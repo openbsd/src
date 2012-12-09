@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.41 2012/12/05 17:17:48 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.42 2012/12/09 18:23:22 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: December 5 2012 $
+.Dd $Mdocdate: December 9 2012 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -238,6 +238,9 @@ IPv4 queries.
 .It inet6
 IPv6 queries.
 .El
+.Pp
+If only one family is specified,
+only that family is tried.
 .It Cm options
 Allows certain internal resolver variables to be modified.
 The syntax is:
