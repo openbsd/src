@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.190 2012/12/05 18:11:33 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.191 2012/12/09 20:28:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -101,6 +101,7 @@ void		 new_resolv_conf(char *, char *, char *);
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
 void		 socket_nonblockmode(int);
+void		 apply_ignore_list(char *);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -272,19 +273,23 @@ main(int argc, char *argv[])
 	int	 ch, fd, quiet = 0, i = 0, socket_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
+	char *ignore_list = NULL;
 	int rtfilter;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "c:dl:qu")) != -1)
+	while ((ch = getopt(argc, argv, "c:di:l:qu")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhclient_conf = optarg;
 			break;
 		case 'd':
 			no_daemon = 1;
+			break;
+		case 'i':
+			ignore_list = optarg;
 			break;
 		case 'l':
 			path_dhclient_db = optarg;
@@ -336,6 +341,8 @@ main(int argc, char *argv[])
 	ifi->rdomain = get_rdomain(ifi->name);
 
 	read_client_conf();
+	if (ignore_list)
+		apply_ignore_list(ignore_list);
 
 	if (interface_status(ifi->name) == 0) {
 		interface_link_forceup(ifi->name);
@@ -2046,4 +2053,47 @@ socket_nonblockmode(int fd)
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
 		error("fcntl F_SETFL: %s", strerror(errno));
+}
+
+/*
+ * Apply the list of options to be ignored that was provided on the
+ * command line. This will override any ignore list obtained from
+ * dhclient.conf.
+ */
+void
+apply_ignore_list(char *ignore_list)
+{
+	u_int8_t list[256];
+	char *p;
+	int ix, i, j;
+
+	memset(list, 0, sizeof(list));
+	ix = 0;
+
+	for (p = strsep(&ignore_list, ", "); p != NULL;
+	    p = strsep(&ignore_list, ", ")) {
+		if (*p == '\0')
+			continue;
+		
+		for (i = 1; i < DHO_END; i++)
+			if (!strcasecmp(dhcp_options[i].name, p))
+				break;
+
+		if (i == DHO_END) {
+			note("Invalid option name: '%s'", p);
+			return;
+		}
+
+		/* Avoid storing duplicate options in the list. */
+		for (j = 0; j < ix; j++) {
+			if (list[j] == i) {
+				note("Duplicate option name: '%s'", p);
+				return;
+			}
+		}
+		list[ix++] = i;
+	}
+
+	config->ignored_option_count = ix;
+	memcpy(config->ignored_options, list, sizeof(config->ignored_options));
 }
