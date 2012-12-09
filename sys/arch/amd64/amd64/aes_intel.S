@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.7 2012/12/09 23:11:13 mikeb Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.8 2012/12/09 23:14:28 mikeb Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -46,6 +46,21 @@
  *
  * - assembler macros were converted to the actual instructions;
  * - aesni_ctr_enc was changed to be RFC 3686 compliant;
+ * - aes-gcm mode added;
+ *
+ * Copyright (c) 2010,2011 Mike Belopuhov
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <machine/param.h>
