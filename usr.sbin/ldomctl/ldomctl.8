@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.3 2012/11/29 22:15:49 kettenis Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.4 2012/12/09 20:24:53 kettenis Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 29 2012 $
+.Dd $Mdocdate: December 9 2012 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -37,12 +37,18 @@ The following commands are available:
 Start a domain.
 .It Cm stop Ar domain
 Stop a domain.
+.It Cm panic Ar domain
+Panic a domain.
+The exact behaviour of this command depends on the OS running in the domain.
+For OpenBSD the default behaviour is to enter
+.Xr ddb 4 .
 .It Cm status Op Ar domain
 Display status information for
 .Ar domain ,
 or for all domains running on the system.
 .El
 .Sh SEE ALSO
+.Xr ddb 4 ,
 .Xr ldomd 8
 .Sh HISTORY
 The

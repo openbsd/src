@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.18 2012/11/28 11:17:23 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.19 2012/12/09 20:24:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -54,6 +54,7 @@ void xselect(int argc, char **argv);
 void delete(int argc, char **argv);
 void guest_start(int argc, char **argv);
 void guest_stop(int argc, char **argv);
+void guest_panic(int argc, char **argv);
 void guest_status(int argc, char **argv);
 void init_system(int argc, char **argv);
 
@@ -65,6 +66,7 @@ struct command commands[] = {
 	{ "delete",	delete },
 	{ "start",	guest_start },
 	{ "stop",	guest_stop },
+	{ "panic",	guest_panic },
 	{ "status",	guest_status },
 	{ "init-system", init_system },
 	{ NULL,		NULL }
@@ -157,7 +159,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s start|stop domain\n", __progname);
+	fprintf(stderr, "usage: %s start|stop|panic domain\n", __progname);
 	fprintf(stderr, "       %s status [domain]\n", __progname);
 	exit(EXIT_FAILURE);
 }
@@ -386,6 +388,32 @@ guest_stop(int argc, char **argv)
 	 */
 	bzero(&msg, sizeof(msg));
 	msg.hdr.op = HVCTL_OP_GUEST_STOP;
+	msg.hdr.seq = hvctl_seq++;
+	msg.msg.guestop.guestid = find_guest(argv[1]);
+	nbytes = write(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "write");
+
+	bzero(&msg, sizeof(msg));
+	nbytes = read(hvctl_fd, &msg, sizeof(msg));
+	if (nbytes != sizeof(msg))
+		err(1, "read");
+}
+
+void
+guest_panic(int argc, char **argv)
+{
+	struct hvctl_msg msg;
+	ssize_t nbytes;
+
+	if (argc < 2)
+		usage();
+
+	/*
+	 * Stop guest domain.
+	 */
+	bzero(&msg, sizeof(msg));
+	msg.hdr.op = HVCTL_OP_GUEST_PANIC;
 	msg.hdr.seq = hvctl_seq++;
 	msg.msg.guestop.guestid = find_guest(argv[1]);
 	nbytes = write(hvctl_fd, &msg, sizeof(msg));
