@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.62 2012/11/28 20:46:15 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.63 2012/12/09 22:04:51 miod Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -20,7 +20,6 @@ LIBIBERTY_INCLUDES=${.CURDIR}/../../lib/libiberty/include
 GNUCFLAGS=	${CFLAGS} ${COPTS} -DOPENBSD_NATIVE \
 		-I${LIBIBERTY_INCLUDES}
 
-VAXHOST_CFLAGS=	-DIN_GCC -DOPENBSD_NATIVE -DHAVE_CONFIG_H -O0
 MAKE_FLAGS= 	CFLAGS="${GNUCFLAGS}" \
 		CC="${CC}" LDFLAGS="${LDSTATIC}" \
 		DEMANGLER_PROG= \
@@ -32,10 +31,6 @@ MAKE_FLAGS= 	CFLAGS="${GNUCFLAGS}" \
 		HOST_LIBDEPS= \
 		LIBDEPS= \
 		build_infodir=.
-
-.if ${MACHINE_ARCH} == "vax"
-MAKE_FLAGS+=	HOST_CFLAGS="${VAXHOST_CFLAGS}"
-.endif
 
 GXX_INCDIR=	/usr/include/g++
 CLEANFILES=	.gdbinit */.gdbinit *.info* \
@@ -67,7 +62,6 @@ MAKE_FLAGS+=	GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include"
 PATH=		/bin:/usr/bin:/sbin:/usr/sbin:${CROSSDIR}/usr/bin
 GXX_INCDIR=	${CROSSDIR}/usr/include/g++
 GNUCFLAGS=	${CFLAGS} ${COPTS} -DOPENBSD_CROSS -I${LIBIBERTY_INCLUDES}
-VAXHOST_CFLAGS=	-DIN_GCC -DHAVE_CONFIG_H -O0
 .else
 CONFIGTARGET=
 CONFIGPREFIX=	/usr
