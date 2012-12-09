@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.68 2012/12/08 12:49:00 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.69 2012/12/09 22:32:29 brad Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -283,6 +283,10 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "7447A");
 		break;
+	case PPC_CPU_MPC7448:
+		ppc_altivec = 1;
+		snprintf(cpu_model, sizeof(cpu_model), "7448");
+		break;
 	case PPC_CPU_IBM970:
 		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "970");
@@ -290,6 +294,10 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case PPC_CPU_IBM970FX:
 		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "970FX");
+		break;
+	case PPC_CPU_IBM970MP:
+		ppc_altivec = 1;
+		snprintf(cpu_model, sizeof(cpu_model), "970MP");
 		break;
 	case PPC_CPU_IBM750FX:
 		snprintf(cpu_model, sizeof(cpu_model), "750FX");
@@ -385,6 +393,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		hid0 |= HID0_DPM;
 		break;
 	case PPC_CPU_MPC7447A:
+	case PPC_CPU_MPC7448:
 	case PPC_CPU_MPC7450:
 	case PPC_CPU_MPC7455:
 	case PPC_CPU_MPC7457:
@@ -401,6 +410,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		break;
 	case PPC_CPU_IBM970:
 	case PPC_CPU_IBM970FX:
+	case PPC_CPU_IBM970MP:
 		/* select NAP mode */
 		hid0 &= ~(HID0_NAP | HID0_DOZE | HID0_SLEEP);
 		hid0 |= HID0_DPM;
@@ -412,10 +422,10 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	/* if processor is G3 or G4, configure l2 cache */
 	if (cpu == PPC_CPU_MPC750 || cpu == PPC_CPU_MPC7400 ||
 	    cpu == PPC_CPU_IBM750FX || cpu == PPC_CPU_MPC7410 ||
-	    cpu == PPC_CPU_MPC7447A || cpu == PPC_CPU_MPC7450 ||
-	    cpu == PPC_CPU_MPC7455 || cpu == PPC_CPU_MPC7457) {
+	    cpu == PPC_CPU_MPC7447A || cpu == PPC_CPU_MPC7448 ||
+	    cpu == PPC_CPU_MPC7450 || cpu == PPC_CPU_MPC7455 ||
+	    cpu == PPC_CPU_MPC7457)
 		config_l2cr(cpu);
-	}
 	printf("\n");
 }
 
@@ -506,6 +516,8 @@ config_l2cr(int cpu)
 		} else if (cpu == PPC_CPU_IBM750FX ||
 			   cpu == PPC_CPU_MPC7447A || cpu == PPC_CPU_MPC7457)
 			printf(": 512KB L2 cache");
+		else if (cpu == PPC_CPU_MPC7448)                                                                                                 
+			printf(": 1MB L2 cache");
 		else {
 			switch (l2cr & L2CR_L2SIZ) {
 			case L2SIZ_256K:
