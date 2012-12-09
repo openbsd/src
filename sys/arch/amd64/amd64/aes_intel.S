@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.6 2012/12/09 22:47:29 mikeb Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.7 2012/12/09 23:11:13 mikeb Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -161,8 +161,8 @@ ENTRY(aesni_set_key)
 	movl	%edx,480(%rdi)
 	pxor	%xmm4,%xmm4		# xmm4 is assumed 0 in _key_expansion_x
 	cmp	$24,%dl
-	jb	.Lenc_key128
-	je	.Lenc_key192
+	jb	2f
+	je	1f
 	movups	0x10(%rsi),%xmm2	# other user key
 	movaps	%xmm2,(%rcx)
 	add	$0x10,%rcx
@@ -192,8 +192,8 @@ ENTRY(aesni_set_key)
 	call	_key_expansion_256b
 	aeskeygenassist $0x40,%xmm2,%xmm1	# round 7
 	call	_key_expansion_256a
-	jmp	.Ldec_key
-.Lenc_key192:
+	jmp	3f
+1:	/* 192 bit key */
 	movq	0x10(%rsi),%xmm2	# other user key
 	aeskeygenassist $0x1,%xmm2,%xmm1	# round 1
 	call	_key_expansion_192a
@@ -211,8 +211,8 @@ ENTRY(aesni_set_key)
 	call	_key_expansion_192a
 	aeskeygenassist $0x80,%xmm2,%xmm1	# round 8
 	call	_key_expansion_192b
-	jmp	.Ldec_key
-.Lenc_key128:
+	jmp	3f
+2:	/* 128 bit key */
 	aeskeygenassist $0x1,%xmm0,%xmm1	# round 1
 	call	_key_expansion_128
 	aeskeygenassist $0x2,%xmm0,%xmm1	# round 2
@@ -233,7 +233,7 @@ ENTRY(aesni_set_key)
 	call	_key_expansion_128
 	aeskeygenassist $0x36,%xmm0,%xmm1	# round 10
 	call	_key_expansion_128
-.Ldec_key:
+3:
 	sub	$0x10,%rcx
 	movaps	(%rdi),%xmm0
 	movaps	(%rcx),%xmm1
@@ -242,14 +242,14 @@ ENTRY(aesni_set_key)
 	add	$0x10,%rdi
 	lea	240-16(%rcx),%rsi
 .align 4
-.Ldec_key_loop:
+4:
 	movaps	(%rdi),%xmm0
 	aesimc	%xmm0,%xmm1
 	movaps	%xmm1,(%rsi)
 	add	$0x10,%rdi
 	sub	$0x10,%rsi
 	cmp	%rcx,%rdi
-	jb	.Ldec_key_loop
+	jb	4b
 	ret
 
 /*
@@ -280,22 +280,22 @@ _aesni_enc1:
 	pxor	KEY,STATE		# round 0
 	add	$0x30,TKEYP
 	cmp	$24,KLEN
-	jb	.Lenc128
+	jb	2f
 	lea	0x20(TKEYP),TKEYP
-	je	.Lenc192
+	je	1f
 	add	$0x20,TKEYP
 	movaps	-0x60(TKEYP),KEY
 	aesenc	KEY,STATE
 	movaps	-0x50(TKEYP),KEY
 	aesenc	KEY,STATE
 .align 4
-.Lenc192:
+1:	/* 192 bit key */
 	movaps	-0x40(TKEYP),KEY
 	aesenc	KEY,STATE
 	movaps	-0x30(TKEYP),KEY
 	aesenc	KEY,STATE
 .align 4
-.Lenc128:
+2:	/* 128 bit key */
 	movaps	-0x20(TKEYP),KEY
 	aesenc	KEY,STATE
 	movaps	-0x10(TKEYP),KEY
@@ -345,9 +345,9 @@ _aesni_enc4:
 	pxor	KEY,STATE4
 	add	$0x30,TKEYP
 	cmp	$24,KLEN
-	jb	.L4enc128
+	jb	2f
 	lea	0x20(TKEYP),TKEYP
-	je	.L4enc192
+	je	1f
 	add	$0x20,TKEYP
 	movaps	-0x60(TKEYP),KEY
 	aesenc	KEY,STATE1
@@ -360,7 +360,7 @@ _aesni_enc4:
 	aesenc	KEY,STATE3
 	aesenc	KEY,STATE4
 #.align 4
-.L4enc192:
+1:	/* 192 bit key */
 	movaps	-0x40(TKEYP),KEY
 	aesenc	KEY,STATE1
 	aesenc	KEY,STATE2
@@ -372,7 +372,7 @@ _aesni_enc4:
 	aesenc	KEY,STATE3
 	aesenc	KEY,STATE4
 #.align 4
-.L4enc128:
+2:	/* 128 bit key */
 	movaps	-0x20(TKEYP),KEY
 	aesenc	KEY,STATE1
 	aesenc	KEY,STATE2
@@ -454,22 +454,22 @@ _aesni_dec1:
 	pxor	KEY,STATE		# round 0
 	add	$0x30,TKEYP
 	cmp	$24,KLEN
-	jb	.Ldec128
+	jb	2f
 	lea	0x20(TKEYP),TKEYP
-	je	.Ldec192
+	je	1f
 	add	$0x20,TKEYP
 	movaps	-0x60(TKEYP),KEY
 	aesdec	KEY,STATE
 	movaps	-0x50(TKEYP),KEY
 	aesdec	KEY,STATE
 .align 4
-.Ldec192:
+1:	/* 192 bit key */
 	movaps	-0x40(TKEYP),KEY
 	aesdec	KEY,STATE
 	movaps	-0x30(TKEYP),KEY
 	aesdec	KEY,STATE
 .align 4
-.Ldec128:
+2:	/* 128 bit key */
 	movaps	-0x20(TKEYP),KEY
 	aesdec	KEY,STATE
 	movaps	-0x10(TKEYP),KEY
@@ -519,9 +519,9 @@ _aesni_dec4:
 	pxor	KEY,STATE4
 	add	$0x30,TKEYP
 	cmp	$24,KLEN
-	jb	.L4dec128
+	jb	2f
 	lea	0x20(TKEYP),TKEYP
-	je	.L4dec192
+	je	1f
 	add 	$0x20,TKEYP
 	movaps	-0x60(TKEYP),KEY
 	aesdec	KEY,STATE1
@@ -534,7 +534,7 @@ _aesni_dec4:
 	aesdec	KEY,STATE3
 	aesdec	KEY,STATE4
 .align 4
-.L4dec192:
+1:	/* 192 bit key */
 	movaps	-0x40(TKEYP),KEY
 	aesdec	KEY,STATE1
 	aesdec	KEY,STATE2
@@ -546,7 +546,7 @@ _aesni_dec4:
 	aesdec	KEY,STATE3
 	aesdec	KEY,STATE4
 .align 4
-.L4dec128:
+2:	/* 128 bit key */
 	movaps	-0x20(TKEYP),KEY
 	aesdec	KEY,STATE1
 	aesdec	KEY,STATE2
@@ -606,14 +606,14 @@ _aesni_dec4:
  */
 ENTRY(aesni_ecb_enc)
 	test	LEN,LEN			# check length
-	jz	.Lecb_enc_ret
+	jz	3f
 	mov	480(KEYP),KLEN
 	cmp	$16,LEN
-	jb	.Lecb_enc_ret
+	jb	3f
 	cmp	$64,LEN
-	jb	.Lecb_enc_loop1
+	jb	2f
 .align 4
-.Lecb_enc_loop4:
+1:
 	movups	(INP),STATE1
 	movups	0x10(INP),STATE2
 	movups	0x20(INP),STATE3
@@ -627,11 +627,11 @@ ENTRY(aesni_ecb_enc)
 	add	$64,INP
 	add	$64,OUTP
 	cmp	$64,LEN
-	jge	.Lecb_enc_loop4
+	jge	1b
 	cmp	$16,LEN
-	jb	.Lecb_enc_ret
+	jb	3f
 .align 4
-.Lecb_enc_loop1:
+2:
 	movups	(INP),STATE1
 	call	_aesni_enc1
 	movups	STATE1,(OUTP)
@@ -639,8 +639,8 @@ ENTRY(aesni_ecb_enc)
 	add	$16,INP
 	add	$16,OUTP
 	cmp	$16,LEN
-	jge	.Lecb_enc_loop1
-.Lecb_enc_ret:
+	jge	2b
+3:
 	ret
 
 /*
@@ -649,15 +649,15 @@ ENTRY(aesni_ecb_enc)
  */
 ENTRY(aesni_ecb_dec)
 	test	LEN,LEN
-	jz	.Lecb_dec_ret
+	jz	3f
 	mov	480(KEYP),KLEN
 	add	$240,KEYP
 	cmp	$16,LEN
-	jb	.Lecb_dec_ret
+	jb	3f
 	cmp	$64,LEN
-	jb	.Lecb_dec_loop1
+	jb	2f
 .align 4
-.Lecb_dec_loop4:
+1:
 	movups	(INP),STATE1
 	movups	0x10(INP),STATE2
 	movups	0x20(INP),STATE3
@@ -671,11 +671,11 @@ ENTRY(aesni_ecb_dec)
 	add	$64,INP
 	add	$64,OUTP
 	cmp	$64,LEN
-	jge	.Lecb_dec_loop4
+	jge	1b
 	cmp	$16,LEN
-	jb	.Lecb_dec_ret
+	jb	3f
 .align 4
-.Lecb_dec_loop1:
+2:
 	movups	(INP),STATE1
 	call	_aesni_dec1
 	movups	STATE1,(OUTP)
@@ -683,8 +683,8 @@ ENTRY(aesni_ecb_dec)
 	add	$16,INP
 	add	$16,OUTP
 	cmp	$16,LEN
-	jge	.Lecb_dec_loop1
-.Lecb_dec_ret:
+	jge	2b
+3:
 	ret
 #endif
 
@@ -694,11 +694,11 @@ ENTRY(aesni_ecb_dec)
  */
 ENTRY(aesni_cbc_enc)
 	cmp	$16,LEN
-	jb	.Lcbc_enc_ret
+	jb	2f
 	mov	480(KEYP),KLEN
 	movups	(IVP),STATE	# load iv as initial state
 .align 4
-.Lcbc_enc_loop:
+1:
 	movups	(INP),IN	# load input
 	pxor	IN,STATE
 	call	_aesni_enc1
@@ -707,9 +707,9 @@ ENTRY(aesni_cbc_enc)
 	add	$16,INP
 	add	$16,OUTP
 	cmp	$16,LEN
-	jge	.Lcbc_enc_loop
+	jge	1b
 	movups	STATE,(IVP)
-.Lcbc_enc_ret:
+2:
 	ret
 
 /*
@@ -718,14 +718,14 @@ ENTRY(aesni_cbc_enc)
  */
 ENTRY(aesni_cbc_dec)
 	cmp	$16,LEN
-	jb	.Lcbc_dec_just_ret
+	jb	4f
 	mov	480(KEYP),KLEN
 	add	$240,KEYP
 	movups	(IVP),IV
 	cmp	$64,LEN
-	jb	.Lcbc_dec_loop1
+	jb	2f
 .align 4
-.Lcbc_dec_loop4:
+1:	/* pipeline 4 instructions when possible */
 	movups	(INP),IN1
 	movaps	IN1,STATE1
 	movups	0x10(INP),IN2
@@ -748,11 +748,11 @@ ENTRY(aesni_cbc_dec)
 	add	$64,INP
 	add	$64,OUTP
 	cmp	$64,LEN
-	jge	.Lcbc_dec_loop4
+	jge	1b
 	cmp	$16,LEN
-	jb	.Lcbc_dec_ret
+	jb	3f
 .align 4
-.Lcbc_dec_loop1:
+2:
 	movups	(INP),IN
 	movaps	IN,STATE
 	call	_aesni_dec1
@@ -763,10 +763,10 @@ ENTRY(aesni_cbc_dec)
 	add	$16,INP
 	add	$16,OUTP
 	cmp	$16,LEN
-	jge	.Lcbc_dec_loop1
-.Lcbc_dec_ret:
+	jge	2b
+3:
 	movups	IV,(IVP)
-.Lcbc_dec_just_ret:
+4:
 	ret
 
 /*
@@ -809,11 +809,11 @@ _aesni_inc_init:
 _aesni_inc:
 	paddq	INC,CTR
 	add	$1,TCTR_LOW
-	jnc	.Linc_low
+	jnc	1f
 	pslldq	$8,INC
 	paddq	INC,CTR
 	psrldq	$8,INC
-.Linc_low:
+1:
 	movaps	CTR,IV
 	pshufb	BSWAP_MASK,IV
 	ret
@@ -824,14 +824,14 @@ _aesni_inc:
  */
 ENTRY(aesni_ctr_enc)
 	cmp	$16,LEN
-	jb	.Lctr_enc_just_ret
+	jb	4f
 	mov	480(KEYP),KLEN
 	movdqu	(ICBP),CTR
 	call	_aesni_inc_init
 	cmp	$64,LEN
-	jb	.Lctr_enc_loop1
+	jb	2f
 .align 4
-.Lctr_enc_loop4:
+1:	/* pipeline 4 instructions when possible */
 	call	_aesni_inc
 	movaps	IV,STATE1
 	movups	(INP),IN1
@@ -857,11 +857,11 @@ ENTRY(aesni_ctr_enc)
 	add	$64,INP
 	add	$64,OUTP
 	cmp	$64,LEN
-	jge	.Lctr_enc_loop4
+	jge	1b
 	cmp	$16,LEN
-	jb	.Lctr_enc_ret
+	jb	3f
 .align 4
-.Lctr_enc_loop1:
+2:
 	call	_aesni_inc
 	movaps	IV,STATE
 	movups	(INP),IN
@@ -872,10 +872,10 @@ ENTRY(aesni_ctr_enc)
 	add	$16,INP
 	add	$16,OUTP
 	cmp	$16,LEN
-	jge	.Lctr_enc_loop1
-.Lctr_enc_ret:
+	jge	2b
+3:
 	movq	IV,(IVP)
-.Lctr_enc_just_ret:
+4:
 	ret
 
 _aesni_gmac_gfmul:
@@ -949,7 +949,7 @@ _aesni_gmac_gfmul:
  */
 ENTRY(aesni_gmac_update)
 	cmp	$16,%rdx
-	jb	.Lgcm_hash_just_ret
+	jb	2f
 
 	movdqu	.Lbswap_mask,BSWAP_MASK	# endianness swap mask
 
@@ -957,8 +957,7 @@ ENTRY(aesni_gmac_update)
 	movdqu	32(%rdi),%xmm6		# initial state
 	pshufb	BSWAP_MASK,%xmm1
 	pshufb	BSWAP_MASK,%xmm6
-
-.Lgcm_hash_loop:
+1:
 	movdqu	(%rsi),%xmm2
 	pshufb	BSWAP_MASK,%xmm2
 	movdqa	%xmm6,%xmm0
@@ -968,12 +967,12 @@ ENTRY(aesni_gmac_update)
 	sub	$16,%rdx
 	add	$16,%rsi
 	cmp	$16,%rdx
-	jge	.Lgcm_hash_loop
+	jge	1b
 
 	pshufb	BSWAP_MASK,%xmm6
 	movdqu	%xmm6,16(%rdi)
 	movdqu	%xmm6,32(%rdi)
-.Lgcm_hash_just_ret:
+2:
 	ret
 
 /*
