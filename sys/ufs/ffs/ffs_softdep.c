@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.112 2011/09/18 23:20:28 bluhm Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.113 2012/12/10 22:58:04 beck Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1973,7 +1973,7 @@ softdep_setup_freeblocks(struct inode *ip, off_t length)
 	ACQUIRE_LOCK(&lk);
 	drain_output(vp, 1);
 	while ((bp = LIST_FIRST(&vp->v_dirtyblkhd))) {
-		if (!getdirtybuf(bp, MNT_WAIT))
+		if (getdirtybuf(bp, MNT_WAIT) <= 0)
 			break;
 		(void) inodedep_lookup(fs, ip->i_number, 0, &inodedep);
 		deallocate_dependencies(bp, inodedep);
@@ -4426,12 +4426,14 @@ softdep_update_inodeblock(struct inode *ip, struct buf *bp, int waitfor)
 	 * forced sync (e.g., an fsync on a file), we force the bitmap
 	 * to be written so that the update can be done.
 	 */
-	if ((inodedep->id_state & DEPCOMPLETE) != 0 || waitfor == 0) {
-		FREE_LOCK(&lk);
-		return;
-	}
-	bp = inodedep->id_buf;
-	gotit = getdirtybuf(bp, MNT_WAIT);
+	do {
+		if ((inodedep->id_state & DEPCOMPLETE) != 0 || waitfor == 0) {
+			FREE_LOCK(&lk);
+			return;
+		}
+		bp = inodedep->id_buf;
+		gotit = getdirtybuf(bp, MNT_WAIT);
+	} while (gotit == -1);
 	FREE_LOCK(&lk);
 	if (gotit && (error = bwrite(bp)) != 0)
 		softdep_error("softdep_update_inodeblock: bwrite", error);
@@ -4670,7 +4672,7 @@ softdep_sync_metadata(struct vop_fsync_args *ap)
 	struct allocindir *aip;
 	struct buf *bp, *nbp;
 	struct worklist *wk;
-	int i, error, waitfor;
+	int i, gotit, error, waitfor;
 
 	/*
 	 * Check whether this vnode is involved in a filesystem
@@ -4716,10 +4718,12 @@ top:
 	 */
 	drain_output(vp, 1);
 	bp = LIST_FIRST(&vp->v_dirtyblkhd);
-	if (getdirtybuf(bp, MNT_WAIT) == 0) {
+	gotit = getdirtybuf(bp, MNT_WAIT);
+	if (gotit == 0) {
 		FREE_LOCK(&lk);
 		return (0);
-	}
+	} else if (gotit == -1)
+		goto top;
 loop:
 	/*
 	 * As we hold the buffer locked, none of its dependencies
@@ -4733,8 +4737,11 @@ loop:
 			if (adp->ad_state & DEPCOMPLETE)
 				break;
 			nbp = adp->ad_buf;
-			if (getdirtybuf(nbp, waitfor) == 0)
+			gotit = getdirtybuf(nbp, waitfor);
+			if (gotit == 0)
 				break;
+			else if (gotit == -1)
+				goto loop;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
 				bawrite(nbp);
@@ -4750,8 +4757,11 @@ loop:
 			if (aip->ai_state & DEPCOMPLETE)
 				break;
 			nbp = aip->ai_buf;
-			if (getdirtybuf(nbp, waitfor) == 0)
+			gotit = getdirtybuf(nbp, waitfor);
+			if (gotit == 0)
 				break;
+			else if (gotit == -1)
+				goto loop;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
 				bawrite(nbp);
@@ -4769,7 +4779,7 @@ loop:
 				if (aip->ai_state & DEPCOMPLETE)
 					continue;
 				nbp = aip->ai_buf;
-				if (getdirtybuf(nbp, MNT_WAIT) == 0)
+				if (getdirtybuf(nbp, MNT_WAIT) <= 0)
 					goto restart;
 				FREE_LOCK(&lk);
 				if ((error = VOP_BWRITE(nbp)) != 0) {
@@ -4822,8 +4832,11 @@ loop:
 			 * rather than panic, just flush it.
 			 */
 			nbp = WK_MKDIR(wk)->md_buf;
-			if (getdirtybuf(nbp, waitfor) == 0)
+			gotit = getdirtybuf(nbp, waitfor);
+			if (gotit == 0)
 				break;
+			else if (gotit == -1)
+				goto loop;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
 				bawrite(nbp);
@@ -4843,8 +4856,11 @@ loop:
 			 * rather than panic, just flush it.
 			 */
 			nbp = WK_BMSAFEMAP(wk)->sm_buf;
-			if (getdirtybuf(nbp, waitfor) == 0)
+			gotit = getdirtybuf(nbp, waitfor);
+			if (gotit == 0)
 				break;
+			else if (gotit == -1)
+				goto loop;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
 				bawrite(nbp);
@@ -4862,8 +4878,10 @@ loop:
 			/* NOTREACHED */
 		}
 	}
-	nbp = LIST_NEXT(bp, b_vnbufs);
-	getdirtybuf(nbp, MNT_WAIT);
+	do {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		gotit = getdirtybuf(nbp, MNT_WAIT);
+	} while (gotit == -1);
 	FREE_LOCK(&lk);
 	bawrite(bp);
 	ACQUIRE_LOCK(&lk);
@@ -4921,7 +4939,7 @@ flush_inodedep_deps(struct fs *fs, ino_t ino)
 {
 	struct inodedep *inodedep;
 	struct allocdirect *adp;
-	int error, waitfor;
+	int gotit, error, waitfor;
 	struct buf *bp;
 
 	splassert(IPL_BIO);
@@ -4940,6 +4958,7 @@ flush_inodedep_deps(struct fs *fs, ino_t ino)
 	 * any pending I/O to complete.
 	 */
 	for (waitfor = MNT_NOWAIT; ; ) {
+	retry_ino:
 		FREE_LOCK(&lk);
 		ACQUIRE_LOCK(&lk);
 		if (inodedep_lookup(fs, ino, 0, &inodedep) == 0)
@@ -4948,11 +4967,13 @@ flush_inodedep_deps(struct fs *fs, ino_t ino)
 			if (adp->ad_state & DEPCOMPLETE)
 				continue;
 			bp = adp->ad_buf;
-			if (getdirtybuf(bp, waitfor) == 0) {
+			gotit = getdirtybuf(bp, waitfor);
+			if (gotit == 0) {
 				if (waitfor == MNT_NOWAIT)
 					continue;
 				break;
-			}
+			} else if (gotit == -1)
+				goto retry_ino;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
 				bawrite(bp);
@@ -4965,15 +4986,18 @@ flush_inodedep_deps(struct fs *fs, ino_t ino)
 		}
 		if (adp != NULL)
 			continue;
+	retry_newino:
 		TAILQ_FOREACH(adp, &inodedep->id_newinoupdt, ad_next) {
 			if (adp->ad_state & DEPCOMPLETE)
 				continue;
 			bp = adp->ad_buf;
-			if (getdirtybuf(bp, waitfor) == 0) {
+			gotit = getdirtybuf(bp, waitfor);
+			if (gotit == 0) {
 				if (waitfor == MNT_NOWAIT)
 					continue;
 				break;
-			}
+			} else if (gotit == -1)
+				goto retry_newino;
 			FREE_LOCK(&lk);
 			if (waitfor == MNT_NOWAIT) {
 				bawrite(bp);
@@ -5083,6 +5107,8 @@ flush_pagedep_deps(struct vnode *pvp, struct mount *mp,
 				if (wk) {
 					gotit = getdirtybuf(bp, MNT_WAIT);
 					FREE_LOCK(&lk);
+					if (gotit == -1)
+						continue;
 					if (gotit && (error = bwrite(bp)) != 0)
 						break;
 				} else
@@ -5122,10 +5148,13 @@ flush_pagedep_deps(struct vnode *pvp, struct mount *mp,
 		 * If the inode still has bitmap dependencies,
 		 * push them to disk.
 		 */
+	retry:
 		if ((inodedep->id_state & DEPCOMPLETE) == 0) {
 			bp = inodedep->id_buf;
 			gotit = getdirtybuf(bp, MNT_WAIT);
 			FREE_LOCK(&lk);
+			if (gotit == -1)
+				goto retry;
 			if (gotit && (error = bwrite(bp)) != 0)
 				break;
 			ACQUIRE_LOCK(&lk);
@@ -5503,7 +5532,10 @@ out:
 /*
  * Acquire exclusive access to a buffer.
  * Must be called with splbio blocked.
- * Return 1 if buffer was acquired.
+ * Returns:
+ * 1 if the buffer was acquired and is dirty;
+ * 0 if the buffer was clean, or we would have slept but had MN_NOWAIT;
+ * -1 if we slept and may try again (but not with this bp).
  */
 STATIC int
 getdirtybuf(struct buf *bp, int waitfor)
@@ -5515,15 +5547,14 @@ getdirtybuf(struct buf *bp, int waitfor)
 
 	splassert(IPL_BIO);
 
-	for (;;) {
-		if ((bp->b_flags & B_BUSY) == 0)
-			break;
+	if (bp->b_flags & B_BUSY) {
 		if (waitfor != MNT_WAIT)
 			return (0);
 		bp->b_flags |= B_WANTED;
 		s = FREE_LOCK_INTERLOCKED(&lk);
 		tsleep((caddr_t)bp, PRIBIO + 1, "sdsdty", 0);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
+		return (-1);
 	}
 	if ((bp->b_flags & B_DELWRI) == 0)
 		return (0);
