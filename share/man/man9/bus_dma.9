@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.29 2010/12/26 15:40:57 miod Exp $
+.\"	$OpenBSD: bus_dma.9,v 1.30 2012/12/10 13:01:26 mpi Exp $
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 26 2010 $
+.Dd $Mdocdate: December 10 2012 $
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -747,6 +747,11 @@ table entries.
 If it is determined that the mapping is DMA coherent, state may be
 placed into the DMA map for use by later calls to
 .Fn bus_dmamap_sync .
+.It Dv BUS_DMA_NOCACHE
+This flag is a
+.Em hint
+to machine-dependent code.
+If possible, map the memory uncached.
 .El
 .El
 .Pp
@@ -819,6 +824,10 @@ It is not safe to wait (sleep) for resources during this call.
 These flags are placeholders, and may be used by buses to provide
 bus-dependent functionality.
 .It Dv BUS_DMA_COHERENT
+See
+.Fn bus_dmamem_map
+above for a description of this flag.
+.It Dv BUS_DMA_NOCACHE
 See
 .Fn bus_dmamem_map
 above for a description of this flag.
