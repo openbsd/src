@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvctl.h,v 1.1 2012/11/04 17:37:10 kettenis Exp $	*/
+/*	$OpenBSD: hvctl.h,v 1.2 2012/12/10 06:42:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -116,6 +116,7 @@ struct hvctl_msg {
 #define HVCTL_OP_RECONFIGURE	4
 #define HVCTL_OP_GUEST_START	5
 #define HVCTL_OP_GUEST_STOP	6
+#define HVCTL_OP_GUEST_PANIC	10
 #define HVCTL_OP_GET_RES_STAT	11
 
 #define HVCTL_ST_OK		0
