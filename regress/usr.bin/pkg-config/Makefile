@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2012/10/09 09:56:58 jasper Exp $
+#	$OpenBSD: Makefile,v 1.36 2012/12/10 10:23:27 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -53,7 +53,13 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		whitespace-linebreak \
 		whitespace-name \
 		broken-require-1 \
-		broken-require-2
+		broken-require-2 \
+		min-version-1 \
+		min-version-2 \
+		exact-version-1 \
+		exact-version-2 \
+		max-version-1 \
+		max-version-2
 
 PKG_CONFIG?=	pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -394,11 +400,35 @@ whitespace-name:
 
 broken-require-1:
 	# Test expanded variables with special parsing requirements
-	${PCONFIG} requires-test3
+	@${PCONFIG} requires-test3
 
 broken-require-2:
 	# Test expanded variables with special parsing requirements
-	${PCONFIG} requires-test4
+	@${PCONFIG} requires-test4
+
+min-version-1:
+	# Test --atleast-version (matches)
+	@${PCONFIG} --atleast-version=0.0.9 vers1
+
+min-version-2:
+	# Test --atleast-version (doesn't match)
+	@if ${PCONFIG} --atleast-version=0.1.1 vers1 ; then false; fi
+
+exact-version-1:
+	# Test --exact-version (matches)
+	@${PCONFIG} --exact-version=0.1.0 vers1
+
+exact-version-2:
+	# Test --exact-version (doesn't match)
+	@if ${PCONFIG} --exact-version=0.1.1 vers1 ; then false; fi
+
+max-version-1:
+	# Test --max-version (matches)
+	@${PCONFIG} --max-version=0.1.0 vers1
+
+max-version-2:
+	# Test --max-version (doesn't match)
+	@if ${PCONFIG} --max-version=0.0.9 vers1 ; then false; fi
 
 clean:
 	rm -f *.want *.got
