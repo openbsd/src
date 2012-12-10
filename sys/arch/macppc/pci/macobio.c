@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.19 2011/05/15 09:10:26 mpi Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.20 2012/12/10 16:32:13 mpi Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -279,24 +279,24 @@ macobio_disable(int offset, u_int32_t bits)
 	out32rb(sc->obiomem + offset, bits);
 }
 
-u_int32_t
+uint8_t
 macobio_read(int offset)
 {
 	struct macobio_softc *sc = macobio_cd.cd_devs[0];
 	if (sc->obiomem == 0)
 		return -1;
 
-	return in32rb(sc->obiomem + offset);
+	return in8rb(sc->obiomem + offset);
 }
 
 void
-macobio_write(int offset, u_int32_t bits)
+macobio_write(int offset, uint8_t bits)
 {
 	struct macobio_softc *sc = macobio_cd.cd_devs[0];
 	if (sc->obiomem == 0)
 		return;
 
-	out32rb(sc->obiomem + offset, bits);
+	out8rb(sc->obiomem + offset, bits);
 }
 
 void

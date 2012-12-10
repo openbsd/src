@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.h,v 1.1 2011/05/15 09:10:26 mpi Exp $	*/
+/*	$OpenBSD: macobio.h,v 1.2 2012/12/10 16:32:13 mpi Exp $	*/
 /*
  * Copyright (c) 2011 Martin Pieuchot <mp@nolizard.org>
  *
@@ -26,8 +26,8 @@
 
 void		macobio_enable(int, u_int32_t);
 void		macobio_disable(int, u_int32_t);
-u_int32_t	macobio_read(int);
-void		macobio_write(int, u_int32_t);
+uint8_t		macobio_read(int);
+void		macobio_write(int, uint8_t);
 
 
 #endif /* _MACOBIO_H_ */
