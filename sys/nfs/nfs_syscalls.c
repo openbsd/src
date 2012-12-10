@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.93 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.94 2012/12/10 22:34:53 beck Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -570,7 +570,8 @@ nfssvc_iod(void *arg)
 	struct vnode *vp;
 	int error = 0, s, bufcount;
 
-	bufcount = 256;	/* XXX: Big enough? sysctl, constant ? */
+	bufcount = MIN(256, bcstats.kvaslots / 8);
+	bufcount = MIN(bufcount, bcstats.numbufs / 8);
 
 	/* Assign my position or return error if too many already running. */
 	myiod = -1;
@@ -587,8 +588,12 @@ nfssvc_iod(void *arg)
 	nfs_numasync++;
 
 	/* Upper limit on how many bufs we'll queue up for this iod. */
+	if (nfs_bufqmax > bcstats.kvaslots / 4) {
+		nfs_bufqmax = bcstats.kvaslots / 4;
+		bufcount = 0;
+	} 
 	if (nfs_bufqmax > bcstats.numbufs / 4) {
-		nfs_bufqmax = bcstats.numbufs / 4; /* limit to 1/4 of bufs */
+		nfs_bufqmax = bcstats.numbufs / 4;
 		bufcount = 0;
 	}
 
