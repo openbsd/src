@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.4 2012/12/09 20:24:53 kettenis Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.5 2012/12/10 06:59:20 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2012 $
+.Dd $Mdocdate: December 10 2012 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -40,7 +40,9 @@ Stop a domain.
 .It Cm panic Ar domain
 Panic a domain.
 The exact behaviour of this command depends on the OS running in the domain.
-For OpenBSD the default behaviour is to enter
+For
+.Ox
+the default behaviour is to enter
 .Xr ddb 4 .
 .It Cm status Op Ar domain
 Display status information for
