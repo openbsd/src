@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.33 2012/09/15 00:47:09 guenther Exp $	*/
+/*	$OpenBSD: types.h,v 1.34 2012/12/10 22:32:00 deraadt Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #ifndef _SYS_TYPES_H_
 #define	_SYS_TYPES_H_
 
-#include <sys/cdefs.h>
 #include <sys/_types.h>
 #include <machine/endian.h>
 
