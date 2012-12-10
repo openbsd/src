@@ -446,7 +446,7 @@ check_bounded_info (status, info, params)
       if (array_size_expr)
         array_size = (TREE_INT_CST_LOW (array_size_expr) + 1) * type_size;
       else
-        array_size_expr = 0;
+        array_size = 0;
       length = TREE_INT_CST_LOW (length_expr);
 
       /* XXX - warn about a too-small buffer? */
