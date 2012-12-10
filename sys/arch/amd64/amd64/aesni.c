@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.23 2012/10/04 13:17:12 haesbaert Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.24 2012/12/10 15:06:45 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -129,6 +129,8 @@ aesni_setup(void)
 	algs[CRYPTO_SHA2_256_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_384_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+
+	algs[CRYPTO_ESN] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	aesni_sc->sc_cid = crypto_get_driverid(0);
 	if (aesni_sc->sc_cid < 0) {
@@ -264,6 +266,11 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			swd->sw_alg = c->cri_alg;
 
 			break;
+
+		case CRYPTO_ESN:
+			/* nothing to do */
+			break;
+
 		default:
 			aesni_freesession(ses->ses_sid);
 			return (EINVAL);
@@ -341,7 +348,9 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	uint8_t tag[GMAC_DIGEST_LEN];
 	uint8_t *buf = aesni_sc->sc_buf;
 	uint32_t *dw;
-	int ivlen, rlen = 0, err = 0;
+	int aadlen, err, ivlen, iskip, oskip, rlen;
+
+	aadlen = rlen = err = iskip = oskip = 0;
 
 	if (crd->crd_len > aesni_sc->sc_buflen) {
 		if (buf != NULL) {
@@ -395,17 +404,34 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 
 	if (crda) {
 		/* Supply GMAC with AAD */
-		rlen = roundup(crda->crd_len, GMAC_BLOCK_LEN);
+		aadlen = crda->crd_len;
+		if (crda->crd_flags & CRD_F_ESN) {
+			aadlen += 4;
+			/* SPI */
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copydata((struct mbuf *)crp->crp_buf,
+				    crda->crd_skip, 4, buf);
+			else
+				cuio_copydata((struct uio *)crp->crp_buf,
+				    crda->crd_skip, 4, buf);
+			iskip = 4; /* additional input offset */
+			/* ESN */
+			bcopy(crda->crd_esn, buf + 4, 4);
+			oskip = iskip + 4; /* offset output buffer by 8 */
+		}
+		rlen = roundup(aadlen, GMAC_BLOCK_LEN);
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
-			m_copydata((struct mbuf *)crp->crp_buf, crda->crd_skip,
-			    crda->crd_len, buf);
+			m_copydata((struct mbuf *)crp->crp_buf,
+			    crda->crd_skip + iskip, crda->crd_len - iskip,
+			    buf + oskip);
 		else
 			cuio_copydata((struct uio *)crp->crp_buf,
-			    crda->crd_skip, crda->crd_len, buf);
+			    crda->crd_skip + iskip, crda->crd_len - iskip,
+			    buf + oskip);
 		fpu_kernel_enter();
 		aesni_gmac_update(ses->ses_ghash, buf, rlen);
 		fpu_kernel_exit();
-		bzero(buf, crda->crd_len);
+		bzero(buf, aadlen);
 	}
 
 	/* Copy data to be processed to the buffer */
@@ -459,7 +485,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		/* lengths block */
 		bzero(tag, GMAC_BLOCK_LEN);
 		dw = (uint32_t *)tag + 1;
-		*dw = htobe32(crda->crd_len * 8);
+		*dw = htobe32(aadlen * 8);
 		dw = (uint32_t *)tag + 3;
 		*dw = htobe32(crd->crd_len * 8);
 		aesni_gmac_update(ses->ses_ghash, tag, GMAC_BLOCK_LEN);
