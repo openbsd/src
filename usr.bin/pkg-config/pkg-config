@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.76 2012/12/08 18:50:05 jasper Exp $
+# $OpenBSD: pkg-config,v 1.77 2012/12/10 10:12:12 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -589,6 +589,8 @@ Usage: $0 [options]
 --uninstalled - allow for uninstalled versions to be used
 --static - adjust output for static linking
 --atleast-version [version] - require a certain version of a package
+--exact-version [version] - require exactly the specified version of a package
+--max-version [version] - require at most a certain version of a package
 --modversion [package] - query the version of a package
 --variable var package - return the definition of <var> in <package>
 EOF
