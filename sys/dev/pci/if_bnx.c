@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.98 2012/12/05 23:20:20 deraadt Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.99 2012/12/10 10:38:56 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -358,11 +358,12 @@ int	bnx_get_buf(struct bnx_softc *, u_int16_t *, u_int16_t *, u_int32_t *);
 
 int	bnx_init_tx_chain(struct bnx_softc *);
 void	bnx_init_tx_context(struct bnx_softc *);
-void	bnx_fill_rx_chain(struct bnx_softc *);
+int	bnx_fill_rx_chain(struct bnx_softc *);
 void	bnx_init_rx_context(struct bnx_softc *);
 int	bnx_init_rx_chain(struct bnx_softc *);
 void	bnx_free_rx_chain(struct bnx_softc *);
 void	bnx_free_tx_chain(struct bnx_softc *);
+void	bnx_rxrefill(void *);
 
 int	bnx_tx_encap(struct bnx_softc *, struct mbuf *);
 void	bnx_start(struct ifnet *);
@@ -933,6 +934,7 @@ bnx_attachhook(void *xsc)
 	ether_ifattach(ifp);
 
 	timeout_set(&sc->bnx_timeout, bnx_tick, sc);
+	timeout_set(&sc->bnx_rxrefill, bnx_rxrefill, sc);
 
 	/* Print some important debugging info. */
 	DBRUN(BNX_INFO, bnx_dump_driver_state(sc));
@@ -3271,6 +3273,7 @@ bnx_stop(struct bnx_softc *sc)
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
 	timeout_del(&sc->bnx_timeout);
+	timeout_del(&sc->bnx_rxrefill);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -4026,11 +4029,12 @@ bnx_init_rx_context(struct bnx_softc *sc)
 /* Returns:                                                                 */
 /*   Nothing                                                                */
 /****************************************************************************/
-void
+int
 bnx_fill_rx_chain(struct bnx_softc *sc)
 {
 	u_int16_t		prod, chain_prod;
 	u_int32_t		prod_bseq;
+	int			ndesc = 0;
 #ifdef BNX_DEBUG
 	int rx_mbuf_alloc_before, free_rx_bd_before;
 #endif
@@ -4053,6 +4057,7 @@ bnx_fill_rx_chain(struct bnx_softc *sc)
 			break;
 		}
 		prod = NEXT_RX_BD(prod);
+		ndesc++;
 	}
 
 #if 0
@@ -4071,6 +4076,8 @@ bnx_fill_rx_chain(struct bnx_softc *sc)
 	REG_WR(sc, MB_RX_CID_ADDR + BNX_L2CTX_HOST_BSEQ, sc->rx_prod_bseq);
 
 	DBPRINT(sc, BNX_EXCESSIVE_RECV, "Exiting %s()\n", __FUNCTION__);
+
+	return (ndesc);
 }
 
 /****************************************************************************/
@@ -4186,6 +4193,18 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 	    sc->rx_mbuf_alloc));
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
+}
+
+void
+bnx_rxrefill(void *xsc)
+{
+	struct bnx_softc	*sc = xsc;
+	int			s;
+
+	s = splnet();
+	if (!bnx_fill_rx_chain(sc))
+		timeout_add(&sc->bnx_rxrefill, 1);
+	splx(s);
 }
 
 /****************************************************************************/
@@ -4553,7 +4572,8 @@ bnx_rx_int_next_rx:
 
 	/* No new packets to process.  Refill the RX chain and exit. */
 	sc->rx_cons = sw_cons;
-	bnx_fill_rx_chain(sc);
+	if (!bnx_fill_rx_chain(sc))
+		timeout_add(&sc->bnx_rxrefill, 1);
 
 	for (i = 0; i < RX_PAGES; i++)
 		bus_dmamap_sync(sc->bnx_dmatag,

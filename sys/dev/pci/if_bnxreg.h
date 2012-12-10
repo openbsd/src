@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.38 2012/07/05 13:50:15 phessler Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.39 2012/12/10 10:38:56 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4869,6 +4869,7 @@ struct bnx_softc {
 
 	int			bnx_link;
 	struct timeout		bnx_timeout;
+	struct timeout		bnx_rxrefill;
 
 	/* Frame size and mbuf allocation size for RX frames. */
 	u_int32_t		max_frame_size;
