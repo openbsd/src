@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2012/12/02 20:47:48 djm Exp $
+#	$OpenBSD: Makefile,v 1.61 2012/12/11 22:42:11 markus Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
 
@@ -52,7 +52,8 @@ LTESTS= 	connect \
 		cert-userkey \
 		host-expand \
 		keys-command \
-		forward-control
+		forward-control \
+		integrity
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
@@ -125,6 +126,10 @@ t9.out:
 t9: t9.out
 	ssh-keygen -lf t9.out > /dev/null
 	ssh-keygen -Bf t9.out > /dev/null
+
+modpipe: modpipe.c
+
+t-integrity: modpipe
 
 .for t in ${LTESTS} ${INTEROP_TESTS}
 t-${t}:
