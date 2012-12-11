@@ -6376,6 +6376,7 @@
 ./usr/share/man/man9/bus_space_copy_8.9
 ./usr/share/man/man9/bus_space_free.9
 ./usr/share/man/man9/bus_space_map.9
+./usr/share/man/man9/bus_space_mmap.9
 ./usr/share/man/man9/bus_space_read_1.9
 ./usr/share/man/man9/bus_space_read_2.9
 ./usr/share/man/man9/bus_space_read_4.9
