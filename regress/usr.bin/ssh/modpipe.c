@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* $Id: modpipe.c,v 1.2 2012/12/11 23:48:07 djm Exp $ */
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
