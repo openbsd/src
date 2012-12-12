@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.30 2012/08/21 10:32:38 ajacoutot Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.31 2012/12/12 22:25:21 halex Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -419,10 +419,18 @@ main(int argc, char **argv)
 		if (selected[i] == inverse)
 			continue;
 
-		if ((*action)(kp, j++) == -1)
+		switch ((*action)(kp, j++)) {
+		case STATUS_MATCH:
+			if (rv != STATUS_ERROR)
+				rv = STATUS_MATCH;
+			break;
+		case STATUS_NOMATCH:
+			j--;
+			break;
+		case STATUS_ERROR:
 			rv = STATUS_ERROR;
-		else if (rv != STATUS_ERROR)
-			rv = STATUS_MATCH;
+			break;
+		}
 	}
 	if (pgrep && j && !quiet)
 		putchar('\n');
@@ -453,11 +461,13 @@ killact(struct kinfo_proc *kp, int dummy)
 	if (longfmt && !quiet)
 		printf("%d %s\n", (int)kp->p_pid, kp->p_comm);
 
-	if (kill(kp->p_pid, signum) == -1 && errno != ESRCH) {
+	if (kill(kp->p_pid, signum) == -1) {
+		if (errno == ESRCH)
+			return (STATUS_NOMATCH);
 		warn("signalling pid %d", (int)kp->p_pid);
-		return (-1);
+		return (STATUS_ERROR);
 	}
-	return (0);
+	return (STATUS_MATCH);
 }
 
 int
@@ -466,13 +476,13 @@ grepact(struct kinfo_proc *kp, int printdelim)
 	char **argv;
 
 	if (quiet)
-		return (0);
+		return (STATUS_MATCH);
+	if (longfmt && matchargs)
+		if ((argv = kvm_getargv(kd, kp, 0)) == NULL)
+			return (errno == ESRCH ? STATUS_NOMATCH : STATUS_ERROR);
 	if (printdelim)
 		fputs(delim, stdout);
 	if (longfmt && matchargs) {
-		if ((argv = kvm_getargv(kd, kp, 0)) == NULL)
-			return (-1);
-
 		printf("%d ", (int)kp->p_pid);
 		for (; *argv != NULL; argv++) {
 			printf("%s", *argv);
@@ -484,7 +494,7 @@ grepact(struct kinfo_proc *kp, int printdelim)
 	else
 		printf("%d", (int)kp->p_pid);
 
-	return (0);
+	return (STATUS_MATCH);
 }
 
 void
