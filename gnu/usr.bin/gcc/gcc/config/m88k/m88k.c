@@ -1838,7 +1838,7 @@ m88k_layout_frame ()
 {
   int regno, sp_size;
 
-  if (frame_laid_out)
+  if (frame_laid_out && reload_completed)
     return;
 
   frame_laid_out = 1;
