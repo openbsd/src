@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.43 2012/12/11 16:40:01 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.44 2012/12/12 11:12:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -203,7 +203,7 @@ redo:
 		}
 		if (r == 0) {
 			c = 1;
-			if (oflag)
+			if (oflag && pmatch.rm_so != pmatch.rm_eo)
 				goto print;
 			break;
 		}
