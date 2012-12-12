@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.15 2012/11/27 17:29:07 mikeb Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.16 2012/12/12 17:23:53 mikeb Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		goto release;
+		break;
 
 	case PRU_DISCONNECT:
 		if (rp->rcb_faddr == 0) {
@@ -310,8 +310,8 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	default:
 		panic("raw_usrreq");
 	}
-release:
 	splx(s);
+release:
 	if (m != NULL)
 		m_freem(m);
 	return (error);
