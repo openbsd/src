@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.35 2012/09/28 16:09:05 markus Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.36 2012/12/13 06:59:36 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -128,6 +128,11 @@ void
 pipex_init(void)
 {
 	extern int max_keylen;		/* for radix.c */
+
+	if (pipex_softintr != NULL) {
+		printf("pipex_init called twice\n");
+		return;
+	}
 
 	LIST_INIT(&pipex_session_list);
 	LIST_INIT(&pipex_close_wait_list);
