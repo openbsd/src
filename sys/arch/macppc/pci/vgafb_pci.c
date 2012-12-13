@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.26 2012/08/30 21:54:13 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.27 2012/12/13 13:55:18 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -147,8 +147,15 @@ vgafb_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (DEVICE_IS_VGA_PCI(pa->pa_class) == 0)
-		return (0);
+	if (DEVICE_IS_VGA_PCI(pa->pa_class) == 0) {
+		/*
+		 * XXX Graphic cards found in iMac G3 have a ``Misc''
+		 * subclass, match them all.
+		 */
+		if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
+		    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_MISC)
+			return (0);
+	}
 
 	/* If it's the console, we have a winner! */
 	if (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag))) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pcivar.h,v 1.6 2012/06/21 10:08:16 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pcivar.h,v 1.7 2012/12/13 13:55:18 mpi Exp $	*/
 /*	$NetBSD: vga_pcivar.h,v 1.1 1996/11/19 04:38:36 cgd Exp $	*/
 
 /*
@@ -27,14 +27,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-#define	DEVICE_IS_VGA_PCI(class)					\
-	    (((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
-	      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA) ||	\
-	     (PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
-	      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_MISC) ||	\
-	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
-	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
 
 extern pcitag_t vgafb_pci_console_tag;
 
