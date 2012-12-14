@@ -1,4 +1,4 @@
-/*	$OpenBSD: itvar.h,v 1.13 2011/01/20 16:59:55 form Exp $	*/
+/*	$OpenBSD: itvar.h,v 1.14 2012/12/14 13:17:29 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -47,6 +47,7 @@
 #define IT_ID_8720		0x8720
 #define IT_ID_8721		0x8721
 #define IT_ID_8726		0x8726
+#define IT_ID_8772		0x8772
 
 #define IT_CCR			0x02
 #define IT_LDN			0x07
