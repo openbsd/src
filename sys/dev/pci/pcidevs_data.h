@@ -1776,6 +1776,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "U3 PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_HT,
+	    "U3 HyperTransport",
+	},
+	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_AGP,
 	    "U3 AGP",
 	},
