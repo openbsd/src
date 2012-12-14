@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.134 2012/12/08 12:54:17 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.135 2012/12/14 11:10:03 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ notice_signal(int sig)
 	}
 }
 
-void
+static void
 setup_all_signals(void)
 {
 	sigemptyset(&sigset);
@@ -849,6 +849,11 @@ handle_running_jobs(void)
 	 * reception of new stuff on sigsuspend
 	 */
 	sigprocmask(SIG_BLOCK, &sigset, &old);
+	/* note this will NOT loop until runningJobs == NULL.
+	 * It's merely an optimisation, namely that we don't need to go 
+	 * through the logic if no job is present. As soon as a job 
+	 * gets reaped, we WILL exit the loop through the break.
+	 */
 	while (runningJobs != NULL) {
 		/* did we already have pending stuff that advances things ?
 		 * then handle_all_signals() will not return

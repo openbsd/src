@@ -1,7 +1,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-/*	$OpenBSD: job.h,v 1.30 2012/12/08 12:54:17 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.31 2012/12/14 11:10:03 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -78,7 +78,18 @@ extern void Job_Begin(void);
 extern void Job_Wait(void);
 extern void Job_AbortAll(void);
 extern void print_errors(void);
+
+/* handle_running_jobs();
+ *	wait until something happens, like a job finishing running a command
+ *	or a signal coming in.
+ */
 extern void handle_running_jobs(void);
+
+/* handle_all_signals();
+ *	if a signal was received, react accordingly.
+ *	By displaying STATUS info, or by aborting running jobs for a fatal
+ *	signals. Relies on Job_Init() for setting up handlers.
+ */
 extern void handle_all_signals(void);
 
 extern void determine_expensive_job(Job *);
