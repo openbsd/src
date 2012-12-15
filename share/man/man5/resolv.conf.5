@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.42 2012/12/09 18:23:22 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.43 2012/12/15 16:04:13 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: December 9 2012 $
+.Dd $Mdocdate: December 15 2012 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -116,11 +116,8 @@ Scoped IPv6 address notation is accepted as well
 (see
 .Xr inet6 4
 for details).
-A non-standard port may be specified using
-.Bo Ar host Bc : Ns Ar port
-syntax.
-When a non-standard port is specified the host
-address must be enclosed in square brackets.
+A non-standard port may also be specified,
+with the host address enclosed in square brackets.
 For example:
 .Bd -literal -offset indent
 nameserver [10.0.0.1]:5353
@@ -146,9 +143,8 @@ If no
 .Cm domain
 entry is present, the domain is determined
 from the local host name returned by
-.Xr gethostname 3 ;
-the domain part is taken to be everything after the first
-.Sq \&. .
+.Xr gethostname 3 \(en
+the domain part is taken to be everything after the first dot.
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.
 .It Cm lookup
@@ -300,8 +296,8 @@ to that of the query packet.
 For testing purposes only.
 .It Cm ndots : Ns Ar n
 Sets a threshold for the number of dots which
-must appear in a name given to res_query (see
-.Xr resolver 3 )
+must appear in a name given to
+.Xr res_query 3
 before an initial absolute query will be made.
 The default for
 .Ar n
