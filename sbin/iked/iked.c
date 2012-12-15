@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.14 2012/11/29 15:08:08 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.15 2012/12/15 23:19:35 reyk Exp $	*/
 /*	$vantronix: iked.c,v 1.22 2010/06/02 14:43:30 reyk Exp $	*/
 
 /*
@@ -119,9 +119,6 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-
-	argv += optind;
-	argc -= optind;
 
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
@@ -314,8 +311,9 @@ parent_sig_handler(int sig, short event, void *arg)
 
 			for (id = 0; id < PROC_MAX; id++)
 				if (pid == ps->ps_pid[id]) {
-					log_warnx("lost child: %s %s",
-					    ps->ps_title[id], cause);
+					if (fail)
+						log_warnx("lost child: %s %s",
+						    ps->ps_title[id], cause);
 					break;
 				}
 
