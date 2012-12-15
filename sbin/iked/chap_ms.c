@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.4 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.5 2012/12/15 23:17:01 reyk Exp $	*/
 /*	$vantronix: chap_ms.c,v 1.7 2010/06/02 12:22:58 reyk Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ void
 mschap_challenge_response(u_int8_t *challenge, u_int8_t *pwhash,
     u_int8_t *response)
 {
-	u_int8_t	 padpwhash[21];
+	u_int8_t	 padpwhash[21 + 1];
 
 	bzero(&padpwhash, sizeof(padpwhash));
 	memcpy(padpwhash, pwhash, MSCHAP_HASH_SZ);
@@ -365,14 +365,13 @@ void
 mschap_lanman(u_int8_t *digest, u_int8_t *challenge, u_int8_t *secret)
 {
 	static u_int8_t	 salt[] = "KGS!@#$%"; /* RASAPI32.dll */
-	u_int8_t	 SECRET[14], *ptr, *end;
+	u_int8_t	 SECRET[14 + 1], *ptr, *end;
 	u_int8_t	 hash[MSCHAP_HASH_SZ];
 
-	end = SECRET + sizeof(SECRET);
+	bzero(&SECRET, sizeof(SECRET));
+	end = SECRET + (sizeof(SECRET) - 1);
 	for (ptr = SECRET; *secret && ptr < end; ptr++, secret++)
 		*ptr = toupper(*secret);
-	if (ptr < end)
-		memset(ptr, '\0', end - ptr);
 
 	mschap_des_encrypt(salt, SECRET, hash);
 	mschap_des_encrypt(salt, SECRET + 7, hash + 8);
