@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.17 2012/10/22 10:25:17 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.18 2012/12/15 23:20:17 reyk Exp $	*/
 /*	$vantronix: config.c,v 1.30 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -608,7 +608,6 @@ config_setpolicy(struct iked *env, struct iked_policy *pol,
 		iovcnt += prop->prop_nxforms + 1;
 	}
 
-	size += pol->pol_nflows * sizeof(*flow);
 	iovcnt += pol->pol_nflows;
 
 	if (iovcnt > IOV_MAX) {

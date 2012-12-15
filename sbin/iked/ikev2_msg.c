@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.22 2012/10/22 10:25:17 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.23 2012/12/15 23:20:17 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	size_t			 len, ivlen, encrlen, integrlen, blocklen,
 				    outlen;
 	u_int8_t		*buf, pad = 0, *ptr;
-	struct ibuf		*integr, *encr, *dst = NULL, *out = NULL;
+	struct ibuf		*encr, *dst = NULL, *out = NULL;
 
 	buf = ibuf_data(src);
 	len = ibuf_size(src);
@@ -344,13 +344,10 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 		goto done;
 	}
 
-	if (sa->sa_hdr.sh_initiator) {
+	if (sa->sa_hdr.sh_initiator)
 		encr = sa->sa_key_iencr;
-		integr = sa->sa_key_iauth;
-	} else {
+	else
 		encr = sa->sa_key_rencr;
-		integr = sa->sa_key_rauth;
-	}
 
 	blocklen = cipher_length(sa->sa_encr);
 	ivlen = cipher_ivlength(sa->sa_encr);
@@ -373,7 +370,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	print_hex(ibuf_data(src), 0, ibuf_size(src));
 
 	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
-	cipher_setiv(sa->sa_encr, NULL, 0);	/* new IV */
+	cipher_setiv(sa->sa_encr, NULL, 0);	/* XXX ivlen */
 	cipher_init_encrypt(sa->sa_encr);
 
 	if ((dst = ibuf_dup(sa->sa_encr->encr_iv)) == NULL)
@@ -413,7 +410,7 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 {
 	int			 ret = -1;
 	size_t			 integrlen, tmplen;
-	struct ibuf		*integr, *prf, *tmp = NULL;
+	struct ibuf		*integr, *tmp = NULL;
 	u_int8_t		*ptr;
 
 	log_debug("%s: message length %d", __func__, ibuf_size(src));
@@ -425,13 +422,10 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 		return (-1);
 	}
 
-	if (sa->sa_hdr.sh_initiator) {
+	if (sa->sa_hdr.sh_initiator)
 		integr = sa->sa_key_iauth;
-		prf = sa->sa_key_iprf;
-	} else {
+	else
 		integr = sa->sa_key_rauth;
-		prf = sa->sa_key_rprf;
-	}
 
 	integrlen = hash_length(sa->sa_integr);
 
