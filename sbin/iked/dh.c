@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.8 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: dh.c,v 1.9 2012/12/15 23:18:17 reyk Exp $	*/
 /*	$vantronix: dh.c,v 1.13 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -298,6 +298,7 @@ group_free(struct group *group)
 	if (group->ec != NULL)
 		EC_KEY_free(group->ec);
 	group->spec = NULL;
+	free(group);
 }
 
 struct group *
