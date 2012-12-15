@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.21 2012/09/18 12:07:59 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.22 2012/12/15 23:12:21 reyk Exp $	*/
 /*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ sa_new(struct iked *env, u_int64_t ispi, u_int64_t rspi,
 	} else
 		localid = &sa->sa_rid;
 
-	if (!ibuf_length(localid->id_buf) &&
+	if (!ibuf_length(localid->id_buf) && pol != NULL &&
 	    ikev2_policy2id(&pol->pol_localid, localid, 1) != 0) {
 		log_debug("%s: failed to get local id", __func__);
 		sa_free(env, sa);
@@ -472,8 +472,6 @@ sa_cmp(struct iked_sa *a, struct iked_sa *b)
 	return (0);
 }
 
-RB_GENERATE(iked_sas, iked_sa, sa_entry, sa_cmp);
-
 struct iked_sa *
 sa_peer_lookup(struct iked_policy *pol, struct sockaddr_storage *peer)
 {
@@ -489,8 +487,6 @@ sa_peer_cmp(struct iked_sa *a, struct iked_sa *b)
 	return (sockaddr_cmp((struct sockaddr *)&a->sa_polpeer.addr,
 	    (struct sockaddr *)&b->sa_polpeer.addr, -1));
 }
-
-RB_GENERATE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
 
 struct iked_user *
 user_lookup(struct iked *env, const char *user)
@@ -510,8 +506,6 @@ user_cmp(struct iked_user *a, struct iked_user *b)
 	return (strcmp(a->usr_name, b->usr_name));
 }
 
-RB_GENERATE(iked_users, iked_user, usr_entry, user_cmp);
-
 static __inline int
 childsa_cmp(struct iked_childsa *a, struct iked_childsa *b)
 {
@@ -521,8 +515,6 @@ childsa_cmp(struct iked_childsa *a, struct iked_childsa *b)
 		return (-1);
 	return (0);
 }
-
-RB_GENERATE(iked_activesas, iked_childsa, csa_node, childsa_cmp);
 
 static __inline int
 addr_cmp(struct iked_addr *a, struct iked_addr *b, int useports)
@@ -556,4 +548,8 @@ flow_cmp(struct iked_flow *a, struct iked_flow *b)
 	return (diff);
 }
 
+RB_GENERATE(iked_sas, iked_sa, sa_entry, sa_cmp);
+RB_GENERATE(iked_sapeers, iked_sa, sa_peer_entry, sa_peer_cmp);
+RB_GENERATE(iked_users, iked_user, usr_entry, user_cmp);
+RB_GENERATE(iked_activesas, iked_childsa, csa_node, childsa_cmp);
 RB_GENERATE(iked_flows, iked_flow, flow_node, flow_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.28 2012/10/22 10:25:17 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.29 2012/12/15 23:12:21 reyk Exp $	*/
 /*	$vantronix: ikev2.c,v 1.101 2010/06/03 07:57:33 reyk Exp $	*/
 
 /*
@@ -838,7 +838,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 
 		log_debug("%s: spi %s", __func__, print_spi(spi, sz));
 
-		if (!ikev2_msg_frompeer(msg))
+		if (peersas == NULL || sa == NULL)
 			continue;
 
 		if ((peersas[i] = childsa_lookup(sa, spi,
@@ -864,7 +864,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	if (!ikev2_msg_frompeer(msg))
 		goto done;
 
-	if (ikev2_msg_frompeer(msg) && (sa->sa_stateflags & IKED_REQ_DELETE)) {
+	if (sa && (sa->sa_stateflags & IKED_REQ_DELETE)) {
 		/* Finish rekeying */
 		sa->sa_stateflags &= ~IKED_REQ_DELETE;
 		ret = 0;
@@ -923,7 +923,6 @@ int
 ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, off_t offset, u_int payload)
 {
-	u_int8_t			*ptr;
 	struct ikev2_tsp		 tsp;
 	struct ikev2_ts			 ts;
 	size_t				 len, i;
@@ -935,7 +934,6 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 	memcpy(&tsp, msgbuf + offset, sizeof(tsp));
 	offset += sizeof(tsp);
 
-	ptr = msgbuf + offset;
 	len = betoh16(pld->pld_length) - sizeof(*pld) - sizeof(tsp);
 
 	log_debug("%s: count %d length %d", __func__,
