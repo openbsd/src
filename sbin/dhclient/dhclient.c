@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.192 2012/12/10 10:39:01 jmc Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.193 2012/12/15 13:26:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ int		 ipv4addrs(char * buf);
 int		 res_hnok(const char *dn);
 char		*option_as_string(unsigned int code, unsigned char *data, int len);
 void		 fork_privchld(int, int);
-void		 get_ifname(char *, char *);
+void		 get_ifname(char *);
 void		 new_resolv_conf(char *, char *, char *);
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
@@ -320,7 +320,7 @@ main(int argc, char *argv[])
 	if (config == NULL)
 		error("config calloc");
 
-	get_ifname(ifi->name, argv[0]);
+	get_ifname(argv[0]);
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
 		error("asprintf");
@@ -1791,7 +1791,7 @@ fork_privchld(int fd, int fd2)
 }
 
 void
-get_ifname(char *ifname, char *arg)
+get_ifname(char *arg)
 {
 	struct ifgroupreq ifgr;
 	struct ifg_req *ifg;
