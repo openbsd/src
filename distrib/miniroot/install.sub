@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.672 2012/11/22 17:57:22 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.673 2012/12/16 20:01:26 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -816,7 +816,7 @@ ieee80211_config() {
 v4_config() {
 	local _ifs=$1 _name=$2 _hn=$3 _prompt _addr _mask
 
-	if ifconfig $_ifs | grep 'groups:.* dhcp' >/dev/null 2>&1; then
+	if ifconfig $_ifs | grep -q 'groups:.* dhcp'; then
 		_addr=dhcp
 	else
 		set -- $(v4_info $_ifs)
