@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.193 2012/12/15 13:26:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.194 2012/12/16 03:15:46 lteo Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1940,6 +1940,8 @@ apply_defaults(struct client_lease *lease)
 	int i, j;
 
 	newlease = clone_lease(lease);
+	if (newlease == NULL)
+		error("Unable to clone lease");
 
 	for (i = 0; i < 256; i++) {
 		for (j = 0; j < config->ignored_option_count; j++) {
@@ -1960,6 +1962,8 @@ apply_defaults(struct client_lease *lease)
 			newlease->options[i].len = config->defaults[i].len;
 			newlease->options[i].data = calloc(1, 
 			    config->defaults[i].len);
+			if (newlease->options[i].data == NULL)
+				goto cleanup;
 			memcpy(newlease->options[i].data,
 			    config->defaults[i].data, config->defaults[i].len);
 			break;
@@ -1971,6 +1975,8 @@ apply_defaults(struct client_lease *lease)
 			    lease->options[i].len;
 			newlease->options[i].data = calloc(1,
 			    newlease->options[i].len);
+			if (newlease->options[i].data == NULL)
+				goto cleanup;
 			memcpy(newlease->options[i].data,
 			    config->defaults[i].data, config->defaults[i].len);
 			memcpy(newlease->options[i].data + 
@@ -1985,6 +1991,8 @@ apply_defaults(struct client_lease *lease)
 			    lease->options[i].len;
 			newlease->options[i].data = calloc(1,
 			    newlease->options[i].len);
+			if (newlease->options[i].data == NULL)
+				goto cleanup;
 			memcpy(newlease->options[i].data,
 			    lease->options[i].data, lease->options[i].len);
 			memcpy(newlease->options[i].data + 
@@ -1999,6 +2007,8 @@ apply_defaults(struct client_lease *lease)
 				    config->defaults[i].len;
 				newlease->options[i].data = calloc(1, 
 				    config->defaults[i].len);
+				if (newlease->options[i].data == NULL)
+					goto cleanup;
 				memcpy(newlease->options[i].data,
 				    config->defaults[i].data,
 				    config->defaults[i].len);
@@ -2011,6 +2021,15 @@ apply_defaults(struct client_lease *lease)
 	}
 
 	return (newlease);
+
+cleanup:
+	if (newlease)
+		free_client_lease(newlease);
+
+	error("Unable to apply defaults");
+	/* NOTREACHED */
+
+	return (NULL);
 }
 
 struct client_lease *
@@ -2020,6 +2039,8 @@ clone_lease(struct client_lease *oldlease)
 	int i;
 
 	newlease = calloc(1, sizeof(struct client_lease));
+	if (newlease == NULL)
+		goto cleanup;
 
 	newlease->expiry = oldlease->expiry;
 	newlease->renewal = oldlease->renewal;
@@ -2027,19 +2048,33 @@ clone_lease(struct client_lease *oldlease)
 	newlease->is_static = oldlease->is_static;
 	newlease->is_bootp = oldlease->is_bootp;
 
-	if (oldlease->server_name)
+	if (oldlease->server_name) {
 		newlease->server_name = strdup(oldlease->server_name);
-	if (oldlease->filename)
+		if (newlease->server_name == NULL)
+			goto cleanup;
+	}
+	if (oldlease->filename) {
 		newlease->filename = strdup(oldlease->filename);
+		if (newlease->filename == NULL)
+			goto cleanup;
+	}
 
 	for (i = 0; i < 256; i++) {
 		newlease->options[i].len = oldlease->options[i].len;
 		newlease->options[i].data = calloc(1, newlease->options[i].len);
+		if (newlease->options[i].data == NULL)
+			goto cleanup;
 		memcpy(newlease->options[i].data, oldlease->options[i].data,
 		    newlease->options[i].len);
 	}
 
 	return (newlease);
+
+cleanup:
+	if (newlease)
+		free_client_lease(newlease);
+
+	return (NULL);
 }
 
 void
