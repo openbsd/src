@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.81 2012/12/17 13:46:23 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.82 2012/12/17 14:03:03 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2988,9 +2988,8 @@ ixgbe_rxeof(struct ix_queue *que)
 
 			ether_input_mbuf(ifp, sendmp);
 		}
-
-		rxr->rx_ndescs--;
 next_desc:
+		rxr->rx_ndescs--;
 		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    dsize * i, dsize,
 		    BUS_DMASYNC_PREREAD);
