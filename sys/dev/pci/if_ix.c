@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.79 2012/12/17 12:03:16 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.80 2012/12/17 12:28:06 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -145,6 +145,8 @@ void	ixgbe_setup_vlan_hw_support(struct ix_softc *);
 /* Support for pluggable optic modules */
 int	ixgbe_sfp_probe(struct ix_softc *);
 void	ixgbe_setup_optics(struct ix_softc *);
+void	ixgbe_handle_mod(struct ix_softc *);
+void	ixgbe_handle_msf(struct ix_softc *);
 
 /* Legacy (single vector interrupt handler */
 int	ixgbe_legacy_irq(void *);
@@ -931,12 +933,6 @@ ixgbe_legacy_irq(void *arg)
 		return (0);
 	}
 
-	if (ifp->if_flags & IFF_RUNNING) {
-		ixgbe_rxeof(que);
-		ixgbe_txeof(txr);
-		refill = 1;
-	}
-
 	/* Check for fan failure */
 	if ((hw->phy.media_type == ixgbe_media_type_copper) &&
 	    (reg_eicr & IXGBE_EICR_GPI_SDP1)) {
@@ -959,6 +955,32 @@ ixgbe_legacy_irq(void *arg)
 		timeout_del(&sc->timer);
 		ixgbe_update_link_status(sc);
 		timeout_add_sec(&sc->timer, 1);
+	}
+
+	if (hw->mac.type != ixgbe_mac_82598EB) {
+		if (reg_eicr & IXGBE_EICR_GPI_SDP2) {
+			/* Clear the interrupt */
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP2);
+			ixgbe_handle_mod(sc);
+		}
+#if 0
+		/*
+		 * XXX: Processing of SDP1 (multispeed fiber) interrupts is
+		 *      disabled due to the lack of testing
+		 */
+		else if ((hw->phy.media_type != ixgbe_media_type_copper) &&
+		    (reg_eicr & IXGBE_EICR_GPI_SDP1)) {
+			/* Clear the interrupt */
+			IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1);
+			ixgbe_handle_msf(sc);
+		}
+#endif
+	}
+
+	if (ifp->if_flags & IFF_RUNNING) {
+		ixgbe_rxeof(que);
+		ixgbe_txeof(txr);
+		refill = 1;
 	}
 
 	if (refill) {
@@ -3380,6 +3402,51 @@ ixgbe_sfp_probe(struct ix_softc *sc)
 	}
 out:
 	return (result);
+}
+
+/*
+ * SFP module interrupts handler
+ */
+void
+ixgbe_handle_mod(struct ix_softc *sc)
+{
+	struct ixgbe_hw *hw = &sc->hw;
+	uint32_t err;
+
+	err = hw->phy.ops.identify_sfp(hw);
+	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
+		printf("%s: Unsupported SFP+ module type was detected!\n",
+		    sc->dev.dv_xname);
+		return;
+	}
+	err = hw->mac.ops.setup_sfp(hw);
+	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
+		printf("%s: Setup failure - unsupported SFP+ module type!\n",
+		    sc->dev.dv_xname);
+		return;
+	}
+	/* Set the optics type so system reports correctly */
+	ixgbe_setup_optics(sc);
+
+	ixgbe_handle_msf(sc);
+}
+
+
+/*
+ * MSF (multispeed fiber) interrupts handler
+ */
+void
+ixgbe_handle_msf(struct ix_softc *sc)
+{
+	struct ixgbe_hw *hw = &sc->hw;
+	uint32_t autoneg;
+	int negotiate;
+
+	autoneg = hw->phy.autoneg_advertised;
+	if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
+		hw->mac.ops.get_link_capabilities(hw, &autoneg, &negotiate);
+	if (hw->mac.ops.setup_link)
+		hw->mac.ops.setup_link(hw, autoneg, negotiate, TRUE);
 }
 
 /**********************************************************************

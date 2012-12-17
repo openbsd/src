@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82599.c,v 1.8 2012/11/10 13:00:47 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82599.c,v 1.9 2012/12/17 12:28:06 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1350,6 +1350,11 @@ sfp_check:
 			physical_layer = IXGBE_PHYSICAL_LAYER_10GBASE_SR;
 		else if (comp_codes_10g & IXGBE_SFF_10GBASELR_CAPABLE)
 			physical_layer = IXGBE_PHYSICAL_LAYER_10GBASE_LR;
+		else if (comp_codes_10g &
+		    (IXGBE_SFF_DA_PASSIVE_CABLE | IXGBE_SFF_DA_BAD_HP_CABLE))
+			physical_layer = IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU;
+		else if (comp_codes_10g & IXGBE_SFF_DA_ACTIVE_CABLE)
+			physical_layer = IXGBE_PHYSICAL_LAYER_SFP_ACTIVE_DA;
 		else if (comp_codes_1g & IXGBE_SFF_1GBASET_CAPABLE)
 			physical_layer = IXGBE_PHYSICAL_LAYER_1000BASE_T;
 		break;
