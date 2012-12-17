@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.83 2012/12/17 14:23:48 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.84 2012/12/17 14:39:28 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2864,7 +2864,7 @@ ixgbe_rxeof(struct ix_queue *que)
 	struct ifnet   		*ifp = &sc->arpcom.ac_if;
 	struct mbuf    		*mp, *sendmp;
 	uint8_t		    	 eop = 0;
-	uint16_t		 plen, hdr, vtag;
+	uint16_t		 len, vtag;
 	uint32_t		 staterr, ptype;
 	struct ixgbe_rx_buf	*rxbuf, *nxbuf;
 	union ixgbe_adv_rx_desc	*rxdesc;
@@ -2898,10 +2898,9 @@ ixgbe_rxeof(struct ix_queue *que)
 		bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->map);
 
 		mp = rxbuf->buf;
-		plen = letoh16(rxdesc->wb.upper.length);
+		len = letoh16(rxdesc->wb.upper.length);
 		ptype = letoh32(rxdesc->wb.lower.lo_dword.data) &
 		    IXGBE_RXDADV_PKTTYPE_MASK;
-		hdr = letoh16(rxdesc->wb.lower.lo_dword.hs_rss.hdr_info);
 		vtag = letoh16(rxdesc->wb.upper.vlan);
 		eop = ((staterr & IXGBE_RXD_STAT_EOP) != 0);
 
@@ -2939,7 +2938,13 @@ ixgbe_rxeof(struct ix_queue *que)
 			/* prefetch(nxbuf); */
 		}
 
-		mp->m_len = plen;
+		/*
+		 * Rather than using the fmp/lmp global pointers
+		 * we now keep the head of a packet chain in the
+		 * buffer struct and pass this along from one
+		 * descriptor to the next, until we get EOP.
+		 */
+		mp->m_len = len;
 		/*
 		 * See if there is a stored head
 		 * that determines what we are
@@ -2961,14 +2966,12 @@ ixgbe_rxeof(struct ix_queue *que)
 #endif
 		}
 
+		/* Pass the head pointer on */
 		if (eop == 0) {
-			/* Pass the head pointer on */
 			nxbuf->fmp = sendmp;
 			sendmp = NULL;
 			mp->m_next = nxbuf->buf;
-		} else {
-			/* Sending this frame? */
-
+		} else { /* Sending this frame? */
 			m_cluncount(sendmp, 1);
 
 			sendmp->m_pkthdr.rcvif = ifp;
