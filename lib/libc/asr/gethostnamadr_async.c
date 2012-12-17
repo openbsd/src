@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.11 2012/11/24 18:58:49 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.12 2012/12/17 21:13:16 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -27,6 +27,7 @@
 #include "ypinternal.h"
 #endif
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -54,6 +55,7 @@ static struct hostent_ext *hostent_alloc(int);
 static int hostent_set_cname(struct hostent_ext *, const char *, int);
 static int hostent_add_alias(struct hostent_ext *, const char *, int);
 static int hostent_add_addr(struct hostent_ext *, const void *, size_t);
+static struct hostent_ext *hostent_from_addr(int, const char *, const char *);
 static struct hostent_ext *hostent_file_match(FILE *, int, int, const char *,
     int);
 static struct hostent_ext *hostent_from_packet(int, int, char *, size_t);
@@ -146,7 +148,7 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 	struct hostent_ext	*h;
 	int			 r, type, saved_errno;
 	FILE			*f;
-	char			 dname[MAXDNAME], *data;
+	char			 dname[MAXDNAME], *data, addr[16], *c;
 
     next:
 	switch (as->as_state) {
@@ -171,8 +173,29 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 			break;
 		}
 
-		if (as->as_type == ASR_GETHOSTBYNAME)
-			async_set_state(as, ASR_STATE_NEXT_DOMAIN);
+		/* Name might be an IP address string */
+		if (as->as_type == ASR_GETHOSTBYNAME) {
+			for (c = as->as.hostnamadr.name; *c; c++)
+				if (!isdigit(*c) && *c != '.' && *c != ':')
+					break;
+			if (*c == 0 &&
+			    inet_pton(as->as.hostnamadr.family,
+			    as->as.hostnamadr.name, addr) == 1) {
+				h = hostent_from_addr(as->as.hostnamadr.family,
+				    as->as.hostnamadr.name, addr);
+				if (h == NULL) {
+					ar->ar_errno = errno;
+					ar->ar_h_errno = NETDB_INTERNAL;
+				}
+				else {
+					ar->ar_hostent = &h->h;
+					ar->ar_h_errno = NETDB_SUCCESS;
+				}
+				async_set_state(as, ASR_STATE_HALT);
+			}
+			else
+				async_set_state(as, ASR_STATE_NEXT_DOMAIN);
+		}
 		else
 			async_set_state(as, ASR_STATE_NEXT_DB);
 		break;
@@ -379,6 +402,26 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 		break;
 	}
 	goto next;
+}
+
+/*
+ * Create a hostent from a numeric address string.
+ */
+static struct hostent_ext *
+hostent_from_addr(int family, const char *name, const char *addr)
+{
+	struct	 hostent_ext *h;
+
+	if ((h = hostent_alloc(family)) == NULL)
+		return (NULL);
+	if (hostent_set_cname(h, name, 0) == -1)
+		goto fail;
+	if (hostent_add_addr(h, addr, h->h.h_length) == -1)
+		goto fail;
+	return (h);
+fail:
+	free(h);
+	return (NULL);
 }
 
 /*
