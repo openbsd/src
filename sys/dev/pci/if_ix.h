@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.22 2012/12/17 13:46:23 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.23 2012/12/17 14:23:48 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -133,9 +133,9 @@ struct ixgbe_tx_buf {
 };
 
 struct ixgbe_rx_buf {
-	struct mbuf	*m_pack;
+	struct mbuf	*buf;
 	struct mbuf	*fmp;
-	bus_dmamap_t	pmap;
+	bus_dmamap_t	map;
 };
 
 /*
@@ -215,7 +215,6 @@ struct rx_ring {
 
 	/* Soft stats */
 	uint64_t		rx_irq;
-	uint64_t		rx_split_packets;
 	uint64_t		rx_packets;
 	uint64_t		rx_bytes;
 	uint64_t		rx_discarded;

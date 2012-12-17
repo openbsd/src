@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.82 2012/12/17 14:03:03 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.83 2012/12/17 14:23:48 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -652,7 +652,7 @@ ixgbe_init(void *arg)
 	ixgbe_hw0(&sc->hw, init_hw);
 	ixgbe_initialize_transmit_units(sc);
 
-	/* Determine the correct buffer size for jumbo/headersplit */
+	/* Determine the correct buffer size for jumbo */
 	if (sc->max_frame_size <= 2048)
 		sc->rx_mbuf_sz = MCLBYTES;
 	else if (sc->max_frame_size <= 4096)
@@ -2505,7 +2505,7 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 
 	rxbuf = &rxr->rx_buffers[i];
 	rxdesc = &rxr->rx_base[i];
-	if (rxbuf->m_pack) {
+	if (rxbuf->buf) {
 		printf("%s: ixgbe_get_buf: slot %d already has an mbuf\n",
 		    sc->dev.dv_xname, i);
 		return (ENOBUFS);
@@ -2521,21 +2521,21 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 	if (sc->max_frame_size <= (sc->rx_mbuf_sz - ETHER_ALIGN))
 		m_adj(mp, ETHER_ALIGN);
 
-	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->pmap,
+	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->map,
 	    mp, BUS_DMA_NOWAIT);
 	if (error) {
 		m_freem(mp);
 		return (error);
 	}
 
-	bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->pmap,
-	    0, rxbuf->pmap->dm_mapsize, BUS_DMASYNC_PREREAD);
-	rxbuf->m_pack = mp;
+	bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->map,
+	    0, rxbuf->map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	rxbuf->buf = mp;
 
 	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 	    dsize * i, dsize, BUS_DMASYNC_POSTWRITE);
 
-	rxdesc->read.pkt_addr = htole64(rxbuf->pmap->dm_segs[0].ds_addr);
+	rxdesc->read.pkt_addr = htole64(rxbuf->map->dm_segs[0].ds_addr);
 
 	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 	    dsize * i, dsize, BUS_DMASYNC_PREWRITE);
@@ -2573,7 +2573,7 @@ ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 	rxbuf = rxr->rx_buffers;
 	for (i = 0; i < sc->num_rx_desc; i++, rxbuf++) {
 		error = bus_dmamap_create(rxr->rxdma.dma_tag, 16 * 1024, 1,
-		    16 * 1024, 0, BUS_DMA_NOWAIT, &rxbuf->pmap);
+		    16 * 1024, 0, BUS_DMA_NOWAIT, &rxbuf->map);
 		if (error) {
 			printf("%s: Unable to create Pack DMA map\n",
 			    ifp->if_xname);
@@ -2832,17 +2832,17 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 	if (rxr->rx_buffers != NULL) {
 		for (i = 0; i < sc->num_rx_desc; i++) {
 			rxbuf = &rxr->rx_buffers[i];
-			if (rxbuf->m_pack != NULL) {
-				bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->pmap,
-				    0, rxbuf->pmap->dm_mapsize,
+			if (rxbuf->buf != NULL) {
+				bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->map,
+				    0, rxbuf->map->dm_mapsize,
 				    BUS_DMASYNC_POSTREAD);
 				bus_dmamap_unload(rxr->rxdma.dma_tag,
-				    rxbuf->pmap);
-				m_freem(rxbuf->m_pack);
-				rxbuf->m_pack = NULL;
+				    rxbuf->map);
+				m_freem(rxbuf->buf);
+				rxbuf->buf = NULL;
 			}
-			bus_dmamap_destroy(rxr->rxdma.dma_tag, rxbuf->pmap);
-			rxbuf->pmap = NULL;
+			bus_dmamap_destroy(rxr->rxdma.dma_tag, rxbuf->map);
+			rxbuf->map = NULL;
 		}
 		free(rxr->rx_buffers, M_DEVBUF);
 		rxr->rx_buffers = NULL;
@@ -2893,11 +2893,11 @@ ixgbe_rxeof(struct ix_queue *que)
 		rxbuf = &rxr->rx_buffers[i];
 
 		/* pull the mbuf off the ring */
-		bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->pmap, 0,
-		    rxbuf->pmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->pmap);
+		bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->map, 0,
+		    rxbuf->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->map);
 
-		mp = rxbuf->m_pack;
+		mp = rxbuf->buf;
 		plen = letoh16(rxdesc->wb.upper.length);
 		ptype = letoh32(rxdesc->wb.lower.lo_dword.data) &
 		    IXGBE_RXDADV_PKTTYPE_MASK;
@@ -2915,7 +2915,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			}
 
 			m_freem(mp);
-			rxbuf->m_pack = NULL;
+			rxbuf->buf = NULL;
 			goto next_desc;
 		}
 
@@ -2945,7 +2945,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		 * that determines what we are
 		 */
 		sendmp = rxbuf->fmp;
-		rxbuf->m_pack = rxbuf->fmp = NULL;
+		rxbuf->buf = rxbuf->fmp = NULL;
 
 		if (sendmp != NULL) /* secondary frag */
 			sendmp->m_pkthdr.len += mp->m_len;
@@ -2965,7 +2965,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			/* Pass the head pointer on */
 			nxbuf->fmp = sendmp;
 			sendmp = NULL;
-			mp->m_next = nxbuf->m_pack;
+			mp->m_next = nxbuf->buf;
 		} else {
 			/* Sending this frame? */
 
