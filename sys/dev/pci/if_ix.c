@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.80 2012/12/17 12:28:06 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.81 2012/12/17 13:46:23 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2498,14 +2498,14 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 {
 	struct ix_softc		*sc = rxr->sc;
 	struct ixgbe_rx_buf	*rxbuf;
-	struct mbuf		*mp, *mh = NULL;
+	struct mbuf		*mp;
 	int			error;
 	union ixgbe_adv_rx_desc	*rxdesc;
 	size_t			 dsize = sizeof(union ixgbe_adv_rx_desc);
 
 	rxbuf = &rxr->rx_buffers[i];
 	rxdesc = &rxr->rx_base[i];
-	if (rxbuf->m_head != NULL || rxbuf->m_pack) {
+	if (rxbuf->m_pack) {
 		printf("%s: ixgbe_get_buf: slot %d already has an mbuf\n",
 		    sc->dev.dv_xname, i);
 		return (ENOBUFS);
@@ -2516,48 +2516,14 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 	if (!mp)
 		return (ENOBUFS);
 
-	if (rxr->hdr_split == FALSE)
-		goto no_split;
-
-	mh = m_gethdr(M_DONTWAIT, MT_DATA);
-	if (mh == NULL) {
-		m_freem(mp);
-		return (ENOBUFS);
-	}
-
-	mh->m_pkthdr.len = mh->m_len = MHLEN;
-	mh->m_len = MHLEN;
-	/* always offset header buffers */
-	m_adj(mh, ETHER_ALIGN);
-
-	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->hmap,
-	    mh, BUS_DMA_NOWAIT);
-	if (error) {
-		m_freem(mp);
-		m_freem(mh);
-		return (error);
-	}
-	bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->hmap,
-	    0, rxbuf->hmap->dm_mapsize, BUS_DMASYNC_PREREAD);
-	rxbuf->m_head = mh;
-
-	rxdesc->read.hdr_addr = htole64(rxbuf->hmap->dm_segs[0].ds_addr);
-
-no_split:
 	mp->m_len = mp->m_pkthdr.len = sc->rx_mbuf_sz;
 	/* only adjust if this is not a split header */
-	if (rxr->hdr_split == FALSE &&
-	    sc->max_frame_size <= (sc->rx_mbuf_sz - ETHER_ALIGN))
+	if (sc->max_frame_size <= (sc->rx_mbuf_sz - ETHER_ALIGN))
 		m_adj(mp, ETHER_ALIGN);
 
 	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->pmap,
 	    mp, BUS_DMA_NOWAIT);
 	if (error) {
-		if (mh) {
-			bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->hmap);
-			rxbuf->m_head = NULL;
-			m_freem(mh);
-		}
 		m_freem(mp);
 		return (error);
 	}
@@ -2606,13 +2572,6 @@ ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 
 	rxbuf = rxr->rx_buffers;
 	for (i = 0; i < sc->num_rx_desc; i++, rxbuf++) {
-		error = bus_dmamap_create(rxr->rxdma.dma_tag, MSIZE, 1,
-		    MSIZE, 0, BUS_DMA_NOWAIT, &rxbuf->hmap);
-		if (error) {
-			printf("%s: Unable to create Head DMA map\n",
-			    ifp->if_xname);
-			goto fail;
-		}
 		error = bus_dmamap_create(rxr->rxdma.dma_tag, 16 * 1024, 1,
 		    16 * 1024, 0, BUS_DMA_NOWAIT, &rxbuf->pmap);
 		if (error) {
@@ -2780,15 +2739,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		    sc->num_rx_desc * sizeof(union ixgbe_adv_rx_desc));
 
 		/* Set up the SRRCTL register */
-		srrctl = bufsz;
-		if (rxr->hdr_split) {
-			/* Use a standard mbuf for the header */
-			srrctl |= ((IXGBE_RX_HDR <<
-			    IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT)
-			    & IXGBE_SRRCTL_BSIZEHDR_MASK);
-			srrctl |= IXGBE_SRRCTL_DESCTYPE_HDR_SPLIT_ALWAYS;
-		} else
-			srrctl |= IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
+		srrctl = bufsz | IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_SRRCTL(i), srrctl);
 
 		/* Setup the HW Rx Head and Tail Descriptor Pointers */
@@ -2881,15 +2832,6 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 	if (rxr->rx_buffers != NULL) {
 		for (i = 0; i < sc->num_rx_desc; i++) {
 			rxbuf = &rxr->rx_buffers[i];
-			if (rxbuf->m_head != NULL) {
-				bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->hmap,
-				    0, rxbuf->hmap->dm_mapsize,
-				    BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(rxr->rxdma.dma_tag,
-				    rxbuf->hmap);
-				m_freem(rxbuf->m_head);
-				rxbuf->m_head = NULL;
-			}
 			if (rxbuf->m_pack != NULL) {
 				bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->pmap,
 				    0, rxbuf->pmap->dm_mapsize,
@@ -2899,9 +2841,7 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 				m_freem(rxbuf->m_pack);
 				rxbuf->m_pack = NULL;
 			}
-			bus_dmamap_destroy(rxr->rxdma.dma_tag, rxbuf->hmap);
 			bus_dmamap_destroy(rxr->rxdma.dma_tag, rxbuf->pmap);
-			rxbuf->hmap = NULL;
 			rxbuf->pmap = NULL;
 		}
 		free(rxr->rx_buffers, M_DEVBUF);
@@ -2922,9 +2862,9 @@ ixgbe_rxeof(struct ix_queue *que)
 	struct ix_softc 	*sc = que->sc;
 	struct rx_ring		*rxr = que->rxr;
 	struct ifnet   		*ifp = &sc->arpcom.ac_if;
-	struct mbuf    		*mh, *mp, *sendmp;
+	struct mbuf    		*mp, *sendmp;
 	uint8_t		    	 eop = 0;
-	uint16_t		 hlen, plen, hdr, vtag;
+	uint16_t		 plen, hdr, vtag;
 	uint32_t		 staterr, ptype;
 	struct ixgbe_rx_buf	*rxbuf, *nxbuf;
 	union ixgbe_adv_rx_desc	*rxdesc;
@@ -2953,14 +2893,10 @@ ixgbe_rxeof(struct ix_queue *que)
 		rxbuf = &rxr->rx_buffers[i];
 
 		/* pull the mbuf off the ring */
-		bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->hmap, 0,
-		    rxbuf->hmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->hmap);
 		bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->pmap, 0,
 		    rxbuf->pmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->pmap);
 
-		mh = rxbuf->m_head;
 		mp = rxbuf->m_pack;
 		plen = letoh16(rxdesc->wb.upper.length);
 		ptype = letoh32(rxdesc->wb.lower.lo_dword.data) &
@@ -2978,9 +2914,7 @@ ixgbe_rxeof(struct ix_queue *que)
 				rxbuf->fmp = NULL;
 			}
 
-			m_freem(mh);
 			m_freem(mp);
-			rxbuf->m_head = NULL;
 			rxbuf->m_pack = NULL;
 			goto next_desc;
 		}
@@ -3004,97 +2938,37 @@ ixgbe_rxeof(struct ix_queue *que)
 			nxbuf = &rxr->rx_buffers[nextp];
 			/* prefetch(nxbuf); */
 		}
-		/*
-		 * The header mbuf is ONLY used when header
-		 * split is enabled, otherwise we get normal
-		 * behavior, ie, both header and payload
-		 * are DMA'd into the payload buffer.
-		 *
-		 * Rather than using the fmp/lmp global pointers
-		 * we now keep the head of a packet chain in the
-		 * buffer struct and pass this along from one
-		 * descriptor to the next, until we get EOP.
-		 */
-		if (rxr->hdr_split && (rxbuf->fmp == NULL)) {
-			/* This must be an initial descriptor */
-			hlen = (hdr & IXGBE_RXDADV_HDRBUFLEN_MASK) >>
-			    IXGBE_RXDADV_HDRBUFLEN_SHIFT;
-			if (hlen > IXGBE_RX_HDR)
-				hlen = IXGBE_RX_HDR;
-			mh->m_len = hlen;
-			mh->m_pkthdr.len = mh->m_len;
-			rxbuf->m_head = NULL;
-			/*
-			 * Check the payload length, this could be zero if
-			 * its a small packet.
-			 */
-			if (plen > 0) {
-				mp->m_len = plen;
-				mp->m_flags &= ~M_PKTHDR;
-				mh->m_next = mp;
-				mh->m_pkthdr.len += mp->m_len;
-				rxbuf->m_pack = NULL;
-				rxr->rx_split_packets++;
-			} else {
-				m_freem(mp);
-				rxbuf->m_pack = NULL;
-			}
-			/* Now create the forward chain. */
-			if (eop == 0) {
-				/* stash the chain head */
-				nxbuf->fmp = mh;
-				/* Make forward chain */
-				if (plen)
-					mp->m_next = nxbuf->m_pack;
-				else
-					mh->m_next = nxbuf->m_pack;
-			} else {
-				/* Singlet, prepare to send */
-				sendmp = mh;
-#if NVLAN > 0
-				if (staterr & IXGBE_RXD_STAT_VP) {
-					sendmp->m_pkthdr.ether_vtag = vtag;
-					sendmp->m_flags |= M_VLANTAG;
-				}
-#endif
-			}
-		} else {
-			/*
-			 * Either no header split, or a
-			 * secondary piece of a fragmented
-			 * split packet.
-			 */
-			mp->m_len = plen;
-			/*
-			 * See if there is a stored head
-			 * that determines what we are
-			 */
-			sendmp = rxbuf->fmp;
-			rxbuf->m_pack = rxbuf->fmp = NULL;
 
-			if (sendmp != NULL) /* secondary frag */
-				sendmp->m_pkthdr.len += mp->m_len;
-			else {
-				 /* first desc of a non-ps chain */
-				 sendmp = mp;
-				 sendmp->m_pkthdr.len = mp->m_len;
+		mp->m_len = plen;
+		/*
+		 * See if there is a stored head
+		 * that determines what we are
+		 */
+		sendmp = rxbuf->fmp;
+		rxbuf->m_pack = rxbuf->fmp = NULL;
+
+		if (sendmp != NULL) /* secondary frag */
+			sendmp->m_pkthdr.len += mp->m_len;
+		else {
+			/* first desc of a non-ps chain */
+			sendmp = mp;
+			sendmp->m_pkthdr.len = mp->m_len;
 #if NVLAN > 0
-				if (staterr & IXGBE_RXD_STAT_VP) {
-					sendmp->m_pkthdr.ether_vtag = vtag;
-					sendmp->m_flags |= M_VLANTAG;
-				}
+			if (staterr & IXGBE_RXD_STAT_VP) {
+				sendmp->m_pkthdr.ether_vtag = vtag;
+				sendmp->m_flags |= M_VLANTAG;
+			}
 #endif
-			}
-			/* Pass the head pointer on */
-			if (eop == 0) {
-				nxbuf->fmp = sendmp;
-				sendmp = NULL;
-				mp->m_next = nxbuf->m_pack;
-			}
 		}
-		rxr->rx_ndescs--;
-		/* Sending this frame? */
-		if (eop) {
+
+		if (eop == 0) {
+			/* Pass the head pointer on */
+			nxbuf->fmp = sendmp;
+			sendmp = NULL;
+			mp->m_next = nxbuf->m_pack;
+		} else {
+			/* Sending this frame? */
+
 			m_cluncount(sendmp, 1);
 
 			sendmp->m_pkthdr.rcvif = ifp;
@@ -3114,6 +2988,8 @@ ixgbe_rxeof(struct ix_queue *que)
 
 			ether_input_mbuf(ifp, sendmp);
 		}
+
+		rxr->rx_ndescs--;
 next_desc:
 		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    dsize * i, dsize,
@@ -3159,7 +3035,6 @@ ixgbe_rx_checksum(uint32_t staterr, struct mbuf * mp, uint32_t ptype)
 			mp->m_pkthdr.csum_flags |=
 				M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 	}
-
 }
 
 void

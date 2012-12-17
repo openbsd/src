@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.21 2012/12/17 12:03:16 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.22 2012/12/17 13:46:23 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -133,10 +133,8 @@ struct ixgbe_tx_buf {
 };
 
 struct ixgbe_rx_buf {
-	struct mbuf	*m_head;
 	struct mbuf	*m_pack;
 	struct mbuf	*fmp;
-	bus_dmamap_t	hmap;
 	bus_dmamap_t	pmap;
 };
 
@@ -204,7 +202,6 @@ struct rx_ring {
 	struct lro_ctrl		lro;
 #endif
 	int			lro_enabled;
-	int			hdr_split;
 	int			hw_rsc;
 	int			discard;
 	unsigned int		next_to_refresh;
