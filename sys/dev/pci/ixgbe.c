@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.10 2012/12/05 14:41:28 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.11 2012/12/17 12:03:16 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -2899,12 +2899,6 @@ int32_t ixgbe_check_mac_link_generic(struct ixgbe_hw *hw, ixgbe_link_speed *spee
 		*speed = IXGBE_LINK_SPEED_100_FULL;
 	else
 		*speed = IXGBE_LINK_SPEED_UNKNOWN;
-
-	/* if link is down, zero out the current_mode */
-	if (*link_up == FALSE) {
-		hw->fc.current_mode = ixgbe_fc_none;
-		hw->fc.fc_was_autonegged = FALSE;
-	}
 
 	return IXGBE_SUCCESS;
 }

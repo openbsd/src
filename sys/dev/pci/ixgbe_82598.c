@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.9 2012/12/07 13:03:31 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.10 2012/12/17 12:03:16 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -706,11 +706,6 @@ int32_t ixgbe_check_mac_link_82598(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 	    (ixgbe_validate_link_ready(hw) != IXGBE_SUCCESS))
 		*link_up = FALSE;
 
-	/* if link is down, zero out the current_mode */
-	if (*link_up == FALSE) {
-		hw->fc.current_mode = ixgbe_fc_none;
-		hw->fc.fc_was_autonegged = FALSE;
-	}
 out:
 	return IXGBE_SUCCESS;
 }
@@ -1206,8 +1201,14 @@ uint32_t ixgbe_get_supported_physical_layer_82598(struct ixgbe_hw *hw)
 			physical_layer = IXGBE_PHYSICAL_LAYER_10GBASE_CX4;
 		else if (pma_pmd_10g == IXGBE_AUTOC_10G_KX4)
 			physical_layer = IXGBE_PHYSICAL_LAYER_10GBASE_KX4;
-		else /* XAUI */
-			physical_layer = IXGBE_PHYSICAL_LAYER_UNKNOWN;
+		else { /* XAUI */
+			if (autoc & IXGBE_AUTOC_KX_SUPP)
+				physical_layer |=
+				    IXGBE_PHYSICAL_LAYER_1000BASE_KX;
+			if (autoc & IXGBE_AUTOC_KX4_SUPP)
+				physical_layer |=
+				    IXGBE_PHYSICAL_LAYER_10GBASE_KX4;
+		}
 		break;
 	case IXGBE_AUTOC_LMS_KX4_AN:
 	case IXGBE_AUTOC_LMS_KX4_AN_1G_AN:

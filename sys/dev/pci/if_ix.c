@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.78 2012/12/05 12:21:12 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.79 2012/12/17 12:03:16 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -305,6 +305,9 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 		goto err_late;
 	}
 
+	/* Detect and set physical type */
+	ixgbe_setup_optics(sc);
+
 	bcopy(sc->hw.mac.addr, sc->arpcom.ac_enaddr,
 	    IXGBE_ETH_LENGTH_OF_ADDRESS);
 
@@ -401,7 +404,7 @@ ixgbe_start(struct ifnet * ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-	if (!sc->link_active)
+	if (!sc->link_up)
 		return;
 
 #if 0
@@ -1265,23 +1268,17 @@ out:
 void
 ixgbe_update_link_status(struct ix_softc *sc)
 {
-	int link_up = FALSE;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	struct tx_ring *txr = sc->tx_rings;
-	int		link_state;
-	int		i;
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
+	int		link_state = LINK_STATE_DOWN;
 
-	ixgbe_hw(&sc->hw, check_link, &sc->link_speed, &link_up, 0);
+	ixgbe_hw(&sc->hw, check_link, &sc->link_speed, &sc->link_up, 0);
 
-	link_state = link_up ? LINK_STATE_FULL_DUPLEX : LINK_STATE_DOWN;
-
-	if (ifp->if_link_state != link_state) {
-		sc->link_active = link_up;
-		ifp->if_link_state = link_state;
-		if_link_state_change(ifp);
-	}
-
-	if (LINK_STATE_IS_UP(ifp->if_link_state)) {
+	if (sc->link_up)
+		link_state = LINK_STATE_FULL_DUPLEX;
+	if (ifp->if_link_state == link_state)
+		return;
+	ifp->if_baudrate = 0;
+	if (link_state != LINK_STATE_DOWN) {
 		switch (sc->link_speed) {
 		case IXGBE_LINK_SPEED_UNKNOWN:
 			ifp->if_baudrate = 0;
@@ -1296,12 +1293,9 @@ ixgbe_update_link_status(struct ix_softc *sc)
 			ifp->if_baudrate = IF_Gbps(10);
 			break;
 		}
-	} else {
-		ifp->if_baudrate = 0;
-		ifp->if_timer = 0;
-		for (i = 0; i < sc->num_queues; i++)
-			txr[i].watchdog_timer = FALSE;
 	}
+	ifp->if_link_state = link_state;
+	if_link_state_change(ifp);
 }
 
 
@@ -1374,66 +1368,54 @@ ixgbe_identify_hardware(struct ix_softc *sc)
 	case PCI_PRODUCT_INTEL_82598_SR_DUAL_EM:
 	case PCI_PRODUCT_INTEL_82598EB_SFP:
 		sc->hw.mac.type = ixgbe_mac_82598EB;
-		sc->optics = IFM_10G_SR;
 		break;
 	case PCI_PRODUCT_INTEL_82598EB_CX4_DUAL:
 	case PCI_PRODUCT_INTEL_82598EB_CX4:
 		sc->hw.mac.type = ixgbe_mac_82598EB;
-		sc->optics = IFM_10G_CX4;
 		break;
 	case PCI_PRODUCT_INTEL_82598EB_XF_LR:
 		sc->hw.mac.type = ixgbe_mac_82598EB;
-		sc->optics = IFM_10G_LR;
 		break;
 	case PCI_PRODUCT_INTEL_82598AT:
 	case PCI_PRODUCT_INTEL_82598AT2:
 	case PCI_PRODUCT_INTEL_82598AT_DUAL:
 		sc->hw.mac.type = ixgbe_mac_82598EB;
-		sc->optics = IFM_10G_T;
 		break;
 	case PCI_PRODUCT_INTEL_82598_BX:
 		sc->hw.mac.type = ixgbe_mac_82598EB;
-		sc->optics = IFM_AUTO;
 		break;
 	case PCI_PRODUCT_INTEL_82599_SFP:
 	case PCI_PRODUCT_INTEL_82599_SFP_EM:
 	case PCI_PRODUCT_INTEL_82599_SFP_FCOE:
 	case PCI_PRODUCT_INTEL_82599_SFP_SF2:
 		sc->hw.mac.type = ixgbe_mac_82599EB;
-		sc->optics = IFM_10G_SR;
 		sc->hw.phy.smart_speed = ixgbe_smart_speed;
 		break;
 	case PCI_PRODUCT_INTEL_82599_KX4:
 	case PCI_PRODUCT_INTEL_82599_KX4_MEZZ:
 	case PCI_PRODUCT_INTEL_82599_CX4:
 		sc->hw.mac.type = ixgbe_mac_82599EB;
-		sc->optics = IFM_10G_CX4;
 		sc->hw.phy.smart_speed = ixgbe_smart_speed;
 		break;
 	case PCI_PRODUCT_INTEL_82599_T3_LOM:
 		sc->hw.mac.type = ixgbe_mac_82599EB;
-		sc->optics = IFM_10G_T;
 		sc->hw.phy.smart_speed = ixgbe_smart_speed;
 		break;
 	case PCI_PRODUCT_INTEL_82599_XAUI:
 	case PCI_PRODUCT_INTEL_82599_COMBO_BACKPLANE:
 	case PCI_PRODUCT_INTEL_82599_BPLANE_FCOE:
 		sc->hw.mac.type = ixgbe_mac_82599EB;
-		sc->optics = IFM_AUTO;
 		sc->hw.phy.smart_speed = ixgbe_smart_speed;
 		break;
 	case PCI_PRODUCT_INTEL_82599VF:
 		sc->hw.mac.type = ixgbe_mac_82599_vf;
-		sc->optics = IFM_AUTO;
 		sc->hw.phy.smart_speed = ixgbe_smart_speed;
 		break;
 	case PCI_PRODUCT_INTEL_X540T:
 		sc->hw.mac.type = ixgbe_mac_X540;
-		sc->optics = IFM_10G_T;
 		sc->hw.phy.smart_speed = ixgbe_smart_speed;
 		break;
 	default:
-		sc->optics = IFM_AUTO;
 		break;
 	}
 }
@@ -1450,35 +1432,23 @@ ixgbe_setup_optics(struct ix_softc *sc)
 	int		layer;
 
 	layer = ixgbe_hw(hw, get_supported_physical_layer);
-	switch (layer) {
-		case IXGBE_PHYSICAL_LAYER_10GBASE_T:
-			sc->optics = IFM_10G_T;
-			break;
-		case IXGBE_PHYSICAL_LAYER_1000BASE_T:
-			sc->optics = IFM_1000_T;
-			break;
-		case IXGBE_PHYSICAL_LAYER_10GBASE_LR:
-		case IXGBE_PHYSICAL_LAYER_10GBASE_LRM:
-			sc->optics = IFM_10G_LR;
-			break;
-		case IXGBE_PHYSICAL_LAYER_10GBASE_SR:
-			sc->optics = IFM_10G_SR;
-			break;
-		case IXGBE_PHYSICAL_LAYER_10GBASE_KX4:
-		case IXGBE_PHYSICAL_LAYER_10GBASE_CX4:
-			sc->optics = IFM_10G_CX4;
-			break;
-		case IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU:
-			sc->optics = IFM_10G_SFP_CU;
-			break;
-		case IXGBE_PHYSICAL_LAYER_1000BASE_KX:
-		case IXGBE_PHYSICAL_LAYER_10GBASE_KR:
-		case IXGBE_PHYSICAL_LAYER_10GBASE_XAUI:
-		case IXGBE_PHYSICAL_LAYER_UNKNOWN:
-		default:
-			sc->optics = IFM_ETHER | IFM_AUTO;
-			break;
-	}
+
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_T)
+		sc->optics = IFM_10G_T;
+	else if (layer & IXGBE_PHYSICAL_LAYER_1000BASE_T)
+		sc->optics = IFM_1000_T;
+	else if (layer & (IXGBE_PHYSICAL_LAYER_10GBASE_LR |
+			  IXGBE_PHYSICAL_LAYER_10GBASE_LRM))
+		sc->optics = IFM_10G_LR;
+	else if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_SR)
+		sc->optics = IFM_10G_SR;
+	else if (layer & IXGBE_PHYSICAL_LAYER_SFP_PLUS_CU)
+		sc->optics = IFM_10G_SFP_CU;
+	else if (layer & (IXGBE_PHYSICAL_LAYER_10GBASE_KX4 |
+			  IXGBE_PHYSICAL_LAYER_10GBASE_CX4))
+		sc->optics = IFM_10G_CX4;
+	else
+		sc->optics = IFM_ETHER | IFM_AUTO;
 }
 
 /*********************************************************************
@@ -1680,6 +1650,10 @@ ixgbe_config_link(struct ix_softc *sc)
 			    &sc->link_up, FALSE);
 		if (err)
 			return;
+		/* XXX: must be changeable in ixgbe_media_change */
+		autoneg = IXGBE_LINK_SPEED_100_FULL |
+			  IXGBE_LINK_SPEED_1GB_FULL |
+			  IXGBE_LINK_SPEED_10GB_FULL;
 		if ((!autoneg) && (sc->hw.mac.ops.get_link_capabilities))
 			err = sc->hw.mac.ops.get_link_capabilities(&sc->hw,
 			    &autoneg, &negotiate);

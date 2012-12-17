@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.20 2012/11/29 13:23:00 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.21 2012/12/17 12:03:16 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -261,7 +261,6 @@ struct ix_softc {
 	/* Info about the interface */
 	uint			optics;
 	int			advertise;  /* link speeds */
-	int			link_active;
 	uint16_t		max_frame_size;
 	uint16_t		num_segs;
 	uint32_t		link_speed;
