@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.194 2012/12/16 03:15:46 lteo Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.195 2012/12/17 22:52:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -214,6 +214,12 @@ routehandler(void)
 		if (rtm->rtm_type == RTM_NEWADDR) {
 			if (a.s_addr == adding.s_addr) {
 				adding.s_addr = INADDR_ANY;
+				note("bound to %s -- renewal in %lld seconds.",
+				    inet_ntoa(client->active->address),
+				    (long long)(client->active->renewal -
+				    time(NULL)));
+				client->state = S_BOUND;
+				go_daemon();
 				break;
 			}
 			errmsg = "interface address added";
@@ -484,6 +490,8 @@ state_reboot(void)
 	/* Cancel all timeouts, since a link state change gets us here
 	   and can happen anytime. */
 	cancel_timeout();
+	deleting.s_addr = INADDR_ANY;
+	adding.s_addr = INADDR_ANY;
 
 	/* If we don't remember an active lease, go straight to INIT. */
 	if (!client->active || client->active->is_bootp) {
@@ -687,14 +695,7 @@ bind_lease(void)
 	memset(&mask, 0, sizeof(mask));
 	memcpy(&mask.s_addr, options[DHO_SUBNET_MASK].data,
 	    options[DHO_SUBNET_MASK].len);
-	add_address(ifi->name, ifi->rdomain, client->new->address, mask);
-	if (options[DHO_ROUTERS].len) {
-		memset(&gateway, 0, sizeof(gateway));
-		/* XXX Only use FIRST router address for now. */
-		memcpy(&gateway.s_addr, options[DHO_ROUTERS].data,
-		    options[DHO_ROUTERS].len);
-		add_default_route(ifi->rdomain, client->new->address, gateway);
-	}
+
 	if (options[DHO_DOMAIN_NAME].len)
 		domainname = strdup(pretty_print_option(
 		    DHO_DOMAIN_NAME, &options[DHO_DOMAIN_NAME], 0));
@@ -708,6 +709,19 @@ bind_lease(void)
 		nameservers = strdup("");
 
 	new_resolv_conf(ifi->name, domainname, nameservers);
+
+        /*
+	 * Add address and default route last, so we know when the binding
+	 * is done by the RTM_NEWADDR message being received.
+	 */
+	add_address(ifi->name, ifi->rdomain, client->new->address, mask);
+	if (options[DHO_ROUTERS].len) {
+		memset(&gateway, 0, sizeof(gateway));
+		/* XXX Only use FIRST router address for now. */
+		memcpy(&gateway.s_addr, options[DHO_ROUTERS].data,
+		    options[DHO_ROUTERS].len);
+		add_default_route(ifi->rdomain, client->new->address, gateway);
+	}
 
 	free(domainname);
 	free(nameservers);
@@ -724,12 +738,6 @@ bind_lease(void)
 
 	/* Set timeout to start the renewal process. */
 	set_timeout(client->active->renewal, state_bound);
-
-	note("bound to %s -- renewal in %lld seconds.",
-	    inet_ntoa(client->active->address),
-	    (long long)(client->active->renewal - time(NULL)));
-	client->state = S_BOUND;
-	go_daemon();
 }
 
 /*
