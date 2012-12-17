@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.17 2012/12/17 18:38:27 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.18 2012/12/17 18:44:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -113,6 +113,7 @@
 #define IXGBE_I2C_CLK_OUT       0x00000002
 #define IXGBE_I2C_DATA_IN       0x00000004
 #define IXGBE_I2C_DATA_OUT      0x00000008
+#define IXGBE_I2C_CLOCK_STRETCHING_TIMEOUT	500
 
 /* Interrupt Registers */
 #define IXGBE_EICR      0x00800

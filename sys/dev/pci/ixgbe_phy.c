@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.9 2012/12/05 14:41:28 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.10 2012/12/17 18:44:27 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1656,16 +1656,20 @@ int32_t ixgbe_clock_out_i2c_bit(struct ixgbe_hw *hw, int data)
  **/
 int32_t ixgbe_raise_i2c_clk(struct ixgbe_hw *hw, uint32_t *i2cctl)
 {
-	int32_t status = IXGBE_SUCCESS;
+	int i;
 
 	*i2cctl |= IXGBE_I2C_CLK_OUT;
 
-	IXGBE_WRITE_REG(hw, IXGBE_I2CCTL, *i2cctl);
+	for (i = 0; i < IXGBE_I2C_CLOCK_STRETCHING_TIMEOUT; i++) {
+		IXGBE_WRITE_REG(hw, IXGBE_I2CCTL, *i2cctl);
+		IXGBE_WRITE_FLUSH(hw);
+		/* SCL rise time (1000ns) */
+		usec_delay(IXGBE_I2C_T_RISE);
 
-	/* SCL rise time (1000ns) */
-	usec_delay(IXGBE_I2C_T_RISE);
-
-	return status;
+		if (IXGBE_READ_REG(hw, IXGBE_I2CCTL) & IXGBE_I2C_CLK_IN)
+			return (IXGBE_SUCCESS);
+	}
+	return (IXGBE_ERR_I2C);
 }
 
 /**
