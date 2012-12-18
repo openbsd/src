@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.8 2009/06/13 19:06:16 andreas Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.9 2012/12/18 21:28:45 millert Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/timeout.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>

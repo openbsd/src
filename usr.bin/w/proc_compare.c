@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc_compare.c,v 1.12 2011/04/10 03:20:59 guenther Exp $	*/
+/*	$OpenBSD: proc_compare.c,v 1.13 2012/12/18 21:28:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -30,8 +30,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/time.h>
 
 #include "extern.h"
 

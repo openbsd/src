@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.74 2012/07/09 22:41:45 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.75 2012/12/18 21:28:45 millert Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -35,14 +35,16 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/dkstat.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/swap.h>
+#include <sys/sysctl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/sysctl.h>
-#include <sys/dkstat.h>
-#include <sys/mount.h>
-#include <sys/swap.h>
 #include <err.h>
 #include <errno.h>
 

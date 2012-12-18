@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.81 2012/07/11 07:50:39 guenther Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.82 2012/12/18 21:28:45 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
