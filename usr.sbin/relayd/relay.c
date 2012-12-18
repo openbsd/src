@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.159 2012/11/29 01:01:53 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.160 2012/12/18 15:58:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1471,8 +1471,8 @@ relay_connect(struct rsession *con)
 void
 relay_close(struct rsession *con, const char *msg)
 {
-	struct relay	*rlay = (struct relay *)con->se_relay;
 	char		 ibuf[128], obuf[128], *ptr = NULL;
+	struct relay	*rlay = (struct relay *)con->se_relay;
 
 	SPLAY_REMOVE(session_tree, &rlay->rl_sessions, con);
 
@@ -1876,16 +1876,14 @@ relay_ssl_accept(int fd, short event, void *arg)
 {
 	struct rsession	*con = (struct rsession *)arg;
 	struct relay	*rlay = (struct relay *)con->se_relay;
+	int		 retry_flag = 0;
+	int		 ssl_err = 0;
 	int		 ret;
-	int		 ssl_err;
-	int		 retry_flag;
 
 	if (event == EV_TIMEOUT) {
 		relay_close(con, "SSL accept timeout");
 		return;
 	}
-
-	retry_flag = ssl_err = 0;
 
 	ret = SSL_accept(con->se_in.ssl);
 	if (ret <= 0) {
@@ -1936,16 +1934,14 @@ relay_ssl_connect(int fd, short event, void *arg)
 {
 	struct rsession	*con = (struct rsession *)arg;
 	struct relay	*rlay = (struct relay *)con->se_relay;
+	int		 retry_flag = 0;
+	int		 ssl_err = 0;
 	int		 ret;
-	int		 ssl_err;
-	int		 retry_flag;
 
 	if (event == EV_TIMEOUT) {
 		relay_close(con, "SSL connect timeout");
 		return;
 	}
-
-	retry_flag = ssl_err = 0;
 
 	ret = SSL_connect(con->se_out.ssl);
 	if (ret <= 0) {
@@ -2006,15 +2002,15 @@ relay_ssl_connected(struct ctl_relay_event *cre)
 void
 relay_ssl_readcb(int fd, short event, void *arg)
 {
+	char rbuf[IBUF_READ_SIZE];
 	struct bufferevent *bufev = arg;
 	struct ctl_relay_event *cre = (struct ctl_relay_event *)bufev->cbarg;
 	struct rsession *con = cre->con;
 	struct relay *rlay = (struct relay *)con->se_relay;
 	int ret = 0, ssl_err = 0;
 	short what = EVBUFFER_READ;
-	size_t len;
-	char rbuf[IBUF_READ_SIZE];
 	int howmuch = IBUF_READ_SIZE;
+	size_t len;
 
 	if (event == EV_TIMEOUT) {
 		what |= EVBUFFER_TIMEOUT;
@@ -2296,10 +2292,10 @@ relay_load_file(const char *name, off_t *len)
 int
 relay_load_certfiles(struct relay *rlay)
 {
-	struct protocol *proto = rlay->rl_proto;
-	int	 useport = htons(rlay->rl_conf.port);
 	char	 certfile[PATH_MAX];
 	char	 hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+	struct protocol *proto = rlay->rl_proto;
+	int	 useport = htons(rlay->rl_conf.port);
 
 	if ((rlay->rl_conf.flags & F_SSLCLIENT) && strlen(proto->sslca)) {
 		if ((rlay->rl_ssl_ca = relay_load_file(proto->sslca,
@@ -2356,8 +2352,6 @@ relay_proto_cmp(struct protonode *a, struct protonode *b)
 	return (ret);
 }
 
-RB_GENERATE(proto_tree, protonode, nodes, relay_proto_cmp);
-
 int
 relay_session_cmp(struct rsession *a, struct rsession *b)
 {
@@ -2370,4 +2364,5 @@ relay_session_cmp(struct rsession *a, struct rsession *b)
 	return ((int)a->se_id - b->se_id);
 }
 
+RB_GENERATE(proto_tree, protonode, nodes, relay_proto_cmp);
 SPLAY_GENERATE(session_tree, rsession, se_nodes, relay_session_cmp);
