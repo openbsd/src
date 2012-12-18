@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.195 2012/12/17 22:52:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.196 2012/12/18 14:34:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -269,7 +269,6 @@ routehandler(void)
 	return;
 
 die:
-	cleanup(client->active);
 	error("routehandler: %s", errmsg);
 }
 
