@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.16 2010/05/26 13:56:08 nicm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.17 2012/12/18 15:34:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -45,11 +45,11 @@ void	ssl_cleanup(struct ctl_tcp_event *);
 void
 ssl_read(int s, short event, void *arg)
 {
-	struct ctl_tcp_event	*cte = arg;
-	int			 ret;
-	int			 ssl_err;
-	int			 retry_flag;
 	char			 rbuf[SMALL_READ_BUF_SIZE];
+	struct ctl_tcp_event	*cte = arg;
+	int			 retry_flag = EV_READ;
+	int			 ssl_err = 0;
+	int			 ret;
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
@@ -59,8 +59,6 @@ ssl_read(int s, short event, void *arg)
 	}
 
 	bzero(rbuf, sizeof(rbuf));
-	ssl_err = 0;
-	retry_flag = EV_READ;
 
 	ret = SSL_read(cte->ssl, rbuf, sizeof(rbuf));
 	if (ret <= 0) {
@@ -112,10 +110,10 @@ void
 ssl_write(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
+	int			 retry_flag = EV_WRITE;
+	int			 ssl_err = 0;
 	int			 len;
 	int			 ret;
-	int			 ssl_err;
-	int			 retry_flag;
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
@@ -125,7 +123,6 @@ ssl_write(int s, short event, void *arg)
 	}
 
 	len = strlen(cte->table->sendbuf);
-	retry_flag = EV_WRITE;
 
 	ret = SSL_write(cte->ssl, cte->table->sendbuf, len);
 	if (ret <= 0) {
@@ -160,9 +157,9 @@ void
 ssl_connect(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
+	int			 retry_flag = 0;
+	int			 ssl_err = 0;
 	int			 ret;
-	int			 ssl_err;
-	int			 retry_flag;
 
 	if (event == EV_TIMEOUT) {
 		cte->host->up = HOST_DOWN;
@@ -170,8 +167,6 @@ ssl_connect(int s, short event, void *arg)
 		ssl_cleanup(cte);
 		return;
 	}
-
-	retry_flag = ssl_err = 0;
 
 	ret = SSL_connect(cte->ssl);
 	if (ret <= 0) {
@@ -230,8 +225,8 @@ ssl_cleanup(struct ctl_tcp_event *cte)
 void
 ssl_error(const char *where, const char *what)
 {
-	unsigned long	 code;
 	char		 errbuf[128];
+	unsigned long	 code;
 	extern int	 debug;
 
 	if (!debug)
