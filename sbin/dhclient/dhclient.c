@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.196 2012/12/18 14:34:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.197 2012/12/19 12:25:38 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -168,7 +168,7 @@ void
 routehandler(void)
 {
 	char msg[2048];
-	struct in_addr a;
+	struct in_addr a, b;
 	ssize_t n;
 	int linkstat;
 	struct rt_msghdr *rtm;
@@ -226,6 +226,13 @@ routehandler(void)
 		} else {
 			if (a.s_addr == deleting.s_addr) {
 				deleting.s_addr = INADDR_ANY;
+				break;
+			}
+			if (client->active &&
+			    a.s_addr == client->active->address.s_addr) {
+				/* Tell the priv process active_addr is gone. */
+				memset(&b, 0, sizeof(b));
+				add_address(ifi->name, 0, b, b);
 				break;
 			}
 			errmsg = "interface address deleted";

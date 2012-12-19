@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.97 2012/12/04 19:24:03 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.98 2012/12/19 12:25:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -197,6 +197,7 @@ extern struct imsgbuf *unpriv_ibuf;
 extern struct in_addr deleting;
 extern struct in_addr adding;
 extern struct in_addr active_addr;
+extern volatile sig_atomic_t quit;
 
 /* options.c */
 int cons_options(struct option_data *);
