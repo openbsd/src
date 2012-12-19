@@ -1,6 +1,6 @@
 define(MACHINE,sparc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.70 2012/12/19 20:30:23 kettenis Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.71 2012/12/19 21:10:16 kettenis Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -39,7 +39,7 @@ _mkdev(s64_czs, cua[a-z], {-u=${i#cua*}
 	*) echo unknown cua device $i ;;
 	esac
 	M cua$u c major_s64_czs_c Add($n, 128) 660 dialer uucp-})dnl
-__devitem(vcc, ttyV*, virtual console concentrator,vcctty)dnl
+__devitem(vcc, ttyV*, Virtual console concentrator, vcctty)dnl
 _mkdev(vcc, ttyV[0-9a-zA-Z], {-U=${i#ttyV*}
 	o=$(alph2d $U)
 	M ttyV$U c major_vcc_c $o 600-})dnl
@@ -47,14 +47,14 @@ dnl
 __devitem(uperf, uperf, Performance counters)dnl
 _mkdev(uperf, uperf, {-M uperf c major_uperf_c 0 664-})dnl
 dnl
-__devitem(vldc_hvctl, hvctl, hypervisor control channel)dnl
+__devitem(vldc_hvctl, hvctl, Hypervisor control channel, vldcp)dnl
 _mkdev(vldc_hvctl, hvctl, {-M hvctl c major_vldc_hvctl_c 0 600-})dnl
-__devitem(vldc_spds, spds, service processor domain services channel)dnl
+__devitem(vldc_spds, spds, Service processor domain services channel, vldcp)dnl
 _mkdev(vldc_spds, spds, {-M spds c major_vldc_spds_c 1 600-})dnl
-__devitem(vldc_ldom, ldom*, logical domain services channels)dnl
+__devitem(vldc_ldom, ldom*, Logical domain services channels, vldcp)dnl
 _mkdev(vldc_ldom, ldom*, {-M ldom$U c major_vldc_ldom_c Add($U,32) 600-})dnl
 dnl
-__devitem(vdsp, vdsp*, virtual disk server ports)dnl
+__devitem(vdsp, vdsp*, Virtual disk server ports)dnl
 _mkdev(vdsp, vdsp*, {-M vdsp$U c major_vdsp_c $U 600-})dnl
 dnl
 _TITLE(make)
