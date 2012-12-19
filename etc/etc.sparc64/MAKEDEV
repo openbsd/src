@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.70 2012/12/19 20:30:23 kettenis Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.71 2012/12/19 21:10:16 kettenis Exp 
 #	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -46,7 +46,7 @@
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 #	tty[a-z]*	Zilog 8530 serial port
 #	ttyh*	Sab82532 serial devices
-#	ttyV*	virtual console concentrator
+#	ttyV*	Virtual console concentrator
 # Pseudo terminals:
 #	ptm	pty master device
 #	pty*	Set of 62 master pseudo terminals
@@ -96,10 +96,10 @@
 #	uperf	Performance counters
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
-#	hvctl	hypervisor control channel
-#	spds	service processor domain services channel
-#	ldom*	logical domain services channels
-#	vdsp*	virtual disk server ports
+#	hvctl	Hypervisor control channel
+#	spds	Service processor domain services channel
+#	ldom*	Logical domain services channels
+#	vdsp*	Virtual disk server ports
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 

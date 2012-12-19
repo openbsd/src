@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.56 2012/08/23 06:17:01 deraadt Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.57 2012/12/19 21:11:24 kettenis Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.66 2012/08/23 06:15:28 deraadt Exp 
+.\"	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.71 2012/12/19 21:10:16 kettenis Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2012 $
+.Dd $Mdocdate: December 19 2012 $
 .Dt MAKEDEV 8 sparc64
 .Os
 .Sh NAME
@@ -129,7 +129,7 @@ Zilog 8530 serial port, see
 Sab82532 serial devices, see
 .Xr sab 4 .
 .It Ar ttyV*
-virtual console concentrator, see
+Virtual console concentrator, see
 .Xr vcctty 4 .
 .El
 .Pp
@@ -285,6 +285,18 @@ Video V4L2 devices, see
 .It Ar vscsi*
 Virtual SCSI controller, see
 .Xr vscsi 8 .
+.It Ar hvctl
+Hypervisor control channel, see
+.Xr vldcp 4 .
+.It Ar spds
+Service processor domain services channel, see
+.Xr vldcp 4 .
+.It Ar ldom*
+Logical domain services channels, see
+.Xr vldcp 4 .
+.It Ar vdsp*
+Virtual disk server ports, see
+.Xr vdsp 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact
