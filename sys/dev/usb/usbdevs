@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.593 2012/12/16 19:01:12 jasper Exp $
+$OpenBSD: usbdevs,v 1.594 2012/12/19 03:29:02 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3287,6 +3287,8 @@ product QUALCOMM MSM_DRIVER	0x1000	MSM driver
 product QUALCOMM MSM_MODEM	0x3196	CDMA MSM modem
 product QUALCOMM MSM_HSDPA2	0x6000	HSDPA MSM
 product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
+product QUALCOMM MSM_HSDPA3	0x9000	HSDPA MSM
+product QUALCOMM MSM_DRIVER2	0xf000	MSM driver
 
 /* Qualcomm(2) products */
 product QUALCOMM2 MSM_PHONE	0x6000	CDMA MSM phone
