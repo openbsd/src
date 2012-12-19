@@ -1,4 +1,4 @@
-/*	$OpenBSD: mppe.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: mppe.c,v 1.9 2012/12/19 09:23:54 sthen Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: mppe.c,v 1.9 2012/12/19 09:23:54 sthen Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -135,7 +135,7 @@ mppe_init(mppe *_this, npppd_ppp *ppp)
 	_this->keylenbits = 0;
 	if ((conf->mppe_keylen & NPPPD_MPPE_40BIT) != 0)
 		_this->keylenbits |= CCP_MPPE_NT_40bit;
-	if ((conf->mppe_keylen & NPPPD_MPPE_56BIT) != 0);
+	if ((conf->mppe_keylen & NPPPD_MPPE_56BIT) != 0)
 		_this->keylenbits |= CCP_MPPE_NT_56bit;
 	if ((conf->mppe_keylen & NPPPD_MPPE_128BIT) != 0)
 		_this->keylenbits |= CCP_MPPE_NT_128bit;
