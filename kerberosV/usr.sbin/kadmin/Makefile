@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2010/10/13 08:14:22 jsg Exp $
+# $OpenBSD: Makefile,v 1.19 2012/12/19 09:54:05 espie Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -38,7 +38,7 @@ slc:	slc-gram.o slc-lex.o ${PRINTVER}
 
 SLC=	slc
 
-kadmin:	kadmin-commands.h
+depend: kadmin-commands.h
 kadmin-commands.c kadmin-commands.h:	kadmin-commands.in $(SLC)
 	./$(SLC) $(KRB5SRC)/kadmin/kadmin-commands.in
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5 -I.
