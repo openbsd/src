@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.244 2012/10/15 16:29:07 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.245 2012/12/19 19:52:11 kettenis Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@ int	sddetach(struct device *, int);
 void	sdminphys(struct buf *);
 int	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *, int);
 void	sdstart(struct scsi_xfer *);
+void	sd_shutdown(void *);
 int	sd_interpret_sense(struct scsi_xfer *);
 int	sd_read_cap_10(struct sd_softc *, int);
 int	sd_read_cap_16(struct sd_softc *, int);
@@ -259,6 +260,19 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		sd_ioctl_cache(sc, DIOCSCACHE, &dkc);
 	}
 
+	/*
+	 * Establish a shutdown hook so that we can ensure that
+	 * our data has actually made it onto the platter at
+	 * shutdown time.  Note that this relies on the fact
+	 * that the shutdown hook code puts us at the head of
+	 * the list (thus guaranteeing that our hook runs before
+	 * our ancestors').
+	 */
+	if ((sc->sc_sdhook =
+	    shutdownhook_establish(sd_shutdown, sc)) == NULL)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sc->sc_dev.dv_xname);
+
 	/* Attach disk. */
 	disk_attach(&sc->sc_dev, &sc->sc_dk);
 }
@@ -310,6 +324,10 @@ sddetach(struct device *self, int flags)
 	bufq_drain(&sc->sc_bufq);
 
 	disk_gone(sdopen, self->dv_unit);
+
+	/* Get rid of the shutdown hook. */
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 
 	/* Detach disk. */
 	bufq_destroy(&sc->sc_bufq);
@@ -1107,6 +1125,21 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 	 * Call the generic disklabel extraction routine
 	 */
 	return readdisklabel(DISKLABELDEV(dev), sdstrategy, lp, spoofonly);
+}
+
+
+void
+sd_shutdown(void *arg)
+{
+	struct sd_softc *sc = (struct sd_softc *)arg;
+
+	/*
+	 * If the disk cache needs to be flushed, and the disk supports
+	 * it, flush it.  We're cold at this point, so we poll for
+	 * completion.
+	 */
+	if ((sc->flags & SDF_DIRTY) != 0)
+		sd_flush(sc, SCSI_AUTOCONF);
 }
 
 /*
