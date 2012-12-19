@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.69 2012/12/08 20:40:04 kettenis Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.70 2012/12/19 20:30:23 kettenis Exp 
 #	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -96,6 +96,9 @@
 #	uperf	Performance counters
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
+#	hvctl	hypervisor control channel
+#	spds	service processor domain services channel
+#	ldom*	logical domain services channels
 #	vdsp*	virtual disk server ports
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -241,16 +244,22 @@ std)
 	M klog		c 16 0 600
 	M openprom	c 70 0 640 kmem
 	M mdesc		c 70 1 640 kmem
-	M hvctl		c 132 0 600
-	M spds		c 132 1 600
-	M ldom0		c 132 32 600
-	M ldom1		c 132 33 600
-	M ldom2		c 132 34 600
-	M ldom3		c 132 35 600
 	;;
 
 vdsp*)
 	M vdsp$U c 133 $U 600
+	;;
+
+ldom*)
+	M ldom$U c 132 $(($U+32)) 600
+	;;
+
+spds)
+	M spds c 132 1 600
+	;;
+
+hvctl)
+	M hvctl c 132 0 600
 	;;
 
 vscsi*)
@@ -620,18 +629,18 @@ local)
 	;;
 
 all)
-	R vdsp0 vdsp1 vdsp2 vdsp3 vdsp4 vdsp5 vdsp6 vdsp7 ttyV0 ttyV1
-	R ttyV2 ttyV3 cuaa cuab cuac cuad ttya ttyb ttyc ttyd bthub0
-	R bthub1 bthub2 bpp0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
-	R sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B
-	R fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F
-	R fd0G fd0H diskmap vscsi0 ch0 audio0 audio1 audio2 hotplug
-	R ptm local wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1
-	R rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 video0 video1 uk0
-	R random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
-	R tty03 ttyh0 ttyh1 crypto pf systrace wd0 wd1 wd2 wd3 std st0
-	R st1 fd
+	R vdsp0 vdsp1 vdsp2 vdsp3 vdsp4 vdsp5 vdsp6 vdsp7 ldom0 ldom1
+	R ldom2 ldom3 spds hvctl ttyV0 ttyV1 ttyV2 ttyV3 cuaa cuab
+	R cuac cuad ttya ttyb ttyc ttyd bthub0 bthub1 bthub2 bpp0 vnd0
+	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0
+	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
+	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap
+	R vscsi0 ch0 audio0 audio1 audio2 hotplug ptm local wscons
+	R pci0 pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
+	R rmidi5 rmidi6 rmidi7 video0 video1 uk0 random lpa0 lpa1 lpa2
+	R lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1
+	R crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
