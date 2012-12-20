@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.85 2012/12/17 18:30:28 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.86 2012/12/20 17:07:37 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1600,9 +1600,6 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 #endif
 
-	sc->max_frame_size =
-	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
-
 	/*
 	 * Specify the media types supported by this sc and register
 	 * callbacks to update media and link information
@@ -1623,6 +1620,9 @@ ixgbe_setup_interface(struct ix_softc *sc)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	sc->max_frame_size =
+	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
 }
 
 void
@@ -2526,7 +2526,6 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 		return (ENOBUFS);
 
 	mp->m_len = mp->m_pkthdr.len = sc->rx_mbuf_sz;
-	/* only adjust if this is not a split header */
 	if (sc->max_frame_size <= (sc->rx_mbuf_sz - ETHER_ALIGN))
 		m_adj(mp, ETHER_ALIGN);
 
