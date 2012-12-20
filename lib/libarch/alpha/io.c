@@ -1,4 +1,4 @@
-/* $OpenBSD: io.c,v 1.3 2012/12/05 23:19:58 deraadt Exp $ */
+/* $OpenBSD: io.c,v 1.4 2012/12/20 21:05:07 naddy Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -28,6 +28,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <machine/cpu.h>
 #include <err.h>
 
 #include "io.h"
