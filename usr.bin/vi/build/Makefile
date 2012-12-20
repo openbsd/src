@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2004/01/25 23:22:10 mickey Exp $
+#	$OpenBSD: Makefile,v 1.17 2012/12/20 20:28:12 naddy Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
@@ -15,6 +15,9 @@ DPADD+= ${LIBCURSES}
 #CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include -D_USE_OLD_CURSES_
 #LDADD+= -locurses
 #DPADD+= ${LIBOLDCURSES}
+
+LDADD+=-lutil
+DPADD+= ${LIBUTIL}
 
 SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	cut.c delete.c ex.c ex_abbrev.c ex_append.c ex_args.c ex_argv.c \

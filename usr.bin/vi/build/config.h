@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.8 2000/11/17 05:22:59 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.9 2012/12/20 20:28:12 naddy Exp $	*/
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
@@ -118,9 +118,6 @@
 
 /* Define if you have <sys/select.h> */
 /* #undef HAVE_SYS_SELECT_H */
-
-/* Define if you have the System V style pty calls. */
-/* #undef HAVE_SYS5_PTY */
 
 /* Define if you want to compile in the Tcl interpreter. */
 /* #undef HAVE_TCL_INTERP */
