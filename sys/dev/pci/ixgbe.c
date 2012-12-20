@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.11 2012/12/17 12:03:16 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.12 2012/12/20 17:32:38 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1900,10 +1900,10 @@ int32_t ixgbe_fc_autoneg(struct ixgbe_hw *hw)
 
 out:
 	if (ret_val == IXGBE_SUCCESS) {
+		hw->fc.current_mode = hw->fc.requested_mode;
 		hw->fc.fc_was_autonegged = TRUE;
 	} else {
 		hw->fc.fc_was_autonegged = FALSE;
-		hw->fc.current_mode = hw->fc.requested_mode;
 	}
 	return ret_val;
 }
