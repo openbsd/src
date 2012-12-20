@@ -7355,6 +7355,9 @@ alpha_initial_elimination_offset (unsigned int from,
   switch (from)
     {
     case FRAME_POINTER_REGNUM:
+      ret += (ALPHA_ROUND (get_frame_size ()
+			   + current_function_pretend_args_size)
+	      - current_function_pretend_args_size);
       break;
 
     case ARG_POINTER_REGNUM:

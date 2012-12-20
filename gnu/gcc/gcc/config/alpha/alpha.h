@@ -738,7 +738,7 @@ extern int alpha_memory_latency;
    is at the high-address end of the local variables;
    that is, each additional local variable allocated
    goes at a more negative offset in the frame.  */
-/* #define FRAME_GROWS_DOWNWARD 0 */
+#define FRAME_GROWS_DOWNWARD 1
 
 /* Offset within stack frame to start allocating local variables at.
    If FRAME_GROWS_DOWNWARD, this is the offset to the END of the
