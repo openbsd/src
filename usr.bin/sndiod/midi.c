@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.6 2012/12/01 12:13:34 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.7 2012/12/20 16:15:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -347,6 +347,7 @@ midi_in(struct midi *iep, unsigned char *idata, int icount)
 	iep->tickets -= icount;
 	if (iep->tickets < 0)
 		iep->tickets = 0;
+	midi_tickets(iep);
 }
 
 /*
