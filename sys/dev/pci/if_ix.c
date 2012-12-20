@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.86 2012/12/20 17:07:37 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.87 2012/12/20 17:34:54 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -1036,6 +1036,23 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 			ifmr->ifm_active |= sc->optics | IFM_FDX;
 			break;
 		}
+	}
+
+	switch (sc->hw.fc.current_mode) {
+	case ixgbe_fc_tx_pause:
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
+		break;
+	case ixgbe_fc_rx_pause:
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+		break;
+	case ixgbe_fc_full:
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE |
+		    IFM_ETH_TXPAUSE;
+		break;
+	default:
+		ifmr->ifm_active &= ~(IFM_FLOW | IFM_ETH_RXPAUSE |
+		    IFM_ETH_TXPAUSE);
+		break;
 	}
 }
 
