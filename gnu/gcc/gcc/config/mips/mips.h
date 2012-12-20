@@ -1741,6 +1741,8 @@ extern const enum reg_class mips_regno_to_class[];
 
 #define STACK_GROWS_DOWNWARD
 
+#define FRAME_GROWS_DOWNWARD 1
+
 /* The offset of the first local variable from the beginning of the frame.
    See compute_frame_size for details about the frame layout.
 
@@ -1753,12 +1755,7 @@ extern const enum reg_class mips_regno_to_class[];
    will end up as 24 instead of 8.  This won't be needed if profiling code is
    inserted before virtual register instantiation.  */
 
-#define STARTING_FRAME_OFFSET						\
-  ((flag_profile_values && ! TARGET_64BIT				\
-    ? MAX (REG_PARM_STACK_SPACE(NULL), current_function_outgoing_args_size) \
-    : current_function_outgoing_args_size)				\
-   + (TARGET_ABICALLS && !TARGET_NEWABI					\
-      ? MIPS_STACK_ALIGN (UNITS_PER_WORD) : 0))
+#define STARTING_FRAME_OFFSET 0
 
 #define RETURN_ADDR_RTX mips_return_addr
 

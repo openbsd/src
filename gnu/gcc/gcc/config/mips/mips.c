@@ -6367,12 +6367,13 @@ compute_frame_size (HOST_WIDE_INT size)
   fmask	= 0;
   var_size = MIPS_STACK_ALIGN (size);
   args_size = current_function_outgoing_args_size;
-  cprestore_size = MIPS_STACK_ALIGN (STARTING_FRAME_OFFSET) - args_size;
+  cprestore_size = (TARGET_ABICALLS && !TARGET_NEWABI
+		    ? MIPS_STACK_ALIGN (UNITS_PER_WORD) : 0);
 
   /* The space set aside by STARTING_FRAME_OFFSET isn't needed in leaf
      functions.  If the function has local variables, we're committed
      to allocating it anyway.  Otherwise reclaim it here.  */
-  if (var_size == 0 && current_function_is_leaf)
+  if (current_function_is_leaf)
     cprestore_size = args_size = 0;
 
   /* The MIPS 3.0 linker does not like functions that dynamically
@@ -6490,7 +6491,9 @@ mips_initial_elimination_offset (int from, int to)
   switch (from)
     {
     case FRAME_POINTER_REGNUM:
-      offset = 0;
+      offset = (cfun->machine->frame.args_size
+		+ cfun->machine->frame.cprestore_size
+		+ cfun->machine->frame.var_size);
       break;
 
     case ARG_POINTER_REGNUM:
