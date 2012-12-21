@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 2012/08/02 13:38:38 okan Exp $
+#	$OpenBSD: Makefile,v 1.63 2012/12/21 08:50:27 espie Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -269,7 +269,7 @@ MLINKS+= curs_inwstr.3 inwstr.3 curs_inwstr.3 innwstr.3 \
 
 GENERATED= init_keytry.h codes.c comp_captab.c expanded.c fallback.c \
 	keys.list lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
-CLEANFILES+= ${GENERATED} stamp_namebuild term.5 terminfo.5 curses.3 \
+CLEANFILES+= ${GENERATED} term.5 terminfo.5 curses.3 \
 	curs_addch.3 curs_attr.3 curs_getch.3 curs_inch.3 curs_mouse.3
 
 .if make(install)
@@ -323,14 +323,12 @@ lib_keyname.c: keys.list ${.CURDIR}/base/MKkeyname.awk
 	${AWK} -f ${.CURDIR}/base/MKkeyname.awk bigstrings=1 \
 		keys.list > ${.TARGET}
 
-names.c codes.c: stamp_namebuild
-
-stamp_namebuild: ${.CURDIR}/tinfo/MKnames.awk ${.CURDIR}/tinfo/MKcodes.awk
+names.c: ${.CURDIR}/tinfo/MKnames.awk
 	${AWK} -f ${.CURDIR}/tinfo/MKnames.awk \
 		${.CURDIR}/Caps > names.c
+codes.c: ${.CURDIR}/tinfo/MKcodes.awk
 	${AWK} -f ${.CURDIR}/tinfo/MKcodes.awk \
 		bigstrings=1 ${.CURDIR}/Caps > codes.c
-	touch $@
 
 unctrl.c: ${.CURDIR}/base/MKunctrl.awk
 	echo | ${AWK} -f ${.CURDIR}/base/MKunctrl.awk bigstrings=1 > ${.TARGET}
