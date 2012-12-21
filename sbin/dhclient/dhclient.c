@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.197 2012/12/19 12:25:38 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.198 2012/12/21 20:37:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -218,7 +218,6 @@ routehandler(void)
 				    inet_ntoa(client->active->address),
 				    (long long)(client->active->renewal -
 				    time(NULL)));
-				client->state = S_BOUND;
 				go_daemon();
 				break;
 			}
@@ -738,6 +737,8 @@ bind_lease(void)
 		free_client_lease(client->active);
 	client->active = client->new;
 	client->new = NULL;
+
+	client->state = S_BOUND;
 
 	/* Write out new leases file. */
 	rewrite_client_leases();
