@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.80 2012/04/14 09:39:46 yasuoka Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.81 2012/12/21 11:13:43 mikeb Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ int bpf_maxbufsize = BPF_MAXBUFSIZE;
 struct bpf_if	*bpf_iflist;
 LIST_HEAD(, bpf_d) bpf_d_list;
 
-int	bpf_allocbufs(struct bpf_d *);
+void	bpf_allocbufs(struct bpf_d *);
 void	bpf_freed(struct bpf_d *);
 void	bpf_ifname(struct ifnet *, struct ifreq *);
 void	bpf_mcopy(const void *, void *, size_t);
@@ -956,7 +956,7 @@ int
 bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 {
 	struct bpf_if *bp, *candidate = NULL;
-	int s, error;
+	int s;
 
 	/*
 	 * Look through attached interfaces for the named one.
@@ -981,11 +981,8 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		 * If we're already attached to requested interface,
 		 * just flush the buffer.
 		 */
-		if (d->bd_sbuf == 0) {
-			error = bpf_allocbufs(d);
-			if (error != 0)
-				return (error);
-		}
+		if (d->bd_sbuf == 0)
+			bpf_allocbufs(d);
 		s = splnet();
 		if (candidate != d->bd_bif) {
 			if (d->bd_bif)
@@ -1432,20 +1429,13 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 /*
  * Initialize all nonzero fields of a descriptor.
  */
-int
+void
 bpf_allocbufs(struct bpf_d *d)
 {
-	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
-	if (d->bd_fbuf == NULL)
-		return (ENOBUFS);
-	d->bd_sbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
-	if (d->bd_sbuf == NULL) {
-		free(d->bd_fbuf, M_DEVBUF);
-		return (ENOBUFS);
-	}
+	d->bd_fbuf = malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
+	d->bd_sbuf = malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
-	return (0);
 }
 
 /*
