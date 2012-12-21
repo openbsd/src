@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.66 2012/10/17 22:32:01 deraadt Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.67 2012/12/21 17:30:39 gsoares Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -947,7 +947,7 @@ bt_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
 
 	/* Block transfer needs 4 extra bytes: length/netfn/seq/cmd + data */
 	*txlen = len + 4;
-	buf = malloc(*txlen, M_DEVBUF, M_NOWAIT|M_CANFAIL);
+	buf = malloc(*txlen, M_DEVBUF, M_NOWAIT);
 	if (buf == NULL)
 		return (NULL);
 
@@ -976,7 +976,7 @@ cmn_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
 
 	/* Common needs two extra bytes: nfLun/cmd + data */
 	*txlen = len + 2;
-	buf = malloc(*txlen, M_DEVBUF, M_NOWAIT|M_CANFAIL);
+	buf = malloc(*txlen, M_DEVBUF, M_NOWAIT);
 	if (buf == NULL)
 		return (NULL);
 
@@ -1043,7 +1043,7 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	int		rawlen;
 
 	/* Need three extra bytes: netfn/cmd/ccode + data */
-	buf = malloc(maxlen + 3, M_DEVBUF, M_NOWAIT|M_CANFAIL);
+	buf = malloc(maxlen + 3, M_DEVBUF, M_NOWAIT);
 	if (buf == NULL) {
 		printf("%s: ipmi_recvcmd: malloc fails\n", DEVNAME(sc));
 		return (-1);
@@ -1142,7 +1142,7 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 	/* Allocate space for entire SDR Length of SDR in header does not
 	 * include header length */
 	sdrlen = sizeof(shdr) + shdr.record_length;
-	psdr = malloc(sdrlen, M_DEVBUF, M_NOWAIT|M_CANFAIL);
+	psdr = malloc(sdrlen, M_DEVBUF, M_NOWAIT);
 	if (psdr == NULL)
 		return (1);
 
@@ -1486,8 +1486,7 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 		return 0;
 	}
 	for (idx = 0; idx < count; idx++) {
-		psensor = malloc(sizeof(*psensor), M_DEVBUF,
-		    M_NOWAIT | M_CANFAIL | M_ZERO);
+		psensor = malloc(sizeof(*psensor), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (psensor == NULL)
 			break;
 
@@ -1719,8 +1718,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* Map registers */
 	ipmi_map_regs(sc, ia);
 
-	sc->sc_thread = malloc(sizeof(struct ipmi_thread), M_DEVBUF,
-	    M_NOWAIT|M_CANFAIL);
+	sc->sc_thread = malloc(sizeof(struct ipmi_thread), M_DEVBUF, M_NOWAIT);
 	if (sc->sc_thread == NULL) {
 		printf(": unable to allocate thread\n");
 		return;
