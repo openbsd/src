@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.148 2012/11/02 18:18:15 djm Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.149 2012/12/22 07:32:17 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -321,7 +321,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	rsz = mopts.malloc_cache - d->free_regions_size;
 	if (psz > rsz)
 		tounmap = psz - rsz;
-	offset = getrnibble() + getrnibble() << 4;
+	offset = getrnibble() + (getrnibble() << 4);
 	for (i = 0; tounmap > 0 && i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
@@ -402,7 +402,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		/* zero fill not needed */
 		return p;
 	}
-	offset = getrnibble() + getrnibble() << 4;
+	offset = getrnibble() + (getrnibble() << 4);
 	for (i = 0; i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
