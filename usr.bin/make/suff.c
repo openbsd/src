@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.83 2012/12/06 10:33:16 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.84 2012/12/22 19:02:05 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ static struct ohash_info suff_info = {
  */
 typedef struct Src_ {
 	char *file;		/* The file to look for */
-	char *pref;		/* Prefix from which file was formed */
+	char *prefix;		/* Prefix from which file was formed */
 	Suff *suff;		/* The suffix on the file */
 	struct Src_ *parent;	/* The Src for which this is a source */
 	GNode *node;		/* The node describing the file */
@@ -687,8 +687,8 @@ SuffAddSrc(
 	targ = ls->s;
 
 	s2 = emalloc(sizeof(Src));
-	s2->file = Str_concat(targ->pref, s->name, 0);
-	s2->pref = targ->pref;
+	s2->file = Str_concat(targ->prefix, s->name, 0);
+	s2->prefix = targ->prefix;
 	s2->parent = targ;
 	s2->node = NULL;
 	s2->suff = s;
@@ -758,7 +758,7 @@ SuffRemoveSrc(Lst l)
 		if (s->children == 0) {
 			free(s->file);
 			if (!s->parent)
-				free(s->pref);
+				free(s->prefix);
 			else {
 #ifdef DEBUG_SRC
 				LstNode ln2 = Lst_Member(&s->parent->cp, s);
@@ -852,84 +852,68 @@ SuffFindThem(
  *	See if any of the children of the target in the Src structure is
  *	one from which the target can be transformed. If there is one,
  *	a Src structure is put together for it and returned.
- *
- * Results:
- *	The Src structure of the "winning" child, or NULL if no such beast.
- *
- * Side Effects:
- *	A Src structure may be allocated.
  *-----------------------------------------------------------------------
  */
 static Src *
-SuffFindCmds(
-    Src 	*targ,	/* Src structure to play with */
-    Lst 	slst)
+SuffFindCmds(Src *targ, Lst slst)
 {
 	LstNode ln;	/* General-purpose list node */
 	GNode *t;	/* Target GNode */
 	GNode *s;	/* Source GNode */
-	int prefLen;	/* The length of the defined prefix */
+	int prefixLen;	/* The length of the defined prefix */
 	Suff *suff;	/* Suffix on matching beastie */
 	Src *ret;	/* Return value */
 	const char *cp;
 
 	t = targ->node;
-	prefLen = strlen(targ->pref);
+	prefixLen = strlen(targ->prefix);
 
 	for (ln = Lst_First(&t->children); ln != NULL; ln = Lst_Adv(ln)) {
 		s = (GNode *)Lst_Datum(ln);
 
 		cp = strrchr(s->name, '/');
-		if (cp == NULL) {
+		if (cp == NULL)
 			cp = s->name;
-		} else {
+		else
 			cp++;
-		}
-		if (strncmp(cp, targ->pref, prefLen) == 0) {
-			/* The node matches the prefix ok, see if it has a known
-			 * suffix.	*/
-			suff = find_suff(&cp[prefLen]);
-			if (suff != NULL) {
-				/*
-				 * It even has a known suffix, see if there's a
-				 * transformation defined between the node's
-				 * suffix and the target's suffix.
-				 *
-				 * XXX: Handle multi-stage transformations
-				 * here, too.
-				 */
-				if (Lst_Member(&suff->parents, targ->suff)
-				    != NULL) {
-					/*
-					 * Hot Damn! Create a new Src structure
-					 * to describe this transformation
-					 * (making sure to duplicate the source
-					 * node's name so Suff_FindDeps can
-					 * free it again (ick)), and return the
-					 * new structure.
-					 */
-					ret = emalloc(sizeof(Src));
-					ret->file = estrdup(s->name);
-					ret->pref = targ->pref;
-					ret->suff = suff;
-					ret->parent = targ;
-					ret->node = s;
-					ret->children = 0;
-					targ->children++;
+		if (strncmp(cp, targ->prefix, prefixLen) != 0)
+			continue;
+		/* The node matches the prefix ok, see if it has a known
+		 * suffix.	*/
+		suff = find_suff(&cp[prefixLen]);
+		if (suff == NULL)
+			continue;
+		/*
+		 * It even has a known suffix, see if there's a transformation
+		 * defined between the node's suffix and the target's suffix.
+		 *
+		 * XXX: Handle multi-stage transformations here, too.
+		 */
+		if (Lst_Member(&suff->parents, targ->suff) == NULL)
+			continue;
+		/*
+		 * Create a new Src structure to describe this transformation
+		 * (making sure to duplicate the source node's name so
+		 * Suff_FindDeps can free it again (ick)), and return the new
+		 * structure.
+		 */
+		ret = emalloc(sizeof(Src));
+		ret->file = estrdup(s->name);
+		ret->prefix = targ->prefix;
+		ret->suff = suff;
+		ret->parent = targ;
+		ret->node = s;
+		ret->children = 0;
+		targ->children++;
 #ifdef DEBUG_SRC
-					Lst_Init(&ret->cp);
-					printf("3 add %x %x\n", targ, ret);
-					Lst_AtEnd(&targ->cp, ret);
+		Lst_Init(&ret->cp);
+		printf("3 add %x %x\n", targ, ret);
+		Lst_AtEnd(&targ->cp, ret);
 #endif
-					Lst_AtEnd(slst, ret);
-					if (DEBUG(SUFF))
-					    printf(
-						"\tusing existing source %s\n",
-						    s->name);
-					return ret;
-				}
-			}
-		}
+		Lst_AtEnd(slst, ret);
+		if (DEBUG(SUFF))
+			printf("\tusing existing source %s\n", s->name);
+		return ret;
 	}
 	return NULL;
 }
@@ -1324,9 +1308,8 @@ SuffFindArchiveDeps(
 static void
 record_possible_suffix(Suff *s, GNode *gn, char *eoname, Lst srcs, Lst targs)
 {
-	int prefLen;
+	int prefixLen;
 	Src *targ;
-	char *sopref = gn->name;
 
 	targ = emalloc(sizeof(Src));
 	targ->file = estrdup(gn->name);
@@ -1341,10 +1324,10 @@ record_possible_suffix(Suff *s, GNode *gn, char *eoname, Lst srcs, Lst targs)
 	/* Allocate room for the prefix, whose end is found by
 	 * subtracting the length of the suffix from the end of
 	 * the name.  */
-	prefLen = (eoname - targ->suff->nameLen) - sopref;
-	targ->pref = emalloc(prefLen + 1);
-	memcpy(targ->pref, sopref, prefLen);
-	targ->pref[prefLen] = '\0';
+	prefixLen = (eoname - targ->suff->nameLen) - gn->name;
+	targ->prefix = emalloc(prefixLen + 1);
+	memcpy(targ->prefix, gn->name, prefixLen);
+	targ->prefix[prefixLen] = '\0';
 
 	/* Add nodes from which the target can be made.  */
 	SuffAddLevel(srcs, targ);
@@ -1397,10 +1380,10 @@ SuffFindNormalDeps(
 	LIST srcs;	/* List of sources at which to look */
 	LIST targs;	/* List of targets to which things can be
 			 * transformed. They all have the same file,
-			 * but different suff and pref fields */
+			 * but different suff and prefix fields */
 	Src *bottom;    /* Start of found transformation path */
 	Src *src;	/* General Src pointer */
-	char *pref;	/* Prefix to use */
+	char *prefix;	/* Prefix to use */
 	Src *targ;	/* General Src target pointer */
 
 
@@ -1438,7 +1421,7 @@ SuffFindNormalDeps(
 		targ->node = gn;
 		targ->parent = NULL;
 		targ->children = 0;
-		targ->pref = estrdup(gn->name);
+		targ->prefix = estrdup(gn->name);
 #ifdef DEBUG_SRC
 		Lst_Init(&targ->cp);
 #endif
@@ -1482,8 +1465,8 @@ SuffFindNormalDeps(
 	 * as expanding sources is concerned, since it has none...	*/
 	Var(TARGET_INDEX, gn) = gn->name;
 
-	pref = targ != NULL ? estrdup(targ->pref) : gn->name;
-	Var(PREFIX_INDEX, gn) = pref;
+	prefix = targ != NULL ? estrdup(targ->prefix) : gn->name;
+	Var(PREFIX_INDEX, gn) = prefix;
 
 	/* Now we've got the important local variables set, expand any sources
 	 * that still contain variables or wildcards in their names.  */
@@ -1610,7 +1593,7 @@ sfnd_abort:
 			 * is set the standard and System V variables.  */
 			targ->node->type |= OP_DEPS_FOUND;
 
-			Var(PREFIX_INDEX, targ->node) = estrdup(targ->pref);
+			Var(PREFIX_INDEX, targ->node) = estrdup(targ->prefix);
 
 			Var(TARGET_INDEX, targ->node) = targ->node->name;
 		}
