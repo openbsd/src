@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.11 2012/11/23 07:03:28 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.12 2012/12/22 10:10:04 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2012 $
+.Dd $Mdocdate: December 22 2012 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -40,11 +40,11 @@ To overcome hardware limitations and to allow multiple applications
 to share the hardware,
 .Xr sndiod 1
 can be used.
-It exposes one or more software subdevices backed by the underlying hardware,
+It exposes one or more software sub-devices backed by the underlying hardware,
 while doing all necessary conversions on the fly.
 It can mix multiple streams or split the hardware into
-multiple subdevices, to allow programs to use the hardware
-concurently.
+multiple sub-devices, to allow programs to use the hardware
+concurrently.
 .Pp
 Hardware MIDI ports correspond to serial connectors provided by the
 .Xr midi 4
