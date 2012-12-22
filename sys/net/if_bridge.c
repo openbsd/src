@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.203 2012/12/07 23:52:09 weerd Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.204 2012/12/22 13:20:32 camield Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -310,7 +310,11 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		if (ifs->if_bridgeport != NULL) {
-			error = EBUSY;
+			p = (struct bridge_iflist *)ifs->if_bridgeport;
+			if (p->bridge_sc == sc)
+				error = EEXIST;
+			else
+				error = EBUSY;
 			break;
 		}
 
@@ -422,7 +426,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 		}
 		if (p != LIST_END(&sc->sc_spanlist)) {
-			error = EBUSY;
+			error = EEXIST;
 			break;
 		}
 		p = malloc(sizeof(*p), M_DEVBUF, M_NOWAIT|M_ZERO);

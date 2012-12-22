@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.5 2012/12/04 02:24:46 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.6 2012/12/22 13:20:32 camield Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -358,8 +358,11 @@ bridge_addspan(const char *ifn, int d)
 
 	strlcpy(req.ifbr_name, name, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
-	if (ioctl(s, SIOCBRDGADDS, &req) < 0)
+	if (ioctl(s, SIOCBRDGADDS, &req) < 0) {
+		if (errno == EEXIST)
+			return;
 		err(1, "%s: %s", name, ifn);
+	}
 }
 
 void
