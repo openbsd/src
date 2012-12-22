@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.16 2012/12/04 10:42:04 mpi Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.17 2012/12/22 19:17:36 mpi Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@
 #define AGP_APPLE_GART_INVALIDATE	0x00001
 #define AGP_APPLE_GART_ENABLE		0x00100
 #define AGP_APPLE_GART_2XRESET		0x10000
+#define AGP_APPLE_GART_PERFRD		0x80000
 
 /*
  * Config offsets for Ali AGP chipsets.

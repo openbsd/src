@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_apple.c,v 1.1 2012/12/04 10:42:04 mpi Exp $	*/
+/*	$OpenBSD: agp_apple.c,v 1.2 2012/12/22 19:17:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Martin Pieuchot <mpi@openbsd.org>
@@ -42,6 +42,8 @@ struct agp_apple_softc {
 	pcitag_t		 asc_tag;
 	bus_addr_t		 asc_apaddr;
 	bus_size_t		 asc_apsize;
+	int			 asc_flags;
+#define	AGP_APPLE_ISU3 (1 << 0)
 };
 
 int	agp_apple_match(struct device *, void *, void *);
@@ -81,21 +83,10 @@ agp_apple_match(struct device *parent, void *match, void *aux)
 		case PCI_PRODUCT_APPLE_UNINORTH2_AGP:
 		case PCI_PRODUCT_APPLE_UNINORTH_AGP3:
 		case PCI_PRODUCT_APPLE_INTREPID2_AGP:
-			return (1);
-#if 0
-		/*
-		 * XXX Do not attach U3 bridges to this driver yet.
-		 *
-		 * Even though they share the same register layout they
-		 * use a big-endian GART and need a different set of
-		 * commands for flushing their TLB. They should also
-		 * support an aperture of 512M.
-		 */
 		case PCI_PRODUCT_APPLE_U3_AGP:
 		case PCI_PRODUCT_APPLE_U3L_AGP:
 		case PCI_PRODUCT_APPLE_K2_AGP:
 			return (1);
-#endif
 	}
 
 	return (0);
@@ -112,6 +103,16 @@ agp_apple_attach(struct device *parent, struct device *self, void *aux)
 	asc->asc_tag = pa->pa_tag;
 	asc->asc_pc = pa->pa_pc;
 
+	switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_APPLE_U3_AGP:
+		case PCI_PRODUCT_APPLE_U3L_AGP:
+		case PCI_PRODUCT_APPLE_K2_AGP:
+			asc->asc_flags |= AGP_APPLE_ISU3;
+			break;
+		default:
+			break;
+	}
+
 	/*
 	 * XXX It looks like UniNorth GART only accepts an aperture
 	 * base address of 0x00 certainly because it does not perform
@@ -123,7 +124,7 @@ agp_apple_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * There's no way to read the aperture size but all UniNorth
-	 * chips seem to support an aperture of 256M.
+	 * chips seem to support an aperture of 256M (and 512M for U3).
 	 */
 	asc->asc_apsize = 256 * M;
 	for (;;) {
@@ -174,11 +175,17 @@ void
 agp_apple_bind_page(void *v, bus_addr_t off, paddr_t pa, int flags)
 {
 	struct agp_apple_softc *asc = v;
+	uint32_t entry;
 
 	if (off >= (asc->gatt->ag_entries << AGP_PAGE_SHIFT))
 		return;
 
-	asc->gatt->ag_virtual[off >> AGP_PAGE_SHIFT] = htole32(pa | 0x01);
+	if (asc->asc_flags & AGP_APPLE_ISU3)
+		entry = (pa >> PAGE_SHIFT | 0x80000000);
+	else
+		entry = htole32(pa | 0x01);
+
+	asc->gatt->ag_virtual[off >> AGP_PAGE_SHIFT] = entry;
 
 	flushd(&asc->gatt->ag_virtual[off >> AGP_PAGE_SHIFT]);
 }
@@ -203,12 +210,20 @@ agp_apple_flush_tlb(void *v)
 {
 	struct agp_apple_softc *asc = v;
 
-	pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
-	    AGP_APPLE_GART_ENABLE | AGP_APPLE_GART_INVALIDATE);
-	pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
-	    AGP_APPLE_GART_ENABLE);
-	pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
-	    AGP_APPLE_GART_ENABLE | AGP_APPLE_GART_2XRESET);
-	pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
-	    AGP_APPLE_GART_ENABLE);
+	if (asc->asc_flags & AGP_APPLE_ISU3) {
+		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
+		    AGP_APPLE_GART_ENABLE | AGP_APPLE_GART_PERFRD |
+		    AGP_APPLE_GART_INVALIDATE);
+		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
+		    AGP_APPLE_GART_ENABLE | AGP_APPLE_GART_PERFRD);
+	} else {
+		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
+		    AGP_APPLE_GART_ENABLE | AGP_APPLE_GART_INVALIDATE);
+		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
+		    AGP_APPLE_GART_ENABLE);
+		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
+		    AGP_APPLE_GART_ENABLE | AGP_APPLE_GART_2XRESET);
+		pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_APPLE_GARTCTRL,
+		    AGP_APPLE_GART_ENABLE);
+	}
 }
