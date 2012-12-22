@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.12 2008/10/17 01:10:47 kurt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.13 2012/12/22 12:14:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -53,13 +53,12 @@ extern void	_mcleanup(void);
 extern unsigned char etext, eprol;
 #endif /* MCRT0 */
 
-void __start(char **, void (*)(void), const Obj_Entry *);
 static char *__strrchr(const char *p, char ch);
 
 char *__progname = "";
 char __progname_storage[NAME_MAX+1];
 
-void __start(char **sp, void (*cleanup)(void), const Obj_Entry *obj);
+void ___start(struct ps_strings *arginfo, void (*cleanup)(void));
 
 __asm(
 	".import $global$, data\n\t"
@@ -86,12 +85,8 @@ __asm(
 	".procend\n\t");
 
 void
-___start(sp, cleanup, obj)
-	char **sp;
-	void (*cleanup)(void);			/* from shared loader */
-	const Obj_Entry *obj;			/* from shared loader */
+___start(struct ps_strings *arginfo, void (*cleanup)(void))
 {
-	struct ps_strings *arginfo = (struct ps_strings *)sp;
 	char **argv, *namep;
 	char *s;
 
@@ -108,6 +103,9 @@ ___start(sp, cleanup, obj)
 		*s = '\0';
 		__progname = __progname_storage;
 	}
+
+	if (cleanup)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
