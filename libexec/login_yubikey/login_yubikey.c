@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.4 2012/02/01 16:07:28 dhill Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.5 2012/12/23 00:50:44 halex Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <ctype.h>
@@ -254,6 +255,7 @@ yubikey_login(const char *username, const char *password)
 	}
 	syslog(LOG_INFO, "user %s: counter %u.%u > %u.%u",
 	    username, ctr / 256, ctr % 256, last_ctr / 256, last_ctr % 256);
+	umask(S_IRWXO);
 	if ((f = fopen(fn, "w")) == NULL) {
 		syslog(LOG_ERR, "user %s: fopen: %s: %m", username, fn);
 		return (AUTH_FAILED);
