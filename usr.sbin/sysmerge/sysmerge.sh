@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.94 2012/12/19 19:40:30 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.95 2012/12/23 11:50:19 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -27,6 +27,7 @@ unset XTGZ XTGZURL
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
 SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
+FETCH_CMD="${FETCH_CMD:=/usr/bin/ftp -V -m -k ${FTP_KEEPALIVE:-0}}"
 REPORT="${REPORT:=${WRKDIR}/sysmerge.log}"
 DBDIR="${DBDIR:=/var/db/sysmerge}"
 
@@ -81,11 +82,6 @@ if (($(id -u) != 0)); then
 	error "need root privileges to run this script"
 	usage
 	error_rm_wrkdir
-fi
-
-if [ -z "${FETCH_CMD}" ]; then
-	[ -z "${FTP_KEEPALIVE}" ] && FTP_KEEPALIVE=0
-	FETCH_CMD="/usr/bin/ftp -V -m -k ${FTP_KEEPALIVE}"
 fi
 
 do_populate() {
