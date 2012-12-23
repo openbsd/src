@@ -1,7 +1,8 @@
 #include <emmintrin.h>
 #include <pthread.h>
 
-void foobar(void) __attribute__((constructor));
+void foo_init(void) __attribute__((constructor));
+void foo_fini(void) __attribute__((destructor));
 
 void *
 foo(void *arg)
@@ -13,7 +14,13 @@ foo(void *arg)
 }
 
 void
-foobar(void)
+foo_init(void)
+{
+	foo(NULL);
+}
+
+void
+foo_fini(void)
 {
 	foo(NULL);
 }
