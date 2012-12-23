@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.8 2010/05/01 11:32:43 kettenis Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.9 2012/12/23 12:24:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -52,16 +52,15 @@ __asm__(".text\n"
 "	.global __start\n"
 "_start:\n"
 "__start:\n"
-"	clr	%g4\n"
 "	clr	%fp\n"
 "	add	%sp, 2175, %o0\n"	/* stack */
 "	ba,pt	%icc, ___start\n"
-"	nop");
+"	 mov	%g1, %o1");
 
-static void ___start(char **, void (*)(void), const void *) __used;
+static void ___start(char **, void (*)(void)) __used;
 
 static void
-___start(char **sp, void (*cleanup)(void), const void *obj)
+___start(char **sp, void (*cleanup)(void))
 {
 	long argc;
 	char **argv, *namep;
@@ -82,6 +81,9 @@ ___start(char **sp, void (*cleanup)(void), const void *obj)
 		*s = '\0';
 		__progname = __progname_storage;
 	}
+
+	if (cleanup)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
