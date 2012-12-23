@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2005/08/15 18:53:41 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.4 2012/12/23 15:12:32 kettenis Exp $
 
-SUBDIR+= X11 exceptions objc
+SUBDIR+= X11 exceptions objc sse2
 
 install:
 
