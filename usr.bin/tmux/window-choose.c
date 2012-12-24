@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.29 2012/10/26 14:35:42 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.30 2012/12/24 12:24:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -118,7 +118,6 @@ window_choose_ready(struct window_pane *wp, u_int cur,
 	ARRAY_CONCAT(&data->old_list, &data->list);
 
 	window_choose_collapse_all(wp);
-	window_choose_redraw_screen(wp);
 }
 
 struct screen *
