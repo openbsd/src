@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.309 2012/12/24 12:25:52 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.310 2012/12/24 12:34:32 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1643,7 +1643,7 @@ is the same as using the
 .Ic last-pane
 command.
 .It Xo Ic select-window
-.Op Fl lnp
+.Op Fl lnpT
 .Op Fl t Ar target-window
 .Xc
 .D1 (alias: Ic selectw )
@@ -1659,6 +1659,11 @@ are equivalent to the
 and
 .Ic previous-window
 commands.
+If
+.Fl T
+is given and the selected window is already the current window,
+the command behaves like
+.Ic last-window .
 .It Xo Ic split-window
 .Op Fl dhvP
 .Op Fl c Ar start-directory

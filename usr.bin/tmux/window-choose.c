@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.30 2012/12/24 12:24:21 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.31 2012/12/24 12:34:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,6 @@ void	window_choose_scroll_down(struct window_pane *);
 void	window_choose_collapse(struct window_pane *, struct session *);
 void	window_choose_expand(struct window_pane *, struct session *, u_int);
 void	window_choose_collapse_all(struct window_pane *);
-void	window_choose_expand_all(struct window_pane *);
 
 enum window_choose_input_type {
 	WINDOW_CHOOSE_NORMAL = -1,
