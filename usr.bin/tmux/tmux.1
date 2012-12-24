@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.310 2012/12/24 12:34:32 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.311 2012/12/24 12:38:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -408,11 +408,15 @@ otherwise the current window in
 is chosen.
 The special character
 .Ql \&!
-uses the last (previously current) window, or
+uses the last (previously current) window,
+.Ql ^
+selects the highest numbered window,
+.Ql $
+selects the lowest numbered window, and
 .Ql +
 and
 .Ql -
-are the next window or the previous window by number.
+select the next window or the previous window by number.
 When the argument does not contain a colon,
 .Nm
 first attempts to parse it as window; if that fails, an attempt is made to
