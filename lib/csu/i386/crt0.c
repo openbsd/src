@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.14 2011/08/19 07:59:49 kettenis Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.15 2012/12/24 19:28:10 kettenis Exp $	*/
 /*	$NetBSD: crt0.c,v 1.20 1995/06/03 13:16:08 pk Exp $	*/
 
 /*
@@ -57,12 +57,8 @@ __asm(".text\n"
 "_start:\n"
 "__start:\n"
 "	movl	%esp,%ebp\n"
-"	subl	$12,%esp		# align stack\n"
-"	andl	$~15,%esp\n"
-"	addl	$12,%esp\n"
-"	pushl	%ebx			# ps_strings\n"
-"	pushl   %ecx                    # obj\n"
-"	pushl   %edx                    # cleanup\n"
+"	andl	$~15,%esp		# align stack\n"
+"	pushl	%edx			# cleanup\n"
 "	movl    0(%ebp),%eax\n"
 "	leal    8(%ebp,%eax,4),%ecx\n"
 "	leal    4(%ebp),%edx\n"
@@ -73,11 +69,9 @@ __asm(".text\n"
 "	call    ___start ");
 
 void
-___start(int argc, char **argv, char **envp, void (*cleanup)(void),
-    const void *obj, struct ps_strings *ps_strings)
+___start(int argc, char **argv, char **envp, void (*cleanup)(void))
 {
 	char *namep;
-	register struct kframe *kfp;
 	char *s;
 
         environ = envp;
@@ -93,6 +87,9 @@ ___start(int argc, char **argv, char **envp, void (*cleanup)(void),
 		*s = '\0';
 		__progname = __progname_storage;
 	}
+
+	if (cleanup)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
