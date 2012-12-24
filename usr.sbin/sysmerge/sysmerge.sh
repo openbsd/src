@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.95 2012/12/23 11:50:19 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.96 2012/12/24 14:31:36 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -211,7 +211,7 @@ mm_install() {
 		fi
 		export NEED_REBOOT=1
 		;;
-	/etc/mail/access|/etc/mail/genericstable|/etc/mail/mailertable|/etc/mail/virtusertable)
+	/etc/mail/@(access|genericstable|mailertable|virtusertable))
 		echo " (running makemap(8))"
 		/usr/libexec/sendmail/makemap hash ${DESTDIR}/${1#.} < ${DESTDIR}/${1#.}
 		;;
@@ -249,7 +249,7 @@ mm_install_link() {
 
 merge_loop() {
 	local INSTALL_MERGED MERGE_AGAIN
-	[ "$(expr "${MERGE_CMD}" : ^sdiff.*)" -gt 0 ] && \
+	[[ ${MERGE_CMD} == sdiff* ]] && \
 		echo "===> Type h at the sdiff prompt (%) to get usage help\n"
 	MERGE_AGAIN=1
 	while [ -n "${MERGE_AGAIN}" ]; do
@@ -337,7 +337,7 @@ diff_loop() {
 	unset CAN_INSTALL
 	unset FORCE_UPG
 
-	while [ "${HANDLE_COMPFILE}" = "v" -o "${HANDLE_COMPFILE}" = "todo" ]; do
+	while [[ ${HANDLE_COMPFILE} == @(v|todo) ]]; do
 		if [ -f "${DESTDIR}${COMPFILE#.}" -a -f "${COMPFILE}" -a -z "${IS_LINK}" ]; then
 			if [ -z "${DIFFMODE}" ]; then
 				# automatically install files if current != new and current = old
@@ -445,7 +445,7 @@ diff_loop() {
 
 		if [ -z "${BATCHMODE}" ]; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
-			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" -a "${COMPFILE}" != "./etc/hosts" ]; then
+			if [[ ${COMPFILE} != ./etc/@(master.passwd|group|hosts) ]]; then
 				CAN_INSTALL=1
 				echo "  Use 'i' to install the temporary ${COMPFILE}"
 			fi
@@ -546,10 +546,9 @@ do_compare() {
 		# it will be deleted from temproot and ignored from comparison.
 		# several files are generated from scripts so CVS ID is not a
 		# reliable way of detecting changes; leave for a full diff.
-		if [ -z "${DIFFMODE}" -a "${COMPFILE}" != "./etc/fbtab" \
-		    -a "${COMPFILE}" != "./etc/login.conf" \
-		    -a "${COMPFILE}" != "./etc/sysctl.conf" \
-		    -a "${COMPFILE}" != "./etc/ttys" -a -z "${IS_LINK}" ]; then
+		if [[ -z ${DIFFMODE} && \
+			${COMPFILE} != ./etc/@(fbtab|login.conf|sysctl.conf|ttys) && \
+			-z ${IS_LINK} ]]; then
 			CVSID1=$(grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2>/dev/null)
 			CVSID2=$(grep "[$]OpenBSD:" ${COMPFILE} 2>/dev/null) || CVSID2=none
 			[ "${CVSID2}" = "${CVSID1}" ] && rm "${COMPFILE}"
@@ -643,8 +642,7 @@ while getopts bds:x: arg; do
 	s)
 		if [ -d "${OPTARG}" ]; then
 			SRCDIR=${OPTARG}
-		elif echo ${OPTARG} | \
-		    grep -qE '^(file|ftp|http|https)://.*/etc[0-9][0-9]\.tgz$'; then
+		elif [[ ${OPTARG} == @(file|ftp|http|https)://*/etc[0-9][0-9].tgz ]]; then 
 			TGZ=${WRKDIR}/etc.tgz
 			TGZURL=${OPTARG}
 			${FETCH_CMD} -o ${TGZ} ${TGZURL} || \
@@ -654,8 +652,7 @@ while getopts bds:x: arg; do
 		fi
 		;;
 	x)
-		if echo ${OPTARG} | \
-		    grep -qE '^(file|ftp|http|https)://.*/xetc[0-9][0-9]\.tgz$'; then
+		if [[ ${OPTARG} == @(file|ftp|http|https)://*/xetc[0-9][0-9].tgz ]]; then 
 			XTGZ=${WRKDIR}/xetc.tgz
 			XTGZURL=${OPTARG}
 			${FETCH_CMD} -o ${XTGZ} ${XTGZURL} || \
