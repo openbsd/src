@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.111 2011/11/23 02:05:17 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.112 2012/12/24 19:43:11 guenther Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -113,7 +113,8 @@ void	*pool_do_get(struct pool *, int);
 void	 pool_do_put(struct pool *, void *);
 void	 pr_rmpage(struct pool *, struct pool_item_header *,
 	    struct pool_pagelist *);
-int	pool_chk_page(struct pool *, struct pool_item_header *, int);
+int	 pool_chk_page(struct pool *, struct pool_item_header *, int);
+int	 pool_chk(struct pool *);
 struct pool_item_header *pool_alloc_item_header(struct pool *, caddr_t , int);
 
 void	*pool_allocator_alloc(struct pool *, int, int *);
@@ -1266,7 +1267,9 @@ db_show_all_pools(db_expr_t expr, int haddr, db_expr_t count, char *modif)
 		pool_chk(pp);
 	}
 }
+#endif /* DDB */
 
+#if defined(POOL_DEBUG) || defined(DDB)
 int
 pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 {
@@ -1360,7 +1363,9 @@ pool_chk(struct pool *pp)
 
 	return (r);
 }
+#endif /* defined(POOL_DEBUG) || defined(DDB) */
 
+#ifdef DDB
 void
 pool_walk(struct pool *pp, int full, int (*pr)(const char *, ...),
     void (*func)(void *, int, int (*)(const char *, ...)))
