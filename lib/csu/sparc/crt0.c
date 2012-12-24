@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-void ___start(int, char **, char **, void (*cleanup)(void), void *);
+void ___start(int, char **, char **, void (*cleanup)(void));
 
 __asm(
 "	.text\n"
@@ -55,10 +55,8 @@ __asm(
 "	add	%o1, %o2, %o2\n"
 "	andn	%sp, 7,	%sp		! align\n"
 "	sub	%sp, 24, %sp		! expand to standard stack frame size\n"
-"	mov	%g3, %o3\n"
-"	mov	%g2, %o4\n"
 "	call	___start\n"
-"	 mov	%g1, %o5\n"
+"	 mov	%g1, %o3\n"
 );
 
 char **environ;
@@ -74,8 +72,7 @@ extern unsigned char _etext, _eprol;
 static char *_strrchr(const char *, char);
 
 void
-___start(int argc, char **argv, char **envp, void (*cleanup)(void),
-	void *obj)
+___start(int argc, char **argv, char **envp, void (*cleanup)(void))
 {
 	char *s;
 
@@ -92,6 +89,9 @@ ___start(int argc, char **argv, char **envp, void (*cleanup)(void),
 		*s = '\0';
 		__progname = __progname_storage;
 	}
+
+	if (cleanup)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
