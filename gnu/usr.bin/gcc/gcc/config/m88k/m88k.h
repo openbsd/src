@@ -989,6 +989,10 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 /* Define registers used by the epilogue and return instruction.  */
 #define EPILOGUE_USES(REGNO)	(reload_completed && (REGNO) == 1)
 
+/* Before the prologue, RA is in r1.  */
+#define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (Pmode, 1)
+#define DWARF_FRAME_RETURN_COLUMN DWARF_FRAME_REGNUM (1)
+
 /* Definitions for register eliminations.
 
    We have two registers that can be eliminated on the m88k.  First, the
