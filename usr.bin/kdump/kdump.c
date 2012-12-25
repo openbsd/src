@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.76 2012/12/05 12:54:15 millert Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.77 2012/12/25 09:35:51 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,6 +59,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,6 +160,7 @@ static void ktrstruct(char *, size_t);
 static void setemul(const char *);
 static void usage(void);
 static void atfd(int);
+static void polltimeout(int);
 
 int
 main(int argc, char *argv[])
@@ -717,6 +719,10 @@ ktrsyscall(struct ktr_syscall *ktr)
 		pn(NULL);
 		pn(sendrecvflagsname);
 		break;
+	case SYS_shutdown:
+		pn(NULL);
+		pn(shutdownhowname);
+		break;
 	case SYS___semctl:
 		pn(NULL);
 		pn(NULL);
@@ -740,6 +746,11 @@ ktrsyscall(struct ktr_syscall *ktr)
 	case SYS_clock_settime:
 	case SYS_clock_getres:
 		pn(clockname);
+		break;
+	case SYS_poll:
+		pn(NULL);
+		pn(NULL);
+		pn(polltimeout);
 		break;
 	case SYS_sigaction:
 		pn(signame);
@@ -776,6 +787,9 @@ ktrsyscall(struct ktr_syscall *ktr)
 		pn(NULL);
 		pn(NULL);
 		pn(wait4optname);
+		break;
+	case SYS_getrusage:
+		pn(rusagewho);
 		break;
 	case SYS___thrsleep:
 		pn(NULL);
@@ -862,6 +876,11 @@ ktrsyscall(struct ktr_syscall *ktr)
 		pn(NULL);
 		pn(atflagsname);
 		break;
+	case SYS_pathconf:
+	case SYS_fpathconf: 
+		pn(NULL);
+		pn(pathconfname);
+		break;
 	}
 
 nonnative:
@@ -900,6 +919,7 @@ static struct ctlname kernprocname[] =
 	{ "tty" },
 	{ "uid" },
 	{ "ruid" },
+	{ "kthread" },
 };
 static struct ctlname ttysname[] = CTL_KERN_TTY_NAMES;
 static struct ctlname semname[] = CTL_KERN_SEMINFO_NAMES;
@@ -1604,4 +1624,15 @@ atfd(int fd)
 		(void)printf("%d", fd);
 	else
 		(void)printf("%#x", fd);
+}
+
+static void
+polltimeout(int timeout)
+{
+	if (timeout == INFTIM)
+		(void)printf("INFTIM");
+	else if (decimal)
+		(void)printf("%d", timeout);
+	else
+		(void)printf("%#x", timeout);
 }

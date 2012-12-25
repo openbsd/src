@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.7 2012/04/12 12:33:04 deraadt Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.8 2012/12/25 09:35:51 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -48,6 +48,7 @@ void mlockallname(int);
 void shmatname(int);
 void nfssvcname(int);
 void whencename(int);
+void pathconfname(int);
 void rlimitname(int);
 void shutdownhowname(int);
 void prioname(int);
@@ -61,6 +62,7 @@ void extattrctlname(int);
 void kldsymcmdname(int);
 void sendfileflagsname(int);
 void acltypename(int);
+void rusagewho(int);
 void sigactionflagname(int);
 void sigprocmaskhowname(int);
 void lio_listioname(int);
@@ -68,4 +70,4 @@ void minheritname(int);
 void quotactlname(int);
 void ptraceopname(int);
 
-extern int decimal, resolv;
+extern int decimal, resolv, fancy;
