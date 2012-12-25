@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.96 2012/12/24 14:31:36 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.97 2012/12/25 13:26:45 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -118,7 +118,7 @@ do_populate() {
 			# and is present in current installation
 			if [ -z "${DIFFMODE}" ]; then
 				_R=$(cd ${TEMPROOT} && \
-					cksum -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
+					cksum -c ${DESTDIR}/${DBDIR}/${i} 2>/dev/null | awk '/OK/ { print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
 						# sanity check: _always_ compare master.passwd(5) and group(5)
@@ -559,7 +559,7 @@ do_compare() {
 			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" >/dev/null 2>&1; then
 				rm "${COMPFILE}"
 			# xetcXX.tgz contains binary files; set IS_BINFILE to disable sdiff
-			elif diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" | grep "Binary" >/dev/null 2>&1; then
+			elif diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" | grep -q Binary; then
 				IS_BINFILE=1
 				diff_loop
 			else
