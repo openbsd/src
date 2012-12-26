@@ -1,4 +1,4 @@
-/*	$OpenBSD: tailq.h,v 1.2 2008/05/04 18:34:04 millert Exp $	*/
+/*	$OpenBSD: tailq.h,v 1.3 2012/12/26 11:44:12 millert Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #define	SM_TAILQ_H_
 
 /*
- * $Sendmail: tailq.h,v 1.2 2007/06/29 23:09:57 ca Exp $
+ * $Sendmail: tailq.h,v 1.3 2012/01/21 00:12:14 ashish Exp $
  *
  * This file is a modified copy of queue.h from a BSD system:
  * we only need tail queues here.
@@ -69,8 +69,8 @@ struct {								\
 	struct type **tqe_prev;	/* address of previous next element */	\
 }
 
-/* 
- * tail queue access methods 
+/*
+ * tail queue access methods
  */
 #define	SM_TAILQ_FIRST(head)		((head)->tqh_first)
 #define	SM_TAILQ_END(head)		NULL
