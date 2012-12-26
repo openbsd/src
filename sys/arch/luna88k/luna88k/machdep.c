@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.84 2012/10/21 09:51:59 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.85 2012/12/26 22:32:13 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -219,7 +219,6 @@ extern char *esym;
 
 int machtype = LUNA_88K;	/* may be overwritten in cpu_startup() */
 int cputyp = CPU_88100;
-int boothowto;			/* XXX: should be set in boot loader and locore.S */
 int bootdev;			/* XXX: should be set in boot loader and locore.S */
 int cpuspeed = 33;		/* safe guess */
 int sysconsole = 1;		/* 0 = ttya, 1 = keyboard/mouse, used in dev/sio.c */
@@ -234,9 +233,6 @@ extern void ws_cnattach(void);	/* in dev/lunaws.c */
 
 vaddr_t first_addr;
 vaddr_t last_addr;
-
-vaddr_t avail_start, avail_end;
-vaddr_t virtual_avail, virtual_end;
 
 extern struct user *proc0paddr;
 
@@ -992,6 +988,8 @@ luna88k_bootstrap()
 {
 	extern struct cmmu_p cmmu8820x;
 	extern char *end;
+	vaddr_t avail_start;
+	extern vaddr_t avail_end;
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;
 #endif
