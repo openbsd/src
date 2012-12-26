@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.97 2012/12/25 13:26:45 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.98 2012/12/26 10:38:10 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -21,8 +21,7 @@
 umask 0022
 
 unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE ETCSUM NEED_NEWALIASES
-unset NEWGRP NEWUSR NEED_REBOOT SRCDIR SRCSUM TGZ TGZURL XETCSUM
-unset XTGZ XTGZURL
+unset NEWGRP NEWUSR NEED_REBOOT SRCDIR SRCSUM TGZ XETCSUM XTGZ
 
 WRKDIR=$(mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXXXXXXX) || exit 1
 SWIDTH=$(stty size | awk '{w=$2} END {if (w==0) {w=80} print w}')
@@ -631,6 +630,18 @@ do_post() {
 	rm -f ${DESTDIR}/${DBDIR}/.*.bak
 }
 
+get_sets() {
+	local _etc=$1 _tgz=$2 _url=$2
+	if [[ ${_url} == @(file|ftp|http|https)://*/${_etc}[0-9][0-9].tgz ]]; then 
+		_tgz=${WRKDIR}/${_etc}.tgz
+		${FETCH_CMD} -o ${_tgz} ${_url} || \
+			error_rm_wrkdir "could not retrieve ${_url}"
+	fi
+	tar tzf ${_tgz} ./var/db/sysmerge/${_etc}sum >/dev/null 2>&1 || \
+		error_rm_wrkdir "${_tgz} is not a valid ${_etc}XX.tgz set"
+	[[ ${_etc} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
+}
+
 while getopts bds:x: arg; do
 	case ${arg} in
 	b)
@@ -642,24 +653,14 @@ while getopts bds:x: arg; do
 	s)
 		if [ -d "${OPTARG}" ]; then
 			SRCDIR=${OPTARG}
-		elif [[ ${OPTARG} == @(file|ftp|http|https)://*/etc[0-9][0-9].tgz ]]; then 
-			TGZ=${WRKDIR}/etc.tgz
-			TGZURL=${OPTARG}
-			${FETCH_CMD} -o ${TGZ} ${TGZURL} || \
-				error_rm_wrkdir "could not retrieve ${TGZURL}"
-		else
-			TGZ=${OPTARG}
+			[ -f "${SRCDIR}/etc/Makefile" ] && \
+				error_rm_wrkdir "${SRCDIR} is not a valid path to src"
+			continue
 		fi
+		get_sets etc "${OPTARG}"
 		;;
 	x)
-		if [[ ${OPTARG} == @(file|ftp|http|https)://*/xetc[0-9][0-9].tgz ]]; then 
-			XTGZ=${WRKDIR}/xetc.tgz
-			XTGZURL=${OPTARG}
-			${FETCH_CMD} -o ${XTGZ} ${XTGZURL} || \
-				error_rm_wrkdir "could not retrieve ${XTGZURL}"
-		else
-			XTGZ=${OPTARG}
-		fi
+		get_sets xetc "${OPTARG}"
 		;;
 	*)
 		usage
@@ -684,15 +685,6 @@ if [ -z "${SRCDIR}" -a -z "${TGZ}" -a -z "${XTGZ}" ]; then
 	fi
 fi
 
-[ -n "${SRCDIR}" -a ! -f "${SRCDIR}/etc/Makefile" ] && \
-	error_rm_wrkdir "${SRCDIR} is not a valid path to src"
-
-[ -n "${TGZ}" ] && ! tar tzf ${TGZ} ./var/db/sysmerge/etcsum >/dev/null 2>&1 && \
-	error_rm_wrkdir "${TGZ} is not a valid etcXX.tgz set"
-
-[ -n "${XTGZ}" ] && ! tar tzf ${XTGZ} ./var/db/sysmerge/xetcsum >/dev/null 2>&1 && \
-	error_rm_wrkdir "${XTGZ} is not a valid xetcXX.tgz set"
-	
 TEMPROOT="${WRKDIR}/temproot"
 BKPDIR="${WRKDIR}/backups"
 
