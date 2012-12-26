@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.98 2012/12/26 10:38:10 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.99 2012/12/26 12:28:26 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -653,7 +653,7 @@ while getopts bds:x: arg; do
 	s)
 		if [ -d "${OPTARG}" ]; then
 			SRCDIR=${OPTARG}
-			[ -f "${SRCDIR}/etc/Makefile" ] && \
+			[ -f "${SRCDIR}/etc/Makefile" ] || \
 				error_rm_wrkdir "${SRCDIR} is not a valid path to src"
 			continue
 		fi
