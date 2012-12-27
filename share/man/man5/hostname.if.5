@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.58 2012/11/26 21:35:20 krw Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.59 2012/12/27 08:26:43 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 26 2012 $
+.Dd $Mdocdate: December 27 2012 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -293,6 +293,11 @@ add ep1
 static fxp0 8:0:20:1e:2f:2b
 up    # and finally enable it
 .Ed
+.Sh FILES
+.Bl -tag -width "/etc/hostname.XXXXXX"
+.It Pa /etc/hostname.XXX
+Interface-specific configuration files.
+.El
 .Sh SEE ALSO
 .Xr hosts 5 ,
 .Xr dhcp 8 ,
