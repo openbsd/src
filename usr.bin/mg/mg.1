@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.73 2012/12/04 10:54:20 florian Exp $
+.\"	$OpenBSD: mg.1,v 1.74 2012/12/27 18:51:52 florian Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: December 4 2012 $
+.Dd $Mdocdate: December 27 2012 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -495,6 +495,8 @@ the *help* buffer.
 .It describe-key-briefly
 Read a key from the keyboard, and look it up in the keymap.
 Display the name of the function currently bound to the key.
+.It diff-buffer-with-file
+View the differences between buffer and its associated file.
 .It digit-argument
 Process a numerical argument for keyboard-invoked functions.
 .It downcase-region

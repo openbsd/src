@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.87 2012/11/06 18:04:10 florian Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.88 2012/12/27 18:51:52 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -11,6 +11,10 @@
 
 #include <libgen.h>
 #include <stdarg.h>
+
+#ifndef DIFFTOOL
+#define DIFFTOOL "/usr/bin/diff"
+#endif /* !DIFFTOOL */
 
 static struct buffer  *makelist(void);
 static struct buffer *bnew(const char *);
@@ -919,4 +923,75 @@ dorevert(void)
 	if (readin(curbp->b_fname))
 		return(setlineno(lineno));
 	return (FALSE);
+}
+
+/*
+ * Diff the current buffer to what is on disk.
+ */
+/*ARGSUSED */
+int
+diffbuffer(int f, int n)
+{
+	struct buffer	*bp;
+	struct line	*lp, *lpend;
+	size_t		 len;
+	int		 ret;
+	char		*text, *ttext;
+	char		* const argv[] =
+	    {DIFFTOOL, "-u", "-p", curbp->b_fname, "-", (char *)NULL};
+
+	len = 0;
+
+	/* C-u is not supported */
+	if (n > 1)
+		return (ABORT);
+
+	if (access(DIFFTOOL, X_OK) != 0) {
+		ewprintf("%s not found or not executable.", DIFFTOOL);
+		return (FALSE);
+	}
+
+	if (curbp->b_fname[0] == 0) {
+		ewprintf("Cannot diff buffer not associated with any files.");
+		return (FALSE);
+	}
+
+	lpend = curbp->b_headp;
+	for (lp = lforw(lpend); lp != lpend; lp = lforw(lp)) {
+		len+=llength(lp);
+		if (lforw(lp) != lpend)		/* no implied \n on last line */
+			len++;
+	}
+	if ((text = calloc(len + 1, sizeof(char))) == NULL) {
+		ewprintf("Cannot allocate memory.");
+		return (FALSE);
+	}
+	ttext = text;
+
+	for (lp = lforw(lpend); lp != lpend; lp = lforw(lp)) {
+		if (llength(lp) != 0) {
+			memcpy(ttext, ltext(lp), llength(lp));
+			ttext += llength(lp);
+		}
+		if (lforw(lp) != lpend)		/* no implied \n on last line */
+			*ttext++ = '\n';
+	}
+
+	bp = bfind("*Diff*", TRUE);
+	bp->b_flag |= BFREADONLY;
+	if (bclear(bp) != TRUE) {
+		free(text);
+		return (FALSE);
+	}
+
+	ret = pipeio(DIFFTOOL, argv, text, len, bp);
+
+	if (ret == TRUE) {
+		eerase();
+		if (lforw(bp->b_headp) == bp->b_headp)
+			addline(bp, "Diff finished (no differences).");
+	}
+
+	free(text);
+	return (ret);
 }
