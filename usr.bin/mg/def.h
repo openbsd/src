@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.132 2012/12/04 10:54:20 florian Exp $	*/
+/*	$OpenBSD: def.h,v 1.133 2012/12/27 18:49:59 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -591,6 +591,8 @@ int		 region_get_data(struct region *, char *, int);
 void		 region_put_data(const char *, int);
 int		 markbuffer(int, int);
 int		 piperegion(int, int);
+int		 pipeio(const char * const, char * const[], char * const, int,
+		     struct buffer *);
 
 /* search.c X */
 int		 forwsearch(int, int);
