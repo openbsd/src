@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.141 2012/12/02 19:42:36 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.142 2012/12/28 14:05:39 jsing Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1083,15 +1083,15 @@ void
 buf_daemon(struct proc *p)
 {
 	struct timeval starttime, timediff;
-	struct buf *bp;
-	int s, pushed;
+	struct buf *bp = NULL;
+	int s, pushed = 0;
 
 	cleanerproc = curproc;
 
-	pushed = 16;
 	s = splbio();
 	for (;;) {
-		if (pushed >= 16 && (UNCLEAN_PAGES < hidirtypages &&
+		if (bp == NULL || (pushed >= 16 &&
+		    UNCLEAN_PAGES < hidirtypages &&
 		    bcstats.kvaslots_avail > 2 * RESERVE_SLOTS)){
 			pushed = 0;
 			/*
@@ -1151,8 +1151,6 @@ buf_daemon(struct proc *p)
 				break;
 
 		}
-		if (bp == NULL)
-			pushed = 16; /* No dirty bufs - sleep */
 	}
 }
 
