@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.2 2011/09/02 10:45:36 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.3 2012/12/28 20:36:25 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -19,23 +19,27 @@ use warnings;
 
 package Proc;
 use Carp;
-use List::Util qw(first);
+use Errno;
 use POSIX;
 use Time::HiRes qw(time alarm sleep);
 
 my %CHILDREN;
 
 sub kill_children {
-	my @pids = keys %CHILDREN
+	my @pids = @_ ? @_ : keys %CHILDREN
 	    or return;
-	if (my $sudo = $ENV{SUDO}) {
-		local $?;  # do not modify during END block
-		my @cmd = ($sudo, '/bin/kill', '-TERM', @pids);
-		system(@cmd);
-	} else {
-		kill TERM => @pids;
+	my @perms;
+	foreach my $pid (@pids) {
+		if (kill(TERM => $pid) != 1 and $!{EPERM}) {
+			push @perms, $pid;
+		}
 	}
-	%CHILDREN = ();
+	if (my $sudo = $ENV{SUDO} and @perms) {
+		local $?;  # do not modify during END block
+		my @cmd = ($sudo, '/bin/kill', '-TERM', @perms);
+		system(@cmd);
+	}
+	delete @CHILDREN{@pids};
 }
 
 BEGIN {
@@ -69,11 +73,15 @@ sub new {
 sub run {
 	my $self = shift;
 
+	pipe(my $reader, my $writer)
+	    or die ref($self), " pipe to child failed";
 	defined(my $pid = fork())
 	    or die ref($self), " fork child failed";
 	if ($pid) {
 		$CHILDREN{$pid} = 1;
 		$self->{pid} = $pid;
+		close($reader);
+		$self->{pipe} = $writer;
 		return $self;
 	}
 	%CHILDREN = ();
@@ -86,6 +94,10 @@ sub run {
 	};
 	open(STDERR, '>&', $self->{log})
 	    or die ref($self), " dup STDERR failed: $!";
+	close($writer);
+	open(STDIN, '<&', $reader)
+	    or die ref($self), " dup STDIN failed: $!";
+	close($reader);
 
 	$self->child();
 	print STDERR $self->{up}, "\n";
@@ -161,6 +173,12 @@ sub down {
 	$self->loggrep(qr/$self->{down}/, $timeout)
 	    or croak ref($self), " no $self->{down} in $self->{logfile} ".
 		"after $timeout seconds";
+	return $self;
+}
+
+sub kill_child {
+	my $self = shift;
+	kill_children($self->{pid});
 	return $self;
 }
 

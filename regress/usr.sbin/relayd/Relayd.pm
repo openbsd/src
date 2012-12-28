@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.4 2012/11/28 00:40:36 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.5 2012/12/28 20:36:25 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -46,7 +46,7 @@ sub new {
 	$self->{connectport}
 	    or croak "$class connect port not given";
 
-	my $test = basename($self->{test} || "");
+	my $test = basename($self->{testfile} || "");
 	open(my $fh, '>', $self->{conffile})
 	    or die ref($self), " conf file $self->{conffile} create failed: $!";
 	print $fh "log all\n";
@@ -86,14 +86,6 @@ sub up {
 	    or croak ref($self), " no relay_launch in $self->{logfile} ".
 		"after $timeout seconds";
 	return $self;
-}
-
-sub down {
-	my $self = shift;
-	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
-	my @cmd = (@sudo, '/bin/kill', $self->{pid});
-	system(@cmd);
-	return Proc::down($self, @_);
 }
 
 sub child {

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relayd.pl,v 1.6 2012/12/28 20:36:25 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.1 2012/12/28 20:36:25 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -17,16 +17,30 @@
 
 use strict;
 use warnings;
+use File::Basename;
+use File::Copy;
 use Socket;
 use Socket6;
 
 use Client;
 use Relayd;
 use Server;
+use Remote;
 require 'funcs.pl';
 
 sub usage {
-	die "usage: relay.pl copy|splice [test-args.pl]\n";
+	die <<"EOF";
+usage:
+    remote.pl localport remoteaddr remoteport [test-args.pl]
+	Run test with local client and server.  Remote relayd
+	forwarding from remoteaddr remoteport to server localport
+	has to be started manually.
+    remote.pl copy|splice listenaddr connectaddr connectport [test-args.pl]
+	Only start remote relayd.
+    remote.pl copy|splice localaddr remoteaddr remotessh [test-args.pl]
+	Run test with local client and server.  Remote relayd is
+	started automatically with ssh on remotessh.
+EOF
 }
 
 my $test;
@@ -36,44 +50,87 @@ if (@ARGV and -f $ARGV[-1]) {
 	do $test
 	    or die "Do test file $test failed: ", $@ || $!;
 }
-@ARGV == 1 or usage();
+my $mode =
+	@ARGV == 3 && $ARGV[0] =~ /^\d+$/ && $ARGV[2] =~ /^\d+$/ ? "manual" :
+	@ARGV == 4 && $ARGV[1] !~ /^\d+$/ && $ARGV[3] =~ /^\d+$/ ? "relay"  :
+	@ARGV == 4 && $ARGV[1] !~ /^\d+$/ && $ARGV[3] !~ /^\d+$/ ? "auto"   :
+	usage();
 
-my($sport, $rport) = find_ports(num => 2);
+my $r;
+if ($mode eq "relay") {
+	my($rport) = find_ports(num => 1);
+	$r = Relayd->new(
+	    forward             => $ARGV[0],
+	    %{$args{relayd}},
+	    listendomain        => AF_INET,
+	    listenaddr          => $ARGV[1],
+	    listenport          => $rport,
+	    connectdomain       => AF_INET,
+	    connectaddr         => $ARGV[2],
+	    connectport         => $ARGV[3],
+	    logfile             => dirname($0)."/remote.log",
+	    conffile            => dirname($0)."/relayd.conf",
+	    testfile            => $test,
+	);
+	open(my $log, '<', $r->{logfile})
+	    or die "Remote log file open failed: $!";
+	$SIG{__DIE__} = sub {
+		die @_ if $^S;
+		copy($log, \*STDERR);
+		warn @_;
+		exit 255;
+	};
+	copy($log, \*STDERR);
+	$r->run;
+	copy($log, \*STDERR);
+	$r->up;
+	copy($log, \*STDERR);
+	print STDERR "listen sock: $ARGV[1] $rport\n";
+	<STDIN>;
+	copy($log, \*STDERR);
+	print STDERR "stdin closed\n";
+	$r->kill_child;
+	$r->down;
+	copy($log, \*STDERR);
+
+	exit;
+}
+
 my $s = Server->new(
     func                => \&read_char,
-    listendomain        => AF_INET,
-    listenaddr          => "127.0.0.1",
-    listenport          => $sport,
     %{$args{server}},
-);
-my $r = Relayd->new(
-    forward             => $ARGV[0],
     listendomain        => AF_INET,
-    listenaddr          => "127.0.0.1",
-    listenport          => $rport,
-    connectdomain       => AF_INET,
-    connectaddr         => "127.0.0.1",
-    connectport         => $sport,
-    %{$args{relayd}},
-    testfile            => $test,
+    listenaddr          => ($mode eq "auto" ? $ARGV[1] : undef),
+    listenport          => ($mode eq "manual" ? $ARGV[0] : undef),
 );
+if ($mode eq "auto") {
+	$r = Remote->new(
+	    forward             => $ARGV[0],
+	    logfile             => "relayd.log",
+	    testfile            => $test,
+	    %{$args{relay}},
+	    remotessh           => $ARGV[3],
+	    listenaddr          => $ARGV[2],
+	    connectaddr         => $ARGV[1],
+	    connectport         => $s->{listenport},
+	);
+	$r->run->up;
+}
 my $c = Client->new(
     func                => \&write_char,
-    connectdomain       => AF_INET,
-    connectaddr         => "127.0.0.1",
-    connectport         => $rport,
     %{$args{client}},
+    connectdomain       => AF_INET,
+    connectaddr         => ($mode eq "manual" ? $ARGV[1] : $r->{listenaddr}),
+    connectport         => ($mode eq "manual" ? $ARGV[2] : $r->{listenport}),
 );
 
 $s->run;
-$r->run;
-$r->up;
 $c->run->up;
 $s->up;
 
 $c->down;
 $s->down;
-$r->kill_child;
+$r->close_child;
 $r->down;
 
 foreach ([ client => $c ], [ relayd => $r ], [ server => $s ]) {

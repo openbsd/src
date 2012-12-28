@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.2 2011/09/02 21:05:41 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.3 2012/12/28 20:36:25 bluhm Exp $
 
 # Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -50,7 +50,7 @@ sub child {
 	    Domain	=> $self->{connectdomain},
 	    PeerAddr    => $self->{connectaddr},
 	    PeerPort    => $self->{connectport},
-	) or die ref($self), " socket connect failed: $!";
+	) or die ref($self), " $iosocket socket connect failed: $!";
 	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
 
