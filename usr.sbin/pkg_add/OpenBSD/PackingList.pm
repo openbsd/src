@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.120 2012/06/08 15:01:00 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.121 2012/12/28 15:09:09 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -135,6 +135,15 @@ sub infodir
 	return ${$self->{infodir}};
 }
 
+sub zap_wrong_annotations
+{
+	my $self = shift;
+	my $pkgname = $self->pkgname;
+	if (defined $pkgname && $pkgname =~ m/^(?:\.libs\d*|partial)\-/) {
+		delete $self->{'manual-installation'};
+	}
+}
+
 sub conflict_list
 {
 	require OpenBSD::PkgCfl;
@@ -161,6 +170,7 @@ sub read
 			return if $line =~ m/^\s*$/o;
 			OpenBSD::PackingElement->create($line, $plist);
 		});
+	$plist->zap_wrong_annotations;
 	return $plist;
 }
 
@@ -303,6 +313,7 @@ sub tofile
 {
 	my ($self, $fname) = @_;
 	open(my $fh, '>', $fname) or return;
+	$self->zap_wrong_annotations;
 	$self->write($fh);
 	close($fh) or return;
 	return 1;
