@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.18 2012/07/10 15:53:34 blambert Exp $	*/
+/*	$OpenBSD: radix.h,v 1.19 2012/12/28 17:52:06 gsoares Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ struct radix_node_head {
 #define Bcmp(a, b, n) bcmp(((caddr_t)(a)), ((caddr_t)(b)), (unsigned)(n))
 #define Bcopy(a, b, n) bcopy(((caddr_t)(a)), ((caddr_t)(b)), (unsigned)(n))
 #define Bzero(p, n) bzero((caddr_t)(p), (unsigned)(n));
-#define R_Malloc(p, t, n) (p = (t) malloc((unsigned long)(n), M_RTABLE, M_DONTWAIT))
+#define R_Malloc(p, t, n) (p = (t) malloc((unsigned long)(n), M_RTABLE, M_NOWAIT))
 #define Free(p) free((caddr_t)p, M_RTABLE);
 
 void	rn_init(void);

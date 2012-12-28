@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.42 2012/01/24 19:08:46 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.43 2012/12/28 17:52:06 gsoares Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		else if (frag6_nfragpackets >= (u_int)ip6_maxfragpackets)
 			goto dropfrag;
 		frag6_nfragpackets++;
-		q6 = malloc(sizeof(*q6), M_FTABLE, M_DONTWAIT | M_ZERO);
+		q6 = malloc(sizeof(*q6), M_FTABLE, M_NOWAIT | M_ZERO);
 		if (q6 == NULL)
 			goto dropfrag;
 
@@ -367,7 +367,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		}
 	}
 
-	ip6af = malloc(sizeof(*ip6af), M_FTABLE, M_DONTWAIT | M_ZERO);
+	ip6af = malloc(sizeof(*ip6af), M_FTABLE, M_NOWAIT | M_ZERO);
 	if (ip6af == NULL)
 		goto dropfrag;
 	ip6af->ip6af_flow = ip6->ip6_flow;

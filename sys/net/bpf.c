@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.82 2012/12/21 11:17:22 mikeb Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.83 2012/12/28 17:52:06 gsoares Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1482,7 +1482,7 @@ void
 bpfattach(caddr_t *driverp, struct ifnet *ifp, u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
-	bp = (struct bpf_if *)malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
+	bp = (struct bpf_if *)malloc(sizeof(*bp), M_DEVBUF, M_NOWAIT);
 
 	if (bp == 0)
 		panic("bpfattach");

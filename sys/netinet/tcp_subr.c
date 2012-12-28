@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.113 2012/03/10 12:03:29 claudio Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.114 2012/12/28 17:52:06 gsoares Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1027,7 +1027,7 @@ tcp_signature_tdb_init(tdbp, xsp, ii)
 	if ((ii->ii_authkeylen < 1) || (ii->ii_authkeylen > 80))
 		return (EINVAL);
 
-	tdbp->tdb_amxkey = malloc(ii->ii_authkeylen, M_XDATA, M_DONTWAIT);
+	tdbp->tdb_amxkey = malloc(ii->ii_authkeylen, M_XDATA, M_NOWAIT);
 	if (tdbp->tdb_amxkey == NULL)
 		return (ENOMEM);
 	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, ii->ii_authkeylen);
