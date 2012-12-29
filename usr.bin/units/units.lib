@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.43 2012/12/01 08:19:16 jmc Exp $
+/ $OpenBSD: units.lib,v 1.44 2012/12/29 16:02:15 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -745,7 +745,7 @@ kilohm			kiloohm
 megohm			megaohm
 siderealyear		365.256360417 day
 siderealday		23.934469444 hour
-siderealhour		1|24 sidereal day
+siderealhour		1|24 siderealday
 lunarmonth		29.5305555 day
 synodicmonth		lunarmonth
 siderealmonth		27.32152777 day
