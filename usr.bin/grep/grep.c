@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.44 2011/07/08 01:20:24 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.45 2012/12/29 01:32:44 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -94,6 +94,7 @@ enum {
 /* Housekeeping */
 int	 first;		/* flag whether or not this is our first match */
 int	 tail;		/* lines left to print */
+int	 file_err;	/* file reading error */
 
 struct patfile {
 	const char		*pf_file;
@@ -497,5 +498,5 @@ main(int argc, char *argv[])
 		for (c = 0; argc--; ++argv)
 			c += procfile(*argv);
 
-	exit(!c);
+	exit(c ? (file_err ? (qflag ? 0 : 2) : 0) : (file_err ? 2 : 1));
 }

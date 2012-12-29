@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.17 2011/07/08 01:20:24 tedu Exp $	*/
+/*	$OpenBSD: grep.h,v 1.18 2012/12/29 01:32:44 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -69,7 +69,7 @@ extern int	 Aflag, Bflag, Eflag, Fflag, Gflag, Hflag, Lflag,
 		 vflag, wflag, xflag;
 extern int	 binbehave;
 
-extern int	 first, matchall, patterns, tail;
+extern int	 first, matchall, patterns, tail, file_err;
 extern char    **pattern;
 extern fastgrep_t *fg_pattern;
 extern regex_t	*r_pattern;
