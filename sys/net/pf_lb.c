@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.22 2012/12/29 14:53:05 markus Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.23 2012/12/29 14:54:45 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -396,8 +396,15 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	case PF_POOL_ROUNDROBIN:
 		if (rpool->addr.type == PF_ADDR_TABLE ||
 		    rpool->addr.type == PF_ADDR_DYNIFTL) {
-			if (pfr_pool_get(rpool, &raddr, &rmask, af))
-				return (1);
+			if (pfr_pool_get(rpool, &raddr, &rmask, af)) {
+				/*
+				 * reset counter in case its value
+				 * has been removed from the pool.
+				 */
+				bzero(&rpool->counter, sizeof(rpool->counter));
+				if (pfr_pool_get(rpool, &raddr, &rmask, af))
+					return (1);
+			}
 		} else if (pf_match_addr(0, raddr, rmask, &rpool->counter, af))
 			return (1);
 
@@ -434,8 +441,12 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		/* retrieve an address first */
 		if (rpool->addr.type == PF_ADDR_TABLE ||
 		    rpool->addr.type == PF_ADDR_DYNIFTL) {
-			if (pfr_pool_get(rpool, &raddr, &rmask, af))
-				return (1);
+			if (pfr_pool_get(rpool, &raddr, &rmask, af)) {
+				/* see PF_POOL_ROUNDROBIN */
+				bzero(&rpool->counter, sizeof(rpool->counter));
+				if (pfr_pool_get(rpool, &raddr, &rmask, af))
+					return (1);
+			}
 		} else if (pf_match_addr(0, raddr, rmask, &rpool->counter, af))
 			return (1);
 
