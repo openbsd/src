@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.94 2012/01/26 11:30:39 mikeb Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.95 2012/12/29 14:53:05 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -189,6 +189,7 @@ int			 pfr_table_count(struct pfr_table *, int);
 int			 pfr_skip_table(struct pfr_table *,
 			    struct pfr_ktable *, int);
 struct pfr_kentry	*pfr_kentry_byidx(struct pfr_ktable *, int, int);
+int			 pfr_islinklocal(sa_family_t, struct pf_addr *);
 
 RB_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 RB_GENERATE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
@@ -2177,13 +2178,20 @@ pfr_detach_table(struct pfr_ktable *kt)
 }
 
 int
-pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
-    struct pf_addr **raddr, struct pf_addr **rmask, struct pfi_kif **kif,
-    u_int64_t *states, u_int16_t *weight, int *curweight, sa_family_t af,
-    int (*filter)(sa_family_t, struct pf_addr *))
+pfr_islinklocal(sa_family_t af, struct pf_addr *addr)
 {
+	if (af == AF_INET6 && IN6_IS_ADDR_LINKLOCAL(&addr->v6))
+		return (1);
+	return (0);
+}
+
+int
+pfr_pool_get(struct pf_pool *rpool, struct pf_addr **raddr,
+    struct pf_addr **rmask, sa_family_t af)
+{
+	struct pfr_ktable	*kt;
 	struct pfr_kentry	*ke, *ke2;
-	struct pf_addr		*addr;
+	struct pf_addr		*addr, *counter;
 	union sockaddr_union	 mask;
 	int			 startidx, idx = -1, loop = 0, use_counter = 0;
 
@@ -2191,16 +2199,22 @@ pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
 		addr = (struct pf_addr *)&pfr_sin.sin_addr;
 	else if (af == AF_INET6)
 		addr = (struct pf_addr *)&pfr_sin6.sin6_addr;
+	if (rpool->addr.type == PF_ADDR_TABLE)
+		kt = rpool->addr.p.tbl;
+	else if (rpool->addr.type == PF_ADDR_DYNIFTL)
+		kt = rpool->addr.p.dyn->pfid_kt;
+	else
+		return (-1);
 	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
 		kt = kt->pfrkt_root;
 	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
 		return (-1);
 
-	if (pidx != NULL)
-		idx = *pidx;
+	counter = &rpool->counter;
+	idx = rpool->tblidx;
 	if (idx < 0 || idx >= kt->pfrkt_cnt)
 		idx = 0;
-	else if (counter != NULL)
+	else
 		use_counter = 1;
 	startidx = idx;
 
@@ -2223,10 +2237,10 @@ pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
 
 	/* Get current weight for weighted round-robin */
 	if (idx == 0 && use_counter == 1 && kt->pfrkt_refcntcost > 0) {
-		*curweight = *curweight - kt->pfrkt_gcdweight;
+		rpool->curweight = rpool->curweight - kt->pfrkt_gcdweight;
 
-		if (*curweight < 1)
-			*curweight = kt->pfrkt_maxweight;
+		if (rpool->curweight < 1)
+			rpool->curweight = kt->pfrkt_maxweight;
 	}
 
 	pfr_prepare_network(&pfr_mask, af, ke->pfrke_net);
@@ -2249,25 +2263,26 @@ pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
 
 	if (!KENTRY_NETWORK(ke)) {
 		/* this is a single IP address - no possible nested block */
-		if (filter && filter(af, addr)) {
+		if (rpool->addr.type == PF_ADDR_DYNIFTL &&
+		    pfr_islinklocal(af, addr)) {
 			idx++;
 			goto _next_block;
 		}
 		PF_ACPY(counter, addr, af);
-		*pidx = idx;
+		rpool->tblidx = idx;
 		kt->pfrkt_match++;
-		*states = 0;
+		rpool->states = 0;
 		if (ke->pfrke_counters != NULL)
-			*states = ke->pfrke_counters->states;
+			rpool->states = ke->pfrke_counters->states;
 		switch (ke->pfrke_type) {
 		case PFRKE_COST:
-			*weight = ((struct pfr_kentry_cost *)ke)->weight;
+			rpool->weight = ((struct pfr_kentry_cost *)ke)->weight;
 			/* FALLTHROUGH */
 		case PFRKE_ROUTE:
-			*kif = ((struct pfr_kentry_route *)ke)->kif;
+			rpool->kif = ((struct pfr_kentry_route *)ke)->kif;
 			break;
 		default:
-			*weight = 1;
+			rpool->weight = 1;
 			break;
 		}
 		return (0);
@@ -2283,24 +2298,25 @@ pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
 		/* no need to check KENTRY_RNF_ROOT() here */
 		if (ke2 == ke) {
 			/* lookup return the same block - perfect */
-			if (filter && filter(af, addr))
+			if (rpool->addr.type == PF_ADDR_DYNIFTL &&
+			    pfr_islinklocal(af, addr))
 				goto _next_entry;
 			PF_ACPY(counter, addr, af);
-			*pidx = idx;
+			rpool->tblidx = idx;
 			kt->pfrkt_match++;
-			*states = 0;
+			rpool->states = 0;
 			if (ke->pfrke_counters != NULL)
-				*states = ke->pfrke_counters->states;
+				rpool->states = ke->pfrke_counters->states;
 			switch (ke->pfrke_type) {
 			case PFRKE_COST:
-				*weight =
+				rpool->weight =
 				    ((struct pfr_kentry_cost *)ke)->weight;
 				/* FALLTHROUGH */
 			case PFRKE_ROUTE:
-				*kif = ((struct pfr_kentry_route *)ke)->kif;
+				rpool->kif = ((struct pfr_kentry_route *)ke)->kif;
 				break;
 			default:
-				*weight = 1;
+				rpool->weight = 1;
 				break;
 			}
 			return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.374 2012/11/06 12:32:41 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.375 2012/12/29 14:53:06 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1840,10 +1840,8 @@ void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
-int	pfr_pool_get(struct pfr_ktable *, int *, struct pf_addr *,
-	    struct pf_addr **, struct pf_addr **, struct pfi_kif **,
-	    u_int64_t *, u_int16_t *, int *,
-	    sa_family_t, int (*)(sa_family_t, struct pf_addr *));
+int	pfr_pool_get(struct pf_pool *, struct pf_addr **,
+	    struct pf_addr **, sa_family_t);
 int	pfr_states_increase(struct pfr_ktable *, struct pf_addr *, int);
 int	pfr_states_decrease(struct pfr_ktable *, struct pf_addr *, int);
 struct pfr_kentry *
