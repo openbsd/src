@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.68 2012/12/04 19:24:03 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.69 2012/12/29 14:40:00 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -114,7 +114,7 @@ dispatch(void)
 	time_t cur_time, howlong;
 	void (*func)(void);
 
-	do {
+	while (quit == 0) {
 		/*
 		 * Call expired timeout, and then if there's still
 		 * a timeout registered, time out the select call then.
@@ -187,7 +187,13 @@ another:
 		if ((fds[2].revents & (POLLIN | POLLHUP))) {
 			error("lost connection to [priv]");
 		}
-	} while (1);
+	}
+
+	if (quit == SIGHUP) {
+		cleanup(client->active);
+		exit(0);
+	}
+	exit(1);
 }
 
 void

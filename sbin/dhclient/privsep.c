@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.26 2012/12/04 19:24:03 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.27 2012/12/29 14:40:01 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,7 @@ dispatch_imsg(struct imsgbuf *ibuf)
 			    sizeof(struct imsg_cleanup))
 				warning("bad IMSG_CLEANUP");
 			else
-				priv_cleanup(imsg.data);
+				quit = SIGHUP;
 			break;
 
 		default:

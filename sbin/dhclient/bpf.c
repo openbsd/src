@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.23 2012/12/04 19:24:02 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.24 2012/12/29 14:40:00 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -194,6 +194,7 @@ if_register_receive(void)
 
 	/* Open a BPF device and hang it on this interface... */
 	ifi->rfdesc = if_register_bpf();
+	fcntl(ifi->rfdesc, F_SETFD, FD_CLOEXEC);
 
 	/* Make sure the BPF version is in range... */
 	if (ioctl(ifi->rfdesc, BIOCVERSION, &v) < 0)

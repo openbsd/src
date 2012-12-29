@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.198 2012/12/21 20:37:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.199 2012/12/29 14:40:00 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,7 @@ static FILE *leaseFile;
 void
 sighdlr(int sig)
 {
-	quit = 1;
+	quit = sig;
 }
 
 int
@@ -278,14 +278,19 @@ die:
 	error("routehandler: %s", errmsg);
 }
 
+char **saved_argv;
+
 int
 main(int argc, char *argv[])
 {
+	struct stat sb;
 	int	 ch, fd, quiet = 0, i = 0, socket_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
 	char *ignore_list = NULL;
 	int rtfilter;
+
+	saved_argv = argv;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY);
@@ -335,6 +340,20 @@ main(int argc, char *argv[])
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
 		error("asprintf");
+
+	if (lstat(path_dhclient_db, &sb) == -1)
+		error("Cannot lstat() '%s': %s", path_dhclient_db,
+		    strerror(errno));
+	if (!S_ISREG(sb.st_mode))
+		error("'%s' is not a regular file", path_dhclient_db);
+
+	if (path_dhclient_conf) {
+		if (lstat(path_dhclient_conf, &sb) == -1)
+			error("Cannot lstat() '%s': %s", path_dhclient_conf,
+			    strerror(errno));
+		if (!S_ISREG(sb.st_mode))
+			error("'%s' is not a regular file", path_dhclient_conf);
+	}
 
 	if (quiet)
 		log_perror = 0;
@@ -390,7 +409,9 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, socket_fd) == -1)
 		error("socketpair: %s", strerror(errno));
 	socket_nonblockmode(socket_fd[0]);
+	fcntl(socket_fd[0], F_SETFD, FD_CLOEXEC);
 	socket_nonblockmode(socket_fd[1]);
+	fcntl(socket_fd[1], F_SETFD, FD_CLOEXEC);
 
 	fork_privchld(socket_fd[0], socket_fd[1]);
 
@@ -1520,6 +1541,17 @@ go_daemon(void)
 		close(nullfd);
 		nullfd = -1;
 	}
+
+	/*
+	 * Catch stuff that might be trying to terminate the program.
+	 */
+	signal(SIGHUP, sighdlr);
+	signal(SIGINT, sighdlr);
+	signal(SIGTERM, sighdlr);
+	signal(SIGUSR1, sighdlr);
+	signal(SIGUSR2, sighdlr);
+
+	signal(SIGPIPE, SIG_IGN);
 }
 
 int
@@ -1756,18 +1788,6 @@ fork_privchld(int fd, int fd2)
 
 	imsg_init(priv_ibuf, fd);
 
-	/*
-	 * Catch stuff that might be trying to terminate the program.
-	 */
-
-	signal(SIGHUP, sighdlr);
-	signal(SIGINT, sighdlr);
-	signal(SIGTERM, sighdlr);
-	signal(SIGUSR1, sighdlr);
-	signal(SIGUSR2, sighdlr);
-
-	signal(SIGPIPE, SIG_IGN);
-
 	while (quit == 0) {
 		pfd[0].fd = priv_ibuf->fd;
 		pfd[0].events = POLLIN;
@@ -1795,12 +1815,23 @@ fork_privchld(int fd, int fd2)
 		dispatch_imsg(priv_ibuf);
 	}
 
+	imsg_clear(priv_ibuf);
+	close(fd);
+
 	memset(&imsg, 0, sizeof(imsg));
 	strlcpy(imsg.ifname, ifi->name, sizeof(imsg.ifname));
 	imsg.rdomain = ifi->rdomain;
 	imsg.addr = active_addr;
 
 	priv_cleanup(&imsg);
+
+	if (quit == SIGHUP) {
+		warning("Received SIGHUP; restarting.");
+		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
+		execvp(saved_argv[0], saved_argv);
+		error("RESTART FAILED: '%s': %s", saved_argv[0],
+		    strerror(errno));
+	}
 
 	exit(1);
 }
