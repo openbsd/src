@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.43 2012/09/10 11:11:00 jsing Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.44 2012/12/29 14:54:11 beck Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -138,6 +138,7 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	mfsp->mfs_size = args.size;
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_pid = p->p_pid;
+	mfsp->mfs_numbufs = 0;
 	mfsp->mfs_buflist = (struct buf *)0;
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
 		mfsp->mfs_buflist = (struct buf *)-1;
@@ -185,9 +186,11 @@ mfs_start(struct mount *mp, int flags, struct proc *p)
 				break;
 			}
 			mfsp->mfs_buflist = bp->b_actf;
+			mfsp->mfs_numbufs--;
 			splx(s);
 			mfs_doio(mfsp, bp);
 			wakeup((caddr_t)bp);
+			wakeup(&mfsp->mfs_numbufs);
 		}
 		if (bp == (struct buf *)-1)
 			break;

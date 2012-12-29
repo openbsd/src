@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.42 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.43 2012/12/29 14:54:11 beck Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/specdev.h>
 
 #include <machine/vmparam.h>
@@ -132,7 +133,12 @@ mfs_strategy(void *v)
 	struct mfsnode *mfsp;
 	struct vnode *vp;
 	struct proc *p = curproc;
+	int bufmax;
 	int s;
+
+	/* Constrain queue to a sensible value. */
+	bufmax = MIN(256, bcstats.kvaslots / 16);
+	bufmax = MIN(bufmax, bcstats.numbufs / 16);
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
@@ -142,8 +148,11 @@ mfs_strategy(void *v)
 		mfs_doio(mfsp, bp);
 	} else {
 		s = splbio();
+		while (mfsp->mfs_numbufs > bufmax)
+			tsleep(&mfsp->mfs_numbufs, PRIBIO + 1, "mfsbufs", 0);
 		bp->b_actf = mfsp->mfs_buflist;
 		mfsp->mfs_buflist = bp;
+		mfsp->mfs_numbufs++;
 		splx(s);
 		wakeup((caddr_t)vp);
 	}
