@@ -18,10 +18,6 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <m88k/aout-dbx.h>
-#include <aoutos.h>
-#include <m88k/m88k.h>
-
 /* <m88k/m88k.h> provided wrong GLOBAL_ASM_OP and SET_ASM_OP */
 #undef SET_ASM_OP
 #define SET_ASM_OP	"\tequ\t"
@@ -31,12 +27,6 @@ Boston, MA 02111-1307, USA.  */
 /* <m88k/m88k.h> provided wrong SUPPORTS_WEAK and SUPPORTS_ONE_ONLY values */
 #undef SUPPORTS_WEAK
 #undef SUPPORTS_ONE_ONLY
-
-#define OBSD_HAS_CORRECT_ASM_OPS
-#define OBSD_OLD_GAS
-#define OBSD_NO_DYNAMIC_LIBRARIES
-
-#include <openbsd.h>
 
 /* Run-time target specifications.  */
 #define TARGET_OS_CPP_BUILTINS()			\
