@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.228 2012/11/05 19:39:35 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.229 2012/12/30 00:58:19 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1762,6 +1762,7 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     struct proc *cp)
 {
 	struct proc *findp;
+	struct vnode *vp;
 	pid_t pid;
 	int error;
 	size_t lenused, len;
@@ -1800,6 +1801,10 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ERANGE);
 	*oldlenp = 0;
 
+	/* snag a reference to the vnode before we can sleep */
+	vp = findp->p_fd->fd_cdir;
+	vref(vp);
+
 	path = malloc(len, M_TEMP, M_WAITOK);
 
 	bp = &path[len];
@@ -1807,13 +1812,14 @@ sysctl_proc_cwd(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	*(--bp) = '\0';
 
 	/* Same as sys__getcwd */
-	error = vfs_getcwd_common(findp->p_fd->fd_cdir, NULL,
+	error = vfs_getcwd_common(vp, NULL,
 	    &bp, path, len / 2, GETCWD_CHECK_ACCESS, cp);
 	if (error == 0) {
 		*oldlenp = lenused = bend - bp;
 		error = copyout(bp, oldp, lenused);
 	}
 
+	vrele(vp);
 	free(path, M_TEMP);
 
 	return (error);
