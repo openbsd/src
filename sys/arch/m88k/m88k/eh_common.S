@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.55 2010/12/23 20:05:08 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.56 2012/12/30 18:13:19 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1491,6 +1491,8 @@ ASLOCAL(m88100_fpu_enable)
 	bb1.n	eq,   r3,   8f
 	 cmp	r3,   r2,   132	/* DDB entry exception */
 	bb1	eq,   r3,   8f
+#else
+	 NOP
 #endif
 
 	/* turn interrupts back on unless they were not enabled when the
