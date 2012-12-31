@@ -20,6 +20,28 @@ DDEESSCCRRIIPPTTIIOONN
      dash compact:
      --   outer list
          --   inner list
+     tag:
+
+     outer tag
+           outer text
+
+           inner tag
+                 inner text
+           outer text
+
+     outer tag
+           outer text (display)
+
+           inner tag
+                 inner text
+           outer text
+
+     outer tag
+                 outer text (one-line display)
+
+           inner tag
+                 inner text
+           outer text
      final text
 
-OpenBSD                         April 12, 2010                         OpenBSD
+OpenBSD                        December 31, 2012                       OpenBSD

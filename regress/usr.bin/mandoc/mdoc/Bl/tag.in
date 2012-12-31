@@ -1,4 +1,4 @@
-.Dd November 18, 2012
+.Dd December 31, 2012
 .Dt BL-TAG 1
 .Os OpenBSD
 .Sh NAME
@@ -48,7 +48,7 @@ b
 b
 .El
 .Pp
-Non-numeric with specification:
+Non-numeric width specification:
 .Bl -tag -width xxx
 .It tag
 text
@@ -56,4 +56,12 @@ text
 .Bl -tag -width xxxxxxxxxx
 .It tag
 text
+.El
+.Pp
+Embedded paragraph:
+.Bl -tag -width Ds
+.It tag
+first paragraph
+.Pp
+second paragraph
 .El

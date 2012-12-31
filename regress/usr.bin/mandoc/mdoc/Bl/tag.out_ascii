@@ -41,10 +41,16 @@ DDEESSCCRRIIPPTTIIOONN
 
      a      b
 
-     Non-numeric with specification:
+     Non-numeric width specification:
 
      tag  text
 
      tag         text
 
-OpenBSD                        November 18, 2012                       OpenBSD
+     Embedded paragraph:
+
+     tag     first paragraph
+
+             second paragraph
+
+OpenBSD                        December 31, 2012                       OpenBSD

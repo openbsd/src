@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.45 2012/11/19 02:14:39 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.46 2012/12/31 22:34:01 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -39,6 +39,7 @@ static	int	  cond_body(DECL_ARGS);
 static	int	  cond_head(DECL_ARGS);
 static  void	  font_push(char);
 static	void	  font_pop(void);
+static	void	  mid_it(void);
 static	void	  post__t(DECL_ARGS);
 static	void	  post_bd(DECL_ARGS);
 static	void	  post_bf(DECL_ARGS);
@@ -438,6 +439,9 @@ print_offs(const char *v)
 	print_word(buf);
 }
 
+/*
+ * Set up the indentation for a list item; used from pre_it().
+ */
 void
 print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 {
@@ -466,16 +470,8 @@ print_width(const char *v, const struct mdoc_node *child, size_t defsz)
 	chsz = (NULL != child && MDOC_TEXT == child->type) ?
 			strlen(child->string) : 0;
 
-	/*
-	 * If we are inside an enclosing list,
-	 * preserve its indentation.
-	 */
-	if (Bl_stack_len && Bl_stack[Bl_stack_len - 1]) {
-		print_line(".RS", MMAN_Bk_susp);
-		snprintf(buf, sizeof(buf), "%ldn",
-				Bl_stack[Bl_stack_len - 1]);
-		print_word(buf);
-	}
+	/* Maybe we are inside an enclosing list? */
+	mid_it();
 
 	/*
 	 * Save our own indentation,
@@ -834,7 +830,6 @@ pre_bd(DECL_ARGS)
 static void
 post_bd(DECL_ARGS)
 {
-	char		 buf[24];
 
 	/* Close out this display. */
 	print_line(".RE", MMAN_nl);
@@ -842,20 +837,9 @@ post_bd(DECL_ARGS)
 	    DISP_literal  == n->norm->Bd.type)
 		print_line(".fi", MMAN_nl);
 
-	/*
-	 * If we are inside an enclosing list and the current
-	 * list item is not yet finished, restore the correct
-	 * indentation for what remains of that item.
-	 */
-	if (NULL != n->parent->next &&
-	    Bl_stack_len && Bl_stack[Bl_stack_len - 1]) {
-		print_line(".RS", MMAN_Bk_susp);
-		snprintf(buf, sizeof(buf), "%ldn",
-				Bl_stack[Bl_stack_len - 1]);
-		print_word(buf);
-		/* Remeber to close out this .RS block later. */
-		Bl_stack_post[Bl_stack_len - 1] = 1;
-	}
+	/* Maybe we are inside an enclosing list? */
+	if (NULL != n->parent->next)
+		mid_it();
 }
 
 static int
@@ -954,6 +938,11 @@ post_bl(DECL_ARGS)
 	}
 	outflags |= MMAN_PP | MMAN_nl;
 	outflags &= ~(MMAN_sp | MMAN_br);
+
+	/* Maybe we are inside an enclosing list? */
+	if (NULL != n->parent->next)
+		mid_it();
+
 }
 
 static int
@@ -988,7 +977,9 @@ static int
 pre_dl(DECL_ARGS)
 {
 
-	print_line(".RS 6n", MMAN_nl);
+	print_line(".RS", MMAN_Bk_susp);
+	print_offs("6n");
+	outflags |= MMAN_nl;
 	return(1);
 }
 
@@ -997,6 +988,10 @@ post_dl(DECL_ARGS)
 {
 
 	print_line(".RE", MMAN_nl);
+
+	/* Maybe we are inside an enclosing list? */
+	if (NULL != n->parent->next)
+		mid_it();
 }
 
 static int
@@ -1259,6 +1254,32 @@ pre_it(DECL_ARGS)
 	return(1);
 }
 
+/*
+ * This function is called after closing out an indented block.
+ * If we are inside an enclosing list, restore its indentation.
+ */
+static void
+mid_it(void)
+{
+	char		 buf[24];
+
+	/* Nothing to do outside a list. */
+	if (0 == Bl_stack_len || 0 == Bl_stack[Bl_stack_len - 1])
+		return;
+
+	/* The indentation has already been set up. */
+	if (Bl_stack_post[Bl_stack_len - 1])
+		return;
+
+	/* Restore the indentation of the enclosing list. */
+	print_line(".RS", MMAN_Bk_susp);
+	snprintf(buf, sizeof(buf), "%ldn", Bl_stack[Bl_stack_len - 1]);
+	print_word(buf);
+
+	/* Remeber to close out this .RS block later. */
+	Bl_stack_post[Bl_stack_len - 1] = 1;
+}
+
 static void
 post_it(DECL_ARGS)
 {
@@ -1298,20 +1319,13 @@ post_it(DECL_ARGS)
 
 			/*
 			 * Our indentation had to be restored
-			 * after a child display.
+			 * after a child display or child list.
 			 * Close out that indentation block now.
 			 */
 			if (Bl_stack_post[Bl_stack_len]) {
 				print_line(".RE", MMAN_nl);
 				Bl_stack_post[Bl_stack_len] = 0;
 			}
-
-			/*
-			 * We are inside an enclosing list.
-			 * Restore the indentation of that list.
-			 */
-			if (Bl_stack_len && Bl_stack[Bl_stack_len - 1])
-				print_line(".RE", MMAN_nl);
 			break;
 		case (LIST_column):
 			if (NULL != n->next) {
