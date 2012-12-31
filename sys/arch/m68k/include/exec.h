@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.4 2010/07/02 19:57:14 tedu Exp $ */
+/*	$OpenBSD: exec.h,v 1.5 2012/12/31 10:41:03 miod Exp $ */
 /*	$NetBSD: exec.h,v 1.8 1994/11/21 21:33:39 gwr Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ struct relocation_info_m68k {
 #define _NLIST_DO_ELF
 
 #define _KERN_DO_AOUT
+#define _KERN_DO_ELF
 
 #define cpu_exec_aout_makecmds(p, epp)  (ENOEXEC)
 
