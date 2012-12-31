@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.68 2012/06/08 15:02:10 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.69 2012/12/31 09:42:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -232,7 +232,8 @@ sub compute_checksum
 			$result->make_hardlink($state->stash("$dev/$ino"));
 		} else {
 			$state->{stash}{"$dev/$ino"} = $name;
-			$result->add_digest($self->compute_digest($fname));
+			$result->add_digest($self->compute_digest($fname))
+			    unless $state->{bad};
 			$result->add_size($size);
 		}
 	} elsif (-d _) {
