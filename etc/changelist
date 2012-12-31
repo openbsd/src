@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.77 2012/10/13 23:40:52 deraadt Exp $
+#	$OpenBSD: changelist,v 1.78 2012/12/31 22:04:20 schwarze Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -78,7 +78,7 @@
 /etc/man.conf
 /etc/master.passwd
 /etc/mk.conf
-/etc/moduli
++/etc/moduli
 /etc/monthly
 /etc/monthly.local
 /etc/motd
