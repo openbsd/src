@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.13 2003/07/09 21:01:10 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.14 2012/12/31 10:07:51 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -60,7 +60,7 @@ ENTRY(_dl_start)
 	/*
 	 * these adds effectively calculate the value the
 	 * bl _GLOBAL_OFFSET_TABLE_@local-4
-	 * operation that would be below would calulate.
+	 * operation that would be below would calculate.
 	 */
 	add	28, 18, 5
 	mr	6, 5		# save offset for later use

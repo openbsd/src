@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.26 2012/10/08 14:22:41 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.27 2012/12/31 10:07:51 miod Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -616,7 +616,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 			if (pbuf == NULL)
 				goto bad;
 
-			/* Calulate P = Dn; Q = gn * Dn */
+			/* Calculate P = Dn; Q = gn * Dn */
 			if (gf_premul(gf_pow[chunk]))
 				goto bad;
 			sr_raid6_xorp(pbuf, data, length);

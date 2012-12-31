@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.96 2012/12/05 23:20:16 deraadt Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.97 2012/12/31 10:07:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -2598,7 +2598,7 @@ bwi_mac_adjust_tpctl(struct bwi_mac *mac, int rf_atten_adj, int bbp_atten_adj)
 
 	bcopy(&mac->mac_tpctl, &tpctl, sizeof(tpctl));
 
-	/* NOTE: Use signed value to do calulation */
+	/* NOTE: Use signed value to do calculation */
 	bbp_atten = tpctl.bbp_atten;
 	rf_atten = tpctl.rf_atten;
 	tp_ctrl1 = tpctl.tp_ctrl1;
