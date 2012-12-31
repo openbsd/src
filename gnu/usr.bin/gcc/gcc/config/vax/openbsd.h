@@ -23,10 +23,7 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
-      builtin_define ("__unix__");		\
-      builtin_define ("__OpenBSD__");		\
-      builtin_assert ("system=unix");		\
-      builtin_assert ("system=OpenBSD");	\
+      OPENBSD_OS_CPP_BUILTINS_COMMON();		\
     }						\
   while (0)
 
