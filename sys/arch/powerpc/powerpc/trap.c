@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.93 2012/08/08 04:11:08 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.94 2012/12/31 06:46:13 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -469,8 +469,6 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 				break;
 			default:
 			bad:
-				if (p->p_emul->e_errno)
-					error = p->p_emul->e_errno[error];
 				frame->fixreg[0] = error;
 				frame->fixreg[FIRSTARG] = error;
 				frame->fixreg[FIRSTARG + 1] = rval[1];

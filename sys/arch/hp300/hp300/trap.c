@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2012/08/07 05:16:53 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.62 2012/12/31 06:46:13 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -1001,8 +1001,6 @@ syscall(code, frame)
 		break;
 	default:
 	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 		frame.f_regs[D0] = error;
 		frame.f_sr |= PSL_C;	/* carry bit */
 		break;

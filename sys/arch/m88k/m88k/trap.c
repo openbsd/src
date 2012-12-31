@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.82 2012/08/07 17:17:46 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.83 2012/12/31 06:46:13 guenther Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1235,8 +1235,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		break;
 	default:
 	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 		tf->tf_r[2] = error;
 		tf->tf_epsr |= PSR_C;   /* fail */
 		tf->tf_snip = tf->tf_snip & ~NIP_E;
@@ -1360,8 +1358,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		break;
 	default:
 	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 		tf->tf_r[2] = error;
 		tf->tf_epsr |= PSR_C;   /* fail */
 		/* skip one instruction */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2012/10/31 03:30:22 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2012/12/31 06:46:13 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -367,7 +367,7 @@ faultcommon:
 
 #ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %lx\n", va);
+			printf("trap: bad kernel access at %lx\n", fa);
 			goto we_re_toast;
 		}
 #endif
@@ -399,7 +399,7 @@ faultcommon:
 				goto copyfault;
 			}
 			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
-			    map, va, ftype, error);
+			    map, fa, ftype, error);
 			goto we_re_toast;
 		}
 		if (error == ENOMEM) {
@@ -412,7 +412,7 @@ faultcommon:
 		} else {
 #ifdef TRAP_SIGDEBUG
 			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",
-			    p->p_pid, p->p_comm, frame->tf_rip, va);
+			    p->p_pid, p->p_comm, frame->tf_rip, fa);
 			frame_dump(frame);
 #endif
 			sv.sival_ptr = (void *)fa;

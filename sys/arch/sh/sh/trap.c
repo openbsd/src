@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2012/08/07 05:16:54 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2012/12/31 06:46:14 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -630,8 +630,6 @@ syscall(struct proc *p, struct trapframe *tf)
 		break;
 	default:
 	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 		tf->tf_r0 = error;
 		tf->tf_ssr &= ~PSL_TBIT;	/* T bit */
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.76 2012/08/07 05:16:54 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.77 2012/12/31 06:46:14 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1342,8 +1342,6 @@ syscall(tf, code, pc)
 
 	default:
 	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 		tf->tf_out[0] = error;
 		tf->tf_tstate |= (((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);	/* fail */
 		dest = tf->tf_npc;
