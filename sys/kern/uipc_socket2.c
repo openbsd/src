@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.53 2012/04/13 09:38:32 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.54 2012/12/31 13:45:14 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -573,16 +573,18 @@ sbappendstream(struct sockbuf *sb, struct mbuf *m)
 void
 sbcheck(struct sockbuf *sb)
 {
-	struct mbuf *m;
+	struct mbuf *m, *n;
 	u_long len = 0, mbcnt = 0;
 
-	for (m = sb->sb_mb; m; m = m->m_next) {
-		len += m->m_len;
-		mbcnt += MSIZE;
-		if (m->m_flags & M_EXT)
-			mbcnt += m->m_ext.ext_size;
-		if (m->m_nextpkt)
-			panic("sbcheck nextpkt");
+	for (m = sb->sb_mb; m; m = m->m_nextpkt) {
+		for (n = m; n; n = n->m_next) {
+			len += n->m_len;
+			mbcnt += MSIZE;
+			if (n->m_flags & M_EXT)
+				mbcnt += n->m_ext.ext_size;
+			if (m != n && n->m_nextpkt)
+				panic("sbcheck nextpkt");
+		}
 	}
 	if (len != sb->sb_cc || mbcnt != sb->sb_mbcnt) {
 		printf("cc %lu != %lu || mbcnt %lu != %lu\n", len, sb->sb_cc,
