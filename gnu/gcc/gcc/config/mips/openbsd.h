@@ -122,8 +122,6 @@ Boston, MA 02110-1301, USA.  */
 #undef MIPS_DEFAULT_GVALUE
 #define MIPS_DEFAULT_GVALUE 0
 
-#define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
-
 /* Borrowed from sparc/linux.h */
 #undef LINK_SPEC
 #define LINK_SPEC \
