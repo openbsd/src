@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.55 2011/11/29 17:15:44 deraadt Exp $ */
+/*	$OpenBSD: ucom.c,v 1.56 2012/12/31 04:25:46 miod Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ int ucom_detach(struct device *, int);
 int ucom_activate(struct device *, int); 
 
 struct cfdriver ucom_cd = { 
-	NULL, "ucom", DV_DULL 
+	NULL, "ucom", DV_TTY 
 }; 
 
 const struct cfattach ucom_ca = { 
