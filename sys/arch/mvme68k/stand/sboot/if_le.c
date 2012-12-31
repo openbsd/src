@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 2012/12/05 23:20:13 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.9 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -66,7 +66,7 @@ struct {
 	int     next_tmd;
 }       le_softc;
 
-static void
+void
 le_error(char *str, struct lereg1 *ler1)
 {
 	/* ler1->ler1_rap = LE_CSRO done in caller */
@@ -86,13 +86,13 @@ le_error(char *str, struct lereg1 *ler1)
 	}
 }
 
-static void
+void
 le_reset(u_char *myea)
 {
 	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
 	unsigned int a;
-	int     timo = 100000, stat, i;
+	int     timo = 100000, stat = 0, i;
 
 	ler1->ler1_rap = LE_CSR0;
 	ler1->ler1_rdp = LE_C0_STOP;	/* do nothing until we are finished */
@@ -161,7 +161,7 @@ le_reset(u_char *myea)
 	ler1->ler1_rdp = LE_C0_STRT;
 }
 
-static int
+int
 le_poll(void *pkt, int len)
 {
 	struct lereg1 *ler1 = le_softc.sc_r1;
@@ -218,7 +218,7 @@ le_put(u_char *pkt, size_t len)
 	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
 	struct letmd *tmd;
-	int     timo = 100000, stat, i;
+	int     timo = 100000, stat = 0;
 	unsigned int a;
 
 	ler1->ler1_rap = LE_CSR0;
@@ -305,7 +305,6 @@ le_get(u_char *pkt, size_t len, u_long timeout)
 void
 le_init(void)
 {
-	caddr_t addr;
 	int    *ea = (int *) LANCE_ADDR;
 	u_long *eram = (u_long *) ERAM_ADDR;
 	u_long  e = *ea;

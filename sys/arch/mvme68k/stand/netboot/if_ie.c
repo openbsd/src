@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.13 2009/02/17 18:42:06 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.14 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -45,6 +45,7 @@
 #include "libsa.h"
 #include "netif.h"
 #include "config.h"
+#include "net.h"
 
 #include "i82586.h"
 #include "if_iereg.h"
@@ -61,6 +62,7 @@ int ie_poll(struct iodesc *, void *, int);
 int ie_probe(struct netif *, void *);
 int ie_put(struct iodesc *, void *, size_t);
 void ie_reset(struct netif *, u_char *);
+extern void machdep_common_ether(u_char *);
 
 struct netif_stats ie_stats;
 
@@ -156,7 +158,7 @@ ie_reset(struct netif *nif, u_char *myea)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
-	int     timo = 10000, stat, i;
+	int     timo = 10000, i;
 	volatile int t;
 	u_int   a;
 
@@ -281,13 +283,11 @@ ie_poll(struct iodesc *desc, void *pkt, int len)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
-	u_char *p = pkt;
 	static int slot;
 	int     length = 0;
-	u_int   a;
 	u_short status;
 
-	asm(".word	0xf518\n");
+	asm(".word	0xf518\n");	/* pflusha */
 	status = iem->im_rfd[slot].ie_fd_status;
 	if (status & IE_FD_BUSY)
 		return (0);
@@ -347,8 +347,6 @@ ie_put(struct iodesc *desc, void *pkt, size_t len)
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
 	u_char *p = pkt;
-	int     timo = 10000, stat, i;
-	volatile int t;
 	u_int   a;
 	int     xx = 0;
 
@@ -388,7 +386,7 @@ ie_put(struct iodesc *desc, void *pkt, size_t len)
 	ier->ie_attention = 1;	/* chan attention! */
 
 	if (ie_debug) {
-		printf("ie%d: send %d to %x:%x:%x:%x:%x:%x\n",
+		printf("ie%d: send %ld to %x:%x:%x:%x:%x:%x\n",
 		    desc->io_netif->nif_unit, len,
 		    p[0], p[1], p[2], p[3], p[4], p[5]);
 	}
@@ -422,8 +420,8 @@ ie_init(struct iodesc *desc, void *machdep_hint)
 	bzero(&ie_softc, sizeof(ie_softc));
 	ie_softc.sc_reg =
 	    (struct iereg *) ie_config[desc->io_netif->nif_unit].phys_addr;
-	/* use 64KB below our code as buffers */
-	ie_softc.sc_mem = (struct iemem *)(STAGE2_RELOC - 0x10000);
+	/* use 64KB below HEAP as buffers */
+	ie_softc.sc_mem = (struct iemem *)(HEAP_START - 0x10000);
 	ie_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));

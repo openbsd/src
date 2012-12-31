@@ -1,13 +1,14 @@
-#	$OpenBSD: Makefile,v 1.16 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.17 2012/12/31 21:35:32 miod Exp $
 
 SIZE?=	size
+STRIP?=	strip
 
 S=	${.CURDIR}/../../../..
-DEFS= -DSUN_BOOTPARAMS -DRELOC=${STAGE2_RELOC}
+DEFS= -DSUN_BOOTPARAMS
+#-DNETIF_DEBUG
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${S} -I${S}/lib/libsa
-CFLAGS+=	-O2 ${DEFS} ${INCPATH} ${COPTS}
-CFLAGS+=-DSTAGE2_RELOC=${STAGE2_RELOC}
+CFLAGS+=-O2 ${DEFS} ${INCPATH} ${COPTS}
 CLEANFILES+=netboot netboot.bin
 
 .include "${S}/arch/mvme68k/stand/bugcrt/Makefile.inc"
@@ -19,17 +20,18 @@ SRCS=   boot.c conf.c version.c devopen.c dev_net.c
 SRCS+=	if_ie.c if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS= ${LIBSA} ${LIBBUG} ${LIBZ}
-LDFLAGS+= -nostdlib -s -N -T ${STAGE2_RELOC}
+LDFLAGS+= -s -N -T ${STAGE2_RELOC}
 NOPIE=
 
 all:	netboot.bin
 
-netboot: ${OBJS} ${BUGCRT} ${LIBS}
+netboot: ${SRTOBJ} ${BUGCRT} ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${SRTOBJ} ${BUGCRT} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
+	    ${SRTOBJ} ${BUGCRT} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
 	@${SIZE} $@
 
 netboot.bin: netboot
+	${STRIP} netboot
 	dd ibs=32 skip=1 if=netboot of=$@
 
 install:

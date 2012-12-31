@@ -1,4 +1,4 @@
-/*	$OpenBSD: wrtvid.c,v 1.7 2007/06/17 00:28:56 deraadt Exp $ */
+/*	$OpenBSD: wrtvid.c,v 1.8 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn <drahn@openbsd.org>
@@ -22,6 +22,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #define __DBINTERFACE_PRIVATE
 #include <db.h>
 
@@ -82,11 +84,8 @@ main(int argc, char *argv[])
 	int tape_vid;
 	int tape_exe;
 	unsigned int exe_addr;
-	unsigned short exe_addr_u;
-	unsigned short exe_addr_l;
 	char *filename;
 	char fileext[256];
-	char filebase[256];
 
 	if (argc == 0)
 		filename = "a.out";

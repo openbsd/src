@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.2 2002/03/14 03:15:56 millert Exp $ */
+/*	$OpenBSD: devopen.c,v 1.3 2012/12/31 21:35:32 miod Exp $ */
 
 #include <sys/param.h>
 #include <stand.h>
@@ -20,7 +20,6 @@ devopen(f, fname, file)
 	char **file;
 {
 	struct devsw *dp;
-	char *cp, *path, *devname;
 	int error;
 
 	*file = (char *)fname;

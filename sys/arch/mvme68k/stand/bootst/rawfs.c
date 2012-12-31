@@ -1,4 +1,4 @@
-/*	$OpenBSD: rawfs.c,v 1.5 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: rawfs.c,v 1.6 2012/12/31 21:35:32 miod Exp $	*/
 /*	$NetBSD: rawfs.c,v 1.1 1995/10/17 22:58:27 gwr Exp $	*/
 
 /*
@@ -43,14 +43,12 @@
 #include <stand.h>
 #include <rawfs.h>
 
-extern int debug;
-
 #define	RAWFS_BSIZE	512
 
 /*
  * In-core open file.
  */
-struct file {
+struct cfile {
 	daddr32_t	fs_nextblk;	/* block number to read next */
 	int		fs_len;		/* amount left in f_buf */
 	char *		fs_ptr;		/* read pointer into f_buf */
@@ -64,13 +62,13 @@ int	rawfs_open(path, f)
 	char *path;
 	struct open_file *f;
 {
-	struct file *fs;
+	struct cfile *fs;
 
 	/*
 	 * The actual PROM driver has already been opened.
 	 * Just allocate the I/O buffer, etc.
 	 */
-	fs = alloc(sizeof(struct file));
+	fs = alloc(sizeof(struct cfile));
 	fs->fs_nextblk = 0;
 	fs->fs_len = 0;
 	fs->fs_ptr = fs->fs_buf;
@@ -82,12 +80,12 @@ int	rawfs_open(path, f)
 int	rawfs_close(f)
 	struct open_file *f;
 {
-	struct file *fs;
+	struct cfile *fs;
 
-	fs = (struct file *) f->f_fsdata;
+	fs = (struct cfile *) f->f_fsdata;
 	f->f_fsdata = (void *)0;
 
-	if (fs != (struct file *)0)
+	if (fs != (struct cfile *)0)
 		free(fs, sizeof(*fs));
 
 	return (0);
@@ -99,7 +97,7 @@ int	rawfs_read(f, start, size, resid)
 	size_t size;
 	size_t *resid;
 {
-	struct file *fs = (struct file *)f->f_fsdata;
+	struct cfile *fs = (struct cfile *)f->f_fsdata;
 	char *addr = start;
 	int error = 0;
 	size_t csize;
@@ -161,16 +159,16 @@ static int
 rawfs_get_block(f)
 	struct open_file *f;
 {
-	struct file *fs;
+	struct cfile *fs;
 	int error;
 	size_t len;
 
-	fs = (struct file *)f->f_fsdata;
+	fs = (struct cfile *)f->f_fsdata;
 	fs->fs_ptr = fs->fs_buf;
 
 	twiddle();
 	error = f->f_dev->dv_strategy(f->f_devdata, F_READ,
-		fs->fs_nextblk, RAWFS_BSIZE,	fs->fs_buf, &len);
+		fs->fs_nextblk, RAWFS_BSIZE, fs->fs_buf, &len);
 
 	if (!error) {
 		fs->fs_len = len;

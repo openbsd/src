@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.7 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.8 2012/12/31 21:35:32 miod Exp $	*/
 
 /*
  * libsa prototypes 
@@ -7,7 +7,7 @@
 #include "libbug.h"
 
 /* bugdev.c */
-int bugscopen(struct open_file *);
+int bugscopen(struct open_file *, ...);
 int bugscclose(struct open_file *);
 int bugscioctl(struct open_file *, u_long, void *);
 int bugscstrategy(void *, int, daddr32_t, size_t, void *, size_t *);

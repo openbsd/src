@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.9 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.10 2012/12/31 21:35:32 miod Exp $
 
 S=	${.CURDIR}/../../../..
-DEFS= 
+DEFS=-DSTAGE2_RELOC=${STAGE2_RELOC}
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
 CFLAGS+=-O2 ${INCPATH} ${DEFS} ${COPTS}
@@ -14,7 +14,7 @@ CLEANFILES+=bootxx
 .include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"
 .include "${S}/arch/mvme68k/stand/libz/Makefile.inc"
 
-SRCS=   bootxx.c conf.c version.c
+SRCS=   bootxx.c conf.c
 
 LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
 
@@ -26,7 +26,7 @@ ALL=	${BOOTS}
 all: ${ALL}
 
 bootxx: ${OBJS} ${BUGCRT} ${LIBS}
-	${LD} -N -T ${STAGE1_RELOC} ${BUGCRT} ${OBJS} ${LIBS} \
+	${LD} -S -N -T ${STAGE1_RELOC} ${BUGCRT} ${OBJS} ${LIBS} \
 	    `cc -print-libgcc-file-name` -o $@
 
 install:

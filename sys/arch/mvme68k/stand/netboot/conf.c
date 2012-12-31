@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2003/08/20 00:26:00 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.6 2012/12/31 21:35:32 miod Exp $ */
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -6,7 +6,7 @@
 
 #include <stand.h>
 #include <nfs.h>
-#include "dev_net.h"
+#include <dev_net.h>
 
 struct fs_ops file_system[] = {
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
@@ -14,9 +14,7 @@ struct fs_ops file_system[] = {
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
 struct devsw devsw[] = {
-	{ "net",  net_strategy,  (int (*)(struct open_file *, ...))net_open,
-	  net_close,  net_ioctl
-	},
+	{ "net",  net_strategy,  net_open, net_close,  net_ioctl },
 };
 int	ndevs = sizeof(devsw) / sizeof(devsw[0]);
 

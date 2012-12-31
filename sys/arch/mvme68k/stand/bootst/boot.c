@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2003/06/02 23:27:51 millert Exp $ */
+/*	$OpenBSD: boot.c,v 1.4 2012/12/31 21:35:32 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/10/17 22:58:14 gwr Exp $ */
 
 /*-
@@ -40,33 +40,31 @@
 #include "stand.h"
 #include "libsa.h"
 
-int debug;
-int errno;
+extern char *version;
+extern int errno;
 
-extern char		*version;
-char	defname[32] = "2";
-char	line[80];
-
-
+int
 main()
 {
-	char *cp, *file;
-	int	io, flag;
+	static char dnm[32] = "2";
+	char line[80];
+	char *filename;
+	int bflag = 0;
 
 	printf(">> OpenBSD MVME%x tapeboot [%s]\n", bugargs.cputyp, version);
 
-	parse_args(&file, &flag);
-	file = defname;	/* override */
+	parse_args(&filename, &bflag);
+	filename = dnm;	/* override */
 
-	if (flag & RB_ASKNAME) {
-		printf("tapeboot: segment? [%s] ", defname);
+	if (bflag & RB_ASKNAME) {
+		printf("tapeboot: segment? [%s] ", dnm);
 		gets(line);
 		if (line[0])
-			file = line;
+			filename = line;
 	}
 
-	exec_mvme(file, flag);
+	exec_mvme(filename, bflag);
 
-	printf("tapeboot: %s: %s\n", file, strerror(errno));
+	printf("tapeboot: %s: %s\n", filename, strerror(errno));
 	return(0);
 }

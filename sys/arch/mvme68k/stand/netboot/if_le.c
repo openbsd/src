@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.11 2009/02/17 18:42:06 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.12 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -66,6 +66,7 @@
 #include "libsa.h"
 #include "netif.h"
 #include "config.h"
+#include "net.h"
 
 #include "if_lereg.h"
 
@@ -80,6 +81,7 @@ int le_poll(struct iodesc *, void *, int);
 int le_probe(struct netif *, void *);
 int le_put(struct iodesc *, void *, size_t);
 void le_reset(struct netif *, u_char *);
+extern void machdep_common_ether(u_char *);
 
 struct netif_stats le_stats;
 
@@ -191,7 +193,7 @@ le_reset(nif, myea)
 	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
 	unsigned int a;
-	int     timo = 100000, stat, i;
+	int     timo = 100000, stat = 0, i;
 
 	if (le_debug)
 		printf("le%d: le_reset called\n", nif->nif_unit);
@@ -335,7 +337,7 @@ le_put(desc, pkt, len)
 	volatile struct lereg1 *ler1 = le_softc.sc_r1;
 	volatile struct lereg2 *ler2 = le_softc.sc_r2;
 	volatile struct letmd *tmd;
-	int     timo = 100000, stat, i;
+	int     timo = 100000, stat = 0;
 	unsigned int a;
 
 	ler1->ler1_rap = LE_CSR0;
@@ -392,7 +394,7 @@ le_put(desc, pkt, len)
 		return -1;
 	}
 	if (le_debug) {
-		printf("le%d: le_put() successful: sent %d\n",
+		printf("le%d: le_put() successful: sent %ld\n",
 		    desc->io_netif->nif_unit, len);
 		printf("le%d: le_put(): tmd1_bits: %x tmd3: %x\n",
 		    desc->io_netif->nif_unit,
@@ -435,7 +437,7 @@ le_init(desc, machdep_hint)
 	bzero(&le_softc, sizeof(le_softc));
 	le_softc.sc_r1 =
 	    (struct lereg1 *) le_config[desc->io_netif->nif_unit].phys_addr;
-	le_softc.sc_r2 = (struct lereg2 *)(STAGE2_RELOC - LEMEMSIZE);
+	le_softc.sc_r2 = (struct lereg2 *)(HEAP_START - LEMEMSIZE);
 	le_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));

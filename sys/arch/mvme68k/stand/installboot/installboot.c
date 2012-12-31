@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.15 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: installboot.c,v 1.16 2012/12/31 21:35:32 miod Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -55,12 +55,12 @@ char  cdev[80];
 
 struct nlist nl[] = {
 #define X_BLOCK_SIZE	0
-	{"_block_size"},
+	{ { "_block_size" } },
 #define X_BLOCK_COUNT	1
-	{"_block_count"},
+	{ { "_block_count" } },
 #define X_BLOCK_TABLE	2
-	{"_block_table"},
-	{NULL}
+	{ { "_block_table" } },
+	{ { NULL } }
 };
 
 int *block_size_p;		/* block size var. in prototype image */
@@ -138,7 +138,7 @@ main(argc, argv)
 
 	/* XXX - Paranoia: Make sure size is aligned! */
 	if (protosize & (DEV_BSIZE - 1))
-		err(1, "proto bootblock bad size=%d", protosize);
+		err(1, "proto bootblock bad size=%ld", protosize);
 
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
@@ -250,7 +250,7 @@ loadprotoblocks(fname, size)
 	if (verbose) {
 		printf("%s: entry point %#x\n", fname, eh.a_entry);
 		printf("proto bootblock size %ld\n", *size);
-		printf("room for %d filesystem blocks at %#x\n",
+		printf("room for %d filesystem blocks at %#lx\n",
 		    maxblocknum, nl[X_BLOCK_TABLE].n_value);
 	}
 
@@ -388,8 +388,6 @@ vid_to_disklabel(char *dkname, char *bootproto)
 	struct mvmedisklabel *pcpul;
 	struct stat sb;
 	unsigned int exe_addr;
-	unsigned short exe_addr_u;
-	unsigned short exe_addr_l;
 
 	pcpul = (struct mvmedisklabel *)malloc(sizeof(struct mvmedisklabel));
 	bzero(pcpul, sizeof(struct mvmedisklabel));

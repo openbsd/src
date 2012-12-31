@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.10 2003/08/20 00:26:00 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.11 2012/12/31 21:35:32 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -62,20 +62,17 @@
 #include "stand.h"
 #include "libsa.h"
 
-/*
- * Boot device is derived from ROM provided information.
- */
-#define LOADADDR	0x10000
-
 extern   char *version;
-char  line[80];
+char line[80];
 
-main(int argc, char *argv[])
+int
+main()
 {
 	char *cp, *file;
 	int ask = 0, howto, ret;
 
 	printf(">> OpenBSD MVME%x netboot [%s]\n", bugargs.cputyp, version);
+
 	/* cycle in the correct args */
 	bugargs.arg_start = bugargs.nbarg_start;
 	bugargs.arg_end   = bugargs.nbarg_end;
@@ -104,4 +101,6 @@ main(int argc, char *argv[])
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
 	}
+	_rtt();
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.8 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.9 2012/12/31 21:35:32 miod Exp $ */
 /*	$NetBSD: bootxx.c,v 1.5 1995/10/13 21:44:57 gwr Exp $ */
 
 /*
@@ -53,8 +53,6 @@
 /*
  * Boot device is derived from ROM provided information.
  */
-#define LOADADDR	0x6F0000 /* where to load level 2 bootstrap */
-				/* (l2 must relocate itself) */
 
 /* This determines the largest boot program we can load. */
 #define MAXBLOCKNUM	64
@@ -65,16 +63,46 @@
  * in terms of 512-byte blocks.  Each non-zero value
  * will result in a read of block_size bytes.
  */
-int     	block_size = 512;	/* default */
+size_t     	block_size = 512;	/* default */
 int     	block_count = MAXBLOCKNUM;	/* length of table */
 daddr32_t 	block_table[MAXBLOCKNUM] = { 0 };
 
-extern		char *version;
+int	copyboot(struct open_file *, char *);
 
-static int
+int
+main()
+{
+	struct open_file f;
+	char *addr;
+	int error;
+
+#ifdef DEBUG
+	printf("Boot: bug device: ctrl=%d, dev=%d\n",
+	    bugargs.ctrl_lun, bugargs.dev_lun);
+#endif
+
+	f.f_flags = F_RAW;
+	if (devopen(&f, 0, &addr)) {
+		printf("bootxx: open failed\n");
+		_rtt();
+	}
+
+	addr = (char *)STAGE2_RELOC;
+	error = copyboot(&f, addr);
+	f.f_dev->dv_close(&f);
+	if (!error) {
+		bugexec((u_int *)addr);
+	}
+	/* copyboot had a problem... */
+	_rtt();
+	return (0);
+}
+
+int
 copyboot(struct open_file *fp, char *addr)
 {
-	int	n, i, blknum;
+	size_t n;
+	int i, blknum;
 	struct exec *x;
 
 	addr -= sizeof(struct exec); /* assume OMAGIC, verify below */
@@ -111,30 +139,4 @@ copyboot(struct open_file *fp, char *addr)
 	}
 
 	return 0;
-}
-
-main(int argc, char *argv[])
-{
-	struct open_file	f;
-	char	*addr;
-	int n, error;
-
-	printf("Boot: bug device: ctrl=%d, dev=%d\n",
-	    bugargs.ctrl_lun, bugargs.dev_lun);
-	printf("\nbootxx: first level bootstrap program [%s]\n\n", version);
-
-	f.f_flags = F_RAW;
-	if (devopen(&f, 0, &addr)) {
-		printf("bootxx: open failed\n");
-		_rtt();
-	}
-
-	addr = (char *)LOADADDR;
-	error = copyboot(&f, addr);
-	f.f_dev->dv_close(&f);
-	if (!error) {
-		bugexec((void (*)(void))addr + 8);
-	}
-	/* copyboot had a problem... */
-	_rtt();
 }

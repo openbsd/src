@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_tape.c,v 1.4 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: dev_tape.c,v 1.5 2012/12/31 21:35:32 miod Exp $	*/
 /*	$NetBSD: dev_tape.c,v 1.2 1995/10/17 22:58:20 gwr Exp $	*/
 
 /*
@@ -43,9 +43,6 @@
 #include "stand.h"
 #include "libsa.h"
 
-
-extern int debug;
-
 struct mvmeprom_dskio tape_ioreq;
 
 /*
@@ -61,7 +58,6 @@ devopen(f, fname, file)
 	char **file;
 {
 	struct devsw *dp;
-	int error;
 
 	*file = (char *)fname;
 	dp = &devsw[0];
@@ -76,7 +72,7 @@ tape_open(f, fname)
 	struct open_file *f;
 	char *fname;		/* partition number, i.e. "1" */
 {
-	int	error, part;
+	int	part;
 	struct mvmeprom_dskio *ti;
 
 	/*
@@ -106,7 +102,7 @@ tape_open(f, fname)
 
 	f->f_devdata = ti;
 
-	return (error);
+	return (0);
 }
 
 int

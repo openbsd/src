@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 2003/06/02 23:27:51 millert Exp $ */
+/*	$OpenBSD: boot.c,v 1.12 2012/12/31 21:35:32 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
 
 /*-
@@ -49,7 +49,7 @@ int
 main()
 {
 	char *cp, *file;
-	int	io, flag, ret;
+	int	flag, ret;
 	int	ask = 0;
 
 	printf(">> OpenBSD MVME%x bootsd [%s]\n", bugargs.cputyp, version);

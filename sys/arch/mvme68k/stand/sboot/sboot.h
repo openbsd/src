@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.h,v 1.9 2012/11/04 13:36:47 miod Exp $ */
+/*	$OpenBSD: sboot.h,v 1.10 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -35,10 +35,9 @@
  * sboot.h: stuff for MVME147's serial line boot
  */
 
-extern caddr_t end;
+void go(unsigned int, const char *, const char *);
 
 /* console */
-void puts(char *);
 char *ngets(char *, int);
 
 /* sboot */

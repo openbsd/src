@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.12 2012/07/05 04:23:33 guenther Exp $ */
+/*	$OpenBSD: prom.h,v 1.13 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -171,16 +171,16 @@ struct mvmeprom_args {
 	MVMEPROM_GETRES(ret); \
 	return (!(ret & 0x4));		/* return a 'status' */
 
-#define MVMEPROM_REG_DEVLUN	"d0"
-#define MVMEPROM_REG_CTRLLUN	"d1"
-#define MVMEPROM_REG_FLAGS	"d4"
-#define MVMEPROM_REG_CTRLADDR	"a0"
-#define MVMEPROM_REG_ENTRY	"a1"
-#define MVMEPROM_REG_CONFBLK	"a2"
-#define MVMEPROM_REG_NBARGSTART	"a3"
-#define MVMEPROM_REG_NBARGEND	"a4"
-#define MVMEPROM_REG_ARGSTART	"a5"
-#define MVMEPROM_REG_ARGEND	"a6"
+#define MVMEPROM_REG_DEVLUN	d0
+#define MVMEPROM_REG_CTRLLUN	d1
+#define MVMEPROM_REG_FLAGS	d4
+#define MVMEPROM_REG_CTRLADDR	a0
+#define MVMEPROM_REG_ENTRY	a1
+#define MVMEPROM_REG_CONFBLK	a2
+#define MVMEPROM_REG_NBARGSTART	a3
+#define MVMEPROM_REG_NBARGEND	a4
+#define MVMEPROM_REG_ARGSTART	a5
+#define MVMEPROM_REG_ARGEND	a6
 
 #ifndef RB_NOSYM
 #define RB_NOSYM 0x4000

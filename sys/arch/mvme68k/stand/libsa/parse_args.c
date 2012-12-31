@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.7 2008/03/23 17:05:41 deraadt Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.8 2012/12/31 21:35:32 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -43,10 +43,10 @@ struct flags {
 	{ 'a', RB_ASKNAME },
 	{ 'b', RB_HALT },
 	{ 'c', RB_CONFIG },
-	{ 'y', RB_NOSYM },
 	{ 'd', RB_KDB },
 	{ 'm', RB_MINIROOT },
 	{ 's', RB_SINGLE },
+	{ 'y', RB_NOSYM }
 };
 
 int
@@ -62,7 +62,7 @@ int *flagp;
 
 	if (bugargs.arg_start != bugargs.arg_end) {
 		ptr = bugargs.arg_start;
-		while (c = *ptr) {
+		while ((c = *ptr) != '\0') {
 			while (c == ' ')
 				c = *++ptr;
 			if (c == '\0')

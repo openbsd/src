@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.23 2012/12/31 21:35:32 miod Exp $
 
 LIB=sa
 
@@ -13,12 +13,16 @@ S=${.CURDIR}/../../../..
 
 SRCS+=	bugdev.c clock.c parse_args.c exec_mvme.c
 
-.PATH:  $S/lib/libsa
-SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c printf.c \
-	strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
-	snprintf.c close.c closeall.c dev.c dkcksum.c lseek.c open.c \
-	nullfs.c read.c fstat.c ufs.c cread.c
-SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c rarp.c bootparam.c
+.PATH:  ${S}/lib/libsa
+SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
+	printf.c strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
+	strlcpy.c strlcat.c snprintf.c \
+	close.c closeall.c dev.c dkcksum.c \
+	lseek.c open.c nullfs.c read.c fstat.c \
+	ufs.c cread.c
+SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
+	rarp.c bootparam.c
+SRCS+=	loadfile.c
 
 .PATH:	${S}/lib/libkern
 SRCS+=	ashrdi3.c muldi3.c
@@ -27,7 +31,8 @@ SRCS+=	ashrdi3.c muldi3.c
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
 #DEFS= -DCOMPAT_UFS
-DEFS= -D__INTERNAL_LIBSA_CREAD
+DEFS= -D__INTERNAL_LIBSA_CREAD -D_STANDALONE
+#DEFS+=-DNETIF_DEBUG
 INCL= -I${.CURDIR} -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
 CFLAGS+= ${XCFLAGS} -O2 ${COPTS} ${DEFS} ${DBG} ${INCL}
 

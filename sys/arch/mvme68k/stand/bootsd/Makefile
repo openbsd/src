@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.17 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.18 2012/12/31 21:35:32 miod Exp $
 
 S=	${.CURDIR}/../../../..
 DEFS= 
@@ -26,10 +26,10 @@ ALL=	${BOOTS}
 
 all: ${ALL}
 
-bootsd: ${OBJS} ${BUGCRT} ${LIBS}
+bootsd: ${BUGCRT} ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${BUGCRT} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
-#${SRTOBJ}
+	    ${BUGCRT} ${OBJS} ${LIBS} `cc -print-libgcc-file-name`
+
 install:
 	install ${INSTALL_STRIP} -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
 

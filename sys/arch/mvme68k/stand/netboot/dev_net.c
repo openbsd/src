@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.9 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.10 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -63,7 +63,7 @@
 #include "netif.h"
 #include "config.h"
 #include "bootparam.h"
-#include "dev_net.h"
+#include "nfs.h"
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
@@ -73,7 +73,56 @@ char rootpath[FNAME_SIZE];
 int netdev_sock = -1;
 static int open_count;
 
-static int
+int	net_mountroot(struct open_file *, char *);
+
+/*
+ * Called by devopen after it sets f->f_dev to our devsw entry.
+ * This opens the low-level device and sets f->f_devdata.
+ */
+int
+net_open(struct open_file *f, char *devname)
+{
+	int error = 0;
+
+	/* On first open, do netif open, mount, etc. */
+	if (open_count == 0) {
+		/* Find network interface. */
+		if ((netdev_sock = netif_open(devname)) < 0)
+			return (error=ENXIO);
+		if ((error = net_mountroot(f, devname)) != 0)
+			return (error);
+	}
+	open_count++;
+	f->f_devdata = nfs_root_node;
+	return (error);
+}
+
+int
+net_close(struct open_file *f)
+{
+	/* On last close, do netif close, etc. */
+	if (open_count > 0)
+		if (--open_count == 0)
+			netif_close(netdev_sock);
+	f->f_devdata = NULL;
+	return (0);
+}
+
+int
+net_ioctl(struct open_file *f, u_long cmd, void *data)
+{
+	return EIO;
+}
+
+int
+net_strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
+    size_t *rsize)
+{
+	return EIO;
+}
+
+
+int
 net_mountroot(struct open_file *f, char *devname)
 {
 	int error;
@@ -162,49 +211,3 @@ machdep_common_ether(u_char *ether)
 		ether[5] = ea[5];
 	}
 }
-
-/*
- * Called by devopen after it sets f->f_dev to our devsw entry.
- * This opens the low-level device and sets f->f_devdata.
- */
-int
-net_open(struct open_file *f, char *devname)
-{
-	int error = 0;
-
-	/* On first open, do netif open, mount, etc. */
-	if (open_count == 0) {
-		/* Find network interface. */
-		if ((netdev_sock = netif_open(devname)) < 0)
-			return (error=ENXIO);
-		if ((error = net_mountroot(f, devname)) != 0)
-			return (error);
-	}
-	open_count++;
-	f->f_devdata = nfs_root_node;
-	return (error);
-}
-
-int
-net_close(struct open_file *f)
-{
-	/* On last close, do netif close, etc. */
-	if (open_count > 0)
-		if (--open_count == 0)
-			netif_close(netdev_sock);
-	f->f_devdata = NULL;
-}
-
-int
-net_ioctl(struct open_file *f, u_long cmd, void *data)
-{
-	return EIO;
-}
-
-int
-net_strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
-    size_t *rsize)
-{
-	return EIO;
-}
-

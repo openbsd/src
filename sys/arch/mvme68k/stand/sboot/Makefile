@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.11 2012/11/04 13:36:47 miod Exp $
+#	$OpenBSD: Makefile,v 1.12 2012/12/31 21:35:32 miod Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 HOSTCFLAGS?= ${CFLAGS}
+CFLAGS+=-D_STANDALONE
 CFLAGS+=-DSTAGE2_RELOC=${STAGE2_RELOC}
-COPTS+= ${DEFS} ${INCL}
+COPTS?= ${DEFS} ${INCL}
 
 .include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
 .include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"

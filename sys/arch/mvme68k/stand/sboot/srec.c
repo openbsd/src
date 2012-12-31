@@ -1,4 +1,4 @@
-/*	$OpenBSD: srec.c,v 1.6 2012/11/04 13:34:51 miod Exp $ */
+/*	$OpenBSD: srec.c,v 1.7 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Public domain, believed to be by Mike Price.
@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 size_t	get32(char *, size_t);

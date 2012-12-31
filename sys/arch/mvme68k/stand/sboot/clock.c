@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2012/12/05 23:20:13 deraadt Exp $ */
+/*	$OpenBSD: clock.c,v 1.9 2012/12/31 21:35:32 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,32 +47,25 @@
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include "sboot.h"
 #include "clockreg.h"
 
 static struct clockreg *clockreg = (struct clockreg *) CLOCK_ADDR;
 
-/*
- * BCD to decimal and decimal to BCD.
- */
-#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
-
-#define	SECDAY		(24 * 60 * 60)
-#define	SECYR		(SECDAY * 365)
 #define	LEAPYEAR(y)	(((y) & 3) == 0)
 
 /*
  * This code is defunct after 2068.
  * Will Unix still be here then??
  */
-const short dayyr[12] =
+const unsigned short dayyr[12] =
     {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
-static u_long
+static unsigned long
 chiptotime(int sec, int min, int hour, int day, int mon, int year)
 {
-	register int days, yr;
+	int days, yr;
 
 	sec = FROMBCD(sec);
 	min = FROMBCD(min);
@@ -99,10 +92,10 @@ chiptotime(int sec, int min, int hour, int day, int mon, int year)
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
-u_long
-ttime(void)
+unsigned long
+ttime()
 {
-	register struct clockreg *cl = clockreg;
+	struct clockreg *cl = clockreg;
 	int     sec, min, hour, day, mon, year;
 
 	cl->cl_csr |= CLK_READ;	/* enable read (stop time) */

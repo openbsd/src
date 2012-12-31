@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtvid.c,v 1.7 2007/06/17 00:28:56 deraadt Exp $	*/
+/*	$OpenBSD: prtvid.c,v 1.8 2012/12/31 21:35:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn <drahn@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/disklabel.h>
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #define __DBINTERFACE_PRIVATE
 #include <db.h>
 
@@ -67,78 +69,80 @@ main(int argc, char *argv[])
 	if (BYTE_ORDER != BIG_ENDIAN)
 		swabvid(cdl);
 
-	printf("vid_id		%s	%x\n", cdl->vid_id,
+	printf("vid_id		%s	%lx\n", cdl->vid_id,
 	    (char *)&(cdl->vid_id[4]) - (char *)cdl);
-	printf("vid_oss		%x	%x\n", cdl->vid_oss,
+	printf("vid_oss		%x	%lx\n", cdl->vid_oss,
 	    (char *)&(cdl->vid_oss) - (char *)cdl);
-	printf("vid_osl		%x	%x\n", cdl->vid_osl,
+	printf("vid_osl		%x	%lx\n", cdl->vid_osl,
 	    (char *)&(cdl->vid_osl) - (char *)cdl);
-	printf("vid_osa_u	%x	%x\n", cdl->vid_osa_u,
+	printf("vid_osa_u	%x	%lx\n", cdl->vid_osa_u,
 	    (char *)&(cdl->vid_osa_u) - (char *)cdl);
-	printf("vid_osa_l	%x	%x\n", cdl->vid_osa_l,
+	printf("vid_osa_l	%x	%lx\n", cdl->vid_osa_l,
 	    (char *)&(cdl->vid_osa_l) - (char *)cdl);
-	printf("vid_vd %x\n",
+	printf("vid_vd %lx\n",
 	    (char *)&(cdl->vid_vd) - (char *)cdl);
-	printf("vid_cas		%x	%x\n", cdl->vid_cas,
+	printf("vid_cas		%x	%lx\n", cdl->vid_cas,
 	    (char *)&(cdl->vid_cas) - (char *)cdl);
-	printf("vid_cal		%x	%x\n", cdl->vid_cal,
+	printf("vid_cal		%x	%lx\n", cdl->vid_cal,
 	    (char *)&(cdl->vid_cal) - (char *)cdl);
-	printf("vid_moto	%s	%x\n", cdl->vid_mot,
+	printf("vid_moto	%s	%lx\n", cdl->vid_mot,
 	    (char *)&(cdl->vid_mot[0]) - (char *)cdl);
 
 	if (BYTE_ORDER != BIG_ENDIAN)
 		swabcfg(cdl);
 
-	printf("cfg_atm		%x	%x\n", cdl->cfg_atm,
+	printf("cfg_atm		%x	%lx\n", cdl->cfg_atm,
 	    (char *)&(cdl->cfg_atm) - (char *)(cdl));
-	printf("cfg_prm		%x	%x\n", cdl->cfg_prm,
+	printf("cfg_prm		%x	%lx\n", cdl->cfg_prm,
 	    (char *)&(cdl->cfg_prm) - (char *)(cdl));
-	printf("cfg_atw		%x	%x\n", cdl->cfg_atw,
+	printf("cfg_atw		%x	%lx\n", cdl->cfg_atw,
 	    (char *)&(cdl->cfg_atw) - (char *)(cdl));
-	printf("cfg_rec		%x	%x\n",(long)cdl->cfg_rec,
+	printf("cfg_rec		%lx	%lx\n",(long)cdl->cfg_rec,
 	    (char *)&(cdl->cfg_rec) - (char *)(cdl));
-	printf("cfg_spt		%x	%x\n", cdl->cfg_spt,
+	printf("cfg_spt		%x	%lx\n", cdl->cfg_spt,
 	    (char *)&(cdl->cfg_spt) - (char *)(cdl));
-	printf("cfg_hds		%x	%x\n", cdl->cfg_hds,
+	printf("cfg_hds		%x	%lx\n", cdl->cfg_hds,
 	    (char *)&(cdl->cfg_hds) - (char *)(cdl));
-	printf("cfg_trk		%x	%x\n", cdl->cfg_trk,
+	printf("cfg_trk		%x	%lx\n", cdl->cfg_trk,
 	    (char *)&(cdl->cfg_trk) - (char *)(cdl));
-	printf("cfg_ilv		%x	%x\n", cdl->cfg_ilv,
+	printf("cfg_ilv		%x	%lx\n", cdl->cfg_ilv,
 	    (char *)&(cdl->cfg_ilv) - (char *)(cdl));
-	printf("cfg_sof		%x	%x\n", cdl->cfg_sof,
+	printf("cfg_sof		%x	%lx\n", cdl->cfg_sof,
 	    (char *)&(cdl->cfg_sof) - (char *)(cdl));
-	printf("cfg_psm		%x	%x\n", cdl->cfg_psm,
+	printf("cfg_psm		%x	%lx\n", cdl->cfg_psm,
 	    (char *)&(cdl->cfg_psm) - (char *)(cdl));
-	printf("cfg_shd		%x	%x\n", cdl->cfg_shd,
+	printf("cfg_shd		%x	%lx\n", cdl->cfg_shd,
 	    (char *)&(cdl->cfg_shd) - (char *)(cdl));
-	printf("cfg_pcom	%x	%x\n", cdl->cfg_pcom,
+	printf("cfg_pcom	%x	%lx\n", cdl->cfg_pcom,
 	    (char *)&(cdl->cfg_pcom) - (char *)(cdl));
-	printf("cfg_ssr 	%x	%x\n", cdl->cfg_ssr,
+	printf("cfg_ssr 	%x	%lx\n", cdl->cfg_ssr,
 	    (char *)&(cdl->cfg_ssr) - (char *)(cdl));
-	printf("cfg_rwcc	%x	%x\n", cdl->cfg_rwcc,
+	printf("cfg_rwcc	%x	%lx\n", cdl->cfg_rwcc,
 	    (char *)&(cdl->cfg_rwcc) - (char *)(cdl));
-	printf("cfg_ecc 	%x	%x\n", cdl->cfg_ecc,
+	printf("cfg_ecc 	%x	%lx\n", cdl->cfg_ecc,
 	    (char *)&(cdl->cfg_ecc) - (char *)(cdl));
-	printf("cfg_eatm	%x	%x\n", cdl->cfg_eatm,
+	printf("cfg_eatm	%x	%lx\n", cdl->cfg_eatm,
 	    (char *)&(cdl->cfg_eatm) - (char *)(cdl));
-	printf("cfg_eprm	%x	%x\n", cdl->cfg_eprm,
+	printf("cfg_eprm	%x	%lx\n", cdl->cfg_eprm,
 	    (char *)&(cdl->cfg_eprm) - (char *)(cdl));
-	printf("cfg_eatw	%x	%x\n", cdl->cfg_eatw,
+	printf("cfg_eatw	%x	%lx\n", cdl->cfg_eatw,
 	    (char *)&(cdl->cfg_eatw) - (char *)(cdl));
-	printf("cfg_gpb1	%x	%x\n", cdl->cfg_gpb1,
+	printf("cfg_gpb1	%x	%lx\n", cdl->cfg_gpb1,
 	    (char *)&(cdl->cfg_gpb1) - (char *)(cdl));
-	printf("cfg_gpb2	%x	%x\n", cdl->cfg_gpb2,
+	printf("cfg_gpb2	%x	%lx\n", cdl->cfg_gpb2,
 	    (char *)&(cdl->cfg_gpb2) - (char *)(cdl));
-	printf("cfg_gpb3	%x	%x\n", cdl->cfg_gpb3,
+	printf("cfg_gpb3	%x	%lx\n", cdl->cfg_gpb3,
 	    (char *)&(cdl->cfg_gpb3) - (char *)(cdl));
-	printf("cfg_gpb4	%x	%x\n", cdl->cfg_gpb4,
+	printf("cfg_gpb4	%x	%lx\n", cdl->cfg_gpb4,
 	    (char *)&(cdl->cfg_gpb4) - (char *)(cdl));
-	printf("cfg_ssc		%x	%x\n", cdl->cfg_ssc,
+	printf("cfg_ssc		%x	%lx\n", cdl->cfg_ssc,
 	    (char *)&(cdl->cfg_ssc) - (char *)(cdl));
-	printf("cfg_runit	%x	%x\n", cdl->cfg_runit,
+	printf("cfg_runit	%x	%lx\n", cdl->cfg_runit,
 	    (char *)&(cdl->cfg_runit) - (char *)(cdl));
-	printf("cfg_rsvc1	%x	%x\n", cdl->cfg_rsvc1,
+	printf("cfg_rsvc1	%x	%lx\n", cdl->cfg_rsvc1,
 	    (char *)&(cdl->cfg_rsvc1) - (char *)(cdl));
-	printf("cfg_rsvc2	%x	%x\n", cdl->cfg_rsvc2,
+	printf("cfg_rsvc2	%x	%lx\n", cdl->cfg_rsvc2,
 	    (char *)&(cdl->cfg_rsvc2) - (char *)(cdl));
+
+	return 0;
 }
