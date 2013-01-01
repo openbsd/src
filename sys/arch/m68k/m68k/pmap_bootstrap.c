@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.19 2010/06/28 04:20:25 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.20 2013/01/01 01:01:08 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -85,7 +85,6 @@ extern pt_entry_t *Sysptmap, *Sysmap;
 extern int physmem;
 extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail, virtual_end;
-extern vsize_t mem_size;
 
 void  pmap_bootstrap(paddr_t, paddr_t);
 
@@ -499,7 +498,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	RELOC(avail_start, paddr_t) = nextpa;
 	PMAP_MD_MEMSIZE();
-	RELOC(mem_size, vsize_t) = ptoa(RELOC(physmem, int));
 	RELOC(virtual_avail, vaddr_t) =
 	    VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
