@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.7 2011/03/23 16:54:35 pirofti Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.8 2013/01/01 00:05:04 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -38,7 +38,7 @@
  * Flush the data pipeline.
  */
 #define	flush_pipeline() \
-	__asm__ __volatile__ ("tb1 0, r0, 0");
+	__asm__ __volatile__ ("tb1 0, r0, 0" ::: "memory");
 
 /*
  * Set the PSR.
