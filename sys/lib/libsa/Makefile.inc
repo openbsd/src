@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2003/06/01 17:00:32 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2013/01/01 00:58:25 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.5 1996/09/30 16:01:18 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
@@ -13,7 +13,6 @@ SAMAKE= \
 	  CC="${CC}" XCFLAGS="${CFLAGS}" \
 	  AS='${AS}' XAFLAGS='${AFLAGS}' \
 	  LD='${LD}' \
-	  XCPPFLAGS="${CPPFLAGS}" \
 	  SAREL="${SAREL}" \
 	  SADIR="${SADIR}" \
 	  EXTRACFLAGS="${EXTRACFLAGS}"
