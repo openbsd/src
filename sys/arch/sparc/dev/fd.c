@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.81 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: fd.c,v 1.82 2013/01/01 01:00:14 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -187,7 +187,7 @@ __inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
-	{ 18,2,36,2,0xff,0xcf,0x1b,0x54,80,2880,1,FDC_500KBPS, "1.44MB"    }, /* 1.44MB diskette */
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS, "1.44MB"    }, /* 1.44MB diskette */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS, "720KB"    }, /* 3.5" 720kB diskette */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS, "360KB/x"  }, /* 360kB in 720kB drive */
 	{  8,2,16,3,0xff,0xdf,0x35,0x74,77,1232,1,FDC_500KBPS, "1.2MB/NEC" } /* 1.2 MB japanese format */
