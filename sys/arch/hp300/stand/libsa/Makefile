@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2013/01/01 17:17:44 miod Exp $
+#	$OpenBSD: Makefile,v 1.17 2013/01/01 17:18:49 miod Exp $
 
 LIB=	sa
 
@@ -8,9 +8,12 @@ CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include -I${.CURDIR}/../.. \
 	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
 	-I${.CURDIR}/../../../../lib/libsa
 
+# local source
+SRCS+=	devopen.c exec_hp300.c rawfs.c
+
 # stand routines
 .PATH:	${.CURDIR}/../../../../lib/libsa
-SRCS+=	alloc.c devopen.c exit.c exec.c getfile.c gets.c globals.c \
+SRCS+=	alloc.c exit.c getfile.c gets.c globals.c loadfile.c \
 	memcmp.c memcpy.c memset.c printf.c snprintf.c strcmp.c \
 	strerror.c strlen.c strncmp.c strncpy.c
 
@@ -28,7 +31,7 @@ SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
 SRCS+=	bootp.c bootparam.c rarp.c
 
 # boot filesystems
-SRCS+=	ufs.c nfs.c rawfs.c cd9660.c
+SRCS+=	ufs.c nfs.c cd9660.c
 
 NOPROFILE=
 NOPIC=
