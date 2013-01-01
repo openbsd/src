@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.14 2011/09/08 03:40:32 guenther Exp $ */
+/*	$OpenBSD: param.h,v 1.15 2013/01/01 01:02:19 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@
 /*
  * Constants related to network buffer management.
  */
-#define NMBCLUSTERS	2048		/* map size, max cluster allocation */
+#define NMBCLUSTERS	4096		/* map size, max cluster allocation */
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

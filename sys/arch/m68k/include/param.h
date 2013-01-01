@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.26 2011/09/08 03:40:32 guenther Exp $	*/
+/*	$OpenBSD: param.h,v 1.27 2013/01/01 01:02:19 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -101,7 +101,7 @@
 /*
  * Constants related to network buffer management.
  */
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PAGE_SHIFT - DEV_BSHIFT))
