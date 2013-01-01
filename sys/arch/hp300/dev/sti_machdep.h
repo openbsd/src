@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_machdep.h,v 1.1 2011/08/18 20:02:57 miod Exp $	*/
+/*	$OpenBSD: sti_machdep.h,v 1.2 2013/01/01 17:17:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, 2011, Miodrag Vallat
@@ -26,7 +26,7 @@
  *
  */
 
-#ifndef STANDALONE
+#ifndef _STANDALONE
 /* Console data */
 extern	struct sti_rom sticn_rom;
 extern	struct sti_screen sticn_scr;

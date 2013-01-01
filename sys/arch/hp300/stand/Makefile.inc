@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2011/08/18 20:02:58 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2013/01/01 17:17:44 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.7 1997/05/12 07:43:18 thorpej Exp $
 
 BINDIR=			/usr/mdec
@@ -9,13 +9,13 @@ RELOC=	FFF00000
 CFLAGS+=		-Wall -Wstrict-prototypes -Wmissing-prototypes \
 			-fno-stack-protector -msoft-float
 
-CPPFLAGS+=		-DAPCICONSOLE -DDCACONSOLE -DDCMCONSOLE -DITECONSOLE
-CPPFLAGS+=		-DHIL_KEYBOARD -DDOMAIN_KEYBOARD
-CPPFLAGS+=		-DSTANDALONE -D__hp300__
-CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
+SA_CPPFLAGS+=		-DAPCICONSOLE -DDCACONSOLE -DDCMCONSOLE -DITECONSOLE
+SA_CPPFLAGS+=		-DHIL_KEYBOARD -DDOMAIN_KEYBOARD
+SA_CPPFLAGS+=		-D_STANDALONE -D__hp300__
+SA_CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
 
 # Limit the alloc() heap to below the msgbuf and ROM scratch pages.
-CPPFLAGS+=		-DHEAP_LIMIT="0xffffdfff"
+SA_CPPFLAGS+=		-DHEAP_LIMIT="0xffffdfff"
 
 ### Figure out what to use for libcommon
 COMMONDIR=		${.CURDIR}/../common

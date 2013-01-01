@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 2006/08/17 06:31:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/01/01 17:17:44 miod Exp $
 
 LIB=	common
 
 NOMAN=	noman
 
-.include "${.CURDIR}/../Makefile.inc"
+CPPFLAGS+=	${SA_CPPFLAGS}
 
 SRCS=	apci.c autoconf.c cons.c ct.c dca.c dcm.c dnkbd.c \
 	fhpib.c hd.c hil.c hpib.c if_le.c ite.c ite_dv.c ite_gb.c ite_hy.c \
