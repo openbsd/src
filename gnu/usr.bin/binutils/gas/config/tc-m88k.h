@@ -24,29 +24,55 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define TC_M88K
 
 #define TARGET_BYTES_BIG_ENDIAN 1
+#undef REGISTER_PREFIX
+
+#ifdef OBJ_AOUT
+#ifdef TE_OpenBSD
+#define TARGET_FORMAT "a.out-m88k-openbsd"
+#endif
+#endif
 
 #ifdef M88KCOFF
-#define COFF_MAGIC MC88OMAGIC
 #define BFD_ARCH bfd_arch_m88k
+#define COFF_MAGIC MC88OMAGIC
 #define COFF_FLAGS F_AR32W
 #endif
 
-#define NEED_FX_R_TYPE
-#define TC_KEEP_FX_OFFSET
-#define TC_CONS_RELOC RELOC_32
+#ifdef OBJ_ELF
+#define BFD_ARCH bfd_arch_m88k
+#define TARGET_ARCH bfd_arch_m88k
+#define TARGET_FORMAT		"elf32-m88k"
+#if defined(TE_OpenBSD)
+#define REGISTER_PREFIX '%'
+#else
+#define REGISTER_PREFIX '#'
+#endif
+#endif
+
+#define CUSTOM_RELOC_FORMAT
 
 /* different type of relocation available in the m88k */
 
-enum reloc_type
+#ifdef BFD_ASSEMBLER
+#include "bfd.h"
+#define	m88k_reloc_type bfd_reloc_code_real
+#else
+enum m88k_reloc_type
 {
-  RELOC_LO16,			/* lo16(sym) */
-  RELOC_HI16,			/* hi16(sym) */
-  RELOC_PC16,			/* bb0, bb1, bcnd */
-  RELOC_PC26,			/* br, bsr */
-  RELOC_32,			/* jump tables, etc */
-  RELOC_IW16,			/* global access through linker regs 28 */
+  RELOC_LO16,		/* lo16(sym) */
+  RELOC_HI16,		/* hi16(sym) */
+  RELOC_PC16,		/* bb0, bb1, bcnd */
+  RELOC_PC26,		/* br, bsr */
+  RELOC_32,		/* jump tables, etc */
+  RELOC_IW16,		/* global access through linker regs 28 */
   NO_RELOC
 };
+
+#define NEED_FX_R_TYPE
+#ifdef M88KCOFF
+#define TC_KEEP_FX_OFFSET
+#endif
+#define TC_CONS_RELOC RELOC_32
 
 struct reloc_info_m88k
 {
@@ -54,13 +80,16 @@ struct reloc_info_m88k
   unsigned int r_symbolnum:24;
   unsigned int r_extern:1;
   unsigned int r_pad:3;
-  enum reloc_type r_type:4;
+  enum m88k_reloc_type r_type:4;
   long int r_addend;
 };
 
 #define relocation_info reloc_info_m88k
+#endif /* BFD_ASSEMBLER */
 
-/* The m88k uses '@' to start local labels.  */
+#ifndef OBJ_ELF
+
+/* The m88k uses '@' to start local labels, except on ELF.  */
 #define LEX_AT (LEX_BEGIN_NAME | LEX_NAME)
 
 #ifndef BFD_ASSEMBLER
@@ -68,9 +97,13 @@ struct reloc_info_m88k
   ((name[0] =='@' && (name [1] == 'L' || name [1] == '.')) \
    || (name[0] == 'L' && name[1] == '0' && name[2] == '\001'))
 #endif
+#endif /* OBJ_ELF */
 
-/* The m88k uses pseudo-ops with no leading period.  */
+#if !defined(OBJ_ELF) || !defined(TE_OpenBSD)
+/* The m88k uses pseudo-ops with no leading period, except on OpenBSD ELF.  */
 #define NO_PSEUDO_DOT 1
+#endif
+
 
 /* Don't warn on word overflow; it happens on %hi relocs.  */
 #undef WARN_SIGNED_OVERFLOW_WORD
@@ -82,6 +115,9 @@ struct reloc_info_m88k
 
 /* We have no special operand handling.  */
 #define md_operand(e)
+
+#define tc_aout_pre_write_hook(x)      do { } while (0)
+#define tc_crawl_symbol_chain(a)       do { } while (0)
 
 #ifdef M88KCOFF
 
@@ -100,10 +136,16 @@ struct reloc_info_m88k
 #endif
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)	max (section_alignment[(int) (SEG)], 4)
 
+#endif /* M88KCOFF */
+
 /* Fill in rs_align_code fragments.  */
 extern void m88k_handle_align PARAMS ((fragS *));
 #define HANDLE_ALIGN(frag)  m88k_handle_align (frag)
 
 #define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4)
 
-#endif /* M88KCOFF */
+#define elf_tc_final_processing m88k_elf_final_processing
+extern void m88k_elf_final_processing (void);
+
+/* word pseudo outputs 32-bit values, no risk of ``broken words'' */
+#define WORKING_DOT_WORD

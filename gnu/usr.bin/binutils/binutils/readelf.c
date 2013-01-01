@@ -88,6 +88,7 @@
 #include "elf/m32r.h"
 #include "elf/m68k.h"
 #include "elf/m68hc11.h"
+#include "elf/m88k.h"
 #include "elf/mcore.h"
 #include "elf/mips.h"
 #include "elf/mmix.h"
@@ -2026,6 +2027,13 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    strcat (buf, ", D-Float");
 	  if ((e_flags & EF_VAX_GFLOAT))
 	    strcat (buf, ", G-Float");
+	  break;
+
+	case EM_88K:
+	  if ((e_flags & EF_NABI))
+	    strcat (buf, ", not 88Open ABI compliant");
+	  if ((e_flags & EF_M88110))
+	    strcat (buf, ", m88110");
 	  break;
 	}
     }

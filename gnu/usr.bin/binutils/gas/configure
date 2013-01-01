@@ -4422,6 +4422,7 @@ echo "$as_me: WARNING: GAS support for ${generic_target} is preliminary and a wo
 
       m88k-motorola-sysv3*)		fmt=coff em=delt88 ;;
       m88k-*-coff*)			fmt=coff ;;
+      m88k-*-openbsd*)			fmt=elf em=obsd bfd_gas=yes ;;
 
       mcore-*-elf)			fmt=elf ;;
       mcore-*-pe)			fmt=coff em=pe bfd_gas=yes ;;

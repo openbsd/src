@@ -1728,6 +1728,10 @@ ENUMX
   BFD_RELOC_16_PCREL_S2
 ENUMX
   BFD_RELOC_23_PCREL_S2
+ENUMX
+  BFD_RELOC_18_PCREL_S2
+ENUMX
+  BFD_RELOC_28_PCREL_S2
 ENUMDOC
   These PC-relative relocations are stored as word displacements --
 i.e., byte displacements shifted right two bits.  The 30-bit word
