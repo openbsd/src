@@ -44,11 +44,8 @@ Boston, MA 02111-1307, USA.  */
 #include "target-def.h"
 
 const char *m88k_pound_sign = ""; /* Either # for SVR4 or empty for SVR3 */
-const char *m88k_short_data;
-const char *m88k_version;
 char m88k_volatile_code;
 
-unsigned m88k_gp_threshold = 0;
 int m88k_prologue_done	= 0;	/* Ln directives can now be emitted */
 int m88k_function_number = 0;	/* Counter unique to each function */
 int m88k_fp_offset	= 0;	/* offset of frame pointer if used */
@@ -70,9 +67,7 @@ static void m88k_output_function_begin_epilogue PARAMS ((FILE *));
 static void m88k_svr3_asm_out_constructor PARAMS ((rtx, int));
 static void m88k_svr3_asm_out_destructor PARAMS ((rtx, int));
 #endif
-static void m88k_select_section PARAMS ((tree, int, unsigned HOST_WIDE_INT));
 static int m88k_adjust_cost PARAMS ((rtx, rtx, rtx, int));
-static void m88k_encode_section_info PARAMS ((tree, int));
 
 /* Initialize the GCC target structure.  */
 #if !defined(OBJECT_FORMAT_ELF)
@@ -99,9 +94,6 @@ static void m88k_encode_section_info PARAMS ((tree, int));
 
 #undef TARGET_SCHED_ADJUST_COST
 #define TARGET_SCHED_ADJUST_COST m88k_adjust_cost
-
-#undef TARGET_ENCODE_SECTION_INFO
-#define TARGET_ENCODE_SECTION_INFO  m88k_encode_section_info
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -523,8 +515,6 @@ static void block_move_no_loop PARAMS ((rtx, rtx, rtx, rtx, int, int));
 #endif
 static void block_move_sequence PARAMS ((rtx, rtx, rtx, rtx, int, int, int));
 static void output_short_branch_defs PARAMS ((FILE *));
-static int output_option PARAMS ((FILE *, const char *, const char *,
-				  const char *, const char *, int, int));
 
 /* Emit code to perform a block move.  Choose the best method.
 
@@ -919,10 +909,6 @@ output_call (operands, addr)
 	  int delta = 4 * (INSN_ADDRESSES (INSN_UID (dest))
 			   - INSN_ADDRESSES (INSN_UID (seq_insn))
 			   - 2);
-#if (MONITOR_GCC & 0x2) /* How often do long branches happen?  */
-	  if ((unsigned) (delta + 0x8000) >= 0x10000)
-	    warning ("internal gcc monitor: short-branch(%x)", delta);
-#endif
 
 	  /* Delete the jump.  */
 	  PUT_CODE (jump, NOTE);
@@ -1537,98 +1523,10 @@ pc_or_label_ref (op, mode)
 
 /* Output to FILE the start of the assembler file.  */
 
-/* This definition must match lang_independent_options from toplev.c.  */
-struct m88k_lang_independent_options
-{
-  const char *const string;
-  int *const variable;
-  const int on_value;
-  const char *const description;
-};
-
-static void output_options PARAMS ((FILE *,
-				    const struct m88k_lang_independent_options *,
-				    int,
-				    const struct m88k_lang_independent_options *,
-				    int, int, int, const char *, const char *,
-				    const char *));
-
-static int
-output_option (file, sep, type, name, indent, pos, max)
-     FILE *file;
-     const char *sep;
-     const char *type;
-     const char *name;
-     const char *indent;
-     int pos;
-     int max;
-{
-  if ((long)(strlen (sep) + strlen (type) + strlen (name) + pos) > max)
-    {
-      fprintf (file, indent);
-      return fprintf (file, "%s%s", type, name);
-    }
-  return pos + fprintf (file, "%s%s%s", sep, type, name);
-}
-
-static const struct { const char *const name; const int value; } m_options[] =
-TARGET_SWITCHES;
-
-static void
-output_options (file, f_options, f_len, W_options, W_len,
-		pos, max, sep, indent, term)
-     FILE *file;
-     const struct m88k_lang_independent_options *f_options;
-     const struct m88k_lang_independent_options *W_options;
-     int f_len, W_len;
-     int pos;
-     int max;
-     const char *sep;
-     const char *indent;
-     const char *term;
-{
-  register int j;
-
-  if (optimize)
-    pos = output_option (file, sep, "-O", "", indent, pos, max);
-  if (write_symbols != NO_DEBUG)
-    pos = output_option (file, sep, "-g", "", indent, pos, max);
-  if (profile_flag)
-    pos = output_option (file, sep, "-p", "", indent, pos, max);
-  for (j = 0; j < f_len; j++)
-    if (*f_options[j].variable == f_options[j].on_value)
-      pos = output_option (file, sep, "-f", f_options[j].string,
-			   indent, pos, max);
-
-  for (j = 0; j < W_len; j++)
-    if (*W_options[j].variable == W_options[j].on_value)
-      pos = output_option (file, sep, "-W", W_options[j].string,
-			   indent, pos, max);
-
-  for (j = 0; j < (long) ARRAY_SIZE (m_options); j++)
-    if (m_options[j].name[0] != '\0'
-	&& m_options[j].value > 0
-	&& ((m_options[j].value & target_flags)
-	    == m_options[j].value))
-      pos = output_option (file, sep, "-m", m_options[j].name,
-			   indent, pos, max);
-
-  if (m88k_short_data)
-    pos = output_option (file, sep, "-mshort-data-", m88k_short_data,
-			 indent, pos, max);
-
-  fprintf (file, term);
-}
-
 void
-output_file_start (file, f_options, f_len, W_options, W_len)
+output_file_start (file)
      FILE *file;
-     const struct m88k_lang_independent_options *f_options;
-     const struct m88k_lang_independent_options *W_options;
-     int f_len, W_len;
 {
-  register int pos;
-
   ASM_FIRST_LINE (file);
   if (TARGET_88110
       && TARGET_SVR4)
@@ -1637,27 +1535,6 @@ output_file_start (file, f_options, f_len, W_options, W_len)
   /* Switch to the data section so that the coffsem symbol
      isn't in the text section.  */
   ASM_COFFSEM (file);
-
-  if (TARGET_IDENTIFY_REVISION)
-    {
-      char indent[256];
-
-      time_t now = time ((time_t *)0);
-      sprintf (indent, "]\"\n%s\"@(#)%s [", IDENT_ASM_OP, main_input_filename);
-      fprintf (file, indent+3);
-      pos = fprintf (file, "gcc %s, %.24s,", version_string, ctime (&now));
-#if 1
-      /* ??? It would be nice to call print_switch_values here (and thereby
-	 let us delete output_options) but this is kept in until it is known
-	 whether the change in content format matters.  */
-      output_options (file, f_options, f_len, W_options, W_len,
-		      pos, 150 - strlen (indent), " ", indent, "]\"\n\n");
-#else
-      fprintf (file, "]\"\n");
-      print_switch_values (file, 0, 150 - strlen (indent),
-			   indent + 3, " ", "]\"\n");
-#endif
-    }
 }
 
 /* Output an ascii string.  */
@@ -2141,11 +2018,6 @@ m88k_output_function_epilogue (stream, size)
 void
 m88k_expand_epilogue ()
 {
-#if (MONITOR_GCC & 0x4) /* What are interesting prologue/epilogue values?  */
-  fprintf (stream, "; size = %d, m88k_fp_offset = %d, m88k_stack_size = %d\n",
-	   size, m88k_fp_offset, m88k_stack_size);
-#endif
-
   if (frame_pointer_needed)
     emit_add (stack_pointer_rtx, frame_pointer_rtx, -m88k_fp_offset);
 
@@ -2333,14 +2205,7 @@ m88k_debugger_offset (reg, offset)
   else if (reg == stack_pointer_rtx)
     offset -= m88k_stack_size;
   else if (reg != arg_pointer_rtx)
-    {
-#if (MONITOR_GCC & 0x10) /* Watch for suspicious symbolic locations.  */
-      if (! (GET_CODE (reg) == REG
-	     && REGNO (reg) >= FIRST_PSEUDO_REGISTER))
-	warning ("internal gcc error: Can't express symbolic location");
-#endif
-      return 0;
-    }
+    return 0;
 
   return offset;
 }
@@ -3452,38 +3317,6 @@ m88k_svr3_asm_out_destructor (symbol, priority)
 }
 #endif /* INIT_SECTION_ASM_OP && ! OBJECT_FORMAT_ELF */
 
-static void
-m88k_select_section (decl, reloc, align)
-     tree decl;
-     int reloc;
-     unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED;
-{
-  if (TREE_CODE (decl) == STRING_CST)
-    {
-      if (! flag_writable_strings)
-	readonly_data_section ();
-      else if (TREE_STRING_LENGTH (decl) <= m88k_gp_threshold)
-	sdata_section ();
-      else
-	data_section ();
-    }
-  else if (TREE_CODE (decl) == VAR_DECL)
-    {
-      if (SYMBOL_REF_FLAG (XEXP (DECL_RTL (decl), 0)))
-	sdata_section ();
-      else if ((flag_pic && reloc)
-	       || !TREE_READONLY (decl) || TREE_SIDE_EFFECTS (decl)
-	       || !DECL_INITIAL (decl)
-	       || (DECL_INITIAL (decl) != error_mark_node
-		   && !TREE_CONSTANT (DECL_INITIAL (decl))))
-	data_section ();
-      else
-	readonly_data_section ();
-    }
-  else
-    readonly_data_section ();
-}
-
 /* Adjust the cost of INSN based on the relationship between INSN that
    is dependent on DEP_INSN through the dependence LINK.  The default
    is to make no adjustment to COST.
@@ -3511,32 +3344,6 @@ m88k_adjust_cost (insn, link, dep, cost)
   return cost;
 }
 
-/* For the m88k, determine if the item should go in the global pool.  */
-
-static void
-m88k_encode_section_info (decl, first)
-     tree decl;
-     int first ATTRIBUTE_UNUSED;
-{
-  if (m88k_gp_threshold > 0)
-    {
-      if (TREE_CODE (decl) == VAR_DECL)
-	{
-	  if (!TREE_READONLY (decl) || TREE_SIDE_EFFECTS (decl))
-	    {
-	      int size = int_size_in_bytes (TREE_TYPE (decl));
-
-	      if (size > 0 && size <= m88k_gp_threshold)
-		SYMBOL_REF_FLAG (XEXP (DECL_RTL (decl), 0)) = 1;
-	    }
-	}
-      else if (TREE_CODE (decl) == STRING_CST
-	       && flag_writable_strings
-	       && TREE_STRING_LENGTH (decl) <= m88k_gp_threshold)
-	SYMBOL_REF_FLAG (XEXP (TREE_CST_RTL (decl), 0)) = 1;
-    }
-}
-
 void
 m88k_override_options ()
 {
@@ -3554,9 +3361,6 @@ m88k_override_options ()
   m88k_cpu = (TARGET_88000 ? PROCESSOR_M88000
 	      : (TARGET_88100 ? PROCESSOR_M88100 : PROCESSOR_M88110));
 
-  if (TARGET_BIG_PIC)
-    flag_pic = 2;
-
   if ((target_flags & MASK_EITHER_LARGE_SHIFT) == MASK_EITHER_LARGE_SHIFT)
     error ("-mtrap-large-shift and -mhandle-large-shift are incompatible");
 
@@ -3572,23 +3376,6 @@ m88k_override_options ()
       target_flags &= ~MASK_SVR4;
     }
 
-  if (m88k_short_data)
-    {
-      const char *p = m88k_short_data;
-      while (*p)
-	if (ISDIGIT (*p))
-	  p++;
-	else
-	  {
-	    error ("invalid option `-mshort-data-%s'", m88k_short_data);
-	    break;
-	  }
-      m88k_gp_threshold = atoi (m88k_short_data);
-      if (m88k_gp_threshold > 0x7fffffff)
-	error ("-mshort-data-%s is too large ", m88k_short_data);
-      if (flag_pic)
-	error ("-mshort-data-%s and PIC are incompatible", m88k_short_data);
-    }
   if (TARGET_OMIT_LEAF_FRAME_POINTER)	/* keep nonleaf frame pointers */
     flag_omit_frame_pointer = 1;
 }

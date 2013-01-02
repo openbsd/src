@@ -95,11 +95,8 @@ enum processor_type {
 /* External variables/functions defined in m88k.c.  */
 
 extern const char *m88k_pound_sign;
-extern const char *m88k_short_data;
-extern const char *m88k_version;
 extern char m88k_volatile_code;
 
-extern unsigned m88k_gp_threshold;
 extern int m88k_prologue_done;
 extern int m88k_function_number;
 extern int m88k_fp_offset;
@@ -118,15 +115,6 @@ extern int target_flags;			/* -m compiler switches */
 extern int frame_pointer_needed;		/* current function has a FP */
 extern int flag_delayed_branch;			/* -fdelayed-branch */
 extern int flag_pic;				/* -fpic */
-
-/* Specify the default monitors.  The meaning of these values can
-   be obtained by doing "grep MONITOR_GCC *m88k*".  Generally, the
-   values downward from 0x8000 are tests that will soon go away.
-   values upward from 0x1 are generally useful tests that will remain.  */
-
-#ifndef MONITOR_GCC
-#define MONITOR_GCC 0
-#endif
 
 /*** Controlling the Compilation Driver, `gcc' ***/
 /* Show we can debug even without a frame pointer.  */
@@ -171,12 +159,10 @@ extern int flag_pic;				/* -fpic */
 #define MASK_SVR4		0x00000010 /* Target is AT&T System V.4 */
 #define MASK_SVR3		0x00000020 /* Target is AT&T System V.3 */
 #define MASK_NO_UNDERSCORES	0x00000040 /* Don't emit a leading `_' */
-#define MASK_BIG_PIC		0x00000080 /* PIC with large got-rel's -fPIC */
 #define MASK_TRAP_LARGE_SHIFT	0x00000100 /* Trap if shift not <= 31 */
 #define MASK_HANDLE_LARGE_SHIFT	0x00000200 /* Handle shift count >= 32 */
 #define MASK_CHECK_ZERO_DIV	0x00000400 /* Check for int div. by 0 */
 #define MASK_USE_DIV		0x00000800 /* No signed div. checks */
-#define MASK_IDENTIFY_REVISION	0x00001000 /* Emit ident, with GCC rev */
 #define MASK_WARN_PASS_STRUCT	0x00002000 /* Warn about passed structs */
 #define MASK_OPTIMIZE_ARG_AREA	0x00004000 /* Save stack space */
 #define MASK_NO_SERIALIZE_VOLATILE 0x00008000 /* Serialize volatile refs */
@@ -195,12 +181,10 @@ extern int flag_pic;				/* -fpic */
 #define TARGET_SVR4		  (target_flags & MASK_SVR4)
 #define TARGET_SVR3		  (target_flags & MASK_SVR3)
 #define TARGET_NO_UNDERSCORES	  (target_flags & MASK_NO_UNDERSCORES)
-#define TARGET_BIG_PIC		  (target_flags & MASK_BIG_PIC)
 #define TARGET_TRAP_LARGE_SHIFT   (target_flags & MASK_TRAP_LARGE_SHIFT)
 #define TARGET_HANDLE_LARGE_SHIFT (target_flags & MASK_HANDLE_LARGE_SHIFT)
 #define TARGET_CHECK_ZERO_DIV	  (target_flags & MASK_CHECK_ZERO_DIV)
 #define	TARGET_USE_DIV		  (target_flags & MASK_USE_DIV)
-#define TARGET_IDENTIFY_REVISION  (target_flags & MASK_IDENTIFY_REVISION)
 #define TARGET_WARN_PASS_STRUCT   (target_flags & MASK_WARN_PASS_STRUCT)
 #define TARGET_OPTIMIZE_ARG_AREA  (target_flags & MASK_OPTIMIZE_ARG_AREA)
 #define TARGET_SERIALIZE_VOLATILE (!(target_flags & MASK_NO_SERIALIZE_VOLATILE))
@@ -225,13 +209,11 @@ extern int flag_pic;				/* -fpic */
     { "svr4",			         MASK_SVR4 }, \
     { "svr3",			        -MASK_SVR4 }, \
     { "no-underscores",			 MASK_NO_UNDERSCORES }, \
-    { "big-pic",			 MASK_BIG_PIC }, \
     { "trap-large-shift",		 MASK_TRAP_LARGE_SHIFT }, \
     { "handle-large-shift",		 MASK_HANDLE_LARGE_SHIFT }, \
     { "check-zero-division",		 MASK_CHECK_ZERO_DIV }, \
     { "no-check-zero-division",		-MASK_CHECK_ZERO_DIV }, \
     { "use-div-instruction",		 MASK_USE_DIV }, \
-    { "identify-revision",		 MASK_IDENTIFY_REVISION }, \
     { "warn-passed-structs",		 MASK_WARN_PASS_STRUCT }, \
     { "optimize-arg-area",		 MASK_OPTIMIZE_ARG_AREA }, \
     { "no-optimize-arg-area",		-MASK_OPTIMIZE_ARG_AREA }, \
@@ -248,11 +230,6 @@ extern int flag_pic;				/* -fpic */
 
 /* Redefined in dgux.h.  */
 #define SUBTARGET_SWITCHES
-
-/* Macro to define table for command options with values.  */
-
-#define TARGET_OPTIONS { { "short-data-", &m88k_short_data }, \
-			 { "version-", &m88k_version } }
 
 /* Do any checking or such that is needed after processing the -m switches.  */
 #define OVERRIDE_OPTIONS m88k_override_options ()
@@ -1665,11 +1642,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 /* Override svr[34].h.  */
 #undef	ASM_FILE_START
 #define ASM_FILE_START(FILE) \
-  output_file_start (FILE, \
-	(struct m88k_lang_independent_options *) f_options, \
-	ARRAY_SIZE (f_options), \
-	(struct m88k_lang_independent_options *) W_options, \
-	ARRAY_SIZE (W_options))
+  output_file_start (FILE)
 
 #undef	ASM_FILE_END
 
@@ -1926,8 +1899,7 @@ do {									 \
 #undef	ASM_OUTPUT_COMMON
 #undef	ASM_OUTPUT_ALIGNED_COMMON
 #define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)	\
-( fprintf ((FILE), "%s",				\
-	   ((SIZE) ? (SIZE) : 1) <= m88k_gp_threshold ? SCOMM_ASM_OP : COMMON_ASM_OP), \
+( fprintf ((FILE), "%s", COMMON_ASM_OP),		\
   assemble_name ((FILE), (NAME)),			\
   fprintf ((FILE), ",%u\n", (SIZE) ? (SIZE) : 1))
 
@@ -1936,8 +1908,7 @@ do {									 \
 #undef	ASM_OUTPUT_LOCAL
 #undef	ASM_OUTPUT_ALIGNED_LOCAL
 #define ASM_OUTPUT_LOCAL(FILE, NAME, SIZE, ROUNDED)	\
-( fprintf ((FILE), "%s",				\
-	   ((SIZE) ? (SIZE) : 1) <= m88k_gp_threshold ? SBSS_ASM_OP : BSS_ASM_OP), \
+( fprintf ((FILE), "%s", BSS_ASM_OP),			\
   assemble_name ((FILE), (NAME)),			\
   fprintf ((FILE), ",%u,%d\n", (SIZE) ? (SIZE) : 1, (SIZE) <= 4 ? 4 : 8))
 
@@ -2230,8 +2201,6 @@ sdata_section ()							\
 									\
   INIT_SECTION_FUNCTION							\
   FINI_SECTION_FUNCTION
-
-#define TARGET_ASM_SELECT_SECTION  m88k_select_section
 
 /* Jump tables consist of branch instructions and should be output in
    the text section.  When we use a table of addresses, we explicitly

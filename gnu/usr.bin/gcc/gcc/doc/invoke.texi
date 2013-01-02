@@ -386,16 +386,16 @@ in the following sections.
 -msdata=@var{sdata-type}  -G @var{num}}
 
 @emph{M88K Options}
-@gccoptlist{-m88000  -m88100  -m88110  -mbig-pic @gol
+@gccoptlist{-m88000  -m88100  -m88110 @gol
 -mcheck-zero-division  -mhandle-large-shift @gol
--midentify-revision  -mno-check-zero-division @gol
+-mno-check-zero-division @gol
 -mno-ocs-debug-info  -mno-ocs-frame-position @gol
 -mno-optimize-arg-area  -mno-serialize-volatile @gol
 -mno-underscores  -mocs-debug-info @gol
 -mocs-frame-position  -moptimize-arg-area @gol
--mserialize-volatile  -mshort-data-@var{num}  -msvr3 @gol
+-mserialize-volatile  -msvr3 @gol
 -msvr4  -mtrap-large-shift  -muse-div-instruction @gol
--mversion-03.00  -mwarn-passed-structs}
+-mwarn-passed-structs}
 
 @emph{RS/6000 and PowerPC Options}
 @gccoptlist{-mcpu=@var{cpu-type} @gol
@@ -6442,18 +6442,6 @@ runs on the m88110.
 Generate code that works best for the m88110, and may not run
 on the m88100.
 
-@item -mbig-pic
-@opindex mbig-pic
-Obsolete option to be removed from the next revision.
-Use @option{-fPIC}.
-
-@item -midentify-revision
-@opindex midentify-revision
-@cindex identifying source, compiler (88k)
-Include an @code{ident} directive in the assembler output recording the
-source file name, compiler name and version, timestamp, and compilation
-flags used.
-
 @item -mno-underscores
 @opindex mno-underscores
 @cindex underscores, avoiding (88k)
@@ -6504,19 +6492,6 @@ memory.
 @opindex mno-optimize-arg-area
 Do not reorganize the stack frame to save space.  This is the default.
 The generated conforms to the specification, but uses more memory.
-
-@item -mshort-data-@var{num}
-@opindex mshort-data
-@cindex smaller data references (88k)
-@cindex r0-relative references (88k)
-Generate smaller data references by making them relative to @code{r0},
-which allows loading a value using a single instruction (rather than the
-usual two).  You control which data references are affected by
-specifying @var{num} with this option.  For example, if you specify
-@option{-mshort-data-512}, then the data references affected are those
-involving displacements of less than 512 bytes.
-@option{-mshort-data-@var{num}} is not effective for @var{num} greater
-than 64k.
 
 @item -mserialize-volatile
 @opindex mserialize-volatile
@@ -6569,11 +6544,6 @@ SVr4.
 
 @option{-msvr4} is the default for the m88k-motorola-sysv4 configuration.
 @option{-msvr3} is the default for all other m88k configurations.
-
-@item -mversion-03.00
-@opindex mversion-03.00
-This option is obsolete, and is ignored.
-@c ??? which asm syntax better for GAS?  option there too?
 
 @item -mno-check-zero-division
 @itemx -mcheck-zero-division
