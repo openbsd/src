@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.1 2012/10/27 15:43:42 jsing Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.2 2013/01/02 16:20:55 martynas Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -169,8 +169,7 @@ srprobe(void)
 
 			if (bv == NULL) {
 				bv = alloc(sizeof(struct sr_boot_volume));
-				bv->sbv_diskinfo = NULL;
-				bv->sbv_keys = NULL;
+				bzero(bv, sizeof(struct sr_boot_volume));
 				bv->sbv_level = md->ssdi.ssd_level;
 				bv->sbv_volid = md->ssdi.ssd_volid;
 				bv->sbv_chunk_no = md->ssdi.ssd_chunk_no;
