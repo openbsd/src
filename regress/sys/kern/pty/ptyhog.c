@@ -30,7 +30,7 @@
 #define BUF_SIZE 1024
 
 /*
- * Exercise a bug in ptcwrite() when we git the TTYHOG limit if
+ * Exercise a bug in ptcwrite() when we hit the TTYHOG limit if
  * the tty is in raw mode.
  */
 static void sigalrm(int signo)
