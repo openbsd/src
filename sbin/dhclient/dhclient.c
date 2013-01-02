@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.199 2012/12/29 14:40:00 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.200 2013/01/02 16:27:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -309,6 +309,11 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			path_dhclient_db = optarg;
+			if (lstat(path_dhclient_db, &sb) != -1) {
+				if (!S_ISREG(sb.st_mode))
+					error("'%s' is not a regular file",
+					    path_dhclient_db);
+			}
 			break;
 		case 'q':
 			quiet = 1;
@@ -340,20 +345,6 @@ main(int argc, char *argv[])
 	if (path_dhclient_db == NULL && asprintf(&path_dhclient_db, "%s.%s",
 	    _PATH_DHCLIENT_DB, ifi->name) == -1)
 		error("asprintf");
-
-	if (lstat(path_dhclient_db, &sb) == -1)
-		error("Cannot lstat() '%s': %s", path_dhclient_db,
-		    strerror(errno));
-	if (!S_ISREG(sb.st_mode))
-		error("'%s' is not a regular file", path_dhclient_db);
-
-	if (path_dhclient_conf) {
-		if (lstat(path_dhclient_conf, &sb) == -1)
-			error("Cannot lstat() '%s': %s", path_dhclient_conf,
-			    strerror(errno));
-		if (!S_ISREG(sb.st_mode))
-			error("'%s' is not a regular file", path_dhclient_conf);
-	}
 
 	if (quiet)
 		log_perror = 0;
