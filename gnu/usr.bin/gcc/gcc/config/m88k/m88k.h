@@ -163,8 +163,6 @@ extern int flag_pic;				/* -fpic */
 #define MASK_HANDLE_LARGE_SHIFT	0x00000200 /* Handle shift count >= 32 */
 #define MASK_CHECK_ZERO_DIV	0x00000400 /* Check for int div. by 0 */
 #define MASK_USE_DIV		0x00000800 /* No signed div. checks */
-#define MASK_WARN_PASS_STRUCT	0x00002000 /* Warn about passed structs */
-#define MASK_OPTIMIZE_ARG_AREA	0x00004000 /* Save stack space */
 #define MASK_NO_SERIALIZE_VOLATILE 0x00008000 /* Serialize volatile refs */
 #define MASK_MEMCPY		0x00010000 /* Always use memcpy for movstr */
 #define MASK_EITHER_LARGE_SHIFT	(MASK_TRAP_LARGE_SHIFT | \
@@ -185,8 +183,6 @@ extern int flag_pic;				/* -fpic */
 #define TARGET_HANDLE_LARGE_SHIFT (target_flags & MASK_HANDLE_LARGE_SHIFT)
 #define TARGET_CHECK_ZERO_DIV	  (target_flags & MASK_CHECK_ZERO_DIV)
 #define	TARGET_USE_DIV		  (target_flags & MASK_USE_DIV)
-#define TARGET_WARN_PASS_STRUCT   (target_flags & MASK_WARN_PASS_STRUCT)
-#define TARGET_OPTIMIZE_ARG_AREA  (target_flags & MASK_OPTIMIZE_ARG_AREA)
 #define TARGET_SERIALIZE_VOLATILE (!(target_flags & MASK_NO_SERIALIZE_VOLATILE))
 #define TARGET_MEMCPY		  (target_flags & MASK_MEMCPY)
 
@@ -214,9 +210,6 @@ extern int flag_pic;				/* -fpic */
     { "check-zero-division",		 MASK_CHECK_ZERO_DIV }, \
     { "no-check-zero-division",		-MASK_CHECK_ZERO_DIV }, \
     { "use-div-instruction",		 MASK_USE_DIV }, \
-    { "warn-passed-structs",		 MASK_WARN_PASS_STRUCT }, \
-    { "optimize-arg-area",		 MASK_OPTIMIZE_ARG_AREA }, \
-    { "no-optimize-arg-area",		-MASK_OPTIMIZE_ARG_AREA }, \
     { "no-serialize-volatile",		 MASK_NO_SERIALIZE_VOLATILE }, \
     { "serialize-volatile",		-MASK_NO_SERIALIZE_VOLATILE }, \
     { "omit-leaf-frame-pointer",	 MASK_OMIT_LEAF_FRAME_POINTER }, \

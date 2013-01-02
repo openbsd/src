@@ -387,15 +387,14 @@ in the following sections.
 
 @emph{M88K Options}
 @gccoptlist{-m88000  -m88100  -m88110 @gol
--mcheck-zero-division  -mhandle-large-shift @gol
--mno-check-zero-division @gol
--mno-ocs-debug-info  -mno-ocs-frame-position @gol
--mno-optimize-arg-area  -mno-serialize-volatile @gol
--mno-underscores  -mocs-debug-info @gol
--mocs-frame-position  -moptimize-arg-area @gol
--mserialize-volatile  -msvr3 @gol
--msvr4  -mtrap-large-shift  -muse-div-instruction @gol
--mwarn-passed-structs}
+-mcheck-zero-division  -mno-check-zero-division @gol
+-muse-div-instruction @gol
+-mserialize-volatile  -mno-serialize-volatile @gol
+-mhandle-large-shift  -mtrap-large-shift  @gol
+-mno-underscores  @gol
+-mno-ocs-debug-info   -mocs-debug-info @gol
+-mno-ocs-frame-position  -mocs-frame-position  @gol
+-msvr3 -msvr4}
 
 @emph{RS/6000 and PowerPC Options}
 @gccoptlist{-mcpu=@var{cpu-type} @gol
@@ -6481,18 +6480,6 @@ register (register 30).  When this option is in effect, the frame
 pointer is not eliminated when debugging information is selected by the
 -g switch.
 
-@item -moptimize-arg-area
-@opindex moptimize-arg-area
-@cindex arguments in frame (88k)
-Save space by reorganizing the stack frame.  This option generates code
-that does not agree with the 88open specifications, but uses less
-memory.
-
-@itemx -mno-optimize-arg-area
-@opindex mno-optimize-arg-area
-Do not reorganize the stack frame to save space.  This is the default.
-The generated conforms to the specification, but uses more memory.
-
 @item -mserialize-volatile
 @opindex mserialize-volatile
 @itemx -mno-serialize-volatile
@@ -6605,14 +6592,6 @@ particular, the behavior of such a division with and without
 Include code to detect bit-shifts of more than 31 bits; respectively,
 trap such shifts or emit code to handle them properly.  By default GCC
 makes no special provision for large bit shifts.
-
-@item -mwarn-passed-structs
-@opindex mwarn-passed-structs
-@cindex structure passing (88k)
-Warn when a function passes a struct as an argument or result.
-Structure-passing conventions have changed during the evolution of the C
-language, and are often the source of portability problems.  By default,
-GCC issues no such warning.
 @end table
 
 @c break page here to avoid unsightly interparagraph stretch.
