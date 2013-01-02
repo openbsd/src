@@ -944,7 +944,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    for profiling a function entry.  Redefined in sysv3.h, sysv4.h and
    dgux.h.  */
 #define FUNCTION_PROFILER(FILE, LABELNO) \
-  output_function_profiler (FILE, LABELNO, "mcount", 1)
+  output_function_profiler (FILE, LABELNO, "mcount")
 
 /* Maximum length in instructions of the code output by FUNCTION_PROFILER.  */
 #define FUNCTION_PROFILER_LENGTH (5+3+1+5)

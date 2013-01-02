@@ -56,7 +56,7 @@ Boston, MA 02111-1307, USA.  */
 /* For the AT&T SVR4 port, the function is _mcount.  */
 #undef	FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO) \
-  output_function_profiler (FILE, LABELNO, "_mcount", 1)
+  output_function_profiler (FILE, LABELNO, "_mcount")
 
 /* Override svr4.h and m88k.h.  */
 #undef	INIT_SECTION_ASM_OP

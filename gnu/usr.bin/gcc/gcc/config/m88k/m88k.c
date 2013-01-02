@@ -2310,52 +2310,46 @@ output_tdesc (file, offset)
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
    for profiling a function entry.  NAME is the mcount function name
-   (varies), SAVEP indicates whether the parameter registers need to
-   be saved and restored.  */
+   (varies).  */
 
 void
-output_function_profiler (file, labelno, name, savep)
+output_function_profiler (file, labelno, name)
      FILE *file;
      int labelno;
      const char *name;
-     int savep;
 {
   char label[256];
   char dbi[256];
-  const char *const temp = (savep ? reg_names[2] : reg_names[10]);
 
   /* Remember to update FUNCTION_PROFILER_LENGTH.  */
 
-  if (savep)
-    {
-      fprintf (file, "\tsubu\t %s,%s,32\n", reg_names[31], reg_names[31]);
-      fprintf (file, "\tst.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
-      fprintf (file, "\tst.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
-      fprintf (file, "\tst.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
-      fprintf (file, "\tst.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
-    }
+  fprintf (file, "\tsubu\t %s,%s,32\n", reg_names[31], reg_names[31]);
+  fprintf (file, "\tst.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
+  fprintf (file, "\tst.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
+  fprintf (file, "\tst.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
+  fprintf (file, "\tst.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
 
   ASM_GENERATE_INTERNAL_LABEL (label, "LP", labelno);
   if (flag_pic == 2)
     {
       fprintf (file, "\tor.u\t %s,%s,%shi16(%s#got_rel)\n",
-	       temp, reg_names[0], m88k_pound_sign, &label[1]);
+	       reg_names[2], reg_names[0], m88k_pound_sign, &label[1]);
       fprintf (file, "\tor\t %s,%s,%slo16(%s#got_rel)\n",
-	       temp, temp, m88k_pound_sign, &label[1]);
-      sprintf (dbi, "\tld\t %s,%s,%s\n", temp,
-	       reg_names[PIC_OFFSET_TABLE_REGNUM], temp);
+	       reg_names[2], reg_names[2], m88k_pound_sign, &label[1]);
+      sprintf (dbi, "\tld\t %s,%s,%s\n", reg_names[2],
+	       reg_names[PIC_OFFSET_TABLE_REGNUM], reg_names[2]);
     }
   else if (flag_pic)
     {
-      sprintf (dbi, "\tld\t %s,%s,%s#got_rel\n", temp,
+      sprintf (dbi, "\tld\t %s,%s,%s#got_rel\n", reg_names[2],
 	       reg_names[PIC_OFFSET_TABLE_REGNUM], &label[1]);
     }
   else
     {
       fprintf (file, "\tor.u\t %s,%s,%shi16(%s)\n",
-	       temp, reg_names[0], m88k_pound_sign, &label[1]);
+	       reg_names[2], reg_names[0], m88k_pound_sign, &label[1]);
       sprintf (dbi, "\tor\t %s,%s,%slo16(%s)\n",
-	       temp, temp, m88k_pound_sign, &label[1]);
+	       reg_names[2], reg_names[2], m88k_pound_sign, &label[1]);
     }
 
   if (flag_pic)
@@ -2364,14 +2358,11 @@ output_function_profiler (file, labelno, name, savep)
     fprintf (file, "\tbsr.n\t %s\n", name);
   fputs (dbi, file);
 
-  if (savep)
-    {
-      fprintf (file, "\tld.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
-      fprintf (file, "\tld.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
-      fprintf (file, "\tld.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
-      fprintf (file, "\tld.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
-      fprintf (file, "\taddu\t %s,%s,32\n", reg_names[31], reg_names[31]);
-    }
+  fprintf (file, "\tld.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
+  fprintf (file, "\tld.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
+  fprintf (file, "\tld.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
+  fprintf (file, "\tld.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
+  fprintf (file, "\taddu\t %s,%s,32\n", reg_names[31], reg_names[31]);
 }
 
 /* Determine whether a function argument is passed in a register, and

@@ -78,7 +78,7 @@ extern int integer_ok_for_set PARAMS ((unsigned));
 extern void m88k_layout_frame PARAMS ((void));
 extern void m88k_expand_prologue PARAMS ((void));
 extern void m88k_expand_epilogue PARAMS ((void));
-extern void output_function_profiler PARAMS ((FILE *, int, const char *, int));
+extern void output_function_profiler PARAMS ((FILE *, int, const char *));
 extern void output_ascii PARAMS ((FILE *, const char *, int,
 				  const char *, int));
 extern void output_label PARAMS ((int));
