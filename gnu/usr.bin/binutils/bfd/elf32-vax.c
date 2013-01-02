@@ -1,6 +1,6 @@
 /* VAX series support for 32-bit ELF
-   Copyright 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004 Free Software Foundation, Inc.
+   Copyright 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
    Contributed by Matt Thomas <matt@3am-software.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -578,7 +578,7 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
   asection *srelgot;
   asection *sreloc;
 
-  if (info->relocatable)
+  if (info->relocateable)
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -821,14 +821,14 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 	  /* This relocation describes the C++ object vtable hierarchy.
 	     Reconstruct it for later use during GC.  */
 	case R_VAX_GNU_VTINHERIT:
-	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+	  if (!_bfd_elf32_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
 	    return FALSE;
 	  break;
 
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_VAX_GNU_VTENTRY:
-	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!_bfd_elf32_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 
@@ -892,21 +892,20 @@ elf_vax_gc_sweep_hook (abfd, info, sec, relocs)
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel, *relend;
+  unsigned long r_symndx;
+  struct elf_link_hash_entry *h;
   bfd *dynobj;
+
+  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
+  sym_hashes = elf_sym_hashes (abfd);
 
   dynobj = elf_hash_table (info)->dynobj;
   if (dynobj == NULL)
     return TRUE;
 
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  sym_hashes = elf_sym_hashes (abfd);
-
   relend = relocs + sec->reloc_count;
   for (rel = relocs; rel < relend; rel++)
     {
-      unsigned long r_symndx;
-      struct elf_link_hash_entry *h;
-
       switch (ELF32_R_TYPE (rel->r_info))
 	{
 	case R_VAX_GOT32:
@@ -1006,7 +1005,7 @@ elf_vax_adjust_dynamic_symbol (info, h)
       /* Make sure this symbol is output as a dynamic symbol.  */
       if (h->dynindx == -1)
 	{
-	  if (! bfd_elf_link_record_dynamic_symbol (info, h))
+	  if (! bfd_elf32_link_record_dynamic_symbol (info, h))
 	    return FALSE;
 	}
 
@@ -1150,7 +1149,7 @@ elf_vax_size_dynamic_sections (output_bfd, info)
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (info->executable)
+      if (!info->shared)
 	{
 	  s = bfd_get_section_by_name (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -1284,12 +1283,7 @@ elf_vax_size_dynamic_sections (output_bfd, info)
 	}
 
       /* Allocate memory for the section contents.  */
-      /* FIXME: This should be a call to bfd_alloc not bfd_zalloc.
-	 Unused entries should be reclaimed before the section's contents
-	 are written out, but at the moment this does not happen.  Thus in
-	 order to prevent writing out garbage, we initialise the section's
-	 contents to zero.  */
-      s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->_raw_size);
+      s->contents = (bfd_byte *) bfd_alloc (dynobj, s->_raw_size);
       if (s->contents == NULL && s->_raw_size != 0)
 	return FALSE;
     }
@@ -1302,7 +1296,7 @@ elf_vax_size_dynamic_sections (output_bfd, info)
 	 the .dynamic section.  The DT_DEBUG entry is filled in by the
 	 dynamic linker and used by the debugger.  */
 #define add_dynamic_entry(TAG, VAL) \
-  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
+  bfd_elf32_add_dynamic_entry (info, (bfd_vma) (TAG), (bfd_vma) (VAL))
 
       if (!info->shared)
 	{
@@ -1344,6 +1338,7 @@ elf_vax_size_dynamic_sections (output_bfd, info)
    in regular objects.  We allocated space for them in the check_relocs
    routine, but we won't fill them in in the relocate_section routine.  */
 
+/*ARGSUSED*/
 static bfd_boolean
 elf_vax_discard_copies (h, ignore)
      struct elf_vax_link_hash_entry *h;
@@ -1371,6 +1366,7 @@ elf_vax_discard_copies (h, ignore)
    creating a shared object or executable, space in the .got and .rela.got
    will be reserved for the symbol.  */
 
+/*ARGSUSED*/
 static bfd_boolean
 elf_vax_instantiate_got_entries (h, infoptr)
      struct elf_link_hash_entry *h;
@@ -1405,7 +1401,7 @@ elf_vax_instantiate_got_entries (h, infoptr)
       /* Make sure this symbol is output as a dynamic symbol.  */
       if (h->dynindx == -1)
 	{
-	  if (!bfd_elf_link_record_dynamic_symbol (info, h))
+	  if (!bfd_elf32_link_record_dynamic_symbol (info, h))
 	    return FALSE;
 	}
 
@@ -1444,7 +1440,7 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
 
-  if (info->relocatable)
+  if (info->relocateable)
     return TRUE;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -1487,21 +1483,19 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
+	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned;
-
-	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
-				   r_symndx, symtab_hdr, sym_hashes,
-				   h, sec, relocation,
-				   unresolved_reloc, warned);
-	   
-	  if ((h->root.type == bfd_link_hash_defined
+	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+	  while (h->root.type == bfd_link_hash_indirect
+		 || h->root.type == bfd_link_hash_warning)
+	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+	  if (h->root.type == bfd_link_hash_defined
 	      || h->root.type == bfd_link_hash_defweak)
-	      && ((r_type == R_VAX_PLT32
+	    {
+	      sec = h->root.u.def.section;
+	      if ((r_type == R_VAX_PLT32
 		   && h->plt.offset != (bfd_vma) -1
 		   && elf_hash_table (info)->dynamic_sections_created)
 		  || (r_type == R_VAX_GOT32
@@ -1530,11 +1524,34 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 			  || r_type == R_VAX_32
 			  || r_type == R_VAX_PC8
 			  || r_type == R_VAX_PC16
-			  || r_type == R_VAX_PC32))))
-	    /* In these cases, we don't need the relocation
-	       value.  We check specially because in some
-	       obscure cases sec->output_section will be NULL.  */
+			  || r_type == R_VAX_PC32)))
+		{
+		  /* In these cases, we don't need the relocation
+		     value.  We check specially because in some
+		     obscure cases sec->output_section will be NULL.  */
+		  relocation = 0;
+		}
+	      else
+		relocation = (h->root.u.def.value
+			      + sec->output_section->vma
+			      + sec->output_offset);
+	    }
+	  else if (h->root.type == bfd_link_hash_undefweak)
 	    relocation = 0;
+	  else if (info->shared
+		   && !info->no_undefined
+		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
+	    relocation = 0;
+	  else
+	    {
+	      if (!(info->callbacks->undefined_symbol
+		    (info, h->root.root.string, input_bfd,
+		     input_section, rel->r_offset,
+		     (!info->shared || info->no_undefined
+		      || ELF_ST_VISIBILITY (h->other)))))
+		return FALSE;
+	      relocation = 0;
+	    }
 	}
 
       switch (r_type)
@@ -1741,7 +1758,16 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 		    {
 		      long indx;
 
-		      if (bfd_is_abs_section (sec))
+		      if (h == NULL)
+			sec = local_sections[r_symndx];
+		      else
+			{
+			  BFD_ASSERT (h->root.type == bfd_link_hash_defined
+				      || (h->root.type
+					  == bfd_link_hash_defweak));
+			  sec = h->root.u.def.section;
+			}
+		      if (sec != NULL && bfd_is_abs_section (sec))
 			indx = 0;
 		      else if (sec == NULL || sec->owner == NULL)
 			{
@@ -2138,7 +2164,7 @@ elf_vax_finish_dynamic_sections (output_bfd, info)
 					_bfd_elf_create_dynamic_sections
 #define bfd_elf32_bfd_link_hash_table_create \
 					elf_vax_link_hash_table_create
-#define bfd_elf32_bfd_final_link	bfd_elf_gc_common_final_link
+#define bfd_elf32_bfd_final_link	_bfd_elf32_gc_common_final_link
 
 #define elf_backend_check_relocs	elf_vax_check_relocs
 #define elf_backend_adjust_dynamic_symbol \
