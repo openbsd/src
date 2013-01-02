@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.58 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.59 2013/01/02 16:14:56 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ again:
 		wakeup(&tp->t_canq);
 		goto done;
 	}
-	while (uio->uio_resid > 0) {
+	do {
 		if (cc == 0) {
 			cc = MIN(uio->uio_resid, BUFSIZ);
 			if (cc > bufcc)
@@ -577,7 +577,7 @@ again:
 			cc--;
 		}
 		cc = 0;
-	}
+	} while (uio->uio_resid > 0);
 	goto done;
 block:
 	/*
