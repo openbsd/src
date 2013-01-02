@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.11 2005/07/16 16:31:46 henning Exp $	*/
+/*	$OpenBSD: tables.c,v 1.12 2013/01/02 14:47:40 krw Exp $	*/
 
 /* Tables of information... */
 
@@ -143,7 +143,7 @@ const struct option dhcp_options[256] = {
 	/*  79 */ { "option-79", "X" },
 	/*  80 */ { "option-80", "X" },
 	/*  81 */ { "option-81", "X" },
-	/*  82 */ { "option-82", "X" },
+	/*  82 */ { "relay-agent-information", "X" },
 	/*  83 */ { "option-83", "X" },
 	/*  84 */ { "option-84", "X" },
 	/*  85 */ { "nds-servers", "IA" },
@@ -205,13 +205,13 @@ const struct option dhcp_options[256] = {
 	/* 141 */ { "option-141", "X" },
 	/* 142 */ { "option-142", "X" },
 	/* 143 */ { "option-143", "X" },
-	/* 144 */ { "option-144", "X" },
+	/* 144 */ { "tftp-config-file", "t" },
 	/* 145 */ { "option-145", "X" },
 	/* 146 */ { "option-146", "X" },
 	/* 147 */ { "option-147", "X" },
 	/* 148 */ { "option-148", "X" },
 	/* 149 */ { "option-149", "X" },
-	/* 150 */ { "option-150", "X" },
+	/* 150 */ { "voip-configuration-server", "IA" },
 	/* 151 */ { "option-151", "X" },
 	/* 152 */ { "option-152", "X" },
 	/* 153 */ { "option-153", "X" },
@@ -313,7 +313,7 @@ const struct option dhcp_options[256] = {
 	/* 249 */ { "option-249", "X" },
 	/* 250 */ { "option-250", "X" },
 	/* 251 */ { "option-251", "X" },
-	/* 252 */ { "option-252", "X" },
+	/* 252 */ { "autoproxy-script", "t" },
 	/* 253 */ { "option-253", "X" },
 	/* 254 */ { "option-254", "X" },
 	/* 255 */ { "option-end", "e" },
