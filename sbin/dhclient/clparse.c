@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.50 2012/12/04 19:24:02 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.51 2013/01/02 01:06:57 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -442,14 +442,6 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		parse_client_lease_declaration(cfile, lease);
 	} while (1);
 	token = next_token(NULL, cfile);
-
-	/* If the lease declaration didn't include an interface
-	 * declaration that we recognized, it's of no use to us.
-	 */
-	if (!ifi) {
-		free_client_lease(lease);
-		return;
-	}
 
 	/*
 	 * The new lease may supersede a lease that's not the active
