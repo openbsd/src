@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.10 2010/09/04 21:35:58 tedu Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.11 2013/01/02 08:12:13 jsing Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -45,10 +45,6 @@
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfs_inode.h>
 #include <ntfs/ntfs_ihash.h>
-
-#ifdef MALLOC_DEFINE
-MALLOC_DEFINE(M_NTFSNTHASH, "NTFS nthash", "NTFS ntnode hash tables");
-#endif
 
 /*
  * Structures associated with inode cacheing.

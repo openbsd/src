@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.29 2012/09/10 11:11:00 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.30 2013/01/02 08:12:13 jsing Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -45,43 +45,18 @@
 #include <sys/conf.h>
 #include <sys/specdev.h>
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <uvm/uvm_extern.h>
-#else
-#include <vm/vm.h>
-#endif
 
 /*#define NTFS_DEBUG 1*/
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <fs/ntfs/ntfs.h>
-#include <fs/ntfs/ntfs_inode.h>
-#include <fs/ntfs/ntfs_subr.h>
-#include <fs/ntfs/ntfs_vfsops.h>
-#include <fs/ntfs/ntfs_ihash.h>
-#include <fs/ntfs/ntfsmount.h>
-#else
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfs_inode.h>
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_vfsops.h>
 #include <ntfs/ntfs_ihash.h>
 #include <ntfs/ntfsmount.h>
-#endif
 
-#ifdef MALLOC_DEFINE
-MALLOC_DEFINE(M_NTFSMNT, "NTFS mount", "NTFS mount structure");
-MALLOC_DEFINE(M_NTFSNTNODE,"NTFS ntnode",  "NTFS ntnode information");
-MALLOC_DEFINE(M_NTFSFNODE,"NTFS fnode",  "NTFS fnode information");
-MALLOC_DEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
-#endif
-
-#if defined(__FreeBSD__)
-static int	ntfs_mount(struct mount *, char *, caddr_t,
-				struct nameidata *, struct proc *);
-#else
 static int	ntfs_mount(struct mount *, const char *, void *,
 				struct nameidata *, struct proc *);
-#endif
 static int	ntfs_quotactl(struct mount *, int, uid_t, caddr_t,
 				   struct proc *);
 static int	ntfs_root(struct mount *, struct vnode **);

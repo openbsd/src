@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.25 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.26 2013/01/02 08:12:13 jsing Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -53,13 +53,6 @@
 
 #if defined(NTFS_DEBUG)
 int ntfs_debug = NTFS_DEBUG;
-#endif
-
-#ifdef MALLOC_DEFINE
-MALLOC_DEFINE(M_NTFSNTVATTR, "NTFS vattr", "NTFS file attribute information");
-MALLOC_DEFINE(M_NTFSRDATA, "NTFS res data", "NTFS resident data");
-MALLOC_DEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
-MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
 #endif
 
 /* Local struct used in ntfs_ntlookupfile() */
