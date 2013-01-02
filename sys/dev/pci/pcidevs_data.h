@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1663 2012/12/21 07:48:51 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1664 2013/01/02 05:45:41 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3880,11 +3880,59 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 4870",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4870_X2,
+	    "Radeon HD 4870 X2",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4850,
 	    "Radeon HD 4850",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4850_X2,
+	    "Radeon HD 4850 X2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V8750,
+	    "FirePro V8750",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V7760,
+	    "FirePro V7760",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4850_M,
+	    "Mobility Radeon HD 4850",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4850_X2_M,
+	    "Mobility Radeon HD 4850 X2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4800,
+	    "Radeon HD 4800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_RV770,
+	    "FirePro RV770",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIRESTREAM_9270,
+	    "FireStream 9270",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIRESTREAM_9250,
+	    "FireStream 9250",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V8700,
+	    "FirePro V8700",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4870_M98,
+	    "Mobility Radeon HD 4870",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4870_M,
 	    "Mobility Radeon HD 4870",
 	},
 	{
@@ -3892,12 +3940,76 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 4890",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4800_2,
+	    "Radeon HD 4800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_M7750,
+	    "FirePro M7750",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4650_M,
+	    "Mobility Radeon HD 4650",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4670_M,
+	    "Mobility Radeon HD 4670",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4670_M_2,
+	    "Mobility Radeon HD 4670",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4670,
 	    "Radeon HD 4670",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_E4600,
+	    "Radeon E4600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4600,
+	    "Radeon HD 4600",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4650,
 	    "Radeon HD 4650",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V7750,
+	    "FirePro V7750",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V5700,
+	    "FirePro V5700",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V3750,
+	    "FirePro V3750",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4830_M,
+	    "Mobility Radeon HD 4830",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4850_M_2,
+	    "Mobility Radeon HD 4850",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_M7740,
+	    "FirePro M7740",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4770,
+	    "Radeon HD 4770",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4700,
+	    "Radeon HD 4700",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_M5750,
+	    "FirePro M5750",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400_XT,
@@ -3908,16 +4020,80 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 2400 Pro",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400PROAGP,
+	    "Radeon HD 2400 Pro AGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V4000,
+	    "FireGL V4000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2350,
+	    "Radeon HD 2350",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400_XT_M,
+	    "Mobility Radeon HD 2400 XT",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400_M72,
 	    "Mobility Radeon HD 2400",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_E2400,
+	    "Radeon E2400",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400PROPCI,
+	    "Radeon HD 2400 Pro PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREMV_2260,
+	    "FireMV 2260",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3870,
 	    "Radeon HD 3870",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3850_M,
+	    "Mobility Radeon HD 3850",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3850,
 	    "Radeon HD 3850",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3850_X2_M,
+	    "Mobility Radeon HD 3850 X2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3870_M,
+	    "Mobility Radeon HD 3870",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3870_X2_M,
+	    "Mobility Radeon HD 3870 X2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3870_X2,
+	    "Radeon HD 3870 X2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V7700,
+	    "FireGL V7700",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3850_AGP,
+	    "Radeon HD 3850 AGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3690,
+	    "Radeon HD 3690",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIRESTREAM_9170,
+	    "FireStream",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4550,
@@ -3928,12 +4104,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 4350",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4300_M,
+	    "Mobility Radeon HD 4300",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4500_M,
 	    "Mobility Radeon HD 4500",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4500_M_2,
+	    "Mobility Radeon HD 4500",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_RG220,
+	    "FirePro RG220",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4330_M,
+	    "Mobility Radeon HD 4330",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_M76,
 	    "Mobility Radeon HD 2600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_XT_M,
+	    "Mobility Radeon HD 2600 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600XTAGP,
+	    "Radeon HD 2600 XT AGP",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600PROAGP,
@@ -3948,12 +4148,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 2600 Pro",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5600,
+	    "FireGL V5600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V3600,
+	    "FireGL V3600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3600,
+	    "Radeon HD 3600",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3650_M,
 	    "Mobility Radeon HD 3650",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3670_M,
 	    "Mobility Radeon HD 3670",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5700_M,
+	    "Mobilty FireGL V5700",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3650_AGP,
@@ -3964,8 +4180,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 3650",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5725_M,
+	    "Mobility FireGL V5725",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3470,
 	    "Radeon HD 3470",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3430_M,
+	    "Mobility Radeon HD 3430",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3400_M82,
@@ -3978,6 +4202,30 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3450_AGP,
 	    "Radeon HD 3450 AGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3430,
+	    "Radeon HD 3430",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3450_PCI,
+	    "Radeon HD 3450 PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V3700,
+	    "FirePro V3700",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREMV_2450,
+	    "FireMV 2450",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREMV_2260_1,
+	    "FireMV 2260",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREMV_2260_2,
+	    "FireMV 2260",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS780_HDA,
@@ -4028,8 +4276,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 4200",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4100,
+	    "Radeon HD 4100",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4200_M,
 	    "Mobility Radeon HD 4200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4100_M,
+	    "Mobility Radeon HD 4100",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4290,
