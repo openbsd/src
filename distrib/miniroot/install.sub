@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.673 2012/12/16 20:01:26 rpe Exp $
+#	$OpenBSD: install.sub,v 1.674 2013/01/02 20:35:00 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -682,6 +682,7 @@ v6_info() {
 		1s/.*<UP,.*/UP/p
 		1s/.*<.*/DOWN/p
 		/scopeid/d
+		/inet6/s/prefixlen//
 		/inet6/s///p'
 }
 
@@ -979,19 +980,22 @@ enable_network() {
 		# Now parse the hostname.* file
 		while :; do
 			if [ "$cmd2" ]; then
-				# we are carrying over from the 'read dt dtaddr' last time
+				# we are carrying over from the 'read dt dtaddr'
+				# last time
 				set -- $cmd2
 				af=$1 name=$2 mask=$3 bcaddr=$4 ext1=$5 cmd2=
-				# make sure and get any remaining args in ext2, like the read below
-				i=1; while [ i -lt 6 -a -n "$1" ]; do shift; let i++; done
+				# make sure and get any remaining args in ext2,
+				# like the read below
+				i=1
+				while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
 				ext2="$@"
 			else
 				# read the next line or exit the while loop
 				read af name mask bcaddr ext1 ext2 || break
 			fi
-			# $af can be "dhcp", "up", "rtsol", an address family, commands, or
-			# a comment.
-			case $af in
+			# $af can be "dhcp", "rtsol", an address family,
+			# commands, or a comment.
+			case "$af" in
 			"#"*|"!"*|"bridge"|"")
 				# skip comments, user commands, bridges,
 				# and empty lines
@@ -1010,11 +1014,6 @@ enable_network() {
 				rtsolif="$rtsolif $if"
 				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
 				;;
-			"up")
-				# The only one of these guaranteed to be set is $if
-				# the remaining ones exist so that media controls work
-				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
-				;;
 			*)	read dt dtaddr
 				if [ "$name" = "alias" ]; then
 					# perform a 'shift' of sorts
@@ -1028,25 +1027,30 @@ enable_network() {
 					alias=
 				fi
 				cmd="ifconfig $if $af $alias $name "
-				case $dt in
+				case "$dt" in
 				dest)	cmd="$cmd $dtaddr"
 					;;
-				[a-z!]*)
+				*)
 					cmd2="$dt $dtaddr"
 					;;
 				esac
-				if [ -z "$name" ]; then
-					echo "/mnt/etc/hostname.$if: invalid network configuration file"
-					return
-				fi
 				case $af in
-				inet)	[ "$mask" ] && cmd="$cmd netmask $mask"
-					if [ "$bcaddr" -a "$bcaddr" != "NONE" ]; then
+				inet)
+					if [ ! -n "$name" ]; then
+						echo "/etc/hostname.$if: inet alone is invalid"
+						return
+					fi
+					[ "$mask" ] && cmd="$cmd netmask $mask"
+					if [ "$bcaddr" -a X"$bcaddr" != "XNONE" ]; then
 						cmd="$cmd broadcast $bcaddr"
 					fi
-					[ "$alias" ] && rtcmd="; route -qn add -host $name 127.0.0.1"
+					[ "$alias" ] && rtcmd=";route -qn add -host $name 127.0.0.1"
 					;;
 				inet6)
+					if [ ! -n "$name" ]; then
+						echo "/etc/hostname.$if: inet6 alone is invalid"
+						return
+					fi
 					[ "$mask" ] && cmd="$cmd prefixlen $mask"
 					cmd="$cmd $bcaddr"
 					;;
