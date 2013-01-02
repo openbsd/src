@@ -964,9 +964,11 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
   || !TARGET_OMIT_LEAF_FRAME_POINTER)					\
  || (write_symbols != NO_DEBUG))
 
-
 /* Define registers used by the epilogue and return instruction.  */
-#define EPILOGUE_USES(REGNO)	(reload_completed && (REGNO) == 1)
+#define EPILOGUE_USES(REGNO) \
+(reload_completed && ((REGNO) == 1 \
+		      || (current_function_profile \
+			  && (REGNO) == FRAME_POINTER_REGNUM)))
 
 /* Before the prologue, RA is in r1.  */
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (Pmode, 1)

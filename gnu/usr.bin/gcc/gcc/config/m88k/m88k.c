@@ -1921,6 +1921,16 @@ m88k_expand_prologue ()
     {
       insn = emit_add (stack_pointer_rtx, stack_pointer_rtx, -m88k_stack_size);
       RTX_FRAME_RELATED_P (insn) = 1;
+
+      /* If the stack pointer adjustment has required a temporary register,
+	 tell the DWARF code how to understand this sequence.  */
+      if (! SMALL_INTVAL (m88k_stack_size))
+	REG_NOTES (insn)
+	  = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR,
+			       gen_rtx_SET (VOIDmode, stack_pointer_rtx,
+				     gen_rtx_PLUS (Pmode, stack_pointer_rtx,
+						   GEN_INT (-m88k_stack_size))),
+			       REG_NOTES(insn));
     }
 
   if (nregs || nxregs)
