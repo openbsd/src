@@ -723,7 +723,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/_float.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/alpha_cpu.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/aout_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/asm.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/atomic.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/autoconf.ph
