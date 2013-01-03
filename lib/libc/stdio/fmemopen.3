@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fmemopen.3,v 1.1 2013/01/01 17:41:13 mpi Exp $
+.\"	$OpenBSD: fmemopen.3,v 1.2 2013/01/03 08:05:40 jmc Exp $
 .\"	$NetBSD: fmemopen.3,v 1.5 2010/10/07 00:14:14 enami Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 1 2013 $
+.Dd $Mdocdate: January 3 2013 $
 .Dt FMEMOPEN 3
 .Os
 .Sh NAME
@@ -81,7 +81,7 @@ The stream treats the buffer as it would treat a file tracking the current
 position to perform I/O operations.
 For example, in the beginning the stream points to the beginning of the buffer,
 unless
-.Dv a
+.Sq a
 was specified in the
 .Fa mode
 argument, and then it points to the first
@@ -100,7 +100,7 @@ of the
 The
 .Fa size
 is initialized depending on the mode:
-.Bl -tag -width r/w+
+.Bl -tag -width "r/w+XXX" -offset indent
 .It Dv r/r+
 Set to the
 .Fa size
@@ -168,7 +168,7 @@ argument is
 and the
 .Fa mode
 argument does not specify a
-.Dv + .
+.Sq + .
 .El
 .Pp
 The

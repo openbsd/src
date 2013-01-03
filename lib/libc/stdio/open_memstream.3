@@ -1,6 +1,6 @@
-.\"	$OpenBSD: open_memstream.3,v 1.1 2013/01/01 17:41:13 mpi Exp $
+.\"	$OpenBSD: open_memstream.3,v 1.2 2013/01/03 08:05:40 jmc Exp $
 .\"
-.\" Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org> 
+.\" Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2013 $
+.Dd $Mdocdate: January 3 2013 $
 .Dt OPEN_MEMSTREAM 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ The
 .Fn open_memstream
 and
 .Fn open_wmemstream
-functions create a seekable byte-oriented, or respectively wide-oriented,
+functions create, respectively, a seekable byte-oriented or wide-oriented
 stream for writing.
 A dynamically allocated buffer, using
 .Xr malloc 3 ,
@@ -47,10 +47,11 @@ stored in the pointer referenced by
 At the same time the smaller of the current position and the buffer length is
 written in the variable pointed to by
 .Fa psize .
-This value represents the number of bytes, or respectively wide characters,
-contained in the buffer not including the terminating null character.
+This value represents, respectively,
+the number of bytes or wide characters contained in the buffer,
+not including the terminating null character.
 .Pp
-The buffer memory should be release after the stream is closed.
+The buffer memory should be released after the stream is closed.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn open_memstream
@@ -87,8 +88,8 @@ specified for the routine
 .Xr malloc 3 .
 .Sh SEE ALSO
 .Xr fmemopen 3 ,
-.Xr funopen 3 ,
 .Xr fopen 3 ,
+.Xr funopen 3 ,
 .Xr malloc 3
 .Sh STANDARDS
 The functions
