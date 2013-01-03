@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.26 2013/01/02 08:12:13 jsing Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.27 2013/01/03 16:13:16 jsing Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -854,9 +854,9 @@ ntfs_ntlookupfile(
 {
 	struct fnode   *fp = VTOF(vp);
 	struct ntnode  *ip = FTONT(fp);
-	struct ntvattr *vap;	/* Root attribute */
+	struct ntvattr *vap = NULL;	/* Root attribute */
 	cn_t            cn = 0;	/* VCN in current attribute */
-	caddr_t         rdbuf;	/* Buffer to read directory's blocks  */
+	caddr_t         rdbuf = NULL;	/* Buffer to read directory's blocks */
 	u_int32_t       blsize;
 	u_int32_t       rdsize;	/* Length of data to read from current block */
 	struct attr_indexentry *iep;
@@ -872,13 +872,14 @@ ntfs_ntlookupfile(
 	struct ntfs_lookup_ctx *lookup_ctx = NULL, *tctx;
 
 	error = ntfs_ntget(ip, p);
-
 	if (error)
 		return (error);
 
 	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_INDXROOT, "$I30", 0, &vap);
-	if (error || (vap->va_flag & NTFS_AF_INRUN))
-		return (ENOTDIR);
+	if (error || (vap->va_flag & NTFS_AF_INRUN)) {
+		error = ENOTDIR;
+		goto fail;
+	}
 
 	/*
 	 * Divide file name into: foofilefoofilefoofile[:attrspec]
@@ -1094,6 +1095,10 @@ ntfs_ntlookupfile(
 	dprintf(("finish\n"));
 
 fail:
+	if (vap)
+		ntfs_ntvattrrele(vap);
+	if (rdbuf)
+		free(rdbuf, M_TEMP);
 	if (attrname)
 		free(attrname, M_TEMP);
 	if (lookup_ctx) {
@@ -1103,9 +1108,7 @@ fail:
 			free(tctx, M_TEMP);
 		}
 	}
-	ntfs_ntvattrrele(vap);
 	ntfs_ntput(ip, p);
-	free(rdbuf, M_TEMP);
 	return (error);
 }
 
@@ -1172,8 +1175,10 @@ ntfs_ntreaddir(
 		return (error);
 
 	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_INDXROOT, "$I30", 0, &vap);
-	if (error)
-		return (ENOTDIR);
+	if (error) {
+		error = ENOTDIR;
+		goto fail;
+	}
 
 	if (fp->f_dirblbuf == NULL) {
 		fp->f_dirblsz = vap->va_a_iroot->ir_size;
