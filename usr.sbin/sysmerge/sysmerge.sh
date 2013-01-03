@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.99 2012/12/26 12:28:26 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.100 2013/01/03 19:45:57 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -83,33 +83,53 @@ if (($(id -u) != 0)); then
 	error_rm_wrkdir
 fi
 
+# extract (x)etcXX.tgz and create cksum file
+# takes file- and setname ('etc' or 'xetc') as arguments
+# stores sumfilename in ETCSUM or XETCSUM (see eval)
+extract_set() {
+	[[ -z $1 ]] && return
+	local _tgz=$(readlink -f "$1") _set=$2
+	typeset -u _SETSUM=${_set}sum
+	eval ${_SETSUM}=${_set}sum
+	(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
+	 tar -tzf "${_tgz}" | xargs cksum > ${WRKDIR}/${_set}sum) || \
+		error_rm_wrkdir "extract/cksum of ${_tgz} failed"
+}
+
+# optionally fetch and check if file is a valid (x)etcXX.tgz
+# takes url or filename and setname ('etc' or 'xetc') as arguments
+# stores local path to tgz in TGZ or XTGZ
+get_set() {
+	local _tgz=$1 _url=$1 _set=$2
+	if [[ ${_url} == @(file|ftp|http|https)://*/*[!/] ]]; then 
+		_tgz=${WRKDIR}/${_set}.tgz
+		${FETCH_CMD} -o ${_tgz} "${_url}" || \
+			error_rm_wrkdir "could not retrieve ${_url}"
+	fi
+	[[ ${_set} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
+	tar -tzf "${_tgz}" ./var/db/sysmerge/${_set}sum >/dev/null 2>&1 || \
+		error_rm_wrkdir "${_tgz} is not a valid ${_set}XX.tgz set"
+}
+
+# prepare TEMPROOT content from a src dir and create cksum file 
+prepare_src() {
+	[[ -z ${SRCDIR} ]] && return
+	SRCSUM=srcsum
+	(cd ${SRCDIR}/etc && \
+	 make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1 && \
+	 cd ${TEMPROOT} && find . -type f | xargs cksum > ${WRKDIR}/${SRCSUM}) || \
+		error_rm_wrkdir "prepare/cksum of ${SRCDIR} failed"
+}
+
 do_populate() {
-	local cf i _array _d _r _D _E _R _X CF_DIFF CF_FILES CURSUM IGNORE_FILES
+	local cf i _array _d _r _D _R CF_DIFF CF_FILES CURSUM IGNORE_FILES
 	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
 	echo "===> Populating temporary root under ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
-	if [ -n "${SRCDIR}" ]; then
-		SRCSUM=srcsum
-		cd ${SRCDIR}/etc
-		make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1
-		(cd ${TEMPROOT} && find . -type f | xargs cksum > ${WRKDIR}/${SRCSUM})
-	fi
-
-	if [ -n "${TGZ}" -o -n "${XTGZ}" ]; then
-		for i in ${TGZ} ${XTGZ}; do
-			tar -xzphf ${i} -C ${TEMPROOT};
-		done
-		if [ -n "${TGZ}" ]; then
-			ETCSUM=etcsum
-			_E=$(cd $(dirname ${TGZ}) && pwd)/$(basename ${TGZ})
-			(cd ${TEMPROOT} && tar -tzf ${_E} | xargs cksum > ${WRKDIR}/${ETCSUM})
-		fi
-		if [ -n "${XTGZ}" ]; then
-			XETCSUM=xetcsum
-			_X=$(cd $(dirname ${XTGZ}) && pwd)/$(basename ${XTGZ})
-			(cd ${TEMPROOT} && tar -tzf ${_X} | xargs cksum > ${WRKDIR}/${XETCSUM})
-		fi
-	fi
+	
+	prepare_src
+	extract_set "${TGZ}" etc
+	extract_set "${XTGZ}" xetc
 
 	for i in ${SRCSUM} ${ETCSUM} ${XETCSUM}; do
 		if [ -f ${DESTDIR}/${DBDIR}/${i} ]; then
@@ -630,17 +650,6 @@ do_post() {
 	rm -f ${DESTDIR}/${DBDIR}/.*.bak
 }
 
-get_sets() {
-	local _etc=$1 _tgz=$2 _url=$2
-	if [[ ${_url} == @(file|ftp|http|https)://*/${_etc}[0-9][0-9].tgz ]]; then 
-		_tgz=${WRKDIR}/${_etc}.tgz
-		${FETCH_CMD} -o ${_tgz} ${_url} || \
-			error_rm_wrkdir "could not retrieve ${_url}"
-	fi
-	tar tzf ${_tgz} ./var/db/sysmerge/${_etc}sum >/dev/null 2>&1 || \
-		error_rm_wrkdir "${_tgz} is not a valid ${_etc}XX.tgz set"
-	[[ ${_etc} == etc ]] && TGZ=${_tgz} || XTGZ=${_tgz}
-}
 
 while getopts bds:x: arg; do
 	case ${arg} in
@@ -657,10 +666,10 @@ while getopts bds:x: arg; do
 				error_rm_wrkdir "${SRCDIR} is not a valid path to src"
 			continue
 		fi
-		get_sets etc "${OPTARG}"
+		get_set "${OPTARG}" etc
 		;;
 	x)
-		get_sets xetc "${OPTARG}"
+		get_set "${OPTARG}" xetc
 		;;
 	*)
 		usage
