@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.215 2012/08/18 15:40:30 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.216 2013/01/03 10:02:59 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 18 2012 $
+.Dd $Mdocdate: January 3 2013 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -2121,10 +2121,9 @@ are contiguous on disk, reducing fragmentation.
 .El
 .Bl -tag -width Ds
 .It Dv NFS_NIOTHREADS
-The number of NFS I/O kernel threads.
-Should be set high enough for the server to handle
-the maximum level of concurrency from its clients,
-typically four to six.
+The number of I/O kernel threads for NFS clients.
+The default is 4;
+the maximum is 20.
 .El
 .El
 .El

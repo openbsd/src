@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.164 2012/04/10 15:57:36 guenther Exp $
+.\"	$OpenBSD: sysctl.8,v 1.165 2013/01/03 10:02:59 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: April 10 2012 $
+.Dd $Mdocdate: January 3 2013 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -82,7 +82,6 @@ Useful for setting shell variables.
 For example, to set the psize shell variable to the pagesize of the hardware:
 .Pp
 .Dl # set psize=`sysctl -n hw.pagesize`
-.Pp
 .It Fl q
 Suppress all output when setting a variable.
 This option overrides the behaviour of
@@ -508,19 +507,6 @@ It is also possible to add or remove ports from the current list:
 # sysctl net.inet.tcp.baddynamic=+748,6000-6999
 # sysctl net.inet.tcp.baddynamic=-871
 .Ed
-.Pp
-To adjust the number of kernel nfsio
-threads used to service asynchronous
-I/O requests on an NFS client machine:
-.Pp
-.Dl # sysctl vfs.nfs.iothreads=4
-.Pp
-The default is 4; 20 is the maximum.
-See
-.Xr nfssvc 2
-and
-.Xr nfsd 8
-for further discussion.
 .Pp
 To set the amount of shared memory available in the system and
 the maximum number of shared memory segments:
