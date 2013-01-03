@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.26 2012/06/20 17:30:22 matthew Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.27 2013/01/03 16:06:01 jsing Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -156,6 +156,16 @@ ntfs_getattr(void *v)
 	vap->va_blocksize = ip->i_mp->ntm_spc * ip->i_mp->ntm_bps;
 	vap->va_type = vp->v_type;
 	vap->va_filerev = 0;
+
+	/*
+	 * Ensure that a directory link count is always 1 so that things
+	 * like fts_read() do not try to be smart and end up skipping over
+	 * directories. Additionally, ip->i_nlink will not be initialised
+	 * until the ntnode has been loaded for the file.
+	 */
+	if (vp->v_type == VDIR || ip->i_nlink < 1)
+		vap->va_nlink = 1;
+
 	return (0);
 }
 
