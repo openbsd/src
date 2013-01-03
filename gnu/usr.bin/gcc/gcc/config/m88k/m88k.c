@@ -418,7 +418,7 @@ legitimize_address (pic, orig, reg, scratch)
 	  /* Should we set special REG_NOTEs here?  */
 	}
     }
-  else if (! SHORT_ADDRESS_P (addr, temp))
+  else
     {
       if (reg == 0)
 	{
@@ -433,8 +433,7 @@ legitimize_address (pic, orig, reg, scratch)
       new = gen_rtx_LO_SUM (SImode, reg, addr);
     }
 
-  if (new != orig
-      && GET_CODE (orig) == MEM)
+  if (GET_CODE (orig) == MEM)
     {
       new = gen_rtx_MEM (GET_MODE (orig), new);
       MEM_COPY_ATTRIBUTES (new, orig);
@@ -3230,14 +3229,7 @@ print_operand_address (file, addr)
 
     default:
       fprintf (file, "%s,", reg_names[0]);
-      if (SHORT_ADDRESS_P (addr, temp))
-	{
-	  fprintf (file, "%siw16(", m88k_pound_sign);
-	  output_addr_const (file, addr);
-	  fputc (')', file);
-	}
-      else
-	  output_addr_const (file, addr);
+      output_addr_const (file, addr);
     }
 }
 

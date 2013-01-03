@@ -1106,11 +1106,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    && (GET_CODE (XEXP (ADDR, 0)) == MULT	\
        || GET_CODE (XEXP (ADDR, 1)) == MULT))
 
-/* Can the reference to X be made short?  */
-#define SHORT_ADDRESS_P(X,TEMP) \
-  ((TEMP) = (GET_CODE (X) == CONST ? get_related_value (X) : X), \
-   ((TEMP) && GET_CODE (TEMP) == SYMBOL_REF && SYMBOL_REF_FLAG (TEMP)))
-
 /* GO_IF_LEGITIMATE_ADDRESS recognizes an RTL expression
    that is a valid memory address for an instruction.
    The MODE argument is the machine mode for the MEM expression
@@ -1179,8 +1174,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
     }							\
   else if (GET_CODE (X) == CONST_INT			\
 	   && SMALL_INT (X))				\
-    goto ADDR;						\
-  else if (SHORT_ADDRESS_P (X, _x))			\
     goto ADDR;						\
 }
 
