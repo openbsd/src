@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.13 2012/10/08 21:47:50 deraadt Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.14 2013/01/04 23:19:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -65,6 +65,17 @@ int
 sdhc_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+
+	/*
+	 * The Realtek RTS5209 is supported by rtsx(4). Usually the device
+	 * class for these is UNDEFINED but there are RTS5209 devices which
+	 * are advertising an SYSTEM/SDHC device class in addition to a
+	 * separate device advertising the UNDEFINED class. Such devices are
+	 * not compatible with sdhc(4), so ignore them.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5209)
+		return 0;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SYSTEM &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SYSTEM_SDHC)
