@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-#	$OpenBSD: direct.pl,v 1.1 2011/09/01 17:33:17 bluhm Exp $
+#	$OpenBSD: direct.pl,v 1.2 2013/01/04 14:01:49 bluhm Exp $
 
-# Copyright (c) 2010,2011 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,13 +24,19 @@ use Client;
 use Server;
 require 'funcs.pl';
 
+sub usage {
+	die "usage: direct.pl [test-args.pl]\n";
+}
+
+my $test;
 our %args;
-if (my $test = pop) {
+if (@ARGV and -f $ARGV[-1]) {
+	$test = pop;
 	do $test
 	    or die "Do test file $test failed: ", $@ || $!;
 }
 
-@ARGV == 0 or die "usage: direct.pl [test-args.pl]\n";
+@ARGV == 0 or usage();
 
 my $s = Server->new(
     func		=> \&read_char,
@@ -53,23 +59,4 @@ $s->up;
 $c->down;
 $s->down;
 
-exit if $args{nocheck} || $args{client}{nocheck};
-
-my $clen = $c->loggrep(qr/^LEN: /) unless $args{client}{nocheck};
-my $slen = $s->loggrep(qr/^LEN: /) unless $args{server}{nocheck};
-!$clen || !$slen || $clen eq $slen
-    or die "client: $clen", "server: $slen", "len mismatch";
-!defined($args{len}) || !$clen || $clen eq "LEN: $args{len}\n"
-    or die "client: $clen", "len $args{len} expected";
-!defined($args{len}) || !$slen || $slen eq "LEN: $args{len}\n"
-    or die "server: $slen", "len $args{len} expected";
-
-my $cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
-my $smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
-!$cmd5 || !$smd5 || ref($args{md5}) eq 'ARRAY' || $cmd5 eq $smd5
-    or die "client: $cmd5", "server: $smd5", "md5 mismatch";
-my $md5 = ref($args{md5}) eq 'ARRAY' ? join('|', @{$args{md5}}) : $args{md5};
-!$md5 || !$cmd5 || $cmd5 =~ /^MD5: ($md5)$/
-    or die "client: $cmd5", "md5 $md5 expected";
-!$md5 || !$smd5 || $smd5 =~ /^MD5: ($md5)$/
-    or die "server: $smd5", "md5 $md5 expected";
+check_logs($c, undef, $s, %args);

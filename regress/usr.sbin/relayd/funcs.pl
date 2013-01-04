@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.6 2012/11/02 17:40:46 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.7 2013/01/04 14:01:49 bluhm Exp $
 
-# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -173,12 +173,8 @@ sub errignore {
 	$SIG{PIPE} = 'IGNORE';
 	$SIG{__DIE__} = sub {
 		die @_ if $^S;
+		warn "Error ignored";
 		warn @_;
-		my $soerror;
-		$soerror = getsockopt(STDIN, SOL_SOCKET, SO_ERROR);
-		print STDERR "ERROR IN: ", unpack('i', $soerror), "\n";
-		$soerror = getsockopt(STDOUT, SOL_SOCKET, SO_ERROR);
-		print STDERR "ERROR OUT: ", unpack('i', $soerror), "\n";
 		IO::Handle::flush(\*STDERR);
 		POSIX::_exit(0);
 	};
@@ -279,6 +275,85 @@ sub write_chunked {
 	my @trailer = ("0", "X-Chunk-Trailer: @chunks", "");
 	print STDERR map { ">>> $_\n" } @trailer;
 	print map { "$_\r\n" } @trailer;
+}
+
+########################################################################
+# Script funcs
+########################################################################
+
+sub check_logs {
+	my ($c, $r, $s, %args) = @_;
+
+	return if $args{nocheck};
+
+	check_len($c, $r, $s, %args);
+	check_md5($c, $r, $s, %args);
+	check_loggrep($c, $r, $s, %args);
+}
+
+sub check_len {
+	my ($c, $r, $s, %args) = @_;
+
+	my @clen = $c->loggrep(qr/^LEN: /) or die "no client len"
+	    unless $args{client}{nocheck};
+	my @slen = $s->loggrep(qr/^LEN: /) or die "no server len"
+	    unless $args{server}{nocheck};
+	!@clen || !@slen || @clen ~~ @slen
+	    or die "client: @clen", "server: @slen", "len mismatch";
+	!defined($args{len}) || !$clen[0] || $clen[0] eq "LEN: $args{len}\n"
+	    or die "client: $clen[0]", "len $args{len} expected";
+	!defined($args{len}) || !$slen[0] || $slen[0] eq "LEN: $args{len}\n"
+	    or die "server: $slen[0]", "len $args{len} expected";
+	my @lengths = map { ref eq 'ARRAY' ? @$_ : $_ }
+	    @{$args{lengths} || []};
+	foreach my $len (@lengths) {
+		my $clen = shift @clen;
+		$clen eq "LEN: $len\n"
+		    or die "client: $clen", "len $len expected";
+		my $slen = shift @slen;
+		$slen eq "LEN: $len\n"
+		    or die "server: $slen", "len $len expected";
+	}
+}
+
+sub check_md5 {
+	my ($c, $r, $s, %args) = @_;
+
+	my $cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
+	my $smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
+	!$cmd5 || !$smd5 || ref($args{md5}) eq 'ARRAY' || $cmd5 eq $smd5
+	    or die "client: $cmd5", "server: $smd5", "md5 mismatch";
+	my $md5 = ref($args{md5}) eq 'ARRAY' ?
+	    join('|', @{$args{md5}}) : $args{md5};
+	!$md5 || !$cmd5 || $cmd5 =~ /^MD5: ($md5)$/
+	    or die "client: $cmd5", "md5 $md5 expected";
+	!$md5 || !$smd5 || $smd5 =~ /^MD5: ($md5)$/
+	    or die "server: $smd5", "md5 $md5 expected";
+}
+
+sub check_loggrep {
+	my ($c, $r, $s, %args) = @_;
+
+	my %name2proc = (client => $c, relayd => $r, server => $s);
+	foreach my $name (qw(client relayd server)) {
+		my $p = $name2proc{$name}
+		    or next;
+		my $pattern = $args{$name}{loggrep} or next;
+		$pattern = [ $pattern ] unless ref($pattern) eq 'ARRAY';
+		foreach my $pat (@$pattern) {
+			if (ref($pat) eq 'HASH') {
+				while (my($re, $num) = each %$pat) {
+					my @matches = $p->loggrep($re);
+					@matches == $num
+					    or die "$name matches @matches: ",
+					    "$re => $num";
+				}
+			} else {
+				$p->loggrep($pat)
+				    or die "$name log missing pattern: $pat";
+			}
+		}
+	}
 }
 
 1;

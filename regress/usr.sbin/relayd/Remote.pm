@@ -1,6 +1,6 @@
-#	$OpenBSD: Remote.pm,v 1.1 2012/12/28 20:36:25 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.2 2013/01/04 14:01:49 bluhm Exp $
 
-# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -95,9 +95,9 @@ sub child {
 	$dir = getcwd() if ! $dir || $dir eq '.';
 	my @cmd = ('ssh', @opts, $self->{remotessh},
 	    @sudo, @ktrace, @relayd, 'perl',
-	    '-I', $dir, $dir.'/'.basename($0), $self->{forward},
+	    '-I', $dir, "$dir/".basename($0), $self->{forward},
 	    $self->{listenaddr}, $self->{connectaddr}, $self->{connectport},
-	    ($self->{testfile} ? $dir.'/'.basename($self->{testfile}) : ()));
+	    ($self->{testfile} ? "$dir/".basename($self->{testfile}) : ()));
 	print STDERR "execute: @cmd\n";
 	exec @cmd;
 	die "Exec @cmd failed: $!";

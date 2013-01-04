@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2012/12/28 20:36:25 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2013/01/04 14:01:49 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -8,7 +8,7 @@
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
 TARGETS ?=		${ARGS}
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES =		*.log *.pem relayd.conf ktrace.out
+CLEANFILES =		*.log *.pem relayd.conf ktrace.out stamp-*
 
 # Fill out these variables if you want to test relayd with
 # the relayd process running on a remote machine.  You have to specify
@@ -46,6 +46,8 @@ run-regress-$a: $a
 .endif
 .endfor
 
+# create the certificates for SSL
+
 /etc/ssl/127.0.0.1.crt:
 	${SUDO} openssl req -batch -new -nodes -newkey rsa -keyout /etc/ssl/private/127.0.0.1.key -subj /CN=127.0.0.1/ -x509 -out $@
 
@@ -54,5 +56,17 @@ server-cert.pem:
 
 ${REGRESS_TARGETS:M*ssl*} ${REGRESS_TARGETS:M*https*}: \
     /etc/ssl/127.0.0.1.crt server-cert.pem
+
+# make perl syntax check for all args files
+
+.PHONY: syntax
+
+syntax: stamp-syntax
+
+stamp-syntax: ${ARGS}
+.for a in ${ARGS}
+	@perl -c ${PERLPATH}$a
+.endfor
+	@date >$@
 
 .include <bsd.regress.mk>

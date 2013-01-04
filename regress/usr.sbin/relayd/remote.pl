@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.1 2012/12/28 20:36:25 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.2 2013/01/04 14:01:49 bluhm Exp $
 
-# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -133,51 +133,4 @@ $s->down;
 $r->close_child;
 $r->down;
 
-foreach ([ client => $c ], [ relayd => $r ], [ server => $s ]) {
-	my($name, $proc) = @$_;
-	my $pattern = $args{$name}{loggrep} or next;
-	$pattern = [ $pattern ] unless ref($pattern) eq 'ARRAY';
-	foreach my $pat (@$pattern) {
-		if (ref($pat) eq 'HASH') {
-			while (my($re, $num) = each %$pat) {
-				my @matches = $proc->loggrep($re);
-				@matches == $num or
-				    die "$name matches @matches: $re => $num";
-			}
-		} else {
-			$proc->loggrep($pat)
-			    or die "$name log missing pattern: $pat";
-		}
-	}
-}
-
-exit if $args{nocheck};
-
-my @clen = $c->loggrep(qr/^LEN: /) or die "no client len"
-    unless $args{client}{nocheck};
-my @slen = $s->loggrep(qr/^LEN: /) or die "no server len"
-    unless $args{server}{nocheck};
-!@clen || !@slen || @clen ~~ @slen
-    or die "client: @clen", "server: @slen", "len mismatch";
-!defined($args{len}) || !$clen[0] || $clen[0] eq "LEN: $args{len}\n"
-    or die "client: $clen[0]", "len $args{len} expected";
-!defined($args{len}) || !$slen[0] || $slen[0] eq "LEN: $args{len}\n"
-    or die "server: $slen[0]", "len $args{len} expected";
-foreach my $len (map { ref eq 'ARRAY' ? @$_ : $_ } @{$args{lengths} || []}) {
-	my $clen = shift @clen;
-	$clen eq "LEN: $len\n"
-	    or die "client: $clen", "len $len expected";
-	my $slen = shift @slen;
-	$slen eq "LEN: $len\n"
-	    or die "server: $slen", "len $len expected";
-}
-
-my $cmd5 = $c->loggrep(qr/^MD5: /) unless $args{client}{nocheck};
-my $smd5 = $s->loggrep(qr/^MD5: /) unless $args{server}{nocheck};
-!$cmd5 || !$smd5 || ref($args{md5}) eq 'ARRAY' || $cmd5 eq $smd5
-    or die "client: $cmd5", "server: $smd5", "md5 mismatch";
-my $md5 = ref($args{md5}) eq 'ARRAY' ? join('|', @{$args{md5}}) : $args{md5};
-!$md5 || !$cmd5 || $cmd5 =~ /^MD5: ($md5)$/
-    or die "client: $cmd5", "md5 $md5 expected";
-!$md5 || !$smd5 || $smd5 =~ /^MD5: ($md5)$/
-    or die "server: $smd5", "md5 $md5 expected";
+check_logs($c, $r, $s, %args);
