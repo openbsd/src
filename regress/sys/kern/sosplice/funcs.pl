@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.1.1.1 2013/01/03 17:36:39 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.2 2013/01/04 12:43:52 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -420,12 +420,13 @@ sub errignore {
 	$SIG{PIPE} = 'IGNORE';
 	$SIG{__DIE__} = sub {
 		die @_ if $^S;
-		warn @_;
+		warn "Error ignored";
 		my $soerror;
 		$soerror = getsockopt(STDIN, SOL_SOCKET, SO_ERROR);
 		print STDERR "ERROR IN: ", unpack('i', $soerror), "\n";
 		$soerror = getsockopt(STDOUT, SOL_SOCKET, SO_ERROR);
 		print STDERR "ERROR OUT: ", unpack('i', $soerror), "\n";
+		warn @_;
 		IO::Handle::flush(\*STDERR);
 		POSIX::_exit(0);
 	};
@@ -637,14 +638,14 @@ sub check_error {
 			my $ein = $p->loggrep(qr/^ERROR IN: /);
 			defined($ein) &&
 			    $ein eq "ERROR IN: $args{$name}{errorin}\n"
-			    or die "$name: $ein",
+			    or die "$name: $ein ",
 			    "error in $args{$name}{errorin} expected";
 		}
 		if (defined($args{$name}{errorout})) {
 			my $eout = $p->loggrep(qr/^ERROR OUT: /);
 			defined($eout) &&
 			    $eout eq "ERROR OUT: $args{$name}{errorout}\n"
-			    or die "$name: $eout",
+			    or die "$name: $eout ",
 			    "error out $args{$name}{errorout} expected";
 		}
 	}
