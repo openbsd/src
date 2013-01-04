@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.52 2011/10/16 06:38:35 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.53 2013/01/04 19:27:46 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -11,7 +11,7 @@
 01/01	J.D. Salinger born, 1919
 01/01	Heinz Zemanek born in Vienna, Austria, 1920
 01/01	Dolores Haze (prototype for Lolita) born, 1935
-01/02	Isaac Asimov born in Petrovichi, Russian SFSR (now part of USSR), 1920
+01/02	Isaac Asimov born in Petrovichi, Russia, 1920
 01/03	J.R.R. Tolkien born, 1892
 01/04	George Washington Carver born in Missouri, 1864
 01/04	Jakob Grimm born, 1785
