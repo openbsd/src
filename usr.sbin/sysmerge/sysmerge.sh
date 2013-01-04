@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.100 2013/01/03 19:45:57 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.101 2013/01/04 07:56:36 rpe Exp $
 #
 # Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -236,11 +236,7 @@ mm_install() {
 		;;
 	/etc/mail/aliases)
 		echo " (running newaliases(8))"
-		if [ -n "${DESTDIR}" ]; then
-			chroot ${DESTDIR} newaliases >/dev/null || export NEED_NEWALIASES=1
-		else
-			newaliases >/dev/null
-		fi
+		${DESTDIR:+chroot ${DESTDIR}} newaliases >/dev/null || export NEED_NEWALIASES=1
 		;;
 	/etc/master.passwd)
 		echo " (running pwd_mkdb(8))"
@@ -380,12 +376,7 @@ diff_loop() {
 						if [ "${_u}" != "root" ]; then
 							if [ -z "$(grep -E "^${_u}:" ${DESTDIR}${COMPFILE#.})" ]; then
 								echo "===> Adding the ${_u} user"
-								if [ -n "${DESTDIR}" ]; then
-									chroot ${DESTDIR} chpass -la "${l}"
-								else
-									chpass -la "${l}"
-								fi
-								if (($? == 0)); then
+								if ${DESTDIR:+chroot ${DESTDIR}} chpass -la "${l}"; then
 									set -A NEWUSR -- ${NEWUSR[@]} ${_u}
 								else
 									_merge_pwd=1
@@ -405,12 +396,7 @@ diff_loop() {
 						_gid=$(echo ${l} | awk -F ':' '{ print $3 }')
 						if [ -z "$(grep -E "^${_g}:" ${DESTDIR}${COMPFILE#.})" ]; then
 							echo "===> Adding the ${_g} group"
-							if [ -n "${DESTDIR}" ]; then
-								chroot ${DESTDIR} groupadd -g "${_gid}" "${_g}"
-							else
-								groupadd -g "${_gid}" "${_g}"
-							fi
-							if (($? == 0)); then
+							if ${DESTDIR:+chroot ${DESTDIR}} groupadd -g "${_gid}" "${_g}"; then
 								set -A NEWGRP -- ${NEWGRP[@]} ${_g}
 							else
 								_merge_grp=1
