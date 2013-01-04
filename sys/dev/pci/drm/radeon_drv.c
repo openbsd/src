@@ -1,4 +1,4 @@
-/* $OpenBSD: radeon_drv.c,v 1.61 2013/01/02 05:52:12 jsg Exp $ */
+/* $OpenBSD: radeon_drv.c,v 1.62 2013/01/04 05:31:35 jsg Exp $ */
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
  */
@@ -680,7 +680,7 @@ const static struct drm_pcidev radeondrm_pciidlist[] = {
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4200_M,
 	    CHIP_RS880|RADEON_IS_MOBILITY|RADEON_NEW_MEMMAP|RADEON_IS_IGP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4290,
-	    CHIP_RS880||RADEON_NEW_MEMMAP|RADEON_IS_IGP},
+	    CHIP_RS880|RADEON_NEW_MEMMAP|RADEON_IS_IGP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5450,
 	    CHIP_RS880|RADEON_NEW_MEMMAP},
         {0, 0, 0}
