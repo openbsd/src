@@ -112,9 +112,6 @@ extern enum processor_type m88k_cpu;
 /* external variables defined elsewhere in the compiler */
 
 extern int target_flags;			/* -m compiler switches */
-extern int frame_pointer_needed;		/* current function has a FP */
-extern int flag_delayed_branch;			/* -fdelayed-branch */
-extern int flag_pic;				/* -fpic */
 
 /*** Controlling the Compilation Driver, `gcc' ***/
 /* Show we can debug even without a frame pointer.  */
