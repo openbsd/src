@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.17 2011/10/07 20:07:25 jmc Exp $	*/
+/*	$OpenBSD: units.c,v 1.18 2013/01/04 19:31:28 jmc Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -612,7 +612,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: units [-qv] [-f filename] [from-unit to-unit]\n");
+	    "usage: units [-qv] [-f filename] [[count] from-unit to-unit]\n");
 	exit(3);
 }
 
@@ -651,14 +651,26 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (optind != argc - 2 && optind != argc)
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 3 && argc != 2 && argc != 0)
 		usage();
 
 	readunits(userfile);
 
-	if (optind == argc - 2) {
-		strlcpy(havestr, argv[optind], sizeof(havestr));
-		strlcpy(wantstr, argv[optind + 1], sizeof(wantstr));
+	if (argc == 3) {
+		strlcpy(havestr, argv[0], sizeof(havestr));
+		strlcat(havestr, " ", sizeof(havestr));
+		strlcat(havestr, argv[1], sizeof(havestr));
+		argc--;
+		argv++;
+		argv[0] = havestr;
+	}
+
+	if (argc == 2) {
+		strlcpy(havestr, argv[0], sizeof(havestr));
+		strlcpy(wantstr, argv[1], sizeof(wantstr));
 		initializeunit(&have);
 		addunit(&have, havestr, 0);
 		completereduce(&have);

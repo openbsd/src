@@ -1,4 +1,4 @@
-.\" $OpenBSD: units.1,v 1.24 2011/10/08 20:41:12 jmc Exp $
+.\" $OpenBSD: units.1,v 1.25 2013/01/04 19:31:28 jmc Exp $
 .\" converted to new format by deraadt@openbsd.org
 .\"
 .\" Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -16,7 +16,7 @@
 .\" I would appreciate (though I do not require) receiving a copy of any
 .\" improvements you might make to this program.
 .\"
-.Dd $Mdocdate: October 8 2011 $
+.Dd $Mdocdate: January 4 2013 $
 .Dt UNITS 1
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Nm units
 .Op Fl qv
 .Op Fl f Ar filename
-.Op Ar from-unit to-unit
+.Op Oo Ar count Oc Ar from-unit to-unit
 .Sh DESCRIPTION
 The
 .Nm
@@ -84,11 +84,15 @@ Suppresses prompting of the user for units and the display of statistics
 about the number of units loaded.
 .It Fl v
 Prints the version number.
-.It Ar from-unit Ar to-unit
+.It Oo Ar count Oc Ar from-unit to-unit
 Allows a single unit conversion to be done directly from the command line.
 No prompting will occur.
 The units program will print out
 only the result of this single conversion.
+A
+.Ar count
+can be given to specify multiples of
+.Ar from-unit .
 .El
 .Pp
 Powers of units can be specified using the
