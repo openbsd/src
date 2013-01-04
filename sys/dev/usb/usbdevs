@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.594 2012/12/19 03:29:02 jsg Exp $
+$OpenBSD: usbdevs,v 1.595 2013/01/04 02:47:46 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2079,6 +2079,7 @@ product HUAWEI E161		0x1446	HUAWEI Mobile Modem
 product HUAWEI K3765		0x1465	HUAWEI Mobile K3765
 product HUAWEI E1820		0x14ac  HUAWEI Mobile Modem
 product HUAWEI K4510		0x14c5  HUAWEI Mobile Modem
+product HUAWEI E353_INIT	0x14fe	HUAWEI Mobile E353 Initial
 product HUAWEI E392_INIT	0x1505	HUAWEI Mobile E392 Initial
 product HUAWEI K3765_INIT	0x1520	HUAWEI Mobile K3765 Initial
 product HUAWEI E173S		0x1c05	HUAWEI Mobile E173s
