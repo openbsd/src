@@ -1,14 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2012/08/28 18:59:28 pascal Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2013/01/05 20:03:06 miod Exp $
 
-OLD_TOOLCHAIN=m68k m88k vax
-
-.for _arch in ${MACHINE_CPU}
-.  if !empty(OLD_TOOLCHAIN:M${_arch})
-USING_OLD_TOOLCHAIN?=yes
-.else
-USING_OLD_TOOLCHAIN?=no
-.  endif
-.endfor
+.include <bsd.own.mk>
 
 SUBDIRS=	opcodes bfd
 CONF_SUBDIRS=	opcodes bfd
@@ -31,7 +23,7 @@ MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
 ###INST_SUBDIRS+=      gdb
 ###MAN+=               gdb/gdb.1
 
-.if ${USING_OLD_TOOLCHAIN:L} != "yes"
+.if ${ELF_TOOLCHAIN:L} == "yes"
 SUBDIRS+=	binutils ld gas
 CONF_SUBDIRS+=	binutils ld gas
 INST_SUBDIRS+=	binutils ld gas
@@ -73,7 +65,7 @@ all:	config.status
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
 	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' all info
-.if ${USING_OLD_TOOLCHAIN:L} == "yes"
+.if ${ELF_TOOLCHAIN:L} != "yes"
 	cd ${.OBJDIR}/binutils && \
 	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
 	    LDFLAGS=${LDSTATIC} objdump
@@ -99,7 +91,7 @@ do-config: .USE
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
 	    ${MAKE} ${CONFIGURE_MODULES}
-.if ${USING_OLD_TOOLCHAIN:L} != "yes"
+.if ${ELF_TOOLCHAIN:L} == "yes"
 	# We need to generate as.1 and ld.1 immediately after config.status
 	# for the manpage machinery to work properly.
 	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
@@ -124,7 +116,7 @@ install: maninstall
 	    INSTALL_PROGRAM='install -c -S' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
 	      install install-info
-.if ${USING_OLD_TOOLCHAIN:L} == "yes"
+.if ${ELF_TOOLCHAIN:L} != "yes"
 	cd ${.OBJDIR}/binutils && \
 		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \
 		    -g ${BINGRP} -m ${BINMODE} objdump ${DESTDIR}${PREFIX}/bin
