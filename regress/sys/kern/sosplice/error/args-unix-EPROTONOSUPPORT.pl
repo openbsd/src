@@ -18,6 +18,6 @@ our %args = (
 	) or die "socket splice failed: $!";
 
 	$s->setsockopt(SOL_SOCKET, SO_SPLICE, pack('i', $ss->fileno()))
-	    and die "splice udp sockets succeeded";
+	    and die "splice unix sockets succeeded";
     },
 );

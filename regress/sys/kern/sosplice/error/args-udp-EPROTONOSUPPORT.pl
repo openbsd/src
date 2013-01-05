@@ -1,4 +1,4 @@
-# test EPROTONOSUPPORT for splicing tcp with udp sockets
+# test EPROTONOSUPPORT for splicing tcp to udp socket
 
 use strict;
 use warnings;
@@ -17,6 +17,6 @@ our %args = (
 	) or die "socket splice failed: $!";
 
 	$s->setsockopt(SOL_SOCKET, SO_SPLICE, pack('i', $ss->fileno()))
-	    and die "splice udp sockets succeeded";
+	    and die "splice udp to tcp socket succeeded";
     },
 );
