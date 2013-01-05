@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.200 2013/01/02 16:27:42 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.201 2013/01/05 20:34:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1440,6 +1440,7 @@ void
 rewrite_client_leases(void)
 {
 	struct client_lease *lp;
+	char *leasestr;
 
 	if (!leaseFile)	/* XXX */
 		error("lease file not open");
@@ -1448,64 +1449,103 @@ rewrite_client_leases(void)
 	rewind(leaseFile);
 
 	for (lp = client->leases; lp; lp = lp->next) {
+		/* Skip any leases that duplicate the active lease address. */
 		if (client->active && lp->address.s_addr ==
 		    client->active->address.s_addr)
 			continue;
-		write_client_lease(lp);
+		/* Don't write out static leases from dhclient.conf. */
+		if (lp->is_static)
+			continue;
+		leasestr = lease_as_string(lp);
+		if (leasestr)
+			fprintf(leaseFile, "%s", leasestr);
+		else
+			warning("cannot make lease into string");
 	}
 
-	if (client->active)
-		write_client_lease(client->active);
+	if (client->active) {
+		leasestr = lease_as_string(client->active);
+		if (leasestr)
+			fprintf(leaseFile, "%s", leasestr);
+		else
+			warning("cannot make lease into string");
+	}
 
 	fflush(leaseFile);
 	ftruncate(fileno(leaseFile), ftello(leaseFile));
 	fsync(fileno(leaseFile));
 }
 
-void
-write_client_lease(struct client_lease *lease)
+char *
+lease_as_string(struct client_lease *lease)
 {
-	struct tm *t;
-	int i;
+	static char leasestr[4096];
+	char *p;
+	size_t sz, rsltsz;
+	int i, rslt;
 
-	/* If the lease came from the config file, we don't need to stash
-	   a copy in the lease database. */
-	if (lease->is_static)
-		return;
+	sz = sizeof(leasestr);
+	p = leasestr;
+	memset(p, 0, sz);
 
-	if (!leaseFile)	/* XXX */
-		error("lease file not open");
+	rslt = snprintf(p, sz, "lease {\n"
+	    "%s  interface \"%s\";\n  fixed-address %s;\n",
+	    (lease->is_bootp) ? "  bootp;\n" : "", ifi->name,
+	    inet_ntoa(lease->address));
+	if (rslt == -1 || rslt >= sz)
+		return (NULL);
+	p += rslt;
+	sz -= rslt;
 
-	fprintf(leaseFile, "lease {\n");
-	if (lease->is_bootp)
-		fprintf(leaseFile, "  bootp;\n");
-	fprintf(leaseFile, "  interface \"%s\";\n", ifi->name);
-	fprintf(leaseFile, "  fixed-address %s;\n", inet_ntoa(lease->address));
-	if (lease->filename)
-		fprintf(leaseFile, "  filename \"%s\";\n", lease->filename);
-	if (lease->server_name)
-		fprintf(leaseFile, "  server-name \"%s\";\n",
+	if (lease->filename) {
+		rslt = snprintf(p, sz, "  filename \"%s\";\n", lease->filename);
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+	}
+	if (lease->server_name) {
+		rslt = snprintf(p, sz, "  server-name \"%s\";\n",
 		    lease->server_name);
-	for (i = 0; i < 256; i++)
-		if (lease->options[i].len)
-			fprintf(leaseFile, "  option %s %s;\n",
-			    dhcp_options[i].name,
-			    pretty_print_option(i, &lease->options[i], 1));
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+	}
 
-	t = gmtime(&lease->renewal);
-	fprintf(leaseFile, "  renew %d %d/%d/%d %02d:%02d:%02d;\n",
-	    t->tm_wday, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-	    t->tm_hour, t->tm_min, t->tm_sec);
-	t = gmtime(&lease->rebind);
-	fprintf(leaseFile, "  rebind %d %d/%d/%d %02d:%02d:%02d;\n",
-	    t->tm_wday, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-	    t->tm_hour, t->tm_min, t->tm_sec);
-	t = gmtime(&lease->expiry);
-	fprintf(leaseFile, "  expire %d %d/%d/%d %02d:%02d:%02d;\n",
-	    t->tm_wday, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-	    t->tm_hour, t->tm_min, t->tm_sec);
-	fprintf(leaseFile, "}\n");
-	fflush(leaseFile);
+	for (i = 0; i < 256; i++) {
+		if (lease->options[i].len == 0)
+			continue;
+		rslt = snprintf(p, sz, "  option %s %s;\n",
+		    dhcp_options[i].name,
+		    pretty_print_option(i, &lease->options[i], 1));
+		if (rslt == -1 || rslt >= sz)
+			return (NULL);
+		p += rslt;
+		sz -= rslt;
+	}
+
+#define TIMEFMT "%u %Y/%m/%d %T;\n"
+	rsltsz = strftime(p, sz, "  renew " TIMEFMT, gmtime(&lease->renewal));
+	if (rsltsz == 0)
+		return (NULL);
+	p += rsltsz;
+	sz -= rsltsz;
+	rsltsz = strftime(p, sz, "  rebind " TIMEFMT, gmtime(&lease->rebind));
+	if (rsltsz == 0)
+		return (NULL);
+	p += rsltsz;
+	sz -= rsltsz;
+	rsltsz = strftime(p, sz, "  expire " TIMEFMT, gmtime(&lease->expiry));
+	if (rsltsz == 0)
+		return (NULL);
+	p += rsltsz;
+	sz -= rsltsz;
+	rslt = snprintf(p, sz, "}\n");
+	if (rslt == -1 || rslt >= sz)
+		return (NULL);
+
+	return (leasestr);
 }
 
 void

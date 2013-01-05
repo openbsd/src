@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.98 2012/12/19 12:25:38 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.99 2013/01/05 20:34:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -292,7 +292,7 @@ void make_decline(struct client_lease *);
 
 void free_client_lease(struct client_lease *);
 void rewrite_client_leases(void);
-void write_client_lease(struct client_lease *);
+char *lease_as_string(struct client_lease *);
 
 struct client_lease *packet_to_lease(struct in_addr, struct option_data *);
 void go_daemon(void);
