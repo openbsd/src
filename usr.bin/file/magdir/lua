@@ -1,4 +1,4 @@
-#	$OpenBSD: lua,v 1.2 2009/04/26 14:17:45 chl Exp $
+#	$OpenBSD: lua,v 1.3 2013/01/05 18:36:54 fgsch Exp $
 
 #------------------------------------------------------------------------------
 # lua:  file(1) magic for Lua scripting language
@@ -15,3 +15,4 @@
 0	string		\033Lua			Lua bytecode,
 >4	byte		0x50			version 5.0
 >4	byte		0x51			version 5.1
+>4	byte		0x52			version 5.2
