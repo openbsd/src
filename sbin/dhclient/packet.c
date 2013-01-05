@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.14 2012/11/15 14:54:18 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.15 2013/01/05 13:41:56 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -205,7 +205,7 @@ decode_udp_ip_header(unsigned char *buf, int bufix, struct sockaddr_in *from,
 		data = buf + bufix + ip_len + sizeof(*udp);
 		len = ntohs(udp->uh_ulen) - sizeof(*udp);
 		udp_packets_length_checked++;
-		if (len + data > buf + bufix + buflen) {
+		if ((len < 0) || (len + data > buf + bufix + buflen)) {
 			udp_packets_length_overflow++;
 			if (udp_packets_length_checked > 4 &&
 			    (udp_packets_length_checked /
