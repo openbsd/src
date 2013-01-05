@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: direct.pl,v 1.1.1.1 2013/01/03 17:36:39 bluhm Exp $
+#	$OpenBSD: direct.pl,v 1.2 2013/01/05 13:53:42 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -39,6 +39,7 @@ if (@ARGV and -f $ARGV[-1]) {
 @ARGV == 0 or usage();
 
 my $s = Server->new(
+    idle		=> 4,
     func		=> \&read_datagram,
     %{$args{server}},
     protocol		=> "udp",

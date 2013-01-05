@@ -8,7 +8,9 @@ our %args = (
 	func => sub { sleep 3; write_stream(@_); },
     },
     relay => {
-	func => sub { relay(@_, 61); relay_copy(@_); },
+	func => sub { relay(@_); relay_copy(@_); },
+	max => 197,
+	end => 1,
 	nocheck => 1,
     },
     len => 251,

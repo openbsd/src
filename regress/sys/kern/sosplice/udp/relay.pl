@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relay.pl,v 1.1.1.1 2013/01/03 17:36:39 bluhm Exp $
+#	$OpenBSD: relay.pl,v 1.2 2013/01/05 13:53:42 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -39,6 +39,7 @@ if (@ARGV and -f $ARGV[-1]) {
 @ARGV == 1 or usage();
 
 my $s = Server->new(
+    idle		=> 4,
     func		=> \&read_datagram,
     listendomain	=> AF_INET,
     listenaddr		=> "127.0.0.1",
@@ -47,7 +48,7 @@ my $s = Server->new(
 );
 my $r = Relay->new(
     forward		=> $ARGV[0],
-    idle		=> 5,
+    idle		=> 3,
     func		=> \&relay,
     listendomain	=> AF_INET,
     listenaddr		=> "127.0.0.1",

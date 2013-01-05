@@ -9,13 +9,13 @@ our %args = (
 	sndbuf => 2**16,
     },
     relay => {
-	timeout => 10,
+	idle => 6,
 	size => 2**16,
 	sndbuf => 2**16,
 	rcvbuf => 2**16,
     },
     server => {
-	num => 1,
+	idle => 7,
 	rcvbuf => 2**16,
     },
     len => 65507,

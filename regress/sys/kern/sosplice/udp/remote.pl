@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.1.1.1 2013/01/03 17:36:39 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.2 2013/01/05 13:53:42 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -61,7 +61,7 @@ if ($mode eq "relay") {
 	$r = Relay->new(
 	    forward		=> $ARGV[0],
 	    logfile		=> dirname($0)."/remote.log",
-	    idle		=> 5,
+	    idle		=> 3,
 	    func		=> \&relay,
 	    %{$args{relay}},
 	    protocol		=> "udp",
@@ -91,6 +91,7 @@ if ($mode eq "relay") {
 }
 
 my $s = Server->new(
+    idle		=> 4,
     func		=> \&read_datagram,
     %{$args{server}},
     protocol		=> "udp",

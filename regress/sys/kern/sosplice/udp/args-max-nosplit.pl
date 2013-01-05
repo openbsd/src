@@ -10,9 +10,9 @@ our %args = (
 	nocheck => 1,
     },
     relay => {
-	max => 4,
+	max => 2,
     },
-    len => 4,
-    lengths => "1 3",
-    md5 => "5df2ad5a8fa778004d06dc070811754c",
+    len => 1,
+    lengths => "1",
+    md5 => "68b329da9893e34099c7d8ad5cb9c940",
 );

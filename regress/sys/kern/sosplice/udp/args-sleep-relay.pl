@@ -1,21 +1,19 @@
-# test idle timeout, must not be to short
+# test with multiple packets, relay sleeps before processing
 
 use strict;
 use warnings;
 use List::Util qw(sum);
 
-my @lengths = (1, 2, 3);
+my @lengths = (0, 1, 2, 3, 4, 5);
 
 our %args = (
     client => {
 	lengths => \@lengths,
-	sleep => 1,
     },
     relay => {
-	idle => 2,
-	timeout => 1,
+	func => sub { sleep 3; relay(@_); },
     },
     len => sum(@lengths),
     lengths => "@lengths",
-    md5 => "868972544a6c4312aa52568c8dfa2366",
+    md5 => "553af7b8fc0e205ead2562ab61a2ad13",
 );

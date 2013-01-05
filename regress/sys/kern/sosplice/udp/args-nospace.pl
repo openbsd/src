@@ -10,14 +10,16 @@ our %args = (
 	nocheck => 1,
     },
     relay => {
+	func => sub { sleep 3; errignore(@_); relay(@_); },
+	down => "Message too long",
 	rcvbuf => 30000,
 	sndbuf => 10000,
+	nocheck => 1,
     },
     server => {
-	num => 4,
 	rcvbuf => 30000,
     },
-    len => 10006,
-    lengths => "1 10000 2 3",
-    md5 => "90c347b1853f03d6e73aa88c9d12ce55",
+    len => 10003,
+    lengths => "1 10000 2",
+    md5 => "2ec9a4b45a449095245177d2cf51dd24",
 );

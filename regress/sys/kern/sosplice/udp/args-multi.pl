@@ -16,10 +16,9 @@ our %args = (
 	sndbuf => 20000,
     },
     server => {
-	num => scalar @lengths,
 	rcvbuf => 20000,
     },
     len => sum(@lengths),
     lengths => "@lengths",
-    md5 => "f5b58b46c97b566fc8d34080c475d637",
+    md5 => "544464f20384567028998e1a1a4c5b1e",
 );
