@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx_pci.c,v 1.2 2013/01/04 23:19:40 stsp Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.3 2013/01/05 15:42:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -78,7 +78,7 @@ rtsx_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map_msi(pa, &ih) && pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
 		return;
 	}
