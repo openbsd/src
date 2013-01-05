@@ -390,11 +390,7 @@ in the following sections.
 -mcheck-zero-division  -mno-check-zero-division @gol
 -muse-div-instruction @gol
 -mserialize-volatile  -mno-serialize-volatile @gol
--mhandle-large-shift  -mtrap-large-shift  @gol
--mno-underscores  @gol
--mno-ocs-debug-info   -mocs-debug-info @gol
--mno-ocs-frame-position  -mocs-frame-position  @gol
--msvr3 -msvr4}
+-mhandle-large-shift  -mtrap-large-shift}
 
 @emph{RS/6000 and PowerPC Options}
 @gccoptlist{-mcpu=@var{cpu-type} @gol
@@ -6441,45 +6437,6 @@ runs on the m88110.
 Generate code that works best for the m88110, and may not run
 on the m88100.
 
-@item -mno-underscores
-@opindex mno-underscores
-@cindex underscores, avoiding (88k)
-In assembler output, emit symbol names without adding an underscore
-character at the beginning of each name.  The default is to use an
-underscore as prefix on each name.
-
-@item -mocs-debug-info
-@itemx -mno-ocs-debug-info
-@opindex mocs-debug-info
-@opindex mno-ocs-debug-info
-@cindex OCS (88k)
-@cindex debugging, 88k OCS
-Include (or omit) additional debugging information (about registers used
-in each stack frame) as specified in the 88open Object Compatibility
-Standard, ``OCS''@.  This extra information allows debugging of code that
-has had the frame pointer eliminated.  The default for SVr4 and Delta 88
-SVr3.2 is to include this information; other 88k configurations omit this
-information by default.
-
-@item -mocs-frame-position
-@opindex mocs-frame-position
-@cindex register positions in frame (88k)
-When emitting COFF debugging information for automatic variables and
-parameters stored on the stack, use the offset from the canonical frame
-address, which is the stack pointer (register 31) on entry to the
-function.  The SVr4 and Delta88 SVr3.2, and BCS configurations use
-@option{-mocs-frame-position}; other 88k configurations have the default
-@option{-mno-ocs-frame-position}.
-
-@item -mno-ocs-frame-position
-@opindex mno-ocs-frame-position
-@cindex register positions in frame (88k)
-When emitting COFF debugging information for automatic variables and
-parameters stored on the stack, use the offset from the frame pointer
-register (register 30).  When this option is in effect, the frame
-pointer is not eliminated when debugging information is selected by the
--g switch.
-
 @item -mserialize-volatile
 @opindex mserialize-volatile
 @itemx -mno-serialize-volatile
@@ -6508,29 +6465,6 @@ MC88100 processor, you may use @option{-mno-serialize-volatile}.
 The extra code generated to guarantee consistency may affect the
 performance of your application.  If you know that you can safely
 forgo this guarantee, you may use @option{-mno-serialize-volatile}.
-
-@item -msvr4
-@itemx -msvr3
-@opindex msvr4
-@opindex msvr3
-@cindex assembler syntax, 88k
-@cindex SVr4
-Turn on (@option{-msvr4}) or off (@option{-msvr3}) compiler extensions
-related to System V release 4 (SVr4).  This controls the following:
-
-@enumerate
-@item
-Which variant of the assembler syntax to emit.
-@item
-@option{-msvr4} makes the C preprocessor recognize @samp{#pragma weak}
-that is used on System V release 4.
-@item
-@option{-msvr4} makes GCC issue additional declaration directives used in
-SVr4.
-@end enumerate
-
-@option{-msvr4} is the default for the m88k-motorola-sysv4 configuration.
-@option{-msvr3} is the default for all other m88k configurations.
 
 @item -mno-check-zero-division
 @itemx -mcheck-zero-division

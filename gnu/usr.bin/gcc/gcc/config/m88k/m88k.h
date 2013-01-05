@@ -55,16 +55,6 @@ Boston, MA 02111-1307, USA.  */
    System V ABI Implementation Guide for the M88000 Processor,
    Release 1.0, January 1991
 	A companion ABI document from 88open.  */
-
-/* Other *.h files in config/m88k include this one and override certain items.
-   Currently these are sysv3.h, sysv4.h, dgux.h, dolph.h, tekXD88.h, and luna.h.
-   Additionally, sysv4.h and dgux.h include svr4.h first.  All other
-   m88k targets except luna.h are based on svr3.h.  */
-
-/* Choose SVR3 as the default.  */
-#if !defined(DBX_DEBUGGING_INFO) && !defined(DWARF_DEBUGGING_INFO)
-#include "svr3.h"
-#endif
 
 /* External types used.  */
 
@@ -96,8 +86,6 @@ enum processor_type {
 
 extern char m88k_volatile_code;
 
-extern int m88k_prologue_done;
-extern int m88k_function_number;
 extern int m88k_fp_offset;
 extern int m88k_stack_size;
 extern int m88k_case_index;
@@ -121,17 +109,10 @@ extern int target_flags;			/* -m compiler switches */
 #undef	CPP_SPEC
 #define	CPP_SPEC "%{!m88000:%{!m88100:%{m88110:-D__m88110__}}} \
 		  %{!m88000:%{!m88110:-D__m88100__}}"
-
-/* LIB_SPEC, LINK_SPEC, and STARTFILE_SPEC defined in svr3.h.
-   ASM_SPEC, ASM_FINAL_SPEC, LIB_SPEC, LINK_SPEC, and STARTFILE_SPEC redefined
-   in svr4.h.
-   CPP_SPEC, ASM_SPEC, ASM_FINAL_SPEC, LIB_SPEC, LINK_SPEC, and
-   STARTFILE_SPEC redefined in dgux.h.  */
 
 /*** Run-time Target Specification ***/
 
-/* Names to predefine in the preprocessor for this target machine.
-   Redefined in sysv3.h, sysv4.h, dgux.h, and luna.h.  */
+/* Names to predefine in the preprocessor for this target machine.  */
 #define CPP_PREDEFINES "-Dm88000 -Dm88k -Dunix -D__CLASSIFY_TYPE__=2"
 
 #define TARGET_VERSION fprintf (stderr, " (%s)", VERSION_INFO)
@@ -150,31 +131,21 @@ extern int target_flags;			/* -m compiler switches */
 #define MASK_88110		0x00000002 /* Target m88110 */
 #define MASK_88000 		(MASK_88100 | MASK_88110)
 
-#define MASK_OCS_DEBUG_INFO	0x00000004 /* Emit .tdesc info */
-#define MASK_OCS_FRAME_POSITION	0x00000008 /* Debug frame = CFA, not r30 */
-#define MASK_SVR4		0x00000010 /* Target is AT&T System V.4 */
-#define MASK_SVR3		0x00000020 /* Target is AT&T System V.3 */
-#define MASK_NO_UNDERSCORES	0x00000040 /* Don't emit a leading `_' */
 #define MASK_TRAP_LARGE_SHIFT	0x00000100 /* Trap if shift not <= 31 */
 #define MASK_HANDLE_LARGE_SHIFT	0x00000200 /* Handle shift count >= 32 */
 #define MASK_CHECK_ZERO_DIV	0x00000400 /* Check for int div. by 0 */
 #define MASK_USE_DIV		0x00000800 /* No signed div. checks */
-#define MASK_NO_SERIALIZE_VOLATILE 0x00008000 /* Serialize volatile refs */
-#define MASK_MEMCPY		0x00010000 /* Always use memcpy for movstr */
+#define MASK_NO_SERIALIZE_VOLATILE 0x00001000 /* Serialize volatile refs */
+#define MASK_MEMCPY		0x00002000 /* Always use memcpy for movstr */
 #define MASK_EITHER_LARGE_SHIFT	(MASK_TRAP_LARGE_SHIFT | \
 				 MASK_HANDLE_LARGE_SHIFT)
-#define MASK_OMIT_LEAF_FRAME_POINTER 0x00020000 /* omit leaf frame pointers */
+#define MASK_OMIT_LEAF_FRAME_POINTER 0x00004000 /* omit leaf frame pointers */
 
 
 #define TARGET_88100   		 ((target_flags & MASK_88000) == MASK_88100)
 #define TARGET_88110		 ((target_flags & MASK_88000) == MASK_88110)
 #define TARGET_88000		 ((target_flags & MASK_88000) == MASK_88000)
 
-#define TARGET_OCS_DEBUG_INFO	  (target_flags & MASK_OCS_DEBUG_INFO)
-#define TARGET_OCS_FRAME_POSITION (target_flags & MASK_OCS_FRAME_POSITION)
-#define TARGET_SVR4		  (target_flags & MASK_SVR4)
-#define TARGET_SVR3		  (target_flags & MASK_SVR3)
-#define TARGET_NO_UNDERSCORES	  (target_flags & MASK_NO_UNDERSCORES)
 #define TARGET_TRAP_LARGE_SHIFT   (target_flags & MASK_TRAP_LARGE_SHIFT)
 #define TARGET_HANDLE_LARGE_SHIFT (target_flags & MASK_HANDLE_LARGE_SHIFT)
 #define TARGET_CHECK_ZERO_DIV	  (target_flags & MASK_CHECK_ZERO_DIV)
@@ -185,7 +156,6 @@ extern int target_flags;			/* -m compiler switches */
 #define TARGET_EITHER_LARGE_SHIFT (target_flags & MASK_EITHER_LARGE_SHIFT)
 #define TARGET_OMIT_LEAF_FRAME_POINTER (target_flags & MASK_OMIT_LEAF_FRAME_POINTER)
 
-/*  Redefined in sysv3.h, sysv4.h, and dgux.h.  */
 #define TARGET_DEFAULT	(MASK_CHECK_ZERO_DIV)
 #define CPU_DEFAULT MASK_88100
 
@@ -194,13 +164,6 @@ extern int target_flags;			/* -m compiler switches */
     { "88110",				 MASK_88110 }, \
     { "88100",				 MASK_88100 }, \
     { "88000",			         MASK_88000 }, \
-    { "ocs-debug-info",			 MASK_OCS_DEBUG_INFO }, \
-    { "no-ocs-debug-info",		-MASK_OCS_DEBUG_INFO }, \
-    { "ocs-frame-position",		 MASK_OCS_FRAME_POSITION }, \
-    { "no-ocs-frame-position",		-MASK_OCS_FRAME_POSITION }, \
-    { "svr4",			         MASK_SVR4 }, \
-    { "svr3",			        -MASK_SVR4 }, \
-    { "no-underscores",			 MASK_NO_UNDERSCORES }, \
     { "trap-large-shift",		 MASK_TRAP_LARGE_SHIFT }, \
     { "handle-large-shift",		 MASK_HANDLE_LARGE_SHIFT }, \
     { "check-zero-division",		 MASK_CHECK_ZERO_DIV }, \
@@ -217,7 +180,6 @@ extern int target_flags;			/* -m compiler switches */
     { "",				 TARGET_DEFAULT }, \
   }
 
-/* Redefined in dgux.h.  */
 #define SUBTARGET_SWITCHES
 
 /* Do any checking or such that is needed after processing the -m switches.  */
@@ -266,7 +228,7 @@ extern int target_flags;			/* -m compiler switches */
    only provided 8 byte alignment.  The m88110 cache is small, so align
    to an 8 byte boundary.  Pack code tightly when compiling crtstuff.c.  */
 #define FUNCTION_BOUNDARY (flag_inhibit_size_directive ? 32 : \
-			   (TARGET_88100 && TARGET_SVR4 ? 128 : 64))
+			   (TARGET_88100 ? 128 : 64))
 
 /* No data type wants to be aligned rounder than this.  */
 #define BIGGEST_ALIGNMENT 64
@@ -305,6 +267,9 @@ extern int target_flags;			/* -m compiler switches */
 /* #define MAX_FIXED_MODE_SIZE 0 */
 
 /*** Register Usage ***/
+
+/* No register prefixes by default.  Will be overriden if necessary.  */
+#undef REGISTER_PREFIX
 
 /* Number of actual hardware registers.
    The hardware registers are assigned numbers for the compiler
@@ -930,8 +895,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
   m88k_va_arg (valist, type)
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
-   for profiling a function entry.  Redefined in sysv3.h, sysv4.h and
-   dgux.h.  */
+   for profiling a function entry.  */
 #define FUNCTION_PROFILER(FILE, LABELNO) \
   output_function_profiler (FILE, LABELNO, "mcount")
 
@@ -1357,10 +1321,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 /* Handle #pragma pack and sometimes #pragma weak.  */
 #define HANDLE_SYSV_PRAGMA 1
 
-/* Tell when to handle #pragma weak.  This is only done for V.4.  */
-#define SUPPORTS_WEAK TARGET_SVR4
-#define SUPPORTS_ONE_ONLY TARGET_SVR4
-
 /* Max number of bytes we can move from memory to memory
    in one reasonably fast instruction.  */
 #define MOVE_MAX 8
@@ -1502,82 +1462,147 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    assembler language.  The compiler assumes that the comment will end at
    the end of the line.  */
 #define ASM_COMMENT_START ";"
-
-/* Allow pseudo-ops to be overridden.  Override these in svr[34].h.  */
-#undef	ASCII_DATA_ASM_OP
-#undef	READONLY_DATA_SECTION_ASM_OP
-#undef	CTORS_SECTION_ASM_OP
-#undef	DTORS_SECTION_ASM_OP
-#undef  TARGET_ASM_NAMED_SECTION
-#undef	INIT_SECTION_ASM_OP
-#undef	FINI_SECTION_ASM_OP
-#undef	TYPE_ASM_OP
-#undef	SIZE_ASM_OP
-#undef	SET_ASM_OP
-#undef	SKIP_ASM_OP
-#undef	COMMON_ASM_OP
-#undef	ALIGN_ASM_OP
-#undef	IDENT_ASM_OP
+
+/* Assembler specific opcodes.
+   Not overriding <elfos.h> if already included.  */
+#ifndef OBJECT_FORMAT_ELF
 
 /* These are used in varasm.c as well.  */
 #define TEXT_SECTION_ASM_OP	"\ttext"
 #define DATA_SECTION_ASM_OP	"\tdata"
 
-/* Other sections.  */
-#define READONLY_DATA_SECTION_ASM_OP (TARGET_SVR4		\
-			      ? "\tsection\t .rodata,\"a\""	\
-			      : "\tsection\t .rodata,\"x\"")
-#define TDESC_SECTION_ASM_OP (TARGET_SVR4			\
-			      ? "\tsection\t .tdesc,\"a\""	\
-			      : "\tsection\t .tdesc,\"x\"")
-
-/* These must be constant strings for crtstuff.c.  */
-#define CTORS_SECTION_ASM_OP	"\tsection\t .ctors,\"d\""
-#define DTORS_SECTION_ASM_OP	"\tsection\t .dtors,\"d\""
-#define INIT_SECTION_ASM_OP	"\tsection\t .init,\"x\""
-#define FINI_SECTION_ASM_OP	"\tsection\t .fini,\"x\""
-
 /* These are pretty much common to all assemblers.  */
+#undef	IDENT_ASM_OP
 #define IDENT_ASM_OP		"\tident\t"
 #define FILE_ASM_OP		"\tfile\t"
+#undef	SET_ASM_OP
 #define SET_ASM_OP		"\tdef\t"
 #define GLOBAL_ASM_OP		"\tglobal\t"
+#undef	ALIGN_ASM_OP
 #define ALIGN_ASM_OP		"\talign\t"
+#undef	SKIP_ASM_OP
 #define SKIP_ASM_OP		"\tzero\t"
+#undef	COMMON_ASM_OP
 #define COMMON_ASM_OP		"\tcomm\t"
 #define BSS_ASM_OP		"\tbss\t"
 #define FLOAT_ASM_OP		"\tfloat\t"
 #define DOUBLE_ASM_OP		"\tdouble\t"
+#undef	ASCII_DATA_ASM_OP
 #define ASCII_DATA_ASM_OP	"\tstring\t"
 
-/* These are particular to the global pool optimization.  */
-#define SBSS_ASM_OP		"\tsbss\t"
-#define SCOMM_ASM_OP		"\tscomm\t"
-#define SDATA_SECTION_ASM_OP	"\tsdata"
-
 /* These are specific to PIC.  */
+#undef	TYPE_ASM_OP
 #define TYPE_ASM_OP		"\ttype\t"
+#undef	SIZE_ASM_OP
 #define SIZE_ASM_OP		"\tsize\t"
 #ifndef AS_BUG_POUND_TYPE /* Faulty assemblers require @ rather than #.  */
 #undef	TYPE_OPERAND_FMT
 #define TYPE_OPERAND_FMT	"#%s"
 #endif
 
-/* This is how we tell the assembler that a symbol is weak.  */
-
-#undef ASM_WEAKEN_LABEL
-#define ASM_WEAKEN_LABEL(FILE,NAME) \
-  do { fputs ("\tweak\t", FILE); assemble_name (FILE, NAME); \
-       fputc ('\n', FILE); } while (0)
-
 /* These are specific to version 03.00 assembler syntax.  */
 #define INTERNAL_ASM_OP		"\tlocal\t"
-#define VERSION_ASM_OP		"\tversion\t"
 #define PUSHSECTION_ASM_OP	"\tsection\t"
 #define POPSECTION_ASM_OP	"\tprevious"
 
 /* These are specific to the version 04.00 assembler syntax.  */
 #define REQUIRES_88110_ASM_OP	"\trequires_88110"
+
+/* This is how we tell the assembler that a symbol is weak.  */
+#undef ASM_WEAKEN_LABEL
+#define ASM_WEAKEN_LABEL(FILE,NAME) \
+  do { fputs ("\tweak\t", FILE); assemble_name (FILE, NAME); \
+       fputc ('\n', FILE); } while (0)
+
+/* Write the extra assembler code needed to declare a function properly.  */
+#undef	ASM_DECLARE_FUNCTION_NAME
+#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
+  do {									\
+    ASM_OUTPUT_LABEL(FILE, NAME);					\
+  } while (0)
+
+/* Write the extra assembler code needed to declare an object properly.  */
+#undef	ASM_DECLARE_OBJECT_NAME
+#define ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL)			\
+  do {									\
+    ASM_OUTPUT_LABEL(FILE, NAME);					\
+  } while (0);
+
+/* Output the size directive for a decl in rest_of_decl_compilation
+   in the case where we did not do so before the initializer.
+   Once we find the error_mark_node, we know that the value of
+   size_directive_output was set
+   by ASM_DECLARE_OBJECT_NAME when it was run for the same decl.  */
+
+#undef ASM_FINISH_DECLARE_OBJECT
+#define ASM_FINISH_DECLARE_OBJECT(FILE, DECL, TOP_LEVEL, AT_END)	 \
+do {									 \
+   } while (0)
+
+/* This is how to declare the size of a function.  */
+#undef	ASM_DECLARE_FUNCTION_SIZE
+#define ASM_DECLARE_FUNCTION_SIZE(FILE, FNAME, DECL)			\
+  do {									\
+  } while (0)
+
+/* The single-byte pseudo-op is the default.  */
+#undef	ASM_OUTPUT_ASCII
+#define ASM_OUTPUT_ASCII(FILE, P, SIZE)  \
+  output_ascii (FILE, ASCII_DATA_ASM_OP, 48, P, SIZE)
+
+/* Code to handle #ident directives.  */
+#undef	ASM_OUTPUT_IDENT
+#ifdef DBX_DEBUGGING_INFO
+#define ASM_OUTPUT_IDENT(FILE, NAME)
+#else
+#define ASM_OUTPUT_IDENT(FILE, NAME) \
+  output_ascii (FILE, IDENT_ASM_OP, 4000, NAME, strlen (NAME));
+#endif
+
+/* This is how to store into the string LABEL
+   the symbol_ref name of an internal numbered label where
+   PREFIX is the class of label and NUM is the number within the class.
+   This is suitable for output with `assemble_name'.  This must agree
+   with ASM_OUTPUT_INTERNAL_LABEL above, except for being prefixed
+   with an `*'.  */
+
+#undef ASM_GENERATE_INTERNAL_LABEL
+#define ASM_GENERATE_INTERNAL_LABEL(LABEL,PREFIX,NUM)			\
+  sprintf (LABEL, "*@%s%u", PREFIX, (unsigned) (NUM))
+
+/* This is how to output an internal numbered label where
+   PREFIX is the class of label and NUM is the number within the class.
+   For ELF, labels use `.' rather than `@'.  */
+
+#undef ASM_OUTPUT_INTERNAL_LABEL
+#define ASM_OUTPUT_INTERNAL_LABEL(FILE,PREFIX,NUM)			\
+  fprintf (FILE, "@%s%u:\n", PREFIX, (unsigned) (NUM))
+
+/* The prefix to add to user-visible assembler symbols.  */
+#undef USER_LABEL_PREFIX
+#define USER_LABEL_PREFIX "_"
+
+#undef	ASM_OUTPUT_COMMON
+#undef	ASM_OUTPUT_ALIGNED_COMMON
+#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)	\
+( fprintf ((FILE), "%s", COMMON_ASM_OP), 		\
+  assemble_name ((FILE), (NAME)),			\
+  fprintf ((FILE), ",%u\n", (SIZE) ? (SIZE) : 1))
+
+/* This says how to output an assembler line to define a local common
+   symbol.  */
+#undef	ASM_OUTPUT_LOCAL
+#undef	ASM_OUTPUT_ALIGNED_LOCAL
+#define ASM_OUTPUT_LOCAL(FILE, NAME, SIZE, ROUNDED)	\
+( fprintf ((FILE), "%s", BSS_ASM_OP),			\
+  assemble_name ((FILE), (NAME)),			\
+  fprintf ((FILE), ",%u,%d\n", (SIZE) ? (SIZE) : 1, (SIZE) <= 4 ? 4 : 8))
+
+#undef	ASM_OUTPUT_SKIP
+#define ASM_OUTPUT_SKIP(FILE,SIZE)  \
+  fprintf (FILE, "%s%u\n", SKIP_ASM_OP, (SIZE))
+
+#endif /* OBJECT_FORMAT_ELF */
 
 /* Output any initial stuff to the assembly file.  Always put out
    a file directive, even if not debugging.
@@ -1602,34 +1627,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 	2	Global names have been converted to lower case
 	3	Global names have been converted to upper case.  */
 
-#ifdef SDB_DEBUGGING_INFO
-#define ASM_COFFSEM(FILE)						\
-    if (write_symbols == SDB_DEBUG)					\
-      {									\
-	fprintf (FILE, "\nsem.%x:\t\t; %s\n",				\
-		 (((TARGET_OCS_FRAME_POSITION) ? 2 : 1) << 0) + (1 << 2) + (1 << 4),\
-		 (TARGET_OCS_FRAME_POSITION)				\
-			? "frame is CFA, normal array dims, case unchanged" \
-			: "frame is r30, normal array dims, case unchanged"); \
-      }
-#else
-#define ASM_COFFSEM(FILE)
-#endif
-
-/* Output the first line of the assembly file.  Redefined in dgux.h.  */
-
-#define ASM_FIRST_LINE(FILE)						\
-  do {									\
-    if (TARGET_SVR4)							\
-      {									\
-	if (TARGET_88110)						\
-	  fprintf (FILE, "%s\"%s\"\n", VERSION_ASM_OP, "04.00");	\
-	else								\
-	  fprintf (FILE, "%s\"%s\"\n", VERSION_ASM_OP, "03.00");	\
-      }									\
-  } while (0)
-
-/* Override svr[34].h.  */
 #undef	ASM_FILE_START
 #define ASM_FILE_START(FILE) \
   output_file_start (FILE)
@@ -1642,23 +1639,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
     output_quoted_string (FILE, NAME);         \
     putc ('\n', FILE);                         \
   } while (0)
-
-#ifdef SDB_DEBUGGING_INFO
-#undef ASM_OUTPUT_SOURCE_LINE
-#define ASM_OUTPUT_SOURCE_LINE(FILE, LINE)			\
-  if (m88k_prologue_done)					\
-    fprintf (FILE, "\n\tln\t %d\t\t\t\t; Real source line %d\n",\
-	     LINE - sdb_begin_function_line, LINE)
-#endif
-
-/* Code to handle #ident directives.  Override svr[34].h definition.  */
-#undef	ASM_OUTPUT_IDENT
-#ifdef DBX_DEBUGGING_INFO
-#define ASM_OUTPUT_IDENT(FILE, NAME)
-#else
-#define ASM_OUTPUT_IDENT(FILE, NAME) \
-  output_ascii (FILE, IDENT_ASM_OP, 4000, NAME, strlen (NAME));
-#endif
 
 /* Output to assembler file text saying following lines
    may contain character constants, extra white space, comments, etc.  */
@@ -1707,119 +1687,22 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 #define ADDITIONAL_REGISTER_NAMES	{{"psr", 0}, {"cc", 0}}
 
-/* Tell when to declare ASM names.  Override svr4.h to provide this hook.  */
-#undef	DECLARE_ASM_NAME
-#define DECLARE_ASM_NAME TARGET_SVR4
-
-/* Write the extra assembler code needed to declare a function properly.  */
-#undef	ASM_DECLARE_FUNCTION_NAME
-#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
-  do {									\
-    if (DECLARE_ASM_NAME)						\
-      ASM_OUTPUT_TYPE_DIRECTIVE (FILE, NAME, "function");		\
-    ASM_OUTPUT_LABEL(FILE, NAME);					\
-  } while (0)
-
-/* Write the extra assembler code needed to declare an object properly.  */
-#undef	ASM_DECLARE_OBJECT_NAME
-#define ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL)			\
-  do {									\
-    if (DECLARE_ASM_NAME)						\
-      {									\
-	HOST_WIDE_INT size;						\
-									\
-	ASM_OUTPUT_TYPE_DIRECTIVE (FILE, NAME, "object");		\
-									\
-	size_directive_output = 0;					\
-	if (!flag_inhibit_size_directive				\
-	    && (DECL) && DECL_SIZE (DECL))				\
-	  {								\
-	    size_directive_output = 1;					\
-	    size = int_size_in_bytes (TREE_TYPE (DECL));		\
-	    ASM_OUTPUT_SIZE_DIRECTIVE (FILE, NAME, size);		\
-	  }								\
-      }									\
-    ASM_OUTPUT_LABEL(FILE, NAME);					\
-  } while (0);
-
-/* Output the size directive for a decl in rest_of_decl_compilation
-   in the case where we did not do so before the initializer.
-   Once we find the error_mark_node, we know that the value of
-   size_directive_output was set
-   by ASM_DECLARE_OBJECT_NAME when it was run for the same decl.  */
-
-#undef ASM_FINISH_DECLARE_OBJECT
-#define ASM_FINISH_DECLARE_OBJECT(FILE, DECL, TOP_LEVEL, AT_END)	 \
-do {									 \
-     const char *name = XSTR (XEXP (DECL_RTL (DECL), 0), 0);		 \
-     HOST_WIDE_INT size;						 \
-     if (!flag_inhibit_size_directive && DECL_SIZE (DECL)		 \
-	 && DECLARE_ASM_NAME						 \
-         && ! AT_END && TOP_LEVEL					 \
-	 && DECL_INITIAL (DECL) == error_mark_node			 \
-	 && !size_directive_output)					 \
-       {								 \
-	 size_directive_output = 1;					 \
-	 size = int_size_in_bytes (TREE_TYPE (DECL));			 \
-	 ASM_OUTPUT_SIZE_DIRECTIVE (FILE, name, size);			 \
-       }								 \
-   } while (0)
-
-/* This is how to declare the size of a function.  */
-#undef	ASM_DECLARE_FUNCTION_SIZE
-#define ASM_DECLARE_FUNCTION_SIZE(FILE, FNAME, DECL)			\
-  do {									\
-    if (DECLARE_ASM_NAME && !flag_inhibit_size_directive)		\
-      ASM_OUTPUT_MEASURED_SIZE (FILE, FNAME);				\
-  } while (0)
-
-/* The prefix to add to user-visible assembler symbols.
-   Override svr[34].h.  */
-#undef USER_LABEL_PREFIX
-#define USER_LABEL_PREFIX "_"
-
-/* This is how to output a reference to a user-level label named NAME.
-   Override svr[34].h.  */
+/* This is how to output a reference to a user-level label named NAME.  */
 #undef	ASM_OUTPUT_LABELREF
 #define ASM_OUTPUT_LABELREF(FILE,NAME)			\
-  {							\
-    if (!TARGET_NO_UNDERSCORES && !TARGET_SVR4) 	\
-      fputc ('_', FILE);				\
-    fputs (NAME, FILE);					\
-  }
+  asm_fprintf ((FILE), "%U%s", (NAME))
 
-/* This is how to output an internal numbered label where
-   PREFIX is the class of label and NUM is the number within the class.
-   For V.4, labels use `.' rather than `@'.  */
+/* Store in OUTPUT a string (made with alloca) containing
+   an assembler-name for a local static variable named NAME.
+   LABELNO is an integer which is different for each call.  */
+#define ASM_FORMAT_PRIVATE_NAME(OUTPUT, NAME, LABELNO)			\
+  do {									\
+    (OUTPUT) = (char *) alloca (strlen ((NAME)) + 10);			\
+    sprintf ((OUTPUT), "%s.%u", (NAME), (unsigned) (LABELNO));		\
+  } while (0)
 
-#undef ASM_OUTPUT_INTERNAL_LABEL
-#ifdef AS_BUG_DOT_LABELS /* The assembler requires a declaration of local.  */
-#define ASM_OUTPUT_INTERNAL_LABEL(FILE,PREFIX,NUM)			\
-  fprintf (FILE, TARGET_SVR4 ? ".%s%d:\n%s.%s%d\n" : "@%s%d:\n", \
-	   PREFIX, NUM, INTERNAL_ASM_OP, PREFIX, NUM)
-#else
-#define ASM_OUTPUT_INTERNAL_LABEL(FILE,PREFIX,NUM)			\
-  fprintf (FILE, TARGET_SVR4 ? ".%s%d:\n" : "@%s%d:\n", PREFIX, NUM)
-#endif /* AS_BUG_DOT_LABELS */
-
-/* This is how to store into the string LABEL
-   the symbol_ref name of an internal numbered label where
-   PREFIX is the class of label and NUM is the number within the class.
-   This is suitable for output with `assemble_name'.  This must agree
-   with ASM_OUTPUT_INTERNAL_LABEL above, except for being prefixed
-   with an `*'.  */
-
-#undef ASM_GENERATE_INTERNAL_LABEL
-#define ASM_GENERATE_INTERNAL_LABEL(LABEL,PREFIX,NUM)			\
-  sprintf (LABEL, TARGET_SVR4 ? "*.%s%ld" : "*@%s%ld", PREFIX, (long)(NUM))
-
-/* The single-byte pseudo-op is the default.  Override svr[34].h.  */
-#undef	ASM_OUTPUT_ASCII
-#define ASM_OUTPUT_ASCII(FILE, P, SIZE)  \
-  output_ascii (FILE, ASCII_DATA_ASM_OP, 48, P, SIZE)
-
-/* Override svr4.h.  Change to the readonly data section for a table of
-   addresses.  final_scan_insn changes back to the text section.  */
+/* Change to the readonly data section for a table of addresses.
+   final_scan_insn changes back to the text section.  */
 #undef	ASM_OUTPUT_CASE_LABEL
 #define ASM_OUTPUT_CASE_LABEL(FILE, PREFIX, NUM, TABLE)			\
   do {									\
@@ -1874,39 +1757,8 @@ do {									 \
 #define LABEL_ALIGN_AFTER_BARRIER(LABEL) \
   (TARGET_88100 && !flag_inhibit_size_directive ? 3 : 2)
 
-/* Override svr[34].h.  */
-#undef	ASM_OUTPUT_SKIP
-#define ASM_OUTPUT_SKIP(FILE,SIZE)  \
-  fprintf (FILE, "%s%u\n", SKIP_ASM_OP, (SIZE))
-
-/* Override svr4.h.  */
+/* Override elfos.h.  */
 #undef	ASM_OUTPUT_EXTERNAL_LIBCALL
-
-/* This says how to output an assembler line to define a global common
-   symbol.  Size can be zero for the unusual case of a `struct { int : 0; }'.
-   Override svr[34].h.  */
-#undef	ASM_OUTPUT_COMMON
-#undef	ASM_OUTPUT_ALIGNED_COMMON
-#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)	\
-( fprintf ((FILE), "%s", COMMON_ASM_OP),		\
-  assemble_name ((FILE), (NAME)),			\
-  fprintf ((FILE), ",%u\n", (SIZE) ? (SIZE) : 1))
-
-/* This says how to output an assembler line to define a local common
-   symbol.  Override svr[34].h.  */
-#undef	ASM_OUTPUT_LOCAL
-#undef	ASM_OUTPUT_ALIGNED_LOCAL
-#define ASM_OUTPUT_LOCAL(FILE, NAME, SIZE, ROUNDED)	\
-( fprintf ((FILE), "%s", BSS_ASM_OP),			\
-  assemble_name ((FILE), (NAME)),			\
-  fprintf ((FILE), ",%u,%d\n", (SIZE) ? (SIZE) : 1, (SIZE) <= 4 ? 4 : 8))
-
-/* Store in OUTPUT a string (made with alloca) containing
-   an assembler-name for a local static variable named NAME.
-   LABELNO is an integer which is different for each call.  */
-#define ASM_FORMAT_PRIVATE_NAME(OUTPUT, NAME, LABELNO)	\
-( (OUTPUT) = (char *) alloca (strlen ((NAME)) + 10),	\
-  sprintf ((OUTPUT), "%s.%d", (NAME), (LABELNO)))
 
 /* This is how to output an insn to push a register on the stack.
    It need not be very fast code.  */
@@ -1933,264 +1785,13 @@ do {									 \
 /* Length in instructions of the code output by ASM_OUTPUT_REG_POP.  */
 #define REG_POP_LENGTH 2
 
-/* Macros to deal with OCS debug information */
-
-#define OCS_START_PREFIX	"Ltb"
-#define OCS_END_PREFIX		"Lte"
-
-#define PUT_OCS_FUNCTION_START(FILE) \
-  { ASM_OUTPUT_INTERNAL_LABEL (FILE, OCS_START_PREFIX, m88k_function_number); }
-
-#define PUT_OCS_FUNCTION_END(FILE) \
-  { ASM_OUTPUT_INTERNAL_LABEL (FILE, OCS_END_PREFIX, m88k_function_number); }
-
 /* Macros for debug information */
 #define DEBUGGER_AUTO_OFFSET(X) \
-  (m88k_debugger_offset (X, 0) \
-   + (TARGET_OCS_FRAME_POSITION ? 0 : m88k_stack_size - m88k_fp_offset))
+  (m88k_debugger_offset (X, 0) + (m88k_stack_size - m88k_fp_offset))
 
 #define DEBUGGER_ARG_OFFSET(OFFSET, X) \
-  (m88k_debugger_offset (X, OFFSET) \
-   + (TARGET_OCS_FRAME_POSITION ? 0 : m88k_stack_size - m88k_fp_offset))
-
-/* Macros to deal with SDB debug information */
-#ifdef SDB_DEBUGGING_INFO
-
-/* Output structure tag names even when it causes a forward reference. */
-#define SDB_ALLOW_FORWARD_REFERENCES
-
-/* Print out extra debug information in the assembler file */
-#define PUT_SDB_SCL(a)						\
-  do {								\
-    register int s = (a);					\
-    register const char *scl;					\
-    switch (s)							\
-      {								\
-      case C_EFCN:	scl = "end of function";	break;	\
-      case C_NULL:	scl = "NULL storage class";	break;	\
-      case C_AUTO:	scl = "automatic";		break;	\
-      case C_EXT:	scl = "external";		break;	\
-      case C_STAT:	scl = "static";			break;	\
-      case C_REG:	scl = "register";		break;	\
-      case C_EXTDEF:	scl = "external definition";	break;	\
-      case C_LABEL:	scl = "label";			break;	\
-      case C_ULABEL:	scl = "undefined label";	break;	\
-      case C_MOS:	scl = "structure member";	break;	\
-      case C_ARG:	scl = "argument";		break;	\
-      case C_STRTAG:	scl = "structure tag";		break;	\
-      case C_MOU:	scl = "union member";		break;	\
-      case C_UNTAG:	scl = "union tag";		break;	\
-      case C_TPDEF:	scl = "typedef";		break;	\
-      case C_USTATIC:	scl = "uninitialized static";	break;	\
-      case C_ENTAG:	scl = "enumeration tag";	break;	\
-      case C_MOE:	scl = "member of enumeration";	break;	\
-      case C_REGPARM:	scl = "register parameter";	break;	\
-      case C_FIELD:	scl = "bit field";		break;	\
-      case C_BLOCK:	scl = "block start/end";	break;	\
-      case C_FCN:	scl = "function start/end";	break;	\
-      case C_EOS:	scl = "end of structure";	break;	\
-      case C_FILE:	scl = "filename";		break;	\
-      case C_LINE:	scl = "line";			break;	\
-      case C_ALIAS:	scl = "duplicated tag";		break;	\
-      case C_HIDDEN:	scl = "hidden";			break;	\
-      default:		scl = "unknown";		break;	\
-      }								\
-								\
-    fprintf(asm_out_file, "\tscl\t %d\t\t\t\t; %s\n", s, scl);	\
-  } while (0)
-
-#define PUT_SDB_TYPE(a)						\
-  do {								\
-    register int t = (a);					\
-    static char buffer[100];					\
-    register char *p = buffer;					\
-    register const char *q;					\
-    register int typ = t;					\
-    register int i;						\
-								\
-    for (i = 0; i <= 5; i++)					\
-      {								\
-	switch ((typ >> ((i*N_TSHIFT) + N_BTSHFT)) & 03)	\
-	  {							\
-	  case DT_PTR:						\
-	    strcpy (p, "ptr to ");				\
-	    p += sizeof("ptr to");				\
-	    break;						\
-								\
-	  case DT_ARY:						\
-	    strcpy (p, "array of ");				\
-	    p += sizeof("array of");				\
-	    break;						\
-								\
-	  case DT_FCN:						\
-	    strcpy (p, "func ret ");				\
-	    p += sizeof("func ret");				\
-	    break;						\
-	  }							\
-      }								\
-								\
-  switch (typ & N_BTMASK)					\
-    {								\
-    case T_NULL:	q = "<no type>";	break;		\
-    case T_CHAR:	q = "char";		break;		\
-    case T_SHORT:	q = "short";		break;		\
-    case T_INT:		q = "int";		break;		\
-    case T_LONG:	q = "long";		break;		\
-    case T_FLOAT:	q = "float";		break;		\
-    case T_DOUBLE:	q = "double";		break;		\
-    case T_STRUCT:	q = "struct";		break;		\
-    case T_UNION:	q = "union";		break;		\
-    case T_ENUM:	q = "enum";		break;		\
-    case T_MOE:		q = "enum member";	break;		\
-    case T_UCHAR:	q = "unsigned char";	break;		\
-    case T_USHORT:	q = "unsigned short";	break;		\
-    case T_UINT:	q = "unsigned int";	break;		\
-    case T_ULONG:	q = "unsigned long";	break;		\
-    default:		q = "void";		break;		\
-    }								\
-								\
-    strcpy (p, q);						\
-    fprintf(asm_out_file, "\ttype\t %d\t\t\t\t; %s\n",		\
-	    t, buffer);						\
-  } while (0)
-
-#define PUT_SDB_INT_VAL(a) \
-  fprintf (asm_out_file, "\tval\t %d\n", (a))
-
-#define PUT_SDB_VAL(a)					\
-( fprintf (asm_out_file, "\tval\t "),			\
-  output_addr_const (asm_out_file, (a)),		\
-  fputc ('\n', asm_out_file))
-
-#define PUT_SDB_DEF(a)						\
-  do { fprintf (asm_out_file, "\tsdef\t ");			\
-    ASM_OUTPUT_LABELREF (asm_out_file, a);			\
-    fputc ('\n', asm_out_file);					\
-  } while (0)
-
-#define PUT_SDB_PLAIN_DEF(a) \
-  fprintf(asm_out_file,"\tsdef\t .%s\n", a)
-
-/* Simply and endef now.  */
-#define PUT_SDB_ENDEF \
-  fputs("\tendef\n\n", asm_out_file)
-
-#define PUT_SDB_SIZE(a) \
-  fprintf (asm_out_file, "\tsize\t %d\n", (a))
-
-/* Max dimensions to store for debug information (limited by COFF).  */
-#define SDB_MAX_DIM 6
-
-/* New method for dim operations.  */
-#define PUT_SDB_START_DIM \
-  fputs("\tdim\t ", asm_out_file)
-
-/* How to end the DIM sequence.  */
-#define PUT_SDB_LAST_DIM(a) \
-  fprintf(asm_out_file, "%d\n", a)
-
-#define PUT_SDB_TAG(a)						\
-  do {								\
-    fprintf (asm_out_file, "\ttag\t ");				\
-    ASM_OUTPUT_LABELREF (asm_out_file, a);			\
-    fputc ('\n', asm_out_file);					\
-  } while( 0 )
-
-#define PUT_SDB_BLOCK_OR_FUNCTION(NAME, SCL, LINE)		\
-  do {								\
-    fprintf (asm_out_file, "\n\tsdef\t %s\n\tval\t .\n",	\
-	     NAME);						\
-    PUT_SDB_SCL( SCL );						\
-    fprintf (asm_out_file, "\tline\t %d\n\tendef\n\n",		\
-	     (LINE));						\
-  } while (0)
-
-#define PUT_SDB_BLOCK_START(LINE) \
-  PUT_SDB_BLOCK_OR_FUNCTION (".bb", C_BLOCK, (LINE))
-
-#define PUT_SDB_BLOCK_END(LINE) \
-  PUT_SDB_BLOCK_OR_FUNCTION (".eb", C_BLOCK, (LINE))
-
-#define PUT_SDB_FUNCTION_START(LINE)				\
-  do {								\
-    fprintf (asm_out_file, "\tln\t 1\n");			\
-    PUT_SDB_BLOCK_OR_FUNCTION (".bf", C_FCN, (LINE));		\
-  } while (0)
-
-#define PUT_SDB_FUNCTION_END(LINE)				\
-  do {								\
-    PUT_SDB_BLOCK_OR_FUNCTION (".ef", C_FCN, (LINE));		\
-  } while (0)
-
-#define PUT_SDB_EPILOGUE_END(NAME)				\
-  do {								\
-    text_section ();						\
-    fprintf (asm_out_file, "\n\tsdef\t ");			\
-    ASM_OUTPUT_LABELREF(asm_out_file, (NAME));			\
-    fputc('\n', asm_out_file);					\
-    PUT_SDB_SCL( C_EFCN );					\
-    fprintf (asm_out_file, "\tendef\n\n");			\
-  } while (0)
-
-#define SDB_GENERATE_FAKE(BUFFER, NUMBER) \
-  sprintf ((BUFFER), ".%dfake", (NUMBER));
-
-#endif /* SDB_DEBUGGING_INFO */
+  (m88k_debugger_offset (X, OFFSET) + (m88k_stack_size - m88k_fp_offset))
 
-/* Support const and tdesc sections.  Generally, a const section will
-   be distinct from the text section whenever we do V.4-like things
-   and so follows DECLARE_ASM_NAME.  Note that strings go in text
-   rather than const.  Override svr[34].h.  */
-
-#undef	EXTRA_SECTIONS
-
-#if defined(USING_SVR4_H)
-
-#define EXTRA_SECTIONS in_tdesc, in_sdata
-#define INIT_SECTION_FUNCTION
-#define FINI_SECTION_FUNCTION
-
-#else
-#if defined(USING_SVR3_H)
-
-#define EXTRA_SECTIONS in_tdesc, in_sdata, in_init, in_fini
-
-#else /* luna or other not based on svr[34].h.  */
-
-#undef READONLY_DATA_SECTION_ASM_OP
-#undef INIT_SECTION_ASM_OP
-#define EXTRA_SECTIONS in_tdesc, in_sdata
-#define INIT_SECTION_FUNCTION
-#define FINI_SECTION_FUNCTION
-
-#endif /* USING_SVR3_H */
-#endif /* USING_SVR4_H */
-
-#undef	EXTRA_SECTION_FUNCTIONS
-#define EXTRA_SECTION_FUNCTIONS						\
-void									\
-tdesc_section ()							\
-{									\
-  if (in_section != in_tdesc)						\
-    {									\
-      fprintf (asm_out_file, "%s\n", TDESC_SECTION_ASM_OP);		\
-      in_section = in_tdesc;						\
-    }									\
-}									\
-									\
-void									\
-sdata_section ()							\
-{									\
-  if (in_section != in_sdata)						\
-    {									\
-      fprintf (asm_out_file, "%s\n", SDATA_SECTION_ASM_OP);		\
-      in_section = in_sdata;						\
-    }									\
-}									\
-									\
-  INIT_SECTION_FUNCTION							\
-  FINI_SECTION_FUNCTION
-
 /* Jump tables consist of branch instructions and should be output in
    the text section.  When we use a table of addresses, we explicitly
    change to the readonly data section.  */
@@ -2209,5 +1810,4 @@ sdata_section ()							\
 
 /* This says not to strength reduce the addr calculations within loops
    (otherwise it does not take advantage of m88k scaled loads and stores */
-
 #define DONT_REDUCE_ADDR

@@ -43,11 +43,13 @@ Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "target-def.h"
 
-const char *m88k_register_prefix = ""; /* Either # for SVR4 or empty for SVR3 */
+#ifdef REGISTER_PREFIX
+const char *m88k_register_prefix = REGISTER_PREFIX;
+#else
+const char *m88k_register_prefix = "";
+#endif
 char m88k_volatile_code;
 
-int m88k_prologue_done	= 0;	/* Ln directives can now be emitted */
-int m88k_function_number = 0;	/* Counter unique to each function */
 int m88k_fp_offset	= 0;	/* offset of frame pointer if used */
 int m88k_stack_size	= 0;	/* size of allocated stack (including frame) */
 int m88k_case_index;
@@ -59,14 +61,7 @@ rtx m88k_compare_op1;		/* cmpsi operand 1 */
 enum processor_type m88k_cpu;	/* target cpu */
 
 static void m88k_frame_related PARAMS ((rtx, rtx, int));
-static void m88k_output_function_prologue PARAMS ((FILE *, HOST_WIDE_INT));
 static void m88k_output_function_epilogue PARAMS ((FILE *, HOST_WIDE_INT));
-static void m88k_output_function_end_prologue PARAMS ((FILE *));
-static void m88k_output_function_begin_epilogue PARAMS ((FILE *));
-#if defined (CTOR_LIST_BEGIN) && !defined (OBJECT_FORMAT_ELF)
-static void m88k_svr3_asm_out_constructor PARAMS ((rtx, int));
-static void m88k_svr3_asm_out_destructor PARAMS ((rtx, int));
-#endif
 static int m88k_adjust_cost PARAMS ((rtx, rtx, rtx, int));
 
 /* Initialize the GCC target structure.  */
@@ -83,12 +78,6 @@ static int m88k_adjust_cost PARAMS ((rtx, rtx, rtx, int));
 #define TARGET_ASM_UNALIGNED_SI_OP "\tuaword\t"
 #endif
 
-#undef TARGET_ASM_FUNCTION_PROLOGUE
-#define TARGET_ASM_FUNCTION_PROLOGUE m88k_output_function_prologue
-#undef TARGET_ASM_FUNCTION_END_PROLOGUE
-#define TARGET_ASM_FUNCTION_END_PROLOGUE m88k_output_function_end_prologue
-#undef TARGET_ASM_FUNCTION_BEGIN_EPILOGUE
-#define TARGET_ASM_FUNCTION_BEGIN_EPILOGUE m88k_output_function_begin_epilogue
 #undef TARGET_ASM_FUNCTION_EPILOGUE
 #define TARGET_ASM_FUNCTION_EPILOGUE m88k_output_function_epilogue
 
@@ -535,11 +524,6 @@ expand_block_move (dest_mem, src_mem, operands)
   int target = (int) m88k_cpu;
 #endif
 
-  if (! (PROCESSOR_M88100 == 0
-	 && PROCESSOR_M88110 == 1
-	 && PROCESSOR_M88000 == 2))
-    abort ();
-
   if (constp && bytes <= 0)
     return;
 
@@ -927,13 +911,8 @@ output_call (operands, addr)
 	     occurs accessing the delay slot.  So don't use jsr.n form when
 	     jumping thru r1.
 	   */
-#ifdef AS_BUG_IMMEDIATE_LABEL /* The assembler restricts immediate values.  */
-	  if (optimize < 2
-	      || ! ADD_INTVAL (delta * 2)
-#else
 	  if (optimize < 2
 	      || ! ADD_INTVAL (delta)
-#endif
 	      || (REG_P (addr) && REGNO (addr) == 1))
 	    {
 	      operands[1] = dest;
@@ -1526,16 +1505,13 @@ void
 output_file_start (file)
      FILE *file;
 {
-  ASM_FIRST_LINE (file);
-  if (TARGET_88110
-      && TARGET_SVR4)
+  if (TARGET_88110)
     fprintf (file, "%s\n", REQUIRES_88110_ASM_OP);
+
   output_file_directive (file, main_input_filename);
-  /* Switch to the data section so that the coffsem symbol
-     isn't in the text section.  */
-  ASM_COFFSEM (file);
 }
 
+#ifndef OBJECT_FORMAT_ELF
 /* Output an ascii string.  */
 
 void
@@ -1603,6 +1579,7 @@ output_ascii (file, opcode, max, p, size)
     }
   fprintf (file, "\"\n");
 }
+#endif
 
 /* Output a label (allows insn-output.c to be compiled without including
    m88k.c or needing to include stdio.h).  */
@@ -1686,21 +1663,12 @@ output_label (label_number)
 static rtx emit_add PARAMS ((rtx, rtx, int));
 static void preserve_registers PARAMS ((int, int));
 static void emit_ldst PARAMS ((int, int, enum machine_mode, int));
-static void output_tdesc PARAMS ((FILE *, int));
 
 static int  nregs;
 static int  nxregs;
 static char save_regs[FIRST_PSEUDO_REGISTER];
 static int  frame_laid_out;
 static int  frame_size;
-static int  epilogue_marked;
-static int  prologue_marked;
-
-#define FIRST_OCS_PRESERVE_REGISTER	14
-#define LAST_OCS_PRESERVE_REGISTER	30
-
-#define FIRST_OCS_EXTENDED_PRESERVE_REGISTER	(32 + 22)
-#define LAST_OCS_EXTENDED_PRESERVE_REGISTER	(32 + 31)
 
 #define STACK_UNIT_BOUNDARY (STACK_BOUNDARY / BITS_PER_UNIT)
 #define ROUND_CALL_BLOCK_SIZE(BYTES) \
@@ -1731,7 +1699,7 @@ m88k_layout_frame ()
   /* If we are producing debug information, store r1 and r30 where the
      debugger wants to find them (r30 at r30+0, r1 at r30+4).  Space has
      already been reserved for r1/r30 in STARTING_FRAME_OFFSET.  */
-  if (write_symbols != NO_DEBUG && !TARGET_OCS_FRAME_POSITION)
+  if (write_symbols != NO_DEBUG)
     save_regs[1] = 1;
 
   /* If we are producing PIC, save the addressing base register and r1.  */
@@ -1824,40 +1792,6 @@ null_prologue ()
 	  && m88k_stack_size == 0);
 }
 
-static void
-m88k_output_function_prologue (stream, size)
-     FILE *stream ATTRIBUTE_UNUSED;
-     HOST_WIDE_INT size ATTRIBUTE_UNUSED;
-{
-  if (TARGET_OMIT_LEAF_FRAME_POINTER && ! quiet_flag && leaf_function_p ())
-    fprintf (stderr, "$");
-
-  m88k_prologue_done = 1;	/* it's ok now to put out ln directives */
-}
-
-static void
-m88k_output_function_end_prologue (stream)
-     FILE *stream;
-{
-  if (TARGET_OCS_DEBUG_INFO && !prologue_marked)
-    {
-      PUT_OCS_FUNCTION_START (stream);
-      prologue_marked = 1;
-
-      /* If we've already passed the start of the epilogue, say that
-	 it starts here.  This marks the function as having a null body,
-	 but at a point where the return address is in a known location.
-
-	 Originally, I thought this couldn't happen, but the pic prologue
-	 for leaf functions ends with the instruction that restores the
-	 return address from the temporary register.  If the temporary
-	 register is never used, that instruction can float all the way
-	 to the end of the function.  */
-      if (epilogue_marked)
-	PUT_OCS_FUNCTION_END (stream);
-    }
-}
-
 /* Add to 'insn' a note which is PATTERN (INSN) but with REG replaced
    with (plus:P (reg 31) VAL).  It would be nice if dwarf2out_frame_debug_expr
    could deduce these equivalences by itself so it wasn't necessary to hold
@@ -1945,19 +1879,26 @@ m88k_expand_prologue ()
     {
       rtx return_reg = gen_rtx_REG (SImode, 1);
       rtx label = gen_label_rtx ();
+#if 0
       rtx temp_reg = NULL_RTX;
+      int save_r1 = regs_ever_live[1];
 
-      if (! save_regs[1])
+      if (save_r1)
 	{
 	  temp_reg = gen_rtx_REG (SImode, TEMP_REGNUM);
 	  emit_move_insn (temp_reg, return_reg);
 	}
+#endif
+
       emit_insn (gen_locate1 (pic_offset_table_rtx, label));
       emit_insn (gen_locate2 (pic_offset_table_rtx, label));
       emit_insn (gen_addsi3 (pic_offset_table_rtx,
 			     pic_offset_table_rtx, return_reg));
-      if (! save_regs[1])
+
+#if 0
+      if (save_r1)
 	emit_move_insn (return_reg, temp_reg);
+#endif
     }
   if (current_function_profile)
     emit_insn (gen_blockage ());
@@ -1972,25 +1913,11 @@ m88k_expand_prologue ()
    omit stack adjustments before returning.  */
 
 static void
-m88k_output_function_begin_epilogue (stream)
-     FILE *stream;
-{
-  if (TARGET_OCS_DEBUG_INFO && !epilogue_marked && prologue_marked)
-    {
-      PUT_OCS_FUNCTION_END (stream);
-    }
-  epilogue_marked = 1;
-}
-
-static void
 m88k_output_function_epilogue (stream, size)
      FILE *stream;
      HOST_WIDE_INT size ATTRIBUTE_UNUSED;
 {
   rtx insn = get_last_insn ();
-
-  if (TARGET_OCS_DEBUG_INFO && !epilogue_marked)
-    PUT_OCS_FUNCTION_END (stream);
 
   /* If the last insn isn't a BARRIER, we must write a return insn.  This
      should only happen if the function has no prologue and no body.  */
@@ -2015,14 +1942,7 @@ m88k_output_function_epilogue (stream, size)
 
   fprintf (stream, "\n");
 
-  if (TARGET_OCS_DEBUG_INFO)
-    output_tdesc (stream, m88k_fp_offset + 4);
-
-  m88k_function_number++;
-  m88k_prologue_done	= 0;		/* don't put out ln directives */
   frame_laid_out	= 0;
-  epilogue_marked	= 0;
-  prologue_marked	= 0;
 }
 
 void
@@ -2088,7 +2008,8 @@ preserve_registers (base, store_p)
       if (nregs > 2 && !save_regs[FRAME_POINTER_REGNUM])
 	offset -= 4;
       /* Do not reload r1 in the epilogue unless really necessary */
-      if (store_p || regs_ever_live[1])
+      if (store_p || regs_ever_live[1]
+	  || (flag_pic && save_regs[PIC_OFFSET_TABLE_REGNUM]))
 	emit_ldst (store_p, 1, SImode, offset);
       offset -= 4;
       base = offset;
@@ -2218,104 +2139,6 @@ m88k_debugger_offset (reg, offset)
     return 0;
 
   return offset;
-}
-
-/* Output the 88open OCS proscribed text description information.
-   The information is:
-        0  8: zero
-	0 22: info-byte-length (16 or 20 bytes)
-	0  2: info-alignment (word 2)
-	1 32: info-protocol (version 1 or 2(pic))
-	2 32: starting-address (inclusive, not counting prologue)
-	3 32: ending-address (exclusive, not counting epilog)
-	4  8: info-variant (version 1 or 3(extended registers))
-	4 17: register-save-mask (from register 14 to 30)
-	4  1: zero
-	4  1: return-address-info-discriminant
-	4  5: frame-address-register
-	5 32: frame-address-offset
-	6 32: return-address-info
-	7 32: register-save-offset
-	8 16: extended-register-save-mask (x16 - x31)
-	8 16: extended-register-save-offset (WORDS from register-save-offset)  */
-
-static void
-output_tdesc (file, offset)
-     FILE *file;
-     int offset;
-{
-  int regno, i, j;
-  long mask, return_address_info, register_save_offset;
-  long xmask, xregister_save_offset;
-  char buf[256];
-
-  for (mask = 0, i = 0, regno = FIRST_OCS_PRESERVE_REGISTER;
-       regno <= LAST_OCS_PRESERVE_REGISTER;
-       regno++)
-    {
-      mask <<= 1;
-      if (save_regs[regno])
-	{
-	  mask |= 1;
-	  i++;
-	}
-    }
-
-  for (xmask = 0, j = 0, regno = FIRST_OCS_EXTENDED_PRESERVE_REGISTER;
-       regno <= LAST_OCS_EXTENDED_PRESERVE_REGISTER;
-       regno++)
-    {
-      xmask <<= 1;
-      if (save_regs[regno])
-	{
-	  xmask |= 1;
-	  j++;
-	}
-    }
-
-  if (save_regs[1])
-    {
-      if ((nxregs > 0 || nregs > 2) && !save_regs[FRAME_POINTER_REGNUM])
-	offset -= 4;
-      return_address_info = - m88k_stack_size + offset;
-      register_save_offset = return_address_info - i*4;
-    }
-  else
-    {
-      return_address_info = 1;
-      register_save_offset = - m88k_stack_size + offset + 4 - i*4;
-    }
-
-  xregister_save_offset = - (j * 2 + ((register_save_offset >> 2) & 1));
-
-  tdesc_section ();
-
-  /* 8:0,22:(20 or 16),2:2 */
-  fprintf (file, "%s%d,%d", integer_asm_op (4, TRUE),
-	   (((xmask != 0) ? 20 : 16) << 2) | 2,
-	   flag_pic ? 2 : 1);
-
-  ASM_GENERATE_INTERNAL_LABEL (buf, OCS_START_PREFIX, m88k_function_number);
-  fprintf (file, ",%s%s", buf+1, flag_pic ? "#rel" : "");
-  ASM_GENERATE_INTERNAL_LABEL (buf, OCS_END_PREFIX, m88k_function_number);
-  fprintf (file, ",%s%s", buf+1, flag_pic ? "#rel" : "");
-
-  fprintf (file, ",0x%x,0x%x,0x%lx,0x%lx",
-	   /* 8:1,17:0x%.3x,1:0,1:%d,5:%d */
-	   (int)(((xmask ? 3 : 1) << (17+1+1+5))
-	    | (mask << (1+1+5))
-	    | ((!!save_regs[1]) << 5)
-	    | (frame_pointer_needed
-	       ? FRAME_POINTER_REGNUM
-	       : STACK_POINTER_REGNUM)),
-	   (m88k_stack_size - (frame_pointer_needed ? m88k_fp_offset : 0)),
-	   return_address_info,
-	   register_save_offset);
-  if (xmask)
-    fprintf (file, ",0x%lx%04lx", xmask, (0xffff & xregister_save_offset));
-  fputc ('\n', file);
-
-  text_section ();
 }
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
@@ -3029,7 +2852,8 @@ print_operand (file, x, code)
       return;
 
     case 'B': /* bcnd branch values */
-      fputs (m88k_register_prefix, file);
+      if (0) /* SVR4 */
+	fputs (m88k_register_prefix, file);
       switch (xc)
 	{
 	case EQ: fputs ("eq0", file); return;
@@ -3042,7 +2866,8 @@ print_operand (file, x, code)
 	}
 
     case 'C': /* bb0/bb1 branch values for comparisons */
-      fputs (m88k_register_prefix, file);
+      if (0) /* SVR4 */
+	fputs (m88k_register_prefix, file);
       switch (xc)
 	{
 	case EQ:  fputs ("eq", file); return;
@@ -3063,8 +2888,11 @@ print_operand (file, x, code)
 	{
 	case EQ: fputs ("0xa", file); return;
 	case NE: fputs ("0x5", file); return;
-	case GT: fputs (m88k_register_prefix, file);
-	  fputs ("gt0", file); return;
+	case GT:
+	  if (0) /* SVR4 */
+	    fputs (m88k_register_prefix, file);
+	  fputs ("gt0", file);
+	  return;
 	case LE: fputs ("0xe", file); return;
 	case LT: fputs ("0x4", file); return;
 	case GE: fputs ("0xb", file); return;
@@ -3278,37 +3106,6 @@ symbolic_operand (op, mode)
     }
 }
 
-#if defined (CTOR_LIST_BEGIN) && !defined (OBJECT_FORMAT_ELF)
-static void
-m88k_svr3_asm_out_constructor (symbol, priority)
-     rtx symbol;
-     int priority ATTRIBUTE_UNUSED;
-{
-  const char *name = XSTR (symbol, 0);
-
-  init_section ();
-  fprintf (asm_out_file, "\tor.u\t r13,r0,hi16(");
-  assemble_name (asm_out_file, name);
-  fprintf (asm_out_file, ")\n\tor\t r13,r13,lo16(");
-  assemble_name (asm_out_file, name);
-  fprintf (asm_out_file, ")\n\tsubu\t r31,r31,%d\n\tst\t r13,r31,%d\n",
-	   STACK_BOUNDARY / BITS_PER_UNIT, REG_PARM_STACK_SPACE (0));
-}
-
-static void
-m88k_svr3_asm_out_destructor (symbol, priority)
-     rtx symbol;
-     int priority ATTRIBUTE_UNUSED;
-{
-  int i;
-
-  fini_section ();
-  assemble_integer (symbol, UNITS_PER_WORD, BITS_PER_WORD, 1);
-  for (i = 1; i < 4; i++)
-    assemble_integer (constm1_rtx, UNITS_PER_WORD, BITS_PER_WORD, 1);
-}
-#endif /* INIT_SECTION_ASM_OP && ! OBJECT_FORMAT_ELF */
-
 /* Adjust the cost of INSN based on the relationship between INSN that
    is dependent on DEP_INSN through the dependence LINK.  The default
    is to make no adjustment to COST.
@@ -3353,16 +3150,6 @@ m88k_override_options ()
 
   if ((target_flags & MASK_EITHER_LARGE_SHIFT) == MASK_EITHER_LARGE_SHIFT)
     error ("-mtrap-large-shift and -mhandle-large-shift are incompatible");
-
-  if (TARGET_SVR4)
-    {
-      m88k_register_prefix = "#";
-    }
-  else
-    {
-      target_flags |= MASK_SVR3;
-      target_flags &= ~MASK_SVR4;
-    }
 
   if (TARGET_OMIT_LEAF_FRAME_POINTER)	/* keep nonleaf frame pointers */
     flag_omit_frame_pointer = 1;
