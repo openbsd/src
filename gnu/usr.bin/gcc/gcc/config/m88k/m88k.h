@@ -94,7 +94,6 @@ enum processor_type {
 
 /* External variables/functions defined in m88k.c.  */
 
-extern const char *m88k_pound_sign;
 extern char m88k_volatile_code;
 
 extern int m88k_prologue_done;
@@ -1022,19 +1021,25 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
   labelno++;								\
   ASM_GENERATE_INTERNAL_LABEL (buf, "LTRMP", labelno);			\
   /* Save the return address (r1) in the static chain reg (r11).  */	\
-  fprintf (FILE, "\tor\t %s,%s,0\n", reg_names[11], reg_names[1]);	\
+  asm_fprintf (FILE, "\tor\t %R%s,%R%s,0\n",				\
+	       reg_names[11], reg_names[1]);				\
   /* Locate this block; transfer to the next instruction.  */		\
-  fprintf (FILE, "\tbsr\t %s\n", &buf[1]);					\
+  fprintf (FILE, "\tbsr\t %s\n", &buf[1]);				\
   ASM_OUTPUT_INTERNAL_LABEL (FILE, "LTRMP", labelno);			\
   /* Save r10; use it as the relative pointer; restore r1.  */		\
-  fprintf (FILE, "\tst\t %s,%s,24\n", reg_names[10], reg_names[1]);	\
-  fprintf (FILE, "\tor\t %s,%s,0\n", reg_names[10], reg_names[1]);	\
-  fprintf (FILE, "\tor\t %s,%s,0\n", reg_names[1], reg_names[11]);	\
+  asm_fprintf (FILE, "\tst\t %R%s,%R%s,24\n",				\
+	       reg_names[10], reg_names[1]);				\
+  asm_fprintf (FILE, "\tor\t %R%s,%R%s,0\n",				\
+	       reg_names[10], reg_names[1]);				\
+  asm_fprintf (FILE, "\tor\t %R%s,%R%s,0\n",				\
+	       reg_names[1], reg_names[11]);				\
   /* Load the function's address and go there.  */			\
-  fprintf (FILE, "\tld\t %s,%s,32\n", reg_names[11], reg_names[10]);	\
-  fprintf (FILE, "\tjmp.n\t %s\n", reg_names[11]);			\
+  asm_fprintf (FILE, "\tld\t %R%s,%R%s,32\n",				\
+	       reg_names[11], reg_names[10]);				\
+  asm_fprintf (FILE, "\tjmp.n\t %R%s\n", reg_names[11]);		\
   /* Restore r10 and load the static chain register.  */		\
-  fprintf (FILE, "\tld.d\t %s,%s,24\n", reg_names[10], reg_names[10]);	\
+  asm_fprintf (FILE, "\tld.d\t %R%s,%R%s,24\n",				\
+	       reg_names[10], reg_names[10]);				\
   /* Storage: r10 save area, static chain, function address.  */	\
   assemble_aligned_integer (UNITS_PER_WORD, const0_rtx);		\
   assemble_aligned_integer (UNITS_PER_WORD, const0_rtx);		\
@@ -1682,18 +1687,17 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
   }
 
 /* How to refer to registers in assembler output.
-   This sequence is indexed by compiler's hard-register-number.
-   Updated by OVERRIDE_OPTIONS to include the # for version 03.00 syntax.  */
+   This sequence is indexed by compiler's hard-register-number.  */
 
 #define REGISTER_NAMES \
-  {"#r0"+1, "#r1"+1, "#r2"+1, "#r3"+1, "#r4"+1, "#r5"+1, "#r6"+1, "#r7"+1, \
-   "#r8"+1, "#r9"+1, "#r10"+1,"#r11"+1,"#r12"+1,"#r13"+1,"#r14"+1,"#r15"+1,\
-   "#r16"+1,"#r17"+1,"#r18"+1,"#r19"+1,"#r20"+1,"#r21"+1,"#r22"+1,"#r23"+1,\
-   "#r24"+1,"#r25"+1,"#r26"+1,"#r27"+1,"#r28"+1,"#r29"+1,"#r30"+1,"#r31"+1,\
-   "#x0"+1, "#x1"+1, "#x2"+1, "#x3"+1, "#x4"+1, "#x5"+1, "#x6"+1, "#x7"+1, \
-   "#x8"+1, "#x9"+1, "#x10"+1,"#x11"+1,"#x12"+1,"#x13"+1,"#x14"+1,"#x15"+1,\
-   "#x16"+1,"#x17"+1,"#x18"+1,"#x19"+1,"#x20"+1,"#x21"+1,"#x22"+1,"#x23"+1,\
-   "#x24"+1,"#x25"+1,"#x26"+1,"#x27"+1,"#x28"+1,"#x29"+1,"#x30"+1,"#x31"+1}
+  { "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",	\
+    "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",	\
+    "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",	\
+    "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",	\
+    "x0",  "x1",  "x2",  "x3",  "x4",  "x5",  "x6",  "x7",	\
+    "x8",  "x9",  "x10", "x11", "x12", "x13", "x14", "x15",	\
+    "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",	\
+    "x24", "x25", "x26", "x27", "x28", "x29", "x30", "x31" }
 
 /* Define additional names for use in asm clobbers and asm declarations.
 
@@ -1838,9 +1842,9 @@ do {									 \
 	ASM_GENERATE_INTERNAL_LABEL (label, "L", NUM);			\
 	fprintf (FILE, "%se:\n", &label[1]);				\
 	if (! flag_delayed_branch)					\
-	  fprintf (FILE, "\tlda\t %s,%s[%s]\n", reg_names[1],		\
-		   reg_names[1], reg_names[m88k_case_index]);		\
-	fprintf (FILE, "\tjmp\t %s\n", reg_names[1]);			\
+	  asm_fprintf (FILE, "\tlda\t %R%s,%R%s[%R%s]\n", reg_names[1],	\
+		       reg_names[1], reg_names[m88k_case_index]);	\
+	asm_fprintf (FILE, "\tjmp\t %R%s\n", reg_names[1]);		\
       }									\
   } while (0)
 
@@ -1907,24 +1911,24 @@ do {									 \
 /* This is how to output an insn to push a register on the stack.
    It need not be very fast code.  */
 #define ASM_OUTPUT_REG_PUSH(FILE,REGNO)  \
-  fprintf (FILE, "\tsubu\t %s,%s,%d\n\tst\t %s,%s,0\n",	\
-	   reg_names[STACK_POINTER_REGNUM],		\
-	   reg_names[STACK_POINTER_REGNUM],		\
-	   (STACK_BOUNDARY / BITS_PER_UNIT),		\
-	   reg_names[REGNO],				\
-	   reg_names[STACK_POINTER_REGNUM])
+  asm_fprintf (FILE, "\tsubu\t %R%s,%R%s,%d\n\tst\t %R%s,%R%s,0\n",	\
+	       reg_names[STACK_POINTER_REGNUM],				\
+	       reg_names[STACK_POINTER_REGNUM],				\
+	       (STACK_BOUNDARY / BITS_PER_UNIT),			\
+	       reg_names[REGNO],					\
+	       reg_names[STACK_POINTER_REGNUM])
 
 /* Length in instructions of the code output by ASM_OUTPUT_REG_PUSH.  */
 #define REG_PUSH_LENGTH 2
 
 /* This is how to output an insn to pop a register from the stack.  */
 #define ASM_OUTPUT_REG_POP(FILE,REGNO)  \
-  fprintf (FILE, "\tld\t %s,%s,0\n\taddu\t %s,%s,%d\n",	\
-	   reg_names[REGNO],				\
-	   reg_names[STACK_POINTER_REGNUM],		\
-	   reg_names[STACK_POINTER_REGNUM],		\
-	   reg_names[STACK_POINTER_REGNUM],		\
-	   (STACK_BOUNDARY / BITS_PER_UNIT))
+  asm_fprintf (FILE, "\tld\t %R%s,%R%s,0\n\taddu\t %R%s,%R%s,%d\n",	\
+	       reg_names[REGNO],					\
+	       reg_names[STACK_POINTER_REGNUM],				\
+	       reg_names[STACK_POINTER_REGNUM],				\
+	       reg_names[STACK_POINTER_REGNUM],				\
+	       (STACK_BOUNDARY / BITS_PER_UNIT))
 
 /* Length in instructions of the code output by ASM_OUTPUT_REG_POP.  */
 #define REG_POP_LENGTH 2

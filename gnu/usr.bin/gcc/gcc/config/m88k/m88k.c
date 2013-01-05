@@ -43,7 +43,7 @@ Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "target-def.h"
 
-const char *m88k_pound_sign = ""; /* Either # for SVR4 or empty for SVR3 */
+const char *m88k_register_prefix = ""; /* Either # for SVR4 or empty for SVR3 */
 char m88k_volatile_code;
 
 int m88k_prologue_done	= 0;	/* Ln directives can now be emitted */
@@ -1997,7 +1997,7 @@ m88k_output_function_epilogue (stream, size)
   if (GET_CODE (insn) == NOTE)
     insn = prev_nonnote_insn (insn);
   if (insn == 0 || GET_CODE (insn) != BARRIER)
-    fprintf (stream, "\tjmp\t %s\n", reg_names[1]);
+    asm_fprintf (stream, "\tjmp\t %R%s\n", reg_names[1]);
 
   /* If the last insn is a barrier, and the insn before that is a call,
      then add a nop instruction so that tdesc can walk the stack correctly
@@ -2007,7 +2007,8 @@ m88k_output_function_epilogue (stream, size)
     {
       insn = prev_nonnote_insn (insn);
       if (insn && GET_CODE (insn) == CALL_INSN)
-        fprintf (stream, "\tor\t %s,%s,%s\n",reg_names[0],reg_names[0],reg_names[0]);
+        asm_fprintf (stream, "\tor\t %R%s,%R%s,%R%s\n",
+		     reg_names[0], reg_names[0], reg_names[0]);
     }
 
   output_short_branch_defs (stream);
@@ -2328,50 +2329,46 @@ output_function_profiler (file, labelno, name)
      const char *name;
 {
   char label[256];
-  char dbi[256];
 
   /* Remember to update FUNCTION_PROFILER_LENGTH.  */
 
-  fprintf (file, "\tsubu\t %s,%s,32\n", reg_names[31], reg_names[31]);
-  fprintf (file, "\tst.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
-  fprintf (file, "\tst.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
-  fprintf (file, "\tst.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
-  fprintf (file, "\tst.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
+  asm_fprintf (file, "\tsubu\t %R%s,%R%s,32\n", reg_names[31], reg_names[31]);
+  asm_fprintf (file, "\tst.d\t %R%s,%R%s,0\n", reg_names[2], reg_names[31]);
+  asm_fprintf (file, "\tst.d\t %R%s,%R%s,8\n", reg_names[4], reg_names[31]);
+  asm_fprintf (file, "\tst.d\t %R%s,%R%s,16\n", reg_names[6], reg_names[31]);
+  asm_fprintf (file, "\tst.d\t %R%s,%R%s,24\n", reg_names[8], reg_names[31]);
 
   ASM_GENERATE_INTERNAL_LABEL (label, "LP", labelno);
   if (flag_pic == 2)
     {
-      fprintf (file, "\tor.u\t %s,%s,%shi16(%s#got_rel)\n",
-	       reg_names[2], reg_names[0], m88k_pound_sign, &label[1]);
-      fprintf (file, "\tor\t %s,%s,%slo16(%s#got_rel)\n",
-	       reg_names[2], reg_names[2], m88k_pound_sign, &label[1]);
-      sprintf (dbi, "\tld\t %s,%s,%s\n", reg_names[2],
-	       reg_names[PIC_OFFSET_TABLE_REGNUM], reg_names[2]);
+      asm_fprintf (file, "\tor.u\t %R%s,%R%s,%Rhi16(%s#got_rel)\n",
+		   reg_names[2], reg_names[0], &label[1]);
+      asm_fprintf (file, "\tor\t %R%s,%R%s,%Rlo16(%s#got_rel)\n",
+		   reg_names[2], reg_names[2], &label[1]);
+      asm_fprintf (file, "\tbsr.n\t %s#plt\n", name);
+      asm_fprintf (file, "\t ld\t %R%s,%R%s,%R%s\n", reg_names[2],
+		   reg_names[PIC_OFFSET_TABLE_REGNUM], reg_names[2]);
     }
   else if (flag_pic)
     {
-      sprintf (dbi, "\tld\t %s,%s,%s#got_rel\n", reg_names[2],
-	       reg_names[PIC_OFFSET_TABLE_REGNUM], &label[1]);
+      asm_fprintf (file, "\tbsr.n\t %s#plt\n", name);
+      asm_fprintf (file, "\t ld\t %R%s,%R%s,%s#got_rel\n", reg_names[2],
+		   reg_names[PIC_OFFSET_TABLE_REGNUM], &label[1]);
     }
   else
     {
-      fprintf (file, "\tor.u\t %s,%s,%shi16(%s)\n",
-	       reg_names[2], reg_names[0], m88k_pound_sign, &label[1]);
-      sprintf (dbi, "\tor\t %s,%s,%slo16(%s)\n",
-	       reg_names[2], reg_names[2], m88k_pound_sign, &label[1]);
+      asm_fprintf (file, "\tor.u\t %R%s,%R%s,%Rhi16(%s)\n",
+		   reg_names[2], reg_names[0], &label[1]);
+      asm_fprintf (file, "\tbsr.n\t %s\n", name);
+      asm_fprintf (file, "\t or\t %R%s,%R%s,%Rlo16(%s)\n",
+		   reg_names[2], reg_names[2], &label[1]);
     }
 
-  if (flag_pic)
-    fprintf (file, "\tbsr.n\t %s#plt\n", name);
-  else
-    fprintf (file, "\tbsr.n\t %s\n", name);
-  fputs (dbi, file);
-
-  fprintf (file, "\tld.d\t %s,%s,0\n", reg_names[2], reg_names[31]);
-  fprintf (file, "\tld.d\t %s,%s,8\n", reg_names[4], reg_names[31]);
-  fprintf (file, "\tld.d\t %s,%s,16\n", reg_names[6], reg_names[31]);
-  fprintf (file, "\tld.d\t %s,%s,24\n", reg_names[8], reg_names[31]);
-  fprintf (file, "\taddu\t %s,%s,32\n", reg_names[31], reg_names[31]);
+  asm_fprintf (file, "\tld.d\t %R%s,%R%s,0\n", reg_names[2], reg_names[31]);
+  asm_fprintf (file, "\tld.d\t %R%s,%R%s,8\n", reg_names[4], reg_names[31]);
+  asm_fprintf (file, "\tld.d\t %R%s,%R%s,16\n", reg_names[6], reg_names[31]);
+  asm_fprintf (file, "\tld.d\t %R%s,%R%s,24\n", reg_names[8], reg_names[31]);
+  asm_fprintf (file, "\taddu\t %R%s,%R%s,32\n", reg_names[31], reg_names[31]);
 }
 
 /* Determine whether a function argument is passed in a register, and
@@ -2884,10 +2881,12 @@ print_operand (file, x, code)
   switch (code)
     {
     case '*': /* addressing base register for PIC */
-      fputs (reg_names[PIC_OFFSET_TABLE_REGNUM], file); return;
+      asm_fprintf (file, "%R%s", reg_names[PIC_OFFSET_TABLE_REGNUM]);
+      return;
 
-    case '#': /* SVR4 pound-sign syntax character (empty if SVR3) */
-      fputs (m88k_pound_sign, file); return;
+    case '#': /* register prefix character (may be empty) */
+      fputs (m88k_register_prefix, file);
+      return;
 
     case 'V': /* Output a serializing instruction as needed if the operand
 		 (assumed to be a MEM) is a volatile load.  */
@@ -2922,16 +2921,16 @@ print_operand (file, x, code)
 	      && !(m88k_volatile_code == 'v'
 		   && GET_CODE (XEXP (x, 0)) == LO_SUM
 		   && rtx_equal_p (XEXP (XEXP (x, 0), 1), last_addr)))
-	    fprintf (file,
+	    asm_fprintf (file,
 #if 0
 #ifdef AS_BUG_FLDCR
-		     "fldcr\t %s,%scr63\n\t",
+			 "fldcr\t %R%s,%Rcr63\n\t",
 #else
-		     "fldcr\t %s,%sfcr63\n\t",
+			 "fldcr\t %R%s,%Rfcr63\n\t",
 #endif
-		     reg_names[0], m88k_pound_sign);
+			 reg_names[0]);
 #else /* 0 */
-		     "tb1\t 1,%s,0xff\n\t", reg_names[0]);
+			 "tb1\t 1,%R%s,0xff\n\t", reg_names[0]);
 #endif /* 0 */
 	  m88k_volatile_code = code;
 	  last_addr = (GET_CODE (XEXP (x, 0)) == LO_SUM
@@ -3030,7 +3029,7 @@ print_operand (file, x, code)
       return;
 
     case 'B': /* bcnd branch values */
-      fputs (m88k_pound_sign, file);
+      fputs (m88k_register_prefix, file);
       switch (xc)
 	{
 	case EQ: fputs ("eq0", file); return;
@@ -3043,7 +3042,7 @@ print_operand (file, x, code)
 	}
 
     case 'C': /* bb0/bb1 branch values for comparisons */
-      fputs (m88k_pound_sign, file);
+      fputs (m88k_register_prefix, file);
       switch (xc)
 	{
 	case EQ:  fputs ("eq", file); return;
@@ -3064,7 +3063,7 @@ print_operand (file, x, code)
 	{
 	case EQ: fputs ("0xa", file); return;
 	case NE: fputs ("0x5", file); return;
-	case GT: fputs (m88k_pound_sign, file);
+	case GT: fputs (m88k_register_prefix, file);
 	  fputs ("gt0", file); return;
 	case LE: fputs ("0xe", file); return;
 	case LT: fputs ("0x4", file); return;
@@ -3083,13 +3082,13 @@ print_operand (file, x, code)
     case 'd': /* second register of a two register pair */
       if (xc != REG)
 	output_operand_lossage ("`%%d' operand isn't a register");
-      fputs (reg_names[REGNO (x) + 1], file);
+      asm_fprintf (file, "%R%s", reg_names[REGNO (x) + 1]);
       return;
 
     case 'r': /* an immediate 0 should be represented as `r0' */
       if (x == const0_rtx)
 	{
-	  fputs (reg_names[0], file);
+	  asm_fprintf (file, "%R%s", reg_names[0]);
 	  return;
 	}
       else if (xc != REG)
@@ -3102,7 +3101,7 @@ print_operand (file, x, code)
 	  if (REGNO (x) == ARG_POINTER_REGNUM)
 	    output_operand_lossage ("operand is r0");
 	  else
-	    fputs (reg_names[REGNO (x)], file);
+	    asm_fprintf (file, "%R%s", reg_names[REGNO (x)]);
 	}
       else if (xc == PLUS)
 	output_address (x);
@@ -3150,12 +3149,12 @@ print_operand_address (file, addr)
       if (REGNO (addr) == ARG_POINTER_REGNUM)
 	abort ();
       else
-	fprintf (file, "%s,%s", reg_names[0], reg_names [REGNO (addr)]);
+	asm_fprintf (file, "%R%s,%R%s", reg_names[0], reg_names [REGNO (addr)]);
       break;
 
     case LO_SUM:
-      fprintf (file, "%s,%slo16(",
-	       reg_names[REGNO (XEXP (addr, 0))], m88k_pound_sign);
+      asm_fprintf (file, "%R%s,%Rlo16(",
+		   reg_names[REGNO (XEXP (addr, 0))]);
       output_addr_const (file, XEXP (addr, 1));
       fputc (')', file);
       break;
@@ -3177,12 +3176,12 @@ print_operand_address (file, addr)
       else if (REG_P (reg0))
 	{
 	  if (REG_P (reg1))
-	    fprintf (file, "%s,%s",
-		     reg_names [REGNO (reg0)], reg_names [REGNO (reg1)]);
+	    asm_fprintf (file, "%R%s,%R%s",
+			 reg_names [REGNO (reg0)], reg_names [REGNO (reg1)]);
 
 	  else if (GET_CODE (reg1) == CONST_INT)
-	    fprintf (file, "%s,%d",
-		     reg_names [REGNO (reg0)], INTVAL (reg1));
+	    asm_fprintf (file, "%R%s,%d",
+			 reg_names [REGNO (reg0)], INTVAL (reg1));
 
 	  else if (GET_CODE (reg1) == MULT)
 	    {
@@ -3190,21 +3189,21 @@ print_operand_address (file, addr)
 	      if (REGNO (mreg) == ARG_POINTER_REGNUM)
 		abort ();
 
-	      fprintf (file, "%s[%s]", reg_names[REGNO (reg0)],
-		       reg_names[REGNO (mreg)]);
+	      asm_fprintf (file, "%R%s[%R%s]", reg_names[REGNO (reg0)],
+			   reg_names[REGNO (mreg)]);
 	    }
 
 	  else if (GET_CODE (reg1) == ZERO_EXTRACT)
 	    {
-	      fprintf (file, "%s,%slo16(",
-		       reg_names[REGNO (reg0)], m88k_pound_sign);
+	      asm_fprintf (file, "%R%s,%Rlo16(",
+			   reg_names[REGNO (reg0)]);
 	      output_addr_const (file, XEXP (reg1, 0));
 	      fputc (')', file);
 	    }
 
 	  else if (flag_pic)
 	    {
-	      fprintf (file, "%s,", reg_names[REGNO (reg0)]);
+	      asm_fprintf (file, "%R%s,", reg_names[REGNO (reg0)]);
 	      output_addr_const (file, reg1);
 	      fputs ("#got_rel", file);
 	    }
@@ -3219,16 +3218,16 @@ print_operand_address (file, addr)
       if (REGNO (XEXP (addr, 0)) == ARG_POINTER_REGNUM)
 	abort ();
 
-      fprintf (file, "%s[%s]",
-	       reg_names[0], reg_names[REGNO (XEXP (addr, 0))]);
+      asm_fprintf (file, "%R%s[%R%s]",
+		   reg_names[0], reg_names[REGNO (XEXP (addr, 0))]);
       break;
 
     case CONST_INT:
-      fprintf (file, "%s,%d", reg_names[0], INTVAL (addr));
+      asm_fprintf (file, "%R%s,%d", reg_names[0], INTVAL (addr));
       break;
 
     default:
-      fprintf (file, "%s,", reg_names[0]);
+      asm_fprintf (file, "%R%s,", reg_names[0]);
       output_addr_const (file, addr);
     }
 }
@@ -3340,8 +3339,6 @@ m88k_adjust_cost (insn, link, dep, cost)
 void
 m88k_override_options ()
 {
-  register int i;
-
   if ((target_flags & MASK_88000) == 0)
     target_flags |= CPU_DEFAULT;
 
@@ -3359,9 +3356,7 @@ m88k_override_options ()
 
   if (TARGET_SVR4)
     {
-      for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-	reg_names[i]--;
-      m88k_pound_sign = "#";
+      m88k_register_prefix = "#";
     }
   else
     {
