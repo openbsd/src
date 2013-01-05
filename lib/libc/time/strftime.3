@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.29 2012/09/13 11:14:20 millert Exp $
+.\"	$OpenBSD: strftime.3,v 1.30 2013/01/05 12:55:10 krw Exp $
 .\"
-.Dd $Mdocdate: September 13 2012 $
+.Dd $Mdocdate: January 5 2013 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ If the total number of resulting characters, including the terminating
 NUL character, is not more than
 .Fa maxsize ,
 .Fn strftime
-returns the number of characters in the array, not counting the
+returns the number of characters placed in the array, not counting the
 terminating NUL.
 Otherwise, zero is returned.
 .Pp
