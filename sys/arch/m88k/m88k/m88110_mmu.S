@@ -1,4 +1,4 @@
-#	$OpenBSD: m88110_mmu.S,v 1.6 2011/10/25 18:38:06 miod Exp $
+#	$OpenBSD: m88110_mmu.S,v 1.7 2013/01/05 11:20:56 miod Exp $
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -50,147 +50,147 @@
  * avoid this. Sigh -- miod
  */
 
-	text
+	.text
 
 /* set routines */
-	align 32
+	.align 5
 ENTRY(set_icmd)
 	FLUSH_PIPELINE
-	stcr	r2, ICMD
-	jmp	r1
+	stcr	%r2, ICMD
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_ictl)
 	FLUSH_PIPELINE
-	stcr	r2, ICTL
+	stcr	%r2, ICTL
 	NOP
 	FLUSH_PIPELINE
-	jmp	r1
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_isar)
-	stcr	r2, ISAR
-	jmp	r1
+	stcr	%r2, ISAR
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_isap)
 	FLUSH_PIPELINE
 	NOP
-	stcr	r2, ISAP
-	jmp	r1
+	stcr	%r2, ISAP
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_iuap)
 	FLUSH_PIPELINE
 	NOP
- 	stcr	r2, IUAP
-	jmp	r1
+ 	stcr	%r2, IUAP
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_iir)
-	stcr	r2, IIR 
-	jmp	r1
+	stcr	%r2, IIR 
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_ibp)
-	stcr	r2, IBP 
-	jmp	r1
+	stcr	%r2, IBP 
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_ippu)
-	stcr	r2, IPPU
-	jmp	r1
+	stcr	%r2, IPPU
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_ippl)
-	stcr	r2, IPPL
-	jmp	r1
+	stcr	%r2, IPPL
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_isr)
-	stcr	r2, ISR 
-	jmp	r1
+	stcr	%r2, ISR 
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dcmd)
 	FLUSH_PIPELINE
-	stcr	r2, DCMD
-	jmp	r1
+	stcr	%r2, DCMD
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dctl)
 	FLUSH_PIPELINE
-	stcr	r2, DCTL
+	stcr	%r2, DCTL
 	NOP
 	FLUSH_PIPELINE
-	jmp	r1
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dsar)
-	stcr	r2, DSAR
+	stcr	%r2, DSAR
 	NOP
-	jmp	r1
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dsap)
 	FLUSH_PIPELINE
 	NOP
-	stcr	r2, DSAP
+	stcr	%r2, DSAP
 	FLUSH_PIPELINE
 	NOP
-	jmp	r1
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_duap)
 	FLUSH_PIPELINE
 	NOP
-	stcr	r2, DUAP
+	stcr	%r2, DUAP
 	FLUSH_PIPELINE
 	NOP
-	jmp	r1
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dir)
-	stcr	r2, DIR 
-	jmp	r1
+	stcr	%r2, DIR 
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dbp)
-	stcr	r2, DBP 
-	jmp	r1
+	stcr	%r2, DBP 
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dppu)
-	stcr	r2, DPPU
-	jmp	r1
+	stcr	%r2, DPPU
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dppl)
-	stcr	r2, DPPL
-	jmp	r1
+	stcr	%r2, DPPL
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(set_dsr)
-	stcr	r2, DSR 
-	jmp	r1
+	stcr	%r2, DSR 
+	jmp	%r1
 
 /* get routines */
-	align 32
+	.align 5
 ENTRY(get_ictl)
-	ldcr	r2, ICTL
-	jmp	r1
+	ldcr	%r2, ICTL
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(get_dctl)
-	ldcr	r2, DCTL
-	jmp	r1
+	ldcr	%r2, DCTL
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(get_dsr)
-	ldcr	r2, DSR
-	jmp	r1
+	ldcr	%r2, DSR
+	jmp	%r1
 
-	align 32
+	.align 5
 ENTRY(get_isr)
-	ldcr	r2, ISR
-	jmp	r1
+	ldcr	%r2, ISR
+	jmp	%r1

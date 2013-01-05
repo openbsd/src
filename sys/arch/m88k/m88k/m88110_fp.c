@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.6 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.7 2013/01/05 11:20:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -137,10 +137,10 @@ m88110_fpu_exception(struct trapframe *frame)
 	 * exception registers. Do it now, and reset the exception
 	 * cause register.
 	 */
-	__asm__ __volatile__ ("fldcr %0, fcr0" : "=r"(frame->tf_fpecr));
-	__asm__ __volatile__ ("fldcr %0, fcr62" : "=r"(frame->tf_fpsr));
-	__asm__ __volatile__ ("fldcr %0, fcr63" : "=r"(frame->tf_fpcr));
-	__asm__ __volatile__ ("fstcr r0, fcr0");
+	__asm__ __volatile__ ("fldcr %0, %%fcr0" : "=r"(frame->tf_fpecr));
+	__asm__ __volatile__ ("fldcr %0, %%fcr62" : "=r"(frame->tf_fpsr));
+	__asm__ __volatile__ ("fldcr %0, %%fcr63" : "=r"(frame->tf_fpcr));
+	__asm__ __volatile__ ("fstcr %r0, %fcr0");
 
 	/*
 	 * Fetch the faulting instruction. This should not fail, if it
@@ -177,7 +177,7 @@ m88110_fpu_exception(struct trapframe *frame)
 		 * Update the floating point status register regardless of
 		 * whether we'll deliver a signal or not.
 		 */
-		__asm__ __volatile__ ("fstcr %0, fcr62" :: "r"(frame->tf_fpsr));
+		__asm__ __volatile__ ("fstcr %0, %%fcr62" :: "r"(frame->tf_fpsr));
 		break;
 	default:
 		/*

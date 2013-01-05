@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.c,v 1.5 2010/12/31 20:54:21 miod Exp $	*/
+/*	$OpenBSD: m88410.c,v 1.6 2013/01/05 11:20:56 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -91,9 +91,9 @@ mc88410_wb_page(paddr_t physaddr)
 
 	/* send command */
 	__asm__ __volatile__ (
-	    "or   r2, r0, %0\n\t"
-	    "or   r3, r0, r0\n\t"
-	    "st.d r2, %1, 0" : : "i" (XCC_WB_PAGE), "r" (xccaddr) : "r2", "r3");
+	    "or   %%r2, %%r0, %0\n\t"
+	    "or   %%r3, %%r0, %%r0\n\t"
+	    "st.d %%r2, %1, 0" :: "i" (XCC_WB_PAGE), "r" (xccaddr) : "r2", "r3");
 
 	/* spin until the operation is complete */
 	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) != 0)
@@ -123,9 +123,9 @@ mc88410_wb(void)
 
 	/* send command */
 	__asm__ __volatile__ (
-	    "or   r2, r0, %0\n\t"
-	    "or   r3, r0, r0\n\t"
-	    "st.d r2, %1, 0" : : "i" (XCC_WB_ALL), "r" (XCC_ADDR) : "r2", "r3");
+	    "or   %%r2, %%r0, %0\n\t"
+	    "or   %%r3, %%r0, %%r0\n\t"
+	    "st.d %%r2, %1, 0" :: "i" (XCC_WB_ALL), "r" (XCC_ADDR) : "r2", "r3");
 
 	/* spin until the operation is complete */
 	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) != 0)
@@ -153,9 +153,9 @@ mc88410_inv(void)
 
 	/* send command */
 	__asm__ __volatile__ (
-	    "or   r2, r0, %0\n\t"
-	    "or   r3, r0, r0\n\t"
-	    "st.d r2, %1, 0" : : "i" (XCC_INV_ALL), "r" (XCC_ADDR) : "r2", "r3");
+	    "or   %%r2, %%r0, %0\n\t"
+	    "or   %%r3, %%r0, %%r0\n\t"
+	    "st.d %%r2, %1, 0" :: "i" (XCC_INV_ALL), "r" (XCC_ADDR) : "r2", "r3");
 
 	/*
 	 * The 88410 will not let the 88110 access it until the

@@ -1,4 +1,4 @@
-#	$OpenBSD: config.gcc,v 1.23 2012/12/30 18:09:30 miod Exp $
+#	$OpenBSD: config.gcc,v 1.24 2013/01/05 11:20:55 miod Exp $
 # GCC build-, host- and target-specific configuration file.
 # Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
@@ -1800,10 +1800,9 @@ m88k-*-aout*)
 	;;
 m88k-*-openbsd*)
 	tmake_file="t-libc-ok t-openbsd"
-	tm_file="openbsd-libpthread.h m88k/aout-dbx.h aoutos.h m88k/openbsd1.h m88k/m88k.h openbsd.h m88k/openbsd.h"
+	tm_file="openbsd-libpthread.h dbxelf.h elfos.h m88k/openbsd1.h m88k/m88k.h openbsd.h m88k/openbsdelf.h"
 #	tm_file="${tm_file} exec-stack.h"
-	use_collect2=yes
-	gas=yes
+	gas=yes gnu_ld=yes
 	;;
 m88k-*-sysv4*)
 	xm_defines=POSIX

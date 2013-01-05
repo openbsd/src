@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.12 2007/10/24 20:19:09 miod Exp $*/
+/*	$OpenBSD: SYS.h,v 1.13 2013/01/05 11:20:55 miod Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -48,8 +48,8 @@
 #endif
 
 #define	__DO_SYSCALL(x)							\
-	or r13,r0,__SYSCALLNAME(SYS_,x);				\
-	tb0 0, r0, 128
+	or %r13, %r0, __SYSCALLNAME(SYS_,x);				\
+	tb0 0, %r0, 128
 
 #define	__SYSCALL__NOERROR(p,x,y)					\
 	__ENTRY(p,x);							\
@@ -62,11 +62,11 @@
 
 #define	__PSEUDO_NOERROR(p,x,y)						\
 	__SYSCALL__NOERROR(p,x,y);					\
-	jmp r1
+	jmp %r1
 
 #define	__PSEUDO(p,x,y)							\
 	__SYSCALL(p,x,y);						\
-	jmp r1
+	jmp %r1
 
 /*
  * System calls entry points are really named _thread_sys_{syscall},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.67 2007/12/21 23:56:54 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.68 2013/01/05 11:20:56 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -48,12 +48,12 @@
 
 ENTRY(pfsr_save_187)
 	ld	TMP2, TMP,  CI_PFSR_I0
-	ld	TMP3, TMP2, r0
-	st	TMP3, r31,  EF_IPFSR
+	ld	TMP3, TMP2, %r0
+	st	TMP3, %r31, EF_IPFSR
 	ld	TMP2, TMP,  CI_PFSR_D0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP3, r31,  EF_DPFSR
+	 st	TMP3, %r31, EF_DPFSR
 #endif
 
 #ifdef MVME188
@@ -82,48 +82,48 @@ ENTRY(pfsr_save_188_quad)
 	 * XXX It will probably be worth changing this so that we can
 	 * handle a bunch of CMMU faults at once in trap.c.
 	 */
-	or.u	TMP,  r0,   hi16(VME_CMMU_I0)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + CMMU_PFSR * 4
+	or.u	TMP,  %r0,  %hi16(VME_CMMU_I0)
+	ld	TMP2, TMP,  %lo16(VME_CMMU_I0) + CMMU_PFSR * 4
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP,  lo16(VME_CMMU_I0) + CMMU_PFSR * 4
-	or.u	TMP,  r0,   hi16(VME_CMMU_I1)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + CMMU_PFSR * 4
+	 st	%r0,  TMP,  %lo16(VME_CMMU_I0) + CMMU_PFSR * 4
+	or.u	TMP,  %r0,  %hi16(VME_CMMU_I1)
+	ld	TMP2, TMP,  %lo16(VME_CMMU_I1) + CMMU_PFSR * 4
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP,  lo16(VME_CMMU_I1) + CMMU_PFSR * 4
-	or.u	TMP,  r0,   hi16(VME_CMMU_I2)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + CMMU_PFSR * 4
+	 st	%r0,  TMP,  %lo16(VME_CMMU_I1) + CMMU_PFSR * 4
+	or.u	TMP,  %r0,  %hi16(VME_CMMU_I2)
+	ld	TMP2, TMP,  %lo16(VME_CMMU_I2) + CMMU_PFSR * 4
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 1f
-	 st	r0,   TMP,  lo16(VME_CMMU_I2) + CMMU_PFSR * 4
-	or.u	TMP,  r0,   hi16(VME_CMMU_I3)
-	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + CMMU_PFSR * 4
-	st	r0,   TMP,  lo16(VME_CMMU_I3) + CMMU_PFSR * 4
+	 st	%r0,  TMP,  %lo16(VME_CMMU_I2) + CMMU_PFSR * 4
+	or.u	TMP,  %r0,  %hi16(VME_CMMU_I3)
+	ld	TMP2, TMP,  %lo16(VME_CMMU_I3) + CMMU_PFSR * 4
+	st	%r0,  TMP,  %lo16(VME_CMMU_I3) + CMMU_PFSR * 4
 1:
-	st	TMP2, r31,  EF_IPFSR
+	st	TMP2, %r31, EF_IPFSR
 	
-	or.u	TMP,  r0,   hi16(VME_CMMU_D0)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + CMMU_PFSR * 4
+	or.u	TMP,  %r0,  %hi16(VME_CMMU_D0)
+	ld	TMP2, TMP,  %lo16(VME_CMMU_D0) + CMMU_PFSR * 4
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP,  lo16(VME_CMMU_D0) + CMMU_PFSR * 4
-	or.u	TMP,  r0,   hi16(VME_CMMU_D1)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + CMMU_PFSR * 4
+	 st	%r0,  TMP,  %lo16(VME_CMMU_D0) + CMMU_PFSR * 4
+	or.u	TMP,  %r0,  %hi16(VME_CMMU_D1)
+	ld	TMP2, TMP,  %lo16(VME_CMMU_D1) + CMMU_PFSR * 4
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP,  lo16(VME_CMMU_D1) + CMMU_PFSR * 4
-	or.u	TMP,  r0,   hi16(VME_CMMU_D2)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + CMMU_PFSR * 4
+	 st	%r0,  TMP,  %lo16(VME_CMMU_D1) + CMMU_PFSR * 4
+	or.u	TMP,  %r0,  %hi16(VME_CMMU_D2)
+	ld	TMP2, TMP,  %lo16(VME_CMMU_D2) + CMMU_PFSR * 4
 	extu	TMP3, TMP2, 3<16>
 	bcnd.n	ne0,  TMP3, 2f
-	 st	r0,   TMP,  lo16(VME_CMMU_D2) + CMMU_PFSR * 4
-	or.u	TMP,  r0,   hi16(VME_CMMU_D3)
-	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + CMMU_PFSR * 4
-	st	r0,   TMP,  lo16(VME_CMMU_D3) + CMMU_PFSR * 4
+	 st	%r0,  TMP,  %lo16(VME_CMMU_D2) + CMMU_PFSR * 4
+	or.u	TMP,  %r0,  %hi16(VME_CMMU_D3)
+	ld	TMP2, TMP,  %lo16(VME_CMMU_D3) + CMMU_PFSR * 4
+	st	%r0,  TMP,  %lo16(VME_CMMU_D3) + CMMU_PFSR * 4
 2:
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP2, r31,  EF_DPFSR
+	 st	TMP2, %r31, EF_DPFSR
 
 ENTRY(pfsr_save_188_double)
 	/*
@@ -135,27 +135,27 @@ ENTRY(pfsr_save_188_double)
 	 * after reading them.
 	 */
 	ld	TMP2, TMP,  CI_PFSR_I0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	extu	TMP3, TMP3, 3<16>
 	bcnd	ne0,  TMP3, 1f
-	st	r0,   TMP2, r0
+	st	%r0,  TMP2, %r0
 	ld	TMP2, TMP,  CI_PFSR_I1
 1:
-	ld	TMP3, TMP2, r0
-	st	r0,   TMP2, r0
-	st	TMP3, r31,  EF_IPFSR
+	ld	TMP3, TMP2, %r0
+	st	%r0,  TMP2, %r0
+	st	TMP3, %r31, EF_IPFSR
 
 	ld	TMP2, TMP,  CI_PFSR_D0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	extu	TMP3, TMP3, 3<16>
 	bcnd	ne0,  TMP3, 2f
-	st	r0,   TMP2, r0
+	st	%r0,  TMP2, %r0
 	ld	TMP2, TMP,  CI_PFSR_D1
 2:
-	ld	TMP3, TMP2, r0
-	st	r0,   TMP2, r0
+	ld	TMP3, TMP2, %r0
+	st	%r0,  TMP2, %r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP3, r31,  EF_DPFSR
+	 st	TMP3, %r31, EF_DPFSR
 
 ENTRY(pfsr_save_188_straight)
 	/*
@@ -164,11 +164,11 @@ ENTRY(pfsr_save_188_straight)
 	 * This is similar to the 187/8120 code.
 	 */
 	ld	TMP2, TMP,  CI_PFSR_I0
-	ld	TMP3, TMP2, r0
-	st	TMP3, r31,  EF_IPFSR
+	ld	TMP3, TMP2, %r0
+	st	TMP3, %r31, EF_IPFSR
 	ld	TMP2, TMP,  CI_PFSR_D0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP3, r31,  EF_DPFSR
+	 st	TMP3, %r31,  EF_DPFSR
 
 #endif	/* MVME188 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.9 2013/01/05 11:20:56 miod Exp $	*/
 
 /* Public Domain */
 
@@ -49,7 +49,7 @@ atomic_clear_int(__volatile unsigned int *uip)
 
 	oldval = 0;
 	__asm__ __volatile__
-	    ("xmem %0, %2, r0" : "+r"(oldval), "+m"(*uip) : "r"(uip));
+	    ("xmem %0, %2, %%r0" : "+r"(oldval), "+m"(*uip) : "r"(uip));
 	return oldval;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.4 2010/04/24 18:46:51 miod Exp $	*/
+/*	$OpenBSD: prom.c,v 1.5 2013/01/05 11:20:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat.
@@ -43,28 +43,28 @@ register_t prom_vbr;					/* set in locore.S */
 	register_t ossr0, ossr1, ossr2, ossr3
 
 #define	SCM_CALL(x) \
-	__asm__ __volatile__ ("or r9, r0, " __STRING(x));		\
-	__asm__ __volatile__ ("tb0 0, r0, 496" :::			\
+	__asm__ __volatile__ ("or %r9, %r0, " __STRING(x));		\
+	__asm__ __volatile__ ("tb0 0, %%r0, 496" :::			\
 	    "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",		\
 	    "r9", "r10", "r11", "r12", "r13")
 
 #define	SCM_VBR() \
-	__asm__ __volatile__ ("stcr %0, cr7" : : "r" (prom_vbr))
+	__asm__ __volatile__ ("stcr %0, %%cr7" : : "r" (prom_vbr))
 
 #define	SCM_CONTEXT() \
-	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (ossr0)); \
-	__asm__ __volatile__ ("ldcr %0, cr18" : "=r" (ossr1)); \
-	__asm__ __volatile__ ("ldcr %0, cr19" : "=r" (ossr2)); \
-	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (ossr3))
+	__asm__ __volatile__ ("ldcr %0, %%cr17" : "=r" (ossr0)); \
+	__asm__ __volatile__ ("ldcr %0, %%cr18" : "=r" (ossr1)); \
+	__asm__ __volatile__ ("ldcr %0, %%cr19" : "=r" (ossr2)); \
+	__asm__ __volatile__ ("ldcr %0, %%cr20" : "=r" (ossr3))
 
 #define	OS_VBR() \
-	__asm__ __volatile__ ("stcr r0, cr7")
+	__asm__ __volatile__ ("stcr %r0, %cr7")
 
 #define	OS_CONTEXT() \
-	__asm__ __volatile__ ("stcr %0, cr17" : : "r" (ossr0)); \
-	__asm__ __volatile__ ("stcr %0, cr18" : : "r" (ossr1)); \
-	__asm__ __volatile__ ("stcr %0, cr19" : : "r" (ossr2)); \
-	__asm__ __volatile__ ("stcr %0, cr20" : : "r" (ossr3))
+	__asm__ __volatile__ ("stcr %0, %%cr17" : : "r" (ossr0)); \
+	__asm__ __volatile__ ("stcr %0, %%cr18" : : "r" (ossr1)); \
+	__asm__ __volatile__ ("stcr %0, %%cr19" : : "r" (ossr2)); \
+	__asm__ __volatile__ ("stcr %0, %%cr20" : : "r" (ossr3))
 
 /* ==== */
 
@@ -78,9 +78,9 @@ scm_cpuconfig(struct scm_cpuconfig *scc)
 	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
-	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (scc));
+	__asm__ __volatile__ ("or %%r2, %%r0, %0" : : "r" (scc));
 	SCM_CALL(SCM_CPUCONFIG);
-	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (ret));
+	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (ret));
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
@@ -99,7 +99,7 @@ scm_cpuid()
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_CPUID);
-	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (ret));
+	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (ret));
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
@@ -118,7 +118,7 @@ scm_getc(void)
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_CHAR);
-	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (ret));
+	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (ret));
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
@@ -137,7 +137,7 @@ scm_getenaddr(u_char *ea)
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_COMMID);
-	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (addr));
+	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (addr));
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
@@ -171,9 +171,9 @@ scm_memsize(int which)
 	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
-	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (which));
+	__asm__ __volatile__ ("or %%r2, %%r0, %0" : : "r" (which));
 	SCM_CALL(SCM_MSIZE);
-	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (msize));
+	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (msize));
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
@@ -194,7 +194,7 @@ scm_printf(const char *msg)
 	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
-	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (msg));
+	__asm__ __volatile__ ("or %%r2, %%r0, %0" : : "r" (msg));
 	SCM_CALL(SCM_PTLINE);
 	OS_CONTEXT();
 	OS_VBR();
@@ -212,7 +212,7 @@ scm_promver()
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_REVNUM);
-	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (ret));
+	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (ret));
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
@@ -229,7 +229,7 @@ scm_putc(int c)
 	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
-	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (c));
+	__asm__ __volatile__ ("or %%r2, %%r0, %0" : : "r" (c));
 	SCM_CALL(SCM_OCHAR);
 	OS_CONTEXT();
 	OS_VBR();
@@ -260,7 +260,7 @@ scm_reboot(const char *cmdline)
 	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
-	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (cmdline));
+	__asm__ __volatile__ ("or %%r2, %%r0, %0" : : "r" (cmdline));
 	SCM_CALL(SCM_REBOOT);
 	OS_CONTEXT();
 	OS_VBR();
@@ -279,7 +279,7 @@ scm_sysid()
 	SCM_CONTEXT();
 	SCM_VBR();
 	SCM_CALL(SCM_SYSID);
-	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (ret));
+	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (ret));
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);
@@ -298,10 +298,10 @@ scm_jpstart(cpuid_t cpu, vaddr_t addr)
 	set_psr(psr | PSR_IND);
 	SCM_CONTEXT();
 	SCM_VBR();
-	__asm__ __volatile__ ("or r2, r0, %0; or r3, r0, %1" : :
+	__asm__ __volatile__ ("or %%r2, %%r0, %0; or %%r3, %%r0, %1" : :
 	    "r" (cpu), "r" (addr));
 	SCM_CALL(SCM_JPSTART);
-	__asm__ __volatile__ ("or %0, r0, r2" : "=r" (ret));
+	__asm__ __volatile__ ("or %0, %%r0, %%r2" : "=r" (ret));
 	OS_CONTEXT();
 	OS_VBR();
 	set_psr(psr);

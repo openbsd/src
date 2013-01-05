@@ -1,4 +1,4 @@
-/*	$OpenBSD: netfopen.c,v 1.1 2004/01/28 00:27:44 miod Exp $	*/
+/*	$OpenBSD: netfopen.c,v 1.2 2013/01/05 11:20:56 miod Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -14,7 +14,7 @@ int
 mvmeprom_netfopen(arg)
 	struct mvmeprom_netfopen *arg;
 {
-	asm volatile ("or r2,r0,%0": : "r" (arg));
+	asm volatile ("or %%r2,%%r0,%0": : "r" (arg));
 	MVMEPROM_CALL(MVMEPROM_NETFOPEN);
 	return (arg->status);
 }

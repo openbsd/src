@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.1 2006/11/17 22:32:38 miod Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.2 2013/01/05 11:20:56 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -43,13 +43,13 @@
  *
  * This is fast. Really fast. Especially for long lengths.
  */
-#define R_dest			r2
-#define R_len			r3
+#define R_dest			%r2
+#define R_len			%r3
 
-#define R_bytes			r4
-#define R_mark_address		r5
-#define R_addr			r6	/* R_addr && R_temp SHARE */
-#define R_temp			r6	/* R_addr && R_temp SHARE */
+#define R_bytes			%r4
+#define R_mark_address		%r5
+#define R_addr			%r6	/* R_addr && R_temp SHARE */
+#define R_temp			%r6	/* R_addr && R_temp SHARE */
 
 ENTRY(bzero)
 	/*
@@ -68,8 +68,8 @@ ASLOCAL(now_word_aligned)
 	 * before we get into the main loop, grab the
 	 * address of the label "mark" below.
 	 */
-	or.u	R_mark_address, r0, hi16(_ASM_LABEL(mark))
-	or	R_mark_address, R_mark_address, lo16(_ASM_LABEL(mark))
+	or.u	R_mark_address, %r0, %hi16(_ASM_LABEL(mark))
+	or	R_mark_address, R_mark_address, %lo16(_ASM_LABEL(mark))
 
 ASLOCAL(top_of_main_loop)
 #define MAX_AT_ONE_TIME 128
@@ -108,7 +108,7 @@ ASLOCAL(top_of_main_loop)
 	 * so if you change things here, WATCH OUT.
 	 */
 	br.n	do_max
-	 or	R_bytes, r0, MAX_AT_ONE_TIME
+	 or	R_bytes, %r0, MAX_AT_ONE_TIME
 
 1:
 	/*
@@ -126,38 +126,38 @@ ASLOCAL(top_of_main_loop)
 ASLOCAL(do_max)
 	  subu	R_len, R_len, R_bytes	/* NOTE: this is in the delay slot! */
 
-	st	r0, R_dest, 0x7c	/* 128 */
-	st	r0, R_dest, 0x78	/* 124 */
-	st	r0, R_dest, 0x74	/* 120 */
-	st	r0, R_dest, 0x70	/* 116 */
-	st	r0, R_dest, 0x6c	/* 112 */
-	st	r0, R_dest, 0x68	/* 108 */
-	st	r0, R_dest, 0x64	/* 104 */
-	st	r0, R_dest, 0x60	/* 100 */
-	st	r0, R_dest, 0x5c	/*  96 */
-	st	r0, R_dest, 0x58	/*  92 */
-	st	r0, R_dest, 0x54	/*  88 */
-	st	r0, R_dest, 0x50	/*  84 */
-	st	r0, R_dest, 0x4c	/*  80 */
-	st	r0, R_dest, 0x48	/*  76 */
-	st	r0, R_dest, 0x44	/*  72 */
-	st	r0, R_dest, 0x40	/*  68 */
-	st	r0, R_dest, 0x3c	/*  64 */
-	st	r0, R_dest, 0x38	/*  60 */
-	st	r0, R_dest, 0x34	/*  56 */
-	st	r0, R_dest, 0x30	/*  52 */
-	st	r0, R_dest, 0x2c	/*  44 */
-	st	r0, R_dest, 0x28	/*  40 */
-	st	r0, R_dest, 0x24	/*  36 */
-	st	r0, R_dest, 0x20	/*  32 */
-	st	r0, R_dest, 0x1c	/*  28 */
-	st	r0, R_dest, 0x18	/*  24 */
-	st	r0, R_dest, 0x14	/*  20 */
-	st	r0, R_dest, 0x10	/*  16 */
-	st	r0, R_dest, 0x0c	/*  12 */
-	st	r0, R_dest, 0x08	/*   8 */
-	st	r0, R_dest, 0x04	/*   4 */
-	st	r0, R_dest, 0x00	/*   0 */
+	st	%r0, R_dest, 0x7c	/* 128 */
+	st	%r0, R_dest, 0x78	/* 124 */
+	st	%r0, R_dest, 0x74	/* 120 */
+	st	%r0, R_dest, 0x70	/* 116 */
+	st	%r0, R_dest, 0x6c	/* 112 */
+	st	%r0, R_dest, 0x68	/* 108 */
+	st	%r0, R_dest, 0x64	/* 104 */
+	st	%r0, R_dest, 0x60	/* 100 */
+	st	%r0, R_dest, 0x5c	/*  96 */
+	st	%r0, R_dest, 0x58	/*  92 */
+	st	%r0, R_dest, 0x54	/*  88 */
+	st	%r0, R_dest, 0x50	/*  84 */
+	st	%r0, R_dest, 0x4c	/*  80 */
+	st	%r0, R_dest, 0x48	/*  76 */
+	st	%r0, R_dest, 0x44	/*  72 */
+	st	%r0, R_dest, 0x40	/*  68 */
+	st	%r0, R_dest, 0x3c	/*  64 */
+	st	%r0, R_dest, 0x38	/*  60 */
+	st	%r0, R_dest, 0x34	/*  56 */
+	st	%r0, R_dest, 0x30	/*  52 */
+	st	%r0, R_dest, 0x2c	/*  44 */
+	st	%r0, R_dest, 0x28	/*  40 */
+	st	%r0, R_dest, 0x24	/*  36 */
+	st	%r0, R_dest, 0x20	/*  32 */
+	st	%r0, R_dest, 0x1c	/*  28 */
+	st	%r0, R_dest, 0x18	/*  24 */
+	st	%r0, R_dest, 0x14	/*  20 */
+	st	%r0, R_dest, 0x10	/*  16 */
+	st	%r0, R_dest, 0x0c	/*  12 */
+	st	%r0, R_dest, 0x08	/*   8 */
+	st	%r0, R_dest, 0x04	/*   4 */
+	st	%r0, R_dest, 0x00	/*   0 */
 
 ASLOCAL(mark)
 	br.n	_ASM_LABEL(top_of_main_loop)
@@ -165,21 +165,21 @@ ASLOCAL(mark)
 
 ASLOCAL(done_doing_words)
 	bcnd	ne0, R_len, 1f
-	jmp	r1
+	jmp	%r1
 
 1:
 	subu	R_len, R_len, 1
 	bcnd.n	ne0, R_len, 1b
-	 st.b	r0, R_dest, R_len
+	 st.b	%r0, R_dest, R_len
 1:
-	jmp	r1
+	jmp	%r1
 
 ASLOCAL(not_initially_word_aligned)
 	/*
 	 * Bzero to word-align the address (at least if the length allows it).
 	 */
 	bcnd	eq0, R_len, 1b
-	st.b	r0, R_dest, 0
+	st.b	%r0, R_dest, 0
 	addu	R_dest, R_dest, 1
 	mask	R_temp, R_dest, 0x3
 	bcnd.n	eq0, R_temp, _ASM_LABEL(now_word_aligned)

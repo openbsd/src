@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.9 2005/08/04 16:33:05 espie Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.10 2013/01/05 11:20:55 miod Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -34,37 +34,53 @@
  * the envp[] NULL-terminated array.
  */
 
+#include <sys/param.h>
 #include <stdlib.h>
 
-#include "common.h"
+char **environ;
+char *__progname = "";
 
-struct kframe {
-	int argc;
-	char *argv[0];
-};
+char __progname_storage[NAME_MAX + 1];
+
+#ifdef MCRT0
+extern void	monstartup(u_long, u_long);
+extern void	_mcleanup(void);
+extern unsigned char _etext, _eprol;
+#endif /* MCRT0 */
+
+static inline char *_strrchr(const char *p, char ch);
 
 __asm__ (
 "	.text\n"
-"	.align 8\n"
-"	.globl start\n"
-"start:\n"
-"	br.n	_start\n"
-"	 or	r2, r31, r0\n"
+"	.align 3\n"
+"	.globl __start\n"
+"	.globl _start\n"
+"__start:\n"
+"_start:\n"
+"	or	%r0, %r0, %r0\n"	/* two nop because execution may */
+"	or	%r0, %r0, %r0\n"	/* skip up to two instructions */
+					/* see setregs() in the kernel */
+					/* for details. */
+"	ld	%r2, %r31, 0\n"		/* argc */
+"	addu	%r3, %r31, 4\n"		/* argv */
+"	lda	%r4, %r3[%r2]\n"
+"	br.n	___start\n"
+"	 addu	%r4, %r4, 4\n"		/* envp = argv + argc + 1 */
+/* cleanup is %r5, zeroed in setregs() at the moment */
 );
 
 static void
-start(struct kframe *kfp)
+___start(int argc, char **argv, char **envp, void (*cleanup)(void))
 {
-	char **argv, *ap, *s;
+	char *s;
 
-	argv = &kfp->argv[0];
-	environ = argv + kfp->argc + 1;
+	environ = envp;
 
-	if (ap = argv[0]) {
-		if ((__progname = _strrchr(ap, '/')) == NULL)
-			__progname = ap;
+	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
+		if ((__progname = _strrchr(__progname, '/')) == NULL)
+			__progname = argv[0];
 		else
-			++__progname;
+			__progname++;
 		for (s = __progname_storage; *__progname &&
 		    s < &__progname_storage[sizeof __progname_storage - 1]; )
 			*s++ = *__progname++;
@@ -72,23 +88,32 @@ start(struct kframe *kfp)
 		__progname = __progname_storage;
 	}
 
-__asm__ ("eprol:");
+	if (cleanup)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
-	monstartup((u_long)&eprol, (u_long)&etext);
+	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
-__asm__ ("__callmain:");	/* Defined for the benefit of debuggers */
-	exit(main(kfp->argc, argv, environ));
+	__init();
+
+	exit(main(argc, argv, environ));
 }
 
-#include "common.c"
+static char *
+_strrchr(const char *p, char ch)
+{
+	char *save;
+
+	for (save = NULL;; ++p) {
+		if (*p == ch)
+			save = (char *)p;
+		if (!*p)
+			return(save);
+	}
+}
 
 #ifdef MCRT0
-__asm__ ("\
-	text\n\
-	global	_eprol\n\
-_eprol:\n\
-");
+asm("\t.text\n_eprol:\n");
 #endif

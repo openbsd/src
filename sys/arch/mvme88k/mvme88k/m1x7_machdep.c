@@ -1,4 +1,4 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.9 2009/03/09 19:51:18 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.10 2013/01/05 11:20:56 miod Exp $ */
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -190,14 +190,25 @@ int
 m1x7_clockintr(void *eframe)
 {
 	uint oflow;
+	uint32_t t1, t2;
+	uint8_t c;
 
+	/*
+	 * Since we can not freeze the counter while reading the count
+	 * and overflow registers, read them a second time; if the
+	 * counter has wrapped, pick the second reading.
+	 */
 	mtx_enter(&pcc_mutex);
-	oflow = (*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL) &
-	    PCC2_TCTL_OVF) >> PCC2_TCTL_OVF_SHIFT;
+	t1 = *(volatile uint32_t *)(PCC2_BASE + PCCTWO_T1COUNT);
+	c = *(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL);
+	t2 = *(volatile uint32_t *)(PCC2_BASE + PCCTWO_T1COUNT);
+	if (t2 < t1)
+		c = *(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL);
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL) =
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
-	pcc_refcnt += oflow * tick;
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1ICR) = PROF_RESET;
+	oflow = c >> PCC2_TCTL_OVF_SHIFT;
+	pcc_refcnt += oflow * tick;
 	mtx_leave(&pcc_mutex);
 
 	while (oflow-- != 0) {
@@ -227,8 +238,8 @@ pcc_get_timecount(struct timecounter *tc)
 	tctl = *(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL);
 	/*
 	 * Since we can not freeze the counter while reading the count
-	 * and overflow registers, read it a second time; if it has
-	 * wrapped, pick the second reading.
+	 * and overflow registers, read it a second time; if it the
+	 * counter has wrapped, pick the second reading.
 	 */
 	tcr2 = *(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T1COUNT);
 	if (tcr2 < tcr1) {
@@ -238,11 +249,10 @@ pcc_get_timecount(struct timecounter *tc)
 	cnt = pcc_refcnt;
 	mtx_leave(&pcc_mutex);
 
-	oflow = (tctl & PCC2_TCTL_OVF) >> PCC2_TCTL_OVF_SHIFT;
-	if (oflow != 0)
-		return cnt + tcr1 + oflow * tick;
-	else
-		return cnt + tcr1;
+	oflow = tctl >> PCC2_TCTL_OVF_SHIFT;
+	while (oflow-- != 0)
+		cnt += pcc2_timer_us2lim(tick);
+	return cnt + tcr1;
 }
 
 int

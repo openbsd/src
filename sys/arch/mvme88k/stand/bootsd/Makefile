@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.16 2012/12/01 21:08:48 miod Exp $
+#	$OpenBSD: Makefile,v 1.17 2013/01/05 11:20:56 miod Exp $
 
 S=	${.CURDIR}/../../../..
 DEFS=
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
 CFLAGS+=${INCPATH} ${DEFS} ${COPTS}
-LDFLAGS=-N -T ${STAGE2_RELOC}
+LDFLAGS=-N -T ${S}/arch/mvme88k/stand/ld.script -Ttext ${STAGE2_RELOC}
 NOPIE=
 CLEANFILES+=bootsd
 
@@ -26,9 +26,9 @@ ALL=	${BOOTS}
 
 all: ${ALL}
 
-bootsd: ${OBJS} ${STAGE2_CRT} ${LIBS}
+bootsd: ${STAGE2_CRT} ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${STAGE2_CRT} ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
+	    ${STAGE2_CRT} ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
 
 install:
 	install ${INSTALL_STRIP} -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}

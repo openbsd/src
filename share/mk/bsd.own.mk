@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.132 2012/12/01 21:08:20 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.133 2013/01/05 11:20:55 miod Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -22,8 +22,7 @@ TCP_WRAPPERS?=	yes
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
 DEBUGLIBS?=	no
 # Set toolchain to be able to know differences.
-.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
-    ${MACHINE_ARCH} == "vax"
+.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "vax"
 ELF_TOOLCHAIN?=	no
 .else
 ELF_TOOLCHAIN?=	yes

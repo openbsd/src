@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2011/04/18 16:52:09 thib Exp $
+#	$OpenBSD: Makefile,v 1.13 2013/01/05 11:20:55 miod Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -55,8 +55,10 @@ rd_teardown:
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 
-rdsetroot:	${TOP}/../common/rdsetroot.c
-	${HOSTCC} -o rdsetroot ${TOP}/../common/rdsetroot.c
+rdsetroot:	${TOP}/../common/elfrdsetroot.c
+	${HOSTCC} -o rdsetroot \
+	    ${TOP}/../common/rdsetroot.c ${TOP}/../common/elf32.c \
+	    ${TOP}/../common/elf64.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -73,7 +75,7 @@ ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
-	crunchgen -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${CBIN}.conf
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

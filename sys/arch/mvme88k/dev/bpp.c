@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpp.c,v 1.2 2009/02/14 17:41:42 miod Exp $	*/
+/*	$OpenBSD: bpp.c,v 1.3 2013/01/05 11:20:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -88,7 +88,7 @@ bpp_csr_command(struct bpp_softc *sc, uint command, bus_addr_t addr)
 		 * version.
 		 */
 		tas8 = TAS_TAS >> 8;
-		__asm__ __volatile__ ("xmem.bu %0, %2, r0" :
+		__asm__ __volatile__ ("xmem.bu %0, %2, %%r0" :
 		    "+r"(tas8), "+m"(tasaddr) : "r"(tasaddr));
 
 		if (!ISSET(tas8, TAS_TAS >> 8))

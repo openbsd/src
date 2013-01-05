@@ -1,4 +1,4 @@
-/*	$OpenBSD: getbrdid.c,v 1.3 2003/09/07 21:35:35 miod Exp $	*/
+/*	$OpenBSD: getbrdid.c,v 1.4 2013/01/05 11:20:56 miod Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -15,6 +15,6 @@ mvmeprom_brdid()
 	struct mvmeprom_brdid *id;
 
 	MVMEPROM_CALL(MVMEPROM_GETBRDID);
-	asm volatile ("or %0,r0,r2": "=r" (id):);
+	asm volatile ("or %0,%%r0,%%r2": "=r" (id):);
 	return (id);
 }

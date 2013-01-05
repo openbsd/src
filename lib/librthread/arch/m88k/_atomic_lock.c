@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 2006/01/05 22:33:24 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 2013/01/05 11:20:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -38,7 +38,7 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 
 	old = _SPINLOCK_LOCKED;
 	__asm__ __volatile__
-	    ("xmem %0, %2, r0" : "=r" (old) : "0" (old), "r" (lock));
+	    ("xmem %0, %2, %%r0" : "=r" (old) : "0" (old), "r" (lock));
 
 	return (old != _SPINLOCK_UNLOCKED);
 }

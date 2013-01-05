@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.8 2005/08/07 16:40:15 espie Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.9 2013/01/05 11:20:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,9 +43,9 @@
  */
 
 SYSENTRY(sigsuspend)
-	ld	r2,r2,0			/* dereference the pointer mask */
-	or	r13,r0,SYS_sigsuspend
-	tb0	0,r0,128
+	ld	%r2,%r2,0		/* dereference the pointer mask */
+	or	%r13,%r0,SYS_sigsuspend
+	tb0	0,%r0,128
 	br	__cerror
-	jmp.n	r1
-	 or	r2,r0,0
+	jmp.n	%r1
+	 or	%r2,%r0,0

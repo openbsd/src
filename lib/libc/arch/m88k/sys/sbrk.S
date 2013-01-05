@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.8 2005/08/07 16:40:15 espie Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.9 2013/01/05 11:20:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,18 +45,18 @@ __curbrk:
 	.text
 
 ENTRY(sbrk)
-	or.u	r5,r0,hi16(__curbrk)
-	ld	r5,r5,lo16(__curbrk)
-	add	r2,r2,r5
-	or	r4,r2,0
-	or	r13,r0,SYS_break
-	tb0	0,r0,128
+	or.u	%r5,%r0,%hi16(__curbrk)
+	ld	%r5,%r5,%lo16(__curbrk)
+	add	%r2,%r2,%r5
+	or	%r4,%r2,0
+	or	%r13,%r0,SYS_break
+	tb0	0,%r0,128
 	br 	__cerror
 	/* Save old __curbrk */
-	or.u	r5,r0,hi16(__curbrk)
-	ld	r2,r5,lo16(__curbrk)
+	or.u	%r5,%r0,%hi16(__curbrk)
+	ld	%r2,%r5,%lo16(__curbrk)
 	/* Update __curbrk */
-	st	r4,r5,lo16(__curbrk)
+	st	%r4,%r5,%lo16(__curbrk)
 	/* and return old __curbrk */
-	jmp.n	r1
-	 or	r3,r0,0
+	jmp.n	%r1
+	 or	%r3,%r0,0

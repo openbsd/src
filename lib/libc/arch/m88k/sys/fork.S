@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.5 2005/08/07 16:40:15 espie Exp $	*/
+/*	$OpenBSD: fork.S,v 1.6 2013/01/05 11:20:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,8 +38,8 @@
 /* r2 = pid. r3 = 0 in parent, 1 in child */
 
 SYSCALL(fork)
-	bcnd	eq0,r3,parent
-	or	r2,r0,0
-	or	r3,r0,0
+	bcnd	eq0,%r3,parent
+	or	%r2,%r0,0
+	or	%r3,%r0,0
 parent:
-	jmp	r1		/* pid = fork() */
+	jmp	%r1		/* pid = fork() */

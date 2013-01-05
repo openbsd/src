@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.8 2007/12/21 23:56:54 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.9 2013/01/05 11:20:55 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -39,10 +39,10 @@
 
 #define	PFSR_SAVE \
 	ld	TMP2, TMP,  CI_PFSR_I0; \
-	ld	TMP3, TMP2, r0; \
-	st	TMP3, r31,  EF_IPFSR; \
+	ld	TMP3, TMP2, %r0; \
+	st	TMP3, %r31, EF_IPFSR; \
 	ld	TMP2, TMP,  CI_PFSR_D0; \
-	ld	TMP3, TMP2, r0; \
-	st	TMP3, r31,  EF_DPFSR
+	ld	TMP3, TMP2, %r0; \
+	st	TMP3, %r31, EF_DPFSR
 
 #include <m88k/m88k/eh_common.S>

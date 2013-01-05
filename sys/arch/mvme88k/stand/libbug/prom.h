@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.5 2012/11/25 14:08:14 miod Exp $	*/
+/*	$OpenBSD: prom.h,v 1.6 2013/01/05 11:20:56 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2010, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -26,6 +26,6 @@
  */
 
 #define MVMEPROM_CALL(x)						\
-	__asm__ __volatile__ ("or r9,r0," __STRING(x) "; tb0 0,r0,496"	\
+	__asm__ __volatile__ ("or %%r9,%%r0," __STRING(x) "; tb0 0,%%r0,496" \
 	    :::	"r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",		\
 	        "r9", "r10", "r11", "r12", "r13", "memory")

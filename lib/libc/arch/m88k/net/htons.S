@@ -1,4 +1,4 @@
-/*	$OpenBSD: htons.S,v 1.5 2009/10/28 06:49:55 deraadt Exp $	*/
+/*	$OpenBSD: htons.S,v 1.6 2013/01/05 11:20:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,5 +38,5 @@
 /* hostorder = htons(netorder) */
 
 ENTRY(htons)
-	jmp.n	r1
-	 clr	r2,r2,16<16> /* clear the top 16 bits */
+	jmp.n	%r1
+	 clr	%r2,%r2,16<16> /* clear the top 16 bits */

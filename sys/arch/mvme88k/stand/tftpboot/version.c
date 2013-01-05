@@ -1,6 +1,7 @@
-/*	$OpenBSD: version.c,v 1.8 2012/12/01 21:08:50 miod Exp $ */
+/*	$OpenBSD: version.c,v 1.9 2013/01/05 11:20:56 miod Exp $ */
 
 /*
+ *	1.9	ELF toolchain
  *	1.8	compiled with gcc 3.3.5
  *	1.7	recognize non-working NIOT configuration and ask the user to
  *		correct it instead of failing to boot silently
@@ -12,4 +13,4 @@
  *	1.2	rewritten startup code and general cleanup
  *	1.1	initial revision
  */
-char *version = "1.8";
+const char *version = "1.9";

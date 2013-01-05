@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors_88110.S,v 1.6 2010/12/23 20:05:08 miod Exp $	*/
+/*	$OpenBSD: vectors_88110.S,v 1.7 2013/01/05 11:20:56 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991, 1992 Carnegie Mellon University
@@ -38,7 +38,7 @@
 	VECTOR(m88110_unknown_handler); VECTOR(m88110_unknown_handler); \
 	VECTOR(m88110_unknown_handler); VECTOR(m88110_unknown_handler);
 
-	data
+	.data
 GLOBAL(m88110_vector_list)
 	VECTOR(m88110_reset_handler)		/* 00 */
 	VECTOR(m88110_interrupt_handler)	/* 01 */
@@ -85,5 +85,5 @@ GLOBAL(m88110_vector_list)
 	VECTOR(m88110_trace)			/* 83 */
 	VECTOR(m88110_entry)			/* 84 */
 #endif
-	word	0
+	.word	0
 	VECTOR(m88110_data_exception_handler_bootstrap)

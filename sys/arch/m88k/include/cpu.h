@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.55 2012/12/02 07:03:31 guenther Exp $ */
+/*	$OpenBSD: cpu.h,v 1.56 2013/01/05 11:20:56 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -191,7 +191,7 @@ curcpu(void)
 {
 	struct cpu_info *cpuptr;
 
-	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (cpuptr));
+	__asm__ __volatile__ ("ldcr %0, %%cr17" : "=r" (cpuptr));
 	return cpuptr;
 }
 

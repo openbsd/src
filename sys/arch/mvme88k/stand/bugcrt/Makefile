@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.14 2013/01/05 11:20:56 miod Exp $
 
 S=${.CURDIR}/../../../..
 
@@ -16,18 +16,12 @@ all:	${OBJS}
 
 stage1crt.o: crt0.S
 	${CC} ${CFLAGS} ${STAGE1_CFLAGS} -c ${.CURDIR}/crt0.S -o ${.TARGET}
-	${LD} -x -r ${.TARGET} -o ${.TARGET}ut
-	mv ${.TARGET}ut ${.TARGET}
 
 stage2crt.o: crt0.S
 	${CC} ${CFLAGS} ${STAGE2_CFLAGS} -c ${.CURDIR}/crt0.S -o ${.TARGET}
-	${LD} -x -r ${.TARGET} -o ${.TARGET}ut
-	mv ${.TARGET}ut ${.TARGET}
 
 netcrt.o: crt0.S
 	${CC} ${CFLAGS} ${NETBOOT_CFLAGS} -c ${.CURDIR}/crt0.S -o ${.TARGET}
-	${LD} -x -r ${.TARGET} -o ${.TARGET}ut
-	mv ${.TARGET}ut ${.TARGET}
 
 install:
 

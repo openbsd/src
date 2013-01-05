@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2012/12/01 21:08:50 miod Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/01/05 11:20:56 miod Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -19,14 +19,14 @@ CLEANFILES+=tftpboot tftpboot.bin
 SRCS=   boot.c conf.c version.c tftpfs.c netdev.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS= ${LIBSA} ${LIBBUG} ${LIBZ}
-LDFLAGS+= -s -N -T ${STAGE2_RELOC}
+LDFLAGS=-N -T ${S}/arch/mvme88k/stand/ld.script -Ttext ${STAGE2_RELOC}
 NOPIE=
 
 all:	tftpboot.bin
 
-tftpboot: ${OBJS} ${NETBOOT_CRT} ${LIBS}
+tftpboot: ${NETBOOT_CRT} ${OBJS} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${NETBOOT_CRT} ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
+	     ${NETBOOT_CRT} ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
 
 tftpboot.bin: tftpboot
 	${STRIP} tftpboot

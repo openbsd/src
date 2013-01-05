@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.8 2005/08/07 16:40:15 espie Exp $	*/
+/*	$OpenBSD: brk.S,v 1.9 2013/01/05 11:20:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,22 +40,22 @@
 
 	.data
 	.align 8
-ASGLOBAL(minbrk)
+ASGLOBAL(__minbrk)
 	.long	_end
 
 ENTRY(brk)
-	or.u	r5,r0,hi16(minbrk)
-	ld	r5,r5,lo16(minbrk)
-	cmp	r3,r5,r2
-	bb1	ls,r3,1f	/* r2 should be > minbrk; can't go below end */
-	or	r2,r5,0		/* otherwise, set r2 to minbrk */
+	or.u	%r5,%r0,%hi16(__minbrk)
+	ld	%r5,%r5,%lo16(__minbrk)
+	cmp	%r3,%r5,%r2
+	bb1	ls,%r3,1f	/* r2 should be > minbrk; can't go below end */
+	or	%r2,%r5,0	/* otherwise, set r2 to minbrk */
 1:
-	or	r4,r2,0
-	or	r13,r0,__SYSCALLNAME(SYS_,break)
-	tb0	0,r0,128
+	or	%r4,%r2,0
+	or	%r13,%r0,__SYSCALLNAME(SYS_,break)
+	tb0	0,%r0,128
 	br	__cerror
-	or.u	r5,r0,hi16(__curbrk)
-	st	r4,r5,lo16(__curbrk)
-	or	r2,r0,0		/* clear r2/r3 to indicate success */
-	jmp.n	r1
-	 or	r3,r0,0
+	or.u	%r5,%r0,%hi16(__curbrk)
+	st	%r4,%r5,%lo16(__curbrk)
+	or	%r2,%r0,0	/* clear r2/r3 to indicate success */
+	jmp.n	%r1
+	 or	%r3,%r0,0

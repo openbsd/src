@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.44 2011/11/08 18:41:34 matthieu Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.45 2013/01/05 11:20:55 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -12,6 +12,7 @@
 
 SIZE?=	size
 STRIP?=	strip
+OBJCOPY?= objcopy
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -38,7 +39,8 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
-LINKFLAGS=	-N -Ttext 0x20000 -e start
+LINKFLAGS=	-T ${_machdir}/conf/ld.script -Ttext 0x20000 -e __start -X -N \
+		    --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -76,19 +78,23 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
-SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
-STRIPFLAGS=	-g
+STRIPFLAGS=	-g -x
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S -x
 .endif
+SYSTEM_LD_TAIL+=; \
+		echo ${OBJCPY} -O a.out-m88k-openbsd --impure $@; \
+		${OBJCPY} -O a.out-m88k-openbsd --impure $@; \
+		chmod 755 $@
 
 %LOAD
 

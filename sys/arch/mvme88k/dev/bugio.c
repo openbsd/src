@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.19 2010/12/23 20:05:08 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.20 2013/01/05 11:20:56 miod Exp $ */
 /*
  * Copyright (c) 2006, 2010, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -46,7 +46,7 @@ __cpu_simple_lock_t bug_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
 #define MVMEPROM_CALL(x)						\
-	__asm__ __volatile__ ("or r9,r0," __STRING(x) "; tb0 0,r0,496"	\
+	__asm__ __volatile__ ("or %%r9,%%r0," __STRING(x) "; tb0 0,%%r0,496"	\
 	    :::	"r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",		\
 	        "r9", "r10", "r11", "r12", "r13", "memory")
 
@@ -55,14 +55,14 @@ __cpu_simple_lock_t bug_lock = __SIMPLELOCK_UNLOCKED;
 	BUG_LOCK();							\
 	psr = get_psr();						\
 	set_psr(psr | PSR_IND);			/* paranoia */		\
-	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (ossr3));		\
-	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(bugsr3));		\
+	__asm__ __volatile__ ("ldcr %0, %%cr20" : "=r" (ossr3));		\
+	__asm__ __volatile__ ("stcr %0, %%cr20" :: "r"(bugsr3));		\
 }
 
 #define	OSCTXT()							\
 {									\
-	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (bugsr3));		\
-	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(ossr3));		\
+	__asm__ __volatile__ ("ldcr %0, %%cr20" : "=r" (bugsr3));		\
+	__asm__ __volatile__ ("stcr %0, %%cr20" :: "r"(ossr3));		\
 	set_psr(psr);							\
 	BUG_UNLOCK();							\
 }
@@ -85,7 +85,7 @@ bugpcrlf(void)
 void
 buginit()
 {
-	__asm__ __volatile__ ("ldcr %0, cr20" : "=r" (bugsr3));
+	__asm__ __volatile__ ("ldcr %0, %%cr20" : "=r" (bugsr3));
 }
 
 char
@@ -101,7 +101,7 @@ buginchr(void)
 
 	BUGCTXT();
 	MVMEPROM_CALL(MVMEPROM_INCHR);
-	__asm__ __volatile__ ("or %0,r0,r2" : "=r" (ret));
+	__asm__ __volatile__ ("or %0,%%r0,%%r2" : "=r" (ret));
 	OSCTXT();
 	return ((char)ret & 0xff);
 }
@@ -117,7 +117,7 @@ bugoutchr(int c)
 #endif
 
 	BUGCTXT();
-	__asm__ __volatile__ ("or r2,r0,%0" : : "r" (c));
+	__asm__ __volatile__ ("or %%r2,%%r0,%0" : : "r" (c));
 	MVMEPROM_CALL(MVMEPROM_OUTCHR);
 	OSCTXT();
 }
@@ -150,7 +150,7 @@ bugbrdid(struct mvmeprom_brdid *id)
 
 	BUGCTXT();
 	MVMEPROM_CALL(MVMEPROM_GETBRDID);
-	__asm__ __volatile__ ("or %0,r0,r2" : "=r" (ptr));
+	__asm__ __volatile__ ("or %0,%%r0,%%r2" : "=r" (ptr));
 	OSCTXT();
 
 	bcopy(ptr, id, sizeof(struct mvmeprom_brdid));
@@ -167,7 +167,7 @@ bugdiskrd(struct mvmeprom_dskio *dio)
 #endif
 
 	BUGCTXT();
-	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (dio));
+	__asm__ __volatile__ ("or %%r2, %%r0, %0" : : "r" (dio));
 	MVMEPROM_CALL(MVMEPROM_DSKRD);
 	OSCTXT();
 }
@@ -189,10 +189,10 @@ spin_cpu(cpuid_t cpu, vaddr_t address)
 #endif
 
 	BUGCTXT();
-	__asm__ __volatile__ ("or r2, r0, %0; or r3, r0, %1" ::
+	__asm__ __volatile__ ("or %%r2, %%r0, %0; or %%r3, %%r0, %1" ::
 	    "r" (cpu), "r" (address));
 	MVMEPROM_CALL(MVMEPROM_FORKMPU);
-	__asm__ __volatile__ ("or %0,r0,r2" : "=r" (ret));
+	__asm__ __volatile__ ("or %0,%%r0,%%r2" : "=r" (ret));
 	OSCTXT();
 
 	return (ret);

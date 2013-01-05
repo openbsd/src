@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.7 2010/04/25 21:02:51 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.8 2013/01/05 11:20:55 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2010 Miodrag Vallat
  *
@@ -46,27 +46,27 @@ ENTRY(pfsr_double)
 	 * after reading them.
 	 */
 	ld	TMP2, TMP,  CI_PFSR_I0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	extu	TMP3, TMP3, 3<16>
 	bcnd	ne0,  TMP3, 1f
-	st	r0,   TMP2, r0
+	st	%r0,  TMP2, %r0
 	ld	TMP2, TMP,  CI_PFSR_I1
 1:
-	ld	TMP3, TMP2, r0
-	st	r0,   TMP2, r0
-	st	TMP3, r31,  EF_IPFSR
+	ld	TMP3, TMP2, %r0
+	st	%r0,  TMP2, %r0
+	st	TMP3, %r31, EF_IPFSR
 
 	ld	TMP2, TMP,  CI_PFSR_D0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	extu	TMP3, TMP3, 3<16>
 	bcnd	ne0,  TMP3, 2f
-	st	r0,   TMP2, r0
+	st	%r0,  TMP2, %r0
 	ld	TMP2, TMP,  CI_PFSR_D1
 2:
-	ld	TMP3, TMP2, r0
-	st	r0,   TMP2, r0
+	ld	TMP3, TMP2, %r0
+	st	%r0,  TMP2, %r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP3, r31,  EF_DPFSR
+	 st	TMP3, %r31, EF_DPFSR
 
 ENTRY(pfsr_straight)
 	/*
@@ -74,12 +74,12 @@ ENTRY(pfsr_straight)
 	 * no need to reset fault status registers in this case.
 	 */
 	ld	TMP2, TMP,  CI_PFSR_I0
-	ld	TMP3, TMP2, r0
-	st	TMP3, r31,  EF_IPFSR
+	ld	TMP3, TMP2, %r0
+	st	TMP3, %r31, EF_IPFSR
 	ld	TMP2, TMP,  CI_PFSR_D0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP3, r31,  EF_DPFSR
+	 st	TMP3, %r31, EF_DPFSR
 
 ENTRY(pfsr_six)
 	/*
@@ -89,33 +89,33 @@ ENTRY(pfsr_six)
 	 * the per-cpu_info pfsr pointers as usual.
 	 */
 	ld	TMP2, TMP,  CI_PFSR_I0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	extu	TMP3, TMP3, 3<16>
 	bcnd	ne0,  TMP3, 1f
 
 	addu	TMP2, TMP2, 0x1000	/* I1 */
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	extu	TMP3, TMP3, 3<16>
 	bcnd	ne0,  TMP3, 1f
 
 	addu	TMP2, TMP2, 0x1000	/* I2 */
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	extu	TMP3, TMP3, 3<16>
 	bcnd	ne0,  TMP3, 1f
 
 	addu	TMP2, TMP2, 0x1000	/* I3 */
 1:
-	ld	TMP3, TMP2, r0
-	st	r0,   TMP2, r0
-	st	TMP3, r31,  EF_IPFSR
+	ld	TMP3, TMP2, %r0
+	st	%r0,  TMP2, %r0
+	st	TMP3, %r31, EF_IPFSR
 
 	ld	TMP2, TMP,  CI_PFSR_D0
-	ld	TMP3, TMP2, r0
+	ld	TMP3, TMP2, %r0
 	extu	TMP3, TMP3, 3<16>
 	bcnd	ne0,  TMP3, 2f
 	addu	TMP2, TMP2, 0x1000	/* D1 */
 2:
-	ld	TMP3, TMP2, r0
-	st	r0,   TMP2, r0
+	ld	TMP3, TMP2, %r0
+	st	%r0,  TMP2, %r0
 	br.n	_ASM_LABEL(pfsr_done)
-	 st	TMP3, r31,  EF_DPFSR
+	 st	TMP3, %r31, EF_DPFSR

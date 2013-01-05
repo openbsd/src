@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.75 2012/08/22 16:58:26 pascal Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.76 2013/01/05 11:20:56 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
-LINKFLAGS=	-Ttext 0x10000 -e start
+LINKFLAGS=	-Ttext 0x10000 -e __start -X -N --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -66,7 +66,6 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-# Kernel is linked as a ZMAGIC executable, with start at 10020
 SYSTEM_HEAD=	locore.o param.o ioconf.o
 SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
@@ -78,13 +77,13 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
-STRIPFLAGS=	-g
+STRIPFLAGS=	-g -x
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S -x
 .endif
 
 %LOAD

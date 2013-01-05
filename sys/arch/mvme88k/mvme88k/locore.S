@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.69 2011/11/19 20:40:10 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.70 2013/01/05 11:20:56 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -75,11 +75,11 @@
  *   0x10000 == start	Boot loader jumps here. (for now, this can
  *			handle only NMAGIC - screwy linker)
  */
-	text
+	.text
 
 GLOBAL(kernelstart)
 GLOBAL(kernel_text)
-ASGLOBAL(start)
+ASGLOBAL(__start)
 	/*
 	 * A few identical jump instructions to make sure the pipeline is
 	 * in a good state. Probably overkill, but it's cheap.
@@ -90,16 +90,14 @@ ASGLOBAL(start)
 	br	_ASM_LABEL(main_start)
 
 	/*
-	 * Room for the kernel (post-autoconf) VBR page. This is allocating
-	 * a bit too much (since kernel_text starts after the a.out header),
-	 * but it's a waste we can afford.
+	 * Room for the kernel (post-autoconf) VBR page.
 	 * Note this page is in kernel text, in order to be write-protected
 	 * by pmap_bootstrap().
 	 */
 #ifdef __ELF__
-	space	PAGE_SIZE - 4 * 4
+	.space	PAGE_SIZE - 4 * 4
 #else
-	space	PAGE_SIZE - 4 * 4 - 0x20
+	.space	PAGE_SIZE - 4 * 4 - 0x20
 #endif
 
 #ifdef M88100
@@ -133,28 +131,28 @@ ASLOCAL(main_start)
  * (*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini,kernel.emini,
  *  bootdev, brdtyp);
  */
-	or.u	r13, r0,  hi16(_C_LABEL(boothowto))
-	st	r2,  r13, lo16(_C_LABEL(boothowto))
-	or.u	r13, r0,  hi16(_C_LABEL(bootaddr))
-	st	r3,  r13, lo16(_C_LABEL(bootaddr))
-	or.u	r13, r0,  hi16(_C_LABEL(first_addr))
-	st	r4,  r13, lo16(_C_LABEL(first_addr))
+	or.u	%r13, %r0,  %hi16(_C_LABEL(boothowto))
+	st	%r2,  %r13, %lo16(_C_LABEL(boothowto))
+	or.u	%r13, %r0,  %hi16(_C_LABEL(bootaddr))
+	st	%r3,  %r13, %lo16(_C_LABEL(bootaddr))
+	or.u	%r13, %r0,  %hi16(_C_LABEL(first_addr))
+	st	%r4,  %r13, %lo16(_C_LABEL(first_addr))
 #if defined(DDB) || NKSYMS > 0
-	or.u	r13, r0,  hi16(_C_LABEL(esym))
-	st	r4,  r13, lo16(_C_LABEL(esym))
+	or.u	%r13, %r0,  %hi16(_C_LABEL(esym))
+	st	%r4,  %r13, %lo16(_C_LABEL(esym))
 #endif
-	or.u	r13, r0,  hi16(_C_LABEL(bootdev))
-	st	r7,  r13, lo16(_C_LABEL(bootdev))
-	or.u	r13, r0,  hi16(_C_LABEL(brdtyp))
-	st	r8,  r13, lo16(_C_LABEL(brdtyp))
+	or.u	%r13, %r0,  %hi16(_C_LABEL(bootdev))
+	st	%r7,  %r13, %lo16(_C_LABEL(bootdev))
+	or.u	%r13, %r0,  %hi16(_C_LABEL(brdtyp))
+	st	%r8,  %r13, %lo16(_C_LABEL(brdtyp))
 
 	/* set cputyp */
-	ldcr	r1,  PID
-	extu	r8,  r1, 8<8>
-	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
+	ldcr	%r1,  PID
+	extu	%r8,  %r1, 8<8>
+	or.u	%r13, %r0,  %hi16(_C_LABEL(cputyp))
 
 	bsr.n	_ASM_LABEL(setup_psr)
-	 st	r8,  r13, lo16(_C_LABEL(cputyp))
+	 st	%r8,  %r13, %lo16(_C_LABEL(cputyp))
 
 	/*
 	 * Have curcpu() point at the dummy cpuinfo structure,
@@ -162,9 +160,9 @@ ASLOCAL(main_start)
 	 * This is necessary for early spl*() usage, as well as
 	 * mutex diagnostic code.
 	 */
-	or.u	r11, r0,  hi16(_ASM_LABEL(dummy_cpu))
-	or	r11, r11, lo16(_ASM_LABEL(dummy_cpu))
-	stcr	r11, CPU
+	or.u	%r11, %r0,  %hi16(_ASM_LABEL(dummy_cpu))
+	or	%r11, %r11, %lo16(_ASM_LABEL(dummy_cpu))
+	stcr	%r11, CPU
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -174,27 +172,27 @@ ASLOCAL(main_start)
 #endif	/* MULTIPROCESSOR */
 
 	/* Switch to startup stack */
-	or.u	r31, r0,  hi16(_ASM_LABEL(initstack_end))
-	or	r31, r31, lo16(_ASM_LABEL(initstack_end))
+	or.u	%r31, %r0,  %hi16(_ASM_LABEL(initstack_end))
+	or	%r31, %r31, %lo16(_ASM_LABEL(initstack_end))
 
 	/* ...and to our exception vectors */
 #ifdef M88110
 #ifdef M88100
-	cmp	r2, r8, CPU_88110
-	bb1	ne, r2, 1f	/* if it's a 'mc88110, use different vectors */
+	cmp	%r2, %r8, CPU_88110
+	bb1	ne, %r2, 1f	/* if it's a 'mc88110, use different vectors */
 #endif
-	or.u	r3, r0, hi16(_C_LABEL(m88110_vector_list))
+	or.u	%r3, %r0, %hi16(_C_LABEL(m88110_vector_list))
 	br.n	2f
-	 or	r3, r3, lo16(_C_LABEL(m88110_vector_list))
+	 or	%r3, %r3, %lo16(_C_LABEL(m88110_vector_list))
 1:
 #endif /* M88110 */
 #ifdef M88100
-	or.u	r3, r0, hi16(_C_LABEL(vector_list))
-	or	r3, r3, lo16(_C_LABEL(vector_list))
+	or.u	%r3, %r0, %hi16(_C_LABEL(vector_list))
+	or	%r3, %r3, %lo16(_C_LABEL(vector_list))
 #endif /* M88100 */
 2:
 	bsr.n	_C_LABEL(mvme88k_vector_init)
-	 ldcr	r2, VBR
+	 ldcr	%r2, VBR
 
 #ifdef MULTIPROCESSOR
 	bsr	_C_LABEL(atomic_init)
@@ -210,12 +208,12 @@ ASLOCAL(main_start)
 	/*
 	 * ...and we can switch to the u area stack now.
 	 */
-	ldcr	r10, CPU
-	ld	r2,  r10, CI_CURPCB
+	ldcr	%r10, CPU
+	ld	%r2,  %r10, CI_CURPCB
 
 	/* call main() - no arguments although main() still defines one */
 	bsr.n	_C_LABEL(main)
-	 addu	r31, r2, USPACE
+	 addu	%r31, %r2, USPACE
 
 #ifdef MULTIPROCESSOR
 
@@ -225,13 +223,13 @@ ASLOCAL(main_start)
 	 * to the comments there for details.
 	 */
 GLOBAL(secondary_start)
-	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
+	or.u	%r31, %r0,  %hi16(_ASM_LABEL(slavestack_end))
 	bsr.n	_ASM_LABEL(setup_psr)
-	 or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
+	 or	%r31, %r31, %lo16(_ASM_LABEL(slavestack_end))
 
-	or.u	r3,  r0,  hi16(_C_LABEL(kernel_vbr))
-	ld	r2,  r3,  lo16(_C_LABEL(kernel_vbr))
-	stcr	r2,  VBR
+	or.u	%r3,  %r0,  %hi16(_C_LABEL(kernel_vbr))
+	ld	%r2,  %r3,  %lo16(_C_LABEL(kernel_vbr))
+	stcr	%r2,  VBR
 	FLUSH_PIPELINE
 
 	/*
@@ -240,10 +238,10 @@ GLOBAL(secondary_start)
 	 * This is necessary for early spl*() usage, as well as
 	 * mutex diagnostic code.
 	 */
-	or.u	r11, r0,  hi16(_ASM_LABEL(dummy_cpu))
-	or	r11, r11, lo16(_ASM_LABEL(dummy_cpu))
-	st	r0,  r11, CI_FLAGS		/* reset CIF_PRIMARY */
-	stcr	r11, CPU
+	or.u	%r11, %r0,  %hi16(_ASM_LABEL(dummy_cpu))
+	or	%r11, %r11, %lo16(_ASM_LABEL(dummy_cpu))
+	st	%r0,  %r11, CI_FLAGS		/* reset CIF_PRIMARY */
+	stcr	%r11, CPU
 
 	/*
 	 * While holding the cpu_mutex, the secondary cpu can use the slavestack
@@ -254,11 +252,11 @@ GLOBAL(secondary_start)
 
 	bsr	_C_LABEL(secondary_pre_main)	/* set cpu number */
 
-	ldcr	r1, CPU
-	st	r2,  r1, CI_CURPCB	/* save stack as curpcb for traps */
+	ldcr	%r1, CPU
+	st	%r2,  %r1, CI_CURPCB	/* save stack as curpcb for traps */
 
 	bsr.n	_C_LABEL(secondary_main)
-	 addu	r31, r2, USPACE			/* switch to startup stack */
+	 addu	%r31, %r2, USPACE		/* switch to startup stack */
 
 	/*
 	 * Dummy mp_atomic_begin() and mp_atomic_end() routine, so that
@@ -266,7 +264,7 @@ GLOBAL(secondary_start)
 	 * bootstrap. Of course this should never happen (-:
 	 */
 ASLOCAL(dummy_mplock)
-	jmp	r1
+	jmp	%r1
 
 #endif	/* MULTIPROCESSOR */
 
@@ -277,10 +275,10 @@ ASLOCAL(dummy_mplock)
 GLOBAL(doboot)
 #ifdef MVME188
 	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_C_LABEL(brdtyp))
-	ld	r3, r4, lo16(_C_LABEL(brdtyp))
-	cmp	r4, r3, BRD_188
-	bb1	ne, r4, 1f
+	or.u	%r4, %r0, %hi16(_C_LABEL(brdtyp))
+	ld	%r3, %r4, %lo16(_C_LABEL(brdtyp))
+	cmp	%r4, %r3, BRD_188
+	bb1	ne, %r4, 1f
 	bsr	_C_LABEL(m188_reset)
 	br	8f
 1:
@@ -288,11 +286,11 @@ GLOBAL(doboot)
 	/*
 	 * Try hitting the SRST bit in VMEchip2 to reset the system.
 	 */
-	or.u	r3, r0, 0xfff4
-	ld	r4, r3, 0x0060		/* read offset (LCSR + 0x60) */
-	bb0.n	30, r4, 1f		/* if not SYSCON, don't SYSRST */
-	 set	r4, r4, 1<23>		/* set SYSRST bit - bit 23 */
-	st	r4, r3, 0x0060		/* and store it back  */
+	or.u	%r3, %r0, 0xfff4
+	ld	%r4, %r3, 0x0060	/* read offset (LCSR + 0x60) */
+	bb0.n	30, %r4, 1f		/* if not SYSCON, don't SYSRST */
+	 set	%r4, %r4, 1<23>		/* set SYSRST bit - bit 23 */
+	st	%r4, %r3, 0x0060	/* and store it back  */
 1:
 	/*
 	 * MVME197LE Errata #7:
@@ -301,14 +299,14 @@ GLOBAL(doboot)
 	 *   properly.''
 	 */
 #ifdef MVME197
-	or.u	r2, r0, hi16(0x20000)
+	or.u	%r2, %r0, %hi16(0x20000)
 #endif
-	ld	r4, r3, 0x0104		/* try local reset, then... */
-	set	r4, r4, 1<7>
-	st	r4, r3, 0x0104
+	ld	%r4, %r3, 0x0104		/* try local reset, then... */
+	set	%r4, %r4, 1<7>
+	st	%r4, %r3, 0x0104
 #ifdef MVME197
-	bcnd.n	ne0,r2, 1b		/* ...for a while */
-	 subu	r2, r2, 1
+	bcnd.n	ne0,%r2, 1b		/* ...for a while */
+	 subu	%r2, %r2, 1
 #endif
 
 	/*
@@ -322,9 +320,9 @@ GLOBAL(doboot)
 	 */
 
 8:
-	or.u	r31, r0,  hi16(_ASM_LABEL(initstack_end))
+	or.u	%r31, %r0,  %hi16(_ASM_LABEL(initstack_end))
 	bsr.n	_C_LABEL(_doboot)
-	 or	r31, r31, lo16(_ASM_LABEL(initstack_end))
+	 or	%r31, %r31, %lo16(_ASM_LABEL(initstack_end))
 	/*NOTREACHED*/
 
 /*
@@ -340,34 +338,34 @@ GLOBAL(doboot)
  * (originally from Mach 2.5) 
  */
 GLOBAL(m188_delay)
-	bcnd	eq0, r2, 2f
-	or.u	r3, r0, hi16(_C_LABEL(m188_delay_const))
-	ld	r3, r3, lo16(_C_LABEL(m188_delay_const))
-	mul	r4, r2, r3
-	subu	r4, r4, 4	/* overhead of these instructions */
+	bcnd	eq0, %r2, 2f
+	or.u	%r3, %r0, %hi16(_C_LABEL(m188_delay_const))
+	ld	%r3, %r3, %lo16(_C_LABEL(m188_delay_const))
+	mul	%r4, %r2, %r3
+	subu	%r4, %r4, 4	/* overhead of these instructions */
 
 	/* now loop for the given number of cycles */
 1: 
-	bcnd.n	gt0, r4, 1b
-	 subu	r4, r4, 2	/* two cycles per iteration */
+	bcnd.n	gt0, %r4, 1b
+	 subu	%r4, %r4, 2	/* two cycles per iteration */
 2:
-	jmp	r1
+	jmp	%r1
 #endif
 
 /*****************************************************************************/
 
-	data
-	.align	PAGE_SIZE
+	.data
+	.balign	PAGE_SIZE
 GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
-	space	0x2000		/* 8K - 4K phys, 4K virt*/
+	.space	0x2000		/* 8K - 4K phys, 4K virt*/
 
-	.align	PAGE_SIZE
+	.balign	PAGE_SIZE
 ASGLOBAL(initstack)
-	space	USPACE
+	.space	USPACE
 ASGLOBAL(initstack_end)
 
 #ifdef MULTIPROCESSOR
-	space	PAGE_SIZE	/* 4K, small, interim stack */
+	.space	PAGE_SIZE	/* 4K, small, interim stack */
 ASLOCAL(slavestack_end)
 #endif
 
@@ -375,30 +373,30 @@ ASLOCAL(slavestack_end)
  * Process 0's u.
  * Should be page aligned.
  */
-	.align	PAGE_SIZE
+	.balign	PAGE_SIZE
 ASLOCAL(u0)
-	space	USPACE
+	.space	USPACE
 
 GLOBAL(proc0paddr)
-	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
+	.word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 
 /* Dummy cpuinfo structure, for cpu_number() to work early. */
 ASLOCAL(dummy_cpu)
-	word	3 /* CIF_ALIVE | CIF_PRIMARY */	/* ci_flags */
-	word	0				/* ci_curproc */
-	word	0				/* ci_curpcb */
-	word	0				/* ci_curpmap */
-	word	0				/* ci_cpuid */
+	.word	3 /* CIF_ALIVE | CIF_PRIMARY */	/* ci_flags */
+	.word	0				/* ci_curproc */
+	.word	0				/* ci_curpcb */
+	.word	0				/* ci_curpmap */
+	.word	0				/* ci_cpuid */
 #ifdef MULTIPROCESSOR
-	word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_begin */
-	word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_end */
+	.word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_begin */
+	.word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_end */
 #else
-	word	0
-	word	0
+	.word	0
+	.word	0
 #endif	/* MULTIPROCESSOR */
-	space	CPU_INFO_SIZEOF - 7 * 4
+	.space	CPU_INFO_SIZEOF - 7 * 4
 
 #if defined(DDB) || NKSYMS > 0
 GLOBAL(esym)
-	word 	0
+	.word 	0
 #endif /* DDB || NKSYMS > 0 */

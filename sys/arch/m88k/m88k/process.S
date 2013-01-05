@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.24 2009/05/02 14:32:29 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.25 2013/01/05 11:20:56 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -47,61 +47,61 @@ ENTRY(cpu_switchto)
 	/*
 	 * Save state of previous process in its pcb if required.
 	 */
-	bcnd	eq0, r2, 1f
+	bcnd	eq0,  %r2, 1f
 
-	ldcr	r2,  CPU
-	ld	r2,  r2,  CI_CURPCB
-	st	r1,  r2,  PCB_PC		/* save return address */
+	ldcr	%r2,  CPU
+	ld	%r2,  %r2,  CI_CURPCB
+	st	%r1,  %r2,  PCB_PC		/* save return address */
 	bsr	_ASM_LABEL(__savectx)
 	/* note that we don't need to recover r1 at this point */
 
 	/* inline pmap_deactivate(oldproc) */
-	ldcr	r11, CPU
-	st	r0,  r11, CI_CURPMAP
+	ldcr	%r11, CPU
+	st	%r0,  %r11, CI_CURPMAP
 
 1:
-	ldcr	r2, PSR
-	set	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r2, PSR
+	ldcr	%r2, PSR
+	set	%r2, %r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	%r2, PSR
 	FLUSH_PIPELINE
 
-	ldcr	r11, CPU
-	st	r3,  r11, CI_CURPROC			/* curproc = newproc */
+	ldcr	%r11, CPU
+	st	%r3,  %r11, CI_CURPROC			/* curproc = newproc */
 
-	or	r2,  r0,  SONPROC
-	st.b	r2,  r3,  P_STAT
+	or	%r2,  %r0,  SONPROC
+	st.b	%r2,  %r3,  P_STAT
 #ifdef MULTIPROCESSOR
-	st	r11, r3,  P_CPU				/* p->p_cpu = curcpu */
+	st	%r11, %r3,  P_CPU			/* p->p_cpu = curcpu */
 #endif
-	ld	r2,  r3,  P_ADDR
-	st	r2,  r11, CI_CURPCB			/* curpcb = p->p_addr */
+	ld	%r2,  %r3,  P_ADDR
+	st	%r2,  %r11, CI_CURPCB			/* curpcb = p->p_addr */
 
 	bsr.n	_C_LABEL(pmap_activate)		/* pmap_activate(newproc) */
-	 or	r2, r0, r3
+	 or	%r2, %r0, %r3
 
-	ldcr	r2, PSR
-	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r2, PSR
+	ldcr	%r2, PSR
+	clr	%r2, %r2, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	%r2, PSR
 	FLUSH_PIPELINE
 
-	ldcr	r10,  CPU
-	ld	r10,  r10, CI_CURPCB
+	ldcr	%r10,  CPU
+	ld	%r10,  %r10, CI_CURPCB
 
 	/* restore from the current context */
-	ld.d	r2,  r10, PCB_FCR62
-	fstcr	r2,  fcr62
-	fstcr	r3,  fcr63
-	ld	r1,  r10, PCB_PC
-	ld.d	r14, r10, PCB_R14
-	ld.d	r16, r10, PCB_R16
-	ld.d	r18, r10, PCB_R18
-	ld.d	r20, r10, PCB_R20
-	ld.d	r22, r10, PCB_R22
-	ld.d	r24, r10, PCB_R24
-	ld.d	r26, r10, PCB_R26
-	ld.d	r28, r10, PCB_R28
-	jmp.n	r1
-	 ld.d	r30, r10, PCB_R30	/* restore frame pointer & stack */
+	ld.d	%r2,  %r10, PCB_FCR62
+	fstcr	%r2,  %fcr62
+	fstcr	%r3,  %fcr63
+	ld	%r1,  %r10, PCB_PC
+	ld.d	%r14, %r10, PCB_R14
+	ld.d	%r16, %r10, PCB_R16
+	ld.d	%r18, %r10, PCB_R18
+	ld.d	%r20, %r10, PCB_R20
+	ld.d	%r22, %r10, PCB_R22
+	ld.d	%r24, %r10, PCB_R24
+	ld.d	%r26, %r10, PCB_R26
+	ld.d	%r28, %r10, PCB_R28
+	jmp.n	%r1
+	 ld.d	%r30, %r10, PCB_R30	/* restore frame pointer & stack */
 
 /*
  * savectx(pcb)
@@ -111,22 +111,22 @@ ENTRY(savectx)
 	/*
 	 * Save preserved general register set.
 	 */
-	st	r1,  r2,  PCB_PC		/* save return address */
+	st	%r1,  %r2,  PCB_PC		/* save return address */
 ASLOCAL(__savectx)
-	st.d	r14, r2,  PCB_R14
-	st.d	r16, r2,  PCB_R16
-	st.d	r18, r2,  PCB_R18
-	st.d	r20, r2,  PCB_R20
-	st.d	r22, r2,  PCB_R22
-	st.d	r24, r2,  PCB_R24
-	st.d	r26, r2,  PCB_R26
-	st.d	r28, r2,  PCB_R28
-	st.d	r30, r2,  PCB_R30	/* save frame pointer & stack pointer */
+	st.d	%r14, %r2,  PCB_R14
+	st.d	%r16, %r2,  PCB_R16
+	st.d	%r18, %r2,  PCB_R18
+	st.d	%r20, %r2,  PCB_R20
+	st.d	%r22, %r2,  PCB_R22
+	st.d	%r24, %r2,  PCB_R24
+	st.d	%r26, %r2,  PCB_R26
+	st.d	%r28, %r2,  PCB_R28
+	st.d	%r30, %r2,  PCB_R30	/* save frame pointer & stack pointer */
 
 	/*
 	 * Save FP state.
 	 */
-	fldcr	r4,  fcr62
-	fldcr	r5,  fcr63
-	jmp.n	r1
-	 st.d	r4,  r2, PCB_FCR62
+	fldcr	%r4,  %fcr62
+	fldcr	%r5,  %fcr63
+	jmp.n	%r1
+	 st.d	%r4,  %r2, PCB_FCR62

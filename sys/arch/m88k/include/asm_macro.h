@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.8 2013/01/01 00:05:04 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.9 2013/01/05 11:20:56 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -38,14 +38,14 @@
  * Flush the data pipeline.
  */
 #define	flush_pipeline() \
-	__asm__ __volatile__ ("tb1 0, r0, 0" ::: "memory");
+	__asm__ __volatile__ ("tb1 0, %%r0, 0" ::: "memory")
 
 /*
  * Set the PSR.
  */
 static __inline__ void set_psr(u_int psr)
 {
-	__asm__ __volatile__ ("stcr %0, cr1" :: "r" (psr));
+	__asm__ __volatile__ ("stcr %0, %%cr1" :: "r" (psr));
 	flush_pipeline();
 }
 
@@ -55,7 +55,7 @@ static __inline__ void set_psr(u_int psr)
 static __inline__ u_int get_psr(void)
 {
 	u_int psr;
-	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (psr));
+	__asm__ __volatile__ ("ldcr %0, %%cr1" : "=r" (psr));
 	return (psr);
 }
 
@@ -71,7 +71,7 @@ static __inline__ u_int ff1(u_int val)
 static __inline__ u_int get_cpu_pid(void)
 {
 	u_int pid;
-	__asm__ __volatile__ ("ldcr %0, cr0" : "=r" (pid));
+	__asm__ __volatile__ ("ldcr %0, %%cr0" : "=r" (pid));
 	return (pid);
 }
 

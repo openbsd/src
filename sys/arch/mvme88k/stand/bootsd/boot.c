@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.8 2006/05/16 22:52:09 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.9 2013/01/05 11:20:56 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
 
 /*-
@@ -42,7 +42,7 @@
 
 int debug;
 int errno;
-extern char *version;
+extern const char *version;
 char    line[80];
 
 int

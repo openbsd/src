@@ -1,6 +1,6 @@
 #ifndef _M88K_PROFILE_H_
 #define _M88K_PROFILE_H_
-/*	$OpenBSD: profile.h,v 1.5 2011/03/23 16:54:35 pirofti Exp $ */
+/*	$OpenBSD: profile.h,v 1.6 2013/01/05 11:20:56 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#define	_MCOUNT_DECL void _mcount
 
 /*
  * On OpenBSD, calls to the function profiler save r2-r9 on stack. The
@@ -34,18 +34,17 @@
  * from the stack frame pointed to by r30.
  */
 #define	MCOUNT \
-extern void mcount(void) __asm__ ("mcount"); \
 void \
-mcount() \
+__mcount() \
 { \
-	int	returnaddress, monpoint; \
-	__asm__ __volatile__ ("or %0, r1, r0" : "=r"(returnaddress)); \
-	__asm__ __volatile__ ("ld %0, r30, 4" : "=r"(monpoint)); \
+	unsigned long returnaddress, monpoint; \
+	__asm__ __volatile__ ("or %0, %%r1, %%r0" : "=r"(returnaddress)); \
+	__asm__ __volatile__ ("ld %0, %%r30, 4" : "=r"(monpoint)); \
 	_mcount(monpoint, returnaddress); \
 }
 
 #ifdef _KERNEL
-#define	MCOUNT_ENTER	s = get_psr(); set_psr(s | PSR_IND);
+#define	MCOUNT_ENTER	do { s = get_psr(); set_psr(s | PSR_IND); } while (0)
 #define	MCOUNT_EXIT	set_psr(s)
 #endif /* _KERNEL */
 

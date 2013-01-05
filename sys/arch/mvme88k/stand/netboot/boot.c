@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.9 2008/09/19 20:18:03 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.10 2013/01/05 11:20:56 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -62,7 +62,7 @@
 #include "stand.h"
 #include "libsa.h"
 
-extern	char *version;
+extern	const char *version;
 char	line[80];
 
 int

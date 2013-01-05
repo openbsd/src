@@ -1,11 +1,12 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.15 2012/12/01 21:08:50 miod Exp $
+#	$OpenBSD: Makefile,v 1.16 2013/01/05 11:20:56 miod Exp $
 
 S=	${.CURDIR}/../../../..
 DEFS=-DSTAGE2_RELOC=${STAGE2_RELOC}
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
 CFLAGS+=${INCPATH} ${DEFS} ${COPTS}
+LDFLAGS=-S -N -T ${S}/arch/mvme88k/stand/ld.script -Ttext ${STAGE1_RELOC}
 NOPIE=
 CLEANFILES+=bootxx
 
@@ -25,9 +26,8 @@ ALL=	${BOOTS}
 
 all: ${ALL}
 
-bootxx: ${OBJS} ${STAGE1_CRT} ${LIBS}
-	${LD} -S -N -T ${STAGE1_RELOC} ${STAGE1_CRT} -o $@ \
-	    ${OBJS} ${LIBS}
+bootxx: ${STAGE1_CRT} ${OBJS} ${LIBS}
+	${LD} ${LDFLAGS} -o $@ ${STAGE1_CRT} ${OBJS} ${LIBS}
 
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}

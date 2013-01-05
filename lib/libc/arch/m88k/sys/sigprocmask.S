@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.7 2005/08/07 16:40:15 espie Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.8 2013/01/05 11:20:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,17 +36,17 @@
 #include "SYS.h"
 
 SYSENTRY(sigprocmask)
-	bcnd	ne0,r3,1f		/* if new sigset pointer is null */
-	or	r2,r0,1			/* how = SIG_BLOCK and do it */
+	bcnd	ne0,%r3,1f		/* if new sigset pointer is null */
+	or	%r2,%r0,1		/* how = SIG_BLOCK and do it */
 	br	2f
 1:
-	ld	r3,r3,0			/* else load set from *set and do it */
+	ld	%r3,%r3,0		/* else load set from *set and do it */
 2:
-	or	r13,r0,SYS_sigprocmask
-	tb0	0,r0,128
+	or	%r13,%r0,SYS_sigprocmask
+	tb0	0,%r0,128
 	br	__cerror
-	bcnd	eq0,r4,3f		/* if old mask not requested, done */
-	st	r2,r4,0			/* otherwise, set it */
+	bcnd	eq0,%r4,3f		/* if old mask not requested, done */
+	st	%r2,%r4,0		/* otherwise, set it */
 3:
-	jmp.n	r1
-	 or	r2,r0,0
+	jmp.n	%r1
+	 or	%r2,%r0,0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.52 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.53 2013/01/05 11:20:56 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -303,7 +303,7 @@ set_cpu_number(cpuid_t number)
 #endif
 	ci->ci_cpuid = number;
 
-	__asm__ __volatile__ ("stcr %0, cr17" :: "r" (ci));
+	__asm__ __volatile__ ("stcr %0, %%cr17" :: "r" (ci));
 	flush_pipeline();
 }
 

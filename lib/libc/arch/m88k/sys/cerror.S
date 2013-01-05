@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.9 2011/04/09 15:45:17 deraadt Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.10 2013/01/05 11:20:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,12 +35,12 @@
 
 #include "SYS.h"
 
-WEAK_ALIAS(_cerror,__cerror)
+WEAK_ALIAS(__cerror,___cerror)
 
-	.globl	_errno
+	.globl	_C_LABEL(errno)
 ENTRY(__cerror)
-	or.u	r4,r0,hi16(_errno)
-	st	r2,r4,lo16(_errno)
-	sub	r2,r0,0x1
-	jmp.n	r1
-	 sub	r3,r0,0x1
+	or.u	%r4,%r0,%hi16(_C_LABEL(errno))
+	st	%r2,%r4,%lo16(_C_LABEL(errno))
+	sub	%r2,%r0,0x1
+	jmp.n	%r1
+	 sub	%r3,%r0,0x1

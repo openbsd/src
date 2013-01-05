@@ -1720,6 +1720,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/psl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ptrace.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/reloc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/setjmp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/signal.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/spinlock.ph
@@ -1797,6 +1798,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/psl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/ptrace.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/reloc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/setjmp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/signal.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/spinlock.ph

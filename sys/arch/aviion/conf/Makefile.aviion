@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.aviion,v 1.38 2012/08/22 16:58:26 pascal Exp $
+#	$OpenBSD: Makefile.aviion,v 1.39 2013/01/05 11:20:55 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,9 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
-# Kernel is linked as a ZMAGIC executable, with start at 10020
-#LINKFLAGS=	-N -Ttext 0x1000 -e start
-LINKFLAGS=	-Ttext 0x1000 -e start
+LINKFLAGS=	-Ttext 0x1000 -e __start -X -N --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
@@ -83,13 +81,13 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
-STRIPFLAGS=	-g
+STRIPFLAGS=	-g -x
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S -x
 .endif
 
 %LOAD

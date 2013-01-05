@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntohl.S,v 1.5 2009/10/28 06:49:55 deraadt Exp $	*/
+/*	$OpenBSD: ntohl.S,v 1.6 2013/01/05 11:20:55 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,4 +38,4 @@
 /* hostorder = ntohl(netorder) */
 
 ENTRY(ntohl)
-	jmp	r1
+	jmp	%r1

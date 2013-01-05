@@ -1,4 +1,4 @@
-/* $OpenBSD: fabs.S,v 1.9 2011/07/08 22:28:33 martynas Exp $ */
+/* $OpenBSD: fabs.S,v 1.10 2013/01/05 11:20:55 miod Exp $ */
 /*-
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -36,11 +36,11 @@
  */
 
 ENTRY(fabs)
-	subu	r31,r31,16
-	st.d	r2,r31,0
-	ld.bu	r4,r31,0
-	mask	r4,r4,0x7f	/* set sign bit to 0 */
-	st.b	r4,r31,0
-	ld.d	r2,r31,0
-	jmp.n	r1
-	 addu	r31,r31,16
+	subu	%r31,%r31,16
+	st.d	%r2,%r31,0
+	ld.bu	%r4,%r31,0
+	mask	%r4,%r4,0x7f	/* set sign bit to 0 */
+	st.b	%r4,%r31,0
+	ld.d	%r2,%r31,0
+	jmp.n	%r1
+	 addu	%r31,%r31,16
