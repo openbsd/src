@@ -1,0 +1,20 @@
+RS-LITERAL(1)              OpenBSD Reference Manual              RS-LITERAL(1)
+
+
+
+NNAAMMEE
+       RS-literal - indented literal text
+
+DDEESSCCRRIIPPTTIIOONN
+       regular text
+       literal
+       text
+              This is a short line.
+              This is a very long line that would wrap if it weren't in literal context.
+
+       literal text
+       regular text
+
+
+
+OpenBSD                         January 5, 2013                  RS-LITERAL(1)

@@ -1,0 +1,18 @@
+.TH RS-LITERAL 1 "January 5, 2013" OpenBSD
+.SH NAME
+RS-literal \- indented literal text
+.SH DESCRIPTION
+regular
+text
+.nf
+literal
+text
+.RS
+This is a short line.
+This is a very long line that would wrap if it weren't in literal context.
+.RE
+.PP
+literal text
+.fi
+regular
+text
