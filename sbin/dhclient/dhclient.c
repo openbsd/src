@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.201 2013/01/05 20:34:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.202 2013/01/06 15:33:12 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1479,7 +1479,7 @@ rewrite_client_leases(void)
 char *
 lease_as_string(struct client_lease *lease)
 {
-	static char leasestr[4096];
+	static char leasestr[8192];
 	char *p;
 	size_t sz, rsltsz;
 	int i, rslt;
