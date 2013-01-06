@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_log_config.c,v 1.19 2010/02/25 07:49:53 pyr Exp $ */
+/*	$OpenBSD: mod_log_config.c,v 1.20 2013/01/06 22:06:54 martynas Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -75,7 +75,7 @@
  *                        Log to file fn with format given by the format
  *                        argument
  *
- *    CookieLog fn        For backwards compatability with old Cookie
+ *    CookieLog fn        For backwards compatibility with old Cookie
  *                        logging module - now deprecated.
  *
  * There can be any number of TransferLog and CustomLog
@@ -86,7 +86,7 @@
  * the request will be logged to the log file(s) defined outside
  * the virtual host section. If a TransferLog or CustomLog directive
  * appears in the VirtualHost section, the log files defined outside
- * the VirtualHost will _not_ be used. This makes this module compatable
+ * the VirtualHost will _not_ be used. This makes this module compatible
  * with the CLF and config log modules, where the use of TransferLog
  * inside the VirtualHost section overrides its use outside.
  *

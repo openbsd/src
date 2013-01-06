@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_upper.c,v 1.5 2012/12/05 23:20:23 deraadt Exp $	*/
+/*	$OpenBSD: l2cap_upper.c,v 1.6 2013/01/06 22:06:54 martynas Exp $	*/
 /*	$NetBSD: l2cap_upper.c,v 1.9 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -359,7 +359,7 @@ l2cap_listen(struct l2cap_channel *chan)
  *	Note: I'm not sure how this will work out, but I think that
  *	if outgoing Retransmission Mode or Flow Control Mode is
  *	negotiated then this call will not be made until the SDU has
- *	been acknowleged by the peer L2CAP entity. For 'Best Effort'
+ *	been acknowledged by the peer L2CAP entity. For 'Best Effort'
  *	it will be made when the packet has cleared the controller
  *	buffers.
  *

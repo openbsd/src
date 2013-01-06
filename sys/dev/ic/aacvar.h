@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.8 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.9 2013/01/06 22:06:54 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -38,7 +38,7 @@
  * - Niklas Hallqvist
  */
 
-/* compatability */
+/* compatibility */
 #define time_second (mono_time.tv_sec)
 
 /* Debugging */

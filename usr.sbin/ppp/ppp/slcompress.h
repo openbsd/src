@@ -31,7 +31,7 @@
  *	Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
  *
- * $OpenBSD: slcompress.h,v 1.7 2003/06/04 16:08:08 deraadt Exp $
+ * $OpenBSD: slcompress.h,v 1.8 2013/01/06 22:06:54 martynas Exp $
  */
 
 #define MIN_VJ_STATES 3
@@ -54,7 +54,7 @@
  *
  * There are 5 numbers which can change (they are always inserted
  * in the following order): TCP urgent pointer, window,
- * acknowlegement, sequence number and IP ID.  (The urgent pointer
+ * acknowledgement, sequence number and IP ID.  (The urgent pointer
  * is different from the others in that its value is sent, not the
  * change in value.)  Since typical use of SLIP links is biased
  * toward small packets (see comments on MTU/MSS below), changes

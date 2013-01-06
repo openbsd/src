@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.14 2012/02/24 06:19:00 guenther Exp $	*/
+/*	$OpenBSD: sii.c,v 1.15 2013/01/06 22:06:54 martynas Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -1072,7 +1072,7 @@ again:
 				if (msg == 0)
 					msg = 256;
 				/*
-				 * We read and acknowlege all the bytes
+				 * We read and acknowledge all the bytes
 				 * except the last so we can assert ATN
 				 * if needed before acknowledging the last.
 				 */
