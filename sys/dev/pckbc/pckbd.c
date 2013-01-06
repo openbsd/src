@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.32 2012/08/10 17:49:31 shadchin Exp $ */
+/* $OpenBSD: pckbd.c,v 1.33 2013/01/06 18:07:07 ratchov Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -902,6 +902,13 @@ pckbd_input(void *vsc, int data)
 
 	rc = pckbd_decode(sc->id, data, &type, &key);
 
+	/*
+	 * Pass audio keys to wskbd_input and discard them.
+	 */
+	if (rc != 0 && (key == 160 || key == 174 || key == 176)) {
+		wskbd_input(sc->sc_wskbddev, type, key);
+		return;
+	}
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->rawkbd) {
 		sc->sc_rawbuf[sc->sc_rawcnt++] = (char)data;
@@ -911,12 +918,7 @@ pckbd_input(void *vsc, int data)
 			    sc->sc_rawcnt);
 			sc->sc_rawcnt = 0;
 		}
-
-		/*
-		 * Pass audio keys to wskbd_input anyway.
-		 */
-		if (rc == 0 || (key != 160 && key != 174 && key != 176))
-			return;
+		return;
 	}
 #endif
 	if (rc != 0)
