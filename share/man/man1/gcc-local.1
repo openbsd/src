@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.33 2012/09/25 19:51:36 brad Exp $
+.\" $OpenBSD: gcc-local.1,v 1.34 2013/01/06 21:53:49 martynas Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 25 2012 $
+.Dd $Mdocdate: January 6 2013 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -180,7 +180,7 @@ option, that turns stack protection code on for all functions,
 and disables any heuristic that flags some functions as safe.
 This extended checking has a moderate runtime cost, though.
 .It
-On the amd64, mips64, mips64el and sparc64 architectures,
+On the alpha, amd64, hppa, mips64, sh and sparc64 architectures,
 .Nm gcc
 generates position-independent executables
 .Pq PIEs
