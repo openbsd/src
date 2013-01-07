@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.83 2012/12/31 06:46:13 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.84 2013/01/07 22:47:18 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -424,17 +424,15 @@ user_fault:
 			break;
 		default:
 			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+			if (result == EACCES)
+				result = EFAULT;
 			break;
 		}
 
 		p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 
-		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (result == 0)
-				uvm_grow(p, va);
-			else if (result == EACCES)
-				result = EFAULT;
-		}
+		if (result == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+			uvm_grow(p, va);
 
 		/*
 		 * This could be a fault caused in copyin*()
@@ -903,6 +901,8 @@ m88110_user_fault:
 			if (frame->tf_isr & (CMMU_ISR_SI | CMMU_ISR_PI)) {
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				if (result == EACCES)
+					result = EFAULT;
 			} else {
 #ifdef TRAPDEBUG
 				printf("Unexpected Instruction fault isr %x\n",
@@ -920,6 +920,8 @@ m88110_user_fault:
 			if (frame->tf_dsr & (CMMU_DSR_SI | CMMU_DSR_PI)) {
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				if (result == EACCES)
+					result = EFAULT;
 			} else
 			if (frame->tf_dsr & (CMMU_DSR_CP | CMMU_DSR_WA)) {
 				/* copyback or write allocate error */
@@ -950,6 +952,8 @@ m88110_user_fault:
 					    map->pmap, va);
 #endif
 					result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+					if (result == EACCES)
+						result = EFAULT;
 				}
 			} else {
 #ifdef TRAPDEBUG
@@ -962,12 +966,8 @@ m88110_user_fault:
 		}
 		p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 
-		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (result == 0)
-				uvm_grow(p, va);
-			else if (result == EACCES)
-				result = EFAULT;
-		}
+		if (result == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+			uvm_grow(p, va);
 		KERNEL_UNLOCK();
 
 		/*
