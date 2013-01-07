@@ -185,4 +185,7 @@ extern enum dwarf2_format mips_dwarf2_format (void);
 
 #define DWARF2_ADDR_SIZE(bfd) mips_dwarf2_addr_size ()
 
+#define tc_regname_to_dw2regnum tc_mips_regname_to_dw2regnum
+extern int tc_mips_regname_to_dw2regnum (char *regname);
+
 #endif /* TC_MIPS */
