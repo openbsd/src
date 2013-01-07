@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.13 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: ppp.h,v 1.14 2013/01/07 18:12:08 brad Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -770,7 +770,7 @@ void         ppp_auth_ok (npppd_ppp *);
 void         ppp_ipcp_opened (npppd_ppp *);
 void         ppp_ccp_opened (npppd_ppp *);
 void         ppp_ccp_stopped (npppd_ppp *);
-inline void  ppp_output (npppd_ppp *, uint16_t, u_char, u_char, u_char *, int);
+void         ppp_output (npppd_ppp *, uint16_t, u_char, u_char, u_char *, int);
 u_char       *ppp_packetbuf (npppd_ppp *, int);
 int          ppp_log (npppd_ppp *, int, const char *, ...) __printflike(3,4);
 void         ppp_reset_idle_timeout(npppd_ppp *);

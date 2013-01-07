@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.16 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.17 2013/01/07 18:12:08 brad Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.16 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.17 2013/01/07 18:12:08 brad Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -964,7 +964,7 @@ handled:
 }
 
 /** This function is called to output PPP packets */
-inline void
+void
 ppp_output(npppd_ppp *_this, uint16_t proto, u_char code, u_char id,
     u_char *datap, int ldata)
 {
