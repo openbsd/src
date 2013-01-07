@@ -1,4 +1,4 @@
-/*	$OpenBSD: ap_config.h,v 1.23 2009/03/10 10:56:40 martynas Exp $ */
+/*	$OpenBSD: ap_config.h,v 1.24 2013/01/07 18:43:33 brad Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -86,7 +86,11 @@ extern "C" {
  * functions).  Only do this in gcc 2.7 or later ... it may work
  * on earlier stuff, but why chance it.
  */
+#ifdef __GNUC_STDC_INLINE__
+#define ap_inline __inline__ __attribute__((__gnu_inline__))
+#else
 #define ap_inline __inline__
+#endif
 #define USE_GNU_INLINE
 #define ENUM_BITFIELD(e,n,w)  e n : w
 
