@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.45 2013/01/05 11:20:55 miod Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.46 2013/01/07 13:05:14 aoyama Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -92,8 +92,8 @@ SYSTEM_LD_TAIL+=; \
 LINKFLAGS+=	-S -x
 .endif
 SYSTEM_LD_TAIL+=; \
-		echo ${OBJCPY} -O a.out-m88k-openbsd --impure $@; \
-		${OBJCPY} -O a.out-m88k-openbsd --impure $@; \
+		echo ${OBJCOPY} -O a.out-m88k-openbsd --impure $@; \
+		${OBJCOPY} -O a.out-m88k-openbsd --impure $@; \
 		chmod 755 $@
 
 %LOAD
