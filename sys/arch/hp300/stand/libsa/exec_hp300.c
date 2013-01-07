@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_hp300.c,v 1.1 2013/01/01 17:18:49 miod Exp $	*/
+/*	$OpenBSD: exec_hp300.c,v 1.2 2013/01/07 20:02:11 miod Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 #include <sys/reboot.h>
 
 #include "stand.h"
+#include "samachdep.h"
 
 #include <lib/libsa/loadfile.h>
 
