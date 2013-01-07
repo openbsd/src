@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-flock.c,v 1.1 2012/07/08 12:31:03 guenther Exp $	*/
+/*	$OpenBSD: kqueue-flock.c,v 1.2 2013/01/07 05:32:09 miod Exp $	*/
 /*
  *	Written by Philip Guenther <guenther@openbsd.org> 2012 Public Domain
  */
@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -40,7 +41,7 @@ check_lock(int fd, const char *msg)
 		if (fcntl(fd, F_GETLK, &fl))
 			err(1, "fcntl(GETLK)");
 		if (fl.l_type != F_WRLCK) {
-			printf("lock not found %s\n");
+			printf("lock not found %s\n", msg);
 			_exit(1);
 		}
 		_exit(0);
