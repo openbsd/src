@@ -132,6 +132,7 @@
 ./usr/include/hp300/intr.h
 ./usr/include/hp300/kcore.h
 ./usr/include/hp300/limits.h
+./usr/include/hp300/loadfile_machdep.h
 ./usr/include/hp300/lock.h
 ./usr/include/hp300/mutex.h
 ./usr/include/hp300/param.h

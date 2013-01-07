@@ -1646,6 +1646,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/limits.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/lock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/mutex.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/param.ph
