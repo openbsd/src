@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.10 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.11 2013/01/08 23:06:43 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 WEAK_ALIAS(__cerror,___cerror)
 
 	.globl	_C_LABEL(errno)
-ENTRY(__cerror)
+ENTRY(___cerror)
 	or.u	%r4,%r0,%hi16(_C_LABEL(errno))
 	st	%r2,%r4,%lo16(_C_LABEL(errno))
 	sub	%r2,%r0,0x1
