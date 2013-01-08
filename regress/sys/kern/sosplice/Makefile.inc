@@ -1,14 +1,16 @@
-#	$OpenBSD: Makefile.inc,v 1.1.1.1 2013/01/03 17:36:38 bluhm Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2013/01/08 21:42:19 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-BSD-Socket-Splice	perl interface to OpenBSD socket splicing
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
 
-ARGS !=			cd ${.CURDIR} && ls args-*.pl
 TARGETS ?=		${ARGS}
+.if empty (TARGETS)
+ARGS !=			cd ${.CURDIR} && ls args-*.pl
+.endif
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES =		*.log ktrace.out stamp-*
+CLEANFILES +=		*.log ktrace.out stamp-*
 
 # Fill out these variables if you want to test socket splicing with
 # the relay process running on a remote machine.  You have to specify
