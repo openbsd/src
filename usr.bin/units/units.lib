@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.45 2012/12/31 07:18:22 jmc Exp $
+/ $OpenBSD: units.lib,v 1.46 2013/01/08 15:43:30 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -88,7 +88,7 @@ pi			3.14159265358979323846
 c			2.99792458e+8 m/sec
 g			9.80665 m/sec2
 bigG			6.67390e-11 m3/kg/s2
-AU			1.49597870e+11 m fuzz
+AU			1.495978707e+11 m
 au			AU
 mole			6.0221367e+23 fuzz
 e			1.60217733e-19 coul fuzz
