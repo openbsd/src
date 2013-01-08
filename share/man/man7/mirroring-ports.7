@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.24 2013/01/08 19:44:13 rpe Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.25 2013/01/08 21:24:17 jmc Exp $
 .\"
 .\" Copyright (c) 2000,2012 Marc Espie
 .\"
@@ -92,8 +92,8 @@ will append to this file each time it is run on the whole tree
 .Fl a )
 and only if the ports tree scan finishes without error.
 Each line is of the form
-.Bd -offset indent
-.Li timestamp SHA256(file) = sha
+.Bd -literal -offset indent
+timestamp SHA256(file) = sha
 .Ed
 .Pp
 denoting the first fime a file/sha entry was no longer seen in the ports tree.
