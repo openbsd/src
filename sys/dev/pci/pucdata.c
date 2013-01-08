@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.85 2012/10/12 21:56:03 sasano Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.86 2013/01/08 02:30:25 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -636,6 +636,15 @@ const struct puc_device_description puc_devs[] = {
 		{ PUC_COM_POW2(3), 0x10, 0x0010 },
 		{ PUC_COM_POW2(3), 0x10, 0x0018 },
 	    },
+	},
+
+	/* Exsys EX-41092 (sold as SIIG JJ-E10011-S3) */
+	{      /* "Exsys EX-41092", */
+		{ PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41092,0x0000,0x0000},
+		{ 0xffff, 0xffff,                                       0x0000,0x0000},
+		{
+			{ PUC_COM_MUL(10), 0x10, 0x0000 },
+		},
 	},
 
 	/* Exsys EX-41098, second part of Serial Technologies Expander PCI-232-108 */
