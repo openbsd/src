@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.26 2010/10/04 09:32:43 ratchov Exp $
+.\" $OpenBSD: midi.4,v 1.27 2013/01/08 13:51:20 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2010 $
+.Dd $Mdocdate: January 8 2013 $
 .Dt MIDI 4
 .Os
 .Sh NAME
@@ -243,8 +243,7 @@ and later largely rewritten by
 MIDI hardware was designed for real time performance and software
 using such hardware must be able to process MIDI events without
 any noticeable latency (typically no more than 5ms, which
-corresponds to the time it takes to the sound to propagate 1.75
-meters).
+is the time it takes for sound to propagate 1.75 meters).
 .Pp
 The
 .Ox
