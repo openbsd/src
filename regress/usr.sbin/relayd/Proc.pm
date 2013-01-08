@@ -1,6 +1,6 @@
-#	$OpenBSD: Proc.pm,v 1.4 2013/01/04 14:01:49 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.5 2013/01/08 21:20:00 bluhm Exp $
 
-# Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@ use warnings;
 package Proc;
 use Carp;
 use Errno;
+use IO::File;
 use POSIX;
 use Time::HiRes qw(time alarm sleep);
 
@@ -66,6 +67,7 @@ sub new {
 	    or croak "$class log file not given";
 	open(my $fh, '>', $self->{logfile})
 	    or die "$class log file $self->{logfile} create failed: $!";
+	$fh->autoflush;
 	$self->{log} = $fh;
 	return bless $self, $class;
 }
