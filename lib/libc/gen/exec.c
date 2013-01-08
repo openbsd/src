@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.19 2012/03/21 23:20:35 matthew Exp $ */
+/*	$OpenBSD: exec.c,v 1.20 2013/01/08 02:26:09 deraadt Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -131,7 +131,8 @@ int
 execvpe(const char *name, char *const *argv, char *const *envp)
 {
 	char **memp;
-	int cnt, lp, ln, len;
+	int cnt;
+	size_t lp, ln, len;
 	char *p;
 	int eacces = 0;
 	char *bp, *cur, *path, buf[MAXPATHLEN];
