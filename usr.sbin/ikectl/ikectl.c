@@ -1,7 +1,7 @@
-/*	$OpenBSD: ikectl.c,v 1.15 2012/11/01 21:27:32 reyk Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.16 2013/01/08 10:38:19 reyk Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>

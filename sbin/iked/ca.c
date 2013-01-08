@@ -1,8 +1,7 @@
-/*	$OpenBSD: ca.c,v 1.20 2012/11/16 14:39:00 mikeb Exp $	*/
-/*	$vantronix: ca.c,v 1.29 2010/06/02 12:22:58 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.21 2013/01/08 10:38:19 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -1,8 +1,7 @@
-/*	$OpenBSD: control.c,v 1.9 2012/09/18 12:07:59 reyk Exp $	*/
-/*	$vantronix: control.c,v 1.4 2010/05/14 07:35:52 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.10 2013/01/08 10:38:19 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any

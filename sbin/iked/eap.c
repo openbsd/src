@@ -1,8 +1,7 @@
-/*	$OpenBSD: eap.c,v 1.7 2012/12/15 23:20:17 reyk Exp $	*/
-/*	$vantronix: eap.c,v 1.12 2010/05/31 11:30:08 reyk Exp $	*/
+/*	$OpenBSD: eap.c,v 1.8 2013/01/08 10:38:19 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

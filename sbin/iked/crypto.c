@@ -1,8 +1,7 @@
-/*	$OpenBSD: crypto.c,v 1.8 2012/12/15 23:18:17 reyk Exp $	*/
-/*	$vantronix: crypto.c,v 1.18 2010/05/28 15:34:35 reyk Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.9 2013/01/08 10:38:19 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

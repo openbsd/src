@@ -1,5 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.24 2012/12/08 12:51:46 mikeb Exp $	*/
-/*	$vantronix: ikeca.c,v 1.13 2010/06/03 15:52:52 reyk Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.25 2013/01/08 10:38:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>

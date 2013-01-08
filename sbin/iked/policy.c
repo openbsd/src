@@ -1,8 +1,7 @@
-/*	$OpenBSD: policy.c,v 1.22 2012/12/15 23:12:21 reyk Exp $	*/
-/*	$vantronix: policy.c,v 1.29 2010/05/28 15:34:35 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.23 2013/01/08 10:38:19 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010, 2011 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2001 Daniel Hartmeier
  *
  * Permission to use, copy, modify, and distribute this software for any

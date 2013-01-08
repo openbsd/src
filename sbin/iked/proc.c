@@ -1,7 +1,7 @@
-/*	$OpenBSD: proc.c,v 1.7 2011/05/09 11:27:08 reyk Exp $	*/
+/*	$OpenBSD: proc.c,v 1.8 2013/01/08 10:38:19 reyk Exp $	*/
 
 /*
- * Copyright (c) 2010,2011 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
