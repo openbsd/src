@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.92 2013/01/07 11:09:33 espie Exp $
+.\" $OpenBSD: ports.7,v 1.93 2013/01/08 09:42:16 rpe Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: January 7 2013 $
+.Dd $Mdocdate: January 8 2013 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ For information about creating new ports, see
 the
 .Ox
 Porter's Handbook
-.Lk http://www.openbsd.org/faq/ports/ .
+.Pq Lk http://www.openbsd.org/faq/ports/ .
 .Pp
 For a detailed description of the build process, see
 .Xr bsd.port.mk 5 .
@@ -130,7 +130,9 @@ port belonging to category,
 port maintained by a given person.
 .El
 .Pp
-For instance, to invoke clean on all ports in the x11 category, one can say:
+For instance, to invoke
+.Ar clean
+on all ports in the x11 category, one can say:
 .Bd -literal -offset indent
 	$ make category=x11 clean
 .Ed
@@ -154,8 +156,15 @@ see
 .Xr packages-specs 7
 .Pc .
 .Ev SKIPDIR
-is handled by a case statement, and so can contain simple wildcards, e.g.,
-SKIPDIR='editors/openoffice*' .
+is handled by a
+.Ic case
+statement, and so can contain simple wildcards
+.Po
+see
+.Xr sh 1
+.Dq File name patterns
+.Pc ,
+e.g., SKIPDIR='editors/openoffice*' .
 .Pp
 The variable
 .Ev STARTDIR
@@ -207,7 +216,9 @@ Some targets that do this are
 and
 .Ar readmes .
 .Pp
-Target names starting with _ are private to the ports infrastructure,
+Target names starting with
+.Sq _
+are private to the ports infrastructure,
 should not be invoked directly, and are liable to change without notice.
 .Pp
 In the following list, each target will run the preceding targets
@@ -286,7 +297,7 @@ Pretend to install the port under a subdirectory of the work directory.
 .It Ar package
 Create a binary package from the fake installation.
 The package is a .tgz file that can be used to
-install the port on several machines with
+install the port with
 .Xr pkg_add 1 .
 .It Ar install
 Install the resulting package.
@@ -294,7 +305,7 @@ Install the resulting package.
 .Pp
 The following targets are not run during the normal install process.
 .Bl -tag -width fetch-list
-.It Ar print-build-depends print-run-depends
+.It Ar print-build-depends , print-run-depends
 Print an ordered list of all the compile and run dependencies.
 .It Ar clean
 Remove the expanded source code.
@@ -341,8 +352,11 @@ should be used to acquire a lock, and
 .Ev UNLOCK_CMD
 should be used to release it.
 .Pp
-Locks are named ${LOCKDIR}/${FULLPKGNAME}.lock,
-or ${LOCKDIR}/${DISTFILE}.lock for distfiles fetching.
+Locks are named
+.Pa ${LOCKDIR}/${FULLPKGNAME}.lock ,
+or
+.Pa ${LOCKDIR}/${DISTFILE}.lock
+for distfiles fetching.
 .Pp
 The default values of
 .Ev LOCK_CMD
@@ -396,7 +410,7 @@ in replacement mode.
 If
 .Ev FORCE_UPDATE
 is set to
-.Sq Yes ,
+.Dv Yes ,
 dependencies will also be updated first, and packages will always be updated,
 even if there is no difference between the old and the new packages.
 .Pp
@@ -437,12 +451,14 @@ over 1G.
 .It
 .Pa devel/jdk/1.6
 requires manually fetching distfiles, and setting up
-.Ev ACCEPT_JRL_LICENSE Ns = Ns Va Yes
+.Ev ACCEPT_JRL_LICENSE Ns = Ns Dv Yes
 in
 .Pa /etc/mk.conf .
 Not building it will take out a sizeable chunk of the ports tree.
 .It
-cluster builds should have shared portsdir and local
+cluster builds should have shared
+.Ev PORTSDIR
+and local
 .Ev WRKOBJDIR .
 If possible, dedicated
 .Ev WRKOBJDIR
@@ -460,7 +476,7 @@ Take notice of
 .Ev CHECKSUM_PACKAGES
 in
 .Xr bsd.port.mk 5 .
-this can be set to
+This can be set to
 .Sq ftp
 during official package builds to compute partial sha256 checksum files.
 .Pp
@@ -500,12 +516,15 @@ ports tree comes with a mechanism called
 Thanks to this mechanism, users can select specific options provided by
 a given port.
 .Pp
-If a port is "flavored", there should be a terse description of
-available flavors in the
+If a port is
+.Qq flavored ,
+there should be a terse description of available flavors in the
 .Pa pkg/DESCR
 file.
 .Pp
-For example, the misc/screen port comes with a flavor called
+For example, the
+.Pa misc/screen
+port comes with a flavor called
 .Ic static .
 This changes the building process so a statically compiled version of
 the program will be built.
@@ -515,6 +534,13 @@ the selected flavors.
 .Pp
 In this instance, the corresponding package will be called
 .Ic screen-4.0.2-static .
+.Pp
+To see the flavors of a port, use the
+.Ar show
+target:
+.Bd -literal -offset indent
+$ make show=FLAVORS
+.Ed
 .Pp
 To build a port with a specific flavor, just pass
 .Ev FLAVOR
@@ -557,12 +583,15 @@ ports tree comes with a mechanism called
 This mechanism is used when a larger package is broken down into
 several smaller components referred to as subpackages.
 .Pp
-If a port is "subpackaged", each subpackage will have
-a corresponding description in the
+If a port is
+.Qq subpackaged ,
+each subpackage will have a corresponding description in the
 .Pa pkg/DESCR-subpackage
 file.
 .Pp
-For example, the database/mysql port comes with subpackages called
+For example, the
+.Pa database/mysql
+port comes with subpackages called
 .Ic -main ,
 .Ic -tests
 and
@@ -593,13 +622,15 @@ These can be changed in the environment, or in
 .Pa /etc/mk.conf
 for persistence.
 They can also be set on make's command line, e.g.,
-.Ic make VAR_FOO=foo
+.Ic make VAR_FOO Ns = Ns Dv foo
 .Pp
 Boolean variables should be set to
 .Dv Yes
 instead of simply being defined, for uniformity and future compatibility.
 .Pp
-Variable names starting with _ are private to the ports infrastructure,
+Variable names starting with
+.Sq _
+are private to the ports infrastructure,
 should not be changed by the user, and are liable to change without notice.
 .Bl -tag -width MASTER_SITES
 .It Ev PORTSDIR
@@ -608,28 +639,24 @@ Location of the ports tree
 .Pa /usr/ports ) .
 .It Ev DISTDIR
 Where to find/put distfiles, normally
-.Pa distfiles/
-in
-.Ev PORTSDIR .
+.Pa ${PORTSDIR}/distfiles
 .It Ev PACKAGE_REPOSITORY
 Used only for the
 .Ar package
 target; the base directory for the packages tree, normally
-.Pa packages
-in
-.Ev PORTSDIR .
+.Pa ${PORTSDIR}/packages .
 If this directory exists, the package tree will be (partially) constructed.
 .It Ev BULK_COOKIES_DIR
 During bulk package building, used to store cookies for already built
 packages to avoid rebuilding them, since the actual
 working directory will already have been cleaned out.
-Defaults to bulk/${MACHINE_ARCH} under
-.Ev PORTSDIR .
+Defaults to
+.Pa ${PORTSDIR}/bulk/${MACHINE_ARCH} .
 .It Ev UPDATE_COOKIES_DIR
-Used to store cookies for package updates, defaults to update/${MACHINE_ARCH}
-under
-.Ev PORTSDIR .
-If set to empty, it will revert to a file under ${WRKDIR}.
+Used to store cookies for package updates, defaults to
+.Pa ${PORTSDIR}/update/${MACHINE_ARCH} .
+If set to empty, it will revert to a file under
+.Pa ${WRKDIR} .
 .It Ev LOCALBASE
 Where to install things in general
 (usually
@@ -640,7 +667,7 @@ Primary sites for distribution files if not found locally.
 If set to
 .Dv Yes ,
 let
-.Sq clean
+.Ar clean
 recurse to dependencies.
 .It Ev FETCH_CMD
 Command to use to fetch files.
@@ -648,7 +675,7 @@ Normally
 .Xr ftp 1 .
 .It Ev FETCH_PACKAGES
 If set to
-.Dq Yes ,
+.Dv Yes ,
 try to use
 .Xr pkg_add 1
 to install the missing packages from
@@ -661,7 +688,7 @@ If defined, only operate on a port if it requires interaction.
 If defined, only operate on a port if it can be installed 100% automatically.
 .It Ev USE_SYSTRACE
 Set to
-.Sq Yes
+.Dv Yes
 to protect the
 .Ar configure , build ,
 and
