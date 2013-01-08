@@ -129,7 +129,7 @@ compile_time_root_prime(int do_ip4, int do_ip6)
 	if(!ah(dp, "A.ROOT-SERVERS.NET.", "198.41.0.4"))	goto failed;
 	if(!ah(dp, "B.ROOT-SERVERS.NET.", "192.228.79.201")) goto failed;
 	if(!ah(dp, "C.ROOT-SERVERS.NET.", "192.33.4.12"))	goto failed;
-	if(!ah(dp, "D.ROOT-SERVERS.NET.", "128.8.10.90"))	goto failed;
+	if(!ah(dp, "D.ROOT-SERVERS.NET.", "199.7.91.13"))	goto failed;
 	if(!ah(dp, "E.ROOT-SERVERS.NET.", "192.203.230.10")) goto failed;
 	if(!ah(dp, "F.ROOT-SERVERS.NET.", "192.5.5.241"))	goto failed;
 	if(!ah(dp, "G.ROOT-SERVERS.NET.", "192.112.36.4"))	goto failed;
