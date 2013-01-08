@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.23 2012/01/30 17:09:10 espie Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.24 2013/01/08 19:44:13 rpe Exp $
 .\"
 .\" Copyright (c) 2000,2012 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 30 2012 $
+.Dd $Mdocdate: January 8 2013 $
 .Dt MIRRORING-PORTS 7
 .Os
 .Sh NAME
@@ -52,20 +52,20 @@ Disregard any architecture or broken annotation, and try to fetch every
 distfile.
 .It
 Fetch files to a temporary copy named
-.Ic some_file.part
+.Pa some_file.part
 using
-.Sq ftp -C
+.Ic ftp -C
 to resume interrupted downloads.
 .It
 Keep a global list of sha256 checksums as
-.Ic ${DISTDIR}/distinfo ,
+.Pa ${DISTDIR}/distinfo ,
 and use that to refetch files when the ports tree records a changing checksum.
 .It
 Produces a log of old distfiles in
-.Ic ${DISTDIR}/history ,
+.Pa ${DISTDIR}/history ,
 .It
 Create sha256 links under
-.Ic ${DISTDIR}/by_cipher/sha256
+.Pa ${DISTDIR}/by_cipher/sha256
 as per
 .Xr link-checksum 1 Ns 's
 former duties.
@@ -76,7 +76,7 @@ For partial distfiles collections,
 can also be run with
 .Fl D Ns Ar HISTORY_ONLY
 to scan the full ports tree and update
-.Ic ${DISTDIR}/history
+.Pa ${DISTDIR}/history
 without fetching anything.
 .Sh FILES
 .Bl -tag -width toto
@@ -128,8 +128,8 @@ However, a more robust approach is also needed, so that ports users can
 depend on distfiles mirrors to carry what they need irrespective of those
 synchronization issues.
 The
-.Pa by-cipher/sha256
-directory provides more persistant access to the distfiles,
+.Pa ${DISTFILES}/by-cipher/sha256
+directory provides more persistent access to the distfiles,
 indexed through the actual checksums that the files should match.
 Provided mirroring is run sufficiently often,
 two versions of the same distfile with respective checksums cksum1 and cksum2
