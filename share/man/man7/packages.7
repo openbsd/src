@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.30 2011/12/03 19:49:21 espie Exp $
+.\" $OpenBSD: packages.7,v 1.31 2013/01/09 01:59:16 rpe Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 3 2011 $
+.Dd $Mdocdate: January 9 2013 $
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@ They are built through the
 infrastructure.
 Adding a new package is as simple as
 .Pp
-.Dl pkg_add foo-1.0-vanilla.tgz
+.Dl # pkg_add foo-1.0-vanilla.tgz
 .Pp
 In appearance, packages seem to be .tgz archives, and as such, can be
 examined on almost any computer system, but there is a bit more to it,
@@ -60,8 +60,8 @@ is not composed of such packages, but of plain tarballs.
 The packages are not as thoroughly audited as the main
 .Ox
 source tree (in many cases, they have not been audited at all).
-This is in part a scale issue: the source tree weighs in at 100MB, compressed,
-whereas source to the ports tree exceeds 3GB.
+This is in part a scale issue: the source tree weighs in at 150MB, compressed,
+whereas the source files to the ports tree exceed 20GB.
 Also, most
 .Ox
 developers concentrate on making the release as safe as possible and,
@@ -212,7 +212,7 @@ are supported:  pointing
 .Ev PKG_PATH
 to a distant package repository, e.g.,
 .Pp
-.Dl setenv PKG_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.9/packages/i386/
+.Dl # export PKG_PATH=ftp://ftp.openbsd.org/pub/OpenBSD/5.2/packages/i386/
 .Pp
 will let
 .Xr pkg_add 1
