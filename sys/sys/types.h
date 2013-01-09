@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.34 2012/12/10 22:32:00 deraadt Exp $	*/
+/*	$OpenBSD: types.h,v 1.35 2013/01/09 12:17:38 jsg Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -236,5 +236,32 @@ struct	buf;
 struct	tty;
 struct	uio;
 #endif
+
+#ifdef _KERNEL
+#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__PCC__) || defined(lint)
+/* Support for _C99: type _Bool is already built-in. */
+#define false	0
+#define true	1
+
+#else
+/* `_Bool' type must promote to `int' or `unsigned int'. */
+typedef enum {
+	false = 0,
+	true = 1
+} _Bool;
+
+/* And those constants must also be available as macros. */
+#define	false	false
+#define	true	true
+
+#endif
+
+/* User visible type `bool' is provided as a macro which may be redefined */
+#define bool _Bool
+
+/* Inform that everything is fine */
+#define __bool_true_false_are_defined 1
+
+#endif /* _KERNEL */
 
 #endif /* !_SYS_TYPES_H_ */
