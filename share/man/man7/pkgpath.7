@@ -1,4 +1,4 @@
-.\" $OpenBSD: pkgpath.7,v 1.1 2011/11/21 12:00:57 espie Exp $
+.\" $OpenBSD: pkgpath.7,v 1.2 2013/01/09 11:52:52 espie Exp $
 .\"
 .\" Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: November 21 2011 $
+.Dd $Mdocdate: January 9 2013 $
 .Dt PKGPATH 7
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ flavor.
 Note that
 .Ar -sub
 and
-.Ar -flavor
+.Ar flavor
 parts can be specified in any order, as all subpackages start with
 a dash.
 It is an error to ask for several subs at once, e.g.\&
@@ -89,7 +89,7 @@ Will actually build with FLAVOR="no_gui no_mono no_qt3 no_qt4 bootstrap"
 (all of which are pseudo-flavors), so that only the main package will build.
 .It Ar net/avahi,no_mono,-qt3
 Build avahi with the "no_mono" pseudo-flavor, which will build the
--main, -qt3, qt4, -gui, -gtk, -gtk3, and -ui subpackages, and refer to the
+-main, -qt3, -qt4, -gui, -gtk, -gtk3, and -ui subpackages, and refer to the
 .Ar -qt3
 subpackage.
 .It Ar net/avahi,
