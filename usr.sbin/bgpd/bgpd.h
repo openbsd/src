@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.274 2012/11/13 09:47:20 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.275 2013/01/09 08:04:25 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,7 @@
 #define	CONFFILE			"/etc/bgpd.conf"
 #define	BGPD_USER			"_bgpd"
 #define	PEER_DESCR_LEN			32
-#define	PFTABLE_LEN			16
+#define	PFTABLE_LEN			32
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
 #define	IPSEC_AUTH_KEY_LEN		20
