@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.313 2013/01/10 01:02:12 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.314 2013/01/10 01:17:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -180,6 +180,7 @@ int bge_init_tx_ring(struct bge_softc *);
 
 void bge_chipinit(struct bge_softc *);
 int bge_blockinit(struct bge_softc *);
+int bge_phy_addr(struct bge_softc *);
 
 u_int32_t bge_readmem_ind(struct bge_softc *, int);
 void bge_writemem_ind(struct bge_softc *, int, int);
@@ -1157,6 +1158,29 @@ bge_iff(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RX_MODE, rxmode);
 }
 
+int
+bge_phy_addr(struct bge_softc *sc)
+{
+	struct pci_attach_args *pa = &(sc->bge_pa);
+	int phy_addr = 1;
+
+	switch (BGE_ASICREV(sc->bge_chipid)) {
+	case BGE_ASICREV_BCM5717:
+	case BGE_ASICREV_BCM5719:
+	case BGE_ASICREV_BCM5720:
+		phy_addr = pa->pa_function;
+		if (sc->bge_chipid == BGE_CHIPID_BCM5717_A0) {
+			phy_addr += (CSR_READ_4(sc, BGE_SGDIG_STS) &
+			    BGE_SGDIGSTS_IS_SERDES) ? 8 : 1;
+		} else {
+			phy_addr += (CSR_READ_4(sc, BGE_CPMU_PHY_STRAP) &
+			    BGE_CPMU_PHY_STRAP_IS_SERDES) ? 8 : 1;
+		}
+	}
+
+	return (phy_addr);
+}
+
 /*
  * Do endian, PCI and DMA initialization.
  */
@@ -1870,6 +1894,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	sc->bge_phy_addr = bge_phy_addr(sc);
+
 	printf(", ");
 	br = bge_lookup_rev(sc->bge_chipid);
 	if (br == NULL)
@@ -2246,7 +2272,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->bge_flags & BGE_PHY_FIBER_MII)
 			mii_flags |= MIIF_HAVEFIBER;
 		mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
-		    1, MII_OFFSET_ANY, mii_flags);
+		    sc->bge_phy_addr, MII_OFFSET_ANY, mii_flags);
 
 		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", sc->bge_dev.dv_xname);
@@ -3655,9 +3681,10 @@ bge_link_upd(struct bge_softc *sc)
 			/* Clear the interrupt */
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
-			bge_miibus_readreg(&sc->bge_dev, 1, BRGPHY_MII_ISR);
-			bge_miibus_writereg(&sc->bge_dev, 1, BRGPHY_MII_IMR,
-			    BRGPHY_INTRS);
+			bge_miibus_readreg(&sc->bge_dev, sc->bge_phy_addr,
+			    BRGPHY_MII_ISR);
+			bge_miibus_writereg(&sc->bge_dev, sc->bge_phy_addr,
+			    BRGPHY_MII_IMR, BRGPHY_INTRS);
 		}
 		return;
 	} 
