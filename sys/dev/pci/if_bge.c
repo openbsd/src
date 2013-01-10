@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.312 2012/09/13 04:15:18 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.313 2013/01/10 01:02:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1848,21 +1848,26 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	      >> BGE_PCIMISCCTL_ASICREV_SHIFT);
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_USE_PRODID_REG) {
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717 ||
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5718)
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_BROADCOM_BCM5717:
+		case PCI_PRODUCT_BROADCOM_BCM5718:
 			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
 			    BGE_PCI_GEN2_PRODID_ASICREV);
-		else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57761 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57765 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57781 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57785 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57791 ||
-			 PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57795)
+			break;
+		case PCI_PRODUCT_BROADCOM_BCM57761:
+		case PCI_PRODUCT_BROADCOM_BCM57765:
+		case PCI_PRODUCT_BROADCOM_BCM57781:
+		case PCI_PRODUCT_BROADCOM_BCM57785:
+		case PCI_PRODUCT_BROADCOM_BCM57791:
+		case PCI_PRODUCT_BROADCOM_BCM57795:
 			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
 			    BGE_PCI_GEN15_PRODID_ASICREV);
-		else
+			break;
+		default:
 			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
 			    BGE_PCI_PRODID_ASICREV);
+			break;
+		}
 	}
 
 	printf(", ");
