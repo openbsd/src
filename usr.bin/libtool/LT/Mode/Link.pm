@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.23 2012/11/09 10:55:01 espie Exp $
+# $OpenBSD: Link.pm,v 1.24 2013/01/10 21:34:29 millert Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -551,6 +551,10 @@ sub internal_parse_linkargs1
 		tsay {"  processing $_"};
 		if (!$_ || $_ eq '' || m/^\s+$/) {
 			# skip empty arguments
+		} elsif (m/^-Wc,(.*)/) {
+			push(@$result, $1);
+		} elsif ($_ eq '-Xcompiler') {
+			next;
 		} elsif ($_ eq '-pthread') {
 			$self->{pthread} = 1;
 		} elsif (m/^-L(.*)/) {
