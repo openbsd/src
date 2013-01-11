@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.13 2013/01/05 11:20:55 miod Exp $*/
+/*	$OpenBSD: SYS.h,v 1.14 2013/01/11 21:21:48 miod Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,13 +38,43 @@
 #include <machine/asm.h>
 
 #ifdef __STDC__
-#define	__ENTRY(p,x)	ENTRY(p##x)
-#define	__SYSCALLNAME(p,x)	p##x
-#define	__ALIAS(prefix,name)	WEAK_ALIAS(name,prefix##name)
+#define	__CONCAT(p,x)		p##x
 #else
-#define	__ENTRY(p,x)	ENTRY(p/**/x)
-#define	__SYSCALLNAME(p,x)	p/**/x
-#define	__ALIAS(prefix,name)	WEAK_ALIAS(name,prefix/**/name)
+#define	__CONCAT(p,x)		p/**/x
+#endif
+#define	__ENTRY(p,x)		ENTRY(__CONCAT(p,x))
+#define	__END(p,x)		END(__CONCAT(p,x))
+#define	__SYSCALLNAME(p,x)	__CONCAT(p,x)
+#define	__ALIAS(prefix,name)	WEAK_ALIAS(name,__CONCAT(prefix,name))
+
+#ifdef __PIC__
+#define	CERROR	__cerror#plt
+#define	PIC_SAVE(reg)		or reg, %r25, %r0
+#define	PIC_RESTORE(reg)	or %r25, reg, %r0
+#define	PIC_SETUP							\
+	or	%r11, %r0,  %r1;					\
+	or.u	%r25, %r0,  %hi16(.Lpic#abdiff);			\
+	bsr.n	.Lpic;							\
+	 or	%r25, %r25, %lo16(.Lpic#abdiff);			\
+.Lpic:	add	%r25, %r25, %r1;					\
+	or	%r1,  %r0,  %r11
+#if __PIC__ > 1
+#define	PIC_LOAD(reg,sym)						\
+	or.u	%r11, %r0,  %hi16(__CONCAT(sym,#got_rel));		\
+	or	%r11, %r11, %lo16(__CONCAT(sym,#got_rel));		\
+	ld	reg,  %r25, %r11
+#define	PIC_STORE(reg,sym)						\
+	or.u	%r11, %r0,  %hi16(__CONCAT(sym,#got_rel));		\
+	or	%r11, %r11, %lo16(__CONCAT(sym,#got_rel));		\
+	st	reg,  %r25, %r11
+#else		/* -fpic */
+#define	PIC_LOAD(reg,sym)						\
+	ld	reg,  %r25, __CONCAT(sym,#got_rel)
+#define	PIC_STORE(reg,sym)						\
+	st	reg,  %r25, __CONCAT(sym,#got_rel)
+#endif
+#else
+#define	CERROR	__cerror
 #endif
 
 #define	__DO_SYSCALL(x)							\
@@ -58,15 +88,17 @@
 
 #define	__SYSCALL(p,x,y)						\
 	__SYSCALL__NOERROR(p,x,y);					\
-	br __cerror
+	br CERROR
 
 #define	__PSEUDO_NOERROR(p,x,y)						\
 	__SYSCALL__NOERROR(p,x,y);					\
-	jmp %r1
+	jmp %r1;							\
+	__END(p,x)
 
 #define	__PSEUDO(p,x,y)							\
 	__SYSCALL(p,x,y);						\
-	jmp %r1
+	jmp %r1;							\
+	__END(p,x)
 
 /*
  * System calls entry points are really named _thread_sys_{syscall},
