@@ -1149,6 +1149,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/drm/drm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/drm/drmP.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/drm/drm_atomic.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/drm/drm_mode.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/drm/drm_sarea.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/drm/i915_drm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/drm/i915_drv.ph
