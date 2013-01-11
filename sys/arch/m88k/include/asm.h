@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.11 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.12 2013/01/11 21:19:45 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -42,11 +42,19 @@
 
 #define	_ASM_LABEL(name)	name
 
+#ifdef __ELF__
 #define	_ENTRY(name) \
-	.text; .balign 8; .globl name; name:
+	.text; .align 3; .globl name; .type name,@function; name:
+#else
+#define	_ENTRY(name) \
+	.text; .align 8; .globl name; name:
+#endif
 
 #define	ENTRY(name)		_ENTRY(_C_LABEL(name))
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name))
+
+#define	END(name) \
+	.size name,.-name
 
 #define	GLOBAL(name) \
 	.globl _C_LABEL(name); _C_LABEL(name):
