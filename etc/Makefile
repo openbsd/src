@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.326 2012/11/04 17:12:36 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.327 2013/01/11 05:18:50 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -319,7 +319,7 @@ distrib:
 	cd ../distrib && \
 	    ${MAKE} && exec ${SUDO} ${MAKE} install
 
-# Becasue the moduli sizes > 4096 are not commonly used, and because they
+# Because the moduli sizes > 4096 are not commonly used, and because they
 # take a long time to generate we update the <= 4096 ones more frequently.
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli: moduli.6144 moduli.8192
