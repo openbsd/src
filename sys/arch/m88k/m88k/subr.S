@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.21 2013/01/05 11:20:56 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.22 2013/01/11 22:34:43 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1163,7 +1163,7 @@ ENTRY(m8820x_zeropage)
 ENTRY(m88110_copypage)
 	addu	%r12, %r2, PAGE_SIZE
 1:
-	ld.h	%r0,  %r2, 0x00	# load allocate
+	ld.h	%r0,  %r2, 0x00	| load allocate
 	ld.d	%r4,  %r2, 0x00
 	ld.d	%r6,  %r2, 0x08
 	st.d	%r4,  %r3, 0x00
@@ -1188,7 +1188,7 @@ ENTRY(m88110_zeropage)
 	or	%r3,  %r1, %r0
 	or	%r1,  %r0, %r0
 1:
-	ld.h	%r0,  %r2, 0x00	# load allocate
+	ld.h	%r0,  %r2, 0x00	| load allocate
 	st.d	%r0,  %r2, 0x00
 	st.d	%r0,  %r2, 0x08
 	st.d	%r0,  %r2, 0x10
