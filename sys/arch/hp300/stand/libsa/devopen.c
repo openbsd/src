@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.4 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.5 2013/01/11 23:22:35 miod Exp $	*/
 /*	$NetBSD: devopen.c,v 1.7 1996/10/14 07:31:47 thorpej Exp $	*/
 
 /*-
@@ -132,12 +132,15 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 	int i;
 	char *s, *args[4];
 
-	/* get device name and make lower case */
+	/* check for device name */
 	for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
-		if (isupper(*s)) *s = tolower(*s);
+		/* if (isupper(*s)) *s = tolower(*s) */;
 
 	/* first form */
 	if (*s == '(') {
+		/* make device name lower case */
+		for (s = (char *)fname; *s != '('; s++)
+			if (isupper(*s)) *s = tolower(*s);
 		/* lookup device and get index */
 		if ((*dev = devlookup(fname, s - fname)) < 0)
 			goto baddev;
@@ -177,8 +180,9 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 	else if (*s == ':') {
 		int temp;
 
-		/* isolate device */
-		for (s = (char *)fname; *s != ':' && !isdigit(*s); s++);
+		/* isolate device and make its name lower case*/
+		for (s = (char *)fname; *s != ':' && !isdigit(*s); s++)
+			if (isupper(*s)) *s = tolower(*s);
 
 		/* lookup device and get index */
 		if ((*dev = devlookup(fname, s - fname)) < 0)
