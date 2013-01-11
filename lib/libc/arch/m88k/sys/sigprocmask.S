@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.8 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.9 2013/01/11 21:23:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,9 +44,10 @@ SYSENTRY(sigprocmask)
 2:
 	or	%r13,%r0,SYS_sigprocmask
 	tb0	0,%r0,128
-	br	__cerror
+	br	CERROR
 	bcnd	eq0,%r4,3f		/* if old mask not requested, done */
 	st	%r2,%r4,0		/* otherwise, set it */
 3:
 	jmp.n	%r1
 	 or	%r2,%r0,0
+END(sigprocmask)

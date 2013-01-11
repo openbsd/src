@@ -1,4 +1,4 @@
-/*	$OpenBSD: htons.S,v 1.6 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: htons.S,v 1.7 2013/01/11 21:23:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,3 +40,4 @@
 ENTRY(htons)
 	jmp.n	%r1
 	 clr	%r2,%r2,16<16> /* clear the top 16 bits */
+END(htons)

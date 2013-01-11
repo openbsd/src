@@ -1,4 +1,4 @@
-/*	$OpenBSD: exect.S,v 1.7 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: exect.S,v 1.8 2013/01/11 21:23:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,4 +38,5 @@
 ENTRY(exect)
 	or	%r13,%r0,SYS_execve
 	tb0	0,%r0,128 		/* exect(file, argv, env) */
-	br	__cerror
+	br	CERROR
+END(exect)

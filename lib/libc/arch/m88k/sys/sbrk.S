@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.9 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.10 2013/01/11 21:23:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,18 +45,44 @@ __curbrk:
 	.text
 
 ENTRY(sbrk)
+#ifdef __PIC__
+	PIC_SAVE(%r9)
+	PIC_SETUP
+#endif
+
+#ifdef __PIC__
+	PIC_LOAD(%r5,__curbrk)
+#else
 	or.u	%r5,%r0,%hi16(__curbrk)
 	ld	%r5,%r5,%lo16(__curbrk)
+#endif
 	add	%r2,%r2,%r5
 	or	%r4,%r2,0
 	or	%r13,%r0,SYS_break
 	tb0	0,%r0,128
-	br 	__cerror
+#ifdef __PIC__
+	br.n	CERROR
+	 PIC_RESTORE(%r9)
+#else
+	br 	CERROR
+#endif
 	/* Save old __curbrk */
+#ifdef __PIC__
+	PIC_LOAD(%r2,__curbrk)
+#else
 	or.u	%r5,%r0,%hi16(__curbrk)
 	ld	%r2,%r5,%lo16(__curbrk)
+#endif
 	/* Update __curbrk */
+#ifdef __PIC__
+	PIC_STORE(%r4,__curbrk)
+#else
 	st	%r4,%r5,%lo16(__curbrk)
+#endif
 	/* and return old __curbrk */
+#ifdef __PIC__
+	PIC_RESTORE(%r9)
+#endif
 	jmp.n	%r1
 	 or	%r3,%r0,0
+END(sbrk)

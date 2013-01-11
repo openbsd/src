@@ -1,4 +1,4 @@
-/* $OpenBSD: fabs.S,v 1.10 2013/01/05 11:20:55 miod Exp $ */
+/* $OpenBSD: fabs.S,v 1.11 2013/01/11 21:23:24 miod Exp $ */
 /*-
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -44,3 +44,4 @@ ENTRY(fabs)
 	ld.d	%r2,%r31,0
 	jmp.n	%r1
 	 addu	%r31,%r31,16
+END(fabs)

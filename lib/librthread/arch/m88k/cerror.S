@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.2 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.3 2013/01/11 21:23:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,3 +53,4 @@ ASENTRY(__cerror)
 	ld	%r25,%r0,%r31
 	jmp.n	%r1
 	 addu	%r31,%r31,16
+END(__cerror)

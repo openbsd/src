@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.11 2013/01/08 23:06:43 miod Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.12 2013/01/11 21:23:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,8 +39,22 @@ WEAK_ALIAS(__cerror,___cerror)
 
 	.globl	_C_LABEL(errno)
 ENTRY(___cerror)
+#ifdef __PIC__
+	PIC_SAVE(%r9)
+	PIC_SETUP
+#endif
+
+#ifdef __PIC__
+	PIC_STORE(%r2,_C_LABEL(errno))
+#else
 	or.u	%r4,%r0,%hi16(_C_LABEL(errno))
 	st	%r2,%r4,%lo16(_C_LABEL(errno))
+#endif
+
+#ifdef __PIC__
+	PIC_RESTORE(%r9)
+#endif
 	sub	%r2,%r0,0x1
 	jmp.n	%r1
 	 sub	%r3,%r0,0x1
+END(___cerror)

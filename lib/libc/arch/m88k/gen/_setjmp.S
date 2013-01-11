@@ -1,4 +1,4 @@
-/* $OpenBSD: _setjmp.S,v 1.10 2013/01/05 11:20:55 miod Exp $ */
+/* $OpenBSD: _setjmp.S,v 1.11 2013/01/11 21:23:24 miod Exp $ */
 /*-
  * Copyright (c) 2002 Steve Murphree, Jr.
  * All rights reserved.
@@ -78,6 +78,7 @@ ENTRY(_setjmp)
 	st	%r4,%r2,80
 	jmp.n	%r1
 	 or	%r2,%r0,0		/* return 0 */
+END(_setjmp)
 
 /*
 void _longjmp(jmp_buf env, int val);
@@ -114,9 +115,14 @@ ENTRY(_longjmp)
 
 2:	subu	%r31,%r31,16	/* get a temporary stack */
 	st	%r1,%r31,0	/* save r1 on stack (return address) */
+#ifdef __PIC__
 	bsr	_C_LABEL(longjmperror)
 	bsr	_C_LABEL(abort)	/* NO RETURN */
+#else
+	bsr	_C_LABEL(longjmperror)#plt
+	bsr	_C_LABEL(abort)#plt	/* NO RETURN */
+#endif
 	ld	%r1,%r31,0	/* restore r1 from stack */
 	jmp.n	%r1	/* this should not happen but we are prepared */
 	 addu	%r31,%r31,16	/* restore the stack */
-
+END(_longjmp)

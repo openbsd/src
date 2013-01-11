@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigreturn.S,v 1.8 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: sigreturn.S,v 1.9 2013/01/11 21:23:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,5 +39,4 @@
  * We must preserve the state of the registers as the user has set them up.
  */
 
-SYSCALL(sigreturn)
-	jmp	%r1
+RSYSCALL(sigreturn)

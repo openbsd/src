@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.11 2013/01/05 11:20:55 miod Exp $ */
+/* $OpenBSD: setjmp.S,v 1.12 2013/01/11 21:23:24 miod Exp $ */
 /*-
  * Copyright (c) 2002 Steve Murphree, Jr.
  * All rights reserved.
@@ -76,13 +76,18 @@ ENTRY(setjmp)
 	or	%r4,%r0,SETJMP_SIG	/* r4 now contains setjmp type */
 	st	%r4,%r2,80	/* setjmp type to _setjmp */
 	or	%r14,%r2,0	/* store address of env in r14 */
+#ifdef __PIC__
 	bsr.n	_C_LABEL(sigblock) /* r2 = sigblock(0) */
+#else
+	bsr.n	_C_LABEL(sigblock)#plt /* r2 = sigblock(0) */
+#endif
 	 or	%r2,%r0,0
 	st	%r2,%r14,4	/* save signal set in offset 4 of env */
 	ld	%r1,%r14,0
 	ld	%r14,%r14,8
 	jmp.n	%r1		/* return 0 */
 	 or	%r2,%r0,0
+END(setjmp)
 
 /*
 void longjmp(jmp_buf env, int retval);
@@ -114,7 +119,11 @@ ENTRY(longjmp)
 
 	subu	%r31,%r31,16	/* get a temporary stack */
 	st.d	%r2,%r31,0	/* save r2 and r3 on stack (env + return val) */
+#ifdef __PIC__
+	bsr.n	_C_LABEL(sigsetmask)#plt /* restore the signal set */
+#else
 	bsr.n	_C_LABEL(sigsetmask) /* restore the signal set */
+#endif
 	 ld	%r2,%r2,4
 	ld.d	%r2,%r31,0	/* restore r2 and r3 */
 	addu	%r31,%r31,16
@@ -126,8 +135,14 @@ ENTRY(longjmp)
 
 2:	subu	%r31,%r31,16	/* get a temporary stack */
 	st	%r1,%r31,0	/* save r1 on stack (return address) */
+#ifdef __PIC__
 	bsr	_C_LABEL(longjmperror)
 	bsr	_C_LABEL(abort)	/* NO RETURN */
+#else
+	bsr	_C_LABEL(longjmperror)#plt
+	bsr	_C_LABEL(abort)#plt	/* NO RETURN */
+#endif
 	ld	%r1,%r31,0	/* restore r1 from stack */
 	jmp.n	%r1	/* this should not happen but we are prepared */
 	 addu	%r31,%r31,16	/* restore the stack */
+END(longjmp)

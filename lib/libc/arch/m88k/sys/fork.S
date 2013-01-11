@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.6 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: fork.S,v 1.7 2013/01/11 21:23:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,3 +43,4 @@ SYSCALL(fork)
 	or	%r3,%r0,0
 parent:
 	jmp	%r1		/* pid = fork() */
+END(fork)
