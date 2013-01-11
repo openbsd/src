@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.129 2012/06/12 20:32:17 matthew Exp $ */
+/*	$OpenBSD: loader.c,v 1.130 2013/01/11 21:17:07 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -394,8 +394,8 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 #define TRUNC_PG(x) ((x) & ~(align))
 
 	/*
-	 * now that GOT and PLT has been relocated, and we know
-	 * page size, protect it from modification
+	 * now that GOT and PLT have been relocated, and we know
+	 * page size, protect them from modification
 	 */
 #ifndef  RTLD_NO_WXORX
 	{
@@ -726,10 +726,10 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 		table[i++] = DT_NULL;
 		for (i = 0; table[i] != DT_NULL; i++) {
 			val = table[i];
-			if (val > DT_HIPROC) /* ??? */
+			if (val >= DT_LOPROC && val < DT_LOPROC + DT_PROCNUM)
+				val = val - DT_LOPROC + DT_NUM;
+			else if (val >= DT_NUM)
 				continue;
-			if (val > DT_LOPROC)
-				val -= DT_LOPROC + DT_NUM;
 			if (dynld.Dyn.info[val] != 0)
 				dynld.Dyn.info[val] += loff;
 		}
