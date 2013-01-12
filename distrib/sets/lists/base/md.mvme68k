@@ -1760,6 +1760,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/limits.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/lock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/mioctl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/mutex.ph
