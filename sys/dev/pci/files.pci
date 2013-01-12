@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.290 2012/11/29 23:36:34 stsp Exp $
+#	$OpenBSD: files.pci,v 1.291 2013/01/12 13:02:22 sf Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -841,3 +841,7 @@ file	dev/pci/if_vio.c		vio
 device	vioblk: scsi
 attach	vioblk at virtio
 file	dev/pci/vioblk.c		vioblk
+
+device	viomb
+attach	viomb at virtio
+file	dev/pci/viomb.c			viomb
