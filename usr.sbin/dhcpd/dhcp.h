@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.6 2009/09/01 08:42:31 reyk Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.7 2013/01/13 18:24:23 krw Exp $	*/
 
 /* Protocol structures... */
 
@@ -154,8 +154,27 @@ struct dhcp_packet {
 #define DHO_DHCP_REBINDING_TIME		59
 #define DHO_DHCP_CLASS_IDENTIFIER	60
 #define DHO_DHCP_CLIENT_IDENTIFIER	61
+#define DHO_NISPLUS_DOMAIN		64
+#define DHO_NISPLUS_SERVERS		65
+#define DHO_TFTP_SERVER			66
+#define DHO_BOOTFILE_NAME		67
+#define DHO_MOBILE_IP_HOME_AGENT	68
+#define DHO_SMTP_SERVER			69
+#define DHO_POP_SERVER			70
+#define DHO_NNTP_SERVER			71
+#define DHO_WWW_SERVER			72
+#define DHO_FINGER_SERVER		73
+#define DHO_IRC_SERVER			74
+#define DHO_STREETTALK_SERVER		75
+#define DHO_STREETTALK_DIRECTORY_ASSISTANCE_SERVER	76
 #define DHO_DHCP_USER_CLASS_ID		77
 #define DHO_RELAY_AGENT_INFORMATION	82
+#define DHO_NDS_SERVERS			85
+#define DHO_NDS_TREE_NAME		86
+#define DHO_NDS_CONTEXT			87
+#define DHO_TFTP_CONFIG_FILE		144
+#define DHO_VOIP_CONFIGURATION_SERVER	150
+#define DHO_AUTOPROXY_SCRIPT		252
 #define DHO_END				255
 
 /* DHCP message types. */
