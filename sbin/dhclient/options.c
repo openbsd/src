@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.45 2012/11/15 14:54:18 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.46 2013/01/13 22:09:38 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -209,9 +209,13 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	struct in_addr foo;
 	char comma;
 
+	memset(optbuf, 0, sizeof(optbuf));
+
 	/* Code should be between 0 and 255. */
-	if (code > 255)
-		error("pretty_print_option: bad code %d", code);
+	if (code > 255) {
+		warning("pretty_print_option: bad code %d", code);
+		goto done;
+	}
 
 	if (emit_punct)
 		comma = ',';
@@ -224,7 +228,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			warning("%s: Excess information in format string: %s",
 			    dhcp_options[code].name,
 			    &(dhcp_options[code].format[i]));
-			break;
+			goto done;
 		}
 		numelem++;
 		fmtbuf[i] = dhcp_options[code].format[i];
@@ -238,7 +242,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    " in format string: %s",
 				    dhcp_options[code].name,
 				    dhcp_options[code].format);
-				return ("<fmt error>");
+				goto done;
 			}
 			break;
 		case 'X':
@@ -282,7 +286,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			warning("%s: garbage in format string: %s",
 			    dhcp_options[code].name,
 			    &(dhcp_options[code].format[i]));
-			break;
+			goto done;
 		}
 	}
 
@@ -290,20 +294,24 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	if (hunksize > len) {
 		warning("%s: expecting at least %d bytes; got %d",
 		    dhcp_options[code].name, hunksize, len);
-		return ("<error>");
+		goto done;
 	}
 	/* Check for too many bytes... */
-	if (numhunk == -1 && hunksize < len)
+	if (numhunk == -1 && hunksize < len) {
 		warning("%s: %d extra bytes",
 		    dhcp_options[code].name, len - hunksize);
+		goto done;
+	}
 
 	/* If this is an array, compute its size. */
 	if (!numhunk)
 		numhunk = len / hunksize;
 	/* See if we got an exact number of hunks. */
-	if (numhunk > 0 && numhunk * hunksize < len)
-		warning("%s: %d extra bytes at end of array",
-		    dhcp_options[code].name, len - numhunk * hunksize);
+	if (numhunk > 0 && numhunk * hunksize != len) {
+		warning("%s: expecting %d bytes: got %d",
+		    dhcp_options[code].name, numhunk * hunksize, len);
+		goto done;
+	}
 
 	/* A one-hunk array prints the same as a single hunk. */
 	if (numhunk < 0)
@@ -439,10 +447,13 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			goto toobig;
 
 	}
+
+done:
 	return (optbuf);
- toobig:
-	warning("dhcp option too large");
-	return ("<error>");
+
+toobig:
+	memset(optbuf, 0, sizeof(optbuf));
+	return (optbuf);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.203 2013/01/13 04:51:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.204 2013/01/13 22:09:38 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -91,8 +91,6 @@ void		 sighdlr(int);
 int		 findproto(char *, int);
 struct sockaddr	*get_ifa(char *, int);
 void		 usage(void);
-int		 check_option(struct client_lease *l, int option);
-int		 ipv4addrs(char * buf);
 int		 res_hnok(const char *dn);
 char		*option_as_string(unsigned int code, unsigned char *data, int len);
 void		 fork_privchld(int, int);
@@ -881,10 +879,10 @@ struct client_lease *
 packet_to_lease(struct in_addr client_addr, struct option_data *options)
 {
 	struct client_lease *lease;
+	char *pretty;
 	int i;
 
 	lease = malloc(sizeof(struct client_lease));
-
 	if (!lease) {
 		warning("dhcpoffer: no memory to record lease.");
 		return (NULL);
@@ -894,16 +892,33 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 
 	/* Copy the lease options. */
 	for (i = 0; i < 256; i++) {
-		if (options[i].len) {
-			lease->options[i] = options[i];
-			options[i].data = NULL;
-			options[i].len = 0;
-			if (!check_option(lease, i)) {
-				warning("Invalid lease option - ignoring offer");
-				free_client_lease(lease);
-				return (NULL);
-			}
+		if (options[i].len == 0)
+			continue;
+		if (!unknown_ok && strncmp("option-",
+		    dhcp_options[i].name, 7)) {
+			warning("dhcpoffer: unknown option %d", i);
+			free_client_lease(lease);
+			return (NULL);
 		}
+		pretty = pretty_print_option(i, &options[i], 0);
+		if (strlen(pretty) == 0)
+			continue;
+		switch (i) {
+		case DHO_HOST_NAME:
+		case DHO_DOMAIN_NAME:
+		case DHO_NIS_DOMAIN:
+			if (!res_hnok(pretty)) {
+				warning("Bogus data for option %s",
+				    dhcp_options[i].name);
+				continue;
+			}
+			break;
+		default:
+			break;
+		}
+		lease->options[i] = options[i];
+		options[i].data = NULL;
+		options[i].len = 0;
 	}
 
 	memcpy(&lease->address.s_addr, &client->packet.yiaddr,
@@ -1591,119 +1606,6 @@ go_daemon(void)
 }
 
 int
-check_option(struct client_lease *l, int option)
-{
-	char *opbuf;
-	char *sbuf;
-
-	/* we use this, since this is what gets passed to dhclient-script */
-
-	opbuf = pretty_print_option(option, &l->options[option], 0);
-
-	sbuf = option_as_string(option, l->options[option].data,
-	    l->options[option].len);
-
-	switch (option) {
-	case DHO_SUBNET_MASK:
-	case DHO_SWAP_SERVER:
-	case DHO_BROADCAST_ADDRESS:
-	case DHO_DHCP_SERVER_IDENTIFIER:
-	case DHO_ROUTER_SOLICITATION_ADDRESS:
-	case DHO_DHCP_REQUESTED_ADDRESS:
-		if (ipv4addrs(opbuf) == 0) {
-			warning("Invalid IP address in option %s: %s",
-			    dhcp_options[option].name, opbuf);
-			return (0);
-		}
-		if (l->options[option].len != 4) { /* RFC 2132 */
-			warning("warning: Only 1 IP address allowed in "
-			    "%s option; length %d, must be 4",
-			    dhcp_options[option].name,
-			    l->options[option].len);
-			l->options[option].len = 4;
-		}
-		return (1);
-	case DHO_TIME_SERVERS:
-	case DHO_NAME_SERVERS:
-	case DHO_ROUTERS:
-	case DHO_DOMAIN_NAME_SERVERS:
-	case DHO_LOG_SERVERS:
-	case DHO_COOKIE_SERVERS:
-	case DHO_LPR_SERVERS:
-	case DHO_IMPRESS_SERVERS:
-	case DHO_RESOURCE_LOCATION_SERVERS:
-	case DHO_NIS_SERVERS:
-	case DHO_NTP_SERVERS:
-	case DHO_NETBIOS_NAME_SERVERS:
-	case DHO_NETBIOS_DD_SERVER:
-	case DHO_FONT_SERVERS:
-		if (ipv4addrs(opbuf) == 0) {
-			warning("Invalid IP address in option %s: %s",
-			    dhcp_options[option].name, opbuf);
-			return (0);
-		}
-		return (1);
-	case DHO_HOST_NAME:
-	case DHO_DOMAIN_NAME:
-	case DHO_NIS_DOMAIN:
-		if (!res_hnok(sbuf)) {
-			warning("Bogus Host Name option %d: %s (%s)", option,
-			    sbuf, opbuf);
-			l->options[option].len = 0;
-			free(l->options[option].data);
-		}
-		return (1);
-	case DHO_PAD:
-	case DHO_TIME_OFFSET:
-	case DHO_BOOT_SIZE:
-	case DHO_MERIT_DUMP:
-	case DHO_ROOT_PATH:
-	case DHO_EXTENSIONS_PATH:
-	case DHO_IP_FORWARDING:
-	case DHO_NON_LOCAL_SOURCE_ROUTING:
-	case DHO_POLICY_FILTER:
-	case DHO_MAX_DGRAM_REASSEMBLY:
-	case DHO_DEFAULT_IP_TTL:
-	case DHO_PATH_MTU_AGING_TIMEOUT:
-	case DHO_PATH_MTU_PLATEAU_TABLE:
-	case DHO_INTERFACE_MTU:
-	case DHO_ALL_SUBNETS_LOCAL:
-	case DHO_PERFORM_MASK_DISCOVERY:
-	case DHO_MASK_SUPPLIER:
-	case DHO_ROUTER_DISCOVERY:
-	case DHO_STATIC_ROUTES:
-	case DHO_TRAILER_ENCAPSULATION:
-	case DHO_ARP_CACHE_TIMEOUT:
-	case DHO_IEEE802_3_ENCAPSULATION:
-	case DHO_DEFAULT_TCP_TTL:
-	case DHO_TCP_KEEPALIVE_INTERVAL:
-	case DHO_TCP_KEEPALIVE_GARBAGE:
-	case DHO_VENDOR_ENCAPSULATED_OPTIONS:
-	case DHO_NETBIOS_NODE_TYPE:
-	case DHO_NETBIOS_SCOPE:
-	case DHO_X_DISPLAY_MANAGER:
-	case DHO_DHCP_LEASE_TIME:
-	case DHO_DHCP_OPTION_OVERLOAD:
-	case DHO_DHCP_MESSAGE_TYPE:
-	case DHO_DHCP_PARAMETER_REQUEST_LIST:
-	case DHO_DHCP_MESSAGE:
-	case DHO_DHCP_MAX_MESSAGE_SIZE:
-	case DHO_DHCP_RENEWAL_TIME:
-	case DHO_DHCP_REBINDING_TIME:
-	case DHO_DHCP_CLASS_IDENTIFIER:
-	case DHO_DHCP_CLIENT_IDENTIFIER:
-	case DHO_DHCP_USER_CLASS_ID:
-	case DHO_TFTP_SERVER:
-	case DHO_END:
-		return (1);
-	default:
-		if (!unknown_ok)
-			warning("unknown dhcp option value 0x%x", option);
-		return (unknown_ok);
-	}
-}
-
-int
 res_hnok(const char *name)
 {
 	const char *dn = name;
@@ -1728,28 +1630,6 @@ res_hnok(const char *name)
 		pch = ch, ch = nch;
 	}
 	return (1);
-}
-
-/* Does buf consist only of dotted decimal ipv4 addrs?
- * return how many if so,
- * otherwise, return 0
- */
-int
-ipv4addrs(char * buf)
-{
-	struct in_addr jnk;
-	int count = 0;
-
-	while (inet_aton(buf, &jnk) == 1){
-		count++;
-		while (*buf == '.' || isdigit(*buf))
-			buf++;
-		if (*buf == '\0')
-			return (count);
-		while (*buf ==  ' ')
-			buf++;
-	}
-	return (0);
 }
 
 char *
