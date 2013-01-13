@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.27 2013/01/03 16:06:01 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.28 2013/01/13 04:07:49 jsing Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -56,21 +56,21 @@
 
 #include <sys/unistd.h> /* for pathconf(2) constants */
 
-static int	ntfs_read(void *);
-static int	ntfs_write(void *);
-static int	ntfs_getattr(void *);
-static int	ntfs_inactive(void *);
-static int	ntfs_print(void *);
-static int	ntfs_reclaim(void *);
-static int	ntfs_strategy(void *);
-static int	ntfs_access(void *);
-static int	ntfs_open(void *);
-static int	ntfs_close(void *);
-static int	ntfs_readdir(void *);
-static int	ntfs_lookup(void *);
-static int	ntfs_bmap(void *);
-static int	ntfs_fsync(void *);
-static int	ntfs_pathconf(void *);
+int	ntfs_read(void *);
+int	ntfs_write(void *);
+int	ntfs_getattr(void *);
+int	ntfs_inactive(void *);
+int	ntfs_print(void *);
+int	ntfs_reclaim(void *);
+int	ntfs_strategy(void *);
+int	ntfs_access(void *v);
+int	ntfs_open(void *v);
+int	ntfs_close(void *);
+int	ntfs_readdir(void *);
+int	ntfs_lookup(void *);
+int	ntfs_bmap(void *);
+int	ntfs_fsync(void *);
+int	ntfs_pathconf(void *);
 
 int	ntfs_prtactive = 0;	/* 1 => print out reclaim of active vnodes */
 
@@ -91,7 +91,7 @@ ntfs_bmap(void *v)
 	return (0);
 }
 
-static int
+int
 ntfs_read(void *v)
 {
 	struct vop_read_args *ap = v;
@@ -128,7 +128,7 @@ ntfs_read(void *v)
 	return (0);
 }
 
-static int
+int
 ntfs_getattr(void *v)
 {
 	struct vop_getattr_args *ap = v;
@@ -232,7 +232,7 @@ ntfs_reclaim(void *v)
 	return (0);
 }
 
-static int
+int
 ntfs_print(void *v)
 {
 	struct vop_print_args *ap = v;
@@ -321,7 +321,7 @@ ntfs_strategy(void *v)
 	return (error);
 }
 
-static int
+int
 ntfs_write(void *v)
 {
 	struct vop_write_args *ap = v;
@@ -429,8 +429,7 @@ ntfs_access(void *v)
  *
  * Nothing to do.
  */
-/* ARGSUSED */
-static int
+int
 ntfs_open(void *v)
 {
 #if NTFS_DEBUG
@@ -453,8 +452,7 @@ ntfs_open(void *v)
  *
  * Update the times on the inode.
  */
-/* ARGSUSED */
-static int
+int
 ntfs_close(void *v)
 {
 #if NTFS_DEBUG
@@ -710,7 +708,7 @@ ntfs_lookup(void *v)
  * This function is worthless for vnodes that represent directories. Maybe we
  * could just do a sync if they try an fsync on a directory file.
  */
-static int
+int
 ntfs_fsync(void *v)
 {
 	return (0);
@@ -719,7 +717,7 @@ ntfs_fsync(void *v)
 /*
  * Return POSIX pathconf information applicable to NTFS filesystem
  */
-static int
+int
 ntfs_pathconf(void *v)
 {
 	struct vop_pathconf_args *ap = v;

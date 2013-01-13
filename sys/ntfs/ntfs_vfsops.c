@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.30 2013/01/02 08:12:13 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.31 2013/01/13 04:07:49 jsing Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -55,36 +55,36 @@
 #include <ntfs/ntfs_ihash.h>
 #include <ntfs/ntfsmount.h>
 
-static int	ntfs_mount(struct mount *, const char *, void *,
+int	ntfs_mount(struct mount *, const char *, void *,
 				struct nameidata *, struct proc *);
-static int	ntfs_quotactl(struct mount *, int, uid_t, caddr_t,
+int	ntfs_quotactl(struct mount *, int, uid_t, caddr_t,
 				   struct proc *);
-static int	ntfs_root(struct mount *, struct vnode **);
-static int	ntfs_start(struct mount *, int, struct proc *);
-static int	ntfs_statfs(struct mount *, struct statfs *,
+int	ntfs_root(struct mount *, struct vnode **);
+int	ntfs_start(struct mount *, int, struct proc *);
+int	ntfs_statfs(struct mount *, struct statfs *,
 				 struct proc *);
-static int	ntfs_sync(struct mount *, int, struct ucred *,
+int	ntfs_sync(struct mount *, int, struct ucred *,
 			       struct proc *);
-static int	ntfs_unmount(struct mount *, int, struct proc *);
-static int	ntfs_vget(struct mount *mp, ino_t ino,
+int	ntfs_unmount(struct mount *, int, struct proc *);
+int	ntfs_vget(struct mount *mp, ino_t ino,
 			       struct vnode **vpp);
-static int	ntfs_mountfs(struct vnode *, struct mount *, 
+int	ntfs_mountfs(struct vnode *, struct mount *, 
 				  struct ntfs_args *, struct proc *);
-static int	ntfs_vptofh(struct vnode *, struct fid *);
+int	ntfs_vptofh(struct vnode *, struct fid *);
 
-static int	ntfs_init(struct vfsconf *);
-static int	ntfs_fhtovp(struct mount *, struct fid *,
+int	ntfs_init(struct vfsconf *);
+int	ntfs_fhtovp(struct mount *, struct fid *,
    			     struct vnode **);
-static int	ntfs_checkexp(struct mount *, struct mbuf *,
+int	ntfs_checkexp(struct mount *, struct mbuf *,
 			       int *, struct ucred **);
-static int	ntfs_sysctl(int *, u_int, void *, size_t *, void *,
+int	ntfs_sysctl(int *, u_int, void *, size_t *, void *,
  			     size_t, struct proc *);
 
 /*
  * Verify a remote client has export rights and return these rights via.
  * exflagsp and credanonp.
  */
-static int
+int
 ntfs_checkexp(mp, nam, exflagsp, credanonp)
 	struct mount *mp;
 	struct mbuf *nam;
@@ -106,8 +106,7 @@ ntfs_checkexp(mp, nam, exflagsp, credanonp)
 	return (0);
 }
 
-/*ARGSUSED*/
-static int
+int
 ntfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -120,7 +119,7 @@ ntfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	return (EINVAL);
 }
 
-static int
+int
 ntfs_init (
 	struct vfsconf *vcp )
 {
@@ -129,7 +128,7 @@ ntfs_init (
 	return 0;
 }
 
-static int
+int
 ntfs_mount( 
 	struct mount *mp,
 	const char *path,
@@ -483,7 +482,7 @@ out:
 	return (error);
 }
 
-static int
+int
 ntfs_start (
 	struct mount *mp,
 	int flags,
@@ -492,7 +491,7 @@ ntfs_start (
 	return (0);
 }
 
-static int
+int
 ntfs_unmount( 
 	struct mount *mp,
 	int mntflags,
@@ -560,7 +559,7 @@ ntfs_unmount(
 	return (error);
 }
 
-static int
+int
 ntfs_root(
 	struct mount *mp,
 	struct vnode **vpp )
@@ -583,8 +582,7 @@ ntfs_root(
 /*
  * Do operations associated with quotas, not supported
  */
-/* ARGSUSED */
-static int
+int
 ntfs_quotactl ( 
 	struct mount *mp,
 	int cmds,
@@ -628,7 +626,7 @@ ntfs_calccfree(
 	return(error);
 }
 
-static int
+int
 ntfs_statfs(
 	struct mount *mp,
 	struct statfs *sbp,
@@ -660,7 +658,7 @@ ntfs_statfs(
 	return (0);
 }
 
-static int
+int
 ntfs_sync (
 	struct mount *mp,
 	int waitfor,
@@ -671,8 +669,7 @@ ntfs_sync (
 	return (0);
 }
 
-/*ARGSUSED*/
-static int
+int
 ntfs_fhtovp(
 	struct mount *mp,
 	struct fid *fhp,
@@ -696,7 +693,7 @@ ntfs_fhtovp(
 	return (0);
 }
 
-static int
+int
 ntfs_vptofh(
 	struct vnode *vp,
 	struct fid *fhp)
@@ -839,7 +836,7 @@ ntfs_vgetex(
 	return (0);
 }
 
-static int
+int
 ntfs_vget(
 	struct mount *mp,
 	ino_t ino,

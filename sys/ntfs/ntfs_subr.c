@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.27 2013/01/03 16:13:16 jsing Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.28 2013/01/13 04:07:49 jsing Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -63,10 +63,10 @@ struct ntfs_lookup_ctx {
 	struct ntfs_lookup_ctx *prev;
 };
 
-static int ntfs_ntlookupattr(struct ntfsmount *, const char *, int, int *, char **);
-static int ntfs_findvattr(struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t);
-static int ntfs_uastricmp(struct ntfsmount *, const wchar *, size_t, const char *, size_t);
-static int ntfs_uastrcmp(struct ntfsmount *, const wchar *, size_t, const char *, size_t);
+int ntfs_ntlookupattr(struct ntfsmount *, const char *, int, int *, char **);
+int ntfs_findvattr(struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t);
+int ntfs_uastricmp(struct ntfsmount *, const wchar *, size_t, const char *, size_t);
+int ntfs_uastrcmp(struct ntfsmount *, const wchar *, size_t, const char *, size_t);
 
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */
@@ -99,7 +99,7 @@ ntfs_ntvattrrele(vap)
 /*
  * find the attribute in the ntnode
  */
-static int
+int
 ntfs_findvattr(ntmp, ip, lvapp, vapp, type, name, namelen, vcn)
 	struct ntfsmount *ntmp;
 	struct ntnode *ip;
@@ -655,7 +655,7 @@ ntfs_runtovrun(
 /*
  * Compare unicode and ascii string case insens.
  */
-static int
+int
 ntfs_uastricmp(ntmp, ustr, ustrlen, astr, astrlen)
 	struct ntfsmount *ntmp;
 	const wchar *ustr;
@@ -685,7 +685,7 @@ ntfs_uastricmp(ntmp, ustr, ustrlen, astr, astrlen)
 /*
  * Compare unicode and ascii string case sens.
  */
-static int
+int
 ntfs_uastrcmp(ntmp, ustr, ustrlen, astr, astrlen)
 	struct ntfsmount *ntmp;
 	const wchar *ustr;
@@ -790,7 +790,7 @@ ntfs_frele(
  * $ATTR_TYPE is searched in attrdefs read from $AttrDefs.
  * If $ATTR_TYPE not specified, ATTR_A_DATA assumed.
  */
-static int
+int
 ntfs_ntlookupattr(
 		struct ntfsmount * ntmp,
 		const char * name,
