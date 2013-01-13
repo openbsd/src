@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.202 2013/01/06 15:33:12 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.203 2013/01/13 04:51:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -718,12 +718,17 @@ bind_lease(void)
 		    DHO_DOMAIN_NAME, &options[DHO_DOMAIN_NAME], 0));
 	else
 		domainname = strdup("");
+	if (domainname == NULL)
+		error("no memory for domainname");
+
 	if (options[DHO_DOMAIN_NAME_SERVERS].len) {
 		nameservers = strdup(pretty_print_option(
 		    DHO_DOMAIN_NAME_SERVERS,
 		    &options[DHO_DOMAIN_NAME_SERVERS], 0));
 	} else
 		nameservers = strdup("");
+	if (nameservers == NULL)
+		error("no memory for nameservers");
 
 	new_resolv_conf(ifi->name, domainname, nameservers);
 
