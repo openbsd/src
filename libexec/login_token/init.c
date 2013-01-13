@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 2005/02/17 13:49:38 aaron Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 2013/01/13 21:21:17 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -93,7 +93,7 @@ token_init(char *path)
 		fprintf(stderr, "Please invoke as one of:");
 		for (i = 0; i < sizeof(types)/sizeof(types[0]); ++i)
 			fprintf(stderr, " %.*s%s%s",
-			    p - path, path, types[i].name, p + 5);
+			    (int)(p - path), path, types[i].name, p + 5);
 		fprintf(stderr, "\n");
 		exit(1);
 

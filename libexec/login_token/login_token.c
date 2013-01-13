@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_token.c,v 1.9 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: login_token.c,v 1.10 2013/01/13 21:21:17 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -55,7 +55,6 @@ int
 main(int argc, char *argv[])
 {
 	FILE *back = NULL;
-	char *class = 0;
 	char *username = 0;
 	char *instance;
 	char challenge[1024];
@@ -114,7 +113,6 @@ main(int argc, char *argv[])
 
 	switch (argc - optind) {
 	case 2:
-		class = argv[optind + 1];
 	case 1:
 		username = argv[optind];
 		break;

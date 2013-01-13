@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.13 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: token.c,v 1.14 2013/01/13 21:21:17 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -173,7 +173,7 @@ tokenverify(char *username, char *challenge, char *response)
 	memset(cipher_text.ct, 0, sizeof(cipher_text.ct));
 	memset(tokennumber.ct, 0, sizeof(tokennumber.ct));
 
-	state = strtok(challenge, "\"");
+	(void)strtok(challenge, "\"");
 	state = strtok(NULL, "\"");
 	tmp.ul[0] = strtoul(state, NULL, 10);
 	snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%8.8lu",tmp.ul[0]);
@@ -259,7 +259,7 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	TOKEN_CBlock checktxt;
 	DES_key_schedule key_schedule;
 
-	memset(&secret.ct, 0, sizeof(secret));
+	memset(&secret, 0, sizeof(secret));
 
 	/*
 	 * If no user secret passed in, create one
@@ -303,7 +303,7 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	 */
 
 	if (!(flags & TOKEN_GENSECRET)) {
-		memset(&secret.ct, 0, sizeof(secret));
+		memset(&secret, 0, sizeof(secret));
 		return (0);
 	}
 
@@ -313,7 +313,7 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	    secret.cb[4], secret.cb[5], secret.cb[6], secret.cb[7]);
 
 	DES_key_sched(&secret.cb, &key_schedule);
-	memset(&secret.ct, 0, sizeof(secret));
+	memset(&secret, 0, sizeof(secret));
 	memset(&nulls, 0, sizeof(nulls));
 	DES_ecb_encrypt(&nulls.cb, &checksum.cb, &key_schedule, DES_ENCRYPT);
 	memset(&key_schedule, 0, sizeof(key_schedule));
