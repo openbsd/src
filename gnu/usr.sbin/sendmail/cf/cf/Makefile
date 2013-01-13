@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2012/04/12 12:13:18 kurt Exp $
+#	$OpenBSD: Makefile,v 1.27 2013/01/13 20:47:05 millert Exp $
 #
 #  Makefile for configuration files.
 #
@@ -48,7 +48,7 @@ install:
 			echo "WARNING: installed missing ${DESTDIR}/etc/mail/submit.cf"; \
 			echo "You should probably rebuild ${DESTDIR}/etc/mail/sendmail.cf"; \
 			${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 \
-			    submit.cf ${DESTDIR}/etc/mail/submit.cf; \
+			    openbsd-submit.cf ${DESTDIR}/etc/mail/submit.cf; \
 		fi; \
 		if test ! -e ${DESTDIR}/etc/mail/localhost.cf; then \
 			echo "WARNING: installed missing ${DESTDIR}/etc/mail/localhost.cf"; \
