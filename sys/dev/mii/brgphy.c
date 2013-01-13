@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.99 2013/01/10 00:37:24 dlg Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.100 2013/01/13 05:40:05 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -632,6 +632,13 @@ brgphy_5708s_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
+
+		if (mii->mii_media_active & IFM_FDX) {
+			if (xstat & BRGPHY_5708S_PG0_1000X_STAT1_TX_PAUSE)
+				mii->mii_media_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
+			if (xstat & BRGPHY_5708S_PG0_1000X_STAT1_RX_PAUSE)
+				mii->mii_media_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+		}
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
@@ -690,6 +697,9 @@ brgphy_5709s_status(struct mii_softc *sc)
                         mii->mii_media_active |= IFM_FDX;
                 else
                         mii->mii_media_active |= IFM_HDX;
+
+		if (mii->mii_media_active & IFM_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
