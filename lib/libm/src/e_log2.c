@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -78,10 +76,5 @@ log2(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double log2l(long double);
-#else	/* lint */
 __weak_alias(log2l, log2);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

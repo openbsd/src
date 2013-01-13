@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_fmax.c,v 1.5 2012/12/05 23:20:03 deraadt Exp $	*/
+/*	$OpenBSD: n_fmax.c,v 1.6 2013/01/13 03:44:59 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,8 +25,6 @@
  * SUCH DAMAGE.
  */
 
-/* LINTLIBRARY */
-
 #include <math.h>
 
 double
@@ -48,9 +46,4 @@ fmax(double x, double y)
 	return (x > y ? x : y);
 }
 
-#ifdef	lint
-/* PROTOLIB1 */
-long double fmaxl(long double, long double);
-#else	/* lint */
 __weak_alias(fmaxl, fmax);
-#endif	/* lint */

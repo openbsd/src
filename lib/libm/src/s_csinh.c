@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_csinh.c,v 1.3 2012/12/05 23:20:04 deraadt Exp $	*/
+/*	$OpenBSD: s_csinh.c,v 1.4 2013/01/13 03:45:00 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* LINTLIBRARY */
 
 /*							csinh
  *
@@ -60,10 +58,5 @@ csinh(double complex z)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double complex csinhl(long double complex);
-#else	/* lint */
 __weak_alias(csinhl, csinh);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* IEEE functions
  *	nextafter(x,y)
  *	return the next machine floating-point number of x in the
@@ -75,14 +73,7 @@ nextafter(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double nextafterl(long double, long double);
-double nexttoward(double, long double);
-long double nexttowardl(long double, long double);
-#else	/* lint */
 __weak_alias(nextafterl, nextafter);
 __weak_alias(nexttoward, nextafter);
 __weak_alias(nexttowardl, nextafter);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

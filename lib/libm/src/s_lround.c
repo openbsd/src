@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lround.c,v 1.4 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_lround.c,v 1.5 2013/01/13 03:45:00 martynas Exp $	*/
 /* $NetBSD: lround.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -26,8 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* LINTLIBRARY */
 
 #include <sys/types.h>
 #include <sys/limits.h>
@@ -91,10 +89,5 @@ LROUNDNAME(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long int lroundl(long double);
-#else	/* lint */
 __weak_alias(lroundl, lround);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

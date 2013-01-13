@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* Tanh(x)
  * Return the Hyperbolic Tangent of x
  *
@@ -80,10 +78,5 @@ tanh(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double tanhl(long double);
-#else	/* lint */
 __weak_alias(tanhl, tanh);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -81,10 +79,5 @@ cbrt(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double cbrtl(long double);
-#else	/* lint */
 __weak_alias(cbrtl, cbrt);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

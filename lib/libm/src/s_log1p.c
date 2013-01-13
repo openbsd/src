@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* double log1p(double x)
  *
  * Method :                  
@@ -161,10 +159,5 @@ log1p(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double log1pl(long double);
-#else	/* lint */
 __weak_alias(log1pl, log1p);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

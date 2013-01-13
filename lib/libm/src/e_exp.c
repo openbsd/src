@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* exp(x)
  * Returns the exponential of x.
  *
@@ -159,10 +157,5 @@ exp(double x)	/* default IEEE double exp */
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double expl(long double);
-#else	/* lint */
 __weak_alias(expl, exp);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -37,8 +37,6 @@
  * to produce the hexadecimal values shown.
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -122,10 +120,5 @@ atan2(double y, double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double atan2l(long double, long double);
-#else	/* lint */
 __weak_alias(atan2l, atan2);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

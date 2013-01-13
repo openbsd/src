@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* double erf(double x)
  * double erfc(double x)
  *			     x
@@ -300,12 +298,6 @@ erfc(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double erfl(long double);
-long double erfcl(long double);
-#else	/* lint */
 __weak_alias(erfl, erf);
 __weak_alias(erfcl, erf);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

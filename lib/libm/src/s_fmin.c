@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmin.c,v 1.6 2012/12/05 23:20:04 deraadt Exp $	*/
+/*	$OpenBSD: s_fmin.c,v 1.7 2013/01/13 03:45:00 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -25,8 +25,6 @@
  * SUCH DAMAGE.
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -50,10 +48,5 @@ fmin(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double fminl(long double, long double);
-#else	/* lint */
 __weak_alias(fminl, fmin);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

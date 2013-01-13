@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /*
  * ceil(x)
  * Return x rounded toward -inf to integral value
@@ -72,10 +70,5 @@ ceil(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double ceill(long double);
-#else	/* lint */
 __weak_alias(ceill, ceil);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

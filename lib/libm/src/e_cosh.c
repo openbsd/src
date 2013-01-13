@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* cosh(x)
  * Method : 
  * mathematically cosh(x) if defined to be (exp(x)+exp(-x))/2
@@ -85,10 +83,5 @@ cosh(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double coshl(long double);
-#else	/* lint */
 __weak_alias(coshl, cosh);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

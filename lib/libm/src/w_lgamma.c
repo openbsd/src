@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* double lgamma(double x)
  * Return the logarithm of the Gamma function of x.
  *
@@ -32,10 +30,5 @@ lgamma(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double lgammal(long double);
-#else	/* lint */
 __weak_alias(lgammal, lgamma);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

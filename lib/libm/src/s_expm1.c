@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* expm1(x)
  * Returns exp(x)-1, the exponential of x minus 1.
  *
@@ -220,10 +218,5 @@ expm1(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double expm1l(long double);
-#else	/* lint */
 __weak_alias(expm1l, expm1);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

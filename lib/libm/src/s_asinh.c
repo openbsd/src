@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* asinh(x)
  * Method :
  *	Based on 
@@ -57,10 +55,5 @@ asinh(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double asinhl(long double);
-#else	/* lint */
 __weak_alias(asinhl, asinh);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

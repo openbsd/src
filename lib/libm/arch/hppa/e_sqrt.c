@@ -2,8 +2,6 @@
  * Written by Michael Shalayeff. Public Domain
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -14,9 +12,4 @@ sqrt(double x)
 	return (x);
 }
 
-#ifdef	lint
-/* PROTOLIB1 */
-long double sqrtl(long double);
-#else	/* lint */
 __weak_alias(sqrtl, sqrt);
-#endif	/* lint */

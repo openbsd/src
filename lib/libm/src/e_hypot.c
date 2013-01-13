@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* hypot(x,y)
  *
  * Method :                  
@@ -124,10 +122,5 @@ hypot(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double hypotl(long double, long double);
-#else	/* lint */
 __weak_alias(hypotl, hypot);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

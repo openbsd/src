@@ -16,8 +16,6 @@
  * with the sign bit of y.
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -34,10 +32,5 @@ copysign(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double copysignl(long double, long double);
-#else	/* lint */
 __weak_alias(copysignl, copysign);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

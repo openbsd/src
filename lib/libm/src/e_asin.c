@@ -40,8 +40,6 @@
  *
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -111,10 +109,5 @@ asin(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double asinl(long double);
-#else	/* lint */
 __weak_alias(asinl, asin);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

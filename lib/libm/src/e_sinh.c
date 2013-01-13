@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* sinh(x)
  * Method : 
  * mathematically sinh(x) if defined to be (exp(x)-exp(-x))/2
@@ -78,10 +76,5 @@ sinh(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double sinhl(long double);
-#else	/* lint */
 __weak_alias(sinhl, sinh);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

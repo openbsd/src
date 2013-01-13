@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /* pow(x,y) return x**y
  *
  *		      n
@@ -301,10 +299,5 @@ pow(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double powl(long double, long double);
-#else	/* lint */
 __weak_alias(powl, pow);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

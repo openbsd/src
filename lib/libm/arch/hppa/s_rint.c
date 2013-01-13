@@ -2,8 +2,6 @@
  * Written by Michael Shalayeff. Public Domain
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -15,9 +13,4 @@ rint(double x)
 	return (x);
 }
 
-#ifdef	lint
-/* PROTOLIB1 */
-long double rintl(long double);
-#else	/* lint */
 __weak_alias(rintl, rint);
-#endif	/* lint */

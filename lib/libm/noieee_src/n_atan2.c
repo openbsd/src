@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.c,v 1.15 2012/12/05 23:20:03 deraadt Exp $	*/
+/*	$OpenBSD: n_atan2.c,v 1.16 2013/01/13 03:44:59 martynas Exp $	*/
 /*	$NetBSD: n_atan2.c,v 1.1 1995/10/10 23:36:37 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -102,8 +102,6 @@
  * from decimal to binary accurately enough to produce the hexadecimal values
  * shown.
  */
-
-/* LINTLIBRARY */
 
 #include <math.h>
 
@@ -240,9 +238,4 @@ begin:
 	return(copysign((signx>zero)?z:PI-z,signy));
 }
 
-#ifdef	lint
-/* PROTOLIB1 */
-long double atan2l(long double, long double);
-#else	/* lint */
 __weak_alias(atan2l, atan2);
-#endif	/* lint */

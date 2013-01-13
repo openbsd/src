@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /*
  * floor(x)
  * Return x rounded toward -inf to integral value
@@ -73,10 +71,5 @@ floor(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double floorl(long double);
-#else	/* lint */
 __weak_alias(floorl, floor);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

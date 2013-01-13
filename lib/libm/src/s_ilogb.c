@@ -16,8 +16,6 @@
  * ilogb(inf/NaN) = 0x7fffffff (no signal is raised)
  */
 
-/* LINTLIBRARY */
-
 #include <float.h>
 #include <math.h>
 
@@ -47,10 +45,5 @@ ilogb(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-int ilogbl(long double);
-#else	/* lint */
 __weak_alias(ilogbl, ilogb);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

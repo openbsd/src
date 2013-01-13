@@ -10,8 +10,6 @@
  * ====================================================
  */
 
-/* LINTLIBRARY */
-
 /*
  * trunc(x)
  * Return x rounded toward 0 to integral value
@@ -62,10 +60,5 @@ trunc(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long double truncl(long double);
-#else	/* lint */
 __weak_alias(truncl, trunc);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */

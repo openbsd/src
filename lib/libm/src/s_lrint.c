@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrint.c,v 1.7 2011/07/06 00:02:42 martynas Exp $	*/
+/*	$OpenBSD: s_lrint.c,v 1.8 2013/01/13 03:45:00 martynas Exp $	*/
 /* $NetBSD: lrint.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -26,8 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* LINTLIBRARY */
 
 #include <sys/types.h>
 #include <sys/limits.h>
@@ -101,10 +99,5 @@ LRINTNAME(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-long int lrintl(long double);
-#else	/* lint */
 __weak_alias(lrintl, lrint);
-#endif	/* lint */
 #endif	/* LDBL_MANT_DIG == 53 */
