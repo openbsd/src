@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.99 2012/12/10 10:38:56 mikeb Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.100 2013/01/13 05:45:10 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -910,9 +910,7 @@ bnx_attachhook(void *xsc)
 	/* Look for our PHY. */
 	ifmedia_init(&sc->bnx_mii.mii_media, 0, bnx_ifmedia_upd,
 	    bnx_ifmedia_sts);
-	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5706 ||
-	    (!(sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)))
-		mii_flags |= MIIF_DOPAUSE;
+	mii_flags |= MIIF_DOPAUSE;
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(&sc->bnx_dev, &sc->bnx_mii, 0xffffffff,
