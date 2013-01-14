@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.32 2013/01/14 00:47:53 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.33 2013/01/14 04:02:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -177,6 +177,10 @@ void	 myx_iff(struct myx_softc *);
 void	 myx_down(struct myx_softc *);
 
 void	 myx_start(struct ifnet *);
+void	 myx_write_txd_head(struct myx_softc *, struct myx_buf *, u_int8_t,
+	    u_int32_t, u_int);
+void	 myx_write_txd_tail(struct myx_softc *, struct myx_buf *, u_int8_t,
+	    u_int32_t, u_int);
 int	 myx_load_buf(struct myx_softc *, struct myx_buf *, struct mbuf *);
 int	 myx_setlladdr(struct myx_softc *, u_int32_t, u_int8_t *);
 int	 myx_intr(void *);
@@ -1366,29 +1370,72 @@ myx_down(struct myx_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_zerodma.mxm_map, 0,
 	    sc->sc_zerodma.mxm_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	myx_dmamem_free(sc, &sc->sc_zerodma);
+}
 
+void
+myx_write_txd_head(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
+    u_int32_t offset, u_int idx)
+{
+	struct myx_tx_desc		txd;
+	bus_dmamap_t			map = mb->mb_map;
+
+	bzero(&txd, sizeof(txd));
+	txd.tx_addr = htobe64(map->dm_segs[0].ds_addr);
+	txd.tx_length = htobe16(map->dm_segs[0].ds_len);
+	txd.tx_nsegs = map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
+	txd.tx_flags = flags | MYXTXD_FLAGS_FIRST;
+
+	myx_write(sc, offset + sizeof(txd) * idx, &txd, sizeof(txd));
+}
+void
+myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
+    u_int32_t offset, u_int idx)
+{
+	struct myx_tx_desc		txd;
+	bus_dmamap_t			zmap = sc->sc_zerodma.mxm_map;
+	bus_dmamap_t			map = mb->mb_map;
+	int				i;
+
+	for (i = 1; i < map->dm_nsegs; i++) {
+		bzero(&txd, sizeof(txd));
+		txd.tx_addr = htobe64(map->dm_segs[i].ds_addr);
+		txd.tx_length = htobe16(map->dm_segs[i].ds_len);
+		txd.tx_flags = flags;
+
+		myx_write(sc, offset +
+		    sizeof(txd) * ((idx + i) % sc->sc_tx_ring_count),
+		    &txd, sizeof(txd));
+	}
+
+	/* pad runt frames */
+	if (map->dm_mapsize < 60) {
+		bzero(&txd, sizeof(txd));
+		txd.tx_addr = htobe64(zmap->dm_segs[0].ds_addr);
+		txd.tx_length = htobe16(60 - map->dm_mapsize);
+		txd.tx_flags = flags;
+
+		myx_write(sc, offset +
+		    sizeof(txd) * ((idx + i) % sc->sc_tx_ring_count),
+		    &txd, sizeof(txd));
+	}
 }
 
 void
 myx_start(struct ifnet *ifp)
 {
-	struct myx_tx_desc		txd;
+	struct myx_buf_list		list = SIMPLEQ_HEAD_INITIALIZER(list);
 	struct myx_softc		*sc = ifp->if_softc;
 	bus_dmamap_t			map;
-	bus_dmamap_t			zmap = sc->sc_zerodma.mxm_map;
-	struct myx_buf			*mb;
+	struct myx_buf			*mb, *firstmb;
 	struct mbuf			*m;
 	u_int32_t			offset = sc->sc_tx_ring_offset;
-	u_int				idx;
-	u_int				i;
+	u_int				idx, firstidx;
 	u_int8_t			flags;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
 	    ISSET(ifp->if_flags, IFF_OACTIVE) ||
 	    IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
-
-	idx = sc->sc_tx_ring_idx;
 
 	for (;;) {
 		if (sc->sc_tx_free <= sc->sc_tx_nsegs) {
@@ -1420,59 +1467,52 @@ myx_start(struct ifnet *ifp)
 #endif
 
 		mb->mb_m = m;
-		map = mb->mb_map;
 
+		map = mb->mb_map;
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-		myx_buf_put(&sc->sc_tx_buf_list, mb);
+		myx_buf_put(&list, mb);
 
-		flags = MYXTXD_FLAGS_NO_TSO;
-		if (m->m_pkthdr.len < 1520)
-			flags |= MYXTXD_FLAGS_SMALL;
-
-		for (i = 1; i < map->dm_nsegs; i++) {
-			bzero(&txd, sizeof(txd));
-			txd.tx_addr = htobe64(map->dm_segs[i].ds_addr);
-			txd.tx_length = htobe16(map->dm_segs[i].ds_len);
-			txd.tx_flags = flags;
-
-			/* complicated maths is cool */
-			myx_write(sc, offset + sizeof(txd) *
-			    ((idx + i) % sc->sc_tx_ring_count),
-			    &txd, sizeof(txd));
-		}
-
-		/* pad runt frames */
-		if (map->dm_mapsize < 60) {
-			bzero(&txd, sizeof(txd));
-			txd.tx_addr = htobe64(zmap->dm_segs[0].ds_addr);
-			txd.tx_length = htobe16(60 - map->dm_mapsize);
-			txd.tx_flags = flags;
-
-			myx_write(sc, offset + sizeof(txd) *
-			    ((idx + i) % sc->sc_tx_ring_count),
-			    &txd, sizeof(txd));
-
-			i++;
-		}
-
-		/* commit by posting the first descriptor */
-		bzero(&txd, sizeof(txd));
-		txd.tx_addr = htobe64(map->dm_segs[0].ds_addr);
-		txd.tx_length = htobe16(map->dm_segs[0].ds_len);
-		txd.tx_nsegs = i;
-		txd.tx_flags = flags | MYXTXD_FLAGS_FIRST;
-
-		myx_write(sc, offset + idx * sizeof(txd),
-		    &txd, sizeof(txd));
-
-		sc->sc_tx_free -= i;
-		idx += i;
-		idx %= sc->sc_tx_ring_count;
+		sc->sc_tx_free -= map->dm_nsegs +
+		    (map->dm_mapsize < 60 ? 1 : 0);
 	}
 
+	/* post the first descriptor last */
+	firstmb = myx_buf_get(&list);
+	if (firstmb == NULL)
+		return;
+	myx_buf_put(&sc->sc_tx_buf_list, firstmb);
+
+	idx = firstidx = sc->sc_tx_ring_idx;
+	idx += firstmb->mb_map->dm_nsegs +
+	    (firstmb->mb_map->dm_mapsize < 60 ? 1 : 0);
+	idx %= sc->sc_tx_ring_count;
+
+	while ((mb = myx_buf_get(&list)) != NULL) {
+		myx_buf_put(&sc->sc_tx_buf_list, mb);
+
+		map = mb->mb_map;
+
+		flags = MYXTXD_FLAGS_NO_TSO;
+		if (map->dm_mapsize < 1520)
+			flags |= MYXTXD_FLAGS_SMALL;
+
+		myx_write_txd_head(sc, mb, flags, offset, idx);
+		myx_write_txd_tail(sc, mb, flags, offset, idx);
+
+		idx += map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
+		idx %= sc->sc_tx_ring_count;
+	}
 	sc->sc_tx_ring_idx = idx;
+
+	/* go back and post first mb */
+	flags = MYXTXD_FLAGS_NO_TSO;
+	if (firstmb->mb_map->dm_mapsize < 1520)
+		flags |= MYXTXD_FLAGS_SMALL;
+
+	myx_write_txd_tail(sc, firstmb, flags, offset, firstidx);
+	myx_write_txd_head(sc, firstmb, flags, offset, firstidx);
 }
 
 int
@@ -1702,27 +1742,38 @@ int
 myx_rx_fill(struct myx_softc *sc, int ring)
 {
 	struct myx_rx_desc rxd;
-	struct myx_buf *mb;
+	struct myx_buf *mb, *firstmb;
 	u_int32_t offset = sc->sc_rx_ring_offset[ring];
-	u_int idx;
-	int ret = 1;
+	u_int idx, firstidx;
 
-	idx = sc->sc_rx_ring_idx[ring];
+	firstmb = myx_buf_fill(sc, ring);
+	if (firstmb == NULL)
+		return (1);
+
+	myx_buf_put(&sc->sc_rx_buf_list[ring], firstmb);
+
+	firstidx = sc->sc_rx_ring_idx[ring];
+	idx = firstidx + 1;
+	idx %= sc->sc_rx_ring_count;
+
 	while ((mb = myx_buf_fill(sc, ring)) != NULL) {
-		rxd.rx_addr = htobe64(mb->mb_map->dm_segs[0].ds_addr);
-
 		myx_buf_put(&sc->sc_rx_buf_list[ring], mb);
+
+		rxd.rx_addr = htobe64(mb->mb_map->dm_segs[0].ds_addr);
 		myx_write(sc, offset + idx * sizeof(rxd),
 		    &rxd, sizeof(rxd));
 
-		if (++idx >= sc->sc_rx_ring_count)
-			idx = 0;
-
-		ret = 0;
+		idx++;
+		idx %= sc->sc_rx_ring_count;
 	}
+
+	rxd.rx_addr = htobe64(firstmb->mb_map->dm_segs[0].ds_addr);
+	myx_write(sc, offset + firstidx * sizeof(rxd),
+		    &rxd, sizeof(rxd));
+
 	sc->sc_rx_ring_idx[ring] = idx;
 
-	return (ret);
+	return (0);
 }
 
 struct myx_buf *
