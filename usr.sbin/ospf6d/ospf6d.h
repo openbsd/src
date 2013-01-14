@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.25 2012/10/22 07:28:49 bluhm Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.26 2013/01/14 14:39:38 florian Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -56,7 +56,9 @@
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
 #define	F_DYNAMIC		0x0040
-#define	F_REDISTRIBUTED		0x0100
+#define	F_REJECT		0x0080
+#define	F_BLACKHOLE		0x0100
+#define	F_REDISTRIBUTED		0x0200
 
 struct imsgev {
 	struct imsgbuf		 ibuf;

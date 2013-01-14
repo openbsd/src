@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.40 2012/10/21 21:30:44 bluhm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.41 2013/01/14 14:39:38 florian Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -393,9 +393,11 @@ kr_redist_eval(struct kroute *kr, struct rroute *rr)
 	    IN6_IS_ADDR_V4COMPAT(&kr->prefix))
 		goto dont_redistribute;
 	/*
-	 * Consider networks with nexthop loopback as not redistributable.
+	 * Consider networks with nexthop loopback as not redistributable
+	 * unless it is a reject or blackhole route.
 	 */
-	if (IN6_IS_ADDR_LOOPBACK(&kr->nexthop))
+	if (IN6_IS_ADDR_LOOPBACK(&kr->nexthop) &&
+	    !(kr->flags & (F_BLACKHOLE|F_REJECT)))
 		goto dont_redistribute;
 
 	/* Should we redistrubute this route? */
@@ -1106,6 +1108,10 @@ fetchtable(void)
 			sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 			if (rtm->rtm_flags & RTF_STATIC)
 				kr->r.flags |= F_STATIC;
+			if (rtm->rtm_flags & RTF_BLACKHOLE)
+				kr->r.flags |= F_BLACKHOLE;
+			if (rtm->rtm_flags & RTF_REJECT)
+				kr->r.flags |= F_REJECT;
 			if (rtm->rtm_flags & RTF_DYNAMIC)
 				kr->r.flags |= F_DYNAMIC;
 			if (rtm->rtm_flags & RTF_PROTO1)
@@ -1308,6 +1314,10 @@ dispatch_rtmsg(void)
 					fatalx("classful IPv6 address?!!");
 				if (rtm->rtm_flags & RTF_STATIC)
 					flags |= F_STATIC;
+				if (rtm->rtm_flags & RTF_BLACKHOLE)
+					flags |= F_BLACKHOLE;
+				if (rtm->rtm_flags & RTF_REJECT)
+					flags |= F_REJECT;
 				if (rtm->rtm_flags & RTF_DYNAMIC)
 					flags |= F_DYNAMIC;
 				if (rtm->rtm_flags & RTF_PROTO1)
