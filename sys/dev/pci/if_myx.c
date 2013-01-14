@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.35 2013/01/14 23:46:01 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.36 2013/01/14 23:58:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -241,8 +241,8 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map the PCI memory space */
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, MYXBAR0);
-	if (pci_mapreg_map(pa, MYXBAR0, memtype, 0, &sc->sc_memt,
-	    &sc->sc_memh, NULL, &sc->sc_mems, 0)) {
+	if (pci_mapreg_map(pa, MYXBAR0, memtype, BUS_SPACE_MAP_PREFETCHABLE,
+	    &sc->sc_memt, &sc->sc_memh, NULL, &sc->sc_mems, 0)) {
 		printf(": unable to map register memory\n");
 		return;
 	}
