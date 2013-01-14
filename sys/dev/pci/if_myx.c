@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.34 2013/01/14 06:00:48 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.35 2013/01/14 23:46:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1577,7 +1577,8 @@ myx_intr(void *arg)
 
 	if (sc->sc_intx) {
 		data = htobe32(0);
-		myx_write(sc, sc->sc_irqdeassertoff, &data, sizeof(data));
+		bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+		    sc->sc_irqdeassertoff, &data, sizeof(data));
 	}
 
 	if (!ISSET(ifp->if_flags, IFF_UP) &&
@@ -1607,10 +1608,14 @@ myx_intr(void *arg)
 	    BUS_DMASYNC_PREREAD);
 
 	data = htobe32(3);
-	if (valid & 0x1)
-		myx_write(sc, sc->sc_irqclaimoff, &data, sizeof(data));
-	myx_write(sc, sc->sc_irqclaimoff + sizeof(u_int32_t),
-	    &data, sizeof(data));
+	if (valid & 0x1) {
+		bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+		    sc->sc_irqclaimoff, &data, sizeof(data));
+	}
+	bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+	    sc->sc_irqclaimoff + sizeof(data), &data, sizeof(data));
+	bus_space_barrier(sc->sc_memt, sc->sc_memh,
+	    sc->sc_irqclaimoff, sizeof(data) * 2, BUS_SPACE_BARRIER_WRITE);
 
 	if (ISSET(ifp->if_flags, IFF_OACTIVE)) {
 		CLR(ifp->if_flags, IFF_OACTIVE);
