@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.44 2013/01/14 21:33:59 guenther Exp $	 */
+/* $OpenBSD: display.c,v 1.45 2013/01/14 21:35:08 guenther Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -163,7 +163,7 @@ display_init(struct statics * statics)
 
 	if (smart_terminal) {
 		addstrp = addstr;
-		printwp = (int(*)(const char *, ...))printw;
+		printwp = printw;
 		standoutp = standout;
 		standendp = standend;
 	} else {
