@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.4 2012/09/18 08:29:09 reyk Exp $	*/
+/*	$OpenBSD: usm.c,v 1.5 2013/01/14 05:13:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -274,7 +274,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
 		    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
 			*errp = "out of time window";
-			msg->sm_usmerr = MIB_usmStatsNotInTimeWindow;
+			msg->sm_usmerr = OIDVAL_usmErrTimeWindow;
 			stats->snmp_usmtimewindow++;
 			goto done;
 		}
