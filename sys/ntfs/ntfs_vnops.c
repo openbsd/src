@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.28 2013/01/13 04:07:49 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.29 2013/01/14 09:44:57 jsing Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -597,7 +597,11 @@ ntfs_readdir(void *v)
 	if (ap->a_eofflag)
 	    *ap->a_eofflag = VTONT(ap->a_vp)->i_size <= uio->uio_offset;
 */
-    out:
+out:
+	if (fp->f_dirblbuf != NULL) {
+		free(fp->f_dirblbuf, M_NTFSDIR);
+		fp->f_dirblbuf = NULL;
+	}
 	free(cde, M_TEMP);
 	return (error);
 }
