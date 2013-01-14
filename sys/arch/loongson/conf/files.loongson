@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.13 2010/10/14 21:23:04 pirofti Exp $
+#	$OpenBSD: files.loongson,v 1.14 2013/01/14 21:18:47 pirofti Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -119,3 +119,7 @@ file	arch/loongson/dev/sisfb.c			sisfb	needs-flag
 device	apm
 attach	apm at mainbus
 file	arch/loongson/dev/apm.c				apm	needs-flag
+
+device	glxclk
+attach	glxclk at glxpcib
+file	arch/loongson/dev/glxclk.c			glxclk

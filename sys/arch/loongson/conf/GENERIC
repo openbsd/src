@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 2012/09/27 14:01:35 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.38 2013/01/14 21:18:47 pirofti Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -40,6 +40,7 @@ pci*		at bonito?
 glxpcib*	at pci?
 gpio*		at glxpcib?
 isa0		at glxpcib?
+glxclk*		at glxpcib?
 mcclock0	at isa? port 0x70
 pckbc0		at isa?				# Yeeloong only
 pckbd*		at pckbc?			# Yeeloong only

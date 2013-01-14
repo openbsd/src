@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.8 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.9 2013/01/14 21:18:47 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -326,8 +326,7 @@ cpu_initclocks()
 {
 	struct cpu_info *ci = curcpu();
 
-	hz = 100;
-	profhz = 100;
+	profhz = hz;
 	stathz = 0;	/* XXX no stat clock yet */
 
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */

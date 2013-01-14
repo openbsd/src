@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxvar.h,v 1.1 2010/10/14 21:23:05 pirofti Exp $	*/
+/*	$OpenBSD: glxvar.h,v 1.2 2013/01/14 21:18:47 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -20,3 +20,11 @@ void		glx_init(pci_chipset_tag_t, pcitag_t, int);
 
 uint64_t	rdmsr(uint);
 void		wrmsr(uint, uint64_t);
+
+struct glxpcib_attach_args {
+	const char			*gaa_name;
+
+	struct pci_attach_args		*gaa_pa;
+	bus_space_tag_t			 gaa_iot;
+	bus_space_handle_t		 gaa_ioh;
+};

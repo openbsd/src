@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.20 2012/10/03 21:44:51 miod Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.21 2013/01/14 21:18:47 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -389,8 +389,15 @@ lemote_isa_intr(uint32_t hwpend, struct trap_frame *frame)
 				rc = 0;
 				for (ih = bonito_intrhand[BONITO_ISA_IRQ(bitno)];
 				    ih != NULL; ih = ih->ih_next) {
+					void *arg;
+
 					splraise(ih->ih_level);
-					ret = (*ih->ih_fun)(ih->ih_arg);
+					if (ih->ih_arg != NULL)
+						arg = ih->ih_arg;
+					else
+						/* clock interrupt */
+						arg = frame;
+					ret = (*ih->ih_fun)(arg);
 					if (ret) {
 						rc = 1;
 						ih->ih_count.ec_count++;
