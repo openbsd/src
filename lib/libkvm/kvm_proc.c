@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.47 2012/04/14 12:11:47 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.48 2013/01/14 06:32:37 guenther Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,41 +95,20 @@
 
 #include "kvm_private.h"
 
-/*
- * Common info from kinfo_proc used by helper routines.
- */
-struct miniproc {
-	struct	vmspace *p_vmspace;
-	char	p_stat;
-	struct	proc *p_paddr;
-	pid_t	p_pid;
-};
 
-/*
- * Convert from struct kinfo_proc to miniproc.
- */
-#define KPTOMINI(kp, p) \
-	do { \
-		(p)->p_stat = (kp)->p_stat; \
-		(p)->p_pid = (kp)->p_pid; \
-		(p)->p_paddr = (void *)(long)(kp)->p_paddr; \
-		(p)->p_vmspace = (void *)(long)(kp)->p_vmspace; \
-	} while (/*CONSTCOND*/0);
+static char	*_kvm_ureadm(kvm_t *, const struct kinfo_proc *, u_long, u_long *);
+static ssize_t	kvm_ureadm(kvm_t *, const struct kinfo_proc *, u_long, char *, size_t);
 
+static char	**kvm_argv(kvm_t *, const struct kinfo_proc *, u_long, int, int);
 
-static char	*_kvm_ureadm(kvm_t *, const struct miniproc *, u_long, u_long *);
-static ssize_t	kvm_ureadm(kvm_t *, const struct miniproc *, u_long, char *, size_t);
-
-static char	**kvm_argv(kvm_t *, const struct miniproc *, u_long, int, int);
-
-static char	**kvm_doargv(kvm_t *, const struct miniproc *, int,
+static char	**kvm_doargv(kvm_t *, const struct kinfo_proc *, int,
 		    void (*)(struct ps_strings *, u_long *, int *));
-static int	proc_verify(kvm_t *, const struct miniproc *);
+static int	proc_verify(kvm_t *, const struct kinfo_proc *);
 static void	ps_str_a(struct ps_strings *, u_long *, int *);
 static void	ps_str_e(struct ps_strings *, u_long *, int *);
 
 static char *
-_kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
+_kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 {
 	u_long addr, offset, slot;
 	struct vmspace vm;
@@ -230,7 +209,7 @@ _kvm_realloc(kvm_t *kd, void *p, size_t n)
  * environment strings.  Read at most maxcnt characters of strings.
  */
 static char **
-kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
+kvm_argv(kvm_t *kd, const struct kinfo_proc *p, u_long addr, int narg,
     int maxcnt)
 {
 	char *np, *cp, *ep, *ap, **argv;
@@ -362,7 +341,7 @@ ps_str_e(struct ps_strings *p, u_long *addr, int *n)
  * being wrong are very low.
  */
 static int
-proc_verify(kvm_t *kd, const struct miniproc *p)
+proc_verify(kvm_t *kd, const struct kinfo_proc *p)
 {
 	struct proc kernproc;
 
@@ -378,7 +357,7 @@ proc_verify(kvm_t *kd, const struct miniproc *p)
 }
 
 static char **
-kvm_doargv(kvm_t *kd, const struct miniproc *p, int nchr,
+kvm_doargv(kvm_t *kd, const struct kinfo_proc *p, int nchr,
     void (*info)(struct ps_strings *, u_long *, int *))
 {
 	static struct ps_strings *ps;
@@ -469,30 +448,24 @@ again:
 char **
 kvm_getargv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 {
-	struct miniproc p;
-
 	if (ISALIVE(kd))
 		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 0));
-	KPTOMINI(kp, &p);
-	return (kvm_doargv(kd, &p, nchr, ps_str_a));
+	return (kvm_doargv(kd, kp, nchr, ps_str_a));
 }
 
 char **
 kvm_getenvv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 {
-	struct miniproc p;
-
 	if (ISALIVE(kd))
 		return (kvm_arg_sysctl(kd, kp->p_pid, nchr, 1));
-	KPTOMINI(kp, &p);
-	return (kvm_doargv(kd, &p, nchr, ps_str_e));
+	return (kvm_doargv(kd, kp, nchr, ps_str_e));
 }
 
 /*
  * Read from user space.  The user context is given by p.
  */
 static ssize_t
-kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long uva, char *buf,
+kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long uva, char *buf,
     size_t len)
 {
 	char *cp = buf;
