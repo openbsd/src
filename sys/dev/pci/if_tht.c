@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.124 2010/05/19 15:27:35 oga Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.125 2013/01/14 23:19:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -400,6 +400,7 @@ struct thtc_softc {
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
 	bus_size_t		sc_mems;
+	void			*sc_ih;
 };
 
 int			thtc_match(struct device *, void *, void *);
@@ -420,7 +421,6 @@ struct tht_attach_args {
 	int			taa_port;
 
 	struct pci_attach_args	*taa_pa;
-	pci_intr_handle_t	taa_ih;
 };
 
 /* tht itself */
@@ -478,8 +478,6 @@ struct tht_softc {
 	struct device		sc_dev;
 	struct thtc_softc	*sc_thtc;
 	int			sc_port;
-
-	void			*sc_ih;
 
 	bus_space_handle_t	sc_memh;
 
@@ -689,6 +687,7 @@ thtc_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t			memtype;
 	const struct thtc_device	*td;
 	struct tht_attach_args		taa;
+	pci_intr_handle_t		ih;
 	int				i;
 
 	bzero(&taa, sizeof(taa));
@@ -703,11 +702,18 @@ thtc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &taa.taa_ih) != 0) {
+	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": unable to map interrupt\n");
 		goto unmap;
 	}
-	printf(": %s\n", pci_intr_string(pa->pa_pc, taa.taa_ih));
+
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih,
+	    IPL_NET, tht_intr, sc, DEVNAME(sc));
+	if (sc->sc_ih == NULL) {
+		printf(": unable to establish interrupt\n");
+		return;
+	}
+	printf(": %s\n", pci_intr_string(pa->pa_pc, ih));
 
 	taa.taa_pa = pa;
 	for (i = 0; i < td->td_nports; i++) {
@@ -768,14 +774,6 @@ tht_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = pci_intr_establish(taa->taa_pa->pa_pc, taa->taa_ih,
-	    IPL_NET, tht_intr, sc, DEVNAME(sc));
-	if (sc->sc_ih == NULL) {
-		printf(": unable to establish interrupt\n");
-		/* bus_space(9) says we dont have to free subregions */
-		return;
-	}
-
 	tht_lladdr_read(sc);
 	bcopy(sc->sc_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
@@ -825,37 +823,45 @@ tht_mountroot(void *arg)
 int
 tht_intr(void *arg)
 {
+	struct thtc_softc		*thtc = arg;
 	struct tht_softc		*sc = arg;
+        struct device			*d;
 	struct ifnet			*ifp;
 	u_int32_t			isr;
+	int				rv = 0;
 
-	isr = tht_read(sc, THT_REG_ISR);
-	if (isr == 0x0) {
+	for (d = TAILQ_NEXT(&thtc->sc_dev, dv_list); d != NULL;
+	    d = TAILQ_NEXT(d, dv_list)) {
+		sc = (struct tht_softc *)d;
+
+		isr = tht_read(sc, THT_REG_ISR);
+		if (isr == 0x0) {
+			tht_write(sc, THT_REG_IMR, sc->sc_imr);
+			continue;
+		}
+		rv = 1;
+
+		DPRINTF(THT_D_INTR, "%s: isr: 0x%b\n", DEVNAME(sc), isr, THT_FMT_ISR);
+
+		if (ISSET(isr, THT_REG_ISR_LINKCHG(0) | THT_REG_ISR_LINKCHG(1)))
+			tht_link_state(sc);
+
+		ifp = &sc->sc_ac.ac_if;
+		if (ifp->if_flags & IFF_RUNNING) {
+			if (ISSET(isr, THT_REG_ISR_RXD(0)))
+				tht_rxd(sc);
+
+			if (ISSET(isr, THT_REG_ISR_RXF(0)))
+				tht_rxf_fill(sc, 0);
+
+			if (ISSET(isr, THT_REG_ISR_TXF(0)))
+				tht_txf(sc);
+
+			tht_start(ifp);
+		}
 		tht_write(sc, THT_REG_IMR, sc->sc_imr);
-		return (0);
 	}
-
-	DPRINTF(THT_D_INTR, "%s: isr: 0x%b\n", DEVNAME(sc), isr, THT_FMT_ISR);
-
-	if (ISSET(isr, THT_REG_ISR_LINKCHG(0) | THT_REG_ISR_LINKCHG(1)))
-		tht_link_state(sc);
-
-	ifp = &sc->sc_ac.ac_if;
-	if (ifp->if_flags & IFF_RUNNING) {
-		if (ISSET(isr, THT_REG_ISR_RXD(0)))
-			tht_rxd(sc);
-
-		if (ISSET(isr, THT_REG_ISR_RXF(0)))
-			tht_rxf_fill(sc, 0);
-
-		if (ISSET(isr, THT_REG_ISR_TXF(0)))
-			tht_txf(sc);
-
-		tht_start(ifp);
-	}
-
-	tht_write(sc, THT_REG_IMR, sc->sc_imr);
-	return (1);
+	return (rv);
 }
 
 int
