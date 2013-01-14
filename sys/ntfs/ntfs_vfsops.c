@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.31 2013/01/13 04:07:49 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.32 2013/01/14 02:41:03 jsing Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -85,11 +85,8 @@ int	ntfs_sysctl(int *, u_int, void *, size_t *, void *,
  * exflagsp and credanonp.
  */
 int
-ntfs_checkexp(mp, nam, exflagsp, credanonp)
-	struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
+ntfs_checkexp(struct mount *mp, struct mbuf *nam, int *exflagsp,
+    struct ucred **credanonp)
 {
 	struct netcred *np;
 	struct ntfsmount *ntm = VFSTONTFS(mp);
@@ -107,21 +104,14 @@ ntfs_checkexp(mp, nam, exflagsp, credanonp)
 }
 
 int
-ntfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+ntfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	return (EINVAL);
 }
 
 int
-ntfs_init (
-	struct vfsconf *vcp )
+ntfs_init(struct vfsconf *vcp)
 {
 	ntfs_nthashinit();
 	ntfs_toupper_init();
@@ -129,12 +119,8 @@ ntfs_init (
 }
 
 int
-ntfs_mount( 
-	struct mount *mp,
-	const char *path,
-	void *data,
-	struct nameidata *ndp,
-	struct proc *p )
+ntfs_mount(struct mount *mp, const char *path, void *data,
+    struct nameidata *ndp, struct proc *p)
 {
 	int		err = 0;
 	struct vnode	*devvp;
@@ -288,11 +274,8 @@ success:
  * Common code for mount and mountroot
  */
 int
-ntfs_mountfs(devvp, mp, argsp, p)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct ntfs_args *argsp;
-	struct proc *p;
+ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
+    struct proc *p)
 {
 	struct buf *bp;
 	struct ntfsmount *ntmp = NULL;
@@ -483,19 +466,13 @@ out:
 }
 
 int
-ntfs_start (
-	struct mount *mp,
-	int flags,
-	struct proc *p )
+ntfs_start(struct mount *mp, int flags, struct proc *p)
 {
 	return (0);
 }
 
 int
-ntfs_unmount( 
-	struct mount *mp,
-	int mntflags,
-	struct proc *p)
+ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct ntfsmount *ntmp;
 	int error, ronly = 0, flags, i;
@@ -560,9 +537,7 @@ ntfs_unmount(
 }
 
 int
-ntfs_root(
-	struct mount *mp,
-	struct vnode **vpp )
+ntfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error = 0;
@@ -583,21 +558,14 @@ ntfs_root(
  * Do operations associated with quotas, not supported
  */
 int
-ntfs_quotactl ( 
-	struct mount *mp,
-	int cmds,
-	uid_t uid,
-	caddr_t arg,
-	struct proc *p)
+ntfs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
+    struct proc *p)
 {
-
 	return EOPNOTSUPP;
 }
 
 int
-ntfs_calccfree(
-	struct ntfsmount *ntmp,
-	cn_t *cfreep)
+ntfs_calccfree(struct ntfsmount *ntmp, cn_t *cfreep)
 {
 	struct vnode *vp;
 	u_int8_t *tmp;
@@ -627,10 +595,7 @@ ntfs_calccfree(
 }
 
 int
-ntfs_statfs(
-	struct mount *mp,
-	struct statfs *sbp,
-	struct proc *p)
+ntfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
 	u_int64_t mftallocated;
@@ -659,21 +624,14 @@ ntfs_statfs(
 }
 
 int
-ntfs_sync (
-	struct mount *mp,
-	int waitfor,
-	struct ucred *cred,
-	struct proc *p)
+ntfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 {
 	/*dprintf(("ntfs_sync():\n"));*/
 	return (0);
 }
 
 int
-ntfs_fhtovp(
-	struct mount *mp,
-	struct fid *fhp,
-	struct vnode **vpp)
+ntfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ntfid *ntfhp = (struct ntfid *)fhp;
 	int error;
@@ -694,9 +652,7 @@ ntfs_fhtovp(
 }
 
 int
-ntfs_vptofh(
-	struct vnode *vp,
-	struct fid *fhp)
+ntfs_vptofh(struct vnode *vp, struct fid *fhp)
 {
 	struct ntnode *ntp;
 	struct ntfid *ntfhp;
@@ -718,15 +674,8 @@ ntfs_vptofh(
 }
 
 int
-ntfs_vgetex(
-	struct mount *mp,
-	ino_t ino,
-	u_int32_t attrtype,
-	char *attrname,
-	u_long lkflags,
-	u_long flags,
-	struct proc *p,
-	struct vnode **vpp) 
+ntfs_vgetex(struct mount *mp, ino_t ino, u_int32_t attrtype, char *attrname,
+    u_long lkflags, u_long flags, struct proc *p, struct vnode **vpp) 
 {
 	int error;
 	struct ntfsmount *ntmp;
@@ -837,10 +786,7 @@ ntfs_vgetex(
 }
 
 int
-ntfs_vget(
-	struct mount *mp,
-	ino_t ino,
-	struct vnode **vpp) 
+ntfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp) 
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */

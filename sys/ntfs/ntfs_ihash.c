@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.11 2013/01/02 08:12:13 jsing Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.12 2013/01/14 02:41:03 jsing Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ struct rwlock ntfs_hashlock = RWLOCK_INITIALIZER("ntfs_nthashlock");
  * Initialize inode hash table.
  */
 void
-ntfs_nthashinit()
+ntfs_nthashinit(void)
 {
 	ntfs_nthashtbl = hashinit(desiredvnodes, M_NTFSNTHASH, M_WAITOK,
 	    &ntfs_nthash);
@@ -69,9 +69,7 @@ ntfs_nthashinit()
  * to it. If it is in core, return it, even if it is locked.
  */
 struct ntnode *
-ntfs_nthashlookup(dev, inum)
-	dev_t dev;
-	ino_t inum;
+ntfs_nthashlookup(dev_t dev, ino_t inum)
 {
 	struct ntnode *ip;
 	struct nthashhead *ipp;
@@ -91,8 +89,7 @@ ntfs_nthashlookup(dev, inum)
  * Insert the ntnode into the hash table.
  */
 void
-ntfs_nthashins(ip)
-	struct ntnode *ip;
+ntfs_nthashins(struct ntnode *ip)
 {
 	struct nthashhead *ipp;
 
@@ -107,8 +104,7 @@ ntfs_nthashins(ip)
  * Remove the inode from the hash table.
  */
 void
-ntfs_nthashrem(ip)
-	struct ntnode *ip;
+ntfs_nthashrem(struct ntnode *ip)
 {
 	/* XXXLOCKING lock hash list? */
 	if (ip->i_flag & IN_HASHED) {
