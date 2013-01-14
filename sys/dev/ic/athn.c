@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.74 2012/10/20 09:54:20 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2443,7 +2443,7 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			athn_set_hostap_timers(sc);
-			/* Enable sotfware beacon alert interrupts. */
+			/* Enable software beacon alert interrupts. */
 			sc->imask |= AR_IMR_SWBA;
 		} else
 #endif

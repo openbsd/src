@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.11 2013/01/14 09:48:24 jsing Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1052,7 +1052,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			athn_set_hostap_timers(sc);
-			/* Enable sotfware beacon alert interrupts. */
+			/* Enable software beacon alert interrupts. */
 			imask = htobe32(AR_IMR_SWBA);
 		} else
 #endif
