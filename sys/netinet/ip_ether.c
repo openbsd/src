@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.61 2012/10/05 17:17:04 camield Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.62 2013/01/14 23:06:09 deraadt Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -189,22 +189,22 @@ etherip_decap(struct mbuf *m, int iphlen)
 
 	/* Verify EtherIP version number */
 	m_copydata(m, iphlen, sizeof(struct etherip_header), (caddr_t)&eip);
-	if ((eip.eip_ver & ETHERIP_VER_VERS_MASK) != ETHERIP_VERSION) {
+	if (eip.eip_ver == ETHERIP_VERSION && eip.eip_oldver == 0) {
+		/* Correct */
+	} else if (eip.eip_oldver == ETHERIP_VERSION && eip.eip_ver == 0) {
+		/*
+		 * OpenBSD developers convinced IETF folk to create a
+		 * "version 3" protocol which would solve a byte order
+		 * problem -- our discussion placed "3" into the first byte.
+		 * They knew we were starting to deploy this.  When IETF
+		 * published the standard this had changed to a nibble...
+		 * but they failed to inform us.  Awesome.
+		 *
+		 * For backwards compat, for a while, we must accept either.
+		 */
+	} else {
 		DPRINTF(("etherip_input(): received EtherIP version number "
 		    "%d not suppoorted\n", eip.eip_ver));
-		etheripstat.etherip_adrops++;
-		m_freem(m);
-		return;
-	}
-
-	/*
-	 * Note that the other potential failure of the above check is that the
-	 * second nibble of the EtherIP header (the reserved part) is not
-	 * zero; this is also invalid protocol behaviour.
-	 */
-	if (eip.eip_ver & ETHERIP_VER_RSVD_MASK) {
-		DPRINTF(("etherip_input(): received EtherIP invalid EtherIP "
-		    "header (reserved field non-zero\n"));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return;
@@ -561,8 +561,18 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int proto)
 	}
 
 	if (proto == IPPROTO_ETHERIP) {
-		/* Set the version number */
-		eip.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
+		/*
+		 * OpenBSD developers convinced IETF folk to create a
+		 * "version 3" protocol which would solve a byte order
+		 * problem -- our discussion placed "3" into the first byte.
+		 * They knew we were starting to deploy this.  When IETF
+		 * published the standard this had changed to a nibble...
+		 * but they failed to inform us.  Awesome.
+		 * 
+		 * We will transition step by step to the new model.
+		 */
+		eip.eip_ver = 0;
+		eip.eip_oldver = ETHERIP_VERSION;
 		eip.eip_pad = 0;
 		m_copyback(m, hlen - sizeof(struct etherip_header),
 		    sizeof(struct etherip_header), &eip, M_NOWAIT);
