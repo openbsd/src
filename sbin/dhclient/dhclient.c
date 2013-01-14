@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.204 2013/01/13 22:09:38 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.205 2013/01/14 02:46:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -638,7 +638,7 @@ dhcpack(struct in_addr client_addr, struct option_data *options)
 
 	lease = packet_to_lease(client_addr, options);
 	if (!lease) {
-		note("packet_to_lease failed.");
+		note("DHCPACK isn't satisfactory.");
 		return;
 	}
 
@@ -793,7 +793,6 @@ void
 dhcpoffer(struct in_addr client_addr, struct option_data *options)
 {
 	struct client_lease *lease, *lp;
-	int i;
 	time_t stop_selecting;
 	char *name = options[DHO_DHCP_MESSAGE_TYPE].len ? "DHCPOFFER" :
 	    "BOOTREPLY";
@@ -801,31 +800,22 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options)
 	if (client->state != S_SELECTING)
 		return;
 
-	/* If this lease doesn't supply the minimum required parameters,
-	   blow it off. */
-	for (i = 0; i < config->required_option_count; i++) {
-		if (!options[config->required_options[i]].len) {
-			note("%s isn't satisfactory.", name);
-			return;
-		}
+	lease = packet_to_lease(client_addr, options);
+	if (!lease) {
+		note("%s isn't satisfactory.", name);
+		return;
 	}
 
 	/* If we've already seen this lease, don't record it again. */
-	for (lease = client->offered_leases;
-	    lease; lease = lease->next) {
-		if (!memcmp(&lease->address.s_addr, &client->packet.yiaddr,
+	for (lp = client->offered_leases; lp; lp = lp->next) {
+		if (!memcmp(&lp->address.s_addr, &client->packet.yiaddr,
 		    sizeof(in_addr_t))) {
 #ifdef DEBUG
 			debug("%s already seen.", name);
 #endif
+			free_client_lease(lease);
 			return;
 		}
-	}
-
-	lease = packet_to_lease(client_addr, options);
-	if (!lease) {
-		note("packet_to_lease failed.");
-		return;
 	}
 
 	/*
@@ -919,6 +909,16 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 		lease->options[i] = options[i];
 		options[i].data = NULL;
 		options[i].len = 0;
+	}
+
+	/*
+	 * If this lease doesn't supply a required parameter, blow it off.
+	 */
+	for (i = 0; i < config->required_option_count; i++) {
+		if (!lease->options[config->required_options[i]].len) {
+			free_client_lease(lease);
+			return (NULL);
+		}
 	}
 
 	memcpy(&lease->address.s_addr, &client->packet.yiaddr,
