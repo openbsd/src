@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.33 2013/01/14 04:02:02 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.34 2013/01/14 06:00:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1385,7 +1385,8 @@ myx_write_txd_head(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 	txd.tx_nsegs = map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
 	txd.tx_flags = flags | MYXTXD_FLAGS_FIRST;
 
-	myx_write(sc, offset + sizeof(txd) * idx, &txd, sizeof(txd));
+	bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+	    offset + sizeof(txd) * idx, &txd, sizeof(txd));
 }
 void
 myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
@@ -1402,8 +1403,8 @@ myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 		txd.tx_length = htobe16(map->dm_segs[i].ds_len);
 		txd.tx_flags = flags;
 
-		myx_write(sc, offset +
-		    sizeof(txd) * ((idx + i) % sc->sc_tx_ring_count),
+		bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+		    offset + sizeof(txd) * ((idx + i) % sc->sc_tx_ring_count),
 		    &txd, sizeof(txd));
 	}
 
@@ -1414,8 +1415,8 @@ myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 		txd.tx_length = htobe16(60 - map->dm_mapsize);
 		txd.tx_flags = flags;
 
-		myx_write(sc, offset +
-		    sizeof(txd) * ((idx + i) % sc->sc_tx_ring_count),
+		bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+		    offset + sizeof(txd) * ((idx + i) % sc->sc_tx_ring_count),
 		    &txd, sizeof(txd));
 	}
 }
@@ -1512,7 +1513,18 @@ myx_start(struct ifnet *ifp)
 		flags |= MYXTXD_FLAGS_SMALL;
 
 	myx_write_txd_tail(sc, firstmb, flags, offset, firstidx);
+
+	/* make sure the first descriptor is seen after the others */
+	if (idx != firstidx + 1) {
+		bus_space_barrier(sc->sc_memt, sc->sc_memh, offset,
+		    sizeof(struct myx_tx_desc) * sc->sc_tx_ring_count,
+		    BUS_SPACE_BARRIER_WRITE);
+	}
+
 	myx_write_txd_head(sc, firstmb, flags, offset, firstidx);
+	bus_space_barrier(sc->sc_memt, sc->sc_memh,
+	    offset + sizeof(struct myx_tx_desc) * firstidx,
+	    sizeof(struct myx_tx_desc), BUS_SPACE_BARRIER_WRITE);
 }
 
 int
@@ -1760,16 +1772,23 @@ myx_rx_fill(struct myx_softc *sc, int ring)
 		myx_buf_put(&sc->sc_rx_buf_list[ring], mb);
 
 		rxd.rx_addr = htobe64(mb->mb_map->dm_segs[0].ds_addr);
-		myx_write(sc, offset + idx * sizeof(rxd),
-		    &rxd, sizeof(rxd));
+		bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+		    offset + idx * sizeof(rxd), &rxd, sizeof(rxd));
 
 		idx++;
 		idx %= sc->sc_rx_ring_count;
 	}
 
+	/* make sure the first descriptor is seen after the others */
+	if (idx != firstidx + 1) {
+		bus_space_barrier(sc->sc_memt, sc->sc_memh,
+		    offset, sizeof(rxd) * sc->sc_rx_ring_count,
+		    BUS_SPACE_BARRIER_WRITE);
+	}
+
 	rxd.rx_addr = htobe64(firstmb->mb_map->dm_segs[0].ds_addr);
 	myx_write(sc, offset + firstidx * sizeof(rxd),
-		    &rxd, sizeof(rxd));
+	    &rxd, sizeof(rxd));
 
 	sc->sc_rx_ring_idx[ring] = idx;
 
