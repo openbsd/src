@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.79 2012/06/08 13:41:16 lum Exp $	*/
+/*	$OpenBSD: top.c,v 1.80 2013/01/14 21:33:59 guenther Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -452,8 +452,9 @@ restart:
 		time(&curr_time);
 		i_timeofday(&curr_time);
 
-		/* display process state breakdown */
-		i_procstates(system_info.p_total, system_info.procstates);
+		/* display process/threads state breakdown */
+		i_procstates(system_info.p_total, system_info.procstates,
+		    ps.threads);
 
 		/* display the cpu state percentage breakdown */
 		i_cpustates(system_info.cpustates);

@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.43 2012/06/05 18:52:53 brynet Exp $	 */
+/* $OpenBSD: display.c,v 1.44 2013/01/14 21:33:59 guenther Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -262,36 +262,27 @@ i_timeofday(time_t * tod)
 }
 
 /*
- *  *_procstates(total, brkdn, names) - print the process summary line
+ *  *_procstates(total, states, threads) - print the process/thread summary line
  *
  *  Assumptions:  cursor is at the beginning of the line on entry
  */
 void
-i_procstates(int total, int *brkdn)
+i_procstates(int total, int *states, int threads)
 {
 	if (screen_length > 2 || !smart_terminal) {
-		int i;
 		char procstates_buffer[MAX_COLS];
 
 		move(1, 0);
 		clrtoeol();
-		/* write current number of processes and remember the value */
-		printwp("%d processes:", total);
-
-		if (smart_terminal)
-			move(1, 15);
-		else {
-			/* put out enough spaces to get to column 15 */
-			i = digits(total);
-			while (i++ < 4) {
-				if (putchar(' ') == EOF)
-					exit(1);
-			}
-		}
+		/* write current number of procs and remember the value */
+		if (threads == Yes)
+			printwp("%d threads: ", total);
+		else
+			printwp("%d processes: ", total);
 
 		/* format and print the process state summary */
-		summary_format(procstates_buffer, sizeof(procstates_buffer), brkdn,
-		    procstate_names);
+		summary_format(procstates_buffer, sizeof(procstates_buffer),
+		    states, procstate_names);
 
 		addstrp(procstates_buffer);
 		putn();
@@ -299,7 +290,7 @@ i_procstates(int total, int *brkdn)
 }
 
 /*
- *  *_cpustates(states, names) - print the cpu state percentages
+ *  *_cpustates(states) - print the cpu state percentages
  *
  *  Assumptions:  cursor is on the PREVIOUS line
  */
