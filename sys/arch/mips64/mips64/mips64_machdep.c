@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.9 2013/01/14 21:18:47 pirofti Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.10 2013/01/15 23:30:37 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -318,8 +318,7 @@ cp0_calibrate(struct cpu_info *ci)
 }
 
 /*
- * Start the real-time and statistics clocks. Leave stathz 0 since there
- * are no other timers available.
+ * Start the real-time and statistics clocks.
  */
 void
 cpu_initclocks()
@@ -327,7 +326,6 @@ cpu_initclocks()
 	struct cpu_info *ci = curcpu();
 
 	profhz = hz;
-	stathz = 0;	/* XXX no stat clock yet */
 
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
 	tickadj = 240000 / (60 * hz);		/* can adjust 240ms in 60s */

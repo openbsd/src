@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2013/01/14 21:18:47 pirofti Exp $ */
+/*	$OpenBSD: machdep.c,v 1.41 2013/01/15 23:30:36 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -417,11 +417,6 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 	if (cpuspeed < 100 * 1000000)
 		cpuspeed = 797000000;  /* Reasonable default */
 	bootcpu_hwinfo.clock = cpuspeed;
-
-	/*
-	 * MFGPT runs on powers of two, adjust the hz value accordingly.
-	 */
-	hz = 128;
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
