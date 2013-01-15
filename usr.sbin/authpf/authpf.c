@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.116 2012/07/07 12:55:29 claudio Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.117 2013/01/15 23:03:37 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -748,6 +748,12 @@ change_filter(int add, const char *luser, const char *ipsrc)
 
 	if (add) {
 		struct stat sb;
+		struct group *grent;
+		if((grent = getgrgid(getgid())) == NULL) {
+			syslog(LOG_ERR, "Group not found user %s, gid %d",
+			    luser, getgid());
+		}
+
 		char	*pargv[13] = {
 			"pfctl", "-p", "/dev/pf", "-q", "-a", "anchor/ruleset",
 			"-D", "user_id=X", "-D", "user_ip=X", "-f", "file", NULL
@@ -771,8 +777,14 @@ change_filter(int add, const char *luser, const char *ipsrc)
 			goto no_mem;
 		if (stat(fn, &sb) == -1) {
 			free(fn);
-			if ((fn = strdup(PATH_PFRULES)) == NULL)
+			if(asprintf(&fn, "%s/%s/authpf.rules", PATH_GROUP_DIR,
+				grent->gr_name) == -1)
 				goto no_mem;
+			if(stat(fn, &sb) == -1) {
+				free(fn);
+				if ((fn = strdup(PATH_PFRULES)) == NULL)
+					goto no_mem;
+			}
 		}
 		pargv[2] = fdpath;
 		pargv[5] = rsn;

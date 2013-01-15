@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.52 2010/01/27 21:36:58 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.53 2013/01/15 23:03:37 beck Exp $
 .\"
 .\" Copyright (c) 1998-2007 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2010 $
+.Dd $Mdocdate: January 15 2013 $
 .Dt AUTHPF 8
 .Os
 .Sh NAME
@@ -133,15 +133,21 @@ is assigned the user name.
 Rules are stored in a file called
 .Pa authpf.rules .
 This file will first be searched for in
-.Pa /etc/authpf/users/$USER/
-and then in
+.Pa /etc/authpf/users/$USER/ ,
+then in
+.Pa /etc/authpf/groups/$GROUP/
+and finally in
 .Pa /etc/authpf/ .
-Only one of these files will be used if both are present.
+Only the first found file will be used.
 .Pp
 Per-user rules from the
 .Pa /etc/authpf/users/$USER/
 directory are intended to be used when non-default rules
 are needed on an individual user basis.
+Per-group rules from the
+.Pa /etc/authpf/groups/$GROUP/
+directory are intended to be used when non-default rules
+are needed on a group basis.
 It is important to ensure that a user can not write or change
 these configuration files.
 .Pp
