@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.110 2012/12/31 13:46:49 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.111 2013/01/15 11:12:57 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1116,8 +1116,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	 * we sleep, the socket buffers are not marked as spliced yet.
 	 */
 	if (somove(so, M_WAIT)) {
-		so->so_rcv.sb_flags |= SB_SPLICE;
-		sosp->so_snd.sb_flags |= SB_SPLICE;
+		so->so_rcv.sb_flagsintr |= SB_SPLICE;
+		sosp->so_snd.sb_flagsintr |= SB_SPLICE;
 	}
 
  release:
@@ -1134,8 +1134,8 @@ sounsplice(struct socket *so, struct socket *sosp, int wakeup)
 	splsoftassert(IPL_SOFTNET);
 
 	timeout_del(&so->so_idleto);
-	sosp->so_snd.sb_flags &= ~SB_SPLICE;
-	so->so_rcv.sb_flags &= ~SB_SPLICE;
+	sosp->so_snd.sb_flagsintr &= ~SB_SPLICE;
+	so->so_rcv.sb_flagsintr &= ~SB_SPLICE;
 	so->so_splice = sosp->so_spliceback = NULL;
 	if (wakeup && soreadable(so))
 		sorwakeup(so);
@@ -1335,7 +1335,7 @@ void
 sorwakeup(struct socket *so)
 {
 #ifdef SOCKET_SPLICE
-	if (so->so_rcv.sb_flags & SB_SPLICE)
+	if (so->so_rcv.sb_flagsintr & SB_SPLICE)
 		(void) somove(so, M_DONTWAIT);
 	if (so->so_splice)
 		return;
@@ -1349,7 +1349,7 @@ void
 sowwakeup(struct socket *so)
 {
 #ifdef SOCKET_SPLICE
-	if (so->so_snd.sb_flags & SB_SPLICE)
+	if (so->so_snd.sb_flagsintr & SB_SPLICE)
 		(void) somove(so->so_spliceback, M_DONTWAIT);
 #endif
 	sowakeup(so, &so->so_snd);

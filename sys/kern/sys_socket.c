@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.14 2009/02/22 07:47:22 otto Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.15 2013/01/15 11:12:57 bluhm Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -150,11 +150,11 @@ soo_poll(struct file *fp, int events, struct proc *p)
 	if (revents == 0) {
 		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 			selrecord(p, &so->so_rcv.sb_sel);
-			so->so_rcv.sb_flags |= SB_SEL;
+			so->so_rcv.sb_flagsintr |= SB_SEL;
 		}
 		if (events & (POLLOUT | POLLWRNORM)) {
 			selrecord(p, &so->so_snd.sb_sel);
-			so->so_snd.sb_flags |= SB_SEL;
+			so->so_snd.sb_flagsintr |= SB_SEL;
 		}
 	}
 	splx(s);

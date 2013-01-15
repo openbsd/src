@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.54 2012/12/31 13:45:14 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.55 2013/01/15 11:12:57 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -275,8 +275,9 @@ socantrcvmore(struct socket *so)
 int
 sbwait(struct sockbuf *sb)
 {
+	splsoftassert(IPL_SOFTNET);
 
-	sb->sb_flags |= SB_WAIT;
+	sb->sb_flagsintr |= SB_WAIT;
 	return (tsleep(&sb->sb_cc,
 	    (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH, "netio",
 	    sb->sb_timeo));
@@ -311,12 +312,15 @@ sb_lock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
 {
+	int s = splsoftnet();
+
 	selwakeup(&sb->sb_sel);
-	sb->sb_flags &= ~SB_SEL;
-	if (sb->sb_flags & SB_WAIT) {
-		sb->sb_flags &= ~SB_WAIT;
+	sb->sb_flagsintr &= ~SB_SEL;
+	if (sb->sb_flagsintr & SB_WAIT) {
+		sb->sb_flagsintr &= ~SB_WAIT;
 		wakeup(&sb->sb_cc);
 	}
+	splx(s);
 	if (so->so_state & SS_ASYNC)
 		csignal(so->so_pgid, SIGIO, so->so_siguid, so->so_sigeuid);
 }
