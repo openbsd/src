@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.20 2012/05/23 08:23:43 mikeb Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.21 2013/01/15 09:33:30 dlg Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -431,6 +431,15 @@ bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 	    (*(volatile u_int32_t *)(h + o)));
 }
 
+u_int64_t
+bus_space_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+{
+	if (t == X86_BUS_SPACE_IO)
+		panic("bus_space_read_8: invalid I/O operation");
+
+	return (*(volatile u_int64_t *)(h + o));
+}
+
 void
 bus_space_read_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 	    u_int8_t *ptr, bus_size_t cnt)
@@ -487,6 +496,27 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 		__asm __volatile(" cld				;"
 		"1:	movl (%2),%%eax				;"
 		"	stosl					;"
+		"	loop 1b"				:
+		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+		    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
+		    "memory");
+	}
+}
+
+void
+bus_space_read_multi_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int64_t *ptr, bus_size_t cnt)
+{
+	if ((t) == X86_BUS_SPACE_IO) {
+		panic("bus_space_multi_8: invalid I/O operation");
+	} else {
+		void *dummy1;
+		int dummy2;
+		void *dummy3;
+		int __x;
+		__asm __volatile(" cld				;"
+		"1:	movq (%2),%%rax				;"
+		"	stosq					;"
 		"	loop 1b"				:
 		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
 		    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
@@ -589,6 +619,26 @@ bus_space_read_region_4(bus_space_tag_t t, bus_space_handle_t h,
 		    "memory");
 	}
 }
+
+void
+bus_space_read_region_8(bus_space_tag_t t, bus_space_handle_t h,
+    bus_size_t o, u_int64_t *ptr, bus_size_t cnt)
+{
+	if ((t) == X86_BUS_SPACE_IO) {
+		panic("bus_space_read_region_8: invalid I/O operation");
+	} else {
+		int dummy1;
+		void *dummy2;
+		int dummy3;
+		__asm __volatile("cld				;"
+		"	repne					;"
+		"	movsq"					:
+		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
+		    "0" (h + o), "1" (ptr), "2" (cnt)	:
+		    "memory");
+	}
+}
+
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -625,6 +675,16 @@ bus_space_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 		outl(h + o, v);
 	else
 		((void)(*(volatile u_int32_t *)(h + o) = v));
+}
+
+void
+bus_space_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int64_t v)
+{
+	if ((t) == X86_BUS_SPACE_IO)
+		panic("bus_space_write_8: invalid I/O operation");
+	else
+		((void)(*(volatile u_int64_t *)(h + o) = v));
 }
 
 void
@@ -681,6 +741,26 @@ bus_space_write_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 		__asm __volatile("cld				;"
 		"1:	lodsl					;"
 		"	movl %%eax,(%2)				;"
+		"	loop 1b"				:
+		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+		    "0" (ptr), "1" (cnt), "2" (h + o));
+	}
+}
+
+void
+bus_space_write_multi_8(bus_space_tag_t t, bus_space_handle_t h,
+    bus_size_t o, const u_int64_t *ptr, bus_size_t cnt)
+{
+	if ((t) == X86_BUS_SPACE_IO) {
+		panic("bus_space_write_multi_8: invalid I/O operation");
+	} else {
+		void *dummy1;
+		int dummy2;
+		void *dummy3;
+		int __x;
+		__asm __volatile("cld				;"
+		"1:	lodsq					;"
+		"	movq %%rax,(%2)				;"
 		"	loop 1b"				:
 		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
 		    "0" (ptr), "1" (cnt), "2" (h + o));
@@ -784,6 +864,25 @@ bus_space_write_region_4(bus_space_tag_t t, bus_space_handle_t h,
 }
 
 void
+bus_space_write_region_8(bus_space_tag_t t, bus_space_handle_t h,
+    bus_size_t o, const u_int64_t *ptr, bus_size_t cnt)
+{
+	if ((t) == X86_BUS_SPACE_IO) {
+		panic("bus_space_write_region_8: invalid I/O operation");
+	} else {
+		int dummy1;
+		void *dummy2;
+		int dummy3;
+		__asm __volatile("cld				;"
+		"	repne					;"
+		"	movsq"					:
+		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
+		    "0" (h + o), "1" (ptr), "2" (cnt)	:
+		    "memory");
+	}
+}
+
+void
 bus_space_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     u_int8_t v, size_t c)
 {
@@ -826,6 +925,19 @@ bus_space_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 }
 
 void
+bus_space_set_multi_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int64_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	if (t == X86_BUS_SPACE_IO)
+		panic("bus_space_set_multi_8: invalid I/O operation");
+	else
+		while (c--)
+			*(volatile u_int64_t *)(addr) = v;
+}
+
+void
 bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     u_int8_t v, size_t c)
 {
@@ -865,6 +977,19 @@ bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 	else
 		for (; c != 0; c--, addr += 4)
 			*(volatile u_int32_t *)(addr) = v;
+}
+
+void
+bus_space_set_region_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    u_int64_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	if (t == X86_BUS_SPACE_IO)
+		panic("bus_space_set_region_8: invalid I/O operation");
+	else
+		for (; c != 0; c--, addr += sizeof(v))
+			*(volatile u_int64_t *)(addr) = v;
 }
 
 void
@@ -968,6 +1093,32 @@ bus_space_copy_4(bus_space_tag_t t,
 			    c != 0; c--, addr1 -= 4, addr2 -= 4)
 				*(volatile u_int32_t *)(addr2) =
 				    *(volatile u_int32_t *)(addr1);
+		}
+	}
+}
+
+void
+bus_space_copy_8(bus_space_tag_t t,
+    bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (t == X86_BUS_SPACE_IO) {
+		panic("bus_space_set_region_8: invalid I/O operation");
+	} else {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 8, addr2 += 8)
+				*(volatile u_int64_t *)(addr2) =
+				    *(volatile u_int64_t *)(addr1);
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 8 * (c - 1), addr2 += 8 * (c - 1);
+			    c != 0; c--, addr1 -= 8, addr2 -= 8)
+				*(volatile u_int64_t *)(addr2) =
+				    *(volatile u_int64_t *)(addr1);
 		}
 	}
 }

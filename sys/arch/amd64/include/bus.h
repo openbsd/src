@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.25 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: bus.h,v 1.26 2013/01/15 09:33:30 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -145,9 +145,8 @@ u_int16_t	bus_space_read_2(bus_space_tag_t, bus_space_handle_t,
 u_int32_t	bus_space_read_4(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t);
 
-#if 0	/* Cause a link error for bus_space_read_8 */
-#define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
-#endif
+u_int64_t	bus_space_read_8(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t);
 
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
@@ -167,9 +166,8 @@ void	bus_space_read_multi_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 void	bus_space_read_multi_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    u_int32_t *, bus_size_t);
 
-#if 0	/* Cause a link error for bus_space_read_multi_8 */
-#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
-#endif
+void	bus_space_read_multi_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    u_int64_t *, bus_size_t);
 
 /*
  *	void bus_space_read_raw_multi_N(bus_space_tag_t tag,
@@ -186,11 +184,8 @@ void	bus_space_read_multi_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
     bus_space_read_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
 #define	bus_space_read_raw_multi_4(t, h, o, a, c) \
     bus_space_read_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
-
-#if 0	/* Cause a link error for bus_space_read_raw_multi_8 */
-#define	bus_space_read_raw_multi_8 \
-    !!! bus_space_read_raw_multi_8 unimplemented !!!
-#endif
+#define	bus_space_read_raw_multi_8(t, h, o, a, c) \
+    bus_space_read_multi_8((t), (h), (o), (u_int32_t *)(a), (c) >> 3)
 
 /*
  *	void bus_space_read_region_N(bus_space_tag_t tag,
@@ -208,11 +203,8 @@ void	bus_space_read_region_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int16_t *, bus_size_t);
 void	bus_space_read_region_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int32_t *, bus_size_t);
-
-#define bus_space_read_region_stream_1 bus_space_read_region_1
-#if 0	/* Cause a link error for bus_space_read_region_8 */
-#define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
-#endif
+void	bus_space_read_region_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, u_int64_t *, bus_size_t);
 
 /*
  *	void bus_space_read_raw_region_N(bus_space_tag_t tag,
@@ -230,11 +222,8 @@ void	bus_space_read_region_4(bus_space_tag_t, bus_space_handle_t,
     bus_space_read_region_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
 #define	bus_space_read_raw_region_4(t, h, o, a, c) \
     bus_space_read_region_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
-
-#if 0	/* Cause a link error for bus_space_read_raw_region_8 */
-#define	bus_space_read_raw_region_8 \
-    !!! bus_space_read_raw_region_8 unimplemented !!!
-#endif
+#define	bus_space_read_raw_region_8(t, h, o, a, c) \
+    bus_space_read_region_4((t), (h), (o), (u_int64_t *)(a), (c) >> 3)
 
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
@@ -251,10 +240,8 @@ void	bus_space_write_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int16_t);
 void	bus_space_write_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int32_t);
-
-#if 0	/* Cause a link error for bus_space_write_8 */
-#define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
-#endif
+void	bus_space_write_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, u_int64_t);
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
@@ -271,11 +258,8 @@ void	bus_space_write_multi_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, const u_int16_t *, bus_size_t);
 void	bus_space_write_multi_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, const u_int32_t *, bus_size_t);
-
-#if 0	/* Cause a link error for bus_space_write_multi_8 */
-#define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplemented !!!
-#endif
+void	bus_space_write_multi_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, const u_int64_t *, bus_size_t);
 
 /*
  *	void bus_space_write_raw_multi_N(bus_space_tag_t tag,
@@ -292,11 +276,8 @@ void	bus_space_write_multi_4(bus_space_tag_t, bus_space_handle_t,
     bus_space_write_multi_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
 #define	bus_space_write_raw_multi_4(t, h, o, a, c) \
     bus_space_write_multi_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
-
-#if 0	/* Cause a link error for bus_space_write_raw_multi_8 */
-#define	bus_space_write_raw_multi_8 \
-    !!! bus_space_write_raw_multi_8 unimplemented !!!
-#endif
+#define	bus_space_write_raw_multi_8(t, h, o, a, c) \
+    bus_space_write_multi_4((t), (h), (o), (const u_int64_t *)(a), (c) >> 3)
 
 /*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
@@ -313,11 +294,8 @@ void	bus_space_write_region_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, const u_int16_t *, bus_size_t);
 void	bus_space_write_region_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, const u_int32_t *, bus_size_t);
-
-#if 0	/* Cause a link error for bus_space_write_region_8 */
-#define	bus_space_write_region_8					\
-			!!! bus_space_write_region_8 unimplemented !!!
-#endif
+void	bus_space_write_region_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, const u_int64_t *, bus_size_t);
 
 /*
  *	void bus_space_write_raw_region_N(bus_space_tag_t tag,
@@ -335,11 +313,8 @@ void	bus_space_write_region_4(bus_space_tag_t, bus_space_handle_t,
     bus_space_write_region_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
 #define	bus_space_write_raw_region_4(t, h, o, a, c) \
     bus_space_write_region_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
-
-#if 0	/* Cause a link error for bus_space_write_raw_region_8 */
-#define	bus_space_write_raw_region_8 \
-    !!! bus_space_write_raw_region_8 unimplemented !!!
-#endif
+#define	bus_space_write_raw_region_8(t, h, o, a, c) \
+    bus_space_write_region_8((t), (h), (o), (const u_int64_t *)(a), (c) >> 3)
 
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
@@ -356,11 +331,8 @@ void	bus_space_set_multi_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int16_t, size_t);
 void	bus_space_set_multi_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int32_t, size_t);
-
-#if 0	/* Cause a link error for bus_space_set_multi_8 */
-#define	bus_space_set_multi_8					\
-			!!! bus_space_set_multi_8 unimplemented !!!
-#endif
+void	bus_space_set_multi_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, u_int64_t, size_t);
 
 /*
  *	void bus_space_set_region_N(bus_space_tag_t tag,
@@ -377,11 +349,8 @@ void	bus_space_set_region_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int16_t, size_t);
 void	bus_space_set_region_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int32_t, size_t);
-
-#if 0	/* Cause a link error for bus_space_set_region_8 */
-#define	bus_space_set_region_8					\
-			!!! bus_space_set_region_8 unimplemented !!!
-#endif
+void	bus_space_set_region_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, u_int64_t, size_t);
 
 /*
  *	void bus_space_copy_N(bus_space_tag_t tag,
@@ -399,11 +368,8 @@ void	bus_space_copy_2(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
 void	bus_space_copy_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
-
-#if 0	/* Cause a link error for bus_space_copy_8 */
-#define	bus_space_copy_8					\
-			!!! bus_space_copy_8 unimplemented !!!
-#endif
+void	bus_space_copy_8(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, bus_space_handle_t, bus_size_t, size_t);
 
 /*
  * Bus read/write barrier methods.
