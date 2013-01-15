@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.10 2012/11/19 15:03:55 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.11 2013/01/15 10:47:35 guenther Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -497,24 +497,36 @@ futex_sleep(struct futex **fp, struct proc *p, int timeout,
 	wp->wp_new_futex = NULL;
 
 	DPRINTF(("futex_sleep: sleep on futex %p\n", f));
-requeue:
-	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
 
-	ret = msleep(f, &futex_lock, PUSER | PCATCH, "futex_sleep", timeout);
+	do {
+		TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
 
-	TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
+		ret = msleep(f, &futex_lock, PUSER | PCATCH, "futex_sleep",
+		    timeout);
 
-	/* if futex_wake() tells us to requeue ... */
-	newf = wp->wp_new_futex;
-	if (ret == 0 && newf != NULL) {
-		/* ... requeue ourselves on the new futex */
+		TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
+
+		/* did futex_wake() tells us to requeue? if not, we're done! */
+		newf = wp->wp_new_futex;
+		if (newf == NULL)
+			break;
+
+		/* yes, so clean up our requeue bits... */
 		DPRINTF(("futex_sleep: requeue futex %p\n", newf));
-		futex_put(f);
 		wp->wp_new_futex = NULL;
 		TAILQ_REMOVE(&newf->f_requeue_proc, wp, wp_rqlist);
+
+		/*
+		 * ...and discard our reference to the old futex.
+		 * The requeuing has already given us a reference
+		 * to the new one.
+		 */
+		futex_put(f);
 		*fp = f = newf;
-		goto requeue;
-	}
+
+		/* only restart if msleep() didn't fail (timeout or signal) */
+	} while (ret == 0);
+
 	return ret;
 }
 
