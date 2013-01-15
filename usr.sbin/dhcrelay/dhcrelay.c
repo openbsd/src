@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.36 2012/06/22 11:28:36 krw Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.37 2013/01/15 23:45:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -268,6 +268,17 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 			    "relay agent information");
 			return;
 		}
+
+		/*
+		 * VMware PXE "ROMs" confuse the DHCP gateway address
+		 * with the IP gateway address. This is a problem if your
+		 * DHCP relay is running on something that's not your
+		 * network gateway.
+		 *
+		 * It is purely informational from the relay to the client
+		 * so we can safely clear it.
+		 */
+		packet->giaddr.s_addr = 0x0;
 
 		if (send_packet(interfaces, packet, length,
 		    interfaces->primary_address, &to, &hto) != -1)
