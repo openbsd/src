@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxclk.c,v 1.2 2013/01/15 00:20:37 pirofti Exp $	*/
+/*	$OpenBSD: glxclk.c,v 1.3 2013/01/15 01:08:43 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -69,12 +69,8 @@ struct cfattach glxclk_ca = {
 #define	AMD5536_MFGPT_STOP_EN	(1 << 11)	/* Stop enable */
 #define	AMD5536_MFGPT_CMP2MODE	(1 << 9)|(1 << 8)/* Set to GE + activate IRQ */
 #define	AMD5536_MFGPT_SCALE	0x7		/* Set to 128 */
-#define AMD5536_MFGPT_CLKSEL	(1 << 4)	/* Clock select 14MHz */
 
-#define AMD5536_MFGPT1_C2_NMIM	(1 << 9)	/* Enable NMIs for MFGPT1 */
-#define	AMD5536_MFGPT1_C2_RSTEN	0x02000000
 #define	AMD5536_MFGPT1_C2_IRQM	0x00000200
-#define	AMD5536_MFGPT5_C2_IRQM	0x00002000
 
 struct glxclk_softc *glxclk_sc;
 
