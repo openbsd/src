@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.30 2012/11/27 13:52:23 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.31 2013/01/15 22:55:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -91,6 +91,13 @@ const struct options_table_entry server_options_table[] = {
 
 /* Session options. */
 const struct options_table_entry session_options_table[] = {
+	{ .name = "assume-paste-time",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 1,
+	},
+
 	{ .name = "base-index",
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .minimum = 0,
