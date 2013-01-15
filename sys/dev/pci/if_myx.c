@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.36 2013/01/14 23:58:34 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.37 2013/01/15 00:22:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -159,6 +159,12 @@ int	 myx_probe_firmware(struct myx_softc *);
 
 void	 myx_read(struct myx_softc *, bus_size_t, void *, bus_size_t);
 void	 myx_write(struct myx_softc *, bus_size_t, void *, bus_size_t);
+
+#if defined(__LP64__)
+#define myx_bus_space_write bus_space_write_raw_region_8
+#else
+#define myx_bus_space_write bus_space_write_raw_region_4
+#endif
 
 int	 myx_cmd(struct myx_softc *, u_int32_t, struct myx_cmd *, u_int32_t *);
 int	 myx_boot(struct myx_softc *, u_int32_t);
@@ -1385,7 +1391,7 @@ myx_write_txd_head(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 	txd.tx_nsegs = map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
 	txd.tx_flags = flags | MYXTXD_FLAGS_FIRST;
 
-	bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+	myx_bus_space_write(sc->sc_memt, sc->sc_memh,
 	    offset + sizeof(txd) * idx, &txd, sizeof(txd));
 }
 void
@@ -1403,7 +1409,7 @@ myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 		txd.tx_length = htobe16(map->dm_segs[i].ds_len);
 		txd.tx_flags = flags;
 
-		bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+		myx_bus_space_write(sc->sc_memt, sc->sc_memh,
 		    offset + sizeof(txd) * ((idx + i) % sc->sc_tx_ring_count),
 		    &txd, sizeof(txd));
 	}
@@ -1415,7 +1421,7 @@ myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 		txd.tx_length = htobe16(60 - map->dm_mapsize);
 		txd.tx_flags = flags;
 
-		bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+		myx_bus_space_write(sc->sc_memt, sc->sc_memh,
 		    offset + sizeof(txd) * ((idx + i) % sc->sc_tx_ring_count),
 		    &txd, sizeof(txd));
 	}
@@ -1777,7 +1783,7 @@ myx_rx_fill(struct myx_softc *sc, int ring)
 		myx_buf_put(&sc->sc_rx_buf_list[ring], mb);
 
 		rxd.rx_addr = htobe64(mb->mb_map->dm_segs[0].ds_addr);
-		bus_space_write_raw_region_4(sc->sc_memt, sc->sc_memh,
+		myx_bus_space_write(sc->sc_memt, sc->sc_memh,
 		    offset + idx * sizeof(rxd), &rxd, sizeof(rxd));
 
 		idx++;
