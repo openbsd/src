@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.280 2013/01/15 04:03:01 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.281 2013/01/15 09:51:22 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2004,6 +2004,53 @@ sr_ccb_put(struct sr_ccb *ccb)
 	splx(s);
 }
 
+struct sr_ccb *
+sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr64_t blkno,
+    daddr64_t len, u_int8_t *data, int xsflags, int ccbflag)
+{
+	struct sr_chunk		*sc = sd->sd_vol.sv_chunks[chunk];
+	struct sr_ccb		*ccb = NULL;
+
+	ccb = sr_ccb_get(sd);
+	if (ccb == NULL)
+		goto out;
+
+	ccb->ccb_flag = ccbflag;
+	ccb->ccb_target = chunk;
+
+	ccb->ccb_buf.b_flags = B_PHYS | B_CALL;
+	if (ISSET(xsflags, SCSI_DATA_IN))
+		ccb->ccb_buf.b_flags |= B_READ;
+	else
+		ccb->ccb_buf.b_flags |= B_WRITE;
+
+	ccb->ccb_buf.b_blkno = blkno;
+	ccb->ccb_buf.b_bcount = len;
+	ccb->ccb_buf.b_bufsize = len;
+	ccb->ccb_buf.b_resid = len;
+	ccb->ccb_buf.b_data = data;
+	ccb->ccb_buf.b_error = 0;
+	ccb->ccb_buf.b_iodone = sd->sd_scsi_intr;
+	ccb->ccb_buf.b_proc = curproc;
+	ccb->ccb_buf.b_dev = sc->src_dev_mm;
+	ccb->ccb_buf.b_vp = sc->src_vn;
+	ccb->ccb_buf.b_bq = NULL;
+
+	if (!ISSET(ccb->ccb_buf.b_flags, B_READ))
+		ccb->ccb_buf.b_vp->v_numoutput++;
+
+	LIST_INIT(&ccb->ccb_buf.b_dep);
+
+	DNPRINTF(SR_D_DIS, "%s: %s %s ccb "
+	    "b_bcount %d b_blkno %lld b_flags 0x%0x b_data %p\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
+	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
+	    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+
+out:
+	return ccb;
+}
+
 int
 sr_wu_alloc(struct sr_discipline *sd)
 {
@@ -2100,7 +2147,7 @@ sr_wu_init(struct sr_discipline *sd, struct sr_workunit *wu)
 
 	s = splbio();
 	if (wu->swu_cb_active == 1)
-		panic("%s: sr_wu_put got active wu", DEVNAME(sd->sd_sc));
+		panic("%s: sr_wu_init got active wu", DEVNAME(sd->sd_sc));
 	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
 		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
 		sr_ccb_put(ccb);
@@ -2110,6 +2157,22 @@ sr_wu_init(struct sr_discipline *sd, struct sr_workunit *wu)
 	bzero(wu, sizeof(*wu));
 	TAILQ_INIT(&wu->swu_ccb);
 	wu->swu_dis = sd;
+}
+
+void
+sr_wu_ccb_enqueue(struct sr_workunit *wu, struct sr_ccb *ccb)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	int			s;
+
+	s = splbio();
+	if (wu->swu_cb_active == 1)
+		panic("%s: sr_wu_ccb_enqueue got active wu",
+		    DEVNAME(sd->sd_sc));
+	ccb->ccb_wu = wu;
+	wu->swu_io_count++;
+	TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
+	splx(s);
 }
 
 void
