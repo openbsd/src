@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.111 2013/01/15 11:12:57 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.112 2013/01/15 21:48:32 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1167,7 +1167,8 @@ somove(struct socket *so, int wait)
 		error = EPIPE;
 		goto release;
 	}
-	if (sosp->so_error && sosp->so_error != ETIMEDOUT) {
+	if (sosp->so_error && sosp->so_error != ETIMEDOUT &&
+	    sosp->so_error != EFBIG) {
 		error = sosp->so_error;
 		goto release;
 	}
@@ -1318,6 +1319,8 @@ somove(struct socket *so, int wait)
 
  release:
 	sosp->so_state &= ~SS_ISSENDING;
+	if (!error && maxreached && so->so_splicemax == so->so_splicelen)
+		error = EFBIG;
 	if (error)
 		so->so_error = error;
 	if (((so->so_state & SS_CANTRCVMORE) && so->so_rcv.sb_cc == 0) ||
