@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.12 2011/05/18 23:36:31 ariane Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.13 2013/01/15 03:14:01 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -666,7 +666,7 @@ viommu_dvmamap_append_range(bus_dma_tag_t t, bus_dmamap_t map, paddr_t pa,
 			 */
 
 			seg->ds_addr = sgstart;
-			seg->ds_len = boundary - (sgstart & bd_mask);
+			seg->ds_len = boundary - (sgstart & ~bd_mask);
 
 			sgstart += seg->ds_len; /* sgend stays the same */
 			length -= seg->ds_len;
