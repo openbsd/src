@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.278 2012/10/09 11:57:33 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.279 2013/01/15 03:47:10 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2057,36 +2057,6 @@ sr_wu_free(struct sr_discipline *sd)
 		free(sd->sd_wu, M_DEVBUF);
 }
 
-void
-sr_wu_put(void *xsd, void *xwu)
-{
-	struct sr_discipline	*sd = (struct sr_discipline *)xsd;
-	struct sr_workunit	*wu = (struct sr_workunit *)xwu;
-	struct sr_ccb		*ccb;
-
-	int			s;
-
-	DNPRINTF(SR_D_WU, "%s: sr_wu_put: %p\n", DEVNAME(sd->sd_sc), wu);
-
-	s = splbio();
-	if (wu->swu_cb_active == 1)
-		panic("%s: sr_wu_put got active wu", DEVNAME(sd->sd_sc));
-	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
-		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
-		sr_ccb_put(ccb);
-	}
-	splx(s);
-
-	bzero(wu, sizeof(*wu));
-	TAILQ_INIT(&wu->swu_ccb);
-	wu->swu_dis = sd;
-
-	mtx_enter(&sd->sd_wu_mtx);
-	TAILQ_INSERT_TAIL(&sd->sd_wu_freeq, wu, swu_link);
-	sd->sd_wu_pending--;
-	mtx_leave(&sd->sd_wu_mtx);
-}
-
 void *
 sr_wu_get(void *xsd)
 {
@@ -2107,6 +2077,42 @@ sr_wu_get(void *xsd)
 }
 
 void
+sr_wu_put(void *xsd, void *xwu)
+{
+	struct sr_discipline	*sd = (struct sr_discipline *)xsd;
+	struct sr_workunit	*wu = (struct sr_workunit *)xwu;
+
+	DNPRINTF(SR_D_WU, "%s: sr_wu_put: %p\n", DEVNAME(sd->sd_sc), wu);
+
+	sr_wu_init(sd, wu);
+
+	mtx_enter(&sd->sd_wu_mtx);
+	TAILQ_INSERT_TAIL(&sd->sd_wu_freeq, wu, swu_link);
+	sd->sd_wu_pending--;
+	mtx_leave(&sd->sd_wu_mtx);
+}
+
+void
+sr_wu_init(struct sr_discipline *sd, struct sr_workunit *wu)
+{
+	struct sr_ccb		*ccb;
+	int			s;
+
+	s = splbio();
+	if (wu->swu_cb_active == 1)
+		panic("%s: sr_wu_put got active wu", DEVNAME(sd->sd_sc));
+	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
+		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
+		sr_ccb_put(ccb);
+	}
+	splx(s);
+
+	bzero(wu, sizeof(*wu));
+	TAILQ_INIT(&wu->swu_ccb);
+	wu->swu_dis = sd;
+}
+
+void
 sr_scsi_done(struct sr_discipline *sd, struct scsi_xfer *xs)
 {
 	DNPRINTF(SR_D_DIS, "%s: sr_scsi_done: xs %p\n", DEVNAME(sd->sd_sc), xs);
@@ -2117,12 +2123,10 @@ sr_scsi_done(struct sr_discipline *sd, struct scsi_xfer *xs)
 void
 sr_scsi_cmd(struct scsi_xfer *xs)
 {
-	int			s;
 	struct scsi_link	*link = xs->sc_link;
 	struct sr_softc		*sc = link->adapter_softc;
-	struct sr_workunit	*wu = NULL;
+	struct sr_workunit	*wu = xs->io;
 	struct sr_discipline	*sd;
-	struct sr_ccb		*ccb;
 
 	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: target %d xs: %p "
 	    "flags: %#x\n", DEVNAME(sc), link->target, xs, xs->flags);
@@ -2139,21 +2143,9 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 		goto stuffup;
 	}
 
-	wu = xs->io;
 	/* scsi layer *can* re-send wu without calling sr_wu_put(). */
-	s = splbio();
-	if (wu->swu_cb_active == 1)
-		panic("%s: sr_scsi_cmd got active wu", DEVNAME(sd->sd_sc));
-	while ((ccb = TAILQ_FIRST(&wu->swu_ccb)) != NULL) {
-		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
-		sr_ccb_put(ccb);
-	}
-	splx(s);
-
-	bzero(wu, sizeof(*wu));
-	TAILQ_INIT(&wu->swu_ccb);
+	sr_wu_init(sd, wu);
 	wu->swu_state = SR_WU_INPROGRESS;
-	wu->swu_dis = sd;
 	wu->swu_xs = xs;
 
 	switch (xs->cmd->opcode) {

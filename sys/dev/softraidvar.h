@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.119 2012/10/09 13:55:36 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.120 2013/01/15 03:47:10 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -649,6 +649,8 @@ int			sr_wu_alloc(struct sr_discipline *);
 void			sr_wu_free(struct sr_discipline *);
 void			*sr_wu_get(void *);
 void			sr_wu_put(void *, void *);
+void			sr_wu_init(struct sr_discipline *,
+			    struct sr_workunit *);
 
 /* misc functions */
 void			sr_info(struct sr_softc *, const char *, ...);
