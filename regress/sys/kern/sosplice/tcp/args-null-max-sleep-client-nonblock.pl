@@ -10,6 +10,7 @@ our %args = (
     },
     relay => {
 	max => 113,
+	nomax => 1,
 	nonblocking => 1,
     },
     len => 0,

@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.3 2013/01/05 13:53:42 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.4 2013/01/15 10:43:17 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -350,7 +350,7 @@ sub relay_splice_stream {
 
 		defined($error = geterror(\*STDIN))
 		    or die ref($self), " get error from stdin failed: $!";
-		($! = $error) && ! $!{ETIMEDOUT} && ! $!{ERANGE}
+		($! = $error) && ! $!{ETIMEDOUT} && ! $!{EFBIG}
 		    and die ref($self), " splice failed: $!";
 
 		defined($splicelen = getsplice(\*STDIN))
@@ -362,22 +362,7 @@ sub relay_splice_stream {
 		$len += $splicelen;
 	} while ($max && $max > $len && !$shortsplice++);
 
-	if ($idle && $error == Errno::ETIMEDOUT) {
-		print STDERR "Timeout\n";
-	}
-	if ($max && $max == $len) {
-		print STDERR "Max\n";
-	} elsif ($max && $max < $len) {
-		die ref($self), " max $max less than len $len";
-	} elsif ($max && $max > $len && $splicelen) {
-		die ref($self), " max $max greater than len $len";
-	} elsif (!$error) {
-		defined(my $read = sysread(STDIN, my $buf, 2**16))
-		    or die ref($self), " sysread stdin failed: $!";
-		$read > 0
-		    and die ref($self), " sysread stdin has data: $read";
-		print STDERR "End\n";
-	}
+	relay_splice_check($self, $idle, $max, $len, $error);
 	print STDERR "LEN: $len\n";
 }
 
@@ -397,7 +382,7 @@ sub relay_splice_datagram {
 
 	defined(my $error = geterror(\*STDIN))
 	    or die ref($self), " get error from stdin failed: $!";
-	($! = $error) && ! $!{ETIMEDOUT} && ! $!{ERANGE}
+	($! = $error) && ! $!{ETIMEDOUT} && ! $!{EFBIG}
 	    and die ref($self), " splice failed: $!";
 
 	defined(my $splicelen = getsplice(\*STDIN))
@@ -408,19 +393,30 @@ sub relay_splice_datagram {
 	    "greater than max $splicemax";
 	my $len = $splicelen;
 
-	if ($idle && $error == Errno::ETIMEDOUT) {
-		print STDERR "Timeout\n";
-	}
 	if ($max && $max > $len) {
 		defined(my $read = sysread(STDIN, my $buf, $max - $len))
 		    or die ref($self), " sysread stdin max failed: $!";
 		$len += $read;
 	}
+	relay_splice_check($self, $idle, $max, $len, $error);
+	print STDERR "LEN: $splicelen\n";
+}
+
+sub relay_splice_check {
+	my $self = shift;
+	my ($idle, $max, $len, $error) = @_;
+
+	if ($idle && $error == Errno::ETIMEDOUT) {
+		print STDERR "Timeout\n";
+	}
+	if ($max && $error == Errno::EFBIG) {
+		print STDERR "Big\n";
+	}
 	if ($max && $max == $len) {
 		print STDERR "Max\n";
 	} elsif ($max && $max < $len) {
 		die ref($self), " max $max less than len $len";
-	} elsif ($max && $max > $len && $splicelen) {
+	} elsif ($max && $max > $len && $error == Errno::EFBIG) {
 		die ref($self), " max $max greater than len $len";
 	} elsif (!$error) {
 		defined(my $read = sysread(STDIN, my $buf, 2**16))
@@ -429,7 +425,6 @@ sub relay_splice_datagram {
 		    and die ref($self), " sysread stdin has data: $read";
 		print STDERR "End\n";
 	}
-	print STDERR "LEN: $splicelen\n";
 }
 
 sub relay_splice {
@@ -640,8 +635,10 @@ sub check_relay {
 
 	$r->loggrep(qr/^Timeout$/) or die "no relay timeout"
 	    if $r && $args{relay}{timeout};
+	$r->loggrep(qr/^Big$/) or die "no relay big"
+	    if $r && $args{relay}{big};
 	$r->loggrep(qr/^Max$/) or die "no relay max"
-	    if $r && $args{relay}{max} && $args{len};
+	    if $r && $args{relay}{max} && !$args{relay}{nomax};
 	$r->loggrep(qr/^End$/) or die "no relay end"
 	    if $r && $args{relay}{end};
 }
