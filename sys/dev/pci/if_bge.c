@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.314 2013/01/10 01:17:00 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.315 2013/01/15 05:11:47 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -45,9 +45,9 @@
 /*
  * The Broadcom BCM5700 is based on technology originally developed by
  * Alteon Networks as part of the Tigon I and Tigon II gigabit ethernet
- * MAC chips. The BCM5700, sometimes refered to as the Tigon III, has
+ * MAC chips. The BCM5700, sometimes referred to as the Tigon III, has
  * two on-board MIPS R4000 CPUs and can have as much as 16MB of external
- * SSRAM. The BCM5700 supports TCP, UDP and IP checksum offload, Jumbo
+ * SSRAM. The BCM5700 supports TCP, UDP and IP checksum offload, jumbo
  * frames, highly configurable RX filtering, and 16 RX and TX queues
  * (which, along with RX filter rules, can be used for QOS applications).
  * Other features, such as TCP segmentation, may be available as part
@@ -567,17 +567,17 @@ bge_eeprom_getbyte(struct bge_softc *sc, int addr, u_int8_t *dest)
 int
 bge_read_eeprom(struct bge_softc *sc, caddr_t dest, int off, int cnt)
 {
-	int err = 0, i;
+	int i, error = 0;
 	u_int8_t byte = 0;
 
 	for (i = 0; i < cnt; i++) {
-		err = bge_eeprom_getbyte(sc, off + i, &byte);
-		if (err)
+		error = bge_eeprom_getbyte(sc, off + i, &byte);
+		if (error)
 			break;
 		*(dest + i) = byte;
 	}
 
-	return (err ? 1 : 0);
+	return (error ? 1 : 0);
 }
 
 int
