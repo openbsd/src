@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.92 2012/09/19 09:47:25 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.93 2013/01/15 10:15:19 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1389,6 +1389,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		struct nd_prefix *pr, *next;
 
 		s = splsoftnet();
+		/* First purge the addresses referenced by a prefix. */
 		for (pr = LIST_FIRST(&nd_prefix); pr; pr = next) {
 			struct in6_ifaddr *ia, *ia_next;
 
@@ -1408,6 +1409,18 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 				if (ia->ia6_ndpr == pr)
 					in6_purgeaddr(&ia->ia_ifa);
 			}
+		}
+		/*
+		 * Purging the addresses might remove the prefix as well.
+		 * So run the loop again to access only prefixes that have
+		 * not been freed already.
+		 */
+		for (pr = LIST_FIRST(&nd_prefix); pr; pr = next) {
+			next = LIST_NEXT(pr, ndpr_entry);
+
+			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
+				continue; /* XXX */
+
 			prelist_remove(pr);
 		}
 		splx(s);
