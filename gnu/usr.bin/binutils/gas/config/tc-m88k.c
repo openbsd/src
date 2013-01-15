@@ -164,16 +164,16 @@ static int current_cpu = 0;
 
 /* These chars start a comment anywhere in a source file (except inside
    another comment.  */
-#if defined(OBJ_AOUT) || defined(OBJ_ELF)
+#if defined(OBJ_ELF)
+const char comment_chars[] = "|";
+#elif defined(OBJ_AOUT)
 const char comment_chars[] = "|#";
 #else
 const char comment_chars[] = ";";
 #endif
 
 /* These chars only start a comment at the beginning of a line.  */
-#if defined(OBJ_ELF)
-const char line_comment_chars[] = "";
-#elif defined(OBJ_AOUT)
+#if defined(OBJ_AOUT)
 const char line_comment_chars[] = ";";
 #else
 const char line_comment_chars[] = "#";
@@ -218,7 +218,7 @@ const pseudo_typeS md_pseudo_table[] =
 
 static void
 s_m88k_88110(i)
-     int i;
+     int i ATTRIBUTE_UNUSED;
 {
   current_cpu = 88110;
 }
@@ -253,7 +253,7 @@ md_begin ()
   record_alignment (data_section, 2);
   record_alignment (bss_section, 2);
 
-  bfd_set_private_flags (stdoutput, 0); /* XXX EF_88110 */
+  bfd_set_private_flags (stdoutput, 0);
 #endif
 }
 
@@ -295,6 +295,54 @@ M88k options:\n\
   -m88100 | -m88110       select processor type\n"),
 	 stream);
 }
+
+#ifdef OBJ_ELF
+enum m88k_pic_reloc_type {
+  pic_reloc_none,
+  pic_reloc_abdiff,
+  pic_reloc_gotrel,
+  pic_reloc_plt
+};
+
+static bfd_reloc_code_real_type
+m88k_get_reloc_code(struct m88k_insn *insn)
+{
+  switch (insn->exp.X_md)
+    {
+    default:
+    case pic_reloc_none:
+      return insn->reloc;
+
+    case pic_reloc_abdiff:
+      if (insn->reloc == BFD_RELOC_LO16)
+	return BFD_RELOC_LO16_BASEREL;
+      if (insn->reloc == BFD_RELOC_HI16)
+	return BFD_RELOC_HI16_BASEREL;
+      break;
+
+    case pic_reloc_gotrel:
+      if (insn->reloc == BFD_RELOC_LO16)
+	return BFD_RELOC_LO16_GOTOFF;
+      if (insn->reloc == BFD_RELOC_HI16)
+	return BFD_RELOC_HI16_GOTOFF;
+      break;
+
+    case pic_reloc_plt:
+      if (insn->reloc == BFD_RELOC_32)
+	return BFD_RELOC_32_PLTOFF;
+      if (insn->reloc == BFD_RELOC_28_PCREL_S2)
+	return BFD_RELOC_32_PLT_PCREL;
+      break;
+    }
+
+  as_bad ("Can't process pic type %d relocation type %d",
+	  insn->exp.X_md, insn->reloc);
+
+  return BFD_RELOC_NONE;
+}
+#else
+#define m88k_get_reloc_code(insn)	(insn).reloc
+#endif
 
 void
 md_assemble (op)
@@ -327,6 +375,7 @@ md_assemble (op)
   insn.exp.X_op_symbol = 0;
   insn.exp.X_add_number = 0;
   insn.exp.X_op = O_illegal;
+  insn.exp.X_md = pic_reloc_none;
   insn.reloc = NO_RELOC;
 
   while (!calcop (format, param, &insn))
@@ -358,7 +407,7 @@ md_assemble (op)
 		   2,
 		   &insn.exp,
 		   0,
-		   insn.reloc);
+		   m88k_get_reloc_code(&insn));
       fixP->fx_no_overflow = 1;
       break;
 
@@ -369,7 +418,7 @@ md_assemble (op)
 		   4,
 		   &insn.exp,
 		   0,
-		   insn.reloc);
+		   m88k_get_reloc_code(&insn));
       break;
 #endif
 
@@ -380,14 +429,14 @@ md_assemble (op)
 		   4,
 		   &insn.exp,
 		   1,
-		   insn.reloc);
+		   m88k_get_reloc_code(&insn));
 #else
       fix_new_exp (frag_now,
 		   thisfrag - frag_now->fr_literal + 2,
 		   2,
 		   &insn.exp,
 		   1,
-		   insn.reloc);
+		   m88k_get_reloc_code(&insn));
 #endif
       break;
 
@@ -397,7 +446,7 @@ md_assemble (op)
 		   4,
 		   &insn.exp,
 		   1,
-		   insn.reloc);
+		   m88k_get_reloc_code(&insn));
       break;
 
     case RELOC_32:
@@ -406,7 +455,7 @@ md_assemble (op)
 		   4,
 		   &insn.exp,
 		   0,
-		   insn.reloc);
+		   m88k_get_reloc_code(&insn));
       break;
 
     default:
@@ -1158,7 +1207,7 @@ md_atof (type, litP, sizeP)
     }
   return 0;
 }
-
+
 int md_short_jump_size = 4;
 int md_long_jump_size = 4;
 
@@ -1351,6 +1400,9 @@ md_pcrel_from (fixp)
       return fixp->fx_frag->fr_address + fixp->fx_where - 2;
 #endif
     case RELOC_PC26:
+#ifdef OBJ_ELF
+    case BFD_RELOC_32_PLT_PCREL:
+#endif
       return fixp->fx_frag->fr_address + fixp->fx_where;
     default:
       abort ();
@@ -1441,7 +1493,7 @@ md_apply_fix3 (fixP, valP, seg)
     {
 #if 0
       /* can't empty 26-bit relocation values with memset() */
-      if (fixP->fx_r_type == RELOC_PC26)
+      if (fixP->fx_r_type == BFD_RELOC_28_PCREL_S2)
 	{
 	  insn = bfd_getb32 ((unsigned char *) buf);
 	  insn &= ~0x03ffffff;
@@ -1459,21 +1511,28 @@ md_apply_fix3 (fixP, valP, seg)
       return;
     }
 
-  if (fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
-    return;
-
   switch (fixP->fx_r_type)
     {
-    case RELOC_LO16:
-    case RELOC_HI16:
+    case BFD_RELOC_VTABLE_INHERIT:
+    case BFD_RELOC_VTABLE_ENTRY:
+      return;
+
+    case BFD_RELOC_HI16_BASEREL:
+    case BFD_RELOC_LO16_BASEREL:
+    case BFD_RELOC_HI16_GOTOFF:
+    case BFD_RELOC_LO16_GOTOFF:
+    case BFD_RELOC_32_PLTOFF:
+      return;
+
+    case BFD_RELOC_LO16:
+    case BFD_RELOC_HI16:
       if (fixP->fx_pcrel)
 	abort ();
       buf[0] = val >> 8;
       buf[1] = val;
       break;
 
-    case RELOC_PC16:
+    case BFD_RELOC_18_PCREL_S2:
       if ((val & 0x03) != 0)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      "Branch to unaligned address (%lx)", (long)val);
@@ -1481,7 +1540,8 @@ md_apply_fix3 (fixP, valP, seg)
       buf[3] = val >> 2;
       break;
 
-    case RELOC_PC26:
+    case BFD_RELOC_32_PLT_PCREL:
+    case BFD_RELOC_28_PCREL_S2:
       if ((val & 0x03) != 0)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      "Branch to unaligned address (%lx)", (long)val);
@@ -1491,7 +1551,7 @@ md_apply_fix3 (fixP, valP, seg)
       buf[3] = val >> 2;
       break;
 
-    case RELOC_32:
+    case BFD_RELOC_32:
       insn = val;
       bfd_putb32(insn, buf);
       break;
@@ -1510,6 +1570,74 @@ m88k_elf_final_processing ()
 {
   if (current_cpu == 88110)
     elf_elfheader (stdoutput)->e_flags |= EF_M88110;
+}
+
+inline static char *
+m88k_end_of_name (const char *suffix, const char *pattern, size_t patlen)
+{
+  if (strncmp (suffix, pattern, patlen) == 0
+      && ! is_part_of_name (suffix[patlen]))
+    return suffix + patlen;
+
+  return NULL;
+}
+
+int
+m88k_parse_name (name, expressionP, nextcharP)
+    const char *name;
+    expressionS *expressionP;
+    char *nextcharP;
+{
+  char *next = input_line_pointer;
+  char *next_end;
+  enum m88k_pic_reloc_type reloc_type = pic_reloc_none;
+  symbolS *symbolP;
+  segT segment;
+
+  if (*nextcharP != '#')
+    return 0;
+
+  if ((next_end = m88k_end_of_name (next + 1, "abdiff", 6)) != NULL)
+    {
+      reloc_type = pic_reloc_abdiff;
+    }
+  else if ((next_end = m88k_end_of_name (next + 1, "got_rel", 7)) != NULL)
+    {
+      reloc_type = pic_reloc_gotrel;
+    }
+  else if ((next_end = m88k_end_of_name (next + 1, "plt", 3)) != NULL)
+    {
+      reloc_type = pic_reloc_plt;
+    }
+  else
+    return 0;
+
+  symbolP = symbol_find_or_make (name);
+  segment = S_GET_SEGMENT (symbolP);
+  if (segment == absolute_section)
+    {
+      expressionP->X_op = O_constant;
+      expressionP->X_add_number = S_GET_VALUE (symbolP);
+    }
+  else if (segment == reg_section)
+    {
+      expressionP->X_op = O_register;
+      expressionP->X_add_number = S_GET_VALUE (symbolP);
+    }
+  else
+    {
+      expressionP->X_op = O_symbol;
+      expressionP->X_add_symbol = symbolP;
+      expressionP->X_add_number = 0;
+    }
+  expressionP->X_md = reloc_type;
+
+  *input_line_pointer = *nextcharP;
+  input_line_pointer = next_end;
+  *nextcharP = *input_line_pointer;
+  *input_line_pointer = '\0';
+
+  return 1;
 }
 #endif /* OBJ_ELF */
 

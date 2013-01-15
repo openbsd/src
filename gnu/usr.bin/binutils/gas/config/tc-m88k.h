@@ -87,8 +87,27 @@ struct reloc_info_m88k
 #define relocation_info reloc_info_m88k
 #endif /* BFD_ASSEMBLER */
 
-#ifndef OBJ_ELF
+#ifdef OBJ_ELF
 
+/* This is used to recognize #abdiff, #got_rel and #plt symbols.
+   The relocation type is stored in X_md.  */
+#define md_parse_name m88k_parse_name
+extern int m88k_parse_name (const char *, expressionS *, char *);
+
+/* This expression evaluates to true if the relocation is for a local
+   object for which we still want to do the relocation at runtime.
+   False if we are willing to perform this relocation while building
+   the .o file.  Only concerns pcrel relocs.  */
+
+#define TC_FORCE_RELOCATION_LOCAL(FIX)			\
+  (!(FIX)->fx_pcrel					\
+   || (FIX)->fx_plt					\
+   || (FIX)->fx_r_type == BFD_RELOC_32_PLT_PCREL	\
+   || TC_FORCE_RELOCATION (FIX))
+
+#endif /* OBJ_ELF */
+
+#ifndef OBJ_ELF
 /* The m88k uses '@' to start local labels, except on ELF.  */
 #define LEX_AT (LEX_BEGIN_NAME | LEX_NAME)
 
@@ -103,7 +122,6 @@ struct reloc_info_m88k
 /* The m88k uses pseudo-ops with no leading period, except on OpenBSD ELF.  */
 #define NO_PSEUDO_DOT 1
 #endif
-
 
 /* Don't warn on word overflow; it happens on %hi relocs.  */
 #undef WARN_SIGNED_OVERFLOW_WORD
