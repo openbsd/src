@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.82 2012/07/11 12:39:20 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.83 2013/01/15 06:05:47 martynas Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -342,10 +342,12 @@ int
 msdosfs_setattr(void *v)
 {
 	struct vop_setattr_args *ap = v;
-	int error = 0;
+	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(ap->a_vp);
+	struct msdosfsmount *pmp = dep->de_pmp;
 	struct vattr *vap = ap->a_vap;
 	struct ucred *cred = ap->a_cred;
+	int error = 0;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_setattr(): vp %08x, vap %08x, cred %08x, p %08x\n",
@@ -354,43 +356,124 @@ msdosfs_setattr(void *v)
 	if ((vap->va_type != VNON) || (vap->va_nlink != VNOVAL) ||
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
-	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
-	    (vap->va_uid != VNOVAL) || (vap->va_gid != VNOVAL)) {
+	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
 		printf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
 		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
 		printf("    va_blocksize %x, va_rdev %x, va_bytes %x, va_gen %x\n",
 		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
-		printf("    va_uid %x, va_gid %x\n",
-		    vap->va_uid, vap->va_gid);
 #endif
 		return (EINVAL);
 	}
-	/*
-	 * Directories must not ever get their attributes modified
-	 */
-	if (ap->a_vp->v_type == VDIR)
-		return (0);
+	if (vap->va_flags != VNOVAL) {
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EINVAL);
+		if (cred->cr_uid != pmp->pm_uid) {
+			error = suser_ucred(cred);
+			if (error)
+				return (error);
+		}
+		/*
+		 * We are very inconsistent about handling unsupported
+		 * attributes.  We ignored the access time and the
+		 * read and execute bits.  We were strict for the other
+		 * attributes.
+		 *
+		 * Here we are strict, stricter than ufs in not allowing
+		 * users to attempt to set SF_SETTABLE bits or anyone to
+		 * set unsupported bits.  However, we ignore attempts to
+		 * set ATTR_ARCHIVE for directories `cp -pr' from a more
+		 * sensible filesystem attempts it a lot.
+		 */
+		if (vap->va_flags & SF_SETTABLE) {
+			error = suser_ucred(cred);
+			if (error)
+				return (error);
+		}
+		if (vap->va_flags & ~SF_ARCHIVED)
+			return EOPNOTSUPP;
+		if (vap->va_flags & SF_ARCHIVED)
+			dep->de_Attributes &= ~ATTR_ARCHIVE;
+		else if (!(dep->de_Attributes & ATTR_DIRECTORY))
+			dep->de_Attributes |= ATTR_ARCHIVE;
+		dep->de_flag |= DE_MODIFIED;
+	}
+
+	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
+		uid_t uid;
+		gid_t gid;
+
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EINVAL);
+		uid = vap->va_uid;
+		if (uid == (uid_t)VNOVAL)
+			uid = pmp->pm_uid;
+		gid = vap->va_gid;
+		if (gid == (gid_t)VNOVAL)
+			gid = pmp->pm_gid;
+		if (cred->cr_uid != pmp->pm_uid || uid != pmp->pm_uid ||
+		    (gid != pmp->pm_gid && !groupmember(gid, cred))) {
+			error = suser_ucred(cred);
+			if (error)
+				return (error);
+		}
+		if (uid != pmp->pm_uid || gid != pmp->pm_gid)
+			return EINVAL;
+	}
 
 	if (vap->va_size != VNOVAL) {
-		error = detrunc(dep, (uint32_t)vap->va_size, 0, cred, ap->a_p);
+		switch (vp->v_type) {
+		case VDIR:
+			return (EISDIR);
+		case VREG:
+			/*
+			 * Truncation is only supported for regular files,
+			 * Disallow it if the filesystem is read-only.
+			 */
+			if (vp->v_mount->mnt_flag & MNT_RDONLY)
+				return (EINVAL);
+			break;
+		default:
+			/*
+			 * According to POSIX, the result is unspecified
+			 * for file types other than regular files,
+			 * directories and shared memory objects.  We
+			 * don't support any file types except regular
+			 * files and directories in this file system, so
+			 * this (default) case is unreachable and can do
+			 * anything.  Keep falling through to detrunc()
+			 * for now.
+			 */
+			break;
+		}
+		error = detrunc(dep, vap->va_size, 0, cred, ap->a_p);
 		if (error)
-			return (error);
+			return error;
 	}
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
-		if (cred->cr_uid != dep->de_pmp->pm_uid &&
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EINVAL);
+		if (cred->cr_uid != pmp->pm_uid &&
 		    (error = suser_ucred(cred)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
 			return (error);
-		if (!(dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)
-		    && vap->va_atime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_atime, &dep->de_ADate, NULL, NULL);
-		if (vap->va_mtime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime, NULL);
-		dep->de_Attributes |= ATTR_ARCHIVE;
-		dep->de_flag |= DE_MODIFIED;
+		if (vp->v_type != VDIR) {
+			if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
+			    vap->va_atime.tv_sec != VNOVAL) {
+				dep->de_flag &= ~DE_ACCESS;
+				unix2dostime(&vap->va_atime, &dep->de_ADate,
+				    NULL, NULL);
+			}
+			if (vap->va_mtime.tv_sec != VNOVAL) {
+				dep->de_flag &= ~DE_UPDATE;
+				unix2dostime(&vap->va_mtime, &dep->de_MDate,
+				    &dep->de_MTime, NULL);
+			}
+			dep->de_Attributes |= ATTR_ARCHIVE;
+			dep->de_flag |= DE_MODIFIED;
+		}
 	}
 	/*
 	 * DOS files only have the ability to have their writability
@@ -398,28 +481,22 @@ msdosfs_setattr(void *v)
 	 * attribute.
 	 */
 	if (vap->va_mode != (mode_t)VNOVAL) {
-		if (cred->cr_uid != dep->de_pmp->pm_uid &&
-		    (error = suser_ucred(cred)))
-			return (error);
-		/* We ignore the read and execute bits. */
-		if (vap->va_mode & VWRITE)
-			dep->de_Attributes &= ~ATTR_READONLY;
-		else
-			dep->de_Attributes |= ATTR_READONLY;
-		dep->de_flag |= DE_MODIFIED;
-	}
-	/*
-	 * Allow the `archived' bit to be toggled.
-	 */
-	if (vap->va_flags != VNOVAL) {
-		if (cred->cr_uid != dep->de_pmp->pm_uid &&
-		    (error = suser_ucred(cred)))
-			return (error);
-		if (vap->va_flags & SF_ARCHIVED)
-			dep->de_Attributes &= ~ATTR_ARCHIVE;
-		else
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EINVAL);
+		if (cred->cr_uid != pmp->pm_uid) {
+			error = suser_ucred(cred);
+			if (error)
+				return (error);
+		}
+		if (vp->v_type != VDIR) {
+			/* We ignore the read and execute bits. */
+			if (vap->va_mode & VWRITE)
+				dep->de_Attributes &= ~ATTR_READONLY;
+			else
+				dep->de_Attributes |= ATTR_READONLY;
 			dep->de_Attributes |= ATTR_ARCHIVE;
-		dep->de_flag |= DE_MODIFIED;
+			dep->de_flag |= DE_MODIFIED;
+		}
 	}
 	VN_KNOTE(ap->a_vp, NOTE_ATTRIB);
 	return (deupdat(dep, 1));
