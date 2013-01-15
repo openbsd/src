@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.26 2012/10/08 14:22:41 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.27 2013/01/15 04:03:01 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -93,6 +93,7 @@ sr_aoe_discipline_init(struct sr_discipline *sd)
 	sd->sd_create = sr_aoe_create;
 	sd->sd_free_resources = sr_aoe_free_resources;
 	sd->sd_scsi_rw = sr_aoe_rw;
+	sd->sd_scsi_intr = NULL;
 }
 
 void
@@ -116,6 +117,7 @@ sr_aoe_server_discipline_init(struct sr_discipline *sd)
 	sd->sd_scsi_start_stop = NULL;
 	sd->sd_scsi_sync = NULL;
 	sd->sd_scsi_rw = NULL;
+	sd->sd_scsi_intr = NULL;
 	sd->sd_set_chunk_state = NULL;
 	sd->sd_set_vol_state = NULL;
 	sd->sd_start_discipline = sr_aoe_server_start;

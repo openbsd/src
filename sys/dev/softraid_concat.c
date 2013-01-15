@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.3 2012/10/08 14:22:41 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.4 2013/01/15 04:03:01 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -58,6 +58,7 @@ sr_concat_discipline_init(struct sr_discipline *sd)
 	sd->sd_create = sr_concat_create;
 	sd->sd_free_resources = sr_concat_free_resources;
 	sd->sd_scsi_rw = sr_concat_rw;
+	sd->sd_scsi_intr = sr_concat_intr;
 }
 
 int

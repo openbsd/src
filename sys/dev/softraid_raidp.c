@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.24 2012/10/08 14:22:41 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.25 2013/01/15 04:03:01 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -85,6 +85,7 @@ sr_raidp_discipline_init(struct sr_discipline *sd, u_int8_t type)
 	sd->sd_free_resources = sr_raidp_free_resources;
 	sd->sd_openings = sr_raidp_openings;
 	sd->sd_scsi_rw = sr_raidp_rw;
+	sd->sd_scsi_intr = sr_raidp_intr;
 	sd->sd_set_chunk_state = sr_raidp_set_chunk_state;
 	sd->sd_set_vol_state = sr_raidp_set_vol_state;
 }

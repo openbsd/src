@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.82 2012/10/09 11:57:33 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.83 2013/01/15 04:03:01 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -128,6 +128,7 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 	sd->sd_ioctl_handler = sr_crypto_ioctl;
 	sd->sd_meta_opt_handler = sr_crypto_meta_opt_handler;
 	sd->sd_scsi_rw = sr_crypto_rw;
+	sd->sd_scsi_intr = sr_crypto_intr;
 }
 
 int

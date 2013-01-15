@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.279 2013/01/15 03:47:10 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.280 2013/01/15 04:03:01 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3709,6 +3709,7 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	sd->sd_scsi_start_stop = sr_raid_start_stop;
 	sd->sd_scsi_sync = sr_raid_sync;
 	sd->sd_scsi_rw = NULL;
+	sd->sd_scsi_intr = NULL;
 	sd->sd_set_chunk_state = sr_set_chunk_state;
 	sd->sd_set_vol_state = sr_set_vol_state;
 	sd->sd_start_discipline = NULL;

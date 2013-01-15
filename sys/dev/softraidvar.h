@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.120 2013/01/15 03:47:10 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.121 2013/01/15 04:03:01 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -596,6 +596,7 @@ struct sr_discipline {
 	/* SCSI emulation */
 	struct scsi_sense_data	sd_scsi_sense;
 	int			(*sd_scsi_rw)(struct sr_workunit *);
+	void			(*sd_scsi_intr)(struct buf *);
 	int			(*sd_scsi_sync)(struct sr_workunit *);
 	int			(*sd_scsi_tur)(struct sr_workunit *);
 	int			(*sd_scsi_start_stop)(struct sr_workunit *);
