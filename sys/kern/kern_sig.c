@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.145 2012/12/02 07:03:32 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.146 2013/01/15 01:34:27 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1410,7 +1410,7 @@ coredump(struct proc *p)
 	struct nameidata nd;
 	struct vattr vattr;
 	struct coredump_iostate	io;
-	int error, error1, len;
+	int error, len;
 	char name[sizeof("/var/crash/") + MAXCOMLEN + sizeof(".core")];
 	char *dir = "";
 
@@ -1474,14 +1474,18 @@ coredump(struct proc *p)
 	io.io_vp = vp;
 	io.io_cred = cred;
 	io.io_offset = 0;
+	VOP_UNLOCK(vp, 0, p);
+	vref(vp);
+	error = vn_close(vp, FWRITE, cred, p);
+	if (error) {
+		vrele(vp);
+		return (error);
+	}
 
 	error = (*p->p_emul->e_coredump)(p, &io);
 out:
-	VOP_UNLOCK(vp, 0, p);
-	error1 = vn_close(vp, FWRITE, cred, p);
 	crfree(cred);
-	if (error == 0)
-		error = error1;
+	vrele(vp);
 	return (error);
 #endif
 }
@@ -1520,7 +1524,7 @@ coredump_trad(struct proc *p, void *cookie)
 		return (error);
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
 	    (int)core.c_hdrsize, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
 	return (error);
 #endif
 }
@@ -1530,22 +1534,45 @@ int
 coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 {
 	struct coredump_iostate *io = cookie;
-	int error;
+	off_t coffset = 0;
+	size_t csize;
+	int chunk, error;
 
-	error = vn_rdwr(UIO_WRITE, io->io_vp, (void *)data, len,
-	    io->io_offset, segflg,
-	    IO_NODELOCKED|IO_UNIT, io->io_cred, NULL, io->io_proc);
-	if (error) {
-		printf("pid %d (%s): %s write of %lu@%p at %lld failed: %d\n",
-		    io->io_proc->p_pid, io->io_proc->p_comm,
-		    segflg == UIO_USERSPACE ? "user" : "system",
-		    len, data, (long long) io->io_offset, error);
-		return (error);
-	}
+	csize = len;
+	do {
+		/* Rest of the loop sleeps with lock held, so... */
+		yield();
+
+		chunk = MIN(csize, MAXPHYS);
+		error = vn_rdwr(UIO_WRITE, io->io_vp,
+		    (caddr_t)data + coffset, chunk,
+		    io->io_offset + coffset, segflg,
+		    IO_UNIT, io->io_cred, NULL, io->io_proc);
+		if (error) {
+			printf("pid %d (%s): %s write of %lu@%p"
+			    " at %lld failed: %d\n",
+			    io->io_proc->p_pid, io->io_proc->p_comm,
+			    segflg == UIO_USERSPACE ? "user" : "system",
+			    len, data, (long long) io->io_offset, error);
+			return (error);
+		}
+
+		coffset += chunk;
+		csize -= chunk;
+	} while (csize > 0);
 
 	io->io_offset += len;
 	return (0);
 }
+
+void
+coredump_unmap(void *cookie, vaddr_t start, vaddr_t end)
+{
+	struct coredump_iostate *io = cookie;
+
+	uvm_unmap(&io->io_proc->p_vmspace->vm_map, start, end);
+}
+
 #endif	/* !SMALL_KERNEL */
 
 /*

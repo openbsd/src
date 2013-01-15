@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.43 2012/03/09 13:01:29 ariane Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.44 2013/01/15 01:34:27 deraadt Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -162,8 +162,8 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 	vm_map_entry_t entry;
 	vaddr_t start, end, top;
 	struct coreseg cseg;
-	off_t offset;
-	int flag, error = 0;
+	off_t offset, coffset;
+	int csize, chunk, flag, error = 0;
 
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
 
@@ -233,14 +233,29 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 			break;
 
 		offset += chdr->c_seghdrsize;
-		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)(u_long)cseg.c_addr, (int)cseg.c_size,
-		    offset, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-		if (error)
-			break;
-		
+
+		coffset = 0;
+		csize = (int)cseg.c_size;
+		do {
+			/* Rest of the loop sleeps with lock held, so... */
+			yield();
+
+			chunk = MIN(csize, MAXPHYS);
+			error = vn_rdwr(UIO_WRITE, vp,
+			    (caddr_t)(u_long)cseg.c_addr + coffset,
+			    chunk, offset + coffset, UIO_USERSPACE,
+			    IO_UNIT, cred, NULL, p);
+			if (error)
+				return (error);
+
+			coffset += chunk;
+			csize -= chunk;
+		} while (csize > 0);
 		offset += cseg.c_size;
+
+		/* Discard the memory */
+		uvm_unmap(map, cseg.c_addr, cseg.c_addr + cseg.c_size);
+
 		chdr->c_nseg++;
 	}
 

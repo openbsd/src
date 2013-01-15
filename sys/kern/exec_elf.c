@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.89 2012/09/17 17:11:49 matthew Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.90 2013/01/15 01:34:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1071,6 +1071,9 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 		    psections[i].p_filesz);
 		if (error)
 			goto out;
+
+		coredump_unmap(cookie, (vaddr_t)psections[i].p_vaddr,
+		    (vaddr_t)psections[i].p_vaddr + psections[i].p_filesz);
 
 #ifdef DIAGNOSTIC
 		offset += psections[i].p_filesz;
