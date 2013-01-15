@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.83 2013/01/15 04:03:01 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.84 2013/01/15 09:28:29 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -114,6 +114,7 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_CRYPTO;
+	strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
 	sd->sd_max_wu = SR_CRYPTO_NOWU;
 
@@ -181,7 +182,6 @@ sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	if (!(bc->bc_flags & BIOC_SCNOAUTOASSEMBLE) && bc->bc_key_disk == NODEV)
 		goto done;
 
-	strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
 	sd->sd_meta->ssdi.ssd_size = coerced_size;
 
 	sr_crypto_create_keys(sd);

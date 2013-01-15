@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.33 2013/01/15 04:03:01 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.34 2013/01/15 09:28:29 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -60,9 +60,9 @@ void	sr_raid1_set_vol_state(struct sr_discipline *);
 void
 sr_raid1_discipline_init(struct sr_discipline *sd)
 {
-
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_RAID1;
+	strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
 	    SR_CAP_REBUILD;
 	sd->sd_max_wu = SR_RAID1_NOWU;
@@ -88,7 +88,6 @@ sr_raid1_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 		return EINVAL;
 	}
 
-	strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 	sd->sd_meta->ssdi.ssd_size = coerced_size;
 
 	sd->sd_max_ccb_per_wu = no_chunk;

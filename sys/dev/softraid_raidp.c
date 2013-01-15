@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.25 2013/01/15 04:03:01 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.26 2013/01/15 09:28:29 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -71,9 +71,12 @@ void	sr_put_block(struct sr_discipline *, void *, int);
 void
 sr_raidp_discipline_init(struct sr_discipline *sd, u_int8_t type)
 {
-
 	/* Fill out discipline members. */
 	sd->sd_type = type;
+	if (sd->sd_type == SR_MD_RAID4)
+		strlcpy(sd->sd_name, "RAID 4", sizeof(sd->sd_name));
+	else
+		strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
 	sd->sd_max_ccb_per_wu = 4; /* only if stripsize <= MAXPHYS */
 	sd->sd_max_wu = SR_RAIDP_NOWU;
@@ -97,11 +100,6 @@ sr_raidp_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 
 	if (no_chunk < 3)
 		return EINVAL;
-
-	if (sd->sd_type == SR_MD_RAID4)
-		strlcpy(sd->sd_name, "RAID 4", sizeof(sd->sd_name));
-	else
-		strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
 
 	/*
 	 * XXX add variable strip size later even though MAXPHYS is really

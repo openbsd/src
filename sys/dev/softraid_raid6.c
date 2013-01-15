@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.28 2013/01/15 04:03:01 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.29 2013/01/15 09:28:29 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -94,12 +94,12 @@ struct sr_raid6_opaque {
 void
 sr_raid6_discipline_init(struct sr_discipline *sd)
 {
-
 	/* Initialize GF256 tables. */
 	gf_init();
 
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_RAID6;
+	strlcpy(sd->sd_name, "RAID 6", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
 	sd->sd_max_wu = SR_RAID6_NOWU;
 
@@ -122,8 +122,6 @@ sr_raid6_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 
 	if (no_chunk < 4)
 		return EINVAL;
-
-	strlcpy(sd->sd_name, "RAID 6", sizeof(sd->sd_name));
 
 	/*
 	 * XXX add variable strip size later even though MAXPHYS is really

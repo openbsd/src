@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.28 2013/01/15 04:03:01 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.29 2013/01/15 09:28:29 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -60,6 +60,7 @@ sr_raid0_discipline_init(struct sr_discipline *sd)
 
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_RAID0;
+	strlcpy(sd->sd_name, "RAID 0", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
 	sd->sd_max_wu = SR_RAID0_NOWU;
 
@@ -85,7 +86,6 @@ sr_raid0_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	 * XXX add variable strip size later even though MAXPHYS is really
 	 * the clever value, users like to tinker with that type of stuff.
 	 */
-	strlcpy(sd->sd_name, "RAID 0", sizeof(sd->sd_name));
 	sd->sd_meta->ssdi.ssd_strip_size = MAXPHYS;
 	sd->sd_meta->ssdi.ssd_size = (coerced_size &
 	    ~((sd->sd_meta->ssdi.ssd_strip_size >> DEV_BSHIFT) - 1)) * no_chunk;

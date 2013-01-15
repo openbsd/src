@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.27 2013/01/15 04:03:01 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.28 2013/01/15 09:28:29 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -84,6 +84,7 @@ sr_aoe_discipline_init(struct sr_discipline *sd)
 
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_AOE_INIT;
+	strlcpy(sd->sd_name, "AOE INIT", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK;
 	sd->sd_max_wu = SR_RAIDAOE_NOWU;
 
@@ -102,6 +103,7 @@ sr_aoe_server_discipline_init(struct sr_discipline *sd)
 
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_AOE_TARG;
+	strlcpy(sd->sd_name, "AOE TARG", sizeof(sd->sd_name));
 	sd->sd_capabilities = 0;
 	sd->sd_max_wu = SR_RAIDAOE_NOWU;
 
@@ -131,8 +133,6 @@ sr_aoe_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 
 	if (no_chunk != 1)
 		return EINVAL;
-
-	strlcpy(sd->sd_name, "AOE INIT", sizeof(sd->sd_name));
 
 	sd->sd_max_ccb_per_wu = no_chunk;
 

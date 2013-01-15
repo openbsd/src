@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.4 2013/01/15 04:03:01 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.5 2013/01/15 09:28:29 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -45,9 +45,9 @@ void	sr_concat_intr(struct buf *);
 void
 sr_concat_discipline_init(struct sr_discipline *sd)
 {
-
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_CONCAT;
+	strlcpy(sd->sd_name, "CONCAT", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
 	    SR_CAP_NON_COERCED;
 	sd->sd_max_wu = SR_CONCAT_NOWU;
@@ -71,8 +71,6 @@ sr_concat_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 		sr_error(sd->sd_sc, "CONCAT requires two or more chunks");
 		return EINVAL;
         }
-
-	strlcpy(sd->sd_name, "CONCAT", sizeof(sd->sd_name));
 
 	sd->sd_meta->ssdi.ssd_size = 0;
 	for (i = 0; i < no_chunk; i++)
