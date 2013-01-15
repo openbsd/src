@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.29 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.30 2013/01/15 23:18:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -62,6 +62,7 @@ const struct tty_term_code_entry tty_term_codes[NTTYCODE] = {
 	{ TTYC_DL, TTYCODE_STRING, "dl" },
 	{ TTYC_DL1, TTYCODE_STRING, "dl1" },
 	{ TTYC_E3, TTYCODE_STRING, "E3" },
+	{ TTYC_ECH, TTYCODE_STRING, "ech" },
 	{ TTYC_EL, TTYCODE_STRING, "el" },
 	{ TTYC_EL1, TTYCODE_STRING, "el1" },
 	{ TTYC_ENACS, TTYCODE_STRING, "enacs" },

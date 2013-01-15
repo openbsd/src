@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.145 2012/11/22 14:41:11 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.146 2013/01/15 23:18:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -716,6 +716,23 @@ tty_cmd_deletecharacter(struct tty *tty, const struct tty_ctx *ctx)
 	if (tty_term_has(tty->term, TTYC_DCH) ||
 	    tty_term_has(tty->term, TTYC_DCH1))
 		tty_emulate_repeat(tty, TTYC_DCH, TTYC_DCH1, ctx->num);
+}
+
+void
+tty_cmd_clearcharacter(struct tty *tty, const struct tty_ctx *ctx)
+{
+	u_int	i;
+
+	tty_reset(tty);
+
+	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
+
+	if (tty_term_has(tty->term, TTYC_ECH))
+		tty_putcode1(tty, TTYC_ECH, ctx->num);
+	else {
+		for (i = 0; i < ctx->num; i++)
+			tty_putc(tty, ' ');
+	}
 }
 
 void
