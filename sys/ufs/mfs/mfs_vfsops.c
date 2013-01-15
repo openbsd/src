@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.44 2012/12/29 14:54:11 beck Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.45 2013/01/15 11:20:55 jsing Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -132,16 +132,15 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	if (checkalias(devvp, makedev(255, mfs_minor), (struct mount *)0))
 		panic("mfs_mount: dup dev");
 	mfs_minor++;
-	mfsp = malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
+	mfsp = malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK | M_ZERO);
 	devvp->v_data = mfsp;
 	mfsp->mfs_baseoff = args.base;
 	mfsp->mfs_size = args.size;
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_pid = p->p_pid;
-	mfsp->mfs_numbufs = 0;
-	mfsp->mfs_buflist = (struct buf *)0;
+	bufq_init(&mfsp->mfs_bufq, BUFQ_FIFO);
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
-		mfsp->mfs_buflist = (struct buf *)-1;
+		mfsp->mfs_shutdown = 1;
 		vrele(devvp);
 		return (error);
 	}
@@ -175,25 +174,21 @@ mfs_start(struct mount *mp, int flags, struct proc *p)
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	struct buf *bp;
-	int sleepreturn = 0, s;
+	int sleepreturn = 0;
 
 	while (1) {
 		while (1) {
-			s = splbio();
-			bp = mfsp->mfs_buflist;
-			if (bp == NULL || bp == (struct buf *)-1) {
-				splx(s);
+			if (mfsp->mfs_shutdown == 1)
 				break;
-			}
-			mfsp->mfs_buflist = bp->b_actf;
-			mfsp->mfs_numbufs--;
-			splx(s);
+			bp = bufq_dequeue(&mfsp->mfs_bufq);
+			if (bp == NULL)
+				break;
 			mfs_doio(mfsp, bp);
-			wakeup((caddr_t)bp);
-			wakeup(&mfsp->mfs_numbufs);
+			wakeup(bp);
 		}
-		if (bp == (struct buf *)-1)
+		if (mfsp->mfs_shutdown == 1)
 			break;
+
 		/*
 		 * If a non-ignored signal is received, try to unmount.
 		 * If that fails, clear the signal (it has been "processed"),

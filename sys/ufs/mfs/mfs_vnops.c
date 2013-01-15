@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.43 2012/12/29 14:54:11 beck Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.44 2013/01/15 11:20:55 jsing Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -133,12 +133,6 @@ mfs_strategy(void *v)
 	struct mfsnode *mfsp;
 	struct vnode *vp;
 	struct proc *p = curproc;
-	int bufmax;
-	int s;
-
-	/* Constrain queue to a sensible value. */
-	bufmax = MIN(256, bcstats.kvaslots / 16);
-	bufmax = MIN(bufmax, bcstats.numbufs / 16);
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
@@ -147,14 +141,8 @@ mfs_strategy(void *v)
 	if (p != NULL && mfsp->mfs_pid == p->p_pid) {
 		mfs_doio(mfsp, bp);
 	} else {
-		s = splbio();
-		while (mfsp->mfs_numbufs > bufmax)
-			tsleep(&mfsp->mfs_numbufs, PRIBIO + 1, "mfsbufs", 0);
-		bp->b_actf = mfsp->mfs_buflist;
-		mfsp->mfs_buflist = bp;
-		mfsp->mfs_numbufs++;
-		splx(s);
-		wakeup((caddr_t)vp);
+		bufq_queue(&mfsp->mfs_bufq, bp);
+		wakeup(vp);
 	}
 	return (0);
 }
@@ -199,42 +187,39 @@ mfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	struct buf *bp;
-	int error, s;
+	int error;
 
 	/*
 	 * Finish any pending I/O requests.
 	 */
 	while (1) {
-		s = splbio();
-		bp = mfsp->mfs_buflist;
-		if (bp == NULL) {
-			splx(s);
+		bp = bufq_dequeue(&mfsp->mfs_bufq);
+		if (bp == NULL)
 			break;
-		}
-		mfsp->mfs_buflist = bp->b_actf;
-		splx(s);
 		mfs_doio(mfsp, bp);
-		wakeup((caddr_t)bp);
+		wakeup(bp);
 	}
+
 	/*
-	 * On last close of a memory filesystem
-	 * we must invalidate any in core blocks, so that
-	 * we can free up its vnode.
+	 * On last close of a memory filesystem we must invalidate any in
+	 * core blocks, so that we can free up its vnode.
 	 */
 	if ((error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0)) != 0)
 		return (error);
+
 #ifdef DIAGNOSTIC
 	/*
 	 * There should be no way to have any more buffers on this vnode.
 	 */
-	if (mfsp->mfs_buflist)
+	if (bufq_peek(&mfsp->mfs_bufq))
 		printf("mfs_close: dirty buffers\n");
 #endif
+
 	/*
 	 * Send a request to the filesystem server to exit.
 	 */
-	mfsp->mfs_buflist = (struct buf *)(-1);
-	wakeup((caddr_t)vp);
+	mfsp->mfs_shutdown = 1;
+	wakeup(vp);
 	return (0);
 }
 
@@ -249,9 +234,8 @@ mfs_inactive(void *v)
 #ifdef DIAGNOSTIC
 	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
-	if (mfsp->mfs_buflist && mfsp->mfs_buflist != (struct buf *)(-1))
-		panic("mfs_inactive: not inactive (mfs_buflist %p)",
-			mfsp->mfs_buflist);
+	if (mfsp->mfs_shutdown && bufq_peek(&mfsp->mfs_bufq))
+		panic("mfs_inactive: not inactive");
 #endif
 	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
 	return (0);
