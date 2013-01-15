@@ -1,4 +1,4 @@
-.\"     $OpenBSD: virtio.4,v 1.4 2012/11/02 10:12:21 brad Exp $
+.\"     $OpenBSD: virtio.4,v 1.5 2013/01/15 11:58:46 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,27 +14,35 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2012 $
+.Dd $Mdocdate: January 15 2013 $
 .Dt VIRTIO 4
 .Os
 .Sh NAME
 .Nm virtio
-.Nd virtio support driver
+.Nd VirtIO support driver
 .Sh SYNOPSIS
 .Cd "virtio* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support service for paravirtualized devices like the virtio
-network adapter
-.Xr vio 4
-or the virtio block device
-.Xr vioblk 4 .
+driver provides support service for paravirtualized devices using the VirtIO
+protocol.
 Such devices are provided by BHyVe, KVM, QEMU, and VirtualBox.
+.Pp
+Currently there are drivers for the following
+.Nm
+devices:
+.Pp
+.Bl -tag -width "vioblk(4)XXX" -offset indent -compact
+.It Xr vio 4
+VirtIO network device
+.It Xr vioblk 4
+VirtIO disk
+.It Xr viomb 4
+VirtIO memory ballooning driver
+.El
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr vio 4 ,
-.Xr vioblk 4
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm
