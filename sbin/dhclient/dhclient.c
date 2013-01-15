@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.205 2013/01/14 02:46:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.206 2013/01/15 21:44:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -96,6 +96,8 @@ char		*option_as_string(unsigned int code, unsigned char *data, int len);
 void		 fork_privchld(int, int);
 void		 get_ifname(char *);
 void		 new_resolv_conf(char *, char *, char *);
+void		 write_file(char *, int, mode_t, uid_t, gid_t, u_int8_t *,
+		     size_t);
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
 void		 socket_nonblockmode(int);
@@ -2095,3 +2097,61 @@ apply_ignore_list(char *ignore_list)
 	config->ignored_option_count = ix;
 	memcpy(config->ignored_options, list, sizeof(config->ignored_options));
 }
+
+void
+write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
+    u_int8_t *contents, size_t sz)
+{
+	struct imsg_write_file *imsg;
+	size_t rslt;
+
+	imsg = calloc(1, sizeof(*imsg) + sz);
+
+	rslt = strlcpy(imsg->path, path, MAXPATHLEN);
+	if (rslt >= MAXPATHLEN) {
+		warning("write_file: path too long (%zu)", rslt);
+		return;
+	}
+	memcpy(imsg->contents, contents, sz);
+	imsg->len = sz;
+	imsg->flags = flags;
+	imsg->mode = mode;
+	imsg->uid = uid;
+	imsg->gid = gid;
+
+	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_FILE, 0, 0, -1, imsg,
+	    sizeof(*imsg) + sz);
+	if (rslt == -1)
+		warning("write_file: imsg_compose: %s", strerror(errno));
+
+	/* Do flush to maximize chances of keeping file current. */
+	rslt = imsg_flush(unpriv_ibuf);
+	if (rslt == -1)
+		warning("write_file: imsg_flush: %s", strerror(errno));
+}
+
+void
+priv_write_file(struct imsg_write_file *imsg)
+{
+	ssize_t n;
+	int fd;
+
+	fd = open(imsg->path, imsg->flags, imsg->mode);
+	if (fd == -1) {
+		note("Couldn't open '%s': %s", imsg->path, strerror(errno));
+		return;
+	}
+
+	n = write(fd, imsg->contents, imsg->len);
+	if (n == -1)
+		note("Couldn't write contents to '%s': %s", imsg->path,
+		    strerror(errno));
+	else if (n < imsg->len)
+		note("Short contents write to '%s' (%zd vs %zd)", imsg->path,
+		    n, imsg->len);
+
+	fchmod(fd, imsg->mode);
+	fchown(fd, imsg->uid, imsg->gid);
+
+	close(fd);
+ }
