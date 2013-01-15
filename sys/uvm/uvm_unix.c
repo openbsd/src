@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.44 2013/01/15 01:34:27 deraadt Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.45 2013/01/15 02:03:38 deraadt Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -237,6 +237,9 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 		coffset = 0;
 		csize = (int)cseg.c_size;
 		do {
+			if (p->p_siglist & sigmask(SIGKILL))
+				return (EINTR);
+
 			/* Rest of the loop sleeps with lock held, so... */
 			yield();
 

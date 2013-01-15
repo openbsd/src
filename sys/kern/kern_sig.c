@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.146 2013/01/15 01:34:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.147 2013/01/15 02:03:38 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -803,6 +803,14 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	mask = sigmask(signum);
 
 	if (type == SPROCESS) {
+		/* Accept SIGKILL to coredumping processes */
+		if (pr->ps_flags & PS_COREDUMP && signum == SIGKILL) {
+			if (pr->ps_single != NULL)
+				p = pr->ps_single;
+			atomic_setbits_int(&p->p_siglist, mask);
+			return;
+		}
+
 		/*
 		 * A process-wide signal can be diverted to a different
 		 * thread that's in sigwait() for this signal.  If there
@@ -1414,6 +1422,8 @@ coredump(struct proc *p)
 	char name[sizeof("/var/crash/") + MAXCOMLEN + sizeof(".core")];
 	char *dir = "";
 
+	p->p_p->ps_flags |= PS_COREDUMP;
+
 	/*
 	 * Don't dump if not root and the process has used set user or
 	 * group privileges, unless the nosuidcoredump sysctl is set to 2,
@@ -1540,6 +1550,9 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 
 	csize = len;
 	do {
+		if (io->io_proc->p_siglist & sigmask(SIGKILL))
+			return (EINTR);
+
 		/* Rest of the loop sleeps with lock held, so... */
 		yield();
 

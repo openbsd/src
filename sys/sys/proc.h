@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.163 2012/09/11 15:44:19 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.164 2013/01/15 02:03:38 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -245,6 +245,7 @@ struct process {
 #define	PS_SINGLEEXIT	_P_SINGLEEXIT
 #define	PS_SINGLEUNWIND	_P_SINGLEUNWIND
 #define	PS_EXITING	_P_EXITING
+#define	PS_COREDUMP	_P_COREDUMP
 
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;
@@ -381,12 +382,10 @@ struct proc {
 
 /* Should be moved to machine-dependent areas. */
 #define	P_OWEUPC	0x008000	/* Owe proc an addupc() at next ast. */
+
 #define	_P_ISPWAIT	0x010000	/* Is parent of PPWAIT child. */
-
-/* XXX Not sure what to do with these, yet. */
-#define	P_SSTEP		0x020000	/* proc needs single-step fixup ??? */
+#define	_P_COREDUMP	0x020000	/* busy coredumping */
 #define	_P_SUGIDEXEC	0x040000	/* last execve() was set[ug]id */
-
 #define	P_SUSPSINGLE	0x080000	/* Need to stop for single threading. */
 #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
 #define _P_INEXEC	0x200000	/* Process is doing an exec right now */
@@ -415,7 +414,7 @@ struct proc {
 #define	P_BITS \
     ("\20\02CONTROLT\03INMEM\04SIGPAUSE\05PPWAIT\06PROFIL\07SELECT" \
      "\010SINTR\011SUGID\012SYSTEM\013TIMEOUT\014TRACED\015WAITED\016WEXIT" \
-     "\017EXEC\020PWEUPC\021ISPWAIT\022SSTEP\023SUGIDEXEC\024SUSPSINGLE" \
+     "\017EXEC\020PWEUPC\021ISPWAIT\022COREDUMPING\023SUGIDEXEC\024SUSPSINGLE" \
      "\025NOZOMBIE\026INEXEC\027SYSTRACE\030CONTINUED" \
      "\031SINGLEEXIT\032SINGLEUNWIND" \
      "\033THREAD\034SUSPSIG\035SOFTDEP\036STOPPED\037CPUPEG")
