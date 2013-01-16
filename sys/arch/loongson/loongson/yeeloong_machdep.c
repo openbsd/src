@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.22 2013/01/16 07:17:59 pirofti Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.23 2013/01/16 20:28:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -28,6 +28,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <mips64/loongson2.h>
 #include <mips64/mips_cpu.h>
 #include <machine/pmon.h>
 
@@ -62,6 +63,7 @@ void	 fuloong_powerdown(void);
 void	 fuloong_setup(void);
 
 void	 yeeloong_powerdown(void);
+void	 yeeloong_setup(void);
 
 void	 lemote_pci_attach_hook(pci_chipset_tag_t);
 int	 lemote_intr_map(int, int, int);
@@ -195,7 +197,7 @@ const struct platform yeeloong_platform = {
 	.isa_chipset = &lemote_isa_chipset,
 	.legacy_io_ranges = yeeloong_legacy_ranges,
 
-	.setup = NULL,
+	.setup = yeeloong_setup,
 	.device_register = lemote_device_register,
 
 	.powerdown = yeeloong_powerdown,
@@ -502,8 +504,18 @@ fuloong_setup(void)
                 comconsiot = &bonito_pci_io_space_tag;
                 comconsaddr = 0x2f8;
                 comconsrate = 115200; /* default PMON console speed */
+		comconscflag = (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) |
+		    CS8 | CLOCAL; /* 8N1 */
 	}
 #endif
+
+	cpu_setperf = loongson2f_setperf;
+}
+
+void
+yeeloong_setup(void)
+{
+	cpu_setperf = loongson2f_setperf;
 }
 
 void

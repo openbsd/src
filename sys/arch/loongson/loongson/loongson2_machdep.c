@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.12 2013/01/16 07:17:59 pirofti Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.13 2013/01/16 20:28:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -38,8 +38,6 @@ boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	loongson2e_setup(u_long, u_long);
 void	loongson2f_setup(u_long, u_long);
 void	loongson2f_setup_window(uint, uint, uint64_t, uint64_t, uint64_t, uint);
-int	loongson2f_cpuspeed(int *);
-void	loongson2f_setperf(int);
 
 /* PCI view of CPU memory */
 paddr_t loongson_dma_base = 0;
@@ -208,7 +206,6 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	    ~(DDR_PHYSICAL_SIZE - 1), DDR_PHYSICAL_BASE, MASTER_CPU);
 
 	cpu_cpuspeed = loongson2f_cpuspeed;
-	cpu_setperf = loongson2f_setperf;
 }
 
 /*

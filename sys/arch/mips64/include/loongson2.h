@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2.h,v 1.3 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: loongson2.h,v 1.4 2013/01/16 20:28:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -56,5 +56,10 @@
 #define	COP_0_DIAG_ITLB_CLEAR		0x04
 #define	COP_0_DIAG_BTB_CLEAR		0x02
 #define	COP_0_DIAG_RAS_DISABLE		0x01
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+int	loongson2f_cpuspeed(int *);
+void	loongson2f_setperf(int);
+#endif
 
 #endif	/* _MIPS64_LOONGSON2_H_ */
