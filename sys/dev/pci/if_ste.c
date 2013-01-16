@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.50 2012/11/29 21:10:32 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.51 2013/01/16 06:15:58 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -821,9 +821,9 @@ ste_stats_update(void *xsc)
 }
 
 const struct pci_matchid ste_devices[] = {
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE550TX },
 	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_1 },
-	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_2 },
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX }
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_2 }
 };	
 
 /*
@@ -856,11 +856,11 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Only use one PHY since this chip reports multiple
-	 * Note on the DFE-550 the PHY is at 1 on the DFE-580
+	 * Note on the DFE-550TX the PHY is at 1 on the DFE-580TX
 	 * it is at 0 & 1.  It is rev 0x12.
 	 */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DLINK &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DLINK_550TX &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DLINK_DFE550TX &&
 	    PCI_REVISION(pa->pa_class) == 0x12)
 		sc->ste_one_phy = 1;
 

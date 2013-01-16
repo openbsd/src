@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1665 2013/01/16 03:33:14 brad Exp $
+$OpenBSD: pcidevs,v 1.1666 2013/01/16 06:15:58 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2058,8 +2058,8 @@ product DELTA 8139		0x1360	8139
 product DIAMOND VIPER		0x9001	Viper/PCI
 
 /* D-Link products */
-product DLINK 550TX		0x1002	550TX
-product DLINK 530TXPLUS		0x1300	530TX+
+product DLINK DFE550TX		0x1002	DFE-550TX
+product DLINK DFE530TXPLUS	0x1300	DFE-530TX+
 product DLINK DFE690TXD		0x1340	DFE-690TXD
 product DLINK DRP32TXD		0x1561	DRP32TXD
 product DLINK DWL610		0x3300	DWL-610
