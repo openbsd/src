@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicvar.h,v 1.9 2010/03/27 16:04:24 miod Exp $ */
+/*	$OpenBSD: sbicvar.h,v 1.10 2013/01/16 18:06:46 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@ struct sbic_tinfo {
     int                     dconns;     /* #disconnects */
     int                     senses;     /* #request sense commands sent */
     int                     lubusy;     /* What local units/subr. are busy? */
-} tinfo_t;
+};
 
 struct  sbic_softc {
     struct  device          sc_dev;
