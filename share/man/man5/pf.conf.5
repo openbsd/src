@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.524 2013/01/16 01:49:20 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.525 2013/01/16 02:43:24 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -622,24 +622,6 @@ For example, the following rule will drop 20% of incoming ICMP packets:
 .Pp
 .Dl block in proto icmp probability 20%
 .Pp
-.It Xo Ar set queue Aq Ar queue
-.No \*(Ba ( Aq Ar queue ,
-.Aq Ar queue )
-.Xc
-Packets matching this rule will be assigned to the specified queue.
-If two queues are given, packets which have a TOS of
-.Ar lowdelay
-and TCP ACKs with no data payload will be assigned to the second one.
-See
-.Sx QUEUEING
-for setup details.
-.Pp
-For example:
-.Bd -literal -offset indent
-pass in proto tcp to port 25 set queue mail
-pass in proto tcp to port 22 set queue(ssh_bulk, ssh_prio)
-.Ed
-.Pp
 .It Ar received-on Aq Ar interface
 Only match packets which were received on the specified
 .Ar interface
@@ -676,6 +658,24 @@ keyword are always enabled and do not require any additional
 configuration, unlike the queues described below and in the
 .Sx QUEUEING
 section.
+.Pp
+.It Xo Ar set queue Aq Ar queue
+.No \*(Ba ( Aq Ar queue ,
+.Aq Ar queue )
+.Xc
+Packets matching this rule will be assigned to the specified queue.
+If two queues are given, packets which have a TOS of
+.Ar lowdelay
+and TCP ACKs with no data payload will be assigned to the second one.
+See
+.Sx QUEUEING
+for setup details.
+.Pp
+For example:
+.Bd -literal -offset indent
+pass in proto tcp to port 25 set queue mail
+pass in proto tcp to port 22 set queue(ssh_bulk, ssh_prio)
+.Ed
 .Pp
 .It Xo Ar set tos Aq Ar string
 .No \*(Ba Aq Ar number
