@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.123 2013/01/16 04:23:42 dtucker Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.124 2013/01/16 06:15:50 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1291,7 +1291,7 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 		sc->vr_cdata.vr_tx_cnt++;
 	}
 
-	/* Set EOP on the last desciptor */
+	/* Set EOP on the last descriptor */
 	f->vr_ctl |= htole32(VR_TXCTL_LASTFRAG | VR_TXCTL_FINT);
 
 	return (0);
