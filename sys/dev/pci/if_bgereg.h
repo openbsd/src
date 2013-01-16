@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.108 2013/01/15 23:06:11 claudio Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.109 2013/01/16 20:56:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2546,7 +2546,7 @@ struct bge_gib {
  * The first thing in the packet is a 14-byte Ethernet header.
  * This means that the packet is misaligned.  To compensate,
  * we actually offset the data 2 bytes into the cluster.  This
- * alignes the packet after the Ethernet header at a 32-bit
+ * aligns the packet after the Ethernet header to a 32-bit
  * boundary.
  */
 
