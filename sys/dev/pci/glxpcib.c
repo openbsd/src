@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.8 2013/01/14 21:18:47 pirofti Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.9 2013/01/16 07:17:59 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -280,11 +280,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	tc->tc_counter_mask = 0xffffffff;
 	tc->tc_frequency = 3579545;
 	tc->tc_name = "CS5536";
-#ifdef __loongson__
-	tc->tc_quality = 0;
-#else
 	tc->tc_quality = 1000;
-#endif
 	tc->tc_priv = sc;
 	tc_init(tc);
 

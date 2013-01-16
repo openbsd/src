@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.21 2013/01/14 21:18:47 pirofti Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.22 2013/01/16 07:17:59 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -75,6 +75,7 @@ void	 lemote_isa_intr_disestablish(void *, void *);
 uint	 lemote_get_isa_imr(void);
 uint	 lemote_get_isa_isr(void);
 uint32_t lemote_isa_intr(uint32_t, struct trap_frame *);
+extern void	(*cpu_setperf)(int);
 
 const struct bonito_config lemote_bonito = {
 	.bc_adbase = 11,
@@ -481,6 +482,7 @@ yeeloong_powerdown()
 void
 lemote_reset()
 {
+	cpu_setperf(100);
 	wrmsr(GLCP_SYS_RST, rdmsr(GLCP_SYS_RST) | 1);
 }
 
