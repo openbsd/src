@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.27 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.28 2013/01/16 19:04:43 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -194,7 +194,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_UNIT, cred, NULL, p);
 	if (error)
 		return error;
 
@@ -202,8 +202,7 @@ cpu_coredump(p, vp, cred, chdr)
 			(caddr_t)(&(p -> p_addr -> u_pcb.pcb_regs)),
 			(off_t)chdr -> c_cpusize,
 			(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
-			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
-			cred, NULL, p);
+			UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
 
 	if (!error)
 		chdr->c_nseg++;
