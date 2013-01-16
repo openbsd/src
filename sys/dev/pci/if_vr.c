@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.122 2013/01/16 03:21:14 dtucker Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.123 2013/01/16 04:23:42 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -62,6 +62,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +83,11 @@
 #endif	/* INET */
 #include <net/if_dl.h>
 #include <net/if_media.h>
+
+#if NVLAN > 0
+#include <net/if_types.h>
+#include <net/if_vlan_var.h>
+#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -632,6 +638,12 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
 					IFCAP_CSUM_UDPv4;
 
+#if NVLAN > 0
+	/* if the hardware can do VLAN tagging, say so. */
+	if (sc->vr_quirks & VR_Q_HWTAG)
+		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+
 #ifndef SMALL_KERNEL
 	if (sc->vr_revid >= REV_ID_VT3065_A) {
 		ifp->if_capabilities |= IFCAP_WOL;
@@ -899,6 +911,7 @@ vr_rxeof(struct vr_softc *sc)
 #endif
 
 		ifp->if_ipackets++;
+
 		if (sc->vr_quirks & VR_Q_CSUM &&
 		    (rxstat & VR_RXSTAT_FRAG) == 0 &&
 		    (rxctl & VR_RXCTL_IP) != 0) {
@@ -910,6 +923,21 @@ vr_rxeof(struct vr_softc *sc)
 				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
 				    M_UDP_CSUM_IN_OK;
 		}
+
+#if NVLAN > 0
+		/*
+		 * If there's a tagged packet, the 802.1q header will be at the
+		 * 4-byte boundary following the CRC.  There will be 2 bytes
+		 * TPID (0x8100) and 2 bytes TCI (including VLAN ID).
+		 * This isn't in the data sheet.
+		 */
+		if (rxctl & VR_RXCTL_TAG) {
+			int offset = ((total_len + 3) & ~3) + ETHER_CRC_LEN + 2;
+			m->m_pkthdr.ether_vtag = htons(*(u_int16_t *)
+			    ((u_int8_t *)m->m_data + offset));
+			m->m_flags |= M_VLANTAG;
+		}
+#endif
 
 #if NBPFILTER > 0
 		/*
@@ -1229,6 +1257,15 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 		c->vr_mbuf = m_head;
 	txmap = c->vr_map;
 	for (i = 0; i < txmap->dm_nsegs; i++) {
+#if NVLAN > 0
+		/* Tell chip to insert VLAN tag if needed. */
+		if (m_head->m_flags & M_VLANTAG) {
+			u_int32_t vtag = m_head->m_pkthdr.ether_vtag;
+			vtag = (vtag << VR_TXSTAT_PQSHIFT) & VR_TXSTAT_PQMASK;
+			vr_status |= vtag;
+			vr_ctl |= htole32(VR_TXCTL_INSERTTAG);
+		}
+#endif
 		if (i != 0)
 			*cp = c = c->vr_nextdesc;
 		f = c->vr_ptr;
@@ -1397,6 +1434,9 @@ vr_init(void *xsc)
 
 	VR_CLRBIT(sc, VR_TXCFG, VR_TXCFG_TX_THRESH);
 	VR_SETBIT(sc, VR_TXCFG, VR_TXTHRESH_STORENFWD);
+
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
+		VR_SETBIT(sc, VR_TXCFG, VR_TXCFG_TXTAGEN);
 
 	/* Init circular RX list. */
 	if (vr_list_rx_init(sc) == ENOBUFS) {
