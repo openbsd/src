@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.45 2013/01/15 02:03:38 deraadt Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.46 2013/01/16 00:24:33 deraadt Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -223,8 +223,7 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)&cseg, chdr->c_seghdrsize,
-		    offset, UIO_SYSSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+		    offset, UIO_SYSSPACE, IO_UNIT, cred, NULL, p);
 		/*
 		 * We might get an EFAULT on objects mapped beyond
 		 * EOF. Ignore the error.
