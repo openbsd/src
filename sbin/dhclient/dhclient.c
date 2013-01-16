@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.208 2013/01/16 06:11:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.209 2013/01/16 11:02:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -170,7 +170,7 @@ routehandler(void)
 	char msg[2048];
 	struct in_addr a, b;
 	ssize_t n;
-	int linkstat, rslt;
+	int linkstat;
 	struct rt_msghdr *rtm;
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
@@ -199,7 +199,7 @@ routehandler(void)
 		sa = get_ifa((char *)ifam + ifam->ifam_hdrlen,
 		    ifam->ifam_addrs);
 		if (sa == NULL) {
-			rslt = asprintf(&errmsg, "%s sa == NULL", ifi->name);
+			errmsg = "sa == NULL";
 			goto die;
 		}
 
@@ -221,13 +221,7 @@ routehandler(void)
 				go_daemon();
 				break;
 			}
-			if (adding.s_addr != INADDR_ANY)
-				rslt = asprintf(&errmsg, "%s, not %s, added "
-				    "to %s", inet_ntoa(a), inet_ntoa(adding),
-				    ifi->name);
-			else
-				rslt = asprintf(&errmsg, "%s added to %s",
-				    inet_ntoa(a), ifi->name);
+			errmsg = "interface address added";
 		} else {
 			if (a.s_addr == deleting.s_addr) {
 				deleting.s_addr = INADDR_ANY;
@@ -240,13 +234,7 @@ routehandler(void)
 				add_address(ifi->name, 0, b, b);
 				break;
 			}
-			if (deleting.s_addr != INADDR_ANY)
-				rslt = asprintf(&errmsg, "%s, not %s, deleted "
-				    "from %s", inet_ntoa(a),
-				    inet_ntoa(deleting), ifi->name);
-			else
-				rslt = asprintf(&errmsg, "%s deleted from %s",
-				    inet_ntoa(a), ifi->name);
+			errmsg = "interface address deleted";
 		} 
 		goto die;
 	case RTM_IFINFO:
@@ -254,7 +242,7 @@ routehandler(void)
 		if (ifm->ifm_index != ifi->index)
 			break;
 		if ((rtm->rtm_flags & RTF_UP) == 0) {
-			rslt = asprintf(&errmsg, "%s down", ifi->name);
+			errmsg = "interface down";
 			goto die;
 		}
 
@@ -277,7 +265,7 @@ routehandler(void)
 		ifan = (struct if_announcemsghdr *)rtm;
 		if (ifan->ifan_what == IFAN_DEPARTURE &&
 		    ifan->ifan_index == ifi->index) {
-			rslt = asprintf(&errmsg, "%s departured", ifi->name);
+			errmsg = "interface departure";
 			goto die;
 		}
 		break;
@@ -287,10 +275,7 @@ routehandler(void)
 	return;
 
 die:
-	if (rslt == -1)
-		error("no memory for errmsg");
 	error("routehandler: %s", errmsg);
-	free(errmsg);
 }
 
 char **saved_argv;
@@ -642,7 +627,7 @@ state_selecting(void)
 }
 
 void
-dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
+dhcpack(struct in_addr client_addr, struct option_data *options)
 {
 	struct client_lease *lease;
 	time_t cur_time;
@@ -650,18 +635,14 @@ dhcpack(struct in_addr client_addr, struct option_data *options, char *info)
 	if (client->state != S_REBOOTING &&
 	    client->state != S_REQUESTING &&
 	    client->state != S_RENEWING &&
-	    client->state != S_REBINDING) {
-		note("Unexpected %s. State #%d", info, client->state);
+	    client->state != S_REBINDING)
 		return;
-	}
 
 	lease = packet_to_lease(client_addr, options);
 	if (!lease) {
-		note("Unsatisfactory %s", info);
+		note("DHCPACK isn't satisfactory.");
 		return;
 	}
-
-	note("%s", info);
 
 	client->new = lease;
 
@@ -811,13 +792,19 @@ state_bound(void)
 }
 
 void
-dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
+dhcpoffer(struct in_addr client_addr, struct option_data *options)
 {
 	struct client_lease *lease, *lp;
 	time_t stop_selecting;
+	char *name = options[DHO_DHCP_MESSAGE_TYPE].len ? "DHCPOFFER" :
+	    "BOOTREPLY";
 
-	if (client->state != S_SELECTING) {
-		note("Unexpected %s. State #%d.", info, client->state);
+	if (client->state != S_SELECTING)
+		return;
+
+	lease = packet_to_lease(client_addr, options);
+	if (!lease) {
+		note("%s isn't satisfactory.", name);
 		return;
 	}
 
@@ -826,16 +813,11 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
 		if (!memcmp(&lp->address.s_addr, &client->packet.yiaddr,
 		    sizeof(in_addr_t))) {
 #ifdef DEBUG
-			debug("Duplicate %s.", info);
+			debug("%s already seen.", name);
 #endif
+			free_client_lease(lease);
 			return;
 		}
-	}
-
-	lease = packet_to_lease(client_addr, options);
-	if (!lease) {
-		note("Unsatisfactory %s", info);
-		return;
 	}
 
 	/*
@@ -870,8 +852,6 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
 			lp->next = lease;
 		}
 	}
-
-	note("%s", info);
 
 	/* If the selecting interval has expired, go immediately to
 	   state_selecting().  Otherwise, time out into
@@ -984,22 +964,18 @@ packet_to_lease(struct in_addr client_addr, struct option_data *options)
 }
 
 void
-dhcpnak(struct in_addr client_addr, struct option_data *options, char *info)
+dhcpnak(struct in_addr client_addr, struct option_data *options)
 {
 	if (client->state != S_REBOOTING &&
 	    client->state != S_REQUESTING &&
 	    client->state != S_RENEWING &&
-	    client->state != S_REBINDING) {
-		note("Unexpected %s. State #%d", info, client->state);
+	    client->state != S_REBINDING)
 		return;
-	}
 
 	if (!client->active) {
-		note("Unexpected %s. No active lease.", info);
+		note("DHCPNAK with no active lease.");
 		return;
 	}
-
-	note("%s", info);
 
 	free_client_lease(client->active);
 	client->active = NULL;

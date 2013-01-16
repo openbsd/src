@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.48 2013/01/16 06:11:21 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.49 2013/01/16 11:02:10 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -463,9 +463,9 @@ do_packet(int len, unsigned int from_port, struct in_addr from,
 	struct dhcp_packet *packet = &client->packet;
 	struct option_data options[256];
 	struct reject_elem *ap;
-	void (*handler)(struct in_addr, struct option_data *, char *);
-	char *type, *info;
-	int i, rslt, options_valid = 1;
+	void (*handler)(struct in_addr, struct option_data *);
+	char *type;
+	int i, options_valid = 1;
 
 	if (packet->hlen > sizeof(packet->chaddr)) {
 		note("Discarding packet with invalid hlen.");
@@ -531,27 +531,21 @@ do_packet(int len, unsigned int from_port, struct in_addr from,
 
 	if (handler && client->xid == client->packet.xid) {
 		if (hfrom->hlen == 6)
-			rslt = asprintf(&info, "%s from %s (%s)", type,
-			    inet_ntoa(from),
+			note("%s from %s (%s)", type, inet_ntoa(from),
 			    ether_ntoa((struct ether_addr *)hfrom->haddr));
 		else
-			rslt = asprintf(&info, "%s from %s", type,
-			    inet_ntoa(from));
-		if (rslt == -1)
-			error("no memory for info string");
+			note("%s from %s", type, inet_ntoa(from));
 	} else
 		handler = NULL;
 
 	for (ap = config->reject_list; ap && handler; ap = ap->next)
 		if (from.s_addr == ap->addr.s_addr) {
-			note("Rejected %s.", info);
+			note("%s from %s rejected.", type, inet_ntoa(from));
 			handler = NULL;
 		}
 
 	if (handler)
-		(*handler)(from, options, info);
-
-	free(info);
+		(*handler)(from, options);
 
 	for (i = 0; i < 256; i++)
 		if (options[i].len && options[i].data)
