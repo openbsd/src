@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.283 2013/01/16 06:42:22 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.284 2013/01/16 07:07:38 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2049,6 +2049,42 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr64_t blkno,
 
 out:
 	return ccb;
+}
+
+void
+sr_ccb_done(struct sr_ccb *ccb)
+{
+	struct sr_workunit	*wu = ccb->ccb_wu;
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_softc		*sc = sd->sd_sc;
+
+	DNPRINTF(SR_D_INTR, "%s: %s %s ccb done b_bcount %d b_resid %d"
+	    " b_flags 0x%0x block %lld target %d\n",
+	    DEVNAME(sc), sd->sd_meta->ssd_devname, sd->sd_name,
+	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
+	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
+
+	splassert(IPL_BIO);
+
+	if (ccb->ccb_target == -1)
+		panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
+
+	if (ccb->ccb_buf.b_flags & B_ERROR) {
+		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target %d\n",
+		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
+		if (!ISSET(sd->sd_capabilities, SR_CAP_REDUNDANT))
+			printf("%s: i/o error on block %lld target %d "
+			    "b_error %d\n", DEVNAME(sc), ccb->ccb_buf.b_blkno,
+			    ccb->ccb_target, ccb->ccb_buf.b_error);
+		ccb->ccb_state = SR_CCB_FAILED;
+		sd->sd_set_chunk_state(sd, ccb->ccb_target, BIOC_SDOFFLINE);
+		wu->swu_ios_failed++;
+	} else {
+		ccb->ccb_state = SR_CCB_OK;
+		wu->swu_ios_succeeded++;
+	}
+
+	wu->swu_ios_complete++;
 }
 
 int
