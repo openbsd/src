@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.620 2012/10/18 15:18:57 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.621 2013/01/16 01:49:20 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2371,6 +2371,13 @@ filter_set	: prio {
 			filter_opts.marker |= FOM_SETPRIO;
 			filter_opts.set_prio[0] = $1.b1;
 			filter_opts.set_prio[1] = $1.b2;
+		}
+		| QUEUE qname	{
+			if (filter_opts.queues.qname) {
+				yyerror("queue cannot be redefined");
+				YYERROR;
+			}
+			filter_opts.queues = $2;
 		}
 		| TOS tos {
 			if (filter_opts.marker & FOM_SETTOS) {
