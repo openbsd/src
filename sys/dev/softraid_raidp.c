@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.27 2013/01/16 06:29:14 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.28 2013/01/16 06:42:22 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -618,10 +618,8 @@ sr_raidp_intr(struct buf *bp)
 			}
 		}
 
-		if (xs != NULL) {
+		if (xs != NULL)
 			xs->error = XS_NOERROR;
-			xs->resid = 0;
-		}
 
 		pend = 0;
 		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {

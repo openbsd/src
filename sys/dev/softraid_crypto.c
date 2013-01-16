@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.84 2013/01/15 09:28:29 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.85 2013/01/16 06:42:22 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1399,8 +1399,6 @@ sr_crypto_finish_io(struct sr_workunit *wu)
 
 	DNPRINTF(SR_D_INTR, "%s: sr_crypto_finish_io: wu %x xs: %x\n",
 	    DEVNAME(sc), wu, xs);
-
-	xs->resid = 0;
 
 	if (wu->swu_cb_active == 1)
 		panic("%s: sr_crypto_finish_io", DEVNAME(sd->sd_sc));

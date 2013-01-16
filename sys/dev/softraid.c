@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.282 2013/01/16 06:29:14 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.283 2013/01/16 06:42:22 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2187,6 +2187,9 @@ void
 sr_scsi_done(struct sr_discipline *sd, struct scsi_xfer *xs)
 {
 	DNPRINTF(SR_D_DIS, "%s: sr_scsi_done: xs %p\n", DEVNAME(sd->sd_sc), xs);
+
+	if (xs->error == XS_NOERROR)
+		xs->resid = 0;
 
 	scsi_done(xs);
 }

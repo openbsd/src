@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.29 2013/01/15 09:28:29 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.30 2013/01/16 06:42:22 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -316,7 +316,6 @@ sr_raid0_intr(struct buf *bp)
 			goto bad;
 
 		xs->error = XS_NOERROR;
-		xs->resid = 0;
 
 		pend = 0;
 		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {

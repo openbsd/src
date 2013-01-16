@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.5 2013/01/15 09:28:29 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.6 2013/01/16 06:42:22 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -290,7 +290,6 @@ sr_concat_intr(struct buf *bp)
 			goto bad;
 
 		xs->error = XS_NOERROR;
-		xs->resid = 0;
 
 		pend = 0;
 		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
