@@ -6208,6 +6208,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DGE-550SX",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE520TX_C1,
+	    "DFE-520TX C1",
+	},
+	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
 	    "DGE-528T",
 	},
