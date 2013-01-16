@@ -1685,7 +1685,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/atomic.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cpu.ph
@@ -1714,7 +1713,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/signal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/stdarg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/sysctl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/tcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/trap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/varargs.ph

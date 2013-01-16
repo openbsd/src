@@ -157,7 +157,6 @@
 ./usr/include/m68k/_float.h
 ./usr/include/m68k/_types.h
 ./usr/include/m68k/asm.h
-./usr/include/m68k/asm_single.h
 ./usr/include/m68k/atomic.h
 ./usr/include/m68k/cdefs.h
 ./usr/include/m68k/cpu.h
@@ -186,7 +185,6 @@
 ./usr/include/m68k/signal.h
 ./usr/include/m68k/spinlock.h
 ./usr/include/m68k/stdarg.h
-./usr/include/m68k/sysctl.h
 ./usr/include/m68k/tcb.h
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/varargs.h
