@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.41 2012/03/09 13:02:45 ariane Exp $ */
+/*	$OpenBSD: procmap.c,v 1.42 2013/01/16 00:13:23 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -983,7 +983,8 @@ cache_enter(struct namecache *ncp)
 	ce->ce_pvp = ncp->nc_dvp;
 	ce->ce_cid = ncp->nc_vpid;
 	ce->ce_pcid = ncp->nc_dvpid;
-	ce->ce_nlen = (unsigned)ncp->nc_nlen;
+	/* safe since nc_nlen is maximum NCHNAMLEN */
+	ce->ce_nlen = (unsigned int)ncp->nc_nlen;
 	strlcpy(ce->ce_name, ncp->nc_name, sizeof(ce->ce_name));
 
 	LIST_INSERT_HEAD(&lcache, ce, ce_next);
