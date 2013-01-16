@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.67 2011/11/13 14:52:30 jsing Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.68 2013/01/16 15:35:33 naddy Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -231,7 +231,7 @@ write_bootblocks(int devfd, struct disklabel *dl)
 
 	/*
 	 * Find OpenBSD partition. Floppies are special, getting an
-	 * everything-in-one /boot starting at sector 0.
+	 * everything-in-one biosboot starting at sector 0.
 	 */
 	if (dl->d_type != DTYPE_FLOPPY) {
 		start = findopenbsd(devfd, dl);
@@ -240,11 +240,12 @@ write_bootblocks(int devfd, struct disklabel *dl)
 	}
 
 	if (verbose)
-		fprintf(stderr, "/boot will be written at sector %u\n", start);
+		fprintf(stderr, "%s will be written at sector %u\n", proto,
+		    start);
 
 	if (start + (protosize / dl->d_secsize) > BOOTBIOS_MAXSEC)
-		warnx("/boot extends beyond sector %u. OpenBSD might not boot.",
-		    BOOTBIOS_MAXSEC);
+		warnx("%s extends beyond sector %u. OpenBSD might not boot.",
+		    proto, BOOTBIOS_MAXSEC);
 
 	if (!nowrite) {
 		if (lseek(devfd, (off_t)start * dl->d_secsize, SEEK_SET) < 0)
@@ -348,7 +349,7 @@ loadproto(char *fname, long *size)
 
 	if (!IS_ELF(eh))
 		errx(1, "%s: bad magic: 0x%02x%02x%02x%02x",
-		    boot,
+		    fname,
 		    eh.e_ident[EI_MAG0], eh.e_ident[EI_MAG1],
 		    eh.e_ident[EI_MAG2], eh.e_ident[EI_MAG3]);
 
@@ -361,7 +362,7 @@ loadproto(char *fname, long *size)
 	/* Program load header. */
 	if (eh.e_phnum != 1)
 		errx(1, "%s: %u ELF load sections (only support 1)",
-		    boot, eh.e_phnum);
+		    fname, eh.e_phnum);
 
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = malloc(phsize);
@@ -371,7 +372,7 @@ loadproto(char *fname, long *size)
 	lseek(fd, eh.e_phoff, SEEK_SET);
 
 	if (read(fd, ph, phsize) != phsize)
-		errx(1, "%s: can't read header", boot);
+		errx(1, "%s: can't read header", fname);
 
 	tdsize = ph->p_filesz;
 
