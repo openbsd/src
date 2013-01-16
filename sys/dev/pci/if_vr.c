@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.121 2012/12/01 09:55:03 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.122 2013/01/16 03:21:14 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1273,6 +1273,7 @@ vr_start(struct ifnet *ifp)
 	struct vr_softc		*sc;
 	struct mbuf		*m_head;
 	struct vr_chain		*cur_tx, *head_tx;
+	unsigned int		 queued = 0;
 
 	sc = ifp->if_softc;
 
@@ -1298,6 +1299,7 @@ vr_start(struct ifnet *ifp)
 				IF_PREPEND(&ifp->if_snd, m_head);
 			break;
 		}
+		queued++;
 
 		/* Only set ownership bit on first descriptor */
 		head_tx->vr_ptr->vr_status |= htole32(VR_TXSTAT_OWN);
@@ -1313,7 +1315,7 @@ vr_start(struct ifnet *ifp)
 #endif
 		cur_tx = cur_tx->vr_nextdesc;
 	}
-	if (sc->vr_cdata.vr_tx_cnt != 0) {
+	if (queued > 0) {
 		sc->vr_cdata.vr_tx_prod = cur_tx;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap.vrm_map, 0,
