@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.206 2013/01/15 21:44:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.207 2013/01/16 05:16:02 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -227,7 +227,7 @@ routehandler(void)
 				deleting.s_addr = INADDR_ANY;
 				break;
 			}
-			if (client->active &&
+			if (adding.s_addr == INADDR_ANY && client->active &&
 			    a.s_addr == client->active->address.s_addr) {
 				/* Tell the priv process active_addr is gone. */
 				memset(&b, 0, sizeof(b));
