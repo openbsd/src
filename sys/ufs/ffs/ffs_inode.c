@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.61 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.62 2013/01/16 22:41:47 beck Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -164,10 +164,8 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
-	int i, aflags, error, allerror, indirect = 0;
+	int i, aflags, error, allerror;
 	off_t osize;
-	extern int num_indirdep;
-	extern int max_indirdep;
 
 	if (length < 0)
 		return (EINVAL);
@@ -243,8 +241,6 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 				   cred, aflags, &bp);
 		if (error)
 			return (error);
-		if (bp->b_lblkno >= NDADDR)
-			indirect = 1;
 		DIP_ASSIGN(oip, size, length);
 		uvm_vnp_setsize(ovp, length);
 		(void) uvm_vnp_uncache(ovp);
@@ -253,20 +249,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		error = UFS_UPDATE(oip, MNT_WAIT);
-		if (DOINGSOFTDEP(ovp) && num_indirdep > max_indirdep)
-			if (indirect) {
-				/*
-				 * If the number of pending indirect block
-				 * dependencies is sufficiently close to the
-				 * maximum number of simultaneously mappable
-				 * buffers force a sync on the vnode to prevent
-				 * buffer cache exhaustion.
-				 */
-				VOP_FSYNC(ovp, curproc->p_ucred, MNT_WAIT,
-				    curproc);
-			}
-		return (error);
+		return (UFS_UPDATE(oip, MNT_WAIT));
 	}
 	uvm_vnp_setsize(ovp, length);
 
