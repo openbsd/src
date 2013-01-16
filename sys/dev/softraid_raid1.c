@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.34 2013/01/15 09:28:29 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.35 2013/01/16 06:29:14 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -640,19 +640,12 @@ sr_raid1_recreate_wu(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct sr_workunit	*wup = wu;
-	struct sr_ccb		*ccb;
 
 	do {
 		DNPRINTF(SR_D_INTR, "%s: sr_raid1_recreate_wu: %p\n", wup);
 
 		/* toss all ccbs */
-		if (wu->swu_cb_active == 1)
-			panic("%s: sr_raid1_recreate_wu", DEVNAME(sd->sd_sc));
-		while ((ccb = TAILQ_FIRST(&wup->swu_ccb)) != NULL) {
-			TAILQ_REMOVE(&wup->swu_ccb, ccb, ccb_link);
-			sr_ccb_put(ccb);
-		}
-		TAILQ_INIT(&wup->swu_ccb);
+		sr_wu_release_ccbs(wup);
 
 		/* recreate ccbs */
 		wup->swu_state = SR_WU_REQUEUE;
