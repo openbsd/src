@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.32 2012/10/20 16:12:22 chris Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.33 2013/01/16 05:25:57 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -83,6 +83,9 @@
 #define VR_MPA_CNT		0x7C
 #define VR_CRC_CNT		0x7E
 #define VR_STICKHW		0x83
+#define VR_CAMMASK		0x88 /* length 4 bytes */
+#define VR_CAMCTRL		0x92
+#define VR_CAMADDR		0x93
 
 /* Misc Registers */
 #define VR_MISC_CR1		0x81
@@ -342,6 +345,14 @@
 #define VR_BCR1_VLANFILT_ENB	0x80		/* 6105M */
 
 /*
+ * CAM Control registers (VT6105M)
+ */
+#define VR_CAMCTRL_WREN		0x01
+#define VR_CAMCTRL_VCAMSEL	0x02
+#define VR_CAMCTRL_WRITE	0x04
+#define VR_CAMCTRL_READ		0x08
+
+/*
  * Rhine TX/RX list structure.
  */
 
@@ -404,6 +415,7 @@ struct vr_desc {
 #define VR_TXSTAT_ERRSUM	0x00008000
 #define VR_TXSTAT_PQMASK	0x7FFF0000
 #define VR_TXSTAT_OWN		0x80000000
+#define VR_TXSTAT_PQSHIFT	16
 
 #define VR_TXCTL_BUFLEN		0x000007FF
 #define VR_TXCTL_BUFLEN_EXT	0x00007800
