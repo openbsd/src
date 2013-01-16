@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1664 2013/01/02 05:45:41 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1666 2013/01/16 06:15:58 brad Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6180,12 +6180,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Viper/PCI",
 	},
 	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX,
-	    "550TX",
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE550TX,
+	    "DFE-550TX",
 	},
 	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_530TXPLUS,
-	    "530TX+",
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
+	    "DFE-530TX+",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE690TXD,
