@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.9 2009/10/27 23:59:35 deraadt Exp $	*/
+/*	$OpenBSD: mcount.c,v 1.10 2013/01/16 23:38:14 dlg Exp $	*/
 /*	$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $	*/
 
 /*-
@@ -47,12 +47,8 @@
  * Note: the original BSD code used the same variable (frompcindex) for
  * both frompcindex and frompc.  Any reasonable, modern compiler will
  * perform this optimization.
- *
- * XXX - the unused attribute is there because some archs define _mcount
- *       as static and gcc doesn't check for function calls in assembler
- *       stubs.
  */
-_MCOUNT_DECL(u_long frompc, u_long selfpc) __attribute__((unused));
+_MCOUNT_DECL(u_long frompc, u_long selfpc) __used;
 _MCOUNT_DECL(u_long frompc, u_long selfpc)	/* _mcount; may be static, inline, etc */
 {
 	u_short *frompcindex;
