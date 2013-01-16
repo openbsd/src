@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.46 2013/01/16 00:24:33 deraadt Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.47 2013/01/16 21:47:08 deraadt Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 {
 	struct vmspace *vm = p->p_vmspace;
 	vm_map_t map = &vm->vm_map;
-	vm_map_entry_t entry;
+	vm_map_entry_t entry, safe;
 	vaddr_t start, end, top;
 	struct coreseg cseg;
 	off_t offset, coffset;
@@ -167,7 +167,7 @@ uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
 
-	RB_FOREACH(entry, uvm_map_addr, &map->addr) {
+	RB_FOREACH_SAFE(entry, uvm_map_addr, &map->addr, safe) {
 		/* should never happen for a user process */
 		if (UVM_ET_ISSUBMAP(entry)) {
 			panic("uvm_coredump: user process with submap?");
