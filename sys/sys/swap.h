@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.h,v 1.4 2001/06/27 04:51:48 art Exp $	*/
+/*	$OpenBSD: swap.h,v 1.5 2013/01/16 04:05:22 deraadt Exp $	*/
 /*	$NetBSD: swap.h,v 1.2 1998/09/13 14:46:24 christos Exp $	*/
 
 /*
@@ -51,6 +51,10 @@ struct swapent {
 	int	se_priority;		/* priority of this device */
 	char	se_path[MAXPATHLEN];	/* path name */
 };
+
+#ifdef _KERNEL
+#define	NETDEV		(dev_t)(-2)	/* network device (for nfs swap) */
+#endif /* _KERNEL */
 
 #define SWAP_ON		1		/* begin swapping on device */
 #define SWAP_OFF	2		/* (stop swapping on device) */

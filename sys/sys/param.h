@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.97 2012/12/05 23:20:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.98 2013/01/16 04:05:22 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -116,7 +116,6 @@
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
 #define	NODEV	(dev_t)(-1)	/* non-existent device */
-#define NETDEV	(dev_t)(-2)	/* network device (for nfs swap) */
 	
 #define	CBLOCK	64		/* Clist block size, must be a power of 2. */
 #define CBQSIZE	(CBLOCK/NBBY)	/* Quote bytes/cblock - can do better. */
