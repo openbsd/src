@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.123 2013/01/16 06:29:14 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.124 2013/01/16 07:06:29 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -519,6 +519,7 @@ struct sr_discipline {
 #define SR_CAP_AUTO_ASSEMBLE	0x00000002	/* Can auto assemble. */
 #define SR_CAP_REBUILD		0x00000004	/* Supports rebuild. */
 #define SR_CAP_NON_COERCED	0x00000008	/* Uses non-coerced size. */
+#define SR_CAP_REDUNDANT	0x00000010	/* Redundant copies of data. */
 
 	union {
 	    struct sr_raid0	mdd_raid0;

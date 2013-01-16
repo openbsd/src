@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.28 2013/01/16 06:42:22 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.29 2013/01/16 07:06:29 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -77,7 +77,8 @@ sr_raidp_discipline_init(struct sr_discipline *sd, u_int8_t type)
 		strlcpy(sd->sd_name, "RAID 4", sizeof(sd->sd_name));
 	else
 		strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
-	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
+	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
+	    SR_CAP_REDUNDANT;
 	sd->sd_max_ccb_per_wu = 4; /* only if stripsize <= MAXPHYS */
 	sd->sd_max_wu = SR_RAIDP_NOWU;
 

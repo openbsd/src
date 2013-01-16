@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.36 2013/01/16 06:42:22 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.37 2013/01/16 07:06:29 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -64,7 +64,7 @@ sr_raid1_discipline_init(struct sr_discipline *sd)
 	sd->sd_type = SR_MD_RAID1;
 	strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
-	    SR_CAP_REBUILD;
+	    SR_CAP_REBUILD | SR_CAP_REDUNDANT;
 	sd->sd_max_wu = SR_RAID1_NOWU;
 
 	/* Setup discipline specific function pointers. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.31 2013/01/16 06:42:22 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.32 2013/01/16 07:06:29 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -100,7 +100,8 @@ sr_raid6_discipline_init(struct sr_discipline *sd)
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_RAID6;
 	strlcpy(sd->sd_name, "RAID 6", sizeof(sd->sd_name));
-	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
+	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
+	    SR_CAP_REDUNDANT;
 	sd->sd_max_wu = SR_RAID6_NOWU;
 
 	/* Setup discipline specific function pointers. */
