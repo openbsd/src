@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.22 2012/11/08 18:06:49 gsoares Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.23 2013/01/16 09:53:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -112,9 +112,6 @@ extern int ipport_hilastauto;
 
 /* from udp_usrreq.c */
 extern int udpcksum;
-
-/* from kern/kern_clock.c; incremented each clock tick. */
-extern int ticks;
 
 void
 pflowattach(int npflow)
@@ -925,6 +922,7 @@ pflow_sendout_v5(struct pflow_softc *sc)
 	struct mbuf		*m = sc->sc_mbuf;
 	struct pflow_header	*h;
 	struct ifnet		*ifp = &sc->sc_if;
+	struct timespec		tv;
 
 	timeout_del(&sc->sc_tmo);
 
@@ -943,8 +941,10 @@ pflow_sendout_v5(struct pflow_softc *sc)
 
 	/* populate pflow_header */
 	h->uptime_ms = htonl(time_uptime * 1000);
-	h->time_sec = htonl(time_second);
-	h->time_nanosec = htonl(ticks);
+
+	getnanotime(&tv);
+	h->time_sec = htonl(tv.tv_sec);
+	h->time_nanosec = htonl(tv.tv_nsec);
 
 	return (pflow_sendout_mbuf(sc, m));
 }
