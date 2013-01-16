@@ -1,5 +1,5 @@
 .\"	$NetBSD: viomb.4,v 1.2 2011/11/26 22:36:14 wiz Exp $
-.\"	$OpenBSD: viomb.4,v 1.1 2013/01/12 13:02:22 sf Exp $
+.\"	$OpenBSD: viomb.4,v 1.2 2013/01/16 00:30:48 brad Exp $
 .\" Copyright (c) 2012 Dinar Talypov <dinar@i-nk.ru>
 .\" Copyright (C) 2011 Minoura Makoto.
 .\" All rights reserved.
@@ -25,14 +25,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 12 2013 $
+.Dd $Mdocdate: January 16 2013 $
 .Dt VIOMB 4
 .Os
 .Sh NAME
 .Nm viomb
 .Nd VirtIO memory ballooning driver
 .Sh SYNOPSIS
-.Cd "virtio* at pci? dev ? function ?"
 .Cd "viomb*  at virtio?"
 .Sh DESCRIPTION
 The
@@ -44,7 +43,7 @@ Memory ballooning works as follows:
 .Bl -enum -compact
 .It
 The host operator requests a guest to return some amount of memory to the host
-(via, for example, the Qemu monitor balloon command).
+(via, for example, the QEMU monitor balloon command).
 .It
 The hypervisor sends the request via the VirtIO memory ballooning device.
 .It
@@ -60,6 +59,7 @@ device tells the hypervisor the guest physical memory address of the
 allocated memory via the VirtIO memory ballooning device.
 .El
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr virtio 4
 .Rs
 .%A Rusty Russell, IBM Corporation
