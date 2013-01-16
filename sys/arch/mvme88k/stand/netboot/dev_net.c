@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.4 2006/05/16 22:52:09 miod Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.5 2013/01/16 20:45:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -66,9 +66,6 @@
 #include "nfs.h"
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
-
-struct in_addr myip, rootip, gateip, mask;
-char rootpath[FNAME_SIZE];
 
 int netdev_sock = -1;
 static int open_count;
@@ -168,8 +165,10 @@ net_mountroot(f, devname)
 	printf("myip: %s (%s)", hostname, intoa(myip));
 	if (gateip)
 		printf(", gateip: %s", intoa(gateip));
+#if 0
 	if (mask)
 		printf(", mask: %s", intoa(mask));
+#endif
 	printf("\n");
 
 #endif

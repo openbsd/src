@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.17 2013/01/05 11:20:56 miod Exp $
+#	$OpenBSD: Makefile,v 1.18 2013/01/16 20:45:09 miod Exp $
 
 S=	${.CURDIR}/../../../..
 DEFS=
@@ -7,6 +7,7 @@ INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
 CFLAGS+=${INCPATH} ${DEFS} ${COPTS}
 LDFLAGS=-N -T ${S}/arch/mvme88k/stand/ld.script -Ttext ${STAGE2_RELOC}
+LDFLAGS+= -warn-common
 NOPIE=
 CLEANFILES+=bootsd
 

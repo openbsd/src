@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.7 2011/03/13 00:13:53 deraadt Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.8 2013/01/16 20:45:09 miod Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -38,8 +38,6 @@
 #include "libsa.h"
 
 void cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp);
-
-int errno;
 
 struct bugsc_softc {
 	int	fd;	/* Prom file descriptor */
