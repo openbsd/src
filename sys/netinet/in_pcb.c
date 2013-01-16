@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.128 2012/09/20 10:25:03 blambert Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.129 2013/01/16 00:07:22 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -172,9 +172,8 @@ in_baddynamic(u_int16_t port, u_int16_t proto)
 }
 
 int
-in_pcballoc(struct socket *so, void *v)
+in_pcballoc(struct socket *so, struct inpcbtable *table)
 {
-	struct inpcbtable *table = v;
 	struct inpcb *inp;
 	int s;
 
@@ -218,9 +217,8 @@ in_pcballoc(struct socket *so, void *v)
 }
 
 int
-in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
+in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 {
-	struct inpcb *inp = v;
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
 	u_int16_t *lastport = &inp->inp_table->inpt_lastport;
@@ -372,9 +370,8 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
  * then pick one.
  */
 int
-in_pcbconnect(void *v, struct mbuf *nam)
+in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 {
-	struct inpcb *inp = v;
 	struct sockaddr_in *ifaddr = NULL;
 	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
 
@@ -444,10 +441,8 @@ in_pcbconnect(void *v, struct mbuf *nam)
 }
 
 void
-in_pcbdisconnect(void *v)
+in_pcbdisconnect(struct inpcb *inp)
 {
-	struct inpcb *inp = v;
-
 	switch (sotopf(inp->inp_socket)) {
 #ifdef INET6
 	case PF_INET6:
@@ -466,9 +461,8 @@ in_pcbdisconnect(void *v)
 }
 
 void
-in_pcbdetach(void *v)
+in_pcbdetach(struct inpcb *inp)
 {
-	struct inpcb *inp = v;
 	struct socket *so = inp->inp_socket;
 	int s;
 
