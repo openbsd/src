@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.37 2013/01/16 07:06:29 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.38 2013/01/16 09:21:50 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -612,7 +612,7 @@ sr_raid1_intr(struct buf *bp)
 				wakeup(wu);
 			}
 		} else {
-			scsi_done(xs);
+			sr_scsi_done(sd, xs);
 		}
 
 		if (sd->sd_sync && sd->sd_wu_pending == 0)
@@ -628,7 +628,7 @@ bad:
 		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
 		wakeup(wu);
 	} else {
-		scsi_done(xs);
+		sr_scsi_done(sd, xs);
 	}
 
 	splx(s);
