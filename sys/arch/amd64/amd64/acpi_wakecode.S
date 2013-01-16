@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.13 2012/10/19 16:38:30 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.14 2013/01/16 22:45:40 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -391,16 +391,14 @@ NENTRY(hibernate_resume_machdep)
 	jmp	*%rax
 _ACPI_TRMP_LABEL(hibernate_resume_vector_2)
 
-	/* Exit long mode */
-	movl	$MSR_EFER, %ecx
-	rdmsr
-	andl	$(~EFER_LME), %eax
-	wrmsr
-
 	.code32
-	/* Get out of 32 bit CS */
-	lgdt	gdt_16
-	ljmp	$0x8, $hibernate_resume_vector_3
+	/* Get out of 64 bit CS */
+	lgdtq	tmp_gdt6416
+
+	rex64	ljmp	*(hibernate_indirect_16)
+_ACPI_TRMP_LABEL(hibernate_indirect_16)
+	.quad	hibernate_resume_vector3
+	.word	0x18
 
 _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	.code16
@@ -411,10 +409,6 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	/* Disable CR0.PE - real mode */
 	andl	$(~CR0_PE), %eax
 	movl	%eax, %cr0
-
-	/* Flush TLB */
-	xorl	%eax, %eax
-	movl	%eax, %cr3
 
 	/* Set up real mode segment selectors */
 	movw	$0x0400, %ax
@@ -428,16 +422,16 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	/* Jump to the S3 resume vector */
 	ljmp	$0x0400, $acpi_s3_vector_real
 
-	.code32
+	.code64
 	/* Switch to hibernate resume pagetable */
 NENTRY(hibernate_activate_resume_pt_machdep)
 	/* Enable large pages */
-	movl	%cr4, %eax
-	orl	$(CR4_PSE), %eax
-	movl	%eax, %cr4
+	movq	%cr4, %rax
+	orq	$(CR4_PSE), %rax
+	movq	%rax, %cr4
 
-	movl	$HIBERNATE_PML4_PAGE, %eax
-	movl	%eax,	%cr3
+	movq	$HIBERNATE_PML4T, %rax
+	movq	%rax,	%cr3
 	jmp	1f
 
 1:	nop
@@ -447,10 +441,10 @@ NENTRY(hibernate_activate_resume_pt_machdep)
 	 * Switch to the private resume-time hibernate stack
 	 */
 NENTRY(hibernate_switch_stack_machdep)
-	movl	(%esp), %eax
-	movl    %eax, HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET
-	movl    $(HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET), %eax
-	movl    %eax, %esp
+	movq	(%rsp), %rax
+	movq    %rax, HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET
+	movq    $(HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET), %rax
+	movq    %rax, %rsp
 
 	/* On our own stack from here onward */
 	ret
@@ -461,6 +455,7 @@ NENTRY(hibernate_flush)
 	invlpg  HIBERNATE_COPY_PAGE
 	ret
 #endif /* HIBERNATE */
+
 	.align 8
 _ACPI_TRMP_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
@@ -573,6 +568,19 @@ _ACPI_TRMP_LABEL(tmp_gdtable64)
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
 _ACPI_TRMP_LABEL(tmp_gdt64_end)
+
+	.align 8
+_ACPI_TRMP_LABEL(tmp_gdt6416)
+	.word 	tmp_gdt6416_end - tmp_gdtable6416
+	.long	tmp_gdtable6416
+
+	.align 8
+_ACPI_TRMP_LABEL(tmp_gdtable6416)
+	.quad	0x0000000000000000
+	.quad	0x00af9a000000ffff
+	.quad	0x00cf92000000ffff
+	.quad   0x00009a000000ffff
+_ACPI_TRMP_LABEL(tmp_gdt6416_end)
 
 	.align 4
 _C_LABEL(do_real_mode_post):
