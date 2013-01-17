@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.44 2011/11/15 17:14:14 deraadt Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.45 2013/01/17 02:36:45 deraadt Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -135,6 +135,16 @@ wd_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 	real_wd = (struct wd_softc *)disk_lookup(&wd_cd, DISKUNIT(dev));
 	if (real_wd == NULL)
 		return (ENODEV);
+
+	if (op == HIB_DONE) {
+		struct wdc_softc *wdc = chp->wdc;
+		struct device *dv = &wdc->sc_dev;
+		struct cfdata *cfd = dv->dv_cfdata;
+
+		/* The ca_activate function for the parent controller */
+		(cfd->cf_attach->ca_activate)(dv, DVACT_RESUME);
+		return (0);
+	}
 
 	/*
 	 * Craft a fake set of softc and related structures

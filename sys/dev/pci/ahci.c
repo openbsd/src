@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.195 2013/01/17 00:08:13 claudio Exp $ */
+/*	$OpenBSD: ahci.c,v 1.196 2013/01/17 02:36:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -4038,6 +4038,9 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		ahci_write(sc, AHCI_REG_IS, 1 << port);
 
 		ahci_enable_interrupts(my->ap);
+		return (0);
+	} else if (op == HIB_DONE) {
+		ahci_pci_activate(&my->ap->ap_sc->sc_dev, DVACT_RESUME);
 		return (0);
 	}
 
