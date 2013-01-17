@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.15 2013/01/17 00:11:24 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.16 2013/01/17 00:54:48 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -571,7 +571,7 @@ _ACPI_TRMP_LABEL(tmp_gdt64_end)
 	.align 8
 _ACPI_TRMP_LABEL(tmp_gdt6416)
 	.word 	tmp_gdt6416_end - tmp_gdtable6416
-	.long	tmp_gdtable6416
+	.quad	tmp_gdtable6416
 
 	.align 8
 _ACPI_TRMP_LABEL(tmp_gdtable6416)
