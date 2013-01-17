@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.14 2013/01/16 22:45:40 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.15 2013/01/17 00:11:24 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -391,13 +391,12 @@ NENTRY(hibernate_resume_machdep)
 	jmp	*%rax
 _ACPI_TRMP_LABEL(hibernate_resume_vector_2)
 
-	.code32
 	/* Get out of 64 bit CS */
 	lgdtq	tmp_gdt6416
 
 	rex64	ljmp	*(hibernate_indirect_16)
 _ACPI_TRMP_LABEL(hibernate_indirect_16)
-	.quad	hibernate_resume_vector3
+	.quad	hibernate_resume_vector_3
 	.word	0x18
 
 _ACPI_TRMP_LABEL(hibernate_resume_vector_3)

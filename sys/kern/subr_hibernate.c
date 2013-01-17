@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.46 2012/07/19 18:07:03 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.47 2013/01/17 00:11:24 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -41,6 +41,8 @@ vaddr_t hibernate_copy_page;
 union hibernate_info disk_hiber_info;
 paddr_t global_pig_start;
 vaddr_t global_piglet_va;
+
+void hibernate_copy_chunk_to_piglet(paddr_t, vaddr_t, size_t);
 
 /*
  * Hib alloc enforced alignment.
@@ -1161,7 +1163,7 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 	struct hibernate_disk_chunk *chunks;
 	union hibernate_info local_hiber_info;
 	paddr_t image_cur = global_pig_start;
-	int *fchunks, i;
+	int i, *fchunks;
 	char *pva = (char *)hiber_info->piglet_va;
 	struct hibernate_zlib_state *hibernate_state;
 
@@ -1169,7 +1171,7 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 
 	/* Mask off based on arch-specific piglet page size */
 	pva = (char *)((paddr_t)pva & (PIGLET_PAGE_MASK));
-	fchunks = (int *)(pva + (6 * PAGE_SIZE));
+	fchunks = (int *)(pva + (4 * PAGE_SIZE));
 
 	chunks = (struct hibernate_disk_chunk *)(pva +  HIBERNATE_CHUNK_SIZE);
 
@@ -1192,7 +1194,43 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 }
 
 /*
- * Process a chunk by ensuring its proper placement, followed by unpacking 
+ * Bounce a compressed image chunk to the piglet, entering mappings for the
+ * copied pages as needed
+ */
+void
+hibernate_copy_chunk_to_piglet(paddr_t img_cur, vaddr_t piglet, size_t size)
+{
+	size_t ct, ofs;
+	paddr_t src = img_cur;
+	vaddr_t dest = piglet;
+
+	/* Copy first partial page */
+	ct = (PAGE_SIZE) - (src & PAGE_MASK);
+	ofs = (src & PAGE_MASK);
+
+	if (ct < PAGE_SIZE) {
+		hibernate_enter_resume_mapping(HIBERNATE_INFLATE_PAGE,
+			(src - ofs), 0);
+		hibernate_flush();
+		bcopy((caddr_t)(HIBERNATE_INFLATE_PAGE + ofs), (caddr_t)dest, ct);
+		src += ct;
+		dest += ct;
+	}
+
+	/* Copy remaining pages */	
+	while (src < size + img_cur) {
+		hibernate_enter_resume_mapping(HIBERNATE_INFLATE_PAGE, src, 0);
+		hibernate_flush();
+		ct = PAGE_SIZE;
+		bcopy((caddr_t)(HIBERNATE_INFLATE_PAGE), (caddr_t)dest, ct);
+		hibernate_flush();
+		src += ct;
+		dest += ct;
+	}
+}
+
+/*
+ * Process a chunk by bouncing it to the piglet, followed by unpacking 
  */
 void
 hibernate_process_chunk(union hibernate_info *hiber_info,
@@ -1200,21 +1238,12 @@ hibernate_process_chunk(union hibernate_info *hiber_info,
 {
 	char *pva = (char *)hiber_info->piglet_va;
 
-	/*
-	 * If there is a conflict, copy the chunk to the piglet area
-	 * before unpacking it to its original location.
-	 */
-	if ((chunk->flags & HIBERNATE_CHUNK_CONFLICT) == 0)
-		hibernate_inflate_region(hiber_info, chunk->base,
-		    img_cur, chunk->compressed_size);
-	else {
-		bcopy((caddr_t)img_cur,
-		    pva + (HIBERNATE_CHUNK_SIZE * 2),
-		    chunk->compressed_size);
-		hibernate_inflate_region(hiber_info, chunk->base,
-		    (vaddr_t)(pva + (HIBERNATE_CHUNK_SIZE * 2)),
-		    chunk->compressed_size);
-	}
+	hibernate_copy_chunk_to_piglet(img_cur,
+	 (vaddr_t)(pva + (HIBERNATE_CHUNK_SIZE * 2)), chunk->compressed_size);
+
+	hibernate_inflate_region(hiber_info, chunk->base,
+	    (vaddr_t)(pva + (HIBERNATE_CHUNK_SIZE * 2)),
+	    chunk->compressed_size);
 }
 
 /*
@@ -1254,7 +1283,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 	/*
 	 * Allocate VA for the temp and copy page.
-	 * These will becomee part of the suspended kernel and will
+	 * These will become part of the suspended kernel and will
 	 * be freed in hibernate_free, upon resume.
 	 */
 	hibernate_temp_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
@@ -1420,7 +1449,7 @@ hibernate_zlib_reset(union hibernate_info *hiber_info, int deflate)
 	if(!deflate)
 		pva = (char *)((paddr_t)pva & (PIGLET_PAGE_MASK));
 
-	hibernate_zlib_start = (vaddr_t)(pva + (8 * PAGE_SIZE));
+	hibernate_zlib_start = (vaddr_t)(pva + (28 * PAGE_SIZE));
 	hibernate_zlib_size = 80 * PAGE_SIZE;
 
 	bzero((caddr_t)hibernate_zlib_start, hibernate_zlib_size);
@@ -1540,9 +1569,9 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 	paddr_t piglet_end = piglet_base + HIBERNATE_CHUNK_SIZE;
 	daddr_t blkctr;
 	size_t processed, compressed_size, read_size;
-	int i, j, overlap, found, nchunks;
-	int nochunks = 0, nfchunks = 0, npchunks = 0;
+	int overlap, found, nchunks, nochunks = 0, nfchunks = 0, npchunks = 0;
 	int *ochunks, *pchunks, *fchunks;
+	int i, j;
 	vaddr_t tempva = (vaddr_t)NULL, hibernate_fchunk_area = (vaddr_t)NULL;
 
 	global_pig_start = pig_start;
@@ -1558,30 +1587,26 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 	tempva = (vaddr_t)km_alloc(2*PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
 	if (!tempva)
 		return (1);
-	hibernate_fchunk_area = (vaddr_t)km_alloc(3*PAGE_SIZE, &kv_any,
+	hibernate_fchunk_area = (vaddr_t)km_alloc(24*PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
 	if (!hibernate_fchunk_area)
 		return (1);
 
-	/* Temporary output chunk ordering VA */
-	ochunks = (int *)hibernate_fchunk_area;
+	/* Final output chunk ordering VA */
+	fchunks = (int *)hibernate_fchunk_area;
 
 	/* Piglet chunk ordering VA */
-	pchunks = (int *)(hibernate_fchunk_area + PAGE_SIZE);
+	pchunks = (int *)(hibernate_fchunk_area + (PAGE_SIZE));
 
 	/* Final chunk ordering VA */
-	fchunks = (int *)(hibernate_fchunk_area + (2*PAGE_SIZE));
+	ochunks = (int *)(hibernate_fchunk_area + (2*PAGE_SIZE));
 
 	/* Map the chunk ordering region */
-	pmap_kenter_pa(hibernate_fchunk_area,
-	    piglet_base + (4*PAGE_SIZE), VM_PROT_ALL);
-	pmap_update(pmap_kernel());	
-	pmap_kenter_pa((vaddr_t)pchunks, piglet_base + (5*PAGE_SIZE),
-	    VM_PROT_ALL);
-	pmap_update(pmap_kernel());	
-	pmap_kenter_pa((vaddr_t)fchunks, piglet_base + (6*PAGE_SIZE),
-	    VM_PROT_ALL);
-	pmap_update(pmap_kernel());	
+	for(i=0; i<3 ; i++) {
+		pmap_kenter_pa(hibernate_fchunk_area + (i*PAGE_SIZE),
+			piglet_base + ((4+i)*PAGE_SIZE), VM_PROT_ALL);
+		pmap_update(pmap_kernel());
+	}
 
 	nchunks = hib_info->chunk_ctr;
 
@@ -1620,7 +1645,7 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 
 		if (j != -1) {
 			found = 1;
-			ochunks[nochunks] = (short)j;
+			ochunks[nochunks] = j;
 			nochunks++;
 			chunks[j].flags |= HIBERNATE_CHUNK_PLACED;
 		}
