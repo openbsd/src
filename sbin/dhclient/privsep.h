@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.11 2013/01/15 21:44:28 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.12 2013/01/17 23:41:07 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,7 @@ struct imsg_add_address {
 };
 
 struct imsg_flush_routes {
+	char	ifname[IFNAMSIZ];
 	int	rdomain;
 };
 

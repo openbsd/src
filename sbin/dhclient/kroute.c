@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.26 2012/12/29 14:40:00 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.27 2013/01/17 23:41:07 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -36,13 +36,14 @@ struct in_addr active_addr;
  *	arp -dan
  */
 void
-flush_routes_and_arp_cache(int rdomain)
+flush_routes_and_arp_cache(char *ifname, int rdomain)
 {
 	struct imsg_flush_routes imsg;
 	int			 rslt;
 
 	memset(&imsg, 0, sizeof(imsg));
 
+	strlcpy(imsg.ifname, ifname, sizeof(imsg.ifname));
 	imsg.rdomain = rdomain;
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_FLUSH_ROUTES, 0, 0, -1,
@@ -61,6 +62,7 @@ flush_routes_and_arp_cache(int rdomain)
 void
 priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 {
+	char ifname[IF_NAMESIZE];
 	struct sockaddr *rti_info[RTAX_MAX];
 	int mib[7];
 	size_t needed;
@@ -68,6 +70,7 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 	struct sockaddr_dl *sdl;
+	struct sockaddr_in *sa_in;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_rtlabel *sa_rl;
 	int s, seqno = 0, rlen, i;
@@ -125,11 +128,19 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 
 		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 
-		if (rti_info[RTAX_LABEL]) {
-			sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
-			if (strcmp(routelabel, sa_rl->sr_label))
+		sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
+		if (sa_rl) {
+			/* Always delete routes we labeled. */
+			if (strcmp(routelabel, sa_rl->sr_label) == 0)
+				goto delete;
+
+			/* Never delete routes labelled by another dhclient. */
+			if (strlen(sa_rl->sr_label) > 8 &&
+			    strncmp("DHCLIENT ", sa_rl->sr_label, 9) == 0)
 				continue;
-		} else if (rtm->rtm_flags & RTF_LLINFO) {
+		}
+
+		if (rtm->rtm_flags & RTF_LLINFO) {
 			if (rtm->rtm_flags & RTF_GATEWAY)
 				continue;
 
@@ -149,14 +160,29 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 				case IFT_ISO88025:
 				case IFT_CARP:
 					/* Delete it. */
-					break;
+					goto delete;
 				default:
-					continue;
+					break;
 				}
 			}
-		} else
 			continue;
+		}
 
+		if (rtm->rtm_flags & RTF_GATEWAY) {
+			memset(ifname, 0, sizeof(ifname));
+			if (if_indextoname(rtm->rtm_index, ifname) == NULL)
+				continue;
+			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
+			if (sa_in && 
+			    sa_in->sin_addr.s_addr == INADDR_ANY &&
+			    rtm->rtm_tableid == imsg->rdomain &&
+			    strcmp(imsg->ifname, ifname) == 0)
+				goto delete;
+		}
+
+		continue;
+
+delete:
 		rtm->rtm_type = RTM_DELETE;
 		rtm->rtm_seq = seqno;
 		rtm->rtm_tableid = imsg->rdomain;

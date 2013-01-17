@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.210 2013/01/16 21:35:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.211 2013/01/17 23:41:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -723,7 +723,7 @@ bind_lease(void)
 	char *domainname, *nameservers;
 
 	delete_addresses(ifi->name, ifi->rdomain);
-	flush_routes_and_arp_cache(ifi->rdomain);
+	flush_routes_and_arp_cache(ifi->name, ifi->rdomain);
 
 	lease = apply_defaults(client->new);
 	options = lease->options;
