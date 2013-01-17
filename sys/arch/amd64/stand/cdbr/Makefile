@@ -1,5 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2012/09/25 09:01:03 pascal Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/01/17 12:25:11 jsing Exp $
 #
+
+S=	${.CURDIR}/../../../..
+SADIR=	${.CURDIR}/..
 
 PROG=	cdbr
 SRCS=	cdbr.S
@@ -12,18 +15,16 @@ LD=ld
 ORG=	0x0000
 LDFLAGS=-nostdlib -Ttext ${ORG} -x -N -s -Bstatic -e start -nopie
 LDFLAGS+=-melf_i386 -L/usr/libdata 
+INSTALL_STRIP=
 
 NOMAN=
 #MAN+=	cdbr.8
-
-INSTALL_STRIP=
-SADIR=${.CURDIR}/..
-S=	${.CURDIR}/../../../..
 
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
 	@size $(PROG)
 	@if [ -x ${.OBJDIR}/${PROG} ]; then \
+		cp ${PROG} ${PROG}.orig; \
 		objcopy -O binary ${PROG} ${.OBJDIR}/.tmp;\
 		mv -f ${.OBJDIR}/.tmp ${.OBJDIR}/${PROG}; \
 		ls -l ${.OBJDIR}/${PROG}; \

@@ -1,11 +1,9 @@
-#	$OpenBSD: Makefile,v 1.16 2012/10/29 13:56:25 jsing Exp $
-
-.include "${.CURDIR}/../Makefile.inc"
+#	$OpenBSD: Makefile,v 1.17 2013/01/17 12:25:11 jsing Exp $
 
 MAN=	cdboot.8
 
 .if ${MACHINE} == "amd64"
-S	=${.CURDIR}/../../../..
+S=	${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
 PROG=	cdboot
@@ -17,10 +15,9 @@ LDFLAGS+=-melf_i386 -L/usr/libdata
 INSTALL_STRIP=
 
 .PATH:	${SADIR}/libsa
-# i386 stuff (so, it will possibly load in the same 64k)
 SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c
 SRCS+=	gidt.S alloca.S biosdev.c bioscons.c gateA20.c \
-	memprobe.c diskprobe.c time.c ## biosprobe.c
+	memprobe.c diskprobe.c time.c
 SRCS+=	softraid.c
 
 .PATH:	${S}/stand/boot
@@ -42,11 +39,8 @@ SRCS+=	divdi3.c moddi3.c qdivrem.c
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
 
-#LDADD=	${LIBSA} ${LIBZ}
-#DPADD=	${LIBSA} ${LIBZ}
-
-${PROG}: $(OBJS) $(DPADD)
-	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) $(LDADD)
+${PROG}: $(OBJS)
+	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS)
 	@$(SIZE) $(PROG)
 	@if [ -x ${.OBJDIR}/${PROG} ]; then \
 		objcopy -O binary ${PROG} ${.OBJDIR}/.tmp;\
