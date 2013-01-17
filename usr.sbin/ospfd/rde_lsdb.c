@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.47 2011/05/09 12:24:41 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.48 2013/01/17 10:07:56 markus Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -585,7 +585,7 @@ lsa_snap(struct rde_nbr *nbr)
 			}
 			lsa_age(v);
 			if (ntohs(v->lsa->hdr.age) >= MAX_AGE)
-				rde_imsg_compose_ospfe(IMSG_LS_UPD, nbr->peerid,
+				rde_imsg_compose_ospfe(IMSG_LS_SNAP, nbr->peerid,
 				    0, &v->lsa->hdr, ntohs(v->lsa->hdr.len));
 			else
 				rde_imsg_compose_ospfe(IMSG_DB_SNAPSHOT,
