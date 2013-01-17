@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.312 2013/01/15 22:55:29 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.313 2013/01/17 00:11:22 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2013 $
+.Dd $Mdocdate: January 17 2013 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1601,7 +1601,7 @@ lower) with
 .Fl U
 or downward (numerically higher).
 .It Xo Ic select-layout
-.Op Fl npUu
+.Op Fl np
 .Op Fl t Ar target-window
 .Op Ar layout-name
 .Xc
@@ -1618,13 +1618,6 @@ are equivalent to the
 and
 .Ic previous-layout
 commands.
-.Pp
-.Fl U
-and
-.Fl u
-step forward and back through previous layouts, up to the maximum set by the
-.Ic layout-history-limit
-option.
 .It Xo Ic select-pane
 .Op Fl lDLRU
 .Op Fl t Ar target-pane
@@ -2676,13 +2669,6 @@ from resizing a window to greater than
 or
 .Ar height .
 A value of zero restores the default unlimited setting.
-.Pp
-.It Ic layout-history-limit Ar limit
-Set the number of previous layouts stored for recovery with
-.Ic select-layout
-.Fl U
-and
-.Fl u .
 .Pp
 .It Ic main-pane-height Ar height
 .It Ic main-pane-width Ar width

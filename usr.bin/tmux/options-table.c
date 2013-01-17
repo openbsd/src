@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.31 2013/01/15 22:55:29 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.32 2013/01/17 00:11:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -515,13 +515,6 @@ const struct options_table_entry window_options_table[] = {
 	  .minimum = 0,
 	  .maximum = INT_MAX,
 	  .default_num = 0
-	},
-
-	{ .name = "layout-history-limit",
-	  .type = OPTIONS_TABLE_NUMBER,
-	  .minimum = 1,
-	  .maximum = USHRT_MAX,
-	  .default_num = 20
 	},
 
 	{ .name = "main-pane-height",
