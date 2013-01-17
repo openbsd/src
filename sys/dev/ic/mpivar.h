@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.35 2010/09/13 07:48:12 dlg Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.36 2013/01/17 10:34:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -56,7 +56,7 @@ struct mpi_dmamem {
 	caddr_t			mdm_kva;
 };
 #define MPI_DMA_MAP(_mdm)	((_mdm)->mdm_map)
-#define MPI_DMA_DVA(_mdm)	((_mdm)->mdm_map->dm_segs[0].ds_addr)
+#define MPI_DMA_DVA(_mdm)	((u_int64_t)(_mdm)->mdm_map->dm_segs[0].ds_addr)
 #define MPI_DMA_KVA(_mdm)	((void *)(_mdm)->mdm_kva)
 
 struct mpi_ccb_bundle {
@@ -84,7 +84,7 @@ struct mpi_ccb {
 
 	bus_addr_t		ccb_offset;
 	void			*ccb_cmd;
-	bus_addr_t		ccb_cmd_dva;
+	u_int64_t		ccb_cmd_dva;
 
 	volatile enum {
 		MPI_CCB_FREE,
