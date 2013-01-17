@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdbr.S,v 1.4 2012/10/28 15:45:58 jsing Exp $	*/
+/*	$OpenBSD: cdbr.S,v 1.5 2013/01/17 12:07:19 jsing Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
@@ -31,9 +31,6 @@
  */
 
 	.file	"cdbr.S"
-
-/* #include <machine/asm.h> */
-/* #include <assym.h> */
 
 /*
  * This program is a CD boot sector, similar to the partition boot record

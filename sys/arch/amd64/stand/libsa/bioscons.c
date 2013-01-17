@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.8 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.9 2013/01/17 12:07:19 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -27,15 +27,18 @@
  */
 
 #include <sys/types.h>
+
 #include <machine/biosvar.h>
 #include <machine/pio.h>
-#include <dev/isa/isareg.h>
+
+#include <dev/cons.h>
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/ns16450reg.h>
-/* #include <i386/isa/nvram.h> */
-#include <dev/cons.h>
+#include <dev/isa/isareg.h>
+
 #include <lib/libsa/stand.h>
+
 #include "biosdev.h"
 
 /* XXX cannot trust NVRAM on this.  Maybe later we make a real probe.  */
