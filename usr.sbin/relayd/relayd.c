@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.114 2012/12/18 15:41:44 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.115 2013/01/17 20:34:18 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -950,7 +950,7 @@ protonode_header(enum direction dir, struct protocol *proto,
 	pn = RB_FIND(proto_tree, tree, pk);
 	if (pn != NULL)
 		return (pn);
-	if ((pn = (struct protonode *)calloc(1, sizeof(*pn))) == NULL) {
+	if ((pn = calloc(1, sizeof(*pn))) == NULL) {
 		log_warn("%s: calloc", __func__);
 		return (NULL);
 	}
