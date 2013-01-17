@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.124 2013/01/16 06:15:50 dtucker Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.125 2013/01/17 21:49:48 chris Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1249,6 +1249,16 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 		return(1);
 	}
 
+#if NVLAN > 0
+	/* Tell chip to insert VLAN tag if needed. */
+	if (m_head->m_flags & M_VLANTAG) {
+		u_int32_t vtag = m_head->m_pkthdr.ether_vtag;
+		vtag = (vtag << VR_TXSTAT_PQSHIFT) & VR_TXSTAT_PQMASK;
+		vr_status |= vtag;
+		vr_ctl |= htole32(VR_TXCTL_INSERTTAG);
+	}
+#endif
+
 	if (m_new != NULL) {
 		m_freem(m_head);
 
@@ -1257,15 +1267,6 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 		c->vr_mbuf = m_head;
 	txmap = c->vr_map;
 	for (i = 0; i < txmap->dm_nsegs; i++) {
-#if NVLAN > 0
-		/* Tell chip to insert VLAN tag if needed. */
-		if (m_head->m_flags & M_VLANTAG) {
-			u_int32_t vtag = m_head->m_pkthdr.ether_vtag;
-			vtag = (vtag << VR_TXSTAT_PQSHIFT) & VR_TXSTAT_PQMASK;
-			vr_status |= vtag;
-			vr_ctl |= htole32(VR_TXCTL_INSERTTAG);
-		}
-#endif
 		if (i != 0)
 			*cp = c = c->vr_nextdesc;
 		f = c->vr_ptr;
