@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.12 2007/08/14 19:10:45 mglocker Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.13 2013/01/17 02:53:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -52,9 +52,28 @@ const char *ieee80211_mgt_subtype_name[] = {
 	"disassociation",
 	"authentication",
 	"deauthentication",
-	"reserved#13",
-	"reserved#14",
+	"action",
+	"action noack",
 	"reserved#15"
+};
+
+const char *ieee80211_data_subtype_name[] = {
+	"data",
+	"data cf ack",
+	"data cf poll",
+	"data cf poll ack",
+	"no-data",
+	"no-data cf poll",
+	"no-data cf ack",
+	"no-data cf poll ack",
+	"QoS data",
+	"QoS data cf ack",
+	"QoS data cf poll",
+	"QoS data cf poll ack",
+	"QoS no-data",
+	"QoS no-data cf poll",
+	"QoS no-data cf ack",
+	"QoS no-data cf poll ack"
 };
 
 int	 ieee80211_hdr(struct ieee80211_frame *);
@@ -134,6 +153,8 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 	u_int8_t *t = (u_int8_t *)wh;
 	struct ieee80211_frame_addr4 *w4;
 	u_int datalen;
+	int data = !(wh->i_fc[1] & IEEE80211_FC0_SUBTYPE_NODATA);
+	u_char *esrc = NULL, *edst = NULL;
 
 	TCHECK(*wh);
 	t += sizeof(struct ieee80211_frame);
@@ -141,22 +162,32 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 
 	switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_TODS:
-		llc_print(t, datalen, datalen, wh->i_addr2, wh->i_addr3);
+		esrc = wh->i_addr2;
+		edst = wh->i_addr3;
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
-		llc_print(t, datalen, datalen, wh->i_addr3, wh->i_addr1);
+		esrc = wh->i_addr3;
+		edst = wh->i_addr1;
 		break;
 	case IEEE80211_FC1_DIR_NODS:
-		llc_print(t, datalen, datalen, wh->i_addr2, wh->i_addr1);
+		esrc = wh->i_addr2;
+		edst = wh->i_addr1;
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
 		w4 = (struct ieee80211_frame_addr4 *) wh;
 		TCHECK(*w4);
 		t = (u_int8_t *) (w4 + 1);
 		datalen = len - sizeof(*w4);
-		llc_print(t, datalen, datalen, w4->i_addr4, w4->i_addr3);
+		esrc = w4->i_addr4;
+		edst = w4->i_addr3;
 		break;
 	}
+
+	if (data && esrc)
+		llc_print(t, datalen, datalen, esrc, edst);
+	else if (eflag && esrc)
+		printf("%s > %s",
+		    etheraddr_string(esrc), etheraddr_string(edst));
 
 	return (0);
 
@@ -360,9 +391,13 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 
 	frm = (u_int8_t *)&wh[1];
 
+	if (vflag)
+		printb(" flags", wh->i_fc[1], IEEE80211_FC1_BITS);
+
 	switch (type) {
 	case IEEE80211_FC0_TYPE_DATA:
-		printf(": data: ");
+		printf(": %s: ", ieee80211_data_subtype_name[
+		    subtype >> IEEE80211_FC0_SUBTYPE_SHIFT]);
 		ieee80211_data(wh, len);
 		break;
 	case IEEE80211_FC0_TYPE_MGT:
@@ -421,9 +456,6 @@ ieee80211_frame(struct ieee80211_frame *wh, u_int len)
 		printf(": type#%d", type);
 		break;
 	}
-
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP)
-		printf(", WEP");
 
 	return (0);
 
