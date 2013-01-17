@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sosplice.9,v 1.4 2013/01/17 16:04:58 bluhm Exp $
+.\"	$OpenBSD: sosplice.9,v 1.5 2013/01/17 22:55:24 bluhm Exp $
 .\"
 .\" Copyright (c) 2011-2013 Alexander Bluhm <bluhm@openbsd.org>
 .\"
@@ -139,8 +139,22 @@ length and the space in the drain's send socket buffer.
 Up to this amount of data is taken out of the source's receive
 socket buffer.
 .Pp
+For atomic protocols, either one complete packet is taken out, or
+nothing is taken at all if:
+the packet is bigger than the the drain's send buffer size, in which
+case the splicing gets aborted with an
+.Er EMSGSIZE
+error;
+the packet does not fit into the drain's current send buffer space,
+in which case it is left in the source's receive buffer for later
+processing;
+or the maximum splice length is located within a packet, in which
+case splicing gets dissolved like a short splice.
+All address or control mbufs associated with the taken packet are
+dropped.
+.Pp
 If the maximum splice length has been reached, an mbuf may get
-split.
+split for non-atomic protocols.
 Otherwise an mbuf is either moved completely to the send buffer or
 left in the receive buffer for later processing.
 If SO_OOBINLINE is set, out-of-band data will get moved as such
@@ -149,6 +163,10 @@ The data is sent out to the drain socket via the protocol function.
 If that fails and the drain socket cannot send anymore, an
 .Er EPIPE
 error is set on the source socket.
+.Pp
+For packet oriented protocols
+.Fn somove
+iterates over the next packet queue.
 .Pp
 If a maximum splice length was specified and at least this amount
 of data has been received from the drain socket, splicing gets
@@ -208,8 +226,11 @@ The given maximum value
 .Fa max
 is negative.
 .It Bq Er ENOTCONN
-The source or the drain socket is neither connected nor in the
-process of connecting to a peer.
+The source socket requires a connection and is neither connected
+nor in the process of connecting to a peer.
+.It Bq Er ENOTCONN
+The drain socket is neither connected nor in the process of connecting
+to a peer.
 .It Bq Er ENOTSOCK
 The given file descriptor
 .Fa fd
@@ -220,7 +241,7 @@ The source or the drain socket is a listen socket.
 The source socket's protocol layer does not have the
 .Dv PR_SPLICE
 flag set.
-At the moment only TCP supports socket splicing.
+Only TCP and UDP socket splicing is supported.
 .It Bq Er EPROTONOSUPPORT
 The drain socket's protocol does not have the same
 .Fa pr_usrreq
@@ -234,8 +255,10 @@ locked.
 .Xr options 4 ,
 .Xr timeout 9
 .Sh HISTORY
-Socket splicing first appeared in
-.Ox 4.9 .
+Socket splicing for TCP first appeared in
+.Ox 4.9 ;
+support for UDP was added in
+.Ox 5.3 .
 .Sh AUTHORS
 .An -nosplit
 The idea for socket splicing originally came from
