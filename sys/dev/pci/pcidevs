@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1666 2013/01/16 06:15:58 brad Exp $
+$OpenBSD: pcidevs,v 1.1667 2013/01/17 12:50:34 reyk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6041,8 +6041,11 @@ product VMWARE VIRTUAL		0x0710	Virtual SVGA
 product VMWARE NET		0x0720	Virtual NIC
 product VMWARE MACHINE_2	0x0740	Virtual Machine Communication Interface
 product VMWARE EHCI		0x0770	Virtual EHCI
+product VMWARE UHCI		0x0774	Virtual UHCI
 product VMWARE PCI		0x0790	Virtual PCI-PCI
 product VMWARE PCIE		0x07a0	Virtual PCIE-PCIE
+product VMWARE NET_3		0x07b0	Virtual VMXNET3
+product VMWARE PVSCSI		0x07c0	Virtual PVSCSI
 product VMWARE MACHINE		0x0801	Virtual Machine Interface
 
 /* Weitek products */
