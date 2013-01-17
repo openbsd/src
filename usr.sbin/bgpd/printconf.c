@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.89 2012/11/13 09:47:20 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.90 2013/01/17 02:00:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,7 +35,7 @@ void		 print_mainconf(struct bgpd_config *);
 void		 print_rdomain_targets(struct filter_set_head *, const char *);
 void		 print_rdomain(struct rdomain *);
 const char	*print_af(u_int8_t);
-void		 print_network(struct network_config *);
+void		 print_network(struct network_config *, const char *);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
 const char	*print_auth_alg(u_int8_t);
@@ -286,13 +286,19 @@ print_rdomain_targets(struct filter_set_head *set, const char *tgt)
 void
 print_rdomain(struct rdomain *r)
 {
+	struct network *n;
+
 	printf("rdomain %u {\n", r->rtableid);
-	printf("\tdescr \"%s\"\n", r->descr);
+	if (*r->descr)
+		printf("\tdescr \"%s\"\n", r->descr);
 	if (r->flags & F_RIB_NOFIBSYNC)
 		printf("\tfib-update no\n");
 	else
 		printf("\tfib-update yes\n");
 	printf("\tdepend on %s\n", r->ifmpe);
+
+	TAILQ_FOREACH(n, &r->net_l, entry)
+		print_network(&n->net, "\t");
 
 	printf("\n\t%s\n", log_rd(r->rd));
 
@@ -318,17 +324,18 @@ print_af(u_int8_t aid)
 }
 
 void
-print_network(struct network_config *n)
+print_network(struct network_config *n, const char *c)
 {
 	switch (n->type) {
 	case NETWORK_STATIC:
-		printf("network %s static", print_af(n->prefix.aid));
+		printf("%snetwork %s static", c, print_af(n->prefix.aid));
 		break;
 	case NETWORK_CONNECTED:
-		printf("network %s connected", print_af(n->prefix.aid));
+		printf("%snetwork %s connected", c, print_af(n->prefix.aid));
 		break;
 	default:
-		printf("network %s/%u", log_addr(&n->prefix), n->prefixlen);
+		printf("%snetwork %s/%u", c, log_addr(&n->prefix),
+		    n->prefixlen);
 		break;
 	}
 	if (!TAILQ_EMPTY(&n->attrset))
@@ -723,7 +730,7 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	print_mainconf(conf);
 	printf("\n");
 	TAILQ_FOREACH(n, net_l, entry)
-		print_network(&n->net);
+		print_network(&n->net, "");
 	printf("\n");
 	SIMPLEQ_FOREACH(rd, rdom_l, entry)
 		print_rdomain(rd);
