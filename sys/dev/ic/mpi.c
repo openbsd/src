@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.181 2013/01/17 02:44:42 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.182 2013/01/17 03:05:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -175,7 +175,8 @@ void		mpi_refresh_sensors(void *);
 
 #define mpi_read_db(s)		mpi_read((s), MPI_DOORBELL)
 #define mpi_write_db(s, v)	mpi_write((s), MPI_DOORBELL, (v))
-#define mpi_read_intr(s)	mpi_read((s), MPI_INTR_STATUS)
+#define mpi_read_intr(s)	bus_space_read_4((s)->sc_iot, (s)->sc_ioh, \
+				    MPI_INTR_STATUS)
 #define mpi_write_intr(s, v)	mpi_write((s), MPI_INTR_STATUS, (v))
 #define mpi_pop_reply(s)	bus_space_read_4((s)->sc_iot, (s)->sc_ioh, \
 				    MPI_REPLY_QUEUE)
@@ -910,6 +911,9 @@ mpi_intr(void *arg)
 	struct mpi_softc		*sc = arg;
 	u_int32_t			reg;
 	int				rv = 0;
+
+	if ((mpi_read_intr(sc) & MPI_INTR_STATUS_REPLY) == 0)
+		return (rv);
 
 	while ((reg = mpi_pop_reply(sc)) != 0xffffffff) {
 		mpi_reply(sc, reg);
