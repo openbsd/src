@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.19 2010/07/15 18:15:31 jmc Exp $
+.\"	$OpenBSD: elf.5,v 1.20 2013/01/17 21:54:18 jmc Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: July 15 2010 $
+.Dd $Mdocdate: January 17 2013 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -264,7 +264,6 @@ Start of architecture identification.
 .It Dv EI_NIDENT
 The size of the e_ident array.
 .El
-.Pp
 .It Dv e_type
 This member of the structure identifies the object file type:
 .Pp
@@ -280,7 +279,6 @@ A shared object.
 .It Dv ET_CORE
 A core file.
 .El
-.Pp
 .It Dv e_machine
 This member specifies the required architecture for an individual file:
 .Pp
@@ -322,7 +320,6 @@ Compaq [DEC] Alpha with enhanced instruction set.
 .It Dv EM_VAX
 DEC Vax.
 .El
-.Pp
 .It Dv e_version
 This member identifies the file version:
 .Pp
@@ -513,7 +510,6 @@ This value down to and including
 .Sy PT_LOPROC
 is reserved for processor-specific semantics.
 .El
-.Pp
 .It Dv p_offset
 This member holds the offset from the beginning of the file at which
 the first byte of the segment resides.
@@ -756,7 +752,6 @@ and
 may be used by the application, without conflicting with current or future
 system-defined section types.
 .El
-.Pp
 .It Dv sh_flags
 Sections support one-bit flags that describe miscellaneous attributes.
 If a flag bit is set in
@@ -787,7 +782,6 @@ This section is for thread-local storage.
 All bits included in this mask are reserved for processor-specific
 semantics.
 .El
-.Pp
 .It Dv sh_addr
 If this section appears in the memory image of a process, this member
 holds the address at which the section's first byte should reside.
@@ -1235,7 +1229,6 @@ or
 convert a binding and a type into an st_info value.
 .El
 .El
-.Pp
 .It Dv st_other
 This member currently holds zero and has no defined meaning.
 .It Dv st_shndx

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.43 2010/12/24 14:12:51 grange Exp $
+.\"	$OpenBSD: uvm.9,v 1.44 2013/01/17 21:54:18 jmc Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: December 24 2010 $
+.Dd $Mdocdate: January 17 2013 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -74,8 +74,6 @@ if there is room.
 .Pp
 There are also several miscellaneous functions.
 .Sh INITIALISATION
-.nr nS 1
-.Pp
 .Ft void
 .Fn uvm_init "void"
 .Ft void
@@ -84,7 +82,6 @@ There are also several miscellaneous functions.
 .Fn uvm_setpagesize "void"
 .Ft void
 .Fn uvm_swap_init "void"
-.nr nS 0
 .Pp
 The
 .Fn uvm_init
@@ -772,8 +769,6 @@ The
 .Fn uvm_swapin
 function swaps in the named process.
 .Sh MISCELLANEOUS FUNCTIONS
-.nr nS 1
-.Pp
 .Ft struct uvm_object *
 .Fn uao_create "vsize_t size" "int flags"
 .Ft void
@@ -801,7 +796,6 @@ function swaps in the named process.
 .Fn uvm_grow "struct proc *p" "vaddr_t sp"
 .Ft int
 .Fn uvm_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" "struct core *chdr"
-.nr nS 0
 .Pp
 The
 .Fn uao_create ,
