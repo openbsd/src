@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.179 2012/09/18 23:54:29 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.180 2013/01/17 02:39:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2095,7 +2095,7 @@ mpi_iocinit(struct mpi_softc *sc)
 
 	iiq.reply_frame_size = htole16(MPI_REPLY_SIZE);
 
-	hi_addr = (u_int32_t)((u_int64_t)MPI_DMA_DVA(sc->sc_requests) >> 32);
+	hi_addr = (u_int32_t)(MPI_DMA_DVA(sc->sc_requests) >> 32);
 	iiq.host_mfa_hi_addr = htole32(hi_addr);
 	iiq.sense_buffer_hi_addr = htole32(hi_addr);
 
