@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.30 2013/01/16 06:42:22 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.31 2013/01/17 04:07:39 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -190,14 +190,22 @@ sr_raid0_rw(struct sr_workunit *wu)
 	length = MIN(xs->datalen, strip_size - stripoffs);
 	leftover = xs->datalen;
 	data = xs->data;
-	for (wu->swu_io_count = 1;; wu->swu_io_count++) {
+	for (;;) {
 		/* make sure chunk is online */
 		scp = sd->sd_vol.sv_chunks[chunk];
-		if (scp->src_meta.scm_status != BIOC_SDONLINE) {
+		if (scp->src_meta.scm_status != BIOC_SDONLINE)
 			goto bad;
-		}
 
-		ccb = sr_ccb_get(sd);
+		DNPRINTF(SR_D_DIS, "%s: %s %s io lbaoffs %lld "
+		    "strip_no %lld chunk %lld stripoffs %lld "
+		    "chunkoffs %lld physoffs %lld length %lld "
+		    "leftover %lld data %p\n",
+		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
+		    lbaoffs, strip_no, chunk, stripoffs, chunkoffs, physoffs,
+		    length, leftover, data);
+
+		blk = physoffs >> DEV_BSHIFT;
+		ccb = sr_ccb_rw(sd, chunk, blk, length, data, xs->flags, 0);
 		if (!ccb) {
 			/* should never happen but handle more gracefully */
 			printf("%s: %s: too many ccbs queued\n",
@@ -205,41 +213,7 @@ sr_raid0_rw(struct sr_workunit *wu)
 			    sd->sd_meta->ssd_devname);
 			goto bad;
 		}
-
-		DNPRINTF(SR_D_DIS, "%s: %s raid io: lbaoffs: %lld "
-		    "strip_no: %lld chunk: %lld stripoffs: %lld "
-		    "chunkoffs: %lld physoffs: %lld length: %lld "
-		    "leftover: %lld data: %p\n",
-		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, lbaoffs,
-		    strip_no, chunk, stripoffs, chunkoffs, physoffs, length,
-		    leftover, data);
-
-		ccb->ccb_buf.b_flags = B_CALL | B_PHYS;
-		ccb->ccb_buf.b_iodone = sr_raid0_intr;
-		ccb->ccb_buf.b_blkno = physoffs >> DEV_BSHIFT;
-		ccb->ccb_buf.b_bcount = length;
-		ccb->ccb_buf.b_bufsize = length;
-		ccb->ccb_buf.b_resid = length;
-		ccb->ccb_buf.b_data = data;
-		ccb->ccb_buf.b_error = 0;
-		ccb->ccb_buf.b_proc = curproc;
-		ccb->ccb_buf.b_bq = NULL;
-		ccb->ccb_wu = wu;
-		ccb->ccb_buf.b_flags |= xs->flags & SCSI_DATA_IN ?
-		    B_READ : B_WRITE;
-		ccb->ccb_target = chunk;
-		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[chunk]->src_dev_mm;
-		ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[chunk]->src_vn;
-		if ((ccb->ccb_buf.b_flags & B_READ) == 0)
-			ccb->ccb_buf.b_vp->v_numoutput++;
-		LIST_INIT(&ccb->ccb_buf.b_dep);
-		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
-
-		DNPRINTF(SR_D_DIS, "%s: %s: sr_raid0: b_bcount: %d "
-		    "b_blkno: %lld b_flags 0x%0x b_data %p\n",
-		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
-		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+		sr_wu_enqueue_ccb(wu, ccb);
 
 		leftover -= length;
 		if (leftover == 0)
@@ -281,31 +255,9 @@ sr_raid0_intr(struct buf *bp)
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
 	    DEVNAME(sc), bp, xs);
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
-	    " b_flags: 0x%0x block: %lld target: %d\n", DEVNAME(sc),
-	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
-	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
-
 	s = splbio();
 
-	if (ccb->ccb_buf.b_flags & B_ERROR) {
-		printf("%s: i/o error on block %lld target: %d b_error: %d\n",
-		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target,
-		    ccb->ccb_buf.b_error);
-		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target: %d\n",
-		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
-		wu->swu_ios_failed++;
-		ccb->ccb_state = SR_CCB_FAILED;
-		if (ccb->ccb_target != -1)
-			sd->sd_set_chunk_state(sd, ccb->ccb_target,
-			    BIOC_SDOFFLINE);
-		else
-			panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
-	} else {
-		ccb->ccb_state = SR_CCB_OK;
-		wu->swu_ios_succeeded++;
-	}
-	wu->swu_ios_complete++;
+	sr_ccb_done(ccb);
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d failed: %d\n",
 	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
