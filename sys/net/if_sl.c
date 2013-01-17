@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.44 2011/07/06 02:42:28 henning Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.45 2013/01/17 21:22:54 deraadt Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -154,7 +154,7 @@
 #if (SLMTU < 3)
 #error Huh?  SLMTU way too small.
 #endif
-#define	SLIP_HIWAT	roundup(50,CBSIZE)
+#define	SLIP_HIWAT	100
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))		/* XXX - cgd */
 #define	CLISTRESERVE	1024	/* Can't let clists get too low */
 #endif	/* !NetBSD */
