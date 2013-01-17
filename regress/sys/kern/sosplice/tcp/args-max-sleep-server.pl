@@ -1,4 +1,5 @@
-# test maximum data length with delay before server read
+# test maximum data length,
+# server sleeps before reading
 
 use strict;
 use warnings;
@@ -11,6 +12,7 @@ our %args = (
     },
     relay => {
 	max => 32117,
+	big => 1,
     },
     server => {
 	func => sub { sleep 3; read_stream(@_); },

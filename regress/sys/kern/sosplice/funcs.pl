@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.4 2013/01/15 10:43:17 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.5 2013/01/17 17:58:28 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -238,6 +238,7 @@ sub relay_copy_stream {
 		}
 		if ($max && $len == $max) {
 			print STDERR "\n";
+			print STDERR "Big\n";
 			print STDERR "Max\n";
 			last;
 		}
@@ -295,6 +296,7 @@ sub relay_copy_datagram {
 
 		if ($max && $len == $max) {
 			print STDERR "\n";
+			print STDERR "Big\n";
 			print STDERR "Max\n";
 			last;
 		}
@@ -633,14 +635,22 @@ sub check_logs {
 sub check_relay {
 	my ($c, $r, $s, %args) = @_;
 
-	$r->loggrep(qr/^Timeout$/) or die "no relay timeout"
-	    if $r && $args{relay}{timeout};
-	$r->loggrep(qr/^Big$/) or die "no relay big"
-	    if $r && $args{relay}{big};
+	return unless $r;
+
+	if (defined $args{relay}{timeout}) {
+		my $lg = $r->loggrep(qr/^Timeout$/);
+		die "no relay timeout"  if !$lg && $args{relay}{timeout};
+		die "relay has timeout" if $lg && !$args{relay}{timeout};
+	}
+	if (defined $args{relay}{big}) {
+		my $lg = $r->loggrep(qr/^Big$/);
+		die "no relay big"  if !$lg && $args{relay}{big};
+		die "relay has big" if $lg && !$args{relay}{big};
+	}
 	$r->loggrep(qr/^Max$/) or die "no relay max"
-	    if $r && $args{relay}{max} && !$args{relay}{nomax};
+	    if $args{relay}{max} && !$args{relay}{nomax};
 	$r->loggrep(qr/^End$/) or die "no relay end"
-	    if $r && $args{relay}{end};
+	    if $args{relay}{end};
 }
 
 sub check_len {

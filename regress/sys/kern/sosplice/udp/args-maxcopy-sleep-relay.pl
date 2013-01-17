@@ -1,5 +1,5 @@
 # test maximum data length then copy packets,
-# client sleeps before and during writing
+# relay sleeps before processing
 
 use strict;
 use warnings;
@@ -9,13 +9,10 @@ my @lengths = (5, 4, 3, 2, 1, 0);
 
 our %args = (
     client => {
-	func => sub { sleep 3; write_datagram(@_); },
-	sleep => 1,
 	lengths => \@lengths,
     },
     relay => {
-	idle => 5,
-	func => sub { relay(@_); relay_copy(@_); },
+	func => sub { sleep 3; relay(@_); relay_copy(@_); },
 	max => 9,
 	big => 1,
 	timeout => 1,

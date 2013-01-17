@@ -11,6 +11,7 @@ our %args = (
     },
     relay => {
 	max => 32117,
+	big => 1,
     },
     len => 32117,
     md5 => "ee338e9693fb2a2ec101bb28935ed123",

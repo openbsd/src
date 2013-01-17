@@ -1,4 +1,4 @@
-# test maximum data length
+# test maximum data length, packet cannot be split at maximum
 
 use strict;
 use warnings;
@@ -11,6 +11,7 @@ our %args = (
     },
     relay => {
 	max => 2,
+	big => 0,
     },
     len => 1,
     lengths => "1",

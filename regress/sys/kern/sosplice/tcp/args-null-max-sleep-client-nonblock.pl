@@ -1,4 +1,6 @@
-# test maximum data length with delay before empty client write with non-blocking relay
+# test maximum data length with empty client write,
+# client sleeps before writing,
+# relay is non-blocking
 
 use strict;
 use warnings;

@@ -11,6 +11,7 @@ our %args = (
     },
     relay => {
 	max => 4,
+	big => 1,
     },
     len => 4,
     lengths => "1 3",

@@ -11,6 +11,7 @@ our %args = (
     relay => {
 	func => sub { relay(@_); sleep(5); },
 	max => 63,
+	big => 1,
     },
     server => {
 	func => sub { alarm(4); read_stream(@_); },

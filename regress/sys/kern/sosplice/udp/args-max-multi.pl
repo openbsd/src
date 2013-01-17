@@ -1,4 +1,4 @@
-# test maximum data length with maximum reached with multiple packets in rcvbuf
+# test maximum data length with maximum reached and multiple packets in rcvbuf
 
 use strict;
 use warnings;
@@ -11,6 +11,7 @@ our %args = (
     relay => {
 	funcs => sub { sleep 3; relay(@_); },
 	max => 4,
+	big => 0,
     },
     len => 3,
     lengths => "1 2",
