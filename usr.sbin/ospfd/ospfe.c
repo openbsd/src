@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.83 2011/07/04 04:34:14 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.84 2013/01/17 10:05:17 markus Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1004,7 +1004,7 @@ orig_rtr_lsa(struct area *area)
 	memcpy(ibuf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
 	    &chksum, sizeof(chksum));
 
-	if (self)
+	if (self && num_links)
 		imsg_compose_event(iev_rde, IMSG_LS_UPD, self->peerid, 0,
 		    -1, buf->buf, ibuf_size(buf));
 	else
