@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.56 2013/01/15 23:18:55 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.57 2013/01/17 20:30:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1565,10 +1565,11 @@ input_exit_osc(struct input_ctx *ictx)
 		server_status_window(ictx->wp->window);
 		break;
 	case 12:
-		screen_set_cursor_colour(ictx->ctx.s, p);
+		if (*p != '?') /* ? is colour request */
+			screen_set_cursor_colour(ictx->ctx.s, p);
 		break;
 	case 112:
-		if (*p == '\0') /* No arguments allowed. */
+		if (*p == '\0') /* no arguments allowed */
 			screen_set_cursor_colour(ictx->ctx.s, "");
 		break;
 	default:

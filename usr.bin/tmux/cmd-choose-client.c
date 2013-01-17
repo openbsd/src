@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.12 2012/08/14 08:51:53 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.13 2013/01/17 20:30:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -44,7 +44,6 @@ const struct cmd_entry cmd_choose_client_entry = {
 
 struct cmd_choose_client_data {
 	struct client	*client;
-	char   		*template;
 };
 
 enum cmd_retval
