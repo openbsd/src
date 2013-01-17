@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.57 2012/10/15 11:11:32 mikeb Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.58 2013/01/17 16:30:10 bluhm Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ struct protosw inetsw[] = {
   0,
   ip_init,	0,		ip_slowtimo,	ip_drain,	ip_sysctl
 },
-{ SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
+{ SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR|PR_SPLICE,
   udp_input,	0,		udp_ctlinput,	ip_ctloutput,
   udp_usrreq,
   udp_init,	0,		0,		0,		udp_sysctl

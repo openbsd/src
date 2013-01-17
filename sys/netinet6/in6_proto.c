@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.63 2012/03/15 14:11:57 mikeb Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.64 2013/01/17 16:30:10 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ struct ip6protosw inet6sw[] = {
   ip6_init,	0,		frag6_slowtimo,	frag6_drain,
   ip6_sysctl,
 },
-{ SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
+{ SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR|PR_SPLICE,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
   udp_usrreq,	0,
   0,		0,		0,
