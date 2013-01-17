@@ -1,6 +1,6 @@
-.\"	$OpenBSD: sosplice.9,v 1.3 2011/07/04 00:34:43 mikeb Exp $
+.\"	$OpenBSD: sosplice.9,v 1.4 2013/01/17 16:04:58 bluhm Exp $
 .\"
-.\" Copyright (c) 2011 Alexander Bluhm <bluhm@openbsd.org>
+.\" Copyright (c) 2011-2013 Alexander Bluhm <bluhm@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2011 $
+.Dd $Mdocdate: January 17 2013 $
 .Dt SOSPLICE 9
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ is not NULL, a
 .Xr timeout 9
 is scheduled to dissolve splicing in the case when no data can be
 transferred for the specified period of time.
-Socket splicing can be invoked from user-land via the
+Socket splicing can be invoked from userland via the
 .Xr setsockopt 2
 system-call at the
 .Dv SOL_SOCKET
@@ -76,6 +76,12 @@ counts the number of bytes spliced so far from this socket.
 .Vt off_t Fa so_splicemax
 specifies the maximum number of bytes to splice from this socket if
 non-zero.
+.It
+.Vt struct timeval Fa so_idletv
+specifies the maximum idle time if non-zero.
+.It
+.Vt struct timeout Fa so_idleto
+provides storage for the kernel timeout if idle time is used.
 .El
 .Pp
 After connecting both sockets,
@@ -112,7 +118,7 @@ For
 the out-of-band property might get lost or a short splice might
 happen.
 In the latter case, less than the given maximum number of bytes are
-transferred and user-land has to cope with this.
+transferred and userland has to cope with this.
 Note that a short splice cannot happen if
 .Fn somove
 was called by
@@ -144,15 +150,28 @@ If that fails and the drain socket cannot send anymore, an
 .Er EPIPE
 error is set on the source socket.
 .Pp
-If the idle timeout was specified and no data was transferred
-for that period of time, splicing gets dissolved and an
+If a maximum splice length was specified and at least this amount
+of data has been received from the drain socket, splicing gets
+dissolved.
+In this case, an
+.Er EFBIG
+error is set on the source socket if the maximum amount of data has
+been transferred.
+Userland can process this error to distinguish the full splice from
+a short splice or to react to the completed maximum splice immediately.
+If an idle timeout was specified and no data has been transferred
+for that period of time, the handler
+.Fn soidle
+dissolves splicing and sets an
 .Er ETIMEDOUT
-error is set on the source socket.
+error on the source socket.
 .Pp
-Finally the socket splicing gets dissolved if the source socket
+The function
+.Fn sounsplice
+is called to dissolve the socket splicing if the source socket
 cannot receive anymore and its receive buffer is empty; or if the
 drain socket cannot send anymore; or if the maximum has been reached;
-or if an error occurred.
+or if an error occurred; or if the idle timeout has fired.
 .Pp
 If the socket buffer flag
 .Dv SB_SPLICE
@@ -167,7 +186,8 @@ While socket splicing is active, any
 .Xr read 2
 from the source socket will block and the wakeup will not be delivered
 to the file descriptor.
-A read event is signaled to user-land after dissolving.
+A read event or a socket error is signaled to userland after
+dissolving.
 .Sh RETURN VALUES
 .Fn sosplice
 returns 0 on success and otherwise the error number.
@@ -223,3 +243,5 @@ The idea for socket splicing originally came from
 and
 .An Alexander Bluhm Aq bluhm@openbsd.org
 implemented it.
+.An Mike Belopuhov Aq mikeb@openbsd.org
+added the timeout feature.
