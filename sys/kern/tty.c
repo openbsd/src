@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.95 2012/04/22 02:26:11 matthew Exp $	*/
+/*	$OpenBSD: tty.c,v 1.96 2013/01/17 21:24:58 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2066,15 +2066,15 @@ ttspeedtab(int speed, const struct speedtab *table)
 void
 ttsetwater(struct tty *tp)
 {
-	int cps, x;
+	int cps, x, omost;
 
 #define CLAMP(x, h, l)	((x) > h ? h : ((x) < l) ? l : (x))
 
 	cps = tp->t_ospeed / 10;
 	tp->t_lowat = x = CLAMP(cps / 2, TTMAXLOWAT, TTMINLOWAT);
 	x += cps;
-	x = CLAMP(x, TTMAXHIWAT, TTMINHIWAT);
-	tp->t_hiwat = roundup(x, CBSIZE);
+	omost = MIN(tp->t_outq.c_cn - 200, tp->t_outq.c_cn);
+	tp->t_hiwat = CLAMP(x, omost, 100);
 #undef	CLAMP
 }
 

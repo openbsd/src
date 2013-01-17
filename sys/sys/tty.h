@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.31 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: tty.h,v 1.32 2013/01/17 21:24:58 deraadt Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -169,8 +169,6 @@ struct itty {
 #define	TTYHOG(tp)	(tp)->t_qlen
 
 #ifdef _KERNEL
-#define	TTMAXHIWAT	roundup(2048, CBSIZE)
-#define	TTMINHIWAT	roundup(100, CBSIZE)
 #define	TTMAXLOWAT	256
 #define	TTMINLOWAT	32
 #endif

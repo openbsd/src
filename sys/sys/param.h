@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.99 2013/01/16 10:38:27 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.100 2013/01/17 21:24:58 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -117,12 +117,6 @@
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
 #define	NODEV	(dev_t)(-1)	/* non-existent device */
 	
-#define	CBLOCK	64		/* Clist block size, must be a power of 2. */
-#define CBQSIZE	(CBLOCK/NBBY)	/* Quote bytes/cblock - can do better. */
-				/* Data chars/clist. */
-#define	CBSIZE	(CBLOCK - sizeof(struct cblock *) - CBQSIZE)
-#define	CROUND	(CBLOCK - 1)	/* Clist rounding. */
-
 /*
  * Constants related to network buffer management.
  * MCLBYTES must be no larger than NBPG (the software page size), and,
