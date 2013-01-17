@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.38 2013/01/16 09:21:50 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.39 2013/01/17 03:37:31 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -369,9 +369,8 @@ sr_raid1_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
-	struct buf		*b;
 	struct sr_chunk		*scp;
-	int			ios, x, i, s, rt;
+	int			ios, chunk, i, s, rt;
 	daddr64_t		blk;
 
 	/* blk and scsi error will be handled by sr_validate_io */
@@ -388,46 +387,16 @@ sr_raid1_rw(struct sr_workunit *wu)
 	wu->swu_io_count = ios;
 
 	for (i = 0; i < ios; i++) {
-		ccb = sr_ccb_get(sd);
-		if (!ccb) {
-			/* should never happen but handle more gracefully */
-			printf("%s: %s: too many ccbs queued\n",
-			    DEVNAME(sd->sd_sc),
-			    sd->sd_meta->ssd_devname);
-			goto bad;
-		}
-		b = &ccb->ccb_buf;
-
-		if (xs->flags & SCSI_POLL) {
-			b->b_flags = 0;
-			b->b_iodone = NULL;
-		} else {
-			b->b_flags = B_CALL;
-			b->b_iodone = sr_raid1_intr;
-		}
-
-		b->b_flags |= B_PHYS;
-		b->b_blkno = blk;
-		b->b_bcount = xs->datalen;
-		b->b_bufsize = xs->datalen;
-		b->b_resid = xs->datalen;
-		b->b_data = xs->data;
-		b->b_error = 0;
-		b->b_proc = curproc;
-		b->b_bq = NULL;
-		ccb->ccb_wu = wu;
-
 		if (xs->flags & SCSI_DATA_IN) {
 			rt = 0;
 ragain:
 			/* interleave reads */
-			x = sd->mds.mdd_raid1.sr1_counter++ %
+			chunk = sd->mds.mdd_raid1.sr1_counter++ %
 			    sd->sd_meta->ssdi.ssd_chunk_no;
-			scp = sd->sd_vol.sv_chunks[x];
+			scp = sd->sd_vol.sv_chunks[chunk];
 			switch (scp->src_meta.scm_status) {
 			case BIOC_SDONLINE:
 			case BIOC_SDSCRUB:
-				b->b_flags |= B_READ;
 				break;
 
 			case BIOC_SDOFFLINE:
@@ -439,26 +408,23 @@ ragain:
 				/* FALLTHROUGH */
 			default:
 				/* volume offline */
-				printf("%s: is offline, can't read\n",
+				printf("%s: is offline, cannot read\n",
 				    DEVNAME(sd->sd_sc));
-				sr_ccb_put(ccb);
 				goto bad;
 			}
 		} else {
 			/* writes go on all working disks */
-			x = i;
-			scp = sd->sd_vol.sv_chunks[x];
+			chunk = i;
+			scp = sd->sd_vol.sv_chunks[chunk];
 			switch (scp->src_meta.scm_status) {
 			case BIOC_SDONLINE:
 			case BIOC_SDSCRUB:
 			case BIOC_SDREBUILD:
-				b->b_flags |= B_WRITE;
 				break;
 
 			case BIOC_SDHOTSPARE: /* should never happen */
 			case BIOC_SDOFFLINE:
 				wu->swu_io_count--;
-				sr_ccb_put(ccb);
 				continue;
 
 			default:
@@ -466,13 +432,46 @@ ragain:
 			}
 
 		}
-		ccb->ccb_target = x;
-		b->b_dev = sd->sd_vol.sv_chunks[x]->src_dev_mm;
-		b->b_vp = sd->sd_vol.sv_chunks[x]->src_vn;
-		if ((b->b_flags & B_READ) == 0)
-			b->b_vp->v_numoutput++;
 
-		LIST_INIT(&b->b_dep);
+		ccb = sr_ccb_get(sd);
+		if (!ccb) {
+			/* should never happen but handle more gracefully */
+			printf("%s: %s: too many ccbs queued\n",
+			    DEVNAME(sd->sd_sc),
+			    sd->sd_meta->ssd_devname);
+			goto bad;
+		}
+
+		if (xs->flags & SCSI_POLL) {
+			ccb->ccb_buf.b_flags = 0;
+			ccb->ccb_buf.b_iodone = NULL;
+		} else {
+			ccb->ccb_buf.b_flags = B_CALL;
+			ccb->ccb_buf.b_iodone = sr_raid1_intr;
+		}
+
+		if (xs->flags & SCSI_DATA_IN)
+			ccb->ccb_buf.b_flags |= B_READ;
+		else
+			ccb->ccb_buf.b_flags |= B_WRITE;
+	
+		ccb->ccb_buf.b_flags |= B_PHYS;
+		ccb->ccb_buf.b_blkno = blk;
+		ccb->ccb_buf.b_bcount = xs->datalen;
+		ccb->ccb_buf.b_bufsize = xs->datalen;
+		ccb->ccb_buf.b_resid = xs->datalen;
+		ccb->ccb_buf.b_data = xs->data;
+		ccb->ccb_buf.b_error = 0;
+		ccb->ccb_buf.b_proc = curproc;
+		ccb->ccb_buf.b_bq = NULL;
+		ccb->ccb_wu = wu;
+		ccb->ccb_target = chunk;
+		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[chunk]->src_dev_mm;
+		ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[chunk]->src_vn;
+		if ((ccb->ccb_buf.b_flags & B_READ) == 0)
+			ccb->ccb_buf.b_vp->v_numoutput++;
+
+		LIST_INIT(&ccb->ccb_buf.b_dep);
 
 		if (wu->swu_cb_active == 1)
 			panic("%s: sr_raid1_rw", DEVNAME(sd->sd_sc));
@@ -481,8 +480,8 @@ ragain:
 		DNPRINTF(SR_D_DIS, "%s: %s: sr_raid1: b_bcount: %d "
 		    "b_blkno: %x b_flags 0x%0x b_data %p\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-		    b->b_bcount, b->b_blkno,
-		    b->b_flags, b->b_data);
+		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
+		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
 	}
 
 	s = splbio();
