@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.151 2012/09/28 16:06:20 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.152 2013/01/17 11:43:06 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -619,6 +619,15 @@ udp_input(struct mbuf *m, ...)
 			return;
 		}
 	}
+
+#if NPF > 0
+	/*
+	 * The statekey has finished finding the inp, it is no longer needed.
+	 * If UDP socket splicing is used, the statekey will confuse pf when
+	 * the same packet goes through ip_output().  So reset the statekey.
+	 */
+	m->m_pkthdr.pf.statekey = NULL;
+#endif
 
 #ifdef IPSEC
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
