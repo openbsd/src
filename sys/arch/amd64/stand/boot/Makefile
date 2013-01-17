@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2013/01/17 12:25:11 jsing Exp $
+#	$OpenBSD: Makefile,v 1.19 2013/01/17 12:37:44 jsing Exp $
 
 MAN?=	boot.8
 MLINKS?=boot.8 boot.conf.5
@@ -53,6 +53,9 @@ boot.bin: boot
 	objcopy -v -O binary ${PROG} boot.bin
 
 CLEANFILES+= ${PROG}.new
+
+${.CURDIR}/srt0.S: assym.h
+${SADIR}/libsa/gidt.S: assym.h
 
 ${PROG}: $(OBJS)
 	$(LD) $(LDFLAGS) -o ${PROG}.new $(OBJS)

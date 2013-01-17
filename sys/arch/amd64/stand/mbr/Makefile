@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2013/01/17 12:25:11 jsing Exp $
+#	$OpenBSD: Makefile,v 1.8 2013/01/17 12:37:44 jsing Exp $
 #
 
 S=	${.CURDIR}/../../../..
@@ -20,6 +20,8 @@ INSTALL_STRIP=
 
 # Uncomment this to make mbr talk to a serial port.
 #CPPFLAGS+=-DSERIAL=0
+
+${.CURDIR}/mbr.S: assym.h
 
 ${PROG}: $(OBJS)
 	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS)

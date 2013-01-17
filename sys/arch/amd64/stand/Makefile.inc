@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2012/09/12 09:19:54 haesbaert Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2013/01/17 12:37:44 jsing Exp $
 
 CFLAGS=${DEBUG} ${COPTS} -Os -Wall -Werror
 CFLAGS+=	-fno-stack-protector
@@ -22,7 +22,7 @@ HEAP_LIMIT=0x90000
 BOOTREL=0x60000
 BOOTMAGIC=0xc001d00d
 #ROM_SIZE=32768
-CLEANFILES+=	machine
+CLEANFILES+=	assym.h machine
 
 .if empty(DEBUGFLAGS:M-D_TEST)
 SACFLAGS+=-nostdinc -fno-builtin -fpack-struct
@@ -31,23 +31,11 @@ SACFLAGS+=-nostdinc -fno-builtin -fpack-struct
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ X$(S) = X -o -h machine ] || ln -s $(S)/arch/amd64/include machine)
-.endif
 
-
-.if exists(${SADIR}/etc/assym.h)
-CPPFLAGS+=-I${SADIR}/etc
-.else
-CPPFLAGS+=-I${SADIR}/etc/${__objdir}
-.endif
-.if exists(${SADIR}/libsa/libsa.a)
-LIBSA=${SADIR}/libsa/libsa.a
-.else
-LIBSA=${SADIR}/libsa/${__objdir}/libsa.a
-.endif
-.if exists(${SADIR}/libz/libz.a)
-LIBZ=${SADIR}/libz/libz.a
-.else
-LIBZ=${SADIR}/libz/${__objdir}/libz.a
+assym.h: ${S}/kern/genassym.sh ${SADIR}/etc/genassym.cf
+	sh ${S}/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${SADIR}/etc/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 .endif
 
 # NO_NET=no_net

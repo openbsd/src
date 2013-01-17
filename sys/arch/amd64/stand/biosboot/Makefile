@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2013/01/17 12:25:11 jsing Exp $
+#	$OpenBSD: Makefile,v 1.8 2013/01/17 12:37:44 jsing Exp $
 
 MAN=	biosboot.8
 
@@ -12,6 +12,8 @@ LD=ld
 LDFLAGS=-nostdlib -Ttext 0 -N -x -Bstatic -nopie
 LDFLAGS+=-melf_i386 -L/usr/libdata 
 INSTALL_STRIP=
+
+${.CURDIR}/biosboot.S: assym.h
 
 ${PROG}: $(OBJS)
 	@rm -f $(PROG)

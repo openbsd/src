@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2013/01/17 12:25:11 jsing Exp $
+#	$OpenBSD: Makefile,v 1.15 2013/01/17 12:37:44 jsing Exp $
 
 MAN=	pxeboot.8
 
@@ -43,6 +43,10 @@ SRCS+=	divdi3.c moddi3.c qdivrem.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
+
+${.CURDIR}/srt0.S: assym.h
+${SADIR}/libsa/gidt.S: assym.h
+${SADIR}/libsa/pxe_call.S: assym.h
 
 ${PROG}: $(OBJS)
 	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS)
