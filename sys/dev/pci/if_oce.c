@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.68 2012/12/10 17:36:10 mikeb Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.69 2013/01/17 00:48:04 henning Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -3079,8 +3079,8 @@ oce_config_rss(struct oce_softc *sc, int enable)
 	/*
 	 * Initialize the RSS CPU indirection table.
 	 *
-	 * The table is used to choose the queue to place incomming packets.
-	 * Incomming packets are hashed.  The lowest bits in the hash result
+	 * The table is used to choose the queue to place incoming packets.
+	 * Incoming packets are hashed.  The lowest bits in the hash result
 	 * are used as the index into the CPU indirection table.
 	 * Each entry in the table contains the RSS CPU-ID returned by the NIC
 	 * create.  Based on the CPU ID, the receive completion is routed to

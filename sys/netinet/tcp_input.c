@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.253 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.254 2013/01/17 00:48:04 henning Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ do { \
  * Macro to compute ACK transmission behavior.  Delay the ACK unless
  * we have already delayed an ACK (must send an ACK every two segments).
  * We also ACK immediately if we received a PUSH and the ACK-on-PUSH
- * option is enabled or when the packet is comming from a loopback
+ * option is enabled or when the packet is coming from a loopback
  * interface.
  */
 #define	TCP_SETUP_ACK(tp, tiflags, m) \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_llc.h,v 1.7 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_llc.h,v 1.8 2013/01/17 00:48:04 henning Exp $	*/
 /*	$NetBSD: if_llc.h,v 1.6 1995/03/08 02:56:57 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  * IEEE 802.2 Link Level Control headers, for use in conjunction with
  * 802.{3,4,5} media access control methods.
  *
- * Headers here do not use bit fields due to shortcommings in many
+ * Headers here do not use bit fields due to shortcomings in many
  * compilers.
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.375 2012/12/29 14:53:06 markus Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.376 2013/01/17 00:48:04 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1237,7 +1237,7 @@ struct pf_pdesc {
 	struct pf_addr	 nsaddr;	/* src address after NAT */
 	struct pf_addr	 ndaddr;	/* dst address after NAT */
 
-	struct pfi_kif	*kif;		/* incomming interface */
+	struct pfi_kif	*kif;		/* incoming interface */
 	struct mbuf	*m;		/* mbuf containing the packet */
 	struct ether_header
 			*eh;
