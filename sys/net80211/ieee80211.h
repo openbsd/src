@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.49 2009/01/28 18:55:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.50 2013/01/17 02:51:56 claudio Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -162,6 +162,9 @@ struct ieee80211_htframe_addr4 {	/* 11n */
 #define	IEEE80211_FC1_PROTECTED			0x40
 #define	IEEE80211_FC1_WEP			0x40	/* pre-RSNA compat */
 #define	IEEE80211_FC1_ORDER			0x80
+#define IEEE80211_FC1_BITS					\
+	"\20\03MORE_FRAG\04RETRY\05PWR_MGT\06MORE_DATA"		\
+	"\07PROTECTED\08ORDER"
 
 /*
  * Sequence Control field (see 7.1.3.4).
