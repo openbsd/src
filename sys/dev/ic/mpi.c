@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.180 2013/01/17 02:39:05 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.181 2013/01/17 02:44:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -177,8 +177,10 @@ void		mpi_refresh_sensors(void *);
 #define mpi_write_db(s, v)	mpi_write((s), MPI_DOORBELL, (v))
 #define mpi_read_intr(s)	mpi_read((s), MPI_INTR_STATUS)
 #define mpi_write_intr(s, v)	mpi_write((s), MPI_INTR_STATUS, (v))
-#define mpi_pop_reply(s)	mpi_read((s), MPI_REPLY_QUEUE)
-#define mpi_push_reply_db(s, v)	mpi_write((s), MPI_REPLY_QUEUE, (v))
+#define mpi_pop_reply(s)	bus_space_read_4((s)->sc_iot, (s)->sc_ioh, \
+				    MPI_REPLY_QUEUE)
+#define mpi_push_reply_db(s, v) bus_space_write_4((s)->sc_iot, (s)->sc_ioh, \
+				    MPI_REPLY_QUEUE, (v))	
 
 #define mpi_wait_db_int(s)	mpi_wait_ne((s), MPI_INTR_STATUS, \
 				    MPI_INTR_STATUS_DOORBELL, 0)
@@ -909,9 +911,6 @@ mpi_intr(void *arg)
 	u_int32_t			reg;
 	int				rv = 0;
 
-	if ((mpi_read_intr(sc) & MPI_INTR_STATUS_REPLY) == 0)
-		return (rv);
-
 	while ((reg = mpi_pop_reply(sc)) != 0xffffffff) {
 		mpi_reply(sc, reg);
 		rv = 1;
@@ -1199,7 +1198,8 @@ mpi_start(struct mpi_softc *sc, struct mpi_ccb *ccb)
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	ccb->ccb_state = MPI_CCB_QUEUED;
-	mpi_write(sc, MPI_REQ_QUEUE, ccb->ccb_cmd_dva);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	    MPI_REQ_QUEUE, ccb->ccb_cmd_dva);
 }
 
 int
