@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1666 2013/01/16 06:15:58 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1667 2013/01/17 12:50:34 reyk Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -20552,12 +20552,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Virtual EHCI",
 	},
 	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_UHCI,
+	    "Virtual UHCI",
+	},
+	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PCI,
 	    "Virtual PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PCIE,
 	    "Virtual PCIE-PCIE",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET_3,
+	    "Virtual VMXNET3",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_PVSCSI,
+	    "Virtual PVSCSI",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_MACHINE,
