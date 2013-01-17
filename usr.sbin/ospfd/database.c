@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.29 2011/05/09 12:24:41 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.30 2013/01/17 08:58:53 markus Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -239,7 +239,6 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 				log_warnx("recv_db_description: invalid "
 				    "seq num, mine %x his %x",
 				    nbr->dd_seq_num, ntohl(dd_hdr.dd_seq_num));
-				nbr_fsm(nbr, NBR_EVT_SEQ_NUM_MIS);
 				return;
 			}
 			nbr->dd_seq_num++;
