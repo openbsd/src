@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.47 2013/01/17 00:11:24 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.48 2013/01/17 01:28:01 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1163,7 +1163,7 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 	struct hibernate_disk_chunk *chunks;
 	union hibernate_info local_hiber_info;
 	paddr_t image_cur = global_pig_start;
-	int i, *fchunks;
+	short i, *fchunks;
 	char *pva = (char *)hiber_info->piglet_va;
 	struct hibernate_zlib_state *hibernate_state;
 
@@ -1171,7 +1171,7 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 
 	/* Mask off based on arch-specific piglet page size */
 	pva = (char *)((paddr_t)pva & (PIGLET_PAGE_MASK));
-	fchunks = (int *)(pva + (4 * PAGE_SIZE));
+	fchunks = (short *)(pva + (4 * PAGE_SIZE));
 
 	chunks = (struct hibernate_disk_chunk *)(pva +  HIBERNATE_CHUNK_SIZE);
 
@@ -1570,8 +1570,7 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 	daddr_t blkctr;
 	size_t processed, compressed_size, read_size;
 	int overlap, found, nchunks, nochunks = 0, nfchunks = 0, npchunks = 0;
-	int *ochunks, *pchunks, *fchunks;
-	int i, j;
+	short *ochunks, *pchunks, *fchunks, i, j;
 	vaddr_t tempva = (vaddr_t)NULL, hibernate_fchunk_area = (vaddr_t)NULL;
 
 	global_pig_start = pig_start;
@@ -1593,16 +1592,16 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 		return (1);
 
 	/* Final output chunk ordering VA */
-	fchunks = (int *)hibernate_fchunk_area;
+	fchunks = (short *)hibernate_fchunk_area;
 
 	/* Piglet chunk ordering VA */
-	pchunks = (int *)(hibernate_fchunk_area + (PAGE_SIZE));
+	pchunks = (short *)(hibernate_fchunk_area + (8*PAGE_SIZE));
 
 	/* Final chunk ordering VA */
-	ochunks = (int *)(hibernate_fchunk_area + (2*PAGE_SIZE));
+	ochunks = (short *)(hibernate_fchunk_area + (16*PAGE_SIZE));
 
 	/* Map the chunk ordering region */
-	for(i=0; i<3 ; i++) {
+	for(i=0; i<24 ; i++) {
 		pmap_kenter_pa(hibernate_fchunk_area + (i*PAGE_SIZE),
 			piglet_base + ((4+i)*PAGE_SIZE), VM_PROT_ALL);
 		pmap_update(pmap_kernel());
