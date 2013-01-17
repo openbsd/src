@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.19 2010/05/26 13:56:08 nicm Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.20 2013/01/17 09:02:22 markus Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -164,7 +164,9 @@ ls_req_list_free(struct nbr *nbr, struct lsa_entry *le)
 		start_ls_req_tx_timer(nbr);
 	}
 
-	if (ls_req_list_empty(nbr) && nbr->dd_pending == 0)
+	/* we might not have received all DDs and are still in XCHNG */
+	if (ls_req_list_empty(nbr) && nbr->dd_pending == 0 &&
+	    nbr->state != NBR_STA_XCHNG)
 		nbr_fsm(nbr, NBR_EVT_LOAD_DONE);
 }
 
