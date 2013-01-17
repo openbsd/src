@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.11 2012/07/13 14:45:24 halex Exp $ */
+/* $OpenBSD: cu.c,v 1.12 2013/01/17 11:15:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -42,6 +42,7 @@ struct termios		 saved_tio;
 struct bufferevent	*input_ev;
 struct bufferevent	*output_ev;
 int			 line_fd;
+struct termios		 line_tio;
 struct bufferevent	*line_ev;
 struct event		 sigterm_ev;
 struct event		 sighup_ev;
@@ -120,7 +121,8 @@ main(int argc, char **argv)
 		err(1, "open(\"%s\")", line);
 	if (ioctl(line_fd, TIOCEXCL) != 0)
 		err(1, "ioctl(TIOCEXCL)");
-
+	if (tcgetattr(line_fd, &line_tio) != 0)
+		err(1, "tcgetattr");
 	if (set_line(speed) != 0)
 		err(1, "tcsetattr");
 
@@ -206,11 +208,12 @@ set_line(int speed)
 {
 	struct termios	 tio;
 
-	cfmakeraw(&tio);
-	tio.c_iflag = 0;
-	tio.c_oflag = 0;
-	tio.c_lflag = 0;
-	tio.c_cflag = CREAD|CS8|CLOCAL;
+	memcpy(&tio, &line_tio, sizeof(tio));
+	tio.c_iflag &= ~(ISTRIP|ICRNL);
+	tio.c_oflag &= ~OPOST;
+	tio.c_lflag &= ~(ICANON|ISIG|IEXTEN|ECHO);
+	tio.c_cflag &= ~(CSIZE|PARENB);
+	tio.c_cflag |= CREAD|CS8|CLOCAL;
 	tio.c_cc[VMIN] = 1;
 	tio.c_cc[VTIME] = 0;
 	cfsetspeed(&tio, speed);
