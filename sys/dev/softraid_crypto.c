@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.85 2013/01/16 06:42:22 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.86 2013/01/18 23:22:18 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -96,6 +96,7 @@ int		sr_crypto_write(struct cryptop *);
 int		sr_crypto_rw(struct sr_workunit *);
 int		sr_crypto_rw2(struct sr_workunit *, struct sr_crypto_wu *);
 void		sr_crypto_intr(struct buf *);
+void		sr_crypto_done(struct sr_workunit *);
 int		sr_crypto_read(struct cryptop *);
 void		sr_crypto_finish_io(struct sr_workunit *);
 void		sr_crypto_calculate_check_hmac_sha1(u_int8_t *, int,
@@ -130,6 +131,7 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 	sd->sd_meta_opt_handler = sr_crypto_meta_opt_handler;
 	sd->sd_scsi_rw = sr_crypto_rw;
 	sd->sd_scsi_intr = sr_crypto_intr;
+	sd->sd_scsi_done = sr_crypto_done;
 }
 
 int
@@ -1232,53 +1234,19 @@ sr_crypto_rw2(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 
 	blk += sd->sd_meta->ssd_data_offset;
 
-	wu->swu_io_count = 1;
-
-	ccb = sr_ccb_get(sd);
+	ccb = sr_ccb_rw(sd, 0, blk, xs->datalen, xs->data, xs->flags, 0);
 	if (!ccb) {
 		/* should never happen but handle more gracefully */
 		printf("%s: %s: too many ccbs queued\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
 		goto bad;
 	}
-
-	ccb->ccb_buf.b_flags = B_CALL | B_PHYS;
-	ccb->ccb_buf.b_iodone = sr_crypto_intr;
-	ccb->ccb_buf.b_blkno = blk;
-	ccb->ccb_buf.b_bcount = xs->datalen;
-	ccb->ccb_buf.b_bufsize = xs->datalen;
-	ccb->ccb_buf.b_resid = xs->datalen;
-
-	if (xs->flags & SCSI_DATA_IN) {
-		ccb->ccb_buf.b_flags |= B_READ;
-		ccb->ccb_buf.b_data = xs->data;
-	} else {
+	if (!ISSET(xs->flags, SCSI_DATA_IN)) {
 		uio = crwu->cr_crp->crp_buf;
-		ccb->ccb_buf.b_flags |= B_WRITE;
 		ccb->ccb_buf.b_data = uio->uio_iov->iov_base;
 		ccb->ccb_opaque = crwu;
 	}
-
-	ccb->ccb_buf.b_error = 0;
-	ccb->ccb_buf.b_proc = curproc;
-	ccb->ccb_wu = wu;
-	ccb->ccb_target = 0;
-	ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[0]->src_dev_mm;
-	ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[0]->src_vn;
-	if ((ccb->ccb_buf.b_flags & B_READ) == 0)
-		ccb->ccb_buf.b_vp->v_numoutput++;
-
-	LIST_INIT(&ccb->ccb_buf.b_dep);
-
-	if (wu->swu_cb_active == 1)
-		panic("%s: sr_crypto_rw2", DEVNAME(sd->sd_sc));
-	TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
-
-	DNPRINTF(SR_D_DIS, "%s: %s: sr_crypto_rw2: b_bcount: %d "
-	    "b_blkno: %x b_flags 0x%0x b_data %p\n",
-	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
-	    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+	sr_wu_enqueue_ccb(wu, ccb);
 
 	s = splbio();
 
@@ -1301,87 +1269,50 @@ void
 sr_crypto_intr(struct buf *bp)
 {
 	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu, *wup;
+	struct sr_workunit	*wu = ccb->ccb_wu;
+#ifdef SR_DEBUG
 	struct sr_discipline	*sd = wu->swu_dis;
-	struct scsi_xfer	*xs = wu->swu_xs;
-	struct sr_softc		*sc = sd->sd_sc;
-	struct sr_crypto_wu	*crwu;
-	int			s, s2, pend;
+#endif
+	int			s;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr bp: %x xs: %x\n",
-	    DEVNAME(sc), bp, wu->swu_xs);
-
-	DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr: b_bcount: %d b_resid: %d"
-	    " b_flags: 0x%0x\n", DEVNAME(sc), ccb->ccb_buf.b_bcount,
-	    ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags);
+	DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr bp %x xs %x\n",
+	    DEVNAME(sd->sd_sc), bp, wu->swu_xs);
 
 	s = splbio();
+	sr_ccb_done(ccb);
+	sr_wu_done(wu);
+	splx(s);
+}
 
-	if (ccb->ccb_buf.b_flags & B_ERROR) {
-		printf("%s: i/o error on block %lld\n", DEVNAME(sc),
-		    ccb->ccb_buf.b_blkno);
-		wu->swu_ios_failed++;
-		ccb->ccb_state = SR_CCB_FAILED;
-		if (ccb->ccb_target != -1)
-			sd->sd_set_chunk_state(sd, ccb->ccb_target,
-			    BIOC_SDOFFLINE);
-		else
-			panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
-	} else {
-		ccb->ccb_state = SR_CCB_OK;
-		wu->swu_ios_succeeded++;
-	}
-	wu->swu_ios_complete++;
+void
+sr_crypto_done(struct sr_workunit *wu)
+{
+	struct scsi_xfer	*xs = wu->swu_xs;
+	struct sr_crypto_wu	*crwu;
+	struct sr_ccb		*ccb;
+	int			s;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr: comp: %d count: %d\n",
-	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count);
-
-	if (wu->swu_ios_complete == wu->swu_io_count) {
-		if (wu->swu_ios_failed == wu->swu_ios_complete)
-			xs->error = XS_DRIVER_STUFFUP;
-		else
-			xs->error = XS_NOERROR;
-
-		pend = 0;
-		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
-			if (wu == wup) {
-				TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
-				pend = 1;
-
-				if (wu->swu_collider) {
-					wu->swu_collider->swu_state =
-					    SR_WU_INPROGRESS;
-					TAILQ_REMOVE(&sd->sd_wu_defq,
-					    wu->swu_collider, swu_link);
-					sr_raid_startwu(wu->swu_collider);
-				}
-				break;
-			}
-		}
-
-		if (!pend)
-			printf("%s: wu: %p not on pending queue\n",
-			    DEVNAME(sc), wu);
-
-		if ((xs->flags & SCSI_DATA_IN) && (xs->error == XS_NOERROR)) {
-			/* only fails on implementation error */
-			crwu = sr_crypto_wu_get(wu, 0);
-			if (crwu == NULL)
-				panic("sr_crypto_intr: no wu");
-			crwu->cr_crp->crp_callback = sr_crypto_read;
-			ccb->ccb_opaque = crwu;
-			DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr: crypto_invoke "
-			    "%p\n", DEVNAME(sc), crwu->cr_crp);
-			s2 = splvm();
-			crypto_invoke(crwu->cr_crp);
-			splx(s2);
-			goto done;
-		}
-
-		sr_crypto_finish_io(wu);
+	/* If this was a successful read, initiate decryption of the data. */
+	if (ISSET(xs->flags, SCSI_DATA_IN) && xs->error == XS_NOERROR) {
+		/* only fails on implementation error */
+		crwu = sr_crypto_wu_get(wu, 0);
+		if (crwu == NULL)
+			panic("sr_crypto_intr: no wu");
+		crwu->cr_crp->crp_callback = sr_crypto_read;
+		ccb = TAILQ_FIRST(&wu->swu_ccb);
+		if (ccb == NULL)
+			panic("sr_crypto_done: no ccbs on workunit");
+		ccb->ccb_opaque = crwu;
+		DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr: crypto_invoke %p\n",
+		    DEVNAME(wu->swu_dis->sd_sc), crwu->cr_crp);
+		s = splvm();
+		crypto_invoke(crwu->cr_crp);
+		splx(s);
+		return;
 	}
 
-done:
+	s = splbio();
+	sr_crypto_finish_io(wu);
 	splx(s);
 }
 
