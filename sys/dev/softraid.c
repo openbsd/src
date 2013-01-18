@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.285 2013/01/18 01:19:38 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.286 2013/01/18 09:39:03 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -139,6 +139,7 @@ int			sr_chunk_in_use(struct sr_softc *, dev_t);
 void			sr_startwu_callback(void *, void *);
 int			sr_rw(struct sr_softc *, dev_t, char *, size_t,
 			    daddr64_t, long);
+void			sr_wu_done_callback(void *, void *);
 
 /* don't include these on RAMDISK */
 #ifndef SMALL_KERNEL
@@ -2225,6 +2226,60 @@ sr_wu_release_ccbs(struct sr_workunit *wu)
 }
 
 void
+sr_wu_done(struct sr_workunit *wu)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+
+	DNPRINTF(SR_D_INTR, "%s: sr_wu_done completed %d count %d\n",
+	    DEVNAME(sd->sd_sc), wu->swu_ios_complete, wu->swu_io_count);
+
+	if (wu->swu_ios_complete < wu->swu_io_count)
+		return;
+
+	workq_queue_task(sd->sd_workq, &wu->swu_wqt, 0,
+	    sr_wu_done_callback, sd, wu);
+}
+
+void
+sr_wu_done_callback(void *arg1, void *arg2)
+{
+	struct sr_discipline	*sd = (struct sr_discipline *)arg1;
+	struct sr_workunit	*wu = (struct sr_workunit *)arg2;
+	struct scsi_xfer	*xs = wu->swu_xs;
+	struct sr_workunit	*wup;
+
+	if (wu->swu_ios_failed)
+		xs->error = XS_DRIVER_STUFFUP;
+	else
+		xs->error = XS_NOERROR;
+
+	TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
+		if (wup == wu)
+			break;
+
+	if (wup == NULL)
+		panic("%s: wu %p not on pending queue",
+		    DEVNAME(sd->sd_sc), wu);
+
+	TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
+
+	if (wu->swu_collider) {
+		wu->swu_collider->swu_state = SR_WU_INPROGRESS;
+		TAILQ_REMOVE(&sd->sd_wu_defq, wu->swu_collider, swu_link);
+		sr_raid_startwu(wu->swu_collider);
+	}
+
+	/*
+	 * If a discipline provides its own sd_scsi_done function, then it
+	 * is responsible for calling sr_scsi_done() once I/O is complete.
+	 */
+	if (sd->sd_scsi_done)
+		sd->sd_scsi_done(wu);
+	else
+		sr_scsi_done(sd, xs);
+}
+
+void
 sr_scsi_done(struct sr_discipline *sd, struct scsi_xfer *xs)
 {
 	DNPRINTF(SR_D_DIS, "%s: sr_scsi_done: xs %p\n", DEVNAME(sd->sd_sc), xs);
@@ -3826,6 +3881,7 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	sd->sd_scsi_sync = sr_raid_sync;
 	sd->sd_scsi_rw = NULL;
 	sd->sd_scsi_intr = NULL;
+	sd->sd_scsi_done = NULL;
 	sd->sd_set_chunk_state = sr_set_chunk_state;
 	sd->sd_set_vol_state = sr_set_vol_state;
 	sd->sd_start_discipline = NULL;

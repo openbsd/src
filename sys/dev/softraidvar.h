@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.125 2013/01/16 07:07:38 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.126 2013/01/18 09:39:03 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -598,6 +598,7 @@ struct sr_discipline {
 	struct scsi_sense_data	sd_scsi_sense;
 	int			(*sd_scsi_rw)(struct sr_workunit *);
 	void			(*sd_scsi_intr)(struct buf *);
+	void			(*sd_scsi_done)(struct sr_workunit *);
 	int			(*sd_scsi_sync)(struct sr_workunit *);
 	int			(*sd_scsi_tur)(struct sr_workunit *);
 	int			(*sd_scsi_start_stop)(struct sr_workunit *);
@@ -659,6 +660,7 @@ void			sr_wu_init(struct sr_discipline *,
 void			sr_wu_enqueue_ccb(struct sr_workunit *,
 			    struct sr_ccb *);
 void			sr_wu_release_ccbs(struct sr_workunit *);
+void			sr_wu_done(struct sr_workunit *);
 
 /* misc functions */
 void			sr_info(struct sr_softc *, const char *, ...);
