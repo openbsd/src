@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.7 2013/01/17 02:43:50 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.8 2013/01/18 02:09:50 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -217,7 +217,7 @@ sr_concat_intr(struct buf *bp)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
-	int			s, pend;
+	int			s;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
 	    DEVNAME(sc), bp, xs);
@@ -231,33 +231,28 @@ sr_concat_intr(struct buf *bp)
 	    wu->swu_ios_failed);
 
 	if (wu->swu_ios_complete >= wu->swu_io_count) {
-		if (wu->swu_ios_failed)
-			goto bad;
-
-		xs->error = XS_NOERROR;
-
-		pend = 0;
-		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
-			if (wu == wup) {
-				/* wu on pendq, remove */
-				TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
-				pend = 1;
-
-				if (wu->swu_collider) {
-					/* restart deferred wu */
-					wu->swu_collider->swu_state =
-					    SR_WU_INPROGRESS;
-					TAILQ_REMOVE(&sd->sd_wu_defq,
-					    wu->swu_collider, swu_link);
-					sr_raid_startwu(wu->swu_collider);
-				}
+		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
+			if (wup == wu)
 				break;
-			}
+
+		if (wup == NULL)
+			panic("%s: wu %p not on pending queue\n",
+			    DEVNAME(sc), wu);
+			
+		TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
+
+		if (wu->swu_collider) {
+			/* restart deferred wu */
+			wu->swu_collider->swu_state = SR_WU_INPROGRESS;
+			TAILQ_REMOVE(&sd->sd_wu_defq,
+			    wu->swu_collider, swu_link);
+			sr_raid_startwu(wu->swu_collider);
 		}
 
-		if (!pend)
-			printf("%s: wu: %p not on pending queue\n",
-			    DEVNAME(sc), wu);
+		if (wu->swu_ios_failed)
+			xs->error = XS_DRIVER_STUFFUP;
+		else
+			xs->error = XS_NOERROR;
 
 		sr_scsi_done(sd, xs);
 
@@ -265,10 +260,5 @@ sr_concat_intr(struct buf *bp)
 			wakeup(sd);
 	}
 
-	splx(s);
-	return;
-bad:
-	xs->error = XS_DRIVER_STUFFUP;
-	sr_scsi_done(sd, xs);
 	splx(s);
 }
