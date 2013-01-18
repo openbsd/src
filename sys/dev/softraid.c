@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.286 2013/01/18 09:39:03 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.287 2013/01/18 09:56:52 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2230,8 +2230,9 @@ sr_wu_done(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_wu_done completed %d count %d\n",
-	    DEVNAME(sd->sd_sc), wu->swu_ios_complete, wu->swu_io_count);
+	DNPRINTF(SR_D_INTR, "%s: sr_wu_done count %d completed %d failed %d\n",
+	    DEVNAME(sd->sd_sc), wu->swu_io_count, wu->swu_ios_complete,
+	    wu->swu_ios_failed);
 
 	if (wu->swu_ios_complete < wu->swu_io_count)
 		return;
@@ -2247,11 +2248,6 @@ sr_wu_done_callback(void *arg1, void *arg2)
 	struct sr_workunit	*wu = (struct sr_workunit *)arg2;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_workunit	*wup;
-
-	if (wu->swu_ios_failed)
-		xs->error = XS_DRIVER_STUFFUP;
-	else
-		xs->error = XS_NOERROR;
 
 	TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
 		if (wup == wu)
@@ -2269,14 +2265,24 @@ sr_wu_done_callback(void *arg1, void *arg2)
 		sr_raid_startwu(wu->swu_collider);
 	}
 
+	if (wu->swu_ios_failed)
+		xs->error = XS_DRIVER_STUFFUP;
+	else
+		xs->error = XS_NOERROR;
+
 	/*
 	 * If a discipline provides its own sd_scsi_done function, then it
 	 * is responsible for calling sr_scsi_done() once I/O is complete.
 	 */
-	if (sd->sd_scsi_done)
+	if (sd->sd_scsi_done) {
 		sd->sd_scsi_done(wu);
-	else
-		sr_scsi_done(sd, xs);
+		return;
+	}
+
+	sr_scsi_done(sd, xs);
+
+	if (sd->sd_sync && sd->sd_wu_pending == 0)
+		wakeup(sd);
 }
 
 void
