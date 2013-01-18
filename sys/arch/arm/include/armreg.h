@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.10 2011/09/20 22:02:13 miod Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.11 2013/01/18 00:20:20 patrick Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -200,12 +200,26 @@
 #define CPU_ID_IXP425_533	0x690541c0
 #define CPU_ID_IXP425_400	0x690541d0
 #define CPU_ID_IXP425_266	0x690541f0
+#define CPU_ID_CORTEX_A5	0x410fc050
+#define CPU_ID_CORTEX_A5_MASK	0xff0ffff0
+#define CPU_ID_CORTEX_A7	0x410fc070
+#define CPU_ID_CORTEX_A7_MASK	0xff0ffff0
+#define CPU_ID_CORTEX_A8_R1	0x411fc080
+#define CPU_ID_CORTEX_A8_R2	0x412fc080
+#define CPU_ID_CORTEX_A8_R3	0x413fc080
 #define CPU_ID_CORTEX_A8	0x410fc080
-#define CPU_ID_CORTEX_A8_MASK	0xff0fffe0
-#define CPU_ID_OMAP3430		0x411fc080
-#define CPU_ID_OMAP3530		0x411fc090      /* XXX */
-#define	CPU_ID_OMAP3630		0x413fc080
-
+#define CPU_ID_CORTEX_A8_MASK	0xff0ffff0
+#define CPU_ID_CORTEX_A9	0x410fc090
+#define CPU_ID_CORTEX_A9_R1	0x411fc090
+#define CPU_ID_CORTEX_A9_R2	0x412fc090
+#define CPU_ID_CORTEX_A9_R3	0x413fc090
+#define CPU_ID_CORTEX_A9_R4	0x414fc090
+#define CPU_ID_CORTEX_A9_MASK	0xff0ffff0
+#define CPU_ID_CORTEX_A15	0x410fc0f0
+#define CPU_ID_CORTEX_A15_R1	0x411fc0f0
+#define CPU_ID_CORTEX_A15_R2	0x412fc0f0
+#define CPU_ID_CORTEX_A15_R3	0x413fc0f0
+#define CPU_ID_CORTEX_A15_MASK	0xff0ffff0
 
 
 /* ARM3-specific coprocessor 15 registers */

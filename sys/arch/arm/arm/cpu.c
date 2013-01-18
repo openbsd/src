@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.14 2011/09/20 22:02:10 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.15 2013/01/18 00:20:20 patrick Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -296,11 +296,37 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S R1",
 	  generic_steppings },
 
-	{ CPU_ID_OMAP3430,	CPU_CLASS_ARMv7,	"ARM OMAP3[45]30",
+	{ CPU_ID_CORTEX_A5,	CPU_CLASS_ARMv7,	"ARM Cortex A5",
 	  generic_steppings },
-	{ CPU_ID_OMAP3530,	CPU_CLASS_ARMv7,	"ARM OMAP3530",
+	{ CPU_ID_CORTEX_A7,	CPU_CLASS_ARMv7,	"ARM Cortex A7",
 	  generic_steppings },
-	{ CPU_ID_OMAP3630,	CPU_CLASS_ARMv7,	"ARM OMAP3630/DM3730",
+	{ CPU_ID_CORTEX_A8,	CPU_CLASS_ARMv7,	"ARM Cortex A8",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A8,	CPU_CLASS_ARMv7,	"ARM Cortex A8",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A8_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A8 R1",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A8_R2,	CPU_CLASS_ARMv7,	"ARM Cortex A8 R2",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A8_R3,	CPU_CLASS_ARMv7,	"ARM Cortex A8 R3",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A9,	CPU_CLASS_ARMv7,	"ARM Cortex A9",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A9_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A9 R1",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A9_R2,	CPU_CLASS_ARMv7,	"ARM Cortex A9 R2",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A9_R3,	CPU_CLASS_ARMv7,	"ARM Cortex A9 R3",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A9_R4,	CPU_CLASS_ARMv7,	"ARM Cortex A9 R4",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A15,	CPU_CLASS_ARMv7,	"ARM Cortex A15",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A15_R1,	CPU_CLASS_ARMv7,	"ARM Cortex A15 R1",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A15_R2,	CPU_CLASS_ARMv7,	"ARM Cortex A15 R2",
+	  generic_steppings },
+	{ CPU_ID_CORTEX_A15_R3,	CPU_CLASS_ARMv7,	"ARM Cortex A15 R3",
 	  generic_steppings },
 
 
