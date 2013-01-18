@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.152 2012/10/05 17:17:04 camield Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.153 2013/01/18 12:10:11 sthen Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -227,7 +227,9 @@ ether_output(ifp0, m0, dst, rt0)
 #endif
 
 #if NTRUNK > 0
-	if (ifp->if_type == IFT_IEEE8023ADLAG)
+	/* restrict transmission on trunk members to bpf only */
+	if (ifp->if_type == IFT_IEEE8023ADLAG &&
+	    (m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL))
 		senderr(EBUSY);
 #endif
 
