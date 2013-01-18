@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.57 2011/11/17 18:54:21 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.58 2013/01/18 11:21:09 guenther Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 17 2011 $
+.Dd $Mdocdate: January 18 2013 $
 .Dt RCS 1
 .Os
 .Sh NAME
@@ -277,7 +277,7 @@ The date and hour (UTC) the revision was checked in.
 .It $\&Header$
 Standard header containing the full pathname of the RCS
 file, the revision number, the date (UTC), the author and the state.
-.It $\&Id$
+.It $\&Id$ and $\&OpenBSD$
 The same content as $\&Header$ but without the path
 of the RCS file.
 .It $\&Log$

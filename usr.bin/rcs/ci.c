@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.213 2011/07/14 16:31:34 sobrado Exp $	*/
+/*	$OpenBSD: ci.c,v 1.214 2013/01/18 11:21:09 guenther Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -42,6 +42,7 @@
 #define DATE_MTIME	-2
 
 #define KW_ID		"Id"
+#define KW_OPENBSD	"OpenBSD"
 #define KW_AUTHOR	"Author"
 #define KW_DATE		"Date"
 #define KW_STATE	"State"
@@ -934,7 +935,8 @@ checkin_keywordtype(char *keystring)
 
 	p = keystring;
 	p++;
-	if (strncmp(p, KW_ID, strlen(KW_ID)) == 0)
+	if (strncmp(p, KW_ID, strlen(KW_ID)) == 0 ||
+	    strncmp(p, KW_OPENBSD, strlen(KW_OPENBSD)) == 0)
 		return (KW_TYPE_ID);
 	else if (strncmp(p, KW_AUTHOR, strlen(KW_AUTHOR)) == 0)
 		return (KW_TYPE_AUTHOR);
