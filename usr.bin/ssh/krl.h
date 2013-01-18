@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* $OpenBSD: krl.h,v 1.2 2013/01/18 00:24:58 djm Exp $ */
+
 #ifndef _KRL_H
 #define _KRL_H
 

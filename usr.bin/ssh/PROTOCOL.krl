@@ -160,3 +160,5 @@ appear, they must appear consecutively at the end of the KRL file.
 Implementations that retrieve KRLs over untrusted channels must verify
 signatures. Signature sections are optional for KRLs distributed by
 trusted means.
+
+$OpenBSD: PROTOCOL.krl,v 1.2 2013/01/18 00:24:58 djm Exp $
