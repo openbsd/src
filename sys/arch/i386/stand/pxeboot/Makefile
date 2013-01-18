@@ -1,11 +1,9 @@
-#	$OpenBSD: Makefile,v 1.11 2012/10/31 14:32:16 jsing Exp $
-
-.include "${.CURDIR}/../Makefile.inc"
+#	$OpenBSD: Makefile,v 1.12 2013/01/18 03:45:23 jsing Exp $
 
 MAN=	pxeboot.8
 
 .if ${MACHINE} == "i386"
-S	=${.CURDIR}/../../../..
+S=	${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
 PROG=	pxeboot

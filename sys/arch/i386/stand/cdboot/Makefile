@@ -1,11 +1,9 @@
-#	$OpenBSD: Makefile,v 1.14 2012/10/31 14:32:16 jsing Exp $
-
-.include "${.CURDIR}/../Makefile.inc"
+#	$OpenBSD: Makefile,v 1.15 2013/01/18 03:45:23 jsing Exp $
 
 MAN=	cdboot.8
 
 .if ${MACHINE} == "i386"
-S	=${.CURDIR}/../../../..
+S=	${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
 PROG=	cdboot
@@ -45,8 +43,8 @@ SRCS+=	strlcpy.c
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
 
-${PROG}: $(OBJS) $(DPADD)
-	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) $(LDADD)
+${PROG}: $(OBJS)
+	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS)
 	@$(SIZE) ${PROG}
 	cp ${PROG} ${PROG}.whole
 	@if [ -x ${.OBJDIR}/${PROG} ]; then \
