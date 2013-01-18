@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.21 2013/01/15 09:33:30 dlg Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.22 2013/01/18 01:54:40 dlg Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -64,6 +64,249 @@ static	int ioport_malloc_safe;
 int	x86_mem_add_mapping(bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
 
+u_int8_t	x86_bus_space_io_read_1(bus_space_handle_t, bus_size_t);
+u_int16_t	x86_bus_space_io_read_2(bus_space_handle_t, bus_size_t);
+u_int32_t	x86_bus_space_io_read_4(bus_space_handle_t, bus_size_t);
+u_int64_t	x86_bus_space_io_read_8(bus_space_handle_t, bus_size_t);
+
+void		x86_bus_space_io_read_multi_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t *, bus_size_t);
+void		x86_bus_space_io_read_multi_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t *, bus_size_t);
+void		x86_bus_space_io_read_multi_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t *, bus_size_t);
+void		x86_bus_space_io_read_multi_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t *, bus_size_t);
+
+void		x86_bus_space_io_read_region_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t *, bus_size_t);
+void		x86_bus_space_io_read_region_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t *, bus_size_t);
+void		x86_bus_space_io_read_region_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t *, bus_size_t);
+void		x86_bus_space_io_read_region_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t *, bus_size_t);
+
+void		x86_bus_space_io_write_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t);
+void		x86_bus_space_io_write_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t);
+void		x86_bus_space_io_write_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t);
+void		x86_bus_space_io_write_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t);
+
+void		x86_bus_space_io_write_multi_1(bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t);
+void		x86_bus_space_io_write_multi_2(bus_space_handle_t,
+		    bus_size_t, const u_int16_t *, bus_size_t);
+void		x86_bus_space_io_write_multi_4(bus_space_handle_t,
+		    bus_size_t, const u_int32_t *, bus_size_t);
+void		x86_bus_space_io_write_multi_8(bus_space_handle_t,
+		    bus_size_t, const u_int64_t *, bus_size_t);
+
+void		x86_bus_space_io_write_region_1(bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t);
+void		x86_bus_space_io_write_region_2(bus_space_handle_t,
+		    bus_size_t, const u_int16_t *, bus_size_t);
+void		x86_bus_space_io_write_region_4(bus_space_handle_t,
+		    bus_size_t, const u_int32_t *, bus_size_t);
+void		x86_bus_space_io_write_region_8(bus_space_handle_t,
+		    bus_size_t, const u_int64_t *, bus_size_t);
+
+void		x86_bus_space_io_set_multi_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t, size_t);
+void		x86_bus_space_io_set_multi_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t, size_t);
+void		x86_bus_space_io_set_multi_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t, size_t);
+void		x86_bus_space_io_set_multi_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t, size_t);
+
+void		x86_bus_space_io_set_region_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t, size_t);
+void		x86_bus_space_io_set_region_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t, size_t);
+void		x86_bus_space_io_set_region_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t, size_t);
+void		x86_bus_space_io_set_region_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t, size_t);
+
+void		x86_bus_space_io_copy_1(bus_space_handle_t, bus_size_t,
+		    bus_space_handle_t, bus_size_t, size_t);
+void		x86_bus_space_io_copy_2(bus_space_handle_t, bus_size_t,
+		    bus_space_handle_t, bus_size_t, size_t);
+void		x86_bus_space_io_copy_4(bus_space_handle_t, bus_size_t,
+		    bus_space_handle_t, bus_size_t, size_t);
+void		x86_bus_space_io_copy_8(bus_space_handle_t, bus_size_t,
+		    bus_space_handle_t, bus_size_t, size_t);
+
+void *		x86_bus_space_io_vaddr(bus_space_handle_t);
+paddr_t		x86_bus_space_io_mmap(bus_addr_t, off_t, int, int);
+
+const struct x86_bus_space_ops x86_bus_space_io_ops = {
+	x86_bus_space_io_read_1,
+	x86_bus_space_io_read_2,
+	x86_bus_space_io_read_4,
+	x86_bus_space_io_read_8,
+	x86_bus_space_io_read_multi_1,
+	x86_bus_space_io_read_multi_2,
+	x86_bus_space_io_read_multi_4,
+	x86_bus_space_io_read_multi_8,
+	x86_bus_space_io_read_region_1,
+	x86_bus_space_io_read_region_2,
+	x86_bus_space_io_read_region_4,
+	x86_bus_space_io_read_region_8,
+	x86_bus_space_io_write_1,
+	x86_bus_space_io_write_2,
+	x86_bus_space_io_write_4,
+	x86_bus_space_io_write_8,
+	x86_bus_space_io_write_multi_1,
+	x86_bus_space_io_write_multi_2,
+	x86_bus_space_io_write_multi_4,
+	x86_bus_space_io_write_multi_8,
+	x86_bus_space_io_write_region_1,
+	x86_bus_space_io_write_region_2,
+	x86_bus_space_io_write_region_4,
+	x86_bus_space_io_write_region_8,
+	x86_bus_space_io_set_multi_1,
+	x86_bus_space_io_set_multi_2,
+	x86_bus_space_io_set_multi_4,
+	x86_bus_space_io_set_multi_8,
+	x86_bus_space_io_set_region_1,
+	x86_bus_space_io_set_region_2,
+	x86_bus_space_io_set_region_4,
+	x86_bus_space_io_set_region_8,
+	x86_bus_space_io_copy_1,
+	x86_bus_space_io_copy_2,
+	x86_bus_space_io_copy_4,
+	x86_bus_space_io_copy_8,
+	x86_bus_space_io_vaddr,
+	x86_bus_space_io_mmap
+};
+
+u_int8_t	x86_bus_space_mem_read_1(bus_space_handle_t, bus_size_t);
+u_int16_t	x86_bus_space_mem_read_2(bus_space_handle_t, bus_size_t);
+u_int32_t	x86_bus_space_mem_read_4(bus_space_handle_t, bus_size_t);
+u_int64_t	x86_bus_space_mem_read_8(bus_space_handle_t, bus_size_t);
+
+void		x86_bus_space_mem_read_multi_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t *, bus_size_t);
+void		x86_bus_space_mem_read_multi_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t *, bus_size_t);
+void		x86_bus_space_mem_read_multi_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t *, bus_size_t);
+void		x86_bus_space_mem_read_multi_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t *, bus_size_t);
+
+void		x86_bus_space_mem_read_region_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t *, bus_size_t);
+void		x86_bus_space_mem_read_region_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t *, bus_size_t);
+void		x86_bus_space_mem_read_region_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t *, bus_size_t);
+void		x86_bus_space_mem_read_region_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t *, bus_size_t);
+
+void		x86_bus_space_mem_write_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t);
+void		x86_bus_space_mem_write_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t);
+void		x86_bus_space_mem_write_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t);
+void		x86_bus_space_mem_write_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t);
+
+void		x86_bus_space_mem_write_multi_1(bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t);
+void		x86_bus_space_mem_write_multi_2(bus_space_handle_t,
+		    bus_size_t, const u_int16_t *, bus_size_t);
+void		x86_bus_space_mem_write_multi_4(bus_space_handle_t,
+		    bus_size_t, const u_int32_t *, bus_size_t);
+void		x86_bus_space_mem_write_multi_8(bus_space_handle_t,
+		    bus_size_t, const u_int64_t *, bus_size_t);
+
+void		x86_bus_space_mem_write_region_1(bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t);
+void		x86_bus_space_mem_write_region_2(bus_space_handle_t,
+		    bus_size_t, const u_int16_t *, bus_size_t);
+void		x86_bus_space_mem_write_region_4(bus_space_handle_t,
+		    bus_size_t, const u_int32_t *, bus_size_t);
+void		x86_bus_space_mem_write_region_8(bus_space_handle_t,
+		    bus_size_t, const u_int64_t *, bus_size_t);
+
+void		x86_bus_space_mem_set_multi_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t, size_t);
+void		x86_bus_space_mem_set_multi_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t, size_t);
+void		x86_bus_space_mem_set_multi_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t, size_t);
+void		x86_bus_space_mem_set_multi_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t, size_t);
+
+void		x86_bus_space_mem_set_region_1(bus_space_handle_t, bus_size_t,
+		    u_int8_t, size_t);
+void		x86_bus_space_mem_set_region_2(bus_space_handle_t, bus_size_t,
+		    u_int16_t, size_t);
+void		x86_bus_space_mem_set_region_4(bus_space_handle_t, bus_size_t,
+		    u_int32_t, size_t);
+void		x86_bus_space_mem_set_region_8(bus_space_handle_t, bus_size_t,
+		    u_int64_t, size_t);
+
+void		x86_bus_space_mem_copy_1(bus_space_handle_t, bus_size_t,
+		    bus_space_handle_t, bus_size_t, size_t);
+void		x86_bus_space_mem_copy_2(bus_space_handle_t, bus_size_t,
+		    bus_space_handle_t, bus_size_t, size_t);
+void		x86_bus_space_mem_copy_4(bus_space_handle_t, bus_size_t,
+		    bus_space_handle_t, bus_size_t, size_t);
+void		x86_bus_space_mem_copy_8(bus_space_handle_t, bus_size_t,
+		    bus_space_handle_t, bus_size_t, size_t);
+
+void *		x86_bus_space_mem_vaddr(bus_space_handle_t);
+
+paddr_t		x86_bus_space_mem_mmap(bus_addr_t, off_t, int, int);
+
+const struct x86_bus_space_ops x86_bus_space_mem_ops = {
+	x86_bus_space_mem_read_1,
+	x86_bus_space_mem_read_2,
+	x86_bus_space_mem_read_4,
+	x86_bus_space_mem_read_8,
+	x86_bus_space_mem_read_multi_1,
+	x86_bus_space_mem_read_multi_2,
+	x86_bus_space_mem_read_multi_4,
+	x86_bus_space_mem_read_multi_8,
+	x86_bus_space_mem_read_region_1,
+	x86_bus_space_mem_read_region_2,
+	x86_bus_space_mem_read_region_4,
+	x86_bus_space_mem_read_region_8,
+	x86_bus_space_mem_write_1,
+	x86_bus_space_mem_write_2,
+	x86_bus_space_mem_write_4,
+	x86_bus_space_mem_write_8,
+	x86_bus_space_mem_write_multi_1,
+	x86_bus_space_mem_write_multi_2,
+	x86_bus_space_mem_write_multi_4,
+	x86_bus_space_mem_write_multi_8,
+	x86_bus_space_mem_write_region_1,
+	x86_bus_space_mem_write_region_2,
+	x86_bus_space_mem_write_region_4,
+	x86_bus_space_mem_write_region_8,
+	x86_bus_space_mem_set_multi_1,
+	x86_bus_space_mem_set_multi_2,
+	x86_bus_space_mem_set_multi_4,
+	x86_bus_space_mem_set_multi_8,
+	x86_bus_space_mem_set_region_1,
+	x86_bus_space_mem_set_region_2,
+	x86_bus_space_mem_set_region_4,
+	x86_bus_space_mem_set_region_8,
+	x86_bus_space_mem_copy_1,
+	x86_bus_space_mem_copy_2,
+	x86_bus_space_mem_copy_4,
+	x86_bus_space_mem_copy_8,
+	x86_bus_space_mem_vaddr,
+	x86_bus_space_mem_mmap
+};
+
 void
 x86_bus_space_init(void)
 {
@@ -89,7 +332,6 @@ x86_bus_space_init(void)
 void
 x86_bus_space_mallocok(void)
 {
-
 	ioport_malloc_safe = 1;
 }
 
@@ -392,14 +634,868 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 	return (0);
 }
 
-paddr_t
-bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot, int flags)
+u_int8_t
+x86_bus_space_io_read_1(bus_space_handle_t h, bus_size_t o)
 {
+	return (inb(h + o));
+}
 
+u_int16_t
+x86_bus_space_io_read_2(bus_space_handle_t h, bus_size_t o)
+{
+	return (inw(h + o));
+}
+
+u_int32_t
+x86_bus_space_io_read_4(bus_space_handle_t h, bus_size_t o)
+{
+	return (inl(h + o));
+}
+
+u_int64_t
+x86_bus_space_io_read_8(bus_space_handle_t h, bus_size_t o)
+{
+	panic("bus_space_read_8: invalid bus space tag");
+}
+
+void
+x86_bus_space_io_read_multi_1(bus_space_handle_t h, bus_size_t o,
+    u_int8_t *ptr, bus_size_t cnt)
+{
+	insb(h + o, ptr, cnt);
+}
+
+void
+x86_bus_space_io_read_multi_2(bus_space_handle_t h, bus_size_t o,
+    u_int16_t *ptr, bus_size_t cnt)
+{
+	insw(h + o, ptr, cnt);
+}
+
+void
+x86_bus_space_io_read_multi_4(bus_space_handle_t h, bus_size_t o,
+    u_int32_t *ptr, bus_size_t cnt)
+{
+	insl(h + o, ptr, cnt);
+}
+
+void
+x86_bus_space_io_read_multi_8(bus_space_handle_t h, bus_size_t o,
+    u_int64_t *ptr, bus_size_t cnt)
+{
+	panic("bus_space_multi_8: invalid bus space tag");
+}
+
+void
+x86_bus_space_io_read_region_1(bus_space_handle_t h,
+    bus_size_t o, u_int8_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	int __x;
+	u_int32_t port = h + o;
+	__asm __volatile(" cld					;"
+	"1:	inb %w1,%%al				;"
+	"	stosb					;"
+	"	incl %1					;"
+	"	loop 1b"				:
+	    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
+	    "=c" (dummy3)				:
+	    "1" (port), "2" (ptr), "3" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_io_read_region_2(bus_space_handle_t h,
+    bus_size_t o, u_int16_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	int __x;
+	u_int32_t port = h + o;
+	__asm __volatile(" cld				;"
+	"1:	inw %w1,%%ax				;"
+	"	stosw					;"
+	"	addl $2,%1				;"
+	"	loop 1b"				:
+	    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
+	    "=c" (dummy3)				:
+	    "1" ((port)), "2" ((ptr)), "3" ((cnt))	:
+	    "memory");
+}
+
+void
+x86_bus_space_io_read_region_4(bus_space_handle_t h,
+    bus_size_t o, u_int32_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	int __x;
+	u_int32_t port = h + o;
+	__asm __volatile("cld				;"
+	"1:	inl %w1,%%eax				;"
+	"	stosl					;"
+	"	addl $4,%1				;"
+	"	loop 1b"				:
+	    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
+	    "=c" (dummy3)				:
+	    "1" (port), "2" (ptr), "3" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_io_read_region_8(bus_space_handle_t h,
+    bus_size_t o, u_int64_t *ptr, bus_size_t cnt)
+{
+	panic("bus_space_read_region_8: invalid bus space tag");
+}
+
+void
+x86_bus_space_io_write_1(bus_space_handle_t h, bus_size_t o, u_int8_t v)
+{
+	outb(h + o, v);
+}
+
+void
+x86_bus_space_io_write_2(bus_space_handle_t h, bus_size_t o, u_int16_t v)
+{
+	outw(h + o, v);
+}
+
+void
+x86_bus_space_io_write_4(bus_space_handle_t h, bus_size_t o, u_int32_t v)
+{
+	outl(h + o, v);
+}
+
+void
+x86_bus_space_io_write_8(bus_space_handle_t h, bus_size_t o, u_int64_t v)
+{
+	panic("bus_space_write_8: invalid bus space tag");
+}
+
+void
+x86_bus_space_io_write_multi_1(bus_space_handle_t h,
+    bus_size_t o, const u_int8_t *ptr, bus_size_t cnt)
+{
+	outsb(h + o, ptr, cnt);
+}
+
+void
+x86_bus_space_io_write_multi_2(bus_space_handle_t h,
+    bus_size_t o, const u_int16_t *ptr, bus_size_t cnt)
+{
+	outsw(h + o, ptr, cnt);
+}
+
+void
+x86_bus_space_io_write_multi_4(bus_space_handle_t h,
+    bus_size_t o, const u_int32_t *ptr, bus_size_t cnt)
+{
+	outsl(h + o, ptr, cnt);
+}
+
+void
+x86_bus_space_io_write_multi_8(bus_space_handle_t h,
+    bus_size_t o, const u_int64_t *ptr, bus_size_t cnt)
+{
+	panic("bus_space_write_multi_8: invalid bus space tag");
+}
+
+void
+x86_bus_space_io_write_region_1(bus_space_handle_t h,
+    bus_size_t o, const u_int8_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	int __x;
+	u_int32_t port = h + o;
+	__asm __volatile("cld				;"
+	"1:	lodsb					;"
+	"	outb %%al,%w1				;"
+	"	incl %1					;"
+	"	loop 1b"				:
+	    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
+	    "=c" (dummy3)				:
+	    "1" (port), "2" (ptr), "3" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_io_write_region_2(bus_space_handle_t h,
+    bus_size_t o, const u_int16_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	int __x;
+	u_int32_t port = h + o;
+	__asm __volatile("cld				;"
+	"1:	lodsw					;"
+	"	outw %%ax,%w1				;"
+	"	addl $2,%1				;"
+	"	loop 1b"				: 
+	    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
+	    "=c" (dummy3)				:
+	    "1" (port), "2" (ptr), "3" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_io_write_region_4(bus_space_handle_t h,
+    bus_size_t o, const u_int32_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	int __x;
+	u_int32_t port = h + o;
+	__asm __volatile(" cld				;"
+	"1:	lodsl					;"
+	"	outl %%eax,%w1				;"
+	"	addl $4,%1				;"
+	"	loop 1b"				:
+	    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
+	    "=c" (dummy3)				:
+	    "1" (port), "2" (ptr), "3" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_io_write_region_8(bus_space_handle_t h,
+    bus_size_t o, const u_int64_t *ptr, bus_size_t cnt)
+{
+	panic("bus_space_write_region_8: invalid bus space tag");
+}
+
+void
+x86_bus_space_io_set_multi_1(bus_space_handle_t h, bus_size_t o,
+    u_int8_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	while (c--)
+		outb(addr, v);
+}
+
+void
+x86_bus_space_io_set_multi_2(bus_space_handle_t h, bus_size_t o,
+    u_int16_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	while (c--)
+		outw(addr, v);
+}
+
+void
+x86_bus_space_io_set_multi_4(bus_space_handle_t h, bus_size_t o,
+    u_int32_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	while (c--)
+		outl(addr, v);
+}
+
+void
+x86_bus_space_io_set_multi_8(bus_space_handle_t h, bus_size_t o,
+    u_int64_t v, size_t c)
+{
+	panic("bus_space_set_multi_8: invalid bus space tag");
+}
+
+void
+x86_bus_space_io_set_region_1(bus_space_handle_t h, bus_size_t o,
+    u_int8_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	for (; c != 0; c--, addr++)
+		outb(addr, v);
+}
+
+void
+x86_bus_space_io_set_region_2(bus_space_handle_t h, bus_size_t o,
+    u_int16_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	for (; c != 0; c--, addr += sizeof(v))
+		outw(addr, v);
+}
+
+void
+x86_bus_space_io_set_region_4(bus_space_handle_t h, bus_size_t o,
+    u_int32_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	for (; c != 0; c--, addr += sizeof(v))
+		outl(addr, v);
+}
+
+void
+x86_bus_space_io_set_region_8(bus_space_handle_t h, bus_size_t o,
+    u_int64_t v, size_t c)
+{
+	panic("bus_space_set_region_8: invalid bus space tag");
+}
+
+void
+x86_bus_space_io_copy_1(bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1++, addr2++)
+			outb(addr2, inb(addr1));
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += (c - 1), addr2 += (c - 1);
+		    c != 0; c--, addr1--, addr2--)
+			outb(addr2, inb(addr1));
+	}
+}
+
+void
+x86_bus_space_io_copy_2(bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1 += 2, addr2 += 2)
+			outw(addr2, inw(addr1));
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
+		    c != 0; c--, addr1 -= 2, addr2 -= 2)
+			outw(addr2, inw(addr1));
+	}
+}
+
+void
+x86_bus_space_io_copy_4(bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1 += 4, addr2 += 4)
+			outl(addr2, inl(addr1));
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
+		    c != 0; c--, addr1 -= 4, addr2 -= 4)
+			outl(addr2, inl(addr1));
+	}
+}
+
+void
+x86_bus_space_io_copy_8(bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	panic("bus_space_set_region_8: invalid bus space tag");
+}
+
+void *
+x86_bus_space_io_vaddr(bus_space_handle_t h)
+{
+	return (NULL);
+}
+
+paddr_t
+x86_bus_space_io_mmap(bus_addr_t addr, off_t off, int prot, int flags)
+{
 	/* Can't mmap I/O space. */
-	if (t == X86_BUS_SPACE_IO)
-		return (-1);
+	return (-1);
+}
 
+void
+x86_bus_space_mem_write_1(bus_space_handle_t h, bus_size_t o, u_int8_t v)
+{
+	*(volatile u_int8_t *)(h + o) = v;
+}
+
+void
+x86_bus_space_mem_write_2(bus_space_handle_t h, bus_size_t o, u_int16_t v)
+{
+	*(volatile u_int16_t *)(h + o) = v;
+}
+
+u_int8_t
+x86_bus_space_mem_read_1(bus_space_handle_t h, bus_size_t o)
+{
+	return (*(volatile u_int8_t *)(h + o));
+}
+
+u_int16_t
+x86_bus_space_mem_read_2(bus_space_handle_t h, bus_size_t o)
+{
+	return (*(volatile u_int16_t *)(h + o));
+}
+
+u_int32_t
+x86_bus_space_mem_read_4(bus_space_handle_t h, bus_size_t o)
+{
+	return (*(volatile u_int32_t *)(h + o));
+}
+
+u_int64_t
+x86_bus_space_mem_read_8(bus_space_handle_t h, bus_size_t o)
+{
+	return (*(volatile u_int64_t *)(h + o));
+}
+
+void
+x86_bus_space_mem_read_multi_1(bus_space_handle_t h, bus_size_t o,
+    u_int8_t *ptr, bus_size_t cnt)
+{
+	void *dummy1;
+	int dummy2;
+	void *dummy3;
+	int __x;
+	__asm __volatile(" cld				;"
+	"1:	movb (%2),%%al				;"
+	"	stosb					;"
+	"	loop 1b"				:
+	    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+	    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
+	    "memory");
+}
+
+void
+x86_bus_space_mem_read_multi_2(bus_space_handle_t h, bus_size_t o,
+    u_int16_t *ptr, bus_size_t cnt)
+{
+	void *dummy1;
+	int dummy2;
+	void *dummy3;
+	int __x;
+	__asm __volatile(" cld				;"
+	"1:	movw (%2),%%ax				;"
+	"	stosw					;"
+	"	loop 1b"				:
+	    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+	    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
+	    "memory");
+}
+
+void
+x86_bus_space_mem_read_multi_4(bus_space_handle_t h, bus_size_t o,
+    u_int32_t *ptr, bus_size_t cnt)
+{
+	void *dummy1;
+	int dummy2;
+	void *dummy3;
+	int __x;
+	__asm __volatile(" cld				;"
+	"1:	movl (%2),%%eax				;"
+	"	stosl					;"
+	"	loop 1b"				:
+	    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+	    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
+	    "memory");
+}
+
+void
+x86_bus_space_mem_read_multi_8(bus_space_handle_t h, bus_size_t o,
+    u_int64_t *ptr, bus_size_t cnt)
+{
+	void *dummy1;
+	int dummy2;
+	void *dummy3;
+	int __x;
+	__asm __volatile(" cld				;"
+	"1:	movq (%2),%%rax				;"
+	"	stosq					;"
+	"	loop 1b"				:
+	    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+	    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
+	    "memory");
+}
+
+void
+x86_bus_space_mem_read_region_1(bus_space_handle_t h,
+    bus_size_t o, u_int8_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	__asm __volatile(" cld				;"
+	"	repne					;"
+	"	movsb"					:
+	    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
+	    "0" (h + o), "1" (ptr), "2" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_mem_read_region_2(bus_space_handle_t h,
+    bus_size_t o, u_int16_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	__asm __volatile(" cld				;"
+	"	repne					;"
+	"	movsw"					:
+	    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
+	    "0" (h + o), "1" (ptr), "2" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_mem_read_region_4(bus_space_handle_t h,
+    bus_size_t o, u_int32_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	__asm __volatile("cld				;"
+	"	repne					;"
+	"	movsl"					:
+	    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
+	    "0" (h + o), "1" (ptr), "2" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_mem_read_region_8(bus_space_handle_t h,
+    bus_size_t o, u_int64_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	__asm __volatile("cld				;"
+	"	repne					;"
+	"	movsq"					:
+	    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
+	    "0" (h + o), "1" (ptr), "2" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_mem_write_4(bus_space_handle_t h, bus_size_t o, u_int32_t v)
+{
+	*(volatile u_int32_t *)(h + o) = v;
+}
+
+void
+x86_bus_space_mem_write_8(bus_space_handle_t h, bus_size_t o, u_int64_t v)
+{
+	*(volatile u_int64_t *)(h + o) = v;
+}
+
+void
+x86_bus_space_mem_write_multi_1(bus_space_handle_t h,
+    bus_size_t o, const u_int8_t *ptr, bus_size_t cnt)
+{
+	void *dummy1;
+	int dummy2;
+	void *dummy3;
+	int __x;
+	__asm __volatile("cld				;"
+	"1:	lodsb					;"
+	"	movb %%al,(%2)				;"
+	"	loop 1b"				:
+	    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+	    "0" (ptr), "1" (cnt), "2" (h + o));
+}
+
+void
+x86_bus_space_mem_write_multi_2(bus_space_handle_t h,
+    bus_size_t o, const u_int16_t *ptr, bus_size_t cnt)
+{
+	void *dummy1;
+	int dummy2;
+	void *dummy3;
+	int __x;
+	__asm __volatile("cld					;"
+	"1:	lodsw					;"
+	"	movw %%ax,(%2)				;"
+	"	loop 1b"				:
+	    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+	    "0" (ptr), "1" (cnt), "2" (h + o));
+}
+
+void
+x86_bus_space_mem_write_multi_4(bus_space_handle_t h,
+    bus_size_t o, const u_int32_t *ptr, bus_size_t cnt)
+{
+	void *dummy1;
+	int dummy2;
+	void *dummy3;
+	int __x;
+	__asm __volatile("cld				;"
+	"1:	lodsl					;"
+	"	movl %%eax,(%2)				;"
+	"	loop 1b"				:
+	    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+	    "0" (ptr), "1" (cnt), "2" (h + o));
+}
+
+void
+x86_bus_space_mem_write_multi_8(bus_space_handle_t h,
+    bus_size_t o, const u_int64_t *ptr, bus_size_t cnt)
+{
+	void *dummy1;
+	int dummy2;
+	void *dummy3;
+	int __x;
+	__asm __volatile("cld				;"
+	"1:	lodsq					;"
+	"	movq %%rax,(%2)				;"
+	"	loop 1b"				:
+	    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
+	    "0" (ptr), "1" (cnt), "2" (h + o));
+}
+
+void
+x86_bus_space_mem_write_region_1(bus_space_handle_t h,
+    bus_size_t o, const u_int8_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	__asm __volatile("cld				;"
+	"	repne					;"
+	"	movsb"					:
+	    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
+	    "0" (h + o), "1" (ptr), "2" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_mem_write_region_2(bus_space_handle_t h,
+    bus_size_t o, const u_int16_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	__asm __volatile("cld				;"
+	"	repne					;"
+	"	movsw"					:
+	    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
+	    "0" (h + o), "1" (ptr), "2" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_mem_write_region_4(bus_space_handle_t h,
+    bus_size_t o, const u_int32_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	__asm __volatile("cld				;"
+	"	repne					;"
+	"	movsl"					:
+	    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
+	    "0" (h + o), "1" (ptr), "2" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_mem_write_region_8(bus_space_handle_t h,
+    bus_size_t o, const u_int64_t *ptr, bus_size_t cnt)
+{
+	int dummy1;
+	void *dummy2;
+	int dummy3;
+	__asm __volatile("cld				;"
+	"	repne					;"
+	"	movsq"					:
+	    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
+	    "0" (h + o), "1" (ptr), "2" (cnt)	:
+	    "memory");
+}
+
+void
+x86_bus_space_mem_set_multi_1(bus_space_handle_t h, bus_size_t o,
+    u_int8_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	while (c--)
+		*(volatile u_int8_t *)(addr) = v;
+}
+
+void
+x86_bus_space_mem_set_multi_2(bus_space_handle_t h, bus_size_t o,
+    u_int16_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	while (c--)
+		*(volatile u_int16_t *)(addr) = v;
+}
+
+void
+x86_bus_space_mem_set_multi_4(bus_space_handle_t h, bus_size_t o,
+    u_int32_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	while (c--)
+		*(volatile u_int32_t *)(addr) = v;
+}
+
+void
+x86_bus_space_mem_set_multi_8(bus_space_handle_t h, bus_size_t o,
+    u_int64_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	while (c--)
+		*(volatile u_int64_t *)(addr) = v;
+}
+
+void
+x86_bus_space_mem_set_region_1(bus_space_handle_t h, bus_size_t o,
+    u_int8_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	for (; c != 0; c--, addr++)
+		*(volatile u_int8_t *)(addr) = v;
+}
+
+void
+x86_bus_space_mem_set_region_2(bus_space_handle_t h, bus_size_t o,
+    u_int16_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	for (; c != 0; c--, addr += sizeof(v))
+		*(volatile u_int16_t *)(addr) = v;
+}
+
+void
+x86_bus_space_mem_set_region_4(bus_space_handle_t h, bus_size_t o,
+    u_int32_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	for (; c != 0; c--, addr += sizeof(v))
+		*(volatile u_int32_t *)(addr) = v;
+}
+
+void
+x86_bus_space_mem_set_region_8(bus_space_handle_t h, bus_size_t o,
+    u_int64_t v, size_t c)
+{
+	bus_addr_t addr = h + o;
+
+	for (; c != 0; c--, addr += sizeof(v))
+		*(volatile u_int64_t *)(addr) = v;
+}
+
+void
+x86_bus_space_mem_copy_1( bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1++, addr2++)
+			*(volatile u_int8_t *)(addr2) =
+			    *(volatile u_int8_t *)(addr1);
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += (c - 1), addr2 += (c - 1);
+		    c != 0; c--, addr1--, addr2--)
+			*(volatile u_int8_t *)(addr2) =
+			    *(volatile u_int8_t *)(addr1);
+	}
+}
+
+void
+x86_bus_space_mem_copy_2(bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1 += 2, addr2 += 2)
+			*(volatile u_int16_t *)(addr2) =
+			    *(volatile u_int16_t *)(addr1);
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
+		    c != 0; c--, addr1 -= 2, addr2 -= 2)
+			*(volatile u_int16_t *)(addr2) =
+			    *(volatile u_int16_t *)(addr1);
+	}
+}
+
+void
+x86_bus_space_mem_copy_4(bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1 += 4, addr2 += 4)
+			*(volatile u_int32_t *)(addr2) =
+			    *(volatile u_int32_t *)(addr1);
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
+		    c != 0; c--, addr1 -= 4, addr2 -= 4)
+			*(volatile u_int32_t *)(addr2) =
+			    *(volatile u_int32_t *)(addr1);
+	}
+}
+
+void
+x86_bus_space_mem_copy_8(bus_space_handle_t h1, bus_size_t o1,
+    bus_space_handle_t h2, bus_size_t o2, size_t c)
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (addr1 >= addr2) {
+		/* src after dest: copy forward */
+		for (; c != 0; c--, addr1 += 8, addr2 += 8)
+			*(volatile u_int64_t *)(addr2) =
+			    *(volatile u_int64_t *)(addr1);
+	} else {
+		/* dest after src: copy backwards */
+		for (addr1 += 8 * (c - 1), addr2 += 8 * (c - 1);
+		    c != 0; c--, addr1 -= 8, addr2 -= 8)
+			*(volatile u_int64_t *)(addr2) =
+			    *(volatile u_int64_t *)(addr1);
+	}
+}
+
+void *
+x86_bus_space_mem_vaddr(bus_space_handle_t h)
+{
+	return ((void *)h);
+}
+
+paddr_t
+x86_bus_space_mem_mmap(bus_addr_t addr, off_t off, int prot, int flags)
+{
 	/*
 	 * "addr" is the base address of the device we're mapping.
 	 * "off" is the offset into that device.
@@ -409,729 +1505,3 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot, int flag
 	 */
 	return (addr + off);
 }
-
-u_int8_t
-bus_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	return (t == X86_BUS_SPACE_IO ? (inb(h + o)) :
-	    (*(volatile u_int8_t *)(h + o)));
-}
-
-u_int16_t
-bus_space_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	return (t == X86_BUS_SPACE_IO ? (inw(h + o)) :
-	    (*(volatile u_int16_t *)(h + o)));
-}
-
-u_int32_t
-bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	return (t == X86_BUS_SPACE_IO ? (inl(h + o)) :
-	    (*(volatile u_int32_t *)(h + o)));
-}
-
-u_int64_t
-bus_space_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	if (t == X86_BUS_SPACE_IO)
-		panic("bus_space_read_8: invalid I/O operation");
-
-	return (*(volatile u_int64_t *)(h + o));
-}
-
-void
-bus_space_read_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-	    u_int8_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		insb(h + o, ptr, cnt);
-	} else {
-		void *dummy1;
-		int dummy2;
-		void *dummy3;
-		int __x;
-		__asm __volatile(" cld					;"
-		"1:	movb (%2),%%al				;"
-		"	stosb					;"
-		"	loop 1b"				:
-		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
-		    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
-		    "memory");
-	}
-}
-
-void
-bus_space_read_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int16_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		insw(h + o, ptr, cnt);
-	} else {
-		void *dummy1;
-		int dummy2;
-		void *dummy3;
-		int __x;
-		__asm __volatile(" cld				;"
-		"1:	movw (%2),%%ax				;"
-		"	stosw					;"
-		"	loop 1b"				:
-		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
-		    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
-		    "memory");
-	}
-}
-
-void
-bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int32_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		insl(h + o, ptr, cnt);
-	} else {
-		void *dummy1;
-		int dummy2;
-		void *dummy3;
-		int __x;
-		__asm __volatile(" cld				;"
-		"1:	movl (%2),%%eax				;"
-		"	stosl					;"
-		"	loop 1b"				:
-		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
-		    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
-		    "memory");
-	}
-}
-
-void
-bus_space_read_multi_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int64_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		panic("bus_space_multi_8: invalid I/O operation");
-	} else {
-		void *dummy1;
-		int dummy2;
-		void *dummy3;
-		int __x;
-		__asm __volatile(" cld				;"
-		"1:	movq (%2),%%rax				;"
-		"	stosq					;"
-		"	loop 1b"				:
-		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
-		    "0" ((ptr)), "1" ((cnt)), "2" (h + o)       :
-		    "memory");
-	}
-}
-
-void
-bus_space_read_region_1(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, u_int8_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		int __x;
-		u_int32_t port = h + o;
-		__asm __volatile(" cld					;"
-		"1:	inb %w1,%%al				;"
-		"	stosb					;"
-		"	incl %1					;"
-		"	loop 1b"				:
-		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
-		    "=c" (dummy3)				:
-		    "1" (port), "2" (ptr), "3" (cnt)	:
-		    "memory");
-	} else {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		__asm __volatile(" cld					;"
-		"	repne					;"
-		"	movsb"					:
-		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
-		    "0" (h + o), "1" (ptr), "2" (cnt)	:
-		    "memory");
-	}
-}
-
-void
-bus_space_read_region_2(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, u_int16_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		int __x;
-		u_int32_t port = h + o;
-		__asm __volatile(" cld				;"
-		"1:	inw %w1,%%ax				;"
-		"	stosw					;"
-		"	addl $2,%1				;"
-		"	loop 1b"				:
-		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
-		    "=c" (dummy3)				:
-		    "1" ((port)), "2" ((ptr)), "3" ((cnt))	:
-		    "memory");
-	} else {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		__asm __volatile(" cld				;"
-		"	repne					;"
-		"	movsw"					:
-		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
-		    "0" (h + o), "1" (ptr), "2" (cnt)	:
-		    "memory");
-	}
-}
-
-void
-bus_space_read_region_4(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, u_int32_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		int __x;
-		u_int32_t port = h + o;
-		__asm __volatile("cld				;"
-		"1:	inl %w1,%%eax				;"
-		"	stosl					;"
-		"	addl $4,%1				;"
-		"	loop 1b"				:
-		    "=&a" (__x), "=d" (dummy1), "=D" (dummy2),
-		    "=c" (dummy3)				:
-		    "1" (port), "2" (ptr), "3" (cnt)	:
-		    "memory");
-	} else {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		__asm __volatile("cld				;"
-		"	repne					;"
-		"	movsl"					:
-		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
-		    "0" (h + o), "1" (ptr), "2" (cnt)	:
-		    "memory");
-	}
-}
-
-void
-bus_space_read_region_8(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, u_int64_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		panic("bus_space_read_region_8: invalid I/O operation");
-	} else {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		__asm __volatile("cld				;"
-		"	repne					;"
-		"	movsq"					:
-		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:
-		    "0" (h + o), "1" (ptr), "2" (cnt)	:
-		    "memory");
-	}
-}
-
-/*
- *	void bus_space_write_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value);
- *
- * Write the 1, 2, 4, or 8 byte value `value' to bus space
- * described by tag/handle/offset.
- */
-void
-bus_space_write_1(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, u_int8_t v)
-{
-	if (t == X86_BUS_SPACE_IO)
-		outb(h + o, v);
-	else
-		((void)(*(volatile u_int8_t *)(h + o) = v));
-}
-
-void
-bus_space_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int16_t v)
-{
-	if ((t) == X86_BUS_SPACE_IO)
-		outw(h + o, v);
-	else
-		((void)(*(volatile u_int16_t *)(h + o) = v));
-}
-
-void
-bus_space_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int32_t v)
-{
-	if ((t) == X86_BUS_SPACE_IO)
-		outl(h + o, v);
-	else
-		((void)(*(volatile u_int32_t *)(h + o) = v));
-}
-
-void
-bus_space_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int64_t v)
-{
-	if ((t) == X86_BUS_SPACE_IO)
-		panic("bus_space_write_8: invalid I/O operation");
-	else
-		((void)(*(volatile u_int64_t *)(h + o) = v));
-}
-
-void
-bus_space_write_multi_1(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, const u_int8_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		outsb(h + o, ptr, cnt);
-	} else {
-		void *dummy1;
-		int dummy2;
-		void *dummy3;
-		int __x;
-		__asm __volatile("cld				;"
-		"1:	lodsb					;"
-		"	movb %%al,(%2)				;"
-		"	loop 1b"				:
-		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
-		    "0" (ptr), "1" (cnt), "2" (h + o));
-	}
-}
-
-void
-bus_space_write_multi_2(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, const u_int16_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		outsw(h + o, ptr, cnt);
-	} else {
-		void *dummy1;
-		int dummy2;
-		void *dummy3;
-		int __x;
-		__asm __volatile("cld					;"
-		"1:	lodsw					;"
-		"	movw %%ax,(%2)				;"
-		"	loop 1b"				:
-		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
-		    "0" (ptr), "1" (cnt), "2" (h + o));
-	}
-}
-
-void
-bus_space_write_multi_4(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, const u_int32_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		outsl(h + o, ptr, cnt);
-	} else {
-		void *dummy1;
-		int dummy2;
-		void *dummy3;
-		int __x;
-		__asm __volatile("cld				;"
-		"1:	lodsl					;"
-		"	movl %%eax,(%2)				;"
-		"	loop 1b"				:
-		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
-		    "0" (ptr), "1" (cnt), "2" (h + o));
-	}
-}
-
-void
-bus_space_write_multi_8(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, const u_int64_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		panic("bus_space_write_multi_8: invalid I/O operation");
-	} else {
-		void *dummy1;
-		int dummy2;
-		void *dummy3;
-		int __x;
-		__asm __volatile("cld				;"
-		"1:	lodsq					;"
-		"	movq %%rax,(%2)				;"
-		"	loop 1b"				:
-		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) :
-		    "0" (ptr), "1" (cnt), "2" (h + o));
-	}
-}
-
-void
-bus_space_write_region_1(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, const u_int8_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		int __x;
-		u_int32_t port = h + o;
-		__asm __volatile("cld				;"
-		"1:	lodsb					;"
-		"	outb %%al,%w1				;"
-		"	incl %1					;"
-		"	loop 1b"				:
-		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
-		    "=c" (dummy3)				:
-		    "1" (port), "2" (ptr), "3" (cnt)	:
-		    "memory");
-	} else {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		__asm __volatile("cld				;"
-		"	repne					;"
-		"	movsb"					:
-		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
-		    "0" (h + o), "1" (ptr), "2" (cnt)	:
-		    "memory");
-	}
-}
-
-void
-bus_space_write_region_2(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, const u_int16_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		int __x;
-		u_int32_t port = h + o;
-		__asm __volatile("cld				;"
-		"1:	lodsw					;"
-		"	outw %%ax,%w1				;"
-		"	addl $2,%1				;"
-		"	loop 1b"				: 
-		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
-		    "=c" (dummy3)				:
-		    "1" (port), "2" (ptr), "3" (cnt)	:
-		    "memory");
-	} else {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		__asm __volatile("cld				;"
-		"	repne					;"
-		"	movsw"					:
-		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
-		    "0" (h + o), "1" (ptr), "2" (cnt)	:
-		    "memory");
-	}
-}
-
-void
-bus_space_write_region_4(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, const u_int32_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		int __x;
-		u_int32_t port = h + o;
-		__asm __volatile(" cld				;"
-		"1:	lodsl					;"
-		"	outl %%eax,%w1				;"
-		"	addl $4,%1				;"
-		"	loop 1b"				:
-		    "=&a" (__x), "=d" (dummy1), "=S" (dummy2),
-		    "=c" (dummy3)				:
-		    "1" (port), "2" (ptr), "3" (cnt)	:
-		    "memory");
-	} else {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		__asm __volatile("cld				;"
-		"	repne					;"
-		"	movsl"					:
-		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
-		    "0" (h + o), "1" (ptr), "2" (cnt)	:
-		    "memory");
-	}
-}
-
-void
-bus_space_write_region_8(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, const u_int64_t *ptr, bus_size_t cnt)
-{
-	if ((t) == X86_BUS_SPACE_IO) {
-		panic("bus_space_write_region_8: invalid I/O operation");
-	} else {
-		int dummy1;
-		void *dummy2;
-		int dummy3;
-		__asm __volatile("cld				;"
-		"	repne					;"
-		"	movsq"					:
-		    "=D" (dummy1), "=S" (dummy2), "=c" (dummy3)	:
-		    "0" (h + o), "1" (ptr), "2" (cnt)	:
-		    "memory");
-	}
-}
-
-void
-bus_space_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int8_t v, size_t c)
-{
-	bus_addr_t addr = h + o;
-
-	if (t == X86_BUS_SPACE_IO)
-		while (c--)
-			outb(addr, v);
-	else
-		while (c--)
-			*(volatile u_int8_t *)(addr) = v;
-}
-
-void
-bus_space_set_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int16_t v, size_t c)
-{
-	bus_addr_t addr = h + o;
-
-	if (t == X86_BUS_SPACE_IO)
-		while (c--)
-			outw(addr, v);
-	else
-		while (c--)
-			*(volatile u_int16_t *)(addr) = v;
-}
-
-void
-bus_space_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int32_t v, size_t c)
-{
-	bus_addr_t addr = h + o;
-
-	if (t == X86_BUS_SPACE_IO)
-		while (c--)
-			outl(addr, v);
-	else
-		while (c--)
-			*(volatile u_int32_t *)(addr) = v;
-}
-
-void
-bus_space_set_multi_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int64_t v, size_t c)
-{
-	bus_addr_t addr = h + o;
-
-	if (t == X86_BUS_SPACE_IO)
-		panic("bus_space_set_multi_8: invalid I/O operation");
-	else
-		while (c--)
-			*(volatile u_int64_t *)(addr) = v;
-}
-
-void
-bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int8_t v, size_t c)
-{
-	bus_addr_t addr = h + o;
-
-	if (t == X86_BUS_SPACE_IO)
-		for (; c != 0; c--, addr++)
-			outb(addr, v);
-	else
-		for (; c != 0; c--, addr++)
-			*(volatile u_int8_t *)(addr) = v;
-}
-
-void
-bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int16_t v, size_t c)
-{
-	bus_addr_t addr = h + o;
-
-	if (t == X86_BUS_SPACE_IO)
-		for (; c != 0; c--, addr += 2)
-			outw(addr, v);
-	else
-		for (; c != 0; c--, addr += 2)
-			*(volatile u_int16_t *)(addr) = v;
-}
-
-void
-bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int32_t v, size_t c)
-{
-	bus_addr_t addr = h + o;
-
-	if (t == X86_BUS_SPACE_IO)
-		for (; c != 0; c--, addr += 4)
-			outl(addr, v);
-	else
-		for (; c != 0; c--, addr += 4)
-			*(volatile u_int32_t *)(addr) = v;
-}
-
-void
-bus_space_set_region_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-    u_int64_t v, size_t c)
-{
-	bus_addr_t addr = h + o;
-
-	if (t == X86_BUS_SPACE_IO)
-		panic("bus_space_set_region_8: invalid I/O operation");
-	else
-		for (; c != 0; c--, addr += sizeof(v))
-			*(volatile u_int64_t *)(addr) = v;
-}
-
-void
-bus_space_copy_1(bus_space_tag_t t,
-    bus_space_handle_t h1, bus_size_t o1,
-    bus_space_handle_t h2, bus_size_t o2, size_t c)
-{
-	bus_addr_t addr1 = h1 + o1;
-	bus_addr_t addr2 = h2 + o2;
-
-	if (t == X86_BUS_SPACE_IO) {
-		if (addr1 >= addr2) {
-			/* src after dest: copy forward */
-			for (; c != 0; c--, addr1++, addr2++)
-				outb(addr2, inb(addr1));
-		} else {
-			/* dest after src: copy backwards */
-			for (addr1 += (c - 1), addr2 += (c - 1);
-			    c != 0; c--, addr1--, addr2--)
-				outb(addr2, inb(addr1));
-		}
-	} else {
-		if (addr1 >= addr2) {
-			/* src after dest: copy forward */
-			for (; c != 0; c--, addr1++, addr2++)
-				*(volatile u_int8_t *)(addr2) =
-				    *(volatile u_int8_t *)(addr1);
-		} else {
-			/* dest after src: copy backwards */
-			for (addr1 += (c - 1), addr2 += (c - 1);
-			    c != 0; c--, addr1--, addr2--)
-				*(volatile u_int8_t *)(addr2) =
-				    *(volatile u_int8_t *)(addr1);
-		}
-	}
-}
-
-void
-bus_space_copy_2(bus_space_tag_t t,
-    bus_space_handle_t h1, bus_size_t o1,
-    bus_space_handle_t h2, bus_size_t o2, size_t c)
-{
-	bus_addr_t addr1 = h1 + o1;
-	bus_addr_t addr2 = h2 + o2;
-
-	if (t == X86_BUS_SPACE_IO) {
-		if (addr1 >= addr2) {
-			/* src after dest: copy forward */
-			for (; c != 0; c--, addr1 += 2, addr2 += 2)
-				outw(addr2, inw(addr1));
-		} else {
-			/* dest after src: copy backwards */
-			for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
-			    c != 0; c--, addr1 -= 2, addr2 -= 2)
-				outw(addr2, inw(addr1));
-		}
-	} else {
-		if (addr1 >= addr2) {
-			/* src after dest: copy forward */
-			for (; c != 0; c--, addr1 += 2, addr2 += 2)
-				*(volatile u_int16_t *)(addr2) =
-				    *(volatile u_int16_t *)(addr1);
-		} else {
-			/* dest after src: copy backwards */
-			for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
-			    c != 0; c--, addr1 -= 2, addr2 -= 2)
-				*(volatile u_int16_t *)(addr2) =
-				    *(volatile u_int16_t *)(addr1);
-		}
-	}
-}
-
-void
-bus_space_copy_4(bus_space_tag_t t,
-    bus_space_handle_t h1, bus_size_t o1,
-    bus_space_handle_t h2, bus_size_t o2, size_t c)
-{
-	bus_addr_t addr1 = h1 + o1;
-	bus_addr_t addr2 = h2 + o2;
-
-	if (t == X86_BUS_SPACE_IO) {
-		if (addr1 >= addr2) {
-			/* src after dest: copy forward */
-			for (; c != 0; c--, addr1 += 4, addr2 += 4)
-				outl(addr2, inl(addr1));
-		} else {
-			/* dest after src: copy backwards */
-			for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
-			    c != 0; c--, addr1 -= 4, addr2 -= 4)
-				outl(addr2, inl(addr1));
-		}
-	} else {
-		if (addr1 >= addr2) {
-			/* src after dest: copy forward */
-			for (; c != 0; c--, addr1 += 4, addr2 += 4)
-				*(volatile u_int32_t *)(addr2) =
-				    *(volatile u_int32_t *)(addr1);
-		} else {
-			/* dest after src: copy backwards */
-			for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
-			    c != 0; c--, addr1 -= 4, addr2 -= 4)
-				*(volatile u_int32_t *)(addr2) =
-				    *(volatile u_int32_t *)(addr1);
-		}
-	}
-}
-
-void
-bus_space_copy_8(bus_space_tag_t t,
-    bus_space_handle_t h1, bus_size_t o1,
-    bus_space_handle_t h2, bus_size_t o2, size_t c)
-{
-	bus_addr_t addr1 = h1 + o1;
-	bus_addr_t addr2 = h2 + o2;
-
-	if (t == X86_BUS_SPACE_IO) {
-		panic("bus_space_set_region_8: invalid I/O operation");
-	} else {
-		if (addr1 >= addr2) {
-			/* src after dest: copy forward */
-			for (; c != 0; c--, addr1 += 8, addr2 += 8)
-				*(volatile u_int64_t *)(addr2) =
-				    *(volatile u_int64_t *)(addr1);
-		} else {
-			/* dest after src: copy backwards */
-			for (addr1 += 8 * (c - 1), addr2 += 8 * (c - 1);
-			    c != 0; c--, addr1 -= 8, addr2 -= 8)
-				*(volatile u_int64_t *)(addr2) =
-				    *(volatile u_int64_t *)(addr1);
-		}
-	}
-}
-
-void
-bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
-    bus_size_t offset, bus_size_t len, int flags)
-{
-	if (flags == (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE))
-		__asm __volatile("mfence");
-	else if (flags == BUS_SPACE_BARRIER_WRITE)
-		__asm __volatile("sfence");
-	else
-		__asm __volatile("lfence");
-}
-
