@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.12 2013/01/18 05:50:32 krw Exp $
+.\" $OpenBSD: dhclient.8,v 1.13 2013/01/18 08:07:32 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -46,8 +46,8 @@
 .Op Fl dqu
 .Op Fl c Ar file
 .Op Fl i Ar options
-.Op Fl l Ar file
 .Op Fl L Ar file
+.Op Fl l Ar file
 .Ar interface
 .Sh DESCRIPTION
 The
@@ -61,7 +61,7 @@ should attempt to
 configure must be specified on the command line.
 .Pp
 The options are as follows:
-.Bl -tag -width "-p port"
+.Bl -tag -width Ds
 .It Fl c Ar file
 Specify an alternate location,
 .Ar file ,
@@ -83,10 +83,6 @@ This list will override any ignore statements in
 must be a comma separated list of valid option names.
 Invalid or duplicated option names will cause the entire list to
 be discarded.
-.It Fl l Ar file
-Specify an alternate location,
-.Ar file ,
-for the leases file.
 .It Fl L Ar file
 Specify a location,
 .Ar file ,
@@ -98,6 +94,10 @@ specified file.
 offered {} will contain the lease offered by the DHCP server.
 effective {} will contain the modified lease used to configure the
 interface.
+.It Fl l Ar file
+Specify an alternate location,
+.Ar file ,
+for the leases file.
 .It Fl q
 Forces
 .Nm
