@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.69 2012/12/29 14:40:00 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.70 2013/01/18 06:05:54 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -120,13 +120,19 @@ dispatch(void)
 		 * a timeout registered, time out the select call then.
 		 */
 another:
-		if (!ifi)
-			error("No interfaces available");
+		if (!ifi) {
+			warning("No interfaces available");
+			quit = SIGTERM;
+			continue;
+		}
 
-		if (ifi->rdomain != get_rdomain(ifi->name))
-			error("Interface %s:"
+		if (ifi->rdomain != get_rdomain(ifi->name)) {
+			warning("Interface %s:"
 			    " rdomain changed out from under us",
 			    ifi->name);
+			quit = SIGTERM;
+			continue;
+		}
 
 		if (timeout.func) {
 			time(&cur_time);
@@ -150,8 +156,11 @@ another:
 			to_msec = -1;
 
 		/* Set up the descriptors to be polled. */
-		if (!ifi || ifi->rfdesc == -1)
-			error("No live interface to poll on");
+		if (!ifi || ifi->rfdesc == -1) {
+			warning("No live interface to poll on");
+			quit = SIGTERM;
+			continue;
+		}
 
 		fds[0].fd = ifi->rfdesc;
 		fds[1].fd = routefd; /* Could be -1, which will be ignored. */
@@ -168,8 +177,11 @@ another:
 		if (count == -1) {
 			if (errno == EAGAIN || errno == EINTR) {
 				continue;
-			} else
-				error("poll: %s", strerror(errno));
+			} else {
+				warning("poll: %s", strerror(errno));
+				quit = SIGTERM;
+				continue;
+			}
 		}
 
 		if ((fds[0].revents & (POLLIN | POLLHUP))) {
@@ -181,18 +193,25 @@ another:
 				routehandler();
 		}
 		if (fds[2].revents & POLLOUT) {
-			if (msgbuf_write(&unpriv_ibuf->w) == -1)
-				error("pipe write error to [priv]");
+			if (msgbuf_write(&unpriv_ibuf->w) == -1) {
+				warning("pipe write error to [priv]");
+				quit = SIGTERM;
+				continue;
+			}
 		}
 		if ((fds[2].revents & (POLLIN | POLLHUP))) {
-			error("lost connection to [priv]");
+			warning("lost connection to [priv]");
+			quit = SIGTERM;
+			continue;
 		}
 	}
 
-	if (quit == SIGHUP) {
+	if (client->active)
 		cleanup(client->active);
+
+	if (quit == SIGHUP)
 		exit(0);
-	}
+
 	exit(1);
 }
 
