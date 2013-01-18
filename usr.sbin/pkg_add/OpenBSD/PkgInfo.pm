@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.25 2011/11/24 19:47:11 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.26 2013/01/18 13:22:54 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -464,8 +464,8 @@ sub parse_and_run
 		    sub {
 			    my $pat = shift;
 			    my @list;
-			    $state->lock;
 			    if ($pat =~ m/\//o) {
+				    $state->lock;
 				    @list = find_by_path($pat);
 				    push(@ARGV, @list);
 			    } else {
