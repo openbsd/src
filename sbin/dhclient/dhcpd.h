@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.103 2013/01/17 23:41:07 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.104 2013/01/18 05:50:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -267,6 +267,7 @@ void putShort(unsigned char *, int);
 /* dhclient.c */
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
+extern char path_option_db[MAXPATHLEN];
 extern int log_perror;
 extern int routefd;
 
@@ -292,7 +293,8 @@ void make_decline(struct client_lease *);
 
 void free_client_lease(struct client_lease *);
 void rewrite_client_leases(void);
-char *lease_as_string(struct client_lease *);
+void rewrite_option_db(struct client_lease *, struct client_lease *);
+char *lease_as_string(char *, struct client_lease *);
 
 struct client_lease *packet_to_lease(struct in_addr, struct option_data *);
 void go_daemon(void);

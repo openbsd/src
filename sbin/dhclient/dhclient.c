@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.211 2013/01/17 23:41:07 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.212 2013/01/18 05:50:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -67,6 +67,8 @@
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = NULL;
+
+char path_option_db[MAXPATHLEN];
 
 int log_perror = 1;
 int nullfd = -1;
@@ -311,7 +313,7 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "c:di:l:qu")) != -1)
+	while ((ch = getopt(argc, argv, "c:di:l:L:qu")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhclient_conf = optarg;
@@ -328,6 +330,14 @@ main(int argc, char *argv[])
 				if (!S_ISREG(sb.st_mode))
 					error("'%s' is not a regular file",
 					    path_dhclient_db);
+			}
+			break;
+		case 'L':
+			strlcat(path_option_db, optarg, MAXPATHLEN);
+			if (lstat(path_option_db, &sb) != -1) {
+				if (!S_ISREG(sb.st_mode))
+					error("'%s' is not a regular file",
+					    path_option_db);
 			}
 			break;
 		case 'q':
@@ -482,8 +492,8 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-dqu] [-c file] [-i options] [-l file] interface\n",
-	    __progname);
+	    "usage: %s [-dqu] [-c file] [-i options] [-l file] [-L file] "
+	    "interface\n", __progname);
 	exit(1);
 }
 
@@ -766,7 +776,6 @@ bind_lease(void)
 
 	free(domainname);
 	free(nameservers);
-	free_client_lease(lease);
 
 	/* Replace the old active lease with the new one. */
 	if (client->active)
@@ -778,6 +787,9 @@ bind_lease(void)
 
 	/* Write out new leases file. */
 	rewrite_client_leases();
+	rewrite_option_db(client->active, lease);
+
+	free_client_lease(lease);
 
 	/* Set timeout to start the renewal process. */
 	set_timeout(client->active->renewal, state_bound);
@@ -1502,7 +1514,7 @@ rewrite_client_leases(void)
 		/* Don't write out static leases from dhclient.conf. */
 		if (lp->is_static)
 			continue;
-		leasestr = lease_as_string(lp);
+		leasestr = lease_as_string("lease", lp);
 		if (leasestr)
 			fprintf(leaseFile, "%s", leasestr);
 		else
@@ -1510,7 +1522,7 @@ rewrite_client_leases(void)
 	}
 
 	if (client->active) {
-		leasestr = lease_as_string(client->active);
+		leasestr = lease_as_string("lease", client->active);
 		if (leasestr)
 			fprintf(leaseFile, "%s", leasestr);
 		else
@@ -1522,8 +1534,41 @@ rewrite_client_leases(void)
 	fsync(fileno(leaseFile));
 }
 
+void
+rewrite_option_db(struct client_lease *offered, struct client_lease *effective)
+{
+	u_int8_t db[8192];
+	char *leasestr;
+	size_t n;
+
+	if (strlen(path_option_db) == 0)
+		return;
+
+	memset(db, 0, sizeof(db));
+
+	leasestr = lease_as_string("offered", offered);
+	if (leasestr) {
+		n = strlcat(db, leasestr, sizeof(db));
+		if (n >= sizeof(db))
+			warning("cannot fit offered lease into option db");
+	} else
+		warning("cannot make offered lease into string");
+
+	leasestr = lease_as_string("effective", effective);
+	if (leasestr) {
+		n = strlcat(db, leasestr, sizeof(db));
+		if (n >= sizeof(db))
+			warning("cannot fit effective lease into option db");
+	} else
+		warning("cannot make effective lease into string");
+
+	write_file(path_option_db,
+	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
+	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0, db, strlen(db));
+}
+
 char *
-lease_as_string(struct client_lease *lease)
+lease_as_string(char *type, struct client_lease *lease)
 {
 	static char leasestr[8192];
 	char *p;
@@ -1534,9 +1579,9 @@ lease_as_string(struct client_lease *lease)
 	p = leasestr;
 	memset(p, 0, sz);
 
-	rslt = snprintf(p, sz, "lease {\n"
+	rslt = snprintf(p, sz, "%s {\n"
 	    "%s  interface \"%s\";\n  fixed-address %s;\n",
-	    (lease->is_bootp) ? "  bootp;\n" : "", ifi->name,
+	    type, (lease->is_bootp) ? "  bootp;\n" : "", ifi->name,
 	    inet_ntoa(lease->address));
 	if (rslt == -1 || rslt >= sz)
 		return (NULL);
@@ -1704,7 +1749,7 @@ fork_privchld(int fd, int fd2)
 	struct pollfd pfd[1];
 	struct imsgbuf *priv_ibuf;
 	ssize_t n;
-	int nfds;
+	int nfds, rslt;
 
 	switch (fork()) {
 	case -1:
@@ -1759,6 +1804,13 @@ fork_privchld(int fd, int fd2)
 
 	imsg_clear(priv_ibuf);
 	close(fd);
+
+	if (strlen(path_option_db)) {
+		rslt = unlink(path_option_db);
+		if (rslt == -1)
+			warning("Could not unlink '%s': %s",
+			    path_option_db, strerror(errno));
+	}
 
 	memset(&imsg, 0, sizeof(imsg));
 	strlcpy(imsg.ifname, ifi->name, sizeof(imsg.ifname));
