@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.21 2012/12/02 19:42:36 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.22 2013/01/18 08:52:04 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -82,18 +82,6 @@ buf_acquire(struct buf *bp)
 }
 
 /*
- * Busy a buffer, but don't map it.
- * If it has a mapping, we keep it, but we also keep the mapping on
- * the list since we assume that it won't be used anymore.
- */
-void
-buf_acquire_unmapped(struct buf *bp)
-{
-	splassert(IPL_BIO);
-	SET(bp->b_flags, B_BUSY|B_NOTMAPPED);
-}
-
-/*
  * Acquire a buf but do not map it. Preserve any mapping it did have.
  */
 void
@@ -101,9 +89,7 @@ buf_acquire_nomap(struct buf *bp)
 {
 	splassert(IPL_BIO);
 	SET(bp->b_flags, B_BUSY);
-	if (bp->b_data == NULL)
-		SET(bp->b_flags, B_NOTMAPPED);
-	else {
+	if (bp->b_data != NULL) {
 		TAILQ_REMOVE(&buf_valist, bp, b_valist);
 		bcstats.kvaslots_avail--;
 		bcstats.busymapped++;
@@ -162,8 +148,6 @@ buf_map(struct buf *bp)
 	}
 
 	bcstats.busymapped++;
-
-	CLR(bp->b_flags, B_NOTMAPPED);
 }
 
 void
@@ -171,7 +155,7 @@ buf_release(struct buf *bp)
 {
 
 	KASSERT(bp->b_flags & B_BUSY);
-	KASSERT((bp->b_data != NULL) || (bp->b_flags & B_NOTMAPPED));
+	KASSERT(bp->b_data != NULL);
 	splassert(IPL_BIO);
 
 	if (bp->b_data) {
@@ -183,7 +167,7 @@ buf_release(struct buf *bp)
 			wakeup(&buf_needva);
 		}
 	}
-	CLR(bp->b_flags, B_BUSY|B_NOTMAPPED);
+	CLR(bp->b_flags, B_BUSY);
 }
 
 /*
