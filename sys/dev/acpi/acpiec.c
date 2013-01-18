@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.46 2012/07/13 10:37:40 pirofti Exp $ */
+/* $OpenBSD: acpiec.c,v 1.47 2013/01/18 06:02:51 pirofti Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -58,6 +58,9 @@ void		acpiec_sci_event(struct acpiec_softc *);
 void		acpiec_get_events(struct acpiec_softc *);
 
 int		acpiec_gpehandler(struct acpi_softc *, int, void *);
+
+void		acpiec_lock(struct acpiec_softc *);
+void		acpiec_unlock(struct acpiec_softc *);
 
 /* EC Status bits */
 #define		EC_STAT_SMI_EVT	0x40	/* SMI event pending */
@@ -523,4 +526,28 @@ acpiec_reg(struct acpiec_softc *sc)
 	}
 
 	return (0);
+}
+
+void
+acpiec_lock(struct acpiec_softc *sc)
+{
+	KASSERT(sc->sc_ecbusy == 0);
+
+	sc->sc_ecbusy = 1;
+
+	if (sc->sc_glk) {
+		acpi_glk_enter();
+	}
+}
+
+void
+acpiec_unlock(struct acpiec_softc *sc)
+{
+	KASSERT(sc->sc_ecbusy == 1);
+
+	if (sc->sc_glk) {
+		acpi_glk_leave();
+	}
+
+	sc->sc_ecbusy = 0;
 }
