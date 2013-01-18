@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.284 2013/01/16 07:07:38 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.285 2013/01/18 01:19:38 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2217,6 +2217,11 @@ sr_wu_release_ccbs(struct sr_workunit *wu)
 		TAILQ_REMOVE(&wu->swu_ccb, ccb, ccb_link);
 		sr_ccb_put(ccb);
 	}
+
+	wu->swu_io_count = 0;
+	wu->swu_ios_complete = 0;
+	wu->swu_ios_failed = 0;
+	wu->swu_ios_succeeded = 0;
 }
 
 void
