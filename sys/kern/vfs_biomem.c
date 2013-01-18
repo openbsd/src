@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.22 2013/01/18 08:52:04 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.23 2013/01/18 10:07:37 beck Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -155,7 +155,6 @@ buf_release(struct buf *bp)
 {
 
 	KASSERT(bp->b_flags & B_BUSY);
-	KASSERT(bp->b_data != NULL);
 	splassert(IPL_BIO);
 
 	if (bp->b_data) {
