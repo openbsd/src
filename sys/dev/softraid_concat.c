@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.8 2013/01/18 02:09:50 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.9 2013/01/18 11:14:48 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -180,6 +180,12 @@ sr_concat_rw(struct sr_workunit *wu)
 		if (scp->src_meta.scm_status != BIOC_SDONLINE)
 			goto bad;
 
+		DNPRINTF(SR_D_DIS, "%s: %s %s io lbaoffs %lld "
+		    "chunk %lld chunkend %lld physoffs %lld length %lld "
+		    "leftover %lld data %p\n",
+		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name,
+		    lbaoffs, chunk, chunkend, physoffs, length, leftover, data);
+
 		blk = physoffs >> DEV_BSHIFT;
 		ccb = sr_ccb_rw(sd, chunk, blk, length, data, xs->flags, 0);
 		if (!ccb) {
@@ -213,52 +219,18 @@ void
 sr_concat_intr(struct buf *bp)
 {
 	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu, *wup;
+	struct sr_workunit	*wu = ccb->ccb_wu;
+#ifdef SR_DEBUG
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
-	struct sr_softc		*sc = sd->sd_sc;
+#endif
 	int			s;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
-	    DEVNAME(sc), bp, xs);
+	DNPRINTF(SR_D_INTR, "%s: %s %s intr bp %x xs %x\n",
+	    DEVNAME(sd->sd_sc), sd->ssd_meta.ssd_devname, sd->sd_name, bp, xs);
 
 	s = splbio();
-
 	sr_ccb_done(ccb);
-
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d failed: %d\n",
-	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
-	    wu->swu_ios_failed);
-
-	if (wu->swu_ios_complete >= wu->swu_io_count) {
-		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
-			if (wup == wu)
-				break;
-
-		if (wup == NULL)
-			panic("%s: wu %p not on pending queue\n",
-			    DEVNAME(sc), wu);
-			
-		TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
-
-		if (wu->swu_collider) {
-			/* restart deferred wu */
-			wu->swu_collider->swu_state = SR_WU_INPROGRESS;
-			TAILQ_REMOVE(&sd->sd_wu_defq,
-			    wu->swu_collider, swu_link);
-			sr_raid_startwu(wu->swu_collider);
-		}
-
-		if (wu->swu_ios_failed)
-			xs->error = XS_DRIVER_STUFFUP;
-		else
-			xs->error = XS_NOERROR;
-
-		sr_scsi_done(sd, xs);
-
-		if (sd->sd_sync && sd->sd_wu_pending == 0)
-			wakeup(sd);
-	}
-
+	sr_wu_done(wu);
 	splx(s);
 }
