@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.13 2013/01/18 08:07:32 jmc Exp $
+.\" $OpenBSD: dhclient.8,v 1.14 2013/01/18 21:19:46 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -89,10 +89,13 @@ Specify a location,
 for the option data file.
 This causes
 .Nm
-to write two pseudo-leases, offered {} and effective {} to the
-specified file.
-offered {} will contain the lease offered by the DHCP server.
-effective {} will contain the modified lease used to configure the
+to write two pseudo-leases,
+.Dq offered
+and
+.Dq effective ,
+to the specified file.
+The offered block will contain the lease offered by the DHCP server;
+the effective block will contain the modified lease used to configure the
 interface.
 .It Fl l Ar file
 Specify an alternate location,
