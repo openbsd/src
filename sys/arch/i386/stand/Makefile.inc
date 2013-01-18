@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.43 2012/10/30 11:08:27 jsing Exp $
+#	$OpenBSD: Makefile.inc,v 1.44 2013/01/18 04:10:16 jsing Exp $
 
 CFLAGS=${DEBUG} ${COPTS} -Os -Wall -Werror
 CFLAGS+=	-fno-stack-protector
@@ -21,7 +21,7 @@ HEAP_LIMIT=0x90000
 BOOTREL=0x60000
 BOOTMAGIC=0xc001d00d
 #ROM_SIZE=32768
-CLEANFILES+=	machine
+CLEANFILES+=	assym.h machine
 
 .if empty(DEBUGFLAGS:M-D_TEST)
 SACFLAGS+=-nostdinc -fno-builtin -fpack-struct
@@ -30,12 +30,11 @@ SACFLAGS+=-nostdinc -fno-builtin -fpack-struct
 .if !make(libdep) && !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ X$(S) = X -o -h machine ] || ln -s $(S)/arch/i386/include machine)
-.endif
 
-.if exists(${SADIR}/etc/assym.h)
-CPPFLAGS+=-I${SADIR}/etc
-.else
-CPPFLAGS+=-I${SADIR}/etc/${__objdir}
+assym.h: ${S}/kern/genassym.sh ${SADIR}/etc/genassym.cf
+	sh ${S}/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${SADIR}/etc/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 .endif
 
 # NO_NET=no_net
