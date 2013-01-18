@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.60 2012/07/16 15:27:11 deraadt Exp $ */
+/* $OpenBSD: dsdt.h,v 1.61 2013/01/18 04:07:06 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -278,5 +278,8 @@ void			aml_notify_dev(const char *, int);
 #endif
 
 void			acpi_freedevlist(struct acpi_devlist_head *);
+
+void			acpi_glk_enter(void);
+void			acpi_glk_leave(void);
 
 #endif /* __DEV_ACPI_DSDT_H__ */

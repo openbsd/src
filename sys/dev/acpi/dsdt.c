@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.197 2012/07/16 15:27:11 deraadt Exp $ */
+/* $OpenBSD: dsdt.c,v 1.198 2013/01/18 04:07:06 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -731,6 +731,30 @@ long acpi_release_global_lock(void*);
 static long global_lock_count = 0;
 #define acpi_acquire_global_lock(x) 1
 #define acpi_release_global_lock(x) 0
+
+void
+acpi_glk_enter(void)
+{
+	acpi_acquire_glk(&acpi_softc->sc_facs->global_lock);
+}
+
+void
+acpi_glk_leave(void)
+{
+	int x;
+
+	if (acpi_release_glk(&acpi_softc->sc_facs->global_lock)) {
+		/*
+		 * If pending, notify the BIOS that the lock was released
+		 * by the OSPM. No locking is needed because nobody outside
+		 * the ACPI thread is touching this register.
+		 */
+		x = acpi_read_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0);
+		x |= ACPI_PM1_GBL_RLS;
+		acpi_write_pmreg(acpi_softc, ACPIREG_PM1_CNT, 0, x);
+	}
+}
+
 void
 aml_lockfield(struct aml_scope *scope, struct aml_value *field)
 {
