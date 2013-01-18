@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.31 2011/03/05 18:48:26 schwarze Exp $
+.\"	$OpenBSD: cat.1,v 1.32 2013/01/18 21:48:43 jmc Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cat.1	8.3 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: March 5 2011 $
+.Dd $Mdocdate: January 18 2013 $
 .Dt CAT 1
 .Os
 .Sh NAME
@@ -136,7 +136,7 @@ read and output contents of the standard input again, then finally output
 the contents of
 .Ar file3 .
 Note that if the standard input referred to a file, the second dash
-on the command-line would have no effect, since the entire contents of the file
+on the command line would have no effect, since the entire contents of the file
 would have already been read and printed by
 .Nm
 when it encountered the first

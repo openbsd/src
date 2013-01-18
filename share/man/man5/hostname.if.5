@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.59 2012/12/27 08:26:43 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.60 2013/01/18 21:48:43 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 27 2012 $
+.Dd $Mdocdate: January 18 2013 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -202,7 +202,7 @@ the interface, such as 64.
 .It Li #
 Comments are allowed.
 Anything following a comment character is treated as a comment.
-.It Li \&! Ns Ar command-line
+.It Li \&! Ns Ar command
 Arbitrary shell commands can be executed using this directive, as
 long as they are available in the single-user environment (for
 instance,
