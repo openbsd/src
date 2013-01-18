@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2013/01/18 11:35:24 jsing Exp $
+#	$OpenBSD: Makefile,v 1.21 2013/01/18 21:09:04 espie Exp $
 
 MAN?=	boot.8
 MLINKS?=boot.8 boot.conf.5
@@ -54,8 +54,7 @@ boot.bin: boot
 
 CLEANFILES+= ${PROG}.new
 
-${.CURDIR}/srt0.S: assym.h
-${SADIR}/libsa/gidt.S: assym.h
+.depend srt0.o gidt.o: assym.h
 
 ${PROG}: $(OBJS)
 	$(LD) $(LDFLAGS) -o ${PROG}.new $(OBJS)
