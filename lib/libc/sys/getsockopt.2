@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.37 2012/10/21 13:06:02 benno Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.38 2013/01/18 09:41:51 bluhm Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 21 2012 $
+.Dd $Mdocdate: January 18 2013 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -369,8 +369,8 @@ the
 error is returned.
 .Pp
 .Dv SO_SPLICE
-can splice together two connected TCP sockets for zero-copy data
-transfers.
+can splice together two TCP or UDP sockets for zero-copy data transfers.
+Both sockets must be of the same type.
 In the first form,
 .Fn setsockopt
 is called with the source socket
@@ -404,8 +404,6 @@ or
 .Xr kqueue 2
 operation testing the ability to read from the source socket indicates
 that the splicing has terminated.
-After reaching the maximum, it becomes readable only when more data
-is available.
 The error status can be examined with
 .Dv SO_ERROR
 at the source socket.
@@ -415,12 +413,15 @@ error is set if there was no data transferred between two sockets
 during the
 .Va sp_idle
 period of time.
+The
+.Er EFBIG
+error is set after exactly
+.Va sp_max
+bytes have been transferred.
 Note that if a maximum is given, it is only guaranteed that no more
 bytes are transferred.
-A short splice can happen but then a second call to splice will
+A short splice can happen, but then a second call to splice will
 transfer the remaining data immediately.
-Also the readability check will not indicate that the maximum has
-been reached but that data after the maximum is available.
 The
 .Dv SO_SPLICE
 option with
