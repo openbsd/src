@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.61 2012/12/11 22:42:11 markus Exp $
+#	$OpenBSD: Makefile,v 1.62 2013/01/18 00:45:29 djm Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
 
@@ -53,7 +53,8 @@ LTESTS= 	connect \
 		host-expand \
 		keys-command \
 		forward-control \
-		integrity
+		integrity \
+		krl
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
@@ -68,9 +69,9 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		ls.copy banner.in banner.out empty.in \
 		scp-ssh-wrapper.exe ssh_proxy_envpass remote_pid \
 		sshd_proxy_bak rsa_ssh2_cr.prv rsa_ssh2_crnl.prv \
-		known_hosts-cert host_ca_key* cert_host_key* \
+		known_hosts-cert host_ca_key* cert_user_key* cert_host_key* \
 		authorized_principals_${USER} expect actual ready \
-		sshd_proxy.* authorized_keys_${USER}.*
+		sshd_proxy.* authorized_keys_${USER}.* revoked-* krl-*
 
 # Enable all malloc(3) randomisations and checks
 TEST_ENV=      "MALLOC_OPTIONS=AFGJPRX"
