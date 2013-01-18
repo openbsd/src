@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.57 2013/01/17 20:30:43 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.58 2013/01/18 02:16:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -879,8 +879,8 @@ input_clear(struct input_ctx *ictx)
 int
 input_print(struct input_ctx *ictx)
 {
-	ictx->cell.data = ictx->ch;
-	screen_write_cell(&ictx->ctx, &ictx->cell, NULL);
+	grid_cell_one(&ictx->cell, ictx->ch);
+	screen_write_cell(&ictx->ctx, &ictx->cell);
 
 	return (0);
 }
@@ -1657,9 +1657,8 @@ input_utf8_close(struct input_ctx *ictx)
 
 	utf8_append(&ictx->utf8data, ictx->ch);
 
-	ictx->cell.flags |= GRID_FLAG_UTF8;
-	screen_write_cell(&ictx->ctx, &ictx->cell, &ictx->utf8data);
-	ictx->cell.flags &= ~GRID_FLAG_UTF8;
+	grid_cell_set(&ictx->cell, &ictx->utf8data);
+	screen_write_cell(&ictx->ctx, &ictx->cell);
 
 	return (0);
 }
