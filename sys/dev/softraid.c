@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.287 2013/01/18 09:56:52 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.288 2013/01/18 23:19:44 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2248,6 +2248,9 @@ sr_wu_done_callback(void *arg1, void *arg2)
 	struct sr_workunit	*wu = (struct sr_workunit *)arg2;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_workunit	*wup;
+	int			s;
+
+	s = splbio();
 
 	TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
 		if (wup == wu)
@@ -2276,13 +2279,15 @@ sr_wu_done_callback(void *arg1, void *arg2)
 	 */
 	if (sd->sd_scsi_done) {
 		sd->sd_scsi_done(wu);
-		return;
+	} else {
+		sr_scsi_done(sd, xs);
+
+		/* XXX - move to sr_scsi_done? */
+		if (sd->sd_sync && sd->sd_wu_pending == 0)
+			wakeup(sd);
 	}
 
-	sr_scsi_done(sd, xs);
-
-	if (sd->sd_sync && sd->sd_wu_pending == 0)
-		wakeup(sd);
+	splx(s);
 }
 
 void
