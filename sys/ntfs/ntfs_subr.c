@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.29 2013/01/14 02:41:03 jsing Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.30 2013/01/18 05:09:21 jsing Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -115,6 +115,10 @@ ntfs_findvattr(struct ntfsmount *ntmp, struct ntnode *ip,
 			       ip->i_number);
 			return (error);
 		}
+	} else {
+		/* Update LRU loaded list. */
+		TAILQ_REMOVE(&ntmp->ntm_ntnodeq, ip, i_loaded);
+		TAILQ_INSERT_HEAD(&ntmp->ntm_ntnodeq, ip, i_loaded);
 	}
 
 	*lvapp = NULL;
@@ -253,16 +257,35 @@ out:
 int
 ntfs_loadntnode(struct ntfsmount *ntmp, struct ntnode *ip)
 {
-	struct filerec  *mfrp;
-	daddr64_t         bn;
-	int		error,off;
-	struct attr    *ap;
-	struct ntvattr *nvap;
+	struct ntnode	*oip;
+	struct ntvattr	*vap;
+	struct filerec	*mfrp;
+	struct attr	*ap;
+	daddr64_t	bn;
+ 	int		error,off;
+ 
+ 	dprintf(("ntfs_loadntnode: loading ino: %d\n",ip->i_number));
+ 
+	KASSERT((ip->i_flag & IN_LOADED) == 0);
 
-	dprintf(("ntfs_loadntnode: loading ino: %d\n",ip->i_number));
+	if (ntmp->ntm_ntnodes >= LOADED_NTNODE_HI) {
+		oip = TAILQ_LAST(&ntmp->ntm_ntnodeq, ntnodeq);
+		TAILQ_REMOVE(&ntmp->ntm_ntnodeq, oip, i_loaded);
+		ntmp->ntm_ntnodes--;
 
-	mfrp = malloc(ntfs_bntob(ntmp->ntm_bpmftrec), M_TEMP, M_WAITOK);
+		dprintf(("ntfs_loadntnode: unloading ino: %d\n",
+		    oip->i_number));
 
+		KASSERT((oip->i_flag & IN_LOADED));
+		oip->i_flag &= ~IN_LOADED;
+		while ((vap = LIST_FIRST(&oip->i_valist)) != NULL) {
+			LIST_REMOVE(vap, va_list);
+			ntfs_freentvattr(vap);
+		}
+	}
+
+ 	mfrp = malloc(ntfs_bntob(ntmp->ntm_bpmftrec), M_TEMP, M_WAITOK);
+ 
 	if (ip->i_number < NTFS_SYSNODESNUM) {
 		struct buf     *bp;
 
@@ -309,12 +332,12 @@ ntfs_loadntnode(struct ntfsmount *ntmp, struct ntnode *ip)
 	LIST_INIT(&ip->i_valist);
 	
 	while (ap->a_hdr.a_type != -1) {
-		error = ntfs_attrtontvattr(ntmp, &nvap, ap);
+		error = ntfs_attrtontvattr(ntmp, &vap, ap);
 		if (error)
 			break;
-		nvap->va_ip = ip;
+		vap->va_ip = ip;
 
-		LIST_INSERT_HEAD(&ip->i_valist, nvap, va_list);
+		LIST_INSERT_HEAD(&ip->i_valist, vap, va_list);
 
 		off += ap->a_hdr.reclen;
 		ap = (struct attr *) ((caddr_t)mfrp + off);
@@ -330,6 +353,10 @@ ntfs_loadntnode(struct ntfsmount *ntmp, struct ntnode *ip)
 	ip->i_frflag = mfrp->fr_flags;
 
 	ip->i_flag |= IN_LOADED;
+
+	/* Add to loaded list. */
+	TAILQ_INSERT_HEAD(&ntmp->ntm_ntnodeq, ip, i_loaded);
+	ntmp->ntm_ntnodes++;
 
 out:
 	free(mfrp, M_TEMP);
@@ -415,6 +442,7 @@ ntfs_ntlookup(struct ntfsmount *ntmp, ino_t ino, struct ntnode **ipp,
 void
 ntfs_ntput(struct ntnode *ip, struct proc *p)
 {
+	struct ntfsmount *ntmp = ip->i_mp;
 	struct ntvattr *vap;
 
 	dprintf(("ntfs_ntput: rele ntnode %d: %p, usecount: %d\n",
@@ -440,6 +468,12 @@ ntfs_ntput(struct ntnode *ip, struct proc *p)
 		panic("ntfs_ntput: ntnode has fnodes");
 
 	ntfs_nthashrem(ip);
+
+	/* Remove from loaded list. */
+	if (ip->i_flag & IN_LOADED) {
+		TAILQ_REMOVE(&ntmp->ntm_ntnodeq, ip, i_loaded);
+		ntmp->ntm_ntnodes--;
+	}
 
 	while ((vap = LIST_FIRST(&ip->i_valist)) != NULL) {
 		LIST_REMOVE(vap, va_list);

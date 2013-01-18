@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_inode.h,v 1.5 2009/08/13 16:00:53 jasper Exp $	*/
+/*	$OpenBSD: ntfs_inode.h,v 1.6 2013/01/18 05:09:21 jsing Exp $	*/
 /*	$NetBSD: ntfs_inode.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
 
 /*-
@@ -38,8 +38,11 @@ struct ntnode {
 	dev_t           i_dev;		/* Device associated with the inode. */
 
 	LIST_ENTRY(ntnode)	i_hash;
+	TAILQ_ENTRY(ntnode)	i_loaded;
+
 	struct ntnode  *i_next;
 	struct ntnode **i_prev;
+
 	struct ntfsmount       *i_mp;
 	ino_t           i_number;
 	u_int32_t       i_flag;
