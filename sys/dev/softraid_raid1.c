@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.39 2013/01/17 03:37:31 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.40 2013/01/18 05:59:28 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -384,7 +384,6 @@ sr_raid1_rw(struct sr_workunit *wu)
 		ios = 1;
 	else
 		ios = sd->sd_meta->ssdi.ssd_chunk_no;
-	wu->swu_io_count = ios;
 
 	for (i = 0; i < ios; i++) {
 		if (xs->flags & SCSI_DATA_IN) {
@@ -424,16 +423,15 @@ ragain:
 
 			case BIOC_SDHOTSPARE: /* should never happen */
 			case BIOC_SDOFFLINE:
-				wu->swu_io_count--;
 				continue;
 
 			default:
 				goto bad;
 			}
-
 		}
 
-		ccb = sr_ccb_get(sd);
+		ccb = sr_ccb_rw(sd, chunk, blk, xs->datalen, xs->data,
+		    xs->flags, 0);
 		if (!ccb) {
 			/* should never happen but handle more gracefully */
 			printf("%s: %s: too many ccbs queued\n",
@@ -441,47 +439,7 @@ ragain:
 			    sd->sd_meta->ssd_devname);
 			goto bad;
 		}
-
-		if (xs->flags & SCSI_POLL) {
-			ccb->ccb_buf.b_flags = 0;
-			ccb->ccb_buf.b_iodone = NULL;
-		} else {
-			ccb->ccb_buf.b_flags = B_CALL;
-			ccb->ccb_buf.b_iodone = sr_raid1_intr;
-		}
-
-		if (xs->flags & SCSI_DATA_IN)
-			ccb->ccb_buf.b_flags |= B_READ;
-		else
-			ccb->ccb_buf.b_flags |= B_WRITE;
-	
-		ccb->ccb_buf.b_flags |= B_PHYS;
-		ccb->ccb_buf.b_blkno = blk;
-		ccb->ccb_buf.b_bcount = xs->datalen;
-		ccb->ccb_buf.b_bufsize = xs->datalen;
-		ccb->ccb_buf.b_resid = xs->datalen;
-		ccb->ccb_buf.b_data = xs->data;
-		ccb->ccb_buf.b_error = 0;
-		ccb->ccb_buf.b_proc = curproc;
-		ccb->ccb_buf.b_bq = NULL;
-		ccb->ccb_wu = wu;
-		ccb->ccb_target = chunk;
-		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[chunk]->src_dev_mm;
-		ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[chunk]->src_vn;
-		if ((ccb->ccb_buf.b_flags & B_READ) == 0)
-			ccb->ccb_buf.b_vp->v_numoutput++;
-
-		LIST_INIT(&ccb->ccb_buf.b_dep);
-
-		if (wu->swu_cb_active == 1)
-			panic("%s: sr_raid1_rw", DEVNAME(sd->sd_sc));
-		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
-
-		DNPRINTF(SR_D_DIS, "%s: %s: sr_raid1: b_bcount: %d "
-		    "b_blkno: %x b_flags 0x%0x b_data %p\n",
-		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
-		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+		sr_wu_enqueue_ccb(wu, ccb);
 	}
 
 	s = splbio();
@@ -519,34 +477,14 @@ sr_raid1_intr(struct buf *bp)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
-	struct buf		*b;
 	int			s, pend;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
 	    DEVNAME(sc), bp, xs);
 
-	b = &ccb->ccb_buf;
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
-	    " b_flags: 0x%0x block: %lld target: %d\n", DEVNAME(sc),
-	    b->b_bcount, b->b_resid, b->b_flags, b->b_blkno, ccb->ccb_target);
-
 	s = splbio();
 
-	if (b->b_flags & B_ERROR) {
-		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target: %d\n",
-		    DEVNAME(sc), b->b_blkno, ccb->ccb_target);
-		wu->swu_ios_failed++;
-		ccb->ccb_state = SR_CCB_FAILED;
-		if (ccb->ccb_target != -1)
-			sd->sd_set_chunk_state(sd, ccb->ccb_target,
-			    BIOC_SDOFFLINE);
-		else
-			panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
-	} else {
-		ccb->ccb_state = SR_CCB_OK;
-		wu->swu_ios_succeeded++;
-	}
-	wu->swu_ios_complete++;
+	sr_ccb_done(ccb);
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d failed: %d\n",
 	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
@@ -557,7 +495,7 @@ sr_raid1_intr(struct buf *bp)
 		if (wu->swu_ios_failed == wu->swu_ios_complete) {
 			if (xs->flags & SCSI_DATA_IN) {
 				printf("%s: retrying read on block %lld\n",
-				    DEVNAME(sc), b->b_blkno);
+				    DEVNAME(sc), ccb->ccb_buf.b_blkno);
 				sr_ccb_put(ccb);
 				if (wu->swu_cb_active == 1)
 					panic("%s: sr_raid1_intr_cb",
@@ -570,7 +508,8 @@ sr_raid1_intr(struct buf *bp)
 					goto retry;
 			} else {
 				printf("%s: permanently fail write on block "
-				    "%lld\n", DEVNAME(sc), b->b_blkno);
+				    "%lld\n", DEVNAME(sc),
+				    ccb->ccb_buf.b_blkno);
 				xs->error = XS_DRIVER_STUFFUP;
 				goto bad;
 			}
