@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.117 2013/01/15 23:03:37 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.118 2013/01/19 16:58:16 miod Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -749,15 +749,15 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	if (add) {
 		struct stat sb;
 		struct group *grent;
-		if((grent = getgrgid(getgid())) == NULL) {
-			syslog(LOG_ERR, "Group not found user %s, gid %d",
-			    luser, getgid());
-		}
-
 		char	*pargv[13] = {
 			"pfctl", "-p", "/dev/pf", "-q", "-a", "anchor/ruleset",
 			"-D", "user_id=X", "-D", "user_ip=X", "-f", "file", NULL
 		};
+
+		if((grent = getgrgid(getgid())) == NULL) {
+			syslog(LOG_ERR, "Group not found user %s, gid %d",
+			    luser, getgid());
+		}
 
 		if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
 			syslog(LOG_ERR, "invalid luser/ipsrc");
