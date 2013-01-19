@@ -1,4 +1,4 @@
-.\"	$OpenBSD: open.2,v 1.40 2011/11/06 17:22:20 schwarze Exp $
+.\"	$OpenBSD: open.2,v 1.41 2013/01/19 07:18:15 jmc Exp $
 .\"	$NetBSD: open.2,v 1.8 1995/02/27 12:35:14 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)open.2	8.2 (Berkeley) 11/16/93
 .\"
-.Dd $Mdocdate: November 6 2011 $
+.Dd $Mdocdate: January 19 2013 $
 .Dt OPEN 2
 .Os
 .Sh NAME
@@ -100,7 +100,7 @@ Atomically obtain an exclusive lock.
 .It Dv O_NOFOLLOW
 If last path element is a symlink, don't follow it.
 .It Dv O_CLOEXEC
-Set FD_CLOEXEC on the new file descriptor.
+Set new file descriptor to close on exec.
 .It Dv O_DIRECTORY
 Error if
 .Fa path
