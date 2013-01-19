@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.28 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: fcntl.2,v 1.29 2013/01/19 21:57:57 millert Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 19 2013 $
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@ by some commands, a pointer to a
 by others (see below), and ignored by the rest.
 .Pp
 The commands are:
-.Bl -tag -width F_GETOWNX
+.Bl -tag -width F_DUPFD_CLOEXEC
 .It Dv F_DUPFD
 Return a new descriptor as follows:
 .Pp
@@ -83,9 +83,18 @@ share the same file status flags).
 .It
 The close-on-exec flag associated with the new file descriptor
 is set to remain open across
-.Xr execv 3
+.Xr execve 2
 calls.
 .El
+.It Dv F_DUPFD_CLOEXEC
+Like
+.Dv F_DUPFD ,
+but the
+.Dv FD_CLOEXEC
+flag associated with the new file descriptor is set, so the file descriptor
+is closed when
+.Xr execve 2
+is called.
 .It Dv F_GETFD
 Get the close-on-exec flag associated with the file descriptor
 .Fa fd
