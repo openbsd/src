@@ -1,4 +1,6 @@
 . ${srcdir}/emulparams/elf32m88k.sh
-GENERATE_SHLIB_SCRIPT=no
+# Force padding around .plt
+DATA_PLT=
+GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=no
 . ${srcdir}/emulparams/elf_obsd.sh
