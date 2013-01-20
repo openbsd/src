@@ -1,0 +1,236 @@
+/*	$OpenBSD: ldasm.S,v 1.1 2013/01/20 23:01:44 miod Exp $	*/
+
+/*
+ * Copyright (c) 2013 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * Copyright (c) 2006 Dale Rahn
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
+#include <machine/asm.h>
+#include <sys/syscall.h>
+#include <SYS.h>
+
+/*
+ * ld.so entry point.
+ * On entry: r31 points to the kernel argument struct (argv, argv, environ).
+ * The environment pointers list is followed by an array of AuxInfo
+ * structs filled by the kernel.
+ */
+#define DL_DATA_SIZE	(4 * 16)	 /* 16 * sizeof(ELF_Addr) */
+ENTRY(_dl_start)
+	/*
+	 * Two nop because execution may skip up to two instructions.
+	 * See setregs() in the kernel for details.
+	 *
+	 * Note that I have been hacking m88k for years and still fall
+	 * into this trap, every time. -- miod
+	 */
+	or	%r0,  %r0,  %r0
+	or	%r0,  %r0,  %r0
+
+	/*
+	 * Get some room for the contiguous AUX pointers array.
+	  */
+	or	%r30, %r31, 0
+	subu	%r31, %r31, DL_DATA_SIZE
+
+	/*
+	 * Invoke _dl_boot_bind
+	 */
+	or	%r2,  %r30, 0		| kernel args
+	or	%r3,  %r31, 0		| array base
+#if 0 /* _dl_boot_bind() can compute this itself */
+	bsr	1f			| the following instruction is skipped
+	bcnd	eq0, %r0, _DYNAMIC	| but gives us the pc-relative offset
+1:	ld.hu	%r5, %r1, 2		| fetch branch offset (low 16 bits)
+	lda	%r4, %r1[%r5]		|
+#endif
+	bsr	_dl_boot_bind
+
+	ld	%r2,  %r30, 0		| argc
+	addu	%r6,  %r30, 4 + 4
+	lda	%r3,  %r6[%r2]		| envp
+	ld	%r4,  %r31, 4 * 7	| ldoff
+/* DEBUG */ or %r29, %r4, %r0
+	or	%r5,  %r31, 0		| array base
+	bsr.n	_dl_boot
+	 addu	%r2,  %r30, 4		| argv
+
+	addu	%r31, %r31, DL_DATA_SIZE
+	jsr.n	%r2
+	 or	%r5,  %r0,  %r0		| cleanup as expected by CSU
+END(_dl_start)
+
+/*
+ * PLT resolver entry point.
+ * Invoked with the following stack frame:
+ *	r31(0x00)	zero
+ *	r31(0x04)	ELF object
+ *	r31(0x08)	saved r11
+ *	r31(0x0c)	saved r1
+ * All registers but r1 and r11 must be preserved. The resolver must return
+ * to the resolved address with r1 restored.
+ */
+#define	OBJECT_OFFSET	(4 * 1)
+#define	R11_OFFSET	(4 * 2)
+#define	R1_OFFSET	(4 * 3)
+#define	PLT_FRAME_SIZE	(4 * 4)
+#define REG_SIZE	(4 * 12)
+ENTRY(_dl_bind_start)
+	/*
+	 * Preserve caller-saved registers.
+	 */
+	subu	%r31, %r31, REG_SIZE
+	st	%r2,  %r31, 4 * 0
+	st	%r3,  %r31, 4 * 1
+	st	%r4,  %r31, 4 * 2
+	st	%r5,  %r31, 4 * 3
+	st	%r6,  %r31, 4 * 4
+	st	%r7,  %r31, 4 * 5
+	st	%r8,  %r31, 4 * 6
+	st	%r9,  %r31, 4 * 7
+	st	%r10, %r31, 4 * 8
+	st	%r12, %r31, 4 * 9
+	st	%r13, %r31, 4 * 10
+
+	/*
+	 * Invoke resolver entry point.
+	 */
+	ld	%r2,  %r31, REG_SIZE + OBJECT_OFFSET
+	bsr.n	_dl_bind
+	 ld	%r3,  %r31, REG_SIZE + R11_OFFSET	| reloff
+
+	/*
+	 * Preserve return address.
+	 */
+	or	%r11, %r2,  %r0
+
+	/*
+	 * Restore caller-saved registers.
+	 */
+	ld	%r13, %r31, 4 * 10
+	ld	%r12, %r31, 4 * 9
+	ld	%r10, %r31, 4 * 8
+	ld	%r9,  %r31, 4 * 7
+	ld	%r8,  %r31, 4 * 6
+	ld	%r7,  %r31, 4 * 5
+	ld	%r6,  %r31, 4 * 4
+	ld	%r5,  %r31, 4 * 3
+	ld	%r4,  %r31, 4 * 2
+	ld	%r3,  %r31, 4 * 1
+	ld	%r2,  %r31, 4 * 0
+	ld	%r1,  %r31, REG_SIZE + R1_OFFSET
+	
+	jsr.n	%r11
+	 addu	%r31, %r31, REG_SIZE + PLT_FRAME_SIZE
+
+/* ld.so SYSCALLS */
+
+#define DL_SYSCALL(n)	DL_SYSCALL2(n,n)
+#define DL_SYSCALL2(n,c)				\
+	__ENTRY(_dl_,n);				\
+	__DO_SYSCALL(c);				\
+	br	_dl_cerror
+
+#define DL_SYSCALL2_NOERR(n,c)				\
+	__ENTRY(_dl_,n);				\
+	__DO_SYSCALL(c)
+
+DL_SYSCALL(close)
+	jmp	%r1
+
+ENTRY(_dl_exit)
+	__DO_SYSCALL(exit)
+1:	br	1b
+
+DL_SYSCALL(issetugid)
+	jmp	%r1
+
+DL_SYSCALL2(_syscall,__syscall)
+	jmp	%r1
+
+DL_SYSCALL(munmap)
+	jmp	%r1
+
+DL_SYSCALL(mprotect)
+	jmp	%r1
+
+DL_SYSCALL(open)
+	jmp	%r1
+
+DL_SYSCALL(read)
+	jmp	%r1
+
+_dl_cerror:
+	jmp.n	%r1
+	 subu	%r2, %r0, 1
+
+DL_SYSCALL(write)
+	jmp	%r1
+
+DL_SYSCALL(fstat)
+	jmp	%r1
+
+DL_SYSCALL(fcntl)
+	jmp	%r1
+
+DL_SYSCALL(gettimeofday)
+	jmp	%r1
+
+DL_SYSCALL2(sysctl,__sysctl)
+	jmp	%r1
+
+DL_SYSCALL(getdirentries)
+	jmp	%r1
+
+ENTRY(_dl_sigprocmask)
+	bcnd	ne0, %r3, 1f
+	or	%r2, %r0, 1		/* SIG_BLOCK */
+	br	2f
+1:
+	ld	%r3, %r3, 0
+2:
+	or	%r13, %r0, SYS_sigprocmask
+	tb0	0, %r0, 128
+	br	_dl_cerror
+	bcnd	eq0, %r4, 3f
+	st	%r2, %r4, 0
+3:
+	jmp.n	%r1
+	 or	%r2, %r0, 0
+END(sigprocmask)
