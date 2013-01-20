@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.35 2012/09/10 01:25:30 tedu Exp $	*/
+/*	$OpenBSD: edit.c,v 1.36 2013/01/20 14:47:46 stsp Exp $	*/
 
 /*
  * Command line editing - common code
@@ -348,7 +348,7 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 {
 	char *toglob;
 	char **words;
-	int nwords, i, idx, escaping;
+	int nwords;
 	XPtrV w;
 	struct source *s, *sold;
 
@@ -357,20 +357,6 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 
 	toglob = add_glob(str, slen);
 
-	/* remove all escaping backward slashes */
-	escaping = 0;
-	for (i = 0, idx = 0; toglob[i]; i++) {
-		if (toglob[i] == '\\' && !escaping) {
-			escaping = 1;
-			continue;
-		}
-
-		toglob[idx] = toglob[i];
-		idx++;
-		if (escaping) escaping = 0;
-	}
-	toglob[idx] = '\0';
-
 	/*
 	 * Convert "foo*" (toglob) to an array of strings (words)
 	 */
@@ -378,7 +364,7 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 	s = pushs(SWSTR, ATEMP);
 	s->start = s->str = toglob;
 	source = s;
-	if (yylex(ONEWORD) != LWORD) {
+	if (yylex(ONEWORD|UNESCAPE) != LWORD) {
 		source = sold;
 		internal_errorf(0, "fileglob: substitute error");
 		return 0;
@@ -394,15 +380,13 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 	if (nwords == 1) {
 		struct stat statb;
 
-		/* Check if globbing failed (returned glob pattern),
-		 * but be careful (E.g. toglob == "ab*" when the file
-		 * "ab*" exists is not an error).
-		 * Also, check for empty result - happens if we tried
-		 * to glob something which evaluated to an empty
-		 * string (e.g., "$FOO" when there is no FOO, etc).
+		/* Check if file exists, also, check for empty
+		 * result - happens if we tried to glob something
+		 * which evaluated to an empty string (e.g.,
+		 * "$FOO" when there is no FOO, etc).
 		 */
 		if ((strcmp(words[0], toglob) == 0 &&
-		    stat(words[0], &statb) < 0) ||
+		    lstat(words[0], &statb) < 0) ||
 		    words[0][0] == '\0') {
 			x_free_words(nwords, words);
 			words = NULL;
