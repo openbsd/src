@@ -1639,6 +1639,21 @@ m88k_parse_name (name, expressionP, nextcharP)
 
   return 1;
 }
+
+int
+m88k_fix_adjustable (fix)
+     fixS *fix;
+{
+  return (fix->fx_r_type != BFD_RELOC_LO16_GOTOFF
+	  && fix->fx_r_type != BFD_RELOC_HI16_GOTOFF
+	  && fix->fx_r_type != BFD_RELOC_VTABLE_INHERIT
+	  && fix->fx_r_type != BFD_RELOC_VTABLE_ENTRY
+	  && (fix->fx_pcrel
+	      || (fix->fx_subsy != NULL
+		  && (S_GET_SEGMENT (fix->fx_subsy)
+		      == S_GET_SEGMENT (fix->fx_addsy)))
+	      || S_IS_LOCAL (fix->fx_addsy)));
+}
 #endif /* OBJ_ELF */
 
 #ifdef OBJ_AOUT

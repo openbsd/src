@@ -105,6 +105,10 @@ extern int m88k_parse_name (const char *, expressionS *, char *);
    || (FIX)->fx_r_type == BFD_RELOC_32_PLT_PCREL	\
    || TC_FORCE_RELOCATION (FIX))
 
+/* Keep relocations relative to the GOT, or non-PC relative.  */
+#define tc_fix_adjustable(FIX) m88k_fix_adjustable (FIX)
+extern int m88k_fix_adjustable PARAMS ((struct fix *));
+
 #endif /* OBJ_ELF */
 
 #ifndef OBJ_ELF
