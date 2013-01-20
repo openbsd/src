@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.14 2013/01/11 21:21:48 miod Exp $*/
+/*	$OpenBSD: SYS.h,v 1.15 2013/01/20 23:00:22 miod Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -61,17 +61,19 @@
 #if __PIC__ > 1
 #define	PIC_LOAD(reg,sym)						\
 	or.u	%r11, %r0,  %hi16(__CONCAT(sym,#got_rel));		\
-	or	%r11, %r11, %lo16(__CONCAT(sym,#got_rel));		\
+	ld	%r11, %r11, %lo16(__CONCAT(sym,#got_rel));		\
 	ld	reg,  %r25, %r11
 #define	PIC_STORE(reg,sym)						\
 	or.u	%r11, %r0,  %hi16(__CONCAT(sym,#got_rel));		\
-	or	%r11, %r11, %lo16(__CONCAT(sym,#got_rel));		\
+	ld	%r11, %r11, %lo16(__CONCAT(sym,#got_rel));		\
 	st	reg,  %r25, %r11
 #else		/* -fpic */
 #define	PIC_LOAD(reg,sym)						\
-	ld	reg,  %r25, __CONCAT(sym,#got_rel)
+	ld	%r11, %r25, __CONCAT(sym,#got_rel);			\
+	ld	reg,  %r11, %r0
 #define	PIC_STORE(reg,sym)						\
-	st	reg,  %r25, __CONCAT(sym,#got_rel)
+	ld	%r11, %r25, __CONCAT(sym,#got_rel);			\
+	st	reg,  %r11, %r0
 #endif
 #else
 #define	CERROR	__cerror
