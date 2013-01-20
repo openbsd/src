@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.817 2012/11/23 18:35:25 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.818 2013/01/20 22:51:16 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4013,7 +4013,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 {
 	struct tcphdr		*th = pd->hdr.tcp;
 	u_int16_t		 win = ntohs(th->th_win);
-	u_int32_t		 ack, end, seq, orig_seq;
+	u_int32_t		 ack, end, data_end, seq, orig_seq;
 	u_int8_t		 sws, dws;
 	int			 ackskew;
 
@@ -4076,6 +4076,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 				}
 			}
 		}
+		data_end = end;
 		if (th->th_flags & TH_FIN)
 			end++;
 
@@ -4106,6 +4107,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 		end = seq + pd->p_len;
 		if (th->th_flags & TH_SYN)
 			end++;
+		data_end = end;
 		if (th->th_flags & TH_FIN)
 			end++;
 	}
@@ -4152,7 +4154,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 
 
 #define MAXACKWINDOW (0xffff + 1500)	/* 1500 is an arbitrary fudge factor */
-	if (SEQ_GEQ(src->seqhi, end) &&
+	if (SEQ_GEQ(src->seqhi, data_end) &&
 	    /* Last octet inside other's window space */
 	    SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws)) &&
 	    /* Retrans: not more than one window back */
@@ -4223,7 +4225,7 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 	} else if ((dst->state < TCPS_SYN_SENT ||
 		dst->state >= TCPS_FIN_WAIT_2 ||
 		src->state >= TCPS_FIN_WAIT_2) &&
-	    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) &&
+	    SEQ_GEQ(src->seqhi + MAXACKWINDOW, data_end) &&
 	    /* Within a window forward of the originating packet */
 	    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW)) {
 	    /* Within a window backward of the originating packet */
@@ -4313,12 +4315,13 @@ pf_tcp_track_full(struct pf_pdesc *pd, struct pf_state_peer *src,
 			    pd->dir == PF_IN ? "in" : "out",
 			    pd->dir == (*state)->direction ? "fwd" : "rev");
 			addlog("pf: State failure on: %c %c %c %c | %c %c\n",
-			    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
+			    SEQ_GEQ(src->seqhi, data_end) ? ' ' : '1',
 			    SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws)) ?
 			    ' ': '2',
 			    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
 			    (ackskew <= (MAXACKWINDOW << sws)) ? ' ' : '4',
-			    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) ?' ' :'5',
+			    SEQ_GEQ(src->seqhi + MAXACKWINDOW, data_end) ?
+			    ' ' :'5',
 			    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW) ?' ' :'6');
 		}
 		REASON_SET(reason, PFRES_BADSTATE);
