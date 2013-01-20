@@ -1,4 +1,4 @@
-#	$OpenBSD: config.gcc,v 1.24 2013/01/05 11:20:55 miod Exp $
+#	$OpenBSD: config.gcc,v 1.25 2013/01/20 22:59:12 miod Exp $
 # GCC build-, host- and target-specific configuration file.
 # Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
@@ -1799,9 +1799,13 @@ m88k-*-aout*)
 	tm_file=m88k/m88k-aout.h
 	;;
 m88k-*-openbsd*)
-	tmake_file="t-libc-ok t-openbsd"
 	tm_file="openbsd-libpthread.h dbxelf.h elfos.h m88k/openbsd1.h m88k/m88k.h openbsd.h m88k/openbsdelf.h"
 #	tm_file="${tm_file} exec-stack.h"
+	tmake_file="t-libc-ok t-openbsd"
+	if test x$enable_threads = xyes; then
+		tmake_file="${tmake_file} t-openbsd-thread"
+	fi
+	tmake_file="${tmake_file} m88k/t-openbsd"
 	gas=yes gnu_ld=yes
 	;;
 m88k-*-sysv4*)
