@@ -1,9 +1,9 @@
-# test persistent https 1.1 connection over http relay
+# test chunked https 1.1 connection over http relay
 
 use strict;
 use warnings;
 
-my @lengths = (251, 16384, 0, 1, 2, 3, 4, 5);
+my @lengths = ([ 251, 10000, 10 ], 1, [2, 3]);
 our %args = (
     client => {
 	func => \&http_client,
@@ -13,8 +13,9 @@ our %args = (
     relayd => {
 	protocol => [ "http",
 	    "request header log foo",
-	    "response header log bar",
+	    "response header log Transfer-Encoding",
 	],
+	loggrep => { "log 'Transfer-Encoding: chunked'" => 2 },
 	forwardssl => 1,
 	listenssl => 1,
     },

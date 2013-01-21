@@ -1,9 +1,9 @@
-# test persistent https 1.1 connection over http relay
+# test persistent https 1.1 connection and grep for content length
 
 use strict;
 use warnings;
 
-my @lengths = (251, 16384, 0, 1, 2, 3, 4, 5);
+my @lengths = (1, 2, 0, 3, 4);
 our %args = (
     client => {
 	func => \&http_client,
@@ -13,8 +13,9 @@ our %args = (
     relayd => {
 	protocol => [ "http",
 	    "request header log foo",
-	    "response header log bar",
+	    "response header log Content-Length",
 	],
+	loggrep => [ map { "log 'Content-Length: $_'" } @lengths ],
 	forwardssl => 1,
 	listenssl => 1,
     },
@@ -23,7 +24,6 @@ our %args = (
 	ssl => 1,
     },
     lengths => \@lengths,
-    md5 => "bc3a3f39af35fe5b1687903da2b00c7f",
 );
 
 1;

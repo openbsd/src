@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.5 2012/12/28 20:36:25 bluhm Exp $
+#	$OpenBSD: Relayd.pm,v 1.6 2013/01/21 20:16:57 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -47,6 +47,8 @@ sub new {
 	    or croak "$class connect port not given";
 
 	my $test = basename($self->{testfile} || "");
+	# ssl does not allow a too long session id, so truncate it
+	substr($test, 25, length($test) - 25, "") if length($test) > 25;
 	open(my $fh, '>', $self->{conffile})
 	    or die ref($self), " conf file $self->{conffile} create failed: $!";
 	print $fh "log all\n";
