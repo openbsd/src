@@ -868,6 +868,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/advlib.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/adw.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/adwlib.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/ahcireg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/ahcivar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/aic6360reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/aic6360var.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/aic6915.ph

@@ -948,6 +948,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/advlib.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/adw.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/adwlib.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ahcireg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ahcivar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/aic6360reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/aic6360var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/aic6915.ph

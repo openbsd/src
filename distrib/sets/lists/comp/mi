@@ -172,6 +172,8 @@
 ./usr/include/dev/ic/advlib.h
 ./usr/include/dev/ic/adw.h
 ./usr/include/dev/ic/adwlib.h
+./usr/include/dev/ic/ahcireg.h
+./usr/include/dev/ic/ahcivar.h
 ./usr/include/dev/ic/aic6360reg.h
 ./usr/include/dev/ic/aic6360var.h
 ./usr/include/dev/ic/aic6915.h
