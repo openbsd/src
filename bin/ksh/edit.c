@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.36 2013/01/20 14:47:46 stsp Exp $	*/
+/*	$OpenBSD: edit.c,v 1.37 2013/01/21 10:13:24 halex Exp $	*/
 
 /*
  * Command line editing - common code
@@ -385,8 +385,7 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 		 * which evaluated to an empty string (e.g.,
 		 * "$FOO" when there is no FOO, etc).
 		 */
-		if ((strcmp(words[0], toglob) == 0 &&
-		    lstat(words[0], &statb) < 0) ||
+		 if ((lstat(words[0], &statb) < 0) ||
 		    words[0][0] == '\0') {
 			x_free_words(nwords, words);
 			words = NULL;
