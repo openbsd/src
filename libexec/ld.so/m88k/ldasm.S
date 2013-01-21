@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2013/01/20 23:01:44 miod Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.2 2013/01/21 17:52:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -86,13 +86,12 @@ ENTRY(_dl_start)
 	addu	%r6,  %r30, 4 + 4
 	lda	%r3,  %r6[%r2]		| envp
 	ld	%r4,  %r31, 4 * 7	| ldoff
-/* DEBUG */ or %r29, %r4, %r0
 	or	%r5,  %r31, 0		| array base
 	bsr.n	_dl_boot
 	 addu	%r2,  %r30, 4		| argv
 
 	addu	%r31, %r31, DL_DATA_SIZE
-	jsr.n	%r2
+	jmp.n	%r2
 	 or	%r5,  %r0,  %r0		| cleanup as expected by CSU
 END(_dl_start)
 
@@ -116,16 +115,12 @@ ENTRY(_dl_bind_start)
 	 * Preserve caller-saved registers.
 	 */
 	subu	%r31, %r31, REG_SIZE
-	st	%r2,  %r31, 4 * 0
-	st	%r3,  %r31, 4 * 1
-	st	%r4,  %r31, 4 * 2
-	st	%r5,  %r31, 4 * 3
-	st	%r6,  %r31, 4 * 4
-	st	%r7,  %r31, 4 * 5
-	st	%r8,  %r31, 4 * 6
-	st	%r9,  %r31, 4 * 7
+	st.d	%r2,  %r31, 4 * 0
+	st.d	%r4,  %r31, 4 * 2
+	st.d	%r6,  %r31, 4 * 4
+	st.d	%r8,  %r31, 4 * 6
 	st	%r10, %r31, 4 * 8
-	st	%r12, %r31, 4 * 9
+	st.d	%r12, %r31, 4 * 10
 	st	%r13, %r31, 4 * 10
 
 	/*
@@ -143,20 +138,15 @@ ENTRY(_dl_bind_start)
 	/*
 	 * Restore caller-saved registers.
 	 */
-	ld	%r13, %r31, 4 * 10
-	ld	%r12, %r31, 4 * 9
+	ld.d	%r12, %r31, 4 * 10
 	ld	%r10, %r31, 4 * 8
-	ld	%r9,  %r31, 4 * 7
-	ld	%r8,  %r31, 4 * 6
-	ld	%r7,  %r31, 4 * 5
-	ld	%r6,  %r31, 4 * 4
-	ld	%r5,  %r31, 4 * 3
-	ld	%r4,  %r31, 4 * 2
-	ld	%r3,  %r31, 4 * 1
-	ld	%r2,  %r31, 4 * 0
+	ld.d	%r8,  %r31, 4 * 6
+	ld.d	%r6,  %r31, 4 * 4
+	ld.d	%r4,  %r31, 4 * 2
+	ld.d	%r2,  %r31, 4 * 0
 	ld	%r1,  %r31, REG_SIZE + R1_OFFSET
 	
-	jsr.n	%r11
+	jmp.n	%r11
 	 addu	%r31, %r31, REG_SIZE + PLT_FRAME_SIZE
 
 /* ld.so SYSCALLS */

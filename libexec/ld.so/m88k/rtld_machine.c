@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1 2013/01/20 23:01:44 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.2 2013/01/21 17:52:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -237,11 +237,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Addr ooff;
 	Elf_Addr plt_addr;
 	const Elf_Sym *this;
-
-#if 1
-	/* XXX force non-lazy binding for now, until it gets fixed... */
-	lazy = 0;
-#endif
 
 	if (pltgot == NULL)
 		return (0);
