@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.16 2013/01/05 11:20:55 miod Exp $ */
+/* $OpenBSD: prebind.c,v 1.17 2013/01/21 17:19:11 miod Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -67,16 +67,11 @@ char *shstrtab;
 #define RELOC_JMP_SLOT	0		/* XXX mips64 doesnt have PLT reloc */
 #endif
 #ifdef __m88k__
-#define RELOC_JMP_SLOT	0		/* XXX no PIC support yet */
+#define RELOC_JMP_SLOT	RELOC_GOTP_ENT
 #endif
 /* powerpc uses RELOC_JMP_SLOT */
 /* sparc uses RELOC_JMP_SLOT */
 /* sparc64 uses RELOC_JMP_SLOT */
-#if defined(__sparc__) && !defined(__sparc64__)
-/* ARGH, our sparc/include/reloc.h is wrong (for the moment) */
-#undef RELOC_JMP_SLOT
-#define RELOC_JMP_SLOT 21
-#endif
 
 #define BUFSZ (256 * 1024)
 
