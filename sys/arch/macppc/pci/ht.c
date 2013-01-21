@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.14 2010/12/04 17:06:31 miod Exp $	*/
+/*	$OpenBSD: ht.c,v 1.15 2013/01/21 15:06:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -26,8 +26,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <macppc/pci/pcibrvar.h>
 
 #include <dev/ofw/openfirm.h>
 

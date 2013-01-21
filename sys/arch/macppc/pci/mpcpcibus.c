@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.44 2013/01/21 14:24:17 mpi Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.45 2013/01/21 15:06:29 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -33,22 +33,16 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <uvm/uvm_extern.h>
+#include <sys/malloc.h>
+#include <sys/extent.h>
 
 #include <machine/autoconf.h>
 #include <machine/pcb.h>
-#include <machine/bat.h>
-#include <machine/powerpc.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <macppc/pci/pcibrvar.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -77,6 +71,28 @@ int	find_node_intr (int parent, u_int32_t *addr, u_int32_t *intr);
 
 void fix_node_irq(int node, struct pcibus_attach_args *pba);
 
+struct pcibr_config {
+	bus_space_tag_t		lc_memt;
+	bus_space_tag_t		lc_iot;
+	bus_space_handle_t	ioh_cf8;
+	bus_space_handle_t	ioh_cfc;
+	struct ppc_pci_chipset	lc_pc;
+	int			config_type;
+	int			bus;
+	int			node;
+};
+
+struct pcibr_softc {
+	struct device		sc_dev;
+	struct ppc_bus_space	sc_membus_space;
+	struct ppc_bus_space	sc_iobus_space;
+	struct pcibr_config	pcibr_config;
+	struct extent 		*sc_ioex;
+	struct extent		*sc_memex;
+	char			sc_ioex_name[32];
+	char			sc_memex_name[32];
+};
+
 struct cfattach mpcpcibr_ca = {
         sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
 };
@@ -89,8 +105,6 @@ static int      mpcpcibrprint(void *, const char *pnp);
 
 void	mpcpcibus_find_ranges_32(struct pcibr_softc *, u_int32_t *, int);
 void	mpcpcibus_find_ranges_64(struct pcibr_softc *, u_int32_t *, int);
-
-struct pcibr_config mpc_config;
 
 /*
  * config types
@@ -379,7 +393,7 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	}
 	/* translate byte(s) into item count*/
 
-	lcp = sc->sc_pcibr = &sc->pcibr_config;
+	lcp = &sc->pcibr_config;
 
 	snprintf(sc->sc_ioex_name, sizeof(sc->sc_ioex_name),
 	    "%s pciio", sc->sc_dev.dv_xname);
