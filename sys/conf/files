@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.539 2012/11/29 23:36:34 stsp Exp $
+#	$OpenBSD: files,v 1.540 2013/01/21 11:17:48 patrick Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -196,6 +196,10 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_openbsd.c		isp
 file	dev/ic/isp_library.c		isp
+
+# Advanced Host Controller Interface for Serial ATA
+device	ahci: scsi, atascsi
+file	dev/ic/ahci.c			ahci | ahci_pci | ahci_jmb needs-flag
 
 # LSI Logic Fusion-MPT Message Passing Interface
 device	mpi: scsi

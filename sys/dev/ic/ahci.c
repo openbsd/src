@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.196 2013/01/17 02:36:45 deraadt Exp $ */
+/*	$OpenBSD: ahci.c,v 1.1 2013/01/21 11:17:48 patrick Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -24,540 +24,15 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
-#include <dev/ata/atascsi.h>
-#include <dev/ata/pmreg.h>
-
-/* change to AHCI_DEBUG for dmesg spam */
-#define NO_AHCI_DEBUG
-
-#ifdef AHCI_DEBUG
-#define DPRINTF(m, f...) do { if ((ahcidebug & (m)) == (m)) printf(f); } \
-    while (0)
-#define AHCI_D_TIMEOUT		0x00
-#define AHCI_D_VERBOSE		0x01
-#define AHCI_D_INTR		0x02
-#define AHCI_D_XFER		0x08
-int ahcidebug = AHCI_D_VERBOSE;
-#else
-#define DPRINTF(m, f...)
-#endif
-
-#define AHCI_PCI_BAR		0x24
-#define AHCI_PCI_ATI_SB600_MAGIC	0x40
-#define AHCI_PCI_ATI_SB600_LOCKED	0x01
-#define AHCI_PCI_INTERFACE	0x01
-
-#define AHCI_PCI_INTEL_MAP		0x90
-#define AHCI_PCI_INTEL_MAP_SC_4P	0x00
-#define AHCI_PCI_INTEL_MAP_SC_6P	0x20
-#define AHCI_PCI_INTEL_MAP_SMS_IDE	0x00
-#define AHCI_PCI_INTEL_MAP_SMS_AHCI	0x40
-#define AHCI_PCI_INTEL_MAP_SMS_RAID	0x80
-
-#define AHCI_REG_CAP		0x000 /* HBA Capabilities */
-#define  AHCI_REG_CAP_NP(_r)		(((_r) & 0x1f)+1) /* Number of Ports */
-#define  AHCI_REG_CAP_SXS		(1<<5) /* External SATA */
-#define  AHCI_REG_CAP_EMS		(1<<6) /* Enclosure Mgmt */
-#define  AHCI_REG_CAP_CCCS		(1<<7) /* Cmd Coalescing */
-#define  AHCI_REG_CAP_NCS(_r)		((((_r) & 0x1f00)>>8)+1) /* NCmds*/
-#define  AHCI_REG_CAP_PSC		(1<<13) /* Partial State Capable */
-#define  AHCI_REG_CAP_SSC		(1<<14) /* Slumber State Capable */
-#define  AHCI_REG_CAP_PMD		(1<<15) /* PIO Multiple DRQ Block */
-#define  AHCI_REG_CAP_FBSS		(1<<16) /* FIS-Based Switching */
-#define  AHCI_REG_CAP_SPM		(1<<17) /* Port Multiplier */
-#define  AHCI_REG_CAP_SAM		(1<<18) /* AHCI Only mode */
-#define  AHCI_REG_CAP_SNZO		(1<<19) /* Non Zero DMA Offsets */
-#define  AHCI_REG_CAP_ISS		(0xf<<20) /* Interface Speed Support */
-#define  AHCI_REG_CAP_ISS_G1		(0x1<<20) /* Gen 1 (1.5 Gbps) */
-#define  AHCI_REG_CAP_ISS_G1_2		(0x2<<20) /* Gen 1 and 2 (3 Gbps) */
-#define  AHCI_REG_CAP_SCLO		(1<<24) /* Cmd List Override */
-#define  AHCI_REG_CAP_SAL		(1<<25) /* Activity LED */
-#define  AHCI_REG_CAP_SALP		(1<<26) /* Aggressive Link Pwr Mgmt */
-#define  AHCI_REG_CAP_SSS		(1<<27) /* Staggered Spinup */
-#define  AHCI_REG_CAP_SMPS		(1<<28) /* Mech Presence Switch */
-#define  AHCI_REG_CAP_SSNTF		(1<<29) /* SNotification Register */
-#define  AHCI_REG_CAP_SNCQ		(1<<30) /* Native Cmd Queuing */
-#define  AHCI_REG_CAP_S64A		(1<<31) /* 64bit Addressing */
-#define  AHCI_FMT_CAP		"\020" "\040S64A" "\037NCQ" "\036SSNTF" \
-				    "\035SMPS" "\034SSS" "\033SALP" "\032SAL" \
-				    "\031SCLO" "\024SNZO" "\023SAM" "\022SPM" \
-				    "\021FBSS" "\020PMD" "\017SSC" "\016PSC" \
-				    "\010CCCS" "\007EMS" "\006SXS"
-#define AHCI_REG_GHC		0x004 /* Global HBA Control */
-#define  AHCI_REG_GHC_HR		(1<<0) /* HBA Reset */
-#define  AHCI_REG_GHC_IE		(1<<1) /* Interrupt Enable */
-#define  AHCI_REG_GHC_MRSM		(1<<2) /* MSI Revert to Single Msg */
-#define  AHCI_REG_GHC_AE		(1<<31) /* AHCI Enable */
-#define AHCI_FMT_GHC		"\020" "\040AE" "\003MRSM" "\002IE" "\001HR"
-#define AHCI_REG_IS		0x008 /* Interrupt Status */
-#define AHCI_REG_PI		0x00c /* Ports Implemented */
-#define AHCI_REG_VS		0x010 /* AHCI Version */
-#define  AHCI_REG_VS_0_95		0x00000905 /* 0.95 */
-#define  AHCI_REG_VS_1_0		0x00010000 /* 1.0 */
-#define  AHCI_REG_VS_1_1		0x00010100 /* 1.1 */
-#define  AHCI_REG_VS_1_2		0x00010200 /* 1.2 */
-#define  AHCI_REG_VS_1_3		0x00010300 /* 1.3 */
-#define AHCI_REG_CCC_CTL	0x014 /* Coalescing Control */
-#define  AHCI_REG_CCC_CTL_INT(_r)	(((_r) & 0xf8) >> 3) /* CCC INT slot */
-#define AHCI_REG_CCC_PORTS	0x018 /* Coalescing Ports */
-#define AHCI_REG_EM_LOC		0x01c /* Enclosure Mgmt Location */
-#define AHCI_REG_EM_CTL		0x020 /* Enclosure Mgmt Control */
-
-#define AHCI_PORT_REGION(_p)	(0x100 + ((_p) * 0x80))
-#define AHCI_PORT_SIZE		0x80
-
-#define AHCI_PREG_CLB		0x00 /* Cmd List Base Addr */
-#define AHCI_PREG_CLBU		0x04 /* Cmd List Base Hi Addr */
-#define AHCI_PREG_FB		0x08 /* FIS Base Addr */
-#define AHCI_PREG_FBU		0x0c /* FIS Base Hi Addr */
-#define AHCI_PREG_IS		0x10 /* Interrupt Status */
-#define  AHCI_PREG_IS_DHRS		(1<<0) /* Device to Host FIS */
-#define  AHCI_PREG_IS_PSS		(1<<1) /* PIO Setup FIS */
-#define  AHCI_PREG_IS_DSS		(1<<2) /* DMA Setup FIS */
-#define  AHCI_PREG_IS_SDBS		(1<<3) /* Set Device Bits FIS */
-#define  AHCI_PREG_IS_UFS		(1<<4) /* Unknown FIS */
-#define  AHCI_PREG_IS_DPS		(1<<5) /* Descriptor Processed */
-#define  AHCI_PREG_IS_PCS		(1<<6) /* Port Change */
-#define  AHCI_PREG_IS_DMPS		(1<<7) /* Device Mechanical Presence */
-#define  AHCI_PREG_IS_PRCS		(1<<22) /* PhyRdy Change */
-#define  AHCI_PREG_IS_IPMS		(1<<23) /* Incorrect Port Multiplier */
-#define  AHCI_PREG_IS_OFS		(1<<24) /* Overflow */
-#define  AHCI_PREG_IS_INFS		(1<<26) /* Interface Non-fatal Error */
-#define  AHCI_PREG_IS_IFS		(1<<27) /* Interface Fatal Error */
-#define  AHCI_PREG_IS_HBDS		(1<<28) /* Host Bus Data Error */
-#define  AHCI_PREG_IS_HBFS		(1<<29) /* Host Bus Fatal Error */
-#define  AHCI_PREG_IS_TFES		(1<<30) /* Task File Error */
-#define  AHCI_PREG_IS_CPDS		(1<<31) /* Cold Presence Detect */
-#define AHCI_PFMT_IS		"\20" "\040CPDS" "\037TFES" "\036HBFS" \
-				    "\035HBDS" "\034IFS" "\033INFS" "\031OFS" \
-				    "\030IPMS" "\027PRCS" "\010DMPS" "\006DPS" \
-				    "\007PCS" "\005UFS" "\004SDBS" "\003DSS" \
-				    "\002PSS" "\001DHRS"
-#define AHCI_PREG_IE		0x14 /* Interrupt Enable */
-#define  AHCI_PREG_IE_DHRE		(1<<0) /* Device to Host FIS */
-#define  AHCI_PREG_IE_PSE		(1<<1) /* PIO Setup FIS */
-#define  AHCI_PREG_IE_DSE		(1<<2) /* DMA Setup FIS */
-#define  AHCI_PREG_IE_SDBE		(1<<3) /* Set Device Bits FIS */
-#define  AHCI_PREG_IE_UFE		(1<<4) /* Unknown FIS */
-#define  AHCI_PREG_IE_DPE		(1<<5) /* Descriptor Processed */
-#define  AHCI_PREG_IE_PCE		(1<<6) /* Port Change */
-#define  AHCI_PREG_IE_DMPE		(1<<7) /* Device Mechanical Presence */
-#define  AHCI_PREG_IE_PRCE		(1<<22) /* PhyRdy Change */
-#define  AHCI_PREG_IE_IPME		(1<<23) /* Incorrect Port Multiplier */
-#define  AHCI_PREG_IE_OFE		(1<<24) /* Overflow */
-#define  AHCI_PREG_IE_INFE		(1<<26) /* Interface Non-fatal Error */
-#define  AHCI_PREG_IE_IFE		(1<<27) /* Interface Fatal Error */
-#define  AHCI_PREG_IE_HBDE		(1<<28) /* Host Bus Data Error */
-#define  AHCI_PREG_IE_HBFE		(1<<29) /* Host Bus Fatal Error */
-#define  AHCI_PREG_IE_TFEE		(1<<30) /* Task File Error */
-#define  AHCI_PREG_IE_CPDE		(1<<31) /* Cold Presence Detect */
-#define AHCI_PFMT_IE		"\20" "\040CPDE" "\037TFEE" "\036HBFE" \
-				    "\035HBDE" "\034IFE" "\033INFE" "\031OFE" \
-				    "\030IPME" "\027PRCE" "\010DMPE" "\007PCE" \
-				    "\006DPE" "\005UFE" "\004SDBE" "\003DSE" \
-				    "\002PSE" "\001DHRE"
-#define AHCI_PREG_CMD		0x18 /* Command and Status */
-#define  AHCI_PREG_CMD_ST		(1<<0) /* Start */
-#define  AHCI_PREG_CMD_SUD		(1<<1) /* Spin Up Device */
-#define  AHCI_PREG_CMD_POD		(1<<2) /* Power On Device */
-#define  AHCI_PREG_CMD_CLO		(1<<3) /* Command List Override */
-#define  AHCI_PREG_CMD_FRE		(1<<4) /* FIS Receive Enable */
-#define  AHCI_PREG_CMD_CCS(_r)		(((_r) >> 8) & 0x1f) /* Curr CmdSlot# */
-#define  AHCI_PREG_CMD_MPSS		(1<<13) /* Mech Presence State */
-#define  AHCI_PREG_CMD_FR		(1<<14) /* FIS Receive Running */
-#define  AHCI_PREG_CMD_CR		(1<<15) /* Command List Running */
-#define  AHCI_PREG_CMD_CPS		(1<<16) /* Cold Presence State */
-#define  AHCI_PREG_CMD_PMA		(1<<17) /* Port Multiplier Attached */
-#define  AHCI_PREG_CMD_HPCP		(1<<18) /* Hot Plug Capable */
-#define  AHCI_PREG_CMD_MPSP		(1<<19) /* Mech Presence Switch */
-#define  AHCI_PREG_CMD_CPD		(1<<20) /* Cold Presence Detection */
-#define  AHCI_PREG_CMD_ESP		(1<<21) /* External SATA Port */
-#define  AHCI_PREG_CMD_ATAPI		(1<<24) /* Device is ATAPI */
-#define  AHCI_PREG_CMD_DLAE		(1<<25) /* Drv LED on ATAPI Enable */
-#define  AHCI_PREG_CMD_ALPE		(1<<26) /* Aggro Pwr Mgmt Enable */
-#define  AHCI_PREG_CMD_ASP		(1<<27) /* Aggro Slumber/Partial */
-#define  AHCI_PREG_CMD_ICC		0xf0000000 /* Interface Comm Ctrl */
-#define  AHCI_PREG_CMD_ICC_SLUMBER	0x60000000
-#define  AHCI_PREG_CMD_ICC_PARTIAL	0x20000000
-#define  AHCI_PREG_CMD_ICC_ACTIVE	0x10000000
-#define  AHCI_PREG_CMD_ICC_IDLE		0x00000000
-#define  AHCI_PFMT_CMD		"\020" "\034ASP" "\033ALPE" "\032DLAE" \
-				    "\031ATAPI" "\026ESP" "\025CPD" "\024MPSP" \
-				    "\023HPCP" "\022PMA" "\021CPS" "\020CR" \
-				    "\017FR" "\016MPSS" "\005FRE" "\004CLO" \
-				    "\003POD" "\002SUD" "\001ST"
-#define AHCI_PREG_TFD		0x20 /* Task File Data*/
-#define  AHCI_PREG_TFD_STS		0xff
-#define  AHCI_PREG_TFD_STS_ERR		(1<<0)
-#define  AHCI_PREG_TFD_STS_DRQ		(1<<3)
-#define  AHCI_PREG_TFD_STS_BSY		(1<<7)
-#define  AHCI_PREG_TFD_ERR		0xff00
-#define AHCI_PFMT_TFD_STS	"\20" "\010BSY" "\004DRQ" "\001ERR"
-#define AHCI_PREG_SIG		0x24 /* Signature */
-#define AHCI_PREG_SSTS		0x28 /* SATA Status */
-#define  AHCI_PREG_SSTS_DET		0xf /* Device Detection */
-#define  AHCI_PREG_SSTS_DET_NONE	0x0
-#define  AHCI_PREG_SSTS_DET_DEV_NE	0x1
-#define  AHCI_PREG_SSTS_DET_DEV		0x3
-#define  AHCI_PREG_SSTS_DET_PHYOFFLINE	0x4
-#define  AHCI_PREG_SSTS_SPD		0xf0 /* Current Interface Speed */
-#define  AHCI_PREG_SSTS_SPD_NONE	0x00
-#define  AHCI_PREG_SSTS_SPD_GEN1	0x10
-#define  AHCI_PREG_SSTS_SPD_GEN2	0x20
-#define  AHCI_PREG_SSTS_IPM		0xf00 /* Interface Power Management */
-#define  AHCI_PREG_SSTS_IPM_NONE	0x000
-#define  AHCI_PREG_SSTS_IPM_ACTIVE	0x100
-#define  AHCI_PREG_SSTS_IPM_PARTIAL	0x200
-#define  AHCI_PREG_SSTS_IPM_SLUMBER	0x600
-#define AHCI_PREG_SCTL		0x2c /* SATA Control */
-#define  AHCI_PREG_SCTL_DET		0xf /* Device Detection */
-#define  AHCI_PREG_SCTL_DET_NONE	0x0
-#define  AHCI_PREG_SCTL_DET_INIT	0x1
-#define  AHCI_PREG_SCTL_DET_DISABLE	0x4
-#define  AHCI_PREG_SCTL_SPD		0xf0 /* Speed Allowed */
-#define  AHCI_PREG_SCTL_SPD_ANY		0x00
-#define  AHCI_PREG_SCTL_SPD_GEN1	0x10
-#define  AHCI_PREG_SCTL_SPD_GEN2	0x20
-#define  AHCI_PREG_SCTL_IPM		0xf00 /* Interface Power Management */
-#define  AHCI_PREG_SCTL_IPM_NONE	0x000
-#define  AHCI_PREG_SCTL_IPM_NOPARTIAL	0x100
-#define  AHCI_PREG_SCTL_IPM_NOSLUMBER	0x200
-#define  AHCI_PREG_SCTL_IPM_DISABLED	0x300
-#define AHCI_PREG_SERR		0x30 /* SATA Error */
-#define  AHCI_PREG_SERR_ERR(_r)		((_r) & 0xffff)
-#define  AHCI_PREG_SERR_ERR_I		(1<<0) /* Recovered Data Integrity */
-#define  AHCI_PREG_SERR_ERR_M		(1<<1) /* Recovered Communications */
-#define  AHCI_PREG_SERR_ERR_T		(1<<8) /* Transient Data Integrity */
-#define  AHCI_PREG_SERR_ERR_C		(1<<9) /* Persistent Comm/Data */
-#define  AHCI_PREG_SERR_ERR_P		(1<<10) /* Protocol */
-#define  AHCI_PREG_SERR_ERR_E		(1<<11) /* Internal */
-#define  AHCI_PFMT_SERR_ERR	"\020" "\014E" "\013P" "\012C" "\011T" "\002M" \
-				    "\001I"
-#define  AHCI_PREG_SERR_DIAG(_r)	(((_r) >> 16) & 0xffff)
-#define  AHCI_PREG_SERR_DIAG_N		(1<<0) /* PhyRdy Change */
-#define  AHCI_PREG_SERR_DIAG_I		(1<<1) /* Phy Internal Error */
-#define  AHCI_PREG_SERR_DIAG_W		(1<<2) /* Comm Wake */
-#define  AHCI_PREG_SERR_DIAG_B		(1<<3) /* 10B to 8B Decode Error */
-#define  AHCI_PREG_SERR_DIAG_D		(1<<4) /* Disparity Error */
-#define  AHCI_PREG_SERR_DIAG_C		(1<<5) /* CRC Error */
-#define  AHCI_PREG_SERR_DIAG_H		(1<<6) /* Handshake Error */
-#define  AHCI_PREG_SERR_DIAG_S		(1<<7) /* Link Sequence Error */
-#define  AHCI_PREG_SERR_DIAG_T		(1<<8) /* Transport State Trans Err */
-#define  AHCI_PREG_SERR_DIAG_F		(1<<9) /* Unknown FIS Type */
-#define  AHCI_PREG_SERR_DIAG_X		(1<<10) /* Exchanged */
-#define  AHCI_PFMT_SERR_DIAG	"\020" "\013X" "\012F" "\011T" "\010S" "\007H" \
-				    "\006C" "\005D" "\004B" "\003W" "\002I" \
-				    "\001N"
-#define AHCI_PREG_SACT		0x34 /* SATA Active */
-#define AHCI_PREG_CI		0x38 /* Command Issue */
-#define  AHCI_PREG_CI_ALL_SLOTS	0xffffffff
-#define AHCI_PREG_SNTF		0x3c /* SNotification */
-
-#define AHCI_PREG_FBS		0x40 /* FIS-based Switching Control */
-#define AHCI_PREG_FBS_DWE	0xf0000	/* Device With Error */
-#define AHCI_PREG_FBS_ADO	0xf000	/* Active Device Optimization */
-#define AHCI_PREG_FBS_DEV	0xf00	/* Device To Issue */
-#define AHCI_PREG_FBS_SDE	(1<<2)	/* Single Device Error */
-#define AHCI_PREG_FBS_DEC	(1<<1)	/* Device Error Clear */
-#define AHCI_PREG_FBS_EN	(1<<0)	/* Enable */
-
-
-
-struct ahci_cmd_hdr {
-	u_int16_t		flags;
-#define AHCI_CMD_LIST_FLAG_CFL		0x001f /* Command FIS Length */
-#define AHCI_CMD_LIST_FLAG_A		(1<<5) /* ATAPI */
-#define AHCI_CMD_LIST_FLAG_W		(1<<6) /* Write */
-#define AHCI_CMD_LIST_FLAG_P		(1<<7) /* Prefetchable */
-#define AHCI_CMD_LIST_FLAG_R		(1<<8) /* Reset */
-#define AHCI_CMD_LIST_FLAG_B		(1<<9) /* BIST */
-#define AHCI_CMD_LIST_FLAG_C		(1<<10) /* Clear Busy upon R_OK */
-#define AHCI_CMD_LIST_FLAG_PMP		0xf000 /* Port Multiplier Port */
-#define AHCI_CMD_LIST_FLAG_PMP_SHIFT	12
-	u_int16_t		prdtl; /* sgl len */
-
-	u_int32_t		prdbc; /* transferred byte count */
-
-	u_int32_t		ctba_lo;
-	u_int32_t		ctba_hi;
-
-	u_int32_t		reserved[4];
-} __packed;
-
-struct ahci_rfis {
-	u_int8_t		dsfis[28];
-	u_int8_t		reserved1[4];
-	u_int8_t		psfis[24];
-	u_int8_t		reserved2[8];
-	u_int8_t		rfis[24];
-	u_int8_t		reserved3[4];
-	u_int8_t		sdbfis[4];
-	u_int8_t		ufis[64];
-	u_int8_t		reserved4[96];
-} __packed;
-
-struct ahci_prdt {
-	u_int32_t		dba_lo;
-	u_int32_t		dba_hi;
-	u_int32_t		reserved;
-	u_int32_t		flags;
-#define AHCI_PRDT_FLAG_INTR		(1<<31) /* interrupt on completion */
-} __packed;
-
-/* this makes ahci_cmd_table 512 bytes, supporting 128-byte alignment */
-#define AHCI_MAX_PRDT		24
-
-struct ahci_cmd_table {
-	u_int8_t		cfis[64];	/* Command FIS */
-	u_int8_t		acmd[16];	/* ATAPI Command */
-	u_int8_t		reserved[48];
-
-	struct ahci_prdt	prdt[AHCI_MAX_PRDT];
-} __packed;
-
-#define AHCI_MAX_PORTS		32
-
-struct ahci_dmamem {
-	bus_dmamap_t		adm_map;
-	bus_dma_segment_t	adm_seg;
-	size_t			adm_size;
-	caddr_t			adm_kva;
-};
-#define AHCI_DMA_MAP(_adm)	((_adm)->adm_map)
-#define AHCI_DMA_DVA(_adm)	((_adm)->adm_map->dm_segs[0].ds_addr)
-#define AHCI_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
-
-struct ahci_softc;
-struct ahci_port;
-
-struct ahci_ccb {
-	/* ATA xfer associated with this CCB.  Must be 1st struct member. */
-	struct ata_xfer		ccb_xa;
-
-	int			ccb_slot;
-	struct ahci_port	*ccb_port;
-
-	bus_dmamap_t		ccb_dmamap;
-	struct ahci_cmd_hdr	*ccb_cmd_hdr;
-	struct ahci_cmd_table	*ccb_cmd_table;
-
-	void			(*ccb_done)(struct ahci_ccb *);
-
-	TAILQ_ENTRY(ahci_ccb)	ccb_entry;
-};
-
-struct ahci_port {
-	struct ahci_softc	*ap_sc;
-	bus_space_handle_t	ap_ioh;
-
-#ifdef AHCI_COALESCE
-	int			ap_num;
-#endif
-
-	struct ahci_rfis	*ap_rfis;
-	struct ahci_dmamem	*ap_dmamem_rfis;
-
-	struct ahci_dmamem	*ap_dmamem_cmd_list;
-	struct ahci_dmamem	*ap_dmamem_cmd_table;
-
-	volatile u_int32_t	ap_active;
-	volatile u_int32_t	ap_active_cnt;
-	volatile u_int32_t	ap_sactive;
-	volatile u_int32_t	ap_pmp_ncq_port;
-	struct ahci_ccb		*ap_ccbs;
-
-	TAILQ_HEAD(, ahci_ccb)	ap_ccb_free;
-	TAILQ_HEAD(, ahci_ccb)	ap_ccb_pending;
-	struct mutex		ap_ccb_mtx;
-	struct ahci_ccb		*ap_ccb_err;
-
-	u_int32_t		ap_state;
-#define AP_S_NORMAL			0
-#define AP_S_PMP_PROBE			1
-#define AP_S_PMP_PORT_PROBE		2
-#define AP_S_ERROR_RECOVERY		3
-#define AP_S_FATAL_ERROR		4
-
-	int			ap_pmp_ports;
-	int			ap_port;
-	int			ap_pmp_ignore_ifs;
-
-	/* For error recovery. */
-#ifdef DIAGNOSTIC
-	int			ap_err_busy;
-#endif
-	u_int32_t		ap_err_saved_sactive;
-	u_int32_t		ap_err_saved_active;
-	u_int32_t		ap_err_saved_active_cnt;
-
-	u_int8_t		*ap_err_scratch;
-
-#ifdef AHCI_DEBUG
-	char			ap_name[16];
-#define PORTNAME(_ap)	((_ap)->ap_name)
-#else
-#define PORTNAME(_ap)	DEVNAME((_ap)->ap_sc)
-#endif
-};
-
-struct ahci_softc {
-	struct device		sc_dev;
-
-	void			*sc_ih;
-	pci_chipset_tag_t	sc_pc;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_size_t		sc_ios;
-	bus_dma_tag_t		sc_dmat;
-
-	int			sc_flags;
-#define AHCI_F_NO_NCQ			(1<<0)
-#define AHCI_F_IPMS_PROBE		(1<<1)	/* IPMS on failed PMP probe */
-#define AHCI_F_NO_PMP			(1<<2)	/* ignore PMP capability */
-
-	u_int			sc_ncmds;
-
-	struct ahci_port	*sc_ports[AHCI_MAX_PORTS];
-
-	struct atascsi		*sc_atascsi;
-
-	u_int32_t		sc_cap;
-
-#ifdef AHCI_COALESCE
-	u_int32_t		sc_ccc_mask;
-	u_int32_t		sc_ccc_ports;
-	u_int32_t		sc_ccc_ports_cur;
-#endif
-};
-#define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
-
-struct ahci_device {
-	pci_vendor_id_t		ad_vendor;
-	pci_product_id_t	ad_product;
-	int			(*ad_match)(struct pci_attach_args *);
-	int			(*ad_attach)(struct ahci_softc *,
-				    struct pci_attach_args *);
-};
-
-const struct ahci_device *ahci_lookup_device(struct pci_attach_args *);
-
-int			ahci_no_match(struct pci_attach_args *);
-int			ahci_vt8251_attach(struct ahci_softc *,
-			    struct pci_attach_args *);
-void			ahci_ati_sb_idetoahci(struct ahci_softc *,
-			    struct pci_attach_args *pa);
-int			ahci_ati_sb600_attach(struct ahci_softc *,
-			    struct pci_attach_args *);
-int			ahci_ati_sb700_attach(struct ahci_softc *,
-			    struct pci_attach_args *);
-int			ahci_amd_hudson2_attach(struct ahci_softc *,
-			    struct pci_attach_args *);
-int			ahci_intel_attach(struct ahci_softc *,
-			    struct pci_attach_args *);
-
-static const struct ahci_device ahci_devices[] = {
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_1,
-	    NULL,		ahci_amd_hudson2_attach },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_2,
-	    NULL,		ahci_amd_hudson2_attach },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_3,
-	    NULL,		ahci_amd_hudson2_attach },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_4,
-	    NULL,		ahci_amd_hudson2_attach },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_5,
-	    NULL,		ahci_amd_hudson2_attach },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA_6,
-	    NULL,		ahci_amd_hudson2_attach },
-
-	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SB600_SATA,
-	    NULL,		ahci_ati_sb600_attach },
-	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_1,
-	    NULL,		ahci_ati_sb700_attach },
-	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_2,
-	    NULL,		ahci_ati_sb700_attach },
-	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_3,
-	    NULL,		ahci_ati_sb700_attach },
-	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_4,
-	    NULL,		ahci_ati_sb700_attach },
-	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_5,
-	    NULL,		ahci_ati_sb700_attach },
-	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_6,
-	    NULL,		ahci_ati_sb700_attach },
-
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6SERIES_AHCI_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6SERIES_AHCI_2,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6321ESB_AHCI,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GR_AHCI,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GBM_AHCI,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_AHCI_6P,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_AHCI_4P,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801HBM_AHCI,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_AHCI_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_AHCI_2,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_AHCI_3,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801JD_AHCI,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801JI_AHCI,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_2,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_3,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_4,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_EP80579_AHCI,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_SATA_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_SATA_2,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_SATA_4,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_SATA_6,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6SERIES_SATA_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6SERIES_SATA_2,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_7SERIES_SATA_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_7SERIES_SATA_2,
-	    NULL,		ahci_intel_attach },
-
-	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
-	  ahci_no_match,	ahci_vt8251_attach }
-};
-
-int			ahci_pci_match(struct device *, void *, void *);
-void			ahci_pci_attach(struct device *, struct device *,
-			    void *);
-int			ahci_pci_detach(struct device *, int);
-int			ahci_pci_activate(struct device *, int);
+#include <dev/ic/ahcivar.h>
+#include <dev/ic/ahcireg.h>
 
 #ifdef HIBERNATE
 #include <uvm/uvm.h>
@@ -578,32 +53,10 @@ int			ahci_hibernate_io(dev_t dev, daddr_t blkno,
 			    vaddr_t addr, size_t size, int wr, void *page);
 #endif
 
-struct cfattach ahci_pci_ca = {
-	sizeof(struct ahci_softc),
-	ahci_pci_match,
-	ahci_pci_attach,
-	ahci_pci_detach,
-	ahci_pci_activate
-};
-
-struct cfattach ahci_jmb_ca = {
-	sizeof(struct ahci_softc),
-	ahci_pci_match,
-	ahci_pci_attach,
-	ahci_pci_detach
-};
-
 struct cfdriver ahci_cd = {
 	NULL, "ahci", DV_DULL
 };
 
-
-int			ahci_map_regs(struct ahci_softc *,
-			    struct pci_attach_args *);
-void			ahci_unmap_regs(struct ahci_softc *);
-int			ahci_map_intr(struct ahci_softc *,
-			    struct pci_attach_args *, pci_intr_handle_t);
-void			ahci_unmap_intr(struct ahci_softc *);
 void			ahci_enable_interrupts(struct ahci_port *);
 
 int			ahci_init(struct ahci_softc *);
@@ -702,177 +155,19 @@ void			ahci_pmp_cmd_done(struct ahci_ccb *);
 void			ahci_ata_cmd_timeout(void *);
 void			ahci_empty_done(struct ahci_ccb *);
 
-const struct ahci_device *
-ahci_lookup_device(struct pci_attach_args *pa)
-{
-	int				i;
-	const struct ahci_device	*ad;
-
-	for (i = 0; i < (sizeof(ahci_devices) / sizeof(ahci_devices[0])); i++) {
-		ad = &ahci_devices[i];
-		if (ad->ad_vendor == PCI_VENDOR(pa->pa_id) &&
-		    ad->ad_product == PCI_PRODUCT(pa->pa_id))
-			return (ad);
-	}
-
-	return (NULL);
-}
-
 int
-ahci_no_match(struct pci_attach_args *pa)
+ahci_attach(struct ahci_softc *sc)
 {
-	return (0);
-}
-
-int
-ahci_vt8251_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
-{
-	sc->sc_flags |= AHCI_F_NO_NCQ;
-
-	return (0);
-}
-
-void
-ahci_ati_sb_idetoahci(struct ahci_softc *sc, struct pci_attach_args *pa)
-{
-	pcireg_t			magic;
-
-	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
-		magic = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_ATI_SB600_MAGIC);
-		pci_conf_write(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_ATI_SB600_MAGIC,
-		    magic | AHCI_PCI_ATI_SB600_LOCKED);
-
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG,
-		    PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT |
-		    PCI_SUBCLASS_MASS_STORAGE_SATA << PCI_SUBCLASS_SHIFT |
-		    AHCI_PCI_INTERFACE << PCI_INTERFACE_SHIFT |
-		    PCI_REVISION(pa->pa_class) << PCI_REVISION_SHIFT);
-
-		pci_conf_write(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_ATI_SB600_MAGIC, magic);
-	}
-}
-
-int
-ahci_ati_sb600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
-{
-	ahci_ati_sb_idetoahci(sc, pa);
-
-	sc->sc_flags |= AHCI_F_IPMS_PROBE;
-
-	return (0);
-}
-
-int
-ahci_ati_sb700_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
-{
-	ahci_ati_sb_idetoahci(sc, pa);
-
-	sc->sc_flags |= AHCI_F_IPMS_PROBE;
-
-	return (0);
-}
-
-int
-ahci_amd_hudson2_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
-{
-	ahci_ati_sb_idetoahci(sc, pa);
-
-	sc->sc_flags |= AHCI_F_IPMS_PROBE;
-
-	return (0);
-}
-
-int
-ahci_intel_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
-{
-	/* switch from pciide(4) to ahci(4) mode */
-	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
-		pcireg_t	reg;
-
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_INTEL_MAP);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, AHCI_PCI_INTEL_MAP,
-		    reg | AHCI_PCI_INTEL_MAP_SMS_AHCI |
-		    AHCI_PCI_INTEL_MAP_SC_6P);
-		/* clear BAR since it keeps the old IO value */
-		pci_conf_write(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_BAR, 0);
-	}
-	sc->sc_flags |= AHCI_F_NO_PMP;
-	return (0);
-}
-
-int
-ahci_pci_match(struct device *parent, void *match, void *aux)
-{
-	struct pci_attach_args		*pa = aux;
-	const struct ahci_device	*ad;
-
-	ad = ahci_lookup_device(pa);
-	if (ad != NULL) {
-		/* the device may need special checks to see if it matches */
-		if (ad->ad_match != NULL)
-			return (ad->ad_match(pa));
-
-		return (2); /* match higher than pciide */
-	}
-
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
-	    PCI_INTERFACE(pa->pa_class) == AHCI_PCI_INTERFACE)
-		return (2);
-
-	return (0);
-}
-
-void
-ahci_pci_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct ahci_softc		*sc = (struct ahci_softc *)self;
-	struct pci_attach_args		*pa = aux;
 	struct atascsi_attach_args	aaa;
-	const struct ahci_device	*ad;
-	pci_intr_handle_t		ih;
 	u_int32_t			pi;
 	int				i;
-
-	sc->sc_pc = pa->pa_pc;
-
-	ad = ahci_lookup_device(pa);
-	if (ad != NULL && ad->ad_attach != NULL) {
-		if (ad->ad_attach(sc, pa) != 0) {
-			/* error should be printed by ad_attach */
-			return;
-		}
-	}
-
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
-		printf(": unable to map interrupt\n");
-		return;
-	}
-	printf(": %s,", pci_intr_string(pa->pa_pc, ih));
-
-	if (ahci_map_regs(sc, pa) != 0) {
-		/* error already printed by ahci_map_regs */
-		return;
-	}
 
 	if (ahci_init(sc) != 0) {
 		/* error already printed by ahci_init */
 		goto unmap;
 	}
 
-	if (ahci_map_intr(sc, pa, ih) != 0) {
-		/* error already printed by ahci_map_intr */
-		goto unmap;
-	}
-
 	printf("\n");
-
-	sc->sc_dmat = pa->pa_dmat;
 
 	sc->sc_cap = ahci_read(sc, AHCI_REG_CAP);
 	sc->sc_ncmds = AHCI_REG_CAP_NCS(sc->sc_cap);
@@ -972,7 +267,7 @@ noccc:
 	/* Enable interrupts */
 	ahci_write(sc, AHCI_REG_GHC, AHCI_REG_GHC_AE | AHCI_REG_GHC_IE);
 
-	return;
+	return 0;
 
 freeports:
 	for (i = 0; i < AHCI_MAX_PORTS; i++) {
@@ -982,14 +277,12 @@ freeports:
 unmap:
 	/* Disable controller */
 	ahci_write(sc, AHCI_REG_GHC, 0);
-	ahci_unmap_regs(sc);
-	return;
+	return 1;
 }
 
 int
-ahci_pci_detach(struct device *self, int flags)
+ahci_detach(struct ahci_softc *sc, int flags)
 {
-	struct ahci_softc		*sc = (struct ahci_softc *)self;
 	int				 rv, i;
 
 	if (sc->sc_atascsi != NULL) {
@@ -1003,14 +296,11 @@ ahci_pci_detach(struct device *self, int flags)
 			ahci_port_free(sc, i);
 	}
 
-	ahci_unmap_intr(sc);
-	ahci_unmap_regs(sc);
-
 	return (0);
 }
 
 int
-ahci_pci_activate(struct device *self, int act)
+ahci_activate(struct device *self, int act)
 {
 	struct ahci_softc		*sc = (struct ahci_softc *)self;
 	int				 i, rv = 0;
@@ -1048,48 +338,6 @@ ahci_pci_activate(struct device *self, int act)
 		break;
 	}
 	return (rv);
-}
-
-int
-ahci_map_regs(struct ahci_softc *sc, struct pci_attach_args *pa)
-{
-	pcireg_t			maptype;
-
-	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHCI_PCI_BAR);
-	if (pci_mapreg_map(pa, AHCI_PCI_BAR, maptype, 0, &sc->sc_iot,
-	    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
-		printf(" unable to map registers\n");
-		return (1);
-	}
-
-	return (0);
-}
-
-void
-ahci_unmap_regs(struct ahci_softc *sc)
-{
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-	sc->sc_ios = 0;
-}
-
-int
-ahci_map_intr(struct ahci_softc *sc, struct pci_attach_args *pa,
-    pci_intr_handle_t ih)
-{
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
-	    ahci_intr, sc, DEVNAME(sc));
-	if (sc->sc_ih == NULL) {
-		printf("%s: unable to map interrupt\n", DEVNAME(sc));
-		return (1);
-	}
-
-	return (0);
-}
-
-void
-ahci_unmap_intr(struct ahci_softc *sc)
-{
-	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 }
 
 int
@@ -4040,7 +3288,7 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		ahci_enable_interrupts(my->ap);
 		return (0);
 	} else if (op == HIB_DONE) {
-		ahci_pci_activate(&my->ap->ap_sc->sc_dev, DVACT_RESUME);
+		ahci_activate(&my->ap->ap_sc->sc_dev, DVACT_RESUME);
 		return (0);
 	}
 
