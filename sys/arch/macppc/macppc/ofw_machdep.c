@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.36 2012/06/21 10:08:16 mpi Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.37 2013/01/21 11:43:41 mpi Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -382,13 +382,10 @@ of_display_console()
 	int display_node;
 	int err;
 	u_int32_t memtag, iotag;
-	struct ppc_pci_chipset pa;
 	struct {
 		u_int32_t phys_hi, phys_mid, phys_lo;
 		u_int32_t size_hi, size_lo;
 	} addr [8];
-
-	pa.pc_make_tag = &ofw_make_tag;
 
 	stdout_node = OF_instance_to_package(OF_stdout);
 	len = OF_getprop(stdout_node, "name", name, 20);
