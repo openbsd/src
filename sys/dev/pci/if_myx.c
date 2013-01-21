@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.38 2013/01/15 03:48:20 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.39 2013/01/21 00:41:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1539,13 +1539,15 @@ myx_load_buf(struct myx_softc *sc, struct myx_buf *mb, struct mbuf *m)
 	bus_dma_tag_t			dmat = sc->sc_dmat;
 	bus_dmamap_t			dmap = mb->mb_map;
 
-	switch (bus_dmamap_load_mbuf(dmat, dmap, m, BUS_DMA_NOWAIT)) {
+	switch (bus_dmamap_load_mbuf(dmat, dmap, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT)) {
 	case 0:
 		break;
 
 	case EFBIG: /* mbuf chain is too fragmented */
 		if (m_defrag(m, M_DONTWAIT) == 0 &&
-		    bus_dmamap_load_mbuf(dmat, dmap, m, BUS_DMA_NOWAIT) == 0)
+		    bus_dmamap_load_mbuf(dmat, dmap, m,
+		    BUS_DMA_STREAMING | BUS_DMA_NOWAIT) == 0)
 			break;
 	default:
 		return (1);
