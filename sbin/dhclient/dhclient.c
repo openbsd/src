@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.213 2013/01/18 08:07:32 jmc Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.214 2013/01/22 06:02:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2230,4 +2230,4 @@ priv_write_file(struct imsg_write_file *imsg)
 	fchown(fd, imsg->uid, imsg->gid);
 
 	close(fd);
- }
+}
