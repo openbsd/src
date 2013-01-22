@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.144 2012/12/22 17:26:46 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.145 2013/01/22 23:56:31 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1581,8 +1581,6 @@ paddr_t sparc_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
     int, int);
 void *sparc_mainbus_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int,
     int, int (*)(void *), void *, const char *);
-void sparc_bus_barrier(bus_space_tag_t, bus_space_tag_t,  bus_space_handle_t,
-    bus_size_t, bus_size_t, int);
 int sparc_bus_alloc(bus_space_tag_t, bus_space_tag_t, bus_addr_t, bus_addr_t,
     bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
     bus_space_handle_t *);
@@ -1837,19 +1835,6 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int number,
 	return (ih);
 }
 
-void
-sparc_bus_barrier(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h,
-    bus_size_t offset, bus_size_t size, int flags)
-{
-	/* 
-	 * We have lots of alternatives depending on whether we're
-	 * synchronizing loads with loads, loads with stores, stores
-	 * with loads, or stores with stores.  The only ones that seem
-	 * generic are #Sync and #MemIssue.  I'll use #Sync for safety.
-	 */
-	membar(Sync);
-}
-
 int
 sparc_bus_alloc(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t rs,
     bus_addr_t re, bus_size_t s, bus_size_t a, bus_size_t b, int f,
@@ -1878,7 +1863,6 @@ static const struct sparc_bus_space_tag _mainbus_space_tag = {
 	sparc_bus_protect,		/* bus_space_protect */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	sparc_bus_subregion,		/* bus_space_subregion */
-	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
 	sparc_mainbus_intr_establish,	/* bus_intr_establish */
 	sparc_bus_addr			/* bus_space_addr */
