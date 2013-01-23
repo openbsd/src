@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.4 2013/01/11 21:23:24 miod Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.5 2013/01/23 18:59:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -32,7 +32,7 @@
  */
 ENTRY(__tfork_thread)
 	or	%r13, %r0,  __SYSCALLNAME(SYS_,__tfork)
-	tb0	0,    %r0,  128	/* corrupts r2 and r3 in the child */
+	tb0	0,    %r0,  450	/* corrupts r2 and r3 in the child */
 	br	CERROR
 
 	bcnd	eq0,  %r2,  1f
@@ -50,5 +50,5 @@ ENTRY(__tfork_thread)
 	 or	%r2,  %r5,  %r0	/* arg */
 
 	or	%r13, %r0,  __SYSCALLNAME(SYS_,__threxit)
-	tb0	0,    %r0,  128
+	tb0	0,    %r0,  450
 END(__tfork_thread)

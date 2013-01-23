@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.10 2013/01/11 21:23:24 miod Exp $	*/
+/*	$OpenBSD: brk.S,v 1.11 2013/01/23 18:59:32 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@ ENTRY(brk)
 1:
 	or	%r4,%r2,0
 	or	%r13,%r0,__SYSCALLNAME(SYS_,break)
-	tb0	0,%r0,128
+	tb0	0,%r0,450
 #ifdef __PIC__
 	br.n	CERROR
 	 PIC_RESTORE(%r9)

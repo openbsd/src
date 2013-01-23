@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.8 2013/01/11 21:23:24 miod Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.9 2013/01/23 18:59:32 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 ENTRY(sigpending)
 	or	%r4,%r2,0		/* save r2 */
 	or	%r13,%r0,SYS_sigpending
-	tb0	0,%r0,128
+	tb0	0,%r0,450
 	br	CERROR
 	st	%r2,%r4,0
 	jmp.n	%r1

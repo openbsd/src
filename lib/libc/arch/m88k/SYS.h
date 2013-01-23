@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.15 2013/01/20 23:00:22 miod Exp $*/
+/*	$OpenBSD: SYS.h,v 1.16 2013/01/23 18:59:32 miod Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
 
 #define	__DO_SYSCALL(x)							\
 	or %r13, %r0, __SYSCALLNAME(SYS_,x);				\
-	tb0 0, %r0, 128
+	tb0 0, %r0, 450
 
 #define	__SYSCALL__NOERROR(p,x,y)					\
 	__ENTRY(p,x);							\
