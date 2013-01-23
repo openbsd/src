@@ -61,6 +61,7 @@ rtx m88k_compare_op1;		/* cmpsi operand 1 */
 enum processor_type m88k_cpu;	/* target cpu */
 
 static void m88k_frame_related PARAMS ((rtx, rtx, int));
+static void m88k_maybe_dead PARAMS ((rtx));
 static void m88k_output_function_epilogue PARAMS ((FILE *, HOST_WIDE_INT));
 static int m88k_adjust_cost PARAMS ((rtx, rtx, rtx, int));
 
@@ -335,17 +336,11 @@ legitimize_address (pic, orig, reg, scratch)
 
 	      emit_insn (gen_rtx_SET
 			 (VOIDmode, temp,
-			  gen_rtx_HIGH (SImode,
-					gen_rtx_UNSPEC (SImode,
-							gen_rtvec (1, addr),
-							0))));
+			  gen_rtx_HIGH (SImode, addr)));
 
 	      emit_insn (gen_rtx_SET
 			 (VOIDmode, temp,
-			  gen_rtx_LO_SUM (SImode, temp,
-					  gen_rtx_UNSPEC (SImode,
-							  gen_rtvec (1, addr),
-							  0))));
+			  gen_rtx_LO_SUM (SImode, temp, addr)));
 	      addr = temp;
 	    }
 
@@ -1840,6 +1835,15 @@ m88k_frame_related (insn, reg, val)
 					REG_NOTES (insn));
 }
 
+static void
+m88k_maybe_dead (insn)
+     rtx insn;
+{
+  REG_NOTES (insn) = gen_rtx_EXPR_LIST (REG_MAYBE_DEAD,
+					const0_rtx,
+					REG_NOTES (insn));
+}
+
 void
 m88k_expand_prologue ()
 {
@@ -1890,10 +1894,11 @@ m88k_expand_prologue ()
 	}
 #endif
 
-      emit_insn (gen_locate1 (pic_offset_table_rtx, label));
-      emit_insn (gen_locate2 (pic_offset_table_rtx, label));
-      emit_insn (gen_addsi3 (pic_offset_table_rtx,
-			     pic_offset_table_rtx, return_reg));
+      m88k_maybe_dead (emit_insn (gen_locate1 (pic_offset_table_rtx, label)));
+      m88k_maybe_dead (emit_insn (gen_locate2 (pic_offset_table_rtx, label)));
+      m88k_maybe_dead (emit_insn (gen_addsi3 (pic_offset_table_rtx,
+					      pic_offset_table_rtx,
+					      return_reg)));
 
 #if 0
       if (save_r1)
