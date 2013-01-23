@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2012/08/28 16:39:09 matthew Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2013/01/23 19:01:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -74,7 +74,7 @@ _dl_strdup(const char *orig)
  * because we only free memory when 'dlclose()' is called and we can
  * reuse at least the memory allocated for the object descriptor. We have
  * one dynamic string allocated, the library name and it is likely that
- * we can reuse that one to without a lot of complex colapsing code.
+ * we can reuse that one too without a lot of complex collapsing code.
  */
 void *
 _dl_malloc(size_t need)

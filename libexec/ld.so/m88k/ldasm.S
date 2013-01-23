@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2013/01/21 17:52:27 miod Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.3 2013/01/23 19:01:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -186,10 +186,6 @@ DL_SYSCALL(open)
 DL_SYSCALL(read)
 	jmp	%r1
 
-_dl_cerror:
-	jmp.n	%r1
-	 subu	%r2, %r0, 1
-
 DL_SYSCALL(write)
 	jmp	%r1
 
@@ -216,11 +212,21 @@ ENTRY(_dl_sigprocmask)
 	ld	%r3, %r3, 0
 2:
 	or	%r13, %r0, SYS_sigprocmask
-	tb0	0, %r0, 128
+	tb0	0, %r0, 450
 	br	_dl_cerror
 	bcnd	eq0, %r4, 3f
 	st	%r2, %r4, 0
 3:
 	jmp.n	%r1
 	 or	%r2, %r0, 0
-END(sigprocmask)
+END(_dl_sigprocmask)
+
+_dl_cerror:
+	jmp.n	%r1
+	 subu	%r2, %r0, 1
+
+ENTRY(_dl_cacheflush)
+	tb0	0, %r0, 451
+	br	_dl_cerror		| never hit
+	jmp	%r1
+END(_dl_cacheflush)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2013/01/21 17:52:27 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.3 2013/01/23 19:01:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -317,9 +317,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				    *addr + object->obj_base);
 			}
 			/*
-			 * XXX We ought to invalidate I$ on the whole
-			 * XXX plt here.
+			 * Force a cache sync on the whole plt here,
+			 * otherwise I$ might have stale information.
 			 */
+			_dl_cacheflush(object->plt_start, object->plt_size);
 		}
 	}
 
