@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.17 2013/01/21 17:19:11 miod Exp $ */
+/* $OpenBSD: prebind.c,v 1.18 2013/01/23 19:15:58 miod Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -59,6 +59,9 @@ char *shstrtab;
 #endif
 #ifdef __i386__
 #define RELOC_JMP_SLOT	RELOC_JUMP_SLOT
+#endif
+#ifdef __m68k__
+#define RELOC_JMP_SLOT	R_68K_JMP_SLOT
 #endif
 #ifdef __sh__
 #define RELOC_JMP_SLOT	R_SH_JMP_SLOT
