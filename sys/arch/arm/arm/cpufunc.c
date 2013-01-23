@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.17 2013/01/18 00:20:20 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.18 2013/01/23 19:57:47 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -108,8 +108,10 @@ struct cpu_functions arm8_cpufuncs = {
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* domain		*/
 	arm8_setttb,			/* setttb		*/
-	cpufunc_faultstatus,		/* faultstatus		*/
-	cpufunc_faultaddress,		/* faultaddress		*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 
@@ -158,8 +160,10 @@ struct cpu_functions arm9_cpufuncs = {
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* Domain		*/
 	arm9_setttb,			/* Setttb		*/
-	cpufunc_faultstatus,		/* Faultstatus		*/
-	cpufunc_faultaddress,		/* Faultaddress		*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 
@@ -209,8 +213,10 @@ struct cpu_functions armv5_ec_cpufuncs = {
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* Domain		*/
 	armv5_ec_setttb,		/* Setttb		*/
-	cpufunc_faultstatus,		/* Faultstatus		*/
-	cpufunc_faultaddress,		/* Faultaddress		*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 
@@ -261,8 +267,10 @@ struct cpu_functions arm10_cpufuncs = {
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* Domain		*/
 	armv5_setttb,			/* Setttb		*/
-	cpufunc_faultstatus,		/* Faultstatus		*/
-	cpufunc_faultaddress,		/* Faultaddress		*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 
@@ -311,8 +319,10 @@ struct cpu_functions arm11_cpufuncs = {
 	cpufunc_control,		/* control			*/
 	cpufunc_domains,		/* Domain			*/
 	arm11_setttb,			/* Setttb			*/
-	cpufunc_faultstatus,		/* Faultstatus			*/
-	cpufunc_faultaddress,		/* Faultaddress			*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 
@@ -361,8 +371,10 @@ struct cpu_functions armv7_cpufuncs = {
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* Domain		*/
 	armv7_setttb,			/* Setttb		*/
-	cpufunc_faultstatus,		/* Faultstatus		*/
-	cpufunc_faultaddress,		/* Faultaddress		*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 
@@ -412,8 +424,10 @@ struct cpu_functions sa11x0_cpufuncs = {
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* domain		*/
 	sa1_setttb,			/* setttb		*/
-	cpufunc_faultstatus,		/* faultstatus		*/
-	cpufunc_faultaddress,		/* faultaddress		*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 
@@ -462,8 +476,10 @@ struct cpu_functions ixp12x0_cpufuncs = {
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* domain		*/
 	sa1_setttb,			/* setttb		*/
-	cpufunc_faultstatus,		/* faultstatus		*/
-	cpufunc_faultaddress,		/* faultaddress		*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 
@@ -513,8 +529,10 @@ struct cpu_functions xscale_cpufuncs = {
 	xscale_control,			/* control		*/
 	cpufunc_domains,		/* domain		*/
 	xscale_setttb,			/* setttb		*/
-	cpufunc_faultstatus,		/* faultstatus		*/
-	cpufunc_faultaddress,		/* faultaddress		*/
+	cpufunc_dfsr,			/* dfsr			*/
+	cpufunc_dfar,			/* dfar			*/
+	cpufunc_ifsr,			/* ifsr			*/
+	cpufunc_ifar,			/* ifar			*/
 
 	/* TLB functions */
 

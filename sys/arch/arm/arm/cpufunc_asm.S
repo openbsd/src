@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: cpufunc_asm.S,v 1.2 2013/01/23 19:57:47 patrick Exp $	*/
 /*	$NetBSD: cpufunc_asm.S,v 1.12 2003/09/06 09:14:52 rearnsha Exp $	*/
 
 /*
@@ -73,12 +73,20 @@ ENTRY(cpu_read_cache_config)
 	mrc	p15, 0, r0, c0, c0, 1
 	mov	pc, lr
 
-ENTRY(cpufunc_faultstatus)
+ENTRY(cpufunc_dfsr)
 	mrc	p15, 0, r0, c5, c0, 0
 	mov	pc, lr
 
-ENTRY(cpufunc_faultaddress)
+ENTRY(cpufunc_dfar)
 	mrc	p15, 0, r0, c6, c0, 0
+	mov	pc, lr
+
+ENTRY(cpufunc_ifsr)
+	mrc	p15, 0, r0, c5, c0, 1
+	mov	pc, lr
+
+ENTRY(cpufunc_ifar)
+	mrc	p15, 0, r0, c6, c0, 2
 	mov	pc, lr
 
 

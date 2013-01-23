@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.9 2011/09/20 22:02:13 miod Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.10 2013/01/23 19:57:47 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -60,8 +60,10 @@ struct cpu_functions {
 	u_int	(*cf_control)		(u_int bic, u_int eor);
 	void	(*cf_domains)		(u_int domains);
 	void	(*cf_setttb)		(u_int ttb);
-	u_int	(*cf_faultstatus)	(void);
-	u_int	(*cf_faultaddress)	(void);
+	u_int	(*cf_dfsr)		(void);
+	u_int	(*cf_dfar)		(void);
+	u_int	(*cf_ifsr)		(void);
+	u_int	(*cf_ifar)		(void);
 
 	/* TLB functions */
 
@@ -154,8 +156,10 @@ extern u_int cputype;
 #define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
 #define cpu_setttb(t)		cpufuncs.cf_setttb(t)
-#define cpu_faultstatus()	cpufuncs.cf_faultstatus()
-#define cpu_faultaddress()	cpufuncs.cf_faultaddress()
+#define cpu_dfsr()		cpufuncs.cf_dfsr()
+#define cpu_dfar()		cpufuncs.cf_dfar()
+#define cpu_ifsr()		cpufuncs.cf_ifsr()
+#define cpu_ifar()		cpufuncs.cf_ifar()
 
 #define	cpu_tlb_flushID()	cpufuncs.cf_tlb_flushID()
 #define	cpu_tlb_flushID_SE(e)	cpufuncs.cf_tlb_flushID_SE(e)
@@ -193,8 +197,10 @@ int	late_abort_fixup	(void *);
 u_int	cpufunc_id		(void);
 u_int	cpufunc_control		(u_int clear, u_int bic);
 void	cpufunc_domains		(u_int domains);
-u_int	cpufunc_faultstatus	(void);
-u_int	cpufunc_faultaddress	(void);
+u_int	cpufunc_dfsr		(void);
+u_int	cpufunc_dfar		(void);
+u_int	cpufunc_ifsr		(void);
+u_int	cpufunc_ifar		(void);
 
 #ifdef CPU_ARM8
 void	arm8_setttb		(u_int ttb);
