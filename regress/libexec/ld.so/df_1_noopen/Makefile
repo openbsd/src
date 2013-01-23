@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2012/06/15 20:50:06 matthew Exp $
+# $OpenBSD: Makefile,v 1.2 2013/01/23 19:46:09 miod Exp $
 
 REGRESS_TARGETS = test
 
@@ -16,15 +16,15 @@ lib3.so:
 	cc -o lib3.so /dev/null -fPIC -shared -L. -l2
 
 dlopen: dlopen.c
-	cc -o dlopen dlopen.c
+	cc -o dlopen ${.CURDIR}/dlopen.c
 
 dlopen1: dlopen.c
-	cc -o dlopen1 dlopen.c -L. -l1
+	cc -o dlopen1 ${.CURDIR}/dlopen.c -L. -l1
 
 dlopen2: dlopen.c
-	cc -o dlopen2 dlopen.c -L. -l2
+	cc -o dlopen2 ${.CURDIR}/dlopen.c -L. -l2
 
 dlopen3: dlopen.c
-	cc -o dlopen3 dlopen.c -L. -l3
+	cc -o dlopen3 ${.CURDIR}/dlopen.c -L. -l3
 
 .include <bsd.regress.mk>
