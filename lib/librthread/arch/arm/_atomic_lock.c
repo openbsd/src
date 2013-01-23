@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 2006/01/05 22:33:23 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 2013/01/23 20:49:55 patrick Exp $	*/
 
 /*
  * Copyright (c) 2004 Dale Rahn. All rights reserved.
@@ -35,9 +35,20 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 {
 	_spinlock_lock_t old;
 
+#ifdef ARM_V7PLUS_LOCKS
+	uint32_t scratch = 0;
+	old = 0;
+	__asm__("1: ldrex %0, [%1]      \n"
+		"   strex %2, %3, [%1]  \n"
+		"   cmp %2, #0          \n"
+		"   bne 1b              \n"
+		: "+r" (old), "+r" (lock), "+r" (scratch)
+		: "r" (_SPINLOCK_LOCKED));
+#else
 	__asm__("swp %0, %2, [%1]"
 		: "=r" (old), "=r" (lock)
 		: "r" (_SPINLOCK_LOCKED), "1" (lock) );
 
+#endif
 	return (old != _SPINLOCK_UNLOCKED);
 }
