@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.5 2013/01/14 05:13:50 miod Exp $	*/
+/*	$OpenBSD: usm.c,v 1.6 2013/01/24 09:30:27 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -173,9 +173,11 @@ usm_checkuser(struct usmuser *up, const char **errp)
 		auth = "none";
 		break;
 	case AUTH_MD5:
+		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
 		auth = "HMAC-MD5-96";
 		break;
 	case AUTH_SHA1:
+		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
 		auth = "HMAC-SHA1-96";
 		break;
 	}
@@ -185,9 +187,11 @@ usm_checkuser(struct usmuser *up, const char **errp)
 		priv = "none";
 		break;
 	case PRIV_DES:
+		up->uu_seclevel |= SNMP_MSGFLAG_PRIV;
 		priv = "CBC-DES";
 		break;
 	case PRIV_AES:
+		up->uu_seclevel |= SNMP_MSGFLAG_PRIV;
 		priv = "CFB128-AES-128";
 		break;
 	}
@@ -285,14 +289,18 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 
 	memcpy(msg->sm_username, user, userlen);
 	msg->sm_username[userlen] = '\0';
-	if (MSG_SECLEVEL(msg) > 0) {
-		msg->sm_user = usm_finduser(msg->sm_username);
-		if (msg->sm_user == NULL) {
-			*errp = "no such user";
-			msg->sm_usmerr = OIDVAL_usmErrUserName;
-			stats->snmp_usmnosuchuser++;
-			goto done;
-		}
+	msg->sm_user = usm_finduser(msg->sm_username);
+	if (msg->sm_user == NULL) {
+		*errp = "no such user";
+		msg->sm_usmerr = OIDVAL_usmErrUserName;
+		stats->snmp_usmnosuchuser++;
+		goto done;
+	}
+	if (MSG_SECLEVEL(msg) > msg->sm_user->uu_seclevel) {
+		*errp = "unsupported security model";
+		msg->sm_usmerr = OIDVAL_usmErrSecLevel;
+		stats->snmp_usmbadseclevel++;
+		goto done;
 	}
 
 	/*
@@ -495,7 +503,7 @@ usm_valid_digest(struct snmp_message *msg, off_t offs,
 	u_char		 exp_digest[EVP_MAX_MD_SIZE];
 	unsigned	 hlen;
 
-	if (!MSG_HAS_AUTH(msg) || msg->sm_user == NULL)
+	if (!MSG_HAS_AUTH(msg))
 		return 1;
 
 	if (digestlen != SNMP_USM_DIGESTLEN)
@@ -506,9 +514,8 @@ usm_valid_digest(struct snmp_message *msg, off_t offs,
 	assert(bcmp(&msg->sm_data[offs], digest, digestlen) == 0);
 #endif
 
-	/* Ignore provided digest if user has no auth passphrase */
 	if ((md = usm_get_md(msg->sm_user->uu_auth)) == NULL)
-		return 1;
+		return 0;
 
 	memset(&msg->sm_data[offs], 0, digestlen);
 	HMAC(md, msg->sm_user->uu_authkey, (int)msg->sm_user->uu_authkeylen,
