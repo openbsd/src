@@ -159,26 +159,41 @@ extern int target_flags;			/* -m compiler switches */
 #define TARGET_DEFAULT	(MASK_CHECK_ZERO_DIV)
 #define CPU_DEFAULT MASK_88100
 
-#define TARGET_SWITCHES \
-  { \
-    { "88110",				 MASK_88110 }, \
-    { "88100",				 MASK_88100 }, \
-    { "88000",			         MASK_88000 }, \
-    { "trap-large-shift",		 MASK_TRAP_LARGE_SHIFT }, \
-    { "handle-large-shift",		 MASK_HANDLE_LARGE_SHIFT }, \
-    { "check-zero-division",		 MASK_CHECK_ZERO_DIV }, \
-    { "no-check-zero-division",		-MASK_CHECK_ZERO_DIV }, \
-    { "use-div-instruction",		 MASK_USE_DIV }, \
-    { "no-serialize-volatile",		 MASK_NO_SERIALIZE_VOLATILE }, \
-    { "serialize-volatile",		-MASK_NO_SERIALIZE_VOLATILE }, \
-    { "omit-leaf-frame-pointer",	 MASK_OMIT_LEAF_FRAME_POINTER }, \
-    { "no-omit-leaf-frame-pointer",     -MASK_OMIT_LEAF_FRAME_POINTER }, \
-    { "memcpy",				 MASK_MEMCPY }, \
-    { "no-memcpy",			-MASK_MEMCPY }, \
-    SUBTARGET_SWITCHES \
-    /* Default switches */ \
-    { "",				 TARGET_DEFAULT }, \
-  }
+#define TARGET_SWITCHES							\
+{									\
+  { "88110",				 MASK_88110,			\
+    N_("Generate code for a 88110 processor") },			\
+  { "88100",				 MASK_88100,			\
+    N_("Generate code for a 88100 processor") },			\
+  { "88000",			         MASK_88000,			\
+    N_("Generate code compatible with both 88100 and 88110 processors") }, \
+  { "trap-large-shift",			 MASK_TRAP_LARGE_SHIFT,		\
+    N_("Add code to trap on logical shift counts larger than 31") },	\
+  { "handle-large-shift",		 MASK_HANDLE_LARGE_SHIFT,	\
+    N_("Add code to handle logical shift counts larger than 31") },	\
+  { "check-zero-division",		 MASK_CHECK_ZERO_DIV,		\
+    N_("Add code to trap on integer divide by zero") },			\
+  { "no-check-zero-division",		-MASK_CHECK_ZERO_DIV,		\
+    N_("Do not add code to trap on integer divide by zero") },		\
+  { "use-div-instruction",		 MASK_USE_DIV,			\
+    N_("Use the \"div\" instruction for signed integer divide") },	\
+  { "no-serialize-volatile",		 MASK_NO_SERIALIZE_VOLATILE,	\
+    N_("Do not force serialization on volatile memory access") },	\
+  { "serialize-volatile",		-MASK_NO_SERIALIZE_VOLATILE,	\
+    N_("Force serialization on volatile memory access") },		\
+  { "omit-leaf-frame-pointer",		 MASK_OMIT_LEAF_FRAME_POINTER,	\
+    N_("Do not save the frame pointer in leaf functions") },		\
+  { "no-omit-leaf-frame-pointer",	-MASK_OMIT_LEAF_FRAME_POINTER,	\
+    N_("Save the frame pointer in leaf functions") },			\
+  { "memcpy",				 MASK_MEMCPY,			\
+    N_("Force all memory copies to use memcpy()") },			\
+  { "no-memcpy",			-MASK_MEMCPY,			\
+    N_("Allow the use of specific memory copy code") },			\
+  SUBTARGET_SWITCHES							\
+  /* Default switches */						\
+  { "",				 	TARGET_DEFAULT,			\
+    NULL },								\
+}
 
 #define SUBTARGET_SWITCHES
 
@@ -1108,7 +1123,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 #define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)		\
 {							\
-  register rtx _x;					\
   if (REG_P (X))					\
     {							\
       if (REG_OK_FOR_BASE_P (X))			\

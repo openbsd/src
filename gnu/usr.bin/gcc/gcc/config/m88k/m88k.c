@@ -2974,7 +2974,7 @@ print_operand_address (file, addr)
     FILE *file;
     rtx addr;
 {
-  register rtx reg0, reg1, temp;
+  register rtx reg0, reg1;
 
   switch (GET_CODE (addr))
     {
