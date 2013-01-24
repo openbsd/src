@@ -62,20 +62,20 @@ Boston, MA 02111-1307, USA.  */
 #ifdef CROSS_COMPILE
 #define INCLUDE_DEFAULTS                       \
   {                                            \
-    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },    \
-    { GPLUSPLUS_TOOL_INCLUDE_DIR, "G++", 1, 1 },\
-    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1 }, \
-    { GPLUSPLUS_INCLUDE_DIR "/..", STANDARD_INCLUDE_COMPONENT, 0, 0 }, \
-    { 0, 0, 0, 0 }                             \
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1, 0 },    \
+    { GPLUSPLUS_TOOL_INCLUDE_DIR, "G++", 1, 1, 0 },\
+    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1, 0 }, \
+    { GPLUSPLUS_INCLUDE_DIR "/..", STANDARD_INCLUDE_COMPONENT, 0, 0, 0 }, \
+    { 0, 0, 0, 0, 0 }                             \
   }
 #else
 #define INCLUDE_DEFAULTS			\
   {						\
-    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
-    { GPLUSPLUS_TOOL_INCLUDE_DIR, "G++", 1, 1 },\
-    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1 }, \
-    { STANDARD_INCLUDE_DIR, STANDARD_INCLUDE_COMPONENT, 0, 0 },	\
-    { 0, 0, 0, 0 }				\
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1, 0 },	\
+    { GPLUSPLUS_TOOL_INCLUDE_DIR, "G++", 1, 1, 0 },\
+    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1, 0 }, \
+    { STANDARD_INCLUDE_DIR, STANDARD_INCLUDE_COMPONENT, 0, 0, 0 },	\
+    { 0, 0, 0, 0, 0 }				\
   }
 #endif
 

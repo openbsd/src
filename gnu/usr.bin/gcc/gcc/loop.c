@@ -1797,6 +1797,7 @@ add_label_notes (x, insns)
     }
 }
 
+#if 0 /* verified to cause bad code generation on OpenBSD/powerpc */
 /* Scan MOVABLES, and move the insns that deserve to be moved.
    If two matching movables are combined, replace one reg with the
    other throughout.  */
@@ -2309,6 +2310,7 @@ move_movables (loop, movables, threshold, insn_count)
   free (reg_map);
   free (already_moved);
 }
+#endif
 
 
 static void

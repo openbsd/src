@@ -25,6 +25,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "rtl.h"
 #include "tree.h"
 #include "regs.h"
+#include "tm_p.h"
 #include "flags.h"
 #include "insn-config.h"
 #include "insn-flags.h"
@@ -2438,7 +2439,7 @@ push_frame_in_operand (insn, orig, push_size, boundary)
 	       && GET_CODE (XEXP (x, 1)) == REG
 	       && fp_equiv[REGNO (XEXP (x, 1))])
 	if (REGNO (XEXP (x, 0)) <= LAST_VIRTUAL_REGISTER
-	    || reg_renumber != 0 && reg_renumber[REGNO (XEXP (x, 0))] >= 0)
+	    || (reg_renumber != 0 && reg_renumber[REGNO (XEXP (x, 0))] >= 0))
 	  fp_equiv[REGNO (XEXP (x, 0))] = fp_equiv[REGNO (XEXP (x, 1))];
       break;
 
