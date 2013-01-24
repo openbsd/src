@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.11 2013/01/23 18:59:32 miod Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.12 2013/01/24 05:24:47 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,8 +61,7 @@ ENTRY(sbrk)
 	or	%r13,%r0,SYS_break
 	tb0	0,%r0,450
 #ifdef __PIC__
-	br.n	CERROR
-	 PIC_RESTORE(%r9)
+	br	9f
 #else
 	br 	CERROR
 #endif
@@ -85,4 +84,10 @@ ENTRY(sbrk)
 #endif
 	jmp.n	%r1
 	 or	%r3,%r0,0
+
+#ifdef __PIC__
+9:
+	br.n	CERROR
+	 PIC_RESTORE(%r9)
+#endif
 END(sbrk)
