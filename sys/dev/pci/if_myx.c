@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.39 2013/01/21 00:41:42 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.40 2013/01/25 02:13:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -79,7 +79,6 @@ struct myx_dmamem {
 	int			 mxm_nsegs;
 	size_t			 mxm_size;
 	caddr_t			 mxm_kva;
-	const char		*mxm_name;
 };
 
 struct myx_buf {
@@ -171,7 +170,7 @@ int	 myx_boot(struct myx_softc *, u_int32_t);
 
 int	 myx_rdma(struct myx_softc *, u_int);
 int	 myx_dmamem_alloc(struct myx_softc *, struct myx_dmamem *,
-	    bus_size_t, u_int align, const char *);
+	    bus_size_t, u_int align);
 void	 myx_dmamem_free(struct myx_softc *, struct myx_dmamem *);
 int	 myx_media_change(struct ifnet *);
 void	 myx_media_status(struct ifnet *, struct ifmediareq *);
@@ -427,7 +426,7 @@ myx_attachhook(void *arg)
 
 	/* Allocate command DMA memory */
 	if (myx_dmamem_alloc(sc, &sc->sc_cmddma, MYXALIGN_CMD,
-	    MYXALIGN_CMD, "cmd") != 0) {
+	    MYXALIGN_CMD) != 0) {
 		printf("%s: failed to allocate command DMA memory\n",
 		    DEVNAME(sc));
 		return;
@@ -515,7 +514,7 @@ myx_probe_firmware(struct myx_softc *sc)
 		}
 	}
 
-	if (myx_dmamem_alloc(sc, &test, 4096, 4096, "test") != 0)
+	if (myx_dmamem_alloc(sc, &test, 4096, 4096) != 0)
 		return (1);
 	map = test.mxm_map;
 
@@ -589,7 +588,7 @@ myx_write(struct myx_softc *sc, bus_size_t off, void *ptr, bus_size_t len)
 
 int
 myx_dmamem_alloc(struct myx_softc *sc, struct myx_dmamem *mxm,
-    bus_size_t size, u_int align, const char *mname)
+    bus_size_t size, u_int align)
 {
 	mxm->mxm_size = size;
 
@@ -607,8 +606,6 @@ myx_dmamem_alloc(struct myx_softc *sc, struct myx_dmamem *mxm,
 	if (bus_dmamap_load(sc->sc_dmat, mxm->mxm_map, mxm->mxm_kva,
 	    mxm->mxm_size, NULL, BUS_DMA_WAITOK) != 0)
 		goto unmap;
-
-	mxm->mxm_name = mname;
 
 	return (0);
  unmap:
@@ -929,7 +926,7 @@ myx_up(struct myx_softc *sc)
 	}
 
 	if (myx_dmamem_alloc(sc, &sc->sc_zerodma,
-	    64, MYXALIGN_CMD, "zero") != 0) {
+	    64, MYXALIGN_CMD) != 0) {
 		printf("%s: failed to allocate zero pad memory\n",
 		    DEVNAME(sc));
 		return;
@@ -939,7 +936,7 @@ myx_up(struct myx_softc *sc)
 	    sc->sc_zerodma.mxm_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	if (myx_dmamem_alloc(sc, &sc->sc_paddma,
-	    MYXALIGN_CMD, MYXALIGN_CMD, "pad") != 0) {
+	    MYXALIGN_CMD, MYXALIGN_CMD) != 0) {
 		printf("%s: failed to allocate pad DMA memory\n",
 		    DEVNAME(sc));
 		goto free_zero;
@@ -982,7 +979,7 @@ myx_up(struct myx_softc *sc)
 
 	size = sc->sc_intrq_count * sizeof(struct myx_intrq_desc);
 	if (myx_dmamem_alloc(sc, &sc->sc_intrq_dma,
-	    size, MYXALIGN_DATA, "intrq") != 0) {
+	    size, MYXALIGN_DATA) != 0) {
 		goto free_pad;
 	}
 	sc->sc_intrq = (struct myx_intrq_desc *)sc->sc_intrq_dma.mxm_kva;
@@ -1075,7 +1072,7 @@ myx_up(struct myx_softc *sc)
 
 	/* Allocate Interrupt Data */
 	if (myx_dmamem_alloc(sc, &sc->sc_sts_dma,
-	    sizeof(struct myx_status), MYXALIGN_DATA, "status") != 0) {
+	    sizeof(struct myx_status), MYXALIGN_DATA) != 0) {
 		printf("%s: failed to allocate status DMA memory\n",
 		    DEVNAME(sc));
 		goto free_intrq;
