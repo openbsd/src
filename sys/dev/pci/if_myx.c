@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.40 2013/01/25 02:13:01 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.41 2013/01/25 02:56:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -161,8 +161,10 @@ void	 myx_write(struct myx_softc *, bus_size_t, void *, bus_size_t);
 
 #if 0 && defined(__LP64__)
 #define myx_bus_space_write bus_space_write_raw_region_8
+typedef u_int64_t myx_bus_t;
 #else
 #define myx_bus_space_write bus_space_write_raw_region_4
+typedef u_int32_t myx_bus_t;
 #endif
 
 int	 myx_cmd(struct myx_softc *, u_int32_t, struct myx_cmd *, u_int32_t *);
@@ -182,8 +184,6 @@ void	 myx_iff(struct myx_softc *);
 void	 myx_down(struct myx_softc *);
 
 void	 myx_start(struct ifnet *);
-void	 myx_write_txd_head(struct myx_softc *, struct myx_buf *, u_int8_t,
-	    u_int32_t, u_int);
 void	 myx_write_txd_tail(struct myx_softc *, struct myx_buf *, u_int8_t,
 	    u_int32_t, u_int);
 int	 myx_load_buf(struct myx_softc *, struct myx_buf *, struct mbuf *);
@@ -1376,22 +1376,6 @@ myx_down(struct myx_softc *sc)
 }
 
 void
-myx_write_txd_head(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
-    u_int32_t offset, u_int idx)
-{
-	struct myx_tx_desc		txd;
-	bus_dmamap_t			map = mb->mb_map;
-
-	bzero(&txd, sizeof(txd));
-	txd.tx_addr = htobe64(map->dm_segs[0].ds_addr);
-	txd.tx_length = htobe16(map->dm_segs[0].ds_len);
-	txd.tx_nsegs = map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
-	txd.tx_flags = flags | MYXTXD_FLAGS_FIRST;
-
-	myx_bus_space_write(sc->sc_memt, sc->sc_memh,
-	    offset + sizeof(txd) * idx, &txd, sizeof(txd));
-}
-void
 myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
     u_int32_t offset, u_int idx)
 {
@@ -1427,6 +1411,7 @@ myx_write_txd_tail(struct myx_softc *sc, struct myx_buf *mb, u_int8_t flags,
 void
 myx_start(struct ifnet *ifp)
 {
+	struct myx_tx_desc		txd;
 	struct myx_buf_list		list = SIMPLEQ_HEAD_INITIALIZER(list);
 	struct myx_softc		*sc = ifp->if_softc;
 	bus_dmamap_t			map;
@@ -1502,7 +1487,14 @@ myx_start(struct ifnet *ifp)
 		if (map->dm_mapsize < 1520)
 			flags |= MYXTXD_FLAGS_SMALL;
 
-		myx_write_txd_head(sc, mb, flags, offset, idx);
+		bzero(&txd, sizeof(txd));
+		txd.tx_addr = htobe64(map->dm_segs[0].ds_addr);
+		txd.tx_length = htobe16(map->dm_segs[0].ds_len);
+		txd.tx_nsegs = map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
+		txd.tx_flags = flags | MYXTXD_FLAGS_FIRST;
+		myx_bus_space_write(sc->sc_memt, sc->sc_memh,
+		    offset + sizeof(txd) * idx, &txd, sizeof(txd));
+
 		myx_write_txd_tail(sc, mb, flags, offset, idx);
 
 		idx += map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
@@ -1511,23 +1503,35 @@ myx_start(struct ifnet *ifp)
 	sc->sc_tx_ring_idx = idx;
 
 	/* go back and post first mb */
+	map = firstmb->mb_map;
+
 	flags = MYXTXD_FLAGS_NO_TSO;
-	if (firstmb->mb_map->dm_mapsize < 1520)
+	if (map->dm_mapsize < 1520)
 		flags |= MYXTXD_FLAGS_SMALL;
 
-	myx_write_txd_tail(sc, firstmb, flags, offset, firstidx);
+	txd.tx_addr = htobe64(map->dm_segs[0].ds_addr);
+	txd.tx_length = htobe16(map->dm_segs[0].ds_len);
+	txd.tx_nsegs = map->dm_nsegs + (map->dm_mapsize < 60 ? 1 : 0);
+	txd.tx_flags = flags | MYXTXD_FLAGS_FIRST;
 
 	/* make sure the first descriptor is seen after the others */
-	if (idx != firstidx + 1) {
-		bus_space_barrier(sc->sc_memt, sc->sc_memh, offset,
-		    sizeof(struct myx_tx_desc) * sc->sc_tx_ring_count,
-		    BUS_SPACE_BARRIER_WRITE);
-	}
+	myx_write_txd_tail(sc, firstmb, flags, offset, firstidx);
 
-	myx_write_txd_head(sc, firstmb, flags, offset, firstidx);
+	myx_bus_space_write(sc->sc_memt, sc->sc_memh,
+	    offset + sizeof(txd) * firstidx, &txd,
+	    sizeof(txd) - sizeof(myx_bus_t));
+
+	bus_space_barrier(sc->sc_memt, sc->sc_memh, offset,
+	    sizeof(txd) * sc->sc_tx_ring_count, BUS_SPACE_BARRIER_WRITE);
+
+	myx_bus_space_write(sc->sc_memt, sc->sc_memh,
+	    offset + sizeof(txd) * (firstidx + 1) - sizeof(myx_bus_t),
+	    (u_int8_t *)&txd + sizeof(txd) - sizeof(myx_bus_t),
+	    sizeof(myx_bus_t));
+
 	bus_space_barrier(sc->sc_memt, sc->sc_memh,
-	    offset + sizeof(struct myx_tx_desc) * firstidx,
-	    sizeof(struct myx_tx_desc), BUS_SPACE_BARRIER_WRITE);
+	    offset + sizeof(txd) * firstidx, sizeof(txd),
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 int
