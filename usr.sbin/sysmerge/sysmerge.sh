@@ -1,8 +1,8 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.101 2013/01/04 07:56:36 rpe Exp $
+# $OpenBSD: sysmerge.sh,v 1.102 2013/01/25 13:32:49 ajacoutot Exp $
 #
-# Copyright (c) 2008, 2009, 2010, 2011, 2012 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2008-2013 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -121,7 +121,7 @@ prepare_src() {
 		error_rm_wrkdir "prepare/cksum of ${SRCDIR} failed"
 }
 
-do_populate() {
+sm_populate() {
 	local cf i _array _d _r _D _R CF_DIFF CF_FILES CURSUM IGNORE_FILES
 	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
 	echo "===> Populating temporary root under ${TEMPROOT}"
@@ -187,7 +187,7 @@ do_populate() {
 	done
 }
 
-do_install_and_rm() {
+install_and_rm() {
 	if [ -f "${5}/${4##*/}" ]; then
 		mkdir -p ${BKPDIR}/${4%/*}
 		cp ${5}/${4##*/} ${BKPDIR}/${4%/*}
@@ -200,7 +200,7 @@ do_install_and_rm() {
 	rm -f "${4}"
 }
 
-mm_install() {
+install_file() {
 	local DIR_MODE FILE_MODE FILE_OWN FILE_GRP INSTDIR
 	INSTDIR=${1#.}
 	INSTDIR=${INSTDIR%/*}
@@ -213,7 +213,7 @@ mm_install() {
 	[ -n "${DESTDIR}${INSTDIR}" -a ! -d "${DESTDIR}${INSTDIR}" ] && \
 		install -d -o root -g wheel -m "${DIR_MODE}" "${DESTDIR}${INSTDIR}"
 
-	do_install_and_rm "${FILE_MODE}" "${FILE_OWN}" "${FILE_GRP}" "${1}" "${DESTDIR}${INSTDIR}" || return
+	install_and_rm "${FILE_MODE}" "${FILE_OWN}" "${FILE_GRP}" "${1}" "${DESTDIR}${INSTDIR}" || return
 
 	case "${1#.}" in
 	/dev/MAKEDEV)
@@ -248,7 +248,7 @@ mm_install() {
 	esac
 }
 
-mm_install_link() {
+install_link() {
 	local _LINKF _LINKT DIR_MODE 
 	_LINKT=$(readlink ${COMPFILE})
 	_LINKF=$(dirname ${DESTDIR}${COMPFILE#.})
@@ -299,7 +299,7 @@ merge_loop() {
 			[iI])
 				mv "${COMPFILE}.merged" "${COMPFILE}"
 				echo -n "\n===> Merging ${COMPFILE#.}"
-				mm_install "${COMPFILE}" || \
+				install_file "${COMPFILE}" || \
 					warn "problem merging ${COMPFILE#.}"
 				unset MERGE_AGAIN
 				;;
@@ -362,7 +362,7 @@ diff_loop() {
 				# automatically install files which differ only by CVS Id or that are binaries
 				if [ -z "$(diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}")" -o -n "${FORCE_UPG}" -o -n "${IS_BINFILE}" ]; then
 					echo -n "===> Updating ${COMPFILE#.}"
-					if mm_install "${COMPFILE}"; then
+					if install_file "${COMPFILE}"; then
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
 						warn "problem updating ${COMPFILE#.}"
@@ -425,7 +425,7 @@ diff_loop() {
 					echo ""
 					NO_INSTALLED=1
 				else
-					if mm_install_link; then
+					if install_link; then
 						echo "===> ${COMPFILE#.} link created successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
@@ -439,7 +439,7 @@ diff_loop() {
 				NO_INSTALLED=1
 			else
 				echo -n "===> Installing ${COMPFILE#.}"
-				if mm_install "${COMPFILE}"; then
+				if install_file "${COMPFILE}"; then
 					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 				else
 					warn "problem installing ${COMPFILE#.}"
@@ -476,7 +476,7 @@ diff_loop() {
 			if [ -n "${CAN_INSTALL}" ]; then
 				echo ""
 				if [ -n "${IS_LINK}" ]; then
-					if mm_install_link; then
+					if install_link; then
 						echo "===> ${COMPFILE#.} link created successfully"
 						MERGED_FILES="${MERGED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
@@ -484,7 +484,7 @@ diff_loop() {
 					fi
 				else
 					echo -n "===> Updating ${COMPFILE#.}"
-					if mm_install "${COMPFILE}"; then
+					if install_file "${COMPFILE}"; then
 						MERGED_FILES="${MERGED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
 						warn "problem updating ${COMPFILE#.}"
@@ -526,7 +526,7 @@ diff_loop() {
 	done
 }
 
-do_compare() {
+sm_compare() {
 	local _c1 _c2 COMPFILE CVSID1 CVSID2
 	echo "===> Starting comparison"
 
@@ -534,7 +534,7 @@ do_compare() {
 
 	# use -size +0 to avoid comparing empty log files and device nodes;
 	# however, we want to keep the symlinks; group and master.passwd
-	# need to be handled first in case mm_install needs a new user/group
+	# need to be handled first in case install_file needs a new user/group
 	_c1="./etc/group ./etc/master.passwd"
 	_c2=$(find . -type f -size +0 -or -type l | grep -vE '(./etc/group|./etc/master.passwd)')
 	for COMPFILE in ${_c1} ${_c2}; do
@@ -576,7 +576,7 @@ do_compare() {
 	echo "===> Comparison complete"
 }
 
-do_post() {
+sm_post() {
 	local FILES_IN_TEMPROOT FILES_IN_BKPDIR
 	echo "===> Checking directory hierarchy permissions (running mtree(8))"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U >/dev/null
@@ -683,6 +683,6 @@ fi
 TEMPROOT="${WRKDIR}/temproot"
 BKPDIR="${WRKDIR}/backups"
 
-do_populate
-do_compare
-do_post
+sm_populate
+sm_compare
+sm_post
