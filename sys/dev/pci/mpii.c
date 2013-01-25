@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.68 2012/09/28 12:46:41 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.69 2013/01/25 04:25:21 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -1753,9 +1753,9 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 	enp = (struct mpii_msg_event_reply *)rcb->rcb_reply;
 
 	DNPRINTF(MPII_D_EVT, "%s: mpii_event_process: %#x\n", DEVNAME(sc),
-	    letoh32(enp->event));
+	    letoh16(enp->event));
 
-	switch (letoh32(enp->event)) {
+	switch (letoh16(enp->event)) {
 	case MPII_EVENT_EVENT_CHANGE:
 		/* should be properly ignored */
 		break;
@@ -1828,7 +1828,7 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		}
 	default:
 		DNPRINTF(MPII_D_EVT, "%s:  unhandled event 0x%02x\n",
-		    DEVNAME(sc), letoh32(enp->event));
+		    DEVNAME(sc), letoh16(enp->event));
 	}
 
 	if (enp->ack_required) {
