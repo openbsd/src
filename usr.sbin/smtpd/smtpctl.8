@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.37 2013/01/26 09:37:23 gilles Exp $
+.\" $OpenBSD: smtpctl.8,v 1.38 2013/01/26 14:13:25 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -50,7 +50,7 @@ except for some counters which are always absolute values.
 The first line reports the current value of each counter.
 The fields are:
 .Pp
-.Bl -compact -bullet
+.Bl -bullet -compact
 .It
 Current number of active SMTP clients (absolute value).
 .It
@@ -85,6 +85,17 @@ Temporarily stop relaying and deliveries to
 remote users.
 .It Cm pause smtp
 Temporarily stop accepting incoming sessions.
+.It Cm profile Ar subsystem
+Enables real-time profiling of
+.Ar subsystem .
+Supported subsystems are:
+.Pp
+.Bl -bullet -compact
+.It
+queue, to profile cost of queue IO
+.It
+imsg, to profile cost of event handlers
+.El
 .It Cm remove Ar envelope-id | message-id
 Remove a single envelope, or all envelopes with the same message ID.
 .It Cm resume mda
@@ -107,9 +118,9 @@ Display information concerning envelopes that are currently in the queue.
 Each line of output describes a single envelope.
 It consists of the following fields, separated by a "|":
 .Pp
-.Bl -compact -bullet
+.Bl -bullet -compact
 .It
-Envelope id.
+Envelope ID.
 .It
 Address family of the client which enqueued the mail.
 .It
@@ -153,7 +164,7 @@ Enables real-time tracing of
 .Ar subsystem .
 Supported subsystems are:
 .Pp
-.Bl -compact -bullet
+.Bl -bullet -compact
 .It
 imsg
 .It
@@ -177,22 +188,11 @@ imsg-size
 .It
 all
 .El
-.It Cm untrace Ar subsystem
-Disables real-time tracing of
-.Ar subsystem .
-.It Cm profile Ar subsystem
-Enables real-time profiling of
-.Ar subsystem .
-Supported subsystems are:
-.Pp
-.Bl -compact -bullet
-.It
-queue, to profile cost of queue IO
-.It
-imsg, to profile cost of event handlers
-.El
 .It Cm unprofile Ar subsystem
 Disables real-time profiling of
+.Ar subsystem .
+.It Cm untrace Ar subsystem
+Disables real-time tracing of
 .Ar subsystem .
 .It Cm update table Ar name
 For table backends that provide caching, causes
