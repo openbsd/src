@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2013/01/23 19:01:44 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.4 2013/01/26 20:41:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -316,11 +316,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				    object->obj_base + rela->r_addend,
 				    *addr + object->obj_base);
 			}
-			/*
-			 * Force a cache sync on the whole plt here,
-			 * otherwise I$ might have stale information.
-			 */
-			_dl_cacheflush(object->plt_start, object->plt_size);
 		}
 	}
 
@@ -329,9 +324,15 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		    PROT_READ);
 	}
 	if (object->plt_size != 0) {
-		if (!lazy || object->obj_base != 0)
+		if (!lazy || object->obj_base != 0) {
+			/*
+			 * Force a cache sync on the whole plt here,
+			 * otherwise I$ might have stale information.
+			 */
+			_dl_cacheflush(object->plt_start, object->plt_size);
 			_dl_mprotect((void*)object->plt_start, object->plt_size,
 			    PROT_READ | PROT_EXEC);
+		}
 	}
 
 	return (fails);
