@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2011/06/23 22:46:12 schwarze Exp $
+# $OpenBSD: Makefile,v 1.19 2013/01/26 06:10:22 djm Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -242,8 +242,7 @@ MAN=	\
 	RAND.3 \
 	RC4.3 \
 	RIPEMD160.3 \
-	SHA1.3 \
-	acss.3
+	SHA1.3
 
 # These pages removed/renamed
 #	OPENSSL_ia32cap.cat3 \	# i386-only, internal API
@@ -911,7 +910,6 @@ MLINKS+=\
 	X509_NAME_add_entry_by_txt.3 X509_NAME_add_entry_by_OBJ.3 \
 	X509_NAME_add_entry_by_txt.3 X509_NAME_delete_entry.3 \
 	X509_new.3 X509_free.3 \
-	acss.3 acss_setkey.3 \
 	bn_internal.3 bn_add_words.3 \
 	bn_internal.3 bn_check_top.3 \
 	bn_internal.3 bn_cmp_words.3 \

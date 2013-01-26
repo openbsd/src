@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.62 2012/10/13 21:31:50 djm Exp $
+# $OpenBSD: Makefile,v 1.63 2013/01/26 06:10:22 djm Exp $
 
 LIB=	crypto
 
@@ -45,9 +45,6 @@ CFLAGS+= -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/evp
 # crypto/
 SRCS+= cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c cpt_err.c
 SRCS+= ebcdic.c uid.c o_time.c o_str.c o_dir.c o_fips.c o_init.c fips_ers.c
-
-# acss/
-SRCS+=	acss_skey.c acss_enc.c
 
 # aes/
 SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c
@@ -169,7 +166,6 @@ SRCS+= c_all.c c_allc.c c_alld.c evp_lib.c bio_ok.c
 SRCS+= evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c
 SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c evp_fips.c
 SRCS+= e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
-SRCS+= e_acss.c # Local addition
 
 # hmac/
 SRCS+= hmac.c hm_ameth.c hm_pmeth.c
@@ -293,7 +289,6 @@ SRCS+= v3_asid.c v3_addr.c
 
 .PATH:	${.CURDIR}/arch/${MACHINE_CPU} \
 	${LCRYPTO_SRC} \
-	${LCRYPTO_SRC}/acss \
 	${LCRYPTO_SRC}/aes \
 	${LCRYPTO_SRC}/asn1 \
 	${LCRYPTO_SRC}/bf \
@@ -355,7 +350,6 @@ SRCS+= v3_asid.c v3_addr.c
 HDRS=\
 	e_os.h \
 	e_os2.h \
-	crypto/acss/acss.h \
 	crypto/aes/aes.h \
 	crypto/asn1/asn1.h \
 	crypto/asn1/asn1_mac.h \

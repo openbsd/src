@@ -394,9 +394,6 @@ struct evp_cipher_st
 /* Set the GCM invocation field, decrypt only */
 #define		EVP_CTRL_GCM_SET_IV_INV		0x18
 
-/* OpenBSD extension */
-#define		EVP_CTRL_SET_ACSS_MODE		0x80
-
 /* GCM TLS constants */
 /* Length of fixed part of IV derived from PRF */
 #define EVP_GCM_TLS_FIXED_IV_LEN			4
@@ -819,9 +816,6 @@ const EVP_CIPHER *EVP_aes_256_xts(void);
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
 #endif
-#endif
-#ifndef OPENSSL_NO_ACSS
-const EVP_CIPHER *EVP_acss(void);
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);
