@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.104 2013/01/18 05:50:32 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.105 2013/01/26 04:11:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -84,8 +84,8 @@ struct option_data {
 };
 
 struct reject_elem {
-	struct reject_elem *next;
-	struct in_addr addr;
+	struct reject_elem	*next;
+	struct in_addr		 addr;
 };
 
 struct hardware {
@@ -145,43 +145,43 @@ struct client_config {
 };
 
 struct client_state {
-	struct client_lease	 *active;
-	struct client_lease	 *new;
-	struct client_lease	 *offered_leases;
-	struct client_lease	 *leases;
-	enum dhcp_state		  state;
-	struct in_addr		  destination;
-	u_int32_t		  xid;
-	u_int16_t		  secs;
-	time_t			  first_sending;
-	time_t			  interval;
-	struct dhcp_packet	  packet;
-	int			  packet_length;
-	struct in_addr		  requested_address;
+	struct client_lease	*active;
+	struct client_lease	*new;
+	struct client_lease	*offered_leases;
+	struct client_lease	*leases;
+	enum dhcp_state		 state;
+	struct in_addr		 destination;
+	u_int32_t		 xid;
+	u_int16_t		 secs;
+	time_t			 first_sending;
+	time_t			 interval;
+	struct dhcp_packet	 packet;
+	int			 packet_length;
+	struct in_addr		 requested_address;
 };
 
 struct interface_info {
-	struct hardware		 hw_address;
-	struct in_addr		 primary_address;
-	char			 name[IFNAMSIZ];
-	int			 rfdesc;
-	int			 wfdesc;
-	int			 ufdesc; /* unicast */
-	unsigned char		*rbuf;
-	size_t			 rbuf_max;
-	size_t			 rbuf_offset;
-	size_t			 rbuf_len;
-	struct ifreq		*ifp;
-	int			 noifmedia;
-	int			 errors;
-	u_int16_t		 index;
-	int			 linkstat;
-	int			 rdomain;
+	struct hardware	 hw_address;
+	struct in_addr	 primary_address;
+	char		 name[IFNAMSIZ];
+	int		 rfdesc;
+	int		 wfdesc;
+	int		 ufdesc; /* unicast */
+	unsigned char	*rbuf;
+	size_t		 rbuf_max;
+	size_t		 rbuf_offset;
+	size_t		 rbuf_len;
+	struct ifreq	*ifp;
+	int		 noifmedia;
+	int		 errors;
+	u_int16_t	 index;
+	int		 linkstat;
+	int		 rdomain;
 };
 
 struct dhcp_timeout {
-	time_t		 when;
-	void		 (*func)(void);
+	time_t	 when;
+	void	 (*func)(void);
 };
 
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
