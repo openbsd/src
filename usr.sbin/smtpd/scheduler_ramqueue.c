@@ -1,7 +1,7 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.25 2012/11/20 09:47:45 eric Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.26 2013/01/26 09:37:23 gilles Exp $	*/
 
 /*
- * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -129,8 +129,6 @@ static struct tree	updates;
 
 static time_t		currtime;
 
-extern int verbose;
-
 static void
 scheduler_ramqueue_init(void)
 {
@@ -182,6 +180,8 @@ scheduler_ramqueue_insert(struct scheduler_info *si)
 
 	envelope->flags = RQ_ENVELOPE_PENDING;
 	sorted_insert(&update->q_pending, envelope);
+
+	si->nexttry = envelope->sched;
 }
 
 static size_t
@@ -259,6 +259,8 @@ scheduler_ramqueue_update(struct scheduler_info *si)
 	sorted_insert(&ramqueue.q_pending, evp);
 	evp->flags &= ~RQ_ENVELOPE_INFLIGHT;
 	evp->flags |= RQ_ENVELOPE_PENDING;
+
+	si->nexttry = evp->sched;
 }
 
 static void
@@ -459,15 +461,15 @@ scheduler_ramqueue_envelopes(uint64_t from, struct evpstate *dst, size_t size)
 		dst[n].evpid = evp->evpid;
 		if (evp->flags & RQ_ENVELOPE_PENDING) {
 			dst[n].time = evp->sched;
-			dst[n].flags = DF_PENDING;
+			dst[n].flags = EF_PENDING;
 		}
 		else if (evp->flags & RQ_ENVELOPE_SCHEDULED) {
 			dst[n].time = evp->t_scheduled;
-			dst[n].flags = DF_PENDING;
+			dst[n].flags = EF_PENDING;
 		}
 		else if (evp->flags & RQ_ENVELOPE_INFLIGHT) {
 			dst[n].time = evp->t_inflight;
-			dst[n].flags = DF_INFLIGHT;
+			dst[n].flags = EF_INFLIGHT;
 		}
 		n++;
 	}

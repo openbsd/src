@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2012/10/14 11:58:23 gilles Exp $
+#	$OpenBSD: Makefile,v 1.17 2013/01/26 09:37:24 gilles Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -17,9 +17,16 @@ CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare -Wbounded
 CFLAGS+=	-DNO_IO
 
-SRCS=	parse.y makemap.c aliases.c expand.c log.c util.c map.c \
-	map_static.c map_db.c map_file.c tree.c
+SRCS=	parse.y makemap.c aliases.c expand.c log.c util.c table.c dict.c tree.c to.c
 
-DPADD+= ${LIBUTIL} ${LIBCRYPTO}
-LDADD+= -lutil -lcrypto
+SRCS+=	table_static.c
+SRCS+=	table_db.c
+SRCS+=	table_getpwnam.c
+SRCS+=	table_ldap.c
+SRCS+=	ber.c
+SRCS+=	aldap.c
+SRCS+=	table_sqlite.c
+
+DPADD+= ${LIBUTIL} ${LIBCRYPTO} ${LIBSQLITE3}
+LDADD+= -lutil -lcrypto -lsqlite3
 .include <bsd.prog.mk>

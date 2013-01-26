@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,63 +44,46 @@ stat_backend_lookup(const char *name)
 }
 
 void
-stat_increment(const char *name, size_t count)
+stat_increment(const char *key, size_t count)
 {
-	char	*s, buf[STAT_KEY_SIZE + sizeof (struct stat_value)];
-	size_t	 len;
-	struct stat_value *value;
+	size_t			 len;
+	struct stat_value	*value;
 
 	value = stat_counter(count);
-	memmove(buf, value, sizeof *value);
-	s = buf + sizeof *value;
-	if ((len = strlcpy(s, name, STAT_KEY_SIZE)) >= STAT_KEY_SIZE) {
-		len = STAT_KEY_SIZE - 1;
-		log_warn("warn: stat_increment: truncated key '%s', ignored",
-		    name);
-	}
 
-	imsg_compose_event(env->sc_ievs[PROC_CONTROL],
-	    IMSG_STAT_INCREMENT, 0, 0, -1, buf, sizeof (*value) + len + 1);
+	len = 32 + strlen(key) + sizeof(*value);
+	m_create(p_control, IMSG_STAT_INCREMENT, 0, 0, -1, len);
+	m_add_string(p_control, key);
+	m_add_data(p_control, value, sizeof(*value));
+	m_close(p_control);
 }
 
 void
-stat_decrement(const char *name, size_t count)
+stat_decrement(const char *key, size_t count)
 {
-	char	*s, buf[STAT_KEY_SIZE + sizeof (struct stat_value)];
-	size_t	 len;
-	struct stat_value *value;
+	size_t			 len;
+	struct stat_value	*value;
 
 	value = stat_counter(count);
-	memmove(buf, value, sizeof *value);
-	s = buf + sizeof *value;
-	if ((len = strlcpy(s, name, STAT_KEY_SIZE)) >= STAT_KEY_SIZE) {
-		len = STAT_KEY_SIZE - 1;
-		log_warn("warn: stat_increment: truncated key '%s', ignored",
-		    name);
-	}
 
-	imsg_compose_event(env->sc_ievs[PROC_CONTROL],
-	    IMSG_STAT_DECREMENT, 0, 0, -1, buf, sizeof (*value) + len + 1);
+	len = 32 + strlen(key) + sizeof(*value);
+	m_create(p_control, IMSG_STAT_DECREMENT, 0, 0, -1, len);
+	m_add_string(p_control, key);
+	m_add_data(p_control, value, sizeof(*value));
+	m_close(p_control);
 }
 
 void
-stat_set(const char *name, const struct stat_value *value)
+stat_set(const char *key, const struct stat_value *value)
 {
-	char	*s, buf[STAT_KEY_SIZE + sizeof (struct stat_value)];
-	size_t	 len;
+	size_t			 len;
 
-	memmove(buf, value, sizeof *value);
-	s = buf + sizeof *value;
-	if ((len = strlcpy(s, name, STAT_KEY_SIZE)) >= STAT_KEY_SIZE) {
-		len = STAT_KEY_SIZE - 1;
-		log_warn("warn: stat_increment: truncated key '%s', ignored",
-		    name);
-	}
-
-	imsg_compose_event(env->sc_ievs[PROC_CONTROL],
-	    IMSG_STAT_SET, 0, 0, -1, buf, sizeof (*value) + len + 1);
+	len = 32 + strlen(key) + sizeof(*value);
+	m_create(p_control, IMSG_STAT_SET, 0, 0, -1, len);
+	m_add_string(p_control, key);
+	m_add_data(p_control, value, sizeof(*value));
+	m_close(p_control);
 }
-
 
 /* helpers */
 

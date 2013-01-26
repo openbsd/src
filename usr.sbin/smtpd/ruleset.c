@@ -1,7 +1,7 @@
-/*	$OpenBSD: ruleset.c,v 1.26 2012/11/12 14:58:53 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.27 2013/01/26 09:37:23 gilles Exp $ */
 
 /*
- * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,188 +34,111 @@
 #include "log.h"
 
 
-static int ruleset_check_source(struct map *, const struct sockaddr_storage *);
-static int ruleset_match_mask(struct sockaddr_storage *, struct netaddr *);
-static int ruleset_inet4_match(struct sockaddr_in *, struct netaddr *);
-static int ruleset_inet6_match(struct sockaddr_in6 *, struct netaddr *);
-
+static int ruleset_check_source(struct table *,
+    const struct sockaddr_storage *, int);
+static int ruleset_check_sender(struct table *, const struct mailaddr *);
 
 struct rule *
 ruleset_match(const struct envelope *evp)
 {
-	const struct mailaddr *maddr = &evp->dest;
-	const struct sockaddr_storage *ss = &evp->ss;
-	struct rule	*r;
-	struct map	*map;
-	struct mapel	*me;
-	int		 v;
-
-	if (evp->flags & DF_INTERNAL)
-		ss = NULL;
+	const struct mailaddr		*maddr = &evp->dest;
+	const struct sockaddr_storage	*ss = &evp->ss;
+	struct rule			*r;
+	int				 ret;
 
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
 
 		if (r->r_tag[0] != '\0' && strcmp(r->r_tag, evp->tag) != 0)
 			continue;
 
-		if (ss != NULL && !(evp->flags & DF_AUTHENTICATED)) {
-			v = ruleset_check_source(r->r_sources, ss);
-			if (v == -1) {
+		ret = ruleset_check_source(r->r_sources, ss, evp->flags);
+		if (ret == -1) {
+			errno = EAGAIN;
+			return (NULL);
+		}
+		if (ret == 0)
+			continue;
+
+		if (r->r_senders) {
+			ret = ruleset_check_sender(r->r_senders, &evp->sender);
+			if (ret == -1) {
 				errno = EAGAIN;
 				return (NULL);
 			}
-			if (v == 0)
+			if (ret == 0)
 				continue;
 		}
 
-		if (r->r_condition.c_type == COND_ANY)
-			return r;
-
-		if (r->r_condition.c_type == COND_DOM) {
-			map = map_find(r->r_condition.c_map);
-			if (map == NULL)
-				fatal("failed to lookup map.");
-
-			if (map->m_src == S_NONE) {
-				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-					if (hostname_match(maddr->domain, me->me_key))
-						return r;
+		ret = r->r_destination == NULL ? 1 :
+		    table_lookup(r->r_destination, maddr->domain, K_DOMAIN,
+			NULL);
+		if (ret == -1) {
+			errno = EAGAIN;
+			return NULL;
+		}
+		if (ret) {
+			if (r->r_desttype == DEST_VDOM &&
+			    (r->r_action == A_RELAY || r->r_action == A_RELAYVIA)) {
+				if (! aliases_virtual_check(r->r_mapping,
+					&evp->rcpt)) {
+					return NULL;
 				}
 			}
-			else if (map_lookup(map->m_id, maddr->domain,
-			    K_VIRTUAL) != NULL) {
-				return (r);
-			} else if (errno) {
-				errno = EAGAIN;
-				return (NULL);
-			}
-		}
-
-		if (r->r_condition.c_type == COND_VDOM) {
-			v = aliases_vdomain_exists(r->r_condition.c_map,
-			    maddr->domain);
-			if (v == -1) {
-				errno = EAGAIN;
-				return (NULL);
-			}
-			if (v)
-				return (r);
+			goto matched;
 		}
 	}
 
 	errno = 0;
 	return (NULL);
+
+matched:
+	log_trace(TRACE_RULES, "rule matched: %s", rule_to_text(r));
+	return r;
 }
 
 static int
-ruleset_cmp_source(const char *s1, const char *s2)
+ruleset_check_source(struct table *table, const struct sockaddr_storage *ss,
+    int evpflags)
 {
-	struct netaddr n1;
-	struct netaddr n2;
+	const char   *key;
 
-	if (! text_to_netaddr(&n1, s1))
-		return 0;
-
-	if (! text_to_netaddr(&n2, s2))
-		return 0;
-
-	if (n1.ss.ss_family != n2.ss.ss_family)
-		return 0;
-	if (n1.ss.ss_len != n2.ss.ss_len)
-		return 0;
-
-	return ruleset_match_mask(&n1.ss, &n2);
-}
-
-static int
-ruleset_check_source(struct map *map, const struct sockaddr_storage *ss)
-{
-	struct mapel *me;
-
-	if (ss == NULL) {
-		/* This happens when caller is part of an internal
-		 * lookup (ie: alias resolved to a remote address)
-		 */
+	if (evpflags & (EF_AUTHENTICATED | EF_INTERNAL))
+		key = "local";
+	else
+		key = ss_to_text(ss);
+	switch (table_lookup(table, key, K_NETADDR, NULL)) {
+	case 1:
 		return 1;
-	}
-
-	if (map->m_src == S_NONE) {
-		TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-			if (ss->ss_family == AF_LOCAL) {
-				if (!strcmp(me->me_key, "local"))
-					return 1;
-				continue;
-			}
-			if (ruleset_cmp_source(ss_to_text(ss), me->me_key))
-				return 1;
-		}
-	}
-	else {
-		if (map_compare(map->m_id, ss_to_text(ss), K_NETADDR,
-		    ruleset_cmp_source))
-			return (1);
-		if (errno)
-			return (-1);
+	case -1:
+		log_warnx("warn: failure to perform a table lookup on table %s",
+		    table->t_name);
+		return -1;
+	default:
+		break;
 	}
 
 	return 0;
 }
 
 static int
-ruleset_match_mask(struct sockaddr_storage *ss, struct netaddr *ssmask)
+ruleset_check_sender(struct table *table, const struct mailaddr *maddr)
 {
-	if (ss->ss_family == AF_INET)
-		return ruleset_inet4_match((struct sockaddr_in *)ss, ssmask);
+	const char	*key;
 
-	if (ss->ss_family == AF_INET6)
-		return ruleset_inet6_match((struct sockaddr_in6 *)ss, ssmask);
+	key = mailaddr_to_text(maddr);
+	if (key == NULL)
+		return -1;
 
-	return (0);
-}
-
-static int
-ruleset_inet4_match(struct sockaddr_in *ss, struct netaddr *ssmask)
-{
-	in_addr_t mask;
-	int i;
-
-	/* a.b.c.d/8 -> htonl(0xff000000) */
-	mask = 0;
-	for (i = 0; i < ssmask->bits; ++i)
-		mask = (mask >> 1) | 0x80000000;
-	mask = htonl(mask);
-
-	/* (addr & mask) == (net & mask) */
- 	if ((ss->sin_addr.s_addr & mask) ==
-	    (((struct sockaddr_in *)ssmask)->sin_addr.s_addr & mask))
+	switch (table_lookup(table, key, K_MAILADDR, NULL)) {
+	case 1:
 		return 1;
-	
-	return 0;
-}
-
-static int
-ruleset_inet6_match(struct sockaddr_in6 *ss, struct netaddr *ssmask)
-{
-	struct in6_addr	*in;
-	struct in6_addr	*inmask;
-	struct in6_addr	 mask;
-	int		 i;
-	
-	bzero(&mask, sizeof(mask));
-	for (i = 0; i < ssmask->bits / 8; i++)
-		mask.s6_addr[i] = 0xff;
-	i = ssmask->bits % 8;
-	if (i)
-		mask.s6_addr[ssmask->bits / 8] = 0xff00 >> i;
-	
-	in = &ss->sin6_addr;
-	inmask = &((struct sockaddr_in6 *)&ssmask->ss)->sin6_addr;
-	
-	for (i = 0; i < 16; i++) {
-		if ((in->s6_addr[i] & mask.s6_addr[i]) !=
-		    (inmask->s6_addr[i] & mask.s6_addr[i]))
-			return (0);
+	case -1:
+		log_warnx("warn: failure to perform a table lookup on table %s",
+		    table->t_name);
+		return -1;
+	default:
+		break;
 	}
 
-	return (1);
+	return 0;
 }

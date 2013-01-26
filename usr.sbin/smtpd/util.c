@@ -1,8 +1,8 @@
-/*	$OpenBSD: util.c,v 1.89 2012/11/23 10:55:25 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.90 2013/01/26 09:37:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
- * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -53,8 +53,6 @@
 
 const char *log_in6addr(const struct in6_addr *);
 const char *log_sockaddr(struct sockaddr *);
-
-static int temp_inet_net_pton_ipv6(const char *, void *, size_t);
 
 void *
 xmalloc(size_t size, const char *where)
@@ -123,6 +121,23 @@ iobuf_xfqueue(struct iobuf *io, const char *where, const char *fmt, ...)
 		errx(1, "%s: iobuf_xfqueue(%p, %s, ...)", where, io, fmt);
 }
 #endif
+
+char *
+strip(char *s)
+{
+	size_t	 l;
+
+	while (*s == ' ' || *s == '\t')
+		s++;
+
+	for (l = strlen(s); l; l--) {
+		if (s[l-1] != ' ' && s[l-1] != '\t')
+			break;
+		s[l-1] = '\0';
+	}
+
+	return (s);
+}
 
 int
 bsnprintf(char *str, size_t size, const char *format, ...)
@@ -275,33 +290,35 @@ rmtree(char *path, int keepdir)
 	path_argv[0] = path;
 	path_argv[1] = NULL;
 	ret = 0;
-	depth = 1;
+	depth = 0;
 
-	if ((fts = fts_open(path_argv, FTS_PHYSICAL, NULL)) == NULL) {
+	fts = fts_open(path_argv, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
+	if (fts == NULL) {
 		warn("fts_open: %s", path);
 		return (-1);
 	}
 
 	while ((e = fts_read(fts)) != NULL) {
-		if (e->fts_number) {
+		switch (e->fts_info) {
+		case FTS_D:
+			depth++;
+			break;
+		case FTS_DP:
+		case FTS_DNR:
 			depth--;
-			if (keepdir && e->fts_number == 1)
+			if (keepdir && depth == 0)
 				continue;
 			if (rmdir(e->fts_path) == -1) {
 				warn("rmdir: %s", e->fts_path);
 				ret = -1;
 			}
-			continue;
-		}
+			break;
 
-		if (S_ISDIR(e->fts_statp->st_mode)) {
-			e->fts_number = depth++;
-			continue;
-		}
-
-		if (unlink(e->fts_path) == -1) {
-			warn("unlink: %s", e->fts_path);
-			ret = -1;
+		case FTS_F:
+			if (unlink(e->fts_path) == -1) {
+				warn("unlink: %s", e->fts_path);
+				ret = -1;
+			}
 		}
 	}
 
@@ -473,273 +490,6 @@ nextsub:
 	return 1;
 }
 
-int
-email_to_mailaddr(struct mailaddr *maddr, char *email)
-{
-	char *username;
-	char *hostname;
-
-	username = email;
-	hostname = strrchr(username, '@');
-
-	if (username[0] == '\0') {
-		*maddr->user = '\0';
-		*maddr->domain = '\0';
-		return 1;
-	}
-
-	if (hostname == NULL) {
-		if (strcasecmp(username, "postmaster") != 0)
-			return 0;
-		hostname = "localhost";
-	} else {
-		*hostname++ = '\0';
-	}
-
-	if (strlcpy(maddr->user, username, sizeof(maddr->user))
-	    >= sizeof(maddr->user))
-		return 0;
-
-	if (strlcpy(maddr->domain, hostname, sizeof(maddr->domain))
-	    >= sizeof(maddr->domain))
-		return 0;
-
-	return 1;
-}
-
-char *
-ss_to_text(const struct sockaddr_storage *ss)
-{
-	static char	 buf[NI_MAXHOST + 5];
-	char		*p;
-
-	buf[0] = '\0';
-	p = buf;
-
-	if (ss->ss_family == AF_LOCAL)
-		strlcpy(buf, "local", sizeof buf);
-	else if (ss->ss_family == AF_INET) {
-		in_addr_t addr;
-
-		addr = ((const struct sockaddr_in *)ss)->sin_addr.s_addr;
-		addr = ntohl(addr);
-		bsnprintf(p, NI_MAXHOST, "%d.%d.%d.%d",
-		    (addr >> 24) & 0xff, (addr >> 16) & 0xff,
-		    (addr >> 8) & 0xff, addr & 0xff);
-	}
-	else if (ss->ss_family == AF_INET6) {
-		const struct sockaddr_in6 *in6;
-		const struct in6_addr	*in6_addr;
-
-		in6 = (const struct sockaddr_in6 *)ss;
-		strlcpy(buf, "IPv6:", sizeof(buf));
-		p = buf + 5;
-		in6_addr = &in6->sin6_addr;
-		bsnprintf(p, NI_MAXHOST, "%s", log_in6addr(in6_addr));
-	}
-
-	return (buf);
-}
-
-char *
-time_to_text(time_t when)
-{
-	struct tm *lt;
-	static char buf[40];
-	char *day[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-	char *month[] = {"Jan","Feb","Mar","Apr","May","Jun",
-			 "Jul","Aug","Sep","Oct","Nov","Dec"};
-
-	lt = localtime(&when);
-	if (lt == NULL || when == 0)
-		fatalx("time_to_text: localtime");
-
-	/* We do not use strftime because it is subject to locale substitution*/
-	if (! bsnprintf(buf, sizeof(buf),
-	    "%s, %d %s %d %02d:%02d:%02d %c%02d%02d (%s)",
-	    day[lt->tm_wday], lt->tm_mday, month[lt->tm_mon],
-	    lt->tm_year + 1900,
-	    lt->tm_hour, lt->tm_min, lt->tm_sec,
-	    lt->tm_gmtoff >= 0 ? '+' : '-',
-	    abs((int)lt->tm_gmtoff / 3600),
-	    abs((int)lt->tm_gmtoff % 3600) / 60,
-	    lt->tm_zone))
-		fatalx("time_to_text: bsnprintf");
-
-	return buf;
-}
-
-char *
-duration_to_text(time_t t)
-{
-	static char	dst[64];
-	char		buf[64];
-	int		d, h, m, s;
-
-	if (t == 0) {
-		strlcpy(dst, "0s", sizeof dst);
-		return (dst);
-	}
-
-	dst[0] = '\0';
-	if (t < 0) {
-		strlcpy(dst, "-", sizeof dst);
-		t = -t;
-	}
-
-	s = t % 60;
-	t /= 60;
-	m = t % 60;
-	t /= 60;
-	h = t % 24;
-	d = t / 24;
-
-	if (d) {
-		snprintf(buf, sizeof buf, "%id", d);
-		strlcat(dst, buf, sizeof dst);
-	}
-	if (h) {
-		snprintf(buf, sizeof buf, "%ih", h);
-		strlcat(dst, buf, sizeof dst);
-	}
-	if (m) {
-		snprintf(buf, sizeof buf, "%im", m);
-		strlcat(dst, buf, sizeof dst);
-	}
-	if (s) {
-		snprintf(buf, sizeof buf, "%is", s);
-		strlcat(dst, buf, sizeof dst);
-	}
-
-	return (dst);
-}
-
-int
-text_to_netaddr(struct netaddr *netaddr, const char *s)
-{
-	struct sockaddr_storage	ss;
-	struct sockaddr_in	ssin;
-	struct sockaddr_in6	ssin6;
-	int			bits;
-
-	if (strncmp("IPv6:", s, 5) == 0)
-		s += 5;
-
-	if (strchr(s, '/') != NULL) {
-		/* dealing with netmask */
-
-		bzero(&ssin, sizeof(struct sockaddr_in));
-		bits = inet_net_pton(AF_INET, s, &ssin.sin_addr,
-		    sizeof(struct in_addr));
-
-		if (bits != -1) {
-			ssin.sin_family = AF_INET;
-			memcpy(&ss, &ssin, sizeof(ssin));
-			ss.ss_len = sizeof(struct sockaddr_in);
-		}
-		else {
-			bzero(&ssin6, sizeof(struct sockaddr_in6));
-			bits = inet_net_pton(AF_INET6, s, &ssin6.sin6_addr,
-			    sizeof(struct in6_addr));
-			if (bits == -1) {
-
-				/* XXX - until AF_INET6 support gets in base */
-				if (errno != EAFNOSUPPORT) {
-					log_warn("warn: inet_net_pton");
-					return 0;
-				}
-				bits = temp_inet_net_pton_ipv6(s,
-				    &ssin6.sin6_addr,
-				    sizeof(struct in6_addr));
-			}
-			if (bits == -1) {
-				log_warn("warn: inet_net_pton");
-				return 0;
-			}
-			ssin6.sin6_family = AF_INET6;
-			memcpy(&ss, &ssin6, sizeof(ssin6));
-			ss.ss_len = sizeof(struct sockaddr_in6);
-		}
-	}
-	else {
-		/* IP address ? */
-		if (inet_pton(AF_INET, s, &ssin.sin_addr) == 1) {
-			ssin.sin_family = AF_INET;
-			bits = 32;
-			memcpy(&ss, &ssin, sizeof(ssin));
-			ss.ss_len = sizeof(struct sockaddr_in);
-		}
-		else if (inet_pton(AF_INET6, s, &ssin6.sin6_addr) == 1) {
-			ssin6.sin6_family = AF_INET6;
-			bits = 128;
-			memcpy(&ss, &ssin6, sizeof(ssin6));
-			ss.ss_len = sizeof(struct sockaddr_in6);
-		}
-		else return 0;
-	}
-
-	netaddr->ss   = ss;
-	netaddr->bits = bits;
-	return 1;
-}
-
-int
-text_to_relayhost(struct relayhost *relay, const char *s)
-{
-	static const struct schema {
-		const char	*name;
-		uint8_t		 flags;
-	} schemas [] = {
-		{ "smtp://",		0				},
-		{ "smtps://",		F_SMTPS				},
-		{ "tls://",		F_STARTTLS			},
-		{ "smtps+auth://",	F_SMTPS|F_AUTH			},
-		{ "tls+auth://",	F_STARTTLS|F_AUTH		},
-		{ "ssl://",		F_SMTPS|F_STARTTLS		},
-		{ "ssl+auth://",	F_SMTPS|F_STARTTLS|F_AUTH	}
-	};
-	const char	*errstr = NULL;
-	const char	*p;
-	char		*sep;
-	size_t		 i;
-	int		 len;
-
-	for (i = 0; i < nitems(schemas); ++i)
-		if (strncasecmp(schemas[i].name, s,
-		    strlen(schemas[i].name)) == 0)
-			break;
-
-	if (i == nitems(schemas)) {
-		/* there is a schema, but it's not recognized */
-		if (strstr(s, "://"))
-			return 0;
-
-		/* no schema, default to smtp:// */
-		i = 0;
-		p = s;
-	}
-	else
-		p = s + strlen(schemas[i].name);
-
-	relay->flags = schemas[i].flags;
-
-	if ((sep = strrchr(p, ':')) != NULL) {
-		relay->port = strtonum(sep+1, 1, 0xffff, &errstr);
-		if (errstr)
-			return 0;
-		len = sep - p;
-	}
-	else
-		len = strlen(p);
-
-	if (strlcpy(relay->hostname, p, sizeof (relay->hostname))
-	    >= sizeof (relay->hostname))
-		return 0;
-
-	relay->hostname[len] = 0;
-
-	return 1;
-}
 
 /*
  * Check file for security. Based on usr.bin/ssh/auth.c.
@@ -943,53 +693,6 @@ session_socket_error(int fd)
 }
 
 const char *
-log_in6addr(const struct in6_addr *addr)
-{
-	struct sockaddr_in6	sa_in6;
-	uint16_t		tmp16;
-
-	bzero(&sa_in6, sizeof(sa_in6));
-	sa_in6.sin6_len = sizeof(sa_in6);
-	sa_in6.sin6_family = AF_INET6;
-	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
-
-	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
-	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
-		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
-		sa_in6.sin6_scope_id = ntohs(tmp16);
-		sa_in6.sin6_addr.s6_addr[2] = 0;
-		sa_in6.sin6_addr.s6_addr[3] = 0;
-	}
-
-	return (log_sockaddr((struct sockaddr *)&sa_in6));
-}
-
-const char *
-log_sockaddr(struct sockaddr *sa)
-{
-	static char	buf[NI_MAXHOST];
-
-	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0,
-	    NI_NUMERICHOST))
-		return ("(unknown)");
-	else
-		return (buf);
-}
-
-uint32_t
-evpid_to_msgid(uint64_t evpid)
-{
-	return (evpid >> 32);
-}
-
-uint64_t
-msgid_to_evpid(uint32_t msgid)
-{
-	return ((uint64_t)msgid << 32);
-}
-
-const char *
 parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 {
 	size_t	 i;
@@ -1021,99 +724,4 @@ parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 			return "non-printable character in reply";
 
 	return NULL;
-}
-
-static int
-temp_inet_net_pton_ipv6(const char *src, void *dst, size_t size)
-{
-	int	ret;
-	int	bits;
-	char	buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255:255:255:255/128")];
-	char		*sep;
-	const char	*errstr;
-
-	if (strlcpy(buf, src, sizeof buf) >= sizeof buf) {
-		errno = EMSGSIZE;
-		return (-1);
-	}
-
-	sep = strchr(buf, '/');
-	if (sep != NULL)
-		*sep++ = '\0';
-
-	ret = inet_pton(AF_INET6, buf, dst);
-	if (ret != 1)
-		return (-1);
-
-	if (sep == NULL)
-		return 128;
-
-	bits = strtonum(sep, 0, 128, &errstr);
-	if (errstr)
-		return (-1);
-
-	return bits;
-}
-
-void
-log_envelope(const struct envelope *evp, const char *extra, const char *prefix,
-    const char *status)
-{
-	char rcpt[MAX_LINE_SIZE];
-	char tmp[MAX_LINE_SIZE];
-	const char *method;
-
-	tmp[0] = '\0';
-	rcpt[0] = '\0';
-	if (strcmp(evp->rcpt.user, evp->dest.user) ||
-	    strcmp(evp->rcpt.domain, evp->dest.domain))
-		snprintf(rcpt, sizeof rcpt, "rcpt=<%s@%s>, ",
-		    evp->rcpt.user, evp->rcpt.domain);
-
-	if (evp->type == D_MDA) {
-		if (evp->agent.mda.method == A_MAILDIR)
-			method = "maildir";
-		else if (evp->agent.mda.method == A_MBOX)
-			method = "mbox";
-		else if (evp->agent.mda.method == A_FILENAME)
-			method = "file";
-		else if (evp->agent.mda.method == A_MDA)
-			method = "mda";
-		else
-			fatalx("log_envelope: bad method");
-		snprintf(tmp, sizeof tmp, "user=%s, method=%s, ",
-		    evp->agent.mda.user, method);
-	}
-
-	if (extra == NULL)
-		extra = "";
-
-	log_info("%s: %s for %016" PRIx64 ": from=<%s@%s>, to=<%s@%s>, "
-	    "%s%sdelay=%s, %sstat=%s",
-	    evp->type == D_MDA ? "delivery" : "relay",
-	    prefix,
-	    evp->id, evp->sender.user, evp->sender.domain,
-	    evp->dest.user, evp->dest.domain,
-	    rcpt,
-	    tmp,
-	    duration_to_text(time(NULL) - evp->creation),
-	    extra,
-	    status);
-}
-
-uint64_t
-strtoevpid(const char *s)
-{
-	uint64_t ulval;
-	char	 *ep;
-
-	errno = 0;
-	ulval = strtoull(s, &ep, 16);
-	if (s[0] == '\0' || *ep != '\0')
-		errx(1, "invalid msgid/evpid");
-	if (errno == ERANGE && ulval == ULLONG_MAX)
-		errx(1, "invalid msgid/evpid");
-	if (ulval == 0)
-		errx(1, "invalid msgid/evpid");
-	return (ulval);
 }

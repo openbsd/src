@@ -1,7 +1,7 @@
-/*	$OpenBSD: scheduler.c,v 1.24 2012/11/20 09:47:45 eric Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.25 2013/01/26 09:37:23 gilles Exp $	*/
 
 /*
- * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2008-2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -45,7 +45,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-static void scheduler_imsg(struct imsgev *, struct imsg *);
+static void scheduler_imsg(struct mproc *, struct imsg *);
 static void scheduler_shutdown(void);
 static void scheduler_sig_handler(int, short, void *);
 static void scheduler_reset_events(void);
@@ -64,28 +64,36 @@ extern const char *backend_scheduler;
 #define	EVPBATCHSIZE	256
 
 void
-scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
+scheduler_imsg(struct mproc *p, struct imsg *imsg)
 {
+	struct bounce_req_msg	 req;
 	struct evpstate		 state[EVPBATCHSIZE];
-	struct envelope		*e;
+	struct envelope		 evp;
 	struct scheduler_info	 si;
-	uint64_t		 id;
+	struct msg		 m;
+	uint64_t		 evpid, id;
 	uint32_t		 msgid, msgids[MSGBATCHSIZE];
 	size_t			 n, i;
+	time_t			 timestamp;
+	int			 v;
 
 	switch (imsg->hdr.type) {
 
 	case IMSG_QUEUE_SUBMIT_ENVELOPE:
-		e = imsg->data;
+		m_msg(&m, imsg);
+		m_get_envelope(&m, &evp);
+		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
-		    "scheduler: inserting evp:%016" PRIx64, e->id);
-		scheduler_info(&si, e);
+		    "scheduler: inserting evp:%016" PRIx64, evp.id);
+		scheduler_info(&si, &evp);
 		stat_increment("scheduler.envelope.incoming", 1);
 		backend->insert(&si);
 		return;
 
 	case IMSG_QUEUE_COMMIT_MESSAGE:
-		msgid = *(uint32_t *)(imsg->data);
+		m_msg(&m, imsg);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
 		    "scheduler: commiting msg:%08" PRIx32, msgid);
 		n = backend->commit(msgid);
@@ -95,7 +103,9 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		return;
 
 	case IMSG_QUEUE_REMOVE_MESSAGE:
-		msgid = *(uint32_t *)(imsg->data);
+		m_msg(&m, imsg);
+		m_get_msgid(&m, &msgid);
+		m_end(&m);
 		log_trace(TRACE_SCHEDULER, "scheduler: aborting msg:%08" PRIx32,
 		    msgid);
 		n = backend->rollback(msgid);
@@ -103,96 +113,127 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		scheduler_reset_events();
 		return;
 
-	case IMSG_QUEUE_DELIVERY_OK:
-		id = *(uint64_t *)(imsg->data);
+	case IMSG_DELIVERY_OK:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
-		    "scheduler: deleting evp:%016" PRIx64 " (ok)", id);
-		backend->delete(id);
+		    "scheduler: deleting evp:%016" PRIx64 " (ok)", evpid);
+		backend->delete(evpid);
 		stat_increment("scheduler.delivery.ok", 1);
 		stat_decrement("scheduler.envelope.inflight", 1);
 		stat_decrement("scheduler.envelope", 1);
 		scheduler_reset_events();
 		return;
 
-	case IMSG_QUEUE_DELIVERY_TEMPFAIL:
-		e = imsg->data;
+	case IMSG_DELIVERY_TEMPFAIL:
+		m_msg(&m, imsg);
+		m_get_envelope(&m, &evp);
+		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
-		    "scheduler: updating evp:%016" PRIx64, e->id);
-		scheduler_info(&si, e);
+		    "scheduler: updating evp:%016" PRIx64, evp.id);
+		scheduler_info(&si, &evp);
 		backend->update(&si);
 		stat_increment("scheduler.delivery.tempfail", 1);
 		stat_decrement("scheduler.envelope.inflight", 1);
+
+		for (i = 0; i < MAX_BOUNCE_WARN; i++) {
+			if (env->sc_bounce_warn[i] == 0)
+				break;
+			timestamp = si.creation + env->sc_bounce_warn[i];
+			if (si.nexttry >= timestamp &&
+			    si.lastbounce < timestamp) {
+	    			req.evpid = evp.id;
+				req.timestamp = timestamp;
+				req.bounce.type = B_WARNING;
+				req.bounce.delay = env->sc_bounce_warn[i];
+				req.bounce.expire = si.expire;
+				m_compose(p, IMSG_QUEUE_BOUNCE, 0, 0, -1,
+				    &req, sizeof req);
+				break;
+			}
+		}
 		scheduler_reset_events();
 		return;
 
-	case IMSG_QUEUE_DELIVERY_PERMFAIL:
-		id = *(uint64_t *)(imsg->data);
+	case IMSG_DELIVERY_PERMFAIL:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
-		    "scheduler: deleting evp:%016" PRIx64 " (fail)", id);
-		backend->delete(id);
+		    "scheduler: deleting evp:%016" PRIx64 " (fail)", evpid);
+		backend->delete(evpid);
 		stat_increment("scheduler.delivery.permfail", 1);
 		stat_decrement("scheduler.envelope.inflight", 1);
 		stat_decrement("scheduler.envelope", 1);
 		scheduler_reset_events();
 		return;
 
-	case IMSG_QUEUE_DELIVERY_LOOP:
-		id = *(uint64_t *)(imsg->data);
+	case IMSG_DELIVERY_LOOP:
+		m_msg(&m, imsg);
+		m_get_evpid(&m, &evpid);
+		m_end(&m);
 		log_trace(TRACE_SCHEDULER,
-		    "scheduler: deleting evp:%016" PRIx64 " (loop)", id);
-		backend->delete(id);
+		    "scheduler: deleting evp:%016" PRIx64 " (loop)", evpid);
+		backend->delete(evpid);
 		stat_increment("scheduler.delivery.loop", 1);
 		stat_decrement("scheduler.envelope.inflight", 1);
 		stat_decrement("scheduler.envelope", 1);
 		scheduler_reset_events();
 		return;
 
-	case IMSG_QUEUE_PAUSE_MDA:
+	case IMSG_CTL_PAUSE_MDA:
 		log_trace(TRACE_SCHEDULER, "scheduler: pausing mda");
 		env->sc_flags |= SMTPD_MDA_PAUSED;
 		return;
 
-	case IMSG_QUEUE_RESUME_MDA:
+	case IMSG_CTL_RESUME_MDA:
 		log_trace(TRACE_SCHEDULER, "scheduler: resuming mda");
 		env->sc_flags &= ~SMTPD_MDA_PAUSED;
 		scheduler_reset_events();
 		return;
 
-	case IMSG_QUEUE_PAUSE_MTA:
+	case IMSG_CTL_PAUSE_MTA:
 		log_trace(TRACE_SCHEDULER, "scheduler: pausing mta");
 		env->sc_flags |= SMTPD_MTA_PAUSED;
 		return;
 
-	case IMSG_QUEUE_RESUME_MTA:
+	case IMSG_CTL_RESUME_MTA:
 		log_trace(TRACE_SCHEDULER, "scheduler: resuming mta");
 		env->sc_flags &= ~SMTPD_MTA_PAUSED;
 		scheduler_reset_events();
 		return;
 
 	case IMSG_CTL_VERBOSE:
-		log_verbose(*(int *)imsg->data);
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		log_verbose(v);
 		return;
 
-	case IMSG_SCHEDULER_MESSAGES:
+	case IMSG_CTL_LIST_MESSAGES:
 		msgid = *(uint32_t *)(imsg->data);
 		n = backend->messages(msgid, msgids, MSGBATCHSIZE);
-		imsg_compose_event(iev, IMSG_SCHEDULER_MESSAGES,
-		    imsg->hdr.peerid, 0, -1, msgids, n * sizeof (*msgids));
+		m_compose(p, IMSG_CTL_LIST_MESSAGES, imsg->hdr.peerid, 0, -1,
+		    msgids, n * sizeof (*msgids));
 		return;
 
-	case IMSG_SCHEDULER_ENVELOPES:
+	case IMSG_CTL_LIST_ENVELOPES:
 		id = *(uint64_t *)(imsg->data);
 		n = backend->envelopes(id, state, EVPBATCHSIZE);
 		for (i = 0; i < n; i++) {
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-			    IMSG_SCHEDULER_ENVELOPES, imsg->hdr.peerid, 0, -1,
-			    &state[i], sizeof state[i]);
+			m_create(p_queue, IMSG_CTL_LIST_ENVELOPES,
+			    imsg->hdr.peerid, 0, -1, 32);
+			m_add_evpid(p_queue, state[i].evpid);
+			m_add_int(p_queue, state[i].flags);
+			m_add_time(p_queue, state[i].time);
+			m_close(p_queue);
 		}
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_SCHEDULER_ENVELOPES, imsg->hdr.peerid, 0, -1, NULL, 0);
+		m_compose(p_queue, IMSG_CTL_LIST_ENVELOPES,
+		    imsg->hdr.peerid, 0, -1, NULL, 0);
 		return;
 
-	case IMSG_SCHEDULER_SCHEDULE:
+	case IMSG_CTL_SCHEDULE:
 		id = *(uint64_t *)(imsg->data);
 		if (id <= 0xffffffffL)
 			log_debug("debug: scheduler: "
@@ -204,7 +245,7 @@ scheduler_imsg(struct imsgev *iev, struct imsg *imsg)
 		scheduler_reset_events();
 		return;
 
-	case IMSG_SCHEDULER_REMOVE:
+	case IMSG_CTL_REMOVE:
 		id = *(uint64_t *)(imsg->data);
 		if (id <= 0xffffffffL)
 			log_debug("debug: scheduler: "
@@ -246,8 +287,9 @@ scheduler_reset_events(void)
 {
 	struct timeval	 tv;
 
+	evtimer_del(&env->sc_ev);
 	tv.tv_sec = 0;
-	tv.tv_usec = 10;
+	tv.tv_usec = 0;
 	evtimer_add(&env->sc_ev, &tv);
 }
 
@@ -256,19 +298,14 @@ scheduler(void)
 {
 	pid_t		 pid;
 	struct passwd	*pw;
-
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
-
-	struct peer peers[] = {
-		{ PROC_CONTROL,	imsg_dispatch },
-		{ PROC_QUEUE,	imsg_dispatch }
-	};
 
 	switch (pid = fork()) {
 	case -1:
 		fatal("scheduler: cannot fork");
 	case 0:
+		env->sc_pid = getpid();
 		break;
 	default:
 		return (pid);
@@ -282,8 +319,7 @@ scheduler(void)
 	if (chdir("/") == -1)
 		fatal("scheduler: chdir(\"/\")");
 
-	smtpd_process = PROC_SCHEDULER;
-	setproctitle("%s", env->sc_title[smtpd_process]);
+	config_process(PROC_SCHEDULER);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -310,8 +346,9 @@ scheduler(void)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(peers, nitems(peers));
-	config_peers(peers, nitems(peers));
+	config_peer(PROC_CONTROL);
+	config_peer(PROC_QUEUE);
+	config_done();
 
 	evtimer_set(&env->sc_ev, scheduler_timeout, NULL);
 	scheduler_reset_events();
@@ -387,8 +424,9 @@ scheduler_process_remove(struct scheduler_batch *batch)
 		batch->evpids = e->next;
 		log_debug("debug: scheduler: evp:%016" PRIx64 " removed",
 		    e->id);
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_REMOVE,
-		    0, 0, -1, &e->id, sizeof e->id);
+		m_create(p_queue, IMSG_QUEUE_REMOVE, 0, 0, -1, 9);
+		m_add_evpid(p_queue, e->id);
+		m_close(p_queue);
 		free(e);
 	}
 
@@ -405,8 +443,9 @@ scheduler_process_expire(struct scheduler_batch *batch)
 		batch->evpids = e->next;
 		log_debug("debug: scheduler: evp:%016" PRIx64 " expired",
 		    e->id);
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_EXPIRE,
-		    0, 0, -1, &e->id, sizeof e->id);
+		m_create(p_queue, IMSG_QUEUE_EXPIRE, 0, 0, -1, 9);
+		m_add_evpid(p_queue, e->id);
+		m_close(p_queue);
 		free(e);
 	}
 
@@ -423,8 +462,9 @@ scheduler_process_bounce(struct scheduler_batch *batch)
 		batch->evpids = e->next;
 		log_debug("debug: scheduler: evp:%016" PRIx64
 		    " scheduled (bounce)", e->id);
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_SMTP_ENQUEUE,
-		    0, 0, -1, &e->id, sizeof e->id);
+		m_create(p_queue, IMSG_BOUNCE_INJECT, 0, 0, -1, 9);
+		m_add_evpid(p_queue, e->id);
+		m_close(p_queue);
 		free(e);
 	}
 
@@ -440,8 +480,9 @@ scheduler_process_mda(struct scheduler_batch *batch)
 		batch->evpids = e->next;
 		log_debug("debug: scheduler: evp:%016" PRIx64
 		    " scheduled (mda)", e->id);
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_MDA_SESS_NEW,
-		    0, 0, -1, &e->id, sizeof e->id);
+		m_create(p_queue, IMSG_MDA_DELIVER, 0, 0, -1, 9);
+		m_add_evpid(p_queue, e->id);
+		m_close(p_queue);
 		free(e);
 	}
 
@@ -453,20 +494,19 @@ scheduler_process_mta(struct scheduler_batch *batch)
 {
 	struct id_list	*e;
 
-	imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_BATCH_CREATE,
-	    0, 0, -1, NULL, 0);
+	m_compose(p_queue, IMSG_MTA_BATCH, 0, 0, -1, NULL, 0);
 
 	while ((e = batch->evpids)) {
 		batch->evpids = e->next;
 		log_debug("debug: scheduler: evp:%016" PRIx64
 		    " scheduled (mta)", e->id);
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_BATCH_APPEND,
-		    0, 0, -1, &e->id, sizeof e->id);
+		m_create(p_queue, IMSG_MTA_BATCH_ADD, 0, 0, -1, 9);
+		m_add_evpid(p_queue, e->id);
+		m_close(p_queue);
 		free(e);
 	}
 
 	stat_increment("scheduler.envelope.inflight", batch->evpcount);
 
-	imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_BATCH_CLOSE,
-	    0, 0, -1, NULL, 0);
+	m_compose(p_queue, IMSG_MTA_BATCH_END, 0, 0, -1, NULL, 0);
 }

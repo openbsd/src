@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.2 2012/11/20 09:47:46 eric Exp $	*/
+/*	$OpenBSD: tree.c,v 1.3 2013/01/26 09:37:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>

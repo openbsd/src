@@ -1,8 +1,9 @@
-/*	$OpenBSD: enqueue.c,v 1.65 2012/11/23 10:55:25 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.66 2013/01/26 09:37:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
+ * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -305,8 +306,8 @@ enqueue(int argc, char *argv[])
 			    "quoted-printable\n");
 	}
 	if (!msg.saw_user_agent)
-		send_line(fout, 0, "User-Agent: OpenSMTPD enqueuer (%s)\n",
-			"Demoosh");
+		send_line(fout, 0, "User-Agent: %s enqueuer (%s)\n",
+		    SMTPD_NAME, "Demoosh");
 
 	/* add separating newline */
 	if (noheader)
@@ -690,7 +691,7 @@ open_connection(void)
 	int		fd;
 	int		n;
 
-	imsg_compose(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, -1, NULL, 0);
+	imsg_compose(ibuf, IMSG_SMTP_ENQUEUE_FD, 0, 0, -1, NULL, 0);
 
 	while (ibuf->w.queued)
 		if (msgbuf_write(&ibuf->w) < 0)

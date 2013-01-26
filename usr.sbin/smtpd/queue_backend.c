@@ -1,7 +1,7 @@
-/*	$OpenBSD: queue_backend.c,v 1.41 2012/11/23 09:25:44 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.42 2013/01/26 09:37:23 gilles Exp $	*/
 
 /*
- * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,7 +43,44 @@
 static const char* envelope_validate(struct envelope *);
 
 extern struct queue_backend	queue_backend_fs;
+extern struct queue_backend	queue_backend_null;
 extern struct queue_backend	queue_backend_ram;
+
+static struct queue_backend	*backend;
+
+#ifdef QUEUE_PROFILING
+
+static struct {
+	struct timespec	 t0;
+	const char	*name;
+} profile;
+
+static inline void profile_enter(const char *name)
+{
+	if ((profiling & PROFILE_QUEUE) == 0)
+		return;
+
+	profile.name = name;
+	clock_gettime(CLOCK_MONOTONIC, &profile.t0);
+}
+
+static inline void profile_leave(void)
+{
+	struct timespec	 t1, dt;
+
+	if ((profiling & PROFILE_QUEUE) == 0)
+		return;
+
+	clock_gettime(CLOCK_MONOTONIC, &t1);
+	timespecsub(&t1, &profile.t0, &dt);
+	log_debug("profile-queue: %s %li.%06li", profile.name,
+	    dt.tv_sec * 1000000 + dt.tv_nsec / 1000000,
+	    dt.tv_nsec % 1000000);
+}
+#else
+#define profile_enter(x)	do {} while (0)
+#define profile_leave()		do {} while (0)
+#endif
 
 int
 queue_message_incoming_path(uint32_t msgid, char *buf, size_t len)
@@ -54,96 +91,69 @@ queue_message_incoming_path(uint32_t msgid, char *buf, size_t len)
 }
 
 int
-queue_envelope_incoming_path(uint64_t evpid, char *buf, size_t len)
-{
-	return bsnprintf(buf, len, "%s/%08x%s/%016" PRIx64,
-	    PATH_INCOMING,
-	    evpid_to_msgid(evpid),
-	    PATH_ENVELOPES,
-	    evpid);
-}
-
-int
-queue_message_incoming_delete(uint32_t msgid)
-{
-	char rootdir[MAXPATHLEN];
-
-	if (! queue_message_incoming_path(msgid, rootdir, sizeof(rootdir)))
-		fatal("queue_message_incoming_delete: snprintf");
-
-	if (rmtree(rootdir, 0) == -1)
-		fatal("queue_message_incoming_delete: rmtree");
-
-	return 1;
-}
-
-struct queue_backend *
-queue_backend_lookup(const char *name)
+queue_init(const char *name, int server)
 {
 	if (!strcmp(name, "fs"))
-		return &queue_backend_fs;
+		backend = &queue_backend_fs;
+	if (!strcmp(name, "null"))
+		backend = &queue_backend_null;
+	if (!strcmp(name, "ram"))
+		backend = &queue_backend_ram;
 
-	return (NULL);
+	if (backend == NULL) {
+		log_warn("could not find queue backend \"%s\"", name);
+		return (0);
+	}
+
+	return backend->init(server);
 }
 
 int
 queue_message_create(uint32_t *msgid)
 {
-	return env->sc_queue->message(QOP_CREATE, msgid);
+	int	r;
+
+	profile_enter("queue_message_create");
+	r = backend->message(QOP_CREATE, msgid);
+	profile_leave();
+
+	return (r);
 }
 
 int
 queue_message_delete(uint32_t msgid)
 {
-	return env->sc_queue->message(QOP_DELETE, &msgid);
+	int	r;
+
+	profile_enter("queue_message_delete");
+	r = backend->message(QOP_DELETE, &msgid);
+	profile_leave();
+
+	return (r);
 }
 
 int
 queue_message_commit(uint32_t msgid)
 {
-	char	msgpath[MAXPATHLEN];
-	char	tmppath[MAXPATHLEN];
-	FILE	*ifp = NULL;
-	FILE	*ofp = NULL;
+	int	r;
 
-	queue_message_incoming_path(msgid, msgpath, sizeof msgpath);
-	strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath));
+	profile_enter("queue_message_commit");
+	r = backend->message(QOP_COMMIT, &msgid);
+	profile_leave();
 
-	if (env->sc_queue_flags & QUEUE_COMPRESS) {
-
-		bsnprintf(tmppath, sizeof tmppath, "%s.comp", msgpath);
-		ifp = fopen(msgpath, "r");
-		ofp = fopen(tmppath, "w+");
-		if (ifp == NULL || ofp == NULL)
-			goto err;
-		if (! compress_file(ifp, ofp))
-			goto err;
-		fclose(ifp);
-		fclose(ofp);
-		ifp = NULL;
-		ofp = NULL;
-
-		if (rename(tmppath, msgpath) == -1) {
-			if (errno == ENOSPC)
-				return (0);
-			fatal("queue_message_commit: rename");
-		}
-	}
-
-	return env->sc_queue->message(QOP_COMMIT, &msgid);
-
-err:
-	if (ifp)
-		fclose(ifp);
-	if (ofp)
-		fclose(ofp);
-	return 0;
+	return (r);
 }
 
 int
 queue_message_corrupt(uint32_t msgid)
 {
-	return env->sc_queue->message(QOP_CORRUPT, &msgid);
+	int	r;
+
+	profile_enter("queue_message_corrupt");
+	r = backend->message(QOP_CORRUPT, &msgid);
+	profile_leave();
+
+	return (r);
 }
 
 int
@@ -153,7 +163,11 @@ queue_message_fd_r(uint32_t msgid)
 	FILE	*ifp = NULL;
 	FILE	*ofp = NULL;
 
-	if ((fdin = env->sc_queue->message(QOP_FD_R, &msgid)) == -1)
+	profile_enter("queue_message_fd_r");
+	fdin = backend->message(QOP_FD_R, &msgid);
+	profile_leave();
+
+	if (fdin == -1)
 		return (-1);
 
 	if (env->sc_queue_flags & QUEUE_COMPRESS) {
@@ -193,12 +207,13 @@ err:
 int
 queue_message_fd_rw(uint32_t msgid)
 {
-	char msgpath[MAXPATHLEN];
+	int	r;
 
-	queue_message_incoming_path(msgid, msgpath, sizeof msgpath);
-	strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath));
+	profile_enter("queue_message_fd_rw");
+	r = backend->message(QOP_FD_RW, &msgid);
+	profile_leave();
 
-	return open(msgpath, O_RDWR | O_CREAT | O_EXCL, 0600);
+	return (r);
 }
 
 static int
@@ -259,7 +274,9 @@ queue_envelope_create(struct envelope *ep)
 	if (evplen == 0)
 		return (0);
 
-	r = env->sc_queue->envelope(QOP_CREATE, &ep->id, evpbuf, evplen);
+	profile_enter("queue_envelope_create");
+	r = backend->envelope(QOP_CREATE, &ep->id, evpbuf, evplen);
+	profile_leave();
 	if (!r) {
 		ep->creation = 0;
 		ep->id = 0;
@@ -268,9 +285,15 @@ queue_envelope_create(struct envelope *ep)
 }
 
 int
-queue_envelope_delete(struct envelope *ep)
+queue_envelope_delete(uint64_t evpid)
 {
-	return env->sc_queue->envelope(QOP_DELETE, &ep->id, NULL, 0);
+	int	r;
+
+	profile_enter("queue_envelope_delete");
+	r = backend->envelope(QOP_DELETE, &evpid, NULL, 0);
+	profile_leave();
+
+	return (r);
 }
 
 int
@@ -281,8 +304,9 @@ queue_envelope_load(uint64_t evpid, struct envelope *ep)
 	size_t		 evplen;
 
 	ep->id = evpid;
-	evplen = env->sc_queue->envelope(QOP_LOAD, &ep->id, evpbuf,
-	    sizeof evpbuf);
+	profile_enter("queue_envelope_load");
+	evplen = backend->envelope(QOP_LOAD, &ep->id, evpbuf, sizeof evpbuf);
+	profile_leave();
 	if (evplen == 0)
 		return (0);
 
@@ -300,14 +324,19 @@ queue_envelope_load(uint64_t evpid, struct envelope *ep)
 int
 queue_envelope_update(struct envelope *ep)
 {
-	char	 evpbuf[sizeof(struct envelope)];
-	size_t	 evplen;
+	char	evpbuf[sizeof(struct envelope)];
+	size_t	evplen;
+	int	r;
 
 	evplen = queue_envelope_dump_buffer(ep, evpbuf, sizeof evpbuf);
 	if (evplen == 0)
 		return (0);
 
-	return env->sc_queue->envelope(QOP_UPDATE, &ep->id, evpbuf, evplen);
+	profile_enter("queue_envelope_update");
+	r = backend->envelope(QOP_UPDATE, &ep->id, evpbuf, evplen);
+	profile_leave();
+
+	return (r);
 }
 
 int
@@ -318,7 +347,9 @@ queue_envelope_walk(struct envelope *ep)
 	char		 evpbuf[sizeof(struct envelope)];
 	int		 r;
 
-	r = env->sc_queue->envelope(QOP_WALK, &evpid, evpbuf, sizeof evpbuf);
+	profile_enter("queue_envelope_walk");
+	r = backend->envelope(QOP_WALK, &evpid, evpbuf, sizeof evpbuf);
+	profile_leave();
 	if (r == -1 || r == 0)
 		return (r);
 

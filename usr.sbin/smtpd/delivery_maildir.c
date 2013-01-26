@@ -1,7 +1,7 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.10 2012/11/23 10:55:25 eric Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.11 2013/01/26 09:37:23 gilles Exp $	*/
 
 /*
- * Copyright (c) 2011 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

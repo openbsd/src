@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.h,v 1.2 2012/11/23 13:54:12 eric Exp $	*/
+/*	$OpenBSD: iobuf.h,v 1.3 2013/01/26 09:37:23 gilles Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -43,6 +43,7 @@ struct iobuf {
 #define IOBUF_WANT_WRITE	-2
 #define IOBUF_CLOSED		-3
 #define IOBUF_ERROR		-4
+#define IOBUF_SSLERROR		-5
 
 int	iobuf_init(struct iobuf *, size_t, size_t);
 void	iobuf_clear(struct iobuf *);

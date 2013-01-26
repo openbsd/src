@@ -1,7 +1,8 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.76 2012/10/16 16:47:40 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.77 2013/01/26 09:37:23 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
+.\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 16 2012 $
+.Dd $Mdocdate: January 26 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -56,21 +57,38 @@ listen on $lan_addr
 listen on $lan_addr tls auth
 .Ed
 .Pp
-Some configuration directives expect expansion of their parameters at runtime.
+Some configuration directives support expansion of their parameters at runtime.
 Such directives (for example
 .Ar deliver to maildir ,
-.Ar deliver to mda ,
-.Ar relay via )
+.Ar deliver to mda )
 may use format specifiers which will be expanded before delivery or
 relaying.
 The following formats are currently supported:
-%a expands to the user part of the email address prior to the
-resolution of aliases;
-%u expands to the user part after aliases
-resolution and will typically be the system account;
-%d expands to the domain part of the email address;
-%A expands to the user part of the sender email address;
-%D expands to the domain part of the sender email address.
+.Bd -literal -offset indent
+%{sender}	     sender email address
+%{sender.user}	     user part of the sender email address
+%{sender.domain}     domain part of the sender email address
+%{rcpt}              recipient email address
+%{rcpt.user}	     user part of the recipient email address
+%{rcpt.domain}	     domain part of the recipient email address
+%{dest}              recipient email address after expansion
+%{dest.user}	     user part after expansion
+%{dest.domain}	     domain part after expansion
+%{user.username}     local user
+%{user.directory}    home directory of the local user
+.Ed
+.Pp
+Expansion formats also support partial expansion using the optional bracket notations
+with substring offset.
+For example, with recipient domain "example.org":
+.Bd -literal -offset indent
+%{rcpt.domain[0]}	expands to "e"
+%{rcpt.domain[1]}	expands to "x"
+%{rcpt.domain[8:]}	expands to "org"
+%{rcpt.domain[-3:]}	expands to "org"
+%{rcpt.domain[0:6]}	expands to "example"
+%{rcpt.domain[0:-4]} 	expands to "example"
+.Ed
 .Pp
 Additional configuration files can be included with the
 .Ic include
@@ -91,17 +109,14 @@ For example:
 expire 4d	# expire after 4 days
 expire 10h	# expire after 10 hours
 .Ed
-.It Ic hostname Ar name
-Specify the fully qualified domain name (FQDN) of the server.
-By default the current host name is used,
-as returned by
-.Xr hostname 1 .
 .It Xo
 .Ic listen on Ar interface
 .Op Ic port Ar port
 .Op Ic tls | tls-require | smtps
 .Op Ic certificate Ar name
 .Op Ic auth | auth-optional
+.Op Ic tag Ar tag
+.Op Ic hostname Ar hostname
 .Xc
 Specify an
 .Ar interface
@@ -131,12 +146,12 @@ is specified,
 a certificate
 .Ao Ar name Ac Ns .crt ,
 a key
-.Ao Ar name Ac Ns .key ,
-a certificate authority
-.Ao Ar name Ac Ns .ca
+.Ao Ar name Ac Ns .key
 and Diffie-Hellman parameters
 .Ao Ar name Ac Ns .dh
 are searched for.
+A certificate authority may be appended to the .crt
+file to create a certificate chain.
 If no
 .Ic certificate
 is specified,
@@ -168,42 +183,82 @@ This is only useful to let a listener accept incoming mail from
 untrusted senders and outgoing mail from authenticated users in
 situations where it is not possible to listen on the submission
 port.
-.It Xo
-.Ic map Ar map
-.Ic source Ar type Ar source
-.Xc
-Maps are used to provide additional configuration information for
-.Xr smtpd 8 .
 .Pp
-The map is identified using map name
-.Ar map ;
+If the
+.Ic tag
+parameter is used, then clients connecting to the listener will be
+tagged
+.Ar tag .
+.Pp
+If the
+.Ic hostname
+parameter is used, then it will be used in the greeting banner.
+.It Xo
+.Ic table Ar name
+.Ar [type:]config
+.Xc
+Tables are used to provide additional configuration information for
+.Xr smtpd 8
+in the form of lists or key-value mappings.
+.Pp
+The table is identified using table name
+.Ar name ;
 the name itself is arbitrarily chosen.
 .Pp
 .Ar type
-specifies the file format,
+specifies the table backend,
 and should be one of the following:
 .Pp
 .Bl -tag -width "fileXXX" -compact
 .It db
-Mappings are stored in a file created using
+Information is stored in a file created using
 .Xr makemap 8 .
-This is the default type if none is specified.
-.It plain
-Mappings are stored in a plain text file using the
+.It file
+Information is stored in a plain text file using the
 same format as used to generate
 .Xr makemap 8
 mappings.
 This is the default.
 .El
 .Pp
-.Ar source
-specifies the source of the map data.
+.Ar config
+specifies a configuration file for the table data.
 It must be an absolute path to a file for the
 .Dq file
 and
 .Dq db
-map types.
-.It Ic size Ar n
+table types.
+.It Xo
+.Ic table Ar name
+.Ic { Ar value
+.Op , Ar value_n
+.Ic }
+.Xc
+Tables containing list of static values may be declared using an inlined notation.
+.Pp
+The table is identified using table name
+.Ar name ;
+the name itself is arbitrarily chosen.
+.Pp
+The table must contain at least one value and may declare many values as a list of
+comma separated strings.
+.It Xo
+.Ic table Ar name
+.Ic { Ar key => value
+.Op , key_n => value_n
+.Ic }
+.Xc
+Tables containing static key-value mappings may be declared using an inlined notation.
+.Pp
+The table is identified using table name
+.Ar name ;
+the name itself is arbitrarily chosen.
+.Pp
+The table must contain at least one key-value mapping and may declare many mappings as
+a list of comma separated
+.Ar key => value
+descriptions.
+.It Ic max-message-size Ar n
 Specify a maximum message size of
 .Ar n
 bytes.
@@ -234,6 +289,9 @@ the default action is to reject the message.
 Following the accept/reject
 decision comes the client's IP address filter:
 .Bl -tag -width Ds
+.It Ic tagged Ar tag
+If specified, the rule will only be matched if the client session was tagged
+.Ar tag .
 .It Ic from any
 Make the rule match regardless of the IP of connecting client.
 .It Ic from local
@@ -244,21 +302,43 @@ and may be omitted.
 The rule matches if the connection is made from the specified
 .Ar network ,
 specified in CIDR notation.
+.It Ic from Ar <table>
+The rule matches if the connection is made from a client whose address
+is declared in the table
+.Ar table .
+.El
+.Pp
+In addition, finer filtering may be achieved on the sender if desired:
+.Bl -tag -width Ds
+.It Ic sender Ar senders
+If specified, the rule will only be matched if the sender email address
+is found in the table
+.Ar senders .
+The table may contain complete email addresses or apply to an entire
+domain if prefixed with @.
 .El
 .Pp
 Next comes the selection based on the domain the message is sent to:
 .Bl -tag -width Ds
 .It Xo
 .Ic for any
-.Op Ic alias Ar aliases
+.Op Ic alias Ar <aliases>
 .Xc
 Make the rule match regardless of the domain it is sent to.
-If specified,
+If specified, the table
 .Ar aliases
 is used for looking up alternative destinations for all addresses.
 .It Xo
+.Ic for any
+.Ic virtual Ar <vmap>
+.Xc
+Make the rule match regardless of the domain it is sent to.
+The
+.Ar vmap
+table will be used as the virtual domain mapping.
+.It Xo
 .Ic for domain Ar domain
-.Op Ic alias Ar aliases
+.Op Ic alias Ar <aliases>
 .Xc
 This rule applies to mail destined for the specified
 .Ar domain .
@@ -270,36 +350,88 @@ so that a single rule for all sub-domains can be used, for example:
 accept for domain "*.example.com" deliver to mbox
 .Ed
 .Pp
-If specified,
+If specified, the table
 .Ar aliases
 is used for looking up alternative destinations for addresses in this
 .Ar domain .
 .It Xo
-.Ic for domain map Ar domains
-.Op Ic alias Ar aliases
+.Ic for domain Ar <domains>
+.Op Ic alias Ar <aliases>
 .Xc
-This rule applies to mail destined to domains which are part of the map
+This rule applies to mail destined to domains which are part of the table
 .Ar domains .
 .Pp
-If specified,
+If specified, the table
 .Ar aliases
 is used for looking up alternative destinations for addresses in these
 .Ar domains .
 .It Xo
+.Ic for domain Ar domain Ic virtual Ar <users>
+.Xc
+This rule applies to mail destined for the specified virtual
+.Ar domain .
+This parameter supports the
+.Sq *
+wildcard,
+so that a single rule for all sub-domains can be used, for example:
+.Bd -literal -offset indent
+accept for domain "*.example.com" \e
+       virtual <users> deliver to mbox
+.Ed
+.Pp
+The table
+.Ar users
+holds a key-value mapping of virtual to system users.
+For an example of how to configure the
+.Ar users
+table, see
+.Xr makemap 8 .
+.It Ic for domain Ar <domains> Ic virtual Ar <users>
+This rule applies to mail destined for the virtual domains specified
+in the table
+.Ar domains .
+.Pp
+The table
+.Ar users
+holds a key-value mapping of virtual to system users.
+For an example of how to configure the
+.Ar users
+table, see
+.Xr makemap 8 .
+.It Xo
 .Ic for local
-.Op Ic alias Ar map
+.Op Ic alias Ar <aliases>
 .Xc
 This rule applies to mail destined to
 .Dq localhost
 and to the server's fully qualified domain name,
 as returned by
 .Xr hostname 1 .
-.It Ic for virtual map Ar vmap
-This rule applies to mail destined for the virtual domains specified
-in the map
-.Ar vmap .
-For an example of how to configure a virtual map, see
-.Xr makemap 8 .
+.It Xo
+.Ic for local
+.Ic virtual Ar <vmap>
+.Xc
+This rule applies to mail destined to
+.Dq localhost
+and to the server's fully qualified domain name,
+as returned by
+.Xr hostname 1 .
+The
+.Ar vmap
+table will be used as the virtual domain mapping.
+.El
+.Pp
+If the method of delivery is local, a user database may be
+specified to override the system database:
+.Bl -tag -width Ds
+.It Xo
+.Op Ic users Ar <table>
+.Xc
+Lookup users in the table
+.Ar table
+instead of performing system lookups using the
+.Xr getpwnam 3
+function.
 .El
 .Pp
 Finally, the method of delivery is specified:
@@ -326,8 +458,9 @@ This parameter may use conversion specifiers that are expanded before use
 (see above).
 .It Xo
 .Ic relay
-.Op Ic backup Ar mx
+.Op Ic backup Op Ar mx
 .Op Ic as Ar address
+.Op Ic source Ar source
 .Xc
 Mail is relayed.
 The routing decision is based on the DNS system.
@@ -339,6 +472,9 @@ for the target domain.
 Accepted mails are only relayed through servers with a lower preference
 value in the MX record for the domain than the one specified in
 .Ar mx .
+If
+.Ar mx
+is not specified, local hostname will be assumed.
 .Pp
 If the
 .Ic as
@@ -352,12 +488,23 @@ may be a user, a domain prefixed with
 or an email address, causing
 smtpd to rewrite the user-part, the domain-part, or the entire address,
 respectively.
+.Pp
+If the
+.Ic source
+parameter is specified,
+.Xr smtpd 8
+will explicitely bind to an address found in the table referenced by
+.Ar table
+when connecting to the relay.
+If the table contains more than one address, they are picked in turn each
+time a new connection is opened.
 .It Xo
 .Ic relay via
 .Ar host
 .Op Ic certificate Ar name
-.Op Ic auth Ar map
+.Op Ic auth Ar <auth>
 .Op Ic as Ar address
+.Op Ic source Ar source
 .Xc
 Mail is relayed through the specified
 .Ar host
@@ -383,10 +530,10 @@ In addition, credentials for authenticated relaying may be provided
 when using a secure schema.
 For example:
 .Bd -literal -offset indent
-tls+auth://mx1.example.org	# AUTH over TLS
-smtps+auth://mx1.example.org	# AUTH over SMTPS
-ssl+auth://mx1.example.org	# AUTH over either \e
-				# SMTPS or TLS
+tls+auth://label@mx.example.org	  # over TLS
+smtps+auth://label@mx.example.org # over SMTPS
+ssl+auth://label@mx.example.org	  # over either \e
+				  # SMTPS or TLS
 .Ed
 .Pp
 If a certificate
@@ -403,8 +550,9 @@ If an SMTPAUTH session with
 is desired, the
 .Ic auth
 parameter is used to specify the
-.Ar map
-that holds the credentials.
+.Ar auth
+table that holds the credentials.
+Credentials will be looked up using the label provided in the URL.
 .Pp
 If the
 .Ic as
@@ -418,9 +566,30 @@ may be a user, a domain prefixed with
 or an email address, causing
 smtpd to rewrite the user-part, the domain-part, or the entire address,
 respectively.
+.Pp
+If the
+.Ic source
+parameter is specified,
+.Xr smtpd 8
+will explicitely bind to an address found in the table referenced by
+.Ar table
+when connecting to the relay.
+If the table contains more than one address, they are picked in turn each
+time a new connection is opened.
+.El
 .It Ic expire Ar n {s|m|h|d}
 Specify how long a message that matched this rule can stay in the queue.
-.El
+.It Ic bounce-warn Ar n {s|m|h|d} [, ...]
+Specify the delays for which temporary failure reports must be generated
+when messages are stuck in the queue.
+For example:
+.Bd -literal -offset indent
+bounce-warn	1h, 6h, 2d
+.Ed
+.Pp
+will generate a failure report when an envelope is in the queue for more
+than one hour, six hours and two days.
+The default is 4h.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
@@ -456,10 +625,10 @@ A secrets file is needed to specify a username and password:
 would look like this:
 .Bd -literal -offset indent
 listen on lo0
-map aliases source db "/etc/mail/aliases.db"
-map secrets source db "/etc/mail/secrets.db"
-accept for local alias aliases deliver to mbox
-accept for any relay via tls+auth://smtp.example.com auth secrets
+table aliases db:/etc/mail/aliases.db
+table secrets db:/etc/mail/secrets.db"
+accept for local alias <aliases> deliver to mbox
+accept for any relay via tls+auth://smtp.example.com auth <secrets>
 .Ed
 .Pp
 In this second example,
@@ -482,8 +651,8 @@ The configuration file would look like this:
 .Bd -literal -offset indent
 listen on lo0
 listen on egress tls certificate mail.example.com auth
-map aliases source db "/etc/mail/aliases.db"
-accept for local deliver to mda "/path/to/mda -f -"
+table aliases db:/etc/mail/aliases.db
+accept for local alias <aliases> deliver to mda "/path/to/mda -f -"
 accept from any for domain example.org \e
 	deliver to mda "/path/to/mda -f -"
 accept for any relay

@@ -1,7 +1,7 @@
-/*	$OpenBSD: expand.c,v 1.18 2012/10/10 18:02:37 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.19 2013/01/26 09:37:23 gilles Exp $	*/
 
 /*
- * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -23,6 +23,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <ctype.h>
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
@@ -63,6 +64,7 @@ expand_insert(struct expand *expand, struct expandnode *node)
 	RB_INSERT(expandtree, &expand->tree, xn);
 	if (expand->queue)
 		TAILQ_INSERT_TAIL(expand->queue, xn, tq_entry);
+	expand->nb_nodes++;
 }
 
 void
@@ -93,6 +95,80 @@ expand_cmp(struct expandnode *e1, struct expandnode *e2)
 		return 1;
 
 	return memcmp(&e1->u, &e2->u, sizeof(e1->u));
+}
+
+static int
+expand_line_split(char **line, char **ret)
+{
+	static char	buffer[MAX_LINE_SIZE];
+	int		esc, i, dq, sq;
+	char	       *s;
+
+	bzero(buffer, sizeof buffer);
+	esc = dq = sq = i = 0;
+	for (s = *line; (*s) && (i < (int)sizeof(buffer)); ++s) {
+		if (esc) {
+			buffer[i++] = *s;
+			esc = 0;
+			continue;
+		}
+		if (*s == '\\') {
+			esc = 1;
+			continue;
+		}
+		if (*s == ',' && !dq && !sq) {
+			*ret = buffer;
+			*line = s+1;
+			return (1);
+		}
+
+		buffer[i++] = *s;
+		esc = 0;
+
+		if (*s == '"' && !sq)
+			dq ^= 1;
+		if (*s == '\'' && !dq)
+			sq ^= 1;
+	}
+
+	if (esc || dq || sq || i == sizeof(buffer))
+		return (-1);
+
+	*ret = buffer;
+	*line = s;
+	return (i ? 1 : 0);
+}
+
+int
+expand_line(struct expand *expand, const char *s, int do_includes)
+{
+	struct expandnode	xn;
+	char			buffer[MAX_LINE_SIZE];
+	char		       *p, *subrcpt;
+	int			ret;
+
+	bzero(buffer, sizeof buffer);
+	if (strlcpy(buffer, s, sizeof buffer) >= sizeof buffer)
+		return 0;
+
+	p = buffer;
+	while ((ret = expand_line_split(&p, &subrcpt)) > 0) {
+		subrcpt = strip(subrcpt);
+		if (subrcpt[0] == '\0')
+			continue;
+		if (! text_to_expandnode(&xn, subrcpt))
+			return 0;
+		if (! do_includes)
+			if (xn.type == EXPAND_INCLUDE)
+				continue;
+		expand_insert(expand, &xn);
+	}
+
+	if (ret >= 0)
+		return 1;
+
+	/* expand_line_split() returned < 0 */
+	return 0;
 }
 
 RB_GENERATE(expandtree, expandnode, entry, expand_cmp);

@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.y,v 1.110 2012/11/12 14:58:53 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.111 2013/01/26 09:37:23 gilles Exp $	*/
 
 /*
- * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -88,18 +88,18 @@ char		*symget(const char *);
 struct smtpd		*conf = NULL;
 static int		 errors = 0;
 
-struct map		*map = NULL;
+struct table		*table = NULL;
 struct rule		*rule = NULL;
-TAILQ_HEAD(condlist, cond) *conditions = NULL;
+struct listener		 l;
 
 struct listener	*host_v4(const char *, in_port_t);
 struct listener	*host_v6(const char *, in_port_t);
 int		 host_dns(const char *, const char *, const char *,
 		    struct listenerlist *, int, in_port_t, uint8_t);
 int		 host(const char *, const char *, const char *,
-		    struct listenerlist *, int, in_port_t, uint8_t);
+    struct listenerlist *, int, in_port_t, const char *, uint8_t, const char *);
 int		 interface(const char *, const char *, const char *,
-		    struct listenerlist *, int, in_port_t, uint8_t);
+    struct listenerlist *, int, in_port_t, const char *, uint8_t, const char *);
 void		 set_localaddrs(void);
 int		 delaytonum(char *);
 int		 is_if_in_group(const char *, const char *);
@@ -108,8 +108,6 @@ typedef struct {
 	union {
 		int64_t		 number;
 		objid_t		 object;
-		struct timeval	 tv;
-		struct cond	*cond;
 		char		*string;
 		struct host	*host;
 		struct mailaddr	*maddr;
@@ -119,22 +117,19 @@ typedef struct {
 
 %}
 
-%token	AS QUEUE COMPRESSION SIZE LISTEN ON ANY PORT EXPIRE
-%token	MAP HASH LIST SINGLE SSL SMTPS CERTIFICATE
-%token	DB LDAP FILE DOMAIN SOURCE
-%token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME
-%token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR
-%token	ARROW AUTH TLS LOCAL VIRTUAL TAG ALIAS FILTER KEY
-%token	AUTH_OPTIONAL TLS_REQUIRE
+%token	AS QUEUE COMPRESSION MAXMESSAGESIZE LISTEN ON ANY PORT EXPIRE
+%token	TABLE SSL SMTPS CERTIFICATE DOMAIN BOUNCEWARN
+%token  RELAY BACKUP VIA DELIVER TO MAILDIR MBOX HOSTNAME HELO
+%token	ACCEPT REJECT INCLUDE ERROR MDA FROM FOR SOURCE
+%token	ARROW AUTH TLS LOCAL VIRTUAL TAG TAGGED ALIAS FILTER KEY
+%token	AUTH_OPTIONAL TLS_REQUIRE USERS SENDER
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.map>		map
-%type	<v.number>	quantifier port from auth ssl size expire
-%type	<v.cond>	condition
-%type	<v.tv>		interval
-%type	<v.object>	mapref
+%type	<v.table>	table
+%type	<v.number>	port from auth ssl size expire sender
+%type	<v.object>	tables tablenew tableref destination alias virtual usermapping userbase credentials
 %type	<v.maddr>	relay_as
-%type	<v.string>	certname tag on alias credentials compression
+%type	<v.string>	certificate tag tagged compression relay_source listen_helo relay_helo relay_backup
 %%
 
 grammar		: /* empty */
@@ -142,7 +137,7 @@ grammar		: /* empty */
 		| grammar include '\n'
 		| grammar varset '\n'
 		| grammar main '\n'
-		| grammar map '\n'
+		| grammar table '\n'
 		| grammar rule '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
@@ -179,31 +174,7 @@ optnl		: '\n' optnl
 		|
 		;
 
-optlbracket    	: '{'
-		|
-		;
-
-optrbracket    	: '}'
-		|
-		;
-
 nl		: '\n' optnl
-		;
-
-quantifier      : /* empty */                   { $$ = 1; }  	 
-		| 'm'                           { $$ = 60; } 	 
-		| 'h'                           { $$ = 3600; } 	 
-		| 'd'                           { $$ = 86400; } 	 
-		;
-
-interval	: NUMBER quantifier		{
-			if ($1 < 0) {
-				yyerror("invalid interval: %" PRId64, $1);
-				YYERROR;
-			}
-			$$.tv_usec = 0;
-			$$.tv_sec = $1 * $2;
-		}
 		;
 
 size		: NUMBER		{
@@ -218,10 +189,10 @@ size		: NUMBER		{
 
 			if (scan_scaled($1, &result) == -1 || result < 0) {
 				yyerror("invalid size: %s", $1);
+				free($1);
 				YYERROR;
 			}
 			free($1);
-
 			$$ = result;
 		}
 		;
@@ -231,28 +202,31 @@ port		: PORT STRING			{
 
 			servent = getservbyname($2, "tcp");
 			if (servent == NULL) {
-				yyerror("port %s is invalid", $2);
+				yyerror("invalid port: %s", $2);
 				free($2);
 				YYERROR;
 			}
-			$$ = servent->s_port;
 			free($2);
+			$$ = ntohs(servent->s_port);
 		}
 		| PORT NUMBER			{
 			if ($2 <= 0 || $2 >= (int)USHRT_MAX) {
 				yyerror("invalid port: %" PRId64, $2);
 				YYERROR;
 			}
-			$$ = htons($2);
+			$$ = $2;
 		}
 		| /* empty */			{
 			$$ = 0;
 		}
 		;
 
-certname	: CERTIFICATE STRING	{
-			if (($$ = strdup($2)) == NULL)
-				fatal(NULL);
+certificate	: CERTIFICATE STRING	{
+			if (($$ = strdup($2)) == NULL) {
+				yyerror("strdup");
+				free($2);
+				YYERROR;
+			}
 			free($2);
 		}
 		| /* empty */			{ $$ = NULL; }
@@ -265,8 +239,20 @@ ssl		: SMTPS				{ $$ = F_SMTPS; }
 		| /* Empty */			{ $$ = 0; }
 		;
 
-auth		: AUTH  			{ $$ = F_AUTH|F_AUTH_REQUIRE; }
-		| AUTH_OPTIONAL			{ $$ = F_AUTH; }
+auth		: AUTH				{
+			$$ = F_AUTH|F_AUTH_REQUIRE;
+		}
+		| AUTH_OPTIONAL			{
+			$$ = F_AUTH;
+		}
+		| AUTH tables  			{
+			strlcpy(l.authtable, table_find($2)->t_name, sizeof l.authtable);
+			$$ = F_AUTH|F_AUTH_REQUIRE;
+		}
+		| AUTH_OPTIONAL tables 		{
+			strlcpy(l.authtable, table_find($2)->t_name, sizeof l.authtable);
+			$$ = F_AUTH;
+		}
 		| /* empty */			{ $$ = 0; }
 		;
 
@@ -282,10 +268,22 @@ tag		: TAG STRING			{
 		| /* empty */			{ $$ = NULL; }
 		;
 
+tagged		: TAGGED STRING			{
+			if (($$ = strdup($2)) == NULL) {
+       				yyerror("strdup");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| /* empty */			{ $$ = NULL; }
+		;
+
 expire		: EXPIRE STRING {
 			$$ = delaytonum($2);
 			if ($$ == -1) {
 				yyerror("invalid expire delay: %s", $2);
+				free($2);
 				YYERROR;
 			}
 			free($2);
@@ -293,116 +291,161 @@ expire		: EXPIRE STRING {
 		| /* empty */	{ $$ = conf->sc_qexpire; }
 		;
 
-credentials	: AUTH STRING	{
-			if ((map_findbyname($2)) == NULL) {
-				yyerror("no such map: %s", $2);
-				free($2);
+bouncedelay	: STRING {
+			time_t	d;
+			int	i;
+
+			d = delaytonum($1);
+			if (d < 0) {
+				yyerror("invalid bounce delay: %s", $1);
+				free($1);
 				YYERROR;
 			}
-			$$ = $2;
+			free($1);
+			for (i = 0; i < MAX_BOUNCE_WARN; i++) {
+				if (conf->sc_bounce_warn[i] != 0)
+					continue;
+				conf->sc_bounce_warn[i] = d;
+				break;
+			}
+		}
+
+bouncedelays	: bouncedelays ',' bouncedelay
+		| bouncedelay
+		| /* EMPTY */
+		;
+
+credentials	: AUTH tables	{
+			struct table   *t = table_find($2);
+
+			if (! table_check_use(t, T_DYNAMIC|T_HASH, K_CREDENTIALS)) {
+				yyerror("invalid use of table \"%s\" as AUTH parameter",
+				    t->t_name);
+				YYERROR;
+			}
+
+			$$ = t->t_id;
 		}
 		| /* empty */	{ $$ = 0; }
 		;
 
-compression	: COMPRESSION STRING {
-			$$ = $2;
-		}
-		| COMPRESSION {
-			$$ = "gzip";
-		}
-		| /* empty */	{ $$ = NULL; }
-		;
-
-main		: QUEUE compression {
-			if ($2) {
-				conf->sc_queue_flags |= QUEUE_COMPRESS;
-				conf->sc_queue_compress_algo = strdup($2);
-				log_debug("debug: queue compress using %s",
-				    conf->sc_queue_compress_algo);
-			}
-			if ($2 == NULL) {
-				yyerror("invalid queue compress <algo>");
+compression	: COMPRESSION		{
+			$$ = strdup("gzip");
+			if ($$ == NULL) {
+				yyerror("strdup");
 				YYERROR;
 			}
 		}
+		| COMPRESSION STRING	{ $$ = $2; }
+		;
+
+listen_helo	: HOSTNAME STRING	{ $$ = $2; }
+		| /* empty */		{ $$ = NULL; }
+
+main		: QUEUE compression {
+			conf->sc_queue_compress_algo = strdup($2);
+			if (conf->sc_queue_compress_algo == NULL) {
+				yyerror("strdup");
+				free($2);
+				YYERROR;
+			}
+			conf->sc_queue_flags |= QUEUE_COMPRESS;
+			free($2);
+		}
+		| BOUNCEWARN {
+			bzero(conf->sc_bounce_warn, sizeof conf->sc_bounce_warn);
+		} bouncedelays
 		| EXPIRE STRING {
 			conf->sc_qexpire = delaytonum($2);
 			if (conf->sc_qexpire == -1) {
 				yyerror("invalid expire delay: %s", $2);
-				YYERROR;
-			}
-		}
-	       	| SIZE size {
-       			conf->sc_maxsize = $2;
-		}
-		| LISTEN ON STRING port ssl certname auth tag {
-			char		*cert;
-			char		*tag;
-			uint8_t		 flags;
-
-			if ($5 == F_SSL) {
-				yyerror("syntax error");
-				free($8);
-				free($6);
-				free($3);
-				YYERROR;
-			}
-
-			if ($5 == 0 && ($6 != NULL || $7)) {
-				yyerror("error: must specify tls or smtps");
-				free($8);
-				free($6);
-				free($3);
-				YYERROR;
-			}
-
-			if ($4 == 0) {
-				if ($5 == F_SMTPS)
-					$4 = htons(465);
-				else
-					$4 = htons(25);
-			}
-
-			cert = ($6 != NULL) ? $6 : $3;
-			flags = $5 | $7; /* ssl | auth */
-
-			if ($5 && ssl_load_certfile(cert, F_SCERT) < 0) {
-				yyerror("cannot load certificate: %s", cert);
-				free($8);
-				free($6);
-				free($3);
-				YYERROR;
-			}
-
-			tag = $3;
-			if ($8 != NULL)
-				tag = $8;
-
-			if (! interface($3, tag, cert, conf->sc_listeners,
-				MAX_LISTEN, $4, flags)) {
-				if (host($3, tag, cert, conf->sc_listeners,
-					MAX_LISTEN, $4, flags) <= 0) {
-					yyerror("invalid virtual ip or interface: %s", $3);
-					free($8);
-					free($6);
-					free($3);
-					YYERROR;
-				}
-			}
-			free($8);
-			free($6);
-			free($3);
-		}
-		| HOSTNAME STRING		{
-			if (strlcpy(conf->sc_hostname, $2,
-			    sizeof(conf->sc_hostname)) >=
-			    sizeof(conf->sc_hostname)) {
-				yyerror("hostname truncated");
 				free($2);
 				YYERROR;
 			}
 			free($2);
-		}/*
+		}
+		| MAXMESSAGESIZE size {
+			conf->sc_maxsize = $2;
+		}
+		| LISTEN {
+			bzero(&l, sizeof l);
+		} ON STRING port ssl certificate auth tag listen_helo {
+			char	       *ifx  = $4;
+			in_port_t	port = $5;
+			uint8_t		ssl  = $6;
+			char	       *cert = $7;
+			uint8_t		auth = $8;
+			char	       *tag  = $9;
+			char	       *helo = $10;
+
+			if (port != 0 && ssl == F_SSL) {
+				yyerror("invalid listen option: tls/smtps on same port");
+				YYERROR;
+			}
+
+			if (auth != 0 && !ssl) {
+				yyerror("invalid listen option: auth requires tls/smtps");
+				YYERROR;
+			}
+
+			if (port == 0) {
+				if (ssl & F_SMTPS) {
+					if (! interface(ifx, tag, cert, conf->sc_listeners,
+						MAX_LISTEN, 465, l.authtable, F_SMTPS|auth, helo)) {
+						if (host(ifx, tag, cert, conf->sc_listeners,
+							MAX_LISTEN, 465, l.authtable, ssl|auth, helo) <= 0) {
+							yyerror("invalid virtual ip or interface: %s", ifx);
+							YYERROR;
+						}
+					}
+				}
+				if (! ssl || (ssl & ~F_SMTPS)) {
+					if (! interface(ifx, tag, cert, conf->sc_listeners,
+						MAX_LISTEN, 25, l.authtable, (ssl&~F_SMTPS)|auth, helo)) {
+						if (host(ifx, tag, cert, conf->sc_listeners,
+							MAX_LISTEN, 25, l.authtable, ssl|auth, helo) <= 0) {
+							yyerror("invalid virtual ip or interface: %s", ifx);
+							YYERROR;
+						}
+					}
+				}
+			}
+			else {
+				if (! interface(ifx, tag, cert, conf->sc_listeners,
+					MAX_LISTEN, port, l.authtable, ssl|auth, helo)) {
+					if (host(ifx, tag, cert, conf->sc_listeners,
+						MAX_LISTEN, port, l.authtable, ssl|auth, helo) <= 0) {
+						yyerror("invalid virtual ip or interface: %s", ifx);
+						YYERROR;
+					}
+				}
+			}
+		}
+		| FILTER STRING			{
+			struct filter *filter;
+			struct filter *tmp;
+
+			filter = xcalloc(1, sizeof *filter, "parse condition: FILTER");
+			if (strlcpy(filter->name, $2, sizeof (filter->name))
+			    >= sizeof (filter->name)) {
+       				yyerror("Filter name too long: %s", filter->name);
+				free($2);
+				YYERROR;
+				
+			}
+			(void)snprintf(filter->path, sizeof filter->path,
+			    PATH_FILTERS "/%s", filter->name);
+
+			tmp = dict_get(&conf->sc_filters, filter->name);
+			if (tmp == NULL)
+				dict_set(&conf->sc_filters, filter->name, filter);
+			else {
+       				yyerror("ambiguous filter name: %s", filter->name);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
 		| FILTER STRING STRING		{
 			struct filter *filter;
 			struct filter *tmp;
@@ -419,12 +462,9 @@ main		: QUEUE compression {
 				YYERROR;
 			}
 
-			TAILQ_FOREACH(tmp, conf->sc_filters, f_entry) {
-				if (strcasecmp(filter->name, tmp->name) == 0)
-					break;
-			}
+			tmp = dict_get(&conf->sc_filters, filter->name);
 			if (tmp == NULL)
-				TAILQ_INSERT_TAIL(conf->sc_filters, filter, f_entry);
+				dict_set(&conf->sc_filters, filter->name, filter);
 			else {
        				yyerror("ambiguous filter name: %s", filter->name);
 				free($2);
@@ -434,55 +474,56 @@ main		: QUEUE compression {
 			free($2);
 			free($3);
 		}
-		*/
 		;
 
-mapsource	: SOURCE FILE STRING			{
-			map->m_src = S_FILE;
-			if (strlcpy(map->m_config, $3, sizeof(map->m_config))
-			    >= sizeof(map->m_config))
-				err(1, "pathname too long");
-		}
-		| STRING {
-			map->m_src = S_FILE;
-			if (strlcpy(map->m_config, $1, sizeof(map->m_config))
-			    >= sizeof(map->m_config))
-				err(1, "pathname too long");
-		}
-		| SOURCE DB STRING			{
-			map->m_src = S_DB;
-			if (strlcpy(map->m_config, $3, sizeof(map->m_config))
-			    >= sizeof(map->m_config))
-				err(1, "pathname too long");
-		}
-/*
-		| SOURCE LDAP STRING			{
-			map->m_src = S_LDAP;
-			if (strlcpy(map->m_config, $3, sizeof(map->m_config))
-			    >= sizeof(map->m_config))
-				err(1, "pathname too long");
-		}
-*/
-		;
+table		: TABLE STRING STRING	{
+			char *p, *backend, *config;
 
-mapopt		: mapsource		{ }
-
-map		: MAP STRING			{
-			map = map_create(S_NONE, $2);
-			free($2);
-		} optlbracket mapopt optrbracket	{
-			if (map->m_src == S_NONE) {
-				yyerror("map %s has no source defined", $2);
-				free(map);
-				map = NULL;
+			p = $3;
+			if (*p == '/') {
+				backend = "static";
+				config = $3;
+			}
+			else {
+				backend = $3;
+				config = NULL;
+				for (p = $3; *p && *p != ':'; p++)
+					;
+				if (*p == ':') {
+					*p = '\0';
+					backend = $3;
+					config  = p+1;
+				}
+			}
+			if (config != NULL && *config != '/') {
+				yyerror("invalid backend parameter for table: %s",
+				    $2);
+				free($2);
+				free($3);
 				YYERROR;
 			}
-			map = NULL;
+			table = table_create(backend, $2, config);
+			if (! table->t_backend->config(table, config)) {
+				yyerror("invalid backend configuration for table %s",
+				    table->t_name);
+				free($2);
+				free($3);
+				YYERROR;
+			}
+			free($2);
+			free($3);
+		}
+		| TABLE STRING {
+			table = table_create("static", $2, NULL);
+			free($2);
+		} '{' tableval_list '}' {
+			table = NULL;
 		}
 		;
 
 keyval		: STRING ARROW STRING		{
-			map_add(map, $1, $3);
+			table->t_type = T_HASH;
+			table_add(table, $1, $3);
 			free($1);
 			free($3);
 		}
@@ -493,7 +534,8 @@ keyval_list	: keyval
 		;
 
 stringel	: STRING			{
-			map_add(map, $1, NULL);
+			table->t_type = T_LIST;
+			table_add(table, $1, NULL);
 			free($1);
 		}
 		;
@@ -502,245 +544,247 @@ string_list	: stringel
 		| stringel comma string_list
 		;
 
-mapref		: STRING			{
-			struct map	*m;
+tableval_list	: string_list			{ }
+		| keyval_list			{ }
+		;
 
-			m = map_create(S_NONE, NULL);
-			map_add(m, $1, NULL);
-			$$ = m->m_id;
-		}
-		| '('				{
-			map = map_create(S_NONE, NULL);
-		} string_list ')'		{
-			$$ = map->m_id;
+tablenew	: STRING			{
+			struct table	*t;
+
+			t = table_create("static", NULL, NULL);
+			t->t_type = T_LIST;
+			table_add(t, $1, NULL);
+			free($1);
+			$$ = t->t_id;
+			table = table_create("static", NULL, NULL);
 		}
 		| '{'				{
-			map = map_create(S_NONE, NULL);
-		} keyval_list '}'		{
-			$$ = map->m_id;
+			table = table_create("static", NULL, NULL);
+		} tableval_list '}'		{
+			$$ = table->t_id;
 		}
-		| MAP STRING			{
-			struct map	*m;
+		;
 
-			if ((m = map_findbyname($2)) == NULL) {
-				yyerror("no such map: %s", $2);
+tableref       	: '<' STRING '>'       		{
+			struct table	*t;
+
+			if ((t = table_findbyname($2)) == NULL) {
+				yyerror("no such table: %s", $2);
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			$$ = m->m_id;
+			$$ = t->t_id;
 		}
 		;
 
-alias		: ALIAS STRING			{ $$ = $2; }
-		| /* empty */			{ $$ = NULL; }
+tables		: tablenew			{ $$ = $1; }
+		| tableref			{ $$ = $1; }
 		;
 
-condition	: DOMAIN mapref	alias		{
-			struct cond	*c;
-			struct map	*m;
+alias		: ALIAS tables			{
+			struct table   *t = table_find($2);
 
-			if ($3) {
-				if ((m = map_findbyname($3)) == NULL) {
-					yyerror("no such map: %s", $3);
-					free($3);
-					YYERROR;
-				}
-				rule->r_amap = m->m_id;
-			}
-
-			c = xcalloc(1, sizeof *c, "parse condition: DOMAIN");
-			c->c_type = COND_DOM;
-			c->c_map = $2;
-			$$ = c;
-		}
-		| VIRTUAL mapref		{
-			struct cond	*c;
-			struct map	*m;
-
-			m = map_find($2);
-			if (m->m_src == S_NONE) {
-				yyerror("virtual parameter MUST be a map");
+			if (! table_check_use(t, T_DYNAMIC|T_HASH, K_ALIAS)) {
+				yyerror("invalid use of table \"%s\" as ALIAS parameter",
+				    t->t_name);
 				YYERROR;
 			}
 
-			c = xcalloc(1, sizeof *c, "parse condition: VIRTUAL");
-			c->c_type = COND_VDOM;
-			c->c_map = $2;
-			$$ = c;
+			$$ = t->t_id;
 		}
-		| LOCAL alias {
-			struct cond	*c;
-			struct map	*m;
-			char		 hostname[MAXHOSTNAMELEN];
+		;
 
-			if (gethostname(hostname, sizeof hostname) == -1) {
-				yyerror("gethostname() failed");
+virtual		: VIRTUAL tables		{
+			struct table   *t = table_find($2);
+
+			if (! table_check_service(t, K_ALIAS)) {
+				yyerror("invalid use of table \"%s\" as VIRTUAL parameter",
+				    t->t_name);
 				YYERROR;
 			}
 
-			if ($2) {
-				if ((m = map_findbyname($2)) == NULL) {
-					yyerror("no such map: %s", $2);
-					free($2);
-					YYERROR;
-				}
-				rule->r_amap = m->m_id;
-			}
-
-			m = map_create(S_NONE, NULL);
-			map_add(m, "localhost", NULL);
-			map_add(m, hostname, NULL);
-
-			c = xcalloc(1, sizeof *c, "parse condition: LOCAL");
-			c->c_type = COND_DOM;
-			c->c_map = m->m_id;
-
-			$$ = c;
-		}
-		| ANY alias			{
-			struct cond	*c;
-			struct map	*m;
-
-			c = xcalloc(1, sizeof *c, "parse condition: ANY");
-			c->c_type = COND_ANY;
-
-			if ($2) {
-				if ((m = map_findbyname($2)) == NULL) {
-					yyerror("no such map: %s", $2);
-					free($2);
-					YYERROR;
-				}
-				rule->r_amap = m->m_id;
-			}
-			$$ = c;
+			$$ = t->t_id;
 		}
 		;
 
-condition_list	: condition comma condition_list	{
-			TAILQ_INSERT_TAIL(conditions, $1, c_entry);
+usermapping	: alias		{
+			rule->r_desttype = DEST_DOM;
+			$$ = $1;
 		}
-		| condition	{
-			TAILQ_INSERT_TAIL(conditions, $1, c_entry);
+		| virtual	{
+			rule->r_desttype = DEST_VDOM;
+			$$ = $1;
+		}
+		| /**/		{
+			rule->r_desttype = DEST_DOM;
+			$$ = 0;
 		}
 		;
 
-conditions	: condition				{
-			TAILQ_INSERT_TAIL(conditions, $1, c_entry);
+userbase	: USERS tables	{
+			struct table   *t = table_find($2);
+
+			if (! table_check_use(t, T_DYNAMIC|T_HASH, K_USERINFO)) {
+				yyerror("invalid use of table \"%s\" as USERS parameter",
+				    t->t_name);
+				YYERROR;
+			}
+
+			$$ = t->t_id;
 		}
-		| '{' condition_list '}'
+		| /**/	{ $$ = table_findbyname("<getpwnam>")->t_id; }
+		;
+
+		
+
+
+destination	: DOMAIN tables			{
+			struct table   *t = table_find($2);
+
+			if (! table_check_use(t, T_DYNAMIC|T_LIST, K_DOMAIN)) {
+				yyerror("invalid use of table \"%s\" as DOMAIN parameter",
+				    t->t_name);
+				YYERROR;
+			}
+
+			$$ = t->t_id;
+		}
+		| LOCAL		{ $$ = table_findbyname("<localnames>")->t_id; }
+		| ANY		{ $$ = 0; }
+		;
+
+relay_source	: SOURCE tables			{
+			struct table	*t = table_find($2);
+			if (! table_check_use(t, T_DYNAMIC|T_LIST, K_SOURCE)) {
+				yyerror("invalid use of table \"%s\" as "
+				    "SOURCE parameter", t->t_name);
+				YYERROR;
+			}
+			$$ = t->t_name;
+		}
+		| { $$ = NULL; }
+		;
+
+relay_helo	: HELO tables			{
+			struct table	*t = table_find($2);
+			if (! table_check_use(t, T_DYNAMIC|T_HASH, K_ADDRNAME)) {
+				yyerror("invalid use of table \"%s\" as "
+				    "HELO parameter", t->t_name);
+				YYERROR;
+			}
+			$$ = t->t_name;
+		}
+		| { $$ = NULL; }
+		;
+
+relay_backup	: BACKUP STRING			{ $$ = $2; }
+		| BACKUP       			{ $$ = NULL; }
 		;
 
 relay_as     	: AS STRING		{
 			struct mailaddr maddr, *maddrp;
-			char *p;
 
-			bzero(&maddr, sizeof (maddr));
-
-			p = strrchr($2, '@');
-			if (p == NULL) {
-				if (strlcpy(maddr.user, $2, sizeof (maddr.user))
-				    >= sizeof (maddr.user))
-					yyerror("user-part too long");
-					free($2);
-					YYERROR;
-			}
-			else {
-				if (p == $2) {
-					/* domain only */
-					p++;
-					if (strlcpy(maddr.domain, p, sizeof (maddr.domain))
-					    >= sizeof (maddr.domain)) {
-						yyerror("user-part too long");
-						free($2);
-						YYERROR;
-					}
-				}
-				else {
-					*p++ = '\0';
-					if (strlcpy(maddr.user, $2, sizeof (maddr.user))
-					    >= sizeof (maddr.user)) {
-						yyerror("user-part too long");
-						free($2);
-						YYERROR;
-					}
-					if (strlcpy(maddr.domain, p, sizeof (maddr.domain))
-					    >= sizeof (maddr.domain)) {
-						yyerror("domain-part too long");
-						free($2);
-						YYERROR;
-					}
-				}
-			}
-
-			if (maddr.user[0] == '\0' && maddr.domain[0] == '\0') {
-				yyerror("invalid 'relay as' value");
+			if (! text_to_mailaddr(&maddr, $2)) {
+				yyerror("invalid parameter to AS: %s", $2);
 				free($2);
 				YYERROR;
 			}
+			free($2);
 
-			if (maddr.domain[0] == '\0') {
+			if (maddr.user[0] == '\0' && maddr.domain[0] == '\0') {
+				yyerror("invalid empty parameter to AS");
+				YYERROR;
+			}
+			else if (maddr.domain[0] == '\0') {
 				if (strlcpy(maddr.domain, conf->sc_hostname,
 					sizeof (maddr.domain))
 				    >= sizeof (maddr.domain)) {
-					fatalx("domain too long");
-					yyerror("domain-part too long");
-					free($2);
+					yyerror("hostname too long for AS parameter: %s",
+					    conf->sc_hostname);
 					YYERROR;
 				}
 			}
-			
-			maddrp = xmemdup(&maddr, sizeof (*maddrp), "parse relay_as: AS");
-			free($2);
-
-			$$ = maddrp;
+			$$ = xmemdup(&maddr, sizeof (*maddrp), "parse relay_as: AS");
 		}
 		| /* empty */		{ $$ = NULL; }
 		;
 
-action		: DELIVER TO MAILDIR			{
+action		: userbase DELIVER TO MAILDIR			{
+			rule->r_users = table_find($1);
 			rule->r_action = A_MAILDIR;
 			if (strlcpy(rule->r_value.buffer, "~/Maildir",
 			    sizeof(rule->r_value.buffer)) >=
 			    sizeof(rule->r_value.buffer))
 				fatal("pathname too long");
 		}
-		| DELIVER TO MAILDIR STRING		{
+		| userbase DELIVER TO MAILDIR STRING		{
+			rule->r_users = table_find($1);
 			rule->r_action = A_MAILDIR;
-			if (strlcpy(rule->r_value.buffer, $4,
+			if (strlcpy(rule->r_value.buffer, $5,
 			    sizeof(rule->r_value.buffer)) >=
 			    sizeof(rule->r_value.buffer))
 				fatal("pathname too long");
-			free($4);
+			free($5);
 		}
-		| DELIVER TO MBOX			{
+		| userbase DELIVER TO MBOX			{
+			rule->r_users = table_find($1);
 			rule->r_action = A_MBOX;
 			if (strlcpy(rule->r_value.buffer, _PATH_MAILDIR "/%u",
 			    sizeof(rule->r_value.buffer))
 			    >= sizeof(rule->r_value.buffer))
 				fatal("pathname too long");
 		}
-		| DELIVER TO MDA STRING			{
+		| userbase DELIVER TO MDA STRING	       	{
+			rule->r_users = table_find($1);
 			rule->r_action = A_MDA;
-			if (strlcpy(rule->r_value.buffer, $4,
+			if (strlcpy(rule->r_value.buffer, $5,
 			    sizeof(rule->r_value.buffer))
 			    >= sizeof(rule->r_value.buffer))
 				fatal("command too long");
-			free($4);
+			free($5);
 		}
-		| RELAY relay_as     			{
+		| RELAY relay_as relay_source relay_helo       	{
 			rule->r_action = A_RELAY;
 			rule->r_as = $2;
+			if ($4 != NULL && $3 == NULL) {
+				yyerror("HELO can only be used with SOURCE");
+				YYERROR;
+			}
+			if ($3)
+				strlcpy(rule->r_value.relayhost.sourcetable, $3,
+				    sizeof rule->r_value.relayhost.sourcetable);
+			if ($4)
+				strlcpy(rule->r_value.relayhost.helotable, $4,
+				    sizeof rule->r_value.relayhost.helotable);
 		}
-		| RELAY BACKUP STRING relay_as     		{
+		| RELAY relay_backup relay_as relay_source relay_helo	{
 			rule->r_action = A_RELAY;
-			rule->r_as = $4;
+			rule->r_as = $3;
 			rule->r_value.relayhost.flags |= F_BACKUP;
-			strlcpy(rule->r_value.relayhost.hostname, $3,
-			    sizeof (rule->r_value.relayhost.hostname));
-			free($3);
+
+			if ($2)
+				strlcpy(rule->r_value.relayhost.hostname, $2,
+				    sizeof (rule->r_value.relayhost.hostname));
+			else
+				strlcpy(rule->r_value.relayhost.hostname, env->sc_hostname,
+				    sizeof (rule->r_value.relayhost.hostname));
+			free($2);
+
+			if ($5 != NULL && $4 == NULL) {
+				yyerror("HELO can only be used with SOURCE");
+				YYERROR;
+			}
+			if ($4)
+				strlcpy(rule->r_value.relayhost.sourcetable, $4,
+				    sizeof rule->r_value.relayhost.sourcetable);
+			if ($5)
+				strlcpy(rule->r_value.relayhost.helotable, $5,
+				    sizeof rule->r_value.relayhost.helotable);
 		}
-		| RELAY VIA STRING certname credentials relay_as {
+		| RELAY VIA STRING certificate credentials relay_as relay_source relay_helo {
+			struct table	*t;
+
 			rule->r_action = A_RELAYVIA;
 			rule->r_as = $6;
 
@@ -748,7 +792,6 @@ action		: DELIVER TO MAILDIR			{
 				yyerror("error: invalid url: %s", $3);
 				free($3);
 				free($4);
-				free($5);
 				free($6);
 				YYERROR;
 			}
@@ -756,147 +799,134 @@ action		: DELIVER TO MAILDIR			{
 
 			/* no worries, F_AUTH cant be set without SSL */
 			if (rule->r_value.relayhost.flags & F_AUTH) {
-				if ($5 == NULL) {
-					yyerror("error: auth without authmap");
+				if (! $5) {
+					yyerror("error: auth without auth table");
 					free($4);
-					free($5);
 					free($6);
 					YYERROR;
 				}
-				strlcpy(rule->r_value.relayhost.authmap, $5,
-				    sizeof(rule->r_value.relayhost.authmap));
+				t = table_find($5);
+				strlcpy(rule->r_value.relayhost.authtable, t->t_name,
+				    sizeof(rule->r_value.relayhost.authtable));
 			}
-			free($5);
-
 
 			if ($4 != NULL) {
-				if (ssl_load_certfile($4, F_CCERT) < 0) {
-					yyerror("cannot load certificate: %s",
-					    $4);
-					free($4);
-					free($6);
-					YYERROR;
-				}
 				if (strlcpy(rule->r_value.relayhost.cert, $4,
 					sizeof(rule->r_value.relayhost.cert))
 				    >= sizeof(rule->r_value.relayhost.cert))
 					fatal("certificate path too long");
 			}
 			free($4);
+			if ($8 != NULL && $7 == NULL) {
+				yyerror("HELO can only be used with SOURCE");
+				YYERROR;
+			}
+			if ($7)
+				strlcpy(rule->r_value.relayhost.sourcetable, $7,
+				    sizeof rule->r_value.relayhost.sourcetable);
+			if ($8)
+				strlcpy(rule->r_value.relayhost.helotable, $8,
+				    sizeof rule->r_value.relayhost.helotable);
 		}
 		;
 
-from		: FROM mapref			{
-			$$ = $2;
-		}
-		| FROM ANY			{
-			$$ = map_findbyname("<anyhost>")->m_id;
-		}
-		| FROM LOCAL			{
-			$$ = map_findbyname("<localhost>")->m_id;
-		}
-		| /* empty */			{
-			$$ = map_findbyname("<localhost>")->m_id;
-		}
-		;
+from		: FROM tables			{
+			struct table   *t = table_find($2);
 
-on		: ON STRING	{
-       			if (strlen($2) >= MAX_TAG_SIZE) {
-       				yyerror("interface, address or tag name too long");
-				free($2);
+			if (! table_check_use(t, T_DYNAMIC|T_LIST, K_NETADDR)) {
+				yyerror("invalid use of table \"%s\" as FROM parameter",
+				    t->t_name);
 				YYERROR;
 			}
 
-			$$ = $2;
+			$$ = t->t_id;
 		}
-		| /* empty */	{ $$ = NULL; }
+		| FROM ANY			{
+			$$ = table_findbyname("<anyhost>")->t_id;
+		}
+		| FROM LOCAL			{
+			$$ = table_findbyname("<localhost>")->t_id;
+		}
+		| /* empty */			{
+			$$ = table_findbyname("<localhost>")->t_id;
+		}
 		;
 
-rule		: ACCEPT on from			{
+sender		: SENDER tables			{
+			struct table   *t = table_find($2);
 
-			rule = xcalloc(1, sizeof(*rule), "parse rule: ACCEPT");
-			rule->r_decision = R_ACCEPT;
-			rule->r_sources = map_find($3);
-
-			conditions = xcalloc(1, sizeof(*conditions),
-			    "parse rule: ACCEPT");
-
-			if ($2)
-				(void)strlcpy(rule->r_tag, $2, sizeof(rule->r_tag));
-			free($2);
-
-			TAILQ_INIT(conditions);
-
-		} FOR conditions action	tag expire {
-			struct rule	*subr;
-			struct cond	*cond;
-
-			if ($8)
-				(void)strlcpy(rule->r_tag, $8, sizeof(rule->r_tag));
-			free($8);
-
-			rule->r_qexpire = $9;
-
-			while ((cond = TAILQ_FIRST(conditions)) != NULL) {
-
-				subr = xmemdup(rule, sizeof(*subr), "parse rule: FOR");
-
-				subr->r_condition = *cond;
-				
-				TAILQ_REMOVE(conditions, cond, c_entry);
-				TAILQ_INSERT_TAIL(conf->sc_rules, subr, r_entry);
-
-				free(cond);
+			if (! table_check_use(t, T_DYNAMIC|T_LIST, K_MAILADDR)) {
+				yyerror("invalid use of table \"%s\" as SENDER parameter",
+				    t->t_name);
+				YYERROR;
 			}
 
-			if (rule->r_amap) {
-				if (rule->r_action == A_RELAY ||
-				    rule->r_action == A_RELAYVIA) {
-					yyerror("aliases set on a relay rule");
-					free(conditions);
-					free(rule);
+			$$ = t->t_id;
+		}
+		| /* empty */			{ $$ = 0; }
+		;
+
+rule		: ACCEPT {
+			rule = xcalloc(1, sizeof(*rule), "parse rule: ACCEPT");
+		 } tagged from sender FOR destination usermapping action expire {
+
+			rule->r_decision = R_ACCEPT;
+			rule->r_sources = table_find($4);
+			rule->r_senders = table_find($5);
+			rule->r_destination = table_find($7);
+			rule->r_mapping = table_find($8);
+			if ($3) {
+				if (strlcpy(rule->r_tag, $3, sizeof rule->r_tag)
+				    >= sizeof rule->r_tag) {
+					yyerror("tag name too long: %s", $3);
+					free($3);
+					YYERROR;
+				}
+				free($3);
+			}
+			rule->r_qexpire = $10;
+
+			if (rule->r_mapping && rule->r_desttype == DEST_VDOM) {
+				enum table_type type;
+
+				switch (rule->r_action) {
+				case A_RELAY:
+				case A_RELAYVIA:
+					type = T_LIST;
+					break;
+				default:
+					type = T_HASH;
+					break;
+				}
+				if (! table_check_type(rule->r_mapping, type)) {
+					yyerror("invalid use of table \"%s\" as VIRTUAL parameter",
+					    rule->r_mapping->t_name);
 					YYERROR;
 				}
 			}
 
-			free(conditions);
-			free(rule);
-			conditions = NULL;
+			TAILQ_INSERT_TAIL(conf->sc_rules, rule, r_entry);
+
 			rule = NULL;
 		}
-		| REJECT on from			{
-
+		| REJECT {
 			rule = xcalloc(1, sizeof(*rule), "parse rule: REJECT");
+		} tagged from sender FOR destination usermapping {
 			rule->r_decision = R_REJECT;
-			rule->r_sources = map_find($3);
-
-			conditions = xcalloc(1, sizeof(*conditions),
-			    "parse rule: REJECT");
-
-			if ($2)
-				(void)strlcpy(rule->r_tag, $2, sizeof(rule->r_tag));
-			free($2);
-
-			TAILQ_INIT(conditions);
-
-		} FOR conditions {
-			struct rule	*subr;
-			struct cond	*cond;
-
-			while ((cond = TAILQ_FIRST(conditions)) != NULL) {
-
-				subr = xmemdup(rule, sizeof(*subr), "parse rule: FOR");
-
-				subr->r_condition = *cond;
-				
-				TAILQ_REMOVE(conditions, cond, c_entry);
-				TAILQ_INSERT_TAIL(conf->sc_rules, subr, r_entry);
-
-				free(cond);
+			rule->r_sources = table_find($4);
+			rule->r_sources = table_find($5);
+			rule->r_destination = table_find($7);
+			rule->r_mapping = table_find($8);
+			if ($3) {
+				if (strlcpy(rule->r_tag, $3, sizeof rule->r_tag)
+				    >= sizeof rule->r_tag) {
+					yyerror("tag name too long: %s", $3);
+					free($3);
+					YYERROR;
+				}
+				free($3);
 			}
-			free(conditions);
-			free(rule);
-			conditions = NULL;
+			TAILQ_INSERT_TAIL(conf->sc_rules, rule, r_entry);
 			rule = NULL;
 		}
 		;
@@ -939,43 +969,41 @@ lookup(char *s)
 		{ "auth",		AUTH },
 		{ "auth-optional",     	AUTH_OPTIONAL },
 		{ "backup",		BACKUP },
+		{ "bounce-warn",	BOUNCEWARN },
 		{ "certificate",	CERTIFICATE },
 		{ "compression",       	COMPRESSION },
-		{ "db",			DB },
 		{ "deliver",		DELIVER },
 		{ "domain",		DOMAIN },
 		{ "expire",		EXPIRE },
-		{ "file",		FILE },
 		{ "filter",		FILTER },
 		{ "for",		FOR },
 		{ "from",		FROM },
-		{ "hash",		HASH },
+		{ "helo",		HELO },
 		{ "hostname",		HOSTNAME },
 		{ "include",		INCLUDE },
 		{ "key",		KEY },
-		{ "ldap",		LDAP },
-		{ "list",		LIST },
 		{ "listen",		LISTEN },
 		{ "local",		LOCAL },
 		{ "maildir",		MAILDIR },
-		{ "map",		MAP },
+		{ "max-message-size",  	MAXMESSAGESIZE },
 		{ "mbox",		MBOX },
 		{ "mda",		MDA },
 		{ "on",			ON },
-		{ "plain",		FILE },
 		{ "port",		PORT },
 		{ "queue",		QUEUE },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
-		{ "single",		SINGLE },
-		{ "size",		SIZE },
+		{ "sender",    		SENDER },
 		{ "smtps",		SMTPS },
 		{ "source",		SOURCE },
 		{ "ssl",		SSL },
+		{ "table",		TABLE },
 		{ "tag",		TAG },
+		{ "tagged",		TAGGED },
 		{ "tls",		TLS },
 		{ "tls-require",       	TLS_REQUIRE },
 		{ "to",			TO },
+		{ "users",     		USERS },
 		{ "via",		VIA },
 		{ "virtual",		VIRTUAL },
 	};
@@ -1305,44 +1333,56 @@ popfile(void)
 int
 parse_config(struct smtpd *x_conf, const char *filename, int opts)
 {
-	struct sym	*sym, *next;
+	struct sym     *sym, *next;
+	struct table   *t;
+	char		hostname[MAXHOSTNAMELEN];
+
+	if (gethostname(hostname, sizeof hostname) == -1) {
+		fprintf(stderr, "invalid hostname: gethostname() failed\n");
+		return (-1);
+	}
 
 	conf = x_conf;
 	bzero(conf, sizeof(*conf));
 
 	conf->sc_maxsize = DEFAULT_MAX_BODY_SIZE;
 
-	conf->sc_maps = calloc(1, sizeof(*conf->sc_maps));
+	conf->sc_tables_dict = calloc(1, sizeof(*conf->sc_tables_dict));
+	conf->sc_tables_tree = calloc(1, sizeof(*conf->sc_tables_tree));
 	conf->sc_rules = calloc(1, sizeof(*conf->sc_rules));
 	conf->sc_listeners = calloc(1, sizeof(*conf->sc_listeners));
-	conf->sc_ssl = calloc(1, sizeof(*conf->sc_ssl));
-	conf->sc_filters = calloc(1, sizeof(*conf->sc_filters));
+	conf->sc_ssl_dict = calloc(1, sizeof(*conf->sc_ssl_dict));
 
-	if (conf->sc_maps == NULL	||
-	    conf->sc_rules == NULL	||
-	    conf->sc_listeners == NULL	||
-	    conf->sc_ssl == NULL	||
-	    conf->sc_filters == NULL) {
+	/* Report mails delayed for more than 4 hours */
+	conf->sc_bounce_warn[0] = 3600 * 4;
+
+	if (conf->sc_tables_dict == NULL	||
+	    conf->sc_tables_tree == NULL	||
+	    conf->sc_rules == NULL		||
+	    conf->sc_listeners == NULL		||
+	    conf->sc_ssl_dict == NULL) {
 		log_warn("warn: cannot allocate memory");
-		free(conf->sc_maps);
+		free(conf->sc_tables_dict);
+		free(conf->sc_tables_tree);
 		free(conf->sc_rules);
 		free(conf->sc_listeners);
-		free(conf->sc_ssl);
-		free(conf->sc_filters);
+		free(conf->sc_ssl_dict);
 		return (-1);
 	}
 
 	errors = 0;
 
-	map = NULL;
+	table = NULL;
 	rule = NULL;
 
+	dict_init(&conf->sc_filters);
+
+	dict_init(conf->sc_ssl_dict);
+	dict_init(conf->sc_tables_dict);
+	tree_init(conf->sc_tables_tree);
+
 	TAILQ_INIT(conf->sc_listeners);
-	TAILQ_INIT(conf->sc_maps);
 	TAILQ_INIT(conf->sc_rules);
-	TAILQ_INIT(conf->sc_filters);
-	SPLAY_INIT(conf->sc_ssl);
-	SPLAY_INIT(&conf->sc_sessions);
 
 	conf->sc_qexpire = SMTPD_QUEUE_EXPIRY;
 	conf->sc_opts = opts;
@@ -1354,9 +1394,16 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	topfile = file;
 
 	/*
-	 * declare special "localhost" and "anyhost" maps
+	 * declare special "localhost", "anyhost" and "localnames" tables
 	 */
 	set_localaddrs();
+
+	t = table_create("static", "<localnames>", NULL);
+	t->t_type = T_LIST;
+	table_add(t, "localhost", NULL);
+	table_add(t, hostname, NULL);
+
+	table_create("getpwnam", "<getpwnam>", NULL);
 
 	/*
 	 * parse configuration
@@ -1583,9 +1630,12 @@ host_dns(const char *s, const char *tag, const char *cert,
 
 int
 host(const char *s, const char *tag, const char *cert, struct listenerlist *al,
-    int max, in_port_t port, uint8_t flags)
+    int max, in_port_t port, const char *authtable, uint8_t flags,
+    const char *helo)
 {
 	struct listener *h;
+
+	port = htons(port);
 
 	h = host_v4(s, port);
 
@@ -1596,12 +1646,19 @@ host(const char *s, const char *tag, const char *cert, struct listenerlist *al,
 	if (h != NULL) {
 		h->port = port;
 		h->flags = flags;
+		if (h->flags & F_SSL)
+			if (cert == NULL)
+				cert = s;
 		h->ssl = NULL;
 		h->ssl_cert_name[0] = '\0';
+		if (authtable != NULL)
+			(void)strlcpy(h->authtable, authtable, sizeof(h->authtable));
 		if (cert != NULL)
 			(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
 		if (tag != NULL)
 			(void)strlcpy(h->tag, tag, sizeof(h->tag));
+		if (helo != NULL)
+			(void)strlcpy(h->helo, helo, sizeof(h->helo));
 
 		TAILQ_INSERT_HEAD(al, h, entry);
 		return (1);
@@ -1612,13 +1669,16 @@ host(const char *s, const char *tag, const char *cert, struct listenerlist *al,
 
 int
 interface(const char *s, const char *tag, const char *cert,
-    struct listenerlist *al, int max, in_port_t port, uint8_t flags)
+    struct listenerlist *al, int max, in_port_t port, const char *authtable, uint8_t flags,
+    const char *helo)
 {
 	struct ifaddrs *ifap, *p;
 	struct sockaddr_in	*sain;
 	struct sockaddr_in6	*sin6;
 	struct listener		*h;
 	int ret = 0;
+
+	port = htons(port);
 
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
@@ -1655,13 +1715,19 @@ interface(const char *s, const char *tag, const char *cert,
 		h->fd = -1;
 		h->port = port;
 		h->flags = flags;
+		if (h->flags & F_SSL)
+			if (cert == NULL)
+				cert = s;
 		h->ssl = NULL;
 		h->ssl_cert_name[0] = '\0';
+		if (authtable != NULL)
+			(void)strlcpy(h->authtable, authtable, sizeof(h->authtable));
 		if (cert != NULL)
 			(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
 		if (tag != NULL)
 			(void)strlcpy(h->tag, tag, sizeof(h->tag));
-
+		if (helo != NULL)
+			(void)strlcpy(h->helo, helo, sizeof(h->helo));
 		ret = 1;
 		TAILQ_INSERT_HEAD(al, h, entry);
 	}
@@ -1678,18 +1744,18 @@ set_localaddrs(void)
 	struct sockaddr_storage ss;
 	struct sockaddr_in	*sain;
 	struct sockaddr_in6	*sin6;
-	struct map		*m;
+	struct table		*t;
 
-	m = map_create(S_NONE, "<anyhost>");
-	map_add(m, "local", NULL);
-	map_add(m, "0.0.0.0/0", NULL);
-	map_add(m, "::/0", NULL);
+	t = table_create("static", "<anyhost>", NULL);
+	table_add(t, "local", NULL);
+	table_add(t, "0.0.0.0/0", NULL);
+	table_add(t, "::/0", NULL);
 
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
-	m = map_create(S_NONE, "<localhost>");
-	map_add(m, "local", NULL);
+	t = table_create("static", "<localhost>", NULL);
+	table_add(t, "local", NULL);
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
 		if (p->ifa_addr == NULL)
@@ -1699,14 +1765,14 @@ set_localaddrs(void)
 			sain = (struct sockaddr_in *)&ss;
 			*sain = *(struct sockaddr_in *)p->ifa_addr;
 			sain->sin_len = sizeof(struct sockaddr_in);
-			map_add(m, ss_to_text(&ss), NULL);
+			table_add(t, ss_to_text(&ss), NULL);
 			break;
 
 		case AF_INET6:
 			sin6 = (struct sockaddr_in6 *)&ss;
 			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
 			sin6->sin6_len = sizeof(struct sockaddr_in6);
-			map_add(m, ss_to_text(&ss), NULL);
+			table_add(t, ss_to_text(&ss), NULL);
 			break;
 		}
 	}

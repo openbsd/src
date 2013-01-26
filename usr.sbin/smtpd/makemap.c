@@ -1,7 +1,7 @@
-/*	$OpenBSD: makemap.c,v 1.41 2012/11/23 10:55:25 eric Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.42 2013/01/26 09:37:23 gilles Exp $	*/
 
 /*
- * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
  * Copyright (c) 2008-2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -58,7 +58,8 @@ char	*source;
 char	*oflag;
 int	 dbputs;
 
-struct smtpd	*env = NULL;
+struct smtpd	smtpd;
+struct smtpd	*env = &smtpd;
 
 enum program {
 	P_MAKEMAP,
@@ -81,12 +82,6 @@ purge_config(uint8_t what)
 }
 
 int
-ssl_load_certfile(const char *name, uint8_t flags)
-{
-	return (0);
-}
-
-int
 main(int argc, char *argv[])
 {
 	struct stat	 sb;
@@ -95,11 +90,8 @@ main(int argc, char *argv[])
 	char		*conf;
 	int		 ch;
 	DBTYPE		 dbtype = DB_HASH;
-	struct smtpd	 smtpd;
 	char		*execname;
 	char		*p;
-
-	env = &smtpd;
 
 	log_init(1);
 
@@ -409,7 +401,7 @@ make_aliases(DBT *val, char *text)
 		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
-		if (! alias_parse(&xn, subrcpt))
+		if (! text_to_expandnode(&xn, subrcpt))
 			goto error;
 	}
 
@@ -426,18 +418,18 @@ error:
 char *
 conf_aliases(char *cfgpath)
 {
-	struct map	*map;
+	struct table	*table;
 	char		*path;
 	char		*p;
 
 	if (parse_config(env, cfgpath, 0))
 		exit(1);
 
-	map = map_findbyname("aliases");
-	if (map == NULL)
+	table = table_findbyname("aliases");
+	if (table == NULL)
 		return (PATH_ALIASES);
 
-	path = xstrdup(map->m_config, "conf_aliases");
+	path = xstrdup(table->t_config, "conf_aliases");
 	p = strstr(path, ".db");
 	if (p == NULL || strcmp(p, ".db") != 0) {
 		return (path);
