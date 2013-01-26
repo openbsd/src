@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2013/01/23 19:01:44 miod Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.4 2013/01/26 20:40:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -121,7 +121,6 @@ ENTRY(_dl_bind_start)
 	st.d	%r8,  %r31, 4 * 6
 	st	%r10, %r31, 4 * 8
 	st.d	%r12, %r31, 4 * 10
-	st	%r13, %r31, 4 * 10
 
 	/*
 	 * Invoke resolver entry point.
