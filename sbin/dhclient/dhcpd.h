@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.105 2013/01/26 04:11:39 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.106 2013/01/26 05:07:21 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -142,6 +142,7 @@ struct client_config {
 	enum { IGNORE, ACCEPT, PREFER }
 				 bootp_policy;
 	struct reject_elem	*reject_list;
+	char			*resolv_tail;
 };
 
 struct client_state {

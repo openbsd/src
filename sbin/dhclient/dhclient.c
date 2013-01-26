@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.214 2013/01/22 06:02:52 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.215 2013/01/26 05:07:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -97,7 +97,7 @@ int		 res_hnok(const char *dn);
 char		*option_as_string(unsigned int code, unsigned char *data, int len);
 void		 fork_privchld(int, int);
 void		 get_ifname(char *);
-void		 new_resolv_conf(char *, char *, char *);
+void		 new_resolv_conf(char *, char *, char *, char *);
 void		 write_file(char *, int, mode_t, uid_t, gid_t, u_int8_t *,
 		     size_t);
 struct client_lease *apply_defaults(struct client_lease *);
@@ -305,7 +305,8 @@ main(int argc, char *argv[])
 	extern char *__progname;
 	struct passwd *pw;
 	char *ignore_list = NULL;
-	int rtfilter;
+	ssize_t tailn;
+	int rtfilter, tailfd;
 
 	saved_argv = argv;
 
@@ -389,6 +390,27 @@ main(int argc, char *argv[])
 	read_client_conf();
 	if (ignore_list)
 		apply_ignore_list(ignore_list);
+
+	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
+	if (tailfd != -1 && fstat(tailfd, &sb) != -1) {
+		config->resolv_tail = calloc(1, sb.st_size + 1);
+		if (config->resolv_tail == NULL) {
+			error("no memory for resolv.conf.tail contents: %s",
+			    strerror(errno));
+		} else {
+			tailn = read(tailfd, config->resolv_tail,
+			    sb.st_size);
+			if (tailn == -1)
+				error("Couldn't read resolv.conf.tail: %s",
+				    strerror(errno));
+			else if (tailn == 0)
+				error("Got no data from resolv.conf.tail");
+			else if (tailn != sb.st_size)
+				error("Short read of resolv.conf.tail");
+		}
+		close(tailfd);
+	} else
+		note("/etc/resolv.conf.tail: %s", strerror(errno));
 
 	if (interface_status(ifi->name) == 0) {
 		interface_link_forceup(ifi->name);
@@ -759,7 +781,8 @@ bind_lease(void)
 	if (nameservers == NULL)
 		error("no memory for nameservers");
 
-	new_resolv_conf(ifi->name, domainname, nameservers);
+	new_resolv_conf(ifi->name, domainname, nameservers,
+	    config->resolv_tail);
 
         /*
 	 * Add address and default route last, so we know when the binding
@@ -1877,7 +1900,8 @@ get_ifname(char *arg)
  */
 
 void
-new_resolv_conf(char *ifname, char *domainname, char *nameservers)
+new_resolv_conf(char *ifname, char *domainname, char *nameservers,
+    char *resolv_tail)
 {
 	struct imsg_resolv_conf  imsg;
 	char			*p;
@@ -1901,6 +1925,8 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 		strlcat(imsg.contents, "\n", MAXRESOLVCONFSIZE);
 	}
 
+	strlcat(imsg.contents, resolv_tail, MAXRESOLVCONFSIZE);
+
 	rslt = imsg_compose(unpriv_ibuf, IMSG_NEW_RESOLV_CONF, 0, 0, -1, &imsg,
 	    sizeof(imsg));
 
@@ -1911,9 +1937,8 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers)
 void
 priv_resolv_conf(struct imsg_resolv_conf *imsg)
 {
-	ssize_t n, tailn;
-	int conffd, tailfd;
-	char *buf;
+	ssize_t n;
+	int conffd;
 
 	if (strlen(imsg->contents) == 0)
 		return;
@@ -1934,39 +1959,6 @@ priv_resolv_conf(struct imsg_resolv_conf *imsg)
 		note("Short contents write to resolv.conf (%zd vs %zd)",
 		    n, strlen(imsg->contents));
 
-	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
-	if (tailfd != -1) {
-		buf = calloc(1, MAXRESOLVCONFSIZE);
-		if (buf == NULL) {
-			note("Can't allocate buf for resolv.conf.tail: %s",
-			    strerror(errno));
-			close(tailfd);
-			goto done;
-		}
-
-		tailn = read(tailfd, buf, MAXRESOLVCONFSIZE - 1);
-		close(tailfd);
-
-		if (tailn == -1)
-			note("Couldn't read resolv.conf.tail: %s",
-			    strerror(errno));
-		else if (tailn == 0)
-			note("Got no data from resolv.conf.tail");
-		else if (tailn > 0) {
-			n = write(conffd, buf, strlen(buf));
-			if (n == -1)
-				note("Couldn't write tail to resolv.conf: %s",
-				    strerror(errno));
-			else if (n == 0)
-				note("Couldn't write tail to resolv.conf");
-			else if (n < strlen(buf))
-				note("Short tail write to resolv.conf "
-				    "(%zd vs %zd)", n, strlen(buf));
-		}
-		free(buf);
-	}
-
-done:
 	fchmod(conffd, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	fchown(conffd, 0, 0); /* root:wheel */
 
