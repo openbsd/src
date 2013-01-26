@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.215 2013/01/26 05:07:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.216 2013/01/26 18:51:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1924,6 +1924,10 @@ new_resolv_conf(char *ifname, char *domainname, char *nameservers,
 		strlcat(imsg.contents, p, MAXRESOLVCONFSIZE);
 		strlcat(imsg.contents, "\n", MAXRESOLVCONFSIZE);
 	}
+
+	/* Don't touch resolv.conf if no domainname and no nameservers. */
+	if (strlen(imsg.contents) == 0)
+		return;
 
 	strlcat(imsg.contents, resolv_tail, MAXRESOLVCONFSIZE);
 
