@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.53 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.54 2013/01/26 20:47:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -116,6 +116,17 @@ setregs(p, pack, stack, retval)
 	int retval[2];
 {
 	struct trapframe *tf = (struct trapframe *)USER_REGS(p);
+
+	/*
+	 * Setup proper floating-point settings. This is necessary because
+	 * we will return through the exception path, which only saves the
+	 * integer registers, and not through cpu_switchto() (which saves
+	 * fcr62 and fcr63 in the pcb).  This is safe to do here since the
+	 * FPU is enabled and the kernel doesn't use it.
+	 */
+	__asm__ __volatile__ ("fstcr %r0, %fcr0");
+	__asm__ __volatile__ ("fstcr %r0, %fcr62");
+	__asm__ __volatile__ ("fstcr %r0, %fcr63");
 
 	/*
 	 * The syscall will ``return'' to snip; set it.
