@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.12 2013/01/17 23:41:07 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.13 2013/01/27 02:45:46 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -20,15 +20,12 @@
 
 #include <imsg.h>
 
-#define MAXRESOLVCONFSIZE	2048
-
 enum imsg_code {
 	IMSG_NONE,
 	IMSG_DELETE_ADDRESS,
 	IMSG_ADD_ADDRESS,
 	IMSG_FLUSH_ROUTES,
 	IMSG_ADD_DEFAULT_ROUTE,
-	IMSG_NEW_RESOLV_CONF,
 	IMSG_CLEANUP,
 	IMSG_WRITE_FILE
 };
@@ -58,7 +55,8 @@ struct imsg_add_default_route {
 };
 
 struct imsg_resolv_conf {
-	char	contents[MAXRESOLVCONFSIZE];
+	size_t	len;
+	char	contents[1];
 };
 
 struct imsg_cleanup {

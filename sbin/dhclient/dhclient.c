@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.216 2013/01/26 18:51:42 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.217 2013/01/27 02:45:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,7 @@
 
 #include <poll.h>
 #include <pwd.h>
+#include <resolv.h>
 
 #define	CLIENT_PATH 		"PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 #define DEFAULT_LEASE_TIME	43200	/* 12 hours... */
@@ -97,7 +98,8 @@ int		 res_hnok(const char *dn);
 char		*option_as_string(unsigned int code, unsigned char *data, int len);
 void		 fork_privchld(int, int);
 void		 get_ifname(char *);
-void		 new_resolv_conf(char *, char *, char *, char *);
+char		*resolv_conf_contents(struct option_data  *,
+		     struct option_data *);
 void		 write_file(char *, int, mode_t, uid_t, gid_t, u_int8_t *,
 		     size_t);
 struct client_lease *apply_defaults(struct client_lease *);
@@ -781,8 +783,13 @@ bind_lease(void)
 	if (nameservers == NULL)
 		error("no memory for nameservers");
 
-	new_resolv_conf(ifi->name, domainname, nameservers,
-	    config->resolv_tail);
+	client->new->resolv_conf = resolv_conf_contents(
+	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
+	if (client->new->resolv_conf)
+		write_file("/etc/resolv.conf",
+		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
+		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
+		    client->new->resolv_conf, strlen(client->new->resolv_conf));
 
         /*
 	 * Add address and default route last, so we know when the binding
@@ -1510,6 +1517,8 @@ free_client_lease(struct client_lease *lease)
 		free(lease->server_name);
 	if (lease->filename)
 		free(lease->filename);
+	if (lease->resolv_conf)
+		free(lease->resolv_conf);
 	for (i = 0; i < 256; i++) {
 		if (lease->options[i].len)
 			free(lease->options[i].data);
@@ -1899,74 +1908,70 @@ get_ifname(char *arg)
  * Update resolv.conf.
  */
 
-void
-new_resolv_conf(char *ifname, char *domainname, char *nameservers,
-    char *resolv_tail)
+char *
+resolv_conf_contents(struct option_data  *domainname,
+    struct option_data *nameservers)
 {
-	struct imsg_resolv_conf  imsg;
-	char			*p;
-	int			 rslt;
+	char *dn, *ns, *nss[MAXNS], *contents, *p;
+	size_t len;
+	int i, rslt;
 
-	memset(&imsg, 0, sizeof(imsg));
+	memset(nss, 0, sizeof(nss));
 
-	/* Build string of contents of new resolv.conf. */
-	if (domainname && strlen(domainname)) {
-		strlcat(imsg.contents, "search ", MAXRESOLVCONFSIZE);
-		strlcat(imsg.contents, domainname, MAXRESOLVCONFSIZE);
-		strlcat(imsg.contents, "\n", MAXRESOLVCONFSIZE);
+	if (domainname->len) {
+		rslt = asprintf(&dn, "search %s\n",
+		    pretty_print_option(DHO_DOMAIN_NAME, domainname, 0));
+		if (rslt == -1)
+			dn = NULL;
+	} else
+		dn = strdup("");
+	if (dn == NULL)
+		error("no memory for domainname");
+
+	if (nameservers->len) {
+		ns = pretty_print_option(DHO_DOMAIN_NAME_SERVERS, nameservers,
+		    0);
+		for (i = 0; i < MAXNS; i++) {
+			p = strsep(&ns, " ");
+			if (p == NULL)
+				break;
+			if (*p == '\0')
+				continue;
+			rslt = asprintf(&nss[i], "nameserver %s\n", p);
+			if (rslt == -1)
+				error("no memory for nameserver");
+		}
 	}
 
-	for (p = strsep(&nameservers, " "); p != NULL;
-	    p = strsep(&nameservers, " ")) {
-		if (*p == '\0')
-			continue;
-		strlcat(imsg.contents, "nameserver ", MAXRESOLVCONFSIZE);
-		strlcat(imsg.contents, p, MAXRESOLVCONFSIZE);
-		strlcat(imsg.contents, "\n", MAXRESOLVCONFSIZE);
+	len = strlen(dn) + 1;
+	for (i = 0; i < MAXNS; i++)
+		if (nss[i])
+			len += strlen(nss[i]);
+
+	if (len > 0 && config->resolv_tail)
+		len += strlen(config->resolv_tail);
+
+	if (len == 0)
+		return (NULL);
+
+	contents = calloc(1, len);
+	if (contents == NULL)
+		error("no memory for resolv.conf contents");
+
+	strlcat(contents, dn, len);
+	free(dn);
+
+	for (i = 0; i < MAXNS; i++) {
+		if (nss[i]) {
+			strlcat(contents, nss[i], len);
+			free(nss[i]);
+		}
 	}
 
-	/* Don't touch resolv.conf if no domainname and no nameservers. */
-	if (strlen(imsg.contents) == 0)
-		return;
+	if (config->resolv_tail)
+		strlcat(contents, config->resolv_tail, len);
 
-	strlcat(imsg.contents, resolv_tail, MAXRESOLVCONFSIZE);
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_NEW_RESOLV_CONF, 0, 0, -1, &imsg,
-	    sizeof(imsg));
-
-	if (rslt == -1)
-		warning("new_resolv_conf: imsg_compose: %s", strerror(errno));
-}
-
-void
-priv_resolv_conf(struct imsg_resolv_conf *imsg)
-{
-	ssize_t n;
-	int conffd;
-
-	if (strlen(imsg->contents) == 0)
-		return;
-
-	conffd = open("/etc/resolv.conf",
-	    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	if (conffd == -1) {
-		note("Couldn't open resolv.conf: %s", strerror(errno));
-		return;
-	}
-
-	n = write(conffd, imsg->contents, strlen(imsg->contents));
-	if (n == -1)
-		note("Couldn't write contents to resolv.conf: %s",
-		    strerror(errno));
-	else if (n < strlen(imsg->contents))
-		note("Short contents write to resolv.conf (%zd vs %zd)",
-		    n, strlen(imsg->contents));
-
-	fchmod(conffd, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	fchown(conffd, 0, 0); /* root:wheel */
-
-	close(conffd);
+	return (contents);
 }
 
 struct client_lease *
