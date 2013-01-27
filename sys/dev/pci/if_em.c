@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.268 2012/11/28 01:15:33 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.269 2013/01/27 04:18:02 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -792,9 +792,9 @@ em_init(void *arg)
 		break;
 	case em_ich9lan:
 	case em_ich10lan:
-	case em_pchlan:
 		pba = E1000_PBA_10K;
 		break;
+	case em_pchlan:
 	case em_pch2lan:
 		pba = E1000_PBA_26K;
 		break;
