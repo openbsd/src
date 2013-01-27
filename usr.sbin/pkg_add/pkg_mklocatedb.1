@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.14 2012/05/08 10:54:43 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.15 2013/01/27 11:39:22 espie Exp $
 .\" Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 8 2012 $
+.Dd $Mdocdate: January 27 2013 $
 .Dt PKG_MKLOCATEDB 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Sh SYNOPSIS
 .Nm pkg_mklocatedb
 .Bk -words
-.Op Fl aCnPq
+.Op Fl aCKnPqu
 .Op Fl d Ar repository
 .Op Fl p Ar portsdir
 .Op Fl r Ar release
@@ -96,6 +96,11 @@ This prevents badly out-of-synch errors.
 Scan directory
 .Ar repository
 for packages.
+.It Fl K
+Include keyword in each object full name.
+This is more accurate, but defeats
+.Xr locate 1
+compression.
 .It Fl n
 Do not pipe output to
 .Pa /usr/libexec/locate.mklocatedb
@@ -120,6 +125,12 @@ Specify the location of
 source.
 .Nm
 will list sets found under that source directory.
+.It Fl u
+Update an existing list.
+The list must come from standard input, and contain pkgpath information
+for items to be replaced.
+This can also be used to supplement an existing database with source and
+x11 information.
 .It Fl x Ar X11src
 Specify the location of X11 source.
 .Nm
