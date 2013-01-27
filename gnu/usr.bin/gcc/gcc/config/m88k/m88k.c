@@ -2940,11 +2940,6 @@ print_operand (file, x, code)
 	output_address (x);
       else if (xc == MEM)
 	output_address (XEXP (x, 0));
-      else if (flag_pic && xc == UNSPEC)
-	{
-	  output_addr_const (file, XVECEXP (x, 0, 0));
-	  fputs ("#got_rel", file);
-	}
       else if (xc == CONST_DOUBLE)
 	output_operand_lossage ("operand is const_double");
       else
@@ -2975,6 +2970,7 @@ print_operand_address (file, addr)
     rtx addr;
 {
   register rtx reg0, reg1;
+  enum rtx_code xc;
 
   switch (GET_CODE (addr))
     {
@@ -2989,6 +2985,12 @@ print_operand_address (file, addr)
       asm_fprintf (file, "%R%s,%Rlo16(",
 		   reg_names[REGNO (XEXP (addr, 0))]);
       output_addr_const (file, XEXP (addr, 1));
+      if (flag_pic)
+	{
+	  xc = GET_CODE (XEXP (addr, 1));
+	  if (xc == SYMBOL_REF || xc == LABEL_REF)
+	    fputs ("#got_rel", file);
+	}
       fputc (')', file);
       break;
 
