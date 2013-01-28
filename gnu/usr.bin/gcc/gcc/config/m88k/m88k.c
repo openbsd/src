@@ -2947,7 +2947,7 @@ print_operand (file, x, code)
       return;
 
     case 'g': /* append #got_rel as needed */
-      if (flag_pic && (xc == SYMBOL_REF || xc == LABEL_REF))
+      if (flag_pic && symbolic_address_p (x))
 	{
 	  output_addr_const (file, x);
 	  fputs ("#got_rel", file);
@@ -2970,7 +2970,6 @@ print_operand_address (file, addr)
     rtx addr;
 {
   register rtx reg0, reg1;
-  enum rtx_code xc;
 
   switch (GET_CODE (addr))
     {
@@ -2987,8 +2986,7 @@ print_operand_address (file, addr)
       output_addr_const (file, XEXP (addr, 1));
       if (flag_pic)
 	{
-	  xc = GET_CODE (XEXP (addr, 1));
-	  if (xc == SYMBOL_REF || xc == LABEL_REF)
+	  if (symbolic_address_p (XEXP (addr, 1)))
 	    fputs ("#got_rel", file);
 	}
       fputc (')', file);
