@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.595 2013/01/04 02:47:46 jsg Exp $
+$OpenBSD: usbdevs,v 1.596 2013/01/28 12:01:22 stsp Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2032,6 +2032,7 @@ product HP 5200C		0x0401	Scanjet 5200C
 product HP 830C			0x0404	DeskJet 830C
 product HP 3400CSE		0x0405	ScanJet 3400cse
 product HP 885C			0x0504	DeskJet 885C
+product HP 1000			0x0517	LaserJet 1000
 product HP 6300C		0x0601	Scanjet 6300C
 product HP 840C			0x0604	DeskJet 840c
 product HP 2200C		0x0605	ScanJet 2200C
@@ -2043,6 +2044,7 @@ product HP 2215			0x1016  iPAQ 22xx/Jornada 548
 product HP 959C			0x1104	Deskjet 959C
 product HP 568J			0x1116  Jornada 568
 product HP 930C			0x1204	DeskJet 930c
+product HP 1005			0x1317	LaserJet 1005
 product HP P2000U		0x1801	Inkjet P-2000U
 product HP HS2300		0x1e1d  HS2300
 product HP T750			0x1f06	T750 UPS
@@ -2052,7 +2054,9 @@ product HP RT2200		0x1f0a	R/T2200 UPS
 product HP R1500G2		0x1fe0	R1500 G2 UPS
 product HP T750G2		0x1fe1	T750 G2 UPS
 product HP 640C			0x2004	DeskJet 640c
+product HP 1020			0x2b17	LaserJet 1020
 product HP P1100		0x3102	Photosmart P1100
+product HP 1018			0x4117	LaserJet 1018
 product HP HN210E		0x811c	HN210E Ethernet
 
 /* HP products */
