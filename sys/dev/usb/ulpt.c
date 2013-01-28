@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.40 2011/09/17 08:36:06 miod Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.41 2013/01/28 17:15:31 stsp Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -46,6 +46,8 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
+#include <sys/types.h>
+#include <sys/malloc.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -103,6 +105,8 @@ struct ulpt_softc {
 
 	int sc_refcnt;
 	u_char sc_dying;
+
+	struct ulpt_fwdev *sc_fwdev;
 };
 
 void ulpt_disco(void *);
@@ -111,6 +115,38 @@ int ulpt_do_write(struct ulpt_softc *, struct uio *uio, int);
 int ulpt_status(struct ulpt_softc *);
 void ulpt_reset(struct ulpt_softc *);
 int ulpt_statusmsg(u_char, struct ulpt_softc *);
+
+/*
+ * Printers which need firmware uploads.
+ */
+void ulpt_load_firmware(void *);
+usbd_status ulpt_ucode_loader_hp(struct ulpt_softc *);
+struct ulpt_fwdev {
+	struct usb_devno	 uv_dev;
+	char			*ucode_name;
+	usbd_status		 (*ucode_loader)(struct ulpt_softc *);
+} ulpt_fwdevs[] = {
+	{
+	    { USB_VENDOR_HP, USB_PRODUCT_HP_1000 },
+	    "ulpt-hp1000",
+	    ulpt_ucode_loader_hp
+	},
+	{
+	    { USB_VENDOR_HP, USB_PRODUCT_HP_1005 },
+	    "ulpt-hp1005",
+	    ulpt_ucode_loader_hp
+	},
+	{
+	    { USB_VENDOR_HP, USB_PRODUCT_HP_1018 },
+	    "ulpt-hp1018",
+	    ulpt_ucode_loader_hp
+	},
+	{
+	    { USB_VENDOR_HP, USB_PRODUCT_HP_1020 },
+	    "ulpt-hp1020",
+	    ulpt_ucode_loader_hp
+	},
+};
 
 #if 0
 void ieee1284_print_id(char *);
@@ -156,6 +192,21 @@ ulpt_match(struct device *parent, void *match, void *aux)
 		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 	return (UMATCH_NONE);
 }
+
+void
+ulpt_load_firmware(void *arg)
+{
+	struct ulpt_softc *sc = (struct ulpt_softc *)arg;
+	usbd_status err;
+
+	err = (sc->sc_fwdev->ucode_loader)(sc);
+	if (err != USBD_NORMAL_COMPLETION)
+		printf("%s: could not load firmware '%s'\n",
+		    sc->sc_dev.dv_xname, sc->sc_fwdev->ucode_name);
+}
+
+#define ulpt_lookup(v, p) \
+	((struct ulpt_fwdev *)usb_lookup(ulpt_fwdevs, v, p))
 
 void
 ulpt_attach(struct device *parent, struct device *self, void *aux)
@@ -261,6 +312,15 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iface = iface;
 	sc->sc_ifaceno = id->bInterfaceNumber;
 	sc->sc_udev = dev;
+
+	/* maybe the device needs firmware */
+	sc->sc_fwdev = ulpt_lookup(uaa->vendor, uaa->product);
+	if (sc->sc_fwdev) {
+		if (rootvp == NULL)
+			mountroothook_establish(ulpt_load_firmware, sc);
+		else
+			ulpt_load_firmware(sc);
+	}
 
 #if 0
 /*
@@ -605,6 +665,67 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 	error = ulpt_do_write(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(&sc->sc_dev);
+	return (error);
+}
+
+usbd_status
+ulpt_ucode_loader_hp(struct ulpt_softc *sc)
+{
+	usbd_status error;
+	int load_error;
+	uint8_t *ucode;
+	uint32_t len;
+	size_t ucode_size;
+	const char *ucode_name = sc->sc_fwdev->ucode_name;
+	int offset = 0, remain;
+	usbd_xfer_handle xfer;
+	void *bufp;
+
+	/* open microcode file */
+	load_error = loadfirmware(ucode_name, &ucode, &ucode_size);
+	if (load_error != 0) {
+		printf("%s: failed loadfirmware of file %s (error %d)\n",
+		    sc->sc_dev.dv_xname, ucode_name, load_error);
+		return (USBD_INVAL);
+	}
+
+	/* upload microcode */
+	error = usbd_open_pipe(sc->sc_iface, sc->sc_out, 0, &sc->sc_out_pipe);
+	if (error)
+		goto free_ucode;
+	xfer = usbd_alloc_xfer(sc->sc_udev);
+	if (xfer == NULL)
+		goto close_pipe;
+	bufp = usbd_alloc_buffer(xfer, ULPT_BSIZE);
+	if (bufp == NULL) {
+		error = USBD_NOMEM;
+		goto free_xfer;
+	}
+	remain = ucode_size;
+	while (remain > 0) {
+		len = min(remain, ULPT_BSIZE);
+		memcpy(bufp, &ucode[offset], len);
+		error = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
+			  USBD_NO_TIMEOUT, bufp, &len, "ulptwr");
+		if (error != USBD_NORMAL_COMPLETION) {
+			printf("%s: ucode upload error=%s!\n",
+			    sc->sc_dev.dv_xname, usbd_errstr(error));
+			break;
+		}
+		DPRINTF(("%s: uploaded %d bytes ucode\n",
+		    sc->sc_dev.dv_xname, len));
+
+		offset += len;
+		remain -= len;
+	}
+free_xfer:
+	usbd_free_xfer(xfer);
+close_pipe:
+	usbd_close_pipe(sc->sc_out_pipe);
+	sc->sc_out_pipe = NULL;
+free_ucode:
+	free(ucode, M_DEVBUF);
+
 	return (error);
 }
 
