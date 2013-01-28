@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.111 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.112 2013/01/28 15:14:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -898,7 +898,8 @@ rule		: ACCEPT {
 					type = T_HASH;
 					break;
 				}
-				if (! table_check_type(rule->r_mapping, type)) {
+				if (! table_check_service(rule->r_mapping, K_ALIAS) &&
+				    ! table_check_type(rule->r_mapping, type)) {
 					yyerror("invalid use of table \"%s\" as VIRTUAL parameter",
 					    rule->r_mapping->t_name);
 					YYERROR;
