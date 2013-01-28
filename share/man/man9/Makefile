@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.174 2012/12/10 13:03:54 mpi Exp $
+#	$OpenBSD: Makefile,v 1.175 2013/01/28 09:46:25 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -315,7 +315,7 @@ MLINKS+=systrace.9 systrace_redirect.9 \
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 	timeout.9 timeout_pending.9 timeout.9 timeout_del.9 \
-	timeout.9 timeout_initialized.9 timeout.9 untimeout.9 \
+	timeout.9 timeout_initialized.9 \
 	timeout.9 timeout_triggered.9 timeout.9 timeout_add_tv.9 \
 	timeout.9 timeout_add_ts.9 timeout.9 timeout_add_bt.9 \
 	timeout.9 timeout_add_sec.9 \
