@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.150 2013/01/28 11:09:53 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.151 2013/01/28 16:40:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -71,7 +71,7 @@ static void mta_relay_schedule(struct mta_relay *, unsigned int);
 static void mta_relay_timeout(int, short, void *);
 static void mta_flush(struct mta_relay *, int, const char *);
 static struct mta_route *mta_find_route(struct mta_connector *);
-static void mta_log(const struct envelope *, const char *, const char *,
+static void mta_log(const struct mta_envelope *, const char *, const char *,
     const char *);
 
 SPLAY_HEAD(mta_relay_tree, mta_relay);
@@ -141,12 +141,14 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	struct mta_source	*source;
 	struct mta_domain	*domain;
 	struct mta_mx		*mx, *imx;
+	struct mta_envelope	*e;
 	struct sockaddr_storage	 ss;
 	struct tree		*batch;
-	struct envelope		*e;
+	struct envelope		 evp;
 	struct msg		 m;
 	const char		*secret;
 	uint64_t		 reqid;
+	char			 buf[MAX_LINE_SIZE];
 	int			 dnserror, preference, v, status;
 
 	if (p->proc == PROC_QUEUE) {
@@ -164,13 +166,12 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		case IMSG_MTA_BATCH_ADD:
-			e = xmalloc(sizeof(*e), "mta:envelope");
 			m_msg(&m, imsg);
 			m_get_id(&m, &reqid);
-			m_get_envelope(&m, e);
+			m_get_envelope(&m, &evp);
 			m_end(&m);
 
-			relay = mta_relay(e);
+			relay = mta_relay(&evp);
 			batch = tree_xget(&batches, reqid);
 
 			if ((task = tree_get(batch, relay->id)) == NULL) {
@@ -180,8 +181,13 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 				TAILQ_INIT(&task->envelopes);
 				task->relay = relay;
 				tree_xset(batch, relay->id, task);
-				task->msgid = evpid_to_msgid(e->id);
-				task->sender = e->sender;
+				task->msgid = evpid_to_msgid(evp.id);
+				if (evp.sender.user[0] || evp.sender.domain[0])
+					snprintf(buf, sizeof buf, "%s@%s",
+					    evp.sender.user, evp.sender.domain);
+				else
+					buf[0] = '\0';
+				task->sender = xstrdup(buf, "mta_task:sender");
 			} else
 				mta_relay_unref(relay); /* from here */
 
@@ -190,15 +196,25 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			 * level, but the batch sent by the scheduler should
 			 * be valid.
 			 */
-			if (task->msgid != evpid_to_msgid(e->id))
+			if (task->msgid != evpid_to_msgid(evp.id))
 				errx(1, "msgid mismatch in batch");
 
+			e = xcalloc(1, sizeof *e, "mta_envelope");
+			e->id = evp.id;
+			e->creation = evp.creation;
+			snprintf(buf, sizeof buf, "%s@%s",
+			    evp.dest.user, evp.dest.domain);
+			e->dest = xstrdup(buf, "mta_envelope:dest");
+			snprintf(buf, sizeof buf, "%s@%s",
+			    evp.rcpt.user, evp.rcpt.domain);
+			if (strcmp(buf, e->dest))
+				e->rcpt = xstrdup(buf, "mta_envelope:rcpt");
+			e->task = task;
 			/* XXX honour relay->maxrcpt */
 			TAILQ_INSERT_TAIL(&task->envelopes, e, entry);
 			stat_increment("mta.envelope", 1);
 			log_debug("debug: mta: received evp:%016" PRIx64
-			    " for <%s@%s>",
-			    e->id, e->dest.user, e->dest.domain);
+			    " for <%s>", e->id, e->dest);
 			return;
 
 		case IMSG_MTA_BATCH_END:
@@ -561,7 +577,7 @@ mta_route_next_task(struct mta_relay *relay, struct mta_route *route)
 }
 
 void
-mta_delivery(struct envelope *e, const char *relay, int delivery,
+mta_delivery(struct mta_envelope *e, const char *relay, int delivery,
     const char *status)
 {
 	if (delivery == IMSG_DELIVERY_OK) {
@@ -964,10 +980,10 @@ mta_drain(struct mta_relay *r)
 static void
 mta_flush(struct mta_relay *relay, int fail, const char *error)
 {
-	struct envelope	*e;
-	struct mta_task	*task;
-	const char	*pfx;
-	size_t		 n;
+	struct mta_envelope	*e;
+	struct mta_task		*task;
+	const char		*pfx;
+	size_t			 n;
 
 	log_debug("debug: mta_flush(%s, %i, \"%s\")",
 	    mta_relay_to_text(relay), fail, error);
@@ -985,9 +1001,12 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 		while ((e = TAILQ_FIRST(&task->envelopes))) {
 			TAILQ_REMOVE(&task->envelopes, e, entry);
 			mta_delivery(e, relay->domain->name, fail, error);
+			free(e->dest);
+			free(e->rcpt);
 			free(e);
 			n++;
 		}
+		free(task->sender);
 		free(task);
 	}
 
@@ -1119,22 +1138,21 @@ mta_find_route(struct mta_connector *c)
 }
 
 static void
-mta_log(const struct envelope *evp, const char *prefix, const char *relay,
+mta_log(const struct mta_envelope *evp, const char *prefix, const char *relay,
     const char *status)
 {
 	char rcpt[MAX_LINE_SIZE];
 
 	rcpt[0] = '\0';
-	if (strcmp(evp->rcpt.user, evp->dest.user) ||
-	    strcmp(evp->rcpt.domain, evp->dest.domain))
-		snprintf(rcpt, sizeof rcpt, "rcpt=<%s@%s>, ",
-		    evp->rcpt.user, evp->rcpt.domain);
+	if (evp->rcpt)
+		snprintf(rcpt, sizeof rcpt, "rcpt=<%s>, ", evp->rcpt);
 
-	log_info("relay: %s for %016" PRIx64 ": from=<%s@%s>, to=<%s@%s>, "
+	log_info("relay: %s for %016" PRIx64 ": from=<%s>, to=<%s>, "
 	    "%srelay=%s delay=%s, stat=%s",
 	    prefix,
-	    evp->id, evp->sender.user, evp->sender.domain,
-	    evp->dest.user, evp->dest.domain,
+	    evp->id,
+	    evp->task->sender,
+	    evp->dest,
 	    rcpt,
 	    relay,
 	    duration_to_text(time(NULL) - evp->creation),
