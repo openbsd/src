@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.125 2013/01/17 21:49:48 chris Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.126 2013/01/28 02:57:02 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -163,6 +163,7 @@ int vr_alloc_mbuf(struct vr_softc *, struct vr_chain_onefrag *);
 #define	VR_Q_CSUM		(1<<1)
 #define	VR_Q_CAM		(1<<2)
 #define	VR_Q_HWTAG		(1<<3)
+#define	VR_Q_INTDISABLE		(1<<4)
 
 struct vr_type {
 	pci_vendor_id_t		vr_vid;
@@ -178,7 +179,7 @@ struct vr_type {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
 	    0 },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
-	    VR_Q_CSUM | VR_Q_CAM | VR_Q_HWTAG },
+	    VR_Q_CSUM | VR_Q_CAM | VR_Q_HWTAG | VR_Q_INTDISABLE },
 	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
 	    VR_Q_NEEDALIGN },
 	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
@@ -724,7 +725,7 @@ vr_list_tx_init(struct vr_softc *sc)
 	cd = &sc->vr_cdata;
 	ld = sc->vr_ldata;
 
-	cd->vr_tx_cnt = 0;
+	cd->vr_tx_cnt = cd->vr_tx_pkts = 0;
 
 	for (i = 0; i < VR_TX_LIST_CNT; i++) {
 		cd->vr_tx_chain[i].vr_ptr = &ld->vr_tx_list[i];
@@ -1198,7 +1199,7 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 	struct vr_chain		*c = *cp;
 	struct vr_desc		*f = NULL;
 	struct mbuf		*m_new = NULL;
-	u_int32_t		vr_ctl = 0, vr_status = 0;
+	u_int32_t		vr_ctl = 0, vr_status = 0, intdisable = 0;
 	bus_dmamap_t		txmap;
 	int			i, runt = 0;
 
@@ -1259,6 +1260,18 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 	}
 #endif
 
+	/*
+	 * We only want TX completion interrupts on every Nth packet.
+	 * We need to set VR_TXNEXT_INTDISABLE on every descriptor except
+	 * for the last discriptor of every Nth packet, where we set
+	 * VR_TXCTL_FINT.  The former is in the specs for only some chips.
+	 * present: VT6102 VT6105M VT8235M
+	 * not present: VT86C100 6105LOM
+	 */
+	if (++sc->vr_cdata.vr_tx_pkts % VR_TX_INTR_THRESH != 0 &&
+	    sc->vr_quirks & VR_Q_INTDISABLE)
+		intdisable = VR_TXNEXT_INTDISABLE;
+
 	if (m_new != NULL) {
 		m_freem(m_head);
 
@@ -1276,7 +1289,7 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 			f->vr_ctl |= htole32(VR_TXCTL_FIRSTFRAG);
 		f->vr_status = htole32(vr_status);
 		f->vr_data = htole32(txmap->dm_segs[i].ds_addr);
-		f->vr_next = htole32(c->vr_nextdesc->vr_paddr);
+		f->vr_next = htole32(c->vr_nextdesc->vr_paddr | intdisable);
 		sc->vr_cdata.vr_tx_cnt++;
 	}
 
@@ -1288,12 +1301,15 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m_head)
 		    VR_TXCTL_TLINK | vr_ctl);
 		f->vr_status = htole32(vr_status);
 		f->vr_data = htole32(sc->sc_zeromap.vrm_map->dm_segs[0].ds_addr);
-		f->vr_next = htole32(c->vr_nextdesc->vr_paddr);
+		f->vr_next = htole32(c->vr_nextdesc->vr_paddr | intdisable);
 		sc->vr_cdata.vr_tx_cnt++;
 	}
 
 	/* Set EOP on the last descriptor */
-	f->vr_ctl |= htole32(VR_TXCTL_LASTFRAG | VR_TXCTL_FINT);
+	f->vr_ctl |= htole32(VR_TXCTL_LASTFRAG);
+
+	if (sc->vr_cdata.vr_tx_pkts % VR_TX_INTR_THRESH == 0)
+		f->vr_ctl |= htole32(VR_TXCTL_FINT);
 
 	return (0);
 }
@@ -1582,6 +1598,15 @@ vr_watchdog(struct ifnet *ifp)
 	struct vr_softc		*sc;
 
 	sc = ifp->if_softc;
+
+	/*
+	 * Since we're only asking for completion interrupts only every
+	 * few packets, occasionally the watchdog will fire when we have
+	 * some TX descriptors to reclaim, so check for that first.
+	 */
+	vr_txeof(sc);
+	if (sc->vr_cdata.vr_tx_cnt == 0);
+		return;
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);

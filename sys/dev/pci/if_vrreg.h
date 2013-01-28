@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.33 2013/01/16 05:25:57 dtucker Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.34 2013/01/28 02:57:02 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -429,11 +429,15 @@ struct vr_desc {
 #define VR_TXCTL_LASTFRAG	0x00400000
 #define VR_TXCTL_FINT		0x00800000
 
+/* TDES3 aka vr_next */
+#define VR_TXNEXT_INTDISABLE	0x00000001
+
 #define VR_MAXFRAGS		8
 #define VR_RX_LIST_CNT		128
 #define VR_TX_LIST_CNT		128
 #define VR_MIN_FRAMELEN		60
 #define VR_RXLEN		1524
+#define VR_TX_INTR_THRESH	8
 
 struct vr_list_data {
 	struct vr_desc		vr_rx_list[VR_RX_LIST_CNT];
@@ -467,6 +471,7 @@ struct vr_chain_data {
 	struct vr_chain		*vr_tx_cons;
 	struct vr_chain		*vr_tx_prod;
 	int			vr_tx_cnt;
+	unsigned int		vr_tx_pkts;
 };
 
 struct vr_mii_frame {
