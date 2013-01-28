@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.28 2013/01/28 11:09:53 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.29 2013/01/28 11:58:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1010,6 +1010,11 @@ mta_flush_task(struct mta_session *s, int delivery, const char *error)
 
 	free(s->task);
 	s->task = NULL;
+
+	if (s->datafp) {
+		fclose(s->datafp);
+		s->datafp = NULL;
+	}
 
 	stat_decrement("mta.envelope", n);
 	stat_decrement("mta.task.running", 1);
