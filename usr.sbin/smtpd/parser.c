@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.31 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.32 2013/01/28 11:09:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -146,6 +146,7 @@ static const struct token t_trace[] = {
 	{KEYWORD,	"transfer",    		LOG_TRACE_MTA,		NULL},
 	{KEYWORD,	"bounce",    		LOG_TRACE_BOUNCE,	NULL},
 	{KEYWORD,	"scheduler",   		LOG_TRACE_SCHEDULER,  	NULL},
+	{KEYWORD,	"lookup",   		LOG_TRACE_LOOKUP,  	NULL},
 	{KEYWORD,	"stat",   		LOG_TRACE_STAT,	  	NULL},
 	{KEYWORD,	"rules",   		LOG_TRACE_RULES,  	NULL},
 	{KEYWORD,	"msg-size",   		LOG_TRACE_IMSG_SIZE,	NULL},
@@ -161,6 +162,7 @@ static const struct token t_untrace[] = {
 	{KEYWORD,	"transfer",    		LOG_UNTRACE_MTA,	NULL},
 	{KEYWORD,	"bounce",    		LOG_UNTRACE_BOUNCE,	NULL},
 	{KEYWORD,	"scheduler",   		LOG_UNTRACE_SCHEDULER, 	NULL},
+	{KEYWORD,	"lookup",   		LOG_UNTRACE_LOOKUP, 	NULL},
 	{KEYWORD,	"stat",   		LOG_UNTRACE_STAT,  	NULL},
 	{KEYWORD,	"rules",   		LOG_UNTRACE_RULES,  	NULL},
 	{KEYWORD,	"msg-size",   		LOG_UNTRACE_IMSG_SIZE,	NULL},

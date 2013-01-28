@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.398 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.399 2013/01/28 11:09:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -577,9 +577,10 @@ struct smtpd {
 #define	TRACE_MTA	0x0020
 #define	TRACE_BOUNCE	0x0040
 #define	TRACE_SCHEDULER	0x0080
-#define	TRACE_STAT	0x0100
-#define	TRACE_RULES	0x0200
-#define	TRACE_IMSGSIZE	0x0400
+#define	TRACE_LOOKUP	0x0100
+#define	TRACE_STAT	0x0200
+#define	TRACE_RULES	0x0400
+#define	TRACE_IMSGSIZE	0x0800
 
 #define PROFILE_TOSTAT	0x0001
 #define PROFILE_IMSG	0x0002
@@ -1189,7 +1190,7 @@ void m_get_envelope(struct msg *, struct envelope *);
 /* mta.c */
 pid_t mta(void);
 void mta_route_ok(struct mta_relay *, struct mta_route *);
-void mta_route_error(struct mta_relay *, struct mta_route *, const char *);
+void mta_route_error(struct mta_relay *, struct mta_route *);
 void mta_route_collect(struct mta_relay *, struct mta_route *);
 void mta_source_error(struct mta_relay *, struct mta_route *, const char *);
 void mta_delivery(struct envelope *, const char *, int, const char *);

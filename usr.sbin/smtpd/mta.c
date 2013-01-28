@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.149 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.150 2013/01/28 11:09:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -491,15 +491,12 @@ mta_source_error(struct mta_relay *relay, struct mta_route *route, const char *e
  * Also, we need a timeout on that.
  */
 void
-mta_route_error(struct mta_relay *relay, struct mta_route *route, const char *e)
+mta_route_error(struct mta_relay *relay, struct mta_route *route)
 {
 	route->dst->nerror++;
 
 	if (route->dst->flags & HOST_IGNORE)
 		return;
-
-	log_info("smtp-out: Error on route %s: %s",
-	    mta_route_to_text(route), e);
 
 	if (route->dst->nerror > MAXERROR_PER_HOST) {
 		log_info("smtp-out: Too many errors on host %s: ignoring this MX",

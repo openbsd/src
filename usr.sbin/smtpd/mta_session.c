@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.27 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.28 2013/01/28 11:09:53 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -443,8 +443,10 @@ mta_connect(struct mta_session *s)
 		schema = "smtps://";
 	else
 		schema = "smtp://";
-	log_debug("debug: mta: %p: connecting to %s%s:%i (%s)",
-	    s, schema, sa_to_text(sa), portno, s->route->dst->ptrname);
+
+	log_info("smtp-out: Connecting to %s%s:%i (%s) on session"
+	    " %016"PRIx64"...", schema, sa_to_text(s->route->dst->sa),
+	    portno, s->route->dst->ptrname, s->id);
 
 	mta_enter_state(s, MTA_INIT);
 	iobuf_xinit(&s->iobuf, 0, 0, "mta_connect");
@@ -794,8 +796,8 @@ mta_io(struct io *io, int evt)
 			schema = "smtps://";
 		else
 			schema = "smtp://";
-		log_debug("debug: mta: %p: connected to %s%s (%s)",
-		    s, schema, sa_to_text(s->route->dst->sa), s->route->dst->ptrname);
+
+		log_info("smtp-out: Connected on session %016"PRIx64, s->id);
 
 		if (s->use_smtps) {
 			io_set_write(io);
@@ -867,6 +869,9 @@ mta_io(struct io *io, int evt)
 			goto nextline;
 
 		if (s->state == MTA_QUIT) {
+			log_info("smtp-out: Closing session %016"PRIx64
+			    ": %i message%s sent.", s->id, s->msgcount,
+			    (s->msgcount > 1) ? "s" : "");
 			mta_free(s);
 			return;
 		}
@@ -1031,7 +1036,15 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 		fatal("mta: vasprintf");
 	va_end(ap);
 
-	mta_route_error(s->relay, s->route, error);
+	if (s->msgcount)
+		log_info("smtp-out: Error on session %016"PRIx64
+		    " after %i message%s sent: %s", s->id, s->msgcount,
+		    (s->msgcount > 1) ? "s" : "", error);
+	else
+		log_info("smtp-out: Error on session %016"PRIx64 ": %s",
+		    s->id, error);
+
+	mta_route_error(s->relay, s->route);
 
 	if (s->task)
 		mta_flush_task(s, IMSG_DELIVERY_TEMPFAIL, error);
