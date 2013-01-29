@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.22 2013/01/29 01:19:27 dlg Exp $
+.\"	$OpenBSD: bus_space.9,v 1.23 2013/01/29 01:30:43 dlg Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1412,9 +1412,21 @@ functions imply a host byte-order and a bus byte-order and take care of
 any translation for the caller.
 In some cases, however, hardware may map a FIFO or some other memory
 region for which the caller may want to use untranslated access.
-Access to these types of memory regions should be with the
-.Fn bus_space_{read,write}_raw_*N
-functions.
+Access to these types of memory regions should be with the following functions.
+.Pp
+.Bl -ohang -compact
+.It Fn bus_space_read_raw_2 "space" "handle" "offset"
+.It Fn bus_space_read_raw_4 "space" "handle" "offset"
+.It Fn bus_space_read_raw_8 "space" "handle" "offset"
+.It Fn bus_space_write_raw_2 "space" "handle" "offset" "value"
+.It Fn bus_space_write_raw_4 "space" "handle" "offset" "value"
+.It Fn bus_space_write_raw_8 "space" "handle" "offset" "value"
+.El
+.Pp
+The
+.Fn bus_space_{read,write}_raw_N
+functions take the same arguments and return the same types as their
+non-raw counterparts, but do not do any translation of the values.
 .Pp
 .Bl -ohang -compact
 .\".It Fn bus_space_read_stream_1 "space" "handle" "offset"
@@ -1422,9 +1434,6 @@ functions.
 .\".It Fn bus_space_read_stream_4 "space" "handle" "offset"
 .\".It Fn bus_space_read_stream_8 "space" "handle" "offset"
 .\".It Fn bus_space_read_raw_multi_1 "space" "handle" "offset" "datap" "size"
-.It Fn bus_space_read_raw_2 "space" "handle" "offset"
-.It Fn bus_space_read_raw_4 "space" "handle" "offset"
-.It Fn bus_space_read_raw_8 "space" "handle" "offset"
 .It Fn bus_space_read_raw_multi_2 "space" "handle" "offset" "datap" "size"
 .It Fn bus_space_read_raw_multi_4 "space" "handle" "offset" "datap" "size"
 .It Fn bus_space_read_raw_multi_8 "space" "handle" "offset" "datap" "size"
@@ -1437,9 +1446,6 @@ functions.
 .\".It Fn bus_space_write_stream_4 "space" "handle" "offset" "value"
 .\".It Fn bus_space_write_stream_8 "space" "handle" "offset" "value"
 .\".It Fn bus_space_write_raw_multi_1 "space" "handle" "offset" "datap" "size"
-.It Fn bus_space_write_raw_2 "space" "handle" "offset" "value"
-.It Fn bus_space_write_raw_4 "space" "handle" "offset" "value"
-.It Fn bus_space_write_raw_8 "space" "handle" "offset" "value"
 .It Fn bus_space_write_raw_multi_2 "space" "handle" "offset" "datap" "size"
 .It Fn bus_space_write_raw_multi_4 "space" "handle" "offset" "datap" "size"
 .It Fn bus_space_write_raw_multi_8 "space" "handle" "offset" "datap" "size"
