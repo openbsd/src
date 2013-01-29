@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.27 2013/01/18 01:54:40 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.28 2013/01/29 01:15:57 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -143,6 +143,10 @@ struct x86_bus_space_ops {
 #define bus_space_read_4(_t, _h, _o) ((_t)->read_4((_h), (_o)))
 #define bus_space_read_8(_t, _h, _o) ((_t)->read_8((_h), (_o)))
 
+#define bus_space_read_raw_2(_t, _h, _o) ((_t)->read_2((_h), (_o)))
+#define bus_space_read_raw_4(_t, _h, _o) ((_t)->read_4((_h), (_o)))
+#define bus_space_read_raw_8(_t, _h, _o) ((_t)->read_8((_h), (_o)))
+
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -256,6 +260,13 @@ struct x86_bus_space_ops {
 #define bus_space_write_4(_t, _h, _o, _v) \
 	((_t)->write_4((_h), (_o), (_v)))
 #define bus_space_write_8(_t, _h, _o, _v) \
+	((_t)->write_8((_h), (_o), (_v)))
+
+#define bus_space_write_raw_2(_t, _h, _o, _v) \
+	((_t)->write_2((_h), (_o), (_v)))
+#define bus_space_write_raw_4(_t, _h, _o, _v) \
+	((_t)->write_4((_h), (_o), (_v)))
+#define bus_space_write_raw_8(_t, _h, _o, _v) \
 	((_t)->write_8((_h), (_o), (_v)))
 
 /*

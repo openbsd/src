@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.56 2012/12/04 20:51:10 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.57 2013/01/29 01:15:57 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -126,8 +126,15 @@ u_int16_t	bus_space_read_2(bus_space_tag_t, bus_space_handle_t,
 u_int32_t	bus_space_read_4(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t);
 
-#if 0	/* Cause a link error for bus_space_read_8 */
+#define bus_space_read_raw_2(t, h, o) \
+    bus_space_read_2((t), (h), (o))
+#define bus_space_read_raw_4(t, h, o) \
+    bus_space_read_4((t), (h), (o))
+
+#if 0
+/* Cause a link error for bus_space_read_8 and bus_space_read_raw_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
+#define	bus_space_read_raw_8(t, h, o)	!!! bus_space_read_raw_8 unimplemented !!!
 #endif
 
 /*
@@ -235,8 +242,15 @@ void	bus_space_write_2(bus_space_tag_t, bus_space_handle_t,
 void	bus_space_write_4(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, u_int32_t);
 
-#if 0	/* Cause a link error for bus_space_write_8 */
+#define bus_space_write_raw_2(t, h, o, v) \
+    bus_space_write_2((t), (h), (o), (v))
+#define bus_space_write_raw_4(t, h, o, v) \
+    bus_space_write_4((t), (h), (o), (v))
+
+#if 0
+/* Cause a link error for bus_space_write_8 and bus_space_write_raw_8  */
 #define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
+#define	bus_space_write_raw_8	!!! bus_space_write_raw_8 not implemented !!!
 #endif
 
 /*
