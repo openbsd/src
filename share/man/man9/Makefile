@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.175 2013/01/28 09:46:25 dlg Exp $
+#	$OpenBSD: Makefile,v 1.176 2013/01/29 01:19:27 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -62,6 +62,9 @@ MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_mmap.9 \
 	bus_space.9 bus_space_read_1.9 bus_space.9 bus_space_read_2.9 \
 	bus_space.9 bus_space_read_4.9 bus_space.9 bus_space_read_8.9 \
+	bus_space.9 bus_space_read_raw_2.9 \
+	bus_space.9 bus_space_read_raw_4.9 \
+	bus_space.9 bus_space_read_raw_8.9 \
 	bus_space.9 bus_space_read_multi_1.9 \
 	bus_space.9 bus_space_read_multi_2.9 \
 	bus_space.9 bus_space_read_multi_4.9 \
@@ -87,6 +90,9 @@ MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_subregion.9 bus_space.9 bus_space_unmap.9 \
 	bus_space.9 bus_space_write_1.9 bus_space.9 bus_space_write_2.9 \
 	bus_space.9 bus_space_write_4.9 bus_space.9 bus_space_write_8.9 \
+	bus_space.9 bus_space_write_raw_2.9 \
+	bus_space.9 bus_space_write_raw_4.9 \
+	bus_space.9 bus_space_write_raw_8.9 \
 	bus_space.9 bus_space_write_multi_1.9 \
 	bus_space.9 bus_space_write_multi_2.9 \
 	bus_space.9 bus_space_write_multi_4.9 \
