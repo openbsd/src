@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.41 2013/01/25 02:56:41 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.42 2013/01/29 07:17:45 brad Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -878,7 +878,7 @@ myx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ISSET(ifp->if_flags, IFF_UP)) {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
-				myx_iff(sc);
+				error = ENETRESET;
 			else
 				myx_up(sc);
 		} else {
@@ -1236,13 +1236,13 @@ myx_iff(struct myx_softc *sc)
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 
+	CLR(ifp->if_flags, IFF_ALLMULTI);
+
 	if (myx_cmd(sc, ISSET(ifp->if_flags, IFF_PROMISC) ?
 	    MYXCMD_SET_PROMISC : MYXCMD_UNSET_PROMISC, &mc, NULL) != 0) {
 		printf("%s: failed to configure promisc mode\n", DEVNAME(sc));
 		return;
 	}
-
-	CLR(ifp->if_flags, IFF_ALLMULTI);
 
 	if (myx_cmd(sc, MYXCMD_SET_ALLMULTI, &mc, NULL) != 0) {
 		printf("%s: failed to enable ALLMULTI\n", DEVNAME(sc));
@@ -1254,7 +1254,7 @@ myx_iff(struct myx_softc *sc)
 		return;
 	}
 
-	if (sc->sc_ac.ac_multirangecnt > 0) {
+	if (ISSET(ifp->if_flags, IFF_PROMISC) || sc->sc_ac.ac_multirangecnt > 0) {
 		SET(ifp->if_flags, IFF_ALLMULTI);
 		return;
 	}
