@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.40 2012/04/06 18:06:40 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.41 2013/01/29 22:39:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -333,7 +333,8 @@ __elf_knlist(int fd, DB *db, int ksyms)
 		goto done;
 	}
 
-	symstrsize = symsize = kernvma = 0;
+	symstrsize = symsize = 0;
+	kernvma = (u_long)-1;	/* 0 is a valid value (at least on hp300) */
 	for (i = 0; i < eh.e_shnum; i++) {
 		if (sh[i].sh_type == SHT_STRTAB) {
 			for (j = 0; j < eh.e_shnum; j++)
@@ -352,7 +353,7 @@ __elf_knlist(int fd, DB *db, int ksyms)
 		}
 	}
 
-	if (!symstrsize || !symsize || !kernvma) {
+	if (symstrsize == 0 || symsize == 0 || kernvma == (u_long)-1) {
 		fmterr = "corrupt file";
 		error = -1;
 		goto done;
