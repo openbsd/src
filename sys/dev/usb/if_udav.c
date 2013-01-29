@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.59 2012/12/05 23:20:21 deraadt Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.60 2013/01/29 02:06:55 brad Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -123,7 +123,7 @@ int udav_miibus_readreg(struct device *, int, int);
 void udav_miibus_writereg(struct device *, int, int, int);
 void udav_miibus_statchg(struct device *);
 int udav_init(struct ifnet *);
-void udav_setmulti(struct udav_softc *);
+void udav_iff(struct udav_softc *);
 void udav_reset(struct udav_softc *);
 
 int udav_csr_read(struct udav_softc *, int, void *, int);
@@ -628,12 +628,6 @@ udav_init(struct ifnet *ifp)
 	/* Initialize RX control register */
 	UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_DIS_LONG | UDAV_RCR_DIS_CRC);
 
-	/* If we want promiscuous mode, accept all physical frames. */
-	if (ifp->if_flags & IFF_PROMISC)
-		UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_ALL|UDAV_RCR_PRMSC);
-	else
-		UDAV_CLRBIT(sc, UDAV_RCR, UDAV_RCR_ALL|UDAV_RCR_PRMSC);
-
 	/* Initialize transmit ring */
 	if (udav_tx_list_init(sc) == ENOBUFS) {
 		printf("%s: tx list init failed\n", sc->sc_dev.dv_xname);
@@ -648,8 +642,8 @@ udav_init(struct ifnet *ifp)
 		return (EIO);
 	}
 
-	/* Load the multicast filter */
-	udav_setmulti(sc);
+	/* Program promiscuous mode and multicast filters */
+	udav_iff(sc);
 
 	/* Enable RX */
 	UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_RXEN);
@@ -729,13 +723,11 @@ udav_activate(struct device *self, int act)
 
 #define UDAV_BITS	6
 
-#define UDAV_CALCHASH(addr) \
-	(ether_crc32_le((addr), ETHER_ADDR_LEN) & ((1 << UDAV_BITS) - 1))
-
 void
-udav_setmulti(struct udav_softc *sc)
+udav_iff(struct udav_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = GET_IFP(sc);
+	struct arpcom *ac = &sc->sc_ac;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int8_t hashes[8];
@@ -746,41 +738,30 @@ udav_setmulti(struct udav_softc *sc)
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
-	ifp = GET_IFP(sc);
+	UDAV_CLRBIT(sc, UDAV_RCR, UDAV_RCR_ALL | UDAV_RCR_PRMSC);
+	memset(hashes, 0x00, sizeof(hashes));
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_PROMISC) {
-		UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_ALL|UDAV_RCR_PRMSC);
-		return;
-	} else if (ifp->if_flags & IFF_ALLMULTI) {
-	allmulti:
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_ALL);
-		UDAV_CLRBIT(sc, UDAV_RCR, UDAV_RCR_PRMSC);
-		return;
+		if (ifp->if_flags & IFF_PROMISC)
+			UDAV_SETBIT(sc, UDAV_RCR, UDAV_RCR_PRMSC);
+	} else {
+		hashes[7] |= 0x80;	/* broadcast address */
+
+		/* now program new ones */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) &
+			    ((1 << UDAV_BITS) - 1);
+
+			hashes[h>>3] |= 1 << (h & 0x7);
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
-	/* first, zot all the existing hash bits */
-	memset(hashes, 0x00, sizeof(hashes));
-	hashes[7] |= 0x80;	/* broadcast address */
-	udav_csr_write(sc, UDAV_MAR, hashes, sizeof(hashes));
-
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			   ETHER_ADDR_LEN) != 0)
-			goto allmulti;
-
-		h = UDAV_CALCHASH(enm->enm_addrlo);
-		hashes[h>>3] |= 1 << (h & 0x7);
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	/* disable all multicast */
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	UDAV_CLRBIT(sc, UDAV_RCR, UDAV_RCR_ALL);
-
-	/* write hash value to the register */
 	udav_csr_write(sc, UDAV_MAR, hashes, sizeof(hashes));
 }
 
@@ -1194,7 +1175,6 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct udav_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct mii_data *mii;
 	int s, error = 0;
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
@@ -1205,42 +1185,32 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		mii = GET_MII(sc);
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
-		break;
-
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		udav_init(ifp);
+		if (!(ifp->if_flags & IFF_RUNNING))
+			udav_init(ifp);
 
-		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-			break;
-#endif /* INET */
-		}
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC) {
-				UDAV_SETBIT(sc, UDAV_RCR,
-				    UDAV_RCR_ALL|UDAV_RCR_PRMSC);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC)) {
-				UDAV_CLRBIT(sc, UDAV_RCR,
-				    UDAV_RCR_PRMSC);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				udav_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				udav_stop(ifp, 1);
 		}
-		error = 0;
+		break;
+
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	default:
@@ -1249,7 +1219,7 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			udav_setmulti(sc);
+			udav_iff(sc);
 		error = 0;
 	}
 
