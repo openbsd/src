@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.34 2013/01/17 20:34:18 bluhm Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.35 2013/01/29 15:04:42 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -58,7 +58,7 @@ icmp_setup(struct relayd *env, struct ctl_icmp_event *cie, int af)
 	if (af == AF_INET6)
 		proto = IPPROTO_ICMPV6;
 	if ((cie->s = socket(af, SOCK_RAW, proto)) < 0)
-		fatal("icmp_init: socket");
+		fatal("icmp_setup: socket");
 	socket_set_blockmode(cie->s, BM_NONBLOCK);
 	cie->env = env;
 	cie->af = af;
