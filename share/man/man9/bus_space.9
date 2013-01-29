@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.24 2013/01/29 01:31:59 dlg Exp $
+.\"	$OpenBSD: bus_space.9,v 1.25 2013/01/29 01:37:00 dlg Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1473,55 +1473,6 @@ In all other respects these functions are the same as their non-raw
 counterparts.
 Please consult the documentation for those functions for further
 information.
-.Sh EXPECTED CHANGES TO THE BUS_SPACE FUNCTIONS
-The definition of the
-.Nm
-functions should not yet be considered finalized.
-There are several changes and improvements which should be explored,
-including:
-.Bl -bullet
-.It
-Providing a mechanism by which incorrectly-written drivers will be
-automatically given barriers and properly-written drivers won't be
-forced to use more barriers than they need.
-This should probably be done via a
-.Li #define
-in the incorrectly-written drivers.
-Unfortunately, at this time, few drivers actually use barriers correctly
-(or at all).
-Because of that,
-.Nm
-implementations on architectures which do buffering must always do the
-barriers inside the
-.Nm
-calls, to be safe.
-That has a potentially significant performance impact.
-.It
-Exporting the
-.Nm
-functions to user-land so that applications (such as X servers) have
-easier, more portable access to device space.
-.It
-Redefining bus space tags and handles so that machine-independent bus
-interface drivers (for example PCI to VME bridges) could define and
-implement bus spaces without requiring machine-dependent code.
-If this is done, it should be done in such a way that machine-dependent
-optimizations should remain possible.
-.It
-Converting bus spaces (such as PCI configuration space) which currently
-use space-specific access methods to use the
-.Nm
-functions where that is appropriate.
-.It
-Redefining the way bus space is mapped and allocated, so that mapping
-and allocation are done with bus specific functions which return bus
-space tags.
-This would allow further optimization than is currently possible, and
-would also ease translation of the
-.Nm
-functions into user space (since mapping in user space would look like
-it just used a different bus-specific mapping function).
-.El
 .Sh SEE ALSO
 .Xr bus_dma 9
 .Sh HISTORY
