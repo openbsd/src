@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.23 2013/01/29 01:30:43 dlg Exp $
+.\"	$OpenBSD: bus_space.9,v 1.24 2013/01/29 01:31:59 dlg Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1524,19 +1524,6 @@ it just used a different bus-specific mapping function).
 .El
 .Sh SEE ALSO
 .Xr bus_dma 9
-.\".Sh STANDARDS
-.\".Pp
-.\"The current version of the
-.\".Nm
-.\"interface specification differs slightly from the original
-.\"specification that came into wide use.
-.\"A few of the function names and arguments have changed
-.\"for consistency and increased functionality.
-.\"Drivers that were written to the
-.\"old, deprecated specification can be compiled by defining the
-.\".Dv __BUS_SPACE_COMPAT_OLDDEFS
-.\"preprocessor symbol before including
-.\".Pa Aq machine/bus.h .
 .Sh HISTORY
 The
 .Nm
