@@ -53,7 +53,7 @@
 ./usr/lib/libasn1.so.18.0
 ./usr/lib/libc.so.66.1
 ./usr/lib/libcom_err.so.18.0
-./usr/lib/libcrypto.so.21.0
+./usr/lib/libcrypto.so.22.0
 ./usr/lib/libcurses.so.12.1
 ./usr/lib/libedit.so.4.1
 ./usr/lib/libevent.so.3.1
@@ -2017,7 +2017,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/ohash.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl
-./usr/libdata/perl5/site_perl/sh-openbsd/openssl/acss.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/aes.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/asn1.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/openssl/asn1_mac.ph

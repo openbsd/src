@@ -1173,7 +1173,6 @@
 ./usr/include/ocurses.h
 ./usr/include/ohash.h
 ./usr/include/openssl
-./usr/include/openssl/acss.h
 ./usr/include/openssl/aes.h
 ./usr/include/openssl/asn1.h
 ./usr/include/openssl/asn1_mac.h
@@ -3132,8 +3131,6 @@
 ./usr/share/man/man3/acoshf.3
 ./usr/share/man/man3/acoshl.3
 ./usr/share/man/man3/acosl.3
-./usr/share/man/man3/acss.3
-./usr/share/man/man3/acss_setkey.3
 ./usr/share/man/man3/add_wch.3
 ./usr/share/man/man3/add_wchnstr.3
 ./usr/share/man/man3/add_wchstr.3
@@ -6874,7 +6871,6 @@
 ./usr/share/man/man9/uiomove.9
 ./usr/share/man/man9/ulmax.9
 ./usr/share/man/man9/ulmin.9
-./usr/share/man/man9/untimeout.9
 ./usr/share/man/man9/uprintf.9
 ./usr/share/man/man9/uvm.9
 ./usr/share/man/man9/uvm_chgkprot.9
