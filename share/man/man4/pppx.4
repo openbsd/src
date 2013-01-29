@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppx.4,v 1.1 2013/01/29 15:42:20 yasuoka Exp $
+.\"	$OpenBSD: pppx.4,v 1.2 2013/01/29 18:21:55 jmc Exp $
 .\"
 .\" Copyright (c) 2013 YASUOKA Masahiko <yasuoka@yasuoka.net>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm pppx
-.Nd ppp multiplexer device
+.Nd PPP multiplexer device
 .Sh SYNOPSIS
 .Cd "pseudo-device pppx"
 .Pp
@@ -29,10 +29,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver works with
+driver works with the
 .Xr npppd 8
 daemon,
-allocates a network interface for each Point-to-Point Protocol (PPP)
+allocating a network interface for each Point-to-Point Protocol (PPP)
 session by request from the daemon.
 It also works with
 .Xr pipex 4
@@ -44,8 +44,7 @@ To use
 .Nm
 from
 .Xr npppd 8
-daemon the administrator need to configure the interface configuration
-in
+the administrator needs to configure the interface configuration in
 .Xr npppd.conf 5 .
 Also the administrator needs to enable
 .Xr pipex 4
@@ -61,8 +60,8 @@ using
 .Xr pipex 4 ,
 .Xr hostname.if 5 ,
 .Xr npppd.conf 5 ,
-.Xr npppd 8 ,
 .Xr netstart 8 ,
+.Xr npppd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
