@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subject.pm,v 1.2 2011/02/22 00:23:14 espie Exp $
+# $OpenBSD: Subject.pm,v 1.3 2013/01/29 11:08:56 espie Exp $
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -22,11 +22,26 @@ package OpenBSD::Makewhatis::SubjectHandler;
 sub new
 {
 	my ($class, $p) = @_;
-	return bless { p => $p}, $class;
+	return bless { p => $p, subjects => []}, $class;
 }
 
 sub add
 {
+	my ($h, $s) = @_;
+	push(@{$h->{subjects}}, $s);
+	$h->{has_subjects} = 1;
+}
+
+sub no_subjects
+{
+	my $h = shift;
+	return !$h->{has_subjects};
+}
+
+sub subjects
+{
+	my $h = shift;
+	return @{$h->{subjects}};
 }
 
 sub p

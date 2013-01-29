@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Unformated.pm,v 1.8 2011/06/24 10:40:18 schwarze Exp $
+# $OpenBSD: Unformated.pm,v 1.9 2013/01/29 11:08:56 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -18,14 +18,14 @@ use strict;
 use warnings;
 package OpenBSD::Makewhatis::Unformated;
 
-# add_unformated_subject($lines, $toadd, $section, $p) :
+# add_unformated_subject($toadd, $section, $toexpand, $h) :
 #
 #   build subject from list of $toadd lines, and add it to the list
 #   of current subjects as section $section
 #
 sub add_unformated_subject
 {
-    my ($subjects, $toadd, $section, $toexpand, $h) = @_;
+    my ($toadd, $section, $toexpand, $h) = @_;
 
     my $exp = sub {
     	if (defined $toexpand->{$_[0]}) {
@@ -62,11 +62,11 @@ sub add_unformated_subject
     	# fine space adjustments
     while (s/\\[vh]\'.*?\'//g)
     	{}
-    unless (s/\s+\\-\s+/ ($section) - / || s/\s*\\\-/ ($section) -/ ||
+    unless (s/\s+\\-\s+/ ($section) - / || s/\s?\\\-/ ($section) -/ ||
     	s/\s-\s/ ($section) - /) {
 	$h->weird_subject($_) if $h->p->picky;
 	    # Try guessing where the separation falls...
-	s/\s+\:\s+/ ($section) - / || s/\S+\s+/$& ($section) - / || s/\s*$/ ($section) - (empty subject)/;
+	s/\s+\:\s+/ ($section) - / || s/\S+\s/$& ($section) - / || s/$/ ($section) - (empty subject)/;
     }
 	# other dashes
     s/\\-/-/g;
@@ -84,10 +84,10 @@ sub add_unformated_subject
     	$h->weird_subject($_) if $h->p->picky;
 	return;
     }
-    push(@$subjects, $_);
+    $h->add($_);
 }
 
-# $lines = handle($file, $h)
+# handle($file, $h)
 #
 #   handle an unformated manpage in $file
 #
@@ -96,7 +96,6 @@ sub add_unformated_subject
 sub handle
 {
     my ($f, $h) = @_;
-    my @lines = ();
     my %toexpand = (Na => 'NaN', Tm => '(tm)');
     my $so_found = 0;
     my $found_th = 0;
@@ -153,7 +152,7 @@ sub handle
 		last if m/^\.\s*(?:SH|sh|SS|ss|nf|LI)/;
 		    # several subjects in one manpage
 		if (m/^\.\s*(?:PP|Pp|br|PD|LP|sp)/) {
-		    add_unformated_subject(\@lines, \@subject,
+		    add_unformated_subject(\@subject,
 			$section, \%toexpand, $h) if @subject != 0;
 		    @subject = ();
 		    next;
@@ -167,8 +166,7 @@ sub handle
 		chomp;
 		s/\.\s*(?:B|I|IR|SM|BR)\s+//;
 		if (m/^\.\s*(\S\S)/) {
-		    $h->errsay("#2: not grokking #1", $_)
-			if $h->p->picky;
+		    $h->errsay("#2: not grokking #1", $_) if $h->p->picky;
 		    next;
 		}
 		push(@subject, $_) unless m/^\s*$/;
@@ -187,7 +185,7 @@ sub handle
 		    $macro eq 'Nx' and s/^/NetBSD /;
 		    if ($macro eq 'Nd') {
 			if (@keep != 0) {
-			    add_unformated_subject(\@lines, \@keep, 
+			    add_unformated_subject(\@keep, 
 				$section, \%toexpand, $h);
 			    @keep = ();
 			}
@@ -204,18 +202,17 @@ sub handle
 	}
     }
     if ($found_th && !$found_old) {
-    		$h->cant_find_subject;
+	    $h->cant_find_subject;
     }
     if ($found_dt && !$found_new) {
-    		$h->cant_find_subject;
+	    $h->cant_find_subject;
     }
     unshift(@subject, @keep) if @keep != 0;
-    add_unformated_subject(\@lines, \@subject, $section,
+    add_unformated_subject(\@subject, $section,
 	\%toexpand, $h) if @subject != 0;
     if (!$so_found && !$found_old && !$found_new) {
     	$h->errsay("Unknown manpage type #1");
     }
-    return \@lines;
 }
 
 1;

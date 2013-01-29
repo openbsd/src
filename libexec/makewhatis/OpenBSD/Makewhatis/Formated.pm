@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Formated.pm,v 1.6 2011/02/22 00:23:14 espie Exp $
+# $OpenBSD: Formated.pm,v 1.7 2013/01/29 11:08:56 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -18,15 +18,14 @@ use strict;
 use warnings;
 package OpenBSD::Makewhatis::Formated;
 
-# add_formated_subject($subjects, $_, $section, $h):
-#   add subject $_ to the list of current $subjects, in section $section.
+# add_formated_subject($_, $section, $h):
+#   add subject $_ to the list of current subjects in $h, in section $section.
 #
 sub add_formated_subject
 {
-    my ($subjects, $line, $section, $h) = @_;
-    my $_ = $line;
+    my ($_, $section, $h) = @_;
 
-    if (m/-/) {
+    if (m/\-/) {
 	s/([-+.\w\d,])\s+/$1 /g;
 	s/([a-z][A-z])-\s+/$1/g;
 	# some twits use: func -- description
@@ -37,8 +36,7 @@ sub add_formated_subject
 	    if (length($func) > 40 && $func =~ m/,/ && $section =~ /^3/) {
 	    	$func =~ s/\b \b//g;
 	    }
-	    $_ = "$func ($section) - $descr";
-	    push(@$subjects, $_);
+	    $h->add("$func ($section) - $descr");
 	    return;
 	}
     }
@@ -50,15 +48,14 @@ sub add_formated_subject
     	my ($func, $descr) = ($1, $2);
 	$func =~ s/\s+/ /g;
 	$descr =~ s/\s+/ /g;
-	$_ = "$func ($section) - $descr";
-	push(@$subjects, $_);
+	$h->add("$func ($section) - $descr");
 	return;
     }
 
     $h->weird_subject($_) unless $h->p->picky;
 }
 
-# $lines = handle($file, $h)
+# handle($file, $h)
 #
 #   handle a formatted manpage in $file
 #
@@ -69,15 +66,13 @@ sub handle
     my ($file, $h) = @_;
     my $_;
     my ($section, $subject);
-    my @lines=();
     my $foundname = 0;
     while (<$file>) {
 	chomp;
 	if (m/^$/) {
 	    # perl aggregates several subjects in one manpage
 	    # so we don't stop after we've got one subject
-	    add_formated_subject(\@lines, $subject, $section, $h) 
-		if defined $subject;
+	    add_formated_subject($subject, $section, $h) if defined $subject;
 	    $subject = undef;
 	    next;
 	}
@@ -112,7 +107,7 @@ sub handle
 	}
 	if ($foundname) {
 	    if (m/^\S/ || m/^\s+\*{3,}\s*$/) {
-		add_formated_subject(\@lines, $subject, $section, $h)
+		add_formated_subject($subject, $section, $h)
 		    if defined $subject;
 		last;
 	    } else {
@@ -132,8 +127,7 @@ sub handle
 	}
     }
 
-    $h->cant_find_subject if @lines == 0;
-    return \@lines;
+    $h->cant_find_subject if $h->no_subjects;
 }
 
 1;
