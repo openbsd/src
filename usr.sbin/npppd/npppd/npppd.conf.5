@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.5 2012/09/22 14:32:35 jmc Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.6 2013/01/29 15:42:20 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 22 2012 $
+.Dd $Mdocdate: January 29 2013 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -483,8 +483,7 @@ setting is described below:
 Use
 .Xr tun 4
 or
-.\".Xr pppx 4
-pppx
+.Xr pppx 4
 and
 specify its name to
 .Ar ifname .
@@ -652,7 +651,7 @@ bind tunnel from L2TP authenticated by LOCAL to tun1
 .Ed
 .Sh SEE ALSO
 .Xr pipex 4 ,
-.\".Xr pppx 4 ,
+.Xr pppx 4 ,
 .Xr tun 4 ,
 .Xr npppctl 8 ,
 .Xr npppd 8
