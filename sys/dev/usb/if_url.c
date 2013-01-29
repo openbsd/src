@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.63 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: if_url.c,v 1.64 2013/01/29 11:06:38 brad Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -123,7 +123,7 @@ int url_int_miibus_readreg(struct device *, int, int);
 void url_int_miibus_writereg(struct device *, int, int, int);
 void url_miibus_statchg(struct device *);
 int url_init(struct ifnet *);
-void url_setmulti(struct url_softc *);
+void url_iff(struct url_softc *);
 void url_reset(struct url_softc *);
 
 int url_csr_read_1(struct url_softc *, int);
@@ -505,18 +505,7 @@ url_init(struct ifnet *ifp)
 		   URL_TCR_NOCRC);
 
 	/* Init receive control register */
-	URL_SETBIT2(sc, URL_RCR, URL_RCR_TAIL | URL_RCR_AD);
-	if (ifp->if_flags & IFF_BROADCAST)
-		URL_SETBIT2(sc, URL_RCR, URL_RCR_AB);
-	else
-		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AB);
-
-	/* If we want promiscuous mode, accept all physical frames. */
-	if (ifp->if_flags & IFF_PROMISC)
-		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
-	else
-		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
-
+	URL_SETBIT2(sc, URL_RCR, URL_RCR_TAIL);
 
 	/* Initialize transmit ring */
 	if (url_tx_list_init(sc) == ENOBUFS) {
@@ -532,8 +521,8 @@ url_init(struct ifnet *ifp)
 		return (EIO);
 	}
 
-	/* Load the multicast filter */
-	url_setmulti(sc);
+	/* Program promiscuous mode and multicast filters */
+	url_iff(sc);
 
 	/* Enable RX and TX */
 	URL_SETBIT(sc, URL_CR, URL_CR_TE | URL_CR_RE);
@@ -595,68 +584,60 @@ url_activate(struct device *self, int act)
 	return (0);
 }
 
-#define url_calchash(addr) (ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
-
-
 void
-url_setmulti(struct url_softc *sc)
+url_iff(struct url_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = GET_IFP(sc);
+	struct arpcom *ac = &sc->sc_ac;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int32_t hashes[2] = { 0, 0 };
+	u_int32_t hashes[2];
+	u_int16_t rcr;
 	int h = 0;
-	int mcnt = 0;
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
-	ifp = GET_IFP(sc);
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
-		return;
-	} else if (ifp->if_flags & IFF_ALLMULTI) {
-	allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
-		URL_SETBIT2(sc, URL_RCR, URL_RCR_AAM);
-		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAP);
-		return;
-	}
-
-	/* first, zot all the existing hash bits */
-	url_csr_write_4(sc, URL_MAR0, 0);
-	url_csr_write_4(sc, URL_MAR4, 0);
-
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			   ETHER_ADDR_LEN) != 0)
-			goto allmulti;
-
-		h = url_calchash(enm->enm_addrlo);
-		if (h < 32)
-			hashes[0] |= (1 << h);
-		else
-			hashes[1] |= (1 << (h -32));
-		mcnt++;
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
+	rcr = url_csr_read_2(sc, URL_RCR);
+	rcr &= ~(URL_RCR_AAM | URL_RCR_AAP | URL_RCR_AB | URL_RCR_AD |
+	    URL_RCR_AM);
+	bzero(hashes, sizeof(hashes));
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
+	/*
+	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
+	 */
+	rcr |= URL_RCR_AB | URL_RCR_AD;
 
-	if (mcnt){
-		URL_SETBIT2(sc, URL_RCR, URL_RCR_AM);
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		rcr |= URL_RCR_AAM;
+		if (ifp->if_flags & IFF_PROMISC)
+			rcr |= URL_RCR_AAP;
 	} else {
-		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AM);
+		rcr |= URL_RCR_AM;
+
+		/* now program new ones */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
+
+			if (h < 32)
+				hashes[0] |= (1 << h);
+			else
+				hashes[1] |= (1 << (h - 32));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
+
 	url_csr_write_4(sc, URL_MAR0, hashes[0]);
 	url_csr_write_4(sc, URL_MAR4, hashes[1]);
+	url_csr_write_2(sc, URL_RCR, rcr);
 }
 
 int
@@ -1059,7 +1040,6 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct url_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct mii_data *mii;
 	int s, error = 0;
 
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
@@ -1072,40 +1052,29 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		url_init(ifp);
-
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			url_init(ifp);
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-			break;
-#endif /* INET */
-		}
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC) {
-				URL_SETBIT2(sc, URL_RCR,
-					    URL_RCR_AAM|URL_RCR_AAP);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-				   !(ifp->if_flags & IFF_PROMISC)) {
-				URL_CLRBIT2(sc, URL_RCR,
-					    URL_RCR_AAM|URL_RCR_AAP);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				url_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				url_stop(ifp, 1);
 		}
-		error = 0;
 		break;
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		mii = GET_MII(sc);
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	default:
@@ -1114,7 +1083,7 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			url_setmulti(sc);
+			url_iff(sc);
 		error = 0;
 	}
 
