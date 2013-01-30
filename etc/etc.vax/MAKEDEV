@@ -468,8 +468,9 @@ local)
 all)
 	R qsc0 dl0 dz0 dhu0 mt0 mt1 hd0 hd1 hd2 vnd0 sd0 sd1 sd2 sd3
 	R cd0 tun0 tun1 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	R pty0 diskmap vscsi0 ch0 audio0 ptm local wscons uk0 random
-	R lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 std st0 st1 fd
+	R pty0 diskmap vscsi0 ch0 audio0 pppx ptm local wscons uk0
+	R random lkm pf systrace rx0 rx1 ra0 ra1 ra2 ra3 std st0 st1
+	R fd
 	;;
 
 sd*|rx*|ra*|hd*)

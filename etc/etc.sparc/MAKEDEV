@@ -518,7 +518,7 @@ all)
 	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R diskmap vscsi0 ch0 bio cuaa cuab cuac cuad ttya ttyb ttyc
-	R ttyd audio0 audio1 audio2 hotplug ptm local wscons uk0
+	R ttyd audio0 audio1 audio2 pppx hotplug ptm local wscons uk0
 	R random lkm tty00 tty01 tty02 tty03 apm pf systrace xd0 xd1
 	R xd2 xd3 std st0 st1 fd
 	;;

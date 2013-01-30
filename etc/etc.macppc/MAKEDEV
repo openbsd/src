@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.51 2012/09/08 17:18:22 mpi Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.52 2012/12/04 10:44:20 mpi Exp 
 #	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -540,8 +540,8 @@ all)
 	R vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1
 	R rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6
 	R bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 cuaa cuab ttya ttyb
-	R audio0 audio1 audio2 hotplug ptm local wscons pci0 pci1 pci2
-	R pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
+	R audio0 audio1 audio2 pppx hotplug ptm local wscons pci0 pci1
+	R pci2 pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
 	R rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 video0 video1 uk0
 	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
 	R wd0 wd1 wd2 wd3 std st0 st1 fd

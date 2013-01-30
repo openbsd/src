@@ -459,10 +459,10 @@ all)
 	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
 	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1
-	R pty2 diskmap vscsi0 audio0 audio1 audio2 hotplug ptm local
-	R wscons pci0 pci1 pci2 pci3 uall video0 video1 uk0 random
-	R tty00 tty01 tty02 tty03 apm crypto pf systrace wd0 wd1 wd2
-	R wd3 std st0 st1 fd
+	R pty2 diskmap vscsi0 audio0 audio1 audio2 pppx hotplug ptm
+	R local wscons pci0 pci1 pci2 pci3 uall video0 video1 uk0
+	R random tty00 tty01 tty02 tty03 apm crypto pf systrace wd0
+	R wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
