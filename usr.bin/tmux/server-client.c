@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.83 2013/01/18 02:10:29 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.84 2013/01/30 17:00:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -331,7 +331,7 @@ int
 server_client_assume_paste(struct session *s)
 {
 	struct timeval	tv;
-	u_int		t;
+	int		t;
 
 	if ((t = options_get_number(&s->options, "assume-paste-time")) == 0)
 		return (0);

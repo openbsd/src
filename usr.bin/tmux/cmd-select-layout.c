@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.17 2013/01/17 00:11:22 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.18 2013/01/30 17:00:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -87,13 +87,11 @@ cmd_select_layout_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args	*args = self->args;
 	struct winlink	*wl;
-	struct window	*w;
 	const char	*layoutname;
 	int		 next, previous, layout;
 
 	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
 		return (CMD_RETURN_ERROR);
-	w = wl->window;
 
 	next = self->entry == &cmd_next_layout_entry;
 	if (args_has(self->args, 'n'))
