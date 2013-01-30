@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.42 2012/03/21 23:44:35 fgsch Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.43 2013/01/30 00:08:13 brad Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -212,6 +212,9 @@ __END_DECLS
  */
 __BEGIN_DECLS
 void	 clearerr(FILE *);
+#if __POSIX_VISIBLE >= 200809
+int	 dprintf(int, const char * __restrict, ...);
+#endif
 int	 fclose(FILE *);
 int	 feof(FILE *);
 int	 ferror(FILE *);
@@ -272,6 +275,9 @@ int	 ungetc(int, FILE *);
 int	 vfprintf(FILE *, const char *, __va_list);
 int	 vprintf(const char *, __va_list);
 int	 vsprintf(char *, const char *, __va_list);
+#if __POSIX_VISIBLE >= 200809
+int	 vdprintf(int, const char * __restrict, __va_list);
+#endif
 
 #if __ISO_C_VISIBLE >= 1999 || __BSD_VISIBLE
 int	 snprintf(char *, size_t, const char *, ...)

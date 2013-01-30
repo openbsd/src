@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.22 2012/03/21 23:44:35 fgsch Exp $
+#	$OpenBSD: Makefile.inc,v 1.23 2013/01/30 00:08:13 brad Exp $
 
 # stdio sources
 .PATH: ${LIBCSRCDIR}/stdio
@@ -19,7 +19,7 @@ SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	putwc.c putwchar.c ungetwc.c \
 	fwprintf.c swprintf.c vfwprintf.c vswprintf.c vwprintf.c wprintf.c \
 	fwscanf.c swscanf.c vfwscanf.c vswscanf.c vwscanf.c wscanf.c \
-	getdelim.c getline.c
+	getdelim.c getline.c dprintf.c vdprintf.c
 
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fopen.3 fputs.3 \
 	fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 putc.3 \
@@ -43,7 +43,8 @@ MLINKS+=mktemp.3 mkdtemp.3
 MLINKS+=mktemp.3 mkstemps.3
 MLINKS+=printf.3 fprintf.3 printf.3 snprintf.3 printf.3 sprintf.3 \
 	printf.3 vfprintf.3 printf.3 vprintf.3 printf.3 vsnprintf.3 \
-	printf.3 vsprintf.3 printf.3 asprintf.3 printf.3 vasprintf.3
+	printf.3 vsprintf.3 printf.3 asprintf.3 printf.3 vasprintf.3 \
+	printf.3 dprintf.3 printf.3 vdprintf.3
 MLINKS+=putc.3 fputc.3 putc.3 putchar.3 putc.3 putw.3
 MLINKS+=scanf.3 fscanf.3 scanf.3 sscanf.3 scanf.3 vfscanf.3 scanf.3 vscanf.3 \
 	scanf.3 vsscanf.3

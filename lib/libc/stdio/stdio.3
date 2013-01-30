@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdio.3,v 1.23 2012/04/12 08:26:38 jmc Exp $
+.\"	$OpenBSD: stdio.3,v 1.24 2013/01/30 00:08:13 brad Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 12 2012 $
+.Dd $Mdocdate: January 30 2013 $
 .Dt STDIO 3
 .Os
 .Sh NAME
@@ -210,6 +210,7 @@ definitions are explicitly removed.
 .It Sy Function Ta Sy Description
 .It asprintf Ta "formatted output conversion with allocation"
 .It clearerr Ta "check and reset stream status"
+.It dprintf Ta "formatted output conversion"
 .It fclose Ta "close a stream"
 .It fdopen Ta "stream open functions"
 .It feof Ta "check and reset stream status"
@@ -267,6 +268,7 @@ definitions are explicitly removed.
 .It tmpnam Ta "temporary file routines"
 .It ungetc Ta "un-get character from input stream"
 .It vasprintf Ta "formatted output conversion with allocation"
+.It vdprintf Ta "formatted output conversion"
 .It vfprintf Ta "formatted output conversion"
 .It vfscanf Ta "input format conversion"
 .It vprintf Ta "formatted output conversion"
