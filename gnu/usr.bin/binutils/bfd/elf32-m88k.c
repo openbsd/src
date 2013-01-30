@@ -1527,7 +1527,7 @@ elf_m88k_relocate_section (output_bfd, info, input_bfd, input_section,
 		 howto->name,
 		 sym_name);
 
-	    relocation = sgot->output_section->vma + sgot->output_offset + off;
+	    relocation = sgot->output_offset + off;
 	  }
 	  break;
 
