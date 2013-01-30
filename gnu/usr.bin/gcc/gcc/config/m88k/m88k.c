@@ -334,13 +334,12 @@ legitimize_address (pic, orig, reg, scratch)
 	      temp = ((reload_in_progress || reload_completed)
 		      ? reg : gen_reg_rtx (Pmode));
 
-	      emit_insn (gen_rtx_SET
-			 (VOIDmode, temp,
-			  gen_rtx_HIGH (SImode, addr)));
-
-	      emit_insn (gen_rtx_SET
-			 (VOIDmode, temp,
-			  gen_rtx_LO_SUM (SImode, temp, addr)));
+	      /* Must put the SYMBOL_REF inside an UNSPEC here so that cse
+		 won't get confused into thinking that these two instructions
+		 are loading in the true address of the symbol.  If in the
+		 future a PIC rtx exists, that should be used instead.  */
+	      emit_insn (gen_movsi_high_pic (temp, addr));
+	      emit_insn (gen_movsi_lo_sum_pic (temp, temp, addr));
 	      addr = temp;
 	    }
 
@@ -2940,6 +2939,11 @@ print_operand (file, x, code)
 	output_address (x);
       else if (xc == MEM)
 	output_address (XEXP (x, 0));
+      else if (flag_pic && xc == UNSPEC)
+	{
+	  output_addr_const (file, XVECEXP (x, 0, 0));
+	  fputs ("#got_rel", file);
+	}
       else if (xc == CONST_DOUBLE)
 	output_operand_lossage ("operand is const_double");
       else
@@ -2947,7 +2951,7 @@ print_operand (file, x, code)
       return;
 
     case 'g': /* append #got_rel as needed */
-      if (flag_pic && symbolic_address_p (x))
+      if (flag_pic && (xc == SYMBOL_REF || xc == LABEL_REF))
 	{
 	  output_addr_const (file, x);
 	  fputs ("#got_rel", file);
@@ -2984,11 +2988,6 @@ print_operand_address (file, addr)
       asm_fprintf (file, "%R%s,%Rlo16(",
 		   reg_names[REGNO (XEXP (addr, 0))]);
       output_addr_const (file, XEXP (addr, 1));
-      if (flag_pic)
-	{
-	  if (symbolic_address_p (XEXP (addr, 1)))
-	    fputs ("#got_rel", file);
-	}
       fputc (')', file);
       break;
 
