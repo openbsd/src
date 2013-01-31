@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.47 2012/12/05 23:20:07 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.48 2013/01/31 06:26:27 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -359,8 +359,8 @@ resolve_failed:
 #define	OR	0x82106000	/*	or	%g1, 0, %g1 */
 #define	ORG5	0x8a116000	/*	or	%g5, 0, %g5 */
 #define	XOR	0x82186000	/*	xor	%g1, 0, %g1 */
-#define	MOV71	0x8283a000	/*	or	%o7, 0, %g1 */
-#define	MOV17	0x9c806000	/*	or	%g1, 0, %o7 */
+#define	MOV71	0x8210000f	/*	or	%o7, 0, %g1 */
+#define	MOV17	0x9e100001	/*	or	%g1, 0, %o7 */
 #define	CALL	0x40000000	/*	call	0 */
 #define	SLLX	0x83287000	/*	sllx	%g1, 0, %g1 */
 #define	SLLXG5	0x8b297000	/*	sllx	%g5, 0, %g5 */
@@ -405,7 +405,7 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 	 * which are increasingly expensive.
 	 */
 
-	offset = ((Elf_Addr)where) - value;
+	offset = value - ((Elf_Addr)where);
 	if (rela->r_addend) {
 		Elf_Addr *ptr = (Elf_Addr *)where;
 		/*
@@ -416,7 +416,8 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 */
 		ptr[0] += value - object->Dyn.info[DT_PLTGOT];
 
-	} else if (offset <= (1L<<20) && offset >= -(1L<<20)) {
+	} else if ((int64_t)(offset-4) <= (1L<<20) &&
+	    (int64_t)(offset-4) >= -(1L<<20)) {
 		/*
 		 * We're within 1MB -- we can use a direct branch insn.
 		 *
@@ -432,7 +433,7 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *	nop
 		 *
 		 */
-		where[1] = BAA | ((offset >> 2) &0x3fffff);
+		where[1] = BAA | (((offset-4) >> 2) &0x3fffff);
 		__asm __volatile("iflush %0+4" : : "r" (where));
 	} else if (value < (1UL<<32)) {
 		/*
@@ -462,8 +463,8 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 * The resulting code in the jump slot is:
 		 *
 		 *	sethi	%hi(. - .PLT0), %g1
-		 *	sethi	%hix(addr), %g1
-		 *	xor	%g1, %lox(addr), %g1
+		 *	sethi	%hix(~addr), %g1
+		 *	xor	%g1, %lox(~addr), %g1
 		 *	jmp	%g1
 		 *	nop
 		 *	nop
@@ -478,7 +479,8 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		__asm __volatile("iflush %0+8" : : "r" (where));
 		__asm __volatile("iflush %0+4" : : "r" (where));
 
-	} else if (offset <= (1L<<32) && offset >= -((1L<<32) - 4)) {
+	} else if ((int64_t)(offset-8) <= (1L<<31) &&
+	    (int64_t)(offset-8) >= -((1L<<31) - 4)) {
 		/*
 		 * We're within 32-bits -- we can use a direct call insn
 		 *
@@ -495,10 +497,10 @@ _dl_reloc_plt(elf_object_t *object, Elf_Word *where, Elf_Addr value,
 		 *
 		 */
 		where[3] = MOV17;
-		where[2] = CALL	  | ((offset >> 4) & 0x3fffffff);
-		where[1] = MOV71;
+		where[2] = CALL	  | (((offset-8) >> 2) & 0x3fffffff);
 		__asm __volatile("iflush %0+12" : : "r" (where));
 		__asm __volatile("iflush %0+8" : : "r" (where));
+		where[1] = MOV71;
 		__asm __volatile("iflush %0+4" : : "r" (where));
 
 	} else if (value < (1L<<42)) {
