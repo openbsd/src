@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.145 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.146 2013/01/31 18:24:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -485,32 +485,6 @@ queue_shutdown(void)
 	_exit(0);
 }
 
-static void
-queue_set_sndbuf(struct mproc *p, int sz)
-{
-	int		 osz;
-	socklen_t	 sl;
-
-	sl = sizeof(osz);
-	if (getsockopt(p->imsgbuf.fd, SOL_SOCKET, SO_SNDBUF, &osz, &sl) == -1) {
-		log_warn("warn: getsockopt");
-		return;
-	}
-	if (osz == sz)
-		return;
-
-	if (setsockopt(p->imsgbuf.fd, SOL_SOCKET, SO_SNDBUF, &sz, sl) == -1) {
-		log_warn("warn: setsockopt");
-		return;
-	}
-	if (getsockopt(p->imsgbuf.fd, SOL_SOCKET, SO_SNDBUF, &sz, &sl) == -1) {
-		log_warn("warn: getsockopt");
-		return;
-	}
-	log_debug("debug: queue: adjusted output buffer size for %s: %i -> %i",
-		p->name, osz, sz);
-}
-
 pid_t
 queue(void)
 {
@@ -570,10 +544,6 @@ queue(void)
 	config_peer(PROC_LKA);
 	config_peer(PROC_SCHEDULER);
 	config_done();
-
-	queue_set_sndbuf(p_scheduler, 65536);
-	queue_set_sndbuf(p_mta, 65536);
-	queue_set_sndbuf(p_mda, 65536);
 
 	/* setup queue loading task */
 	evtimer_set(&ev_qload, queue_timeout, &ev_qload);

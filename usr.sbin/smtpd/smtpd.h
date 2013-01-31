@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.400 2013/01/28 16:40:22 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.401 2013/01/31 18:24:47 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -906,11 +906,8 @@ struct stat_digest {
 	size_t			 dlv_loop;
 };
 
-#if 1
-#define MSZ_EVP	(32 + sizeof(struct envelope))
-#else
-#define MSZ_EVP	384
-#endif
+#define MSZ_EVP		512
+
 
 struct mproc {
 	pid_t		 pid;
