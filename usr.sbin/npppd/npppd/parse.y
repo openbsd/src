@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2012/11/13 17:10:40 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2013/01/31 09:44:21 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -677,7 +677,8 @@ radopt		: ADDRESS address optport SECRET STRING {
 				YYERROR;
 			}
 			n->address = $2;
-			((struct sockaddr_in *)&n->address)->sin_port = $3;
+			((struct sockaddr_in *)&n->address)->sin_port =
+			    htons($3);
 			n->secret = $5;
 			TAILQ_INSERT_TAIL(&curr_radconf->servers, n, entry);
 		}

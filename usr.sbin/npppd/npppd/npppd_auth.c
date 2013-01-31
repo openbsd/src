@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.11 2012/09/22 20:22:48 espie Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.12 2013/01/31 09:44:21 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.11 2012/09/22 20:22:48 espie Exp $ */
+/* $Id: npppd_auth.c,v 1.12 2013/01/31 09:44:21 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -561,6 +561,10 @@ npppd_auth_radius_reload(npppd_auth_base *base, struct authconf *auth)
 			break;
 		memcpy(&rad->server[i].peer, &server->address,
 		    server->address.ss_len);
+		if (((struct sockaddr_in *)&rad->server[i].peer)->sin_port
+		    == 0)
+			((struct sockaddr_in *)&rad->server[i].peer)->sin_port
+			    = htons(DEFAULT_RADIUS_AUTH_PORT);
 		strlcpy(rad->server[i].secret, server->secret,
 		    sizeof(rad->server[i].secret));
 		rad->server[i].enabled = 1;
@@ -578,6 +582,10 @@ npppd_auth_radius_reload(npppd_auth_base *base, struct authconf *auth)
 			break;
 		memcpy(&rad->server[i].peer, &server->address,
 		    server->address.ss_len);
+		if (((struct sockaddr_in *)&rad->server[i].peer)->sin_port
+		    == 0)
+			((struct sockaddr_in *)&rad->server[i].peer)->sin_port
+			    = htons(DEFAULT_RADIUS_ACCT_PORT);
 		strlcpy(rad->server[i].secret, server->secret,
 		    sizeof(rad->server[i].secret));
 		rad->server[i].enabled = 1;
