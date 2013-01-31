@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdio.3,v 1.24 2013/01/30 00:08:13 brad Exp $
+.\"	$OpenBSD: stdio.3,v 1.25 2013/01/31 12:18:46 brad Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 30 2013 $
+.Dd $Mdocdate: January 31 2013 $
 .Dt STDIO 3
 .Os
 .Sh NAME
@@ -220,12 +220,16 @@ definitions are explicitly removed.
 .It fgetln Ta "get a line from a stream"
 .It fgetpos Ta "reposition a stream"
 .It fgets Ta "get a line from a stream"
+.It fgetwc Ta "get next wide character from input stream"
+.It fgetws Ta "get a line of wide characters from a stream"
 .It fileno Ta "get a stream's underlying file descriptor"
 .It fopen Ta "stream open functions"
 .It fprintf Ta "formatted output conversion"
 .It fpurge Ta "flush a stream"
 .It fputc Ta "output a character or word to a stream"
 .It fputs Ta "output a line to a stream"
+.It fputwc Ta "output a wide character to a stream"
+.It fputws Ta "output a line of wide characters to a stream"
 .It fread Ta "binary stream input/output"
 .It freopen Ta "stream open functions"
 .It fropen Ta "open a stream"
@@ -234,7 +238,9 @@ definitions are explicitly removed.
 .It fsetpos Ta "reposition a stream"
 .It ftell Ta "reposition a stream"
 .It funopen Ta "open a stream"
+.It fwide Ta "set/get orientation of stream"
 .It fwopen Ta "open a stream"
+.It fwprintf Ta "formatted wide character output conversion"
 .It fwrite Ta "binary stream input/output"
 .It getc Ta "get next character or word from input stream"
 .It getchar Ta "get next character or word from input stream"
@@ -242,6 +248,9 @@ definitions are explicitly removed.
 .It getline Ta "read a delimited record from a stream"
 .It gets Ta "get a line from a stream"
 .It getw Ta "get next character or word from input stream"
+.It getwc Ta "get next wide character from input stream"
+.It getwchar Ta "get next wide character from input stream"
+.It mkdtemp Ta "create unique temporary directory"
 .It mkstemp Ta "create unique temporary file"
 .It mktemp Ta "create unique temporary file"
 .It perror Ta "system error messages"
@@ -250,6 +259,8 @@ definitions are explicitly removed.
 .It putchar Ta "output a character or word to a stream"
 .It puts Ta "output a line to a stream"
 .It putw Ta "output a character or word to a stream"
+.It putwc Ta "output a wide character to a stream"
+.It putwchar Ta "output a wide character to a stream"
 .It remove Ta "remove directory entry"
 .It rewind Ta "reposition a stream"
 .It scanf Ta "input format conversion"
@@ -261,21 +272,27 @@ definitions are explicitly removed.
 .It sprintf Ta "formatted output conversion"
 .It sscanf Ta "input format conversion"
 .It strerror Ta "system error messages"
+.It swprintf Ta "formatted wide character output conversion"
 .It sys_errlist Ta "system error messages"
 .It sys_nerr Ta "system error messages"
 .It tempnam Ta "temporary file routines"
 .It tmpfile Ta "temporary file routines"
 .It tmpnam Ta "temporary file routines"
 .It ungetc Ta "un-get character from input stream"
+.It ungetwc Ta "un-get wide character from input stream"
 .It vasprintf Ta "formatted output conversion with allocation"
 .It vdprintf Ta "formatted output conversion"
 .It vfprintf Ta "formatted output conversion"
 .It vfscanf Ta "input format conversion"
+.It vfwprintf Ta "formatted wide character output conversion"
 .It vprintf Ta "formatted output conversion"
 .It vscanf Ta "input format conversion"
 .It vsnprintf Ta "formatted output conversion"
 .It vsprintf Ta "formatted output conversion"
 .It vsscanf Ta "input format conversion"
+.It vswprintf Ta "formatted wide character output conversion"
+.It vwprintf Ta "formatted wide character output conversion"
+.It wprintf Ta "formatted wide character output conversion"
 .El
 .Sh SEE ALSO
 .Xr close 2 ,
