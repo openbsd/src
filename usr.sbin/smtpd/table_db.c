@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.1 2013/01/26 09:37:24 gilles Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.2 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -83,13 +83,13 @@ struct dbhandle {
 static int
 table_db_config(struct table *table, const char *config)
 {
-	DB	*db;
+	struct dbhandle	       *handle;
 
-	db = table_db_open(table);
-	if (db == NULL)
+	handle = table_db_open(table);
+	if (handle == NULL)
 		return 0;
 
-	table_db_close(db);
+	table_db_close(handle);
 	return 1;
 }
 
@@ -103,7 +103,6 @@ table_db_update(struct table *table)
 		return 0;
 
 	table_db_close(table->t_handle);
-	free(table->t_handle);
 	table->t_handle = handle;
 	return 1;
 }
@@ -142,6 +141,7 @@ table_db_close(void *hdl)
 {
 	struct dbhandle	*handle = hdl;
 	handle->db->close(handle->db);
+	free(handle);
 }
 
 static int
@@ -174,8 +174,10 @@ table_db_lookup(void *hdl, const char *key, enum table_service service,
 	if (line == NULL)
 		return 0;
 
-	if (retp == NULL)
+	if (retp == NULL) {
+		free(line);
 		return 1;
+	}
 
 	ret = 0;
 	switch (service) {

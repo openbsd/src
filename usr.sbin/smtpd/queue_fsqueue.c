@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.57 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.58 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -157,8 +157,9 @@ fsqueue_envelope_dump(char *dest, char *evpbuf, size_t evplen, int do_atomic, in
 		log_warn("warn: fsqueue_envelope_dump: fsync");
 		goto tempfail;
 	}
-	if (fclose(fp)) {
+	if (fclose(fp) != 0) {
 		log_warn("warn: fsqueue_envelope_dump: fclose");
+		fp = NULL;
 		goto tempfail;
 	}
 	fp = NULL;
@@ -229,7 +230,7 @@ fsqueue_envelope_load(uint64_t evpid, char *buf, size_t len)
 {
 	char	 pathname[MAXPATHLEN];
 	FILE	*fp;
-	ssize_t	 r;
+	size_t	 r;
 
 	fsqueue_envelope_path(evpid, pathname, sizeof(pathname));
 
@@ -241,7 +242,14 @@ fsqueue_envelope_load(uint64_t evpid, char *buf, size_t len)
 	}
 
 	r = fread(buf, 1, len, fp);
-
+	if (r) {
+		if (r == len) {
+			log_warn("warn: fsqueue_envelope_load: too large");
+			r = 0;
+		}
+		else
+			buf[r] = '\0';
+	}
 	fclose(fp);
 
 	return (r);
@@ -297,6 +305,7 @@ fsqueue_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 		hdl = fsqueue_qwalk_new();
 
 	if (fsqueue_qwalk(hdl, evpid)) {
+		bzero(buf, len);
 		r = fsqueue_envelope_load(*evpid, buf, len);
 		if (r) {
 			msgid = evpid_to_msgid(*evpid);

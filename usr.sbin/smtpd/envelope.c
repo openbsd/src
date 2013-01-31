@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.18 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.19 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -557,6 +557,9 @@ ascii_load_sockaddr(struct sockaddr_storage *ss, char *buf)
 {
 	struct sockaddr_in6 ssin6;
 	struct sockaddr_in  ssin;
+
+	bzero(&ssin, sizeof ssin);
+	bzero(&ssin6, sizeof ssin6);
 
 	if (!strcmp("local", buf)) {
 		ss->ss_family = AF_LOCAL;

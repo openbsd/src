@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.30 2013/01/28 16:40:22 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.31 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1027,14 +1027,6 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 	char	*error;
 	int	 len;
 
-	/*
-	 * If not connected yet, and the error is not local, just ignore it
-	 * and try to reconnect.
-	 */
-	if (s->state == MTA_INIT && 
-	    (errno == ETIMEDOUT || errno == ECONNREFUSED))
-		return;
-
 	va_start(ap, fmt);
 	if ((len = vasprintf(&error, fmt, ap)) == -1)
 		fatal("mta: vasprintf");
@@ -1047,6 +1039,16 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 	else
 		log_info("smtp-out: Error on session %016"PRIx64 ": %s",
 		    s->id, error);
+	/*
+	 * If not connected yet, and the error is not local, just ignore it
+	 * and try to reconnect.
+	 */
+	if (s->state == MTA_INIT && 
+	    (errno == ETIMEDOUT || errno == ECONNREFUSED)) {
+		log_debug("debug: mta: not reporting route error yet");
+		free(error);
+		return;
+	}
 
 	mta_route_error(s->relay, s->route);
 

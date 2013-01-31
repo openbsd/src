@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.3 2013/01/26 09:37:22 gilles Exp $ */
-/*	$OpenBSD: aldap.c,v 1.3 2013/01/26 09:37:22 gilles Exp $ */
+/*	$Id: aldap.c,v 1.4 2013/01/31 18:34:43 eric Exp $ */
+/*	$OpenBSD: aldap.c,v 1.4 2013/01/31 18:34:43 eric Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -324,10 +324,13 @@ aldap_parse_page_control(struct ber_element *control, size_t len)
 	ber_scanf_elements(control, "ss", &oid, &encoded);
 	ber_set_readbuf(&b, encoded, control->be_next->be_len);
 	elm = ber_read_elements(&b, NULL);
+	if (elm == NULL) {
+		ber_free(&b);
+		return NULL;
+	}
 
 	if ((page = malloc(sizeof(struct aldap_page_control))) == NULL) {
-		if (elm != NULL)
-			ber_free_elements(elm);
+		ber_free_elements(elm);
 		ber_free(&b);
 		return NULL;
 	}
@@ -336,8 +339,7 @@ aldap_parse_page_control(struct ber_element *control, size_t len)
 	page->cookie_len = elm->be_sub->be_next->be_len;
 
 	if ((page->cookie = malloc(page->cookie_len)) == NULL) {
-		if (elm != NULL)
-			ber_free_elements(elm);
+		ber_free_elements(elm);
 		ber_free(&b);
 		free(page);
 		return NULL;
@@ -569,8 +571,9 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 	const char	*errstr = NULL;
 	int		 i;
 
-	if ((lu->buffer = p = strdup(url)) == NULL)
+	if ((lu->buffer = strdup(url)) == NULL)
 		return (-1);
+	p = lu->buffer;
 
 	/* protocol */
 	if (strncasecmp(LDAP_URL, p, strlen(LDAP_URL)) != 0)
@@ -822,7 +825,7 @@ ldap_do_parse_search_filter(struct ber_element *prev, char **cpp)
 		ber_set_header(root, BER_CLASS_CONTEXT, LDAP_FILT_NOT);
 
 		cp++;				/* now points to sub-filter */
-		if ((elm = ldap_do_parse_search_filter(root, &cp)) == NULL)
+		if (ldap_do_parse_search_filter(root, &cp) == NULL)
 			goto bad;
 
 		if (*cp != ')')			/* trailing `)` of filter */

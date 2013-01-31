@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.185 2013/01/28 11:09:53 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.186 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -35,6 +35,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
@@ -542,6 +543,9 @@ parent_sig_handler(int sig, short event, void *p)
 				}
 				if (child->cause)
 					free(child->cause);
+				log_debug("debug: smtpd: mda process done "
+				    "for session %016"PRIx64 ": %s",
+				    child->mda_id, cause);
 				m_create(p_mda, IMSG_MDA_DONE, 0, 0,
 				    child->mda_out, 32 + strlen(cause));
 				m_add_id(p_mda, child->mda_id);
@@ -792,7 +796,7 @@ main(int argc, char *argv[])
 			continue;
 		ssl = NULL;
 		if (! ssl_load_certfile(&ssl, "/etc/mail/certs",
-			r->r_value.relayhost.cert, F_CCERT) < 0)
+			r->r_value.relayhost.cert, F_CCERT))
 			errx(1, "cannot load certificate: %s", r->r_value.relayhost.cert);
 		dict_set(env->sc_ssl_dict, ssl->ssl_name, ssl);
 	}
@@ -898,7 +902,6 @@ static void
 purge_task(int fd, short ev, void *arg)
 {
 	DIR		*d;
-	struct dirent	*de;
 	int		 n;
 	uid_t		 uid;
 	gid_t		 gid;
@@ -907,7 +910,7 @@ purge_task(int fd, short ev, void *arg)
 
 		n = 0;
 		if ((d = opendir(PATH_SPOOL PATH_PURGE))) {
-			while ((de = readdir(d)) != NULL)
+			while (readdir(d) != NULL)
 				n++;
 			closedir(d);
 		} else
@@ -949,9 +952,10 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	struct child	*child;
 	pid_t		 pid;
 	int		 n, allout, pipefd[2];
+	mode_t		 omode;
 
-	log_debug("debug: forkmda: to \"%s\" as %s",
-	    deliver->to, deliver->user);
+	log_debug("debug: smtpd: forking mda for session %016"PRIx64
+	    ": \"%s\" as %s", id, deliver->to, deliver->user);
 
 	db = delivery_backend_lookup(deliver->mode);
 	if (db == NULL)
@@ -984,7 +988,9 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 
 	/* prepare file which captures stdout and stderr */
 	strlcpy(sfn, "/tmp/smtpd.out.XXXXXXXXXXX", sizeof(sfn));
+	omode = umask(7077);
 	allout = mkstemp(sfn);
+	umask(omode);
 	if (allout < 0) {
 		n = snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
 		if (seteuid(0) < 0)
@@ -1007,6 +1013,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		m_create(p_mda, IMSG_MDA_DONE, 0, 0, -1, 128);
 		m_add_id(p_mda,	id);
 		m_add_string(p_mda, ebuf);
+		m_close(p_mda);
 		close(pipefd[0]);
 		close(pipefd[1]);
 		close(allout);

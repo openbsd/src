@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.66 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.67 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <sys/tree.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -680,6 +681,8 @@ rcpt_add(char *addr)
 		if ((p = strchr(addr, ',')) != NULL)
 			*p++ = '\0';
 		msg.rcpts[msg.rcpt_cnt++] = qualify_addr(addr);
+		if (p == NULL)
+			break;
 		addr = p;
 	}
 }
@@ -732,6 +735,7 @@ enqueue_offline(int argc, char *argv[])
 	char	 path[MAXPATHLEN];
 	FILE	*fp;
 	int	 i, fd, ch;
+	mode_t	 omode;
 
 	if (ckdir(PATH_SPOOL PATH_OFFLINE, 01777, 0, 0, 0) == 0)
 		errx(1, "error in offline directory setup");
@@ -740,12 +744,14 @@ enqueue_offline(int argc, char *argv[])
 		PATH_OFFLINE, (long long int) time(NULL)))
 		err(1, "snprintf");
 
+	omode = umask(7077);
 	if ((fd = mkstemp(path)) == -1 || (fp = fdopen(fd, "w+")) == NULL) {
 		warn("cannot create temporary file %s", path);
 		if (fd != -1)
 			unlink(path);
 		exit(1);
 	}
+	umask(omode);
 
 	for (i = 1; i < argc; i++) {
 		if (strchr(argv[i], '|') != NULL) {

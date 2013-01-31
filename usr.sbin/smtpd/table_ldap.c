@@ -171,9 +171,11 @@ table_ldap_open(struct table *table)
 	return tlh;
 
 err:
-	if (tlh->aldap != NULL)
-		aldap_close(tlh->aldap);
-	free(tlh);
+	if (tlh) {
+		if (tlh->aldap != NULL)
+			aldap_close(tlh->aldap);
+		free(tlh);
+	}
 	if (message != NULL)
 		aldap_freemsg(message);
 	return NULL;
@@ -288,8 +290,6 @@ error:
 	ret = -1;
 
 end:
-	if (pg)
-		aldap_freepage(pg);
 	if (m)
 		aldap_freemsg(m);
 	log_debug("debug: table_ldap_internal_query: filter=%s, ret=%d", filter, ret);
@@ -593,6 +593,7 @@ ldap_client_connect(const char *addr)
 		warnx("aldap_parse_url fail");
 		goto err;
 	}
+	url = NULL;
 
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
@@ -628,11 +629,10 @@ ldap_client_connect(const char *addr)
 		}
 
 		close(fd);
+		fd = -1;
 	}
 
 err:
-	if (fd != -1)
-		close(fd);
 	free(url);
 	return NULL;
 }

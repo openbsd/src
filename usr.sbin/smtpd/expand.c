@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.19 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: expand.c,v 1.20 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -68,7 +68,7 @@ expand_insert(struct expand *expand, struct expandnode *node)
 }
 
 void
-expand_free(struct expand *expand)
+expand_clear(struct expand *expand)
 {
 	struct expandnode *xn;
 
@@ -80,6 +80,13 @@ expand_free(struct expand *expand)
 		RB_REMOVE(expandtree, &expand->tree, xn);
 		free(xn);
 	}
+}
+
+void
+expand_free(struct expand *expand)
+{
+	expand_clear(expand);
+	free(expand);
 }
 
 int

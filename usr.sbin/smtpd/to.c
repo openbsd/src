@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.1 2013/01/26 09:37:24 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.2 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -266,23 +266,22 @@ text_to_netaddr(struct netaddr *netaddr, const char *s)
 	struct sockaddr_in6	ssin6;
 	int			bits;
 
+	bzero(&ssin, sizeof(struct sockaddr_in));
+	bzero(&ssin6, sizeof(struct sockaddr_in6));
+
 	if (strncmp("IPv6:", s, 5) == 0)
 		s += 5;
 
 	if (strchr(s, '/') != NULL) {
 		/* dealing with netmask */
-
-		bzero(&ssin, sizeof(struct sockaddr_in));
 		bits = inet_net_pton(AF_INET, s, &ssin.sin_addr,
 		    sizeof(struct in_addr));
-
 		if (bits != -1) {
 			ssin.sin_family = AF_INET;
 			memcpy(&ss, &ssin, sizeof(ssin));
 			ss.ss_len = sizeof(struct sockaddr_in);
 		}
 		else {
-			bzero(&ssin6, sizeof(struct sockaddr_in6));
 			bits = inet_net_pton(AF_INET6, s, &ssin6.sin6_addr,
 			    sizeof(struct in6_addr));
 			if (bits == -1) {

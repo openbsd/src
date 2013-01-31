@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.52 2013/01/28 11:09:53 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.53 2013/01/31 18:34:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -199,7 +199,7 @@ lka_resume(struct lka_session *lks)
 		m_close(p_queue);
 	}
 
-	expand_free(&lks->expand);
+	expand_clear(&lks->expand);
 	tree_xpop(&sessions, lks->id);
 	free(lks);
 }
@@ -644,7 +644,11 @@ lka_expand_format(char *buf, size_t len, const struct envelope *ep,
 		/* extract token from %{token} */
 		if ((size_t)(ebuf - pbuf) - 1 >= sizeof token)
 			return 0;
-		*strchr(memcpy(token, pbuf+2, ebuf-pbuf-1), '}') = '\0';
+
+		memcpy(token, pbuf+2, ebuf-pbuf-1);
+		if (strchr(token, '}') == NULL)
+			return 0;
+		*strchr(token, '}') = '\0';
 
 		exptoklen = lka_expand_token(exptok, sizeof exptok, token, ep,
 		    ui);
