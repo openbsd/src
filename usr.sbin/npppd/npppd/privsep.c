@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.7 2012/09/28 23:46:00 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.8 2013/01/31 02:14:46 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -463,7 +463,7 @@ priv_get_if_addr(const char *ifname, struct in_addr *addr)
 	struct PRIVSEP_GET_IF_ADDR_RESP  r;
 
 	a.cmd = PRIVSEP_GET_IF_ADDR;
-	strlcpy(a.ifname, ifname, sizeof(ifname));
+	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
 		return retval;
 	if ((retval = recv(privsep_sock, &r, sizeof(r), 0)) < 0) {
@@ -488,7 +488,7 @@ priv_delete_if_addr(const char *ifname)
 	struct PRIVSEP_DEL_IF_ADDR_ARG   a;
 
 	a.cmd = PRIVSEP_DEL_IF_ADDR;
-	strlcpy(a.ifname, ifname, sizeof(ifname));
+	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
 		return retval;
 	retval = privsep_common_resp();
@@ -503,7 +503,7 @@ priv_set_if_addr(const char *ifname, struct in_addr *addr)
 	struct PRIVSEP_SET_IF_ADDR_ARG   a;
 
 	a.cmd = PRIVSEP_SET_IF_ADDR;
-	strlcpy(a.ifname, ifname, sizeof(ifname));
+	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 	a.addr = *addr;
 	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
 		return retval;
@@ -519,7 +519,7 @@ priv_get_if_flags(const char *ifname, int *pflags)
 	struct PRIVSEP_GET_IF_FLAGS_RESP  r;
 
 	a.cmd = PRIVSEP_GET_IF_FLAGS;
-	strlcpy(a.ifname, ifname, sizeof(ifname));
+	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
 		return retval;
 	if ((retval = recv(privsep_sock, &r, sizeof(r), 0)) < 0) {
@@ -543,7 +543,7 @@ priv_set_if_flags(const char *ifname, int flags)
 	struct PRIVSEP_SET_IF_FLAGS_ARG   a;
 
 	a.cmd = PRIVSEP_SET_IF_FLAGS;
-	strlcpy(a.ifname, ifname, sizeof(ifname));
+	strlcpy(a.ifname, ifname, sizeof(a.ifname));
 	a.flags = flags;
 	if ((retval = send(privsep_sock, &a, sizeof(a), 0)) < 0)
 		return retval;
