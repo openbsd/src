@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.218 2013/02/01 01:33:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.219 2013/02/01 15:24:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -404,14 +404,21 @@ main(int argc, char *argv[])
 		apply_ignore_list(ignore_list);
 
 	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
-	if (tailfd != -1 && fstat(tailfd, &sb) != -1) {
-		config->resolv_tail = calloc(1, sb.st_size + 1);
-		if (config->resolv_tail == NULL) {
-			error("no memory for resolv.conf.tail contents: %s",
+	if (tailfd == -1) {
+		if (errno != ENOENT)
+			error("Cannot open /etc/resolv.conf.tail: %s",
 			    strerror(errno));
-		} else {
-			tailn = read(tailfd, config->resolv_tail,
-			    sb.st_size);
+	} else if (fstat(tailfd, &sb) == -1) {
+		error("Cannot stat /etc/resolv.conf.tail: %s",
+		    strerror(errno));
+	} else {
+		if (sb.st_size > 0) {
+			config->resolv_tail = calloc(1, sb.st_size + 1);
+			if (config->resolv_tail == NULL) {
+				error("no memory for resolv.conf.tail "
+				    "contents: %s", strerror(errno));
+			}
+			tailn = read(tailfd, config->resolv_tail, sb.st_size);
 			if (tailn == -1)
 				error("Couldn't read resolv.conf.tail: %s",
 				    strerror(errno));
@@ -421,8 +428,7 @@ main(int argc, char *argv[])
 				error("Short read of resolv.conf.tail");
 		}
 		close(tailfd);
-	} else
-		note("/etc/resolv.conf.tail: %s", strerror(errno));
+	}
 
 	if (interface_status(ifi->name) == 0) {
 		interface_link_forceup(ifi->name);
