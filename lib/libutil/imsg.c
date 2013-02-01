@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.3 2012/12/19 13:37:12 reyk Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.4 2013/02/01 15:22:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,6 +74,7 @@ again:
 	    (CMSG_SPACE(sizeof(int))-CMSG_SPACE(0))/sizeof(int)
 	    >= getdtablesize()) {
 		errno = EAGAIN;
+		free(ifd);
 		return (-1);
 	}
 	
