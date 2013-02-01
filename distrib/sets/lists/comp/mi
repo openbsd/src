@@ -3623,6 +3623,7 @@
 ./usr/share/man/man3/dn_comp.3
 ./usr/share/man/man3/dn_expand.3
 ./usr/share/man/man3/doupdate.3
+./usr/share/man/man3/dprintf.3
 ./usr/share/man/man3/drand48.3
 ./usr/share/man/man3/drem.3
 ./usr/share/man/man3/dremf.3
@@ -6024,6 +6025,7 @@
 ./usr/share/man/man3/varargs.3
 ./usr/share/man/man3/vasprintf.3
 ./usr/share/man/man3/vax/infnan.3
+./usr/share/man/man3/vdprintf.3
 ./usr/share/man/man3/verr.3
 ./usr/share/man/man3/verrx.3
 ./usr/share/man/man3/vfprintf.3
@@ -6385,6 +6387,9 @@
 ./usr/share/man/man9/bus_space_read_multi_2.9
 ./usr/share/man/man9/bus_space_read_multi_4.9
 ./usr/share/man/man9/bus_space_read_multi_8.9
+./usr/share/man/man9/bus_space_read_raw_2.9
+./usr/share/man/man9/bus_space_read_raw_4.9
+./usr/share/man/man9/bus_space_read_raw_8.9
 ./usr/share/man/man9/bus_space_read_raw_multi_2.9
 ./usr/share/man/man9/bus_space_read_raw_multi_4.9
 ./usr/share/man/man9/bus_space_read_raw_multi_8.9
@@ -6414,6 +6419,9 @@
 ./usr/share/man/man9/bus_space_write_multi_2.9
 ./usr/share/man/man9/bus_space_write_multi_4.9
 ./usr/share/man/man9/bus_space_write_multi_8.9
+./usr/share/man/man9/bus_space_write_raw_2.9
+./usr/share/man/man9/bus_space_write_raw_4.9
+./usr/share/man/man9/bus_space_write_raw_8.9
 ./usr/share/man/man9/bus_space_write_raw_multi_2.9
 ./usr/share/man/man9/bus_space_write_raw_multi_4.9
 ./usr/share/man/man9/bus_space_write_raw_multi_8.9
@@ -6871,7 +6879,6 @@
 ./usr/share/man/man9/uiomove.9
 ./usr/share/man/man9/ulmax.9
 ./usr/share/man/man9/ulmin.9
-./usr/share/man/man9/untimeout.9
 ./usr/share/man/man9/uprintf.9
 ./usr/share/man/man9/uvm.9
 ./usr/share/man/man9/uvm_chgkprot.9

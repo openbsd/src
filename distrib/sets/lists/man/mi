@@ -1944,6 +1944,7 @@
 ./usr/share/man/man4/ppb.4
 ./usr/share/man/man4/ppp.4
 ./usr/share/man/man4/pppoe.4
+./usr/share/man/man4/pppx.4
 ./usr/share/man/man4/ptm.4
 ./usr/share/man/man4/pty.4
 ./usr/share/man/man4/puc.4
