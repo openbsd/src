@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.220 2013/02/01 20:07:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.221 2013/02/01 20:46:04 florian Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1148,6 +1148,7 @@ state_panic(void)
 	struct client_lease *lp;
 	time_t cur_time;
 
+	time(&cur_time);
 	note("No DHCPOFFERS received.");
 
 	/* We may not have an active lease, but we may have some
@@ -1156,7 +1157,6 @@ state_panic(void)
 		goto activate_next;
 
 	/* Run through the list of leases and see if one can be used. */
-	time(&cur_time);
 	while (client->active) {
 		if (client->active->expiry > cur_time) {
 			note("Trying recorded lease %s",
