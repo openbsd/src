@@ -6871,6 +6871,7 @@
 ./usr/share/man/man9/uiomove.9
 ./usr/share/man/man9/ulmax.9
 ./usr/share/man/man9/ulmin.9
+./usr/share/man/man9/untimeout.9
 ./usr/share/man/man9/uprintf.9
 ./usr/share/man/man9/uvm.9
 ./usr/share/man/man9/uvm_chgkprot.9
