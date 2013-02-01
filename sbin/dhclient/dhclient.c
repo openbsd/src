@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.219 2013/02/01 15:24:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.220 2013/02/01 20:07:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1959,7 +1959,7 @@ resolv_conf_contents(struct option_data  *domainname,
 		}
 	}
 
-	len = strlen(dn) + 1;
+	len = strlen(dn);
 	for (i = 0; i < MAXNS; i++)
 		if (nss[i])
 			len += strlen(nss[i]);
@@ -1970,6 +1970,7 @@ resolv_conf_contents(struct option_data  *domainname,
 	if (len == 0)
 		return (NULL);
 
+	len++; /* Need room for terminating NUL. */
 	contents = calloc(1, len);
 	if (contents == NULL)
 		error("no memory for resolv.conf contents");
