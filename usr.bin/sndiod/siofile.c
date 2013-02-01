@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.2 2013/02/01 09:06:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -30,6 +30,8 @@
 #include "file.h"
 #include "siofile.h"
 #include "utils.h"
+
+#define WATCHDOG_USEC	2000000		/* 2 seconds */
 
 int dev_sio_pollfd(void *, struct pollfd *);
 int dev_sio_revents(void *, struct pollfd *);
@@ -67,6 +69,16 @@ dev_sio_onmove(void *arg, int delta)
 		d->sio.rused += delta;
 #endif
 	dev_onmove(d, delta);
+}
+
+void
+dev_sio_timeout(void *arg)
+{
+	struct dev *d = arg;
+
+	dev_log(d);
+	log_puts(": watchdog timeout\n");
+	dev_close(d);
 }
 
 /*
@@ -136,6 +148,7 @@ dev_sio_open(struct dev *d)
 		d->mode &= ~MODE_REC;
 	sio_onmove(d->sio.hdl, dev_sio_onmove, d);
 	d->sio.file = file_new(&dev_sio_ops, d, d->path, sio_nfds(d->sio.hdl));
+	timo_set(&d->sio.watchdog, dev_sio_timeout, d);
 	return 1;
  bad_close:
 	sio_close(d->sio.hdl);
@@ -184,6 +197,7 @@ dev_sio_start(struct dev *d)
 		log_puts(": started\n");
 	}
 #endif
+	timo_add(&d->sio.watchdog, WATCHDOG_USEC);
 }
 
 void
@@ -206,6 +220,7 @@ dev_sio_stop(struct dev *d)
 		log_puts("\n");
 	}
 #endif
+	timo_del(&d->sio.watchdog);
 }
 
 int
@@ -315,6 +330,9 @@ dev_sio_run(void *arg)
 			d->sio.cstate = DEV_SIO_CYCLE;
 			break;
 		case DEV_SIO_CYCLE:
+			timo_del(&d->sio.watchdog);
+			timo_add(&d->sio.watchdog, WATCHDOG_USEC);
+
 #ifdef DEBUG
 			/*
 			 * check that we're called at cycle boundary:

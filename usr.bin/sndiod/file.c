@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.2 2012/12/07 08:04:58 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.3 2013/02/01 09:06:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -383,7 +383,8 @@ file_poll(void)
 #ifdef DEBUG
 		clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
-		revents = f->ops->revents(f->arg, f->pfd);
+		revents = (f->state != FILE_ZOMB) ? 
+		    f->ops->revents(f->arg, f->pfd) : 0;
 		if ((revents & POLLHUP) && (f->state != FILE_ZOMB))
 			f->ops->hup(f->arg);
 		if ((revents & POLLIN) && (f->state != FILE_ZOMB))
