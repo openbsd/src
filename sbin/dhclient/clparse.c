@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.51 2013/01/02 01:06:57 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.52 2013/02/01 20:44:00 florian Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -435,6 +435,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		token = peek_token(NULL, cfile);
 		if (token == EOF) {
 			parse_warn("unterminated lease declaration.");
+			free(lease);
 			return;
 		}
 		if (token == '}')
