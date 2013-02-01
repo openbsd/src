@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.28 2013/01/22 06:02:52 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.29 2013/02/01 01:33:44 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -700,4 +700,88 @@ priv_cleanup(struct imsg_cleanup *imsg)
 	dimsg.rdomain = imsg->rdomain;
 	dimsg.addr = imsg->addr;
 	priv_delete_address(&dimsg);
+}
+
+int
+resolv_conf_priority(int domain)
+{
+	struct sockaddr *rti_info[RTAX_MAX];
+	int mib[7];
+	size_t needed;
+	char *lim, *buf, *next, *routelabel;
+	struct rt_msghdr *rtm;
+	struct sockaddr *sa;
+	struct sockaddr_in *sa_in;
+	struct sockaddr_rtlabel *sa_rl;
+	int i, priority, mypriority;
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = AF_INET;
+	mib[4] = NET_RT_FLAGS;
+	mib[5] = RTF_GATEWAY;
+	mib[6] = domain;
+
+	if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
+		if (domain != 0 && errno == EINVAL)
+			return (1);
+		error("sysctl size of routes: %s", strerror(errno));
+	}
+
+	if (needed == 0)
+		return (1);
+
+	if ((buf = malloc(needed)) == NULL)
+		error("no memory for sysctl routes");
+
+	if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1)
+		error("sysctl retrieval of routes: %s", strerror(errno));
+
+	if (asprintf(&routelabel, "DHCLIENT %d", (int)getpid()) == -1)
+		error("recreating route label: %s", strerror(errno));
+
+#define ROUNDUP(a) \
+    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+
+	priority = mypriority = INT_MAX;
+	lim = buf + needed;
+	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+		rtm = (struct rt_msghdr *)next;
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
+		if ((rtm->rtm_flags & RTF_UP) == 0)
+			continue;
+		if (rtm->rtm_flags & RTF_REJECT)
+			continue;
+
+		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
+		memset(rti_info, 0, sizeof(rti_info));
+		for (i = 0; i < RTAX_MAX; i++) {
+			if (rtm->rtm_addrs & (1 << i)) {
+				rti_info[i] = sa;
+				sa = (struct sockaddr *)((char *)(sa) +
+				    ROUNDUP(sa->sa_len));
+			}
+		}
+
+		sa_in = (struct sockaddr_in *)rti_info[RTAX_DST];
+		if (sa_in == NULL || sa_in->sin_addr.s_addr != INADDR_ANY)
+			continue;
+		sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
+		if (sa_in == NULL || sa_in->sin_addr.s_addr != INADDR_ANY)
+			continue;
+
+		sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
+		if (sa_rl && strcmp(routelabel, sa_rl->sr_label) == 0) {
+			if (rtm->rtm_priority < mypriority)
+				mypriority = rtm->rtm_priority;
+		} else if (rtm->rtm_priority < priority)
+			priority = rtm->rtm_priority;
+	}
+
+	free(buf);
+	free(routelabel);
+
+	return (mypriority < priority);
 }

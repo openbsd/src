@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.217 2013/01/27 02:45:46 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.218 2013/02/01 01:33:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -93,6 +93,7 @@ struct imsgbuf *unpriv_ibuf;
 void		 sighdlr(int);
 int		 findproto(char *, int);
 struct sockaddr	*get_ifa(char *, int);
+int		 resolv_conf_priority(int);
 void		 usage(void);
 int		 res_hnok(const char *dn);
 char		*option_as_string(unsigned int code, unsigned char *data, int len);
@@ -288,6 +289,15 @@ routehandler(void)
 	default:
 		break;
 	}
+
+	/* Something has happened. Try to write out the resolv.conf. */
+	if (client->active && client->active->resolv_conf &&
+	    resolv_conf_priority(ifi->rdomain))
+		write_file("/etc/resolv.conf",
+		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
+		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
+		    client->new->resolv_conf, strlen(client->new->resolv_conf));
+
 	return;
 
 die:
@@ -783,14 +793,6 @@ bind_lease(void)
 	if (nameservers == NULL)
 		error("no memory for nameservers");
 
-	client->new->resolv_conf = resolv_conf_contents(
-	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
-	if (client->new->resolv_conf)
-		write_file("/etc/resolv.conf",
-		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
-		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
-		    client->new->resolv_conf, strlen(client->new->resolv_conf));
-
         /*
 	 * Add address and default route last, so we know when the binding
 	 * is done by the RTM_NEWADDR message being received.
@@ -803,6 +805,14 @@ bind_lease(void)
 		    options[DHO_ROUTERS].len);
 		add_default_route(ifi->rdomain, client->new->address, gateway);
 	}
+
+	client->new->resolv_conf = resolv_conf_contents(
+	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS]);
+	if (client->new->resolv_conf)
+		write_file("/etc/resolv.conf",
+		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
+		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
+		    client->new->resolv_conf, strlen(client->new->resolv_conf));
 
 	free(domainname);
 	free(nameservers);
