@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.11 2012/10/27 11:58:08 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.12 2013/02/01 09:02:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -161,6 +161,7 @@ sio_setpar(struct sio_hdl *hdl, struct sio_par *par)
 	if (par->bufsz != ~0U) {
 		DPRINTF("sio_setpar: setting bufsz is deprecated\n");
 		par->appbufsz = par->bufsz;
+		par->bufsz = ~0U;
 	}
 	if (par->rate != ~0U && par->appbufsz == ~0U)
 		par->appbufsz = par->rate * 200 / 1000;
