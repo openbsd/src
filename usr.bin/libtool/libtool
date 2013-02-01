@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.38 2012/10/27 10:11:23 espie Exp $
+# $OpenBSD: libtool,v 1.39 2013/02/01 05:21:20 brad Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -57,14 +57,14 @@ sub new
 	    }, $class;
 	    ($self->{gnu_arch} = $self->{machine_arch}) =~ s/amd64/x86_64/;
 
-	    if (grep { $_ eq $self->{machine_arch} } qw(m88k vax)) {
+	    if (grep { $_ eq $self->{machine_arch} } qw(vax)) {
 		$self->{build_libtool_libs} = 'yes';
 		$self->{noshared} = 1;
 	    } else {
 		$self->{build_libtool_libs} = 'no';
 		$self->{noshared} = 0;
 	    }
-	    if (grep { $_ eq $self->{machine_arch} } qw(m68k m88k vax)) {
+	    if (grep { $_ eq $self->{machine_arch} } qw(m68k vax)) {
 		$self->{elf} = 0;
 	    } else {
 		$self->{elf} = 1;
