@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.96 2012/11/29 21:10:32 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.97 2013/02/01 06:51:32 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -165,8 +165,7 @@ int msk_miibus_readreg(struct device *, int, int);
 void msk_miibus_writereg(struct device *, int, int, int);
 void msk_miibus_statchg(struct device *);
 
-void msk_setmulti(struct sk_if_softc *);
-void msk_setpromisc(struct sk_if_softc *);
+void msk_iff(struct sk_if_softc *);
 void msk_tick(void *);
 
 #ifdef MSK_DEBUG
@@ -363,38 +362,42 @@ msk_miibus_statchg(struct device *dev)
 }
 
 void
-msk_setmulti(struct sk_if_softc *sc_if)
+msk_iff(struct sk_if_softc *sc_if)
 {
-	struct ifnet *ifp= &sc_if->arpcom.ac_if;
-	u_int32_t hashes[2] = { 0, 0 };
-	int h;
+	struct ifnet *ifp = &sc_if->arpcom.ac_if;
 	struct arpcom *ac = &sc_if->arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
+	u_int32_t hashes[2];
+	u_int16_t rcr;
+	int h;
 
-	/* First, zot all the existing filters. */
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH1, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH2, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH3, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH4, 0);
+	rcr = SK_YU_READ_2(sc_if, YUKON_RCR);
+	rcr &= ~(YU_RCR_MUFLEN | YU_RCR_UFLEN);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	/*
+	 * Always accept frames destined to our station address.
+	 */
+	rcr |= YU_RCR_UFLEN;
 
-	/* Now program new ones. */
-allmulti:
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-		hashes[0] = 0xFFFFFFFF;
-		hashes[1] = 0xFFFFFFFF;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rcr &= ~YU_RCR_UFLEN;
+		else
+			rcr |= YU_RCR_MUFLEN;
+		hashes[0] = hashes[1] = 0xFFFFFFFF;
 	} else {
-		/* First find the tail of the list. */
+		rcr |= YU_RCR_MUFLEN;
+		/* Program new filter. */
+		bzero(hashes, sizeof(hashes));
+
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-				 ETHER_ADDR_LEN)) {
-				ifp->if_flags |= IFF_ALLMULTI;
-				goto allmulti;
-			}
-			h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
-			    ((1 << SK_HASH_BITS) - 1);
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) & ((1 << SK_HASH_BITS) - 1);
+
 			if (h < 32)
 				hashes[0] |= (1 << h);
 			else
@@ -408,19 +411,7 @@ allmulti:
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH2, (hashes[0] >> 16) & 0xffff);
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH3, hashes[1] & 0xffff);
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH4, (hashes[1] >> 16) & 0xffff);
-}
-
-void
-msk_setpromisc(struct sk_if_softc *sc_if)
-{
-	struct ifnet *ifp = &sc_if->arpcom.ac_if;
-
-	if (ifp->if_flags & IFF_PROMISC)
-		SK_YU_CLRBIT_2(sc_if, YUKON_RCR,
-		    YU_RCR_UFLEN | YU_RCR_MUFLEN);
-	else
-		SK_YU_SETBIT_2(sc_if, YUKON_RCR,
-		    YU_RCR_UFLEN | YU_RCR_MUFLEN);
+	SK_YU_WRITE_2(sc_if, YUKON_RCR, rcr);
 }
 
 int
@@ -616,25 +607,19 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc_if->arpcom, ifa);
-#endif /* INET */
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    (sc_if->sk_if_flags ^ ifp->if_flags) &
-			     IFF_PROMISC) {
-				msk_setpromisc(sc_if);
-				msk_setmulti(sc_if);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					msk_init(sc_if);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				msk_init(sc_if);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				msk_stop(sc_if, 0);
 		}
-		sc_if->sk_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCGIFMEDIA:
@@ -649,7 +634,7 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			msk_setmulti(sc_if);
+			msk_iff(sc_if);
 		error = 0;
 	}
 
@@ -1931,12 +1916,9 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 		SK_YU_WRITE_2(sc_if, YUKON_SAL2 + i * 4, reg);
 	}
 
-	/* Set promiscuous mode */
-	msk_setpromisc(sc_if);
-
-	/* Set multicast filter */
+	/* Program promiscuous mode and multicast filters */
 	DPRINTFN(6, ("msk_init_yukon: 11\n"));
-	msk_setmulti(sc_if);
+	msk_iff(sc_if);
 
 	/* enable interrupt mask for counter overflows */
 	DPRINTFN(6, ("msk_init_yukon: 12\n"));
