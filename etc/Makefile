@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.327 2013/01/11 05:18:50 miod Exp $
+#	$OpenBSD: Makefile,v 1.328 2013/02/01 09:06:40 phessler Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -309,7 +309,7 @@ sha:
 release: sha
 sha: distrib
 distrib: release-sets kernels
-release-sets: distribution
+release-sets: distribution kernels
 
 .endif
 
