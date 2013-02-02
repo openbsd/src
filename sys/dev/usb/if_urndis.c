@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.35 2012/12/05 23:20:21 deraadt Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.36 2013/02/02 15:03:58 fgsch Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -112,6 +112,8 @@ u_int32_t urndis_ctrl_keepalive(struct urndis_softc *);
 int urndis_encap(struct urndis_softc *, struct mbuf *, int);
 void urndis_decap(struct urndis_softc *, struct urndis_chain *, u_int32_t);
 
+const struct urndis_class *urndis_lookup(usb_interface_descriptor_t *);
+
 int urndis_match(struct device *, void *, void *);
 void urndis_attach(struct device *, struct device *, void *);
 int urndis_detach(struct device *, int);
@@ -129,23 +131,15 @@ struct cfattach urndis_ca = {
 	urndis_activate,
 };
 
-struct urndis_class {
+const struct urndis_class {
 	u_int8_t class;
 	u_int8_t subclass;
 	u_int8_t protocol;
+	const char *typestr;
 } urndis_class[] = {
-	{ UICLASS_CDC, UISUBCLASS_ABSTRACT_CONTROL_MODEL, 0xff },
-	{ UICLASS_WIRELESS, UISUBCLASS_RF, UIPROTO_RNDIS },
-	{ UICLASS_MISC, UISUBCLASS_SYNC, UIPROTO_ACTIVESYNC }
-};
-
-/*
- * Supported devices that we can't match by class IDs.
- */
-static const struct usb_devno urndis_devs[] = {
-	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_ANDROID },
-	{ USB_VENDOR_SAMSUNG2,	USB_PRODUCT_SAMSUNG2_ANDROID },
-	{ USB_VENDOR_SAMSUNG2,	USB_PRODUCT_SAMSUNG2_ANDROID2 }
+	{ UICLASS_CDC, UISUBCLASS_ABSTRACT_CONTROL_MODEL, 0xff, "Vendor" },
+	{ UICLASS_WIRELESS, UISUBCLASS_RF, UIPROTO_RNDIS, "RNDIS" },
+	{ UICLASS_MISC, UISUBCLASS_SYNC, UIPROTO_ACTIVESYNC, "Activesync" }
 };
 
 usbd_status
@@ -1322,12 +1316,27 @@ urndis_txeof(usbd_xfer_handle xfer,
 	splx(s);
 }
 
+const struct urndis_class *
+urndis_lookup(usb_interface_descriptor_t *id)
+{
+	const struct urndis_class	*uc;
+	int				 i;
+
+	uc = urndis_class;
+	for (i = 0; i < nitems(urndis_class); i++, uc++) {
+		if (uc->class == id->bInterfaceClass &&
+		    uc->subclass == id->bInterfaceSubClass &&
+		    uc->protocol == id->bInterfaceProtocol)
+			return (uc);
+	}
+	return (NULL);
+}
+
 int
 urndis_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg		*uaa;
 	usb_interface_descriptor_t	*id;
-	int				 i;
 
 	uaa = aux;
 
@@ -1338,20 +1347,14 @@ urndis_match(struct device *parent, void *match, void *aux)
 	if (id == NULL)
 		return (UMATCH_NONE);
 
-	for (i = 0; i < nitems(urndis_class); i++) {
-		if (urndis_class[i].class == id->bInterfaceClass &&
-		    urndis_class[i].subclass == id->bInterfaceSubClass &&
-		    urndis_class[i].protocol == id->bInterfaceProtocol)
-			return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
-	}
-
-	return (usb_lookup(urndis_devs, uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	return (urndis_lookup(id) ? 
+	    UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO : UMATCH_NONE);
 }
 
 void
 urndis_attach(struct device *parent, struct device *self, void *aux)
 {
+	const struct urndis_class	*uc;
 	struct urndis_softc		*sc;
 	struct usb_attach_arg		*uaa;
 	struct ifnet			*ifp;
@@ -1388,14 +1391,16 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	uc = urndis_lookup(id);
+	printf("%s: using %s", DEVNAME(sc), uc->typestr);
+
 	id = usbd_get_interface_descriptor(sc->sc_iface_data);
 	cd = usbd_get_config_descriptor(sc->sc_udev);
 	altcnt = usbd_get_no_alts(cd, id->bInterfaceNumber);
 
 	for (j = 0; j < altcnt; j++) {
 		if (usbd_set_interface(sc->sc_iface_data, j)) {
-			printf("%s: interface alternate setting %u failed\n",
-			    DEVNAME(sc), j);
+			printf(": interface alternate setting %u failed\n", j);
 			return;
 		}
 		/* Find endpoints. */
@@ -1405,8 +1410,8 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 			ed = usbd_interface2endpoint_descriptor(
 			    sc->sc_iface_data, i);
 			if (!ed) {
-				printf("%s: no descriptor for bulk endpoint "
-				    "%u\n", DEVNAME(sc), i);
+				printf(": no descriptor for bulk endpoint "
+				    "%u\n", i);
 				return;
 			}
 			if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -1430,9 +1435,9 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_bulkin_no == -1)
-		printf("%s: could not find data bulk in\n", DEVNAME(sc));
+		printf(": could not find data bulk in\n");
 	if (sc->sc_bulkout_no == -1 )
-		printf("%s: could not find data bulk out\n", DEVNAME(sc));
+		printf(": could not find data bulk out\n");
 	return;
 
 	found:
@@ -1456,7 +1461,7 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 
 	if (urndis_ctrl_query(sc, OID_802_3_PERMANENT_ADDRESS, NULL, 0,
 	    &buf, &bufsz) != RNDIS_STATUS_SUCCESS) {
-		printf("%s: unable to get hardware address\n", DEVNAME(sc));
+		printf(": unable to get hardware address\n");
 		urndis_stop(sc);
 		splx(s);
 		return;
@@ -1464,10 +1469,10 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bufsz == ETHER_ADDR_LEN) {
 		memcpy(eaddr, buf, ETHER_ADDR_LEN);
-		printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(eaddr));
+		printf(", address %s\n", ether_sprintf(eaddr));
 		free(buf, M_TEMP);
 	} else {
-		printf("%s: invalid address\n", DEVNAME(sc));
+		printf(", invalid address\n");
 		free(buf, M_TEMP);
 		urndis_stop(sc);
 		splx(s);
