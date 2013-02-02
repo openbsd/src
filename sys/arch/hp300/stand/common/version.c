@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.12 2013/01/11 23:22:35 miod Exp $	*/
+/*	$OpenBSD: version.c,v 1.13 2013/02/02 13:34:29 miod Exp $	*/
 
 /*
  * Record major changes in the boot code here, and increment the version
@@ -24,6 +24,7 @@
  * 2.13	Allow kernels with uppercase characters in their names to be loaded
  *	from the default boot device without an explicit device or a leading
  *	`/'.
+ * 2.14 Build with the ELF toolchain.
  */
 
-const char version[] = "2.13";
+const char version[] = "2.14";

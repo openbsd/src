@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdreg.h,v 1.6 2007/05/25 20:32:29 krw Exp $	*/
+/*	$OpenBSD: hdreg.h,v 1.7 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: rdreg.h,v 1.7 1996/02/09 18:00:37 scottr Exp $	*/
 
 /*
@@ -51,14 +51,14 @@ struct	hd_iocmd {
 	long	c_len;
 	char	c_cmd;
 	char	c_pad2;
-};
+} __packed;
 
 struct	hd_rscmd {
 	char	c_unit;
 	char	c_sram;
 	char	c_ram;
 	char	c_cmd;
-};
+} __packed;
 
 struct	hd_stat {
 	char	c_vu;
@@ -78,7 +78,7 @@ struct	hd_stat {
 			short	cu_sect;
 		} cu_tva;
 	} c_pf;
-};
+} __packed;
 #define c_raw	c_pf.cu_raw
 #define c_blk	c_pf.cu_sva.cu_lsl	/* for now */
 #define c_tva	c_pf.cu_tva
@@ -90,19 +90,19 @@ struct	hd_ssmcmd {
 	short	c_fefm;
 	short	c_aefm;
 	short	c_iefm;
-};
+} __packed;
 
 struct	hd_srcmd {
 	char	c_unit;
 	char	c_nop;
 	char	c_cmd;
 	char	c_param;
-};
+} __packed;
 
 struct	hd_clearcmd {
 	char	c_unit;
 	char	c_cmd;
-};
+} __packed;
 
 /* HW ids */
 #define	HD7946AID	0x220	/* also 7945A */

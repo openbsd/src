@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.79 2012/08/22 16:58:26 pascal Exp $
+#	$OpenBSD: Makefile.hp300,v 1.80 2013/02/02 13:34:29 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
-LINKFLAGS=	-n -Ttext 0 -e start
+LINKFLAGS=	-Ttext 0 -e start --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h

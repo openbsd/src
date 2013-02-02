@@ -1,4 +1,4 @@
-/*	$OpenBSD: rominfo.h,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: rominfo.h,v 1.3 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: rominfo.h,v 1.5 1994/10/26 07:27:53 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 struct jmpvec {
 	short op;	/* jmp instruction */
 	long  addr;	/* address */
-};
+} __packed;
 
 struct rominfo {
 	char p1[0xDC0];
@@ -62,4 +62,4 @@ struct rominfo {
 	char  p6;		/* ??				(FFFFFEDB) */
 	long  msus;		/* ??				(FFFFFEDC) */
 	struct jmpvec jvec[48];	/* jump vectors			(FFFFFEE0) */
-};
+} __packed;

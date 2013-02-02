@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvboxreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: dvboxreg.h,v 1.3 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: grf_dvreg.h,v 1.5 1994/10/26 07:23:50 cgd Exp $	*/
 
 /*
@@ -161,4 +161,4 @@ struct dvboxfb {
 	u_int16_t trans;		/* Transparency		      0xC226 */
 	u_int8_t f45[0xC23E -0xC226-2];
 	u_int16_t pstop;		/* Pace value control	      0xc23e */
-};
+} __packed;

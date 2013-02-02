@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2011/08/18 20:02:58 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.12 1997/01/30 10:32:51 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,8 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 
+#include <lib/libsa/stand.h>
+
 #include "samachdep.h"
 #include "consdefs.h"
 #include "rominfo.h"
@@ -84,9 +86,9 @@ printrominfo()
 {
 	struct rominfo *rp = (struct rominfo *)ROMADDR;
 
-	printf("boottype %x, name %s, lowram %x, sysflag %x\n",
+	printf("boottype %lx, name %s, lowram %lx, sysflag %x\n",
 	       rp->boottype, rp->name, rp->lowram, rp->sysflag&0xff);
-	printf("rambase %x, ndrives %x, sysflag2 %x, msus %x\n",
+	printf("rambase %lx, ndrives %x, sysflag2 %x, msus %lx\n",
 	       rp->rambase, rp->ndrives, rp->sysflag2&0xff, rp->msus);
 }
 #endif
@@ -163,7 +165,7 @@ msustobdev()
 	bdev  = MAKEBOOTDEV(type, ctlr, slave, punit, 0);
 
 #ifdef PRINTROMINFO
-	printf("msus %x -> bdev %x\n", rp->msus, bdev);
+	printf("msus %lx -> bdev %lx\n", rp->msus, bdev);
 #endif
 	return (bdev);
 }

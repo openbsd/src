@@ -1,4 +1,4 @@
-/*	$OpenBSD: rboxreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: rboxreg.h,v 1.3 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: grf_rbreg.h,v 1.4 1994/10/26 07:24:03 cgd Exp $	*/
 
 /*
@@ -117,4 +117,4 @@ struct rboxfb {
 	u_int8_t filler20[0x8012 - 0x4120];
 	u_int16_t te_status;		/* transform engine status    0x8012 */
 	u_int8_t filler21[0x1ffff-0x8014];
-};
+} __packed;

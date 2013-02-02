@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.7 2011/08/18 19:54:19 miod Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.8 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: srt0.S,v 1.4 1997/05/12 07:56:00 thorpej Exp $	*/
 
 /*
@@ -70,124 +70,129 @@ GLOBAL(machineid)
 GLOBAL(mmuid)
 	.long	0
 
+	.chip	68020
 	.text
 ASENTRY_NOPROFILE(begin)
-	movl	#STACK,sp
-	moveq	#47,d0			| # of vectors - 1
-	movl	#VECTORS+2,a0		| addr part of first vector
+	movl	#STACK,%sp
+	moveq	#47,%d0			| # of vectors - 1
+	movl	#VECTORS+2,%a0		| addr part of first vector
 1:
-	movl	#_ASM_LABEL(__trap),a0@	| make it direct to __trap
-	addql	#6,a0			| move to next vector addr
-	dbf	d0,1b			| go til done
-	movl	#NMIRESET,a0		| NMI keyboard reset addr
-	movl	#nmi,a0@		| catch in reset routine
+	movl	#_ASM_LABEL(__trap),%a0@ | make it direct to __trap
+	addql	#6,%a0			| move to next vector addr
+	dbf	%d0,1b			| go til done
+	movl	#NMIRESET,%a0		| NMI keyboard reset addr
+	movl	#nmi,%a0@		| catch in reset routine
 
 /*
  * Determine our SPU type and look for internal HP-IB
  */
-	lea	_C_LABEL(machineid),a0
-	movl	#0x808,d0
-	movc	d0,cacr			| clear and disable on-chip cache(s)
-	movl	#0x200,d0		| data freeze bit
-	movc	d0,cacr			|   only exists on 68030
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
+	lea	_C_LABEL(machineid),%a0
+	movl	#0x808,%d0
+	movc	%d0,%cacr		| clear and disable on-chip cache(s)
+	movl	#0x200,%d0		| data freeze bit
+	movc	%d0,%cacr		|   only exists on 68030
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
 	jeq	not68030		| yes, we have 68020/68040
 
 	/*
 	 * 68030 models
 	 */
 
-	movl	#0x808,d0
-	movc	d0,cacr			| clear data freeze bit again
+	.chip	68030
+	movl	#0x808,%d0
+	movc	%d0,%cacr		| clear data freeze bit again
 	movl	#0x80,MMUCMD		| set magic cookie
-	movl	MMUCMD,d0		| read it back
-	btst	#7,d0			| cookie still on?
+	movl	MMUCMD,%d0		| read it back
+	btst	#7,%d0			| cookie still on?
 	jeq	not370			| no, 360 or 375
-	movl	#HP_370,a0@		| consider a 370 for now
+	movl	#HP_370,%a0@		| consider a 370 for now
 	movl	#0,MMUCMD		| clear magic cookie
-	movl	MMUCMD,d0		| read it back
-	btst	#7,d0			| still on?
+	movl	MMUCMD,%d0		| read it back
+	btst	#7,%d0			| still on?
 	jeq	ihpibcheck		| no, a 370
-	movl	#HP_340,a0@		| yes, must be a 340
+	movl	#HP_340,%a0@		| yes, must be a 340
 	jra	ihpibcheck
 
 not370:
-	movl	#HP_36X,a0@		| type is at least a 360
+	movl	#HP_36X,%a0@		| type is at least a 360
 	movl	#0,MMUCMD		| clear magic cookie2
-	movl	MMUCMD,d0		| read it back
-	btst	#16,d0			| still on?
+	movl	MMUCMD,%d0		| read it back
+	btst	#16,%d0			| still on?
 	jeq	ihpibcheck		| no, a 360 or a 362
-	lsrl	#MMUID_SHIFT,d0		| save MMU ID
-	andl	#MMUID_MASK,d0
-	movl	d0,_C_LABEL(mmuid)	| save mmuid
-	cmpb	#MMUID_345,d0		| are we a 345?
+	lsrl	#MMUID_SHIFT,%d0	| save MMU ID
+	andl	#MMUID_MASK,%d0
+	movl	%d0,_C_LABEL(mmuid)	| save mmuid
+	cmpb	#MMUID_345,%d0		| are we a 345?
 	jeq	isa345
-	cmpb	#MMUID_375,d0		| how about a 375?
+	cmpb	#MMUID_375,%d0		| how about a 375?
 	jeq	isa375
-	movl	#HP_400,a0@		| must be a 400
+	movl	#HP_400,%a0@		| must be a 400
 	jra	ihpibcheck
 isa345:
-	movl	#HP_345,a0@
+	movl	#HP_345,%a0@
 	jra	ihpibcheck
 isa375:
-	movl	#HP_375,a0@
+	movl	#HP_375,%a0@
 	jra	ihpibcheck
+	.chip	68020
 
 	/*
 	 * End of 68030 section
 	 */
 
 not68030:
-	bset	#31,d0			| data cache enable bit
-	movc	d0,cacr			|   only exists on 68040
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
+	bset	#31,%d0			| data cache enable bit
+	movc	%d0,%cacr		|   only exists on 68040
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
 	beq	is68020			| yes, we have 68020
-	moveq	#0,d0			| now turn it back off
-	movec	d0,cacr			|   before we access any data
+	moveq	#0,%d0			| now turn it back off
+	movec	%d0,%cacr		|   before we access any data
 
 	/*
 	 * 68040 models
 	 */
 
-	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0006		| movc d0,dtt0
-	.long	0x4e7b0007		| movc d0,dtt1
-	.word	0xf4d8			| cinva bc
-	movl	MMUCMD,d0		| get MMU ID
-	lsrl	#MMUID_SHIFT,d0
-	andl	#MMUID_MASK,d0
-	movl	d0,_C_LABEL(mmuid)	| save mmuid
-	cmpb	#MMUID_425_T,d0		| are we a 425t?
+	.chip	68040
+	movc	%d0,%itt0
+	movc	%d0,%itt1
+	movc	%d0,%dtt0
+	movc	%d0,%dtt1
+	cinva	%bc
+	movl	MMUCMD,%d0		| get MMU ID
+	lsrl	#MMUID_SHIFT,%d0
+	andl	#MMUID_MASK,%d0
+	movl	%d0,_C_LABEL(mmuid)	| save mmuid
+	cmpb	#MMUID_425_T,%d0	| are we a 425t?
 	jeq	isa425
-	cmpb	#MMUID_425_S,d0		| how about 425s?
+	cmpb	#MMUID_425_S,%d0	| how about 425s?
 	jeq	isa425
-	cmpb	#MMUID_425_E,d0		| or maybe a 425e?
+	cmpb	#MMUID_425_E,%d0	| or maybe a 425e?
 	jeq	isa425
-	cmpb	#MMUID_433_T,d0		| or a 433t?
+	cmpb	#MMUID_433_T,%d0	| or a 433t?
 	jeq	isa433
-	cmpb	#MMUID_433_S,d0		| maybe a 433s?
+	cmpb	#MMUID_433_S,%d0	| maybe a 433s?
 	jeq	isa433
-	cmpb	#MMUID_385,d0		| then a 385?
+	cmpb	#MMUID_385,%d0		| then a 385?
 	jeq	isa385
-	cmpb	#MMUID_382,d0		| last chance...
+	cmpb	#MMUID_382,%d0		| last chance...
 	jeq	isa382
-	movl	#HP_380,a0@		| guess we are a 380
+	movl	#HP_380,%a0@		| guess we are a 380
 	jra	ihpibcheck
 isa425:
-	movl	#HP_425,a0@
+	movl	#HP_425,%a0@
 	jra	ihpibcheck
 isa433:
-	movl	#HP_433,a0@
+	movl	#HP_433,%a0@
 	jra	ihpibcheck
 isa385:
-	movl	#HP_385,a0@
+	movl	#HP_385,%a0@
 	jra	ihpibcheck
 isa382:
-	movl	#HP_382,a0@
+	movl	#HP_382,%a0@
 	jra	ihpibcheck
+	.chip	68020
 
 	/*
 	 * End 68040 section
@@ -198,17 +203,17 @@ isa382:
 	 */
 
 is68020:
-	movl	#HP_330,a0@		| consider a 330 for now
+	movl	#HP_330,%a0@		| consider a 330 for now
 	movl	#1,MMUCMD		| a 68020, write HP MMU location
-	movl	MMUCMD,d0		| read it back
-	btst	#0,d0			| zero?
+	movl	MMUCMD,%d0		| read it back
+	btst	#0,%d0			| zero?
 	jeq	ihpibcheck		| yes, a 330
-	movl	#HP_320,a0@		| no, consider a 320 for now
+	movl	#HP_320,%a0@		| no, consider a 320 for now
 	movl	#0x80,MMUCMD		| set magic cookie
-	movl	MMUCMD,d0		| read it back
-	btst	#7,d0			| cookie still on?
+	movl	MMUCMD,%d0		| read it back
+	btst	#7,%d0			| cookie still on?
 	jeq	ihpibcheck		| no, just a 320
-	movl	#HP_350,a0@		| yes, a 350
+	movl	#HP_350,%a0@		| yes, a 350
 
 	/*
 	 * End 68020 section
@@ -225,9 +230,9 @@ ihpibcheck:
 boottype:
 	cmpw	#12,BOOTTYPE		| is this a reboot (REQ_REBOOT)?
 	jne	notreboot		| no, skip
-	lea	MAXADDR,a0		| find last page
-	movl	a0@+,d7			| and extract howto, bootdev
-	movl	a0@+,d6			|   from where doboot() left them
+	lea	MAXADDR,%a0		| find last page
+	movl	%a0@+,%d7		| and extract howto, bootdev
+	movl	%a0@+,%d6		|   from where doboot() left them
 	jra	boot1
 /*
  * At this point we do not know which logical device the MSUS select
@@ -235,30 +240,30 @@ boottype:
  * and let configure() construct it.
  */
 notreboot:
-	moveq	#0,d6			| make sure bootdev is invalid
+	moveq	#0,%d6			| make sure bootdev is invalid
 	cmpw	#18,BOOTTYPE		| does the user want to interact?
 	jeq	askme			| yes, go to it
-	moveq	#0,d7			| default to RB_AUTOBOOT
+	moveq	#0,%d7			| default to RB_AUTOBOOT
 	jra	boot1
 askme:
-	moveq	#3,d7			| default to RB_SINGLE|RB_ASKNAME
+	moveq	#3,%d7			| default to RB_SINGLE|RB_ASKNAME
 boot1:
-	movl	d6,_C_LABEL(bootdev)	| save bootdev and howto
-	movl	d7,_C_LABEL(howto)	|   globally so all can access
-	movl	LOWRAM,d0		| read lowram value from bootrom
+	movl	%d6,_C_LABEL(bootdev)	| save bootdev and howto
+	movl	%d7,_C_LABEL(howto)	|   globally so all can access
+	movl	LOWRAM,%d0		| read lowram value from bootrom
 	/*
 	 * Must preserve the scratch area for the BOOT ROM.
 	 * Round up to the next 8k boundary.
 	 */
-	addl	#((2*NBPG)-1),d0
-	andl	#-(2*NBPG),d0
-	movl	d0,_C_LABEL(lowram)	| stash that value
+	addl	#((2*NBPG)-1),%d0
+	andl	#-(2*NBPG),%d0
+	movl	%d0,_C_LABEL(lowram)	| stash that value
 start:
-	movl	#_C_LABEL(edata),a2	| start of BSS
-	movl	#_C_LABEL(end),a3	| end
+	movl	#_C_LABEL(edata),%a2	| start of BSS
+	movl	#_C_LABEL(end),%a3	| end
 1:
-	clrb	a2@+			| clear BSS
-	cmpl	a2,a3			| done?
+	clrb	%a2@+			| clear BSS
+	cmpl	%a2,%a3			| done?
 	bne	1b			| no, keep going
 	jsr	_C_LABEL(configure)	| configure critical devices
 	jsr	_C_LABEL(main)		| lets go
@@ -271,19 +276,19 @@ GLOBAL(_rtt)
  */
 ENTRY_NOPROFILE(badaddr)
 	movl	BUSERR,_C_LABEL(_bsave)	| save ROM bus error handler address
-	movl	sp,_C_LABEL(_ssave)	| and current stack pointer
+	movl	%sp,_C_LABEL(_ssave)	| and current stack pointer
 	movl	#catchbad,BUSERR	| plug in our handler
-	movl	sp@(4),a0		| address to probe
-	movw	a0@,d1			| do it
+	movl	%sp@(4),%a0		| address to probe
+	movw	%a0@,%d1		| do it
 	movl	_C_LABEL(_bsave),BUSERR	| if we got here, it did not fault
-	clrl	d0			| return that this was not a bad addr
+	clrl	%d0			| return that this was not a bad addr
 	rts
 
 catchbad:
 	movl	_C_LABEL(_bsave),BUSERR	| got a bus error, so restore
 					|   old handler
-	movl	_C_LABEL(_ssave),sp	| manually restore stack
-	moveq	#1,d0			| indicate that we got a fault
+	movl	_C_LABEL(_ssave),%sp	| manually restore stack
+	moveq	#1,%d0			| indicate that we got a fault
 	rts				| return to caller of badaddr()
 
 	.data
@@ -294,14 +299,14 @@ GLOBAL(_ssave)
 	.long	0
 
 ASENTRY_NOPROFILE(__trap)
-	moveml	#0xFFFF,sp@-		| save registers
-	movl	sp,sp@-			| push pointer to frame
+	moveml	#0xFFFF,%sp@-		| save registers
+	movl	%sp,%sp@-		| push pointer to frame
 	jsr	_C_LABEL(trap)		| call C routine to deal with it
-	tstl	d0
+	tstl	%d0
 	jeq	Lstop
-	addql	#4,sp
-	moveml	sp@+,#0x7FFF
-	addql	#8,sp
+	addql	#4,%sp
+	moveml	%sp@+,#0x7FFF
+	addql	#8,%sp
 	rte
 Lstop:
 	stop	#0x2700			| stop cold
@@ -317,7 +322,7 @@ ENTRY_NOPROFILE(call_req_reboot)
 	rts				| XXX: just in case?
 
 ENTRY_NOPROFILE(romout)
-	movl	sp@(4),d0		| line number
-	movl	sp@(8),a0		| string
+	movl	%sp@(4),%d0		| line number
+	movl	%sp@(8),%a0		| string
 	jsr	0x150			| do it
 	rts

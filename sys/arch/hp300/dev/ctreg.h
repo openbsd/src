@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctreg.h,v 1.7 2005/11/18 00:09:15 miod Exp $	*/
+/*	$OpenBSD: ctreg.h,v 1.8 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: ctreg.h,v 1.6 1996/02/09 18:00:35 scottr Exp $	*/
 
 /*
@@ -42,12 +42,12 @@ struct	ct_iocmd {
 	long	len;
 	char	nop3;
 	char	cmd;
-};
+} __packed;
 
 struct	ct_rscmd {
 	char	unit;
 	char	cmd;
-};
+} __packed;
 
 struct	ct_stat {
 	char	c_vu;
@@ -59,7 +59,7 @@ struct	ct_stat {
 	short	c_blk0;
 	long	c_blk;
 	char	c_pad[4];
-};
+} __packed;
 
 struct	ct_ssmcmd {
 	char	unit;
@@ -68,36 +68,36 @@ struct	ct_ssmcmd {
 	short	fefm;
 	short	aefm;
 	short	iefm;
-};
+} __packed;
 
 struct	ct_srcmd {
 	char	unit;
 	char	nop;
 	char	cmd;
 	char	param;
-};
+} __packed;
 
 struct	ct_soptcmd {
 	char	unit;
 	char	nop;
 	char	cmd;
 	char	opt;
-};
+} __packed;
 
 struct	ct_ulcmd {
 	char	unit;
 	char	cmd;
-};
+} __packed;
 
 struct	ct_wfmcmd {
 	char	unit;
 	char	cmd;
-};
+} __packed;
 
 struct	ct_clearcmd {
 	char	unit;
 	char	cmd;
-};
+} __packed;
 
 #define	CT7946ID	0x220
 #define CT9145ID	0x268

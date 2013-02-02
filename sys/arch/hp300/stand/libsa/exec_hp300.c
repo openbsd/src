@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_hp300.c,v 1.2 2013/01/07 20:02:11 miod Exp $	*/
+/*	$OpenBSD: exec_hp300.c,v 1.3 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -49,9 +49,9 @@ exec(char *path, void *loadaddr, int howto)
 	if (rc != 0)
 		return;
 
-	printf("Start @ 0x%lx\n", marks[MARK_START]);
+	printf("Start @ 0x%lx\n", marks[MARK_ENTRY]);
 
-	machdep_start((char *)marks[MARK_START], howto, loadaddr,
+	machdep_start((char *)marks[MARK_ENTRY], howto, loadaddr,
 	    (char *)marks[MARK_SYM], (char *)marks[MARK_END]);
 
 	/* exec failed */

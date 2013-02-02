@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.7 2010/12/26 15:40:59 miod Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.8 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $	*/
 
 /*-
@@ -272,11 +272,11 @@ hp300_mem_bsrm1(bus_space_handle_t h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movb	a0@,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movb	%%a0@,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -288,11 +288,11 @@ hp300_mem_bsrm2(bus_space_handle_t h, bus_size_t offset,
 	     u_int16_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	a0@,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%a0@,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -304,11 +304,11 @@ hp300_mem_bsrm4(bus_space_handle_t h, bus_size_t offset,
 	     u_int32_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,%d0		;"
-	"1:	movl	a0@,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%a0@,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -320,11 +320,11 @@ hp300_mem_bsrrm2(bus_space_handle_t h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	a0@,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%a0@,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -336,11 +336,11 @@ hp300_mem_bsrrm4(bus_space_handle_t h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,%d0		;"
-	"1:	movl	a0@,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%a0@,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -352,11 +352,11 @@ hp300_mem_bsrr1(bus_space_handle_t h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movb	a0@+,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movb	%%a0@+,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -368,11 +368,11 @@ hp300_mem_bsrr2(bus_space_handle_t h, bus_size_t offset,
 	     u_int16_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	a0@+,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%a0@+,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -384,11 +384,11 @@ hp300_mem_bsrr4(bus_space_handle_t h, bus_size_t offset,
 	     u_int32_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movl	a0@+,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%a0@+,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -400,11 +400,11 @@ hp300_mem_bsrrr2(bus_space_handle_t h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	a0@+,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%a0@+,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c / 2)	:
@@ -416,11 +416,11 @@ hp300_mem_bsrrr4(bus_space_handle_t h, bus_size_t offset,
 	     u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movl	a0@+,a1@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%a0@+,%%a1@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c / 4)	:
@@ -453,11 +453,11 @@ hp300_mem_bswm1(bus_space_handle_t h, bus_size_t offset,
 	     const u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movb	a1@+,a0@	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movb	%%a1@+,%%a0@	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -469,11 +469,11 @@ hp300_mem_bswm2(bus_space_handle_t h, bus_size_t offset,
 	     const u_int16_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	a1@+,a0@	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%a1@+,%%a0@	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -485,11 +485,11 @@ hp300_mem_bswm4(bus_space_handle_t h, bus_size_t offset,
 	     const u_int32_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movl	a1@+,a0@	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%a1@+,%%a0@	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -501,11 +501,11 @@ hp300_mem_bswrm2(bus_space_handle_t h, bus_size_t offset,
 	     const u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	a1@+,a0@	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%a1@+,%%a0@	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -517,11 +517,11 @@ hp300_mem_bswrm4(bus_space_handle_t h, bus_size_t offset,
 	     const u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movl	a1@+,a0@	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%a1@+,%%a0@	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -533,11 +533,11 @@ hp300_mem_bswr1(bus_space_handle_t h, bus_size_t offset,
 	     const u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movb	a1@+,a0@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movb	%%a1@+,%%a0@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -549,11 +549,11 @@ hp300_mem_bswr2(bus_space_handle_t h, bus_size_t offset,
 	     const u_int16_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	a1@+,a0@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%a1@+,%%a0@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -565,11 +565,11 @@ hp300_mem_bswr4(bus_space_handle_t h, bus_size_t offset,
 	     const u_int32_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movl	a1@+,a0@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%a1@+,%%a0@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c)	:
@@ -581,11 +581,11 @@ hp300_mem_bswrr2(bus_space_handle_t h, bus_size_t offset,
 	     const u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	a1@+,a0@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%a1@+,%%a0@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c / 2)	:
@@ -597,11 +597,11 @@ hp300_mem_bswrr4(bus_space_handle_t h, bus_size_t offset,
 	     const u_int8_t *a, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,a1		;"
-	"	movl	%2,d0		;"
-	"1:	movl	a1@+,a0@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%a1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%a1@+,%%a0@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"					:
 								:
 		    "r" (h + offset), "g" (a), "g" (c / 4)	:
@@ -613,11 +613,11 @@ hp300_mem_bssm1(bus_space_handle_t h, bus_size_t offset,
 	     u_int8_t v, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,d1		;"
-	"	movl	%2,d0		;"
-	"1:	movb	d1,a0@	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%d1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movb	%%d1,%%a0@	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"						:
 									:
 		    "r" (h + offset), "g" ((u_long)v), "g" (c)	:
@@ -629,11 +629,11 @@ hp300_mem_bssm2(bus_space_handle_t h, bus_size_t offset,
 	     u_int16_t v, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,d1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	d1,a0@	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%d1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%d1,%%a0@	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"						:
 									:
 		    "r" (h + offset), "g" ((u_long)v), "g" (c)	:
@@ -645,11 +645,11 @@ hp300_mem_bssm4(bus_space_handle_t h, bus_size_t offset,
 	     u_int32_t v, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,d1		;"
-	"	movl	%2,d0		;"
-	"1:	movl	d1,a0@	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%d1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%d1,%%a0@	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"						:
 									:
 		    "r" (h + offset), "g" ((u_long)v), "g" (c)	:
@@ -661,11 +661,11 @@ hp300_mem_bssr1(bus_space_handle_t h, bus_size_t offset,
 	     u_int8_t v, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,d1		;"
-	"	movl	%2,d0		;"
-	"1:	movb	d1,a0@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%d1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movb	%%d1,%%a0@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"						:
 									:
 		    "r" (h + offset), "g" ((u_long)v), "g" (c)	:
@@ -677,11 +677,11 @@ hp300_mem_bssr2(bus_space_handle_t h, bus_size_t offset,
 	     u_int16_t v, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,d1		;"
-	"	movl	%2,d0		;"
-	"1:	movw	d1,a0@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%d1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movw	%%d1,%%a0@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"						:
 									:
 		    "r" (h + offset), "g" ((u_long)v), "g" (c)	:
@@ -693,11 +693,11 @@ hp300_mem_bssr4(bus_space_handle_t h, bus_size_t offset,
 	     u_int32_t v, size_t c)
 {
 	__asm __volatile (
-	"	movl	%0,a0		;"
-	"	movl	%1,d1		;"
-	"	movl	%2,d0		;"
-	"1:	movl	d1,a0@+	;"
-	"	subql	#1,d0		;"
+	"	movl	%0,%%a0		;"
+	"	movl	%1,%%d1		;"
+	"	movl	%2,%%d0		;"
+	"1:	movl	%%d1,%%a0@+	;"
+	"	subql	#1,%%d0		;"
 	"	jne	1b"						:
 									:
 		    "r" (h + offset), "g" ((u_long)v), "g" (c)	:

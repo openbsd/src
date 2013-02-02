@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmareg.h,v 1.9 2005/11/17 23:56:02 miod Exp $	*/
+/*	$OpenBSD: dmareg.h,v 1.10 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: dmareg.h,v 1.12 1997/05/05 21:02:40 thorpej Exp $	*/
 
 /*
@@ -46,14 +46,14 @@ struct	dmaBdevice {
 	vu_short	dmaB_count;
 	vu_short	dmaB_cmd;
 #define	dmaB_stat	dmaB_cmd
-};
+} __packed;
 
 struct	dmadevice {
 	v_char		*dma_addr;
 	vu_int		dma_count;
 	vu_short	dma_cmd;
 	vu_short	dma_stat;
-};
+} __packed;
 
 struct	dmareg {
 	struct dmaBdevice dma_Bchan0;
@@ -65,7 +65,7 @@ struct	dmareg {
 	struct dmadevice  dma_chan0;
 	char		  dma_pad2[0xF4];
 	struct dmadevice  dma_chan1;
-};
+} __packed;
 
 /* The hp300 has 2 DMA channels. */
 #define	NDMACHAN	2

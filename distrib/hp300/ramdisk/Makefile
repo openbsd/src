@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2011/04/18 16:52:09 thib Exp $
+#	$OpenBSD: Makefile,v 1.30 2013/02/02 13:34:29 miod Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -59,8 +59,10 @@ rd_teardown:
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
-rdsetroot:	${TOP}/../common/rdsetroot.c
-	${HOSTCC} -o rdsetroot ${TOP}/../common/rdsetroot.c
+rdsetroot:	${TOP}/../common/elfrdsetroot.c
+	${HOSTCC} -o rdsetroot \
+	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
+	    ${TOP}/../common/elf64.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

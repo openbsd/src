@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcatreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: topcatreg.h,v 1.3 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: grf_tcreg.h,v 1.6 1994/10/26 07:24:06 cgd Exp $	*/
 
 /*
@@ -114,4 +114,4 @@ struct tcboxfb {
 	u_int16_t plane_mask;		/* plane mask select	      0x60ba */
 	u_int8_t f24[0x60f0-0x60ba-2];
 	u_int16_t strobe;		/* color map trigger 	      0x60f0 */
-};
+} __packed;

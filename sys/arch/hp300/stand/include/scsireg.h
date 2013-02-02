@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsireg.h,v 1.3 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: scsireg.h,v 1.4 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: scsireg.h,v 1.4 1994/10/26 07:24:59 cgd Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ struct scsi_format_parms {		/* physical BFI format */
 		unsigned head : 8;
 		long	bytes_from_index;
 	} defect[127];
-} format_parms;
+};
 
 struct scsi_reassign_parms {
 	u_short	reserved;
@@ -299,7 +299,7 @@ struct scsi_reassign_parms {
 	struct new_defect {
 		unsigned lba;	/* logical block address */
 	} new_defect[2];
-} reassign_parms;
+};
 
 struct scsi_modesel_hdr {
 	u_char	rsvd1;

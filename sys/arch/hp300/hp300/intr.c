@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.25 2011/12/21 22:39:10 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.26 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -287,7 +287,7 @@ splassert_check(int wantipl, const char *func)
 {
 	int oldipl, realwantipl;
 
-	__asm __volatile ("movew sr,%0" : "=&d" (oldipl));
+	__asm __volatile ("movew %%sr,%0" : "=&d" (oldipl));
 
 	realwantipl = PSLTOIPL(hp300_varpsl[wantipl]);
 	oldipl = PSLTOIPL(oldipl);

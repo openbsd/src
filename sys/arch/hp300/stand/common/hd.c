@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.7 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: hd.c,v 1.8 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.11 1996/12/21 21:34:40 thorpej Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ hdident(int ctlr, int unit)
 	return(id);
 }
 
-char io_buf[MAXBSIZE];
+char hdio_buf[MAXBSIZE];
 
 int
 hdgetinfo(struct hd_softc *rs)
@@ -221,7 +221,7 @@ hdgetinfo(struct hd_softc *rs)
 	savepart = rs->sc_part;
 	rs->sc_part = RAW_PART;
 	err = hdstrategy(rs, F_READ, LABELSECTOR,
-	    lp->d_secsize ? lp->d_secsize : DEV_BSIZE, io_buf, &i);
+	    lp->d_secsize ? lp->d_secsize : DEV_BSIZE, hdio_buf, &i);
 	rs->sc_part = savepart;
 
 	if (err) {
@@ -229,7 +229,7 @@ hdgetinfo(struct hd_softc *rs)
 		return(0);
 	}
 
-	msg = getdisklabel(io_buf, lp);
+	msg = getdisklabel(hdio_buf, lp);
 	if (msg) {
 		printf("hd(%d,%d,%d): WARNING: %s, ",
 		       rs->sc_ctlr, rs->sc_unit, rs->sc_part, msg);

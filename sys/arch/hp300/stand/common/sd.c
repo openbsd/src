@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.7 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.8 2013/02/02 13:34:29 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.9 1996/12/21 21:34:41 thorpej Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ sdreset(int ctlr, int unit)
 {
 }
 
-char io_buf[MAXBSIZE];
+char sdio_buf[MAXBSIZE];
 
 int
 sdgetinfo(struct sd_softc *ss)
@@ -136,7 +136,7 @@ sdgetinfo(struct sd_softc *ss)
 	savepart = ss->sc_part;
 	ss->sc_part = RAW_PART;
 	err = sdstrategy(ss, F_READ, LABELSECTOR,
-	    lp->d_secsize ? lp->d_secsize : DEV_BSIZE, io_buf, &i);
+	    lp->d_secsize ? lp->d_secsize : DEV_BSIZE, sdio_buf, &i);
 	ss->sc_part = savepart;
 
 	if (err) {
@@ -144,7 +144,7 @@ sdgetinfo(struct sd_softc *ss)
 		return(0);
 	}
 
-	msg = getdisklabel(io_buf, lp);
+	msg = getdisklabel(sdio_buf, lp);
 	if (msg) {
 		printf("sd(%d,%d,%d): WARNING: %s, ",
 		       ss->sc_ctlr, ss->sc_unit, ss->sc_part, msg);
