@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.222 2013/02/01 23:43:33 florian Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.223 2013/02/02 02:47:16 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -296,7 +296,8 @@ routehandler(void)
 		write_file("/etc/resolv.conf",
 		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
 		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
-		    client->new->resolv_conf, strlen(client->new->resolv_conf));
+		    client->active->resolv_conf,
+		    strlen(client->active->resolv_conf));
 
 	return;
 
