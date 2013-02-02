@@ -1661,6 +1661,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/pte.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/ptrace.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/reloc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/setjmp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/signal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/spinlock.ph
@@ -1755,6 +1756,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/pte_motorola.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ptrace.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/reloc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/setjmp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/signal.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/spinlock.ph
