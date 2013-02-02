@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2005/09/28 23:54:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2013/02/02 13:47:17 miod Exp $
 #	$NetBSD: Makefile,v 1.13 1995/04/23 07:58:46 cgd Exp $
 
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
@@ -27,7 +27,7 @@ beforedepend:
 	ln -sf ${.CURDIR}/../../../sys/arch/${TARGET}/include \
 		cross-include/machine
 .else
-SUBDIR=	ldconfig ldd rtld
+SUBDIR=	ldconfig ldd
 .endif
 
 .PATH: $(.CURDIR)/$(TARGET_MACHINE_ARCH)
