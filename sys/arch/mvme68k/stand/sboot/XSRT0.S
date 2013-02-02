@@ -1,4 +1,4 @@
-/*	$OpenBSD: XSRT0.S,v 1.5 2003/06/04 16:36:14 deraadt Exp $ */
+/*	$OpenBSD: XSRT0.S,v 1.6 2013/02/02 13:36:06 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -55,31 +55,31 @@
 
 		| start at 0x4000, load at 0xa000, stack at 0x9ff0.
 		.text
-		.globl start
-start:		movb	#0,_reboot
+		.globl __start
+__start:	movb	#0,reboot
 		jra	Ldoit
-restart:	movb	#1,_reboot		| fall through
+restart:	movb	#1,reboot		| fall through
 
-Ldoit:		movl	#0x00006ff0,sp
-		jsr	_main
+Ldoit:		movl	#0x00006ff0,%sp
+		jsr	main
 
-		.globl	___main
-___main:	rts
+		.globl	__main
+__main:		rts
 
 Lname:
-	.ascii "sboot\0"
+		.ascii "sboot\0"
 
-.globl  _go
-_go:
-	clrl	d0		| dev lun
-	clrl	d1		| ctrl lun
-	movl	#0x2c, d4	| flags for IPL
-	movl	#0xfffe1800, a0	| address of "disk" ctrl
-	movl	sp@(4), a1	| entry point of loaded program
-	movl	d0, a2		| media config block (NULL)
-	movl	sp@(8), a3	| nb args (start)
-	movl	sp@(12), a4	| nb end args
-	movl	#Lname, a5	| args
-	movl	#Lname+5, a6	| end args
-				| SRT0 will set stack
-	jmp	a1@		| GO!
+		.globl  go
+go:
+		clrl	%d0			| dev lun
+		clrl	%d1			| ctrl lun
+		movl	#0x2c, %d4		| flags for IPL
+		movl	#0xfffe1800, %a0	| address of "disk" ctrl
+		movl	%sp@(4), %a1		| entry point of loaded program
+		movl	%d0, %a2		| media config block (NULL)
+		movl	%sp@(8), %a3		| nb args (start)
+		movl	%sp@(12), %a4		| nb end args
+		movl	#Lname, %a5		| args
+		movl	#Lname+5, %a6		| end args
+						| SRT0 will set stack
+		jmp	%a1@			| GO!

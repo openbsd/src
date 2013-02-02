@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.13 2012/12/31 21:35:32 miod Exp $ */
+/*	$OpenBSD: prom.h,v 1.14 2013/02/02 13:36:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -154,13 +154,13 @@ struct mvmeprom_args {
 #define MVMEPROM_CALL(x) \
 	__asm__ __volatile__ ("trap #15; .short " __STRING(x))
 #define MVMEPROM_NOARG() \
-	__asm__ __volatile__ ("clrl sp@-")
+	__asm__ __volatile__ ("clrl %sp@-")
 #define MVMEPROM_ARG1(arg) \
-	__asm__ __volatile__ ("movel %0, sp@-"::"d" (arg))
+	__asm__ __volatile__ ("movel %0, %%sp@-"::"d" (arg))
 #define MVMEPROM_ARG2(arg) \
-	__asm__ __volatile__ ("movel %0, sp@-"::"d" (arg))
+	__asm__ __volatile__ ("movel %0, %%sp@-"::"d" (arg))
 #define MVMEPROM_GETRES(ret) \
-	__asm__ __volatile__ ("movel sp@+,%0": "=d" (ret):)
+	__asm__ __volatile__ ("movel %%sp@+,%0": "=d" (ret):)
 #define MVMEPROM_RETURN(ret) \
 	MVMEPROM_GETRES(ret); \
 	return (ret);			/* return a value (int) */
@@ -171,16 +171,16 @@ struct mvmeprom_args {
 	MVMEPROM_GETRES(ret); \
 	return (!(ret & 0x4));		/* return a 'status' */
 
-#define MVMEPROM_REG_DEVLUN	d0
-#define MVMEPROM_REG_CTRLLUN	d1
-#define MVMEPROM_REG_FLAGS	d4
-#define MVMEPROM_REG_CTRLADDR	a0
-#define MVMEPROM_REG_ENTRY	a1
-#define MVMEPROM_REG_CONFBLK	a2
-#define MVMEPROM_REG_NBARGSTART	a3
-#define MVMEPROM_REG_NBARGEND	a4
-#define MVMEPROM_REG_ARGSTART	a5
-#define MVMEPROM_REG_ARGEND	a6
+#define MVMEPROM_REG_DEVLUN	%d0
+#define MVMEPROM_REG_CTRLLUN	%d1
+#define MVMEPROM_REG_FLAGS	%d4
+#define MVMEPROM_REG_CTRLADDR	%a0
+#define MVMEPROM_REG_ENTRY	%a1
+#define MVMEPROM_REG_CONFBLK	%a2
+#define MVMEPROM_REG_NBARGSTART	%a3
+#define MVMEPROM_REG_NBARGEND	%a4
+#define MVMEPROM_REG_ARGSTART	%a5
+#define MVMEPROM_REG_ARGEND	%a6
 
 #ifndef RB_NOSYM
 #define RB_NOSYM 0x4000

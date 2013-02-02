@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2012/12/31 21:35:32 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2013/02/02 13:36:06 miod Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
@@ -15,7 +15,7 @@ SRCS=   sboot.c clock.c etherfun.c if_le.c
 
 OBJS=	${SRCS:S/.c/.o/g}
 LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
-LDFLAGS= -N -s -static 
+LDFLAGS= -static -s -N -T ${S}/arch/mvme68k/stand/ld.script
 CLEANFILES+=XBUG.o XSRT0.o oc_cksum.o sboot.tmp rboot.tmp srec sboot rboot
 MDEC_DIR?=/usr/mdec
 NOPIE=
@@ -23,12 +23,12 @@ NOPIE=
 all:	sboot rboot
 
 sboot.tmp:	XSRT0.o oc_cksum.o ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -T ${STAGE1_RELOC} XSRT0.o ${OBJS} oc_cksum.o -o $@ \
-	    ${LIBS} `cc -print-libgcc-file-name`
+	${LD} ${LDFLAGS} -Ttext ${STAGE1_RELOC} XSRT0.o ${OBJS} oc_cksum.o -o $@ \
+	    ${LIBS} `${CC} -print-libgcc-file-name`
 
 rboot.tmp:	XBUG.o XSRT0.o oc_cksum.o ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -T 0xffa00000 -Tdata 0x4000 XBUG.o XSRT0.o \
-	    ${OBJS} oc_cksum.o -o $@ ${LIBS} `cc -print-libgcc-file-name`
+	${LD} ${LDFLAGS} -Ttext 0xffa00000 -Tdata 0x4000 XBUG.o XSRT0.o \
+	    ${OBJS} oc_cksum.o -o $@ ${LIBS} `${CC} -print-libgcc-file-name`
 
 srec:	srec.c
 	${HOSTCC} ${HOSTCFLAGS} -o $@ ${.CURDIR}/srec.c 

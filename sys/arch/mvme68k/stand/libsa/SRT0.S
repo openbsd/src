@@ -1,4 +1,4 @@
-|	$OpenBSD: SRT0.S,v 1.7 2001/07/04 08:06:56 niklas Exp $
+|	$OpenBSD: SRT0.S,v 1.8 2013/02/02 13:36:06 miod Exp $
 |	$NetBSD: SRT0.S,v 1.2 1995/08/12 18:38:55 gwr Exp $
 
 | Copyright (c) 1995 Gordon W. Ross
@@ -42,36 +42,36 @@ xstart:
 | first, relocate code to correct place without touching critical regs
 | (args are in: d0, d1, d4, a0, a1, a2, a3, a4, a5, a6)
 | 	[a3 and a4 only when netbooting]
-	movl	a3, d3			| SAVE a3 in d3
-	movl	a4, d5			| SAVE a4 in d5
-	lea	pc@(xstart:w), a3	| a3 = current addr (could be anywhere)
-	lea	xstart:l, a4		| a4 = desired location (LINKADDR)
-	cmpl	a3, a4			| already there?
+	movl	%a3, %d3		| SAVE a3 in d3
+	movl	%a4, %d5		| SAVE a4 in d5
+	lea	%pc@(xstart:w), %a3	| a3 = current addr (could be anywhere)
+	lea	xstart:l, %a4		| a4 = desired location (LINKADDR)
+	cmpl	%a3, %a4		| already there?
 	beqs	restart			| short-circuit out
 
 					| Relocate the code and data 
-	movl	#_edata,d2		| Desired end of program
-	subl	a4,d2			| Calculate length, round up.
-	lsrl	#2,d2
+	movl	#edata,%d2		| Desired end of program
+	subl	%a4,%d2			| Calculate length, round up.
+	lsrl	#2,%d2
 Lcp:
-	movl	a3@+, a4@+
-	dbra	d2, Lcp
+	movl	%a3@+, %a4@+
+	dbra	%d2, Lcp
 
 | Force a long jump to the relocated code (not pc-relative)
-	lea	restart:l, a3
-	jmp	a3@
+	lea	restart:l, %a3
+	jmp	%a3@
 
 restart:
 | now in the relocated code
 
 | Set up stack (just before relocated text)
-	lea	__estack:l, a3
-	movl	a3, sp
+	lea	__estack:l, %a3
+	movl	%a3, %sp
 
 | now that we have relocated, call the bugcrt  (note we skip over the special
 |	bug header which has a PC and SP in it)
-	movl	d3, a3			| RESTORE a3
-	movl	d5, a4			| RESTORE a4
-	jmp	_start
+	movl	%d3, %a3		| RESTORE a3
+	movl	%d5, %a4		| RESTORE a4
+	jmp	__start
 
 | The end.

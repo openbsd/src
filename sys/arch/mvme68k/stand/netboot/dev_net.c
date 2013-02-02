@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.10 2012/12/31 21:35:32 miod Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.11 2013/02/02 13:36:06 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -68,7 +68,6 @@
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
 struct in_addr myip, rootip, gateip, mask;
-char rootpath[FNAME_SIZE];
 
 int netdev_sock = -1;
 static int open_count;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.65 2011/11/08 18:41:34 matthieu Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.66 2013/02/02 13:36:05 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp -traditional-cpp ${CMACHFLAGS}
-LINKFLAGS=	-Ttext 0x10000 -z -e start
+LINKFLAGS=	-Ttext 0x10000 -e start --warn-common -nopie
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h

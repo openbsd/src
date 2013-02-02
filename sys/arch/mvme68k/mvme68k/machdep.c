@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.128 2012/10/22 04:26:33 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.129 2013/02/02 13:36:06 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -705,7 +705,7 @@ initvectors()
 	switch (cputype) {
 #ifdef M68060
 	case CPU_68060:
-		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
+		asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : : 
 						  "d"(m68060_pcr_init):"d0" );
 
 #if defined(M060SP)
@@ -859,7 +859,7 @@ fpu_gettype()
 	 * have if this will.  We save the state in order to get the
 	 * size of the frame.
 	 */
-	asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
+	asm("movl %0, %%a0; fsave %%a0@" : : "a" (fpframe) : "a0" );
 	b = *((u_char *) fpframe + 1);
 
 	/*
@@ -919,7 +919,7 @@ splassert_check(int wantipl, const char *func)
 {
 	int oldipl;
 
-	__asm __volatile ("movew sr,%0" : "=&d" (oldipl));
+	__asm __volatile ("movew %%sr,%0" : "=&d" (oldipl));
 
 	oldipl = PSLTOIPL(oldipl);
 
