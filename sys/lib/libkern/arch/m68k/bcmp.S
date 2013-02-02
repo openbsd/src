@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmp.S,v 1.4 2007/11/24 19:38:04 deraadt Exp $	*/
+/*	$OpenBSD: bcmp.S,v 1.5 2013/02/02 13:32:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,38 +46,38 @@
  *	- use nested DBcc instructions or use one and limit size to 64K
  */
 ENTRY(bcmp)
-	movl	sp@(4),a0		| string 1
-	movl	sp@(8),a1		| string 2
-	movl	sp@(12),d0		| length
+	movl	%sp@(4),%a0		| string 1
+	movl	%sp@(8),%a1		| string 2
+	movl	%sp@(12),%d0		| length
 	beq	bcdone			| if zero, nothing to do
-	movl	a0,d1
-	btst	#0,d1			| string 1 address odd?
+	movl	%a0,%d1
+	btst	#0,%d1			| string 1 address odd?
 	beq	bceven			| no, skip alignment
-	cmpmb	a0@+,a1@+		| yes, compare a byte
+	cmpmb	%a0@+,%a1@+		| yes, compare a byte
 	bne	bcnoteq			| not equal, return non-zero
-	subql	#1,d0			| adjust count
+	subql	#1,%d0			| adjust count
 	beq	bcdone			| count 0, reutrn zero
 bceven:
-	movl	a1,d1
-	btst	#0,d1			| string 2 address odd?
+	movl	%a1,%d1
+	btst	#0,%d1			| string 2 address odd?
 	bne	bcbloop			| yes, no hope for alignment, compare bytes
-	movl	d0,d1			| no, both even
-	lsrl	#2,d1			| convert count to longword count
+	movl	%d0,%d1			| no, both even
+	lsrl	#2,%d1			| convert count to longword count
 	beq	bcbloop			| count 0, skip longword loop
 bclloop:
-	cmpml	a0@+,a1@+		| compare a longword
+	cmpml	%a0@+,%a1@+		| compare a longword
 	bne	bcnoteq			| not equal, return non-zero
-	subql	#1,d1			| adjust count
+	subql	#1,%d1			| adjust count
 	bne	bclloop			| still more, keep comparing
-	andl	#3,d0			| what remains
+	andl	#3,%d0			| what remains
 	beq	bcdone			| nothing, all done
 bcbloop:
-	cmpmb	a0@+,a1@+		| compare a byte
+	cmpmb	%a0@+,%a1@+		| compare a byte
 	bne	bcnoteq			| not equal, return non-zero
-	subql	#1,d0			| adjust count
+	subql	#1,%d0			| adjust count
 	bne	bcbloop			| still more, keep going
 	rts
 bcnoteq:
-	moveq	#1,d0
+	moveq	#1,%d0
 bcdone:
 	rts

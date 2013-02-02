@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.9 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.10 2013/02/02 13:32:06 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.5 1994/10/26 07:50:50 cgd Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
 ({									\
 	register int _spl_r;						\
 									\
-	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
+	__asm __volatile ("clrl %0; movew %%sr,%0; movew %1,%%sr" :	\
 	    "=&d" (_spl_r) : "di" (s));					\
 	_spl_r;								\
 })
@@ -96,15 +96,15 @@
 	register int _spl_r;						\
 									\
 	__asm __volatile ("						\
-		clrl	d0					;	\
-		movw	sr,d0					;	\
-		movl	d0,%0					;	\
-		andw	#0x700,d0				;	\
-		movw	%1,d1					;	\
-		andw	#0x700,d1				;	\
-		cmpw	d0,d1					;	\
+		clrl	%%d0					;	\
+		movw	%%sr,%%d0				;	\
+		movl	%%d0,%0					;	\
+		andw	#0x700,%%d0				;	\
+		movw	%1,%%d1					;	\
+		andw	#0x700,%%d1				;	\
+		cmpw	%%d0,%%d1				;	\
 		jle	1f					;	\
-		movw	%1,sr					;	\
+		movw	%1,%%sr					;	\
 	    1:"							:	\
 		    "=&d" (_spl_r)				:	\
 		    "di" (s)					:	\

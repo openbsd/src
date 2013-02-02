@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.4 2007/11/24 19:38:04 deraadt Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.5 2013/02/02 13:32:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,11 +38,11 @@
 #include "DEFS.h"
 
 ENTRY(ffs)
-	movl	sp@(4),d0
-	movl	d0,d1
-	negl	d0
-	andl	d0,d1
-	movql	#32,d0
-	bfffo	d1{#0:#32},d1
-	subl	d1,d0
+	movl	%sp@(4),%d0
+	movl	%d0,%d1
+	negl	%d0
+	andl	%d0,%d1
+	movql	#32,%d0
+	bfffo	%d1{#0:#32},%d1
+	subl	%d1,%d0
 	rts

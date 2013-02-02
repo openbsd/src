@@ -1,4 +1,4 @@
-*	$OpenBSD: x_store.sa,v 1.2 1996/05/29 21:05:49 niklas Exp $
+*	$OpenBSD: x_store.sa,v 1.3 2013/02/02 13:32:05 miod Exp $
 *	$NetBSD: x_store.sa,v 1.3 1994/10/26 07:50:29 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -118,7 +118,7 @@ opc011:
 	tst.l	d0		;if dest format is extended
 	beq.w	dest_ext	;then branch
 	cmpi.l	#1,d0		;if dest format is single
-	beq.b	dest_sgl	;then branch
+	beq.b	short_dest_sgl	;then branch
 *
 *	fall through to dest_dbl
 *
@@ -226,6 +226,7 @@ dbl_wrt:
 *	   	 	      31     22     0
 *
 dest_sgl:
+short_dest_sgl:
 	clr.l	d0
 	move.w	LOCAL_EX(a1),d0	;get exponent
 	sub.w	#$3fff,d0	;subtract extended precision bias

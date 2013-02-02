@@ -1,4 +1,4 @@
-*	$OpenBSD: util.sa,v 1.2 1996/05/29 21:05:45 niklas Exp $
+*	$OpenBSD: util.sa,v 1.3 2013/02/02 13:32:05 miod Exp $
 *	$NetBSD: util.sa,v 1.3 1994/10/26 07:50:20 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -164,20 +164,20 @@ ovf_e1_exc:
 *
 ovf_fsgl:
 	clr.l	d0
-	bra.b	ovf_res
+	bra.b	short_ovf_res
 
 ovff_sgl:
 	move.l	#$00000001,d0		;set single
-	bra.b	ovf_res
+	bra.b	short_ovf_res
 ovff_dbl:
 	move.l	#$00000002,d0		;set double
-	bra.b	ovf_res
+	bra.b	short_ovf_res
 *
 * The precision is in the fpcr.
 *
 ovf_fpcr:
 	bfextu	FPCR_MODE(a6){0:2},d0 ;set round precision
-	bra.b	ovf_res
+	bra.b	short_ovf_res
 	
 *
 *
@@ -206,6 +206,7 @@ ovf_r_x3:
 *
 	xdef	ovf_res
 ovf_res:
+short_ovf_res:
 	lsl.l	#2,d0		;move round precision to d0{3:2}
 	bfextu	FPCR_MODE(a6){2:2},d1 ;set round mode
 	or.l	d1,d0		;index is fmt:mode in d0{3:0}

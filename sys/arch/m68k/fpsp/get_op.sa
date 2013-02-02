@@ -1,4 +1,4 @@
-*	$OpenBSD: get_op.sa,v 1.2 1996/05/29 21:05:29 niklas Exp $
+*	$OpenBSD: get_op.sa,v 1.3 2013/02/02 13:32:05 miod Exp $
 *	$NetBSD: get_op.sa,v 1.3 1994/10/26 07:49:09 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -197,7 +197,7 @@ PTENRP:
 get_op:
 	clr.b	DY_MO_FLG(a6)
 	tst.b	UFLG_TMP(a6)	;test flag for unsupp/unimp state
-	beq.b	uni_getop
+	beq.b	short_uni_getop
 
 uns_getop:
 	btst.b	#direction_bit,CMDREG1B(a6)
@@ -219,6 +219,7 @@ uns_notpacked:
 	bra.b	dst_ex_dnrm	;else, handle destination unnorm/dnrm
 
 uni_getop:
+short_uni_getop:
 	bfextu	CMDREG1B(a6){0:6},d0 ;get opclass and src fields
 	cmpi.l	#$17,d0		;if op class and size fields are $17, 
 *				;it is FMOVECR; if not, continue

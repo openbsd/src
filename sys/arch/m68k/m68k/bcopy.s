@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.s,v 1.3 2007/11/24 20:58:26 deraadt Exp $	*/
+/*	$OpenBSD: bcopy.s,v 1.4 2013/02/02 13:32:06 miod Exp $	*/
 /*	$NetBSD: bcopy.s,v 1.1 1997/03/17 19:44:33 gwr Exp $	*/
 
 /*-
@@ -52,71 +52,71 @@
  */
 ALTENTRY(memmove, memcpy)
 ENTRY(memcpy)
-	movl	sp@(12),d0		| get count
+	movl	%sp@(12),%d0		| get count
 	jeq	Lbccpyexit		| if zero, return
-	movl	sp@(8), a0		| src address
-	movl	sp@(4), a1		| dest address
+	movl	%sp@(8), %a0		| src address
+	movl	%sp@(4), %a1		| dest address
 	jra	Lbcdocopy		| jump into bcopy
 ALTENTRY(ovbcopy, bcopy)
 ENTRY(bcopy)
-	movl	sp@(12),d0		| get count
+	movl	%sp@(12),%d0		| get count
 	jeq	Lbccpyexit		| if zero, return
-	movl	sp@(4),a0		| src address
-	movl	sp@(8),a1		| dest address
+	movl	%sp@(4),%a0		| src address
+	movl	%sp@(8),%a1		| dest address
 Lbcdocopy:
-	cmpl	a1,a0			| src before dest?
+	cmpl	%a1,%a0			| src before dest?
 	jlt	Lbccpyback		| yes, copy backwards (avoids overlap)
-	movl	a0,d1
-	btst	#0,d1			| src address odd?
+	movl	%a0,%d1
+	btst	#0,%d1			| src address odd?
 	jeq	Lbccfeven		| no, go check dest
-	movb	a0@+,a1@+		| yes, copy a byte
-	subql	#1,d0			| update count
+	movb	%a0@+,%a1@+		| yes, copy a byte
+	subql	#1,%d0			| update count
 	jeq	Lbccpyexit		| exit if done
 Lbccfeven:
-	movl	a1,d1
-	btst	#0,d1			| dest address odd?
+	movl	%a1,%d1
+	btst	#0,%d1			| dest address odd?
 	jne	Lbccfbyte		| yes, must copy by bytes
-	movl	d0,d1			| no, get count
-	lsrl	#2,d1			| convert to longwords
+	movl	%d0,%d1			| no, get count
+	lsrl	#2,%d1			| convert to longwords
 	jeq	Lbccfbyte		| no longwords, copy bytes
-	subql	#1,d1			| set up for dbf
+	subql	#1,%d1			| set up for dbf
 Lbccflloop:
-	movl	a0@+,a1@+		| copy longwords
-	dbf	d1,Lbccflloop		| til done
-	andl	#3,d0			| get remaining count
+	movl	%a0@+,%a1@+		| copy longwords
+	dbf	%d1,Lbccflloop		| til done
+	andl	#3,%d0			| get remaining count
 	jeq	Lbccpyexit		| done if none
 Lbccfbyte:
-	subql	#1,d0			| set up for dbf
+	subql	#1,%d0			| set up for dbf
 Lbccfbloop:
-	movb	a0@+,a1@+		| copy bytes
-	dbf	d0,Lbccfbloop		| til done
+	movb	%a0@+,%a1@+		| copy bytes
+	dbf	%d0,Lbccfbloop		| til done
 Lbccpyexit:
 	rts
 Lbccpyback:
-	addl	d0,a0			| add count to src
-	addl	d0,a1			| add count to dest
-	movl	a0,d1
-	btst	#0,d1			| src address odd?
+	addl	%d0,%a0			| add count to src
+	addl	%d0,%a1			| add count to dest
+	movl	%a0,%d1
+	btst	#0,%d1			| src address odd?
 	jeq	Lbccbeven		| no, go check dest
-	movb	a0@-,a1@-		| yes, copy a byte
-	subql	#1,d0			| update count
+	movb	%a0@-,%a1@-		| yes, copy a byte
+	subql	#1,%d0			| update count
 	jeq	Lbccpyexit		| exit if done
 Lbccbeven:
-	movl	a1,d1
-	btst	#0,d1			| dest address odd?
+	movl	%a1,%d1
+	btst	#0,%d1			| dest address odd?
 	jne	Lbccbbyte		| yes, must copy by bytes
-	movl	d0,d1			| no, get count
-	lsrl	#2,d1			| convert to longwords
+	movl	%d0,%d1			| no, get count
+	lsrl	#2,%d1			| convert to longwords
 	jeq	Lbccbbyte		| no longwords, copy bytes
-	subql	#1,d1			| set up for dbf
+	subql	#1,%d1			| set up for dbf
 Lbccblloop:
-	movl	a0@-,a1@-		| copy longwords
-	dbf	d1,Lbccblloop		| til done
-	andl	#3,d0			| get remaining count
+	movl	%a0@-,%a1@-		| copy longwords
+	dbf	%d1,Lbccblloop		| til done
+	andl	#3,%d0			| get remaining count
 	jeq	Lbccpyexit		| done if none
 Lbccbbyte:
-	subql	#1,d0			| set up for dbf
+	subql	#1,%d0			| set up for dbf
 Lbccbbloop:
-	movb	a0@-,a1@-		| copy bytes
-	dbf	d0,Lbccbbloop		| til done
+	movb	%a0@-,%a1@-		| copy bytes
+	dbf	%d0,Lbccbbloop		| til done
 	rts

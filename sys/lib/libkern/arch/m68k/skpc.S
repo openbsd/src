@@ -1,4 +1,4 @@
-/*	$OpenBSD: skpc.S,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: skpc.S,v 1.4 2013/02/02 13:32:06 miod Exp $	*/
 /*	$NetBSD: skpc.S,v 1.2 1994/10/26 06:39:32 cgd Exp $	*/
 
 /*
@@ -45,14 +45,14 @@
  *	skpc(mask, count, startc)
  */
 ENTRY(skpc)
-	movl	sp@(8),d0	| get length
+	movl	%sp@(8),%d0	| get length
 	jeq	Lskdone		| nothing to do, return
-	movb	sp@(7),d1	| mask to use
-	movl	sp@(12),a0	| where to start
-	subqw	#1,d0		| adjust for dbcc
+	movb	%sp@(7),%d1	| mask to use
+	movl	%sp@(12),%a0	| where to start
+	subqw	#1,%d0		| adjust for dbcc
 Lskloop:
-	cmpb	a0@+,d1		| compate with mask
-	dbne	d0,Lskloop	| keep going til no more or zero
-	addqw	#1,d0		| overshot by one
+	cmpb	%a0@+,%d1	| compare with mask
+	dbne	%d0,Lskloop	| keep going til no more or zero
+	addqw	#1,%d0		| overshot by one
 Lskdone:
 	rts

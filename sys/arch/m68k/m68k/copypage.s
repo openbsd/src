@@ -1,4 +1,4 @@
-/*	$OpenBSD: copypage.s,v 1.5 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: copypage.s,v 1.6 2013/02/02 13:32:06 miod Exp $	*/
 /*	$NetBSD: copypage.s,v 1.4 1997/05/30 01:34:49 jtc Exp $	*/
 
 /*-
@@ -49,13 +49,13 @@
  */
 #if defined(M68040) || defined(M68060)
 ENTRY(copypage040)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destination address
-	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
+	movl	%sp@(4),%a0		| source address
+	movl	%sp@(8),%a1		| destination address
+	movw	#NBPG/32-1,%d0		| number of 32 byte chunks - 1
 Lm16loop:
 	.long	0xf6209000		| move16 a0@+,a1@+
 	.long	0xf6209000		| move16 a0@+,a1@+
-	dbf	d0,Lm16loop
+	dbf	%d0,Lm16loop
 	rts
 #endif /* M68040 || M68060 */
 
@@ -65,19 +65,19 @@ Lm16loop:
  * Optimized version of bcopy for a single page-aligned NBPG byte copy.
  */
 ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destination address
-	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
+	movl	%sp@(4),%a0		| source address
+	movl	%sp@(8),%a1		| destination address
+	movw	#NBPG/32-1,%d0		| number of 32 byte chunks - 1
 Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	dbf	d0,Lmlloop
+	movl	%a0@+,%a1@+
+	movl	%a0@+,%a1@+
+	movl	%a0@+,%a1@+
+	movl	%a0@+,%a1@+
+	movl	%a0@+,%a1@+
+	movl	%a0@+,%a1@+
+	movl	%a0@+,%a1@+
+	movl	%a0@+,%a1@+
+	dbf	%d0,Lmlloop
 	rts
 
 /*
@@ -86,27 +86,27 @@ Lmlloop:
  * Optimized version of bzero for a single page-aligned NBPG byte zero.
  */
 ENTRY(zeropage)
-	movl	sp@(4),a0		| dest address
-	movql	#NBPG/256-1,d0		| number of 256 byte chunks - 1
-	movml	d2-d7,sp@-
-	movql	#0,d1
-	movql	#0,d2
-	movql	#0,d3
-	movql	#0,d4
-	movql	#0,d5
-	movql	#0,d6
-	movql	#0,d7
-	movl	d1,a1
-	lea	a0@(NBPG),a0
+	movl	%sp@(4),%a0		| dest address
+	movql	#NBPG/256-1,%d0		| number of 256 byte chunks - 1
+	movml	%d2-%d7,%sp@-
+	movql	#0,%d1
+	movql	#0,%d2
+	movql	#0,%d3
+	movql	#0,%d4
+	movql	#0,%d5
+	movql	#0,%d6
+	movql	#0,%d7
+	movl	%d1,%a1
+	lea	%a0@(NBPG),%a0
 Lzloop:
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	movml	d1-d7/a1,a0@-
-	dbf	d0,Lzloop
-	movml	sp@+,d2-d7
+	movml	%d1-%d7/%a1,%a0@-
+	movml	%d1-%d7/%a1,%a0@-
+	movml	%d1-%d7/%a1,%a0@-
+	movml	%d1-%d7/%a1,%a0@-
+	movml	%d1-%d7/%a1,%a0@-
+	movml	%d1-%d7/%a1,%a0@-
+	movml	%d1-%d7/%a1,%a0@-
+	movml	%d1-%d7/%a1,%a0@-
+	dbf	%d0,Lzloop
+	movml	%sp@+,%d2-%d7
 	rts

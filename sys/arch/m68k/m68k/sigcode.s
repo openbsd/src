@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.s,v 1.3 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: sigcode.s,v 1.4 2013/02/02 13:32:06 miod Exp $	*/
 /*	$NetBSD: sigcode.s,v 1.2 1997/04/25 02:22:03 thorpej Exp $	*/
 
 /*
@@ -65,13 +65,13 @@
 	.data
 	.align	2
 GLOBAL(sigcode)
-	movl	sp@(12),a0	| signal handler addr	(4 bytes)
-	jsr	a0@		| call signal handler	(2 bytes)
-	addql	#4,sp		| pop signal number	(2 bytes)
+	movl	%sp@(12),%a0	| signal handler addr	(4 bytes)
+	jsr	%a0@		| call signal handler	(2 bytes)
+	addql	#4,%sp		| pop signal number	(2 bytes)
 GLOBAL(sigcodetrap)
 	trap	#1		| special syscall entry	(2 bytes)
-	movl	d0,sp@(4)	| save errno		(4 bytes)
-	moveq	#SYS_exit,d0	| syscall == exit	(2 bytes)
+	movl	%d0,%sp@(4)	| save errno		(4 bytes)
+	moveq	#SYS_exit,%d0	| syscall == exit	(2 bytes)
 	trap	#0		| exit(errno)		(2 bytes)
 	.align	2
 GLOBAL(esigcode)

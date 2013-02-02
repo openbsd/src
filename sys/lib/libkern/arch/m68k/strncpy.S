@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncpy.S,v 1.4 2007/11/24 19:38:04 deraadt Exp $	*/
+/*	$OpenBSD: strncpy.S,v 1.5 2013/02/02 13:32:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,20 +36,20 @@
 #include "DEFS.h"
 
 ENTRY(strncpy)
-	movl	sp@(4),d0		| return value is toaddr
-	movl	sp@(12),d1		| count
+	movl	%sp@(4),%d0		| return value is toaddr
+	movl	%sp@(12),%d1		| count
 	beq	scdone			| nothing to do
-	movl	sp@(8),a0		| a0 = fromaddr
-	movl	d0,a1			| a1 = toaddr
+	movl	%sp@(8),%a0		| a0 = fromaddr
+	movl	%d0,%a1			| a1 = toaddr
 scloop:
-	movb	a0@+,a1@+		| copy a byte
+	movb	%a0@+,%a1@+		| copy a byte
 	beq	scploop			| copied null, go pad if necessary
-	subql	#1,d1			| adjust count
+	subql	#1,%d1			| adjust count
 	bne	scloop			| more room, keep going
 scdone:
 	rts
 scploop:
-	subql	#1,d1			| adjust count
+	subql	#1,%d1			| adjust count
 	beq	scdone			| no more room, all done
-	clrb	a1@+			| clear a byte
+	clrb	%a1@+			| clear a byte
 	jra	scploop			| keep going

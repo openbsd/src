@@ -1,4 +1,4 @@
-*	$OpenBSD: netbsd.sa,v 1.5 2004/01/27 16:16:27 miod Exp $
+*	$OpenBSD: netbsd.sa,v 1.6 2013/02/02 13:32:05 miod Exp $
 *	$NetBSD: netbsd.sa,v 1.3 1997/04/25 02:26:04 thorpej Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -74,7 +74,7 @@ SKELETON	IDNT    2,1 Motorola 040 Floating Point Software Package
 *
 * XXX Note, this is NOT valid Motorola syntax, but what else can we do?
 *
-#include "../include/asm.h"
+#include <machine/asm.h>
 
 	xref	b1238_fix
 
@@ -128,21 +128,21 @@ inex:
 	addq.l		#4,sp
 	frestore	(sp)+
 	unlk		a6
-	bra		fpsp_snan
+	bra.l		fpsp_snan
 inex_ckofl:
 	btst.b		#ovfl_bit,2(sp) ;test for ovfl
 	beq		inex_ckufl 
 	addq.l		#4,sp
 	frestore	(sp)+
 	unlk		a6
-	bra		fpsp_ovfl
+	bra.l		fpsp_ovfl
 inex_ckufl:
 	btst.b		#unfl_bit,2(sp) ;test for unfl
 	beq		not_b1232
 	addq.l		#4,sp
 	frestore	(sp)+
 	unlk		a6
-	bra		fpsp_unfl
+	bra.l		fpsp_unfl
 
 *
 * We do not have the bug 1232 case.  Clean up the stack and call

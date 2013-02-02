@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.4 2007/11/24 19:38:04 deraadt Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.5 2013/02/02 13:32:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,28 +45,28 @@
  *	- use nested DBcc instructions or use one and limit size to 64K
  */
 ENTRY(bzero)
-	movl	sp@(4),a0		| destination
-	movl	sp@(8),d0		| count
+	movl	%sp@(4),%a0		| destination
+	movl	%sp@(8),%d0		| count
 	beq	bzdone			| nothing to do
-	movl	a0,d1
-	btst	#0,d1			| address odd?
+	movl	%a0,%d1
+	btst	#0,%d1			| address odd?
 	beq	bzeven			| no, skip alignment
-	clrb	a0@+			| yes, clear a byte
-	subql	#1,d0			| adjust count
+	clrb	%a0@+			| yes, clear a byte
+	subql	#1,%d0			| adjust count
 	beq	bzdone			| if zero, all done
 bzeven:
-	movl	d0,d1
-	lsrl	#2,d1			| convert to longword count
+	movl	%d0,%d1
+	lsrl	#2,%d1			| convert to longword count
 	beq	bzbloop			| no longwords, skip loop
 bzlloop:
-	clrl	a0@+			| clear a longword
-	subql	#1,d1			| adjust count
+	clrl	%a0@+			| clear a longword
+	subql	#1,%d1			| adjust count
 	bne	bzlloop			| still more, keep going
-	andl	#3,d0			| what remains
+	andl	#3,%d0			| what remains
 	beq	bzdone			| nothing, all done
 bzbloop:
-	clrb	a0@+			| clear a byte
-	subql	#1,d0			| adjust count
+	clrb	%a0@+			| clear a byte
+	subql	#1,%d0			| adjust count
 	bne	bzbloop			| still more, keep going
 bzdone:
 	rts

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.S,v 1.3 2007/11/24 19:38:04 deraadt Exp $	*/
+/*	$OpenBSD: memset.S,v 1.4 2013/02/02 13:32:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,55 +45,55 @@
  *	- use nested DBcc instructions or use one and limit size to 64K
  */
 ENTRY(memset)
-	movl	d2,sp@-
-	movl	sp@(8),a0		| destination
-	movl	sp@(16),d0		| count
+	movl	%d2,%sp@-
+	movl	%sp@(8),%a0		| destination
+	movl	%sp@(16),%d0		| count
 	beq	bzdone			| nothing to do
-	movb	sp@(15),d2		| character
-	movl	a0,d1
-	btst	#0,d1			| address odd?
+	movb	%sp@(15),%d2		| character
+	movl	%a0,%d1
+	btst	#0,%d1			| address odd?
 	beq	bzeven			| no, skip alignment
-	movb	d2,a0@+			| set one byte
-	subql	#1,d0			| adjust count
+	movb	%d2,%a0@+			| set one byte
+	subql	#1,%d0			| adjust count
 	beq	bzdone			| if zero, all done
 bzeven:
-	cmpl	#15,d0
+	cmpl	#15,%d0
 	ble	bzbloop			| too small to be worthwhile
-	clrl	d1			| replicate byte to fill longword
-	movb	d2,d1
-	movl	d1,d2
-	lsll	#8,d1
-	orl	d1,d2
-	lsll	#8,d1
-	orl	d1,d2
-	lsll	#8,d1
-	orl	d1,d2
-	movl	d0,d1			| convert to longword count
-	lsrl	#2,d1
+	clrl	%d1			| replicate byte to fill longword
+	movb	%d2,%d1
+	movl	%d1,%d2
+	lsll	#8,%d1
+	orl	%d1,%d2
+	lsll	#8,%d1
+	orl	%d1,%d2
+	lsll	#8,%d1
+	orl	%d1,%d2
+	movl	%d0,%d1			| convert to longword count
+	lsrl	#2,%d1
 #ifdef DEBUG
-	moveml	#0xffff,sp@-
-	movl	d2,sp@-
-	movl	d1,sp@-
-	movl	d0,sp@-
-	movl	a0,sp@-
-	movl	#foo,sp@-
-	jsr	_printf
-	addl	#20,sp
-	moveml	sp@+,#0xffff
+	moveml	#0xffff,%sp@-
+	movl	%d2,%sp@-
+	movl	%d1,%sp@-
+	movl	%d0,%sp@-
+	movl	%a0,%sp@-
+	movl	#foo,%sp@-
+	jsr	_C_LABEL(printf)
+	addl	#20,%sp
+	moveml	%sp@+,#0xffff
 #endif
 bzlloop:
-	movl	d2,a0@+			| set one longword
-	subql	#1,d1			| adjust count
+	movl	%d2,%a0@+			| set one longword
+	subql	#1,%d1			| adjust count
 	bne	bzlloop			| still more, keep going
-	andl	#3,d0			| what remains
+	andl	#3,%d0			| what remains
 	beq	bzdone			| nothing, all done
 bzbloop:
-	movb	d2,a0@+			| set one byte
-	subql	#1,d0			| adjust count
+	movb	%d2,%a0@+			| set one byte
+	subql	#1,%d0			| adjust count
 	bne	bzbloop			| still more, keep going
 bzdone:
-	movl	sp@(8),d0		| return destination
-	movl	sp@+,d2
+	movl	%sp@(8),%d0		| return destination
+	movl	%sp@+,%d2
 	rts
 
 #ifdef DEBUG

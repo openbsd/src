@@ -1,7 +1,7 @@
-#
-# $OpenBSD: copyright.S,v 1.2 1996/05/30 22:14:01 niklas Exp $
-# $NetBSD: copyright.S,v 1.2 1996/05/16 15:37:49 is Exp $
-#
+|#
+|# $OpenBSD: copyright.S,v 1.3 2013/02/02 13:32:05 miod Exp $
+|# $NetBSD: copyright.S,v 1.2 1996/05/16 15:37:49 is Exp $
+|#
 
  .ascii "MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP\n"
  .ascii "M68000 Hi-Performance Microprocessor Division\n"

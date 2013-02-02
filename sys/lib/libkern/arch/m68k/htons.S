@@ -1,4 +1,4 @@
-/*	$OpenBSD: htons.S,v 1.4 2007/11/25 18:25:35 deraadt Exp $	*/
+/*	$OpenBSD: htons.S,v 1.5 2013/02/02 13:32:06 miod Exp $	*/
 /*	$NetBSD: htons.S,v 1.2 1994/10/26 06:39:27 cgd Exp $	*/
 
 /*-
@@ -41,6 +41,6 @@
 ALTENTRY(ntohs, _htons)
 ALTENTRY(bswap16, _htons)
 ENTRY(htons)
-	clrl	d0
-	movw	sp@(6),d0
+	clrl	%d0
+	movw	%sp@(6),%d0
 	rts

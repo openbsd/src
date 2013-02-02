@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap_subr.s,v 1.2 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: trap_subr.s,v 1.3 2013/02/02 13:32:06 miod Exp $	*/
 /*	$NetBSD: trap_subr.s,v 1.2 1997/06/04 22:12:43 is Exp $	*/
 
 /*
@@ -51,17 +51,17 @@
  * Registers have been saved, and type for trap() placed in d0.
  */
 ASENTRY_NOPROFILE(fault)
-	movl	usp,a0			| get and save
-	movl	a0,sp@(FR_SP)		|   the user stack pointer
-	clrl	sp@-			| no VA arg
-	clrl	sp@-			| or code arg
-	movl	d0,sp@-			| push trap type
+	movl	%usp,%a0		| get and save
+	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
+	clrl	%sp@-			| no VA arg
+	clrl	%sp@-			| or code arg
+	movl	%d0,%sp@-			| push trap type
 	jbsr	_C_LABEL(trap)		| handle trap
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| restore most user regs
-	addql	#8,sp			| pop SP and stack adjust
+	lea	%sp@(12),%sp		| pop value args
+	movl	%sp@(FR_SP),%a0		| restore
+	movl	%a0,%usp		|   user SP
+	moveml	%sp@+,#0x7FFF		| restore most user regs
+	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
@@ -71,26 +71,26 @@ ASENTRY(faultstkadj)
 	jbsr	_C_LABEL(trap)		| handle the error
 /* for 68060 Branch Prediction Error handler */
 _ASM_LABEL(faultstkadjnotrap):
-	lea	sp@(12),sp		| pop value args
+	lea	%sp@(12),%sp		| pop value args
 /* for new 68060 Branch Prediction Error handler */
 _ASM_LABEL(faultstkadjnotrap2):
-	movl	sp@(FR_SP),a0		| restore user SP
-	movl	a0,usp			|   from save area 
-	movw	sp@(FR_ADJ),d0		| need to adjust stack?
+	movl	%sp@(FR_SP),%a0		| restore user SP
+	movl	%a0,%usp		|   from save area 
+	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
 	jne	1f			| yes, go to it 
-	moveml	sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,sp			| toss SSP and stkadj 
+	moveml	%sp@+,#0x7FFF		| no, restore most user regs
+	addql	#8,%sp			| toss SSP and stkadj 
 	jra	_ASM_LABEL(rei)		| all done
 1:
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	addql	#8,a1			| source pointer
-	movl	a1,a0			| source
-	addw	d0,a0			|  + hole size = dest pointer
-	movl	a1@-,a0@-		| copy
-	movl	a1@-,a0@-		|  8 bytes
-	movl	a0,sp@(FR_SP)		| new SSP
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
+	lea	%sp@(FR_HW),%a1		| pointer to HW frame
+	addql	#8,%a1			| source pointer
+	movl	%a1,%a0			| source
+	addw	%d0,%a0			|  + hole size = dest pointer
+	movl	%a1@-,%a0@-		| copy
+	movl	%a1@-,%a0@-		|  8 bytes
+	movl	%a0,%sp@(FR_SP)		| new SSP
+	moveml	%sp@+,#0x7FFF		| restore user registers
+	movl	%sp@,%sp		| and our SP
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
@@ -98,33 +98,33 @@ _ASM_LABEL(faultstkadjnotrap2):
  * and require no post-trap stack adjustment.
  */
 ENTRY_NOPROFILE(illinst)
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_ILLINST,d0
+	clrl	%sp@-
+	moveml	#0xFFFF,%sp@-
+	moveq	#T_ILLINST,%d0
 	jra	_ASM_LABEL(fault)
 
 ENTRY_NOPROFILE(zerodiv)
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_ZERODIV,d0
+	clrl	%sp@-
+	moveml	#0xFFFF,%sp@-
+	moveq	#T_ZERODIV,%d0
 	jra	_ASM_LABEL(fault)
 
 ENTRY_NOPROFILE(chkinst)
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_CHKINST,d0
+	clrl	%sp@-
+	moveml	#0xFFFF,%sp@-
+	moveq	#T_CHKINST,%d0
 	jra	_ASM_LABEL(fault)
 
 ENTRY_NOPROFILE(trapvinst)
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_TRAPVINST,d0
+	clrl	%sp@-
+	moveml	#0xFFFF,%sp@-
+	moveq	#T_TRAPVINST,%d0
 	jra	_ASM_LABEL(fault)
 
 ENTRY_NOPROFILE(privinst)
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_PRIVINST,d0
+	clrl	%sp@-
+	moveml	#0xFFFF,%sp@-
+	moveq	#T_PRIVINST,%d0
 	jra	_ASM_LABEL(fault)
 
 /*
@@ -133,23 +133,23 @@ ENTRY_NOPROFILE(privinst)
  * stack adjustment.
  */
 ENTRY_NOPROFILE(coperr)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-
-	movl	usp,a0			| get and save
-	movl	a0,sp@(FR_SP)		|   the user stack pointer
-	clrl	sp@-			| no VA arg
-	clrl	sp@-			| or code arg
-	movl	#T_COPERR,sp@-		| push trap type
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-
+	movl	%usp,%a0		| get and save
+	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
+	clrl	%sp@-			| no VA arg
+	clrl	%sp@-			| or code arg
+	movl	#T_COPERR,%sp@-		| push trap type
 	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
 					|   adjustments
 
 ENTRY_NOPROFILE(fmterr)
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-
-	movl	usp,a0			| get and save
-	movl	a0,sp@(FR_SP)		|   the user stack pointer
-	clrl	sp@-			| no VA arg
-	clrl	sp@-			| or code arg
-	movl	#T_FMTERR,sp@-		| push trap type
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-
+	movl	%usp,%a0		| get and save
+	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
+	clrl	%sp@-			| no VA arg
+	clrl	%sp@-			| or code arg
+	movl	#T_FMTERR,%sp@-		| push trap type
 	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
 					|   adjustments

@@ -1,4 +1,4 @@
-*	$OpenBSD: do_func.sa,v 1.2 1996/05/29 21:05:27 niklas Exp $
+*	$OpenBSD: do_func.sa,v 1.3 2013/02/02 13:32:05 miod Exp $
 *	$NetBSD: do_func.sa,v 1.2 1994/10/26 07:49:02 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -103,7 +103,7 @@ not_fmovecr:
 	move.w	CMDREG1B(a6),d0
 	and.l	#$7F,d0
 	cmpi.l	#$38,d0		;if the extension is >= $38, 
-	bge.b	serror		;it is illegal
+	bge.b	short_serror	;it is illegal
 	bfextu	STAG(a6){0:3},d1
 	lsl.l	#3,d0		;make room for STAG
 	add.l	d1,d0		;combine for final index into table
@@ -119,6 +119,7 @@ not_fmovecr:
 *
 	xdef	serror
 serror:
+short_serror:
 	st.b	STORE_FLG(a6)
 	rts
 *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.s,v 1.3 2006/02/22 22:16:07 miod Exp $	*/
+/*	$OpenBSD: support.s,v 1.4 2013/02/02 13:32:06 miod Exp $	*/
 /*	$NetBSD: support.s,v 1.1 1997/03/16 10:47:33 thorpej Exp $	*/
 
 /*
@@ -54,15 +54,15 @@
  * non-local gotos
  */
 ENTRY(setjmp)
-	movl	sp@(4),a0	| savearea pointer
-	moveml	#0xFCFC,a0@	| save d2-d7/a2-a7
-	movl	sp@,a0@(48)	| and return address
-	moveq	#0,d0		| return 0
+	movl	%sp@(4),%a0	| savearea pointer
+	moveml	#0xFCFC,%a0@	| save d2-d7/a2-a7
+	movl	%sp@,%a0@(48)	| and return address
+	moveq	#0,%d0		| return 0
 	rts
 
 ENTRY(longjmp)
-	movl	sp@(4),a0
-	moveml	a0@+,#0xFCFC
-	movl	a0@,sp@
-	moveq	#1,d0
+	movl	%sp@(4),%a0
+	moveml	%a0@+,#0xFCFC
+	movl	%a0@,%sp@
+	moveq	#1,%d0
 	rts
