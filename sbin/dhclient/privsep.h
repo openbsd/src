@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.13 2013/01/27 02:45:46 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.14 2013/02/02 04:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -67,6 +67,7 @@ struct imsg_cleanup {
 
 struct imsg_write_file {
 	char	path[MAXPATHLEN];
+	int	rdomain;
 	int	flags;
 	mode_t	mode;
 	size_t	len;
