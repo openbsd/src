@@ -167,7 +167,7 @@ m68kbsd_aout_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, m68kbsd_aout_in_solib_call_trampoline);
 }
 
-/* NetBSD ELF.  */
+/* NetBSD/OpenBSD ELF.  */
 
 static void
 m68kbsd_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -224,5 +224,7 @@ _initialize_m68kbsd_tdep (void)
   gdbarch_register_osabi (bfd_arch_m68k, 0, GDB_OSABI_NETBSD_AOUT,
 			  m68kbsd_aout_init_abi);
   gdbarch_register_osabi (bfd_arch_m68k, 0, GDB_OSABI_NETBSD_ELF,
+			  m68kbsd_elf_init_abi);
+  gdbarch_register_osabi (bfd_arch_m68k, 0, GDB_OSABI_OPENBSD_ELF,
 			  m68kbsd_elf_init_abi);
 }

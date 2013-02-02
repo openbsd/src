@@ -395,7 +395,8 @@ m68*-*-netbsdelf*)	targ_emul=m68kelfnbsd
 m68*-*-netbsdaout* | m68*-*-netbsd*)
 			targ_emul=m68knbsd
 			targ_extra_emuls="m68kelfnbsd m68k4knbsd" ;;
-m68*-*-openbsd*)	targ_emul=m68kobsd ;;
+m68*-*-openbsd*)	targ_emul=m68kelfobsd
+			targ_extra_emuls="m68knbsd m68k4knbsd" ;;
 m68*-*-psos*)		targ_emul=m68kpsos ;;
 m68*-*-rtemscoff*)	targ_emul=m68kcoff ;;
 m68*-*-rtems*)		targ_emul=m68kelf ;;

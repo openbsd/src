@@ -1546,11 +1546,16 @@ m68k*-*-netbsd*)
 use_collect2=yes
 	;;
 m68k*-*-openbsd*)
-	tm_file="${tm_file} exec-stack.h"
+	tm_file=m68k/openbsdelf.h
+	#tm_file="${tm_file} exec-stack.h"
+	# was tmake_file="t-libc-ok t-openbsd t-libgcc-pic"
 	tmake_file="t-libc-ok t-openbsd m68k/t-openbsd"
+	if test x$enable_threads = xyes; then
+		thread_file='posix'
+		tmake_file="${tmake_file} t-openbsd-thread"
+	fi
 	float_format=m68k
-	# we need collect2 until our bug is fixed...
-	use_collect2=yes
+		gas=yes gnu_ld=yes
 	;;
 m68k-*-sysv3*)			# Motorola m68k's running system V.3
 	xm_file="xm-alloca.h ${xm_file}"

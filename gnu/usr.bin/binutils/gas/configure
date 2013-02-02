@@ -4416,7 +4416,7 @@ echo "$as_me: WARNING: GAS support for ${generic_target} is preliminary and a wo
       m68k-*-lynxos*)			fmt=coff em=lynx ;;
       m68k-*-netbsdelf*)		fmt=elf em=nbsd ;;
       m68k-*-netbsd*)			fmt=aout em=nbsd bfd_gas=yes ;;
-      m68k-*-openbsd*)			fmt=aout em=obsd bfd_gas=yes ;;
+      m68k-*-openbsd*)			fmt=elf em=obsd ;;
       m68k-apple-aux*)			fmt=coff em=aux ;;
       m68k-*-psos*)			fmt=elf em=psos;;
 
