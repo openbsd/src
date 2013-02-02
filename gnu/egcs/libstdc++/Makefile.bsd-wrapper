@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2012/08/31 00:11:27 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2013/02/02 13:38:08 miod Exp $
 
 .if (${MACHINE_ARCH} == "mips")
 NOPIC=
@@ -131,8 +131,14 @@ stdexcepti.po: stdexcepti.cc
 	@rm -f ${.TARGET}.o
 
 stdexcepti.so: stdexcepti.cc
+# XXX workaround for compiler ICE
+.if ${MACHINE_ARCH} == "m68k"
+	@echo "${COMPILE.cc} -O0 -frtti ${PICFLAG} -DPIC ${.CURDIR}/stdexcepti.cc -o ${.TARGET}"
+	@${COMPILE.cc} -O0 -frtti ${PICFLAG} -DPIC ${.CURDIR}/stdexcepti.cc -o ${.TARGET}.o
+.else
 	@echo "${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.CURDIR}/stdexcepti.cc -o ${.TARGET}"
 	@${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.CURDIR}/stdexcepti.cc -o ${.TARGET}.o
+.endif
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
