@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.224 2013/02/02 04:18:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.225 2013/02/02 20:20:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -770,7 +770,6 @@ bind_lease(void)
 	struct in_addr gateway, mask;
 	struct option_data *options;
 	struct client_lease *lease;
-	char *domainname, *nameservers;
 
 	delete_addresses(ifi->name, ifi->rdomain);
 	flush_routes_and_arp_cache(ifi->name, ifi->rdomain);
@@ -781,23 +780,6 @@ bind_lease(void)
 	memset(&mask, 0, sizeof(mask));
 	memcpy(&mask.s_addr, options[DHO_SUBNET_MASK].data,
 	    options[DHO_SUBNET_MASK].len);
-
-	if (options[DHO_DOMAIN_NAME].len)
-		domainname = strdup(pretty_print_option(
-		    DHO_DOMAIN_NAME, &options[DHO_DOMAIN_NAME], 0));
-	else
-		domainname = strdup("");
-	if (domainname == NULL)
-		error("no memory for domainname");
-
-	if (options[DHO_DOMAIN_NAME_SERVERS].len) {
-		nameservers = strdup(pretty_print_option(
-		    DHO_DOMAIN_NAME_SERVERS,
-		    &options[DHO_DOMAIN_NAME_SERVERS], 0));
-	} else
-		nameservers = strdup("");
-	if (nameservers == NULL)
-		error("no memory for nameservers");
 
         /*
 	 * Add address and default route last, so we know when the binding
@@ -819,9 +801,6 @@ bind_lease(void)
 		    O_WRONLY | O_CREAT | O_TRUNC | O_SYNC | O_EXLOCK,
 		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, 0, 0,
 		    client->new->resolv_conf, strlen(client->new->resolv_conf));
-
-	free(domainname);
-	free(nameservers);
 
 	/* Replace the old active lease with the new one. */
 	if (client->active)
