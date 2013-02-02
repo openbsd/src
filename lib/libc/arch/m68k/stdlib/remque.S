@@ -1,4 +1,4 @@
-/*	$OpenBSD: remque.S,v 1.3 2009/10/28 06:49:55 deraadt Exp $	*/
+/*	$OpenBSD: remque.S,v 1.4 2013/02/02 13:29:14 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,9 +40,9 @@
 #include "DEFS.h"
 
 ENTRY(remque)
-	movl	sp@(4),a0
-	movl	a0@,a1
-	movl	a0@(4),a0
-	movl	a0,a1@(4)
-	movl	a1,a0@
+	movl	%sp@(4),%a0
+	movl	%a0@,%a1
+	movl	%a0@(4),%a0
+	movl	%a0,%a1@(4)
+	movl	%a1,%a0@
 	rts

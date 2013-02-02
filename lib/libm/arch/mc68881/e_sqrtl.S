@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sqrtl.S,v 1.1 2011/05/28 22:13:52 martynas Exp $ */
+/*	$OpenBSD: e_sqrtl.S,v 1.2 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -40,9 +40,6 @@
  * to the rounding mode.
  */
 
-.lcomm	_ASM_LABEL(__rv),12
 ENTRY(sqrtl)
-	fsqrtx	sp@(4),fp0
-	fmovex	fp0,_ASM_LABEL(__rv)
-	movel	#_ASM_LABEL(__rv),d0
+	fsqrtx	%sp@(4),%fp0
 	rts

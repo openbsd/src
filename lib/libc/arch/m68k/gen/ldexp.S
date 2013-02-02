@@ -1,4 +1,4 @@
-/* $OpenBSD: ldexp.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: ldexp.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,12 +39,9 @@
  * returns: val * (2**exp), for integer exp
  */
 ENTRY(ldexp)
-	fmoved		sp@(4),fp0
+	fmoved		%sp@(4),%fp0
 	fbeq		Ldone
-	ftwotoxl	sp@(12),fp1
-	fmulx		fp1,fp0
+	ftwotoxl	%sp@(12),%fp1
+	fmulx		%fp1,%fp0
 Ldone:
-	fmoved		fp0,sp@-
-	movel		sp@+,d0
-	movel		sp@+,d1
 	rts

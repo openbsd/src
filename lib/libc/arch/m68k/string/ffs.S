@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: ffs.S,v 1.6 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,11 +37,11 @@
 /* bit = ffs(value) */
 
 ENTRY(ffs)
-	movl	sp@(4),d0
-	movl	d0,d1
-	negl	d0
-	andl	d0,d1
-	movql	#32,d0
-	bfffo	d1{#0:#32},d1
-	subl	d1,d0
+	movl	%sp@(4),%d0
+	movl	%d0,%d1
+	negl	%d0
+	andl	%d0,%d1
+	movql	#32,%d0
+	bfffo	%d1{#0:#32},%d1
+	subl	%d1,%d0
 	rts

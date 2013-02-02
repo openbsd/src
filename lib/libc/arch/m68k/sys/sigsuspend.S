@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.6 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: sigsuspend.S,v 1.7 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,12 +35,12 @@
 #include "SYS.h"
 
 SYSENTRY(sigsuspend)
-	movl	sp@(4),a0
-	movl	a0@,sp@(4)		/* indirect to mask arg */
-	movl	#SYS_sigsuspend,d0
+	movl	%sp@(4),%a0
+	movl	%a0@,%sp@(4)		/* indirect to mask arg */
+	movl	#SYS_sigsuspend,%d0
 	trap	#0
 	jcs	err
-	clrl	d0			/* shouldn't happen */
+	clrl	%d0			/* shouldn't happen */
 	rts
 err:
-	jra	__cerror
+	jra	PIC_PLT(__cerror)

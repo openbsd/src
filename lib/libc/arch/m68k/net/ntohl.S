@@ -36,5 +36,5 @@
 #include "DEFS.h"
 
 ENTRY(ntohl)
-	movl	sp@(4),d0
+	movl	%sp@(4),%d0
 	rts

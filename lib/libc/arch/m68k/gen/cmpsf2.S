@@ -1,4 +1,4 @@
-/* $OpenBSD: cmpsf2.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: cmpsf2.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,12 +38,12 @@
 /* single < single: -1 */
 /* single == single: 0 */
 ENTRY(__cmpsf2)
-	fmoves	sp@(4),fp0
-	fcmps	sp@(8),fp0
+	fmoves	%sp@(4),%fp0
+	fcmps	%sp@(8),%fp0
 	fbgt	Lagtb
-	fslt	d0
-	extbl	d0
+	fslt	%d0
+	extbl	%d0
 	rts
 Lagtb:
-	moveq	#1,d0
+	moveq	#1,%d0
 	rts

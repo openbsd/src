@@ -1,4 +1,4 @@
-/*	$OpenBSD: insque.S,v 1.3 2009/10/28 06:49:55 deraadt Exp $	*/
+/*	$OpenBSD: insque.S,v 1.4 2013/02/02 13:29:14 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,11 +40,11 @@
 #include "DEFS.h"
 
 ENTRY(insque)
-	movl	sp@(8),a0
-	movl	sp@(4),a1
-	movl	a0@,a1@
-	movl	a0,a1@(4)
-	movl	a1,a0@
-	movl	a1@,a0
-	movl	a1,a0@(4)
+	movl	%sp@(8),%a0
+	movl	%sp@(4),%a1
+	movl	%a0@,%a1@
+	movl	%a0,%a1@(4)
+	movl	%a1,%a0@
+	movl	%a1@,%a0
+	movl	%a1,%a0@(4)
 	rts

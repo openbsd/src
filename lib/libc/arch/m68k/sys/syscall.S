@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.6 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: syscall.S,v 1.7 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,9 +35,9 @@
 #include "SYS.h"
 
 SYSENTRY(syscall)
-	clrl	d0
+	clrl	%d0
 	trap	#0
 	jcs	err
 	rts
 err:
-	jra	__cerror
+	jra	PIC_PLT(__cerror)

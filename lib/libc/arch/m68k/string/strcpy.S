@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcpy.S,v 1.8 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: strcpy.S,v 1.9 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,16 +37,17 @@
  
 #if defined(APIWARN)
 #APP
-	.stabs "warning: strcpy() is almost always misused, consider using strlcpy()",30,0,0,0
-	.stabs "_strcpy",1,0,0,0
+	.section .gnu.warning.strcpy
+	.ascii "warning: strcpy() is almost always misused, consider using strlcpy()"
 #NO_APP
 #endif
 
 ENTRY(strcpy)
-	movl	sp@(8),a0		| a0 = fromaddr
-	movl	sp@(4),d0		| return value is toaddr
-	movl	d0,a1			| a1 = toaddr
+	movl	%sp@(8),%a0		| a0 = fromaddr
+	movl	%sp@(4),%d0		| return value is toaddr
+	movl	%d0,%a1			| a1 = toaddr
 scloop:
-	movb	a0@+,a1@+		| copy a byte
+	movb	%a0@+,%a1@+		| copy a byte
 	bne	scloop			| copied non-null, keep going
+	moveal	%d0,%a0
 	rts

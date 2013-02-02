@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: fork.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,6 +35,6 @@
 #include "SYS.h"
 
 SYSCALL(fork)
-	subql	#1,d1	/* from 1 to 0 in child, 0 to -1 in parent */
-	andl	d1,d0
+	subql	#1,%d1	/* from 1 to 0 in child, 0 to -1 in parent */
+	andl	%d1,%d0
 	rts		/* pid = fork() */

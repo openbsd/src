@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.7 2012/08/22 17:19:35 pascal Exp $ */
+/*	$OpenBSD: brk.S,v 1.8 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,36 +35,36 @@
 #include "SYS.h"
 
 	.globl	_end
-	.globl	minbrk
-	.globl	__curbrk
+	.globl	_C_LABEL(__minbrk)
+	.globl	_C_LABEL(__curbrk)
 
 	.data
-minbrk:	.long	_end
+_C_LABEL(__minbrk):
+	.long	_end
 	.text
 
 ENTRY(brk)
 #ifdef	__PIC__
-	movl	#__GLOBAL_OFFSET_TABLE_,a1
-	lea	pc@(0,a1:l),a1
-	movl	a1@(minbrk:w),a0
-	movl	a0@,d0
+	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a1
+	movl	%a1@(_C_LABEL(__minbrk)@GOT:w),%a0
+	movl	%a0@,%d0
 #else
-	movl	minbrk,d0
+	movl	_C_LABEL(__minbrk),%d0
 #endif
-	cmpl	sp@(4),d0
+	cmpl	%sp@(4),%d0
 	jls	ok
-	movl	d0,sp@(4)
+	movl	%d0,%sp@(4)
 ok:
-	movl	#SYS_break,d0
+	movl	#SYS_break,%d0
 	trap	#0
 	jcs	err
 #ifdef	__PIC__
-	movl	a1@(__curbrk:w),a0
-	movl	sp@(4),a0@
+	movl	%a1@(_C_LABEL(__curbrk)@GOT:w),%a0
+	movl	%sp@(4),%a0@
 #else
-	movl	sp@(4),__curbrk
+	movl	%sp@(4),_C_LABEL(__curbrk)
 #endif
-	clrl	d0
+	clrl	%d0
 	rts
 err:
-	jra	__cerror
+	jra	PIC_PLT(__cerror)

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.107 2012/09/04 03:10:42 okan Exp $
+#	$OpenBSD: Makefile.inc,v 1.108 2013/02/02 13:29:14 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -22,7 +22,8 @@ SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
 # stack protector helper functions
 SRCS+=	stack_protector.c
 
-# modules with default implementations on all architectures:
+# modules with default implementations on all architectures, unless overriden
+# below:
 ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	__sysctl.o __threxit.o __thrsigdivert.o __thrsleep.o \
 	__thrwakeup.o accept.o access.o acct.o adjfreq.o adjtime.o \
@@ -56,6 +57,15 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o \
 	symlinkat.o sync.o sysarch.o umask.o unlink.o unlinkat.o \
 	unmount.o utimensat.o utimes.o wait4.o write.o writev.o
+
+# modules with specific implementations on some architectures, and the
+# default implementation elsewhere:
+SRCS_m68k=	__get_tcb.S shmat.S chdir.S
+
+SRCS+=	${SRCS_${MACHINE_CPU}}
+.for i in ${SRCS_${MACHINE_CPU}}
+ASM:=	${ASM:N${i:R}.o}
+.endfor
 
 GASM=	${ASM:.o=.go}
 PASM=	${ASM:.o=.po}

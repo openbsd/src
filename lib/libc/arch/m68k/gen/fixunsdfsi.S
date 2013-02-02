@@ -1,4 +1,4 @@
-/* $OpenBSD: fixunsdfsi.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: fixunsdfsi.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,13 +36,13 @@
 
 /* (unsigned) double */
 ENTRY(__fixunsdfsi)
-	fintrzd	sp@(4),fp0
-	fcmpd	#0r2147483648.0,fp0
+	fintrzd	%sp@(4),%fp0
+	fcmpd	#0r2147483648.0,%fp0
 	fbge	Lwaybig
-	fmovel	fp0,d0
+	fmovel	%fp0,%d0
 	rts
 Lwaybig:
-	fsubd	#0r2147483648.0,fp0
-	fmovel	fp0,d0
-	bset	#31,d0
+	fsubd	#0r2147483648.0,%fp0
+	fmovel	%fp0,%d0
+	bset	#31,%d0
 	rts

@@ -36,6 +36,6 @@
 #include "DEFS.h"
 
 ENTRY(ntohs)
-	clrl	d0
-	movw	sp@(6),d0
+	clrl	%d0
+	movw	%sp@(6),%d0
 	rts

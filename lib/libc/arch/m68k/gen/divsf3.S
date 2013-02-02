@@ -1,4 +1,4 @@
-/* $OpenBSD: divsf3.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: divsf3.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,6 @@
 
 /* single / single */
 ENTRY(__divsf3)
-	fmoves	sp@(4),fp0
-	fdivs	sp@(8),fp0
-	fmoves	fp0,d0
+	fmoves	%sp@(4),%fp0
+	fdivs	%sp@(8),%fp0
 	rts

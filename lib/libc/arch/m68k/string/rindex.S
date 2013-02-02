@@ -1,4 +1,4 @@
-/*	$OpenBSD: rindex.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: rindex.S,v 1.6 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,15 +39,16 @@ ENTRY(strrchr)
 #else
 ENTRY(rindex)
 #endif
-	movl	sp@(4),a0		| string
-	movb	sp@(11),d0		| char to look for
-	subl	a1,a1			| clear rindex pointer
+	movl	%sp@(4),%a0		| string
+	movb	%sp@(11),%d0		| char to look for
+	subl	%a1,%a1			| clear rindex pointer
 rixloop:
-	cmpb	a0@,d0			| found our char?
+	cmpb	%a0@,%d0		| found our char?
 	bne	rixnope			| no, check for null
-	movl	a0,a1			| yes, remember location
+	movl	%a0,%a1			| yes, remember location
 rixnope:
-	tstb	a0@+			| null?
+	tstb	%a0@+			| null?
 	bne	rixloop			| no, keep going
-	movl	a1,d0			| return value
+	movl	%a1,%d0			| return value
+	moveal	%d0,%a0
 	rts

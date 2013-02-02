@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: sigpending.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #include "SYS.h"
 
 SYSCALL(sigpending)
-	movl	sp@(4),a0
-	movl	d0,a0@
-	clrl	d0
+	movl	%sp@(4),%a0
+	movl	%d0,%a0@
+	clrl	%d0
 	rts

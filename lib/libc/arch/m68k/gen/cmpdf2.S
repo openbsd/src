@@ -1,4 +1,4 @@
-/* $OpenBSD: cmpdf2.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: cmpdf2.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,12 +38,12 @@
 /* double < double: -1 */
 /* double == double: 0 */
 ENTRY(__cmpdf2)
-	fmoved	sp@(4),fp0
-	fcmpd	sp@(12),fp0
+	fmoved	%sp@(4),%fp0
+	fcmpd	%sp@(12),%fp0
 	fbgt	Lagtb
-	fslt	d0
-	extbl	d0
+	fslt	%d0
+	extbl	%d0
 	rts
 Lagtb:
-	moveq	#1,d0
+	moveq	#1,%d0
 	rts

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_logbl.S,v 1.1 2011/05/28 22:13:52 martynas Exp $ */
+/*	$OpenBSD: s_logbl.S,v 1.2 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,25 +37,22 @@
 | logbl(x)
 | returns the unbiased exponent of x, a signed integer in double precision,
 | except that logbl(0) is -INF, logbl(INF) is +INF, and logbl(NAN) is that NAN.
-.lcomm	_ASM_LABEL(__rv),12
 ENTRY(logbl)
-	movw	sp@(4),d0
-	movw	#0x7FFF,d1	| exponent bits
-	andw	d1,d0		| mask off all else
-	cmpw	d1,d0		| max exponent?
+	movw	%sp@(4),%d0
+	movw	#0x7FFF,%d1	| exponent bits
+	andw	%d1,%d0		| mask off all else
+	cmpw	%d1,%d0		| max exponent?
 	bne	Lfinite		| no, is finite
-	fmovex	sp@(4),fp0	| yes, infinite or NaN
+	fmovex	%sp@(4),%fp0	| yes, infinite or NaN
 	fbun	Ldone		| NaN returns NaN
-	fabsx	fp0		| +-inf returns inf
-	jra	Ldone
+	fabsx	%fp0		| +-inf returns inf
+	rts
 Lfinite:
-	fmovex	sp@(4),fp0	| get entire number
+	fmovex	%sp@(4),%fp0	| get entire number
 	fbne	Lnonz		| zero?
-	flog2x	fp0		| yes, log(0) a convenient source of -inf
-	jra	Ldone
+	flog2x	%fp0		| yes, log(0) a convenient source of -inf
+	rts
 Lnonz:
-	fgetexpx	fp0	| get exponent
+	fgetexpx	%fp0	| get exponent
 Ldone:
-	fmovex	fp0,_ASM_LABEL(__rv)
-	movel	#_ASM_LABEL(__rv),d0
 	rts

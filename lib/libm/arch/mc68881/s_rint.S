@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_rint.S,v 1.3 2005/08/02 11:17:32 espie Exp $ */
+/*	$OpenBSD: s_rint.S,v 1.4 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,8 +37,5 @@
 | rint(x)
 | delivers integer nearest x in direction of prevailing rounding mode
 ENTRY(rint)
-	fintd	sp@(4),fp0	| use prevailing rounding mode
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fintd	%sp@(4),%fp0	| use prevailing rounding mode
 	rts

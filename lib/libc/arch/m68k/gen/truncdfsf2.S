@@ -1,4 +1,4 @@
-/* $OpenBSD: truncdfsf2.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: truncdfsf2.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,5 @@
 
 /* (float) double */
 ENTRY(__truncdfsf2)
-	fmoved	sp@(4),fp0
-	fmoves	fp0,d0
+	fmoved	%sp@(4),%fp0
 	rts

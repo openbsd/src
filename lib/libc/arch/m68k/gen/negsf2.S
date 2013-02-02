@@ -1,4 +1,4 @@
-/* $OpenBSD: negsf2.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: negsf2.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,5 @@
 
 /* -single */
 ENTRY(__negsf2)
-	movel	sp@(4),d0
-	bchg	#31,d0
+	fnegs	%sp@(4),%fp0
 	rts

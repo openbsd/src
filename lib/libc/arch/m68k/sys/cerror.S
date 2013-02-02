@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.8 2012/08/22 17:19:35 pascal Exp $ */
+/*	$OpenBSD: cerror.S,v 1.9 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,16 +37,16 @@
 WEAK_ALIAS(_cerror,__cerror)
 
 	.even
-	.globl	_errno
-___cerror:
+	.globl	_C_LABEL(errno)
+__cerror:
 #ifdef	__PIC__
-	movl	#__GLOBAL_OFFSET_TABLE_,a0
-	lea	pc@(0,a0:l),a0
-	movl	a0@(_errno:w),a0
-	movl	d0,a0@
+	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a0
+	movl	%a0@(_C_LABEL(errno)@GOT:w),%a0
+	movl	%d0,%a0@
 #else
-	movl	d0,_errno
+	movl	%d0,_C_LABEL(errno)
 #endif
-	movl	#-1,d0
-	movl	#-1,d1
+	movl	#-1,%d0
+	movl	#-1,%d1
+	moveal	%d0,%a0
 	rts

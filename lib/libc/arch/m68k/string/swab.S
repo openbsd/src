@@ -1,4 +1,4 @@
-/*	$OpenBSD: swab.S,v 1.5 2005/08/07 16:40:14 espie Exp $	*/
+/*	$OpenBSD: swab.S,v 1.6 2013/02/02 13:29:14 miod Exp $	*/
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -27,17 +27,17 @@
 #include "DEFS.h"
 
 ENTRY(swab)
-	movl	sp@(12),d1	| #bytes
-	lsrl	#1,d1		| -> #words
+	movl	%sp@(12),%d1	| #bytes
+	lsrl	#1,%d1		| -> #words
 	beq	swab_end
-	subql	#1,d1		| for proper dbf behaviour
-	movl	sp@(4),a0	| src
-	movl	sp@(8),a1	| and dst
+	subql	#1,%d1		| for proper dbf behaviour
+	movl	%sp@(4),%a0	| src
+	movl	%sp@(8),%a1	| and dst
 swab_loop:
-	movw	a0@+,d0
-	rorw	#8,d0
-	movw	d0,a1@+
-	dbf	d1,swab_loop
+	movw	%a0@+,%d0
+	rorw	#8,%d0
+	movw	%d0,%a1@+
+	dbf	%d1,swab_loop
 swab_end:
 	rts
 

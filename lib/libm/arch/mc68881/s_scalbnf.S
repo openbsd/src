@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_scalbnf.S,v 1.2 2012/12/30 01:48:50 miod Exp $ */
+/*	$OpenBSD: s_scalbnf.S,v 1.3 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,10 +38,8 @@
 | returns  x * (2**N), for integer values N.
 ALTENTRY(ldexpf,scalbnf)
 ENTRY(scalbnf)
-	fmoves	sp@(4),fp0
+	fmoves	%sp@(4),%fp0
 	fbeq	Ldone
-	fscalel	sp@(8),fp0
+	fscalel	%sp@(8),%fp0
 Ldone:
-	fmoves	fp0,sp@-
-	movel	sp@+,d0
 	rts

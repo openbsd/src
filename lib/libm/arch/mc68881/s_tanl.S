@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_tanl.S,v 1.1 2011/05/28 22:13:52 martynas Exp $ */
+/*	$OpenBSD: s_tanl.S,v 1.2 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,9 +34,6 @@
 
 #include <machine/asm.h>
 
-.lcomm	_ASM_LABEL(__rv),12
 ENTRY(tanl)
-	ftanx	sp@(4),fp0
-	fmovex	fp0,_ASM_LABEL(__rv)
-	movel	#_ASM_LABEL(__rv),d0
+	ftanx	%sp@(4),%fp0
 	rts

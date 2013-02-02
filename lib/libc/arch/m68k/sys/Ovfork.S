@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.6 2012/08/22 17:19:34 pascal Exp $ */
+/*	$OpenBSD: Ovfork.S,v 1.7 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -51,22 +51,21 @@
  */
 
 SYSENTRY(vfork)
-	movl	sp@+,a0
-	movl	#SYS_vfork,d0
+	movl	%sp@+,%a0
+	movl	#SYS_vfork,%d0
 	trap	#0
 	jcs	err
-	subql	#1,d1	/* from 1 to 0 in child, 0 to -1 in parent */
-	andl	d1,d0
-	jmp	a0@
+	subql	#1,%d1	/* from 1 to 0 in child, 0 to -1 in parent */
+	andl	%d1,%d0
+	jmp	%a0@
 err:
-	.globl	_errno
+	.globl	_C_LABEL(errno)
 #ifdef	__PIC__
-	movel	#__GLOBAL_OFFSET_TABLE_,a1
-	lea	pc@(0,a1:l),a1
-	movl	a1@(_errno:w),a1
-	movl	d0,a1@
+	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a1
+	movl	%a1@(_C_LABEL(errno)@GOT:w),%a1
+	movl	%d0,%a1@
 #else
-	movl	d0,_errno
+	movl	%d0,_C_LABEL(errno)
 #endif
-	moveq	#-1,d0
-	jmp	a0@
+	moveq	#-1,%d0
+	jmp	%a0@

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_floorf.S,v 1.1 2011/05/28 21:55:04 martynas Exp $ */
+/*	$OpenBSD: s_floorf.S,v 1.2 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,18 +37,16 @@
 | floorf(x)
 | the largest integer no larger than x
 ENTRY(floorf)
-	fmovel	fpcr,d0		| save old FPCR
-	fmoves	sp@(4),fp0	| get argument
+	fmovel	%fpcr,%d0	| save old FPCR
+	fmoves	%sp@(4),%fp0	| get argument
 	fbun	Lret		| if NaN, return NaN
 	fboge	Lrtz		| >=0, round to zero
-	fmovel	#0x20,fpcr	| <0, round to -inf
+	fmovel	#0x20,%fpcr	| <0, round to -inf
 	jra	Ldoit
 Lrtz:
-	fmovel	#0x10,fpcr
+	fmovel	#0x10,%fpcr
 Ldoit:
-	fints	sp@(4),fp0	| truncate
-	fmovel	d0,fpcr		| restore old FPCR
+	fints	%sp@(4),%fp0	| truncate
+	fmovel	%d0,%fpcr	| restore old FPCR
 Lret:
-	fmoves	fp0,sp@-
-	movel	sp@+,d0
 	rts

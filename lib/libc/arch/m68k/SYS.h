@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.16 2003/06/02 20:18:30 millert Exp $
+ *	$OpenBSD: SYS.h,v 1.17 2013/02/02 13:29:14 miod Exp $
  */
 
 #include <sys/syscall.h>
@@ -41,13 +41,13 @@
 #ifdef __STDC__
 # define	__ENTRY(p,x)	ENTRY(p##x)
 # define	__DO_SYSCALL(x)					\
-				movl _IMMEDIATE_ SYS_##x, d0;	\
+				movl _IMMEDIATE_ SYS_##x, %d0;	\
 				trap _IMMEDIATE_ 0
 # define	__LABEL2(p,x)	_C_LABEL(p##x)
 #else
 # define	__ENTRY(p,x)	ENTRY(p/**/x)
 # define	__DO_SYSCALL(x)					\
-				movl _IMMEDIATE_ SYS_/**/x, d0;	\
+				movl _IMMEDIATE_ SYS_/**/x, %d0;\
 				trap _IMMEDIATE_ 0
 # define	__LABEL2(p,x)	_C_LABEL(p/**/x)
 #endif
@@ -62,22 +62,22 @@
 /* perform a syscall, set errno */
 
 #define		__SYSCALL(p,x,y)				\
-				.even;				\
-			err:	jra	__cerror;		\
+			.even;					\
+		err:	jra	PIC_PLT(__cerror);		\
 			__SYSCALL_NOERROR(p,x,y);		\
-				jcs err
+			jcs err
 
 /* perform a syscall, return */
 
 #define		__PSEUDO_NOERROR(p,x,y)				\
 			__SYSCALL_NOERROR(p,x,y);		\
-				rts
+			rts
 
 /* perform a syscall, set errno, return */
 
 #define		__PSEUDO(p,x,y)					\
 			__SYSCALL(p,x,y);			\
-				rts
+			rts
 
 
 #ifdef	__STDC__

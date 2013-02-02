@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsetjmp.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: sigsetjmp.S,v 1.6 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -49,20 +49,20 @@
 #include <m68k/setjmp.h>
 
 ENTRY(sigsetjmp)
-	movl	sp@(8),d1	/* grab the mask */
-	movl	sp@(4),a0	/* grab the area pointer */
-	movl	d1,a0@(_JBLEN * 4 )	/* save at end of area */
-	tstl	d1
+	movl	%sp@(8),%d1	/* grab the mask */
+	movl	%sp@(4),%a0	/* grab the area pointer */
+	movl	%d1,%a0@(_JBLEN * 4 )	/* save at end of area */
+	tstl	%d1
 	bne	dosig
-	jra	__setjmp
+	jra	PIC_PLT(_C_LABEL(_setjmp))
 dosig:
-	jra	_setjmp
+	jra	PIC_PLT(_C_LABEL(setjmp))
 
 
 ENTRY(siglongjmp)
-	movl	sp@(4),a0	/* save area pointer */
-	tstl	a0@(_JBLEN * 4) /* check mask... */
+	movl	%sp@(4),%a0	/* save area pointer */
+	tstl	%a0@(_JBLEN * 4) /* check mask... */
 	bne	didsig
-	jra	__longjmp
+	jra	PIC_PLT(_C_LABEL(_longjmp))
 didsig:
-	jra	_longjmp
+	jra	PIC_PLT(_C_LABEL(longjmp))

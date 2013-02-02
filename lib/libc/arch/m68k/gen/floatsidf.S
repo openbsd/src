@@ -1,4 +1,4 @@
-/* $OpenBSD: floatsidf.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: floatsidf.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,9 +36,6 @@
 
 /* (double) int */
 ENTRY(__floatsidf)
-	fmovel	sp@(4),fp0
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fmovel	%sp@(4),%fp0
 	rts
 

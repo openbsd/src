@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.3 2013/02/02 13:29:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -34,8 +34,8 @@ ENTRY(__tfork_thread)
 	/*
 	 * Move info for the new thread into registers.
 	 */
-	movl	sp@(16), a0	/* arg */
-	movl	sp@(12), a1	/* func */
+	movl	%sp@(16), %a0	/* arg */
+	movl	%sp@(12), %a1	/* func */
 
 	/*
 	 * We did not create a frame, so the stack is ready for an immediate
@@ -44,7 +44,7 @@ ENTRY(__tfork_thread)
 	__DO_SYSCALL(__tfork)
 	jcs	9f
 
-	tstl	d0
+	tstl	%d0
 	jeq	1f
 
 	/*
@@ -56,9 +56,9 @@ ENTRY(__tfork_thread)
 	/*
 	 * child process: invoke function, then exit.
 	 */
-	movl	a0, sp@-	/* stack with arg pushed on it */
-	jsr	a1@		/* func */
-	addq	#4, sp
+	movl	%a0, %sp@-	/* stack with arg pushed on it */
+	jsr	%a1@		/* func */
+	addq	#4, %sp
 
 	__DO_SYSCALL(__threxit)
 
@@ -66,4 +66,4 @@ ENTRY(__tfork_thread)
 	/*
 	 * system call failure.
 	 */
-	jra	__cerror
+	jra	PIC_PLT(__cerror)

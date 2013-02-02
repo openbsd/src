@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncmp.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: strncmp.S,v 1.6 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -41,22 +41,22 @@
  * right??
  */
 ENTRY(strncmp)
-	movl	sp@(12),d1		| count
+	movl	%sp@(12),%d1		| count
 	beq	scdone			| nothing to do
-	movl	sp@(4),a0		| a0 = string1
-	movl	sp@(8),a1		| a1 = string2
+	movl	%sp@(4),%a0		| a0 = string1
+	movl	%sp@(8),%a1		| a1 = string2
 scloop:
-	movb	a0@+,d0			| get *string1
-	cmpb	a1@+,d0			| compare a byte
+	movb	%a0@+,%d0		| get *string1
+	cmpb	%a1@+,%d0		| compare a byte
 	bne	scexit			| not equal, break out
-	tstb	d0			| at end of string1?
+	tstb	%d0			| at end of string1?
 	beq	scdone			| yes, all done
-	subql	#1,d1			| no, adjust count
+	subql	#1,%d1			| no, adjust count
 	bne	scloop			| more to do, keep going
 scdone:
-	moveq	#0,d0			| strings are equal
+	moveq	#0,%d0			| strings are equal
 	rts
 scexit:
-	subb	a1@-,d0			| *string1 - *string2
-	extbl	d0
+	subb	%a1@-,%d0		| *string1 - *string2
+	extbl	%d0
 	rts

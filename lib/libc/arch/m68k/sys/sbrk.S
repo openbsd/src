@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.6 2012/08/22 17:19:35 pascal Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.7 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,32 +35,32 @@
 #include "SYS.h"
 
 	.globl	_end
-	.globl	__curbrk
+	.globl	_C_LABEL(__curbrk)
 
 	.data
-__curbrk:.long	_end
+_C_LABEL(__curbrk):
+	.long	_end
 	.text
 
 ENTRY(sbrk)
 #ifdef	__PIC__
-	movl	#__GLOBAL_OFFSET_TABLE_,a1
-	lea	pc@(0,a1:l),a1
-	movl	a1@(__curbrk:w),a1
-	movl	a1@,d0
+	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a1
+	movl	%a1@(_C_LABEL(__curbrk)@GOT:w),%a1
+	movl	%a1@,%d0
 #else
-	movl	__curbrk,d0
+	movl	_C_LABEL(__curbrk),%d0
 #endif
-	addl	d0,sp@(4)
-	movl	#SYS_break,d0
+	addl	%d0,%sp@(4)
+	movl	#SYS_break,%d0
 	trap	#0
 	jcs 	err
 #ifdef	__PIC__
-	movl	a1@,d0
-	movl	sp@(4),a1@
+	movl	%a1@,%d0
+	movl	%sp@(4),%a1@
 #else
-	movl	__curbrk,d0
-	movl	sp@(4),__curbrk
+	movl	_C_LABEL(__curbrk),%d0
+	movl	%sp@(4),_C_LABEL(__curbrk)
 #endif
 	rts
 err:
-	jra	__cerror
+	jra	PIC_PLT(__cerror)

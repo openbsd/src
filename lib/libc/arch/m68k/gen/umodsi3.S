@@ -1,4 +1,4 @@
-/* $OpenBSD: umodsi3.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: umodsi3.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,6 @@
 
 /* unsigned % unsigned */
 ENTRY(__umodsi3)
-	movel	sp@(4),d1
-	divull	sp@(8),d0:d1
+	movel	%sp@(4),%d1
+	divull	%sp@(8),%d0:%d1
 	rts

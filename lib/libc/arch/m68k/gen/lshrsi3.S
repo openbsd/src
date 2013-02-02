@@ -1,4 +1,4 @@
-/* $OpenBSD: lshrsi3.S,v 1.4 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: lshrsi3.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 /* unsigned >> unsigned */
 ENTRY(__lshrsi3)
-	movel	sp@(8),d1
-	movel	sp@(4),d0
-	lsrl	d1,d0
+	movel	%sp@(8),%d1
+	movel	%sp@(4),%d0
+	lsrl	%d1,%d0
 	rts

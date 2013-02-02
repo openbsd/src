@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcat.S,v 1.7 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: strcat.S,v 1.8 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,20 +36,21 @@
 
 #if defined(APIWARN)
 #APP
-	.stabs "warning: strcat() is almost always misused, consider using strlcat()",30,0,0,0
-	.stabs "_strcat",1,0,0,0
+	.section .gnu.warning.strcat
+	.ascii "warning: strcat() is almost always misused, consider using strlcat()"
 #NO_APP
 #endif
 
 ENTRY(strcat)
-	movl	sp@(8),a0		| a0 = fromaddr
-	movl	sp@(4),d0		| return value is toaddr
-	movl	d0,a1			| a1 = toaddr
+	movl	%sp@(8),%a0		| a0 = fromaddr
+	movl	%sp@(4),%d0		| return value is toaddr
+	movl	%d0,%a1			| a1 = toaddr
 slloop:
-	tstb	a1@+			| null?
+	tstb	%a1@+			| null?
 	bne	slloop			| no, keep going
-	subql	#1,a1
+	subql	#1,%a1
 scloop:
-	movb	a0@+,a1@+		| copy a byte
+	movb	%a0@+,%a1@+		| copy a byte
 	bne	scloop			| copied non-null, keep going
+	moveal	%d0,%a0
 	rts

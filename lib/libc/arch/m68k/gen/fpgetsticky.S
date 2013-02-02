@@ -1,4 +1,4 @@
-/* $OpenBSD: fpgetsticky.S,v 1.3 2005/08/07 16:40:14 espie Exp $ */
+/* $OpenBSD: fpgetsticky.S,v 1.4 2013/02/02 13:29:14 miod Exp $ */
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
  * Public domain.
@@ -7,6 +7,6 @@
 #include <machine/asm.h>
 
 ENTRY(fpgetsticky)
-	fmovel fpsr,d0
-	bfextu d0{#24:#5},d0
+	fmovel %fpsr,%d0
+	bfextu %d0{#24:#5},%d0
 	rts

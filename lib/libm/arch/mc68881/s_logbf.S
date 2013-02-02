@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_logbf.S,v 1.1 2011/05/28 21:55:04 martynas Exp $ */
+/*	$OpenBSD: s_logbf.S,v 1.2 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,23 +38,21 @@
 | returns the unbiased exponent of x, a signed integer in single precision,
 | except that logbf(0) is -INF, logbf(INF) is +INF, and logbf(NAN) is that NAN.
 ENTRY(logbf)
-	movw	sp@(4),d0
-	movw	#0x7F80,d1	| exponent bits
-	andw	d1,d0		| mask off all else
-	cmpw	d1,d0		| max exponent?
+	movw	%sp@(4),%d0
+	movw	#0x7F80,%d1	| exponent bits
+	andw	%d1,%d0		| mask off all else
+	cmpw	%d1,%d0		| max exponent?
 	bne	Lfinite		| no, is finite
-	fmoves	sp@(4),fp0	| yes, infinite or NaN
+	fmoves	%sp@(4),%fp0	| yes, infinite or NaN
 	fbun	Ldone		| NaN returns NaN
-	fabsx	fp0		| +-inf returns inf
+	fabsx	%fp0		| +-inf returns inf
 	jra	Ldone
 Lfinite:
-	fmoves	sp@(4),fp0	| get entire number
+	fmoves	%sp@(4),%fp0	| get entire number
 	fbne	Lnonz		| zero?
-	flog2x	fp0		| yes, log(0) a convenient source of -inf
+	flog2x	%fp0		| yes, log(0) a convenient source of -inf
 	jra	Ldone
 Lnonz:
-	fgetexpx	fp0	| get exponent
+	fgetexpx	%fp0	| get exponent
 Ldone:
-	fmoves	fp0,sp@-
-	movel	sp@+,d0
 	rts

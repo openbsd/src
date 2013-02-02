@@ -1,4 +1,4 @@
-/*	$OpenBSD: exect.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: exect.S,v 1.6 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,6 +36,6 @@
 #include <machine/psl.h>
 
 ENTRY(exect)
-	movl	#SYS_execve,d0
+	movl	#SYS_execve,%d0
 	trap	#0
-	jra	__cerror	/* exect(file, argv, env) */
+	jra	PIC_PLT(__cerror)	/* exect(file, argv, env) */

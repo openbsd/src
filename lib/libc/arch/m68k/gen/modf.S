@@ -1,4 +1,4 @@
-/* $OpenBSD: modf.S,v 1.6 2011/07/08 22:28:33 martynas Exp $ */
+/* $OpenBSD: modf.S,v 1.7 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,12 +39,9 @@
  * returns: xxx and n (in *iptr) where val == n.xxx
  */
 ENTRY(modf)
-	fmoved	sp@(4),fp0
-	movel	sp@(12),a0
-	fintrzx	fp0,fp1
-	fmoved	fp1,a0@
-	fsubx	fp1,fp0
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fmoved	%sp@(4),%fp0
+	movel	%sp@(12),%a0
+	fintrzx	%fp0,%fp1
+	fmoved	%fp1,%a0@
+	fsubx	%fp1,%fp0
 	rts

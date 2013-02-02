@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.S,v 1.5 2005/08/07 16:40:14 espie Exp $ */
+/*	$OpenBSD: index.S,v 1.6 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,15 +39,16 @@ ENTRY(strchr)
 #else
 ENTRY(index)
 #endif
-	movl	sp@(4),a0		| string
-	movb	sp@(11),d0		| char to look for
+	movl	%sp@(4),%a0		| string
+	movb	%sp@(11),%d0		| char to look for
 ixloop:
-	cmpb	a0@,d0			| found our char?
+	cmpb	%a0@,%d0		| found our char?
 	beq	ixfound			| yes, break out
-	tstb	a0@+			| null?
+	tstb	%a0@+			| null?
 	bne	ixloop			| no, keep going
-	moveq	#0,d0			| not found, return null
+	moveq	#0,%d0			| not found, return null
+	moveal	%d0,%a0
 	rts
 ixfound:
-	movl	a0,d0			| found, return pointer
+	movl	%a0,%d0			| found, return pointer
 	rts

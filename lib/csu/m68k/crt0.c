@@ -1,9 +1,11 @@
-/*	$OpenBSD: crt0.c,v 1.9 2005/08/04 16:33:05 espie Exp $	*/
-/*	$NetBSD: crt0.c,v 1.14 1995/06/03 13:16:11 pk Exp $	*/
+/* $OpenBSD: crt0.c,v 1.10 2013/02/02 13:29:14 miod Exp $ */
+/* $NetBSD: crt0.c,v 1.13 2011/03/07 05:09:10 joerg Exp $ */
+
 /*
- * Copyright (c) 1993 Paul Kranenburg
+ * Copyright (c) 1999 Klaus Klein
+ * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,10 +16,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
+ *          This product includes software developed for the
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
+ *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
- *
+ *    derived from this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -28,47 +32,53 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * 
+ * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-
-#include <sys/param.h>
 #include <stdlib.h>
+#include <limits.h>
 
-#include "common.h"
+static char	*_strrchr(char *, char);
 
-extern void	start(void) asm("start");
+char	**environ;
+char	*__progname = "";
+char	__progname_storage[NAME_MAX+1];
+
+#ifdef MCRT0
+extern void	monstartup(u_long, u_long);
+extern void	_mcleanup(void);
+extern unsigned char _etext, _eprol;
+#endif /* MCRT0 */
+
+static void ___start(int, char **, char **, void (*)(void)) __used;
+
+__asm("\n"
+"	.text				\n"
+"	.align	2			\n"
+"	.globl	__start			\n"
+"__start:				\n"
+"	movl	%sp,%a0			\n"
+"	movl	(%a0)+,%d0		| argc\n"
+"	movl	%a1,-(%sp)		| cleanup\n"
+"	pea	4(%a0,%d0.l*4)		| envp\n"
+"	movl	%a0,-(%sp)		| argv\n"
+"	movl	%d0,-(%sp)		| argc\n"
+"	jsr	___start");
 
 void
-start()
+___start(int argc, char **argv, char **envp,
+    void (*cleanup)(void))
 {
-	struct kframe {
-		int	kargc;
-		char	*kargv[1];	/* size depends on kargc */
-		char	kargstr[1];	/* size varies */
-		char	kenvstr[1];	/* size varies */
-	};
-	/*
-	 *	ALL REGISTER VARIABLES!!!
-	 */
-	register struct kframe *kfp;
-	register char **argv, *ap;
 	char *s;
 
-#ifdef lint
-	kfp = 0;
-	initcode = initcode = 0;
-#else /* not lint */
-	asm("lea a6@(4),%0" : "=r" (kfp));	/* catch it quick */
-#endif /* not lint */
-	argv = &kfp->kargv[0];
-	environ = argv + kfp->kargc + 1;
+	environ = envp;
 
-	if (ap = argv[0]) {
-		if ((__progname = _strrchr(ap, '/')) == NULL)
-			__progname = ap;
+	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
+		if ((__progname = _strrchr(__progname, '/')) == NULL)
+			__progname = argv[0];
 		else
-			++__progname;
+			__progname++;
 		for (s = __progname_storage; *__progname &&
 		    s < &__progname_storage[sizeof __progname_storage - 1]; )
 			*s++ = *__progname++;
@@ -76,43 +86,35 @@ start()
 		__progname = __progname_storage;
 	}
 
-#ifdef DYNAMIC
-	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
-#ifdef stupid_gcc
-	if (&_DYNAMIC)
-#else
-	if ( ({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }) )
-#endif
-		__load_rtld(&_DYNAMIC);
-#endif /* DYNAMIC */
-
-asm("eprol:");
+	if (cleanup)
+		atexit(cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
-	monstartup((u_long)&eprol, (u_long)&etext);
-#endif /* MCRT0 */
+	monstartup((u_long)&_eprol, (u_long)&_etext);
+#endif
 
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
-	exit(main(kfp->kargc, argv, environ));
+	__init();
+
+	exit(main(argc, argv, environ));
 }
 
-#ifdef DYNAMIC
-	asm("	___syscall:");
-	asm("		movel	a7@+,a0");	/* return address */
-	asm("		movel	a7@,d0");	/* syscall number */
-	asm("		movel	a0,a7@");
-	asm("		trap	#0");		/* do system call */
-	asm("		bcc	1f");		/* check error */
-	asm("		moveq	#-1,d0");
-	asm("	1:	movel	a7@,a0");	/* get return address, leave */
-	asm("		jmp	a0@");		/* correct amount on stack */
+static char *
+_strrchr(p, ch)
+register char *p, ch;
+{
+	register char *save;
 
-#endif /* DYNAMIC */
-
-#include "common.c"
+	for (save = NULL;; ++p) {
+		if (*p == ch)
+			save = (char *)p;
+		if (!*p)
+			return(save);
+	}
+/* NOTREACHED */
+}
 
 #ifdef MCRT0
-asm ("	.text");
+asm ("  .text");
 asm ("_eprol:");
 #endif

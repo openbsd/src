@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.2 2012/08/22 17:19:35 pascal Exp $ */
+/*	$OpenBSD: cerror.S,v 1.3 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,20 +34,19 @@
 
 #include "SYS.h"
 
+	.globl	_C_LABEL(__errno)
 	.even
-	.globl	___errno
 __cerror:
-	movl	d0,sp@-
+	movl	%d0,%sp@-
 #ifdef	__PIC__
-	movl	#__GLOBAL_OFFSET_TABLE_,a0
-	lea	pc@(0,a0:l),a0
-	movl	a0@(___errno:l),a0
-	jsr	a0@
+	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a0
+	movl	%a0@(_C_LABEL(__errno)@GOT:l),%a0
+	jsr	%a0@
 #else
-	jbsr	___errno
+	jbsr	_C_LABEL(__errno)
 #endif
-	movl	d0,a0
-	movl	sp@+,a0@
-	movl	#-1,d0
-	movl	#-1,d1
+	movl	%d0,%a0
+	movl	%sp@+,%a0@
+	movl	#-1,%d0
+	movl	#-1,%d1
 	rts

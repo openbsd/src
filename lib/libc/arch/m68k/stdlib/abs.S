@@ -36,8 +36,8 @@
 #include "DEFS.h"
 
 ENTRY(abs)
-	movl	sp@(4),d0
+	movl	%sp@(4),%d0
 	jge	L1
-	negl	d0
+	negl	%d0
 L1:
 	rts

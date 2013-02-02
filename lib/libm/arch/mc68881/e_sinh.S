@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sinh.S,v 1.4 2008/09/07 20:36:08 martynas Exp $ */
+/*	$OpenBSD: e_sinh.S,v 1.5 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,8 +35,5 @@
 #include <machine/asm.h>
 
 ENTRY(sinh)
-	fsinhd	sp@(4),fp0
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fsinhd	%sp@(4),%fp0
 	rts

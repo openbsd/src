@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_copysignl.S,v 1.1 2011/05/28 22:13:52 martynas Exp $ */
+/*	$OpenBSD: s_copysignl.S,v 1.2 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,15 +36,13 @@
 
 | copysignl(x,y)
 | returns x with the sign of y.
-.lcomm	_ASM_LABEL(__rv),12
 ENTRY(copysignl)
-	fmovex	sp@(4),fp0
-	fmovex	fp0,_ASM_LABEL(__rv)
-	movel	#_ASM_LABEL(__rv),d0
-	tstw	sp@(16)
+	tstw	%sp@(16)
 	jmi	Lneg
-	bclr	#31,_ASM_LABEL(__rv)
+	bclr	#31,%sp@(4)
+	fmovex	%sp@(4),%fp0
 	rts
 Lneg:
-	bset	#31,_ASM_LABEL(__rv)
+	bset	#31,%sp@(4)
+	fmovex	%sp@(4),%fp0
 	rts

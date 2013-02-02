@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cos.S,v 1.3 2005/08/02 11:17:32 espie Exp $ */
+/*	$OpenBSD: s_cos.S,v 1.4 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,8 +35,5 @@
 #include <machine/asm.h>
 
 ENTRY(cos)
-	fcosd	sp@(4),fp0
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fcosd	%sp@(4),%fp0
 	rts

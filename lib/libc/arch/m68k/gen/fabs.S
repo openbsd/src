@@ -1,4 +1,4 @@
-/* $OpenBSD: fabs.S,v 1.8 2011/07/08 22:28:33 martynas Exp $ */
+/* $OpenBSD: fabs.S,v 1.9 2013/02/02 13:29:14 miod Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,11 +37,8 @@
 #include "DEFS.h"
 
 ENTRY(fabs)
-	fmoved	sp@(4),fp0
+	fmoved	%sp@(4),%fp0
 	fjnlt	L1
-	fnegx	fp0
+	fnegx	%fp0
 L1:
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
 	rts
