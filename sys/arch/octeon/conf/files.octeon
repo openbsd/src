@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.11 2011/07/03 20:40:17 yasuoka Exp $
+#	$OpenBSD: files.octeon,v 1.12 2013/02/03 22:35:52 bcallah Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -18,6 +18,7 @@ file	arch/octeon/octeon/conf.c
 file	arch/octeon/octeon/disksubr.c		disk
 file	arch/octeon/octeon/lock_machdep.c	multiprocessor
 file	arch/octeon/octeon/machdep.c
+file	arch/mips64/mips64/mips64r2.S
 file	arch/octeon/octeon/mutex.c
 
 include "dev/ata/files.ata"
