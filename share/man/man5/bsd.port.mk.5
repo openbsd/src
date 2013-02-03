@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.361 2013/01/16 16:24:53 zhuk Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.362 2013/02/03 13:36:40 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 16 2013 $
+.Dd $Mdocdate: February 3 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2776,6 +2776,17 @@ Set to
 if the ports tree libtool is insufficient and GNU libtool is required.
 Adds dependencies if necessary, and passes LIBTOOL environment variable to
 scripts invocations.
+.It Ev USE_MFS
+Set to
+.Sq Yes
+to build ports under a
+.Xr mfs 8
+filesystem.
+Mostly for use by
+.Xr dpb 1 ,
+see
+.Ev WRKOBJDIR_MFS
+for configuration.
 .It Ev USE_SYSTRACE
 User settings.
 Set to
@@ -2878,6 +2889,18 @@ For instance, setting WRKOBJDIR_www/mozilla=/tmp/obj
 will affect only the mozilla port.
 If explicitly unset (WRKOBJDIR=), the working directory is
 created within the port directory.
+.It Ev WRKOBJDIR_MFS
+Alternate location for the port working directory.
+The intent is to use a
+.Xr mfs 8
+based filesystem for small ports with
+.Xr dpb 1 .
+Active when
+.Ev USE_MFS
+is
+.Sq Yes .
+Defaults to
+.Pa /tmp/pobj .
 .It Ev X11BASE
 Where X11 has been installed.
 Default:
