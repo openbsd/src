@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.29 2013/02/01 01:33:44 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.30 2013/02/03 15:10:36 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -705,83 +705,107 @@ priv_cleanup(struct imsg_cleanup *imsg)
 int
 resolv_conf_priority(int domain)
 {
+	struct iovec iov[3];
+	struct {
+		struct rt_msghdr	m_rtm;
+		char			m_space[512];
+	} m_rtmsg;
 	struct sockaddr *rti_info[RTAX_MAX];
-	int mib[7];
-	size_t needed;
-	char *lim, *buf, *next, *routelabel;
-	struct rt_msghdr *rtm;
+	char *routelabel;
 	struct sockaddr *sa;
-	struct sockaddr_in *sa_in;
+	struct sockaddr_in sin;
 	struct sockaddr_rtlabel *sa_rl;
-	int i, priority, mypriority;
+	pid_t pid;
+	ssize_t len;
+	u_int32_t seq;
+	int i, fd, rslt, iovcnt = 0;
 
-	mib[0] = CTL_NET;
-	mib[1] = PF_ROUTE;
-	mib[2] = 0;
-	mib[3] = AF_INET;
-	mib[4] = NET_RT_FLAGS;
-	mib[5] = RTF_GATEWAY;
-	mib[6] = domain;
+	rslt = 0;
 
-	if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
-		if (domain != 0 && errno == EINVAL)
-			return (1);
-		error("sysctl size of routes: %s", strerror(errno));
+	fd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
+	if (fd == -1) {
+		warning("default route socket: %s", strerror(errno));
+		return (0);
 	}
 
-	if (needed == 0)
-		return (1);
+	/* Build RTM header */
 
-	if ((buf = malloc(needed)) == NULL)
-		error("no memory for sysctl routes");
+	memset(&m_rtmsg, 0, sizeof(m_rtmsg));
 
-	if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1)
-		error("sysctl retrieval of routes: %s", strerror(errno));
+	m_rtmsg.m_rtm.rtm_version = RTM_VERSION;
+	m_rtmsg.m_rtm.rtm_type = RTM_GET;
+	m_rtmsg.m_rtm.rtm_msglen = sizeof(m_rtmsg.m_rtm);
+	m_rtmsg.m_rtm.rtm_flags = RTF_STATIC | RTF_GATEWAY | RTF_UP;
+	m_rtmsg.m_rtm.rtm_seq = seq = arc4random();
 
-	if (asprintf(&routelabel, "DHCLIENT %d", (int)getpid()) == -1)
-		error("recreating route label: %s", strerror(errno));
+	iov[iovcnt].iov_base = &m_rtmsg.m_rtm;
+	iov[iovcnt++].iov_len = sizeof(m_rtmsg.m_rtm);
+	
+	/* Set destination & netmask addresses of all zeros. */
 
-#define ROUNDUP(a) \
-    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+	m_rtmsg.m_rtm.rtm_addrs = RTA_DST | RTA_NETMASK;
 
-	priority = mypriority = INT_MAX;
-	lim = buf + needed;
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		if (rtm->rtm_version != RTM_VERSION)
-			continue;
-		if ((rtm->rtm_flags & RTF_UP) == 0)
-			continue;
-		if (rtm->rtm_flags & RTF_REJECT)
-			continue;
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
 
-		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-		memset(rti_info, 0, sizeof(rti_info));
-		for (i = 0; i < RTAX_MAX; i++) {
-			if (rtm->rtm_addrs & (1 << i)) {
-				rti_info[i] = sa;
-				sa = (struct sockaddr *)((char *)(sa) +
-				    ROUNDUP(sa->sa_len));
-			}
+	iov[iovcnt].iov_base = &sin;
+	iov[iovcnt++].iov_len = sizeof(sin);
+	iov[iovcnt].iov_base = &sin;
+	iov[iovcnt++].iov_len = sizeof(sin);
+
+	m_rtmsg.m_rtm.rtm_msglen += 2 * sizeof(sin);
+
+	if (writev(fd, iov, iovcnt) == -1) {
+		warning("default route write: %s", strerror(errno));
+		return (0);
+	}
+
+	pid = getpid();
+
+	do {
+		len = read(fd, &m_rtmsg, sizeof(m_rtmsg));
+		if (len == -1) {
+			warning("get default route read: %s", strerror(errno));
+			break;
+		} else if (len == 0) {
+			warning("no data from default route read");
+			break;
 		}
-
-		sa_in = (struct sockaddr_in *)rti_info[RTAX_DST];
-		if (sa_in == NULL || sa_in->sin_addr.s_addr != INADDR_ANY)
+		if (m_rtmsg.m_rtm.rtm_version != RTM_VERSION)
 			continue;
-		sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
-		if (sa_in == NULL || sa_in->sin_addr.s_addr != INADDR_ANY)
-			continue;
+		if (m_rtmsg.m_rtm.rtm_type == RTM_GET &&
+		    m_rtmsg.m_rtm.rtm_pid == pid &&
+		    m_rtmsg.m_rtm.rtm_seq == seq) {
+			if (m_rtmsg.m_rtm.rtm_errno) {
+				warning("default route read rtm: %s",
+				    strerror(m_rtmsg.m_rtm.rtm_errno));
+				goto done;
+			}
+			break;
+		}
+	} while (1);
 
-		sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
-		if (sa_rl && strcmp(routelabel, sa_rl->sr_label) == 0) {
-			if (rtm->rtm_priority < mypriority)
-				mypriority = rtm->rtm_priority;
-		} else if (rtm->rtm_priority < priority)
-			priority = rtm->rtm_priority;
+	sa = (struct sockaddr *)((char *)&m_rtmsg + m_rtmsg.m_rtm.rtm_hdrlen);
+	memset(rti_info, 0, sizeof(rti_info));
+	for (i = 0; i < RTAX_MAX; i++) {
+		if (m_rtmsg.m_rtm.rtm_addrs & (1 << i)) {
+			rti_info[i] = sa;
+			sa = (struct sockaddr *)((char *)(sa) +
+			    ROUNDUP(sa->sa_len));
+		}
 	}
 
-	free(buf);
-	free(routelabel);
+	sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
+	if (sa_rl) {
+		if (asprintf(&routelabel, "DHCLIENT %d", (int)getpid()) == -1)
+			error("recreating route label: %s", strerror(errno));
+		if (strcmp(routelabel, sa_rl->sr_label) == 0)
+			rslt = 1;
+		free(routelabel);
+	}
 
-	return (mypriority < priority);
+done:
+	close(fd);
+	return (rslt);
 }
