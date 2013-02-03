@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.362 2013/02/03 13:36:40 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.363 2013/02/03 16:04:24 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2779,7 +2779,7 @@ scripts invocations.
 .It Ev USE_MFS
 Set to
 .Sq Yes
-to build ports under a
+to build ports under an
 .Xr mfs 8
 filesystem.
 Mostly for use by
@@ -2891,7 +2891,7 @@ If explicitly unset (WRKOBJDIR=), the working directory is
 created within the port directory.
 .It Ev WRKOBJDIR_MFS
 Alternate location for the port working directory.
-The intent is to use a
+The intent is to use an
 .Xr mfs 8
 based filesystem for small ports with
 .Xr dpb 1 .
