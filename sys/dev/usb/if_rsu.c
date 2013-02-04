@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.14 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.15 2013/02/04 23:13:41 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1078,7 +1078,7 @@ rsu_join_bss(struct rsu_softc *sc, struct ieee80211_node *ni)
 	bss->len = htole32(((frm - buf) + 3) & ~3);
 	DPRINTF(("sending join bss command to %s chan %d\n",
 	    ether_sprintf(bss->macaddr), letoh32(bss->config.dsconfig)));
-	return (rsu_fw_cmd(sc, R92S_CMD_JOIN_BSS, buf, frm - buf));
+	return (rsu_fw_cmd(sc, R92S_CMD_JOIN_BSS, buf, sizeof(buf)));
 }
 
 int
