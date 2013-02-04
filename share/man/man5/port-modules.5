@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.152 2013/02/04 09:22:30 sthen Exp $
+.\"	$OpenBSD: port-modules.5,v 1.153 2013/02/04 13:33:04 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -853,7 +853,8 @@ If any files have a python shebang line which needs to be replaced
 using MODPY_BIN, list them in
 .Ev MODPY_ADJ_FILES .
 These are prefixed with WRKSRC and replaced automatically
-at the end of .Ar pre-configure .
+at the end of
+.Ar pre-configure .
 Also affects
 .Ev CATEGORIES ,
 .Ev MAKE_ENV ,
