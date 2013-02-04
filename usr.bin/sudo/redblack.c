@@ -418,7 +418,7 @@ rbrepair(tree, node)
 {
     struct rbnode *sibling;
 
-    while (node->color == black && node != rbroot(tree)) {
+    while (node->color == black && node != rbfirst(tree)) {
 	if (node == node->parent->left) {
 	    sibling = node->parent->right;
 	    if (sibling->color == red) {
@@ -441,7 +441,7 @@ rbrepair(tree, node)
 		node->parent->color = black;
 		sibling->right->color = black;
 		rotate_left(tree, node->parent);
-		node = rbroot(tree); /* exit loop */
+		node = rbfirst(tree); /* exit loop */
 	    }
 	} else { /* if (node == node->parent->right) */
 	    sibling = node->parent->left;
@@ -465,7 +465,7 @@ rbrepair(tree, node)
 		node->parent->color = black;
 		sibling->left->color = black;
 		rotate_right(tree, node->parent);
-		node = rbroot(tree); /* exit loop */
+		node = rbfirst(tree); /* exit loop */
 	    }
 	}
     }
