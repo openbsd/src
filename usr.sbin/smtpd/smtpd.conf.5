@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.79 2013/01/26 17:02:52 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.80 2013/02/04 05:55:58 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 26 2013 $
+.Dd $Mdocdate: February 4 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -619,7 +619,7 @@ A secrets file is needed to specify a username and password:
 # touch /etc/mail/secrets
 # chmod 640 /etc/mail/secrets
 # chown root:_smtpd /etc/mail/secrets
-# echo "smtp.example.com  username:password" \*(Gt /etc/mail/secrets
+# echo "label username:password" \*(Gt /etc/mail/secrets
 # makemap /etc/mail/secrets
 .Ed
 .Pp
@@ -630,7 +630,7 @@ listen on lo0
 table aliases db:/etc/mail/aliases.db
 table secrets db:/etc/mail/secrets.db
 accept for local alias <aliases> deliver to mbox
-accept for any relay via tls+auth://smtp.example.com auth <secrets>
+accept for any relay via tls+auth://label@smtp.example.com auth <secrets>
 .Ed
 .Pp
 In this second example,
