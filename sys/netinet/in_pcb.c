@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.129 2013/01/16 00:07:22 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.130 2013/02/04 15:10:22 millert Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -775,7 +775,7 @@ in_pcbrtentry(struct inpcb *inp)
 			if (inp->inp_faddr.s_addr == INADDR_ANY)
 				break;
 			ro->ro_dst.sa_family = AF_INET;
-			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
+			ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
 			ro->ro_tableid = inp->inp_rtableid;
 			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
 			rtalloc_mpath(ro, &inp->inp_laddr.s_addr);
