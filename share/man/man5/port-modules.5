@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.151 2013/02/03 15:05:22 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.152 2013/02/04 09:22:30 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 3 2013 $
+.Dd $Mdocdate: February 4 2013 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -822,8 +822,7 @@ Sets
 .Ev MODPY_WANTLIB ,
 .Ev MODPY_LIB_DEPENDS ,
 .Ev MODPY_RUN_DEPENDS ,
-.Ev MODPY_BUILD_DEPENDS ,
-.Ev MODPY_BIN_ADJ
+.Ev MODPY_BUILD_DEPENDS
 and
 .Ev MODPY_ADJ_FILES .
 Appends to
@@ -850,15 +849,11 @@ Extra arguments to the build and install commands can be passed via
 .Ev MODPY_DISTUTILS_BUILDARGS
 and
 .Ev MODPY_DISTUTILS_INSTALLARGS .
-.Ev MODPY_BIN_ADJ
-is a command that takes filename arguments and replaces the python
-shebang line with
-.Ev MODPY_BIN .
-.Ev MODPY_ADJ_FILES
-is a list of filenames that will automatically have
-.Ev MODPY_BIN_ADJ
-called on them at the end of
-.Ar pre-configure .
+If any files have a python shebang line which needs to be replaced
+using MODPY_BIN, list them in
+.Ev MODPY_ADJ_FILES .
+These are prefixed with WRKSRC and replaced automatically
+at the end of .Ar pre-configure .
 Also affects
 .Ev CATEGORIES ,
 .Ev MAKE_ENV ,
