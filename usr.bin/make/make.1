@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.100 2012/10/12 21:44:19 espie Exp $
+.\"	$OpenBSD: make.1,v 1.101 2013/02/04 14:44:58 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 12 2012 $
+.Dd $Mdocdate: February 4 2013 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -525,6 +525,20 @@ Any whitespace before the assigned
 .Ar value
 is removed; if the value is being appended, a single space is inserted
 between the previous contents of the variable and the appended value.
+.Pp
+Several extended assignment operators may be combined together.
+For instance,
+.Bd -literal -offset indent
+A ?!= cmd
+.Ed
+.Pp
+will only run
+.Qq cmd
+and put its output into
+.Va A
+if
+.Va A
+is not yet defined.
 .Pp
 Variables are expanded by surrounding the variable name with either
 curly braces
@@ -1542,7 +1556,7 @@ is contorted to the point of absurdity.
 .Pp
 If the same target is specified several times in complete target rules,
 .Nm
-ignores all commands after the first non empty set of commands,
+silently ignores all commands after the first non empty set of commands,
 e.g., in
 .Bd -literal -offset indent
 a:
@@ -1600,13 +1614,6 @@ For instance, in
 .Ed
 .Pp
 the test will never match, even though the value is correct.
-.Pp
-The conditional handler is incredibly lame.
-Junk such as
-.Pp
-.Dl \&.if defined anything goes (A)
-.Pp
-will be accepted silently.
 .Pp
 In a .for loop, only the variable value is used; assignments will be
 evaluated later, e.g., in
