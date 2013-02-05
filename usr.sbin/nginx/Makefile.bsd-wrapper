@@ -1,5 +1,5 @@
 # Build wrapper for Nginx
-# $OpenBSD: Makefile.bsd-wrapper,v 1.9 2012/10/25 13:02:46 robert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.10 2013/02/05 15:01:02 ajacoutot Exp $
 
 LNDIR=	/usr/bin/lndir
 
@@ -89,6 +89,9 @@ distribution:
 		${.CURDIR}/conf/uwsgi_params \
 		${.CURDIR}/conf/win-utf \
 			${DESTDIR}/etc/nginx/
+	${INSTALL} -C -o ${BINOWN} -g ${BINGRP} -m 0444 \
+		${.CURDIR}/html/50x.html \
+			${DESTDIR}/var/www/htdocs/
 
 .ifdef NOMAN
 maninstall:
