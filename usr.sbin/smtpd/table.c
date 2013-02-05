@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.2 2013/02/05 11:45:18 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.3 2013/02/05 15:23:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -154,6 +154,17 @@ table_destroy(struct table *t)
 	dict_xpop(env->sc_tables_dict, t->t_name);
 	tree_xpop(env->sc_tables_tree, t->t_id);
 	free(t);
+}
+
+void
+table_replace(struct table *orig, struct table *tnew)
+{
+	void	*p = NULL;
+
+	while (dict_poproot(&orig->t_dict, NULL, (void **)&p))
+		free(p);
+	dict_merge(&orig->t_dict, &tnew->t_dict);
+	table_destroy(tnew);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.1 2013/01/26 09:37:24 gilles Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.2 2013/02/05 15:23:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -89,7 +89,6 @@ static int
 table_static_update(struct table *table)
 {
 	struct table   *t;
-	char		name[MAX_LINE_SIZE];
 
 	/* no config ? ok */
 	if (table->t_config[0] == '\0')
@@ -99,26 +98,16 @@ table_static_update(struct table *table)
 	if (! t->t_backend->config(t, table->t_config))
 		goto err;
 
-	/* update successful, swap table names */
-	strlcpy(name, table->t_name, sizeof name);
-	strlcpy(table->t_name, t->t_name, sizeof table->t_name);
-	strlcpy(t->t_name, name, sizeof t->t_name);
-
-	/* swap, table id */
-	table->t_id = table->t_id ^ t->t_id;
-	t->t_id     = table->t_id ^ t->t_id;
-	table->t_id = table->t_id ^ t->t_id;
-
-	/* destroy former table */
-	table_destroy(table);
+	/* replace former table, frees t */
+	table_replace(table, t);
 
 ok:
-	log_info("info: Table \"%s\" successfully updated", name);
+	log_info("info: Table \"%s\" successfully updated", table->t_name);
 	return 1;
 
 err:
 	table_destroy(t);
-	log_info("info: Failed to update table \"%s\"", name);
+	log_info("info: Failed to update table \"%s\"", table->t_name);
 	return 0;
 }
 

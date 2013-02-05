@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.402 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.403 2013/02/05 15:23:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -724,8 +724,7 @@ struct mta_relay {
 #define RELAY_WAIT_PREFERENCE	0x02
 #define RELAY_WAIT_SECRET	0x04
 #define RELAY_WAIT_SOURCE	0x08
-#define RELAY_WAIT_HELO		0x10
-#define RELAY_WAITMASK		0x1f
+#define RELAY_WAITMASK		0x0f
 	int			 status;
 
 	int			 refcount;
@@ -1306,6 +1305,7 @@ void table_destroy(struct table *);
 void table_add(struct table *, const char *, const char *);
 void table_delete(struct table *, const char *);
 void table_delete_all(struct table *);
+void table_replace(struct table *, struct table *);
 int table_domain_match(const char *, const char *);
 int table_netaddr_match(const char *, const char *);
 int table_mailaddr_match(const char *, const char *);
