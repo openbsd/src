@@ -722,6 +722,8 @@ parse_args (unsigned argc, char **argv)
 	  break;
 	case OPTION_NON_SHARED:
 	  config.dynamic_link = FALSE;
+	  if (! link_info.shared)
+	    link_info.pie = FALSE;
 	  break;
 	case OPTION_CREF:
 	  command_line.cref = TRUE;
