@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.168 2012/11/07 16:31:03 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.169 2013/02/05 09:33:29 mpi Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4083,7 +4083,7 @@ sun4v_dev_mondo:
 #endif
 
 #ifdef MULTIPROCESSOR
-ENTRY(sun4u_ipi_tlb_page_demap)
+NENTRY(sun4u_ipi_tlb_page_demap)
 	rdpr	%pstate, %g1
 	andn	%g1, PSTATE_IE, %g2
 	wrpr	%g2, %pstate				! disable interrupts
@@ -4092,7 +4092,7 @@ ENTRY(sun4u_ipi_tlb_page_demap)
 	brnz	%g2, 1f
 	 add	%g2, 1, %g4
 	wrpr	%g0, %g4, %tl				! Switch to traplevel > 0
-1:	
+1:
 	mov	CTX_PRIMARY, %g4
 	andn	%g3, 0xfff, %g3				! drop unused va bits
 	ldxa	[%g4] ASI_DMMU, %g6			! Save primary context
@@ -4114,7 +4114,7 @@ ENTRY(sun4u_ipi_tlb_page_demap)
 	ba,a	ret_from_intr_vector
 	 nop
 
-ENTRY(sun4u_ipi_tlb_context_demap)
+NENTRY(sun4u_ipi_tlb_context_demap)
 	rdpr	%pstate, %g1
 	andn	%g1, PSTATE_IE, %g2
 	wrpr	%g2, %pstate				! disable interrupts
@@ -4123,7 +4123,7 @@ ENTRY(sun4u_ipi_tlb_context_demap)
 	brnz	%g2, 1f
 	 add	%g2, 1, %g4
 	wrpr	%g0, %g4, %tl				! Switch to traplevel > 0
-1:	
+1:
 	mov	CTX_PRIMARY, %g4
 	sethi	%hi(KERNBASE), %g7
 	ldxa	[%g4] ASI_DMMU, %g6			! Save primary context
@@ -4138,14 +4138,14 @@ ENTRY(sun4u_ipi_tlb_context_demap)
 	stxa	%g6, [%g4] ASI_DMMU
 	membar	#Sync
 	flush	%g7
-	
+
 	wrpr	%g2, %tl
 	wrpr	%g1, %pstate
 	ba,a	ret_from_intr_vector
 	 nop
 
 #ifdef SUN4V
-ENTRY(sun4v_ipi_tlb_page_demap)
+NENTRY(sun4v_ipi_tlb_page_demap)
 	mov	%o0, %g1
 	mov	%o1, %g2
 	mov	%o2, %g4
@@ -4159,11 +4159,11 @@ ENTRY(sun4v_ipi_tlb_page_demap)
 
 	retry
 
-ENTRY(sun4v_ipi_tlb_context_demap)
+NENTRY(sun4v_ipi_tlb_context_demap)
 	NOTREACHED
 #endif
 
-ENTRY(ipi_save_fpstate)
+NENTRY(ipi_save_fpstate)
 	GET_CPUINFO_VA(%g1)
 	ldx	[%g1 + CI_FPPROC], %g2
 	cmp	%g2, %g3
@@ -4219,7 +4219,7 @@ ENTRY(ipi_save_fpstate)
 	ba	ret_from_intr_vector
 	 nop
 
-ENTRY(ipi_drop_fpstate)
+NENTRY(ipi_drop_fpstate)
 	rdpr	%pstate, %g1
 	wr	%g0, FPRS_FEF, %fprs
 	or	%g1, PSTATE_PEF, %g1
@@ -4234,7 +4234,7 @@ ENTRY(ipi_drop_fpstate)
 	ba	ret_from_intr_vector
 	 nop
 
-ENTRY(ipi_softint)
+NENTRY(ipi_softint)
 	ba	ret_from_intr_vector
 	 wr	%g3, 0, SET_SOFTINT
 #endif
