@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.86 2013/01/18 02:16:21 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.87 2013/02/05 11:08:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -335,9 +335,9 @@ window_copy_resize(struct window_pane *wp, u_int sx, u_int sy)
 	struct screen			*s = &data->screen;
 	struct screen_write_ctx	 	 ctx;
 
-	screen_resize(s, sx, sy);
+	screen_resize(s, sx, sy, 0);
 	if (data->backing != &wp->base)
-		screen_resize(data->backing, sx, sy);
+		screen_resize(data->backing, sx, sy, 0);
 
 	if (data->cy > sy - 1)
 		data->cy = sy - 1;

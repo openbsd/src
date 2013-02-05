@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.31 2012/12/24 12:34:32 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.32 2013/02/05 11:08:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -203,7 +203,7 @@ window_choose_resize(struct window_pane *wp, u_int sx, u_int sy)
 	if (data->selected > sy - 1)
 		data->top = data->selected - (sy - 1);
 
-	screen_resize(s, sx, sy);
+	screen_resize(s, sx, sy, 0);
 	window_choose_redraw_screen(wp);
 }
 
