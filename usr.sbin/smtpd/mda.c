@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.87 2013/01/31 18:18:40 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.88 2013/02/05 10:53:57 nicm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -386,7 +386,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			s = tree_xget(&sessions, reqid);
 			e = s->evp;
 			if (imsg->fd == -1) {
-				log_warn("warn: mda: fail to retreive mda fd");
+				log_warn("warn: mda: fail to retrieve mda fd");
 				queue_tempfail(e->id, "Cannot get mda fd");
 				mda_log(e, "TempFail", "Cannot get mda fd");
 				mda_done(s);

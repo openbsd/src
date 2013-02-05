@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.31 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.32 2013/02/05 10:53:57 nicm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -325,7 +325,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			mta_connect(s);
 		} else {
 			mta_source_error(s->relay, s->route,
-			    "Failed to retreive helo string");
+			    "Failed to retrieve helo string");
 			mta_free(s);
 		}
 		return;
