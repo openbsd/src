@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glxclk.4,v 1.1 2013/02/04 10:47:14 pirofti Exp $
+.\"	$OpenBSD: glxclk.4,v 1.2 2013/02/05 06:44:20 pirofti Exp $
 .\"
 .\" Copyright (c) 2013 Paul Irofti.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 4 2013 $
+.Dd $Mdocdate: February 5 2013 $
 .Dt GLXCLK 4 loongson
 .Os
 .Sh NAME
@@ -29,10 +29,20 @@ driver enables two of the multi-function general purpose timers found on the
 Geode companion chip to be used as the system clock and the statistics clock.
 .Pp
 The statistics clock is implemented with interval variance support based on
-Torek's paper on randomized sampling.
+Chris Torek's paper on randomized sampling.
 .Sh SEE ALSO
 .Xr glxpcib 4 ,
 .Xr intro 4
+.Rs
+.%A Steven Mccanne
+.%A Chris Torek
+.%T "A Randomized Sampling Clock for CPU Utilization Estimation and Code Profiling"
+.%B In Proc. Winter 1993 USENIX Conference
+.%D 1993
+.%P 387-394
+.%I USENIX Association
+.%U ftp://ftp.ee.lbl.gov/papers/statclk-usenix93.ps.Z
+.Re
 .Sh HISTORY
 The
 .Nm
