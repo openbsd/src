@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.161 2013/01/17 20:34:18 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.162 2013/02/05 21:36:33 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -643,6 +643,7 @@ relay_connected(int fd, short sig, void *arg)
 	case RELAY_PROTO_HTTP:
 		/* Check the servers's HTTP response */
 		if (!RB_EMPTY(&rlay->rl_proto->response_tree)) {
+			con->se_out.toread = TOREAD_HTTP_HEADER;
 			outrd = relay_read_http;
 			if ((con->se_out.nodes = calloc(proto->response_nodes,
 			    sizeof(u_int8_t))) == NULL) {
@@ -699,6 +700,7 @@ relay_input(struct rsession *con)
 		/* Check the client's HTTP request */
 		if (!RB_EMPTY(&rlay->rl_proto->request_tree) ||
 		    proto->lateconnect) {
+			con->se_in.toread = TOREAD_HTTP_HEADER;
 			inrd = relay_read_http;
 			if ((con->se_in.nodes = calloc(proto->request_nodes,
 			    sizeof(u_int8_t))) == NULL) {
@@ -974,6 +976,8 @@ relay_accept(int fd, short event, void *arg)
 	con->se_out.con = con;
 	con->se_in.splicelen = -1;
 	con->se_out.splicelen = -1;
+	con->se_in.toread = TOREAD_UNLIMITED;
+	con->se_out.toread = TOREAD_UNLIMITED;
 	con->se_relay = rlay;
 	con->se_id = ++relay_conid;
 	con->se_relayid = rlay->rl_conf.id;

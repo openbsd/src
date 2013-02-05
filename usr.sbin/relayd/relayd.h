@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.163 2012/11/27 05:00:28 guenther Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.164 2013/02/05 21:36:33 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -194,6 +194,13 @@ struct ctl_relay_event {
 
 	u_int8_t		*buf;
 	int			 buflen;
+};
+
+enum httpchunk {
+	TOREAD_UNLIMITED		= -1,
+	TOREAD_HTTP_HEADER		= -2,
+	TOREAD_HTTP_CHUNK_LENGTH	= -3,
+	TOREAD_HTTP_CHUNK_TRAILER	= -4
 };
 
 struct ctl_natlook {
