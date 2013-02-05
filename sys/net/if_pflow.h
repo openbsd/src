@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.6 2012/02/02 12:34:37 benno Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.7 2013/02/05 11:58:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -34,18 +34,20 @@
 
 /* RFC 5102 Information Element Identifiers */
 
-#define PFIX_IE_octetDeltaCount			 1
-#define PFIX_IE_packetDeltaCount		 2
-#define PFIX_IE_protocolIdentifier		 4
-#define PFIX_IE_ipClassOfService		 5
-#define PFIX_IE_sourceTransportPort		 7
-#define PFIX_IE_sourceIPv4Address		 8
-#define PFIX_IE_destinationTransportPort	11
-#define PFIX_IE_destinationIPv4Address		12
-#define PFIX_IE_flowEndSysUpTime		21
-#define PFIX_IE_flowStartSysUpTime		22
-#define PFIX_IE_sourceIPv6Address		27
-#define PFIX_IE_destinationIPv6Address		28
+#define PFIX_IE_octetDeltaCount			  1
+#define PFIX_IE_packetDeltaCount		  2
+#define PFIX_IE_protocolIdentifier		  4
+#define PFIX_IE_ipClassOfService		  5
+#define PFIX_IE_sourceTransportPort		  7
+#define PFIX_IE_sourceIPv4Address		  8
+#define PFIX_IE_destinationTransportPort	 11
+#define PFIX_IE_destinationIPv4Address		 12
+#define PFIX_IE_flowEndSysUpTime		 21
+#define PFIX_IE_flowStartSysUpTime		 22
+#define PFIX_IE_sourceIPv6Address		 27
+#define PFIX_IE_destinationIPv6Address		 28
+#define PFIX_IE_flowStartSeconds		150
+#define PFIX_IE_flowEndSeconds			151
 
 struct pflow_flow {
 	u_int32_t	src_ip;
@@ -148,8 +150,11 @@ struct pflow_flow6 {
 	struct in6_addr dest_ip;	/* destinationIPv6Address */
 	u_int64_t	flow_packets;	/* packetDeltaCount */
 	u_int64_t	flow_octets;	/* octetDeltaCount */
-	u_int32_t	flow_start;	/* flowStartSysUpTime */
-	u_int32_t	flow_finish;	/* flowEndSysUpTime */
+	u_int32_t	flow_start;	/*
+					 * flowStartSysUpTime /
+					 * flowStartSeconds
+					 */
+	u_int32_t	flow_finish;	/* flowEndSysUpTime / flowEndSeconds */
 	u_int16_t	src_port;	/* sourceTransportPort */
 	u_int16_t	dest_port;	/* destinationTransportPort */
 	u_int8_t	tos;		/* ipClassOfService */

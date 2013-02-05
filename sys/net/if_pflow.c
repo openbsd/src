@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.23 2013/01/16 09:53:19 dlg Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.24 2013/02/05 11:58:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -91,9 +91,9 @@ void	pflow_timeout_tmpl(void *);
 void	copy_flow_data(struct pflow_flow *, struct pflow_flow *,
 	struct pf_state *, int, int);
 void	copy_flow4_data(struct pflow_flow4 *, struct pflow_flow4 *,
-	struct pf_state *, int, int);
+	struct pf_state *, struct pflow_softc *, int, int);
 void	copy_flow6_data(struct pflow_flow6 *, struct pflow_flow6 *,
-	struct pf_state *, int, int);
+	struct pf_state *, struct pflow_softc *, int, int);
 int	pflow_pack_flow(struct pf_state *, struct pflow_softc *);
 int	pflow_pack_flow_ipfix(struct pf_state *, struct pflow_softc *);
 int	pflow_get_dynport(void);
@@ -162,11 +162,15 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	pflowif->sc_tmpl.ipv4_tmpl.octets.field_id =
 	    htons(PFIX_IE_octetDeltaCount);
 	pflowif->sc_tmpl.ipv4_tmpl.octets.len = htons(8);
+	/* keep in sync with SIOCSETPFLOW */
 	pflowif->sc_tmpl.ipv4_tmpl.start.field_id =
-	    htons(PFIX_IE_flowStartSysUpTime);
+	    htons(pflowif->sc_version == PFLOW_PROTO_9?
+	    PFIX_IE_flowStartSysUpTime:PFIX_IE_flowStartSeconds);
 	pflowif->sc_tmpl.ipv4_tmpl.start.len = htons(4);
+	/* keep in sync with SIOCSETPFLOW */
 	pflowif->sc_tmpl.ipv4_tmpl.finish.field_id =
-	    htons(PFIX_IE_flowEndSysUpTime);
+	    htons(pflowif->sc_version == PFLOW_PROTO_9?
+	    PFIX_IE_flowEndSysUpTime:PFIX_IE_flowEndSeconds);
 	pflowif->sc_tmpl.ipv4_tmpl.finish.len = htons(4);
 	pflowif->sc_tmpl.ipv4_tmpl.src_port.field_id =
 	    htons(PFIX_IE_sourceTransportPort);
@@ -197,11 +201,15 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	pflowif->sc_tmpl.ipv6_tmpl.octets.field_id =
 	    htons(PFIX_IE_octetDeltaCount);
 	pflowif->sc_tmpl.ipv6_tmpl.octets.len = htons(8);
+	/* keep in sync with SIOCSETPFLOW */
 	pflowif->sc_tmpl.ipv6_tmpl.start.field_id =
-	    htons(PFIX_IE_flowStartSysUpTime);
+	    htons(pflowif->sc_version == PFLOW_PROTO_9?
+	    PFIX_IE_flowStartSysUpTime:PFIX_IE_flowStartSeconds);
 	pflowif->sc_tmpl.ipv6_tmpl.start.len = htons(4);
+	/* keep in sync with SIOCSETPFLOW */
 	pflowif->sc_tmpl.ipv6_tmpl.finish.field_id =
-	    htons(PFIX_IE_flowEndSysUpTime);
+	    htons(pflowif->sc_version == PFLOW_PROTO_9?
+	    PFIX_IE_flowEndSysUpTime:PFIX_IE_flowEndSeconds);
 	pflowif->sc_tmpl.ipv6_tmpl.finish.len = htons(4);
 	pflowif->sc_tmpl.ipv6_tmpl.src_port.field_id =
 	    htons(PFIX_IE_sourceTransportPort);
@@ -374,12 +382,31 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		pflow_setmtu(sc, ETHERMTU);
 		pflow_init_timeouts(sc);
 
-		if (sc->sc_version == PFLOW_PROTO_9
-		    || sc->sc_version == PFLOW_PROTO_10) {
+		switch (sc->sc_version) {
+		case PFLOW_PROTO_9:
 			sc->sc_tmpl.set_header.set_id =
-			    htons(sc->sc_version == PFLOW_PROTO_9?
-				PFLOW_V9_TMPL_SET_ID:PFLOW_V10_TMPL_SET_ID);
+			    htons(PFLOW_V9_TMPL_SET_ID);
+			sc->sc_tmpl.ipv4_tmpl.start.field_id =
+			    sc->sc_tmpl.ipv6_tmpl.start.field_id =
+			    htons(PFIX_IE_flowStartSysUpTime);
+			sc->sc_tmpl.ipv4_tmpl.finish.field_id =
+			    sc->sc_tmpl.ipv6_tmpl.finish.field_id =
+			    htons(PFIX_IE_flowEndSysUpTime);
 			pflow_sendout_ipfix_tmpl(sc);
+			break;
+		case PFLOW_PROTO_10:
+			sc->sc_tmpl.set_header.set_id =
+			    htons(PFLOW_V10_TMPL_SET_ID);
+			sc->sc_tmpl.ipv4_tmpl.start.field_id =
+			    sc->sc_tmpl.ipv6_tmpl.start.field_id =
+			    htons(PFIX_IE_flowStartSeconds);
+			sc->sc_tmpl.ipv4_tmpl.finish.field_id =
+			    sc->sc_tmpl.ipv6_tmpl.finish.field_id =
+			    htons(PFIX_IE_flowEndSeconds);
+			pflow_sendout_ipfix_tmpl(sc);
+			break;
+		default:
+			break;
 		}
 
 		splx(s);
@@ -566,7 +593,7 @@ copy_flow_data(struct pflow_flow *flow1, struct pflow_flow *flow2,
 
 void
 copy_flow4_data(struct pflow_flow4 *flow1, struct pflow_flow4 *flow2,
-    struct pf_state *st, int src, int dst)
+    struct pf_state *st, struct pflow_softc *sc, int src, int dst)
 {
 	struct pf_state_key	*sk = st->key[PF_SK_WIRE];
 
@@ -580,15 +607,29 @@ copy_flow4_data(struct pflow_flow4 *flow1, struct pflow_flow4 *flow2,
 	flow1->flow_octets = htobe64(st->bytes[0]);
 	flow2->flow_octets = htobe64(st->bytes[1]);
 
-	/*
-	 * Pretend the flow was created or expired when the machine came up
-	 * when creation is in the future of the last time a package was seen
-	 * or was created / expired before this machine came up due to pfsync.
-	 */
-	flow1->flow_start = flow2->flow_start = st->creation < 0 ||
-	    st->creation > st->expire ? htonl(0) : htonl(st->creation * 1000);
-	flow1->flow_finish = flow2->flow_finish = st->expire < 0 ? htonl(0) :
-	    htonl(st->expire * 1000);
+	switch (sc->sc_version) {
+	case PFLOW_PROTO_9:
+		/*
+		 * Pretend the flow was created or expired when the machine came
+		 * up when creation is in the future of the last time a package
+		 * was seen or was created / expired before this machine came up
+		 * due to pfsync.
+		 */
+		flow1->flow_start = flow2->flow_start = st->creation < 0 ||
+		    st->creation > st->expire ? htonl(0) : htonl(st->creation *
+		    1000);
+		flow1->flow_finish = flow2->flow_finish = st->expire < 0 ?
+		    htonl(0) : htonl(st->expire * 1000);
+		break;
+	case PFLOW_PROTO_10:
+		flow1->flow_start = flow2->flow_start = htonl(time_second -
+		    (time_uptime - st->creation));
+		flow1->flow_finish = flow2->flow_finish = htonl(time_second -
+		    (time_uptime - st->expire));
+		break;
+	default: /* NOTREACHED */
+		break;
+	}
 
 	flow1->protocol = flow2->protocol = sk->proto;
 	flow1->tos = flow2->tos = st->rule.ptr->tos;
@@ -596,7 +637,7 @@ copy_flow4_data(struct pflow_flow4 *flow1, struct pflow_flow4 *flow2,
 
 void
 copy_flow6_data(struct pflow_flow6 *flow1, struct pflow_flow6 *flow2,
-    struct pf_state *st, int src, int dst)
+    struct pf_state *st, struct pflow_softc *sc, int src, int dst)
 {
 	struct pf_state_key	*sk = st->key[PF_SK_WIRE];
 	bcopy(&sk->addr[src].v6, &flow1->src_ip, sizeof(flow1->src_ip));
@@ -611,15 +652,29 @@ copy_flow6_data(struct pflow_flow6 *flow1, struct pflow_flow6 *flow2,
 	flow1->flow_octets = htobe64(st->bytes[0]);
 	flow2->flow_octets = htobe64(st->bytes[1]);
 
-	/*
-	 * Pretend the flow was created or expired when the machine came up
-	 * when creation is in the future of the last time a package was seen
-	 * or was created / expired before this machine came up due to pfsync.
-	 */
-	flow1->flow_start = flow2->flow_start = st->creation < 0 ||
-	    st->creation > st->expire ? htonl(0) : htonl(st->creation * 1000);
-	flow1->flow_finish = flow2->flow_finish = st->expire < 0 ? htonl(0) :
-	    htonl(st->expire * 1000);
+	switch (sc->sc_version) {
+	case PFLOW_PROTO_9:
+		/*
+		 * Pretend the flow was created or expired when the machine came
+		 * up when creation is in the future of the last time a package
+		 * was seen or was created / expired before this machine came up
+		 * due to pfsync.
+		 */
+		flow1->flow_start = flow2->flow_start = st->creation < 0 ||
+		    st->creation > st->expire ? htonl(0) : htonl(st->creation *
+		    1000);
+		flow1->flow_finish = flow2->flow_finish = st->expire < 0 ?
+		    htonl(0) : htonl(st->expire * 1000);
+		break;
+	case PFLOW_PROTO_10:
+		flow1->flow_start = flow2->flow_start = htonl(time_second -
+		    (time_uptime - st->creation));
+		flow1->flow_finish = flow2->flow_finish = htonl(time_second -
+		    (time_uptime - st->expire));
+		break;
+	default: /* NOTREACHED */
+		break;
+	}
 
 	flow1->protocol = flow2->protocol = sk->proto;
 	flow1->tos = flow2->tos = st->rule.ptr->tos;
@@ -826,9 +881,9 @@ pflow_pack_flow_ipfix(struct pf_state *st, struct pflow_softc *sc)
 		bzero(&flow4_2, sizeof(flow4_2));
 
 		if (st->direction == PF_OUT)
-			copy_flow4_data(&flow4_1, &flow4_2, st, 1, 0);
+			copy_flow4_data(&flow4_1, &flow4_2, st, sc, 1, 0);
 		else
-			copy_flow4_data(&flow4_1, &flow4_2, st, 0, 1);
+			copy_flow4_data(&flow4_1, &flow4_2, st, sc, 0, 1);
 
 		if (st->bytes[0] != 0) /* first flow from state */
 			ret = copy_flow4_to_m(&flow4_1, sc);
@@ -840,9 +895,9 @@ pflow_pack_flow_ipfix(struct pf_state *st, struct pflow_softc *sc)
 		bzero(&flow6_2, sizeof(flow6_2));
 
 		if (st->direction == PF_OUT)
-			copy_flow6_data(&flow6_1, &flow6_2, st, 1, 0);
+			copy_flow6_data(&flow6_1, &flow6_2, st, sc, 1, 0);
 		else
-			copy_flow6_data(&flow6_1, &flow6_2, st, 0, 1);
+			copy_flow6_data(&flow6_1, &flow6_2, st, sc, 0, 1);
 
 		if (st->bytes[0] != 0) /* first flow from state */
 			ret = copy_flow6_to_m(&flow6_1, sc);
