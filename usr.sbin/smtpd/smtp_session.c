@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.177 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.178 2013/02/05 11:45:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1287,7 +1287,8 @@ smtp_connected(struct smtp_session *s)
 	    s->id, s->hostname, ss_to_text(&s->ss));
 
 	sl = sizeof(ss);
-	getsockname(s->io.sock, (struct sockaddr*)&ss, &sl);
+	if (getsockname(s->io.sock, (struct sockaddr*)&ss, &sl) == -1)
+		fatal("getsockname");
 
 	m_create(p_mfa, IMSG_MFA_REQ_CONNECT, 0, 0, -1, 64 + strlen(s->hostname));
 	m_add_id(p_mfa, s->id);

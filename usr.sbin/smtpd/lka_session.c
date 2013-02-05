@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.53 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.54 2013/02/05 11:45:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -584,9 +584,14 @@ lka_expand_token(char *dest, size_t len, const char *token,
 	if ((size_t)i + 1 >= len)
 		return 0;
 
-	memcpy(dest, string + begoff, i);
+	string += begoff;
+	for (; i; i--) {
+		*dest = (*string == '/') ? ':' : *string;
+		dest++;
+		string++;
+	}
 
-	return i;
+	return endoff - begoff;
 }
 
 

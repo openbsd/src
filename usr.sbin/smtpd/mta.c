@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.152 2013/02/05 10:53:57 nicm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.153 2013/02/05 11:45:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -890,8 +890,6 @@ mta_drain(struct mta_relay *r)
 			strlcat(buf, "secret ", sizeof buf);
 		if (r->status & RELAY_WAIT_SOURCE)
 			strlcat(buf, "source ", sizeof buf);
-		if (r->status & RELAY_WAIT_HELO)
-			strlcat(buf, "helo ", sizeof buf);
 		log_debug("debug: mta: %s waiting for %s",
 		    mta_relay_to_text(r), buf);
 		return;
