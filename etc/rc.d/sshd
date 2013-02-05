@@ -1,9 +1,13 @@
 #!/bin/sh
 #
-# $OpenBSD: sshd,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: sshd,v 1.2 2013/02/05 00:26:31 halex Exp $
 
 daemon="/usr/sbin/sshd"
 
 . /etc/rc.d/rc.subr
+
+rc_reload() {
+	${daemon} ${daemon_flags} -t && pkill -HUP -f "^${pexp}"
+}
 
 rc_cmd $1
