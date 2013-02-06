@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.81 2013/02/05 09:49:38 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.82 2013/02/06 07:30:02 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 5 2013 $
+.Dd $Mdocdate: February 6 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -110,6 +110,7 @@ expire 4d	# expire after 4 days
 expire 10h	# expire after 10 hours
 .Ed
 .It Xo
+.Bk -words
 .Ic listen on Ar interface
 .Op Ic port Ar port
 .Op Ic tls | tls-require | smtps
@@ -117,6 +118,7 @@ expire 10h	# expire after 10 hours
 .Op Ic auth | auth-optional
 .Op Ic tag Ar tag
 .Op Ic hostname Ar hostname
+.Ek
 .Xc
 Specify an
 .Ar interface
@@ -601,9 +603,9 @@ contains a mapping of IP addresses to hostnames and
 .Xr smtpd 8
 will automatically select the name that matches its source address
 when connected to the remote server.
-.El
 .It Ic expire Ar n {s|m|h|d}
 Specify how long a message that matched this rule can stay in the queue.
+.El
 .It Ic bounce-warn Ar n {s|m|h|d} [, ...]
 Specify the delays for which temporary failure reports must be generated
 when messages are stuck in the queue.
@@ -653,7 +655,8 @@ listen on lo0
 table aliases db:/etc/mail/aliases.db
 table secrets db:/etc/mail/secrets.db
 accept for local alias <aliases> deliver to mbox
-accept for any relay via tls+auth://label@smtp.example.com auth <secrets>
+accept for any relay via tls+auth://label@smtp.example.com \e
+	auth <secrets>
 .Ed
 .Pp
 In this second example,
