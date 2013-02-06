@@ -1,4 +1,4 @@
-#	$OpenBSD: config.gcc,v 1.25 2013/01/20 22:59:12 miod Exp $
+#	$OpenBSD: config.gcc,v 1.26 2013/02/06 20:12:06 miod Exp $
 # GCC build-, host- and target-specific configuration file.
 # Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
@@ -1745,11 +1745,12 @@ m68k*-*-netbsd*)
 	use_collect2=yes
 	;;
 m68k*-*-openbsd*)
-	# needed to unconfuse gdb
-	tmake_file="t-libc-ok t-openbsd m68k/t-openbsd"
-	# we need collect2 until our bug is fixed...
-	use_collect2=yes
+	tm_file="openbsd-libpthread.h m68k/openbsd1.h m68k/m68k.h dbxelf.h elfos.h openbsd.h m68k/openbsdelf.h"
 	tm_file="${tm_file} exec-stack.h"
+	tmake_file="t-libc-ok t-openbsd m68k/t-openbsd"
+	if test x$enable_threads = xyes; then
+		tmake_file="${tmake_file} t-openbsd-thread"
+	fi
 	;;
 m68k-*-sysv4*)			# Motorola m68k's running system V.4
 	tm_file=m68k/m68kv4.h
