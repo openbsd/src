@@ -669,6 +669,7 @@ guess_is_rela (unsigned long e_machine)
     case EM_XTENSA:
     case EM_XTENSA_OLD:
     case EM_M32R:
+    case EM_88K:
       return TRUE;
 
     case EM_MMA:
@@ -1166,6 +1167,10 @@ dump_relocations (FILE *file,
 	case EM_XTENSA_OLD:
 	case EM_XTENSA:
 	  rtype = elf_xtensa_reloc_type (type);
+	  break;
+
+	case EM_88K:
+	  rtype = elf_m88k_reloc_type (type);
 	  break;
 	}
 
