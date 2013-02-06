@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.10 2013/02/02 13:32:06 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.11 2013/02/06 20:00:14 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.13 1997/04/24 22:49:39 thorpej Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #ifndef _M68K_ASM_H_
 #define _M68K_ASM_H_
 
-#if defined(PIC)
+#if defined(__PIC__)
 #define	PIC_PLT(name)	name@PLTPC
 #else
 #define	PIC_PLT(name)	name
