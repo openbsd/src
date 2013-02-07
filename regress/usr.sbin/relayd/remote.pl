@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.2 2013/01/04 14:01:49 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.3 2013/02/07 22:56:27 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -102,7 +102,7 @@ my $s = Server->new(
     listendomain        => AF_INET,
     listenaddr          => ($mode eq "auto" ? $ARGV[1] : undef),
     listenport          => ($mode eq "manual" ? $ARGV[0] : undef),
-);
+) unless $args{server}{noserver};
 if ($mode eq "auto") {
 	$r = Remote->new(
 	    forward             => $ARGV[0],
@@ -112,7 +112,7 @@ if ($mode eq "auto") {
 	    remotessh           => $ARGV[3],
 	    listenaddr          => $ARGV[2],
 	    connectaddr         => $ARGV[1],
-	    connectport         => $s->{listenport},
+	    connectport         => $s ? $s->{listenport} : 1,
 	);
 	$r->run->up;
 }
@@ -124,12 +124,12 @@ my $c = Client->new(
     connectport         => ($mode eq "manual" ? $ARGV[2] : $r->{listenport}),
 );
 
-$s->run;
+$s->run unless $args{server}{noserver};
 $c->run->up;
-$s->up;
+$s->up unless $args{server}{noserver};
 
 $c->down;
-$s->down;
+$s->down unless $args{server}{noserver};
 $r->close_child;
 $r->down;
 

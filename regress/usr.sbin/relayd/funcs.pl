@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.7 2013/01/04 14:01:49 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.8 2013/02/07 22:56:27 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -88,24 +88,33 @@ sub http_client {
 	my @lengths = @{$self->{lengths} || [ shift // $self->{len} // 251 ]};
 	my $vers = $self->{lengths} ? "1.1" : "1.0";
 	my $method = $self->{method} || "GET";
+	my %header = %{$self->{header} || {}};
 
 	foreach my $len (@lengths) {
 		# encode the requested length or chunks into the url
 		my $path = ref($len) eq 'ARRAY' ? join("/", @$len) : $len;
-		my @request = ("$method /$path HTTP/$vers", "Host: foo.bar");
+		my @request = ("$method /$path HTTP/$vers");
+		push @request, "Host: foo.bar" unless defined $header{Host};
 		push @request, "Content-Length: $len"
-		    if $vers eq "1.1" && $method eq "PUT";
+		    if $vers eq "1.1" && $method eq "PUT" &&
+		    !defined $header{'Content-Length'};
+		push @request, "$_: $header{$_}" foreach sort keys %header;
 		push @request, "";
 		print STDERR map { ">>> $_\n" } @request;
 		print map { "$_\r\n" } @request;
 		write_char($self, $len) if $method eq "PUT";
 		IO::Handle::flush(\*STDOUT);
+		# XXX client shutdown seems to be broken in relayd
+		#shutdown(\*STDOUT, SHUT_WR)
+		#    or die ref($self), " shutdown write failed: $!"
+		#    if $vers ne "1.1";
 
 		my $chunked = 0;
 		{
 			local $/ = "\r\n";
 			local $_ = <STDIN>;
-			defined or die ref($self), " missing http response";
+			defined
+			    or die ref($self), " missing http $len response";
 			chomp;
 			print STDERR "<<< $_\n";
 			m{^HTTP/$vers 200 OK$}
@@ -231,26 +240,29 @@ sub http_server {
 				chomp;
 				print STDERR "<<< $_\n";
 				last if /^$/;
-				if (/^Content-Length: (.*)/) {
+				if ($method eq "PUT" &&
+				    /^Content-Length: (.*)/) {
 					$1 == $len or die ref($self),
 					    " bad content length $1";
 				}
 			}
 		}
-		read_char($self, $vers eq "1.1" ? $len : undef)
+		# XXX reading to EOF does not work with relayd
+		#read_char($self, $vers eq "1.1" ? $len : undef)
+		read_char($self, $len)
 		    if $method eq "PUT";
 
-		my @request = ("HTTP/$vers 200 OK");
+		my @response = ("HTTP/$vers 200 OK");
 		if (ref($len) eq 'ARRAY') {
-			push @request, "Transfer-Encoding: chunked"
+			push @response, "Transfer-Encoding: chunked"
 			    if $vers eq "1.1";
 		} else {
-			push @request, "Content-Length: $len"
+			push @response, "Content-Length: $len"
 			    if $vers eq "1.1" && $method eq "GET";
 		}
-		push @request, "";
-		print STDERR map { ">>> $_\n" } @request;
-		print map { "$_\r\n" } @request;
+		push @response, "";
+		print STDERR map { ">>> $_\n" } @response;
+		print map { "$_\r\n" } @response;
 
 		if (ref($len) eq 'ARRAY') {
 			write_chunked($self, @$len);
@@ -307,12 +319,16 @@ sub check_len {
 	my @lengths = map { ref eq 'ARRAY' ? @$_ : $_ }
 	    @{$args{lengths} || []};
 	foreach my $len (@lengths) {
-		my $clen = shift @clen;
-		$clen eq "LEN: $len\n"
-		    or die "client: $clen", "len $len expected";
-		my $slen = shift @slen;
-		$slen eq "LEN: $len\n"
-		    or die "server: $slen", "len $len expected";
+		unless ($args{client}{nocheck}) {
+			my $clen = shift @clen;
+			$clen eq "LEN: $len\n"
+			    or die "client: $clen", "len $len expected";
+		}
+		unless ($args{server}{nocheck}) {
+			my $slen = shift @slen;
+			$slen eq "LEN: $len\n"
+			    or die "server: $slen", "len $len expected";
+		}
 	}
 }
 

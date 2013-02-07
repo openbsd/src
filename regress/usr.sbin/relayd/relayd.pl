@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: relayd.pl,v 1.7 2013/01/04 14:01:49 bluhm Exp $
+#	$OpenBSD: relayd.pl,v 1.8 2013/02/07 22:56:27 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -45,7 +45,7 @@ my $s = Server->new(
     listenaddr          => "127.0.0.1",
     listenport          => $sport,
     %{$args{server}},
-);
+) unless $args{server}{noserver};
 my $r = Relayd->new(
     forward             => $ARGV[0],
     listendomain        => AF_INET,
@@ -65,14 +65,14 @@ my $c = Client->new(
     %{$args{client}},
 );
 
-$s->run;
+$s->run unless $args{server}{noserver};
 $r->run;
 $r->up;
 $c->run->up;
-$s->up;
+$s->up unless $args{server}{noserver};
 
 $c->down;
-$s->down;
+$s->down unless $args{server}{noserver};
 $r->kill_child;
 $r->down;
 
