@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.61 2012/12/10 22:42:54 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.62 2013/02/07 17:29:31 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -981,7 +981,7 @@ uvmpd_scan(void)
 	 * our inactive target.
 	 */
 
-	inactive_shortage = uvmexp.inactarg - uvmexp.inactive;
+	inactive_shortage = uvmexp.inactarg - uvmexp.inactive - BUFPAGES_INACT;
 
 	/*
 	 * detect if we're not going to be able to page anything out
