@@ -4316,6 +4316,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 6320",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7290,
+	    "Radeon HD 7290",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_HDA,
 	    "Radeon HD 2600 HD Audio",
 	},
