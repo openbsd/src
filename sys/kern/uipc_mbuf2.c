@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.35 2011/11/30 10:26:56 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.36 2013/02/07 11:06:42 mikeb Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -67,6 +67,8 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+
+extern struct pool mtagpool;
 
 /* can't call it m_dup(), as freebsd[34] uses m_dup() with different arg */
 static struct mbuf *m_dup1(struct mbuf *, int, int, int);
@@ -256,7 +258,9 @@ m_tag_get(int type, int len, int wait)
 
 	if (len < 0)
 		return (NULL);
-	t = malloc(sizeof(struct m_tag) + len, M_PACKET_TAGS, wait);
+	if (len > PACKET_TAG_MAXSIZE)
+		panic("requested tag size for pool %#x is too big", type);
+	t = pool_get(&mtagpool, wait == M_WAITOK ? PR_WAITOK : PR_NOWAIT);
 	if (t == NULL)
 		return (NULL);
 	t->m_tag_id = type;
@@ -280,7 +284,7 @@ m_tag_delete(struct mbuf *m, struct m_tag *t)
 	struct m_tag	*p;
 
 	SLIST_REMOVE(&m->m_pkthdr.tags, t, m_tag, m_tag_link);
-	free(t, M_PACKET_TAGS);
+	pool_put(&mtagpool, t);
 
 	SLIST_FOREACH(p, &m->m_pkthdr.tags, m_tag_link)
 		tagsset |= p->m_tag_id;
@@ -296,7 +300,7 @@ m_tag_delete_chain(struct mbuf *m)
 
 	while ((p = SLIST_FIRST(&m->m_pkthdr.tags)) != NULL) {
 		SLIST_REMOVE_HEAD(&m->m_pkthdr.tags, m_tag_link);
-		free(p, M_PACKET_TAGS);
+		pool_put(&mtagpool, p);
 	}
 	m->m_pkthdr.tagsset = 0;
 }

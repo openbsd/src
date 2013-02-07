@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.167 2012/09/26 14:53:23 markus Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.168 2013/02/07 11:06:42 mikeb Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -99,6 +99,7 @@
 
 struct	mbstat mbstat;		/* mbuf stats */
 struct	pool mbpool;		/* mbuf pool */
+struct	pool mtagpool;
 
 /* mbuf cluster pools */
 u_int	mclsizes[] = {
@@ -149,6 +150,10 @@ mbinit(void)
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
 	pool_set_constraints(&mbpool, &kp_dma_contig);
 	pool_setlowat(&mbpool, mblowat);
+
+	pool_init(&mtagpool, PACKET_TAG_MAXSIZE + sizeof(struct m_tag),
+	    0, 0, 0, "mtagpl", NULL);
+	pool_setipl(&mtagpool, IPL_NET);
 
 	for (i = 0; i < nitems(mclsizes); i++) {
 		snprintf(mclnames[i], sizeof(mclnames[0]), "mcl%dk",

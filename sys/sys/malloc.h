@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.100 2012/04/06 15:10:40 jsing Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.101 2013/02/07 11:06:42 mikeb Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -143,8 +143,7 @@
 #define M_CRYPTO_DATA	108	/* Crypto framework data buffers (keys etc.) */
 /* 109 - free */
 #define M_CREDENTIALS	110	/* IPsec-related credentials and ID info */
-#define M_PACKET_TAGS	111	/* Packet-attached information */
-/* 112-113 - free */
+/* 111-113 - free */
 #define	M_EMULDATA	114	/* Per-process emulation data */
 /* 115-122 - free */
 
@@ -284,7 +283,7 @@
 	"crypto data",	/* 108 M_CRYPTO_DATA */ \
 	NULL, \
 	"IPsec creds",	/* 110 M_CREDENTIALS */ \
-	"packet tags",	/* 111 M_PACKET_TAGS */ \
+	NULL, \
 	NULL, \
 	NULL, \
 	"emuldata",	/* 114 M_EMULDATA */ \
