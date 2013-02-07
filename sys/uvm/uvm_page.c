@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.114 2011/07/08 00:10:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.115 2013/02/07 17:38:12 beck Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -792,13 +792,39 @@ int
 uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
     paddr_t boundary, struct pglist *rlist, int nsegs, int flags)
 {
-
 	KASSERT((alignment & (alignment - 1)) == 0);
 	KASSERT((boundary & (boundary - 1)) == 0);
 	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
 
 	if (size == 0)
 		return (EINVAL);
+	/*
+	 * check to see if we need to generate some free pages waking
+	 * the pagedaemon.
+	 */
+	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
+	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
+	    (uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg))
+		wakeup(&uvm.pagedaemon);
+
+	/*
+	 * XXX uvm_pglistalloc is currently only used for kernel
+	 * objects. Unlike the checks in uvm_pagealloc, below, here
+	 * we are always allowed to use the kernel reseve. However, we
+	 * have to enforce the pagedaemon reserve here or allocations
+	 * via this path could consume everything and we can't
+	 * recover in the page daemon.
+	 */
+ again:
+	if ((uvmexp.free <= uvmexp.reserve_pagedaemon &&
+	    !((curproc == uvm.pagedaemon_proc) ||
+		(curproc == syncerproc)))) {
+		if (UVM_PLA_WAITOK) {
+			uvm_wait("uvm_pglistalloc");
+			goto again;
+		}
+		return (ENOMEM);
+	}
 
 	if ((high & PAGE_MASK) != PAGE_MASK) {
 		printf("uvm_pglistalloc: Upper boundary 0x%lx "
