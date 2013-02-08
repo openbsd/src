@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.8 2013/01/31 02:14:46 yasuoka Exp $ */
+/*	$OpenBSD: privsep.c,v 1.9 2013/02/08 12:35:52 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -738,6 +738,7 @@ privsep_priv_on_sockio(int sock, short evmask, void *ctx)
 			r.framed_ip_netmask.s_addr = INADDR_NONE;
 			db[0] = a->path;
 
+			str = buf = NULL;
 			if (privsep_npppd_check_get_user_info(a)) {
 				r.retval = -1;
 				r.rerrno = EACCES;
@@ -749,6 +750,8 @@ privsep_priv_on_sockio(int sock, short evmask, void *ctx)
 					    sizeof(r.password)) >=
 					    sizeof(r.password))
 						goto on_broken_entry;
+					free(str);
+					str = NULL;
 				}
 				if ((retval = cgetstr(buf, "calling-number",
 				    &str)) >= 0) {
@@ -756,12 +759,16 @@ privsep_priv_on_sockio(int sock, short evmask, void *ctx)
 					    sizeof(r.calling_number)) >=
 					    sizeof(r.calling_number))
 						goto on_broken_entry;
+					free(str);
+					str = NULL;
 				}
 				if ((retval = cgetstr(buf, "framed-ip-address",
 				    &str)) >= 0) {
 					if (inet_aton(str,
 					    &r.framed_ip_address) != 1)
 						goto on_broken_entry;
+					free(str);
+					str = NULL;
 				}
 
 				if ((retval = cgetstr(buf, "framed-ip-netmask",
@@ -769,11 +776,19 @@ privsep_priv_on_sockio(int sock, short evmask, void *ctx)
 					if (inet_aton(str,
 					    &r.framed_ip_netmask) != 1)
 						goto on_broken_entry;
+					free(str);
+					str = NULL;
 				}
 				cgetclose();
+				free(buf);
 				r.retval = 0;
 			} else if (retval == -1) {
+				buf = NULL;
 on_broken_entry:
+				if (buf != NULL)
+					free(buf);
+				if (str != NULL)
+					free(str);
 				r.retval = -1;
 				r.rerrno = ENOENT;
 			} else {
