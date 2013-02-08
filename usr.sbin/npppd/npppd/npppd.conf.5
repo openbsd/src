@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.6 2013/01/29 15:42:20 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.7 2013/02/08 11:06:26 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2013 $
+.Dd $Mdocdate: February 8 2013 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -79,7 +79,8 @@ The supported options are as follows:
 .Bl -tag -width Ds
 .It Ic listen on Ar address Op Ic port Ar port
 Specify the IP address that this tunnel listens on.
-Both IPv4 and IPv6 addresses can be used.
+Both IPv4 and IPv6 addresses can be used for L2TP.
+Only IPv4 address can be used for PPTP.
 If the port is omitted, the default port numbers are used.
 The default port numbers are 1723 for PPTP and 1701 for L2TP.
 The default value is 0.0.0.0.
