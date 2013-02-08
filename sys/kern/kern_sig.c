@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.147 2013/01/15 02:03:38 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.148 2013/02/08 04:30:37 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1457,22 +1457,25 @@ coredump(struct proc *p)
 
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
 
-	if (error) {
-		crfree(cred);
-		return (error);
-	}
+	if (error)
+		goto out;
 
 	/*
 	 * Don't dump to non-regular files, files with links, or files
 	 * owned by someone else.
 	 */
 	vp = nd.ni_vp;
-	if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0) {
+		VOP_UNLOCK(vp, 0, p);
+		vn_close(vp, FWRITE, cred, p);
 		goto out;
+	}
 	if (vp->v_type != VREG || vattr.va_nlink != 1 ||
 	    vattr.va_mode & ((VREAD | VWRITE) >> 3 | (VREAD | VWRITE) >> 6) ||
 	    vattr.va_uid != cred->cr_uid) {
 		error = EACCES;
+		VOP_UNLOCK(vp, 0, p);
+		vn_close(vp, FWRITE, cred, p);
 		goto out;
 	}
 	VATTR_NULL(&vattr);
@@ -1487,15 +1490,11 @@ coredump(struct proc *p)
 	VOP_UNLOCK(vp, 0, p);
 	vref(vp);
 	error = vn_close(vp, FWRITE, cred, p);
-	if (error) {
-		vrele(vp);
-		return (error);
-	}
-
-	error = (*p->p_emul->e_coredump)(p, &io);
+	if (error == 0)
+		error = (*p->p_emul->e_coredump)(p, &io);
+	vrele(vp);
 out:
 	crfree(cred);
-	vrele(vp);
 	return (error);
 #endif
 }
