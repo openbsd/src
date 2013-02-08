@@ -135,6 +135,7 @@ static const char * const local_patches[] = {
 	,"Updated Digest to 1.17"
 	,"CVE-2011-2939"
 	,"CVE-2012-5195"
+	,"CVE-2012-6329"
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
 	,"uncommitted-changes"
 #endif
