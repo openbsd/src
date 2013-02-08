@@ -253,6 +253,7 @@
 ./var/www/conf/httpd.conf
 ./var/www/conf/magic
 ./var/www/conf/mime.types
+./var/www/htdocs/50x.html
 ./var/www/htdocs/apache_pb.gif
 ./var/www/htdocs/bgplg/index.html
 ./var/www/htdocs/bgplg/openbgpd.gif

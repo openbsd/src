@@ -1773,6 +1773,7 @@
 ./usr/share/man/man4/loongson/autoconf.4
 ./usr/share/man/man4/loongson/bonito.4
 ./usr/share/man/man4/loongson/gdiumiic.4
+./usr/share/man/man4/loongson/glxclk.4
 ./usr/share/man/man4/loongson/glxpcib.4
 ./usr/share/man/man4/loongson/intro.4
 ./usr/share/man/man4/loongson/kmem.4
