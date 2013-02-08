@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.39 2012/12/10 10:38:56 mikeb Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.40 2013/02/08 21:30:11 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -215,8 +215,6 @@
 #define BRCM_DEVICEID_BCM5708S		0x16AC
 
 #define HP_VENDORID					0x103C
-
-#define PCI_ANY_ID					(u_int16_t) (~0U)
 
 /* chip num:16-31, rev:12-15, metal:4-11, bond_id:0-3 */
 
