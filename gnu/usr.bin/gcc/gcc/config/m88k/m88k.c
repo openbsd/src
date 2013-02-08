@@ -2328,10 +2328,7 @@ m88k_setup_incoming_varargs (cum, mode, type, pretend_size, no_rtl)
   CUMULATIVE_ARGS next_cum;
   tree fntype;
   int stdarg_p;
-  int regcnt;
-
-  if (no_rtl)
-    return;
+  int regcnt, delta;
 
   fntype = TREE_TYPE (current_function_decl);
   stdarg_p = (TYPE_ARG_TYPES (fntype) != 0
@@ -2345,48 +2342,29 @@ m88k_setup_incoming_varargs (cum, mode, type, pretend_size, no_rtl)
     m88k_function_arg_advance(&next_cum, mode, type, 1);
 
   regcnt = next_cum < 8 ? 8 - next_cum : 0;
-  if (regcnt & 1)
-    regcnt++;
-  *pretend_size = regcnt * UNITS_PER_WORD;
-}
-
-/* Do what is necessary for `va_start'.  We look at the current function
-   to determine if stdargs or varargs is used and spill as necessary. 
-   We return a pointer to the spill area.  */
-
-struct rtx_def *
-m88k_builtin_saveregs ()
-{
-  rtx addr;
-  int regcnt, delta;
-
-  if (! CONSTANT_P (current_function_arg_offset_rtx))
-    abort ();
-
-  regcnt = current_function_args_info < 8 ? 8 - current_function_args_info : 0;
   delta = regcnt & 1;
 
-  /* Allocate the register space, which will be returned as the __va_reg
-     member. If the number of registers to copy is odd, we add an extra
-     word to align even-numbered registers to a doubleword boundary.  */
-  addr = assign_stack_local (BLKmode, (regcnt + delta) * UNITS_PER_WORD, -1);
-  set_mem_alias_set (addr, get_varargs_alias_set ());
-  RTX_UNCHANGING_P (addr) = 1;
-  RTX_UNCHANGING_P (XEXP (addr, 0)) = 1;
-
-  /* Now store the incoming registers.  */
-  if (regcnt != 0)
+  if (! no_rtl && regcnt != 0)
     {
+      rtx mem, dst;
+      int set, regno, offs;
+
+      set = get_varargs_alias_set ();
+      mem = gen_rtx_MEM (BLKmode,
+			 plus_constant (virtual_incoming_args_rtx,
+					- (regcnt + delta) * UNITS_PER_WORD));
+      set_mem_alias_set (mem, set);
+
+      /* Now store the incoming registers.  */
       /* The following is equivalent to
-	 move_block_from_reg (2 + current_function_args_info,
-			      adjust_address (addr, Pmode,
+	 move_block_from_reg (2 + next_cum,
+			      adjust_address (mem, Pmode,
 					      delta * UNITS_PER_WORD),
 			      regcnt, UNITS_PER_WORD * regcnt);
 	 but using double store instruction since the stack is properly
 	 aligned.  */
-      rtx dst = addr;
-      int regno = 2 + current_function_args_info;
-      int offs;
+      regno = 2 + next_cum;
+      dst = mem;
 
       if (delta != 0)
 	{
@@ -2404,17 +2382,11 @@ m88k_builtin_saveregs ()
 	  offs += 2;
 	  regno += 2;
         }
+
+      *pretend_size = (regcnt + delta) * UNITS_PER_WORD;
     }
-
-  /* Return the address of the hypothetical save area containing all the
-     argument registers (to help va_arg() computations), but don't put it in a
-     register.  This fails when not optimizing and produces worse code
-     when optimizing.  */
-  addr = adjust_address (addr, Pmode,
-			 -(current_function_args_info - delta) * UNITS_PER_WORD);
-  return XEXP (addr, 0);
 }
-
+
 /* Define the `__builtin_va_list' type for the ABI.  */
 
 tree
@@ -2490,8 +2462,10 @@ m88k_va_start (valist, nextarg)
   TREE_SIDE_EFFECTS (t) = 1;
   expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
 
-  /* Tuck the return value from __builtin_saveregs into __va_reg.  */
-  t = make_tree (TREE_TYPE (reg), expand_builtin_saveregs ());
+  /* Setup __va_reg */
+  t = make_tree (TREE_TYPE (reg), virtual_incoming_args_rtx);
+  t = build (PLUS_EXPR, TREE_TYPE (reg), t,
+	     build_int_2 (-8 * UNITS_PER_WORD, -1));
   t = build (MODIFY_EXPR, TREE_TYPE (reg), reg, t);
   TREE_SIDE_EFFECTS (t) = 1;
   expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);

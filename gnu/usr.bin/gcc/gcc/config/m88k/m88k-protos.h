@@ -82,7 +82,6 @@ extern void output_function_profiler PARAMS ((FILE *, int, const char *));
 extern void output_ascii PARAMS ((FILE *, const char *, int,
 				  const char *, int));
 extern void output_label PARAMS ((int));
-extern struct rtx_def *m88k_builtin_saveregs PARAMS ((void));
 extern void m88k_setup_incoming_varargs PARAMS ((CUMULATIVE_ARGS *,
 						 enum machine_mode, tree, int *,
 						 int));
