@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.7 2013/02/08 11:06:26 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.8 2013/02/08 12:15:33 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -269,6 +269,29 @@ The default value is 2.
 .It Ic ipcp-max-nak-loop Ar number
 Specify the maximum number of IPCP configure NAK loops.
 The default value is 5.
+.It Ic mppe Ar yes | no | required
+If
+.Dq yes
+is specified,
+.Xr npppd 8
+will negotiate to use Microsoft Point-to-Point Encryption (MPPE), and it
+will continue the PPP even if the negotiation fails.
+If
+.Dq required
+is specified,
+.Xr npppd 8
+will negotiate to use MPPE, and it will not continue the PPP if the
+negotiation fails.
+If
+.Dq no
+is specified,
+.Xr npppd 8
+will negotiate not to use MPPE and it will refuse to use MPPE.
+The default value is
+.Dq required
+for PPTP and
+.Dq yes
+for L2TP and PPPoE.
 .It Ic mppe-key-length Ar key-length ...
 Specify key lengths for this configuration.
 The following key lengths can be used:
