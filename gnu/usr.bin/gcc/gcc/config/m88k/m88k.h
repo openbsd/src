@@ -848,7 +848,8 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    made in memory and a pointer to the argument is passed instead of the
    argument itself.  The pointer is passed in whatever way is appropriate
    for passing a pointer to that type.  */
-#define FUNCTION_ARG_PASS_BY_REFERENCE(CUM, MODE, TYPE, NAMED) (0)
+#define FUNCTION_ARG_PASS_BY_REFERENCE(CUM, MODE, TYPE, NAMED) \
+  m88k_function_arg_pass_by_reference(&CUM, MODE, TYPE, NAMED)
 
 /* A C type for declaring a variable that is used as the first argument
    of `FUNCTION_ARG' and other related values.  It suffices to count
