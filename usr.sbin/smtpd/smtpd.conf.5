@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.83 2013/02/08 08:41:10 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.84 2013/02/08 10:13:55 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -283,8 +283,6 @@ Mail is piped to the specified
 which is run with the privileges of the user the message is destined to.
 This parameter may use conversion specifiers that are expanded before use
 (see above).
-.It Ic expire Ar n {s|m|h|d}
-Specify how long a message that matched this rule can stay in the queue.
 .It Xo
 .Ic relay
 .Op Ic backup Op Ar mx
@@ -428,6 +426,12 @@ contains a mapping of IP addresses to hostnames and
 .Xr smtpd 8
 will automatically select the name that matches its source address
 when connected to the remote server.
+.El
+.Pp
+Additional per-rule adjustments available:
+.Bl -tag -width Ds
+.It Ic expire Ar n {s|m|h|d}
+Specify how long a message that matched this rule can stay in the queue.
 .El
 .It Ic bounce-warn Ar n {s|m|h|d} [, ...]
 Specify the delays for which temporary failure reports must be generated
