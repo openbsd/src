@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1667 2013/01/17 12:50:34 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1669 2013/02/08 07:58:18 jasper Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -51,6 +51,7 @@
  * List of known PCI vendors
  */
 
+#define	PCI_VENDOR_DLINK2	0x00ec		/* D-Link */
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta */
 #define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge */
 #define	PCI_VENDOR_TTTECH	0x0357		/* TTTech */
@@ -2079,6 +2080,7 @@
 #define	PCI_PRODUCT_DLINK_DGE560SX	0x4b02		/* DGE-560SX */
 #define	PCI_PRODUCT_DLINK_DGE550T_B1	0x4b03		/* DGE-550T B1 */
 #define	PCI_PRODUCT_DLINK_DGE530T_A1	0x4c00		/* DGE-530T A1 */
+#define	PCI_PRODUCT_DLINK2_DFE530TXPLUS2	0x8139		/* DFE-530TX+ */
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_MEMCTLR	0x1012		/* Memory Control */
