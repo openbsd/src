@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1668 2013/02/07 16:12:26 pirofti Exp $
+$OpenBSD: pcidevs,v 1.1669 2013/02/08 07:58:18 jasper Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ $OpenBSD: pcidevs,v 1.1668 2013/02/07 16:12:26 pirofti Exp $
  * List of known PCI vendors
  */
 
+vendor	DLINK2		0x00ec	D-Link
 vendor	MARTINMARIETTA	0x003d	Martin-Marietta
 vendor	HAUPPAUGE	0x0070	Hauppauge
 vendor	TTTECH		0x0357	TTTech
@@ -2074,6 +2075,7 @@ product DLINK DGE530T_B1	0x4b01	DGE-530T B1
 product DLINK DGE560SX		0x4b02	DGE-560SX
 product DLINK DGE550T_B1	0x4b03	DGE-550T B1
 product DLINK DGE530T_A1	0x4c00	DGE-530T A1
+product	DLINK2 DFE530TXPLUS2	0x8139	DFE-530TX+
 
 /* Distributed Processing Technology products */
 product DPT MEMCTLR		0x1012	Memory Control
