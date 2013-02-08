@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.82 2013/02/06 07:30:02 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.83 2013/02/08 08:41:10 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 6 2013 $
+.Dd $Mdocdate: February 8 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -101,183 +101,6 @@ The syntax of
 .Nm
 is described below.
 .Bl -tag -width Ds
-.It Ic expire Ar n {s|m|h|d}
-Specify how long a message can stay in the queue.
-The default value is 4 days.
-For example:
-.Bd -literal -offset indent
-expire 4d	# expire after 4 days
-expire 10h	# expire after 10 hours
-.Ed
-.It Xo
-.Bk -words
-.Ic listen on Ar interface
-.Op Ic port Ar port
-.Op Ic tls | tls-require | smtps
-.Op Ic certificate Ar name
-.Op Ic auth | auth-optional
-.Op Ic tag Ar tag
-.Op Ic hostname Ar hostname
-.Ek
-.Xc
-Specify an
-.Ar interface
-and
-.Ar port
-to listen on.
-An interface group, an IP address or a domain name may
-be used in place of
-.Ar interface .
-.Pp
-Secured connections are provided either using STARTTLS
-.Pq Ic tls ,
-by default on port 25,
-or SMTPS
-.Pq Ic smtps ,
-by default on port 465.
-.Ic tls-require
-may be used to force clients to establish a secure connection
-before being allowed to start an SMTP transaction.
-Host certificates may be used for these connections,
-and are searched for in the
-.Pa /etc/mail/certs
-directory.
-If
-.Ic certificate
-is specified,
-a certificate
-.Ao Ar name Ac Ns .crt ,
-a key
-.Ao Ar name Ac Ns .key
-and Diffie-Hellman parameters
-.Ao Ar name Ac Ns .dh
-are searched for.
-A certificate authority may be appended to the .crt
-file to create a certificate chain.
-If no
-.Ic certificate
-is specified,
-the default interface name is instead used,
-for example
-.Pa fxp0.crt ,
-.Pa fxp0.key ,
-.Pa fxp0.ca ,
-and
-.Pa fxp0.dh .
-If no DH parameters are provided, smtpd will use
-built-in parameters.
-Creation of certificates is documented in
-.Xr starttls 8 .
-.Pp
-If the
-.Ic auth
-parameter is used,
-then a client may only start an SMTP transaction after a
-successful authentication.
-Any remote sender that passed SMTPAUTH is treated as if
-it was the server's local user that was sending the mail.
-This means that filter rules using "from local" will be matched.
-If
-.Ic auth-optional
-is specified, then SMTPAUTH is not required to establish an
-SMTP transaction.
-This is only useful to let a listener accept incoming mail from
-untrusted senders and outgoing mail from authenticated users in
-situations where it is not possible to listen on the submission
-port.
-.Pp
-If the
-.Ic tag
-parameter is used, then clients connecting to the listener will be
-tagged
-.Ar tag .
-.Pp
-If the
-.Ic hostname
-parameter is used, then it will be used in the greeting banner.
-.It Xo
-.Ic table Ar name
-.Ar [type:]config
-.Xc
-Tables are used to provide additional configuration information for
-.Xr smtpd 8
-in the form of lists or key-value mappings.
-.Pp
-The table is identified using table name
-.Ar name ;
-the name itself is arbitrarily chosen.
-.Pp
-.Ar type
-specifies the table backend,
-and should be one of the following:
-.Pp
-.Bl -tag -width "fileXXX" -compact
-.It db
-Information is stored in a file created using
-.Xr makemap 8 .
-.It file
-Information is stored in a plain text file using the
-same format as used to generate
-.Xr makemap 8
-mappings.
-This is the default.
-.El
-.Pp
-.Ar config
-specifies a configuration file for the table data.
-It must be an absolute path to a file for the
-.Dq file
-and
-.Dq db
-table types.
-.It Xo
-.Ic table Ar name
-.Ic { Ar value
-.Op , Ar value_n
-.Ic }
-.Xc
-Tables containing list of static values may be declared
-using an inlined notation.
-.Pp
-The table is identified using table name
-.Ar name ;
-the name itself is arbitrarily chosen.
-.Pp
-The table must contain at least one value and may declare many values as a
-list of comma separated strings.
-.It Xo
-.Ic table Ar name
-.Ic { Ar key => value
-.Op , key_n => value_n
-.Ic }
-.Xc
-Tables containing static key-value mappings may be declared
-using an inlined notation.
-.Pp
-The table is identified using table name
-.Ar name ;
-the name itself is arbitrarily chosen.
-.Pp
-The table must contain at least one key-value mapping and may declare
-many mappings as a list of comma separated
-.Ar key => value
-descriptions.
-.It Ic max-message-size Ar n
-Specify a maximum message size of
-.Ar n
-bytes.
-The argument may contain a multiplier, as documented in
-.Xr scan_scaled 3 .
-The default maximum message size is 35MB if none is specified.
-.It Xo
-.Ic queue
-.Ic compression Op Ar gzip
-.Xc
-Enable transparent deflating and inflating of all envelopes
-and messages.
-The only supported algorithm at the moment is gzip.
-Envelopes and messages may be inspected using
-.Xr gzcat 1 .
 .It Ic accept | reject
 .Xr smtpd 8
 accepts and rejects messages
@@ -293,9 +116,6 @@ the default action is to reject the message.
 Following the accept/reject
 decision comes the client's IP address filter:
 .Bl -tag -width Ds
-.It Ic tagged Ar tag
-If specified, the rule will only be matched if the client session was tagged
-.Ar tag .
 .It Ic from any
 Make the rule match regardless of the IP of connecting client.
 .It Ic from local
@@ -310,6 +130,9 @@ specified in CIDR notation.
 The rule matches if the connection is made from a client whose address
 is declared in the table
 .Ar table .
+.It Ic tagged Ar tag
+If specified, the rule will only be matched if the client session was tagged
+.Ar tag .
 .El
 .Pp
 In addition, finer filtering may be achieved on the sender if desired:
@@ -460,6 +283,8 @@ Mail is piped to the specified
 which is run with the privileges of the user the message is destined to.
 This parameter may use conversion specifiers that are expanded before use
 (see above).
+.It Ic expire Ar n {s|m|h|d}
+Specify how long a message that matched this rule can stay in the queue.
 .It Xo
 .Ic relay
 .Op Ic backup Op Ar mx
@@ -603,8 +428,6 @@ contains a mapping of IP addresses to hostnames and
 .Xr smtpd 8
 will automatically select the name that matches its source address
 when connected to the remote server.
-.It Ic expire Ar n {s|m|h|d}
-Specify how long a message that matched this rule can stay in the queue.
 .El
 .It Ic bounce-warn Ar n {s|m|h|d} [, ...]
 Specify the delays for which temporary failure reports must be generated
@@ -617,6 +440,183 @@ bounce-warn	1h, 6h, 2d
 will generate a failure report when an envelope is in the queue for more
 than one hour, six hours and two days.
 The default is 4h.
+.It Ic expire Ar n {s|m|h|d}
+Specify how long a message can stay in the queue.
+The default value is 4 days.
+For example:
+.Bd -literal -offset indent
+expire 4d	# expire after 4 days
+expire 10h	# expire after 10 hours
+.Ed
+.It Xo
+.Bk -words
+.Ic listen on Ar interface
+.Op Ic port Ar port
+.Op Ic tls | tls-require | smtps
+.Op Ic certificate Ar name
+.Op Ic auth | auth-optional
+.Op Ic tag Ar tag
+.Op Ic hostname Ar hostname
+.Ek
+.Xc
+Specify an
+.Ar interface
+and
+.Ar port
+to listen on.
+An interface group, an IP address or a domain name may
+be used in place of
+.Ar interface .
+.Pp
+Secured connections are provided either using STARTTLS
+.Pq Ic tls ,
+by default on port 25,
+or SMTPS
+.Pq Ic smtps ,
+by default on port 465.
+.Ic tls-require
+may be used to force clients to establish a secure connection
+before being allowed to start an SMTP transaction.
+Host certificates may be used for these connections,
+and are searched for in the
+.Pa /etc/mail/certs
+directory.
+If
+.Ic certificate
+is specified,
+a certificate
+.Ao Ar name Ac Ns .crt ,
+a key
+.Ao Ar name Ac Ns .key
+and Diffie-Hellman parameters
+.Ao Ar name Ac Ns .dh
+are searched for.
+A certificate authority may be appended to the .crt
+file to create a certificate chain.
+If no
+.Ic certificate
+is specified,
+the default interface name is instead used,
+for example
+.Pa fxp0.crt ,
+.Pa fxp0.key ,
+.Pa fxp0.ca ,
+and
+.Pa fxp0.dh .
+If no DH parameters are provided, smtpd will use
+built-in parameters.
+Creation of certificates is documented in
+.Xr starttls 8 .
+.Pp
+If the
+.Ic auth
+parameter is used,
+then a client may only start an SMTP transaction after a
+successful authentication.
+Any remote sender that passed SMTPAUTH is treated as if
+it was the server's local user that was sending the mail.
+This means that filter rules using "from local" will be matched.
+If
+.Ic auth-optional
+is specified, then SMTPAUTH is not required to establish an
+SMTP transaction.
+This is only useful to let a listener accept incoming mail from
+untrusted senders and outgoing mail from authenticated users in
+situations where it is not possible to listen on the submission
+port.
+.Pp
+If the
+.Ic tag
+parameter is used, then clients connecting to the listener will be
+tagged
+.Ar tag .
+.Pp
+If the
+.Ic hostname
+parameter is used, then it will be used in the greeting banner.
+.It Ic max-message-size Ar n
+Specify a maximum message size of
+.Ar n
+bytes.
+The argument may contain a multiplier, as documented in
+.Xr scan_scaled 3 .
+The default maximum message size is 35MB if none is specified.
+.It Xo
+.Ic queue
+.Ic compression Op Ar gzip
+.Xc
+Enable transparent deflating and inflating of all envelopes
+and messages.
+The only supported algorithm at the moment is gzip.
+Envelopes and messages may be inspected using
+.Xr gzcat 1 .
+.It Xo
+.Ic table Ar name
+.Ar [type:]config
+.Xc
+Tables are used to provide additional configuration information for
+.Xr smtpd 8
+in the form of lists or key-value mappings.
+.Pp
+The table is identified using table name
+.Ar name ;
+the name itself is arbitrarily chosen.
+.Pp
+.Ar type
+specifies the table backend,
+and should be one of the following:
+.Pp
+.Bl -tag -width "fileXXX" -compact
+.It db
+Information is stored in a file created using
+.Xr makemap 8 .
+.It file
+Information is stored in a plain text file using the
+same format as used to generate
+.Xr makemap 8
+mappings.
+This is the default.
+.El
+.Pp
+.Ar config
+specifies a configuration file for the table data.
+It must be an absolute path to a file for the
+.Dq file
+and
+.Dq db
+table types.
+.It Xo
+.Ic table Ar name
+.Ic { Ar value
+.Op , Ar value_n
+.Ic }
+.Xc
+Tables containing list of static values may be declared
+using an inlined notation.
+.Pp
+The table is identified using table name
+.Ar name ;
+the name itself is arbitrarily chosen.
+.Pp
+The table must contain at least one value and may declare many values as a
+list of comma separated strings.
+.It Xo
+.Ic table Ar name
+.Ic { Ar key => value
+.Op , key_n => value_n
+.Ic }
+.Xc
+Tables containing static key-value mappings may be declared
+using an inlined notation.
+.Pp
+The table is identified using table name
+.Ar name ;
+the name itself is arbitrarily chosen.
+.Pp
+The table must contain at least one key-value mapping and may declare
+many mappings as a list of comma separated
+.Ar key => value
+descriptions.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
