@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd-users.5,v 1.4 2012/09/21 09:03:32 jmc Exp $
+.\"	$OpenBSD: npppd-users.5,v 1.5 2013/02/08 12:04:15 yasuoka Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: September 21 2012 $
+.Dd $Mdocdate: February 8 2013 $
 .Dt NPPPD-USERS 5
 .Os
 .Sh NAME
@@ -59,3 +59,7 @@ hana:\\
 .Xr getcap 3 ,
 .Xr npppd.conf 5 ,
 .Xr npppd 8
+.Sh BUGS
+Colon
+.Pq Sq \&:
+characters cannot be used in username or password.
