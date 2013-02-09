@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.107 2012/11/29 21:10:32 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.108 2013/02/09 19:15:18 sthen Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1093,6 +1093,7 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, SIS_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_hardmtu = 1518; /* determined experimentally on DP83815 */
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
