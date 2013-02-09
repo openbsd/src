@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.28 2010/03/16 17:23:09 miod Exp $
+dnl	$OpenBSD: install,v 1.29 2013/02/09 19:48:37 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -169,7 +169,7 @@ the default value of 001F0000). The "Boot File Name" must match the name
 of the netboot file on the server (copying it as "netboot.mvme88k" or
 "tftpboot.mvme88k" is usually a wise choice). Finally, "Argument File Name"
 needs to be set to the kernel name: "bsd.rd" in order to boot the
-installation miniroot, or "bsd" for the regular kernel.
+installation kernel, or "bsd" for the regular kernel.
 
 Here are acceptable values for a 187 card using the built-in controller:
 

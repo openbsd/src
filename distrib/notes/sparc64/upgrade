@@ -1,2 +1,2 @@
-dnl	$OpenBSD: upgrade,v 1.12 2005/08/09 16:48:11 deraadt Exp $
-OpenBSDUpgrade({:-CD-ROM, the miniroot, or an installation floppy-:})
+dnl	$OpenBSD: upgrade,v 1.13 2013/02/09 19:48:37 miod Exp $
+OpenBSDUpgrade({:-CD-ROM, bsd.rd, the miniroot, or an installation floppy-:})
