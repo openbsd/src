@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2011/11/19 16:15:11 mpi Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2013/02/09 20:38:44 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ get_alt_bootdev(char *dev, size_t devsz, char *line, size_t linesz)
 	len = p - line + 1; /* str len plus nil */
 	strlcpy(dev, line, len > devsz ? devsz : len);
 
-	strlcpy(line, p+1, linesz); /* rest of string ater ':' */
+	strlcpy(line, p+1, linesz); /* rest of string after ':' */
 }
 
 
