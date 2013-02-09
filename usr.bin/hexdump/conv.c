@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.8 2009/10/27 23:59:39 deraadt Exp $	*/
+/*	$OpenBSD: conv.c,v 1.9 2013/02/09 02:46:03 krw Exp $	*/
 /*	$NetBSD: conv.c,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ conv_u(PR *pr, u_char *p)
 	static const char *list[] = {
 		"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",
 		 "bs",  "ht",  "lf",  "vt",  "ff",  "cr",  "so",  "si",
-		"dle", "dcl", "dc2", "dc3", "dc4", "nak", "syn", "etb",
+		"dle", "dc1", "dc2", "dc3", "dc4", "nak", "syn", "etb",
 		"can",  "em", "sub", "esc",  "fs",  "gs",  "rs",  "us",
 	};
 
