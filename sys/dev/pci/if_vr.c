@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.126 2013/01/28 02:57:02 dtucker Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.127 2013/02/09 19:17:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -164,6 +164,7 @@ int vr_alloc_mbuf(struct vr_softc *, struct vr_chain_onefrag *);
 #define	VR_Q_CAM		(1<<2)
 #define	VR_Q_HWTAG		(1<<3)
 #define	VR_Q_INTDISABLE		(1<<4)
+#define	VR_Q_BABYJUMBO		(1<<5) /* others may work too */
 
 struct vr_type {
 	pci_vendor_id_t		vr_vid;
@@ -175,11 +176,12 @@ struct vr_type {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
 	    VR_Q_NEEDALIGN },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2,
-	    0 },
+	    VR_Q_BABYJUMBO },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
-	    0 },
+	    VR_Q_BABYJUMBO },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
-	    VR_Q_CSUM | VR_Q_CAM | VR_Q_HWTAG | VR_Q_INTDISABLE },
+	    VR_Q_CSUM | VR_Q_CAM | VR_Q_HWTAG | VR_Q_INTDISABLE |
+	    VR_Q_BABYJUMBO },
 	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
 	    VR_Q_NEEDALIGN },
 	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
@@ -630,6 +632,9 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = vr_ioctl;
 	ifp->if_start = vr_start;
 	ifp->if_watchdog = vr_watchdog;
+	if (sc->vr_quirks & VR_Q_BABYJUMBO)
+		ifp->if_hardmtu = VR_RXLEN_BABYJUMBO -
+		    ETHER_HDR_LEN - ETHER_CRC_LEN;
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -1745,7 +1750,10 @@ vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r)
 	r->vr_mbuf = m;
 	d = r->vr_ptr;
 	d->vr_data = htole32(r->vr_map->dm_segs[0].ds_addr);
-	d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
+	if (sc->vr_quirks & VR_Q_BABYJUMBO)
+		d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN_BABYJUMBO);
+	else
+		d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap.vrm_map, 0,
 	    sc->sc_listmap.vrm_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
