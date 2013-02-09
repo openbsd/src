@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.21 2012/06/21 01:00:36 deraadt Exp $
+dnl	$OpenBSD: install,v 1.22 2013/02/09 19:47:09 miod Exp $
 dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -8,18 +8,18 @@ from either network, tape or CD-ROM.
 
 Booting from Tape or CD-ROM installation media:
 
-You can burn a bootable CD-ROM and boot from it or you can prepare an
-installation tape as described in the "Creating an installation tape"
-section earlier.
-To boot from SCSI CD-ROM, simply insert the CD into the drive before power
-up, then during the computer's self-test cycle, press the space bar.
-Subsequently at the PROM prompt issue a command:
+  You can burn a bootable CD-ROM and boot from it or you can prepare an
+  installation tape as described in the "Creating an installation tape"
+  section earlier.
+  To boot from SCSI CD-ROM, simply insert the CD into the drive before power
+  up, then during the computer's self-test cycle, press the space bar.
+  Subsequently at the PROM prompt issue a command:
 
 	BOOT_ADMIN> search
 
-to initiate a search for all bootable devices available.  This procedure
-may take a few minutes and should you have configured network boot services
-present may find those too.  A sample output might be:
+  to initiate a search for all bootable devices available.  This procedure
+  may take a few minutes and should you have configured network boot services
+  present may find those too.  A sample output might be:
 
    Path Number        Device Path              Device Type
    -----------        -----------------        -----------
@@ -29,34 +29,34 @@ present may find those too.  A sample output might be:
    P3                 FWSCSI.0.0               SEAGATE ST318436LW
    P4                 SESCSI.6.0               HP     HP35480A
 
-To boot from your CD-ROM type:
+  To boot from your CD-ROM type:
 
 	BOOT_ADMIN> boot p0
 
-To boot from your tape type:
+  To boot from your tape type:
 
 	BOOT_ADMIN> boot p4
 
 
 Booting from Network:
 
-In order to bootstrap via the network, you must provide a second system to
-act as a boot server. It is convenient if this is a second OpenBSD machine
-as the necessary services are already installed, although source code for
-such programs as dhcpd can be found in OpenBSD's source tree, and should be
-reasonably portable to other UN*X-like operating systems. More information
-on diskless booting can be found in the OpenBSD diskless(8) manual page.
+  In order to bootstrap via the network, you must provide a second system to
+  act as a boot server. It is convenient if this is a second OpenBSD machine
+  as the necessary services are already installed, although source code for
+  such programs as dhcpd can be found in OpenBSD's source tree, and should be
+  reasonably portable to other UN*X-like operating systems. More information
+  on diskless booting can be found in the OpenBSD diskless(8) manual page.
 
-Your MACHINE expects to be able to download a so-called LIF (``Logical
-Interchange Format'') image, containing both the boot code and the kernel,
-via the HP rboot protocol, for older firmware, or via the bootp protocol,
-for more recent firmware.
+  Your MACHINE expects to be able to download a so-called LIF (``Logical
+  Interchange Format'') image, containing both the boot code and the kernel,
+  via the HP rboot protocol, for older firmware, or via the bootp protocol,
+  for more recent firmware.
 
-Old firmware operation
+  Old firmware operation
 
-Models such as 7[035]5, 715/33/50/75, 725/50/75 have an older version
-of PDC. There are two levels of interactive commands in this version.
-The first level is a short menu:
+    Models such as 7[035]5, 715/33/50/75, 725/50/75 have an older version
+    of PDC. There are two levels of interactive commands in this version.
+    The first level is a short menu:
 
 	b)   Boot from specified device
 	s)   Search for bootable device
@@ -65,25 +65,26 @@ The first level is a short menu:
 
 	Select from menu:
 
-In this case, you will need to setup rbootd on the server. Start by creating
-an /etc/rbootd.conf file on the bootserver. The format of this file is the
-ethernet address followed by the LIF filename. Here is an example:
+    In this case, you will need to setup rbootd on the server. Start by
+    creating an /etc/rbootd.conf file on the bootserver. The format of this
+    file is the ethernet address followed by the LIF filename. Here is an
+    example:
 
 	08:00:09:70:c4:11		lif{:--:}OSrev.fs
 
-Then start rbootd (or configure /etc/rc.conf to always start rbootd). Once
-rbootd is running, the server name will then appear on the MACHINE as part of
-the possible boot choices in a boot device search (``s'' command).
+    Then start rbootd (or configure /etc/rc.conf to always start rbootd). Once
+    rbootd is running, the server name will then appear on the MACHINE as part
+    of the possible boot choices in a boot device search (``s'' command).
 
-Modern firmware operation
+  Modern firmware operation
 
-More recent machines mostly those based on the 7100LC, 7200 and 7300LC CPU
-types have a different PDC version.  There is only one interactive mode,
-with a BOOT_ADMIN> prompt, which provides both boot settings and commands.
+    More recent machines mostly those based on the 7100LC, 7200 and 7300LC CPU
+    types have a different PDC version.  There is only one interactive mode,
+    with a BOOT_ADMIN> prompt, which provides both boot settings and commands.
 
-In this case, you will need to set up dhcpd on the server, which can
-serve bootp protocol requests.  Start by editing the /etc/dhcpd.conf on
-the bootserver, and declare an information block. Here is an example:
+    In this case, you will need to set up dhcpd on the server, which can
+    serve bootp protocol requests.  Start by editing the /etc/dhcpd.conf on
+    the bootserver, and declare an information block. Here is an example:
 
 	subnet 10.0.0.0 netmask 255.0.0.0 {
 		host boron {
@@ -93,16 +94,17 @@ the bootserver, and declare an information block. Here is an example:
 		}
 	}
 
-Do not forget to enable dhcpd.
+    Do not forget to enable dhcpd.
 
-You will also need to enable tftpd, for the MACHINE to download the
-miniroot (bf entry) from the server in the /tftpboot (td entry) directory.
+    You will also need to enable tftpd, for the MACHINE to download the
+    installation kernel (`filename' entry) from the server in its tftp
+    directory.
 
-Common operation
+  Common operation
 
-You are now ready to bootstrap the miniroot. On your MACHINE, escape to a
-prompt and boot from the network by entering ``boot lan isl''. On old PDC
-firmware, you will need to enter administration mode first.
+    You are now ready to bootstrap the installation kernel. On your machine,
+    escape to a prompt and boot from the network by entering ``boot lan isl''.
+    On old PDC firmware, you will need to enter administration mode first.
 
 
 Installing using the netboot procedure:
@@ -111,7 +113,7 @@ OpenBSDInstallPart2
 
 	Boot your machine from the installation media as described above.
 
-	It will take a while to load the miniroot image, especially from
+	It will take a while to load the installation kernel, especially from
 	a slow network connection or a CD-ROM, most likely more than a minute.
 	If some action doesn't eventually happen, or the spinning cursor
 	has stopped and nothing further has happened, either your boot
