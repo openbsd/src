@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.2 2011/09/20 22:02:13 miod Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.3 2013/02/09 20:52:12 miod Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.2 2001/08/25 14:45:59 bjh21 Exp $	*/
 
 /*
@@ -11,7 +11,7 @@
  * NOTE: The internal structure of a jmp_buf is *PRIVATE*
  *       This information is provided as there is software
  *       that fiddles with this with obtain the stack pointer
- *	 (yes really ! and its commercial !).
+ *	 (yes really ! and it's commercial !).
  *
  * Description of the setjmp buffer
  *
@@ -39,12 +39,12 @@
  *
  * The magic number number identifies the jmp_buf and
  * how the buffer was created as well as providing
- * a sanity check
+ * a sanity check.
  *
- * A side note I should mention - Please do not tamper
+ * A side note I should mention - please do not tamper
  * with the floating point fields. While they are
  * always saved and restored at the moment this cannot
- * be garenteed especially if the compiler happens
+ * be guaranteed especially if the compiler happens
  * to be generating soft-float code so no fp
  * registers will be used.
  *
