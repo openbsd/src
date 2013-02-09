@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.12 2012/09/11 15:44:15 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.13 2013/02/09 19:20:39 miod Exp $	*/
 /*	$NetBSD: exec.h,v 1.1 1995/02/13 23:07:37 cgd Exp $	*/
 
 /*
@@ -30,8 +30,6 @@
 
 #ifndef _MACHINE_EXEC_H_
 #define	_MACHINE_EXEC_H_
-
-#define cpu_exec_aout_makecmds(p, epp)	ENOEXEC
 
 /* Size of a page in an object file. */
 #define	__LDPGSZ	8192

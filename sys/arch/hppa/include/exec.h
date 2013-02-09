@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.11 2012/09/11 15:44:17 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.12 2013/02/09 19:20:39 miod Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -26,8 +26,6 @@
 #ifndef	_MACHINE_EXEC_H_
 #define	_MACHINE_EXEC_H_
 
-#define cpu_exec_aout_makecmds(p, epp)  ENOEXEC
-
 /* Size of a page in an object file. */
 #define	__LDPGSZ	4096
 
@@ -41,7 +39,7 @@
 #define	_KERN_DO_ELF
 
 /*
- * the following MD ELF values defenitions are from the:
+ * the following MD ELF values definitions are from the:
  * "Processor-Specific ELF Supplement for PA-RISC.
  *  Including HP and HP-UX Extensions. Version 1.43. October 6, 1997"
  *	http://devrsrc1.external.hp.com/STK/partner/elf-pa.pdf

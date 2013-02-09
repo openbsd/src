@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.15 2012/09/11 15:44:18 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.16 2013/02/09 19:20:39 miod Exp $	*/
 /*	$NetBSD: exec.h,v 1.7 1994/11/20 20:53:02 deraadt Exp $ */
 
 /*
@@ -33,32 +33,6 @@
 
 #define __LDPGSZ	8192	/* linker page size */
 
-#ifndef __ELF__
-enum reloc_type {
-	RELOC_8,	RELOC_16, 	RELOC_32,
-	RELOC_DISP8,	RELOC_DISP16,	RELOC_DISP32,
-	RELOC_WDISP30,	RELOC_WDISP22,
-	RELOC_HI22,	RELOC_22,
-	RELOC_13,	RELOC_LO10,
-	RELOC_UNUSED1,	RELOC_UNUSED2,
-	RELOC_BASE10,	RELOC_BASE13,	RELOC_BASE22,
-	RELOC_PC10,	RELOC_PC22,
-	RELOC_JMP_TBL,
-	RELOC_UNUSED3,
-	RELOC_GLOB_DAT,	RELOC_JMP_SLOT,	RELOC_RELATIVE
-};
-
-/* Relocation format. */
-struct relocation_info_sparc {
-	int r_address;			/* offset in text or data segment */
-	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
-			r_extern :  1,	/* 1 if need to add symbol to value */
-				 :  2;	/* unused bits */
-	enum reloc_type r_type   :  5;	/* relocation type time copy */
-	long r_addend;			/* relocation addend */
-};
-#define relocation_info	relocation_info_sparc
-#else
 #define R_SPARC_NONE		0
 #define R_SPARC_8		1
 #define R_SPARC_16		2
@@ -113,7 +87,6 @@ struct relocation_info_sparc {
 #define R_SPARC_TLS_TPOFF64	79
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)
-#endif
 
 #define ARCH_ELFSIZE		32
 
@@ -123,9 +96,6 @@ struct relocation_info_sparc {
 
 #define	_NLIST_DO_AOUT
 #define	_NLIST_DO_ELF
-
-#define cpu_exec_aout_makecmds(p, epp)  (ENOEXEC)
-
 
 #define _KERN_DO_ELF
 
