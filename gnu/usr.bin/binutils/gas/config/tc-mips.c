@@ -33,6 +33,7 @@
 #include "opcode/mips.h"
 #include "itbl-ops.h"
 #include "dwarf2dbg.h"
+#include "dw2gencfi.h"
 
 #ifdef DEBUG
 #define DBG(x) printf x
@@ -14588,6 +14589,13 @@ mips_dwarf2_addr_size (void)
     return 8;
   else
     return 4;
+}
+
+/* Standard calling conventions leave the CFA at SP on entry.  */
+void
+mips_cfi_frame_initial_instructions (void)
+{
+  cfi_add_CFA_def_cfa_register (SP);
 }
 
 int
