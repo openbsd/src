@@ -56,8 +56,8 @@ int skip_evaluation;
 enum attrs {A_PACKED, A_NOCOMMON, A_COMMON, A_NORETURN, A_CONST, A_T_UNION,
 	    A_NO_CHECK_MEMORY_USAGE, A_NO_INSTRUMENT_FUNCTION,
 	    A_CONSTRUCTOR, A_DESTRUCTOR, A_MODE, A_SECTION, A_ALIGNED,
-	    A_UNUSED, A_FORMAT, A_FORMAT_ARG, A_WEAK, A_ALIAS, A_NONNULL,
-	    A_SENTINEL, A_BOUNDED};
+	    A_USED, A_UNUSED, A_FORMAT, A_FORMAT_ARG, A_WEAK, A_ALIAS,
+	    A_NONNULL, A_SENTINEL, A_BOUNDED};
 
 enum format_type { printf_format_type, scanf_format_type,
 		   strftime_format_type, syslog_format_type,
@@ -385,6 +385,7 @@ init_attributes ()
   add_attribute (A_COMMON, "common", 0, 0, 1);
   add_attribute (A_NORETURN, "noreturn", 0, 0, 1);
   add_attribute (A_NORETURN, "volatile", 0, 0, 1);
+  add_attribute (A_USED, "used", 0, 0, 1);
   add_attribute (A_UNUSED, "unused", 0, 0, 0);
   add_attribute (A_CONST, "const", 0, 0, 1);
   add_attribute (A_T_UNION, "transparent_union", 0, 0, 0);
@@ -565,6 +566,15 @@ decl_attributes (node, attributes, prefix_attributes)
 	      = build_pointer_type
 		(build_type_variant (TREE_TYPE (type),
 				     TREE_READONLY (TREE_TYPE (type)), 1));
+	  else
+	    warning ("`%s' attribute ignored", IDENTIFIER_POINTER (name));
+	  break;
+
+	case A_USED:
+	  if (TREE_CODE (decl) == FUNCTION_DECL
+	      || (TREE_CODE (decl) == VAR_DECL && TREE_STATIC (node)))
+	    TREE_SYMBOL_REFERENCED (DECL_ASSEMBLER_NAME (node))
+	      = TREE_USED (decl) = 1;
 	  else
 	    warning ("`%s' attribute ignored", IDENTIFIER_POINTER (name));
 	  break;
