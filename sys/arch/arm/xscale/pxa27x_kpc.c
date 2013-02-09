@@ -1,3 +1,4 @@
+/*	$OpenBSD: pxa27x_kpc.c,v 1.2 2013/02/09 20:36:14 miod Exp $	*/
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
  *
@@ -66,6 +67,7 @@ int
 pxa27x_kpc_match(void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
+
 	if (pxa->pxa_addr != PXA2X0_KPC_BASE)
 		return 0;	/* Wrong device */
 
@@ -130,6 +132,7 @@ pxa27x_kpc_submit(struct pxa27x_kpc_softc *sc, int event)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	u_char key;
+
 	if (sc->sc_rawkbd) {
 		key = sc->sc_key;
 		if (event == WSCONS_EVENT_KEY_DOWN)
@@ -137,7 +140,7 @@ pxa27x_kpc_submit(struct pxa27x_kpc_softc *sc, int event)
 		wskbd_rawinput(sc->sc_wskbddev, &key, 1);
 	} else
 #endif
-	wskbd_input(sc->sc_wskbddev, event, sc->sc_key);
+		wskbd_input(sc->sc_wskbddev, event, sc->sc_key);
 }
 
 int
