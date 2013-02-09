@@ -653,6 +653,7 @@
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/re
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/re/re.so
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/sdbm
+./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/sdbm/extralibs.ld
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/threads
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/threads/shared
 ./usr/libdata/perl5/m88k-openbsd/5.12.2/auto/threads/shared/shared.so
