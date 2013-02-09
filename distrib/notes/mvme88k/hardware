@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.14 2009/03/07 15:27:41 miod Exp $
+dnl	$OpenBSD: hardware,v 1.15 2013/02/09 20:33:11 miod Exp $
 OpenBSD/MACHINE OSREV runs on the systems built around the following
 MVME boards:
 
@@ -15,9 +15,11 @@ OpenBSD/MACHINE OSREV supports MVME188 and MVME197DP SMP (Symmetrical
 MultiProcessor) systems.  To support SMP operation, a separate SMP kernel
 (bsd.mp) is included with the installation file sets.
 
-The minimal configuration requires 16MB of RAM and ~250MB of disk space.
-To install the entire system requires much more disk space, and to
-compile the system, more RAM is recommended.
+The minimal configuration requires 16MB of RAM and at least 200MB of disk
+space, by installing only the `base' and `etc' sets. To install the entire
+system, at least 650MB is required, and to compile the system, more RAM is
+recommended.  Note that until you have at least 32MB of RAM, getting more
+RAM is more important than getting a faster CPU board.
 
 Supported HYPERmodules: (for MVME188 systems)
 

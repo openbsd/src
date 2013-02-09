@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.155 2013/01/05 05:31:08 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.156 2013/02/09 20:33:11 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -88,9 +88,9 @@ OpenBSD/MACHINE OSREV supports SMP (Symmetrical MultiProcessor)
 systems.  To support SMP operation, a separate SMP kernel (bsd.mp) is
 included with the installation file sets.
 
-The minimal configuration requires 32MB of RAM and ~160MB of disk space.
-To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.
+The minimal configuration requires 32MB of RAM and at least 250MB of disk
+space, by installing only the `base' and `etc' sets. To install the entire
+system, at least 650MB is required.
 
 Supported devices {:-include-:}:
 	SCSI Host Adapters:
