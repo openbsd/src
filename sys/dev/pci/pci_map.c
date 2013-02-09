@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.29 2010/09/06 12:30:35 kettenis Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.30 2013/02/09 20:43:33 miod Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -249,11 +249,8 @@ obsd_pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	}
 	if (flagsp != 0)
 		*flagsp =
-#ifdef BUS_SPACE_MAP_PREFETCHABLE
 		    PCI_MAPREG_MEM_PREFETCHABLE(address) ?
-		      BUS_SPACE_MAP_PREFETCHABLE :
-#endif
-		  0;
+		      BUS_SPACE_MAP_PREFETCHABLE : 0;
 
 	return (0);
 }

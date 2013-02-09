@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.97 2012/10/08 21:47:50 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.98 2013/02/09 20:43:33 miod Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -820,13 +820,11 @@ pci_reserve_resources(struct pci_attach_args *pa)
 		switch (type) {
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-#ifdef BUS_SPACE_MAP_PREFETCHABLE
 			if (ISSET(flags, BUS_SPACE_MAP_PREFETCHABLE) &&
 			    pa->pa_pmemex && extent_alloc_region(pa->pa_pmemex,
 			    base, size, EX_NOWAIT) == 0) {
 				break;
 			}
-#endif
 			if (pa->pa_memex && extent_alloc_region(pa->pa_memex,
 			    base, size, EX_NOWAIT)) {
 				printf("%d:%d:%d: mem address conflict 0x%x/0x%x\n",
