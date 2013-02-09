@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.112 2012/12/24 19:43:11 guenther Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.113 2013/02/09 20:56:35 miod Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -138,9 +138,10 @@ void	pool_large_free_ni(struct pool *, void *);
 
 
 #ifdef DDB
-void	 pool_print_pagelist(struct pool_pagelist *,
-	    int (*)(const char *, ...));
-void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...));
+void	 pool_print_pagelist(struct pool_pagelist *, int (*)(const char *, ...)
+	    __attribute__((__format__(__kprintf__,1,2))));
+void	 pool_print1(struct pool *, const char *, int (*)(const char *, ...)
+	    __attribute__((__format__(__kprintf__,1,2))));
 #endif
 
 #define pool_sleep(pl) msleep(pl, &pl->pr_mtx, PSWP, pl->pr_wchan, 0)
@@ -637,7 +638,7 @@ startover:
 		    i < pp->pr_size / sizeof(int); i++) {
 			if (ip[i] != ph->ph_magic) {
 				panic("pool_do_get(%s): free list modified: "
-				    "page %p; item addr %p; offset 0x%x=0x%x",
+				    "page %p; item addr %p; offset 0x%zx=0x%x",
 				    pp->pr_wchan, ph->ph_page, pi,
 				    i * sizeof(int), ip[i]);
 			}
@@ -1121,13 +1122,15 @@ pool_reclaim_all(void)
  * Diagnostic helpers.
  */
 void
-pool_printit(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
+pool_printit(struct pool *pp, const char *modif,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	pool_print1(pp, modif, pr);
 }
 
 void
-pool_print_pagelist(struct pool_pagelist *pl, int (*pr)(const char *, ...))
+pool_print_pagelist(struct pool_pagelist *pl,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct pool_item_header *ph;
 #ifdef DIAGNOSTIC
@@ -1149,7 +1152,8 @@ pool_print_pagelist(struct pool_pagelist *pl, int (*pr)(const char *, ...))
 }
 
 void
-pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
+pool_print1(struct pool *pp, const char *modif,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct pool_item_header *ph;
 	int print_pagelist = 0;
@@ -1223,12 +1227,12 @@ db_show_all_pools(db_expr_t expr, int haddr, db_expr_t count, char *modif)
 		    "Maxpg",
 		    "Idle");
 	else
-		db_printf("%-10s %18s %18s\n",
+		db_printf("%-12s %18s %18s\n",
 		    "Name", "Address", "Allocator");
 
 	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
 		if (mode == 'a') {
-			db_printf("%-10s %18p %18p\n", pp->pr_wchan, pp,
+			db_printf("%-12s %18p %18p\n", pp->pr_wchan, pp,
 			    pp->pr_alloc);
 			continue;
 		}
@@ -1311,7 +1315,7 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 				if (ip[i] != ph->ph_magic) {
 					printf("pool(%s): free list modified: "
 					    "page %p; item ordinal %d; addr %p "
-					    "(p %p); offset 0x%x=0x%x\n",
+					    "(p %p); offset 0x%zx=0x%x\n",
 					    pp->pr_wchan, ph->ph_page, n, pi,
 					    page, i * sizeof(int), ip[i]);
 				}
@@ -1367,8 +1371,9 @@ pool_chk(struct pool *pp)
 
 #ifdef DDB
 void
-pool_walk(struct pool *pp, int full, int (*pr)(const char *, ...),
-    void (*func)(void *, int, int (*)(const char *, ...)))
+pool_walk(struct pool *pp, int full,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))),
+    void (*func)(void *, int, int (*)(const char *, ...) __attribute__((__format__(__kprintf__,1,2)))))
 {
 	struct pool_item_header *ph;
 	struct pool_item *pi;

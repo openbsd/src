@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.92 2012/03/30 23:03:42 pirofti Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.93 2013/02/09 20:56:35 miod Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -328,11 +328,11 @@ malloc(unsigned long size, int type, int flags)
 		vm_map_unlock(kmem_map);
 
 		if (!rv)  {
-			printf("%s %d of object %p size 0x%lx %s %s"
+			printf("%s %zd of object %p size 0x%lx %s %s"
 			    " (invalid addr %p)\n",
 			    "Data modified on freelist: word", 
 			    (int32_t *)&kbp->kb_next - (int32_t *)kbp, va, size,
-			    "previous type", savedtype, addr);
+			    "previous type", savedtype, (void *)addr);
 			kbp->kb_next = NULL;
 		}
 	}
@@ -355,7 +355,7 @@ malloc(unsigned long size, int type, int flags)
 		for (lp = (int32_t *)va; lp < end; lp++) {
 			if (*lp == WEIRD_ADDR)
 				continue;
-			printf("%s %d of object %p size 0x%lx %s %s"
+			printf("%s %zd of object %p size 0x%lx %s %s"
 			    " (0x%x != 0x%x)\n",
 			    "Data modified on freelist: word",
 			    lp - (int32_t *)va, va, size,
@@ -710,7 +710,8 @@ malloc_roundup(size_t sz)
 #include <ddb/db_output.h>
 
 void
-malloc_printit(int (*pr)(const char *, ...))
+malloc_printit(
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 #ifdef KMEMSTATS
 	struct kmemstats *km;

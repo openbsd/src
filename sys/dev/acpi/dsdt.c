@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.198 2013/01/18 04:07:06 pirofti Exp $ */
+/* $OpenBSD: dsdt.c,v 1.199 2013/02/09 20:56:35 miod Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2640,7 +2640,8 @@ aml_disprintf(void *arg, const char *fmt, ...)
 
 void
 aml_disasm(struct aml_scope *scope, int lvl,
-    void (*dbprintf)(void *, const char *, ...),
+    void (*dbprintf)(void *, const char *, ...)
+	    __attribute__((__format__(__kprintf__,2,3))),
     void *arg)
 {
 	int pc, opcode;

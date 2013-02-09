@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.200 2012/11/17 23:08:22 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.201 2013/02/09 20:56:35 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2150,7 +2150,8 @@ vn_isdisk(struct vnode *vp, int *errp)
 #include <ddb/db_output.h>
 
 void
-vfs_buf_print(void *b, int full, int (*pr)(const char *, ...))
+vfs_buf_print(void *b, int full,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct buf *bp = b;
 
@@ -2177,7 +2178,8 @@ const char *vtypes[] = { VTYPE_NAMES };
 const char *vtags[] = { VTAG_NAMES };
 
 void
-vfs_vnode_print(void *v, int full, int (*pr)(const char *, ...))
+vfs_vnode_print(void *v, int full,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct vnode *vp = v;
 
@@ -2186,7 +2188,7 @@ vfs_vnode_print(void *v, int full, int (*pr)(const char *, ...))
 	      vp->v_type > nitems(vtypes)? "<unk>":vtypes[vp->v_type],
 	      vp->v_type, vp->v_mount, vp->v_mountedhere);
 
-	(*pr)("data %p usecount %d writecount %ld holdcnt %ld numoutput %d\n",
+	(*pr)("data %p usecount %d writecount %d holdcnt %d numoutput %d\n",
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
 	      vp->v_holdcnt, vp->v_numoutput);
 
@@ -2210,7 +2212,8 @@ vfs_vnode_print(void *v, int full, int (*pr)(const char *, ...))
 }
 
 void
-vfs_mount_print(struct mount *mp, int full, int (*pr)(const char *, ...))
+vfs_mount_print(struct mount *mp, int full,
+    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
 {
 	struct vfsconf *vfc = mp->mnt_vfc;
 	struct vnode *vp;
