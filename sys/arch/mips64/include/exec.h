@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.5 2012/09/11 15:44:18 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.6 2013/02/09 19:25:13 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -31,17 +31,7 @@
 
 #define	__LDPGSZ	16384
 
-/*
- *  Define what exec "formats" we should handle.
- */
-#define NATIVE_ELFSIZE 64
-#define	EXEC_SCRIPT
-
-/*
- *  If included from sys/exec.h define kernels ELF format.
- */
 #define	ARCH_ELFSIZE 64
-#define DB_ELFSIZE 64
 #define ELF_TARG_CLASS  ELFCLASS64
 
 #if defined(__MIPSEB__)
@@ -55,7 +45,7 @@
 
 #define _KERN_DO_ELF64
 
-/* Information taken from MIPS ABI supplemental */
+/* Information taken from MIPS ABI supplement */
 
 /* Architecture dependent Segment types - p_type */
 #define PT_MIPS_REGINFO 0x70000000      /* Register usage information */
