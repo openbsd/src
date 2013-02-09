@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.225 2013/02/02 20:20:42 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.226 2013/02/09 23:37:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2168,13 +2168,10 @@ apply_ignore_list(char *ignore_list)
 		}
 
 		/* Avoid storing duplicate options in the list. */
-		for (j = 0; j < ix; j++) {
-			if (list[j] == i) {
-				note("Duplicate option name: '%s'", p);
-				return;
-			}
-		}
-		list[ix++] = i;
+		for (j = 0; j < ix && list[j] != i; j++)
+			;
+		if (j == ix)
+			list[ix++] = i;
 	}
 
 	config->ignored_option_count = ix;
