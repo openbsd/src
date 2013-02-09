@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.32 2012/07/10 12:58:26 halex Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.33 2013/02/09 21:21:27 millert Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 		mib[0] = CTL_MACHDEP;
 		mib[1] = CPU_LIDSUSPEND;
 		if (sysctl(mib, 2, NULL, NULL, &lidsuspend,
-		    sizeof(lidsuspend)) == -1)
+		    sizeof(lidsuspend)) == -1 && errno != EOPNOTSUPP)
 			warn("sysctl");
 	}
 #endif /* CPU_LIDSUSPEND */
