@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.158 2012/10/18 08:46:23 gerhard Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.159 2013/02/10 19:19:30 beck Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ struct vm_map_entry	*uvm_mapent_tryjoin(struct vm_map*,
 			    struct vm_map_entry*, struct uvm_map_deadq*);
 struct vm_map_entry	*uvm_map_mkentry(struct vm_map*, struct vm_map_entry*,
 			    struct vm_map_entry*, vaddr_t, vsize_t, int,
-			    struct uvm_map_deadq*);
+			    struct uvm_map_deadq*, struct vm_map_entry*);
 struct vm_map_entry	*uvm_mapent_alloc(struct vm_map*, int);
 void			 uvm_mapent_free(struct vm_map_entry*);
 void			 uvm_unmap_kill_entry(struct vm_map*,
@@ -961,7 +961,7 @@ int
 uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
     struct uvm_object *uobj, voff_t uoffset, vsize_t align, uvm_flag_t flags)
 {
-	struct vm_map_entry	*first, *last, *entry;
+	struct vm_map_entry	*first, *last, *entry, *new;
 	struct uvm_map_deadq	 dead;
 	vm_prot_t		 prot;
 	vm_prot_t		 maxprot;
@@ -1037,9 +1037,20 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	if ((prot & maxprot) != prot)
 		return EACCES;
 
+	/*
+	 * Before grabbing the lock, allocate a map entry for later
+	 * use to ensure we don't wait for memory while holding the
+	 * vm_map_lock.
+	 */
+	new = uvm_mapent_alloc(map, flags);
+	if (new == NULL)
+		return(ENOMEM);
+
 	if (flags & UVM_FLAG_TRYLOCK) {
-		if (vm_map_lock_try(map) == FALSE)
-			return EFAULT;
+		if (vm_map_lock_try(map) == FALSE) {
+			error = EFAULT;
+			goto out;
+		}
 	} else
 		vm_map_lock(map);
 
@@ -1147,11 +1158,13 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	 * Create new entry.
 	 * first and last may be invalidated after this call.
 	 */
-	entry = uvm_map_mkentry(map, first, last, *addr, sz, flags, &dead);
+	entry = uvm_map_mkentry(map, first, last, *addr, sz, flags, &dead,
+	    new);
 	if (entry == NULL) {
 		error = ENOMEM;
 		goto unlock;
 	}
+	new = NULL;
 	KDASSERT(entry->start == *addr && entry->end == *addr + sz);
 	entry->object.uvm_obj = uobj;
 	entry->offset = uoffset;
@@ -1209,6 +1222,9 @@ unlock:
 	 * destroy free-space entries.
 	 */
 	uvm_unmap_detach(&dead, 0);
+out:
+	if (new)
+		uvm_mapent_free(new);
 	return error;
 }
 
@@ -1407,7 +1423,7 @@ uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 struct vm_map_entry*
 uvm_map_mkentry(struct vm_map *map, struct vm_map_entry *first,
     struct vm_map_entry *last, vaddr_t addr, vsize_t sz, int flags,
-    struct uvm_map_deadq *dead)
+    struct uvm_map_deadq *dead, struct vm_map_entry *new)
 {
 	struct vm_map_entry *entry, *prev;
 	struct uvm_addr_state *free;
@@ -1430,7 +1446,10 @@ uvm_map_mkentry(struct vm_map *map, struct vm_map_entry *first,
 	/*
 	 * Initialize new entry.
 	 */
-	entry = uvm_mapent_alloc(map, flags);
+	if (new == NULL)
+		entry = uvm_mapent_alloc(map, flags);
+	else
+		entry = new;
 	if (entry == NULL)
 		return NULL;
 	entry->offset = 0;
@@ -3283,7 +3302,7 @@ uvm_mapent_clone(struct vm_map *dstmap, vaddr_t dstaddr, vsize_t dstlen,
 		    "entry in empty map");
 	}
 	new_entry = uvm_map_mkentry(dstmap, first, last,
-	    dstaddr, dstlen, mapent_flags, dead);
+	    dstaddr, dstlen, mapent_flags, dead, NULL);
 	if (new_entry == NULL)
 		return NULL;
 	/* old_entry -> new_entry */
