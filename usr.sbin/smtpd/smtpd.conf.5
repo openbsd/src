@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.85 2013/02/10 15:23:13 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.86 2013/02/10 15:45:46 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -147,26 +147,17 @@ domain if prefixed with @.
 .Pp
 Next comes the selection based on the domain the message is sent to:
 .Bl -tag -width Ds
-.It Xo
-.Ic for any
-.Op Ic alias Aq Ar aliases
-.Xc
+.It Ic for any Op Ic alias Aq Ar aliases
 Make the rule match regardless of the domain it is sent to.
 If specified, the table
 .Ar aliases
 is used for looking up alternative destinations for all addresses.
-.It Xo
-.Ic for any
-.Ic virtual Aq Ar vmap
-.Xc
+.It Ic for any virtual Aq Ar vmap
 Make the rule match regardless of the domain it is sent to.
 The
 .Ar vmap
 table will be used as the virtual domain mapping.
-.It Xo
-.Ic for domain Ar domain
-.Op Ic alias Aq Ar aliases
-.Xc
+.It Ic for domain Ar domain Op Ic alias Aq Ar aliases
 This rule applies to mail destined for the specified
 .Ar domain .
 This parameter supports the
@@ -181,10 +172,7 @@ If specified, the table
 .Ar aliases
 is used for looking up alternative destinations for addresses in this
 .Ar domain .
-.It Xo
-.Ic for domain Aq Ar domains
-.Op Ic alias Aq Ar aliases
-.Xc
+.It Ic for domain Aq Ar domains Op Ic alias Aq Ar aliases
 This rule applies to mail destined to domains which are part of the table
 .Ar domains .
 .Pp
@@ -192,9 +180,7 @@ If specified, the table
 .Ar aliases
 is used for looking up alternative destinations for addresses in these
 .Ar domains .
-.It Xo
-.Ic for domain Ar domain Ic virtual Aq Ar users
-.Xc
+.It Ic for domain Ar domain Ic virtual Aq Ar users
 This rule applies to mail destined for the specified virtual
 .Ar domain .
 This parameter supports the
@@ -225,19 +211,13 @@ For an example of how to configure the
 .Ar users
 table, see
 .Xr makemap 8 .
-.It Xo
-.Ic for local
-.Op Ic alias Aq Ar aliases
-.Xc
+.It Ic for local Op Ic alias Aq Ar aliases
 This rule applies to mail destined to
 .Dq localhost
 and to the server's fully qualified domain name,
 as returned by
 .Xr hostname 1 .
-.It Xo
-.Ic for local
-.Ic virtual Aq Ar vmap
-.Xc
+.It Ic for local virtual Aq Ar vmap
 This rule applies to mail destined to
 .Dq localhost
 and to the server's fully qualified domain name,
@@ -543,19 +523,13 @@ bytes.
 The argument may contain a multiplier, as documented in
 .Xr scan_scaled 3 .
 The default maximum message size is 35MB if none is specified.
-.It Xo
-.Ic queue
-.Ic compression Op Ar gzip
-.Xc
+.It Ic queue compression Op Ar gzip
 Enable transparent deflating and inflating of all envelopes
 and messages.
 The only supported algorithm at the moment is gzip.
 Envelopes and messages may be inspected using
 .Xr gzcat 1 .
-.It Xo
-.Ic table Ar name
-.Oo Ar type : Oc Ns Ar config
-.Xc
+.It Ic table Ar name Oo Ar type : Oc Ns Ar config
 Tables are used to provide additional configuration information for
 .Xr smtpd 8
 in the form of lists or key-value mappings.
