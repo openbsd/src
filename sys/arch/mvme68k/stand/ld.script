@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.1 2013/02/02 13:36:06 miod Exp $	*/
+/*	$OpenBSD: ld.script,v 1.2 2013/02/10 20:27:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -39,6 +39,7 @@ SECTIONS
 	PROVIDE(end = .);
 	/DISCARD/ :
 	{
-		*(.stab*)
+		*(.debug*)
+		*(.eh_frame)
 	}
 }

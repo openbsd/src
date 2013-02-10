@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2013/01/01 17:17:44 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2013/02/10 20:27:18 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.7 1997/05/12 07:43:18 thorpej Exp $
 
 BINDIR=			/usr/mdec
@@ -8,6 +8,8 @@ RELOC=	FFF00000
 
 CFLAGS+=		-Wall -Wstrict-prototypes -Wmissing-prototypes \
 			-fno-stack-protector -msoft-float
+CFLAGS+=		-fno-builtin-printf -fno-builtin-putchar \
+			-fno-builtin-vprintf
 
 SA_CPPFLAGS+=		-DAPCICONSOLE -DDCACONSOLE -DDCMCONSOLE -DITECONSOLE
 SA_CPPFLAGS+=		-DHIL_KEYBOARD -DDOMAIN_KEYBOARD

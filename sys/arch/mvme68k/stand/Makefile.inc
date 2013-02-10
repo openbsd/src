@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2012/12/31 21:35:32 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2013/02/10 20:27:18 miod Exp $
 
 MDEC_DIR?=/usr/mdec
 CFLAGS+=-Wall -Werror -fno-stack-protector
-#CFLAGS+=-fno-builtin-printf -fno-builtin-putchar -fno-builtin-vprintf
+CFLAGS+=-fno-builtin-printf -fno-builtin-putchar -fno-builtin-vprintf
 CFLAGS+=-DHEAP_START=${HEAP_START}
 
 # Load addresses for first and second stage bootstraps
