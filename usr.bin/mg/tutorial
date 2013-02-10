@@ -145,7 +145,7 @@ You can issue insert or delete commands multiple times using C-u. For example,
 C-u 10 e will type out eeeeeeeeee, C-u 4 M-d will delete four words to the
 right of the cursor and so on.
 
-To undo any operation, you can use C-_ (That's control-underscore).
+To undo any operation, you can use C-_ (that's control-underscore).
 
 Now if you kill something that you didn't mean to, you can yank it back from
 the dead by using C-y. In general, when you kill something bigger than a single
@@ -183,7 +183,7 @@ text from the current position. At this point you can do one of the following:
 	
 	y - Replace the text at this instance and search for more items.
 	n - Skip this instance and search for more items.
-	. or Enter - Stop replacing text (You can also use C-g).
+	. or Enter - Stop replacing text (you can also use C-g).
 	! - Replace all the instances without prompting at each one.
 
 >> Try replacing "frobnitz" with "zutwalt" on this line.

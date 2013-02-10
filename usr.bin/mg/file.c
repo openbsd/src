@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.85 2012/11/27 19:46:46 jasper Exp $	*/
+/*	$OpenBSD: file.c,v 1.86 2013/02/10 15:38:18 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -259,7 +259,7 @@ readin(char *fname)
 			if (stat(dp, &statbuf) == -1 && errno == ENOENT) {
 				/* no read-only; like emacs */
 				ewprintf("Use M-x make-directory RET RET to "
-				    "create the directory and it's parents");
+				    "create the directory and its parents");
 			} else if (access(dp, W_OK) == -1 && 
 			    errno == EACCES) {
 				ewprintf("File not found and directory"
