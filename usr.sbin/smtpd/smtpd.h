@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.403 2013/02/05 15:23:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.404 2013/02/10 15:01:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -813,11 +813,6 @@ struct scheduler_info {
 	time_t			nexttry;
 };
 
-struct id_list {
-	struct id_list	*next;
-	uint64_t	 id;
-};
-
 #define SCHED_NONE		0x00
 #define SCHED_DELAY		0x01
 #define SCHED_REMOVE		0x02
@@ -830,7 +825,7 @@ struct scheduler_batch {
 	int		 type;
 	time_t		 delay;
 	size_t		 evpcount;
-	struct id_list	*evpids;
+	uint64_t	*evpids;
 };
 
 struct scheduler_backend {
