@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.104 2011/07/12 11:28:31 sthen Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.105 2013/02/10 10:47:08 markus Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -195,6 +195,7 @@ int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 int	NoDNS = 0;		/* when true, will refrain from doing DNS lookups */
+int	IncludeHostname = 0;	/* include RFC 3164 style hostnames when forwarding */
 
 char	*ctlsock_path = NULL;	/* Path to control socket */
 
@@ -289,13 +290,16 @@ main(int argc, char *argv[])
 	struct addrinfo hints, *res, *res0;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "dnuf:m:p:a:s:")) != -1)
+	while ((ch = getopt(argc, argv, "dhnuf:m:p:a:s:")) != -1)
 		switch (ch) {
 		case 'd':		/* debug */
 			Debug++;
 			break;
 		case 'f':		/* configuration file */
 			ConfFile = optarg;
+			break;
+		case 'h':		/* RFC 3164 hostnames */
+			IncludeHostname = 1;
 			break;
 		case 'm':		/* mark interval */
 			MarkInterval = atoi(optarg) * 60;
@@ -611,7 +615,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-dnu] [-a path] [-f config_file] [-m mark_interval]\n"
+	    "usage: syslogd [-dhnu] [-a path] [-f config_file] [-m mark_interval]\n"
 	    "               [-p log_socket] [-s reporting_socket]\n");
 	exit(1);
 }
@@ -888,8 +892,10 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_FORW:
 		dprintf(" %s\n", f->f_un.f_forw.f_hname);
-		if ((l = snprintf(line, sizeof(line), "<%d>%.15s %s",
+		if ((l = snprintf(line, sizeof(line), "<%d>%.15s %s%s%s",
 		    f->f_prevpri, (char *)iov[0].iov_base,
+		    IncludeHostname ? LocalHostName : "",
+		    IncludeHostname ? " " : "",
 		    (char *)iov[4].iov_base)) >= sizeof(line) || l == -1)
 			l = strlen(line);
 		if (sendto(pfd[PFD_INET].fd, line, l, 0,
