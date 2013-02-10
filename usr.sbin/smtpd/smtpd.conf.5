@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.84 2013/02/08 10:13:55 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.85 2013/02/10 15:23:13 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 8 2013 $
+.Dd $Mdocdate: February 10 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -126,7 +126,7 @@ and may be omitted.
 The rule matches if the connection is made from the specified
 .Ar network ,
 specified in CIDR notation.
-.It Ic from Ar <table>
+.It Ic from Aq Ar table
 The rule matches if the connection is made from a client whose address
 is declared in the table
 .Ar table .
@@ -149,7 +149,7 @@ Next comes the selection based on the domain the message is sent to:
 .Bl -tag -width Ds
 .It Xo
 .Ic for any
-.Op Ic alias Ar <aliases>
+.Op Ic alias Aq Ar aliases
 .Xc
 Make the rule match regardless of the domain it is sent to.
 If specified, the table
@@ -157,7 +157,7 @@ If specified, the table
 is used for looking up alternative destinations for all addresses.
 .It Xo
 .Ic for any
-.Ic virtual Ar <vmap>
+.Ic virtual Aq Ar vmap
 .Xc
 Make the rule match regardless of the domain it is sent to.
 The
@@ -165,7 +165,7 @@ The
 table will be used as the virtual domain mapping.
 .It Xo
 .Ic for domain Ar domain
-.Op Ic alias Ar <aliases>
+.Op Ic alias Aq Ar aliases
 .Xc
 This rule applies to mail destined for the specified
 .Ar domain .
@@ -182,8 +182,8 @@ If specified, the table
 is used for looking up alternative destinations for addresses in this
 .Ar domain .
 .It Xo
-.Ic for domain Ar <domains>
-.Op Ic alias Ar <aliases>
+.Ic for domain Aq Ar domains
+.Op Ic alias Aq Ar aliases
 .Xc
 This rule applies to mail destined to domains which are part of the table
 .Ar domains .
@@ -193,7 +193,7 @@ If specified, the table
 is used for looking up alternative destinations for addresses in these
 .Ar domains .
 .It Xo
-.Ic for domain Ar domain Ic virtual Ar <users>
+.Ic for domain Ar domain Ic virtual Aq Ar users
 .Xc
 This rule applies to mail destined for the specified virtual
 .Ar domain .
@@ -213,7 +213,7 @@ For an example of how to configure the
 .Ar users
 table, see
 .Xr makemap 8 .
-.It Ic for domain Ar <domains> Ic virtual Ar <users>
+.It Ic for domain Ao Ar domains Ac Ic virtual Aq Ar users
 This rule applies to mail destined for the virtual domains specified
 in the table
 .Ar domains .
@@ -227,7 +227,7 @@ table, see
 .Xr makemap 8 .
 .It Xo
 .Ic for local
-.Op Ic alias Ar <aliases>
+.Op Ic alias Aq Ar aliases
 .Xc
 This rule applies to mail destined to
 .Dq localhost
@@ -236,7 +236,7 @@ as returned by
 .Xr hostname 1 .
 .It Xo
 .Ic for local
-.Ic virtual Ar <vmap>
+.Ic virtual Aq Ar vmap
 .Xc
 This rule applies to mail destined to
 .Dq localhost
@@ -251,9 +251,7 @@ table will be used as the virtual domain mapping.
 If the method of delivery is local, a user database may be
 specified to override the system database:
 .Bl -tag -width Ds
-.It Xo
-.Op Ic users Ar <table>
-.Xc
+.It Op Ic users Aq Ar table
 Look up users in the table
 .Ar table
 instead of performing system lookups using the
@@ -343,7 +341,7 @@ when connected to the remote server.
 .Ic relay via
 .Ar host
 .Op Ic certificate Ar name
-.Op Ic auth Ar <auth>
+.Op Ic auth Aq Ar auth
 .Op Ic as Ar address
 .Op Ic source Ar source
 .Op Ic helo Ar names
@@ -430,10 +428,10 @@ when connected to the remote server.
 .Pp
 Additional per-rule adjustments available:
 .Bl -tag -width Ds
-.It Ic expire Ar n {s|m|h|d}
+.It Ic expire Ar n Brq Ar s\*(Bam\*(Bah\*(Bad
 Specify how long a message that matched this rule can stay in the queue.
 .El
-.It Ic bounce-warn Ar n {s|m|h|d} [, ...]
+.It Ic bounce-warn Ar n Bro Ar s\*(Bam\*(Bah\*(Bad Brc Bq , Ar ...
 Specify the delays for which temporary failure reports must be generated
 when messages are stuck in the queue.
 For example:
@@ -444,7 +442,7 @@ bounce-warn	1h, 6h, 2d
 will generate a failure report when an envelope is in the queue for more
 than one hour, six hours and two days.
 The default is 4h.
-.It Ic expire Ar n {s|m|h|d}
+.It Ic expire Ar n Brq Ar s\*(Bam\*(Bah\*(Bad
 Specify how long a message can stay in the queue.
 The default value is 4 days.
 For example:
@@ -556,7 +554,7 @@ Envelopes and messages may be inspected using
 .Xr gzcat 1 .
 .It Xo
 .Ic table Ar name
-.Ar [type:]config
+.Oo Ar type : Oc Ns Ar config
 .Xc
 Tables are used to provide additional configuration information for
 .Xr smtpd 8
