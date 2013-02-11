@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.48 2012/12/08 12:49:00 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.49 2013/02/11 17:05:25 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -84,6 +84,9 @@ struct cpu_info {
 
 #ifdef DIAGNOSTIC
 	int	ci_mutex_level;
+#endif
+#ifdef GPROF
+	struct gmonparam *ci_gmon;
 #endif
 };
 

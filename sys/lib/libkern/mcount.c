@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.10 2013/01/16 23:38:14 dlg Exp $	*/
+/*	$OpenBSD: mcount.c,v 1.11 2013/02/11 17:05:25 mpi Exp $	*/
 /*	$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $	*/
 
 /*-
@@ -43,13 +43,10 @@
  * _mcount updates data structures that represent traversals of the
  * program's call graph edges.  frompc and selfpc are the return
  * address and function address that represents the given call graph edge.
- * 
- * Note: the original BSD code used the same variable (frompcindex) for
- * both frompcindex and frompc.  Any reasonable, modern compiler will
- * perform this optimization.
  */
 _MCOUNT_DECL(u_long frompc, u_long selfpc) __used;
-_MCOUNT_DECL(u_long frompc, u_long selfpc)	/* _mcount; may be static, inline, etc */
+/* _mcount; may be static, inline, etc */
+_MCOUNT_DECL(u_long frompc, u_long selfpc)
 {
 	u_short *frompcindex;
 	struct tostruct *top, *prevtop;
@@ -57,9 +54,21 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)	/* _mcount; may be static, inline, et
 	long toindex;
 #ifdef _KERNEL
 	int s;
-#endif
 
+	/*
+	 * Do not profile execution if memory for the current CPU
+	 * desciptor and profiling buffers has not yet been allocated
+	 * or if the CPU we are running on has not yet set its trap
+	 * handler.
+	 */
+	if (gmoninit == 0)
+		return;
+
+	if ((p = curcpu()->ci_gmon) == NULL)
+		return;
+#else
 	p = &_gmonparam;
+#endif
 	/*
 	 * check that we are profiling
 	 * and that we aren't recursively invoked.
@@ -156,7 +165,6 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)	/* _mcount; may be static, inline, et
 			*frompcindex = toindex;
 			goto done;
 		}
-		
 	}
 done:
 #ifdef _KERNEL

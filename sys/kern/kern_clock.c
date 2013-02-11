@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.76 2012/11/05 19:39:34 miod Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.77 2013/02/11 17:05:25 mpi Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -421,8 +421,8 @@ statclock(struct clockframe *frame)
 		/*
 		 * Kernel statistics are just like addupc_intr, only easier.
 		 */
-		g = &_gmonparam;
-		if (g->state == GMON_PROF_ON) {
+		g = ci->ci_gmon;
+		if (g != NULL && g->state == GMON_PROF_ON) {
 			i = CLKF_PC(frame) - g->lowpc;
 			if (i < g->textsize) {
 				i /= HISTFRACTION * sizeof(*g->kcount);
