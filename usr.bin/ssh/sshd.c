@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.396 2012/11/04 11:09:15 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.397 2013/02/11 21:21:58 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1527,7 +1527,8 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-	debug("sshd version %.100s", SSH_VERSION);
+	debug("sshd version %s, %s", SSH_VERSION,
+	    SSLeay_version(SSLEAY_VERSION));
 
 	/* load private host keys */
 	sensitive_data.host_keys = xcalloc(options.num_host_key_files,
