@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.18 2010/08/16 14:39:21 miod Exp $
+dnl	$OpenBSD: prep,v 1.19 2013/02/11 10:09:12 jasper Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of Open Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -77,7 +77,7 @@ setenv auto-boot? false
 		(force the machine to wait at Open Firmware
 		for user input at next reboot; options are true/false)
 
-setenv boot-device ide:,ofwboot
+setenv boot-device hd:,ofwboot
 		(force the machine to boot into OpenBSD
 		automatically at next reboot)
 
