@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.47 2012/10/11 22:21:29 halex Exp $	*/
+/*	$OpenBSD: init.c,v 1.48 2013/02/11 15:52:42 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -1320,7 +1320,7 @@ nice_death(void)
 
 	if ((death_howto & RB_POWERDOWN) &&
 	    (sysctl(lidsuspend_mib, 2, NULL, NULL, &dontsuspend,
-		    sizeof(dontsuspend)) < 0))
+		    sizeof(dontsuspend)) == -1) && (errno != EOPNOTSUPP))
 			warning("cannot disable lid suspend");
 #endif
 
