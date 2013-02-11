@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.164 2013/01/15 02:03:38 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.165 2013/02/11 11:11:42 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -283,7 +283,7 @@ struct proc {
 	/* scheduling */
 	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
 	int	p_cpticks;	 /* Ticks of cpu time. */
-	fixpt_t	p_pctcpu;	 /* %cpu for this process during p_swtime */
+	fixpt_t	p_pctcpu;	 /* %cpu for this thread during p_swtime */
 	const volatile void *p_wchan;/* Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
 	const char *p_wmesg;	 /* Reason for sleep. */
