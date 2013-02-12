@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.h,v 1.5 2013/02/11 17:05:25 mpi Exp $	*/
+/*	$OpenBSD: gmon.h,v 1.6 2013/02/12 08:06:22 mpi Exp $	*/
 /*	$NetBSD: gmon.h,v 1.5 1996/04/09 20:55:30 cgd Exp $	*/
 
 /*-
@@ -115,6 +115,12 @@ struct rawarc {
 };
 
 /*
+ * general rounding functions.
+ */
+#define ROUNDDOWN(x,y)	(((x)/(y))*(y))
+#define ROUNDUP(x,y)	((((x)+(y)-1)/(y))*(y))
+
+/*
  * The profiling data structures are housed in this structure.
  */
 struct gmonparam {
@@ -131,19 +137,15 @@ struct gmonparam {
 	u_long		textsize;
 	u_long		hashfraction;
 };
-#ifdef _KERNEL
-extern int gmoninit;		/* Is the kernel ready for beeing profiled? */
-#else
 extern struct gmonparam _gmonparam;
-#endif
 
 /*
  * Possible states of profiling.
  */
-#define	GMON_PROF_OFF	0
+#define	GMON_PROF_ON	0
 #define	GMON_PROF_BUSY	1
 #define	GMON_PROF_ERROR	2
-#define	GMON_PROF_ON	3
+#define	GMON_PROF_OFF	3
 
 /*
  * Sysctl definitions for extracting profiling information from the kernel.

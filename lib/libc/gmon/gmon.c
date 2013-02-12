@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.21 2013/02/12 07:31:13 mpi Exp $ */
+/*	$OpenBSD: gmon.c,v 1.22 2013/02/12 08:06:22 mpi Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,9 +46,6 @@ struct gmonparam _gmonparam = { GMON_PROF_OFF };
 static int	s_scale;
 /* see profil(2) where this is describe (incorrectly) */
 #define		SCALE_1_TO_1	0x10000L
-
-#define ROUNDDOWN(x,y)(((x)/(y))*(y))
-#define ROUNDUP(x,y)((((x)+(y)-1)/(y))*(y))
 
 #define ERR(s) write(STDERR_FILENO, s, sizeof(s))
 

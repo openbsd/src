@@ -1,4 +1,4 @@
-.\" $OpenBSD: kgmon.8,v 1.11 2013/02/11 17:32:33 jmc Exp $
+.\" $OpenBSD: kgmon.8,v 1.12 2013/02/12 08:06:22 mpi Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -27,9 +27,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)kgmon.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: kgmon.8,v 1.11 2013/02/11 17:32:33 jmc Exp $
+.\"	$Id: kgmon.8,v 1.12 2013/02/12 08:06:22 mpi Exp $
 .\"
-.Dd $Mdocdate: February 11 2013 $
+.Dd $Mdocdate: February 12 2013 $
 .Dt KGMON 8
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Sh SYNOPSIS
 .Nm kgmon
 .Op Fl bhpr
-.Op Fl c Ar cpuid
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Sh DESCRIPTION
@@ -46,7 +45,7 @@
 is a tool used when profiling the operating system.
 When no arguments are supplied,
 .Nm kgmon
-indicates the state of per-CPU operating system profilings as
+indicates the state of operating system profiling as
 .Dq running ,
 .Dq off ,
 or
@@ -118,8 +117,10 @@ Users with only read permission on
 .Pa /dev/kmem
 cannot change the state
 of profiling collection.
-They can get profile files with the warning that the data may be inconsistent
-if profiling is in progress.
+They can get a
+.Pa gmon.out
+file with the warning that the data may be
+inconsistent if profiling is in progress.
 .Sh SEE ALSO
 .Xr gprof 1 ,
 .Xr config 8

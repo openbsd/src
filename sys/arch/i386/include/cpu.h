@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.126 2013/02/11 17:05:25 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.127 2013/02/12 08:06:22 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -148,9 +148,6 @@ struct cpu_info {
 
 	struct ksensordev	ci_sensordev;
 	struct ksensor		ci_sensor;
-#ifdef GPROF
-	struct gmonparam	*ci_gmon;
-#endif
 };
 
 /*
