@@ -124,15 +124,6 @@ __dcache_sync (addr, len)						\
   __asm __volatile ("tb0 0, %r0, 451");					\
 }
 
-/* Disable stack protector until the varargs code is fixed to interact
-   correctly with it.  */
-#undef OVERRIDE_OPTIONS
-#define OVERRIDE_OPTIONS						\
-  do {									\
-    m88k_override_options ();						\
-    flag_propolice_protection = flag_stack_protection = 0;		\
-  } while (0)
-
 #undef LINK_SPEC
 #define LINK_SPEC \
   "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} \
