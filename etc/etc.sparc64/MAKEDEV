@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.71 2012/12/19 21:10:16 kettenis Exp 
-#	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.72 2013/02/12 12:03:57 ajacoutot Exp 
+#	OpenBSD: MAKEDEV.common,v 1.61 2013/01/30 01:59:20 yasuoka Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -629,18 +629,20 @@ local)
 	;;
 
 all)
-	R vdsp0 vdsp1 vdsp2 vdsp3 vdsp4 vdsp5 vdsp6 vdsp7 ldom0 ldom1
-	R ldom2 ldom3 spds hvctl ttyV0 ttyV1 ttyV2 ttyV3 cuaa cuab
-	R cuac cuad ttya ttyb ttyc ttyd bthub0 bthub1 bthub2 bpp0 vnd0
-	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0
-	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
-	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap
-	R vscsi0 ch0 audio0 audio1 audio2 pppx hotplug ptm local
-	R wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3
-	R rmidi4 rmidi5 rmidi6 rmidi7 video0 video1 uk0 random lpa0
-	R lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0
-	R ttyh1 crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R vdsp0 vdsp1 vdsp2 vdsp3 vdsp4 vdsp5 vdsp6 vdsp7 vdsp8 vdsp9
+	R vdsp10 vdsp11 vdsp12 vdsp13 vdsp14 vdsp15 ldom0 ldom1 ldom2
+	R ldom3 ldom4 ldom5 ldom6 ldom7 spds hvctl ttyV0 ttyV1 ttyV2
+	R ttyV3 ttyV4 ttyV5 ttyV6 ttyV7 cuaa cuab cuac cuad ttya ttyb
+	R ttyc ttyd bthub0 bthub1 bthub2 bpp0 vnd0 vnd1 vnd2 vnd3 sd0
+	R sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1
+	R tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8
+	R bpf9 pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B
+	R fd0C fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 ch0 audio0
+	R audio1 audio2 pppx hotplug ptm local wscons pci0 pci1 pci2
+	R pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6
+	R rmidi7 video0 video1 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1
+	R lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1 crypto pf
+	R systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
