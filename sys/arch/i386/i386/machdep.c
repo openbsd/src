@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.519 2012/12/04 20:51:10 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.520 2013/02/13 21:21:34 martynas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3251,8 +3251,8 @@ init386(paddr_t first_avail)
 	printf("physload: ");
 #endif
 	kb = atop(KERNTEXTOFF - KERNBASE);
-	if (kb > atop(0x100000)) {
-		paddr_t lim = atop(0x100000);
+	if (kb > atop(IOM_END)) {
+		paddr_t lim = atop(IOM_END);
 #ifdef DEBUG
 		printf(" %x-%x (<16M)", lim, kb);
 #endif
