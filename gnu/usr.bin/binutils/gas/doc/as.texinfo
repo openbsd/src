@@ -3732,9 +3732,12 @@ Some machine configurations provide additional directives.
 * Line::                        @code{.line @var{line-number}}
 @end ifclear
 
-* Ln::                          @code{.ln @var{line-number}}
 * Linkonce::			@code{.linkonce [@var{type}]}
 * List::                        @code{.list}
+* Ln::                          @code{.ln @var{line-number}}
+
+* LNS directives::              @code{.file}, @code{.loc}, etc.
+
 * Long::                        @code{.long @var{expressions}}
 @ignore
 * Lsym::                        @code{.lsym @var{symbol}, @var{expression}}
@@ -4033,6 +4036,52 @@ SPARC register window has been saved.
 Allows the user to add arbitrary bytes to the unwind info.  One
 might use this to add OS-specific CFI opcodes, or generic CFI
 opcodes that GAS does not yet support.
+
+@node LNS directives
+@section @code{.file @var{fileno} @var{filename}}
+@cindex @code{file} directive
+When emitting dwarf2 line number information @code{.file} assigns filenames
+to the @code{.debug_line} file name table.  The @var{fileno} operand should
+be a unique positive integer to use as the index of the entry in the table.
+The @var{filename} operand is a C string literal.
+
+The detail of filename indicies is exposed to the user because the filename
+table is shared with the @code{.debug_info} section of the dwarf2 debugging
+information, and thus the user must know the exact indicies that table
+entries will have.
+
+@section @code{.loc @var{fileno} @var{lineno} [@var{column}] [@var{options}]}
+@cindex @code{loc} directive
+The @code{.loc} directive will add row to the @code{.debug_line} line
+number matrix corresponding to the immediately following assembly
+instruction.  The @var{fileno}, @var{lineno}, and optional @var{column}
+arguments will be applied to the @code{.debug_line} state machine before
+the row is added.
+
+The @var{options} are a sequence of the following tokens in any order:
+
+@table @code
+@item basic_block
+This option will set the @code{basic_block} register in the
+@code{.debug_line} state machine to @code{true}.
+
+@item prologue_end
+This option will set the @code{prologue_end} register in the
+@code{.debug_line} state machine to @code{true}.
+
+@item epilogue_begin
+This option will set the @code{epilogue_begin} register in the
+@code{.debug_line} state machine to @code{true}.
+
+@item is_stmt @var{value}
+This option will set the @code{is_stmt} register in the
+@code{.debug_line} state machine to @code{value}, which must be 
+either 0 or 1.
+
+@item isa @var{value}
+This directive will set the @code{isa} register in the @code{.debug_line}
+state machine to @var{value}, which must be an unsigned integer.
+@end table
 
 @node Data
 @section @code{.data @var{subsection}}
