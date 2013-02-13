@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.2 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.3 2013/02/13 14:34:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -375,10 +375,14 @@ error:
 static int
 table_db_userinfo(const char *key, char *line, size_t len, void **retp)
 {
-	struct userinfo		*userinfo;
+	struct userinfo		*userinfo = NULL;
+	char			buffer[1024];
+
+	if (! bsnprintf(buffer, sizeof buffer, "%s:%s", key, line))
+		goto error;
 
 	userinfo = xcalloc(1, sizeof *userinfo, "table_db_userinfo");
-	if (! text_to_userinfo(userinfo, line))
+	if (! text_to_userinfo(userinfo, buffer))
 	    goto error;
 	*retp = userinfo;
 	return 1;
