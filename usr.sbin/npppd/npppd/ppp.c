@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.17 2013/01/07 18:12:08 brad Exp $ */
+/*	$OpenBSD: ppp.c,v 1.18 2013/02/13 22:10:38 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.17 2013/01/07 18:12:08 brad Exp $ */
+/* $Id: ppp.c,v 1.18 2013/02/13 22:10:38 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -869,7 +869,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 
 				return 1;
 			}
-			if (MPPE_READY(_this)) {
+			if (MPPE_RECV_READY(_this)) {
 				/* MPPE is opened but naked ip packet */
 				ppp_log(_this, LOG_WARNING,
 				    "mppe is available but received naked IP.");
@@ -879,7 +879,7 @@ ppp_recv_packet(npppd_ppp *_this, unsigned char *pkt, int lpkt, int flags)
 		break;
 	case PPP_PROTO_MPPE:
 #ifdef USE_NPPPD_MPPE
-		if (_this->mppe_started == 0)  {
+		if (!MPPE_RECV_READY(_this)) {
 #else
 		{
 #endif

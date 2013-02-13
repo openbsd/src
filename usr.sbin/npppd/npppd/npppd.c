@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.26 2012/12/05 23:20:26 deraadt Exp $ */
+/*	$OpenBSD: npppd.c,v 1.27 2013/02/13 22:10:38 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.26 2012/12/05 23:20:26 deraadt Exp $
+ * $Id: npppd.c,v 1.27 2013/02/13 22:10:38 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -899,19 +899,21 @@ pipex_setup_common(npppd_ppp *ppp, struct pipex_session_req *req)
 
 #ifdef USE_NPPPD_MPPE
 	req->pr_ccp_id = ppp->ccp.fsm.id;
-	memcpy(req->pr_mppe_send.master_key,
-	    ppp->mppe.send.master_key, sizeof(req->pr_mppe_send.master_key));
-	req->pr_mppe_send.stateless = ppp->mppe.send.stateless;
-	req->pr_mppe_send.keylenbits = ppp->mppe.send.keybits;
-
-	memcpy(req->pr_mppe_recv.master_key,
-	    ppp->mppe.recv.master_key, sizeof(req->pr_mppe_recv.master_key));
-	req->pr_mppe_recv.stateless = ppp->mppe.recv.stateless;
-	req->pr_mppe_recv.keylenbits = ppp->mppe.recv.keybits;
-
-	if (ppp->mppe_started != 0) {
-		req->pr_ppp_flags |= PIPEX_PPP_MPPE_ACCEPTED;
+	if (ppp->mppe.send.keybits > 0) {
+		memcpy(req->pr_mppe_send.master_key,
+		    ppp->mppe.send.master_key,
+		    sizeof(req->pr_mppe_send.master_key));
+		req->pr_mppe_send.stateless = ppp->mppe.send.stateless;
+		req->pr_mppe_send.keylenbits = ppp->mppe.send.keybits;
 		req->pr_ppp_flags |= PIPEX_PPP_MPPE_ENABLED;
+	}
+	if (ppp->mppe.recv.keybits > 0) {
+		memcpy(req->pr_mppe_recv.master_key,
+		    ppp->mppe.recv.master_key,
+		    sizeof(req->pr_mppe_recv.master_key));
+		req->pr_mppe_recv.stateless = ppp->mppe.recv.stateless;
+		req->pr_mppe_recv.keylenbits = ppp->mppe.recv.keybits;
+		req->pr_ppp_flags |= PIPEX_PPP_MPPE_ACCEPTED;
 	}
 	if (ppp->mppe.required)
 		req->pr_ppp_flags |= PIPEX_PPP_MPPE_REQUIRED;

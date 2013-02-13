@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.14 2013/01/07 18:12:08 brad Exp $ */
+/*	$OpenBSD: ppp.h,v 1.15 2013/02/13 22:10:38 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -645,7 +645,11 @@ typedef struct _dialin_proxy_info {
 	(((ppp)->mppe.enabled != 0) && ((ppp)->mppe.required != 0))
 
 /** MPPE is ready to use */
-#define	MPPE_READY(ppp) 	((ppp)->mppe_started  != 0)
+#define	MPPE_SEND_READY(ppp)				\
+    ((ppp)->mppe_started != 0 && (ppp)->mppe.send.keybits > 0)
+#define	MPPE_RECV_READY(ppp) 				\
+    ((ppp)->mppe_started != 0 && (ppp)->mppe.recv.keybits > 0)
+
 
 /* Adapted from NetBSD:/usr/src/usr.sbin/pppd/pppd/pppd.h */
 /*

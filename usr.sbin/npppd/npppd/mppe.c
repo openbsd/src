@@ -1,4 +1,4 @@
-/*	$OpenBSD: mppe.c,v 1.9 2012/12/19 09:23:54 sthen Exp $ */
+/*	$OpenBSD: mppe.c,v 1.10 2013/02/13 22:10:38 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.9 2012/12/19 09:23:54 sthen Exp $ */
+/* $Id: mppe.c,v 1.10 2013/02/13 22:10:38 yasuoka Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -118,9 +118,6 @@ mppe_init(mppe *_this, npppd_ppp *ppp)
 		goto mppe_config_done;
 
 	_this->required = conf->mppe_required;
-
-	if (_this->required == 0)
-		goto mppe_config_done;
 
 	if (conf->mppe_keystate == (NPPPD_MPPE_STATEFUL|NPPPD_MPPE_STATELESS)) {
 		/* no need to change from default. */
@@ -230,21 +227,21 @@ mppe_start(mppe *_this)
 		_this->recv.keybits = 128;
 	}
 
-	mppe_rc4_init(_this, &_this->send, 0);
-	mppe_rc4_init(_this, &_this->recv, _this->recv.stateless);
-
-	GetNewKeyFromSHA(_this->recv.master_key, _this->recv.master_key,
-	    _this->recv.keylen, _this->recv.session_key);
-	GetNewKeyFromSHA(_this->send.master_key, _this->send.master_key,
-	    _this->send.keylen, _this->send.session_key);
-
-	mppe_reduce_key(&_this->recv);
-	mppe_reduce_key(&_this->send);
-
-	mppe_rc4_setkey(_this, &_this->recv);
-	mppe_rc4_setkey(_this, &_this->send);
+	if (_this->send.keybits > 0) {
+		mppe_rc4_init(_this, &_this->send, 0);
+		GetNewKeyFromSHA(_this->send.master_key, _this->send.master_key,
+		    _this->send.keylen, _this->send.session_key);
+		mppe_reduce_key(&_this->send);
+		mppe_rc4_setkey(_this, &_this->send);
+	}
+	if (_this->recv.keybits > 0) {
+		mppe_rc4_init(_this, &_this->recv, _this->recv.stateless);
+		GetNewKeyFromSHA(_this->recv.master_key, _this->recv.master_key,
+		    _this->recv.keylen, _this->recv.session_key);
+		mppe_reduce_key(&_this->recv);
+		mppe_rc4_setkey(_this, &_this->recv);
+	}
 }
-
 
 /**
  * creating the mppe bits. In case of first proposal, it specifies the

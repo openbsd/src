@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd_iface.c,v 1.8 2013/02/13 22:10:38 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.7 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.8 2013/02/13 22:10:38 yasuoka Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4) or pppx(4).
@@ -467,7 +467,7 @@ npppd_iface_network_input_delegate(struct radish *radish, void *args0)
 		if (ppp_iface(ppp) != args->_this)
 			return 0;
 #ifdef	USE_NPPPD_MPPE
-		if (MPPE_READY(ppp)) {
+		if (MPPE_SEND_READY(ppp)) {
 			/* output via MPPE if MPPE started */
 			mppe_pkt_output(&ppp->mppe, PPP_PROTO_IP, args->pktp,
 			    args->lpktp);
@@ -528,7 +528,7 @@ npppd_iface_network_input_ipv4(npppd_iface *_this, u_char *pktp, int lpktp)
 		ppp_reset_idle_timeout(ppp);
 
 #ifdef	USE_NPPPD_MPPE
-	if (MPPE_READY(ppp)) {
+	if (MPPE_SEND_READY(ppp)) {
 		/* output via MPPE if MPPE started */
 		mppe_pkt_output(&ppp->mppe, PPP_PROTO_IP, pktp, lpktp);
 		return;
