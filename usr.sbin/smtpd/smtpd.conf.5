@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.87 2013/02/14 07:42:49 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.88 2013/02/14 12:30:49 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -231,7 +231,7 @@ table will be used as the virtual domain mapping.
 If the method of delivery is local, a user database may be
 specified to override the system database:
 .Bl -tag -width Ds
-.It Op Ic users Aq Ar table
+.It Op Ic userbase Aq Ar table
 Look up users in the table
 .Ar table
 instead of performing system lookups using the

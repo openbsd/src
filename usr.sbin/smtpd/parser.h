@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.25 2013/01/28 11:09:53 gilles Exp $	*/
+/*	$OpenBSD: parser.h,v 1.26 2013/02/14 12:30:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,6 +47,7 @@ enum actions {
 	LOG_TRACE_STAT,
 	LOG_TRACE_RULES,
 	LOG_TRACE_IMSG_SIZE,
+	LOG_TRACE_EXPAND,
 	LOG_TRACE_ALL,
 	LOG_UNTRACE_IMSG,
 	LOG_UNTRACE_IO,
@@ -59,6 +60,7 @@ enum actions {
 	LOG_UNTRACE_STAT,
 	LOG_UNTRACE_RULES,
 	LOG_UNTRACE_IMSG_SIZE,
+	LOG_UNTRACE_EXPAND,
 	LOG_UNTRACE_ALL,
 	LOG_PROFILE_IMSG,
 	LOG_PROFILE_QUEUE,

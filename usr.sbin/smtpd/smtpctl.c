@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.100 2013/01/28 11:09:53 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.101 2013/02/14 12:30:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Gilles Chehade <gilles@poolp.org>
@@ -310,6 +310,7 @@ main(int argc, char *argv[])
 	case LOG_TRACE_STAT:
 	case LOG_TRACE_RULES:
 	case LOG_TRACE_IMSG_SIZE:
+	case LOG_TRACE_EXPAND:
 	case LOG_TRACE_ALL:
 		verb = trace_convert(action);
 		imsg_compose(ibuf, IMSG_CTL_TRACE, 0, 0, -1, &verb,
@@ -328,6 +329,7 @@ main(int argc, char *argv[])
 	case LOG_UNTRACE_STAT:
 	case LOG_UNTRACE_RULES:
 	case LOG_UNTRACE_IMSG_SIZE:
+	case LOG_UNTRACE_EXPAND:
 	case LOG_UNTRACE_ALL:
 		verb = trace_convert(action);
 		imsg_compose(ibuf, IMSG_CTL_UNTRACE, 0, 0, -1, &verb,
@@ -382,6 +384,7 @@ main(int argc, char *argv[])
 		case LOG_TRACE_STAT:
 		case LOG_TRACE_RULES:
 		case LOG_TRACE_IMSG_SIZE:
+		case LOG_TRACE_EXPAND:
 		case LOG_TRACE_ALL:
 		case LOG_UNTRACE_IMSG:
 		case LOG_UNTRACE_IO:
@@ -394,6 +397,7 @@ main(int argc, char *argv[])
 		case LOG_UNTRACE_STAT:
 		case LOG_UNTRACE_RULES:
 		case LOG_UNTRACE_IMSG_SIZE:
+		case LOG_UNTRACE_EXPAND:
 		case LOG_UNTRACE_ALL:
 		case LOG_PROFILE_IMSG:
 		case LOG_PROFILE_QUEUE:
@@ -865,6 +869,10 @@ trace_convert(uint32_t trace)
 	case LOG_TRACE_IMSG_SIZE:
 	case LOG_UNTRACE_IMSG_SIZE:
 		return TRACE_IMSGSIZE;
+
+	case LOG_TRACE_EXPAND:
+	case LOG_UNTRACE_EXPAND:
+		return TRACE_EXPAND;
 
 	case LOG_TRACE_ALL:
 	case LOG_UNTRACE_ALL:

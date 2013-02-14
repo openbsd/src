@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.54 2013/02/05 11:45:18 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.55 2013/02/14 12:30:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -114,13 +114,13 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 	switch (fwreq->status) {
 	case 0:
 		/* permanent failure while lookup ~/.forward */
-		log_trace(TRACE_LOOKUP, "lookup: ~/.forward failed for user %s",
+		log_trace(TRACE_EXPAND, "expand: ~/.forward failed for user %s",
 		    fwreq->user);
 		lks->error = LKA_PERMFAIL;
 		break;
 	case 1:
 		if (fd == -1) {
-			log_trace(TRACE_LOOKUP, "lookup: no .forward for "
+			log_trace(TRACE_EXPAND, "expand: no .forward for "
 			    "user %s, just deliver", fwreq->user);
 			lka_submit(lks, rule, xn);
 		}
@@ -129,10 +129,11 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 			lks->expand.rule = rule;
 			lks->expand.parent = xn;
 			lks->expand.alias = 0;
-
+			xn->mapping = rule->r_mapping;
+			xn->userbase = rule->r_userbase;
 			/* forwards_get() will close the descriptor no matter what */
 			if (! forwards_get(fd, &lks->expand)) {
-				log_trace(TRACE_LOOKUP, "lookup: temporary "
+				log_trace(TRACE_EXPAND, "expand: temporary "
 				    "forward error for user %s", fwreq->user);
 				lks->error = LKA_TEMPFAIL;
 			}
@@ -167,7 +168,7 @@ lka_resume(struct lka_session *lks)
 
 	/* delivery list is empty, reject */
 	if (TAILQ_FIRST(&lks->deliverylist) == NULL) {
-		log_trace(TRACE_LOOKUP, "lookup: lka_done: expanded to empty "
+		log_trace(TRACE_EXPAND, "expand: lka_done: expanded to empty "
 		    "delivery list");
 		lks->error = LKA_PERMFAIL;
 	}
@@ -214,7 +215,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	struct userinfo	       *tu = NULL;
 
 	if (xn->depth >= EXPAND_DEPTH) {
-		log_trace(TRACE_LOOKUP, "lookup: lka_expand: node too deep.");
+		log_trace(TRACE_EXPAND, "expand: lka_expand: node too deep.");
 		lks->error = LKA_PERMFAIL;
 		return;
 	}
@@ -227,7 +228,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 
 	case EXPAND_ADDRESS:
 
-		log_trace(TRACE_LOOKUP, "lookup: lka_expand: address: %s@%s "
+		log_trace(TRACE_EXPAND, "expand: lka_expand: address: %s@%s "
 		    "[depth=%d]",
 		    xn->u.mailaddr.user, xn->u.mailaddr.domain, xn->depth);
 
@@ -243,6 +244,9 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			break;
 		}
 
+		xn->mapping = rule->r_mapping;
+		xn->userbase = rule->r_userbase;
+
 		if (rule->r_action == A_RELAY || rule->r_action == A_RELAYVIA) {
 			lka_submit(lks, rule, xn);
 		}
@@ -251,16 +255,15 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			lks->expand.rule = rule;
 			lks->expand.parent = xn;
 			lks->expand.alias = 1;
-			r = aliases_virtual_get(rule->r_mapping,
-			    &lks->expand, &xn->u.mailaddr);
+			r = aliases_virtual_get(&lks->expand, &xn->u.mailaddr);
 			if (r == -1) {
 				lks->error = LKA_TEMPFAIL;
-				log_trace(TRACE_LOOKUP, "lookup: lka_expand: "
+				log_trace(TRACE_EXPAND, "expand: lka_expand: "
 				    "error in virtual alias lookup");
 			}
 			else if (r == 0) {
 				lks->error = LKA_PERMFAIL;
-				log_trace(TRACE_LOOKUP, "lookup: lka_expand: "
+				log_trace(TRACE_EXPAND, "expand: lka_expand: "
 				    "no aliases for virtual");
 			}
 		}
@@ -272,16 +275,18 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			node.type = EXPAND_USERNAME;
 			mailaddr_to_username(&xn->u.mailaddr, node.u.user,
 				sizeof node.u.user);
+			node.mapping = rule->r_mapping;
+			node.userbase = rule->r_userbase;
 			expand_insert(&lks->expand, &node);
 		}
 		break;
 
 	case EXPAND_USERNAME:
-		log_trace(TRACE_LOOKUP, "lookup: lka_expand: username: %s "
+		log_trace(TRACE_EXPAND, "expand: lka_expand: username: %s "
 		    "[depth=%d]", xn->u.user, xn->depth);
 
 		if (xn->sameuser) {
-			log_trace(TRACE_LOOKUP, "lookup: lka_expand: same "
+			log_trace(TRACE_EXPAND, "expand: lka_expand: same "
 			    "user, submitting");
 			lka_submit(lks, rule, xn);
 			break;
@@ -291,11 +296,12 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		lks->expand.rule = rule;
 		lks->expand.parent = xn;
 		lks->expand.alias = 1;
+		xn->mapping = rule->r_mapping;
+		xn->userbase = rule->r_userbase;
 		if (rule->r_mapping) {
-			r = aliases_get(rule->r_mapping, &lks->expand,
-			    xn->u.user);
+			r = aliases_get(&lks->expand, xn->u.user);
 			if (r == -1) {
-				log_trace(TRACE_LOOKUP, "lookup: lka_expand: "
+				log_trace(TRACE_EXPAND, "expand: lka_expand: "
 				    "error in alias lookup");
 				lks->error = LKA_TEMPFAIL;
 			}
@@ -305,21 +311,21 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 
 		/* A username should not exceed the size of a system user */
 		if (strlen(xn->u.user) >= sizeof fwreq.user) {
-			log_trace(TRACE_LOOKUP, "lookup: lka_expand: "
+			log_trace(TRACE_EXPAND, "expand: lka_expand: "
 			    "user-part too long to be a system user");
 			lks->error = LKA_PERMFAIL;
 			break;
 		}
 
-		r = table_lookup(rule->r_users, xn->u.user, K_USERINFO, (void **)&tu);
+		r = table_lookup(rule->r_userbase, xn->u.user, K_USERINFO, (void **)&tu);
 		if (r == -1) {
-			log_trace(TRACE_LOOKUP, "lookup: lka_expand: "
+			log_trace(TRACE_EXPAND, "expand: lka_expand: "
 			    "backend error while searching user");
 			lks->error = LKA_TEMPFAIL;
 			break;
 		}
 		if (r == 0) {
-			log_trace(TRACE_LOOKUP, "lookup: lka_expand: "
+			log_trace(TRACE_EXPAND, "expand: lka_expand: "
 			    "user-part does not match system user");
 			lks->error = LKA_PERMFAIL;
 			break;
@@ -340,13 +346,13 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_FILENAME:
-		log_trace(TRACE_LOOKUP, "lookup: lka_expand: filename: %s "
+		log_trace(TRACE_EXPAND, "expand: lka_expand: filename: %s "
 		    "[depth=%d]", xn->u.buffer, xn->depth);
 		lka_submit(lks, rule, xn);
 		break;
 
 	case EXPAND_FILTER:
-		log_trace(TRACE_LOOKUP, "lookup: lka_expand: filter: %s "
+		log_trace(TRACE_EXPAND, "expand: lka_expand: filter: %s "
 		    "[depth=%d]", xn->u.buffer, xn->depth);
 		lka_submit(lks, rule, xn);
 		break;
@@ -412,14 +418,14 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			    sizeof(ep->agent.mda.username));
 		}
 
-		r = table_lookup(rule->r_users, ep->agent.mda.username, K_USERINFO,
+		r = table_lookup(rule->r_userbase, ep->agent.mda.username, K_USERINFO,
 		    (void **)&tu);
 		if (r <= 0) {
 			lks->error = (r == -1) ? LKA_TEMPFAIL : LKA_PERMFAIL;
 			free(ep);
 			return;
 		}
-		strlcpy(ep->agent.mda.usertable, rule->r_users->t_name,
+		strlcpy(ep->agent.mda.usertable, rule->r_userbase->t_name,
 		    sizeof ep->agent.mda.usertable);
 		strlcpy(ep->agent.mda.username, tu->username,
 		    sizeof ep->agent.mda.username);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.149 2013/02/05 11:45:18 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.150 2013/02/14 12:30:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -472,8 +472,8 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
 			tmp = env->sc_tables_dict;
 			env->sc_tables_dict = tables_dict;
-			rule->r_users = table_findbyname(imsg->data);
-			if (rule->r_users == NULL)
+			rule->r_userbase = table_findbyname(imsg->data);
+			if (rule->r_userbase == NULL)
 				fatalx("lka: tables inconsistency");
 			env->sc_tables_dict = tmp;
 			return;

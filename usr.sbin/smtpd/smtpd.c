@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.186 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.187 2013/02/14 12:30:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -470,10 +470,10 @@ parent_send_config_lka()
 			    &r->r_mapping->t_name,
 			    sizeof(r->r_mapping->t_name));
 		}
-		if (r->r_users) {
+		if (r->r_userbase) {
 			m_compose(p_lka, IMSG_CONF_RULE_USERS, 0, 0, -1,
-			    &r->r_users->t_name,
-			    sizeof(r->r_users->t_name));
+			    &r->r_userbase->t_name,
+			    sizeof(r->r_userbase->t_name));
 		}
 	}
 
@@ -664,6 +664,8 @@ main(int argc, char *argv[])
 				verbose |= TRACE_RULES;
 			else if (!strcmp(optarg, "imsg-size"))
 				verbose |= TRACE_IMSGSIZE;
+			else if (!strcmp(optarg, "expand"))
+				verbose |= TRACE_EXPAND;
 			else if (!strcmp(optarg, "all"))
 				verbose |= ~TRACE_VERBOSE;
 			else if (!strcmp(optarg, "profstat"))

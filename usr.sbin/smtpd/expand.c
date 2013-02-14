@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.20 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.21 2013/02/14 12:30:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -33,6 +33,8 @@
 #include "smtpd.h"
 #include "log.h"
 
+static const char *expandnode_info(struct expandnode *);
+
 struct expandnode *
 expand_lookup(struct expand *expand, struct expandnode *key)
 {
@@ -44,15 +46,24 @@ expand_insert(struct expand *expand, struct expandnode *node)
 {
 	struct expandnode *xn;
 
+	log_trace(TRACE_EXPAND, "expand: %p: expand_insert() called for %s",
+	    expand, expandnode_info(node));
 	if (node->type == EXPAND_USERNAME &&
 	    expand->parent &&
 	    expand->parent->type == EXPAND_USERNAME &&
-	    !strcmp(expand->parent->u.user, node->u.user))
+	    !strcmp(expand->parent->u.user, node->u.user)) {
+		log_trace(TRACE_EXPAND, "expand: %p: setting sameuser = 1",
+		    expand);
 		node->sameuser = 1;
+	}
 
-	if (expand_lookup(expand, node))
+	if (expand_lookup(expand, node)) {
+		log_trace(TRACE_EXPAND, "expand: %p: node found, discarding",
+			expand);
 		return;
+	}
 
+	log_trace(TRACE_EXPAND, "expand: %p: inserting node", expand);
 	xn = xmemdup(node, sizeof *xn, "expand_insert");
 	xn->rule = expand->rule;
 	xn->parent = expand->parent;
@@ -72,6 +83,7 @@ expand_clear(struct expand *expand)
 {
 	struct expandnode *xn;
 
+	log_trace(TRACE_EXPAND, "expand: %p: clearing expand tree", expand);
 	if (expand->queue)
 		while ((xn = TAILQ_FIRST(expand->queue)))
 			TAILQ_REMOVE(expand->queue, xn, tq_entry);
@@ -86,6 +98,8 @@ void
 expand_free(struct expand *expand)
 {
 	expand_clear(expand);
+
+	log_trace(TRACE_EXPAND, "expand: %p: freeing expand tree", expand);
 	free(expand);
 }
 
@@ -99,6 +113,14 @@ expand_cmp(struct expandnode *e1, struct expandnode *e2)
 	if (e1->sameuser < e2->sameuser)
 		return -1;
 	if (e1->sameuser > e2->sameuser)
+		return 1;
+	if (e1->mapping < e2->mapping)
+		return -1;
+	if (e1->mapping > e2->mapping)
+		return 1;
+	if (e1->userbase < e2->userbase)
+		return -1;
+	if (e1->userbase > e2->userbase)
 		return 1;
 
 	return memcmp(&e1->u, &e2->u, sizeof(e1->u));
@@ -176,6 +198,60 @@ expand_line(struct expand *expand, const char *s, int do_includes)
 
 	/* expand_line_split() returned < 0 */
 	return 0;
+}
+
+static const char *
+expandnode_info(struct expandnode *e)
+{
+	static char	buffer[1024];
+	const char     *type = NULL;
+	const char     *value = NULL;
+
+	switch (e->type) {
+	case EXPAND_FILTER:
+		type = "filter";
+		break;
+	case EXPAND_FILENAME:
+		type = "filename";
+		break;
+	case EXPAND_INCLUDE:
+		type = "include";
+		break;
+	case EXPAND_USERNAME:
+		type = "username";
+		break;
+	case EXPAND_ADDRESS:
+		type = "address";
+		break;
+	case EXPAND_INVALID:
+	default:
+		return NULL;
+	}
+
+	if ((value = expandnode_to_text(e)) == NULL)
+		return NULL;
+
+	strlcpy(buffer, type, sizeof buffer);
+	strlcat(buffer, ":", sizeof buffer);
+	if (strlcat(buffer, value, sizeof buffer) >= sizeof buffer)
+		return NULL;
+	if (e->mapping || e->userbase) {
+		strlcat(buffer, " [", sizeof buffer);
+		if (e->mapping) {
+			strlcat(buffer, "mapping=", sizeof buffer);
+			strlcat(buffer, e->mapping->t_name, sizeof buffer);
+			if (e->userbase)
+				strlcat(buffer, ", ", sizeof buffer);
+
+		}
+		if (e->userbase) {
+			strlcat(buffer, "userbase=", sizeof buffer);
+			strlcat(buffer, e->userbase->t_name, sizeof buffer);
+		}
+		if (strlcat(buffer, "]", sizeof buffer) >= sizeof buffer)
+			return NULL;
+	}
+	return buffer;
 }
 
 RB_GENERATE(expandtree, expandnode, entry, expand_cmp);

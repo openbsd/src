@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.404 2013/02/10 15:01:16 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.405 2013/02/14 12:30:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -359,7 +359,7 @@ struct rule {
 
 	struct mailaddr		       *r_as;
 	struct table		       *r_mapping;
-	struct table		       *r_users;
+	struct table		       *r_userbase;
 	time_t				r_qexpire;
 };
 
@@ -409,6 +409,8 @@ struct expandnode {
 	struct rule	       *rule;
 	struct expandnode      *parent;
 	unsigned int		depth;
+	struct table   	       *mapping;
+	struct table   	       *userbase;
 	union {
 		/*
 		 * user field handles both expansion user and system user
@@ -581,6 +583,7 @@ struct smtpd {
 #define	TRACE_STAT	0x0200
 #define	TRACE_RULES	0x0400
 #define	TRACE_IMSGSIZE	0x0800
+#define	TRACE_EXPAND	0x1000
 
 #define PROFILE_TOSTAT	0x0001
 #define PROFILE_IMSG	0x0002
@@ -1021,9 +1024,9 @@ struct ca_vrfy_resp_msg {
 
 
 /* aliases.c */
-int aliases_get(struct table *, struct expand *, const char *);
+int aliases_get(struct expand *, const char *);
 int aliases_virtual_check(struct table *, const struct mailaddr *);
-int aliases_virtual_get(struct table *, struct expand *, const struct mailaddr *);
+int aliases_virtual_get(struct expand *, const struct mailaddr *);
 int alias_parse(struct expandnode *, const char *);
 
 
@@ -1338,7 +1341,7 @@ const char *relayhost_to_text(const struct relayhost *);
 const char *rule_to_text(struct rule *);
 const char *sockaddr_to_text(struct sockaddr *);
 const char *mailaddr_to_text(const struct mailaddr *);
-
+const char *expandnode_to_text(struct expandnode *);
 
 /* util.c */
 typedef struct arglist arglist;
