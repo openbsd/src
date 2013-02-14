@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.153 2012/10/17 22:27:27 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.154 2013/02/14 22:22:48 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1424,11 +1424,7 @@ comcnprobe(struct consdev *cp)
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(commajor, comconsunit);
-#if defined(COMCONSOLE) || !defined(__amd64__)
 	cp->cn_pri = CN_HIGHPRI;
-#else
-	cp->cn_pri = CN_LOWPRI;
-#endif
 }
 
 void
