@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.40 2012/08/18 08:44:25 jmc Exp $
+.\"	$OpenBSD: rtw.4,v 1.41 2013/02/14 07:40:42 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2012 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt RTW 4
 .Os
 .Sh NAME
@@ -123,40 +123,31 @@ The following adapters should work:
 .It Li "Zonet ZEW1000" Ta GRF5101 Ta CardBus
 .El
 .Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig rtw0 scan
+.Pp
 The following
 .Xr hostname.if 5
-example configures rtw0 to join whatever network is available on boot,
+example configures rtw0 to join network
+.Dq mynwid ,
 using WEP key
-.Dq 0x1deadbeef1 ,
-channel 11, obtaining an IP address using DHCP:
+.Dq mywepkey ,
+obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+nwid mynwid
+nwkey mywepkey
+dhcp
 .Ed
 .Pp
 The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
-	mediaopt hostap nwid my_net chan 11
-.Ed
-.Pp
-Configure rtw0 for WEP, using hex key
-.Dq 0x1deadbeef1 :
-.Bd -literal -offset indent
-# ifconfig rtw0 nwkey 0x1deadbeef1
-.Ed
-.Pp
-Return rtw0 to its default settings:
-.Bd -literal -offset indent
-# ifconfig rtw0 -bssid -chan media autoselect \e
-	nwid "" -nwkey
-.Ed
-.Pp
-Join an existing BSS network,
-.Dq my_net :
-.Bd -literal -offset indent
-# ifconfig rtw0 192.168.1.1 netmask 0xffffff00 nwid my_net
+inet 192.168.1.1 255.255.255.0
+mediaopt hostap
+nwid mynwid
+nwkey mywepkey
 .Ed
 .Sh SEE ALSO
 .Xr arp 4 ,

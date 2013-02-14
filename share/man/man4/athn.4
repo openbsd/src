@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.21 2012/09/17 11:04:24 sthen Exp $
+.\" $OpenBSD: athn.4,v 1.22 2013/02/14 07:40:42 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2012 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -173,36 +173,31 @@ firmware files, which are loaded when an interface is attached:
 A prepackaged version of the firmware can be installed using
 .Xr fw_update 1 .
 .Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig athn0 scan
+.Pp
 The following
 .Xr hostname.if 5
-example configures athn0 to join whatever network is available on boot,
-using WEP key
-.Dq 0x1deadbeef1 ,
-channel 11, obtaining an IP address using DHCP:
+example configures athn0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+nwid mynwid
+wpakey mywpakey
+dhcp
 .Ed
 .Pp
 The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
-	mediaopt hostap nwid my_net chan 11
-.Ed
-.Pp
-Configure athn0 to join network
-.Dq my_net
-using WPA with passphrase
-.Dq my_passphrase :
-.Bd -literal -offset indent
-# ifconfig athn0 nwid my_net wpakey my_passphrase
-.Ed
-.Pp
-Join an existing BSS network,
-.Dq my_net :
-.Bd -literal -offset indent
-# ifconfig athn0 192.168.1.1 netmask 0xffffff00 nwid my_net
+inet 192.168.1.1 255.255.255.0
+mediaopt hostap
+nwid mynwid
+wpakey mywpakey
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

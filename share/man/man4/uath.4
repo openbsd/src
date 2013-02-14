@@ -1,4 +1,4 @@
-.\" $OpenBSD: uath.4,v 1.27 2012/09/17 11:04:24 sthen Exp $
+.\" $OpenBSD: uath.4,v 1.28 2013/02/14 07:40:42 jmc Exp $
 .\"
 .\" Copyright (c) 2006
 .\"     Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2012 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt UATH 4
 .Os
 .Sh NAME
@@ -122,32 +122,21 @@ The following adapters should work:
 .It Li "ZyXEL XtremeMIMO M-202" Ta AR5005UX
 .El
 .Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig uath0 scan
+.Pp
 The following
 .Xr hostname.if 5
-example configures uath0 to join whatever network is available on boot,
+example configures uath0 to join network
+.Dq mynwid ,
 using WEP key
-.Dq 0x1deadbeef1 ,
-channel 11, obtaining an IP address using DHCP:
+.Dq mywepkey ,
+obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
-.Ed
-.Pp
-Configure uath0 for WEP, using hex key
-.Dq 0x1deadbeef1 :
-.Bd -literal -offset indent
-# ifconfig uath0 nwkey 0x1deadbeef1
-.Ed
-.Pp
-Return uath0 to its default settings:
-.Bd -literal -offset indent
-# ifconfig uath0 -bssid -chan media autoselect \e
-        nwid "" -nwkey
-.Ed
-.Pp
-Join an existing BSS network,
-.Dq my_net :
-.Bd -literal -offset indent
-# ifconfig uath0 192.168.1.1 netmask 0xffffff00 nwid my_net
+nwid mynwid
+nwkey mywepkey
+dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

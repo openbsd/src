@@ -1,4 +1,4 @@
-.\" $OpenBSD: zyd.4,v 1.36 2010/11/01 17:59:09 jmc Exp $
+.\" $OpenBSD: zyd.4,v 1.37 2013/02/14 07:40:42 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 1 2010 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt ZYD 4
 .Os
 .Sh NAME
@@ -143,28 +143,21 @@ driver when a device is attached:
 .It Pa /etc/firmware/zd1211b
 .El
 .Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig zyd0 scan
+.Pp
 The following
 .Xr hostname.if 5
-example configures zyd0 to join whatever network is available on boot,
-using WEP key
-.Dq 0x1deadbeef1 ,
-channel 11, obtaining an IP address using DHCP:
+example configures zyd0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
-.Ed
-.Pp
-Configure zyd0 to join network
-.Dq my_net
-using WPA with passphrase
-.Dq my_passphrase :
-.Bd -literal -offset indent
-# ifconfig zyd0 nwid my_net wpakey my_passphrase
-.Ed
-.Pp
-Join an existing BSS network,
-.Dq my_net :
-.Bd -literal -offset indent
-# ifconfig zyd0 192.168.0.2 netmask 0xffffff00 nwid my_net
+nwid mynwid
+wpakey mywpakey
+dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.54 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.55 2013/02/14 07:40:42 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -71,12 +71,10 @@ Support for the various devices is as follows:
 .It AR5210
 These devices support 802.11a operation with transmit speeds
 of 6 Mbps, 9 Mbps, 12 Mbps, 18 Mbps, 24 Mbps, 36 Mbps, 48 Mbps, and 54 Mbps.
-.Pp
 .It AR5211
 These devices support 802.11a and 802.11b operation with
 transmit speeds as above for 802.11a and
 1Mbps, 2Mbps, 5.5 Mbps, and 11Mbps for 802.11b operation.
-.Pp
 .It AR5212
 These devices support 802.11a, 802.11b, and 802.11g operation with
 transmit speeds as above for 802.11a, 802.11b, and 802.11g operation
@@ -196,36 +194,31 @@ driver:
 .It "Wistron CM9" Ta AR5212 Ta Mini PCI Ta a/b/g
 .El
 .Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig ath0 scan
+.Pp
 The following
 .Xr hostname.if 5
-example configures ath0 to join whatever network is available on boot,
-using WEP key
-.Dq 0x1deadbeef1 ,
-channel 11, obtaining an IP address using DHCP:
+example configures ath0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+nwid mynwid
+wpakey mywpakey
+dhcp
 .Ed
 .Pp
 The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
-	mediaopt hostap nwid my_net chan 11
-.Ed
-.Pp
-Configure ath0 to join network
-.Dq my_net
-using WPA with passphrase
-.Dq my_passphrase :
-.Bd -literal -offset indent
-# ifconfig ath0 nwid my_net wpakey my_passphrase
-.Ed
-.Pp
-Join an existing BSS network,
-.Dq my_net :
-.Bd -literal -offset indent
-# ifconfig ath0 192.168.1.1 netmask 0xffffff00 nwid my_net
+inet 192.168.1.1 255.255.255.0
+mediaopt hostap
+nwid mynwid
+wpakey mywpakey
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.100 2012/10/11 09:43:22 kettenis Exp $
+.\" $OpenBSD: ral.4,v 1.101 2013/02/14 07:40:42 jmc Exp $
 .\"
 .\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2012 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt RAL 4
 .Os
 .Sh NAME
@@ -266,53 +266,32 @@ Tonze PC-620C.
 Zinwell ZWX-G360.
 .Ed
 .Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig ral0 scan
+.Pp
 The following
 .Xr hostname.if 5
-example configures ral0 to join whatever network is available on boot,
-using WEP key
-.Dq 0x1deadbeef1 ,
-channel 11, obtaining an IP address using DHCP:
+example configures ral0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+nwid mynwid
+wpakey mywpakey
+dhcp
 .Ed
 .Pp
 The following
 .Xr hostname.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
-	mediaopt hostap nwid my_net chan 11
+inet 192.168.1.1 255.255.255.0
+mediaopt hostap
+nwid mynwid
+wpakey mywpakey
 .Ed
-.Pp
-Configure ral0 to join network
-.Dq my_net
-using WPA with passphrase
-.Dq my_passphrase :
-.Bd -literal -offset indent
-# ifconfig ral0 nwid my_net wpakey my_passphrase
-.Ed
-.Pp
-Join an existing BSS network,
-.Dq my_net :
-.Bd -literal -offset indent
-# ifconfig ral0 192.168.1.1 netmask 0xffffff00 nwid my_net
-.Ed
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "ral%d: error %d, could not read firmware %s"
-For some reason, the driver was unable to read the firmware image from the
-filesystem.
-The file might be missing or corrupted.
-.It "ral%d: could not load 8051 microcode"
-An error occurred while attempting to upload the microcode to the onboard 8051
-microcontroller unit.
-.It "ral%d: timeout waiting for MCU to initialize"
-The onboard 8051 microcontroller unit failed to initialize in time.
-.It "ral%d: device timeout"
-A frame dispatched to the hardware for transmission did not complete in time.
-The driver will reset the hardware.
-This should not happen.
-.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr cardbus 4 ,

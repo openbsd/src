@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipw.4,v 1.37 2012/09/17 11:04:24 sthen Exp $
+.\" $OpenBSD: ipw.4,v 1.38 2013/02/14 07:40:42 jmc Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 17 2012 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt IPW 4
 .Os
 .Sh NAME
@@ -111,28 +111,21 @@ majid.awad@intel.com.
 A prepackaged version of the firmware can be installed using
 .Xr fw_update 1 .
 .Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig ipw0 scan
+.Pp
 The following
 .Xr hostname.if 5
-example configures ipw0 to join whatever network is available on boot,
-using WEP key
-.Dq 0x1deadbeef1 ,
-channel 11, obtaining an IP address using DHCP:
+example configures ipw0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
-.Ed
-.Pp
-Configure ipw0 to join network
-.Dq my_net
-using WPA with passphrase
-.Dq my_passphrase :
-.Bd -literal -offset indent
-# ifconfig ipw0 nwid my_net wpakey my_passphrase
-.Ed
-.Pp
-Join an existing BSS network,
-.Dq my_net :
-.Bd -literal -offset indent
-# ifconfig ipw0 192.168.1.1 netmask 0xffffff00 nwid my_net
+nwid mynwid
+wpakey mywpakey
+dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
