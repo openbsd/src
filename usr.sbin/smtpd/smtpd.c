@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.187 2013/02/14 12:30:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.188 2013/02/14 13:11:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -758,6 +758,8 @@ main(int argc, char *argv[])
 
 	log_init(debug);
 	log_verbose(verbose);
+
+	log_info("info: %s %s starting", SMTPD_NAME, SMTPD_VERSION);
 
 	if (!debug)
 		if (daemon(0, 0) == -1)
