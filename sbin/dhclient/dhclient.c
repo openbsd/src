@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.228 2013/02/14 20:39:46 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.229 2013/02/14 22:18:12 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -176,6 +176,7 @@ routehandler(void)
 	struct in_addr a, b;
 	ssize_t n;
 	int linkstat, rslt;
+	struct hardware hw;
 	struct rt_msghdr *rtm;
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
@@ -255,12 +256,20 @@ routehandler(void)
 		} 
 		goto die;
 	case RTM_IFINFO:
+		note("Got RTM_IFINFO");
 		ifm = (struct if_msghdr *)rtm;
 		if (ifm->ifm_index != ifi->index)
 			break;
 		if ((rtm->rtm_flags & RTF_UP) == 0) {
 			rslt = asprintf(&errmsg, "%s down", ifi->name);
 			goto die;
+		}
+
+		memcpy(&hw, &ifi->hw_address, sizeof(hw));
+		discover_interface();
+		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
+			quit = SIGHUP;
+			return;
 		}
 
 		linkstat =
@@ -461,6 +470,10 @@ main(int argc, char *argv[])
 
 	/* set up the interface */
 	discover_interface();
+
+	/* Register the interface... */
+	if_register_receive();
+	if_register_send();
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, socket_fd) == -1)
 		error("socketpair: %s", strerror(errno));

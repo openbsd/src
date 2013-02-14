@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.71 2013/02/13 19:32:52 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.72 2013/02/14 22:18:12 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -97,9 +97,6 @@ discover_interface(void)
 	if (!ifi->ifp)
 		error("%s: not found", ifi->name);
 
-	/* Register the interface... */
-	if_register_receive();
-	if_register_send();
 	freeifaddrs(ifap);
 }
 
