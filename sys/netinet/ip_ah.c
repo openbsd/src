@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.104 2012/10/18 10:49:48 markus Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.105 2013/02/14 16:22:34 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -149,7 +149,6 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
 	tdbp->tdb_xform = xsp;
 	tdbp->tdb_authalgxform = thash;
-	tdbp->tdb_bitmap = 0;
 	tdbp->tdb_rpl = AH_HMAC_INITIAL_RPL;
 
 	DPRINTF(("ah_init(): initialized TDB with hash algorithm %s\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.152 2012/10/18 10:49:48 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.153 2013/02/14 16:22:34 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -355,8 +355,11 @@ struct tdb {				/* tunnel descriptor block */
 	u_int8_t	*tdb_amxkey;	/* Raw authentication key */
 	u_int8_t	*tdb_emxkey;	/* Raw encryption key */
 
+#define TDB_REPLAYWASTE	32
+#define TDB_REPLAYMAX	(2100+TDB_REPLAYWASTE)
+
 	u_int64_t	tdb_rpl;	/* Replay counter */
-	u_int64_t	tdb_bitmap;	/* Used for replay sliding window */
+	u_int32_t	tdb_seen[howmany(TDB_REPLAYMAX, 32)]; /* Anti-replay window */
 
 	u_int8_t	tdb_iv[4];	/* Used for HALF-IV ESP */
 

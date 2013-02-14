@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.120 2012/10/18 10:49:48 markus Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.121 2013/02/14 16:22:34 mikeb Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -242,7 +242,6 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	}
 
 	tdbp->tdb_xform = xsp;
-	tdbp->tdb_bitmap = 0;
 	tdbp->tdb_rpl = AH_HMAC_INITIAL_RPL;
 
 	/* Initialize crypto session */
@@ -1114,33 +1113,7 @@ esp_output_cb(void *op)
 	return error;
 }
 
-static __inline int
-checkreplay(u_int64_t *bitmap, u_int32_t diff)
-{
-	if (*bitmap & (1ULL << diff))
-		return (1);
-	return (0);
-}
-
-static __inline void
-setreplay(u_int64_t *bitmap, u_int32_t diff, u_int32_t window, int wupdate)
-{
-	if (wupdate) {
-		if (diff < window)
-			*bitmap = ((*bitmap) << diff) | 1;
-		else
-			*bitmap = 1;
-	} else
-		*bitmap |= 1ULL << diff;
-}
-
-/*
- * To prevent ESN desynchronization replay distance specifies maximum
- * valid difference between the received SN and the last authenticated
- * one.  It's arbitrary chosen to be 1000 packets, meaning that only
- * up to 999 packets can be lost.
- */
-#define REPLAY_DISTANCE (1000)
+#define SEEN_SIZE	howmany(TDB_REPLAYMAX, 32)
 
 /*
  * return 0 on success
@@ -1153,20 +1126,25 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
     int commit)
 {
 	u_int32_t	tl, th, wl;
-	u_int32_t	seqh, diff;
-	u_int32_t	window = tdb->tdb_wnd;
-	u_int64_t	*bitmap = &tdb->tdb_bitmap;
-	int		esn = tdb->tdb_flags & TDBF_ESN;
+	u_int32_t	seqh, packet;
+	u_int32_t	window = TDB_REPLAYMAX - TDB_REPLAYWASTE;
+	int		idx, esn = tdb->tdb_flags & TDBF_ESN;
 
 	tl = (u_int32_t)tdb->tdb_rpl;
 	th = (u_int32_t)(tdb->tdb_rpl >> 32);
 
 	/* Zero SN is not allowed */
-	if (seq == 0 && tl == 0 && th == 0)
+	if ((esn && seq == 0 && tl <= AH_HMAC_INITIAL_RPL && th == 0) ||
+	    (!esn && seq == 0))
 		return (1);
 
+	if (th == 0 && tl < window)
+		window = tl;
 	/* Current replay window starts here */
 	wl = tl - window + 1;
+
+	idx = (seq % TDB_REPLAYMAX) / 32;
+	packet = 1 << (31 - (seq & 31));
 
 	/*
 	 * We keep the high part intact when:
@@ -1178,24 +1156,35 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 	    (tl <  window - 1 && seq <  wl)) {
 		seqh = *seqhigh = th;
 		if (seq > tl) {
-			if (seq - tl >= REPLAY_DISTANCE)
-				return (2);
 			if (commit) {
-				setreplay(bitmap, seq - tl, window, 1);
+				if (seq - tl > window)
+					bzero(tdb->tdb_seen,
+					    sizeof(tdb->tdb_seen));
+				else {
+					int i = (tl % TDB_REPLAYMAX) / 32;
+
+					while (i != idx) {
+						i = (i + 1) % SEEN_SIZE;
+						tdb->tdb_seen[i] = 0;
+					}
+				}
+				tdb->tdb_seen[idx] |= packet;
 				tdb->tdb_rpl = ((u_int64_t)seqh << 32) | seq;
 			}
 		} else {
-			if (checkreplay(bitmap, tl - seq))
+			if (tl - seq >= window)
+				return (2);
+			if (tdb->tdb_seen[idx] & packet)
 				return (3);
 			if (commit)
-				setreplay(bitmap, tl - seq, window, 0);
+				tdb->tdb_seen[idx] |= packet;
 		}
 		return (0);
 	}
 
 	/* Can't wrap if not doing ESN */
 	if (!esn)
-		return (1);
+		return (2);
 
 	/*
 	 * SN is within [wl, 0xffffffff] and wl is within
@@ -1204,13 +1193,11 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 	 * subspace.
 	 */
 	if (tl < window - 1 && seq >= wl) {
-		seqh = *seqhigh = th - 1;
-		diff = (u_int32_t)((((u_int64_t)th << 32) | tl) -
-		    (((u_int64_t)seqh << 32) | seq));
-		if (checkreplay(bitmap, diff))
+		if (tdb->tdb_seen[idx] & packet)
 			return (3);
+		seqh = *seqhigh = th - 1;
 		if (commit)
-			setreplay(bitmap, diff, window, 0);
+			tdb->tdb_seen[idx] |= packet;
 		return (0);
 	}
 
@@ -1218,17 +1205,21 @@ checkreplaywindow(struct tdb *tdb, u_int32_t seq, u_int32_t *seqhigh,
 	 * SN has wrapped and the last authenticated SN is in the old
 	 * subspace.
 	 */
-
-	if (seq - tl >= REPLAY_DISTANCE)
-		return (2);
-
 	seqh = *seqhigh = th + 1;
 	if (seqh == 0)		/* Don't let high bit to wrap */
 		return (1);
 	if (commit) {
-		diff = (u_int32_t)((((u_int64_t)seqh << 32) | seq) -
-		    (((u_int64_t)th << 32) | tl));
-		setreplay(bitmap, diff, window, 1);
+		if (seq - tl > window)
+			bzero(tdb->tdb_seen, sizeof(tdb->tdb_seen));
+		else {
+			int i = (tl % TDB_REPLAYMAX) / 32;
+
+			while (i != idx) {
+				i = (i + 1) % SEEN_SIZE;
+				tdb->tdb_seen[i] = 0;
+			}
+		}
+		tdb->tdb_seen[idx] |= packet;
 		tdb->tdb_rpl = ((u_int64_t)seqh << 32) | seq;
 	}
 

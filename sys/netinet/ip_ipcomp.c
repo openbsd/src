@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.29 2012/09/20 10:25:03 blambert Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.30 2013/02/14 16:22:34 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -113,7 +113,6 @@ ipcomp_init(tdbp, xsp, ii)
 	    tcomp->name));
 
 	tdbp->tdb_xform = xsp;
-	tdbp->tdb_bitmap = 0;
 
 	/* Initialize crypto session */
 	bzero(&cric, sizeof(cric));
