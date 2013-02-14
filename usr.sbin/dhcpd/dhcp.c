@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.32 2010/03/29 22:22:28 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.33 2013/02/14 22:06:13 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -1352,6 +1352,7 @@ dhcp_reply(struct lease *lease)
 	} else {
 		to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 		to.sin_port = client_port;
+		memset(&state->haddr, 0xff, sizeof state->haddr);
 	}
 
 	memcpy(&from, state->from.iabuf, sizeof from);
