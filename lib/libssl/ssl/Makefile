@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.26 2012/10/13 21:31:56 djm Exp $
+# $OpenBSD: Makefile,v 1.27 2013/02/14 15:11:44 markus Exp $
 
 LIB=	ssl
 
@@ -22,6 +22,7 @@ SRCS=\
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_algs.c \
 	bio_ssl.c ssl_err.c kssl.c tls_srp.c t1_reneg.c
+SRCS+=	s3_cbc.c
 
 HDRS=	srtp.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h kssl.h
 
