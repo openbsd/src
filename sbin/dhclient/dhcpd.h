@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.108 2013/02/03 21:04:19 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.109 2013/02/14 20:39:46 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -158,7 +158,8 @@ struct client_state {
 	time_t			 first_sending;
 	time_t			 interval;
 	struct dhcp_packet	 packet;
-	int			 packet_length;
+	struct dhcp_packet	 bootrequest_packet;
+	int			 bootrequest_packet_length;
 	struct in_addr		 requested_address;
 };
 

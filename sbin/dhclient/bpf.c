@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.25 2013/02/03 21:04:19 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.26 2013/02/14 20:39:46 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -274,13 +274,13 @@ send_packet(struct in_addr from, struct sockaddr_in *to,
 
 	assemble_udp_ip_header(buf, &bufp, from.s_addr,
 	    to->sin_addr.s_addr, to->sin_port,
-	    (unsigned char *)&client->packet,
-	    client->packet_length);
+	    (unsigned char *)&client->bootrequest_packet,
+	    client->bootrequest_packet_length);
 
 	iov[0].iov_base = (char *)buf;
 	iov[0].iov_len = bufp;
-	iov[1].iov_base = (char *)&client->packet;
-	iov[1].iov_len = client->packet_length;
+	iov[1].iov_base = (char *)&client->bootrequest_packet;
+	iov[1].iov_len = client->bootrequest_packet_length;
 
 	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
 		result = writev(ifi->wfdesc, iov, IOVCNT);
