@@ -136,7 +136,9 @@ them both to 0; an emulation function will be used. */
 
 /* Define to 1 or 0, depending whether the compiler supports simple visibility
    declarations. */
+#if !defined(__vax__)
 #define HAVE_VISIBILITY 1
+#endif
 
 /* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
@@ -229,11 +231,13 @@ them both to 0; an emulation function will be used. */
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "8.32"
 
+#if !defined(__vax__)
 /* to make a symbol visible */
 #define PCRECPP_EXP_DECL extern __attribute__ ((visibility ("default")))
 
 /* to make a symbol visible */
 #define PCRECPP_EXP_DEFN __attribute__ ((visibility ("default")))
+#endif
 
 /* The value of PCREGREP_BUFSIZE determines the size of buffer used by
    pcregrep to hold parts of the file it is searching. This is also the
@@ -242,6 +246,7 @@ them both to 0; an emulation function will be used. */
    lines. */
 #define PCREGREP_BUFSIZE 20480
 
+#if !defined(__vax__)
 /* to make a symbol visible */
 #define PCREPOSIX_EXP_DECL extern __attribute__ ((visibility ("default")))
 
@@ -265,6 +270,7 @@ them both to 0; an emulation function will be used. */
    of the external API. It does not appear on functions that are "external"
    in the C sense, but which are internal to the library. */
 #define PCRE_EXP_DEFN __attribute__ ((visibility ("default")))
+#endif
 
 /* Define to any value if linking statically (TODO: make nice with Libtool) */
 /* #undef PCRE_STATIC */

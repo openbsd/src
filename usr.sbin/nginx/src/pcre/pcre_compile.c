@@ -847,7 +847,7 @@ else
           }
 
 #if defined COMPILE_PCRE8
-        if (c > (utf ? 0x10ffff : 0xff))
+        if (c > (unsigned int)(utf ? 0x10ffff : 0xff))
 #elif defined COMPILE_PCRE16
         if (c > (utf ? 0x10ffff : 0xffff))
 #elif defined COMPILE_PCRE32
@@ -1085,7 +1085,7 @@ else
 #endif
 
 #if defined COMPILE_PCRE8
-        if (c > (utf ? 0x10ffff : 0xff)) { overflow = TRUE; break; }
+        if (c > (unsigned int)(utf ? 0x10ffff : 0xff)) { overflow = TRUE; break; }
 #elif defined COMPILE_PCRE16
         if (c > (utf ? 0x10ffff : 0xffff)) { overflow = TRUE; break; }
 #elif defined COMPILE_PCRE32
