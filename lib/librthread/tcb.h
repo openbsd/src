@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.4 2012/02/18 21:43:28 fgsch Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.5 2013/02/14 03:38:15 guenther Exp $	*/
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
  *
@@ -85,7 +85,6 @@ struct thread_control_block {
 	__ERRNOPTR(TCB_THREAD())
 #define	TCB_INIT(tcb, thread, errnoptr)			\
 	do {						\
-		(tcb)->tcb_dtv = 0;			\
 		(tcb)->tcb_thread = (thread);		\
 		__ERRNOPTR(thread) = (errnoptr);	\
 	} while (0)
@@ -113,7 +112,6 @@ struct thread_control_block {
 #define	TCB_INIT(tcb, thread, errnoptr)			\
 	do {						\
 		(tcb)->__tcb_self = (tcb);		\
-		(tcb)->tcb_dtv = 0;			\
 		(tcb)->tcb_thread = (thread);		\
 		(tcb)->__tcb_errno = (errnoptr);	\
 	} while (0)
@@ -129,16 +127,11 @@ struct thread_control_block {
 #define	TCB_SET(tcb)	__set_tcb(tcb)
 #endif
 
-#if 0
-void *_rtld_allocate_tls(void *, size_t, size_t);
-void _rtld_free_tls(void *, size_t, size_t);
-#else
 /*
- * XXX Until we have these in ld.so and support __thread, just use
- * malloc/free.  The main thread's TCB cannot be allocated or freed with these.
+ * Functions that will eventually be provided by ld.so for allocating 
+ * and freeing TCBs
  */
-#define	_rtld_allocate_tls(old, size, align)	malloc(size)
-#define	_rtld_free_tls(old, size, align)	free(old)
-#endif
+void	*_dl_allocate_tls(void *);
+void	_dl_free_tls(void *);
 
 #endif /* _TCB_H_ */
