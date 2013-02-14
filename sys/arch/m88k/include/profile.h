@@ -1,6 +1,6 @@
 #ifndef _M88K_PROFILE_H_
 #define _M88K_PROFILE_H_
-/*	$OpenBSD: profile.h,v 1.6 2013/01/05 11:20:56 miod Exp $ */
+/*	$OpenBSD: profile.h,v 1.7 2013/02/14 05:56:02 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -30,18 +30,32 @@
 
 /*
  * On OpenBSD, calls to the function profiler save r2-r9 on stack. The
- * monitor point is found in r1. The function's return address is taken
- * from the stack frame pointed to by r30.
+ * monitor point is found in r2. The function's return address is taken
+ * from the stack frame pointed to by r30, and needs to be restored as
+ * r1 hasn't have had a chance to be saved yet.
  */
-#define	MCOUNT \
-void \
-__mcount() \
-{ \
-	unsigned long returnaddress, monpoint; \
-	__asm__ __volatile__ ("or %0, %%r1, %%r0" : "=r"(returnaddress)); \
-	__asm__ __volatile__ ("ld %0, %%r30, 4" : "=r"(monpoint)); \
-	_mcount(monpoint, returnaddress); \
-}
+
+#ifdef __PIC__
+#define	MCOUNT_SYMBOL	"_mcount#plt"
+#else
+#define	MCOUNT_SYMBOL	"_mcount"
+#endif
+
+#define MCOUNT								\
+__asm__ (".text;"							\
+	 ".align 3;"							\
+	 ".globl __mcount;"						\
+	 ".type  __mcount,@function;"					\
+	 "__mcount:"							\
+	 "	subu	%r31, %r31, 16;"				\
+	 "	st	%r1,  %r31, 4;"					\
+	 "	bsr.n	" MCOUNT_SYMBOL ";"				\
+	 "	 ld	%r3,  %r30, 4;"	/* function return address */	\
+	 "	ld	%r2,  %r31, 4;"					\
+	 "	addu	%r31, %r31, 16;"				\
+	 "	jmp.n	%r2;"						\
+	 "	 ld	%r1,  %r30, 4;"	/* restore r1 */		\
+	 ".size	__mcount, .-__mcount");
 
 #ifdef _KERNEL
 #define	MCOUNT_ENTER	do { s = get_psr(); set_psr(s | PSR_IND); } while (0)
