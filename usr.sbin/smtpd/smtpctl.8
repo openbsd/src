@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.39 2013/01/28 11:09:53 gilles Exp $
+.\" $OpenBSD: smtpctl.8,v 1.40 2013/02/14 13:21:16 gilles Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2013 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -180,7 +180,9 @@ bounce
 .It
 scheduler
 .It
-lookup (aliases/virtual/forward expansion)
+expand (aliases/virtual/forward expansion)
+.It
+lookup (user/credentials lookups)
 .It
 stat
 .It
