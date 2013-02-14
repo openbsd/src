@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.86 2013/02/10 15:45:46 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.87 2013/02/14 07:42:49 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 10 2013 $
+.Dd $Mdocdate: February 14 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -561,12 +561,7 @@ It must be an absolute path to a file for the
 and
 .Dq db
 table types.
-.It Xo
-.Ic table Ar name
-.Ic { Ar value
-.Op , Ar value_n
-.Ic }
-.Xc
+.It Ic table Ar name Brq Ar value Op , Ar ...
 Tables containing list of static values may be declared
 using an inlined notation.
 .Pp
@@ -576,12 +571,7 @@ the name itself is arbitrarily chosen.
 .Pp
 The table must contain at least one value and may declare many values as a
 list of comma separated strings.
-.It Xo
-.Ic table Ar name
-.Ic { Ar key => value
-.Op , key_n => value_n
-.Ic }
-.Xc
+.It Ic table Ar name Brq Ar key => value Op , Ar ...
 Tables containing static key-value mappings may be declared
 using an inlined notation.
 .Pp
