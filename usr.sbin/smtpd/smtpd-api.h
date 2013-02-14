@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.1 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.2 2013/02/14 14:34:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -29,8 +29,8 @@
 #define	FILTER_API_VERSION	 50
 
 #define MAX_LINE_SIZE		 2048
-#define MAX_LOCALPART_SIZE	 64
-#define MAX_DOMAINPART_SIZE	 255
+#define MAX_LOCALPART_SIZE	 (64 + 1)
+#define MAX_DOMAINPART_SIZE	 (255 + 1)
 
 struct mailaddr {
 	char	user[MAX_LOCALPART_SIZE];
