@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.88 2012/12/27 18:51:52 florian Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.89 2013/02/15 15:12:25 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -903,6 +903,7 @@ int
 dorevert(void)
 {
 	int lineno;
+	struct undo_rec *rec;
 
 	if (access(curbp->b_fname, F_OK|R_OK) != 0) {
 		if (errno == ENOENT)
@@ -919,6 +920,12 @@ dorevert(void)
 
 	/* Prevent readin from asking if we want to kill the buffer. */
 	curbp->b_flag &= ~BFCHG;
+
+	/* Clean up undo memory */
+	while ((rec = TAILQ_FIRST(&curbp->b_undo))) {
+		TAILQ_REMOVE(&curbp->b_undo, rec, next);
+		free_undo_record(rec);
+	}
 
 	if (readin(curbp->b_fname))
 		return(setlineno(lineno));
