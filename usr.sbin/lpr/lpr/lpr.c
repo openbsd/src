@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.42 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.43 2013/02/15 08:28:08 mpi Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -150,6 +150,7 @@ main(int argc, char **argv)
 				if (i > 0)
 					ncopies = i;
 			}
+			break;
 
 		case '4':		/* troff fonts */
 		case '3':
