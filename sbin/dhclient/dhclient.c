@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.230 2013/02/15 14:40:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.231 2013/02/15 14:54:04 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1114,10 +1114,10 @@ send_discover(void)
 
 	/* Record the number of seconds since we started sending. */
 	if (interval < 65536)
-		client->packet.secs = htons(interval);
+		client->bootrequest_packet.secs = htons(interval);
 	else
-		client->packet.secs = htons(65535);
-	client->secs = client->packet.secs;
+		client->bootrequest_packet.secs = htons(65535);
+	client->secs = client->bootrequest_packet.secs;
 
 	note("DHCPDISCOVER on %s to %s port %d interval %d",
 	    ifi->name, inet_ntoa(sockaddr_broadcast.sin_addr),
@@ -1294,12 +1294,12 @@ send_request(void)
 
 	/* Record the number of seconds since we started sending. */
 	if (client->state == S_REQUESTING)
-		client->packet.secs = client->secs;
+		client->bootrequest_packet.secs = client->secs;
 	else {
 		if (interval < 65536)
-			client->packet.secs = htons(interval);
+			client->bootrequest_packet.secs = htons(interval);
 		else
-			client->packet.secs = htons(65535);
+			client->bootrequest_packet.secs = htons(65535);
 	}
 
 	note("DHCPREQUEST on %s to %s port %d", ifi->name,
