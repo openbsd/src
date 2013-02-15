@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.231 2013/02/15 14:54:04 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.232 2013/02/15 15:00:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1374,10 +1374,10 @@ make_discover(struct client_lease *lease)
 	packet->secs = 0; /* filled in by send_discover. */
 	packet->flags = 0;
 
-	memset(&packet->ciaddr, 0, sizeof(client->packet.ciaddr));
-	memset(&packet->yiaddr, 0, sizeof(client->packet.yiaddr));
-	memset(&packet->siaddr, 0, sizeof(client->packet.siaddr));
-	memset(&packet->giaddr, 0, sizeof(client->packet.giaddr));
+	memset(&packet->ciaddr, 0, sizeof(packet->ciaddr));
+	memset(&packet->yiaddr, 0, sizeof(packet->yiaddr));
+	memset(&packet->siaddr, 0, sizeof(packet->siaddr));
+	memset(&packet->giaddr, 0, sizeof(packet->giaddr));
 	memcpy(&packet->chaddr, ifi->hw_address.haddr, ifi->hw_address.hlen);
 }
 
