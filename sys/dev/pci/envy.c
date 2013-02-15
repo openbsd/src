@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.51 2012/03/30 08:18:19 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.52 2013/02/15 14:26:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,6 +42,7 @@
 #include <dev/pci/envyvar.h>
 #include <dev/pci/envyreg.h>
 #include <machine/bus.h>
+#include <uvm/uvm.h>
 
 #ifdef ENVY_DEBUG
 #define DPRINTF(...) do { if (envydebug) printf(__VA_ARGS__); } while(0)
@@ -1733,7 +1734,7 @@ void *
 envy_allocm(void *self, int dir, size_t size, int type, int flags)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
-	int err, rsegs, basereg, wait;
+	int err, basereg, wait;
 	struct envy_buf *buf;
 	bus_addr_t dma_addr;
 
@@ -1752,19 +1753,14 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 	wait = (flags & M_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
 
 #define ENVY_ALIGN	4
-#define ENVY_BOUNDARY	(1 << 28)
+#define ENVY_MAXADDR	((1 << 28) - 1)
 
-	err = bus_dmamem_alloc(sc->pci_dmat, buf->size, ENVY_ALIGN,
-	    sc->isht ? 0 : ENVY_BOUNDARY, &buf->seg, 1, &rsegs, wait);
-	if (err) {
-		DPRINTF("%s: dmamem_alloc: failed %d\n", DEVNAME(sc), err);
+	buf->addr = (caddr_t)uvm_km_kmemalloc_pla(kernel_map,
+	    uvm.kernel_object, buf->size, 0, UVM_KMF_NOWAIT, 0,
+	    (paddr_t)ENVY_MAXADDR, 0, 0, 1);
+	if (buf->addr == NULL) {
+		DPRINTF("%s: unable to alloc dma segment\n", DEVNAME(sc));
 		goto err_ret;
-	}
-	err = bus_dmamem_map(sc->pci_dmat, &buf->seg, rsegs, buf->size,
-	    &buf->addr, wait | BUS_DMA_COHERENT);
-	if (err) {
-		DPRINTF("%s: dmamem_map: failed %d\n", DEVNAME(sc), err);
-		goto err_free;
 	}
 	err = bus_dmamap_create(sc->pci_dmat, buf->size, 1, buf->size, 0,
 	    wait, &buf->map);
@@ -1781,7 +1777,7 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 	dma_addr = buf->map->dm_segs[0].ds_addr;
 	DPRINTF("%s: allocated %zd bytes dir=%d, ka=%p, da=%p\n", DEVNAME(sc),
 	    buf->size, dir, buf->addr, dma_addr);
-	if (!sc->isht && (dma_addr & ~(ENVY_BOUNDARY - 1))) {
+	if (!sc->isht && (dma_addr & ~ENVY_MAXADDR)) {
 		printf("%s: DMA address beyond 0x10000000\n", DEVNAME(sc));
 		goto err_unload;
 	}
@@ -1792,9 +1788,7 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
  err_destroy:
 	bus_dmamap_destroy(sc->pci_dmat, buf->map);
  err_unmap:
-	bus_dmamem_unmap(sc->pci_dmat, buf->addr, buf->size);
- err_free:
-	bus_dmamem_free(sc->pci_dmat, &buf->seg, 1);
+	uvm_km_free(kernel_map, (vaddr_t)buf->addr, buf->size);
  err_ret:
 	return NULL;
 }
@@ -1818,8 +1812,7 @@ envy_freem(void *self, void *addr, int type)
 	}
 	bus_dmamap_unload(sc->pci_dmat, buf->map);
 	bus_dmamap_destroy(sc->pci_dmat, buf->map);
-	bus_dmamem_unmap(sc->pci_dmat, buf->addr, buf->size);
-	bus_dmamem_free(sc->pci_dmat, &buf->seg, 1);
+	uvm_km_free(kernel_map, (vaddr_t)&buf->addr, buf->size);
 	buf->addr = NULL;
 	DPRINTF("%s: freed buffer (mode=%d)\n", DEVNAME(sc), dir);
 }
