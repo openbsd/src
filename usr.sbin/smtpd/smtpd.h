@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.406 2013/02/14 13:11:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.407 2013/02/15 22:43:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -91,6 +91,7 @@
 #define	F_BACKUP		0x10	/* XXX - MUST BE SYNC-ED WITH RELAY_BACKUP */
 #define	F_STARTTLS_REQUIRE	0x20
 #define	F_AUTH_REQUIRE		0x40
+#define	F_LMTP			0x80
 
 #define F_SCERT			0x01
 #define F_CCERT			0x02
@@ -103,6 +104,7 @@
 #define RELAY_AUTH		0x08
 #define RELAY_BACKUP		0x10	/* XXX - MUST BE SYNC-ED WITH F_BACKUP */
 #define RELAY_MX		0x20
+#define RELAY_LMTP		0x80
 
 typedef uint32_t	objid_t;
 

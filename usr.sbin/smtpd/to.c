@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.3 2013/02/14 12:30:49 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.4 2013/02/15 22:43:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -323,6 +323,7 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 		uint8_t		 flags;
 	} schemas [] = {
 		{ "smtp://",		0				},
+		{ "lmtp://",		F_LMTP				},
 		{ "smtp+tls://",       	F_TLS_OPTIONAL 			},
 		{ "smtps://",		F_SMTPS				},
 		{ "tls://",		F_STARTTLS			},
@@ -362,6 +363,10 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 
 	relay->flags = schemas[i].flags;
 
+	/* need to specify an explicit port for LMTP */
+	if (relay->flags & F_LMTP)
+		relay->port = 0;
+
 	if ((sep = strrchr(p, ':')) != NULL) {
 		*sep = 0;
 		relay->port = strtonum(sep+1, 1, 0xffff, &errstr);
@@ -371,6 +376,9 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 	}
 	else
 		len = strlen(p);
+
+	if ((relay->flags & F_LMTP) && (relay->port == 0))
+		return 0;
 
 	relay->hostname[len] = 0;
 
@@ -427,6 +435,9 @@ relayhost_to_text(const struct relayhost *relay)
 		break;
 	case F_TLS_OPTIONAL:
 		strlcat(buf, "smtp+tls://", sizeof buf);
+		break;
+	case F_LMTP:
+		strlcat(buf, "lmtp://", sizeof buf);
 		break;
 	default:
 		strlcat(buf, "smtp://", sizeof buf);
