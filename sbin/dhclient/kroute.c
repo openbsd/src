@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.30 2013/02/03 15:10:36 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.31 2013/02/15 01:20:39 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -718,12 +718,12 @@ resolv_conf_priority(int domain)
 	pid_t pid;
 	ssize_t len;
 	u_int32_t seq;
-	int i, fd, rslt, iovcnt = 0;
+	int i, s, rslt, iovcnt = 0;
 
 	rslt = 0;
 
-	fd = socket(PF_ROUTE, SOCK_RAW, AF_INET);
-	if (fd == -1) {
+	s = socket(PF_ROUTE, SOCK_RAW, AF_INET);
+	if (s == -1) {
 		warning("default route socket: %s", strerror(errno));
 		return (0);
 	}
@@ -737,6 +737,7 @@ resolv_conf_priority(int domain)
 	m_rtmsg.m_rtm.rtm_msglen = sizeof(m_rtmsg.m_rtm);
 	m_rtmsg.m_rtm.rtm_flags = RTF_STATIC | RTF_GATEWAY | RTF_UP;
 	m_rtmsg.m_rtm.rtm_seq = seq = arc4random();
+	m_rtmsg.m_rtm.rtm_tableid = domain;
 
 	iov[iovcnt].iov_base = &m_rtmsg.m_rtm;
 	iov[iovcnt++].iov_len = sizeof(m_rtmsg.m_rtm);
@@ -756,15 +757,15 @@ resolv_conf_priority(int domain)
 
 	m_rtmsg.m_rtm.rtm_msglen += 2 * sizeof(sin);
 
-	if (writev(fd, iov, iovcnt) == -1) {
-		warning("default route write: %s", strerror(errno));
-		return (0);
+	if (writev(s, iov, iovcnt) == -1) {
+		warning("RTM_GET of default route: %s", strerror(errno));
+		goto done;
 	}
 
 	pid = getpid();
 
 	do {
-		len = read(fd, &m_rtmsg, sizeof(m_rtmsg));
+		len = read(s, &m_rtmsg, sizeof(m_rtmsg));
 		if (len == -1) {
 			warning("get default route read: %s", strerror(errno));
 			break;
@@ -806,6 +807,6 @@ resolv_conf_priority(int domain)
 	}
 
 done:
-	close(fd);
+	close(s);
 	return (rslt);
 }
