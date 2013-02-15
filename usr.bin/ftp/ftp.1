@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.85 2012/10/15 21:20:05 bluhm Exp $
+.\" 	$OpenBSD: ftp.1,v 1.86 2013/02/15 04:31:59 lteo Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,12 +30,12 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: October 15 2012 $
+.Dd $Mdocdate: February 15 2013 $
 .Dt FTP 1
 .Os
 .Sh NAME
 .Nm ftp
-.Nd ARPANET file transfer program
+.Nd Internet file transfer program
 .Sh SYNOPSIS
 .Nm ftp
 .Op Fl 46AadEegimnptVv
@@ -85,9 +85,8 @@
 .Ar ...
 .Sh DESCRIPTION
 .Nm
-is the user interface to the
-.Tn ARPANET
-standard File Transfer Protocol (FTP).
+is the user interface to the Internet standard File Transfer
+Protocol (FTP).
 The program allows a user to transfer files to and from a
 remote network site.
 .Pp
