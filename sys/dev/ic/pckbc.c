@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.31 2012/10/17 19:16:10 deraadt Exp $ */
+/* $OpenBSD: pckbc.c,v 1.32 2013/02/15 08:37:09 mpi Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -46,6 +46,12 @@
 
 #if NPCKBD > 0
 #include <dev/pckbc/pckbdvar.h>
+#endif
+
+#ifdef PCKBCDEBUG
+#define DPRINTF(x...)	do { printf(x); } while (0);
+#else
+#define DPRINTF(x...)
 #endif
 
 /* descriptor for one device command */
@@ -102,9 +108,10 @@ int pckbcintr_internal(struct pckbc_internal *, struct pckbc_softc *);
 
 const char *pckbc_slot_names[] = { "kbd", "aux" };
 
-#define KBC_DEVCMD_ACK 0xfa
-#define KBC_DEVCMD_RESEND 0xfe
-#define KBC_DEVCMD_BAT 0xaa
+#define KBC_DEVCMD_ACK		0xfa
+#define KBC_DEVCMD_RESEND	0xfe
+#define KBC_DEVCMD_BAT_DONE	0xaa
+#define KBC_DEVCMD_BAT_FAIL	0xfc
 
 #define	KBD_DELAY	DELAY(8)
 
@@ -587,39 +594,32 @@ pckbc_poll_cmd1(struct pckbc_internal *t, pckbc_slot_t slot,
 				break;
 		}
 
-		if (c == KBC_DEVCMD_ACK) {
+		switch (c) {
+		case KBC_DEVCMD_ACK:
 			cmd->cmdidx++;
 			continue;
-		}
 		/*
 		 * Some legacy free PCs keep returning Basic Assurance Test
 		 * (BAT) instead of something usable, so fail gracefully.
 		 */
-		if (c == KBC_DEVCMD_RESEND || c == KBC_DEVCMD_BAT) {
-#ifdef PCKBCDEBUG
-			printf("pckbc_cmd: %s\n",
+		case KBC_DEVCMD_RESEND:
+		case KBC_DEVCMD_BAT_DONE:
+		case KBC_DEVCMD_BAT_FAIL:
+			DPRINTF("pckbc_cmd: %s\n",
 			    c == KBC_DEVCMD_RESEND ? "RESEND": "BAT");
-#endif
 			if (cmd->retries++ < 5)
 				continue;
-			else {
-#ifdef PCKBCDEBUG
-				printf("pckbc: cmd failed\n");
-#endif
-				cmd->status = ENXIO;
-				return;
-			}
-		}
-		if (c == -1) {
-#ifdef PCKBCDEBUG
-			printf("pckbc_cmd: timeout\n");
-#endif
+
+			DPRINTF("pckbc_cmd: cmd failed\n");
+			cmd->status = ENXIO;
+			return;
+		case -1:
+			DPRINTF("pckbc_cmd: timeout\n");
 			cmd->status = EIO;
 			return;
+		default:
+			DPRINTF("pckbc_cmd: lost 0x%x\n", c);
 		}
-#ifdef PCKBCDEBUG
-		printf("pckbc_cmd: lost 0x%x\n", c);
-#endif
 	}
 
 	while (cmd->responseidx < cmd->responselen) {
