@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.232 2013/02/15 15:00:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.233 2013/02/15 19:52:38 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -595,14 +595,9 @@ state_reboot(void)
 		return;
 	}
 
-	/* make_request doesn't initialize xid because it normally comes
-	   from the DHCPDISCOVER, but we haven't sent a DHCPDISCOVER,
-	   so pick an xid now. */
 	client->xid = arc4random();
-
-	/* Make a DHCPREQUEST packet, and set appropriate per-interface
-	   flags. */
 	make_request(client->active);
+
 	client->destination.s_addr = INADDR_BROADCAST;
 	client->first_sending = time(NULL);
 	client->interval = 0;
@@ -617,10 +612,9 @@ state_reboot(void)
 void
 state_init(void)
 {
-	/* Make a DHCPDISCOVER packet, and set appropriate per-interface
-	   flags. */
+	client->xid = arc4random();
 	make_discover(client->active);
-	client->xid = client->bootrequest_packet.xid;
+
 	client->destination.s_addr = INADDR_BROADCAST;
 	client->state = S_SELECTING;
 	client->first_sending = time(NULL);
@@ -694,9 +688,12 @@ state_selecting(void)
 	client->first_sending = cur_time;
 	client->interval = 0;
 
-	/* Make a DHCPREQUEST packet from the lease we picked. */
+	/*
+	 * Make a DHCPREQUEST packet from the lease we picked. Keep
+	 * the current xid, as all offers should have had the same
+	 * one.
+	 */
 	make_request(picked);
-	client->xid = client->packet.xid;
 
 	/* Toss the lease we picked - we'll get it back in a DHCPACK. */
 	free_client_lease(picked);
@@ -843,8 +840,8 @@ void
 state_bound(void)
 {
 	/* T1 has expired. */
+	client->xid = arc4random();
 	make_request(client->active);
-	client->xid = client->packet.xid;
 
 	if (client->active->options[DHO_DHCP_SERVER_IDENTIFIER].len == 4) {
 		memcpy(&client->destination.s_addr,
@@ -1370,7 +1367,7 @@ make_discover(struct client_lease *lease)
 	packet->htype = ifi->hw_address.htype;
 	packet->hlen = ifi->hw_address.hlen;
 	packet->hops = 0;
-	packet->xid = arc4random();
+	packet->xid = client->xid;
 	packet->secs = 0; /* filled in by send_discover. */
 	packet->flags = 0;
 
