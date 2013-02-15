@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.92 2012/10/09 19:39:59 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.93 2013/02/15 18:34:25 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -798,6 +798,10 @@ Var_ParseSkip(const char **pstr, SymTable *ctxt)
 	bool has_modifier;
 	const char *tstr = str;
 
+	if (str[1] == 0) {
+		*pstr = str+1;
+		return false;
+	}
 	has_modifier = parse_base_variable_name(&tstr, &name, ctxt);
 	VarName_Free(&name);
 	result = true;
@@ -940,6 +944,12 @@ Var_Parse(const char *str,	/* The string to parse */
 	*freePtr = false;
 
 	tstr = str;
+
+	if (str[1] == 0) {
+		*lengthPtr = 1;
+		*freePtr = false;
+		return err ? var_Error : varNoError;
+	}
 
 	has_modifier = parse_base_variable_name(&tstr, &name, ctxt);
 
