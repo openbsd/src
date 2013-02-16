@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.179 2013/02/15 17:36:08 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.180 2013/02/16 16:20:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -367,7 +367,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		    s->evp.helo,
 		    s->hostname,
 		    ss_to_text(&s->ss),
-		    env->sc_hostname,
+		    s->listener->helo[0] ? s->listener->helo : env->sc_hostname,
 		    SMTPD_NAME,
 		    s->flags & SF_EHLO ? "E" : "",
 		    evpid_to_msgid(s->evp.id));
