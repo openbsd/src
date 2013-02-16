@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.233 2013/02/15 19:52:38 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.234 2013/02/16 13:50:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -256,7 +256,6 @@ routehandler(void)
 		} 
 		goto die;
 	case RTM_IFINFO:
-		note("Got RTM_IFINFO");
 		ifm = (struct if_msghdr *)rtm;
 		if (ifm->ifm_index != ifi->index)
 			break;
