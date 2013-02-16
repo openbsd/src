@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.92 2012/09/20 11:32:06 ajacoutot Exp $ */
+/* $OpenBSD: user.c,v 1.93 2013/02/16 07:25:54 ajacoutot Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1348,6 +1348,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	char		*shell_last_char;
 	size_t		colonc, loginc;
 	size_t		cc;
+	size_t		shell_buf;
 	FILE		*master;
 	char		newdir[MaxFileNameLen];
 	char		*colon;
@@ -1371,7 +1372,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		errx(EXIT_FAILURE, "User `%s' must be a local user", login_name);
 	}
 	if (up != NULL) {
-		if ((up->u_flags & (F_ACCTLOCK | F_ACCTUNLOCK)) && (pwp->pw_uid == 0))
+		if ((up->u_flags & (F_ACCTLOCK | F_ACCTUNLOCK)) && (pwp->pw_uid < 1000))
 			errx(EXIT_FAILURE, "(un)locking is not supported for the `%s' account", pwp->pw_name);
 	}
 	/* keep dir name in case we need it for '-m' */
@@ -1470,13 +1471,14 @@ moduser(char *login_name, char *newlogin, user_t *up)
 			}
 			/* unlock the account */
 			if (*shell_last_char == *acctlock_str) {
-				shell_tmp = malloc(strlen(pwp->pw_shell) - sizeof(acctlock_str));
+				shell_buf = strlen(pwp->pw_shell) + 2 - sizeof(acctlock_str);
+				shell_tmp = malloc(shell_buf);
 				if (shell_tmp == NULL) {
 					(void) close(ptmpfd);
 					pw_abort();
 					errx(EXIT_FAILURE, "unlock: cannot allocate memory");
 				}
-				strlcpy(shell_tmp, pwp->pw_shell, sizeof(shell_tmp) + 1);
+				strlcpy(shell_tmp, pwp->pw_shell, shell_buf);
 				pwp->pw_shell = shell_tmp;
 			} else {
 				unlocked++;
