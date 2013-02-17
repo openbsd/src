@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.6 2013/01/05 11:20:56 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.7 2013/02/17 18:05:51 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -2017,7 +2017,7 @@ poswrinfd:
 /* Write negative infinity of the correct precision */
 
 negwrinf:
-	bb1	dsize, %r9, negwrinfd		/* branch to write double
+	bb1	dsize, %r9, negwrinfd		/* branch to write double */
 						/* precision inf. */
 	br.n	inf_return
 	 or.u	%r6,  %r0, 0xff80		/* load r6 with single */
