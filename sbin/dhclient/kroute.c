@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.31 2013/02/15 01:20:39 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.32 2013/02/17 15:08:13 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -639,10 +639,8 @@ priv_add_address(struct imsg_add_address *imsg)
 	for (i = 0; i < 5; i++) {
 		if (writev(s, iov, iovcnt) != -1)
 			break;
-		/* XXX Why do some systems get ENETUNREACH? */
 		if (errno == ENETUNREACH) {
-			note("failed to add 127.0.0.1 route: %s",
-			    strerror(errno));
+			/* Not our responsibility to ensure 127/8 exists. */
 			break;
 		} else if (errno != EEXIST)
 			error("failed to add 127.0.0.1 route: %s",
