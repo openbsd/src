@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.234 2013/02/16 13:50:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.235 2013/02/17 00:02:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -406,6 +406,9 @@ main(int argc, char *argv[])
 
 	/* Put us into the correct rdomain */
 	ifi->rdomain = get_rdomain(ifi->name);
+	if (setrtable(ifi->rdomain) == -1)
+		error("setting routing table to %d: '%s'", ifi->rdomain,
+		    strerror(errno));
 
 	read_client_conf();
 	if (ignore_list)
