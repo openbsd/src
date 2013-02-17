@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.54 2013/01/26 20:47:08 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.55 2013/02/17 18:07:36 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -96,7 +96,7 @@ __cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
 struct cpu_info m88k_cpus[MAX_CPUS];
-struct cmmu_p *cmmu;
+const struct cmmu_p *cmmu;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait

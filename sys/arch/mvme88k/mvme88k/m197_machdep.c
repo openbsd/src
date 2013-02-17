@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.46 2011/10/25 18:38:06 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.47 2013/02/17 18:07:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -326,8 +326,8 @@ m197_raiseipl(u_int level)
 void
 m197_bootstrap()
 {
-	extern struct cmmu_p cmmu88110;
-	extern struct cmmu_p cmmu88410;
+	extern const struct cmmu_p cmmu88110;
+	extern const struct cmmu_p cmmu88410;
 	extern int cpuspeed;
 	u_int16_t cpu;
 	u_int8_t version, btimer, pbt;

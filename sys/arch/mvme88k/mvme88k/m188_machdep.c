@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.54 2010/12/31 21:38:08 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.55 2013/02/17 18:07:36 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -221,7 +221,7 @@ m188_memsize()
 void
 m188_bootstrap()
 {
-	extern struct cmmu_p cmmu8820x;
+	extern const struct cmmu_p cmmu8820x;
 
 	cmmu = &cmmu8820x;
 	md_interrupt_func_ptr = m188_ext_int;

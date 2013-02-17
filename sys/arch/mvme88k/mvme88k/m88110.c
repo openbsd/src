@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.76 2011/10/25 18:38:06 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.77 2013/02/17 18:07:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -122,7 +122,7 @@ void	m88410_initialize_cpu(cpuid_t);
  * This is the function table for the MC88110 built-in CMMUs without
  * external 88410.
  */
-struct cmmu_p cmmu88110 = {
+const struct cmmu_p cmmu88110 = {
 	m88110_init,
 	m88110_setup_board_config,
 	m88110_cpu_configuration_print,
@@ -147,7 +147,7 @@ struct cmmu_p cmmu88110 = {
  * This is the function table for the MC88110 built-in CMMUs with
  * external 88410.
  */
-struct cmmu_p cmmu88410 = {
+const struct cmmu_p cmmu88410 = {
 	m88410_init,
 	m88410_setup_board_config,
 	m88410_cpu_configuration_print,

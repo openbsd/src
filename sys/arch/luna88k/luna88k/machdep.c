@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.85 2012/12/26 22:32:13 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.86 2013/02/17 18:07:36 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -986,7 +986,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 luna88k_bootstrap()
 {
-	extern struct cmmu_p cmmu8820x;
+	extern const struct cmmu_p cmmu8820x;
 	extern char *end;
 	vaddr_t avail_start;
 	extern vaddr_t avail_end;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.22 2010/12/31 21:38:08 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.23 2013/02/17 18:07:36 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -224,7 +224,7 @@ void
 m187_bootstrap()
 {
 	extern int cpuspeed;
-	extern struct cmmu_p cmmu8820x;
+	extern const struct cmmu_p cmmu8820x;
 
 	/*
 	 * Find out the processor speed, from the PCC2 prescaler

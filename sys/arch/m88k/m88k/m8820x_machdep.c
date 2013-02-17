@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.50 2011/10/25 18:38:06 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.51 2013/02/17 18:07:36 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -102,7 +102,7 @@ void	m8820x_dma_cachectl(paddr_t, psize_t, int);
 void	m8820x_dma_cachectl_local(paddr_t, psize_t, int);
 void	m8820x_initialize_cpu(cpuid_t);
 
-struct cmmu_p cmmu8820x = {
+const struct cmmu_p cmmu8820x = {
 	m8820x_init,
 	m8820x_setup_board_config,
 	m8820x_cpu_configuration_print,
