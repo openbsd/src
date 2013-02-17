@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.73 2013/02/17 17:04:41 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.74 2013/02/17 17:36:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -119,7 +119,7 @@ dispatch(void)
 another:
 		if (!ifi) {
 			warning("No interfaces available");
-			quit = SIGQUIT;
+			quit = INTERNALSIG;
 			continue;
 		}
 
@@ -127,7 +127,7 @@ another:
 			warning("Interface %s:"
 			    " rdomain changed out from under us",
 			    ifi->name);
-			quit = SIGQUIT;
+			quit = INTERNALSIG;
 			continue;
 		}
 
@@ -155,7 +155,7 @@ another:
 		/* Set up the descriptors to be polled. */
 		if (!ifi || ifi->rfdesc == -1) {
 			warning("No live interface to poll on");
-			quit = SIGQUIT;
+			quit = INTERNALSIG;
 			continue;
 		}
 
@@ -176,7 +176,7 @@ another:
 				continue;
 			} else {
 				warning("poll: %s", strerror(errno));
-				quit = SIGQUIT;
+				quit = INTERNALSIG;
 				continue;
 			}
 		}
@@ -192,13 +192,13 @@ another:
 		if (fds[2].revents & POLLOUT) {
 			if (msgbuf_write(&unpriv_ibuf->w) == -1) {
 				warning("pipe write error to [priv]");
-				quit = SIGQUIT;
+				quit = INTERNALSIG;
 				continue;
 			}
 		}
 		if ((fds[2].revents & (POLLIN | POLLHUP))) {
 			/* Pipe to [priv] closed. Assume it emitted error. */
-			quit = SIGQUIT;
+			quit = INTERNALSIG;
 			continue;
 		}
 	}

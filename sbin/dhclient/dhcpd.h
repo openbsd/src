@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.109 2013/02/14 20:39:46 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.110 2013/02/17 17:36:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -72,6 +72,7 @@
 
 #define	LOCAL_PORT	68
 #define	REMOTE_PORT	67
+#define	INTERNALSIG	INT_MAX
 
 struct option {
 	char *name;
