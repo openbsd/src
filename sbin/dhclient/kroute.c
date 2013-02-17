@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.33 2013/02/17 15:48:03 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.34 2013/02/17 17:04:41 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -424,8 +424,9 @@ priv_delete_address(struct imsg_delete_address *imsg)
 
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
 	if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
-		warning("SIOCDIFADDR failed (%s): %s", inet_ntoa(imsg->addr),
-		    strerror(errno));
+		if (errno != EADDRNOTAVAIL)
+			warning("SIOCDIFADDR failed (%s): %s",
+			    inet_ntoa(imsg->addr), strerror(errno));
 		close(s);
 		return;
 	}
@@ -676,7 +677,7 @@ cleanup(struct client_lease *active)
 
 	/* Do flush so cleanup message gets through immediately. */
 	rslt = imsg_flush(unpriv_ibuf);
-	if (rslt == -1)
+	if (rslt == -1 && errno != EPIPE)
 		warning("cleanup: imsg_flush: %s", strerror(errno));
 }
 

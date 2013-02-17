@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.72 2013/02/14 22:18:12 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.73 2013/02/17 17:04:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -197,7 +197,7 @@ another:
 			}
 		}
 		if ((fds[2].revents & (POLLIN | POLLHUP))) {
-			warning("lost connection to [priv]");
+			/* Pipe to [priv] closed. Assume it emitted error. */
 			quit = SIGQUIT;
 			continue;
 		}
