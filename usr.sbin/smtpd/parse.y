@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.114 2013/02/14 12:30:49 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.115 2013/02/17 12:28:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -129,7 +129,7 @@ typedef struct {
 %type	<v.number>	port from auth ssl size expire sender
 %type	<v.object>	tables tablenew tableref destination alias virtual usermapping userbase credentials
 %type	<v.maddr>	relay_as
-%type	<v.string>	certificate tag tagged compression relay_source listen_helo relay_helo relay_backup
+%type	<v.string>	certificate tag tagged relay_source listen_helo relay_helo relay_backup
 %%
 
 grammar		: /* empty */
@@ -329,30 +329,10 @@ credentials	: AUTH tables	{
 		| /* empty */	{ $$ = 0; }
 		;
 
-compression	: COMPRESSION		{
-			$$ = strdup("gzip");
-			if ($$ == NULL) {
-				yyerror("strdup");
-				YYERROR;
-			}
-		}
-		| COMPRESSION STRING	{ $$ = $2; }
-		;
-
 listen_helo	: HOSTNAME STRING	{ $$ = $2; }
 		| /* empty */		{ $$ = NULL; }
 
-main		: QUEUE compression {
-			conf->sc_queue_compress_algo = strdup($2);
-			if (conf->sc_queue_compress_algo == NULL) {
-				yyerror("strdup");
-				free($2);
-				YYERROR;
-			}
-			conf->sc_queue_flags |= QUEUE_COMPRESS;
-			free($2);
-		}
-		| BOUNCEWARN {
+main		: BOUNCEWARN {
 			bzero(conf->sc_bounce_warn, sizeof conf->sc_bounce_warn);
 		} bouncedelays
 		| EXPIRE STRING {
@@ -978,7 +958,6 @@ lookup(char *s)
 		{ "backup",		BACKUP },
 		{ "bounce-warn",	BOUNCEWARN },
 		{ "certificate",	CERTIFICATE },
-		{ "compression",       	COMPRESSION },
 		{ "deliver",		DELIVER },
 		{ "domain",		DOMAIN },
 		{ "expire",		EXPIRE },

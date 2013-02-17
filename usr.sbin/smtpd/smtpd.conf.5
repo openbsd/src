@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.90 2013/02/15 22:43:21 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.91 2013/02/17 12:28:30 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 15 2013 $
+.Dd $Mdocdate: February 17 2013 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -525,12 +525,6 @@ bytes.
 The argument may contain a multiplier, as documented in
 .Xr scan_scaled 3 .
 The default maximum message size is 35MB if none is specified.
-.It Ic queue compression Op Ar gzip
-Enable transparent deflating and inflating of all envelopes
-and messages.
-The only supported algorithm at the moment is gzip.
-Envelopes and messages may be inspected using
-.Xr gzcat 1 .
 .It Ic table Ar name Oo Ar type : Oc Ns Ar config
 Tables are used to provide additional configuration information for
 .Xr smtpd 8
