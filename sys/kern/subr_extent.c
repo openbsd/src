@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.46 2013/02/09 20:56:35 miod Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.47 2013/02/17 17:39:29 miod Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
 
 #if defined(DIAGNOSTIC) || defined(DDB)
 void	extent_print1(struct extent *, int (*)(const char *, ...)
-	    __attribute__((__format__(__kprintf__,1,2))));
+	    /* __attribute__((__format__(__kprintf__,1,2))) */);
 #endif
 
 static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
@@ -1160,7 +1160,7 @@ extent_print(struct extent *ex)
 
 void
 extent_print1(struct extent *ex,
-    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
+    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */)
 {
 	struct extent_region *rp;
 

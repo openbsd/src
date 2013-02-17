@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.201 2013/02/09 20:56:35 miod Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.202 2013/02/17 17:39:29 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2151,7 +2151,7 @@ vn_isdisk(struct vnode *vp, int *errp)
 
 void
 vfs_buf_print(void *b, int full,
-    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
+    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */)
 {
 	struct buf *bp = b;
 
@@ -2179,7 +2179,7 @@ const char *vtags[] = { VTAG_NAMES };
 
 void
 vfs_vnode_print(void *v, int full,
-    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
+    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */)
 {
 	struct vnode *vp = v;
 
@@ -2213,7 +2213,7 @@ vfs_vnode_print(void *v, int full,
 
 void
 vfs_mount_print(struct mount *mp, int full,
-    int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2))))
+    int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */)
 {
 	struct vfsconf *vfc = mp->mnt_vfc;
 	struct vnode *vp;
