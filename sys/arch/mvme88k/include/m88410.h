@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.h,v 1.14 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: m88410.h,v 1.15 2013/02/17 18:10:01 miod Exp $ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -42,16 +42,10 @@
 
 #include <mvme88k/dev/busswreg.h>
 
-void	mc88410_wb_page(paddr_t);
-void	mc88410_wb(void);
 void	mc88410_inv(void);
-
-static __inline__ void
-mc88410_wbinv(void)
-{
-	mc88410_wb();
-	mc88410_inv();
-}
+void	mc88410_wb(void);
+void	mc88410_wbinv(void);
+void	mc88410_wb_page(paddr_t);
 
 static __inline__ int
 mc88410_present(void)
