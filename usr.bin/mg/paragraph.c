@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.22 2011/11/29 05:59:54 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.23 2013/02/17 15:42:21 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -41,22 +41,14 @@ gotobop(int f, int n)
 			if (llength(lback(curwp->w_dotp)) &&
 			    lgetc(curwp->w_dotp, 0) != ' ' &&
 			    lgetc(curwp->w_dotp, 0) != '.' &&
-			    lgetc(curwp->w_dotp, 0) != '\t')
+			    lgetc(curwp->w_dotp, 0) != '\t') {
 				curwp->w_dotp = lback(curwp->w_dotp);
-			else {
+				curwp->w_dotline--;
+			} else {
 				if (llength(lback(curwp->w_dotp)) &&
 				    lgetc(curwp->w_dotp, 0) == '.') {
 					curwp->w_dotp = lforw(curwp->w_dotp);
-					if (curwp->w_dotp == curbp->b_headp) {
-						/*
-						 * beyond end of buffer,
-						 * cleanup time
-						 */
-						curwp->w_dotp =
-						    lback(curwp->w_dotp);
-						curwp->w_doto =
-						    llength(curwp->w_dotp);
-					}
+					curwp->w_dotline++;	 
 				}
 				break;
 			}
@@ -93,9 +85,10 @@ gotoeop(int f, int n)
 			if (llength(curwp->w_dotp) &&
 			    lgetc(curwp->w_dotp, 0) != ' ' &&
 			    lgetc(curwp->w_dotp, 0) != '.' &&
-			    lgetc(curwp->w_dotp, 0) != '\t')
+			    lgetc(curwp->w_dotp, 0) != '\t') {
 				curwp->w_dotp = lforw(curwp->w_dotp);
-			else
+				curwp->w_dotline++;
+			} else
 				break;
 		}
 		if (curwp->w_dotp == curbp->b_headp) {
@@ -103,7 +96,8 @@ gotoeop(int f, int n)
 			curwp->w_dotp = lback(curwp->w_dotp);
 			curwp->w_doto = llength(curwp->w_dotp);
 			break;
-		}
+		} else
+			curwp->w_dotline++;
 	}
 	/* force screen update */
 	curwp->w_rflag |= WFMOVE;
