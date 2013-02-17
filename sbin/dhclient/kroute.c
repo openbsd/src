@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.32 2013/02/17 15:08:13 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.33 2013/02/17 15:48:03 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -256,7 +256,7 @@ priv_add_default_route(struct imsg_add_default_route *imsg)
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_ADD;
 	rtm.rtm_tableid = imsg->rdomain;
-	rtm.rtm_priority = 0;
+	rtm.rtm_priority = RTP_NONE;
 	rtm.rtm_msglen = sizeof(rtm);
 
 	iov[iovcnt].iov_base = &rtm;
@@ -446,7 +446,7 @@ priv_delete_address(struct imsg_delete_address *imsg)
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_DELETE;
 	rtm.rtm_tableid = imsg->rdomain;
-	rtm.rtm_priority = 0;
+	rtm.rtm_priority = RTP_NONE;
 	rtm.rtm_msglen = sizeof(rtm);
 
 	iov[iovcnt].iov_base = &rtm;
@@ -581,7 +581,7 @@ priv_add_address(struct imsg_add_address *imsg)
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_ADD;
 	rtm.rtm_tableid = imsg->rdomain;
-	rtm.rtm_priority = 0;
+	rtm.rtm_priority = RTP_NONE;
 	rtm.rtm_msglen = sizeof(rtm);
 
 	iov[iovcnt].iov_base = &rtm;
