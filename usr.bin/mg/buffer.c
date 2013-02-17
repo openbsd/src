@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.89 2013/02/15 15:12:25 florian Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.90 2013/02/17 10:30:26 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -153,7 +153,7 @@ killbuffer(struct buffer *bp)
 	struct buffer *bp2;
 	struct mgwin  *wp;
 	int s;
-	struct undo_rec *rec, *next;
+	struct undo_rec *rec;
 
 	/*
 	 * Find some other buffer to display. Try the alternate buffer,
@@ -204,12 +204,10 @@ killbuffer(struct buffer *bp)
 			bp1->b_altb = (bp->b_altb == bp1) ? NULL : bp->b_altb;
 		bp1 = bp1->b_bufp;
 	}
-	rec = TAILQ_FIRST(&bp->b_undo);
 
-	while (rec != NULL) {
-		next = TAILQ_NEXT(rec, next);
+	while ((rec = TAILQ_FIRST(&bp->b_undo))) {
+		TAILQ_REMOVE(&bp->b_undo, rec, next);
 		free_undo_record(rec);
-		rec = next;
 	}
 
 	free(bp->b_bname);			/* Release name block	 */
