@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.74 2013/02/17 17:36:31 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.75 2013/02/18 15:57:08 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -203,17 +203,15 @@ another:
 		}
 	}
 
-	/*
-	 * SIGTERM is used by system at shut down. Be nice and don't cleanup
-	 * routes, thus possibly preventing NFS from properly shutting down.
-	 */
-	if (client->active && quit != SIGTERM)
-		cleanup(client->active);
-
-	if (quit == SIGHUP)
-		exit(0);
-
-	exit(1);
+	if (quit == SIGHUP) {
+		/* Tell [priv] process that HUP has occurred. */
+		sendhup(client->active);
+		warning("%s; restarting", strsignal(quit));
+		exit (0);
+	} else if (quit != INTERNALSIG) {
+		warning("%s; exiting", strsignal(quit));
+		exit(1);
+	}
 }
 
 void

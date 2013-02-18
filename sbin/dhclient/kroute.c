@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.35 2013/02/17 17:36:31 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.36 2013/02/18 15:57:08 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -655,12 +655,12 @@ priv_add_address(struct imsg_add_address *imsg)
 }
 
 /*
- * [priv_]cleanup removes dhclient installed routes and address.
+ * Inform the [priv] process a HUP was received and it should restart.
  */
 void
-cleanup(struct client_lease *active)
+sendhup(struct client_lease *active)
 {
-	struct imsg_cleanup imsg;
+	struct imsg_hup imsg;
 	int rslt;
 
 	memset(&imsg, 0, sizeof(imsg));
@@ -670,7 +670,7 @@ cleanup(struct client_lease *active)
 	if (active)
 		imsg.addr = active->address;
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_CLEANUP, 0, 0, -1,
+	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
 		warning("cleanup: imsg_compose: %s", strerror(errno));
@@ -681,8 +681,11 @@ cleanup(struct client_lease *active)
 		warning("cleanup: imsg_flush: %s", strerror(errno));
 }
 
+/*
+ * priv_cleanup removes dhclient installed routes and address.
+ */
 void
-priv_cleanup(struct imsg_cleanup *imsg)
+priv_cleanup(struct imsg_hup *imsg)
 {
 	struct imsg_flush_routes fimsg;
 	struct imsg_delete_address dimsg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.236 2013/02/17 17:04:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.237 2013/02/18 15:57:08 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -242,8 +242,11 @@ routehandler(void)
 			if (adding.s_addr == INADDR_ANY && client->active &&
 			    a.s_addr == client->active->address.s_addr) {
 				/* Tell the priv process active_addr is gone. */
+				warning("Active address (%s) deleted; exiting",
+				    inet_ntoa(client->active->address));
 				memset(&b, 0, sizeof(b));
 				add_address(ifi->name, 0, b, b);
+				quit = INTERNALSIG;
 				break;
 			}
 			if (deleting.s_addr != INADDR_ANY)
@@ -268,6 +271,7 @@ routehandler(void)
 		discover_interface();
 		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
 			warning("LLADDR changed; restarting");
+			ifi->flags |= IFI_NEW_LLADDR;
 			quit = SIGHUP;
 			return;
 		}
@@ -312,7 +316,7 @@ routehandler(void)
 die:
 	if (rslt == -1)
 		error("no memory for errmsg");
-	error("routehandler: %s", errmsg);
+	error("%s; exiting", errmsg);
 	free(errmsg);
 }
 
@@ -1784,7 +1788,7 @@ toobig:
 void
 fork_privchld(int fd, int fd2)
 {
-	struct imsg_cleanup imsg;
+	struct imsg_hup imsg;
 	struct pollfd pfd[1];
 	struct imsgbuf *priv_ibuf;
 	ssize_t n;
@@ -1820,7 +1824,7 @@ fork_privchld(int fd, int fd2)
 		if ((nfds = poll(pfd, 1, INFTIM)) == -1) {
 			if (errno != EINTR) {
 				warning("poll error: %s", strerror(errno));
-				break;
+				quit = INTERNALSIG;
 			}
 			continue;
 		} 
@@ -1830,12 +1834,14 @@ fork_privchld(int fd, int fd2)
 
 		if ((n = imsg_read(priv_ibuf)) == -1) {
 			warning("imsg_read(priv_ibuf): %s", strerror(errno));
-			break;
+			quit = INTERNALSIG;
+			continue;
 		}
 
-		if (n == 0) {	/* connection closed */
-			warning("dispatch_imsg in main: pipe closed");
-			break;
+		if (n == 0) {
+			/* Connection closed -- other end should log message. */
+			quit = INTERNALSIG;
+			continue;
 		}
 
 		dispatch_imsg(priv_ibuf);
@@ -1851,26 +1857,31 @@ fork_privchld(int fd, int fd2)
 			    path_option_db, strerror(errno));
 	}
 
-	memset(&imsg, 0, sizeof(imsg));
-	strlcpy(imsg.ifname, ifi->name, sizeof(imsg.ifname));
-	imsg.rdomain = ifi->rdomain;
-	imsg.addr = active_addr;
-
 	/*
 	 * SIGTERM is used by system at shut down. Be nice and don't cleanup
 	 * routes, possibly preventing NFS from properly shutting down.
 	 */
-	if (quit != SIGTERM)
+	if (quit != SIGTERM) {
+		memset(&imsg, 0, sizeof(imsg));
+		strlcpy(imsg.ifname, ifi->name, sizeof(imsg.ifname));
+		imsg.rdomain = ifi->rdomain;
+		imsg.addr = active_addr;
 		priv_cleanup(&imsg);
+	}
 
 	if (quit == SIGHUP) {
-		warning("Received SIGHUP; restarting.");
+		if (!(ifi->flags & IFI_HUP) &&
+		   (!(ifi->flags & IFI_NEW_LLADDR)))
+			warning("%s; restarting.", strsignal(quit));
 		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
 		execvp(saved_argv[0], saved_argv);
 		error("RESTART FAILED: '%s': %s", saved_argv[0],
 		    strerror(errno));
 	}
 
+	if (quit != INTERNALSIG)
+		warning("%s; exiting", strsignal(quit));
+ 
 	exit(1);
 }
 
