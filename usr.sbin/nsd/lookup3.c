@@ -52,6 +52,12 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 #ifdef linux
 # include <endian.h>    /* attempt to define endianness */
 #endif
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+#include <sys/endian.h> /* attempt to define endianness */
+#endif
+#ifdef __OpenBSD__
+#include <machine/endian.h> /* attempt to define endianness */
+#endif
 
 /* random initial value */
 static uint32_t raninit = 0xdeadbeef;
@@ -68,12 +74,16 @@ hash_set_raninit(uint32_t v)
  */
 #if (defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && \
      __BYTE_ORDER == __LITTLE_ENDIAN) || \
+    (defined(_BYTE_ORDER) && defined(_LITTLE_ENDIAN) && \
+     _BYTE_ORDER == _LITTLE_ENDIAN) || \
     (defined(i386) || defined(__i386__) || defined(__i486__) || \
      defined(__i586__) || defined(__i686__) || defined(vax) || defined(MIPSEL))
 # define HASH_LITTLE_ENDIAN 1
 # define HASH_BIG_ENDIAN 0
 #elif (defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && \
        __BYTE_ORDER == __BIG_ENDIAN) || \
+      (defined(_BYTE_ORDER) && defined(_BIG_ENDIAN) && \
+       _BYTE_ORDER == _BIG_ENDIAN) || \
       (defined(sparc) || defined(POWERPC) || defined(mc68000) || defined(sel))
 # define HASH_LITTLE_ENDIAN 0
 # define HASH_BIG_ENDIAN 1
