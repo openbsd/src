@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.130 2012/04/28 12:00:10 espie Exp $
+# $OpenBSD: Add.pm,v 1.131 2013/02/18 19:29:03 okan Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -377,7 +377,7 @@ sub install
 	$self->SUPER::install($state);
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
-	if ($fullname =~ m,^/usr/local/share/doc/pkg-readmes/,) {
+	if ($fullname =~ m,^$state->{localbase}/share/doc/pkg-readmes/,) {
 		$state->{readmes}++;
 	}
 

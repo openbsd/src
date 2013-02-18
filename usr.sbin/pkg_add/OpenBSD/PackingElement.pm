@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.208 2012/10/13 10:28:22 jeremy Exp $
+# $OpenBSD: PackingElement.pm,v 1.209 2013/02/18 19:29:03 okan Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -177,7 +177,7 @@ sub finish
 	OpenBSD::PackingElement::Fontdir->finish($state);
 	OpenBSD::PackingElement::RcScript->report($state);
 	if ($state->{readmes}) {
-		$state->say("Look in /usr/local/share/doc/pkg-readmes for extra documentation.");
+		$state->say("Look in #1/share/doc/pkg-readmes for extra documentation.", $state->{localbase});
 	}
 }
 
