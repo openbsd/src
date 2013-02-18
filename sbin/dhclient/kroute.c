@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.36 2013/02/18 15:57:08 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.37 2013/02/18 22:10:04 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -142,6 +142,8 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 
 		if (rtm->rtm_flags & RTF_LLINFO) {
 			if (rtm->rtm_flags & RTF_GATEWAY)
+				continue;
+			if (rtm->rtm_flags & RTF_PERMANENT_ARP)
 				continue;
 
 			/* XXXX Check for AF_INET too? (arp ask for them) */
