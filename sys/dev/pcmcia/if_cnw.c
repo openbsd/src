@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.22 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.23 2013/02/18 23:29:21 jsg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -431,6 +431,9 @@ cnw_attach(parent, self, aux)
 	/* Attach the interface */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	if_addgroup(ifp, "wlan");
+	ifp->if_priority = IF_WIRELESS_DEFAULT_PRIORITY;
 
 	/* Disable the card now, and turn it on when the interface goes up */
 	pcmcia_function_disable(sc->sc_pf);

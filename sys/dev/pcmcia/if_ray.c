@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.48 2011/07/07 19:13:29 henning Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.49 2013/02/18 23:29:21 jsg Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -616,6 +616,9 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	memcpy(&sc->sc_ec.ac_enaddr, ep->e_station_addr, ETHER_ADDR_LEN);
 	ether_ifattach(ifp);
+
+	if_addgroup(ifp, "wlan");
+	ifp->if_priority = IF_WIRELESS_DEFAULT_PRIORITY;
 
 	/* need enough space for ieee80211_header + (snap or e2) */
 	ifp->if_hdrlen =
