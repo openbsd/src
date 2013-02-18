@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.37 2013/02/12 20:24:32 lum Exp $	*/
+/*	$OpenBSD: last.c,v 1.38 2013/02/18 10:40:12 fgsch Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdio.h>
