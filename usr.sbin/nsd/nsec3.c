@@ -435,7 +435,7 @@ prehash_zone_incremental(struct namedb *db, struct zone *zone)
 			node = rbtree_next(node);
 			continue;
 		}
-		if (!walk->nsec3_cover) {
+		if (walk->nsec3_cover != NULL) {
 			node = rbtree_next(node);
 			continue;
 		}

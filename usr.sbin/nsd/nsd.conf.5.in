@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Nov  1, 2012" "NLnet Labs" "nsd 3.2.14"
+.TH "nsd.conf" "5" "Feb  4, 2013" "NLnet Labs" "nsd 3.2.15"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -185,7 +185,7 @@ If not present no statistics are dumped. Statistics are produced
 every number seconds. Same as commandline option 
 .BR \-s .
 .TP
-.B zone-stats-file:\fR <filename>
+.B zone\-stats\-file:\fR <filename>
 If per zone statistics is enabled, file to dump the statistics.
 .TP
 .B chroot:\fR <directory>
@@ -235,6 +235,25 @@ zone transfers. 2 lists soft warnings that are encountered.
 .B hide\-version:\fR <yes or no>
 Prevent NSD from replying with the version string on CHAOS class 
 queries.
+.\" rrlstart
+.TP
+.B rrl\-size:\fR <numbuckets>
+This option gives the size of the hashtable. Default 1000000. More buckets
+use more memory, and reduce the chance of hash collisions.
+.TP
+.B rrl\-ratelimit:\fR <qps>
+The max qps allowed (from one query source). Default 200 qps. If set to 0
+then it is disabled (unlimited rate), also set the whilelist\-ratelimit
+to 0 to disable ratelimit processing.  If you set verbosity to 2 the
+blocked and unblocked subnets are logged.  Blocked queries are blocked
+and some receive TCP fallback replies.
+.TP
+.B rrl\-whitelist\-ratelimit:\fR <qps>
+The max qps for query sorts for a source, which have been
+whitelisted. Default 2000 qps. With the rrl\-whitelist option you can set
+specific queries to receive this qps limit instead of the normal limit.
+With the value 0 the rate is unlimited.
+.\" rrlend
 .SS "Zone Options"
 .LP 
 For every zone the options need to be specified in one 
@@ -284,12 +303,12 @@ made to the master server.
 If the UDP option is given, the secondary will use UDP to transmit the IXFR 
 requests. You should deploy TSIG when allowing UDP transport, to authenticate
 notifies and zone transfers. Otherwise, NSD is more vulnerable for 
-Kaminsky-style attacks. If the UDP option is left out then IXFR will be 
+Kaminsky\-style attacks. If the UDP option is left out then IXFR will be 
 transmitted using TCP.
 .RE
 .TP
 .B allow\-axfr\-fallback:\fR <yes or no>
-This option should be accompanied by request-xfr. It (dis)allows NSD (as secondary) 
+This option should be accompanied by request\-xfr. It (dis)allows NSD (as secondary) 
 to fallback to AXFR if the primary name server does not support IXFR. Default is yes.
 .TP
 .B notify:\fR <ip\-address> <key\-name | NOKEY>
@@ -328,6 +347,18 @@ The ip\-address is a plain IP address (IPv4 or IPv6).
 A port number can be added using a suffix of @number, for example 
 1.2.3.4@5300.
 .RE
+\" rrlstart
+.TP
+.B rrl\-whitelist:\fR <rrltype>
+This option causes queries of this rrltype to be whitelisted, for this
+zone. They receive the whitelist\-ratelimit. You can give multiple lines,
+each enables a new rrltype to be whitelisted for the zone. Default has
+none whitelisted. The rrltype is the query classification that the NSD RRL
+employs to make different types not interfere with one another.  The types
+are logged in the loglines when a subnet is blocked (in verbosity 2).
+The RRL classification types are: nxdomain, error, referral, any, rrsig,
+wildcard, nodata, dnskey, positive, all.
+.\" rrlend
 .SS "Key Declarations"
 The 
 .B key: 
@@ -509,8 +540,8 @@ default
 configuration file
 .SH "SEE ALSO" 
 .LP
-nsd(8), nsdc(8), nsd\-checkconf(8), nsd-notify(8), 
-nsd-patch(8), nsd-xfer(8), nsd\-zonec(8)
+nsd(8), nsdc(8), nsd\-checkconf(8), nsd\-notify(8), 
+nsd\-patch(8), nsd\-xfer(8), nsd\-zonec(8)
 .SH "AUTHORS"
 .LP
 .B NSD

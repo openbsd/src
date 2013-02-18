@@ -18,6 +18,7 @@
 
 #include "options.h"
 #include "util.h"
+#include "rrl.h"
 #include "configyyrename.h"
 int c_lex(void);
 void c_error(const char *message);
@@ -58,6 +59,7 @@ static int server_settings_seen = 0;
 %token VAR_ALGORITHM VAR_SECRET
 %token VAR_AXFR VAR_UDP
 %token VAR_VERBOSITY VAR_HIDE_VERSION
+%token VAR_RRL_SIZE VAR_RRL_RATELIMIT VAR_RRL_WHITELIST_RATELIMIT VAR_RRL_WHITELIST
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -81,7 +83,8 @@ content_server: server_ip_address | server_debug_mode | server_ip4_only |
 	server_username | server_zonesdir |
 	server_difffile | server_xfrdfile | server_xfrd_reload_timeout |
 	server_tcp_query_count | server_tcp_timeout | server_ipv4_edns_size |
-	server_ipv6_edns_size | server_verbosity | server_hide_version;
+	server_ipv6_edns_size | server_verbosity | server_hide_version |
+	server_rrl_size | server_rrl_ratelimit | server_rrl_whitelist_ratelimit;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -163,7 +166,7 @@ server_nsid: VAR_NSID STRING
 
 		OUTYY(("P(server_nsid:%s)\n", $2));
 
-                if (strlen($2) % 2 != 0) {
+		if (strlen($2) % 2 != 0) {
 			yyerror("the NSID must be a hex string of an even length.");
 		} else {
 			nsid_len = strlen($2) / 2;
@@ -294,6 +297,32 @@ server_ipv6_edns_size: VAR_IPV6_EDNS_SIZE STRING
 		cfg_parser->opt->ipv6_edns_size = atoi($2);
 	}
 	;
+server_rrl_size: VAR_RRL_SIZE STRING
+	{ 
+		OUTYY(("P(server_rrl_size:%s)\n", $2)); 
+#ifdef RATELIMIT
+		if(atoi($2) <= 0)
+			yyerror("number greater than zero expected");
+		cfg_parser->opt->rrl_size = atoi($2);
+#endif
+	}
+	;
+server_rrl_ratelimit: VAR_RRL_RATELIMIT STRING
+	{ 
+		OUTYY(("P(server_rrl_ratelimit:%s)\n", $2)); 
+#ifdef RATELIMIT
+		cfg_parser->opt->rrl_ratelimit = atoi($2);
+#endif
+	}
+	;
+server_rrl_whitelist_ratelimit: VAR_RRL_WHITELIST_RATELIMIT STRING
+	{ 
+		OUTYY(("P(server_rrl_whitelist_ratelimit:%s)\n", $2)); 
+#ifdef RATELIMIT
+		cfg_parser->opt->rrl_whitelist_ratelimit = atoi($2);
+#endif
+	}
+	;
 
 /* zone: declaration */
 zonestart: VAR_ZONE
@@ -321,7 +350,7 @@ zonestart: VAR_ZONE
 contents_zone: contents_zone content_zone | content_zone;
 content_zone: zone_name | zone_zonefile | zone_allow_notify | 
 	zone_request_xfr | zone_notify | zone_notify_retry | zone_provide_xfr | 
-	zone_outgoing_interface | zone_allow_axfr_fallback;
+	zone_outgoing_interface | zone_allow_axfr_fallback | zone_rrl_whitelist;
 zone_name: VAR_NAME STRING
 	{ 
 		OUTYY(("P(zone_name:%s)\n", $2)); 
@@ -444,6 +473,14 @@ zone_allow_axfr_fallback: VAR_ALLOW_AXFR_FALLBACK STRING
 		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
 			yyerror("expected yes or no.");
 		else cfg_parser->current_zone->allow_axfr_fallback = (strcmp($2, "yes")==0);
+	}
+	;
+zone_rrl_whitelist: VAR_RRL_WHITELIST STRING
+	{ 
+		OUTYY(("P(zone_rrl_whitelist:%s)\n", $2)); 
+#ifdef RATELIMIT
+		cfg_parser->current_zone->rrl_whitelist |= rrlstr2type($2);
+#endif
 	}
 	;
 

@@ -26,6 +26,7 @@
 #include "dname.h"
 #include "namedb.h"
 #include "rdata.h"
+#include "zonec.h"
 
 #ifdef USE_MMAP_ALLOC
 #include <sys/mman.h>
@@ -42,6 +43,8 @@
 unsigned nsd_debug_facilities = 0xffff;
 int nsd_debug_level = 0;
 #endif
+
+#define MSB_32 0x80000000
 
 int verbosity = 0;
 
@@ -477,10 +480,22 @@ strtottl(const char *nptr, const char **endptr)
 			break;
 		default:
 			seconds += i;
+			/**
+			 * According to RFC2308, Section 8, the MSB
+			 * (sign bit) should be set to zero.
+			 * If we encounter a value larger than 2^31 -1,
+			 * we fall back to the default TTL.
+			 */
+			if ((seconds & MSB_32)) {
+				seconds = DEFAULT_TTL;
+			}
 			return seconds;
 		}
 	}
 	seconds += i;
+	if ((seconds & MSB_32)) {
+		seconds = DEFAULT_TTL;
+	}
 	return seconds;
 }
 

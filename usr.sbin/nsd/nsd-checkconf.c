@@ -6,7 +6,7 @@
  * See LICENSE for the license.
  *
  */
-#include <config.h>
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -16,6 +16,7 @@
 #include "options.h"
 #include "util.h"
 #include "dname.h"
+#include "rrl.h"
 
 extern char *optarg;
 extern int optind;
@@ -45,6 +46,12 @@ extern int optind;
 		printf("%s\n", zone->NAME?"yes":"no"); 	\
 	}
 
+#define ZONE_GET_RRL(NAME, VAR, PATTERN) 			\
+	if (strcasecmp(#NAME, (VAR)) == 0) { 		\
+		zone_print_rrl_whitelist("", PATTERN->NAME);	\
+		return;					\
+	}
+
 #define SERV_GET_BIN(NAME, VAR) 			\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 		\
 		printf("%s\n", opt->NAME?"yes":"no"); 	\
@@ -70,6 +77,21 @@ extern int optind;
 		}						\
 		return;						\
 	}
+
+#ifdef RATELIMIT
+static void zone_print_rrl_whitelist(const char* s, uint16_t w)
+{
+	int i;
+	if(w==rrl_type_all) {
+		printf("%sall\n", s);
+		return;
+	}
+	for(i=0x01; i <= 0x80; i<<=1) {
+		if( (w&i) )
+			printf("%s%s\n", s, rrltype2str(i));
+	}
+}
+#endif /* RATELIMIT */
 
 static char buf[BUFSIZ];
 
@@ -248,6 +270,9 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o, const
 				ZONE_GET_BIN(notify_retry, o);
 				ZONE_GET_OUTGOING(outgoing_interface, o);
 				ZONE_GET_BIN(allow_axfr_fallback, o);
+#ifdef RATELIMIT
+				ZONE_GET_RRL(rrl_whitelist, o, zone);
+#endif
 				printf("Zone option not handled: %s %s\n", z, o);
 				exit(1);
 			}
@@ -287,6 +312,11 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o, const
 		SERV_GET_INT(statistics, o);
 		SERV_GET_INT(xfrd_reload_timeout, o);
 		SERV_GET_INT(verbosity, o);
+#ifdef RATELIMIT
+		SERV_GET_INT(rrl_size, o);
+		SERV_GET_INT(rrl_ratelimit, o);
+		SERV_GET_INT(rrl_whitelist_ratelimit, o);
+#endif
 
 		if(strcasecmp(o, "zones") == 0) {
 			RBTREE_FOR(zone, zone_options_t*, opt->zone_options)
@@ -334,6 +364,11 @@ config_test_print_server(nsd_options_t* opt)
 	print_string_var("xfrdfile:", opt->xfrdfile);
 	printf("\txfrd_reload_timeout: %d\n", opt->xfrd_reload_timeout);
 	printf("\tverbosity: %d\n", opt->verbosity);
+#ifdef RATELIMIT
+	printf("\trrl-size: %d\n", (int)opt->rrl_size);
+	printf("\trrl-ratelimit: %d\n", (int)opt->rrl_ratelimit);
+	printf("\trrl-whitelist-ratelimit: %d\n", (int)opt->rrl_whitelist_ratelimit);
+#endif
 
 	for(ip = opt->ip_addresses; ip; ip=ip->next)
 	{
@@ -351,6 +386,9 @@ config_test_print_server(nsd_options_t* opt)
 		printf("\nzone:\n");
 		print_string_var("name:", zone->name);
 		print_string_var("zonefile:", zone->zonefile);
+#ifdef RATELIMIT
+		zone_print_rrl_whitelist("\trrl-whitelist: ", zone->rrl_whitelist);
+#endif
 		print_acl("allow-notify:", zone->allow_notify);
 		print_acl("request-xfr:", zone->request_xfr);
 		printf("\tnotify-retry: %d\n", zone->notify_retry);

@@ -1,10 +1,10 @@
-.TH "NSD" "8" "Nov  1, 2012" "NLnet Labs" "NSD 3.2.14"
+.TH "NSD" "8" "Feb  4, 2013" "NLnet Labs" "NSD 3.2.15"
 .\" Copyright (c) 2001\-2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .LP
 .B nsd
-\- Name Server Daemon (NSD) version 3.2.14.
+\- Name Server Daemon (NSD) version 3.2.15.
 .SH "SYNOPSIS"
 .LP
 .B nsd

@@ -442,7 +442,7 @@ region_log_stats(region_type *region)
 {
 	char buf[10240], *str=buf;
 	int strl = sizeof(buf);
-	int len=0;
+	int len;
 	len=snprintf(str, strl, "%lu objects (%lu small/%lu large), %lu bytes allocated (%lu wasted) in %lu chunks, %lu cleanups, %lu in recyclebin",
 		(unsigned long) (region->small_objects + region->large_objects),
 		(unsigned long) region->small_objects,

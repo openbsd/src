@@ -222,6 +222,20 @@ rdata_aaaa_to_string(buffer_type *output, rdata_atom_type rdata,
 }
 
 static int
+rdata_ilnp64_to_string(buffer_type *output, rdata_atom_type rdata,
+	rr_type* ATTR_UNUSED(rr))
+{
+	uint8_t* data = rdata_atom_data(rdata);
+	uint16_t a1 = read_uint16(data);
+	uint16_t a2 = read_uint16(data+2);
+	uint16_t a3 = read_uint16(data+4);
+	uint16_t a4 = read_uint16(data+6);
+
+	buffer_printf(output, "%.4x:%.4x:%.4x:%.4x", a1, a2, a3, a4);
+	return 1;
+}
+
+static int
 rdata_rrtype_to_string(buffer_type *output, rdata_atom_type rdata,
 	rr_type* ATTR_UNUSED(rr))
 {
@@ -578,6 +592,7 @@ static rdata_to_string_type rdata_to_string_table[RDATA_ZF_UNKNOWN + 1] = {
 	rdata_nxt_to_string,
 	rdata_nsec_to_string,
 	rdata_loc_to_string,
+	rdata_ilnp64_to_string,
 	rdata_unknown_to_string
 };
 
@@ -652,6 +667,9 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 			break;
 		case RDATA_WF_AAAA:
 			length = IP6ADDRLEN;
+			break;
+		case RDATA_WF_ILNP64:
+			length = IP6ADDRLEN/2;
 			break;
 		case RDATA_WF_BINARY:
 			/* Remaining RDATA is binary.  */

@@ -34,6 +34,8 @@
 #define SHUT_WR 1
 #endif
 
+#include <openssl/rand.h>
+
 #include "axfr.h"
 #include "namedb.h"
 #include "netio.h"
@@ -42,6 +44,8 @@
 #include "difffile.h"
 #include "nsec3.h"
 #include "ipc.h"
+#include "lookup3.h"
+#include "rrl.h"
 
 /*
  * Data for the UDP handlers.
@@ -87,17 +91,17 @@ struct tcp_handler_data
 	 * data, including this structure.  This region is destroyed
 	 * when the connection is closed.
 	 */
-	region_type     *region;
+	region_type*		region;
 
 	/*
 	 * The global nsd structure.
 	 */
-	struct nsd      *nsd;
+	struct nsd*			nsd;
 
 	/*
 	 * The current query data for this TCP connection.
 	 */
-	query_type      *query;
+	query_type*			query;
 
 	/*
 	 * These fields are used to enable the TCP accept handlers
@@ -112,7 +116,7 @@ struct tcp_handler_data
 	 * AXFR, if we're done processing, or if we should discard the
 	 * query and connection.
 	 */
-	query_state_type query_state;
+	query_state_type	query_state;
 
 	/*
 	 * The bytes_transmitted field is used to remember the number
@@ -120,7 +124,7 @@ struct tcp_handler_data
 	 * packet.  The count includes the two additional bytes used
 	 * to specify the packet length on a TCP connection.
 	 */
-	size_t           bytes_transmitted;
+	size_t				bytes_transmitted;
 
 	/*
 	 * The number of queries handled by this specific TCP connection.
@@ -525,6 +529,23 @@ server_init(struct nsd *nsd)
 int
 server_prepare(struct nsd *nsd)
 {
+#ifdef RATELIMIT
+	/* set secret modifier for hashing (udb ptr buckets and rate limits) */
+#ifdef HAVE_ARC4RANDOM
+	srandom(arc4random());
+	hash_set_raninit(arc4random());
+#else
+	uint32_t v = getpid() ^ time(NULL);
+	srandom((unsigned long)v);
+	if(RAND_status() && RAND_bytes((unsigned char*)&v, sizeof(v)) > 0)
+		hash_set_raninit(v);
+	else	hash_set_raninit(random());
+#endif
+	rrl_mmap_init(nsd->child_count, nsd->options->rrl_size,
+		nsd->options->rrl_ratelimit,
+		nsd->options->rrl_whitelist_ratelimit);
+#endif /* RATELIMIT */
+
 	/* Open the database... */
 	if ((nsd->db = namedb_open(nsd->dbfile, nsd->options, nsd->child_count)) == NULL) {
 		log_msg(LOG_ERR, "unable to open the database %s: %s",
@@ -591,7 +612,7 @@ close_all_sockets(struct nsd_socket sockets[], size_t n)
  * Does not return.
  *
  */
-static void
+void
 server_shutdown(struct nsd *nsd)
 {
 	size_t i;
@@ -751,7 +772,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 			log_msg(LOG_ERR, "unable to reload the database: %s", strerror(errno));
 			exit(1);
 		}
-#ifndef FULL_PREHASH
+#if defined(NSEC3) && !defined(FULL_PREHASH)
 		prehash(nsd->db, 0);
 #endif
 	}
@@ -967,6 +988,10 @@ server_main(struct nsd *nsd)
 	pid_t reload_pid = -1;
 	pid_t xfrd_pid = -1;
 	sig_atomic_t mode;
+
+#ifdef RATELIMIT
+	rrl_init((nsd->this_child - nsd->children)/sizeof(nsd->children[0]));
+#endif
 
 	/* Ensure we are the main process */
 	assert(nsd->server_kind == NSD_SERVER_MAIN);
@@ -1372,6 +1397,20 @@ server_child(struct nsd *nsd)
 	server_shutdown(nsd);
 }
 
+static query_state_type
+server_process_query_udp(struct nsd *nsd, struct query *query)
+{
+#ifdef RATELIMIT
+	if(query_process(query, nsd) != QUERY_DISCARDED) {
+		if(rrl_process_query(query))
+			return rrl_slip(query);
+		else	return QUERY_PROCESSED;
+	}
+	return QUERY_DISCARDED;
+#else
+	return query_process(query, nsd);
+#endif
+}
 
 static void
 handle_udp(netio_type *ATTR_UNUSED(netio),
@@ -1416,7 +1455,7 @@ handle_udp(netio_type *ATTR_UNUSED(netio),
 		buffer_flip(q->packet);
 
 		/* Process and answer the query... */
-		if (server_process_query(data->nsd, q) != QUERY_DISCARDED) {
+		if (server_process_query_udp(data->nsd, q) != QUERY_DISCARDED) {
 #ifdef BIND8_STATS
 			if (RCODE(q->packet) == RCODE_OK && !AA(q->packet)) {
 				STATUP(data->nsd, nona);

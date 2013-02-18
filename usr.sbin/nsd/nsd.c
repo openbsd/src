@@ -465,7 +465,7 @@ main(int argc, char *argv[])
 	struct sigaction action;
 	FILE* dbfd;
 #ifdef HAVE_GETPWNAM
-	struct passwd *pwd;
+	struct passwd *pwd = NULL;
 #endif /* HAVE_GETPWNAM */
 
 	/* For initialising the address info structures */

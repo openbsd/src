@@ -168,6 +168,27 @@ connection, including optional source port.\n"
 
 
 /*
+ * Find an HMAC algorithm based on its id.
+ */
+static tsig_algorithm_type *
+tsig_get_algorithm_by_id(uint8_t alg)
+{
+	if (alg == TSIG_HMAC_MD5)
+		return tsig_get_algorithm_by_name("hmac-md5");
+#ifdef HAVE_EVP_SHA1
+	if (alg == TSIG_HMAC_SHA1)
+		return tsig_get_algorithm_by_name("hmac-sha1");
+#endif /* HAVE_EVP_SHA1 */
+#ifdef HAVE_EVP_SHA256
+	if (alg == TSIG_HMAC_SHA256)
+		return tsig_get_algorithm_by_name("hmac-sha256");
+#endif /* HAVE_EVP_SHA256 */
+
+        return NULL;
+}
+
+
+/*
  * Signal handler for timeouts (SIGALRM). This function is called when
  * the alarm() value that was set counts down to zero.  This indicates
  * that we haven't received a response from the server.

@@ -225,6 +225,10 @@ query_reset(query_type *q, size_t maxlen, int is_tcp)
 	q->axfr_current_domain = NULL;
 	q->axfr_current_rrset = NULL;
 	q->axfr_current_rr = 0;
+
+#ifdef RATELIMIT
+	q->wildcard_domain = NULL;
+#endif
 }
 
 /* get a temporary domain number (or 0=failure) */
@@ -359,8 +363,9 @@ process_tsig(struct query* q)
 		return NSD_RC_FORMAT;
 	if(q->tsig.status == TSIG_OK) {
 		if(!tsig_from_query(&q->tsig)) {
-			log_msg(LOG_ERR, "query tsig unknown key/algorithm");
-			return NSD_RC_REFUSE;
+			log_msg(LOG_ERR, "query: bad tsig (%s)",
+				tsig_error(q->tsig.error_code));
+			return NSD_RC_NOTAUTH;
 		}
 		buffer_set_limit(q->packet, q->tsig.position);
 		ARCOUNT_SET(q->packet, ARCOUNT(q->packet) - 1);
@@ -369,7 +374,7 @@ process_tsig(struct query* q)
 		if(!tsig_verify(&q->tsig)) {
 			log_msg(LOG_ERR, "query: bad tsig signature for key %s",
 				dname_to_string(q->tsig.key->name, NULL));
-			return NSD_RC_REFUSE;
+			return NSD_RC_NOTAUTH;
 		}
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "query good tsig signature for %s",
 			dname_to_string(q->tsig.key->name, NULL)));
@@ -416,14 +421,13 @@ answer_notify(struct nsd* nsd, struct query *query)
 		uint32_t acl_send = htonl(acl_num);
 		uint32_t acl_xfr;
 		size_t pos;
+		assert(why);
 
 		/* Find priority candidate for request XFR. -1 if no match */
 		acl_num_xfr = acl_check_incoming(
 			zone_opt->request_xfr, query, NULL);
-
 		acl_xfr = htonl(acl_num_xfr);
 
-		assert(why);
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "got notify %s passed acl %s %s",
 			dname_to_string(query->qname, NULL),
 			why->ip_address_spec,
@@ -863,10 +867,8 @@ answer_nodata(struct query *query, answer_type *answer, domain_type *original)
 static void
 answer_nxdomain(query_type *query, answer_type *answer)
 {
-	if (query->cname_count == 0) {
-		RCODE_SET(query->packet, RCODE_NXDOMAIN);
-		answer_soa(query, answer);
-	}
+	RCODE_SET(query->packet, RCODE_NXDOMAIN);
+	answer_soa(query, answer);
 }
 
 
@@ -1039,6 +1041,9 @@ answer_authoritative(struct nsd   *nsd,
 	} else if (domain_wildcard_child(closest_encloser)) {
 		/* Generate the domain from the wildcard.  */
 		domain_type *wildcard_child = domain_wildcard_child(closest_encloser);
+#ifdef RATELIMIT
+		q->wildcard_domain = wildcard_child;
+#endif
 
 		match = (domain_type *) region_alloc(q->region,
 						     sizeof(domain_type));

@@ -344,6 +344,9 @@
 /* Pathname to the NSD pidfile */
 #undef PIDFILE
 
+/* Define this to enable rate limiting. */
+#undef RATELIMIT
+
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 

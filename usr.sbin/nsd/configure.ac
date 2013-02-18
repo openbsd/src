@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,3.2.14,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,3.2.15,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 AC_AIX
@@ -474,7 +474,7 @@ AC_TYPE_SIGNAL
 AC_FUNC_FSEEKO
 AC_SYS_LARGEFILE
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime setusercontext initgroups setresuid setreuid setresgid setregid getpwnam])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime setusercontext initgroups setresuid setreuid setresgid setregid getpwnam mmap])
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).
 if echo $build_os | grep darwin8 > /dev/null; then
@@ -592,11 +592,25 @@ case "$enable_checking" in
 		CHECK_COMPILER_FLAG(W, [ CFLAGS="$CFLAGS -W" ])
 		CHECK_COMPILER_FLAG(Wall, [ CFLAGS="$CFLAGS -Wall" ])
 		CHECK_COMPILER_FLAG(Wextra, [ CFLAGS="$CFLAGS -Wextra" ])
+		CHECK_COMPILER_FLAG(Wdeclaration-after-statement, [ CFLAGS="$CFLAGS -Wdeclaration-after-statement" ])
 		;;
         no|*)
                 AC_DEFINE([NDEBUG], [], [Undefine this to enable internal runtime checks.])
                 ;;
 esac
+
+AC_ARG_ENABLE(ratelimit, AC_HELP_STRING([--enable-ratelimit], [Enable rate limiting]))
+case "$enable_ratelimit" in
+	yes)
+		AC_DEFINE_UNQUOTED([RATELIMIT], [], [Define this to enable rate limiting.])
+		dnl causes awk to not match the exclusion start marker.
+		ratelimit="xx"
+		;;
+	no|*)
+		ratelimit=""
+		;;
+esac
+AC_SUBST(ratelimit)
 
 # we need SSL for TSIG (and maybe also for NSEC3).
 CHECK_SSL
