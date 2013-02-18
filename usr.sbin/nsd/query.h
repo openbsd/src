@@ -119,6 +119,11 @@ struct query {
 	domain_type *axfr_current_domain;
 	rrset_type  *axfr_current_rrset;
 	uint16_t     axfr_current_rr;
+
+#ifdef RATELIMIT
+	/* if we encountered a wildcard, its domain */
+	domain_type *wildcard_domain;
+#endif
 };
 
 

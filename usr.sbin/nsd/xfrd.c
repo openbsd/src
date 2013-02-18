@@ -1129,6 +1129,12 @@ xfrd_xfr_process_tsig(xfrd_zone_t* zone, buffer_type* packet)
 	}
 	if(zone->tsig.status == TSIG_OK) {
 		have_tsig = 1;
+		if (zone->tsig.error_code != TSIG_ERROR_NOERROR) {
+			log_msg(LOG_ERR, "xfrd: zone %s, from %s: tsig error "
+				"(%s)", zone->apex_str,
+				zone->master->ip_address_spec,
+				tsig_error(zone->tsig.error_code));
+		}
 	}
 	if(have_tsig) {
 		/* strip the TSIG resource record off... */
@@ -1203,7 +1209,10 @@ xfrd_parse_received_xfr_packet(xfrd_zone_t* zone, buffer_type* packet,
 			RCODE(packet) == RCODE_FORMAT) {
 			return xfrd_packet_notimpl;
 		}
-		return xfrd_packet_bad;
+		if (RCODE(packet) != RCODE_NOTAUTH) {
+			/* RFC 2845: If NOTAUTH, client should do TSIG checking */
+			return xfrd_packet_bad;
+		}
 	}
 	/* check TSIG */
 	if(zone->master->key_options) {
@@ -1213,6 +1222,10 @@ xfrd_parse_received_xfr_packet(xfrd_zone_t* zone, buffer_type* packet,
 			return xfrd_packet_bad;
 		}
 	}
+	if (RCODE(packet) == RCODE_NOTAUTH) {
+		return xfrd_packet_bad;
+	}
+
 	buffer_skip(packet, QHEADERSZ);
 
 	/* skip question section */

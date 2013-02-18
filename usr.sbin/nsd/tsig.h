@@ -156,11 +156,6 @@ void tsig_add_algorithm(tsig_algorithm_type *algorithm);
 tsig_algorithm_type *tsig_get_algorithm_by_name(const char *name);
 
 /*
- * Find an HMAC algorithm based on its identifier.
- */
-tsig_algorithm_type *tsig_get_algorithm_by_id(uint8_t alg);
-
-/*
  * Return a descriptive error message based on the TSIG error code.
  */
 const char *tsig_error(int error_code);

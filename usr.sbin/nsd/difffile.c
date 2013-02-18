@@ -7,7 +7,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
@@ -85,7 +85,6 @@ diff_write_packet(const char* zone, uint32_t new_serial, uint16_t id,
 		log_msg(LOG_ERR, "could not write to file %s: %s",
 			filename, strerror(errno));
 	}
-	fflush(df);
 	fclose(df);
 }
 
@@ -439,8 +438,8 @@ delete_RR(namedb_type* db, const dname_type* dname,
 		}
 		rrnum = find_rr_num(rrset, type, klass, rdatas, rdata_num);
 		if(rrnum == -1) {
-			log_msg(LOG_WARNING, "diff: RR %s does not exist",
-				dname_to_string(dname,0));
+			log_msg(LOG_WARNING, "diff: RR <%s, %s> does not exist",
+				dname_to_string(dname,0), rrtype_to_string(type));
 			return 1; /* not fatal error */
 		}
 #ifdef NSEC3
@@ -532,8 +531,8 @@ add_RR(namedb_type* db, const dname_type* dname,
 	}
 	rrnum = find_rr_num(rrset, type, klass, rdatas, rdata_num);
 	if(rrnum != -1) {
-		DEBUG(DEBUG_XFRD, 2, (LOG_ERR, "diff: RR %s already exists",
-			dname_to_string(dname,0)));
+		DEBUG(DEBUG_XFRD, 2, (LOG_ERR, "diff: RR <%s, %s> already exists",
+			dname_to_string(dname,0), rrtype_to_string(type)));
 		/* ignore already existing RR: lenient accepting of messages */
 		return 1;
 	}
@@ -1294,8 +1293,6 @@ read_sure_part(namedb_type* db, FILE *in, nsd_options_t* opt,
 		int is_axfr=0, delete_mode=0, rr_count=0;
 		off_t resume_pos;
 
-		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "processing xfr: %s", log_buf));
-
 #ifdef NSEC3
 #ifndef FULL_PREHASH
 		struct region *region;
@@ -1328,6 +1325,8 @@ read_sure_part(namedb_type* db, FILE *in, nsd_options_t* opt,
 		}
 #endif /* !FULL_PREHASH */
 #endif /* NSEC3 */
+
+		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "processing xfr: %s", log_buf));
 
 		resume_pos = ftello(in);
 		if(resume_pos == -1) {

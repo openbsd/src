@@ -72,6 +72,18 @@ handle_xfrd_zone_state(struct nsd* nsd, buffer_type* packet)
 	return zone;
 }
 
+static void
+ipc_child_quit(struct nsd* nsd)
+{
+	/* call shutdown and quit routines */
+	nsd->mode = NSD_QUIT;
+#ifdef	BIND8_STATS
+	bind8_stats(nsd);
+#endif /* BIND8_STATS */
+	server_shutdown(nsd);
+	exit(0);
+}
+
 void
 child_handle_parent_command(netio_type *ATTR_UNUSED(netio),
 		      netio_handler_type *handler,
@@ -117,8 +129,10 @@ child_handle_parent_command(netio_type *ATTR_UNUSED(netio),
 
 	switch (mode) {
 	case NSD_STATS:
-	case NSD_QUIT:
 		data->nsd->mode = mode;
+		break;
+	case NSD_QUIT:
+		ipc_child_quit(data->nsd);
 		break;
 	case NSD_ZONE_STATE:
 		data->conn->is_reading = 1;
