@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.96 2013/01/16 09:18:34 markus Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.97 2013/02/18 14:48:13 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -703,7 +703,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	}
 
 	if (!(flags & PFR_FLAG_DUMMY)) {
-		pfr_clstats_kentries(&workq, 0, 0);
+		pfr_clstats_kentries(&workq, time_second, 0);
 	}
 	if (nzero != NULL)
 		*nzero = xzero;
