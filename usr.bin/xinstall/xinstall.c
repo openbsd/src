@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.52 2012/09/14 00:00:29 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.53 2013/02/18 22:15:11 miod Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -639,8 +639,10 @@ create_newfile(char *path, struct stat *sbp)
 		/* It is ok for the target file not to exist. */
 		if (rename(path, backup) < 0 && errno != ENOENT)
 			err(EX_OSERR, "rename: %s to %s (errno %d)", path, backup, errno);
-	} else
-		(void)unlink(path);
+	} else {
+		if (unlink(path) < 0 && errno != ENOENT)
+			err(EX_OSERR, "%s", path);
+	}
 
 	return(open(path, O_CREAT | O_RDWR | O_EXCL, S_IRUSR | S_IWUSR));
 }
