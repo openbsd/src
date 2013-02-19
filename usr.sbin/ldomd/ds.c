@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.3 2012/11/04 23:28:07 kettenis Exp $	*/
+/*	$OpenBSD: ds.c,v 1.4 2013/02/19 09:26:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -646,7 +646,7 @@ ds_conn_open(const char *path, void *cookie)
 
 	dc->fd = open(path, O_RDWR, 0);
 	if (dc->fd == -1)
-		err(1, "open");
+		err(1, "cannot open %s", path);
 
 	memset(&dc->lc, 0, sizeof(dc->lc));
 	dc->lc.lc_fd = dc->fd;
