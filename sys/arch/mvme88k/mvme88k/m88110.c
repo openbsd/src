@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.77 2013/02/17 18:07:36 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.78 2013/02/19 21:02:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -100,6 +100,8 @@ void	m88110_cpu_configuration_print(int);
 void	m88410_cpu_configuration_print(int);
 void	m88110_shutdown(void);
 cpuid_t	m88110_cpu_number(void);
+apr_t	m88110_kapr_cmode(void);
+apr_t	m88410_kapr_cmode(void);
 void	m88110_set_sapr(apr_t);
 void	m88110_set_uapr(apr_t);
 void	m88110_tlbis(cpuid_t, vaddr_t, pt_entry_t);
@@ -128,6 +130,7 @@ const struct cmmu_p cmmu88110 = {
 	m88110_cpu_configuration_print,
 	m88110_shutdown,
 	m88110_cpu_number,
+	m88110_kapr_cmode,
 	m88110_set_sapr,
 	m88110_set_uapr,
 	m88110_tlbis,
@@ -153,6 +156,7 @@ const struct cmmu_p cmmu88410 = {
 	m88410_cpu_configuration_print,
 	m88110_shutdown,
 	m88110_cpu_number,
+	m88410_kapr_cmode,
 	m88110_set_sapr,
 	m88110_set_uapr,
 	m88110_tlbis,
@@ -438,6 +442,18 @@ m88410_initialize_cpu(cpuid_t cpu)
 void
 m88110_shutdown(void)
 {
+}
+
+apr_t
+m88110_kapr_cmode(void)
+{
+	return CACHE_DFL;
+}
+
+apr_t
+m88410_kapr_cmode(void)
+{
+	return CACHE_WT;
 }
 
 void
@@ -1019,6 +1035,10 @@ m88410_dma_cachectl_local(paddr_t _pa, psize_t _size, int op)
 			bcopy(lines, (void *)pa1, sz1);
 		if (sz2 != 0)
 			bcopy(lines + MC88110_CACHE_LINE, (void *)pa2, sz2);
+		if (sz1 != 0)
+			m88110_cmmu_wbinv_locked(pa1, MC88110_CACHE_LINE);
+		if (sz2 != 0)
+			m88110_cmmu_wbinv_locked(pa2, MC88110_CACHE_LINE);
 	} else {
 		while (size != 0) {
 			count = (pa & PAGE_MASK) == 0 && size >= PAGE_SIZE ?

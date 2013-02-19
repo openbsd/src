@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2013/02/14 05:50:49 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.70 2013/02/19 21:02:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -136,7 +136,7 @@ struct pmap kernel_pmap_store;
 /* #define	CACHE_PT	(CPU_IS88100 ? CACHE_INH : CACHE_WT) */
 #define	CACHE_PT	CACHE_WT
 
-#if defined(M88110) && defined(MULTIPROCESSOR)
+#if defined(M88110) && defined(M88410)
 apr_t	kernel_apr_cmode = CACHE_DFL;		/* might be downgraded to WT */
 #define	KERNEL_APR_CMODE	kernel_apr_cmode
 #else
@@ -639,11 +639,10 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 
 #if defined(M88110)
 	if (CPU_IS88110) {
-#ifdef MULTIPROCESSOR
-		/* XXX until whatever causes the kernel to hang without
-		   XXX is understood and fixed */
-		kernel_apr_cmode = CACHE_WT;
-#else
+#if defined(M88410)
+		kernel_apr_cmode = cmmu_kapr_cmode();
+#endif
+#ifndef MULTIPROCESSOR
 		default_apr &= ~CACHE_GLOBAL;
 #endif
 	}

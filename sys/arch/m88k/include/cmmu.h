@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.28 2013/02/17 18:07:36 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.29 2013/02/19 21:02:06 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -42,6 +42,7 @@ struct cmmu_p {
 
 	cpuid_t (*cpu_number)(void);
 
+	apr_t (*kapr_cmode)(void);
 	void (*set_sapr)(apr_t);
 	void (*set_uapr)(apr_t);
 
@@ -82,6 +83,7 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 #define	cpu_configuration_print(cpu)	(cmmu->cpu_configuration_print)(cpu)
 #define	cmmu_shutdown			(cmmu->shutdown)
 #define	cmmu_cpu_number			(cmmu->cpu_number)
+#define	cmmu_kapr_cmode			(cmmu->kapr_cmode)
 #define	cmmu_set_sapr(apr)		(cmmu->set_sapr)(apr)
 #define	cmmu_set_uapr(apr)		(cmmu->set_uapr)(apr)
 #define	cmmu_tlbis(cpu, va, pte) 	(cmmu->tlb_inv_s)(cpu, va, pte)
