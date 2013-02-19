@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.1 2013/01/21 11:17:48 patrick Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.2 2013/02/19 15:29:27 brad Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -44,13 +44,6 @@
 #define AHCI_PCI_ATI_SB600_MAGIC	0x40
 #define AHCI_PCI_ATI_SB600_LOCKED	0x01
 #define AHCI_PCI_INTERFACE	0x01
-
-#define AHCI_PCI_INTEL_MAP		0x90
-#define AHCI_PCI_INTEL_MAP_SC_4P	0x00
-#define AHCI_PCI_INTEL_MAP_SC_6P	0x20
-#define AHCI_PCI_INTEL_MAP_SMS_IDE	0x00
-#define AHCI_PCI_INTEL_MAP_SMS_AHCI	0x40
-#define AHCI_PCI_INTEL_MAP_SMS_RAID	0x80
 
 struct ahci_pci_softc {
 	struct ahci_softc	psc_ahci;
@@ -149,22 +142,6 @@ static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_AHCI_4,
 	    NULL,		ahci_intel_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_EP80579_AHCI,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_SATA_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_SATA_2,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_SATA_4,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_3400_SATA_6,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6SERIES_SATA_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_6SERIES_SATA_2,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_7SERIES_SATA_1,
-	    NULL,		ahci_intel_attach },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_7SERIES_SATA_2,
 	    NULL,		ahci_intel_attach },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
@@ -304,19 +281,6 @@ ahci_amd_hudson2_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 int
 ahci_intel_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
-	/* switch from pciide(4) to ahci(4) mode */
-	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
-		pcireg_t	reg;
-
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_INTEL_MAP);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, AHCI_PCI_INTEL_MAP,
-		    reg | AHCI_PCI_INTEL_MAP_SMS_AHCI |
-		    AHCI_PCI_INTEL_MAP_SC_6P);
-		/* clear BAR since it keeps the old IO value */
-		pci_conf_write(pa->pa_pc, pa->pa_tag,
-		    AHCI_PCI_BAR, 0);
-	}
 	sc->sc_flags |= AHCI_F_NO_PMP;
 	return (0);
 }
