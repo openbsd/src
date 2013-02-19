@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.34 2011/11/08 19:22:13 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.35 2013/02/19 20:52:26 miod Exp $
 
 machine		mvme88k m88k
 
@@ -9,10 +9,11 @@ option		RAMDISK_HOOKS
 # Processor type
 option		M88100
 option		M88110
+option		M88410
 
-option		MVME187		# support for 187 (requires M88100)
-option		MVME188		# support for 188 (requires M88100)
-option		MVME197		# support for 197 (requires M88110)
+option		MVME187		# support for MVME187 (requires M88100)
+option		MVME188		# support for MVME188 (requires M88100)
+option		MVME197		# support for MVME197 (requires M88110, M88410)
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR

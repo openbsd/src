@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.55 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.56 2013/02/19 20:52:26 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -16,10 +16,11 @@ maxusers	32			# estimated number of users
 # Processor type
 option		M88100
 option		M88110
+option		M88410
 
-option		MVME187			# support for 187 (requires M88100)
-option		MVME188			# support for 188 (requires M88100)
-option		MVME197			# support for 197 (requires M88110)
+option		MVME187		# support for MVME187 (requires M88100)
+option		MVME188		# support for MVME188 (requires M88100)
+option		MVME197		# support for MVME197 (requires M88110, M88410)
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR
