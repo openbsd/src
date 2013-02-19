@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.237 2013/02/18 15:57:08 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.238 2013/02/19 23:40:25 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -288,6 +288,9 @@ routehandler(void)
 			if (ifi->linkstat) {
 				client->state = S_REBOOTING;
 				state_reboot();
+			} else {
+				/* No need to wait for anything but link. */
+				cancel_timeout();
 			}
 		}
 		break;
