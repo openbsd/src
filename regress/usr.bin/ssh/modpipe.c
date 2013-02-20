@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: modpipe.c,v 1.2 2012/12/11 23:48:07 djm Exp $ */
+/* $Id: modpipe.c,v 1.3 2013/02/20 08:27:50 djm Exp $ */
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -27,7 +27,7 @@
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: modpipe [-m modspec ...] < in > out\n");
+	fprintf(stderr, "Usage: modpipe -w [-m modspec ...] < in > out\n");
 	fprintf(stderr, "modspec is one of:\n");
 	fprintf(stderr, "    xor:offset:value       - XOR \"value\" at \"offset\"\n");
 	fprintf(stderr, "    andor:offset:val1:val2 - AND \"val1\" then OR \"val2\" at \"offset\"\n");
@@ -71,14 +71,17 @@ main(int argc, char **argv)
 	size_t total;
 	ssize_t r, s, o;
 	struct modification mods[MAX_MODIFICATIONS];
-	u_int i, num_mods = 0;
+	u_int i, wflag = 0, num_mods = 0;
 
-	while ((ch = getopt(argc, argv, "m:")) != -1) {
+	while ((ch = getopt(argc, argv, "wm:")) != -1) {
 		switch (ch) {
 		case 'm':
 			if (num_mods >= MAX_MODIFICATIONS)
 				errx(1, "Too many modifications");
 			parse_modification(optarg, &(mods[num_mods++]));
+			break;
+		case 'w':
+			wflag = 1;
 			break;
 		default:
 			usage();
@@ -88,7 +91,7 @@ main(int argc, char **argv)
 	for (total = 0;;) {
 		r = s = read(STDIN_FILENO, buf, sizeof(buf));
 		if (r == 0)
-			return 0;
+			break;
 		if (r < 0) {
 			if (errno == EAGAIN || errno == EINTR)
 				continue;
@@ -111,7 +114,7 @@ main(int argc, char **argv)
 		for (o = 0; o < s; o += r) {
 			r = write(STDOUT_FILENO, buf, s - o);
 			if (r == 0)
-				return 0;
+				break;
 			if (r < 0) {
 				if (errno == EAGAIN || errno == EINTR)
 					continue;
@@ -120,5 +123,13 @@ main(int argc, char **argv)
 		}
 		total += s;
 	}
-	return 0;
+	/* Warn if modifications not reached in input stream */
+	r = 0;
+	for (i = 0; wflag && i < num_mods; i++) {
+		if (mods[i].offset < total)
+			continue;
+		r = 1;
+		fprintf(stderr, "modpipe: warning - mod %u not reached\n", i);
+	}
+	return r;
 }
