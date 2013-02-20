@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.15 2013/02/18 15:57:08 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.16 2013/02/20 18:50:29 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -54,11 +54,6 @@ struct imsg_add_default_route {
 	struct in_addr	gateway;
 };
 
-struct imsg_resolv_conf {
-	size_t	len;
-	char	contents[1];
-};
-
 struct imsg_hup {
 	char	ifname[IFNAMSIZ];
 	int	rdomain;
@@ -77,7 +72,6 @@ struct imsg_write_file {
 };
 
 void	dispatch_imsg(struct imsgbuf *);
-void	priv_resolv_conf(struct imsg_resolv_conf *);
 void	priv_delete_address(struct imsg_delete_address *);
 void	priv_add_address(struct imsg_add_address *);
 void	priv_flush_routes_and_arp_cache(struct imsg_flush_routes *);
