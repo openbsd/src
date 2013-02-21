@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.37 2013/02/18 22:10:04 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.38 2013/02/21 14:10:22 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -393,9 +393,13 @@ delete_address(char *ifname, int rdomain, struct in_addr addr)
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_DELETE_ADDRESS, 0, 0 , -1, &imsg,
 	    sizeof(imsg));
-
 	if (rslt == -1)
 		warning("delete_address: imsg_compose: %s", strerror(errno));
+
+	/* Do flush to quickly kill previous dhclient, if any. */
+	rslt = imsg_flush(unpriv_ibuf);
+	if (rslt == -1 && errno != EPIPE)
+		warning("delete_address: imsg_flush: %s", strerror(errno));
 }
 
 void
