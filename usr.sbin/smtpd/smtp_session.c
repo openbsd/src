@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.180 2013/02/16 16:20:07 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.181 2013/02/21 14:22:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -77,6 +77,7 @@ enum session_flags {
 	SF_BOUNCE		= 0x0010,
 	SF_KICK			= 0x0020,
 	SF_VERIFIED		= 0x0040,
+	SF_MFACONNSENT		= 0x0080,
 };
 
 enum message_flags {
@@ -1298,6 +1299,7 @@ smtp_connected(struct smtp_session *s)
 	m_add_sockaddr(p_mfa, (struct sockaddr *)&s->ss);
 	m_add_string(p_mfa, s->hostname);
 	m_close(p_mfa);
+	s->flags |= SF_MFACONNSENT;
 	smtp_wait_mfa(s, IMSG_MFA_REQ_CONNECT);
 }
 
@@ -1444,9 +1446,11 @@ smtp_free(struct smtp_session *s, const char * reason)
 		m_close(p_queue);
 	}
 
-	m_create(p_mfa, IMSG_MFA_EVENT_DISCONNECT, 0, 0, -1, 16);
-	m_add_id(p_mfa, s->id);
-	m_close(p_mfa);
+	if (s->flags & SF_MFACONNSENT) {
+		m_create(p_mfa, IMSG_MFA_EVENT_DISCONNECT, 0, 0, -1, 16);
+		m_add_id(p_mfa, s->id);
+		m_close(p_mfa);
+	}
 
 	if (s->flags & SF_SECURE && s->listener->flags & F_SMTPS)
 		stat_decrement("smtp.smtps", 1);
