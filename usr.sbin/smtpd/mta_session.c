@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.33 2013/02/15 22:43:21 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.34 2013/02/21 16:25:21 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -83,8 +83,8 @@ enum mta_state {
 #define MTA_VERIFIED   		0x0200
 
 #define MTA_FREE		0x0400
-
 #define MTA_LMTP		0x0800
+#define MTA_WAIT		0x1000
 
 #define MTA_EXT_STARTTLS	0x01
 #define MTA_EXT_AUTH		0x02
@@ -134,6 +134,7 @@ static const char * mta_strstate(int);
 static int mta_check_loop(FILE *);
 static void mta_start_tls(struct mta_session *);
 static int mta_verify_certificate(struct mta_session *);
+static struct mta_session *mta_tree_pop(struct tree *, uint64_t);
 
 static struct tree wait_helo;
 static struct tree wait_ptr;
@@ -211,6 +212,7 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 	} else if (waitq_wait(&route->dst->ptrname, mta_on_ptr, s)) {
 		dns_query_ptr(s->id, s->route->dst->sa);
 		tree_xset(&wait_ptr, s->id, s);
+		s->flags |= MTA_WAIT;
 	}
 }
 
@@ -236,7 +238,12 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (imsg->fd == -1)
 			fatalx("mta: cannot obtain msgfd");
 
-		s = tree_xpop(&wait_fd, reqid);
+		s = mta_tree_pop(&wait_fd, reqid);
+		if (s == NULL) {
+			close(imsg->fd);
+			return;
+		}
+
 		s->datafp = fdopen(imsg->fd, "r");
 		if (s->datafp == NULL)
 			fatal("mta: fdopen");
@@ -263,7 +270,10 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		else
 			m_get_string(&m, &name);
 		m_end(&m);
-		s = tree_xpop(&wait_ptr, reqid);
+		s = mta_tree_pop(&wait_ptr, reqid);
+		if (s == NULL)
+			return;
+
 		h = s->route->dst;
 		h->lastptrquery = time(NULL);
 		if (name)
@@ -273,7 +283,9 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_LKA_SSL_INIT:
 		resp_ca_cert = imsg->data;
-		s = tree_xpop(&wait_ssl_init, resp_ca_cert->reqid);
+		s = mta_tree_pop(&wait_ssl_init, resp_ca_cert->reqid);
+		if (s == NULL)
+			return;
 
 		if (resp_ca_cert->status == CA_FAIL) {
 			log_info("smtp-out: Disconnecting session %016" PRIx64
@@ -306,7 +318,9 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_LKA_SSL_VERIFY:
 		resp_ca_vrfy = imsg->data;
-		s = tree_xpop(&wait_ssl_verify, resp_ca_vrfy->reqid);
+		s = mta_tree_pop(&wait_ssl_verify, resp_ca_vrfy->reqid);
+		if (s == NULL)
+			return;
 
 		if (resp_ca_vrfy->status == CA_OK)
 			s->flags |= MTA_VERIFIED;
@@ -324,7 +338,9 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_string(&m, &name);
 		m_end(&m);
 
-		s = tree_xpop(&wait_helo, reqid);
+		s = mta_tree_pop(&wait_helo, reqid);
+		if (s == NULL)
+			return;
 
 		if (status == LKA_OK) {
 			s->helo = xstrdup(name, "mta_session_imsg");
@@ -340,6 +356,22 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		errx(1, "mta_session_imsg: unexpected %s imsg",
 		    imsg_to_str(imsg->hdr.type));
 	}
+}
+
+static struct mta_session *
+mta_tree_pop(struct tree *wait, uint64_t reqid)
+{
+	struct mta_session *s;
+
+	s = tree_xpop(wait, reqid);
+	if (s->flags & MTA_FREE) {
+		log_debug("debug: mta: %p: zombie session", s);
+		mta_free(s);
+		return (NULL);
+	}
+	s->flags &= ~MTA_WAIT;
+
+	return (s);
 }
 
 static void
@@ -399,6 +431,7 @@ mta_connect(struct mta_session *s)
 			m_add_sockaddr(p_lka, s->route->src->sa);
 			m_close(p_lka);
 			tree_xset(&wait_helo, s->id, s);
+			s->flags |= MTA_WAIT;
 			return;
 		}
 		if (s->relay->heloname)
@@ -581,6 +614,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		m_close(p_queue);
 
 		tree_xset(&wait_fd, s->id, s);
+		s->flags |= MTA_WAIT;
 		break;
 
 	case MTA_MAIL:
@@ -921,7 +955,10 @@ mta_io(struct io *io, int evt)
 		if (iobuf_len(&s->iobuf)) {
 			log_debug("debug: mta: remaining data in input buffer");
 			mta_error(s, "Remote host sent too much data");
-			mta_free(s);
+			if (s->flags & MTA_WAIT)
+				s->flags |= MTA_FREE;
+			else
+				mta_free(s);
 		}
 		break;
 
@@ -1156,6 +1193,7 @@ mta_start_tls(struct mta_session *s)
 		m_compose(p_lka, IMSG_LKA_SSL_INIT, 0, 0, -1,
 		    &req_ca_cert, sizeof(req_ca_cert));
 		tree_xset(&wait_ssl_init, s->id, s);
+		s->flags |= MTA_WAIT;
 		return;
 	}
 	ssl = ssl_mta_init(NULL, 0, NULL, 0);
@@ -1187,6 +1225,7 @@ mta_verify_certificate(struct mta_session *s)
 	 */
 
 	tree_xset(&wait_ssl_verify, s->id, s);
+	s->flags |= MTA_WAIT;
 
 	/* Send the client certificate */
 	bzero(&req_ca_vrfy, sizeof req_ca_vrfy);
