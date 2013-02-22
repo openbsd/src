@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.17 2013/02/22 14:14:45 krw Exp $
+.\" $OpenBSD: dhclient.8,v 1.18 2013/02/22 22:28:15 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -143,6 +143,20 @@ group
 .Nm
 will exit with an error.
 .Pp
+When configuring the interface,
+.Nm
+attempts to remove any existing addresses, gateway routes that use
+the interface and non-permanent
+.Xr arp 8
+entries.
+Conversely, if the interface is later manipulated to add or delete
+addresses then
+.Nm
+will automatically exit.
+It thus automatically exits whenever a new
+.Nm
+is run on the same interface.
+.Pp
 In order to keep track of leases across system reboots and server
 restarts,
 .Nm
@@ -204,6 +218,24 @@ On receiving
 will restart itself, reading
 .Xr dhclient.conf 5
 and obtaining a new lease.
+.It Dv INT
+On receiving
+.Dv INT
+.Nm
+will exit after attempting to remove any routes, interface addresses
+or temporary files it created.
+.It Dv QUIT
+On receiving
+.Dv QUIT
+.Nm
+will dump core and exit without attempting to remove any routes, interface
+addresses or temporary files it created.
+.It Dv TERM
+On receiving
+.Dv TERM
+.Nm
+will exit without attempting to remove any routes, interface addresses
+or temporary files it created.
 .It Dv USR[12]
 On receiving either
 .Dv USR1
@@ -212,18 +244,6 @@ or
 .Nm
 will exit after attempting to remove any routes, interface addresses
 or temporary files it created.
-.It Dv TERM
-On receiving
-.Dv TERM
-.Nm
-will exit without attempting to remove any routes, interface addresses
-or temporary files it created.
-.It Dv QUIT
-On receiving
-.Dv QUIT
-.Nm
-will dump core and exit without attempting to remove any routes, interface
-addresses or temporary files it created.
 .El
 .Sh FILES
 .Bl -tag -width "/var/db/dhclient.leases.<IFNAME>XXX" -compact
