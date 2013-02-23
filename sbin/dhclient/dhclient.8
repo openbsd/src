@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.18 2013/02/22 22:28:15 krw Exp $
+.\" $OpenBSD: dhclient.8,v 1.19 2013/02/23 11:51:53 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: February 22 2013 $
+.Dd $Mdocdate: February 23 2013 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -130,23 +130,21 @@ It then attempts to configure the network interface
 .Ar interface
 with DHCP.
 The special value
-.Sq egress
+.Dq egress
 may be used instead of a network interface name.
 In this case
 .Nm
 will look for the network interface currently in the interface group
-.Sq egress
+.Dq egress
 and configure it with DHCP.
-If there is more than one network interface in the
-.Sq egress
-group
+If there is more than one network interface in the egress group
 .Nm
 will exit with an error.
 .Pp
 When configuring the interface,
 .Nm
 attempts to remove any existing addresses, gateway routes that use
-the interface and non-permanent
+the interface, and non-permanent
 .Xr arp 8
 entries.
 Conversely, if the interface is later manipulated to add or delete
@@ -156,6 +154,33 @@ will automatically exit.
 It thus automatically exits whenever a new
 .Nm
 is run on the same interface.
+.Pp
+Once the interface is configured,
+.Nm
+constructs a
+.Xr resolv.conf 5
+file.
+It does this only when one or both of the options
+.Cm domain-name
+and
+.Cm domain-name-servers
+is present.
+(note that these options may be offered by the DHCP server but suppressed by
+.Xr dhclient.conf 5 ) .
+If a resolv.conf is contructed,
+.Nm
+appends any contents of the
+.Xr resolv.conf.tail 5
+file, which are read once at start up.
+The constructed resolv.conf is copied into
+.Pa /etc/resolv.conf
+whenever the default route goes out the interface
+.Nm
+is running on.
+.Nm
+monitors the system for changes to the default route and re-checks
+whether it should write its resolv.conf when possible changes are
+detected.
 .Pp
 In order to keep track of leases across system reboots and server
 restarts,
@@ -210,7 +235,7 @@ for more information.
 While running,
 .Nm
 reacts to a few different signals:
-.Bl -tag -width "USR[12]XXX"
+.Bl -tag -width "USR1, USR2XXX"
 .It Dv HUP
 On receiving
 .Dv HUP
@@ -236,7 +261,7 @@ On receiving
 .Nm
 will exit without attempting to remove any routes, interface addresses
 or temporary files it created.
-.It Dv USR[12]
+.It Dv USR1, USR2
 On receiving either
 .Dv USR1
 or
