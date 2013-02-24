@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.1 2013/01/12 13:02:22 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.2 2013/02/24 12:43:13 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 /*
  * Copyright (c) 2012 Talypov Dinar <dinar@i-nk.ru>
@@ -32,6 +32,7 @@
 #include <sys/device.h>
 #include <sys/workq.h>
 #include <sys/stdint.h>
+#include <sys/pool.h>
 #include <uvm/uvm.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -80,10 +81,10 @@ static const struct virtio_feature_name viomb_feature_names[] = {
 #define VQ_DEFLATE	1
 
 struct balloon_req {
-	bus_dmamap_t	bl_dmamap;
-	struct pglist	bl_pglist;
-	int		bl_nentries;
-	u_int32_t	bl_pages[PGS_PER_REQ];
+	bus_dmamap_t	 bl_dmamap;
+	struct pglist	 bl_pglist;
+	int		 bl_nentries;
+	u_int32_t	*bl_pages;
 };
 
 struct viomb_softc {
@@ -179,6 +180,11 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 	viomb_read_config(sc);
 	TAILQ_INIT(&sc->sc_balloon_pages);
 
+	if ((sc->sc_req.bl_pages = dma_alloc(sizeof(u_int32_t) * PGS_PER_REQ,
+	    PR_NOWAIT|PR_ZERO)) == NULL) {
+		printf("%s: Can't alloc DMA memory.\n", DEVNAME(sc));
+		goto err;
+	}
 	if (bus_dmamap_create(vsc->sc_dmat, sizeof(u_int32_t) * PGS_PER_REQ,
 			      1, sizeof(u_int32_t) * PGS_PER_REQ, 0,
 			      BUS_DMA_NOWAIT, &sc->sc_req.bl_dmamap)) {
@@ -201,6 +207,8 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 err_dmamap:
 	bus_dmamap_destroy(vsc->sc_dmat, sc->sc_req.bl_dmamap);
 err:
+	if (sc->sc_req.bl_pages)
+		dma_free(sc->sc_req.bl_pages, sizeof(u_int32_t) * PGS_PER_REQ);
 	for (i = 0; i < vsc->sc_nvqs; i++)
 		virtio_free_vq(vsc, &sc->sc_vq[i]);
 	vsc->sc_nvqs = 0;
@@ -402,8 +410,7 @@ viomb_inflate_intr(struct virtqueue *vq)
 
 	b = &sc->sc_req;
 	nvpages = b->bl_nentries;
-	bus_dmamap_sync(vsc->sc_dmat, b->bl_dmamap,
-			offsetof(struct balloon_req, bl_pages),
+	bus_dmamap_sync(vsc->sc_dmat, b->bl_dmamap, 0,
 			sizeof(u_int32_t) * nvpages,
 			BUS_DMASYNC_POSTWRITE);
 	while (!TAILQ_EMPTY(&b->bl_pglist)) {
@@ -438,8 +445,7 @@ viomb_deflate_intr(struct virtqueue *vq)
 
 	b = &sc->sc_req;
 	nvpages = b->bl_nentries;
-	bus_dmamap_sync(vsc->sc_dmat, b->bl_dmamap,
-			offsetof(struct balloon_req, bl_pages),
+	bus_dmamap_sync(vsc->sc_dmat, b->bl_dmamap, 0,
 			sizeof(u_int32_t) * nvpages,
 			BUS_DMASYNC_POSTWRITE);
 
