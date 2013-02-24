@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.leases.5,v 1.7 2012/09/22 20:09:43 jmc Exp $
+.\"	$OpenBSD: dhclient.leases.5,v 1.8 2013/02/24 12:18:43 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,37 +36,39 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: September 22 2012 $
+.Dd $Mdocdate: February 24 2013 $
 .Dt DHCLIENT.LEASES 5
 .Os
 .Sh NAME
 .Nm dhclient.leases
 .Nd DHCP client lease database
 .Sh DESCRIPTION
-The Internet Software Consortium DHCP client keeps a persistent
-database of leases that it has acquired that are still valid.
+.Xr dhclient 8
+keeps a persistent database of leases that it has acquired that are still
+valid.
 The database is a free-form ASCII file containing one valid declaration
 per lease.
-If more than one declaration appears for a given lease,
-the last one in the file is used.
-The file is written as a log, so this is not an unusual occurrence.
+The file is written as a log, so the last declaration is the most recent
+lease obtained.
 .Pp
 The lease file is named
-.Qq dhclient.leases.IFNAME ,
+.Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME ,
 where
 .Qq IFNAME
-represents the network interface the DHCP client acquired the lease on.
+represents the network interface
+.Xr dhclient 8
+acquired the lease on.
 For example, if
 .Xr dhclient 8
 is configured for the em0 network device,
 the lease file will be named
-.Qq dhclient.leases.em0 .
+.Pa /var/db/dhclient.leases.em0 ,
 .Pp
 The format of the lease declarations is described in
 .Xr dhclient.conf 5 .
 .Sh FILES
 .Bl -tag -width "/var/db/dhclient.leases.IFNAME   "
-.It /var/db/dhclient.leases.IFNAME
+.It Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME ,
 Current lease file.
 .El
 .Sh SEE ALSO

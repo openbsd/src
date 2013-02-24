@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.27 2013/02/09 16:44:37 jmc Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.28 2013/02/24 12:18:43 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: February 9 2013 $
+.Dd $Mdocdate: February 24 2013 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -46,8 +46,7 @@
 The
 .Nm
 file contains configuration information for
-.Xr dhclient 8 ,
-the Internet Software Consortium DHCP Client.
+.Xr dhclient 8 .
 .Pp
 The
 .Nm
@@ -287,10 +286,10 @@ This is done with the
 statement.
 .Pp
 NOTE: the lease statement is also used in the
-.Pa dhclient.leases
+.Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME
 file in order to record leases that have been received from DHCP servers.
 Some of the syntax for leases as described below is only needed in the
-.Pa dhclient.leases
+.Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME
 file.
 Such syntax is documented here for completeness.
 .Pp
