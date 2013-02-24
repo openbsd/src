@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.238 2013/02/19 23:40:25 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.239 2013/02/24 01:10:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -663,11 +663,12 @@ state_selecting(void)
 	}
 	client->offered_leases = NULL;
 
-	/* If we just tossed all the leases we were offered, go back
-	   to square one. */
+	/*
+	 * If we just tossed all the leases we were offered, go back
+	 *  to square one.
+	 */
 	if (!picked) {
-		client->state = S_INIT;
-		state_init();
+		state_panic();
 		return;
 	}
 
@@ -1148,7 +1149,7 @@ state_panic(void)
 	time_t cur_time;
 
 	time(&cur_time);
-	note("No DHCPOFFERS received.");
+	note("No acceptable DHCPOFFERS received.");
 
 	/* We may not have an active lease, but we may have some
 	   predefined leases that we can try. */
