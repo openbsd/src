@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.38 2013/02/21 14:10:22 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.39 2013/02/24 01:23:19 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -766,7 +766,9 @@ resolv_conf_priority(int domain)
 	m_rtmsg.m_rtm.rtm_msglen += 2 * sizeof(sin);
 
 	if (writev(s, iov, iovcnt) == -1) {
-		warning("RTM_GET of default route: %s", strerror(errno));
+		if (errno != ESRCH)
+			warning("RTM_GET of default route: %s",
+			    strerror(errno));
 		goto done;
 	}
 
