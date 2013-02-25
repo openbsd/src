@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2013/02/09 19:47:09 miod Exp $
+dnl	$OpenBSD: install,v 1.23 2013/02/25 20:34:07 miod Exp $
 dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -24,7 +24,7 @@ Booting from Tape or CD-ROM installation media:
    Path Number        Device Path              Device Type
    -----------        -----------------        -----------
    P0                 SESCSI.2.0               TOSHIBA CD-ROM XM-6201TA
-   P1                 LAN.10.0.0.5.3.254       lucifier
+   P1                 LAN.10.0.0.5.3.254       boron
    P2                 FWSCSI.5.0               IBM     DDRS-34560WS
    P3                 FWSCSI.0.0               SEAGATE ST318436LW
    P4                 SESCSI.6.0               HP     HP35480A
@@ -54,8 +54,9 @@ Booting from Network:
 
   Old firmware operation
 
-    Models such as 7[035]5, 715/33/50/75, 725/50/75 have an older version
-    of PDC. There are two levels of interactive commands in this version.
+    Most of the 7xx models (except the 712, the second generation of 715, i.e.
+    715/64/80/100/100XC, and the 74x) have an older version of PDC. There are
+    two levels of interactive commands in this version.
     The first level is a short menu:
 
 	b)   Boot from specified device
