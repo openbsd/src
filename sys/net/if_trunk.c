@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.78 2011/10/28 12:49:43 krw Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.79 2013/02/25 22:00:46 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1505,35 +1505,46 @@ trunk_bcast_detach(struct trunk_softc *tr)
 }
 
 int
-trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m)
+trunk_bcast_start(struct trunk_softc *tr, struct mbuf *m0)
 {
 	int			 active_ports = 0;
 	int			 errors = 0;
 	int			 ret;
-	struct trunk_port	*tp;
-	struct mbuf		*n;
+	struct trunk_port	*tp, *last = NULL;
+	struct mbuf		*m;
 
 	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
-		if (TRUNK_PORTACTIVE(tp)) {
-			if (active_ports) {
-				n = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
-				if (n == NULL) {
-					m_freem(m);
-					return (ENOBUFS);
-				}
-			} else
-				n = m;
-			active_ports++;
-			if ((ret = trunk_enqueue(tp->tp_if, n)))
+		if (!TRUNK_PORTACTIVE(tp))
+			continue;
+
+		active_ports++;
+
+		if (last != NULL) {
+			m = m_copym(m0, 0, M_COPYALL, M_DONTWAIT);
+			if (m == NULL) {
+				ret = ENOBUFS;
+				errors++;
+				break;
+			}
+
+			ret = trunk_enqueue(last->tp_if, m);
+			if (ret != 0)
 				errors++;
 		}
+		last = tp;
 	}
-	if (active_ports == 0) {
-		m_freem(m);
+	if (last == NULL) {
+		m_freem(m0);
 		return (ENOENT);
 	}
+
+	ret = trunk_enqueue(last->tp_if, m0);
+	if (ret != 0)
+		errors++;
+
 	if (errors == active_ports)
 		return (ret);
+
 	return (0);
 }
 
