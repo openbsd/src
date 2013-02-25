@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.20 2013/02/09 20:33:11 miod Exp $
+dnl	$OpenBSD: hardware,v 1.21 2013/02/25 20:28:01 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME141 - Motorola with 68030 and 68882, with VSB interface
 	- MVME147 - Motorola with 68030 and 68882
@@ -9,11 +9,12 @@ dnl 172 support is not tested
 	- MVME172 - Motorola with 68060 and IndustryPack slots
 	- MVME177 - Motorola with 68060
 
-The minimal configuration requires 12MB of RAM and at least 200MB of disk
-space, by installing only the `base' and `etc' sets. To install the entire
-system, at least 650MB is required, and to compile the system, more RAM is
-recommended.  Note that until you have at least 32MB of RAM, getting more
-RAM is more important than getting a faster CPU board.
+12MB of RAM should be sufficient to boot and a minimal system can probably
+be squeezed onto a 250MB disk by installing only the `base' and `etc' sets.
+However, a minimum of 16MB is necessary for the system not to be swap-bound,
+with 32MB or more being recommended for serious usage of the system.
+Note that until you have at least 32MB of RAM, getting more RAM is more
+important than getting a faster CPU board.
 
 Supported devices {:-include-:}:
 

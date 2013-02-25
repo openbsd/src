@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.29 2013/02/09 20:33:11 miod Exp $
+dnl	$OpenBSD: hardware,v 1.30 2013/02/25 20:28:01 miod Exp $
 OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
 The following systems have been tested:
 	- VAXstation 2000
@@ -68,10 +68,9 @@ Supported devices {:-include-:}:
 	- VSxxx mice and tablets (lkms)
 
 dnl 12MB needs swap during installation, which is a work-in-progress
-The minimal configuration requires 16MB of RAM and at least 300MB of disk
-space, by installing only the `base' and `etc' sets. To install the entire
-system, at least 800MB is required, and to compile the system, at least 32MB
-of RAM is recommended. 
+16MB of RAM should be sufficient to boot and a minimal system can probably
+be squeezed onto a 300MB disk by installing only the `base' and `etc' sets.
+However, a minimum of 32MB is recommended for serious usage of the system.
 
 Currently, your storage options for using OpenBSD/MACHINE are SCSI disks
 or tapes on one of the supported controllers, disks and tapes accessed
