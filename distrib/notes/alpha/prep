@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.30 2010/03/07 14:53:02 miod Exp $
+dnl	$OpenBSD: prep,v 1.31 2013/02/25 20:08:27 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -127,6 +127,27 @@ USB support on the XP1000:
     at the SRM prompt, followed by
 	init
     before attempting to install OpenBSD.
+
+EISA configuration:
+
+    A few MACHINE systems support EISA devices. However, the SRM firmware
+    has only a very limited knowledge of EISA devices and is not able to
+    configure them.
+
+    Every time an EISA board is added to or removed from the system, the
+    EISA Configuration Utility needs to be run from a floppy disk using the
+    ``runecu'' command at the SRM prompt. An ECU floppy disk is supposed to
+    be provided with EISA-capable systems; this disk will be updated with
+    the current configuration every time it is run, and needs to be
+    writeable. ECU disks should not be shared between systems.
+
+    Redistributing ECU is not allowed, however a copy of it can be
+    downloaded from:
+
+    ftp://ftp.hp.com/pub/alphaserver/firmware/other/utility/ecu/ntecuv111a.zip
+
+    Extract this archive to a newly FAT-formated 3"1/2 floppy disk to get
+    a pristine ECU disk.
 
 SRM console boot device restrictions:
 
