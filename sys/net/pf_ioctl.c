@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.256 2012/10/30 12:09:05 florian Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.257 2013/02/26 14:56:05 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -324,6 +324,9 @@ void
 pf_purge_rule(struct pf_ruleset *ruleset, struct pf_rule *rule)
 {
 	u_int32_t		 nr;
+
+	if (ruleset == NULL || ruleset->anchor == NULL)
+		return;
 
 	pf_rm_rule(ruleset->rules.active.ptr, rule);
 	ruleset->rules.active.rcount--;
