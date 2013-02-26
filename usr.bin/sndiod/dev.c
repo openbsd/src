@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.3 2012/11/30 20:44:31 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.4 2013/02/26 22:52:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1689,7 +1689,7 @@ slot_attach(struct slot *s)
 		if (!aparams_native(&s->par)) {
 			dec_init(&s->mix.dec, &s->par, slot_nch);
 			s->mix.decbuf =
-			    xmalloc(d->round * slot_nch * sizeof(adata_t));
+			    xmalloc(s->round * slot_nch * sizeof(adata_t));
 		}
 		if (s->rate != d->rate) {
 			resamp_init(&s->mix.resamp, s->round, d->round,
@@ -1728,7 +1728,7 @@ slot_attach(struct slot *s)
 		if (!aparams_native(&s->par)) {
 			enc_init(&s->sub.enc, &s->par, slot_nch);
 			s->sub.encbuf =
-			    xmalloc(d->round * slot_nch * sizeof(adata_t));
+			    xmalloc(s->round * slot_nch * sizeof(adata_t));
 		}
 	
 		/*
