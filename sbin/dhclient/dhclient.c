@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.239 2013/02/24 01:10:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.240 2013/02/27 17:25:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -172,7 +172,6 @@ get_ifa(char *cp, int n)
 void
 routehandler(void)
 {
-	char msg[2048];
 	struct in_addr a, b;
 	ssize_t n;
 	int linkstat, rslt;
@@ -182,16 +181,20 @@ routehandler(void)
 	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
 	struct sockaddr *sa;
-	char *errmsg;
+	char *errmsg, *rtmmsg;
+
+	rtmmsg = calloc(1, 2048);
+	if (rtmmsg == NULL)
+		error("No memory for rtmmsg");
 
 	do {
-		n = read(routefd, &msg, sizeof(msg));
+		n = read(routefd, rtmmsg, 2048);
 	} while (n == -1 && errno == EINTR);
 
-	rtm = (struct rt_msghdr *)msg;
+	rtm = (struct rt_msghdr *)rtmmsg;
 	if (n < sizeof(rtm->rtm_msglen) || n < rtm->rtm_msglen ||
 	    rtm->rtm_version != RTM_VERSION)
-		return;
+		goto done;
 
 	switch (rtm->rtm_type) {
 	case RTM_NEWADDR:
@@ -273,7 +276,7 @@ routehandler(void)
 			warning("LLADDR changed; restarting");
 			ifi->flags |= IFI_NEW_LLADDR;
 			quit = SIGHUP;
-			return;
+			goto done;
 		}
 
 		linkstat =
@@ -314,13 +317,14 @@ routehandler(void)
 		    client->active->resolv_conf,
 		    strlen(client->active->resolv_conf));
 
+done:
+	free(rtmmsg);
 	return;
 
 die:
 	if (rslt == -1)
 		error("no memory for errmsg");
 	error("%s; exiting", errmsg);
-	free(errmsg);
 }
 
 char **saved_argv;
