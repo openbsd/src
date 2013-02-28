@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.39 2013/02/24 01:23:19 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.40 2013/02/28 21:00:53 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -66,14 +66,14 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	struct sockaddr *rti_info[RTAX_MAX];
 	int mib[7];
 	size_t needed;
-	char *lim, *buf, *next, *routelabel;
+	char *lim, *buf, *next, *routelabel, *errmsg;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 	struct sockaddr_dl *sdl;
 	struct sockaddr_in *sa_in;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_rtlabel *sa_rl;
-	int s, seqno = 0, rlen, i;
+	int s, seqno = 0, rlen, retry, i;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -83,20 +83,33 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	mib[5] = 0;
 	mib[6] = imsg->rdomain;
 
-	if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
-		if (imsg->rdomain != 0 && errno == EINVAL)
+	buf = NULL;
+	retry = 0;
+	do {
+		retry++;
+		errmsg = NULL;
+		if (buf)
+			free(buf);
+		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
+			errmsg = "sysctl size of routes:";
+			continue;
+		}
+		if (needed == 0)
 			return;
-		error("sysctl size of routes: %s", strerror(errno));
-	}
+		if ((buf = malloc(needed)) == NULL) {
+			errmsg = "routes buf malloc:";
+			continue;
+		}
+		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
+			errmsg = "sysctl retrieval of routes:";
+		}
+	} while (retry < 10 && errmsg != NULL);
 
-	if (needed == 0)
+	if (errmsg) {
+		warning("route cleanup failed - %s %s (%d retries, msize=%zu)",
+		    errmsg, strerror(errno), retry, needed);
 		return;
-
-	if ((buf = malloc(needed)) == NULL)
-		error("no memory for sysctl routes");
-
-	if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1)
-		error("sysctl retrieval of routes: %s", strerror(errno));
+	}
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("opening socket to flush routes: %s", strerror(errno));
