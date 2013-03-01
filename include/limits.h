@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.17 2013/02/17 22:09:54 guenther Exp $	*/
+/*	$OpenBSD: limits.h,v 1.18 2013/03/01 21:16:34 guenther Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -58,23 +58,25 @@
 #define	_POSIX_THREAD_THREADS_MAX		4
 
 #if __POSIX_VISIBLE >= 200112
+#define	_POSIX_CLOCKRES_MIN	20000000
 #define	_POSIX_NGROUPS_MAX	8
 #define	_POSIX_OPEN_MAX		20
-#define _POSIX_TZNAME_MAX	6
+#define	_POSIX_TZNAME_MAX	6
 #else
 #define	_POSIX_NGROUPS_MAX	0
 #define	_POSIX_OPEN_MAX		16
-#define _POSIX_TZNAME_MAX	3
+#define	_POSIX_TZNAME_MAX	3
 #endif
 
-#define	_POSIX2_BC_BASE_MAX	99
-#define	_POSIX2_BC_DIM_MAX	2048
-#define	_POSIX2_BC_SCALE_MAX	99
-#define	_POSIX2_BC_STRING_MAX	1000
+#define	_POSIX2_BC_BASE_MAX		99
+#define	_POSIX2_BC_DIM_MAX		2048
+#define	_POSIX2_BC_SCALE_MAX		99
+#define	_POSIX2_BC_STRING_MAX		1000
 #define	_POSIX2_COLL_WEIGHTS_MAX	2
-#define	_POSIX2_EXPR_NEST_MAX	32
-#define	_POSIX2_LINE_MAX	2048
-#define	_POSIX2_RE_DUP_MAX	_POSIX_RE_DUP_MAX
+#define	_POSIX2_EXPR_NEST_MAX		32
+#define	_POSIX2_LINE_MAX		2048
+#define	_POSIX2_RE_DUP_MAX		_POSIX_RE_DUP_MAX
+#define	_POSIX2_CHARCLASS_NAME_MAX	14
 
 #if __POSIX_VISIBLE >= 200112
 #define _POSIX_HOST_NAME_MAX	255
