@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.33 2012/10/20 19:08:39 deraadt Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.34 2013/03/02 22:54:29 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -567,13 +567,14 @@ sio_intr_alloc(v, mask, type, irq)
 	count = -1;
 
 	/* some interrupts should never be dynamically allocated */
-	mask &= 0xdef8;
+	mask &= 0xffff;
+	mask &= ~((1 << 13) | (1 << 8) | (1 << 2) | (1 << 1) | (1 << 0));
 
 	/*
 	 * XXX some interrupts will be used later (6 for fdc, 12 for pms).
 	 * the right answer is to do "breadth-first" searching of devices.
 	 */
-	mask &= 0xefbf;
+	mask &= ~((1 << 12) | (1 << 6));
 
 	for (i = 0; i < ICU_LEN; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
