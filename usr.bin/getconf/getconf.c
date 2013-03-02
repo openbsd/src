@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.12 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.13 2013/03/02 05:33:41 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #include <errno.h>
 
 static void usage(void);
+static void list_var(int);
+static int compilation_spec_valid(const char *);
 
 struct conf_variable
 {
@@ -58,83 +60,340 @@ struct conf_variable
   long value;
 };
 
+
+#define constant_row(name)		 { #name, CONSTANT, name },
+#define sysconf_row(name)		 { #name, SYSCONF,  _SC_##name },
+#define pathconf_row(name)		 { #name, PATHCONF, _PC_##name },
+#define confstr_row(name)		 { #name, CONFSTR,  _CS_##name },
+#define posix_constant_row(name)	 { #name, CONSTANT, _POSIX_##name },
+#define posix_confstr_row(name)		 { #name, CONFSTR,  _CS_POSIX_##name },
+#define compat_posix2_sysconf_row(name)	 { #name, SYSCONF,  _SC_2_##name },
+#define compat_posix2_constant_row(name) { #name, CONSTANT, _POSIX2_##name },
+
+/* Some sysconf variables don't follow the pattern of the others */
+#define posix2_sysconf_row(name) \
+			{ "_POSIX2_" #name, SYSCONF,  _SC_2_##name },
+#define posix2_pathconf_row(name) \
+			{ "_POSIX2_" #name, PATHCONF,  _PC_2_##name },
+#define pthread_sysconf_row(name) \
+			{ "_PTHREAD_" #name, SYSCONF,  _SC_THREAD_##name },
+#define xopen_sysconf_row(name) \
+			{ "_XOPEN_" #name, SYSCONF,  _SC_XOPEN_##name },
+
 const struct conf_variable conf_table[] =
 {
-  { "PATH",			CONFSTR,	_CS_PATH		},
-
-  /* Utility Limit Minimum Values */
-  { "POSIX2_BC_BASE_MAX",	CONSTANT,	_POSIX2_BC_BASE_MAX	},
-  { "POSIX2_BC_DIM_MAX",	CONSTANT,	_POSIX2_BC_DIM_MAX	},
-  { "POSIX2_BC_SCALE_MAX",	CONSTANT,	_POSIX2_BC_SCALE_MAX	},
-  { "POSIX2_BC_STRING_MAX",	CONSTANT,	_POSIX2_BC_STRING_MAX	},
-  { "POSIX2_COLL_WEIGHTS_MAX",	CONSTANT,	_POSIX2_COLL_WEIGHTS_MAX },
-  { "POSIX2_EXPR_NEST_MAX",	CONSTANT,	_POSIX2_EXPR_NEST_MAX	},
-  { "POSIX2_LINE_MAX",		CONSTANT,	_POSIX2_LINE_MAX	},
-  { "POSIX2_RE_DUP_MAX",	CONSTANT,	_POSIX2_RE_DUP_MAX	},
-  { "POSIX2_VERSION",		CONSTANT,	_POSIX2_VERSION		},
-
-  /* POSIX.1 Minimum Values */
-  { "_POSIX_ARG_MAX",		CONSTANT,	_POSIX_ARG_MAX		},
-  { "_POSIX_CHILD_MAX",		CONSTANT,	_POSIX_CHILD_MAX	},
-  { "_POSIX_LINK_MAX",		CONSTANT,	_POSIX_LINK_MAX		},
-  { "_POSIX_MAX_CANON",		CONSTANT,	_POSIX_MAX_CANON	},
-  { "_POSIX_MAX_INPUT",		CONSTANT,	_POSIX_MAX_INPUT	},
-  { "_POSIX_NAME_MAX",		CONSTANT,	_POSIX_NAME_MAX		},
-  { "_POSIX_NGROUPS_MAX",	CONSTANT,	_POSIX_NGROUPS_MAX	},
-  { "_POSIX_OPEN_MAX",		CONSTANT,	_POSIX_OPEN_MAX		},
-  { "_POSIX_PATH_MAX",		CONSTANT,	_POSIX_PATH_MAX		},
-  { "_POSIX_PIPE_BUF",		CONSTANT,	_POSIX_PIPE_BUF		},
-  { "_POSIX_SSIZE_MAX",		CONSTANT,	_POSIX_SSIZE_MAX	},
-  { "_POSIX_STREAM_MAX",	CONSTANT,	_POSIX_STREAM_MAX	},
-  { "_POSIX_TZNAME_MAX",	CONSTANT,	_POSIX_TZNAME_MAX	},
+  /* Configuration strings */
+  confstr_row(PATH)
+  confstr_row(V7_ENV)
+  confstr_row(V6_ENV)
 
   /* Symbolic Utility Limits */
-  { "BC_BASE_MAX",		SYSCONF,	_SC_BC_BASE_MAX		},
-  { "BC_DIM_MAX",		SYSCONF,	_SC_BC_DIM_MAX		},
-  { "BC_SCALE_MAX",		SYSCONF,	_SC_BC_SCALE_MAX	},
-  { "BC_STRING_MAX",		SYSCONF,	_SC_BC_STRING_MAX	},
-  { "COLL_WEIGHTS_MAX",		SYSCONF,	_SC_COLL_WEIGHTS_MAX	},
-  { "EXPR_NEST_MAX",		SYSCONF,	_SC_EXPR_NEST_MAX	},
-  { "LINE_MAX",			SYSCONF,	_SC_LINE_MAX		},
-  { "RE_DUP_MAX",		SYSCONF,	_SC_RE_DUP_MAX		},
-
-  /* Optional Facility Configuration Values */
-#if 0
-  { "POSIX2_C_BIND",		SYSCONF,	???			},
-#endif
-  { "POSIX2_C_DEV",		SYSCONF,	_SC_2_C_DEV		},
-  { "POSIX2_CHAR_TERM",		SYSCONF,	_SC_2_CHAR_TERM		},
-  { "POSIX2_FORT_DEV",		SYSCONF,	_SC_2_FORT_DEV		},
-  { "POSIX2_FORT_RUN",		SYSCONF,	_SC_2_FORT_RUN		},
-  { "POSIX2_LOCALEDEF",		SYSCONF,	_SC_2_LOCALEDEF		},
-  { "POSIX2_SW_DEV",		SYSCONF,	_SC_2_SW_DEV		},
-  { "POSIX2_UPE",		SYSCONF,	_SC_2_UPE		},
+  sysconf_row(BC_BASE_MAX)
+  sysconf_row(BC_DIM_MAX)
+  sysconf_row(BC_SCALE_MAX)
+  sysconf_row(BC_STRING_MAX)
+  sysconf_row(COLL_WEIGHTS_MAX)
+  sysconf_row(EXPR_NEST_MAX)
+  sysconf_row(LINE_MAX)
+  sysconf_row(RE_DUP_MAX)
 
   /* POSIX.1 Configurable System Variables */
-  { "ARG_MAX",			SYSCONF,	_SC_ARG_MAX 		},
-  { "CHILD_MAX",		SYSCONF,	_SC_CHILD_MAX		},
-  { "CLK_TCK",			SYSCONF,	_SC_CLK_TCK		},
-  { "NGROUPS_MAX",		SYSCONF,	_SC_NGROUPS_MAX		},
-  { "OPEN_MAX",			SYSCONF,	_SC_OPEN_MAX		},
-  { "STREAM_MAX",		SYSCONF,	_SC_STREAM_MAX		},
-  { "TZNAME_MAX",		SYSCONF,	_SC_TZNAME_MAX		},
-  { "_POSIX_JOB_CONTROL",	SYSCONF,	_SC_JOB_CONTROL 	},
-  { "_POSIX_SAVED_IDS",		SYSCONF,	_SC_SAVED_IDS		},
-  { "_POSIX_VERSION",		SYSCONF,	_SC_VERSION		},
+  sysconf_row(AIO_LISTIO_MAX)
+  sysconf_row(AIO_MAX)
+  sysconf_row(AIO_PRIO_DELTA_MAX)
+  sysconf_row(ARG_MAX)
+  sysconf_row(CHILD_MAX)
+  sysconf_row(CLK_TCK)
+  sysconf_row(NGROUPS_MAX)
+  sysconf_row(OPEN_MAX)
+  sysconf_row(STREAM_MAX)
+  sysconf_row(TZNAME_MAX)
+  sysconf_row(PAGE_SIZE)
+  sysconf_row(PAGESIZE)
 
-  { "LINK_MAX",			PATHCONF,	_PC_LINK_MAX		},
-  { "MAX_CANON",		PATHCONF,	_PC_MAX_CANON		},
-  { "MAX_INPUT",		PATHCONF,	_PC_MAX_INPUT		},
-  { "NAME_MAX",			PATHCONF,	_PC_NAME_MAX		},
-  { "PATH_MAX",			PATHCONF,	_PC_PATH_MAX		},
-  { "PIPE_BUF",			PATHCONF,	_PC_PIPE_BUF		},
-  { "_POSIX_CHOWN_RESTRICTED",	PATHCONF,	_PC_CHOWN_RESTRICTED	},
-  { "_POSIX_NO_TRUNC",		PATHCONF,	_PC_NO_TRUNC		},
-  { "_POSIX_VDISABLE",		PATHCONF,	_PC_VDISABLE		},
+  sysconf_row(SEM_NSEMS_MAX)
+  sysconf_row(SEM_VALUE_MAX)
+  sysconf_row(HOST_NAME_MAX)
+  sysconf_row(LOGIN_NAME_MAX)
+
+  sysconf_row(ATEXIT_MAX)
+  sysconf_row(DELAYTIMER_MAX)
+  sysconf_row(IOV_MAX)
+  sysconf_row(MQ_OPEN_MAX)
+  sysconf_row(MQ_PRIO_MAX)
+  sysconf_row(RTSIG_MAX)
+  sysconf_row(SIGQUEUE_MAX)
+  sysconf_row(SYMLOOP_MAX)
+  sysconf_row(TIMER_MAX)
+  sysconf_row(TTY_NAME_MAX)
+
+  posix2_sysconf_row(PBS)
+  posix2_sysconf_row(PBS_ACCOUNTING)
+  posix2_sysconf_row(PBS_CHECKPOINT)
+  posix2_sysconf_row(PBS_LOCATE)
+  posix2_sysconf_row(PBS_MESSAGE)
+  posix2_sysconf_row(PBS_TRACK)
+
+  pthread_sysconf_row(DESTRUCTOR_ITERATIONS)
+  pthread_sysconf_row(KEYS_MAX)
+  pthread_sysconf_row(STACK_MIN)
+  pthread_sysconf_row(THREADS_MAX)
+
+  xopen_sysconf_row(SHM)
+  xopen_sysconf_row(CRYPT)
+  xopen_sysconf_row(ENH_I18N)
+  xopen_sysconf_row(REALTIME)
+  xopen_sysconf_row(REALTIME_THREADS)
+  xopen_sysconf_row(STREAMS)
+  xopen_sysconf_row(UNIX)
+  xopen_sysconf_row(UUCP)
+  xopen_sysconf_row(VERSION)
+
+  pathconf_row(FILESIZEBITS)
+  pathconf_row(LINK_MAX)
+  pathconf_row(MAX_CANON)
+  pathconf_row(MAX_INPUT)
+  pathconf_row(NAME_MAX)
+  pathconf_row(PATH_MAX)
+  pathconf_row(PIPE_BUF)
+  pathconf_row(SYMLINK_MAX)
+
+  posix2_pathconf_row(SYMLINKS)
+
+  constant_row(_POSIX2_CHARCLASS_NAME_MAX)
+  constant_row(_POSIX2_RE_DUP_MAX)
+  constant_row(_XOPEN_IOV_MAX)
+  constant_row(_XOPEN_NAME_MAX)
+  constant_row(_XOPEN_PATH_MAX)
 
   { NULL }
 };
 
+/*
+ * Lots of names have a leading "_POSIX_", so put them in a table with
+ * that prefix trimmed
+ */
+const char uposix_prefix[] = "_POSIX_";
+const struct conf_variable uposix_conf_table[] =
+{
+  /* POSIX.1 Maximum Values */
+  posix_constant_row(CLOCKRES_MIN)
+
+  /* POSIX.1 Minimum Values */
+  /*posix_constant_row(AIO_LISTIO_MAX)*/
+  /*posix_constant_row(AIO_MAX)*/
+  posix_constant_row(ARG_MAX)
+  posix_constant_row(ARG_MAX)
+  posix_constant_row(CHILD_MAX)
+  /*posix_constant_row(DELAYTIMER_MAX)*/
+  posix_constant_row(HOST_NAME_MAX)
+  posix_constant_row(LINK_MAX)
+  posix_constant_row(LOGIN_NAME_MAX)
+  posix_constant_row(MAX_CANON)
+  posix_constant_row(MAX_INPUT)
+  /*posix_constant_row(MQ_OPEN_MAX)*/
+  /*posix_constant_row(MQ_PRIO_MAX)*/
+  posix_constant_row(NAME_MAX)
+  posix_constant_row(NGROUPS_MAX)
+  posix_constant_row(OPEN_MAX)
+  posix_constant_row(PATH_MAX)
+  posix_constant_row(PIPE_BUF)
+  posix_constant_row(RE_DUP_MAX)
+  /*posix_constant_row(RTSIG_MAX)*/
+  posix_constant_row(SEM_NSEMS_MAX)
+  posix_constant_row(SEM_VALUE_MAX)
+  /*posix_constant_row(SIGQUEUE_MAX)*/
+  posix_constant_row(SSIZE_MAX)
+  /*posix_constant_row(SS_REPL_MAX)*/
+  posix_constant_row(STREAM_MAX)
+  posix_constant_row(SYMLINK_MAX)
+  posix_constant_row(SYMLOOP_MAX)
+  posix_constant_row(THREAD_DESTRUCTOR_ITERATIONS)
+  posix_constant_row(THREAD_KEYS_MAX)
+  posix_constant_row(THREAD_THREADS_MAX)
+  /*posix_constant_row(TIMER_MAX)*/
+  posix_constant_row(TTY_NAME_MAX)
+  posix_constant_row(TZNAME_MAX)
+
+  /* POSIX.1 Configurable System Variables */
+  sysconf_row(JOB_CONTROL)
+  sysconf_row(SAVED_IDS)
+  sysconf_row(VERSION)
+  sysconf_row(FSYNC)
+  sysconf_row(MONOTONIC_CLOCK)
+  sysconf_row(THREAD_SAFE_FUNCTIONS)
+  sysconf_row(ADVISORY_INFO)
+  sysconf_row(BARRIERS)
+  sysconf_row(ASYNCHRONOUS_IO)
+  sysconf_row(CLOCK_SELECTION)
+  sysconf_row(CPUTIME)
+  sysconf_row(IPV6)
+  sysconf_row(MAPPED_FILES)
+  sysconf_row(MEMLOCK)
+  sysconf_row(MEMLOCK_RANGE)
+  sysconf_row(MEMORY_PROTECTION)
+  sysconf_row(MESSAGE_PASSING)
+  sysconf_row(PRIORITIZED_IO)
+  sysconf_row(PRIORITY_SCHEDULING)
+  sysconf_row(RAW_SOCKETS)
+  sysconf_row(READER_WRITER_LOCKS)
+  sysconf_row(REALTIME_SIGNALS)
+  sysconf_row(REGEXP)
+  sysconf_row(SEMAPHORES)
+  sysconf_row(SHARED_MEMORY_OBJECTS)
+  sysconf_row(SHELL)
+  sysconf_row(SPAWN)
+  sysconf_row(SPIN_LOCKS)
+  sysconf_row(SPORADIC_SERVER)
+  sysconf_row(SS_REPL_MAX)
+  sysconf_row(SYNCHRONIZED_IO)
+  sysconf_row(THREAD_ATTR_STACKADDR)
+  sysconf_row(THREAD_ATTR_STACKSIZE)
+  sysconf_row(THREAD_CPUTIME)
+  sysconf_row(THREAD_PRIO_INHERIT)
+  sysconf_row(THREAD_PRIO_PROTECT)
+  sysconf_row(THREAD_PRIORITY_SCHEDULING)
+  sysconf_row(THREAD_PROCESS_SHARED)
+  sysconf_row(THREAD_ROBUST_PRIO_INHERIT)
+  sysconf_row(THREAD_SPORADIC_SERVER)
+  sysconf_row(THREADS)
+  sysconf_row(TIMEOUTS)
+  sysconf_row(TIMERS)
+  sysconf_row(TRACE)
+  sysconf_row(TRACE_EVENT_FILTER)
+  sysconf_row(TRACE_EVENT_NAME_MAX)
+  sysconf_row(TRACE_INHERIT)
+  sysconf_row(TRACE_LOG)
+  sysconf_row(TRACE_NAME_MAX)
+  sysconf_row(TRACE_SYS_MAX)
+  sysconf_row(TRACE_USER_EVENT_MAX)
+  sysconf_row(TYPED_MEMORY_OBJECTS)
+
+  /*
+   * If new compilation specification are added (V8_*?) then add them
+   * to the compilation_specs array below too
+   */
+  sysconf_row(V7_ILP32_OFF32)
+  sysconf_row(V7_ILP32_OFFBIG)
+  sysconf_row(V7_LP64_OFF64)
+  sysconf_row(V7_LPBIG_OFFBIG)
+  sysconf_row(V6_ILP32_OFF32)
+  sysconf_row(V6_ILP32_OFFBIG)
+  sysconf_row(V6_LP64_OFF64)
+  sysconf_row(V6_LPBIG_OFFBIG)
+
+  /* POSIX.1 Configurable Path Variables */
+  pathconf_row(CHOWN_RESTRICTED)
+  pathconf_row(NO_TRUNC)
+  pathconf_row(VDISABLE)
+  pathconf_row(ASYNC_IO)
+  pathconf_row(PRIO_IO)
+  pathconf_row(SYNC_IO)
+  /*pathconf_row(TIMESTAMP_RESOLUTION)*/
+
+  { NULL }
+};
+
+/*
+ * Then there are the "POSIX_*" values
+ */
+const char posix_prefix[] = "POSIX_";
+const struct conf_variable posix_conf_table[] =
+{
+  pathconf_row(ALLOC_SIZE_MIN)
+  pathconf_row(REC_INCR_XFER_SIZE)
+  pathconf_row(REC_MAX_XFER_SIZE)
+  pathconf_row(REC_MIN_XFER_SIZE)
+  pathconf_row(REC_XFER_ALIGN)
+
+  posix_confstr_row(V7_ILP32_OFF32_CFLAGS)
+  posix_confstr_row(V7_ILP32_OFF32_LDFLAGS)
+  posix_confstr_row(V7_ILP32_OFF32_LIBS)
+  posix_confstr_row(V7_ILP32_OFFBIG_CFLAGS)
+  posix_confstr_row(V7_ILP32_OFFBIG_LDFLAGS)
+  posix_confstr_row(V7_ILP32_OFFBIG_LIBS)
+  posix_confstr_row(V7_LP64_OFF64_CFLAGS)
+  posix_confstr_row(V7_LP64_OFF64_LDFLAGS)
+  posix_confstr_row(V7_LP64_OFF64_LIBS)
+  posix_confstr_row(V7_LPBIG_OFFBIG_CFLAGS)
+  posix_confstr_row(V7_LPBIG_OFFBIG_LDFLAGS)
+  posix_confstr_row(V7_LPBIG_OFFBIG_LIBS)
+  posix_confstr_row(V7_THREADS_CFLAGS)
+  posix_confstr_row(V7_THREADS_LDFLAGS)
+  posix_confstr_row(V7_WIDTH_RESTRICTED_ENVS)
+  posix_confstr_row(V6_ILP32_OFF32_CFLAGS)
+  posix_confstr_row(V6_ILP32_OFF32_LDFLAGS)
+  posix_confstr_row(V6_ILP32_OFF32_LIBS)
+  posix_confstr_row(V6_ILP32_OFFBIG_CFLAGS)
+  posix_confstr_row(V6_ILP32_OFFBIG_LDFLAGS)
+  posix_confstr_row(V6_ILP32_OFFBIG_LIBS)
+  posix_confstr_row(V6_LP64_OFF64_CFLAGS)
+  posix_confstr_row(V6_LP64_OFF64_LDFLAGS)
+  posix_confstr_row(V6_LP64_OFF64_LIBS)
+  posix_confstr_row(V6_LPBIG_OFFBIG_CFLAGS)
+  posix_confstr_row(V6_LPBIG_OFFBIG_LDFLAGS)
+  posix_confstr_row(V6_LPBIG_OFFBIG_LIBS)
+  posix_confstr_row(V6_WIDTH_RESTRICTED_ENVS)
+
+  { NULL }
+};
+
+/*
+ * Finally, there are variables that are accepted with a prefix
+ * of either "_POSIX2_" or "POSIX2_"
+ */
+const char compat_posix2_prefix[] = "POSIX2_";
+const struct conf_variable compat_posix2_conf_table[] =
+{
+  /* Optional Facility Configuration Values */
+  compat_posix2_sysconf_row(VERSION)
+  compat_posix2_sysconf_row(C_BIND)
+  compat_posix2_sysconf_row(C_DEV)
+  compat_posix2_sysconf_row(CHAR_TERM)
+  compat_posix2_sysconf_row(FORT_DEV)
+  compat_posix2_sysconf_row(FORT_RUN)
+  compat_posix2_sysconf_row(LOCALEDEF)
+  compat_posix2_sysconf_row(SW_DEV)
+  compat_posix2_sysconf_row(UPE)
+
+  /* Utility Limit Minimum Values */
+  compat_posix2_constant_row(BC_BASE_MAX)
+  compat_posix2_constant_row(BC_DIM_MAX)
+  compat_posix2_constant_row(BC_SCALE_MAX)
+  compat_posix2_constant_row(BC_STRING_MAX)
+  compat_posix2_constant_row(COLL_WEIGHTS_MAX)
+  compat_posix2_constant_row(EXPR_NEST_MAX)
+  compat_posix2_constant_row(LINE_MAX)
+  compat_posix2_constant_row(RE_DUP_MAX)
+
+  { NULL }
+};
+
+#undef constant_row
+#undef sysconf_row
+#undef pathconf_row
+#undef confstr_row
+#undef posix_constant_row
+#undef posix_confstr_row
+#undef compat_posix2_sysconf_row
+#undef compat_posix2_constant_row
+
+
+/*
+ * What values are possibly accepted by the -v option?
+ * These are implied to have a prefix of posix_prefix
+ */
+const char *compilation_specs[] = {
+  "V7_ILP32_OFF32",
+  "V7_ILP32_OFFBIG",
+  "V7_LP64_OFF64",
+  "V7_LPBIG_OFFBIG",
+  "V6_ILP32_OFF32",
+  "V6_ILP32_OFFBIG",
+  "V6_LP64_OFF64",
+  "V6_LPBIG_OFFBIG",
+  NULL
+};
 
 int
 main(int argc, char *argv[])
@@ -148,8 +407,18 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
+	while ((ch = getopt(argc, argv, "lLv:")) != -1) {
 		switch (ch) {
+		case 'l':	/* nonstandard: list system variables */
+			list_var(0);
+			return (0);
+		case 'L':	/* nonstandard: list path variables */
+			list_var(1);
+			return (0);
+		case 'v':
+			if (! compilation_spec_valid(optarg))
+				errx(1, "%s: unknown specification", optarg);
+			break;
 		case '?':
 		default:
 			usage();
@@ -163,10 +432,39 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
-	for (cp = conf_table; cp->name != NULL; cp++) {
-		if (strcmp(*argv, cp->name) == 0)
-			break;
+	/* pick a table based on a possible prefix */
+	if (strncmp(*argv, uposix_prefix, sizeof(uposix_prefix) - 1) == 0) {
+		cp = uposix_conf_table;
+		slen = sizeof(uposix_prefix) - 1;
+	} else if (strncmp(*argv, posix_prefix,
+	    sizeof(posix_prefix) - 1) == 0) {
+		cp = posix_conf_table;
+		slen = sizeof(posix_prefix) - 1;
+	} else {
+		cp = conf_table;
+		slen = 0;
 	}
+
+	/* scan the table */
+	for (; cp->name != NULL; cp++)
+		if (strcmp(*argv + slen, cp->name) == 0)
+			break;
+
+	/*
+	 * If no match, then make a final check against
+	 * compat_posix2_conf_table, with special magic to accept/skip
+	 * a leading underbar
+	 */
+	slen = argv[0][0] == '_';
+	if (cp->name == NULL && strncmp(*argv + slen, compat_posix2_prefix,
+	    sizeof(compat_posix2_prefix) - 1) == 0) {
+		slen += sizeof(compat_posix2_prefix) - 1;
+		for (cp = compat_posix2_conf_table; cp->name != NULL; cp++) {
+			if (strcmp(*argv + slen, cp->name) == 0)
+				break;
+		}
+	}
+
 	if (cp->name == NULL) {
 		errx(1, "%s: unknown variable", *argv);
 		/* NOTREACHED */
@@ -238,6 +536,49 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s name [pathname]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-lL] [-v spec] name [pathname]\n",
+	    __progname);
 	exit(1);
+}
+
+static void
+list_var(int do_pathconf)
+{
+	const struct conf_variable *cp;
+
+	for (cp = uposix_conf_table; cp->name != NULL; cp++)
+		if ((cp->type == PATHCONF) == do_pathconf)
+			printf("%s%s\n", uposix_prefix, cp->name);
+	for (cp = posix_conf_table; cp->name != NULL; cp++)
+		if ((cp->type == PATHCONF) == do_pathconf)
+			printf("%s%s\n", posix_prefix, cp->name);
+	for (cp = conf_table; cp->name != NULL; cp++)
+		if ((cp->type == PATHCONF) == do_pathconf)
+			printf("%s\n", cp->name);
+	for (cp = compat_posix2_conf_table; cp->name != NULL; cp++)
+		if ((cp->type == PATHCONF) == do_pathconf)
+			printf("_%s%s\n", compat_posix2_prefix, cp->name);
+}
+
+static int
+compilation_spec_valid(const char *spec)
+{
+	const char **sp;
+	const struct conf_variable *cp;
+
+	if (strncmp(spec, posix_prefix, sizeof(posix_prefix) - 1) != 0)
+		return (0);
+
+	spec += sizeof(posix_prefix) - 1;
+	for (sp = compilation_specs; *sp != NULL; sp++)
+		if (strcmp(spec, *sp) == 0)
+			break;
+	if (*sp == NULL)
+		return (0);
+
+	for (cp = uposix_conf_table; cp->name != NULL; cp++)
+		if (strcmp(spec, cp->name) == 0 && cp->type == SYSCONF)
+			return (sysconf(cp->value) != -1);
+
+	return (0);
 }
