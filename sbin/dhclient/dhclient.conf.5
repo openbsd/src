@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.28 2013/02/24 12:18:43 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.29 2013/03/02 07:11:19 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: February 24 2013 $
+.Dd $Mdocdate: March 2 2013 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -230,40 +230,35 @@ Options in the lease can be modified before being accepted.
 Several option modifiers are available.
 .Bl -tag -width Ds
 .It Ic default Ar option option-value ;
-If for some set of options the client should use the value supplied by
-the server, but needs to use some default value if no value was supplied
-by the server, these values can be defined in the
-.Ic default
-statement.
+Use
+.Ar option-value
+for the given
+.Ar option ,
+if no value is supplied by the server.
 .It Ic supersede Ar option option-value ;
-If for some set of options the client should always use its own value
-rather than any value supplied by the server, these values can be defined
-in the
-.Ic supersede
-statement.
+Use
+.Ar option-value
+for the given
+.Ar option ,
+regardless of the value supplied by the server.
 .It Ic prepend Ar option option-value ;
-If for some set of options the client should use a value you supply,
-and then use the values supplied by the server, if any,
-these values can be defined in the
+Use
+.Ar option-value
+for the given
+.Ar option ,
+and then use the value supplied by the server.
 .Ic prepend
-statement.
-The
-.Ic prepend
-statement can only be used for options which allow more than one value to
-be given.
-This restriction is not enforced \- if violated, the results are unpredictable.
+can only be used for options which allow more than one value to be given.
+The restriction is not enforced \- if violated, the results are unpredictable.
 .It Ic append Ar option option-value ;
-If for some set of options the client should first use the values
-supplied by the server, if any, and then use values you supply, these
-values can be defined in the
+Use
+.Ar option-value
+for the given
+.Ar option ,
+after first using the value supplied by the server.
 .Ic append
-statement.
-The
-.Ic append
-statement can only be used for options which allow more than one value to
-be given.
-This restriction is not enforced \- if you ignore it,
-the behaviour will be unpredictable.
+can only be used for options which allow more than one value to be given.
+The restriction is not enforced \- if violated, the results are unpredictable.
 .El
 .Sh LEASE DECLARATIONS
 The lease declaration:
