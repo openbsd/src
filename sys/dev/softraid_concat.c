@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.10 2013/03/02 12:25:55 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.11 2013/03/02 12:50:01 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -85,7 +85,6 @@ int
 sr_concat_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, void *data)
 {
-
 	sd->sd_max_ccb_per_wu = SR_CONCAT_NOWU * no_chunk;
 
 	return 0;
@@ -95,9 +94,6 @@ int
 sr_concat_alloc_resources(struct sr_discipline *sd)
 {
 	int			rv = EINVAL;
-
-	if (!sd)
-		return (rv);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_concat_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
@@ -116,9 +112,6 @@ int
 sr_concat_free_resources(struct sr_discipline *sd)
 {
 	int			rv = EINVAL;
-
-	if (!sd)
-		return (rv);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_concat_free_resources\n",
 	    DEVNAME(sd->sd_sc));

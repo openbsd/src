@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.29 2013/01/16 06:42:22 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.30 2013/03/02 12:50:01 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -243,9 +243,6 @@ out:
 int
 sr_aoe_alloc_resources(struct sr_discipline *sd)
 {
-	if (!sd)
-		return (EINVAL);
-
 	DNPRINTF(SR_D_DIS, "%s: sr_aoe_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
@@ -260,9 +257,6 @@ sr_aoe_free_resources(struct sr_discipline *sd)
 {
 	int			s, rv = EINVAL;
 	struct aoe_handler	*ah;
-
-	if (!sd)
-		return (rv);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_aoe_free_resources\n",
 	    DEVNAME(sd->sd_sc));
@@ -604,9 +598,6 @@ sr_aoe_server_alloc_resources(struct sr_discipline *sd)
 	struct aoe_handler	*ah;
 	struct ifnet		*ifp;
 
-	if (!sd)
-		return (rv);
-
 	DNPRINTF(SR_D_DIS, "%s: sr_aoe_server_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
@@ -654,9 +645,6 @@ int
 sr_aoe_server_free_resources(struct sr_discipline *sd)
 {
 	int			s;
-
-	if (!sd)
-		return (EINVAL);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_aoe_server_free_resources\n",
 	    DEVNAME(sd->sd_sc));

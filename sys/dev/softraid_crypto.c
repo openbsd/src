@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.86 2013/01/18 23:22:18 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.87 2013/03/02 12:50:01 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -960,9 +960,6 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	struct sr_crypto_wu	*crwu;
 	u_int			num_keys, i;
 
-	if (!sd)
-		return (EINVAL);
-
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
@@ -1053,9 +1050,6 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 	int			rv = EINVAL;
 	struct sr_crypto_wu	*crwu;
 	u_int			i;
-
-	if (!sd)
-		return (rv);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_free_resources\n",
 	    DEVNAME(sd->sd_sc));

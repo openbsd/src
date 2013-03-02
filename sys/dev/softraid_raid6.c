@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.33 2013/01/16 09:21:50 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.34 2013/03/02 12:50:01 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -161,9 +161,6 @@ sr_raid6_alloc_resources(struct sr_discipline *sd)
 {
 	int			rv = EINVAL;
 
-	if (!sd)
-		return (rv);
-
 	DNPRINTF(SR_D_DIS, "%s: sr_raid6_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
@@ -187,9 +184,6 @@ int
 sr_raid6_free_resources(struct sr_discipline *sd)
 {
 	int			rv = EINVAL;
-
-	if (!sd)
-		return (rv);
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid6_free_resources\n",
 	    DEVNAME(sd->sd_sc));
