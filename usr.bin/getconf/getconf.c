@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.13 2013/03/02 05:33:41 guenther Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.14 2013/03/02 07:18:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -536,7 +536,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-lL] [-v spec] name [pathname]\n",
+	(void)fprintf(stderr,
+	    "usage: %s [-Ll] [-v specification] name [pathname]\n",
 	    __progname);
 	exit(1);
 }
