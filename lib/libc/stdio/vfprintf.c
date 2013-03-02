@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.62 2012/06/26 14:53:23 matthew Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.63 2013/03/02 19:40:08 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -1268,6 +1268,9 @@ reswitch:	switch (ch) {
 				flags |= SHORTINT;
 			}
 			goto rflag;
+		case 'j':
+			flags |= MAXINT;
+			goto rflag;
 		case 'l':
 			if (*fmt == 'l') {
 				fmt++;
@@ -1444,8 +1447,14 @@ done:
 		case TP_SSIZEINT:
 			(*argtable)[n].pssizearg = va_arg(ap, ssize_t *);
 			break;
-		case TP_MAXINT:
+		case T_MAXINT:
 			(*argtable)[n].intmaxarg = va_arg(ap, intmax_t);
+			break;
+		case T_MAXUINT:
+			(*argtable)[n].uintmaxarg = va_arg(ap, uintmax_t);
+			break;
+		case TP_MAXINT:
+			(*argtable)[n].pintmaxarg = va_arg(ap, intmax_t *);
 			break;
 #ifdef PRINTF_WIDE_CHAR
 		case T_WINT:
