@@ -1,4 +1,4 @@
-.\"	$OpenBSD: confstr.3,v 1.17 2013/03/01 21:19:42 guenther Exp $
+.\"	$OpenBSD: confstr.3,v 1.18 2013/03/02 07:02:31 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 1 2013 $
+.Dd $Mdocdate: March 2 2013 $
 .Dt CONFSTR 3
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@ and
 .It Li _CS_POSIX_V6_ILP32_OFFBIG_LIBS
 If
 .Fn sysconf _SC_V7_ILP32_OFFBIG
-returns a value greater than zero, 
+returns a value greater than zero,
 return the compiler flags for compiling objects,
 the linker flags for linking an executable,
 or the linker arguments for additional libraries, respectively,
@@ -133,7 +133,7 @@ Otherwise, the result is unspecified.
 .It Li _CS_POSIX_V6_LP64_OFF64_LIBS
 If
 .Fn sysconf _SC_V7_LP64_OFF64
-returns a value greater than zero, 
+returns a value greater than zero,
 return the compiler flags for compiling objects,
 the linker flags for linking an executable,
 or the linker arguments for additional libraries, respectively,
@@ -152,7 +152,7 @@ Otherwise, the result is unspecified.
 .It Li _CS_POSIX_V6_LPBIG_OFFBIG_LIBS
 If
 .Fn sysconf _SC_V7_LPBIG_OFFBIG
-returns a value greater than zero, 
+returns a value greater than zero,
 return the compiler flags for compiling objects,
 the linker flags for linking an executable,
 or the linker arguments for additional libraries, respectively,
