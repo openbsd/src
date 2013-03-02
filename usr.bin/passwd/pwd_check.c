@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.12 2008/11/06 05:35:56 djm Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.13 2013/03/02 09:07:37 ajacoutot Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -133,21 +133,21 @@ pwd_check(login_cap_t *lc, char *password)
 			exit(1);
 		}
 
-		for (i = 0; i < sizeof(patterns) / sizeof(*patterns); i++) {
-			if (regcomp(&rgx, patterns[i].match,
-			    patterns[i].flags) != 0)
-				continue;
-			res = regexec(&rgx, password, 0, NULL, 0);
-			regfree(&rgx);
-			if (res == 0) {
-				printf("%s\n", patterns[i].response);
-				exit(1);
+		if (checker == NULL) {
+			for (i = 0; i < sizeof(patterns) / sizeof(*patterns); i++) {
+				if (regcomp(&rgx, patterns[i].match,
+				    patterns[i].flags) != 0)
+					continue;
+				res = regexec(&rgx, password, 0, NULL, 0);
+				regfree(&rgx);
+				if (res == 0) {
+					printf("%s\n", patterns[i].response);
+					exit(1);
+				}
 			}
-		}
-
-		/* If no external checker in use, accept the password */
-		if (checker == NULL)
+			/* no external checker in use, accept the password */
 			exit(0);
+		}
 
 		/* Otherwise, pass control to checker program */
 		argp[2] = checker;
