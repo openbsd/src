@@ -1,5 +1,5 @@
-/*	$OpenBSD: profile.h,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
-/*	$NetBSD: profile.h,v 1.4 2002/04/28 17:10:36 uch Exp $	*/
+/*	$OpenBSD: profile.h,v 1.2 2013/03/02 22:42:48 miod Exp $	*/
+/*	$NetBSD: profile.h,v 1.5 2006/10/26 23:54:28 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -33,40 +33,39 @@
 #define	_MCOUNT_DECL static void mcount
 #endif
 
-#define	MCOUNT __asm ("			\n\
-	.text				\n\
-	.align	2			\n\
-	.globl	__mcount		\n\
-__mcount:				\n\
-	mov.l	r0,@-r15		\n\
-	mov.l	r4,@-r15		\n\
-	mov.l	r5,@-r15		\n\
-	mov.l	r6,@-r15		\n\
-	mov.l	r7,@-r15		\n\
-	mov.l	r14,@-r15		\n\
-	sts.l	pr,@-r15		\n\
-	mov	r15,r14			\n\
-					\n\
-	mov.l	1f,r1	! _mcount	\n\
-	sts	pr,r4	! frompc	\n\
-	mov	r0,r5	! selfpc	\n\
-	jsr	@r1			\n\
-	nop				\n\
-					\n\
-	mov	r14,r15			\n\
-	lds.l	@r15+,pr		\n\
-	mov.l	@r15+,r14		\n\
-	mov.l	@r15+,r7		\n\
-	mov.l	@r15+,r6		\n\
-	mov.l	@r15+,r5		\n\
-	mov.l	@r15+,r4		\n\
-	mov.l	@r15+,r0		\n\
-					\n\
-	jmp	@r0	! return	\n\
-	nop				\n\
-					\n\
-	.align	2			\n\
-1:	.long	_mcount			");
+#define	MCOUNT __asm ("				\n\
+	.text					\n\
+	.align	2				\n\
+	.globl	__mcount			\n\
+__mcount:					\n\
+	mov.l	r4, @-r15			\n\
+	mov.l	r5, @-r15			\n\
+	mov.l	r6, @-r15			\n\
+	mov.l	r7, @-r15			\n\
+	mov.l	r0, @-r15			\n\
+	mov.l	r14, @-r15			\n\
+	sts.l	pr, @-r15			\n\
+	mov	r15, r14			\n\
+						\n\
+	mov.l	1f, r1		! _mcount	\n\
+	sts	pr, r4		! frompc	\n\
+0:	bsrf	r1				\n\
+	 mov	r0, r5		! selfpc	\n\
+						\n\
+	mov	r14, r15			\n\
+	lds.l	@r15+, pr			\n\
+	mov.l	@r15+, r14			\n\
+	mov.l	@r15+, r0			\n\
+	mov.l	@r15+, r7			\n\
+	mov.l	@r15+, r6			\n\
+	mov.l	@r15+, r5			\n\
+	jmp	@r0		! real function	\n\
+	 mov.l	@r15+, r4			\n\
+						\n\
+	.align	2				\n\
+1:	.long	_mcount - ((0b) + 4)		\n\
+						\n\
+	.size	__mcount, . - __mcount		");
 
 #ifdef _KERNEL
 #define	MCOUNT_ENTER	s = splhigh()
