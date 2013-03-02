@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.621 2013/01/16 01:49:20 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.622 2013/03/02 12:28:13 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2232,7 +2232,6 @@ filter_opt	: USER uids {
 		| SCRUB '(' scrub_opts ')' {
 			filter_opts.nodf = $3.nodf;
 			filter_opts.minttl = $3.minttl;
-			filter_opts.settos = $3.settos;
 			filter_opts.randomid = $3.randomid;
 			filter_opts.max_mss = $3.maxmss;
 			if ($3.reassemble_tcp)
