@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.33 2013/01/18 11:48:05 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.34 2013/03/02 12:25:55 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -254,7 +254,7 @@ sr_raid0_intr(struct buf *bp)
 	int			s;
 
 	DNPRINTF(SR_D_INTR, "%s: %s %s intr bp %x xs %x\n",
-	    DEVNAME(sd->sd_sc), sd->sd_meta.ssd_name, sd->sd_name, bp, xs);
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name, bp, xs);
 
 	s = splbio();
 	sr_ccb_done(ccb);

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.9 2013/01/18 11:14:48 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.10 2013/03/02 12:25:55 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -227,7 +227,7 @@ sr_concat_intr(struct buf *bp)
 	int			s;
 
 	DNPRINTF(SR_D_INTR, "%s: %s %s intr bp %x xs %x\n",
-	    DEVNAME(sd->sd_sc), sd->ssd_meta.ssd_devname, sd->sd_name, bp, xs);
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name, bp, xs);
 
 	s = splbio();
 	sr_ccb_done(ccb);
