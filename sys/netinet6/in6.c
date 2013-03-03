@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.101 2012/11/30 13:48:12 stsp Exp $	*/
+/*	$OpenBSD: in6.c,v 1.102 2013/03/03 00:35:13 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -97,6 +97,9 @@
 #include <netinet6/ip6_mroute.h>
 #endif
 #include <netinet6/in6_ifattach.h>
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 /* backward compatibility for a while... */
 #define COMPAT_IN6IFIOCTL
@@ -2145,6 +2148,9 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	struct in6_ifaddr *ifa_best = NULL;
+#if NCARP > 0
+	struct sockaddr_dl *proxydl = NULL;
+#endif
 
 	if (oifp == NULL) {
 		printf("in6_ifawithscope: output interface is not specified\n");
@@ -2159,6 +2165,15 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
+#if NCARP > 0
+		/*
+		 * Never use a carp address of an interface which is not
+		 * the master.
+		 */
+		if (ifp->if_type == IFT_CARP &&
+		    !carp_iamatch6(ifp, NULL, &proxydl))
+			continue;
+#endif
 
 		/*
 		 * We can never take an address that breaks the scope zone
@@ -2435,6 +2450,14 @@ in6if_do_dad(struct ifnet *ifp)
 		 * NS would confuse the DAD procedure.
 		 */
 		return (0);
+#if NCARP > 0
+	case IFT_CARP:
+		/*
+		 * XXX: DAD does not work currently on carp(4)
+		 * so disable it for now.
+		 */
+		return (0);
+#endif
 	default:
 		/*
 		 * Our DAD routine requires the interface up and running.

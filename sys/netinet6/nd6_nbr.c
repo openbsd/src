@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.63 2012/05/16 09:48:38 mikeb Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.64 2013/03/03 00:35:14 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -561,6 +561,9 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct rtentry *rt;
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
+#if NCARP > 0
+	struct sockaddr_dl *proxydl = NULL;
+#endif
 
 	if (ip6->ip6_hlim != 255) {
 		nd6log((LOG_ERR,
@@ -617,6 +620,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 
 	ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
+#if NCARP > 0
+	if (ifp->if_type == IFT_CARP && ifa &&
+	    !carp_iamatch6(ifp, lladdr, &proxydl))
+		ifa = NULL;
+#endif
 
 	/*
 	 * Target address matches one of my interface address.
