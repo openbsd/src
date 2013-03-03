@@ -161,3 +161,113 @@ expected-stderr: !
 	XX
 ---
 
+name: single-quotes-in-braces
+description:
+	Check that single quotes inside unquoted {} are treated as quotes
+stdin:
+	foo=1
+	echo ${foo:+'blah  $foo'}
+expected-stdout:
+	blah  $foo
+---
+
+name: single-quotes-in-quoted-braces
+description:
+	Check that single quotes inside quoted {} are treated as
+	normal char
+stdin:
+	foo=1
+	echo "${foo:+'blah  $foo'}"
+expected-stdout:
+	'blah  1'
+---
+
+name: single-quotes-in-braces-nested
+description:
+	Check that single quotes inside unquoted {} are treated as quotes,
+	even if that's inside a double-quoted command expansion
+stdin:
+	foo=1
+	echo "$( echo ${foo:+'blah  $foo'})"
+expected-stdout:
+	blah  $foo
+---
+
+name: single-quotes-in-brace-pattern
+description:
+	Check that single quotes inside {} pattern are treated as quotes
+stdin:
+	foo=1234
+	echo ${foo%'2'*} "${foo%'2'*}" ${foo%2'*'} "${foo%2'*'}"
+expected-stdout:
+	1 1 1234 1234
+---
+
+name: single-quotes-in-heredoc-braces
+description:
+	Check that single quotes inside {} in heredoc are treated
+	as normal char
+stdin:
+	foo=1
+	cat <<EOM
+	${foo:+'blah  $foo'}
+	EOM
+expected-stdout:
+	'blah  1'
+---
+
+name: single-quotes-in-nested-braces
+description:
+	Check that single quotes inside nested unquoted {} are
+	treated as quotes
+stdin:
+	foo=1
+	echo ${foo:+${foo:+'blah  $foo'}}
+expected-stdout:
+	blah  $foo
+---
+
+name: single-quotes-in-nested-quoted-braces
+description:
+	Check that single quotes inside nested quoted {} are treated
+	as normal char
+stdin:
+	foo=1
+	echo "${foo:+${foo:+'blah  $foo'}}"
+expected-stdout:
+	'blah  1'
+---
+
+name: single-quotes-in-nested-braces-nested
+description:
+	Check that single quotes inside nested unquoted {} are treated
+	as quotes, even if that's inside a double-quoted command expansion
+stdin:
+	foo=1
+	echo "$( echo ${foo:+${foo:+'blah  $foo'}})"
+expected-stdout:
+	blah  $foo
+---
+
+name: single-quotes-in-nested-brace-pattern
+description:
+	Check that single quotes inside nested {} pattern are treated as quotes
+stdin:
+	foo=1234
+	echo ${foo:+${foo%'2'*}} "${foo:+${foo%'2'*}}" ${foo:+${foo%2'*'}} "${foo:+${foo%2'*'}}"
+expected-stdout:
+	1 1 1234 1234
+---
+
+name: single-quotes-in-heredoc-nested-braces
+description:
+	Check that single quotes inside nested {} in heredoc are treated
+	as normal char
+stdin:
+	foo=1
+	cat <<EOM
+	${foo:+${foo:+'blah  $foo'}}
+	EOM
+expected-stdout:
+	'blah  1'
+---

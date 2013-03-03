@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.46 2013/01/20 14:47:46 stsp Exp $	*/
+/*	$OpenBSD: lex.c,v 1.47 2013/03/03 19:11:34 guenther Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -113,7 +113,7 @@ yylex(int cf)
 
   Again:
 	states[0].ls_state = -1;
-	states[0].ls_info.base = (Lex_state *) 0;
+	states[0].ls_info.base = NULL;
 	statep = &states[1];
 	state_info.base = states;
 	state_info.end = &states[STATE_BSIZE];
@@ -270,6 +270,10 @@ yylex(int cf)
 					*wp++ = QCHAR, *wp++ = c;
 				break;
 			case '\'':
+				if ((cf & HEREDOC) || state == SBRACEQ) {
+					*wp++ = CHAR, *wp++ = c;
+					break;
+				}
 				*wp++ = OQUOTE;
 				ignore_backslash_newline++;
 				PUSH_STATE(SSQUOTE);
@@ -346,7 +350,11 @@ yylex(int cf)
 						PUSH_STATE(STBRACE);
 					} else {
 						ungetsc(c);
-						PUSH_STATE(SBRACE);
+						if (state == SDQUOTE ||
+						    state == SBRACEQ)
+							PUSH_STATE(SBRACEQ);
+						else
+							PUSH_STATE(SBRACE);
 					}
 				} else if (ctype(c, C_ALPHA)) {
 					*wp++ = OSUBST;
@@ -423,6 +431,10 @@ yylex(int cf)
 		case SSQUOTE:
 			if (c == '\'') {
 				POP_STATE();
+				if (state == SBRACEQ) {
+					*wp++ = CHAR, *wp++ = c;
+					break;
+				}
 				*wp++ = CQUOTE;
 				ignore_backslash_newline--;
 			} else
@@ -529,6 +541,7 @@ yylex(int cf)
 			*wp++ = c;
 			break;
 
+		case SBRACEQ:
 		case SBRACE:
 			/*{*/
 			if (c == '}') {
