@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.40 2013/01/24 09:30:27 gerhard Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.41 2013/03/04 14:00:31 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -507,7 +507,7 @@ int			 pfr_get_astats(struct pfr_table *, struct pfr_astats *,
 int			 pfr_get_tstats(struct pfr_table *, struct pfr_tstats *,
 			    int *, int);
 int			 pfr_buf_grow(struct pfr_buffer *, int);
-void			*pfr_buf_next(struct pfr_buffer *, const void *);
+const void		*pfr_buf_next(struct pfr_buffer *, const void *);
 int			 pfi_get_ifaces(const char *, struct pfi_kif *, int *);
 int			 pfi_get(struct pfr_buffer *, const char *);
 int			 pfi_count(void);
