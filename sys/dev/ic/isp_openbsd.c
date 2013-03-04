@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.47 2011/10/22 19:34:06 miod Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.48 2013/03/04 00:41:54 dlg Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -103,7 +103,7 @@ isp_attach(struct ispsoftc *isp)
 	 * We only manage a single wait queues for dual bus controllers.
 	 * This is arguably broken.
 	 */
-	isp->isp_osinfo.wqf = isp->isp_osinfo.wqt = NULL;
+	SIMPLEQ_INIT(&isp->isp_osinfo.wq);
 
 	lptr->adapter_softc = isp;
 	lptr->adapter = &isp->isp_osinfo._adapter;
@@ -276,13 +276,7 @@ ispcmd_slow(XS_T *xs)
 void
 isp_add2_blocked_queue(struct ispsoftc *isp, XS_T *xs)
 {
-	if (isp->isp_osinfo.wqf != NULL) {
-		isp->isp_osinfo.wqt->free_list.le_next = xs;
-	} else {
-		isp->isp_osinfo.wqf = xs;
-	}
-	isp->isp_osinfo.wqt = xs;
-	xs->free_list.le_next = NULL;
+	SIMPLEQ_INSERT_TAIL(&isp->isp_osinfo.wq, xs, xfer_list);
 }
 
 int
@@ -665,53 +659,41 @@ void
 isp_trestart(void *arg)
 {
 	struct ispsoftc *isp = arg;
-	struct scsi_xfer *list;
+	struct scsi_xfer *xs;
+	struct scsi_xfer_list list;
 
 	ISP_LOCK(isp);
 	isp->isp_osinfo.rtpend = 0;
-	list = isp->isp_osinfo.wqf;
-	if (isp->isp_osinfo.blocked == 0 && list != NULL) {
-		int nrestarted = 0;
+	if (isp->isp_osinfo.blocked) {
+		ISP_UNLOCK(isp);
+		return;
+	}
+	
+	list = isp->isp_osinfo.wq;
+	SIMPLEQ_INIT(&isp->isp_osinfo.wq);
+	ISP_UNLOCK(isp);
 
-		isp->isp_osinfo.wqf = NULL;
-		ISP_UNLOCK(isp);
-		do {
-			struct scsi_xfer *xs = list;
-			list = xs->free_list.le_next;
-			xs->free_list.le_next = NULL;
-			isp_requeue(xs);
-			if (isp->isp_osinfo.wqf == NULL)
-				nrestarted++;
-		} while (list != NULL);
-#ifndef SMALL_KERNEL
-		isp_prt(isp, ISP_LOGDEBUG0, "requeued %d commands", nrestarted);
-#endif
-	} else {
-		ISP_UNLOCK(isp);
+	while ((xs = SIMPLEQ_FIRST(&list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&list, xfer_list);
+		isp_requeue(xs);
 	}
 }
 
 void
 isp_restart(struct ispsoftc *isp)
 {
-	struct scsi_xfer *list;
+	struct scsi_xfer *xs;
+	struct scsi_xfer_list list;
 
-	list = isp->isp_osinfo.wqf;
-	if (isp->isp_osinfo.blocked == 0 && list != NULL) {
-		int nrestarted = 0;
+	if (isp->isp_osinfo.blocked)
+		return;
 
-		isp->isp_osinfo.wqf = NULL;
-		do {
-			struct scsi_xfer *xs = list;
-			list = xs->free_list.le_next;
-			xs->free_list.le_next = NULL;
-			isp_requeue(xs);
-			if (isp->isp_osinfo.wqf == NULL)
-				nrestarted++;
-		} while (list != NULL);
-#ifndef SMALL_KERNEL
-		isp_prt(isp, ISP_LOGDEBUG0, "requeued %d commands", nrestarted);
-#endif
+	list = isp->isp_osinfo.wq;
+	SIMPLEQ_INIT(&isp->isp_osinfo.wq);
+
+	while ((xs = SIMPLEQ_FIRST(&list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&list, xfer_list);
+		isp_requeue(xs);
 	}
 }
 

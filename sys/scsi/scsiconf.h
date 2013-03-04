@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.150 2012/07/01 01:41:13 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.151 2013/03/04 00:41:54 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -390,7 +390,7 @@ struct scsi_attach_args {
  * (via the scsi_link structure)
  */
 struct scsi_xfer {
-	LIST_ENTRY(scsi_xfer) free_list;
+	SIMPLEQ_ENTRY(scsi_xfer) xfer_list;
 	int	flags;
 	struct	scsi_link *sc_link;	/* all about our device and adapter */
 	int	retries;		/* the number of times to retry */
@@ -414,6 +414,7 @@ struct scsi_xfer {
 
 	void *io;			/* adapter io resource */
 };
+SIMPLEQ_HEAD(scsi_xfer_list, scsi_xfer);
 
 /*
  * Per-request Flag values

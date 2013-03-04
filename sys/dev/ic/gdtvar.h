@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.21 2012/08/15 02:38:14 jsg Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.22 2013/03/04 00:41:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -131,8 +131,7 @@ struct gdt_softc {
 	struct gdt_ccb sc_ccbs[GDT_MAXCMDS];
 	TAILQ_HEAD(, gdt_ccb) sc_free_ccb, sc_ccbq;
 	TAILQ_HEAD(, gdt_ucmd) sc_ucmdq;
-	LIST_HEAD(, scsi_xfer) sc_queue;
-	struct scsi_xfer *sc_queuelast;
+	struct scsi_xfer_list sc_queue;
 
 	struct mutex		sc_ccb_mtx;
 	struct scsi_iopool	sc_iopool;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.61 2012/08/15 02:38:14 jsg Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.62 2013/03/04 00:41:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -129,7 +129,7 @@ gdt_attach(struct gdt_softc *sc)
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_ucmdq);
-	LIST_INIT(&sc->sc_queue);
+	SIMPLEQ_INIT(&sc->sc_queue);
 
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, gdt_ccb_alloc, gdt_ccb_free);
@@ -517,14 +517,10 @@ gdt_eval_mapping(u_int32_t size, int *cyls, int *heads, int *secs)
 void
 gdt_enqueue(struct gdt_softc *sc, struct scsi_xfer *xs, int infront)
 {
-	if (infront || LIST_FIRST(&sc->sc_queue) == NULL) {
-		if (LIST_FIRST(&sc->sc_queue) == NULL)
-			sc->sc_queuelast = xs;
-		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
-		return;
-	}
-	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
-	sc->sc_queuelast = xs;
+	if (infront)
+		SIMPLEQ_INSERT_HEAD(&sc->sc_queue, xs, xfer_list);
+	else
+		SIMPLEQ_INSERT_TAIL(&sc->sc_queue, xs, xfer_list);
 }
 
 /*
@@ -535,13 +531,9 @@ gdt_dequeue(struct gdt_softc *sc)
 {
 	struct scsi_xfer *xs;
 
-	xs = LIST_FIRST(&sc->sc_queue);
-	if (xs == NULL)
-		return (NULL);
-	LIST_REMOVE(xs, free_list);
-
-	if (LIST_FIRST(&sc->sc_queue) == NULL)
-		sc->sc_queuelast = NULL;
+	xs = SIMPLEQ_FIRST(&sc->sc_queue);
+	if (xs != NULL)
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, xfer_list);
 
 	return (xs);
 }
@@ -584,7 +576,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	/* Don't double enqueue if we came from gdt_chain. */
-	if (xs != LIST_FIRST(&sc->sc_queue))
+	if (xs != SIMPLEQ_FIRST(&sc->sc_queue))
 		gdt_enqueue(sc, xs, 0);
 
 	while ((xs = gdt_dequeue(sc)) != NULL) {
@@ -1307,8 +1299,8 @@ gdt_chain(struct gdt_softc *sc)
 {
 	GDT_DPRINTF(GDT_D_INTR, ("gdt_chain(%p) ", sc));
 
-	if (LIST_FIRST(&sc->sc_queue))
-		gdt_scsi_cmd(LIST_FIRST(&sc->sc_queue));
+	if (!SIMPLEQ_EMPTY(&sc->sc_queue))
+		gdt_scsi_cmd(SIMPLEQ_FIRST(&sc->sc_queue));
 }
 
 void

@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.34 2011/03/06 16:59:42 miod Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.35 2013/03/04 00:41:54 dlg Exp $ */
 /*
  * OpenBSD Specific definitions for the QLogic ISP Host Adapter
  */
@@ -103,7 +103,7 @@ struct isposinfo {
 		u_int16_t	_discovered[2];
 	} un;
 #define	discovered	un._discovered
-	struct scsi_xfer	*wqf, *wqt;
+	struct scsi_xfer_list wq;
 	struct timeout rqt;
 };
 #define	MUST_POLL(isp)	\
