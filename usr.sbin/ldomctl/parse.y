@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2012/11/24 12:13:06 kettenis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2013/03/04 11:54:13 otto Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -104,6 +104,13 @@ domain		: DOMAIN STRING optnl '{' optnl	{
 			SIMPLEQ_INIT(&domain->vnet_list);
 		}
 		    domainopts_l '}' {
+			/* domain names need to be unique. */
+			struct domain *odomain;
+			SIMPLEQ_FOREACH(odomain, &conf->domain_list, entry)
+				if (strcmp(odomain->name, $2) == 0) {
+					yyerror("duplicate domain name: %s", $2);
+					YYERROR;
+				}
 			SIMPLEQ_INSERT_TAIL(&conf->domain_list, domain, entry);
 			domain = NULL;
 		}
@@ -151,7 +158,7 @@ mac_addr	: MAC_ADDR '=' STRING {
 			struct ether_addr *ea;
 
 			if ((ea = ether_aton($3)) == NULL) {
-				yyerror("invalid address: %s\n", $3);
+				yyerror("invalid address: %s", $3);
 				YYERROR;
 			}
 
