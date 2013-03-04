@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.596 2013/01/28 12:01:22 stsp Exp $
+$OpenBSD: usbdevs,v 1.597 2013/03/04 13:06:59 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2363,6 +2363,7 @@ product LINKSYS4 RT3070		0x0078	RT3070
 product LINKSYS4 WUSB600NV2	0x0079	WUSB600N v2
 product LINKSYS MAUSB2		0x0105	Camedia MAUSB-2
 product LINKSYS USB10TX1	0x200c	USB10TX
+product LINKSYS HG20F9		0x20f9	HG20F9 Ethernet
 product LINKSYS USB10T		0x2202	USB10T Ethernet
 product LINKSYS USB100TX	0x2203	USB100TX Ethernet
 product LINKSYS USB100H1	0x2204	USB100H1 Ethernet/HPNA
