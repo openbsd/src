@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.365 2013/03/04 13:47:14 jasper Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.366 2013/03/04 15:54:33 jasper Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2270,7 +2270,7 @@ This is highly experimental and not recommended.
 .It Ev PREFERRED_CIPHERS
 List of cryptographic ciphers to use, in order of preference.
 Default is
-.Sq sha256 sha1 rmd160 md5 .
+.Sq sha256 .
 The first cipher that matches in ${CHECKSUM_FILE} is verified.
 .It Ev PREFIX
 Base directory for the current port installation.
