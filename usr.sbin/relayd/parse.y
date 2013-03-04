@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.168 2012/10/19 16:49:50 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.169 2013/03/04 08:41:32 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Reyk Floeter <reyk@openbsd.org>
@@ -51,6 +51,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <ifaddrs.h>
+#include <syslog.h>
 
 #include <openssl/ssl.h>
 
@@ -1760,13 +1761,15 @@ int
 yyerror(const char *fmt, ...)
 {
 	va_list		 ap;
+	char		*nfmt;
 
 	file->errors++;
 	va_start(ap, fmt);
-	fprintf(stderr, "%s:%d: ", file->name, yylval.lineno);
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
+	if (asprintf(&nfmt, "%s:%d: %s", file->name, yylval.lineno, fmt) == -1)
+		fatalx("yyerror asprintf");
+	vlog(LOG_CRIT, nfmt, ap);
 	va_end(ap);
+	free(nfmt);
 	return (0);
 }
 
