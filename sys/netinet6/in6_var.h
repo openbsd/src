@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.35 2012/11/11 04:45:44 deraadt Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.36 2013/03/04 14:23:35 bluhm Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct	in6_ifaddr {
 				 */
 	time_t	ia6_updatetime;
 
-	/* back pointer to the ND prefix (for autoconfigured addresses only) */
+	/* back pointer to the prefix (for all addresses, not just autoconf) */
 	struct nd_prefix *ia6_ndpr;
 
 	/* multicast addresses joined from the kernel */

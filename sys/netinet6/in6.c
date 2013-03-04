@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.102 2013/03/03 00:35:13 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.103 2013/03/04 14:23:35 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1260,20 +1260,16 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 		in6_savemkludge(oia);
 	}
 
-	/*
-	 * When an autoconfigured address is being removed, release the
-	 * reference to the base prefix.
-	 */
-	if ((oia->ia6_flags & IN6_IFF_AUTOCONF) != 0) {
-		if (oia->ia6_ndpr == NULL) {
-			log(LOG_NOTICE, "in6_unlink_ifa: autoconf'ed address "
+	/* Release the reference to the base prefix. */
+	if (oia->ia6_ndpr == NULL) {
+		if (!IN6_IS_ADDR_LINKLOCAL(IA6_IN6(oia)))
+			log(LOG_NOTICE, "in6_unlink_ifa: interface address "
 			    "%p has no prefix\n", oia);
-		} else {
-			oia->ia6_flags &= ~IN6_IFF_AUTOCONF;
-			if (--oia->ia6_ndpr->ndpr_refcnt == 0)
-				prelist_remove(oia->ia6_ndpr);
-			oia->ia6_ndpr = NULL;
-		}
+	} else {
+		oia->ia6_flags &= ~IN6_IFF_AUTOCONF;
+		if (--oia->ia6_ndpr->ndpr_refcnt == 0)
+			prelist_remove(oia->ia6_ndpr);
+		oia->ia6_ndpr = NULL;
 	}
 
 	/*
