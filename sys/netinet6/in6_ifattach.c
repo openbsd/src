@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.56 2012/09/19 09:47:25 bluhm Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.57 2013/03/04 14:42:25 bluhm Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -681,7 +681,7 @@ in6_ifdetach(struct ifnet *ifp)
 			continue;
 		}
 
-		ia = (struct in6_ifaddr *)ifa;
+		ia = ifatoia6(ifa);
 
 		/*
 		 * leave from multicast groups we have joined for the interface

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.132 2012/11/06 12:32:42 henning Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.133 2013/03/04 14:42:25 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -588,7 +588,7 @@ reroute:
 	 * then rt (for unicast) and ifp must be non-NULL valid values.
 	 */
 	if (rt) {
-		ia = (struct in6_ifaddr *)(rt->rt_ifa);
+		ia = ifatoia6(rt->rt_ifa);
 		rt->rt_use++;
 	}
 

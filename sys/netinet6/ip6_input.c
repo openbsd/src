@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.105 2012/11/06 12:32:42 henning Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.106 2013/03/04 14:42:25 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -488,7 +488,7 @@ ip6_input(struct mbuf *m)
 #endif
 	    ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_LOOP) {
 		struct in6_ifaddr *ia6 =
-			(struct in6_ifaddr *)ip6_forward_rt.ro_rt->rt_ifa;
+			ifatoia6(ip6_forward_rt.ro_rt->rt_ifa);
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
 			isanycast = 1;
 		/*

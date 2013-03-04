@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.103 2013/03/04 14:23:35 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.104 2013/03/04 14:42:25 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1864,7 +1864,7 @@ in6ifa_ifpforlinklocal(struct ifnet *ifp, int ignoreflags)
 		}
 	}
 
-	return ((struct in6_ifaddr *)ifa);
+	return (ifatoia6(ifa));
 }
 
 
@@ -1885,7 +1885,7 @@ in6ifa_ifpwithaddr(struct ifnet *ifp, struct in6_addr *addr)
 			break;
 	}
 
-	return ((struct in6_ifaddr *)ifa);
+	return (ifatoia6(ifa));
 }
 
 /*
@@ -2197,7 +2197,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			       dscopecmp,
 			       ifa_best ? IN6_ARE_SCOPE_CMP(src_scope, best_scope) : -1,
 			       in6_matchlen(IFA_IN6(ifa), dst),
-			       ((struct in6_ifaddr *)ifa)->ia6_flags);
+			       ifatoia6(ifa)->ia6_flags);
 #endif
 
 			/*
@@ -2378,7 +2378,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			continue; /* (b) */
 
 		  replace:
-			ifa_best = (struct in6_ifaddr *)ifa;
+			ifa_best = ifatoia6(ifa);
 			blen = tlen >= 0 ? tlen :
 				in6_matchlen(IFA_IN6(ifa), dst);
 			best_scope = in6_addrscope(&ifa_best->ia_addr.sin6_addr);

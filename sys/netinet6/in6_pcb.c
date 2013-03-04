@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.50 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.51 2013/03/04 14:42:25 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -253,7 +253,7 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			 * deprecated addresses (default: forbid bind(2)).
 			 */
 			if (ia &&
-			    ((struct in6_ifaddr *)ia)->ia6_flags &
+			    ifatoia6(ia)->ia6_flags &
 			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
 				return (EADDRNOTAVAIL);
 		}

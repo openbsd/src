@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.43 2012/12/28 17:52:06 gsoares Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.44 2013/03/04 14:42:25 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	rtalloc_mpath((struct route *)&ro, &ip6->ip6_src.s6_addr32[0]);
 
 	if (ro.ro_rt != NULL && ro.ro_rt->rt_ifa != NULL)
-		dstifp = ((struct in6_ifaddr *)ro.ro_rt->rt_ifa)->ia_ifp;
+		dstifp = ifatoia6(ro.ro_rt->rt_ifa)->ia_ifp;
 	if (ro.ro_rt != NULL) {
 		RTFREE(ro.ro_rt);
 		ro.ro_rt = NULL;
