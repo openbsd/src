@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.126 2013/01/18 09:39:03 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.127 2013/03/05 10:24:00 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -608,7 +608,11 @@ struct sr_discipline {
 
 	/* background operation */
 	struct proc		*sd_background_proc;
+
+	TAILQ_ENTRY(sr_discipline) sd_link;
 };
+
+TAILQ_HEAD(sr_discipline_list, sr_discipline);
 
 struct sr_softc {
 	struct device		sc_dev;
@@ -629,11 +633,9 @@ struct sr_softc {
 	struct scsi_link	sc_link;	/* scsi prototype link */
 	struct scsibus_softc	*sc_scsibus;
 
-	/*
-	 * XXX expensive, alternative would be nice but has to be cheap
-	 * since the target lookup happens on each IO
-	 */
+	/* The target lookup has to be cheap since it happens for each I/O. */
 	struct sr_discipline	*sc_dis[SR_MAX_LD];
+	struct sr_discipline_list sc_dis_list;
 };
 
 /* hotplug */
