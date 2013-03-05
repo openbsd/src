@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.43 2010/03/04 21:37:56 jmc Exp $   */
+/*      $OpenBSD: whois.c,v 1.44 2013/03/05 16:09:10 sthen Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -57,6 +57,7 @@
 #define LNICHOST	"whois.lacnic.net"
 #define	AFNICHOST	"whois.afrinic.net"
 #define BNICHOST	"whois.registro.br"
+#define	PDBHOST		"whois.peeringdb.com"
 #define	QNICHOST_TAIL	".whois-servers.net"
 
 #define	WHOIS_PORT	"whois"
@@ -81,7 +82,7 @@ main(int argc, char *argv[])
 
 	country = host = NULL;
 	flags = rval = 0;
-	while ((ch = getopt(argc, argv, "aAc:dgh:ilmp:qQrR")) != -1)
+	while ((ch = getopt(argc, argv, "aAc:dgh:ilmp:PqQrR")) != -1)
 		switch (ch) {
 		case 'a':
 			host = ANICHOST;
@@ -112,6 +113,9 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			port_whois = optarg;
+			break;
+		case 'P':
+			host = PDBHOST;
 			break;
 		case 'q':
 			/* deprecated, now the default */
@@ -306,7 +310,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-AadgilmQRr] [-c country-code | -h host] "
+	    "usage: %s [-AadgilmPQRr] [-c country-code | -h host] "
 		"[-p port] name ...\n", __progname);
 	exit(1);
 }
