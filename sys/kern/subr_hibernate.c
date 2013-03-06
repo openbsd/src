@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.50 2013/01/17 02:51:08 pirofti Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.51 2013/03/06 08:34:05 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -632,7 +632,7 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	hiber_info->secsize = dl.d_secsize;
 
 	/* Make sure the signature can fit in one block */
-	KASSERT(sizeof(union hibernate_info)/hiber_info->secsize == 1);
+	KASSERT(sizeof(union hibernate_info) <= hiber_info->secsize);
 
 	/* Calculate swap offset from start of disk */
 	hiber_info->swap_offset = dl.d_partitions[1].p_offset;
