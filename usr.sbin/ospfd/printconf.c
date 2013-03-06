@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.15 2010/02/16 08:39:05 dlg Exp $ */
+/*	$OpenBSD: printconf.c,v 1.16 2013/03/06 15:43:23 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -117,38 +117,41 @@ print_iface(struct iface *iface)
 
 	printf("\t\tmetric %d\n", iface->metric);
 
-	if (iface->passive)
-		printf("\t\tpassive\n");
 	if (*iface->demote_group)
 		printf("\t\tdemote %s\n", iface->demote_group);
+	if (iface->passive)
+		printf("\t\tpassive\n");
+	else {
+		printf("\t\tretransmit-interval %d\n", iface->rxmt_interval);
+		if (iface->dead_interval == FAST_RTR_DEAD_TIME) {
+			printf("\t\trouter-dead-time minimal\n");
+			printf("\t\tfast-hello-interval msec %u\n",
+			    iface->fast_hello_interval);
+		} else {
+			printf("\t\trouter-dead-time %d\n",
+			    iface->dead_interval);
+			printf("\t\thello-interval %d\n",
+			    iface->hello_interval);
+		}
+		printf("\t\trouter-priority %d\n", iface->priority);
+		printf("\t\ttransmit-delay %d\n", iface->transmit_delay);
 
-	printf("\t\tretransmit-interval %d\n", iface->rxmt_interval);
-	if (iface->dead_interval == FAST_RTR_DEAD_TIME) {
-		printf("\t\trouter-dead-time minimal\n");
-		printf("\t\tfast-hello-interval msec %u\n",
-		    iface->fast_hello_interval);
-	} else {
-		printf("\t\trouter-dead-time %d\n", iface->dead_interval);
-		printf("\t\thello-interval %d\n", iface->hello_interval);
-	}
-	printf("\t\trouter-priority %d\n", iface->priority);
-	printf("\t\ttransmit-delay %d\n", iface->transmit_delay);
-
-	printf("\t\tauth-type %s\n", if_auth_name(iface->auth_type));
-	switch (iface->auth_type) {
-	case AUTH_TYPE_NONE:
-		break;
-	case AUTH_TYPE_SIMPLE:
-		printf("\t\tauth-key XXXXXX\n");
-		break;
-	case AUTH_TYPE_CRYPT:
-		printf("\t\tauth-md-keyid %d\n", iface->auth_keyid);
-		TAILQ_FOREACH(md, &iface->auth_md_list, entry)
-			printf("\t\tauth-md %d XXXXXX\n", md->keyid);
-		break;
-	default:
-		printf("\t\tunknown auth type!\n");
-		break;
+		printf("\t\tauth-type %s\n", if_auth_name(iface->auth_type));
+		switch (iface->auth_type) {
+		case AUTH_TYPE_NONE:
+			break;
+		case AUTH_TYPE_SIMPLE:
+			printf("\t\tauth-key XXXXXX\n");
+			break;
+		case AUTH_TYPE_CRYPT:
+			printf("\t\tauth-md-keyid %d\n", iface->auth_keyid);
+			TAILQ_FOREACH(md, &iface->auth_md_list, entry)
+				printf("\t\tauth-md %d XXXXXX\n", md->keyid);
+			break;
+		default:
+			printf("\t\tunknown auth type!\n");
+			break;
+		}
 	}
 
 	printf("\t}\n");
