@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.117 2013/03/03 22:37:58 miod Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.118 2013/03/06 22:26:15 beck Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -805,6 +805,8 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 
 	if (size == 0)
 		return (EINVAL);
+	size = atop(round_page(size));
+
 	/*
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
@@ -823,7 +825,7 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 	 * recover in the page daemon.
 	 */
  again:
-	if ((uvmexp.free <= uvmexp.reserve_pagedaemon &&
+	if ((uvmexp.free <= uvmexp.reserve_pagedaemon + size &&
 	    !((curproc == uvm.pagedaemon_proc) ||
 		(curproc == syncerproc)))) {
 		if (UVM_PLA_WAITOK) {
@@ -853,7 +855,6 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 	 * low<high assert will fail.
 	 */
 	high = atop(high + 1);
-	size = atop(round_page(size));
 	alignment = atop(alignment);
 	if (boundary < PAGE_SIZE && boundary != 0)
 		boundary = PAGE_SIZE;
