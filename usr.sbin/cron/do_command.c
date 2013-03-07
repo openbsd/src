@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.36 2011/08/22 19:32:42 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.37 2013/03/07 11:13:54 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -507,7 +507,7 @@ child_process(entry *e, user *u) {
 
 int
 safe_p(const char *usernm, const char *s) {
-	static const char safe_delim[] = "@!:%-.,";     /* conservative! */
+	static const char safe_delim[] = "@!:%+-.,";     /* conservative! */
 	const char *t;
 	int ch, first;
 
