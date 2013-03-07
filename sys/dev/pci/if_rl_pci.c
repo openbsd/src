@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.25 2013/02/08 08:00:34 jasper Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.26 2013/03/07 01:03:57 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -182,6 +182,11 @@ rl_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8129)
+		sc->rl_type = RL_8129;
+	else
+		sc->rl_type = RL_8139;
 
 	rl_attach(sc);
 }

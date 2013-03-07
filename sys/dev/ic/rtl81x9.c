@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.76 2012/11/29 21:10:32 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.77 2013/03/07 01:03:57 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1125,7 +1125,7 @@ rl_attach(struct rl_softc *sc)
 {
 	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
 	int		rseg, i;
-	u_int16_t	rl_id, rl_did;
+	u_int16_t	rl_id;
 	caddr_t		kva;
 	int		addr_len;
 
@@ -1147,18 +1147,6 @@ rl_attach(struct rl_softc *sc)
 	    addr_len, 3, 1);
 
 	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-
-	rl_read_eeprom(sc, (caddr_t)&rl_did, RL_EE_PCI_DID, addr_len, 1, 0);
-
-	if (rl_did == RT_DEVICEID_8139 || rl_did == ACCTON_DEVICEID_5030 ||
-	    rl_did == DELTA_DEVICEID_8139 || rl_did == ADDTRON_DEVICEID_8139 ||
-	    rl_did == DLINK_DEVICEID_8139 || rl_did == DLINK_DEVICEID_8139_2 ||
-	    rl_did == ABOCOM_DEVICEID_8139)
-		sc->rl_type = RL_8139;
-	else if (rl_did == RT_DEVICEID_8129)
-		sc->rl_type = RL_8129;
-	else
-		sc->rl_type = RL_UNKNOWN;	/* could be 8138 or other */
 
 	if (bus_dmamem_alloc(sc->sc_dmat, RL_RXBUFLEN + 32, PAGE_SIZE, 0,
 	    &sc->sc_rx_seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
