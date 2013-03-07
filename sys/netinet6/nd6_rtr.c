@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.66 2013/03/04 14:42:25 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.67 2013/03/07 09:40:19 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1598,7 +1598,6 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	ifa = &in6ifa_ifpforlinklocal(ifp,
 	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST)->ia_ifa;
 	if (ifa == NULL) {
-		/* XXX: freebsd does not have ifa_ifwithaf */
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family == AF_INET6)
 				break;

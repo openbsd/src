@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.249 2013/03/07 09:03:16 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.250 2013/03/07 09:40:19 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -961,27 +961,6 @@ ifa_ifwithnet(struct sockaddr *addr, u_int rdomain)
 		}
 	}
 	return (ifa_maybe);
-}
-
-/*
- * Find an interface using a specific address family
- */
-struct ifaddr *
-ifa_ifwithaf(int af, u_int rdomain)
-{
-	struct ifnet *ifp;
-	struct ifaddr *ifa;
-
-	rdomain = rtable_l2(rdomain);
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		if (ifp->if_rdomain != rdomain)
-			continue;
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family == af)
-				return (ifa);
-		}
-	}
-	return (NULL);
 }
 
 /*
