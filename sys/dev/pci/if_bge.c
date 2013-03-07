@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.320 2013/03/04 01:33:18 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.321 2013/03/07 19:30:52 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -4021,7 +4021,6 @@ bge_ifmedia_upd(struct ifnet *ifp)
 					CSR_WRITE_4(sc, BGE_SGDIG_CFG, sgdig);
 				}
 			}
-			DELAY(40);
 			break;
 		case IFM_1000_SX:
 			if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
@@ -4031,6 +4030,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 				BGE_SETBIT(sc, BGE_MAC_MODE,
 				    BGE_MACMODE_HALF_DUPLEX);
 			}
+			DELAY(40);
 			break;
 		default:
 			return (EINVAL);
