@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.127 2013/02/09 19:17:52 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.128 2013/03/07 11:20:26 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1610,7 +1610,7 @@ vr_watchdog(struct ifnet *ifp)
 	 * some TX descriptors to reclaim, so check for that first.
 	 */
 	vr_txeof(sc);
-	if (sc->vr_cdata.vr_tx_cnt == 0);
+	if (sc->vr_cdata.vr_tx_cnt == 0)
 		return;
 
 	ifp->if_oerrors++;
