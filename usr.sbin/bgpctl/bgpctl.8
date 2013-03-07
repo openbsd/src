@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.60 2012/09/26 16:19:44 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.61 2013/03/07 21:28:34 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: March 7 2013 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -95,22 +95,27 @@ Fetch only IPv6 prefixes from the registry.
 Disable verbose debug logging.
 .It Cm log verbose
 Enable verbose debug logging.
-.It Cm neighbor Ar peer Cm up
-Take the BGP session to the specified neighbor up.
+.It Cm neighbor Ar peer Cm clear
+Stop and restart the BGP session to the specified neighbor.
+.Ar peer
+may be the neighbor's address or description.
+.It Cm neighbor Ar peer Cm destroy
+Destroy a previously cloned peer.
+The peer must be down before calling this function.
 .Ar peer
 may be the neighbor's address or description.
 .It Cm neighbor Ar peer Cm down
 Take the BGP session to the specified neighbor down.
 .Ar peer
 may be the neighbor's address or description.
-.It Cm neighbor Ar peer Cm clear
-Stop and restart the BGP session to the specified neighbor.
-.Ar peer
-may be the neighbor's address or description.
 .It Cm neighbor Ar peer Cm refresh
 Request the neighbor to re-send all routes.
 Note that the neighbor is not obliged to re-send all routes, or any routes at
 all, even if it announced the route refresh capability.
+.Ar peer
+may be the neighbor's address or description.
+.It Cm neighbor Ar peer Cm up
+Take the BGP session to the specified neighbor up.
 .Ar peer
 may be the neighbor's address or description.
 .It Cm network add Ar prefix Op Ar arguments
