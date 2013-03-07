@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.14 2013/03/02 07:18:17 jmc Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.15 2013/03/07 08:54:53 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -161,7 +161,6 @@ const struct conf_variable conf_table[] =
   posix2_pathconf_row(SYMLINKS)
 
   constant_row(_POSIX2_CHARCLASS_NAME_MAX)
-  constant_row(_POSIX2_RE_DUP_MAX)
   constant_row(_XOPEN_IOV_MAX)
   constant_row(_XOPEN_NAME_MAX)
   constant_row(_XOPEN_PATH_MAX)
@@ -182,7 +181,6 @@ const struct conf_variable uposix_conf_table[] =
   /* POSIX.1 Minimum Values */
   /*posix_constant_row(AIO_LISTIO_MAX)*/
   /*posix_constant_row(AIO_MAX)*/
-  posix_constant_row(ARG_MAX)
   posix_constant_row(ARG_MAX)
   posix_constant_row(CHILD_MAX)
   /*posix_constant_row(DELAYTIMER_MAX)*/
@@ -427,10 +425,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1 || argc > 2) {
+	if (argc < 1 || argc > 2)
 		usage();
-		/* NOTREACHED */
-	}
 
 	/* pick a table based on a possible prefix */
 	if (strncmp(*argv, uposix_prefix, sizeof(uposix_prefix) - 1) == 0) {
@@ -465,10 +461,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (cp->name == NULL) {
+	if (cp->name == NULL)
 		errx(1, "%s: unknown variable", *argv);
-		/* NOTREACHED */
-	}
 
 	if (cp->type == PATHCONF) {
 		if (argc != 2) usage();
@@ -483,30 +477,27 @@ main(int argc, char *argv[])
 
 	case CONFSTR:
 		errno = 0;
-		slen = confstr (cp->value, (char *) 0, (size_t) 0);
-		
-		if (slen == 0 || slen == (size_t)-1) {
-			if (errno)
-				err(1, "%ld", cp->value);
-			else
-				errx(1, "%ld", cp->value);
-		}
-		if ((sval = malloc(slen)) == NULL)
-			err(1, NULL);
+		if ((slen = confstr(cp->value, NULL, 0)) == 0) {
+			if (errno != 0)
+				err(1, NULL);
 
-		confstr(cp->value, sval, slen);
-		printf("%s\n", sval);
+			printf("undefined\n");
+		} else {
+			if ((sval = malloc(slen)) == NULL)
+				err(1, NULL);
+
+			confstr(cp->value, sval, slen);
+			printf("%s\n", sval);
+		}
 		break;
 
 	case SYSCONF:
 		errno = 0;
 		if ((val = sysconf(cp->value)) == -1) {
-			if (errno != 0) {
+			if (errno != 0)
 				err(1, NULL);
-				/* NOTREACHED */
-			}
 
-			printf ("undefined\n");
+			printf("undefined\n");
 		} else {
 			printf("%ld\n", val);
 		}
@@ -515,19 +506,17 @@ main(int argc, char *argv[])
 	case PATHCONF:
 		errno = 0;
 		if ((val = pathconf(argv[1], cp->value)) == -1) {
-			if (errno != 0) {
+			if (errno != 0)
 				err(1, "%s", argv[1]);
-				/* NOTREACHED */
-			}
 
-			printf ("undefined\n");
+			printf("undefined\n");
 		} else {
-			printf ("%ld\n", val);
+			printf("%ld\n", val);
 		}
 		break;
 	}
 
-	exit (ferror(stdout));
+	exit(ferror(stdout));
 }
 
 
