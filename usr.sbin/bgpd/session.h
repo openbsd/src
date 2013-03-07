@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.114 2012/09/12 05:56:22 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.115 2013/03/07 21:26:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -214,6 +214,7 @@ struct peer {
 	struct msgbuf		 wbuf;
 	struct ibuf_read	*rbuf;
 	struct peer		*next;
+	struct peer		*template;
 	int			 fd;
 	int			 lasterr;
 	u_int			 errcnt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.275 2013/01/09 08:04:25 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.276 2013/03/07 21:26:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -297,7 +297,6 @@ struct peer_config {
 	u_int16_t		 local_short_as;
 	u_int8_t		 template;
 	u_int8_t		 remote_masklen;
-	u_int8_t		 cloned;
 	u_int8_t		 ebgp;		/* 0 = ibgp else ebgp */
 	u_int8_t		 distance;	/* 1 = direct, >1 = multihop */
 	u_int8_t		 passive;
@@ -308,7 +307,6 @@ struct peer_config {
 	u_int8_t		 softreconfig_out;
 	u_int8_t		 ttlsec;	/* TTL security hack */
 	u_int8_t		 flags;
-	u_int8_t		 pad[3];
 };
 
 #define PEERFLAG_TRANS_AS	0x01
@@ -347,6 +345,7 @@ enum imsg_type {
 	IMSG_CTL_NEIGHBOR_DOWN,
 	IMSG_CTL_NEIGHBOR_CLEAR,
 	IMSG_CTL_NEIGHBOR_RREFRESH,
+	IMSG_CTL_NEIGHBOR_DESTROY,
 	IMSG_CTL_KROUTE,
 	IMSG_CTL_KROUTE_ADDR,
 	IMSG_CTL_RESULT,
@@ -418,7 +417,9 @@ enum ctl_results {
 	CTL_RES_NOCAP,
 	CTL_RES_PARSE_ERROR,
 	CTL_RES_PENDING,
-	CTL_RES_NOMEM
+	CTL_RES_NOMEM,
+	CTL_RES_BADPEER,
+	CTL_RES_BADSTATE
 };
 
 /* needed for session.h parse prototype */

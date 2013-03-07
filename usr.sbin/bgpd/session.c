@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.326 2012/12/01 10:35:17 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.327 2013/03/07 21:26:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -97,6 +97,8 @@ void	session_demote(struct peer *, int);
 
 int		 la_cmp(struct listen_addr *, struct listen_addr *);
 struct peer	*getpeerbyip(struct sockaddr *);
+void		 session_template_clone(struct peer *, struct sockaddr *,
+		    u_int32_t, u_int32_t);
 int		 session_match_mask(struct peer *, struct bgpd_addr *);
 struct peer	*getpeerbyid(u_int32_t);
 
@@ -265,11 +267,12 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 	while (session_quit == 0) {
 		/* check for peers to be initialized or deleted */
 		last = NULL;
-		for (p = peers; p != NULL; p = next) {
-			next = p->next;
-			if (!pending_reconf) {
+		if (!pending_reconf) {
+			for (p = peers; p != NULL; p = next) {
+				next = p->next;
 				/* cloned peer that idled out? */
-				if (p->state == STATE_IDLE && p->conf.cloned &&
+				if (p->template && (p->state == STATE_IDLE ||
+				    p->state == STATE_ACTIVE) &&
 				    time(NULL) - p->stats.last_updown >=
 				    INTERVAL_HOLD_CLONED)
 					p->conf.reconf_action = RECONF_DELETE;
@@ -302,8 +305,8 @@ session_main(int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
 					continue;
 				}
 				p->conf.reconf_action = RECONF_NONE;
+				last = p;
 			}
-			last = p;
 		}
 
 		if (peer_cnt > peer_l_elms) {
@@ -2148,7 +2151,7 @@ parse_open(struct peer *peer)
 	}
 
 	/* if remote-as is zero and it's a cloned neighbor, accept any */
-	if (peer->conf.cloned && !peer->conf.remote_as && as != AS_TRANS) {
+	if (peer->template && !peer->conf.remote_as && as != AS_TRANS) {
 		peer->conf.remote_as = as;
 		peer->conf.ebgp = (peer->conf.remote_as != conf->as);
 		if (!peer->conf.ebgp)
@@ -2603,6 +2606,32 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 
 			memcpy(&p->conf, pconf, sizeof(struct peer_config));
 			p->conf.reconf_action = reconf;
+
+			/* sync the RDE in case we keep the peer */
+			if (reconf == RECONF_KEEP) {
+				if (imsg_compose(ibuf_rde, IMSG_RECONF_PEER,
+				    p->conf.id, 0, -1, &p->conf,
+				    sizeof(struct peer_config)) == -1)
+					fatalx("imsg_compose error");
+				if (p->conf.template) {
+					/* apply the conf to all clones */
+					struct peer *np;
+					for (np = peers; np; np = np->next) {
+						if (np->template != p)
+							continue;
+						session_template_clone(np,
+						    NULL, np->conf.id,
+						    np->conf.remote_as);
+						if (imsg_compose(ibuf_rde,
+						    IMSG_RECONF_PEER,
+						    np->conf.id, 0, -1,
+						    &np->conf,
+						    sizeof(struct peer_config))
+						    == -1)
+							fatalx("imsg_compose error");
+					}
+				}
+			}
 			break;
 		case IMSG_RECONF_LISTENER:
 			if (idx != PFD_PIPE_MAIN)
@@ -2688,7 +2717,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			for (p = peers; p != NULL; p = p->next) {
 				/* needs to be deleted? */
 				if (p->conf.reconf_action == RECONF_NONE &&
-				    !p->conf.cloned)
+				    !p->template)
 					p->conf.reconf_action = RECONF_DELETE;
 				/* had demotion, is demoted, demote removed? */
 				if (p->demoted && !p->conf.demote_group[0])
@@ -3013,21 +3042,11 @@ getpeerbyip(struct sockaddr *ip)
 			    p = p->next)
 				;	/* nothing */
 			if (p == NULL) {	/* we found a free id */
-				newpeer->conf.id = id;
 				break;
 			}
 		}
-		sa2addr(ip, &newpeer->conf.remote_addr);
-		switch (ip->sa_family) {
-		case AF_INET:
-			newpeer->conf.remote_masklen = 32;
-			break;
-		case AF_INET6:
-			newpeer->conf.remote_masklen = 128;
-			break;
-		}
-		newpeer->conf.template = 0;
-		newpeer->conf.cloned = 1;
+		newpeer->template = loose;
+		session_template_clone(newpeer, ip, id, 0);
 		newpeer->state = newpeer->prev_state = STATE_NONE;
 		newpeer->conf.reconf_action = RECONF_KEEP;
 		newpeer->rbuf = NULL;
@@ -3039,6 +3058,41 @@ getpeerbyip(struct sockaddr *ip)
 	}
 
 	return (NULL);
+}
+
+void
+session_template_clone(struct peer *p, struct sockaddr *ip, u_int32_t id,
+    u_int32_t as)
+{
+	struct bgpd_addr	remote_addr;
+
+	if (ip)
+		sa2addr(ip, &remote_addr);
+	else
+		memcpy(&remote_addr, &p->conf.remote_addr, sizeof(remote_addr));
+
+	memcpy(&p->conf, &p->template->conf, sizeof(struct peer_config));
+
+	p->conf.id = id;
+
+	if (as) {
+		p->conf.remote_as = as;
+		p->conf.ebgp = (p->conf.remote_as != conf->as);
+		if (!p->conf.ebgp)
+			/* force enforce_as off for iBGP sessions */
+			p->conf.enforce_as = ENFORCE_AS_OFF;
+	}
+
+	memcpy(&p->conf.remote_addr, &remote_addr, sizeof(remote_addr));
+	switch (p->conf.remote_addr.aid) {
+	case AID_INET:
+		p->conf.remote_masklen = 32;
+		break;
+	case AID_INET6:
+		p->conf.remote_masklen = 128;
+		break;
+	}
+	p->conf.template = 0;
 }
 
 int

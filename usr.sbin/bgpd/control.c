@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.72 2012/05/27 18:52:07 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.73 2013/03/07 21:26:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -316,6 +316,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_CTL_NEIGHBOR_DOWN:
 		case IMSG_CTL_NEIGHBOR_CLEAR:
 		case IMSG_CTL_NEIGHBOR_RREFRESH:
+		case IMSG_CTL_NEIGHBOR_DESTROY:
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
 			    sizeof(struct ctl_neighbor)) {
 				neighbor = imsg.data;
@@ -354,6 +355,23 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 						    CTL_RES_NOCAP);
 					else
 						control_result(c, CTL_RES_OK);
+					break;
+				case IMSG_CTL_NEIGHBOR_DESTROY:
+					if (!p->template)
+						control_result(c,
+						    CTL_RES_BADPEER);
+					else if (p->state != STATE_IDLE)
+						control_result(c,
+						    CTL_RES_BADSTATE);
+					else {
+						/*
+					 	 * Mark as deleted, will be
+						 * collected on next poll loop.
+						 */
+						p->conf.reconf_action =
+						    RECONF_DELETE;
+						control_result(c, CTL_RES_OK);
+					}
 					break;
 				default:
 					fatal("king bula wants more humppa");

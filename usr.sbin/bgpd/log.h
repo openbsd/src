@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.14 2012/09/18 09:45:51 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.15 2013/03/07 21:26:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -118,7 +118,9 @@ static const char * const ctl_res_strerror[] = {
 	"neighbor does not have this capability",
 	"config file has errors, reload failed",
 	"previous reload still running",
-	"out of memory"
+	"out of memory",
+	"not a cloned peer",
+	"peer still active, down peer first"
 };
 
 static const char * const timernames[] = {
