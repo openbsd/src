@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.72 2012/07/10 08:31:51 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.73 2013/03/07 09:03:16 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ cleanup:
 		}
 		/* remove backpointer, since ifp may die before ia */
 		ia->ia_ifp = NULL;
-		IFAFREE((&ia->ia_ifa));
+		ifafree((&ia->ia_ifa));
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
 		splx(s);
@@ -960,7 +960,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		if ((ifp->if_ioctl == NULL) ||
 		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
 			LIST_REMOVE(inm, inm_list);
-			IFAFREE(&inm->inm_ia->ia_ifa);
+			ifafree(&inm->inm_ia->ia_ifa);
 			free(inm, M_IPMADDR);
 			splx(s);
 			return (NULL);
@@ -995,7 +995,7 @@ in_delmulti(struct in_multi *inm)
 		 */
 		LIST_REMOVE(inm, inm_list);
 		ifp = inm->inm_ia->ia_ifp;
-		IFAFREE(&inm->inm_ia->ia_ifa);
+		ifafree(&inm->inm_ia->ia_ifa);
 
 		if (ifp) {
 			/*

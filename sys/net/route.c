@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.141 2012/09/20 20:53:12 blambert Exp $	*/
+/*	$OpenBSD: route.c,v 1.142 2013/03/07 09:03:16 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -401,7 +401,7 @@ rtfree(struct rtentry *rt)
 		rt_timer_remove_all(rt);
 		ifa = rt->rt_ifa;
 		if (ifa)
-			IFAFREE(ifa);
+			ifafree(ifa);
 		rtlabel_unref(rt->rt_labelid);
 #ifdef MPLS
 		if (rt->rt_flags & RTF_MPLS)
@@ -926,7 +926,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 				if ((*ret_nrt)->rt_ifa->ifa_rtrequest)
 					(*ret_nrt)->rt_ifa->ifa_rtrequest(
 					    RTM_DELETE, *ret_nrt, NULL);
-				IFAFREE((*ret_nrt)->rt_ifa);
+				ifafree((*ret_nrt)->rt_ifa);
 				(*ret_nrt)->rt_ifa = ifa;
 				(*ret_nrt)->rt_ifp = ifa->ifa_ifp;
 				ifa->ifa_refcnt++;
@@ -957,7 +957,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			RTFREE(crt);
 		}
 		if (rn == 0) {
-			IFAFREE(ifa);
+			ifafree(ifa);
 			if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent)
 				rtfree(rt->rt_parent);
 			if (rt->rt_gwroute)
@@ -1139,7 +1139,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 			    ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, NULL);
-			IFAFREE(rt->rt_ifa);
+			ifafree(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
 			ifa->ifa_refcnt++;

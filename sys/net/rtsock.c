@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.123 2012/09/20 20:53:13 blambert Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.124 2013/03/07 09:03:16 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -784,7 +784,7 @@ report:
 				    if (oifa && oifa->ifa_rtrequest)
 					oifa->ifa_rtrequest(RTM_DELETE, rt,
 					    &info);
-				    IFAFREE(rt->rt_ifa);
+				    ifafree(rt->rt_ifa);
 				    rt->rt_ifa = ifa;
 				    ifa->ifa_refcnt++;
 				    rt->rt_ifp = ifp;

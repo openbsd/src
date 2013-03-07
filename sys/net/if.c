@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.248 2012/11/23 20:12:03 sthen Exp $	*/
+/*	$OpenBSD: if.c,v 1.249 2013/03/07 09:03:16 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -617,7 +617,7 @@ do { \
 			continue;
 
 		ifa->ifa_ifp = NULL;
-		IFAFREE(ifa);
+		ifafree(ifa);
 	}
 
 	for (ifg = TAILQ_FIRST(&ifp->if_groups); ifg;
@@ -627,7 +627,7 @@ do { \
 	if_free_sadl(ifp);
 
 	ifnet_addrs[ifp->if_index]->ifa_ifp = NULL;
-	IFAFREE(ifnet_addrs[ifp->if_index]);
+	ifafree(ifnet_addrs[ifp->if_index]);
 	ifnet_addrs[ifp->if_index] = NULL;
 
 	free(ifp->if_addrhooks, M_TEMP);
@@ -1040,7 +1040,7 @@ link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		ifa->ifa_refcnt++;
-		IFAFREE(rt->rt_ifa);
+		ifafree(rt->rt_ifa);
 		rt->rt_ifa = ifa;
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, info);
@@ -1523,7 +1523,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 				    (struct in_ifaddr *)ifa, ia_list);
 				ifa_del(ifp, ifa);
 				ifa->ifa_ifp = NULL;
-				IFAFREE(ifa);
+				ifafree(ifa);
 			}
 #endif
 			splx(s);

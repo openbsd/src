@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.93 2013/01/15 10:15:19 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.94 2013/03/07 09:03:16 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1197,7 +1197,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 				 * of the loopback address.
 				 */
 				if (ifa != rt->rt_ifa) {
-					IFAFREE(rt->rt_ifa);
+					ifafree(rt->rt_ifa);
 					ifa->ifa_refcnt++;
 					rt->rt_ifa = ifa;
 				}

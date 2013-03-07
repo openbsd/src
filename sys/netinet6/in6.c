@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.104 2013/03/04 14:42:25 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.105 2013/03/07 09:03:16 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	 * of the loopback address.
 	 */
 	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa) {
-		IFAFREE(nrt->rt_ifa);
+		ifafree(nrt->rt_ifa);
 		ifa->ifa_refcnt++;
 		nrt->rt_ifa = ifa;
 	}
@@ -1276,7 +1276,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	 * release another refcnt for the link from in6_ifaddr.
 	 * Note that we should decrement the refcnt at least once for all *BSD.
 	 */
-	IFAFREE(&oia->ia_ifa);
+	ifafree(&oia->ia_ifa);
 
 	splx(s);
 }
@@ -1596,7 +1596,7 @@ in6_savemkludge(struct in6_ifaddr *oia)
 		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
 		    in6m != LIST_END(&oia->ia6_multiaddrs); in6m = next) {
 			next = LIST_NEXT(in6m, in6m_entry);
-			IFAFREE(&in6m->in6m_ia->ia_ifa);
+			ifafree(&in6m->in6m_ia->ia_ifa);
 			ia->ia_ifa.ifa_refcnt++;
 			in6m->in6m_ia = ia;
 			LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
@@ -1614,7 +1614,7 @@ in6_savemkludge(struct in6_ifaddr *oia)
 		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
 		    in6m != LIST_END(&oia->ia6_multiaddrs); in6m = next) {
 			next = LIST_NEXT(in6m, in6m_entry);
-			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+			ifafree(&in6m->in6m_ia->ia_ifa); /* release reference */
 			in6m->in6m_ia = NULL;
 			LIST_INSERT_HEAD(&mk->mk_head, in6m, in6m_entry);
 		}
@@ -1762,7 +1762,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
-			IFAFREE(&ia->ia_ifa);
+			ifafree(&ia->ia_ifa);
 			splx(s);
 			return (NULL);
 		}
@@ -1797,7 +1797,7 @@ in6_delmulti(struct in6_multi *in6m)
 		 */
 		LIST_REMOVE(in6m, in6m_entry);
 		if (in6m->in6m_ia) {
-			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+			ifafree(&in6m->in6m_ia->ia_ifa); /* release reference */
 		}
 
 		/*

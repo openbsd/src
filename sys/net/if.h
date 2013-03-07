@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.137 2012/11/23 20:12:03 sthen Exp $	*/
+/*	$OpenBSD: if.h,v 1.138 2013/03/07 09:03:16 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -707,14 +707,6 @@ struct if_laddrreq {
 #include <net/if_arp.h>
 
 #ifdef _KERNEL
-#define	IFAFREE(ifa) \
-do { \
-	if ((ifa)->ifa_refcnt <= 0) \
-		ifafree(ifa); \
-	else \
-		(ifa)->ifa_refcnt--; \
-} while (/* CONSTCOND */0)
-
 #ifdef ALTQ
 
 #define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
