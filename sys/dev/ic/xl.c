@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.107 2012/10/19 02:49:55 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.108 2013/03/07 05:55:30 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2070,7 +2070,7 @@ xl_init(void *xsc)
 
 	/* Set the RX early threshold */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_THRESH|(XL_PACKET_SIZE >>2));
-	CSR_WRITE_2(sc, XL_DMACTL, XL_DMACTL_UP_RX_EARLY);
+	CSR_WRITE_4(sc, XL_DMACTL, XL_DMACTL_UP_RX_EARLY);
 
 	/* Enable receiver and transmitter. */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_ENABLE);
