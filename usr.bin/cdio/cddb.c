@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.16 2011/04/06 11:36:26 miod Exp $ */
+/* $OpenBSD: cddb.c,v 1.17 2013/03/07 16:54:28 espie Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -242,6 +242,7 @@ char **
 cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 {
 	int s = -1;
+	int s2 = -1;
 	FILE *cin = NULL;
 	FILE *cout = NULL;
 	char *type;
@@ -253,17 +254,21 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 	s = parse_connect_to(host_port, "cddb");
 	if (s == -1)
 		goto end;
+	s2 = dup(s);
+	if (s2 == -1)
+		goto end;
 	cin = fdopen(s, "r");
 	if (!cin) {
 		warn("cddb: fdopen");
 		goto end;
 	}
-	cout = fdopen(s, "w");
 	s = -1;
+	cout = fdopen(s2, "w");
 	if (!cout) {
 		warn("cddb: fdopen");
 		goto end;
 	}
+	s2 = -1;
 	line = get_answer(cin);
 	if (!line) {
 		warnx("cddb: won't talk to us");
@@ -371,6 +376,8 @@ end:
 		fclose(cin);
 	if (s != -1)
 		close(s);
+	if (s2 != -1)
+		close(s2);
 	return result;
 }
 
