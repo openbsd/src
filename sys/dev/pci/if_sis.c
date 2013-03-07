@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.108 2013/02/09 19:15:18 sthen Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.109 2013/03/07 06:19:07 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1751,7 +1751,7 @@ sis_init(void *xsc)
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
 		reg = CSR_READ_4(sc, NS_PHY_DSPCFG) & 0xfff;
 		CSR_WRITE_4(sc, NS_PHY_DSPCFG, reg | 0x1000);
-		DELAY(100000);
+		DELAY(100);
 		reg = CSR_READ_4(sc, NS_PHY_TDATA) & 0xff;
 		if ((reg & 0x0080) == 0 || (reg > 0xd8 && reg <= 0xff)) {
 #ifdef DEBUG
