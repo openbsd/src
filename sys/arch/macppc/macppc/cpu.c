@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.69 2012/12/09 22:32:29 brad Exp $ */
+/*	$OpenBSD: cpu.c,v 1.70 2013/03/07 03:19:38 brad Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -419,13 +419,20 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	if (ppc_proc_is_64b == 0)
 		ppc_mthid0(hid0);
 
-	/* if processor is G3 or G4, configure l2 cache */
-	if (cpu == PPC_CPU_MPC750 || cpu == PPC_CPU_MPC7400 ||
-	    cpu == PPC_CPU_IBM750FX || cpu == PPC_CPU_MPC7410 ||
-	    cpu == PPC_CPU_MPC7447A || cpu == PPC_CPU_MPC7448 ||
-	    cpu == PPC_CPU_MPC7450 || cpu == PPC_CPU_MPC7455 ||
-	    cpu == PPC_CPU_MPC7457)
+	/* if processor is G3 or G4, configure L2 cache */
+	switch (cpu) {
+	case PPC_CPU_MPC750:
+	case PPC_CPU_MPC7400:
+	case PPC_CPU_IBM750FX:
+	case PPC_CPU_MPC7410:
+	case PPC_CPU_MPC7447A:
+	case PPC_CPU_MPC7448:
+	case PPC_CPU_MPC7450:
+	case PPC_CPU_MPC7455:
+	case PPC_CPU_MPC7457:
 		config_l2cr(cpu);
+		break;
+	}
 	printf("\n");
 }
 
