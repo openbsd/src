@@ -1,4 +1,4 @@
-/*	$OpenBSD: confstr.c,v 1.9 2013/03/01 21:19:42 guenther Exp $ */
+/*	$OpenBSD: confstr.c,v 1.10 2013/03/07 06:00:18 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,7 @@ confstr(int name, char *buf, size_t len)
 {
 	switch (name) {
 	case _CS_PATH:
-		return (strlcpy(buf, _PATH_STDPATH, len));
+		return (strlcpy(buf, _PATH_STDPATH, len) + 1);
 
 	/* no configuration-defined value */
 	case _CS_POSIX_V6_ILP32_OFF32_CFLAGS:
@@ -111,13 +111,13 @@ confstr(int name, char *buf, size_t len)
 		return (1);
 
 	case _CS_POSIX_V7_THREADS_LDFLAGS:
-		return (strlcpy(buf, "-lpthread", len));
+		return (strlcpy(buf, "-lpthread", len) + 1);
 
 	case _CS_POSIX_V6_WIDTH_RESTRICTED_ENVS:
-		return (strlcpy(buf, v6_width_restricted_envs, len));
+		return (strlcpy(buf, v6_width_restricted_envs, len) + 1);
 	
 	case _CS_POSIX_V7_WIDTH_RESTRICTED_ENVS:
-		return (strlcpy(buf, v7_width_restricted_envs, len));
+		return (strlcpy(buf, v7_width_restricted_envs, len) + 1);
 
 	default:
 		errno = EINVAL;
