@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.597 2013/03/04 13:06:59 sthen Exp $
+$OpenBSD: usbdevs,v 1.598 2013/03/07 23:39:14 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -258,6 +258,7 @@ vendor SAITEK		0x06a3	Saitek
 vendor ALCATELT		0x06b9	Alcatel Telecom
 vendor AGFA		0x06bd	AGFA-Gevaert
 vendor ASIAMD		0x06be	Asia Microelectronic Development
+vendor PHIDGETS		0x06c2	Phidgets
 vendor BIZLINK		0x06c4	Bizlink International
 vendor KEYSPAN		0x06cd	Keyspan
 vendor LIEBERT		0x06da	Liebert
@@ -3161,6 +3162,9 @@ product PERACOM ENET2		0x0005	Ethernet
 /* Pheenet products */
 product PHEENET WL503IA		0x4017	WL-503IA
 product PHEENET GWU513		0x4025	GWU513
+
+/* Phidgets products */
+product PHIDGETS 2X2		0x0036	2x2 Interface Kit
 
 /* Philips products */
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
