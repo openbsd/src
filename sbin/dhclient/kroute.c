@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.40 2013/02/28 21:00:53 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.41 2013/03/07 13:23:27 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -26,8 +26,19 @@
 #include <net/if_types.h>
 
 #include <ifaddrs.h>
+#include <signal.h>
 
 struct in_addr active_addr;
+
+int	create_route_label(struct sockaddr_rtlabel *);
+int	check_route_label(struct sockaddr_rtlabel *);
+
+#define	ROUTE_LABEL_NONE		1
+#define	ROUTE_LABEL_NOT_DHCLIENT	2
+#define	ROUTE_LABEL_DHCLIENT_OURS	3
+#define	ROUTE_LABEL_DHCLIENT_UNKNOWN	4
+#define	ROUTE_LABEL_DHCLIENT_LIVE	5
+#define	ROUTE_LABEL_DHCLIENT_DEAD	6
 
 /*
  * Do equivalent of 
@@ -66,7 +77,7 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	struct sockaddr *rti_info[RTAX_MAX];
 	int mib[7];
 	size_t needed;
-	char *lim, *buf, *next, *routelabel, *errmsg;
+	char *lim, *buf, *next, *errmsg;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 	struct sockaddr_dl *sdl;
@@ -114,9 +125,6 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("opening socket to flush routes: %s", strerror(errno));
 
-	if (asprintf(&routelabel, "DHCLIENT %d", (int)getpid()) == -1)
-		error("recreating route label: %s", strerror(errno));
-
 #define ROUNDUP(a) \
     ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
@@ -142,15 +150,17 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 
 		sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
-		if (sa_rl) {
+		switch (check_route_label(sa_rl)) {
+		case ROUTE_LABEL_DHCLIENT_OURS:
 			/* Always delete routes we labeled. */
-			if (strcmp(routelabel, sa_rl->sr_label) == 0)
-				goto delete;
-
+			goto delete;
+		case ROUTE_LABEL_DHCLIENT_LIVE:
+		case ROUTE_LABEL_DHCLIENT_DEAD:
+		case ROUTE_LABEL_DHCLIENT_UNKNOWN:
 			/* Never delete routes labelled by another dhclient. */
-			if (strlen(sa_rl->sr_label) > 8 &&
-			    strncmp("DHCLIENT ", sa_rl->sr_label, 9) == 0)
-				continue;
+			continue;
+		default:
+			break;
 		}
 
 		if (rtm->rtm_flags & RTF_LLINFO) {
@@ -214,7 +224,6 @@ delete:
 
 	close(s);
 	free(buf);
-	free(routelabel);
 }
 
 /*
@@ -255,7 +264,7 @@ priv_add_default_route(struct imsg_add_default_route *imsg)
 	struct sockaddr_in dest, gateway, mask;
 	struct sockaddr_rtlabel label;
 	struct iovec iov[5];
-	int s, len, i, iovcnt = 0;
+	int s, i, iovcnt = 0;
 
 	/*
 	 * Add a default route via the specified address.
@@ -322,22 +331,12 @@ priv_add_default_route(struct imsg_add_default_route *imsg)
 	iov[iovcnt++].iov_len = sizeof(mask);
 
 	/* Add our label so we can identify the route as our creation. */
-	memset(&label, 0, sizeof(label));
-	label.sr_len = sizeof(label);
-	label.sr_family = AF_UNSPEC;
-	len = snprintf(label.sr_label, sizeof(label.sr_label), "DHCLIENT %d",
-	    getpid());
-	if (len == -1)
-		error("writing label for default route: %s", strerror(errno));
-	if (len >= sizeof(label.sr_label))
-		error("label for default route too long (%zd)",
-		    sizeof(label.sr_label));
-
-	rtm.rtm_addrs |= RTA_LABEL;
-	rtm.rtm_msglen += sizeof(label);
-
-	iov[iovcnt].iov_base = &label;
-	iov[iovcnt++].iov_len = sizeof(label);
+	if (create_route_label(&label) == 0) {
+		rtm.rtm_addrs |= RTA_LABEL;
+		rtm.rtm_msglen += sizeof(label);
+		iov[iovcnt].iov_base = &label;
+		iov[iovcnt++].iov_len = sizeof(label);
+	}
 
 	/* Check for EEXIST since other dhclient may not be done. */
 	for (i = 0; i < 5; i++) {
@@ -547,7 +546,7 @@ priv_add_address(struct imsg_add_address *imsg)
 	struct sockaddr_rtlabel label;
 	struct iovec iov[4];
 	struct sockaddr_in *in;
-	int s, len, i, iovcnt = 0;
+	int s, i, iovcnt = 0;
 
 	if (imsg->addr.s_addr == INADDR_ANY) {
 		/* Notification that the active_addr has been deleted. */
@@ -637,23 +636,12 @@ priv_add_address(struct imsg_add_address *imsg)
 	iov[iovcnt++].iov_len = sizeof(gateway);
 
 	/* Add our label so we can identify the route as our creation. */
-	memset(&label, 0, sizeof(label));
-
-	label.sr_len = sizeof(label);
-	label.sr_family = AF_UNSPEC;
-	len = snprintf(label.sr_label, sizeof(label.sr_label), "DHCLIENT %d",
-	    getpid());
-	if (len == -1)
-		error("writing label for host route: %s", strerror(errno));
-	if (len >= sizeof(label.sr_label))
-		error("label for host route too long (%zd)",
-		    sizeof(label.sr_label));
-
-	rtm.rtm_addrs |= RTA_LABEL;
-	rtm.rtm_msglen += sizeof(label);
-
-	iov[iovcnt].iov_base = &label;
-	iov[iovcnt++].iov_len = sizeof(label);
+	if (create_route_label(&label) == 0) {
+		rtm.rtm_addrs |= RTA_LABEL;
+		rtm.rtm_msglen += sizeof(label);
+		iov[iovcnt].iov_base = &label;
+		iov[iovcnt++].iov_len = sizeof(label);
+	}
 
 	/* Check for EEXIST since other dhclient may not be done. */
 	for (i = 0; i < 5; i++) {
@@ -732,7 +720,6 @@ resolv_conf_priority(int domain)
 		char			m_space[512];
 	} m_rtmsg;
 	struct sockaddr *rti_info[RTAX_MAX];
-	char *routelabel;
 	struct sockaddr *sa;
 	struct sockaddr_in sin;
 	struct sockaddr_rtlabel *sa_rl;
@@ -821,15 +808,65 @@ resolv_conf_priority(int domain)
 	}
 
 	sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
-	if (sa_rl) {
-		if (asprintf(&routelabel, "DHCLIENT %d", (int)getpid()) == -1)
-			error("recreating route label: %s", strerror(errno));
-		if (strcmp(routelabel, sa_rl->sr_label) == 0)
-			rslt = 1;
-		free(routelabel);
-	}
+	if (check_route_label(sa_rl) == ROUTE_LABEL_DHCLIENT_OURS)
+		rslt = 1;
 
 done:
 	close(s);
 	return (rslt);
+}
+
+int
+create_route_label(struct sockaddr_rtlabel *label)
+{
+	int len;
+
+	memset(label, 0, sizeof(*label));
+
+	label->sr_len = sizeof(label);
+	label->sr_family = AF_UNSPEC;
+
+	len = snprintf(label->sr_label, sizeof(label->sr_label), "DHCLIENT %d",
+	    (int)getpid());
+
+	if (len == -1) {
+		warning("creating route label: %s", strerror(errno));
+		return (1);
+	}
+
+	if (len >= sizeof(label->sr_label)) {
+		warning("creating route label: label too long (%d vs %zd)", len,
+		    sizeof(label->sr_label));
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+check_route_label(struct sockaddr_rtlabel *label)
+{
+	pid_t pid;
+
+	if (!label)
+		return (ROUTE_LABEL_NONE);
+
+	if (strncmp("DHCLIENT ", label->sr_label, 9))
+		return (ROUTE_LABEL_NOT_DHCLIENT);
+
+	pid = (pid_t)strtonum(label->sr_label + 9, 1, INT_MAX, NULL);
+	if (pid <= 0)
+		return (ROUTE_LABEL_DHCLIENT_UNKNOWN);
+
+	if (pid == getpid())
+		return (ROUTE_LABEL_DHCLIENT_OURS);
+
+	if (kill(pid, 0) == -1) {
+		if (errno == ESRCH)
+			return (ROUTE_LABEL_DHCLIENT_DEAD);
+		else
+			return (ROUTE_LABEL_DHCLIENT_UNKNOWN);
+	}
+
+	return (ROUTE_LABEL_DHCLIENT_LIVE);
 }
