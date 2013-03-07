@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.53 2012/11/27 01:02:07 djm Exp $
+.\"	$OpenBSD: ssl.8,v 1.54 2013/03/07 13:19:54 sthen Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 27 2012 $
+.Dd $Mdocdate: March 7 2013 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -150,17 +150,63 @@ The following command will generate 1024-bit keys:
 # openssl dsaparam 1024 -out dsa1024.pem
 .Ed
 .Pp
-Once you have the DSA parameters generated, you can generate a certificate
-and unencrypted private key using the command:
+Once you have the DSA parameters generated, you can generate a
+CSR and unencrypted private key using the command:
 .Bd -literal -offset indent
-# openssl req -x509 -nodes -newkey dsa:dsa1024.pem \e
-  -out /etc/ssl/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
+# openssl req -nodes -newkey dsa:dsa1024.pem \e
+  -out /etc/ssl/dsacert.csr -keyout /etc/ssl/private/dsakey.pem
 .Ed
 .Pp
 To generate an encrypted private key, you would use:
 .Bd -literal -offset indent
-# openssl req -x509 -newkey dsa:dsa1024.pem \e
-  -out /etc/ssl/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
+# openssl req -newkey dsa:dsa1024.pem \e
+  -out /etc/ssl/dsacert.csr -keyout /etc/ssl/private/dsakey.pem
+.Ed
+.Pp
+This
+.Pa server.csr
+file can then be given to a CA who will sign the key.
+.Pp
+You can also sign the key yourself, using the command:
+.Bd -literal -offset indent
+# openssl x509 -sha256 -req -days 365 \e
+  -in /etc/ssl/private/dsacert.csr \e
+  -signkey /etc/ssl/private/dsacert.key \e
+  -out /etc/ssl/dsacert.crt
+.Ed
+.Sh GENERATING ECDSA SERVER CERTIFICATES
+First, generate parameters for ECDSA keys.
+The following command will use a NIST/SECG curve over a 384-bit
+prime field:
+.Bd -literal -offset indent
+# openssl ecparam -out ec-secp384r1.pem -name secp384r1
+.Ed
+.Pp
+Once you have the ECDSA parameters generated, you can generate a
+CSR and unencrypted private key using the command:
+.Bd -literal -offset indent
+# openssl req -nodes -newkey ec:ec-secp384r1.pem \e
+  -keyout /etc/ssl/private/eccert.key -new \e
+  -out /etc/ssl/private/eccert.csr
+.Ed
+.Pp
+To generate an encrypted private key, you would use:
+.Bd -literal -offset indent
+# openssl req -newkey ec:ec-secp384r1.pem \e
+  -keyout /etc/ssl/private/eccert.key -new \e
+  -out /etc/ssl/private/eccert.csr
+.Ed
+.Pp
+This
+.Pa eccert.csr
+file can then be given to a CA who will sign the key.
+.Pp
+You can also sign the key yourself, using the command:
+.Bd -literal -offset indent
+# openssl x509 -sha256 -req -days 365 \e
+  -in /etc/ssl/private/eccert.csr \e
+  -signkey /etc/ssl/private/eccert.key \e
+  -out /etc/ssl/eccert.crt
 .Ed
 .Sh USING SSL/TLS WITH SENDMAIL
 By default,
