@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_none.c,v 1.4 2012/12/05 23:19:59 deraadt Exp $ */
+/*	$OpenBSD: citrus_none.c,v 1.5 2013/03/07 18:12:31 stsp Exp $ */
 /*	$NetBSD: citrus_none.c,v 1.18 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ _citrus_none_ctype_wcrtomb(char * __restrict s,
 	/* ps appears to be unused */
 
 	if (s == NULL)
-		return (0);
+		return (1);
 
 	if (wc < 0 || wc > 0xff) {
 		errno = EILSEQ;
