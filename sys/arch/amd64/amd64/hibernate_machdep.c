@@ -63,6 +63,8 @@ extern	struct hibernate_state *hibernate_state;
 
 /*
  * amd64 MD Hibernate functions
+ *
+ * see amd64 hibernate.h for lowmem layout used during hibernate
  */
 
 /*
@@ -322,21 +324,6 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 /*
  * MD-specific resume preparation (creating resume time pagetables,
  * stacks, etc).
- *
- * On amd64, we use the piglet whose address is contained in hib_info
- * as per the following layout:
- *
- * offset from piglet base      use
- * -----------------------      --------------------
- * 0                            i/o allocation area
- * PAGE_SIZE                    i/o read area
- * 2*PAGE_SIZE                  temp/scratch page
- * 5*PAGE_SIZE			resume stack
- * 6*PAGE_SIZE                  hiballoc arena
- * 7*PAGE_SIZE to 87*PAGE_SIZE  zlib inflate area
- * ...
- * HIBERNATE_CHUNK_SIZE         chunk table
- * 2*HIBERNATE_CHUNK_SIZE	bounce/copy area
  */
 void
 hibernate_prepare_resume_machdep(union hibernate_info *hib_info)
@@ -345,15 +332,13 @@ hibernate_prepare_resume_machdep(union hibernate_info *hib_info)
 	vaddr_t va;
 
 	/*
-	 * At this point, we are sure that the piglet's phys
-	 * space is going to have been unused by the suspending
-	 * kernel, but the vaddrs used by the suspending kernel
-	 * may or may not be available to us here in the
-	 * resuming kernel, so we allocate a new range of VAs
-	 * for the piglet. Those VAs will be temporary and will
-	 * cease to exist as soon as we switch to the resume
-	 * PT, so we need to ensure that any VAs required during
-	 * inflate are also entered into that map.
+	 * At this point, we are sure that the piglet's phys space is going to
+	 * have been unused by the suspending kernel, but the vaddrs used by
+	 * the suspending kernel may or may not be available to us here in the
+	 * resuming kernel, so we allocate a new range of VAs for the piglet.
+	 * Those VAs will be temporary and will cease to exist as soon as we
+	 * switch to the resume PT, so we need to ensure that any VAs required
+	 * during inflate are also entered into that map.
 	 */
 
         hib_info->piglet_va = (vaddr_t)km_alloc(HIBERNATE_CHUNK_SIZE*3,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.51 2013/03/06 08:34:05 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.52 2013/03/07 01:26:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -32,6 +32,32 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
 #include <machine/hibernate.h>
+
+/*
+ * Hibernate piglet layout information
+ *
+ * The piglet is a scratch area of memory allocated by the suspending kernel.
+ * Its phys and virt addrs are recorded in the signature block. The piglet is
+ * used to guarantee an unused area of memory that can be used by the resuming
+ * kernel for various things. The piglet is excluded during unpack operations.
+ * The piglet size is presently 3*HIBERNATE_CHUNK_SIZE (typically 3*4MB).
+ *
+ * Offset from piglet_base	Purpose
+ * ----------------------------------------------------------------------------
+ * 0				I/O page used during resume
+ * 1*PAGE_SIZE		 	I/O page used during hibernate suspend
+ * 2*PAGE_SIZE			unused
+ * 3*PAGE_SIZE			copy page used during hibernate suspend
+ * 4*PAGE_SIZE			final chunk ordering list (8 pages)
+ * 12*PAGE_SIZE			piglet chunk ordering list (8 pages)
+ * 20*PAGE_SIZE			temp chunk ordering list (8 pages)
+ * 28*PAGE_SIZE			start of hiballoc area
+ * 108*PAGE_SIZE		end of hiballoc area (80 pages)
+ * ...				unused
+ * HIBERNATE_CHUNK_SIZE		start of hibernate chunk table
+ * 2*HIBERNATE_CHUNK_SIZE	bounce area for chunks being unpacked
+ * 3*HIBERNATE_CHUNK_SIZE	end of piglet
+ */
 
 /* Temporary vaddr ranges used during hibernate */
 vaddr_t hibernate_temp_page;
@@ -451,7 +477,7 @@ retry:
 	}
 
 	/*
-	 * Try to coerse the pagedaemon into freeing memory
+	 * Try to coerce the pagedaemon into freeing memory
 	 * for the piglet.
 	 *
 	 * pdaemon_woken is set to prevent the code from
@@ -565,8 +591,8 @@ uvm_pmr_free_piglet(vaddr_t va, vsize_t sz)
 /*
  * Physmem RLE compression support.
  *
- * Given a physical page address, it will return the number of pages
- * starting at the address, that are free.  Clamps to the number of pages in
+ * Given a physical page address, return the number of pages starting at the
+ * address that are free.  Clamps to the number of pages in
  * HIBERNATE_CHUNK_SIZE. Returns 0 if the page at addr is not free.
  */
 int
@@ -660,8 +686,12 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 		hiber_info->io_page = (void *)hiber_info->piglet_va;
 
 		/*
-		 * Initialize of the hibernate IO function (for drivers which
-		 * need that)
+		 * Initialization of the hibernate IO function for drivers
+		 * that need to do prep work (such as allocating memory or
+		 * setting up data structures that cannot safely be done
+		 * during suspend without causing side effects). There is
+		 * a matching HIB_DONE call performed after the write is
+		 * completed.	
 		 */
 		if (hiber_info->io_func(hiber_info->device, 0,
 		    (vaddr_t)NULL, 0, HIB_INIT, hiber_info->io_page))
@@ -683,7 +713,7 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	if (get_hibernate_info_md(hiber_info))
 		goto fail;
 
-	/* Calculate memory image location */
+	/* Calculate memory image location in swap */
 	hiber_info->image_offset = dl.d_partitions[1].p_offset +
 	    dl.d_partitions[1].p_size -
 	    (hiber_info->image_size / hiber_info->secsize) -
@@ -747,7 +777,8 @@ hibernate_get_next_rle(void)
 	i = inflate(&hibernate_state->hib_stream, Z_FULL_FLUSH);
 	if (i != Z_OK && i != Z_STREAM_END) {
 		/*
-		 * XXX - this will likely reboot/hang most machines,
+		 * XXX - this will likely reboot/hang most machines
+		 *       since the console output buffer will be unmapped,
 		 *       but there's not much else we can do here.
 		 */
 		panic("inflate rle error");
@@ -783,16 +814,22 @@ hibernate_inflate_page(void)
 	i = inflate(&hibernate_state->hib_stream, Z_PARTIAL_FLUSH);
 	if (i != Z_OK && i != Z_STREAM_END) {
 		/*
-		 * XXX - this will likely reboot/hang most machines,
+		 * XXX - this will likely reboot/hang most machines
+		 *       since the console output buffer will be unmapped,
 		 *       but there's not much else we can do here.
 		 */
-
 		panic("inflate error");
 	}
 
 	/* We should always have extracted a full page ... */
-	if (hibernate_state->hib_stream.avail_out != 0)
+	if (hibernate_state->hib_stream.avail_out != 0) {
+		/*
+		 * XXX - this will likely reboot/hang most machines
+		 *       since the console output buffer will be unmapped,
+		 *       but there's not much else we can do here.
+		 */
 		panic("incomplete page");
+	}
 
 	return (i == Z_STREAM_END);
 }
@@ -803,7 +840,8 @@ hibernate_inflate_page(void)
  *
  * This function executes while using the resume-time stack
  * and pmap, and therefore cannot use ddb/printf/etc. Doing so
- * will likely hang or reset the machine.
+ * will likely hang or reset the machine since the console output buffer
+ * will be unmapped.
  */
 void
 hibernate_inflate_region(union hibernate_info *hiber_info, paddr_t dest,
@@ -880,9 +918,6 @@ hibernate_deflate(union hibernate_info *hiber_info, paddr_t src,
  * Write the hibernation information specified in hiber_info
  * to the location in swap previously calculated (last block of
  * swap), called the "signature block".
- *
- * Write the memory chunk table to the area in swap immediately
- * preceding the signature block.
  */
 int
 hibernate_write_signature(union hibernate_info *hiber_info)
@@ -1127,8 +1162,6 @@ hibernate_resume(void)
 		goto fail;
 	}
 
-	/* Point of no return ... */
-
 	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
 	    VM_PROT_ALL);
 	pmap_activate(curproc);
@@ -1137,11 +1170,15 @@ hibernate_resume(void)
 	hibernate_switch_stack_machdep();
 
 	/*
-	 * Image is now in high memory (pig area), copy to correct location
-	 * in memory. We'll eventually end up copying on top of ourself, but
-	 * we are assured the kernel code here is the same between the
-	 * hibernated and resuming kernel, and we are running on our own
-	 * stack, so the overwrite is ok.
+	 * Point of no return. Once we pass this point, only kernel code can
+	 * be accessed. No global variables or other kernel data structures
+	 * are guaranteed to be coherent after unpack starts.
+	 *
+	 * The image is now in high memory (pig area), we unpack from the pig
+	 * to the correct location in memory. We'll eventually end up copying
+	 * on top of ourself, but we are assured the kernel code here is the
+	 * same between the hibernated and resuming kernel, and we are running
+	 * on our own stack, so the overwrite is ok.
 	 */
 	hibernate_unpack_image(&disk_hiber_info);
 
@@ -1159,10 +1196,6 @@ fail:
 /*
  * Unpack image from pig area to original location by looping through the
  * list of output chunks in the order they should be restored (fchunks).
- * This ordering is used to avoid having inflate overwrite a chunk in the
- * middle of processing that chunk. This will, of course, happen during the
- * final output chunk, where we copy the chunk to the piglet area first,
- * before inflating.
  */
 void
 hibernate_unpack_image(union hibernate_info *hiber_info)
@@ -1271,7 +1304,7 @@ hibernate_process_chunk(union hibernate_info *hiber_info,
  * devices are quiesced/suspended, interrupts are off, and cold has
  * been set. This means that there can be no side effects once the
  * write has started, and the write function itself can also have no
- * side effects. This also means no printfs are permitted (since it
+ * side effects. This also means no printfs are permitted (since printf
  * has side effects.)
  */
 int
@@ -1292,6 +1325,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 	/*
 	 * Allocate VA for the temp and copy page.
+	 * 
 	 * These will become part of the suspended kernel and will
 	 * be freed in hibernate_free, upon resume.
 	 */
@@ -1835,6 +1869,10 @@ hibernate_suspend(void)
 	/* Allow the disk to settle */
 	delay(500000);
 
+	/*
+	 * Give the device-specific I/O function a notification that we're
+	 * done, and that it can clean up or shutdown as needed.
+	 */
 	hib_info.io_func(hib_info.device, 0, (vaddr_t)NULL, 0,
 	    HIB_DONE, hib_info.io_page);
 
