@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca_dma.c,v 1.9 2009/02/01 14:34:00 miod Exp $	*/
+/*	$OpenBSD: lca_dma.c,v 1.10 2013/03/08 18:26:54 miod Exp $	*/
 /* $NetBSD: lca_dma.c,v 1.13 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
@@ -149,11 +149,12 @@ lca_dma_init(lcp)
 	t->_dmamem_unmap = _bus_dmamem_unmap;
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
-	/*
-	 * The firmware has set up window 1 as a 1G direct-mapped DMA
-	 * window beginning at 1G.  We leave it alone.  Disable
-	 * window 0.
-	 */
+	/* Initialize window 1 as a direct-mapped window. */
+	REGVAL64(LCA_IOC_W_BASE1) = LCA_DIRECT_MAPPED_BASE | IOC_W_BASE_WEN;
+	REGVAL64(LCA_IOC_W_MASK1) = IOC_W_MASK_1G;
+	alpha_mb();
+
+	/* Disable window 0 while we set it up. */
 	REGVAL64(LCA_IOC_W_BASE0) = 0;
 	alpha_mb();
 
@@ -170,8 +171,6 @@ lca_dma_init(lcp)
 	 */
 	REGVAL64(LCA_IOC_W_BASE0) = LCA_SGMAP_MAPPED_BASE |
 	    IOC_W_BASE_SG | IOC_W_BASE_WEN;
-	alpha_mb();
-
 	REGVAL64(LCA_IOC_W_MASK0) = IOC_W_MASK_8M;
 	alpha_mb();
 
