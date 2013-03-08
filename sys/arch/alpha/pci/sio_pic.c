@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.34 2013/03/02 22:54:29 miod Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.35 2013/03/08 18:29:33 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -118,6 +118,7 @@ u_int8_t initial_elcr[2];
 
 void		sio_setirqstat(int, int, int);
 int		sio_intr_alloc(void *, int, int, int *);
+int		sio_intr_check(void *, int, int);
 
 u_int8_t	(*sio_read_elcr)(int);
 void		(*sio_write_elcr)(int, u_int8_t);
@@ -580,7 +581,7 @@ sio_intr_alloc(v, mask, type, irq)
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
 
-		switch(sio_intr[i].intr_sharetype) {
+		switch (sio_intr[i].intr_sharetype) {
 		case IST_NONE:
 			/*
 			 * if nothing's using the irq, just return it
@@ -624,6 +625,32 @@ sio_intr_alloc(v, mask, type, irq)
 	*irq = bestirq;
 
 	return (0);
+}
+
+/*
+ * Just check to see if an IRQ is available/can be shared.
+ * 0 = interrupt not available
+ * 1 = interrupt shareable
+ * 2 = interrupt all to ourself
+ */
+int
+sio_intr_check(void *v, int irq, int type)
+{
+	if (type == IST_NONE)
+		return (0);
+
+	switch (sio_intr[irq].intr_sharetype) {
+	case IST_NONE:
+		return (2);
+	case IST_EDGE:
+	case IST_LEVEL:
+		if (type == sio_intr[irq].intr_sharetype)
+			return (1);
+		/* FALLTHROUGH */
+	default:
+	case IST_PULSE:
+		return (0);
+	}
 }
 
 static void

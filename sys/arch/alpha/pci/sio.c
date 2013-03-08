@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.36 2010/06/06 11:26:11 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.37 2013/03/08 18:29:33 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ int	siomatch(struct device *, void *, void *);
 void	sioattach(struct device *, struct device *, void *);
 
 extern int sio_intr_alloc(isa_chipset_tag_t *, int, int, int *);
+extern int sio_intr_check(isa_chipset_tag_t *, int, int);
 
 
 struct cfattach sio_ca = {
@@ -187,6 +188,7 @@ sio_bridge_callback(self)
 	ic.ic_intr_establish = sio_intr_establish;
 	ic.ic_intr_disestablish = sio_intr_disestablish;
 	ic.ic_intr_alloc = sio_intr_alloc;
+	ic.ic_intr_check = sio_intr_check;
 
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;
