@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.41 2013/03/07 13:23:27 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.42 2013/03/08 12:25:15 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -32,6 +32,7 @@ struct in_addr active_addr;
 
 int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
+void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
 
 #define	ROUTE_LABEL_NONE		1
 #define	ROUTE_LABEL_NOT_DHCLIENT	2
@@ -82,9 +83,8 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	struct sockaddr *sa;
 	struct sockaddr_dl *sdl;
 	struct sockaddr_in *sa_in;
-	struct sockaddr_inarp *sin;
 	struct sockaddr_rtlabel *sa_rl;
-	int s, seqno = 0, rlen, retry, i;
+	int s, seqno = 0, rlen, retry;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -125,9 +125,6 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("opening socket to flush routes: %s", strerror(errno));
 
-#define ROUNDUP(a) \
-    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -138,16 +135,7 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 		if (sa->sa_family == AF_KEY)
 			continue;  /* Don't flush SPD */
 
-		memset(rti_info, 0, sizeof(rti_info));
-		for (i = 0; i < RTAX_MAX; i++) {
-			if (rtm->rtm_addrs & (1 << i)) {
-				rti_info[i] = sa;
-				sa = (struct sockaddr *)((char *)(sa) +
-				    ROUNDUP(sa->sa_len));
-			}
-		}
-
-		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
+		populate_rti_info(rti_info, rtm);
 
 		sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
 		switch (check_route_label(sa_rl)) {
@@ -168,13 +156,12 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 				continue;
 			if (rtm->rtm_flags & RTF_PERMANENT_ARP)
 				continue;
+			sdl = (struct sockaddr_dl *)rti_info[RTAX_GATEWAY];
+			if (sdl == NULL)
+				continue;
 
 			/* XXXX Check for AF_INET too? (arp ask for them) */
 			/* XXXX Need 'retry' for proxy entries? (arp does) */
-
-			sin = (struct sockaddr_inarp *)(sa);
-			sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) +
-			   (char *)sin);
 
 			if (sdl->sdl_family == AF_LINK) {
 				switch (sdl->sdl_type) {
@@ -720,13 +707,12 @@ resolv_conf_priority(int domain)
 		char			m_space[512];
 	} m_rtmsg;
 	struct sockaddr *rti_info[RTAX_MAX];
-	struct sockaddr *sa;
 	struct sockaddr_in sin;
 	struct sockaddr_rtlabel *sa_rl;
 	pid_t pid;
 	ssize_t len;
 	u_int32_t seq;
-	int i, s, rslt, iovcnt = 0;
+	int s, rslt, iovcnt = 0;
 
 	rslt = 0;
 
@@ -797,15 +783,7 @@ resolv_conf_priority(int domain)
 		}
 	} while (1);
 
-	sa = (struct sockaddr *)((char *)&m_rtmsg + m_rtmsg.m_rtm.rtm_hdrlen);
-	memset(rti_info, 0, sizeof(rti_info));
-	for (i = 0; i < RTAX_MAX; i++) {
-		if (m_rtmsg.m_rtm.rtm_addrs & (1 << i)) {
-			rti_info[i] = sa;
-			sa = (struct sockaddr *)((char *)(sa) +
-			    ROUNDUP(sa->sa_len));
-		}
-	}
+	populate_rti_info(rti_info, &m_rtmsg.m_rtm);
 
 	sa_rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
 	if (check_route_label(sa_rl) == ROUTE_LABEL_DHCLIENT_OURS)
@@ -869,4 +847,25 @@ check_route_label(struct sockaddr_rtlabel *label)
 	}
 
 	return (ROUTE_LABEL_DHCLIENT_LIVE);
+}
+
+void
+populate_rti_info(struct sockaddr **rti_info, struct rt_msghdr *rtm)
+{
+	struct sockaddr *sa;
+	int i;
+
+#define ROUNDUP(a) \
+    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+
+	sa = (struct sockaddr *)((char *)(rtm) + rtm->rtm_hdrlen);
+
+	for (i = 0; i < RTAX_MAX; i++) {
+		if (rtm->rtm_addrs & (1 << i)) {
+			rti_info[i] = sa;
+			sa = (struct sockaddr *)((char *)(sa) +
+			    ROUNDUP(sa->sa_len));
+		} else
+			rti_info[i] = NULL;
+	}
 }
