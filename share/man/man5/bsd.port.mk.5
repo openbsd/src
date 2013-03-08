@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.366 2013/03/04 15:54:33 jasper Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.367 2013/03/08 10:11:55 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 4 2013 $
+.Dd $Mdocdate: March 8 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2112,7 +2112,7 @@ PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
 Defaults to -p0 .
-.It Ev PERMIT_{DISTFILES,PACKAGE}_{CDROM,FTP}
+.It Ev PERMIT_DISTFILES_FTP , PERMIT_PACKAGE_CDROM , PERMIT_PACKAGE_FTP
 Set to
 .Sq Yes
 if package or distribution files can be allowed on FTP sites or CD-ROM without
@@ -3730,8 +3730,6 @@ instead.
 .It Ev MIRROR_DISTFILE
 Use
 .Ev PERMIT_DISTFILES_FTP
-and
-.Ev PERMIT_DISTFILES_CDROM
 to determine which files can be mirrored instead.
 See
 .Xr mirroring-ports 7 .
@@ -3829,6 +3827,13 @@ becomes
 PATCHFILES=foo.diff.gz:0
 MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .Ed
+.It Ev PERMIT_DISTFILES_CDROM
+The
+.Ox
+project does not ship distfiles on cdrom.
+Concentrate on real questions instead, make sure
+.Ev PERMIT_PACKAGE_CDROM
+is set correctly.
 .It Ev PKG_CMD
 replaced by
 .Ev PKG_CREATE .
