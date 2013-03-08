@@ -1,3 +1,5 @@
+/*	$OpenBSD: stat_backend.c,v 1.7 2013/03/08 19:11:52 chl Exp $	*/
+
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
  *
