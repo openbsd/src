@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.37 2012/09/18 09:24:45 markus Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.38 2013/03/09 16:51:30 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -1004,11 +1004,11 @@ export_tag(void **p, struct tdb *tdb)
 	struct sadb_x_tag *stag = (struct sadb_x_tag *)*p;
 	char *s = (char *)(stag + 1);
 
-	pf_tag2tagname(tdb->tdb_tag, s);
 	stag->sadb_x_tag_taglen = strlen(s) + 1;
 	stag->sadb_x_tag_len = (sizeof(struct sadb_x_tag) +
 	    PADUP(stag->sadb_x_tag_taglen)) / sizeof(uint64_t);
-	*p += PADUP(stag->sadb_x_tag_taglen) + sizeof(struct sadb_x_tag);
+	pf_tag2tagname(tdb->tdb_tag, s);
+	*p += sizeof(struct sadb_x_tag) + PADUP(stag->sadb_x_tag_taglen);
 }
 
 /* Import enc(4) tap device information for SA */

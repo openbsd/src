@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.129 2013/02/26 00:28:29 sthen Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.130 2013/03/09 16:51:30 deraadt Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -539,28 +539,28 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 		i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_proxy.sa));
 
 	if (sa->tdb_srcid)
-		i += PADUP(sa->tdb_srcid->ref_len) + sizeof(struct sadb_ident);
+		i += sizeof(struct sadb_ident) + PADUP(sa->tdb_srcid->ref_len);
 
 	if (sa->tdb_dstid)
-		i += PADUP(sa->tdb_dstid->ref_len) + sizeof(struct sadb_ident);
+		i += sizeof(struct sadb_ident) + PADUP(sa->tdb_dstid->ref_len);
 
 	if (sa->tdb_local_cred)
-		i += PADUP(sa->tdb_local_cred->ref_len) + sizeof(struct sadb_x_cred);
+		i += sizeof(struct sadb_x_cred) + PADUP(sa->tdb_local_cred->ref_len);
 
 	if (sa->tdb_remote_cred)
-		i += PADUP(sa->tdb_remote_cred->ref_len) + sizeof(struct sadb_x_cred);
+		i += sizeof(struct sadb_x_cred) + PADUP(sa->tdb_remote_cred->ref_len);
 
 	if (sa->tdb_local_auth)
-		i += PADUP(sa->tdb_local_auth->ref_len) + sizeof(struct sadb_x_cred);
+		i += sizeof(struct sadb_x_cred) + PADUP(sa->tdb_local_auth->ref_len);
 
 	if (sa->tdb_remote_auth)
-		i += PADUP(sa->tdb_remote_auth->ref_len) + sizeof(struct sadb_x_cred);
+		i += sizeof(struct sadb_x_cred) + PADUP(sa->tdb_remote_auth->ref_len);
 
 	if (sa->tdb_amxkey)
-		i+= PADUP(sa->tdb_amxkeylen) + sizeof(struct sadb_key);
+		i += sizeof(struct sadb_key) + PADUP(sa->tdb_amxkeylen);
 
 	if (sa->tdb_emxkey)
-		i+= PADUP(sa->tdb_emxkeylen) + sizeof(struct sadb_key);
+		i += sizeof(struct sadb_key) + PADUP(sa->tdb_emxkeylen);
 
 	if (sa->tdb_filter.sen_type) {
 		i += 2 * sizeof(struct sadb_protocol);
@@ -586,13 +586,13 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	}
 
 	if (sa->tdb_udpencap_port)
-		i+= sizeof(struct sadb_x_udpencap);
+		i += sizeof(struct sadb_x_udpencap);
 
 #if NPF > 0
 	if (sa->tdb_tag)
-		i+= PADUP(PF_TAG_NAME_SIZE) + sizeof(struct sadb_x_tag);
+		i += sizeof(struct sadb_x_tag) + PADUP(PF_TAG_NAME_SIZE);
 	if (sa->tdb_tap)
-		i+= sizeof(struct sadb_x_tap);
+		i += sizeof(struct sadb_x_tap);
 #endif
 
 	if (lenp)
