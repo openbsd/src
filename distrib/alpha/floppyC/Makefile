@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2001/01/29 21:25:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/03/09 17:25:24 deraadt Exp $
 
 .PATH: ${.CURDIR}/../ramdisk
 RAMDISK=RAMDISKC

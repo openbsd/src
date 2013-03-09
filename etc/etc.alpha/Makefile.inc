@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.21 2011/07/22 09:30:54 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2013/03/09 17:25:25 deraadt Exp $
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}
@@ -6,5 +6,5 @@ bootblocks:
 	cp ${DESTDIR}/usr/mdec/netboot ${RELEASEDIR}
 
 MDEXT=	bsd.rd cd${OSrev}.iso \
-	floppy${OSrev}.fs floppyB${OSrev}.fs \
+	floppy${OSrev}.fs floppyB${OSrev}.fs floppyC${OSrev}.fs \
 	boot bootxx netboot
