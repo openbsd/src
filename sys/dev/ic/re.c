@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.139 2012/05/09 13:30:12 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.140 2013/03/09 17:17:12 bluhm Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1139,8 +1139,21 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 
 	m_clsetwms(ifp, MCLBYTES, 2, RL_RX_DESC_CNT);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
-			       IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	/*
+	 * RTL8168/8111C generates wrong IP checksummed frame if the
+	 * packet has IP options so disable TX IP checksum offloading.
+	 */
+	switch (sc->sc_hwrev) {
+	case RL_HWREV_8168C:
+	case RL_HWREV_8168C_SPIN2:
+	case RL_HWREV_8168CP:
+		ifp->if_capabilities = IFCAP_VLAN_MTU |
+				       IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		break;
+	default:
+		ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
+				       IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	}
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
