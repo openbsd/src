@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.26 2010/09/20 07:40:41 deraadt Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.27 2013/03/09 17:57:00 mpi Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -150,6 +150,10 @@ struct gem_softc {
 #define GEM_SUN_ERI			2	/* Sun ERI */
 #define GEM_APPLE_GMAC			3	/* Apple GMAC */
 #define GEM_APPLE_K2_GMAC		4	/* Apple K2 GMAC */
+
+#define	GEM_IS_APPLE(sc)						\
+	((sc)->sc_variant == GEM_APPLE_GMAC ||				\
+	 (sc)->sc_variant == GEM_APPLE_K2_GMAC)
 
 	u_int		sc_flags;	/* */
 #define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */

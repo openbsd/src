@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.98 2012/12/01 10:04:58 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.99 2013/03/09 17:57:00 mpi Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -275,11 +275,14 @@ gem_config(struct gem_softc *sc)
 		    MII_OFFSET_ANY, mii_flags);
 	}
 
-	/* 
+	/*
 	 * Fall back on an internal PHY if no external PHY was found.
+	 * Note that with Apple (K2) GMACs GEM_MIF_CONFIG_MDI0 can't be
+	 * trusted when the firmware has powered down the chip
 	 */
 	child = LIST_FIRST(&mii->mii_phys);
-	if (child == NULL && sc->sc_mif_config & GEM_MIF_CONFIG_MDI0) {
+	if (child == NULL &&
+	    (sc->sc_mif_config & GEM_MIF_CONFIG_MDI0 || GEM_IS_APPLE(sc))) {
 		sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
 		bus_space_write_4(sc->sc_bustag, sc->sc_h1,
 	            GEM_MIF_CONFIG, sc->sc_mif_config);
