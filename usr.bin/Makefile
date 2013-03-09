@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.126 2012/11/23 07:03:28 ratchov Exp $
+#	$OpenBSD: Makefile,v 1.127 2013/03/09 19:27:48 nicm Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 	basename bc bdes bgplg \
 	biff cal calendar cap_mkdb cdio chpass cmp col colrm \
-	column comm compile_et compress cpp crontab csplit ctags cut \
+	column comm compile_et compress cpp crontab csplit ctags cu cut \
 	dc deroff diff diff3 dirname du encrypt env expand false file \
 	file2c find fgen finger fmt fold from fsplit fstat ftp gencat getcap \
 	getconf getent getopt gprof grep gzsig head hexdump id indent \
@@ -23,7 +23,7 @@ SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 	rwho sdiff script sed sendbug shar showmount skey \
 	skeyaudit skeyinfo skeyinit sndiod \
 	sort spell split sqlite3 ssh stat su systat \
-	sudo tail talk tcopy tcpbench tee telnet tftp tic time tip \
+	sudo tail talk tcopy tcpbench tee telnet tftp tic time \
 	tmux top touch tput tr true tset tsort tty usbhidaction usbhidctl \
 	ul uname unexpand unifdef uniq units \
 	unvis users uudecode uuencode vacation vi vis vmstat w wall wc \
