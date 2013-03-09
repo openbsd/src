@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.28 2010/06/06 07:05:40 jmc Exp $
+.\"	$OpenBSD: identd.8,v 1.29 2013/03/09 17:40:57 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
 .\" This software has been released into the public domain.
 .\"
-.Dd $Mdocdate: June 6 2010 $
+.Dd $Mdocdate: March 9 2013 $
 .Dt IDENTD 8
 .Os
 .Sh NAME
@@ -174,12 +174,7 @@ switch to after binding itself to the
 TCP/IP port if running as a stand-alone daemon.
 .Nm
 runs as user
-.Qq _identd
-by default and falls back to
-.Qq nobody
-if the
-.Qq _identd
-user does not exist.
+.Qq _identd .
 .It Fl v
 Log every request to syslog if
 .Fl l

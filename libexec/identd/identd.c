@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.50 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.51 2013/03/09 17:40:57 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 
-	/* runs as _identd if possible, fallback to "nobody" */
+	/* runs as _identd */
 	if (getuid() == 0) {
 		if ((pwd = getpwnam(DEFAULT_UID)) == NULL)
 			error("no such user %s", DEFAULT_UID);
