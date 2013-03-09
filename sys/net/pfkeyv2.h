@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.62 2012/09/18 09:24:45 markus Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.63 2013/03/09 02:27:07 deraadt Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -400,8 +400,7 @@ struct mbuf;
 #define EXTLEN(x) (((struct sadb_ext *)(x))->sadb_ext_len * sizeof(uint64_t))
 #define PADUP(x) (((x) + sizeof(uint64_t) - 1) & ~(sizeof(uint64_t) - 1))
 
-struct pfkey_version
-{
+struct pfkey_version {
 	int protocol;
 	int (*create)(struct socket *socket);
 	int (*release)(struct socket *socket);
@@ -409,8 +408,7 @@ struct pfkey_version
 	int (*sysctl)(int *, u_int, void *, size_t *, void *, size_t);
 };
 
-struct pfkeyv2_socket
-{
+struct pfkeyv2_socket {
 	struct pfkeyv2_socket *next;
 	struct socket *socket;
 	int flags;
@@ -419,8 +417,7 @@ struct pfkeyv2_socket
 	uint rdomain;
 };
 
-struct dump_state
-{
+struct dump_state {
 	struct sadb_msg *sadb_msg;
 	struct socket *socket;
 };
