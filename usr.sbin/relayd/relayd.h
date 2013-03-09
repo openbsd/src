@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.165 2013/03/04 08:41:32 sthen Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.166 2013/03/09 14:43:06 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -995,6 +995,9 @@ int	 relay_cmp_af(struct sockaddr_storage *,
 	    struct sockaddr_storage *);
 void	 relay_write(struct bufferevent *, void *);
 void	 relay_read(struct bufferevent *, void *);
+int	 relay_splice(struct ctl_relay_event *);
+int	 relay_splicelen(struct ctl_relay_event *);
+int	 relay_spliceadjust(struct ctl_relay_event *);
 void	 relay_error(struct bufferevent *, short, void *);
 int	 relay_lognode(struct rsession *,
 	    struct protonode *, struct protonode *, char *, size_t);

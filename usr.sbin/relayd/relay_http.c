@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.9 2013/02/15 12:15:12 bluhm Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.10 2013/03/09 14:43:06 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -375,6 +375,8 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	if (EVBUFFER_LENGTH(src) && bev->readcb != relay_read_http)
 		bev->readcb(bev, arg);
 	bufferevent_enable(bev, EV_READ);
+	if (relay_splice(cre) == -1)
+		relay_close(con, strerror(errno));
 	return;
  fail:
 	relay_abort_http(con, 500, strerror(errno), 0);
@@ -398,6 +400,8 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	    __func__, cre->dir, size, cre->toread);
 	if (!size)
 		return;
+	if (relay_spliceadjust(cre) == -1)
+		goto fail;
 
 	if (cre->toread > 0) {
 		/* Read content data */
@@ -449,6 +453,8 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	    __func__, cre->dir, size, cre->toread);
 	if (!size)
 		return;
+	if (relay_spliceadjust(cre) == -1)
+		goto fail;
 
 	if (cre->toread > 0) {
 		/* Read chunk data */
