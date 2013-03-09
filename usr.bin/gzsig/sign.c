@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.9 2007/10/12 19:52:06 jasper Exp $ */
+/* $OpenBSD: sign.c,v 1.10 2013/03/09 21:08:37 tobias Exp $ */
 
 /*
  * sign.c
@@ -185,8 +185,8 @@ embed_signature(struct key *key, FILE *fin, FILE *fout)
 void
 sign_usage(void)
 {
-	fprintf(stderr, "Usage: %s sign [-q] [-f secret_file] privkey [file ...]\n",
-	    __progname);
+	fprintf(stderr, "Usage: %s sign [-q | -v] [-f secret_file] privkey "
+	    "[file ...]\n", __progname);
 }
 
 int

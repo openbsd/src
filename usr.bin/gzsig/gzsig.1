@@ -1,5 +1,5 @@
-.\" $OpenBSD: gzsig.1,v 1.13 2011/09/29 17:57:09 jmc Exp $
-.\" $Id: gzsig.1,v 1.13 2011/09/29 17:57:09 jmc Exp $
+.\" $OpenBSD: gzsig.1,v 1.14 2013/03/09 21:08:37 tobias Exp $
+.\" $Id: gzsig.1,v 1.14 2013/03/09 21:08:37 tobias Exp $
 .\"
 .\"  Copyright (c) 2001 Dug Song <dugsong@arbor.net>
 .\"  Copyright (c) 2001 Arbor Networks, Inc.
@@ -28,7 +28,7 @@
 .\"    OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\"    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 29 2011 $
+.Dd $Mdocdate: March 9 2013 $
 .Dt GZSIG 1
 .Os
 .Sh NAME
@@ -37,13 +37,13 @@
 .Sh SYNOPSIS
 .Nm gzsig
 .Ic sign
-.Op Fl q
+.Op Fl q | v
 .Op Fl f Ar secret_file
 .Ar privkey
 .Op Ar
 .Nm gzsig
 .Ic verify
-.Op Fl q
+.Op Fl q | v
 .Op Fl f Ar secret_file
 .Ar pubkey
 .Op Ar
@@ -72,6 +72,14 @@ Indicates that the passphrase for the key should be read from
 instead of being supplied manually.
 .It Fl q
 Enable quiet mode.
+.It Fl v
+Enable verbose mode.
+This is the default.
+.Fl q
+and
+.Fl v
+are mutually exclusive;
+the last one specified takes precedence.
 .It Ic sign
 Sign the input using the private key in
 .Ar privkey .
