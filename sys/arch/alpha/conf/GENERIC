@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.228 2012/09/27 14:01:35 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.229 2013/03/09 02:10:47 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -19,6 +19,7 @@ option		DEC_3000_300	# Pelican etc:	3000/300*
 option		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 option		DEC_KN20AA	# KN20AA:	AlphaStation 600
 option		DEC_KN300	# KN300:	AlphaServer 4100 and 1200
+option		DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
@@ -337,6 +338,11 @@ ep*	at isapnp?			# 3C509 ethernet cards
 #wss*	at isa? port 0x530 irq 9 drq 0	# Windows Sound System
 lc0	at isa? port 0x200		# DEC EtherWorks
 lc1	at isa? port 0x280		# DEC EtherWorks
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic1	at isa? port 0x3e2 iomem 0xcc000 iosiz 0x10000
+
+pcmcia*	at pcic? controller ? socket ?
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Eth.
 
 cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# floppy controller

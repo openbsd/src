@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.93 2011/11/15 22:27:52 deraadt Exp $
+#	$OpenBSD: files.alpha,v 1.94 2013/03/09 02:10:47 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -126,12 +126,24 @@ file	arch/alpha/tc/scc.c			scc		needs-count
 include	"dev/atapiscsi/files.atapiscsi"
 include	"dev/ata/files.ata"
 
-# XXX Dummy bus needed for some multi-homed devices specified in files.isa
-define	pcmcia {}
-
 include	"dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include	"dev/isa/files.isa"
 major	{wd = 0}
+
+device	pcic: pcmciabus
+file	dev/ic/i82365.c			pcic
+
+# PCIC pcmcia controller on ISA bus.
+attach	pcic at isa with pcic_isa
+file	dev/isa/i82365_isa.c		pcic_isa
+
+# Code common to ISA and ISAPnP attachments
+file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
+
+#
+# Machine-independent PCMCIA drivers
+#
+include "dev/pcmcia/files.pcmcia"
 
 #
 # ISA Bus devices
@@ -242,6 +254,7 @@ file	arch/alpha/pci/pci_550.c		dec_550
 file	arch/alpha/pci/pci_1000a.c		dec_1000a
 file	arch/alpha/pci/pci_1000.c		dec_1000
 file	arch/alpha/pci/pci_6600.c		dec_6600
+file	arch/alpha/pci/pci_alphabook1.c		dec_alphabook1
 file	arch/alpha/pci/pci_up1000.c		api_up1000
 
 #
@@ -327,6 +340,7 @@ file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 file	arch/alpha/alpha/dec_kn300.c		dec_kn300	needs-flag
 file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
+file	arch/alpha/alpha/dec_alphabook1.c	dec_alphabook1	needs-flag
 file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a	needs-flag
 file	arch/alpha/alpha/dec_6600.c		dec_6600	needs-flag
 file	arch/alpha/alpha/api_up1000.c		api_up1000	needs-flag

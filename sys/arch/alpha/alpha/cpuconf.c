@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.13 2009/10/02 18:01:47 miod Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.14 2013/03/09 02:10:47 deraadt Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -140,6 +140,12 @@ extern void dec_6600_init(void);
 #define	dec_6600_init		platform_not_configured
 #endif
 
+#ifdef DEC_ALPHABOOK1
+extern void dec_alphabook1_init(void);
+#else
+#define	dec_alphabook1_init	platform_not_configured
+#endif
+
 #ifdef API_UP1000
 extern void api_up1000_init(void);
 #else
@@ -163,8 +169,7 @@ static const struct cpuinit cpuinit[] = {
 	cpu_init(ST_DEC_KN20AA, dec_kn20aa_init, "DEC_KN20AA"),
 	cpu_init(ST_DEC_1000, dec_1000_init, "DEC_1000"),
 	cpu_notsupp(ST_EB66, "DEC_EB66"),
-	cpu_init(ST_EB64P, dec_eb64plus_init, "DEC_EB64PLUS"),
-	cpu_notsupp(ST_ALPHABOOK1, "DEC_ALPHABOOK1"),
+	cpu_init(ST_ALPHABOOK1, dec_alphabook1_init, "DEC_ALPHABOOK1"),
 	cpu_init(ST_DEC_4100, dec_kn300_init, "DEC_KN300"),
 	cpu_notsupp(ST_DEC_EV45_PBP, "EV45 Passive Backplane Board"),
 	cpu_notsupp(ST_DEC_2100A_A500, "DEC_2100A_A500"),
