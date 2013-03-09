@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.51 2013/01/16 06:15:58 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.52 2013/03/09 09:34:15 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -115,7 +115,7 @@ int	ste_eeprom_wait(struct ste_softc *);
 int	ste_read_eeprom(struct ste_softc *, caddr_t, int,
 	    int, int);
 void	ste_wait(struct ste_softc *);
-void	ste_setmulti(struct ste_softc *);
+void	ste_iff(struct ste_softc *);
 int	ste_init_rx_list(struct ste_softc *);
 void	ste_init_tx_list(struct ste_softc *);
 
@@ -502,52 +502,56 @@ ste_read_eeprom(struct ste_softc *sc, caddr_t dest, int off, int cnt, int swap)
 }
 
 void
-ste_setmulti(struct ste_softc *sc)
+ste_iff(struct ste_softc *sc)
 {
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct arpcom		*ac = &sc->arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
+	u_int32_t		rxmode, hashes[2];
 	int			h = 0;
-	u_int32_t		hashes[2] = { 0, 0 };
 
-	ifp = &sc->arpcom.ac_if;
-allmulti:
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-		STE_SETBIT1(sc, STE_RX_MODE, STE_RXMODE_ALLMULTI);
-		STE_CLRBIT1(sc, STE_RX_MODE, STE_RXMODE_MULTIHASH);
-		return;
-	}
+	rxmode = CSR_READ_1(sc, STE_RX_MODE);
+	rxmode &= ~(STE_RXMODE_ALLMULTI | STE_RXMODE_BROADCAST |
+	    STE_RXMODE_MULTIHASH | STE_RXMODE_PROMISC |
+	    STE_RXMODE_UNICAST);
+	bzero(hashes, sizeof(hashes));
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	/* first, zot all the existing hash bits */
-	CSR_WRITE_2(sc, STE_MAR0, 0);
-	CSR_WRITE_2(sc, STE_MAR1, 0);
-	CSR_WRITE_2(sc, STE_MAR2, 0);
-	CSR_WRITE_2(sc, STE_MAR3, 0);
+	/*
+	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
+	 */
+	rxmode |= STE_RXMODE_BROADCAST | STE_RXMODE_UNICAST;
 
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		rxmode |= STE_RXMODE_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rxmode |= STE_RXMODE_PROMISC;
+	} else {
+		rxmode |= STE_RXMODE_MULTIHASH;
+
+		/* now program new ones */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) & 0x3F;
+
+			if (h < 32)
+				hashes[0] |= (1 << h);
+			else
+				hashes[1] |= (1 << (h - 32));
+
+			ETHER_NEXT_MULTI(step, enm);
 		}
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3F;
-		if (h < 32)
-			hashes[0] |= (1 << h);
-		else
-			hashes[1] |= (1 << (h - 32));
-		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	CSR_WRITE_2(sc, STE_MAR0, hashes[0] & 0xFFFF);
 	CSR_WRITE_2(sc, STE_MAR1, (hashes[0] >> 16) & 0xFFFF);
 	CSR_WRITE_2(sc, STE_MAR2, hashes[1] & 0xFFFF);
 	CSR_WRITE_2(sc, STE_MAR3, (hashes[1] >> 16) & 0xFFFF);
-	STE_CLRBIT1(sc, STE_RX_MODE, STE_RXMODE_ALLMULTI);
-	STE_SETBIT1(sc, STE_RX_MODE, STE_RXMODE_MULTIHASH);
-
-	return;
+	CSR_WRITE_1(sc, STE_RX_MODE, rxmode);
 }
 
 int
@@ -1100,24 +1104,8 @@ ste_init(void *xsc)
 	/* Set the TX reclaim threshold. */
 	CSR_WRITE_1(sc, STE_TX_RECLAIM_THRESH, (ETHER_MAX_DIX_LEN >> 4));
 
-	/* Set up the RX filter. */
-	CSR_WRITE_1(sc, STE_RX_MODE, STE_RXMODE_UNICAST);
-
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC) {
-		STE_SETBIT1(sc, STE_RX_MODE, STE_RXMODE_PROMISC);
-	} else {
-		STE_CLRBIT1(sc, STE_RX_MODE, STE_RXMODE_PROMISC);
-	}
-
-	/* Set capture broadcast bit to accept broadcast frames. */
-	if (ifp->if_flags & IFF_BROADCAST) {
-		STE_SETBIT1(sc, STE_RX_MODE, STE_RXMODE_BROADCAST);
-	} else {
-		STE_CLRBIT1(sc, STE_RX_MODE, STE_RXMODE_BROADCAST);
-	}
-
-	ste_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	ste_iff(sc);
 
 	/* Load the address of the RX list. */
 	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_RXDMA_STALL);
@@ -1245,7 +1233,6 @@ ste_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ste_softc	*sc = ifp->if_softc;
 	struct ifaddr		*ifa = (struct ifaddr *) data;
 	struct ifreq		*ifr = (struct ifreq *) data;
-	struct mii_data		*mii;
 	int			s, error = 0;
 
 	s = splnet();
@@ -1253,34 +1240,19 @@ ste_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
+		if (!(ifp->if_flags & IFF_RUNNING))
 			ste_init(sc);
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
-		default:
-			ste_init(sc);
-			break;
-		}
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->ste_if_flags & IFF_PROMISC)) {
-				STE_SETBIT1(sc, STE_RX_MODE,
-				    STE_RXMODE_PROMISC);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->ste_if_flags & IFF_PROMISC) {
-				STE_CLRBIT1(sc, STE_RX_MODE,
-				    STE_RXMODE_PROMISC);
-			}
-			if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->ste_if_flags) & IFF_ALLMULTI)
-				ste_setmulti(sc);
-			if (!(ifp->if_flags & IFF_RUNNING)) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else {
 				sc->ste_tx_thresh = STE_TXSTART_THRESH;
 				ste_init(sc);
 			}
@@ -1288,14 +1260,11 @@ ste_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				ste_stop(sc);
 		}
-		sc->ste_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		mii = &sc->sc_mii;
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
 
 	default:
@@ -1304,7 +1273,7 @@ ste_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			ste_setmulti(sc);
+			ste_iff(sc);
 		error = 0;
 	}
 
