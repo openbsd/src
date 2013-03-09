@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.14 2012/09/27 14:01:35 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.15 2013/03/09 02:19:21 deraadt Exp $
 #
 # Diskless kernel config
 #
@@ -50,9 +50,9 @@ pci*	at ppb?
 # CardBus bus support
 cbb*		at pci?
 cardslot*	at cbb?
-option		CARDBUS_DEBUG,CARDSLOT_DEBUG,CARDBUS_MAP_DEBUG
+#option		CARDBUS_DEBUG,CARDSLOT_DEBUG,CARDBUS_MAP_DEBUG
 cardbus*	at cardslot?
-option		PCMCIADEBUG,PCMCIAVERBOSE
+#option		PCMCIADEBUG,PCMCIAVERBOSE
 pcmcia*		at cardslot?
 
 # PCI USB Controllers
