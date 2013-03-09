@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.367 2013/03/08 10:11:55 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.368 2013/03/09 00:11:38 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 8 2013 $
+.Dd $Mdocdate: March 9 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2122,6 +2122,24 @@ PERMIT_* lines in the Makefile should be preceded with a comment explaining
 details about licensing and patents issues the port may have.
 Porters must be very thorough in their checks.
 In case of doubt, ask.
+.Pp
+If
+.Ev PERMIT_PACKAGE_CDROM
+is set to
+.Sq Yes ,
+.Ev PERMIT_PACKAGE_FTP
+and
+.Ev PERMIT_DISTFILES_FTP
+will default to
+.Sq Yes .
+.Pp
+If
+.Ev PERMIT_PACKAGE_FTP
+is set to
+.Sq Yes ,
+.Ev PERMIT_DISTFILES_FTP
+will default to
+.Sq Yes .
 .It Ev PKG_ADD
 User settings.
 Path to
