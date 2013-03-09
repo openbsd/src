@@ -434,7 +434,7 @@ case "${target}" in
     ;;
   *-*-openbsd*)
     # Skip some stuff on all OpenBSD configurations.
-    noconfigdirs="$noconfigdirs gdb target-libiberty"
+    noconfigdirs="$noconfigdirs etc gdb gprof target-libiberty"
     ;;
   *-*-rtems*)
     noconfigdirs="$noconfigdirs target-libgloss ${libgcj}"
