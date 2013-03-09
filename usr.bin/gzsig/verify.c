@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.8 2013/03/09 21:08:37 tobias Exp $ */
+/* $OpenBSD: verify.c,v 1.9 2013/03/09 22:36:44 jmc Exp $ */
 
 /*
  * verify.c
@@ -144,7 +144,7 @@ verify_signature(struct key *key, FILE *fin)
 void
 verify_usage(void)
 {
-	fprintf(stderr, "Usage: %s verify [-q | -v] [-f secret_file] pubkey "
+	fprintf(stderr, "usage: %s verify [-q | -v] [-f secret_file] pubkey "
 	    "[file ...]\n", __progname);
 }
 
