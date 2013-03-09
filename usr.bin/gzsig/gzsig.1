@@ -1,5 +1,5 @@
-.\" $OpenBSD: gzsig.1,v 1.14 2013/03/09 21:08:37 tobias Exp $
-.\" $Id: gzsig.1,v 1.14 2013/03/09 21:08:37 tobias Exp $
+.\" $OpenBSD: gzsig.1,v 1.15 2013/03/09 22:36:25 jmc Exp $
+.\" $Id: gzsig.1,v 1.15 2013/03/09 22:36:25 jmc Exp $
 .\"
 .\"  Copyright (c) 2001 Dug Song <dugsong@arbor.net>
 .\"  Copyright (c) 2001 Arbor Networks, Inc.
@@ -72,9 +72,16 @@ Indicates that the passphrase for the key should be read from
 instead of being supplied manually.
 .It Fl q
 Enable quiet mode.
+The options
+.Fl q
+and
+.Fl v
+are mutually exclusive;
+the last one specified takes precedence.
 .It Fl v
 Enable verbose mode.
 This is the default.
+The options
 .Fl q
 and
 .Fl v
