@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.47 2012/04/14 09:39:47 yasuoka Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.48 2013/03/10 13:15:48 claudio Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -164,17 +164,14 @@ struct if_clone loop_cloner =
 
 /* ARGSUSED */
 void
-loopattach(n)
-	int n;
+loopattach(int n)
 {
 	(void) loop_clone_create(&loop_cloner, 0);
 	if_clone_attach(&loop_cloner);
 }
 
 int
-loop_clone_create(ifc, unit)
-	struct if_clone *ifc;
-	int unit;
+loop_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet *ifp;
 
@@ -209,8 +206,7 @@ loop_clone_create(ifc, unit)
 }
 
 int
-loop_clone_destroy(ifp)
-	struct ifnet *ifp;
+loop_clone_destroy(struct ifnet *ifp)
 {
 	if (ifp == lo0ifp)
 		return (EPERM);
@@ -222,11 +218,8 @@ loop_clone_destroy(ifp)
 }
 
 int
-looutput(ifp, m, dst, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt;
+looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
 	int s, isr;
 	struct ifqueue *ifq = 0;
@@ -319,8 +312,7 @@ looutput(ifp, m, dst, rt)
 
 #ifdef ALTQ
 static void
-lo_altqstart(ifp)
-	struct ifnet *ifp;
+lo_altqstart(struct ifnet *ifp)
 {
 	struct ifqueue *ifq;
 	struct mbuf *m;
@@ -382,12 +374,8 @@ lo_altqstart(ifp)
 
 /* ARGSUSED */
 void
-lortrequest(cmd, rt, info)
-	int cmd;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+lortrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
-
 	if (rt)
 		rt->rt_rmx.rmx_mtu = LOMTU;
 }
@@ -397,10 +385,7 @@ lortrequest(cmd, rt, info)
  */
 /* ARGSUSED */
 int
-loioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
