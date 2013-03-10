@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.127 2013/03/05 10:24:00 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.128 2013/03/10 09:05:12 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -634,7 +634,7 @@ struct sr_softc {
 	struct scsibus_softc	*sc_scsibus;
 
 	/* The target lookup has to be cheap since it happens for each I/O. */
-	struct sr_discipline	*sc_dis[SR_MAX_LD];
+	struct sr_discipline	*sc_targets[SR_MAX_LD];
 	struct sr_discipline_list sc_dis_list;
 };
 

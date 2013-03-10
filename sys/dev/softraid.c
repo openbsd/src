@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.289 2013/03/05 10:24:00 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.290 2013/03/10 09:05:12 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2313,7 +2313,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: target %d xs: %p "
 	    "flags: %#x\n", DEVNAME(sc), link->target, xs, xs->flags);
 
-	sd = sc->sc_dis[link->target];
+	sd = sc->sc_targets[link->target];
 	if (sd == NULL) {
 		printf("%s: sr_scsi_cmd NULL discipline\n", DEVNAME(sc));
 		goto stuffup;
@@ -2415,7 +2415,7 @@ sr_scsi_probe(struct scsi_link *link)
 
 	KASSERT(link->target < SR_MAX_LD && link->lun == 0);
 
-	sd = sc->sc_dis[link->target];
+	sd = sc->sc_targets[link->target];
 	if (sd == NULL)
 		return (ENODEV);
 
@@ -3430,11 +3430,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 		 * Find a free target.
 		 *
 		 * XXX: We reserve sd_target == 0 to indicate the
-		 * discipline is not linked into sc->sc_dis, so begin
+		 * discipline is not linked into sc->sc_targets, so begin
 		 * the search with target = 1.
 		 */
 		for (target = 1; target < SR_MAX_LD; target++)
-			if (sc->sc_dis[target] == NULL)
+			if (sc->sc_targets[target] == NULL)
 				break;
 		if (target == SR_MAX_LD) {
 			sr_error(sc, "no free target for %s",
@@ -3447,10 +3447,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 
 		/* Attach discipline and get midlayer to probe it. */
 		sd->sd_target = target;
-		sc->sc_dis[target] = sd;
+		sc->sc_targets[target] = sd;
 		if (scsi_probe_lun(sc->sc_scsibus, target, 0) != 0) {
 			sr_error(sc, "scsi_probe_lun failed");
-			sc->sc_dis[target] = NULL;
+			sc->sc_targets[target] = NULL;
 			sd->sd_target = 0;
 			goto unwind;
 		}
@@ -3462,7 +3462,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 
 		/* XXX - Count volumes, not targets. */
 		for (i = 0, vol = -1; i <= sd->sd_target; i++)
-			if (sc->sc_dis[i])
+			if (sc->sc_targets[i])
 				vol++;
 
 		rv = 0;
@@ -3790,8 +3790,8 @@ sr_discipline_free(struct sr_discipline *sd)
 	}
 
 	if (sd->sd_target != 0) {
-		KASSERT(sc->sc_dis[sd->sd_target] == sd);
-		sc->sc_dis[sd->sd_target] = NULL;
+		KASSERT(sc->sc_targets[sd->sd_target] == sd);
+		sc->sc_targets[sd->sd_target] = NULL;
 	}
 
 	TAILQ_FOREACH_SAFE(sdtmp1, &sc->sc_dis_list, sd_link, sdtmp2) {
