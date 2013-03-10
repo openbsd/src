@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.25 2012/08/23 14:44:42 jmc Exp $
-# $NetBSD: mdoclint,v 1.12 2010/08/30 12:20:44 wiz Exp $
+# $OpenBSD: mdoclint,v 1.26 2013/03/10 21:57:04 jmc Exp $
+# $NetBSD: mdoclint,v 1.17 2012/01/02 18:01:00 wiz Exp $
 #
-# Copyright (c) 2001-2010 Thomas Klausner
+# Copyright (c) 2001-2012 Thomas Klausner
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -160,7 +160,7 @@ my $valid_date_re;
 		$valid_date_re = qr{\$Mdocdate\b};
 	}
 	if (NETBSD) {
-		$valid_date_re = qr{(?:January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*,\s*(?:198[0-9]|199[0-9]|200[0-9]|201[01])$}o;
+		$valid_date_re = qr{(?:January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*,\s*(?:198[0-9]|199[0-9]|200[0-9]|201[0-2])$}o;
 	}
 }
 
