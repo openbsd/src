@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.4 2012/12/05 23:20:21 deraadt Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.5 2013/03/10 21:56:11 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -76,6 +76,9 @@ struct virtio_pci_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
+
+	void                    *sc_ih;
+
 	int			sc_config_offset;
 };
 
@@ -213,8 +216,8 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_2;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	vsc->sc_ih = pci_intr_establish(pc, ih, vsc->sc_ipl, virtio_pci_intr, sc, vsc->sc_dev.dv_xname);
-	if (vsc->sc_ih == NULL) {
+	sc->sc_ih = pci_intr_establish(pc, ih, vsc->sc_ipl, virtio_pci_intr, sc, vsc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt", vsc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -247,8 +250,8 @@ virtio_pci_detach(struct device *self, int flags)
 	}
 	KASSERT(vsc->sc_child == 0 || vsc->sc_child == VIRTIO_CHILD_ERROR);
 	KASSERT(vsc->sc_vqs == 0);
-	pci_intr_disestablish(sc->sc_pc, vsc->sc_ih);
-	vsc->sc_ih = 0;
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+	sc->sc_ih = 0;
 	if (sc->sc_iosize)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 	sc->sc_iosize = 0;

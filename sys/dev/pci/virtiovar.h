@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.2 2012/10/12 21:12:19 reyk Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.3 2013/03/10 21:56:11 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ struct virtio_softc {
 	struct virtio_ops	*sc_ops;	/* set by transport */
 
 	int			 sc_ipl;		/* set by child */
-	void			*sc_ih;		/* set by transport */
 
 	uint32_t		 sc_features;
 	int			 sc_indirect;
