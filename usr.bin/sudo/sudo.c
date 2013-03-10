@@ -1090,29 +1090,6 @@ open_sudoers(sudoers, doedit, keepopen)
 {
     struct stat statbuf;
     FILE *fp = NULL;
-    int rootstat;
-
-    /*
-     * Fix the mode and group on sudoers file from old default.
-     * Only works if file system is readable/writable by root.
-     */
-    if ((rootstat = stat_sudoers(sudoers, &statbuf)) == 0 &&
-	SUDOERS_UID == statbuf.st_uid && SUDOERS_MODE != 0400 &&
-	(statbuf.st_mode & 0007777) == 0400) {
-
-	if (chmod(sudoers, SUDOERS_MODE) == 0) {
-	    warningx("fixed mode on %s", sudoers);
-	    SET(statbuf.st_mode, SUDOERS_MODE);
-	    if (statbuf.st_gid != SUDOERS_GID) {
-		if (chown(sudoers, (uid_t) -1, SUDOERS_GID) == 0) {
-		    warningx("set group on %s", sudoers);
-		    statbuf.st_gid = SUDOERS_GID;
-		} else
-		    warning("unable to set group on %s", sudoers);
-	    }
-	} else
-	    warning("unable to fix mode on %s", sudoers);
-    }
 
     /*
      * Sanity checks on sudoers file.  Must be done as sudoers
@@ -1121,7 +1098,7 @@ open_sudoers(sudoers, doedit, keepopen)
      */
     set_perms(PERM_SUDOERS);
 
-    if (rootstat != 0 && stat_sudoers(sudoers, &statbuf) != 0)
+    if (stat_sudoers(sudoers, &statbuf) != 0)
 	log_error(USE_ERRNO|NO_EXIT, "can't stat %s", sudoers);
     else if (!S_ISREG(statbuf.st_mode))
 	log_error(NO_EXIT, "%s is not a regular file", sudoers);
