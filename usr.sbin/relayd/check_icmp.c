@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.35 2013/01/29 15:04:42 sthen Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.36 2013/03/10 23:32:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -95,8 +95,7 @@ check_icmp_add(struct ctl_icmp_event *cie, int flags, struct timeval *start,
 	if (start != NULL)
 		bcopy(start, &cie->tv_start, sizeof(cie->tv_start));
 	bcopy(&cie->env->sc_timeout, &tv, sizeof(tv));
-	if (gettimeofday(&cie->tv_start, NULL) == -1)
-		fatal("check_icmp_add: gettimeofday");
+	getmonotime(&cie->tv_start);
 	event_del(&cie->ev);
 	event_set(&cie->ev, cie->s, EV_TIMEOUT|flags, fn, cie);
 	event_add(&cie->ev, &tv);

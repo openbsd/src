@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.166 2013/03/09 14:43:06 bluhm Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.167 2013/03/10 23:32:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -945,7 +945,7 @@ const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
 const char *print_httperror(u_int);
 const char *printb_flags(const u_int32_t, const char *);
-
+void	 getmonotime(struct timeval *);
 
 /* pfe.c */
 pid_t	 pfe(struct privsep *, struct privsep_proc *);

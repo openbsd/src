@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.27 2013/01/17 20:34:18 bluhm Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.28 2013/03/10 23:32:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -254,15 +254,6 @@ relay_udp_server(int fd, short sig, void *arg)
 	con->se_in.dir = RELAY_DIR_REQUEST;
 	con->se_out.dir = RELAY_DIR_RESPONSE;
 	con->se_retry = rlay->rl_conf.dstretry;
-
-	if (gettimeofday(&con->se_tv_start, NULL) == -1) {
-		free(con);
-		free(priv);
-		return;
-	}
-
-	bcopy(&con->se_tv_start, &con->se_tv_last, sizeof(con->se_tv_last));
-	bcopy(&ss, &con->se_in.ss, sizeof(con->se_in.ss));
 	con->se_out.port = rlay->rl_conf.dstport;
 	switch (ss.ss_family) {
 	case AF_INET:
@@ -272,6 +263,10 @@ relay_udp_server(int fd, short sig, void *arg)
 		con->se_in.port = ((struct sockaddr_in6 *)&ss)->sin6_port;
 		break;
 	}
+	bcopy(&ss, &con->se_in.ss, sizeof(con->se_in.ss));
+
+	getmonotime(&con->se_tv_start);
+	bcopy(&con->se_tv_start, &con->se_tv_last, sizeof(con->se_tv_last));
 
 	relay_sessions++;
 	SPLAY_INSERT(session_tree, &rlay->rl_sessions, con);
@@ -468,8 +463,7 @@ relay_dns_request(struct rsession *con)
 	if (debug)
 		relay_dns_log(con, buf, len);
 
-	if (gettimeofday(&con->se_tv_start, NULL) == -1)
-		return (-1);
+	getmonotime(&con->se_tv_start);
 
 	if (!TAILQ_EMPTY(&rlay->rl_tables)) {
 		if (relay_from_table(con) != 0)

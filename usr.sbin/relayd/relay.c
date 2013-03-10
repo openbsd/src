@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.163 2013/03/09 14:43:06 bluhm Exp $	*/
+/*	$OpenBSD: relay.c,v 1.164 2013/03/10 23:32:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -318,8 +318,7 @@ relay_statistics(int fd, short events, void *arg)
 	 */
 
 	timerclear(&tv);
-	if (gettimeofday(&tv_now, NULL) == -1)
-		fatal("relay_init: gettimeofday");
+	getmonotime(&tv_now);
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		bzero(&crs, sizeof(crs));
@@ -741,8 +740,8 @@ relay_write(struct bufferevent *bev, void *arg)
 	struct ctl_relay_event	*cre = arg;
 	struct rsession		*con = cre->con;
 
-	if (gettimeofday(&con->se_tv_last, NULL) == -1)
-		goto fail;
+	getmonotime(&con->se_tv_last);
+
 	if (con->se_done)
 		goto done;
 	if (relay_splice(cre->dst) == -1)
@@ -780,8 +779,8 @@ relay_read(struct bufferevent *bev, void *arg)
 	struct rsession		*con = cre->con;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 
-	if (gettimeofday(&con->se_tv_last, NULL) == -1)
-		goto fail;
+	getmonotime(&con->se_tv_last);
+
 	if (!EVBUFFER_LENGTH(src))
 		return;
 	if (relay_bufferevent_write_buffer(cre->dst, src) == -1)
@@ -891,8 +890,8 @@ relay_splicelen(struct ctl_relay_event *cre)
 	    __func__, con->se_id, cre->dir, len);
 
 	if (len > cre->splicelen) {
-		if (gettimeofday(&con->se_tv_last, NULL) == -1)
-			return (-1);
+		getmonotime(&con->se_tv_last);
+
 		cre->splicelen = len;
 		return (1);
 	}
@@ -1049,10 +1048,6 @@ relay_accept(int fd, short event, void *arg)
 	con->se_out.dir = RELAY_DIR_RESPONSE;
 	con->se_retry = rlay->rl_conf.dstretry;
 	con->se_bnds = -1;
-	if (gettimeofday(&con->se_tv_start, NULL) == -1)
-		goto err;
-	bcopy(&con->se_tv_start, &con->se_tv_last, sizeof(con->se_tv_last));
-	bcopy(&ss, &con->se_in.ss, sizeof(con->se_in.ss));
 	con->se_out.port = rlay->rl_conf.dstport;
 	switch (ss.ss_family) {
 	case AF_INET:
@@ -1062,6 +1057,10 @@ relay_accept(int fd, short event, void *arg)
 		con->se_in.port = ((struct sockaddr_in6 *)&ss)->sin6_port;
 		break;
 	}
+	bcopy(&ss, &con->se_in.ss, sizeof(con->se_in.ss));
+
+	getmonotime(&con->se_tv_start);
+	bcopy(&con->se_tv_start, &con->se_tv_last, sizeof(con->se_tv_last));
 
 	relay_sessions++;
 	SPLAY_INSERT(session_tree, &rlay->rl_sessions, con);
@@ -1454,8 +1453,7 @@ relay_connect(struct rsession *con)
 	if (relay_inflight < 1)
 		fatalx("relay_connect: no connection in flight");
 
-	if (gettimeofday(&con->se_tv_start, NULL) == -1)
-		return (-1);
+	getmonotime(&con->se_tv_start);
 
 	if (!TAILQ_EMPTY(&rlay->rl_tables)) {
 		if (relay_from_table(con) != 0)

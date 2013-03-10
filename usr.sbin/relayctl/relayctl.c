@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.45 2011/05/20 09:43:53 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.46 2013/03/10 23:32:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -443,8 +443,7 @@ show_session_msg(struct imsg *imsg)
 		    a, ntohs(con->se_in.port), b, ntohs(con->se_out.port),
 		    con->se_done ? "DONE" : "RUNNING");
 
-		if (gettimeofday(&tv_now, NULL))
-			fatal("show_session_msg: gettimeofday");
+		getmonotime(&tv_now);
 		print_time(&tv_now, &con->se_tv_start, a, sizeof(a));
 		print_time(&tv_now, &con->se_tv_last, b, sizeof(b));
 		printf("\tage %s, idle %s, relay %u, pid %u",
