@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2013/03/10 21:06:23 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2013/03/10 21:07:23 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ CFLAGS+=	${PIE_DEFAULT}
 # testing purposes
 PREFIX=/usr
 .if ${PREFIX} != "/usr"
-MANDIR=${PREFIX}/share/man/cat
+MANDIR=${PREFIX}/share/man/man
 .endif
 
 MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
@@ -90,10 +90,12 @@ do-config: .USE
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
 	    ${MAKE} ${CONFIGURE_MODULES}
+
 .if ${ELF_TOOLCHAIN:L} == "yes"
-	# We need to generate as.1 and ld.1 immediately after config.status
-	# for the manpage machinery to work properly.
+gas/doc/as.1: config.status
 	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
+
+ld/ld.1: config.status
 	cd ${.OBJDIR}/ld && ${MAKE} ld.1
 .endif
 
