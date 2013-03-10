@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.15 2010/07/02 07:40:03 nicm Exp $
+#	$OpenBSD: Makefile,v 1.16 2013/03/10 17:55:54 nicm Exp $
 
 PROG=	tip
-LINKS=	${BINDIR}/tip ${BINDIR}/cu
-MAN=	tip.1 cu.1
+MAN=	tip.1
 
 CFLAGS+=-I${.CURDIR} -DDEFBR=9600 -DDEFFS=BUFSIZ
 LDADD=  -lutil

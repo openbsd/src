@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.127 2013/03/09 19:27:48 nicm Exp $
+#	$OpenBSD: Makefile,v 1.128 2013/03/10 17:55:54 nicm Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 	rwho sdiff script sed sendbug shar showmount skey \
 	skeyaudit skeyinfo skeyinit sndiod \
 	sort spell split sqlite3 ssh stat su systat \
-	sudo tail talk tcopy tcpbench tee telnet tftp tic time \
+	sudo tail talk tcopy tcpbench tee telnet tftp tic tip time \
 	tmux top touch tput tr true tset tsort tty usbhidaction usbhidctl \
 	ul uname unexpand unifdef uniq units \
 	unvis users uudecode uuencode vacation vi vis vmstat w wall wc \
