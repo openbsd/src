@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.3 2013/03/10 10:34:33 tobias Exp $ */
+/* $OpenBSD: util.c,v 1.4 2013/03/10 10:36:57 tobias Exp $ */
 
 /*
  * util.c
@@ -59,6 +59,17 @@ copy_permissions(int srcfd, int dstfd)
 	if (fchmod(dstfd, st.st_mode) < 0)
 		return (-1);
 
+	return (0);
+}
+
+int
+skip_string(FILE *fin)
+{
+	int c;
+
+	while ((c = getc(fin)) != '\0')
+		if (c == EOF)
+			return (-1);
 	return (0);
 }
 

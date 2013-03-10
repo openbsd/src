@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.9 2013/03/09 22:36:44 jmc Exp $ */
+/* $OpenBSD: verify.c,v 1.10 2013/03/10 10:36:57 tobias Exp $ */
 
 /*
  * verify.c
@@ -105,12 +105,12 @@ verify_signature(struct key *key, FILE *fin)
 	}
 	/* Skip over any options. */
 	if (gh.flags & GZIP_FNAME) {
-		while (getc(fin) != '\0')
-			;
+		if (skip_string(fin))
+			return (-1);
 	}
 	if (gh.flags & GZIP_FCOMMENT) {
-		while (getc(fin) != '\0')
-			;
+		if (skip_string(fin))
+			return (-1);
 	}
 	if (gh.flags & GZIP_FENCRYPT &&
 	    fread(buf, 1, GZIP_FENCRYPT_LEN, fin) != GZIP_FENCRYPT_LEN)
