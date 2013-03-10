@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.11 2013/03/09 22:36:44 jmc Exp $ */
+/* $OpenBSD: sign.c,v 1.12 2013/03/10 10:34:33 tobias Exp $ */
 
 /*
  * sign.c
@@ -285,7 +285,7 @@ sign(int argc, char *argv[])
 			close(fd);
 			continue;
 		}
-		if (copy_permissions(gzipfile, tmppath) < 0) {
+		if (copy_permissions(fileno(fin), fd) < 0) {
 			fprintf(stderr, "Error initializing %s: %s\n",
 			    tmppath, strerror(errno));
 			fclose(fin);
