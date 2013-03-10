@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.1 2013/03/09 17:25:25 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.2 2013/03/10 19:07:40 deraadt Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
 
@@ -7,7 +7,6 @@ option		NO_PROPOLICE
 
 # CPU Support; at least one is REQUIRED
 option		DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
-#option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 
 # Enable the hooks used for initializing the ram-disk.
 option		RAMDISK_HOOKS
