@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.60 2013/02/02 13:38:41 miod Exp $
+# $OpenBSD: Makefile.cross,v 1.61 2013/03/10 08:50:42 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -105,6 +105,15 @@ BINUTILS_VERSION=binutils-2.17
 BINUTILS_VERSION=binutils
 .endif
 
+.if !empty(PIE_ARCH:M${_arch})
+NOPIE_FLAGS=-fno-pie
+NOPIE_LDFLAGS=-nopie
+PIE_DEFAULT=${DEFAULT_PIE_DEF}
+.else
+NOPIE_FLAGS=
+PIE_DEFAULT=
+.endif
+
 .if !empty(OLD_BINUTILS_ARCH:M${_arch})
 NEW_BINUTILS?=	No
 BINUTILS=	ar as ld nm ranlib objcopy objdump strings strip
@@ -198,17 +207,17 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	(cd ${.CURDIR}/${BINUTILS_DIR}; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
+	    USING_NEW_BINUTILS=${NEW_BINUTILS} PIE_DEFAULT=${PIE_DEFAULT} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    PATH=${CROSSPATH} \
 	    ${MAKE} -f Makefile.bsd-wrapper depend && \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
+	    USING_NEW_BINUTILS=${NEW_BINUTILS} PIE_DEFAULT=${PIE_DEFAULT} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} -f Makefile.bsd-wrapper all && \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    COMPILER_VERSION=${COMPILER_VERSION} \
-	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
+	    USING_NEW_BINUTILS=${NEW_BINUTILS} PIE_DEFAULT=${PIE_DEFAULT} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    USING_NEW_BINUTILS=${NEW_BINUTILS} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
