@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.35 2013/03/09 11:33:25 mpi Exp $	*/
+/*	$OpenBSD: adb.c,v 1.36 2013/03/10 11:26:34 mpi Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -1586,7 +1586,6 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	struct confargs nca;
 	char name[32];
 	int node;
-
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
 	int totaladbs;
@@ -1619,7 +1618,8 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	adb_polling = 1;
-	adb_reinit();
+	if (!adbempty)
+		adb_reinit();
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_HIGH,
 	    adb_intr, sc, sc->sc_dev.dv_xname);
@@ -1627,28 +1627,6 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	/* init powerpc globals which control RTC functionality */
 	time_read = adb_read_date_time;
 	time_write = adb_set_date_time;
-
-#ifdef ADB_DEBUG
-	if (adb_debug)
-		printf("adb: done with adb_reinit\n");
-#endif
-	totaladbs = count_adbs();
-
-	printf(" irq %d: %s, %d target%s\n", ca->ca_intr[0], ca->ca_name,
-	    totaladbs, (totaladbs == 1) ? "" : "s");
-
-	/* for each ADB device */
-	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
-		/* Get the ADB information */
-		adbaddr = get_ind_adb_info(&adbdata, adbindex);
-
-		aa_args.name = adb_device_name;
-		aa_args.origaddr = adbdata.origADBAddr;
-		aa_args.adbaddr = adbaddr;
-		aa_args.handler_id = adbdata.devType;
-
-		(void)config_found(self, &aa_args, adbprint);
-	}
 
 #if NAPM > 0
 	if (adbHardware == ADB_HW_PMU) {
@@ -1674,6 +1652,36 @@ adbattach(struct device *parent, struct device *self, void *aux)
 		adb_cuda_fileserver_mode();
 	if (adbHardware == ADB_HW_PMU)
 		pmu_fileserver_mode(1);
+
+	/*
+	 * XXX If the machine doesn't have an ADB bus (PowerBook5,6+)
+	 * yes it sounds stupid to attach adb(4), but don't try to send
+	 * ADB commands otherwise the PMU may shutdown the machine...
+	 */
+	if (adbempty)
+		return;
+
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: done with adb_reinit\n");
+#endif
+	totaladbs = count_adbs();
+
+	printf(" irq %d: %s, %d target%s\n", ca->ca_intr[0], ca->ca_name,
+	    totaladbs, (totaladbs == 1) ? "" : "s");
+
+	/* for each ADB device */
+	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
+		/* Get the ADB information */
+		adbaddr = get_ind_adb_info(&adbdata, adbindex);
+
+		aa_args.name = adb_device_name;
+		aa_args.origaddr = adbdata.origADBAddr;
+		aa_args.adbaddr = adbaddr;
+		aa_args.handler_id = adbdata.devType;
+
+		(void)config_found(self, &aa_args, adbprint);
+	}
 
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_autopoll();
