@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.9 2012/12/05 23:20:20 deraadt Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.10 2013/03/10 21:54:46 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -93,6 +93,7 @@
 
 static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_CSUM,		"CSum" },
+	{ VIRTIO_NET_F_GUEST_CSUM,	"GuestCSum" },
 	{ VIRTIO_NET_F_MAC,		"MAC" },
 	{ VIRTIO_NET_F_GSO,		"GSO" },
 	{ VIRTIO_NET_F_GUEST_TSO4,	"GuestTSO4" },
@@ -281,6 +282,9 @@ int	vio_alloc_mem(struct vio_softc *);
 int	vio_alloc_dmamem(struct vio_softc *);
 void	vio_free_dmamem(struct vio_softc *);
 
+#if VIRTIO_DEBUG
+void	vio_dump(struct vio_softc *);
+#endif
 
 int
 vio_match(struct device *parent, void *match, void *aux)
@@ -776,6 +780,27 @@ again:
 	}
 }
 
+#if VIRTIO_DEBUG
+void
+vio_dump(struct vio_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct virtio_softc *vsc = sc->sc_virtio;
+
+	printf("%s status dump:\n", ifp->if_xname);
+	printf("TX virtqueue:\n");
+	virtio_vq_dump(&vsc->sc_vqs[VQTX]);
+	printf("tx tick active: %d\n", !timeout_triggered(&sc->sc_tick));
+	printf("RX virtqueue:\n");
+	virtio_vq_dump(&vsc->sc_vqs[VQRX]);
+	if (vsc->sc_nvqs == 3) {
+		printf("CTL virtqueue:\n");
+		virtio_vq_dump(&vsc->sc_vqs[VQCTL]);
+		printf("ctrl_inuse: %d\n", sc->sc_ctrl_inuse);
+	}
+}
+#endif
+
 int
 vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -796,6 +821,10 @@ vio_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
+#if VIRTIO_DEBUG
+			if (ifp->if_flags & IFF_DEBUG)
+				vio_dump(sc);
+#endif
 			if (ifp->if_flags & IFF_RUNNING)
 				r = ENETRESET;
 			else
