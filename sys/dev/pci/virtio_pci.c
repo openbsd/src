@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.5 2013/03/10 21:56:11 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.6 2013/03/10 21:58:02 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ void		virtio_pci_write_device_config_2(struct virtio_softc *, int, uint16_t);
 void		virtio_pci_write_device_config_4(struct virtio_softc *, int, uint32_t);
 void		virtio_pci_write_device_config_8(struct virtio_softc *, int, uint64_t);
 uint16_t	virtio_pci_read_queue_size(struct virtio_softc *, uint16_t);
-void		virtio_pci_write_queue_address(struct virtio_softc *, uint16_t, uint32_t);
+void		virtio_pci_setup_queue(struct virtio_softc *, uint16_t, uint32_t);
 void		virtio_pci_set_status(struct virtio_softc *, int);
 uint32_t	virtio_pci_negotiate_features(struct virtio_softc *, uint32_t,
 					      const struct virtio_feature_name *);
@@ -101,7 +101,7 @@ struct virtio_ops virtio_pci_ops = {
 	virtio_pci_write_device_config_4,
 	virtio_pci_write_device_config_8,
 	virtio_pci_read_queue_size,
-	virtio_pci_write_queue_address,
+	virtio_pci_setup_queue,
 	virtio_pci_set_status,
 	virtio_pci_negotiate_features,
 	virtio_pci_intr,
@@ -118,7 +118,7 @@ virtio_pci_read_queue_size(struct virtio_softc *vsc, uint16_t idx)
 }
 
 void
-virtio_pci_write_queue_address(struct virtio_softc *vsc, uint16_t idx, uint32_t addr)
+virtio_pci_setup_queue(struct virtio_softc *vsc, uint16_t idx, uint32_t addr)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, VIRTIO_CONFIG_QUEUE_SELECT,

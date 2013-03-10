@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.4 2013/03/10 21:54:46 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.5 2013/03/10 21:58:02 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 			      sc->sc_dev.dv_xname, vq->vq_index);
 		}
 		virtio_init_vq(sc, vq, 1);
-		virtio_write_queue_address(sc, vq->vq_index,
+		virtio_setup_queue(sc, vq->vq_index,
 		    vq->vq_dmamap->dm_segs[0].ds_addr / VIRTIO_PAGE_SIZE);
 	}
 }
@@ -355,7 +355,7 @@ virtio_alloc_vq(struct virtio_softc *sc,
 		goto err;
 	}
 
-	virtio_write_queue_address(sc, index,
+	virtio_setup_queue(sc, index,
 	    vq->vq_dmamap->dm_segs[0].ds_addr / VIRTIO_PAGE_SIZE);
 
 	/* remember addresses and offsets for later use */
@@ -399,7 +399,7 @@ virtio_alloc_vq(struct virtio_softc *sc,
 	return 0;
 
 err:
-	virtio_write_queue_address(sc, index, 0);
+	virtio_setup_queue(sc, index, 0);
 	if (vq->vq_dmamap)
 		bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	if (vq->vq_vaddr)
@@ -429,7 +429,7 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	}
 
 	/* tell device that there's no virtqueue any longer */
-	virtio_write_queue_address(sc, vq->vq_index, 0);
+	virtio_setup_queue(sc, vq->vq_index, 0);
 
 	free(vq->vq_entries, M_DEVBUF);
 	bus_dmamap_unload(sc->sc_dmat, vq->vq_dmamap);
