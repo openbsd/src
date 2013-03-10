@@ -1,9 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.79 2013/01/05 20:03:06 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.80 2013/03/10 21:06:23 miod Exp $
 
 .include <bsd.own.mk>
-
-SUBDIRS=	opcodes bfd
-CONF_SUBDIRS=	opcodes bfd
 
 CFLAGS+=	${PIE_DEFAULT}
 # This allows moving the whole binutils installation around for 
@@ -13,14 +10,28 @@ PREFIX=/usr
 MANDIR=${PREFIX}/share/man/man
 .endif
 
+.if ${BINUTILS_VERSION} == "binutils-2.17"
+
+SUBDIRS=	opcodes bfd gdb
+CONF_SUBDIRS=	${SUBDIRS}
+INST_SUBDIRS=	gdb
+MAN=		gdb/gdb.1
+
+.else
+
+SUBDIRS=	opcodes bfd
+CONF_SUBDIRS=	opcodes bfd
+
 MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
 		binutils/doc/objdump.1 binutils/doc/readelf.1 \
 		c++filt.1
 
+.if !defined(TARGET_ARCH)
 CONF_SUBDIRS+=	gdb
 SUBDIRS+=	gdb
 INST_SUBDIRS+=	gdb
 MAN+=		gdb/gdb.1
+.endif
 
 .if ${ELF_TOOLCHAIN:L} == "yes"
 SUBDIRS+=	binutils ld gas
@@ -32,6 +43,8 @@ MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
 .  else
 CONF_SUBDIRS=${SUBDIRS}
 CONF_SUBDIRS+= binutils
+.endif
+
 .endif
 
 # Used by the GNU Makefile
@@ -116,7 +129,7 @@ install: maninstall
 	    INSTALL_PROGRAM='install -c -S' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
 	      install install-info
-.if ${ELF_TOOLCHAIN:L} != "yes"
+.if ${ELF_TOOLCHAIN:L} != "yes" && ${BINUTILS_VERSION} != "binutils-2.17"
 	cd ${.OBJDIR}/binutils && \
 		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \
 		    -g ${BINGRP} -m ${BINMODE} objdump ${DESTDIR}${PREFIX}/bin

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2011/11/21 01:36:18 jsg Exp $
+#	$OpenBSD: Makefile,v 1.52 2013/03/10 21:06:23 miod Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -19,6 +19,10 @@ SUBDIR+=	cxxfilt cvs lynx
 .if make(obj)
 SUBDIR+=	binutils binutils-2.17
 .else
+# binutils-2.17 needs to build gdb in binutils at the moment
+.if ${BINUTILS_VERSION} == "binutils-2.17"
+SUBDIR+=	binutils
+.endif
 SUBDIR+=	${BINUTILS_VERSION}
 .endif
 
