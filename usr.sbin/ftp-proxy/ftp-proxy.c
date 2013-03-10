@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.25 2012/04/05 19:08:40 camield Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.26 2013/03/10 21:28:26 benno Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -60,6 +60,9 @@
 
 #define	sstosa(ss)	((struct sockaddr *)(ss))
 
+#define FD_RESERVE	5
+volatile int con_inflight = 0;
+
 enum { CMD_NONE = 0, CMD_PORT, CMD_EPRT, CMD_PASV, CMD_EPSV };
 
 struct session {
@@ -94,6 +97,8 @@ int	drop_privs(void);
 void	end_session(struct session *);
 void	exit_daemon(void);
 int	get_line(char *, size_t *);
+int	accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+		int reserve, volatile int *counter);
 void	handle_connection(const int, short, void *);
 void	handle_signal(int, short, void *);
 struct session * init_session(void);
@@ -290,8 +295,14 @@ end_session(struct session *s)
 	if (s->server_bufev && s->server_fd != -1)
 		evbuffer_write(s->server_bufev->output, s->server_fd);
 
-	if (s->client_fd != -1)
+	if (s->client_fd != -1) {
 		close(s->client_fd);
+		if (s->server_fd == -1) {
+			con_inflight--;
+			logmsg(LOG_DEBUG, "%s: inflight decremented, now %d",
+			    __func__, con_inflight);
+		}
+	}
 	if (s->server_fd != -1)
 		close(s->server_fd);
 
@@ -370,6 +381,25 @@ get_line(char *buf, size_t *valid)
 	return ((int)linelen);
 }
 
+int
+accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
+    int reserve, volatile int *counter)
+{
+	int ret;
+	if (getdtablecount() + reserve +
+	    *counter >= getdtablesize()) {
+		errno = EMFILE;
+		return -1;
+	}
+
+	if ((ret = accept(sockfd, addr, addrlen)) > -1) {
+		(*counter)++;
+		logmsg(LOG_DEBUG, "%s: inflight incremented, now %d",__func__,
+		    *counter);
+	}
+	return ret;
+}
+
 void
 handle_connection(const int listen_fd, short event, void *arg)
 {
@@ -392,7 +422,8 @@ handle_connection(const int listen_fd, short event, void *arg)
 	 */
 	client_sa = sstosa(&tmp_ss);
 	len = sizeof(struct sockaddr_storage);
-	if ((client_fd = accept(listen_fd, client_sa, &len)) < 0) {
+	if ((client_fd = accept_reserve(listen_fd, client_sa, &len,
+		FD_RESERVE, &con_inflight)) < 0) {
 		logmsg(LOG_CRIT, "accept() failed: %s", strerror(errno));
 
 		/*
@@ -413,6 +444,9 @@ handle_connection(const int listen_fd, short event, void *arg)
 		logmsg(LOG_ERR, "client limit (%d) reached, refusing "
 		    "connection from %s", max_sessions, sock_ntop(client_sa));
 		close(client_fd);
+		con_inflight--;
+		logmsg(LOG_DEBUG, "%s: inflight decremented, now %d",__func__,
+                    con_inflight);
 		return;
 	}
 
@@ -421,6 +455,9 @@ handle_connection(const int listen_fd, short event, void *arg)
 	if (s == NULL) {
 		logmsg(LOG_CRIT, "init_session failed");
 		close(client_fd);
+		con_inflight--;
+		logmsg(LOG_DEBUG, "%s: inflight decremented, now %d",__func__,
+                    con_inflight);
 		return;
 	}
 	s->client_fd = client_fd;
@@ -489,6 +526,10 @@ handle_connection(const int listen_fd, short event, void *arg)
 		    s->id, sock_ntop(server_sa), strerror(errno));
 		goto fail;
 	}
+	con_inflight--;
+	logmsg(LOG_DEBUG, "%s: connected, inflight decremented, now %d",__func__,
+		con_inflight);
+
 
 	len = sizeof(struct sockaddr_storage);
 	if ((getsockname(s->server_fd, proxy_to_server_sa, &len)) < 0) {
@@ -1127,3 +1168,4 @@ usage(void)
             "                 [-t timeout]\n", __progname);
 	exit(1);
 }
+
