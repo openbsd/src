@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.12 2012/11/13 17:10:40 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.13 2013/03/11 09:28:02 giovanni Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,20 +25,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.12 2012/11/13 17:10:40 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.13 2013/03/11 09:28:02 giovanni Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.12 2012/11/13 17:10:40 yasuoka Exp $
+ * $Id: pptpd.c,v 1.13 2013/03/11 09:28:02 giovanni Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_gre.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -49,7 +51,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <string.h>
 #include <string.h>
 #include <event.h>
 #include <ifaddrs.h>
@@ -99,6 +100,18 @@ pptpd_init(pptpd *_this)
 {
 	int i, m;
 	uint16_t call0, call[UINT16_MAX - 1];
+
+	int mib[] = { CTL_NET, PF_INET, IPPROTO_GRE, GRECTL_ALLOW };
+	int value;
+	size_t size;
+	size = sizeof(value);
+
+	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &value, &size, NULL, 0) == 0) {
+		if(value == 0) {
+			pptpd_log(_this, LOG_ERR, "GRE protocol not allowed");
+			return 1;
+		}
+	}
 
 	memset(_this, 0, sizeof(pptpd));
 	_this->id = pptpd_seqno++;
