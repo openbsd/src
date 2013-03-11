@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.42 2013/03/08 12:25:15 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.43 2013/03/11 16:01:02 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -57,6 +57,7 @@ flush_routes_and_arp_cache(char *ifname, int rdomain)
 
 	strlcpy(imsg.ifname, ifname, sizeof(imsg.ifname));
 	imsg.rdomain = rdomain;
+	imsg.zapzombies = 1;
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_FLUSH_ROUTES, 0, 0, -1,
 	    &imsg, sizeof(imsg));
@@ -142,8 +143,11 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 		case ROUTE_LABEL_DHCLIENT_OURS:
 			/* Always delete routes we labeled. */
 			goto delete;
-		case ROUTE_LABEL_DHCLIENT_LIVE:
 		case ROUTE_LABEL_DHCLIENT_DEAD:
+			if (imsg->zapzombies)
+				goto delete;
+			continue;
+		case ROUTE_LABEL_DHCLIENT_LIVE:
 		case ROUTE_LABEL_DHCLIENT_UNKNOWN:
 			/* Never delete routes labelled by another dhclient. */
 			continue;
@@ -373,7 +377,6 @@ delete_addresses(char *ifname, int rdomain)
  * [priv_]delete_address is the equivalent of
  *
  *	ifconfig <ifname> inet <addr> delete
- *	route -q <rdomain> delete <addr> 127.0.0.1
  */
 void
 delete_address(char *ifname, int rdomain, struct in_addr addr)
@@ -405,11 +408,8 @@ void
 priv_delete_address(struct imsg_delete_address *imsg)
 {
 	struct ifaliasreq ifaliasreq;
-	struct rt_msghdr rtm;
-	struct sockaddr_in dest, gateway;
-	struct iovec iov[3];
 	struct sockaddr_in *in;
-	int s, iovcnt = 0;
+	int s;
 
 	/*
 	 * Delete specified address on specified interface.
@@ -435,61 +435,6 @@ priv_delete_address(struct imsg_delete_address *imsg)
 		close(s);
 		return;
 	}
-
-	close(s);
-
-	/*
-	 * Delete the 127.0.0.1 route for the specified address.
-	 */
-
-	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		error("Routing Socket open failed: %s", strerror(errno));
-
-	/* Build RTM header */
-
-	memset(&rtm, 0, sizeof(rtm));
-
-	rtm.rtm_version = RTM_VERSION;
-	rtm.rtm_type = RTM_DELETE;
-	rtm.rtm_tableid = imsg->rdomain;
-	rtm.rtm_priority = RTP_NONE;
-	rtm.rtm_msglen = sizeof(rtm);
-
-	iov[iovcnt].iov_base = &rtm;
-	iov[iovcnt++].iov_len = sizeof(rtm);
-	
-	/* Set destination address */
-
-	memset(&dest, 0, sizeof(dest));
-
-	dest.sin_len = sizeof(dest);
-	dest.sin_family = AF_INET;
-	dest.sin_addr.s_addr = imsg->addr.s_addr;
-
-	rtm.rtm_addrs |= RTA_DST;
-	rtm.rtm_msglen += sizeof(dest);
-
-	iov[iovcnt].iov_base = &dest;
-	iov[iovcnt++].iov_len = sizeof(dest);
-	
-	/* Set gateway address */
-
-	memset(&gateway, 0, sizeof(gateway));
-
-	gateway.sin_len = sizeof(gateway);
-	gateway.sin_family = AF_INET;
-	gateway.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-	rtm.rtm_flags |= RTF_GATEWAY;
-	rtm.rtm_addrs |= RTA_GATEWAY;
-	rtm.rtm_msglen += sizeof(gateway);
-
-	iov[iovcnt].iov_base = &gateway;
-	iov[iovcnt++].iov_len = sizeof(gateway);
-
-	/* ESRCH means the route does not exist to delete. */
-	if ((writev(s, iov, iovcnt) == -1) && (errno != ESRCH))
-		error("failed to delete 127.0.0.1: %s", strerror(errno));
 
 	close(s);
 }
@@ -686,6 +631,7 @@ priv_cleanup(struct imsg_hup *imsg)
 
 	memset(&fimsg, 0, sizeof(fimsg));
 	fimsg.rdomain = imsg->rdomain;
+	fimsg.zapzombies = 0;	/* Only zapzombies when binding a lease. */
 	priv_flush_routes_and_arp_cache(&fimsg);
 
 	if (imsg->addr.s_addr == INADDR_ANY)
