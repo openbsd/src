@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.29 2013/03/09 17:40:57 deraadt Exp $
+.\"	$OpenBSD: identd.8,v 1.30 2013/03/11 21:24:24 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
 .\" This software has been released into the public domain.
 .\"
-.Dd $Mdocdate: March 9 2013 $
+.Dd $Mdocdate: March 11 2013 $
 .Dt IDENTD 8
 .Os
 .Sh NAME
@@ -40,10 +40,8 @@
 .Op Fl b | i | w
 .Op Fl a Ar address
 .Op Fl c Ar charset
-.Op Fl g Ar gid
 .Op Fl p Ar port
 .Op Fl t Ar seconds
-.Op Fl u Ar uid
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -93,12 +91,6 @@ instead of the
 or
 .Dq INVALID-PORT
 errors.
-.It Fl g Ar gid
-Specify a group ID number or group name which the
-.Nm
-server should
-switch to after binding itself to the
-TCP/IP port if running as a stand-alone daemon.
 .It Fl H
 Hide information about non existing users (e.g., connections through NAT) as
 well as existing users.
@@ -166,14 +158,6 @@ in the user's home directory.
 If this file is accessible, return
 at most 20 characters of the first line of the file
 instead of the normal USERID response.
-.It Fl u Ar uid
-Specify a user ID number or user name which the
-.Nm identd
-server should
-switch to after binding itself to the
-TCP/IP port if running as a stand-alone daemon.
-.Nm
-runs as user
 .Qq _identd .
 .It Fl v
 Log every request to syslog if

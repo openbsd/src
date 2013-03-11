@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.52 2013/03/11 17:40:10 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.53 2013/03/11 21:24:24 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -67,7 +67,7 @@ usage(void)
 {
 	syslog(LOG_ERR,
 	    "usage: %s [-46deHhlmNnoUv] [-b | -i | -w] [-a address] [-c charset] "
-	    "[-g gid] [-p port] [-t seconds] [-u uid]", __progname);
+	    "[-p port] [-t seconds]", __progname);
 	exit(2);
 }
 
@@ -149,7 +149,6 @@ main(int argc, char *argv[])
 	struct in_addr laddr, faddr;
 	struct in6_addr laddr6, faddr6;
 	struct passwd *pwd;
-	struct group *grp;
 	struct pollfd *pfds = NULL;
 	int	i, n = 0, background_flag = 0, timeout = 0, ch;
 	char   *portno = "auth";
@@ -206,34 +205,6 @@ main(int argc, char *argv[])
 			break;
 		case 'a':
 			bind_address = optarg;
-			break;
-		case 'u':
-			pwd = getpwnam(optarg);
-			if (pwd == NULL && isdigit(optarg[0])) {
-				set_uid = atoi(optarg);
-				if ((pwd = getpwuid(set_uid)) == NULL)
-					break;
-			}
-			if (pwd == NULL)
-				error("no such user (%s) for -u option",
-				    optarg);
-			else {
-				set_uid = pwd->pw_uid;
-				if (set_gid == 0)
-					set_gid = pwd->pw_gid;
-			}
-			break;
-		case 'g':
-			grp = getgrnam(optarg);
-			if (grp == NULL && isdigit(optarg[0])) {
-				set_gid = atoi(optarg);
-				break;
-			}
-			grp = getgrnam(optarg);
-			if (!grp)
-				error("no such group (%s) for -g option", optarg);
-			else
-				set_gid = grp->gr_gid;
 			break;
 		case 'c':
 			charset_name = optarg;
@@ -350,19 +321,12 @@ main(int argc, char *argv[])
 		n = 1;
 	}
 
-	if (set_gid) {
-		if (setegid(set_gid) == -1)
+	if (set_gid)
+		if (setresgid(set_gid, set_gid, set_gid) == -1)
 			error("main: setegid");
-		if (setgid(set_gid) == -1)
-			error("main: setgid");
-	}
-	if (set_uid) {
-		if (seteuid(set_uid) == -1)
+	if (set_uid)
+		if (setresuid(set_uid, set_uid, set_uid) == -1)
 			error("main: seteuid");
-		if (setuid(set_uid) == -1)
-			error("main: setuid");
-	}
-
 	/*
 	 * Do some special handling if the "-b" or "-w" flags are used
 	 */
