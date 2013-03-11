@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.818 2013/01/20 22:51:16 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.819 2013/03/11 19:48:40 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3487,7 +3487,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 				if (r->rule_flag & PFRULE_AFTO)
 					pd->naf = r->naf;
 				if (pf_get_transaddr(r, pd, sns, &nr) == -1) {
-					REASON_SET(&reason, PFRES_MEMORY);
+					REASON_SET(&reason, PFRES_TRANSLATE);
 					goto cleanup;
 				}
 				if (r->log || act.log & PF_LOG_MATCHES) {
@@ -3526,7 +3526,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	if (r->rule_flag & PFRULE_AFTO)
 		pd->naf = r->naf;
 	if (pf_get_transaddr(r, pd, sns, &nr) == -1) {
-		REASON_SET(&reason, PFRES_MEMORY);
+		REASON_SET(&reason, PFRES_TRANSLATE);
 		goto cleanup;
 	}
 	REASON_SET(&reason, PFRES_MATCH);
