@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.29 2012/02/14 18:05:41 sthen Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.30 2013/03/11 14:08:04 mpi Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -328,9 +328,6 @@ extern int nd6_debug;
 
 extern struct timeout nd6_timer_ch;
 
-/* nd6_rtr.c */
-extern int nd6_defifindex;
-
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[9];
 	struct {
@@ -416,7 +413,6 @@ struct nd_prefix *nd6_prefix_lookup(struct nd_prefix *);
 int in6_ifdel(struct ifnet *, struct in6_addr *);
 int in6_init_prefix_ltimes(struct nd_prefix *ndpr);
 void rt6_flush(struct in6_addr *, struct ifnet *);
-int nd6_setdefaultiface(int);
 
 #endif /* _KERNEL */
 

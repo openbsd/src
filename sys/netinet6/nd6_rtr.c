@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.67 2013/03/07 09:40:19 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.68 2013/03/11 14:08:04 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -80,9 +80,6 @@ int rt6_deleteroute(struct radix_node *, void *, u_int);
 void nd6_addr_add(void *, void *);
 
 extern int nd6_recalc_reachtm_interval;
-
-static struct ifnet *nd6_defifp;
-int nd6_defifindex;
 
 /*
  * Receive Router Solicitation Message - just for routers.
@@ -2008,25 +2005,4 @@ rt6_deleteroute(struct radix_node *rn, void *arg, u_int id)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	return (rtrequest1(RTM_DELETE, &info, RTP_ANY, NULL, id));
 #undef SIN6
-}
-
-int
-nd6_setdefaultiface(int ifindex)
-{
-	int error = 0;
-
-	if (ifindex < 0 || if_indexlim <= ifindex)
-		return (EINVAL);
-	if (ifindex != 0 && !ifindex2ifnet[ifindex])
-		return (EINVAL);
-
-	if (nd6_defifindex != ifindex) {
-		nd6_defifindex = ifindex;
-		if (nd6_defifindex > 0) {
-			nd6_defifp = ifindex2ifnet[nd6_defifindex];
-		} else
-			nd6_defifp = NULL;
-	}
-
-	return (error);
 }

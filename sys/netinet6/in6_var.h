@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.36 2013/03/04 14:23:35 bluhm Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.37 2013/03/11 14:08:04 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -415,9 +415,6 @@ struct	in6_rrenumreq {
 #define SIOCSIFALIFETIME_IN6	_IOWR('i', 82, struct in6_ifreq)
 #define SIOCGIFSTAT_IN6		_IOWR('i', 83, struct in6_ifreq)
 #define SIOCGIFSTAT_ICMP6	_IOWR('i', 84, struct in6_ifreq)
-
-#define SIOCSDEFIFACE_IN6	_IOWR('i', 85, struct in6_ndifreq)
-#define SIOCGDEFIFACE_IN6	_IOWR('i', 86, struct in6_ndifreq)
 
 #define SIOCSIFINFO_FLAGS	_IOWR('i', 87, struct in6_ndireq) /* XXX */
 
