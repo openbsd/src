@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.322 2013/03/07 21:35:19 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.323 2013/03/11 01:12:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -961,6 +961,7 @@ bge_miibus_readreg(struct device *dev, int phy, int reg)
 
 	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_READ|BGE_MICOMM_BUSY|
 	    BGE_MIPHY(phy)|BGE_MIREG(reg));
+	CSR_READ_4(sc, BGE_MI_COMM); /* force write */
 
 	for (i = 0; i < 200; i++) {
 		delay(1);
@@ -1018,6 +1019,7 @@ bge_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_WRITE|BGE_MICOMM_BUSY|
 	    BGE_MIPHY(phy)|BGE_MIREG(reg)|val);
+	CSR_READ_4(sc, BGE_MI_COMM); /* force write */
 
 	for (i = 0; i < 200; i++) {
 		delay(1);
