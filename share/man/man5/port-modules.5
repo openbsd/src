@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.155 2013/03/10 20:01:43 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.156 2013/03/11 14:35:53 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 10 2013 $
+.Dd $Mdocdate: March 11 2013 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -237,13 +237,13 @@ The following variables can be overridden in a relatively safe fashion:
 .Ev MASTER_SITES ,
 .Ev MULTI_PACKAGES ,
 .Ev NO_BUILD ,
-.Ev NO_REGRESS ,
+.Ev NO_TEST ,
 .Ev PATCH_LIST ,
 .Ev PKG_ARCH ,
 .Ev PKGNAME* ,
 .Ev PREFIX ,
-.Ev REGRESS_TARGET ,
-.Ev REGRESS_IS_INTERACTIVE ,
+.Ev TEST_TARGET ,
+.Ev TEST_IS_INTERACTIVE ,
 .Ev REORDER_DEPENDENCIES ,
 .Ev SEPARATE_BUILD ,
 .Ev SHARED_ONLY ,
@@ -265,7 +265,7 @@ The following variables can be added to in a relatively safe fashion:
 .Ev MAKE_FLAGS ,
 .Ev PKG_ARGS ,
 .Ev PSEUDO_FLAVORS ,
-.Ev REGRESS_DEPENDS ,
+.Ev TEST_DEPENDS ,
 .Ev REORDER_DEPENDENCIES ,
 .Ev RUN_DEPENDS ,
 .Ev SUBST_VARS ,
@@ -351,7 +351,7 @@ the correct location depending on
 and sets a default
 .Ev PKGNAME .
 Also affects
-.Ev REGRESS_DEPENDS ,
+.Ev TEST_DEPENDS ,
 .Ev CONFIGURE_STYLE ,
 .Ev PKG_ARCH ,
 and
@@ -374,7 +374,7 @@ to a valid directory,
 and
 .Ev CPAN_REPORT_FROM
 to a valid email address to automate the reporting
-of regress tests to CPAN.
+of regression tests to CPAN.
 .Pp
 If
 .Ev MODCPAN_EXAMPLES
@@ -602,7 +602,7 @@ and
 .Ar do-build ,
 .Ar do-install
 and
-.Ar do-regress
+.Ar do-test
 targets are provided if the port itself didn't set them.
 If
 .Ar register
@@ -668,10 +668,10 @@ by default.
 Ports can be built with two lua versions.
 If no FLAVOR is set it defaults to MODLUA_DEAFULT_VERSION.
 Otherwise the FULLPKGNAME is adjusted, if MODLUA_SA is not set.
-In order to set a build, run or regress dependency on a lua port,
+In order to set a build, run or test dependency on a lua port,
 use the following, which will propagate the currently used flavor:
 .Ev MODLUA_BUILD_DEPENDS ,
-.Ev MODLUA_REGRESS_DEPENDS ,
+.Ev MODLUA_TEST_DEPENDS ,
 .Ev MODLUA_RUN_DEPENDS .
 .It lang/mono
 Sets
@@ -731,14 +731,14 @@ append "expresso" to
 .Ev CONFIGURE_STYLE .
 .Pa devel/node-expresso
 will be appened to
-.Ev REGRESS_DEPENDS
+.Ev TEST_DEPENDS
 and a default
-.Ev MODNODE_REGRESS_TARGET
-will be defined, along with a do-regress target if it has not
+.Ev MODNODE_TEST_TARGET
+will be defined, along with a do-test target if it has not
 already been set.
 If "expresso" isn't appended to
 .Ev CONFIGURE_STYLE ,
-.Ev REGRESS_TARGET
+.Ev TEST_TARGET
 will be set to "test".
 One of these two
 .Ev CONFIGURE_STYLE Ns s
@@ -796,13 +796,13 @@ Sets default
 .Ev USE_LIBTOOL ,
 .Ev LIBTOOL_FLAGS .
 Provides a default
-.Ev REGRESS_TARGET
+.Ev TEST_TARGET
 and
-.Ev REGRESS_FLAGS
+.Ev TEST_FLAGS
 unless
-.Ev NO_REGRESS
+.Ev NO_TEST
 or a
-.Ar do-regress
+.Ar do-test
 target is defined.
 Adds common dependencies to
 .Ev RUN_DEPENDS
@@ -864,7 +864,7 @@ Also affects
 and
 .Ev SUBST_VARS .
 May affect the
-.Ar regress
+.Ar test
 target.
 .It lang/ruby
 See
@@ -1040,9 +1040,9 @@ Sets
 to
 .Pa /var/www .
 Sets
-.Ev NO_REGRESS
+.Ev NO_TEST
 unless a
-.Ar do-regress
+.Ar do-test
 target is defined.
 Adds common dependencies to
 .Ev RUN_DEPENDS
@@ -1074,7 +1074,7 @@ It appends
 to
 .Ev RUN_DEPENDS
 and also sets
-.Ev NO_REGRESS
+.Ev NO_TEST
 to Yes.
 .It www/zope
 .It x11/gnome
