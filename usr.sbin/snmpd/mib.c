@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.63 2012/12/18 21:28:45 millert Exp $	*/
+/*	$OpenBSD: mib.c,v 1.64 2013/03/11 19:49:37 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1459,6 +1459,7 @@ static struct oid openbsd_mib[] = {
 	{ MIB(pfCntStateLimit),		OID_RD, mib_pfcounters },
 	{ MIB(pfCntSrcLimit),		OID_RD, mib_pfcounters },
 	{ MIB(pfCntSynproxy),		OID_RD, mib_pfcounters },
+	{ MIB(pfCntTranslate),		OID_RD, mib_pfcounters },
 	{ MIB(pfStateCount),		OID_RD, mib_pfscounters },
 	{ MIB(pfStateSearches),		OID_RD, mib_pfscounters },
 	{ MIB(pfStateInserts),		OID_RD, mib_pfscounters },
@@ -1702,7 +1703,8 @@ mib_pfcounters(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		{ 12, &s.counters[PFRES_STATEINS] },
 		{ 13, &s.counters[PFRES_MAXSTATES] },
 		{ 14, &s.counters[PFRES_SRCLIMIT] },
-		{ 15, &s.counters[PFRES_SYNPROXY] }
+		{ 15, &s.counters[PFRES_SYNPROXY] },
+		{ 16, &s.counters[PFRES_TRANSLATE] }
 	};
 
 	if (pf_get_stats(&s))

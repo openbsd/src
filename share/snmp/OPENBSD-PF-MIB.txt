@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.1 2012/02/23 03:54:38 joel Exp $
+-- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.2 2013/03/11 19:49:37 sthen Exp $
 --
 -- Copyright (c) 2004-2012 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -33,7 +33,7 @@ IMPORTS
 		FROM SNMPv2-CONF;
 
 pfMIBObjects MODULE-IDENTITY
-    LAST-UPDATED "201201260000Z"
+    LAST-UPDATED "201302242033Z"
     ORGANIZATION "OpenBSD"
     CONTACT-INFO "
                   Author:     Joel Knight
@@ -43,6 +43,8 @@ pfMIBObjects MODULE-IDENTITY
     DESCRIPTION "The MIB module for gathering information from
 		OpenBSD's packet filter.
                 "
+    REVISION "201302242033Z"
+    DESCRIPTION "Add separate counter for failed translations"
     REVISION "201201260000Z"
     DESCRIPTION "Add OPENBSD-PF-MIB to OpenBSD's snmpd"
     ::= { openBSD 1 }
@@ -237,6 +239,15 @@ pfCntSynproxy OBJECT-TYPE
     DESCRIPTION
 	"The number of packets that were dropped during the TCP synproxy process."
     ::= { pfCounters 15 }
+
+pfCntTranslate OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+	"The number of packets that were dropped because network address
+        translation was requested and no unused port was available."
+    ::= { pfCounters 16 }
 
 
 -- pfStateTable
