@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.16 2012/04/12 17:33:43 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.17 2013/03/11 17:40:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -268,7 +268,8 @@ session_accept(int fd, short event, void *bula)
 		 */
 		if (errno == ENFILE || errno == EMFILE) {
 			accept_pause();
-		} else if (errno != EWOULDBLOCK && errno != EINTR)
+		} else if (errno != EWOULDBLOCK && errno != EINTR &&
+		    errno != ECONNABORTED)
 			log_debug("sess_recv_packet: accept error: %s",
 			    strerror(errno));
 		return;

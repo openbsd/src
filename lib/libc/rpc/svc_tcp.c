@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.30 2010/09/01 14:43:34 millert Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.31 2013/03/11 17:40:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -251,7 +251,8 @@ rendezvous_request(SVCXPRT *xprt, struct rpc_msg *ignored)
 	len = sizeof(struct sockaddr_in);
 	if ((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr,
 	    &len)) < 0) {
-		if (errno == EINTR)
+		if (errno == EINTR || errno == EWOULDBLOCK ||
+		    errno == ECONNABORTED)
 			goto again;
 	       return (FALSE);
 	}

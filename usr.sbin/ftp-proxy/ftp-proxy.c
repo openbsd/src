@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.26 2013/03/10 21:28:26 benno Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.27 2013/03/11 17:40:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -435,7 +435,9 @@ handle_connection(const int listen_fd, short event, void *arg)
 
 			event_del(&listen_ev);
 			evtimer_add(&pause_accept_ev, &pause);
-		}
+		} else if (errno != EWOULDBLOCK && errno != EINTR &&
+		    errno != ECONNABORTED)
+			logmsg(LOG_CRIT, "accept() failed: %s", strerror(errno));
 		return;
 	}
 

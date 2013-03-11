@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.10 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.11 2013/03/11 17:40:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -165,7 +165,8 @@ control_accept(int listenfd, short event, void *arg)
 
 			event_del(&cs->cs_ev);
 			evtimer_add(&cs->cs_evt, &evtpause);
-		} else if (errno != EWOULDBLOCK && errno != EINTR)
+		} else if (errno != EWOULDBLOCK && errno != EINTR &&
+		    errno != ECONNABORTED)
 			log_warn("%s: accept", __func__);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.50 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.51 2013/03/11 17:40:11 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -387,7 +387,8 @@ main(int argc, char **argv)
 				}
 		}
 		if (s < 0) {
-			if (errno != EINTR)
+			if (errno != EINTR && errno != EWOULDBLOCK &&
+			    errno != ECONNABORTED)
 				syslog(LOG_WARNING, "accept: %m");
 			continue;
 		}

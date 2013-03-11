@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.31 2010/04/17 16:27:49 krw Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.32 2013/03/11 17:40:10 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -304,6 +304,9 @@ main(int argc, char *argv[])
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tcpsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
+				if (errno == EWOULDBLOCK || errno == EINTR ||
+				    errno == ECONNABORTED)
+					continue;
 				syslog(LOG_ERR, "accept failed: %m");
 				return (1);
 			}

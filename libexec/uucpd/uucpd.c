@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.32 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.33 2013/03/11 17:40:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -136,7 +136,8 @@ main(int argc, char *argv[])
 	for(;;) {
 		s = accept(tcp_socket, &hisctladdr, &hisaddrlen);
 		if (s < 0){
-			if (errno == EINTR)
+			if (errno == EINTR || errno == EWOULDBLOCK ||
+			    errno == ECONNABORTED)
 				continue;
 			perror("uucpd: accept");
 			exit(1);

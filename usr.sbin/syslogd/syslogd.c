@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.105 2013/02/10 10:47:08 markus Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.106 2013/03/11 17:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1805,7 +1805,8 @@ ctlsock_accept_handler(void)
 	dprintf("Accepting control connection\n");
 	fd = accept(pfd[PFD_CTLSOCK].fd, NULL, NULL);
 	if (fd == -1) {
-		if (errno != EINTR && errno != ECONNABORTED)
+		if (errno != EINTR && errno != EWOULDBLOCK &&
+		    errno != ECONNABORTED)
 			logerror("accept ctlsock");
 		return;
 	}

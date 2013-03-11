@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.82 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.83 2013/03/11 17:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -308,7 +308,8 @@ control_accept(int listenfd, short event, void *arg)
 	if ((connfd = accept(listenfd, (struct sockaddr *)&sun, &len)) == -1) {
 		if (errno == ENFILE || errno == EMFILE)
 			goto pause;
-		if (errno == EINTR || errno == ECONNABORTED)
+		if (errno == EINTR || errno == EWOULDBLOCK ||
+		    errno == ECONNABORTED)
 			return;
 		fatal("control_accept: accept");
 	}

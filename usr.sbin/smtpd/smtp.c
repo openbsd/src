@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.123 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.124 2013/03/11 17:40:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -418,7 +418,8 @@ smtp_accept(int fd, short event, void *p)
 			log_warn("warn: Disabling incoming SMTP connections");
 			goto pause;
 		}
-		if (errno == EINTR || errno == ECONNABORTED)
+		if (errno == EINTR || errno == EWOULDBLOCK ||
+		    errno == ECONNABORTED)
 			return;
 		fatal("smtp_accept");
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.327 2013/03/07 21:26:28 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.328 2013/03/11 17:40:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1037,13 +1037,12 @@ session_accept(int listenfd)
 	len = sizeof(cliaddr);
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&cliaddr, &len)) == -1) {
-		if (errno == ENFILE || errno == EMFILE) {
+		if (errno == ENFILE || errno == EMFILE)
 			pauseaccept = getmonotime();
-			return;
-		} else if (errno == EWOULDBLOCK || errno == EINTR)
-			return;
-		else
+		else if (errno != EWOULDBLOCK && errno != EINTR &&
+		    errno != ECONNABORTED)
 			log_warn("accept");
+		return;
 	}
 
 	p = getpeerbyip((struct sockaddr *)&cliaddr);

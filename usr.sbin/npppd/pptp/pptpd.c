@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.13 2013/03/11 09:28:02 giovanni Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.14 2013/03/11 17:40:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.13 2013/03/11 09:28:02 giovanni Exp $ */
+/* $Id: pptpd.c,v 1.14 2013/03/11 17:40:11 deraadt Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.13 2013/03/11 09:28:02 giovanni Exp $
+ * $Id: pptpd.c,v 1.14 2013/03/11 17:40:11 deraadt Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -646,7 +646,8 @@ pptpd_io_event(int fd, short evmask, void *ctx)
 			    (struct sockaddr *)&peer, &peerlen)) < 0) {
 				if (errno == EMFILE || errno == ENFILE)
 					accept_pause();
-				else if (errno != EAGAIN && errno != EINTR) {
+				else if (errno != EAGAIN && errno != EINTR &&
+				    errno != ECONNABORTED) {
 					pptpd_log(_this, LOG_ERR,
 					    "accept() failed at %s(): %m",
 						__func__);

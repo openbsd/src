@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.14 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: invite.c,v 1.15 2013/03/11 17:40:11 deraadt Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -95,7 +95,8 @@ invite_remote(void)
 	signal(SIGALRM, re_invite);
 	(void) setjmp(invitebuf);
 	while ((new_sockt = accept(sockt, &rp, &rplen)) == -1) {
-		if (errno == EINTR || errno == ECONNABORTED)
+		if (errno == EINTR || errno == EWOULDBLOCK ||
+		    errno == ECONNABORTED)
 			continue;
 		quit("Unable to connect with your party", 1);
 	}

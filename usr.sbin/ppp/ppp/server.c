@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: server.c,v 1.18 2006/09/25 05:59:28 otto Exp $
+ *	$OpenBSD: server.c,v 1.19 2013/03/11 17:40:11 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -101,9 +101,11 @@ server_Read(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
 
   if (s->fd >= 0 && FD_ISSET(s->fd, fdset)) {
     wfd = accept(s->fd, sa, &ssize);
-    if (wfd < 0)
-      log_Printf(LogERROR, "server_Read: accept(): %s\n", strerror(errno));
-    else if (sa->sa_len == 0) {
+    if (wfd < 0) {
+      if (errno != EINTR && errno != EWOULDBLOCK &&
+        errno != ECONNABORTED)
+         log_Printf(LogERROR, "server_Read: accept(): %s\n", strerror(errno));
+    } else if (sa->sa_len == 0) {
       close(wfd);
       wfd = -1;
     }
