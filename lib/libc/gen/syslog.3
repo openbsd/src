@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.28 2008/05/07 12:05:35 claudio Exp $
+.\"	$OpenBSD: syslog.3,v 1.29 2013/03/11 13:26:35 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 7 2008 $
+.Dd $Mdocdate: March 11 2013 $
 .Dt SYSLOG 3
 .Os
 .Sh NAME
@@ -222,6 +222,13 @@ descriptors are allocated.
 This option must be used in programs that call
 .Xr chroot 2
 where the new root does not have its own log socket.
+.It Dv LOG_ODELAY
+Delay opening the connection to
+.Xr syslogd 8
+until the first message is logged.
+This is the opposite of
+.Dv LOG_NDELAY
+and is the default behaviour when neither option is specified.
 .It Dv LOG_PERROR
 Write the message to standard error output as well as to the system log.
 .It Dv LOG_PID
