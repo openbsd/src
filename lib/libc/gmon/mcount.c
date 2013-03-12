@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.13 2013/02/12 08:06:22 mpi Exp $ */
+/*	$OpenBSD: mcount.c,v 1.14 2013/03/12 09:37:16 mpi Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,10 +41,6 @@
  * _mcount updates data structures that represent traversals of the
  * program's call graph edges.  frompc and selfpc are the return
  * address and function address that represents the given call graph edge.
- *
- * Note: the original BSD code used the same variable (frompcindex) for
- * both frompcindex and frompc.  Any reasonable, modern compiler will
- * perform this optimization.
  */
 _MCOUNT_DECL(u_long frompc, u_long selfpc) __used;
 /* _mcount; may be static, inline, etc */
@@ -56,9 +52,21 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)
 	long toindex;
 #ifdef _KERNEL
 	int s;
-#endif
 
+	/*
+	 * Do not profile execution if memory for the current CPU
+	 * desciptor and profiling buffers has not yet been allocated
+	 * or if the CPU we are running on has not yet set its trap
+	 * handler.
+	 */
+	if (gmoninit == 0)
+		return;
+
+	if ((p = curcpu()->ci_gmon) == NULL)
+		return;
+#else
 	p = &_gmonparam;
+#endif
 	/*
 	 * check that we are profiling
 	 * and that we aren't recursively invoked.
@@ -171,10 +179,8 @@ overflow:
 	return;
 }
 
-#ifndef lint
 /*
  * Actual definition of mcount function.  Defined in <machine/profile.h>,
  * which is included by <sys/gmon.h>.
  */
 MCOUNT
-#endif

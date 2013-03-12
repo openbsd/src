@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.17 2013/02/12 08:06:22 mpi Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.18 2013/03/12 09:37:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -58,28 +58,32 @@ struct kvmvars {
 	struct gmonparam gpm;
 };
 
-int	bflag, hflag, kflag, rflag, pflag;
+extern char *__progname;
+
+int	bflag, cflag, hflag, kflag, rflag, pflag;
 int	debug = 0;
-void	setprof(struct kvmvars *, int);
-void	dumpstate(struct kvmvars *);
-void	reset(struct kvmvars *);
+void	kgmon(char *, char *, struct kvmvars *, int);
+void	setprof(struct kvmvars *, int, int);
+void	dumpstate(struct kvmvars *, int);
+void	reset(struct kvmvars *, int);
 void	kern_readonly(int);
-int	getprof(struct kvmvars *);
+int	getprof(struct kvmvars *, int);
 int	getprofhz(struct kvmvars *);
-int	openfiles(char *, char *, struct kvmvars *);
+int	openfiles(char *, char *, struct kvmvars *, int);
+int	getncpu(void);
 
 int
 main(int argc, char **argv)
 {
-	extern char *__progname;
-	int ch, mode, disp, accessmode;
+	int ch, err, ncpu, cpuid = -1;
 	struct kvmvars kvmvars;
 	char *sys, *kmemf;
+	const char *p;
 
 	seteuid(getuid());
 	kmemf = NULL;
 	sys = NULL;
-	while ((ch = getopt(argc, argv, "M:N:bhpr")) != -1) {
+	while ((ch = getopt(argc, argv, "M:N:bc:hpr")) != -1) {
 		switch((char)ch) {
 
 		case 'M':
@@ -95,6 +99,13 @@ main(int argc, char **argv)
 			bflag = 1;
 			break;
 
+		case 'c':
+			cflag = 1;
+			cpuid = strtonum(optarg, 0, 1024, &p);
+			if (p)
+				errx(1, "illegal CPU id %s: %s", optarg, p);
+			break;
+
 		case 'h':
 			hflag = 1;
 			break;
@@ -108,9 +119,8 @@ main(int argc, char **argv)
 			break;
 
 		default:
-			fprintf(stderr,
-			    "usage: %s [-bhpr] [-M core] [-N system]\n",
-			    __progname);
+			fprintf(stderr, "usage: %s [-bhpr] "
+			    "[-c cpuid] [-M core] [-N system]\n", __progname);
 			exit(1);
 		}
 	}
@@ -127,8 +137,25 @@ main(int argc, char **argv)
 		}
 	}
 #endif
-	accessmode = openfiles(sys, kmemf, &kvmvars);
-	mode = getprof(&kvmvars);
+
+	if (cflag) {
+		kgmon(sys, kmemf, &kvmvars, cpuid);
+	} else {
+		ncpu = getncpu();
+		for (cpuid = 0; cpuid < ncpu; cpuid++)
+			kgmon(sys, kmemf, &kvmvars, cpuid);
+	}
+
+	return (0);
+}
+
+void
+kgmon(char *sys, char *kmemf, struct kvmvars *kvp, int cpuid)
+{
+	int mode, disp, accessmode;
+
+	accessmode = openfiles(sys, kmemf, kvp, cpuid);
+	mode = getprof(kvp, cpuid);
 	if (hflag)
 		disp = GMON_PROF_OFF;
 	else if (bflag)
@@ -136,23 +163,22 @@ main(int argc, char **argv)
 	else
 		disp = mode;
 	if (pflag)
-		dumpstate(&kvmvars);
+		dumpstate(kvp, cpuid);
 	if (rflag)
-		reset(&kvmvars);
+		reset(kvp, cpuid);
 	if (accessmode == O_RDWR)
-		setprof(&kvmvars, disp);
-	printf("%s: kernel profiling is %s.\n", __progname,
-	    disp == GMON_PROF_OFF ? "off" : "running");
-	return (0);
+		setprof(kvp, cpuid, disp);
+	printf("%s: kernel profiling is %s for cpu %d.\n", __progname,
+	    disp == GMON_PROF_OFF ? "off" : "running", cpuid);
 }
 
 /*
  * Check that profiling is enabled and open any ncessary files.
  */
 int
-openfiles(char *sys, char *kmemf, struct kvmvars *kvp)
+openfiles(char *sys, char *kmemf, struct kvmvars *kvp, int cpuid)
 {
-	int mib[3], state, openmode;
+	int mib[4], state, openmode;
 	size_t size;
 	char errbuf[_POSIX2_LINE_MAX];
 
@@ -160,14 +186,15 @@ openfiles(char *sys, char *kmemf, struct kvmvars *kvp)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_PROF;
 		mib[2] = GPROF_STATE;
+		mib[3] = cpuid;
 		size = sizeof state;
-		if (sysctl(mib, 3, &state, &size, NULL, 0) < 0)
+		if (sysctl(mib, 4, &state, &size, NULL, 0) < 0)
 			errx(20, "profiling not defined in kernel.");
 		if (!(bflag || hflag || rflag ||
 		    (pflag && state == GMON_PROF_ON)))
 			return (O_RDONLY);
 		(void)seteuid(0);
-		if (sysctl(mib, 3, NULL, NULL, &state, size) >= 0)
+		if (sysctl(mib, 4, NULL, NULL, &state, size) >= 0)
 			return (O_RDWR);
 		(void)seteuid(getuid());
 		kern_readonly(state);
@@ -216,9 +243,9 @@ kern_readonly(int mode)
  * Get the state of kernel profiling.
  */
 int
-getprof(struct kvmvars *kvp)
+getprof(struct kvmvars *kvp, int cpuid)
 {
-	int mib[3];
+	int mib[4];
 	size_t size;
 
 	if (kflag) {
@@ -228,8 +255,9 @@ getprof(struct kvmvars *kvp)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_PROF;
 		mib[2] = GPROF_GMONPARAM;
+		mib[3] = cpuid;
 		size = sizeof kvp->gpm;
-		if (sysctl(mib, 3, &kvp->gpm, &size, NULL, 0) < 0)
+		if (sysctl(mib, 4, &kvp->gpm, &size, NULL, 0) < 0)
 			size = 0;
 	}
 	if (size != sizeof kvp->gpm)
@@ -242,10 +270,10 @@ getprof(struct kvmvars *kvp)
  * Enable or disable kernel profiling according to the state variable.
  */
 void
-setprof(struct kvmvars *kvp, int state)
+setprof(struct kvmvars *kvp, int cpuid, int state)
 {
 	struct gmonparam *p = (struct gmonparam *)nl[N_GMONPARAM].n_value;
-	int mib[3], oldstate;
+	int mib[4], oldstate;
 	size_t sz;
 
 	sz = sizeof(state);
@@ -253,12 +281,13 @@ setprof(struct kvmvars *kvp, int state)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_PROF;
 		mib[2] = GPROF_STATE;
-		if (sysctl(mib, 3, &oldstate, &sz, NULL, 0) < 0)
+		mib[3] = cpuid;
+		if (sysctl(mib, 4, &oldstate, &sz, NULL, 0) < 0)
 			goto bad;
 		if (oldstate == state)
 			return;
 		(void)seteuid(0);
-		if (sysctl(mib, 3, NULL, NULL, &state, sz) >= 0) {
+		if (sysctl(mib, 4, NULL, NULL, &state, sz) >= 0) {
 			(void)seteuid(getuid());
 			return;
 		}
@@ -275,22 +304,25 @@ bad:
  * Build the gmon.out file.
  */
 void
-dumpstate(struct kvmvars *kvp)
+dumpstate(struct kvmvars *kvp, int cpuid)
 {
 	FILE *fp;
 	struct rawarc rawarc;
 	struct tostruct *tos;
 	u_long frompc;
 	u_short *froms, *tickbuf;
-	int mib[3];
+	int mib[4];
 	size_t i;
 	struct gmonhdr h;
 	int fromindex, endfrom, toindex;
+	char buf[16];
 
-	setprof(kvp, GMON_PROF_OFF);
-	fp = fopen("gmon.out", "w");
+	snprintf(buf, sizeof(buf), "gmon-%02d.out", cpuid);
+
+	setprof(kvp, cpuid, GMON_PROF_OFF);
+	fp = fopen(buf, "w");
 	if (fp == 0) {
-		perror("gmon.out");
+		perror(buf);
 		return;
 	}
 
@@ -317,8 +349,9 @@ dumpstate(struct kvmvars *kvp)
 		    kvp->gpm.kcountsize);
 	} else {
 		mib[2] = GPROF_COUNT;
+		mib[3] = cpuid;
 		i = kvp->gpm.kcountsize;
-		if (sysctl(mib, 3, tickbuf, &i, NULL, 0) < 0)
+		if (sysctl(mib, 4, tickbuf, &i, NULL, 0) < 0)
 			i = 0;
 	}
 	if (i != kvp->gpm.kcountsize)
@@ -339,8 +372,9 @@ dumpstate(struct kvmvars *kvp)
 		    kvp->gpm.fromssize);
 	} else {
 		mib[2] = GPROF_FROMS;
+		mib[3] = cpuid;
 		i = kvp->gpm.fromssize;
-		if (sysctl(mib, 3, froms, &i, NULL, 0) < 0)
+		if (sysctl(mib, 4, froms, &i, NULL, 0) < 0)
 			i = 0;
 	}
 	if (i != kvp->gpm.fromssize)
@@ -354,8 +388,9 @@ dumpstate(struct kvmvars *kvp)
 		    kvp->gpm.tossize);
 	} else {
 		mib[2] = GPROF_TOS;
+		mib[3] = cpuid;
 		i = kvp->gpm.tossize;
-		if (sysctl(mib, 3, tos, &i, NULL, 0) < 0)
+		if (sysctl(mib, 4, tos, &i, NULL, 0) < 0)
 			i = 0;
 	}
 	if (i != kvp->gpm.tossize)
@@ -415,13 +450,13 @@ getprofhz(struct kvmvars *kvp)
  * Reset the kernel profiling date structures.
  */
 void
-reset(struct kvmvars *kvp)
+reset(struct kvmvars *kvp, int cpuid)
 {
 	char *zbuf;
 	u_long biggest;
-	int mib[3];
+	int mib[4];
 
-	setprof(kvp, GMON_PROF_OFF);
+	setprof(kvp, cpuid, GMON_PROF_OFF);
 
 	biggest = kvp->gpm.kcountsize;
 	if (kvp->gpm.fromssize > biggest)
@@ -447,14 +482,31 @@ reset(struct kvmvars *kvp)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_PROF;
 	mib[2] = GPROF_COUNT;
-	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.kcountsize) < 0)
+	mib[3] = cpuid;
+	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.kcountsize) < 0)
 		err(13, "tickbuf zero");
 	mib[2] = GPROF_FROMS;
-	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.fromssize) < 0)
+	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.fromssize) < 0)
 		err(14, "froms zero");
 	mib[2] = GPROF_TOS;
-	if (sysctl(mib, 3, NULL, NULL, zbuf, kvp->gpm.tossize) < 0)
+	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.tossize) < 0)
 		err(15, "tos zero");
 	(void)seteuid(getuid());
 	free(zbuf);
+}
+
+int
+getncpu(void)
+{
+	int mib[2] = { CTL_HW, HW_NCPU };
+	size_t size;
+	int ncpu;
+
+	size = sizeof(ncpu);
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) < 0) {
+		warnx("cannot read hw.ncpu");
+		return (1);
+	}
+
+	return (ncpu);
 }

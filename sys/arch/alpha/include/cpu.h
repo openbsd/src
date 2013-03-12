@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.48 2013/02/12 08:06:22 mpi Exp $ */
+/* $OpenBSD: cpu.h,v 1.49 2013/03/12 09:37:16 mpi Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -203,6 +203,9 @@ struct cpu_info {
 	u_long ci_ipis;			/* interprocessor interrupts pending */
 #endif
 	u_int32_t ci_randseed;
+#ifdef GPROF
+	struct gmonparam *ci_gmon;
+#endif
 };
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */

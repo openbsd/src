@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.23 2013/02/12 08:06:22 mpi Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.24 2013/03/12 09:37:16 mpi Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -49,49 +49,72 @@
 #include <uvm/uvm_extern.h>
 
 /*
- * Froms is actually a bunch of unsigned shorts indexing tos
+ * Flag to prevent CPUs from executing the mcount() monitor function
+ * until we're sure they are in a sane state.
  */
-struct gmonparam _gmonparam = { GMON_PROF_OFF };
+int gmoninit = 0;
 
 extern char etext[];
-
 
 void
 kmstartup(void)
 {
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	struct gmonparam *p;
+	u_long lowpc, highpc, textsize;
+	u_long kcountsize, fromssize, tossize;
+	long tolimit;
 	char *cp;
-	struct gmonparam *p = &_gmonparam;
 	int size;
 
 	/*
 	 * Round lowpc and highpc to multiples of the density we're using
 	 * so the rest of the scaling (here and in gprof) stays in ints.
 	 */
-	p->lowpc = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
-	p->highpc = ROUNDUP((u_long)etext, HISTFRACTION * sizeof(HISTCOUNTER));
-	p->textsize = p->highpc - p->lowpc;
+	lowpc = ROUNDDOWN(KERNBASE, HISTFRACTION * sizeof(HISTCOUNTER));
+	highpc = ROUNDUP((u_long)etext, HISTFRACTION * sizeof(HISTCOUNTER));
+	textsize = highpc - lowpc;
 	printf("Profiling kernel, textsize=%ld [%lx..%lx]\n",
-	       p->textsize, p->lowpc, p->highpc);
-	p->kcountsize = p->textsize / HISTFRACTION;
-	p->hashfraction = HASHFRACTION;
-	p->fromssize = p->textsize / HASHFRACTION;
-	p->tolimit = p->textsize * ARCDENSITY / 100;
-	if (p->tolimit < MINARCS)
-		p->tolimit = MINARCS;
-	else if (p->tolimit > MAXARCS)
-		p->tolimit = MAXARCS;
-	p->tossize = p->tolimit * sizeof(struct tostruct);
-	size = p->kcountsize + p->fromssize + p->tossize;
-	cp = (char *)uvm_km_zalloc(kernel_map, round_page(size));
-	if (cp == 0) {
-		printf("No memory for profiling.\n");
-		return;
+	    textsize, lowpc, highpc);
+	kcountsize = textsize / HISTFRACTION;
+	fromssize = textsize / HASHFRACTION;
+	tolimit = textsize * ARCDENSITY / 100;
+	if (tolimit < MINARCS)
+		tolimit = MINARCS;
+	else if (tolimit > MAXARCS)
+		tolimit = MAXARCS;
+	tossize = tolimit * sizeof(struct tostruct);
+	size = sizeof(*p) + kcountsize + fromssize + tossize;
+
+	/* Allocate and initialize one profiling buffer per CPU. */
+	CPU_INFO_FOREACH(cii, ci) {
+		cp = km_alloc(round_page(size), &kv_any, &kp_zero, &kd_nowait);
+		if (cp == NULL) {
+			printf("No memory for profiling.\n");
+			return;
+		}
+
+		p = (struct gmonparam *)cp;
+		cp += sizeof(*p);
+		p->tos = (struct tostruct *)cp;
+		cp += tossize;
+		p->kcount = (u_short *)cp;
+		cp += kcountsize;
+		p->froms = (u_short *)cp;
+
+		p->state = GMON_PROF_OFF;
+		p->lowpc = lowpc;
+		p->highpc = highpc;
+		p->textsize = textsize;
+		p->hashfraction = HASHFRACTION;
+		p->kcountsize = kcountsize;
+		p->fromssize = fromssize;
+		p->tolimit = tolimit;
+		p->tossize = tossize;
+
+		ci->ci_gmon = p;
 	}
-	p->tos = (struct tostruct *)cp;
-	cp += p->tossize;
-	p->kcount = (u_short *)cp;
-	cp += p->kcountsize;
-	p->froms = (u_short *)cp;
 }
 
 /*
@@ -101,14 +124,32 @@ int
 sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	struct gmonparam *gp = &_gmonparam;
-	int error;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	struct gmonparam *gp = NULL;
+	int error, cpuid, op;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
+	/* all sysctl names at this level are name and field */
+	if (namelen != 2)
 		return (ENOTDIR);		/* overloaded */
 
-	switch (name[0]) {
+	op = name[0];
+	cpuid = name[1];
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (cpuid == CPU_INFO_UNIT(ci)) {
+			gp = ci->ci_gmon;
+			break;
+		}
+	}
+
+	if (gp == NULL)
+		return (EOPNOTSUPP);
+
+	/* Assume that if we're here it is safe to execute profiling. */
+	gmoninit = 1;
+
+	switch (op) {
 	case GPROF_STATE:
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &gp->state);
 		if (error)
