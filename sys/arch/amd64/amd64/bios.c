@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.22 2012/08/10 18:50:04 krw Exp $	*/
+/*	$OpenBSD: bios.c,v 1.23 2013/03/12 16:31:50 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -95,6 +95,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 	vaddr_t va;
 	paddr_t pa, end;
 	u_int8_t *p;
+	int smbiosrev = 0;
 
 	/* see if we have SMBIOS extentions */
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
@@ -137,6 +138,10 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		printf(": SMBIOS rev. %d.%d @ 0x%lx (%d entries)",
 		    hdr->majrev, hdr->minrev, hdr->addr, hdr->count);
 
+		smbiosrev = hdr->majrev * 100 + hdr->minrev;
+		if (hdr->minrev < 10)
+			smbiosrev = hdr->majrev * 100 + hdr->minrev * 10;
+
 		bios.cookie = 0;
 		if (smbios_find_table(SMBIOS_TYPE_BIOS, &bios)) {
 			sb = bios.tblhdr;
@@ -158,6 +163,39 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 	printf("\n");
+
+	/* No SMBIOS extensions, go looking for Soekris comBIOS */
+	if (smbiosrev == 0) {
+		const char *signature = "Soekris Engineering";
+
+		for (p = ISA_HOLE_VADDR(SMBIOS_START);
+		    p <= (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END -
+		    (strlen(signature) - 1)); p++)
+			if (!memcmp(p, signature, strlen(signature))) {
+				hw_vendor = malloc(strlen(signature) + 1,
+				    M_DEVBUF, M_NOWAIT);
+				if (hw_vendor)
+					strlcpy(hw_vendor, signature,
+					    strlen(signature) + 1);
+				p += strlen(signature);
+				break;
+			}
+
+		for (; hw_vendor &&
+		    p <= (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END - 6); p++)
+			/*
+			 * Search only for "net6501" in the comBIOS as that's
+			 * the only Soekris platform that can run amd64
+			 */
+			if (!memcmp(p, "net6501", 7)) {
+				hw_prod = malloc(8, M_DEVBUF, M_NOWAIT);
+				if (hw_prod) {
+					memcpy(hw_prod, p, 7);
+					hw_prod[7] = '\0';
+				}
+				break;
+			}
+	}
 
 #if NACPI > 0
 	{

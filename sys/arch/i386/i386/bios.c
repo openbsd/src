@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.97 2012/10/09 12:58:07 jsing Exp $	*/
+/*	$OpenBSD: bios.c,v 1.98 2013/03/12 16:31:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -334,6 +334,43 @@ biosattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	/* No SMBIOS extensions, go looking for Soekris comBIOS */
+	if (!(flags & BIOSF_SMBIOS) && smbiosrev == 0) {
+		const char *signature = "Soekris Engineering";
+
+		for (va = ISA_HOLE_VADDR(SMBIOS_START);
+		    va <= (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END -
+		    (strlen(signature) - 1)); va++)
+			if (!memcmp((u_int8_t *)va, signature,
+			    strlen(signature))) {
+				hw_vendor = malloc(strlen(signature) + 1,
+				    M_DEVBUF, M_NOWAIT);
+				if (hw_vendor)
+					strlcpy(hw_vendor, signature,
+					    strlen(signature) + 1);
+				va += strlen(signature);
+				break;
+			}
+
+		for (; hw_vendor &&
+		    va <= (u_int8_t *)ISA_HOLE_VADDR(SMBIOS_END - 6); va++)
+			/*
+			 * Search for "net(4(5xx|801)|[56]501)" which matches
+			 * the strings found in the comBIOS images
+			 */
+			if (!memcmp((u_int8_t *)va, "net45xx", 7) ||
+			    !memcmp((u_int8_t *)va, "net4801", 7) ||
+			    !memcmp((u_int8_t *)va, "net5501", 7) ||
+			    !memcmp((u_int8_t *)va, "net6501", 7)) {
+				hw_prod = malloc(8, M_DEVBUF, M_NOWAIT);
+				if (hw_prod) {
+					memcpy(hw_prod, (u_int8_t *)va, 7);
+					hw_prod[7] = '\0';
+				}
+				break;
+			}
+	}
 
 #if NAPM > 0
 	if (apm && ncpu < 2 && smbiosrev < 240) {
