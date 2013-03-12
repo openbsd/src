@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.29 2011/03/02 07:47:21 jmc Exp $
+.\"	$OpenBSD: ln.1,v 1.30 2013/03/12 06:00:05 guenther Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ln.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: March 2 2011 $
+.Dd $Mdocdate: March 12 2013 $
 .Dt LN 1
 .Os
 .Sh NAME
@@ -41,11 +41,11 @@
 .Nd make hard and symbolic links to files
 .Sh SYNOPSIS
 .Nm ln
-.Op Fl fhns
+.Op Fl fhLnPs
 .Ar source
 .Op Ar target
 .Nm ln
-.Op Fl fs
+.Op Fl fLPs
 .Ar source ...\&
 .Op Ar directory
 .Sh DESCRIPTION
@@ -68,10 +68,23 @@ The options are as follows:
 Unlink any already existing file, permitting the link to occur.
 .It Fl h
 If the target is a symlink to a directory, do not descend into it.
+.It Fl L
+When creating a hard link and the source is a symbolic link,
+link to the fully resolved target of the symbolic link.
+This is the default.
+This option cancels the
+.Fl P
+option.
 .It Fl n
 An alias for
 .Fl h
 for compatibility with other operating systems.
+.It Fl P
+When creating a hard link and the source is a symbolic link,
+link to the symbolic link itself.
+This option cancels the
+.Fl L
+option.
 .It Fl s
 Create a symbolic link.
 .El
@@ -183,7 +196,7 @@ create a new symlink
 pointing to itself.
 This results from directory-walking.
 .Sh SEE ALSO
-.Xr link 2 ,
+.Xr linkat 2 ,
 .Xr lstat 2 ,
 .Xr readlink 2 ,
 .Xr stat 2 ,
