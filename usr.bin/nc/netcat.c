@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.109 2012/07/07 15:33:02 haesbaert Exp $ */
+/* $OpenBSD: netcat.c,v 1.110 2013/03/12 02:57:37 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -379,9 +379,10 @@ main(int argc, char *argv[])
 				len = sizeof(cliaddr);
 				connfd = accept(s, (struct sockaddr *)&cliaddr,
 				    &len);
-				if (connfd == -1)
-					err(1, "accept");
-
+				if (connfd == -1) {
+					/* For now, all errnos are fatal */
+   					err(1, "accept");
+				}
 				if (vflag)
 					report_connect((struct sockaddr *)&cliaddr, len);
 
