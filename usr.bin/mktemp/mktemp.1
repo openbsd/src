@@ -1,6 +1,7 @@
-.\"	$OpenBSD: mktemp.1,v 1.26 2010/12/27 21:18:44 millert Exp $
+.\"	$OpenBSD: mktemp.1,v 1.27 2013/03/12 15:07:12 millert Exp $
 .\"
-.\" Copyright (c) 1996, 2000, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 1996, 2000, 2001, 2003, 2010, 2013
+.\"	Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2010 $
+.Dd $Mdocdate: March 12 2013 $
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -33,7 +34,7 @@ utility takes the given filename
 and overwrites a portion of it to create a unique filename.
 The
 .Ar template
-may be any filename with some number of
+may be any filename with at least six
 .Ql X Ns s
 appended
 to it, for example
@@ -196,7 +197,7 @@ TMPFILE=`mktemp -p /extra/tmp example.XXXXXXXXXX` || exit 1
 echo "program output" >> $TMPFILE
 .Ed
 .Pp
-In some cases, we want the script to catch the error.
+In other cases, we want the script to catch the error.
 For instance, if we attempt to create two temporary files and
 the second one fails we need to remove the first before exiting.
 .Bd -literal -offset indent
@@ -220,6 +221,40 @@ TMPFILE=`mktemp -q -t example.XXXXXXXXXX` && {
 	rm -f $TMPFILE
 }
 .Ed
+.Sh DIAGNOSTICS
+One of the following error messages may be displayed if
+.Nm
+does not succeed and the
+.Fl q
+option was not specified:
+.Bl -tag -width indent
+.It Li "insufficient number of Xs in template"
+The specified
+.Ar template
+contained fewer than six
+.Ql X Ns s
+at the end.
+.It Li "template must not contain directory separators in -t mode"
+The
+.Ar template
+contained one or more directory components and the
+.Fl t
+option was specified.
+.It Li "cannot make temp dir"
+.Nm
+was unable to create the temporary directory for any of the reasons
+specified by
+.Xr mkdir 2 .
+.It Li "cannot make temp file"
+.Nm
+was unable to create the temporary file for any of the reasons
+specified by
+.Xr open 2 .
+.It Li "cannot allocate memory"
+.Nm
+was unable to allocate memory for any of the reasons specified by
+.Xr malloc 3 .
+.El
 .Sh SEE ALSO
 .Xr mktemp 3
 .Sh HISTORY
