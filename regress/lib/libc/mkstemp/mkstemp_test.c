@@ -9,17 +9,19 @@
  */
 
 #include <sys/param.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #define MAX_TEMPLATE_LEN	10
 #define MAX_TRIES		100
+#define MIN_Xs			6
 
 #define SUFFIX	".suff"
 #define SLEN	(sizeof SUFFIX - 1)
@@ -38,8 +40,15 @@ check(int fd, char const *path, char const *prefix, size_t plen,
 	struct stat sb, fsb;
 	char const *p;
 
+	if (tlen < MIN_Xs) {
+		if (fd >= 0)
+			errx(1, "mkstemp(%s) succeed with too few Xs", path);
+		if (errno != EINVAL)
+			err(1, "mkstemp(%s) failed with wrong errno", path);
+		return 1;
+	}
 	if (fd < 0)
-		err(1, "mkstemp");
+		err(1, "mkstemp(%s)", path);
 	if (stat(path, &sb))
 		err(1, "stat(%s)", path);
 	if (fstat(fd, &fsb))
@@ -120,7 +129,7 @@ main(void)
 	p += pg;
 
 	i = MAX_TEMPLATE_LEN + 1;
-	while (i-- > 1) {
+	while (i-- > 0) {
 		/* try first at the start of a page, no prefix */
 		try_mkstemp(p, "", i);
 		/* now at the end of the page, no prefix */
