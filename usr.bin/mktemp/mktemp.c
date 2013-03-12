@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.16 2013/03/12 15:07:12 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.17 2013/03/12 19:09:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001-2003, 2013
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 		len = strlen(template);
 		if (len < 6 || strcmp(&template[len - 6], "XXXXXX")) {
 		    if (!quiet) {
-			warningx("insufficient number of Xs in template `%s'",
+			warnx("insufficient number of Xs in template `%s'",
 			    template);
 		    }
 		    exit(1);
