@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.32 2011/02/24 17:20:08 mikeb Exp $
+.\"	$OpenBSD: socket.2,v 1.33 2013/03/12 00:19:02 dlg Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 24 2011 $
+.Dd $Mdocdate: March 12 2013 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -95,9 +95,10 @@ socket may provide a sequenced, reliable,
 two-way connection-based data transmission path for datagrams
 of fixed maximum length; a consumer may be required to read
 an entire packet with each read system call.
-This facility is protocol specific, and presently implemented
-only for
-.Dv AF_BLUETOOTH .
+This facility is protocol specific, and presently implemented for
+.Dv AF_BLUETOOTH
+and
+.Dv AF_UNIX .
 .Dv SOCK_RAW
 sockets provide access to internal network protocols and interfaces,
 and are available only to the superuser.
