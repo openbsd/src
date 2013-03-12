@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.49 2012/06/01 01:01:57 guenther Exp $
+.\"	$OpenBSD: mktemp.3,v 1.50 2013/03/12 16:47:11 guenther Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 1 2012 $
+.Dd $Mdocdate: March 12 2013 $
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -52,18 +52,15 @@ The
 family of functions take the given file name template and overwrite
 a portion of it to create a new file name.
 This file name is unique and suitable for use by the application.
-The template may be any file name with some number of Xs appended
-to it, for example
-.Pa /tmp/temp.XXXXXX .
+The template may be any file name with at least six trailing Xs,
+for example
+.Pa /tmp/temp.XXXXXXXX .
 The trailing Xs are replaced with a unique digit and letter combination.
 The number of unique file names that can be returned
-depends on the number of Xs provided; six Xs will result in
+depends on the number of Xs provided;
 .Fn mktemp
-testing roughly 62 ** 6 combinations.
-At least 6 Xs should be used, though 10 is much better.
-Some
-.No non- Ns Bx
-implementations return an error if fewer than 6 Xs are used.
+will try at least 2 ** 31 combinations before giving up.
+At least six Xs must be used, though 10 is much better.
 .Pp
 The
 .Fn mktemp
@@ -200,14 +197,19 @@ fails with an
 of
 .Er EEXIST .
 .Sh ERRORS
-These functions may set
+The
+.Fn mktemp ,
+.Fn mkstemp ,
+and
+.Fn mkdtemp
+functions may set
 .Va errno
 to one of the following values:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The
 .Ar template
-argument is an empty string.
+argument has fewer than six trailing Xs.
 .It Bq Er EEXIST
 All file names tried are already in use.
 Consider appending more Xs to the
@@ -239,7 +241,11 @@ to any value specified by the
 function or,
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The suffix length is longer than the template length.
+The
+.Ar template
+argument length is less than
+.Ar suffixlen
+or it has fewer than six Xs before the suffix.
 .El
 .Pp
 The
@@ -265,9 +271,7 @@ and
 functions conform to the
 .St -p1003.1-2008
 specification.
-The ability to specify more than six Xs and setting
-.Xr errno 2
-in case of errors are extensions to that standard.
+The ability to specify more than six Xs is an extension to that standard.
 .Pp
 The
 .Fn mktemp

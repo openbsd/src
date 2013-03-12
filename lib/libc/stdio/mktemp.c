@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.31 2011/10/02 07:41:56 dtucker Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.32 2013/03/12 16:47:11 guenther Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -33,6 +33,7 @@
 
 #define TEMPCHARS	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 #define NUM_CHARS	(sizeof(TEMPCHARS) - 1)
+#define MIN_X		6
 
 static int
 mktemp_internal(char *path, int slen, int mode)
@@ -45,19 +46,20 @@ mktemp_internal(char *path, int slen, int mode)
 	int fd;
 
 	len = strlen(path);
-	if (len == 0 || slen < 0 || (size_t)slen >= len) {
+	if (len < MIN_X || slen < 0 || (size_t)slen > len - MIN_X) {
 		errno = EINVAL;
 		return(-1);
 	}
 	ep = path + len - slen;
 
-	tries = 1;
-	for (start = ep; start > path && start[-1] == 'X'; start--) {
-		if (tries < INT_MAX / NUM_CHARS)
-			tries *= NUM_CHARS;
+	for (start = ep; start > path && start[-1] == 'X'; start--)
+		;
+	if (ep - start < MIN_X) {
+		errno = EINVAL;
+		return(-1);
 	}
-	tries *= 2;
 
+	tries = INT_MAX;
 	do {
 		for (cp = start; cp != ep; cp++) {
 			r = arc4random_uniform(NUM_CHARS);
