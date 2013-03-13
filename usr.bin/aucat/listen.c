@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.20 2012/06/27 06:53:13 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.21 2013/03/13 08:28:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -190,7 +190,7 @@ listen_revents(struct file *file, struct pollfd *pfd)
 				continue;
 			if (errno == ENFILE || errno == EMFILE)
 				file_slowaccept = 1;
-			else
+			else if (errno != ECONNABORTED && errno != EWOULDBLOCK)
 				perror("accept");
 			return 0;
 		}
