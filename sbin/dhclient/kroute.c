@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.43 2013/03/11 16:01:02 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.44 2013/03/13 16:28:05 weerd Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -133,8 +133,8 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 			continue;
 
 		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-		if (sa->sa_family == AF_KEY)
-			continue;  /* Don't flush SPD */
+		if (sa->sa_family == AF_KEY || sa->sa_family == AF_INET6)
+			continue;  /* Don't flush SPD or INET6 routes */
 
 		populate_rti_info(rti_info, rtm);
 
