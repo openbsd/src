@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 2012/10/08 21:47:50 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.24 2013/03/13 14:30:57 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -682,12 +682,11 @@ haltsys:
 		else
 			printf("System Halt.\n");
 	} else {
-		void (*__reset)(void) = (void (*)(void))RESET_EXC_VEC;
 		printf("System restart.\n");
 		(void)disableintr();
 		tlb_set_wired(0);
 		tlb_flush(bootcpu_hwinfo.tlbsize);
-		__reset();
+		octeon_write_csr(OCTEON_CIU_BASE + CIU_SOFT_RST, 1);
 	}
 
 	for (;;) ;
