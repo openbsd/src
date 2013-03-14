@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.14 2011/04/07 15:30:16 miod Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.15 2013/03/14 17:02:15 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -114,6 +114,7 @@ ipgphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &ipgphy_funcs;
 	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_pdata = mii;
+	sc->mii_flags = ma->mii_flags;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
@@ -355,6 +356,7 @@ ipgphy_mii_phy_auto(struct mii_softc *sc)
 
 	if (sc->mii_model == MII_MODEL_ICPLUS_IP1001) {
 		reg = PHY_READ(sc, IPGPHY_MII_ANAR);
+		reg &= ~(IPGPHY_ANAR_PAUSE | IPGPHY_ANAR_APAUSE);
 		reg |= IPGPHY_ANAR_NP;
 	}
 
@@ -367,7 +369,8 @@ ipgphy_mii_phy_auto(struct mii_softc *sc)
 	PHY_WRITE(sc, IPGPHY_MII_ANAR, reg | IPGPHY_ANAR_CSMA);
 
 	reg = IPGPHY_1000CR_1000T | IPGPHY_1000CR_1000T_FDX;
-	reg |= IPGPHY_1000CR_MASTER;
+	if (sc->mii_model != MII_MODEL_ICPLUS_IP1001)
+		reg |= IPGPHY_1000CR_MASTER;
 	PHY_WRITE(sc, IPGPHY_MII_1000CR, reg);
 
 	PHY_WRITE(sc, IPGPHY_MII_BMCR, (IPGPHY_BMCR_FDX |
