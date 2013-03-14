@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.53 2012/11/29 21:10:32 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.54 2013/03/14 17:04:50 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -811,7 +811,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    vge_ifmedia_upd, vge_ifmedia_sts);
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->vge_dev.dv_xname);
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL,
@@ -1629,9 +1629,16 @@ vge_init(struct ifnet *ifp)
 	/* Init the multicast filter. */
 	vge_setmulti(sc);
 
-	/* Enable flow control */
-
-	CSR_WRITE_1(sc, VGE_CRS2, 0x8B);
+	/* Initialize pause timer. */
+	CSR_WRITE_2(sc, VGE_TX_PAUSE_TIMER, 0xFFFF);
+	/*
+	 * Initialize flow control parameters.
+	 *  TX XON high threshold : 48
+	 *  TX pause low threshold : 24
+	 *  Disable half-duplex flow control
+	 */
+	CSR_WRITE_1(sc, VGE_CRC2, 0xFF);
+	CSR_WRITE_1(sc, VGE_CRS2, VGE_CR2_XON_ENABLE | 0x0B);
 
 	/* Enable jumbo frame reception (if desired) */
 
@@ -1767,6 +1774,16 @@ vge_miibus_statchg(struct device *dev)
 		    sc->vge_dev.dv_xname, IFM_SUBTYPE(ife->ifm_media));
 		break;
 	}
+
+	/*
+	 * 802.3x flow control
+	*/
+	CSR_WRITE_1(sc, VGE_CRC2, VGE_CR2_FDX_TXFLOWCTL_ENABLE |
+	    VGE_CR2_FDX_RXFLOWCTL_ENABLE);
+	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) != 0)
+		CSR_WRITE_1(sc, VGE_CRS2, VGE_CR2_FDX_TXFLOWCTL_ENABLE);
+	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_RXPAUSE) != 0)
+		CSR_WRITE_1(sc, VGE_CRS2, VGE_CR2_FDX_RXFLOWCTL_ENABLE);
 }
 
 int
