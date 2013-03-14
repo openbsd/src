@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.9 2012/12/05 23:20:26 deraadt Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.10 2013/03/14 10:21:07 mpi Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -546,19 +546,4 @@ adjust_tcp_mss(u_char *pktp, int lpktp, int mtu)
 		}
 	}
 	return 0;
-}
-
-void
-set_faith(int sock, int onoff)
-{
-#ifdef IP_FAITH
-	int ival;
-
-	ival = onoff;
-	if(setsockopt(sock, IPPROTO_IP, IP_FAITH, &ival, sizeof(ival))
-	    < 0) {
-		log_printf(LOG_DEBUG,
-		"setsockopt(IP_FAITH) failed at %s(): %m", __func__);
-	}
-#endif
 }
