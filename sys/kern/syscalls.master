@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.127 2013/03/02 07:05:18 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.128 2013/03/14 21:38:22 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -564,6 +564,6 @@
 			    const struct timespec *times, int flag); }
 327	STD		{ int sys_futimens(int fd, \
 			    const struct timespec *times); }
-328	OBSOL		otfork51
+328	COMPAT_O51	{ int sys___tfork(struct __tfork51 *param); }
 329	STD NOLOCK	{ void sys___set_tcb(void *tcb); }
 330	STD NOLOCK	{ void *sys___get_tcb(void); }

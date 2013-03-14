@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.144 2013/03/02 07:05:17 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.145 2013/03/14 21:38:22 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -140,6 +140,31 @@ sys___tfork(struct proc *p, void *v, register_t *retval)
 	return (fork1(p, 0, flags, param.tf_stack, param.tf_tid,
 	    tfork_child_return, param.tf_tcb, retval, NULL));
 }
+
+#ifdef COMPAT_O51
+int
+compat_o51_sys___tfork(struct proc *p, void *v, register_t *retval)
+{
+	struct compat_o51_sys___tfork_args /* {
+		syscallarg(struct __tfork51) *param;
+	} */ *uap = v;
+	struct __tfork51 param;
+	int flags;
+	int error;
+
+	if ((error = copyin(SCARG(uap, param), &param, sizeof(param))))
+		return (error);
+
+	if (param.tf_flags != 0)
+		return (EINVAL);
+
+	flags = FORK_TFORK | FORK_THREAD | FORK_SIGHAND | FORK_SHAREVM
+	    | FORK_NOZOMBIE | FORK_SHAREFILES;
+
+	return (fork1(p, 0, flags, NULL, param.tf_tid, tfork_child_return,
+	    param.tf_tcb, retval, NULL));
+}
+#endif
 
 void
 tfork_child_return(void *arg)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.25 2013/03/02 07:05:18 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.26 2013/03/14 21:38:22 tedu Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -64,6 +64,13 @@ struct __tfork {
 	void	*tf_tcb;
 	pid_t	*tf_tid;
 	void	*tf_stack;
+};
+
+/* COMPAT_O51 */
+struct __tfork51 {
+	void	*tf_tcb;
+	pid_t	*tf_tid;
+	int	tf_flags;
 };
 #endif
 
