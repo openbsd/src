@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.106 2013/03/11 14:08:03 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.107 2013/03/14 11:18:37 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -2436,14 +2436,6 @@ in6if_do_dad(struct ifnet *ifp)
 		return (0);
 
 	switch (ifp->if_type) {
-	case IFT_FAITH:
-		/*
-		 * These interfaces do not have the IFF_LOOPBACK flag,
-		 * but loop packets back.  We do not have to do DAD on such
-		 * interfaces.  We should even omit it, because loop-backed
-		 * NS would confuse the DAD procedure.
-		 */
-		return (0);
 #if NCARP > 0
 	case IFT_CARP:
 		/*

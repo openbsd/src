@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.543 2013/01/29 15:42:20 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.544 2013/03/14 11:18:37 mpi Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -22,7 +22,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	eap.4 ec.4 eephy.4 ef.4 eg.4 ehci.4 eisa.4 el.4 em.4 emc.4 gcu.4 \
 	emu.4 enc.4 endrun.4 envy.4 ep.4 epic.4 esa.4 \
 	eso.4 ess.4 et.4 etphy.4 ex.4 exphy.4 \
-	faith.4 fd.4 fdc.4 fins.4 fintek.4 fms.4 fpa.4 fxp.4 gdt.4 \
+	fd.4 fdc.4 fins.4 fintek.4 fms.4 fpa.4 fxp.4 gdt.4 \
 	gentbi.4 gem.4 gif.4 \
 	glenv.4 gpio.4 gpiodcf.4 gpioiic.4 gpioow.4 gpr.4 gre.4 gscsio.4 gtp.4 \
 	hds.4 hifn.4 hil.4 hilid.4 hilkbd.4 hilms.4 hme.4 hotplug.4 hsq.4 \

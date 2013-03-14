@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.44 2012/01/09 14:47:53 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.45 2013/03/14 11:18:37 mpi Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -241,7 +241,6 @@ extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */
 extern int	ip6_maxfrags;	/* Maximum fragments in reassembly queue */
 extern int	ip6_accept_rtadv;	/* Acts as a host not a router */
-extern int	ip6_keepfaith;		/* Firewall Aided Internet Translator */
 extern int	ip6_log_interval;
 extern time_t	ip6_log_time;
 extern int	ip6_hdrnestlimit; /* upper limit of # of extension headers */

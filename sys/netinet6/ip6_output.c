@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.133 2013/03/04 14:42:25 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.134 2013/03/14 11:18:37 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1347,7 +1347,6 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 				/* FALLTHROUGH */
 			case IPV6_UNICAST_HOPS:
 			case IPV6_HOPLIMIT:
-			case IPV6_FAITH:
 
 			case IPV6_RECVPKTINFO:
 			case IPV6_RECVHOPLIMIT:
@@ -1459,10 +1458,6 @@ do { \
 						break;
 					}
 					OPTSET(IN6P_RTHDR);
-					break;
-
-				case IPV6_FAITH:
-					OPTSET(IN6P_FAITH);
 					break;
 
 				case IPV6_RECVPATHMTU:
@@ -1765,7 +1760,6 @@ do { \
 			case IPV6_RECVRTHDR:
 			case IPV6_RECVPATHMTU:
 
-			case IPV6_FAITH:
 			case IPV6_V6ONLY:
 			case IPV6_PORTRANGE:
 			case IPV6_RECVTCLASS:
@@ -1803,10 +1797,6 @@ do { \
 
 				case IPV6_RECVPATHMTU:
 					optval = OPTBIT(IN6P_MTU);
-					break;
-
-				case IPV6_FAITH:
-					optval = OPTBIT(IN6P_FAITH);
 					break;
 
 				case IPV6_V6ONLY:

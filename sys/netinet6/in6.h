@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.61 2012/11/06 12:32:42 henning Exp $	*/
+/*	$OpenBSD: in6.h,v 1.62 2013/03/14 11:18:37 mpi Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -617,7 +617,6 @@ struct ip6_mtuinfo {
 #define IPV6CTL_SOURCECHECK	10	/* verify source route and intf */
 #define IPV6CTL_SOURCECHECK_LOGINT 11	/* minimume logging interval */
 #define IPV6CTL_ACCEPT_RTADV	12
-#define IPV6CTL_KEEPFAITH	13
 #define IPV6CTL_LOG_INTERVAL	14
 #define IPV6CTL_HDRNESTLIMIT	15
 #define IPV6CTL_DAD_COUNT	16
@@ -660,7 +659,6 @@ struct ip6_mtuinfo {
 	{ "sourcecheck", CTLTYPE_INT }, \
 	{ "sourcecheck_logint", CTLTYPE_INT }, \
 	{ "accept_rtadv", CTLTYPE_INT }, \
-	{ "keepfaith", CTLTYPE_INT }, \
 	{ "log_interval", CTLTYPE_INT }, \
 	{ "hdrnestlimit", CTLTYPE_INT }, \
 	{ "dad_count", CTLTYPE_INT }, \
@@ -713,7 +711,6 @@ struct ip6_mtuinfo {
 	NULL, \
 	NULL, \
 	&ip6_accept_rtadv, \
-	&ip6_keepfaith, \
 	&ip6_log_interval, \
 	&ip6_hdrnestlimit, \
 	&ip6_dad_count, \

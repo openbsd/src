@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.17 2011/11/24 17:39:55 sperreault Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.18 2013/03/14 11:18:37 mpi Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -89,8 +89,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/ip6protosw.h>
-
-#include "faith.h"
 
 /*
  * UDP protocol inplementation.

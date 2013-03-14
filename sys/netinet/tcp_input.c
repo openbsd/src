@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.255 2013/01/17 11:43:06 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.256 2013/03/14 11:18:37 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -94,11 +94,6 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
-
-#include "faith.h"
-#if NFAITH > 0
-#include <net/if_types.h>
-#endif
 
 #include "pf.h"
 #if NPF > 0
@@ -346,16 +341,6 @@ int
 tcp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
-
-#if NFAITH > 0
-	if (m->m_pkthdr.rcvif) {
-		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
-			/* XXX send icmp6 host/port unreach? */
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
-	}
-#endif
 
 	tcp_input(m, *offp, proto);
 	return IPPROTO_DONE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.46 2013/03/04 14:42:25 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.47 2013/03/14 11:18:37 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -96,8 +96,6 @@
 
 #include <sys/stdarg.h>
 
-#include "faith.h"
-
 /*
  * Raw interface to IP6 protocol.
  */
@@ -153,16 +151,6 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	struct mbuf *opts = NULL;
 
 	rip6stat.rip6s_ipackets++;
-
-#if defined(NFAITH) && 0 < NFAITH
-	if (m->m_pkthdr.rcvif) {
-		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
-			/* send icmp6 host unreach? */
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
-	}
-#endif
 
 	/* Be proactive about malicious use of IPv4 mapped address */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||

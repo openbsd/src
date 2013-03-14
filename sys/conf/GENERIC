@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.194 2013/03/01 21:06:04 guenther Exp $
+#	$OpenBSD: GENERIC,v 1.195 2013/03/14 11:18:37 mpi Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -105,9 +105,6 @@ pseudo-device	trunk		# Trunking support
 pseudo-device	tun		# network tunneling over tty
 pseudo-device	vether		# Virtual ethernet
 pseudo-device	vlan 		# IEEE 802.1Q VLAN 
-
-# for IPv6
-#pseudo-device	faith	1	# IPv[46] tcp relay translation i/f
 
 pseudo-device	bio	1	# ioctl multiplexing device
 

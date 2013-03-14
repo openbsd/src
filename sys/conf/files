@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.540 2013/01/21 11:17:48 patrick Exp $
+#	$OpenBSD: files,v 1.541 2013/03/14 11:18:37 mpi Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -529,7 +529,6 @@ pseudo-device bridge: ifnet, ether
 pseudo-device vlan: ifnet, ether
 pseudo-device carp: ifnet, ether
 pseudo-device sppp: ifnet
-pseudo-device faith: ifnet
 pseudo-device gif: ifnet
 pseudo-device gre: ifnet
 pseudo-device crypto: ifnet
@@ -951,7 +950,6 @@ file uvm/uvm_user.c
 file uvm/uvm_vnode.c
 
 # IPv6
-file net/if_faith.c			faith			needs-count
 file net/if_gif.c			gif			needs-count
 file netinet/ip_ecn.c			inet | inet6
 file netinet/in_gif.c			gif & inet

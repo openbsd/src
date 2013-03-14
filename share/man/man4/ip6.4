@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.29 2012/09/26 17:34:38 jmc Exp $
+.\"	$OpenBSD: ip6.4,v 1.30 2013/03/14 11:18:37 mpi Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -26,7 +26,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: March 14 2013 $
 .Dt IP6 4
 .Os
 .Sh NAME
@@ -401,10 +401,6 @@ With
 .Ox
 IPv6 sockets are always IPv6-only, so the socket option is read-only
 (not modifiable).
-.It Dv IPV6_FAITH Fa "int *"
-Get or set the status of whether
-.Xr faith 4
-connections can be made to this socket.
 .It Dv IPV6_USE_MIN_MTU Fa "int *"
 Get or set whether the minimal IPv6 maximum transmission unit (MTU) size
 will be used to avoid fragmentation from occurring for subsequent

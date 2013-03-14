@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.75 2013/01/16 00:07:22 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.76 2013/03/14 11:18:37 mpi Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -208,7 +208,6 @@ struct inpcbtable {
 #define IN6P_AUTOFLOWLABEL	0x800000 /* attach flowlabel automatically */
 
 #define IN6P_ANONPORT		0x4000000 /* port chosen for user */
-#define IN6P_FAITH		0x8000000 /* accept FAITH'ed connections */
 #define IN6P_RFC2292		0x40000000 /* used RFC2292 API on the socket */
 #define IN6P_MTU		0x80000000 /* receive path MTU */
 
