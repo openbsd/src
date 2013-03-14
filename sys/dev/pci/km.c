@@ -1,4 +1,4 @@
-/*	$OpenBSD: km.c,v 1.5 2011/05/31 00:19:55 deraadt Exp $	*/
+/*	$OpenBSD: km.c,v 1.6 2013/03/14 14:50:25 brynet Exp $	*/
 
 /*
  * Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -70,7 +70,8 @@ struct cfdriver km_cd = {
 static const struct pci_matchid km_devices[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_10_MISC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_MISC },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_MISC }
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_MISC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_15_MISC }
 };
 
 
