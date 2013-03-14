@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.54 2013/03/07 13:19:54 sthen Exp $
+.\"	$OpenBSD: ssl.8,v 1.55 2013/03/14 04:03:47 lteo Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 7 2013 $
+.Dd $Mdocdate: March 14 2013 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -35,10 +35,10 @@ the OpenSSL libssl and libcrypto libraries.
 This document is intended as an overview of what the libraries do,
 and what uses them.
 .Pp
-The SSL libraries (libssl and libcrypto) implement the SSL version 2,
-SSL version 3, and TLS version 1 protocols.
-SSL version 2 and 3 are most commonly used by the HTTPS protocol for
-encrypted web transactions, as can be done with
+The SSL libraries (libssl and libcrypto) implement the SSL version 3
+and TLS version 1 protocols.
+SSL and TLS are most commonly used by the HTTPS protocol for encrypted
+web transactions, as can be done with
 .Xr httpd 8 .
 The libcrypto library is also used by various programs such as
 .Xr ssh 1 ,
@@ -283,6 +283,10 @@ This method is now no longer needed, as the fully functional
 libraries ship with the system.
 However, this entire debacle is worth remembering when choosing
 software and vendors.
+.Pp
+Due to multiple flaws in the protocol, SSL version 2 was disabled in
+.Ox 5.2 .
+Users and programs should use SSL version 3 or TLS version 1 instead.
 .Pp
 This document first appeared in
 .Ox 2.5 .
