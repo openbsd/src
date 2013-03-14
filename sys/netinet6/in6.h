@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.62 2013/03/14 11:18:37 mpi Exp $	*/
+/*	$OpenBSD: in6.h,v 1.63 2013/03/14 14:28:38 mpi Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -659,6 +659,7 @@ struct ip6_mtuinfo {
 	{ "sourcecheck", CTLTYPE_INT }, \
 	{ "sourcecheck_logint", CTLTYPE_INT }, \
 	{ "accept_rtadv", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "log_interval", CTLTYPE_INT }, \
 	{ "hdrnestlimit", CTLTYPE_INT }, \
 	{ "dad_count", CTLTYPE_INT }, \
@@ -711,6 +712,7 @@ struct ip6_mtuinfo {
 	NULL, \
 	NULL, \
 	&ip6_accept_rtadv, \
+	NULL, \
 	&ip6_log_interval, \
 	&ip6_hdrnestlimit, \
 	&ip6_dad_count, \
