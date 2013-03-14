@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.85 2012/01/05 13:16:10 sthen Exp $
+.\"	$OpenBSD: find.1,v 1.86 2013/03/14 20:30:41 halex Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 5 2012 $
+.Dd $Mdocdate: March 14 2013 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -273,7 +273,7 @@ flags specified exactly match those of the file.
 .It Ic -follow
 This primary always evaluates to true.
 The same as specifying the
-.Fl H
+.Fl L
 option.
 .Pp
 .It Ic -fstype Ar type
@@ -633,7 +633,7 @@ primary was inspired by GNU find.
 .Pp
 Historically, the
 .Fl d ,
-.Fl H ,
+.Fl L ,
 and
 .Fl x
 options were implemented using the primaries
