@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.28 2013/03/14 18:25:39 jmc Exp $
-# $NetBSD: mdoclint,v 1.21 2013/01/01 01:42:08 jnemeth Exp $
+# $OpenBSD: mdoclint,v 1.29 2013/03/14 21:22:52 jmc Exp $
+# $NetBSD: mdoclint,v 1.22 2013/03/06 21:26:45 wiz Exp $
 #
-# Copyright (c) 2001-2012 Thomas Klausner
+# Copyright (c) 2001-2013 Thomas Klausner
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,8 @@ use constant {
 };
 
 use vars qw(
-	$opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_m
+	$opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_l
+	$opt_m
 	$opt_n $opt_o $opt_P $opt_p $opt_r $opt_S $opt_s $opt_v $opt_w
 	$opt_X $opt_x
 );
@@ -50,11 +51,11 @@ use vars qw(
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="aDdeFfHhmnoPprSsvwXx";
+my $options="aDdeFfHhlmnoPprSsvwXx";
 
 sub usage
 	{
-	my $default = OPENBSD ? "-aDdfmnoPprSsXx" : "-aDdefmnoPprSsXx";
+	my $default = OPENBSD ? "-aDdfmnoPprSsXx" : "-aDdelfmnoPprSsXx";
 
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
@@ -67,6 +68,7 @@ usage:	mdoclint [-$options] file ...
 	-f	warn about possible incorrect .Fn syntax
 	-H	warn about characters that produce problems in HTML output
 	-h	display this help text
+	-l	warn about unknown libraries
 	-m	warn about man pages that are not in mdoc(7) format
 	-n	warn about .Nd's ending in '.'
 	-o	warn about non-empty .Os strings
@@ -89,6 +91,64 @@ my %short = (
     "Free" => ".Fx",
     "Net" => ".Nx",
     "Open" => ".Ox"
+);
+
+my %libraries = (
+    "libarchive" => 1,
+    "libarm" => 1,
+    "libarm32" => 1,
+    "libbluetooth" => 1,
+    "libc" => 1,
+    "libcdk" => 1,
+    "libcompat" => 1,
+    "libcrypt" => 1,
+    "libcurses" => 1,
+    "libdm" => 1,
+    "libedit" => 1,
+    "libelf" => 1,
+    "libevent" => 1,
+    "libexecinfo" => 1,
+    "libfetch" => 1,
+    "libform" => 1,
+    "libi386" => 1,
+    "libintl" => 1,
+    "libipsec" => 1,
+    "libiscsi" => 1,
+    "libisns" => 1,
+    "libkvm" => 1,
+    "libm" => 1,
+    "libm68k" => 1,
+    "libmagic" => 1,
+    "libmandoc" => 1,
+    "libmenu" => 1,
+    "libj" => 1,
+    "libnetpgp" => 1,
+    "libnetpgpverify" => 1,
+    "libnpf" => 1,
+    "libossaudio" => 1,
+    "libpam" => 1,
+    "libpcap" => 1,
+    "libpci" => 1,
+    "libperfuse" => 1,
+    "libpmc" => 1,
+    "libposix" => 1,
+    "libppath" => 1,
+    "libprop" => 1,
+    "libpthread" => 1,
+    "libpuffs" => 1,
+    "libquota" => 1,
+    "librefuse" => 1,
+    "libresolv" => 1,
+    "librt" => 1,
+    "librumpclient" => 1,
+    "libsaslc" => 1,
+    "libssp" => 1,
+    "libtermcap" => 1,
+    "libterminfo" => 1,
+    "libusbhid" => 1,
+    "libutil" => 1,
+    "libx86_64" => 1,
+    "libz" => 1
 );
 
 # constants to build
@@ -186,13 +246,15 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_a or $opt_D or $opt_d or $opt_e or $opt_f or $opt_H
-	    or $opt_m or $opt_n or $opt_o or $opt_P or $opt_p or $opt_r
+	unless ($opt_a or $opt_D or $opt_d or $opt_e
+	    or $opt_f or $opt_H or $opt_l
+	    or $opt_m or $opt_n
+	    or $opt_o or $opt_P or $opt_p or $opt_r
 	    or $opt_S or $opt_s or $opt_X or $opt_x) {
 		$opt_a = $opt_D = $opt_d = $opt_f = $opt_m =
 		    $opt_n = $opt_o = $opt_P = $opt_p = $opt_r = $opt_S =
 		    $opt_s = $opt_X = $opt_x = 1;
-		    $opt_e = 1 if NETBSD;
+		    $opt_e = $opt_l = 1 if NETBSD;
 	}
 }
 
@@ -443,6 +505,11 @@ sub process_line
 	if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o or /Bx (Net)/o)) {
 		$s->warning("`.Bx $1' found -- use $short{$1} instead")
 		    if $opt_X;
+	}
+	if (/^\.Lb\s+(\S+)/o) {
+		if (not $libraries{$1}) {
+			$s->warning("Unknown library `$1' used as Lb argument") if $opt_l;
+		}
 	}
 	if (/^\.Os\s+(.+)/o) {
 		$s->warning(".Os used with argument `$1'") if $opt_o;
