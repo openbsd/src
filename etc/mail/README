@@ -1,11 +1,11 @@
-$OpenBSD: README,v 1.5 2008/09/27 19:17:10 martynas Exp $
+$OpenBSD: README,v 1.6 2013/03/14 15:19:10 jmc Exp $
 
 This directory contains the configuration files for sendmail(8) and
 spamd(8).  The source for the .cf files lives in /usr/share/sendmail/cf.
 You should make changes in the corresponding .mc file and not edit
 the .cf files directly.  Useful information may be found in
 /usr/share/sendmail/README, /usr/share/sendmail/TUNING, and
-/usr/share/doc/smm/08.sendmailop/op.me.  For details on enabling
+/usr/src/gnu/usr.sbin/sendmail/doc/op/op.me.  For details on enabling
 encrypted SMTP, see the starttls(8) man page.
 
 Sendmail configuration files:
