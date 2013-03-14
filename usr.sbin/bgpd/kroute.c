@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.191 2012/11/13 22:07:28 florian Exp $ */
+/*	$OpenBSD: kroute.c,v 1.192 2013/03/14 14:53:52 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -506,8 +506,10 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 		kr->r.priority = RTP_BGP;
 		kr->r.labelid = labelid;
 
-		if (kroute_insert(kt, kr) == -1)
+		if (kroute_insert(kt, kr) == -1) {
 			free(kr);
+			return (-1);
+		}
 	} else {
 		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
 		rtlabel_unref(kr->r.labelid);
@@ -563,8 +565,10 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 		kr6->r.priority = RTP_BGP;
 		kr6->r.labelid = labelid;
 
-		if (kroute6_insert(kt, kr6) == -1)
+		if (kroute6_insert(kt, kr6) == -1) {
 			free(kr6);
+			return (-1);
+		}
 	} else {
 		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
 		    sizeof(struct in6_addr));
@@ -633,8 +637,10 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl)
 		kr->r.labelid = labelid;
 		kr->r.mplslabel = mplslabel;
 
-		if (kroute_insert(kt, kr) == -1)
+		if (kroute_insert(kt, kr) == -1) {
 			free(kr);
+			return (-1);
+		}
 	} else {
 		kr->r.mplslabel = mplslabel;
 		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
