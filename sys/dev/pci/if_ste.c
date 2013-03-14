@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.52 2013/03/09 09:34:15 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.53 2013/03/14 01:25:38 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -141,6 +141,12 @@ void	ste_init_tx_list(struct ste_softc *);
 #define MII_SET(x)		STE_SETBIT1(sc, STE_PHYCTL, x)
 #define MII_CLR(x)		STE_CLRBIT1(sc, STE_PHYCTL, x) 
 
+const struct pci_matchid ste_devices[] = {
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE550TX },
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_1 },
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_2 }
+};
+
 struct cfattach ste_ca = {
 	sizeof(struct ste_softc), ste_probe, ste_attach
 };
@@ -165,8 +171,6 @@ ste_mii_sync(struct ste_softc *sc)
 		MII_CLR(STE_PHYCTL_MCLK);
 		DELAY(1);
 	}
-
-	return;
 }
 
 /*
@@ -360,8 +364,6 @@ ste_miibus_writereg(struct device *self, int phy, int reg, int data)
 	frame.mii_data = data;
 
 	ste_mii_writereg(sc, &frame);
-
-	return;
 }
 
 void
@@ -390,8 +392,6 @@ ste_miibus_statchg(struct device *self)
 
 	STE_SETBIT4(sc, STE_DMACTL,
 	    STE_DMACTL_RXDMA_UNSTALL | STE_DMACTL_TXDMA_UNSTALL);
-
-	return;
 }
  
 int
@@ -425,8 +425,6 @@ ste_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	mii_pollstat(mii);
 	ifmr->ifm_active = mii->mii_media_active;
 	ifmr->ifm_status = mii->mii_media_status;
-
-	return;
 }
 
 void
@@ -441,8 +439,6 @@ ste_wait(struct ste_softc *sc)
 
 	if (i == STE_TIMEOUT)
 		printf("%s: command never completed!\n", sc->sc_dev.dv_xname);
-
-	return;
 }
 
 /*
@@ -712,8 +708,6 @@ ste_rxeof(struct ste_softc *sc)
 		cur_rx->ste_ptr->ste_status = 0;
 		count++;
 	}
-
-	return;
 }
 
 void
@@ -750,8 +744,6 @@ ste_txeoc(struct ste_softc *sc)
 		ste_init(sc);
 		CSR_WRITE_2(sc, STE_TX_STATUS, txstat);
 	}
-
-	return;
 }
 
 void
@@ -781,8 +773,6 @@ ste_txeof(struct ste_softc *sc)
 	sc->ste_cdata.ste_tx_cons = idx;
 	if (idx == sc->ste_cdata.ste_tx_prod)
 		ifp->if_timer = 0;
-
-	return;
 }
 
 void
@@ -820,15 +810,7 @@ ste_stats_update(void *xsc)
 
 	timeout_add_sec(&sc->sc_stats_tmo, 1);
 	splx(s);
-
-	return;
 }
-
-const struct pci_matchid ste_devices[] = {
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE550TX },
-	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_1 },
-	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_2 }
-};	
 
 /*
  * Probe for a Sundance ST201 chip. Check the PCI vendor and device
@@ -1057,8 +1039,6 @@ ste_init_tx_list(struct ste_softc *sc)
 
 	cd->ste_tx_prod = 0;
 	cd->ste_tx_cons = 0;
-
-	return;
 }
 
 void
@@ -1153,8 +1133,6 @@ ste_init(void *xsc)
 
 	timeout_set(&sc->sc_stats_tmo, ste_stats_update, sc);
 	timeout_add_sec(&sc->sc_stats_tmo, 1);
-
-	return;
 }
 
 void
@@ -1199,8 +1177,6 @@ ste_stop(struct ste_softc *sc)
 	}
 
 	bzero(sc->ste_ldata, sizeof(struct ste_list_data));
-
-	return;
 }
 
 void
@@ -1416,8 +1392,6 @@ ste_start(struct ifnet *ifp)
 		ifp->if_timer = 5;
 	}
 	sc->ste_cdata.ste_tx_prod = idx;
-
-	return;
 }
 
 void
@@ -1439,6 +1413,4 @@ ste_watchdog(struct ifnet *ifp)
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		ste_start(ifp);
-
-	return;
 }
