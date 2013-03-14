@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.26 2013/03/10 21:57:04 jmc Exp $
-# $NetBSD: mdoclint,v 1.17 2012/01/02 18:01:00 wiz Exp $
+# $OpenBSD: mdoclint,v 1.27 2013/03/14 18:18:26 jmc Exp $
+# $NetBSD: mdoclint,v 1.18 2012/02/22 15:31:35 wiz Exp $
 #
 # Copyright (c) 2001-2012 Thomas Klausner
 # All rights reserved.
@@ -55,7 +55,7 @@ my $options="aDdeFfHhmnoPprSsvwXx";
 sub usage
 	{
 	my $default = OPENBSD ? "-aDdfmnoPprSsXx" : "-aDdefmnoPprSsXx";
-	
+
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
 usage:	mdoclint [-$options] file ...
@@ -313,7 +313,7 @@ sub set_section_header
 	}
 
 	if ($s->{lastline} =~ /^\.Pp/o) {
-		$s->warning("Paragraph problem: section header after .Pp") 
+		$s->warning("Paragraph problem: section header after .Pp")
 		    if $opt_P;
 	}
 
@@ -342,13 +342,17 @@ sub process_line
 		s/\s+$//o;
 	}
 	if (/\$OpenBSD\b.*\$/o) {
-		$s->{oxrcsidseen} = 1;
-		# nothing else to do
+		$s->{oxrcsidseen}++;
+		if (OPENBSD and ($s->{oxrcsidseen} > 1)) {
+		    $s->warning("RCS Id seen twice") if $opt_r;
+		}
 		return "$_\n";
 	}
 	if (/[\$]NetBSD\b.*\$/o) {
-		$s->{nxrcsidseen} = 1;
-		# nothing else to do
+		$s->{nxrcsidseen}++;
+		if (NETBSD and ($s->{nxrcsidseen} > 1)) {
+		    $s->warning("RCS Id seen twice") if $opt_r;
+		}
 		return "$_\n";
 	}
 	# comments
@@ -437,7 +441,7 @@ sub process_line
 		    . "`$short{$1}': `$_'") if $opt_X;
 	}
 	if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o or /Bx (Net)/o)) {
-		$s->warning("`.Bx $1' found -- use $short{$1} instead") 
+		$s->warning("`.Bx $1' found -- use $short{$1} instead")
 		    if $opt_X;
 	}
 	if (/^\.Os\s+(.+)/o) {
@@ -585,7 +589,7 @@ sub handle_file
 		open OUT, ">$_[0].new" or
 		    die "can't open output file `$_[0].new'";
 		for my $l (@{$parser->{all}}) {
-			print OUT $l 
+			print OUT $l
 		}
 		close OUT;
 		system("mv -i $_[0].new $_[0]");
