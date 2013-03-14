@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.106 2011/08/08 20:03:03 miod Exp $
+dnl	$OpenBSD: hardware,v 1.107 2013/03/14 22:10:03 tedu Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -488,6 +488,8 @@ dnl		XR16850-based ports (only in the pccom driver)
 		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
 		Raytheon Raylink/WebGear Aviator IEEE 802.11FH PCMCIA adapters
 		Realtek RTL8180L IEEE 802.11b CardBus adapters
+		Realtek RTL8187L/RTL8187B USB IEEE 802.11b/g adapters
+		Realtek RTL8188CU/RTL8192CU USB IEEE 802.11b/g/n adapters
 		TI ACX100/ACX111 IEEE 802.11a/b/g PCI/CardBus adapters
 		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b Compact
 		    Flash adapters (will be detected as PCMCIA adapters)
