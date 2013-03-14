@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.23 2012/04/08 15:56:28 jsg Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.24 2013/03/14 12:56:58 mikeb Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -23,6 +23,10 @@ CFLAGS+=	${CDIAGFLAGS}
 .if ${MACHINE} == "amd64"
 CFLAGS+=	-mcmodel=kernel
 .endif
+
+CFLAGS+=	${NOPIE_FLAGS}
+AFLAGS+=	${NOPIE_FLAGS}
+LDFLAGS+=	${NOPIE_LDFLAGS}
 
 LDFLAGS+= -r
 .if defined(LKM)
