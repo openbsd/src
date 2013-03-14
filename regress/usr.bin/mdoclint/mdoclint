@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.30 2013/03/14 21:37:00 jmc Exp $
-# $NetBSD: mdoclint,v 1.24 2013/03/06 22:09:01 wiz Exp $
+# $OpenBSD: mdoclint,v 1.31 2013/03/14 21:47:57 jmc Exp $
+# $NetBSD: mdoclint,v 1.29 2013/03/10 22:14:40 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
 # All rights reserved.
@@ -121,7 +121,7 @@ my %libraries = (
     "libmagic" => 1,
     "libmandoc" => 1,
     "libmenu" => 1,
-    "libj" => 1,
+    "libmj" => 1,
     "libnetpgp" => 1,
     "libnetpgpverify" => 1,
     "libnpf" => 1,
@@ -519,8 +519,10 @@ sub process_line
 		$s->warning(".Nd ends with a dot: `$_'") if $opt_n;
 	}
 
-	if (/\w\w\.\s+[A-Z]/o) {
-		$s->warning("new sentence, new line: `$_'") if $opt_p;
+	if (/(\w\w)\.\s+[A-Z]/o and not /^.%T/ and not $s->{inliteral}) {
+		if ("$1" ne "St") {
+			$s->warning("new sentence, new line: `$_'") if $opt_p;
+		}
 	}
 	if (/^\... .*[^\s][\.();,\[\]\{\}:]$/o
 	    and not /\s\.\.\.$/o and not /\\&.$/o) {
