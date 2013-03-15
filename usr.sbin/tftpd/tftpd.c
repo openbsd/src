@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.10 2013/03/15 12:36:11 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.11 2013/03/15 12:52:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -565,7 +565,7 @@ client_alloc()
 {
 	struct tftp_client *client;
 
-	client = calloc(sizeof(*client), 1);
+	client = calloc(1, sizeof(*client));
 	if (client == NULL)
 		return (NULL);
 
@@ -812,7 +812,7 @@ again:
 	client->fgetc = pf->f_getc;
 	client->fputc = pf->f_putc;
 
-	client->options = options = calloc(sizeof(*client->options), NOPT);
+	client->options = options = calloc(NOPT, sizeof(*client->options));
 	if (options == NULL) {
 		ecode = 100 + ENOMEM;
 		goto error;
