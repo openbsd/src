@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.10 2013/03/10 21:54:46 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.11 2013/03/15 15:44:54 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -501,7 +501,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (vsc->sc_child != NULL) {
-		printf("child already attached for %s; something wrong...\n",
+		printf(": child already attached for %s; something wrong...\n",
 		       parent->dv_xname);
 		return;
 	}
@@ -525,7 +525,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	    !(vsc->sc_dev.dv_cfdata->cf_flags & 2))
 		features |= VIRTIO_F_RING_EVENT_IDX;
 	else
-		printf("RingEventIdx disabled by UKC\n");
+		printf(": RingEventIdx disabled by UKC");
 
 	features = virtio_negotiate_features(vsc, features,
 	    virtio_net_feature_names);
