@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.141 2012/08/23 06:12:49 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.142 2013/03/15 09:10:52 ratchov Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -142,8 +142,6 @@ cdev_decl(cy);
 #include "audio.h"
 #include "video.h"
 #include "midi.h"
-#include "sequencer.h"
-cdev_decl(music);
 #include "joy.h"
 #include "bthub.h"
 #include "pctr.h"
@@ -246,7 +244,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
 	cdev_notdef(),			/* 51 */
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
-	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
+	cdev_notdef(),			/* 53 was: sequencer I/O */
 	cdev_notdef(),			/* 54 was: RAIDframe disk driver */
 	cdev_notdef(),			/* 55: */
 	/* The following slots are reserved for isdn4bsd. */

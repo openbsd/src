@@ -1,6 +1,6 @@
 define(MACHINE,macppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.52 2012/12/04 10:44:20 mpi Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.53 2013/03/15 09:10:52 ratchov Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -98,7 +98,6 @@ _DEV(pppx, 85)
 _DEV(radio, 76)
 _DEV(rnd, 40)
 _DEV(rmidi, 52)
-_DEV(music, 53)
 _DEV(systrace, 50)
 _DEV(tun, 23)
 _DEV(tuner, 75)

@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.61 2013/01/30 01:59:20 yasuoka Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.62 2013/03/15 09:10:52 ratchov Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -155,7 +155,6 @@ target(all, uk, 0)dnl
 twrget(all, vi, video, 0, 1)dnl
 twrget(all, speak, speaker)dnl
 target(all, asc, 0)dnl
-target(all, music, 0)dnl
 target(all, radio, 0)dnl
 target(all, tuner, 0)dnl
 target(all, rmidi, 0, 1, 2, 3, 4, 5, 6, 7)dnl
@@ -447,11 +446,6 @@ __devitem(asc, asc*, ASC Audio device)dnl
 _mkdev(asc, asc*, {-M asc$U major_asc_c 0-})dnl
 __devitem(bio, bio, {-ioctl tunnel pseudo-device-})dnl
 _mkdev(bio, bio, {-M bio c major_bio_c 0 600-})dnl
-__devitem(music, music*, MIDI sequencer,music)dnl
-_mkdev(music, music*, {-M music$U     c major_music_c $U
-	M sequencer$U c major_music_c Add($U, 128)
-	MKlist[${#MKlist[*]}]=";[ -e music ] || ln -s music$U music"
-	MKlist[${#MKlist[*]}]=";[ -e sequencer ] || ln -s sequencer$U sequencer"-})dnl
 __devitem(radio, radio*, FM tuner devices)dnl
 _mkdev(radio, radio*, {-M radio$U     c major_radio_c $U
 	MKlist[${#MKlist[*]}]=";[ -e radio ] || ln -s radio$U radio"-})dnl

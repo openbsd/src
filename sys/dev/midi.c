@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.28 2012/04/17 07:58:47 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.29 2013/03/15 09:10:52 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -15,16 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/*
- * TODO
- *	- put the sequencer stuff in sequencer.c and sequencervar.h
- *	  there is no reason to have it here. The sequencer
- *	  driver need only to open the midi hw_if thus it does not
- *	  need this driver
- */
-
-#include "sequencer.h"
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -67,13 +57,6 @@ void	midi_out_do(struct midi_softc *);
 void	midi_attach(struct midi_softc *, struct device *);
 
 
-#if NSEQUENCER > 0
-int	midi_unit_count(void);
-void	midi_toevent(struct midi_softc *, int);
-int	midi_writebytes(int, u_char *, int);
-void	midiseq_in(struct midi_dev *, u_char *, int);
-#endif
-
 struct cfattach midi_ca = {
 	sizeof(struct midi_softc), midiprobe, midiattach, mididetach
 };
@@ -107,12 +90,6 @@ midi_iintr(void *addr, int data)
 	if (sc->isdying || !sc->isopen || !(sc->flags & FREAD))
 		return;
 
-#if NSEQUENCER > 0
-	if (sc->seqopen) {
-		midi_toevent(sc, data);
-		return;
-	}
-#endif
 	if (MIDIBUF_ISFULL(mb))
 		return; /* discard data */
 
@@ -482,11 +459,6 @@ midiopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (err)
 		return err;
 	sc->isopen = 1;
-#if NSEQUENCER > 0
-	sc->seq_md = 0;
-	sc->seqopen = 0;
-	sc->evstatus = 0xff;
-#endif
 	return 0;
 }
 
@@ -644,74 +616,3 @@ midi_unit_count(void)
 	return midi_cd.cd_ndevs;
 }
 
-
-#if NSEQUENCER > 0
-#define MIDI_EVLEN(status) 	(midi_evlen[((status) >> 4) & 7])
-unsigned midi_evlen[] = { 2, 2, 2, 2, 1, 1, 2 };
-
-void
-midi_toevent(struct midi_softc *sc, int data)
-{
-	unsigned char mesg[3];
-
-	if (data >= 0xf8) {		/* is it a realtime message ? */
-		switch(data) {
-		case 0xf8:		/* midi timer tic */
-		case 0xfa:		/* midi timer start */
-		case 0xfb:		/* midi timer continue (after stop) */
-		case 0xfc:		/* midi timer stop */
-			mesg[0] = data;
-			midiseq_in(sc->seq_md, mesg, 1);
-			break;
-		default:
-			break;
-		}
-	} else if (data >= 0x80) {	/* is it a common or voice message ? */
-		sc->evstatus = data;
-		sc->evindex = 0;
-	} else {			/* else it is a data byte */
-		/* strip common messages and bogus data */
-		if (sc->evstatus >= 0xf0 || sc->evstatus < 0x80)
-			return;
-
-		sc->evdata[sc->evindex++] = data;
-		if (sc->evindex == MIDI_EVLEN(sc->evstatus)) {
-			sc->evindex = 0;
-			mesg[0] = sc->evstatus;
-			mesg[1] = sc->evdata[0];
-			mesg[2] = sc->evdata[1];
-			midiseq_in(sc->seq_md, mesg, 1 + MIDI_EVLEN(sc->evstatus));
-		}
-	}
-}
-
-
-int
-midi_writebytes(int unit, unsigned char *mesg, int mesglen)
-{
-	struct midi_softc  *sc = midi_cd.cd_devs[unit];
-	struct midi_buffer *mb = &sc->outbuf;
-	unsigned 	    count;
-	int		    s;
-
-	s = splaudio();
-	if (mesglen > MIDIBUF_AVAIL(mb)) {
-		splx(s);
-		return EWOULDBLOCK;
-	}
-
-	while (mesglen > 0) {
-		count = MIDIBUF_SIZE - MIDIBUF_END(mb);
-		if (count > MIDIBUF_AVAIL(mb)) count = MIDIBUF_AVAIL(mb);
-		if (count > mesglen) count = mesglen;
-		bcopy(mesg, mb->data + MIDIBUF_END(mb), count);
-		mb->used += count;
-		mesg += count;
-		mesglen -= count;
-		midi_out_start(sc);
-	}
-	splx(s);
-	return 0;
-}
-
-#endif /* NSEQUENCER > 0 */

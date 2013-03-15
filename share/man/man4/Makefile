@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.544 2013/03/14 11:18:37 mpi Exp $
+#	$OpenBSD: Makefile,v 1.545 2013/03/15 09:10:52 ratchov Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -50,7 +50,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	rtfps.4 rtii.4 rtw.4 safe.4 safte.4 san.4 sbt.4 sbus.4 schsio.4 \
 	scsi.4 sd.4 \
 	sdmmc.4 sdhc.4 se.4 ses.4 \
-	sequencer.4 sf.4 sf2r.4 sfr.4 sili.4 siop.4 sis.4 sk.4 sl.4 sli.4 \
+	sf.4 sf2r.4 sfr.4 sili.4 siop.4 sis.4 sk.4 sl.4 sli.4 \
 	sm.4 smsc.4 softraid.4 spdmem.4 sdtemp.4 speaker.4 sppp.4 sqphy.4 \
 	st.4 ste.4 stge.4 sti.4 \
 	stp.4 sv.4 sym.4 systrace.4 tcic.4 tcp.4 termios.4 tht.4 ti.4 tl.4 \
@@ -88,7 +88,6 @@ MLINKS+=pty.4 ptm.4
 MLINKS+=random.4 arandom.4
 MLINKS+=random.4 srandom.4 random.4 urandom.4
 MLINKS+=scsi.4 scsibus.4
-MLINKS+=sequencer.4 music.4
 MLINKS+=sk.4 skc.4 msk.4 mskc.4
 MLINKS+=speaker.4 spkr.4
 MLINKS+=tht.4 thtc.4

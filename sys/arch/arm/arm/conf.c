@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2012/08/23 06:12:49 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.34 2013/03/15 09:10:52 ratchov Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -117,7 +117,6 @@ cdev_decl(pci);
 #include "audio.h"
 #include "video.h"
 #include "midi.h"
-#include "sequencer.h"
 
 /*
  * USB devices
@@ -340,7 +339,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),			/* 55: Reserved for bypass device */	
 	cdev_notdef(),				/* 56: reserved */
 	cdev_midi_init(NMIDI,midi),		/* 57: MIDI I/O */
-	cdev_midi_init(NSEQUENCER,sequencer),	/* 58: sequencer I/O */
+	cdev_notdef(),				/* 58 was: sequencer I/O */
 	cdev_notdef(),				/* 59: reserved */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 60: frame buffers, etc.*/
 	cdev_mouse_init(NWSKBD,wskbd),		/* 61: keyboards */

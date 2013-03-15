@@ -1,4 +1,4 @@
-/* $OpenBSD: db_structinfo.c,v 1.5 2012/12/05 23:20:15 deraadt Exp $ */
+/* $OpenBSD: db_structinfo.c,v 1.6 2013/03/15 09:10:52 ratchov Exp $ */
 /* public domain */
 /*
  * This file is intended to be compiled with debug information,
@@ -105,7 +105,6 @@
 #include <sys/cdio.h>
 #include <sys/chio.h>
 #include <sys/dkio.h>
-#include <sys/midiio.h>
 #include <sys/filio.h>
 #include <sys/mtio.h>
 #include <sys/pciio.h>

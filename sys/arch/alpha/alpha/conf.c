@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.69 2012/08/23 06:12:49 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.70 2013/03/15 09:10:52 ratchov Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -97,8 +97,6 @@ cdev_decl(com);
 #include "wsmux.h"
 #include "midi.h"
 cdev_decl(midi);
-#include "sequencer.h"
-cdev_decl(music);
 
 #include "spkr.h"
 cdev_decl(spkr);
@@ -177,7 +175,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 39: Kernel symbols device */
 	cdev_spkr_init(NSPKR,spkr),	/* 40: PC speaker */
 	cdev_midi_init(NMIDI,midi),     /* 41: MIDI I/O */
-        cdev_midi_init(NSEQUENCER,sequencer),   /* 42: sequencer I/O */
+        cdev_notdef(),   		/* 42 was: sequencer I/O */
 	cdev_notdef(),			/* 43 was: RAIDframe disk driver */
 	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_usb_init(NUSB,usb),	/* 45: USB controller */
