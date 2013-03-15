@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.17 2012/06/01 01:01:57 guenther Exp $ */
+/*	$OpenBSD: random.c,v 1.18 2013/03/15 19:07:53 tedu Exp $ */
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -35,6 +35,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "thread_private.h"
 
 /*
  * random.c:
@@ -174,6 +176,12 @@ static int rand_type = TYPE_3;
 static int rand_deg = DEG_3;
 static int rand_sep = SEP_3;
 
+_THREAD_PRIVATE_MUTEX(random);
+static long random_l(void);
+
+#define LOCK() _THREAD_PRIVATE_MUTEX_LOCK(random)
+#define UNLOCK() _THREAD_PRIVATE_MUTEX_UNLOCK(random)
+
 /*
  * srandom:
  *
@@ -186,8 +194,8 @@ static int rand_sep = SEP_3;
  * introduced by the L.C.R.N.G.  Note that the initialization of randtbl[]
  * for default usage relies on values produced by this routine.
  */
-void
-srandom(unsigned int x)
+static void
+srandom_l(unsigned int x)
 {
 	int i;
 	int32_t test;
@@ -213,8 +221,16 @@ srandom(unsigned int x)
 		fptr = &state[rand_sep];
 		rptr = &state[0];
 		for (i = 0; i < 10 * rand_deg; i++)
-			(void)random();
+			(void)random_l();
 	}
+}
+
+void
+srandom(unsigned int x)
+{
+	LOCK();
+	srandom_l(x);
+	UNLOCK();
 }
 
 /*
@@ -234,6 +250,7 @@ srandomdev(void)
 	int mib[2];
 	size_t len;
 
+	LOCK();
 	if (rand_type == TYPE_0)
 		len = sizeof(state[0]);
 	else
@@ -247,6 +264,7 @@ srandomdev(void)
 		fptr = &state[rand_sep];
 		rptr = &state[0];
 	}
+	UNLOCK();
 }
 
 /*
@@ -273,12 +291,15 @@ initstate(u_int seed, char *arg_state, size_t n)
 {
 	char *ostate = (char *)(&state[-1]);
 
+	LOCK();
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
 		state[-1] = MAX_TYPES * (rptr - state) + rand_type;
-	if (n < BREAK_0)
+	if (n < BREAK_0) {
+		UNLOCK();
 		return(NULL);
+	}
 	if (n < BREAK_1) {
 		rand_type = TYPE_0;
 		rand_deg = DEG_0;
@@ -302,11 +323,12 @@ initstate(u_int seed, char *arg_state, size_t n)
 	}
 	state = &(((int32_t *)arg_state)[1]);	/* first location */
 	end_ptr = &state[rand_deg];	/* must set end_ptr before srandom */
-	srandom(seed);
+	srandom_l(seed);
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
 		state[-1] = MAX_TYPES*(rptr - state) + rand_type;
+	UNLOCK();
 	return(ostate);
 }
 
@@ -333,6 +355,7 @@ setstate(char *arg_state)
 	int32_t rear = new_state[0] / MAX_TYPES;
 	char *ostate = (char *)(&state[-1]);
 
+	LOCK();
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
@@ -348,6 +371,7 @@ setstate(char *arg_state)
 		rand_sep = seps[type];
 		break;
 	default:
+		UNLOCK();
 		return(NULL);
 	}
 	state = &new_state[1];
@@ -356,6 +380,7 @@ setstate(char *arg_state)
 		fptr = &state[(rear + rand_sep) % rand_deg];
 	}
 	end_ptr = &state[rand_deg];		/* set end_ptr too */
+	UNLOCK();
 	return(ostate);
 }
 
@@ -376,8 +401,8 @@ setstate(char *arg_state)
  *
  * Returns a 31-bit random number.
  */
-long
-random(void)
+static long
+random_l(void)
 {
 	int32_t i;
 
@@ -393,4 +418,14 @@ random(void)
 			rptr = state;
 	}
 	return((long)i);
+}
+
+long
+random(void)
+{
+	long r;
+	LOCK();
+	r = random_l();
+	UNLOCK();
+	return r;
 }
