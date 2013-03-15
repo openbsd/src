@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.11 2013/03/15 12:52:03 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.12 2013/03/15 13:13:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -1396,7 +1396,7 @@ oack(struct tftp_client *client)
 
 	tp = (struct tftphdr *)client->buf;
 	bp = (char *)tp->th_stuff;
-	size = client->packet_size - 2;
+	size = sizeof(client->buf) - 2;
 
 	tp->th_opcode = htons((u_short)OACK);
 	for (i = 0; i < NOPT; i++) {
