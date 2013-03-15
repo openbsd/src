@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.beagle/MAKEDEV.md,v 1.3 2012/08/23 06:15:28 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: etc.beagle/MAKEDEV.md,v 1.4 2013/03/15 09:10:52 ratchov Exp 
+#	OpenBSD: MAKEDEV.common,v 1.62 2013/03/15 09:10:52 ratchov Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -72,7 +72,6 @@
 #	hotplug	devices hot plugging
 #	iop*	I2O controller devices
 #	lkm	Loadable kernel modules interface
-#	music*	MIDI sequencer
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
@@ -285,13 +284,6 @@ pci*)
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
 	;;
 
-music*)
-	M music$U     c 58 $U
-	M sequencer$U c 58 $(($U+128))
-	MKlist[${#MKlist[*]}]=";[ -e music ] || ln -s music$U music"
-	MKlist[${#MKlist[*]}]=";[ -e sequencer ] || ln -s sequencer$U sequencer"
-	;;
-
 lkm)
 	M lkm c 35 0 640 _lkm
 	;;
@@ -499,9 +491,9 @@ all)
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
 	R diskmap vscsi0 ch0 pppx hotplug ptm local wscons pci0 pci1
 	R pci2 pci3 iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
-	R rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 video0 video1 uk0
-	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
-	R wd0 wd1 wd2 wd3 std st0 st1 fd
+	R rmidi5 rmidi6 rmidi7 tuner0 radio0 video0 video1 uk0 random
+	R lkm tty00 tty01 tty02 tty03 apm crypto pf systrace wd0 wd1
+	R wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
