@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2013/03/15 09:18:19 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.26 2013/03/15 09:19:01 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -81,8 +81,6 @@
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octeonreg.h>
 #include <machine/octeonvar.h>
-
-#define BOARD_TYPE_SIM 1
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */

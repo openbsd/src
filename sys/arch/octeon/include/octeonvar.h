@@ -191,6 +191,17 @@ struct octeon_fau_map {
 #define	OCTEON_POW_GROUP_CORE1_TASK_6	14
 #define	OCTEON_POW_GROUP_CORE1_TASK_7	15
 
+/*
+ * Octeon board types known to work with OpenBSD/octeon.
+ * One of the main reasons for keeping this list is to be able to tell which
+ * boards do and do not have octcf(4). Currently the only board not to have octcf(4)
+ * is BOARD_TYPE_UBIQUITI_E100. Sadly, this number is also used by other vendors, but
+ * we don't run on those boards yet. When that time comes, iobus needs extra care for
+ * not blindly attaching octcf(4) on every board.
+ */
+#define	BOARD_TYPE_SIM			1
+#define	BOARD_TYPE_UBIQUITI_E100	20002
+
 #ifdef _KERNEL
 struct boot_desc {
 	uint32_t desc_ver;
