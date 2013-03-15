@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.7 2011/07/06 04:49:35 matthew Exp $ */
+/*	$OpenBSD: octcf.c,v 1.8 2013/03/15 09:18:19 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -85,6 +85,7 @@
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/octeonreg.h>
+#include <machine/octeonvar.h>
 
 #define OCTCF_REG_SIZE	8
 #define ATAPARAMS_SIZE	512
@@ -159,8 +160,15 @@ int 	octcf_get_params(struct octcf_softc *, struct ataparams *);
 	bus_space_write_2(wd->sc_iot, wd->sc_ioh, reg & 0x6, val)
 
 int
-octcfprobe(struct device *parent, void *match_, void *aux)
+octcfprobe(struct device *parent, void *match, void *aux)
 {
+	extern uint64_t cf_found;
+
+	if (cf_found == 0) {
+		OCTCFDEBUG_PRINT(("octcfprobe: No cf bus found\n"), DEBUG_FUNCS | DEBUG_PROBE);
+		return 0;
+	}
+
 	return 1;
 }
 

@@ -192,6 +192,75 @@ struct octeon_fau_map {
 #define	OCTEON_POW_GROUP_CORE1_TASK_7	15
 
 #ifdef _KERNEL
+struct boot_desc {
+	uint32_t desc_ver;
+	uint32_t desc_size;
+	uint64_t stack_top;
+	uint64_t heap_start;
+	uint64_t heap_end;
+	uint64_t __unused17;
+	uint64_t __unused16;
+	uint32_t __unused18;
+	uint32_t __unused15;
+	uint32_t __unused14;
+	uint32_t argc;
+	uint32_t argv[64];
+	uint32_t flags;
+	uint32_t core_mask;
+	uint32_t dram_size;
+	uint32_t phy_mem_desc_addr;
+	uint32_t debugger_flag_addr;
+	uint32_t eclock;
+	uint32_t __unused10;
+	uint32_t __unused9;
+	uint16_t __unused8;
+	uint8_t __unused7;
+	uint8_t __unused6;
+	uint16_t __unused5;
+	uint8_t __unused4;
+	uint8_t __unused3;
+	uint8_t __unused2[20];
+	uint8_t __unused1[6];
+	uint8_t __unused0;
+	uint64_t boot_info_addr;
+};
+
+struct boot_info {
+	uint32_t ver_major;
+	uint32_t ver_minor;
+	uint64_t stack_top;
+	uint64_t heap_start;
+	uint64_t heap_end;
+	uint64_t boot_desc_addr;
+	uint32_t exception_base_addr;
+	uint32_t stack_size;
+	uint32_t flags;
+	uint32_t core_mask;
+	uint32_t dram_size;
+	uint32_t phys_mem_desc_addr;
+	uint32_t debugger_flags_addr;
+	uint32_t eclock;
+	uint32_t dclock;
+	uint32_t __unused0;
+	uint16_t board_type;
+	uint8_t board_rev_major;
+	uint8_t board_rev_minor;
+	uint16_t __unused1;
+	uint8_t __unused2;
+	uint8_t __unused3;
+	char board_serial[20];
+	uint8_t mac_addr_base[6];
+	uint8_t mac_addr_count;
+	uint64_t cf_common_addr;
+	uint64_t cf_attr_addr;
+	uint64_t led_display_addr;
+	uint32_t dfaclock;
+	uint32_t config_flags;
+};
+
+/* Contains the address for the CF bus, if one was found. */
+uint64_t cf_found;
+
 extern struct octeon_config	octeon_configuration;
 
 void	octeon_bus_io_init(bus_space_tag_t, void *);
