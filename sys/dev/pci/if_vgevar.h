@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vgevar.h,v 1.4 2009/11/23 23:18:16 kettenis Exp $	*/
+/*	$OpenBSD: if_vgevar.h,v 1.5 2013/03/15 01:33:23 brad Exp $	*/
 /*	$FreeBSD: if_vgevar.h,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -83,7 +83,6 @@ struct vge_softc {
 	bus_dma_tag_t		sc_dmat;
 	pci_chipset_tag_t	sc_pc;
 	struct mii_data		sc_mii;
-	int			vge_if_flags;
 	int			vge_rx_consumed;
 	int			vge_link;
 	int			vge_camidx;

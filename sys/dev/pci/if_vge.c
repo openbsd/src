@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.54 2013/03/14 17:04:50 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.55 2013/03/15 01:33:23 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -162,7 +162,7 @@ void vge_miibus_statchg	(struct device *);
 
 void vge_cam_clear	(struct vge_softc *);
 int vge_cam_set		(struct vge_softc *, uint8_t *);
-void vge_setmulti	(struct vge_softc *);
+void vge_iff		(struct vge_softc *);
 void vge_reset		(struct vge_softc *);
 
 struct cfattach vge_ca = {
@@ -469,67 +469,66 @@ fail:
 }
 
 /*
- * Program the multicast filter. We use the 64-entry CAM filter
- * for perfect filtering. If there's more than 64 multicast addresses,
- * we use the hash filter instead.
+ * We use the 64-entry CAM filter for perfect filtering.
+ * If there's more than 64 multicast addresses, we use the
+ * hash filter instead.
  */
 void
-vge_setmulti(struct vge_softc *sc)
+vge_iff(struct vge_softc *sc)
 {
 	struct arpcom		*ac = &sc->arpcom;
 	struct ifnet		*ifp = &ac->ac_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
+	u_int32_t		h = 0, hashes[2];
+	u_int8_t		rxctl;
 	int			error;
-	u_int32_t		h = 0, hashes[2] = { 0, 0 };
 
-	/* First, zot all the multicast entries. */
 	vge_cam_clear(sc);
-	CSR_WRITE_4(sc, VGE_MAR0, 0);
-	CSR_WRITE_4(sc, VGE_MAR1, 0);
+	rxctl = CSR_READ_1(sc, VGE_RXCTL);
+	rxctl &= ~(VGE_RXCTL_RX_BCAST | VGE_RXCTL_RX_MCAST |
+	    VGE_RXCTL_RX_PROMISC | VGE_RXCTL_RX_UCAST);
+	bzero(hashes, sizeof(hashes));
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
-	 * If the user wants allmulti or promisc mode, enable reception
-	 * of all multicast frames.
+	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
 	 */
-	if (ifp->if_flags & IFF_PROMISC) {
-allmulti:
-		CSR_WRITE_4(sc, VGE_MAR0, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, VGE_MAR1, 0xFFFFFFFF);
+	rxctl |= VGE_RXCTL_RX_BCAST | VGE_RXCTL_RX_UCAST;
+
+	if ((ifp->if_flags & IFF_PROMISC) == 0)
+		rxctl |= VGE_RXCTL_RX_MCAST;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
-		return;
-	}
-
-	/* Now program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
-			goto allmulti;
-
-		error = vge_cam_set(sc, enm->enm_addrlo);
-		if (error)
-			break;
-
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	/* If there were too many addresses, use the hash filter. */
-	if (error) {
-		vge_cam_clear(sc);
-
+		if (ifp->if_flags & IFF_PROMISC)
+			rxctl |= VGE_RXCTL_RX_PROMISC;
+		hashes[0] = hashes[1] = 0xFFFFFFFF;
+	} else if (ac->ac_multicnt > VGE_CAM_MAXADDRS) {
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
 			h = ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN) >> 26;
+
 			hashes[h >> 5] |= 1 << (h & 0x1f);
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			error = vge_cam_set(sc, enm->enm_addrlo);
+			if (error)
+				break;
 
-		CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
-		CSR_WRITE_4(sc, VGE_MAR1, hashes[1]);
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
+
+	CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
+	CSR_WRITE_4(sc, VGE_MAR1, hashes[1]);
+	CSR_WRITE_1(sc, VGE_RXCTL, rxctl);
 }
 
 void
@@ -1588,7 +1587,6 @@ vge_init(struct ifnet *ifp)
 	 * Load the addresses of the DMA queues into the chip.
 	 * Note that we only use one transmit queue.
 	 */
-
 	CSR_WRITE_4(sc, VGE_TXDESC_ADDR_LO0,
 	    VGE_ADDR_LO(sc->vge_ldata.vge_tx_listseg.ds_addr));
 	CSR_WRITE_2(sc, VGE_TXDESCNUM, VGE_TX_DESC_CNT - 1);
@@ -1606,28 +1604,10 @@ vge_init(struct ifnet *ifp)
 	CSR_WRITE_2(sc, VGE_TXQCSRS, VGE_TXQCSR_RUN0);
 
 	/* Set up the receive filter -- allow large frames for VLANs. */
-	CSR_WRITE_1(sc, VGE_RXCTL, VGE_RXCTL_RX_UCAST|VGE_RXCTL_RX_GIANT);
+	CSR_WRITE_1(sc, VGE_RXCTL, VGE_RXCTL_RX_GIANT);
 
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC) {
-		CSR_SETBIT_1(sc, VGE_RXCTL, VGE_RXCTL_RX_PROMISC);
-	}
-
-	/* Set capture broadcast bit to capture broadcast frames. */
-	if (ifp->if_flags & IFF_BROADCAST) {
-		CSR_SETBIT_1(sc, VGE_RXCTL, VGE_RXCTL_RX_BCAST);
-	}
-
-	/* Set multicast bit to capture multicast frames. */
-	if (ifp->if_flags & IFF_MULTICAST) {
-		CSR_SETBIT_1(sc, VGE_RXCTL, VGE_RXCTL_RX_MCAST);
-	}
-
-	/* Init the cam filter. */
-	vge_cam_clear(sc);
-
-	/* Init the multicast filter. */
-	vge_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	vge_iff(sc);
 
 	/* Initialize pause timer. */
 	CSR_WRITE_2(sc, VGE_TX_PAUSE_TIMER, 0xFFFF);
@@ -1697,7 +1677,6 @@ vge_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	sc->vge_if_flags = 0;
 	sc->vge_link = 0;
 
 	if (!timeout_pending(&sc->timer_handle))
@@ -1799,40 +1778,24 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch (command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			vge_init(ifp);
 #ifdef INET
-		case AF_INET:
-			vge_init(ifp);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
 #endif
-		default:
-			vge_init(ifp);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->vge_if_flags & IFF_PROMISC)) {
-				CSR_SETBIT_1(sc, VGE_RXCTL,
-				    VGE_RXCTL_RX_PROMISC);
-				vge_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->vge_if_flags & IFF_PROMISC) {
-				CSR_CLRBIT_1(sc, VGE_RXCTL,
-				    VGE_RXCTL_RX_PROMISC);
-				vge_setmulti(sc);
-                        } else
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
 				vge_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				vge_stop(sc);
 		}
-		sc->vge_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCGIFMEDIA:
@@ -1846,7 +1809,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			vge_setmulti(sc);
+			vge_iff(sc);
 		error = 0;
 	}
 
