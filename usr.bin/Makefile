@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.128 2013/03/10 17:55:54 nicm Exp $
+#	$OpenBSD: Makefile,v 1.129 2013/03/15 06:01:41 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 	readlink renice rev rpcgen rpcinfo rs rsh rup ruptime rusers rwall \
 	rwho sdiff script sed sendbug shar showmount skey \
 	skeyaudit skeyinfo skeyinit sndiod \
-	sort spell split sqlite3 ssh stat su systat \
+	sort spell split sqlite3 ssh stat strip strings su systat \
 	sudo tail talk tcopy tcpbench tee telnet tftp tic tip time \
 	tmux top touch tput tr true tset tsort tty usbhidaction usbhidctl \
 	ul uname unexpand unifdef uniq units \
@@ -32,10 +32,6 @@ SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 
 .if (${YP:L} == "yes")
 SUBDIR+=ypcat ypmatch ypwhich
-.endif
-
-.if (${ELF_TOOLCHAIN:L} == "no")
-SUBDIR+= strip strings
 .endif
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,7 @@
-#	$OpenBSD: Makefile,v 1.11 2004/07/12 10:44:11 miod Exp $
+#	$OpenBSD: Makefile,v 1.12 2013/03/15 06:01:42 deraadt Exp $
+
+.include <bsd.own.mk>
+.if (${ELF_TOOLCHAIN:L} == "no")
 
 TARGET_MACHINE_ARCH?=	${MACHINE_ARCH}
 
@@ -45,5 +48,7 @@ realinstall:
 	${STRIP} ${DESTDIR}${BINDIR}/strip
 	chmod ${BINMODE} ${DESTDIR}${BINDIR}/strip
 	-if [ "${INSTALL_COPY}" = "" ]; then rm -f ${STRIP}; fi
+
+.endif
 
 .include <bsd.prog.mk>
