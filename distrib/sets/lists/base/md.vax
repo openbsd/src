@@ -710,7 +710,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sdmmc/sdmmcdevs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sdmmc/sdmmcreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sdmmc/sdmmcvar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/softraidvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/spdmemvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sun
@@ -1458,7 +1457,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/malloc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/mbuf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/memrange.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/mount.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/mplock.ph

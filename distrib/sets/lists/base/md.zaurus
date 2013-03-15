@@ -1440,7 +1440,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sdmmc/sdmmcdevs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sdmmc/sdmmcreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sdmmc/sdmmcvar.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/softraidvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/spdmemvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sun
@@ -2274,7 +2273,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/malloc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mbuf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/memrange.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mount.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mplock.ph

@@ -1500,7 +1500,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sdmmc/sdmmcdevs.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sdmmc/sdmmcreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sdmmc/sdmmcvar.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/softraidvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/spdmemvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/sun
@@ -2337,7 +2336,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/malloc.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/mbuf.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/memrange.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/mount.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/mplock.ph

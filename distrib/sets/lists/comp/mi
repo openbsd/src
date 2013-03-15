@@ -724,7 +724,6 @@
 ./usr/include/dev/sdmmc/sdmmcdevs.h
 ./usr/include/dev/sdmmc/sdmmcreg.h
 ./usr/include/dev/sdmmc/sdmmcvar.h
-./usr/include/dev/sequencervar.h
 ./usr/include/dev/softraidvar.h
 ./usr/include/dev/spdmemvar.h
 ./usr/include/dev/sun
@@ -1430,7 +1429,6 @@
 ./usr/include/sys/malloc.h
 ./usr/include/sys/mbuf.h
 ./usr/include/sys/memrange.h
-./usr/include/sys/midiio.h
 ./usr/include/sys/mman.h
 ./usr/include/sys/mount.h
 ./usr/include/sys/mplock.h

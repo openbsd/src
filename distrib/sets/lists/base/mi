@@ -2739,6 +2739,7 @@
 ./usr/share/calendar
 ./usr/share/calendar/calendar.all
 ./usr/share/calendar/calendar.birthday
+./usr/share/calendar/calendar.canada
 ./usr/share/calendar/calendar.christian
 ./usr/share/calendar/calendar.computer
 ./usr/share/calendar/calendar.croatian
