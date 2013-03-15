@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.9 2013/03/15 12:20:11 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.10 2013/03/15 12:36:11 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -1406,14 +1406,14 @@ oack(struct tftp_client *client)
 		n = snprintf(bp, size, "%s%c%lld", opt_names[i], '\0',
 		    options[i].o_reply);
 		if (n == -1 || n >= size) {
-			lwarn("oack: no buffer space");
+			lwarnx("oack: no buffer space");
 			goto error;
 		}
 
 		bp += n + 1;
 		size -= n + 1;
 		if (size < 0) {
-			lwarn("oack: no buffer space");
+			lwarnx("oack: no buffer space");
 			goto error;
 		}
 	}
