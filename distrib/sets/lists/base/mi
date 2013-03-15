@@ -2566,7 +2566,6 @@
 ./usr/sbin/dvmrpd
 ./usr/sbin/editmap
 ./usr/sbin/edquota
-./usr/sbin/faithd
 ./usr/sbin/ftp-proxy
 ./usr/sbin/fw_update
 ./usr/sbin/group
@@ -3580,6 +3579,7 @@
 ./usr/share/zoneinfo/Asia/Kashgar
 ./usr/share/zoneinfo/Asia/Kathmandu
 ./usr/share/zoneinfo/Asia/Katmandu
+./usr/share/zoneinfo/Asia/Khandyga
 ./usr/share/zoneinfo/Asia/Kolkata
 ./usr/share/zoneinfo/Asia/Krasnoyarsk
 ./usr/share/zoneinfo/Asia/Kuala_Lumpur
@@ -3624,6 +3624,7 @@
 ./usr/share/zoneinfo/Asia/Ulaanbaatar
 ./usr/share/zoneinfo/Asia/Ulan_Bator
 ./usr/share/zoneinfo/Asia/Urumqi
+./usr/share/zoneinfo/Asia/Ust-Nera
 ./usr/share/zoneinfo/Asia/Vientiane
 ./usr/share/zoneinfo/Asia/Vladivostok
 ./usr/share/zoneinfo/Asia/Yakutsk
@@ -3739,6 +3740,7 @@
 ./usr/share/zoneinfo/Europe/Brussels
 ./usr/share/zoneinfo/Europe/Bucharest
 ./usr/share/zoneinfo/Europe/Budapest
+./usr/share/zoneinfo/Europe/Busingen
 ./usr/share/zoneinfo/Europe/Chisinau
 ./usr/share/zoneinfo/Europe/Copenhagen
 ./usr/share/zoneinfo/Europe/Dublin
@@ -4184,6 +4186,7 @@
 ./usr/share/zoneinfo/posix/Asia/Kashgar
 ./usr/share/zoneinfo/posix/Asia/Kathmandu
 ./usr/share/zoneinfo/posix/Asia/Katmandu
+./usr/share/zoneinfo/posix/Asia/Khandyga
 ./usr/share/zoneinfo/posix/Asia/Kolkata
 ./usr/share/zoneinfo/posix/Asia/Krasnoyarsk
 ./usr/share/zoneinfo/posix/Asia/Kuala_Lumpur
@@ -4228,6 +4231,7 @@
 ./usr/share/zoneinfo/posix/Asia/Ulaanbaatar
 ./usr/share/zoneinfo/posix/Asia/Ulan_Bator
 ./usr/share/zoneinfo/posix/Asia/Urumqi
+./usr/share/zoneinfo/posix/Asia/Ust-Nera
 ./usr/share/zoneinfo/posix/Asia/Vientiane
 ./usr/share/zoneinfo/posix/Asia/Vladivostok
 ./usr/share/zoneinfo/posix/Asia/Yakutsk
@@ -4343,6 +4347,7 @@
 ./usr/share/zoneinfo/posix/Europe/Brussels
 ./usr/share/zoneinfo/posix/Europe/Bucharest
 ./usr/share/zoneinfo/posix/Europe/Budapest
+./usr/share/zoneinfo/posix/Europe/Busingen
 ./usr/share/zoneinfo/posix/Europe/Chisinau
 ./usr/share/zoneinfo/posix/Europe/Copenhagen
 ./usr/share/zoneinfo/posix/Europe/Dublin
@@ -4789,6 +4794,7 @@
 ./usr/share/zoneinfo/right/Asia/Kashgar
 ./usr/share/zoneinfo/right/Asia/Kathmandu
 ./usr/share/zoneinfo/right/Asia/Katmandu
+./usr/share/zoneinfo/right/Asia/Khandyga
 ./usr/share/zoneinfo/right/Asia/Kolkata
 ./usr/share/zoneinfo/right/Asia/Krasnoyarsk
 ./usr/share/zoneinfo/right/Asia/Kuala_Lumpur
@@ -4833,6 +4839,7 @@
 ./usr/share/zoneinfo/right/Asia/Ulaanbaatar
 ./usr/share/zoneinfo/right/Asia/Ulan_Bator
 ./usr/share/zoneinfo/right/Asia/Urumqi
+./usr/share/zoneinfo/right/Asia/Ust-Nera
 ./usr/share/zoneinfo/right/Asia/Vientiane
 ./usr/share/zoneinfo/right/Asia/Vladivostok
 ./usr/share/zoneinfo/right/Asia/Yakutsk
@@ -4948,6 +4955,7 @@
 ./usr/share/zoneinfo/right/Europe/Brussels
 ./usr/share/zoneinfo/right/Europe/Bucharest
 ./usr/share/zoneinfo/right/Europe/Budapest
+./usr/share/zoneinfo/right/Europe/Busingen
 ./usr/share/zoneinfo/right/Europe/Chisinau
 ./usr/share/zoneinfo/right/Europe/Copenhagen
 ./usr/share/zoneinfo/right/Europe/Dublin

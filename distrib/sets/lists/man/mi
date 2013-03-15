@@ -1581,7 +1581,6 @@
 ./usr/share/man/man4/etphy.4
 ./usr/share/man/man4/ex.4
 ./usr/share/man/man4/exphy.4
-./usr/share/man/man4/faith.4
 ./usr/share/man/man4/fd.4
 ./usr/share/man/man4/fdc.4
 ./usr/share/man/man4/fea.4
@@ -2662,7 +2661,6 @@
 ./usr/share/man/man8/dvmrpd.8
 ./usr/share/man/man8/editmap.8
 ./usr/share/man/man8/edquota.8
-./usr/share/man/man8/faithd.8
 ./usr/share/man/man8/fdisk.8
 ./usr/share/man/man8/fingerd.8
 ./usr/share/man/man8/fsck.8
