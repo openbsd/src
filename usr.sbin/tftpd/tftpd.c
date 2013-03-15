@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.8 2012/07/13 02:31:46 gsoares Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.9 2013/03/15 12:20:11 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -168,7 +168,7 @@ void		tftp_end(struct tftp_client *);
 void		tftp(struct tftp_client *, struct tftphdr *, size_t);
 void		tftp_open(struct tftp_client *, const char *);
 void		nak(struct tftp_client *, int);
-void		oack(struct tftp_client *);
+int		oack(struct tftp_client *);
 void		oack_done(int, short, void *);
 
 void		sendfile(struct tftp_client *);
@@ -872,11 +872,14 @@ tftp_open(struct tftp_client *client, const char *filename)
 	int ecode;
 
 	ecode = validate_access(client, filename);
-	if (ecode)
-		goto error;
+	if (ecode) {
+		nak(client, ecode);
+		return;
+	}
 
 	if (client->options) {
-		oack(client);
+		if (oack(client) == -1)
+			return;
 
 		free(client->options);
 		client->options = NULL;
@@ -886,9 +889,6 @@ tftp_open(struct tftp_client *client, const char *filename)
 		sendfile(client);
 
 	return;
-
-error:
-	nak(client, ecode);
 }
 
 /*
@@ -1386,7 +1386,7 @@ nak(struct tftp_client *client, int error)
 /*
  * Send an oack packet (option acknowledgement).
  */
-void
+int
 oack(struct tftp_client *client)
 {
 	struct opt_client *options = client->options;
@@ -1436,10 +1436,11 @@ oack(struct tftp_client *client)
 		    oack_done, client);
 
 	event_add(&client->sev, &client->tv);
-	return;
+	return (0);
 
 error:
 	client_free(client);
+	return (-1);
 }
 
 int
