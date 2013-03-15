@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.250 2013/03/07 09:40:19 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.251 2013/03/15 20:45:34 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1693,7 +1693,7 @@ ifconf(u_long cmd, caddr_t data)
 
 	ifrp = ifc->ifc_req;
 	for (ifp = TAILQ_FIRST(&ifnet); space >= sizeof(ifr) &&
-	    ifp != TAILQ_END(&ifnet); ifp = TAILQ_NEXT(ifp, if_list)) {
+	    ifp != NULL; ifp = TAILQ_NEXT(ifp, if_list)) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
@@ -1705,7 +1705,7 @@ ifconf(u_long cmd, caddr_t data)
 		} else
 			for (ifa = TAILQ_FIRST(&ifp->if_addrlist);
 			    space >= sizeof (ifr) &&
-			    ifa != TAILQ_END(&ifp->if_addrlist);
+			    ifa != NULL;
 			    ifa = TAILQ_NEXT(ifa, ifa_list)) {
 				struct sockaddr *sa = ifa->ifa_addr;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX)
