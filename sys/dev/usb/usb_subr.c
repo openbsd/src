@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.82 2012/05/15 12:52:44 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.83 2013/03/16 11:11:22 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -967,7 +967,7 @@ usbd_probe_and_attach(struct device *parent, usbd_device_handle dev, int port,
 		}
 
 		free(dev->subdevs, M_USB);
-		dev->subdevs = 0;
+		dev->subdevs = NULL;
 	}
 	/* No interfaces were attached in any of the configurations. */
 
@@ -1101,7 +1101,7 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
 	    &dev->default_pipe);
 	if (err) {
-		usbd_remove_device(dev, up);
+		usb_free_device(dev, up);
 		return (err);
 	}
 
@@ -1150,7 +1150,7 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc "
 		    "failed\n", addr));
-		usbd_remove_device(dev, up);
+		usb_free_device(dev, up);
 		return (err);
 	}
 
@@ -1175,13 +1175,13 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 		/* Illegal device descriptor */
 		DPRINTFN(-1,("usbd_new_device: illegal descriptor %d\n",
 		    dd->bDescriptorType));
-		usbd_remove_device(dev, up);
+		usb_free_device(dev, up);
 		return (USBD_INVAL);
 	}
 
 	if (dd->bLength < USB_DEVICE_DESCRIPTOR_SIZE) {
 		DPRINTFN(-1,("usbd_new_device: bad length %d\n", dd->bLength));
-		usbd_remove_device(dev, up);
+		usb_free_device(dev, up);
 		return (USBD_INVAL);
 	}
 
@@ -1191,7 +1191,7 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
 		    "failed\n", addr));
-		usbd_remove_device(dev, up);
+		usb_free_device(dev, up);
 		return (err);
 	}
 
@@ -1201,7 +1201,7 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 	if (err) {
 		DPRINTFN(-1,("usbd_new_device: set address %d failed\n", addr));
 		err = USBD_SET_ADDR_FAILED;
-		usbd_remove_device(dev, up);
+		usb_free_device(dev, up);
 		return (err);
 	}
 
@@ -1233,7 +1233,7 @@ usbd_new_device(struct device *parent, usbd_bus_handle bus, int depth,
 
 	err = usbd_probe_and_attach(parent, dev, port, addr);
 	if (err) {
-		usbd_remove_device(dev, up);
+		usb_free_device(dev, up);
 		return (err);
   	}
 
@@ -1254,19 +1254,6 @@ usbd_reload_device_desc(usbd_device_handle dev)
 	dev->quirks = usbd_find_quirk(&dev->ddesc);
 
 	return (USBD_NORMAL_COMPLETION);
-}
-
-void
-usbd_remove_device(usbd_device_handle dev, struct usbd_port *up)
-{
-	DPRINTF(("usbd_remove_device: %p\n", dev));
-
-	if (dev->default_pipe != NULL)
-		usbd_kill_pipe(dev->default_pipe);
-	up->device = NULL;
-	dev->bus->devices[dev->address] = NULL;
-
-	free(dev, M_USB);
 }
 
 int
@@ -1414,9 +1401,11 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 }
 
 void
-usb_free_device(usbd_device_handle dev)
+usb_free_device(usbd_device_handle dev, struct usbd_port *up)
 {
 	int ifcidx, nifc;
+
+	DPRINTF(("usb_free_device: %p\n", dev));
 
 	if (dev->default_pipe != NULL)
 		usbd_kill_pipe(dev->default_pipe);
@@ -1430,6 +1419,9 @@ usb_free_device(usbd_device_handle dev)
 		free(dev->cdesc, M_USB);
 	if (dev->subdevs != NULL)
 		free(dev->subdevs, M_USB);
+	up->device = NULL;
+	dev->bus->devices[dev->address] = NULL;
+
 	free(dev, M_USB);
 }
 
@@ -1483,7 +1475,5 @@ usb_disconnect_port(struct usbd_port *up, struct device *parent)
 		}
 	}
 
-	dev->bus->devices[dev->address] = NULL;
-	up->device = NULL;
-	usb_free_device(dev);
+	usb_free_device(dev, up);
 }
