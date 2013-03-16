@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.35 2012/11/05 19:08:29 shadchin Exp $ */
+/* $OpenBSD: pms.c,v 1.36 2013/03/16 11:14:47 stsp Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -339,7 +339,6 @@ const struct pms_protocol pms_protocols[] = {
 		pms_proc_alps,
 		NULL
 	},
-#ifdef notyet
 	/* Elantech touchpad (hardware version 1) */
 	{
 		PMS_ELANTECH_V1, 4,
@@ -358,7 +357,6 @@ const struct pms_protocol pms_protocols[] = {
 		pms_proc_elantech_v2,
 		NULL
 	},
-#endif
 	/* Elantech touchpad (hardware version 3) */
 	{
 		PMS_ELANTECH_V3, 6,
