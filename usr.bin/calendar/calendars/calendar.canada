@@ -1,7 +1,7 @@
 /*
  * Canada holiday
  *
- * $OpenBSD: calendar.canada,v 1.1 2013/03/15 08:37:10 jmc Exp $
+ * $OpenBSD: calendar.canada,v 1.2 2013/03/16 07:52:29 jmc Exp $
  */
 
 #ifndef _calendar_canada_
@@ -28,7 +28,7 @@ Easter+1	Easter Monday
 09/MonFirst	Labour Day (Statutory holiday)
 09/22*	Autumnal Equinox
 10/MonSecond	Thanksgiving
-10/31	All Hallows Eve  (Halloween)
+10/31	All Hallows' Eve (Halloween)
 11/SunFirst	Daylight Saving Time ends; clocks move back (1st Sunday in November)
 11/11	Remembrance Day
 12/21*	Winter Solstice
