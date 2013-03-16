@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.41 2012/06/20 10:51:27 fgsch Exp $ */
+/*	$OpenBSD: usb.h,v 1.42 2013/03/16 09:58:40 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -622,27 +622,6 @@ struct usb_device_info {
 	char		udi_serial[USB_MAX_STRING_LEN];
 };
 
-/* OpenBSD <= 4.8 version, to be removed eventually */
-struct usb_device_info_48 {
-	u_int8_t	udi_bus;
-	u_int8_t	udi_addr;	/* device address */
-	char		udi_product[USB_MAX_STRING_LEN];
-	char		udi_vendor[USB_MAX_STRING_LEN];
-	char		udi_release[8];
-	u_int16_t	udi_productNo;
-	u_int16_t	udi_vendorNo;
-	u_int16_t	udi_releaseNo;
-	u_int8_t	udi_class;
-	u_int8_t	udi_subclass;
-	u_int8_t	udi_protocol;
-	u_int8_t	udi_config;
-	u_int8_t	udi_speed;
-	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
-	int		udi_nports;
-	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
-	u_int8_t	udi_ports[16];/* hub only: addresses of devices on ports */
-};
-
 struct usb_ctl_report {
 	int	ucr_report;
 	u_char	ucr_data[1024];	/* filled data size will vary */
@@ -657,7 +636,6 @@ struct usb_device_stats {
 #define USB_SETDEBUG		_IOW ('U', 2, unsigned int)
 #define USB_DISCOVER		_IO  ('U', 3)
 #define USB_DEVICEINFO		_IOWR('U', 4, struct usb_device_info)
-#define USB_DEVICEINFO_48	_IOWR('U', 4, struct usb_device_info_48)
 #define USB_DEVICESTATS		_IOR ('U', 5, struct usb_device_stats)
 
 /* Generic HID device */
