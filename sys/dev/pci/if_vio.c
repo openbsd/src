@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.11 2013/03/15 15:44:54 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.12 2013/03/16 19:08:37 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -233,11 +233,13 @@ struct vio_softc {
 	((sc)->sc_hdr_size == sizeof(struct virtio_net_hdr))
 
 #define VIRTIO_NET_TX_MAXNSEGS		16 /* for larger chains, defrag */
-#define VIRTIO_NET_CTRL_MAC_MAXENTRIES	64 /* for more entries, use ALLMULTI */
+#define VIRTIO_NET_CTRL_MAC_MC_ENTRIES	64 /* for more entries, use ALLMULTI */
+#define VIRTIO_NET_CTRL_MAC_UC_ENTRIES	 1 /* one entry for own unicast addr */
 
 #define VIO_CTRL_MAC_INFO_SIZE 					\
 	(2*sizeof(struct virtio_net_ctrl_mac_tbl) + 		\
-	 (VIRTIO_NET_CTRL_MAC_MAXENTRIES + 1) * ETHER_ADDR_LEN)
+	 (VIRTIO_NET_CTRL_MAC_MC_ENTRIES + 			\
+	  VIRTIO_NET_CTRL_MAC_UC_ENTRIES) * ETHER_ADDR_LEN)
 
 /* cfattach interface functions */
 int	vio_match(struct device *, void *, void *);
@@ -395,9 +397,7 @@ vio_alloc_mem(struct vio_softc *sc)
 		allocsize += sizeof(struct virtio_net_ctrl_cmd) * 1;
 		allocsize += sizeof(struct virtio_net_ctrl_status) * 1;
 		allocsize += sizeof(struct virtio_net_ctrl_rx) * 1;
-		allocsize += sizeof(struct virtio_net_ctrl_mac_tbl)
-			+ sizeof(struct virtio_net_ctrl_mac_tbl)
-			+ ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES;
+		allocsize += VIO_CTRL_MAC_INFO_SIZE;
 	}
 	sc->sc_dma_size = allocsize;
 
@@ -417,7 +417,8 @@ vio_alloc_mem(struct vio_softc *sc)
 		sc->sc_ctrl_rx = (void*)(kva + offset);
 		offset += sizeof(*sc->sc_ctrl_rx);
 		sc->sc_ctrl_mac_tbl_uc = (void*)(kva + offset);
-		offset += sizeof(*sc->sc_ctrl_mac_tbl_uc);
+		offset += sizeof(*sc->sc_ctrl_mac_tbl_uc) +
+		    ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_UC_ENTRIES;
 		sc->sc_ctrl_mac_tbl_mc = (void*)(kva + offset);
 	}
 
@@ -1371,7 +1372,7 @@ vio_iff(struct vio_softc *sc)
 	}
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
-	    ac->ac_multicnt >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
+	    ac->ac_multicnt >= VIRTIO_NET_CTRL_MAC_MC_ENTRIES) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			promisc = 1;
