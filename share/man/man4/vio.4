@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vio.4,v 1.7 2013/01/16 00:30:48 brad Exp $
+.\"     $OpenBSD: vio.4,v 1.8 2013/03/16 19:12:03 sf Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,20 +14,25 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 16 2013 $
+.Dd $Mdocdate: March 16 2013 $
 .Dt VIO 4
 .Os
 .Sh NAME
 .Nm vio
 .Nd VirtIO network device
 .Sh SYNOPSIS
-.Cd "vio* at virtio?"
+.Cd "vio* at virtio? flags 0x00"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the
 .Xr virtio 4
 network interface provided by bhyve, KVM, QEMU, and VirtualBox.
+.Pp
+Setting flags to 0x02 disables the RingEventIndex feature.
+This can be tried as a workaround for possible bugs in host implementations or
+.Nm
+at the cost of slightly reduced performance.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr virtio 4
