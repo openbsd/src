@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sis.4,v 1.27 2012/08/18 08:44:25 jmc Exp $
+.\"	$OpenBSD: sis.4,v 1.28 2013/03/17 09:58:43 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/sis.4,v 1.2 1999/11/15 23:14:27 phantom Exp $
 .\"
-.Dd $Mdocdate: August 18 2012 $
+.Dd $Mdocdate: March 17 2013 $
 .Dt SIS 4
 .Os
 .Sh NAME
@@ -47,13 +47,21 @@
 The
 .Nm
 driver provides support for PCI Ethernet adapters and embedded
-controllers based on the Silicon Integrated Systems SiS 900
-and SiS 7016 Fast Ethernet controller chips, as well as support
-for adapters based on National Semiconductor DP83815 (MacPHYTER)
-and DP83816 (MacPHYTER-II) PCI Ethernet controller chips,
-including the Netgear FA311, FA312 and FA331,
-and the embedded controllers on Soekris net4xxx single-board computers
-and lan16x1 multi-port PCI Ethernet adapters.
+controllers based on the Silicon Integrated Systems SiS 900 /
+SiS 7016 Fast Ethernet controller chips, and National
+Semiconductor DP83815 (MacPHYTER) / DP83816 (MacPHYTER-II) PCI
+Ethernet controller chips, including the following:
+.Pp
+.Bl -bullet -compact
+.It
+@Nifty FNECHARD IFC USUP-TX
+.It
+MELCO LGY-PCI-TXC
+.It
+Netgear FA311, FA312, FA331
+.It
+Soekris Engineering net45xx, net48xx, lan1621, and lan1641
+.El
 .Pp
 The SiS 900 is a 100Mbps Ethernet MAC and MII-compliant transceiver
 in a single package.
