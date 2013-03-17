@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.100 2013/01/13 05:40:05 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.101 2013/03/17 00:23:44 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -80,6 +80,8 @@ void	brgphy_5709s_status(struct mii_softc *);
 int	brgphy_mii_phy_auto(struct mii_softc *);
 void	brgphy_loop(struct mii_softc *);
 void	brgphy_reset(struct mii_softc *);
+void	brgphy_reset_bge(struct mii_softc *);
+void	brgphy_reset_bnx(struct mii_softc *);
 void	brgphy_bcm5401_dspcode(struct mii_softc *);
 void	brgphy_bcm5411_dspcode(struct mii_softc *);
 void	brgphy_bcm5421_dspcode(struct mii_softc *);
@@ -758,8 +760,6 @@ brgphy_loop(struct mii_softc *sc)
 void
 brgphy_reset(struct mii_softc *sc)
 {
-	struct bge_softc *bge_sc = NULL;
-	struct bnx_softc *bnx_sc = NULL;
 	char *devname;
 
 	devname = sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name;
@@ -791,6 +791,25 @@ brgphy_reset(struct mii_softc *sc)
 			break;
 		}
 		break;
+	}
+
+	/* Handle any bge (NetXtreme/NetLink) workarounds. */
+	if (strcmp(devname, "bge") == 0)
+		brgphy_reset_bge(sc);
+	/* Handle any bnx (NetXtreme II) workarounds. */
+	else if (strcmp(devname, "bnx") == 0)
+		brgphy_reset_bnx(sc);
+}
+
+void
+brgphy_reset_bge(struct mii_softc *sc)
+{
+	struct bge_softc *bge_sc = sc->mii_pdata->mii_ifp->if_softc;
+
+	if (sc->mii_flags & MIIF_HAVEFIBER)
+		return;
+
+	switch (sc->mii_oui) {
 	case MII_OUI_xxBROADCOM3:
 		switch (sc->mii_model) {
 		case MII_MODEL_xxBROADCOM3_BCM5717C:
@@ -801,181 +820,171 @@ brgphy_reset(struct mii_softc *sc)
 		}
 	}
 
-	/* Handle any bge (NetXtreme/NetLink) workarounds. */
-	if (strcmp(devname, "bge") == 0) {
-		if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
-			bge_sc = sc->mii_pdata->mii_ifp->if_softc;
+	if (bge_sc->bge_flags & BGE_PHY_ADC_BUG)
+		brgphy_adc_bug(sc);
+	if (bge_sc->bge_flags & BGE_PHY_5704_A0_BUG)
+		brgphy_5704_a0_bug(sc);
+	if (bge_sc->bge_flags & BGE_PHY_BER_BUG)
+		brgphy_ber_bug(sc);
+	else if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG) {
+	    PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
+		PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
 
-			if (bge_sc->bge_flags & BGE_PHY_ADC_BUG)
-				brgphy_adc_bug(sc);
-			if (bge_sc->bge_flags & BGE_PHY_5704_A0_BUG)
-				brgphy_5704_a0_bug(sc);
-			if (bge_sc->bge_flags & BGE_PHY_BER_BUG)
-				brgphy_ber_bug(sc);
-			else if (bge_sc->bge_flags & BGE_PHY_JITTER_BUG) {
-				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
-				PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG,
-				    0x000a);
+		if (bge_sc->bge_flags & BGE_PHY_ADJUST_TRIM) {
+			PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, 0x110b);
+			PHY_WRITE(sc, BRGPHY_TEST1, BRGPHY_TEST1_TRIM_EN |
+			    0x4);
+		} else
+			PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, 0x010b);
 
-				if (bge_sc->bge_flags & BGE_PHY_ADJUST_TRIM) {
-					PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
-					    0x110b);
-					PHY_WRITE(sc, BRGPHY_TEST1,
-					    BRGPHY_TEST1_TRIM_EN | 0x4);
-				} else {
-					PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
-					    0x010b);
-				}
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
+	}
 
-				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
-			}
-			if (bge_sc->bge_flags & BGE_PHY_CRC_BUG)
-				brgphy_crc_bug(sc);
+	if (bge_sc->bge_flags & BGE_PHY_CRC_BUG)
+		brgphy_crc_bug(sc);
 
-			/* Set Jumbo frame settings in the PHY. */
-			if (bge_sc->bge_flags & BGE_JUMBO_CAPABLE)
-				brgphy_jumbo_settings(sc);
+	/* Set Jumbo frame settings in the PHY. */
+	if (bge_sc->bge_flags & BGE_JUMBO_CAPABLE)
+		brgphy_jumbo_settings(sc);
 
-			/* Adjust output voltage */
-			if (sc->mii_oui == MII_OUI_BROADCOM2 &&
-			    sc->mii_model == MII_MODEL_BROADCOM2_BCM5906)
-				PHY_WRITE(sc, BRGPHY_MII_EPHY_PTEST, 0x12);
+	/* Adjust output voltage */
+	if (sc->mii_oui == MII_OUI_BROADCOM2 &&
+	    sc->mii_model == MII_MODEL_BROADCOM2_BCM5906)
+		PHY_WRITE(sc, BRGPHY_MII_EPHY_PTEST, 0x12);
 
-			/* Enable Ethernet@Wirespeed */
-			if (!(bge_sc->bge_flags & BGE_NO_ETH_WIRE_SPEED))
-				brgphy_eth_wirespeed(sc);
+	/* Enable Ethernet@Wirespeed */
+	if (!(bge_sc->bge_flags & BGE_NO_ETH_WIRE_SPEED))
+		brgphy_eth_wirespeed(sc);
 
-			/* Enable Link LED on Dell boxes */
-			if (bge_sc->bge_flags & BGE_NO_3LED) {
-				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
-				PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
-					& ~BRGPHY_PHY_EXTCTL_3_LED);
-			}
+	/* Enable Link LED on Dell boxes */
+	if (bge_sc->bge_flags & BGE_NO_3LED) {
+		PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
+		    PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
+		    & ~BRGPHY_PHY_EXTCTL_3_LED);
+	}
+}
+
+void
+brgphy_reset_bnx(struct mii_softc *sc)
+{
+	struct bnx_softc *bnx_sc = sc->mii_pdata->mii_ifp->if_softc;
+
+	if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5708 &&
+	    sc->mii_flags & MIIF_HAVEFIBER) {
+		/* Store autoneg capabilities/results in digital block (Page 0) */
+		PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG3_PG2);
+		PHY_WRITE(sc, BRGPHY_5708S_PG2_DIGCTL_3_0,
+		    BRGPHY_5708S_PG2_DIGCTL_3_0_USE_IEEE);
+		PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG_PG0);
+
+		/* Enable fiber mode and autodetection */
+		PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL1,
+		    PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL1) |
+		    BRGPHY_5708S_PG0_1000X_CTL1_AUTODET_EN |
+		    BRGPHY_5708S_PG0_1000X_CTL1_FIBER_MODE);
+
+		/* Enable parallel detection */
+		PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL2,
+		    PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL2) |
+		    BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN);
+
+		/* Advertise 2.5G support through next page during autoneg */
+		if (bnx_sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG) {
+			PHY_WRITE(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1,
+			    PHY_READ(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1) |
+			    BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
 		}
-	/* Handle any bnx (NetXtreme II) workarounds. */
-	} else if (strcmp(devname, "bnx") == 0) {
-		bnx_sc = sc->mii_pdata->mii_ifp->if_softc;
 
-		if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5708 &&
-		    sc->mii_flags & MIIF_HAVEFIBER) {
-			/* Store autoneg capabilities/results in digital block (Page 0) */
-			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG3_PG2);
-			PHY_WRITE(sc, BRGPHY_5708S_PG2_DIGCTL_3_0, 
-				BRGPHY_5708S_PG2_DIGCTL_3_0_USE_IEEE);
-			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG_PG0);
+		/* Increase TX signal amplitude */
+		if ((BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_A0) ||
+		    (BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_B0) ||
+		    (BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_B1)) {
+			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+			    BRGPHY_5708S_TX_MISC_PG5);
+			PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL1,
+			    PHY_READ(sc, BRGPHY_5708S_PG5_TXACTL1) &
+			    ~BRGPHY_5708S_PG5_TXACTL1_VCM);
+			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+			    BRGPHY_5708S_DIG_PG0);
+		}
 
-			/* Enable fiber mode and autodetection */
-			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL1, 
-				PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL1) | 
-				BRGPHY_5708S_PG0_1000X_CTL1_AUTODET_EN | 
-				BRGPHY_5708S_PG0_1000X_CTL1_FIBER_MODE);
+		/* Backplanes use special driver/pre-driver/pre-emphasis values. */
+		if ((bnx_sc->bnx_shared_hw_cfg & BNX_SHARED_HW_CFG_PHY_BACKPLANE) &&
+		    (bnx_sc->bnx_port_hw_cfg & BNX_PORT_HW_CFG_CFG_TXCTL3_MASK)) {
+			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+			    BRGPHY_5708S_TX_MISC_PG5);
+			PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL3,
+			    bnx_sc->bnx_port_hw_cfg &
+			    BNX_PORT_HW_CFG_CFG_TXCTL3_MASK);
+			    PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+			    BRGPHY_5708S_DIG_PG0);
+		}
+	} else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709 &&
+	    sc->mii_flags & MIIF_HAVEFIBER) {
+		/* Select the SerDes Digital block of the AN MMD. */
+		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR, BRGPHY_BLOCK_ADDR_SERDES_DIG);
 
-			/* Enable parallel detection */
-			PHY_WRITE(sc, BRGPHY_5708S_PG0_1000X_CTL2, 
-				PHY_READ(sc, BRGPHY_5708S_PG0_1000X_CTL2) | 
-				BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN);
+		PHY_WRITE(sc, BRGPHY_SERDES_DIG_1000X_CTL1,
+		    (PHY_READ(sc, BRGPHY_SERDES_DIG_1000X_CTL1) &
+		    ~BRGPHY_SD_DIG_1000X_CTL1_AUTODET) |
+		    BRGPHY_SD_DIG_1000X_CTL1_FIBER);
 
-			/* Advertise 2.5G support through next page during autoneg */
-			if (bnx_sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG)
-				PHY_WRITE(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1, 
-					PHY_READ(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1) | 
-					BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
-
-			/* Increase TX signal amplitude */
-			if ((BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_A0) ||
-			    (BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_B0) ||
-			    (BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_B1)) {
-				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
-					BRGPHY_5708S_TX_MISC_PG5);
-				PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL1, 
-					PHY_READ(sc, BRGPHY_5708S_PG5_TXACTL1) &
-					~BRGPHY_5708S_PG5_TXACTL1_VCM);
-				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
-					BRGPHY_5708S_DIG_PG0);
-			}
-
-			/* Backplanes use special driver/pre-driver/pre-emphasis values. */
-			if ((bnx_sc->bnx_shared_hw_cfg & BNX_SHARED_HW_CFG_PHY_BACKPLANE) &&
-			    (bnx_sc->bnx_port_hw_cfg & BNX_PORT_HW_CFG_CFG_TXCTL3_MASK)) {
-					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
-						BRGPHY_5708S_TX_MISC_PG5);
-					PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL3, 
-						bnx_sc->bnx_port_hw_cfg & 
-						BNX_PORT_HW_CFG_CFG_TXCTL3_MASK);
-					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
-						BRGPHY_5708S_DIG_PG0);
-			}
-		} else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709 &&
-		    sc->mii_flags & MIIF_HAVEFIBER) {
-			/* Select the SerDes Digital block of the AN MMD. */
+		if (bnx_sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG) {
+			/* Select the Over 1G block of the AN MMD. */
 			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-			    BRGPHY_BLOCK_ADDR_SERDES_DIG);
+			    BRGPHY_BLOCK_ADDR_OVER_1G);
 
-			PHY_WRITE(sc, BRGPHY_SERDES_DIG_1000X_CTL1,
-			    (PHY_READ(sc, BRGPHY_SERDES_DIG_1000X_CTL1) &
-			    ~BRGPHY_SD_DIG_1000X_CTL1_AUTODET) |
-			    BRGPHY_SD_DIG_1000X_CTL1_FIBER);
-
-			if (bnx_sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG) {
-				/* Select the Over 1G block of the AN MMD. */
-				PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-				    BRGPHY_BLOCK_ADDR_OVER_1G);
-
-				/*
-				 * Enable autoneg "Next Page" to advertise
-				 * 2.5G support.
-				 */
-				PHY_WRITE(sc, BRGPHY_OVER_1G_UNFORMAT_PG1,
-				    PHY_READ(sc, BRGPHY_OVER_1G_UNFORMAT_PG1) |
-				    BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
-			}
-
-                        /*
-                         * Select the Multi-Rate Backplane Ethernet block of
-                         * the AN MMD.
-                         */
-                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-                            BRGPHY_BLOCK_ADDR_MRBE);
-
-                        /* Enable MRBE speed autoneg. */
-                        PHY_WRITE(sc, BRGPHY_MRBE_MSG_PG5_NP,
-                            PHY_READ(sc, BRGPHY_MRBE_MSG_PG5_NP) |
-                            BRGPHY_MRBE_MSG_PG5_NP_MBRE |
-                            BRGPHY_MRBE_MSG_PG5_NP_T2);
-
-                        /* Select the Clause 73 User B0 block of the AN MMD. */
-                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-                            BRGPHY_BLOCK_ADDR_CL73_USER_B0);
-
-                        /* Enable MRBE speed autoneg. */
-                        PHY_WRITE(sc, BRGPHY_CL73_USER_B0_MBRE_CTL1,
-                            BRGPHY_CL73_USER_B0_MBRE_CTL1_NP_AFT_BP |
-                            BRGPHY_CL73_USER_B0_MBRE_CTL1_STA_MGR |
-                            BRGPHY_CL73_USER_B0_MBRE_CTL1_ANEG);
-
-                        PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-                            BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
-		} else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709) {
-			if (BNX_CHIP_REV(bnx_sc) == BNX_CHIP_REV_Ax ||
-			    BNX_CHIP_REV(bnx_sc) == BNX_CHIP_REV_Bx)
-				brgphy_disable_early_dac(sc);
-
-			/* Set Jumbo frame settings in the PHY. */
-			brgphy_jumbo_settings(sc);
-
-			/* Enable Ethernet@Wirespeed */
-			brgphy_eth_wirespeed(sc);
-		} else {
-			if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
-				brgphy_ber_bug(sc);
-
-				/* Set Jumbo frame settings in the PHY. */
-				brgphy_jumbo_settings(sc);
-
-				/* Enable Ethernet@Wirespeed */
-				brgphy_eth_wirespeed(sc);
-			}
+			/*
+			 * Enable autoneg "Next Page" to advertise
+			 * 2.5G support.
+			 */
+			PHY_WRITE(sc, BRGPHY_OVER_1G_UNFORMAT_PG1,
+			    PHY_READ(sc, BRGPHY_OVER_1G_UNFORMAT_PG1) |
+			    BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
 		}
+
+		/*
+		 * Select the Multi-Rate Backplane Ethernet block of
+		 * the AN MMD.
+		 */
+		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR, BRGPHY_BLOCK_ADDR_MRBE);
+
+		/* Enable MRBE speed autoneg. */
+		PHY_WRITE(sc, BRGPHY_MRBE_MSG_PG5_NP,
+		    PHY_READ(sc, BRGPHY_MRBE_MSG_PG5_NP) |
+		    BRGPHY_MRBE_MSG_PG5_NP_MBRE |
+		    BRGPHY_MRBE_MSG_PG5_NP_T2);
+
+		/* Select the Clause 73 User B0 block of the AN MMD. */
+		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+		    BRGPHY_BLOCK_ADDR_CL73_USER_B0);
+
+		/* Enable MRBE speed autoneg. */
+		PHY_WRITE(sc, BRGPHY_CL73_USER_B0_MBRE_CTL1,
+		    BRGPHY_CL73_USER_B0_MBRE_CTL1_NP_AFT_BP |
+		    BRGPHY_CL73_USER_B0_MBRE_CTL1_STA_MGR |
+		    BRGPHY_CL73_USER_B0_MBRE_CTL1_ANEG);
+
+		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+		    BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
+	} else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709) {
+		if (BNX_CHIP_REV(bnx_sc) == BNX_CHIP_REV_Ax ||
+		    BNX_CHIP_REV(bnx_sc) == BNX_CHIP_REV_Bx)
+			brgphy_disable_early_dac(sc);
+
+		/* Set Jumbo frame settings in the PHY. */
+		brgphy_jumbo_settings(sc);  
+
+		/* Enable Ethernet@Wirespeed */
+		brgphy_eth_wirespeed(sc);   
+	} else if ((sc->mii_flags & MIIF_HAVEFIBER) == 0) {
+		brgphy_ber_bug(sc);
+
+		/* Set Jumbo frame settings in the PHY. */
+		brgphy_jumbo_settings(sc);
+
+		/* Enable Ethernet@Wirespeed */
+		brgphy_eth_wirespeed(sc);
 	}
 }
 
