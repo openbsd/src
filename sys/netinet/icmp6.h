@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.34 2012/07/08 10:45:46 phessler Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.35 2013/03/17 00:38:29 brad Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -224,6 +224,14 @@ struct nd_router_advert {	/* router advertisement */
 #define nd_ra_flags_reserved	nd_ra_hdr.icmp6_data8[1]
 #define ND_RA_FLAG_MANAGED	0x80
 #define ND_RA_FLAG_OTHER	0x40
+
+#define ND_RA_FLAG_RTPREF_MASK	0x18	/* 00011000 */
+
+#define ND_RA_FLAG_RTPREF_HIGH	0x08	/* 00001000 */ 
+#define ND_RA_FLAG_RTPREF_MEDIUM	0x00	/* 00000000 */
+#define ND_RA_FLAG_RTPREF_LOW	0x18	/* 00011000 */
+#define ND_RA_FLAG_RTPREF_RSV	0x10	/* 00010000 */
+
 #define nd_ra_router_lifetime	nd_ra_hdr.icmp6_data16[1]
 
 struct nd_neighbor_solicit {	/* neighbor solicitation */

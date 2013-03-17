@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.30 2012/09/05 05:52:10 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.31 2013/03/17 00:38:29 brad Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -166,10 +166,6 @@ getconfig(intface)
 	MAYHAVE(val, "raflags", 0);
 	tmp->managedflg = val & ND_RA_FLAG_MANAGED;
 	tmp->otherflg = val & ND_RA_FLAG_OTHER;
-#ifndef ND_RA_FLAG_RTPREF_MASK
-#define ND_RA_FLAG_RTPREF_MASK	0x18 /* 00011000 */
-#define ND_RA_FLAG_RTPREF_RSV	0x10 /* 00010000 */
-#endif
 	tmp->rtpref = val & ND_RA_FLAG_RTPREF_MASK;
 	if (tmp->rtpref == ND_RA_FLAG_RTPREF_RSV) {
 		log_warnx("invalid router preference (%02x) on %s",
