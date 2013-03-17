@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.9 2013/01/16 07:17:59 pirofti Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.10 2013/03/17 19:09:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -166,6 +166,15 @@
 #define AMD5536_SMB_CTL2_FREQ	0x78 /* 100 kHz */
 #define AMD5536_SMB_CTL3	0x06 /* control 3 */
 
+/* PMS */
+#define	MSR_LBAR_PMS		DIVIL_LBAR_PMS
+#define	MSR_PMS_SIZE		0x80
+#define	MSR_PMS_ADDR_MASK	0xff80
+#define	AMD5536_PMS_SSC		0x54
+#define	AMD5536_PMS_SSC_PI	0x00040000
+#define	AMD5536_PMS_SSC_CLR_PI	0x00020000
+#define	AMD5536_PMS_SSC_SET_PI	0x00010000
+
 /*
  * MSR registers we want to preserve accross suspend/resume
  */
@@ -275,6 +284,7 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 	u_int64_t sa;
 	struct i2cbus_attach_args iba;
 	int i2c = 0;
+	bus_space_handle_t tmpioh;
 #endif
 	tc->tc_get_timecount = glxpcib_get_timecount;
 	tc->tc_counter_mask = 0xffffffff;
@@ -383,6 +393,18 @@ glxpcib_attach(struct device *parent, struct device *self, void *aux)
 		iba.iba_name = "iic";
 		iba.iba_tag = &sc->sc_smb_ic;
 		i2c = 1;
+	}
+
+	/* Map PMS I/O space and enable the ``Power Immediate'' feature */
+	sa = rdmsr(MSR_LBAR_PMS);
+	if (sa & MSR_LBAR_ENABLE &&
+	    !bus_space_map(pa->pa_iot, sa & MSR_PMS_ADDR_MASK,
+	    MSR_PMS_SIZE, 0, &tmpioh)) {
+		bus_space_write_4(pa->pa_iot, tmpioh, AMD5536_PMS_SSC,
+		    AMD5536_PMS_SSC_SET_PI);
+		bus_space_barrier(pa->pa_iot, tmpioh, AMD5536_PMS_SSC, 4,
+		    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+		bus_space_unmap(pa->pa_iot, tmpioh, MSR_PMS_SIZE);
 	}
 #endif /* SMALL_KERNEL */
 	pcibattach(parent, self, aux);
