@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 2008/05/10 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 2013/03/17 15:10:33 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -35,8 +35,6 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
-#include <powerpc/cpu.h>
-
 /* 
  * CTL_MACHDEP definitions.
  */
@@ -50,4 +48,9 @@
 	{ "altivec", CTLTYPE_INT }, \
 }
 
-#endif	/* _MACHINE_CPU_H_ */
+#ifdef _KERNEL
+
+#include <powerpc/cpu.h>
+
+#endif /* _KERNEL */
+#endif /* _MACHINE_CPU_H_ */
