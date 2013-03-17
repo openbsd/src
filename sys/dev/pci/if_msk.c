@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.97 2013/02/01 06:51:32 brad Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.98 2013/03/17 10:56:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -771,10 +771,21 @@ mskc_reset(struct sk_softc *sc)
 	 */
 	switch (sc->sk_type) {
 	case SK_YUKON_EC:
-	case SK_YUKON_XL:
-	case SK_YUKON_FE:
+	case SK_YUKON_EC_U:
+	case SK_YUKON_EX:
+	case SK_YUKON_SUPR:
+	case SK_YUKON_ULTRA2:
 	case SK_YUKON_OPTIMA:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
+	case SK_YUKON_FE:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE;
+		break;
+	case SK_YUKON_FE_P:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE_P;
+		break;
+	case SK_YUKON_XL:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_XL;
 		break;
 	default:
 		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;

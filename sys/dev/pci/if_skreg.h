@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.57 2012/10/18 21:44:21 deraadt Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.58 2013/03/17 10:56:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -395,9 +395,12 @@
 #define SK_IMCTL_START		0x04
 
 /* Number of ticks per usec for interrupt moderation */
+#define SK_IMTIMER_TICKS_YUKON_FE_P	50
 #define SK_IMTIMER_TICKS_GENESIS	53
 #define SK_IMTIMER_TICKS_YUKON		78
+#define SK_IMTIMER_TICKS_YUKON_FE	100
 #define SK_IMTIMER_TICKS_YUKON_EC	125
+#define SK_IMTIMER_TICKS_YUKON_XL	156
 #define SK_IM_USECS(x)		((x) * imtimer_ticks)
 
 /*
