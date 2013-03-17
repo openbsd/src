@@ -1121,7 +1121,6 @@ ngx_test_lockfile(u_char *file, ngx_log_t *log)
 void
 ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
 {
-    ssize_t           n, len;
     ngx_fd_t          fd;
     ngx_uint_t        i;
     ngx_list_part_t  *part;
@@ -1141,32 +1140,16 @@ ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
             i = 0;
         }
 
-        if (file[i].name.len == 0) {
-            continue;
-        }
-
-        len = file[i].pos - file[i].buffer;
-
         if ((ngx_process == NGX_PROCESS_WORKER) && ngx_chrooted) {
             ngx_strip_chroot(&file[i].name);
         }
 
-        if (file[i].buffer && len != 0) {
+        if (file[i].name.len == 0) {
+            continue;
+        }
 
-            n = ngx_write_fd(file[i].fd, file[i].buffer, len);
-
-            if (n == NGX_FILE_ERROR) {
-                ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                              ngx_write_fd_n " to \"%s\" failed",
-                              file[i].name.data);
-
-            } else if (n != len) {
-                ngx_log_error(NGX_LOG_ALERT, cycle->log, 0,
-                          ngx_write_fd_n " to \"%s\" was incomplete: %z of %uz",
-                          file[i].name.data, n, len);
-            }
-
-            file[i].pos = file[i].buffer;
+        if (file[i].flush) {
+            file[i].flush(&file[i], cycle->log);
         }
 
         fd = ngx_open_file(file[i].name.data, NGX_FILE_APPEND,
