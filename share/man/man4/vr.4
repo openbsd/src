@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vr.4,v 1.30 2013/03/17 18:37:57 brad Exp $
+.\"	$OpenBSD: vr.4,v 1.31 2013/03/17 21:15:55 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -48,8 +48,8 @@ The
 .Nm
 driver provides support for PCI Ethernet adapters and embedded
 controllers based on the VIA Technologies VT3043 Rhine I,
-VT86C100A Rhine II, and VT6105/VT6105M Rhine III Fast Ethernet
-controller chips, including the following:
+VT86C100A Rhine II, VT6102 Rhine II, and VT6105/VT6105M Rhine III
+Fast Ethernet controller chips, including the following:
 .Pp
 .Bl -bullet -compact
 .It
@@ -58,6 +58,8 @@ AOpen/Acer ALN-320
 D-Link DFE-520TX, DFE-530TX
 .It
 Hawking Technologies PN102TX
+.It
+PC Engines alix1d, alix2d2, alix2d3, alix2d13, alix3d2, alix3d3, and alix6f2
 .It
 Soekris Engineering net5501, and lan1741
 .El
@@ -193,11 +195,11 @@ The
 .Nm
 driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
-.Sh BUGS
+.Sh CAVEATS
 The
 .Nm
-driver always copies transmit mbuf chains into longword-aligned
-buffers prior to transmission in order to pacify the Rhine chips.
+driver copies transmit mbuf chains into longword-aligned buffers prior
+to transmission in order to pacify the VT3043 and VT86C100A chips.
 If buffers are not aligned correctly, the chip will round the
 supplied buffer address and begin DMAing from the wrong location.
 This buffer copying impairs transmit performance on slower systems but can't
