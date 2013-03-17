@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.12 2013/03/15 13:13:10 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.13 2013/03/17 09:48:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -872,14 +872,12 @@ tftp_open(struct tftp_client *client, const char *filename)
 	int ecode;
 
 	ecode = validate_access(client, filename);
-	if (ecode) {
-		nak(client, ecode);
-		return;
-	}
+	if (ecode)
+		goto error;
 
 	if (client->options) {
 		if (oack(client) == -1)
-			return;
+			goto error;
 
 		free(client->options);
 		client->options = NULL;
@@ -889,6 +887,8 @@ tftp_open(struct tftp_client *client, const char *filename)
 		sendfile(client);
 
 	return;
+error:
+	nak(client, ecode);
 }
 
 /*
@@ -1439,7 +1439,6 @@ oack(struct tftp_client *client)
 	return (0);
 
 error:
-	client_free(client);
 	return (-1);
 }
 
