@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.141 2013/03/11 23:42:19 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.142 2013/03/17 20:47:23 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1067,8 +1067,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	/* Create DMA maps for TX buffers */
 	for (i = 0; i < RL_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
-		    RL_JUMBO_FRAMELEN,
-		    RL_TX_DESC_CNT(sc) - RL_NTXDESC_RSVD, RL_TDESC_CMD_FRAGLEN,
+		    RL_JUMBO_FRAMELEN, RL_NTXSEGS, RL_JUMBO_FRAMELEN,
 		    0, 0, &sc->rl_ldata.rl_txq[i].txq_dmamap);
 		if (error) {
 			printf("%s: can't create DMA map for TX\n",
@@ -1592,8 +1591,7 @@ re_txeof(struct rl_softc *sc)
 
 	sc->rl_ldata.rl_txq_considx = idx;
 
-	if (sc->rl_ldata.rl_tx_free > RL_NTXDESC_RSVD)
-		ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Some chips will ignore a second TX request issued while an
@@ -1731,9 +1729,6 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 	u_int32_t	cmdstat, vlanctl = 0, csum_flags = 0;
 	struct rl_txq	*txq;
 
-	if (sc->rl_ldata.rl_tx_free <= RL_NTXDESC_RSVD)
-		return (EFBIG);
-
 	/*
 	 * Set up checksum offload. Note: checksum offload bits must
 	 * appear in all descriptors of a multi-descriptor transmit
@@ -1784,7 +1779,7 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		nsegs++;
 	}
 
-	if (nsegs > sc->rl_ldata.rl_tx_free - RL_NTXDESC_RSVD) {
+	if (sc->rl_ldata.rl_tx_free - nsegs <= 1) {
 		error = EFBIG;
 		goto fail_unload;
 	}
