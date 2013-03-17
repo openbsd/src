@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.6 2010/05/10 22:06:04 oga Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.7 2013/03/17 21:49:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -172,6 +172,12 @@ agp_bus_dma_set_alignment(bus_dma_tag_t tag, bus_dmamap_t dmam,
     u_long alignment)
 {
 	sg_dmamap_set_alignment(tag, dmam, alignment);
+}
+
+void
+agp_bus_dma_rebind(bus_dma_tag_t tag, bus_dmamap_t dmam, int flags)
+{
+	sg_dmamap_reload(tag, dmam, flags);
 }
 
 struct agp_map {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.7 2011/04/07 15:30:15 miod Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.8 2013/03/17 21:49:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -784,6 +784,18 @@ sg_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	spm->spm_origbuf = NULL;
 	spm->spm_proc = NULL;
 	_bus_dmamap_unload(t, map);
+}
+
+/* 
+ * Reload a dvmamap.
+ */
+void
+sg_dmamap_reload(bus_dma_tag_t t, bus_dmamap_t map, int flags)
+{
+	struct sg_cookie	*is = t->_cookie;
+	struct sg_page_map	*spm = map->_dm_cookie;
+
+	sg_iomap_load_map(is, spm, spm->spm_start, flags);
 }
 
 /*
