@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.109 2013/03/07 06:19:07 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.110 2013/03/17 00:29:16 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1668,23 +1668,23 @@ sis_init(void *xsc)
 	}
 
         /*
-	 * Short Cable Receive Errors (MP21.E)
-	 * also: Page 78 of the DP83815 data sheet (september 2002 version)
+	 * Page 78 of the DP83815 data sheet (september 2002 version)
 	 * recommends the following register settings "for optimum
-	 * performance." for rev 15C.  The driver from NS also sets  
+	 * performance." for rev 15C.  The driver from NS also sets
 	 * the PHY_CR register for later versions.
+	 *
+	 * This resolves an issue with tons of errors in AcceptPerfectMatch
+	 * (non-IFF_PROMISC) mode.
 	 */
 	 if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr <= NS_SRR_15D) {
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
 		CSR_WRITE_4(sc, NS_PHY_CR, 0x189C);
-		if (sc->sis_srr == NS_SRR_15C) {  
-			/* set val for c2 */
-			CSR_WRITE_4(sc, NS_PHY_TDATA, 0x0000);
-			/* load/kill c2 */ 
-			CSR_WRITE_4(sc, NS_PHY_DSPCFG, 0x5040);
-			/* rais SD off, from 4 to c */
-			CSR_WRITE_4(sc, NS_PHY_SDCFG, 0x008C);
-		}
+		/* set val for c2 */
+		CSR_WRITE_4(sc, NS_PHY_TDATA, 0x0000);
+		/* load/kill c2 */
+		CSR_WRITE_4(sc, NS_PHY_DSPCFG, 0x5040);
+		/* raise SD off, from 4 to c */
+		CSR_WRITE_4(sc, NS_PHY_SDCFG, 0x008C);
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
 	}
 
@@ -1741,13 +1741,16 @@ sis_init(void *xsc)
 		SIS_SETBIT(sc, SIS_TX_CFG, SIS_TXCFG_MPII03D);
  	}
 
+	/*
+	 * Some DP83815s experience problems when used with short
+	 * (< 30m/100ft) Ethernet cables in 100baseTX mode.  This
+	 * sequence adjusts the DSP's signal attenuation to fix the
+	 * problem.
+	 */
 	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr < NS_SRR_16A &&
-	     IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
 		uint32_t reg;
 
-		/*
-		 * Short Cable Receive Errors (MP21.E)
-		 */
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
 		reg = CSR_READ_4(sc, NS_PHY_DSPCFG) & 0xfff;
 		CSR_WRITE_4(sc, NS_PHY_DSPCFG, reg | 0x1000);
@@ -1759,8 +1762,7 @@ sis_init(void *xsc)
 			    sc->sc_dev.dv_xname, reg);
 #endif
 			CSR_WRITE_4(sc, NS_PHY_TDATA, 0x00e8);
-			reg = CSR_READ_4(sc, NS_PHY_DSPCFG);
-			SIS_SETBIT(sc, NS_PHY_DSPCFG, reg | 0x20);
+			SIS_SETBIT(sc, NS_PHY_DSPCFG, 0x20);
 		}
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
 	}
