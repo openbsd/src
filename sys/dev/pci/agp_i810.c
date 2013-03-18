@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.73 2013/03/18 11:20:11 jsg Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.74 2013/03/18 12:02:56 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -59,6 +59,10 @@
 #define	INTEL_LOCAL	0x2
 /* Memory is snooped, must not be accessed through gtt from the cpu. */
 #define	INTEL_COHERENT	0x6	
+
+#define GEN6_PTE_UNCACHED		(1 << 1)
+#define GEN6_PTE_CACHE_LLC		(2 << 1)
+#define GEN6_PTE_CACHE_LLC_MLC		(3 << 1)
 
 enum {
 	CHIP_NONE	= 0,	/* not integrated graphics */
@@ -726,8 +730,21 @@ agp_i810_bind_page(void *sc, bus_addr_t offset, paddr_t physical, int flags)
 	 * COHERENT mappings mean set the snoop bit. this should never be
 	 * accessed by the gpu through the gtt.
 	 */
-	if (flags & BUS_DMA_COHERENT)
-		physical |= INTEL_COHERENT;
+	switch (isc->chiptype) {
+	case CHIP_SANDYBRIDGE:
+	case CHIP_IVYBRIDGE:
+		if (flags & BUS_DMA_GTT_NOCACHE)
+			physical |= GEN6_PTE_UNCACHED;
+		if (flags & BUS_DMA_GTT_CACHE_LLC)
+			physical |= GEN6_PTE_CACHE_LLC;
+		if (flags & BUS_DMA_GTT_CACHE_LLC_MLC)
+			physical |= GEN6_PTE_CACHE_LLC_MLC;
+		break;
+	default:
+		if (flags & BUS_DMA_COHERENT)
+			physical |= INTEL_COHERENT;
+		break;
+	}
 
 	intagp_write_gtt(isc, offset - isc->isc_apaddr, physical);
 }

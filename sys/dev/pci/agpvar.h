@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.25 2013/03/18 11:14:44 jsg Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.26 2013/03/18 12:02:56 jsg Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -42,6 +42,11 @@
 #endif
 
 #define AGPUNIT(x)	minor(x)
+
+/* we can't use the BUS_DMA_NOCACHE here or it won't get mapped via the gtt */
+#define BUS_DMA_GTT_NOCACHE		(1 << 30)
+#define BUS_DMA_GTT_CACHE_LLC		(1 << 29)
+#define BUS_DMA_GTT_CACHE_LLC_MLC	(1 << 28)
 
 struct agp_attach_args {
 	char			*aa_busname;
