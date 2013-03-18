@@ -1,4 +1,4 @@
-/* $OpenBSD: radeon_irq.c,v 1.27 2011/06/19 12:04:20 oga Exp $ */
+/* $OpenBSD: radeon_irq.c,v 1.28 2013/03/18 12:36:51 jsg Exp $ */
 /* radeon_irq.c -- IRQ handling for radeon -*- linux-c -*- */
 /*
  * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
@@ -349,7 +349,7 @@ radeon_driver_irq_install(struct drm_device * dev)
 
 	atomic_set(&dev_priv->swi_emitted, 0);
 
-	dev->vblank->vb_max = 0x001fffff;
+	dev->max_vblank_count = 0x001fffff;
 
 	radeon_irq_set_state(dev, RADEON_SW_INT_ENABLE, 1);
 

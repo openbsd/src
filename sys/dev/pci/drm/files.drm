@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.23 2012/05/19 18:02:53 kettenis Exp $
+# $OpenBSD: files.drm,v 1.24 2013/03/18 12:36:51 jsg Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -12,13 +12,51 @@ file   dev/pci/drm/drm_drv.c		drm	needs-flag
 file   dev/pci/drm/drm_irq.c		drm
 file   dev/pci/drm/drm_lock.c		drm
 file   dev/pci/drm/drm_memory.c		drm
+file   dev/pci/drm/drm_mm.c		drm
 file   dev/pci/drm/drm_scatter.c	drm
+file   dev/pci/drm/drm_crtc.c		drm
+file   dev/pci/drm/drm_modes.c		drm
+file   dev/pci/drm/drm_crtc_helper.c	drm
+file   dev/pci/drm/drm_edid.c		drm
+file   dev/pci/drm/drm_dp_helper.c	drm
+file   dev/pci/drm/drm_fb_helper.c	drm
 
-device	inteldrm: drmbase
+device	inteldrm: drmbase, wsemuldisplaydev, rasops32
 attach	inteldrm at drmdev
-file	dev/pci/drm/i915_drv.c		inteldrm
-file	dev/pci/drm/i915_irq.c		inteldrm
-file	dev/pci/drm/i915_suspend.c	inteldrm
+file	dev/pci/drm/i915/i915_dma.c		inteldrm
+file	dev/pci/drm/i915/i915_drv.c		inteldrm
+file	dev/pci/drm/i915/i915_gem.c		inteldrm
+file	dev/pci/drm/i915/i915_gem_evict.c	inteldrm
+file	dev/pci/drm/i915/i915_gem_execbuffer.c	inteldrm
+file	dev/pci/drm/i915/i915_gem_gtt.c		inteldrm
+file	dev/pci/drm/i915/i915_gem_tiling.c	inteldrm
+file	dev/pci/drm/i915/i915_irq.c		inteldrm
+file	dev/pci/drm/i915/i915_suspend.c		inteldrm
+file	dev/pci/drm/i915/intel_bios.c		inteldrm
+file	dev/pci/drm/i915/intel_crt.c		inteldrm
+file	dev/pci/drm/i915/intel_ddi.c		inteldrm
+file	dev/pci/drm/i915/intel_display.c	inteldrm
+file	dev/pci/drm/i915/intel_dp.c		inteldrm
+file	dev/pci/drm/i915/intel_dvo.c		inteldrm
+file	dev/pci/drm/i915/intel_fb.c		inteldrm
+file	dev/pci/drm/i915/intel_hdmi.c		inteldrm
+file	dev/pci/drm/i915/intel_i2c.c		inteldrm
+file	dev/pci/drm/i915/intel_lvds.c		inteldrm
+file	dev/pci/drm/i915/intel_modes.c		inteldrm
+file	dev/pci/drm/i915/intel_opregion.c	inteldrm
+file	dev/pci/drm/i915/intel_overlay.c	inteldrm
+file	dev/pci/drm/i915/intel_panel.c		inteldrm
+file	dev/pci/drm/i915/intel_pm.c		inteldrm
+file	dev/pci/drm/i915/intel_ringbuffer.c	inteldrm
+file	dev/pci/drm/i915/intel_sdvo.c		inteldrm
+file	dev/pci/drm/i915/intel_sprite.c		inteldrm
+file	dev/pci/drm/i915/intel_tv.c		inteldrm
+file	dev/pci/drm/i915/dvo_ch7017.c		inteldrm
+file	dev/pci/drm/i915/dvo_ch7xxx.c		inteldrm
+file	dev/pci/drm/i915/dvo_ivch.c		inteldrm
+file	dev/pci/drm/i915/dvo_ns2501.c		inteldrm
+file	dev/pci/drm/i915/dvo_sil164.c		inteldrm
+file	dev/pci/drm/i915/dvo_tfp410.c		inteldrm
 
 device	radeondrm: drmbase
 attach	radeondrm at drmdev

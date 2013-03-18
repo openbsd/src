@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_atomic.h,v 1.6 2011/06/02 18:22:00 weerd Exp $ */
+/* $OpenBSD: drm_atomic.h,v 1.7 2013/03/18 12:36:51 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -52,6 +52,24 @@ typedef u_int32_t atomic_t;
 #define atomic_inc(p)		(*(p) += 1)
 #define atomic_dec(p)		(*(p) -= 1)
 #define atomic_add(n, p)	(*(p) += (n))
+
+static inline int
+atomic_add_return(int n, atomic_t *p)
+{
+	*(p) += (n);
+	return  (*p);
+}
+
+static inline int
+atomic_inc_not_zero(atomic_t *p)
+{
+	if (*p == 0)
+		return (0);
+
+	*(p) += 1;
+	return (*p);
+}
+
 #define atomic_sub(n, p)	(*(p) -= (n))
 /* FIXME */
 #define atomic_add_int(p, v)      *(p) += v

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_mode.h,v 1.1 2013/01/09 10:33:42 jsg Exp $	*/
+/*	$OpenBSD: drm_mode.h,v 1.2 2013/03/18 12:36:51 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007 Jakob Bornecrantz <wallbraker@gmail.com>
@@ -163,6 +163,7 @@ struct drm_mode_get_plane_res {
 #define DRM_MODE_ENCODER_TMDS	2
 #define DRM_MODE_ENCODER_LVDS	3
 #define DRM_MODE_ENCODER_TVDAC	4
+#define DRM_MODE_ENCODER_VIRTUAL 5
 
 struct drm_mode_get_encoder {
 	uint32_t encoder_id;
@@ -200,6 +201,7 @@ struct drm_mode_get_encoder {
 #define DRM_MODE_CONNECTOR_HDMIB	12
 #define DRM_MODE_CONNECTOR_TV		13
 #define DRM_MODE_CONNECTOR_eDP		14
+#define DRM_MODE_CONNECTOR_VIRTUAL      15
 
 struct drm_mode_get_connector {
 
@@ -227,6 +229,7 @@ struct drm_mode_get_connector {
 #define DRM_MODE_PROP_IMMUTABLE	(1<<2)
 #define DRM_MODE_PROP_ENUM	(1<<3) /* enumerated type with text strings */
 #define DRM_MODE_PROP_BLOB	(1<<4)
+#define DRM_MODE_PROP_BITMASK	(1<<5) /* bitmask of enumerated types */
 
 struct drm_mode_property_enum {
 	uint64_t value;
@@ -249,6 +252,21 @@ struct drm_mode_connector_set_property {
 	uint64_t value;
 	uint32_t prop_id;
 	uint32_t connector_id;
+};
+
+struct drm_mode_obj_get_properties {
+	uint64_t props_ptr;
+	uint64_t prop_values_ptr;
+	uint32_t count_props;
+	uint32_t obj_id;
+	uint32_t obj_type;
+};
+
+struct drm_mode_obj_set_property {
+	uint64_t value;
+	uint32_t prop_id;
+	uint32_t obj_id;
+	uint32_t obj_type;
 };
 
 struct drm_mode_get_blob {
@@ -340,8 +358,9 @@ struct drm_mode_mode_cmd {
 	struct drm_mode_modeinfo mode;
 };
 
-#define DRM_MODE_CURSOR_BO	(1<<0)
-#define DRM_MODE_CURSOR_MOVE	(1<<1)
+#define DRM_MODE_CURSOR_BO	0x01
+#define DRM_MODE_CURSOR_MOVE	0x02
+#define DRM_MODE_CURSOR_FLAGS	0x03
 
 /*
  * depending on the value in flags different members are used.

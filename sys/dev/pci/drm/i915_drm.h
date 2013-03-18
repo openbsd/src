@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.14 2013/01/09 10:33:42 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.15 2013/03/18 12:36:51 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -281,6 +281,13 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_HAS_RELAXED_DELTA	 15
 #define I915_PARAM_HAS_GEN7_SOL_RESET	 16
 #define I915_PARAM_HAS_LLC		 17
+#define I915_PARAM_HAS_ALIASING_PPGTT	 18
+#define I915_PARAM_HAS_WAIT_TIMEOUT	 19
+#define I915_PARAM_HAS_SEMAPHORES	 20
+#define I915_PARAM_HAS_PRIME_VMAP_FLUSH	 21
+#define I915_PARAM_RSVD_FOR_FUTURE_USE	 22
+#define I915_PARAM_HAS_SECURE_BATCHES	 23
+#define I915_PARAM_HAS_PINNED_BATCHES	 24
 
 typedef struct drm_i915_getparam {
 	int param;
@@ -594,6 +601,23 @@ struct drm_i915_gem_execbuffer2 {
 	u_int64_t rsvd1;
 	u_int64_t rsvd2;
 };
+
+/** Resets the SO write offset registers for transform feedback on gen7. */
+#define I915_EXEC_GEN7_SOL_RESET	(1<<8)
+
+/** Request a privileged ("secure") batch buffer. Note only available for
+ * DRM_ROOT_ONLY | DRM_MASTER processes.
+ */
+#define I915_EXEC_SECURE		(1<<9)
+
+/** Inform the kernel that the batch is and will always be pinned. This
+ * negates the requirement for a workaround to be performed to avoid
+ * an incoherent CS (such as can be found on 830/845). If this flag is
+ * not passed, the kernel will endeavour to make sure the batch is
+ * coherent with the CS before execution. If this flag is passed,
+ * userspace assumes the responsibility for ensuring the same.
+ */
+#define I915_EXEC_IS_PINNED		(1<<10)
 
 struct drm_i915_gem_pin {
 	/** Handle of the buffer to be pinned. */

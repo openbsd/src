@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.99 2012/12/06 15:05:21 mpi Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.100 2013/03/18 12:36:51 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -86,6 +86,8 @@ boolean_t	 drm_flush(struct uvm_object *, voff_t, voff_t, int);
 SPLAY_PROTOTYPE(drm_obj_tree, drm_handle, entry, drm_handle_cmp);
 SPLAY_PROTOTYPE(drm_name_tree, drm_obj, entry, drm_name_cmp);
 
+int	 drm_getcap(struct drm_device *, void *, struct drm_file *);
+
 /*
  * attach drm to a pci-based driver.
  *
@@ -93,16 +95,24 @@ SPLAY_PROTOTYPE(drm_name_tree, drm_obj, entry, drm_name_cmp);
  * drm_attach_args.
  */
 struct device *
-drm_attach_pci(const struct drm_driver_info *driver, struct pci_attach_args *pa,
+drm_attach_pci(struct drm_driver_info *driver, struct pci_attach_args *pa,
     int is_agp, struct device *dev)
 {
 	struct drm_attach_args arg;
+	pcireg_t subsys;
 
 	arg.driver = driver;
 	arg.dmat = pa->pa_dmat;
 	arg.bst = pa->pa_memt;
 	arg.irq = pa->pa_intrline;
 	arg.is_agp = is_agp;
+
+	arg.pci_vendor = PCI_VENDOR(pa->pa_id);
+	arg.pci_device = PCI_PRODUCT(pa->pa_id);
+
+	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	arg.pci_subvendor = PCI_VENDOR(subsys);
+	arg.pci_subdevice = PCI_PRODUCT(subsys);
 
 	arg.busid_len = 20;
 	arg.busid = malloc(arg.busid_len + 1, M_DRM, M_NOWAIT);
@@ -159,6 +169,10 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->irq = da->irq;
 	dev->unique = da->busid;
 	dev->unique_len = da->busid_len;
+	dev->pci_vendor = da->pci_vendor;
+	dev->pci_device = da->pci_device;
+	dev->pci_subvendor = da->pci_subvendor;
+	dev->pci_subdevice = da->pci_subdevice;
 
 	rw_init(&dev->dev_lock, "drmdevlk");
 	mtx_init(&dev->lock.spinlock, IPL_NONE);
@@ -166,12 +180,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&dev->maplist);
 	SPLAY_INIT(&dev->files);
-
-	if (dev->driver->vblank_pipes != 0 && drm_vblank_init(dev,
-	    dev->driver->vblank_pipes)) {
-		printf(": failed to allocate vblank data\n");
-		goto error;
-	}
+	TAILQ_INIT(&dev->vbl_events);
 
 	/*
 	 * the dma buffers api is just weird. offset 1Gb to ensure we don't
@@ -318,14 +327,16 @@ drm_firstopen(struct drm_device *dev)
 	if (dev->driver->firstopen)
 		dev->driver->firstopen(dev);
 
-	if (dev->driver->flags & DRIVER_DMA) {
+	if (drm_core_check_feature(dev, DRIVER_DMA) &&
+	    !drm_core_check_feature(dev, DRIVER_MODESET)) {
 		if ((i = drm_dma_setup(dev)) != 0)
 			return (i);
 	}
 
 	dev->magicid = 1;
 
-	dev->irq_enabled = 0;
+	if (!drm_core_check_feature(dev, DRIVER_MODESET))
+		dev->irq_enabled = 0;
 	dev->if_version = 0;
 
 	dev->buf_pgid = 0;
@@ -345,16 +356,19 @@ drm_lastclose(struct drm_device *dev)
 	if (dev->driver->lastclose != NULL)
 		dev->driver->lastclose(dev);
 
-	if (dev->irq_enabled)
+	if (!drm_core_check_feature(dev, DRIVER_MODESET) && dev->irq_enabled)
 		drm_irq_uninstall(dev);
 
 #if __OS_HAS_AGP
-	drm_agp_takedown(dev);
+	if (!drm_core_check_feature(dev, DRIVER_MODESET))
+		drm_agp_takedown(dev);
 #endif
-	drm_dma_takedown(dev);
+	if (!drm_core_check_feature(dev, DRIVER_MODESET))
+		drm_dma_takedown(dev);
 
 	DRM_LOCK();
-	if (dev->sg != NULL) {
+	if (dev->sg != NULL &&
+	    !drm_core_check_feature(dev, DRIVER_MODESET)) {
 		struct drm_sg_mem *sg = dev->sg; 
 		dev->sg = NULL;
 
@@ -416,6 +430,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	file_priv->kdev = kdev;
 	file_priv->flags = flags;
 	file_priv->minor = minor(kdev);
+	INIT_LIST_HEAD(&file_priv->fbs);
 	TAILQ_INIT(&file_priv->evlist);
 	file_priv->event_space = 4096; /* 4k for event buffer */
 	DRM_DEBUG("minor = %d\n", file_priv->minor);
@@ -465,7 +480,8 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 	struct drm_device		*dev = drm_get_device_from_kdev(kdev);
 	struct drm_file			*file_priv;
 	struct drm_pending_event	*ev, *evtmp;
-	int				 i, retcode = 0;
+	struct drm_pending_vblank_event	*vev;
+	int				 retcode = 0;
 
 	if (dev == NULL)
 		return (ENXIO);
@@ -500,16 +516,15 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 		drm_reclaim_buffers(dev, file_priv);
 
 	mtx_enter(&dev->event_lock);
-	for (i = 0; i < dev->vblank->vb_num; i++) {
-		struct drmevlist *list = &dev->vblank->vb_crtcs[i].vbl_events;
-		for (ev = TAILQ_FIRST(list); ev != TAILQ_END(list);
-		    ev = evtmp) {
-			evtmp = TAILQ_NEXT(ev, link);
-			if (ev->file_priv == file_priv) {
-				TAILQ_REMOVE(list, ev, link);
-				drm_vblank_put(dev, i);
-				ev->destroy(ev);
-			}
+	struct drmevlist *list = &dev->vbl_events;
+	for (ev = TAILQ_FIRST(list); ev != TAILQ_END(list);
+	    ev = evtmp) {
+		evtmp = TAILQ_NEXT(ev, link);
+		vev = (struct drm_pending_vblank_event *)ev;
+		if (ev->file_priv == file_priv) {
+			TAILQ_REMOVE(list, ev, link);
+			drm_vblank_put(dev, vev->pipe);
+			ev->destroy(ev);
 		}
 	}
 	while ((ev = TAILQ_FIRST(&file_priv->evlist)) != NULL) {
@@ -517,6 +532,9 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 		ev->destroy(ev);
 	}
 	mtx_leave(&dev->event_lock);
+
+	if (dev->driver->flags & DRIVER_MODESET)
+		drm_fb_release(dev, file_priv);
 
 	DRM_LOCK();
 	if (dev->driver->flags & DRIVER_GEM) {
@@ -647,6 +665,8 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return (drm_gem_flink_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_GEM_OPEN:
 			return (drm_gem_open_ioctl(dev, data, file_priv));
+		case DRM_IOCTL_GET_CAP:
+			return (drm_getcap(dev, data, file_priv));
 
 		}
 	}
@@ -706,6 +726,60 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		 * requested version 1.1 or greater.
 		 */
 			return (EBUSY);
+		case DRM_IOCTL_MODE_GETRESOURCES:
+			return drm_mode_getresources(dev, data, file_priv);
+		case DRM_IOCTL_MODE_GETPLANERESOURCES:
+			return drm_mode_getplane_res(dev, data, file_priv);
+		case DRM_IOCTL_MODE_GETCRTC:
+			return drm_mode_getcrtc(dev, data, file_priv);
+		case DRM_IOCTL_MODE_SETCRTC:
+			return drm_mode_setcrtc(dev, data, file_priv);
+		case DRM_IOCTL_MODE_GETPLANE:
+			return drm_mode_getplane(dev, data, file_priv);
+		case DRM_IOCTL_MODE_SETPLANE:
+			return drm_mode_setplane(dev, data, file_priv);
+		case DRM_IOCTL_MODE_CURSOR:
+			return drm_mode_cursor_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_GETGAMMA:
+			return drm_mode_gamma_get_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_SETGAMMA:
+			return drm_mode_gamma_set_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_GETENCODER:
+			return drm_mode_getencoder(dev, data, file_priv);
+		case DRM_IOCTL_MODE_GETCONNECTOR:
+			return drm_mode_getconnector(dev, data, file_priv);
+		case DRM_IOCTL_MODE_ATTACHMODE:
+			return drm_mode_attachmode_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_DETACHMODE:
+			return drm_mode_detachmode_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_GETPROPERTY:
+			return drm_mode_getproperty_ioctl(dev, data, 
+			    file_priv);
+		case DRM_IOCTL_MODE_SETPROPERTY:
+			return drm_mode_connector_property_set_ioctl(dev, 
+			    data, file_priv);
+		case DRM_IOCTL_MODE_GETPROPBLOB:
+			return drm_mode_getblob_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_GETFB:
+			return drm_mode_getfb(dev, data, file_priv);
+		case DRM_IOCTL_MODE_ADDFB:
+			return drm_mode_addfb(dev, data, file_priv);
+		case DRM_IOCTL_MODE_ADDFB2:
+			return drm_mode_addfb2(dev, data, file_priv);
+		case DRM_IOCTL_MODE_RMFB:
+			return drm_mode_rmfb(dev, data, file_priv);
+		case DRM_IOCTL_MODE_PAGE_FLIP:
+			return drm_mode_page_flip_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_DIRTYFB:
+			return drm_mode_dirtyfb_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_CREATE_DUMB:
+			return drm_mode_create_dumb_ioctl(dev, data, 
+			    file_priv);
+		case DRM_IOCTL_MODE_MAP_DUMB:
+			return drm_mode_mmap_dumb_ioctl(dev, data, file_priv);
+		case DRM_IOCTL_MODE_DESTROY_DUMB:
+			return drm_mode_destroy_dumb_ioctl(dev, data, 
+			    file_priv);
 		}
 	}
 	if (dev->driver->ioctl != NULL)
@@ -778,7 +852,7 @@ int
 drm_dequeue_event(struct drm_device *dev, struct drm_file *file_priv,
     size_t resid, struct drm_pending_event **out)
 {
-	struct drm_pending_event	*ev;
+	struct drm_pending_event	*ev = NULL;
 	int				 gotone = 0;
 
 	MUTEX_ASSERT_LOCKED(&dev->event_lock);
@@ -946,6 +1020,32 @@ drm_getunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 	u->unique_len = dev->unique_len;
 
+	return 0;
+}
+
+int
+drm_getcap(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	struct drm_get_cap *req = data;
+
+	req->value = 0;
+	switch (req->capability) {
+	case DRM_CAP_DUMB_BUFFER:
+		if (dev->driver->dumb_create)
+			req->value = 1;
+		break;
+	case DRM_CAP_VBLANK_HIGH_CRTC:
+		req->value = 1;
+		break;
+	case DRM_CAP_DUMB_PREFERRED_DEPTH:
+		req->value = dev->mode_config.preferred_depth;
+		break;
+	case DRM_CAP_DUMB_PREFER_SHADOW:
+		req->value = dev->mode_config.prefer_shadow;
+		break;
+	default:
+		return EINVAL;
+	}
 	return 0;
 }
 

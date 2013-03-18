@@ -1,4 +1,4 @@
-/* $OpenBSD: radeon_drv.c,v 1.62 2013/01/04 05:31:35 jsg Exp $ */
+/* $OpenBSD: radeon_drv.c,v 1.63 2013/03/18 12:36:51 jsg Exp $ */
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
  */
@@ -686,7 +686,7 @@ const static struct drm_pcidev radeondrm_pciidlist[] = {
         {0, 0, 0}
 };
 
-static const struct drm_driver_info radeondrm_driver = {
+static struct drm_driver_info radeondrm_driver = {
 	.buf_priv_size		= sizeof(drm_radeon_buf_priv_t),
 	.file_priv_size		= sizeof(struct drm_radeon_file),
 	.firstopen		= radeon_driver_firstopen,
@@ -802,6 +802,9 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INIT(&dev_priv->fb_heap);
 
 	dev_priv->drmdev = drm_attach_pci(&radeondrm_driver, pa, is_agp, self);
+
+	if (drm_vblank_init((struct drm_device *)dev_priv->drmdev, 2))
+		printf(": drm_vblank_init failed\n");
 }
 
 int
