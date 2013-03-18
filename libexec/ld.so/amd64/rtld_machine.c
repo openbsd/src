@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.17 2012/12/05 23:20:06 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.18 2013/03/18 04:22:31 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -116,7 +116,7 @@ static int reloc_target_flags[] = {
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(16) | _RF_RS(0),		/* 13 PC16 */
 	_RF_S|_RF_A|		_RF_SZ(8) | _RF_RS(0),		/* 14 8 */
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(8) | _RF_RS(0),		/* 15 PC8 */
-	_RF_E,							/* 16 DPTMOD64*/
+	_RF_E,							/* 16 DTPMOD64*/
 	_RF_E,							/* 17 DTPOFF64*/
 	_RF_E,							/* 18 TPOFF64 */
 	_RF_E,							/* 19 TLSGD */
@@ -153,7 +153,7 @@ static long reloc_target_bitmask[] = {
 	_BM(16),		/* 13 PC16 */
 	_BM(8),			/* 14 8 */
 	_BM(8),			/* 15 PC8 */
-	0,			/* 16 DPTMOD64*/
+	0,			/* 16 DTPMOD64*/
 	0,			/* 17 DTPOFF64*/
 	0,			/* 18 TPOFF64 */
 	0,			/* 19 TLSGD */
