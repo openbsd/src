@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.4 2013/03/18 04:50:01 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.5 2013/03/18 04:53:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -576,7 +576,7 @@ identd_listen(const char *addr, const char *port, int family)
 
 		event_set(&l->ev, s, EV_READ | EV_PERSIST, identd_accept, l);
 		event_add(&l->ev, NULL);
-	        evtimer_set(&l->pause, identd_paused, l);
+		evtimer_set(&l->pause, identd_paused, l);
 	}
 	if (l == NULL)
 		err(1, "%s", cause);
@@ -1037,14 +1037,14 @@ getport(struct sockaddr_storage *ss)
 int
 fetchuid(struct ident_client *c)
 {
-        struct tcp_ident_mapping tir;
+	struct tcp_ident_mapping tir;
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_IDENT };
 	struct sockaddr_in *s4;
-        struct sockaddr_in6 *s6;
-        int err = 0;
-        size_t len;
+	struct sockaddr_in6 *s6;
+	int err = 0;
+	size_t len;
 
-        memset(&tir, 0, sizeof(tir));
+	memset(&tir, 0, sizeof(tir));
 	memcpy(&tir.faddr, &c->client.ss, sizeof(&tir.faddr));
 	memcpy(&tir.laddr, &c->server.ss, sizeof(&tir.laddr));
 
@@ -1068,7 +1068,7 @@ fetchuid(struct ident_client *c)
 	}
 
 	len = sizeof(tir);
-        err = sysctl(mib, sizeof(mib) / sizeof(mib[0]), &tir, &len, NULL, 0);
+	err = sysctl(mib, sizeof(mib) / sizeof(mib[0]), &tir, &len, NULL, 0);
 	if (err == -1)
 		lerr(1, "sysctl");
 
