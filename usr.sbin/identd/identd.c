@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.3 2013/03/18 04:43:55 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.4 2013/03/18 04:50:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -53,6 +53,7 @@
 #define TIMEOUT_MIN 4
 #define TIMEOUT_MAX 240
 #define TIMEOUT_DEFAULT 120
+#define INPUT_MAX 256
 
 enum ident_client_state {
 	S_BEGINNING = 0,
@@ -85,6 +86,7 @@ struct ident_client {
 	enum ident_client_state state;
 	struct event ev;
 	struct event tmo;
+	size_t rxbytes;
 
 	char *buf;
 	size_t buflen;
@@ -688,6 +690,10 @@ identd_request(int fd, short events, void *arg)
 		break;
 	}
 
+	c->rxbytes += n;
+	if (c->rxbytes >= INPUT_MAX)
+		goto fail;
+
 	for (i = 0; c->state < S_EOL && i < n; i++)
 		c->state = identd_parse(c, buf[i]);
 
@@ -763,6 +769,10 @@ identd_resolving(int fd, short events, void *arg)
 		    gethost(&c->client.ss));
 		break;
 	default:
+		c->rxbytes += n;
+		if (c->rxbytes >= INPUT_MAX)
+			break;
+
 		/* ignore extra input */
 		return;
 	}
@@ -882,6 +892,10 @@ identd_response(int fd, short events, void *arg)
 			    gethost(&c->client.ss));
 			goto done;
 		default:
+			c->rxbytes += n;
+			if (c->rxbytes >= INPUT_MAX)
+				goto done;
+
 			/* ignore extra input */
 			break;
 		}
