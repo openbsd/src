@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.24 2013/03/17 21:49:00 kettenis Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.25 2013/03/18 11:14:44 jsg Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -131,6 +131,7 @@ struct agp_softc {
 	pcitag_t			 sc_pcitag;
 	bus_addr_t			 sc_apaddr;
 	bus_size_t			 sc_apsize;
+	uint32_t			 sc_stolen_entries;
 	pcireg_t			 sc_id;
 
 	int				 sc_opened;
