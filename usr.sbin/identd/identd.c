@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.1 2013/03/18 00:34:48 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.2 2013/03/18 01:20:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -98,6 +98,10 @@ struct ident_resolver {
 	u_int error;
 };
 
+struct identd_listener {
+	struct event ev, pause;
+};
+
 void	parent_rd(int, short, void *);
 void	parent_wr(int, short, void *);
 
@@ -105,6 +109,7 @@ void	child_rd(int, short, void *);
 void	child_wr(int, short, void *);
 
 void	identd_listen(const char *, const char *, int);
+void	identd_paused(int, short, void *);
 void	identd_accept(int, short, void *);
 void	identd_request(int, short, void *);
 enum ident_client_state
@@ -523,7 +528,7 @@ child_wr(int fd, short events, void *arg)
 void
 identd_listen(const char *addr, const char *port, int family)
 {
-	struct event *ev = NULL;
+	struct identd_listener *l = NULL;
 
 	struct addrinfo hints, *res, *res0;
 	int error;
@@ -565,23 +570,33 @@ identd_listen(const char *addr, const char *port, int family)
 		if (listen(s, 5) == -1)
 			err(1, "listen");
 
-		ev = calloc(1, sizeof(*ev));
-		if (ev == NULL)
+		l = calloc(1, sizeof(*l));
+		if (l == NULL)
 			err(1, "listener ev alloc");
 
-		event_set(ev, s, EV_READ | EV_PERSIST, identd_accept, NULL);
-		event_add(ev, NULL);
+		event_set(&l->ev, s, EV_READ | EV_PERSIST, identd_accept, l);
+		event_add(&l->ev, NULL);
+	        evtimer_set(&l->pause, identd_paused, l);
 	}
-	if (ev == NULL)
+	if (l == NULL)
 		err(1, "%s", cause);
 
 	freeaddrinfo(res0);
 }
 
 void
+identd_paused(int fd, short events, void *arg)
+{
+	struct identd_listener *l = arg;
+	event_add(&l->ev, NULL);
+}
+
+void
 identd_accept(int fd, short events, void *arg)
 {
+	struct identd_listener *l = arg;
 	struct sockaddr_storage ss;
+	struct timeval pause = { 1, 0 };
 	struct ident_client *c = NULL;
 	socklen_t len;
 	int s;
@@ -594,6 +609,12 @@ identd_accept(int fd, short events, void *arg)
 		case EWOULDBLOCK:
 		case ECONNABORTED:
 			return;
+		case EMFILE:
+		case ENFILE:
+			event_del(&l->ev);
+			evtimer_add(&l->pause, &pause);
+			return;
+
 		default:
 			lerr(1, "accept");
 		}
