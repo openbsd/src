@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.145 2013/01/17 21:20:25 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.146 2013/03/18 11:10:52 mpi Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: March 18 2013 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -2884,11 +2884,10 @@ The following default bindings show how the arrow keys
 on an ANSI terminal or xterm are bound
 (of course some escape sequences won't work out quite this nicely):
 .Bd -literal -offset indent
-bind '^[['=prefix-2
-bind '^XA'=up-history
-bind '^XB'=down-history
-bind '^XC'=forward-char
-bind '^XD'=backward-char
+bind '^[[A'=up-history
+bind '^[[B'=down-history
+bind '^[[C'=forward-char
+bind '^[[D'=backward-char
 .Ed
 .Pp
 .It Ic break Op Ar level
@@ -4923,10 +4922,6 @@ or
 .Ic search-history .
 .It no-op: QUIT
 This does nothing.
-.It prefix-1: ^[
-Introduces a 2-character command sequence.
-.It prefix-2: ^X , ^[[ , ^[O
-Introduces a 2-character command sequence.
 .It Xo prev-hist-word:
 .Op Ar n
 .No ^[. , ^[_
