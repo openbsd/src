@@ -11,7 +11,7 @@
 *************************************************************************
 ** This file implements a tokenizer for fts2 based on the ICU library.
 ** 
-** $Id: fts2_icu.c,v 1.1.1.1 2012/04/14 13:13:18 espie Exp $
+** $Id: fts2_icu.c,v 1.1.1.2 2013/03/18 10:45:30 espie Exp $
 */
 
 #if !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_FTS2)
@@ -118,7 +118,7 @@ static int icuOpen(
   nChar = nInput+1;
   pCsr = (IcuCursor *)sqlite3_malloc(
       sizeof(IcuCursor) +                /* IcuCursor */
-      nChar * sizeof(UChar) +            /* IcuCursor.aChar[] */
+      ((nChar+3)&~3) * sizeof(UChar) +   /* IcuCursor.aChar[] */
       (nChar+1) * sizeof(int)            /* IcuCursor.aOffset[] */
   );
   if( !pCsr ){
@@ -126,7 +126,7 @@ static int icuOpen(
   }
   memset(pCsr, 0, sizeof(IcuCursor));
   pCsr->aChar = (UChar *)&pCsr[1];
-  pCsr->aOffset = (int *)&pCsr->aChar[nChar];
+  pCsr->aOffset = (int *)&pCsr->aChar[(nChar+3)&~3];
 
   pCsr->aOffset[iOut] = iInput;
   U8_NEXT(zInput, iInput, nInput, c); 

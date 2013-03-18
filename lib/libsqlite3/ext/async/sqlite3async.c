@@ -10,7 +10,7 @@
 **
 *************************************************************************
 **
-** $Id: sqlite3async.c,v 1.1.1.1 2012/04/14 13:13:18 espie Exp $
+** $Id: sqlite3async.c,v 1.1.1.2 2013/03/18 10:45:29 espie Exp $
 **
 ** This file contains the implementation of an asynchronous IO backend 
 ** for SQLite.
@@ -1510,6 +1510,7 @@ static void asyncWriterThread(void){
       case ASYNC_DELETE:
         ASYNC_TRACE(("DELETE %s\n", p->zBuf));
         rc = pVfs->xDelete(pVfs, p->zBuf, (int)p->iOffset);
+        if( rc==SQLITE_IOERR_DELETE_NOENT ) rc = SQLITE_OK;
         break;
 
       case ASYNC_OPENEXCLUSIVE: {
