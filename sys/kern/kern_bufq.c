@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.23 2012/10/17 23:58:25 beck Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.24 2013/03/18 22:13:04 tedu Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -453,7 +453,6 @@ bufq_fifo_peek(void *data)
 struct bufq_nscan_data {
 	struct bufq_nscan_head sorted;
 	struct bufq_nscan_head fifo;
-	int dir;
 	int leftoverroom; /* Remaining number of buffer inserts allowed  */
 };
 
