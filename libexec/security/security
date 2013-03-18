@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.20 2013/03/18 13:20:39 sthen Exp $
+# $OpenBSD: security,v 1.21 2013/03/18 14:36:05 sthen Exp $
 #
 # Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -522,7 +522,9 @@ sub strmode {
 }
 
 sub find_special_files {
-	my %skip = map { $_ => 1 } split ' ', $ENV{SUIDSKIP}
+	my %skip;
+
+	%skip = map { $_ => 1 } split ' ', $ENV{SUIDSKIP}
 	    if $ENV{SUIDSKIP};
 
 	# Add mount points of non-local file systems
