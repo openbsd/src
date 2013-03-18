@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_bios.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_bios.c,v 1.2 2013/03/18 13:06:37 mpi Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -793,7 +793,7 @@ intel_parse_bios(struct drm_device *dev)
 			dev_priv->opregion.vbt = NULL;
 	}
 
-#if defined(__amd64__) || defined(__i386)
+#if defined(__amd64__) || defined(__i386__)
 	if (bdb == NULL) {
 		struct vbt_header *vbt = NULL;
 		size_t size;
