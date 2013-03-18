@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.2 2013/03/18 01:20:46 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.3 2013/03/18 04:43:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -64,7 +64,7 @@ enum ident_client_state {
 	S_EOL,
 
 	S_DEAD,
-	S_DYING
+	S_QUEUED
 };
 
 #define E_NONE		0
@@ -84,6 +84,7 @@ struct ident_client {
 	SIMPLEQ_ENTRY(ident_client) entry;
 	enum ident_client_state state;
 	struct event ev;
+	struct event tmo;
 
 	char *buf;
 	size_t buflen;
@@ -111,6 +112,7 @@ void	child_wr(int, short, void *);
 void	identd_listen(const char *, const char *, int);
 void	identd_paused(int, short, void *);
 void	identd_accept(int, short, void *);
+void	identd_timeout(int, short, void *);
 void	identd_request(int, short, void *);
 enum ident_client_state
 	identd_parse(struct ident_client *, int);
@@ -449,16 +451,11 @@ child_rd(int fd, short events, void *arg)
 		lerrx(1, "short data from parent");
 
 	/* check if something went wrong while the parent was working */
-	switch (c->state) {
-	case S_DYING: /* we're sending an error to the client */
-		c->state = S_DEAD;
-		return;
-	case S_DEAD: /* we finished sending an error to the client */
+	if (c->state == S_DEAD) {
 		free(c);
 		return;
-	default:
-		break;
 	}
+	c->state = S_DEAD;
 
 	switch (reply.error) {
 	case E_NONE:
@@ -489,10 +486,11 @@ child_rd(int fd, short events, void *arg)
 	event_del(&c->ev);
 	event_set(&c->ev, fd, EV_READ | EV_WRITE | EV_PERSIST,
 	    identd_response, c);
-	event_add(&c->ev, &timeout);
+	event_add(&c->ev, NULL);
 	return;
 
 fail:
+	evtimer_del(&c->tmo);
 	event_del(&c->ev);
 	close(fd);
 	free(c);
@@ -640,7 +638,26 @@ identd_accept(int fd, short events, void *arg)
 		lerr(1, "getsockname");
 
 	event_set(&c->ev, s, EV_READ | EV_PERSIST, identd_request, c);
-	event_add(&c->ev, &timeout);
+	event_add(&c->ev, NULL);
+
+	event_set(&c->tmo, s, 0, identd_timeout, c);
+	event_add(&c->tmo, &timeout);
+}
+
+void
+identd_timeout(int fd, short events, void *arg)
+{
+	struct ident_client *c = arg;
+
+	event_del(&c->ev);
+	close(fd);
+	if (c->buf != NULL)
+		free(c->buf);
+
+	if (c->state == S_QUEUED) /* it is queued for resolving */
+		c->state = S_DEAD;
+	else
+		free(c);
 }
 
 void
@@ -650,11 +667,6 @@ identd_request(int fd, short events, void *arg)
 	char buf[64];
 	ssize_t n, i;
 	char *errstr = "INVALID-PORT";
-
-	if (events & EV_TIMEOUT) {
-		ldebug("%s request timeout", gethost(&c->client.ss));
-		goto fail;
-	}
 
 	n = read(fd, buf, sizeof(buf));
 	switch (n) {
@@ -687,17 +699,17 @@ identd_request(int fd, short events, void *arg)
 	if (c->server.port < 1 || c->client.port < 1)
 		goto error;
 
-	event_del(&c->ev);
-
 	if (fetchuid(c) == -1) {
 		errstr = "NO-USER";
 		goto error;
 	}
 
 	SIMPLEQ_INSERT_TAIL(&sc.child.pushing, c, entry);
+	c->state = S_QUEUED;
 
+	event_del(&c->ev);
 	event_set(&c->ev, fd, EV_READ | EV_PERSIST, identd_resolving, c);
-	event_add(&c->ev, &timeout);
+	event_add(&c->ev, NULL);
 
 	event_add(&proc_wr, NULL);
 	return;
@@ -711,13 +723,13 @@ error:
 	c->buflen = n;
 
 	event_del(&c->ev);
-
 	event_set(&c->ev, fd, EV_READ | EV_WRITE | EV_PERSIST,
 	    identd_response, c);
-	event_add(&c->ev, &timeout);
+	event_add(&c->ev, NULL);
 	return;
 
 fail:
+	evtimer_del(&c->tmo);
 	event_del(&c->ev);
 	close(fd);
 	free(c);
@@ -735,12 +747,6 @@ identd_resolving(int fd, short events, void *arg)
 	 * the user.
 	 */
 
-	if (events & EV_TIMEOUT) {
-		ldebug("%s timeout during resolving",
-		    gethost(&c->client.ss));
-		goto error;
-	}
-
 	n = read(fd, buf, sizeof(buf));
 	switch (n) {
 	case -1:
@@ -751,37 +757,20 @@ identd_resolving(int fd, short events, void *arg)
 		default:
 			lerrx(1, "resolving read");
 		}
-		break;
+		/* NOTREACHED */
 	case 0:
 		ldebug("%s closed connection during resolving",
 		    gethost(&c->client.ss));
-		goto fail;
-	default:
 		break;
+	default:
+		/* ignore extra input */
+		return;
 	}
 
-	/* throw it away */
-	return;
-
-error:
-	n = asprintf(&c->buf, "%u , %u : ERROR : UNKNOWN-ERROR\r\n",
-	    c->server.port, c->client.port);
-	if (n == -1)
-		goto fail;
-
-	c->buflen = n;
-
-	event_del(&c->ev);
-	event_set(&c->ev, fd, EV_READ | EV_WRITE | EV_PERSIST,
-	    identd_response, c);
-	event_add(&c->ev, &timeout);
-	c->state = S_DYING;
-	return;
-
-fail:
+	evtimer_del(&c->tmo);
 	event_del(&c->ev);
 	close(fd);
-	c->state = S_DEAD;
+	c->state = S_DEAD; /* on the resolving queue */
 }
 
 enum ident_client_state
@@ -875,11 +864,6 @@ identd_response(int fd, short events, void *arg)
 	char buf[64];
 	ssize_t n;
 
-	if (events & EV_TIMEOUT) {
-		ldebug("%s timeout during response", gethost(&c->client.ss));
-		goto done;
-	}
-
 	if (events & EV_READ) {
 		n = read(fd, buf, sizeof(buf));
 		switch (n) {
@@ -898,7 +882,7 @@ identd_response(int fd, short events, void *arg)
 			    gethost(&c->client.ss));
 			goto done;
 		default:
-			/* flushed socket */
+			/* ignore extra input */
 			break;
 		}
 	}
@@ -912,7 +896,7 @@ identd_response(int fd, short events, void *arg)
 		case EAGAIN:
 			return; /* try again later */
 		default:
-			goto done;
+			lerr(1, "response write");
 		}
 	}
 
@@ -921,13 +905,11 @@ identd_response(int fd, short events, void *arg)
 		return; /* try again later */
 
 done:
+	evtimer_del(&c->tmo);
 	event_del(&c->ev);
 	close(fd);
 	free(c->buf);
-	if (c->state == S_DYING) /* it was queued for resolving */
-		c->state = S_DEAD;
-	else
-		free(c);
+	free(c);
 }
 
 void
