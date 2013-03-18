@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.72 2013/03/18 11:14:44 jsg Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.73 2013/03/18 11:20:11 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -946,14 +946,19 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 	if (v != 0) {
 		pte = v | INTEL_ENABLED;
 		/* 965+ can do 36-bit addressing, add in the extra bits */
-		if (isc->chiptype == CHIP_I965 ||
-		    isc->chiptype == CHIP_G4X ||
-		    isc->chiptype == CHIP_PINEVIEW ||
-		    isc->chiptype == CHIP_G33 ||
-		    isc->chiptype == CHIP_IRONLAKE ||
-		    isc->chiptype == CHIP_SANDYBRIDGE ||
-		    isc->chiptype == CHIP_IVYBRIDGE) {
+		switch (isc->chiptype) {
+		case CHIP_I965:
+		case CHIP_G4X:
+		case CHIP_PINEVIEW:
+		case CHIP_G33:
+		case CHIP_IRONLAKE:
 			pte |= (v & 0x0000000f00000000ULL) >> 28;
+			break;
+		/* gen6+ can do 40 bit addressing */
+		case CHIP_SANDYBRIDGE:
+		case CHIP_IVYBRIDGE:
+			pte |= (v & 0x000000ff00000000ULL) >> 28;
+			break;
 		}
 	}
 
