@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.56 2012/08/28 16:45:03 pascal Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.57 2013/03/18 10:51:35 mpi Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -8,7 +8,7 @@
 
 .include <bsd.own.mk>
 
-.SUFFIXES: .out .o .c .cc .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
+.SUFFIXES: .out .o .c .cc .cpp .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
 .if defined(LDSTATIC) || defined(NOPIE)
 CFLAGS+=       ${NOPIE_FLAGS}
@@ -87,7 +87,8 @@ _YACCINTM+=${SRCS:M*.y:.y=.c}
 .  endif
 
 .  if defined(OBJS) && !empty(OBJS)
-.    if !empty(SRCS:M*.C) || !empty(SRCS:M*.cc) || !empty(SRCS:M*.cxx)
+.    if !empty(SRCS:M*.C) || !empty(SRCS:M*.cc) || !empty(SRCS:M*.cpp) || \
+       !empty(SRCS:M*.cxx)
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD}
 	${CXX} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 .    else

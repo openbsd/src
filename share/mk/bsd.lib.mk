@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.68 2012/09/16 20:41:16 kettenis Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.69 2013/03/18 10:51:35 mpi Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -25,7 +25,7 @@ SHLIB_MINOR=${minor}
 # .so used for PIC object files.
 # .m for objective c files.
 .SUFFIXES:
-.SUFFIXES: .out .o .go .po .so .S .s .c .cc .C .cxx .f .y .l .m4 .m
+.SUFFIXES: .out .o .go .po .so .S .s .c .cc .cpp .C .cxx .f .y .l .m4 .m
 
 .if defined(NOPIE)
 CFLAGS+=	${NOPIE_FLAGS}
@@ -56,25 +56,25 @@ AFLAGS+=	${NOPIE_FLAGS}
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.cc.o .C.o .cxx.o:
+.cc.o .cpp.o .C.o .cxx.o:
 	@echo "${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.cc.go .C.go .cxx.go:
+.cc.go .cpp.go .C.go .cxx.go:
 	@echo "${COMPILE.cc} -g ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} -g ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.cc.po .C.po .cxx.po:
+.cc.po .cpp.po .C.po .cxx.po:
 	@echo "${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.cc.so .C.so .cxx.so:
+.cc.so .cpp.so .C.so .cxx.so:
 	@echo "${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
