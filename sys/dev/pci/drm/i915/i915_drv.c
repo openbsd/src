@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.2 2013/03/19 19:13:01 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.3 2013/03/19 21:07:31 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -665,7 +665,7 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			dp->min = 0;
 			dp->max = _intel_panel_get_max_backlight(dev);
 			dp->curval = dev_priv->backlight_level;
-			return 0;
+			return (dp->max > dp->min) ? 0 : -1;
 		}
 		break;
 	case WSDISPLAYIO_SETPARAM:
