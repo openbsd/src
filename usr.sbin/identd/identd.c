@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.5 2013/03/18 04:53:23 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.6 2013/03/19 00:44:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -354,8 +354,6 @@ parent_rd(int fd, short events, void *arg)
 	default:
 		lerrx(1, "unexpected %zd data from child", n);
 	}
-
-	event_add(&proc_wr, NULL);
 
 	r = calloc(1, sizeof(*r));
 	if (r == NULL)
