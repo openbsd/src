@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -1064,7 +1064,7 @@ struct drm_display_mode *
 drm_pick_cmdline_mode(struct drm_fb_helper_connector *fb_helper_conn,
 						      int width, int height)
 {
-	printf("%s stub\n", __func__);
+	DRM_DEBUG_KMS("stub\n");
 	return (NULL);
 #ifdef notyet
 	struct drm_cmdline_mode *cmdline_mode;

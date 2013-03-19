@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -531,20 +531,21 @@ intel_sdvo_debug_write(struct intel_sdvo *intel_sdvo, u8 cmd,
 	DRM_DEBUG_KMS("%s: W: %02X ",
 				SDVO_NAME(intel_sdvo), cmd);
 	for (i = 0; i < args_len; i++)
-		printf("%02X ", ((u8 *)args)[i]);
+		DRM_LOG_KMS("%02X ", ((u8 *)args)[i]);
 	for (; i < 8; i++)
-		printf("   ");
+		DRM_LOG_KMS("   ");
 	for (i = 0; i < ARRAY_SIZE(sdvo_cmd_names); i++) {
 		if (cmd == sdvo_cmd_names[i].cmd) {
-			printf("(%s)", sdvo_cmd_names[i].name);
+			DRM_LOG_KMS("(%s)", sdvo_cmd_names[i].name);
 			break;
 		}
 	}
 	if (i == ARRAY_SIZE(sdvo_cmd_names))
-		printf("(%02X)", cmd);
-	printf("\n");
+		DRM_LOG_KMS("(%02X)", cmd);
+	DRM_LOG_KMS("\n");
 }
 
+#ifdef DRMDEBUG
 static const char *cmd_status_names[] = {
 	"Power on",
 	"Success",
@@ -554,6 +555,7 @@ static const char *cmd_status_names[] = {
 	"Target not specified",
 	"Scaling not supported"
 };
+#endif
 
 struct i2c_msg {
 	i2c_op_t	 op;
@@ -675,9 +677,9 @@ intel_sdvo_read_response(struct intel_sdvo *intel_sdvo,
 	}
 
 	if (status <= SDVO_CMD_STATUS_SCALING_NOT_SUPP)
-		printf("(%s)", cmd_status_names[status]);
+		DRM_LOG_KMS("(%s)", cmd_status_names[status]);
 	else
-		printf("(??? %d)", status);
+		DRM_LOG_KMS("(??? %d)", status);
 
 	if (status != SDVO_CMD_STATUS_SUCCESS)
 		goto log_fail;
@@ -688,13 +690,13 @@ intel_sdvo_read_response(struct intel_sdvo *intel_sdvo,
 					  SDVO_I2C_RETURN_0 + i,
 					  &((u8 *)response)[i]))
 			goto log_fail;
-		printf(" %02X", ((u8 *)response)[i]);
+		DRM_LOG_KMS(" %02X", ((u8 *)response)[i]);
 	}
-	printf("\n");
+	DRM_LOG_KMS("\n");
 	return true;
 
 log_fail:
-	printf("... failed\n");
+	DRM_LOG_KMS("... failed\n");
 	return false;
 }
 

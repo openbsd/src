@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -9622,7 +9622,7 @@ intel_modeset_init(struct drm_device *dev)
 #ifdef notyet
 	dev->mode_config.fb_base = dev_priv->mm.gtt_base_addr;
 #else
-	printf("%s todo set fb base\n", __func__);
+	DRM_DEBUG_KMS("todo set fb base\n");
 #endif
 
 	DRM_DEBUG_KMS("%d display pipe%s available.\n",

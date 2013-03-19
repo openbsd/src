@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2772,7 +2772,7 @@ gen6_enable_rps(struct drm_device *dev)
 			rc6_mask |= GEN6_RC_CTL_RC6pp_ENABLE;
 	}
 
-	DRM_INFO("Enabling RC6 states: RC6 %s, RC6p %s, RC6pp %s\n",
+	DRM_DEBUG("Enabling RC6 states: RC6 %s, RC6p %s, RC6pp %s\n",
 			(rc6_mask & GEN6_RC_CTL_RC6_ENABLE) ? "on" : "off",
 			(rc6_mask & GEN6_RC_CTL_RC6p_ENABLE) ? "on" : "off",
 			(rc6_mask & GEN6_RC_CTL_RC6pp_ENABLE) ? "on" : "off");

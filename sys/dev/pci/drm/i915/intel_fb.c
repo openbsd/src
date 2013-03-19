@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_fb.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_fb.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -176,7 +176,7 @@ intelfb_create(struct intel_fbdev *ifbdev,
 
 	DRM_UNLOCK();
 #if 1
-	printf("skipping call to vga_switcheroo_client_fb_set\n");
+	DRM_DEBUG_KMS("skipping call to vga_switcheroo_client_fb_set\n");
 #else
 	vga_switcheroo_client_fb_set(dev->pdev, info);
 #endif
