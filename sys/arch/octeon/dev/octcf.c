@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.9 2013/03/19 09:17:52 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.10 2013/03/19 16:37:12 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -165,7 +165,7 @@ octcfprobe(struct device *parent, void *match, void *aux)
 	extern struct boot_info *octeon_boot_info;
 
 	if (octeon_boot_info->cf_common_addr == 0) {
-		OCTCFDEBUG_PRINT(("octcfprobe: No cf bus found\n"), DEBUG_FUNCS | DEBUG_PROBE);
+		OCTCFDEBUG_PRINT(("%s: No cf bus found\n", __func__), DEBUG_FUNCS | DEBUG_PROBE);
 		return 0;
 	}
 
@@ -179,7 +179,7 @@ octcfattach(struct device *parent, struct device *self, void *aux)
 	struct iobus_attach_args *aa = aux;
 	int i, blank;
 	char buf[41], c, *p, *q;
-	OCTCFDEBUG_PRINT(("octcfattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS | DEBUG_PROBE);
 	uint8_t status;
 
 	wd->sc_iot = aa->aa_bust;
@@ -308,7 +308,7 @@ octcfstrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
-	OCTCFDEBUG_PRINT(("octcfstrategy (%s)\n", wd->sc_dev.dv_xname),
+	OCTCFDEBUG_PRINT(("%s (%s)\n", __func__, wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((wd->sc_flags & OCTCFF_LOADED) == 0) {
@@ -354,7 +354,7 @@ octcfstart(void *arg)
 	struct octcf_softc *wd = arg;
 	struct buf *dp, *bp;
 
-	OCTCFDEBUG_PRINT(("octcfstart %s\n", wd->sc_dev.dv_xname),
+	OCTCFDEBUG_PRINT(("%s %s\n", __func__, wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 	while (1) {
 		/* Remove the next buffer from the queue or stop. */
@@ -413,7 +413,7 @@ int
 octcfread(dev_t dev, struct uio *uio, int flags)
 {
 
-	OCTCFDEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_XFERS);
 	return (physio(octcfstrategy, dev, B_READ, minphys, uio));
 }
 
@@ -421,7 +421,7 @@ int
 octcfwrite(dev_t dev, struct uio *uio, int flags)
 {
 
-	OCTCFDEBUG_PRINT(("octcfwrite\n"), DEBUG_XFERS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_XFERS);
 	return (physio(octcfstrategy, dev, B_WRITE, minphys, uio));
 }
 
@@ -432,7 +432,7 @@ octcfopen(dev_t dev, int flag, int fmt, struct proc *p)
 	int unit, part;
 	int error;
 
-	OCTCFDEBUG_PRINT(("octcfopen\n"), DEBUG_FUNCS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
 	unit = DISKUNIT(dev);
 	wd = octcflookup(unit);
@@ -518,7 +518,7 @@ octcfclose(dev_t dev, int flag, int fmt, struct proc *p)
 	if (wd == NULL)
 		return ENXIO;
 
-	OCTCFDEBUG_PRINT(("octcfclose\n"), DEBUG_FUNCS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
 	disk_lock_nointr(&wd->sc_dk);
 
@@ -542,7 +542,7 @@ octcfclose(dev_t dev, int flag, int fmt, struct proc *p)
 void
 octcfgetdefaultlabel(struct octcf_softc *wd, struct disklabel *lp)
 {
-	OCTCFDEBUG_PRINT(("octcfgetdefaultlabel\n"), DEBUG_FUNCS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
@@ -573,7 +573,7 @@ octcfgetdisklabel(dev_t dev, struct octcf_softc *wd, struct disklabel *lp,
 {
 	int error;
 
-	OCTCFDEBUG_PRINT(("octcfgetdisklabel\n"), DEBUG_FUNCS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
 	octcfgetdefaultlabel(wd, lp);
 	error = readdisklabel(DISKLABELDEV(dev), octcfstrategy, lp,
@@ -588,7 +588,7 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 	struct disklabel *lp;
 	int error = 0;
 
-	OCTCFDEBUG_PRINT(("octcfioctl\n"), DEBUG_FUNCS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
 	wd = octcflookup(DISKUNIT(dev));
 	if (wd == NULL)
@@ -700,7 +700,7 @@ octcfsize(dev_t dev)
 	int part, omask;
 	int64_t size;
 
-	OCTCFDEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
 	wd = octcflookup(DISKUNIT(dev));
 	if (wd == NULL)
@@ -829,7 +829,7 @@ octcf_get_params(struct octcf_softc *wd, struct ataparams *prms)
 	uint8_t status;
 	int error;
 
-	OCTCFDEBUG_PRINT(("octcf_get_parms\n"), DEBUG_FUNCS);
+	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
 	tb = malloc(ATAPARAMS_SIZE, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (tb == NULL)
