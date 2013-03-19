@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.6 2013/03/19 19:52:29 jeremy Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.7 2013/03/19 23:50:20 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -147,7 +147,7 @@ The "ruby gem"
 should be used for pure ruby gems without C extensions.
 This adds
 .Ev PKG_ARCH
-= * and adds ruby18, ruby19, rbx, and jruby
+= * and adds ruby18, ruby19, ruby20, rbx, and jruby
 .Ev FLAVOR Ns s
 to the port, so the same port can build packages for multiple versions of ruby.
 .It
@@ -165,7 +165,7 @@ c, m, and
 .Ev MODRUBY_WANTLIB
 to
 .Ev WANTLIB .
-It also adds ruby18, ruby19, and rbx
+It also adds ruby18, ruby19, ruby20, and rbx
 .Ev FLAVOR Ns s
 to the port.
 .It
@@ -195,7 +195,7 @@ You can set
 .Ev MODRUBY_REV
 to use a specific ruby version for non-gem and extconf ports.
 .Pp
-Use of a ruby19, rbx, or jruby
+Use of a ruby19, ruby20, rbx, or jruby
 .Ev FLAVOR
 causes the
 .Ev FULLPKGNAME
