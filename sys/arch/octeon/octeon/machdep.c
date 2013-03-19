@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2013/03/19 09:17:53 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.29 2013/03/19 09:19:10 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -121,6 +121,7 @@ void	dumpconf(void);
 vaddr_t	mips_init(__register_t, __register_t, __register_t, __register_t);
 boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	octeon_memory_init(struct boot_info *);
+int	octeon_cpuspeed(int *);
 
 cons_decl(cn30xxuart);
 struct consdev uartcons = cons_init(cn30xxuart);
@@ -371,6 +372,8 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	bcopy(&boot_info, &octeon_boot_info, sizeof(octeon_boot_info));
 	bcopy(&boot_desc, &octeon_boot_desc, sizeof(octeon_boot_desc));
 
+	cpu_cpuspeed = octeon_cpuspeed;
+
 	/*
 	 * Get a console, very early but after initial mapping setup.
 	 */
@@ -541,6 +544,14 @@ cpu_startup()
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
+}
+
+int
+octeon_cpuspeed(int *freq)
+{
+	extern struct boot_info *octeon_boot_info;
+	*freq = octeon_boot_info->eclock / 1000000;
+	return (0);
 }
 
 /*
