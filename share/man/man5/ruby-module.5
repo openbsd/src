@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.5 2013/03/11 14:35:53 espie Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.6 2013/03/19 19:52:29 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 11 2013 $
+.Dd $Mdocdate: March 19 2013 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -188,6 +188,12 @@ the ports system will automatically use the ruby19 FLAVOR by default.
 Explicitly specify the ruby18
 .Ev FLAVOR
 to build a package for ruby 1.8.
+.Pp
+Currently, the ports system uses ruby 1.8 by default for non-gem or
+extconf ports.
+You can set
+.Ev MODRUBY_REV
+to use a specific ruby version for non-gem and extconf ports.
 .Pp
 Use of a ruby19, rbx, or jruby
 .Ev FLAVOR
