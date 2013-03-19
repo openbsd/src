@@ -305,7 +305,7 @@ main(argc, argv, envp)
 	log_error(NO_STDERR|NO_EXIT, "problem with defaults entries");
 
     /* Set login class if applicable. */
-    set_loginclass(sudo_user.pw);
+    set_loginclass(runas_pw ? runas_pw : sudo_user.pw);
 
     /* Update initial shell now that runas is set. */
     if (ISSET(sudo_mode, MODE_LOGIN_SHELL))
