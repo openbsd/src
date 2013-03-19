@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.46 2012/11/27 17:38:45 pirofti Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.47 2013/03/19 06:46:28 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -386,7 +386,9 @@ acpi_sleep_mp()
 	for (i = 0; i < ncpus; i++) {
 		struct cpu_info *ci = cpu_info[i];
 
-		while (!CPU_IS_PRIMARY(curcpu()) && ci->ci_fpcurproc)
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		while (ci->ci_fpcurproc)
 			;
 	}
 
@@ -395,8 +397,9 @@ acpi_sleep_mp()
 	for (i = 0; i < ncpus; i++) {
 		struct cpu_info *ci = cpu_info[i];
 
-		while (!CPU_IS_PRIMARY(curcpu()) &&
-		    (ci->ci_flags & CPUF_RUNNING))
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		while (ci->ci_flags & CPUF_RUNNING)
 			;
 	}
 }
