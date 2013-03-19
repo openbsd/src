@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.21 2013/03/18 14:36:05 sthen Exp $
+# $OpenBSD: security,v 1.22 2013/03/19 22:14:30 sthen Exp $
 #
 # Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -601,7 +601,7 @@ sub adjust_columns {
 		}
 	}
 	$s[-1] = '';
-	my $fmt = join ' ', map "%-${_}s", @s;
+	my $fmt = join ' ', map { m/(\d+)/ && "%-$1s"} @s; 
 
 	return map { sprintf $fmt, @$_ } @table;
 }
