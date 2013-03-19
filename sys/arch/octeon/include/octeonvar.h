@@ -269,8 +269,8 @@ struct boot_info {
 	uint32_t config_flags;
 };
 
-/* Contains the address for the CF bus, if one was found. */
-uint64_t cf_found;
+extern struct boot_desc *octeon_boot_desc;
+extern struct boot_info *octeon_boot_info;
 
 extern struct octeon_config	octeon_configuration;
 
