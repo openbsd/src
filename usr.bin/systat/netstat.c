@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.35 2012/01/30 14:35:50 okan Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.36 2013/03/20 06:55:24 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -429,7 +429,7 @@ kvm_ckread(void *a, void *b, size_t l)
 {
 	if (kvm_read(kd, (u_long)a, b, l) != l) {
 		if (verbose)
-			error("error reading kmem at %x\n", a);
+			error("error reading kmem\n");
 		return (0);
 	} else
 		return (1);
