@@ -584,9 +584,7 @@ add_m6if(struct mif6ctl *mifcp)
 	mifp = mif6table + mifcp->mif6c_mifi;
 	if (mifp->m6_ifp)
 		return EADDRINUSE; /* XXX: is it appropriate? */
-	if (mifcp->mif6c_pifi == 0 || mifcp->mif6c_pifi >= if_indexlim)
-		return ENXIO;
-	ifp = ifindex2ifnet[mifcp->mif6c_pifi];
+	ifp = if_get(mifcp->mif6c_pifi);
 	if (!ifp)
 		return ENXIO;
 

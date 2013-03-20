@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.251 2013/03/15 20:45:34 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.252 2013/03/20 10:34:12 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -190,8 +190,8 @@ ifinit()
 	if_slowtimo(&if_slowtim);
 }
 
-static int if_index = 0;
-int if_indexlim = 0;
+static unsigned int if_index = 0;
+static unsigned int if_indexlim = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
@@ -932,8 +932,7 @@ ifa_ifwithnet(struct sockaddr *addr, u_int rdomain)
 	rdomain = rtable_l2(rdomain);
 	if (af == AF_LINK) {
 		struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
-		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
-		    ifindex2ifnet[sdl->sdl_index])
+		if (sdl->sdl_index && if_get(sdl->sdl_index))
 			return (ifnet_addrs[sdl->sdl_index]);
 	}
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
@@ -1164,8 +1163,7 @@ if_slowtimo(void *arg)
 }
 
 /*
- * Map interface name to
- * interface structure pointer.
+ * Map interface name to interface structure pointer.
  */
 struct ifnet *
 ifunit(const char *name)
@@ -1177,6 +1175,20 @@ ifunit(const char *name)
 			return (ifp);
 	}
 	return (NULL);
+}
+
+/*
+ * Map interface index to interface structure pointer.
+ */
+struct ifnet *
+if_get(unsigned int index)
+{
+	struct ifnet *ifp = NULL;
+
+	if (index < if_indexlim)
+		ifp = ifindex2ifnet[index];
+
+	return (ifp);
 }
 
 /*

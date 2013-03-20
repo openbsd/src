@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.28 2013/03/04 14:42:25 bluhm Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.29 2013/03/20 10:34:12 mpi Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
     struct ip6_moptions *mopts, struct route_in6 *ro, struct in6_addr *laddr,
     int *errorp, u_int rtableid)
 {
+	struct ifnet *ifp = NULL;
 	struct in6_addr *dst;
 	struct in6_ifaddr *ia6 = NULL;
 	struct in6_pktinfo *pi = NULL;
@@ -118,7 +119,6 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 */
 	if (opts && (pi = opts->ip6po_pktinfo) &&
 	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr)) {
-		struct ifnet *ifp = NULL;
 		struct sockaddr_in6 sa6;
 
 		/* get the outgoing interface */
@@ -160,9 +160,12 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * the interface.
 	 */
 	if (pi && pi->ipi6_ifindex) {
-		/* XXX boundary check is assumed to be already done. */
-		ia6 = in6_ifawithscope(ifindex2ifnet[pi->ipi6_ifindex],
-				       dst, rtableid);
+		ifp = if_get(pi->ipi6_ifindex);
+		if (ifp == NULL) {
+			*errorp = ENXIO; /* XXX: better error? */
+			return (0);
+		}
+		ia6 = in6_ifawithscope(ifp, dst, rtableid);
 		if (ia6 == 0) {
 			*errorp = EADDRNOTAVAIL;
 			return (0);
@@ -181,18 +184,12 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 */
 	if ((IN6_IS_ADDR_LINKLOCAL(dst) || IN6_IS_ADDR_MC_LINKLOCAL(dst) ||
 	     IN6_IS_ADDR_MC_INTFACELOCAL(dst)) && dstsock->sin6_scope_id) {
-		/*
-		 * I'm not sure if boundary check for scope_id is done
-		 * somewhere...
-		 */
-		if (dstsock->sin6_scope_id < 0 ||
-		    if_indexlim <= dstsock->sin6_scope_id ||
-		    !ifindex2ifnet[dstsock->sin6_scope_id]) {
+		ifp = if_get(dstsock->sin6_scope_id);
+		if (ifp == NULL) {
 			*errorp = ENXIO; /* XXX: better error? */
 			return (0);
 		}
-		ia6 = in6_ifawithscope(ifindex2ifnet[dstsock->sin6_scope_id],
-				       dst, rtableid);
+		ia6 = in6_ifawithscope(ifp, dst, rtableid);
 		if (ia6 == 0) {
 			*errorp = EADDRNOTAVAIL;
 			return (0);
@@ -208,10 +205,10 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * choose a loopback interface as the outgoing interface.
 	 */
 	if (IN6_IS_ADDR_MULTICAST(dst)) {
-		struct ifnet *ifp = mopts ? mopts->im6o_multicast_ifp : NULL;
+		ifp = mopts ? mopts->im6o_multicast_ifp : NULL;
 
 		if (!ifp && dstsock->sin6_scope_id)
-			ifp = ifindex2ifnet[htons(dstsock->sin6_scope_id)];
+			ifp = if_get(htons(dstsock->sin6_scope_id));
 
 		if (ifp) {
 			ia6 = in6_ifawithscope(ifp, dst, rtableid);
@@ -349,8 +346,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 	/* If the caller specify the outgoing interface explicitly, use it. */
 	if (opts && (pi = opts->ip6po_pktinfo) != NULL && pi->ipi6_ifindex) {
-		/* XXX boundary check is assumed to be already done. */
-		ifp = ifindex2ifnet[pi->ipi6_ifindex];
+		ifp = if_get(pi->ipi6_ifindex);
 		if (ifp != NULL &&
 		    (norouteok || retrt == NULL ||
 		     IN6_IS_ADDR_MULTICAST(dst))) {
@@ -640,7 +636,9 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 		if (in6p && in6p->in6p_outputopts &&
 		    (pi = in6p->in6p_outputopts->ip6po_pktinfo) &&
 		    pi->ipi6_ifindex) {
-			ifp = ifindex2ifnet[pi->ipi6_ifindex];
+			ifp = if_get(pi->ipi6_ifindex);
+			if (ifp == NULL)
+				return ENXIO;  /* XXX EINVAL? */
 			in6->s6_addr16[1] = htons(pi->ipi6_ifindex);
 		} else if (in6p && IN6_IS_ADDR_MULTICAST(in6) &&
 			   in6p->in6p_moptions &&
@@ -648,11 +646,9 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 			ifp = in6p->in6p_moptions->im6o_multicast_ifp;
 			in6->s6_addr16[1] = htons(ifp->if_index);
 		} else if (scopeid) {
-			/* boundary check */
-			if (scopeid < 0 || if_indexlim <= scopeid ||
-			    !ifindex2ifnet[scopeid])
+			ifp = if_get(scopeid);
+			if (ifp == NULL)
 				return ENXIO;  /* XXX EINVAL? */
-			ifp = ifindex2ifnet[scopeid];
 			/*XXX assignment to 16bit from 32bit variable */
 			in6->s6_addr16[1] = htons(scopeid & 0xffff);
 		}
@@ -694,8 +690,7 @@ in6_recoverscope(struct sockaddr_in6 *sin6, const struct in6_addr *in6,
 		scopeid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (scopeid) {
 			/* sanity check */
-			if (scopeid < 0 || if_indexlim <= scopeid ||
-			    !ifindex2ifnet[scopeid])
+			if (if_get(scopeid) == NULL)
 				return ENXIO;
 			if (ifp && ifp->if_index != scopeid)
 				return ENXIO;
