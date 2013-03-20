@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.137 2012/12/05 07:08:38 rpe Exp $
+#	$OpenBSD: netstart,v 1.138 2013/03/20 15:26:28 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -252,8 +252,7 @@ if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 	fi
 fi
 
-# /etc/mygate, if it exists, contains the name of my gateway host
-# that name must be in /etc/hosts.
+# Look for default routes in /etc/mygate.
 [[ -z $dhcpif ]] && stripcom /etc/mygate | while read gw; do
 		[[ $gw == @(*:*) ]] && continue
 		route -qn delete default > /dev/null 2>&1
