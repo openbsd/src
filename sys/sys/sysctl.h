@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.127 2012/12/18 21:28:45 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.128 2013/03/20 03:43:07 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -462,18 +462,22 @@ struct kinfo_proc {
 
 #define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
-#define FILL_KPROC(kp, copy_str, p, pr, pc, uc, pg, paddr, praddr, sess, vm, lim, sa, isthread) \
+#define FILL_KPROC(kp, copy_str, p, pr, pc, uc, pg, paddr, \
+    praddr, sess, vm, lim, sa, isthread, show_addresses) \
 do {									\
 	memset((kp), 0, sizeof(*(kp)));					\
 									\
-	(kp)->p_paddr = PTRTOINT64(paddr);				\
+	if (show_addresses)							\
+		(kp)->p_paddr = PTRTOINT64(paddr);			\
 	(kp)->p_fd = PTRTOINT64((p)->p_fd);				\
 	(kp)->p_stats = 0;						\
 	(kp)->p_limit = PTRTOINT64((pr)->ps_limit);			\
 	(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);			\
 	(kp)->p_sigacts = PTRTOINT64((p)->p_sigacts);			\
-	(kp)->p_sess = PTRTOINT64((pg)->pg_session);			\
-	(kp)->p_ru = PTRTOINT64((pr)->ps_ru);				\
+	if (show_addresses)							\
+		(kp)->p_sess = PTRTOINT64((pg)->pg_session);		\
+	if (show_addresses)							\
+		(kp)->p_ru = PTRTOINT64((pr)->ps_ru);			\
 									\
 	(kp)->p_exitsig = (p)->p_exitsig;				\
 	(kp)->p_flag = (p)->p_flag | (pr)->ps_flags | P_INMEM;		\
@@ -512,7 +516,8 @@ do {									\
 	(kp)->p_cpticks = (p)->p_cpticks;				\
 	(kp)->p_pctcpu = (p)->p_pctcpu;					\
 									\
-	(kp)->p_tracep = PTRTOINT64((pr)->ps_tracevp);			\
+	if (show_addresses)							\
+		(kp)->p_tracep = PTRTOINT64((pr)->ps_tracevp);		\
 	(kp)->p_traceflag = (pr)->ps_traceflag;				\
 									\
 	(kp)->p_siglist = (p)->p_siglist;				\
@@ -555,7 +560,8 @@ do {									\
 		if ((p)->p_wmesg)					\
 			copy_str((kp)->p_wmesg, (p)->p_wmesg,		\
 			    sizeof((kp)->p_wmesg));			\
-		(kp)->p_wchan = PTRTOINT64((p)->p_wchan);		\
+		if (show_addresses)						\
+			(kp)->p_wchan = PTRTOINT64((p)->p_wchan);	\
 	}								\
 									\
 	if (lim)							\

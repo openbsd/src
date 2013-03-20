@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.14 2012/11/12 00:29:09 guenther Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.15 2013/03/20 03:43:08 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 		if ((proc.p_flag & P_THREAD) == 0) {
 			FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred,
 			    &ucred, &pgrp, p, proc.p_p, &sess, vmp, limp, sap,
-			    0);
+			    0, 1);
 
 			/* stuff that's too painful to generalize */
 			kp.p_pid = process_pid;
@@ -322,7 +322,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			continue;
 
 		FILL_KPROC(&kp, do_copy_str, &proc, &process, &pcred, &ucred,
-		    &pgrp, p, proc.p_p, &sess, vmp, limp, sap, 1);
+		    &pgrp, p, proc.p_p, &sess, vmp, limp, sap, 1, 1);
 
 		/* stuff that's too painful to generalize into the macros */
 		kp.p_pid = process_pid;

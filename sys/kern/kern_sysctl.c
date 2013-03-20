@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.231 2013/02/11 11:11:42 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.232 2013/03/20 03:43:08 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1061,23 +1061,28 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 	  int fd, struct vnode *vp, struct proc *pp, struct proc *p)
 {
 	struct vattr va;
+	int show_pointers = suser(curproc, 0) == 0;
 
 	memset(kf, 0, sizeof(*kf));
 
 	kf->fd_fd = fd;		/* might not really be an fd */
 
 	if (fp != NULL) {
-		kf->f_fileaddr = PTRTOINT64(fp);
+		if (show_pointers)
+			kf->f_fileaddr = PTRTOINT64(fp);
 		kf->f_flag = fp->f_flag;
 		kf->f_iflags = fp->f_iflags;
 		kf->f_type = fp->f_type;
 		kf->f_count = fp->f_count;
 		kf->f_msgcount = fp->f_msgcount;
-		kf->f_ucred = PTRTOINT64(fp->f_cred);
+		if (show_pointers)
+			kf->f_ucred = PTRTOINT64(fp->f_cred);
 		kf->f_uid = fp->f_cred->cr_uid;
 		kf->f_gid = fp->f_cred->cr_gid;
-		kf->f_ops = PTRTOINT64(fp->f_ops);
-		kf->f_data = PTRTOINT64(fp->f_data);
+		if (show_pointers)
+			kf->f_ops = PTRTOINT64(fp->f_ops);
+		if (show_pointers)
+			kf->f_data = PTRTOINT64(fp->f_data);
 		kf->f_usecount = 0;
 
 		if (suser(p, 0) == 0 || p->p_ucred->cr_uid == fp->f_cred->cr_uid) {
@@ -1103,12 +1108,15 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 		if (fp != NULL)
 			vp = (struct vnode *)fp->f_data;
 
-		kf->v_un = PTRTOINT64(vp->v_un.vu_socket);
+		if (show_pointers)
+			kf->v_un = PTRTOINT64(vp->v_un.vu_socket);
 		kf->v_type = vp->v_type;
 		kf->v_tag = vp->v_tag;
 		kf->v_flag = vp->v_flag;
-		kf->v_data = PTRTOINT64(vp->v_data);
-		kf->v_mount = PTRTOINT64(vp->v_mount);
+		if (show_pointers)
+			kf->v_data = PTRTOINT64(vp->v_data);
+		if (show_pointers)
+			kf->v_mount = PTRTOINT64(vp->v_mount);
 		if (vp->v_mount)
 			strlcpy(kf->f_mntonname,
 			    vp->v_mount->mnt_stat.f_mntonname,
@@ -1128,11 +1136,13 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 
 		kf->so_type = so->so_type;
 		kf->so_state = so->so_state;
-		kf->so_pcb = PTRTOINT64(so->so_pcb);
+		if (show_pointers)
+			kf->so_pcb = PTRTOINT64(so->so_pcb);
 		kf->so_protocol = so->so_proto->pr_protocol;
 		kf->so_family = so->so_proto->pr_domain->dom_family;
 		if (so->so_splice) {
-			kf->so_splice = PTRTOINT64(so->so_splice);
+			if (show_pointers)
+				kf->so_splice = PTRTOINT64(so->so_splice);
 			kf->so_splicelen = so->so_splicelen;
 		} else if (so->so_spliceback)
 			kf->so_splicelen = -1;
@@ -1142,7 +1152,8 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 		case AF_INET: {
 			struct inpcb *inpcb = so->so_pcb;
 
-			kf->inp_ppcb = PTRTOINT64(inpcb->inp_ppcb);
+			if (show_pointers)
+				kf->inp_ppcb = PTRTOINT64(inpcb->inp_ppcb);
 			kf->inp_lport = inpcb->inp_lport;
 			kf->inp_laddru[0] = inpcb->inp_laddr.s_addr;
 			kf->inp_fport = inpcb->inp_fport;
@@ -1170,7 +1181,8 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 		case AF_UNIX: {
 			struct unpcb *unpcb = so->so_pcb;
 
-			kf->unp_conn = PTRTOINT64(unpcb->unp_conn);
+			if (show_pointers)
+				kf->unp_conn = PTRTOINT64(unpcb->unp_conn);
 			break;
 		    }
 		}
@@ -1180,7 +1192,8 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 	case DTYPE_PIPE: {
 		struct pipe *pipe = (struct pipe *)fp->f_data;
 
-		kf->pipe_peer = PTRTOINT64(pipe->pipe_peer);
+		if (show_pointers)
+			kf->pipe_peer = PTRTOINT64(pipe->pipe_peer);
 		kf->pipe_state = pipe->pipe_state;
 		break;
 	    }
@@ -1525,9 +1538,11 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread)
 	struct session *s = pr->ps_session;
 	struct tty *tp;
 	struct timeval ut, st;
+	int show_pointers = suser(curproc, 0) == 0;
 
 	FILL_KPROC(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
-	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_sigacts, isthread);
+	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_sigacts, isthread,
+	    show_pointers);
 
 	/* stuff that's too painful to generalize into the macros */
 	ki->p_pid = pr->ps_pid;
@@ -1539,7 +1554,8 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread)
 	if ((pr->ps_flags & PS_CONTROLT) && (tp = s->s_ttyp)) {
 		ki->p_tdev = tp->t_dev;
 		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : -1;
-		ki->p_tsess = PTRTOINT64(tp->t_session);
+		if (show_pointers)
+			ki->p_tsess = PTRTOINT64(tp->t_session);
 	} else {
 		ki->p_tdev = NODEV;
 		ki->p_tpgid = -1;
