@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.36 2012/03/21 04:28:45 matthew Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.37 2013/03/20 21:49:59 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -41,7 +41,7 @@
 #include "dir.h"
 #include "sod.h"
 
-#define DEFAULT_PATH "/usr/lib"
+char * _dl_default_path[2] = { "/usr/lib", NULL };
 
 
 /* STATIC DATA */
@@ -125,11 +125,10 @@ _dl_cmp_sod(struct sod *sodp, const struct sod *lsod)
 char _dl_hint_store[MAXPATHLEN];
 
 char *
-_dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
+_dl_find_shlib(struct sod *sodp, char **searchpath, int nohints)
 {
-	char *hint, lp[PATH_MAX + 10], *path;
+	char *hint, **pp;
 	struct dirent *dp;
-	const char *pp;
 	int match, len;
 	_dl_DIR *dd;
 	struct sod tsod, bsod;		/* transient and best sod */
@@ -151,29 +150,11 @@ _dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 		/* search hints requesting matches for only
 		 * the searchpath directories,
 		 */
-		pp = searchpath;
-		while (pp) {
-			path = lp;
-			while (path < lp + PATH_MAX &&
-			    *pp && *pp != ':' && *pp != ';')
-				*path++ = *pp++;
-			*path = 0;
-
-			/* interpret "" as curdir "." */
-			if (lp[0] == '\0') {
-				lp[0] = '.';
-				lp[1] = '\0';
-			}
-
+		for (pp = searchpath; *pp != NULL; pp++) {
 			hint = _dl_findhint((char *)sodp->sod_name,
-			    sodp->sod_major, sodp->sod_minor, lp);
+			    sodp->sod_major, sodp->sod_minor, *pp);
 			if (hint != NULL)
 				return hint;
-
-			if (*pp)	/* Try curdir if ':' at end */
-				pp++;
-			else
-				pp = 0;
 		}
 	}
 
@@ -187,23 +168,11 @@ nohints:
 		if (_dl_hint_search_path != NULL)
 			searchpath = _dl_hint_search_path;
 		else
-			searchpath = DEFAULT_PATH;
+			searchpath = _dl_default_path;
 	}
 	_dl_memset(&bsod, 0, sizeof(bsod));
-	pp = searchpath;
-	while (pp) {
-		path = lp;
-		while (path < lp + PATH_MAX && *pp && *pp != ':' && *pp != ';')
-			*path++ = *pp++;
-		*path = 0;
-
-		/* interpret "" as curdir "." */
-		if (lp[0] == '\0') {
-			lp[0] = '.';
-			lp[1] = '\0';
-		}
-
-		if ((dd = _dl_opendir(lp)) != NULL) {
+	for (pp = searchpath; *pp != NULL; pp++) {
+		if ((dd = _dl_opendir(*pp)) != NULL) {
 			match = 0;
 			while ((dp = _dl_readdir(dd)) != NULL) {
 				tsod = *sodp;
@@ -225,9 +194,9 @@ nohints:
 						bsod = tsod;
 						match = 1;
 						len = _dl_strlcpy(
-						    _dl_hint_store, lp,
+						    _dl_hint_store, *pp,
 						    MAXPATHLEN);
-						if (lp[len-1] != '/') {
+						if (pp[0][len-1] != '/') {
 							_dl_hint_store[len] =
 							    '/';
 							len++;
@@ -247,11 +216,6 @@ nohints:
 				return (_dl_hint_store);
 			}
 		}
-
-		if (*pp)	/* Try curdir if ':' at end */
-			pp++;
-		else
-			pp = 0;
 	}
 	return NULL;
 }
@@ -351,6 +315,7 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
 	ignore_hints = 0;
 
 	if (_dl_strchr(libname, '/')) {
+		char *paths[2];
 		char *lpath, *lname;
 		lpath = _dl_strdup(libname);
 		lname = _dl_strrchr(lpath, '/');
@@ -370,8 +335,10 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
 		_dl_build_sod(lname, &sod);
 		req_sod = sod;
 
+		paths[0] = lpath;
+		paths[1] = NULL;
 fullpathagain:
-		hint = _dl_find_shlib(&req_sod, lpath, ignore_hints);
+		hint = _dl_find_shlib(&req_sod, paths, ignore_hints);
 		if (hint != NULL)
 			goto fullpathdone;
 
@@ -405,15 +372,15 @@ again:
 	}
 
 	/* Check DT_RPATH.  */
-	if (parent->dyn.rpath != NULL) {
-		hint = _dl_find_shlib(&req_sod, parent->dyn.rpath, ignore_hints);
+	if (parent->rpath != NULL) {
+		hint = _dl_find_shlib(&req_sod, parent->rpath, ignore_hints);
 		if (hint != NULL)
 			goto done;
 	}
 
 	/* Check main program's DT_RPATH, if parent != main program */
-	if (parent != _dl_objects && _dl_objects->dyn.rpath != NULL) {
-		hint = _dl_find_shlib(&req_sod, _dl_objects->dyn.rpath, ignore_hints);
+	if (parent != _dl_objects && _dl_objects->rpath != NULL) {
+		hint = _dl_find_shlib(&req_sod, _dl_objects->rpath, ignore_hints);
 		if (hint != NULL)
 			goto done;
 	}

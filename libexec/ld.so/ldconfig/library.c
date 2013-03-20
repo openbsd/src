@@ -1,4 +1,4 @@
-/* $OpenBSD: library.c,v 1.3 2009/12/30 04:30:01 drahn Exp $ */
+/* $OpenBSD: library.c,v 1.4 2013/03/20 21:49:59 kurt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -34,12 +34,11 @@
 #include "prebind.h"
 #include "prebind_struct.h"
 
-/* TODO - library path from ldconfig */
-#define DEFAULT_PATH "/usr/lib"
+char * _dl_default_path[2] = { "/usr/lib", NULL };
 
 elf_object_t * elf_load_shlib_hint(struct sod *sod, struct sod *req_sod,
-    int ignore_hints, const char *libpath);
-char * elf_find_shlib(struct sod *sodp, const char *searchpath, int nohints);
+    int ignore_hints, char **libpath);
+char * elf_find_shlib(struct sod *sodp, char **searchpath, int nohints);
 elf_object_t * elf_tryload_shlib(const char *libname);
 int elf_match_file(struct sod *sodp, char *name, int namelen);
 
@@ -56,6 +55,7 @@ load_lib(const char *name, struct elf_object *parent)
 	ignore_hints = 0;
 
 	if(strchr(name, '/')) {
+		char *paths[2];
 		char *lpath, *lname;
 
 		lpath = strdup(name);
@@ -70,10 +70,12 @@ load_lib(const char *name, struct elf_object *parent)
 		_dl_build_sod(lname, &sod);
 		req_sod = sod;
 
+		paths[0] = lpath;
+		paths[1] = NULL;
 		/* this code does not allow lower minors */
 fullpathagain:
 		object = elf_load_shlib_hint(&sod, &req_sod,
-			ignore_hints, lpath);
+			ignore_hints, paths);
 		if (object != NULL)
 			goto fullpathdone;
 
@@ -95,15 +97,15 @@ fullpathdone:
 	/* ignore LD_LIBRARY_PATH */
 
 again:
-	if (parent->dyn.rpath != NULL) {
+	if (parent->rpath != NULL) {
 		object = elf_load_shlib_hint(&sod, &req_sod,
-		    ignore_hints, parent->dyn.rpath);
+		    ignore_hints, parent->rpath);
 		if (object != NULL)
 			goto done;
 	}
-	if (parent != load_object && load_object->dyn.rpath != NULL) {
+	if (parent != load_object && load_object->rpath != NULL) {
 		object = elf_load_shlib_hint(&sod, &req_sod,
-			ignore_hints, load_object->dyn.rpath);
+			ignore_hints, load_object->rpath);
 		if (object != NULL)
 			goto done;
 	}
@@ -130,7 +132,7 @@ done:
  */
 elf_object_t *
 elf_load_shlib_hint(struct sod *sod, struct sod *req_sod,
-    int ignore_hints, const char *libpath)
+    int ignore_hints, char **libpath)
 {
 	elf_object_t *object = NULL;
 	char *hint;
@@ -151,12 +153,11 @@ elf_load_shlib_hint(struct sod *sod, struct sod *req_sod,
 char elf_hint_store[MAXPATHLEN];
 
 char *
-elf_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
+elf_find_shlib(struct sod *sodp, char **searchpath, int nohints)
 {
-	char *hint, lp[PATH_MAX + 10], *path;
+	char *hint, **pp;
 	struct sod tsod, bsod;		/* transient and best sod */
 	struct dirent *dp;
-	const char *pp;
 	int match, len;
 	DIR *dd;
 
@@ -177,29 +178,11 @@ elf_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 		/* search hints requesting matches for only
 		 * the searchpath directories,
 		 */
-		pp = searchpath;
-		while (pp) {
-			path = lp;
-			while (path < lp + PATH_MAX &&
-			    *pp && *pp != ':' && *pp != ';')
-				*path++ = *pp++;
-			*path = 0;
-
-			/* interpret "" as curdir "." */
-			if (lp[0] == '\0') {
-				lp[0] = '.';
-				lp[1] = '\0';
-			}
-
+		for (pp = searchpath; *pp != NULL; pp++) {
 			hint = _dl_findhint((char *)sodp->sod_name,
-			    sodp->sod_major, sodp->sod_minor, lp);
+			    sodp->sod_major, sodp->sod_minor, *pp);
 			if (hint != NULL)
 				return hint;
-
-			if (*pp)	/* Try curdir if ':' at end */
-				pp++;
-			else
-				pp = 0;
 		}
 	}
 
@@ -213,22 +196,10 @@ nohints:
 		if (_dl_hint_search_path != NULL)
 			searchpath = _dl_hint_search_path;
 		else
-			searchpath = DEFAULT_PATH;
+			searchpath = _dl_default_path;
 	}
-	pp = searchpath;
-	while (pp) {
-		path = lp;
-		while (path < lp + PATH_MAX && *pp && *pp != ':' && *pp != ';')
-			*path++ = *pp++;
-		*path = 0;
-
-		/* interpret "" as curdir "." */
-		if (lp[0] == '\0') {
-			lp[0] = '.';
-			lp[1] = '\0';
-		}
-
-		if ((dd = opendir(lp)) != NULL) {
+	for (pp = searchpath; *pp != NULL; pp++) {
+		if ((dd = opendir(*pp)) != NULL) {
 			match = 0;
 			while ((dp = readdir(dd)) != NULL) {
 				tsod = *sodp;
@@ -250,9 +221,9 @@ nohints:
 						bsod = tsod;
 						match = 1;
 						len = strlcpy(
-						    elf_hint_store, lp,
+						    elf_hint_store, *pp,
 						    MAXPATHLEN);
-						if (lp[len-1] != '/') {
+						if (pp[0][len-1] != '/') {
 							elf_hint_store[len] =
 							    '/';
 							len++;
@@ -272,11 +243,6 @@ nohints:
 				return (elf_hint_store);
 			}
 		}
-
-		if (*pp)	/* Try curdir if ':' at end */
-			pp++;
-		else
-			pp = 0;
 	}
 	return NULL;
 }

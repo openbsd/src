@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.18 2013/01/23 19:15:58 miod Exp $ */
+/* $OpenBSD: prebind.c,v 1.19 2013/03/20 21:49:59 kurt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -32,6 +32,7 @@
 #include <err.h>
 #include "resolve.h"
 #include "link.h"
+#include "path.h"
 #include "sod.h"
 #ifndef __mips64__
 #include "machine/reloc.h"
@@ -671,8 +672,8 @@ elf_load_object(void *pexe, const char *name)
 			object->dyn.jmprel = 0;
 		}
 		if (object->dyn.rpath != NULL){
-			object->dyn.rpath = strdup(object->dyn.rpath);
-			if (object->dyn.rpath == NULL) {
+			object->rpath = _dl_split_path(object->dyn.rpath);
+			if (object->rpath == NULL) {
 				printf("unable to allocate rpath for %s\n",
 				    name);
 				exit(10);

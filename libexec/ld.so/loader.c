@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.130 2013/01/11 21:17:07 miod Exp $ */
+/*	$OpenBSD: loader.c,v 1.131 2013/03/20 21:49:59 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,6 +40,7 @@
 
 #include "syscall.h"
 #include "archdep.h"
+#include "path.h"
 #include "resolve.h"
 #include "sod.h"
 #include "stdlib.h"
@@ -63,7 +64,8 @@ void _dl_call_init_recurse(elf_object_t *object, int initfirst);
 const char *_dl_progname;
 int  _dl_pagesz;
 
-char *_dl_libpath;
+char **_dl_libpath;
+
 char *_dl_preload;
 char *_dl_bindnow;
 char *_dl_traceld;
@@ -212,14 +214,14 @@ _dl_setup_env(char **envp)
 	/*
 	 * Get paths to various things we are going to use.
 	 */
-	_dl_libpath = _dl_getenv("LD_LIBRARY_PATH", envp);
+	_dl_debug = _dl_getenv("LD_DEBUG", envp);
+	_dl_libpath = _dl_split_path(_dl_getenv("LD_LIBRARY_PATH", envp));
 	_dl_preload = _dl_getenv("LD_PRELOAD", envp);
 	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp);
 	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
 	_dl_tracefmt1 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT1", envp);
 	_dl_tracefmt2 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT2", envp);
 	_dl_traceprog = _dl_getenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", envp);
-	_dl_debug = _dl_getenv("LD_DEBUG", envp);
 	_dl_norandom = _dl_getenv("LD_NORANDOM", envp);
 	_dl_noprebind = _dl_getenv("LD_NOPREBIND", envp);
 	_dl_prebind_validate = _dl_getenv("LD_PREBINDVALIDATE", envp);
@@ -230,6 +232,7 @@ _dl_setup_env(char **envp)
 	 */
 	if (_dl_issetugid()) {	/* Zap paths if s[ug]id... */
 		if (_dl_libpath) {
+			_dl_free_path(_dl_libpath);
 			_dl_libpath = NULL;
 			_dl_unsetenv("LD_LIBRARY_PATH", envp);
 		}

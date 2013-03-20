@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.59 2012/07/06 23:15:50 matthew Exp $ */
+/*	$OpenBSD: resolve.c,v 1.60 2013/03/20 21:49:59 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -34,6 +34,7 @@
 #include <link.h>
 #include "syscall.h"
 #include "archdep.h"
+#include "path.h"
 #include "resolve.h"
 #include "dl_prebind.h"
 
@@ -182,6 +183,9 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	TAILQ_INIT(&object->grpsym_list);
 	TAILQ_INIT(&object->grpref_list);
 
+	if (object->dyn.rpath)
+		object->rpath = _dl_split_path(object->dyn.rpath);
+
 	return(object);
 }
 
@@ -223,6 +227,8 @@ _dl_cleanup_objects()
 			_dl_free(head->load_name);
 		if (head->sod.sod_name)
 			_dl_free((char *)head->sod.sod_name);
+		if (head->rpath)
+			_dl_free_path(head->rpath);
 		_dl_tailq_free(TAILQ_FIRST(&head->grpsym_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->child_list));
 		_dl_tailq_free(TAILQ_FIRST(&head->grpref_list));

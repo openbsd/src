@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.65 2011/11/28 20:59:03 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.66 2013/03/20 21:49:59 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -149,6 +149,8 @@ struct elf_object {
 	/* last symbol lookup on this object, to avoid mutiple searches */
 	int lastlookup_head;
 	int lastlookup;
+
+	char **rpath;
 };
 
 struct dep_node {
@@ -223,7 +225,7 @@ void _dl_run_all_dtors(void);
 Elf_Addr _dl_bind(elf_object_t *object, int index);
 
 int	_dl_match_file(struct sod *sodp, const char *name, int namelen);
-char	*_dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints);
+char	*_dl_find_shlib(struct sod *sodp, char **searchpath, int nohints);
 void	_dl_load_list_free(struct load_list *load_list);
 
 void	_dl_thread_kern_go(void);
@@ -242,7 +244,8 @@ extern struct r_debug *_dl_debug_map;
 extern int  _dl_pagesz;
 extern int  _dl_errno;
 
-extern char *_dl_libpath;
+extern char **_dl_libpath;
+
 extern char *_dl_preload;
 extern char *_dl_bindnow;
 extern char *_dl_traceld;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.1 2006/05/12 23:20:53 deraadt Exp $	*/
+/*	$OpenBSD: sod.c,v 1.2 2013/03/20 21:49:59 kurt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -50,6 +50,7 @@
 #include "archdep.h"
 #include "util.h"
 #endif
+#include "path.h"
 #include "sod.h"
 
 int _dl_hinthash(char *cp, int vmajor, int vminor);
@@ -138,7 +139,7 @@ backout:
 static struct hints_header	*hheader = NULL;
 static struct hints_bucket	*hbuckets;
 static char			*hstrtab;
-char				*_dl_hint_search_path = NULL;
+char				**_dl_hint_search_path = NULL;
 
 #define HINTS_VALID (hheader != NULL && hheader != (struct hints_header *)-1)
 
@@ -173,7 +174,7 @@ _dl_maphints(void)
 	hbuckets = (struct hints_bucket *)(addr + hheader->hh_hashtab);
 	hstrtab = (char *)(addr + hheader->hh_strtab);
 	if (hheader->hh_version >= LD_HINTS_VERSION_2)
-		_dl_hint_search_path = hstrtab + hheader->hh_dirlist;
+		_dl_hint_search_path = _dl_split_path(hstrtab + hheader->hh_dirlist);
 
 	/* close the file descriptor, leaving the hints mapped */
 	close(hfd);
