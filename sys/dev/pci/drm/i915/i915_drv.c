@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.3 2013/03/19 21:07:31 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.4 2013/03/20 12:37:41 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -528,7 +528,6 @@ i915_drm_freeze(struct drm_device *dev)
 		intel_modeset_disable(dev);
 
 		drm_irq_uninstall(dev);
-		dev_priv->enable_hotplug_processing = false;
 	}
 
 	i915_save_state(dev);
@@ -560,19 +559,9 @@ __i915_drm_thaw(struct drm_device *dev)
 		error = i915_gem_init_hw(dev);
 		DRM_UNLOCK();
 
-		/* We need working interrupts for modeset enabling ... */
-		drm_irq_install(dev);
-
 		intel_modeset_init_hw(dev);
 		intel_modeset_setup_hw_state(dev, false);
-
-		/*
-		 * ... but also need to make sure that hotplug processing
-		 * doesn't cause havoc. Like in the driver load code we don't
-		 * bother with the tiny race here where we might loose hotplug
-		 * notifications.
-		 * */
-		dev_priv->enable_hotplug_processing = true;
+		drm_irq_install(dev);
 	}
 
 	intel_opregion_init(dev);

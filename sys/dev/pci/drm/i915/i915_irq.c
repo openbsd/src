@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.2 2013/03/20 12:37:41 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -347,10 +347,6 @@ i915_hotplug_work_func(void *arg1, void *arg2)
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	struct drm_mode_config *mode_config = &dev->mode_config;
 	struct intel_encoder *encoder;
-
-	/* HPD irq before everything is fully set up. */
-	if (!dev_priv->enable_hotplug_processing)
-		return;
 
 	rw_enter_write(&mode_config->rwl);
 	DRM_DEBUG_KMS("running encoder hotplug functions\n");
