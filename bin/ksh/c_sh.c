@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.41 2010/03/27 09:10:01 jmc Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.42 2013/03/20 21:05:00 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -465,29 +465,13 @@ c_trap(char **wp)
 	wp += builtin_opt.optind;
 
 	if (*wp == NULL) {
-		int anydfl = 0;
-
 		for (p = sigtraps, i = NSIG+1; --i >= 0; p++) {
-			if (p->trap == NULL)
-				anydfl = 1;
-			else {
+			if (p->trap != NULL) {
 				shprintf("trap -- ");
 				print_value_quoted(p->trap);
 				shprintf(" %s\n", p->name);
 			}
 		}
-#if 0 /* this is ugly and not clear POSIX needs it */
-		/* POSIX may need this so output of trap can be saved and
-		 * used to restore trap conditions
-		 */
-		if (anydfl) {
-			shprintf("trap -- -");
-			for (p = sigtraps, i = NSIG+1; --i >= 0; p++)
-				if (p->trap == NULL && p->name)
-					shprintf(" %s", p->name);
-			shprintf(newline);
-		}
-#endif
 		return 0;
 	}
 
