@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.15 2013/03/20 03:43:08 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.16 2013/03/20 14:46:45 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct proc *p,
 			kp.p_pid = process_pid;
 			kp.p_ppid = parent_pid;
 			kp.p_sid = leader_pid;
-			if ((process.ps_flags & PS_CONTROLT) && 
+			if ((process.ps_flags & PS_CONTROLT) &&
 			    sess.s_ttyp != NULL) {
 				kp.p_tdev = tty.t_dev;
 				if (tty.t_pgrp != NULL &&

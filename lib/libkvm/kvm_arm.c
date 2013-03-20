@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_arm.c,v 1.6 2011/04/10 12:43:39 miod Exp $	*/
+/*	$OpenBSD: kvm_arm.c,v 1.7 2013/03/20 14:46:45 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -127,7 +127,7 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 			    (off_t)(pa - (paddr_t)mp->start));
 		off += (off_t)mp->size;
 	}
-	
+
 	_kvm_err(kd, 0, "not a physical address: %x", pa);
 	return (-1);
 }

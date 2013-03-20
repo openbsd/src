@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.26 2012/08/23 06:21:21 deraadt Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.27 2013/03/20 14:46:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -709,7 +709,7 @@ _kvm_getftype(enum vtype v_type)
 	case VBAD:
 		break;
 	}
-	
+
 	return (ftype);
 }
 
