@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.94 2012/08/22 06:08:07 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.95 2013/03/20 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ static struct protox *name2protox(char *);
 static struct protox *knownname(char *);
 u_int gettable(const char *);
 
+int hideroot;
 
 kvm_t *kvmd;
 
@@ -161,6 +162,8 @@ main(int argc, char *argv[])
 	u_int tableid;
 	int Tflag = 0;
 	int repeatcount = 0;
+
+	hideroot = getuid();
 
 	af = AF_UNSPEC;
 	tableid = getrtable();

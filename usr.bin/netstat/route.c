@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.89 2013/01/16 10:53:14 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.90 2013/03/20 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -221,8 +221,9 @@ p_rtnode(void)
 	struct radix_mask *rm = rnode.rn_mklist;
 
 	if (rnode.rn_b < 0) {
-		snprintf(nbuf, sizeof nbuf, " => %p", rnode.rn_dupedkey);
-		printf("\t  (%p)%s", rnode.rn_p,
+		snprintf(nbuf, sizeof nbuf, " => %p",
+		    hideroot ? 0 : rnode.rn_dupedkey);
+		printf("\t  (%p)%s", hideroot ? 0 : rnode.rn_p,
 		    rnode.rn_dupedkey ? nbuf : "");
 		if (rnode.rn_mask) {
 			printf(" mask ");
@@ -234,7 +235,8 @@ p_rtnode(void)
 		}
 	} else {
 		snprintf(nbuf, sizeof nbuf, "(%d)", rnode.rn_b);
-		printf("%6.6s (%p) %16p : %16p", nbuf, rnode.rn_p, rnode.rn_l,
+		printf("%6.6s (%p) %16p : %16p", nbuf,
+		    hideroot ? 0 : rnode.rn_p, rnode.rn_l,
 		    rnode.rn_r);
 	}
 
@@ -245,13 +247,14 @@ p_rtnode(void)
 		kread((u_long)rm, &rmask, sizeof(rmask));
 		snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
 		printf("\n\tmk = %p {(%d),%s",
-		    rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
+		    hideroot ? 0 : rm,
+		    -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
 		p_rtflags(rmask.rm_flags);
 		printf(", ");
 		if (rmask.rm_flags & RNF_NORMAL) {
 			struct radix_node rnode_aux;
 
-			printf("leaf = %p ", rmask.rm_leaf);
+			printf("leaf = %p ", hideroot ? 0 : rmask.rm_leaf);
 			kread((u_long)rmask.rm_leaf, &rnode_aux, sizeof(rnode_aux));
 			p_sockaddr(kgetsa((struct sockaddr *)rnode_aux.rn_mask),
 			    0, 0, -1);

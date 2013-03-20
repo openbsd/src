@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.37 2013/01/16 10:53:14 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.38 2013/03/20 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -131,15 +131,20 @@ p_rttables(int af, u_int tableid)
 	mib[5] = 0;
 	mib[6] = tableid;
 	mcnt = 7;
-
-	if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) < 0)
-		err(1, "route-sysctl-estimate");
-	if (needed > 0) {
-		if ((buf = malloc(needed)) == 0)
+	while (1) {
+		if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) == -1)
+			err(1, "route-sysctl-estimate");
+		if (needed == 0)
+			break;
+		if ((buf = realloc(buf, needed)) == NULL)
 			err(1, NULL);
-		if (sysctl(mib, mcnt, buf, &needed, NULL, 0) < 0)
+		if (sysctl(mib, mcnt, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
 			err(1, "sysctl of routing table");
+		}
 		lim = buf + needed;
+		break;
 	}
 
 	printf("Routing tables\n");
@@ -166,18 +171,23 @@ p_rttables(int af, u_int tableid)
 	mib[2] = PF_KEY_V2;
 	mib[3] = NET_KEY_SPD_DUMP;
 	mib[4] = mib[5] = 0;
-
-	if (sysctl(mib, 4, NULL, &needed, NULL, 0) == -1) {
-		if (errno == ENOPROTOOPT)
-			return;
-		err(1, "spd-sysctl-estimate");
-	}
-	if (needed > 0) {
-		if ((buf = malloc(needed)) == 0)
+	while (1) {
+		if (sysctl(mib, 4, NULL, &needed, NULL, 0) == -1) {
+			if (errno == ENOPROTOOPT)
+				return;
+			err(1, "spd-sysctl-estimate");
+		}
+		if (needed == 0)
+			break;
+		if ((buf = realloc(buf, needed)) == NULL)
 			err(1, NULL);
-		if (sysctl(mib, 4, buf, &needed, NULL, 0) == -1)
+		if (sysctl(mib, 4, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
 			err(1,"sysctl of spd");
+		}
 		lim = buf + needed;
+		break;
 	}
 
 	if (buf) {

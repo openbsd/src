@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.64 2012/12/05 23:20:25 deraadt Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.65 2013/03/20 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ int	af;		/* address family */
 
 extern	char *__progname; /* program name, from crt0.o */
 
+extern int hideroot;
 
 int	kread(u_long addr, void *buf, int size);
 char	*plural(u_int64_t);

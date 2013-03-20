@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.121 2013/02/05 13:58:02 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.122 2013/03/20 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -199,9 +199,9 @@ protopr(u_long off, char *name, int af, u_int tableid, u_long pcbaddr)
 		}
 		if (Aflag) {
 			if (istcp)
-				printf("%*p ", PLEN, inpcb.inp_ppcb);
+				printf("%*p ", PLEN, hideroot ? 0 : inpcb.inp_ppcb);
 			else
-				printf("%*p ", PLEN, prev);
+				printf("%*p ", PLEN, hideroot ? 0 : prev);
 		}
 		if (inpcb.inp_flags & INP_IPV6 && !israw) {
 			strlcpy(namebuf, name0, sizeof namebuf);
@@ -1175,14 +1175,15 @@ socket_dump(u_long off)
 	kread(off, &so, sizeof(so));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, so.v);
-	printf("socket %#lx\n ", off);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : so.v);
+	printf("socket %#lx\n ", hideroot ? 0 : off);
 	p("%#0.4x", so_type, "\n ");
 	p("%#0.4x", so_options, "\n ");
 	p("%d", so_linger, "\n ");
 	p("%#0.4x", so_state, "\n ");
-	p("%p", so_pcb, ", ");
-	p("%p", so_proto, ", ");
-	p("%p", so_head, "\n ");
+	pp("%p", so_pcb, ", ");
+	pp("%p", so_proto, ", ");
+	pp("%p", so_head, "\n ");
 	p("%d", so_q0len, ", ");
 	p("%d", so_qlen, ", ");
 	p("%d", so_qlimit, "\n ");
@@ -1192,8 +1193,8 @@ socket_dump(u_long off)
 	p("%u", so_siguid, ", ");
 	p("%u", so_sigeuid, "\n ");
 	p("%lu", so_oobmark, "\n ");
-	p("%p", so_splice, ", ");
-	p("%p", so_spliceback, "\n ");
+	pp("%p", so_splice, ", ");
+	pp("%p", so_spliceback, "\n ");
 	p("%lld", so_splicelen, ", ");
 	p("%lld", so_splicemax, ", ");
 	p("%ld", so_idletv.tv_sec, ", ");
@@ -1206,6 +1207,7 @@ socket_dump(u_long off)
 	p("%u", so_rgid, "\n ");
 	p("%d", so_cpid, "\n");
 #undef	p
+#undef	pp
 
 	if (!vflag)
 		return;
@@ -1248,12 +1250,14 @@ protosw_dump(u_long off, u_long pcb)
 	kread(off, &proto, sizeof(proto));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, proto.v);
-	printf("protosw %#lx\n ", off);
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : proto.v);
+	printf("protosw %#lx\n ", hideroot ? 0 : off);
 	p("%#0.4x", pr_type, "\n ");
-	p("%p", pr_domain, "\n ");
+	pp("%p", pr_domain, "\n ");
 	p("%d", pr_protocol, "\n ");
 	p("%#0.4x", pr_flags, "\n");
 #undef	p
+#undef	pp
 
 	domain_dump((u_long)proto.pr_domain, pcb, proto.pr_protocol);
 }
@@ -1273,7 +1277,7 @@ domain_dump(u_long off, u_long pcb, short protocol)
 	kread((u_long)dom.dom_name, name, sizeof(name));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, dom.v);
-	printf("domain %#lx\n ", off);
+	printf("domain %#lx\n ", hideroot ? 0 : off);
 	p("%d", dom_family, "\n ");
 	printf("dom_name %.*s\n", sizeof(name), name);
 #undef	p
@@ -1315,15 +1319,16 @@ inpcb_dump(u_long off, short protocol, int af)
 	}
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, inp.v);
-	printf("inpcb %#lx\n ", off);
-	p("%p", inp_table, "\n ");
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : inp.v);
+	printf("inpcb %#lx\n ", hideroot ? 0 : off);
+	pp("%p", inp_table, "\n ");
 	printf("inp_faddru %s, inp_laddru %s\n ", faddr, laddr);
 	HTONS(inp.inp_fport);
 	HTONS(inp.inp_lport);
 	p("%u", inp_fport, ", ");
 	p("%u", inp_lport, "\n ");
-	p("%p", inp_socket, ", ");
-	p("%p", inp_ppcb, "\n ");
+	pp("%p", inp_socket, ", ");
+	pp("%p", inp_ppcb, "\n ");
 	p("%#0.8x", inp_flags, "\n ");
 	p("%d", inp_hops, "\n ");
 	p("%u", inp_seclevel[0], ", ");
@@ -1333,17 +1338,18 @@ inpcb_dump(u_long off, short protocol, int af)
 	p("%#x", inp_secrequire, ", ");
 	p("%#x", inp_secresult, "\n ");
 	p("%u", inp_ip_minttl, "\n ");
-	p("%p", inp_tdb_in, ", ");
-	p("%p", inp_tdb_out, ", ");
-	p("%p", inp_ipo, "\n ");
-	p("%p", inp_ipsec_remotecred, ", ");
-	p("%p", inp_ipsec_remoteauth, "\n ");
+	pp("%p", inp_tdb_in, ", ");
+	pp("%p", inp_tdb_out, ", ");
+	pp("%p", inp_ipo, "\n ");
+	pp("%p", inp_ipsec_remotecred, ", ");
+	pp("%p", inp_ipsec_remoteauth, "\n ");
 	p("%d", in6p_cksum, "\n ");
-	p("%p", inp_icmp6filt, "\n ");
-	p("%p", inp_pf_sk, "\n ");
+	pp("%p", inp_icmp6filt, "\n ");
+	pp("%p", inp_pf_sk, "\n ");
 	p("%u", inp_rtableid, "\n ");
 	p("%d", inp_pipex, "\n");
 #undef	p
+#undef	pp
 
 	switch (protocol) {
 	case IPPROTO_TCP:
@@ -1365,8 +1371,9 @@ tcpcb_dump(u_long off)
 	kread(off, (char *)&tcpcb, sizeof (tcpcb));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, tcpcb.v);
-	printf("tcpcb %#lx\n ", off);
-	p("%p", t_inpcb, "\n ");
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : tcpcb.v);
+	printf("tcpcb %#lx\n ", hideroot ? 0 : off);
+	pp("%p", t_inpcb, "\n ");
 	p("%d", t_state, "");
 	if (tcpcb.t_state >= 0 && tcpcb.t_state < TCP_NSTATES)
 		printf(" (%s)", tcpstates[tcpcb.t_state]);
@@ -1429,4 +1436,5 @@ tcpcb_dump(u_long off)
 	p("%u", t_pmtud_th_seq, "\n ");
 	p("%u", pf, "\n");
 #undef	p
+#undef	pp
 }

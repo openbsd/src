@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.15 2010/10/30 23:06:05 bluhm Exp $	*/
+/*	$OpenBSD: unix.c,v 1.16 2013/03/20 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -122,9 +122,12 @@ unixdomainpr(struct socket *so, caddr_t soaddr, u_long pcbaddr)
 		first = 0;
 	}
 	printf("%*p %-6.6s %6ld %6ld %*p %*p %*p %*p",
-	    PLEN, soaddr, socktype[so->so_type], so->so_rcv.sb_cc,
-	    so->so_snd.sb_cc, PLEN, unp->unp_vnode, PLEN, unp->unp_conn,
-	    PLEN, unp->unp_refs, PLEN, unp->unp_nextref);
+	    PLEN, hideroot ? 0 : soaddr,
+	    socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
+	    PLEN, hideroot ? 0 : unp->unp_vnode,
+	    PLEN, hideroot ? 0 : unp->unp_conn,
+	    PLEN, hideroot ? 0 : unp->unp_refs,
+	    PLEN, hideroot ? 0 : unp->unp_nextref);
 	if (m)
 		printf(" %.*s",
 		    (int)(m->m_len - (int)(sizeof(*sa) - sizeof(sa->sun_path))),
@@ -145,14 +148,15 @@ unpcb_dump(u_long off)
 	kread(off, &unp, sizeof(unp));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, unp.v);
-	printf("unpcb %#lx\n ", off);
-	p("%p", unp_socket, "\n ");
-	p("%p", unp_vnode, ", ");
+#define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : unp.v);
+	printf("unpcb %#lx\n ", hideroot ? 0 : off);
+	pp("%p", unp_socket, "\n ");
+	pp("%p", unp_vnode, ", ");
 	p("%u", unp_ino, "\n ");
-	p("%p", unp_conn, ", ");
-	p("%p", unp_refs, ", ");
-	p("%p", unp_nextref, "\n ");
-	p("%p", unp_addr, "\n ");
+	pp("%p", unp_conn, ", ");
+	pp("%p", unp_refs, ", ");
+	pp("%p", unp_nextref, "\n ");
+	pp("%p", unp_addr, "\n ");
 	p("%#0.8x", unp_flags, "\n ");
 	p("%u", unp_connid.uid, ", ");
 	p("%u", unp_connid.gid, ", ");
@@ -162,4 +166,5 @@ unpcb_dump(u_long off)
 	p("%d", unp_ctime.tv_sec, ", ");
 	p("%ld", unp_ctime.tv_nsec, "\n");
 #undef p
+#undef pp
 }
