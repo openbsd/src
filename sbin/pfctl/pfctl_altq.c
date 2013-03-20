@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.98 2012/05/02 07:45:50 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.99 2013/03/20 00:18:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -405,8 +405,8 @@ eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 
 	if (opts->pktsize == 0) {	/* use default */
 		opts->pktsize = ifmtu;
-		if (opts->pktsize > MCLBYTES)	/* do what TCP does */
-			opts->pktsize &= ~MCLBYTES;
+		if (opts->pktsize > 2048)	/* do what TCP does */
+			opts->pktsize &= ~2048;
 	} else if (opts->pktsize > ifmtu)
 		opts->pktsize = ifmtu;
 	if (opts->maxpktsize == 0)	/* use default */
