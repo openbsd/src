@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.324 2013/03/17 10:17:54 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.325 2013/03/20 02:46:33 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1774,9 +1774,9 @@ bge_blockinit(struct bge_softc *sc)
 {
 	volatile struct bge_rcb		*rcb;
 	vaddr_t			rcb_addr;
-	int			i;
 	bge_hostaddr		taddr;
 	u_int32_t		dmactl, val;
+	int			i, limit;
 
 	/*
 	 * Initialize the memory window pointer register so that
@@ -1870,28 +1870,82 @@ bge_blockinit(struct bge_softc *sc)
 		return (ENXIO);
 	}
 
+	/*
+	 * Summary of rings supported by the controller:
+	 *
+	 * Standard Receive Producer Ring
+	 * - This ring is used to feed receive buffers for "standard"
+	 *   sized frames (typically 1536 bytes) to the controller.
+	 *
+	 * Jumbo Receive Producer Ring
+	 * - This ring is used to feed receive buffers for jumbo sized
+	 *   frames (i.e. anything bigger than the "standard" frames)
+	 *   to the controller.
+	 *
+	 * Mini Receive Producer Ring
+	 * - This ring is used to feed receive buffers for "mini"
+	 *   sized frames to the controller.
+	 * - This feature required external memory for the controller
+	 *   but was never used in a production system.  Should always
+	 *   be disabled.
+	 *
+	 * Receive Return Ring
+	 * - After the controller has placed an incoming frame into a
+	 *   receive buffer that buffer is moved into a receive return
+	 *   ring.  The driver is then responsible to passing the
+	 *   buffer up to the stack.  Many versions of the controller
+	 *   support multiple RR rings.
+	 *
+	 * Send Ring
+	 * - This ring is used for outgoing frames.  Many versions of
+	 *   the controller support multiple send rings.
+	 */
+
 	/* Initialize the standard RX ring control block */
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
-	if (BGE_IS_5717_PLUS(sc))
-		rcb->bge_maxlen_flags = (BGE_RCB_MAXLEN_FLAGS(512, 0) |
-					(ETHER_MAX_DIX_LEN << 2));
-	else if (BGE_IS_5705_PLUS(sc))
+	if (BGE_IS_5717_PLUS(sc)) {
+		/*
+		 * Bits 31-16: Programmable ring size (2048, 1024, 512, .., 32)
+		 * Bits 15-2 : Maximum RX frame size
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring ENabled
+		 * Bit 0     : Reserved
+		 */
+		rcb->bge_maxlen_flags =
+		    BGE_RCB_MAXLEN_FLAGS(512, ETHER_MAX_DIX_LEN << 2);
+	} else if (BGE_IS_5705_PLUS(sc)) {
+		/*
+		 * Bits 31-16: Programmable ring size (512, 256, 128, 64, 32)
+		 * Bits 15-2 : Reserved (should be 0)
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring Enabled
+		 * Bit 0     : Reserved
+		 */
 		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
-	else
+	} else {
+		/*
+		 * Ring size is always XXX entries
+		 * Bits 31-16: Maximum RX frame size
+		 * Bits 15-2 : Reserved (should be 0)
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring Enabled
+		 * Bit 0     : Reserved
+		 */
 		rcb->bge_maxlen_flags =
 		    BGE_RCB_MAXLEN_FLAGS(ETHER_MAX_DIX_LEN, 0);
+	}
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
 		rcb->bge_nicaddr = BGE_STD_RX_RINGS_5717;
 	else
 		rcb->bge_nicaddr = BGE_STD_RX_RINGS;
-
+	/* Write the standard receive producer ring control block. */
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_HADDR_HI, rcb->bge_hostaddr.bge_addr_hi);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_HADDR_LO, rcb->bge_hostaddr.bge_addr_lo);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_MAXLEN_FLAGS, rcb->bge_maxlen_flags);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_NICADDR, rcb->bge_nicaddr);
+
+	/* Reset the standard receive producer ring producer index. */
+	bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, 0);
 
 	/*
 	 * Initialize the Jumbo RX ring control block
@@ -1912,7 +1966,6 @@ bge_blockinit(struct bge_softc *sc)
 			rcb->bge_nicaddr = BGE_JUMBO_RX_RINGS_5717;
 		else
 			rcb->bge_nicaddr = BGE_JUMBO_RX_RINGS;
-
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_HI,
 		    rcb->bge_hostaddr.bge_addr_hi);
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_LO,
@@ -1941,7 +1994,6 @@ bge_blockinit(struct bge_softc *sc)
 		    offsetof(struct bge_ring_data, bge_info),
 		    sizeof (struct bge_gib),
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
 	}
 
 	/* Choose de-pipeline mode for BCM5906 A0, A1 and A2. */
@@ -1953,6 +2005,11 @@ bge_blockinit(struct bge_softc *sc)
 			    (CSR_READ_4(sc, BGE_ISO_PKT_TX) & ~3) | 2);
 	}
 	/*
+	 * The BD ring replenish thresholds control how often the
+	 * hardware fetches new BD's from the producer rings in host
+	 * memory.  Setting the value too low on a busy system can
+	 * starve the hardware and recue the throughpout.
+	 *
 	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
 	 * each ring, but since we try to avoid filling the entire
@@ -1961,7 +2018,8 @@ bge_blockinit(struct bge_softc *sc)
 	 * to work around HW bugs.
 	 */
 	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, 8);
-	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, 8);
+	if (BGE_IS_JUMBO_CAPABLE(sc))
+		CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, 8);
 
 	if (BGE_IS_5717_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_STD_REPL_LWM, 4);
@@ -1969,19 +2027,24 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	/*
-	 * Disable all unused send rings by setting the 'ring disabled'
-	 * bit in the flags field of all the TX send ring control blocks.
-	 * These are located in NIC memory.
+	 * Disable all send rings by setting the 'ring disabled' bit
+	 * in the flags field of all the TX send ring control blocks,
+	 * located in NIC memory.
 	 */
+	if (BGE_IS_5700_FAMILY(sc)) {
+		/* 5700 to 5704 had 16 send rings. */
+		limit = BGE_TX_RINGS_EXTSSRAM_MAX;
+	} else
+		limit = 1;
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
-	for (i = 0; i < BGE_TX_RINGS_EXTSSRAM_MAX; i++) {
+	for (i = 0; i < limit; i++) {
 		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 		    BGE_RCB_MAXLEN_FLAGS(0, BGE_RCB_FLAG_RING_DISABLED));
 		RCB_WRITE_4(sc, rcb_addr, bge_nicaddr, 0);
 		rcb_addr += sizeof(struct bge_rcb);
 	}
 
-	/* Configure TX RCB 0 (we use only the first ring) */
+	/* Configure send ring RCB 0 (we use only the first ring) */
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
 	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_tx_ring));
 	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, taddr.bge_addr_hi);
@@ -1993,13 +2056,29 @@ bge_blockinit(struct bge_softc *sc)
 	else
 		RCB_WRITE_4(sc, rcb_addr, bge_nicaddr,
 		    BGE_NIC_TXRING_ADDR(0, BGE_TX_RING_CNT));
-	if (BGE_IS_5700_FAMILY(sc))
-		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
-		    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
+	RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
+	    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
 
-	/* Disable all unused RX return rings */
+	/*
+	 * Disable all receive return rings by setting the
+	 * 'ring diabled' bit in the flags field of all the receive
+	 * return ring control blocks, located in NIC memory.
+	 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720) {
+		/* Should be 17, use 16 until we get an SRAM map. */
+		limit = 16;
+	} else if (BGE_IS_5700_FAMILY(sc))
+		limit = BGE_RX_RINGS_MAX;
+	else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_IS_57765_PLUS(sc))
+		limit = 4;
+	else
+		limit = 1;
+	/* Disable all receive return rings */
 	rcb_addr = BGE_MEMWIN_START + BGE_RX_RETURN_RING_RCB;
-	for (i = 0; i < BGE_RX_RINGS_MAX; i++) {
+	for (i = 0; i < limit; i++) {
 		RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, 0);
 		RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, 0);
 		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
@@ -2012,10 +2091,9 @@ bge_blockinit(struct bge_softc *sc)
 	}
 
 	/*
-	 * Set up RX return ring 0
-	 * Note that the NIC address for RX return rings is 0x00000000.
-	 * The return rings live entirely within the host, so the
-	 * nicaddr field in the RCB isn't used.
+	 * Set up receive return ring 0.  Note that the NIC address
+	 * for RX return rings is 0x0.  The return rings live entirely
+	 * within the host, so the nicaddr field in the RCB isn't used.
 	 */
 	rcb_addr = BGE_MEMWIN_START + BGE_RX_RETURN_RING_RCB;
 	BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_rx_return_ring));
