@@ -408,12 +408,16 @@ cat <<EOF
     KEEP (*(SORT(.fini_array.*)))
     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__fini_array_end = .);}}
   }
+  /* If the randomdata_{start,end} symbols are inside the block then ld
+     always reserves a program header slot for a PT_OPENBSD_RANDOMIZE entry,
+     which for /boot shifts the address biosboot has to use even though
+     the slot isn't actually used */
+  ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__openbsd_randomdata_start = .);}}
   .openbsd.randomdata   ${RELOCATING-0} :
   {
-    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__openbsd_randomdata_start = .);}}
     *(.openbsd.randomdata${RELOCATING+ .openbsd.randomdata.*})
-    ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__openbsd_randomdata_end = .);}}
   }
+  ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (__openbsd_randomdata_end = .);}}
   ${PAD_CDTOR-${SMALL_DATA_CTOR-${RELOCATING+${CTOR}}}}
   ${PAD_CDTOR-${SMALL_DATA_DTOR-${RELOCATING+${DTOR}}}}
   .jcr          ${RELOCATING-0} : { KEEP (*(.jcr)) }
