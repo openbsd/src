@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmp.h,v 1.3 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: rmp.h,v 1.4 2013/03/20 15:02:39 deraadt Exp $	*/
 /*	$NetBSD: rmp.h,v 1.4 1995/10/06 05:12:18 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  *  MCLBYTES is for bpfwrite(); it is adamant about using a cluster.
  */
 
-#define	RMP_MAX_PACKET	MIN(1514,MCLBYTES)
+#define	RMP_MAX_PACKET	1514
 #define	RMP_MIN_PACKET	60
 
 /*
