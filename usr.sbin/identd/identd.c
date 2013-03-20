@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.7 2013/03/20 00:23:53 deraadt Exp $ */
+/*	$OpenBSD: identd.c,v 1.8 2013/03/20 03:58:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -16,35 +16,29 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/ioctl.h>
-#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/queue.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 
-#include <arpa/inet.h>
 #include <netdb.h>
 
 #include <err.h>
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <syslog.h>
 #include <unistd.h>
 
