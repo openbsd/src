@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.43 2013/03/20 14:53:35 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.44 2013/03/20 15:24:17 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -255,9 +255,6 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-
-	if (getuid() && pid == -1)
-		errx(1, "only root may look at the kernel");
 
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
