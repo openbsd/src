@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.137 2013/03/10 08:50:42 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.138 2013/03/20 21:30:10 miod Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -30,7 +30,7 @@ ELF_TOOLCHAIN?=	yes
 
 GCC2_ARCH=vax
 GCC4_ARCH=alpha amd64 arm hppa hppa64 i386 ia64 mips64 mips64el powerpc sh sparc sparc64
-BINUTILS217_ARCH=hppa64 ia64
+BINUTILS217_ARCH=amd64 arm hppa64 i386 ia64 sh sparc64
 
 # i386 PIE works; but there are RAMDISK fitting problems.
 # powerpc has problems on some "embedded" powerpc.
