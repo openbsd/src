@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.47 2013/03/19 06:46:28 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.48 2013/03/20 21:23:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -374,25 +374,17 @@ acpi_resume_cpu(struct acpi_softc *sc)
 
 #ifdef MULTIPROCESSOR
 void
-acpi_sleep_mp()
+acpi_sleep_mp(void)
 {
 	int i;
 
 	sched_stop_secondary_cpus();
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 
-	/* Wait for cpus to save their floating point context */
-	i386_broadcast_ipi(I386_IPI_SYNCH_FPU);
-	for (i = 0; i < ncpus; i++) {
-		struct cpu_info *ci = cpu_info[i];
-
-		if (CPU_IS_PRIMARY(ci))
-			continue;
-		while (ci->ci_fpcurproc)
-			;
-	}
-
-	/* Wait for cpus to halt so we know their caches are written back */
+	/* 
+	 * Wait for cpus to halt so we know their FPU state has been
+	 * saved and their caches have been written back.
+	 */
 	i386_broadcast_ipi(I386_IPI_HALT);
 	for (i = 0; i < ncpus; i++) {
 		struct cpu_info *ci = cpu_info[i];
