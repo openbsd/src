@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.7 2013/03/19 23:50:20 jeremy Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.8 2013/03/20 19:23:54 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 19 2013 $
+.Dd $Mdocdate: March 20 2013 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -44,27 +44,26 @@ Sets
 .Ev RSPEC ,
 .Ev MODRUBY_BIN_TESTRB ,
 .Ev MODRUBY_BIN_RSPEC ,
+.Ev MODRUBY_WANTLIB ,
 .Ev MODRUBY_RUN_DEPENDS ,
 .Ev MODRUBY_LIB_DEPENDS ,
 .Ev MODRUBY_BUILD_DEPENDS ,
 .Ev MODRUBY_ICONV_DEPENDS ,
+.Ev MODRUBY_RAKE_DEPENDS ,
+.Ev MODRUBY_RSPEC_DEPENDS ,
+.Ev MODRUBY_RSPEC2_DEPENDS ,
+.Ev MODRUBY_RUBY_ADJ ,
+.Ev MODRUBY_ADJ_FILES ,
 .Ev MODRUBY_LIBDIR ,
 .Ev MODRUBY_DOCDIR ,
 .Ev MODRUBY_SITEARCHDIR ,
 .Ev MODRUBY_SITEDIR ,
-.Ev MODRUBY_ARCH ,
 .Ev MODRUBY_EXAMPLEDIR ,
-.Ev MODRUBY_RUBY_ADJ ,
-.Ev MODRUBY_ADJ_FILES ,
-.Ev GEM_BIN_SUFFIX ,
-.Ev GEM_MAN_SUFFIX ,
+.Ev MODRUBY_ARCH ,
 .Ev MODRUBY_LIBREV ,
 .Ev MODRUBY_BINREV ,
-.Ev MODRUBY_PKGSPEC ,
+.Ev MODRUBY_HANDLE_FLAVORS ,
 .Ev MODRUBY_PKG_PREFIX ,
-.Ev MODRUBY_RAKE_DEPENDS ,
-.Ev MODRUBY_RSPEC_DEPENDS ,
-.Ev MODRUBY_WANTLIB ,
 .Ev MODRUBY_FLAVOR ,
 .Ev MODRUBY_TEST ,
 .Ev MODRUBY_TEST_TARGET ,
@@ -79,6 +78,8 @@ Sets
 .Ev GEM_BASE_LIB ,
 .Ev GEM_ABS_PATH ,
 .Ev GEM_BASE_BIN ,
+.Ev GEM_BIN_SUFFIX ,
+.Ev GEM_MAN_SUFFIX ,
 and
 .Ev GEM_FLAGS .
 .Pp
@@ -98,6 +99,19 @@ Appends to
 unless
 .Ev MODRUBY_RUNDEP
 is set to No.
+.Pp
+.Ev MODRUBY_ICONV_DEPENDS
+is set to the dependency line for the iconv port for the version of ruby in
+use.
+.Ev MODRUBY_RAKE_DEPENDS
+is set to the dependency line for the rake port for the version of ruby in
+use.
+.Ev MODRUBY_RSPEC_DEPENDS
+is set to the dependency line for the rspec 1 port for the version of ruby in
+use.
+.Ev MODRUBY_RSPEC2_DEPENDS
+is set to the dependency line for the rspec 2 port for the version of ruby in
+use.
 .Pp
 .Ev RUBY ,
 .Ev RAKE ,
@@ -168,12 +182,16 @@ to
 It also adds ruby18, ruby19, ruby20, and rbx
 .Ev FLAVOR Ns s
 to the port.
+If the C extension in the gem requires specific arguments to extconf.rb, set those
+via
+.Ev CONFIGURE_ARGS .
 .It
 The "ruby extconf"
 .Ev CONFIGURE_STYLE
 is similar to the "ruby gem ext"
 .Ev CONFIGURE_STYLE ,
-except that it is used when the package is not distributed as a ruby gem.
+except that it is used when the package is distributed with an extconf.rb file
+and not as a ruby gem.
 .El
 .Pp
 To ensure that dependencies use the same ruby implementation as the
@@ -181,19 +199,6 @@ current port, all ruby gem/extconf dependencies specified in the port
 should use this format:
 .Pp
 .Dl category/ruby-foo,${MODRUBY_FLAVOR}
-.Pp
-When building a gem/extconf port without a
-.Ev FLAVOR ,
-the ports system will automatically use the ruby19 FLAVOR by default.
-Explicitly specify the ruby18
-.Ev FLAVOR
-to build a package for ruby 1.8.
-.Pp
-Currently, the ports system uses ruby 1.8 by default for non-gem or
-extconf ports.
-You can set
-.Ev MODRUBY_REV
-to use a specific ruby version for non-gem and extconf ports.
 .Pp
 Use of a ruby19, ruby20, rbx, or jruby
 .Ev FLAVOR
@@ -207,6 +212,37 @@ Specifying
 is necessary so that if a ruby 1.9 package is being built for the current
 port, it depends on the ruby 1.9 package of the
 dependencies.
+.Pp
+The ports system defaults to using ruby 1.9 if the version of ruby is not
+specified.
+If you want to specify a version for a gem/extconf port, use a specific
+.Ev FLAVOR ,
+such as ruby18 to use ruby 1.8.
+If you want to specify a version for a non-gem/extconf port, set
+.Ev MODRUBY_REV 
+for the version of ruby you want to use (1.8, 1.9, 2.0, jruby, rbx).
+.Pp
+If you do not want the ports system to automatically set up
+.Ev FLAVOR Ns s
+when using a gem/extconf port, set
+.Ev MODRUBY_HANDLE_FLAVORS
+to No.
+Similarly, if you want the ports system to automatically set up
+.Ev FLAVOR Ns s
+when using a non-gem/extconf port, set
+.Ev MODRUBY_HANDLE_FLAVORS
+to Yes.
+When
+.Ev MODRUBY_HANDLE_FLAVORS
+is Yes, the ports system automatically adds the appropriate prefix to the
+.Ev FULLPKGNAME
+(e.g. ruby- for ruby 1.8, ruby19- for ruby 1.9).  Additionally, it adds
+.Ev GEM_BIN_SUFFIX
+and
+.Ev GEM_MAN_SUFFIX
+to
+.Ev SUBST_VARS
+so that the PLISTs will work on multiple ruby versions.
 .Pp
 For ruby gem ports that can work on both ruby 1.8 and ruby 1.9, any binary
 file entries in the PLIST should be appended with
