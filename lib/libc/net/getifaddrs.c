@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.10 2008/11/24 20:08:49 claudio Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.11 2013/03/20 14:15:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -52,7 +52,7 @@ getifaddrs(struct ifaddrs **pif)
 	int ncnt = 0;
 	int mib[6];
 	size_t needed;
-	char *buf;
+	char *buf = NULL, *bufp;
 	char *next;
 	struct ifaddrs *cif = 0;
 	char *p, *p0;
@@ -74,13 +74,25 @@ getifaddrs(struct ifaddrs **pif)
 	mib[3] = 0;             /* wildcard address family */
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = 0;             /* no flags */
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		return (-1);
-	if ((buf = malloc(needed)) == NULL)
-		return (-1);
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
-		free(buf);
-		return (-1);
+	while (1) {
+		if (sysctl(mib, 6, NULL, &needed, NULL, 0) == -1) {
+			free(buf);
+			return (-1);
+		}
+		if (needed == 0)
+			break;
+		if ((bufp = realloc(buf, needed)) == NULL) {
+			free(buf);
+			return (-1);
+		}
+		buf = bufp;
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			free(buf);
+			return (-1);
+		}
+		break;
 	}
 
 	for (next = buf; next < buf + needed; next += rtm->rtm_msglen) {
