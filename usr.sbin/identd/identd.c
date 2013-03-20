@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.6 2013/03/19 00:44:03 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.7 2013/03/20 00:23:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -322,9 +322,7 @@ main(int argc, char *argv[])
 		lerr(1, "unable to revoke privs");
 
 	event_add(&proc_rd, NULL);
-
 	event_dispatch();
-
 	return (0);
 }
 
@@ -529,9 +527,7 @@ identd_listen(const char *addr, const char *port, int family)
 	struct identd_listener *l = NULL;
 
 	struct addrinfo hints, *res, *res0;
-	int error;
-	int s;
-	int serrno;
+	int error, s;
 	const char *cause = NULL;
 
 	memset(&hints, 0, sizeof(hints));
@@ -555,8 +551,9 @@ identd_listen(const char *addr, const char *port, int family)
 			err(1, "listener setsockopt(SO_REUSEADDR)");
 
 		if (bind(s, res->ai_addr, res->ai_addrlen) == -1) {
+			int serrno = errno;
+
 			cause = "bind";
-			serrno = errno;
 			close(s);
 			errno = serrno;
 			continue;
@@ -612,7 +609,6 @@ identd_accept(int fd, short events, void *arg)
 			event_del(&l->ev);
 			evtimer_add(&l->pause, &pause);
 			return;
-
 		default:
 			lerr(1, "accept");
 		}
@@ -928,39 +924,35 @@ void
 syslog_vstrerror(int e, int priority, const char *fmt, va_list ap)
 {
 	char *s;
-  
+
 	if (vasprintf(&s, fmt, ap) == -1) {
 		syslog(LOG_EMERG, "unable to alloc in syslog_vstrerror");
 		exit(1);
 	}
- 
 	syslog(priority, "%s: %s", s, strerror(e));
- 
 	free(s);
 }
- 
+
 void
 syslog_err(int ecode, const char *fmt, ...)
 {
 	va_list ap;
- 
+
 	va_start(ap, fmt);
 	syslog_vstrerror(errno, LOG_EMERG, fmt, ap);
 	va_end(ap);
- 
 	exit(ecode);
 }
- 
+
 void
 syslog_errx(int ecode, const char *fmt, ...)
 {
 	va_list ap;
- 
+
 	va_start(ap, fmt);
 	vsyslog(LOG_WARNING, fmt, ap);
 	va_end(ap);
-
-	exit(ecode);  
+	exit(ecode);
 }
 
 void
@@ -970,7 +962,7 @@ syslog_warn(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	syslog_vstrerror(errno, LOG_WARNING, fmt, ap);
-	va_end(ap);   
+	va_end(ap);
 }
 
 void
