@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.128 2013/03/20 03:43:07 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.129 2013/03/20 04:26:11 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -467,16 +467,17 @@ struct kinfo_proc {
 do {									\
 	memset((kp), 0, sizeof(*(kp)));					\
 									\
-	if (show_addresses)							\
+	if (show_addresses)						\
 		(kp)->p_paddr = PTRTOINT64(paddr);			\
 	(kp)->p_fd = PTRTOINT64((p)->p_fd);				\
 	(kp)->p_stats = 0;						\
 	(kp)->p_limit = PTRTOINT64((pr)->ps_limit);			\
 	(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);			\
-	(kp)->p_sigacts = PTRTOINT64((p)->p_sigacts);			\
-	if (show_addresses)							\
+	if (show_addresses)						\
+		(kp)->p_sigacts = PTRTOINT64((p)->p_sigacts);		\
+	if (show_addresses)						\
 		(kp)->p_sess = PTRTOINT64((pg)->pg_session);		\
-	if (show_addresses)							\
+	if (show_addresses)						\
 		(kp)->p_ru = PTRTOINT64((pr)->ps_ru);			\
 									\
 	(kp)->p_exitsig = (p)->p_exitsig;				\
@@ -516,7 +517,7 @@ do {									\
 	(kp)->p_cpticks = (p)->p_cpticks;				\
 	(kp)->p_pctcpu = (p)->p_pctcpu;					\
 									\
-	if (show_addresses)							\
+	if (show_addresses)						\
 		(kp)->p_tracep = PTRTOINT64((pr)->ps_tracevp);		\
 	(kp)->p_traceflag = (pr)->ps_traceflag;				\
 									\
@@ -529,7 +530,7 @@ do {									\
 	(kp)->p_nice = (pr)->ps_nice;					\
 									\
 	(kp)->p_xstat = (p)->p_xstat;					\
-	(kp)->p_acflag = (pr)->ps_acflag;					\
+	(kp)->p_acflag = (pr)->ps_acflag;				\
 									\
 	/* XXX depends on e_name being an array and not a pointer */	\
 	copy_str((kp)->p_emul, (char *)(p)->p_emul +			\
@@ -560,7 +561,7 @@ do {									\
 		if ((p)->p_wmesg)					\
 			copy_str((kp)->p_wmesg, (p)->p_wmesg,		\
 			    sizeof((kp)->p_wmesg));			\
-		if (show_addresses)						\
+		if (show_addresses)					\
 			(kp)->p_wchan = PTRTOINT64((p)->p_wchan);	\
 	}								\
 									\
