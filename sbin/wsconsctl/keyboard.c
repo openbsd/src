@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.11 2012/08/08 16:44:07 shadchin Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.12 2013/03/21 06:04:05 miod Exp $	*/
 /*	$NetBSD: keyboard.c 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -121,8 +121,8 @@ keyboard_get_values(int fd)
 	if (field_by_value(keyboard_field_tab, &dfrepeat.delN)->flags & FLG_GET)
 		dfrepeat.which |= WSKBD_KEYREPEAT_DODELN;
 	if (dfrepeat.which != 0 &&
-	    ioctl(fd, WSKBDIO_GETKEYREPEAT, &dfrepeat) < 0)
-		warn("WSKBDIO_GETKEYREPEAT");
+	    ioctl(fd, WSKBDIO_GETDEFAULTKEYREPEAT, &dfrepeat) < 0)
+		warn("WSKBDIO_GETDEFAULTKEYREPEAT");
 
 	if (field_by_value(keyboard_field_tab, &ledstate)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GETLEDS, &ledstate) < 0)
