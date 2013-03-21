@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-commands.c,v 1.7 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-list-commands.c,v 1.8 2013/03/21 16:12:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,8 +42,15 @@ cmd_list_commands_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 {
 	const struct cmd_entry 	      **entryp;
 
-	for (entryp = cmd_table; *entryp != NULL; entryp++)
-		ctx->print(ctx, "%s %s", (*entryp)->name, (*entryp)->usage);
+	for (entryp = cmd_table; *entryp != NULL; entryp++) {
+		if ((*entryp)->alias != NULL) {
+			ctx->print(ctx, "%s (%s) %s", (*entryp)->name,
+			    (*entryp)->alias, (*entryp)->usage);
+		} else {
+			ctx->print(ctx, "%s %s", (*entryp)->name,
+			    (*entryp)->usage);
+		}
+	}
 
 	return (CMD_RETURN_NORMAL);
 }
