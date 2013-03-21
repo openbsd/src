@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.75 2013/03/21 16:19:25 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.76 2013/03/21 16:22:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1229,7 +1229,7 @@ cmd_template_replace(const char *template, const char *s, int idx)
 	int	 	 replaced;
 	size_t	 	 len;
 
-	if (strstr(template, "%") == NULL)
+	if (strchr(template, '%') == NULL)
 		return (xstrdup(template));
 
 	buf = xmalloc(1);
