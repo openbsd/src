@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.46 2013/03/11 14:02:37 mpi Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.47 2013/03/21 04:43:17 deraadt Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -544,7 +544,7 @@ dump(struct in6_addr *addr, int cflag)
 {
 	int mib[6];
 	size_t needed;
-	char *lim, *buf, *next;
+	char *lim, *buf = NULL, *next;
 	struct rt_msghdr *rtm;
 	struct sockaddr_in6 *sin;
 	struct sockaddr_dl *sdl;
@@ -569,16 +569,21 @@ again:;
 	mib[3] = AF_INET6;
 	mib[4] = NET_RT_FLAGS;
 	mib[5] = RTF_LLINFO;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		err(1, "sysctl(PF_ROUTE estimate)");
-	if (needed > 0) {
-		if ((buf = malloc(needed)) == NULL)
-			err(1, "malloc");
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+	while (1) {
+		if (sysctl(mib, 6, NULL, &needed, NULL, 0) == -1)
+			err(1, "sysctl(PF_ROUTE estimate)");
+		if (needed == 0)
+			break;
+		if ((buf = realloc(buf, needed)) == NULL)
+			err(1, "realloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
 			err(1, "sysctl(PF_ROUTE, NET_RT_FLAGS)");
+		}
 		lim = buf + needed;
-	} else
-		buf = lim = NULL;
+		break;
+	}
 
 	for (next = buf; next && next < lim; next += rtm->rtm_msglen) {
 		int isrouter = 0, prbs = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.92 2012/12/04 02:30:33 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.93 2013/03/21 04:43:17 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -142,14 +142,20 @@ p_rttables(int af, u_int tableid, int hastable)
 	} else
 		mcnt = 6;
 
-	if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) < 0)
-		err(1, "route-sysctl-estimate");
-	if (needed > 0) {
-		if ((buf = malloc(needed)) == 0)
-			err(1, NULL);
-		if (sysctl(mib, mcnt, buf, &needed, NULL, 0) < 0)
+	while (1) {
+		if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) == -1)
+			err(1, "route-sysctl-estimate");
+		if (needed == 0)
+			break;
+		if ((buf = realloc(buf, needed)) == NULL)
+			err(1, "realloc");
+		if (sysctl(mib, mcnt, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
 			err(1, "sysctl of routing table");
+		}
 		lim = buf + needed;
+		break;
 	}
 
 	printf("Routing tables\n");

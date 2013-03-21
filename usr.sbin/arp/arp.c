@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.51 2012/11/08 11:05:41 phessler Exp $ */
+/*	$OpenBSD: arp.c,v 1.52 2013/03/21 04:43:17 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -442,7 +442,7 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 {
 	int mib[7];
 	size_t needed;
-	char *lim, *buf, *next;
+	char *lim, *buf = NULL, *next;
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
@@ -454,15 +454,21 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	mib[4] = NET_RT_FLAGS;
 	mib[5] = RTF_LLINFO;
 	mib[6] = rdomain;
-	if (sysctl(mib, 7, NULL, &needed, NULL, 0) < 0)
-		err(1, "route-sysctl-estimate");
-	if (needed == 0)
-		return;
-	if ((buf = malloc(needed)) == NULL)
-		err(1, "malloc");
-	if (sysctl(mib, 7, buf, &needed, NULL, 0) < 0)
-		err(1, "actual retrieval of routing table");
-	lim = buf + needed;
+	while (1) {
+		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1)
+			err(1, "route-sysctl-estimate");
+		if (needed == 0)
+			return;
+		if ((buf = realloc(buf, needed)) == NULL)
+			err(1, "malloc");
+		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			err(1, "actual retrieval of routing table");
+		}
+		lim = buf + needed;
+		break;
+	}
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)

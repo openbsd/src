@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.55 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.56 2013/03/21 04:43:17 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -2257,8 +2257,8 @@ int
 getifmtu(int ifindex)
 {
 	int	mib[6];
-	char	*buf;
-	size_t	msize;
+	char	*buf = NULL;
+	size_t	needed;
 	struct	if_msghdr *ifm;
 	int	mtu;
 
@@ -2268,17 +2268,19 @@ getifmtu(int ifindex)
 	mib[3] = AF_INET6;
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = ifindex;
-	if (sysctl(mib, 6, NULL, &msize, NULL, 0) < 0) {
-		fatal("sysctl estimate NET_RT_IFLIST");
-		/*NOTREACHED*/
-	}
-	if ((buf = malloc(msize)) == NULL) {
-		fatal("malloc");
-		/*NOTREACHED*/
-	}
-	if (sysctl(mib, 6, buf, &msize, NULL, 0) < 0) {
-		fatal("sysctl NET_RT_IFLIST");
-		/*NOTREACHED*/
+	while (1) {
+		if (sysctl(mib, 6, NULL, &needed, NULL, 0) == -1)
+			fatal("sysctl estimate NET_RT_IFLIST");
+		if (needed == 0)
+			break;
+		if ((buf = realloc(buf, needed)) == NULL)
+			fatal("malloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			fatal("sysctl NET_RT_IFLIST");
+		}
+		break;
 	}
 	ifm = (struct if_msghdr *)buf;
 	mtu = ifm->ifm_data.ifi_mtu;

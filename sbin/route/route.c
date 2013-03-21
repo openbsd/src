@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.160 2012/12/04 02:30:33 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.161 2013/03/21 04:43:17 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -286,14 +286,20 @@ flushroutes(int argc, char **argv)
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;		/* no flags */
 	mib[6] = tableid;
-	if (sysctl(mib, 7, NULL, &needed, NULL, 0) < 0)
-		err(1, "route-sysctl-estimate");
-	if (needed) {
-		if ((buf = malloc(needed)) == NULL)
-			err(1, "malloc");
-		if (sysctl(mib, 7, buf, &needed, NULL, 0) < 0)
+	while (1) {
+		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1)
+			err(1, "route-sysctl-estimate");
+		if (needed == 0)
+			break;
+		if ((buf = realloc(buf, needed)) == NULL)
+			err(1, "realloc");
+		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
 			err(1, "actual retrieval of routing table");
+		}
 		lim = buf + needed;
+		break;
 	}
 	if (verbose) {
 		printf("Examining routing table from sysctl\n");

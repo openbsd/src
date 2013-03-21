@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.44 2013/03/13 16:28:05 weerd Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.45 2013/03/21 04:43:17 deraadt Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -79,13 +79,13 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	struct sockaddr *rti_info[RTAX_MAX];
 	int mib[7];
 	size_t needed;
-	char *lim, *buf, *next, *errmsg;
+	char *lim, *buf = NULL, *bufp, *next, *errmsg = NULL;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 	struct sockaddr_dl *sdl;
 	struct sockaddr_in *sa_in;
 	struct sockaddr_rtlabel *sa_rl;
-	int s, seqno = 0, rlen, retry;
+	int s, seqno = 0, rlen;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -95,31 +95,34 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	mib[5] = 0;
 	mib[6] = imsg->rdomain;
 
-	buf = NULL;
-	retry = 0;
-	do {
-		retry++;
-		errmsg = NULL;
-		if (buf)
-			free(buf);
+	while (1) {
 		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
 			errmsg = "sysctl size of routes:";
-			continue;
+			break;
 		}
-		if (needed == 0)
+		if (needed == 0) {
+			free(buf);
 			return;
-		if ((buf = malloc(needed)) == NULL) {
+		}
+		if ((bufp = realloc(buf, needed)) == NULL) {
+			free(buf);
 			errmsg = "routes buf malloc:";
 			continue;
 		}
+		buf = bufp;
 		if (sysctl(mib, 7, buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			free(buf);
 			errmsg = "sysctl retrieval of routes:";
+			break;
 		}
-	} while (retry < 10 && errmsg != NULL);
+		break;
+	}
 
 	if (errmsg) {
-		warning("route cleanup failed - %s %s (%d retries, msize=%zu)",
-		    errmsg, strerror(errno), retry, needed);
+		warning("route cleanup failed - %s %s (msize=%zu)",
+		    errmsg, strerror(errno), needed);
 		return;
 	}
 

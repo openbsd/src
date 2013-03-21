@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.24 2011/07/05 05:13:04 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.25 2013/03/21 04:43:15 deraadt Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -437,14 +437,20 @@ get_iflist(char **buf, size_t *size)
 	mib[3] = AF_INET6;
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = 0;
-
-	if (sysctl(mib, 6, NULL, size, NULL, 0) < 0)
-		fatal("sysctl: iflist size get failed");
-	if ((*buf = malloc(*size)) == NULL)
-		fatal("malloc");
-	if (sysctl(mib, 6, *buf, size, NULL, 0) < 0)
-		fatal("sysctl: iflist get failed");
-	return;
+	while (1) {
+		if (sysctl(mib, 6, NULL, size, NULL, 0) == -1)
+			fatal("sysctl: iflist size get failed");
+		if (*size == 0)
+			break;
+		if ((*buf = realloc(*buf, *size)) == NULL)
+			fatal("malloc");
+		if (sysctl(mib, 6, *buf, size, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			fatal("sysctl: iflist get failed");
+		}
+		break;
+	}
 }
 
 /*
