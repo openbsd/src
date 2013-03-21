@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.8 2013/02/02 13:34:29 miod Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.9 2013/03/21 21:51:00 deraadt Exp $	*/
 /*	$NetBSD: srt0.S,v 1.4 1997/05/12 07:56:00 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 	NMIRESET = 0xffffff9c		| reset vector
 	BUSERR =   0xfffffffc
 	MAXADDR =  0xfffff000
-	NBPG =	   4096
+	PAGE_SIZE =4096
 	MMUCMD =   0x005f400c		| MMU command/status register
 
 	.data
@@ -255,8 +255,8 @@ boot1:
 	 * Must preserve the scratch area for the BOOT ROM.
 	 * Round up to the next 8k boundary.
 	 */
-	addl	#((2*NBPG)-1),%d0
-	andl	#-(2*NBPG),%d0
+	addl	#((2*PAGE_SIZE)-1),%d0
+	andl	#-(2*PAGE_SIZE),%d0
 	movl	%d0,_C_LABEL(lowram)	| stash that value
 start:
 	movl	#_C_LABEL(edata),%a2	| start of BSS

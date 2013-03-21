@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.6 2013/03/21 21:51:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -62,10 +62,10 @@ static void
 domap()
 {
 	extern char end[];
-	register caddr_t p = (caddr_t)(((u_long)end + PGOFSET) & ~PGOFSET);
+	register caddr_t p = (caddr_t)(((u_long)end + PAGE_MASK) & ~PAGE_MASK);
 
 	/* map heap */
-	if ( (p = ummap(p, 32*NBPG, PROT_READ|PROT_WRITE,
+	if ( (p = ummap(p, 32*PAGE_SIZE, PROT_READ|PROT_WRITE,
 		   MAP_FIXED|MAP_ANON, -1, 0)) == (caddr_t)-1) {
 		printf("mmap failed: %d\n", errno);
 		uexit(1);

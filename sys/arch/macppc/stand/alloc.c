@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.6 2008/05/25 16:55:31 miod Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.7 2013/03/21 21:51:00 deraadt Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1997/04/16 20:29:16 thorpej Exp $	*/
 
 /*
@@ -140,8 +140,8 @@ alloc(unsigned size)
 		 * Allocate memory from the OpenFirmware, rounded
 		 * to page size, and record the chunk size.
 		 */
-		size = roundup(size, NBPG);
-		help = OF_claim(0, size, NBPG);
+		size = roundup(size, PAGE_SIZE);
+		help = OF_claim(0, size, PAGE_SIZE);
 		if (help == (char *)-1)
 			panic("alloc: out of memory");
 

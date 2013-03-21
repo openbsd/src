@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.c,v 1.3 2010/07/06 20:41:06 miod Exp $	*/
+/*	$OpenBSD: mmu.c,v 1.4 2013/03/21 21:51:00 deraadt Exp $	*/
 /*	$NetBSD: mmu.c,v 1.8 2008/04/28 20:23:36 martin Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@ mmu_init(void)
 int
 pmap_map4(vaddr_t va, paddr_t pa, psize_t size)
 {
-	u_int n = (size + NBPG - 1) >> PGSHIFT;
+	u_int n = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	u_int pte;
 
 	if (sun4_mmu3l)
@@ -110,10 +110,10 @@ pmap_map4(vaddr_t va, paddr_t pa, psize_t size)
 #endif
 	setsegmap((va & -NBPSG), ++scookie);
 	while (n--) {
-		pte = PG_S | PG_V | PG_W | PG_NC | ((pa >> PGSHIFT) & PG_PFNUM);
+		pte = PG_S | PG_V | PG_W | PG_NC | ((pa >> PAGE_SHIFT) & PG_PFNUM);
 		setpte4(va, pte);
-		va += NBPG;
-		pa += NBPG;
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
 		if ((va & (NBPSG - 1)) == 0) {
 #ifdef DEBUG
 	printf("%d ", scookie);
@@ -132,12 +132,12 @@ pmap_extract4(vaddr_t va, paddr_t *ppa)
 {
 	u_int pte;
 
-	va &= -NBPG;
+	va &= -PAGE_SIZE;
 	pte = getpte4(va);
 	if ((pte & PG_V) == 0)
 		return (EFAULT);
 
-	*ppa = (pte & PG_PFNUM) << PGSHIFT;
+	*ppa = (pte & PG_PFNUM) << PAGE_SHIFT;
 	return (0);
 }
 
@@ -168,7 +168,7 @@ pmap_extract_srmmu(vaddr_t va, paddr_t *ppa)
 	char buf[32];
 	u_int pte;
 
-	va &= -NBPG;
+	va &= -PAGE_SIZE;
 	snprintf(buf, sizeof buf, "%lx pgmap@ %lx L!", va, (u_long)&pte);
 	prom_interpret(buf);
 	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)

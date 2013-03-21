@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.2 2010/08/25 12:53:38 jsing Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.3 2013/03/21 21:51:01 deraadt Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 			align = 4 * MB;
 		if (phdr.p_filesz < phdr.p_memsz)
 			phdr.p_memsz = roundup(phdr.p_memsz, 4 * MB);
-		phdr.p_memsz = roundup(phdr.p_memsz, NBPG);
+		phdr.p_memsz = roundup(phdr.p_memsz, PAGE_SIZE);
 		if (OF_claim((void *)(long)phdr.p_vaddr, phdr.p_memsz, align) ==
 		    (void *)-1)
 			panic("cannot claim memory");
@@ -147,7 +147,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 	/*
 	 * Reserve memory for the symbols.
 	 */
-	if ((addr = OF_claim(0, roundup(size, NBPG), NBPG)) == (void *)-1)
+	if ((addr = OF_claim(0, roundup(size, PAGE_SIZE), PAGE_SIZE)) == (void *)-1)
 		panic("no space for symbol table");
 
 	/*

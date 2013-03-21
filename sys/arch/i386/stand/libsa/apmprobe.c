@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.15 2007/09/13 06:58:47 weingart Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.16 2013/03/21 21:51:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -139,7 +139,7 @@ apm_connect(bios_apminfo_t *ai)
 	ai->apm_data_len   = 0xffff - (ai->apm_data_base & 0xffff);
 #endif
 	if (ai->apm_data_base < BOOTARG_OFF)
-		ai->apm_data_len = NBPG - (ai->apm_data_base & PGOFSET) - 1;
+		ai->apm_data_len = PAGE_SIZE - (ai->apm_data_base & PAGE_MASK) - 1;
 
 #ifdef DEBUG
 	if (debug)

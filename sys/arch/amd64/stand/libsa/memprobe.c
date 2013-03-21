@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.11 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.12 2013/03/21 21:51:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -431,7 +431,7 @@ mem_delete(long long sa, long long ea)
 			register int64_t sp = p->addr, ep = p->addr + p->size;
 
 			/* can we eat it as a whole? */
-			if ((sa - sp) <= NBPG && (ep - ea) <= NBPG) {
+			if ((sa - sp) <= PAGE_SIZE && (ep - ea) <= PAGE_SIZE) {
 				bcopy(p + 1, p, (char *)bios_memmap +
 				    sizeof(bios_memmap) - (char *)p);
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.14 2011/04/14 18:27:49 miod Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.15 2013/03/21 21:51:00 deraadt Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -889,7 +889,7 @@ prom0_iopen(pd)
 #ifdef	DEBUG_PROM
 		printf("prom_iopen: devaddr=0x%x pte=0x%x\n",
 			si->si_devaddr,
-			getpte((u_long)si->si_devaddr & ~PGOFSET));
+			getpte((u_long)si->si_devaddr & ~PAGE_MASK));
 #endif
 	}
 
@@ -974,7 +974,7 @@ prom_mapin(physaddr, length, maptype)
 {
 	int i, pa, pte, va;
 
-	if (length > (4*NBPG))
+	if (length > (4*PAGE_SIZE))
 		panic("prom_mapin: length=%d", length);
 
 	for (i = 0; i < prom_mapinfo_cnt; i++)
@@ -987,16 +987,16 @@ found:
 	pte |= (PG_V|PG_W|PG_S|PG_NC);
 	pa = prom_mapinfo[i].base;
 	pa += physaddr;
-	pte |= ((pa >> PGSHIFT) & PG_PFNUM);
+	pte |= ((pa >> PAGE_SHIFT) & PG_PFNUM);
 
 	va = prom_devmap;
 	do {
 		setpte(va, pte);
-		va += NBPG;
+		va += PAGE_SIZE;
 		pte += 1;
-		length -= NBPG;
+		length -= PAGE_SIZE;
 	} while (length > 0);
-	return ((char *)(prom_devmap | (pa & PGOFSET)));
+	return ((char *)(prom_devmap | (pa & PAGE_MASK)));
 }
 
 void

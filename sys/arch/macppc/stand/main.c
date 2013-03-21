@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2013/02/09 20:38:44 miod Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2013/03/21 21:51:00 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ run_loadfile(u_long *marks, int howto)
 	esym = (void *)marks[MARK_END];
 	{
 		u_int32_t lastpage;
-		lastpage = roundup(marks[MARK_END], NBPG);
+		lastpage = roundup(marks[MARK_END], PAGE_SIZE);
 		OF_release((void*)lastpage, CLAIM_LIMIT - lastpage);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.18 2010/08/25 12:53:38 jsing Exp $	*/
+/*	$OpenBSD: boot.c,v 1.19 2013/03/21 21:51:01 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -202,7 +202,8 @@ chain(u_int64_t pentry, char *args, void *ssym, void *esym)
 #endif
 	/* if -D is set then pause in the PROM. */
 	if (debug > 1) OF_enter();
-	OF_chain((void *)RELOC, ((end - (char *)RELOC)+NBPG)%NBPG, entry, args, l);
+	OF_chain((void *)RELOC, ((end - (char *)RELOC)+PAGE_SIZE)%PAGE_SIZE,
+	    entry, args, l);
 	panic("chain");
 }
 
