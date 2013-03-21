@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.11 2003/06/03 01:13:19 weingart Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.12 2013/03/21 18:37:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -57,7 +57,7 @@ int MBR_write(int, off_t, char *);
 void MBR_pcopy(disk_t *, mbr_t *);
 
 /* Sanity check */
-#include <machine/param.h>
+#include <sys/param.h>
 #if (DEV_BSIZE != 512)
 #error "DEV_BSIZE != 512, somebody better fix me!"
 #endif

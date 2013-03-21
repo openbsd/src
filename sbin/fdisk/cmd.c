@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.58 2012/07/11 10:27:34 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.59 2013/03/21 18:37:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,7 +41,6 @@
 #include "user.h"
 #include "part.h"
 #include "cmd.h"
-#define MAX(a, b) ((a) >= (b) ? (a) : (b))
 
 int
 Xreinit(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
