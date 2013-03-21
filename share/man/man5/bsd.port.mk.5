@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.370 2013/03/10 22:27:41 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.371 2013/03/21 08:30:29 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 10 2013 $
+.Dd $Mdocdate: March 21 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1712,8 +1712,7 @@ related targets, see
 .Ar print-package-args
 for details.
 .It Ev LIBTOOL
-Location of the libtool binary for ports that set
-.Ev USE_LIBTOOL
+Location of the libtool binary.
 Default:
 .Pa /usr/bin/libtool .
 .It Ev LIBTOOL_FLAGS
@@ -2538,9 +2537,7 @@ the rules for shared library versions, thus breaking the update mechanism.
 For that reason it is advised to set libversion to 0.0 when first importing a
 port.
 .Pp
-Porters of software using libtool should also set
-.Ev USE_LIBTOOL
-and make sure
+Porters of software using libtool should make sure
 .Ev MAKE_FLAGS
 get propagated to the libtool invocations.
 This should be enough in most cases.
@@ -2786,12 +2783,18 @@ This sets groff as a build dependency, and also tells
 .Xr pkg_create 1
 to format manpages behind the scene using groff while building packages.
 .It Ev USE_LIBTOOL
-Set to
-.Sq Yes
-if libtool is required for correct behavior of this port.
+Defaults to
+.Sq Yes .
 Set to
 .Sq gnu
-if the ports tree libtool is insufficient and GNU libtool is required.
+if the base
+.Xr libtool 1
+is insufficient and GNU libtool is required.
+Set to
+.Sq \&No
+to disable the use of
+.Xr libtool 1
+entirely; this should not be set under normal circumstances.
 Adds dependencies if necessary, and passes LIBTOOL environment variable to
 scripts invocations.
 .It Ev USE_MFS

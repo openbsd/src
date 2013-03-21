@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.157 2013/03/11 22:29:04 jmc Exp $
+.\"	$OpenBSD: port-modules.5,v 1.158 2013/03/21 08:30:29 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 11 2013 $
+.Dd $Mdocdate: March 21 2013 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -793,7 +793,6 @@ Sets default
 .Ev MODPHP_DO_PHPIZE ,
 .Ev AUTOCONF_VERSION ,
 .Ev AUTOMAKE_VERSION ,
-.Ev USE_LIBTOOL ,
 .Ev LIBTOOL_FLAGS .
 Provides a default
 .Ev TEST_TARGET
@@ -1108,9 +1107,8 @@ is appended to
 and
 .Li LDFLAGS="-L${LOCALBASE}/lib"
 are appended to
-.Ev CONFIGURE_ENV ,
-.Ev USE_LIBTOOL
-is set to Yes and
+.Ev CONFIGURE_ENV
+and
 .Pa textproc/intltool
 is appended to
 .Ev MODULES .
@@ -1251,8 +1249,6 @@ to
 Unless
 .Ev XFCE_NO_SRC
 is set,
-.Ev USE_LIBTOOL
-is set to yes and
 .Pa devel/gettext
 and
 .Pa textproc/intltool
