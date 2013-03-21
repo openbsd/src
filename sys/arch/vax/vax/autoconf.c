@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.35 2011/07/10 17:31:40 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.36 2013/03/21 21:55:09 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 
 #include <machine/cpu.h>
 #include <machine/sid.h>
-#include <machine/param.h>
 #include <machine/vmparam.h>
 #include <machine/nexus.h>
 #include <machine/clock.h>
