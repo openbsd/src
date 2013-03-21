@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.2 2013/03/21 21:49:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -310,13 +310,6 @@ i915_gem_object_needs_bit17_swizzle(struct drm_i915_gem_object *obj)
 		obj->tiling_mode != I915_TILING_NONE;
 }
 
-// __copy_to_user_swizzled
-// __copy_from_user_swizzled
-// shmem_pread_fast
-// shmem_clflush_swizzled_range
-// shmem_pread_slow
-// i915_gem_shmem_pread
-
 /**
  * Reads data from the object referenced by handle.
  *
@@ -383,12 +376,6 @@ out:
 
 	return (ret);
 }
-
-// fast_user_write
-// i915_gem_gtt_pwrite_fast
-// shmem_pwrite_fast
-// shmem_pwrite_slow
-// i915_gem_shmem_pwrite
 
 /**
  * Writes data to the object referenced by handle.
