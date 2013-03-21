@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.51 2013/03/21 18:44:47 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.52 2013/03/21 18:45:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -473,7 +473,6 @@ tty_keys_next(struct tty *tty)
 	/* Try to parse a key with an xterm-style modifier. */
 	switch (xterm_keys_find(buf, len, &size, &key)) {
 	case 0:		/* found */
-		key = KEYC_NONE;
 		goto complete_key;
 	case -1:	/* not found */
 		break;
