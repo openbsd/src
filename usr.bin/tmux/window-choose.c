@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.35 2013/03/21 16:09:59 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.36 2013/03/21 16:19:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -864,7 +864,7 @@ window_choose_scroll_down(struct window_pane *wp)
 
 struct window_choose_data *
 window_choose_add_session(struct window_pane *wp, struct client *c,
-    struct session *s, const char *template, char *action, u_int idx)
+    struct session *s, const char *template, const char *action, u_int idx)
 {
 	struct window_choose_data	*wcd;
 
@@ -887,7 +887,7 @@ window_choose_add_session(struct window_pane *wp, struct client *c,
 
 struct window_choose_data *
 window_choose_add_item(struct window_pane *wp, struct client *c,
-    struct winlink *wl, const char *template, char *action, u_int idx)
+    struct winlink *wl, const char *template, const char *action, u_int idx)
 {
 	struct window_choose_data	*wcd;
 	char				*expanded;
@@ -918,7 +918,7 @@ window_choose_add_item(struct window_pane *wp, struct client *c,
 struct window_choose_data *
 window_choose_add_window(struct window_pane *wp, struct client *c,
     struct session *s, struct winlink *wl, const char *template,
-    char *action, u_int idx)
+    const char *action, u_int idx)
 {
 	struct window_choose_data	*wcd;
 	char				*expanded;

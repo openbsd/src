@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.17 2013/03/21 16:17:35 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.18 2013/03/21 16:19:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -174,7 +174,7 @@ cmd_choose_tree_exec(struct cmd *self, struct cmd_ctx *ctx)
 		}
 
 		wcd = window_choose_add_session(wl->window->active,
-		    c, s2, ses_template, (char *)ses_action, idx_ses);
+		    c, s2, ses_template, ses_action, idx_ses);
 
 		/* If we're just choosing sessions, skip choosing windows. */
 		if (sflag && !wflag) {

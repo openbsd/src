@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.74 2013/01/18 02:10:29 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.75 2013/03/21 16:19:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1222,12 +1222,12 @@ cmd_find_pane_offset(const char *paneptr, struct winlink *wl)
 
 /* Replace the first %% or %idx in template by s. */
 char *
-cmd_template_replace(char *template, const char *s, int idx)
+cmd_template_replace(const char *template, const char *s, int idx)
 {
-	char	 ch;
-	char	*buf, *ptr;
-	int	 replaced;
-	size_t	 len;
+	char		 ch, *buf;
+	const char	*ptr;
+	int	 	 replaced;
+	size_t	 	 len;
 
 	if (strstr(template, "%") == NULL)
 		return (xstrdup(template));
