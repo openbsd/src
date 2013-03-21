@@ -106,7 +106,7 @@ INTERP=".interp       ${RELOCATING-0} : { *(.interp) }"
 if test -z "$PLT"; then
   PLT=".plt          ${RELOCATING-0} : { *(.plt) }"
 fi
-test -n "${DATA_PLT-${BSS_PLT-text}}" && TEXT_PLT=yes
+test -n "${PLT_BEFORE_GOT-${DATA_PLT-${BSS_PLT-text}}}" && TEXT_PLT=yes
 if test -z "$GOT"; then
   if test -z "$SEPARATE_GOTPLT"; then
     GOT=".got          ${RELOCATING-0} : { *(.got.plt) *(.got) }"
