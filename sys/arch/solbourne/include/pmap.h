@@ -1,4 +1,5 @@
-/*	$OpenBSD: pmap.h,v 1.6 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 2013/03/21 02:10:37 deraadt Exp $	*/
+
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *

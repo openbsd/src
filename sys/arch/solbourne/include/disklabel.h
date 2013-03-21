@@ -1,3 +1,3 @@
-/* $OpenBSD: disklabel.h,v 1.2 2007/06/17 00:27:28 deraadt Exp $ */
+/*	$OpenBSD: disklabel.h,v 1.3 2013/03/21 02:10:37 deraadt Exp $ */
 
 #include <sparc/disklabel.h>

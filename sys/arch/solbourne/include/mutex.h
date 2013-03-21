@@ -1,3 +1,3 @@
-/* $OpenBSD: mutex.h,v 1.1 2007/04/10 21:24:28 miod Exp $ */
-/* public domain */
+/*	$OpenBSD: mutex.h,v 1.2 2013/03/21 02:10:37 deraadt Exp $ */
+
 #include <sparc/mutex.h>

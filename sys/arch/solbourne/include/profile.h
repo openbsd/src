@@ -1,3 +1,3 @@
-/* $OpenBSD: profile.h,v 1.1 2005/04/19 21:30:18 miod Exp $ */
-/* public domain */
+/*	$OpenBSD: profile.h,v 1.2 2013/03/21 02:10:37 deraadt Exp $ */
+
 #include <sparc/profile.h>
