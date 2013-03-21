@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.147 2013/01/18 02:16:21 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.148 2013/03/21 16:50:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -156,7 +156,7 @@ tty_open(struct tty *tty, const char *overrides, char **cause)
 
 	tty_start_tty(tty);
 
-	tty_keys_init(tty);
+	tty_keys_build(tty);
 
 	return (0);
 }
