@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_opregion.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_opregion.c,v 1.2 2013/03/21 08:27:32 jsg Exp $	*/
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
  * Copyright 2008 Red Hat <mjg@redhat.com>
@@ -33,6 +33,8 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
+#include "acpi.h"
 #include <dev/acpi/acpivar.h>
 
 #define PCI_ASLE 0xe4
@@ -146,7 +148,15 @@ struct opregion_asle {
 #define ACPI_DIGITAL_OUTPUT (3<<8)
 #define ACPI_LVDS_OUTPUT (4<<8)
 
-#ifdef CONFIG_ACPI
+u32	asle_set_backlight(struct drm_device *, u32);
+u32	asle_set_als_illum(struct drm_device *, u32);
+u32	asle_set_pwm_freq(struct drm_device *, u32);
+u32	asle_set_pfit(struct drm_device *, u32);
+void	intel_opregion_asle_intr(struct drm_device *);
+void	intel_opregion_gse_intr(struct drm_device *);
+void	intel_didl_outputs(struct drm_device *);
+
+#if NACPI > 0
 u32
 asle_set_backlight(struct drm_device *dev, u32 bclp)
 {
@@ -299,6 +309,7 @@ intel_opregion_enable_asle(struct drm_device *dev)
 
 static struct intel_opregion *system_opregion;
 
+#ifdef notyet
 int
 intel_opregion_video_event(struct notifier_block *nb, unsigned long val,
     void *data)
@@ -330,6 +341,7 @@ intel_opregion_video_event(struct notifier_block *nb, unsigned long val,
 static struct notifier_block intel_opregion_notifier = {
 	.notifier_call = intel_opregion_video_event,
 };
+#endif
 
 /*
  * Initialise the DIDL field in opregion. This passes a list of devices to
@@ -340,6 +352,7 @@ static struct notifier_block intel_opregion_notifier = {
 void
 intel_didl_outputs(struct drm_device *dev)
 {
+#ifdef notyet
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct intel_opregion *opregion = &dev_priv->opregion;
 	struct drm_connector *connector;
@@ -427,6 +440,7 @@ blind_set:
 		i++;
 	}
 	goto end;
+#endif
 }
 
 void
@@ -449,7 +463,9 @@ intel_opregion_init(struct drm_device *dev)
 		opregion->acpi->drdy = 1;
 
 		system_opregion = opregion;
+#ifdef notyet
 		register_acpi_notifier(&intel_opregion_notifier);
+#endif
 	}
 
 	if (opregion->asle)
@@ -469,37 +485,12 @@ intel_opregion_fini(struct drm_device *dev)
 		opregion->acpi->drdy = 0;
 
 		system_opregion = NULL;
+#ifdef notyet
 		unregister_acpi_notifier(&intel_opregion_notifier);
+#endif
 	}
 
 	/* just clear all opregion memory pointers now */
-	iounmap(opregion->header);
-	opregion->header = NULL;
-	opregion->acpi = NULL;
-	opregion->swsci = NULL;
-	opregion->asle = NULL;
-	opregion->vbt = NULL;
-}
-#else
-int
-intel_opregion_init(struct drm_device *dev)
-{
-
-	return (0);
-}
-
-void
-intel_opregion_fini(struct drm_device *dev)
-{
-	struct inteldrm_softc *dev_priv;
-	struct intel_opregion *opregion;
-
-	dev_priv = dev->dev_private;
-	opregion = &dev_priv->opregion;
-
-	if (opregion->header == NULL)
-		return;
-
 	bus_space_unmap(dev_priv->bst, dev_priv->opregion_ioh, OPREGION_SIZE);
 	opregion->header = NULL;
 	opregion->acpi = NULL;

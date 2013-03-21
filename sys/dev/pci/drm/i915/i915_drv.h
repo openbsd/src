@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.2 2013/03/20 12:37:41 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.3 2013/03/21 08:27:32 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -40,6 +40,8 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
+
+#include "acpi.h"
 
 /* General customization:
  */
@@ -1012,6 +1014,7 @@ void	i915_enable_pipestat(struct inteldrm_softc *, int, u_int32_t);
 void	i915_disable_pipestat(struct inteldrm_softc *, int, u_int32_t);
 void	intel_irq_init(struct drm_device *dev);
 void	i915_hangcheck_elapsed(void *);
+void	intel_enable_asle(struct drm_device *);
 
 extern void intel_gt_init(struct drm_device *dev);
 extern void intel_gt_reset(struct drm_device *dev);
@@ -1221,10 +1224,19 @@ int i915_mutex_lock_interruptible(struct drm_device *dev);
 
 /* intel_opregion.c */
 int intel_opregion_setup(struct drm_device *dev);
-extern int intel_opregion_init(struct drm_device *dev);
+#if NACPI > 0
+extern void intel_opregion_init(struct drm_device *dev);
 extern void intel_opregion_fini(struct drm_device *dev);
-extern void opregion_asle_intr(struct drm_device *dev);
-extern void opregion_enable_asle(struct drm_device *dev);
+extern void intel_opregion_asle_intr(struct drm_device *dev);
+extern void intel_opregion_gse_intr(struct drm_device *dev);
+extern void intel_opregion_enable_asle(struct drm_device *dev);
+#else
+static inline void intel_opregion_init(struct drm_device *dev) { return; }
+static inline void intel_opregion_fini(struct drm_device *dev) { return; }
+static inline void intel_opregion_asle_intr(struct drm_device *dev) { return; }
+static inline void intel_opregion_gse_intr(struct drm_device *dev) { return; }
+static inline void intel_opregion_enable_asle(struct drm_device *dev) { return; }
+#endif
 
 /* i915_gem_gtt.c */
 void i915_gem_cleanup_aliasing_ppgtt(struct drm_device *dev);

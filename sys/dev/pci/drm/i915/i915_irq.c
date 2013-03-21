@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.2 2013/03/20 12:37:41 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.3 2013/03/21 08:27:32 jsg Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -785,10 +785,8 @@ ivybridge_intr(void *arg)
 
 	de_iir = I915_READ(DEIIR);
 	if (de_iir) {
-#ifdef notyet
 		if (de_iir & DE_GSE_IVB)
 			intel_opregion_gse_intr(dev);
-#endif
 
 		for (i = 0; i < 3; i++) {
 			if (de_iir & (DE_PIPEA_VBLANK_IVB << (5 * i)))
@@ -869,10 +867,8 @@ ironlake_intr(void *arg)
 	else
 		snb_gt_irq_handler(dev, dev_priv, gt_iir);
 
-#ifdef notyet
 	if (de_iir & DE_GSE)
 		intel_opregion_gse_intr(dev);
-#endif
 
 	if (de_iir & DE_PIPEA_VBLANK)
 		drm_handle_vblank(dev, 0);
@@ -2398,11 +2394,7 @@ i915_irq_postinstall(struct drm_device *dev)
 
 	/* Unmask the interrupts that we always want on. */
 	dev_priv->irq_mask =
-#ifdef notyet
 		~(I915_ASLE_INTERRUPT |
-#else
-		~(
-#endif
 		  I915_DISPLAY_PIPE_A_EVENT_INTERRUPT |
 		  I915_DISPLAY_PIPE_B_EVENT_INTERRUPT |
 		  I915_DISPLAY_PLANE_A_FLIP_PENDING_INTERRUPT |
@@ -2410,9 +2402,7 @@ i915_irq_postinstall(struct drm_device *dev)
 		  I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT);
 
 	enable_mask =
-#ifdef notyet
 		I915_ASLE_INTERRUPT |
-#endif
 		I915_DISPLAY_PIPE_A_EVENT_INTERRUPT |
 		I915_DISPLAY_PIPE_B_EVENT_INTERRUPT |
 		I915_RENDER_COMMAND_PARSER_ERROR_INTERRUPT |
@@ -2452,7 +2442,7 @@ i915_irq_postinstall(struct drm_device *dev)
 		I915_WRITE(PORT_HOTPLUG_EN, hotplug_en);
 	}
 
-//	intel_opregion_enable_asle(dev);
+	intel_opregion_enable_asle(dev);
 
 	return 0;
 }
@@ -2544,10 +2534,8 @@ i915_intr(void *arg)
 				blc_event = true;
 		}
 
-#ifdef notyet
 		if (blc_event || (iir & I915_ASLE_INTERRUPT))
 			intel_opregion_asle_intr(dev);
-#endif
 
 		/* With MSI, interrupts are only generated when iir
 		 * transitions from zero to nonzero.  If another bit got
@@ -2624,11 +2612,7 @@ i965_irq_postinstall(struct drm_device *dev)
 	u32 error_mask;
 
 	/* Unmask the interrupts that we always want on. */
-#ifdef notyet
 	dev_priv->irq_mask = ~(I915_ASLE_INTERRUPT |
-#else
-	dev_priv->irq_mask = ~(
-#endif
 			       I915_DISPLAY_PORT_INTERRUPT |
 			       I915_DISPLAY_PIPE_A_EVENT_INTERRUPT |
 			       I915_DISPLAY_PIPE_B_EVENT_INTERRUPT |
@@ -2699,9 +2683,7 @@ i965_irq_postinstall(struct drm_device *dev)
 
 	I915_WRITE(PORT_HOTPLUG_EN, hotplug_en);
 
-#ifdef notyet
 	intel_opregion_enable_asle(dev);
-#endif
 
 	return 0;
 }
@@ -2796,10 +2778,8 @@ i965_intr(void *arg)
 		}
 
 
-#ifdef notyet
 		if (blc_event || (iir & I915_ASLE_INTERRUPT))
 			intel_opregion_asle_intr(dev);
-#endif
 
 		/* With MSI, interrupts are only generated when iir
 		 * transitions from zero to nonzero.  If another bit got
