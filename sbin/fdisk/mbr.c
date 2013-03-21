@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.28 2012/04/04 13:14:44 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.29 2013/03/21 18:45:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -25,6 +25,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <err.h>
 #include <errno.h>
 #include <util.h>
@@ -32,13 +38,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/disklabel.h>
-#include <sys/dkio.h>
-#include <machine/param.h>
 #include "disk.h"
 #include "misc.h"
 #include "mbr.h"

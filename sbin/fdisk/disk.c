@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.33 2012/07/11 13:24:29 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.34 2013/03/21 18:45:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -25,19 +25,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/dkio.h>
+#include <sys/stdint.h>
+#include <sys/stat.h>
+#include <sys/disklabel.h>
 #include <err.h>
 #include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/dkio.h>
-#include <sys/stdint.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/disklabel.h>
-#include <sys/param.h>
 #include "disk.h"
 #include "misc.h"
 

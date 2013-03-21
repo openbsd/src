@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.59 2013/03/21 18:37:07 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.60 2013/03/21 18:45:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -25,6 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/fcntl.h>
+#include <sys/disklabel.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -33,8 +36,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/fcntl.h>
-#include <sys/disklabel.h>
 #include <limits.h>
 #include "disk.h"
 #include "misc.h"

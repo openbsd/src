@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.17 2012/07/11 10:27:34 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.18 2013/03/21 18:45:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,8 +28,6 @@
 #ifndef _MISC_H
 #define _MISC_H
 
-#include <sys/types.h>
-#include <machine/param.h>
 #include "cmd.h"
 
 /* typedefs */

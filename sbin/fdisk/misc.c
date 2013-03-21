@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.30 2012/08/14 08:48:42 chl Exp $	*/
+/*	$OpenBSD: misc.c,v 1.31 2013/03/21 18:45:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -25,13 +25,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/disklabel.h>
 #include <err.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/disklabel.h>
 #include <limits.h>
 #include "misc.h"
 
