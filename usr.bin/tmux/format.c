@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.12 2013/02/05 11:01:45 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.13 2013/03/21 16:13:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -251,10 +251,11 @@ format_expand(struct format_tree *ft, const char *fmt)
 					continue;
 				}
 			}
-			while (len - off < 2) {
+			while (len - off < 3) {
 				buf = xrealloc(buf, 2, len);
 				len *= 2;
 			}
+			buf[off++] = '#';
 			buf[off++] = ch;
 			continue;
 		}
