@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.50 2012/11/19 10:51:25 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.51 2013/03/21 16:54:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -413,7 +413,6 @@ const struct mode_key_entry mode_key_emacs_copy[] = {
 	{ '\026' /* C-v */,	    0, MODEKEYCOPY_NEXTPAGE },
 	{ '\027' /* C-w */,	    0, MODEKEYCOPY_COPYSELECTION },
 	{ '\033' /* Escape */,	    0, MODEKEYCOPY_CANCEL },
-	{ 'N',			    0, MODEKEYCOPY_SEARCHREVERSE },
 	{ 'b' | KEYC_ESCAPE,	    0, MODEKEYCOPY_PREVIOUSWORD },
 	{ 'f',			    0, MODEKEYCOPY_JUMP },
 	{ 'f' | KEYC_ESCAPE,	    0, MODEKEYCOPY_NEXTWORDEND },
