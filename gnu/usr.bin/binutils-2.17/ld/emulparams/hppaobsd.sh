@@ -11,6 +11,7 @@ ENTRY="__start"
 MACHINE=hppa1.1    # We use 1.1 specific features.
 OTHER_READONLY_SECTIONS=".PARISC.unwind ${RELOCATING-0} : { *(.PARISC.unwind) }"
 DATA_NONEXEC_PLT=
+PLT_BEFORE_GOT=
 GENERATE_SHLIB_SCRIPT=yes
 
 . ${srcdir}/emulparams/elf_obsd.sh
