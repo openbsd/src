@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.43 2012/11/10 09:45:05 mglocker Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.44 2013/03/21 18:39:18 kurt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -512,10 +512,13 @@ identifycpu(struct cpu_info *ci)
 		CPUID(0x01, dummy, cflushsz, dummy, dummy);
 		/* cflush cacheline size is equal to bits 15-8 of ebx * 8 */
 		ci->ci_cflushsz = ((cflushsz >> 8) & 0xff) * 8;
+	}
+
+	if (!strcmp(cpu_vendor, "GenuineIntel") && cpuid_level >= 0x06 ) {
 		CPUID(0x06, val, dummy, dummy, dummy);
 		if (val & 0x1) {
 			strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
-			    sizeof(ci->ci_sensordev.xname));
+		    	sizeof(ci->ci_sensordev.xname));
 			ci->ci_sensor.type = SENSOR_TEMP;
 			sensor_task_register(ci, intelcore_update_sensor, 5);
 			sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
