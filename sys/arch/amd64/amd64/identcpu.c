@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.44 2013/03/21 18:39:18 kurt Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.45 2013/03/21 19:43:14 kurt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -518,7 +518,7 @@ identifycpu(struct cpu_info *ci)
 		CPUID(0x06, val, dummy, dummy, dummy);
 		if (val & 0x1) {
 			strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
-		    	sizeof(ci->ci_sensordev.xname));
+			    sizeof(ci->ci_sensordev.xname));
 			ci->ci_sensor.type = SENSOR_TEMP;
 			sensor_task_register(ci, intelcore_update_sensor, 5);
 			sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
