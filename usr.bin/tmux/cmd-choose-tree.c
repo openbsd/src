@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.18 2013/03/21 16:19:25 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.19 2013/03/21 16:23:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -203,8 +203,8 @@ windows_only:
 					cur_win = idx_ses;
 			}
 
-			xasprintf(&final_win_action, "%s ; %s", win_action,
-			    wcd ? wcd->command : "");
+			xasprintf(&final_win_action, "%s ; %s",
+			    wcd ? wcd->command : "",  win_action);
 
 			if (win_ses != win_max)
 				cur_win_template = final_win_template_middle;
