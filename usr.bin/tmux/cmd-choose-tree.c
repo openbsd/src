@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.16 2013/03/21 16:09:59 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.17 2013/03/21 16:17:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -37,7 +37,7 @@ enum cmd_retval	cmd_choose_tree_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_choose_tree_entry = {
 	"choose-tree", NULL,
 	"S:W:swub:c:t:", 0, 1,
-	"[-swu] [-b session-template] [-c window template] [-S format] " \
+	"[-suw] [-b session-template] [-c window template] [-S format] " \
 	"[-W format] " CMD_TARGET_WINDOW_USAGE,
 	0,
 	NULL,
