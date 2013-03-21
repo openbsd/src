@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.13 2013/01/17 03:51:21 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.14 2013/03/21 16:08:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -33,9 +33,6 @@
  */
 
 enum cmd_retval	cmd_choose_tree_exec(struct cmd *, struct cmd_ctx *);
-
-void	cmd_choose_tree_callback(struct window_choose_data *);
-void	cmd_choose_tree_free(struct window_choose_data *);
 
 const struct cmd_entry cmd_choose_tree_entry = {
 	"choose-tree", NULL,
@@ -230,35 +227,10 @@ windows_only:
 	free(final_win_template_middle);
 	free(final_win_template_last);
 
-	window_choose_ready(wl->window->active, cur_win,
-		cmd_choose_tree_callback, cmd_choose_tree_free);
+	window_choose_ready(wl->window->active, cur_win, NULL, NULL);
 
 	if (args_has(args, 'u'))
 		window_choose_expand_all(wl->window->active);
 
 	return (CMD_RETURN_NORMAL);
-}
-
-void
-cmd_choose_tree_callback(struct window_choose_data *cdata)
-{
-	if (cdata == NULL)
-		return;
-
-	if (cdata->client->flags & CLIENT_DEAD)
-		return;
-
-	window_choose_ctx(cdata);
-}
-
-void
-cmd_choose_tree_free(struct window_choose_data *cdata)
-{
-	cdata->session->references--;
-	cdata->client->references--;
-
-	free(cdata->ft_template);
-	free(cdata->command);
-	format_free(cdata->ft);
-	free(cdata);
 }
