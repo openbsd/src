@@ -1,4 +1,4 @@
-/* $OpenBSD: doi.c,v 1.10 2005/04/08 22:32:09 cloder Exp $	 */
+/* $OpenBSD: doi.c,v 1.11 2013/03/21 04:30:14 deraadt Exp $	 */
 /* $EOM: doi.c,v 1.4 1999/04/02 00:57:36 niklas Exp $	 */
 
 /*
@@ -29,7 +29,7 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 #include "doi.h"
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.101 2012/07/13 15:16:18 mikeb Exp $	 */
+/* $OpenBSD: conf.c,v 1.102 2013/03/21 04:30:14 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -30,7 +30,7 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/socket.h>

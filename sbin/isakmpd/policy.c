@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.94 2012/06/30 14:51:31 naddy Exp $	 */
+/* $OpenBSD: policy.c,v 1.95 2013/03/21 04:30:14 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -32,7 +32,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>

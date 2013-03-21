@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.31 2010/10/19 07:47:34 mikeb Exp $	 */
+/* $OpenBSD: crypto.c,v 1.32 2013/03/21 04:30:14 deraadt Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -30,7 +30,7 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
 

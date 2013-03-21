@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.35 2005/12/28 10:57:35 hshoexer Exp $	 */
+/* $OpenBSD: transport.c,v 1.36 2013/03/21 04:30:14 deraadt Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -30,7 +30,6 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <netdb.h>
 #include <string.h>

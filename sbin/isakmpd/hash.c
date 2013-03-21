@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.22 2008/09/06 12:01:34 djm Exp $	 */
+/* $OpenBSD: hash.c,v 1.23 2013/03/21 04:30:14 deraadt Exp $	 */
 /* $EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	 */
 
 /*
@@ -30,7 +30,7 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <string.h>
 #include <md5.h>
 #include <sha1.h>

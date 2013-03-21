@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.8 2013/01/08 10:38:19 reyk Exp $	*/
+/*	$OpenBSD: eap.c,v 1.9 2013/03/21 04:30:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/wait.h>

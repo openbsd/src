@@ -1,4 +1,4 @@
-/* $OpenBSD: prf.c,v 1.15 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: prf.c,v 1.16 2013/03/21 04:30:14 deraadt Exp $	 */
 /* $EOM: prf.c,v 1.7 1999/05/02 12:50:29 niklas Exp $	 */
 
 /*
@@ -30,7 +30,6 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
 
