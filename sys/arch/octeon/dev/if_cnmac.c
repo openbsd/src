@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.8 2013/03/21 09:26:31 jasper Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.9 2013/03/21 09:29:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -490,20 +490,6 @@ octeon_eth_smi_init(struct octeon_eth_softc *sc)
 }
 
 /* ---- XXX */
-
-#define	ADDR2UINT64(u, a) \
-	do { \
-		u = \
-		    (((uint64_t)a[0] << 40) | ((uint64_t)a[1] << 32) | \
-		     ((uint64_t)a[2] << 24) | ((uint64_t)a[3] << 16) | \
-		     ((uint64_t)a[4] <<  8) | ((uint64_t)a[5] <<  0)); \
-	} while (0)
-#define	UINT642ADDR(a, u) \
-	do { \
-		a[0] = (uint8_t)((u) >> 40); a[1] = (uint8_t)((u) >> 32); \
-		a[2] = (uint8_t)((u) >> 24); a[3] = (uint8_t)((u) >> 16); \
-		a[4] = (uint8_t)((u) >>  8); a[5] = (uint8_t)((u) >>  0); \
-	} while (0)
 
 static void
 octeon_eth_board_mac_addr(uint8_t *enaddr)
