@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.95 2013/03/15 19:10:43 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.96 2013/03/21 01:29:41 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -458,7 +458,7 @@ free(void *addr, int type)
 	if (size > MAXALLOCSAVE) {
 		uvm_km_free(kmem_map, (vaddr_t)addr, ptoa(kup->ku_pagecnt));
 #ifdef KMEMSTATS
-		size = kup->ku_pagecnt << PGSHIFT;
+		size = kup->ku_pagecnt << PAGE_SHIFT;
 		ksp->ks_memuse -= size;
 		kup->ku_indx = 0;
 		kup->ku_pagecnt = 0;
