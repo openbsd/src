@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.49 2013/03/21 16:51:11 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.50 2013/03/21 16:52:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,9 +28,9 @@
 #include "tmux.h"
 
 /*
- * Handle keys input from the outside terminal. tty_keys[] is a base table of
- * supported keys which are looked up in terminfo(5) and translated into a
- * ternary tree (a binary tree of binary trees).
+ * Handle keys input from the outside terminal. tty_default_*_keys[] are a base
+ * table of supported keys which are looked up in terminfo(5) and translated
+ * into a ternary tree.
  */
 
 void		tty_keys_add1(struct tty_key **, const char *, int);
