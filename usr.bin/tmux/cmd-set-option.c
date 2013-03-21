@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.57 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.58 2013/03/21 16:15:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -234,7 +234,7 @@ cmd_set_option_set(struct cmd *self, struct cmd_ctx *ctx,
 	if (o == NULL)
 		return (-1);
 
-	s = options_table_print_entry(oe, o);
+	s = options_table_print_entry(oe, o, 0);
 	if (!args_has(args, 'q'))
 		ctx->info(ctx, "set option: %s -> %s", oe->name, s);
 	return (0);

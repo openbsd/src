@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.378 2013/03/21 16:12:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.379 2013/03/21 16:15:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1572,12 +1572,11 @@ long long options_get_number(struct options *, const char *);
 extern const struct options_table_entry server_options_table[];
 extern const struct options_table_entry session_options_table[];
 extern const struct options_table_entry window_options_table[];
-void	options_table_populate_tree(
-	    const struct options_table_entry *, struct options *);
-const char *options_table_print_entry(
-	    const struct options_table_entry *, struct options_entry *);
-int	options_table_find(
-	    const char *, const struct options_table_entry **,
+void	options_table_populate_tree(const struct options_table_entry *,
+	    struct options *);
+const char *options_table_print_entry(const struct options_table_entry *,
+	    struct options_entry *, int);
+int	options_table_find(const char *, const struct options_table_entry **,
 	    const struct options_table_entry **);
 
 /* job.c */
