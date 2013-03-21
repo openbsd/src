@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.19 2011/11/19 16:11:55 mpi Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.20 2013/03/21 21:57:15 deraadt Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ devclose(struct open_file *of)
 		net_close(op);
 	if (op->dmabuf)
 		OF_call_method("dma-free", op->handle, 2, 0,
-		    op->dmabuf, MAXPHYS);
+		    op->dmabuf, MAXBSIZE);
 
 	OF_close(op->handle);
 	op->handle = -1;
@@ -325,7 +325,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	bzero(&ofdev, sizeof ofdev);
 	ofdev.handle = handle;
 	ofdev.dmabuf = NULL;
-	OF_call_method("dma-alloc", handle, 1, 1, MAXPHYS, &ofdev.dmabuf);
+	OF_call_method("dma-alloc", handle, 1, 1, MAXBSIZE, &ofdev.dmabuf);
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
