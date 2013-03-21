@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.12 2013/03/21 16:09:17 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.13 2013/03/21 16:09:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -51,11 +51,10 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	const char			*template;
 	u_int				 idx;
 
-	if (ctx->curclient == NULL) {
-		ctx->error(ctx, "must be run interactively");
+	if ((c = cmd_current_client(ctx)) == NULL) {
+		ctx->error(ctx, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
-	c = ctx->curclient;
 
 	if ((template = args_get(args, 'F')) == NULL)
 		template = CHOOSE_BUFFER_TEMPLATE;

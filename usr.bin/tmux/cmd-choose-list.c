@@ -1,4 +1,4 @@
-/* $Id: cmd-choose-list.c,v 1.5 2013/03/21 16:09:17 nicm Exp $ */
+/* $Id: cmd-choose-list.c,v 1.6 2013/03/21 16:09:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -47,13 +47,14 @@ enum cmd_retval
 cmd_choose_list_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct args			*args = self->args;
+	struct client			*c;
 	struct winlink			*wl;
 	const char			*list1;
 	char				*template, *item, *copy, *list;
 	u_int				 idx;
 
-	if (ctx->curclient == NULL) {
-		ctx->error(ctx, "must be run interactively");
+	if ((c = cmd_current_client(ctx)) == NULL) {
+		ctx->error(ctx, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
 
@@ -77,7 +78,7 @@ cmd_choose_list_exec(struct cmd *self, struct cmd_ctx *ctx)
 	{
 		if (*item == '\0') /* no empty entries */
 			continue;
-		window_choose_add_item(wl->window->active, ctx, wl, item,
+		window_choose_add_item(wl->window->active, c, wl, item,
 		    template, idx);
 		idx++;
 	}

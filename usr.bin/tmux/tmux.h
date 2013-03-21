@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.376 2013/03/21 16:09:17 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.377 2013/03/21 16:09:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -2208,13 +2208,13 @@ struct window_choose_data	*window_choose_data_create (int,
 void	window_choose_data_free(struct window_choose_data *);
 void	window_choose_data_run(struct window_choose_data *);
 struct window_choose_data	*window_choose_add_window(struct window_pane *,
-			struct cmd_ctx *, struct session *, struct winlink *,
+			struct client *, struct session *, struct winlink *,
 			const char *, char *, u_int);
 struct window_choose_data	*window_choose_add_session(struct window_pane *,
-			struct cmd_ctx *, struct session *, const char *,
+			struct client *, struct session *, const char *,
 			char *, u_int);
 struct window_choose_data	*window_choose_add_item(struct window_pane *,
-			struct cmd_ctx *, struct winlink *, const char *,
+			struct client *, struct winlink *, const char *,
 			char *, u_int);
 void	window_choose_expand_all(struct window_pane *);
 

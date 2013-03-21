@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.15 2013/03/21 16:09:17 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.16 2013/03/21 16:09:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,11 +57,10 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 	char				*action;
 	u_int			 	 i, idx, cur;
 
-	if (ctx->curclient == NULL) {
-		ctx->error(ctx, "must be run interactively");
+	if ((c = cmd_current_client(ctx)) == NULL) {
+		ctx->error(ctx, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
-	c = ctx->curclient;
 
 	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
 		return (CMD_RETURN_ERROR);
