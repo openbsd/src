@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.42 2012/12/14 13:17:29 mikeb Exp $	*/
+/*	$OpenBSD: it.c,v 1.43 2013/03/21 18:20:00 brynet Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -168,6 +168,7 @@ it_match(struct device *parent, void *match, void *aux)
 	case IT_ID_8720:
 	case IT_ID_8721:
 	case IT_ID_8726:
+	case IT_ID_8728:
 	case IT_ID_8772:
 		/* get environment controller base address */
 		it_writereg(ia->ia_iot, ioh, IT_LDN, IT_EC_LDN);
