@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.314 2012/09/19 15:52:17 camield Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.315 2013/03/21 00:54:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1411,7 +1411,7 @@ void
 pfctl_init_options(struct pfctl *pf)
 {
 	int64_t mem;
-	int mib[2];
+	int mib[2], mcl;
 	size_t size;
 
 	pf->timeout[PFTM_TCP_FIRST_PACKET] = PFTM_TCP_FIRST_PACKET_VAL;
@@ -1436,7 +1436,14 @@ pfctl_init_options(struct pfctl *pf)
 	pf->timeout[PFTM_ADAPTIVE_END] = PFSTATE_ADAPT_END;
 
 	pf->limit[PF_LIMIT_STATES] = PFSTATE_HIWAT;
-	pf->limit[PF_LIMIT_FRAGS] = PFFRAG_FRENT_HIWAT;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MAXCLUSTERS;
+	size = sizeof(mcl);
+	if (sysctl(mib, 2, &mcl, &size, NULL, 0) == -1)
+		err(1, "sysctl");
+	pf->limit[PF_LIMIT_FRAGS] = mcl / 4;
+
 	pf->limit[PF_LIMIT_SRC_NODES] = PFSNODE_HIWAT;
 	pf->limit[PF_LIMIT_TABLES] = PFR_KTABLE_HIWAT;
 	pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT;
