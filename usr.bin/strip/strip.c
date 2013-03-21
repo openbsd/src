@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.29 2010/06/01 21:44:39 deraadt Exp $	*/
+/*	$OpenBSD: strip.c,v 1.30 2013/03/21 19:53:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -235,10 +235,10 @@ s_sym(const char *fn, int fd, EXEC *ep, struct stat *sp, off_t *sz)
 	/*
 	 * Unfortunately, this can't work correctly without changing the way
 	 * the loader works.  We could cap it at one page, or even fiddle with
-	 * a_data and a_bss, but this only works for CLBYTES == NBPG.  If we
-	 * are on a system where, e.g., CLBYTES is 8k and NBPG is 4k, and we
-	 * happen to remove 4.5k, we will lose.  And we really don't want to
-	 * fiddle with pages, because that breaks binary compatibility.  Lose.
+	 * a_data and a_bss, but this only works for CLBYTES == PAGE_SIZE.  If
+	 * we are on a system where, e.g., CLBYTES is 8k and PAGE_SIZE is 4k,
+	 * and we happen to remove 4.5k, we will lose.  And we really don't want
+	 * to fiddle with pages, because that breaks binary compatibility.  Lose.
 	 */
 
 	if (zmagic) {
