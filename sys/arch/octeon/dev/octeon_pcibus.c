@@ -1,5 +1,5 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.6 2011/05/08 13:24:55 syuu Exp $	*/
-/*	$OpenBSD: octeon_pcibus.c,v 1.6 2011/05/08 13:24:55 syuu Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.7 2013/03/21 09:25:48 jasper Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.7 2013/03/21 09:25:48 jasper Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -56,6 +56,7 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/octeonvar.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -192,7 +193,14 @@ int
 octeon_pcibus_match(struct device *parent, void *vcf, void *aux)
 {
 	struct iobus_attach_args *aa = aux;
+	extern struct boot_info *octeon_boot_info;
 
+	if ((octeon_boot_info->config_flags & BOOTINFO_CFG_FLAG_PCI_HOST) == 0) {
+#ifdef OCTEON_PCIBUS_DEBUG
+		printf("%s, no PCI host function detected.\n", __func__);
+#endif
+		return 0;
+	}
 	if (strcmp(aa->aa_name, pcibus_cd.cd_name) == 0)
 		return 1;
 
