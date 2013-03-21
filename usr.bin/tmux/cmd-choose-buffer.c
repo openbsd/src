@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-buffer.c,v 1.11 2013/03/21 16:08:24 nicm Exp $ */
+/* $OpenBSD: cmd-choose-buffer.c,v 1.12 2013/03/21 16:09:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -91,7 +91,7 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 	free(action);
 
-	window_choose_ready(wl->window->active, 0, NULL, NULL);
+	window_choose_ready(wl->window->active, 0, NULL);
 
 	return (CMD_RETURN_NORMAL);
 }

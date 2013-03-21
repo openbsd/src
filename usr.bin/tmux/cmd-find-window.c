@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.21 2013/03/21 16:08:24 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.22 2013/03/21 16:09:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -198,8 +198,7 @@ cmd_find_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		window_choose_add(wl->window->active, cdata);
 	}
 
-	window_choose_ready(wl->window->active, 0, cmd_find_window_callback,
-	    NULL);
+	window_choose_ready(wl->window->active, 0, cmd_find_window_callback);
 
 out:
 	ARRAY_FREE(&find_list);

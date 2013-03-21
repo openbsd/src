@@ -1,4 +1,4 @@
-/* $Id: cmd-choose-list.c,v 1.4 2013/03/21 16:08:24 nicm Exp $ */
+/* $Id: cmd-choose-list.c,v 1.5 2013/03/21 16:09:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -89,7 +89,7 @@ cmd_choose_list_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (CMD_RETURN_ERROR);
 	}
 
-	window_choose_ready(wl->window->active, 0, NULL, NULL);
+	window_choose_ready(wl->window->active, 0, NULL);
 
 	free(template);
 
