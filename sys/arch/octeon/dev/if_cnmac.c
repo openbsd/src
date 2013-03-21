@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.7 2011/07/03 21:42:11 yasuoka Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.8 2013/03/21 09:26:31 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -137,7 +137,7 @@ static void	octeon_eth_pko_init(struct octeon_eth_softc *);
 static void	octeon_eth_asx_init(struct octeon_eth_softc *);
 static void	octeon_eth_smi_init(struct octeon_eth_softc *);
 
-static void	octeon_eth_board_mac_addr(uint8_t *, size_t, int);
+static void	octeon_eth_board_mac_addr(uint8_t *);
 
 static int	octeon_eth_mii_readreg(struct device *, int, int);
 static void	octeon_eth_mii_writereg(struct device *, int, int, int);
@@ -289,6 +289,9 @@ struct cn30xxfpa_buf	*octeon_eth_pools[8/* XXX */];
 #define	octeon_eth_fb_cmd	octeon_eth_pools[OCTEON_POOL_NO_CMD]
 #define	octeon_eth_fb_sg	octeon_eth_pools[OCTEON_POOL_NO_SG]
 
+uint64_t octeon_eth_mac_addr = 0;
+uint32_t octeon_eth_mac_addr_offset = 0;
+
 static void
 octeon_eth_buf_init(struct octeon_eth_softc *sc)
 {
@@ -345,7 +348,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_ip_offset = 0/* XXX */;
 
-	octeon_eth_board_mac_addr(enaddr, sizeof(enaddr), sc->sc_port);
+	octeon_eth_board_mac_addr(enaddr);
 	printf(", address %s\n", ether_sprintf(enaddr));
 
 	/*
@@ -503,18 +506,56 @@ octeon_eth_smi_init(struct octeon_eth_softc *sc)
 	} while (0)
 
 static void
-octeon_eth_board_mac_addr(uint8_t *enaddr, size_t size, int port)
+octeon_eth_board_mac_addr(uint8_t *enaddr)
 {
-	uint64_t addr;
-	int i;
+	extern struct boot_info *octeon_boot_info;
+	int id;
 
-	/* XXX read a mac_dsc tuple from EEPROM */
-	for (i = 0; i < size; i++)
-		enaddr[i] = i;
+	/* Initialize MAC addresses from the global address base. */
+	if (octeon_eth_mac_addr == 0) {
+		memcpy((uint8_t *)&octeon_eth_mac_addr + 2,
+		       octeon_boot_info->mac_addr_base, 6);
 
-	ADDR2UINT64(addr, enaddr);
-	addr += port;
-	UINT642ADDR(enaddr, addr);
+		/*
+		 * Should be allowed to fail hard if couldn't read the
+		 * mac_addr_base address...
+		 */
+		if (octeon_eth_mac_addr == 0)
+			return;
+
+		/*
+		 * Calculate the offset from the mac_addr_base that will be used
+		 * for the next sc->sc_port.
+		 */
+		id = octeon_get_chipid();
+
+		switch (octeon_model_family(id)) {
+		case OCTEON_MODEL_FAMILY_CN56XX:
+			octeon_eth_mac_addr_offset = 1;
+			break;
+		/*
+		case OCTEON_MODEL_FAMILY_CN52XX:
+		case OCTEON_MODEL_FAMILY_CN63XX:
+			octeon_eth_mac_addr_offset = 2;
+			break;
+		*/
+		default:
+			octeon_eth_mac_addr_offset = 0;
+			break;
+		}
+
+		enaddr += octeon_eth_mac_addr_offset;
+	}
+
+	/* No more MAC addresses to assign. */
+	if (octeon_eth_mac_addr_offset >= octeon_boot_info->mac_addr_count)
+		return;
+
+	if (enaddr)
+		memcpy(enaddr, (uint8_t *)&octeon_eth_mac_addr + 2, 6);
+
+	octeon_eth_mac_addr++;
+	octeon_eth_mac_addr_offset++;
 }
 
 /* ---- media */
