@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.36 2013/03/21 16:19:25 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.37 2013/03/21 16:20:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -75,7 +75,6 @@ struct window_choose_mode_data {
 	char			*input_str;
 
 	void 			(*callbackfn)(struct window_choose_data *);
-	void			(*freefn)(struct window_choose_data *);
 };
 
 int     window_choose_key_index(struct window_choose_mode_data *, u_int);
@@ -131,7 +130,6 @@ window_choose_init(struct window_pane *wp)
 	wp->modedata = data = xmalloc(sizeof *data);
 
 	data->callbackfn = NULL;
-	data->freefn = NULL;
 	data->input_type = WINDOW_CHOOSE_NORMAL;
 	data->input_str = xstrdup("");
 	data->input_prompt = NULL;
