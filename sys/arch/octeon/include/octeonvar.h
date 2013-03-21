@@ -272,7 +272,11 @@ struct boot_info {
 extern struct boot_desc *octeon_boot_desc;
 extern struct boot_info *octeon_boot_info;
 
-extern struct octeon_config	octeon_configuration;
+/* Device capabilities advertised in boot_info->config_flags */
+#define BOOTINFO_CFG_FLAG_PCI_HOST	(1ull << 0)
+#define BOOTINFO_CFG_FLAG_PCI_TARGET	(1ull << 1)
+#define BOOTINFO_CFG_FLAG_DEBUG		(1ull << 2)
+#define BOOTINFO_CFG_FLAG_NO_MAGIC	(1ull << 3)
 
 void	octeon_bus_io_init(bus_space_tag_t, void *);
 void	octeon_bus_mem_init(bus_space_tag_t, void *);
