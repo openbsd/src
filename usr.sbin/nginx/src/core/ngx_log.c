@@ -645,7 +645,7 @@ ngx_set_syslog(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char       *program;
     ngx_str_t  *value;
-    ngx_int_t   facility, match = 0;
+    ngx_int_t   facility = SYSLOG_FACILITY, match = 0;
     ngx_uint_t  n;
 
     value = cf->args->elts;
