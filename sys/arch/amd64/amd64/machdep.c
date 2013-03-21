@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.161 2013/03/02 07:02:07 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.162 2013/03/21 15:50:27 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1403,6 +1403,24 @@ init_x86_64(paddr_t first_avail)
 		uvm_page_physload(atop(seg_start), atop(seg_end),
 		    atop(seg_start), atop(seg_end), 0);
 	}
+
+	/*
+         * Now, load the memory between the end of I/O memory "hole"
+         * and the kernel.
+	 */
+	{
+		paddr_t seg_start = round_page(IOM_END);
+		paddr_t seg_end = trunc_page(KERNTEXTOFF - KERNBASE);
+
+		if (seg_start < seg_end) {
+#if DEBUG_MEMLOAD
+			printf("loading 0x%lx-0x%lx\n", seg_start, seg_end);
+#endif
+			uvm_page_physload(atop(seg_start), atop(seg_end),
+			    atop(seg_start), atop(seg_end), 0);
+		}
+	}
+
 #if DEBUG_MEMLOAD
 	printf("avail_start = 0x%lx\n", avail_start);
 	printf("avail_end = 0x%lx\n", avail_end);

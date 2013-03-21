@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern.ldscript,v 1.1 2009/08/13 13:35:54 weingart Exp $	*/
+/*	$OpenBSD: kern.ldscript,v 1.2 2013/03/21 15:50:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -36,7 +36,7 @@ PHDRS
  *__ALIGN_SIZE = 0x200000;
  */
 __ALIGN_SIZE = 0x1000;
-__kernel_base_virt = 0xffffffff80100000 + SIZEOF_HEADERS;
+__kernel_base_virt = 0xffffffff81000000 + SIZEOF_HEADERS;
 __kernel_base_phys = __kernel_base_virt & 0x7fffffff;
 
 /* We use physical address to jump to kernel */
