@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.154 2013/03/22 10:34:46 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.155 2013/03/22 10:40:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -284,7 +284,7 @@ tty_stop_tty(struct tty *tty)
 		tty_raw(tty, "\033[?1000l\033[?1006l\033[?1005l");
 
 	if (tty_term_has(tty->term, TTYC_XT))
-		tty_puts(tty, "\033[>4m");
+		tty_raw(tty, "\033[>4m");
 
 	tty_raw(tty, tty_term_string(tty->term, TTYC_RMCUP));
 
