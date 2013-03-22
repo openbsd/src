@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.324 2013/03/22 10:37:39 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.325 2013/03/22 15:51:15 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1038,7 +1038,6 @@ but a different format may be specified with
 .It Xo Ic capture-pane
 .Op Fl p
 .Op Fl b Ar buffer-index
-.Op Fl c Ar target-client
 .Op Fl E Ar end-line
 .Op Fl S Ar start-line
 .Op Fl t Ar target-pane
@@ -1047,9 +1046,7 @@ but a different format may be specified with
 Capture the contents of a pane.
 If
 .Fl p
-is given, the output goes to
-.Ar target-client
-stdout, otherwise to the buffer specified with
+is given, the output goes to stdout, otherwise to the buffer specified with
 .Fl b
 or a new buffer if omitted.
 .Pp
