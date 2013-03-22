@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.385 2013/03/22 10:37:39 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.386 2013/03/22 10:38:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -105,7 +105,7 @@ extern char   **environ;
 
 /* Default templates for choose-tree. */
 #define CHOOSE_TREE_SESSION_TEMPLATE				\
-	"#{session_name}: #{session_windows} windows "		\
+	"#{session_name}: #{session_windows} windows"		\
 	"#{?session_grouped, (group ,}"				\
 	"#{session_group}#{?session_grouped,),}"		\
 	"#{?session_attached, (attached),}"
