@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.4 2012/09/24 13:39:10 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.5 2013/03/22 15:49:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -93,7 +93,7 @@ void
 control_callback(struct client *c, int closed, unused void *data)
 {
 	char		*line, *cause;
-	struct cmd_ctx	 ctx;
+	struct cmd_ctx	*ctx;
 	struct cmd_list	*cmdlist;
 
 	if (closed)
@@ -108,22 +108,24 @@ control_callback(struct client *c, int closed, unused void *data)
 			break;
 		}
 
-		ctx.msgdata = NULL;
-		ctx.cmdclient = NULL;
-		ctx.curclient = c;
+		ctx = cmd_get_ctx();
+		ctx->msgdata = NULL;
+		ctx->cmdclient = NULL;
+		ctx->curclient = c;
 
-		ctx.error = control_msg_error;
-		ctx.print = control_msg_print;
-		ctx.info = control_msg_info;
+		ctx->error = control_msg_error;
+		ctx->print = control_msg_print;
+		ctx->info = control_msg_info;
 
 		if (cmd_string_parse(line, &cmdlist, &cause) != 0) {
 			control_write(c, "%%error in line \"%s\": %s", line,
 			    cause);
 			free(cause);
 		} else {
-			cmd_list_exec(cmdlist, &ctx);
+			cmd_list_exec(cmdlist, ctx);
 			cmd_list_free(cmdlist);
 		}
+		cmd_free_ctx(ctx);
 
 		free(line);
 	}
