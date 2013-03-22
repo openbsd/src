@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.101 2013/03/22 15:52:40 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.102 2013/03/22 15:55:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -676,7 +676,7 @@ status_job_callback(struct job *job)
 			memcpy(buf, EVBUFFER_DATA(job->event->input), len);
 		buf[len] = '\0';
 	} else
-		buf = xstrdup(line);
+		buf = line;
 
 	so->out = buf;
 	server_status_client(c);

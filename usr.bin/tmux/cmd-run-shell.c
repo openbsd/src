@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.15 2013/03/22 15:49:55 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.16 2013/03/22 15:55:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -112,6 +112,7 @@ cmd_run_shell_callback(struct job *job)
 	do {
 		if ((line = evbuffer_readline(job->event->input)) != NULL) {
 			cmd_run_shell_print (job, line);
+			free(line);
 			lines++;
 		}
 	} while (line != NULL);
