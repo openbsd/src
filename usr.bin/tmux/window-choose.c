@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.41 2013/03/22 15:49:55 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.42 2013/03/22 15:50:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -221,10 +221,7 @@ window_choose_data_run(struct window_choose_data *cdata)
 	}
 
 	ctx = cmd_get_ctx();
-	ctx->msgdata = NULL;
 	ctx->curclient = cdata->start_client;
-	ctx->cmdclient = NULL;
-
 	ctx->error = key_bindings_error;
 	ctx->print = key_bindings_print;
 	ctx->info = key_bindings_info;

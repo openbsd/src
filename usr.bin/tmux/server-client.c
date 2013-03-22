@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.88 2013/03/22 15:49:55 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.89 2013/03/22 15:50:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -872,9 +872,7 @@ server_client_msg_command(struct client *c, struct msg_command_data *data)
 
 	ctx = cmd_get_ctx();
 	ctx->msgdata = data;
-	ctx->curclient = NULL;
 	ctx->cmdclient = c;
-
 	ctx->error = server_client_msg_error;
 	ctx->print = server_client_msg_print;
 	ctx->info = server_client_msg_info;
