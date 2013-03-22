@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.24 2013/03/22 15:51:54 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.25 2013/03/22 15:53:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -511,6 +511,7 @@ grid_string_cells_code(const struct grid_cell *lastgc,
 	for (i = 0; i < nitems(attrs); i++) {
 		if (!(attr & attrs[i].mask) && (lastattr & attrs[i].mask)) {
 			s[n++] = 0;
+			lastattr &= GRID_ATTR_CHARSET;
 			break;
 		}
 	}
@@ -523,7 +524,8 @@ grid_string_cells_code(const struct grid_cell *lastgc,
 	/* If the foreground c changed, append its parameters. */
 	nnewc = grid_string_cells_fg(gc, newc);
 	noldc = grid_string_cells_fg(lastgc, oldc);
-	if (nnewc != noldc || memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
+	if (nnewc != noldc ||
+	    memcmp(newc,oldc, nnewc * sizeof newc[0]) != 0) {
 		for (i = 0; i < nnewc; i++)
 			s[n++] = newc[i];
 	}
@@ -531,7 +533,8 @@ grid_string_cells_code(const struct grid_cell *lastgc,
 	/* If the background c changed, append its parameters. */
 	nnewc = grid_string_cells_bg(gc, newc);
 	noldc = grid_string_cells_bg(lastgc, oldc);
-	if (nnewc != noldc || memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
+	if (nnewc != noldc ||
+	    memcmp(newc, oldc, nnewc * sizeof newc[0]) != 0) {
 		for (i = 0; i < nnewc; i++)
 			s[n++] = newc[i];
 	}
