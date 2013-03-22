@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.18 2011/03/24 10:00:43 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.19 2013/03/22 12:00:57 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -179,9 +179,9 @@ struct ls_upd_hdr {
 
 /* for some reason they thought 24bit types are fun, make them less a hazard */
 #define LSA_24_MASK 0xffffff
-#define LSA_24_GETHI(x)	\
+#define LSA_24_GETHI(x)		\
 	((x) >> 24)
-#define LSA_24_GETLO(x)	\
+#define LSA_24_GETLO(x)		\
 	((x) & LSA_24_MASK)
 #define LSA_24_SETHI(x, y)	\
 	((x) = ((x) & LSA_24_MASK) | (((y) & 0xff) << 24))
