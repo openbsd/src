@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.107 2012/12/06 12:49:13 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.108 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -316,7 +316,6 @@ server_update_socket(void)
 }
 
 /* Callback for server socket. */
-/* ARGSUSED */
 void
 server_accept_callback(int fd, short events, unused void *data)
 {
@@ -370,7 +369,6 @@ server_add_accept(int timeout)
 }
 
 /* Signal handler. */
-/* ARGSUSED */
 void
 server_signal_callback(int sig, unused short events, unused void *data)
 {
@@ -466,7 +464,6 @@ server_child_stopped(pid_t pid, int status)
 }
 
 /* Handle once-per-second timer events. */
-/* ARGSUSED */
 void
 server_second_callback(unused int fd, unused short events, unused void *arg)
 {

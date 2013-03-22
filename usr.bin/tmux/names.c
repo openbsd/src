@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.18 2012/11/27 09:20:03 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.19 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,6 @@ queue_window_name(struct window *w)
 	evtimer_add(&w->name_timer, &tv);
 }
 
-/* ARGSUSED */
 void
 window_name_callback(unused int fd, unused short events, void *data)
 {

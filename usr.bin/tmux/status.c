@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.99 2013/03/21 16:25:08 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.100 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -829,7 +829,6 @@ status_message_clear(struct client *c)
 }
 
 /* Clear status line message after timer expires. */
-/* ARGSUSED */
 void
 status_message_callback(unused int fd, unused short event, void *data)
 {

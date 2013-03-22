@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.30 2013/01/18 02:16:21 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.31 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,6 @@ const struct cmd_entry cmd_server_info_entry = {
 	cmd_server_info_exec
 };
 
-/* ARGSUSED */
 enum cmd_retval
 cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 {

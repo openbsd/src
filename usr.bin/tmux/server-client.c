@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.86 2013/03/21 18:47:01 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.87 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -587,7 +587,6 @@ server_client_reset_state(struct client *c)
 }
 
 /* Repeat time callback. */
-/* ARGSUSED */
 void
 server_client_repeat_timer(unused int fd, unused short events, void *data)
 {

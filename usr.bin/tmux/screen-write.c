@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.61 2013/03/21 18:47:56 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.62 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,7 +41,6 @@ screen_write_start(
 }
 
 /* Finish writing. */
-/* ARGSUSED */
 void
 screen_write_stop(unused struct screen_write_ctx *ctx)
 {

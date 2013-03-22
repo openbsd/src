@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.22 2013/03/21 16:54:37 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.23 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,13 +40,11 @@ int			 cfg_finished;
 int	 		 cfg_references;
 struct causelist	 cfg_causes;
 
-/* ARGSUSED */
 void printflike2
 cfg_print(unused struct cmd_ctx *ctx, unused const char *fmt, ...)
 {
 }
 
-/* ARGSUSED */
 void printflike2
 cfg_error(unused struct cmd_ctx *ctx, const char *fmt, ...)
 {

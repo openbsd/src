@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.27 2012/07/10 11:53:01 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.28 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -134,7 +134,6 @@ job_free(struct job *job)
 }
 
 /* Job buffer error callback. */
-/* ARGSUSED */
 void
 job_callback(unused struct bufferevent *bufev, unused short events, void *data)
 {

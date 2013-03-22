@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.38 2013/03/21 16:22:48 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.39 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -480,7 +480,6 @@ window_choose_expand(struct window_pane *wp, struct session *s, u_int pos)
 	}
 }
 
-/* ARGSUSED */
 void
 window_choose_key(struct window_pane *wp, unused struct session *sess, int key)
 {
@@ -686,7 +685,6 @@ window_choose_key(struct window_pane *wp, unused struct session *sess, int key)
 	}
 }
 
-/* ARGSUSED */
 void
 window_choose_mouse(
     struct window_pane *wp, unused struct session *sess, struct mouse_event *m)

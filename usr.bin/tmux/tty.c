@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.151 2013/03/22 10:30:04 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.152 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -161,7 +161,6 @@ tty_open(struct tty *tty, const char *overrides, char **cause)
 	return (0);
 }
 
-/* ARGSUSED */
 void
 tty_read_callback(unused struct bufferevent *bufev, void *data)
 {
@@ -171,7 +170,6 @@ tty_read_callback(unused struct bufferevent *bufev, void *data)
 		;
 }
 
-/* ARGSUSED */
 void
 tty_error_callback(
     unused struct bufferevent *bufev, unused short what, unused void *data)

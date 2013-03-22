@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.89 2013/02/05 11:08:59 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.90 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -802,7 +802,6 @@ window_pane_timer_callback(unused int fd, unused short events, void *data)
 	wp->changes = 0;
 }
 
-/* ARGSUSED */
 void
 window_pane_read_callback(unused struct bufferevent *bufev, void *data)
 {
@@ -829,7 +828,6 @@ window_pane_read_callback(unused struct bufferevent *bufev, void *data)
 		fatal("gettimeofday failed.");
 }
 
-/* ARGSUSED */
 void
 window_pane_error_callback(
     unused struct bufferevent *bufev, unused short what, void *data)

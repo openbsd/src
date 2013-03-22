@@ -1,4 +1,4 @@
-/* $OpenBSD: window-clock.c,v 1.8 2013/02/05 11:08:59 nicm Exp $ */
+/* $OpenBSD: window-clock.c,v 1.9 2013/03/22 10:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -83,7 +83,6 @@ window_clock_resize(struct window_pane *wp, u_int sx, u_int sy)
 	window_clock_draw_screen(wp);
 }
 
-/* ARGSUSED */
 void
 window_clock_key(
     struct window_pane *wp, unused struct session *sess, unused int key)
