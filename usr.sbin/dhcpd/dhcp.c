@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.34 2013/03/11 15:43:38 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.35 2013/03/22 23:45:52 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -1184,6 +1184,10 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 	}
+
+	/* RFC 2131: MUST NOT send client identifier option in OFFER/ACK! */
+	i = DHO_DHCP_CLIENT_IDENTIFIER;
+	memset(&state->options[i], 0, sizeof(state->options[i]));
 
 	lease->state = state;
 
