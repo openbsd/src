@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.75 2013/02/18 15:57:08 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.76 2013/03/22 23:58:51 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -59,7 +59,9 @@ discover_interface(void)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct ifreq *tif;
-	int len = IFNAMSIZ + sizeof(struct sockaddr_storage);
+	struct option_data *opt;
+	char *data;
+	int len;
 
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
@@ -83,10 +85,24 @@ discover_interface(void)
 			ifi->index = foo->sdl_index;
 			ifi->hw_address.hlen = foo->sdl_alen;
 			ifi->hw_address.htype = HTYPE_ETHER; /* XXX */
-			memcpy(ifi->hw_address.haddr,
-			    LLADDR(foo), foo->sdl_alen);
+			memcpy(ifi->hw_address.haddr, LLADDR(foo),
+			    foo->sdl_alen);
+			opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
+			if (opt->len == 0) {
+				/* Build default client identifier. */
+				data = calloc(1, foo->sdl_alen + 1);
+				if (data != NULL) {
+					data[0] = ifi->hw_address.htype;
+					memcpy(&data[1], LLADDR(foo),
+					    foo->sdl_alen);
+					opt->data = data;
+					opt->len = foo->sdl_alen + 1;
+				}
+			}
 		}
+
 		if (!ifi->ifp) {
+			len = IFNAMSIZ + sizeof(struct sockaddr_storage);
 			if ((tif = malloc(len)) == NULL)
 				error("no space to remember ifp");
 			strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
