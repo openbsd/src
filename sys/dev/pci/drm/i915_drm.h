@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.16 2013/03/22 05:19:21 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.17 2013/03/22 10:36:01 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -628,6 +628,12 @@ struct drm_i915_gem_execbuffer2 {
  * userspace assumes the responsibility for ensuring the same.
  */
 #define I915_EXEC_IS_PINNED		(1<<10)
+
+#define I915_EXEC_CONTEXT_ID_MASK	(0xffffffff)
+#define i915_execbuffer2_set_context_id(eb2, context) \
+	(eb2).rsvd1 = context & I915_EXEC_CONTEXT_ID_MASK
+#define i915_execbuffer2_get_context_id(eb2) \
+	((eb2).rsvd1 & I915_EXEC_CONTEXT_ID_MASK)
 
 struct drm_i915_gem_pin {
 	/** Handle of the buffer to be pinned. */
