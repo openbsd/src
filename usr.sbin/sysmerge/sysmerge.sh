@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.103 2013/03/02 09:11:15 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.104 2013/03/22 08:20:43 ajacoutot Exp $
 #
 # Copyright (c) 2008-2013 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -88,12 +88,13 @@ fi
 # stores sumfilename in ETCSUM or XETCSUM (see eval)
 extract_set() {
 	[[ -z $1 ]] && return
-	local _tgz=$(readlink -f "$1") _set=$2
+	local _tgz=$(readlink -f "$1") _set=$2 _f
 	typeset -u _SETSUM=${_set}sum
 	eval ${_SETSUM}=${_set}sum
 	(cd ${TEMPROOT} && tar -xzphf "${_tgz}" && \
-	 tar -tzf "${_tgz}" | xargs cksum > ${WRKDIR}/${_set}sum) || \
-		error_rm_wrkdir "extract/cksum of ${_tgz} failed"
+		tar -tzf "${_tgz}" | while read _f; do
+			[ ! -h ${_f} ] && cksum ${_f} >> ${WRKDIR}/${_set}sum; done) || \
+				error_rm_wrkdir "extract/cksum of ${_tgz} failed"
 }
 
 # optionally fetch and check if file is a valid (x)etcXX.tgz
@@ -117,7 +118,7 @@ prepare_src() {
 	SRCSUM=srcsum
 	(cd ${SRCDIR}/etc && \
 	 make DESTDIR=${TEMPROOT} distribution-etc-root-var >/dev/null 2>&1 && \
-	 cd ${TEMPROOT} && find . -type f | xargs cksum > ${WRKDIR}/${SRCSUM}) || \
+	 cd ${TEMPROOT} && find . -type f -and ! -type l | xargs cksum > ${WRKDIR}/${SRCSUM}) || \
 		error_rm_wrkdir "prepare/cksum of ${SRCDIR} failed"
 }
 
