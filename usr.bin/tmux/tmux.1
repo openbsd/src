@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.325 2013/03/22 15:51:15 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.326 2013/03/22 15:51:54 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1036,6 +1036,7 @@ By default, it uses the format
 but a different format may be specified with
 .Fl F .
 .It Xo Ic capture-pane
+.Op Fl e
 .Op Fl p
 .Op Fl b Ar buffer-index
 .Op Fl E Ar end-line
@@ -1049,6 +1050,9 @@ If
 is given, the output goes to stdout, otherwise to the buffer specified with
 .Fl b
 or a new buffer if omitted.
+If
+.Fl e
+is given, the output includes escape sequences for text and background attributes.
 .Pp
 .Fl S
 and

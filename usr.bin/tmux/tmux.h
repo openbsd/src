@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.387 2013/03/22 15:49:55 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.388 2013/03/22 15:51:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1977,7 +1977,8 @@ void	 grid_clear(struct grid *, u_int, u_int, u_int, u_int);
 void	 grid_clear_lines(struct grid *, u_int, u_int);
 void	 grid_move_lines(struct grid *, u_int, u_int, u_int);
 void	 grid_move_cells(struct grid *, u_int, u_int, u_int, u_int);
-char	*grid_string_cells(struct grid *, u_int, u_int, u_int);
+char	*grid_string_cells(struct grid *, u_int, u_int, u_int,
+	     struct grid_cell **, int);
 void	 grid_duplicate_lines(
 	     struct grid *, u_int, struct grid *, u_int, u_int);
 u_int	 grid_reflow(struct grid *, struct grid *, u_int);
