@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.39 2013/03/22 10:31:22 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.40 2013/03/22 10:38:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -753,7 +753,7 @@ window_choose_write_line(
 		    (item->wcd->type & TREE_SESSION) ?
 		    (item->state & TREE_EXPANDED ? "-" : "+") : "", item->name);
 	}
-	while (s->cx < screen_size_x(s))
+	while (s->cx < screen_size_x(s) - 1)
 		screen_write_putc(ctx, &gc, ' ');
 
 	if (data->input_type != WINDOW_CHOOSE_NORMAL) {
