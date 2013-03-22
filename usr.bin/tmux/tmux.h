@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.388 2013/03/22 15:51:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.389 2013/03/22 15:52:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -566,6 +566,7 @@ enum mode_key_cmd {
 	MODEKEYCOPY_BOTTOMLINE,
 	MODEKEYCOPY_CANCEL,
 	MODEKEYCOPY_CLEARSELECTION,
+	MODEKEYCOPY_COPYPIPE,
 	MODEKEYCOPY_COPYLINE,
 	MODEKEYCOPY_COPYENDOFLINE,
 	MODEKEYCOPY_COPYSELECTION,
@@ -632,12 +633,13 @@ struct mode_key_data {
 
 /* Binding between a key and a command. */
 struct mode_key_binding {
-	int			key;
+	int				 key;
 
-	int			mode;
-	enum mode_key_cmd	cmd;
+	int				 mode;
+	enum mode_key_cmd		 cmd;
+	const char			*arg;
 
-	RB_ENTRY(mode_key_binding) entry;
+	RB_ENTRY(mode_key_binding)	 entry;
 };
 RB_HEAD(mode_key_tree, mode_key_binding);
 
@@ -1548,7 +1550,7 @@ enum mode_key_cmd mode_key_fromstring(const struct mode_key_cmdstr *,
 const struct mode_key_table *mode_key_findtable(const char *);
 void	mode_key_init_trees(void);
 void	mode_key_init(struct mode_key_data *, struct mode_key_tree *);
-enum mode_key_cmd mode_key_lookup(struct mode_key_data *, int);
+enum mode_key_cmd mode_key_lookup(struct mode_key_data *, int, const char **);
 
 /* notify.c */
 void	notify_enable(void);

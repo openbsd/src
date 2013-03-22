@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.19 2012/10/15 21:53:30 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.20 2013/03/22 15:52:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -138,9 +138,12 @@ cmd_list_keys_table(struct cmd *self, struct cmd_ctx *ctx)
 			mode = "c";
 		cmdstr = mode_key_tostring(mtab->cmdstr, mbind->cmd);
 		if (cmdstr != NULL) {
-			ctx->print(ctx, "bind-key -%st %s%s %*s %s",
+			ctx->print(ctx, "bind-key -%st %s%s %*s %s%s%s%s",
 			    mode, any_mode && *mode == '\0' ? " " : "",
-			    mtab->name, (int) width, key, cmdstr);
+			    mtab->name, (int) width, key, cmdstr,
+			    mbind->arg != NULL ? " \"" : "",
+			    mbind->arg != NULL ? mbind->arg : "",
+			    mbind->arg != NULL ? "\"": "");
 		}
 	}
 
