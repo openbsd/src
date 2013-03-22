@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.14 2013/03/21 16:14:09 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.15 2013/03/22 10:32:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -301,8 +301,9 @@ format_session(struct format_tree *ft, struct session *s)
 void
 format_client(struct format_tree *ft, struct client *c)
 {
-	char	*tim;
-	time_t	 t;
+	char		*tim;
+	time_t		 t;
+	struct session	*s;
 
 	format_add(ft, "client_cwd", "%s", c->cwd);
 	format_add(ft, "client_height", "%u", c->tty.sy);
@@ -333,6 +334,13 @@ format_client(struct format_tree *ft, struct client *c)
 		format_add(ft, "client_readonly", "%d", 1);
 	else
 		format_add(ft, "client_readonly", "%d", 0);
+
+	s = c->session;
+	if (s != NULL)
+		format_add(ft, "client_session", "%s", s->name);
+	s = c->last_session;
+	if (s != NULL && session_alive(s))
+		format_add(ft, "client_last_session", "%s", s->name);
 }
 
 /* Set default format keys for a winlink. */
