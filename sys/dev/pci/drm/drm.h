@@ -1,4 +1,4 @@
-/* $OpenBSD: drm.h,v 1.8 2013/01/09 10:33:42 jsg Exp $ */
+/* $OpenBSD: drm.h,v 1.9 2013/03/22 05:19:21 jsg Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -609,6 +609,17 @@ struct drm_get_cap {
 	uint64_t value;
 };
 
+#define DRM_CLOEXEC O_CLOEXEC
+struct drm_prime_handle {
+	uint32_t handle;
+
+	/** Flags.. only applicable for handle->fd */
+	uint32_t flags;
+
+	/** Returned dmabuf file descriptor */
+	int32_t fd;
+};
+
 /**
  * Header for events written back to userspace on the drm fd.  The
  * type defines the type of event, the length specifies the total
@@ -698,6 +709,9 @@ struct drm_event_vblank {
 #define DRM_IOCTL_UNLOCK		DRM_IOW( 0x2b, struct drm_lock)
 #define DRM_IOCTL_FINISH		DRM_IOW( 0x2c, struct drm_lock)
 
+#define DRM_IOCTL_PRIME_HANDLE_TO_FD	DRM_IOWR(0x2d, struct drm_prime_handle)
+#define DRM_IOCTL_PRIME_FD_TO_HANDLE 	DRM_IOWR(0x2e, struct drm_prime_handle)
+
 #define DRM_IOCTL_AGP_ACQUIRE		DRM_IO(  0x30)
 #define DRM_IOCTL_AGP_RELEASE		DRM_IO(  0x31)
 #define DRM_IOCTL_AGP_ENABLE		DRM_IOW( 0x32, struct drm_agp_mode)
@@ -741,6 +755,8 @@ struct drm_event_vblank {
 #define DRM_IOCTL_MODE_GETPLANE		DRM_IOWR(0xB6, struct drm_mode_get_plane)
 #define DRM_IOCTL_MODE_SETPLANE		DRM_IOWR(0xB7, struct drm_mode_set_plane)
 #define DRM_IOCTL_MODE_ADDFB2		DRM_IOWR(0xB8, struct drm_mode_fb_cmd2)
+#define DRM_IOCTL_MODE_OBJ_GETPROPERTIES	DRM_IOWR(0xB9, struct drm_mode_obj_get_properties)
+#define DRM_IOCTL_MODE_OBJ_SETPROPERTY	DRM_IOWR(0xBA, struct drm_mode_obj_set_property)
 
 /**
  * Device specific ioctls should only be in their respective headers

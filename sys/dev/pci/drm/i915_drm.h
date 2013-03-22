@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.15 2013/03/18 12:36:51 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.16 2013/03/22 05:19:21 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -184,6 +184,12 @@ typedef struct drm_i915_sarea {
 #define DRM_I915_GET_PIPE_FROM_CRTC_ID  0x29	/* EXECBUFFER2 upstream */
 #define DRM_I915_GET_SPRITE_COLORKEY 0x2a
 #define DRM_I915_SET_SPRITE_COLORKEY 0x2b
+#define DRM_I915_GEM_WAIT	0x2c
+#define DRM_I915_GEM_CONTEXT_CREATE	0x2d
+#define DRM_I915_GEM_CONTEXT_DESTROY	0x2e
+#define DRM_I915_GEM_SET_CACHEING	0x2f
+#define DRM_I915_GEM_GET_CACHEING	0x30
+#define DRM_I915_REG_READ		0x31
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
 #define DRM_IOCTL_I915_FLUSH		DRM_IO ( DRM_COMMAND_BASE + DRM_I915_FLUSH)
@@ -227,6 +233,10 @@ typedef struct drm_i915_sarea {
 #define DRM_IOCTL_I915_OVERLAY_ATTRS	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_OVERLAY_ATTRS, struct drm_intel_overlay_attrs)
 #define DRM_IOCTL_I915_SET_SPRITE_COLORKEY	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_SET_SPRITE_COLORKEY, struct drm_intel_sprite_colorkey)
 #define DRM_IOCTL_I915_GET_SPRITE_COLORKEY	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GET_SPRITE_COLORKEY, struct drm_intel_sprite_colorkey)
+#define DRM_IOCTL_I915_GEM_WAIT		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_WAIT, struct drm_i915_gem_wait)
+#define DRM_IOCTL_I915_GEM_CONTEXT_CREATE	DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_CREATE, struct drm_i915_gem_context_create)
+#define DRM_IOCTL_I915_GEM_CONTEXT_DESTROY	DRM_IOW (DRM_COMMAND_BASE + DRM_I915_GEM_CONTEXT_DESTROY, struct drm_i915_gem_context_destroy)
+#define DRM_IOCTL_I915_REG_READ			DRM_IOWR (DRM_COMMAND_BASE + DRM_I915_REG_READ, struct drm_i915_reg_read)
 
 /* Allow drivers to submit batchbuffers directly to hardware, relying
  * on the security mechanisms provided by hardware.
@@ -841,4 +851,27 @@ struct drm_intel_sprite_colorkey {
 	uint32_t flags;
 };
 
+struct drm_i915_gem_wait {
+	/** Handle of BO we shall wait on */
+	uint32_t bo_handle;
+	uint32_t flags;
+	/** Number of nanoseconds to wait, Returns time remaining. */
+	int64_t timeout_ns;
+};
+
+struct drm_i915_gem_context_create {
+	/*  output: id of new context*/
+	uint32_t ctx_id;
+	uint32_t pad;
+};
+
+struct drm_i915_gem_context_destroy {
+	uint32_t ctx_id;
+	uint32_t pad;
+};
+
+struct drm_i915_reg_read {
+	uint64_t offset;
+	uint64_t val; /* Return value */
+};
 #endif				/* _I915_DRM_H_ */
