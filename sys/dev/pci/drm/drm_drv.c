@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.100 2013/03/18 12:36:51 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.101 2013/03/22 07:52:36 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -779,6 +779,12 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return drm_mode_mmap_dumb_ioctl(dev, data, file_priv);
 		case DRM_IOCTL_MODE_DESTROY_DUMB:
 			return drm_mode_destroy_dumb_ioctl(dev, data, 
+			    file_priv);
+		case DRM_IOCTL_MODE_OBJ_GETPROPERTIES:
+			return drm_mode_obj_get_properties_ioctl(dev, data,
+			    file_priv);
+		case DRM_IOCTL_MODE_OBJ_SETPROPERTY:
+			return drm_mode_obj_set_property_ioctl(dev, data,
 			    file_priv);
 		}
 	}
