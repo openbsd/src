@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.198 2012/10/08 18:48:25 camield Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.199 2013/03/22 01:41:12 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1028,8 +1028,7 @@ carp_destroy_vhosts(struct carp_softc *sc)
 	/* XXX bow out? */
 	struct carp_vhost_entry *vhe, *nvhe;
 
-	for (vhe = LIST_FIRST(&sc->carp_vhosts);
-	     vhe != LIST_END(&sc->carp_vhosts); vhe = nvhe) {
+	for (vhe = LIST_FIRST(&sc->carp_vhosts); vhe != NULL; vhe = nvhe) {
 		nvhe = LIST_NEXT(vhe, vhost_entries);
 		free(vhe, M_DEVBUF);
 	}

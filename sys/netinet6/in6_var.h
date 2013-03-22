@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.37 2013/03/11 14:08:04 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.38 2013/03/22 01:41:12 tedu Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -532,7 +532,7 @@ do {								\
 	  	(in6m) = NULL;					\
 	else							\
 		for ((in6m) = LIST_FIRST(&ia->ia6_multiaddrs);	\
-		     (in6m) != LIST_END(&ia->ia6_multiaddrs) &&	\
+		     (in6m) != NULL &&	\
 		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr));	\
 		     (in6m) = LIST_NEXT((in6m), in6m_entry))	\
 			continue;				\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.200 2012/11/06 12:32:42 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.201 2013/03/22 01:41:12 tedu Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -814,8 +814,8 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp)
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq);
-	    q != LIST_END(&fp->ipq_fragq); p = q, q = LIST_NEXT(q, ipqe_q))
+	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq); q != NULL;
+	    p = q, q = LIST_NEXT(q, ipqe_q))
 		if (ntohs(q->ipqe_ip->ip_off) > ntohs(ipqe->ipqe_ip->ip_off))
 			break;
 
@@ -873,8 +873,8 @@ insert:
 		LIST_INSERT_AFTER(p, ipqe, ipqe_q);
 	}
 	next = 0;
-	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq);
-	    q != LIST_END(&fp->ipq_fragq); p = q, q = LIST_NEXT(q, ipqe_q)) {
+	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq); q != NULL;
+	    p = q, q = LIST_NEXT(q, ipqe_q)) {
 		if (ntohs(q->ipqe_ip->ip_off) != next)
 			return (0);
 		next += ntohs(q->ipqe_ip->ip_len);
@@ -947,8 +947,7 @@ ip_freef(struct ipq *fp)
 {
 	struct ipqent *q, *p;
 
-	for (q = LIST_FIRST(&fp->ipq_fragq); q != LIST_END(&fp->ipq_fragq);
-	    q = p) {
+	for (q = LIST_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
 		p = LIST_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
@@ -970,7 +969,7 @@ ip_slowtimo(void)
 	struct ipq *fp, *nfp;
 	int s = splsoftnet();
 
-	for (fp = LIST_FIRST(&ipq); fp != LIST_END(&ipq); fp = nfp) {
+	for (fp = LIST_FIRST(&ipq); fp != NULL; fp = nfp) {
 		nfp = LIST_NEXT(fp, ipq_q);
 		if (--fp->ipq_ttl == 0) {
 			ipstat.ips_fragtimeout++;

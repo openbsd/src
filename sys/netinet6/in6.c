@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.107 2013/03/14 11:18:37 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.108 2013/03/22 01:41:12 tedu Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1592,7 +1592,7 @@ in6_savemkludge(struct in6_ifaddr *oia)
 	IFP_TO_IA6(oia->ia_ifp, ia);
 	if (ia) {	/* there is another address */
 		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
-		    in6m != LIST_END(&oia->ia6_multiaddrs); in6m = next) {
+		    in6m != NULL; in6m = next) {
 			next = LIST_NEXT(in6m, in6m_entry);
 			ifafree(&in6m->in6m_ia->ia_ifa);
 			ia->ia_ifa.ifa_refcnt++;
@@ -1610,7 +1610,7 @@ in6_savemkludge(struct in6_ifaddr *oia)
 			panic("in6_savemkludge: no kludge space");
 
 		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
-		    in6m != LIST_END(&oia->ia6_multiaddrs); in6m = next) {
+		    in6m != NULL; in6m = next) {
 			next = LIST_NEXT(in6m, in6m_entry);
 			ifafree(&in6m->in6m_ia->ia_ifa); /* release reference */
 			in6m->in6m_ia = NULL;
@@ -1633,8 +1633,7 @@ in6_restoremkludge(struct in6_ifaddr *ia, struct ifnet *ifp)
 		if (mk->mk_ifp == ifp) {
 			struct in6_multi *in6m, *next;
 
-			for (in6m = LIST_FIRST(&mk->mk_head);
-			    in6m != LIST_END(&mk->mk_head);
+			for (in6m = LIST_FIRST(&mk->mk_head); in6m != NULL;
 			    in6m = next) {
 				next = LIST_NEXT(in6m, in6m_entry);
 				in6m->in6m_ia = ia;

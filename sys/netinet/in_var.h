@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.18 2012/11/11 04:45:44 deraadt Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.19 2013/03/22 01:41:12 tedu Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ void	in_socktrim(struct sockaddr_in *);
 do {									\
 	struct in_ifaddr *ia;						\
 									\
-	for (ia = TAILQ_FIRST(&in_ifaddr); ia != TAILQ_END(&in_ifaddr) && \
+	for (ia = TAILQ_FIRST(&in_ifaddr); ia != NULL && \
 	    (ia->ia_ifp->if_rdomain != rtable_l2(rdomain) || 		\
 	    ia->ia_addr.sin_addr.s_addr != (addr).s_addr);		\
 	    ia = TAILQ_NEXT(ia, ia_list))				\
@@ -115,7 +115,7 @@ do {									\
 	/* struct in_ifaddr *ia; */					\
 do {									\
 	for ((ia) = TAILQ_FIRST(&in_ifaddr);				\
-	    (ia) != TAILQ_END(&in_ifaddr) && (ia)->ia_ifp != (ifp);	\
+	    (ia) != NULL && (ia)->ia_ifp != (ifp);	\
 	    (ia) = TAILQ_NEXT((ia), ia_list))				\
 		continue;						\
 } while (/* CONSTCOND */ 0)
@@ -173,7 +173,7 @@ do {									\
 		(inm) = NULL;						\
 	else								\
 		for ((inm) = LIST_FIRST(&ia->ia_multiaddrs);		\
-		     (inm) != LIST_END(&ia->ia_multiaddrs) &&		\
+		     (inm) != NULL &&		\
 		      (inm)->inm_addr.s_addr != (addr).s_addr;		\
 		     (inm) = LIST_NEXT(inm, inm_list))			\
 			 continue;					\

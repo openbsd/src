@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.44 2013/03/04 14:42:25 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.45 2013/03/22 01:41:12 tedu Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &q6->ip6q_dst))
 			break;
 
-	if (q6 == TAILQ_END(&frag6_queue)) {
+	if (q6 == NULL) {
 		/*
 		 * the first fragment to arrive, create a reassembly queue.
 		 */
@@ -378,7 +378,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	IP6_REASS_MBUF(ip6af) = m;
 
 	if (first_frag) {
-		paf6 = LIST_END(&q6->ip6q_asfrag);
+		paf6 = NULL;
 		goto insert;
 	}
 
@@ -406,9 +406,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (paf6 = LIST_END(&q6->ip6q_asfrag),
-	    af6 = LIST_FIRST(&q6->ip6q_asfrag);
-	    af6 != LIST_END(&q6->ip6q_asfrag);
+	for (paf6 = NULL, af6 = LIST_FIRST(&q6->ip6q_asfrag);
+	    af6 != NULL;
 	    paf6 = af6, af6 = LIST_NEXT(af6, ip6af_list))
 		if (af6->ip6af_off > ip6af->ip6af_off)
 			break;
@@ -419,7 +418,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * fragment, the entire datagram (and any constituent fragments) MUST
 	 * be silently discarded.
 	 */
-	if (paf6 != LIST_END(&q6->ip6q_asfrag)) {
+	if (paf6 != NULL) {
 		i = (paf6->ip6af_off + paf6->ip6af_frglen) - ip6af->ip6af_off;
 		if (i > 0) {
 #if 0				/* suppress the noisy log */
@@ -431,7 +430,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 			goto flushfrags;
 		}
 	}
-	if (af6 != LIST_END(&q6->ip6q_asfrag)) {
+	if (af6 != NULL) {
 		i = (ip6af->ip6af_off + ip6af->ip6af_frglen) - af6->ip6af_off;
 		if (i > 0) {
 #if 0				/* suppress the noisy log */
@@ -451,7 +450,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * Move to front of packet queue, as we are
 	 * the most recently active fragmented packet.
 	 */
-	if (paf6 != LIST_END(&q6->ip6q_asfrag))
+	if (paf6 != NULL)
 		LIST_INSERT_AFTER(paf6, ip6af, ip6af_list);
 	else
 		LIST_INSERT_HEAD(&q6->ip6q_asfrag, ip6af, ip6af_list);
@@ -464,9 +463,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	}
 #endif
 	next = 0;
-	for (paf6 = LIST_END(&q6->ip6q_asfrag),
-	    af6 = LIST_FIRST(&q6->ip6q_asfrag);
-	    af6 != LIST_END(&q6->ip6q_asfrag);
+	for (paf6 = NULL, af6 = LIST_FIRST(&q6->ip6q_asfrag);
+	    af6 != NULL;
 	    paf6 = af6, af6 = LIST_NEXT(af6, ip6af_list)) {
 		if (af6->ip6af_off != next) {
 			IP6Q_UNLOCK();
@@ -485,8 +483,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	ip6af = LIST_FIRST(&q6->ip6q_asfrag);
 	LIST_REMOVE(ip6af, ip6af_list);
 	t = m = IP6_REASS_MBUF(ip6af);
-	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) !=
-	    LIST_END(&q6->ip6q_asfrag)) {
+	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) != NULL) {
 		LIST_REMOVE(af6, ip6af_list);
 		while (t->m_next)
 			t = t->m_next;
@@ -547,8 +544,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	return nxt;
 
  flushfrags:
-	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) !=
-	    LIST_END(&q6->ip6q_asfrag)) {
+	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) != NULL) {
 		LIST_REMOVE(af6, ip6af_list);
 		m_freem(IP6_REASS_MBUF(af6));
 		free(af6, M_FTABLE);
@@ -602,8 +598,7 @@ frag6_freef(struct ip6q *q6)
 
 	IP6Q_LOCK_CHECK();
 
-	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) !=
-	    LIST_END(&q6->ip6q_asfrag)) {
+	while ((af6 = LIST_FIRST(&q6->ip6q_asfrag)) != NULL) {
 		struct mbuf *m = IP6_REASS_MBUF(af6);
 
 		LIST_REMOVE(af6, ip6af_list);
@@ -690,7 +685,7 @@ frag6_drain(void)
 
 	if (ip6q_lock_try() == 0)
 		return;
-	while ((q6 = TAILQ_FIRST(&frag6_queue)) != TAILQ_END(&frag6_queue)) {
+	while ((q6 = TAILQ_FIRST(&frag6_queue)) != NULL) {
 		ip6stat.ip6s_fragdropped++;
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(q6);
