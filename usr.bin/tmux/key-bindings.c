@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.36 2013/03/22 15:50:42 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.37 2013/03/22 15:54:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -266,8 +266,7 @@ key_bindings_dispatch(struct key_binding *bd, struct client *c)
 	struct cmd	*cmd;
 	int		 readonly;
 
-	ctx = cmd_get_ctx();
-	ctx->curclient = c;
+	ctx = cmd_get_ctx(NULL, c);
 	ctx->error = key_bindings_error;
 	ctx->print = key_bindings_print;
 	ctx->info = key_bindings_info;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.23 2013/03/22 15:50:42 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.24 2013/03/22 15:54:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -184,8 +184,7 @@ cmd_command_prompt_callback(void *data, const char *s)
 		return (0);
 	}
 
-	ctx = cmd_get_ctx();
-	ctx->curclient = c;
+	ctx = cmd_get_ctx(NULL, c);
 	ctx->error = key_bindings_error;
 	ctx->print = key_bindings_print;
 	ctx->info = key_bindings_info;

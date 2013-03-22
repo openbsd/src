@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.389 2013/03/22 15:52:41 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.390 2013/03/22 15:54:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1718,7 +1718,7 @@ long long	 args_strtonum(
 		    struct args *, u_char, long long, long long, char **);
 
 /* cmd.c */
-struct cmd_ctx	*cmd_get_ctx(void);
+struct cmd_ctx	*cmd_get_ctx(struct client *, struct client *);
 void		 cmd_free_ctx(struct cmd_ctx *);
 void		 cmd_ref_ctx(struct cmd_ctx *);
 int		 cmd_pack_argv(int, char **, char *, size_t);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.16 2013/03/22 15:50:42 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.17 2013/03/22 15:54:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -125,8 +125,7 @@ cmd_confirm_before_callback(void *data, const char *s)
 		return (0);
 	}
 
-	ctx = cmd_get_ctx();
-	ctx->curclient = c;
+	ctx = cmd_get_ctx(NULL, c);
 	ctx->error = key_bindings_error;
 	ctx->print = key_bindings_print;
 	ctx->info = key_bindings_info;

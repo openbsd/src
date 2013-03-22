@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.26 2013/03/22 15:50:13 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.27 2013/03/22 15:54:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -92,7 +92,7 @@ load_cfg(const char *path, struct cmd_ctx *ctx, struct causelist *causes)
 	if (ctx != NULL)
 		cmd_ref_ctx(ctx);
 	else {
-		ctx = cmd_get_ctx();
+		ctx = cmd_get_ctx(NULL, NULL);
 		ctx->error = cfg_error;
 		ctx->print = cfg_print;
 		ctx->info = cfg_print;

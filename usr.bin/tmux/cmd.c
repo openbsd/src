@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.77 2013/03/22 15:49:55 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.78 2013/03/22 15:54:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -134,12 +134,15 @@ int		 cmd_find_index_offset(const char *, struct session *, int *);
 struct window_pane *cmd_find_pane_offset(const char *, struct winlink *);
 
 struct cmd_ctx *
-cmd_get_ctx(void)
+cmd_get_ctx(struct client *cmdclient, struct client *curclient)
 {
 	struct cmd_ctx	*ctx;
 
 	ctx = xcalloc(1, sizeof *ctx);
 	ctx->references = 0;
+
+	ctx->cmdclient = cmdclient;
+	ctx->curclient = curclient;
 
 	cmd_ref_ctx(ctx);
 	return (ctx);
