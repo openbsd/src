@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.64 2013/03/22 10:36:54 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.65 2013/03/22 10:41:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1053,7 +1053,7 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	 * Move the cursor. If not wrapping, stick at the last character and
 	 * replace it.
 	 */
-	last = !!(s->mode & MODE_WRAP);
+	last = !(s->mode & MODE_WRAP);
 	if (s->cx <= screen_size_x(s) - last - width)
 		s->cx += width;
 	else
