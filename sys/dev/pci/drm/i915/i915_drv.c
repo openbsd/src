@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.4 2013/03/20 12:37:41 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.5 2013/03/22 06:19:56 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1329,6 +1329,8 @@ inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			return (intel_get_pipe_from_crtc_id(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_MADVISE:
 			return (i915_gem_madvise_ioctl(dev, data, file_priv));
+		case DRM_IOCTL_I915_GEM_SW_FINISH:
+			return (i915_gem_sw_finish_ioctl(dev, data, file_priv));
 		default:
 			break;
 		}

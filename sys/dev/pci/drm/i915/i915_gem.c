@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.2 2013/03/21 21:49:07 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.3 2013/03/22 06:19:56 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -644,7 +644,37 @@ unlock:
 	return ret;
 }
 
-// i915_gem_sw_finish_ioctl
+/**
+ * Called when user space has done writes to this buffer
+ */
+int
+i915_gem_sw_finish_ioctl(struct drm_device *dev, void *data,
+			 struct drm_file *file)
+{
+	struct drm_i915_gem_sw_finish *args = data;
+	struct drm_i915_gem_object *obj;
+	int ret = 0;
+
+	ret = i915_mutex_lock_interruptible(dev);
+	if (ret)
+		return ret;
+
+	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
+	if (&obj->base == NULL) {
+		ret = ENOENT;
+		goto unlock;
+	}
+
+	/* Pinned buffers may be scanout, so flush the cache */
+	if (obj->pin_count)
+		i915_gem_object_flush_cpu_write_domain(obj);
+
+	drm_gem_object_unreference(&obj->base);
+unlock:
+	DRM_UNLOCK();
+	return ret;
+}
+
 // i915_gem_mmap_ioctl
 
 int
