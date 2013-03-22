@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.59 2013/03/21 18:47:56 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.60 2013/03/22 10:33:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1260,6 +1260,9 @@ input_csi_dispatch(struct input_ctx *ictx)
 		case 1005:
 			screen_write_mode_clear(&ictx->ctx, MODE_MOUSE_UTF8);
 			break;
+		case 1006:
+			screen_write_mode_clear(&ictx->ctx, MODE_MOUSE_SGR);
+			break;
 		case 47:
 		case 1047:
 			window_pane_alternate_off(wp, &ictx->cell, 0);
@@ -1319,6 +1322,9 @@ input_csi_dispatch(struct input_ctx *ictx)
 			break;
 		case 1005:
 			screen_write_mode_set(&ictx->ctx, MODE_MOUSE_UTF8);
+			break;
+		case 1006:
+			screen_write_mode_set(&ictx->ctx, MODE_MOUSE_SGR);
 			break;
 		case 47:
 		case 1047:
