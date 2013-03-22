@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.18 2013/01/23 19:57:47 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.19 2013/03/22 21:24:11 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ struct cpu_functions armv5_ec_cpufuncs = {
 
 	/* Soft functions */
 	arm10_context_switch,		/* context_switch	*/
-	arm10_setup			/* cpu setup		*/
+	arm9e_setup			/* cpu setup		*/
 };
 #endif /* CPU_ARM9E || CPU_ARM10 */
 
@@ -1256,7 +1256,7 @@ arm9_setup()
 
 #if defined(CPU_ARM9E) || defined(CPU_ARM10)
 void
-arm10_setup()
+arm9e_setup()
 {
 	int cpuctrl, cpuctrlmask;
 
@@ -1280,9 +1280,6 @@ arm10_setup()
 	/* Now really make sure they are clean.  */
 	__asm __volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
 
-	/* Allow detection code to find the VFP if it's fitted.  */
-	__asm __volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
-
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
@@ -1291,6 +1288,17 @@ arm10_setup()
 	cpu_idcache_wbinv_all();
 }
 #endif	/* CPU_ARM9E || CPU_ARM10 */
+
+#if defined(CPU_ARM10)
+void
+arm10_setup()
+{
+	arm9e_setup();
+
+	/* Allow detection code to find the VFP if it's fitted.  */
+	__asm __volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
+}
+#endif	/* CPU_ARM10 */
 
 #ifdef CPU_ARM11
 void

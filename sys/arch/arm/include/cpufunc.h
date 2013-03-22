@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.10 2013/01/23 19:57:47 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.11 2013/03/22 21:24:11 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -296,6 +296,7 @@ void	arm10_tlb_flushI_SE	(u_int);
 
 void	arm10_context_switch	(u_int);
 
+void	arm9e_setup		(void);
 void	arm10_setup		(void);
 #endif
 
