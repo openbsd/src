@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.52 2013/03/21 18:45:38 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.53 2013/03/22 10:30:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -364,8 +364,6 @@ tty_keys_build(struct tty *tty)
 			tty_keys_add(tty, s, tdkc->key);
 
 	}
-
-	tty_keys_add(tty, "abc", 'x');
 }
 
 /* Free the entire key tree. */
