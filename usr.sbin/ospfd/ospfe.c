@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.85 2013/01/17 10:07:56 markus Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.86 2013/03/22 08:42:55 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -869,10 +869,14 @@ orig_rtr_lsa(struct area *area)
 			/*
 			 * do not add a stub net LSA for interfaces that are:
 			 *  - down
-			 *  - have a linkstate which is down
+			 *  - have a linkstate which is down, apart from carp:
+			 *    backup carp interfaces have linkstate down, but
+			 *    we still announce them.
 			 */
 			if (!(iface->flags & IFF_UP) ||
-			    !LINK_STATE_IS_UP(iface->linkstate))
+			    (!LINK_STATE_IS_UP(iface->linkstate) &&
+			    !(iface->media_type == IFT_CARP &&
+			    iface->linkstate == LINK_STATE_DOWN)))
 				continue;
 			log_debug("orig_rtr_lsa: stub net, "
 			    "interface %s", iface->name);
