@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.28 2011/06/06 06:13:46 deraadt Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.29 2013/03/22 22:15:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -74,6 +74,7 @@
 #define	THINKPAD_TABLET_PEN_INSERTED	0x500b
 #define	THINKPAD_TABLET_PEN_REMOVED	0x500c
 #define	THINKPAD_POWER_CHANGED		0x6030
+#define	THINKPAD_BACKLIGHT_CHANGED	0x6050
 #define	THINKPAD_SWITCH_WIRELESS	0x7000
 
 #define THINKPAD_NSENSORS 9
@@ -345,6 +346,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			handled = 1;
 			break;
 		case THINKPAD_POWER_CHANGED:
+		case THINKPAD_BACKLIGHT_CHANGED:
 			handled = 1;
 			break;
 		case THINKPAD_SWITCH_WIRELESS:
