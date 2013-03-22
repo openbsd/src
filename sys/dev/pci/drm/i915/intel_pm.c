@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.3 2013/03/22 01:00:39 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2474,7 +2474,7 @@ ironlake_set_drps(struct drm_device *dev, u8 val)
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	u16 rgvswctl;
 
-//	assert_spin_locked(&mchdev_lock);
+	MUTEX_ASSERT_LOCKED(&mchdev_lock);
 
 	rgvswctl = I915_READ16(MEMSWCTL);
 	if (rgvswctl & MEMCTL_CMD_STS) {
@@ -2501,7 +2501,7 @@ ironlake_enable_drps(struct drm_device *dev)
 	u8 fmax, fmin, fstart, vstart;
 	int retries;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 
 	/* Enable temp reporting */
 	I915_WRITE16(PMMISC, I915_READ(PMMISC) | MCPPCE_EN);
@@ -2565,7 +2565,7 @@ ironlake_enable_drps(struct drm_device *dev)
 	dev_priv->ips.last_count2 = I915_READ(0x112f4);
 	nanouptime(&dev_priv->ips.last_time2);
 
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 }
 
 void
@@ -2574,7 +2574,7 @@ ironlake_disable_drps(struct drm_device *dev)
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	u16 rgvswctl;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 
 	rgvswctl = I915_READ16(MEMSWCTL);
 
@@ -2592,7 +2592,7 @@ ironlake_disable_drps(struct drm_device *dev)
 	I915_WRITE(MEMSWCTL, rgvswctl);
 	DELAY(1000);
 
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 }
 
 /* There's a funny hw issue where the hw returns all 0 when reading from
@@ -3067,7 +3067,7 @@ __i915_chipset_val(struct inteldrm_softc *dev_priv)
 	unsigned long now = jiffies_to_msecs(ticks), diff1;
 	int i;
 
-//	assert_spin_locked(&mchdev_lock);
+	MUTEX_ASSERT_LOCKED(&mchdev_lock);
 
 	diff1 = now - dev_priv->ips.last_time1;
 
@@ -3122,11 +3122,11 @@ i915_chipset_val(struct inteldrm_softc *dev_priv)
 	if (dev_priv->info->gen != 5)
 		return 0;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 
 	val = __i915_chipset_val(dev_priv);
 
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 
 	return val;
 }
@@ -3297,7 +3297,7 @@ __i915_update_gfx_val(struct inteldrm_softc *dev_priv)
 	unsigned long diffms;
 	u32 count;
 
-//	assert_spin_locked(&mchdev_lock);
+	MUTEX_ASSERT_LOCKED(&mchdev_lock);
 
 	nanouptime(&now);
 	timespecsub(&now, &dev_priv->ips.last_time2, &diff1);
@@ -3331,11 +3331,11 @@ i915_update_gfx_val(struct inteldrm_softc *dev_priv)
 	if (dev_priv->info->gen != 5)
 		return;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 
 	__i915_update_gfx_val(dev_priv);
 
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 }
 
 unsigned long
@@ -3344,7 +3344,7 @@ __i915_gfx_val(struct inteldrm_softc *dev_priv)
 	unsigned long t, corr, state1, corr2, state2;
 	u32 pxvid, ext_v;
 
-//	assert_spin_locked(&mchdev_lock);
+	MUTEX_ASSERT_LOCKED(&mchdev_lock);
 
 	pxvid = I915_READ(PXVFREQ_BASE + (dev_priv->rps.cur_delay * 4));
 	pxvid = (pxvid >> 24) & 0x7f;
@@ -3384,11 +3384,11 @@ i915_gfx_val(struct inteldrm_softc *dev_priv)
 	if (dev_priv->info->gen != 5)
 		return 0;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 
 	val = __i915_gfx_val(dev_priv);
 
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 
 	return val;
 }
@@ -3405,7 +3405,7 @@ i915_read_mch_val(void)
 	struct inteldrm_softc *dev_priv;
 	unsigned long chipset_val, graphics_val, ret = 0;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 	if (!i915_mch_dev)
 		goto out_unlock;
 	dev_priv = i915_mch_dev;
@@ -3416,7 +3416,7 @@ i915_read_mch_val(void)
 	ret = chipset_val + graphics_val;
 
 out_unlock:
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 
 	return ret;
 }
@@ -3432,7 +3432,7 @@ i915_gpu_raise(void)
 	struct inteldrm_softc *dev_priv;
 	bool ret = true;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 	if (!i915_mch_dev) {
 		ret = false;
 		goto out_unlock;
@@ -3443,7 +3443,7 @@ i915_gpu_raise(void)
 		dev_priv->ips.max_delay--;
 
 out_unlock:
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 
 	return ret;
 }
@@ -3460,7 +3460,7 @@ i915_gpu_lower(void)
 	struct inteldrm_softc *dev_priv;
 	bool ret = true;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 	if (!i915_mch_dev) {
 		ret = false;
 		goto out_unlock;
@@ -3471,7 +3471,7 @@ i915_gpu_lower(void)
 		dev_priv->ips.max_delay++;
 
 out_unlock:
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 
 	return ret;
 }
@@ -3489,7 +3489,7 @@ i915_gpu_busy(void)
 	bool ret = false;
 	int i;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 	if (!i915_mch_dev)
 		goto out_unlock;
 	dev_priv = i915_mch_dev;
@@ -3498,7 +3498,7 @@ i915_gpu_busy(void)
 		ret |= !list_empty(&ring->request_list);
 
 out_unlock:
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 
 	return ret;
 }
@@ -3516,7 +3516,7 @@ i915_gpu_turbo_disable(void)
 	struct drm_device *dev;
 	bool ret = true;
 
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 	if (!i915_mch_dev) {
 		ret = false;
 		goto out_unlock;
@@ -3529,7 +3529,7 @@ i915_gpu_turbo_disable(void)
 		ret = false;
 
 out_unlock:
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 
 	return ret;
 }
@@ -3561,9 +3561,9 @@ intel_gpu_ips_init(struct inteldrm_softc *dev_priv)
 {
 	/* We only register the i915 ips part with intel-ips once everything is
 	 * set up, to avoid intel-ips sneaking in and reading bogus values. */
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 	i915_mch_dev = dev_priv;
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 
 //	ips_ping_for_i915_load();
 }
@@ -3571,9 +3571,9 @@ intel_gpu_ips_init(struct inteldrm_softc *dev_priv)
 void
 intel_gpu_ips_teardown(void)
 {
-//	spin_lock_irq(&mchdev_lock);
+	mtx_enter(&mchdev_lock);
 	i915_mch_dev = NULL;
-//	spin_unlock_irq(&mchdev_lock);
+	mtx_leave(&mchdev_lock);
 } 
 
 void
