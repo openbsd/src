@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.23 2013/03/22 10:31:22 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.24 2013/03/22 10:41:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -97,7 +97,7 @@ load_cfg(const char *path, struct cmd_ctx *ctxin, struct causelist *causes)
 		/* Trim \n. */
 		if (buf[len - 1] == '\n')
 			len--;
-		log_debug ("%s: %s", path, buf);
+		log_debug("%s: %.*s", path, (int)len, buf);
 
 		/* Current line is the continuation of the previous one. */
 		if (line != NULL) {
