@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.5 2013/03/22 06:19:56 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.6 2013/03/22 22:51:00 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1306,7 +1306,7 @@ inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 		case DRM_IOCTL_I915_GEM_THROTTLE:
 			return (i915_gem_ring_throttle(dev, file_priv));
 		case DRM_IOCTL_I915_GEM_MMAP:
-			return (i915_gem_gtt_map_ioctl(dev, data, file_priv));
+			return (i915_gem_mmap_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_MMAP_GTT:
 			return (i915_gem_mmap_gtt_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_CREATE:
@@ -1471,57 +1471,6 @@ inteldrm_set_max_obj_size(struct inteldrm_softc *dev_priv)
 	dev_priv->max_gem_obj_size = (dev->gtt_total -
 	    atomic_read(&dev->pin_memory)) * 3 / 4 / 2;
 
-}
-
-int
-i915_gem_gtt_map_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	struct drm_i915_gem_mmap	*args = data;
-	struct drm_obj			*obj;
-	struct drm_i915_gem_object	*obj_priv;
-	vaddr_t				 addr;
-	voff_t				 offset;
-	vsize_t				 end, nsize;
-	int				 ret;
-
-	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
-	if (obj == NULL)
-		return (EBADF);
-
-	/* Since we are doing purely uvm-related operations here we do
-	 * not need to hold the object, a reference alone is sufficient
-	 */
-	obj_priv = to_intel_bo(obj);
-
-	/* Check size. Also ensure that the object is not purgeable */
-	if (args->size == 0 || args->offset > obj->size || args->size >
-	    obj->size || (args->offset + args->size) > obj->size ||
-	    i915_gem_object_is_purgeable(obj_priv)) {
-		ret = EINVAL;
-		goto done;
-	}
-
-	end = round_page(args->offset + args->size);
-	offset = trunc_page(args->offset);
-	nsize = end - offset;
-
-	/*
-	 * We give our reference from object_lookup to the mmap, so only
-	 * must free it in the case that the map fails.
-	 */
-	addr = 0;
-	ret = uvm_map(&curproc->p_vmspace->vm_map, &addr, nsize, &obj->uobj,
-	    offset, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
-
-done:
-	if (ret == 0)
-		args->addr_ptr = (uint64_t) addr + (args->offset & PAGE_MASK);
-	else
-		drm_unref(&obj->uobj);
-
-	return (ret);
 }
 
 struct drm_obj *

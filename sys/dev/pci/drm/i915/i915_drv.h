@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.4 2013/03/22 06:19:56 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.5 2013/03/22 22:51:00 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1037,7 +1037,7 @@ int	i915_gem_get_aperture_ioctl(struct drm_device *, void *,
 	    struct drm_file *);
 int	i915_gem_set_tiling(struct drm_device *, void *, struct drm_file *);
 int	i915_gem_get_tiling(struct drm_device *, void *, struct drm_file *);
-int	i915_gem_gtt_map_ioctl(struct drm_device *, void *, struct drm_file *);
+int	i915_gem_mmap_ioctl(struct drm_device *, void *, struct drm_file *);
 int	i915_gem_mmap_gtt_ioctl(struct drm_device *, void *, struct drm_file *);
 int	i915_gem_madvise_ioctl(struct drm_device *, void *, struct drm_file *);
 int	i915_gem_sw_finish_ioctl(struct drm_device *, void *, struct drm_file *);
