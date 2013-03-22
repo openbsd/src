@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.22 2011/08/20 19:02:28 sthen Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.23 2013/03/22 14:25:31 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -116,7 +116,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] [-f file]\n",
+	fprintf(stderr, "usage: %s [-dnv] [-D macro=value]"
+	    " [-f file] [-s socket]\n",
 	    __progname);
 	exit(1);
 }
@@ -130,14 +131,16 @@ main(int argc, char *argv[])
 	int			 ipforwarding;
 	int			 mib[4];
 	size_t			 len;
+	char			*sockname;
 
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
+	sockname = OSPF6D_SOCKET;
 
 	log_init(1);	/* log to stderr until daemonized */
 	log_verbose(1);
 
-	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "cdD:f:s:nv")) != -1) {
 		switch (ch) {
 		case 'c':
 			opts |= OSPFD_OPT_FORCE_DEMOTE;
@@ -155,6 +158,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			opts |= OSPFD_OPT_NOACTION;
+			break;
+		case 's':
+			sockname = optarg;
 			break;
 		case 'v':
 			if (opts & OSPFD_OPT_VERBOSE)
@@ -193,6 +199,7 @@ main(int argc, char *argv[])
 	/* parse config file */
 	if ((ospfd_conf = parse_config(conffile, opts)) == NULL )
 		exit(1);
+	ospfd_conf->csock = sockname;
 
 	if (ospfd_conf->opts & OSPFD_OPT_NOACTION) {
 		if (ospfd_conf->opts & OSPFD_OPT_VERBOSE)
@@ -300,7 +307,7 @@ ospfd_shutdown(void)
 	if (rde_pid)
 		kill(rde_pid, SIGTERM);
 
-	control_cleanup();
+	control_cleanup(ospfd_conf->csock);
 	kr_shutdown();
 	carp_demote_shutdown();
 

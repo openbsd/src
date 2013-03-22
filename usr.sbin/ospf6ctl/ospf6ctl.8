@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6ctl.8,v 1.7 2010/05/10 18:46:07 sthen Exp $
+.\"	$OpenBSD: ospf6ctl.8,v 1.8 2013/03/22 14:25:31 sthen Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2010 $
+.Dd $Mdocdate: March 22 2013 $
 .Dt OSPF6CTL 8
 .Os
 .Sh NAME
@@ -30,6 +30,17 @@ The
 program controls the
 .Xr ospf6d 8
 daemon.
+.Pp
+The following option is available:
+.Bl -tag -width Ds
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/ospfd.sock
+to communicate with
+.Xr ospfd 8 .
+.El
 Commands may be abbreviated to the minimum unambiguous prefix; for example,
 .Cm s s
 for

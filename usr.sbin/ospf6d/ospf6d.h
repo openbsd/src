@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.26 2013/01/14 14:39:38 florian Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.27 2013/03/22 14:25:31 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -375,6 +375,7 @@ struct ospfd_conf {
 	int			flags;
 	u_int8_t		border;
 	u_int8_t		redistribute;
+	char			*csock;
 };
 
 /* kroute */
