@@ -359,15 +359,15 @@ ngx_http_log_write(ngx_http_request_t *r, ngx_http_log_t *log, u_char *buf,
     ssize_t              n;
     ngx_err_t            err;
 
+#if (NGX_ZLIB)
+    ngx_http_log_buf_t  *buffer;
+#endif
+
 #if (NGX_ENABLE_SYSLOG)
     n = 0;
     if (log->syslog_on) {
         syslog(log->priority, "%.*s", (int)len, buf);
     }
-#endif
-
-#if (NGX_ZLIB)
-    ngx_http_log_buf_t  *buffer;
 #endif
 
     if (log->script == NULL) {
