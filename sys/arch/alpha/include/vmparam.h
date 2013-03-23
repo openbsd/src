@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.21 2011/05/30 22:25:20 oga Exp $ */
+/* $OpenBSD: vmparam.h,v 1.22 2013/03/23 16:12:18 deraadt Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  * consider doing that at some point, but it might require changes
  * to the exec code.
  */
-#define	USRTEXT		NBPG
+#define	USRTEXT		PAGE_SIZE
 #define	USRSTACK	((vaddr_t)0x0000000200000000)		/* 8G */
 
 /*
@@ -116,7 +116,7 @@
 #define VM_PIE_MAX_ADDR		0x80000000
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vaddr_t)0xfffffffc00000000)	/* Virt. pg table */

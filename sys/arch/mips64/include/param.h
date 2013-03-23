@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.30 2011/09/08 03:40:32 guenther Exp $ */
+/*      $OpenBSD: param.h,v 1.31 2013/03/23 16:12:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -32,13 +32,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: Utah Hdr: machparam.h 1.11 89/08/14
- *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MIPS64_PARAM_H_
-#define _MIPS64_PARAM_H_
+#ifndef	_MIPS64_PARAM_H_
+#define	_MIPS64_PARAM_H_
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -48,60 +45,46 @@
 #define	ALIGN(p)		_ALIGN(p)
 #define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
-#define PAGE_SIZE	(1 << PAGE_SHIFT)
-#define PAGE_MASK	(PAGE_SIZE - 1)
-
-#define	NBPG		PAGE_SIZE
-#define	PGOFSET		PAGE_MASK
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 #define	PGSHIFT		PAGE_SHIFT
+#define	PGOFSET		PAGE_MASK
 
 #define	KERNBASE	0xffffffff80000000L	/* start of kernel virtual */
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
-#define USPACE		(16384)
 #ifdef _KERNEL
+
+#define	NBPG		PAGE_SIZE
+
+#define	USPACE		16384
 #define	UPAGES		(USPACE >> PAGE_SHIFT)
 #if PAGE_SHIFT > 12
 #define	USPACE_ALIGN	0
 #else
 #define	USPACE_ALIGN	(2 * PAGE_SIZE)	/* align to an even TLB boundary */
 #endif
-#endif	/* _KERNEL */
 
-/*
- * Constants related to network buffer management.
- */
 #define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
 
-#ifdef _KERNEL
+#ifndef MSGBUFSIZE
 #if PAGE_SHIFT > 12
 #define	MSGBUFSIZE	PAGE_SIZE
 #else
 #define	MSGBUFSIZE	8192
 #endif
+#endif
 
-/* Default malloc arena size */
-#define	NKMEMPAGES_MIN_DEFAULT  ((8 * 1024 * 1024) >> PAGE_SHIFT)
+/*
+ * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
 #define	NKMEMPAGES_MAX_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
-#endif /* _KERNEL */
 
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define dbtob(x)	((x) << DEV_BSHIFT)
-
-#ifdef _KERNEL
 #ifndef _LOCORE
 #define	DELAY(n)	delay(n)
 void delay(int);
 #endif
+
 #endif /* _KERNEL */
 
-#endif /* !_MIPS64_PARAM_H_ */
+#endif /* _MIPS64_PARAM_H_ */

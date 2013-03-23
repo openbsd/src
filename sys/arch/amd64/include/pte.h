@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.8 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: pte.h,v 1.9 2013/03/23 16:12:20 deraadt Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -96,6 +96,9 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define L3_FRAME	(L4_FRAME|L3_MASK)
 #define L2_FRAME	(L3_FRAME|L2_MASK)
 #define L1_FRAME	(L2_FRAME|L1_MASK)
+
+#define	x86_round_pdr(x) \
+	((((unsigned long)(x)) + (NBPD_L2 - 1)) & ~(NBPD_L2 - 1))
 
 /*
  * PDE/PTE bits. These are no different from their i386 counterparts.

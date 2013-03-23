@@ -1,5 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 2011/03/23 16:54:35 pirofti Exp $	*/
-/*	$NetBSD: param.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$OpenBSD: param.h,v 1.3 2013/03/23 16:12:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,16 +30,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)param.h	5.8 (Berkeley) 6/28/91
  */
 
-/*
- * Machine dependent constants for landisk
- */
-
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
 #include <sh/param.h>
 

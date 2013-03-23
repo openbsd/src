@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.10 2011/05/30 22:25:21 oga Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.11 2013/03/23 16:12:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,9 +99,9 @@
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)(USRSTACK))
-#define VM_MAX_ADDRESS		((vaddr_t)(0-(UPAGES*NBPG)))
+#define VM_MAX_ADDRESS		((vaddr_t)(0-(UPAGES*PAGE_SIZE)))
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-NBPG))
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

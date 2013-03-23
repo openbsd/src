@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.84 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.85 2013/03/23 16:12:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -245,8 +245,8 @@ extern void need_resched(struct cpu_info *);
  * Boot arguments stuff
  */
 
-#define	BOOTARG_LEN	(NBPG)
-#define	BOOTARG_OFF	(0x10000)
+#define	BOOTARG_LEN	PAGE_SIZE
+#define	BOOTARG_OFF	0x10000
 
 /*
  * CTL_MACHDEP definitions.

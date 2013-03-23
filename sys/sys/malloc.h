@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.101 2013/02/07 11:06:42 mikeb Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.102 2013/03/23 16:12:30 deraadt Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -353,15 +353,33 @@ struct kmembuckets {
 	u_int64_t kb_couldfree;	/* over high water mark and could free */
 };
 
+/*
+ * Constants for setting the parameters of the kernel memory allocator.
+ *
+ * 2 ** MINBUCKET is the smallest unit of memory that will be
+ * allocated. It must be at least large enough to hold a pointer.
+ *
+ * Units of memory less or equal to MAXALLOCSAVE will permanently
+ * allocate physical memory; requests for these size pieces of
+ * memory are quite fast. Allocations greater than MAXALLOCSAVE must
+ * always allocate and free physical memory; requests for these
+ * size allocations should be done infrequently as they will be slow.
+ *
+ * Constraints: PAGE_SIZE <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
+ * MAXALLOCSIZE must be a power of two.
+ */
+#define MINBUCKET	4		/* 4 => min allocation of 16 bytes */
+
 #ifdef _KERNEL
 
 #define	MINALLOCSIZE	(1 << MINBUCKET)
+#define	MAXALLOCSAVE	(2 * PAGE_SIZE)
 
 /*
  * Turn virtual addresses into kmem map indices
  */
-#define	kmemxtob(alloc)	(kmembase + (alloc) * NBPG)
-#define	btokmemx(addr)	(((caddr_t)(addr) - kmembase) / NBPG)
+#define	kmemxtob(alloc)	(kmembase + (alloc) * PAGE_SIZE)
+#define	btokmemx(addr)	(((caddr_t)(addr) - kmembase) / PAGE_SIZE)
 #define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> PAGE_SHIFT])
 
 extern struct kmemstats kmemstats[];

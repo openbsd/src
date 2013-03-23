@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.37 2011/09/08 03:40:32 guenther Exp $ */
-/*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
+/*	$OpenBSD: param.h,v 1.38 2013/03/23 16:12:28 deraadt Exp $ */
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -30,16 +30,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)param.h	5.8 (Berkeley) 6/28/91
  */
 
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
-
-/*
- * Machine dependent constants for VAX.
- */
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
 #define	_MACHINE	vax
 #define	MACHINE		"vax"
@@ -51,13 +45,11 @@
 #define	ALIGN(p)		_ALIGN(p)
 #define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
-#define	PGSHIFT		12			/* LOG2(NBPG) */
-#define	NBPG		(1 << PGSHIFT)		/* (1 << PGSHIFT) bytes/page */
-#define	PGOFSET		(NBPG - 1)               /* byte offset into page */
-
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 #define	VAX_PGSHIFT	9
 #define	VAX_NBPG	(1 << VAX_PGSHIFT)
@@ -66,53 +58,32 @@
 
 #define	KERNBASE	0x80000000		/* start of kernel virtual */
 
-#define	DEV_BSHIFT	9		               /* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
+#ifdef _KERNEL
 
-#define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-#define	MAXBSIZE	0x4000		/* max FS block size - XXX */
+#define	NBPG		PAGE_SIZE		/* bytes/page */
 
-#define	UPAGES		2		/* pages of u-area */
-#define USPACE		(NBPG*UPAGES)
-#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
-#define	REDZONEADDR	(VAX_NBPG*3)	/* Must be > sizeof(struct user) */
+#define	UPAGES		2			/* pages of u-area */
+#define	USPACE		(UPAGES * PAGE_SIZE)
+#define	USPACE_ALIGN	(0)			/* u-area alignment 0-none */
+#define	REDZONEADDR	(VAX_NBPG*3)		/* Must be > sizeof(struct user) */
 
-#ifndef MSGBUFSIZE
-#define MSGBUFSIZE	8192		/* default message buffer size */
+#define	NMBCLUSTERS	768			/* map size, max cluster allocation */
+
+#ifndef	MSGBUFSIZE
+#define	MSGBUFSIZE	(2 * PAGE_SIZE)		/* default message buffer size */
 #endif
 
 /*
- * Constants related to network buffer management.
- */
-#define	NMBCLUSTERS	768		/* map size, max cluster allocation */
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
-
-/*
- * Some macros for units conversion
- */
-
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
 
 /* MD conversion macros */
 #define	vax_atop(x)	(((unsigned)(x) + VAX_PGOFSET) >> VAX_PGSHIFT)
 #define	vax_btop(x)	(((unsigned)(x)) >> VAX_PGSHIFT)
 
-#define       ovbcopy(x,y,z)  bcopy(x, y, z)
-
-#ifdef _KERNEL
+#define	ovbcopy(x,y,z)	bcopy(x, y, z)
 
 #include <machine/intr.h>
 

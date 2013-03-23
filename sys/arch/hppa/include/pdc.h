@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.36 2013/03/23 16:12:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -94,7 +94,7 @@
 #define	IODC_IOSIZ	(16 * 1024)
 
 #define	PDC_ALIGNMENT	__attribute__ ((__aligned__(64)))
-#define	PDC_STACKSIZE	(4*NBPG)
+#define	PDC_STACKSIZE	(4 * PAGE_SIZE)
 
 /*
  * The PDC Entry Points and their arguments...

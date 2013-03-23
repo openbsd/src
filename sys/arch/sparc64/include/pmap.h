@@ -72,7 +72,7 @@
 
 #define HOLESHIFT	(43)
 
-#define PTSZ	(NBPG/8)
+#define PTSZ	(PAGE_SIZE/8)
 #define PDSZ	(PTSZ)
 #define STSZ	(PTSZ)
 

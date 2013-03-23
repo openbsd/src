@@ -1,5 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2005/09/12 23:05:05 miod Exp $	*/
-/*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 2013/03/23 16:12:24 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
+
 #ifdef	_KERNEL
 #ifndef	_LOCORE
 #include <machine/cpu.h>
@@ -40,12 +42,11 @@
 
 #include <powerpc/param.h>
 
-/*
- * Machine dependent constants for macppc (32-bit only currently)
- */
 #define	MACHINE		"macppc"
 #define	_MACHINE	macppc
 
 #define	KERNBASE	0x100000
 
-#define MSGBUFSIZE	(NBPG*2)
+#define	MSGBUFSIZE	(2 * PAGE_SIZE)
+
+#endif /* _MACHINE_PARAM_H_ */

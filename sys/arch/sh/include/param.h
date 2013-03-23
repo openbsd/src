@@ -1,5 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 2011/09/08 03:40:32 guenther Exp $	*/
-/*	$NetBSD: param.h,v 1.15 2006/08/28 13:43:35 yamt Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 2013/03/23 16:12:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -32,15 +31,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)param.h	5.8 (Berkeley) 6/28/91
  */
 
-/*
- * SuperH dependent constants.
- */
-
-#ifndef _SH_PARAM_H_
+#ifndef	_SH_PARAM_H_
 #define	_SH_PARAM_H_
 
 #define	_MACHINE_ARCH	sh
@@ -54,6 +47,10 @@
 #include <sh/cpu.h>
 #endif
 
+#define	ALIGNBYTES		_ALIGNBYTES
+#define	ALIGN(p)		_ALIGN(p)
+#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
+
 /*
  * We use 4K pages on the sh3/sh4.  Override the PAGE_* definitions
  * to be compile-time constants.
@@ -61,26 +58,22 @@
 #define	PAGE_SHIFT		12
 #define	PAGE_SIZE		(1 << PAGE_SHIFT)
 #define	PAGE_MASK		(PAGE_SIZE - 1)
-
 #define	PGSHIFT			PAGE_SHIFT
-#define	NBPG			PAGE_SIZE
 #define	PGOFSET			PAGE_MASK
 
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
+#ifdef _KERNEL
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#define	NBPG			PAGE_SIZE
+
+#endif
 
 /*
  * u-space.
  */
-#define	UPAGES		3		/* pages of u-area */
-#define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
+#define	UPAGES		3			/* pages of u-area */
+#define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
 #define	USPACE_ALIGN	(0)
+
 #if UPAGES == 1
 #error "too small u-area"
 #elif UPAGES == 2
@@ -89,28 +82,20 @@
 #undef	P1_STACK	/* kernel stack is P3-area */
 #endif
 
+#ifdef _KERNEL
+
+#define	NMBCLUSTERS	4096			/* map size, max cluster allocation */
+
 #ifndef MSGBUFSIZE
-#define	MSGBUFSIZE	NBPG		/* default message buffer size */
+#define	MSGBUFSIZE	PAGE_SIZE		/* default message buffer size */
 #endif
 
-/* pages to disk blocks */
-#define	ctod(x)		((x) << (PAGE_SHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PAGE_SHIFT - DEV_BSHIFT))
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-
 /*
- * Constants related to network buffer management.
- */
-#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
-#endif /* !_SH_PARAM_H_ */
+#endif /* _KERNEL */
+
+#endif /* _SH_PARAM_H_ */

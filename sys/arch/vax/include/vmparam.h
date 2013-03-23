@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.31 2011/05/30 22:25:23 oga Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.32 2013/03/23 16:12:28 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  * resides kernel.
  * */
 
-#define USRTEXT		NBPG
+#define USRTEXT		PAGE_SIZE
 #define USRSTACK	KERNBASE
 
 /*

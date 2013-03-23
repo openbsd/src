@@ -1,5 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2011/09/20 22:02:13 miod Exp $	*/
-/*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
+/*	$OpenBSD: param.h,v 1.18 2013/03/23 16:12:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -36,40 +35,43 @@
 #ifndef	_ARM_PARAM_H_
 #define	_ARM_PARAM_H_
 
-#define MACHINE_ARCH	"arm"
-#define _MACHINE_ARCH	arm
+#define	MACHINE_ARCH	"arm"
+#define	_MACHINE_ARCH	arm
+#define	MID_MACHINE	MID_ARM6
 
-/*
- * Machine dependent constants for ARM6+ processors
- */
-/* These are defined in the Port File before it includes
- * this file. */
+#define	ALIGNBYTES		_ALIGNBYTES
+#define	ALIGN(p)		_ALIGN(p)
+#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
-#define	PAGE_SHIFT	12		/* LOG2(NBPG) */
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)	/* bytes/page */
-#define	NBPG		(1 << PAGE_SHIFT)	/* bytes/page */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-#define PGOFSET		(PAGE_SIZE - 1)
+#define	PGSHIFT		PAGE_SHIFT
+#define	PGOFSET		PAGE_MASK
+
+#ifdef _KERNEL
+
 #define	NPTEPG		(PAGE_SIZE/(sizeof (pt_entry_t)))
 
-#define UPAGES          2               /* pages of u-area */
-#define USPACE          (UPAGES * PAGE_SIZE) /* total size of u-area */
-#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
+#define	NBPG		PAGE_SIZE
 
-#ifndef MSGBUFSIZE
-#define MSGBUFSIZE	PAGE_SIZE	/* default message buffer size */
+#define	UPAGES		2			/* pages of u-area */
+#define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
+#define	USPACE_ALIGN	0			/* u-area alignment 0-none */
+
+#define	NMBCLUSTERS	4096			/* map size, max cluster allocation */
+
+#ifndef	MSGBUFSIZE
+#define	MSGBUFSIZE	(1 * PAGE_SIZE)		/* default message buffer size */
 #endif
 
 /*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* Constants used to divide the USPACE area */
-
 /*
  * The USPACE area contains :
  * 1. the user structure for the process
@@ -94,73 +96,27 @@
  * overflows.
  */
 
-#define FPCONTEXTSIZE			(0x100)
-#define USPACE_SVC_STACK_TOP		(USPACE)
-#define USPACE_SVC_STACK_BOTTOM		(USPACE_SVC_STACK_TOP - 0x1000)
+#define	FPCONTEXTSIZE			(0x100)
+#define	USPACE_SVC_STACK_TOP		(USPACE)
+#define	USPACE_SVC_STACK_BOTTOM		(USPACE_SVC_STACK_TOP - 0x1000)
 #define	USPACE_UNDEF_STACK_TOP		(USPACE_SVC_STACK_BOTTOM - 0x10)
-#define USPACE_UNDEF_STACK_BOTTOM	(sizeof(struct user) + FPCONTEXTSIZE + 10)
+#define	USPACE_UNDEF_STACK_BOTTOM	(sizeof(struct user) + FPCONTEXTSIZE + 10)
 
-#ifdef _KERNEL
 #ifndef _LOCORE
 void	delay (unsigned);
-#define DELAY(x)	delay(x)
-#endif
-#endif
-
-/*
- * Machine dependent constants for all ARM processors
- */
-
-/*
- * For KERNEL code:
- *	MACHINE must be defined by the individual port.  This is so that
- *	uname returns the correct thing, etc.
- *
- *	MACHINE_ARCH may be defined by individual ports as a temporary
- *	measure while we're finishing the conversion to ELF.
- *
- * For non-KERNEL code:
- *	If ELF, MACHINE and MACHINE_ARCH are forced to "arm/armeb".
- */
-
-
-#define	MID_MACHINE	MID_ARM6
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
-
-/* ARM-specific macro to align a stack pointer (downwards). */
-#define STACKALIGNBYTES		(8 - 1)
-#define STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-
-#ifndef MAXPHYS
-#define	MAXPHYS		(64 * 1024)		/* max I/O transfer size */
+#define	DELAY(x)	delay(x)
 #endif
 
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)	((x) << (PAGE_SHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PAGE_SHIFT - DEV_BSHIFT))
+#define	ovbcopy bcopy
 
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((db) << DEV_BSHIFT)
-
-/*
- * Constants related to network buffer management.
- */
-#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
-
-#define ovbcopy bcopy
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-#include <sys/param.h>
+#if !defined(_LOCORE)
 #include <machine/cpu.h>
 #endif
 
-#endif	/* _ARM_PARAM_H_ */
+/* ARM-specific macro to align a stack pointer (downwards). */
+#define	STACKALIGNBYTES		(8 - 1)
+#define	STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)
+
+#endif /* _KERNEL */
+
+#endif /* _ARM_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.6 2012/03/19 19:11:26 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.7 2013/03/23 16:12:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -23,21 +23,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
-/*
- * Machine dependent constants.
- */
 #define	MACHINE		"sgi"
 #define	_MACHINE	sgi
-#define MACHINE_ARCH	"mips64"
-#define _MACHINE_ARCH	mips64
-
-#define MID_MACHINE	MID_MIPS64	/* None but has to be defined */
+#define	MACHINE_ARCH	"mips64"
+#define	_MACHINE_ARCH	mips64
+#define	MID_MACHINE	MID_MIPS64	/* None but has to be defined */
 
 #ifdef _KERNEL
 #ifndef PAGE_SHIFT

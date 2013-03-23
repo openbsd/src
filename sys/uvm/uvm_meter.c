@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.29 2010/07/22 17:31:39 thib Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.30 2013/03/23 16:12:31 deraadt Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -55,8 +55,15 @@
 #endif
 
 /*
- * maxslp: ???? XXXCDC
+ * The time for a process to be blocked before being very swappable.
+ * This is a number of seconds which the system takes as being a non-trivial
+ * amount of real time.  You probably shouldn't change this;
+ * it is used in subtle ways (fractions and multiples of it are, that is, like
+ * half of a ``long time'', almost a long time, etc.)
+ * It is related to human patience and other factors which don't really
+ * change over time.
  */
+#define	MAXSLP	20
 
 int maxslp = MAXSLP;	/* patchable ... */
 struct loadavg averunnable;

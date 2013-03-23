@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: biosvar.h,v 1.17 2012/10/09 12:58:07 jsing Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.18 2013/03/23 16:12:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -33,8 +33,8 @@
 #define _MACHINE_BIOSVAR_H_
 
 	/* some boxes put apm data seg in the 2nd page */
-#define	BOOTARG_OFF	(NBPG*2)
-#define	BOOTARG_LEN	(NBPG*1)
+#define	BOOTARG_OFF	(PAGE_SIZE * 2)
+#define	BOOTARG_LEN	(PAGE_SIZE * 1)
 #define	BOOTBIOS_ADDR	(0x7c00)
 #define	BOOTBIOS_MAXSEC	((1 << 28) - 1)
 

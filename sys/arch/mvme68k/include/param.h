@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2006/06/11 20:48:13 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.22 2013/03/23 16:12:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -32,18 +32,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Utah $Hdr: machparam.h 1.16 92/12/20$
- *
- *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MACHINE_PARAM_H_
+#ifndef	_MACHINE_PARAM_H_
 #define	_MACHINE_PARAM_H_
 
-/*
- * Machine dependent constants for mvme68k, based on HP9000 series 300.
- */
 #define	_MACHINE 	"mvme68k"
 #define	MACHINE 	"mvme68k"
 
@@ -52,7 +45,7 @@
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x00010000	/* start of kernel text */
 
-#define MSGBUFSIZE	4096
+#define	MSGBUFSIZE	4096
 
 #include <m68k/param.h>
 
@@ -61,4 +54,4 @@ extern void delay(int);
 #define DELAY(n)	delay(n)
 #endif	/* _KERNEL && !_LOCORE */
 
-#endif	/* _MACHINE_PARAM_H_ */
+#endif /* _MACHINE_PARAM_H_ */

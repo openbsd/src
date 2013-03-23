@@ -1,5 +1,4 @@
-/*	$OpenBSD: param.h,v 1.32 2011/09/08 03:40:32 guenther Exp $	*/
-/*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
+/*	$OpenBSD: param.h,v 1.33 2013/03/23 16:12:26 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,12 +40,8 @@
 #endif	/* _LOCORE */
 #endif
 
-/*
- * Machine dependent constants for PowerPC (32-bit only currently)
- */
 #define	MACHINE_ARCH	"powerpc"
 #define	_MACHINE_ARCH	powerpc
-
 #define	MID_MACHINE	MID_POWERPC
 
 #define	ALIGNBYTES		_ALIGNBYTES
@@ -54,50 +49,26 @@
 #define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PAGE_SHIFT	12
-#define	PAGE_SIZE	4096
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 #define	PGSHIFT		PAGE_SHIFT
-#define	NBPG		PAGE_SIZE
 #define	PGOFSET		PAGE_MASK
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#ifdef _KERNEL
 
-#define	UPAGES		4
-#define	USPACE		(UPAGES * NBPG)
-#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
+#define	NBPG		PAGE_SIZE
+
+#define	UPAGES		4			/* pages of u-area */
+#define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
+#define	USPACE_ALIGN	0			/* u-area alignment 0-none */
+
+#define	NMBCLUSTERS	4096			/* map size, max cluster allocation */
 
 /*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
-
-/*
- * Constants related to network buffer management.
- */
-#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
-
-/*
- * pages ("clicks") to disk blocks
- */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/*
- * bytes to disk blocks
- */
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-
-/*
- * Segment handling stuff
- */
-#define	PPC_SEGMENT_LENGTH	0x10000000
-#define	PPC_SEGMENT_MASK	0xf0000000
 
 /*
  * Fixed segments
@@ -109,15 +80,10 @@
 #define	PPC_USER_ADDR	((void *)(PPC_USER_SR << ADDR_SR_SHIFT))
 
 /*
- * Some system constants
- */
-#ifndef	NPMAPS
-#define	NPMAPS		32768	/* Number of pmaps in system */
-#endif
-
-/*
  * Temporary kludge till we do (ov)bcopy in assembler
  */
 #define	ovbcopy	bcopy
 
-#endif	/* _POWERPC_PARAM_H_ */
+#endif /* _KERNEL */
+
+#endif /* _POWERPC_PARAM_H_ */

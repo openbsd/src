@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2011/11/01 21:20:55 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.36 2013/03/23 16:12:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -148,22 +148,22 @@ extern	int iiomapsize;
 /* physical memory sections for mvme141 */
 #define	INTIOBASE_141	(0xfff50000)
 #define	INTIOTOP_141	(0xfffc0000)
-#define	INTIOSIZE_141	((INTIOTOP_141-INTIOBASE_141)/NBPG)
+#define	INTIOSIZE_141	((INTIOTOP_141-INTIOBASE_141)/PAGE_SIZE)
 
 /* physical memory sections for mvme147 */
 #define	INTIOBASE_147	(0xfffe0000)
 #define	INTIOTOP_147	(0xfffe5000)
-#define	INTIOSIZE_147	((INTIOTOP_147-INTIOBASE_147)/NBPG)
+#define	INTIOSIZE_147	((INTIOTOP_147-INTIOBASE_147)/PAGE_SIZE)
 
 /* physical memory sections for mvme16x */
 #define	INTIOBASE_162	(0xfff00000)
 #define	INTIOTOP_162	(0xfffd0000)		/* was 0xfff50000 */
-#define	INTIOSIZE_162	((INTIOTOP_162-INTIOBASE_162)/NBPG)
+#define	INTIOSIZE_162	((INTIOTOP_162-INTIOBASE_162)/PAGE_SIZE)
 
 /* physical memory sections for mvme165 */
 #define	INTIOBASE_165	(0xfff90000)
 #define	INTIOTOP_165	(0xffff0000)
-#define	INTIOSIZE_165	((INTIOTOP_165-INTIOBASE_165)/NBPG)
+#define	INTIOSIZE_165	((INTIOTOP_165-INTIOBASE_165)/PAGE_SIZE)
 
 /*
  * Internal IO space (iiomapsize).

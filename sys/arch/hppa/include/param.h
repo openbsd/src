@@ -1,6 +1,6 @@
-/*	$OpenBSD: param.h,v 1.42 2012/06/26 16:18:14 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.43 2013/03/23 16:12:22 deraadt Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1988-1994, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -19,18 +19,15 @@
  *
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
- *
- * 	Utah $Hdr: param.h 1.18 94/12/16$
  */
+
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #endif
-
-/*
- * Machine dependent constants for PA-RISC.
- */
 
 #define	_MACHINE	hppa
 #define	MACHINE		"hppa"
@@ -42,47 +39,37 @@
 #define	ALIGN(p)		_ALIGN(p)
 #define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
-#define	PAGE_SIZE	4096
-#define	PAGE_MASK	(PAGE_SIZE-1)
 #define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		12		/* LOG2(NBPG) */
+#define	KERNBASE	0x00000000		/* start of kernel virtual */
 
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
+#ifdef _KERNEL
 
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#define	NBPG		PAGE_SIZE		/* bytes/page */
 
-#define	MACHINE_STACK_GROWS_UP	1	/* stack grows to higher addresses */
+#define	UPAGES		4			/* pages of u-area */
+#define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
+#define	USPACE_ALIGN	0			/* u-area alignment 0-none */
 
-#define	USPACE		(4 * NBPG)	/* pages for user struct and kstack */
-#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
+#define	NMBCLUSTERS	4096			/* map size, max cluster allocation */
 
 #ifndef	MSGBUFSIZE
-#define	MSGBUFSIZE	2*NBPG		/* default message buffer size */
+#define	MSGBUFSIZE	(2 * PAGE_SIZE)		/* default message buffer size */
 #endif
 
 /*
- * Constants related to network buffer management.
- */
-#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
-/* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#endif /* _KERNEL */
 
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-
+#define	MACHINE_STACK_GROWS_UP	1		/* stack grows to higher addresses */
 #define	__SWAP_BROKEN
+
+#endif /* _MACHINE_PARAM_H_ */

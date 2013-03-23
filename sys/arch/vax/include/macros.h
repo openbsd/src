@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.18 2012/11/25 22:35:19 miod Exp $ */
+/*	$OpenBSD: macros.h,v 1.19 2013/03/23 16:12:28 deraadt Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ strlen(const char *cp)
         return  ret;
 }
 
+#if 0
 static __inline__ char *
 strncat(char *cp, const char *c2, size_t count)
 {
@@ -74,6 +75,7 @@ strncat(char *cp, const char *c2, size_t count)
                         : "r0","r1","r2","r3","r4","r5","memory","cc");
         return  cp;
 }
+#endif
 
 static __inline__ char *
 strncpy(char *cp, const char *c2, size_t len)

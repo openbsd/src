@@ -1,4 +1,5 @@
-/*	$OpenBSD: param.h,v 1.40 2008/09/19 20:18:01 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.41 2013/03/23 16:12:25 deraadt Exp $ */
+
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -32,17 +33,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Utah $Hdr: machparam.h 1.11 89/08/14$
- *
- *	@(#)param.h	7.8 (Berkeley) 6/28/91
  */
 
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
-#define  _MACHINE       mvme88k
-#define  MACHINE        "mvme88k"
+#define	_MACHINE       mvme88k
+#define	MACHINE        "mvme88k"
 
 #include <m88k/param.h>
 
@@ -50,7 +47,7 @@
  * The Bug uses the bottom 64KB. The kernel will allocate PTEs to map this
  * space, but the kernel must be linked with a start address past these 64KB.
  */
-#define KERNBASE	0x00000000	/* start of kernel virtual */
+#define	KERNBASE	0x00000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x00010000	/* start of kernel text */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -67,4 +64,5 @@ extern int brdtyp;
 #define BRD_8120	0x8120
 
 #endif	/* _KERNEL || _STANDALONE */
-#endif /* !_MACHINE_PARAM_H_ */
+
+#endif /* _MACHINE_PARAM_H_ */

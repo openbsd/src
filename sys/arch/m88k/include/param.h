@@ -1,4 +1,5 @@
-/*	$OpenBSD: param.h,v 1.15 2013/01/01 01:02:19 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.16 2013/03/23 16:12:24 deraadt Exp $ */
+
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -32,13 +33,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Utah $Hdr: machparam.h 1.11 89/08/14$
- *
- *	@(#)param.h	7.8 (Berkeley) 6/28/91
  */
-#ifndef _M88K_PARAM_H_
-#define _M88K_PARAM_H_
+
+#ifndef	_M88K_PARAM_H_
+#define	_M88K_PARAM_H_
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -46,63 +44,48 @@
 #endif	/* _LOCORE */
 #endif
 
-#define  _MACHINE_ARCH  m88k
-#define  MACHINE_ARCH   "m88k"
-#define  MID_MACHINE    MID_M88K
+#define	_MACHINE_ARCH  m88k
+#define	MACHINE_ARCH   "m88k"
+#define	MID_MACHINE    MID_M88K
 
 #define	ALIGNBYTES		_ALIGNBYTES
 #define	ALIGN(p)		_ALIGN(p)
 #define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
-#define NBPG		(1 << PGSHIFT)	/* bytes/page */
-#define PGOFSET		(NBPG-1)	/* byte offset into page */
-#define PGSHIFT		12		/* LOG2(NBPG) */
-
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_SIZE		/* byte offset into page */
 
-#define NPTEPG		(PAGE_SIZE / (sizeof(pt_entry_t)))
+#define	NPTEPG		(PAGE_SIZE / (sizeof(pt_entry_t)))
 
-#define DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define DEV_BSIZE	(1 << DEV_BSHIFT)
-#define BLKDEV_IOSIZE	2048
-#define MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#ifdef _KERNEL
 
-#define UPAGES		2		/* pages of u-area */
-#define USPACE		(UPAGES * NBPG)
-#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
+#define	NBPG		PAGE_SIZE
+
+#define	UPAGES		2			/* pages of u-area */
+#define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
+#define	USPACE_ALIGN	0			/* u-area alignment 0-none */
+
+#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
+
+#ifndef MSGBUFSIZE
+#define	MSGBUFSIZE	PAGE_SIZE
+#endif
 
 /*
- * Constants related to network buffer management.
- */
-#define NMBCLUSTERS	4096		/* map size, max cluster allocation */
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * Mmaximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
-
-#define MSGBUFSIZE	PAGE_SIZE
-
-/* pages ("clicks") to disk blocks */
-#define ctod(x)			((x) << (PGSHIFT - DEV_BSHIFT))
-#define dtoc(x)			((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* bytes to disk blocks */
-#define btodb(x)		((x) >> DEV_BSHIFT)
-#define dbtob(x)		((x) << DEV_BSHIFT)
 
 /*
  * Get interrupt glue.
  */
 #include <machine/intr.h>
 
-#ifdef   _KERNEL
-
-#define  DELAY(x)             delay(x)
+#define	DELAY(x)	delay(x)
 
 #if !defined(_LOCORE)
 extern void delay(int);
@@ -129,4 +112,5 @@ extern int cputyp;
 #endif
 
 #endif	/* _KERNEL */
-#endif	/* !_M88K_PARAM_H_ */
+
+#endif /* _M88K_PARAM_H_ */

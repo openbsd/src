@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.48 2012/08/30 18:14:26 mpi Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.49 2013/03/23 16:12:26 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -93,6 +93,19 @@ struct pmap {
 	int pm_refs;		/* ref count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
+
+/*
+ * Segment handling stuff
+ */
+#define	PPC_SEGMENT_LENGTH	0x10000000
+#define	PPC_SEGMENT_MASK	0xf0000000
+
+/*
+ * Some system constants
+ */
+#ifndef	NPMAPS
+#define	NPMAPS		32768	/* Number of pmaps in system */
+#endif
 
 typedef	struct pmap *pmap_t;
 
