@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.129 2013/03/20 04:26:11 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.130 2013/03/23 21:22:20 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -467,19 +467,16 @@ struct kinfo_proc {
 do {									\
 	memset((kp), 0, sizeof(*(kp)));					\
 									\
-	if (show_addresses)						\
+	if (show_addresses) {						\
 		(kp)->p_paddr = PTRTOINT64(paddr);			\
-	(kp)->p_fd = PTRTOINT64((p)->p_fd);				\
-	(kp)->p_stats = 0;						\
-	(kp)->p_limit = PTRTOINT64((pr)->ps_limit);			\
-	(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);			\
-	if (show_addresses)						\
+		(kp)->p_fd = PTRTOINT64((p)->p_fd);			\
+		(kp)->p_stats = 0;					\
+		(kp)->p_limit = PTRTOINT64((pr)->ps_limit);		\
+		(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);		\
 		(kp)->p_sigacts = PTRTOINT64((p)->p_sigacts);		\
-	if (show_addresses)						\
 		(kp)->p_sess = PTRTOINT64((pg)->pg_session);		\
-	if (show_addresses)						\
 		(kp)->p_ru = PTRTOINT64((pr)->ps_ru);			\
-									\
+	}								\
 	(kp)->p_exitsig = (p)->p_exitsig;				\
 	(kp)->p_flag = (p)->p_flag | (pr)->ps_flags | P_INMEM;		\
 									\
@@ -940,11 +937,6 @@ int sysctl_vnode(char *, size_t *, struct proc *);
 int sysctl_doprof(int *, u_int, void *, size_t *, void *, size_t);
 #endif
 int sysctl_dopool(int *, u_int, char *, size_t *);
-
-void fill_file2(struct kinfo_file2 *, struct file *, struct filedesc *,
-    int, struct vnode *, struct proc *, struct proc *);
-
-void fill_kproc(struct proc *, struct kinfo_proc *, int);
 
 int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		     struct proc *);

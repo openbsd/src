@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.232 2013/03/20 03:43:08 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.233 2013/03/23 21:22:20 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -120,6 +120,10 @@ int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
+
+void fill_file2(struct kinfo_file2 *, struct file *, struct filedesc *,
+    int, struct vnode *, struct proc *, struct proc *, int);
+void fill_kproc(struct proc *, struct kinfo_proc *, int, int);
 
 int (*cpu_cpuspeed)(int *);
 void (*cpu_setperf)(int);
@@ -1058,10 +1062,10 @@ sysctl_file(char *where, size_t *sizep, struct proc *p)
 #ifndef SMALL_KERNEL
 void
 fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
-	  int fd, struct vnode *vp, struct proc *pp, struct proc *p)
+	  int fd, struct vnode *vp, struct proc *pp, struct proc *p,
+	  int show_pointers)
 {
 	struct vattr va;
-	int show_pointers = suser(curproc, 0) == 0;
 
 	memset(kf, 0, sizeof(*kf));
 
@@ -1240,6 +1244,7 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 	char *dp = where;
 	int arg, i, error = 0, needed = 0;
 	u_int op;
+	int show_pointers;
 
 	if (namelen > 4)
 		return (ENOTDIR);
@@ -1256,11 +1261,13 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 	if (elem_size < 1)
 		return (EINVAL);
 
+	show_pointers = suser(curproc, 0) == 0;
+
 	kf = malloc(sizeof(*kf), M_TEMP, M_WAITOK);
 
 #define FILLIT(fp, fdp, i, vp, pp) do {				\
 	if (buflen >= elem_size && elem_count > 0) {		\
-		fill_file2(kf, fp, fdp, i, vp, pp, p);		\
+		fill_file2(kf, fp, fdp, i, vp, pp, p, show_pointers);	\
 		error = copyout(kf, dp, outsize);		\
 		if (error)					\
 			break;					\
@@ -1383,6 +1390,7 @@ sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 	int arg, buflen, doingzomb, elem_size, elem_count;
 	int error, needed, op;
 	int dothreads = 0;
+	int show_pointers;
 
 	dp = where;
 	buflen = where != NULL ? *sizep : 0;
@@ -1398,6 +1406,8 @@ sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
 
 	dothreads = op & KERN_PROC_SHOW_THREADS;
 	op &= ~KERN_PROC_SHOW_THREADS;
+
+	show_pointers = suser(curproc, 0) == 0;
 
 	if (where != NULL)
 		kproc = malloc(sizeof(*kproc), M_TEMP, M_WAITOK);
@@ -1473,7 +1483,7 @@ again:
 
 		if ((p->p_flag & P_THREAD) == 0) {
 			if (buflen >= elem_size && elem_count > 0) {
-				fill_kproc(p, kproc, 0);
+				fill_kproc(p, kproc, 0, show_pointers);
 				/* Update %cpu for all threads */
 				if (!dothreads) {
 					TAILQ_FOREACH(pp, &pr->ps_threads,
@@ -1497,7 +1507,7 @@ again:
 			continue;
 
 		if (buflen >= elem_size && elem_count > 0) {
-			fill_kproc(p, kproc, 1);
+			fill_kproc(p, kproc, 1, show_pointers);
 			error = copyout(kproc, dp, elem_size);
 			if (error)
 				goto err;
@@ -1532,13 +1542,13 @@ err:
  * Fill in a kproc structure for the specified process.
  */
 void
-fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread)
+fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread,
+    int show_pointers)
 {
 	struct process *pr = p->p_p;
 	struct session *s = pr->ps_session;
 	struct tty *tp;
 	struct timeval ut, st;
-	int show_pointers = suser(curproc, 0) == 0;
 
 	FILL_KPROC(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
 	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_sigacts, isthread,
