@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.86 2012/11/01 00:55:38 jsing Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.87 2013/03/23 16:08:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -258,8 +258,8 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 		 * routine.  However, the El Torito spec says that the
 		 * BIOS will work in 2,048-byte sectors.  So shift back.
 		 */
-		off >>= (ISO_DEFAULT_BLOCK_SHIFT - DEV_BSHIFT);
-		nsect >>= (ISO_DEFAULT_BLOCK_SHIFT - DEV_BSHIFT);
+		off /= (ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE);
+		nsect /= (ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE);
 	}
 
 	/*

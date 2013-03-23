@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.20 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.21 2013/03/23 16:08:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -59,6 +59,7 @@
  *	Utah $Hdr: pdc.c 1.8 92/03/14$
  */
 
+#include <sys/param.h>
 #include <sys/time.h>
 #include "libsa.h"
 #include <sys/reboot.h>
@@ -68,7 +69,6 @@
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/nvm.h>
-#include <machine/param.h>
 #include <machine/cpufunc.h>
 
 #include "dev_hppa.h"
@@ -147,7 +147,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 #endif
 
 	blk += dp->fsoff;
-	blk <<= DEV_BSHIFT;
+	blk *= DEV_BSIZE;
 	if ((pzdev->pz_class & PCL_CLASS_MASK) == PCL_SEQU) {
 		/* rewind and re-read to seek */
 		if (blk < dp->last_blk) {

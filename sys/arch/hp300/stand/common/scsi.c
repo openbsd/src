@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.8 2011/08/18 20:02:58 miod Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.9 2013/03/23 16:08:28 deraadt Exp $	*/
 /*	$NetBSD: scsi.c,v 1.7 1997/01/30 10:32:57 thorpej Exp $	*/
 
 /*
@@ -403,8 +403,8 @@ scsi_tt_read(int ctlr, int slave, u_char *buf, u_int len, daddr32_t blk,
 	cdb.lbahm = blk >> 16;
 	cdb.lbalm = blk >> 8;
 	cdb.lbal = blk;
-	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
-	cdb.lenl = nblk >> DEV_BSHIFT;
+	cdb.lenh = nblk / (256 * DEV_BSIZE);
+	cdb.lenl = nblk / DEV_BSIZE;
 	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
 	    buf, len, DATA_IN_PHASE));
 }
@@ -422,8 +422,8 @@ scsi_tt_write(int ctlr, int slave, u_char *buf, u_int len, daddr32_t blk,
 	cdb.lbahm = blk >> 16;
 	cdb.lbalm = blk >> 8;
 	cdb.lbal = blk;
-	cdb.lenh = nblk >> (8 + DEV_BSHIFT);
-	cdb.lenl = nblk >> DEV_BSHIFT;
+	cdb.lenh = nblk / (256 * DEV_BSIZE);
+	cdb.lenl = nblk / DEV_BSIZE;
 	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
 	    buf, len, DATA_OUT_PHASE));
 }
