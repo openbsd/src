@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.75 2012/12/18 21:28:45 millert Exp $	 */
+/* $OpenBSD: machine.c,v 1.76 2013/03/23 21:12:32 tedu Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -464,7 +464,7 @@ format_comm(struct kinfo_proc *kp)
 char *
 format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid)
 {
-	char *p_wait, waddr[sizeof(void *) * 2 + 3];	/* Hexify void pointer */
+	char *p_wait;
 	struct kinfo_proc *pp;
 	struct handle *hp;
 	int cputime;
@@ -480,15 +480,9 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid)
 	/* calculate the base for cpu percentages */
 	pct = pctdouble(pp->p_pctcpu);
 
-	if (pp->p_wchan) {
-		if (pp->p_wmesg)
-			p_wait = pp->p_wmesg;
-		else {
-			snprintf(waddr, sizeof(waddr), "%llx",
-			    (unsigned long long)pp->p_wchan);
-			p_wait = waddr;
-		}
-	} else
+	if (pp->p_wmesg[0])
+		p_wait = pp->p_wmesg;
+	else
 		p_wait = "-";
 
 	/* format this entry */
