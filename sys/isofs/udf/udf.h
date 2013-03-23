@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.15 2013/03/23 16:01:27 deraadt Exp $	*/
+/*	$OpenBSD: udf.h,v 1.16 2013/03/23 17:12:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -80,6 +80,10 @@ struct umount {
 #define	UDF_MNT_USES_VAT	0x02	/* Indicates a VAT must be used */
 #define	UDF_MNT_USES_META	0x04	/* Indicates we are using a Metadata partition*/
 
+#define	VTOU(vp)	((struct unode *)((vp)->v_data))
+
+#ifdef _KERNEL
+
 struct udf_dirstream {
 	struct unode	*node;
 	struct umount	*ump;
@@ -96,7 +100,6 @@ struct udf_dirstream {
 };
 
 #define	VFSTOUDFFS(mp)	((struct umount *)((mp)->mnt_data))
-#define	VTOU(vp)	((struct unode *)((vp)->v_data))
 
 /*
  * The block layer refers to things in terms of 512 byte blocks by default.
@@ -105,6 +108,7 @@ struct udf_dirstream {
  */
 #define	RDSECTOR(devvp, sector, size, bp) \
 	bread(devvp, ((sector) << ump->um_bshift) / DEV_BSIZE, size, bp)
+
 
 static __inline int
 udf_readlblks(struct umount *ump, int sector, int size, struct buf **bp)
@@ -134,3 +138,6 @@ int udf_hashrem(struct unode *);
 int udf_checktag(struct desc_tag *, uint16_t);
 
 typedef	uint16_t unicode_t;
+
+#endif /* _KERNEL */
+

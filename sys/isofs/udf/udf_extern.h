@@ -1,9 +1,11 @@
-/*	$OpenBSD: udf_extern.h,v 1.11 2010/12/21 20:14:43 thib Exp $	*/
+/*	$OpenBSD: udf_extern.h,v 1.12 2013/03/23 17:12:57 deraadt Exp $	*/
 
 /*
  * Written by Pedro Martelletto <pedro@ambientworks.net> in February 2005.
  * Public domain.
  */
+
+#ifdef _KERNEL
 
 /*
  * udf_subr.c
@@ -63,3 +65,5 @@ extern struct pool udf_ds_pool;
 
 /* Set of UDF vnode operations.*/
 extern struct vops udf_vops;
+
+#endif /* _KERNEL */
