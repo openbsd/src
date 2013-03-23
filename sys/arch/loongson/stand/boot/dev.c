@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.3 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: dev.c,v 1.4 2013/03/23 15:50:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -44,10 +44,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include "libsa.h"
 #include <sys/disklabel.h>
-#include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/pmon.h>
 
