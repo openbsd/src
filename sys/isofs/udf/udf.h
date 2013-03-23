@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.14 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: udf.h,v 1.15 2013/03/23 16:01:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -104,7 +104,7 @@ struct udf_dirstream {
  * Can the block layer be forced to use a different block size?
  */
 #define	RDSECTOR(devvp, sector, size, bp) \
-	bread(devvp, sector << (ump->um_bshift - DEV_BSHIFT), size, bp)
+	bread(devvp, ((sector) << ump->um_bshift) / DEV_BSIZE, size, bp)
 
 static __inline int
 udf_readlblks(struct umount *ump, int sector, int size, struct buf **bp)
