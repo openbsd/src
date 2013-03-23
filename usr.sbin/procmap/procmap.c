@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.44 2013/03/20 15:24:17 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.45 2013/03/23 10:46:04 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -202,12 +202,14 @@ int
 main(int argc, char *argv[])
 {
 	char errbuf[_POSIX2_LINE_MAX], *kmem = NULL, *kernel = NULL;
-	struct kinfo_proc *kproc;
+	struct kinfo_proc *kprocs, *kproc;
 	struct sum total_sum;
-	int many, ch, rc;
+	int many, ch, rc, i, nprocs;
 	kvm_t *kd;
 	pid_t pid = -1;
 	gid_t gid;
+	int mib[2];
+	size_t len;
 
 	while ((ch = getopt(argc, argv, "AaD:dlmM:N:p:Prsvx")) != -1) {
 		switch (ch) {
@@ -279,22 +281,26 @@ main(int argc, char *argv[])
 	/* start by opening libkvm */
 	kd = kvm_openfiles(kernel, kmem, NULL, O_RDONLY, errbuf);
 
-	if (kernel == NULL && kmem == NULL)
-		if (setresgid(gid, gid, gid) == -1)
-			err(1, "setresgid");
-
 	if (kd == NULL)
 		errx(1, "%s", errbuf);
 
-	/* get "bootstrap" addresses from kernel */
-	load_symbols(kd);
 
-	memset(&total_sum, 0, sizeof(total_sum));
-
+	nprocs = 0;
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_NPROCS;
+	len = sizeof(nprocs);
+	sysctl(mib, 2, &nprocs, &len, NULL, 0);
+	kprocs = calloc(nprocs, sizeof(struct kinfo_proc));
+	if (!kprocs)
+		err(1, "calloc");
+	/*
+	 * we need to do this to get secret pointers via sysctl
+	 * before we drop the kmem group
+	 */
+	i = 0;
 	do {
-		struct sum sum;
-
-		memset(&sum, 0, sizeof(sum));
+		if (i == nprocs)
+			errx(1, "too many procs at once");
 
 		if (pid == -1) {
 			if (argc == 0)
@@ -307,9 +313,7 @@ main(int argc, char *argv[])
 		}
 
 		/* find the process id */
-		if (pid == 0)
-			kproc = NULL;
-		else {
+		if (pid != 0) {
 			kproc = kvm_getprocs(kd, KERN_PROC_PID, pid,
 			    sizeof(struct kinfo_proc), &rc);
 			if (kproc == NULL || rc == 0) {
@@ -318,21 +322,43 @@ main(int argc, char *argv[])
 				pid = -1;
 				continue;
 			}
+			memcpy(&kprocs[i], kproc, sizeof(struct kinfo_proc));
 		}
+		pid = -1;
+
+		i++;
+	} while (argc > 0);
+
+	nprocs = i;
+
+	if (kernel == NULL && kmem == NULL)
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
+
+	/* get "bootstrap" addresses from kernel */
+	load_symbols(kd);
+
+	memset(&total_sum, 0, sizeof(total_sum));
+
+	for (i = 0; i < nprocs; i++) {
+		struct sum sum;
+
+		memset(&sum, 0, sizeof(sum));
+
+		kproc = &kprocs[i];
 
 		/* dump it */
 		if (many) {
 			if (kproc)
-				printf("process %d:\n", pid);
+				printf("process %d:\n", kproc->p_pid);
 			else
 				printf("kernel:\n");
 		}
 
-		process_map(kd, pid, kproc, &sum);
+		process_map(kd, kproc ? kproc->p_pid : 0, kproc, &sum);
 		if (print_amap)
 			print_sum(&sum, &total_sum);
-		pid = -1;
-	} while (argc > 0);
+	}
 
 	if (print_amap)
 		print_sum(&total_sum, NULL);
