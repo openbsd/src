@@ -1,4 +1,4 @@
-/*	$OpenBSD: lf.c,v 1.7 2004/04/07 18:24:20 mickey Exp $	*/
+/*	$OpenBSD: lf.c,v 1.8 2013/03/24 19:20:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -26,10 +26,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include "libsa.h"
 #include <machine/pdc.h>
 #include <machine/iomod.h>
-#include <machine/param.h>
 
 #include "dev_hppa.h"
 

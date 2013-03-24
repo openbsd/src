@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.3 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: rd.c,v 1.4 2013/03/24 19:20:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -16,10 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include "libsa.h"
 #include <machine/cpu.h>
-#include <machine/param.h>
 #include <sys/exec_elf.h>
 
 static	off_t rdoffs;

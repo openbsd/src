@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.9 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: wd.c,v 1.10 2013/03/24 19:20:34 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -30,10 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stdint.h>
-
-#include <machine/param.h>
 
 #include "libsa.h"
 #include "wdvar.h"
