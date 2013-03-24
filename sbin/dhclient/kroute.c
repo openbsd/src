@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.45 2013/03/21 04:43:17 deraadt Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.46 2013/03/24 12:53:20 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -33,6 +33,7 @@ struct in_addr active_addr;
 int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
 void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
+void	delete_route(int, int, struct rt_msghdr *);
 
 #define	ROUTE_LABEL_NONE		1
 #define	ROUTE_LABEL_NOT_DHCLIENT	2
@@ -85,7 +86,7 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 	struct sockaddr_dl *sdl;
 	struct sockaddr_in *sa_in;
 	struct sockaddr_rtlabel *sa_rl;
-	int s, seqno = 0, rlen;
+	int s;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -145,10 +146,11 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 		switch (check_route_label(sa_rl)) {
 		case ROUTE_LABEL_DHCLIENT_OURS:
 			/* Always delete routes we labeled. */
-			goto delete;
+			delete_route(s, imsg->rdomain, rtm);
+			continue;
 		case ROUTE_LABEL_DHCLIENT_DEAD:
 			if (imsg->zapzombies)
-				goto delete;
+				delete_route(s, imsg->rdomain, rtm);
 			continue;
 		case ROUTE_LABEL_DHCLIENT_LIVE:
 		case ROUTE_LABEL_DHCLIENT_UNKNOWN:
@@ -178,8 +180,8 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 				case IFT_ISO88024:
 				case IFT_ISO88025:
 				case IFT_CARP:
-					/* Delete it. */
-					goto delete;
+					delete_route(s, imsg->rdomain, rtm);
+					break;
 				default:
 					break;
 				}
@@ -195,25 +197,11 @@ priv_flush_routes_and_arp_cache(struct imsg_flush_routes *imsg)
 			if (sa_in && 
 			    sa_in->sin_addr.s_addr == INADDR_ANY &&
 			    rtm->rtm_tableid == imsg->rdomain &&
-			    strcmp(imsg->ifname, ifname) == 0)
-				goto delete;
+			    strcmp(imsg->ifname, ifname) == 0) {
+				delete_route(s, imsg->rdomain, rtm);
+				continue;
+			}
 		}
-
-		continue;
-
-delete:
-		rtm->rtm_type = RTM_DELETE;
-		rtm->rtm_seq = seqno;
-		rtm->rtm_tableid = imsg->rdomain;
-
-		rlen = write(s, next, rtm->rtm_msglen);
-		if (rlen == -1) {
-			if (errno != ESRCH)
-				error("RTM_DELETE write: %s", strerror(errno));
-		} else if (rlen < (int)rtm->rtm_msglen)
-			error("short RTM_DELETE write (%d)\n", rlen);
-
-		seqno++;
 	}
 
 	close(s);
@@ -817,4 +805,22 @@ populate_rti_info(struct sockaddr **rti_info, struct rt_msghdr *rtm)
 		} else
 			rti_info[i] = NULL;
 	}
+}
+
+void
+delete_route(int s, int rdomain, struct rt_msghdr *rtm)
+{
+	static int seqno;
+	int rlen;
+
+	rtm->rtm_type = RTM_DELETE;
+	rtm->rtm_tableid = rdomain;
+	rtm->rtm_seq = seqno++;
+
+	rlen = write(s, (char *)rtm, rtm->rtm_msglen);
+	if (rlen == -1) {
+		if (errno != ESRCH)
+			error("RTM_DELETE write: %s", strerror(errno));
+	} else if (rlen < (int)rtm->rtm_msglen)
+		error("short RTM_DELETE write (%d)\n", rlen);
 }
