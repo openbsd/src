@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.330 2013/03/22 18:45:36 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.331 2013/03/24 09:19:51 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2013 $
+.Dd $Mdocdate: March 24 2013 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3016,6 +3016,7 @@ The following variables are available, where appropriate:
 .It Li "mouse_standard_flag" Ta "Pane mouse standard flag"
 .It Li "mouse_utf8_flag" Ta "Pane mouse UTF-8 flag"
 .It Li "pane_active" Ta "1 if active pane"
+.It Li "pane_current_command" Ta "Current command if available"
 .It Li "pane_current_path" Ta "Current path if available"
 .It Li "pane_dead" Ta "1 if pane is dead"
 .It Li "pane_height" Ta "Height of pane"
