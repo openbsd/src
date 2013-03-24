@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.99 2012/12/05 23:20:16 deraadt Exp $ */
+/*	$OpenBSD: acx.c,v 1.100 2013/03/24 17:02:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2762,10 +2762,7 @@ acx_set_tim(struct ieee80211com *ic, int aid, int set)
 	struct acx_tmplt_tim tim;
 	u_int8_t *ep;
 
-	if (set)
-		setbit(ic->ic_tim_bitmap, aid & ~0xc000);
-	else
-		clrbit(ic->ic_tim_bitmap, aid & ~0xc000);
+	ieee80211_set_tim(ic, aid, set);
 
 	bzero(&tim, sizeof(tim));
 	ep = ieee80211_add_tim(tim.data.u_mem, ic);
