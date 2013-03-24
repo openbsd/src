@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.392 2013/03/22 16:00:26 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.393 2013/03/24 09:18:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -669,6 +669,7 @@ struct mode_key_table {
 #define MODE_MOUSE_UTF8 0x100
 #define MODE_MOUSE_SGR 0x200
 #define MODE_BRACKETPASTE 0x400
+#define MODE_FOCUSON 0x800
 
 #define ALL_MOUSE_MODES (MODE_MOUSE_STANDARD|MODE_MOUSE_BUTTON|MODE_MOUSE_ANY)
 
@@ -930,6 +931,7 @@ struct window_pane {
 	int		 flags;
 #define PANE_REDRAW 0x1
 #define PANE_DROP 0x2
+#define PANE_FOCUSED 0x4
 
 	char		*cmd;
 	char		*shell;

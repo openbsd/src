@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.155 2013/03/22 10:40:22 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.156 2013/03/24 09:18:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -221,7 +221,7 @@ tty_start_tty(struct tty *tty)
 		tty_puts(tty, "\033[?1000l\033[?1006l\033[?1005l");
 
 	if (tty_term_has(tty->term, TTYC_XT))
-		tty_puts(tty, "\033[c\033[>4;1m");
+		tty_puts(tty, "\033[c\033[>4;1m\033[?1004l");
 
 	tty->cx = UINT_MAX;
 	tty->cy = UINT_MAX;
