@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.48 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.49 2013/03/24 09:58:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,8 +35,8 @@ enum cmd_retval	 cmd_new_session_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_new_session_entry = {
 	"new-session", "new",
-	"dn:s:t:x:y:", 0, 1,
-	"[-d] [-n window-name] [-s session-name] " CMD_TARGET_SESSION_USAGE
+	"AdDn:s:t:x:y:", 0, 1,
+	"[-AdD] [-n window-name] [-s session-name] " CMD_TARGET_SESSION_USAGE
 	" [-x width] [-y height] [command]",
 	CMD_STARTSERVER|CMD_CANTNEST|CMD_SENDENVIRON,
 	NULL,
@@ -76,6 +76,10 @@ cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 		}
 		if (session_find(newname) != NULL) {
+			if (args_has(args, 'A')) {
+				return (cmd_attach_session(cmdq, newname,
+				    args_has(args, 'D'), 0));
+			}
 			cmdq_error(cmdq, "duplicate session: %s", newname);
 			return (CMD_RETURN_ERROR);
 		}

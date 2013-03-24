@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.398 2013/03/24 09:57:59 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.399 2013/03/24 09:58:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1839,6 +1839,9 @@ extern const struct cmd_entry cmd_switch_client_entry;
 extern const struct cmd_entry cmd_unbind_key_entry;
 extern const struct cmd_entry cmd_unlink_window_entry;
 extern const struct cmd_entry cmd_up_pane_entry;
+
+/* cmd-attach-session.c */
+enum cmd_retval	 cmd_attach_session(struct cmd_q *, const char*, int, int);
 
 /* cmd-list.c */
 struct cmd_list	*cmd_list_parse(int, char **, const char *, u_int, char **);
