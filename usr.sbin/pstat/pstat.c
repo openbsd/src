@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.82 2012/12/18 21:28:45 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.83 2013/03/24 15:09:12 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -126,6 +126,8 @@ void	vnode_header(void);
 void	vnode_print(struct vnode *, struct vnode *);
 void	vnodemode(void);
 
+int	hideroot;
+
 int
 main(int argc, char *argv[])
 {
@@ -136,6 +138,8 @@ main(int argc, char *argv[])
 	extern int optind;
 	gid_t gid;
 	int i, need_nlist;
+
+	hideroot = getuid();
 
 	while ((ch = getopt(argc, argv, "d:TM:N:fiknstv")) != -1)
 		switch (ch) {
@@ -450,8 +454,9 @@ vnode_print(struct vnode *avnode, struct vnode *vp)
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
-	(void)printf("%0*lx %s %5s %4d %4u", 2 * (int)sizeof(long),
-	    (long)avnode, type, flags, vp->v_usecount, vp->v_holdcnt);
+	(void)printf("%0*lx %s %5s %4d %4u",
+	    2 * (int)sizeof(long), hideroot ? 0L : (long)avnode,
+	    type, flags, vp->v_usecount, vp->v_holdcnt);
 }
 
 void
@@ -952,7 +957,8 @@ ttyprt(struct itty *tp)
 	if (j == 0)
 		state[j++] = '-';
 	state[j] = '\0';
-	(void)printf("%-6s %8lx", state, (u_long)tp->t_session & 0xffffffff);
+	(void)printf("%-6s %8lx", state,
+		hideroot ? 0 : (u_long)tp->t_session & 0xffffffff);
 	(void)printf("%6d ", tp->t_pgrp_pg_id);
 	switch (tp->t_line) {
 	case TTYDISC:
@@ -1027,7 +1033,8 @@ filemode(void)
 	(void)printf("%*s TYPE       FLG  CNT  MSG  %*s  OFFSET\n",
 	    2 * (int)sizeof(long), "LOC", 2 * (int)sizeof(long), "DATA");
 	for (; nfile-- > 0; kf++) {
-		(void)printf("%0*llx ", 2 * (int)sizeof(long), kf->f_fileaddr);
+		(void)printf("%0*llx ", 2 * (int)sizeof(long),
+		    hideroot ? 0LL : kf->f_fileaddr);
 		(void)printf("%-8.8s", dtypes[
 		    (kf->f_type >= (sizeof(dtypes)/sizeof(dtypes[0])))
 		    ? 0 : kf->f_type]);
@@ -1054,15 +1061,17 @@ filemode(void)
 		(void)printf("%6s  %3ld", flagbuf, (long)kf->f_count);
 		(void)printf("  %3ld", (long)kf->f_msgcount);
 		(void)printf("  %0*lx", 2 * (int)sizeof(long),
-		    (long)kf->f_data);
+		    hideroot ? 0L : (long)kf->f_data);
 
 		if (kf->f_offset == (uint64_t)-1)
 			(void)printf("  *\n");
 		else if (kf->f_offset > INT64_MAX) {
 			/* would have been negative */
-			(void)printf("  %llx\n", (long long)kf->f_offset);
+			(void)printf("  %llx\n",
+			    hideroot ? 0LL : (long long)kf->f_offset);
 		} else
-			(void)printf("  %lld\n", (long long)kf->f_offset);
+			(void)printf("  %lld\n",
+			    hideroot ? 0LL : (long long)kf->f_offset);
 	}
 }
 

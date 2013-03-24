@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.73 2012/11/30 14:40:03 mikeb Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.74 2013/03/24 15:09:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -123,6 +123,15 @@ void systracetrans(struct kinfo_file2 *);
 void vtrans(struct kinfo_file2 *);
 const char *inet6_addrstr(struct in6_addr *);
 int signame_to_signum(char *);
+void hide(void *p);
+
+int hideroot;
+
+void
+hide(void *p)
+{
+	printf("%p", hideroot ? NULL : p);
+}
 
 int
 main(int argc, char *argv[])
@@ -134,6 +143,8 @@ main(int argc, char *argv[])
 	char buf[_POSIX2_LINE_MAX];
 	const char *errstr;
 	int cnt, flags;
+
+	hideroot = getuid();
 
 	arg = -1;
 	what = KERN_FILE_BYPID;
@@ -187,7 +198,7 @@ main(int argc, char *argv[])
 				usage();
 			arg = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr != NULL) {
-				warnx("-p requires a process id, %s: %s", 
+				warnx("-p requires a process id, %s: %s",
 					errstr, optarg);
 				usage();
 			}
@@ -208,7 +219,7 @@ main(int argc, char *argv[])
 				usage();
 			if (!fuser) {
 				if (!(passwd = getpwnam(optarg))) {
-					arg = strtonum(optarg, 0, UID_MAX, 
+					arg = strtonum(optarg, 0, UID_MAX,
 					    &errstr);
 					if (errstr != NULL) {
 						errx(1, "%s: unknown uid",
@@ -441,15 +452,15 @@ vtrans(struct kinfo_file2 *kf)
 		if (oflg) {
 			if (uid == 0 || uid == *procuid)
 				printf(":%-8llu", kf->f_offset);
-			else 
+			else
 				printf(":%-8s", "*");
 		}
 	}
 	if (sflg) {
 		if (uid == 0 || uid == *procuid) {
 			printf(" %8llu %8llu",
-		    	(kf->f_rxfer + kf->f_rwfer),
-		    	(kf->f_rbytes + kf->f_wbytes) / 1024);
+			    (kf->f_rxfer + kf->f_rwfer),
+			    (kf->f_rbytes + kf->f_wbytes) / 1024);
 		} else {
 			printf(" %8s %8s", "*", "*");
 		}
@@ -476,7 +487,9 @@ pipetrans(struct kinfo_file2 *kf)
 	 */
 	maxaddr = (void *)(uintptr_t)MAX(kf->f_data, kf->pipe_peer);
 
-	printf("pipe %p state: %s%s%s", maxaddr,
+	printf("pipe ");
+	hide(maxaddr);
+	printf("state: %s%s%s",
 	    (kf->pipe_state & PIPE_WANTR) ? "R" : "",
 	    (kf->pipe_state & PIPE_WANTW) ? "W" : "",
 	    (kf->pipe_state & PIPE_EOF) ? "E" : "");
@@ -495,7 +508,9 @@ kqueuetrans(struct kinfo_file2 *kf)
 
 	printf(" ");
 
-	printf("kqueue %p %d state: %s%s\n", (void *)(uintptr_t)kf->f_data,
+	printf("kqueue ");
+	hide((void *)(uintptr_t)kf->f_data);
+	printf(" %d state: %s%s\n",
 	    kf->kq_count,
 	    (kf->kq_state & KQ_SEL) ? "S" : "",
 	    (kf->kq_state & KQ_SLEEP) ? "W" : "");
@@ -509,7 +524,9 @@ cryptotrans(struct kinfo_file2 *kf)
 
 	printf(" ");
 
-	printf("crypto %p\n", (void *)(uintptr_t)kf->f_data);
+	printf("crypto ");
+	hide((void *)(uintptr_t)kf->f_data);
+	printf("\n");
 }
 
 void
@@ -519,8 +536,9 @@ systracetrans(struct kinfo_file2 *kf)
 
 	printf(" ");
 
-	printf("systrace %p npol %d\n", (void *)(uintptr_t)kf->f_data,
-	    kf->str_npolicies);
+	printf("systrace ");
+	hide((void *)(uintptr_t)kf->f_data);
+	printf(" npol %d\n", kf->str_npolicies);
 	return;
 }
 
@@ -556,7 +574,7 @@ splice_insert(char type, u_int64_t ptr, struct kinfo_file2 *data)
 {
 	ENTRY entry, *found;
 
-	if (asprintf(&entry.key, "%c%llx", type, ptr) == -1)
+	if (asprintf(&entry.key, "%c%llx", type, hideroot ? 0 : ptr) == -1)
 		err(1, NULL);
 	entry.data = data;
 	if ((found = hsearch(entry, ENTER)) == NULL)
@@ -572,7 +590,7 @@ splice_find(char type, u_int64_t ptr)
 	ENTRY entry, *found;
 	char buf[20];
 
-	snprintf(buf, sizeof(buf), "%c%llx", type, ptr);
+	snprintf(buf, sizeof(buf), "%c%llx", type, hideroot ? 0 : ptr);
 	entry.key = buf;
 	found = hsearch(entry, FIND);
 	return (found != NULL ? found->data : NULL);
@@ -606,7 +624,8 @@ print_inet_details(struct kinfo_file2 *kf)
 	memcpy(&laddr, kf->inp_laddru, sizeof(laddr));
 	memcpy(&faddr, kf->inp_faddru, sizeof(faddr));
 	if (kf->so_protocol == IPPROTO_TCP) {
-		printf(" %p", (void *)(uintptr_t)kf->inp_ppcb);
+		printf(" ");
+		hide((void *)(uintptr_t)kf->inp_ppcb);
 		printf(" %s:%d", laddr.s_addr == INADDR_ANY ? "*" :
 		    inet_ntoa(laddr), ntohs(kf->inp_lport));
 		if (kf->inp_fport) {
@@ -626,8 +645,10 @@ print_inet_details(struct kinfo_file2 *kf)
 			    faddr.s_addr == INADDR_ANY ? "*" :
 			    inet_ntoa(faddr), ntohs(kf->inp_fport));
 		}
-	} else if (kf->so_pcb)
-		printf(" %p", (void *)(uintptr_t)kf->so_pcb);
+	} else if (kf->so_pcb) {
+		printf(" ");
+		hide((void *)(uintptr_t)kf->so_pcb);
+	}
 }
 
 #ifdef INET6
@@ -640,7 +661,8 @@ print_inet6_details(struct kinfo_file2 *kf)
 	memcpy(&laddr6, kf->inp_laddru, sizeof(laddr6));
 	memcpy(&faddr6, kf->inp_faddru, sizeof(faddr6));
 	if (kf->so_protocol == IPPROTO_TCP) {
-		printf(" %p", (void *)(uintptr_t)kf->inp_ppcb);
+		printf(" ");
+		hide((void *)(uintptr_t)kf->inp_ppcb);
 		snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
 		    inet6_addrstr(&laddr6));
 		printf(" %s:%d",
@@ -670,8 +692,10 @@ print_inet6_details(struct kinfo_file2 *kf)
 			    IN6_IS_ADDR_UNSPECIFIED(&faddr6) ? "*" :
 			    xaddrbuf, ntohs(kf->inp_fport));
 		}
-	} else if (kf->so_pcb)
-		printf(" %p", (void *)(uintptr_t)kf->so_pcb);
+	} else if (kf->so_pcb) {
+		printf(" ");
+		hide((void *)(uintptr_t)kf->so_pcb);
+	}
 }
 #endif
 
@@ -737,7 +761,8 @@ socktrans(struct kinfo_file2 *kf)
 		/* print address of pcb and connected pcb */
 		printf("* unix %s", stype);
 		if (kf->so_pcb) {
-			printf(" %p", (void *)(uintptr_t)kf->so_pcb);
+			printf(" ");
+			hide((void *)(uintptr_t)kf->so_pcb);
 			if (kf->unp_conn) {
 				char shoconn[4], *cp;
 
@@ -748,40 +773,40 @@ socktrans(struct kinfo_file2 *kf)
 				if (!(kf->so_state & SS_CANTSENDMORE))
 					*cp++ = '>';
 				*cp = '\0';
-				printf(" %s %p", shoconn,
-				    (void *)(uintptr_t)kf->unp_conn);
+				printf(" %s ", shoconn);
+				hide((void *)(uintptr_t)kf->unp_conn);
 			}
 		}
 		break;
 	case AF_MPLS:
 		/* print protocol number and socket address */
 		printf("* mpls %s", stype);
-		printf(" %d %p", kf->so_protocol,
-		    (void *)(uintptr_t)kf->f_data);
+		printf(" %d ", kf->so_protocol);
+		hide((void *)(uintptr_t)kf->f_data);
 		break;
 	case AF_ROUTE:
 		/* print protocol number and socket address */
 		printf("* route %s", stype);
-		printf(" %d %p", kf->so_protocol,
-		    (void *)(uintptr_t)kf->f_data);
+		printf(" %d ", kf->so_protocol);
+		hide((void *)(uintptr_t)kf->f_data);
 		break;
 	case AF_BLUETOOTH:
 		/* print protocol number and socket address */
 		printf("* bluetooth %s", stype);
-		printf(" %d %p", kf->so_protocol,
-		    (void *)(uintptr_t)kf->f_data);
+		printf(" %d ", kf->so_protocol);
+		hide((void *)(uintptr_t)kf->f_data);
 		break;
 	case AF_NATM:
 		/* print protocol number and socket address */
 		printf("* natm %s", stype);
-		printf(" %d %p", kf->so_protocol,
-		    (void *)(uintptr_t)kf->f_data);
+		printf(" %d ", kf->so_protocol);
+		hide((void *)(uintptr_t)kf->f_data);
 		break;
 	default:
 		/* print protocol number and socket address */
 		printf("* %d %s", kf->so_family, stype);
-		printf(" %d %p", kf->so_protocol,
-		    (void *)(uintptr_t)kf->f_data);
+		printf(" %d ", kf->so_protocol);
+		hide((void *)(uintptr_t)kf->f_data);
 	}
 	if (kf->so_splice != 0 || kf->so_splicelen == -1) {
 		struct kinfo_file2 *from, *to;
