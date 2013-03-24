@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.5 2013/03/24 09:27:19 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.6 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
  * Display panes on a client.
  */
 
-enum cmd_retval	 cmd_display_panes_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_display_panes_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_display_panes_entry = {
 	"display-panes", "displayp",
@@ -37,12 +37,12 @@ const struct cmd_entry cmd_display_panes_entry = {
 };
 
 enum cmd_retval
-cmd_display_panes_exec(struct cmd *self, struct cmd_ctx *ctx)
+cmd_display_panes_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
 	struct client	*c;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 't'), 0)) == NULL)
+	if ((c = cmd_find_client(cmdq, args_get(args, 't'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
 
 	server_set_identify(c);

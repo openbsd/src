@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.64 2013/03/22 10:42:55 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.65 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -194,7 +194,7 @@ server_status_window(struct window *w)
 
 	/*
 	 * This is slightly different. We want to redraw the status line of any
-	 * clients containing this window rather than any where it is the
+	 * clients containing this window rather than anywhere it is the
 	 * current window.
 	 */
 
@@ -563,7 +563,7 @@ int
 server_set_stdin_callback(struct client *c, void (*cb)(struct client *, int,
     void *), void *cb_data, char **cause)
 {
-	if (c == NULL) {
+	if (c == NULL || c->session != NULL) {
 		*cause = xstrdup("no client with stdin");
 		return (-1);
 	}

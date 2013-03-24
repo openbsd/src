@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-commands.c,v 1.9 2013/03/22 10:31:22 nicm Exp $ */
+/* $OpenBSD: cmd-list-commands.c,v 1.10 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
  * List all commands with usages.
  */
 
-enum cmd_retval	 cmd_list_commands_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_list_commands_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_list_commands_entry = {
 	"list-commands", "lscm",
@@ -37,16 +37,16 @@ const struct cmd_entry cmd_list_commands_entry = {
 };
 
 enum cmd_retval
-cmd_list_commands_exec(unused struct cmd *self, struct cmd_ctx *ctx)
+cmd_list_commands_exec(unused struct cmd *self, struct cmd_q *cmdq)
 {
 	const struct cmd_entry 	      **entryp;
 
 	for (entryp = cmd_table; *entryp != NULL; entryp++) {
 		if ((*entryp)->alias != NULL) {
-			ctx->print(ctx, "%s (%s) %s", (*entryp)->name,
+			cmdq_print(cmdq, "%s (%s) %s", (*entryp)->name,
 			    (*entryp)->alias, (*entryp)->usage);
 		} else {
-			ctx->print(ctx, "%s %s", (*entryp)->name,
+			cmdq_print(cmdq, "%s %s", (*entryp)->name,
 			    (*entryp)->usage);
 		}
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.19 2013/03/24 09:27:19 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.20 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,7 +26,7 @@
  * Break pane off into a window.
  */
 
-enum cmd_retval	 cmd_break_pane_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_break_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_break_pane_entry = {
 	"break-pane", "breakp",
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_break_pane_entry = {
 };
 
 enum cmd_retval
-cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
+cmd_break_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct winlink		*wl;
@@ -54,11 +54,11 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	const char		*template;
 	char			*cp;
 
-	if ((wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp)) == NULL)
+	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
 		return (CMD_RETURN_ERROR);
 
 	if (window_count_panes(wl->window) == 1) {
-		ctx->error(ctx, "can't break with only one pane");
+		cmdq_error(cmdq, "can't break with only one pane");
 		return (CMD_RETURN_ERROR);
 	}
 
@@ -97,14 +97,14 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 			template = BREAK_PANE_TEMPLATE;
 
 		ft = format_create();
-		if ((c = cmd_find_client(ctx, NULL, 1)) != NULL)
+		if ((c = cmd_find_client(cmdq, NULL, 1)) != NULL)
 			format_client(ft, c);
 		format_session(ft, s);
 		format_winlink(ft, s, wl);
 		format_window_pane(ft, wp);
 
 		cp = format_expand(ft, template);
-		ctx->print(ctx, "%s", cp);
+		cmdq_print(cmdq, "%s", cp);
 		free(cp);
 
 		format_free(ft);

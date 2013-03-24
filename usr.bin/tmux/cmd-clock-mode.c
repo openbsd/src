@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-clock-mode.c,v 1.7 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-clock-mode.c,v 1.8 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
  * Enter clock mode.
  */
 
-enum cmd_retval	 cmd_clock_mode_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_clock_mode_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_clock_mode_entry = {
 	"clock-mode", NULL,
@@ -37,12 +37,12 @@ const struct cmd_entry cmd_clock_mode_entry = {
 };
 
 enum cmd_retval
-cmd_clock_mode_exec(struct cmd *self, struct cmd_ctx *ctx)
+cmd_clock_mode_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct window_pane	*wp;
 
-	if (cmd_find_pane(ctx, args_get(args, 't'), NULL, &wp) == NULL)
+	if (cmd_find_pane(cmdq, args_get(args, 't'), NULL, &wp) == NULL)
 		return (CMD_RETURN_ERROR);
 
 	window_pane_set_mode(wp, &window_clock_mode);

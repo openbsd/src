@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.18 2013/03/24 09:30:41 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.19 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -30,7 +30,7 @@
  * Saves a paste buffer to a file.
  */
 
-enum cmd_retval	 cmd_save_buffer_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_save_buffer_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_save_buffer_entry = {
 	"save-buffer", "saveb",
@@ -53,7 +53,7 @@ const struct cmd_entry cmd_show_buffer_entry = {
 };
 
 enum cmd_retval
-cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
+cmd_save_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct client		*c;
@@ -70,20 +70,20 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	if (!args_has(args, 'b')) {
 		if ((pb = paste_get_top(&global_buffers)) == NULL) {
-			ctx->error(ctx, "no buffers");
+			cmdq_error(cmdq, "no buffers");
 			return (CMD_RETURN_ERROR);
 		}
 	} else {
 		buffer = args_strtonum(args, 'b', 0, INT_MAX, &cause);
 		if (cause != NULL) {
-			ctx->error(ctx, "buffer %s", cause);
+			cmdq_error(cmdq, "buffer %s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
 		}
 
 		pb = paste_get_index(&global_buffers, buffer);
 		if (pb == NULL) {
-			ctx->error(ctx, "no buffer %d", buffer);
+			cmdq_error(cmdq, "no buffer %d", buffer);
 			return (CMD_RETURN_ERROR);
 		}
 	}
@@ -93,22 +93,20 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	else
 		path = args->argv[0];
 	if (strcmp(path, "-") == 0) {
-		c = ctx->cmdclient;
-		if (c != NULL)
+		c = cmdq->client;
+		if (c == NULL) {
+			cmdq_error(cmdq, "can't write to stdout");
+			return (CMD_RETURN_ERROR);
+		}
+		if (c->session == NULL || (c->flags & CLIENT_CONTROL))
 			goto do_stdout;
-		c = ctx->curclient;
-		if (c->flags & CLIENT_CONTROL)
-			goto do_stdout;
-		if (c != NULL)
-			goto do_print;
-		ctx->error(ctx, "can't write to stdout");
-		return (CMD_RETURN_ERROR);
+		goto do_print;
 	}
 
-	c = ctx->cmdclient;
+	c = cmdq->client;
 	if (c != NULL)
 		wd = c->cwd;
-	else if ((s = cmd_current_session(ctx, 0)) != NULL) {
+	else if ((s = cmd_current_session(cmdq, 0)) != NULL) {
 		wd = options_get_string(&s->options, "default-path");
 		if (*wd == '\0')
 			wd = s->cwd;
@@ -127,11 +125,11 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 		f = fopen(path, "wb");
 	umask(mask);
 	if (f == NULL) {
-		ctx->error(ctx, "%s: %s", path, strerror(errno));
+		cmdq_error(cmdq, "%s: %s", path, strerror(errno));
 		return (CMD_RETURN_ERROR);
 	}
 	if (fwrite(pb->data, 1, pb->size, f) != pb->size) {
-		ctx->error(ctx, "%s: fwrite error", path);
+		cmdq_error(cmdq, "%s: fwrite error", path);
 		fclose(f);
 		return (CMD_RETURN_ERROR);
 	}
@@ -146,7 +144,7 @@ do_stdout:
 
 do_print:
 	if (pb->size > (INT_MAX / 4) - 1) {
-		ctx->error(ctx, "buffer too big");
+		cmdq_error(cmdq, "buffer too big");
 		return (CMD_RETURN_ERROR);
 	}
 	msg = NULL;
@@ -165,7 +163,7 @@ do_print:
 		msg = xrealloc(msg, 1, msglen);
 
 		strvisx(msg, start, size, VIS_OCTAL|VIS_TAB);
-		ctx->print(ctx, "%s", msg);
+		cmdq_print(cmdq, "%s", msg);
 
 		used += size + (end != NULL);
 	}

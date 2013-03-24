@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.334 2013/03/24 09:33:35 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.335 2013/03/24 09:54:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -3466,6 +3466,7 @@ Miscellaneous commands are as follows:
 Display a large clock.
 .It Xo Ic if-shell
 .Op Fl t Ar target-pane
+.Op Fl b
 .Ar shell-command command
 .Op Ar command
 .Xc
@@ -3481,12 +3482,17 @@ Before being executed, shell-command is expanded using the rules specified in th
 .Sx FORMATS
 section, including those relevant to
 .Ar target-pane .
+With
+.Fl b ,
+.Ar shell-command
+is run in the background.
 .It Ic lock-server
 .D1 (alias: Ic lock )
 Lock each client individually by running the command specified by the
 .Ic lock-command
 option.
 .It Xo Ic run-shell
+.Fl b
 .Op Fl t Ar target-pane
 .Ar shell-command
 .Xc
@@ -3498,6 +3504,9 @@ Before being executed, shell-command is expanded using the rules specified in
 the
 .Sx FORMATS
 section.
+With
+.Fl b ,
+the command is run in the background.
 After it finishes, any output to stdout is displayed in copy mode (in the pane
 specified by
 .Fl t

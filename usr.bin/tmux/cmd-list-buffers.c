@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.16 2013/03/22 10:31:22 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.17 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
  * List paste buffers.
  */
 
-enum cmd_retval	 cmd_list_buffers_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_list_buffers_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_list_buffers_entry = {
 	"list-buffers", "lsb",
@@ -40,7 +40,7 @@ const struct cmd_entry cmd_list_buffers_entry = {
 };
 
 enum cmd_retval
-cmd_list_buffers_exec(unused struct cmd *self, struct cmd_ctx *ctx)
+cmd_list_buffers_exec(unused struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct paste_buffer	*pb;
@@ -59,7 +59,7 @@ cmd_list_buffers_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 		format_paste_buffer(ft, pb);
 
 		line = format_expand(ft, template);
-		ctx->print(ctx, "%s", line);
+		cmdq_print(cmdq, "%s", line);
 		free(line);
 
 		format_free(ft);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-server.c,v 1.9 2013/03/22 10:31:22 nicm Exp $ */
+/* $OpenBSD: cmd-kill-server.c,v 1.10 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -27,7 +27,7 @@
  * Kill the server and do nothing else.
  */
 
-enum cmd_retval	 cmd_kill_server_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_kill_server_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_kill_server_entry = {
 	"kill-server", NULL,
@@ -40,7 +40,7 @@ const struct cmd_entry cmd_kill_server_entry = {
 };
 
 enum cmd_retval
-cmd_kill_server_exec(unused struct cmd *self, unused struct cmd_ctx *ctx)
+cmd_kill_server_exec(unused struct cmd *self, unused struct cmd_q *cmdq)
 {
 	kill(getpid(), SIGTERM);
 

@@ -1,4 +1,4 @@
-/* $Id: cmd-choose-list.c,v 1.6 2013/03/21 16:09:59 nicm Exp $ */
+/* $Id: cmd-choose-list.c,v 1.7 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -31,7 +31,7 @@
  * Enter choose mode to choose a custom list.
  */
 
-enum cmd_retval cmd_choose_list_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval cmd_choose_list_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_choose_list_entry = {
 	"choose-list", NULL,
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_choose_list_entry = {
 };
 
 enum cmd_retval
-cmd_choose_list_exec(struct cmd *self, struct cmd_ctx *ctx)
+cmd_choose_list_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args			*args = self->args;
 	struct client			*c;
@@ -53,15 +53,15 @@ cmd_choose_list_exec(struct cmd *self, struct cmd_ctx *ctx)
 	char				*template, *item, *copy, *list;
 	u_int				 idx;
 
-	if ((c = cmd_current_client(ctx)) == NULL) {
-		ctx->error(ctx, "no client available");
+	if ((c = cmd_current_client(cmdq)) == NULL) {
+		cmdq_error(cmdq, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
 
 	if ((list1 = args_get(args, 'l')) == NULL)
 		return (CMD_RETURN_ERROR);
 
-	if ((wl = cmd_find_window(ctx, args_get(args, 't'), NULL)) == NULL)
+	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), NULL)) == NULL)
 		return (CMD_RETURN_ERROR);
 
 	if (window_pane_set_mode(wl->window->active, &window_choose_mode) != 0)

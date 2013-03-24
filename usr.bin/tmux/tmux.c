@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.114 2012/11/27 16:12:29 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.115 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -329,8 +329,6 @@ main(int argc, char **argv)
 
 	options_init(&global_w_options, NULL);
 	options_table_populate_tree(window_options_table, &global_w_options);
-
-	ARRAY_INIT(&cfg_causes);
 
 	/* Enable UTF-8 if the first client is on UTF-8 terminal. */
 	if (flags & IDENTIFY_UTF8) {

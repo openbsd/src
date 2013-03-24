@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unlink-window.c,v 1.11 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-unlink-window.c,v 1.12 2013/03/24 09:54:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -24,7 +24,7 @@
  * Unlink a window, unless it would be destroyed by doing so (only one link).
  */
 
-enum cmd_retval	 cmd_unlink_window_exec(struct cmd *, struct cmd_ctx *);
+enum cmd_retval	 cmd_unlink_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_unlink_window_entry = {
 	"unlink-window", "unlinkw",
@@ -37,7 +37,7 @@ const struct cmd_entry cmd_unlink_window_entry = {
 };
 
 enum cmd_retval
-cmd_unlink_window_exec(struct cmd *self, struct cmd_ctx *ctx)
+cmd_unlink_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
 	struct winlink		*wl;
@@ -46,7 +46,7 @@ cmd_unlink_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct session_group	*sg;
 	u_int			 references;
 
-	if ((wl = cmd_find_window(ctx, args_get(args, 't'), &s)) == NULL)
+	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), &s)) == NULL)
 		return (CMD_RETURN_ERROR);
 	w = wl->window;
 
@@ -59,7 +59,7 @@ cmd_unlink_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		references = 1;
 
 	if (!args_has(self->args, 'k') && w->references == references) {
-		ctx->error(ctx, "window is only linked to one session");
+		cmdq_error(cmdq, "window is only linked to one session");
 		return (CMD_RETURN_ERROR);
 	}
 
