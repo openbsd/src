@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.63 2013/03/24 09:30:41 nicm Exp $
+# $OpenBSD: Makefile,v 1.64 2013/03/24 09:31:38 nicm Exp $
 
 PROG=	tmux
 SRCS=	arguments.c \
@@ -60,7 +60,6 @@ SRCS=	arguments.c \
 	cmd-select-pane.c \
 	cmd-select-window.c \
 	cmd-send-keys.c \
-	cmd-send-prefix.c \
 	cmd-server-info.c \
 	cmd-set-buffer.c \
 	cmd-set-environment.c \
