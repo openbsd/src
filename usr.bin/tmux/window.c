@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.91 2013/03/24 09:21:27 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.92 2013/03/24 09:25:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -854,23 +854,14 @@ window_pane_error_callback(
 void
 window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 {
-	struct winsize	ws;
-
 	if (sx == wp->sx && sy == wp->sy)
 		return;
 	wp->sx = sx;
 	wp->sy = sy;
 
-	memset(&ws, 0, sizeof ws);
-	ws.ws_col = sx;
-	ws.ws_row = sy;
-
 	screen_resize(&wp->base, sx, sy, wp->saved_grid == NULL);
 	if (wp->mode != NULL)
 		wp->mode->resize(wp, sx, sy);
-
-	if (wp->fd != -1 && ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
-		fatal("ioctl failed");
 }
 
 /*

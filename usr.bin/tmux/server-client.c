@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.91 2013/03/24 09:18:16 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.92 2013/03/24 09:25:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include <event.h>
 #include <fcntl.h>
@@ -29,6 +30,7 @@
 #include "tmux.h"
 
 void	server_client_check_focus(struct window_pane *);
+void	server_client_check_resize(struct window_pane *);
 void	server_client_check_mouse(struct client *, struct window_pane *);
 void	server_client_repeat_timer(int, short, void *);
 void	server_client_check_exit(struct client *);
@@ -496,7 +498,7 @@ server_client_loop(void)
 
 	/*
 	 * Any windows will have been redrawn as part of clients, so clear
-	 * their flags now. Also check and update pane focus.
+	 * their flags now. Also check pane focus and resize.
 	 */
 	for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
 		w = ARRAY_ITEM(&windows, i);
@@ -506,9 +508,39 @@ server_client_loop(void)
 		w->flags &= ~WINDOW_REDRAW;
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			server_client_check_focus(wp);
+			server_client_check_resize(wp);
 			wp->flags &= ~PANE_REDRAW;
 		}
 	}
+}
+
+/* Check if pane should be resized. */
+void
+server_client_check_resize(struct window_pane *wp)
+{
+	struct winsize	ws;
+
+	if (wp->fd == -1 || !(wp->flags & PANE_RESIZE))
+		return;
+
+	memset(&ws, 0, sizeof ws);
+	ws.ws_col = wp->sx;
+	ws.ws_row = wp->sy;
+
+	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1) {
+#ifdef __sun
+		/*
+		 * Some versions of Solaris apparently can return an error when
+		 * resizing; don't know why this happens, can't reproduce on
+		 * other platforms and ignoring it doesn't seem to cause any
+		 * issues.
+		 */
+		if (errno != EINVAL)
+#endif
+		fatal("ioctl failed");
+	}
+
+	wp->flags &= ~PANE_RESIZE;
 }
 
 /* Check whether pane should be focused. */
