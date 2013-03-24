@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.29 2012/12/09 23:17:35 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.30 2013/03/24 09:27:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -126,7 +126,7 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 			template = NEW_WINDOW_TEMPLATE;
 
 		ft = format_create();
-		if ((c = cmd_find_client(ctx, NULL)) != NULL)
+		if ((c = cmd_find_client(ctx, NULL, 1)) != NULL)
 		    format_client(ft, c);
 		format_session(ft, s);
 		format_winlink(ft, s, wl);

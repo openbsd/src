@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.15 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.16 2013/03/24 09:27:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -64,7 +64,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct client	*c;
 	struct session	*s;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 'c'))) == NULL)
+	if ((c = cmd_find_client(ctx, args_get(args, 'c'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
 
 	if (args_has(args, 'r')) {

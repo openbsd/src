@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.394 2013/03/24 09:25:04 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.395 2013/03/24 09:27:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1732,7 +1732,7 @@ struct cmd	*cmd_parse(int, char **, char **);
 size_t		 cmd_print(struct cmd *, char *, size_t);
 struct session	*cmd_current_session(struct cmd_ctx *, int);
 struct client	*cmd_current_client(struct cmd_ctx *);
-struct client	*cmd_find_client(struct cmd_ctx *, const char *);
+struct client	*cmd_find_client(struct cmd_ctx *, const char *, int);
 struct session	*cmd_find_session(struct cmd_ctx *, const char *, int);
 struct winlink	*cmd_find_window(
 		     struct cmd_ctx *, const char *, struct session **);

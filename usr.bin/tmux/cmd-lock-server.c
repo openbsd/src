@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.12 2013/03/22 10:31:22 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.13 2013/03/24 09:27:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -74,7 +74,7 @@ cmd_lock_server_exec(struct cmd *self, unused struct cmd_ctx *ctx)
 			return (CMD_RETURN_ERROR);
 		server_lock_session(s);
 	} else {
-		if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
+		if ((c = cmd_find_client(ctx, args_get(args, 't'), 0)) == NULL)
 			return (CMD_RETURN_ERROR);
 		server_lock_client(c);
 	}

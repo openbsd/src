@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.17 2013/03/22 15:54:29 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.18 2013/03/24 09:27:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -79,7 +79,7 @@ cmd_confirm_before_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (CMD_RETURN_ERROR);
 	}
 
-	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
+	if ((c = cmd_find_client(ctx, args_get(args, 't'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
 
 	if ((prompt = args_get(args, 'p')) != NULL)

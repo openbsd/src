@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.4 2012/07/11 07:10:15 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.5 2013/03/24 09:27:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -48,7 +48,7 @@ cmd_show_messages_exec(struct cmd *self, struct cmd_ctx *ctx)
 	char			*tim;
 	u_int			 i;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 't'))) == NULL)
+	if ((c = cmd_find_client(ctx, args_get(args, 't'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
 
 	for (i = 0; i < ARRAY_LENGTH(&c->message_log); i++) {

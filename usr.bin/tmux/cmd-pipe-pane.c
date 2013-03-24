@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.23 2013/03/22 10:31:22 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.24 2013/03/24 09:27:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,7 +57,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	if (cmd_find_pane(ctx, args_get(args, 't'), NULL, &wp) == NULL)
 		return (CMD_RETURN_ERROR);
-	c = cmd_find_client(ctx, NULL);
+	c = cmd_find_client(ctx, NULL, 1);
 
 	/* Destroy the old pipe. */
 	old_fd = wp->pipe_fd;
