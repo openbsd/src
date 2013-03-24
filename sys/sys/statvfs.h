@@ -1,4 +1,4 @@
-/*	$OpenBSD: statvfs.h,v 1.2 2008/03/22 19:37:05 otto Exp $	*/
+/*	$OpenBSD: statvfs.h,v 1.3 2013/03/24 17:45:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
@@ -38,9 +38,11 @@ struct statvfs {
 #define ST_RDONLY	0x0001UL	/* read-only filesystem */
 #define	ST_NOSUID	0x0002UL	/* nosuid flag set */
 
+#ifndef _KERNEL
 __BEGIN_DECLS
-int fstatvfs(int, struct statvfs *);
-int statvfs(const char *, struct statvfs *);
+int	fstatvfs(int, struct statvfs *);
+int	statvfs(const char *, struct statvfs *);
 __END_DECLS
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_STATVFS_H_ */
