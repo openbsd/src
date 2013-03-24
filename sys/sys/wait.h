@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.14 2006/04/27 02:17:21 tedu Exp $	*/
+/*	$OpenBSD: wait.h,v 1.15 2013/03/24 17:42:43 deraadt Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -158,8 +158,8 @@ pid_t	waitpid(pid_t, int *, int);
 #if __BSD_VISIBLE
 pid_t	wait3(int *, int, struct rusage *);
 pid_t	wait4(pid_t, int *, int, struct rusage *);
-#endif
+#endif /* __BSD_VISIBLE */
 __END_DECLS
-#endif
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_WAIT_H_ */
