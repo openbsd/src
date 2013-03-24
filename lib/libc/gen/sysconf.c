@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.17 2012/08/29 21:46:29 matthew Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.18 2013/03/24 20:04:35 guenther Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -198,13 +198,9 @@ sysconf(int name)
 		return (value);
 		break;
 	case _SC_SEM_NSEMS_MAX:
+		return (-1);
 	case _SC_SEM_VALUE_MAX:
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_SEMINFO;
-		mib[2] = name = _SC_SEM_NSEMS_MAX ?
-		    KERN_SEMINFO_SEMMNS : KERN_SEMINFO_SEMVMX;
-		namelen = 3;
-		break;
+		return (SEM_VALUE_MAX);
 
 /* Unsorted */
 	case _SC_HOST_NAME_MAX:
