@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1670 2013/03/14 14:47:00 brynet Exp 
+ *	OpenBSD: pcidevs,v 1.1671 2013/03/24 19:26:36 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2402,6 +2402,7 @@
 #define	PCI_PRODUCT_IDT_89HPES24N3A	0x801c		/* 89HPES24N3A */
 #define	PCI_PRODUCT_IDT_89HPES24T6	0x802e		/* 89HPES24T6 */
 #define	PCI_PRODUCT_IDT_89HPES4T4	0x803a		/* 89HPES4T4 */
+#define	PCI_PRODUCT_IDT_89HPES5T5ZB	0x803c		/* 89HPES5T5ZB */
 #define	PCI_PRODUCT_IDT_89HPES24T3G2	0x806a		/* 89HPES24T3G2 */
 
 /* Industrial Computer Source */
