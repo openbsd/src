@@ -483,7 +483,9 @@ cat <<EOF
   ${RELOCATING+__bss_start = .;}
   ${RELOCATING+${OTHER_BSS_SYMBOLS}}
   ${SBSS}
+  ${BSS_PLT+${PAD_PLT+${PAD_PLT0}}}
   ${BSS_PLT+${PLT}}
+  ${BSS_PLT+${PAD_PLT+${PAD_PLT1}}}
   .bss          ${RELOCATING-0} :
   {
    *(.dynbss)
