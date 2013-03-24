@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.29 2012/11/29 02:15:44 guenther Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.30 2013/03/24 17:46:58 deraadt Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@ typedef struct _dirdesc DIR;
 
 #endif /* __BSD_VISIBLE */
 
-#ifndef _KERNEL
 __BEGIN_DECLS
 DIR *opendir(const char *);
 #if __POSIX_VISIBLE >= 200809
@@ -107,7 +106,5 @@ int alphasort(const void *, const void *);
 int dirfd(DIR *);
 #endif
 __END_DECLS
-
-#endif /* !_KERNEL */
 
 #endif /* !_DIRENT_H_ */
