@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.9 2013/03/21 18:46:12 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.10 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -50,7 +50,7 @@ recalculate_sizes(void)
 	struct window		*w;
 	struct window_pane	*wp;
 	u_int			 i, j, ssx, ssy, has, limit;
-	int			 flag, has_status;
+	int			 flag, has_status, is_zoomed;
 
 	RB_FOREACH(s, sessions, &sessions) {
 		has_status = options_get_number(&s->options, "status");
@@ -123,12 +123,16 @@ recalculate_sizes(void)
 
 		if (w->sx == ssx && w->sy == ssy)
 			continue;
-
 		log_debug("window size %u,%u (was %u,%u)", ssx, ssy, w->sx,
 		    w->sy);
 
+		is_zoomed = w->flags & WINDOW_ZOOMED;
+		if (is_zoomed)
+			window_unzoom(w);
 		layout_resize(w, ssx, ssy);
 		window_resize(w, ssx, ssy);
+		if (is_zoomed && window_pane_visible(w->active))
+			window_zoom(w->active);
 
 		/*
 		 * If the current pane is now not visible, move to the next

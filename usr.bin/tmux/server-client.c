@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.94 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.95 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -384,6 +384,7 @@ server_client_handle_key(struct client *c, int key)
 	if (c->flags & CLIENT_IDENTIFY && key >= '0' && key <= '9') {
 		if (c->flags & CLIENT_READONLY)
 			return;
+		window_unzoom(w);
 		wp = window_pane_at_index(w, key - '0');
 		if (wp != NULL && window_pane_visible(wp))
 			window_set_active_pane(w, wp);

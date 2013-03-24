@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.13 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.14 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -92,11 +92,13 @@ join_pane(struct cmd *self, struct cmd_q *cmdq, int not_same_window)
 		return (CMD_RETURN_ERROR);
 	dst_w = dst_wl->window;
 	dst_idx = dst_wl->idx;
+	server_unzoom_window(dst_w);
 
 	src_wl = cmd_find_pane(cmdq, args_get(args, 's'), NULL, &src_wp);
 	if (src_wl == NULL)
 		return (CMD_RETURN_ERROR);
 	src_w = src_wl->window;
+	server_unzoom_window(src_w);
 
 	if (not_same_window && src_w == dst_w) {
 		cmdq_error(cmdq, "can't join a pane to its own window");

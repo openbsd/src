@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.40 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.41 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -73,6 +73,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
 		return (CMD_RETURN_ERROR);
 	w = wl->window;
+	server_unzoom_window(w);
 
 	environ_init(&env);
 	environ_copy(&global_environ, &env);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.15 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.16 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -80,6 +80,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 		}
 
+		server_unzoom_window(wl->window);
 		window_set_active_pane(wl->window, wl->window->last);
 		server_status_window(wl->window);
 		server_redraw_window_borders(wl->window);
@@ -90,6 +91,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), NULL, &wp)) == NULL)
 		return (CMD_RETURN_ERROR);
 
+	server_unzoom_window(wp->window);
 	if (!window_pane_visible(wp)) {
 		cmdq_error(cmdq, "pane not visible");
 		return (CMD_RETURN_ERROR);

@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.31 2013/03/22 10:33:50 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.32 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -219,7 +219,8 @@ input_mouse(struct window_pane *wp, struct session *s, struct mouse_event *m)
 		 */
 		if (m->sgr && (wp->screen->mode & MODE_MOUSE_SGR)) {
 			len = xsnprintf(buf, sizeof buf, "\033[<%d;%d;%d%c",
-			    m->sgr_xb, m->x + 1, m->y + 1, m->sgr_rel ? 'm' : 'M');
+			    m->sgr_xb, m->x + 1, m->y + 1,
+			    m->sgr_rel ? 'm' : 'M');
 		} else if (wp->screen->mode & MODE_MOUSE_UTF8) {
 			len = xsnprintf(buf, sizeof buf, "\033[M");
 			len += utf8_split2(m->xb + 32, &buf[len]);

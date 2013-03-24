@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.17 2013/03/22 10:37:39 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.18 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -374,13 +374,13 @@ layout_destroy_cell(struct layout_cell *lc, struct layout_cell **lcroot)
 }
 
 void
-layout_init(struct window *w)
+layout_init(struct window *w, struct window_pane *wp)
 {
 	struct layout_cell	*lc;
 
 	lc = w->layout_root = layout_create_cell(NULL);
 	layout_set_size(lc, w->sx, w->sy, 0, 0);
-	layout_make_leaf(lc, TAILQ_FIRST(&w->panes));
+	layout_make_leaf(lc, wp);
 
 	layout_fix_panes(w, w->sx, w->sy);
 }

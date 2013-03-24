@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.336 2013/03/24 09:55:02 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.337 2013/03/24 09:57:59 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1568,7 +1568,7 @@ Rename the current window, or the window at
 if specified, to
 .Ar new-name .
 .It Xo Ic resize-pane
-.Op Fl DLRU
+.Op Fl DLRUZ
 .Op Fl t Ar target-pane
 .Op Fl x Ar width
 .Op Fl y Ar height
@@ -1592,6 +1592,11 @@ or
 The
 .Ar adjustment
 is given in lines or cells (the default is 1).
+.Pp
+With
+.Fl Z ,
+the active pane is toggled between occupying the whole of the window and its
+normal position in the layout.
 .It Xo Ic respawn-pane
 .Op Fl k
 .Op Fl t Ar target-pane

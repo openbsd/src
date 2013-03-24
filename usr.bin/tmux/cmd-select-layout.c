@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.19 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.20 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -92,6 +92,7 @@ cmd_select_layout_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), NULL)) == NULL)
 		return (CMD_RETURN_ERROR);
+	server_unzoom_window(wl->window);
 
 	next = self->entry == &cmd_next_layout_entry;
 	if (args_has(self->args, 'n'))

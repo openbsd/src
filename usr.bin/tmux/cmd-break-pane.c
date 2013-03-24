@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.20 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.21 2013/03/24 09:57:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -63,6 +63,8 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	w = wl->window;
+	server_unzoom_window(w);
+
 	TAILQ_REMOVE(&w->panes, wp, entry);
 	if (wp == w->active) {
 		w->active = w->last;
@@ -82,7 +84,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	name = default_window_name(w);
 	window_set_name(w, name);
 	free(name);
-	layout_init(w);
+	layout_init(w, wp);
 
 	base_idx = options_get_number(&s->options, "base-index");
 	wl = session_attach(s, w, -1 - base_idx, &cause); /* can't fail */
