@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.77 2012/11/07 19:39:08 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.78 2013/03/24 17:01:23 claudio Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -94,7 +94,6 @@ void ieee80211_node_leave_ht(struct ieee80211com *, struct ieee80211_node *);
 #endif
 void ieee80211_node_leave_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_11g(struct ieee80211com *, struct ieee80211_node *);
-void ieee80211_set_tim(struct ieee80211com *, int, int);
 void ieee80211_inact_timeout(void *);
 void ieee80211_node_cache_timeout(void *);
 #endif
