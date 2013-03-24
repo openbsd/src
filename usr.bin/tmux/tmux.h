@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.395 2013/03/24 09:27:20 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.396 2013/03/24 09:28:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -241,6 +241,9 @@ enum key_code {
 	KEYC_KP_ENTER,
 	KEYC_KP_ZERO,
 	KEYC_KP_PERIOD,
+
+	KEYC_FOCUS_IN,
+	KEYC_FOCUS_OUT,
 };
 
 /* Termcap codes. */
@@ -1320,6 +1323,7 @@ struct client {
 #define CLIENT_READONLY 0x800
 #define CLIENT_REDRAWWINDOW 0x1000
 #define CLIENT_CONTROL 0x2000
+#define CLIENT_FOCUSED 0x4000
 	int		 flags;
 
 	struct event	 identify_timer;
