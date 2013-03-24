@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.130 2013/03/23 21:22:20 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.131 2013/03/24 00:09:31 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -470,13 +470,13 @@ do {									\
 	if (show_addresses) {						\
 		(kp)->p_paddr = PTRTOINT64(paddr);			\
 		(kp)->p_fd = PTRTOINT64((p)->p_fd);			\
-		(kp)->p_stats = 0;					\
 		(kp)->p_limit = PTRTOINT64((pr)->ps_limit);		\
 		(kp)->p_vmspace = PTRTOINT64((p)->p_vmspace);		\
 		(kp)->p_sigacts = PTRTOINT64((p)->p_sigacts);		\
 		(kp)->p_sess = PTRTOINT64((pg)->pg_session);		\
 		(kp)->p_ru = PTRTOINT64((pr)->ps_ru);			\
 	}								\
+	(kp)->p_stats = 0;						\
 	(kp)->p_exitsig = (p)->p_exitsig;				\
 	(kp)->p_flag = (p)->p_flag | (pr)->ps_flags | P_INMEM;		\
 									\
