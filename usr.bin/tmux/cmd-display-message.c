@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.17 2012/12/09 23:17:35 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.18 2013/03/24 09:26:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -55,8 +55,7 @@ cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
 	time_t			 t;
 	size_t			 len;
 
-	if ((c = cmd_find_client(ctx, args_get(args, 'c'))) == NULL)
-		return (CMD_RETURN_ERROR);
+	c = cmd_find_client(ctx, args_get(args, 'c'));
 
 	if (args_has(args, 't')) {
 		wl = cmd_find_pane(ctx, args_get(args, 't'), &s, &wp);
@@ -80,7 +79,8 @@ cmd_display_message_exec(struct cmd *self, struct cmd_ctx *ctx)
 		template = DISPLAY_MESSAGE_TEMPLATE;
 
 	ft = format_create();
-	format_client(ft, c);
+	if (c != NULL)
+		format_client(ft, c);
 	format_session(ft, s);
 	format_winlink(ft, s, wl);
 	format_window_pane(ft, wp);
