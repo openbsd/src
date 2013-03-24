@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslimits.h,v 1.11 2008/02/02 15:31:31 kettenis Exp $	*/
+/*	$OpenBSD: syslimits.h,v 1.12 2013/03/24 19:55:45 guenther Exp $	*/
 /*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #define	LINE_MAX		 2048	/* max bytes in an input line */
 #ifndef RE_DUP_MAX
 #define	RE_DUP_MAX		  255	/* max RE's in interval notation */
+#define	SEM_VALUE_MAX	     UINT_MAX	/* max value of a sem_* semaphore */
 #endif
 
 #if __XPG_VISIBLE

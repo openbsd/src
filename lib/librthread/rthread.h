@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.40 2012/08/22 23:43:32 matthew Exp $ */
+/*	$OpenBSD: rthread.h,v 1.41 2013/03/24 19:55:45 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -45,7 +45,7 @@ struct stack {
 	size_t	len;			/* total size of allocated stack */
 };
 
-struct sem {
+struct __sem {
 	_spinlock_lock_t lock;
 	volatile int waitcount;
 	volatile int value;
@@ -140,7 +140,7 @@ struct pthread_spinlock {
 };
 
 struct pthread {
-	struct sem donesem;
+	struct __sem donesem;
 #if TLS_VARIANT == 1
 	int *errno_ptr;
 #endif

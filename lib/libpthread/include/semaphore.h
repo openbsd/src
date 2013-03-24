@@ -1,4 +1,4 @@
-/*	$OpenBSD: semaphore.h,v 1.7 2013/03/24 17:47:49 deraadt Exp $	*/
+/*	$OpenBSD: semaphore.h,v 1.8 2013/03/24 19:55:45 guenther Exp $	*/
 
 /* semaphore.h: POSIX 1003.1b semaphores */
 
@@ -39,17 +39,12 @@
 #ifndef _SEMAPHORE_H_
 #define _SEMAPHORE_H_
 
-#include <sys/limits.h>
-
 /* Opaque type definition. */
-struct sem;
-typedef struct sem *sem_t;
+struct __sem;
+typedef struct __sem *sem_t;
 struct timespec;
 
 #define SEM_FAILED      ((sem_t *)0)
-#define SEM_VALUE_MAX   UINT_MAX
-
-#ifndef _KERNEL
 
 __BEGIN_DECLS
 int	sem_init(sem_t *, int, unsigned int);
@@ -63,7 +58,5 @@ int	sem_trywait(sem_t *);
 int	sem_post(sem_t *);
 int	sem_getvalue(sem_t * __restrict, int * __restrict);
 __END_DECLS
-
-#endif /* _KERNEL */
 
 #endif /* _SEMAPHORE_H_ */
