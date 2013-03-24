@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.37 2012/12/09 23:17:35 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.38 2013/03/24 09:21:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -59,8 +59,8 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct window		*w;
 	struct window_pane	*wp, *new_wp = NULL;
 	struct environ		 env;
-	const char		*cmd, *cwd, *shell;
-	char			*cause, *new_cause;
+	const char		*cmd, *cwd, *shell, *prefix;
+	char			*cause, *new_cause, *cmd1;
 	u_int			 hlimit;
 	int			 size, percentage;
 	enum layout_type	 type;
@@ -122,9 +122,18 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		goto error;
 	}
 	new_wp = window_add_pane(w, hlimit);
-	if (window_pane_spawn(
-	    new_wp, cmd, shell, cwd, &env, s->tio, &cause) != 0)
+
+	if (*cmd != '\0') {
+		prefix = options_get_string(&w->options, "command-prefix");
+		xasprintf(&cmd1, "%s%s", prefix, cmd);
+	} else
+		cmd1 = xstrdup("");
+	if (window_pane_spawn(new_wp, cmd1, shell, cwd, &env, s->tio,
+	    &cause) != 0) {
+		free(cmd1);
 		goto error;
+	}
+	free(cmd1);
 	layout_assign_pane(lc, new_wp);
 
 	server_redraw_window(w);
