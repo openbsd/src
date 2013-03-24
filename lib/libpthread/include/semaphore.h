@@ -1,4 +1,4 @@
-/*	$OpenBSD: semaphore.h,v 1.6 2012/12/05 23:20:05 deraadt Exp $	*/
+/*	$OpenBSD: semaphore.h,v 1.7 2013/03/24 17:47:49 deraadt Exp $	*/
 
 /* semaphore.h: POSIX 1003.1b semaphores */
 
@@ -39,7 +39,7 @@
 #ifndef _SEMAPHORE_H_
 #define _SEMAPHORE_H_
 
-#include <machine/limits.h>
+#include <sys/limits.h>
 
 /* Opaque type definition. */
 struct sem;
