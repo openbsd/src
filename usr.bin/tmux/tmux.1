@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.349 2013/03/25 11:40:20 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.350 2013/03/25 11:40:40 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -3671,7 +3671,7 @@ The new layout is
 .It Ic %output Ar pane-id Ar value
 A window pane produced output.
 .Ar value
-contains that output with each byte encoded as two hex digits.
+escapes non-printable characters and backslash as octal \\xxx.
 .It Ic %session-changed Ar session-id Ar name
 The client is now attached to the session with ID
 .Ar session-id ,

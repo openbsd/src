@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.5 2013/03/25 11:38:43 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.6 2013/03/25 11:40:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -46,8 +46,12 @@ control_notify_input(struct client *c, struct window_pane *wp,
 	if (winlink_find_by_window(&c->session->windows, wp->window) != NULL) {
 		message = evbuffer_new();
 		evbuffer_add_printf(message, "%%output %u ", wp->id);
-		for (i = 0; i < len; i++)
-			evbuffer_add_printf(message, "%02hhx", buf[i]);
+		for (i = 0; i < len; i++) {
+			if (buf[i] < ' ' || buf[i] == '\\')
+			    evbuffer_add_printf(message, "\\%03o", buf[i]);
+			else
+			    evbuffer_add_printf(message, "%c", buf[i]);
+		}
 		control_write_buffer(c, message);
 		evbuffer_free(message);
 	}
