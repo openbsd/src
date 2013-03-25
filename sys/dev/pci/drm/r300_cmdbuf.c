@@ -1,4 +1,4 @@
-/* $OpenBSD: r300_cmdbuf.c,v 1.13 2011/06/02 18:22:00 weerd Exp $ */
+/* $OpenBSD: r300_cmdbuf.c,v 1.14 2013/03/25 01:40:05 jsg Exp $ */
 /* r300_cmdbuf.c -- Command buffer emission for R300 -*- linux-c -*-
  *
  * Copyright (C) The Weather Channel, Inc.  2002.
@@ -234,6 +234,10 @@ void r300_init_reg_flags(struct drm_device *dev)
 	ADD_RANGE(0x42C0, 2);
 	ADD_RANGE(R300_RS_CNTL_0, 2);
 
+	ADD_RANGE(R300_SU_REG_DEST, 1);
+	if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV530)
+		ADD_RANGE(RV530_FG_ZBREG_DEST, 1);
+
 	ADD_RANGE(R300_SC_HYPERZ, 2);
 	ADD_RANGE(0x43E8, 1);
 
@@ -259,6 +263,7 @@ void r300_init_reg_flags(struct drm_device *dev)
 	ADD_RANGE(R300_ZB_DEPTHPITCH, 1);
 	ADD_RANGE(R300_ZB_DEPTHCLEARVALUE, 1);
 	ADD_RANGE(R300_ZB_ZMASK_OFFSET, 13);
+	ADD_RANGE(R300_ZB_ZPASS_DATA, 2); /* ZB_ZPASS_DATA, ZB_ZPASS_ADDR */
 
 	ADD_RANGE(R300_TX_FILTER_0, 16);
 	ADD_RANGE(R300_TX_FILTER1_0, 16);
