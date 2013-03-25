@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.404 2013/03/25 11:41:16 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.405 2013/03/25 11:43:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -779,9 +779,6 @@ struct job {
 
 	int		 fd;
 	struct bufferevent *event;
-
-	struct bufferevent *out;
-	int		outdone;
 
 	void		(*callbackfn)(struct job *);
 	void		(*freefn)(void *);
@@ -1614,8 +1611,8 @@ int	options_table_find(const char *, const struct options_table_entry **,
 
 /* job.c */
 extern struct joblist all_jobs;
-struct job *job_run(
-	    const char *, void (*)(struct job *), void (*)(void *), void *);
+struct job *job_run(const char *, struct session *,
+	    void (*)(struct job *), void (*)(void *), void *);
 void	job_free(struct job *);
 void	job_died(struct job *, int);
 

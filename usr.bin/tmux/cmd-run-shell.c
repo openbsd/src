@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.21 2013/03/25 11:36:42 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.22 2013/03/25 11:43:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -103,7 +103,7 @@ cmd_run_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 	cdata->cmdq = cmdq;
 	cmdq->references++;
 
-	job_run(shellcmd, cmd_run_shell_callback, cmd_run_shell_free, cdata);
+	job_run(shellcmd, s, cmd_run_shell_callback, cmd_run_shell_free, cdata);
 
 	if (cdata->bflag)
 		return (CMD_RETURN_NORMAL);
