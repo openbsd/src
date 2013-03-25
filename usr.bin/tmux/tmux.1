@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.346 2013/03/25 11:38:15 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.347 2013/03/25 11:38:43 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -3668,10 +3668,8 @@ The layout of a window with ID
 changed.
 The new layout is
 .Ar window-layout .
-.It Ic %output Ar source-pane Ar value
-A window pane,
-.Ar source-pane ,
-produced output.
+.It Ic %output Ar pane-id Ar value
+A window pane produced output.
 .Ar value
 contains that output with each byte encoded as two hex digits.
 .It Ic %session-changed Ar session-id Ar name
