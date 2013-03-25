@@ -14,6 +14,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -70,7 +71,7 @@ use Storable ();
 	eval {
 		Storable::freeze( $badfreeze );
 	};
-	ok( $@, 'Storable dies correctly when STORABLE_freeze returns a referece' );
+	ok( $@, 'Storable dies correctly when STORABLE_freeze returns a reference' );
 	# Check for a unique substring of the error message
 	ok( $@ =~ /cannot return references/, 'Storable dies with the expected error' );
 

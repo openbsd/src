@@ -7,7 +7,7 @@ perlreftut - Mark's very short tutorial about references
 One of the most important new features in Perl 5 was the capability to
 manage complicated data structures like multidimensional arrays and
 nested hashes.  To enable these, Perl 5 introduced a feature called
-`references', and using references is the key to managing complicated,
+'references', and using references is the key to managing complicated,
 structured data in Perl.  Unfortunately, there's a lot of funny syntax
 to learn, and the main manual page can be hard to follow.  The manual
 is quite complete, and sometimes people find that a problem, because
@@ -402,7 +402,7 @@ This is Perl, so it does the exact right thing.  It sees that you want
 to push C<Athens> onto an array that doesn't exist, so it helpfully
 makes a new, empty, anonymous array for you, installs it into
 C<%table>, and then pushes C<Athens> onto it.  This is called
-`autovivification'--bringing things to life automatically.  Perl saw
+'autovivification'--bringing things to life automatically.  Perl saw
 that they key wasn't in the hash, so it created a new hash entry
 automatically. Perl saw that you wanted to use the hash value as an
 array, so it created a new empty array and installed a reference to it

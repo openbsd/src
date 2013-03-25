@@ -1,12 +1,9 @@
 #!perl
 use strict;
 use warnings;
-use Pod::Tidy;
+use Pod::Tidy 0.10;
 
 # Reformat pod using Pod::Tidy
-
-# 72 is what fmt defaults to
-$Text::Wrap::columns = 72;
 
 my $filename = shift || die "Usage podtidy [filename]";
 
@@ -15,4 +12,5 @@ Pod::Tidy::tidy_files(
     verbose  => 1,
     inplace  => 1,
     nobackup => 1,
+    columns => 72, # 72 is what fmt defaults to
 );

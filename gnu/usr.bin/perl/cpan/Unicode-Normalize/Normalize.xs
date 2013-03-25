@@ -17,31 +17,42 @@
 
 /* Perl 5.6.1 ? */
 #ifndef utf8n_to_uvuni
-#define utf8n_to_uvuni  utf8_to_uv
+#define utf8n_to_uvuni   utf8_to_uv
 #endif /* utf8n_to_uvuni */
 
 /* UTF8_ALLOW_BOM is used before Perl 5.8.0 */
-#ifdef UTF8_ALLOW_BOM
-#define AllowAnyUTF (UTF8_ALLOW_SURROGATE|UTF8_ALLOW_BOM|UTF8_ALLOW_FFFF)
-#else
-#define AllowAnyUTF (UTF8_ALLOW_SURROGATE|UTF8_ALLOW_FFFF)
-#endif
+#ifndef UTF8_ALLOW_BOM
+#define UTF8_ALLOW_BOM  (0)
+#endif /* UTF8_ALLOW_BOM */
 
-/* if utf8n_to_uvuni() sets retlen to 0 (?) */
+#ifndef UTF8_ALLOW_SURROGATE
+#define UTF8_ALLOW_SURROGATE  (0)
+#endif /* UTF8_ALLOW_SURROGATE */
+
+#ifndef UTF8_ALLOW_FE_FF
+#define UTF8_ALLOW_FE_FF  (0)
+#endif /* UTF8_ALLOW_FE_FF */
+
+#ifndef UTF8_ALLOW_FFFF
+#define UTF8_ALLOW_FFFF  (0)
+#endif /* UTF8_ALLOW_FFFF */
+
+#define AllowAnyUTF (UTF8_ALLOW_SURROGATE|UTF8_ALLOW_BOM|UTF8_ALLOW_FE_FF|UTF8_ALLOW_FFFF)
+
+/* check if the string buffer is enough before uvuni_to_utf8(). */
+/* dstart, d, and dlen should be defined outside before. */
+#define Renew_d_if_not_enough_to(need)	STRLEN curlen = d - dstart;	\
+		if (dlen < curlen + (need)) {	\
+		    dlen += (need);		\
+		    Renew(dstart, dlen+1, U8);	\
+		    d = dstart + curlen;	\
+		}
+
+/* if utf8n_to_uvuni() sets retlen to 0 (if broken?) */
 #define ErrRetlenIsZero "panic (Unicode::Normalize %s): zero-length character"
 
 /* utf8_hop() hops back before start. Maybe broken UTF-8 */
 #define ErrHopBeforeStart "panic (Unicode::Normalize): hopping before start"
-
-/* It should never happen as there is no instance in UTF-8 and UTF-EBCDIC.
-   If Unicode would add a new composition of A + B to C
-   where bytes::length(A) + bytes::length(B) < bytes::length(C),
-   this code should be fixed.
-   In this case, mkheader will prevent Unicode::Normalize from building. */
-#define ErrLongerThanSrc "panic (Unicode::Normalize %s): longer than source"
-
-/* uvuni_to_utf8 wants UTF8_MAXBYTES free bytes available */
-#define ErrTargetNotEnough "panic (Unicode::Normalize %s): target not enough"
 
 /* At present, char > 0x10ffff are unaffected without complaint, right? */
 #define VALID_UTF_MAX    (0x10ffff)
@@ -216,13 +227,7 @@ U8* pv_utf8_decompose(U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscompat)
 	p += retlen;
 
 	if (Hangul_IsS(uv)) {
-	    STRLEN cur = d - dstart;
-
-	    if (dlen < cur + UTF8_MAXLEN * 3) {
-		dlen += UTF8_MAXLEN * 3;
-		Renew(dstart, dlen+1, U8);
-		d = dstart + cur;
-	    }
+	    Renew_d_if_not_enough_to(UTF8_MAXLEN * 3)
 	    d = pv_cat_decompHangul(d, uv);
 	}
 	else {
@@ -230,23 +235,12 @@ U8* pv_utf8_decompose(U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscompat)
 
 	    if (r) {
 		STRLEN len = (STRLEN)strlen((char *)r);
-		STRLEN cur = d - dstart;
-		if (dlen < cur + len) {
-		    dlen += len;
-		    Renew(dstart, dlen+1, U8);
-		    d = dstart + cur;
-		}
+		Renew_d_if_not_enough_to(len)
 		while (len--)
 		    *d++ = *r++;
 	    }
 	    else {
-		STRLEN cur = d - dstart;
-
-		if (dlen < cur + UTF8_MAXLEN) {
-		    dlen += UTF8_MAXLEN;
-		    Renew(dstart, dlen+1, U8);
-		    d = dstart + cur;
-		}
+		Renew_d_if_not_enough_to(UTF8_MAXLEN)
 		d = uvuni_to_utf8(d, uv);
 	    }
 	}
@@ -256,21 +250,18 @@ U8* pv_utf8_decompose(U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscompat)
 }
 
 static
-U8* pv_utf8_reorder(U8* s, STRLEN slen, U8* d, STRLEN dlen)
+U8* pv_utf8_reorder(U8* s, STRLEN slen, U8** dp, STRLEN dlen)
 {
     U8* p = s;
     U8* e = s + slen;
-    U8* dend = d + dlen;
+    U8* dstart = *dp;
+    U8* d = dstart;
 
     UNF_cc  seq_ary[CC_SEQ_SIZE];
     UNF_cc* seq_ptr = seq_ary; /* use array at the beginning */
     UNF_cc* seq_ext = NULL; /* extend if need */
     STRLEN seq_max = CC_SEQ_SIZE;
     STRLEN cc_pos = 0;
-
-    if (dlen < slen || dlen < slen + UTF8_MAXLEN)
-	croak(ErrTargetNotEnough, "reorder");
-    dend -= UTF8_MAXLEN; /* safety */
 
     while (p < e) {
 	U8 curCC;
@@ -306,6 +297,7 @@ U8* pv_utf8_reorder(U8* s, STRLEN slen, U8* d, STRLEN dlen)
 		continue;
 	}
 
+	/* output */
 	if (cc_pos) {
 	    STRLEN i;
 
@@ -313,30 +305,30 @@ U8* pv_utf8_reorder(U8* s, STRLEN slen, U8* d, STRLEN dlen)
 		qsort((void*)seq_ptr, cc_pos, sizeof(UNF_cc), compare_cc);
 
 	    for (i = 0; i < cc_pos; i++) {
+		Renew_d_if_not_enough_to(UTF8_MAXLEN)
 		d = uvuni_to_utf8(d, seq_ptr[i].uv);
-		if (dend < d) /* real end is dend + UTF8_MAXLEN */
-		    croak(ErrLongerThanSrc, "reorder");
 	    }
 	    cc_pos = 0;
 	}
 
 	if (curCC == 0) {
+	    Renew_d_if_not_enough_to(UTF8_MAXLEN)
 	    d = uvuni_to_utf8(d, uv);
-	    if (dend < d) /* real end is dend + UTF8_MAXLEN */
-		croak(ErrLongerThanSrc, "reorder");
 	}
     }
     if (seq_ext)
 	Safefree(seq_ext);
+    *dp = dstart;
     return d;
 }
 
 static
-U8* pv_utf8_compose(U8* s, STRLEN slen, U8* d, STRLEN dlen, bool iscontig)
+U8* pv_utf8_compose(U8* s, STRLEN slen, U8** dp, STRLEN dlen, bool iscontig)
 {
     U8* p = s;
     U8* e = s + slen;
-    U8* dend = d + dlen;
+    U8* dstart = *dp;
+    U8* d = dstart;
 
     UV uvS = 0; /* code point of the starter */
     bool valid_uvS = FALSE; /* if FALSE, uvS isn't initialized yet */
@@ -347,10 +339,6 @@ U8* pv_utf8_compose(U8* s, STRLEN slen, U8* d, STRLEN dlen, bool iscontig)
     UV* seq_ext = NULL; /* extend if need */
     STRLEN seq_max = CC_SEQ_SIZE;
     STRLEN cc_pos = 0;
-
-    if (dlen < slen || dlen < slen + UTF8_MAXLEN)
-	croak(ErrTargetNotEnough, "compose");
-    dend -= UTF8_MAXLEN; /* safety */
 
     while (p < e) {
 	U8 curCC;
@@ -370,9 +358,8 @@ U8* pv_utf8_compose(U8* s, STRLEN slen, U8* d, STRLEN dlen, bool iscontig)
 		    continue;
 	    }
 	    else {
+		Renew_d_if_not_enough_to(UTF8_MAXLEN)
 		d = uvuni_to_utf8(d, uv);
-		if (dend < d) /* real end is dend + UTF8_MAXLEN */
-		    croak(ErrLongerThanSrc, "compose");
 		continue;
 	    }
 	}
@@ -380,9 +367,9 @@ U8* pv_utf8_compose(U8* s, STRLEN slen, U8* d, STRLEN dlen, bool iscontig)
 	    bool composed;
 
 	    /* blocked */
-	    if (iscontig && cc_pos || /* discontiguous combination */
-		 curCC != 0 && preCC == curCC || /* blocked by same CC */
-		 preCC > curCC) /* blocked by higher CC: revised D2 */
+	    if ((iscontig && cc_pos) || /* discontiguous combination */
+		 (curCC != 0 && preCC == curCC) || /* blocked by same CC */
+		 (preCC > curCC)) /* blocked by higher CC: revised D2 */
 		composed = FALSE;
 
 	    /* not blocked:
@@ -428,17 +415,18 @@ U8* pv_utf8_compose(U8* s, STRLEN slen, U8* d, STRLEN dlen, bool iscontig)
 	    }
 	}
 
-	d = uvuni_to_utf8(d, uvS); /* starter (composed or not) */
-	if (dend < d) /* real end is dend + UTF8_MAXLEN */
-	    croak(ErrLongerThanSrc, "compose");
+	/* output */
+	{
+	    Renew_d_if_not_enough_to(UTF8_MAXLEN)
+	    d = uvuni_to_utf8(d, uvS); /* starter (composed or not) */
+	}
 
 	if (cc_pos) {
 	    STRLEN i;
 
 	    for (i = 0; i < cc_pos; i++) {
+		Renew_d_if_not_enough_to(UTF8_MAXLEN)
 		d = uvuni_to_utf8(d, seq_ptr[i]);
-		if (dend < d) /* real end is dend + UTF8_MAXLEN */
-		    croak(ErrLongerThanSrc, "compose");
 	    }
 	    cc_pos = 0;
 	}
@@ -447,6 +435,7 @@ U8* pv_utf8_compose(U8* s, STRLEN slen, U8* d, STRLEN dlen, bool iscontig)
     }
     if (seq_ext)
 	Safefree(seq_ext);
+    *dp = dstart;
     return d;
 }
 
@@ -474,6 +463,7 @@ decompose(src, compat = &PL_sv_no)
   OUTPUT:
     RETVAL
 
+
 SV*
 reorder(src)
     SV * src
@@ -485,15 +475,16 @@ reorder(src)
   CODE:
     s = (U8*)sv_2pvunicode(src,&slen);
     dst = newSVpvn("", 0);
-    dlen = slen + UTF8_MAXLEN;
-    d = (U8*)SvGROW(dst,dlen+1);
+    dlen = slen;
+    New(0, d, dlen+1, U8);
+    dend = pv_utf8_reorder(s, slen, &d, dlen);
+    sv_setpvn(dst, (char *)d, dend - d);
     SvUTF8_on(dst);
-    dend = pv_utf8_reorder(s, slen, d, dlen);
-    *dend = '\0';
-    SvCUR_set(dst, dend - d);
+    Safefree(d);
     RETVAL = dst;
   OUTPUT:
     RETVAL
+
 
 SV*
 compose(src)
@@ -508,15 +499,16 @@ compose(src)
   CODE:
     s = (U8*)sv_2pvunicode(src,&slen);
     dst = newSVpvn("", 0);
-    dlen = slen + UTF8_MAXLEN;
-    d = (U8*)SvGROW(dst,dlen+1);
+    dlen = slen;
+    New(0, d, dlen+1, U8);
+    dend = pv_utf8_compose(s, slen, &d, dlen, (bool)ix);
+    sv_setpvn(dst, (char *)d, dend - d);
     SvUTF8_on(dst);
-    dend = pv_utf8_compose(s, slen, d, dlen, (bool)ix);
-    *dend = '\0';
-    SvCUR_set(dst, dend - d);
+    Safefree(d);
     RETVAL = dst;
   OUTPUT:
     RETVAL
+
 
 SV*
 NFD(src)
@@ -529,28 +521,33 @@ NFD(src)
     U8 *s, *t, *tend, *d, *dend;
     STRLEN slen, tlen, dlen;
   CODE:
-    /* decompose */
     s = (U8*)sv_2pvunicode(src,&slen);
+
+    /* decompose */
     tlen = slen;
     New(0, t, tlen+1, U8);
-    tend = pv_utf8_decompose(s, slen, &t, tlen, (bool)ix);
+    tend = pv_utf8_decompose(s, slen, &t, tlen, (bool)(ix==1));
     *tend = '\0';
-    tlen = tend - t; /* no longer know real tlen */
+    tlen = tend - t; /* no longer know real size of t */
 
     /* reorder */
-    dst = newSVpvn("", 0);
-    dlen = tlen + UTF8_MAXLEN;
-    d = (U8*)SvGROW(dst,dlen+1);
-    SvUTF8_on(dst);
-    dend = pv_utf8_reorder(t, tlen, d, dlen);
+    dlen = tlen;
+    New(0, d, dlen+1, U8);
+    dend = pv_utf8_reorder(t, tlen, &d, dlen);
     *dend = '\0';
-    SvCUR_set(dst, dend - d);
+    dlen = dend - d; /* no longer know real size of d */
 
     /* return */
+    dst = newSVpvn("", 0);
+    sv_setpvn(dst, (char *)d, dlen);
+    SvUTF8_on(dst);
+
     Safefree(t);
+    Safefree(d);
     RETVAL = dst;
   OUTPUT:
     RETVAL
+
 
 SV*
 NFC(src)
@@ -564,36 +561,41 @@ NFC(src)
     U8 *s, *t, *tend, *u, *uend, *d, *dend;
     STRLEN slen, tlen, ulen, dlen;
   CODE:
-    /* decompose */
     s = (U8*)sv_2pvunicode(src,&slen);
+
+    /* decompose */
     tlen = slen;
     New(0, t, tlen+1, U8);
     tend = pv_utf8_decompose(s, slen, &t, tlen, (bool)(ix==1));
     *tend = '\0';
-    tlen = tend - t; /* no longer know real tlen */
+    tlen = tend - t; /* no longer know real size of t */
 
     /* reorder */
-    ulen = tlen + UTF8_MAXLEN;
+    ulen = tlen;
     New(0, u, ulen+1, U8);
-    uend = pv_utf8_reorder(t, tlen, u, ulen);
+    uend = pv_utf8_reorder(t, tlen, &u, ulen);
     *uend = '\0';
-    ulen = uend - u;
+    ulen = uend - u; /* no longer know real size of u */
 
     /* compose */
-    dst = newSVpvn("", 0);
-    dlen = ulen + UTF8_MAXLEN;
-    d = (U8*)SvGROW(dst,dlen+1);
-    SvUTF8_on(dst);
-    dend = pv_utf8_compose(u, ulen, d, dlen, (bool)(ix==2));
+    dlen = ulen;
+    New(0, d, dlen+1, U8);
+    dend = pv_utf8_compose(u, ulen, &d, dlen, (bool)(ix==2));
     *dend = '\0';
-    SvCUR_set(dst, dend - d);
+    dlen = dend - d; /* no longer know real size of d */
 
     /* return */
+    dst = newSVpvn("", 0);
+    sv_setpvn(dst, (char *)d, dlen);
+    SvUTF8_on(dst);
+
     Safefree(t);
     Safefree(u);
+    Safefree(d);
     RETVAL = dst;
   OUTPUT:
     RETVAL
+
 
 SV*
 checkNFD(src)

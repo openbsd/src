@@ -8,7 +8,7 @@ BEGIN {
 use strict;
 use Pod::Simple::Search;
 use Test;
-BEGIN { plan tests => 7 }
+BEGIN { plan tests => 11 }
 
 print "# ", __FILE__,
  ": Testing the surveying of the current directory...\n";
@@ -73,7 +73,35 @@ ok( ($name2where->{'squaa'} || 'huh???'), '/squaa\.pm$/');
 
 ok grep( m/squaa\.pm/, keys %$where2name ), 1;
 
+###### Now with recurse(0)
+
+print "# Testing the surveying of a subdirectory with recursing off...\n";
+
+$x->recurse(0);
+($name2where, $where2name) = $x->survey(
+                             File::Spec->catdir($cwd, 't', 'testlib2'));
+
+$p = pretty( $where2name, $name2where )."\n";
+$p =~ s/, +/,\n/g;
+$p =~ s/^/#  /mg;
+print $p;
+
+{
+my $names = lc join "|", sort values %$where2name;
+ok $names, "suzzle";
+}
+
+{
+my $names = lc join "|", sort keys %$name2where;
+ok $names, "suzzle";
+}
+
+ok( ($name2where->{'Vliff'} || 'huh???'), 'huh???');
+
+ok grep( m/Vliff\.pm/, keys %$where2name ), 0;
+
 ok 1;
 
 __END__
+
 

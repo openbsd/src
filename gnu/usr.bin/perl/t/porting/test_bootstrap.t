@@ -45,3 +45,18 @@ while (my $file = <$fh>) {
     unlike($contents, qr/^\s*require\s+/m, "$file doesn't use require")
 	unless $file eq 'comp/require.t'
 }
+
+# There are regression tests using test.pl that don't want PL_sawampersand set
+
+# This very much relies on a bug in the regexp implementation, but for now it's
+# the best way to work out whether PL_sawampersand is true.
+# Then again, PL_sawampersand *is* a bug, for precisely the reason that this
+# test can detect the behaviour change.
+
+isnt($INC{'./test.pl'}, undef, 'We loaded test.pl');
+ok("Perl rules" =~ /Perl/, 'Perl rules');
+is(eval '$&', undef, 'Nothing in test.pl mentioned $&');
+is(eval '$`', undef, 'Nothing in test.pl mentioned $`');
+is(eval '$\'', undef, 'Nothing in test.pl mentioned $\'');
+# Currently seeing any of the 3 triggers the setting of all 3.
+# $` and $' will be '' rather than undef if the regexp sets them.

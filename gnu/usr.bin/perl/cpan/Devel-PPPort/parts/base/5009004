@@ -11,6 +11,7 @@ SvREFCNT_inc_simple_void_NN    # U
 SvREFCNT_inc_void              # U
 SvREFCNT_inc_void_NN           # U
 gv_name_set                    # U
+hv_copy_hints_hv               # U
 hv_stores                      # U
 my_snprintf                    # U
 my_strlcat                     # U

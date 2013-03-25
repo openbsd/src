@@ -45,12 +45,24 @@ BEGIN { $tests += 1 }
 can_ok( 'Sys::Syslog' => qw(openlog syslog syslog setlogmask setlogsock closelog) );
 
 
-BEGIN { $tests += 1 }
+BEGIN { $tests += 4 }
 # check the diagnostics
 # setlogsock()
 eval { setlogsock() };
-like( $@, qr/^Invalid argument passed to setlogsock/, 
+like( $@, qr/^setlogsock\(\): Invalid number of arguments/, 
     "calling setlogsock() with no argument" );
+
+eval { setlogsock(undef) };
+like( $@, qr/^setlogsock\(\): Invalid type; must be one of /, 
+    "calling setlogsock() with undef" );
+
+eval { setlogsock(\"") };
+like( $@, qr/^setlogsock\(\): Unexpected scalar reference/, 
+    "calling setlogsock() with a scalar reference" );
+
+eval { setlogsock({}) };
+like( $@, qr/^setlogsock\(\): No argument given/, 
+    "calling setlogsock() with an empty hash reference" );
 
 BEGIN { $tests += 3 }
 # syslog()

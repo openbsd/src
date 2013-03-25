@@ -30,7 +30,7 @@ optimization process.
 
 Firstly, you need to establish a baseline time for the existing code, which
 timing needs to be reliable and repeatable.  You'll probably want to use the
-C<Benchmark> or C<Devel::DProf> modules, or something similar, for this step,
+C<Benchmark> or C<Devel::NYTProf> modules, or something similar, for this step,
 or perhaps the Unix system C<time> utility, whichever is appropriate.  See the
 base of this document for a longer list of benchmarking and profiling modules,
 and recommended further reading.
@@ -567,7 +567,7 @@ to execute, C<if ( $debug ) { > and C<my $message = shift;>, for example.  The
 differences in the actual times recorded might be in the algorithm used
 internally, or it could be due to system resource limitations or contention.
 
-See also the L<DBIx::Profiler> which will profile database queries running
+See also the L<DBIx::Profile> which will profile database queries running
 under the C<DBIx::*> namespace.
 
 =head2 Devel::NYTProf
@@ -597,7 +597,7 @@ the code.
 C<NYTProf> will generate a report database into the file F<nytprof.out> by
 default.  Human readable reports can be generated from here by using the
 supplied C<nytprofhtml> (HTML output) and C<nytprofcsv> (CSV output) programs.
-We've used the Unix sytem C<html2text> utility to convert the
+We've used the Unix system C<html2text> utility to convert the
 F<nytprof/index.html> file for convenience here.
 
     $> html2text nytprof/index.html
@@ -1137,7 +1137,7 @@ deserve further attention.
     Apache::DProf
     Apache::SmallProf
     Benchmark
-    DBIx::Profiler
+    DBIx::Profile
     Devel::AutoProfiler
     Devel::DProf
     Devel::DProfLB

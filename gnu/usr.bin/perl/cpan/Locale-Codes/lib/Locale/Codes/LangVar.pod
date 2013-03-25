@@ -1,0 +1,118 @@
+=pod
+
+=head1 NAME
+
+Locale::Codes::LangVar - standard codes for language variation identification
+
+=head1 SYNOPSIS
+
+   use Locale::Codes::LangVar;
+
+   $lvar = code2langvar('acm');                 # $lvar gets 'Mesopotamian Arabic'
+   $code = langvar2code('Mesopotamian Arabic'); # $code gets 'acm'
+
+   @codes   = all_langvar_codes();
+   @names   = all_langvar_names();
+
+=head1 DESCRIPTION
+
+The C<Locale::Codes::LangVar> module provides access to standard codes
+used for identifying language variations, such as those as defined in
+the IANA language registry.
+
+Most of the routines take an optional additional argument which
+specifies the code set to use. If not specified, the default IANA
+language registry codes will be used.
+
+=head1 SUPPORTED CODE SETS
+
+There are several different code sets you can use for identifying
+language variations. A code set may be specified using either a name, or a
+constant that is automatically exported by this module.
+
+For example, the two are equivalent:
+
+   $lvar = code2langvar('en','alpha-2');
+   $lvar = code2langvar('en',LOCALE_CODE_ALPHA_2);
+
+The codesets currently supported are:
+
+=over 4
+
+=item B<alpha>
+
+This is the set of alphanumeric codes from the IANA
+language registry, such as 'arevela' for Eastern Armenian. 
+
+This code set is identified with the symbol C<LOCALE_LANGVAR_ALPHA>.
+
+This is the default code set.
+
+=back
+
+=head1 ROUTINES
+
+=over 4
+
+=item B<code2langvar ( CODE [,CODESET] )>
+
+=item B<langvar2code ( NAME [,CODESET] )>
+
+=item B<langvar_code2code ( CODE ,CODESET ,CODESET2 )>
+
+=item B<all_langvar_codes ( [CODESET] )>
+
+=item B<all_langvar_names ( [CODESET] )>
+
+=item B<Locale::Codes::LangVar::rename_langvar  ( CODE ,NEW_NAME [,CODESET] )>
+
+=item B<Locale::Codes::LangVar::add_langvar  ( CODE ,NAME [,CODESET] )>
+
+=item B<Locale::Codes::LangVar::delete_langvar  ( CODE [,CODESET] )>
+
+=item B<Locale::Codes::LangVar::add_langvar_alias  ( NAME ,NEW_NAME )>
+
+=item B<Locale::Codes::LangVar::delete_langvar_alias  ( NAME )>
+
+=item B<Locale::Codes::LangVar::rename_langvar_code  ( CODE ,NEW_CODE [,CODESET] )>
+
+=item B<Locale::Codes::LangVar::add_langvar_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
+
+=item B<Locale::Codes::LangVar::delete_langvar_code_alias  ( CODE [,CODESET] )>
+
+These routines are all documented in the Locale::Codes::API man page.
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item B<Locale::Codes>
+
+The Locale-Codes distribution.
+
+=item B<Locale::Codes::API>
+
+The list of functions supported by this module.
+
+=item B<http://www.iana.org/assignments/language-subtag-registry>
+
+The IANA language subtag registry.
+
+=back
+
+=head1 AUTHOR
+
+See Locale::Codes for full author history.
+
+Currently maintained by Sullivan Beck (sbeck@cpan.org).
+
+=head1 COPYRIGHT
+
+   Copyright (c) 2011-2012 Sullivan Beck
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=cut

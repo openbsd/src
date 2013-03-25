@@ -1,5 +1,8 @@
 package Log::Message::Handlers;
 use strict;
+use vars qw[$VERSION];
+
+$VERSION = '0.04';
 
 =pod
 
@@ -111,7 +114,7 @@ sub warn { warn shift->message; }
 =head2 trace
 
 Will provide a traceback of this error item back to the first one that
-occurrent, clucking with every item as it comes across it.
+occurred, clucking with every item as it comes across it.
 
 =cut
 

@@ -27,13 +27,20 @@ CHANGE_WARN
 # In case the empty lib/ directory was not created.
 mkdir 'lib', 0755 unless $ENV{PERL_CORE};
 
+# starting with Perl 5.11, "site" and "vendor" directories finally are
+# before "perl" (core) in @INC, thus allowing dual-life modules to be
+# updated without the need to overwrite the old version
+my $installdirs = $] < 5.011 ? "perl" : "site";
+
 WriteMakefile(
     NAME            => $PACKAGE,
-    LICENSE         => 'perl',
-    AUTHOR          => 'Sebastien Aperghis-Tramoni <sebastien@aperghis.net>',
+    ($ExtUtils::MakeMaker::VERSION > 6.30 ?
+     (LICENSE       => 'perl',
+      AUTHOR        => 'Sebastien Aperghis-Tramoni <sebastien@aperghis.net>',
+      ABSTRACT_FROM => 'XSLoader_pm.PL',
+     ) : ()),
     VERSION_FROM    => 'XSLoader_pm.PL',
-    ABSTRACT_FROM   => 'XSLoader_pm.PL',
-    INSTALLDIRS     => 'perl',
+    INSTALLDIRS     => $installdirs,
     PL_FILES        => { 'XSLoader_pm.PL'  => 'XSLoader.pm' },
     PM              => { 'XSLoader.pm' => '$(INST_ARCHLIB)/XSLoader.pm' },
     PREREQ_PM       => {

@@ -9,13 +9,12 @@ our (@ISA, $VERSION, @EXPORT_OK, %EXPORT_TAGS);
 @ISA    = qw(Exporter IO::File);
 
 
-$VERSION = '2.024';
+$VERSION = '2.048';
 
 use constant G_EOF => 0 ;
 use constant G_ERR => -1 ;
 
-use IO::Compress::Base::Common 2.024 ;
-#use Parse::Parameters ;
+use IO::Compress::Base::Common 2.048 ;
 
 use IO::File ;
 use Symbol;
@@ -25,9 +24,6 @@ use Carp ;
 
 %EXPORT_TAGS = ( );
 push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
-#Exporter::export_ok_tags('all') ;
-
-
 
 sub smartRead
 {
@@ -37,6 +33,7 @@ sub smartRead
     $$out = "" ;
 
     my $offset = 0 ;
+    my $status = 1;
 
 
     if (defined *$self->{InputLength}) {
@@ -46,7 +43,6 @@ sub smartRead
     }
 
     if ( length *$self->{Prime} ) {
-        #$$out = substr(*$self->{Prime}, 0, $size, '') ;
         $$out = substr(*$self->{Prime}, 0, $size) ;
         substr(*$self->{Prime}, 0, $size) =  '' ;
         if (length $$out == $size) {
@@ -69,11 +65,12 @@ sub smartRead
             # because the filehandle may not support the offset parameter
             # An example is Net::FTP
             my $tmp = '';
-            *$self->{FH}->read($tmp, $get_size) &&
-                (substr($$out, $offset) = $tmp);
+            $status = *$self->{FH}->read($tmp, $get_size) ;
+            substr($$out, $offset) = $tmp
+                if defined $status && $status > 0 ;
         }
         else
-          { *$self->{FH}->read($$out, $get_size) }
+          { $status = *$self->{FH}->read($$out, $get_size) }
     }
     elsif (defined *$self->{InputEvent}) {
         my $got = 1 ;
@@ -83,7 +80,6 @@ sub smartRead
         }
 
         if (length $$out > $size ) {
-            #*$self->{Prime} = substr($$out, $size, length($$out), '');
             *$self->{Prime} = substr($$out, $size, length($$out));
             substr($$out, $size, length($$out)) =  '';
         }
@@ -94,7 +90,6 @@ sub smartRead
        no warnings 'uninitialized';
        my $buf = *$self->{Buffer} ;
        $$buf = '' unless defined $$buf ;
-       #$$out = '' unless defined $$out ;
        substr($$out, $offset) = substr($$buf, *$self->{BufferOffset}, $get_size);
        if (*$self->{ConsumeInput})
          { substr($$buf, 0, $get_size) = '' }
@@ -105,6 +100,11 @@ sub smartRead
     *$self->{InputLengthRemaining} -= length($$out) #- $offset 
         if defined *$self->{InputLength};
         
+    if (! defined $status) {
+        $self->saveStatus($!) ;
+        return STATUS_ERROR;
+    }
+
     $self->saveStatus(length $$out < 0 ? STATUS_ERROR : STATUS_OK) ;
 
     return length $$out;
@@ -140,17 +140,36 @@ sub smartSeek
     my $self   = shift ;
     my $offset = shift ;
     my $truncate = shift;
-    #print "smartSeek to $offset\n";
+    my $position = shift || SEEK_SET;
 
     # TODO -- need to take prime into account
     if (defined *$self->{FH})
-      { *$self->{FH}->seek($offset, SEEK_SET) }
+      { *$self->{FH}->seek($offset, $position) }
     else {
-        *$self->{BufferOffset} = $offset ;
+        if ($position == SEEK_END) {
+            *$self->{BufferOffset} = length ${ *$self->{Buffer} } + $offset ;
+        }
+        elsif ($position == SEEK_CUR) {
+            *$self->{BufferOffset} += $offset ;
+        }
+        else {
+            *$self->{BufferOffset} = $offset ;
+        }
+
         substr(${ *$self->{Buffer} }, *$self->{BufferOffset}) = ''
             if $truncate;
         return 1;
     }
+}
+
+sub smartTell
+{
+    my $self   = shift ;
+
+    if (defined *$self->{FH})
+      { return *$self->{FH}->tell() }
+    else 
+      { return *$self->{BufferOffset} }
 }
 
 sub smartWrite
@@ -191,7 +210,8 @@ sub smartEof
         #
         # here, but this can cause trouble if
         # the filehandle is itself a tied handle, but it uses sysread.
-        # Then we get into mixing buffered & non-buffered IO, which will cause trouble
+        # Then we get into mixing buffered & non-buffered IO, 
+        # which will cause trouble
 
         my $info = $self->getErrInfo();
         
@@ -199,7 +219,7 @@ sub smartEof
         my $status = $self->smartRead(\$buffer, 1);
         $self->pushBack($buffer) if length $buffer;
         $self->setErrInfo($info);
-        
+
         return $status == 0 ;
     }
     elsif (defined *$self->{InputEvent})
@@ -236,8 +256,6 @@ sub saveStatus
 {
     my $self   = shift ;
     my $errno = shift() + 0 ;
-    #return $errno unless $errno || ! defined *$self->{ErrorNo};
-    #return $errno unless $errno ;
 
     *$self->{ErrorNo}  = $errno;
     ${ *$self->{Error} } = '' ;
@@ -251,12 +269,9 @@ sub saveErrorString
     my $self   = shift ;
     my $retval = shift ;
 
-    #return $retval if ${ *$self->{Error} };
-
     ${ *$self->{Error} } = shift ;
-    *$self->{ErrorNo} = shift() + 0 if @_ ;
+    *$self->{ErrorNo} = @_ ? shift() + 0 : STATUS_ERROR ;
 
-    #warn "saveErrorString: " . ${ *$self->{Error} } . " " . *$self->{Error} . "\n" ;
     return $retval;
 }
 
@@ -474,14 +489,32 @@ sub _create
     return undef
         unless defined $status;
 
-    if ( !  $status) {
+    *$obj->{InNew} = 0;
+    *$obj->{Closed} = 0;
+
+    if ($status) {
+        # Need to try uncompressing to catch the case
+        # where the compressed file uncompresses to an
+        # empty string - so eof is set immediately.
+        
+        my $out_buffer = '';
+
+        $status = $obj->read(\$out_buffer);
+    
+        if ($status < 0) {
+            *$obj->{ReadStatus} = [ $status, $obj->error(), $obj->errorNo() ];
+        }
+
+        $obj->ungetc($out_buffer)
+            if length $out_buffer;
+    }
+    else {
         return undef 
             unless *$obj->{Transparent};
 
         $obj->clearError();
         *$obj->{Type} = 'plain';
         *$obj->{Plain} = 1;
-        #$status = $obj->mkIdentityUncomp($class, $got);
         $obj->pushBack(*$obj->{HeaderPending})  ;
     }
 
@@ -698,7 +731,7 @@ sub _rd2
 
         while (($status = $z->read($x->{buff})) > 0) {
             if ($fh) {
-                print $fh ${ $x->{buff} }
+                syswrite $fh, ${ $x->{buff} }
                     or return $z->saveErrorString(undef, "Error writing to output file: $!", $!);
                 ${ $x->{buff} } = '' ;
             }
@@ -717,7 +750,6 @@ sub _rd2
         }
 
         last if $status < 0 || $z->smartEof();
-        #last if $status < 0 ;
 
         last 
             unless *$self->{MultiStream};
@@ -776,8 +808,8 @@ sub readBlock
     }
     
     my $status = $self->smartRead($buff, $size) ;
-    return $self->saveErrorString(STATUS_ERROR, "Error Reading Data")
-        if $status < 0  ;
+    return $self->saveErrorString(STATUS_ERROR, "Error Reading Data: $!", $!)
+        if $status == STATUS_ERROR  ;
 
     if ($status == 0 ) {
         *$self->{Closed} = 1 ;
@@ -803,7 +835,6 @@ sub _raw_read
     my $self = shift ;
 
     return G_EOF if *$self->{Closed} ;
-    #return G_EOF if !length *$self->{Pending} && *$self->{EndStream} ;
     return G_EOF if *$self->{EndStream} ;
 
     my $buffer = shift ;
@@ -814,7 +845,7 @@ sub _raw_read
         my $len = $self->smartRead(\$tmp_buff, *$self->{BlockSize}) ;
         
         return $self->saveErrorString(G_ERR, "Error reading data: $!", $!) 
-                if $len < 0 ;
+                if $len == STATUS_ERROR ;
 
         if ($len == 0 ) {
             *$self->{EndStream} = 1 ;
@@ -843,6 +874,7 @@ sub _raw_read
     my $temp_buf = '';
     my $outSize = 0;
     my $status = $self->readBlock(\$temp_buf, *$self->{BlockSize}, $outSize) ;
+    
     return G_ERR
         if $status == STATUS_ERROR  ;
 
@@ -871,7 +903,7 @@ sub _raw_read
         *$self->{TotalInflatedBytesRead} += $buf_len ;
         *$self->{UnCompSize}->add($buf_len) ;
 
-        $self->filterUncompressed($buffer);
+        $self->filterUncompressed($buffer, $before_len);
 
         if (*$self->{Encoding}) {
             $$buffer = *$self->{Encoding}->decode($$buffer);
@@ -881,8 +913,6 @@ sub _raw_read
     if ($status == STATUS_ENDSTREAM) {
 
         *$self->{EndStream} = 1 ;
-#$self->pushBack($temp_buf)  ;
-#$temp_buf = '';
 
         my $trailer;
         my $trailer_size = *$self->{Info}{TrailerLength} ;
@@ -972,15 +1002,16 @@ sub gotoNextStream
 
     *$self->{NewStream} = 0 ;
     *$self->{EndStream} = 0 ;
+    *$self->{CompressedInputLengthDone} = undef ;
+    *$self->{CompressedInputLength} = undef ;
     $self->reset();
     *$self->{UnCompSize}->reset();
     *$self->{CompSize}->reset();
 
     my $magic = $self->ckMagic();
-    #*$self->{EndStream} = 0 ;
 
     if ( ! defined $magic) {
-        if (! *$self->{Transparent} )
+        if (! *$self->{Transparent} || $self->eof())
         {
             *$self->{EndStream} = 1 ;
             return 0;
@@ -1013,6 +1044,13 @@ sub streamCount
     return scalar @{ *$self->{InfoList} }  ;
 }
 
+#sub read
+#{
+#    my $status = myRead(@_);
+#    return undef if $status < 0;
+#    return $status;
+#}
+
 sub read
 {
     # return codes
@@ -1021,6 +1059,13 @@ sub read
     # <0 - not ok
     
     my $self = shift ;
+
+    if (defined *$self->{ReadStatus} ) {
+        my $status = *$self->{ReadStatus}[0];
+        $self->saveErrorString( @{ *$self->{ReadStatus} } );
+        delete  *$self->{ReadStatus} ;
+        return $status ;
+    }
 
     return G_EOF if *$self->{Closed} ;
 
@@ -1056,6 +1101,9 @@ sub read
                 substr($$buffer, $offset) = '';
             }
         }
+    }
+    elsif (! defined $$buffer) {
+        $$buffer = '' ;
     }
 
     return G_EOF if !length *$self->{Pending} && *$self->{EndStream} ;
@@ -1113,7 +1161,6 @@ sub read
     *$self->{Pending} = $out_buffer;
     $out_buffer = \*$self->{Pending} ;
 
-    #substr($$buffer, $offset) = substr($$out_buffer, 0, $length, '') ;
     substr($$buffer, $offset) = substr($$out_buffer, 0, $length) ;
     substr($$out_buffer, 0, $length) =  '' ;
 
@@ -1123,70 +1170,78 @@ sub read
 sub _getline
 {
     my $self = shift ;
+    my $status = 0 ;
 
     # Slurp Mode
     if ( ! defined $/ ) {
         my $data ;
-        1 while $self->read($data) > 0 ;
-        return \$data ;
+        1 while ($status = $self->read($data)) > 0 ;
+        return ($status, \$data);
     }
 
     # Record Mode
     if ( ref $/ eq 'SCALAR' && ${$/} =~ /^\d+$/ && ${$/} > 0) {
         my $reclen = ${$/} ;
         my $data ;
-        $self->read($data, $reclen) ;
-        return \$data ;
+        $status = $self->read($data, $reclen) ;
+        return ($status, \$data);
     }
 
     # Paragraph Mode
     if ( ! length $/ ) {
         my $paragraph ;    
-        while ($self->read($paragraph) > 0 ) {
+        while (($status = $self->read($paragraph)) > 0 ) {
             if ($paragraph =~ s/^(.*?\n\n+)//s) {
                 *$self->{Pending}  = $paragraph ;
                 my $par = $1 ;
-                return \$par ;
+                return (1, \$par);
             }
         }
-        return \$paragraph;
+        return ($status, \$paragraph);
     }
 
     # $/ isn't empty, or a reference, so it's Line Mode.
     {
         my $line ;    
-        my $offset;
         my $p = \*$self->{Pending}  ;
-
-        if (length(*$self->{Pending}) && 
-                    ($offset = index(*$self->{Pending}, $/)) >=0) {
-            my $l = substr(*$self->{Pending}, 0, $offset + length $/ );
-            substr(*$self->{Pending}, 0, $offset + length $/) = '';    
-            return \$l;
-        }
-
-        while ($self->read($line) > 0 ) {
+        while (($status = $self->read($line)) > 0 ) {
             my $offset = index($line, $/);
             if ($offset >= 0) {
                 my $l = substr($line, 0, $offset + length $/ );
                 substr($line, 0, $offset + length $/) = '';    
                 $$p = $line;
-                return \$l;
+                return (1, \$l);
             }
         }
 
-        return \$line;
+        return ($status, \$line);
     }
 }
 
 sub getline
 {
     my $self = shift;
+
+    if (defined *$self->{ReadStatus} ) {
+        $self->saveErrorString( @{ *$self->{ReadStatus} } );
+        delete  *$self->{ReadStatus} ;
+        return undef;
+    }
+
+    return undef 
+        if *$self->{Closed} || (!length *$self->{Pending} && *$self->{EndStream}) ;
+
     my $current_append = *$self->{AppendOutput} ;
     *$self->{AppendOutput} = 1;
-    my $lineref = $self->_getline();
-    $. = ++ *$self->{LineNo} if defined $$lineref ;
+
+    my ($status, $lineref) = $self->_getline();
     *$self->{AppendOutput} = $current_append;
+
+    return undef 
+        if $status < 0 || length $$lineref == 0 ;
+
+    $. = ++ *$self->{LineNo} ;
+
     return $$lineref ;
 }
 
@@ -1280,7 +1335,6 @@ sub close
 
     if (defined *$self->{FH}) {
         if ((! *$self->{Handle} || *$self->{AutoClose}) && ! *$self->{StdIO}) {
-        #if ( *$self->{AutoClose}) {
             local $.; 
             $! = 0 ;
             $status = *$self->{FH}->close();
@@ -1411,7 +1465,6 @@ sub input_line_number
 sub _notAvailable
 {
     my $name = shift ;
-    #return sub { croak "$name Not Available" ; } ;
     return sub { croak "$name Not Available: File opened only for intput" ; } ;
 }
 
@@ -1445,13 +1498,13 @@ IO::Uncompress::Base - Base Class for IO::Uncompress modules
 =head1 DESCRIPTION
 
 This module is not intended for direct use in application code. Its sole
-purpose if to to be sub-classed by IO::Unompress modules.
+purpose if to to be sub-classed by IO::Uncompress modules.
 
 =head1 SEE ALSO
 
 L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
 
-L<Compress::Zlib::FAQ|Compress::Zlib::FAQ>
+L<IO::Compress::FAQ|IO::Compress::FAQ>
 
 L<File::GlobMapper|File::GlobMapper>, L<Archive::Zip|Archive::Zip>,
 L<Archive::Tar|Archive::Tar>,
@@ -1467,7 +1520,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2010 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

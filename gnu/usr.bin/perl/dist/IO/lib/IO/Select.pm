@@ -11,7 +11,7 @@ use warnings::register;
 use     vars qw($VERSION @ISA);
 require Exporter;
 
-$VERSION = "1.17";
+$VERSION = "1.21";
 
 @ISA = qw(Exporter); # This is only so we can do version checking
 
@@ -74,9 +74,9 @@ sub _update
  foreach $f (@_)
   {
    my $fn = $vec->_fileno($f);
-   next unless defined $fn;
-   my $i = $fn + FIRST_FD;
    if ($add) {
+     next unless defined $fn;
+     my $i = $fn + FIRST_FD;
      if (defined $vec->[$i]) {
 	 $vec->[$i] = $f;  # if array rest might be different, so we update
 	 next;
@@ -85,6 +85,12 @@ sub _update
      vec($bits, $fn, 1) = 1;
      $vec->[$i] = $f;
    } else {      # remove
+     if ( ! defined $fn ) { # remove if fileno undef'd
+         defined($_) && $_ == $f and do { $vec->[FD_COUNT]--; $_ = undef; }
+           for @{$vec}[FIRST_FD .. $#$vec];
+         next;
+     }
+     my $i = $fn + FIRST_FD;
      next unless defined $vec->[$i];
      $vec->[FD_COUNT]--;
      vec($bits, $fn, 1) = 0;
@@ -346,8 +352,8 @@ listening for more connections on a listen socket
     use IO::Select;
     use IO::Socket;
 
-    $lsn = new IO::Socket::INET(Listen => 1, LocalPort => 8080);
-    $sel = new IO::Select( $lsn );
+    $lsn = IO::Socket::INET->new(Listen => 1, LocalPort => 8080);
+    $sel = IO::Select->new( $lsn );
 
     while(@ready = $sel->can_read) {
         foreach $fh (@ready) {
@@ -369,7 +375,7 @@ listening for more connections on a listen socket
 =head1 AUTHOR
 
 Graham Barr. Currently maintained by the Perl Porters.  Please report all
-bugs to <perl5-porters@perl.org>.
+bugs to <perlbug@perl.org>.
 
 =head1 COPYRIGHT
 

@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 33;
+use Test::More tests => 32;
 
 use TieOut;
 use MakeMaker::Test::Utils;
@@ -37,9 +37,7 @@ END {
 ok( chdir 'Min-PerlVers', 'entering dir Min-PerlVers' ) ||
     diag("chdir failed: $!");
 
-{
-    # ----- argument verification -----
-
+note "Argument verification"; {
     my $stdout = tie *STDOUT, 'TieOut';
     ok( $stdout, 'capturing stdout' );
     my $warnings = '';
@@ -102,18 +100,15 @@ END
             MIN_PERL_VERSION => 'foobar',
         );
     };
-    ok( '' ne $warnings,    'MIN_PERL_VERSION=foobar triggers a warning' );
-    is( $warnings, <<'END', '  with expected message text' );
+    is( $@, <<'END', 'Invalid MIN_PERL_VERSION is fatal' );
 Warning: MIN_PERL_VERSION is not in a recognized format.
 Recommended is a quoted numerical value like '5.005' or '5.008001'.
 END
 
-    is( $@, '',             '  and without a hard failure' );
 }
 
 
-# ----- PREREQ_PRINT output -----
-{
+note "PREREQ_PRINT output"; {
     my $prereq_out = run(qq{$perl Makefile.PL "PREREQ_PRINT=1"});
     is( $?, 0,            'PREREQ_PRINT exiting normally' );
     my $prereq_out_sane = $prereq_out =~ /^\s*\$PREREQ_PM\s*=/;
@@ -137,8 +132,7 @@ END
 }
 
 
-# ----- PRINT_PREREQ output -----
-{
+note "PRINT_PREREQ output"; {
     my $prereq_out = run(qq{$perl Makefile.PL "PRINT_PREREQ=1"});
     is( $?, 0,                      'PRINT_PREREQ exiting normally' );
     ok( $prereq_out !~ /^warning/i, '  and not complaining loudly' );
@@ -148,8 +142,7 @@ END
 }
 
 
-# ----- generated files verification -----
-{
+note "generated files verification"; {
     unlink $makefile;
     my @mpl_out = run(qq{$perl Makefile.PL});
     END { unlink $makefile, makefile_backup() }
@@ -159,8 +152,7 @@ END
 }
 
 
-# ----- ppd output -----
-{
+note "ppd output"; {
     my $ppd_file = 'Min-PerlVers.ppd';
     my @make_out = run(qq{$make ppd});
     END { unlink $ppd_file }
@@ -175,21 +167,29 @@ END
 }
 
 
-# ----- META.yml output -----
-{
+note "META.yml output"; {
     my $distdir  = 'Min-PerlVers-0.05';
     $distdir =~ s{\.}{_}g if $Is_VMS;
 
     my $meta_yml = "$distdir/META.yml";
+    my $meta_json = "$distdir/META.json";
     my @make_out    = run(qq{$make metafile});
     END { rmtree $distdir }
 
-    cmp_ok( $?, '==', 0, 'Make metafile exiting normally' ) || diag(@make_out);
-    my $meta = slurp($meta_yml);
-    ok( defined($meta),  '  META.yml present' );
-
-    like( $meta, qr{\nrequires:[^\S\n]*\n\s+perl:\s+5\.005\n\s+strict:\s+0\n},
-                         '  META.yml content good');
+    for my $case (
+        ['META.yml', $meta_yml],
+        ['META.json', $meta_json],
+    ) {
+        my ($label, $meta_name) = @$case;
+        ok(
+          my $obj = eval {
+            CPAN::Meta->load_file($meta_name, {lazy_validation => 0})
+          },
+          "$label validates"
+        );
+        is( $obj->prereqs->{runtime}{requires}{perl}, '5.005',
+          "$label has runtime/requires perl 5.005"
+        );
+    }
 }
 
-__END__

@@ -26,7 +26,7 @@ my $r = $c->reval($no_warn_redef . q!
     (bless[],"Foo")->isa("Foo");
 !);
 
-is( $r, "pwned", "isa overriden in compartment" );
+is( $r, "pwned", "isa overridden in compartment" );
 is( (bless[],"Foo")->isa("Foo"), 1, "... but not outside" );
 
 sub Foo::foo {}
@@ -36,7 +36,7 @@ $r = $c->reval($no_warn_redef . q!
     (bless[],"Foo")->can("foo");
 !);
 
-is( $r, "pwned", "can overriden in compartment" );
+is( $r, "pwned", "can overridden in compartment" );
 is( (bless[],"Foo")->can("foo"), \&Foo::foo, "... but not outside" );
 
 $r = $c->reval(q!

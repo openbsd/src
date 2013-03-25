@@ -15,7 +15,7 @@
 
 /* In BeOS 5.0 the waitpid() seems to misbehave in that the status
  * has the upper and lower bytes swapped compared with the usual
- * POSIX/UNIX implementations.  To undo the surpise effect to the
+ * POSIX/UNIX implementations.  To undo the surprise effect to the
  * rest of Perl we need this wrapper.  (The rest of BeOS might be
  * surprised because of this, though.) */
 

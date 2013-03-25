@@ -1,28 +1,34 @@
-# $Id: vos.sh,v 1.0 2001-12-11 09:30:00-05 Green Exp $
-
-# This is a hints file for Stratus VOS, using the POSIX environment
-# in VOS 14.4.0 and higher.
+# This is a hints file for Stratus OpenVOS, using the POSIX environment
+# found in VOS 17.1.0 and higher.
 #
-# VOS POSIX is based on POSIX.1-1996 and contains elements of
+# OpenVOS POSIX is based on POSIX.1-1996 and contains elements of
 # POSIX.1-2001.  It ships with gcc as the standard compiler.
 #
 # Paul Green (Paul.Green@stratus.com)
 
 # C compiler and default options.
 cc=gcc
-ccflags="-D_SVID_SOURCE -D_POSIX_C_SOURCE=200112L"
+ccflags="-D_XOPEN_SOURCE=700 -D_VOS_EXTENDED_NAMES"
+ccdlflags="-Wl,-rpath,$shrpdir"
+cccdlflags="-fPIC"
 
 # Make command.
 make="/system/gnu_library/bin/gmake"
 # indented to not put it into config.sh
   _make="/system/gnu_library/bin/gmake"
 
-# Architecture name
-if test `uname -m` = i786; then
-     archname="i786"
-else
-     archname="hppa1.1"
+# Check for the minimum acceptable release of OpenVOS (17.1.0).
+if test `uname -r | sed -e 's/OpenVOS Release //' -e 's/VOS Release //'` \< "17.1.0"; then
+cat >&4 <<EOF
+***
+*** This version of Perl 5 must be built on OpenVOS Release 17.1.0 or later.
+***
+EOF
+exit 1
 fi
+
+# Always X86
+archname=`uname -m`
 
 # Executable suffix.
 # No, this is not a typo.  The ".pm" really is the native
@@ -30,25 +36,13 @@ fi
 _exe=".pm"
 
 # Object library paths.
-loclibpth="/system/stcp/object_library"
-loclibpth="$loclibpth /system/stcp/object_library/common"
-loclibpth="$loclibpth /system/stcp/object_library/net"
-loclibpth="$loclibpth /system/stcp/object_library/socket"
-loclibpth="$loclibpth /system/posix_object_library/sysv"
 loclibpth="$loclibpth /system/posix_object_library"
 loclibpth="$loclibpth /system/c_object_library"
 loclibpth="$loclibpth /system/object_library"
 glibpth="$loclibpth"
 
 # Include library paths
-# Pick up vos/syslog.h on Continuum Platform.
-if test "$archname" = "i786"; then
-     locincpth=""
-else
-     locincpth=`pwd`/vos
-fi
-locincpth="$locincpth /system/stcp/include_library"
-locincpth="$locincpth /system/include_library/sysv"
+locincpth=""
 usrinc="/system/include_library"
 
 # Where to install perl5.
@@ -56,11 +50,15 @@ prefix=/system/ported/perl5
 
 # Linker is gcc.
 ld="gcc"
+lddlflags="-shared"
 
-# No shared libraries.
-so="none"
+# Shared libraries!
+so="so"
 
-# Don't use nm.
+# Build libperl.so
+useshrplib="true"
+
+# Don't use nm. The VOS copy of libc.a is empty.
 usenm="n"
 
 # Make the default be no large file support.
@@ -89,71 +87,5 @@ archobjs="vos.o"
 # Help gmake find vos.c
 test -h vos.c || ln -s vos/vos.c vos.c
 
-# VOS returns a constant 1 for st_nlink when stat'ing a
-# directory. Therefore, we must set this variable to stop
-# File::Find using the link count to determine whether there are
-# subdirectories to be searched.
-dont_use_nlink=define
-
 # Tell Configure where to find the hosts file.
 hostcat="cat /system/stcp/hosts"
-
-# VOS does not have socketpair() but we supply one in vos.c
-d_sockpair="define"
-
-# Once we have the compiler flags defined, Configure will
-# execute the following call-back script. See hints/README.hints
-# for details.
-cat > UU/cc.cbu <<'EOCBU'
-# This script UU/cc.cbu will get 'called-back' by Configure after it
-# has prompted the user for the C compiler to use.
-
-# Compile and run the a test case to see if bug gnu_g++-220 is
-# present. If so, lower the optimization level when compiling
-# pp_pack.c.  This works around a bug in unpack.
-
-echo " "
-echo "Testing whether bug gnu_g++-220 is fixed in your compiler..."
-
-# Try compiling the test case.
-if $cc -o t001 -O $ccflags $ldflags ../hints/t001.c; then
-	gccbug=`$run ./t001`
-	if [ "X$gccversion" = "X" ]; then
-		# Done too late in Configure if hinted
-		gccversion=`$cc -dumpversion`
-	fi
-	case "$gccbug" in
-	*fails*)	cat >&4 <<EOF
-This C compiler ($gccversion) is known to have optimizer
-problems when compiling pp_pack.c.  The Stratus bug number
-for this problem is gnu_g++-220.
-
-Disabling optimization for pp_pack.c.
-EOF
-			case "$pp_pack_cflags" in
-			'')	pp_pack_cflags='optimize='
-				echo "pp_pack_cflags='optimize=\"\"'" >> config.sh ;;
-			*)  echo "You specified pp_pack_cflags yourself, so we'll go with your value." >&4 ;;
-			esac
-		;;
-	*)	echo "Your compiler is ok." >&4
-		;;
-	esac
-else
-	echo " "
-	echo "*** WHOA THERE!!! ***" >&4
-	echo "    Your C compiler \"$cc\" doesn't seem to be working!" >&4
-	case "$knowitall" in
-	'')
-		echo "    You'd better start hunting for one and let me know about it." >&4
-		exit 1
-		;;
-	esac
-fi
-
-$rm -f t001$_o t001$_exe t001.kp
-EOCBU
-
-
-# VOS 14.7 has minimal support for dynamic linking. Too minimal for perl.
-usedl="undef"

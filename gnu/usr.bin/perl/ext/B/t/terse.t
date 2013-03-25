@@ -91,9 +91,7 @@ sub bar {
 
 # Schwern's example of finding an RV
 my $path = join " ", map { qq["-I$_"] } @INC;
-$path = '-I::lib -MMac::err=unix' if $^O eq 'MacOS';
-my $redir = $^O eq 'MacOS' ? '' : "2>&1";
-my $items = qx{$^X $path "-MO=Terse" -le "print \\42" $redir};
+my $items = qx{$^X $path "-MO=Terse" -le "print \\42" 2>&1};
 if( $] >= 5.011 ) {
     like( $items, qr/IV $hex \\42/, 'RV (but now stored in an IV)' );
 } else {

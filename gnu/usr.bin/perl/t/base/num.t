@@ -1,9 +1,9 @@
 #!./perl
 
-print "1..50\n";
+print "1..53\n";
 
 # First test whether the number stringification works okay.
-# (Testing with == would exercize the IV/NV part, not the PV.)
+# (Testing with == would exercise the IV/NV part, not the PV.)
 
 $a = 1; "$a";
 print $a eq "1"       ? "ok 1\n"  : "not ok 1 # $a\n";
@@ -49,6 +49,8 @@ print $a eq "256"     ? "ok 14\n" : "not ok 14 # $a\n";
 
 $a = 1000; "$a";
 print $a eq "1000"    ? "ok 15\n" : "not ok 15 # $a\n";
+
+# more hex and binary tests below starting at 51
 
 # Okay, now test the numerics.
 # We may be assuming too much, given the painfully well-known floating
@@ -196,3 +198,14 @@ print $a == 10.0 ? "ok 49\n" : "not ok 49\n";
 $a = 57.295779513082320876798154814169;
 print ok($a*10,572.95779513082320876798154814169,1e-10) ? "ok 50\n" :
   "not ok 50 # $a\n";
+
+# Allow uppercase base markers (#76296)
+
+$a = 0Xabcdef; "$a";
+print $a eq "11259375"     ? "ok 51\n" : "not ok 51 # $a\n";
+
+$a = 0XFEDCBA; "$a";
+print $a eq "16702650"     ? "ok 52\n" : "not ok 52 # $a\n";
+
+$a = 0B1101; "$a";
+print $a eq "13"           ? "ok 53\n" : "not ok 53 # $a\n";

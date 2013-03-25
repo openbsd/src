@@ -5,7 +5,7 @@ use Log::Message private => 0;;
 
 BEGIN { 
     use vars qw[$VERSION]; 
-    $VERSION = 0.06; 
+    $VERSION = 0.08;
 }
         
 
@@ -268,6 +268,8 @@ printed. This default to C<*STDOUT>.
 If this option is set to C<true>, every call to C<error()> will 
 generate a stacktrace using C<Carp::shortmess()>.
 Defaults to C<false>
+
+=back
 
 =cut
 

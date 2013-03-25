@@ -24,13 +24,10 @@
 #
 
 BEGIN {
-    if (ord("A") == 193) {
-	print "1..0 # Skip: EBCDIC\n"; # For now, until someone has time.
-	exit(0);
-    }
     chdir 't' if -d 't';
     @INC = '../lib';
     require "./test.pl";
+    skip_all('EBCDIC') if $::IS_EBCDIC;
     undef &skip;
 }
 

@@ -13,7 +13,7 @@ use Exporter ();
 our(@ISA, @EXPORT_OK, @EXPORT, $VERSION);
 
 @ISA = qw(Exporter);
-$VERSION = "0.07";
+$VERSION = "0.09";
 
 @EXPORT = qw( POLLIN
 	      POLLOUT
@@ -140,7 +140,7 @@ IO::Poll - Object interface to system poll call
 
     use IO::Poll qw(POLLRDNORM POLLWRNORM POLLIN POLLHUP);
 
-    $poll = new IO::Poll;
+    $poll = IO::Poll->new();
 
     $poll->mask($input_handle => POLLIN);
     $poll->mask($output_handle => POLLOUT);
@@ -198,7 +198,7 @@ L<poll(2)>, L<IO::Handle>, L<IO::Select>
 =head1 AUTHOR
 
 Graham Barr. Currently maintained by the Perl Porters.  Please report all
-bugs to <perl5-porters@perl.org>.
+bugs to <perlbug@perl.org>.
 
 =head1 COPYRIGHT
 

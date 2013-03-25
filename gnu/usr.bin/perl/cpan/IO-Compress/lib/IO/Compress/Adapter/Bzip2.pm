@@ -4,13 +4,12 @@ use strict;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.024 qw(:Status);
+use IO::Compress::Base::Common  2.048 qw(:Status);
 
-#use Compress::Bzip2 ;
-use Compress::Raw::Bzip2  2.024 ;
+use Compress::Raw::Bzip2  2.048 ;
 
 our ($VERSION);
-$VERSION = '2.024';
+$VERSION = '2.048';
 
 sub mkCompObject
 {
@@ -18,11 +17,12 @@ sub mkCompObject
     my $WorkFactor = shift ;
     my $Verbosity  = shift ;
 
+    $BlockSize100K = 1 if ! defined $BlockSize100K ;
+    $WorkFactor    = 0 if ! defined $WorkFactor ;
+    $Verbosity     = 0 if ! defined $Verbosity ;
+
     my ($def, $status) = new Compress::Raw::Bzip2(1, $BlockSize100K,
                                                  $WorkFactor, $Verbosity);
-    #my ($def, $status) = bzdeflateInit();
-                        #-BlockSize100K => $params->value('BlockSize100K'),
-                        #-WorkFactor    => $params->value('WorkFactor');
 
     return (undef, "Could not create Deflate object: $status", $status)
         if $status != BZ_OK ;
@@ -39,7 +39,6 @@ sub compr
 
     my $def   = $self->{Def};
 
-    #my ($out, $status) = $def->bzdeflate(defined ${$_[0]} ? ${$_[0]} : "") ;
     my $status = $def->bzdeflate($_[0], $_[1]) ;
     $self->{ErrorNo} = $status;
 
@@ -48,8 +47,6 @@ sub compr
         $self->{Error} = "Deflate Error: $status"; 
         return STATUS_ERROR;
     }
-
-    #${ $_[1] } .= $out if defined $out;
 
     return STATUS_OK;    
 }
@@ -60,8 +57,6 @@ sub flush
 
     my $def   = $self->{Def};
 
-    #my ($out, $status) = $def->bzflush($opt);
-    #my $status = $def->bzflush($_[0], $opt);
     my $status = $def->bzflush($_[0]);
     $self->{ErrorNo} = $status;
 
@@ -71,7 +66,6 @@ sub flush
         return STATUS_ERROR;
     }
 
-    #${ $_[0] } .= $out if defined $out ;
     return STATUS_OK;    
     
 }
@@ -82,7 +76,6 @@ sub close
 
     my $def   = $self->{Def};
 
-    #my ($out, $status) = $def->bzclose();
     my $status = $def->bzclose($_[0]);
     $self->{ErrorNo} = $status;
 
@@ -92,7 +85,6 @@ sub close
         return STATUS_ERROR;
     }
 
-    #${ $_[0] } .= $out if defined $out ;
     return STATUS_OK;    
     
 }

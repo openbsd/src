@@ -2,7 +2,7 @@
  *
  * Platform:	VM/ESA, possibly others which use dllload etc.
  * Author:	Neale Ferguson (neale@mailbox.tabnsw.com.au)
- * Created:	23rd Septemer, 1998
+ * Created:	23rd September, 1998
  *
  *
  */

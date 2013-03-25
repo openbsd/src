@@ -1,7 +1,7 @@
 
 require 5;
 package Pod::Simple::DumpAsXML;
-$VERSION = '3.14';
+$VERSION = '3.20';
 use Pod::Simple ();
 BEGIN {@ISA = ('Pod::Simple')}
 
@@ -114,7 +114,7 @@ L<Pod::Simple>.
 L<Pod::Simple::XMLOutStream> is rather like this class.
 Pod::Simple::XMLOutStream's output is space-padded in a way
 that's better for sending to an XML processor (that is, it has
-no ignoreable whitespace). But
+no ignorable whitespace). But
 Pod::Simple::DumpAsXML's output is much more human-readable, being
 (more-or-less) one token per line, with line-wrapping.
 

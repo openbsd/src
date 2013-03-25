@@ -86,7 +86,7 @@ NLM_VERSION    = 3,20,0
 
 
 # Here comes the CW tools - TO BE FILLED TO BUILD WITH CW -
-MODULE_DESC     = "Perl 5.12.2 for NetWare"
+MODULE_DESC     = "Perl 5.16.3 for NetWare"
 CCTYPE          = CodeWarrior
 C_COMPILER		= mwccnlm -c
 CPP_COMPILER	= mwccnlm
@@ -318,7 +318,6 @@ DUMPER_NLM	= $(AUTODIR)\Data\Dumper\Dumper.NLM
 PEEK_NLM	= $(AUTODIR)\Devel\Peek\Peek.NLM
 RE_NLM		= $(AUTODIR)\re\re.NLM
 BYTELOADER_NLM	= $(AUTODIR)\ByteLoader\ByteLoader.NLM
-DPROF_NLM	= $(AUTODIR)\Devel\DProf\DProf.NLM
 GLOB_NLM	= $(AUTODIR)\File\Glob\Glob.NLM
 HOSTNAME_NLM	= $(AUTODIR)\Sys\Hostname\Hostname.NLM
 CWD_NLM			= $(EXTDIR)\Cwd\Cwd.NLM
@@ -326,9 +325,9 @@ STORABLE_NLM		= $(EXTDIR)\Storable\Storable.NLM
 LISTUTIL_NLM		= $(EXTDIR)\List\Util.NLM
 MIMEBASE64_NLM		= $(EXTDIR)\MIME\Base64\Base64.NLM
 XSAPITEST_NLM		= $(EXTDIR)\XS\APItest\APItest.NLM
-XSAPITESTKEYWORDRPN_NLM	= $(EXTDIR)\XS\APItest\KeywordRPN\KeywordRPN.NLM
 XSTYPEMAP_NLM		= $(EXTDIR)\XS\Typemap\Typemap.NLM
 UNICODENORMALIZE_NLM 	= $(EXTDIR)\Unicode\Normalize\Normalize.NLM
+UNICODECOLLATE_NLM 	= $(EXTDIR)\Unicode\Collate\Collate.NLM
 
 EXTENSION_NLM	= 		\
 		$(FCNTL_NLM)	\
@@ -344,14 +343,12 @@ EXTENSION_NLM	= 		\
 		$(GLOB_NLM)		\
 		$(PEEK_NLM)		\
 		$(RE_NLM)	\
-		$(DPROF_NLM)	\
 		$(HOSTNAME_NLM)		\
 		$(CWD_NLM)		\
 		$(STORABLE_NLM)		\
 		$(LISTUTIL_NLM)		\
 		$(MIMEBASE64_NLM)	\
 		$(XSAPITEST_NLM)	\
-		$(XSAPITESTKEYWORDRPN_NLM)	\
 		$(XSTYPEMAP_NLM)	\
 		$(UNICODENORMALIZE_NLM)  \
 		$(FILTER_NLM)	
@@ -465,7 +462,7 @@ INST_NW_TOP2 = $(INST_NW_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-INST_VER	= \5.12.2
+INST_VER	= \5.16.3
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -663,7 +660,6 @@ PL2BAT		= ..\win32\bin\pl2bat.pl
 UTILS		=			\
 		..\utils\h2ph		\
 		..\utils\splain		\
-		..\utils\dprofpp	\
 		..\utils\perlbug	\
 		..\utils\pl2pm 		\
 		..\utils\c2ph		\
@@ -702,6 +698,7 @@ MICROCORE_SRC	=		\
 		..\gv.c		\
 		..\mro.c	\
 		..\hv.c		\
+		..\keywords.c	\
 		..\locale.c	\
                 ..\mathoms.c    \
 		..\mg.c		\
@@ -790,9 +787,9 @@ DLL_OBJ		= $(DLL_SRC:.c=.obj)
 X2P_OBJ		= $(X2P_SRC:.c=.obj)
 
 DYNAMIC_EXT	= Socket IO Fcntl Opcode SDBM_File POSIX attributes B re \
-		Data/Dumper Devel/Peek ByteLoader Devel/DProf File/Glob \
-		Storable/Storable List/Util MIME/Base64/Base64 XS/APItest/APItest XS/APItest/KeywordRPN \
-		XS/Typemap/Typemap Unicode/Normalize/Normalize Sys/Hostname
+		Data/Dumper Devel/Peek ByteLoader File/Glob \
+		Storable/Storable List/Util MIME/Base64/Base64 XS/APItest/APItest \
+		XS/Typemap/Typemap Unicode/Collate/Collate Unicode/Normalize/Normalize Sys/Hostname
 
 STATIC_EXT	= DynaLoader
 NONXS_EXT	= Errno
@@ -811,7 +808,6 @@ DUMPER		= $(EXTDIR)\Data\Dumper\Dumper
 ERRNO		= $(EXTDIR)\Errno\Errno
 PEEK		= $(EXTDIR)\Devel\Peek\Peek
 BYTELOADER	= $(EXTDIR)\ByteLoader\ByteLoader
-DPROF		= $(EXTDIR)\Devel\DProf\DProf
 GLOB		= $(EXTDIR)\File\Glob\Glob
 HOSTNAME	= $(EXTDIR)\Sys\Hostname\Hostname
 CWD			= $(EXTDIR)\Cwd\Cwd
@@ -819,9 +815,9 @@ STORABLE		= $(EXTDIR)\Storable\Storable
 LISTUTIL		= $(EXTDIR)\List\Util
 MIMEBASE64		= $(EXTDIR)\MIME\Base64\Base64
 XSAPITEST		= $(EXTDIR)\XS\APItest\APItest
-XSAPITESTKEYWORDRPN	= $(EXTDIR)\XS\APItest\KeywordRPN\KeywordRPN
 XSTYPEMAP		= $(EXTDIR)\XS\Typemap\Typemap
 UNICODENORMALIZE	= $(EXTDIR)\Unicode\Normalize\Normalize
+UNICODECOLLATE	= $(EXTDIR)\Unicode\Collate\Collate
 
 ERRNO_PM_NW	= $(LIBDIR)\Errno.pm
 
@@ -838,7 +834,6 @@ EXTENSION_C	= 		\
 		$(PEEK).c	\
 		$(B).c		\
 		$(BYTELOADER).c	\
-		$(DPROF).c	\
 		$(GLOB).c	\
 		$(HOSTNAME).c \
 		$(CWD).c	\
@@ -846,7 +841,6 @@ EXTENSION_C	= 		\
 		$(LISTUTIL).c	\
 		$(MIMEBASE64).c	\
 		$(XSAPITEST).c	\
-		$(XSAPITESTKEYWORDRPN).c	\
 		$(XSTYPEMAP).c	\
 		$(UNICODENORMALIZE).c	\
 
@@ -870,8 +864,7 @@ all : .cleanoldfiles .\nwconfig.h $(CONFIGPM) $(NLM_NAME) $(EXTENSION_NLM) $(EXT
 	$(MINIPERL) -I..\lib config_sh.PL $(NW_CFG_VARS) config.nw5 > ..\config.sh
 
 # this target is for when changes to the main config.sh happen
-# edit config.{b,v,g,w}c and make this target once for each supported
-# compiler (e.g. `dmake CCTYPE=BORLAND regen_config_h`)
+# edit config.wc and make this target
 regen_config_h:
 	perl config_sh.PL $(NW_CFG_VARS) $(NW_CFGSH_TMPL) > ..\config.sh
 	cd ..
@@ -1067,12 +1060,12 @@ $(PERLIMPLIB): perllib.imp
 #	$(XCOPY) $(PERLIMPLIB) $(COREDIR)
 #	@echo $(PERLIMPLIB) Done
 
-perllib.imp : $(MINIPERL) $(CONFIGPM) ..\global.sym ..\pp.sym ..\makedef.pl
+perllib.imp : $(MINIPERL) $(CONFIGPM) ..\embed.fnc ..\makedef.pl
 #	$(MINIPERL) -w ..\makedef.pl PLATFORM=netware FILETYPE=def $(ADD_BUILDOPT) \
-#	    CCTYPE=$(CCTYPE) > perllib.def
+#	    CCTYPE=$(CCTYPE) TARG_DIR=..\ > perllib.def
 	@echo (Perl) > perl.imp
   	$(MINIPERL) -w ..\makedef.pl PLATFORM=netware FILETYPE=imp $(BS_CFLAGS) $(DEFINES) $(ADD_BUILDOPT) \
-	    CCTYPE=$(CCTYPE) >> perl.imp
+	    CCTYPE=$(CCTYPE) TARG_DIR=..\ >> perl.imp
 	copy perl.imp $(COREDIR)
   
 $(DLL_OBJ) : $(DYNALOADER).c $(CORE_H) $(EXTDIR)\DynaLoader\dlutils.c
@@ -1211,12 +1204,6 @@ $(BYTELOADER_NLM):
 	$(MAKE)
 	cd ..\..\netware
 
-$(DPROF_NLM):
-	cd $(EXTDIR)\Devel\$(*B)
-	..\..\..\miniperl -I..\..\..\lib Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\..\netware
-
 $(GLOB_NLM):
 	cd $(EXTDIR)\File\$(*B)
 	..\..\..\miniperl -I..\..\..\lib Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
@@ -1266,12 +1253,6 @@ $(MIMEBASE64_NLM):
 	cd ..\..\..\netware
 
 $(XSAPITEST_NLM):
-	cd $(EXTDIR)\XS\$(*B)
-	..\..\..\miniperl -I..\..\lib Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
-	$(MAKE)
-	cd ..\..\..\netware
-
-$(XSAPITESTKEYWORDRPN_NLM):
 	cd $(EXTDIR)\XS\$(*B)
 	..\..\..\miniperl -I..\..\lib Makefile.PL PERL_CORE=1 INSTALLDIRS=perl
 	$(MAKE)
@@ -1410,16 +1391,17 @@ distclean: clean nwclean
 	-del /f /q $(LIBDIR)\SDBM_File.pm $(LIBDIR)\Socket.pm $(LIBDIR)\POSIX.pm
 	-del /f /q $(LIBDIR)\B.pm $(LIBDIR)\O.pm $(LIBDIR)\re.pm
 	-del /f /q $(LIBDIR)\Data\Dumper.pm $(LIBDIR)\ByteLoader.pm
-	-del /f /q $(LIBDIR)\Devel\Peek.pm $(LIBDIR)\Devel\DProf.pm
+	-del /f /q $(LIBDIR)\Devel\Peek.pm
 	-del /f /q $(LIBDIR)\File\Glob.pm
 	-del /f /q $(LIBDIR)\Unicode\Normalize.pm
+	-del /f /q $(LIBDIR)\Unicode\Collate.pm
 	-rmdir /s /q $(LIBDIR)\IO
 	-rmdir /s /q $(LIBDIR)\B
 	-rmdir /s /q $(LIBDIR)\Data
 	-del /f /q $(PODDIR)\*.html
 	-del /f /q $(PODDIR)\*.bat
 	cd ..\utils
-	-del /f /q h2ph splain perlbug pl2pm c2ph h2xs perldoc dprofpp
+	-del /f /q h2ph splain perlbug pl2pm c2ph h2xs perldoc
 	-del /f /q *.bat
 	cd ..\netware
 	cd ..\x2p

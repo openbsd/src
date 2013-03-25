@@ -10,8 +10,7 @@ $perl = VMS::Filespec::vmsify($perl) if $^O eq 'VMS';
 
 my $Invoke_Perl = qq(MCR $perl "-I[-.lib]");
 
-BEGIN { require "./test.pl"; }
-plan(tests => 25);
+use Test::More tests => 25;
 
 SKIP: {
     skip("tests for non-VMS only", 1) if $^O eq 'VMS';
@@ -29,7 +28,7 @@ SKIP: {
 
 #========== vmsish status ==========
 `$Invoke_Perl -e 1`;  # Avoid system() from a pipe from harness.  Mutter.
-is($?,0,"simple Perl invokation: POSIX success status");
+is($?,0,"simple Perl invocation: POSIX success status");
 {
   use vmsish qw(status);
   is(($? & 1),1, "importing vmsish [vmsish status]");
@@ -53,7 +52,7 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
 
   $msg = do_a_perl('-e "exit 1"');
     $msg =~ s/\n/\\n/g; # keep output on one line
-  like($msg,'ABORT', "POSIX ERR exit, DCL error message check");
+  like($msg, qr/ABORT/, "POSIX ERR exit, DCL error message check");
   is($?&1,0,"vmsish status check, POSIX ERR exit");
 
   $msg = do_a_perl('-e "use vmsish qw(exit); exit 1"');
@@ -63,7 +62,7 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
 
   $msg = do_a_perl('-e "use vmsish qw(exit); exit 44"');
     $msg =~ s/\n/\\n/g; # keep output on one line
-  like($msg, 'ABORT', "vmsish ERR exit, DCL error message check");
+  like($msg, qr/ABORT/, "vmsish ERR exit, DCL error message check");
   is($?&1,0,"vmsish ERR exit, vmsish status check");
 
   $msg = do_a_perl('-e "use vmsish qw(hushed); exit 1"');
@@ -76,7 +75,7 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
 
   $msg = do_a_perl('-e "use vmsish qw(exit hushed); no vmsish qw(hushed); exit 44"');
   $msg =~ s/\n/\\n/g; # keep output on one line
-  like($msg,'ABORT',"vmsish ERR exit, no vmsish hushed, DCL error message check");
+  like($msg, qr/ABORT/,"vmsish ERR exit, no vmsish hushed, DCL error message check");
 
   $msg = do_a_perl('-e "use vmsish qw(hushed); die(qw(blah));"');
   $msg =~ s/\n/\\n/g; # keep output on one line
@@ -127,7 +126,7 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
   END { 1 while unlink $file; }
 
   {
-     use_ok('vmsish qw(time)');
+     use_ok('vmsish', 'time');
 
      # but that didn't get it in our current scope
      use vmsish qw(time);

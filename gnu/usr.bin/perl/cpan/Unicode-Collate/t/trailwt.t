@@ -1,3 +1,4 @@
+
 BEGIN {
     unless ("A" eq pack('U', 0x41)) {
 	print "1..0 # Unicode::Collate " .
@@ -10,16 +11,24 @@ BEGIN {
     }
 }
 
-use Test;
-BEGIN { plan tests => 58 };
-
 use strict;
 use warnings;
+BEGIN { $| = 1; print "1..58\n"; }
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Collate;
 
-#########################
-
 ok(1);
+
+#########################
 
 # a standard collator (3.1.1)
 my $Collator = Unicode::Collate->new(
@@ -222,5 +231,3 @@ ok($Collator->eq("\x{1100}\x{1161}A", "\x{326E}A"));
 ok($Collator->eq("\x{1100}\x{1161}\x{3042}", "\x{326E}\x{3042}"));
 ok($Collator->eq("\x{1100}\x{1161}\x{4E00}", "\x{326E}\x{4E00}"));
 
-1;
-__END__

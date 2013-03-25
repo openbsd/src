@@ -5,35 +5,6 @@
 #  in the README file that comes with the distribution.
 #
 
-# NOTE THAT THIS FILE IS COPIED FROM ext/Storable/t/st-dump.pl
-# TO t/lib/st-dump.pl.  One could also play games with
-# File::Spec->updir and catdir to get the st-dump.pl in
-# ext/Storable into @INC.
-
-sub ok {
-	my ($num, $ok, $name) = @_;
-        $num .= " - $name" if defined $name and length $name;
-	print $ok ? "ok $num\n" : "not ok $num\n";
-        $ok;
-}
-
-sub num_equal {
-	my ($num, $left, $right, $name) = @_;
-        my $ok = ((defined $left) ? $left == $right : undef);
-        unless (ok ($num, $ok, $name)) {
-          print "# Expected $right\n";
-          if (!defined $left) {
-            print "# Got undef\n";
-          } elsif ($left !~ tr/0-9//c) {
-            print "# Got $left\n";
-          } else {
-            $left =~ s/([^-a-zA-Z0-9_+])/sprintf "\\%03o", ord $1/ge;
-            print "# Got \"$left\"\n";
-          }
-        }
-        $ok;
-}
-
 package dump;
 use Carp;
 
@@ -60,7 +31,7 @@ sub main'dump {
 # This is the root recursive dumping routine that may indirectly be
 # called by one of the routine it calls...
 # The link parameter is set to false when the reference passed to
-# the routine is an internal temporay variable, implying the object's
+# the routine is an internal temporary variable, implying the object's
 # address is not to be dumped in the %dumped table since it's not a
 # user-visible object.
 sub recursive_dump {

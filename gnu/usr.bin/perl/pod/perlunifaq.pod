@@ -84,12 +84,12 @@ or encode anymore, on things that use the layered handle.
 
 You can provide this layer when C<open>ing the file:
 
-    open my $fh, '>:encoding(UTF-8)', $filename;  # auto encoding on write
-    open my $fh, '<:encoding(UTF-8)', $filename;  # auto decoding on read
+  open my $fh, '>:encoding(UTF-8)', $filename;  # auto encoding on write
+  open my $fh, '<:encoding(UTF-8)', $filename;  # auto decoding on read
 
 Or if you already have an open filehandle:
 
-    binmode $fh, ':encoding(UTF-8)';
+  binmode $fh, ':encoding(UTF-8)';
 
 Some database drivers for DBI can also automatically encode and decode, but
 that is sometimes limited to the UTF-8 encoding.
@@ -138,28 +138,27 @@ concern, and you can just C<eval> dumped data as always.
 
 =head2 Why do some characters not uppercase or lowercase correctly?
 
-It seemed like a good idea at the time, to keep the semantics the same for
-standard strings, when Perl got Unicode support.  The plan is to fix this
-in the future, and the casing component has in fact mostly been fixed, but we
-have to deal with the fact that Perl treats equal strings differently,
-depending on the internal state.
+Starting in Perl 5.14 (and partially in Perl 5.12), just put a
+C<use feature 'unicode_strings'> near the beginning of your program.
+Within its lexical scope you shouldn't have this problem.  It also is
+automatically enabled under C<use feature ':5.12'> or using C<-E> on the
+command line for Perl 5.12 or higher.
 
-First the casing.  Just put a C<use feature 'unicode_strings'> near the
-beginning of your program.  Within its lexical scope, C<uc>, C<lc>, C<ucfirst>,
-C<lcfirst>, and the regular expression escapes C<\U>, C<\L>, C<\u>, C<\l> use
-Unicode semantics for changing case regardless of whether the UTF8 flag is on
-or not.  However, if you pass strings to subroutines in modules outside the
-pragma's scope, they currently likely won't behave this way, and you have to
-try one of the solutions below.  There is another exception as well:  if you
-have furnished your own casing functions to override the default, these will
-not be called unless the UTF8 flag is on)
+The rationale for requiring this is to not break older programs that
+rely on the way things worked before Unicode came along.  Those older
+programs knew only about the ASCII character set, and so may not work
+properly for additional characters.  When a string is encoded in UTF-8,
+Perl assumes that the program is prepared to deal with Unicode, but when
+the string isn't, Perl assumes that only ASCII (unless it is an EBCDIC
+platform) is wanted, and so those characters that are not ASCII
+characters aren't recognized as to what they would be in Unicode.
+C<use feature 'unicode_strings'> tells Perl to treat all characters as
+Unicode, whether the string is encoded in UTF-8 or not, thus avoiding
+the problem.
 
-This remains a problem for the regular expression constructs
-C<\d>, C<\s>, C<\w>, C<\D>, C<\S>, C<\W>, C</.../i>, C<(?i:...)>,
-and C</[[:posix:]]/>.
-
-To force Unicode semantics, you can upgrade the internal representation to
-by doing C<utf8::upgrade($string)>. This can be used
+However, on earlier Perls, or if you pass strings to subroutines outside
+the feature's scope, you can force Unicode semantics by changing the
+encoding to UTF-8 by doing C<utf8::upgrade($string)>. This can be used
 safely on any string, as it checks and does not change strings that have
 already been upgraded.
 
@@ -275,7 +274,8 @@ Instead of C<decode> and C<encode>, you could use C<_utf8_on> and C<_utf8_off>,
 but this is considered bad style. Especially C<_utf8_on> can be dangerous, for
 the same reason that C<:utf8> can.
 
-There are some shortcuts for oneliners; see C<-C> in L<perlrun>.
+There are some shortcuts for oneliners;
+see L<-C|perlrun/-C [numberE<sol>list]> in L<perlrun>.
 
 =head2 What's the difference between C<UTF-8> and C<utf8>?
 

@@ -7,7 +7,7 @@ require q(./test.pl); plan(tests => 5);
 
 =pod
 
-This tests the classic diamond inheritence pattern.
+This tests the classic diamond inheritance pattern.
 
    <A>
   /   \

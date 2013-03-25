@@ -4,7 +4,7 @@
 # we've not yet verified that use works.
 # use strict;
 
-print "1..13\n";
+print "1..19\n";
 my $test = 0;
 
 # Historically constant folding was performed by evaluating the ops, and if
@@ -52,6 +52,16 @@ sub is {
     failed($got, "'$expect'", $name);
 }
 
+sub ok {
+    my ($got, $name) = @_;
+    $test = $test + 1;
+    if ($got) {
+	print "ok $test - $name\n";
+	return 1;
+    }
+    failed($got, "a true value", $name);
+}
+
 my $a;
 $a = eval '$b = 0/0 if 0; 3';
 is ($a, 3, 'constants in conditionals don\'t affect constant folding');
@@ -87,4 +97,24 @@ is ($@, '', 'no error');
     };
     like ($@, qr/division/, "eval caught division");
     is($c, 2, "missing die hook");
+}
+
+# [perl #20444] Constant folding should not change the meaning of match
+# operators.
+{
+ local *_;
+ $_="foo"; my $jing = 1;
+ ok scalar $jing =~ (1 ? /foo/ : /bar/),
+   'lone m// is not bound via =~ after ? : folding';
+ ok scalar $jing =~ (0 || /foo/),
+   'lone m// is not bound via =~ after || folding';
+ ok scalar $jing =~ (1 ? s/foo/foo/ : /bar/),
+   'lone s/// is not bound via =~ after ? : folding';
+ ok scalar $jing =~ (0 || s/foo/foo/),
+   'lone s/// is not bound via =~ after || folding';
+ $jing = 3;
+ ok scalar $jing =~ (1 ? y/fo// : /bar/),
+   'lone y/// is not bound via =~ after ? : folding';
+ ok scalar $jing =~ (0 || y/fo//),
+   'lone y/// is not bound via =~ after || folding';
 }

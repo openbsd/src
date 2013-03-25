@@ -13,3 +13,5 @@
 #define sha512			NULL
 #define H0384			H01
 #define H0512			H01
+#define H0512224		H01
+#define H0512256		H01

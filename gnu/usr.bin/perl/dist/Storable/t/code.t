@@ -8,6 +8,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -33,7 +34,7 @@ BEGIN {
     }
 }
 
-BEGIN { plan tests => 59 }
+BEGIN { plan tests => 63 }
 
 use Storable qw(retrieve store nstore freeze nfreeze thaw dclone);
 use Safe;
@@ -59,7 +60,7 @@ local *FOO;
       \&Another::Package::foo,  # code in another package
       sub ($$;$) { 0 },         # prototypes
       sub { print "test\n" },
-      \&Test::More::ok,               # large scalar
+      \&Storable::_store,       # large scalar
      ],
 
      {"a" => sub { "srt" }, "b" => \&code},
@@ -305,3 +306,13 @@ is(prototype($thawed->[4]), prototype($obj[0]->[4]));
     }
 
 }
+
+{
+    my @text = ("hello", "\x{a3}", "\x{a3} \x{2234}", "\x{2234}\x{2234}");
+
+    for my $text(@text) {
+        my $res = (thaw freeze eval "sub {'" . $text . "'}")->();
+        ok($res eq $text);
+    }
+}
+

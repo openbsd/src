@@ -12,7 +12,7 @@ my @comma = ("key", "value");
 # The peephole optimiser already knows that it should convert the string in
 # $foo{string} into a shared hash key scalar. It might be worth making the
 # tokeniser build the LHS of => as a shared hash key scalar too.
-# And so there's the possiblility of it going wrong
+# And so there's the possibility of it going wrong
 # And going right on 8 bit but wrong on utf8 keys.
 # And really we should also try utf8 literals in {} and => in utf8.t
 

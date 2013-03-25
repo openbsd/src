@@ -1,11 +1,13 @@
 #!./perl
 
-$qr = 1;
-$qr_embed_thr = 1;
-for $file ('./re/regexp.t', './t/re/regexp.t', ':re:regexp.t') {
-    if (-r $file) {
-	do $file or die $@;
-	exit;
-    }
-}
-die "Cannot find ./re/regexp.t or ./t/re/regexp.t\n";
+chdir 't' if -d 't';
+require './test.pl';
+
+skip_all_without_config(useithreads);
+skip_all_if_miniperl("no dynamic loading on miniperl, no threads");
+require threads;
+
+$::qr = 1;
+$::qr_embed_thr = 1;
+
+require './re/regexp.t';

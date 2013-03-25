@@ -4,39 +4,37 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
     require './test.pl';
+    eval 'use Errno';
+    die $@ if $@ and !is_miniperl();
 }
 
-use Config;
-BEGIN {
-    eval {require Errno; Errno->import;};
-}
+
 plan(tests => 9);
 
 ok( binmode(STDERR),            'STDERR made binary' );
-if (find PerlIO::Layer 'perlio') {
-  ok( binmode(STDERR, ":unix"),   '  with unix discipline' );
-} else {
-  ok(1,   '  skip unix discipline without PerlIO layers' );
+SKIP: {
+    skip('skip unix discipline without PerlIO layers', 1)
+	unless find PerlIO::Layer 'perlio';
+    ok( binmode(STDERR, ":unix"),   '  with unix discipline' );
 }
 ok( binmode(STDERR, ":raw"),    '  raw' );
 ok( binmode(STDERR, ":crlf"),   '  and crlf' );
 
 # If this one fails, we're in trouble.  So we just bail out.
 ok( binmode(STDOUT),            'STDOUT made binary' )      || exit(1);
-if (find PerlIO::Layer 'perlio') {
-  ok( binmode(STDOUT, ":unix"),   '  with unix discipline' );
-} else {
-  ok(1,   '  skip unix discipline without PerlIO layers' );
+SKIP: {
+    skip('skip unix discipline without PerlIO layers', 1)
+	unless find PerlIO::Layer 'perlio';
+    ok( binmode(STDOUT, ":unix"),   '  with unix discipline' );
 }
 ok( binmode(STDOUT, ":raw"),    '  raw' );
 ok( binmode(STDOUT, ":crlf"),   '  and crlf' );
 
 SKIP: {
-    skip "minitest", 1 if $ENV{PERL_CORE_MINITEST};
-    skip "no EBADF", 1 if (!exists &Errno::EBADF);
+    skip "no EBADF", 1 unless exists &Errno::EBADF;
 
     no warnings 'io', 'once';
     $! = 0;
     binmode(B);
-    ok($! == &Errno::EBADF);
+    cmp_ok($!, '==', Errno::EBADF());
 }

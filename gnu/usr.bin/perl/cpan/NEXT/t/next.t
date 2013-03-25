@@ -1,10 +1,3 @@
-BEGIN {
-    if ($ENV{PERL_CORE}) {
-        chdir('t') if -d 't';
-        @INC = qw(../lib);
-    }
-}
-
 BEGIN { print "1..26\n"; }
 
 use NEXT;

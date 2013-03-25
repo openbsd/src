@@ -5,9 +5,9 @@
 #  in the README file that comes with the distribution.
 #
 
-require DynaLoader;
+require XSLoader;
 require Exporter;
-package Storable; @ISA = qw(Exporter DynaLoader);
+package Storable; @ISA = qw(Exporter);
 
 @EXPORT = qw(store retrieve);
 @EXPORT_OK = qw(
@@ -19,23 +19,31 @@ package Storable; @ISA = qw(Exporter DynaLoader);
         file_magic read_magic
 );
 
-use AutoLoader;
-use FileHandle;
 use vars qw($canonical $forgive_me $VERSION);
 
-$VERSION = '2.22';
-*AUTOLOAD = \&AutoLoader::AUTOLOAD;		# Grrr...
+$VERSION = '2.34';
 
-#
-# Use of Log::Agent is optional
-#
-
-{
-    local $SIG{__DIE__};
-    eval "use Log::Agent";
+BEGIN {
+    if (eval { local $SIG{__DIE__}; require Log::Agent; 1 }) {
+        Log::Agent->import;
+    }
+    #
+    # Use of Log::Agent is optional. If it hasn't imported these subs then
+    # provide a fallback implementation.
+    #
+    if (!exists &logcroak) {
+        require Carp;
+        *logcroak = sub {
+            Carp::croak(@_);
+        };
+    }
+    if (!exists &logcarp) {
+	require Carp;
+        *logcarp = sub {
+          Carp::carp(@_);
+        };
+    }
 }
-
-require Carp;
 
 #
 # They might miss :flock in Fcntl
@@ -57,28 +65,12 @@ sub CLONE {
     Storable::init_perinterp();
 }
 
-# Can't Autoload cleanly as this clashes 8.3 with &retrieve
-sub retrieve_fd { &fd_retrieve }		# Backward compatibility
-
 # By default restricted hashes are downgraded on earlier perls.
 
 $Storable::downgrade_restricted = 1;
 $Storable::accept_future_minor = 1;
-bootstrap Storable;
-1;
-__END__
-#
-# Use of Log::Agent is optional. If it hasn't imported these subs then
-# Autoloader will kindly supply our fallback implementation.
-#
 
-sub logcroak {
-    Carp::croak(@_);
-}
-
-sub logcarp {
-  Carp::carp(@_);
-}
+XSLoader::load('Storable', $Storable::VERSION);
 
 #
 # Determine whether locking is possible, but only when needed.
@@ -116,8 +108,10 @@ EOM
 }
 
 sub file_magic {
+    require IO::File;
+
     my $file = shift;
-    my $fh = new FileHandle;
+    my $fh = IO::File->new;
     open($fh, "<". $file) || die "Can't open '$file': $!";
     binmode($fh);
     defined(sysread($fh, my $buf, 32)) || die "Can't read from '$file': $!";
@@ -151,14 +145,14 @@ sub read_magic {
 	$net_order = 0;
     }
     else {
-	$net_order = ord(substr($buf, 0, 1, ""));
-	my $major = $net_order >> 1;
+	$buf =~ s/(.)//s;
+	my $major = (ord $1) >> 1;
 	return undef if $major > 4; # sanity (assuming we never go that high)
 	$info{major} = $major;
-	$net_order &= 0x01;
+	$net_order = (ord $1) & 0x01;
 	if ($major > 1) {
-	    return undef unless length($buf);
-	    my $minor = ord(substr($buf, 0, 1, ""));
+	    return undef unless $buf =~ s/(.)//s;
+	    my $minor = ord $1;
 	    $info{minor} = $minor;
 	    $info{version} = "$major.$minor";
 	    $info{version_nv} = sprintf "%d.%03d", $major, $minor;
@@ -171,17 +165,16 @@ sub read_magic {
     $info{netorder} = $net_order;
 
     unless ($net_order) {
-	return undef unless length($buf);
-	my $len = ord(substr($buf, 0, 1, ""));
+	return undef unless $buf =~ s/(.)//s;
+	my $len = ord $1;
 	return undef unless length($buf) >= $len;
 	return undef unless $len == 4 || $len == 8;  # sanity
-	$info{byteorder} = substr($buf, 0, $len, "");
-	$info{intsize} = ord(substr($buf, 0, 1, ""));
-	$info{longsize} = ord(substr($buf, 0, 1, ""));
-	$info{ptrsize} = ord(substr($buf, 0, 1, ""));
+	@info{qw(byteorder intsize longsize ptrsize)}
+	    = unpack "a${len}CCC", $buf;
+	(substr $buf, 0, $len + 3) = '';
 	if ($info{version_nv} >= 2.002) {
-	    return undef unless length($buf);
-	    $info{nvsize} = ord(substr($buf, 0, 1, ""));
+	    return undef unless $buf =~ s/(.)//s;
+	    $info{nvsize} = ord $1;
 	}
     }
     $info{hdrsize} = $buflen - length($buf);
@@ -262,11 +255,18 @@ sub _store {
 	my $ret;
 	# Call C routine nstore or pstore, depending on network order
 	eval { $ret = &$xsptr(*FILE, $self) };
-	close(FILE) or $ret = undef;
-	unlink($file) or warn "Can't unlink $file: $!\n" if $@ || !defined $ret;
+	# close will return true on success, so the or short-circuits, the ()
+	# expression is true, and for that case the block will only be entered
+	# if $@ is true (ie eval failed)
+	# if close fails, it returns false, $ret is altered, *that* is (also)
+	# false, so the () expression is false, !() is true, and the block is
+	# entered.
+	if (!(close(FILE) or undef $ret) || $@) {
+		unlink($file) or warn "Can't unlink $file: $!\n";
+	}
 	logcroak $@ if $@ =~ s/\.?\n$/,/;
 	$@ = $da;
-	return $ret ? $ret : undef;
+	return $ret;
 }
 
 #
@@ -305,7 +305,7 @@ sub _store_fd {
 	logcroak $@ if $@ =~ s/\.?\n$/,/;
 	local $\; print $file '';	# Autoflush the file if wanted
 	$@ = $da;
-	return $ret ? $ret : undef;
+	return $ret;
 }
 
 #
@@ -400,6 +400,8 @@ sub fd_retrieve {
 	$@ = $da;
 	return $self;
 }
+
+sub retrieve_fd { &fd_retrieve }		# Backward compatibility
 
 #
 # thaw
@@ -908,7 +910,7 @@ version of Storable fully support (but see discussion of
 C<$Storable::accept_future_minor> above).  The constant
 C<Storable::BIN_WRITE_VERSION_NV> function returns what file version
 is written and might be less than C<Storable::BIN_VERSION_NV> in some
-configuations.
+configurations.
 
 =item C<major>, C<minor>
 
@@ -1147,7 +1149,7 @@ Thank you to (in chronological order):
 
 	Jarkko Hietaniemi <jhi@iki.fi>
 	Ulrich Pfeifer <pfeifer@charly.informatik.uni-dortmund.de>
-	Benjamin A. Holzman <bah@ecnvantage.com>
+	Benjamin A. Holzman <bholzman@earthlink.net>
 	Andrew Ford <A.Ford@ford-mason.co.uk>
 	Gisle Aas <gisle@aas.no>
 	Jeff Gresham <gresham_jeffrey@jpmorgan.com>
@@ -1158,6 +1160,7 @@ Thank you to (in chronological order):
 	Salvador Ortiz Garcia <sog@msg.com.mx>
 	Dominic Dunlop <domo@computer.org>
 	Erik Haugan <erik@solbors.no>
+    Benjamin A. Holzman <ben.holzman@grantstreet.com>
 
 for their bug reports, suggestions and contributions.
 
@@ -1169,7 +1172,9 @@ simply counting the objects instead of tagging them (leading to
 a binary incompatibility for the Storable image starting at version
 0.6--older images are, of course, still properly understood).
 Murray Nesbitt made Storable thread-safe.  Marc Lehmann added overloading
-and references to tied items support.
+and references to tied items support.  Benjamin Holzman added a performance
+improvement for overloaded classes; thanks to Grant Street Group for footing
+the bill.
 
 =head1 AUTHOR
 

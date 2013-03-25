@@ -17,6 +17,7 @@ use Test::More 'no_plan';
 {   my @Map = (
         # module               flag diagnostic
         [q|Must::Be::Loaded|,   1,  'module'],
+        [q|::Must::Be::Loaded|, 1,  'module'],
         [q|LoadMe.pl|,          0,  'file'  ],
         [q|LoadIt|,             1,  'ambiguous module'  ],
         [q|ToBeLoaded|,         0,  'ambiguous file'    ],

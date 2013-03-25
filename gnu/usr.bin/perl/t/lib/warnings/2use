@@ -8,7 +8,7 @@ __END__
 #  check illegal category is caught
 use warnings 'this-should-never-be-a-warning-category' ;
 EXPECT
-Unknown warnings category 'this-should-never-be-a-warning-category' at - line 3
+Unknown warnings category 'this-should-never-be-a-warning-category' at - line 3.
 BEGIN failed--compilation aborted at - line 3.
 ########
 

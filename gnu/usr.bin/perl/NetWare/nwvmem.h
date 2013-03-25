@@ -1,6 +1,6 @@
 
 /*
- * Copyright © 2001 Novell, Inc. All Rights Reserved.
+ * Copyright Â© 2001 Novell, Inc. All Rights Reserved.
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Artistic License, as specified in the README file.
@@ -13,7 +13,7 @@
  *                  Watcom's hash table is used to store memory pointers.
  *                  All malloc's, realloc's, free's go through this.
  * Author		:	HYAK, SGP
- * Date			:	Januray 2001.
+ * Date			:	January 2001.
  *
  */
 

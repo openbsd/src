@@ -7,10 +7,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
+    require "test.pl";
 }
 
-require "test.pl";
-plan( tests => 61 );
+plan( tests => 62 );
 
 {
     my @lol = ([qw(a b c)], [], [qw(1 2 3)]);
@@ -203,7 +203,7 @@ plan( tests => 61 );
 }
 
 {
-    # This shouldn't loop indefinitively.
+    # This shouldn't loop indefinitely.
     my @empty = map { while (1) {} } ();
     cmp_ok("@empty", 'eq', '', 'staying alive');
 }
@@ -214,3 +214,11 @@ plan( tests => 61 );
     like($@, qr/Missing comma after first argument to grep function/,
          "proper error on variable as block. [perl #37314]");
 }
+
+# [perl #92254] freeing $_ in gremap block
+{
+    my $y;
+    grep { undef *_ } $y;
+    map { undef *_ } $y;
+}
+pass 'no double frees with grep/map { undef *_ }';

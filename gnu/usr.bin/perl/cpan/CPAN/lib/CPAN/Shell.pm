@@ -47,7 +47,7 @@ use vars qw(
              "CPAN/Tarzip.pm",
              "CPAN/Version.pm",
             );
-$VERSION = "5.5001";
+$VERSION = "5.5002";
 # record the initial timestamp for reload.
 $reload = { map {$INC{$_} ? ($_,(stat $INC{$_})[9]) : ()} @relo };
 @CPAN::Shell::ISA = qw(CPAN::Debug);
@@ -375,16 +375,8 @@ sub o {
             $cfilter ||= "";
             my $qrfilter = eval 'qr/$cfilter/';
             my($k,$v);
-            $CPAN::Frontend->myprint("\$CPAN::Config options from ");
-            my @from;
-            if (exists $INC{'CPAN/Config.pm'}) {
-                push @from, $INC{'CPAN/Config.pm'};
-            }
-            if (exists $INC{'CPAN/MyConfig.pm'}) {
-                push @from, $INC{'CPAN/MyConfig.pm'};
-            }
-            $CPAN::Frontend->myprint(join " and ", map {"'$_'"} @from);
-            $CPAN::Frontend->myprint(":\n");
+            my $configpm = CPAN::HandleConfig->require_myconfig_or_config;
+            $CPAN::Frontend->myprint("\$CPAN::Config options from $configpm\:\n");
             for $k (sort keys %CPAN::HandleConfig::can) {
                 next unless $k =~ /$qrfilter/;
                 $v = $CPAN::HandleConfig::can{$k};
@@ -655,22 +647,21 @@ sub _reload_this {
 
 #-> sub CPAN::Shell::mkmyconfig ;
 sub mkmyconfig {
-    my($self, $cpanpm, %args) = @_;
-    require CPAN::FirstTime;
-    my $home = CPAN::HandleConfig::home();
-    $cpanpm = $INC{'CPAN/MyConfig.pm'} ||
-        File::Spec->catfile(split /\//, "$home/.cpan/CPAN/MyConfig.pm");
-    File::Path::mkpath(File::Basename::dirname($cpanpm)) unless -e $cpanpm;
-    CPAN::HandleConfig::require_myconfig_or_config();
-    $CPAN::Config ||= {};
-    $CPAN::Config = {
-        %$CPAN::Config,
-        build_dir           =>  undef,
-        cpan_home           =>  undef,
-        keep_source_where   =>  undef,
-        histfile            =>  undef,
-    };
-    CPAN::FirstTime::init($cpanpm, %args);
+    my($self) = @_;
+    if ( my $configpm = $INC{'CPAN/MyConfig.pm'} ) {
+        $CPAN::Frontend->myprint(
+            "CPAN::MyConfig already exists as $configpm.\n" .
+            "Running configuration again...\n"
+        );
+        require CPAN::FirstTime;
+        CPAN::FirstTime::init($configpm);
+    }
+    else {
+        # force some missing values to be filled in with defaults
+        delete $CPAN::Config->{$_}
+            for qw/build_dir cpan_home keep_source_where histfile/;
+        CPAN::HandleConfig->load( make_myconfig => 1 );
+    }
 }
 
 #-> sub CPAN::Shell::_binary_extensions ;
@@ -1230,6 +1221,7 @@ sub autobundle {
     $fh->close;
     $CPAN::Frontend->myprint("\nWrote bundle file
     $to\n\n");
+    return $to;
 }
 
 #-> sub CPAN::Shell::expandany ;
@@ -1456,6 +1448,7 @@ sub print_ornamented {
 
     local $| = 1; # Flush immediately
     if ( $CPAN::Be_Silent ) {
+        # WARNING: variable Be_Silent is poisoned and must be eliminated.
         print {report_fh()} $what;
         return;
     }
@@ -1692,7 +1685,7 @@ sub rematein {
             if ($meth =~ /^($needs_recursion_protection)$/) {
                 # it would be silly to check for recursion for look or dump
                 # (we are in CPAN::Shell::rematein)
-                CPAN->debug("Going to test against recursion") if $CPAN::DEBUG;
+                CPAN->debug("Testing against recursion") if $CPAN::DEBUG;
                 eval {  $obj->color_cmd_tmps(0,1); };
                 if ($@) {
                     if (ref $@
@@ -1855,7 +1848,7 @@ sub recent {
   my($self) = @_;
   if ($CPAN::META->has_inst("XML::LibXML")) {
       my $url = $CPAN::Defaultrecent;
-      $CPAN::Frontend->myprint("Going to fetch '$url'\n");
+      $CPAN::Frontend->myprint("Fetching '$url'\n");
       unless ($CPAN::META->has_usable("LWP")) {
           $CPAN::Frontend->mydie("LWP not installed; cannot continue");
       }
@@ -1943,7 +1936,7 @@ sub smoke {
     my $distros = $self->recent;
   DISTRO: for my $distro (@$distros) {
         next if $distro =~ m|/Bundle-|; # XXX crude heuristic to skip bundles
-        $CPAN::Frontend->myprint(sprintf "Going to download and test '$distro'\n");
+        $CPAN::Frontend->myprint(sprintf "Downloading and testing '$distro'\n");
         {
             my $skip = 0;
             local $SIG{INT} = sub { $skip = 1 };

@@ -5,7 +5,7 @@ about pod in pod/perlpod.pod or the short summary in the INSTALL file.
 
 =head1 NAME
 
-README.BS2000 - building and installing Perl for BS2000.
+perlbs2000 - building and installing Perl for BS2000.
 
 =head1 SYNOPSIS
 
@@ -206,7 +206,7 @@ Perl, that it should use the native IO layer:
 
 Now your IO would be ASCII on ASCII partitions and EBCDIC on EBCDIC
 partitions.  See the documentation of PerlIO (without C<Encode::>!)
-for further posibilities.
+for further possibilities.
 
 =head1 AUTHORS
 
@@ -224,7 +224,7 @@ To subscribe, send an empty message to perl-mvs-subscribe@perl.org.
 
 See also:
 
-    http://lists.perl.org/showlist.cgi?name=perl-mvs
+    http://lists.perl.org/list/perl-mvs.html
 
 There are web archives of the mailing list at:
 

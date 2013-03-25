@@ -90,4 +90,4 @@ sub new { bless({name => $_[1]}, $_[0]) }
 # a package with a freeze() which dies
 package Test3;
 sub new { bless({name => $_[1]}, $_[0]) }
-sub freeze { die "freeze() is broked" }
+sub freeze { die "freeze() is broken" }

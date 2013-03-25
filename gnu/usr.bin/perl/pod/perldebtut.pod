@@ -512,7 +512,7 @@ using the list 'L' command:
  		17:            print "$out $deg\n";
    		break if (1)     
 
-Note that to delete a breakpoint you use 'd' or 'D'.
+Note that to delete a breakpoint you use 'B'.
 
 Now we'll continue down into our subroutine, this time rather than by line
 number, we'll use the subroutine name, followed by the now familiar 'v':
@@ -702,7 +702,6 @@ place to go), and of course, experiment.
 L<perldebug>, 
 L<perldebguts>, 
 L<perldiag>,
-L<dprofpp>,
 L<perlrun>
 
 

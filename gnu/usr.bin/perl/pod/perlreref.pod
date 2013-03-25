@@ -21,7 +21,7 @@ false if the match succeeds, and true if it fails.
 
     $var !~ /foo/;
 
-C<m/pattern/msixpogc> searches a string for a pattern match,
+C<m/pattern/msixpogcdual> searches a string for a pattern match,
 applying the given options.
 
     m  Multiline mode - ^ and $ match internal lines
@@ -33,21 +33,28 @@ applying the given options.
     o  compile pattern Once
     g  Global - all occurrences
     c  don't reset pos on failed matches when using /g
+    a  restrict \d, \s, \w and [:posix:] to match ASCII only
+    aa (two a's) also /i matches exclude ASCII/non-ASCII
+    l  match according to current locale
+    u  match according to Unicode rules
+    d  match according to native rules unless something indicates
+       Unicode
 
 If 'pattern' is an empty string, the last I<successfully> matched
 regex is used. Delimiters other than '/' may be used for both this
 operator and the following ones. The leading C<m> can be omitted
 if the delimiter is '/'.
 
-C<qr/pattern/msixpo> lets you store a regex in a variable,
+C<qr/pattern/msixpodual> lets you store a regex in a variable,
 or pass one around. Modifiers as for C<m//>, and are stored
 within the regex.
 
-C<s/pattern/replacement/msixpogce> substitutes matches of
+C<s/pattern/replacement/msixpogcedual> substitutes matches of
 'pattern' with 'replacement'. Modifiers as for C<m//>,
-with one addition:
+with two additions:
 
     e  Evaluate 'replacement' as an expression
+    r  Return substitution and leave the original string untouched.
 
 'e' may be specified multiple times. 'replacement' is interpreted
 as a double quoted string unless a single-quote (C<'>) is the delimiter.
@@ -57,25 +64,26 @@ delimiters can be used.  Must be reset with reset().
 
 =head2 SYNTAX
 
-   \       Escapes the character immediately following it
-   .       Matches any single character except a newline (unless /s is used)
-   ^       Matches at the beginning of the string (or line, if /m is used)
-   $       Matches at the end of the string (or line, if /m is used)
-   *       Matches the preceding element 0 or more times
-   +       Matches the preceding element 1 or more times
-   ?       Matches the preceding element 0 or 1 times
-   {...}   Specifies a range of occurrences for the element preceding it
-   [...]   Matches any one of the characters contained within the brackets
-   (...)   Groups subexpressions for capturing to $1, $2...
-   (?:...) Groups subexpressions without capturing (cluster)
-   |       Matches either the subexpression preceding or following it
-   \1, \2, \3 ...           Matches the text from the Nth group
-   \g1 or \g{1}, \g2 ...    Matches the text from the Nth group
-   \g-1 or \g{-1}, \g-2 ... Matches the text from the Nth previous group
-   \g{name}     Named backreference
-   \k<name>     Named backreference
-   \k'name'     Named backreference
-   (?P=name)    Named backreference (python syntax)
+ \       Escapes the character immediately following it
+ .       Matches any single character except a newline (unless /s is
+           used)
+ ^       Matches at the beginning of the string (or line, if /m is used)
+ $       Matches at the end of the string (or line, if /m is used)
+ *       Matches the preceding element 0 or more times
+ +       Matches the preceding element 1 or more times
+ ?       Matches the preceding element 0 or 1 times
+ {...}   Specifies a range of occurrences for the element preceding it
+ [...]   Matches any one of the characters contained within the brackets
+ (...)   Groups subexpressions for capturing to $1, $2...
+ (?:...) Groups subexpressions without capturing (cluster)
+ |       Matches either the subexpression preceding or following it
+ \g1 or \g{1}, \g2 ...    Matches the text from the Nth group
+ \1, \2, \3 ...           Matches the text from the Nth group
+ \g-1 or \g{-1}, \g-2 ... Matches the text from the Nth previous group
+ \g{name}     Named backreference
+ \k<name>     Named backreference
+ \k'name'     Named backreference
+ (?P=name)    Named backreference (python syntax)
 
 =head2 ESCAPE SEQUENCES
 
@@ -87,17 +95,19 @@ These work as in normal strings.
    \n       Newline
    \r       Carriage return
    \t       Tab
-   \037     Any octal ASCII value
-   \x7f     Any hexadecimal ASCII value
-   \x{263a} A wide hexadecimal value
+   \037     Char whose ordinal is the 3 octal digits, max \777
+   \o{2307} Char whose ordinal is the octal number, unrestricted
+   \x7f     Char whose ordinal is the 2 hex digits, max \xFF
+   \x{263a} Char whose ordinal is the hex number, unrestricted
    \cx      Control-x
-   \N{name} A named character
+   \N{name} A named Unicode character or character sequence
    \N{U+263D} A Unicode character by hex ordinal
 
    \l  Lowercase next character
    \u  Titlecase next character
    \L  Lowercase until \E
    \U  Uppercase until \E
+   \F  Foldcase until \E
    \Q  Disable pattern metacharacters until \E
    \E  End modification
 
@@ -126,9 +136,9 @@ and L<perlunicode> for details.
    \S      A non-whitespace character
    \h      An horizontal whitespace
    \H      A non horizontal whitespace
-   \N      A non newline (when not followed by '{NAME}'; experimental; not
-	   valid in a character class; equivalent to [^\n]; it's like '.'
-	   without /s modifier)
+   \N      A non newline (when not followed by '{NAME}'; experimental;
+           not valid in a character class; equivalent to [^\n]; it's
+           like '.' without /s modifier)
    \v      A vertical whitespace
    \V      A non vertical whitespace
    \R      A generic newline           (?>\v|\x0D\x0A)
@@ -142,27 +152,46 @@ and L<perlunicode> for details.
 
 POSIX character classes and their Unicode and Perl equivalents:
 
-   alnum   IsAlnum              Alphanumeric
-   alpha   IsAlpha              Alphabetic
-   ascii   IsASCII              Any ASCII char
-   blank   IsSpace  [ \t]       Horizontal whitespace (GNU extension)
-   cntrl   IsCntrl              Control characters
-   digit   IsDigit  \d          Digits
-   graph   IsGraph              Alphanumeric and punctuation
-   lower   IsLower              Lowercase chars (locale and Unicode aware)
-   print   IsPrint              Alphanumeric, punct, and space
-   punct   IsPunct              Punctuation
-   space   IsSpace  [\s\ck]     Whitespace
-           IsSpacePerl   \s     Perl's whitespace definition
-   upper   IsUpper              Uppercase chars (locale and Unicode aware)
-   word    IsWord   \w          Alphanumeric plus _ (Perl extension)
-   xdigit  IsXDigit [0-9A-Fa-f] Hexadecimal digit
+            ASCII-         Full-
+   POSIX    range          range    backslash
+ [[:...:]]  \p{...}        \p{...}   sequence    Description
+
+ -----------------------------------------------------------------------
+ alnum   PosixAlnum       XPosixAlnum            Alpha plus Digit
+ alpha   PosixAlpha       XPosixAlpha            Alphabetic characters
+ ascii   ASCII                                   Any ASCII character
+ blank   PosixBlank       XPosixBlank   \h       Horizontal whitespace;
+                                                   full-range also
+                                                   written as
+                                                   \p{HorizSpace} (GNU
+                                                   extension)
+ cntrl   PosixCntrl       XPosixCntrl            Control characters
+ digit   PosixDigit       XPosixDigit   \d       Decimal digits
+ graph   PosixGraph       XPosixGraph            Alnum plus Punct
+ lower   PosixLower       XPosixLower            Lowercase characters
+ print   PosixPrint       XPosixPrint            Graph plus Print, but
+                                                   not any Cntrls
+ punct   PosixPunct       XPosixPunct            Punctuation and Symbols
+                                                   in ASCII-range; just
+                                                   punct outside it
+ space   PosixSpace       XPosixSpace            [\s\cK]
+         PerlSpace        XPerlSpace    \s       Perl's whitespace def'n
+ upper   PosixUpper       XPosixUpper            Uppercase characters
+ word    PosixWord        XPosixWord    \w       Alnum + Unicode marks +
+                                                   connectors, like '_'
+                                                   (Perl extension)
+ xdigit  ASCII_Hex_Digit  XPosixDigit            Hexadecimal digit,
+                                                    ASCII-range is
+                                                    [0-9A-Fa-f]
+
+Also, various synonyms like C<\p{Alpha}> for C<\p{XPosixAlpha}>; all listed
+in L<perluniprops/Properties accessible through \p{} and \P{}>
 
 Within a character class:
 
-    POSIX       traditional   Unicode
-    [:digit:]       \d        \p{IsDigit}
-    [:^digit:]      \D        \P{IsDigit}
+    POSIX      traditional   Unicode
+  [:digit:]       \d        \p{Digit}
+  [:^digit:]      \D        \P{Digit}
 
 =head2 ANCHORS
 
@@ -176,7 +205,6 @@ All are zero-width assertions.
    \Z Match string end (before optional newline)
    \z Match absolute string end
    \G Match where previous m//g left off
-
    \K Keep the stuff left of the \K, don't include it in $&
 
 =head2 QUANTIFIERS
@@ -222,6 +250,10 @@ There is no quantifier C<{,n}>. That's interpreted as a literal string.
    (?P>name)         Recurse into a named subpattern (python syntax)
    (?(cond)yes|no)
    (?(cond)yes)      Conditional expression, where "cond" can be:
+                     (?=pat)   look-ahead
+                     (?!pat)   negative look-ahead
+                     (?<=pat)  look-behind
+                     (?<!pat)  negative look-behind
                      (N)       subpattern N has matched something
                      (<name>)  named subpattern has matched something
                      ('name')  named subpattern has matched something
@@ -257,8 +289,8 @@ specify the C</p> (preserve) modifier on your regular expression.
    $^R   Holds the result of the last (?{...}) expr
    @-    Offsets of starts of groups. $-[0] holds start of whole match
    @+    Offsets of ends of groups. $+[0] holds end of whole match
-   %+    Named capture buffers
-   %-    Named capture buffers, as array refs
+   %+    Named capture groups
+   %-    Named capture groups, as array refs
 
 Captured groups are numbered according to their I<opening> paren.
 
@@ -268,6 +300,7 @@ Captured groups are numbered according to their I<opening> paren.
    lcfirst     Lowercase first char of a string
    uc          Uppercase a string
    ucfirst     Titlecase first char of a string
+   fc          Foldcase a string
 
    pos         Return or set current match position
    quotemeta   Quote metacharacters
@@ -276,8 +309,9 @@ Captured groups are numbered according to their I<opening> paren.
 
    split       Use a regex to split a string into parts
 
-The first four of these are like the escape sequences C<\L>, C<\l>,
-C<\U>, and C<\u>.  For Titlecase, see L</Titlecase>.
+The first five of these are like the escape sequences C<\L>, C<\l>,
+C<\U>, C<\u>, and C<\F>.  For Titlecase, see L</Titlecase>; For
+Foldcase, see L</Foldcase>.
 
 =head2 TERMINOLOGY
 
@@ -285,6 +319,12 @@ C<\U>, and C<\u>.  For Titlecase, see L</Titlecase>.
 
 Unicode concept which most often is equal to uppercase, but for
 certain characters like the German "sharp s" there is a difference.
+
+=head3 Foldcase
+
+Unicode form that is useful when comparing strings regardless of case,
+as certain characters have compex one-to-many case mappings. Primarily a
+variant of lowercase.
 
 =head1 AUTHOR
 
@@ -339,7 +379,7 @@ debugging.
 
 =item *
 
-L<perldebug/"Debugging regular expressions">
+L<perldebug/"Debugging Regular Expressions">
 
 =item *
 

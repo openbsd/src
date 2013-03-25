@@ -6,7 +6,15 @@
 use strict;
 use lib 't/lib';
 
-use Test::More 'no_plan';
+use Test::More;
+
+# In a BEGIN block so the END tests aren't registered.
+BEGIN {
+    plan skip_all => "miniperl test only necessary for the perl core"
+      if !$ENV{PERL_CORE};
+    
+    plan "no_plan";
+}
 
 BEGIN {
     ok !$INC{"ExtUtils/MakeMaker.pm"}, "MakeMaker is not yet loaded";

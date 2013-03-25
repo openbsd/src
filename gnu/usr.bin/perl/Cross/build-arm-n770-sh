@@ -6,7 +6,7 @@
 # to skip Configure/build for HOST miniperl, pass "noconf" argument to this script
 
 # some trick is different, however - the file extension for objects files
-# are choosen to be .${CROSS_NAME}, .armo in our case
+# are chosen to be .${CROSS_NAME}, .armo in our case
 
 # note how invoked Makefile.PL for cross-compilation:
 #   miniperl -MCross Makefile.PL

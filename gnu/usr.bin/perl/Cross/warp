@@ -1,7 +1,7 @@
 #!/bin/sh -x
 
 ## This script contains an rm -rf.  This may alarm you.
-## These directories need to be reccursively deleted.
+## These directories need to be recursively deleted.
 ## I don't see any method of making "Bad Things"[tm]
 ## Happen.  But we don't run buildroot as root do we? :-)
 

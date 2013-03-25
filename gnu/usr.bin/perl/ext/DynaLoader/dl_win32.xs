@@ -72,6 +72,10 @@ dl_static_linked(char *filename)
     static char subStr[] = "/auto/";
     char szBuffer[MAX_PATH];
 
+    /* avoid buffer overflow when called with invalid filenames */
+    if (strlen(filename) >= sizeof(szBuffer))
+        return 0;
+
     /* change all the '\\' to '/' */
     strcpy(szBuffer, filename);
     for(ptr = szBuffer; ptr = strchr(ptr, '\\'); ++ptr)

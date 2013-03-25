@@ -5,21 +5,15 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
-    if ($ENV{PERL_CORE_MINITEST}) {
-        print "1..0 # Skip: no dynamic loading on miniperl\n";
-        exit 0;
-    }
-    unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: not perlio\n";
-	exit 0;
-    }
-    require "test.pl";
+    require 'test.pl';
+    skip_all_if_miniperl('no dynamic loading on miniperl, no Filter::Util::Call');
+    skip_all_without_perlio();
 }
 use strict;
 use Config;
 use Filter::Util::Call;
 
-plan(tests => 143);
+plan(tests => 144);
 
 unshift @INC, sub {
     no warnings 'uninitialized';
@@ -201,7 +195,7 @@ do [$fh, sub {$_ .= $_ . $_; return;}] or die;
 do \"pass\n(\n'Scalar references are treated as initial file contents'\n)\n"
 or die;
 
-open $fh, "<", \"ss('The file is concatentated');";
+open $fh, "<", \"ss('The file is concatenated');";
 
 do [\'pa', $fh] or die;
 
@@ -232,4 +226,12 @@ for (0 .. 1) {
     open $fh, "<",
 	\'like(__FILE__, qr/(?:GLOB|CODE)\(0x[0-9a-f]+\)/, "__FILE__ is valid");';
     do $fh or die;
+}
+
+# [perl #91880] $_ having the wrong refcount inside a
+{ #             filter sub
+    local @INC; local $|;
+    unshift @INC, sub { sub { undef *_; --$| }};
+    do "dah";
+    pass '$_ has the right refcount inside a filter sub';
 }

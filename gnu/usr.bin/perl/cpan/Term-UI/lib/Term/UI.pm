@@ -11,7 +11,7 @@ use strict;
 BEGIN {
     use vars        qw[$VERSION $AUTOREPLY $VERBOSE $INVALID];
     $VERBOSE    =   1;
-    $VERSION    =   '0.20';
+    $VERSION    =   '0.30';
     $INVALID    =   loc('Invalid selection, please try again: ');
 }
 
@@ -35,7 +35,7 @@ Term::UI - Term::ReadLine UI made easy
     my $reply = $term->get_reply(
                     prompt => 'What is your favourite colour?',
                     choices => [qw|blue red green|],
-                    default => blue,
+                    default => 'blue',
     );
 
     my $bool = $term->ask_yn(
@@ -55,7 +55,7 @@ Term::UI - Term::ReadLine UI made easy
     ### always pick the default (good for non-interactive terms)
     ### -- default is '0'
     $Term::UI::AUTOREPLY = 1;
-    
+
     ### Retrieve the entire session as a printable string:
     $hist = Term::UI::History->history_as_string;
     $hist = $term->history_as_string;
@@ -73,12 +73,12 @@ For asking a yes or no question, there's even a shortcut.
 
 =head1 HOW IT WORKS
 
-C<Term::UI> places itself at the back of the C<Term::ReadLine> 
+C<Term::UI> places itself at the back of the C<Term::ReadLine>
 C<@ISA> array, so you can call its functions through your term object.
 
 C<Term::UI> uses C<Term::UI::History> to record all interactions
 with the commandline. You can retrieve this history, or alter
-the filehandle the interaction is printed to. See the 
+the filehandle the interaction is printed to. See the
 C<Term::UI::History> manpage or the C<SYNOPSIS> for details.
 
 =head1 METHODS
@@ -102,8 +102,8 @@ toggling the C<multi> flag. Note that a list of answers will then be
 returned to you, rather than a simple string.
 
 By specifying an C<allow> hander, you can yourself validate the answer
-a user gives. This can be any of the types that the Params::Check C<allow> 
-function allows, so please refer to that manpage for details. 
+a user gives. This can be any of the types that the Params::Check C<allow>
+function allows, so please refer to that manpage for details.
 
 Finally, you have the option of adding a C<print_me> argument, which is
 simply printed before the prompt. It's printed to the same file handle
@@ -135,16 +135,16 @@ sub get_reply {
     ### add this to the prompt to indicate the default
     ### answer to the question if there is one.
     my $prompt_add;
-    
+
     ### if you supplied several choices to pick from,
-    ### we'll print them seperately before the prompt
+    ### we'll print them separately before the prompt
     if( @{$args->{choices}} ) {
         my $i;
 
         for my $choice ( @{$args->{choices}} ) {
             $i++;   # the answer counter -- but humans start counting
                     # at 1 :D
-            
+
             ### so this choice is the default? add it to 'prompt_add'
             ### so we can construct a "foo? [DIGIT]" type prompt
             $prompt_add = $i if (defined $args->{default} and $choice eq $args->{default});
@@ -153,7 +153,7 @@ sub get_reply {
             $args->{print_me} .= sprintf "\n%3s> %-s", $i, $choice;
         }
 
-        ### we listed some choices -- add another newline for 
+        ### we listed some choices -- add another newline for
         ### pretty printing
         $args->{print_me} .= "\n" if $i;
 
@@ -169,14 +169,14 @@ sub get_reply {
     ### we set up the defaults, prompts etc, dispatch to the readline call
     return $term->_tt_readline( %$args, prompt_add => $prompt_add );
 
-} 
+}
 
 =head2 $bool = $term->ask_yn( prompt => "your question", [default => (y|1,n|0), print_me => "extra text to print & record"] )
 
 Asks a simple C<yes> or C<no> question to the user, returning a boolean
 indicating C<true> or C<false> to the caller.
 
-The C<default> answer will automatically returned, if the user hits 
+The C<default> answer will automatically returned, if the user hits
 C<enter> or if C<$AUTOREPLY> is set to true. See the C<GLOBAL VARIABLES>
 section further below.
 
@@ -199,7 +199,7 @@ sub ask_yn {
         default     => { default => undef, allow => [qw|0 1 y n|],
                                                             strict_type => 1 },
         prompt      => { default => '', required => 1,      strict_type => 1 },
-        print_me    => { default => '',                     strict_type => 1 },        
+        print_me    => { default => '',                     strict_type => 1 },
         multi       => { default => 0,                      no_override => 1 },
         choices     => { default => [qw|y n|],              no_override => 1 },
         allow       => { default => [qr/^y(?:es)?$/i, qr/^n(?:o)?$/i],
@@ -208,7 +208,7 @@ sub ask_yn {
     };
 
     my $args = check( $tmpl, \%hash, $VERBOSE ) or return undef;
-    
+
     ### uppercase the default choice, if there is one, to be added
     ### to the prompt in a 'foo? [Y/n]' type style.
     my $prompt_add;
@@ -217,10 +217,10 @@ sub ask_yn {
 
             ### if you supplied the default as a boolean, rather than y/n
             ### transform it to a y/n now
-            $args->{default} = $args->{default} =~ /\d/ 
+            $args->{default} = $args->{default} =~ /\d/
                                 ? { 0 => 'n', 1 => 'y' }->{ $args->{default} }
                                 : $args->{default};
-        
+
             @list = map { lc $args->{default} eq lc $_
                                 ? uc $args->{default}
                                 : $_
@@ -231,7 +231,7 @@ sub ask_yn {
     }
 
     my $rv = $term->_tt_readline( %$args, prompt_add => $prompt_add );
-    
+
     return $rv =~ /^y/i ? 1 : 0;
 }
 
@@ -247,11 +247,11 @@ sub _tt_readline {
 
     my ($default, $prompt, $choices, $multi, $allow, $prompt_add, $print_me);
     my $tmpl = {
-        default     => { default => undef,  strict_type => 1, 
+        default     => { default => undef,  strict_type => 1,
                             store => \$default },
         prompt      => { default => '',     strict_type => 1, required => 1,
                             store => \$prompt },
-        choices     => { default => [],     strict_type => 1, 
+        choices     => { default => [],     strict_type => 1,
                             store => \$choices },
         multi       => { default => 0,      allow => [0, 1], store => \$multi },
         allow       => { default => qr/.*/, store => \$allow, },
@@ -265,7 +265,7 @@ sub _tt_readline {
     ### it can display wonky on some terminals.
     history( $print_me ) if $print_me;
 
-    
+
     ### we might have to add a default value to the prompt, to
     ### show the user what will be picked by default:
     $prompt .= " [$prompt_add]: " if $prompt_add;
@@ -273,16 +273,16 @@ sub _tt_readline {
 
     ### are we in autoreply mode?
     if ($AUTOREPLY) {
-        
+
         ### you used autoreply, but didnt provide a default!
-        carp loc(   
+        carp loc(
             q[You have '%1' set to true, but did not provide a default!],
-            '$AUTOREPLY' 
+            '$AUTOREPLY'
         ) if( !defined $default && $VERBOSE);
 
         ### print it out for visual feedback
         history( join ' ', grep { defined } $prompt, $default );
-        
+
         ### and return the default
         return $default;
     }
@@ -290,16 +290,16 @@ sub _tt_readline {
 
     ### so, no AUTOREPLY, let's see what the user will answer
     LOOP: {
-        
+
         ### annoying bug in T::R::Perl that mucks up lines with a \n
         ### in them; So split by \n, save the last line as the prompt
         ### and just print the rest
         {   my @lines   = split "\n", $prompt;
             $prompt     = pop @lines;
-            
+
             history( "$_\n" ) for @lines;
         }
-        
+
         ### pose the question
         my $answer  = $term->readline($prompt);
         $answer     = $default unless length $answer;
@@ -315,12 +315,12 @@ sub _tt_readline {
 
         ### the return value list
         my @rv;
-        
+
         if( @$choices ) {
-            
+
             for my $answer (@answers) {
-                
-                ### a digit implies a multiple choice question, 
+
+                ### a digit implies a multiple choice question,
                 ### a non-digit is an open answer
                 if( $answer =~ /\D/ ) {
                     push @rv, $answer if allow( $answer, $allow );
@@ -328,24 +328,24 @@ sub _tt_readline {
 
                     ### remember, the answer digits are +1 compared to
                     ### the choices, because humans want to start counting
-                    ### at 1, not at 0 
-                    push @rv, $choices->[ $answer - 1 ] 
+                    ### at 1, not at 0
+                    push @rv, $choices->[ $answer - 1 ]
                         if $answer > 0 && defined $choices->[ $answer - 1];
-                }    
+                }
             }
-     
+
         ### no fixed list of choices.. just check if the answers
         ### (or otherwise the default!) pass the allow handler
-        } else {       
+        } else {
             push @rv, grep { allow( $_, $allow ) }
-                        scalar @answers ? @answers : ($default);  
+                        scalar @answers ? @answers : ($default);
         }
 
         ### if not all the answers made it to the return value list,
-        ### at least one of them was an invalid answer -- make the 
+        ### at least one of them was an invalid answer -- make the
         ### user do it again
-        if( (@rv != @answers) or 
-            (scalar(@$choices) and not scalar(@answers)) 
+        if( (@rv != @answers) or
+            (scalar(@$choices) and not scalar(@answers))
         ) {
             $prompt = $INVALID;
             $prompt .= "[$prompt_add] " if $prompt_add;
@@ -483,10 +483,10 @@ This defaults to C<*STDOUT>.
 
     ### ask a user (with an open question) for their favourite colour
     $reply = $term->get_reply( prompt => 'Your favourite colour? );
-    
+
 which would look like:
 
-    Your favourite colour? 
+    Your favourite colour?
 
 and C<$reply> would hold the text the user typed.
 
@@ -496,15 +496,15 @@ and C<$reply> would hold the text the user typed.
     $reply = $term->get_reply(
                 prompt  => 'Your favourite colour?',
                 choices => [qw|red green blue|] );
-                
+
 which would look like:
 
       1> red
       2> green
       3> blue
-    
-    Your favourite colour? 
-                
+
+    Your favourite colour?
+
 C<$reply> will hold one of the choices presented. C<Term::UI> will repose
 the question if the user attempts to enter an answer that's not in the
 list of choices. The string presented is held in the C<$Term::UI::INVALID>
@@ -523,8 +523,8 @@ which would look like:
       1> red
       2> green
       3> blue
-    
-    Your favourite colour? [3]:  
+
+    Your favourite colour? [3]:
 
 Note the default answer after the prompt. A user can now just hit C<enter>
 (or set C<$Term::UI::AUTOREPLY> -- see the C<GLOBAL VARIABLES> section) and
@@ -532,10 +532,10 @@ the sensible answer 'blue' will be returned.
 
 =head2 get_reply using print_me & multi
 
-    ### allow the user to pick more than one colour and add an 
+    ### allow the user to pick more than one colour and add an
     ### introduction text
     @reply = $term->get_reply(
-                print_me    => 'Tell us what colours you like', 
+                print_me    => 'Tell us what colours you like',
                 prompt      => 'Your favourite colours?',
                 choices     => [qw|red green blue|],
                 multi       => 1 );
@@ -546,20 +546,20 @@ which would look like:
       1> red
       2> green
       3> blue
-    
+
     Your favourite colours?
 
 An answer of C<3 2 1> would fill C<@reply> with C<blue green red>
 
 =head2 get_reply & allow
 
-    ### pose an open question, but do a custom verification on 
-    ### the answer, which will only exit the question loop, if 
+    ### pose an open question, but do a custom verification on
+    ### the answer, which will only exit the question loop, if
     ### the answer matches the allow handler.
     $reply = $term->get_reply(
                 prompt  => "What is the magic number?",
                 allow   => 42 );
-                
+
 Unless the user now enters C<42>, the question will be reposed over
 and over again. You can use more sophisticated C<allow> handlers (even
 subroutines can be used). The C<allow> handler is implemented using
@@ -571,18 +571,18 @@ C<Params::Check>'s C<allow> function. Check its manpage for details.
     ### and inform him first what cookies are.
     $bool = $term->ask_yn( prompt   => 'Do you like cookies?',
                            default  => 'y',
-                           print_me => 'Cookies are LOVELY!!!' ); 
+                           print_me => 'Cookies are LOVELY!!!' );
 
-would print:                           
+would print:
 
     Cookies are LOVELY!!!
-    Do you like cookies? [Y/n]: 
+    Do you like cookies? [Y/n]:
 
-If a user then simply hits C<enter>, agreeing with the default, 
-C<$bool> would be set to C<true>. (Simply hitting 'y' would also 
+If a user then simply hits C<enter>, agreeing with the default,
+C<$bool> would be set to C<true>. (Simply hitting 'y' would also
 return C<true>. Hitting 'n' would return C<false>)
 
-We could later retrieve this interaction by printing out the Q&A 
+We could later retrieve this interaction by printing out the Q&A
 history as follows:
 
     print $term->history_as_string;
@@ -614,7 +614,7 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =cut

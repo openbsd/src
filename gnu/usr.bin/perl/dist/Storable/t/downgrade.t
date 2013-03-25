@@ -14,6 +14,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -95,7 +96,7 @@ sub thaw_scalar {
     # TODO tests.
     warn "# Test skipped because eq is buggy for certain Unicode cases in 5.6.0";
     warn "# Please upgrade to 5.6.1\n";
-    ok ("I'd really like to fail this test on 5.6.0 but I'm told that CPAN auto-dependancies mess up, and certain vendors only ship 5.6.0. Get your vendor to ugrade. Else upgrade your vendor.");
+    ok ("I'd really like to fail this test on 5.6.0 but I'm told that CPAN auto-dependencies mess up, and certain vendors only ship 5.6.0. Get your vendor to ugrade. Else upgrade your vendor.");
     # One such vendor being the folks who brought you LONG_MIN as a positive
     # integer.
   } else {

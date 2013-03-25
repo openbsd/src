@@ -14,11 +14,11 @@ App::Prove::State::Result - Individual test suite results.
 
 =head1 VERSION
 
-Version 3.17
+Version 3.23
 
 =cut
 
-$VERSION = '3.17';
+$VERSION = '3.23';
 
 =head1 DESCRIPTION
 
@@ -223,7 +223,7 @@ sub raw {
     my %raw  = %$self;
 
     my %tests;
-    foreach my $test ( $self->tests ) {
+    for my $test ( $self->tests ) {
         $tests{ $test->name } = $test->raw;
     }
     $raw{tests} = \%tests;

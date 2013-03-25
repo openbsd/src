@@ -3,7 +3,7 @@ use strict;
 my $MODULE;
 
 BEGIN {
-	$MODULE = ($ENV{PERL_CORE} || -d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
 	eval "require $MODULE" || die $@;
 	$MODULE->import(qw(sha512_hex));
 }
@@ -29,7 +29,7 @@ for (1 .. $numtests) {
 	unless ($skip) {
 		print "not " unless sha512_hex($data) eq $digest;
 	}
-	print "ok ", $_, $skip ? " # skip: no 64 bit" : "", "\n";
+	print "ok ", $_, $skip ? " # skip: no 64-bit" : "", "\n";
 }
 
 __DATA__

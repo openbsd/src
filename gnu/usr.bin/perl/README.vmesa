@@ -7,7 +7,7 @@ INSTALL file.
 
 =head1 NAME
 
-README.vmesa - building and installing Perl for VM/ESA.
+perlvmesa - building and installing Perl for VM/ESA.
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ To extract an ASCII tar archive on VM/ESA, try this:
 GNU make for VM/ESA, which may be required for the build of perl,
 is available from:
 
-  http://vm.marist.edu/~neale/vmoe.html
+L<http://vm.marist.edu/~neale/vmoe.html>
 
 =head2 Configure Perl on VM/ESA
 
@@ -120,12 +120,21 @@ To subscribe, send an empty message to perl-mvs-subscribe@perl.org.
 
 See also:
 
-    http://lists.perl.org/showlist.cgi?name=perl-mvs
+L<http://lists.perl.org/list/perl-mvs.html>
 
 There are web archives of the mailing list at:
 
-    http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/
-    http://archive.develooper.com/perl-mvs@perl.org/
+=over 4
+
+=item *
+
+L<http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/>
+
+=item *
+
+L<http://archive.develooper.com/perl-mvs@perl.org/>
+
+=back
 
 =cut
 

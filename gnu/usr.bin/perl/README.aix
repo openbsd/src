@@ -4,7 +4,7 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.aix - Perl version 5 on IBM AIX (UNIX) systems
+perlaix - Perl version 5 on IBM AIX (UNIX) systems
 
 =head1 DESCRIPTION
 
@@ -33,12 +33,12 @@ like DBD::Oracle, it is better to use the _r version of the compiler.
 This will not build a threaded Perl, but a thread-enabled Perl. See
 also L<Threaded Perl> later on.
 
-As of writing (2010-05) only the I<IBM XL C for AIX> or I<IBM XL C/C++
-for AIX> compiler is supported by IBM on AIX 5L/6.1.
+As of writing (2010-09) only the I<IBM XL C for AIX> or I<IBM XL C/C++
+for AIX> compiler is supported by IBM on AIX 5L/6.1/7.1.
 
 The following compiler versions are currently supported by IBM:
 
-    IBM XL C and IBM XL C/C++ V8, V9, V10
+    IBM XL C and IBM XL C/C++ V8, V9, V10, V11
 
 The XL C for AIX is integrated in the XL C/C++ for AIX compiler and
 therefore also supported.
@@ -50,8 +50,8 @@ adding -qipa to the optimization flags (-Doptimize='-O -qipa').
 The PTF for APAR IZ35785 which solves this problem is available
 from IBM (April 2009 PTF for XL C/C++ Enterprise Edition for AIX, V9.0).
 
-If you choose XL C/C++ V11 you need the April 2010 PTF installed
-otherwise you will not get a working Perl version.
+If you choose XL C/C++ V11 you need the April 2010 PTF (or newer)
+installed otherwise you will not get a working Perl version.
 
 Perl can be compiled with either IBM's ANSI C compiler or with gcc.
 The former is recommended, as not only it can compile Perl with no
@@ -73,22 +73,24 @@ wanted libraries if the presence of one of these two header files is
 detected. If you want to build Perl with GDBM support then please install
 at least gdbm-devel-1.8.3-5 (or higher).
 
-=head2 Perl 5.12 was successfully compiled and tested on:
+=head2 Perl 5 was successfully compiled and tested on:
 
-    AIX Level            | Compiler Level            | w th | w/o th
-    ---------------------+---------------------------+------+-------
-    5.1 TL9 32 bit       | XL C/C++ V7               | OK   | OK
-    5.1 TL9 64 bit       | XL C/C++ V7               | OK   | OK
-    5.2 TL10 SP8 32 bit  | XL C/C++ V8               | OK   | OK
-    5.2 TL10 SP8 32 bit  | gcc 3.2.2                 | OK   | OK
-    5.2 TL10 SP8 64 bit  | XL C/C++ V8               | OK   | OK
-    5.3 TL8 SP8 32 bit   | XL C/C++ V9 + IZ35785     | OK   | OK
-    5.3 TL8 SP8 32 bit   | gcc 4.2.4                 | OK   | OK
-    5.3 TL8 SP8 64 bit   | XL C/C++ V9 + IZ35785     | OK   | OK
-    5.3 TL10 SP3 32 bit  | XL C/C++ V11 + April 2010 | OK   | OK
-    5.3 TL10 SP3 64 bit  | XL C/C++ V11 + April 2010 | OK   | OK
-    6.1 TL1 SP7 32 bit   | XL C/C++ V10              | OK   | OK
-    6.1 TL1 SP7 64 bit   | XL C/C++ V10              | OK   | OK
+    Perl   | AIX Level           | Compiler Level          | w th | w/o th
+    -------+---------------------+-------------------------+------+-------
+    5.12.2 |5.1 TL9 32 bit       | XL C/C++ V7             | OK   | OK
+    5.12.2 |5.1 TL9 64 bit       | XL C/C++ V7             | OK   | OK
+    5.12.2 |5.2 TL10 SP8 32 bit  | XL C/C++ V8             | OK   | OK
+    5.12.2 |5.2 TL10 SP8 32 bit  | gcc 3.2.2               | OK   | OK
+    5.12.2 |5.2 TL10 SP8 64 bit  | XL C/C++ V8             | OK   | OK
+    5.12.2 |5.3 TL8 SP8 32 bit   | XL C/C++ V9 + IZ35785   | OK   | OK
+    5.12.2 |5.3 TL8 SP8 32 bit   | gcc 4.2.4               | OK   | OK
+    5.12.2 |5.3 TL8 SP8 64 bit   | XL C/C++ V9 + IZ35785   | OK   | OK
+    5.12.2 |5.3 TL10 SP3 32 bit  | XL C/C++ V11 + Apr 2010 | OK   | OK
+    5.12.2 |5.3 TL10 SP3 64 bit  | XL C/C++ V11 + Apr 2010 | OK   | OK
+    5.12.2 |6.1 TL1 SP7 32 bit   | XL C/C++ V10            | OK   | OK
+    5.12.2 |6.1 TL1 SP7 64 bit   | XL C/C++ V10            | OK   | OK
+    5.13   |7.1 TL0 SP1 32 bit   | XL C/C++ V11 + Jul 2010 | OK   | OK
+    5.13   |7.1 TL0 SP1 64 bit   | XL C/C++ V11 + Jul 2010 | OK   | OK
 
     w th   = with thread support
     w/o th = without thread support
@@ -123,19 +125,19 @@ Should yield no problems.
 
 =head2 Threaded Perl
 
-Should yield no problems with AIX 5.1 / 5.2 / 5.3 and 6.1.
+Should yield no problems with AIX 5.1 / 5.2 / 5.3 / 6.1 / 7.1.
 
 IBM uses the AIX system Perl (V5.6.0 on AIX 5.1 and V5.8.2 on
-AIX 5.2 / 5.3 and 6.1; V5.8.8 on AIX 5.3 TL11 and AIX 6.1 TL4) for
-some AIX system scripts. If you switch the links in /usr/bin from the
-AIX system Perl (/usr/opt/perl5) to the newly build Perl then you
-get the same features as with the IBM AIX system Perl if the threaded
-options are used.
+AIX 5.2 / 5.3 and 6.1; V5.8.8 on AIX 5.3 TL11 and AIX 6.1 TL4; V5.10.1
+on AIX 7.1) for some AIX system scripts. If you switch the links in
+/usr/bin from the AIX system Perl (/usr/opt/perl5) to the newly build
+Perl then you get the same features as with the IBM AIX system Perl if
+the threaded options are used.
 
 The threaded Perl build works also on AIX 5.1 but the IBM Perl
 build (Perl v5.6.0) is not threaded on AIX 5.1.
 
-Perl 5.12 is not compatible with the IBM fileset perl.libext.
+Perl 5.12 an newer is not compatible with the IBM fileset perl.libext.
 
 =head2 64-bit Perl
 
@@ -155,7 +157,7 @@ With the default setting the size is limited to 128MB.
 The -1 removes this limit. If the "make test" fails please change
 your /etc/security/limits as stated above.
 
-=head2 Recommended Options AIX 5.1/5.2/5.3 and 6.1 (threaded/32-bit)
+=head2 Recommended Options AIX 5.1/5.2/5.3/6.1 and 7.1 (threaded/32-bit)
 
 With the following options you get a threaded Perl version which
 passes all make tests in threaded 32-bit mode, which is the default
@@ -172,7 +174,7 @@ configuration for the Perl builds that AIX ships with.
 The -Dprefix option will install Perl in a directory parallel to the 
 IBM AIX system Perl installation.
 
-=head2 Recommended Options AIX 5.1/5.2/5.3 and 6.1 (32-bit)
+=head2 Recommended Options AIX 5.1/5.2/5.3/6.1 and 7.1 (32-bit)
 
 With the following options you get a Perl version which passes 
 all make tests in 32-bit mode.
@@ -187,7 +189,7 @@ all make tests in 32-bit mode.
 The -Dprefix option will install Perl in a directory parallel to the
 IBM AIX system Perl installation.
 
-=head2 Recommended Options AIX 5.1/5.2/5.3 and 6.1 (threaded/64-bit)
+=head2 Recommended Options AIX 5.1/5.2/5.3/6.1 and 7.1 (threaded/64-bit)
 
 With the following options you get a threaded Perl version which
 passes all make tests in 64-bit mode.
@@ -203,7 +205,7 @@ passes all make tests in 64-bit mode.
     -Duse64bitall \
     -Dprefix=/usr/opt/perl5_64
 
-=head2 Recommended Options AIX 5.1/5.2/5.3 and 6.1(64-bit)
+=head2 Recommended Options AIX 5.1/5.2/5.3/6.1 and 7.1 (64-bit)
 
 With the following options you get a Perl version which passes all
 make tests in 64-bit mode. 
@@ -482,11 +484,6 @@ therefore in AIX 4.2 Perl is not linked against the libC_r.
 
 =head1 AUTHORS
 
-H.Merijn Brand <h.m.brand@xs4all.nl>
 Rainer Tammer <tammer@tammer.net>
-
-=head1 DATE
-
-Version 5.12.1 / 2010-05-14
 
 =cut

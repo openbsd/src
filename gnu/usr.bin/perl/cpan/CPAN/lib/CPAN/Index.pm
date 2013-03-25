@@ -1,7 +1,7 @@
 package CPAN::Index;
 use strict;
 use vars qw($LAST_TIME $DATE_OF_02 $DATE_OF_03 $HAVE_REANIMATED $VERSION);
-$VERSION = "1.94";
+$VERSION = "1.9600";
 @CPAN::Index::ISA = qw(CPAN::Debug);
 $LAST_TIME ||= 0;
 $DATE_OF_03 ||= 0;
@@ -132,7 +132,7 @@ sub reanimate_build_dir {
         return;
     }
     $CPAN::Frontend->myprint
-        (sprintf("Going to read %d yaml file%s from %s/\n",
+        (sprintf("Reading %d yaml file%s from %s/\n",
                  scalar @candidates,
                  @candidates==1 ? "" : "s",
                  $CPAN::Config->{build_dir}
@@ -231,7 +231,7 @@ sub rd_authindex {
     return unless defined $index_target;
     return if CPAN::_sqlite_running();
     my @lines;
-    $CPAN::Frontend->myprint("Going to read '$index_target'\n");
+    $CPAN::Frontend->myprint("Reading '$index_target'\n");
     local(*FH);
     tie *FH, 'CPAN::Tarzip', $index_target;
     local($/) = "\n";
@@ -271,7 +271,7 @@ sub rd_modpacks {
     my($self, $index_target) = @_;
     return unless defined $index_target;
     return if CPAN::_sqlite_running();
-    $CPAN::Frontend->myprint("Going to read '$index_target'\n");
+    $CPAN::Frontend->myprint("Reading '$index_target'\n");
     my $fh = CPAN::Tarzip->TIEHANDLE($index_target);
     local $_;
     CPAN->debug(sprintf "start[%d]", time) if $CPAN::DEBUG;
@@ -292,6 +292,7 @@ sub rd_modpacks {
         $shift =~ /^Last-Updated:\s+(.+)/ and $last_updated = $1;
     }
     CPAN->debug("line_count[$line_count]last_updated[$last_updated]") if $CPAN::DEBUG;
+    my $errors = 0;
     if (not defined $line_count) {
 
         $CPAN::Frontend->mywarn(qq{Warning: Your $index_target does not contain a Line-Count header.
@@ -299,7 +300,7 @@ Please check the validity of the index file by comparing it to more
 than one CPAN mirror. I'll continue but problems seem likely to
 happen.\a
 });
-
+        $errors++;
         $CPAN::Frontend->mysleep(5);
     } elsif ($line_count != scalar @lines) {
 
@@ -317,7 +318,7 @@ Please check the validity of the index file by comparing it to more
 than one CPAN mirror. I'll continue but problems seem likely to
 happen.\a
 });
-
+        $errors++;
         $CPAN::Frontend->mysleep(5);
     } else {
 
@@ -371,14 +372,19 @@ happen.\a
     my(%exists);
     my $i = 0;
     my $painted = 0;
-    foreach (@lines) {
+ LINE: foreach (@lines) {
         # before 1.56 we split into 3 and discarded the rest. From
         # 1.57 we assign remaining text to $comment thus allowing to
         # influence isa_perl
         my($mod,$version,$dist,$comment) = split " ", $_, 4;
         unless ($mod && defined $version && $dist) {
-            $CPAN::Frontend->mywarn("Could not split line[$_]\n");
-            next;
+            require Dumpvalue;
+            my $dv = Dumpvalue->new(tick => '"');
+            $CPAN::Frontend->mywarn(sprintf "Could not split line[%s]\n", $dv->stringify($_));
+            if ($errors++ >= 5){
+                $CPAN::Frontend->mydie("Giving up parsing your $index_target, too many errors");
+            }
+            next LINE;
         }
         my($bundle,$id,$userid);
 
@@ -488,7 +494,7 @@ sub rd_modlist {
     my($cl,$index_target) = @_;
     return unless defined $index_target;
     return if CPAN::_sqlite_running();
-    $CPAN::Frontend->myprint("Going to read '$index_target'\n");
+    $CPAN::Frontend->myprint("Reading '$index_target'\n");
     my $fh = CPAN::Tarzip->TIEHANDLE($index_target);
     local $_;
     my $slurp = "";
@@ -550,7 +556,7 @@ sub write_metadata_cache {
     $cache->{last_time} = $LAST_TIME;
     $cache->{DATE_OF_02} = $DATE_OF_02;
     $cache->{PROTOCOL} = PROTOCOL;
-    $CPAN::Frontend->myprint("Going to write $metadata_file\n");
+    $CPAN::Frontend->myprint("Writing $metadata_file\n");
     eval { Storable::nstore($cache, $metadata_file) };
     $CPAN::Frontend->mywarn($@) if $@; # ?? missing "\n" after $@ in mywarn ??
 }
@@ -563,7 +569,7 @@ sub read_metadata_cache {
     return unless $CPAN::META->has_usable("Storable");
     my $metadata_file = File::Spec->catfile($CPAN::Config->{cpan_home},"Metadata");
     return unless -r $metadata_file and -f $metadata_file;
-    $CPAN::Frontend->myprint("Going to read '$metadata_file'\n");
+    $CPAN::Frontend->myprint("Reading '$metadata_file'\n");
     my $cache;
     eval { $cache = Storable::retrieve($metadata_file) };
     $CPAN::Frontend->mywarn($@) if $@; # ?? missing "\n" after $@ in mywarn ??

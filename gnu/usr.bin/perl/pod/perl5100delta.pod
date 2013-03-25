@@ -844,7 +844,7 @@ of C<CPANPLUS>.
 =item *
 
 C<Archive::Extract> is a generic archive extraction mechanism
-for F<.tar> (plain, gziped or bzipped) or F<.zip> files.
+for F<.tar> (plain, gzipped or bzipped) or F<.zip> files.
 
 =item *
 

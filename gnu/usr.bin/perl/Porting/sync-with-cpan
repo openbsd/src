@@ -1,0 +1,328 @@
+#!/usr/bin/env perl
+
+#
+# Script to help out with syncing cpan distros.
+#
+# Does the following:
+#    - Fetches the package list from CPAN. Finds the current version of
+#      the given package. [1]
+#    - Downloads the relevant tarball; unpacks the tarball;. [1]
+#    - Clean out the old directory (git clean -dfx)
+#    - Moves the old directory out of the way, moves the new directory in place.
+#    - Restores any .gitignore file.
+#    - Removes files from @IGNORE and EXCLUDED
+#    - git add any new files.
+#    - git rm any files that are gone.
+#    - Remove the +x bit on files in t/
+#    - Remove the +x bit on files that don't have in enabled in the current dir
+#    - Restore files mentioned in CUSTOMIZED
+#    - Adds new files to MANIFEST
+#    - Runs a "make" (assumes a configure has been run)
+#    - Cleans up
+#    - Runs tests for the package
+#    - Runs the porting tests
+#
+# [1]  If the --tarball option is given, then CPAN is not consulted.
+#      --tarball should be the path to the tarball; the version is extracted
+#      from the filename -- but can be overwritten by the --version option.
+#
+# TODO:  - Delete files from MANIFEST
+#        - Update Porting/Maintainers.pl
+#        - Optional, run a full test suite
+#        - Handle complicated FILES
+#
+# This is an initial version; no attempt has been made yet to make this
+# portable. It shells out instead of trying to find a Perl solution.
+# In particular, it assumes wget, git, tar, chmod, perl, make, and rm
+# to be available.
+#
+# Usage: perl Porting/sync-with-cpan <module>
+#        where <module> is the name it appears in the %Modules hash
+#        of Porting/Maintainers.pl
+#
+
+package Maintainers;
+
+use 5.010;
+
+use strict;
+use warnings;
+use Getopt::Long;
+no  warnings 'syntax';
+
+$| = 1;
+
+die "This does not like top level directory"
+     unless -d "cpan" && -d "Porting";
+
+our @IGNORABLE;
+our %Modules;
+
+use autodie;
+
+require "Porting/Maintainers.pl";
+
+my %IGNORABLE    = map {$_ => 1} @IGNORABLE;
+
+my $package      = "02packages.details.txt";
+my $package_url  = "http://www.cpan.org/modules/$package";
+my $package_file = "/tmp/$package";
+
+
+GetOptions ('tarball=s'  =>  \my $tarball,
+            'version=s'  =>  \my $version,
+             force       =>  \my $force,)
+        or  die "Failed to parse arguments";
+
+die "Usage: $0 module [args] [cpan package]" unless @ARGV == 1 || @ARGV == 2;
+
+my ($module)  = shift;
+my  $cpan_mod = @ARGV ? shift : $module;
+
+
+my  $info         = $Modules {$module} or die "Cannot find module $module";
+my  $distribution = $$info {DISTRIBUTION};
+
+my @files         = glob $$info {FILES};
+if (@files != 1 || !-d $files [0] || $$info {MAP}) {
+    say "This looks like a setup $0 cannot handle (yet)";
+    unless ($force) {
+        say "Will not continue without a --force option";
+        exit 1;
+    }
+    say "--force is in effect, so we'll soldier on. Wish me luck!";
+}
+
+
+chdir "cpan";
+
+my  $pkg_dir      = $$info {FILES};
+    $pkg_dir      =~ s!.*/!!;
+
+my ($old_version) = $distribution =~ /-([0-9.]+)\.tar\.gz/;
+
+my  $o_module     = $module;
+if ($cpan_mod =~ /-/ && $cpan_mod !~ /::/) {
+    $cpan_mod =~ s/-/::/g;
+}
+
+#
+# Find the information from CPAN.
+#
+my $new_file;
+my $new_version;
+unless ($tarball) {
+    #
+    # Poor man's cache
+    #
+    unless (-f $package_file && -M $package_file < 1) {
+        system wget => $package_url, '-qO', $package_file;
+    }
+
+    my  $new_line = `grep '^$cpan_mod ' $package_file`
+                     or die "Cannot find $cpan_mod on CPAN\n";
+    chomp $new_line;
+    (undef, $new_version, my $new_path) = split ' ', $new_line;
+    $new_file = (split '/', $new_path) [-1];
+
+    my $url = "http://search.cpan.org/CPAN/authors/id/$new_path";
+    say "Fetching $url";
+    #
+    # Fetch the new distro
+    #
+    system wget => $url, '-qO', $new_file;
+}
+else {
+    $new_file     = $tarball;
+    $new_version  = $version // ($new_file =~ /-([0-9._]+)\.tar\.gz/) [0];
+}
+
+my  $old_dir      = "$pkg_dir-$old_version";
+my  $new_dir      = "$pkg_dir-$new_version";
+
+say "Cleaning out old directory";
+system git => 'clean', '-dfxq', $pkg_dir;
+
+say "Unpacking $new_file";
+
+system tar => 'xfz', $new_file;
+
+say "Renaming directories";
+rename $pkg_dir => $old_dir;
+rename $new_dir => $pkg_dir;
+
+
+if (-f "$old_dir/.gitignore") {
+    say "Restoring .gitignore";
+    system git => 'checkout', "$pkg_dir/.gitignore";
+}
+
+my @new_files = `find $pkg_dir -type f`;
+chomp @new_files;
+@new_files = grep {$_ ne $pkg_dir} @new_files;
+s!^[^/]+/!! for @new_files;
+my %new_files = map {$_ => 1} @new_files;
+
+my @old_files = `find $old_dir -type f`;
+chomp @old_files;
+@old_files = grep {$_ ne $old_dir} @old_files;
+s!^[^/]+/!! for @old_files;
+my %old_files = map {$_ => 1} @old_files;
+
+#
+# Find files that can be deleted.
+#
+my @EXCLUDED_QR;
+my %EXCLUDED_QQ;
+if ($$info {EXCLUDED}) {
+    foreach my $entry (@{$$info {EXCLUDED}}) {
+        if (ref $entry) {push @EXCLUDED_QR => $entry}
+        else            {$EXCLUDED_QQ {$entry} = 1}
+    }
+}
+
+my @delete;
+my @commit;
+my @gone;
+FILE:
+foreach my $file (@new_files) {
+    next if -d "$pkg_dir/$file";   # Ignore directories.
+    next if $old_files {$file};    # It's already there.
+    if ($IGNORABLE {$file}) {
+        push @delete => $file;
+        next;
+    }
+    if ($EXCLUDED_QQ {$file}) {
+        push @delete => $file;
+        next;
+    }
+    foreach my $pattern (@EXCLUDED_QR) {
+        if ($file =~ /$pattern/) {
+            push @delete => $file;
+            next FILE;
+        }
+    }
+    push @commit => $file;
+}
+foreach my $file (@old_files) {
+    next if -d "$old_dir/$file";
+    next if $new_files {$file};
+    push @gone => $file;
+}
+
+#
+# Find all files with an exec bit
+#
+my @exec = `find $pkg_dir -type f -perm +111`;
+chomp @exec;
+my @de_exec;
+foreach my $file (@exec) {
+    # Remove leading dir
+    $file =~ s!^[^/]+/!!;
+    if ($file =~ m!^t/!) {
+        push @de_exec => $file;
+        next;
+    }
+    # Check to see if the file exists; if it doesn't and doesn't have
+    # the exec bit, remove it.
+    if ($old_files {$file}) {
+        unless (-x "$old_dir/$file") {
+            push @de_exec => $file;
+        }
+    }
+}
+
+#
+# No need to change the +x bit on files that will be deleted.
+#
+if (@de_exec && @delete) {
+    my %delete = map {+"$pkg_dir/$_" => 1} @delete;
+    @de_exec = grep {!$delete {$_}} @de_exec;
+}
+
+say "unlink $pkg_dir/$_" for @delete;
+say "git add $pkg_dir/$_" for @commit;
+say "git rm -f $pkg_dir/$_" for @gone;
+say "chmod a-x $pkg_dir/$_" for @de_exec;
+
+print "Hit return to continue; ^C to abort "; <STDIN>;
+
+unlink "$pkg_dir/$_"                      for @delete;
+system git   => 'add', "$pkg_dir/$_"      for @commit;
+system git   => 'rm', '-f', "$pkg_dir/$_" for @gone;
+system chmod => 'a-x', "$pkg_dir/$_"      for @de_exec;
+
+#
+# Restore anything that is customized.
+# We don't really care whether we've deleted the file - since we
+# do a git restore, it's going to be resurrected if necessary.
+#
+if ($$info {CUSTOMIZED}) {
+    say "Restoring customized files";
+    foreach my $file (@{$$info {CUSTOMIZED}}) {
+        system git => "checkout", "$pkg_dir/$file";
+    }
+}
+
+chdir "..";
+if (@commit) {
+    say "Fixing MANIFEST";
+    my $MANIFEST      = "MANIFEST";
+    my $MANIFEST_SORT = "$MANIFEST.sorted";
+    open my $fh, ">>", $MANIFEST;
+    say $fh "cpan/$pkg_dir/$_" for @commit;
+    close $fh;
+    system perl => "Porting/manisort", '--output', $MANIFEST_SORT;
+    rename $MANIFEST_SORT => $MANIFEST;
+}
+
+
+print "Running a make ... ";
+system "make > make.log 2>&1" and die "Running make failed, see make.log";
+print "done\n";
+
+#
+# Must clean up, or else t/porting/FindExt.t will fail.
+# Note that we can always retrieve the orginal directory with a git checkout.
+#
+print "About to clean up; hit return or abort (^C) "; <STDIN>;
+
+chdir "cpan";
+system rm => '-r', $old_dir;
+unlink $new_file unless $tarball;
+
+
+#
+# Run the tests. First the test belonging to the module, followed by the
+# the tests in t/porting
+#
+chdir "../t";
+say "Running module tests";
+my @test_files = `find ../cpan/$pkg_dir -name '*.t' -type f`;
+chomp @test_files;
+my $output = `./perl TEST @test_files`;
+unless ($output =~ /All tests successful/) {
+    say $output;
+    exit 1;
+}
+
+print "Running tests in t/porting ";
+my @tests = `ls porting/*.t`;
+chomp @tests;
+my @failed;
+foreach my $t (@tests) {
+    my @not = `./perl -I../lib -I.. $t | grep ^not | grep -v "# TODO"`;
+    print @not ? '!' : '.';
+    push @failed => $t if @not;
+}
+print "\n";
+say "Failed tests: @failed" if @failed;
+
+
+print "Now you ought to run a make; make test ...\n";
+
+say "Do not forget to update Porting/Maintainers.pl before committing";
+say "$o_module is now version $new_version";
+
+
+__END__

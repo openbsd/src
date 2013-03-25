@@ -2,14 +2,11 @@ BEGIN {
 	chdir 't' if -d 't';
 	@INC = '../lib';
 	require Config; import Config;
-	unless (find PerlIO::Layer 'perlio') {
-	    print "1..0 # Skip: PerlIO not used\n";
-	    exit 0;
-	}
 	require './test.pl';
+	skip_all_without_perlio();
 }
 
-plan tests => 42;
+plan tests => 45;
 
 use_ok('PerlIO');
 
@@ -105,14 +102,14 @@ ok(close($utffh));
 
       my $filename = find_filename($x, $perlio_tmp_file_glob);
       is($filename, undef, "No tmp files leaked");
-      unlink $filename if defined $filename;
+      unlink_all $filename if defined $filename;
 
       mkdir $ENV{TMPDIR};
       ok(open(my $x,"+<",undef), 'TMPDIR honored by magic temp file via 3 arg open with undef - works if TMPDIR points to an existent dir');
 
       $filename = find_filename($x, $perlio_tmp_file_glob);
       is($filename, undef, "No tmp files leaked");
-      unlink $filename if defined $filename;
+      unlink_all $filename if defined $filename;
     }
 }
 
@@ -135,7 +132,7 @@ sub find_filename {
 SKIP: {
     eval { require PerlIO::scalar };
     unless (find PerlIO::Layer 'scalar') {
-	skip("PerlIO::scalar not found", 9);
+	skip("PerlIO::scalar not found", 11);
     }
     my $var;
     ok( open(my $x,"+<",\$var), 'magic in-memory file via 3 arg open with \\$var');
@@ -171,10 +168,10 @@ SKIP: {
     }
 
 
-{ local $TODO = 'fails well back into 5.8.x';
+    { local $TODO = 'fails well back into 5.8.x';
 
 	
-sub read_fh_and_return_final_rv {
+      sub read_fh_and_return_final_rv {
 	my ($fh) = @_;
 	my $buf = '';
 	my $rv;
@@ -183,24 +180,46 @@ sub read_fh_and_return_final_rv {
 		next if $rv;
 	}
 	return $rv
+      }
+
+      open(my $no_perlio, '<', \'ab') or die; 
+      open(my $perlio, '<:crlf', \'ab') or die; 
+
+      is(read_fh_and_return_final_rv($perlio),
+         read_fh_and_return_final_rv($no_perlio),
+        "RT#69332 - perlio should return the same value as nonperlio after EOF");
+
+      close ($perlio);
+      close ($no_perlio);
+    }
+
+    { # [perl #92258]
+        open my $fh, "<", \(my $f = *f);
+        is join("", <$fh>), '*main::f', 'reading from a glob copy';
+        is ref \$f, 'GLOB', 'the glob copy is unaffected';
+    }
+
 }
 
-open(my $no_perlio, '<', \'ab') or die; 
-open(my $perlio, '<:crlf', \'ab') or die; 
-
-is(read_fh_and_return_final_rv($perlio), read_fh_and_return_final_rv($no_perlio), "RT#69332 - perlio should return the same value as nonperlio after EOF");
-
-close ($perlio);
-close ($no_perlio);
+{
+    # see RT #75722, RT #96008
+    fresh_perl_like(<<'EOP',
+unshift @INC, sub {
+    return undef unless caller eq "main";
+    open my $fh, "<", \1;
+    $fh;
+};
+require Symbol; # doesn't matter whether it exists or not
+EOP
+		    qr/\ARecursive call to Perl_load_module in PerlIO_find_layer at/s,
+		    {stderr => 1},
+		    'Mutal recursion between Perl_load_module and PerlIO_find_layer croaks');
 }
-
-}
-
 
 END {
-    1 while unlink $txt;
-    1 while unlink $bin;
-    1 while unlink $utf;
+    unlink_all $txt;
+    unlink_all $bin;
+    unlink_all $utf;
     rmdir $nonexistent;
 }
 

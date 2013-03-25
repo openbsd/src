@@ -51,7 +51,7 @@ if [ -z "$bs2000_ignoredl" -a -e /usr/lib/libdl.a ]; then
 	*risc_4000*)
 	    bs2000_ld="perl_genso"
 	    echo "
-Now you must buy everything they sell you, musn't you?
+Now you must buy everything they sell you, mustn't you?
 Didn't somebody tell you that RISC machines and dynamic library support gives
 you helluva lot of configuration problems at the moment?
 Sigh.  Now you'll expect me to fix it for you, eh?

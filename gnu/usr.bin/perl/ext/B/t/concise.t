@@ -10,7 +10,7 @@ BEGIN {
     require 'test.pl';		# we use runperl from 'test.pl', so can't use Test::More
 }
 
-plan tests => 157;
+plan tests => 159;
 
 require_ok("B::Concise");
 
@@ -92,7 +92,7 @@ SKIP: {
 my @stylespec;
 $@='';
 eval { add_style ('junk_B' => @stylespec) };
-like ($@, 'expecting 3 style-format args',
+like ($@, qr/expecting 3 style-format args/,
     "add_style rejects insufficient args");
 
 @stylespec = (0,0,0); # right length, invalid values
@@ -392,14 +392,17 @@ like($out, qr/FUNC: \*B::Concise::concise_cv_obj/,
 like($out, qr/FUNC: \*B::Concise::walk_output/,
      "stash rendering includes Concise::walk_output");
 
-like($out, qr/FUNC: \*B::Concise::PAD_FAKELEX_MULTI/,
-     "stash rendering includes constant sub: PAD_FAKELEX_MULTI");
-
-like($out, qr/PAD_FAKELEX_MULTI is a constant sub, optimized to a IV/,
-     "stash rendering identifies it as constant");
-
 like($out, qr/\# 4\d\d: \s+ \$l->concise\(\$level\);/,
      "src-line rendering works");
+
+$out = runperl ( switches => ["-MStorable", "-MO=Concise,-stash=Storable,-src"],
+		 prog => '-e 1', stderr => 1 );
+
+like($out, qr/FUNC: \*Storable::BIN_MAJOR/,
+     "stash rendering includes constant sub: PAD_FAKELEX_MULTI");
+
+like($out, qr/BIN_MAJOR is a constant sub, optimized to a IV/,
+     "stash rendering identifies it as constant");
 
 $out = runperl ( switches => ["-MO=Concise,-stash=ExtUtils::Mksymlists,-src,-exec"],
 		 prog => '-e 1', stderr => 1 );
@@ -413,7 +416,7 @@ $out = runperl ( switches => ["-MO=Concise,-stash=Data::Dumper,-src,-exec"],
 like($out, qr/FUNC: \*Data::Dumper::format_refaddr/,
      "stash rendering loads package as needed");
 
-my $prog = q{package FOO; sub bar { print "bar" } package main; FOO::bar(); };
+my $prog = q{package FOO; sub bar { print q{bar} } package main; FOO::bar(); };
 
 # this would fail if %INC used for -stash test
 $out = runperl ( switches => ["-MO=Concise,-src,-stash=FOO,-main"],
@@ -421,5 +424,28 @@ $out = runperl ( switches => ["-MO=Concise,-src,-stash=FOO,-main"],
 
 like($out, qr/FUNC: \*FOO::bar/,
      "stash rendering works on inlined package");
+
+# Test that consecutive nextstate ops are not nulled out when PERLDBf_NOOPT
+# is set.
+# XXX Does this test belong here?
+
+$out = runperl ( switches => ["-MO=Concise"],
+		 prog => 'BEGIN{$^P = 0x04} 1 if 0; print',
+		 stderr => 1 );
+like $out, qr/nextstate.*nextstate/s,
+  'nulling of nextstate-nextstate happeneth not when $^P | PERLDBf_NOOPT';
+
+
+# A very basic test for -tree output
+$out =
+ runperl(
+  switches => ["-MO=Concise,-tree"], prog => 'print', stderr => 1
+ );
+ok index $out=~s/\r\n/\n/gr=~s/gvsv\(\*_\)/gvsv[*_]/r, <<'end'=~s/\r\n/\n/gr =>>= 0, '-tree output';
+<6>leave[1 ref]-+-<1>enter
+                |-<2>nextstate(main 1 -e:1)
+                `-<5>print-+-<3>pushmark
+                           `-ex-rv2sv---<4>gvsv[*_]
+end
 
 __END__

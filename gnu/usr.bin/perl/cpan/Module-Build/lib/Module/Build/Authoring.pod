@@ -2,7 +2,6 @@
 
 Module::Build::Authoring - Authoring Module::Build modules
 
-
 =head1 DESCRIPTION
 
 When creating a C<Build.PL> script for a module, something like the
@@ -104,7 +103,7 @@ C<@INC> (including the C</nonstandard/library/path>) is propagated to
 the Build script, so that My::Builder can be found when running build
 actions.  If you find that you need to C<chdir> into a different directories
 in your subclass methods or actions, be sure to always return to the original
-directory (available via the C<base_dir()> method before returning control
+directory (available via the C<base_dir()> method) before returning control
 to the parent class.  This is important to avoid data serialization problems.
 
 For very small additions, Module::Build provides a C<subclass()>
@@ -304,8 +303,8 @@ Module-Build mailing list at <module-build@perl.org>.
 Bug reports are also welcome at
 <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Module-Build>.
 
-The latest development version is available from the Subversion
-repository at <https://svn.perl.org/modules/Module-Build/trunk/>
+The latest development version is available from the Git
+repository at <https://github.com/dagolden/module-build/>
 
 
 =head1 SEE ALSO
@@ -314,7 +313,7 @@ perl(1), L<Module::Build>(3), L<Module::Build::API>(3),
 L<Module::Build::Cookbook>(3), L<ExtUtils::MakeMaker>(3), L<YAML>(3)
 
 F<META.yml> Specification:
-L<http://module-build.sourceforge.net/META-spec-current.html>
+L<CPAN::META::Spec>
 
 L<http://www.dsmit.com/cons/>
 

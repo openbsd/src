@@ -7,7 +7,7 @@ use overload '""' => "as_string";
 use vars qw(
             $VERSION
 );
-$VERSION = "1.0";
+$VERSION = "1.001";
 
 
 sub new {

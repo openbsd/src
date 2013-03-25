@@ -45,6 +45,7 @@
 
 use strict;
 use warnings;
+use autodie;
 use Getopt::Std;
 use ExtUtils::Manifest;
 
@@ -56,6 +57,7 @@ sub usage { die <<EOF }
 usage: $0 -c <C.C.C>
           -s <C.C.C> <N.N.N>
 	  -u
+	  -i <C.C.C> <N.N.N>
 
     -c check files and warn if any known string values (eg
 	PERL_SUBVERSION) don't match the specified version
@@ -64,14 +66,16 @@ usage: $0 -c <C.C.C>
 
     -u read in the scan file from stdin, and change all the lines specified
 
+    -i scan files and make changes inplace
+
     C.C.C the current perl version, eg 5.10.0
     N.N.N the new     perl version, eg 5.10.1
 EOF
 
 my %opts;
-getopts('csu', \%opts) or usage;
+getopts('csui', \%opts) or usage;
 if ($opts{u}) {
-    @ARGV == 0 or usage('no version version numbers should be speciied');
+    @ARGV == 0 or usage('no version version numbers should be specified');
     # fake to stop warnings when calculating $oldx etc
     @ARGV = qw(99.99.99 99.99.99);
 }
@@ -82,7 +86,7 @@ elsif ($opts{c}) {
 else {
     @ARGV == 2 or usage('require two version numbers');
 }
-usage('only one of -c, -s and -u') if keys %opts > 1;
+usage('only one of -c, -s, -u and -i') if keys %opts > 1;
 
 my ($oldx, $oldy, $oldz) = $ARGV[0] =~ /^(\d+)\.(\d+)\.(\d+)$/
 	or usage("bad version: $ARGV[0]");
@@ -118,14 +122,14 @@ my @maps =  (
     ],
     [
 	qr{^(api_subversion(?:=|\s+)'?) (\d+) ('?)  (?!\.)}x,
-	sub { $2, "${1}0$3" },
-	0,
+	sub { $2, ($newy % 2) ? "$1$newz$3" : "${1}0$3" },
+	($oldy % 2) ? $oldz : 0,
 	qr/config/,
     ],
     [
 	qr{^(api_versionstring(?:=|\s+)'?) ([\d\.]+) ('?) (?!\.)}x,
-	sub { $2, "$1$newx.$newy.0$3" },
-	"$oldx.$oldy.0",
+	sub { $2, ($newy % 2) ? "$1$newx.$newy.$newz$3": "$1$newx.$newy.0$3" },
+	($oldy % 2) ? "$oldx.$oldy.$oldz" : "$oldx.$oldy.0",
 	qr/config/,
     ],
     [
@@ -142,12 +146,12 @@ my @maps =  (
     [
 	qr{\b (PERL_SUBVERSION(?:=|\s+)'?) (\d+) ('?)  (?!\.)}x,
 	sub { $2, "$1$newz$3"},
-	$oldz,
+	($oldy % 2) ? $oldz : 0,
     ],
     [
 	qr{\b (PERL_API_SUBVERSION(?:=|\s+)'?) (\d+) ('?)  (?!\.)}x,
-	sub { $2, "${1}0$3"},
-	0,
+	sub { $2, ($newy % 2) ? "$1$newz$3" : "${1}0$3" },
+	$oldz,
     ],
     # these two formats are in README.vms
     [
@@ -179,7 +183,23 @@ my @maps =  (
 	qr{\b ((?:lib)?) perl (\d\d\d) (s?) \b }x,
 	sub {$2, "$1perl$newx$newy$3" },
 	"$oldx$oldy",
-	qr/makedef|win32|hints/,      # makedef.pl, README.win32, win32/*, hints/*
+	qr/win32|hints/,      # README.win32, win32/*, hints/*
+    ],
+
+    # microperl locations should be bumped for major versions
+    [
+        qr{(/)(\d\.\d{2})(["'/])},
+        sub { $2, "$1$newx.$newy$3" },
+        "$oldx.$oldy",
+        qr/uconfig/,
+    ],
+
+    # rename perl-5^.15^.1.dirperl-5_15_1.dir in README.vms
+    [
+	qr{\sperl-(\d+)_(\d+)_(\d+)\.dir}x,
+	sub { " perl-${1}_${2}_${3}.dir", " perl-${newx}_${newy}_${newz}.dir" },
+	" perl-${oldx}_${oldy}_{$oldz}.dir",
+	qr/README.vms/,
     ],
 
 );
@@ -190,19 +210,20 @@ my @maps =  (
 my %SKIP_FILES = map { ($_ => 1) } qw(
     Changes
     MANIFEST
+    Porting/Maintainers.pl
+    Porting/acknowledgements.pl
+    Porting/epigraphs.pod
     Porting/how_to_write_a_perldelta.pod
     Porting/release_managers_guide.pod
-	Porting/release_schedule.pod
+    Porting/release_schedule.pod
     Porting/bump-perl-version
-    Porting/mergelog
-    Porting/mergelog-tool
-    pod.lst
     pp_ctl.c
 );
 my @SKIP_DIRS = qw(
     ext
     lib
     pod
+    cpan
     t
 );
 
@@ -210,14 +231,14 @@ my @mani_files = sort keys %{ExtUtils::Manifest::maniread('MANIFEST')};
 my %mani_files = map { ($_ => 1) } @mani_files;
 die "No entries found in MANIFEST; aborting\n" unless @mani_files;
 
-if ($opts{c} or $opts{s}) {
+if ($opts{c} or $opts{s} or $opts{i}) {
     do_scan();
 }
 elsif ($opts{u}) {
     do_update();
 }
 else {
-    usage('one of -c, -s or -u must be specifcied');
+    usage('one of -c, -s or -u must be specified');
 }
 exit 0;
 
@@ -231,31 +252,46 @@ sub do_scan {
 	    warn "(skipping $file)\n";
 	    next;
 	}
-	open my $fh, '<', $file or die "Aborting: can't open $file: $!\n";
+	open my $fh, '<', $file;
 	my $header = 0;
+	my @stat = stat $file;
+	my $mode = $stat[2];
+	my $file_changed = 0;
+	my $new_contents = '';
 
-	while (<$fh>) {
+	while (my $line = <$fh>) {
+	    my $oldline = $line;
 	    for my $map (@maps) {
 		my ($pat, $sub, $expected, $file_pat) = @$map;
 
 		next if defined $file_pat and $file !~ $file_pat;
-		next unless $_ =~ $pat;
+		next unless $line =~ $pat;
 		my ($got, $replacement) = $sub->();
 
 		if ($opts{c}) {
 		    # only report unexpected 
 		    next unless defined $expected and $got ne $expected;
 		}
-		my $newstr = $_;
-    		$newstr =~ s/$pat/$replacement/
+		$line =~ s/$pat/$replacement/
 		    or die "Internal error: substitution failed: [$pat]\n";
-		if ($_ ne $newstr) {
+	    }
+	    $new_contents .= $line if $opts{i};
+	    if ($line ne $oldline) {
+		$file_changed = 1;
+		if ($opts{s}) {
 		    print "\n$file\n" unless $header;
 		    $header=1;
-		    printf "\n%5d: -%s       +%s", $., $_, $newstr;
+		    printf "\n%5d: -%s       +%s", $., $oldline, $line;
 		}
-		last;
 	    }
+	}
+	if ($opts{i} && $file_changed) {
+	    warn "Updating $file inplace\n";
+	    open my $fh, '>', $file;
+	    binmode $fh;
+	    print $fh $new_contents;
+	    close $fh;
+	    chmod $mode & 0777, $file;
 	}
     }
     warn "(skipped  $_/*)\n" for @SKIP_DIRS;
@@ -280,7 +316,7 @@ sub do_update {
 	elsif (/^\s+(\d+): -(.*)/) {
 	    my $old;
 	    ($line, $old) = ($1,$2);
-	    die "$.: old line without preceeding filename\n"
+	    die "$.: old line without preceding filename\n"
 			    unless defined $file;
 	    die "Dup line number: $line\n" if exists $changes{$file}{$line};
 	    $changes{$file}{$line}[0] = $old;
@@ -300,11 +336,11 @@ sub do_update {
 
     my %contents;
     for my $file (sort keys %changes) {
-	open my $fh, '<', $file or die "open '$file': $!\n";
+	open my $fh, '<', $file;
 	binmode $fh;
 	$contents{$file} = [ <$fh> ];
 	chomp @{$contents{$file}};
-	close $fh or die "close: '$file': $!\n";
+	close $fh;
 
 	my $entries = $changes{$file};
 	for my $line (keys %$entries) {
@@ -331,15 +367,15 @@ sub do_update {
 
     for my $file (sort keys %contents) {
 	my $nfile = "$file-new";
-	open my $fh, '>', $nfile or die "create '$nfile' failed: $!\n";
+	open my $fh, '>', $nfile;
 	binmode $fh;
 	print $fh $_, "\n" for @{$contents{$file}};
-	close $fh or die "failed to close $nfile; aborting: $!\n";
+	close $fh;
 
-	my @stat = stat $file or die "Can't stat $file: $!\n";
+	my @stat = stat $file;
 	my $mode = $stat[2];
 	die "stat $file fgailed to give a mode!\n" unless defined $mode;
-	chmod $mode & 0777, $nfile or die "chmod $nfile failed; aborting: $!\n";
+	chmod $mode & 0777, $nfile;
     }
 
     # and rename them
@@ -347,7 +383,7 @@ sub do_update {
     for my $file (sort keys %contents) {
 	my $nfile = "$file-new";
 	warn "updating $file ...\n";
-	rename $nfile, $file or die "rename $nfile $file: $!\n";
+	rename $nfile, $file;
     }
 }
 

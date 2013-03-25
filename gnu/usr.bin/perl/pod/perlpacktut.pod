@@ -73,13 +73,12 @@ remains.
 The inverse operation - packing byte contents from a string of hexadecimal
 digits - is just as easily written. For instance:
 
-   my $s = pack( 'H2' x 10, map { "3$_" } ( 0..9 ) );
+   my $s = pack( 'H2' x 10, 30..39 );
    print "$s\n";
 
 Since we feed a list of ten 2-digit hexadecimal strings to C<pack>, the
 pack template should contain ten pack codes. If this is run on a computer
 with ASCII character coding, it will print C<0123456789>.
-
 
 =head1 Packing Text
 

@@ -4,7 +4,7 @@ specifically designed to be readable as is.
 
 =head1 NAME
 
-README.riscos - Perl version 5 for RISC OS
+perlriscos - Perl version 5 for RISC OS
 
 =head1 DESCRIPTION
 
@@ -25,11 +25,11 @@ Then, in the source to be cross compiled:
 
 =over 4
 
-=item
+=item 1.
 
     $ ./Configure
 
-=item
+=item 2.
 
 Select the riscos hint file. The default answers for the rest of the
 questions are usually sufficient.
@@ -39,24 +39,24 @@ document for details), to have it select the correct hint file, you'll
 need to provide the argument -Dhintfile=riscos on the Configure
 command-line.
 
-=item
+=item 3.
 
     $ make miniperl
 
-=item
+=item 4.
 
 This should build miniperl and then fail when it tries to run it.
 
-=item
+=item 5.
 
 Copy the miniperl executable from the native build done earlier to
 replace the cross compiled miniperl.
 
-=item
+=item 6.
 
     $ make
 
-=item
+=item 7.
 
 This will use miniperl to complete the rest of the build.
 

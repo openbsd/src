@@ -5,8 +5,9 @@
 # This file is read by mkppport at build time.
 #
 
-cpan/Cwd
 cpan/DB_File
 cpan/IPC-SysV
+cpan/List-Util
 cpan/Time-HiRes
 cpan/Win32API-File
+dist/Cwd

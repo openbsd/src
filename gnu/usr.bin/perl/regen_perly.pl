@@ -2,7 +2,7 @@
 #
 # regen_perly.pl, DAPM 12-Feb-04
 #
-# Copyright (c) 2004, 2005 Larry Wall
+# Copyright (c) 2004, 2005, 2006, 2009, 2010, 2011 Larry Wall
 #
 # Given an input file perly.y, run bison on it and produce
 # the following output files:
@@ -29,10 +29,13 @@
 # it may work elsewhere but no specific attempt has been made to make it
 # portable.
 
+use 5.006;
 sub usage { die "usage: $0 [ -b bison_executable ] [ file.y ]\n" }
 
 use warnings;
 use strict;
+
+BEGIN { require 'regen/regen_lib.pl'; }
 
 my $bison = 'bison';
 
@@ -61,11 +64,15 @@ die "$0: must be run on an ASCII system\n" unless ord 'A' == 65;
 #    this; 1.35+ does
 #  * Must produce output which is extractable by the regexes below
 #  * Must produce the right values.
-# These last two contstraints  may well be met by earlier versions, but
+# These last two constraints  may well be met by earlier versions, but
 # I simply haven't tested them yet. If it works for you, then modify
 # the test below to allow that version too. DAPM Feb 04.
 
 my $version = `$bison -V`;
+unless ($version) { die <<EOF; }
+Could not find a version of bison in your path. Please install bison.
+EOF
+
 unless ($version =~ /\b(1\.875[a-z]?|2\.[0134])\b/) { die <<EOF; }
 
 You have the wrong version of bison in your path; currently 1.875
@@ -79,28 +86,24 @@ EOF
 # creates $tmpc_file and $tmph_file
 my_system("$bison -d -o $tmpc_file $y_file");
 
-open CTMPFILE, $tmpc_file or die "Can't open $tmpc_file: $!\n";
+open my $ctmp_fh, '<', $tmpc_file or die "Can't open $tmpc_file: $!\n";
 my $clines;
-{ local $/; $clines = <CTMPFILE>; }
+{ local $/; $clines = <$ctmp_fh>; }
 die "failed to read $tmpc_file: length mismatch\n"
     unless length $clines == -s $tmpc_file;
-close CTMPFILE;
+close $ctmp_fh;
 
 my ($actlines, $tablines) = extract($clines);
 
 $tablines .= make_type_tab($y_file, $tablines);
 
-chmod 0644, $act_file;
-open ACTFILE, ">$act_file" or die "can't open $act_file: $!\n";
-print ACTFILE $actlines;
-close ACTFILE;
-chmod 0444, $act_file;
+my ($act_fh, $tab_fh, $h_fh) = map {
+    open_new($_, '>', { by => $0, from => $y_file });
+} $act_file, $tab_file, $h_file;
 
-chmod 0644, $tab_file;
-open TABFILE, ">$tab_file" or die "can't open $tab_file: $!\n";
-print TABFILE $tablines;
-close TABFILE;
-chmod 0444, $tab_file;
+print $act_fh $actlines;
+
+print $tab_fh $tablines;
 
 unlink $tmpc_file;
 
@@ -108,17 +111,16 @@ unlink $tmpc_file;
 # C<#line 30 "perly.y"> confuses the Win32 resource compiler and the
 # C<#line 188 "perlytmp.h"> gets picked up by make depend, so remove them.
 
-open TMPH_FILE, $tmph_file or die "Can't open $tmph_file: $!\n";
-chmod 0644, $h_file;
-open H_FILE, ">$h_file" or die "Can't open $h_file: $!\n";
+open my $tmph_fh, '<', $tmph_file or die "Can't open $tmph_file: $!\n";
+
 my $endcore_done = 0;
 # Token macros need to be generated manually on bison 2.4
 my $gather_tokens = ($version =~ /\b2\.4\b/ ? undef : 0);
 my $tokens;
-while (<TMPH_FILE>) {
-    print H_FILE "#ifdef PERL_CORE\n" if $. == 1;
+while (<$tmph_fh>) {
+    print $h_fh "#ifdef PERL_CORE\n" if $. == 1;
     if (!$endcore_done and /YYSTYPE_IS_DECLARED/) {
-	print H_FILE "#endif /* PERL_CORE */\n";
+	print $h_fh "#endif /* PERL_CORE */\n";
 	$endcore_done = 1;
     }
     next if /^#line \d+ ".*"/;
@@ -135,14 +137,14 @@ while (<TMPH_FILE>) {
 	    $tokens .= "#define $tok $val\n" if $tok;
 	}
     }
-    print H_FILE $_;
+    print $h_fh $_;
 }
-close TMPH_FILE;
-close H_FILE;
-chmod 0444, $h_file;
+close $tmph_fh;
 unlink $tmph_file;
 
-print "rebuilt:  $h_file $tab_file $act_file\n";
+foreach ($act_fh, $tab_fh, $h_fh) {
+    read_only_bottom_close_and_rename($_, ['regen_perly.pl', $y_file]);
+}
 
 exit 0;
 

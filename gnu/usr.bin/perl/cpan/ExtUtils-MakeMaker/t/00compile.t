@@ -12,7 +12,11 @@ BEGIN {
     $Has_Test_Pod = eval 'use Test::Pod 0.95; 1';
 }
 
+plan skip_all => 'No MANIFEST'
+  unless -e "../MANIFEST";
+  
 chdir "..";
+
 my $manifest = "MANIFEST";
 open(my $manifest_fh, "<", $manifest) or die "Can't open $manifest: $!";
 my @modules = map  { m{^lib/(\S+)}; $1 } 

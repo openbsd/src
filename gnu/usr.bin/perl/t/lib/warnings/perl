@@ -71,3 +71,155 @@ BEGIN { $^W = 1 }
 $y = 3 ;
 EXPECT
 Name "main::y" used only once: possible typo at - line 6.
+########
+
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+no warnings 'once' ;
+$ᛪ = 3 ;
+use warnings 'once' ;
+$ȥ = 3 ;
+EXPECT
+Name "main::ȥ" used only once: possible typo at - line 8.
+########
+-w
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+$ᛪ = 3 ;
+no warnings 'once' ;
+$ȥ = 3;
+EXPECT
+Name "main::ᛪ" used only once: possible typo at - line 5.
+########
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+BEGIN { $^W =1 ; }
+$ᛪ = 3 ;
+no warnings 'once' ;
+$ȥ = 3 
+EXPECT
+Name "main::ᛪ" used only once: possible typo at - line 5.
+########
+-W
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+no warnings 'once' ;
+$ᛪ = 3 ;
+use warnings 'once' ;
+$ȥ = 3 ;
+EXPECT
+OPTION random
+Name "main::ȥ" used only once: possible typo at - line 8.
+Name "main::ᛪ" used only once: possible typo at - line 6.
+########
+-X
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'once' ;
+$ᛪ = 3 ;
+EXPECT
+########
+
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+{ use warnings 'once' ; $ᛪ = 3 ; }
+$ŷ = 3 ;
+EXPECT
+Name "main::ᛪ" used only once: possible typo at - line 5.
+########
+
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+$ȥ = 3 ;
+BEGIN { $^W = 1 }
+{ no warnings 'once' ; $ᛪ = 3 ; }
+$ŷ = 3 ;
+EXPECT
+Name "main::ŷ" used only once: possible typo at - line 8.
+########
+
+
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+package ɕლȃṢȿ;
+no warnings 'once' ;
+$ᛪ = 3 ;
+use warnings 'once' ;
+$ȥ = 3 ;
+EXPECT
+Name "ɕლȃṢȿ::ȥ" used only once: possible typo at - line 10.
+########
+-w
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+package ɕლȃṢȿ;
+$ᛪ = 3 ;
+no warnings 'once' ;
+$ȥ = 3 
+EXPECT
+Name "ɕლȃṢȿ::ᛪ" used only once: possible typo at - line 6.
+########
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+package ɕლȃṢȿ;
+BEGIN { $^W =1 ; }
+$ᛪ = 3 ;
+no warnings 'once' ;
+$ȥ = 3 
+EXPECT
+Name "ɕლȃṢȿ::ᛪ" used only once: possible typo at - line 6.
+########
+-W
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+package ɕლȃṢȿ;
+no warnings 'once' ;
+$ᛪ = 3 ;
+use warnings 'once' ;
+$ȥ = 3 ;
+EXPECT
+OPTION random
+Name "ɕლȃṢȿ::ᛪ" used only once: possible typo at - line 7.
+Name "ɕლȃṢȿ::ȥ" used only once: possible typo at - line 9.
+########
+-X
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'once' ;
+package ɕლȃṢȿ;
+$ᛪ = 3 ;
+EXPECT
+########
+
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+package ɕლȃṢȿ;
+{ use warnings 'once' ; $ᛪ = 3 ; }
+$ŷ = 3 ;
+EXPECT
+Name "ɕლȃṢȿ::ᛪ" used only once: possible typo at - line 6.
+########
+
+# perl.c
+use utf8;
+use open qw( :utf8 :std );
+package ɕლȃṢȿ;
+$ȥ = 3 ;
+BEGIN { $^W = 1 }
+{ no warnings 'once' ; $ᛪ = 3 ; }
+$ŷ = 3 ;
+EXPECT
+Name "ɕლȃṢȿ::ŷ" used only once: possible typo at - line 9.

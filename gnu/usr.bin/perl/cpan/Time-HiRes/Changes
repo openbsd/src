@@ -1,5 +1,53 @@
 Revision history for the Perl extension Time::HiRes.
 
+1.9725 [2012-02-01]
+	- Correct stack discipline in stat(), which was screwing up list
+	  operations in expressions containing calls to it [rt.cpan.org
+	  #72926].
+	- Add missing OUTPUT sections to the XS code [rt.cpan.org #70930].
+	- Skip itimer tests on GNU/Hurd, which has the API but lacks
+	  the implementation [rt.cpan.org #72754].
+	- Fix a doubled word in the documentation [rt.cpan.org #72763].
+
+1.9724 [2011-06-09]
+	- Correct XS parameter list, and therefore prototype, for
+	  unimplemented-on-this-platform version of clock_nanosleep()
+	  [rt.cpan.org #68700].
+	- Declare package variables with "our" rather than "use vars".
+	- Corresponding to "our" usage, check for minimum Perl version
+	  5.006.
+	- Declare module dependencies.
+
+1.9723 [2011-06-07]
+	- Remove $ENV{PERL_CORE} logic from test suite, which is no
+	  longer desired in the core.
+	- Convert test suite to use Test::More.
+	- Factor out watchdog code from test suite.
+	- In test suite, be consistent about using fully-qualified form
+	  of function names.
+	- Divide test suite into feature-specific scripts.
+	- Make ualarm timing test less vulnerable to delay-induced false
+	  failure, from Dave Mitchell.
+
+1.9722 [2011-05-18]
+	- Update for changes in build process in the core, patches
+	  from BinGOs [rt.cpan.org #58858] and Craig Berry [rt.cpan.org
+	  #63363].
+	- Fix broken linkage on Windows with gcc 3.4 seen with ActivePerl,
+	  report from Christian Walde [rt.cpan.org #61648], fix derived
+	  from Vincent Pit.
+	- Jump through hoops to avoid compiler warnings.
+
+1.9721 [2010-03-17]
+	- Address [rt.cpan.org #54196] alarm and ularm return values are bogus,
+	  additional fix from Gisle Aas
+	- Address [rt.cpan.org #55665] "Bad plan" on Windows,
+	  report and fix from Jan Dubois
+
+1.9720 [2010-02-14]
+	- Address [rt.cpan.org #54196] alarm and ularm return values are bogus,
+	  report and fix from Nicholas Clark
+
 1.9719	[2009-01-04]
 	- As with QNX, Haiku has the API of interval timers but not
 	  the implementation (bleadperl change #34630), hence skip

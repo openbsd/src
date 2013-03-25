@@ -14,5 +14,5 @@ use Tie::Handle;
     @ISA = qw(Tie::StdHandle);
 }
 
-# For backwards compatabilty with 5.8.x
+# For backwards compatibility with 5.8.x
 ok( Foo->can("TIEHANDLE"), "loading Tie::Handle loads TieStdHandle" );

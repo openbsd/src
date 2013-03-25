@@ -12,7 +12,7 @@ package Pod::InputObjects;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '1.31';  ## Current version of this package
+$VERSION = '1.51';  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################
@@ -39,9 +39,9 @@ This module defines some basic input objects used by B<Pod::Parser> when
 reading and parsing POD text from an input source. The following objects
 are defined:
 
-=over 4
-
 =begin __PRIVATE__
+
+=over 4
 
 =item package B<Pod::InputSource>
 
@@ -50,7 +50,11 @@ wrapper around a filehandle or C<IO::Handle>-type object (or anything
 that implements the C<getline()> method) which keeps track of some
 additional information relevant to the parsing of PODs.
 
+=back
+
 =end __PRIVATE__
+
+=over 4
 
 =item package B<Pod::Paragraph>
 
@@ -922,6 +926,8 @@ sub DESTROY {
 #############################################################################
 
 =head1 SEE ALSO
+
+B<Pod::InputObjects> is part of the L<Pod::Parser> distribution.
 
 See L<Pod::Parser>, L<Pod::Select>
 

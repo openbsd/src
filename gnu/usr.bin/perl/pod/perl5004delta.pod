@@ -753,7 +753,7 @@ and above) or the Borland C++ compiler (versions 5.02 and above).
 The resulting perl can be used under Windows 95 (if it
 is installed in the same directory locations as it got installed
 in Windows NT).  This port includes support for perl extension
-building tools like L<MakeMaker> and L<h2xs>, so that many extensions
+building tools like L<ExtUtils::MakeMaker> and L<h2xs>, so that many extensions
 available on the Comprehensive Perl Archive Network (CPAN) can now be
 readily built under Windows NT.  See http://www.perl.com/ for more
 information on CPAN and F<README.win32> in the perl distribution for more

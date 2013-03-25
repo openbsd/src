@@ -71,4 +71,4 @@ sub mkfiles {
     return wantarray ? @results : @results[-1];
 }
 
-END { unlink map { ($_, "$_.bak") } mkfiles(1..5) }
+END { unlink_all map { ($_, "$_.bak") } mkfiles(1..5) }

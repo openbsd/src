@@ -181,6 +181,11 @@ files in the directory will be compiled to object files.  The
 directory will be added to the search path during the compilation and
 linking phases of any C or XS files.
 
+[version 0.3604]
+
+A list of directories can be supplied using an anonymous array
+reference of strings.
+
 =item conflicts
 
 [version 0.07]
@@ -260,6 +265,25 @@ set this directly, they can use C<module_name> to set C<dist_name> to
 a reasonable default.  However, some agglomerative distributions like
 C<libwww-perl> or C<bioperl> have names that don't correspond directly
 to a module name, so C<dist_name> can be set independently.
+
+=item dist_suffix
+
+[version 0.37]
+
+Specifies an optional suffix to include after the version number
+in the distribution directory (and tarball) name.  The only suffix
+currently recognized by PAUSE is 'TRIAL', which indicates that the
+distribution should not be indexed.  For example:
+
+  Foo-Bar-1.23-TRIAL.tar.gz
+
+This will automatically do the "right thing" depending on C<dist_version> and
+C<release_status>.  When C<dist_version> does not have an underscore and
+C<release_status> is not 'stable', then C<dist_suffix> will default to 'TRIAL'.
+Otherwise it will default to the empty string, disabling the suffix.  
+
+In general, authors should only set this if they B<must> override the default
+behavior for some particular purpose.
 
 =item dist_version
 
@@ -447,8 +471,12 @@ L<Module::Build/"INSTALL PATHS">
 
 [version 0.07]
 
-Specifies the licensing terms of your distribution.  Valid options include:
+Specifies the licensing terms of your distribution.
 
+As of Module::Build version 0.36_14, you may use a L<Software::License>
+subclass name (e.g. 'Apache_2_0') instead of one of the keys below.
+
+The legacy list of valid license values include:
 
 =over 4
 
@@ -525,9 +553,9 @@ restrictions.
 
 =back
 
-
 Note that you must still include the terms of your license in your
-documentation - this field only lets automated tools figure out your
+code and documentation - this field only sets the information that is included
+in distribution metadata to let automated tools figure out your
 licensing restrictions.  Humans still need something to read.  If you
 choose to provide this field, you should make sure that you keep it in
 sync with your written documentation if you ever change your licensing
@@ -536,13 +564,7 @@ terms.
 You may also use a license type of C<unknown> if you don't wish to
 specify your terms in the metadata.
 
-It is a fatal error to use a license other than the ones mentioned
-above.  This is not because I wish to impose licensing terms on you -
-please let me know if you would like another license option to be
-added to the list.  I just started out with a small set of licenses to
-keep things simple, figuring I'd let people with actual working
-knowledge in this area tell me what to do.  So if that's you, drop me
-a line.
+Also see the C<create_license> parameter.
 
 =item meta_add
 
@@ -710,6 +732,22 @@ for the details of how requirements can be specified.
 Normally, C<Module::Build> does not search subdirectories when looking
 for tests to run. When this options is set it will search recursively
 in all subdirectories of the standard 't' test directory.
+
+=item release_status
+
+[version 0.37]
+
+The CPAN Meta Spec version 2 adds C<release_status> to allow authors
+to specify how a distribution should be indexed.  Consistent with the
+spec, this parameter can only have one three values: 'stable',
+'testing' or 'unstable'.
+
+Unless explicitly set by the author, C<release_status> will default
+to 'stable' unless C<dist_version> contains an underscore, in which
+case it will default to 'testing'.
+
+It is an error to specify a C<release_status> of 'stable' when
+C<dist_version> contains an underscore character.
 
 =item requires
 
@@ -1588,10 +1626,23 @@ of F<META.yml>.   E.g.
     return $data;
   }
 
-The only valid argument is C<fatal>, which indicates whether missing required
+Valid arguments include:
+
+=over
+
+=item *
+
+C<fatal> -- indicates whether missing required
 metadata fields should be a fatal error or not.  For META creation, it
 generally should, but for MYMETA creation for end-users, it should not be
 fatal.
+
+=item *
+
+C<auto> -- indicates whether any necessary configure_requires should be
+automatically added.  This is used in META creation.
+
+=back
 
 This method is a wrapper around the old prepare_metadata API now that we
 no longer use YAML::Node to hold metadata.
@@ -1667,8 +1718,8 @@ Examples:
 [version 0.32]
 
 Returns a reference to a hash describing all prerequisites.  The keys of the
-hash will the various prerequisite types ('requires', 'build_requires',
-'configure_requires', 'recommends', or 'conflicts') and the values will
+hash will be the various prerequisite types ('requires', 'build_requires',
+'configure_requires', 'recommends', or 'conflicts') and the values will be
 references to hashes of module names and version numbers.  Only prerequisites
 types that are defined will be included.  The C<prereq_data> action is just a
 thin wrapper around the C<prereq_data()> method and dumps the hash as a string
@@ -1827,18 +1878,144 @@ accessor methods for the following properties:
 
 =over 4
 
-<autogenerated_accessors>
+=item PL_files()
+
+=item allow_mb_mismatch()
+
+=item auto_configure_requires()
+
+=item autosplit()
+
+=item base_dir()
+
+=item bindoc_dirs()
+
+=item blib()
+
+=item build_bat()
+
+=item build_class()
+
+=item build_elements()
+
+=item build_requires()
+
+=item build_script()
+
+=item bundle_inc()
+
+=item bundle_inc_preload()
+
+=item c_source()
+
+=item config_dir()
+
+=item configure_requires()
+
+=item conflicts()
+
+=item cpan_client()
+
+=item create_license()
+
+=item create_makefile_pl()
+
+=item create_packlist()
+
+=item create_readme()
+
+=item debug()
+
+=item debugger()
+
+=item destdir()
+
+=item dynamic_config()
+
+=item get_options()
+
+=item html_css()
+
+=item include_dirs()
+
+=item install_base()
+
+=item installdirs()
+
+=item libdoc_dirs()
+
+=item license()
+
+=item magic_number()
+
+=item mb_version()
+
+=item meta_add()
+
+=item meta_merge()
+
+=item metafile()
+
+=item metafile2()
+
+=item module_name()
+
+=item mymetafile()
+
+=item mymetafile2()
+
+=item needs_compiler()
+
+=item orig_dir()
+
+=item perl()
+
+=item pm_files()
+
+=item pod_files()
+
+=item pollute()
+
+=item prefix()
+
+=item prereq_action_types()
+
+=item program_name()
+
+=item quiet()
+
+=item recommends()
+
+=item recurse_into()
+
+=item recursive_test_files()
+
+=item requires()
+
+=item scripts()
+
+=item sign()
+
+=item tap_harness_args()
+
+=item test_file_exts()
+
+=item use_rcfile()
+
+=item use_tap_harness()
+
+=item verbose()
+
+=item xs_files()
 
 =back
-
 
 =head1 MODULE METADATA
 
 If you would like to add other useful metadata, C<Module::Build>
 supports this with the C<meta_add> and C<meta_merge> arguments to
-L</new>. The authoritative list of supported metadata can be found at
-L<http://module-build.sourceforge.net/META-spec-current.html>, but for
-convenience - here are a few of the more useful ones:
+L</new()>. The authoritative list of supported metadata can be found at
+L<CPAN::META::Spec> but for convenience - here are a few of the more useful ones:
 
 =over 4
 
@@ -1847,16 +2024,12 @@ convenience - here are a few of the more useful ones:
 For describing the distribution using keyword (or "tags") in order to
 make CPAN.org indexing and search more efficient and useful.
 
-See L<http://module-build.sourceforge.net/META-spec-current.html#keywords>.
-
 =item resources
 
 A list of additional resources available for users of the
 distribution. This can include links to a homepage on the web, a
-bug tracker, the repository location, a even subscription page for the
+bug tracker, the repository location, and even a subscription page for the
 distribution mailing list.
-
-See L<http://module-build.sourceforge.net/META-spec-current.html#resources>.
 
 =back
 
@@ -1877,9 +2050,9 @@ modify it under the same terms as Perl itself.
 =head1 SEE ALSO
 
 perl(1), L<Module::Build>(3), L<Module::Build::Authoring>(3),
-L<Module::Build::Cookbook>(3), L<ExtUtils::MakeMaker>(3), L<YAML::Tiny>(3)
+L<Module::Build::Cookbook>(3), L<ExtUtils::MakeMaker>(3)
 
 F<META.yml> Specification:
-L<http://module-build.sourceforge.net/META-spec-current.html>
+L<CPAN::META::Spec>
 
 =cut

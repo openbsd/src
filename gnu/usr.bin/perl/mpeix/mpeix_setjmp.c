@@ -182,7 +182,7 @@
 
 /*
   * Construct a jump buffer and unconditionally save
-  * the signal mask. Return a 0 unconditinoally.
+  * the signal mask. Return a 0 unconditionally.
   * Care is taken here and in the macros to assume
   * the __jumpbuf is in %r26 and that the return
   * value will be in %r28. It is done this way to
@@ -275,7 +275,7 @@ void _longjmp(register void *jmpbuf, register int i2)
 }
 
 /*
-  * Return to the location establsihed in the jmpbuf,
+  * Return to the location established in the jmpbuf,
   * and conditionally re-establish the signal mask.
   */
 void siglongjmp(register void *jmpbuf, register int i2)

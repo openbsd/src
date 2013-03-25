@@ -3,9 +3,11 @@
 package CPAN::LWP::UserAgent;
 use strict;
 use vars qw(@ISA $USER $PASSWD $SETUPDONE);
+use CPAN::HTTP::Credentials;
 # we delay requiring LWP::UserAgent and setting up inheritance until we need it
 
-$CPAN::LWP::UserAgent::VERSION = $CPAN::LWP::UserAgent::VERSION = "1.94";
+$CPAN::LWP::UserAgent::VERSION = $CPAN::LWP::UserAgent::VERSION = "1.9600";
+
 
 sub config {
     return if $SETUPDONE;
@@ -20,75 +22,16 @@ sub config {
 
 sub get_basic_credentials {
     my($self, $realm, $uri, $proxy) = @_;
-    if ($USER && $PASSWD) {
-        return ($USER, $PASSWD);
-    }
     if ( $proxy ) {
-        ($USER,$PASSWD) = $self->get_proxy_credentials();
+        return CPAN::HTTP::Credentials->get_proxy_credentials();
     } else {
-        ($USER,$PASSWD) = $self->get_non_proxy_credentials();
+        return CPAN::HTTP::Credentials->get_non_proxy_credentials();
     }
-    return($USER,$PASSWD);
 }
 
-sub get_proxy_credentials {
-    my $self = shift;
-    my ($user, $password);
-    if ( defined $CPAN::Config->{proxy_user} ) {
-        $user = $CPAN::Config->{proxy_user};
-        $password = $CPAN::Config->{proxy_pass} || "";
-        return ($user, $password);
-    }
-    my $username_prompt = "\nProxy authentication needed!
- (Note: to permanently configure username and password run
-   o conf proxy_user your_username
-   o conf proxy_pass your_password
-     )\nUsername:";
-    ($user, $password) =
-        _get_username_and_password_from_user($username_prompt);
-    return ($user,$password);
-}
-
-sub get_non_proxy_credentials {
-    my $self = shift;
-    my ($user,$password);
-    if ( defined $CPAN::Config->{username} ) {
-        $user = $CPAN::Config->{username};
-        $password = $CPAN::Config->{password} || "";
-        return ($user, $password);
-    }
-    my $username_prompt = "\nAuthentication needed!
-     (Note: to permanently configure username and password run
-       o conf username your_username
-       o conf password your_password
-     )\nUsername:";
-
-    ($user, $password) =
-        _get_username_and_password_from_user($username_prompt);
-    return ($user,$password);
-}
-
-sub _get_username_and_password_from_user {
-    my $username_message = shift;
-    my ($username,$password);
-
-    ExtUtils::MakeMaker->import(qw(prompt));
-    $username = prompt($username_message);
-        if ($CPAN::META->has_inst("Term::ReadKey")) {
-            Term::ReadKey::ReadMode("noecho");
-        }
-    else {
-        $CPAN::Frontend->mywarn(
-            "Warning: Term::ReadKey seems not to be available, your password will be echoed to the terminal!\n"
-        );
-    }
-    $password = prompt("Password:");
-
-        if ($CPAN::META->has_inst("Term::ReadKey")) {
-            Term::ReadKey::ReadMode("restore");
-        }
-        $CPAN::Frontend->myprint("\n\n");
-    return ($username,$password);
+sub no_proxy {
+    my ( $self, $no_proxy ) = @_;
+    return $self->SUPER::no_proxy( split(',',$no_proxy) );
 }
 
 # mirror(): Its purpose is to deal with proxy authentication. When we
@@ -125,8 +68,7 @@ sub mirror {
     my($self,$url,$aslocal) = @_;
     my $result = $self->SUPER::mirror($url,$aslocal);
     if ($result->code == 407) {
-        undef $USER;
-        undef $PASSWD;
+        CPAN::HTTP::Credentials->clear_credentials;
         $result = $self->SUPER::mirror($url,$aslocal);
     }
     $result;

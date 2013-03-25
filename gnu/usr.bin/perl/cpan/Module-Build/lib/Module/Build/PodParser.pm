@@ -2,7 +2,7 @@ package Module::Build::PodParser;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.3603';
+$VERSION = '0.39_01';
 $VERSION = eval $VERSION;
 use vars qw(@ISA);
 
@@ -11,17 +11,8 @@ sub new {
   my $package = shift;
 
   my $self;
-
-  # Try using Pod::Parser first
-  if (eval{ require Pod::Parser; 1; }) {
-    @ISA = qw(Pod::Parser);
-    $self = $package->SUPER::new(@_);
-    $self->{have_pod_parser} = 1;
-  } else {
-    @ISA = ();
-    *parse_from_filehandle = \&_myparse_from_filehandle;
-    $self = bless {have_pod_parser => 0, @_}, $package;
-  }
+  @ISA = ();
+  $self = bless {have_pod_parser => 0, @_}, $package;
 
   unless ($self->{fh}) {
     die "No 'file' or 'fh' parameter given" unless $self->{file};
@@ -31,7 +22,7 @@ sub new {
   return $self;
 }
 
-sub _myparse_from_filehandle {
+sub parse_from_filehandle {
   my ($self, $fh) = @_;
 
   local $_;
@@ -71,36 +62,3 @@ sub get_author {
 
   return $self->{author} || [];
 }
-
-################## Pod::Parser overrides ###########
-sub initialize {
-  my $self = shift;
-  $self->{_head} = '';
-  $self->SUPER::initialize();
-}
-
-sub command {
-  my ($self, $cmd, $text) = @_;
-  if ( $cmd eq 'head1' ) {
-    $text =~ s/^\s+//;
-    $text =~ s/\s+$//;
-    $self->{_head} = $text;
-  }
-}
-
-sub textblock {
-  my ($self, $text) = @_;
-  $text =~ s/^\s+//;
-  $text =~ s/\s+$//;
-  if (uc $self->{_head} eq 'NAME') {
-    my ($name, $abstract) = split( /\s+-\s+/, $text, 2 );
-    $self->{abstract} = $abstract;
-  } elsif ($self->{_head} =~ /^AUTHORS?$/i) {
-    push @{$self->{author}}, $text if $text =~ /\@/;
-  }
-}
-
-sub verbatim {}
-sub interior_sequence {}
-
-1;

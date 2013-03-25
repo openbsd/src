@@ -13,13 +13,9 @@ use Carp;
 
 no warnings 'utf8';
 
-our $VERSION = '1.03';
+our $VERSION = '1.14';
 our $PACKAGE = __PACKAGE__;
 
-require Exporter;
-require DynaLoader;
-
-our @ISA = qw(Exporter DynaLoader);
 our @EXPORT = qw( NFC NFD NFKC NFKD );
 our @EXPORT_OK = qw(
     normalize decompose reorder compose
@@ -27,8 +23,8 @@ our @EXPORT_OK = qw(
     getCanon getCompat getComposite getCombinClass
     isExclusion isSingleton isNonStDecomp isComp2nd isComp_Ex
     isNFD_NO isNFC_NO isNFC_MAYBE isNFKD_NO isNFKC_NO isNFKC_MAYBE
-    FCD checkFCD FCC checkFCC composeContiguous
-    splitOnLastStarter
+    FCD checkFCD FCC checkFCC composeContiguous splitOnLastStarter
+    normalize_partial NFC_partial NFD_partial NFKC_partial NFKD_partial
 );
 our %EXPORT_TAGS = (
     all       => [ @EXPORT, @EXPORT_OK ],
@@ -37,14 +33,8 @@ our %EXPORT_TAGS = (
     fast      => [ qw/FCD checkFCD FCC checkFCC composeContiguous/ ],
 );
 
-######
-
-bootstrap Unicode::Normalize $VERSION;
-
-######
-
 ##
-## utilites for tests
+## utilities for tests
 ##
 
 sub pack_U {
@@ -55,9 +45,18 @@ sub unpack_U {
     return unpack('U*', shift(@_).pack('U*'));
 }
 
+require Exporter;
+
+##### The above part is common to XS and PP #####
+
+our @ISA = qw(Exporter DynaLoader);
+require DynaLoader;
+bootstrap Unicode::Normalize $VERSION;
+
+##### The below part is common to XS and PP #####
 
 ##
-## normalization forms
+## normalize
 ##
 
 sub FCD ($) {
@@ -83,9 +82,27 @@ sub normalize($$)
     croak($PACKAGE."::normalize: invalid form name: $form");
 }
 
+##
+## partial
+##
+
+sub normalize_partial ($$) {
+    if (exists $formNorm{$_[0]}) {
+	my $n = normalize($_[0], $_[1]);
+	my($p, $u) = splitOnLastStarter($n);
+	$_[1] = $u;
+	return $p;
+    }
+    croak($PACKAGE."::normalize_partial: invalid form name: $_[0]");
+}
+
+sub NFD_partial ($) { return normalize_partial('NFD', $_[0]) }
+sub NFC_partial ($) { return normalize_partial('NFC', $_[0]) }
+sub NFKD_partial($) { return normalize_partial('NFKD',$_[0]) }
+sub NFKC_partial($) { return normalize_partial('NFKC',$_[0]) }
 
 ##
-## quick check
+## check
 ##
 
 our %formCheck = (
@@ -239,6 +256,82 @@ you can get its NFC/NFKC string, by saying
     $NFC_string  = compose($NFD_string);
     $NFKC_string = compose($NFKD_string);
 
+=item C<($processed, $unprocessed) = splitOnLastStarter($normalized)>
+
+It returns two strings: the first one, C<$processed>, is a part
+before the last starter, and the second one, C<$unprocessed> is
+another part after the first part. A starter is a character having
+a combining class of zero (see UAX #15).
+
+Note that C<$processed> may be empty (when C<$normalized> contains no
+starter or starts with the last starter), and then C<$unprocessed>
+should be equal to the entire C<$normalized>.
+
+When you have a C<$normalized> string and an C<$unnormalized> string
+following it, a simple concatenation is wrong:
+
+    $concat = $normalized . normalize($form, $unnormalized); # wrong!
+
+Instead of it, do like this:
+
+    ($processed, $unprocessed) = splitOnLastStarter($normalized);
+     $concat = $processed . normalize($form, $unprocessed.$unnormalized);
+
+C<splitOnLastStarter()> should be called with a pre-normalized parameter
+C<$normalized>, that is in the same form as C<$form> you want.
+
+If you have an array of C<@string> that should be concatenated and then
+normalized, you can do like this:
+
+    my $result = "";
+    my $unproc = "";
+    foreach my $str (@string) {
+        $unproc .= $str;
+        my $n = normalize($form, $unproc);
+        my($p, $u) = splitOnLastStarter($n);
+        $result .= $p;
+        $unproc  = $u;
+    }
+    $result .= $unproc;
+    # instead of normalize($form, join('', @string))
+
+=item C<$processed = normalize_partial($form, $unprocessed)>
+
+A wrapper for the combination of C<normalize()> and C<splitOnLastStarter()>.
+Note that C<$unprocessed> will be modified as a side-effect.
+
+If you have an array of C<@string> that should be concatenated and then
+normalized, you can do like this:
+
+    my $result = "";
+    my $unproc = "";
+    foreach my $str (@string) {
+        $unproc .= $str;
+        $result .= normalize_partial($form, $unproc);
+    }
+    $result .= $unproc;
+    # instead of normalize($form, join('', @string))
+
+=item C<$processed = NFD_partial($unprocessed)>
+
+It does like C<normalize_partial('NFD', $unprocessed)>.
+Note that C<$unprocessed> will be modified as a side-effect.
+
+=item C<$processed = NFC_partial($unprocessed)>
+
+It does like C<normalize_partial('NFC', $unprocessed)>.
+Note that C<$unprocessed> will be modified as a side-effect.
+
+=item C<$processed = NFKD_partial($unprocessed)>
+
+It does like C<normalize_partial('NFKD', $unprocessed)>.
+Note that C<$unprocessed> will be modified as a side-effect.
+
+=item C<$processed = NFKC_partial($unprocessed)>
+
+It does like C<normalize_partial('NFKC', $unprocessed)>.
+Note that C<$unprocessed> will be modified as a side-effect.
+
 =back
 
 =head2 Quick Check
@@ -321,15 +414,15 @@ while C<"B\N{COMBINING ACUTE ACCENT}"> is in NFC.
 If you want to check exactly, compare the string with its NFC/NFKC/FCC.
 
     if ($string eq NFC($string)) {
-	# $string is exactly normalized in NFC;
+        # $string is exactly normalized in NFC;
     } else {
-	# $string is not normalized in NFC;
+        # $string is not normalized in NFC;
     }
 
     if ($string eq NFKC($string)) {
-	# $string is exactly normalized in NFKC;
+        # $string is exactly normalized in NFKC;
     } else {
-	# $string is not normalized in NFKC;
+        # $string is not normalized in NFKC;
     }
 
 =head2 Character Data
@@ -454,7 +547,10 @@ normalization implemented by this module depends on your perl's version.
      5.8.4-5.8.6          4.0.1 (normalization is same as 4.0.0)
      5.8.7-5.8.8          4.1.0
        5.10.0             5.0.0
-       5.8.9              5.1.0
+    5.8.9, 5.10.1         5.1.0
+    5.12.0-5.12.3         5.2.0
+       5.14.0             6.0.0
+    5.16.0 (to be)        6.1.0
 
 =item Correction of decomposition mapping
 
@@ -482,7 +578,7 @@ lower than 4.1.0.
 
 SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
-Copyright(C) 2001-2007, SADAHIRO Tomoyuki. Japan. All rights reserved.
+Copyright(C) 2001-2012, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This module is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.

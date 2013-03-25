@@ -1,10 +1,3 @@
-BEGIN { 
-    if( $ENV{PERL_CORE} ) {
-        chdir '../lib/Archive/Extract' if -d '../lib/Archive/Extract';
-        unshift @INC, '../../..', '../../../..';
-    }
-}    
-
 BEGIN { chdir 't' if -d 't' };
 BEGIN { mkdir 'out' unless -d 'out' };
 
@@ -111,7 +104,17 @@ my $tmpl = {
                     modules     => [qw[Archive::Zip]],
                     method      => 'is_zip',
                     outfile     => 'a',
-                },                
+                }, 
+    'x.ear' => {    programs    => [qw[unzip]],
+                    modules     => [qw[Archive::Zip]],
+                    method      => 'is_zip',
+                    outfile     => 'a',
+                },
+    'x.war' => {    programs    => [qw[unzip]],
+                    modules     => [qw[Archive::Zip]],
+                    method      => 'is_zip',
+                    outfile     => 'a',
+                },               
     'x.par' => {    programs    => [qw[unzip]],
                     modules     => [qw[Archive::Zip]],
                     method      => 'is_zip',
@@ -120,6 +123,23 @@ my $tmpl = {
     'x.lzma' => {   programs    => [qw[unlzma]],
                     modules     => [qw[Compress::unLZMA]],
                     method      => 'is_lzma',
+                    outfile     => 'a',
+                },
+    'x.xz'   => {   programs    => [qw[unxz]],
+                    modules     => [qw[IO::Uncompress::UnXz]],
+                    method      => 'is_xz',
+                    outfile     => 'a',
+                },
+    'x.txz'  => {   programs    => [qw[unxz tar]],
+                    modules     => [qw[Archive::Tar
+                                           IO::Uncompress::UnXz]],
+                    method      => 'is_txz',
+                    outfile     => 'a',
+                },
+    'x.tar.xz'=> {  programs    => [qw[unxz tar]],
+                    modules     => [qw[Archive::Tar
+                                           IO::Uncompress::UnXz]],
+                    method      => 'is_txz',
                     outfile     => 'a',
                 },
     ### with a directory
@@ -134,6 +154,20 @@ my $tmpl = {
                         modules     => [qw[Archive::Tar 
                                            IO::Uncompress::Bunzip2]],
                         method      => 'is_tbz',
+                        outfile     => 'z',
+                        outdir      => 'y'
+                    },    
+    'y.txz'     => {    programs    => [qw[unxz tar]],
+                        modules     => [qw[Archive::Tar 
+                                           IO::Uncompress::UnXz]],
+                        method      => 'is_txz',
+                        outfile     => 'z',
+                        outdir      => 'y',
+                    },
+    'y.tar.xz'  => {    programs    => [qw[unxz tar]],
+                        modules     => [qw[Archive::Tar 
+                                           IO::Uncompress::UnXz]],
+                        method      => 'is_txz',
                         outfile     => 'z',
                         outdir      => 'y'
                     },    
@@ -173,6 +207,18 @@ my $tmpl = {
                     outfile     => 'z',
                     outdir      => 'y'
                 },
+    'y.ear' => {    programs    => [qw[unzip]],
+                    modules     => [qw[Archive::Zip]],
+                    method      => 'is_zip',
+                    outfile     => 'z',
+                    outdir      => 'y'
+                },
+    'y.war' => {    programs    => [qw[unzip]],
+                    modules     => [qw[Archive::Zip]],
+                    method      => 'is_zip',
+                    outfile     => 'z',
+                    outdir      => 'y'
+              },
     ### with non-same top dir
     'double_dir.zip' => {
                     programs    => [qw[unzip]],
@@ -309,6 +355,7 @@ for my $switch ( [0,1], [1,0] ) {
     diag("Running extract with configuration: $cfg") if $Debug;
 
     for my $archive (keys %$tmpl) {
+        diag("Archive : $archive") if $Debug;
 
         ### check first if we can do the proper
 
@@ -318,11 +365,11 @@ for my $switch ( [0,1], [1,0] ) {
         ### Do an extra run with _ALLOW_TAR_ITER = 0 if it's a tar file of some
         ### sort
         my @with_tar_iter = ( 1 );
-        push @with_tar_iter, 0 if grep { $ae->$_ } qw[is_tbz is_tgz is_tar];
+        push @with_tar_iter, 0 if grep { $ae->$_ } qw[is_tbz is_tgz is_txz is_tar];
 
         for my $tar_iter (@with_tar_iter) { SKIP: {
 
-            ### Doesn't matter unless .tar, .tbz, .tgz
+            ### Doesn't matter unless .tar, .tbz, .tgz, .txz
             local $Archive::Extract::_ALLOW_TAR_ITER = $tar_iter; 
         
             diag("Archive::Tar->iter: $tar_iter") if $Debug;
@@ -330,8 +377,7 @@ for my $switch ( [0,1], [1,0] ) {
             isa_ok( $ae, $Class );
 
             my $method = $tmpl->{$archive}->{method};
-            ok( $ae->$method(),         "Archive type recognized properly" );
-
+            ok( $ae->$method(),         "Archive type $method recognized properly" );
         
             my $file        = $tmpl->{$archive}->{outfile};
             my $dir         = $tmpl->{$archive}->{outdir};  # can be undef
@@ -365,7 +411,7 @@ for my $switch ( [0,1], [1,0] ) {
             ### where to extract to -- try both dir and file for gz files
             ### XXX test me!
             #my @outs = $ae->is_gz ? ($abs_path, $OutDir) : ($OutDir);
-            my @outs = $ae->is_gz || $ae->is_bz2 || $ae->is_Z || $ae->is_lzma
+            my @outs = $ae->is_gz || $ae->is_bz2 || $ae->is_Z || $ae->is_lzma || $ae->is_xz
                             ? ($abs_path) 
                             : ($OutDir);
 
@@ -421,7 +467,7 @@ for my $switch ( [0,1], [1,0] ) {
                             
                         ### win32 + bin utils is notorious, and none of them are
                         ### officially supported by strawberry. So if we 
-                        ### encounter an error while extracting whlie running 
+                        ### encounter an error while extracting while running
                         ### with $PREFER_BIN on win32, just skip the tests.
                         ### See rt#46948: unable to install install on win32
                         ### for details on the pain
@@ -438,7 +484,7 @@ for my $switch ( [0,1], [1,0] ) {
                         unlike( $err, $re,
                                         "No errors capturing buffers" );
         
-                        ### might be 1 or 2, depending wether we extracted 
+                        ### might be 1 or 2, depending whether we extracted
                         ### a dir too
                         my $files    = $ae->files || [];
                         my $file_cnt = grep { defined } $file, $dir;
@@ -501,7 +547,7 @@ for my $switch ( [0,1], [1,0] ) {
                             eval { rmtree( $ae->extract_path ) }; 
                             ok( !$@,        "   rmtree gave no error" );
                             ok( !(-d $ae->extract_path ),
-                                            "   Extract dir succesfully removed" );
+                                            "   Extract dir successfully removed" );
                         }
                     }
                 }

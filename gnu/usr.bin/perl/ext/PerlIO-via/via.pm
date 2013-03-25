@@ -1,7 +1,7 @@
 package PerlIO::via;
-our $VERSION = '0.09';
-use XSLoader ();
-XSLoader::load 'PerlIO::via';
+our $VERSION = '0.12';
+require XSLoader;
+XSLoader::load();
 1;
 __END__
 
@@ -74,7 +74,7 @@ C<FDOPEN> or by letting a lower layer do the open.
 
 Optional - called when the layer is about to be removed.
 
-=item $obj->UTF8($bellowFlag,[$fh])
+=item $obj->UTF8($belowFlag,[$fh])
 
 Optional - if present it will be called immediately after PUSHED has
 returned. It should return a true value if the layer expects data to be
@@ -84,7 +84,7 @@ UTF-8 encoded. If it returns true, the result is as if the caller had done
 
 If not present or if it returns false, then the stream is left with
 the UTF-8 flag clear.
-The I<$bellowFlag> argument will be true if there is a layer below
+The I<$belowFlag> argument will be true if there is a layer below
 and that layer was expecting UTF-8.
 
 =item $obj->OPEN($path,$mode,[$fh])

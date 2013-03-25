@@ -18,8 +18,8 @@ use Opcode 1.00, qw(opdesc opset opset_to_ops opset_to_hex
 
 use Safe 1.00;
 
-my $last_test; # initalised at end
-print "1..$last_test\n";
+use Test::More;
+my $TB = Test::Builder->new();
 
 # Set up a package namespace of things to be visible to the unsafe code
 $Root::foo = "visible";
@@ -38,12 +38,7 @@ $cpt = new Safe "Root";
 $cpt->permit(qw(:base_io));
 
 $cpt->reval(q{ system("echo not ok 1"); });
-if ($@ =~ /^'?system'? trapped by operation mask/) {
-    print "ok 1\n";
-} else {
-    print "#$@" if $@;
-    print "not ok 1\n";
-}
+like($@, qr/^'?system'? trapped by operation mask/);
 
 $cpt->reval(q{
     print $foo eq 'visible'		? "ok 2\n" : "not ok 2\n";
@@ -52,11 +47,12 @@ $cpt->reval(q{
     print defined($::bar)		? "not ok 5\n" : "ok 5\n";
     print defined($main::bar)		? "not ok 6\n" : "ok 6\n";
 });
-print $@ ? "not ok 7\n#$@" : "ok 7\n";
+$TB->current_test(6);
+is($@, '');
 
 $foo = "ok 8\n";
 %bar = (key => "ok 9\n");
-@baz = (); push(@baz, "o", "10"); $" = 'k ';
+@baz = (); push(@baz, "o", "10");
 $glob = "ok 11\n";
 @glob = qw(not ok 16);
 
@@ -65,7 +61,9 @@ sub sayok { print "ok @_\n" }
 $cpt->share(qw($foo %bar @baz *glob sayok));
 $cpt->share('$"') unless $Config{use5005threads};
 
-$cpt->reval(q{
+{
+    $" = 'k ';
+    $cpt->reval(q{
     package other;
     sub other_sayok { print "ok @_\n" }
     package main;
@@ -77,10 +75,14 @@ $cpt->reval(q{
     $foo =~ s/8/14/;
     $bar{new} = "ok 15\n";
     @glob = qw(ok 16);
+    $" = ' ';
 });
-print $@ ? "not ok 13\n#$@" : "ok 13\n";
-$" = ' ';
-print $foo, $bar{new}, "@glob\n";
+}
+$TB->current_test(12);
+is($@, '');
+is($foo, "ok 14\n");
+is($bar{new}, "ok 15\n");
+is("@glob", "ok 16");
 
 $Root::foo = "not ok 17";
 @{$cpt->varglob('bar')} = qw(not ok 18);
@@ -88,66 +90,62 @@ ${$cpt->varglob('foo')} = "ok 17";
 @Root::bar = "ok";
 push(@Root::bar, "18"); # Two steps to prevent "Identifier used only once..."
 
-print "$Root::foo\n";
-print "@{$cpt->varglob('bar')}\n";
+is($Root::foo, 'ok 17');
+is("@{$cpt->varglob('bar')}", 'ok 18');
 
 use strict;
-
-print 1 ? "ok 19\n" : "not ok 19\n";
-print 1 ? "ok 20\n" : "not ok 20\n";
 
 my $m1 = $cpt->mask;
 $cpt->trap("negate");
 my $m2 = $cpt->mask;
 my @masked = opset_to_ops($m1);
-print $m2 eq opset("negate", @masked) ? "ok 21\n" : "not ok 21\n";
+is(opset("negate", @masked), $m2);
 
-print eval { $cpt->mask("a bad mask") } ? "not ok 22\n" : "ok 22\n";
+is(eval { $cpt->mask("a bad mask") }, undef);
+isnt($@, '');
 
-print $cpt->reval("2 + 2") == 4 ? "ok 23\n" : "not ok 23\n";
+is($cpt->reval("2 + 2"), 4);
 
-$cpt->mask(empty_opset);
-my $t_scalar = $cpt->reval('print wantarray ? "not ok 24\n" : "ok 24\n"');
-print $cpt->reval('@ary=(6,7,8);@ary') == 3 ? "ok 25\n" : "not ok 25\n";
-my @t_array  = $cpt->reval('print wantarray ? "ok 26\n" : "not ok 26\n"; (2,3,4)');
-print $t_array[2] == 4 ? "ok 27\n" : "not ok 27\n";
+my $test = $TB->current_test() + 1;
+my $t_scalar = $cpt->reval("print wantarray ? 'not ok $test\n' : 'ok $test\n'");
+++$test;
+my @t_array  = $cpt->reval("print wantarray ? 'ok $test\n' : 'not ok $test\n'; (2,3,4)");
+$TB->current_test($test);
+
+is($t_array[2], 4);
+
+is($cpt->reval('@ary=(6,7,8);@ary'), 3);
 
 my $t_scalar2 = $cpt->reval('die "foo bar"; 1');
-print defined $t_scalar2 ? "not ok 28\n" : "ok 28\n";
-print $@ =~ /foo bar/ ? "ok 29\n" : "not ok 29\n";
+is($t_scalar2, undef);
+like($@, qr/foo bar/);
 
 # --- rdo
   
-my $t = 30;
 $! = 0;
-my $nosuch = '/non/existant/file.name';
+my $nosuch = '/non/existent/file.name';
 open(NOSUCH, $nosuch);
 if ($@) {
-    my $errno  = $!;
+    my $errno = $!;
     die "Eek! Attempting to open $nosuch failed, but \$! is still 0" unless $!;
     $! = 0;
     $cpt->rdo($nosuch);
-    print $! == $errno ? "ok $t\n" : sprintf "not ok $t # \"$!\" is %d (expected %d)\n", $!, $errno; $t++;
+    is($!, $errno);
 } else {
     die "Eek! Didn't expect $nosuch to be there.";
 }
 close(NOSUCH);
 
-# test #31 is gone.
-print "ok $t\n"; $t++;
-  
 #my $rdo_file = "tmp_rdo.tpl";
 #if (open X,">$rdo_file") {
 #    print X "999\n";
 #    close X;
 #    $cpt->permit_only('const', 'leaveeval');
-#    print  $cpt->rdo($rdo_file) == 999 ? "ok $t\n" : "not ok $t\n"; $t++;
+#    $cpt->rdo($rdo_file) == 999 ? "ok $t\n" : "not ok $t\n"; $t++;
 #    unlink $rdo_file;
 #}
 #else {
 #    print "# test $t skipped, can't open file: $!\nok $t\n"; $t++;
 #}
 
-
-print "ok $last_test\n";
-BEGIN { $last_test = 32 }
+done_testing();

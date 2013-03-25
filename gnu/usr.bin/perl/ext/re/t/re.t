@@ -10,7 +10,7 @@ BEGIN {
 
 use strict;
 
-use Test::More tests => 13;
+use Test::More tests => 15;
 require_ok( 're' );
 
 # setcolor
@@ -63,6 +63,11 @@ my $ok='foo'=~/$reg/;
 eval"no re Debug=>'ALL'";
 ok( $ok, 'No segv!' );
 
+my $message = "Don't tread on me";
+$_ = $message;
+re->import("/aa");
+is($_, $message, "re doesn't clobber \$_");
+
 package Term::Cap;
 
 sub Tgetent {
@@ -71,4 +76,13 @@ sub Tgetent {
 
 sub Tputs {
 	return $_[1];
+}
+
+package main;
+
+{
+  my $w;
+  local $SIG{__WARN__} = sub { warn shift; ++$w };
+  re->import();
+  is $w, undef, 'no warning for "use re;" (which is not useless)';
 }

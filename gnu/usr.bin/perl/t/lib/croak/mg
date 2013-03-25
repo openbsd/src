@@ -1,0 +1,7 @@
+__END__
+# mg.c
+# NAME Perl_magic_setsig
+$SIG{_HUNGRY} = \&mmm_pie;
+warn "Mmm, pie";
+EXPECT
+No such hook: _HUNGRY at - line 2.

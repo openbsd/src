@@ -17,7 +17,7 @@ $| = 1;
 BEGIN {
     chdir 't' if -d 't';
     @INC = ('../lib','.');
-    do "re/ReTest.pl" or die $@;
+    require './test.pl';
 }
 
 
@@ -37,6 +37,7 @@ sub run_tests {
         my @plain_complement_failed;
         for my $ord (0 .. $upper_bound) {
             my $ch= chr $ord;
+            my $ord = sprintf "U+%04X", $ord;  # For display in Unicode terms
             my $plain= $ch=~/$special/ ? 1 : 0;
             my $plain_u= $ch=~/$upper/ ? 1 : 0;
             push @plain_complement_failed, "$ord-$plain-$plain_u" if $plain == $plain_u;
@@ -47,9 +48,9 @@ sub run_tests {
 
             push @cc_plain_failed, "$ord-$plain-$cc" if $plain != $cc;
         }
-        iseq(join(" | ",@cc_plain_failed),"", "Check that /$special/ and /[$special]/ match same things (ord-plain-cc)");
-        iseq(join(" | ",@plain_complement_failed),"", "Check that /$special/ and /$upper/ are complements (ord-plain-plain_u)");
-        iseq(join(" | ",@cc_complement_failed),"", "Check that /[$special]/ and /[$upper]/ are complements (ord-cc-cc_u)");
+        is(join(" | ",@cc_plain_failed),"", "Check that /$special/ and /[$special]/ match same things (ord-plain-cc)");
+        is(join(" | ",@plain_complement_failed),"", "Check that /$special/ and /$upper/ are complements (ord-plain-plain_u)");
+        is(join(" | ",@cc_complement_failed),"", "Check that /[$special]/ and /[$upper]/ are complements (ord-cc-cc_u)");
     }
 } # End of sub run_tests
 

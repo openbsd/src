@@ -1,0 +1,41 @@
+=pod
+
+=head1 NAME
+
+Locale::Codes::Constants - constants for Locale codes
+
+=head1 DESCRIPTION
+
+B<Locale::Codes::Constants> defines symbols which are used in the other
+modules from the Locale-Codes distribution.
+
+You shouldn't have to C<use> this module directly yourself - it is
+used by the other Locale modules, which in turn export the symbols.
+
+The constants are documented in each of the Locale modules.
+
+=head1 KNOWN BUGS AND LIMITATIONS
+
+None known.
+
+=head1 SEE ALSO
+
+Locale::Codes
+
+=head1 AUTHOR
+
+See Locale::Codes for full author history.
+
+Currently maintained by Sullivan Beck (sbeck@cpan.org).
+
+=head1 COPYRIGHT
+
+   Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
+   Copyright (c) 2001-2010 Neil Bowers
+   Copyright (c) 2010-2012 Sullivan Beck
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=cut
+

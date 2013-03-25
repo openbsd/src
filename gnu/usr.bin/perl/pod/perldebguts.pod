@@ -53,7 +53,7 @@ C<"$break_condition\0$action">.
 
 The same holds for evaluated strings that contain subroutines, or
 which are currently being executed.  The $filename for C<eval>ed strings
-looks like C<(eval 34)> or  C<(re_eval 19)>.
+looks like C<(eval 34)> or C<(re_eval 19)>.
 
 =item *
 
@@ -151,9 +151,9 @@ after the debugger completes its own initialization.)
 After the rc file is read, the debugger reads the PERLDB_OPTS
 environment variable and uses it to set debugger options. The
 contents of this variable are treated as if they were the argument
-of an C<o ...> debugger command (q.v. in L<perldebug/Options>).
+of an C<o ...> debugger command (q.v. in L<perldebug/"Configurable Options">).
 
-=head3 Debugger internal variables
+=head3 Debugger Internal Variables
 
 In addition to the file and subroutine-related variables mentioned above,
 the debugger also maintains various magical internal variables.
@@ -172,7 +172,7 @@ equal to zero only if the line is not breakable.
 
 =item *
 
-C<%DB::dbline>, is an alias for C<%{"::_<current_file"}>, which
+C<%DB::dbline> is an alias for C<%{"::_<current_file"}>, which
 contains breakpoints and actions keyed by line number in
 the currently-selected file, either explicitly chosen with the
 debugger's C<f> command, or implicitly by flow of execution.
@@ -184,7 +184,7 @@ C<"$break_condition\0$action">.
 
 =back
 
-=head3 Debugger customization functions
+=head3 Debugger Customization Functions
 
 Some functions are provided to simplify customization.
 
@@ -227,7 +227,7 @@ information.  For example, contrast this expression trace:
  Loading DB routines from perl5db.pl patch level 0.94
  Emacs support available.
 
- Enter h or `h h' for help.
+ Enter h or 'h h' for help.
 
  main::(-e:1):   0
    DB<1> sub foo { 14 }
@@ -257,8 +257,8 @@ with this one, once the C<o>ption C<frame=2> has been set:
 By way of demonstration, we present below a laborious listing
 resulting from setting your C<PERLDB_OPTS> environment variable to
 the value C<f=n N>, and running I<perl -d -V> from the command line.
-Examples use various values of C<n> are shown to give you a feel
-for the difference between settings.  Long those it may be, this
+Examples using various values of C<n> are shown to give you a feel
+for the difference between settings.  Long though it may be, this
 is not a complete listing, but only excerpts.
 
 =over 4
@@ -397,7 +397,7 @@ When a package is compiled, a line like this
 
 is printed with proper indentation.
 
-=head1 Debugging regular expressions
+=head1 Debugging Regular Expressions
 
 There are two ways to enable debugging output for regular expressions.
 
@@ -405,13 +405,14 @@ If your perl is compiled with C<-DDEBUGGING>, you may use the
 B<-Dr> flag on the command line.
 
 Otherwise, one can C<use re 'debug'>, which has effects at
-compile time and run time.  It is not lexically scoped.
+compile time and run time.  Since Perl 5.9.5, this pragma is lexically
+scoped.
 
-=head2 Compile-time output
+=head2 Compile-time Output
 
 The debugging output at compile time looks like this:
 
-  Compiling REx `[bc]d(ef*g)+h[ij]k$'
+  Compiling REx '[bc]d(ef*g)+h[ij]k$'
   size 45 Got 364 bytes for offset annotations.
   first at 1
   rarest char g at 0
@@ -432,8 +433,8 @@ The debugging output at compile time looks like this:
     42: EXACT <k>(44)
     44: EOL(45)
     45: END(0)
-  anchored `de' at 1 floating `gh' at 3..2147483647 (checking floating) 
-        stclass `ANYOF[bc]' minlen 7 
+  anchored 'de' at 1 floating 'gh' at 3..2147483647 (checking floating) 
+        stclass 'ANYOF[bc]' minlen 7 
   Offsets: [45]
   	1[4] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 0[0] 5[1]
   	0[0] 12[1] 0[0] 6[1] 0[0] 7[1] 0[0] 9[1] 8[1] 0[0] 10[1] 0[0]
@@ -449,8 +450,8 @@ label I<id> of the first node that does a match.
 
 The 
 
-  anchored `de' at 1 floating `gh' at 3..2147483647 (checking floating) 
-        stclass `ANYOF[bc]' minlen 7 
+  anchored 'de' at 1 floating 'gh' at 3..2147483647 (checking floating) 
+        stclass 'ANYOF[bc]' minlen 7 
 
 line (split into two lines above) contains optimizer
 information.  In the example shown, the optimizer found that the match 
@@ -513,13 +514,13 @@ C<(??{ code })>.
 
 =item C<anchored(TYPE)>
 
-If the pattern may match only at a handful of places, (with C<TYPE>
+If the pattern may match only at a handful of places, with C<TYPE>
 being C<BOL>, C<MBOL>, or C<GPOS>.  See the table below.
 
 =back
 
 If a substring is known to match at end-of-line only, it may be
-followed by C<$>, as in C<floating `k'$>.
+followed by C<$>, as in C<floating 'k'$>.
 
 The optimizer-specific information is used to avoid entering (a slow) regex
 engine on strings that will not definitely match.  If the C<isall> flag
@@ -531,119 +532,240 @@ form of the regex.  Each line has format
 
 C<   >I<id>: I<TYPE> I<OPTIONAL-INFO> (I<next-id>)
 
-=head2 Types of nodes
+=head2 Types of Nodes
 
 Here are the possible types, with short descriptions:
 
-    # TYPE arg-description [num-args] [longjump-len] DESCRIPTION
+ # TYPE arg-description [num-args] [longjump-len] DESCRIPTION
 
-    # Exit points
-    END		no	End of program.
-    SUCCEED	no	Return from a subroutine, basically.
+ # Exit points
+ END   no        End of program.
+ SUCCEED   no        Return from a subroutine, basically.
 
-    # Anchors:
-    BOL		no	Match "" at beginning of line.
-    MBOL	no	Same, assuming multiline.
-    SBOL	no	Same, assuming singleline.
-    EOS		no	Match "" at end of string.
-    EOL		no	Match "" at end of line.
-    MEOL	no	Same, assuming multiline.
-    SEOL	no	Same, assuming singleline.
-    BOUND	no	Match "" at any word boundary
-    BOUNDL	no	Match "" at any word boundary
-    NBOUND	no	Match "" at any word non-boundary
-    NBOUNDL	no	Match "" at any word non-boundary
-    GPOS	no	Matches where last m//g left off.
+ # Anchors:
 
-    # [Special] alternatives
-    ANY		no	Match any one character (except newline).
-    SANY	no	Match any one character.
-    ANYOF	sv	Match character in (or not in) this class.
-    ALNUM	no	Match any alphanumeric character
-    ALNUML	no	Match any alphanumeric char in locale
-    NALNUM	no	Match any non-alphanumeric character
-    NALNUML	no	Match any non-alphanumeric char in locale
-    SPACE	no	Match any whitespace character
-    SPACEL	no	Match any whitespace char in locale
-    NSPACE	no	Match any non-whitespace character
-    NSPACEL	no	Match any non-whitespace char in locale
-    DIGIT	no	Match any numeric character
-    NDIGIT	no	Match any non-numeric character
+ BOL        no      Match "" at beginning of line.
+ MBOL       no      Same, assuming multiline.
+ SBOL       no      Same, assuming singleline.
+ EOS        no      Match "" at end of string.
+ EOL        no      Match "" at end of line.
+ MEOL       no      Same, assuming multiline.
+ SEOL       no      Same, assuming singleline.
+ BOUND      no      Match "" at any word boundary using native charset
+                    semantics for non-utf8
+ BOUNDL     no      Match "" at any locale word boundary
+ BOUNDU     no      Match "" at any word boundary using Unicode semantics
+ BOUNDA     no      Match "" at any word boundary using ASCII semantics
+ NBOUND     no      Match "" at any word non-boundary using native charset
+                    semantics for non-utf8
+ NBOUNDL    no      Match "" at any locale word non-boundary
+ NBOUNDU    no      Match "" at any word non-boundary using Unicode semantics
+ NBOUNDA    no      Match "" at any word non-boundary using ASCII semantics
+ GPOS       no      Matches where last m//g left off.
 
-    # BRANCH	The set of branches constituting a single choice are hooked
-    #		together with their "next" pointers, since precedence prevents
-    #		anything being concatenated to any individual branch.  The
-    #		"next" pointer of the last BRANCH in a choice points to the
-    #		thing following the whole choice.  This is also where the
-    #		final "next" pointer of each individual branch points; each
-    #		branch starts with the operand node of a BRANCH node.
-    #
-    BRANCH	node	Match this alternative, or the next...
+ # [Special] alternatives:
 
-    # BACK	Normal "next" pointers all implicitly point forward; BACK
-    #		exists to make loop structures possible.
-    # not used
-    BACK	no	Match "", "next" ptr points backward.
+ REG_ANY    no      Match any one character (except newline).
+ SANY       no      Match any one character.
+ CANY       no      Match any one byte.
+ ANYOF      sv      Match character in (or not in) this class, single char
+                    match only
+ ANYOFV     sv      Match character in (or not in) this class, can
+                    match-multiple chars
+ ALNUM      no      Match any alphanumeric character using native charset
+                    semantics for non-utf8
+ ALNUML     no      Match any alphanumeric char in locale
+ ALNUMU     no      Match any alphanumeric char using Unicode semantics
+ ALNUMA     no      Match [A-Za-z_0-9]
+ NALNUM     no      Match any non-alphanumeric character using native charset
+                    semantics for non-utf8
+ NALNUML    no      Match any non-alphanumeric char in locale
+ NALNUMU    no      Match any non-alphanumeric char using Unicode semantics
+ NALNUMA    no      Match [^A-Za-z_0-9]
+ SPACE      no      Match any whitespace character using native charset
+                    semantics for non-utf8
+ SPACEL     no      Match any whitespace char in locale
+ SPACEU     no      Match any whitespace char using Unicode semantics
+ SPACEA     no      Match [ \t\n\f\r]
+ NSPACE     no      Match any non-whitespace character using native charset
+                    semantics for non-utf8
+ NSPACEL    no      Match any non-whitespace char in locale
+ NSPACEU    no      Match any non-whitespace char using Unicode semantics
+ NSPACEA    no      Match [^ \t\n\f\r]
+ DIGIT      no      Match any numeric character using native charset semantics
+                    for non-utf8
+ DIGITL     no      Match any numeric character in locale
+ DIGITA     no      Match [0-9]
+ NDIGIT     no      Match any non-numeric character using native charset
+ i                  semantics for non-utf8
+ NDIGITL    no      Match any non-numeric character in locale
+ NDIGITA    no      Match [^0-9]
+ CLUMP      no      Match any extended grapheme cluster sequence
 
-    # Literals
-    EXACT	sv	Match this string (preceded by length).
-    EXACTF	sv	Match this string, folded (prec. by length).
-    EXACTFL	sv	Match this string, folded in locale (w/len).
+ # Alternation
 
-    # Do nothing
-    NOTHING	no	Match empty string.
-    # A variant of above which delimits a group, thus stops optimizations
-    TAIL	no	Match empty string. Can jump here from outside.
+ # BRANCH        The set of branches constituting a single choice are hooked
+ #               together with their "next" pointers, since precedence prevents
+ #               anything being concatenated to any individual branch.  The
+ #               "next" pointer of the last BRANCH in a choice points to the
+ #               thing following the whole choice.  This is also where the
+ #               final "next" pointer of each individual branch points; each
+ #               branch starts with the operand node of a BRANCH node.
+ #
+ BRANCH	node        Match this alternative, or the next...
 
-    # STAR,PLUS	'?', and complex '*' and '+', are implemented as circular
-    #		BRANCH structures using BACK.  Simple cases (one character
-    #		per match) are implemented with STAR and PLUS for speed
-    #		and to minimize recursive plunges.
-    #
-    STAR	node	Match this (simple) thing 0 or more times.
-    PLUS	node	Match this (simple) thing 1 or more times.
+ # Back pointer
 
-    CURLY	sv 2	Match this simple thing {n,m} times.
-    CURLYN	no 2	Match next-after-this simple thing 
-    #			{n,m} times, set parens.
-    CURLYM	no 2	Match this medium-complex thing {n,m} times.
-    CURLYX	sv 2	Match this complex thing {n,m} times.
+ # BACK          Normal "next" pointers all implicitly point forward; BACK
+ #               exists to make loop structures possible.
+ # not used
+ BACK       no      Match "", "next" ptr points backward.
 
-    # This terminator creates a loop structure for CURLYX
-    WHILEM	no	Do curly processing and see if rest matches.
+ # Literals
 
-    # OPEN,CLOSE,GROUPP	...are numbered at compile time.
-    OPEN	num 1	Mark this point in input as start of #n.
-    CLOSE	num 1	Analogous to OPEN.
+ EXACT      str     Match this string (preceded by length).
+ EXACTF     str     Match this string, folded, native charset semantics for
+                    non-utf8 (prec. by length).
+ EXACTFL    str     Match this string, folded in locale (w/len).
+ EXACTFU    str     Match this string, folded, Unicode semantics for non-utf8
+                    (prec. by length).
+ EXACTFA    str	    Match this string, folded, Unicode semantics for non-utf8,
+                    but no ASCII-range character matches outside ASCII (prec.
+                    by length),.
 
-    REF		num 1	Match some already matched string
-    REFF	num 1	Match already matched string, folded
-    REFFL	num 1	Match already matched string, folded in loc.
+ # Do nothing types
 
-    # grouping assertions
-    IFMATCH	off 1 2	Succeeds if the following matches.
-    UNLESSM	off 1 2	Fails if the following matches.
-    SUSPEND	off 1 1	"Independent" sub-regex.
-    IFTHEN	off 1 1	Switch, should be preceded by switcher .
-    GROUPP	num 1	Whether the group matched.
+ NOTHING    no        Match empty string.
+ # A variant of above which delimits a group, thus stops optimizations
+ TAIL       no        Match empty string. Can jump here from outside.
 
-    # Support for long regex
-    LONGJMP	off 1 1	Jump far away.
-    BRANCHJ	off 1 1	BRANCH with long offset.
+ # Loops
 
-    # The heavy worker
-    EVAL	evl 1	Execute some Perl code.
+ # STAR,PLUS    '?', and complex '*' and '+', are implemented as circular
+ #               BRANCH structures using BACK.  Simple cases (one character
+ #               per match) are implemented with STAR and PLUS for speed
+ #               and to minimize recursive plunges.
+ #
+ STAR       node    Match this (simple) thing 0 or more times.
+ PLUS       node    Match this (simple) thing 1 or more times.
 
-    # Modifiers
-    MINMOD	no	Next operator is not greedy.
-    LOGICAL	no	Next opcode should set the flag only.
+ CURLY      sv 2    Match this simple thing {n,m} times.
+ CURLYN     no 2    Capture next-after-this simple thing
+ CURLYM     no 2    Capture this medium-complex thing {n,m} times.
+ CURLYX     sv 2    Match this complex thing {n,m} times.
 
-    # This is not used yet
-    RENUM	off 1 1	Group with independently numbered parens.
+ # This terminator creates a loop structure for CURLYX
+ WHILEM     no      Do curly processing and see if rest matches.
 
-    # This is not really a node, but an optimized away piece of a "long" node.
-    # To simplify debugging output, we mark it as if it were a node
-    OPTIMIZED	off	Placeholder for dump.
+ # Buffer related
+
+ # OPEN,CLOSE,GROUPP     ...are numbered at compile time.
+ OPEN       num 1   Mark this point in input as start of #n.
+ CLOSE      num 1   Analogous to OPEN.
+
+ REF        num 1   Match some already matched string
+ REFF       num 1   Match already matched string, folded using native charset
+                    semantics for non-utf8
+ REFFL      num 1   Match already matched string, folded in loc.
+ REFFU      num 1   Match already matched string, folded using unicode
+                    semantics for non-utf8
+ REFFA      num 1   Match already matched string, folded using unicode
+                    semantics for non-utf8, no mixing ASCII, non-ASCII
+
+ # Named references.  Code in regcomp.c assumes that these all are after the
+ # numbered references
+ NREF       no-sv 1 Match some already matched string
+ NREFF      no-sv 1 Match already matched string, folded using native charset
+                    semantics for non-utf8
+ NREFFL     no-sv 1 Match already matched string, folded in loc.
+ NREFFU     num   1 Match already matched string, folded using unicode
+                    semantics for non-utf8
+ NREFFA     num   1 Match already matched string, folded using unicode
+                    semantics for non-utf8, no mixing ASCII, non-ASCII
+
+ IFMATCH    off 1 2 Succeeds if the following matches.
+ UNLESSM    off 1 2 Fails if the following matches.
+ SUSPEND    off 1 1 "Independent" sub-RE.
+ IFTHEN     off 1 1 Switch, should be preceded by switcher.
+ GROUPP     num 1   Whether the group matched.
+
+ # Support for long RE
+
+ LONGJMP    off 1 1 Jump far away.
+ BRANCHJ    off 1 1 BRANCH with long offset.
+
+ # The heavy worker
+
+ EVAL       evl 1   Execute some Perl code.
+
+ # Modifiers
+
+ MINMOD     no      Next operator is not greedy.
+ LOGICAL    no      Next opcode should set the flag only.
+
+ # This is not used yet
+ RENUM      off 1 1 Group with independently numbered parens.
+
+ # Trie Related
+
+ # Behave the same as A|LIST|OF|WORDS would. The '..C' variants have
+ # inline charclass data (ascii only), the 'C' store it in the structure.
+ # NOTE: the relative order of the TRIE-like regops  is significant
+
+ TRIE       trie 1    Match many EXACT(F[ALU]?)? at once. flags==type
+ TRIEC      charclass Same as TRIE, but with embedded charclass data
+
+ # For start classes, contains an added fail table.
+ AHOCORASICK trie 1   Aho Corasick stclass. flags==type
+ AHOCORASICKC charclass Same as AHOCORASICK, but with embedded charclass data
+
+ # Regex Subroutines
+ GOSUB      num/ofs 2L recurse to paren arg1 at (signed) ofs arg2
+ GOSTART    no         recurse to start of pattern
+
+ # Special conditionals
+ NGROUPP    no-sv 1   Whether the group matched.
+ INSUBP     num 1     Whether we are in a specific recurse.
+ DEFINEP    none 1    Never execute directly.
+
+ # Backtracking Verbs
+ ENDLIKE    none      Used only for the type field of verbs
+ OPFAIL     none      Same as (?!)
+ ACCEPT     parno 1   Accepts the current matched string.
+
+
+ # Verbs With Arguments
+ VERB       no-sv 1   Used only for the type field of verbs
+ PRUNE      no-sv 1   Pattern fails at this startpoint if no-backtracking through this
+ MARKPOINT  no-sv 1   Push the current location for rollback by cut.
+ SKIP       no-sv 1   On failure skip forward (to the mark) before retrying
+ COMMIT     no-sv 1   Pattern fails outright if backtracking through this
+ CUTGROUP   no-sv 1   On failure go to the next alternation in the group
+
+ # Control what to keep in $&.
+ KEEPS      no        $& begins here.
+
+ # New charclass like patterns
+ LNBREAK    none      generic newline pattern
+ VERTWS     none      vertical whitespace         (Perl 6)
+ NVERTWS    none      not vertical whitespace     (Perl 6)
+ HORIZWS    none      horizontal whitespace       (Perl 6)
+ NHORIZWS   none      not horizontal whitespace   (Perl 6)
+
+ FOLDCHAR   codepoint 1 codepoint with tricky case folding properties.
+
+ # SPECIAL  REGOPS
+
+ # This is not really a node, but an optimized away piece of a "long" node.
+ # To simplify debugging output, we mark it as if it were a node
+ OPTIMIZED  off       Placeholder for dump.
+
+ # Special opcode with the property that no opcode in a compiled program
+ # will ever be of this type. Thus it can be used as a flag value that
+ # no other opcode has been seen. END is used similarly, in that an END
+ # node cant be optimized. So END implies "unoptimizable" and PSEUDO mean
+ # "not seen anything to optimize yet".
+ PSEUDO     off       Pseudo opcode for internal use.
 
 =for unprinted-credits
 Next section M-J. Dominus (mjd-perl-patch+@plover.com) 20010421
@@ -675,7 +797,7 @@ is, it corresponds to the C<+> symbol in the precompiled regex.
 
 C<0[0]> items indicate that there is no corresponding node.
 
-=head2 Run-time output
+=head2 Run-time Output
 
 First of all, when doing a match, one may get no run-time output even
 if debugging is enabled.  This means that the regex engine was never
@@ -683,7 +805,7 @@ entered and that all of the job was therefore done by the optimizer.
 
 If the regex engine was entered, the output may look like this:
 
-  Matching `[bc]d(ef*g)+h[ij]k$' against `abcdefg__gh__'
+  Matching '[bc]d(ef*g)+h[ij]k$' against 'abcdefg__gh__'
     Setting an EVAL scope, savestack=3
      2 <ab> <cdefg__gh_>    |  1: ANYOF
      3 <abc> <defg__gh_>    | 11: EXACT <d>
@@ -718,7 +840,7 @@ C<    >I<STRING-OFFSET> <I<PRE-STRING>> <I<POST-STRING>>   |I<ID>:  I<TYPE>
 The I<TYPE> info is indented with respect to the backtracking level.
 Other incidental information appears interspersed within.
 
-=head1 Debugging Perl memory usage
+=head1 Debugging Perl Memory Usage
 
 Perl is a profligate wastrel when it comes to memory use.  There
 is a saying that to estimate memory usage of Perl, assume a reasonable
@@ -754,7 +876,7 @@ The B<-DL> command-line switch is obsolete since circa Perl 5.6.0
 The switch was used to track Perl's memory allocations and possible
 memory leaks.  These days the use of malloc debugging tools like
 F<Purify> or F<valgrind> is suggested instead.  See also
-L<perlhack/PERL_MEM_LOG>.
+L<perlhacktips/PERL_MEM_LOG>.
 
 One way to find out how much memory is being used by Perl data
 structures is to install the Devel::Size module from CPAN: it gives
@@ -763,7 +885,7 @@ structure.  Please be mindful of the difference between the size()
 and total_size().
 
 If Perl has been compiled using Perl's malloc you can analyze Perl
-memory usage by setting the $ENV{PERL_DEBUG_MSTATS}.
+memory usage by setting $ENV{PERL_DEBUG_MSTATS}.
 
 =head2 Using C<$ENV{PERL_DEBUG_MSTATS}>
 
@@ -811,7 +933,7 @@ would have usable size 8188, and the memory footprint would be 8192.
 In a Perl built for debugging, some buckets may have negative usable
 size.  This means that these buckets cannot (and will not) be used.
 For larger buckets, the memory footprint may be one page greater
-than a power of 2.  If so, case the corresponding power of two is
+than a power of 2.  If so, the corresponding power of two is
 printed in the C<APPROX> field above.
 
 =item Free/Used
@@ -829,7 +951,7 @@ were
      free:    8     16    32    64    128  256 512 1024 2048 4096 8192
 	   4     12    24    48    80
 
-With non-C<DEBUGGING> perl, the buckets starting from C<128> have
+With a non-C<DEBUGGING> perl, the buckets starting from C<128> have
 a 4-byte overhead, and thus an 8192-long bucket may take up to
 8188-byte allocations.
 

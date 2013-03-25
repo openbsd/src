@@ -8,7 +8,7 @@
 
  All comments/suggestions/problems are welcome
 
-     Copyright (c) 1995-2009 Paul Marquess. All rights reserved.
+     Copyright (c) 1995-2012 Paul Marquess. All rights reserved.
      This program is free software; you can redistribute it and/or
      modify it under the same terms as Perl itself.
 
@@ -69,7 +69,7 @@
         1.67 -  Backed off the use of newSVpvn.
 		Fixed DBM Filter code for Perl 5.004.
 		Fixed a small memory leak in the filter code.
-        1.68 -  fixed backward compatability bug with R_IAFTER & R_IBEFORE
+        1.68 -  fixed backward compatibility bug with R_IAFTER & R_IBEFORE
 		merged in the 5.005_58 changes
         1.69 -  fixed a bug in push -- DB_APPEND wasn't working properly.
 		Fixed the R_SETCURSOR bug introduced in 1.68
@@ -79,7 +79,7 @@
 		Added a BOOT check to test for equivalent versions of db.h &
 		libdb.a/so.
         1.71 -  Support for Berkeley DB version 3.
-		Support for Berkeley DB 2/3's backward compatability mode.
+		Support for Berkeley DB 2/3's backward compatibility mode.
 		Rewrote push
         1.72 -  No change to DB_File.xs
         1.73 -  No change to DB_File.xs
@@ -87,7 +87,7 @@
                 with a win32 macro.
 		Added Perl core patches 7703 & 7801.
         1.75 -  Fixed Perl core patch 7703.
-		Added suppport to allow DB_File to be built with 
+		Added support to allow DB_File to be built with 
 		Berkeley DB 3.2 -- btree_compare, btree_prefix and hash_cb
 		needed to be changed.
         1.76 -  No change to DB_File.xs
@@ -95,7 +95,7 @@
         1.78 -  Core patch 10335, 10372, 10534, 10549, 11051 included.
         1.79 -  NEXTKEY ignores the input key.
                 Added lots of casts
-        1.800 - Moved backward compatability code into ppport.h.
+        1.800 - Moved backward compatibility code into ppport.h.
                 Use the new constants code.
         1.801 - No change to DB_File.xs
         1.802 - No change to DB_File.xs

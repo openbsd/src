@@ -1,7 +1,3 @@
-# feed this into perl
-	eval 'exec perl -S $0 ${1+"$@"}'
-		if $running_under_some_shell;
-
 # Usage: rofftoc PerlTOC.xxx.raw
 #
 # Post-processes roffitall output. Called from roffitall to produce

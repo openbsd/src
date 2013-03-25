@@ -3,10 +3,10 @@
  *
  * Ref: FIPS PUB 198 The Keyed-Hash Message Authentication Code
  *
- * Copyright (C) 2003-2008 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2012 Mark Shelor, All Rights Reserved
  *
- * Version: 5.47
- * Wed Apr 30 04:00:54 MST 2008
+ * Version: 5.71
+ * Wed Feb 29 04:06:10 MST 2012
  *
  */
 
@@ -37,21 +37,27 @@ int		 hmacclose	(_HMAC_STATE);
 
 #ifndef SHA_PERL_MODULE
 
-unsigned char	*hmac1digest	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac1hex	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac1base64	(_HMAC_DATA, _HMAC_KEY);
-unsigned char	*hmac224digest	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac224hex	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac224base64	(_HMAC_DATA, _HMAC_KEY);
-unsigned char	*hmac256digest	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac256hex	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac256base64	(_HMAC_DATA, _HMAC_KEY);
-unsigned char	*hmac384digest	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac384hex	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac384base64	(_HMAC_DATA, _HMAC_KEY);
-unsigned char	*hmac512digest	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac512hex	(_HMAC_DATA, _HMAC_KEY);
-char		*hmac512base64	(_HMAC_DATA, _HMAC_KEY);
+unsigned char	*hmac1digest		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac1hex		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac1base64		(_HMAC_DATA, _HMAC_KEY);
+unsigned char	*hmac224digest		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac224hex		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac224base64		(_HMAC_DATA, _HMAC_KEY);
+unsigned char	*hmac256digest		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac256hex		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac256base64		(_HMAC_DATA, _HMAC_KEY);
+unsigned char	*hmac384digest		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac384hex		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac384base64		(_HMAC_DATA, _HMAC_KEY);
+unsigned char	*hmac512digest		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac512hex		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac512base64		(_HMAC_DATA, _HMAC_KEY);
+unsigned char	*hmac512224digest	(_HMAC_DATA, _HMAC_KEY);
+char		*hmac512224hex		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac512224base64	(_HMAC_DATA, _HMAC_KEY);
+unsigned char	*hmac512256digest	(_HMAC_DATA, _HMAC_KEY);
+char		*hmac512256hex		(_HMAC_DATA, _HMAC_KEY);
+char		*hmac512256base64	(_HMAC_DATA, _HMAC_KEY);
 
 #endif
 

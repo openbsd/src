@@ -78,19 +78,22 @@ PREINIT:
     REGEXP *re;
 PPCODE:
 {
-    if ((re = SvRX(sv))) /* assign deliberate */
+    if ((re = SvRX(sv)) /* assign deliberate */
+       /* only for re engines we know about */
+       && (RX_ENGINE(re) == &my_reg_engine
+           || RX_ENGINE(re) == &PL_core_reg_engine))
     {
         SV *an = &PL_sv_no;
         SV *fl = &PL_sv_no;
         if (RX_ANCHORED_SUBSTR(re)) {
-            an = newSVsv(RX_ANCHORED_SUBSTR(re));
+            an = sv_2mortal(newSVsv(RX_ANCHORED_SUBSTR(re)));
         } else if (RX_ANCHORED_UTF8(re)) {
-            an = newSVsv(RX_ANCHORED_UTF8(re));
+            an = sv_2mortal(newSVsv(RX_ANCHORED_UTF8(re)));
         }
         if (RX_FLOAT_SUBSTR(re)) {
-            fl = newSVsv(RX_FLOAT_SUBSTR(re));
+            fl = sv_2mortal(newSVsv(RX_FLOAT_SUBSTR(re)));
         } else if (RX_FLOAT_UTF8(re)) {
-            fl = newSVsv(RX_FLOAT_UTF8(re));
+            fl = sv_2mortal(newSVsv(RX_FLOAT_UTF8(re)));
         }
         XPUSHs(an);
         XPUSHs(fl);

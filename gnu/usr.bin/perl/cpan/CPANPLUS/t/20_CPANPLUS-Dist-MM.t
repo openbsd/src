@@ -1,6 +1,6 @@
 ### make sure we can find our conf.pl file
-BEGIN { 
-    use FindBin; 
+BEGIN {
+    use FindBin;
     require "$FindBin::Bin/inc/conf.pl";
 }
 
@@ -103,7 +103,7 @@ ok( $Mod->extract,              "Extracting module to ".$Mod->status->extract );
     ok( $dist,                  "Dist created with target => " . TARGET_INIT );
     ok( !$dist->status->prepared,
                                 "   Prepare was not run" );
-}                                
+}
 
 ok( $Mod->test,                 "Testing module" );
 
@@ -141,20 +141,20 @@ SKIP: {
     ### make sure no options are set in PERL5_MM_OPT, as they might
     ### change the installation target and therefor will 1. mess up
     ### the tests and 2. leave an installed copy of our test module
-    ### lying around. This addresses bug #29716: 20_CPANPLUS-Dist-MM.t 
-    ### fails (and leaves test files installed) when EUMM options 
+    ### lying around. This addresses bug #29716: 20_CPANPLUS-Dist-MM.t
+    ### fails (and leaves test files installed) when EUMM options
     ### include INSTALL_BASE
-    {   local $ENV{'PERL5_MM_OPT'};
-    
+    {   local $ENV{'PERL5_MM_OPT'}; local $ENV{'PERL_MM_OPT'};
+
         ### add the new dir to the configuration too, so eu::installed tests
         ### work as they should
         $conf->set_conf( lib => [ TEST_CONF_INSTALL_DIR ] );
-    
-        ok( $Mod->install(  force           => 1, 
-                            makemakerflags  => 'PREFIX='.TEST_CONF_INSTALL_DIR, 
+
+        ok( $Mod->install(  force           => 1,
+                            makemakerflags  => 'PREFIX='.TEST_CONF_INSTALL_DIR,
                         ),      "Installing module" );
-    }                                
-                                
+    }
+
     ok( $Mod->status->installed,"   Module installed according to status" );
 
 
@@ -164,8 +164,8 @@ SKIP: {
         ### #46890: ExtUtils::Installed + EU::MM PREFIX= don't always work
         ### well together
         skip( "ExtUtils::Installed issue #46890 prevents these tests from running reliably", 8 );
-    
-    
+
+
         skip( "Old perl on cygwin detected " .
               "-- tests will fail due to known bugs", 8
         ) if ON_OLD_CYGWIN;
@@ -225,7 +225,7 @@ SKIP: {
 ### test exceptions in Dist::MM->create ###
 {   ok( $Mod->status->mk_flush, "Old status info flushed" );
     my $dist = INSTALLER_MM->new( module => $Mod );
-    
+
     ok( $dist,                  "New dist object made" );
     ok(!$dist->prepare,         "   Dist->prepare failed" );
     like( CPANPLUS::Error->stack_as_string, qr/No dir found to operate on/,
@@ -268,7 +268,7 @@ SKIP: {
     ok( $dist->write_makefile_pl( force => 0 ),
                                 "   Makefile.PL written" );
     like( CPANPLUS::Error->stack_as_string, qr/Already created/,
-                                "   Prior existance noted" );
+                                "   Prior existence noted" );
 
     ### ok, unlink the makefile.pl, now really write one
     1 while unlink $makefile;
@@ -308,7 +308,7 @@ SKIP: {
     {   my $unlink_sts = unlink($makefile_pl);
         1 while unlink $makefile_pl;
         ok( $unlink_sts,        "Deleting Makefile.PL");
-    }    
+    }
     ok( !-s $makefile_pl,       "   Makefile.PL deleted" );
     ok( $dist->status->mk_flush,"Dist status flushed" );
     ok( $dist->prepare,         "   Dist->prepare run again" );
@@ -339,7 +339,7 @@ SKIP: {
 
     ### now let's write a makefile.pl that just does 'die'
     {   local $^W;
-        local *CPANPLUS::Dist::MM::write_makefile_pl = 
+        local *CPANPLUS::Dist::MM::write_makefile_pl =
             __PACKAGE__->_custom_makefile_pl_sub( "exit 1;" );
 
         ### there's no makefile.pl now, since the previous test failed
@@ -360,8 +360,8 @@ SKIP: {
     {   my $unlink_sts = unlink($makefile_pl);
         1 while unlink $makefile_pl;
         ok( $unlink_sts,        "Deleting Makefile.PL");
-    }   
-    
+    }
+
     $dist->status->mk_flush;
 }
 
@@ -370,21 +370,21 @@ SKIP: {
     my $env     = ENV_CPANPLUS_IS_EXECUTING;
     my $sub     = __PACKAGE__->_custom_makefile_pl_sub(
                                     "print qq[ENV=\$ENV{$env}\n]; exit 1;" );
-    
+
     my $clone   = $Mod->clone;
     $clone->status->fetch( $Mod->status->fetch );
-    
+
     ok( $clone,                 'Testing ENV settings $dist->prepare' );
     ok( $clone->extract,        '   Files extracted' );
     ok( $clone->prepare,        '   $mod->prepare worked first time' );
-    
+
     my $dist        = $clone->status->dist;
     my $makefile_pl = MAKEFILE_PL->( $clone->status->extract );
 
     ok( $sub->($dist),          "   Custom Makefile.PL written" );
     ok( -e $makefile_pl,        "       File exists" );
 
-    ### clear errors    
+    ### clear errors
     CPANPLUS::Error->flush;
 
     my $rv = $dist->prepare( force => 1, verbose => 0 );
@@ -401,20 +401,20 @@ SKIP: {
 
     ### and the ENV var should no longer be set now
     ok( !$ENV{$env},            "   ENV var now unset" );
-}    
+}
 
 sub _custom_makefile_pl_sub {
     my $pkg = shift;
     my $txt = shift or return;
-    
+
     return sub {
-        my $dist = shift; 
+        my $dist = shift;
         my $self = $dist->parent;
         my $fh   = OPEN_FILE->(
                     MAKEFILE_PL->($self->status->extract), '>' );
         print $fh $txt;
         close $fh;
-    
+
         return 1;
     }
 }

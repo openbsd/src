@@ -4,7 +4,7 @@ use strict;
 
 use Config;
 use POSIX;
-use Test::More tests => 13;
+use Test::More tests => 19;
 
 # go to UTC to avoid DST issues around the world when testing.  SUS3 says that
 # null should get you UTC, but some environments want the explicit names.
@@ -39,21 +39,33 @@ if ($^O eq "hpux" && $Config{osvers} >= 11.3) {
 # asctime and ctime...Let's stay below INT_MAX for 32-bits and
 # positive for some picky systems.
 
-is(asctime(localtime(0)), ctime(0), "asctime() and ctime() at zero");
-is(asctime(localtime(12345678)), ctime(12345678), "asctime() and ctime() at 12345678");
+is(asctime(CORE::localtime(0)), ctime(0), "asctime() and ctime() at zero");
+is(asctime(POSIX::localtime(0)), ctime(0), "asctime() and ctime() at zero");
+is(asctime(CORE::localtime(12345678)), ctime(12345678),
+   "asctime() and ctime() at 12345678");
+is(asctime(POSIX::localtime(12345678)), ctime(12345678),
+   "asctime() and ctime() at 12345678");
 
-# Careful!  strftime() is locale sensative.  Let's take care of that
+# Careful!  strftime() is locale sensitive.  Let's take care of that
 my $orig_loc = setlocale(LC_TIME, "C") || die "Cannot setlocale() to C:  $!";
 my $jan_16 = 15 * 86400;
-is(ctime($jan_16), strftime("%a %b %d %H:%M:%S %Y\n", localtime($jan_16)),
+is(ctime($jan_16), strftime("%a %b %d %H:%M:%S %Y\n", CORE::localtime($jan_16)),
         "get ctime() equal to strftime()");
-is(strftime("%Y\x{5e74}%m\x{6708}%d\x{65e5}", gmtime($jan_16)),
+is(ctime($jan_16), strftime("%a %b %d %H:%M:%S %Y\n", POSIX::localtime($jan_16)),
+        "get ctime() equal to strftime()");
+is(strftime("%Y\x{5e74}%m\x{6708}%d\x{65e5}", CORE::gmtime($jan_16)),
+   "1970\x{5e74}01\x{6708}16\x{65e5}",
+   "strftime() can handle unicode chars in the format string");
+is(strftime("%Y\x{5e74}%m\x{6708}%d\x{65e5}", POSIX::gmtime($jan_16)),
    "1970\x{5e74}01\x{6708}16\x{65e5}",
    "strftime() can handle unicode chars in the format string");
 
 my $ss = chr 223;
 unlike($ss, qr/\w/, 'Not internally UTF-8 encoded');
-is(ord strftime($ss, localtime), 223, 'Format string has correct character');
+is(ord strftime($ss, CORE::localtime), 223,
+   'Format string has correct character');
+is(ord strftime($ss, POSIX::localtime(time)),
+   223, 'Format string has correct character');
 unlike($ss, qr/\w/, 'Still not internally UTF-8 encoded');
 
 setlocale(LC_TIME, $orig_loc) || die "Cannot setlocale() back to orig: $!";
@@ -62,7 +74,7 @@ setlocale(LC_TIME, $orig_loc) || die "Cannot setlocale() back to orig: $!";
 # and BSD.  Cygwin, Win32, and Linux lean the BSD way.  So, the tests just
 # check the basics.
 like(clock(), qr/\d*/, "clock() returns a numeric value");
-ok(clock() >= 0, "...and it returns something >= 0");
+cmp_ok(clock(), '>=', 0, "...and it returns something >= 0");
 
 SKIP: {
     skip "No difftime()", 1 if $Config{d_difftime} ne 'define';
@@ -70,7 +82,8 @@ SKIP: {
 }
 
 SKIP: {
-    skip "No mktime()", 1 if $Config{d_mktime} ne 'define';
+    skip "No mktime()", 2 if $Config{d_mktime} ne 'define';
     my $time = time();
-    is(mktime(localtime($time)), $time, "mktime()");
+    is(mktime(CORE::localtime($time)), $time, "mktime()");
+    is(mktime(POSIX::localtime($time)), $time, "mktime()");
 }

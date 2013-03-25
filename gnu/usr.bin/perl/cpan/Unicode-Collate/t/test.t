@@ -11,14 +11,24 @@ BEGIN {
     }
 }
 
-use Test;
-BEGIN { plan tests => 113 };
-
 use strict;
 use warnings;
+BEGIN { $| = 1; print "1..107\n"; }
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Collate;
 
 ok(1);
+
+#########################
 
 sub _pack_U   { Unicode::Collate::pack_U(@_) }
 sub _unpack_U { Unicode::Collate::unpack_U(@_) }
@@ -137,22 +147,22 @@ ok( $Collator->cmp($hiragana, $katakana), -1);
 ok( $Collator->lt($hiragana, $katakana) );
 
 ##### 53..54
-
-my $ignoreAE = Unicode::Collate->new(
-  table => 'keys.txt',
-  normalization => undef,
-  ignoreChar => qr/^[aAeE]$/,
-);
-
-ok($ignoreAE->eq("element","lament"));
-ok($ignoreAE->eq("Perl","ePrl"));
+{
+    my $ignoreAE = Unicode::Collate->new(
+	table => 'keys.txt',
+	normalization => undef,
+	ignoreChar => qr/^[aAeE]$/,
+    );
+    ok($ignoreAE->eq("element","lament"));
+    ok($ignoreAE->eq("Perl","ePrl"));
+}
 
 ##### 55
-
-my $onlyABC = Unicode::Collate->new(
-    table => undef,
-    normalization => undef,
-    entry => << 'ENTRIES',
+{
+    my $onlyABC = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	entry => << 'ENTRIES',
 0061 ; [.0101.0020.0002.0061] # LATIN SMALL LETTER A
 0041 ; [.0101.0020.0008.0041] # LATIN CAPITAL LETTER A
 0062 ; [.0102.0020.0002.0062] # LATIN SMALL LETTER B
@@ -160,62 +170,63 @@ my $onlyABC = Unicode::Collate->new(
 0063 ; [.0103.0020.0002.0063] # LATIN SMALL LETTER C
 0043 ; [.0103.0020.0008.0043] # LATIN CAPITAL LETTER C
 ENTRIES
-);
-
-ok(
-  join(':', $onlyABC->sort( qw/ ABA BAC cc A Ab cAc aB / ) ),
-  join(':',                 qw/ A aB Ab ABA BAC cAc cc / ),
-);
+    );
+    ok(
+	join(':', $onlyABC->sort( qw/ ABA BAC cc A Ab cAc aB / ) ),
+	join(':',                 qw/ A aB Ab ABA BAC cAc cc / ),
+    );
+}
 
 ##### 56..59
-
-my $undefAE = Unicode::Collate->new(
-  table => 'keys.txt',
-  normalization => undef,
-  undefChar => qr/^[aAeE]$/,
-);
-
-ok($undefAE ->gt("edge","fog"));
-ok($Collator->lt("edge","fog"));
-ok($undefAE ->gt("lake","like"));
-ok($Collator->lt("lake","like"));
+{
+    my $undefAE = Unicode::Collate->new(
+	table => 'keys.txt',
+	normalization => undef,
+	undefChar => qr/^[aAeE]$/,
+    );
+    ok($undefAE ->gt("edge","fog"));
+    ok($Collator->lt("edge","fog"));
+    ok($undefAE ->gt("lake","like"));
+    ok($Collator->lt("lake","like"));
+}
 
 ##### 60..69
+{
+    # Table is undefined, then no entry is defined.
+    my $undef_table = Unicode::Collate->new(
+	table => undef,
+	normalization => undef,
+	level => 1,
+    );
 
-# Table is undefined, then no entry is defined.
+    # in the Unicode code point order
+    ok($undef_table->lt('', 'A'));
+    ok($undef_table->lt('ABC', 'B'));
 
-my $undef_table = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  level => 1,
-);
+    # Hangul should be decomposed (even w/o Unicode::Normalize).
+    ok($undef_table->lt("Perl", "\x{AC00}"));
+    ok($undef_table->eq("\x{AC00}", "\x{1100}\x{1161}"));
+    ok($undef_table->eq("\x{AE00}", "\x{1100}\x{1173}\x{11AF}"));
+    ok($undef_table->lt("\x{AE00}", "\x{3042}"));
 
-# in the Unicode code point order
-ok($undef_table->lt('', 'A'));
-ok($undef_table->lt('ABC', 'B'));
+    # U+AC00: Hangul GA
+    # U+AE00: Hangul GEUL
+    # U+3042: Hiragana A
 
-# Hangul should be decomposed (even w/o Unicode::Normalize).
-ok($undef_table->lt("Perl", "\x{AC00}"));
-ok($undef_table->eq("\x{AC00}", "\x{1100}\x{1161}"));
-ok($undef_table->eq("\x{AE00}", "\x{1100}\x{1173}\x{11AF}"));
-ok($undef_table->lt("\x{AE00}", "\x{3042}"));
-  # U+AC00: Hangul GA
-  # U+AE00: Hangul GEUL
-  # U+3042: Hiragana A
+    # Weight for CJK Ideographs is defined, though.
+    ok($undef_table->lt("", "\x{4E00}"));
+    ok($undef_table->lt("\x{4E8C}","ABC"));
+    ok($undef_table->lt("\x{4E00}","\x{3042}"));
+    ok($undef_table->lt("\x{4E00}","\x{4E8C}"));
 
-# Weight for CJK Ideographs is defined, though.
-ok($undef_table->lt("", "\x{4E00}"));
-ok($undef_table->lt("\x{4E8C}","ABC"));
-ok($undef_table->lt("\x{4E00}","\x{3042}"));
-ok($undef_table->lt("\x{4E00}","\x{4E8C}"));
-  # U+4E00: Ideograph "ONE"
-  # U+4E8C: Ideograph "TWO"
-
+    # U+4E00: Ideograph "ONE"
+    # U+4E8C: Ideograph "TWO"
+}
 
 ##### 70..74
-
-my $few_entries = Unicode::Collate->new(
-  entry => <<'ENTRIES',
+{
+    my $few_entries = Unicode::Collate->new(
+	entry => <<'ENTRIES',
 0050 ; [.0101.0020.0002.0050]  # P
 0045 ; [.0102.0020.0002.0045]  # E
 0052 ; [.0103.0020.0002.0052]  # R
@@ -224,85 +235,63 @@ my $few_entries = Unicode::Collate->new(
 1175 ; [.0106.0020.0002.1175]  # Hangul Jamo middle I
 5B57 ; [.0107.0020.0002.5B57]  # CJK Ideograph "Letter"
 ENTRIES
-  table => undef,
-  normalization => undef,
-);
+	table => undef,
+	normalization => undef,
+    );
+    # defined before undefined
+    my $sortABC = join '',
+	$few_entries->sort(split //, "ABCDEFGHIJKLMNOPQRSTUVWXYZ ");
 
-# defined before undefined
+    ok($sortABC eq "PERL ABCDFGHIJKMNOQSTUVWXYZ");
 
-my $sortABC = join '',
-    $few_entries->sort(split //, "ABCDEFGHIJKLMNOPQRSTUVWXYZ ");
+    ok($few_entries->lt('E', 'D'));
+    ok($few_entries->lt("\x{5B57}", "\x{4E00}"));
+    ok($few_entries->lt("\x{AE30}", "\x{AC00}"));
 
-ok($sortABC eq "PERL ABCDFGHIJKMNOQSTUVWXYZ");
-
-ok($few_entries->lt('E', 'D'));
-ok($few_entries->lt("\x{5B57}", "\x{4E00}"));
-ok($few_entries->lt("\x{AE30}", "\x{AC00}"));
-
-# Hangul must be decomposed.
-
-ok($few_entries->eq("\x{AC00}", "\x{1100}\x{1161}"));
+    # Hangul must be decomposed.
+    ok($few_entries->eq("\x{AC00}", "\x{1100}\x{1161}"));
+}
 
 ##### 75..79
+{
+    my $dropArticles = Unicode::Collate->new(
+	table => "keys.txt",
+	normalization => undef,
+	preprocess => sub {
+	    my $string = shift;
+	    $string =~ s/\b(?:an?|the)\s+//ig;
+	    $string;
+	},
+    );
+    ok($dropArticles->eq("camel", "a    camel"));
+    ok($dropArticles->eq("Perl", "The Perl"));
+    ok($dropArticles->lt("the pen", "a pencil"));
+    ok($Collator->lt("Perl", "The Perl"));
+    ok($Collator->gt("the pen", "a pencil"));
+}
 
-my $dropArticles = Unicode::Collate->new(
-  table => "keys.txt",
-  normalization => undef,
-  preprocess => sub {
-    my $string = shift;
-    $string =~ s/\b(?:an?|the)\s+//ig;
-    $string;
-  },
-);
+##### 80..83
+{
+    my $undefName = Unicode::Collate->new(
+	table => "keys.txt",
+	normalization => undef,
+	undefName => qr/HANGUL|HIRAGANA|KATAKANA|BOPOMOFO/,
+    );
+    # HIRAGANA and KATAKANA are made undefined via undefName.
+    # So they are after CJK Unified Ideographs.
 
-ok($dropArticles->eq("camel", "a    camel"));
-ok($dropArticles->eq("Perl", "The Perl"));
-ok($dropArticles->lt("the pen", "a pencil"));
-ok($Collator->lt("Perl", "The Perl"));
-ok($Collator->gt("the pen", "a pencil"));
+    ok($undefName->lt("\x{4E00}", $hiragana));
+    ok($undefName->lt("\x{4E03}", $katakana));
+    ok($Collator ->gt("\x{4E00}", $hiragana));
+    ok($Collator ->gt("\x{4E03}", $katakana));
+}
 
-##### 80..81
-
-my $backLevel1 = Unicode::Collate->new(
-  table => undef,
-  normalization => undef,
-  backwards => [ 1 ],
-);
-
-# all strings are reversed at level 1.
-
-ok($backLevel1->gt("AB", "BA"));
-ok($backLevel1->gt("\x{3042}\x{3044}", "\x{3044}\x{3042}"));
-
-##### 82..89
-
-my $backLevel2 = Unicode::Collate->new(
-  table => "keys.txt",
-  normalization => undef,
-  undefName => qr/HANGUL|HIRAGANA|KATAKANA|BOPOMOFO/,
-  backwards => 2,
-);
-
-ok($backLevel2->gt("Ca\x{300}ca\x{302}", "ca\x{302}ca\x{300}"));
-ok($backLevel2->gt("ca\x{300}ca\x{302}", "Ca\x{302}ca\x{300}"));
-ok($Collator  ->lt("Ca\x{300}ca\x{302}", "ca\x{302}ca\x{300}"));
-ok($Collator  ->lt("ca\x{300}ca\x{302}", "Ca\x{302}ca\x{300}"));
-
-# HIRAGANA and KATAKANA are made undefined via undefName.
-# So they are after CJK Unified Ideographs.
-
-ok($backLevel2->lt("\x{4E00}", $hiragana));
-ok($backLevel2->lt("\x{4E03}", $katakana));
-ok($Collator  ->gt("\x{4E00}", $hiragana));
-ok($Collator  ->gt("\x{4E03}", $katakana));
-
-
-##### 90..96
-
-my $O_str = Unicode::Collate->new(
-  table => "keys.txt",
-  normalization => undef,
-  entry => <<'ENTRIES',
+##### 84..90
+{
+    my $O_str = Unicode::Collate->new(
+	table => "keys.txt",
+	normalization => undef,
+	entry => <<'ENTRIES',
 0008  ; [*0008.0000.0000.0000] # BACKSPACE (need to be non-ignorable)
 004F 0337 ; [.0B53.0020.0008.004F] # capital O WITH SHORT SOLIDUS OVERLAY
 006F 0008 002F ; [.0B53.0020.0002.006F] # LATIN SMALL LETTER O WITH STROKE
@@ -312,26 +301,27 @@ my $O_str = Unicode::Collate->new(
 #00F8 ; [.0B53.0020.0002.00F8] # LATIN SMALL LETTER O WITH STROKE
 #00D8 ; [.0B53.0020.0008.00D8] # LATIN CAPITAL LETTER O WITH STROKE
 ENTRIES
-);
+    );
 
-my $o_BS_slash = _pack_U(0x006F, 0x0008, 0x002F);
-my $O_BS_slash = _pack_U(0x004F, 0x0008, 0x002F);
-my $o_sol    = _pack_U(0x006F, 0x0337);
-my $O_sol    = _pack_U(0x004F, 0x0337);
-my $o_stroke = _pack_U(0x00F8);
-my $O_stroke = _pack_U(0x00D8);
+    my $o_BS_slash = _pack_U(0x006F, 0x0008, 0x002F);
+    my $O_BS_slash = _pack_U(0x004F, 0x0008, 0x002F);
+    my $o_sol    = _pack_U(0x006F, 0x0337);
+    my $O_sol    = _pack_U(0x004F, 0x0337);
+    my $o_stroke = _pack_U(0x00F8);
+    my $O_stroke = _pack_U(0x00D8);
 
-ok($O_str->eq($o_stroke, $o_BS_slash));
-ok($O_str->eq($O_stroke, $O_BS_slash));
+    ok($O_str->eq($o_stroke, $o_BS_slash));
+    ok($O_str->eq($O_stroke, $O_BS_slash));
 
-ok($O_str->eq($o_stroke, $o_sol));
-ok($O_str->eq($O_stroke, $O_sol));
+    ok($O_str->eq($o_stroke, $o_sol));
+    ok($O_str->eq($O_stroke, $O_sol));
 
-ok($Collator->eq("\x{200B}", "\0"));
-ok($O_str   ->gt("\x{200B}", "\0"));
-ok($O_str   ->gt("\x{200B}", "A"));
+    ok($Collator->eq("\x{200B}", "\0"));
+    ok($O_str   ->gt("\x{200B}", "\0"));
+    ok($O_str   ->gt("\x{200B}", "A"));
+}
 
-##### 97..107
+##### 91..101
 
 my %origVer = $Collator->change(UCA_Version => 8);
 
@@ -361,7 +351,7 @@ $Collator->change(level => 4);
 ok($Collator->gt("!\x{300}", ""));
 ok($Collator->eq("!\x{300}", "!"));
 
-##### 108..113
+##### 102..107
 
 $_ = 'Foo';
 

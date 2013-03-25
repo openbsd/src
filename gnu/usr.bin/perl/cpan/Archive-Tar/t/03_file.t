@@ -1,5 +1,4 @@
 ### This program tests Archive::Tar::File ###
-
 use Test::More 'no_plan';
 use strict;
 
@@ -24,7 +23,7 @@ my @test_files = (
     ### we didnt handle 'false' filenames very well across A::T as of version
     ### 1.32, as reported in #28687. Test for the handling of such files here.
     [    0,               '',                                             ],
-    
+
     ### keep this one as the last entry
     [    'x/yy/z',        '',               { type  => DIR,
                                               mode  => 0777,
@@ -72,20 +71,20 @@ for my $f ( @test_files ) {
     ok( ! $obj->devminor,                        "   devminor ok" );
     ok( ! $obj->raw,                             "   raw ok" );
 
-    ### test type checkers 
+    ### test type checkers
     SKIP: {
         skip "Attributes defined, may not be plainfile", 11 if keys %$attr;
-        
+
         ok( $obj->is_file,                      "   Object is a file" );
-        
-        for my $name (qw[dir hardlink symlink chardev blockdev fifo 
+
+        for my $name (qw[dir hardlink symlink chardev blockdev fifo
                          socket unknown longlink label ]
         ) {
             my $method = 'is_' . $name;
-            
+
             ok(!$obj->$method(),               "   Object is not a '$name'");
         }
-    }        
+    }
 
     ### Use "ok" not "is" to avoid binary data screwing up the screen ###
     ok( $obj->get_content eq $contents,          "   get_content ok" );
@@ -100,6 +99,11 @@ for my $f ( @test_files ) {
     ok( $obj->get_content eq $contents,          "   get_content ok" );
 
     ok( $obj->rename( $rename_path ),            "   rename ok" );
+    ok( $obj->chown( 'root' ),                   "   chown 1 arg ok" );
+    is( $obj->uname,    'root',                  "   chown to root ok" );
+    ok( $obj->chown( 'rocky', 'perl'),           "   chown 2 args ok" );
+    is( $obj->uname,    'rocky',                 "   chown to rocky ok" );
+    is( $obj->gname,    'perl',                  "   chown to rocky:perl ok" );
     is( $obj->name,     $rename_file,            "   name '$file' ok" );
     is( $obj->prefix,   $rename_dir,             "   prefix '$dir' ok" );
     ok( $obj->rename( $unix_path ),              "   rename ok" );
@@ -116,23 +120,23 @@ for my $f ( @test_files ) {
 {   my $aref        = $test_files[-1];
     my $unix_path   = $aref->[0];
     my $contents    = $aref->[1];
-    my $attr        = $aref->[2];     
-    
+    my $attr        = $aref->[2];
+
     my $obj = Archive::Tar::File->new( data => $unix_path, $contents, $attr );
-    
+
     ### check if the object is as expected
     isa_ok( $obj,                           'Archive::Tar::File' );
     ok( $obj->is_dir,                       "   Is a directory" );
-    
-    ### do the downgrade 
+
+    ### do the downgrade
     ok( $obj->_downgrade_to_plainfile,      "   Downgraded to plain file" );
-    
+
     ### now check if it's downgraded
     ok( $obj->is_file,                      "   Is now a file" );
     is( $obj->linkname, '',                 "   No link entered" );
     is( $obj->mode, MODE,                   "   Mode as expected" );
-}    
- 
+}
+
 ### helper subs ###
 sub dir_and_file {
     my $unix_path = shift;

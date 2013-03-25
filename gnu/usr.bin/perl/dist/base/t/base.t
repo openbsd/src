@@ -14,7 +14,7 @@ sub VERSION { 42 }
 package Test::Version;
 
 use base qw(No::Version);
-::ok( $No::Version::VERSION =~ /set by base\.pm/,          '$VERSION bug' );
+::ok( ! defined $No::Version::VERSION, '$VERSION bug' );
 
 # Test Inverse of $VERSION bug base.pm should not clobber existing $VERSION
 package Has::Version;

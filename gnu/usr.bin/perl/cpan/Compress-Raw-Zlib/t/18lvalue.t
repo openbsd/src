@@ -38,8 +38,12 @@ EOM
 my $len   = length $hello ;
 
 # Check zlib_version and ZLIB_VERSION are the same.
-is Compress::Raw::Zlib::zlib_version, ZLIB_VERSION, 
-    "ZLIB_VERSION matches Compress::Raw::Zlib::zlib_version" ;
+SKIP: {
+    skip "TEST_SKIP_VERSION_CHECK is set", 1 
+        if $ENV{TEST_SKIP_VERSION_CHECK};
+    is Compress::Raw::Zlib::zlib_version, ZLIB_VERSION,
+        "ZLIB_VERSION matches Compress::Raw::Zlib::zlib_version" ;
+}
 
 
 {

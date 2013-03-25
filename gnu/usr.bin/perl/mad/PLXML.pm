@@ -3451,10 +3451,6 @@ sub args { 'S S S' }
 
 # Time calls.
 
-# NOTE: MacOS patches the 'i' of time() away later when the interpreter
-# is created because in MacOS time() is already returning times > 2**31-1,
-# that is, non-integers.
-
 package PLXML::op_time;
 
 our @ISA = ('PLXML::baseop');

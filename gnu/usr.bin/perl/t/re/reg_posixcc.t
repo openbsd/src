@@ -17,6 +17,10 @@ my @pats=(
 	    "\\S",
 	    "\\d",
 	    "\\D",
+            "\\h",
+	    "\\H",
+            "\\v",
+	    "\\V",
 	    "[:alnum:]",
 	    "[:^alnum:]",
 	    "[:alpha:]",
@@ -41,9 +45,6 @@ my @pats=(
 	    "[:^space:]",
 	    "[:blank:]",
 	    "[:^blank:]" );
-if (1 or $ENV{PERL_TEST_LEGACY_POSIX_CC}) {
-    $::TODO = "Only works under PERL_LEGACY_UNICODE_CHARCLASS_MAPPINGS = 0";
-}
 
 sub rangify {
     my $ary= shift;
@@ -72,6 +73,9 @@ sub rangify {
     return $ret;
 }
 
+# The bug is only fixed for /u
+use feature 'unicode_strings';
+
 my $description = "";
 while (@pats) {
     my ($yes,$no)= splice @pats,0,2;
@@ -81,6 +85,7 @@ while (@pats) {
     my %complements;
     foreach my $b (0..255) {
         my %got;
+        my $display_b = sprintf("\\x%02X", $b);
         for my $type ('unicode','not-unicode') {
             my $str=chr($b).chr($b);
             if ($type eq 'unicode') {
@@ -88,33 +93,41 @@ while (@pats) {
                 chop $str;
             }
             if ($str=~/[$yes][$no]/){
-                TODO: {
-                    unlike($str,qr/[$yes][$no]/,
-                        "chr($b)=~/[$yes][$no]/ should not match under $type");
-                }
+                unlike($str,qr/[$yes][$no]/,
+                    "chr($display_b) X 2 =~/[$yes][$no]/ should not match under $type");
                 push @{$err_by_type{$type}},$b;
             }
             $got{"[$yes]"}{$type} = $str=~/[$yes]/ ? 1 : 0;
             $got{"[$no]"}{$type} = $str=~/[$no]/ ? 1 : 0;
             $got{"[^$yes]"}{$type} = $str=~/[^$yes]/ ? 1 : 0;
             $got{"[^$no]"}{$type} = $str=~/[^$no]/ ? 1 : 0;
+
+            # For \w, \s, and \d, \h, \v, also test without being in character
+            # classes.
+            next if $yes =~ /\[/;
+
+            # The rest of this .t was written when there were many test
+            # failures, so it goes to some lengths to summarize things.  Now
+            # those are fixed, so these missing tests just do standard
+            # procedures
+
+            my $chr = chr($b);
+            utf8::upgrade $chr if $type eq 'unicode';
+            ok (($chr =~ /$yes/) != ($chr =~ /$no/),
+                "$type: chr($display_b) isn't both $yes and $no");
         }
         foreach my $which ("[$yes]","[$no]","[^$yes]","[^$no]") {
             if ($got{$which}{'unicode'} != $got{$which}{'not-unicode'}){
-                TODO: {
-                    is($got{$which}{'unicode'},$got{$which}{'not-unicode'},
-                        "chr($b)=~/$which/ should have the same results regardless of internal string encoding");
-                }
+                is($got{$which}{'unicode'},$got{$which}{'not-unicode'},
+                    "chr($display_b) X 2=~ /$which/ should have the same results regardless of internal string encoding");
                 push @{$singles{$which}},$b;
             }
         }
         foreach my $which ($yes,$no) {
             foreach my $strtype ('unicode','not-unicode') {
                 if ($got{"[$which]"}{$strtype} == $got{"[^$which]"}{$strtype}) {
-                    TODO: {
-                        isnt($got{"[$which]"}{$strtype},$got{"[^$which]"}{$strtype},
-                            "chr($b)=~/[$which]/ should not have the same result as chr($b)=~/[^$which]/");
-                    }
+                    isnt($got{"[$which]"}{$strtype},$got{"[^$which]"}{$strtype},
+                        "chr($display_b) X 2 =~ /[$which]/ should not have the same result as chr($display_b)=~/[^$which]/");
                     push @{$complements{$which}{$strtype}},$b;
                 }
             }
@@ -153,8 +166,4 @@ while (@pats) {
         }
     }
 }
-TODO: {
-    is( $description, "", "POSIX and perl charclasses should not depend on string type");
-}
-
 __DATA__

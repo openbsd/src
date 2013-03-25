@@ -2,7 +2,7 @@
 use VMS::Stdio;
 import VMS::Stdio qw(&flush &getname &rewind &sync &tmpnam);
 
-print "1..18\n";
+print "1..19\n";
 print +(defined(&getname) ? '' : 'not '), "ok 1\n";
 
 #VMS can pretend that it is UNIX.
@@ -77,3 +77,33 @@ close $sfh;
 unlink("$name.tmp");
 print +($defs[0] eq uc($ENV{'SYS$LOGIN'}) ? '' : "not ($defs[0]) "),"ok 18\n";
 #print +($defs[1] eq VMS::Filespec::rmsexpand('[-]') ? '' : "not ($defs[1]) "),"ok 19\n";
+
+# This is not exactly a test of VMS::Stdio, but we need it to create a record-oriented
+# file and then make sure perlio can write to it without introducing spurious newlines.
+
+1 while unlink 'rectest.lis';
+END { 1 while unlink 'rectest.lis'; }
+
+$fh = VMS::Stdio::vmsopen('>rectest.lis', 'rfm=var', 'rat=cr')
+   or die "Couldn't open rectest.lis: $!";
+close $fh;
+
+open $fh, '>', 'rectest.lis'
+   or die "Couldn't open rectest.lis: $!";
+
+for (1..20) { print $fh ('Z' x 2048) . "\n" ; }
+
+close $fh;
+
+open $fh, '<', 'rectest.lis'
+   or die "Couldn't open rectest.lis: $!";
+
+my @records = <$fh>;
+close $fh;
+
+if (scalar(@records) == 20) {
+    print "ok 19\n";
+}
+else {
+    print "not ok 18 # Expected 20 got " . scalar(@records) . "\n";
+}

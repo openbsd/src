@@ -2,7 +2,7 @@ package Module::Build::Platform::VMS;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.3603';
+$VERSION = '0.39_01';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 use Config;
@@ -77,9 +77,28 @@ Prefixify taking into account VMS' filepath syntax.
 =cut
 
 # Translated from ExtUtils::MM_VMS::prefixify()
+
+sub _catprefix {
+    my($self, $rprefix, $default) = @_;
+
+    my($rvol, $rdirs) = File::Spec->splitpath($rprefix);
+    if( $rvol ) {
+        return File::Spec->catpath($rvol,
+                                   File::Spec->catdir($rdirs, $default),
+                                   ''
+                                  )
+    }
+    else {
+        return File::Spec->catdir($rdirs, $default);
+    }
+}
+
+
 sub _prefixify {
     my($self, $path, $sprefix, $type) = @_;
     my $rprefix = $self->prefix;
+
+    return '' unless defined $path;
 
     $self->log_verbose("  prefixify $path from $sprefix to $rprefix\n");
 
@@ -90,7 +109,7 @@ sub _prefixify {
     $self->log_verbose("  rprefix translated to $rprefix\n".
                        "  sprefix translated to $sprefix\n");
 
-    if( length $path == 0 ) {
+    if( length($path) == 0 ) {
         $self->log_verbose("  no path to prefixify.\n")
     }
     elsif( !File::Spec->file_name_is_absolute($path) ) {

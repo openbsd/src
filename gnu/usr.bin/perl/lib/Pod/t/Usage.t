@@ -47,8 +47,7 @@ SKIP: {
     is( $$fake_out, $vbl_0, '-pathlist parameter' );
 }
 
-SKIP: { # Test exit status from pod2usage()
-    skip "Exit status broken on Mac OS", 1 if $^O eq 'MacOS';
+{ # Test exit status from pod2usage()
     my $exit = ($^O eq 'VMS' ? 2 : 42);
     my $dev_null = File::Spec->devnull;
     my $args = join ", ", (

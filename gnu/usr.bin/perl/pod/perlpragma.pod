@@ -82,17 +82,17 @@ The interaction with the Perl compilation happens inside package C<myint>:
     use warnings;
     
     sub import {
-        $^H{myint} = 1;
+        $^H{"myint/in_effect"} = 1;
     }
     
     sub unimport {
-        $^H{myint} = 0;
+        $^H{"myint/in_effect"} = 0;
     }
     
     sub in_effect {
         my $level = shift // 0;
         my $hinthash = (caller($level))[10];
-        return $hinthash->{myint};
+        return $hinthash->{"myint/in_effect"};
     }
     
     1;
@@ -122,9 +122,25 @@ at index 10 of the list of returned results. In the example pragma, retrieval
 is encapsulated into the routine C<in_effect()>, which takes as parameter
 the number of call frames to go up to find the value of the pragma in the
 user's script. This uses C<caller()> to determine the value of
-C<$^H{myint}> when each line of the user's script was called, and
+C<$^H{"myint/in_effect"}> when each line of the user's script was called, and
 therefore provide the correct semantics in the subroutine implementing the
 overloaded addition.
+
+=head1 Key naming
+
+There is only a single C<%^H>, but arbitrarily many modules that want
+to use its scoping semantics.  To avoid stepping on each other's toes,
+they need to be sure to use different keys in the hash.  It is therefore
+conventional for a module to use only keys that begin with the module's
+name (the name of its main package) and a "/" character.  After this
+module-identifying prefix, the rest of the key is entirely up to the
+module: it may include any characters whatsoever.  For example, a module
+C<Foo::Bar> should use keys such as C<Foo::Bar/baz> and C<Foo::Bar/$%/_!>.
+Modules following this convention all play nicely with each other.
+
+The Perl core uses a handful of keys in C<%^H> which do not follow this
+convention, because they predate it.  Keys that follow the convention
+won't conflict with the core's historical keys.
 
 =head1 Implementation details
 

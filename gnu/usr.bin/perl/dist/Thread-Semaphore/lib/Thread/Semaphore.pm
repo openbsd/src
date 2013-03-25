@@ -3,60 +3,96 @@ package Thread::Semaphore;
 use strict;
 use warnings;
 
-our $VERSION = '2.09';
+our $VERSION = '2.12';
+$VERSION = eval $VERSION;
 
 use threads::shared;
 use Scalar::Util 1.10 qw(looks_like_number);
 
+# Predeclarations for internal functions
+my ($validate_arg);
+
 # Create a new semaphore optionally with specified count (count defaults to 1)
 sub new {
     my $class = shift;
-    my $val :shared = @_ ? shift : 1;
-    if (!defined($val) ||
-        ! looks_like_number($val) ||
-        (int($val) != $val))
-    {
-        require Carp;
-        $val = 'undef' if (! defined($val));
-        Carp::croak("Semaphore initializer is not an integer: $val");
+
+    my $val :shared = 1;
+    if (@_) {
+        $val = shift;
+        if (! defined($val) ||
+            ! looks_like_number($val) ||
+            (int($val) != $val))
+        {
+            require Carp;
+            $val = 'undef' if (! defined($val));
+            Carp::croak("Semaphore initializer is not an integer: $val");
+        }
     }
+
     return bless(\$val, $class);
 }
 
 # Decrement a semaphore's count (decrement amount defaults to 1)
 sub down {
     my $sema = shift;
+    my $dec = @_ ? $validate_arg->(shift) : 1;
+
     lock($$sema);
-    my $dec = @_ ? shift : 1;
-    if (! defined($dec) ||
-        ! looks_like_number($dec) ||
-        (int($dec) != $dec) ||
-        ($dec < 1))
-    {
-        require Carp;
-        $dec = 'undef' if (! defined($dec));
-        Carp::croak("Semaphore decrement is not a positive integer: $dec");
-    }
     cond_wait($$sema) until ($$sema >= $dec);
+    $$sema -= $dec;
+}
+
+# Decrement a semaphore's count only if count >= decrement value
+#  (decrement amount defaults to 1)
+sub down_nb {
+    my $sema = shift;
+    my $dec = @_ ? $validate_arg->(shift) : 1;
+
+    lock($$sema);
+    my $ok = ($$sema >= $dec);
+    $$sema -= $dec if $ok;
+    return $ok;
+}
+
+# Decrement a semaphore's count even if the count goes below 0
+#  (decrement amount defaults to 1)
+sub down_force {
+    my $sema = shift;
+    my $dec = @_ ? $validate_arg->(shift) : 1;
+
+    lock($$sema);
     $$sema -= $dec;
 }
 
 # Increment a semaphore's count (increment amount defaults to 1)
 sub up {
     my $sema = shift;
+    my $inc = @_ ? $validate_arg->(shift) : 1;
+
     lock($$sema);
-    my $inc = @_ ? shift : 1;
-    if (! defined($inc) ||
-        ! looks_like_number($inc) ||
-        (int($inc) != $inc) ||
-        ($inc < 1))
-    {
-        require Carp;
-        $inc = 'undef' if (! defined($inc));
-        Carp::croak("Semaphore increment is not a positive integer: $inc");
-    }
     ($$sema += $inc) > 0 and cond_broadcast($$sema);
 }
+
+### Internal Functions ###
+
+# Validate method argument
+$validate_arg = sub {
+    my $arg = shift;
+
+    if (! defined($arg) ||
+        ! looks_like_number($arg) ||
+        (int($arg) != $arg) ||
+        ($arg < 1))
+    {
+        require Carp;
+        my ($method) = (caller(1))[3];
+        $method =~ s/Thread::Semaphore:://;
+        $arg = 'undef' if (! defined($arg));
+        Carp::croak("Argument to semaphore method '$method' is not a positive integer: $arg");
+    }
+
+    return $arg;
+};
 
 1;
 
@@ -66,7 +102,7 @@ Thread::Semaphore - Thread-safe semaphores
 
 =head1 VERSION
 
-This document describes Thread::Semaphore version 2.09
+This document describes Thread::Semaphore version 2.12
 
 =head1 SYNOPSIS
 
@@ -76,10 +112,24 @@ This document describes Thread::Semaphore version 2.09
     # The guarded section is here
     $s->up();     # Also known as the semaphore V operation.
 
-    # The default semaphore value is 1
-    my $s = Thread::Semaphore-new($initial_value);
+    # Decrement the semaphore only if it would immediately succeed.
+    if ($s->down_nb()) {
+        # The guarded section is here
+        $s->up();
+    }
+
+    # Forcefully decrement the semaphore even if its count goes below 0.
+    $s->down_force();
+
+    # The default value for semaphore operations is 1
+    my $s = Thread::Semaphore->new($initial_value);
     $s->down($down_value);
     $s->up($up_value);
+    if ($s->down_nb($down_value)) {
+        ...
+        $s->up($up_value);
+    }
+    $s->down_force($down_value);
 
 =head1 DESCRIPTION
 
@@ -119,6 +169,27 @@ This is the semaphore "P operation" (the name derives from the Dutch
 word "pak", which means "capture" -- the semaphore operations were
 named by the late Dijkstra, who was Dutch).
 
+=item ->down_nb()
+
+=item ->down_nb(NUMBER)
+
+The C<down_nb> method attempts to decrease the semaphore's count by the
+specified number (which must be an integer >= 1), or by one if no number
+is specified.
+
+If the semaphore's count would drop below zero, this method will return
+I<false>, and the semaphore's count remains unchanged.  Otherwise, the
+semaphore's count is decremented and this method returns I<true>.
+
+=item ->down_force()
+
+=item ->down_force(NUMBER)
+
+The C<down_force> method decreases the semaphore's count by the specified
+number (which must be an integer >= 1), or by one if no number is specified.
+This method does not block, and may cause the semaphore's count to drop
+below zero.
+
 =item ->up()
 
 =item ->up(NUMBER)
@@ -149,12 +220,6 @@ environment.
 
 Thread::Semaphore Discussion Forum on CPAN:
 L<http://www.cpanforum.com/dist/Thread-Semaphore>
-
-Annotated POD for Thread::Semaphore:
-L<http://annocpan.org/~JDHEDDEN/Thread-Semaphore-2.09/lib/Thread/Semaphore.pm>
-
-Source repository:
-L<http://code.google.com/p/thread-semaphore/>
 
 L<threads>, L<threads::shared>
 

@@ -1,7 +1,7 @@
 package PerlIO::encoding;
 
 use strict;
-our $VERSION = '0.12';
+our $VERSION = '0.15';
 our $DEBUG = 0;
 $DEBUG and warn __PACKAGE__, " called by ", join(", ", caller), "\n";
 
@@ -10,8 +10,8 @@ $DEBUG and warn __PACKAGE__, " called by ", join(", ", caller), "\n";
 #
 # use Encode ();
 
-use XSLoader ();
-XSLoader::load(__PACKAGE__, $VERSION);
+require XSLoader;
+XSLoader::load();
 
 our $fallback =
     Encode::PERLQQ()|Encode::WARN_ON_ERR()|Encode::STOP_AT_PARTIAL();

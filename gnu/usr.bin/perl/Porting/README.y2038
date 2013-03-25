@@ -23,7 +23,7 @@ against a large table of known good values in different time zones.
 Limitations, Issues, etc...
 ---------------------------
 localtime64_r() gets its time zone and daylight savings time information by
-mappping the future year back to a similar one between 2010 and 2037, safe
+mapping the future year back to a similar one between 2010 and 2037, safe
 for localtime_r().  The calculations are accurate according to current time
 zone and daylight savings information, but may become inaccurate if a
 change is made that takes place after 2010.

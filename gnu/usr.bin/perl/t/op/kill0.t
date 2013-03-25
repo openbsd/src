@@ -14,7 +14,7 @@ BEGIN {
 
 use strict;
 
-plan tests => 5;
+plan tests => 6;
 
 ok( kill(0, $$), 'kill(0, $pid) returns true if $pid exists' );
 
@@ -43,3 +43,10 @@ for my $case ( @bad_pids ) {
   like( $@, qr/^Can't kill a non-numeric process ID/, "dies killing $name pid");
 }
 
+# Verify that killing a magic variable containing a number doesn't
+# trigger the above
+{
+  my $x = $$ . " ";
+  $x =~ /(\d+)/;
+  ok(eval { kill 0, $1 }, "can kill a number string in a magic variable");
+}

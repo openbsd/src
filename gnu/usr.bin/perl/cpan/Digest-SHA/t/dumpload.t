@@ -4,7 +4,7 @@ use FileHandle;
 my $MODULE;
 
 BEGIN {
-	$MODULE = ($ENV{PERL_CORE} || -d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
 	eval "require $MODULE" || die $@;
 	$MODULE->import(qw(sha384_hex sha512_hex));
 }
@@ -51,7 +51,7 @@ while (@sharsp) {
 	if ($alg == 384) { $skip = sha384_hex("") ? 0 : 1 }
 	if ($alg == 512) { $skip = sha512_hex("") ? 0 : 1 }
 	if ($skip) {
-		print "ok ", $testnum++, " # skip: no 64 bit\n";
+		print "ok ", $testnum++, " # skip: no 64-bit\n";
 		next;
 	}
 	my $digest;

@@ -14,7 +14,7 @@ package Pod::Find;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '1.35';   ## Current version of this package
+$VERSION = '1.51';   ## Current version of this package
 require  5.005;   ## requires this Perl version or later
 use Carp;
 
@@ -60,7 +60,7 @@ files/directories like RCS, CVS, SCCS, .svn are ignored.
 use Exporter;
 use File::Spec;
 use File::Find;
-use Cwd;
+use Cwd qw(abs_path cwd);
 
 use vars qw(@ISA @EXPORT_OK $VERSION);
 @ISA = qw(Exporter);
@@ -158,7 +158,13 @@ sub pod_find
             }
             push(@search, grep($_ ne File::Spec->curdir, @new_INC));
         } else {
-            push(@search, grep($_ ne File::Spec->curdir, @INC));
+            my %seen;
+            my $curdir = File::Spec->curdir;
+	    foreach(@INC) {
+                next if $_ eq $curdir;
+		my $path = abs_path($_);
+                push(@search, $path) unless $seen{$path}++;
+            }
         }
 
         $opts{-perl} = 1;
@@ -198,8 +204,12 @@ sub pod_find
         # simplify path
         # on VMS canonpath will vmsify:[the.path], but File::Find::find
         # wants /unixy/paths
-        $try = File::Spec->canonpath($try) if ($^O ne 'VMS');
-        $try = VMS::Filespec::unixify($try) if ($^O eq 'VMS');
+        if ($^O eq 'VMS') {
+            $try = VMS::Filespec::unixify($try);
+        }
+        else {
+            $try = File::Spec->canonpath($try);
+        }
         my $name;
         if(-f $try) {
             if($name = _check_and_extract_name($try, $opts{-verbose})) {
@@ -208,6 +218,7 @@ sub pod_find
             next;
         }
         my $root_rx = $^O eq 'MacOS' ? qq!^\Q$try\E! : qq!^\Q$try\E/!;
+        $root_rx=~ s|//$|/|;  # remove trailing double slash
         File::Find::find( sub {
             my $item = $File::Find::name;
             if(-d) {
@@ -268,8 +279,8 @@ sub _check_and_extract_name {
     # TODO what happens on e.g. Win32?
     my $name = $file;
     if(defined $root_rx) {
-        $name =~ s/$root_rx//s;
-        $name =~ s/$SIMPLIFY_RX//s if(defined $SIMPLIFY_RX);
+        $name =~ s/$root_rx//is;
+        $name =~ s/$SIMPLIFY_RX//is if(defined $SIMPLIFY_RX);
     }
     else {
         if ($^O eq 'MacOS') {
@@ -443,6 +454,7 @@ sub pod_where {
 
       # Now concatenate this directory with the pod we are searching for
       my $fullname = File::Spec->catfile($dir, @parts);
+      $fullname = VMS::Filespec::unixify($fullname) if $^O eq 'VMS';
       warn "Filename is now $fullname\n"
         if $options{'-verbose'};
 
@@ -524,6 +536,8 @@ heavily borrowing code from Nick Ing-Simmons' PodToHtml.
 
 Tim Jenness E<lt>t.jenness@jach.hawaii.eduE<gt> provided
 C<pod_where> and C<contains_pod>.
+
+B<Pod::Find> is part of the L<Pod::Parser> distribution.
 
 =head1 SEE ALSO
 

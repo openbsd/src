@@ -205,6 +205,24 @@ DESTROY { die "@{$_[0]} foo bar" }
 { bless ['B'], 'Foo' for 1..10 }
 EXPECT
 	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) A foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
+	(in cleanup) B foo bar at - line 4.
 	(in cleanup) B foo bar at - line 4.
 ########
 # pp_ctl.c

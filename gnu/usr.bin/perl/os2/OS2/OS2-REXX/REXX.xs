@@ -89,7 +89,7 @@ exec_in_REXX_with(pTHX_ char *cmd, int c, char **handlerNames, RexxFunctionHandl
 
     s = cmd;
     while (*s) {
-	if (*s == '\n') {		/* Is not preceeded by \r! */
+	if (*s == '\n') {		/* Is not preceded by \r! */
 	    Newx(cmd, 2*strlen(cmd)+1, char);
 	    s = ocmd;
 	    t = cmd;

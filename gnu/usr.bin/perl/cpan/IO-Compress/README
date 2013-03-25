@@ -1,11 +1,11 @@
 
                              IO-Compress
 
-                             Version 2.024
+                             Version 2.048
 
-                             7th January 2010
+                             29th January 2012
 
-       Copyright (c) 1995-2010 Paul Marquess. All rights reserved.
+       Copyright (c) 1995-2012 Paul Marquess. All rights reserved.
           This program is free software; you can redistribute it
            and/or modify it under the same terms as Perl itself.
 
@@ -89,7 +89,7 @@ To help me help you, I need all of the following information:
         If you haven't installed IO-Compress then search IO::Compress::Gzip.pm
         for a line like this:
 
-          $VERSION = "2.024" ;
+          $VERSION = "2.048" ;
 
  2. If you are having problems building IO-Compress, send me a
     complete log of what happened. Start by unpacking the IO-Compress

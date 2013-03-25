@@ -1,5 +1,41 @@
 Revision history for Sys-Syslog
 
+0.29 -- 2011.04.18 -- Sebastien Aperghis-Tramoni (SAPER) #PerlQA2011
+        [BUGFIX] CPAN-RT#55215: Sys::Syslog might call exit which triggers
+        DESTROY (Alexander Berger).
+        [BUGFIX] CPAN-RT#55151: Allow temporary facility with native mechanism
+        (Tim Jenkins).
+        [BUGFIX] CPAN-RT#50928: Convert Win32 files to Unix EOLs (Steve Hay).
+        [BUGFIX] CPAN-RT#50534: Unwanted space at the end of syslog message
+        (Eugene V. Lyubimkin).
+        [BUGFIX] CPAN-RT#49877: Options not reset after closelog() (Herbert Brezina).
+        [BUGFIX] CPAN-RT#48386: Add Win32::EventLog as a prerequisite (kmx and
+        Laurent Dami).
+        [FEATURE] CPAN-RT#50534: Added options noeol and nonul.
+        [DIST] Set INSTALLDIRS to "site" when installed on Perl 5.11+
+
+0.28 -- 2011.04.16 -- Sebastien Aperghis-Tramoni (SAPER) #PerlQA2011
+        [BUGFIX] CPAN-RT#56084: Reset connection tracking vars (Vladimir Marek).
+        [BUGFIX] CPAN-RT#56826: Avoid memory corruption when closelog() is
+        called twice (Andreas Jaekel).
+        [BUGFIX] CPAN-RT#64287: Make strftime() Windows-compatible (Dave Stafford).
+        [FEATURE] New API for setlogsock(), in order to allow the setting
+        of new options. Thanks to Jake Scott for the idea.
+        [CODE] Modify can_load() so it can print the warnings if desired.
+        [CODE] CPAN-RT#44410: Provide fallback macros in Syslog.xs in
+        order to compile on Novell Netware.
+        [TESTS] In blead, the distribution was moved from ext/Sys/Syslog
+        to ext/Sys-Syslog. t/constants.t had to be fixed (Vincent Pit).
+        [TESTS] CPAN-RT#53317: In core, Sys-Syslog was moved to cpan/, thus
+        making t/constants.t unable to find macros.all (David Mitchell).
+        [TESTS] CPAN-RT#64716: Skip t/data-validation.t if the available
+        version of POE::Component::Server::Syslog is too old.
+        [DIST] Bleadperl no longer require an empty MAN3PODS (Nicholas Clark).
+        [DIST] Removed unneeded modules in Makefile.PL (Nicholas Clark).
+        [DOC] Recreated Sys::Syslog history from the unified git repository.
+        [DOC] Added a section to list the matching Perl and Sys::Syslog version.
+        [DOC] CPAN-RT#49859: Removed a dead link (Leon Brocard).
+
 0.27 -- 2008.09.21 -- Sebastien Aperghis-Tramoni (SAPER)
         [BUGFIX] Fixed compilation on Win32, thanks to Serguei Trouchelle.
         Also added stubs so calling the XS functions will never fail.
@@ -167,6 +203,8 @@ Revision history for Sys-Syslog
         [TESTS] Added t/distchk.t, t/podspell.t, t/podcover.t, t/portfs.t
 
 0.09 -- 2005.12.06 -- Sebastien Aperghis-Tramoni (SAPER)
+        [BUGFIX] Escape percent signs in error message when interpolating %m
+        (Ronald J. Kimball).
         [CODE] Now setlogsock() really croak(), as documented.
         [DIST] CPANized from blead@26281.
         [DIST] Modified Makefile.PL so that ExtUtils::Constant is conditionaly 
@@ -175,3 +213,81 @@ Revision history for Sys-Syslog
         [DOC] Added support and license information.
         [TESTS] Rewrote and ported t/syslog.t to Test::More
 
+0.08 -- 2005.12.03
+        [FEATURES] syslog() can now accept a message without printf() escapes
+        and arguments (Gisle Aas ).
+        [DOC] Document that openlog() might die (Rafael Garcia-Suarez).
+
+0.07 -- 2005.06.27
+        [CODE] Use XSLoader instead of DynaLoader (Alexey Tourbin).
+        [DOC] Shows the correct way to use syslog() (Dave Mitchell).
+
+0.06 -- 2004.12.14
+        [FEATURE] Allow escaping %m as %%m in Sys::Syslog format strings (Rafael
+        Garcia-Suarez, suggested by Joshua Richardson and Yitzchak Scott-Thoennes).
+        [CODE] Make Sys::Syslog stricture-compliant (Rafael Garcia-Suarez).
+        [DOC] Document $Sys::Syslog::host (Jay Hannah).
+
+0.05 -- 2004.04.06
+        [FEATURE] IRIX wants setlogsock("stream") (Jarkko Hietaniemi).
+        [FEATURE] Allow syslog() to use numeric constants in addition to strings
+        for facility names and priorities (Jim Schneider ).
+        [DOC] Remind users to always use openlog() (Jarkko Hietaniemi).
+
+0.04 -- 2003.08.13
+        [BUGFIX] Do not use "udp" on some platforms (Slaven Rezic).
+        [BUGFIX] Perl-RT#18180: Fixed a problem with Sys:Syslog on Solaris 8
+        with perl 5.8.0 (Joost van Baal).
+        [BUGFIX] Fixed some warnings (Jarkko Hietaniemi).
+        [BUGFIX] Better error messages (Jari Aalto).
+
+0.03 -- 2002.03.23
+        [BUGFIX] Fixed copious warnings from Sys::Syslog (Andreas König).
+        [FEATURE] Failover to different communication modes by Nick Williams.
+
+0.02 -- 2001.06.04
+        [BUGFIX] /dev/console may not be writable in Syslog.pm (Ask Bjoern Hansen).
+        [BUGFIX] Fixed for accidental arguments to autoloaded constants (Gurusamy Sarathy).
+        [BUGFIX] Make _PATH_LOG() return "" if not available (Gurusamy Sarathy).
+        [BUGFIX] Forked child may not exit correctly if it failed to open
+        /dev/console (Graham Barr).
+        [BUGFIX] More checking in case someone has broken their services or
+        protocol databases (Robert Spier).
+        [BUGFIX] xlate() doesn't handle LOG_EMERG (Mark J. Reed).
+        [CODE] Code for constant()s regenerated by Nicholas Clark.
+        [TESTS] Added syslog.t to check if Sys::Syslog works (Tom Hughes).
+
+0.01 -- 2000.02.04 -- Gurusamy Sarathy
+        [FEATURE] Sys::Syslog now uses XSUBs to access facilities from syslog.h
+        so it no longer requires syslog.ph to exist. Thanks to Tom Hughes.
+        As a consequence, Sys::Syslog moved from lib/ to ext/.
+
+perl 5.004_03 -- 1997.09.05 -- Tim Bunce
+        [BUGFIX] Handle missing _PATH_LOG (Ulrich Pfeifer).
+
+perl 5.004_02 -- 1997.08.07 -- Tim Bunce
+        [FEATURE] UNIX domain sockets support, by Sean Robinson and Tim Bunce.
+
+perl 5.004_01 -- 1997.06.11 -- Tim Bunce
+        [BUGFIX] Allows FQDN (even allowing "_").
+
+perl 5.004 -- 1997.05.15 -- Chip Salzenberg
+        [BUGFIX] Fixed $whoami calulation (Marc Rouleau).
+        [BUGFIX] Allows hyphens in hostnames (Jerome Abela).
+
+perl 5.003_01 -- 1996.06.18 -- Charles Bailey
+        [CODE] Moved call to hostname() into connect() function, and eliminated
+        domain suffix.
+        [DOC] Correct documentation for calling sequence of syslog() function.
+
+perl 5.002_01 -- 1996.03.25 -- Charles Bailey
+        [CODE] Use Sys::Hostname::hostname() only when necessary.
+
+perl 5.002 -- 1996.02.29 -- Larry Wall
+        [CODE] Use constants from Socket.pm (Andy Dougherty).
+        [CODE] Connect to the name given by Sys::Hostname::hostname() instead
+        of "localhost" (Andy Dougherty).
+        [DOC] Added documentation, thanks to Hallvard B Furuseth.
+
+perl 5.000 -- 1994.10.17 -- Larry Wall
+        [DIST] Converted from lib/syslog.pl to lib/Sys/Syslog.pm

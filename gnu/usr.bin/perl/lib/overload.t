@@ -1,4 +1,4 @@
-#!./perl
+#!./perl -T
 
 BEGIN {
     chdir 't' if -d 't';
@@ -47,8 +47,10 @@ sub numify { 0 + "${$_[0]}" }	# Not needed, additional overhead
 package main;
 
 $| = 1;
-use Test::More tests => 607;
+BEGIN { require './test.pl' }
+plan tests => 5041;
 
+use Scalar::Util qw(tainted);
 
 $a = new Oscalar "087";
 $b= "$a";
@@ -295,7 +297,7 @@ like($@, qr/no method found/);
 bless \$x, Oscalar;
 
 $na = eval { ~$a };		# Hash updated
-warn "`$na', $@" if $@;
+warn "'$na', $@" if $@;
 ok !$@;
 is($na, '_!_xx_!_');
 
@@ -601,8 +603,7 @@ is($c, "bareword");
   }
   sub TIESCALAR { my $pack = shift; $pack->new(@_) }
   sub FETCH { shift }
-  sub nop {  }		# Around a bug
-  sub vars { my $p = shift; tie($_, $p), $_->nop foreach @_; }
+  sub vars { my $p = shift; tie($_, $p) foreach @_; }
   sub STORE { 
     my $obj = shift; 
     $#$obj = 1; 
@@ -705,13 +706,7 @@ is($c, "bareword");
   sub iter { my ($x) = @_; return undef if $$x < 0; return $$x--; }
 }
 
-# XXX iterator overload not intended to work with CORE::GLOBAL?
-if (defined &CORE::GLOBAL::glob) {
-  is('1', '1');
-  is('1', '1');
-  is('1', '1');
-}
-else {
+{
   my $iter = iterator->new(5);
   my $acc = '';
   my $out;
@@ -940,25 +935,37 @@ unless ($aaa) {
 }
 
 {
-    # check the `$_[0]' is not an overloadable type warning
+    # check the '$_[0]' is not an overloadable type warning
     my $a = "" ;
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
     $x = eval ' overload::constant "fred" => sub {} ; ' ;
     is($a, "");
     use warnings 'overload' ;
     $x = eval ' overload::constant "fred" => sub {} ; ' ;
-    like($a, qr/^`fred' is not an overloadable type at/);
+    like($a, qr/^'fred' is not an overloadable type at/);
 }
 
 {
-    # check the `$_[1]' is not a code reference warning
+    # check the '$_[1]' is not a code reference warning
     my $a = "" ;
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
     $x = eval ' overload::constant "integer" => 1; ' ;
     is($a, "");
     use warnings 'overload' ;
     $x = eval ' overload::constant "integer" => 1; ' ;
-    like($a, qr/^`1' is not a code reference at/);
+    like($a, qr/^'1' is not a code reference at/);
+}
+
+{
+    # check the invalid argument warning [perl #74098]
+    my $a = "" ;
+    local $SIG{__WARN__} = sub {$a = $_[0]} ;
+    $x = eval ' use overload "~|_|~" => sub{} ' ;
+    is($a, "");
+    use warnings 'overload' ;
+    $x = eval ' use overload "~|_|~" => sub{} ' ;
+    like($a, qr/^overload arg '~\|_\|~' is invalid at \(eval \d+\) line /,
+	'invalid arg warning');
 }
 
 {
@@ -1371,11 +1378,11 @@ foreach my $op (qw(<=> == != < <= > >=)) {
     $obj = bless do {my $a; \$a}, 'Shklitza';
     $ref = $obj;
 
-    is ($obj, "CLiK KLAK");
-    is ($ref, "CLiK KLAK");
+    is ("$obj", "CLiK KLAK");
+    is ("$ref", "CLiK KLAK");
 
     weaken $ref;
-    is ($ref, "CLiK KLAK");
+    is ("$ref", "CLiK KLAK");
 
     bless $obj, 'Ksshfwoom';
 
@@ -1589,5 +1596,652 @@ foreach my $op (qw(<=> == != < <= > >=)) {
     is($x, $o, "copy constructor falls back to assignment (postinc)");
     is($y, $o, "copy constructor falls back to assignment (preinc)");
 }
+
+# only scalar 'x' should currently overload
+
+{
+    package REPEAT;
+
+    my ($x,$n, $nm);
+
+    use overload
+	'x'        => sub { $x++; 1 },
+	'0+'       => sub { $n++; 1 },
+	'nomethod' => sub { $nm++; 1 },
+	'fallback' => 0,
+    ;
+
+    my $s = bless {};
+
+    package main;
+
+    my @a;
+    my $count = 3;
+
+    ($x,$n,$nm) = (0,0,0);
+    @a = ((1,2,$s) x $count);
+    is("$x-$n-$nm", "0-0-0", 'repeat 1');
+
+    ($x,$n,$nm) = (0,0,0);
+    @a = ((1,$s,3) x $count);
+    is("$x-$n-$nm", "0-0-0", 'repeat 2');
+
+    ($x,$n,$nm) = (0,0,0);
+    @a = ((1,2,3) x $s);
+    is("$x-$n-$nm", "0-1-0", 'repeat 3');
+}
+
+
+
+# RT #57012: magic items need to have mg_get() called before testing for
+# overload. Lack of this means that overloaded values returned by eg a
+# tied array didn't call overload methods.
+# We test here both a tied array and scalar, since the implementation of
+# tied  arrays (and hashes) is such that in rvalue context, mg_get is
+# called prior to executing the op, while it isn't for a tied scalar.
+# We also check that return values are correctly tainted.
+# We try against two overload packages; one has all expected methods, the
+# other uses only fallback methods.
+
+{
+
+    # @tests holds a list of test cases. Each elem is an array ref with
+    # the following entries:
+    #
+    #  * the value that the overload method should return
+    #
+    #  * the expression to be evaled. %s is replaced with the
+    #       variable being tested ($ta[0], $ts, or $plain)
+    #
+    #  * a string listing what functions we expect to be called.
+    #       Each method appends its name in parentheses, so "(=)(+)" means
+    #       we expect the copy constructor and then the add method to be
+    #       called.
+    #
+    #  * like above, but what should be called for the fallback-only test
+    #      (in this case, nomethod() identifies itself as "(NM:*)" where *
+    #      is the op).  If this value is undef, fallback tests are skipped.
+    #
+    #  * An array ref of expected counts of calls to FETCH/STORE.
+    #      The first three values are:
+    #         1. the expected number of FETCHs for a tied array
+    #         2. the expected number of FETCHs for a tied scalar
+    #         3. the expected number of STOREs
+    #       If there are a further three elements present, then
+    #       these represent the expected counts for the fallback
+    #       version of the tests. If absent, they are assumed to
+    #       be the same as for the full method test
+    #
+    #  * Under the taint version of the tests,  whether we expect
+    #       the result to be tainted (for example comparison ops
+    #       like '==' don't return a tainted value, even if their
+    #       args are.
+    my @tests;
+
+    my %subs;
+    my $funcs;
+    my $use_int;
+
+    BEGIN {
+	# A note on what methods to expect to be called, and
+	# how many times FETCH/STORE is called:
+	#
+	# Mutating ops (+=, ++ etc) trigger a copy ('='), since
+	# the code can't distinguish between something that's been copied:
+	#    $a = foo->new(0); $b = $a; refcnt($$b) == 2
+	# and overloaded objects stored in ties which will have extra
+	# refcounts due to the tied_obj magic and entries on the tmps
+	# stack when returning from FETCH etc. So we always copy.
+
+	# This accounts for a '=', and an extra STORE.
+	# We also have a FETCH returning the final value from the eval,
+	# plus a FETCH in the overload subs themselves: ($_[0][0])
+	# triggers one. However, tied aggregates have a mechanism to prevent
+	# multiple fetches between STOREs, which means that the tied
+	# hash skips doing a FETCH during '='.
+
+	for (qw(+ - * / % ** << >> & | ^)) {
+	    my $op = $_;
+	    $op = '%%' if $op eq '%';
+	    my $e = "%s $op= 3";
+	    $subs{"$_="} = $e;
+	    # ARRAY  FETCH: initial,        sub+=, eval-return,
+	    # SCALAR FETCH: initial, sub=,  sub+=, eval-return,
+	    # STORE:        copy, mutator
+	    push @tests, [ 18, $e, "(=)($_=)", "(=)(NM:$_=)", [ 3, 4, 2 ], 1 ];
+
+	    $subs{$_} =
+		"do { my \$arg = %s; \$_[2] ? (3 $op \$arg) : (\$arg $op 3) }";
+	    # ARRAY  FETCH: initial
+	    # SCALAR FETCH: initial eval-return,
+	    push @tests, [ 18, "%s $op 3", "($_)", "(NM:$_)", [ 1, 2, 0 ], 1 ];
+	    push @tests, [ 18, "3 $op %s", "($_)", "(NM:$_)", [ 1, 2, 0 ], 1 ];
+	}
+
+	# these use string fallback rather than nomethod
+	for (qw(x .)) {
+	    my $op = $_;
+	    my $e = "%s $op= 3";
+	    $subs{"$_="} = $e;
+	    # For normal case:
+	    #   ARRAY  FETCH: initial,        sub+=, eval-return,
+	    #   SCALAR FETCH: initial, sub=,  sub+=, eval-return,
+	    #          STORE: copy, mutator
+	    # for fallback, we just stringify, so eval-return and copy skipped
+
+	    push @tests, [ 18, $e, "(=)($_=)", '("")',
+			    [ 3, 4, 2,     2, 3, 1 ], 1 ];
+
+	    $subs{$_} =
+		"do { my \$arg = %s; \$_[2] ? (3 $op \$arg) : (\$arg $op 3) }";
+	    # ARRAY  FETCH: initial
+	    # SCALAR FETCH: initial eval-return,
+	    # with fallback, we just stringify, so eval-return skipped,
+	    #    but an extra FETCH happens in sub"", except for 'x',
+	    #    which passes a copy of the RV to sub"", avoiding the
+	    #    second FETCH
+
+	    push @tests, [ 18, "%s $op 3", "($_)", '("")',
+			    [ 1, 2, 0,     1, ($_ eq '.' ? 2 : 1), 0 ], 1 ];
+	    next if $_ eq 'x'; # repeat only overloads on LHS
+	    push @tests, [ 18, "3 $op %s", "($_)", '("")',
+			    [ 1, 2, 0,     1, 2, 0 ], 1 ];
+	}
+
+	for (qw(++ --)) {
+	    my $pre  = "$_%s";
+	    my $post = "%s$_";
+	    $subs{$_} = $pre;
+	    push @tests,
+		# ARRAY  FETCH: initial,        sub+=, eval-return,
+		# SCALAR FETCH: initial, sub=,  sub+=, eval-return,
+		# STORE:        copy, mutator
+		[ 18, $pre, "(=)($_)(\"\")", "(=)(NM:$_)(\"\")", [ 3, 4, 2 ], 1 ],
+		# ARRAY  FETCH: initial,        sub+=
+		# SCALAR FETCH: initial, sub=,  sub+=
+		# STORE:        copy, mutator
+		[ 18, $post, "(=)($_)(\"\")", "(=)(NM:$_)(\"\")", [ 2, 3, 2 ], 1 ];
+	}
+
+	# For the non-mutator ops, we have a initial FETCH,
+	# an extra FETCH within the sub itself for the scalar option,
+	# and no STOREs
+
+	for (qw(< <= >  >= == != lt le gt ge eq ne)) {
+	    my $e = "%s $_ 3";
+	    $subs{$_} = $e;
+	    push @tests, [ 3, $e, "($_)", "(NM:$_)", [ 1, 2, 0 ], 0 ];
+	}
+	for (qw(<=> cmp)) {
+	    my $e = "%s $_ 3";
+	    $subs{$_} = $e;
+	    push @tests, [ 3, $e, "($_)", "(NM:$_)", [ 1, 2, 0 ], 1 ];
+	}
+	for (qw(atan2)) {
+	    my $e = "$_ %s, 3";
+	    $subs{$_} = $e;
+	    push @tests, [ 18, $e, "($_)", "(NM:$_)", [ 1, 2, 0 ], 1 ];
+	}
+	for (qw(cos sin exp abs log sqrt int ~)) {
+	    my $e = "$_(%s)";
+	    $subs{$_} = $e;
+	    push @tests, [ 1.23, $e, "($_)",
+		    ($_ eq 'int' ? '(0+)' : "(NM:$_)") , [ 1, 2, 0 ], 1 ];
+	}
+	for (qw(!)) {
+	    my $e = "$_(%s)";
+	    $subs{$_} = $e;
+	    push @tests, [ 1.23, $e, "($_)", '(0+)', [ 1, 2, 0 ], 0 ];
+	}
+	for (qw(-)) {
+	    my $e = "$_(%s)";
+	    $subs{neg} = $e;
+	    push @tests, [ 18, $e, '(neg)', '(NM:neg)', [ 1, 2, 0 ], 1 ];
+	}
+	my $e = '(%s) ? 1 : 0';
+	$subs{bool} = $e;
+	push @tests, [ 18, $e, '(bool)', '(0+)', [ 1, 2, 0 ], 0 ];
+
+	# note: this is testing unary qr, not binary =~
+	$subs{qr} = '(qr/%s/)';
+	push @tests, [ "abc", '"abc" =~ (%s)', '(qr)', '("")', [ 1, 2, 0 ], 0 ];
+	push @tests, [ chr 256, 'chr(256) =~ (%s)', '(qr)', '("")',
+	                                                  [ 1, 2, 0 ], 0 ];
+
+	$e = '"abc" ~~ (%s)';
+	$subs{'~~'} = $e;
+	push @tests, [ "abc", $e, '(~~)', '(NM:~~)', [ 1, 1, 0 ], 0 ];
+
+	$subs{'-X'} = 'do { my $f = (%s);'
+		    . '$_[1] eq "r" ? (-r ($f)) :'
+		    . '$_[1] eq "e" ? (-e ($f)) :'
+		    . '$_[1] eq "f" ? (-f ($f)) :'
+		    . '$_[1] eq "l" ? (-l ($f)) :'
+		    . '$_[1] eq "t" ? (-t ($f)) :'
+		    . '$_[1] eq "T" ? (-T ($f)) : 0;}';
+	# Note - we don't care what these file tests return, as
+	# long as the tied and untied versions return the same value.
+	# The flags below are chosen to test all uses of tryAMAGICftest_MG
+	for (qw(r e f l t T)) {
+	    push @tests, [ 'TEST', "-$_ (%s)", '(-X)', '("")', [ 1, 2, 0 ], 0 ];
+	}
+
+	$subs{'${}'} = '%s';
+	push @tests, [ do {my $s=99; \$s}, '${%s}', '(${})', undef, [ 1, 1, 0 ], 0 ];
+
+	# we skip testing '@{}' here because too much of this test
+	# framework involves array dereferences!
+
+	$subs{'%{}'} = '%s';
+	push @tests, [ {qw(a 1 b 2 c 3)}, 'join "", sort keys %%{%s}',
+			'(%{})', undef, [ 1, 1, 0 ], 0 ];
+
+	$subs{'&{}'} = '%s';
+	push @tests, [ sub {99}, 'do {&{%s} for 1,2}',
+			    '(&{})(&{})', undef, [ 2, 2, 0 ], 0 ];
+
+	our $RT57012A = 88;
+	our $RT57012B;
+	$subs{'*{}'} = '%s';
+	push @tests, [ \*RT57012A, '*RT57012B = *{%s}; our $RT57012B',
+		'(*{})', undef, [ 1, 1, 0 ], 0 ];
+
+	my $iter_text = ("some random text\n" x 100) . $^X;
+	open my $iter_fh, '<', \$iter_text
+	    or die "open of \$iter_text gave ($!)\n";
+	$subs{'<>'} = '<$iter_fh>';
+	push @tests, [ $iter_fh, '<%s>', '(<>)', undef, [ 1, 1, 0 ], 1 ];
+
+	# eval should do tie, overload on its arg before checking taint */
+	push @tests, [ '1;', 'eval q(eval %s); $@ =~ /Insecure/',
+		'("")', '("")', [ 1, 2, 0 ], 0 ];
+
+
+	for my $sub (keys %subs) {
+	    my $term = $subs{$sub};
+	    my $t = sprintf $term, '$_[0][0]';
+	    my $e ="sub { \$funcs .= '($sub)'; my \$r; if (\$use_int) {"
+		. "use integer; \$r = ($t) } else { \$r = ($t) } \$r }";
+	    $subs{$sub} = eval $e;
+	    die "Compiling sub gave error:\n<$e>\n<$@>\n" if $@;
+	}
+    }
+
+    my $fetches;
+    my $stores;
+
+    package RT57012_OV;
+
+    use overload
+	%subs,
+	"="   => sub { $funcs .= '(=)';  bless [ $_[0][0] ] },
+	'0+'  => sub { $funcs .= '(0+)'; 0 + $_[0][0] },
+	'""'  => sub { $funcs .= '("")'; "$_[0][0]"   },
+	;
+
+    package RT57012_OV_FB; # only contains fallback conversion functions
+
+    use overload
+	"="   => sub { $funcs .= '(=)';  bless [ $_[0][0] ] },
+	'0+'  => sub { $funcs .= '(0+)'; 0 + $_[0][0] },
+	'""'  => sub { $funcs .= '("")'; "$_[0][0]"   },
+	"nomethod" => sub {
+			$funcs .= "(NM:$_[3])";
+			my $e = defined($_[1])
+				? $_[3] eq 'atan2'
+				    ? $_[2]
+				       ? "atan2(\$_[1],\$_[0][0])"
+				       : "atan2(\$_[0][0],\$_[1])"
+				    : $_[2]
+					? "\$_[1] $_[3] \$_[0][0]"
+					: "\$_[0][0] $_[3] \$_[1]"
+				: $_[3] eq 'neg'
+				    ? "-\$_[0][0]"
+				    : "$_[3](\$_[0][0])";
+			my $r;
+			if ($use_int) {
+			    use integer; $r = eval $e;
+			}
+			else {
+			    $r = eval $e;
+			}
+			::diag("eval of nomethod <$e> gave <$@>") if $@;
+			$r;
+		    }
+
+	;
+
+    package RT57012_TIE_S;
+
+    my $tie_val;
+    sub TIESCALAR { bless [ bless [ $tie_val ], $_[1] ] }
+    sub FETCH     { $fetches++; $_[0][0] }
+    sub STORE     { $stores++;  $_[0][0] = $_[1] }
+
+    package RT57012_TIE_A;
+
+    sub TIEARRAY  { bless [] }
+    sub FETCH     { $fetches++; $_[0][0] }
+    sub STORE     { $stores++;  $_[0][$_[1]] = $_[2] }
+
+    package main;
+
+    for my $test (@tests) {
+	my ($val, $sub_term, $exp_funcs, $exp_fb_funcs,
+	    $exp_counts, $exp_taint) = @$test;
+
+	my $tainted_val;
+	{
+	    # create tainted version of $val (unless its a ref)
+	    my $t = substr($^X,0,0);
+	    my $t0 = $t."0";
+	    my $val1 = $val; # use a copy to avoid stringifying original
+	    $tainted_val = ref($val1) ? $val :
+			($val1 =~ /^[\d\.]+$/) ? $val+$t0 : $val.$t;
+	}
+	$tie_val = $tainted_val;
+
+	for my $int ('', 'use integer; ') {
+	    $use_int = ($int ne '');
+	    my $plain = $tainted_val;
+	    my $plain_term = $int . sprintf $sub_term, '$plain';
+	    my $exp = eval $plain_term;
+	    diag("eval of plain_term <$plain_term> gave <$@>") if $@;
+	    is(tainted($exp), $exp_taint,
+			"<$plain_term> taint of expected return");
+
+	    for my $ov_pkg (qw(RT57012_OV RT57012_OV_FB)) {
+		next if $ov_pkg eq 'RT57012_OV_FB'
+			and  not defined $exp_fb_funcs;
+		my ($exp_fetch_a, $exp_fetch_s, $exp_store) =
+		    ($ov_pkg eq 'RT57012_OV' || @$exp_counts < 4)
+			? @$exp_counts[0,1,2]
+			: @$exp_counts[3,4,5];
+
+		tie my $ts, 'RT57012_TIE_S', $ov_pkg;
+		tie my @ta, 'RT57012_TIE_A';
+		$ta[0]    = bless [ $tainted_val ], $ov_pkg;
+		my $oload = bless [ $tainted_val ], $ov_pkg;
+
+		for my $var ('$ta[0]', '$ts', '$oload',
+			    ($sub_term eq '<%s>' ? '${ts}' : ())
+		) {
+
+		    $funcs = '';
+		    $fetches = 0;
+		    $stores = 0;
+
+		    my $res_term  = $int . sprintf $sub_term, $var;
+		    my $desc =  "<$res_term> $ov_pkg" ;
+		    my $res = eval $res_term;
+		    diag("eval of res_term $desc gave <$@>") if $@;
+		    # uniquely, the inc/dec ops return the original
+		    # ref rather than a copy, so stringify it to
+		    # find out if its tainted
+		    $res = "$res" if $res_term =~ /\+\+|--/;
+		    is(tainted($res), $exp_taint,
+			    "$desc taint of result return");
+		    is($res, $exp, "$desc return value");
+		    my $fns =($ov_pkg eq 'RT57012_OV_FB')
+				? $exp_fb_funcs : $exp_funcs;
+		    if ($var eq '$oload' && $res_term !~ /oload(\+\+|--)/) {
+			# non-tied overloading doesn't trigger a copy
+			# except for post inc/dec
+			$fns =~ s/^\(=\)//;
+		    }
+		    is($funcs, $fns, "$desc methods called");
+		    next if $var eq '$oload';
+		    my $exp_fetch = ($var eq '$ts') ?
+			    $exp_fetch_s : $exp_fetch_a;
+		    is($fetches, $exp_fetch, "$desc FETCH count");
+		    is($stores, $exp_store, "$desc STORE count");
+
+		}
+
+	    }
+	}
+    }
+}
+
+# Test overload from the main package
+fresh_perl_is
+ '$^W = 1; use overload q\""\ => sub {"ning"}; print bless []',
+ 'ning',
+  { switches => ['-wl'], stderr => 1 },
+ 'use overload from the main package'
+;
+
+{
+    package blessed_methods;
+    use overload '+' => sub {};
+    bless overload::Method __PACKAGE__,'+';
+    eval { overload::Method __PACKAGE__,'+' };
+    ::is($@, '', 'overload::Method and blessed overload methods');
+}
+
+{
+    # fallback to 'cmp' and '<=>' with heterogeneous operands
+    # [perl #71286]
+    my $not_found = 'no method found';
+    my $used = 0;
+    package CmpBase;
+    sub new {
+        my $n = $_[1] || 0;
+        bless \$n, ref $_[0] || $_[0];
+    }
+    sub cmp {
+        $used = \$_[0];
+        (${$_[0]} <=> ${$_[1]}) * ($_[2] ? -1 : 1);
+    }
+
+    package NCmp;
+    use base 'CmpBase';
+    use overload '<=>' => 'cmp';
+
+    package SCmp;
+    use base 'CmpBase';
+    use overload 'cmp' => 'cmp';
+
+    package main;
+    my $n = NCmp->new(5);
+    my $s = SCmp->new(3);
+    my $res;
+
+    eval { $res = $n > $s; };
+    $res = $not_found if $@ =~ /$not_found/;
+    is($res, 1, 'A>B using A<=> when B overloaded, no B<=>');
+
+    eval { $res = $s < $n; };
+    $res = $not_found if $@ =~ /$not_found/;
+    is($res, 1, 'A<B using B<=> when A overloaded, no A<=>');
+
+    eval { $res = $s lt $n; };
+    $res = $not_found if $@ =~ /$not_found/;
+    is($res, 1, 'A lt B using A:cmp when B overloaded, no B:cmp');
+
+    eval { $res = $n gt $s; };
+    $res = $not_found if $@ =~ /$not_found/;
+    is($res, 1, 'A gt B using B:cmp when A overloaded, no A:cmp');
+
+    my $o = NCmp->new(9);
+    $res = $n < $o;
+    is($used, \$n, 'A < B uses <=> from A in preference to B');
+
+    my $t = SCmp->new(7);
+    $res = $s lt $t;
+    is($used, \$s, 'A lt B uses cmp from A in preference to B');
+}
+
+{
+    # Combinatorial testing of 'fallback' and 'nomethod'
+    # [perl #71286]
+    package NuMB;
+    use overload '0+' => sub { ${$_[0]}; },
+        '""' => 'str';
+    sub new {
+        my $self = shift;
+        my $n = @_ ? shift : 0;
+        bless my $obj = \$n, ref $self || $self;
+    }
+    sub str {
+        no strict qw/refs/;
+        my $s = "(${$_[0]} ";
+        $s .= "nomethod, " if defined ${ref($_[0]).'::(nomethod'};
+        my $fb = ${ref($_[0]).'::()'};
+        $s .= "fb=" . (defined $fb ? 0 + $fb : 'undef') . ")";
+    }
+    sub nomethod { "${$_[0]}.nomethod"; }
+
+    # create classes for tests
+    package main;
+    my @falls = (0, 'undef', 1);
+    my @nomethods = ('', 'nomethod');
+    my $not_found = 'no method found';
+    for my $fall (@falls) {
+        for my $nomethod (@nomethods) {
+            my $nomethod_decl = $nomethod
+                ? $nomethod . "=>'nomethod'," : '';
+            eval qq{
+                    package NuMB$fall$nomethod;
+                    use base qw/NuMB/;
+                    use overload $nomethod_decl
+                    fallback => $fall;
+                };
+        }
+    }
+
+    # operation and precedence of 'fallback' and 'nomethod'
+    # for all combinations with 2 overloaded operands
+    for my $nomethod2 (@nomethods) {
+        for my $nomethod1 (@nomethods) {
+            for my $fall2 (@falls) {
+                my $pack2 = "NuMB$fall2$nomethod2";
+                for my $fall1 (@falls) {
+                    my $pack1 = "NuMB$fall1$nomethod1";
+                    my ($test, $out, $exp);
+                    eval qq{
+                            my \$x = $pack1->new(2);
+                            my \$y = $pack2->new(3);
+                            \$test = "\$x" . ' * ' . "\$y";
+                            \$out = \$x * \$y;
+                        };
+                    $out = $not_found if $@ =~ /$not_found/;
+                    $exp = $nomethod1 ? '2.nomethod' :
+                         $nomethod2 ? '3.nomethod' :
+                         $fall1 eq '1' && $fall2 eq '1' ? 6
+                         : $not_found;
+                    is($out, $exp, "$test --> $exp");
+                }
+            }
+        }
+    }
+
+    # operation of 'fallback' and 'nomethod'
+    # where the other operand is not overloaded
+    for my $nomethod (@nomethods) {
+        for my $fall (@falls) {
+            my ($test, $out, $exp);
+            eval qq{
+                    my \$x = NuMB$fall$nomethod->new(2);
+                    \$test = "\$x" . ' * 3';
+                    \$out = \$x * 3;
+                };
+            $out = $not_found if $@ =~ /$not_found/;
+            $exp = $nomethod ? '2.nomethod' :
+                $fall eq '1' ? 6
+                : $not_found;
+            is($out, $exp, "$test --> $exp");
+
+            eval qq{
+                    my \$x = NuMB$fall$nomethod->new(2);
+                    \$test = '3 * ' . "\$x";
+                    \$out = 3 * \$x;
+                };
+            $out = $not_found if $@ =~ /$not_found/;
+            is($out, $exp, "$test --> $exp");
+        }
+    }
+}
+
+# since 5.6 overloaded <> was leaving an extra arg on the stack!
+
+{
+    package Iter1;
+    use overload '<>' => sub { 11 };
+    package main;
+    my $a = bless [], 'Iter1';
+    my $x;
+    my @a = (10, ($x = <$a>), 12);
+    is ($a[0], 10, 'Iter1: a[0]');
+    is ($a[1], 11, 'Iter1: a[1]');
+    is ($a[2], 12, 'Iter1: a[2]');
+    @a = (10, ($x .= <$a>), 12);
+    is ($a[0],   10, 'Iter1: a[0] concat');
+    is ($a[1], 1111, 'Iter1: a[1] concat');
+    is ($a[2],   12, 'Iter1: a[2] concat');
+}
+
+# Some tests for error messages
+{
+    package Justus;
+    use overload '+' => 'justice';
+    eval {bless[]};
+    ::like $@, qr/^Can't resolve method "justice" overloading "\+" in p(?x:
+                  )ackage "Justus" at /,
+      'Error message when explicitly named overload method does not exist';
+
+    package JustUs;
+    our @ISA = 'JustYou';
+    package JustYou { use overload '+' => 'injustice'; }
+    "JustUs"->${\"(+"};
+    eval {bless []};
+    ::like $@, qr/^Stub found while resolving method "\?{3}" overloadin(?x:
+                  )g "\+" in package "JustUs" at /,
+      'Error message when sub stub is encountered';
+}
+
+{ # undefining the overload stash -- KEEP THIS TEST LAST
+    package ant;
+    use overload '+' => 'onion';
+    $_ = \&overload::nil;
+    undef %overload::;
+    bless[];
+    ::ok(1, 'no crash when undefining %overload::');
+}
+
+# [perl #40333]
+# overload::Overloaded should not use a ->can designed for autoloading.
+# This example attempts to be as realistic as possible.  The o class has a
+# default singleton object, but can have instances, too.  The proxy class
+# represents proxies for o objects, but class methods delegate to the
+# singleton.
+# overload::Overloaded used to return incorrect results for proxy objects.
+package proxy {
+    sub new { bless [$_[1]], $_[0] }
+    sub AUTOLOAD {
+       our $AUTOLOAD =~ s/.*:://;
+       &_self->$AUTOLOAD;
+    }
+    sub can      { SUPER::can{@_} || &_self->can($_[1]) }
+    sub _self { ref $_[0] ? $_[0][0] : $o::singleton }
+}
+package o     { use overload '""' => sub { 'keck' };
+                sub new { bless[], $_[0] }
+                our $singleton = o->new; }
+ok !overload::Overloaded(new proxy new o),
+ 'overload::Overloaded does not incorrectly return true for proxy classes';
+
+# Another test, based on the type of explosive test class for which
+# perl #40333 was filed.
+{
+    package broken_can;
+    sub can {}
+    use overload '""' => sub {"Ahoy!"};
+
+    package main;
+    my $obj = bless [], 'broken_can';
+    ok(overload::Overloaded($obj));
+}
+
 
 # EOF

@@ -18,6 +18,7 @@ regnext                        # E (Perl_regnext)
 runops_debug                   # E
 runops_standard                # E
 save_iv                        # E (save_iv)
+save_op                        # U
 screaminstr                    # E (Perl_screaminstr)
 sv_iv                          # E
 sv_peek                        # U

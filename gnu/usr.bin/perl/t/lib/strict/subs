@@ -45,8 +45,8 @@ Execution of - aborted due to compilation errors.
 use strict 'subs' ;
 my @a = (A..Z);
 EXPECT
-Bareword "Z" not allowed while "strict subs" in use at - line 4.
 Bareword "A" not allowed while "strict subs" in use at - line 4.
+Bareword "Z" not allowed while "strict subs" in use at - line 4.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -54,8 +54,8 @@ Execution of - aborted due to compilation errors.
 use strict 'subs' ;
 my $a = (B..Y);
 EXPECT
-Bareword "Y" not allowed while "strict subs" in use at - line 4.
 Bareword "B" not allowed while "strict subs" in use at - line 4.
+Bareword "Y" not allowed while "strict subs" in use at - line 4.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -381,6 +381,15 @@ EXPECT
 Bareword "foo" not allowed while "strict subs" in use at (re_eval 1) line 1.
 Compilation failed in regexp at - line 3.
 ########
+# Regexp compilation errors weren't UTF-8 clean
+use strict 'subs';
+use utf8;
+use open qw( :utf8 :std );
+qr/(?{my $x=fòò})/;
+EXPECT
+Bareword "fòò" not allowed while "strict subs" in use at (re_eval 1) line 1.
+Compilation failed in regexp at - line 5.
+########
 #  [perl #27628] strict 'subs' didn't warn on bareword array index
 use strict 'subs';
 my $x=$a[FOO];
@@ -432,3 +441,13 @@ ret
 foo:
 ret
 bar
+########
+# infinite loop breaks some strict checking
+use strict 'subs';
+sub foo {
+    1 while 1;
+    kill FOO, 1;
+}
+EXPECT
+Bareword "FOO" not allowed while "strict subs" in use at - line 5.
+Execution of - aborted due to compilation errors.

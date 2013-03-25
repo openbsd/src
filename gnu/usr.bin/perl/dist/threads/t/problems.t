@@ -137,7 +137,7 @@ for my $decl ('my $x : unique', 'sub foo : unique') {
 }
 
 
-# Returing a closure from a thread caused problems. If the last index in
+# Returning a closure from a thread caused problems. If the last index in
 # the anon sub's pad wasn't for a lexical, then a core dump could occur.
 # Otherwise, there might be leaked scalars.
 

@@ -1,8 +1,10 @@
 #!./perl
 
+my $hires;
 BEGIN {
     chdir 't' if -d 't';
     @INC = ('.', '../lib');
+    $hires = eval 'use Time::HiResx "time"; 1';
 }
 
 require 'test.pl';
@@ -11,40 +13,54 @@ plan (11);
 
 my $blank = "";
 eval {select undef, $blank, $blank, 0};
-is ($@, "");
+is ($@, "", 'select undef  $blank $blank 0');
 eval {select $blank, undef, $blank, 0};
-is ($@, "");
+is ($@, "", 'select $blank undef  $blank 0');
 eval {select $blank, $blank, undef, 0};
-is ($@, "");
+is ($@, "", 'select $blank $blank undef  0');
 
 eval {select "", $blank, $blank, 0};
-is ($@, "");
+is ($@, "", 'select ""     $blank $blank 0');
 eval {select $blank, "", $blank, 0};
-is ($@, "");
+is ($@, "", 'select $blank ""     $blank 0');
 eval {select $blank, $blank, "", 0};
-is ($@, "");
+is ($@, "", 'select $blank $blank ""     0');
 
 eval {select "a", $blank, $blank, 0};
-like ($@, qr/^Modification of a read-only value attempted/);
+like ($@, qr/^Modification of a read-only value attempted/,
+	    'select "a"    $blank $blank 0');
 eval {select $blank, "a", $blank, 0};
-like ($@, qr/^Modification of a read-only value attempted/);
+like ($@, qr/^Modification of a read-only value attempted/,
+	    'select $blank "a"    $blank 0');
 eval {select $blank, $blank, "a", 0};
-like ($@, qr/^Modification of a read-only value attempted/);
+like ($@, qr/^Modification of a read-only value attempted/,
+	    'select $blank $blank "a"    0');
 
-my($sleep,$fudge) = (3,0);
+my $sleep = 3;
 # Actual sleep time on Windows may be rounded down to an integral
 # multiple of the system clock tick interval.  Clock tick interval
 # is configurable, but usually about 15.625 milliseconds.
-# time() however doesn't return fractional values, so the observed
-# delay may be 1 second short.
-($sleep,$fudge) = (4,1) if $^O eq "MSWin32";
+# time() however (if we haven;t loaded Time::HiRes), doesn't return
+# fractional values, so the observed delay may be 1 second short.
+#
+# There is also a report that old linux kernels may return 0.5ms early:
+# <20110520081714.GC17549@mars.tony.develop-help.com>.
+#
 
-my $t = time;
+my $under = $hires ? 0.1 : 1;
+
+my $t0 = time;
 select(undef, undef, undef, $sleep);
-ok(time-$t >= $sleep-$fudge, "$sleep seconds have passed");
+my $t1 = time;
+my $diff = $t1-$t0;
+ok($diff >= $sleep-$under, "select(u,u,u,\$sleep):  at least $sleep seconds have passed");
+note("diff=$diff under=$under");
 
 my $empty = "";
 vec($empty,0,1) = 0;
-$t = time;
+$t0 = time;
 select($empty, undef, undef, $sleep);
-ok(time-$t >= $sleep-$fudge, "$sleep seconds have passed");
+$t1 = time;
+$diff = $t1-$t0;
+ok($diff >= $sleep-$under, "select(\$e,u,u,\$sleep): at least $sleep seconds have passed");
+note("diff=$diff under=$under");

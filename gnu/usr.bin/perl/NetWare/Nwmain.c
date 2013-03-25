@@ -1,6 +1,6 @@
 
 /*
- * Copyright © 2001 Novell, Inc. All Rights Reserved.
+ * Copyright Â© 2001 Novell, Inc. All Rights Reserved.
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Artistic License, as specified in the README file.
@@ -169,7 +169,7 @@ void main(int argc, char *argv[])
 
 	// Create the file NUL if not present. This is done only once per NLM load.
 	// This is required for -e.
-	// Earlier verions were creating temporary files (in perl.c file) for -e.
+	// Earlier versions were creating temporary files (in perl.c file) for -e.
 	// Now, the technique of creating temporary files are removed since they were
 	// fragile or insecure or slow. It now uses the memory by setting
 	// the BIT_BUCKET to "nul" on Win32, which is equivalent to /dev/nul of Unix.

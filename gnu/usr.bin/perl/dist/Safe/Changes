@@ -1,3 +1,17 @@
+2.31 Fri Jan 20 2012
+    - Now need to use code points above 255 to get SWASHNEW to load
+
+2.30 Tue Dec  6 2011
+    - Fix bad interaction with loading Tie::Hash::NamedCapture
+      on perls >= 5.14.0 [rt.cpan.org #72872]
+
+2.29 Sun Oct 31 2010
+    - Add &version::vxs::VCMP to Safe's default share
+
+2.28 Mon Sep 13 2010
+    - Avoid infinite loop in _find_code_refs.
+      Patch by Yasushi Nakajima (rt.cpan.org #61262)
+
 2.27 Thu Apr 29 2010
     - Wrap coderefs returned by reval() and rdo()
     - Add even more version::vxs routines to the default share

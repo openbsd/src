@@ -4,7 +4,7 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.beos - Perl version 5.8+ on BeOS
+perlbeos - Perl version 5.8+ on BeOS
 
 =head1 DESCRIPTION
 
@@ -19,7 +19,7 @@ I have built and tested Perl 5.8.6 and 5.9.1 under BeOS R5 x86 net server.
 I can't say anything with regard to PPC. Since Perl 5.8.0 had been released
 for BeOS BONE, I suspect, there is a good chance, that it still compiles on
 a BONE system. The only change I've made, that affects BONE systems is the
-recognition of whether it is a BONE system or not in C<hints/beos.sh>. Now
+recognition of whether it is a BONE system or not in F<hints/beos.sh>. Now
 network socket support should remain enabled on BONE systems. This might
 as well break the build, though.
 
@@ -81,21 +81,21 @@ to try enabling it and see what problems occur.
 
 =item *
 
-The LFS (large file support) tests (C<t/op/lfs> and C<xt/Fcntl/t/syslfs>) are
+The LFS (large file support) tests (F<t/op/lfs> and F<xt/Fcntl/t/syslfs>) are
 disabled as seeking beyond 2 GB is broken according to jhi@iki.fi who was the
 last one checking the BeOS port and updating this file before me. Haven't
 checked this myself.
 
 =item *
 
-The C<t/io/fflush> test fails at #6. As far as I can tell, this is caused by
+The F<t/io/fflush> test fails at #6. As far as I can tell, this is caused by
 a bug in the BeOS pipes implementation that occurs when starting other child
 processes. In the particular test case a C<system("perl -e 0")> flushes the
 stdout pipe of another child process.
 
 =item *
 
-The C<ext/POSIX/t/waitpid> test fails at #1. After all child processes are
+The F<ext/POSIX/t/waitpid> test fails at #1. After all child processes are
 gone BeOS' waitpid(-1,...) returns 0 instead of -1 (as it should). No idea
 how to fix this.
 

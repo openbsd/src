@@ -1,6 +1,6 @@
 ### make sure we can find our conf.pl file
-BEGIN { 
-    use FindBin; 
+BEGIN {
+    use FindBin;
     require "$FindBin::Bin/inc/conf.pl";
 }
 
@@ -40,7 +40,7 @@ ok( IS_CONFOBJ->( conf => $conf ),  "IS_CONFOBJ recognizes conf object" );
 ok( FILE_EXISTS->( file => basename($0) ),      "FILE_EXISTS finds file" );
 ok( FILE_READABLE->( file => basename($0) ),    "FILE_READABLE finds file" );
 ok( DIR_EXISTS->( dir => cwd() ),               "DIR_EXISTS finds dir" );
-            
+
 
 {   no strict 'refs';
 
@@ -56,18 +56,18 @@ ok( DIR_EXISTS->( dir => cwd() ),               "DIR_EXISTS finds dir" );
                 : 'Makefile'
         },
     };
-    
+
     while ( my($sub,$res) = each %$tmpl ) {
         is( &{$sub}->(), $res, "$sub returns proper result without args" );
-        
+
         my $long = File::Spec->catfile( cwd(), $res );
         is( &{$sub}->( cwd() ), $long, "$sub returns proper result with args" );
-    }       
-}                               
-      
+    }
+}
+
 # Local variables:
 # c-indentation-style: bsd
 # c-basic-offset: 4
 # indent-tabs-mode: nil
 # End:
-# vim: expandtab shiftwidth=4:          
+# vim: expandtab shiftwidth=4:

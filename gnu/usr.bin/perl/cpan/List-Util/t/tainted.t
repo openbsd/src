@@ -16,7 +16,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 use Scalar::Util qw(tainted);
 
@@ -32,3 +32,12 @@ ok( tainted($ENV{$key}),	'environment variable');
 
 $var = $ENV{$key};
 ok( tainted($var),	'copy of environment variable');
+
+{
+    package Tainted;
+    sub TIESCALAR { bless {} }
+    sub FETCH { $^X }
+}
+
+tie my $tiedvar, 'Tainted';
+ok( tainted($tiedvar), 'for magic variables');

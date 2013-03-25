@@ -1,12 +1,127 @@
 =head1 NAME
 
-perlpolicy - Various and sundry policies and commitments related to the perl core
+perlpolicy - Various and sundry policies and commitments related to the Perl core
 
 =head1 DESCRIPTION
 
 This document is the master document which records all written
 policies about how the Perl 5 Porters collectively develop and maintain
 the Perl core.
+
+=head1 GOVERNANCE
+
+=head2 Perl 5 Porters
+
+Subscribers to perl5-porters (the porters themselves) come in several flavours.
+Some are quiet curious lurkers, who rarely pitch in and instead watch
+the ongoing development to ensure they're forewarned of new changes or
+features in Perl.  Some are representatives of vendors, who are there
+to make sure that Perl continues to compile and work on their
+platforms.  Some patch any reported bug that they know how to fix,
+some are actively patching their pet area (threads, Win32, the regexp
+-engine), while others seem to do nothing but complain.  In other
+words, it's your usual mix of technical people.
+
+Over this group of porters presides Larry Wall.  He has the final word
+in what does and does not change in any of the Perl programming languages.
+These days, Larry spends most of his time on Perl 6, while Perl 5 is
+shepherded by a "pumpking", a porter responsible for deciding what
+goes into each release and ensuring that releases happen on a regular
+basis.
+
+Larry sees Perl development along the lines of the US government:
+there's the Legislature (the porters), the Executive branch (the
+-pumpking), and the Supreme Court (Larry).  The legislature can
+discuss and submit patches to the executive branch all they like, but
+the executive branch is free to veto them.  Rarely, the Supreme Court
+will side with the executive branch over the legislature, or the
+legislature over the executive branch.  Mostly, however, the
+legislature and the executive branch are supposed to get along and
+work out their differences without impeachment or court cases.
+
+You might sometimes see reference to Rule 1 and Rule 2.  Larry's power
+as Supreme Court is expressed in The Rules:
+
+=over 4
+
+=item 1
+
+Larry is always by definition right about how Perl should behave.
+This means he has final veto power on the core functionality.
+
+=item 2
+
+Larry is allowed to change his mind about any matter at a later date,
+regardless of whether he previously invoked Rule 1.
+
+=back
+
+Got that?  Larry is always right, even when he was wrong.  It's rare
+to see either Rule exercised, but they are often alluded to.
+
+=head1 MAINTENANCE AND SUPPORT
+
+Perl 5 is developed by a community, not a corporate entity. Every change
+contributed to the Perl core is the result of a donation. Typically, these
+donations are contributions of code or time by individual members of our
+community. On occasion, these donations come in the form of corporate
+or organizational sponsorship of a particular individual or project.
+
+As a volunteer organization, the commitments we make are heavily dependent
+on the goodwill and hard work of individuals who have no obligation to
+contribute to Perl.
+
+That being said, we value Perl's stability and security and have long
+had an unwritten covenant with the broader Perl community to support
+and maintain releases of Perl.
+
+This document codifies the support and maintenance commitments that
+the Perl community should expect from Perl's developers:
+
+=over
+
+=item *
+
+We "officially" support the two most recent stable release series.  5.12.x
+and earlier are now out of support.  As of the release of 5.18.0, we will
+"officially" end support for Perl 5.14.x, other than providing security
+updates as described below.
+
+=item *
+
+To the best of our ability, we will attempt to fix critical issues
+in the two most recent stable 5.x release series.  Fixes for the
+current release series take precedence over fixes for the previous
+release series.
+
+=item *
+
+To the best of our ability, we will provide "critical" security patches
+/ releases for any major version of Perl whose 5.x.0 release was within
+the past three years.  We can only commit to providing these for the
+most recent .y release in any 5.x.y series.
+
+=item *
+
+We will not provide security updates or bug fixes for development
+releases of Perl.
+
+=item *
+
+We encourage vendors to ship the most recent supported release of
+Perl at the time of their code freeze.
+
+=item *
+
+As a vendor, you may have a requirement to backport security fixes
+beyond our 3 year support commitment.  We can provide limited support and
+advice to you as you do so and, where possible will try to apply
+those patches to the relevant -maint branches in git, though we may or
+may not choose to make numbered releases or "official" patches
+available.  Contact us at E<lt>perl5-security-report@perl.orgE<gt>
+to begin that process.
+
+=back
 
 =head1 BACKWARD COMPATIBILITY AND DEPRECATION
 
@@ -69,7 +184,7 @@ bug as a feature, we need to treat it as such.
 
 New syntax and semantics which don't break existing language constructs
 and syntax have a much lower bar.  They merely need to prove themselves
-to be useful, elegant, well designed and well tested.
+to be useful, elegant, well designed, and well tested.
 
 =head2 Terminology
 
@@ -90,7 +205,7 @@ an experimental feature useful and want to help shape its future.
 =item deprecated
 
 If something in the Perl core is marked as B<deprecated>, we may remove it
-from thecore in the next stable release series, though we may not. As of
+from the core in the next stable release series, though we may not. As of
 Perl 5.12, deprecated features and modules warn the user as they're used.
 If you use a deprecated feature and believe that its removal from the Perl
 core would be a mistake, please contact the perl5-porters mailinglist and
@@ -104,12 +219,12 @@ From time to time, we may mark language constructs and features which we
 consider to have been mistakes as B<discouraged>.  Discouraged features
 aren't candidates for removal in the next major release series, but
 we may later deprecate them if they're found to stand in the way of a
-significant improvement to the core.
+significant improvement to the Perl core.
 
 =item removed
 
 Once a feature, construct or module has been marked as deprecated for a
-stable release cycle, we may remove it from the core.  Unsurprisingly,
+stable release cycle, we may remove it from the Perl core.  Unsurprisingly,
 we say we've B<removed> these things.
 
 =back
@@ -134,7 +249,9 @@ acceptable.
 
 =item *
 
-Documentation updates are acceptable.
+Acceptable documentation updates are those that correct factual errors,
+explain significant bugs or deficiencies in the current implementation, 
+or fix broken markup.
 
 =item *
 
@@ -154,8 +271,20 @@ rather than applied directly.
 
 =item *
 
+Patches that fix regressions in perl's behavior relative to previous
+releases are acceptable.
+
+=item *
+
 Updates to dual-life modules should consist of minimal patches to 
 fix crashing or security issues (as above).
+
+=item *
+
+Minimal patches that fix platform-specific test failures or
+installation issues are acceptable. When these changes are made
+to dual-life modules for which CPAN is canonical, any changes
+should be coordinated with the upstream author.
 
 =item *
 
@@ -213,7 +342,7 @@ the heart of Perl itself, is a joint project on the part of all of us.
 From time to time, a script, module, or set of modules (hereafter referred
 to simply as a "module") will prove so widely useful and/or so integral to
 the correct functioning of Perl itself that it should be distributed with
-Perl core.  This should never be done without the author's explicit
+the Perl core.  This should never be done without the author's explicit
 consent, and a clear recognition on all parts that this means the module
 is being distributed under the same terms as Perl itself.  A module author
 should realize that inclusion of a module into the Perl core will
@@ -230,7 +359,7 @@ gives up their ownership of it.  In particular:
 
 =item *
 
-The version of the module in the core should still be considered the
+The version of the module in the Perl core should still be considered the
 work of the original author.  All patches, bug reports, and so
 forth should be fed back to them.  Their development directions
 should be respected whenever possible.
@@ -269,11 +398,11 @@ As a last resort, however:
 If the author's vision of the future of their module is sufficiently
 different from the vision of the pumpkin holder and perl5-porters as a
 whole so as to cause serious problems for Perl, the pumpkin holder may
-choose to formally fork the version of the module in the core from the
+choose to formally fork the version of the module in the Perl core from the
 one maintained by the author.  This should not be done lightly and
 should B<always> if at all possible be done only after direct input
 from Larry.  If this is done, it must then be made explicit in the
-module as distributed with Perl core that it is a forked version and
+module as distributed with the Perl core that it is a forked version and
 that while it is based on the original author's work, it is no longer
 maintained by them.  This must be noted in both the documentation and
 in the comments in the source of the module.
@@ -306,7 +435,45 @@ necessary, and certainly no more drastic measure should be used until
 every avenue of communication and discussion has failed.
 
 
+=head1 DOCUMENTATION
+
+Perl's documentation is an important resource for our users. It's
+incredibly important for Perl's documentation to be reasonably coherent
+and to accurately reflect the current implementation.
+
+Just as P5P collectively maintains the codebase, we collectively
+maintain the documentation.  Writing a particular bit of documentation
+doesn't give an author control of the future of that documentation.
+At the same time, just as source code changes should match the style
+of their surrounding blocks, so should documentation changes.
+
+Examples in documentation should be illustrative of the concept
+they're explaining.  Sometimes, the best way to show how a
+language feature works is with a small program the reader can
+run without modification.  More often, examples will consist
+of a snippet of code containing only the "important" bits.
+The definition of "important" varies from snippet to snippet.
+Sometimes it's important to declare C<use strict> and C<use warnings>,
+initialize all variables and fully catch every error condition.
+More often than not, though, those things obscure the lesson
+the example was intended to teach.
+
+As Perl is developed by a global team of volunteers, our
+documentation often contains spellings which look funny
+to I<somebody>.  Choice of American/British/Other spellings
+is left as an exercise for the author of each bit of
+documentation.  When patching documentation, try to emulate
+the documentation around you, rather than changing the existing
+prose.
+
+In general, documentation should describe what Perl does "now" rather
+than what it used to do.  It's perfectly reasonable to include notes
+in documentation about how behaviour has changed from previous releases,
+but, with very few exceptions, documentation isn't "dual-life" --
+it doesn't need to fully describe how all old versions used to work.
+
+
 =head1 CREDITS
 
-Social Contract about Contributed Modules originally by Russ Allbery E<lt>rra@stanford.eduE<gt> and the perl5-porters.
+"Social Contract about Contributed Modules" originally by Russ Allbery E<lt>rra@stanford.eduE<gt> and the perl5-porters.
 

@@ -1,6 +1,6 @@
 package ExtUtils::Constant;
 use vars qw (@ISA $VERSION @EXPORT_OK %EXPORT_TAGS);
-$VERSION = 0.22;
+$VERSION = 0.23;
 
 =head1 NAME
 
@@ -494,6 +494,9 @@ sub WriteConstants {
 
   croak "Module name not specified" unless length $ARGS{NAME};
 
+  # Do this before creating (empty) files, in case it fails:
+  require ExtUtils::Constant::ProxySubs if $ARGS{PROXYSUBS};
+
   my $c_fh = $ARGS{C_FH};
   if (!$c_fh) {
       if ($] <= 5.008) {
@@ -522,7 +525,6 @@ sub WriteConstants {
   # names.
   
   if ($ARGS{PROXYSUBS}) {
-      require ExtUtils::Constant::ProxySubs;
       $ARGS{C_FH} = $c_fh;
       $ARGS{XS_FH} = $xs_fh;
       ExtUtils::Constant::ProxySubs->WriteConstants(%ARGS);

@@ -5,21 +5,21 @@ use Carp qw[carp];
 
 BEGIN { use base 'Exporter';
         use vars qw[@EXPORT $VERSION];
-        
-        $VERSION = '0.06';
+
+        $VERSION = '0.08';
         @EXPORT  = qw[mark_as_loaded mark_as_unloaded is_loaded];
 }
 
-=head1 NAME 
+=head1 NAME
 
 Module::Loaded - mark modules as loaded or unloaded
 
 =head1 SYNOPSIS
 
     use Module::Loaded;
-    
+
     $bool = mark_as_loaded('Foo');   # Foo.pm is now marked as loaded
-    $loc  = is_loaded('Foo');        # location of Foo.pm set to the 
+    $loc  = is_loaded('Foo');        # location of Foo.pm set to the
                                      # loaders location
     eval "require 'Foo'";            # is now a no-op
 
@@ -51,21 +51,21 @@ sub mark_as_loaded (*) {
     my $pm      = shift;
     my $file    = __PACKAGE__->_pm_to_file( $pm ) or return;
     my $who     = [caller]->[1];
-    
+
     my $where   = is_loaded( $pm );
     if ( defined $where ) {
         carp "'$pm' already marked as loaded ('$where')";
-    
+
     } else {
         $INC{$file} = $who;
     }
-    
+
     return 1;
 }
 
 =head2 $bool = mark_as_unloaded( PACKAGE );
 
-Marks the package as unloaded to perl, which is the exact opposite 
+Marks the package as unloaded to perl, which is the exact opposite
 of C<mark_as_loaded>. C<PACKAGE> can be a bareword or string.
 
 If the module is already unloaded, C<mark_as_unloaded> will carp about
@@ -73,7 +73,7 @@ this and tell you the C<PACKAGE> has been unloaded already.
 
 =cut
 
-sub mark_as_unloaded (*) { 
+sub mark_as_unloaded (*) {
     my $pm      = shift;
     my $file    = __PACKAGE__->_pm_to_file( $pm ) or return;
 
@@ -83,7 +83,7 @@ sub mark_as_unloaded (*) {
     } else {
         delete $INC{ $file };
     }
-    
+
     return 1;
 }
 
@@ -92,17 +92,17 @@ sub mark_as_unloaded (*) {
 C<is_loaded> tells you if C<PACKAGE> has been marked as loaded yet.
 C<PACKAGE> can be a bareword or string.
 
-It returns falls if C<PACKAGE> has not been loaded yet and the location 
+It returns falls if C<PACKAGE> has not been loaded yet and the location
 from where it is said to be loaded on success.
 
 =cut
 
-sub is_loaded (*) { 
+sub is_loaded (*) {
     my $pm      = shift;
     my $file    = __PACKAGE__->_pm_to_file( $pm ) or return;
 
     return $INC{$file} if exists $INC{$file};
-    
+
     return;
 }
 
@@ -110,12 +110,12 @@ sub is_loaded (*) {
 sub _pm_to_file {
     my $pkg = shift;
     my $pm  = shift or return;
-    
+
     my $file = join '/', split '::', $pm;
     $file .= '.pm';
-    
+
     return $file;
-}    
+}
 
 =head1 BUG REPORTS
 
@@ -127,7 +127,7 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =cut

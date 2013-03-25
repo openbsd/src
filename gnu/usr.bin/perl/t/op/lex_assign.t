@@ -128,7 +128,7 @@ for (@INPUT) {
   \$a = $op;
   \$b = $expectop;
   if (\$a ne \$b) {
-    print "# \$comment: got `\$a', expected `\$b'\n";
+    print "# \$comment: got '\$a', expected '\$b'\n";
     print "\$skip " if \$a ne \$b or \$skip eq 'skip';
   }
   print "ok \$ord\\n";

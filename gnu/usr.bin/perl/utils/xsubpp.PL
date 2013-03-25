@@ -34,7 +34,7 @@ $Config{startperl}
 use File::Spec;
 
 my $xsubpp = File::Spec->catfile(File::Spec->catdir(File::Spec->updir,
-						    qw(cpan ExtUtils-ParseXS
+						    qw(dist ExtUtils-ParseXS
 						       lib ExtUtils)),
 				 'xsubpp');
 

@@ -1,12 +1,3 @@
-BEGIN {
-    push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
-    require Config; import Config;
-    if ($Config{'extensions'} !~ /\bXS\/APItest\b/) {
-        print "1..0 # Skip: XS::APItest was not built\n";
-        exit 0;
-    }
-}
-
 use strict;
 use warnings;
 
@@ -72,12 +63,9 @@ like (DPeek ($1), qr'^PVMG\("',			' $1');
   $VAR = "\xa8";
   is (DPeek ($VAR),	'PVIV("\250"\0)',	' $VAR "\xa8"');
   is (DPeek (\$VAR),	'\PVIV("\250"\0)',	'\$VAR "\xa8"');
-  SKIP: {
-      $] <= 5.008001 and skip "UTF8 tests useless in this ancient perl version", 1;
-      $VAR = "a\x0a\x{20ac}";
-      is (DPeek ($VAR), 'PVIV("a\n\342\202\254"\0) [UTF8 "a\n\x{20ac}"]',
-						  ' $VAR "a\x0a\x{20ac}"');
-      }
+  $VAR = "a\x0a\x{20ac}";
+  is (DPeek ($VAR), 'PVIV("a\n\342\202\254"\0) [UTF8 "a\n\x{20ac}"]',
+					' $VAR "a\x0a\x{20ac}"');
   $VAR = sub { "VAR" };
   is (DPeek ($VAR),	'\CV(__ANON__)',	' $VAR sub { "VAR" }');
   is (DPeek (\$VAR),	'\\\CV(__ANON__)',	'\$VAR sub { "VAR" }');

@@ -3,7 +3,9 @@
 use strict;
 use warnings;
 
-require q(./test.pl); plan(tests => 12);
+BEGIN { chdir 't'; require q(./test.pl); @INC = qw "../lib lib" }
+
+plan(tests => 12);
 
 {
 
@@ -19,7 +21,7 @@ require q(./test.pl); plan(tests => 12);
     # call the submethod in the direct instance
 
     my $foo = Foo->new();
-    isa_ok($foo, 'Foo');
+    object_ok($foo, 'Foo');
 
     can_ok($foo, 'bar');
     is($foo->bar(), 'Foo::bar', '... got the right return value');    
@@ -35,8 +37,8 @@ require q(./test.pl); plan(tests => 12);
     }  
     
     my $bar = Bar->new();
-    isa_ok($bar, 'Bar');
-    isa_ok($bar, 'Foo');    
+    object_ok($bar, 'Bar');
+    object_ok($bar, 'Foo');    
     
     # test it working with with Sub::Name
     SKIP: {    
@@ -52,7 +54,7 @@ require q(./test.pl); plan(tests => 12);
 
         can_ok($bar, 'bar');
         my $value = eval { $bar->bar() };
-        ok(!$@, '... calling bar() succedded') || diag $@;
+        ok(!$@, '... calling bar() succeeded') || diag $@;
         is($value, 'Foo::bar', '... got the right return value too');
     }
     
@@ -66,8 +68,8 @@ require q(./test.pl); plan(tests => 12);
     }      
     
     my $baz = Baz->new();
-    isa_ok($baz, 'Baz');
-    isa_ok($baz, 'Foo');    
+    object_ok($baz, 'Baz');
+    object_ok($baz, 'Foo');    
     
     {
         my $m = sub { (shift)->next::method() };

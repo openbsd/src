@@ -15,11 +15,7 @@ sub _initialize {
 sub _set_defaults {
     my $self = shift;
 
-    for my $key (
-        qw( source_class perl_source_class grammar_class
-        iterator_factory_class result_factory_class )
-      )
-    {
+    for my $key (qw( grammar_class result_factory_class )) {
         my $default_method = "_default_$key";
         $self->$key( $self->$default_method() );
     }

@@ -1,10 +1,3 @@
-BEGIN {
-    if( $ENV{PERL_CORE} ) {
-        chdir '../lib/Archive/Tar' if -d '../lib/Archive/Tar';
-    }
-    use lib '../../..';
-}
-
 BEGIN { chdir 't' if -d 't' }
 
 use Test::More 'no_plan';
@@ -70,6 +63,20 @@ my $LONG_FILE = qq[directory/really-really-really-really-really-really-really-re
 my $TOO_LONG    =   ($^O eq 'MSWin32' or $^O eq 'cygwin' or $^O eq 'VMS')
                     && length( cwd(). $LONG_FILE ) > 247;
 
+if(!$TOO_LONG) {
+    my $alt = File::Spec->catfile( cwd(), $LONG_FILE);
+    eval 'mkpath([$alt]);';
+    if($@)
+    {
+        $TOO_LONG = 1;
+    }
+    else
+    {
+        $@ = '';
+        my $base = File::Spec->catfile( cwd(), 'directory');
+        rmtree $base;
+    }
+}
 ### warn if we are going to skip long file names
 if ($TOO_LONG) {
     diag("No long filename support - long filename extraction disabled") if ! $ENV{PERL_CORE};

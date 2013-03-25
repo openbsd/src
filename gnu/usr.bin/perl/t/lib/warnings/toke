@@ -80,6 +80,9 @@ toke.c	AOK
     Unrecognized escape \\%c passed through
         $a = "\m" ;
 
+    Useless use of \\E.
+        $a = "abcd\E" ;
+
     %s number > %s non-portable
         my $a =  0b011111111111111111111111111111110 ;
         $a =  0b011111111111111111111111111111111 ;
@@ -140,13 +143,19 @@ Use of comma-less variable list is deprecated at - line 4.
 Use of comma-less variable list is deprecated at - line 4.
 ########
 # toke.c
+$a =~ m/$foo/sand $bar;
+$a =~ s/$foo/fool/sand $bar;
 $a = <<;
 
 no warnings 'deprecated' ;
+$a =~ m/$foo/sand $bar;
+$a =~ s/$foo/fool/sand $bar;
 $a = <<;
 
 EXPECT
-Use of bare << to mean <<"" is deprecated at - line 2.
+Having no space between pattern and following word is deprecated at - line 2.
+Having no space between pattern and following word is deprecated at - line 3.
+Use of bare << to mean <<"" is deprecated at - line 4.
 ########
 # toke.c
 use warnings 'syntax' ;
@@ -228,6 +237,26 @@ EXPECT
 You need to quote "fred" at - line 3.
 ########
 # toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'syntax' ;
+sub frèd {} ; $SIG{TERM} = frèd;
+no warnings 'syntax' ;
+$SIG{TERM} = frèd;
+EXPECT
+You need to quote "frèd" at - line 5.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'syntax' ;
+sub ふれど {} ; $SIG{TERM} = ふれど;
+no warnings 'syntax' ;
+$SIG{TERM} = ふれど;
+EXPECT
+You need to quote "ふれど" at - line 5.
+########
+# toke.c
 use warnings 'syntax' ;
 @a[3] = 2;
 @a{3} = 2;
@@ -237,6 +266,32 @@ no warnings 'syntax' ;
 EXPECT
 Scalar value @a[3] better written as $a[3] at - line 3.
 Scalar value @a{3} better written as $a{3} at - line 4.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'syntax' ;
+@à[3] = 2;
+@à{3} = 2;
+no warnings 'syntax' ;
+@à[3] = 2;
+@à{3} = 2;
+EXPECT
+Scalar value @à[3] better written as $à[3] at - line 5.
+Scalar value @à{3} better written as $à{3} at - line 6.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'syntax' ;
+@ぁ[3] = 2;
+@ぁ{3} = 2;
+no warnings 'syntax' ;
+@ぁ[3] = 2;
+@ぁ{3} = 2;
+EXPECT
+Scalar value @ぁ[3] better written as $ぁ[3] at - line 5.
+Scalar value @ぁ{3} better written as $ぁ{3} at - line 6.
 ########
 # toke.c
 use warnings 'syntax' ;
@@ -269,10 +324,19 @@ Possible attempt to separate words with commas at - line 3.
 ########
 # toke.c
 use warnings 'qw' ;
-@a = qw(a b #) ;
+@a = qw(a b c # #) ;
 no warnings 'qw' ;
-@a = qw(a b #) ;
+@a = qw(a b c # #) ;
 EXPECT
+Possible attempt to put comments in qw() list at - line 3.
+########
+# toke.c
+use warnings 'qw' ;
+@a = qw(a, b, c # #) ;
+no warnings 'qw' ;
+@a = qw(a, b, c # #) ;
+EXPECT
+Possible attempt to separate words with commas at - line 3.
 Possible attempt to put comments in qw() list at - line 3.
 ########
 # toke.c
@@ -552,6 +616,30 @@ EXPECT
 Bareword "FRED::" refers to nonexistent package at bar line 25.
 ########
 # toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'bareword' ;
+#line 25 "bar"
+$a = FRÈD:: ;
+no warnings 'bareword' ;
+#line 25 "bar"
+$a = FRÈD:: ;
+EXPECT
+Bareword "FRÈD::" refers to nonexistent package at bar line 25.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'bareword' ;
+#line 25 "bar"
+$a = ϞϞϞ:: ;
+no warnings 'bareword' ;
+#line 25 "bar"
+$a = ϞϞϞ:: ;
+EXPECT
+Bareword "ϞϞϞ::" refers to nonexistent package at bar line 25.
+########
+# toke.c
 use warnings 'ambiguous' ;
 sub time {}
 my $a = time() ;
@@ -592,6 +680,14 @@ Warning: Use of "rand" without parentheses is ambiguous at - line 3.
 Warning: Use of "rand" without parentheses is ambiguous at - line 8.
 Warning: Use of "rand" without parentheses is ambiguous at - line 10.
 ########
+# [perl #97110]
+sub myrand(;$) { }
+sub whatever($) { }
+my $a = myrand + 4 ;
+my $b = whatever + 4 ;
+EXPECT
+Warning: Use of "myrand" without parentheses is ambiguous at - line 4.
+########
 # toke.c
 use warnings "ambiguous";
 print for keys %+; # should not warn
@@ -620,9 +716,76 @@ Ambiguous use of -fred resolved as -&fred() at - line 9.
 Ambiguous use of -fred resolved as -&fred() at - line 11.
 ########
 # toke.c
+use utf8;
+use open qw( :utf8 :std );
+sub frèd {};
+-frèd ;
+EXPECT
+Ambiguous use of -frèd resolved as -&frèd() at - line 5.
+########
+# toke.c
+$^W = 0 ;
+use utf8;
+use open qw( :utf8 :std );
+sub frèd {} ;
+-frèd ;
+{
+    no warnings 'ambiguous' ;
+    -frèd ;
+    use warnings 'ambiguous' ;
+    -frèd ;
+}
+-frèd ;
+EXPECT
+Ambiguous use of -frèd resolved as -&frèd() at - line 6.
+Ambiguous use of -frèd resolved as -&frèd() at - line 11.
+Ambiguous use of -frèd resolved as -&frèd() at - line 13.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+sub ᒍᒘᒊ {};
+-ᒍᒘᒊ ;
+EXPECT
+Ambiguous use of -ᒍᒘᒊ resolved as -&ᒍᒘᒊ() at - line 5.
+########
+# toke.c
+$^W = 0 ;
+use utf8;
+use open qw( :utf8 :std );
+sub ᒍᒘᒊ {} ;
+-ᒍᒘᒊ ;
+{
+    no warnings 'ambiguous' ;
+    -ᒍᒘᒊ ;
+    use warnings 'ambiguous' ;
+    -ᒍᒘᒊ ;
+}
+-ᒍᒘᒊ ;
+EXPECT
+Ambiguous use of -ᒍᒘᒊ resolved as -&ᒍᒘᒊ() at - line 6.
+Ambiguous use of -ᒍᒘᒊ resolved as -&ᒍᒘᒊ() at - line 11.
+Ambiguous use of -ᒍᒘᒊ resolved as -&ᒍᒘᒊ() at - line 13.
+########
+# toke.c
 open FOO || time;
+open local *FOO; # should be ok
 EXPECT
 Precedence problem: open FOO should be open(FOO) at - line 2.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+open FÒÒ || time;
+EXPECT
+Precedence problem: open FÒÒ should be open(FÒÒ) at - line 4.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+open ᒍOO || time;
+EXPECT
+Precedence problem: open ᒍOO should be open(ᒍOO) at - line 4.
 ########
 # toke.c (and [perl #16184])
 open FOO => "<&0"; close FOO;
@@ -638,10 +801,45 @@ open FOO || time;
     open FOO || time;
 }
 open FOO || time;
+open Foo::BAR; # this should not warn
 EXPECT
 Precedence problem: open FOO should be open(FOO) at - line 3.
 Precedence problem: open FOO should be open(FOO) at - line 8.
 Precedence problem: open FOO should be open(FOO) at - line 10.
+########
+# toke.c
+$^W = 0 ;
+use utf8;
+use open qw( :utf8 :std );
+open FÒÒ || time;
+{
+    no warnings 'precedence' ;
+    open FÒÒ || time;
+    use warnings 'precedence' ;
+    open FÒÒ || time;
+}
+open FÒÒ || time;
+EXPECT
+Precedence problem: open FÒÒ should be open(FÒÒ) at - line 5.
+Precedence problem: open FÒÒ should be open(FÒÒ) at - line 10.
+Precedence problem: open FÒÒ should be open(FÒÒ) at - line 12.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+$^W = 0 ;
+open ᒍÒÒ || time;
+{
+    no warnings 'precedence' ;
+    open ᒍÒÒ || time;
+    use warnings 'precedence' ;
+    open ᒍÒÒ || time;
+}
+open ᒍÒÒ || time;
+EXPECT
+Precedence problem: open ᒍÒÒ should be open(ᒍÒÒ) at - line 5.
+Precedence problem: open ᒍÒÒ should be open(ᒍÒÒ) at - line 10.
+Precedence problem: open ᒍÒÒ should be open(ᒍÒÒ) at - line 12.
 ########
 # toke.c
 $^W = 0 ;
@@ -662,12 +860,40 @@ Operator or semicolon missing before *foo at - line 10.
 Ambiguous use of * resolved as operator * at - line 10.
 ########
 # toke.c
+use utf8;
+use open qw( :utf8 :std );
+$^W = 0 ;
+*ｆｏｏ *ｆｏｏ ;
+{
+    no warnings 'ambiguous' ;
+    *ｆｏｏ *ｆｏｏ ;
+    use warnings 'ambiguous' ;
+    *ｆｏｏ *ｆｏｏ ;
+}
+*ｆｏｏ *ｆｏｏ ;
+EXPECT
+Operator or semicolon missing before *ｆｏｏ at - line 5.
+Ambiguous use of * resolved as operator * at - line 5.
+Operator or semicolon missing before *ｆｏｏ at - line 10.
+Ambiguous use of * resolved as operator * at - line 10.
+Operator or semicolon missing before *ｆｏｏ at - line 12.
+Ambiguous use of * resolved as operator * at - line 12.
+########
+# toke.c
 use warnings 'misc' ;
 my $a = "\m" ;
 no warnings 'misc' ;
 $a = "\m" ;
 EXPECT
 Unrecognized escape \m passed through at - line 3.
+########
+# toke.c
+use warnings 'misc' ;
+my $a = "abcd\E" ;
+no warnings 'misc' ;
+$a = "abcd\E" ;
+EXPECT
+Useless use of \E at - line 3.
 ########
 # toke.c
 use warnings 'portable' ;
@@ -733,18 +959,38 @@ dump() better written as CORE::dump() at - line 4.
 # toke.c
 use warnings 'misc';
 use subs qw/dump/;
-sub dump { print "no warning for overriden dump\n"; }
+sub dump { print "no warning for overridden dump\n"; }
 dump;
 EXPECT
-no warning for overriden dump
+no warning for overridden dump
 ########
 # toke.c
 use warnings 'ambiguous';
 "@mjd_previously_unused_array";        
 no warnings 'ambiguous';
-"@mjd_previously_unused_array";        
+"@mjd_previously_unused_array2";        
 EXPECT
 Possible unintended interpolation of @mjd_previously_unused_array in string at - line 3.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'ambiguous';
+"@mjd_previously_unused_àrray";        
+no warnings 'ambiguous';
+"@mjd_previously_unused_àrray2";        
+EXPECT
+Possible unintended interpolation of @mjd_previously_unused_àrray in string at - line 5.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'ambiguous';
+"@mjd_previously_unused_ぁrrぁy";        
+no warnings 'ambiguous';
+"@mjd_previously_unused_ぁrrぁy2";        
+EXPECT
+Possible unintended interpolation of @mjd_previously_unused_ぁrrぁy in string at - line 5.
 ########
 # toke.c
 # 20020328 mjd-perl-patch+@plover.com at behest of jfriedl@yahoo.com
@@ -903,60 +1149,104 @@ Possible unintended interpolation of $\ in regex at - line 3.
 Possible unintended interpolation of $\ in regex at - line 5.
 ########
 # toke.c
-use feature 'state';
-# This one is fine as an empty attribute list
-my $holy_Einstein : = '';
-# This one is deprecated
-my $krunch := 4;
-our $FWISK_FWISK_FWIZZACH_FWACH_ZACHITTY_ZICH_SHAZZATZ_FWISK := '';
-state $thump := 'Trumpets';
-# Lather rinse repeat in my usual obsessive style
-my @holy_perfect_pitch : = ();
-my @zok := ();
-our @GUKGUK := ();
-# state @widget_mark := ();
-my %holy_seditives : = ();
-my %bang := ();
-our %GIGAZING := ();
-# state %hex := ();
-no warnings 'deprecated';
-my $holy_giveaways : = '';
-my $eee_yow := [];
-our $TWOYYOYYOING_THUK_UGH := 1 == 1;
-state $octothorn := 'Tinky Winky';
-my @holy_Taj_Mahal : = ();
-my @touche := ();
-our @PLAK_DAK_THUK_FRIT := ();
-# state @hash_mark := ();
-my %holy_priceless_collection_of_Etruscan_snoods : = ();
-my %wham_eth := ();
-our %THWUK := ();
-# state %octalthorpe := ();
-use warnings;
-my $holy_sewer_pipe : = '';
-my $thunk := undef;
-our $BLIT := time;
-state $crunch := 'Laa Laa';
-my @glurpp := ();
-my @holy_harem : = ();
-our @FABADAP := ();
-# state @square := ();
-my %holy_pin_cushions : = ();
-my %swoosh := ();
-our %RRRRR := ();
-# state %scratchmark := ();
+use warnings 'syntax' ;
+my $a = "\o";
+my $a = "\o{";
+my $a = "\o{}";
+no warnings 'syntax' ;
+my $a = "\o";
+my $a = "\o{";
+my $a = "\o{}";
 EXPECT
-Use of := for an empty attribute list is deprecated at - line 6.
-Use of := for an empty attribute list is deprecated at - line 7.
-Use of := for an empty attribute list is deprecated at - line 8.
-Use of := for an empty attribute list is deprecated at - line 11.
-Use of := for an empty attribute list is deprecated at - line 12.
-Use of := for an empty attribute list is deprecated at - line 15.
-Use of := for an empty attribute list is deprecated at - line 16.
-Use of := for an empty attribute list is deprecated at - line 33.
-Use of := for an empty attribute list is deprecated at - line 34.
-Use of := for an empty attribute list is deprecated at - line 35.
-Use of := for an empty attribute list is deprecated at - line 36.
-Use of := for an empty attribute list is deprecated at - line 38.
-Use of := for an empty attribute list is deprecated at - line 41.
-Use of := for an empty attribute list is deprecated at - line 42.
+Missing braces on \o{} at - line 3, within string
+Missing right brace on \o{ at - line 4, within string
+Number with no digits at - line 5, within string
+BEGIN not safe after errors--compilation aborted at - line 6.
+########
+# toke.c
+use warnings 'digit' ;
+my $a = "\o{1238456}";
+no warnings 'digit' ;
+my $a = "\o{1238456}";
+EXPECT
+Non-octal character '8'.  Resolved as "\o{123}" at - line 3.
+########
+# toke.c
+use warnings;
+my $a = "foo";
+print $a =~ ?f? ? "yes\n" : "no\n" foreach 0..2;
+EXPECT
+Use of ?PATTERN? without explicit operator is deprecated at - line 4.
+yes
+no
+no
+########
+# toke.c
+use warnings;
+my $a = "\c{ack}";
+$a = "\c,";
+$a = "\c`";
+no warnings 'syntax';
+$a = "\c{ack}";
+$a = "\c,";
+$a = "\c`";
+no warnings 'deprecated';
+EXPECT
+"\c{" is deprecated and is more clearly written as ";" at - line 3.
+"\c," is more clearly written simply as "l" at - line 4.
+"\c`" is more clearly written simply as "\ " at - line 5.
+"\c{" is deprecated and is more clearly written as ";" at - line 7.
+########
+# toke.c
+use warnings 'syntax' ;
+my $a = qr/foo/du;
+$a = qr/foo/lai;
+$a = qr/foo/lil;
+$a = qr/foo/aia;
+$a = qr/foo/aaia;
+no warnings 'syntax' ;
+my $a = qr/foo/du;
+EXPECT
+Regexp modifiers "/d" and "/u" are mutually exclusive at - line 3, near "= "
+Regexp modifiers "/l" and "/a" are mutually exclusive at - line 4, near "= "
+Regexp modifier "/l" may not appear twice at - line 5, near "= "
+Regexp modifier "/a" may appear a maximum of twice at - line 7, near "= "
+BEGIN not safe after errors--compilation aborted at - line 8.
+########
+# toke.c
+# [perl #4362]
+eval "print q\xabfoo";
+print "ok\n" if
+    $@ =~ /Can't find string terminator "\xab" anywhere before EOF/;
+EXPECT
+ok
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'ambiguous' ;
+sub frèd {}
+$a = ${frèd} ;
+no warnings 'ambiguous' ;
+$a = ${frèd} ;
+EXPECT
+Ambiguous use of ${frèd} resolved to $frèd at - line 6.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'ambiguous' ;
+sub f렏 {}
+$a = ${f렏} ;
+no warnings 'ambiguous' ;
+$a = ${f렏} ;
+EXPECT
+Ambiguous use of ${f렏} resolved to $f렏 at - line 6.
+########
+# toke.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings;
+CORE::렏;
+EXPECT
+CORE::렏 is not a keyword at - line 5.

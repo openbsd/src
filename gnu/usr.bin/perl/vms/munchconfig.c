@@ -215,7 +215,7 @@ main(int argc, char *argv[])
     }
   }
 
-  /* Okay, we've read in all the substititions from our config.sh */
+  /* Okay, we've read in all the substitutions from our config.sh */
   /* equivalent. Read in the config_h.sh equiv and start the substitution */
   
   /* First, eat all the lines until we get to one with !GROK!THIS! in it */
@@ -311,7 +311,7 @@ main(int argc, char *argv[])
       }
     }
     
-    /* If we've created an #undef line, make sure we don't output anthing
+    /* If we've created an #undef line, make sure we don't output anything
      * after the "#undef FOO" besides comments.  We could do this as we
      * go by recognizing the #undef as it goes by, and thus avoid another
      * use of a fixed-length buffer, but this is simpler.

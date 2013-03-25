@@ -44,15 +44,15 @@ $Object::Accessor::DEBUG = $Object::Accessor::DEBUG = 1 if @ARGV;
 {   ### bad
     {   my $warning;
         local $SIG{__WARN__} = sub { $warning .= "@_" };
-    
+
         ok( !$Object->$Acc( $0 ),   "'$Acc' NOT set to '$0'" );
         is( $Object->$Acc(), undef, "   '$Acc' still holds '<undef>'" );
         like( $warning, $Err_re,    "   Warnings logged" );
-    
+
         ### reset warnings;
         undef $warning;
-        
-    
+
+
         my $ok = $Object->mk_verify;
         ok( !$ok,                   "   Internal verify fails" );
         like( $warning, $Ver_re,    "       Warning logged" );
@@ -63,14 +63,14 @@ $Object::Accessor::DEBUG = $Object::Accessor::DEBUG = 1 if @ARGV;
     ### good
     {   my $warning;
         local $SIG{__WARN__} = sub { $warning .= "@_" };
-    
+
         ok( $Object->$Acc( $$ ),    "'$Acc' set to '$$'" );
         is( $Object->$Acc(), $$,    "   '$Acc' still holds '$$'" );
         ok(!$warning,               "   No warnings logged" );
 
         ### reset warnings;
         undef $warning;
-        
+
         my $ok = $Object->mk_verify;
         ok( $ok,                    "   Internal verify succeeds" );
         ok( !$warning,              "       No warnings" );

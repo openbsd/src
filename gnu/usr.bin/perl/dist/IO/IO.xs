@@ -57,6 +57,10 @@ typedef FILE * OutputStream;
 # define NORETURN_FUNCTION_END /* NOT REACHED */ return 0
 #endif
 
+#ifndef dVAR
+#  define dVAR dNOOP
+#endif
+
 static int not_here(const char *s) __attribute__noreturn__;
 static int
 not_here(const char *s)
@@ -122,13 +126,46 @@ io_blocking(pTHX_ InputStream f, int block)
     return RETVAL;
 #else
 #   ifdef WIN32
-    char flags = (char)block;
-    return ioctl(PerlIO_fileno(f), FIONBIO, &flags);
+    if (block >= 0) {
+	unsigned long flags = !block;
+	/* ioctl claims to take char* but really needs a u_long sized buffer */
+	const int ret = ioctl(PerlIO_fileno(f), FIONBIO, (char*)&flags);
+	if (ret != 0)
+	    return -1;
+	/* Win32 has no way to get the current blocking status of a socket.
+	 * However, we don't want to just return undef, because there's no way
+	 * to tell that the ioctl succeeded.
+	 */
+	return flags;
+    }
+    /* TODO: Perhaps set $! to ENOTSUP? */
+    return -1;
 #   else
     return -1;
 #   endif
 #endif
 }
+
+static OP *
+io_pp_nextstate(pTHX)
+{
+    dVAR;
+    COP *old_curcop = PL_curcop;
+    OP *next = PL_ppaddr[PL_op->op_type](aTHX);
+    PL_curcop = old_curcop;
+    return next;
+}
+
+static OP *
+io_ck_lineseq(pTHX_ OP *o)
+{
+    OP *kid = cBINOPo->op_first;
+    for (; kid; kid = kid->op_sibling)
+	if (kid->op_type == OP_NEXTSTATE || kid->op_type == OP_DBSTATE)
+	    kid->op_ppaddr = io_pp_nextstate;
+    return o;
+}
+
 
 MODULE = IO	PACKAGE = IO::Seekable	PREFIX = f
 
@@ -226,7 +263,7 @@ new_tmpfile(packname = "IO::File")
 #endif
 	gv = (GV*)SvREFCNT_inc(newGVgen(packname));
 	if (gv)
-	    hv_delete(GvSTASH(gv), GvNAME(gv), GvNAMELEN(gv), G_DISCARD);
+	    (void) hv_delete(GvSTASH(gv), GvNAME(gv), GvNAMELEN(gv), G_DISCARD);
 	if (gv && do_open(gv, "+>&", 3, FALSE, 0, 0, fp)) {
 	    ST(0) = sv_2mortal(newRV((SV*)gv));
 	    sv_bless(ST(0), gv_stashpv(packname, TRUE));
@@ -442,6 +479,18 @@ fsync(handle)
 #else
 	RETVAL = (SysRet) not_here("IO::Handle::sync");
 #endif
+    OUTPUT:
+	RETVAL
+
+SV *
+_create_getline_subs(const char *code)
+    PREINIT:
+	SV *ret;
+    CODE:
+	OP *(*io_old_ck_lineseq)(pTHX_ OP *) = PL_check[OP_LINESEQ];
+	PL_check[OP_LINESEQ] = io_ck_lineseq;
+	RETVAL = SvREFCNT_inc(eval_pv(code,FALSE));
+	PL_check[OP_LINESEQ] = io_old_ck_lineseq;
     OUTPUT:
 	RETVAL
 

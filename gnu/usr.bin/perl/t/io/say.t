@@ -3,6 +3,9 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
+    eval 'use Errno';
+    die $@ if $@ and !is_miniperl();
 }
 
 # Just a few very basic tests cribbed from t/io/print.t,
@@ -11,12 +14,9 @@ BEGIN {
 # the same way as print in any case.
 
 use strict 'vars';
-eval 'use Errno';
-die $@ if $@ and !$ENV{PERL_CORE_MINITEST};
-
 use feature "say";
 
-say "1..12";
+say "1..13";
 
 my $foo = 'STDOUT';
 say $foo "ok 1";
@@ -52,4 +52,9 @@ say STDOUT;
     # test that $, doesn't show up before the trailing \n
     local $, = "\nnot ok 13"; # how to fool Test::Harness
     say "ok 12";
+}
+
+{
+    no feature 'say';
+    CORE::say "ok 13 - CORE::say without feature.pm";
 }

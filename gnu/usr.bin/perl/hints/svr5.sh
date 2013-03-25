@@ -27,7 +27,7 @@ case "$cc" in
     ;;  
 esac
 
-# Hardwire the processor to 586 for consistancy with autoconf
+# Hardwire the processor to 586 for consistency with autoconf
 # archname='i586-svr5'
 #  -- seems this is generally disliked by perl porters so leave it to float
 
@@ -66,7 +66,7 @@ else
     libswanted=`echo " $libswanted " | sed -e 's/ ucb / /'`
     glibpth=`echo " $glibpth " | sed -e 's/ \/usr\/ucblib / /'`
 
-    # If see libdbm in /usr/local and not overidden assume its the 
+    # If see libdbm in /usr/local and not overridden assume its the
     # non ucblib rebuild from skunkware  and use it
     if [ ! -f /usr/local/lib/libdbm.so -o ! "$want_dbm" ] ; then
         i_dbm='undef'

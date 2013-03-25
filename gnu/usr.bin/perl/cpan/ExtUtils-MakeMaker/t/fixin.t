@@ -64,6 +64,8 @@ sub test_fixin {
 
 
 # A simple test of fixin
+# On VMS, the shebang line comes after the startperl business.
+my $shb_line_num = $^O eq 'VMS' ? 2 : 0;
 test_fixin(<<END,
 #!/foo/bar/perl -w
 
@@ -71,8 +73,8 @@ blah blah blah
 END
     sub {
         my @lines = @_;
-        unlike $lines[0], qr[/foo/bar/perl], "#! replaced";
-        like   $lines[0], qr[ -w\b], "switch retained";
+        unlike $lines[$shb_line_num], qr[/foo/bar/perl], "#! replaced";
+        like   $lines[$shb_line_num], qr[ -w\b], "switch retained";
         
         # In between might be that "not running under some shell" madness.
                
@@ -90,8 +92,8 @@ END
 
     sub {
         my @lines = @_;
-        unlike $lines[0], qr[/foo/bar/perl5.8.8], "#! replaced";
-        like   $lines[0], qr[ -w\b], "switch retained";
+        unlike $lines[$shb_line_num], qr[/foo/bar/perl5.8.8], "#! replaced";
+        like   $lines[$shb_line_num], qr[ -w\b], "switch retained";
 
         # In between might be that "not running under some shell" madness.
 
@@ -101,17 +103,20 @@ END
 
 
 # fixin shouldn't pick this up.
-test_fixin(<<END,
+SKIP: {
+    skip "Not relevant on VMS", 4 if $^O eq 'VMS';
+    test_fixin(<<END,
 #!/foo/bar/perly -w
 
 blah blah blah
 END
 
-    sub {
-        is join("", @_), <<END;
+        sub {
+            is join("", @_), <<END;
 #!/foo/bar/perly -w
 
 blah blah blah
 END
-    }
-);
+        }
+    );
+}

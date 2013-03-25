@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 13;
+use Test::More tests => 16;
 
 use TieOut;
 use MakeMaker::Test::Utils;
@@ -35,6 +35,8 @@ ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
     local $SIG{__WARN__} = sub {
         $warnings .= join '', @_;
     };
+    # prerequisite warnings are disabled while building the perl core:
+    local $ENV{PERL_CORE} = 0;
 
     WriteMakefile(
         NAME            => 'Big::Dummy',
@@ -64,6 +66,20 @@ ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
     );
     is $warnings, 
     "Warning: prerequisite I::Do::Not::Exist 0 not found.\n";
+
+
+    $warnings = '';
+    WriteMakefile(
+        NAME            => 'Big::Dummy',
+        PREREQ_PM       => {
+            "I::Do::Not::Exist" => "",
+        }
+    );
+    my @warnings = split /\n/, $warnings;
+    is @warnings, 2;
+    like $warnings[0], qr{^Unparsable version '' for prerequisite I::Do::Not::Exist\b};
+    is $warnings[1], "Warning: prerequisite I::Do::Not::Exist 0 not found.";
+
 
     $warnings = '';
     WriteMakefile(

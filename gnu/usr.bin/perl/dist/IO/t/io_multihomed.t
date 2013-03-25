@@ -74,7 +74,8 @@ package main;
 
 use IO::Socket;
 
-$listen = IO::Socket::INET->new(Listen => 2,
+$listen = IO::Socket::INET->new(LocalAddr => 'localhost',
+				Listen => 2,
 				Proto => 'tcp',
 				Timeout => 5,
 			       ) or die "$!";

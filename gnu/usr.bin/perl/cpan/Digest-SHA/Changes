@@ -1,5 +1,67 @@
 Revision history for Perl extension Digest::SHA.
 
+5.71  Wed Feb 29 04:06:10 MST 2012
+	- prevented $! from getting clobbered in _bail() routine
+		-- thanks to Zefram for patch
+	- added example of BITS mode usage to shasum documentation
+
+5.70  Wed Dec 14 02:32:10 MST 2011
+	- added BITS mode to addfile method and shasum
+		-- partial-byte inputs now possible via files/STDIN
+		-- allows shasum to check all 8074 NIST Msg vectors
+			-- previously required special programming
+
+5.63  Tue Nov  8 02:36:42 MST 2011
+	- added code to allow very large data inputs all at once
+		-- previously limited to several hundred MB at a time
+		-- many thanks to Thomas Drugeon for his elegant patch
+	- removed outdated reference URLs from several test scripts
+		-- these URLs aren't essential, and often go stale
+		-- thanks to Leon Brocard for spotting this
+			-- ref. rt.cpan.org #68740
+
+5.62  Sat May 14 04:00:34 MST 2011
+	- removed unnecessary loading of MIME::Base64 module
+		-- thanks to dolmen for pointing this out
+
+5.61  Wed Mar  9 05:26:36 MST 2011
+	- corrected bug in 'algorithm' method
+	- fixed -x option in Makefile.PL
+		-- not often used since it deliberately excludes
+			all 64-bit SHA transforms
+	- addressed minor documentation oversights
+
+5.60  Thu Mar  3 05:26:42 MST 2011
+	- added new SHA-512/224 and SHA-512/256 transforms
+		-- ref. NIST Draft FIPS 180-4 (February 2011)
+	- simplified shasum by removing duplicative text
+	- improved efficiency of Addfile
+		-- expensive -T test now occurs only in portable mode
+
+5.50  Tue Dec 14 06:20:08 MST 2010
+	- adopted convention that '-' always means STDIN
+		-- actual filename '-' accessed as './-'
+		-- accords with behavior of sha1sum/md5sum
+	- corrected undefined subroutine oversight in shasum
+		-- inadvertent migration of _bail() from SHA.pm
+
+5.49  Sun Dec 12 07:22:04 MST 2010
+	- modified Addfile to accept all POSIX filenames
+		-- standard allows all characters except NUL and '/'
+	- updated shasum to more closely mimic sha1sum/md5sum
+		-- added "backslash processing" to handle newlines
+			and backslashes in filenames
+		-- now accepts all POSIX filenames via Addfile
+		-- thanks to Sean Burke for identifying edge cases
+
+5.48  Mon Jan  4 16:32:52 MST 2010
+	- fixed "shasum -a0" option (ref. rt.cpan.org #53319)
+		-- incorrectly accepted 0 as a valid algorithm
+			-- thanks to Zefram for patch
+	- updated URL for NIST test vectors
+		-- ref. files t/nistbit.t, t/nistbyte.t
+			-- thanks to Leon Brocard for patch
+
 5.47  Wed Apr 30 04:00:54 MST 2008
 	- modified Makefile.PL to install in core for Perls >= 5.10
 		-- thanks to Jerry Hedden for patch

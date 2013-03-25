@@ -164,7 +164,7 @@ $pid = system 4|0x40000, $^X, '-wle', <<'EOS', $pname, $$; # SESSION|INDEPENDENT
 EOS
 
 ok $pid, 'kid started';
-sleep 2;			# XXX How to syncronize with kid???
+sleep 2;			# XXX How to synchronize with kid???
 $in = scalar <$server_pipe>;
 my $ok1 = ($in || '') eq "Is your pid $$?\n";
 is $in, "Is your pid $$?\n", 'call in';

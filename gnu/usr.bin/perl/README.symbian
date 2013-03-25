@@ -4,7 +4,7 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.symbian - Perl version 5 on Symbian OS
+perlsymbian - Perl version 5 on Symbian OS
 
 =head1 DESCRIPTION
 
@@ -33,11 +33,11 @@ mainly as demonstrations.
     These instructions have been tested under various Nokia Series 60
     Symbian SDKs (1.2 to 2.6, 2.8 should also work, 1.2 compiles but
     does not work), Series 80 2.0, and Nokia 7710 (Series 90) SDK.
-    You can get the SDKs from Forum Nokia (http://www.forum.nokia.com/).
+    You can get the SDKs from Forum Nokia (L<http://www.forum.nokia.com/>).
     A very rough port ("it compiles") to UIQ 2.1 has also been made.
 
     A prerequisite for any of the SDKs is to install ActivePerl
-    from ActiveState, http://www.activestate.com/Products/ActivePerl/
+    from ActiveState, L<http://www.activestate.com/Products/ActivePerl/>
 
     Having the SDK installed also means that you need to have either
     the Metrowerks CodeWarrior installed (2.8 and 3.0 were used in testing)
@@ -57,7 +57,7 @@ mainly as demonstrations.
     releases, SDKs, compilers, platforms, or devices are naturally welcome.
 
 (1) Get a Perl source code distribution (for example the file
-    perl-5.9.2.tar.gz is fine) from http://www.cpan.org/src/
+    perl-5.9.2.tar.gz is fine) from L<http://www.cpan.org/src/>
     and unpack it in your the C:/Symbian directory of your Windows
     system.
 
@@ -215,7 +215,7 @@ If you see right after "make" this
     'cat' is not recognized as an internal or external command,
     operable program or batch file.
 
-it means you need to (re)run the symbian\config.pl.
+it means you need to (re)run the F<symbian\config.pl>.
 
 If you get the error
 
@@ -243,19 +243,19 @@ the "Oneliner" allows one to type in Perl code, and the "Run"
 opens a file chooser for selecting a Perl file to run.
 
 The PerlApp also is started when the "Perl recognizer" (also included
-and installed) detects a Perl file being activated througg the GUI,
+and installed) detects a Perl file being activated through the GUI,
 and offers either to install it under \Perl (if the Perl file is in
 the inbox of the messaging application) or to run it (if the Perl file
 is under \Perl).
 
 =head2 sisify.pl
 
-In the symbian subdirectory there is sisify.pl utility which can be
-used to package Perl scripts and/or Perl library directories into SIS
-files, which can be installed to the device.  To run the sisify.pl
-utility, you will need to have the 'makesis' and 'uidcrc' utilities
-already installed.  If you don't have the Win32 SDKs, you may try
-for example http://gnupoc.sourceforge.net/ or http://symbianos.org/~andreh/.
+In the symbian subdirectory there is F<sisify.pl> utility which can be used
+to package Perl scripts and/or Perl library directories into SIS files,
+which can be installed to the device.  To run the sisify.pl utility,
+you will need to have the 'makesis' and 'uidcrc' utilities already
+installed.  If you don't have the Win32 SDKs, you may try for example
+L<http://gnupoc.sourceforge.net/> or L<http://symbianos.org/~andreh/>.
 
 =head2 Using Perl in Symbian
 
@@ -270,9 +270,9 @@ library, but certain corners of such emulation libraries that tend
 to be left unimplemented on non-UNIX platforms have been left
 unimplemented also this time: fork(), signals(), user/group ids,
 select() working for sockets, non-blocking sockets, and so forth.
-See the file symbian/config.sh and look for 'undef' to find the
+See the file F<symbian/config.sh> and look for 'undef' to find the
 unsupported APIs (or from Perl use Config).
-  
+
 The filesystem of Symbian devices uses DOSish syntax, "drives"
 separated from paths by a colon, and backslashes for the path.  The
 exact assignment of the drives probably varies between platforms, but
@@ -301,7 +301,7 @@ the Perl definitions and redefines them as PerlNew() and PerlCopy().
 
 =head1 TO DO
 
-Lots.  See F<symbian\TODO>.
+Lots.  See F<symbian/TODO>.
 
 =head1 WARNING
 
@@ -319,7 +319,7 @@ the API names.  Instead, developers should consider basing the API
 naming in the existing (C++, or maybe Java) public component and API
 naming, modified as appropriate by the rules of the programming
 language the new APIs are for.
-  
+
 Nokia is a registered trademark of Nokia Corporation. Nokia's product
 names are trademarks or registered trademarks of Nokia.  Other product
 and company names mentioned herein may be trademarks or trade names of
@@ -430,4 +430,3 @@ We maintain the binary incompatibility.
 =back
 
 =cut
-

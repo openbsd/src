@@ -27,13 +27,21 @@ use ExtUtils::MakeMaker qw( neatvalue );
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 our @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-our $VERSION = '6.56';
+our $VERSION = '6.63_02';
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
 
-my $BORLAND = $Config{'cc'} =~ /^bcc/i ? 1 : 0;
-my $GCC     = $Config{'cc'} =~ /\bgcc$/i ? 1 : 0;
-my $DLLTOOL = $Config{'dlltool'} || 'dlltool';
+my ( $BORLAND, $GCC, $DLLTOOL ) = _identify_compiler_environment( \%Config );
+
+sub _identify_compiler_environment {
+	my ( $config ) = @_;
+
+	my $BORLAND = $config->{cc} =~ /^bcc/i ? 1 : 0;
+	my $GCC     = $config->{cc} =~ /\bgcc\b/i ? 1 : 0;
+	my $DLLTOOL = $config->{dlltool} || 'dlltool';
+
+	return ( $BORLAND, $GCC, $DLLTOOL );
+}
 
 
 =head2 Overridden methods
@@ -133,21 +141,13 @@ sub init_DIRFILESEP {
                                                        : '\\';
 }
 
-=item B<init_others>
+=item init_tools
 
-Override some of the Unix specific commands with portable
-ExtUtils::Command ones.
-
-Also provide defaults for LD and AR in case the %Config values aren't
-set.
-
-LDLOADLIBS's default is changed to $Config{libs}.
-
-Adjustments are made for Borland's quirks needing -L to come first.
+Override some of the slower, portable commands with Windows specific ones.
 
 =cut
 
-sub init_others {
+sub init_tools {
     my ($self) = @_;
 
     $self->{NOOP}     ||= 'rem';
@@ -157,13 +157,32 @@ sub init_others {
       "\$(PERLRUN) $self->{PERL_SRC}/win32/bin/pl2bat.pl" : 
       'pl2bat.bat';
 
+    $self->SUPER::init_tools;
+
+    # Setting SHELL from $Config{sh} can break dmake.  Its ok without it.
+    delete $self->{SHELL};
+
+    return;
+}
+
+
+=item init_others
+
+Override the default link and compile tools.
+
+LDLOADLIBS's default is changed to $Config{libs}.
+
+Adjustments are made for Borland's quirks needing -L to come first.
+
+=cut
+
+sub init_others {
+    my $self = shift;
+
     $self->{LD}     ||= 'link';
     $self->{AR}     ||= 'lib';
 
     $self->SUPER::init_others;
-
-    # Setting SHELL from $Config{sh} can break dmake.  Its ok without it.
-    delete $self->{SHELL};
 
     $self->{LDLOADLIBS} ||= $Config{libs};
     # -Lfoo must come first for Borland, so we put it in LDDLFLAGS
@@ -179,7 +198,7 @@ sub init_others {
         $self->{LDDLFLAGS} .= " $libpath";
     }
 
-    return 1;
+    return;
 }
 
 
@@ -195,6 +214,8 @@ sub init_platform {
     my($self) = shift;
 
     $self->{MM_Win32_VERSION} = $VERSION;
+
+    return;
 }
 
 sub platform_constants {
@@ -208,6 +229,36 @@ sub platform_constants {
     }
 
     return $make_frag;
+}
+
+
+=item constants
+
+Add MAXLINELENGTH for dmake before all the constants are output.
+
+=cut
+
+sub constants {
+    my $self = shift;
+
+    my $make_text = $self->SUPER::constants;
+    return $make_text unless $self->is_make_type('dmake');
+
+    # dmake won't read any single "line" (even those with escaped newlines)
+    # larger than a certain size which can be as small as 8k.  PM_TO_BLIB
+    # on large modules like DateTime::TimeZone can create lines over 32k.
+    # So we'll crank it up to a <ironic>WHOPPING</ironic> 64k.
+    #
+    # This has to come here before all the constants and not in
+    # platform_constants which is after constants.
+    my $size = $self->{MAXLINELENGTH} || 64 * 1024;
+    my $prefix = qq{
+# Get dmake to read long commands like PM_TO_BLIB
+MAXLINELENGTH = $size
+
+};
+
+    return $prefix . $make_text;
 }
 
 
@@ -288,17 +339,6 @@ sub dynamic_lib {
     my($inst_dynamic_dep) = $attribs{INST_DYNAMIC_DEP} || "";
     my($ldfrom) = '$(LDFROM)';
     my(@m);
-
-# one thing for GCC/Mingw32:
-# we try to overcome non-relocateable-DLL problems by generating
-#    a (hopefully unique) image-base from the dll's name
-# -- BKS, 10-19-1999
-    if ($GCC) { 
-	my $dllname = $self->{BASEEXT} . "." . $self->{DLEXT};
-	$dllname =~ /(....)(.{0,4})/;
-	my $baseaddr = unpack("n", $1 ^ $2);
-	$otherldflags .= sprintf("-Wl,--image-base,0x%x0000 ", $baseaddr);
-    }
 
     push(@m,'
 # This section creates the dynamically loadable $(INST_DYNAMIC)
@@ -456,22 +496,34 @@ sub oneliner {
 
 
 sub quote_literal {
-    my($self, $text) = @_;
+    my($self, $text, $opts) = @_;
+    $opts->{allow_variables} = 1 unless defined $opts->{allow_variables};
 
-    # I don't know if this is correct, but it seems to work on
-    # Win98's command.com
-    $text =~ s{"}{\\"}g;
+    # See: http://www.autohotkey.net/~deleyd/parameters/parameters.htm#CPP
 
-    # dmake eats '{' inside double quotes and leaves alone { outside double
-    # quotes; however it transforms {{ into { either inside and outside double
-    # quotes.  It also translates }} into }.  The escaping below is not
-    # 100% correct.
+    # Apply the Microsoft C/C++ parsing rules
+    $text =~ s{\\\\"}{\\\\\\\\\\"}g;  # \\" -> \\\\\"
+    $text =~ s{(?<!\\)\\"}{\\\\\\"}g; # \"  -> \\\"
+    $text =~ s{(?<!\\)"}{\\"}g;       # "   -> \"
+    $text = qq{"$text"} if $text =~ /[ \t]/;
+
+    # Apply the Command Prompt parsing rules (cmd.exe)
+    my @text = split /("[^"]*")/, $text;
+    # We should also escape parentheses, but it breaks one-liners containing
+    # $(MACRO)s in makefiles.
+    s{([<>|&^@!])}{^$1}g foreach grep { !/^"[^"]*"$/ } @text;
+    $text = join('', @text);
+    
+    # dmake expands {{ to { and }} to }.
     if( $self->is_make_type('dmake') ) {
         $text =~ s/{/{{/g;
-        $text =~ s/}}/}}}/g;
+        $text =~ s/}/}}/g;
     }
 
-    return qq{"$text"};
+    $text = $opts->{allow_variables}
+      ? $self->escape_dollarsigns($text) : $self->escape_all_dollarsigns($text);
+
+    return $text;
 }
 
 

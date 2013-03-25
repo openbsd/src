@@ -1,9 +1,11 @@
+=encoding utf8
+
 =head1 BASE PORT
 
 =head2 Console
 
 - The Console only does "ASCII" input: e.g. pressing the "2"
-  key five times, "aaaaa", does not produce "ä" ("a diaeresis"),
+  key five times, "aaaaa", does not produce "Ã¤" ("a diaeresis"),
   but instead the "2" key rotates through "abc2abc2...".
   This is a pity because the Console is actually capable of full
   Unicode input and output (if you have the fonts, that is).  You

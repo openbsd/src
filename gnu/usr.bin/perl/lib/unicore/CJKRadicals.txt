@@ -1,8 +1,8 @@
-# CJKRadicals-5.2.0.txt
-# Date: 2009-05-28, 11:45:00 PDT [RC]
+# CJKRadicals-6.1.0.txt
+# Date: 2011-08-30, 23:14:00 GMT [RC, KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2009 Unicode, Inc.
+# Copyright (c) 1991-2011 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr38/
 #
@@ -23,6 +23,8 @@
 # and in particular they can end with a U+0027 ' APOSTROPHE.
 #
 # This file was created for Unicode 5.2 by Richard Cook.
+# Updated for Unicode 6.0 by Richard Cook.
+# Updated for Unicode 6.1 by Ken Whistler.
 #
 # ####################################################
 
@@ -116,6 +118,7 @@
 88; 2F57; 7236
 89; 2F58; 723B
 90; 2F59; 723F
+90'; 2EA6; 4E2C
 91; 2F5A; 7247
 92; 2F5B; 7259
 93; 2F5C; 725B
@@ -193,6 +196,7 @@
 160; 2F9F; 8F9B
 161; 2FA0; 8FB0
 162; 2FA1; 8FB5
+162'; 2ECC; 8FB6
 163; 2FA2; 9091
 164; 2FA3; 9149
 165; 2FA4; 91C6
@@ -245,6 +249,7 @@
 199'; 2EE8; 9EA6
 200; 2FC7; 9EBB
 201; 2FC8; 9EC3
+201'; 2EE9; 9EC4
 202; 2FC9; 9ECD
 203; 2FCA; 9ED1
 204; 2FCB; 9EF9

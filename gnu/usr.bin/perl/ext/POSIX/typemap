@@ -11,6 +11,20 @@ fd			T_IV
 speed_t			T_IV
 tcflag_t		T_IV
 cc_t			T_IV
-POSIX::SigSet		T_PTROBJ
-POSIX::Termios		T_PTROBJ
+POSIX::SigSet		T_OPAQUEPTROBJ
+POSIX::Termios		T_OPAQUEPTROBJ
 POSIX::SigAction	T_HVREF
+
+INPUT
+T_OPAQUEPTROBJ
+	if (SvROK($arg) && sv_derived_from($arg, \"${ntype}\")) {
+	    $var = ($type)SvPV_nolen(SvRV($arg));
+	}
+	else
+	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\", \"$ntype\")
+
+OUTPUT
+T_OPAQUEPTROBJ
+	sv_setref_pvn($arg, \"${ntype}\", (const char*)$var, sizeof(*$var));

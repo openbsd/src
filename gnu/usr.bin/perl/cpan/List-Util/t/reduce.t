@@ -16,7 +16,7 @@ BEGIN {
 
 use List::Util qw(reduce min);
 use Test::More;
-plan tests => 27 + ($::PERL_ONLY ? 0 : 2);
+plan tests => 29 + ($::PERL_ONLY ? 0 : 2);
 
 my $v = reduce {};
 
@@ -151,6 +151,13 @@ if (!$::PERL_ONLY) { SKIP: {
 
 } }
 
+# XSUB callback
+use constant XSUBC => 42;
+
+is reduce(\&XSUBC, 1, 2, 3), 42, "xsub callbacks";
+
+eval { &reduce(1) };
+ok($@ =~ /^Not a subroutine reference/, 'check for code reference');
 eval { &reduce(1,2) };
 ok($@ =~ /^Not a subroutine reference/, 'check for code reference');
 eval { &reduce(qw(a b)) };

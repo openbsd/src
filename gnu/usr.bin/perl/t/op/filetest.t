@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use Config;
-plan(tests => 28 + 27*14);
+plan(tests => 47 + 27*14);
 
 ok( -d 'op' );
 ok( -f 'TEST' );
@@ -87,7 +87,39 @@ ok( -f $tempfile );
 is( -s $tempfile, 0 );
 is( -f -s $tempfile, 0 );
 is( -s -f $tempfile, 0 );
-unlink $tempfile;
+unlink_all $tempfile;
+
+# stacked -l
+eval { -l -e "TEST" };
+like $@, qr/^The stat preceding -l _ wasn't an lstat at /,
+  'stacked -l non-lstat error with warnings off';
+{
+ local $^W = 1;
+ eval { -l -e "TEST" };
+ like $@, qr/^The stat preceding -l _ wasn't an lstat at /,
+  'stacked -l non-lstat error with warnings on';
+}
+# Make sure -l is using the previous stat buffer, and not using the previ-
+# ous op’s return value as a file name.
+SKIP: {
+ use Perl::OSType 'os_type';
+ if (os_type ne 'Unix') { skip "Not Unix", 2 }
+ if (-l "TEST") { skip "TEST is a symlink", 2 }
+ chomp(my $ln = `which ln`);
+ if ( ! -e $ln ) { skip "No ln"   , 2 }
+ lstat "TEST";
+ `ln -s TEST 1`;
+ ok ! -l -e _, 'stacked -l uses previous stat, not previous retval';
+ unlink 1;
+
+ # Since we already have our skip block set up, we might as well put this
+ # test here, too:
+ # -l always treats a non-bareword argument as a file name
+ system qw "ln -s TEST", \*foo;
+ local $^W = 1;
+ ok -l \*foo, '-l \*foo is a file name';
+ unlink \*foo;
+}
 
 # test that _ is a bareword after filetest operators
 
@@ -198,3 +230,127 @@ for my $op (split //, "rwxoRWXOezsfdlpSbctugkTMBAC") {
     is( eval "-r -$op \$ft", "-r",      "stacked overloaded -$op" );
     is( eval "-$op -r \$ft", "-$op",    "overloaded stacked -$op" );
 }
+
+# -l stack corruption: this bug occurred from 5.8 to 5.14
+{
+ push my @foo, "bar", -l baz;
+ is $foo[0], "bar", '-l bareword does not corrupt the stack';
+}
+
+# -l and fatal warnings
+stat "test.pl";
+eval { use warnings FATAL => io; -l cradd };
+ok !stat _,
+  'fatal warnings do not prevent -l HANDLE from setting stat status';
+
+# File test ops should not call get-magic on the topmost SV on the stack if
+# it belongs to another op.
+{
+  my $w;
+  sub oon::TIESCALAR{bless[],'oon'}
+  sub oon::FETCH{$w++}
+  tie my $t, 'oon';
+  push my @a, $t, -t;
+  is $w, 1, 'file test does not call FETCH on stack item not its own';
+}
+
+# -T and -B
+
+my $Perl = which_perl();
+
+SKIP: {
+    skip "no -T on filehandles", 8 unless eval { -T STDERR; 1 };
+
+    # Test that -T HANDLE sets the last stat type
+    -l "perl.c";   # last stat type is now lstat
+    -T STDERR;     # should set it to stat, since -T does a stat
+    eval { -l _ }; # should die, because the last stat type is not lstat
+    like $@, qr/^The stat preceding -l _ wasn't an lstat at /,
+	'-T HANDLE sets the stat type';
+
+    # statgv should be cleared when freed
+    fresh_perl_is
+	'open my $fh, "test.pl"; -r $fh; undef $fh; open my $fh2, '
+	. "q\0$Perl\0; print -B _",
+	'',
+	{ switches => ['-l'] },
+	'PL_statgv should not point to freed-and-reused SV';
+
+    # or coerced into a non-glob
+    fresh_perl_is
+	'open Fh, "test.pl"; -r($h{i} = *Fh); $h{i} = 3; undef %h;'
+	. 'open my $fh2, ' . "q\0" . which_perl() . "\0; print -B _",
+	'',
+	{ switches => ['-l'] },
+	'PL_statgv should not point to coerced-freed-and-reused GV';
+
+    # -T _ should work after stat $ioref
+    open my $fh, 'test.pl';
+    stat $Perl; # a binary file
+    stat *$fh{IO};
+    ok -T _, '-T _ works after stat $ioref';
+
+    # and after -r $ioref
+    -r *$fh{IO};
+    ok -T _, '-T _ works after -r $ioref';
+
+    # -T _ on closed filehandle should still reset stat info
+    stat $fh;
+    close $fh;
+    -T _;
+    ok !stat _, '-T _ on closed filehandle resets stat info';
+
+    lstat "test.pl";
+    -T $fh; # closed
+    eval { lstat _ };
+    like $@, qr/^The stat preceding lstat\(\) wasn't an lstat at /,
+	'-T on closed handle resets last stat type';
+
+    # Fatal warnings should not affect the setting of errno.
+    $! = 7;
+    -T cradd;
+    my $errno = $!;
+    $! = 7;
+    eval { use warnings FATAL => unopened; -T cradd };
+    my $errno2 = $!;
+    is $errno2, $errno,
+	'fatal warnings do not affect errno after -T BADHADNLE';
+}
+
+is runperl(prog => '-T _', switches => ['-w'], stderr => 1), "",
+  'no uninit warnings from -T with no preceding stat';
+
+SKIP: {
+    my $rand_file_name = 'filetest-' . rand =~ y/.//dr;
+    if (-e $rand_file_name) { skip "File $rand_file_name exists", 1 }
+    stat 'test.pl';
+    -T $rand_file_name;
+    ok !stat _, '-T "nonexistent" resets stat success status';
+}
+
+# Unsuccessful filetests on filehandles should leave stat buffers in the
+# same state whether fatal warnings are on or off.
+{
+    stat "test.pl";
+    # This GV has no IO
+    -r *phlon;
+    my $failed_stat1 = stat _;
+
+    stat "test.pl";
+    eval { use warnings FATAL => unopened; -r *phlon };
+    my $failed_stat2 = stat _;
+
+    is $failed_stat2, $failed_stat1,
+	'failed -r($gv_without_io) with and w/out fatal warnings';
+
+    stat "test.pl";
+    -r cength;  # at compile time autovivifies IO, but with no fp
+    $failed_stat1 = stat _;
+
+    stat "test.pl";
+    eval { use warnings FATAL => unopened; -r cength };
+    $failed_stat2 = stat _;
+    
+    is $failed_stat2, $failed_stat1,
+	'failed -r($gv_with_io_but_no_fp) with and w/out fatal warnings';
+} 

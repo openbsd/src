@@ -10,9 +10,9 @@
 
 /*
  *      A Elbereth Gilthoniel,
- *      silivren penna míriel
+ *      silivren penna mÃ­riel
  *      o menel aglar elenath!
- *      Na-chaered palan-díriel
+ *      Na-chaered palan-dÃ­riel
  *      o galadhremmin ennorath,
  *      Fanuilos, le linnathon
  *      nef aear, si nef aearon!
@@ -28,10 +28,6 @@
 #define PERL_IN_LOCALE_C
 #include "perl.h"
 
-#ifdef I_LOCALE
-#  include <locale.h>
-#endif
-
 #ifdef I_LANGINFO
 #   include <langinfo.h>
 #endif
@@ -46,7 +42,7 @@
  * (1) "xx_YY" if the first argument of setlocale() is not LC_ALL
  * (2) "xa_YY xb_YY ..." if the first argument of setlocale() is LC_ALL
  *     (the space-separated values represent the various sublocales,
- *      in some unspecificed order)
+ *      in some unspecified order)
  *
  * In some platforms it has a form like "LC_SOMETHING=Lang_Country.866\n",
  * which is harmful for further use of the string in setlocale().
@@ -231,8 +227,9 @@ Perl_new_collate(pTHX_ const char *newcoll)
 	  const Size_t fa = strxfrm(xbuf, "a",  XFRMBUFSIZE);
 	  const Size_t fb = strxfrm(xbuf, "ab", XFRMBUFSIZE);
 	  const SSize_t mult = fb - fa;
-	  if (mult < 1)
-	      Perl_croak(aTHX_ "strxfrm() gets absurd");
+	  if (mult < 1 && !(fa == 0 && fb == 0))
+	      Perl_croak(aTHX_ "panic: strxfrm() gets absurd - a => %"UVuf", ab => %"UVuf,
+			 (UV) fa, (UV) fb);
 	  PL_collxfrm_base = (fa > (Size_t)mult) ? (fa - mult) : 0;
 	  PL_collxfrm_mult = mult;
 	}
@@ -522,23 +519,23 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
 	 codeset = nl_langinfo(CODESET);
 #endif
 	 if (codeset)
-	      utf8locale = (ibcmp(codeset, STR_WITH_LEN("UTF-8")) == 0 ||
-			    ibcmp(codeset, STR_WITH_LEN("UTF8") ) == 0);
+	      utf8locale = (foldEQ(codeset, STR_WITH_LEN("UTF-8"))
+			    || foldEQ(codeset, STR_WITH_LEN("UTF8") ));
 #if defined(USE_LOCALE)
 	 else { /* nl_langinfo(CODESET) is supposed to correctly
 		 * interpret the locale environment variables,
 		 * but just in case it fails, let's do this manually. */ 
 	      if (lang)
-		   utf8locale = (ibcmp(lang, STR_WITH_LEN("UTF-8")) == 0 ||
-			         ibcmp(lang, STR_WITH_LEN("UTF8") ) == 0);
+		   utf8locale = (foldEQ(lang, STR_WITH_LEN("UTF-8"))
+				 || foldEQ(lang, STR_WITH_LEN("UTF8") ));
 #ifdef USE_LOCALE_CTYPE
 	      if (curctype)
-		   utf8locale = (ibcmp(curctype, STR_WITH_LEN("UTF-8")) == 0 ||
-			         ibcmp(curctype, STR_WITH_LEN("UTF8") ) == 0);
+		   utf8locale = (foldEQ(curctype, STR_WITH_LEN("UTF-8"))
+				 || foldEQ(curctype, STR_WITH_LEN("UTF8") ));
 #endif
 	      if (lc_all)
-		   utf8locale = (ibcmp(lc_all, STR_WITH_LEN("UTF-8")) == 0 ||
-			         ibcmp(lc_all, STR_WITH_LEN("UTF8") ) == 0);
+		   utf8locale = (foldEQ(lc_all, STR_WITH_LEN("UTF-8"))
+				 || foldEQ(lc_all, STR_WITH_LEN("UTF8") ));
 	 }
 #endif /* USE_LOCALE */
 	 if (utf8locale)

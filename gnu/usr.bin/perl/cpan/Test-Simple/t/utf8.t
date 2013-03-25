@@ -10,15 +10,14 @@ BEGIN {
 use strict;
 use warnings;
 
-use Test::More skip_all => 'Not yet implemented';
-
 my $have_perlio;
 BEGIN {
     # All together so Test::More sees the open discipline
     $have_perlio = eval q[
-        use PerlIO;
-        use open ':std', ':locale';
-        use Test::More;
+        require PerlIO;
+        binmode *STDOUT, ":encoding(utf8)";
+        binmode *STDERR, ":encoding(utf8)";
+        require Test::More;
         1;
     ];
 }
@@ -53,10 +52,9 @@ SKIP: {
     }
 }
 
-SKIP: {
-    skip( "Can't test in general because their locale is unknown", 2 )
-        unless $ENV{AUTHOR_TESTING};
 
+# Test utf8 is ok.
+{
     my $uni = "\x{11e}";
     
     my @warnings;

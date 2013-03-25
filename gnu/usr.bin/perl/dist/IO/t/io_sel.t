@@ -50,7 +50,7 @@ if ( grep $^O eq $_, qw(MSWin32 NetWare dos VMS riscos beos) ) {
     goto POST_SOCKET;
 }
 
-@a = $sel->can_read();  # should return imediately
+@a = $sel->can_read();  # should return immediately
 print "not " unless @a == 0;
 print "ok 10\n";
 

@@ -11,6 +11,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -19,26 +20,25 @@ sub BEGIN {
 }
 
 use Storable qw(store retrieve);
+use Test::More;
 
 # problems with 5.00404 when in an BEGIN block, so this is defined here
 if (!eval { require File::Spec; 1 } || $File::Spec::VERSION < 0.8) {
-    print "1..0 # Skip: File::Spec 0.8 needed\n";
-    exit 0;
+    plan(skip_all => "File::Spec 0.8 needed");
     # Mention $File::Spec::VERSION again, as 5.00503's harness seems to have
     # warnings on.
     exit $File::Spec::VERSION;
 }
 
-print "1..8\n";
+plan(tests => 8);
 
-my $test = 1;
 *GLOB = *GLOB; # peacify -w
 my $bad = ['foo', \*GLOB,  'bar'];
 my $result;
 
 eval {$result = store ($bad , 'store')};
-print ((!defined $result)?"ok $test\n":"not ok $test\n"); $test++;
-print (($@ ne '')?"ok $test\n":"not ok $test\n"); $test++;
+is($result, undef);
+isnt($@, '');
 
 $Storable::forgive_me=1;
 
@@ -52,14 +52,14 @@ eval {$result = store ($bad , 'store')};
 
 open(STDERR, ">&SAVEERR");
 
-print ((defined $result)?"ok $test\n":"not ok $test\n"); $test++;
-print (($@ eq '')?"ok $test\n":"not ok $test\n"); $test++;
+isnt($result, undef);
+is($@, '');
 
 my $ret = retrieve('store');
-print ((defined $ret)?"ok $test\n":"not ok $test\n"); $test++;
-print (($ret->[0] eq 'foo')?"ok $test\n":"not ok $test\n"); $test++;
-print (($ret->[2] eq 'bar')?"ok $test\n":"not ok $test\n"); $test++;
-print ((ref $ret->[1] eq 'SCALAR')?"ok $test\n":"not ok $test\n"); $test++;
+isnt($ret, undef);
+is($ret->[0], 'foo');
+is($ret->[2], 'bar');
+is(ref $ret->[1], 'SCALAR');
 
 
 END { 1 while unlink 'store' }

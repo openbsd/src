@@ -7,6 +7,7 @@
 # With an optional arg specifying the root of a CPAN mirror, outputs the
 # %upstream and %bug_tracker hashes too.
 
+use autodie;
 use strict;
 use warnings;
 use File::Find;
@@ -17,8 +18,11 @@ use Maintainers qw(%Modules files_to_modules);
 use File::Spec;
 use Parse::CPAN::Meta;
 use IPC::Cmd 'can_run';
+use HTTP::Tiny;
+use IO::Uncompress::Gunzip;
 
 my $corelist_file = 'dist/Module-CoreList/lib/Module/CoreList.pm';
+my $pod_file = 'dist/Module-CoreList/lib/Module/CoreList.pod';
 
 my %lines;
 my %module_to_file;
@@ -36,7 +40,7 @@ if ( !-f 'MANIFEST' ) {
     die "Must be run from the root of a clean perl tree\n";
 }
 
-open( my $corelist_fh, '<', $corelist_file ) || die "Could not open $corelist_file: $!";
+open( my $corelist_fh, '<', $corelist_file );
 my $corelist = join( '', <$corelist_fh> );
 
 if ($cpan) {
@@ -46,17 +50,19 @@ if ($cpan) {
     my $fh;
     if ( -e $modlistfile ) {
         warn "Reading the module list from $modlistfile";
-        open $fh, '<', $modlistfile or die "Couldn't open $modlistfile: $!";
+        open $fh, '<', $modlistfile;
     } elsif ( -e $modlistfile . ".gz" ) {
         my $zcat = can_run('gzcat') || can_run('zcat') or die "Can't find gzcat or zcat";
         warn "Reading the module list from $modlistfile.gz";
-        open $fh, '-|', "$zcat $modlistfile.gz" or die "Couldn't zcat $modlistfile.gz: $!";
+        open $fh, '-|', "$zcat $modlistfile.gz";
     } else {
         warn "About to fetch 02packages from ftp.funet.fi. This may take a few minutes\n";
-        $content = fetch_url('http://ftp.funet.fi/pub/CPAN/modules/02packages.details.txt');
-        unless ($content) {
+	my $gzipped_content = fetch_url('http://ftp.funet.fi/pub/CPAN/modules/02packages.details.txt.gz');
+	unless ($gzipped_content) {
             die "Unable to read 02packages.details.txt from either your CPAN mirror or ftp.funet.fi";
         }
+	IO::Uncompress::Gunzip::gunzip(\$gzipped_content, \$content, Transparent => 0)
+	    or die "Can't gunzip content: $IO::Uncompress::Gunzip::GunzipError";
     }
 
     if ( $fh and !$content ) {
@@ -86,7 +92,7 @@ find(
         $version =~ /\d/ and $version = "'$version'";
 
         # some heuristics to figure out the module name from the file name
-        $module =~ s{^(lib|cpan|dist|(?:vms/|symbian/)?ext)/}{}
+        $module =~ s{^(lib|cpan|dist|(?:symbian/)?ext)/}{}
 			and $1 ne 'lib'
             and (
             $module =~ s{\b(\w+)/\1\b}{$1},
@@ -96,8 +102,11 @@ find(
             $module =~ s{^Encode/encoding}{encoding},
             $module =~ s{^IPC-SysV/}{IPC/},
             $module =~ s{^MIME-Base64/QuotedPrint}{MIME/QuotedPrint},
-            $module =~ s{^(?:DynaLoader|Errno|Opcode)/}{},
+            $module =~ s{^(?:DynaLoader|Errno|Opcode|XSLoader)/}{},
+            $module =~ s{^Sys-Syslog/win32}{Sys-Syslog},
+            $module =~ s{^Time-Piece/Seconds}{Time/Seconds},
             );
+        $module =~ s{^vms/ext}{VMS};
 		$module =~ s{^lib/}{}g;
         $module =~ s{/}{::}g;
         $module =~ s{-}{::}g;
@@ -143,7 +152,7 @@ my %module_to_deprecated;
 while ( my ( $module, $file ) = each %module_to_file ) {
     my $M = $file_to_M->{$file};
     next unless $M;
-    next if $Modules{$M}{MAINTAINER} eq 'p5p';
+    next if $Modules{$M}{MAINTAINER} && $Modules{$M}{MAINTAINER} eq 'p5p';
     $module_to_upstream{$module} = $Modules{$M}{UPSTREAM};
     $module_to_deprecated{$module} = 1 if $Modules{$M}{DEPRECATED};
     next
@@ -162,7 +171,7 @@ while ( my ( $module, $file ) = each %module_to_file ) {
 
     # Like it or lump it, this has to be Unix format.
     my $meta_YAML_path = "authors/id/$dist";
-    $meta_YAML_path =~ s/(?:tar\.gz|tar\.bz2|zip)$/meta/ or die "$meta_YAML_path";
+    $meta_YAML_path =~ s/(?:tar\.gz|tar\.bz2|zip|tgz)$/meta/ or die "$meta_YAML_path";
     my $meta_YAML_url = 'http://ftp.funet.fi/pub/CPAN/' . $meta_YAML_path;
 
     if ( -e "$cpan/$meta_YAML_path" ) {
@@ -226,15 +235,10 @@ $tracker .= ");";
 
 $corelist =~ s/^%bug_tracker .*? ;/$tracker/eismx;
 
-unless ( $corelist =~ /and $perl_vstring releases of perl/ ) {
-    warn "Adding $perl_vstring to the list of perl versions covered by Module::CoreList\n";
-    $corelist =~ s/\s*and (.*?) releases of perl/, $1 and $perl_vstring releases of perl/ism;
-}
-
 unless (
-    $corelist =~ /^%released \s* = \s* \( 
-        .*? 
-        $perl_vnum => .*? 
+    $corelist =~ /^%released \s* = \s* \(
+        .*?
+        $perl_vnum => .*?
         \);/ismx
     )
 {
@@ -243,26 +247,37 @@ unless (
                 /$1  $perl_vnum => '????-??-??',\n  $2/ismx;
 }
 
-write_corelist($corelist);
+write_corelist($corelist,$corelist_file);
 
-warn "All done. Please check over $corelist_file carefully before committing. Thanks!\n";
+open( my $pod_fh, '<', $pod_file );
+my $pod = join( '', <$pod_fh> );
+
+unless ( $pod =~ /and $perl_vstring releases of perl/ ) {
+    warn "Adding $perl_vstring to the list of perl versions covered by Module::CoreList\n";
+    $pod =~ s/(currently covers (?:.*?))\s*and (.*?) releases of perl/$1, $2 and $perl_vstring releases of perl/ism;
+}
+
+write_corelist($pod,$pod_file);
+
+warn "All done. Please check over $corelist_file and $pod_file carefully before committing. Thanks!\n";
 
 
 sub write_corelist {
     my $content = shift;
-    open (my $clfh, ">", $corelist_file) || die "Failed to open $corelist_file for writing: $!";
-    print $clfh $content || die "Failed to write the new CoreList.pm: $!";
+    my $filename = shift;
+    open (my $clfh, ">", $filename);
+    print $clfh $content;
     close($clfh);
 }
 
 sub fetch_url {
     my $url = shift;
-    eval { require LWP::Simple };
-    if ( LWP::Simple->can('get') ) {
-        return LWP::Simple->get($url);
-    } elsif (`which curl`) {
-        return `curl -s $url`;
-    } elsif (`which wget`) {
-        return `wget -q -O - $url`;
+    my $http = HTTP::Tiny->new;
+    my $response = $http->get($url);
+    if ($response->{success}) {
+	return $response->{content};
+    } else {
+	warn "Error fetching $url: $response->{status} $response->{reason}\n";
+        return;
     }
 }

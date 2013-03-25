@@ -582,7 +582,7 @@ line 8
 ### s ###
 's' => {
   script => <<'[TheEnd]',
-# enclose any `(a)'.. `(c)' in `-'
+# enclose any '(a)'.. '(c)' in '-'
 s/([a-z])/-\1-/g
 
 s/\([abc]\)/-\1-/g
@@ -789,7 +789,7 @@ my $plsed  = "s2pt$$.pl";
 my $s2p  = File::Spec->catfile( File::Spec->updir(), 'x2p', 's2p' );
 my $psed = File::Spec->catfile( File::Spec->curdir(), 'psed' );
 if ($^O eq 'VMS') {
-  # default in the .com extenson if it's not already there
+  # default in the .com extension if it's not already there
   $s2p = VMS::Filespec::vmsify($s2p);
   $psed = VMS::Filespec::vmsify($psed);
   # Converting file specs from Unix format to VMS with the extended

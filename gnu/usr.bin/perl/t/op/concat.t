@@ -18,7 +18,7 @@ sub ok {
     return $ok;
 }
 
-print "1..29\n";
+print "1..30\n";
 
 ($a, $b, $c) = qw(foo bar);
 
@@ -151,4 +151,11 @@ sub beq { use bytes; $_[0] eq $_[1]; }
     # Concatenation needs to preserve UTF8ness of left oper.
     my $x = eval"qr/\x{fff}/";
     ok( ord chop($x .= "\303\277") == 191, "UTF8ness preserved" );
+}
+
+{
+    my $x;
+    $x = "a" . "b";
+    $x .= "-append-";
+    ok($x eq "ab-append-", "Appending to something initialized using constant folding");
 }

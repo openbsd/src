@@ -61,17 +61,19 @@ skip( $unless_ascii,
   "=pod\n\nI like bric-a-bracE<160>aE<160>gogo.\n",
 ));
 &ok(
-  map {my $z = $_; $z =~ s/content-implicit="yes" //g; $z }
+  map {my $z = $_; $z =~ s/content-implicit="yes" //g; $z =~ s/raw=".+?" //g; $z }
   $x->_duo( sub { $_[0]->nbsp_for_S(1) },
     qq{=pod\n\nI like S<L</"bric-a-brac a gogo">>.\n},
     qq{=pod\n\nI like L<"bric-a-bracE<160>aE<160>gogo"|/"bric-a-brac a gogo">.\n},
 ));
-&ok( $x->_duo( sub { $_[0]->nbsp_for_S(1) },
+&ok( 
+  map {my $z = $_; $z =~ s/raw=".+?" //g; $z }
+  $x->_duo( sub { $_[0]->nbsp_for_S(1) },
     qq{=pod\n\nI like S<L<Stuff like that|"bric-a-brac a gogo">>.\n},
     qq{=pod\n\nI like L<StuffE<160>likeE<160>that|"bric-a-brac a gogo">.\n},
 ));
 &ok(
-  map {my $z = $_; $z =~ s/content-implicit="yes" //g; $z }
+  map {my $z = $_; $z =~ s/content-implicit="yes" //g; $z =~ s/raw=".+?" //g; $z }
   $x->_duo( sub { $_[0]->nbsp_for_S(1) },
     qq{=pod\n\nI like S<L<Stuff I<like that>|"bric-a-brac a gogo">>.\n},
     qq{=pod\n\nI like L<StuffE<160>I<likeE<160>that>|"bric-a-brac a gogo">.\n},

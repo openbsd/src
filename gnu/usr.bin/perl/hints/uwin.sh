@@ -32,7 +32,7 @@
 #b # compile/link flags
 #b ldflags=-g
 #b optimize=-g
-#b static_ext="B Data/Dumper Digest/MD5 Errno Fcntl Filter::Util::Call IO IPC/SysV MIME::Base64 Opcode PerlIO::scalar POSIX SDBM_File Socket Storable Unicode::Normalize attributes re"
+#b static_ext="B Data/Dumper Digest/MD5 Errno Fcntl Filter::Util::Call IO IPC/SysV MIME::Base64 Opcode PerlIO::scalar POSIX SDBM_File Socket Storable Unicode::Collate Unicode::Normalize attributes re"
 #b #static_ext=none
 #b # dynamic loading needs work
 #b usedl=undef
@@ -46,8 +46,7 @@
 # __UWIN__ added so it could be used in ext/POSIX/POSIX.xs
 # to protect against either tzname definition.  According to Dave Korn
 
-#dgk gcc on uwin also predefined _UWIN as does the borland and digital
-#dgk mars compiler.
+#dgk gcc on uwin also predefined _UWIN as does the digital mars compiler.
 #dgk 
 #dgk Only ncc does not define _UWIN and this is intentional.  ncc is used
 #dgk to build binaries that do not require the uwin runtime.
@@ -109,7 +108,7 @@ optimize=-g
 
 # Original, with :: separators, cause make to choke.
 # No longer seems to be necessary at all.
-# static_ext="B Data/Dumper Digest/MD5 Errno Fcntl Filter/Util/Call IO IPC/SysV MIME/Base64 Opcode PerlIO/scalar POSIX SDBM_File Socket Storable Unicode/Normalize attributes re"
+# static_ext="B Data/Dumper Digest/MD5 Errno Fcntl Filter/Util/Call IO IPC/SysV MIME/Base64 Opcode PerlIO/scalar POSIX SDBM_File Socket Storable Unicode/Collate Unicode/Normalize attributes re"
 
 # perl malloc will not work
 usemymalloc=n
@@ -123,7 +122,7 @@ usevfork=false
 
 #          got: '/E/users/jpl/src/cmd/perl/t'
 #     expected: '/e/users/jpl/src/cmd/perl/t'
-#     Failed test (../cpan/Cwd/t/cwd.t at line 88)
+#     Failed test (../dist/Cwd/t/cwd.t at line 88)
 
 # when running tests under harness, try the simple expedient of
 # changing to directory

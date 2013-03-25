@@ -483,11 +483,9 @@ win32_savecopyservent(struct servent*d, struct servent*s, const char *proto)
     d->s_name = s->s_name;
     d->s_aliases = s->s_aliases;
     d->s_port = s->s_port;
-#ifndef __BORLANDC__	/* Buggy on Win95 and WinNT-with-Borland-WSOCK */
     if (!IsWin95() && s->s_proto && strlen(s->s_proto))
 	d->s_proto = s->s_proto;
     else
-#endif
     if (proto && strlen(proto))
 	d->s_proto = (char *)proto;
     else

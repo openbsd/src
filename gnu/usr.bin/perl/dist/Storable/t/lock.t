@@ -8,6 +8,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -17,16 +18,14 @@ sub BEGIN {
     require 'st-dump.pl';
 }
 
-sub ok;
-
+use Test::More;
 use Storable qw(lock_store lock_retrieve);
 
 unless (&Storable::CAN_FLOCK) {
-    print "1..0 # Skip: fcntl/flock emulation broken on this platform\n";
-	exit 0;
+    plan(skip_all => "fcntl/flock emulation broken on this platform");
 }
 
-print "1..5\n";
+plan(tests => 5);
 
 @a = ('first', undef, 3, -4, -3.14159, 456, 4.5);
 
@@ -34,13 +33,14 @@ print "1..5\n";
 # We're just ensuring things work, we're not validating locking.
 #
 
-ok 1, defined lock_store(\@a, 'store');
-ok 2, $dumped = &dump(\@a);
+isnt(lock_store(\@a, 'store'), undef);
+my $dumped = &dump(\@a);
+isnt($dumped, undef);
 
 $root = lock_retrieve('store');
-ok 3, ref $root eq 'ARRAY';
-ok 4, @a == @$root;
-ok 5, &dump($root) eq $dumped; 
+is(ref $root, 'ARRAY');
+is(scalar @a, scalar @$root);
+is(&dump($root), $dumped);
 
 unlink 't/store';
 

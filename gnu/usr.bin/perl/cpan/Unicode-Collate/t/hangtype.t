@@ -1,3 +1,4 @@
+
 BEGIN {
     unless ("A" eq pack('U', 0x41)) {
 	print "1..0 # Unicode::Collate " .
@@ -10,47 +11,77 @@ BEGIN {
     }
 }
 
-use Test;
-BEGIN { plan tests => 33 };
-
 use strict;
 use warnings;
+BEGIN { $| = 1; print "1..451\n"; } # 1 + 50 x @Versions
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Collate;
 
 ok(1);
 
 #########################
 
-ok(Unicode::Collate::getHST(0x0000), '');
-ok(Unicode::Collate::getHST(0x0100), '');
-ok(Unicode::Collate::getHST(0x1000), '');
-ok(Unicode::Collate::getHST(0x10FF), '');
-ok(Unicode::Collate::getHST(0x1100), 'L');
-ok(Unicode::Collate::getHST(0x1101), 'L');
-ok(Unicode::Collate::getHST(0x1159), 'L');
-ok(Unicode::Collate::getHST(0x115A), '');
-ok(Unicode::Collate::getHST(0x115E), '');
-ok(Unicode::Collate::getHST(0x115F), 'L');
-ok(Unicode::Collate::getHST(0x1160), 'V');
-ok(Unicode::Collate::getHST(0x1161), 'V');
-ok(Unicode::Collate::getHST(0x11A0), 'V');
-ok(Unicode::Collate::getHST(0x11A2), 'V');
-ok(Unicode::Collate::getHST(0x11A3), '');
-ok(Unicode::Collate::getHST(0x11A7), '');
-ok(Unicode::Collate::getHST(0x11A8), 'T');
-ok(Unicode::Collate::getHST(0x11AF), 'T');
-ok(Unicode::Collate::getHST(0x11E0), 'T');
-ok(Unicode::Collate::getHST(0x11F9), 'T');
-ok(Unicode::Collate::getHST(0x11FA), '');
-ok(Unicode::Collate::getHST(0x11FF), '');
-ok(Unicode::Collate::getHST(0x3011), '');
-ok(Unicode::Collate::getHST(0x11A7), '');
-ok(Unicode::Collate::getHST(0xABFF), '');
-ok(Unicode::Collate::getHST(0xAC00), 'LV');
-ok(Unicode::Collate::getHST(0xAC01), 'LVT');
-ok(Unicode::Collate::getHST(0xAC1B), 'LVT');
-ok(Unicode::Collate::getHST(0xAC1C), 'LV');
-ok(Unicode::Collate::getHST(0xD7A3), 'LVT');
-ok(Unicode::Collate::getHST(0xD7A4), '');
-ok(Unicode::Collate::getHST(0xFFFF), '');
+my @Versions = (8, 9, 11, 14, 16, 18, 20, 22, 24);
+
+for my $v (@Versions) {
+    ok(Unicode::Collate::getHST(0x0000, $v), '');
+    ok(Unicode::Collate::getHST(0x0100, $v), '');
+    ok(Unicode::Collate::getHST(0x1000, $v), '');
+    ok(Unicode::Collate::getHST(0x10FF, $v), '');
+    ok(Unicode::Collate::getHST(0x1100, $v), 'L');
+    ok(Unicode::Collate::getHST(0x1101, $v), 'L');
+    ok(Unicode::Collate::getHST(0x1159, $v), 'L');
+    ok(Unicode::Collate::getHST(0x115A, $v), ($v >= 20 ? 'L' : ''));
+    ok(Unicode::Collate::getHST(0x115E, $v), ($v >= 20 ? 'L' : ''));
+    ok(Unicode::Collate::getHST(0x115F, $v), 'L');
+    ok(Unicode::Collate::getHST(0x1160, $v), 'V');
+    ok(Unicode::Collate::getHST(0x1161, $v), 'V');
+    ok(Unicode::Collate::getHST(0x11A0, $v), 'V');
+    ok(Unicode::Collate::getHST(0x11A2, $v), 'V');
+    ok(Unicode::Collate::getHST(0x11A3, $v), ($v >= 20 ? 'V' : ''));
+    ok(Unicode::Collate::getHST(0x11A7, $v), ($v >= 20 ? 'V' : ''));
+    ok(Unicode::Collate::getHST(0x11A8, $v), 'T');
+    ok(Unicode::Collate::getHST(0x11AF, $v), 'T');
+    ok(Unicode::Collate::getHST(0x11E0, $v), 'T');
+    ok(Unicode::Collate::getHST(0x11F9, $v), 'T');
+    ok(Unicode::Collate::getHST(0x11FA, $v), ($v >= 20 ? 'T' : ''));
+    ok(Unicode::Collate::getHST(0x11FF, $v), ($v >= 20 ? 'T' : ''));
+    ok(Unicode::Collate::getHST(0x3011, $v), '');
+    ok(Unicode::Collate::getHST(0xA960, $v), ($v >= 20 ? 'L' : ''));
+    ok(Unicode::Collate::getHST(0xA961, $v), ($v >= 20 ? 'L' : ''));
+    ok(Unicode::Collate::getHST(0xA97C, $v), ($v >= 20 ? 'L' : ''));
+    ok(Unicode::Collate::getHST(0xA97F, $v), '');
+    ok(Unicode::Collate::getHST(0xABFF, $v), '');
+    ok(Unicode::Collate::getHST(0xAC00, $v), 'LV');
+    ok(Unicode::Collate::getHST(0xAC01, $v), 'LVT');
+    ok(Unicode::Collate::getHST(0xAC1B, $v), 'LVT');
+    ok(Unicode::Collate::getHST(0xAC1C, $v), 'LV');
+    ok(Unicode::Collate::getHST(0xD7A3, $v), 'LVT');
+    ok(Unicode::Collate::getHST(0xD7A4, $v), '');
+    ok(Unicode::Collate::getHST(0xD7AF, $v), '');
+    ok(Unicode::Collate::getHST(0xD7B0, $v), ($v >= 20 ? 'V' : ''));
+    ok(Unicode::Collate::getHST(0xD7C0, $v), ($v >= 20 ? 'V' : ''));
+    ok(Unicode::Collate::getHST(0xD7C6, $v), ($v >= 20 ? 'V' : ''));
+    ok(Unicode::Collate::getHST(0xD7C7, $v), '');
+    ok(Unicode::Collate::getHST(0xD7CA, $v), '');
+    ok(Unicode::Collate::getHST(0xD7CB, $v), ($v >= 20 ? 'T' : ''));
+    ok(Unicode::Collate::getHST(0xD7DD, $v), ($v >= 20 ? 'T' : ''));
+    ok(Unicode::Collate::getHST(0xD7FB, $v), ($v >= 20 ? 'T' : ''));
+    ok(Unicode::Collate::getHST(0xD7FC, $v), '');
+    ok(Unicode::Collate::getHST(0xD7FF, $v), '');
+    ok(Unicode::Collate::getHST(0xFFFF, $v), '');
+    ok(Unicode::Collate::getHST(0x11100, $v), '');
+    ok(Unicode::Collate::getHST(0x111FF, $v), '');
+    ok(Unicode::Collate::getHST(0x2AC00, $v), '');
+    ok(Unicode::Collate::getHST(0x10D7A3, $v), '');
+}
 

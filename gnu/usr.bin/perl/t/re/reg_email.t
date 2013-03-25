@@ -1,4 +1,4 @@
-#!./perl
+#!./perl -w
 #
 # Tests to make sure the regexp engine doesn't run into limits too soon.
 #
@@ -6,9 +6,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-print "1..13\n";
+use strict;
 
 my $email = qr {
     (?(DEFINE)
@@ -29,7 +30,7 @@ my $email = qr {
       (?<dcontent>        (?&dtext) | (?&quoted_pair))
       (?<dtext>           (?&NO_WS_CTL) | [\x21-\x5a\x5e-\x7e])
 
-      (?<atext>           (?&ALPHA) | (?&DIGIT) | [!#\$%&'*+-/=?^_`{|}~])
+      (?<atext>           (?&ALPHA) | (?&DIGIT) | [-!#\$%&'*+/=?^_`{|}~])
       (?<atom>            (?&CFWS)? (?&atext)+ (?&CFWS)?)
       (?<dot_atom>        (?&CFWS)? (?&dot_atom_text) (?&CFWS)?)
       (?<dot_atom_text>   (?&atext)+ (?: \. (?&atext)+)*)
@@ -66,13 +67,9 @@ my $email = qr {
     (?&address)
 }x;
 
-
 run_tests() unless caller;
 
 sub run_tests {
-    my $count = 0;
-
-    $| = 1;
     # rewinding DATA is necessary with PERLIO=stdio when this
     # test is run from another thread
     seek *DATA, 0, 0;
@@ -80,9 +77,13 @@ sub run_tests {
     while (<DATA>) {
 	chomp;
 	next if /^#/;
-	print /^$email$/ ? "ok " : "not ok ", ++ $count, "\n";
+	like($_, qr/^$email$/, $_);
     }
+
+    done_testing();
 }
+
+1; # Because reg_email_thr.t will (indirectly) require this script.
 
 #
 # Acme::MetaSyntactic ++

@@ -2,7 +2,6 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-use Pod::Usage;
 use File::Spec;
 use File::Compare qw( compare );
 use File::Copy qw( copy );
@@ -22,7 +21,10 @@ my %opt = (
   clean  => 0,
 );
 
-GetOptions(\%opt, qw( clean list=s )) or pod2usage(2);
+unless ( GetOptions(\%opt, qw( clean list=s )) ) {
+  require Pod::Usage;
+  Pod::Usage::pod2usage(2);
+}
 
 my $absroot = File::Spec->rel2abs($rootdir);
 my @destdirs = readlist($opt{list});

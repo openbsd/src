@@ -6,6 +6,8 @@
 #undef sha512
 #undef H0384
 #undef H0512
+#undef H0512224
+#undef H0512256
 
 #define sha_384_512	1
 
@@ -63,6 +65,20 @@ static W64 H0512[8] =		/* SHA-512 initial hash value */
 C64(0x6a09e667f3bcc908), C64(0xbb67ae8584caa73b), C64(0x3c6ef372fe94f82b),
 C64(0xa54ff53a5f1d36f1), C64(0x510e527fade682d1), C64(0x9b05688c2b3e6c1f),
 C64(0x1f83d9abfb41bd6b), C64(0x5be0cd19137e2179)
+};
+
+static W64 H0512224[8] =	/* SHA-512/224 initial hash value */
+{
+C64(0x8c3d37c819544da2), C64(0x73e1996689dcd4d6), C64(0x1dfab7ae32ff9c82),
+C64(0x679dd514582f9fcf), C64(0x0f6d2b697bd44da8), C64(0x77e36f7304c48942),
+C64(0x3f9d85a86a1d36c8), C64(0x1112e6ad91d692a1)
+};
+
+static W64 H0512256[8] =	/* SHA-512/256 initial hash value */
+{
+C64(0x22312194fc2bf72c), C64(0x9f555fa3c84c64c2), C64(0x2393b86b6f53b151),
+C64(0x963877195940eabd), C64(0x96283ee2a88effe3), C64(0xbe5e1e2553863992),
+C64(0x2b0199fc2c85b8aa), C64(0x0eb72ddc81c52ca2)
 };
 
 /* strto64: converts hex string to a 64-bit word */

@@ -4,7 +4,7 @@ specially designed to be readable as is.
 
 =head1 NAME
 
-README.mpeix - Perl/iX for HP e3000 MPE
+perlmpeix - Perl/iX for HP e3000 MPE
 
 =head1 SYNOPSIS
 
@@ -104,7 +104,7 @@ libwww-perl (LWP) which lets Perl programs behave like web browsers:
 mod_perl (just the perl portion; the actual DSO will be released
 soon with Apache/iX 1.3.12 from bixby.org).  This module allows you to
 write high performance persistent Perl CGI scripts and all sorts of
-cool things. (http://perl.apache.org/)
+cool things. (L<http://perl.apache.org/>)
 
 and much much more hiding under /PERL/PUB/.cpan/
 
@@ -117,7 +117,7 @@ installing of add-on packages:
     2. perl -MCPAN -e shell
     3. Ignore any terminal I/O related complaints!
 
-(http://search.cpan.org/dist/CPAN/)
+(L<http://search.cpan.org/dist/CPAN/>)
 
 =back
 
@@ -151,12 +151,12 @@ Migrated from cccd.edu to bixby.org.
 =head1 Welcome to Perl/iX
 
 This is the official home page for the HP e3000 MPE/iX
-( http://www.hp.com/go/e3000 ) port of the Perl scripting
-language ( http://www.perl.com/ ) which gives you all of the power of C,
+( L<http://www.hp.com/go/e3000> ) port of the Perl scripting
+language ( L<http://www.perl.com/> ) which gives you all of the power of C,
 awk, sed, and sh in a single language. Check here for the latest news,
 implemented functionality, known bugs, to-do list, etc. Status reports
 about major milestones will also be posted to the HP3000-L mailing list
-( http://www.lsoft.com/scripts/wl.exe?SL1=HP3000-L&H=RAVEN.UTC.EDU ) and
+( L<http://www.lsoft.com/scripts/wl.exe?SL1=HP3000-L&H=RAVEN.UTC.EDU> ) and
 its associated gatewayed newsgroup comp.sys.hp.mpe.
 
 I'm doing this port because I can't live without Perl on the Unix
@@ -164,14 +164,14 @@ machines that I administer, and I want to have the same power
 available to me on MPE.
 
 Please send your comments, questions, and bug reports directly to me,
-Mark Bixby ( http://www.bixby.org/mark/ ). Or just post them to HP3000-L.
+Mark Bixby ( L<http://www.bixby.org/mark/> ). Or just post them to HP3000-L.
 
 The platform I'm using to do this port is an HP 3000 957RX running
 MPE/iX 6.0 and using the GNU gcc C compiler
-( http://jazz.external.hp.com/src/gnu/gnuframe.html ).
+( L<http://jazz.external.hp.com/src/gnu/gnuframe.html> ).
 
 The combined porting wisdom from all of my ports can be found in my
-MPE/iX Porting Guide (http://www.bixby.org/mark/porting.html).
+MPE/iX Porting Guide (L<http://www.bixby.org/mark/porting.html>).
 
 IMPORTANT NOTICE: Yes, I do work for the HP CSY R&D lab, but ALL of
 the software you download from bixby.org is my personal freeware that
@@ -189,7 +189,7 @@ MPE/iX 5.0 or earlier, nor does it run on "classic" MPE/V machines.
 =item *
 
 If you wish to recompile Perl, you must install both GNUCORE and
-GNUGCC from jazz (http://jazz.external.hp.com/src/gnu/gnuframe.html).
+GNUGCC from jazz (L<http://jazz.external.hp.com/src/gnu/gnuframe.html>).
 
 =item *
 
@@ -205,9 +205,9 @@ to _getenv_libc.
 =item *
 
 If you will be compiling Perl/iX yourself, you will also need
-Syslog/iX ( http://www.bixby.org/mark/syslogix.html ) and the
+Syslog/iX ( L<http://www.bixby.org/mark/syslogix.html> ) and the
 /BIND/PUB/include and /BIND/PUB/lib portions of BIND/iX
-( http://www.bixby.org/mark/bindix.html ).
+( L<http://www.bixby.org/mark/bindix.html> ).
 
 =back
 
@@ -418,9 +418,9 @@ equivalent symbolic link) as the first line.  Use the chmod command to
 make sure that your script has execute permission. Run your script!
 
 Be sure to take a look at the CPAN module list
-( http://www.cpan.org/CPAN.html ). A wide variety of free Perl software
+( L<http://www.cpan.org/CPAN.html> ). A wide variety of free Perl software
 is available.  You can automatically download these packages by using
-the CPAN module ( http://search.cpan.org/dist/CPAN/ ).
+the CPAN module ( L<http://search.cpan.org/dist/CPAN/> ).
 
 =head1 MPE/iX Implementation Considerations
 
@@ -707,5 +707,5 @@ Porting begins.
 
 =head1 AUTHOR
 
-Mark Bixby, http://www.bixby.org/mark/
+Mark Bixby, L<http://www.bixby.org/mark/>
 

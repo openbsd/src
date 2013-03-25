@@ -195,7 +195,7 @@ sub gimme_conf {
     ### cpanp-run-perl installed the same amount of 'uplevels'
     ### as the /tmp/foo prefix, we'll pull in the wrong script
     ### by accident.
-    ### Since we set the path to cpanp-run-perl explicitily
+    ### Since we set the path to cpanp-run-perl explicitly
     ### at the top of this script, it's best to update the config
     ### ourselves with a path lookup, rather than rely on its
     ### heuristics. Thanks to David Wheeler, Josh Jore and Vincent

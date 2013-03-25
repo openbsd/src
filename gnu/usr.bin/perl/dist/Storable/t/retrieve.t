@@ -8,6 +8,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -18,8 +19,7 @@ sub BEGIN {
 
 
 use Storable qw(store retrieve nstore);
-
-print "1..14\n";
+use Test::More tests => 14;
 
 $a = 'toto';
 $b = \$a;
@@ -29,41 +29,29 @@ $c->{attribute} = 'attrval';
 @a = ('first', '', undef, 3, -4, -3.14159, 456, 4.5,
 	$b, \$a, $a, $c, \$c, \%a);
 
-print "not " unless defined store(\@a, 'store');
-print "ok 1\n";
-print "not " if Storable::last_op_in_netorder();
-print "ok 2\n";
-print "not " unless defined nstore(\@a, 'nstore');
-print "ok 3\n";
-print "not " unless Storable::last_op_in_netorder();
-print "ok 4\n";
-print "not " unless Storable::last_op_in_netorder();
-print "ok 5\n";
+isnt(store(\@a, 'store'), undef);
+is(Storable::last_op_in_netorder(), '');
+isnt(nstore(\@a, 'nstore'), undef);
+is(Storable::last_op_in_netorder(), 1);
+is(Storable::last_op_in_netorder(), 1);
 
 $root = retrieve('store');
-print "not " unless defined $root;
-print "ok 6\n";
-print "not " if Storable::last_op_in_netorder();
-print "ok 7\n";
+isnt($root, undef);
+is(Storable::last_op_in_netorder(), '');
 
 $nroot = retrieve('nstore');
-print "not " unless defined $nroot;
-print "ok 8\n";
-print "not " unless Storable::last_op_in_netorder();
-print "ok 9\n";
+isnt($root, undef);
+is(Storable::last_op_in_netorder(), 1);
 
 $d1 = &dump($root);
-print "ok 10\n";
+isnt($d1, undef);
 $d2 = &dump($nroot);
-print "ok 11\n";
+isnt($d2, undef);
 
-print "not " unless $d1 eq $d2; 
-print "ok 12\n";
+is($d1, $d2);
 
 # Make sure empty string is defined at retrieval time
-print "not " unless defined $root->[1];
-print "ok 13\n";
-print "not " if length $root->[1];
-print "ok 14\n";
+isnt($root->[1], undef);
+is(length $root->[1], 0);
 
 END { 1 while unlink('store', 'nstore') }

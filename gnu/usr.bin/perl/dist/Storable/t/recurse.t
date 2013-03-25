@@ -8,19 +8,16 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
         exit 0;
     }
-    require 'st-dump.pl';
 }
 
-sub ok;
-
 use Storable qw(freeze thaw dclone);
-
-print "1..33\n";
+use Test::More tests => 33;
 
 package OBJ_REAL;
 
@@ -132,51 +129,51 @@ package main;
 
 my $real = OBJ_REAL->make;
 my $x = freeze $real;
-ok 1, 1;
+isnt($x, undef);
 
 my $y = thaw $x;
-ok 2, ref $y eq 'OBJ_REAL';
-ok 3, $y->[0] eq 'a';
-ok 4, $y->[1] == 1;
+is(ref $y, 'OBJ_REAL');
+is($y->[0], 'a');
+is($y->[1], 1);
 
 my $sync = OBJ_SYNC->make;
 $x = freeze $sync;
-ok 5, 1;
+isnt($x, undef);
 
 $y = thaw $x;
-ok 6, 1;
-ok 7, $y->{ok} == $y;
+is(ref $y, 'OBJ_SYNC');
+is($y->{ok}, $y);
 
 my $ext = [1, 2];
 $sync = OBJ_SYNC2->make($ext);
 $x = freeze [$sync, $ext];
-ok 8, 1;
+isnt($x, undef);
 
 my $z = thaw $x;
 $y = $z->[0];
-ok 9, 1;
-ok 10, $y->{ok} == $y;
-ok 11, ref $y->{sync} eq 'OBJ_SYNC';
-ok 12, $y->{ext} == $z->[1];
+is(ref $y, 'OBJ_SYNC2');
+is($y->{ok}, $y);
+is(ref $y->{sync}, 'OBJ_SYNC');
+is($y->{ext}, $z->[1]);
 
 $real = OBJ_REAL2->make;
 $x = freeze $real;
-ok 13, 1;
-ok 14, $OBJ_REAL2::recursed == $OBJ_REAL2::MAX;
-ok 15, $OBJ_REAL2::hook_called == $OBJ_REAL2::MAX;
+isnt($x, undef);
+is($OBJ_REAL2::recursed, $OBJ_REAL2::MAX);
+is($OBJ_REAL2::hook_called, $OBJ_REAL2::MAX);
 
 $y = thaw $x;
-ok 16, 1;
-ok 17, $OBJ_REAL2::recursed == 0;
+is(ref $y, 'OBJ_REAL2');
+is($OBJ_REAL2::recursed, 0);
 
 $x = dclone $real;
-ok 18, 1;
-ok 19, ref $x eq 'OBJ_REAL2';
-ok 20, $OBJ_REAL2::recursed == 0;
-ok 21, $OBJ_REAL2::hook_called == 2 * $OBJ_REAL2::MAX;
+isnt($x, undef);
+is(ref $x, 'OBJ_REAL2');
+is($OBJ_REAL2::recursed, 0);
+is($OBJ_REAL2::hook_called, 2 * $OBJ_REAL2::MAX);
 
-ok 22, !Storable::is_storing;
-ok 23, !Storable::is_retrieving;
+is(Storable::is_storing, '');
+is(Storable::is_retrieving, '');
 
 #
 # The following was a test-case that Salvador Ortiz Garcia <sog@msg.com.mx>
@@ -219,11 +216,11 @@ package main;
 my $bar = new Bar;
 my $bar2 = thaw freeze $bar;
 
-ok 24, ref($bar2) eq 'Bar';
-ok 25, ref($bar->{b}[0]) eq 'Foo';
-ok 26, ref($bar->{b}[1]) eq 'Foo';
-ok 27, ref($bar2->{b}[0]) eq 'Foo';
-ok 28, ref($bar2->{b}[1]) eq 'Foo';
+is(ref($bar2), 'Bar');
+is(ref($bar->{b}[0]), 'Foo');
+is(ref($bar->{b}[1]), 'Foo');
+is(ref($bar2->{b}[0]), 'Foo');
+is(ref($bar2->{b}[1]), 'Foo');
 
 #
 # The following attempts to make sure blessed objects are blessed ASAP
@@ -256,10 +253,10 @@ sub STORABLE_freeze {
 
 sub STORABLE_thaw {
 	my($self, $clonning, $frozen, $c1, $c3, $o) = @_;
-	main::ok 29, ref $self eq "CLASS_2";
-	main::ok 30, ref $c1 eq "CLASS_1";
-	main::ok 31, ref $c3 eq "CLASS_3";
-	main::ok 32, ref $o eq "CLASS_OTHER";
+	main::is(ref $self, "CLASS_2");
+	main::is(ref $c1, "CLASS_1");
+	main::is(ref $c3, "CLASS_3");
+	main::is(ref $o, "CLASS_OTHER");
 	$self->{c1} = $c1;
 	$self->{c3} = $c3;
 }
@@ -312,4 +309,4 @@ my $so = thaw freeze $o;
 
 $refcount_ok = 0;
 thaw freeze(Foo3->new);
-ok 33, $refcount_ok == 1;
+is($refcount_ok, 1);

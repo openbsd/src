@@ -1,4 +1,5 @@
 # Same as 400_ping_syn.t but testing ack( $host ) instead of ack( ).
+use strict;
 
 BEGIN {
   if ($ENV{PERL_CORE}) {
@@ -33,7 +34,9 @@ BEGIN {
 # $ PERL_CORE=1 make test
 
 # Try a few remote servers
-my $webs = {
+my %webs;
+BEGIN {
+  %webs = (
   # Hopefully this is never a routeable host
   "172.29.249.249" => 0,
 
@@ -45,15 +48,12 @@ my $webs = {
   "www.about.com." => 1,
   "www.microsoft.com." => 1,
   "127.0.0.1" => 1,
-};
+);
+}
 
-use strict;
-use Test;
-use Net::Ping;
-plan tests => ((keys %{ $webs }) * 2 + 3);
+use Test::More tests => 3 + 2 * keys %webs;
 
-# Everything loaded fine
-ok 1;
+BEGIN {use_ok('Net::Ping')};
 
 my $can_alarm = eval {alarm 0; 1;};
 
@@ -63,40 +63,34 @@ sub Alarm {
 
 Alarm(50);
 $SIG{ALRM} = sub {
-  ok 0;
+  fail('Alarm timed out');
   die "TIMED OUT!";
 };
 
 my $p = new Net::Ping "syn", 10;
 
-# new() worked?
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'new() worked');
 
 # Change to use the more common web port.
 # (Make sure getservbyname works in scalar context.)
-ok ($p -> {port_num} = getservbyname("http", "tcp"));
+cmp_ok(($p->{port_num} = getservbyname("http", "tcp")), '>', 0, 'vaid port');
 
-foreach my $host (keys %{ $webs }) {
+foreach my $host (keys %webs) {
   # ping() does dns resolution and
   # only sends the SYN at this point
   Alarm(50); # (Plenty for a DNS lookup)
-  if (!ok($p -> ping($host))) {
-    print STDERR "CANNOT RESOLVE $host $p->{bad}->{$host}\n";
-  }
+  is($p->ping($host), 1, "Can reach $host $p->{bad}->{$host}");
 }
 
 Alarm(20);
-foreach my $host (sort keys %{ $webs }) {
+foreach my $host (sort keys %webs) {
   my $on = $p->ack($host);
-  if (!ok (($on && $webs->{$host}) ||
-           (!$on && !$webs->{$host}))) {
-    if ($on) {
-      print STDERR "SUPPOSED TO BE DOWN: http://$host/\n";
-    } else {
-      print STDERR "DOWN: http://$host/ [",($p->{bad}->{$host} || ""),"]\n";
-    }
+  if ($on) {
+    is($webs{$host}, 1, "supposed to be up: http://$host/");
+  } else {   
+    is($webs{$host}, 0, "supposed to be down: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
   }
-  delete $webs->{$host};
+  delete $webs{$host};
   Alarm(20);
 }
 

@@ -1,5 +1,9 @@
 #!perl -w
 
+BEGIN {
+    unshift @INC, 't/compat' if $] < 5.006002;
+};
+
 use strict;
 use Test::More;
 use Storable qw(store nstore);

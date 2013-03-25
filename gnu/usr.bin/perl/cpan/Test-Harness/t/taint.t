@@ -37,7 +37,8 @@ sub run_test_file {
 }
 
 {
-    local $ENV{PERL5OPT} = $ENV{PERL_CORE} ? '-I../../lib -Mstrict' : '-Mstrict';
+    local $ENV{PERL5OPT}
+      = $ENV{PERL_CORE} ? '-I../../lib -Mstrict' : '-Mstrict';
     run_test_file(<<'END');
 #!/usr/bin/perl -T
 

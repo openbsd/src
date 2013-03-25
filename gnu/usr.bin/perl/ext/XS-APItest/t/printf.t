@@ -1,12 +1,3 @@
-BEGIN {
-    push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
-    require Config; import Config;
-    if ($Config{'extensions'} !~ /\bXS\/APItest\b/) {
-        print "1..0 # Skip: XS::APItest was not built\n";
-        exit 0;
-    }
-}
-
 use Test::More tests => 11;
 
 BEGIN { use_ok('XS::APItest') };

@@ -3,16 +3,16 @@ use strict;
 use warnings;
 use autodie;
 use feature qw(say);
-use File::Find::Rule;
-use File::Slurp;
-use File::Spec;
-use IO::Socket::SSL;
+require File::Find::Rule;
+require File::Slurp;
+require File::Spec;
+require IO::Socket::SSL;
 use List::Util qw(sum);
-use LWP::UserAgent;
-use Net::FTP;
-use Parallel::Fork::BossWorkerAsync;
-use Term::ProgressBar::Simple;
-use URI::Find::Simple qw( list_uris );
+require LWP::UserAgent;
+require Net::FTP;
+require Parallel::Fork::BossWorkerAsync;
+require Term::ProgressBar::Simple;
+require URI::Find::Simple;
 $| = 1;
 
 my %ignore;
@@ -23,7 +23,7 @@ while ( my $line = <main::DATA> ) {
     $ignore{$line} = 1;
 }
 
-my $ua = LWP::UserAgent->new;
+my $ua = LWP::UserAgent->new(ssl_opts => { verify_hostname => 0 });
 $ua->timeout(58);
 $ua->env_proxy;
 
@@ -44,19 +44,26 @@ foreach my $filename (@filenames) {
     next if $filename =~ /uris\.txt/;
     next if $filename =~ /check_uris/;
     next if $filename =~ /\.patch$/;
-    my $contents = read_file($filename);
-    my @uris     = list_uris($contents);
+    next if $filename =~ 'cpan/Pod-Simple/t/perlfaqo?\.pod';
+    next if $filename =~ /checkURL\.pl$/;
+    my $contents = File::Slurp::read_file($filename);
+    my @uris     = URI::Find::Simple::list_uris($contents);
     foreach my $uri (@uris) {
         next unless $uri =~ /^(http|ftp)/;
         next if $ignore{$uri};
 
         # no need to hit rt.perl.org
         next
-            if $uri =~ m{^http://rt.perl.org/rt3/Ticket/Display.html?id=\d+$};
+            if $uri =~ m{^https?://rt.perl.org/rt3/Ticket/Display.html?id=\d+$};
 
         # no need to hit rt.cpan.org
         next
-            if $uri =~ m{^http://rt.cpan.org/Public/Bug/Display.html?id=\d+$};
+            if $uri =~ m{^https?://rt.cpan.org/Public/Bug/Display.html?id=\d+$};
+
+        # no need to hit google groups (weird redirect LWP does not like)
+        next
+            if $uri =~ m{^http://groups\.google\.com/};
+
         push @{ $uris{$uri} }, $filename;
     }
     $extract_progress += -s $filename;
@@ -212,11 +219,18 @@ __DATA__
 ftp://ftp.stratus.com/pub/vos/posix/ga/ga.html
 ftp://ftp.stratus.com/pub/vos/utility/utility.html
 
-# this is missing, sigh
+# these are missing, sigh
 ftp://ftp.sco.com/SLS/ptf7051e.Z
 http://perlmonks.thepen.com/42898.html
+http://svn.mutatus.co.uk/wsvn/Scalar-List-Utils/trunk/
+http://public.activestate.com/cgi-bin/perlbrowse
+http://svn.mutatus.co.uk/browse/libnet/tags/libnet-1.17/ChangeLog
+http://aspn.activestate.com/ASPN/Mail/Message/perl6-internals/2746631
+http://my.smithmicro.com/mac/stuffit/
+http://www.wg.omron.co.jp/cgi-bin/j-e/jfriedl.html
+http://persephone.cps.unizar.es/general/gente/spd/gzip/gzip.html
 
-# this are URI extraction bugs
+# these are URI extraction bugs
 http://www.perl.org/E
 http://en.wikipedia.org/wiki/SREC_(file_format
 http://somewhere.else',-type=/
@@ -226,6 +240,8 @@ http:[-
 http://search.cpan.org/src/KWILLIAMS/Module-Build-0.30/lib/Module/Build/Platform/Windows.pm:split_like_shell
 http://www.xray.mpe.mpg.de/mailing-lists/perl5-
 http://support.microsoft.com/support/kb/articles/Q280/3/41.ASP:
+http://perl.come/
+http://www.perl.come/
 
 # these are used as an example
 http://example.com/
@@ -293,6 +309,49 @@ http://www.fh-wedel.de/elvis/
 ftp://ftp.blarg.net/users/amol/zsh/
 ftp://ftp.funet.fi/pub/languages/perl/CPAN
 http://search.cpan.org/CPAN/authors/id/S/SH/SHAY/dmake-4.5-20060619-SHAY.zip
+http://users.perl5.git.perl.org/~USERNAME
+http://foo/x//y/script.cgi/a//b
+http://xxx/script.cgi/http://foo
+http://foo/./x//z/script.cgi/a/../b//c
+http://somewhere.else/in/movie/land
+http://somewhere.else/finished.html
+http://somewhere.else/bin/foo&bar$
+http://somewhere.else/
+http://proxy:8484/
+http://proxy/
+http://myrepo.example.com/
+http://remote/source
+https://example.com/
+http://example.com:1024/
+http:///path?foo=bar
+http://[::]:1024/
+http://([/
+http://example.com:9000/index.html
+http://proxy.example.com:8080/
+http:///index.html
+http://[www.json::pp.org]/
+http://localhost/
+http://foo.example.com/
+http://abc.com/a.js
+http://whatever/man/1/crontab
+http://abc.com/c.js
+http://whatever/Foo%3A%3ABar
+http://abc.com/b.js
+http://remote.server.com/jquery.css
+http://some.other.com/page.html
+https://text.com/1/2
+https://text.com/1/2
+http://link.included.here?o=1&p=2
+http://link.included.here?o=1&amp;p=2
+http://link.included.here?o=1&amp;p=2
+http://link.included.here/
+http://foo/x//y/script.cgi/a//b
+http://xxx/script.cgi/http://foo
+http://foo/./x//z/script.cgi/a/../b//c
+http://somewhere.else/in/movie/land
+http://somewhere.else/finished.html
+http://webproxy:3128/
+http://www/
 
 # these are used to generate or match URLs
 http://www.cpan.org/modules/by-authors/id/$1/$1$2/$dist
@@ -304,19 +363,22 @@ ftp://ftp.foo.bar/
 http://$host/
 http://wwwe%3C46/
 ftp:/
+http://$addr/mark?commit=$
+http://search.cpan.org/~
+http:/
+ftp:%5Cn$url
+http://www.ietf.org/rfc/rfc$2.txt
+http://search.cpan.org/~
+ftp:%5Cn$url
 
 # weird redirects that LWP doesn't like
 http://www.theperlreview.com/community_calendar
 http://www.software.hp.com/portal/swdepot/displayProductInfo.do?productNumber=PERL
-http://groups.google.com/
-http://groups.google.com/group/comp.lang.perl.misc/topics
-http://groups.google.co.uk/group/perl.perl5.porters/browse_thread/thread/b4e2b1d88280ddff/630b667a66e3509f?#630b667a66e3509f
-http://groups.google.com/group/comp.sys.sgi.admin/msg/3ad8353bc4ce3cb0
-http://groups.google.com/group/perl.module.build/browse_thread/thread/c8065052b2e0d741
-http://groups.google.com/group/perl.perl5.porters/browse_thread/thread/adaffaaf939b042e/20dafc298df737f0%2320dafc298df737f0?sa=X&oi=groupsr&start=0&num=3
+http://sunsolve.sun.com
 
 # broken webserver that doesn't like HEAD requests
 http://docs.sun.com/app/docs/doc/816-5168/syslog-3c?a=view
+http://www.w3.org/TR/html4/loose.dtd
 
 # these have been reported upstream to CPAN authors
 http://www.gnu.org/manual/tar/html_node/tar_139.html
@@ -351,6 +413,34 @@ http://www.nara.gov/genealogy/soundex/soundex.html
 http://rfc.net/rfc3461.html
 ftp://ftp.cs.pdx.edu/pub/elvis/
 http://www.fh-wedel.de/elvis/
+http://lists.perl.org/list/perl-mvs.html
+http://www.cpan.org/ports/os2/
+http://github.com/dagolden/cpan-meta-spec
+http://github.com/dagolden/cpan-meta-spec/issues
+http://www.opensource.org/licenses/lgpl-license.phpt
+http://reality.sgi.com/ariel
+http://www.chiark.greenend.org.uk/pipermail/ukcrypto/1999-February/003538.html
+http://www.chiark.greenend.org.uk/pipermail/ukcrypto/1999-February/003538.html
+http://www.nsrl.nist.gov/testdata/
+http://public.activestate.com/cgi-bin/perlbrowse/p/31194
+http://public.activestate.com/cgi-bin/perlbrowse?patch=16173
+http://public.activestate.com/cgi-bin/perlbrowse?patch=16049
+http://www.li18nux.org/docs/html/CodesetAliasTable-V10.html
+http://aspn.activestate.com/ASPN/Mail/Message/perl5-porters/3486118
+http://lxr.mozilla.org/seamonkey/source/intl/uconv/ucvlatin/vps.ut
+http://lxr.mozilla.org/seamonkey/source/intl/uconv/ucvlatin/vps.uf
+http://github.com/schwern/extutils-makemaker
+https://github.com/dagolden/cpanpm/compare/master...private%2Fuse-http-lite
+http://www.json.org/JSON::PP_checker/
+ftp://ftp.kiae.su/pub/unix/fido/
+http://www.gallistel.net/nparker/weather/code/
+http://www.javaworld.com/javaworld/jw-09-2001/jw-0928-ntmessages.html
+ftp://ftp-usa.tpc.int/pub/tpc/server/UNIX/
+http://www.cis.ohio-state.edu/htbin/rfc/rfc959.html
+http://public.activestate.com/cgi-bin/perlbrowse/p/33567
+http://public.activestate.com/cgi-bin/perlbrowse/p/33566
+http://www.dsmit.com/cons/
+http://www.makemaker.org/wiki/index.cgi?ModuleBuildConversionGuide
 
 __END__
 

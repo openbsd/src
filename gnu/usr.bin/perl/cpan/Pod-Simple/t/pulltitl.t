@@ -7,7 +7,7 @@ BEGIN {
 
 use strict;
 use Test;
-BEGIN { plan tests => 114 };
+BEGIN { plan tests => 116 };
 
 #use Pod::Simple::Debug (5);
 
@@ -44,6 +44,13 @@ ok( $t = $p->get_token);
 ok( $t && $t->type, 'text');
 ok( $t && $t->type eq 'text' && $t->text, 'NAME' );
 
+DIE: {
+    # Make sure we die.
+    local $@;
+    eval { $p->set_source(\'=head1 foo') };
+    ok $@;
+    ok $@ =~ /\QCannot assign new source to pull parser; create a new instance, instead/;
+}
 }
 
 ###########################################################################

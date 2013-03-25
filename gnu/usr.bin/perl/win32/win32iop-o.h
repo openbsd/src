@@ -178,15 +178,6 @@ END_EXTERN_C
 #undef uname
 #undef wait
 
-#ifdef __BORLANDC__
-#undef ungetc
-#undef getc
-#undef putc
-#undef getchar
-#undef putchar
-#undef fileno
-#endif
-
 #define stderr				win32_stderr()
 #define stdout				win32_stdout()
 #define	stdin				win32_stdin()

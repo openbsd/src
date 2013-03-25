@@ -4,7 +4,7 @@ specially designed to be readable as is.
 
 =head1 NAME
 
-README.vos - Perl for Stratus VOS
+perlvos - Perl for Stratus VOS
 
 =head1 SYNOPSIS
 
@@ -13,13 +13,18 @@ operating system.  Perl is a scripting or macro language that is
 popular on many systems.  See L<perlbook> for a number of good
 books on Perl.
 
-These are instructions for building Perl from source.  Most
-people can simply download a pre-compiled distribution from the
-VOS anonymous FTP site.  This version of Perl is not supported
-on VOS Release 14.2.0 or earlier releases.  If you are running
-VOS Release 14.3.0 or later, download Perl from
-ftp://ftp.stratus.com/pub/vos/posix/ga/ga.html.  Instructions
-for unbundling the Perl distribution file are at
+These are instructions for building Perl from source.  This version of
+Perl is not supported on VOS Release 14.2 or earlier releases.  If you
+have a Continuum platform running VOS Release 14.3 through 14.7,
+download Perl from the Stratus Anonymous FTP site at
+ftp://ftp.stratus.com/pub/vos/posix/ga/continuum/continuum.html.  If
+you have a V Series platform running VOS Release 15.0 or later, or if
+you have a V Series platform running OpenVOS Release 17.0 or later,
+download Perl from
+ftp://ftp.stratus.com/pub/vos/posix/ga/v-series/v-series.html.  The
+perl distribution files on the Stratus anonymous FTP site are stored
+in a format called a "bundled file".  Instructions for unbundling the
+Perl distribution file are at
 ftp://ftp.stratus.com/pub/vos/utility/utility.html.
 
 If you are running VOS Release 14.4.1 or later, you can obtain a
@@ -55,27 +60,28 @@ you have modify and default write permission to C<<
 
 =item 2
 
-While there are currently no architecture-specific
-extensions or modules distributed with perl, the following
-directories can be used to hold such files:
+While there are currently no architecture-specific extensions or
+modules distributed with perl, the following directories can be
+used to hold such files (replace the string VERSION by the
+appropriate version number):
 
-     >system>ported>lib>perl5>5.9.0>7100
-     >system>ported>lib>perl5>5.9.0>8000
-     >system>ported>lib>perl5>5.9.0>i786
+     >system>ported>lib>perl5>VERSION>7100
+     >system>ported>lib>perl5>VERSION>8000
+     >system>ported>lib>perl5>VERSION>i786
 
 =item 3
 
 Site-specific perl extensions and modules can be installed in one of
 two places.  Put architecture-independent files into:
 
-     >system>ported>lib>perl5>site_perl>5.9.0
+     >system>ported>lib>perl5>site_perl>VERSION
 
 Put site-specific architecture-dependent files into one of the
 following directories:
 
-     >system>ported>lib>perl5>site_perl>5.9.0>7100
-     >system>ported>lib>perl5>site_perl>5.9.0>8000
-     >system>ported>lib>perl5>site_perl>5.9.0>i786
+     >system>ported>lib>perl5>site_perl>VERSION>7100
+     >system>ported>lib>perl5>site_perl>VERSION>8000
+     >system>ported>lib>perl5>site_perl>VERSION>i786
 
 =item 4
 
@@ -114,8 +120,8 @@ modified to perform such mapping in software on VOS.  Performing
 other floating-point computations that underflow or overflow
 will probably result in SIGFPE.  Don't push your luck.
 
-As of VOS Release 14.7.0, the VOS POSIX runtime sets up the
-PA-RISC and IA-32 hardware floating-point status register so
+As of VOS Release 14.7.0 or later, the VOS POSIX runtime sets up
+the PA-RISC and IA-32 hardware floating-point status register so
 that the overflow and underflow exceptions do not trap, but
 instead automatically convert the result to infinity or zero, as
 appropriate.  As of this writing, there are still floating-point
@@ -158,6 +164,6 @@ Paul Green (Paul.Green@stratus.com)
 
 =head1 LAST UPDATE
 
-February 7, 2008
+October 6, 2010
 
 =cut

@@ -7,7 +7,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 74;
+use Test::More tests => 78;
 
 my $ro_err = qr/^Modification of a read-only value attempted/;
 
@@ -163,3 +163,14 @@ is(  Internals::SvREFCNT($foo[2]), 1 );
 is(  Internals::SvREFCNT(%foo), 1 );
 is(  Internals::SvREFCNT($foo{foo}), 1 );
 
+is(  Internals::SvREFCNT($foo, 2), 2, "update ref count");
+is(  Internals::SvREFCNT($foo), 2, "check we got the stored value");
+
+# the reference count is a U16, but was returned as an IV resulting in
+# different values between 32 and 64-bit builds
+my $big_count = 0xFFFFFFF0; # -16 32-bit signed
+is( Internals::SvREFCNT($foo, $big_count), $big_count,
+    "set reference count unsigned");
+is( Internals::SvREFCNT($foo), $big_count, "reference count unsigned");
+
+Internals::SvREFCNT($foo, 1 );

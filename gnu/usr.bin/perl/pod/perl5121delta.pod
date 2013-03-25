@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.12.1
+perl5121delta - what is new for perl v5.12.1
 
 =head1 DESCRIPTION
 
@@ -60,7 +60,7 @@ We made a small fix to the L<CPANPLUS> test suite to fix an occasional spurious 
 
 =item *
 
-We upgraded L<Safe> to version 2.27 to wrap coderefs retured by C<reval()> and C<rdo()>.
+We upgraded L<Safe> to version 2.27 to wrap coderefs returned by C<reval()> and C<rdo()>.
 
 =back
 
@@ -210,11 +210,9 @@ XSUB.h now correctly redefines fgets under PERL_IMPLICIT_SYS
 
 See also: L<http://rt.cpan.org/Public/Bug/Display.html?id=55049>
 
-
 =item * 
 
 utf8::is_utf8 now respects GMAGIC (e.g. $1)
-
 
 =item * 
 
@@ -257,7 +255,7 @@ See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=74290>
 =item *
 
 We fixed a regression in case-insensitive matching of folded characters
-in regular expressions introduced in Perl 5.12.0.
+in regular expressions introduced in Perl 5.10.1.
 
 See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=72998>
 
@@ -390,7 +388,8 @@ analysed by the Perl porting team.
 If the bug you are reporting has security implications, which make it
 inappropriate to send to a publicly archived mailing list, then please send
 it to perl5-security-report@perl.org. This points to a closed subscription
-unarchived mailing list, which includes all the core committers, who be able
+unarchived mailing list, which includes
+all the core committers, who will be able
 to help assess the impact of issues, figure out a resolution, and help
 co-ordinate the release of patches to mitigate or fix the problem across all
 platforms on which Perl is supported. Please only use this address for

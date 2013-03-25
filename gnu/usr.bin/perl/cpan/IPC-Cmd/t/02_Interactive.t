@@ -73,7 +73,7 @@ for my $aref ( @Conf ) {
         my $buffer;
         my $ok = run( command => $cmd, verbose => 1, buffer => \$buffer );
     
-        ok( $ok,                    "   Command '$cmd' ran succesfully" );
+        ok( $ok,                    "   Command '$cmd' ran successfully" );
     
         SKIP: {
             skip "No buffers available", 1 unless $Class->can_capture_buffer;

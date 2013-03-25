@@ -4,20 +4,18 @@
 # -- Raphael Manfredi, September 1996 (indirectly: because of Math::Complex)
 #
 
-require Exporter;
 package Math::Trig;
 
-use 5.005;
+{ use 5.006; }
 use strict;
 
-use Math::Complex 1.56;
+use Math::Complex 1.59;
 use Math::Complex qw(:trig :pi);
+require Exporter;
 
-use vars qw($VERSION $PACKAGE @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
+our @ISA = qw(Exporter);
 
-@ISA = qw(Exporter);
-
-$VERSION = 1.20;
+our $VERSION = 1.23;
 
 my @angcnv = qw(rad2deg rad2grad
 		deg2rad deg2grad
@@ -25,7 +23,7 @@ my @angcnv = qw(rad2deg rad2grad
 
 my @areal = qw(asin_real acos_real);
 
-@EXPORT = (@{$Math::Complex::EXPORT_TAGS{'trig'}},
+our @EXPORT = (@{$Math::Complex::EXPORT_TAGS{'trig'}},
 	   @angcnv, @areal);
 
 my @rdlcnv = qw(cartesian_to_cylindrical
@@ -46,13 +44,13 @@ my @greatcircle = qw(
 
 my @pi = qw(pi pi2 pi4 pip2 pip4);
 
-@EXPORT_OK = (@rdlcnv, @greatcircle, @pi, 'Inf');
+our @EXPORT_OK = (@rdlcnv, @greatcircle, @pi, 'Inf');
 
 # See e.g. the following pages:
 # http://www.movable-type.co.uk/scripts/LatLong.html
 # http://williams.best.vwh.net/avform.htm
 
-%EXPORT_TAGS = ('radial' => [ @rdlcnv ],
+our %EXPORT_TAGS = ('radial' => [ @rdlcnv ],
 	        'great_circle' => [ @greatcircle ],
 	        'pi'     => [ @pi ]);
 
@@ -166,19 +164,13 @@ sub great_circle_distance {
 sub great_circle_direction {
     my ( $theta0, $phi0, $theta1, $phi1 ) = @_;
 
-    my $distance = great_circle_distance($theta0, $phi0, $theta1, $phi1);
-
     my $lat0 = pip2 - $phi0;
     my $lat1 = pip2 - $phi1;
 
-    my $direction =
- 	acos_real((sin($lat1) - sin($lat0) * cos($distance)) /
-		  (cos($lat0) * sin($distance)));
-  
-    $direction = pi2 - $direction
-	if sin($theta1 - $theta0) < 0;
-
-    return rad2rad($direction);
+    return rad2rad(pi2 -
+	atan2(sin($theta0-$theta1) * cos($lat1),
+		cos($lat0) * sin($lat1) -
+		    sin($lat0) * cos($lat1) * cos($theta0-$theta1)));
 }
 
 *great_circle_bearing         = \&great_circle_direction;
@@ -755,8 +747,9 @@ L<Math::Complex>
 
 =head1 AUTHORS
 
-Jarkko Hietaniemi <F<jhi!at!iki.fi>> and 
-Raphael Manfredi <F<Raphael_Manfredi!at!pobox.com>>.
+Jarkko Hietaniemi <F<jhi!at!iki.fi>>,
+Raphael Manfredi <F<Raphael_Manfredi!at!pobox.com>>,
+Zefram <zefram@fysh.org>
 
 =head1 LICENSE
 

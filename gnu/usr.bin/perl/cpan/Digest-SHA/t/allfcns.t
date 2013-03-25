@@ -3,7 +3,7 @@ use strict;
 my $MODULE;
 
 BEGIN {
-	$MODULE = ($ENV{PERL_CORE} || -d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
 	eval "require $MODULE" || die $@;
 	$MODULE->import(qw(
 		hmac_sha1	hmac_sha1_base64	hmac_sha1_hex

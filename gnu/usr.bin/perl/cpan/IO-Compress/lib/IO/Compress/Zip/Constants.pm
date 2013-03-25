@@ -7,7 +7,7 @@ require Exporter;
 
 our ($VERSION, @ISA, @EXPORT, %ZIP_CM_MIN_VERSIONS);
 
-$VERSION = '2.024';
+$VERSION = '2.048';
 
 @ISA = qw(Exporter);
 
@@ -38,7 +38,9 @@ $VERSION = '2.024';
     ZIP_EXTRA_ID_ZIP64
     ZIP_EXTRA_ID_EXT_TIMESTAMP
     ZIP_EXTRA_ID_INFO_ZIP_UNIX2
-    ZIP_EXTRA_ID_INFO_ZIP_UNIXn
+    ZIP_EXTRA_ID_INFO_ZIP_UNIXN
+    ZIP_EXTRA_ID_INFO_ZIP_Upath
+    ZIP_EXTRA_ID_INFO_ZIP_Ucom        
     ZIP_EXTRA_ID_JAVA_EXE
 
     ZIP_OS_CODE_UNIX
@@ -49,6 +51,12 @@ $VERSION = '2.024';
     %ZIP_CM_MIN_VERSIONS
     ZIP64_MIN_VERSION
 
+    ZIP_A_RONLY
+    ZIP_A_HIDDEN
+    ZIP_A_SYSTEM
+    ZIP_A_LABEL
+    ZIP_A_DIR 
+    ZIP_A_ARCHIVE
     );
 
 # Compression types supported
@@ -72,6 +80,7 @@ use constant ZIP_IFA_TEXT_MASK                 => 1;
 # Signatures for each of the headers
 use constant ZIP_LOCAL_HDR_SIG                 => 0x04034b50;
 use constant ZIP_DATA_HDR_SIG                  => 0x08074b50;
+use constant packed_ZIP_DATA_HDR_SIG           => pack "V", ZIP_DATA_HDR_SIG;
 use constant ZIP_CENTRAL_HDR_SIG               => 0x02014b50;
 use constant ZIP_END_CENTRAL_HDR_SIG           => 0x06054b50;
 use constant ZIP64_END_CENTRAL_REC_HDR_SIG     => 0x06064b50;
@@ -86,16 +95,27 @@ use constant ZIP_OS_CODE_DEFAULT               => 3;
 use constant ZIP_EXTRA_ID_ZIP64                => pack "v", 1;
 use constant ZIP_EXTRA_ID_EXT_TIMESTAMP        => "UT";
 use constant ZIP_EXTRA_ID_INFO_ZIP_UNIX2       => "Ux";
-use constant ZIP_EXTRA_ID_INFO_ZIP_UNIXn       => "ux";
+use constant ZIP_EXTRA_ID_INFO_ZIP_UNIXN       => "ux";
+use constant ZIP_EXTRA_ID_INFO_ZIP_Upath       => "up";
+use constant ZIP_EXTRA_ID_INFO_ZIP_Ucom        => "uc";
 use constant ZIP_EXTRA_ID_JAVA_EXE             => pack "v", 0xCAFE;
+
+# DOS Attributes
+use constant ZIP_A_RONLY                       => 0x01;
+use constant ZIP_A_HIDDEN                      => 0x02;
+use constant ZIP_A_SYSTEM                      => 0x04;
+use constant ZIP_A_LABEL                       => 0x08;
+use constant ZIP_A_DIR                         => 0x10;
+use constant ZIP_A_ARCHIVE                     => 0x20;
 
 use constant ZIP64_MIN_VERSION                 => 45;
 
 %ZIP_CM_MIN_VERSIONS = (
-            ZIP_CM_STORE()                      => 20,
-            ZIP_CM_DEFLATE()                    => 20,
-            ZIP_CM_BZIP2()                      => 46,
-            ZIP_CM_LZMA()                       => 63,
+            ZIP_CM_STORE()                     => 20,
+            ZIP_CM_DEFLATE()                   => 20,
+            ZIP_CM_BZIP2()                     => 46,
+            ZIP_CM_LZMA()                      => 63,
+            ZIP_CM_PPMD()                      => 63,
             );
 
 

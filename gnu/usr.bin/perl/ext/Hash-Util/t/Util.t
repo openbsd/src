@@ -155,7 +155,7 @@ is( $hash{locked}, 42,  'unlock_value' );
     my %hash = (foo => 42, bar => undef);
     eval { lock_keys(%hash, qw(foo baz)); };
     is( $@, sprintf("Hash has key 'bar' which is not in the new key ".
-                    "set at %s line %d\n", __FILE__, __LINE__ - 2),
+                    "set at %s line %d.\n", __FILE__, __LINE__ - 2),
                     'carp test' );
 }
 

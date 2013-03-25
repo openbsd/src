@@ -3,7 +3,7 @@ use lib 't/lib';
 use MBTest;
 use DistGen;
 
-plan tests => 7;
+plan tests => 6;
 
 # Ensure any Module::Build modules are loaded from correct directory
 blib_load('Module::Build');
@@ -33,8 +33,6 @@ my $out = stdout_of( sub {
     $dist->run_build('installdeps')
 });
 ok( length($out), "ran mocked Build installdeps");
-my $expected = quotemeta(Module::Build->find_command($^X));
-like( $out, qr/$expected/i, "relative cpan_client resolved relative to \$^X" );
 like( $out, qr/File::Spec/, "saw File::Spec prereq" );
 like( $out, qr/Getopt::Long/, "saw Getopt::Long prereq" );
 

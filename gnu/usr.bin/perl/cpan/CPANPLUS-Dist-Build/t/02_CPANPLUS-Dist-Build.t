@@ -145,7 +145,10 @@ while( my($path,$need_cc) = each %Map ) {
         SKIP: {
             skip("Install tests require Module::Build 0.2606 or higher", 2)
                 unless $Module::Build::VERSION >= '0.2606';
-        
+
+            local $ENV{MODULEBUILDRC};
+            local $ENV{PERL_MB_OPT};
+
             ### flush the lib cache
             ### otherwise, cpanplus thinks the module's already installed
             ### since the blib is already in @INC

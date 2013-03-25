@@ -1,6 +1,6 @@
 ### make sure we can find our conf.pl file
-BEGIN { 
-    use FindBin; 
+BEGIN {
+    use FindBin;
     require "$FindBin::Bin/inc/conf.pl";
 }
 
@@ -21,7 +21,7 @@ BEGIN {
     require CPANPLUS::Dist;
     CPANPLUS::Dist->_add_dist_types( __PACKAGE__ );
 
-    sub init                { $_[0]->status->mk_accessors( 
+    sub init                { $_[0]->status->mk_accessors(
                                 qw[prepared created installed
                                    _prepare_args _install_args _create_args]);
                               return $Init };
@@ -50,7 +50,7 @@ my $cb   = CPANPLUS::Backend->new( $conf );
 ### obsolete
 #my $Format = '_test';
 my $Module      = 'CPANPLUS::Dist::_Test';
-my $ModName     = TEST_CONF_MODULE; 
+my $ModName     = TEST_CONF_MODULE;
 my $ModPrereq   = TEST_CONF_INST_MODULE;
 ### XXX this version doesn't exist, but we don't check for it either ###
 my $Prereq      = { $ModPrereq => '1000' };
@@ -96,7 +96,7 @@ ok( $Mod,                       "Got module object" );
 {   local $CPANPLUS::Dist::_Test::Available = 0;
 
     ok( !$Module->format_available,
-                                "Format availabillity turned off" );
+                                "Format availability turned off" );
 
     {   $conf->_set_build('sanity_check' => 0);
 
@@ -108,9 +108,9 @@ ok( $Mod,                       "Got module object" );
     }
 
     {   $conf->_set_build('sanity_check' => 1);
-        
+
         my $dist = $Module->new( module => $Mod );
-        
+
         ok( !$dist,             "Dist not created with sanity check on" );
         like( CPANPLUS::Error->stack_as_string,
                 qr/Format '$Module' is not available/,
@@ -122,7 +122,7 @@ ok( $Mod,                       "Got module object" );
 {   local $CPANPLUS::Dist::_Test::Init = 0;
 
     my $dist = $Module->new( module => $Mod );
-    
+
     ok( !$dist,                 "No dist created by failed init" );
     like( CPANPLUS::Error->stack_as_string,
             qr/Dist initialization of '$Module' failed for/s,
@@ -132,36 +132,36 @@ ok( $Mod,                       "Got module object" );
 ### configure_requires tests
 {   my $meta    = META->( $Mod );
     ok( $meta,                  "Reading 'configure_requires' from '$meta'" );
-    
+
     my $clone   = $Mod->clone;
     ok( $clone,                 "   Package cloned" );
 
     ### set the new location to fetch from
     $clone->package( $meta );
-    
+
     my $file = $clone->fetch;
     ok( $file,                  "   Meta file fetched" );
     ok( -e $file,               "       File '$file' exits" );
-    
+
     my $dist = $Module->new( module => $Mod );
 
     ok( $dist,                  "   Dist object created" );
-        
-    my $meth = 'find_configure_requires';    
+
+    my $meth = 'find_configure_requires';
     can_ok( $dist,              $meth );
-    
+
     my $href = $dist->$meth( file => $file );
     ok( $href,                  "   '$meth' returned hashref" );
-    
+
     ok( scalar(keys(%$href)),   "       Contains entries" );
     ok( $href->{ +TEST_CONF_PREREQ },
                                 "       Contains the right prereq" );
-}    
+}
 
 
 ### test _resolve prereqs, in a somewhat simulated set of circumstances
 {   my $old_prereq = $conf->get_conf('prereqs');
-    
+
     my $map = {
         0 => {
             'Previous install failed' => [
@@ -199,13 +199,6 @@ ok( $Mod,                       "Got module object" );
                             "   Dist installation failed recorded ok" ) },
             ],
 
-            "Set dependency to be perl-core" => [
-                sub { $cb->module_tree( $ModPrereq )->package(
-                                        'perl-5.8.1.tar.gz' );  'install' },
-                sub { like( CPANPLUS::Error->stack_as_string,
-                      qr/Prerequisite '$ModPrereq' is perl-core/s,
-                            "   Dist installation failed recorded ok" ) },
-            ],
             'Simple ignore'     => [
                 sub { 'ignore' },
                 sub { ok( !$_[0]->status->prepared,
@@ -229,10 +222,10 @@ ok( $Mod,                       "Got module object" );
             'Perl binary version too low' => [
                 sub { $cb->module_tree( $ModName )
                         ->status->prereqs({ PERL_CORE, 10000000000 }); '' },
-                sub { like( CPANPLUS::Error->stack_as_string, 
+                sub { like( CPANPLUS::Error->stack_as_string,
                             qr/needs perl version/,
                             "   Perl version not high enough" ) },
-            ],                            
+            ],
         },
         1 => {
             'Simple create'     => [
@@ -252,6 +245,14 @@ ok( $Mod,                       "Got module object" );
                             "   Module status says created" ) },
                 sub { ok( $_[0]->status->installed,
                             "   Module status says installed" ) },
+            ],
+
+            "Set dependency to be perl-core" => [
+                sub { $cb->module_tree( $ModPrereq )->package(
+                                        'perl-5.8.1.tar.gz' );  'install' },
+                sub { like( CPANPLUS::Error->stack_as_string,
+                      qr/Prerequisite '$ModPrereq' is perl-core/s,
+                            "   Dist installation failed recorded ok" ) },
             ],
 
             'Install from conf' => [
@@ -315,10 +316,10 @@ ok( $Mod,                       "Got module object" );
             'Perl binary version sufficient' => [
                 sub { $cb->module_tree( $ModName )
                         ->status->prereqs({ PERL_CORE, 1 }); '' },
-                sub { unlike( CPANPLUS::Error->stack_as_string, 
+                sub { unlike( CPANPLUS::Error->stack_as_string,
                             qr/needs perl version/,
                             "   Perl version sufficient" ) },
-            ],                            
+            ],
         },
     };
 
@@ -371,7 +372,7 @@ ok( $Mod,                       "Got module object" );
         0   =>      undef,
         1   =>      undef,
         2   =>      qr/have to resolve/,
-    };       
+    };
 
     my $mod = CPANPLUS::Module::Fake->new(
                     module  => $$,
@@ -381,37 +382,37 @@ ok( $Mod,                       "Got module object" );
 
     ok( $mod,                   "Fake module created" );
     is( $mod->version, 1,       "   Version set correctly" );
-    
+
      my $dist = $Module->new( module => $Mod );
-    
+
     ok( $dist,                  "Dist object created" );
     isa_ok( $dist,              $Module );
-    
-    
+
+
     ### scope it for the locals
     {   local $^W;  # quell sub redefined warnings;
-    
+
         ### is_uptodate will need to return false for this test
         local *CPANPLUS::Module::Fake::is_uptodate = sub { return };
         local *CPANPLUS::Module::Fake::is_uptodate = sub { return };
-        CPANPLUS::Error->flush;    
-    
-    
+        CPANPLUS::Error->flush;
+
+
         ### it's satisfied
         while( my($ver, $re) = each %$map ) {
-        
+
             my $rv = $dist->prereq_satisfied(
                         version => $ver,
                         modobj  => $mod );
-                        
-            ok( 1,                  "Testing ver: $ver" );                    
+
+            ok( 1,                  "Testing ver: $ver" );
             is( $rv, undef,       "   Return value as expected" );
-            
+
             if( $re ) {
                 like( CPANPLUS::Error->stack_as_string, $re,
                                     "   Error as expected" );
             }
-        
+
             CPANPLUS::Error->flush;
         }
     }

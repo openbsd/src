@@ -254,55 +254,58 @@ Your module may be object oriented (OO) or not, or it may have both kinds
 of interfaces available.  There are pros and cons of each technique, which 
 should be considered when you design your API.
 
-According to Damian Conway, you should consider using OO:
+In I<Perl Best Practices> (copyright 2004, Published by O'Reilly Media, Inc.),
+Damian Conway provides a list of criteria to use when deciding if OO is the
+right fit for your problem:
 
 =over 4
 
-=item * 
+=item *
 
-When the system is large or likely to become so
-
-=item * 
-
-When the data is aggregated in obvious structures that will become objects 
-
-=item * 
-
-When the types of data form a natural hierarchy that can make use of inheritance
+The system being designed is large, or is likely to become large.
 
 =item *
 
-When operations on data vary according to data type (making
-polymorphic invocation of methods feasible)
+The data can be aggregated into obvious structures, especially if
+there's a large amount of data in each aggregate.
 
 =item *
 
-When it is likely that new data types may be later introduced
-into the system, and will need to be handled by existing code
+The various types of data aggregate form a natural hierarchy that
+facilitates the use of inheritance and polymorphism.
 
 =item *
 
-When interactions between data are best represented by
-overloaded operators
+You have a piece of data on which many different operations are
+applied.
 
 =item *
 
-When the implementation of system components is likely to
-change over time (and hence should be encapsulated)
+You need to perform the same general operations on related types of
+data, but with slight variations depending on the specific type of data
+the operations are applied to.
 
 =item *
 
-When the system design is itself object-oriented
+It's likely you'll have to add new data types later.
 
 =item *
 
-When large amounts of client code will use the software (and
-should be insulated from changes in its implementation)
+The typical interactions between pieces of data are best represented by
+operators.
 
 =item *
 
-When many separate operations will need to be applied to the
-same set of data
+The implementation of individual components of the system is likely to
+change over time.
+
+=item *
+
+The system design is already object-oriented.
+
+=item *
+
+Large numbers of other programmers will be using your code modules.
 
 =back
 

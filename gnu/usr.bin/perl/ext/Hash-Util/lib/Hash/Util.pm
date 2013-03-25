@@ -4,6 +4,7 @@ require 5.007003;
 use strict;
 use Carp;
 use warnings;
+no warnings 'uninitialized';
 use warnings::register;
 use Scalar::Util qw(reftype);
 
@@ -28,10 +29,9 @@ our @EXPORT_OK  = qw(
                      hash_seed hv_store
 
                     );
-our $VERSION    = 0.07;
-require DynaLoader;
-local @ISA = qw(DynaLoader);
-bootstrap Hash::Util $VERSION;
+our $VERSION = '0.11';
+require XSLoader;
+XSLoader::load();
 
 sub import {
     my $class = shift;
@@ -320,7 +320,8 @@ sub lock_hashref_recurse {
 
     lock_ref_keys($hash);
     foreach my $value (values %$hash) {
-        if (reftype($value) eq 'HASH') {
+        my $type = reftype($value);
+        if (defined($type) and $type eq 'HASH') {
             lock_hashref_recurse($value);
         }
         Internals::SvREADONLY($value,1);
@@ -332,7 +333,8 @@ sub unlock_hashref_recurse {
     my $hash = shift;
 
     foreach my $value (values %$hash) {
-        if (reftype($value) eq 'HASH') {
+        my $type = reftype($value);
+        if (defined($type) and $type eq 'HASH') {
             unlock_hashref_recurse($value);
         }
         Internals::SvREADONLY($value,1);

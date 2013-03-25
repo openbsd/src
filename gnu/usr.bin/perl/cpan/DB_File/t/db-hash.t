@@ -1,11 +1,11 @@
 #!./perl 
- 
+
 use warnings;
 use strict;
 use Config;
  
 BEGIN {
-    if($ENV{PERL_CORE}) {
+    if(-d "lib" && -f "TEST") {
         if ($Config{'extensions'} !~ /\bDB_File\b/ ) {
             print "1..0 # Skip: DB_File was not built\n";
             exit 0;
@@ -294,7 +294,7 @@ ok(36, $status == 0 );
     ok(37, $h{'q'} eq undef );
 }
 
-# Attempting to delete a non-existant key should fail
+# Attempting to delete a non-existent key should fail
 
 $status = $X->del('joe') ;
 ok(38, $status == 1 );

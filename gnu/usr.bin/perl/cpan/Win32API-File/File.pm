@@ -10,7 +10,7 @@ use Fcntl qw( O_RDONLY O_RDWR O_WRONLY O_APPEND O_BINARY O_TEXT );
 use vars qw( $VERSION @ISA );
 use vars qw( @EXPORT @EXPORT_OK @EXPORT_FAIL %EXPORT_TAGS );
 
-$VERSION= '0.1101';
+$VERSION= '0.1200';
 
 use base qw( Exporter DynaLoader Tie::Handle IO::File );
 
@@ -716,7 +716,7 @@ sub READLINE {
 	my $self = shift;
 	my $line = "";
 
-	while ((index $line, $/) == $[-1) { # read until end of line marker
+	while ((index $line, $/) == -1) { # read until end of line marker
 		my $char = $self->GETC();
 
 		last if !defined $char || $char eq '';
@@ -2195,7 +2195,7 @@ Only bits set in C<$uMask> will be modified by C<SetHandleInformation>.
 C<$uFlags> is an unsigned value having zero or more of the bits
 C<HANDLE_FLAG_INHERIT> and C<HANDLE_FLAG_PROTECT_FROM_CLOSE> set.
 For each bit set in C<$uMask>, the cooresponding bit in the handle's
-flags is set to the value of the cooresponding bit in C<$uFlags>.
+flags is set to the value of the corresponding bit in C<$uFlags>.
 
 If C<$uOldFlags> were the value of the handle's flags before the
 call to C<SetHandleInformation>, then the value of the handle's
@@ -2471,7 +2471,7 @@ the media is currently accessible.
 
 Allows the device's media to be locked or unlocked.  C<$opOutBuf> should
 be C<[]>.  C<$pInBuf> should be a C<PREVENT_MEDIA_REMOVAL> data structure,
-which is simply an interger containing a boolean value:
+which is simply an integer containing a boolean value:
 
     $pInBuf= pack( "i", $bPreventMediaRemoval );
 
@@ -2559,7 +2559,7 @@ argument to C<DeviceIoControl>.  Most of these are to be used on
 physical drive devices like C<"//./PhysicalDrive0">.  However,
 C<IOCTL_DISK_GET_PARTITION_INFO> and C<IOCTL_DISK_SET_PARTITION_INFO>
 should only be used on a single-partition device like C<"//./C:">.  Also,
-C<IOCTL_DISK_GET_MEDIA_TYPES> is documented as having been superceded but
+C<IOCTL_DISK_GET_MEDIA_TYPES> is documented as having been superseded but
 is still useful when used on a floppy device like C<"//./A:">.
 
 Includes C<IOCTL_DISK_FORMAT_TRACKS>, C<IOCTL_DISK_FORMAT_TRACKS_EX>,
@@ -2631,7 +2631,7 @@ offset of the partition, measured in bytes.
 =item C<$ucHiddenSects>
 
 The number of "hidden" sectors for this partition.  Actually this is
-the number of sectors found prior to this partiton, that is, the
+the number of sectors found prior to this partition, that is, the
 starting offset [as found in C<$uStartLow> and C<$ivStartHigh>]
 divided by the number of bytes per sector.
 
@@ -2640,7 +2640,7 @@ divided by the number of bytes per sector.
 The sequence number of this partition.  Partitions are numbered
 starting as C<1> [with "partition 0" meaning the entire disk].  
 Sometimes this field may be C<0> and you'll have to infer the
-partition sequence number from how many partitions preceed it on
+partition sequence number from how many partitions precede it on
 the disk.
 
 =item C<$uPartitionType>
@@ -2834,7 +2834,7 @@ Stop loggin each disk request:
 
 =item DISK_LOGGING_DUMP
 
-Copy the interal log into the supplied buffer:
+Copy the internal log into the supplied buffer:
 
     $pLogBuffer= ' ' x $uLogBufferSize
     $pInBuf= pack( "C P L", 2, $pLogBuffer, $uLogBufferSize );
@@ -3026,7 +3026,7 @@ None known at this time.
 
 =head1 AUTHOR
 
-Tye McQueen, tye@metronet.com, http://www.metronet.com/~tye/.
+Tye McQueen, tye@metronet.com, http://perlmonks.org/?node=tye.
 
 =head1 SEE ALSO
 

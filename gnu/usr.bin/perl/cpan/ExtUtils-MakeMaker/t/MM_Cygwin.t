@@ -115,8 +115,10 @@ SKIP: {
 }
 
 # Our copy of Perl (with a unix-path) should always be executable.
-ok(MM->maybe_command($Config{perlpath}), qq{'$Config{perlpath}' should be executable});
-
+SKIP: {
+  skip "The Perl may not be installed yet when in core" if $ENV{PERL_CORE};
+  ok(MM->maybe_command($Config{perlpath}), qq{'$Config{perlpath}' should be executable});
+}
 
 package FakeOut;
 

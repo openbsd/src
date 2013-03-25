@@ -3,10 +3,10 @@
  *
  * Ref: NIST FIPS PUB 180-2 Secure Hash Standard
  *
- * Copyright (C) 2003-2008 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2012 Mark Shelor, All Rights Reserved
  *
- * Version: 5.47
- * Wed Apr 30 04:00:54 MST 2008
+ * Version: 5.71
+ * Wed Feb 29 04:06:10 MST 2012
  *
  */
 
@@ -145,23 +145,29 @@
 	#define SHA_getc		fgetc
 #endif
 
-#define SHA1	1
-#define SHA224	224
-#define SHA256	256
-#define SHA384	384
-#define SHA512	512
+#define SHA1		1
+#define SHA224		224
+#define SHA256		256
+#define SHA384		384
+#define SHA512		512
+#define SHA512224	512224
+#define SHA512256	512256
 
 #define SHA1_BLOCK_BITS		512
 #define SHA224_BLOCK_BITS	SHA1_BLOCK_BITS
 #define SHA256_BLOCK_BITS	SHA1_BLOCK_BITS
 #define SHA384_BLOCK_BITS	1024
 #define SHA512_BLOCK_BITS	SHA384_BLOCK_BITS
+#define SHA512224_BLOCK_BITS	SHA512_BLOCK_BITS
+#define SHA512256_BLOCK_BITS	SHA512_BLOCK_BITS
 
 #define SHA1_DIGEST_BITS	160
 #define SHA224_DIGEST_BITS	224
 #define SHA256_DIGEST_BITS	256
 #define SHA384_DIGEST_BITS	384
 #define SHA512_DIGEST_BITS	512
+#define SHA512224_DIGEST_BITS	224
+#define SHA512256_DIGEST_BITS	256
 
 #define SHA_MAX_BLOCK_BITS	SHA512_BLOCK_BITS
 #define SHA_MAX_DIGEST_BITS	SHA512_DIGEST_BITS
@@ -205,6 +211,7 @@ unsigned char	*shadigest	(_SHA_STATE);
 char		*shahex		(_SHA_STATE);
 char		*shabase64	(_SHA_STATE);
 int		 shadsize	(_SHA_STATE);
+int		 shaalg		(_SHA_STATE);
 SHA		*shadup		(_SHA_STATE);
 int		 shadump	(_SHA_FNAME, _SHA_STATE);
 SHA		*shaload	(_SHA_FNAME);
@@ -212,21 +219,27 @@ int		 shaclose	(_SHA_STATE);
 
 #ifndef SHA_PERL_MODULE
 
-unsigned char	*sha1digest	(_SHA_DATA);
-char		*sha1hex	(_SHA_DATA);
-char		*sha1base64	(_SHA_DATA);
-unsigned char	*sha224digest	(_SHA_DATA);
-char		*sha224hex	(_SHA_DATA);
-char		*sha224base64	(_SHA_DATA);
-unsigned char	*sha256digest	(_SHA_DATA);
-char		*sha256hex	(_SHA_DATA);
-char		*sha256base64	(_SHA_DATA);
-unsigned char	*sha384digest	(_SHA_DATA);
-char		*sha384hex	(_SHA_DATA);
-char		*sha384base64	(_SHA_DATA);
-unsigned char	*sha512digest	(_SHA_DATA);
-char		*sha512hex	(_SHA_DATA);
-char		*sha512base64	(_SHA_DATA);
+unsigned char	*sha1digest		(_SHA_DATA);
+char		*sha1hex		(_SHA_DATA);
+char		*sha1base64		(_SHA_DATA);
+unsigned char	*sha224digest		(_SHA_DATA);
+char		*sha224hex		(_SHA_DATA);
+char		*sha224base64		(_SHA_DATA);
+unsigned char	*sha256digest		(_SHA_DATA);
+char		*sha256hex		(_SHA_DATA);
+char		*sha256base64		(_SHA_DATA);
+unsigned char	*sha384digest		(_SHA_DATA);
+char		*sha384hex		(_SHA_DATA);
+char		*sha384base64		(_SHA_DATA);
+unsigned char	*sha512digest		(_SHA_DATA);
+char		*sha512hex		(_SHA_DATA);
+char		*sha512base64		(_SHA_DATA);
+unsigned char	*sha512224digest	(_SHA_DATA);
+char		*sha512224hex		(_SHA_DATA);
+char		*sha512224base64	(_SHA_DATA);
+unsigned char	*sha512256digest	(_SHA_DATA);
+char		*sha512256hex		(_SHA_DATA);
+char		*sha512256base64	(_SHA_DATA);
 
 #endif
 

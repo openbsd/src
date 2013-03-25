@@ -1,6 +1,6 @@
 
 /*
- * Copyright © 2001 Novell, Inc. All Rights Reserved.
+ * Copyright Â© 2001 Novell, Inc. All Rights Reserved.
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Artistic License, as specified in the README file.
@@ -11,7 +11,7 @@
  * FILENAME		:	NWUtil.c
  * DESCRIPTION	:	Utility functions for NetWare implementation of Perl.
  * Author		:	HYAK
- * Date			:	Januray 2001.
+ * Date			:	January 2001.
  *
  */
 

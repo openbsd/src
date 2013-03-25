@@ -6,7 +6,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-plan (tests => 34);
+plan (tests => 38);
 
 print "not " unless length("")    == 0;
 print "ok 1\n";
@@ -210,4 +210,25 @@ is($ul, undef, "Assigned length of overloaded undef with result in TARG");
 
 # ok(!defined $uo); Turns you can't test this. FIXME for pp_defined?
 
-is($warnings, 0, "There were no warnings");
+{
+    my $y = "\x{100}BC";
+    is(index($y, "B"), 1, 'adds an intermediate position to the offset cache');
+    is(length $y, 3,
+       'Check that sv_len_utf8() can take advantage of the offset cache');
+}
+
+{
+    local $SIG{__WARN__} = sub {
+        pass("'print length undef' warned");
+    };
+    print length undef;
+}
+
+{
+    local $SIG{__WARN__} = sub {
+	pass '[perl #106726] no crash with length @lexical warning'
+    };
+    eval ' sub { length my @forecasts } ';
+}
+
+is($warnings, 0, "There were no other warnings");

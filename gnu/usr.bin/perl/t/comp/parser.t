@@ -3,7 +3,7 @@
 # Checks if the parser behaves correctly in edge cases
 # (including weird syntax errors)
 
-print "1..122\n";
+print "1..123\n";
 
 sub failed {
     my ($got, $expected, $name) = @_;
@@ -125,7 +125,7 @@ is( $@, '', 'PL_lex_brackstack' );
     is("${a}[", "A[", "interpolation, qq//");
     my @b=("B");
     is("@{b}{", "B{", "interpolation, qq//");
-    is(qr/${a}{/, '(?-xism:A{)', "interpolation, qr//");
+    is(qr/${a}{/, '(?^:A{)', "interpolation, qr//");
     my $c = "A{";
     $c =~ /${a}{/;
     is($&, 'A{', "interpolation, m//");
@@ -354,6 +354,11 @@ eval q{
 is($@, "", "multiline whitespace inside substitute expression");
 
 # Add new tests HERE:
+
+# bug #74022: Loop on characters in \p{OtherIDContinue}
+# This test hangs if it fails.
+eval chr 0x387;
+is(1,1, '[perl #74022] Parser looping on OtherIDContinue chars');
 
 # More awkward tests for #line. Keep these at the end, as they will screw
 # with sane line reporting for any other test failures

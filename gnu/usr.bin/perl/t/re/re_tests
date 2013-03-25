@@ -1,5 +1,10 @@
 # This stops me getting screenfulls of syntax errors every time I accidentally
-# run this file via a shell glob
+# run this file via a shell glob.  The full format of this file is given
+# in regexp.t
+# Prior to the implementation of autoloading of \N{}, tests that used \N{name}
+# could not go in this file, and were farmed out to other .t's.
+#
+# pat	string	y/n/etc	expr	expected-expr	skip-reason
 __END__
 abc	abc	y	$&	abc
 abc	abc	y	$-[0]	0
@@ -626,15 +631,15 @@ $(?<=^(a))	a	y	$1	a
 ([[:upper:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	AB
 ([[:xdigit:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01
 ([[:^alpha:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	01
-([[:^alnum:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	__--  ${nulnul}${ffff}
+((?a)[[:^alnum:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	__--  ${nulnul}${ffff}
 ([[:^ascii:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	${ffff}
 ([[:^cntrl:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy__--  
 ([[:^digit:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd
 ([[:^lower:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	AB
-([[:^print:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	${nulnul}${ffff}
+((?a)[[:^print:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	${nulnul}${ffff}
 ([[:^punct:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy
 ([[:^space:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy__--
-([[:^word:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	--  ${nulnul}${ffff}
+((?a)[[:^word:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	--  ${nulnul}${ffff}
 ([[:^upper:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	cd01
 ([[:^xdigit:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	Xy__--  ${nulnul}${ffff}
 [[:foo:]]	-	c	-	POSIX class [:foo:] unknown
@@ -904,6 +909,7 @@ tt+$	xxxtt	y	-	-
 ^([^,]{0,3},){3,}d	aaa,b,c,d	y	$1	c,
 ^([^,]{0,3},){0,3}d	aaa,b,c,d	y	$1	c,
 (?i)		y	-	-
+(?a:((?u)\w)\W)	\xC0\xC0	y	$&	\xC0\xC0
 '(?!\A)x'm	a\nxb\n	y	-	-
 ^(a(b)?)+$	aba	y	-$1-$2-	-a--
 ^(aa(bb)?)+$	aabbaa	y	-$1-$2-	-aa--
@@ -1064,35 +1070,35 @@ X(?<=foo.)[YZ]	..XfooXY..	y	pos	8
 ((?2)*)([fF]o+)	fooFoFoo	y	$1-$2	fooFo-Foo
 (<(?:[^<>]+|(?R))*>)	<<><<<><>>>>	y	$1	<<><<<><>>>>
 (?<n>foo|bar|baz)	snofooewa	y	$1	foo
-(?<n>foo|bar|baz)	snofooewa	y	$+{n}	foo
-(?<n>foo|bar|baz)(?<m>[ew]+)	snofooewa	y	$+{n}	foo
-(?<n>foo|bar|baz)(?<m>[ew]+)	snofooewa	y	$+{m}	ew
-(?<n>foo)|(?<n>bar)|(?<n>baz)	snofooewa	y	$+{n}	foo
-(?<n>foo)(??{ $+{n} })	snofooefoofoowaa	y	$+{n}	foo
+(?<n>foo|bar|baz)	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+(?<n>foo|bar|baz)(?<m>[ew]+)	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+(?<n>foo|bar|baz)(?<m>[ew]+)	snofooewa	yM	$+{m}	ew	miniperl cannot load Tie::Hash::NamedCapture
+(?<n>foo)|(?<n>bar)|(?<n>baz)	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+(?<n>foo)(??{ $+{n} })	snofooefoofoowaa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 (?P<n>foo|bar|baz)	snofooewa	y	$1	foo
-(?P<n>foo|bar|baz)	snofooewa	y	$+{n}	foo
-(?P<n>foo|bar|baz)(?P<m>[ew]+)	snofooewa	y	$+{n}	foo
-(?P<n>foo|bar|baz)(?P<m>[ew]+)	snofooewa	y	$+{m}	ew
-(?P<n>foo)|(?P<n>bar)|(?P<n>baz)	snofooewa	y	$+{n}	foo
-(?P<n>foo)(??{ $+{n} })	snofooefoofoowaa	y	$+{n}	foo
+(?P<n>foo|bar|baz)	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+(?P<n>foo|bar|baz)(?P<m>[ew]+)	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+(?P<n>foo|bar|baz)(?P<m>[ew]+)	snofooewa	yM	$+{m}	ew	miniperl cannot load Tie::Hash::NamedCapture
+(?P<n>foo)|(?P<n>bar)|(?P<n>baz)	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+(?P<n>foo)(??{ $+{n} })	snofooefoofoowaa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 (?P<=n>foo|bar|baz)	snofooewa	c	-	Sequence (?P<=...) not recognized
 (?P<!n>foo|bar|baz)	snofooewa	c	-	Sequence (?P<!...) not recognized
 (?PX<n>foo|bar|baz)	snofooewa	c	-	Sequence (?PX<...) not recognized
 /(?'n'foo|bar|baz)/	snofooewa	y	$1	foo
-/(?'n'foo|bar|baz)/	snofooewa	y	$+{n}	foo
-/(?'n'foo|bar|baz)(?'m'[ew]+)/	snofooewa	y	$+{n}	foo
-/(?'n'foo|bar|baz)(?'m'[ew]+)/	snofooewa	y	$+{m}	ew
-/(?'n'foo)|(?'n'bar)|(?<n>baz)/	snobazewa	y	$+{n}	baz
-/(?'n'foo)(??{ $+{n} })/	snofooefoofoowaa	y	$+{n}	foo
+/(?'n'foo|bar|baz)/	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?'n'foo|bar|baz)(?'m'[ew]+)/	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?'n'foo|bar|baz)(?'m'[ew]+)/	snofooewa	yM	$+{m}	ew	miniperl cannot load Tie::Hash::NamedCapture
+/(?'n'foo)|(?'n'bar)|(?<n>baz)/	snobazewa	yM	$+{n}	baz	miniperl cannot load Tie::Hash::NamedCapture
+/(?'n'foo)(??{ $+{n} })/	snofooefoofoowaa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?'n'foo)\k<n>/	..foofoo..	y	$1	foo
-/(?'n'foo)\k<n>/	..foofoo..	y	$+{n}	foo
+/(?'n'foo)\k<n>/	..foofoo..	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?<n>foo)\k'n'/	..foofoo..	y	$1	foo
-/(?<n>foo)\k'n'/	..foofoo..	y	$+{n}	foo
-/(?:(?<n>foo)|(?<n>bar))\k<n>/	..barbar..	y	$+{n}	bar
-/^(?'main'<(?:[^<>]+|(?&crap)|(?&main))*>)(?'empty')(?'crap'!>!>!>)$/	<<!>!>!>><>>!>!>!>	y	$+{main}	<<!>!>!>><>>
+/(?<n>foo)\k'n'/	..foofoo..	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?:(?<n>foo)|(?<n>bar))\k<n>/	..barbar..	yM	$+{n}	bar	miniperl cannot load Tie::Hash::NamedCapture
+/^(?'main'<(?:[^<>]+|(?&crap)|(?&main))*>)(?'empty')(?'crap'!>!>!>)$/	<<!>!>!>><>>!>!>!>	yM	$+{main}	<<!>!>!>><>>	miniperl cannot load Tie::Hash::NamedCapture
 /^(?'main'<(?:[^<>]+|(?&main))*>)$/	<<><<<><>>>>	y	$1	<<><<<><>>>>
-/(?'first'(?&second)*)(?'second'[fF]o+)/	fooFoFoo	y	$+{first}-$+{second}	fooFo-Foo
-(?<A>foo)?(?(<A>)bar|nada)	foobar	y	$+{A}	foo
+/(?'first'(?&second)*)(?'second'[fF]o+)/	fooFoFoo	yM	$+{first}-$+{second}	fooFo-Foo	miniperl cannot load Tie::Hash::NamedCapture
+(?<A>foo)?(?(<A>)bar|nada)	foobar	yM	$+{A}	foo	miniperl cannot load Tie::Hash::NamedCapture
 (?<A>foo)?(?(<A>)bar|nada)	foo-barnada	y	$&	nada
 (?<A>foo)?(?(1)bar|nada)	foo-barnada	y	$&	nada
 (?<A>foo(?(R)bar))?(?1)	foofoobar	y	$1	foo
@@ -1246,15 +1252,15 @@ a*(*F)	aaaab	n	-	-
 
 # \k<n> preceded by a literal
 /(?'n'foo) \k<n>/	..foo foo..	y	$1	foo
-/(?'n'foo) \k<n>/	..foo foo..	y	$+{n}	foo
+/(?'n'foo) \k<n>/	..foo foo..	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?<n>foo) \k'n'/	..foo foo..	y	$1	foo
-/(?<n>foo) \k'n'/	..foo foo..	y	$+{n}	foo
-/(?'a1'foo) \k'a1'/	..foo foo..	y	$+{a1}	foo
-/(?<a1>foo) \k<a1>/	..foo foo..	y	$+{a1}	foo
-/(?'_'foo) \k'_'/	..foo foo..	y	$+{_}	foo
-/(?<_>foo) \k<_>/	..foo foo..	y	$+{_}	foo
-/(?'_0_'foo) \k'_0_'/	..foo foo..	y	$+{_0_}	foo
-/(?<_0_>foo) \k<_0_>/	..foo foo..	y	$+{_0_}	foo
+/(?<n>foo) \k'n'/	..foo foo..	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?'a1'foo) \k'a1'/	..foo foo..	yM	$+{a1}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?<a1>foo) \k<a1>/	..foo foo..	yM	$+{a1}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?'_'foo) \k'_'/	..foo foo..	yM	$+{_}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?<_>foo) \k<_>/	..foo foo..	yM	$+{_}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?'_0_'foo) \k'_0_'/	..foo foo..	yM	$+{_0_}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?<_0_>foo) \k<_0_>/	..foo foo..	yM	$+{_0_}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?'0'foo) bar/	..foo bar..	c	-	Sequence (?'
 /(?<0>foo) bar/	..foo bar..	c	-	Sequence (?<
 /(?'12'foo) bar/	..foo bar..	c	-	Sequence (?'
@@ -1283,19 +1289,19 @@ a*(*F)	aaaab	n	-	-
 
 # \g{...} with a name as the argument 
 /(?'n'foo) \g{n}/	..foo foo..	y	$1	foo
-/(?'n'foo) \g{n}/	..foo foo..	y	$+{n}	foo
+/(?'n'foo) \g{n}/	..foo foo..	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?<n>foo) \g{n}/	..foo foo..	y	$1	foo
-/(?<n>foo) \g{n}/	..foo foo..	y	$+{n}	foo
+/(?<n>foo) \g{n}/	..foo foo..	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?<as>as) (\w+) \g{as} (\w+)/	as easy as pie	y	$1-$2-$3	as-easy-pie
 
 # Python style named capture buffer stuff
 /(?P<n>foo)(?P=n)/	..foofoo..	y	$1	foo
-/(?P<n>foo)(?P=n)/	..foofoo..	y	$+{n}	foo
-/(?:(?P<n>foo)|(?P<n>bar))(?P=n)/	..barbar..	y	$+{n}	bar
+/(?P<n>foo)(?P=n)/	..foofoo..	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
+/(?:(?P<n>foo)|(?P<n>bar))(?P=n)/	..barbar..	yM	$+{n}	bar	miniperl cannot load Tie::Hash::NamedCapture
 /^(?P<PAL>(?P<CHAR>.)((?P>PAL)|.?)(?P=CHAR))$/	madamimadam	y	$&	madamimadam
 /^(?P<PAL>(?P<CHAR>.)((?P>PAL)|.?)(?P=CHAR))$/	madamiamadam	n	-	-
 /(?P<n>foo) (?P=n)/	..foo foo..	y	$1	foo
-/(?P<n>foo) (?P=n)/	..foo foo..	y	$+{n}	foo
+/(?P<n>foo) (?P=n)/	..foo foo..	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?P<as>as) (\w+) (?P=as) (\w+)/	as easy as pie	y	$1-$2-$3	as-easy-pie
 
 #check that non identifiers as names are treated as the appropriate lookaround
@@ -1322,10 +1328,13 @@ X(\w+)(?=\s)|X(\w+)	Xab	y	[$1-$2]	[-ab]
 (?|(?|(a)|(b))|(?|(c)|(d)))	d	y	$1	d
 (.)(?|(.)(.)x|(.)d)(.)	abcde	y	$1-$2-$3-$4-$5-	b-c--e--
 (\N)(?|(\N)(\N)x|(\N)d)(\N)	abcde	y	$1-$2-$3-$4-$5-	b-c--e--
-(?|(?<foo>x))	x	y	$+{foo}	x
-(?|(?<foo>x)|(?<bar>y))	x	y	$+{foo}	x
-(?|(?<bar>y)|(?<foo>x))	x	y	$+{foo}	x
-(?<bar>)(?|(?<foo>x))	x	y	$+{foo}	x
+(?|(?<foo>x))	x	yM	$+{foo}	x	miniperl cannot load Tie::Hash::NamedCapture
+(?|(?<foo>x)|(?<bar>y))	x	yM	$+{foo}	x	miniperl cannot load Tie::Hash::NamedCapture
+(?|(?<bar>y)|(?<foo>x))	x	yM	$+{foo}	x	miniperl cannot load Tie::Hash::NamedCapture
+(?<bar>)(?|(?<foo>x))	x	yM	$+{foo}	x	miniperl cannot load Tie::Hash::NamedCapture
+# Used to crash, because the last branch was ignored when the parens
+# were counted:
+(?|(b)|()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()(a))	a	y	$&	a
 
 #Bug #41492
 (?(DEFINE)(?<A>(?&B)+)(?<B>a))(?&A)	a	y	$&	a
@@ -1404,7 +1413,7 @@ foo(\h)bar	foo\tbar	y	$1	\t
 /\N{U+41}\x{c1}/i	a\x{e1}	y	$&	a\x{e1}
 /[\N{U+41}\x{c1}]/i	\x{e1}	y	$&	\x{e1}
 
-[\s][\S]	\x{a0}\x{a0}	nT	-	-	# Unicode complements should not match same character
+[\s][\S]	\x{a0}\x{a0}	n	-	-	# Unicode complements should not match same character
 
 # was generating malformed utf8
 '[\x{100}\xff]'i	\x{ff}	y	$&	\x{ff}
@@ -1433,7 +1442,7 @@ abc\N	abc\n	n
 # figures it out.
 \N{U+}	-	c	-	Invalid hexadecimal number
 [\N{U+}]	-	c	-	Invalid hexadecimal number
-\N{U+4AG3}	-	c	-	Invalid hexadecimal number
+\N{U+4AG3}	-	c	-	Illegal hexadecimal digit
 [\N{U+4AG3}]	-	c	-	Invalid hexadecimal number
 abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 
@@ -1442,11 +1451,155 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 /abc\N {SPACE}/x	-	c	-	Missing braces
 
 # Verifies catches hex errors, and doesn't expose our . notation to the outside
-/\N{U+0xBEEF}/	- 	c	-	Illegal hexadecimal digit
-/\N{U+BEEF.BEAD}/	- 	c	-	Illegal hexadecimal digit
+/\N{U+0xBEEF}/	-	c	-	Illegal hexadecimal digit
+/\N{U+BEEF.BEAD}/	-	c	-	Illegal hexadecimal digit
 
 # Verify works in single quotish context; regex compiler delivers slightly different msg
 # \N{U+BEEF.BEAD} succeeds here, because can't completely hide it from the outside.
-\N{U+0xBEEF}	- 	c	-	Invalid hexadecimal number
+\N{U+0xBEEF}	-	c	-	Illegal hexadecimal digit
+\c`	-	c	-	\"\\c`\" is more clearly written simply as \"\\ \"
+\c1	-	c	-	\"\\c1\" is more clearly written simply as \"q\"
+\cA	\001	y	$&	\1
 
-# vim: set noexpandtab
+\400	\x{100}	y	$&	\x{100}
+\600	\x{180}	y	$&	\x{180}
+\777	\x{1FF}	y	$&	\x{1FF}
+[a\400]	\x{100}	y	$&	\x{100}
+[b\600]	\x{180}	y	$&	\x{180}
+[c\777]	\x{1FF}	y	$&	\x{1FF}
+\o{120}	\x{50}	y	$&	\x{50}
+\o{400}	\x{100}	y	$&	\x{100}
+\o{1000}	\x{200}	y	$&	\x{200}
+[a\o{120}]	\x{50}	y	$&	\x{50}
+[a\o{400}]	\x{100}	y	$&	\x{100}
+[a\o{1000}]	\x{200}	y	$&	\x{200}
+
+# The below was inserting a NULL into the character class.
+[\8\9]	\000	n	-	-
+[\8\9]	8	y	$&	8
+[\8\9]	9	y	$&	9
+
+# Verify that reads 1-3 octal digits, and that \_ works in char class
+[\0]	\000	y	$&	\000
+[\07]	\007	y	$&	\007
+[\07]	7\000	n	-	-
+[\006]	\006	y	$&	\006
+[\006]	6\000	n	-	-
+[\0005]	\0005	y	$&	\000
+[\0005]	5\000	y	$&	5
+[\_]	_	y	$&	_
+
+# RT #79152
+(q1|.)*(q2|.)*(x(a|bc)*y){2,}	xayxay	y	$&	xayxay
+(q1|.)*(q2|.)*(x(a|bc)*y){2,3}	xayxay	y	$&	xayxay
+(q1|z)*(q2|z)*z{15}-.*?(x(a|bc)*y){2,3}Z	zzzzzzzzzzzzzzzz-xayxayxayxayZ	y	$&	zzzzzzzzzzzzzzzz-xayxayxayxayZ
+
+(?:(?:)foo|bar|zot|rt78356)	foo	y	$&	foo
+/\xe0\pL/i	\xc0a	y	$&	\xc0a
+
+# RT #85528
+(?{})[\x{100}]	\x{100}	y	$&	\x{100}
+
+# RT #85964
+^m?(\S)(.*)\1$	aba	y	$1	a
+^m?(\S)(.*)\1$	\tb\t	n	-	-
+^m?(\s)(.*)\1$	\tb\t	y	$1	\t
+^m?(\s)(.*)\1$	aba	n	-	-
+^m?(\W)(.*)\1$	:b:	y	$1	:
+^m?(\W)(.*)\1$	aba	n	-	-
+^m?(\w)(.*)\1$	aba	y	$1	a
+^m?(\w)(.*)\1$	:b:	n	-	-
+^m?(\D)(.*)\1$	aba	y	$1	a
+^m?(\D)(.*)\1$	5b5	n	-	-
+^m?(\d)(.*)\1$	5b5	y	$1	5
+^m?(\d)(.*)\1$	aba	n	-	-
+
+# 17F is 'Long s';  This makes sure the a's in /aa can be separate
+/s/ai	\x{17F}	y	$&	\x{17F}
+/s/aia	\x{17F}	n	-	-
+/s/aia	S	y	$&	S
+/(?aia:s)/	\x{17F}	n	-	-
+/(?aia:s)/	S	y	$&	S
+
+# Normally 1E9E generates a multi-char fold, but not in inverted class;
+# See [perl #89750].  This makes sure that the simple fold gets generated
+# in that case, to DF.
+/[^\x{1E9E}]/i	\x{DF}	n	-	-
+
+# RT #96354
+/^.*\d\H/	X1	n	-	-
+/^.*\d\V/	X1	n	-	-
+
+# \p{L_} was being misinterpreted as \p{L}.  L_ matches cased letters, which
+# the ideograph below isn't, whereas it does match L
+/^\p{L_}/	\x{3400}	n	-	-
+/^\p{L}/	\x{3400}	y	$&	\x{3400}
+
+# RT #89774
+/[s\xDF]/ui	\xDFs	ybT	$&	\xDFs
+
+# RT #99928
+/^\R\x0A$/	\x0D\x0A	n	-	-
+
+/ff/i	\x{FB00}\x{FB01}	y	$&	\x{FB00}
+/ff/i	\x{FB01}\x{FB00}	y	$&	\x{FB00}
+/fi/i	\x{FB01}\x{FB00}	y	$&	\x{FB01}
+/fi/i	\x{FB00}\x{FB01}	y	$&	\x{FB01}
+
+# These test that doesn't cut-off matching too soon in the string for
+# multi-char folds
+/ffiffl/i	abcdef\x{FB03}\x{FB04}	y	$&	\x{FB03}\x{FB04}
+/\xdf\xdf/ui	abcdefssss	y	$&	ssss
+
+/st/i	\x{DF}\x{FB05}	y	$&	\x{FB05}
+/ssst/i	\x{DF}\x{FB05}	y	$&	\x{DF}\x{FB05}
+
+# [perl #101970]
+/[[:lower:]]/i	\x{100}	y	$&	\x{100}
+/[[:upper:]]/i	\x{101}	y	$&	\x{101}
+
+# Was matching 'ss' only and failing the entire match, not seeing the
+# alternative that would succeed
+/s\xDF/ui	\xDFs	y	$&	\xDFs
+/sst/ui	s\N{LATIN SMALL LIGATURE ST}	y	$&	s\N{LATIN SMALL LIGATURE ST}
+/sst/ui	s\N{LATIN SMALL LIGATURE LONG S T}	y	$&	s\N{LATIN SMALL LIGATURE LONG S T}
+
+# /i properties shouldn't match more than the property itself
+/[[:ascii:]]/i	\N{KELVIN SIGN}	n	-	-
+
+# [[:lower:]]/i and [[:upper:]]/i should match what \p{Lower} and \p{Upper} do.
+# which is \p{Cased}, not \p{Alpha},
+/[[:lower:]]/i	\N{U+3400}	n	-	-
+/[[:upper:]]/i	\N{U+01BB}	n	-	-
+
+# [perl #110648]
+[^\p{Alphabetic}]	\x{100}	n	-	-
+
+# [perl #111400].  Tests the first Y/N boundary above 255 for each of these.
+/[[:alnum:]]/	\x{2c1}	y	-	-
+/[[:alnum:]]/	\x{2c2}	n	-	-
+/[[:alpha:]]/	\x{2c1}	y	-	-
+/[[:alpha:]]/	\x{2c2}	n	-	-
+/[[:graph:]]/	\x{377}	y	-	-
+/[[:graph:]]/	\x{378}	n	-	-
+/[[:lower:]]/	\x{100}	n	-	-
+/[[:lower:]]/	\x{101}	y	-	-
+/[[:lower:]]/	\x{102}	n	-	-
+/[[:print:]]/	\x{377}	y	-	-
+/[[:print:]]/	\x{378}	n	-	-
+/[[:punct:]]/	\x{37D}	n	-	-
+/[[:punct:]]/	\x{37E}	y	-	-
+/[[:punct:]]/	\x{388}	n	-	-
+/[[:upper:]]/	\x{100}	y	-	-
+/[[:upper:]]/	\x{101}	n	-	-
+/[[:word:]]/	\x{2c1}	y	-	-
+/[[:word:]]/	\x{2c2}	n	-	-
+
+# [perl #114220]
+/[\h]/	\x{A0}	y	$&	\xA0
+/[\H]/	\x{BF}	y	$&	\xBF
+/[\H]/	\x{A0}	n	-	-
+/[\H]/	\x{A1}	y	$&	\xA1
+
+
+# vim: softtabstop=0 noexpandtab

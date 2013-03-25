@@ -4,7 +4,7 @@ package Pod::Simple::Methody;
 use strict;
 use Pod::Simple ();
 use vars qw(@ISA $VERSION);
-$VERSION = '3.14';
+$VERSION = '3.20';
 @ISA = ('Pod::Simple');
 
 # Yes, we could use named variables, but I want this to be impose
@@ -32,7 +32,7 @@ sub _handle_element_end {
   ( $_[0]->can( 'end_' . $_[1] )
     || return
   )->(
-    $_[0]
+    $_[0], $_[2]
   );
 }
 
@@ -51,12 +51,12 @@ Pod::Simple::Methody -- turn Pod::Simple events into method calls
  use strict;
  package SomePodFormatter;
  use base qw(Pod::Simple::Methody);
- 
+
  sub handle_text {
    my($self, $text) = @_;
    ...
  }
- 
+
  sub start_head1 {
    my($self, $attrs) = @_;
    ...
@@ -65,7 +65,7 @@ Pod::Simple::Methody -- turn Pod::Simple events into method calls
    my($self) = @_;
    ...
  }
- 
+
 ...and start_/end_ methods for whatever other events you want to catch.
 
 =head1 DESCRIPTION

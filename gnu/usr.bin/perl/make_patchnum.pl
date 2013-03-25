@@ -17,7 +17,7 @@ make_patchnum.pl - make patchnum
 
 This program creates the files holding the information
 about locally applied patches to the source code. The created
-files are  C<git_version.h> and C<lib/Config_git.pl>.
+files are  F<git_version.h> and F<lib/Config_git.pl>.
 
 =head2 C<lib/Config_git.pl>
 
@@ -134,6 +134,7 @@ if (my $patch_file= read_file(".patch")) {
 elsif (-d "$srcdir/.git") {
     # git branch | awk 'BEGIN{ORS=""} /\*/ { print $2 }'
     ($branch) = map { /\* ([^(]\S*)/ ? $1 : () } backtick("git branch");
+    $branch //= "";
     my ($remote,$merge);
     if (length $branch) {
         $merge= backtick("git config branch.$branch.merge");

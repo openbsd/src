@@ -3,7 +3,8 @@ package Thread::Queue;
 use strict;
 use warnings;
 
-our $VERSION = '2.11';
+our $VERSION = '2.12';
+$VERSION = eval $VERSION;
 
 use threads::shared 1.21;
 use Scalar::Util 1.10 qw(looks_like_number blessed reftype refaddr);
@@ -209,7 +210,7 @@ Thread::Queue - Thread-safe queues
 
 =head1 VERSION
 
-This document describes Thread::Queue version 2.11
+This document describes Thread::Queue version 2.12
 
 =head1 SYNOPSIS
 
@@ -460,12 +461,6 @@ Passing array/hash refs that contain objects may not work for Perl prior to
 
 Thread::Queue Discussion Forum on CPAN:
 L<http://www.cpanforum.com/dist/Thread-Queue>
-
-Annotated POD for Thread::Queue:
-L<http://annocpan.org/~JDHEDDEN/Thread-Queue-2.11/lib/Thread/Queue.pm>
-
-Source repository:
-L<http://code.google.com/p/thread-queue/>
 
 L<threads>, L<threads::shared>
 

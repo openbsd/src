@@ -23,7 +23,7 @@ require Exporter;
 use strict;
 use vars qw[$DEBUG $error $VERSION $WARN $FOLLOW_SYMLINK $CHOWN $CHMOD
             $DO_NOT_USE_PREFIX $HAS_PERLIO $HAS_IO_STRING $SAME_PERMISSIONS
-            $INSECURE_EXTRACT_MODE @ISA @EXPORT
+            $INSECURE_EXTRACT_MODE $ZERO_PAD_NUMBERS @ISA @EXPORT
          ];
 
 @ISA                    = qw[Exporter];
@@ -31,12 +31,13 @@ use vars qw[$DEBUG $error $VERSION $WARN $FOLLOW_SYMLINK $CHOWN $CHMOD
 $DEBUG                  = 0;
 $WARN                   = 1;
 $FOLLOW_SYMLINK         = 0;
-$VERSION                = "1.54";
+$VERSION                = "1.82";
 $CHOWN                  = 1;
 $CHMOD                  = 1;
 $SAME_PERMISSIONS       = $> == 0 ? 1 : 0;
 $DO_NOT_USE_PREFIX      = 0;
 $INSECURE_EXTRACT_MODE  = 0;
+$ZERO_PAD_NUMBERS       = 0;
 
 BEGIN {
     use Config;
@@ -67,6 +68,9 @@ Archive::Tar - module for manipulations of tar archives
     $tar->add_data('file/baz.txt', 'This is the contents now');
 
     $tar->rename('oldname', 'new/file/name');
+    $tar->chown('/', 'root');
+    $tar->chown('/', 'root:root');
+    $tar->chmod('/tmp', '1777');
 
     $tar->write('files.tar');                   # plain tar
     $tar->write('files.tgz', COMPRESS_GZIP);    # gzip compressed
@@ -167,6 +171,14 @@ very big archives, and are only interested in the first few files.
 Can be set to a regular expression.  Only files with names that match
 the expression will be read.
 
+=item md5
+
+Set to 1 and the md5sum of files will be returned (instead of file data)
+    my $iter = Archive::Tar->iter( $file,  1, {md5 => 1} );
+    while( my $f = $iter->() ) {
+        print $f->data . "\t" . $f->full_path . $/;
+    }
+
 =item extract
 
 If set to true, immediately extract entries when reading them. This
@@ -211,10 +223,15 @@ sub read {
 sub _get_handle {
     my $self     = shift;
     my $file     = shift;   return unless defined $file;
-                            return $file if ref $file;
     my $compress = shift || 0;
     my $mode     = shift || READ_ONLY->( ZLIB ); # default to read only
 
+    ### Check if file is a file handle or IO glob
+    if ( ref $file ) {
+	return $file if eval{ *$file{IO} };
+	return $file if eval{ $file->isa(q{IO::Handle}) };
+	$file = q{}.$file;
+    }
 
     ### get a FH opened to the right class, so we can use it transparently
     ### throughout the program
@@ -300,6 +317,8 @@ sub _read_tar {
 
     my $count   = $opts->{limit}    || 0;
     my $filter  = $opts->{filter};
+    my $md5  = $opts->{md5} || 0;	# cdrake
+    my $filter_cb = $opts->{filter_cb};
     my $extract = $opts->{extract}  || 0;
 
     ### set a cap on the amount of files to extract ###
@@ -317,6 +336,7 @@ sub _read_tar {
     while( $handle->read( $chunk, HEAD ) ) {
         ### IO::Zlib doesn't support this yet
         my $offset = eval { tell $handle } || 'unknown';
+        $@ = '';
 
         unless( $read++ ) {
             my $gzip = GZIP_MAGIC_NUM;
@@ -324,7 +344,7 @@ sub _read_tar {
                 $self->_error( qq[Cannot read compressed format in tar-mode] );
                 return;
             }
-            
+
             ### size is < HEAD, which means a corrupted file, as the minimum
             ### length is _at least_ HEAD
             if (length $chunk != HEAD) {
@@ -343,7 +363,7 @@ sub _read_tar {
 
         ### according to the posix spec, the last 12 bytes of the header are
         ### null bytes, to pad it to a 512 byte block. That means if these
-        ### bytes are NOT null bytes, it's a corrrupt header. See:
+        ### bytes are NOT null bytes, it's a corrupt header. See:
         ### www.koders.com/c/fidCE473AD3D9F835D690259D60AD5654591D91D5BA.aspx
         ### line 111
         {   my $nulls = join '', "\0" x 12;
@@ -369,7 +389,7 @@ sub _read_tar {
         }
 
         ### ignore labels:
-        ### http://www.gnu.org/manual/tar/html_node/tar_139.html
+        ### http://www.gnu.org/software/tar/manual/html_chapter/Media.html#SEC159
         next if $entry->is_label;
 
         if( length $entry->type and ($entry->is_file || $entry->is_longlink) ) {
@@ -390,18 +410,64 @@ sub _read_tar {
 
             $data = $entry->get_content_by_ref;
 
-            ### just read everything into memory
-            ### can't do lazy loading since IO::Zlib doesn't support 'seek'
-            ### this is because Compress::Zlib doesn't support it =/
-            ### this reads in the whole data in one read() call.
-            if( $handle->read( $$data, $block ) < $block ) {
-                $self->_error( qq[Read error on tarfile (missing data) '].
-                                    $entry->full_path ."' at offset $offset" );
-                next LOOP;
-            }
+	    my $skip = 0;
+	    my $ctx;			# cdrake
+	    ### skip this entry if we're filtering
 
-            ### throw away trailing garbage ###
-            substr ($$data, $entry->size) = "" if defined $$data;
+	    if($md5) {			# cdrake
+	      $ctx = Digest::MD5->new;	# cdrake
+	        $skip=5;		# cdrake
+
+	    } elsif ($filter && $entry->name !~ $filter) {
+		$skip = 1;
+
+	    ### skip this entry if it's a pax header. This is a special file added
+	    ### by, among others, git-generated tarballs. It holds comments and is
+	    ### not meant for extracting. See #38932: pax_global_header extracted
+	    } elsif ( $entry->name eq PAX_HEADER or $entry->type =~ /^(x|g)$/ ) {
+		$skip = 2;
+	    } elsif ($filter_cb && ! $filter_cb->($entry)) {
+		$skip = 3;
+	    }
+
+	    if ($skip) {
+		#
+		# Since we're skipping, do not allocate memory for the
+		# whole file.  Read it 64 BLOCKS at a time.  Do not
+		# complete the skip yet because maybe what we read is a
+		# longlink and it won't get skipped after all
+		#
+		my $amt = $block;
+		my $fsz=$entry->size;	# cdrake
+		while ($amt > 0) {
+		    $$data = '';
+		    my $this = 64 * BLOCK;
+		    $this = $amt if $this > $amt;
+		    if( $handle->read( $$data, $this ) < $this ) {
+			$self->_error( qq[Read error on tarfile (missing data) '].
+					    $entry->full_path ."' at offset $offset" );
+			next LOOP;
+		    }
+		    $amt -= $this;
+		    $fsz -= $this;	# cdrake
+		substr ($$data, $fsz) = "" if ($fsz<0);	# remove external junk prior to md5	# cdrake
+		$ctx->add($$data) if($skip==5);	# cdrake
+		}
+		$$data = $ctx->hexdigest if($skip==5 && !$entry->is_longlink && !$entry->is_unknown && !$entry->is_label ) ;	# cdrake
+            } else {
+
+		### just read everything into memory
+		### can't do lazy loading since IO::Zlib doesn't support 'seek'
+		### this is because Compress::Zlib doesn't support it =/
+		### this reads in the whole data in one read() call.
+		if ( $handle->read( $$data, $block ) < $block ) {
+		    $self->_error( qq[Read error on tarfile (missing data) '].
+                                    $entry->full_path ."' at offset $offset" );
+		    next LOOP;
+		}
+		### throw away trailing garbage ###
+		substr ($$data, $entry->size) = "" if defined $$data;
+            }
 
             ### part II of the @LongLink munging -- need to do /after/
             ### the checksum check.
@@ -442,21 +508,23 @@ sub _read_tar {
             undef $real_name;
         }
 
-        ### skip this entry if we're filtering
-        if ($filter && $entry->name !~ $filter) {
-            next LOOP;
+	if ($filter && $entry->name !~ $filter) {
+	    next LOOP;
 
-        ### skip this entry if it's a pax header. This is a special file added
-        ### by, among others, git-generated tarballs. It holds comments and is
-        ### not meant for extracting. See #38932: pax_global_header extracted
-        } elsif ( $entry->name eq PAX_HEADER ) {
-            next LOOP;
+	### skip this entry if it's a pax header. This is a special file added
+	### by, among others, git-generated tarballs. It holds comments and is
+	### not meant for extracting. See #38932: pax_global_header extracted
+	} elsif ( $entry->name eq PAX_HEADER or $entry->type =~ /^(x|g)$/ ) {
+	    next LOOP;
+	} elsif ($filter_cb && ! $filter_cb->($entry)) {
+	    next LOOP;
+	}
+
+        if ( $extract && !$entry->is_longlink
+                      && !$entry->is_unknown
+                      && !$entry->is_label ) {
+            $self->_extract_file( $entry ) or return;
         }
-
-        $self->_extract_file( $entry ) if $extract
-                                            && !$entry->is_longlink
-                                            && !$entry->is_unknown
-                                            && !$entry->is_label;
 
         ### Guard against tarfiles with garbage at the end
 	    last LOOP if $entry->name eq '';
@@ -527,7 +595,7 @@ sub extract {
     # use the speed optimization for all extracted files
     local($self->{cwd}) = cwd() unless $self->{cwd};
 
-    ### you requested the extraction of only certian files
+    ### you requested the extraction of only certain files
     if( @args ) {
         for my $file ( @args ) {
 
@@ -708,7 +776,7 @@ sub _extract_file {
         my @cwd     = File::Spec->splitdir( $cwd_dir );
         push @cwd, $cwd_file if length $cwd_file;
 
-        ### We need to pass '' as the last elemant to catpath. Craig Berry
+        ### We need to pass '' as the last element to catpath. Craig Berry
         ### explains why (msgid <p0624083dc311ae541393@[172.16.52.1]>):
         ### The root problem is that splitpath on UNIX always returns the
         ### final path element as a file even if it is a directory, and of
@@ -1035,6 +1103,45 @@ sub rename {
     return $entry->rename( $new );
 }
 
+=head2 $tar->chmod( $file, $mode )
+
+Change mode of $file to $mode.
+
+Returns true on success and false on failure.
+
+=cut
+
+sub chmod {
+    my $self = shift;
+    my $file = shift; return unless defined $file;
+    my $mode = shift; return unless defined $mode && $mode =~ /^[0-7]{1,4}$/;
+    my @args = ("$mode");
+
+    my $entry = $self->_find_entry( $file ) or return;
+    my $x = $entry->chmod( @args );
+    return $x;
+}
+
+=head2 $tar->chown( $file, $uname [, $gname] )
+
+Change owner $file to $uname and $gname.
+
+Returns true on success and false on failure.
+
+=cut
+
+sub chown {
+    my $self = shift;
+    my $file = shift; return unless defined $file;
+    my $uname  = shift; return unless defined $uname;
+    my @args   = ($uname);
+    push(@args, shift);
+
+    my $entry = $self->_find_entry( $file ) or return;
+    my $x = $entry->chown( @args );
+    return $x;
+}
+
 =head2 $tar->remove (@filenamelist)
 
 Removes any entries with names matching any of the given filenames
@@ -1082,7 +1189,7 @@ GLOB reference).
 The second argument is used to indicate compression. You can either
 compress using C<gzip> or C<bzip2>. If you pass a digit, it's assumed
 to be the C<gzip> compression level (between 1 and 9), but the use of
-constants is prefered:
+constants is preferred:
 
   # write a gzip compressed file
   $tar->write( 'out.tgz', COMPRESS_GZIP );
@@ -1242,8 +1349,13 @@ sub write {
                         : $HAS_PERLIO ? $dummy
                         : do { seek $handle, 0, 0; local $/; <$handle> };
 
-    ### make sure to close the handle;
-    close $handle;
+    ### make sure to close the handle if we created it
+    if ( $file ne $handle ) {
+	unless( close $handle ) {
+	    $self->_error( qq[Could not write tar] );
+	    return;
+	}
+    }
 
     return $rv;
 }
@@ -1258,7 +1370,7 @@ sub _format_tar_entry {
     my $prefix  = $entry->prefix; $prefix = '' unless defined $prefix;
 
     ### remove the prefix from the file name
-    ### not sure if this is still neeeded --kane
+    ### not sure if this is still needed --kane
     ### no it's not -- Archive::Tar::File->_new_from_file will take care of
     ### this for us. Even worse, this would break if we tried to add a file
     ### like x/x.
@@ -1273,7 +1385,7 @@ sub _format_tar_entry {
     my $l = PREFIX_LENGTH; # is ambiguous otherwise...
     substr ($prefix, 0, -$l) = "" if length $prefix >= PREFIX_LENGTH;
 
-    my $f1 = "%06o"; my $f2  = "%11o";
+    my $f1 = "%06o"; my $f2  = $ZERO_PAD_NUMBERS ? "%011o" : "%11o";
 
     ### this might be optimizable with a 'changed' flag in the file objects ###
     my $tar = pack (
@@ -1296,6 +1408,7 @@ sub _format_tar_entry {
     );
 
     ### add the checksum ###
+    my $checksum_fmt = $ZERO_PAD_NUMBERS ? "%06o\0" : "%06o\0";
     substr($tar,148,7) = sprintf("%6o\0", unpack("%16C*",$tar));
 
     return $tar;
@@ -1497,7 +1610,7 @@ To switch back to the default behaviour, use
 
 and C<Archive::Tar> will call C<Cwd::cwd()> internally again.
 
-If you're using C<Archive::Tar>'s C<exract()> method, C<setcwd()> will
+If you're using C<Archive::Tar>'s C<extract()> method, C<setcwd()> will
 be called for you.
 
 =cut
@@ -1520,7 +1633,7 @@ reference to an open file handle (e.g. a GLOB reference).
 The second argument is used to indicate compression. You can either
 compress using C<gzip> or C<bzip2>. If you pass a digit, it's assumed
 to be the C<gzip> compression level (between 1 and 9), but the use of
-constants is prefered:
+constants is preferred:
 
   # write a gzip compressed file
   Archive::Tar->create_archive( 'out.tgz', COMPRESS_GZIP, @filelist );
@@ -1592,7 +1705,7 @@ Example usage:
 sub iter {
     my $class       = shift;
     my $filename    = shift or return;
-    my $compressed  = shift or 0;
+    my $compressed  = shift || 0;
     my $opts        = shift || {};
 
     ### get a handle to read from.
@@ -1874,6 +1987,13 @@ your perl to be able to  write stringified archives.
 Don't change this variable unless you B<really> know what you're
 doing.
 
+=head2 $Archive::Tar::ZERO_PAD_NUMBERS
+
+This variable holds a boolean indicating if we will create
+zero padded numbers for C<size>, C<mtime> and C<checksum>.
+The default is C<0>, indicating that we will create space padded
+numbers. Added for compatibility with C<busybox> implementations.
+
 =head1 FAQ
 
 =over 4
@@ -1932,7 +2052,7 @@ the extraction of this particular item didn't work.
 
 By default, C<Archive::Tar> is in a completely POSIX-compatible
 mode, which uses the POSIX-specification of C<tar> to store files.
-For paths greather than 100 characters, this is done using the
+For paths greater than 100 characters, this is done using the
 C<POSIX header prefix>. Non-POSIX-compatible clients may not support
 this part of the specification, and may only support the C<GNU Extended
 Header> functionality. To facilitate those clients, you can set the
@@ -2054,7 +2174,7 @@ encoded in a different way.
 
 =head1 CAVEATS
 
-The AIX tar does not fill all unused space in the tar archive with 0x00. 
+The AIX tar does not fill all unused space in the tar archive with 0x00.
 This sometimes leads to warning messages from C<Archive::Tar>.
 
   Invalid header block at offset nnn
@@ -2066,14 +2186,14 @@ of AIX, all of which should be coming out in the 4th quarter of 2009:
  AIX 5.3 TL8 SP8
  AIX 5.3 TL9 SP5
  AIX 5.3 TL10 SP2
- 
+
  AIX 6.1 TL0 SP11
  AIX 6.1 TL1 SP7
  AIX 6.1 TL2 SP6
  AIX 6.1 TL3 SP3
 
-The IBM APAR number for this problem is IZ50240 (Reported component ID: 
-5765G0300 / AIX 5.3). It is possible to get an ifix for that problem. 
+The IBM APAR number for this problem is IZ50240 (Reported component ID:
+5765G0300 / AIX 5.3). It is possible to get an ifix for that problem.
 If you need an ifix please contact your local IBM AIX support.
 
 =head1 TODO
@@ -2107,9 +2227,9 @@ to an uploaded file, which might be a compressed archive.
 
 C<http://www.gnu.org/software/tar/manual/tar.html>
 
-=item The PAX format specication
+=item The PAX format specification
 
-The specifcation which tar derives from; C< http://www.opengroup.org/onlinepubs/007904975/utilities/pax.html>
+The specification which tar derives from; C< http://www.opengroup.org/onlinepubs/007904975/utilities/pax.html>
 
 =item A comparison of GNU and POSIX tar standards; C<http://www.delorie.com/gnu/docs/tar/tar_114.html>
 

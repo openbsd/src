@@ -28,7 +28,7 @@ sub make_constants
     my @outdated = grep { (-M) > $depage } @files;
     my @newdeps = grep { (-M) < $oldage } @deps;
 
-    print STDERR <<EOM;
+    print STDERR <<EOM if @outdated;
 
 ***********************************************************************
 
@@ -85,7 +85,7 @@ EOM
 
   if ($@) {
     my $err = "Cannot regenerate constants:\n$@\n";
-    if ($[ < 5.006) {
+    if ($] < 5.006) {
       print STDERR $err;
       exit 0;
     }

@@ -23,7 +23,7 @@ use integer; # vroom!
 use strict;
 use Carp ();
 use vars qw($VERSION );
-$VERSION = '3.14';
+$VERSION = '3.20';
 #use constant DEBUG => 7;
 BEGIN {
   require Pod::Simple;
@@ -42,6 +42,7 @@ sub parse_lines {             # Usage: $parser->parse_lines(@lines)
 
   my $code_handler = $self->{'code_handler'};
   my $cut_handler  = $self->{'cut_handler'};
+  my $wl_handler   = $self->{'whiteline_handler'};
   $self->{'line_count'} ||= 0;
  
   my $scratch;
@@ -88,8 +89,8 @@ sub parse_lines {             # Usage: $parser->parse_lines(@lines)
       DEBUG > 2 and print "First line: [$source_line]\n";
 
       if( ($line = $source_line) =~ s/^\xEF\xBB\xBF//s ) {
-        DEBUG and print "UTF-8 BOM seen.  Faking a '=encode utf8'.\n";
-        $self->_handle_encoding_line( "=encode utf8" );
+        DEBUG and print "UTF-8 BOM seen.  Faking a '=encoding utf8'.\n";
+        $self->_handle_encoding_line( "=encoding utf8" );
         $line =~ tr/\n\r//d;
         
       } elsif( $line =~ s/^\xFE\xFF//s ) {
@@ -191,7 +192,12 @@ sub parse_lines {             # Usage: $parser->parse_lines(@lines)
       # TODO: add to docs: Note: this may cause cuts to be processed out
       #  of order relative to pods, but in order relative to code.
       
-    } elsif($line =~ m/^\s*$/s) {  # it's a blank line
+    } elsif($line =~ m/^(\s*)$/s) {  # it's a blank line
+      if (defined $1 and $1 =~ /[^\S\r\n]/) { # it's a white line
+        $wl_handler->(map $_, $line, $self->{'line_count'}, $self)
+          if $wl_handler;
+      }
+
       if(!$self->{'start_of_pod_block'} and @$paras and $paras->[-1][0] eq '~Verbatim') {
         DEBUG > 1 and print "Saving blank line at line ${$self}{'line_count'}\n";
         push @{$paras->[-1]}, $line;
@@ -519,7 +525,7 @@ sub _ponder_paragraph_buffer {
     #   don't require any lookahead, but all others (bullets
     #   and numbers) do.
 
-# TODO: winge about many kinds of directives in non-resolving =for regions?
+# TODO: whinge about many kinds of directives in non-resolving =for regions?
 # TODO: many?  like what?  =head1 etc?
 
     $para = shift @$paras;
@@ -592,7 +598,8 @@ sub _ponder_paragraph_buffer {
       if($para_type eq '=item') {
 
         my $over;
-        unless(@$curr_open and ($over = $curr_open->[-1])->[0] eq '=over') {
+        unless(@$curr_open and
+               $over = (grep { $_->[0] eq '=over' } @$curr_open)[-1]) {
           $self->whine(
             $para->[1]{'start_line'},
             "'=item' outside of any '=over'"
@@ -917,7 +924,7 @@ sub _ponder_begin {
   $para->[1]{'title'} = $title if ($title);
   $para->[1]{'target'} = $target;  # without any ':'
   $content = $target; # strip off the title
-
+  
   $content =~ s/^:!/!:/s;
   my $neg;  # whether this is a negation-match
   $neg = 1        if $content =~ s/^!//s;
@@ -983,7 +990,7 @@ sub _ponder_end {
   $content =~ s/^\s+//s;
   $content =~ s/\s+$//s;
   DEBUG and print "Ogling '=end $content' directive\n";
-  
+
   unless(length($content)) {
     $self->whine(
       $para->[1]{'start_line'},
@@ -1039,7 +1046,7 @@ sub _ponder_end {
       # what's that for?
     
     $self->{'content_seen'} ||= 1;
-    $self->_handle_element_end( my $scratch = 'for' );
+    $self->_handle_element_end( my $scratch = 'for', $para->[1]);
   }
   DEBUG > 1 and print "Popping $curr_open->[-1][0] $curr_open->[-1][1]{'target'} because of =end $content\n";
   pop @$curr_open;
@@ -1092,7 +1099,18 @@ sub _ponder_pod {
     "=pod directives shouldn't be over one line long!  Ignoring all "
      . (@$para - 2) . " lines of content"
   ) if @$para > 3;
-  # Content is always ignored.
+
+  # Content ignored unless 'pod_handler' is set
+  if (my $pod_handler = $self->{'pod_handler'}) {
+      my ($line_num, $line) = map $_, $para->[1]{'start_line'}, $para->[2];
+      $line = $line eq '' ? "=pod" : "=pod $line"; # imitate cut_handler output
+      $pod_handler->($line, $line_num, $self);
+  }
+
+  # The surrounding methods set content_seen, so let us remain consistent.
+  # I do not know why it was not here before -- should it not be here?
+  # $self->{'content_seen'} ||= 1;
+
   return;
 }
 
@@ -1105,10 +1123,13 @@ sub _ponder_over {
     $list_type = $self->_get_initial_item_type($paras->[0]);
 
   } elsif($paras->[0][0] eq '=back') {
-    # Ignore empty lists.  TODO: make this an option?
-    shift @$paras;
-    return 1;
-    
+    # Ignore empty lists by default
+    if ($self->{'parse_empty_lists'}) {
+      $list_type = 'empty';
+    } else {
+      shift @$paras;
+      return 1;
+    }
   } elsif($paras->[0][0] eq '~end') {
     $self->whine(
       $para->[1]{'start_line'},
@@ -1169,7 +1190,7 @@ sub _ponder_back {
     #my $over = pop @$curr_open;
     $self->{'content_seen'} ||= 1;
     $self->_handle_element_end( my $scratch =
-      'over-' . ( (pop @$curr_open)->[1]{'~type'} )
+      'over-' . ( (pop @$curr_open)->[1]{'~type'} ), $para->[1]
     );
   } else {
     DEBUG > 1 and print "=back found without a matching =over.  Stack: (",
@@ -1185,7 +1206,8 @@ sub _ponder_back {
 sub _ponder_item {
   my ($self,$para,$curr_open,$paras) = @_;
   my $over;
-  unless(@$curr_open and ($over = $curr_open->[-1])->[0] eq '=over') {
+  unless(@$curr_open and
+         $over = (grep { $_->[0] eq '=over' } @$curr_open)[-1]) {
     $self->whine(
       $para->[1]{'start_line'},
       "'=item' outside of any '=over'"
@@ -1383,7 +1405,7 @@ sub _ponder_Verbatim {
   for(my $i = 2; $i < @$para; $i++) {
     foreach my $line ($para->[$i]) { # just for aliasing
       # Strip indentation.
-      $line =~ s/^\E$indent// if $indent
+      $line =~ s/^\Q$indent// if $indent
           && !($self->{accept_codes} && $self->{accept_codes}{VerbatimFormatted});
       while( $line =~
         # Sort of adapted from Text::Tabs -- yes, it's hardwired in that
@@ -1471,7 +1493,9 @@ sub _closers_for_all_curr_open {
       $copy[-1] = '' unless defined $copy[-1];
        # since =over's don't have targets
     }
-    
+
+    $copy[1]{'fake-closer'} = 1;
+
     DEBUG and print "Queuing up fake-o event: ", pretty(\@copy), "\n";
     unshift @closers, \@copy;
   }
@@ -1638,6 +1662,10 @@ sub _treelet_from_formatting_codes {
   
   my @stack;
   my @lineage = ($treelet);
+  my $raw = ''; # raw content of L<> fcode before splitting/processing
+    # XXX 'raw' is not 100% accurate: all surrounding whitespace is condensed
+    # into just 1 ' '. Is this the regex's doing or 'raw's?
+  my $inL = 0;
 
   DEBUG > 4 and print "Paragraph:\n$para\n\n";
  
@@ -1709,7 +1737,13 @@ sub _treelet_from_formatting_codes {
       }
       push @lineage, [ substr($1,0,1), {}, ];  # new node object
       push @{ $lineage[-2] }, $lineage[-1];
-      
+      if ('L' eq substr($1,0,1)) {
+        $raw = $inL ? $raw.$1 : ''; # reset raw content accumulator
+        $inL = 1;
+      } else {
+        $raw .= $1 if $inL;
+      }
+
     } elsif(defined $4) {
       DEBUG > 3 and print "Found apparent complex end-text code \"$3$4\"\n";
       # This is where it gets messy...
@@ -1743,6 +1777,14 @@ sub _treelet_from_formatting_codes {
       
       pop @stack;
       pop @lineage;
+
+      unless (@stack) { # not in an L if there are no open fcodes
+        $inL = 0;
+        if (ref $lineage[-1][-1] && $lineage[-1][-1][0] eq 'L') {
+          $lineage[-1][-1][1]{'raw'} = $raw
+        }
+      }
+      $raw .= $3.$4 if $inL;
       
     } elsif(defined $5) {
       DEBUG > 3 and print "Found apparent simple end-text code \"$5\"\n";
@@ -1764,10 +1806,21 @@ sub _treelet_from_formatting_codes {
         push @{ $lineage[-1] }, $5;
       }
 
+      unless (@stack) { # not in an L if there are no open fcodes
+        $inL = 0;
+        if (ref $lineage[-1][-1] && $lineage[-1][-1][0] eq 'L') {
+          $lineage[-1][-1][1]{'raw'} = $raw
+        }
+      }
+      $raw .= $5 if $inL;
+
     } elsif(defined $6) {
       DEBUG > 3 and print "Found stuff \"$6\"\n";
       push @{ $lineage[-1] }, $6;
-      
+      $raw .= $6 if $inL;
+        # XXX does not capture multiplace whitespaces -- 'raw' ends up with
+        #     at most 1 leading/trailing whitespace, why not all of it?
+
     } else {
       # should never ever ever ever happen
       DEBUG and print "AYYAYAAAAA at line ", __LINE__, "\n";
@@ -1795,7 +1848,7 @@ sub _treelet_from_formatting_codes {
       "Unterminated $x sequence",
     );
   }
-  
+
   return $treelet;
 }
 
@@ -1911,7 +1964,7 @@ sub pretty { # adopted from Class::Classless
 
 # A rather unsubtle method of blowing away all the state information
 # from a parser object so it can be reused. Provided as a utility for
-# backward compatibilty in Pod::Man, etc. but not recommended for
+# backward compatibility in Pod::Man, etc. but not recommended for
 # general use.
 
 sub reinit {

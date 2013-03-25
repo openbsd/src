@@ -4,7 +4,7 @@ specially designed to be readable as is.
 
 =head1 NAME
 
-README.epoc - Perl for EPOC
+perlepoc - Perl for EPOC
 
 =head1 SYNOPSIS
 
@@ -12,18 +12,18 @@ Perl 5 README file for the EPOC Release 5 operating system.
 
 =head1 INTRODUCTION
 
-EPOC is an OS for palmtops and mobile phones. For more informations look at:
-http://www.symbian.com/
+EPOC is an OS for palmtops and mobile phones. For more information look
+at: L<http://www.symbian.com/>
 
 This is a port of perl to the epocemx SDK by Eberhard Mattes, which
 itself uses the SDK by symbian. Essentially epocemx it is a POSIX
 look alike environment for the EPOC OS.  For more information look at: 
-http://epocemx.sourceforge.net/
+L<http://epocemx.sourceforge.net/>
 
 perl and epocemx runs on Epoc Release 5 machines: Psion 5mx, 5mx Pro,
 Psion Revo, Psion Netbook and on the Ericsson M128. It may run on Epoc
 Release 3 Hardware (Series 5 classic), too. For more information about
-this hardware please refer to http://www.psion.com/
+this hardware please refer to L<http://www.psion.com/>
 
 Vendors which like to have support for their devices are free to send
 me a sample. 
@@ -31,12 +31,12 @@ me a sample.
 =head1 INSTALLING PERL ON EPOC
 
 You can download a ready-to-install version from
-http://www.oflebbe.de/perl/perl5.html
+L<http://www.oflebbe.de/perl/perl5.html>
 
 You will need at least ~6MB free space in order to install and run perl.
 
 Please install the emxusr.sis package from
-http://epocemx.sourceforge.net/ first.
+L<http://epocemx.sourceforge.net/> first.
 
 Install perl.sis on the EPOC machine. If you do not know how to do
 that, consult your PsiWin documentation.
@@ -145,7 +145,7 @@ Very special thanks to Eberhard Mattes for epocemx.
 =head1 AUTHOR
 
 Olaf Flebbe <olaf@oflebbe.de>
-http://www.oflebbe.de/perl/perl5.html
+L<http://www.oflebbe.de/perl/perl5.html>
 
 =head1 LAST UPDATE
 

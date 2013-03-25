@@ -48,14 +48,25 @@ sets the build type to Release by default.
 This is used to set the build type to debug or release. Change the
 build type only after executing SetNWBld.bat
 
-=item *
-
 Example:
-  1. Typing "buildtype d on" at the command prompt causes the buildtype
-     to be set to Debug type with D2 flag set. 
-  2. Typing "buildtype d off" or "buildtype d" at the command prompt causes
-     the buildtype to be set to Debug type with D1 flag set. 
-  2. Typing "buildtype r" at the command prompt sets it to Release Build type.
+
+=over
+
+=item 1.
+
+Typing "buildtype d on" at the command prompt causes the buildtype
+to be set to Debug type with D2 flag set. 
+
+=item 2.
+
+Typing "buildtype d off" or "buildtype d" at the command prompt causes
+the buildtype to be set to Debug type with D1 flag set. 
+
+=item 3.
+
+Typing "buildtype r" at the command prompt sets it to Release Build type.
+
+=back
 
 =back
 
@@ -64,7 +75,7 @@ Example:
 The make process runs only under WinNT shell.  The NetWare makefile is
 located under the NetWare folder.  This makes use of miniperl.exe to
 run some of the Perl scripts. To create miniperl.exe, first set the
-required paths for Visual c++ compilier (specify vcvars32 location) at
+required paths for Visual c++ compiler (specify vcvars32 location) at
 the command prompt.  Then run nmake from win32 folder through WinNT
 command prompt.  The build process can be stopped after miniperl.exe
 is created. Then run nmake from NetWare folder through WinNT command
@@ -107,8 +118,8 @@ I<sys:\perl\system> folder.  Copy this to I<sys:\system> folder.
 
 Example: At the command prompt Type "nmake nwinstall".
           This will install NetWare Perl on the NetWare Server.
-          Similiarly if you type "nmake install",
-          This will cause the binaries to be installed on the local machine.
+          Similarly, if you type "nmake install",
+          this will cause the binaries to be installed on the local machine.
           (Typically under the c:\perl folder)
 
 =head1 BUILD NEW EXTENSIONS

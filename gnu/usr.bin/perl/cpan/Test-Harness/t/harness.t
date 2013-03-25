@@ -16,7 +16,7 @@ my $HARNESS = 'TAP::Harness';
 my $source_tests = 't/source_tests';
 my $sample_tests = 't/sample-tests';
 
-plan tests => 119;
+plan tests => 128;
 
 # note that this test will always pass when run through 'prove'
 ok $ENV{HARNESS_ACTIVE},  'HARNESS_ACTIVE env variable should be set';
@@ -56,9 +56,9 @@ is $@, '', '... and calling it with non-existent libs is fine';
 ok my $harness = $HARNESS->new,
   'Calling new() without arguments should succeed';
 
-foreach my $test_args ( get_arg_sets() ) {
+for my $test_args ( get_arg_sets() ) {
     my %args = %$test_args;
-    foreach my $key ( sort keys %args ) {
+    for my $key ( sort keys %args ) {
         $args{$key} = $args{$key}{in};
     }
     ok my $harness = $HARNESS->new( {%args} ),
@@ -122,7 +122,7 @@ foreach my $test_args ( get_arg_sets() ) {
     my $status           = pop @output;
     my $expected_status  = qr{^Result: PASS$};
     my $summary          = pop @output;
-    my $expected_summary = qr{^Files=1, Tests=1,  \d+ wallclock secs};
+    my $expected_summary = qr{^Files=1, Tests=1, +\d+ wallclock secs};
 
     is_deeply \@output, \@expected, '... and the output should be correct';
     like $status, $expected_status,
@@ -155,7 +155,7 @@ foreach my $test_args ( get_arg_sets() ) {
     $status           = pop @output;
     $expected_status  = qr{^Result: PASS$};
     $summary          = pop @output;
-    $expected_summary = qr{^Files=1, Tests=1,  \d+ wallclock secs};
+    $expected_summary = qr{^Files=1, Tests=1, +\d+ wallclock secs};
 
     is_deeply \@output, \@expected, '... and the output should be correct';
     like $status, $expected_status,
@@ -196,7 +196,7 @@ foreach my $test_args ( get_arg_sets() ) {
     $status           = pop @output;
     $expected_status  = qr{^Result: PASS$};
     $summary          = pop @output;
-    $expected_summary = qr{^Files=2, Tests=2,  \d+ wallclock secs};
+    $expected_summary = qr{^Files=2, Tests=2, +\d+ wallclock secs};
 
     is_deeply \@output, \@expected, '... and the output should be correct';
     like $status, $expected_status,
@@ -219,7 +219,7 @@ foreach my $test_args ( get_arg_sets() ) {
     $status           = pop @output;
     $expected_status  = qr{^Result: PASS$};
     $summary          = pop @output;
-    $expected_summary = qr/^Files=1, Tests=1,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=1, +\d+ wallclock secs/;
 
     is_deeply \@output, \@expected, '... and the output should be correct';
     like $status, $expected_status,
@@ -240,7 +240,7 @@ foreach my $test_args ( get_arg_sets() ) {
     $status           = pop @output;
     $expected_status  = qr{^Result: PASS$};
     $summary          = pop @output;
-    $expected_summary = qr/^Files=1, Tests=1,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=1, +\d+ wallclock secs/;
 
     is_deeply \@output, \@expected, '... and the output should be correct';
     like $status, $expected_status,
@@ -376,7 +376,7 @@ foreach my $test_args ( get_arg_sets() ) {
 
     $status           = pop @output;
     $summary          = pop @output;
-    $expected_summary = qr/^Files=1, Tests=3,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=3, +\d+ wallclock secs/;
 
     is_deeply \@output, \@expected, '... and the output should be correct';
     like $summary, $expected_summary,
@@ -486,7 +486,7 @@ foreach my $test_args ( get_arg_sets() ) {
 
     like $status, qr{^Result: FAIL$},
       '... and the status line should be correct';
-    $expected_summary = qr/^Files=1, Tests=2,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=2, +\d+ wallclock secs/;
     is_deeply \@output, \@expected, '... and the output should be correct';
 
     # check the status output for no tests
@@ -510,7 +510,7 @@ foreach my $test_args ( get_arg_sets() ) {
 
     like $status, qr{^Result: FAIL$},
       '... and the status line should be correct';
-    $expected_summary = qr/^Files=1, Tests=2,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=2, +\d+ wallclock secs/;
     is_deeply \@output, \@expected, '... and the output should be correct';
 
     #XXXX
@@ -520,6 +520,8 @@ foreach my $test_args ( get_arg_sets() ) {
 SKIP: {
 
     my $cat = '/bin/cat';
+
+    # TODO: use TYPE on win32?
     unless ( -e $cat ) {
         skip "no '$cat'", 2;
     }
@@ -532,12 +534,7 @@ SKIP: {
         }
     );
 
-    eval {
-        _runtests(
-            $harness,
-            't/data/catme.1'
-        );
-    };
+    eval { _runtests( $harness, 't/data/catme.1' ); };
 
     my @output = tied($$capture)->dump;
     my $status = pop @output;
@@ -672,6 +669,66 @@ SKIP: {
     is( $output[-1], "All tests successful.\n",
         'No exec accumulation'
     );
+}
+
+# customize default File source
+{
+    my $capture = IO::c55Capture->new_handle;
+    my $harness = TAP::Harness->new(
+        {   verbosity => -2,
+            stdout    => $capture,
+            sources   => {
+                File => { extensions => ['.1'] },
+            },
+        }
+    );
+
+    _runtests( $harness, "$source_tests/source.1" );
+
+    my @output = tied($$capture)->dump;
+    my $status = pop @output;
+    like $status, qr{^Result: PASS$},
+      'customized File source has correct status line';
+    pop @output;    # get rid of summary line
+    my $answer = pop @output;
+    is( $answer, "All tests successful.\n", '... all tests passed' );
+}
+
+# load a custom source
+{
+    my $capture = IO::c55Capture->new_handle;
+    my $harness = TAP::Harness->new(
+        {   verbosity => -2,
+            stdout    => $capture,
+            sources   => {
+                MyFileSourceHandler => { extensions => ['.1'] },
+            },
+        }
+    );
+
+    my $source_test = "$source_tests/source.1";
+    eval { _runtests( $harness, "$source_tests/source.1" ); };
+    my $e = $@;
+    ok( !$e, 'no error on load custom source' ) || diag($e);
+
+    no warnings 'once';
+    can_ok( 'MyFileSourceHandler', 'make_iterator' );
+    ok( $MyFileSourceHandler::CAN_HANDLE,
+        '... MyFileSourceHandler->can_handle was called'
+    );
+    ok( $MyFileSourceHandler::MAKE_ITER,
+        '... MyFileSourceHandler->make_iterator was called'
+    );
+
+    my $raw_source = eval { ${ $MyFileSourceHandler::LAST_SOURCE->raw } };
+    is( $raw_source, $source_test, '... used the right source' );
+
+    my @output = tied($$capture)->dump;
+    my $status = pop(@output) || '';
+    like $status, qr{^Result: PASS$}, '... and test has correct status line';
+    pop @output;    # get rid of summary line
+    my $answer = pop @output;
+    is( $answer, "All tests successful.\n", '... all tests passed' );
 }
 
 sub trim {
@@ -900,9 +957,7 @@ sub _runtests {
 
     # coverage tests for the basically untested T::H::_open_spool
 
-    my @spool = (
-        ( 't', 'spool' )
-    );
+    my @spool = ( 't', 'spool' );
     $ENV{PERL_TEST_HARNESS_DUMP_TAP} = File::Spec->catfile(@spool);
 
 # now given that we're going to be writing stuff to the file system, make sure we have

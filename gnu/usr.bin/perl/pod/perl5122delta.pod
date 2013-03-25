@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.12.2
+perl5122delta - what is new for perl v5.12.2
 
 =head1 DESCRIPTION
 
@@ -58,8 +58,8 @@ overriding C<caller()> incorrectly.
 =item C<CPANPLUS>
 
 A patch to F<cpanp-run-perl> has been backported from CPANPLUS C<0.9004>. This
-resolves L<[perl #55964]|http://rt.perl.org/rt3/Ticket/Display.html?id=55964>
-and L<[perl #57106]|http://rt.perl.org/rt3/Ticket/Display.html?id=57106>, both
+resolves L<RT #55964|http://rt.cpan.org/Public/Bug/Display.html?id=55964>
+and L<RT #57106|http://rt.cpan.org/Public/Bug/Display.html?id=57106>, both
 of which related to failures to install distributions that use
 C<Module::Install::DSL>.
 
@@ -89,12 +89,12 @@ name is empty; C<abs2rel()> properly handles Unix-style input.
 
 =over
 
-=item * 
+=item *
 
 F<perlbug> now always gives the reporter a chance to change the email address it
 guesses for them.
 
-=item * 
+=item *
 
 F<perlbug> should no longer warn about uninitialized values when using the C<-d>
 and C<-v> options.
@@ -226,7 +226,7 @@ now supports get/set magic and thus tied buffers correctly.
 
 =item *
 
-The C<pp_getc>, C<pp_tell>, and C<pp_eof> opcodes now make room on the 
+The C<pp_getc>, C<pp_tell>, and C<pp_eof> opcodes now make room on the
 stack for their return values in cases where no argument was passed in.
 
 =item *
@@ -241,7 +241,7 @@ See  L<[perl #75680]|http://rt.perl.org/rt3/Public/Bug/Display.html?id=75680>
 
 =head2 AIX
 
-=over 
+=over
 
 =item *
 
@@ -258,7 +258,7 @@ suite.
 
 When building Perl with the mingw64 x64 cross-compiler C<incpath>,
 C<libpth>, C<ldflags>, C<lddlflags> and C<ldflags_nolargefiles> values
-in F<Config.pm> and F<Config_heavy.pl> were not previously not being set
+in F<Config.pm> and F<Config_heavy.pl> were not previously being set
 correctly because, with that compiler, the include and lib directories
 are not immediately below C<$(CCHOME)>.
 
@@ -325,7 +325,8 @@ analysed by the Perl porting team.
 If the bug you are reporting has security implications, which make it
 inappropriate to send to a publicly archived mailing list, then please send
 it to perl5-security-report@perl.org. This points to a closed subscription
-unarchived mailing list, which includes all the core committers, who be able
+unarchived mailing list, which includes
+all the core committers, who will be able
 to help assess the impact of issues, figure out a resolution, and help
 co-ordinate the release of patches to mitigate or fix the problem across all
 platforms on which Perl is supported. Please only use this address for

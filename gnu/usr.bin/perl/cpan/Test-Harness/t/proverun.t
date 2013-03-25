@@ -8,10 +8,12 @@ use strict;
 use Test::More;
 use File::Spec;
 use App::Prove;
+use TAP::Parser::Utils qw( split_shell );
 
 my @SCHEDULE;
 
 BEGIN {
+    my $t_dir = File::Spec->catdir('t');
 
     # to add a new test to proverun, just list the name of the file in
     # t/sample-tests and a name for the test.  The rest is handled
@@ -24,14 +26,15 @@ BEGIN {
             name => 'Passing TODO',
         },
     );
-    foreach my $test (@tests) {
+
+    # TODO: refactor this and add in a test for:
+    # prove --source 'File: {extensions: [.1]}' t/source_tests/source.1
+
+    for my $test (@tests) {
 
         # let's fully expand that filename
-        $test->{file} = File::Spec->catfile(
-            't',
-            'sample-tests',
-            $test->{file}
-        );
+        $test->{file}
+          = File::Spec->catfile( $t_dir, 'sample-tests', $test->{file} );
     }
     @SCHEDULE = (
         map {
@@ -43,6 +46,9 @@ BEGIN {
                         {   merge   => undef,
                             command => [
                                 'PERL',
+                                $ENV{HARNESS_PERL_SWITCHES}
+                                ? split_shell( $ENV{HARNESS_PERL_SWITCHES} )
+                                : (),
                                 $_->{file},
                             ],
                             setup    => \'CODE',
@@ -52,7 +58,7 @@ BEGIN {
                     ]
                 ]
             }
-          } @tests
+          } @tests,
     );
 
     plan tests => @SCHEDULE * 3;

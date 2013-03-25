@@ -1,6 +1,6 @@
 ### make sure we can find our conf.pl file
-BEGIN { 
-    use FindBin; 
+BEGIN {
+    use FindBin;
     require "$FindBin::Bin/inc/conf.pl";
 }
 
@@ -37,7 +37,7 @@ for my $type ( CPANPLUS::Module->accessors() ) {
 ### search for authors ###
 my $auth = $Mod->author;
 for my $type ( CPANPLUS::Module::Author->accessors() ) {
-    
+
     ### don't muck around with references/objects
     ### or private identifiers
     next if ref $auth->$type() or $type =~/^_/;

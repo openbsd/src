@@ -1,6 +1,6 @@
 ### make sure we can find our conf.pl file
-BEGIN { 
-    use FindBin; 
+BEGIN {
+    use FindBin;
     require "$FindBin::Bin/inc/conf.pl";
 }
 
@@ -24,16 +24,16 @@ use_ok( $Class );
 for my $meth ( qw[fetch get install] ) {
     my $sub     = $Class->can( $meth );
     ok( $sub,                   "$Class->can( $meth )" );
-    
+
     my %map = (
         0   => qr/failed/,
         1   => qr/successful/,
     );
-    
+
     ok( 1,                  "Trying '$meth' in different configurations" );
-    
+
     while( my($rv, $re) = each %map ) {
-        
+
         ### don't actually install, just test logic
         no warnings 'redefine';
         local *CPANPLUS::Module::install = sub { $rv };
@@ -45,7 +45,7 @@ for my $meth ( qw[fetch get install] ) {
         is( $ok, $rv,       "   Expected RV: $rv" );
         like( CPANPLUS::Error->stack_as_string, $re,
                             "       With expected diagnostic" );
-    }        
+    }
 
     ### does not take objects / references
     {   CPANPLUS::Error->flush;
@@ -74,15 +74,15 @@ for my $meth ( qw[fetch get install] ) {
 
     {   ### test package for shell() method
         package CPANPLUS::Shell::Test;
-        
+
         ### ->shell() looks in %INC
         use Module::Loaded qw[mark_as_loaded];
         mark_as_loaded( __PACKAGE__ );
 
-        sub new   { bless {}, __PACKAGE__ };        
+        sub new   { bless {}, __PACKAGE__ };
         sub shell { $$ };
     }
-    
+
     my $rv = $sub->( 'Test' );
     ok( $rv,                "   Shell started" );
     is( $rv, $$,            "       Proper shell called" );

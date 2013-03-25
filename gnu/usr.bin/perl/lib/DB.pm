@@ -41,7 +41,7 @@ BEGIN {
   $DB::subname = '';    # currently executing sub (fullly qualified name)
   $DB::lineno = '';     # current line number
 
-  $DB::VERSION = $DB::VERSION = '1.02';
+  $DB::VERSION = $DB::VERSION = '1.04';
 
   # initialize private globals to avoid warnings
 
@@ -92,15 +92,6 @@ sub DB {
 
   $usrctxt = "package $DB::package;";		# this won't let them modify, alas
   local(*DB::dbline) = "::_<$DB::filename";
-
-  # we need to check for pseudofiles on Mac OS (these are files
-  # not attached to a filename, but instead stored in Dev:Pseudo)
-  # since this is done late, $DB::filename will be "wrong" after
-  # skippkg
-  if ($^O eq 'MacOS' && $#DB::dbline < 0) {
-    $DB::filename = 'Dev:Pseudo';
-    *DB::dbline = "::_<$DB::filename";
-  }
 
   my ($stop, $action);
   if (($stop,$action) = split(/\0/,$DB::dbline{$DB::lineno})) {
@@ -267,7 +258,7 @@ sub backtrace {
     } elsif ($s eq '(eval)') {
       $s = "eval {...}";
     }
-    $f = "file `$f'" unless $f eq '-e';
+    $f = "file '$f'" unless $f eq '-e';
     push @ret, "$w&$s$a from $f line $l";
     last if $DB::signal;
   }

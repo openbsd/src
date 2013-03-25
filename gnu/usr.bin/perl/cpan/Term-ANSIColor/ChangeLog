@@ -1,3 +1,47 @@
+2011-07-20  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 3.01 released.
+
+	* Makefile.PL: Change the DISTNAME to Term-ANSIColor.
+
+	* ANSIColor.pm (colored): Only interpret an initial array
+	reference as a list of colors, not any initial reference, allowing
+	the colored function to work properly on objects with
+	stringification defined.  Thanks, Revilo Reegiles.
+	* t/stringify.t: New test for proper behavior with non-array
+	references in colored.
+
+2011-03-13  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Fix two syntax errors in the SYNOPSIS.  Thanks,
+	Jan Hartung.
+
+2010-10-08  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Warn in the documentation that attributes are not
+	supported in and will not work with Perl formats.
+
+2010-04-11  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Update the URL for ECMA-048 in the documentation.
+
+2010-01-24  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 3.00 released.
+
+	* t/basic.t: Add some basic tests for bright color support.
+
+	* ANSIColor.pm: Reorganize the documentation and be clearer about
+	the function interface parameters.  Reword the explanation of
+	bright and regular colors, and provide some advice about which to
+	use.
+
+2010-01-24  Jakob Ilves  <illvilja@gmail.com>
+
+	* ANSIColor.pm: Add bright versions of the basic eight foreground
+	and background colors using the 9x and 10x codes, supported by
+	emulators with 16 color support.
+
 2009-08-30  Russ Allbery  <rra@stanford.edu>
 
 	* ANSIColor.pm: Version 2.02 released.

@@ -16,6 +16,7 @@ BEGIN {
      exit 0;
      }
      # http://smontagu.damowmow.com/utf8test.html
+     # The numbers below, like 2.1.2 are test numbers on this web page
      %ORD = (
          0x00000080 => 0, # 2.1.2
          0x00000800 => 0, # 2.1.3
@@ -44,7 +45,7 @@ BEGIN {
 	 %SEQ = (
 		 qq/dd 64 73 73/    => 0, # 2.3.1
 		 qq/dd 67 41 41/    => 0, # 2.3.2
-		 qq/ee 42 73 73 73/ => 0, # 2.3.3
+		 qq/ee 42 73 73 71/ => 0, # 2.3.3
 		 qq/f4 90 80 80/ => 1, # 2.3.4 -- out of range so NG
 		 # "3 Malformed sequences" are checked by perl.
 		 # "4 Overlong sequences"  are checked by perl.
@@ -53,7 +54,7 @@ BEGIN {
 	 %SEQ = (
 		 qq/ed 9f bf/    => 0, # 2.3.1
 		 qq/ee 80 80/    => 0, # 2.3.2
-		 qq/f4 8f bf bf/ => 0, # 2.3.3
+		 qq/f4 8f bf bd/ => 0, # 2.3.3
 		 qq/f4 90 80 80/ => 1, # 2.3.4 -- out of range so NG
 		 # "3 Malformed sequences" are checked by perl.
 		 # "4 Overlong sequences"  are checked by perl.

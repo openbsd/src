@@ -5,7 +5,7 @@ use vars qw($VERSION);
 use Carp;
 use Text::Wrap;
 use ExtUtils::Constant::Utils qw(C_stringify perl_stringify);
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 use constant is_perl56 => ($] < 5.007 && $] > 5.005_50);
 
@@ -81,6 +81,18 @@ sub macro_to_ifdef {
 	return $macro ? "#ifdef $macro\n" : "#if 0\n";
     }
     return "";
+}
+
+sub macro_to_ifndef {
+    my ($self, $macro) = @_;
+    if (ref $macro) {
+	# Can't invert these stylishly, so "bodge it"
+	return "$macro->[0]#else\n";
+    }
+    if (defined $macro && $macro ne "" && $macro ne "1") {
+	return $macro ? "#ifndef $macro\n" : "#if 1\n";
+    }
+    croak "Can't generate an ifndef for unconditional code";
 }
 
 sub macro_to_endif {

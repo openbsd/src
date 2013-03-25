@@ -1,0 +1,12 @@
+__END__
+# NAME when outside given
+use 5.01;
+when(undef){}
+EXPECT
+Can't "when" outside a topicalizer at - line 2.
+########
+# NAME default outside given
+use 5.01;
+default{}
+EXPECT
+Can't "default" outside a topicalizer at - line 2.

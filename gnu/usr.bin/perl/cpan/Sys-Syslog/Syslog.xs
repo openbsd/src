@@ -1,3 +1,10 @@
+/*
+ * Syslog.xs
+ * 
+ * XS wrapper for the syslog(3) facility.
+ * 
+ */
+
 #if defined(_WIN32)
 #  include <windows.h>
 #endif
@@ -26,6 +33,29 @@ static SV *ident_svptr;
 
 #include "const-c.inc"
 
+
+#ifndef LOG_FAC
+#define LOG_FACMASK     0x03f8
+#define LOG_FAC(p)      (((p) & LOG_FACMASK) >> 3)
+#endif
+
+#ifndef	LOG_PRI
+#define	LOG_PRI(p)	((p) & LOG_PRIMASK)
+#endif
+
+#ifndef	LOG_MAKEPRI
+#define	LOG_MAKEPRI(fac, pri)	(((fac) << 3) | (pri))
+#endif
+
+#ifndef LOG_MASK
+#define	LOG_MASK(pri)	(1 << (pri))
+#endif
+
+#ifndef LOG_UPTO
+#define	LOG_UPTO(pri)	((1 << ((pri)+1)) - 1)
+#endif
+
+
 MODULE = Sys::Syslog		PACKAGE = Sys::Syslog		
 
 INCLUDE: const-xs.inc
@@ -34,72 +64,27 @@ int
 LOG_FAC(p)
     INPUT:
 	int		p
-    CODE:
-#ifdef LOG_FAC
-	RETVAL = LOG_FAC(p);
-#else
-	croak("Your vendor has not defined the Sys::Syslog macro LOG_FAC");
-	RETVAL = -1;
-#endif
-    OUTPUT:
-	RETVAL
 
 int
 LOG_PRI(p)
     INPUT:
 	int		p
-    CODE:
-#ifdef LOG_PRI
-	RETVAL = LOG_PRI(p);
-#else
-	croak("Your vendor has not defined the Sys::Syslog macro LOG_PRI");
-	RETVAL = -1;
-#endif
-    OUTPUT:
-	RETVAL
 
 int
 LOG_MAKEPRI(fac,pri)
     INPUT:
 	int		fac
 	int		pri
-    CODE:
-#ifdef LOG_MAKEPRI
-	RETVAL = LOG_MAKEPRI(fac,pri);
-#else
-	croak("Your vendor has not defined the Sys::Syslog macro LOG_MAKEPRI");
-	RETVAL = -1;
-#endif
-    OUTPUT:
-	RETVAL
 
 int
 LOG_MASK(pri)
     INPUT:
 	int		pri
-    CODE:
-#ifdef LOG_MASK
-	RETVAL = LOG_MASK(pri);
-#else
-	croak("Your vendor has not defined the Sys::Syslog macro LOG_MASK");
-	RETVAL = -1;
-#endif
-    OUTPUT:
-	RETVAL
 
 int
 LOG_UPTO(pri)
     INPUT:
 	int		pri
-    CODE:
-#ifdef LOG_UPTO
-	RETVAL = LOG_UPTO(pri);
-#else
-	croak("Your vendor has not defined the Sys::Syslog macro LOG_UPTO");
-	RETVAL = -1;
-#endif
-    OUTPUT:
-	RETVAL
 
 #ifdef HAVE_SYSLOG
 
@@ -136,10 +121,18 @@ setlogmask_xs(mask)
 
 void
 closelog_xs()
+    PREINIT:
+        U32 refcnt;
     CODE:
+        if (!ident_svptr)
+            return;
         closelog();
-        if (SvREFCNT(ident_svptr))
+        refcnt = SvREFCNT(ident_svptr);
+        if (refcnt) {
             SvREFCNT_dec(ident_svptr);
+            if (refcnt == 1)
+                ident_svptr = NULL;
+        }
 
 #else  /* HAVE_SYSLOG */
 

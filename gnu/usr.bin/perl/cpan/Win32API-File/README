@@ -1,4 +1,4 @@
-Win32API::File v0.08 -- Low-level access to Win32 API calls for files.
+Win32API::File v0.1200 -- Low-level access to Win32 API calls for files.
 
 New since v0.07:
 
@@ -130,7 +130,7 @@ technical questions that are not full bug reports to
 
 http://perlmonks.org/index.pl?node=Seekers%20of%20Perl%20Wisdom
 
-Tye McQueen, tye@metronet.com, http://www.metronet.com/~tye/.
+Tye McQueen, tye@metronet.com, http://perlmonks.org/?node=tye.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

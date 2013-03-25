@@ -8,7 +8,7 @@ BEGIN {
 
 use strict;
 use lib '../lib';
-use Test::More tests => 44;
+use Test::More tests => 58;
 #use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
@@ -394,6 +394,294 @@ is $results, <<'EOF', 'And it should work!';
 <h4 id="Ouch">Ouch</h4>
 
 <h1 id="Drip">Drip</h1>
+
+EOF
+
+initialize($parser, $results);
+$parser->html_header($header);
+$parser->html_footer($footer);
+$parser->backlink(1);
+ok $parser->parse_string_document( '=head1 Foo' ), 'Parse a header';
+is $results, <<'EOF', 'Should have the index and a backlink';
+
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+</head>
+<body id="_podtop_">
+
+
+<ul id="index">
+  <li><a href="#Foo">Foo</a></li>
+</ul>
+
+<a href="#_podtop_"><h1 id="Foo">Foo</h1></a>
+
+</body>
+</html>
+
+EOF
+
+initialize($parser, $results);
+$parser->html_header($header);
+$parser->html_footer($footer);
+$parser->backlink(1);
+ok $parser->parse_string_document( "=head1 Foo \n\n=head2 Bar \n\n=head1 Baz" ), 'Parse headers';
+is $results, <<'EOF', 'Should have the index and backlinks';
+
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+</head>
+<body id="_podtop_">
+
+
+<ul id="index">
+  <li><a href="#Foo">Foo</a>
+    <ul>
+      <li><a href="#Bar">Bar</a></li>
+    </ul>
+  </li>
+  <li><a href="#Baz">Baz</a></li>
+</ul>
+
+<a href="#_podtop_"><h1 id="Foo">Foo</h1></a>
+
+<h2 id="Bar">Bar</h2>
+
+<a href="#_podtop_"><h1 id="Baz">Baz</h1></a>
+
+</body>
+</html>
+
+EOF
+
+initialize($parser, $results);
+$parser->html_header($header);
+$parser->html_footer($footer);
+$parser->index(0);
+$parser->backlink(1);
+ok $parser->parse_string_document( "=head1 Foo \n\n=head1 Bar" ), 'Parse headers';
+is $results, <<'EOF', 'Should have backlinks but no index';
+
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+</head>
+<body id="_podtop_">
+
+
+<a href="#_podtop_"><h1 id="Foo">Foo</h1></a>
+
+<a href="#_podtop_"><h1 id="Bar">Bar</h1></a>
+
+</body>
+</html>
+
+EOF
+
+initialize($parser, $results);
+$parser->html_header($header);
+$parser->html_footer($footer);
+$parser->backlink(1);
+$parser->html_h_level(2);
+ok $parser->parse_string_document( "=head1 Foo \n\n=head1 Bar" ), 'Parse headers';
+is $results, <<'EOF', 'Should have index and backlinks around h2 elements';
+
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+</head>
+<body id="_podtop_">
+
+
+<ul id="index">
+  <li>
+    <ul>
+      <li><a href="#Foo">Foo</a></li>
+      <li><a href="#Bar">Bar</a></li>
+    </ul>
+  </li>
+</ul>
+
+<a href="#_podtop_"><h2 id="Foo">Foo</h2></a>
+
+<a href="#_podtop_"><h2 id="Bar">Bar</h2></a>
+
+</body>
+</html>
+
+EOF
+
+initialize($parser, $results);
+$parser->anchor_items(1);
+ok $parser->parse_string_document( <<'EOPOD' ), 'Parse POD';
+=head1 Foo
+
+=over
+
+=item test
+
+=item Test 2
+
+body of item
+
+=back
+
+=over
+
+=item *
+
+not anchored
+
+=back
+
+=over
+
+=item 1
+
+still not anchored
+
+=back
+EOPOD
+
+is $results, <<'EOF', 'Anchor =item directives';
+<ul id="index">
+  <li><a href="#Foo">Foo</a></li>
+</ul>
+
+<h1 id="Foo">Foo</h1>
+
+<dl>
+
+<dt id="test">test</dt>
+<dd>
+
+</dd>
+<dt id="Test-2">Test 2</dt>
+<dd>
+
+<p>body of item</p>
+
+</dd>
+</dl>
+
+<ul>
+
+<li><p>not anchored</p>
+
+</li>
+</ul>
+
+<ol>
+
+<li><p>still not anchored</p>
+
+</li>
+</ol>
+
+EOF
+
+initialize($parser, $results);
+$parser->anchor_items(0);
+ok $parser->parse_string_document( <<'EOPOD' ), 'Parse POD';
+=head1 Foo
+
+=over
+
+=item test
+
+=item Test 2
+
+body of item
+
+=back
+
+=over
+
+=item *
+
+not anchored
+
+=back
+
+=over
+
+=item 1
+
+still not anchored
+
+=back
+EOPOD
+is $results, <<'EOF', 'Do not anchor =item directives';
+<ul id="index">
+  <li><a href="#Foo">Foo</a></li>
+</ul>
+
+<h1 id="Foo">Foo</h1>
+
+<dl>
+
+<dt>test</dt>
+<dd>
+
+</dd>
+<dt>Test 2</dt>
+<dd>
+
+<p>body of item</p>
+
+</dd>
+</dl>
+
+<ul>
+
+<li><p>not anchored</p>
+
+</li>
+</ul>
+
+<ol>
+
+<li><p>still not anchored</p>
+
+</li>
+</ol>
+
+EOF
+
+$ENV{FOO}= 1;
+
+initialize($parser, $results);
+ok $parser->parse_string_document( <<'EOPOD' ), 'Parse POD';
+=head1 Foo
+
+Test links from perlpodspec: L</"About LE<lt>...E<gt> Codes">
+
+=head1 About LE<lt>...E<gt> Codes
+
+Here it is
+EOPOD
+
+my $id = 'About-L...-Codes'; # what should this be?
+
+is $results, <<EOF, 'anchor and h1 use same section id for complex sections';
+<ul id="index">
+  <li><a href="#Foo">Foo</a></li>
+  <li><a href="#$id">About L&lt;...&gt; Codes</a></li>
+</ul>
+
+<h1 id="Foo">Foo</h1>
+
+<p>Test links from perlpodspec: <a href="#$id">&quot;About L&lt;...&gt; Codes&quot;</a></p>
+
+<h1 id="$id">About L&lt;...&gt; Codes</h1>
+
+<p>Here it is</p>
 
 EOF
 

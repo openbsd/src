@@ -2,7 +2,7 @@
 0.4: Hashes dumped recursively.
      Additional fields for CV added.
 0.5: Prototypes for functions supported. 
-     Strings are consostently in quotes now.
+     Strings are consistently in quotes now.
      Name changed to Devel::Peek (former ExtUtils::Peek).
 0.7:
 	New function mstat added.

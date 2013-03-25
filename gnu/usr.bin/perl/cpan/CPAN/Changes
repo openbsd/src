@@ -1,3 +1,169 @@
+2011-08-07  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.9800
+
+	* RT #69463: fix memory leak in CacheMgr (Serguei Trouchelle)
+
+2011-06-27  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.97_51
+
+	* address #68835: Changed read_meta to ignore dynamic_config (David Golden)
+
+	* bugfix: refuse to store_persistent if the own build_dir is not
+	available (Andreas Koenig)
+
+	* cosmetics: remove "Going to" from the beginning of user-visible
+	strings (Jesse Vincent)
+
+	* flock adjustments for Win32 from activestate (Christian Walde)
+
+2011-03-12  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.9600
+
+	* Added PAUSE batch signing key 2011 to the distribution
+
+	* Make t/00signature.t skip if verification fails.  The user
+	  shouldn't be prevented from installing if their gpg isn't
+	  configured correctly, but we still run this to see diagnostics
+
+	* Major highlights:
+
+	- much less configuration dialog hassle
+	- support for META/MYMETA.json
+	- support for local::lib
+	- support for HTTP::Tiny to reduce the dependency on ftp sites
+	- automatic mirror selection
+	- iron out all known bugs in configure_requires
+	- support for distributions compressed with bzip2
+	- allow Foo/Bar.pm on the commandline to mean Foo::Bar
+	- for more see Changes file for the 0.94_51 to 0.94_65 dev releases
+
+2011-02-14  David Golden <dagolden@cpan.org>
+
+	* release 1.94_65
+
+	* Adds support for META/MYMETA.json files if CPAN::Meta is
+        installed
+
+	* Adds HOMEDRIVE/HOMEPATH or USERPROFILE as home directory
+        options on Windows
+
+	* fixes a minor test bug related to Makefile timeskews
+
+	* fixes a minor test bug related to Makefile timeskews
+
+	* various documentation typo fixes
+
+2011-01-20  David Golden <dagolden@cpan.org>
+
+	* release 1.94_64
+
+	* remove 'use_file_homedir' config option and fix #62986 using
+	a more robust method. Original config directories will be found
+	even if File::HomeDir is installed
+
+	* streamline configuration intro text
+
+	* add missing documentation for 'atexit' and local::lib bootstrap
+
+2011-01-16  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_63
+
+	* address #63357: use Dumpvalue when dumping potential crap (Andreas
+	Koenig)
+
+	* address #62986: new config option use_file_homedir (Andreas Koenig)
+
+	* address #64037: new config option prefer_external_tar (Andreas Koenig)
+
+	* add support for bootstrapping local::lib when the user does not have
+	write access to perl's site library directories (David Golden)
+
+	* add support for (and prerequisite on) HTTP::Tiny; also adds
+	prerequisites for MIME::Base64 and Digest::MD5 to support proxy
+	authentication (David Golden)
+
+	* automatic mirror selection now returns only http mirrors (David
+	Golden)
+
+	* add 'atexit' option for cache scanning and cleanup (David Golden)
+
+	* now with 421 distroprefs files (but a good portion of them seems
+	outdated)
+
+2010-10-26  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_62
+
+	* address RT #62064: build_requires_install_policy set to "no" did not
+	work correctly (reported by Xavier Bergade)
+
+	* address RT ##55091: don't ask the proxy credentials if proxy_user
+	empty (fixed by Robert Bohne)
+
+	* address RT #55093: no_proxy doesn't work with more then one entries
+	(fixed by Robert Bohne)
+
+2010-10-03  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_61
+
+	* address RT #61735: stop talking about sending test reports by email (Schwern)
+
+	* prevent the use of old versions of Parse::CPAN::Meta which caused test failures
+
+	* bandaid for native solaris patch program to actually do patching
+
+2010-09-28  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_60
+
+	* improvements to find_perl() by David Golden
+
+	* test fixes to address the issues demonstrated by some cpantesters
+
+2010-09-26  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_59
+
+	* address RT #61607: make the FTP download code more robust  (Reini Urban)
+
+	* omit useless arithmetic in CPAN::Version to possibly help netbsd
+	(reported by Nigel Horne and suggested David Golden)
+
+	* address RT #59216: make sure $builddir exists before calling tempdir
+	(Lee Goddard)
+
+	* a couple of new distropref files
+
+2010-06-24  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_58
+
+	* bugfix: Non-English locales got no diagnostics on a failed locking due
+	to permissions (reported by Frank Wiegand)
+
+	* chasing test failures with test fixes.
+
+2010-05-24  Andreas J. Koenig  <andk@cpan.org>
+
+	* release 1.94_57
+
+	* bugfix: treat modules correctly that are deprecated in perl 5.12.
+
+	* bugfix: RT #57482 and #57788 revealed that configure_requires
+	implicitly assumed build_requires instead of normal requires. (Reported
+	by Andrew Whatson and Father Chrysostomos respectively)
+
+	* testfix: solaris should run the tests without expect because (some?)
+	solaris have a broken expect
+
+	* testfix: run tests with cache_metadata off to prevent spill over
+	effects from previous test runs
+
 2010-02-17  Andreas J. Koenig  <andk@cpan.org>
 
 	* release 1.94_56

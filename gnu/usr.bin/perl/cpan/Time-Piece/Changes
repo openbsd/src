@@ -1,6 +1,36 @@
-
 Time::Piece Changes
 
+1.20
+    - Fix for alloca broke Solaris
+    - Fixed documentation buggette about strptime
+    - Added ->pretty() method for Time::Seconds objects
+	- Add %s support to strptime
+
+1.19
+    - Fix for alloca broke FreeBSD
+
+1.18
+    - Fix for alloca on IRIX
+
+1.17
+    - Force all to use internal strptime then everyone gets %z even OSX
+      users.
+    - Finally figured out the timezone test failures on Win32 and fixed
+      them.
+
+1.16
+	- Implement %z for the internal implementation of strptime(). 
+	  Unfortunately this doesn't get picked up everywhere, so there are no 
+	  tests for it (yet - patches welcome).
+	- Fix for major bug in add_months() using negative months which were 
+	  multiples of 12. Also affected add_years() with negative years.
+	- Fix for object creation bug in get_epochs which called new from object 
+	  but that wasn't supported in the new() code.
+ 	- Added docs about the weakness of using epoch seconds internally and
+	  suggested alternatives.
+	- Removed useless "use UNIVERSAL qw(isa)" line.
+	- Fix for installing over core perl version.
+	
 1.15
     - Skip a test on Win32 that there's just no way of passing
     - Document the above failure

@@ -1,211 +1,93 @@
+=pod
 
 =head1 NAME
 
-Locale::Script - ISO codes for script identification (ISO 15924)
+Locale::Script - standard codes for script identification
 
 =head1 SYNOPSIS
 
-    use Locale::Script;
-    use Locale::Constants;
-    
-    $script  = code2script('ph');                       # 'Phoenician'
-    $code    = script2code('Tibetan');                  # 'bo'
-    $code3   = script2code('Tibetan',
-                           LOCALE_CODE_ALPHA_3);        # 'bod'
-    $codeN   = script2code('Tibetan',
-                           LOCALE_CODE_ALPHA_NUMERIC);  # 330
-    
-    @codes   = all_script_codes();
-    @scripts = all_script_names();
-    
+   use Locale::Script;
+
+   $script  = code2script('phnx');                     # 'Phoenician'
+   $code    = script2code('Phoenician');               # 'Phnx'
+   $code    = script2code('Phoenician',
+                          LOCALE_CODE_NUMERIC);        # 115
+
+   @codes   = all_script_codes();
+   @scripts = all_script_names();
 
 =head1 DESCRIPTION
 
-The C<Locale::Script> module provides access to the ISO
-codes for identifying scripts, as defined in ISO 15924.
-For example, Egyptian hieroglyphs are denoted by the two-letter
-code 'eg', the three-letter code 'egy', and the numeric code 050.
+The C<Locale::Script> module provides access to standards codes used
+for identifying scripts, such as those defined in ISO 15924.
 
-You can either access the codes via the conversion routines
-(described below), or with the two functions which return lists
-of all script codes or all script names.
+Most of the routines take an optional additional argument which
+specifies the code set to use. If not specified, the default ISO
+15924 four-letter codes will be used.
 
-There are three different code sets you can use for identifying
-scripts:
+=head1 SUPPORTED CODE SETS
+
+There are several different code sets you can use for identifying
+scripts. A code set may be specified using either a name, or a
+constant that is automatically exported by this module.
+
+For example, the two are equivalent:
+
+   $script = code2script('phnx','alpha');
+   $script = code2script('phnx',LOCALE_SCRIPT_ALPHA);
+
+The codesets currently supported are:
 
 =over 4
 
-=item B<alpha-2>
+=item B<alpha, LOCALE_SCRIPT_ALPHA>
 
-Two letter codes, such as 'bo' for Tibetan.
-This code set is identified with the symbol C<LOCALE_CODE_ALPHA_2>.
+This is a set of four-letter (capitalized) codes from ISO 15924
+such as 'Phnx' for Phoenician.  It also includes additions to this
+set included in the IANA language registry.
 
-=item B<alpha-3>
+The Zxxx, Zyyy, and Zzzz codes are not used.
 
-Three letter codes, such as 'ell' for Greek.
-This code set is identified with the symbol C<LOCALE_CODE_ALPHA_3>.
+This is the default code set.
 
-=item B<numeric>
+=item B<num, LOCALE_SCRIPT_NUMERIC>
 
-Numeric codes, such as 410 for Hiragana.
-This code set is identified with the symbol C<LOCALE_CODE_NUMERIC>.
+This is a set of three-digit numeric codes from ISO 15924 such as 115
+for Phoenician.
 
 =back
 
-All of the routines take an optional additional argument
-which specifies the code set to use.
-If not specified, it defaults to the two-letter codes.
-This is partly for backwards compatibility (previous versions
-of Locale modules only supported the alpha-2 codes), and
-partly because they are the most widely used codes.
-
-The alpha-2 and alpha-3 codes are not case-dependent,
-so you can use 'BO', 'Bo', 'bO' or 'bo' for Tibetan.
-When a code is returned by one of the functions in
-this module, it will always be lower-case.
-
-=head2 SPECIAL CODES
-
-The standard defines various special codes.
+=head1 ROUTINES
 
 =over 4
 
-=item *
+=item B<code2script ( CODE [,CODESET] )>
 
-The standard reserves codes in the ranges B<qa> - B<qt>,
-B<qaa> - B<qat>, and B<900> - B<919>, for private use.
+=item B<script2code ( NAME [,CODESET] )>
 
-=item *
+=item B<script_code2code ( CODE ,CODESET ,CODESET2 )>
 
-B<zx>, B<zxx>, and B<997>, are the codes for unwritten languages.
+=item B<all_script_codes ( [CODESET] )>
 
-=item *
+=item B<all_script_names ( [CODESET] )>
 
-B<zy>, B<zyy>, and B<998>, are the codes for an undetermined script.
+=item B<Locale::Script::rename_script  ( CODE ,NEW_NAME [,CODESET] )>
 
-=item *
+=item B<Locale::Script::add_script  ( CODE ,NAME [,CODESET] )>
 
-B<zz>, B<zzz>, and B<999>, are the codes for an uncoded script.
+=item B<Locale::Script::delete_script  ( CODE [,CODESET] )>
 
-=back
+=item B<Locale::Script::add_script_alias  ( NAME ,NEW_NAME )>
 
-The private codes are not recognised by Locale::Script,
-but the others are.
+=item B<Locale::Script::delete_script_alias  ( NAME )>
 
+=item B<Locale::Script::rename_script_code  ( CODE ,NEW_CODE [,CODESET] )>
 
-=head1 CONVERSION ROUTINES
+=item B<Locale::Script::add_script_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
 
-There are three conversion routines: C<code2script()>, C<script2code()>,
-and C<script_code2code()>.
+=item B<Locale::Script::delete_script_code_alias  ( CODE [,CODESET] )>
 
-=over 4
-
-=item code2script( CODE, [ CODESET ] )
-
-This function takes a script code and returns a string
-which contains the name of the script identified.
-If the code is not a valid script code, as defined by ISO 15924,
-then C<undef> will be returned:
-
-    $script = code2script('cy');   # Cyrillic
-
-=item script2code( STRING, [ CODESET ] )
-
-This function takes a script name and returns the corresponding
-script code, if such exists.
-If the argument could not be identified as a script name,
-then C<undef> will be returned:
-
-    $code = script2code('Gothic', LOCALE_CODE_ALPHA_3);
-    # $code will now be 'gth'
-
-The case of the script name is not important.
-See the section L<KNOWN BUGS AND LIMITATIONS> below.
-
-=item script_code2code( CODE, CODESET, CODESET )
-
-This function takes a script code from one code set,
-and returns the corresponding code from another code set.
-
-    $alpha2 = script_code2code('jwi',
-		 LOCALE_CODE_ALPHA_3 => LOCALE_CODE_ALPHA_2);
-    # $alpha2 will now be 'jw' (Javanese)
-
-If the code passed is not a valid script code in
-the first code set, or if there isn't a code for the
-corresponding script in the second code set,
-then C<undef> will be returned.
-
-=back
-
-
-=head1 QUERY ROUTINES
-
-There are two function which can be used to obtain a list of all codes,
-or all script names:
-
-=over 4
-
-=item C<all_script_codes ( [ CODESET ] )>
-
-Returns a list of all two-letter script codes.
-The codes are guaranteed to be all lower-case,
-and not in any particular order.
-
-=item C<all_script_names ( [ CODESET ] )>
-
-Returns a list of all script names for which there is a corresponding
-script code in the specified code set.
-The names are capitalised, and not returned in any particular order.
-
-=back
-
-
-=head1 EXAMPLES
-
-The following example illustrates use of the C<code2script()> function.
-The user is prompted for a script code, and then told the corresponding
-script name:
-
-    $| = 1;   # turn off buffering
-    
-    print "Enter script code: ";
-    chop($code = <STDIN>);
-    $script = code2script($code, LOCALE_CODE_ALPHA_2);
-    if (defined $script)
-    {
-        print "$code = $script\n";
-    }
-    else
-    {
-        print "'$code' is not a valid script code!\n";
-    }
-
-
-=head1 KNOWN BUGS AND LIMITATIONS
-
-=over 4
-
-=item *
-
-When using C<script2code()>, the script name must currently appear
-exactly as it does in the source of the module. For example,
-
-    script2code('Egyptian hieroglyphs')
-
-will return B<eg>, as expected. But the following will all return C<undef>:
-
-    script2code('hieroglyphs')
-    script2code('Egyptian Hieroglypics')
-
-If there's need for it, a future version could have variants
-for script names.
-
-=item *
-
-In the current implementation, all data is read in when the
-module is loaded, and then held in memory.
-A lazy implementation would be more memory friendly.
+These routines are all documented in the Locale::Codes::API man page.
 
 =back
 
@@ -213,41 +95,37 @@ A lazy implementation would be more memory friendly.
 
 =over 4
 
-=item Locale::Language
+=item B<Locale::Codes>
 
-ISO two letter codes for identification of language (ISO 639).
+The Locale-Codes distribution.
 
-=item Locale::Currency
+=item B<Locale::Codes::API>
 
-ISO three letter codes for identification of currencies
-and funds (ISO 4217).
+The list of functions supported by this module.
 
-=item Locale::Country
-
-ISO three letter codes for identification of countries (ISO 3166)
-
-=item ISO 15924
-
-The ISO standard which defines these codes.
-
-=item http://www.evertype.com/standards/iso15924/
+=item B<http://www.unicode.org/iso15924/>
 
 Home page for ISO 15924.
 
+=item B<http://www.iana.org/assignments/language-subtag-registry>
+
+The IANA language subtag registry.
 
 =back
 
-
 =head1 AUTHOR
 
-Neil Bowers E<lt>neil@bowers.comE<gt>
+See Locale::Codes for full author history.
+
+Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
 =head1 COPYRIGHT
 
-Copyright (c) 2002-2004 Neil Bowers.
+   Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
+   Copyright (c) 2001-2010 Neil Bowers
+   Copyright (c) 2010-2012 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =cut
-

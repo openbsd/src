@@ -13,7 +13,7 @@ BEGIN {
     use vars        qw( @EXPORT @ISA $VERSION );
     @EXPORT     =   qw( shell fetch get install );
     @ISA        =   qw( Exporter );
-    $VERSION = "0.90";     #have to hardcode or cpan.org gets unhappy
+    $VERSION = "0.9121";     #have to hardcode or cpan.org gets unhappy
 }
 
 ### purely for backward compatibility, so we can call it from the commandline:
@@ -113,7 +113,7 @@ CPANPLUS - API & CLI access to the CPAN mirrors
     $ perl -MCPANPLUS -eshell
     $ perl -MCPANPLUS -e'fetch Some::Module'
 
-    
+
 =head1 DESCRIPTION
 
 The C<CPANPLUS> library is an API to the C<CPAN> mirrors and a
@@ -124,21 +124,21 @@ that use this API.
 
 =head2 GENERAL USAGE
 
-This is the document you are currently reading. It describes 
-basic usage and background information. Its main purpose is to 
+This is the document you are currently reading. It describes
+basic usage and background information. Its main purpose is to
 assist the user who wants to learn how to invoke CPANPLUS
 and install modules from the commandline and to point you
 to more indepth reading if required.
 
 =head2 API REFERENCE
 
-The C<CPANPLUS> API is meant to let you programmatically 
+The C<CPANPLUS> API is meant to let you programmatically
 interact with the C<CPAN> mirrors. The documentation in
 L<CPANPLUS::Backend> shows you how to create an object
 capable of interacting with those mirrors, letting you
 create & retrieve module objects.
 L<CPANPLUS::Module> shows you how you can use these module
-objects to perform actions like installing and testing. 
+objects to perform actions like installing and testing.
 
 The default shell, documented in L<CPANPLUS::Shell::Default>
 is also scriptable. You can use its API to dispatch calls
@@ -150,46 +150,46 @@ from your script to the CPANPLUS Shell.
 
 =head2 STARTING AN INTERACTIVE SHELL
 
-You can start an interactive shell by running either of 
+You can start an interactive shell by running either of
 the two following commands:
 
     $ cpanp
 
     $ perl -MCPANPLUS -eshell
 
-All commans available are listed in the interactive shells
-help menu. See C<cpanp -h> or L<CPANPLUS::Shell::Default> 
-for instructions on using the default shell.  
-    
+All commands available are listed in the interactive shells
+help menu. See C<cpanp -h> or L<CPANPLUS::Shell::Default>
+for instructions on using the default shell.
+
 =head2 CHOOSE A SHELL
 
 By running C<cpanp> without arguments, you will start up
-the shell specified in your config, which defaults to 
+the shell specified in your config, which defaults to
 L<CPANPLUS::Shell::Default>. There are more shells available.
-C<CPANPLUS> itself ships with an emulation shell called 
-L<CPANPLUS::Shell::Classic> that looks and feels just like 
+C<CPANPLUS> itself ships with an emulation shell called
+L<CPANPLUS::Shell::Classic> that looks and feels just like
 the old C<CPAN.pm> shell.
 
 You can start this shell by typing:
 
     $ perl -MCPANPLUS -e'shell Classic'
-    
-Even more shells may be available from C<CPAN>.    
+
+Even more shells may be available from C<CPAN>.
 
 Note that if you have changed your default shell in your
-configuration, that shell will be used instead. If for 
-some reason there was an error with your specified shell, 
+configuration, that shell will be used instead. If for
+some reason there was an error with your specified shell,
 you will be given the default shell.
 
 =head2 BUILDING PACKAGES
 
-C<cpan2dist> is a commandline tool to convert any distribution 
+C<cpan2dist> is a commandline tool to convert any distribution
 from C<CPAN> into a package in the format of your choice, like
-for example C<.deb> or C<FreeBSD ports>. 
+for example C<.deb> or C<FreeBSD ports>.
 
 See C<cpan2dist -h> for details.
-    
-    
+
+
 =head1 FUNCTIONS
 
 For quick access to common commands, you may use this module,
@@ -238,10 +238,10 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =head1 SEE ALSO
@@ -256,7 +256,7 @@ L<CPANPLUS::Shell::Default>, L<CPANPLUS::FAQ>, L<CPANPLUS::Backend>, L<CPANPLUS:
 I<bug-cpanplus@rt.cpan.org>
 
 =item * Questions & suggestions:
-I<cpanplus-devel@lists.sourceforge.net>
+I<bug-cpanplus@rt.cpan.org>
 
 =back
 

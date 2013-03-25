@@ -31,7 +31,6 @@ newSVhek                       # U
 newSVpvs                       # U
 newSVpvs_share                 # U
 newWHENOP                      # U
-newWHILEOP                     # E (Perl_newWHILEOP)
 savepvs                        # U
 sortsv_flags                   # U
 sv_catpvs                      # U

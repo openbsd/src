@@ -31,7 +31,7 @@ use_ok( 'Pod::InputObjects' );
 { # test package Pod::Paragraph
     my $p_p1 = Pod::Paragraph->new( -text => 'NAME', -name => 'head2' );
     my $p_p2 = Pod::Paragraph->new( 'test - This is the test suite' );
-    isa_ok( $p_p1, 'Pod::Paragraph', 'Pod::Paragraph constuctor' );
+    isa_ok( $p_p1, 'Pod::Paragraph', 'Pod::Paragraph constructor' );
     isa_ok( $p_p2, 'Pod::Paragraph', 'Pod::Paragraph constructor revisited' );
 
     is( $p_p1->cmd_name(), 'head2', 'Pod::Paragraph->cmd_name()' );

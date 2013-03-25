@@ -21,7 +21,7 @@ use Tie::RefHash;
 use Storable qw/dclone nfreeze thaw/;
 
 $\ = "\n";
-print "1..24";
+print "1..42";
 
 sub ok ($$) {
     print ( ( $_[0] ? "" : "not " ), "ok - $_[1]" );
@@ -47,7 +47,7 @@ foreach my $clone ( \%hash, dclone(\%hash), thaw(nfreeze(\%hash)) ){
   isa_ok( tied(%$clone), "Tie::RefHash" );
 
   my @keys = keys %$clone;
-  is( scalar(@keys), 2, "one key in clone");
+  is( scalar(@keys), 2, "two keys in clone");
   my $key = ref($keys[0]) ? shift @keys : pop @keys;
   my $reg = $keys[0];
 
@@ -60,4 +60,21 @@ foreach my $clone ( \%hash, dclone(\%hash), thaw(nfreeze(\%hash)) ){
   is( $clone->{$reg}, "other", "and is also a valid key" );
 }
 
+tie my %only_refs, "Tie::RefHash";
+$only_refs{$key} = "value";
+
+foreach my $clone ( \%only_refs, dclone(\%only_refs), thaw(nfreeze(\%only_refs)) ){
+
+  ok( tied(%$clone), "copy is tied");
+  isa_ok( tied(%$clone), "Tie::RefHash" );
+
+  my @keys = keys %$clone;
+  is( scalar(@keys), 1, "one key in clone");
+  my $key = $keys[0];
+
+  ok( ref($key), "key is a ref after clone" );
+  is( $key->{foo}, 1, "key serialized ok");
+
+  is( $clone->{$key}, "value", "and is still pointing at the same value" );
+}
 

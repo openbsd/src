@@ -11,7 +11,7 @@ use strict;
 use Config;
 use ExtUtils::MakeMaker;
 
-use Test::More tests => 80;
+use Test::More tests => 171;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::BFD;
 use File::Find;
@@ -31,8 +31,8 @@ $| = 1;
 
 ok( setup_recurs(), 'setup' );
 END {
-    ok( chdir File::Spec->updir );
-    ok( teardown_recurs(), 'teardown' );
+    ok chdir File::Spec->updir or die;
+    ok teardown_recurs, "teardown";
 }
 
 ok( chdir('Big-Dummy'), "chdir'd to Big-Dummy" ) ||
@@ -73,7 +73,6 @@ my $make = make_run();
 
 END { unlink 'MANIFEST'; }
 
-
 my $ppd_out = run("$make ppd");
 is( $?, 0,                      '  exited normally' ) || diag $ppd_out;
 ok( open(PPD, 'Big-Dummy.ppd'), '  .ppd file generated' );
@@ -82,7 +81,8 @@ my $ppd_html;
 close PPD;
 like( $ppd_html, qr{^<SOFTPKG NAME="Big-Dummy" VERSION="0.01">}m, 
                                                            '  <SOFTPKG>' );
-like( $ppd_html, qr{^\s*<ABSTRACT>Try "our" hot dog's</ABSTRACT>}m,         
+like( $ppd_html,
+      qr{^\s*<ABSTRACT>Try "our" hot dog's, \$andwiche\$ and \$\(ub\)\$!</ABSTRACT>}m,
                                                            '  <ABSTRACT>');
 like( $ppd_html, 
       qr{^\s*<AUTHOR>Michael G Schwern &lt;schwern\@pobox.com&gt;</AUTHOR>}m,
@@ -229,64 +229,163 @@ use ExtUtils::Manifest qw(maniread);
 my $distdir  = 'Big-Dummy-0.01';
 $distdir =~ s/\./_/g if $Is_VMS;
 my $meta_yml = "$distdir/META.yml";
+my $mymeta_yml = "$distdir/MYMETA.yml";
+my $meta_json = "$distdir/META.json";
+my $mymeta_json = "$distdir/MYMETA.json";
 
-ok( !-f 'META.yml',  'META.yml not written to source dir' );
-ok( -f $meta_yml,    'META.yml written to dist dir' );
-ok( !-e "META_new.yml", 'temp META.yml file not left around' );
+note "META file validity"; {
+    require CPAN::Meta;
 
-SKIP: {
-    # META.yml spec 1.4 was added in 0.11
-    skip "Test::YAML::Meta >= 0.11 required", 2
-      unless eval { require Test::YAML::Meta }   and
-             Test::YAML::Meta->VERSION >= 0.11;
+    ok( !-f 'META.yml',  'META.yml not written to source dir' );
+    ok( -f $meta_yml,    'META.yml written to dist dir' );
+    ok( !-e "META_new.yml", 'temp META.yml file not left around' );
 
-    Test::YAML::Meta::meta_spec_ok($meta_yml);
+    ok( -f 'MYMETA.yml',  'MYMETA.yml is written to source dir' );
+    ok( -f $mymeta_yml,    'MYMETA.yml is written to dist dir on disttest' );
+
+    ok( !-f 'META.json',  'META.json not written to source dir' );
+    ok( -f $meta_json,    'META.json written to dist dir' );
+    ok( !-e "META_new.json", 'temp META.json file not left around' );
+
+    ok( -f 'MYMETA.json',  'MYMETA.json is written to source dir' );
+    ok( -f $mymeta_json,    'MYMETA.json is written to dist dir on disttest' );
+
+    for my $case (
+      ['META.yml', $meta_yml],
+      ['MYMETA.yml', $mymeta_yml],
+      ['META.json', $meta_json],
+      ['MYMETA.json', $mymeta_json],
+      ['MYMETA.yml', 'MYMETA.yml'],
+      ['MYMETA.json', 'MYMETA.json'],
+    ) {
+      my ($label, $meta_name) = @$case;
+      ok(
+        my $obj = eval {
+          CPAN::Meta->load_file($meta_name, {lazy_validation => 0})
+        },
+        "$label validates"
+      );
+      my $is = sub {
+        my ($m,$e) = @_;
+        is($obj->$m, $e, "$label -> $m")
+      };
+      my $is_list = sub {
+        my ($m,$e) = @_;
+        is_deeply([$obj->$m], $e, "$label -> $m")
+      };
+      my $is_map = sub {
+        my ($m,$e) = @_;
+        is_deeply($obj->$m, $e, "$label -> $m")
+      };
+      $is->( name => "Big-Dummy" );
+      $is->( version => "0.01" );
+      $is->( abstract => q{Try "our" hot dog's, $andwiche$ and $(ub)$!} );
+      $is_list->( licenses => [q{unknown}] );
+      $is_list->( authors => [ q{Michael G Schwern <schwern@pobox.com>} ] );
+      $is_map->( prereqs => {
+          configure => {
+            requires => {
+              'ExtUtils::MakeMaker' => 0
+            },
+          },
+          build => {
+            requires => {
+              'warnings' => 0
+            }
+          },
+          runtime => {
+            requires => {
+              'strict' => 0
+            }
+          },
+        }
+      );
+      $is_map->(
+        no_index => {
+          directory => [qw/t inc/],
+        }
+      );
+      $is->( dynamic_config => ($label =~ /MYMETA/) ? 0 : 1 );
+    }
+
+    my $manifest = maniread("$distdir/MANIFEST");
+    # VMS is non-case preserving, so we can't know what the MANIFEST will
+    # look like. :(
+    _normalize($manifest);
+    is( $manifest->{'meta.yml'}, 'Module YAML meta-data (added by MakeMaker)',
+      "MANIFEST has META.yml"
+    );
+    is( $manifest->{'meta.json'}, 'Module JSON meta-data (added by MakeMaker)',
+      "MANFIEST has META.json"
+    );
+
+    # Test NO_META META.yml suppression
+    for my $f ( $meta_yml, $meta_json, 'MYMETA.yml', 'MYMETA.json' ) {
+      1 while unlink $f;
+    }
+    ok( !-f $meta_yml,   'META.yml deleted' );
+    ok( !-f 'MYMETA.yml','MYMETA.yml deleted' );
+    ok( !-f $meta_json,   'META.json deleted' );
+    ok( !-f 'MYMETA.json','MYMETA.json deleted' );
+
+    @mpl_out = run(qq{$perl Makefile.PL "NO_META=1"});
+    ok( -f 'MYMETA.yml', 'MYMETA.yml generation not suppressed by NO_META' );
+    ok( -f 'MYMETA.json', 'MYMETA.json generation not suppressed by NO_META' );
+    cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
+    ok( !-f $meta_yml,   'META.yml generation suppressed by NO_META' );
+    ok( !-f $meta_json,   'META.json generation suppressed by NO_META' );
+    my $distdir_out = run("$make distdir");
+    is( $?, 0, 'distdir' ) || diag($distdir_out);
+    ok( !-f $meta_yml,   'META.yml generation suppressed by NO_META' );
+    ok( !-f $meta_json,   'META.json generation suppressed by NO_META' );
+
+    for my $f ( 'MYMETA.yml', 'MYMETA.json' ) {
+      1 while unlink $f;
+    }
+    ok( !-f 'MYMETA.yml','MYMETA.yml deleted' );
+    ok( !-f 'MYMETA.json','MYMETA.json deleted' );
+
+    @mpl_out = run(qq{$perl Makefile.PL "NO_MYMETA=1"});
+    cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
+    $distdir_out = run("$make distdir");
+    is( $?, 0, 'distdir' ) || diag($distdir_out);
+    ok( !-f 'MYMETA.yml','MYMETA.yml generation suppressed by NO_MYMETA' );
+    ok( !-f 'MYMETA.json','MYMETA.json generation suppressed by NO_MYMETA' );
+    ok( -f $meta_yml,    'META.yml generation not suppressed by NO_MYMETA' );
+    ok( -f $meta_json,    'META.json generation not suppressed by NO_MYMETA' );
+
+    # Test MYMETA really comes from META except for prereqs
+    for my $f ( $meta_yml, $meta_json, 'MYMETA.yml', 'MYMETA.json' ) {
+      1 while unlink $f;
+    }
+    @mpl_out = run(qq{$perl Makefile.PL});
+    cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
+    $distdir_out = run("$make distdir");
+    is( $?, 0, 'distdir' ) || diag($distdir_out);
+    ok( -f $meta_yml,    'META.yml generated in distdir' );
+    ok( -f $meta_json,    'META.json generated in distdir' );
+    ok( ! -f $mymeta_yml,    'MYMETA.yml not yet generated in distdir' );
+    ok( ! -f $mymeta_json,    'MYMETA.json generated in distdir' );
+    my $edit_meta = CPAN::Meta->load_file($meta_json)->as_struct;
+    $edit_meta->{abstract} = "New abstract";
+    my $meta_obj = CPAN::Meta->new($edit_meta);
+    is( $meta_obj->abstract, "New abstract", "MYMETA abstract from META, not Makefile.PL");
+    ok( $meta_obj->save($meta_json), "Saved edited META.json in distdir" );
+    ok( $meta_obj->save($meta_yml, {version => 1.4}), "Saved edited META.yml in distdir");
+    ok( chdir $distdir );
+    ok( -f 'META.yml',    'META.yml confirmed in distdir' );
+    ok( -f 'META.json',    'META.json confirmed in distdir' );
+    @mpl_out = run(qq{$perl Makefile.PL});
+    cmp_ok( $?, '==', 0, 'Makefile.PL in distdir exited with zero' ) || diag(@mpl_out);
+    ok( chdir File::Spec->updir );
+    ok( -f $mymeta_yml,    'MYMETA.yml generated in distdir' );
+    ok( -f $mymeta_json,    'MYMETA.json generated in distdir' );
+    $meta_obj = CPAN::Meta->load_file($meta_json);
+    is( $meta_obj->abstract, "New abstract", "META abstract is same as was saved");
+    $meta_obj = CPAN::Meta->load_file($mymeta_json);
+    is( $meta_obj->abstract, "New abstract", "MYMETA abstract from META, not Makefile.PL");
 }
 
-ok open META, $meta_yml or diag $!;
-my $meta = join '', <META>;
-ok close META;
-
-is $meta, <<"END";
---- #YAML:1.0
-name:               Big-Dummy
-version:            0.01
-abstract:           Try "our" hot dog's
-author:
-    - Michael G Schwern <schwern\@pobox.com>
-license:            unknown
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
-build_requires:
-    warnings:  0
-requires:
-    strict:  0
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version $ExtUtils::MakeMaker::VERSION
-meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
-END
-
-my $manifest = maniread("$distdir/MANIFEST");
-# VMS is non-case preserving, so we can't know what the MANIFEST will
-# look like. :(
-_normalize($manifest);
-is( $manifest->{'meta.yml'}, 'Module meta-data (added by MakeMaker)' );
-
-
-# Test NO_META META.yml suppression
-unlink $meta_yml;
-ok( !-f $meta_yml,   'META.yml deleted' );
-@mpl_out = run(qq{$perl Makefile.PL "NO_META=1"});
-cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
-my $distdir_out = run("$make distdir");
-is( $?, 0, 'distdir' ) || diag($distdir_out);
-ok( !-f $meta_yml,   'META.yml generation suppressed by NO_META' );
 
 
 # Make sure init_dirscan doesn't go into the distdir

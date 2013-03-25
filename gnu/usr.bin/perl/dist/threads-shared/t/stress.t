@@ -11,6 +11,14 @@ BEGIN {
         print("1..0 # SKIP Broken under HP-UX 10.20\n");
         exit(0);
     }
+
+    # http://lists.alioth.debian.org/pipermail/perl-maintainers/2011-June/002285.html
+    # There _is_ TLS support on m68k, but this stress test is overwhelming
+    # for the hardware
+    if ($^O eq 'linux' && $Config{archname} =~ /^m68k/) {
+        print("1..0 # Skip: m68k doesn't have enough oomph for these stress tests\n");
+        exit(0);
+    }
 }
 
 use ExtUtils::testlib;

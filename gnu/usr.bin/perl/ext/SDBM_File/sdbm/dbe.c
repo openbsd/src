@@ -286,7 +286,7 @@ main(int argc, char **argv)
 	}
 
 	if (giveusage || what == YOW || argn < 1) {
-		fprintf(stderr, "Usage: %s databse [-m r|w|rw] [-crtx] -a|-d|-f|-F|-s [key [content]]\n", argv[0]);
+		fprintf(stderr, "Usage: %s database [-m r|w|rw] [-crtx] -a|-d|-f|-F|-s [key [content]]\n", argv[0]);
 		exit(-1);
 	}
 

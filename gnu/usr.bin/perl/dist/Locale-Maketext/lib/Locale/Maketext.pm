@@ -1,16 +1,33 @@
+
 package Locale::Maketext;
 use strict;
 use vars qw( @ISA $VERSION $MATCH_SUPERS $USING_LANGUAGE_TAGS
 $USE_LITERALS $MATCH_SUPERS_TIGHTLY);
 use Carp ();
-use I18N::LangTags 0.30 ();
+use I18N::LangTags ();
+use I18N::LangTags::Detect ();
 
 #--------------------------------------------------------------------------
 
 BEGIN { unless(defined &DEBUG) { *DEBUG = sub () {0} } }
 # define the constant 'DEBUG' at compile-time
 
-$VERSION = '1.14';
+# turn on utf8 if we have it (this is what GutsLoader.pm used to do essentially )
+#    use if (exists $INC{'utf8.pm'} || eval 'use utf8'), 'utf8';
+BEGIN {
+
+    # if we have it || we can load it
+    if ( exists $INC{'utf8.pm'} || eval { local $SIG{'__DIE__'};require utf8; } ) {
+        utf8->import();
+        DEBUG and warn " utf8 on for _compile()\n";
+    }
+    else {
+        DEBUG and warn " utf8 not available for _compile() ($INC{'utf8.pm'})\n$@\n";
+    }
+}
+
+
+$VERSION = '1.22';
 @ISA = ();
 
 $MATCH_SUPERS = 1;
@@ -131,8 +148,7 @@ sub failure_handler_auto {
     $handle->{'failure_lex'} ||= {};
     my $lex = $handle->{'failure_lex'};
 
-    my $value;
-    $lex->{$phrase} ||= ($value = $handle->_compile($phrase));
+    my $value ||= ($lex->{$phrase} ||= $handle->_compile($phrase));
 
     # Dumbly copied from sub maketext:
     return ${$value} if ref($value) eq 'SCALAR';
@@ -144,12 +160,11 @@ sub failure_handler_auto {
     # If we make it here, there was an exception thrown in the
     #  call to $value, and so scream:
     if($@) {
-        my $err = $@;
         # pretty up the error message
-        $err =~ s{\s+at\s+\(eval\s+\d+\)\s+line\s+(\d+)\.?\n?}
+        $@ =~ s{\s+at\s+\(eval\s+\d+\)\s+line\s+(\d+)\.?\n?}
                  {\n in bracket code [compiled line $1],}s;
         #$err =~ s/\n?$/\n/s;
-        Carp::croak "Error in maketexting \"$phrase\":\n$err as used";
+        Carp::croak "Error in maketexting \"$phrase\":\n$@ as used";
         # Rather unexpected, but suppose that the sub tried calling
         # a method that didn't exist.
     }
@@ -179,34 +194,54 @@ sub maketext {
     my($handle, $phrase) = splice(@_,0,2);
     Carp::confess('No handle/phrase') unless (defined($handle) && defined($phrase));
 
+    # backup $@ in case it it's still being used in the calling code.
+    # If no failures, we'll re-set it back to what it was later.
+    my $at = $@;
 
-    # Don't interefere with $@ in case that's being interpolated into the msg.
-    local $@;
+    # Copy @_ case one of its elements is $@.
+    @_ = @_;
 
     # Look up the value:
 
     my $value;
-    foreach my $h_r (
-        @{  $isa_scan{ref($handle) || $handle} || $handle->_lex_refs  }
-    ) {
-        DEBUG and warn "* Looking up \"$phrase\" in $h_r\n";
-        if(exists $h_r->{$phrase}) {
-            DEBUG and warn "  Found \"$phrase\" in $h_r\n";
-            unless(ref($value = $h_r->{$phrase})) {
-                # Nonref means it's not yet compiled.  Compile and replace.
-                $value = $h_r->{$phrase} = $handle->_compile($value);
+    if (exists $handle->{'_external_lex_cache'}{$phrase}) {
+        DEBUG and warn "* Using external lex cache version of \"$phrase\"\n";
+        $value = $handle->{'_external_lex_cache'}{$phrase};
+    }
+    else {
+        foreach my $h_r (
+            @{  $isa_scan{ref($handle) || $handle} || $handle->_lex_refs  }
+        ) {
+            DEBUG and warn "* Looking up \"$phrase\" in $h_r\n";
+            if(exists $h_r->{$phrase}) {
+                DEBUG and warn "  Found \"$phrase\" in $h_r\n";
+                unless(ref($value = $h_r->{$phrase})) {
+                    # Nonref means it's not yet compiled.  Compile and replace.
+                    if ($handle->{'use_external_lex_cache'}) {
+                        $value = $handle->{'_external_lex_cache'}{$phrase} = $handle->_compile($value);
+                    }
+                    else {
+                        $value = $h_r->{$phrase} = $handle->_compile($value);
+                    }
+                }
+                last;
             }
-            last;
+            # extending packages need to be able to localize _AUTO and if readonly can't "local $h_r->{'_AUTO'} = 1;"
+            # but they can "local $handle->{'_external_lex_cache'}{'_AUTO'} = 1;"
+            elsif($phrase !~ m/^_/s and ($handle->{'use_external_lex_cache'} ? ( exists $handle->{'_external_lex_cache'}{'_AUTO'} ? $handle->{'_external_lex_cache'}{'_AUTO'} : $h_r->{'_AUTO'} ) : $h_r->{'_AUTO'})) {
+                # it's an auto lex, and this is an autoable key!
+                DEBUG and warn "  Automaking \"$phrase\" into $h_r\n";
+                if ($handle->{'use_external_lex_cache'}) {
+                    $value = $handle->{'_external_lex_cache'}{$phrase} = $handle->_compile($phrase);
+                }
+                else {
+                    $value = $h_r->{$phrase} = $handle->_compile($phrase);
+                }
+                last;
+            }
+            DEBUG>1 and print "  Not found in $h_r, nor automakable\n";
+            # else keep looking
         }
-        elsif($phrase !~ m/^_/s and $h_r->{'_AUTO'}) {
-            # it's an auto lex, and this is an autoable key!
-            DEBUG and warn "  Automaking \"$phrase\" into $h_r\n";
-
-            $value = $h_r->{$phrase} = $handle->_compile($phrase);
-            last;
-        }
-        DEBUG>1 and print "  Not found in $h_r, nor automakable\n";
-        # else keep looking
     }
 
     unless(defined($value)) {
@@ -215,10 +250,12 @@ sub maketext {
             DEBUG and warn "WARNING0: maketext fails looking for <$phrase>\n";
             my $fail;
             if(ref($fail = $handle->{'fail'}) eq 'CODE') { # it's a sub reference
+                $@ = $at; # Put $@ back in case we altered it along the way.
                 return &{$fail}($handle, $phrase, @_);
                 # If it ever returns, it should return a good value.
             }
             else { # It's a method name
+                $@ = $at; # Put $@ back in case we altered it along the way.
                 return $handle->$fail($phrase, @_);
                 # If it ever returns, it should return a good value.
             }
@@ -229,8 +266,14 @@ sub maketext {
         }
     }
 
-    return $$value if ref($value) eq 'SCALAR';
-    return $value unless ref($value) eq 'CODE';
+    if(ref($value) eq 'SCALAR'){
+        $@ = $at; # Put $@ back in case we altered it along the way.
+        return $$value ;
+    }
+    if(ref($value) ne 'CODE'){
+        $@ = $at; # Put $@ back in case we altered it along the way.
+        return $value ;
+    }
 
     {
         local $SIG{'__DIE__'};
@@ -239,18 +282,19 @@ sub maketext {
     # If we make it here, there was an exception thrown in the
     #  call to $value, and so scream:
     if ($@) {
-        my $err = $@;
         # pretty up the error message
-        $err =~ s{\s+at\s+\(eval\s+\d+\)\s+line\s+(\d+)\.?\n?}
+        $@ =~ s{\s+at\s+\(eval\s+\d+\)\s+line\s+(\d+)\.?\n?}
                  {\n in bracket code [compiled line $1],}s;
         #$err =~ s/\n?$/\n/s;
-        Carp::croak "Error in maketexting \"$phrase\":\n$err as used";
+        Carp::croak "Error in maketexting \"$phrase\":\n$@ as used";
         # Rather unexpected, but suppose that the sub tried calling
         # a method that didn't exist.
     }
     else {
+        $@ = $at; # Put $@ back in case we altered it along the way.
         return $value;
     }
+    $@ = $at; # Put $@ back in case we altered it along the way.
 }
 
 ###########################################################################
@@ -347,7 +391,6 @@ sub _langtag_munging {
 ###########################################################################
 
 sub _ambient_langprefs {
-    require I18N::LangTags::Detect;
     return  I18N::LangTags::Detect::detect();
 }
 
@@ -387,10 +430,6 @@ sub _add_supers {
 #
 ###########################################################################
 
-use Locale::Maketext::GutsLoader;
-
-###########################################################################
-
 my %tried = ();
 # memoization of whether we've used this module, or found it unusable.
 
@@ -400,16 +439,18 @@ sub _try_use {   # Basically a wrapper around "require Modulename"
 
     my $module = $_[0];   # ASSUME sane module name!
     { no strict 'refs';
+        no warnings 'once';
         return($tried{$module} = 1)
         if %{$module . '::Lexicon'} or @{$module . '::ISA'};
         # weird case: we never use'd it, but there it is!
     }
 
     DEBUG and warn " About to use $module ...\n";
-    {
-        local $SIG{'__DIE__'};
-        eval "require $module"; # used to be "use $module", but no point in that.
-    }
+
+    local $SIG{'__DIE__'};
+    local $@;
+    eval "require $module"; # used to be "use $module", but no point in that.
+
     if($@) {
         DEBUG and warn "Error using $module \: $@\n";
         return $tried{$module} = 0;
@@ -452,5 +493,320 @@ sub _lex_refs {  # report the lexicon references for this handle's class
 }
 
 sub clear_isa_scan { %isa_scan = (); return; } # end on a note of simplicity!
+
+#--------------------------------------------------------------------------
+
+sub _compile {
+    # This big scary routine compiles an entry.
+    # It returns either a coderef if there's brackety bits in this, or
+    #  otherwise a ref to a scalar.
+
+    my $string_to_compile = $_[1]; # There are taint issues using regex on @_ - perlbug 60378,27344
+
+    # The while() regex is more expensive than this check on strings that don't need a compile.
+    # this op causes a ~2% speed hit for strings that need compile and a 250% speed improvement
+    # on strings that don't need compiling.
+    return \"$string_to_compile" if($string_to_compile !~ m/[\[~\]]/ms); # return a string ref if chars [~] are not in the string
+
+    my $target = ref($_[0]) || $_[0];
+
+    my(@code);
+    my(@c) = (''); # "chunks" -- scratch.
+    my $call_count = 0;
+    my $big_pile = '';
+    {
+        my $in_group = 0; # start out outside a group
+        my($m, @params); # scratch
+
+        while($string_to_compile =~  # Iterate over chunks.
+            m/(
+                [^\~\[\]]+  # non-~[] stuff (Capture everything else here)
+                |
+                ~.       # ~[, ~], ~~, ~other
+                |
+                \[          # [ presumably opening a group
+                |
+                \]          # ] presumably closing a group
+                |
+                ~           # terminal ~ ?
+                |
+                $
+            )/xgs
+        ) {
+            DEBUG>2 and warn qq{  "$1"\n};
+
+            if($1 eq '[' or $1 eq '') {       # "[" or end
+                # Whether this is "[" or end, force processing of any
+                #  preceding literal.
+                if($in_group) {
+                    if($1 eq '') {
+                        $target->_die_pointing($string_to_compile, 'Unterminated bracket group');
+                    }
+                    else {
+                        $target->_die_pointing($string_to_compile, 'You can\'t nest bracket groups');
+                    }
+                }
+                else {
+                    if ($1 eq '') {
+                        DEBUG>2 and warn "   [end-string]\n";
+                    }
+                    else {
+                        $in_group = 1;
+                    }
+                    die "How come \@c is empty?? in <$string_to_compile>" unless @c; # sanity
+                    if(length $c[-1]) {
+                        # Now actually processing the preceding literal
+                        $big_pile .= $c[-1];
+                        if($USE_LITERALS and (
+                                (ord('A') == 65)
+                                ? $c[-1] !~ m/[^\x20-\x7E]/s
+                                # ASCII very safe chars
+                                : $c[-1] !~ m/[^ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~\x07]/s
+                                # EBCDIC very safe chars
+                            )) {
+                            # normal case -- all very safe chars
+                            $c[-1] =~ s/'/\\'/g;
+                            push @code, q{ '} . $c[-1] . "',\n";
+                            $c[-1] = ''; # reuse this slot
+                        }
+                        else {
+                            push @code, ' $c[' . $#c . "],\n";
+                            push @c, ''; # new chunk
+                        }
+                    }
+                    # else just ignore the empty string.
+                }
+
+            }
+            elsif($1 eq ']') {  # "]"
+                # close group -- go back in-band
+                if($in_group) {
+                    $in_group = 0;
+
+                    DEBUG>2 and warn "   --Closing group [$c[-1]]\n";
+
+                    # And now process the group...
+
+                    if(!length($c[-1]) or $c[-1] =~ m/^\s+$/s) {
+                        DEBUG>2 and warn "   -- (Ignoring)\n";
+                        $c[-1] = ''; # reset out chink
+                        next;
+                    }
+
+                    #$c[-1] =~ s/^\s+//s;
+                    #$c[-1] =~ s/\s+$//s;
+                    ($m,@params) = split(/,/, $c[-1], -1);  # was /\s*,\s*/
+
+                    # A bit of a hack -- we've turned "~,"'s into DELs, so turn
+                    #  'em into real commas here.
+                    if (ord('A') == 65) { # ASCII, etc
+                        foreach($m, @params) { tr/\x7F/,/ }
+                    }
+                    else {              # EBCDIC (1047, 0037, POSIX-BC)
+                        # Thanks to Peter Prymmer for the EBCDIC handling
+                        foreach($m, @params) { tr/\x07/,/ }
+                    }
+
+                    # Special-case handling of some method names:
+                    if($m eq '_*' or $m =~ m/^_(-?\d+)$/s) {
+                        # Treat [_1,...] as [,_1,...], etc.
+                        unshift @params, $m;
+                        $m = '';
+                    }
+                    elsif($m eq '*') {
+                        $m = 'quant'; # "*" for "times": "4 cars" is 4 times "cars"
+                    }
+                    elsif($m eq '#') {
+                        $m = 'numf';  # "#" for "number": [#,_1] for "the number _1"
+                    }
+
+                    # Most common case: a simple, legal-looking method name
+                    if($m eq '') {
+                        # 0-length method name means to just interpolate:
+                        push @code, ' (';
+                    }
+                    elsif($m =~ /^\w+(?:\:\:\w+)*$/s
+                            and $m !~ m/(?:^|\:)\d/s
+                        # exclude starting a (sub)package or symbol with a digit
+                    ) {
+                        # Yes, it even supports the demented (and undocumented?)
+                        #  $obj->Foo::bar(...) syntax.
+                        $target->_die_pointing(
+                            $string_to_compile, q{Can't use "SUPER::" in a bracket-group method},
+                            2 + length($c[-1])
+                        )
+                        if $m =~ m/^SUPER::/s;
+                        # Because for SUPER:: to work, we'd have to compile this into
+                        #  the right package, and that seems just not worth the bother,
+                        #  unless someone convinces me otherwise.
+
+                        push @code, ' $_[0]->' . $m . '(';
+                    }
+                    else {
+                        # TODO: implement something?  or just too icky to consider?
+                        $target->_die_pointing(
+                            $string_to_compile,
+                            "Can't use \"$m\" as a method name in bracket group",
+                            2 + length($c[-1])
+                        );
+                    }
+
+                    pop @c; # we don't need that chunk anymore
+                    ++$call_count;
+
+                    foreach my $p (@params) {
+                        if($p eq '_*') {
+                            # Meaning: all parameters except $_[0]
+                            $code[-1] .= ' @_[1 .. $#_], ';
+                            # and yes, that does the right thing for all @_ < 3
+                        }
+                        elsif($p =~ m/^_(-?\d+)$/s) {
+                            # _3 meaning $_[3]
+                            $code[-1] .= '$_[' . (0 + $1) . '], ';
+                        }
+                        elsif($USE_LITERALS and (
+                                (ord('A') == 65)
+                                ? $p !~ m/[^\x20-\x7E]/s
+                                # ASCII very safe chars
+                                : $p !~ m/[^ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~\x07]/s
+                                # EBCDIC very safe chars
+                            )) {
+                            # Normal case: a literal containing only safe characters
+                            $p =~ s/'/\\'/g;
+                            $code[-1] .= q{'} . $p . q{', };
+                        }
+                        else {
+                            # Stow it on the chunk-stack, and just refer to that.
+                            push @c, $p;
+                            push @code, ' $c[' . $#c . '], ';
+                        }
+                    }
+                    $code[-1] .= "),\n";
+
+                    push @c, '';
+                }
+                else {
+                    $target->_die_pointing($string_to_compile, q{Unbalanced ']'});
+                }
+
+            }
+            elsif(substr($1,0,1) ne '~') {
+                # it's stuff not containing "~" or "[" or "]"
+                # i.e., a literal blob
+                $c[-1] .= $1;
+
+            }
+            elsif($1 eq '~~') { # "~~"
+                $c[-1] .= '~';
+
+            }
+            elsif($1 eq '~[') { # "~["
+                $c[-1] .= '[';
+
+            }
+            elsif($1 eq '~]') { # "~]"
+                $c[-1] .= ']';
+
+            }
+            elsif($1 eq '~,') { # "~,"
+                if($in_group) {
+                    # This is a hack, based on the assumption that no-one will actually
+                    # want a DEL inside a bracket group.  Let's hope that's it's true.
+                    if (ord('A') == 65) { # ASCII etc
+                        $c[-1] .= "\x7F";
+                    }
+                    else {              # EBCDIC (cp 1047, 0037, POSIX-BC)
+                        $c[-1] .= "\x07";
+                    }
+                }
+                else {
+                    $c[-1] .= '~,';
+                }
+
+            }
+            elsif($1 eq '~') { # possible only at string-end, it seems.
+                $c[-1] .= '~';
+
+            }
+            else {
+                # It's a "~X" where X is not a special character.
+                # Consider it a literal ~ and X.
+                $c[-1] .= $1;
+            }
+        }
+    }
+
+    if($call_count) {
+        undef $big_pile; # Well, nevermind that.
+    }
+    else {
+        # It's all literals!  Ahwell, that can happen.
+        # So don't bother with the eval.  Return a SCALAR reference.
+        return \$big_pile;
+    }
+
+    die q{Last chunk isn't null??} if @c and length $c[-1]; # sanity
+    DEBUG and warn scalar(@c), " chunks under closure\n";
+    if(@code == 0) { # not possible?
+        DEBUG and warn "Empty code\n";
+        return \'';
+    }
+    elsif(@code > 1) { # most cases, presumably!
+        unshift @code, "join '',\n";
+    }
+    unshift @code, "use strict; sub {\n";
+    push @code, "}\n";
+
+    DEBUG and warn @code;
+    my $sub = eval(join '', @code);
+    die "$@ while evalling" . join('', @code) if $@; # Should be impossible.
+    return $sub;
+}
+
+#--------------------------------------------------------------------------
+
+sub _die_pointing {
+    # This is used by _compile to throw a fatal error
+    my $target = shift; # class name
+    # ...leaving $_[0] the error-causing text, and $_[1] the error message
+
+    my $i = index($_[0], "\n");
+
+    my $pointy;
+    my $pos = pos($_[0]) - (defined($_[2]) ? $_[2] : 0) - 1;
+    if($pos < 1) {
+        $pointy = "^=== near there\n";
+    }
+    else { # we need to space over
+        my $first_tab = index($_[0], "\t");
+        if($pos > 2 and ( -1 == $first_tab  or  $first_tab > pos($_[0]))) {
+            # No tabs, or the first tab is harmlessly after where we will point to,
+            # AND we're far enough from the margin that we can draw a proper arrow.
+            $pointy = ('=' x $pos) . "^ near there\n";
+        }
+        else {
+            # tabs screw everything up!
+            $pointy = substr($_[0],0,$pos);
+            $pointy =~ tr/\t //cd;
+            # make everything into whitespace, but preserving tabs
+            $pointy .= "^=== near there\n";
+        }
+    }
+
+    my $errmsg = "$_[1], in\:\n$_[0]";
+
+    if($i == -1) {
+        # No newline.
+        $errmsg .= "\n" . $pointy;
+    }
+    elsif($i == (length($_[0]) - 1)  ) {
+        # Already has a newline at end.
+        $errmsg .= $pointy;
+    }
+    else {
+        # don't bother with the pointy bit, I guess.
+    }
+    Carp::croak( "$errmsg via $target, as used" );
+}
 
 1;

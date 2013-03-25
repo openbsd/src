@@ -2,14 +2,14 @@
 #
 # t/basic.t -- Test suite for the Term::ANSIColor Perl module.
 #
-# Copyright 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2009
+# Copyright 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2009, 2010
 #     Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 
 use strict;
-use Test::More tests => 47;
+use Test::More tests => 51;
 
 BEGIN {
     delete $ENV{ANSI_COLORS_DISABLED};
@@ -51,6 +51,12 @@ is ((DARK "testing"), "\e[2mtesting\e[0m", 'DARK');
 # Check faint as a synonym for dark.
 is (colored ('test', 'faint'), "\e[2mtest\e[0m", 'colored supports faint');
 is ((FAINT "test"), "\e[2mtest\e[0m", '...and the FAINT constant works');
+
+# Test bright color support.
+is (color ('bright_red'), "\e[91m", 'Bright red is supported');
+is ((BRIGHT_RED "test"), "\e[91mtest\e[0m", '...and as a constant');
+is (color ('on_bright_red'), "\e[101m", '...as is on bright red');
+is ((ON_BRIGHT_RED "test"), "\e[101mtest\e[0m", '...and as a constant');
 
 # Test colored with 0 and EACHLINE.
 $Term::ANSIColor::EACHLINE = "\n";

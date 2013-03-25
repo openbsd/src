@@ -17,7 +17,7 @@ my $DOSISH = ($^O =~ /^(MSWin\d\d|os2|dos|mint)$/);
 require VMS::Filespec if $Is_VMS;
 
 use vars qw($VERSION);
-$VERSION = '1.999_001';
+$VERSION = '1.999002';
 $VERSION = eval $VERSION;
 
 sub _is_prefix {
@@ -162,7 +162,9 @@ sub new {
     }
     {
         my %dupe;
-        @{$self->{':private:'}{LIBDIRS}} = grep { -e $_ && !$dupe{$_}++ }
+        @{$self->{':private:'}{LIBDIRS}} =
+            grep { $_ ne '.' || ! $args{skip_cwd} }
+            grep { -e $_ && !$dupe{$_}++ }
             @{$self->{':private:'}{EXTRA}}, @{$self->{':private:'}{INC}};
     }
 
@@ -327,7 +329,7 @@ ExtUtils::Installed - Inventory management of installed modules
 =head1 SYNOPSIS
 
    use ExtUtils::Installed;
-   my ($inst) = ExtUtils::Installed->new();
+   my ($inst) = ExtUtils::Installed->new( skip_cwd => 1 );
    my (@modules) = $inst->modules();
    my (@missing) = $inst->validate("DBI");
    my $all_files = $inst->files("DBI");
@@ -369,6 +371,11 @@ information from C<%Config::Config> and the default module search
 paths C<@INC>. The packlists are read using the
 L<ExtUtils::Packlist> module.
 
+If the named parameter C<skip_cwd> is true, the current directory C<.> will
+be stripped from C<@INC> before searching for .packlists.  This keeps
+ExtUtils::Installed from finding modules installed in other perls that
+happen to be located below the current directory.
+
 If the named parameter C<config_override> is specified,
 it should be a reference to a hash which contains all information
 usually found in C<%Config::Config>. For example, you can obtain
@@ -376,7 +383,8 @@ the configuration information for a separate perl installation and
 pass that in.
 
     my $yoda_cfg  = get_fake_config('yoda');
-    my $yoda_inst = ExtUtils::Installed->new(config_override=>$yoda_cfg);
+    my $yoda_inst =
+               ExtUtils::Installed->new(config_override=>$yoda_cfg);
 
 Similarly, the parameter C<inc_override> may be a reference to an
 array which is used in place of the default module search paths
@@ -389,10 +397,11 @@ from C<@INC>.
 B<Note>: You probably do not want to use these options alone, almost always
 you will want to set both together.
 
-The parameter c<extra_libs> can be used to specify B<additional> paths to
+The parameter C<extra_libs> can be used to specify B<additional> paths to
 search for installed modules. For instance
 
-    my $installed = ExtUtils::Installed->new(extra_libs=>["/my/lib/path"]);
+    my $installed =
+             ExtUtils::Installed->new(extra_libs=>["/my/lib/path"]);
 
 This should only be necessary if C</my/lib/path> is not in PERL5LIB.
 

@@ -28,7 +28,6 @@ repair()
      -e 's=[tT]hread[/a-zA-Z]*==g'\
      -e 's/byteload/ByteLoader/'\
      -e 's=devel/peek=Devel/Peek='\
-     -e 's=devel/dprof=Devel/DProf='\
      -e 's=sys/sys=Sys/Sys='\
      -e 's=sys/hos=Sys/Hos='\
      -e 's=file/=='\
@@ -46,10 +45,10 @@ repair()
      -e 's=cwd=Cwd=' \
      -e 's=perlio/via=PerlIO/via=' \
      -e 's=perlio/encoding=PerlIO/encoding=' \
-     -e 's=xs/apitest/keywordrpn=XS/APItest/KeywordRPN=' \
      -e 's=xs/apitest=XS/APItest=' \
      -e 's=xs/typemap=XS/Typemap=' \
      -e 's=unicode/normaliz=Unicode/Normalize=' \
+     -e 's=unicode/collate=Unicode/Collate=' \
      -e 's=i18n/langinfo=I18N/Langinfo=' \
      -e 's=devel/ppport=Devel/PPPort='
 }

@@ -52,7 +52,7 @@ void test(double *result)
 				fadd,dbl %fr4,%fr12,%fr4
 				fsub,dbl %fr4,%fr12,%fr4
 
-				This code depends on the floading-add and
+				This code depends on the floating-add and
 				floating-subtract retaining all of the
 				precision present in the operands.  There is
 				no such guarantee when using floating-point,

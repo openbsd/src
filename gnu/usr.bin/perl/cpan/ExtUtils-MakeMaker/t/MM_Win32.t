@@ -9,11 +9,9 @@ use strict;
 use Test::More;
 
 BEGIN {
-	if ($^O =~ /MSWin32/i) {
-		plan tests => 49;
-	} else {
-		plan skip_all => 'This is not Win32';
-	}
+    if ($^O !~ /MSWin32/i) {
+        plan skip_all => 'This is not Win32';
+    }
 }
 
 use Config;
@@ -104,13 +102,20 @@ delete $ENV{PATHEXT} unless $had_pathext;
         'catfile() eq File::Spec->catfile()' );
 }
 
-# init_others(): check if all keys are created and set?
-# qw( TOUCH CHMOD CP RM_F RM_RF MV NOOP TEST_F LD AR LDLOADLIBS DEV_NUL )
-{
-    my $mm_w32 = bless( { BASEEXT => 'Foo' }, 'MM' );
+# init_tools(): check if all keys are created and set?
+note "init_tools creates expected keys"; {
+    my $mm_w32 = bless( { BASEEXT => 'Foo', MAKE => $Config{make} }, 'MM' );
+    $mm_w32->init_tools();
+    my @keys = qw( TOUCH CHMOD CP RM_F RM_RF MV NOOP NOECHO ECHO ECHO_N TEST_F DEV_NULL );
+    for my $key ( @keys ) {
+        ok( $mm_w32->{ $key }, "init_tools: $key" );
+    }
+}
+
+note "init_others creates expected keys"; {
+    my $mm_w32 = bless( { BASEEXT => 'Foo', MAKE => $Config{make} }, 'MM' );
     $mm_w32->init_others();
-    my @keys = qw( TOUCH CHMOD CP RM_F RM_RF MV NOOP 
-                   TEST_F LD AR LDLOADLIBS DEV_NULL );
+    my @keys = qw( LD AR LDLOADLIBS );
     for my $key ( @keys ) {
         ok( $mm_w32->{ $key }, "init_others: $key" );
     }
@@ -124,6 +129,7 @@ delete $ENV{PATHEXT} unless $had_pathext;
         NAME         => 'TestMM_Win32', 
         VERSION      => '1.00',
         PM           => { 'MM_Win32.pm' => 1 },
+        MAKE         => $Config{make},
     }, 'MM';
 
     # XXX Hack until we have a proper init method.
@@ -184,7 +190,7 @@ delete $ENV{PATHEXT} unless $had_pathext;
 {
     my $path = 'c:\\Program Files/SomeApp\\Progje.exe';
     is( $MM->canonpath( $path ), File::Spec->canonpath( $path ),
-	    'canonpath() eq File::Spec->canonpath' );
+        'canonpath() eq File::Spec->canonpath' );
 }
 
 # perl_script()
@@ -234,28 +240,28 @@ unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
     SKIP: {
         skip("Not using 'nmake'", 2) unless $Config{make} eq 'nmake';
         ok(   $MM->is_make_type('nmake'), '->is_make_type(nmake) true'  );
-	ok( ! $MM->is_make_type('dmake'), '->is_make_type(dmake) false' );
+        ok( ! $MM->is_make_type('dmake'), '->is_make_type(dmake) false' );
     }
 
     # Check for literal nmake
     SKIP: {
         skip("Not using /nmake/", 2) unless $Config{make} =~ /nmake/;
         ok(   $MM->is_make_type('nmake'), '->is_make_type(nmake) true'  );
-	ok( ! $MM->is_make_type('dmake'), '->is_make_type(dmake) false' );
+        ok( ! $MM->is_make_type('dmake'), '->is_make_type(dmake) false' );
     }
 
     # Check for literal dmake
     SKIP: {
         skip("Not using 'dmake'", 2) unless $Config{make} eq 'dmake';
         ok(   $MM->is_make_type('dmake'), '->is_make_type(dmake) true'  );
-	ok( ! $MM->is_make_type('nmake'), '->is_make_type(nmake) false' );
+        ok( ! $MM->is_make_type('nmake'), '->is_make_type(nmake) false' );
     }
 
     # Check for literal dmake
     SKIP: {
         skip("Not using /dmake/", 2) unless $Config{make} =~ /dmake/;
         ok(   $MM->is_make_type('dmake'), '->is_make_type(dmake) true'  );
-	ok( ! $MM->is_make_type('nmake'), '->is_make_type(nmake) false' );
+        ok( ! $MM->is_make_type('nmake'), '->is_make_type(nmake) false' );
     }
 
 }
@@ -272,36 +278,110 @@ unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
     is( $MM->pasthru(), $pastru, 'pasthru()' );
 }
 
+# _identify_compiler_environment()
+{
+    sub _run_cc_id {
+        my ( $config ) = @_;
+
+        $config->{cc} ||= '';
+
+        my @cc_env = ExtUtils::MM_Win32::_identify_compiler_environment( $config );
+
+        my %cc_env = ( BORLAND => $cc_env[0], GCC => $cc_env[1], DLLTOOL => $cc_env[2] );
+
+        return \%cc_env;
+    }
+
+    sub _check_cc_id_value {
+        my ( $test ) = @_;
+
+        my $res = _run_cc_id( $test->{config} );
+
+        fail( "unknown key '$test->{key}'" ) if !exists $res->{$test->{key}};
+        my $val = $res->{$test->{key}};
+
+        is( $val, $test->{expect}, $test->{desc} );
+
+        return;
+    }
+
+    my @tests = (
+        {
+            config => {},
+            key => 'DLLTOOL', expect => 'dlltool',
+            desc => 'empty dlltool defaults to "dlltool"',
+        },
+        {
+            config => { dlltool => 'test' },
+            key => 'DLLTOOL', expect => 'test',
+            desc => 'dlltool value is taken over verbatim from %Config, if set',
+        },
+        {
+            config => {},
+            key => 'GCC', expect => 0,
+            desc => 'empty cc is not recognized as gcc',
+        },
+        {
+            config => { cc => 'gcc' },
+            key => 'GCC', expect => 1,
+            desc => 'plain "gcc" is recognized',
+        },
+        {
+            config => { cc => 'C:/MinGW/bin/gcc.exe' },
+            key => 'GCC', expect => 1,
+            desc => 'fully qualified "gcc" is recognized',
+        },
+        {
+            config => { cc => 'C:/MinGW/bin/gcc-1.exe' },
+            key => 'GCC', expect => 1,
+            desc => 'dash-extended gcc is recognized',
+        },
+        {
+            config => { cc => 'C:/MinGW/bin/gcc_1.exe' },
+            key => 'GCC', expect => 0,
+            desc => 'underscore-extended gcc is not recognized',
+        },
+        {
+            config => {},
+            key => 'BORLAND', expect => 0,
+            desc => 'empty cc is not recognized as borland',
+        },
+        {
+            config => { cc => 'bcc' },
+            key => 'BORLAND', expect => 1,
+            desc => 'plain "bcc" is recognized',
+        },
+        {
+            config => { cc => 'C:/Borland/bin/bcc.exe' },
+            key => 'BORLAND', expect => 0,
+            desc => 'fully qualified borland cc is not recognized',
+        },
+        {
+            config => { cc => 'bcc-1.exe' },
+            key => 'BORLAND', expect => 1,
+            desc => 'dash-extended borland cc is recognized',
+        },
+        {
+            config => { cc => 'bcc_1.exe' },
+            key => 'BORLAND', expect => 1,
+            desc => 'underscore-extended borland cc is recognized',
+        },
+    );
+
+    _check_cc_id_value($_) for @tests;
+}
+
+
+done_testing;
+
+
 package FakeOut;
 
 sub TIEHANDLE {
-	bless(\(my $scalar), $_[0]);
+    bless(\(my $scalar), $_[0]);
 }
 
 sub PRINT {
-	my $self = shift;
-	$$self .= shift;
+    my $self = shift;
+    $$self .= shift;
 }
-
-__END__
-
-=head1 NAME
-
-MM_Win32.t - Tests for ExtUtils::MM_Win32
-
-=head1 TODO
-
- - Methods to still be checked:
- # static_lib() should look into that
- # dynamic_bs() should look into that
- # dynamic_lib() should look into that
- # xs_o() should look into that
- # top_targets() should look into that
- # dist_ci() should look into that
- # dist_core() should look into that
-
-=head1 AUTHOR
-
-20011228 Abe Timmerman <abe@ztreet.demon.nl>
-
-=cut

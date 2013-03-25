@@ -1,0 +1,348 @@
+Tests for use charnames with compilation errors and aliases.
+__END__
+# NAME illegal :pragma
+use warnings;
+use charnames ":scoobydoo";
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+unsupported special ':scoobydoo' in charnames at
+########
+# NAME autoload doesn't get vianame
+print "Here: \N{DIGIT ONE}\n";
+charnames::vianame("DIGIT TWO");
+EXPECT
+Undefined subroutine &charnames::vianame called at - line 2.
+Here: 1
+########
+# NAME autoload doesn't get viacode
+print "Here: \N{DIGIT THREE}\n";
+charnames::viacode(0x34);
+EXPECT
+OPTIONS regex
+Undefined subroutine &charnames::viacode called at - line 2.
+Here: 3
+########
+# NAME autoload doesn't get string_vianame
+print "Here: \N{DIGIT FOUR}\n";
+charnames::string_vianame("DIGIT FIVE");
+EXPECT
+OPTIONS regex
+Undefined subroutine &charnames::string_vianame called at - line 2.
+Here: 4
+########
+# NAME wrong type of alias (missing colon)
+no warnings;
+use charnames "alias";
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'e_ACUTE' at
+########
+# NAME alias without an argument
+use warnings;
+use charnames ":alias";
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+:alias needs an argument in charnames at
+########
+# NAME reversed sequence
+use warnings;
+use charnames ":alias" => ":full";
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+:alias cannot use existing pragma :full \(reversed order\?\) at
+########
+# NAME alias with hashref but no :full
+use warnings;
+use charnames ":alias" => { e_ACUTE => "LATIN SMALL LETTER E WITH ACUTE" };
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN SMALL LETTER E WITH ACUTE' at
+########
+# NAME alias with hashref but with :short
+use warnings;
+no warnings 'void';
+use charnames ":short", ":alias" => { e_ACUTE => "LATIN SMALL LETTER E WITH ACUTE" };
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN SMALL LETTER E WITH ACUTE' at
+########
+# NAME alias with hashref to :full OK
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => { e_ACUTE => "LATIN SMALL LETTER E WITH ACUTE" };
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+$
+########
+# NAME alias with hashref to :loose OK
+use warnings;
+no warnings 'void';
+use charnames ":loose", ":alias" => { e_ACUTE => "LATIN SMALL LETTER E WITH ACUTE" };
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+$
+########
+# NAME alias with :loose requires :full type name
+use warnings;
+no warnings 'void';
+use charnames ":loose", ":alias" => { e_ACUTE => "latin SMALL LETTER E WITH ACUTE" };
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'latin SMALL LETTER E WITH ACUTE' at
+########
+# NAME alias with hashref to :short but using :full
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => { e_ACUTE => "LATIN:e WITH ACUTE" };
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN:e WITH ACUTE' at
+########
+# NAME alias with hashref to :short OK
+use warnings;
+no warnings 'void';
+use charnames ":short", ":alias" => { e_ACUTE => "LATIN:e WITH ACUTE" };
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+$
+########
+# NAME alias with bad hashref
+use warnings;
+no warnings 'void';
+use charnames ":short", ":alias" => "e_ACUTE";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+unicore/e_ACUTE_alias.pl cannot be used as alias file for charnames at
+########
+# NAME alias with arrayref
+use warnings;
+no warnings 'void';
+use charnames ":short", ":alias" => [ e_ACUTE => "LATIN:e WITH ACUTE" ];
+"Here: \N{e_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Only HASH reference supported as argument to :alias at
+########
+# NAME alias with bad hashref
+no warnings;
+use charnames ":short", ":alias" => { e_ACUTE => "LATIN:e WITH ACUTE", "a_ACUTE" };
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'a_ACUTE' at
+########
+# NAME alias with hashref two aliases
+use warnings;
+no warnings 'void';
+use charnames ":short", ":alias" => {
+    e_ACUTE => "LATIN:e WITH ACUTE",
+    a_ACUTE => "",
+    };
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname '' at
+########
+# NAME alias with hashref two aliases
+use warnings;
+no warnings 'void';
+use charnames ":short", ":alias" => {
+    e_ACUTE => "LATIN:e WITH ACUTE",
+    a_ACUTE => "LATIN:a WITH ACUTE",
+    };
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+$
+########
+# NAME alias with hashref using mixed aliases
+use warnings;
+use charnames ":short", ":alias" => {
+    e_ACUTE => "LATIN:e WITH ACUTE",
+    a_ACUTE => "LATIN SMALL LETTER A WITH ACUT",
+    };
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN SMALL LETTER A WITH ACUT' at
+########
+# NAME alias with hashref using mixed aliases
+use warnings;
+use charnames ":short", ":alias" => {
+    e_ACUTE => "LATIN:e WITH ACUTE",
+    a_ACUTE => "LATIN SMALL LETTER A WITH ACUTE",
+    };
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN SMALL LETTER A WITH ACUTE' at
+########
+# NAME alias with hashref using mixed aliases
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => {
+    e_ACUTE => "LATIN:e WITH ACUTE",
+    a_ACUTE => "LATIN SMALL LETTER A WITH ACUTE",
+    };
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN:e WITH ACUTE' at
+########
+# NAME alias with nonexisting file
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => "non_existing_xyzzy";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+unicore/non_existing_xyzzy_alias.pl cannot be used as alias file for charnames at
+########
+# NAME alias with bad file name
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => "xy 7-";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Charnames alias files can only have identifier characters at
+########
+# NAME alias with non_absolute (existing) file name (which it should /not/ use)
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => "perl";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+unicore/perl_alias.pl cannot be used as alias file for charnames at
+########
+# alias with bad file
+--FILE-- ../../lib/unicore/xyzzy_alias.pl
+#!perl
+0;
+--FILE--
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => "xyzzy";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+unicore/xyzzy_alias.pl did not return a \(valid\) list of alias pairs at
+########
+# alias with file with empty list
+--FILE-- ../../lib/unicore/xyzzy_alias.pl
+#!perl
+();
+--FILE--
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => "xyzzy";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'e_ACUTE' at
+########
+# alias with file OK but file has :short aliases
+--FILE-- ../../lib/unicore/xyzzy_alias.pl
+#!perl
+(   e_ACUTE => "LATIN:e WITH ACUTE",
+    a_ACUTE => "LATIN:a WITH ACUTE",
+    );
+--FILE--
+use warnings;
+no warnings 'void';
+use charnames ":full", ":alias" => "xyzzy";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN:e WITH ACUTE' at
+########
+# alias with :short and file OK
+--FILE-- ../../lib/unicore/xyzzy_alias.pl
+#!perl
+(   e_ACUTE => "LATIN:e WITH ACUTE",
+    a_ACUTE => "LATIN:a WITH ACUTE",
+    );
+--FILE--
+use warnings;
+no warnings 'void';
+use charnames ":short", ":alias" => "xyzzy";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+$
+########
+# alias with :short and file OK has :long aliases
+--FILE-- ../../lib/unicore/xyzzy_alias.pl
+#!perl
+(   e_ACUTE => "LATIN SMALL LETTER E WITH ACUTE",
+    a_ACUTE => "LATIN SMALL LETTER A WITH ACUTE",
+    );
+--FILE--
+use warnings;
+no warnings 'void';
+use charnames ":short", ":alias" => "xyzzy";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN SMALL LETTER E WITH ACUTE' at
+########
+# alias with file implicit :full but file has :short aliases
+--FILE-- ../../lib/unicore/xyzzy_alias.pl
+#!perl
+(   e_ACUTE => "LATIN:e WITH ACUTE",
+    a_ACUTE => "LATIN:a WITH ACUTE",
+    );
+--FILE--
+use warnings;
+no warnings 'void';
+use charnames ":alias" => ":xyzzy";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+Unknown charname 'LATIN:e WITH ACUTE' at
+########
+# alias with file implicit :full and file has :long aliases
+--FILE-- ../../lib/unicore/xyzzy_alias.pl
+#!perl
+(   e_ACUTE => "LATIN SMALL LETTER E WITH ACUTE",
+    a_ACUTE => "LATIN SMALL LETTER A WITH ACUTE",
+    );
+--FILE--
+use warnings;
+no warnings 'void';
+use charnames ":alias" => ":xyzzy";
+"Here: \N{e_ACUTE}\N{a_ACUTE}!\n";
+EXPECT
+OPTIONS regex
+$
+########
+# NAME charnames with no import still works for runtime functions
+use warnings;
+no warnings 'void';
+use charnames ();
+charnames::vianame('SPACE');
+charnames::viacode(0x41);
+EXPECT
+OPTIONS regex
+$
+########
+# NAME no extraneous warning [perl #11560]
+use warnings;
+use charnames ();
+print charnames::viacode(0x80), "\n";
+EXPECT
+OPTIONS regex
+PADDING CHARACTER

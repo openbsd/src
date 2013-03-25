@@ -2,158 +2,158 @@ If you read this file _as_is_, just ignore the funny characters you
 see. It is written in the POD format (see perlpod manpage) which is
 specially designed to be readable as is.
 
-The following documentation is written in Big5 encoding.
+The following documentation is written in UTF-8 encoding.
 
-¦pªG§A¥Î¤@¯ëªº¤å¦r½s¿è¾¹¾\Äı³o¥÷¤å¥ó, ½Ğ©¿²¤¤å¤¤©_¯Sªºµù°O¦r²Å.
-³o¥÷¤å¥ó¬O¥H POD (Â²©ú¤å¥ó®æ¦¡) ¼g¦¨; ³oºØ®æ¦¡¬O¬°¤F¯àÅı¤Hª½±µÅª¨ú,
-¦Ó¯S§O³]­pªº. Ãö©ó¦¹®æ¦¡ªº¶i¤@¨B¸ê°T, ½Ğ°Ñ¦Ò perlpod ½u¤W¤å¥ó.
+å¦‚æœä½ ç”¨ä¸€èˆ¬çš„æ–‡å­—ç·¨è¼¯å™¨é–±è¦½é€™ä»½æ–‡ä»¶, è«‹å¿½ç•¥æ–‡ä¸­å¥‡ç‰¹çš„è¨»è¨˜å­—ç¬¦.
+é€™ä»½æ–‡ä»¶æ˜¯ä»¥ POD (ç°¡æ˜æ–‡ä»¶æ ¼å¼) å¯«æˆ; é€™ç¨®æ ¼å¼æ˜¯ç‚ºäº†èƒ½è®“äººç›´æ¥è®€å–,
+è€Œç‰¹åˆ¥è¨­è¨ˆçš„. é—œæ–¼æ­¤æ ¼å¼çš„é€²ä¸€æ­¥è³‡è¨Š, è«‹åƒè€ƒ perlpod ç·šä¸Šæ–‡ä»¶.
 
-=encoding big5
+=encoding UTF-8
 
 =head1 NAME
 
-perltw - ¥¿Åé¤¤¤å Perl «ü«n
+perltw - æ­£é«”ä¸­æ–‡ Perl æŒ‡å—
 
 =head1 DESCRIPTION
 
-Åwªï¨Ó¨ì Perl ªº¤Ñ¦a!
+æ­¡è¿ä¾†åˆ° Perl çš„å¤©åœ°!
 
-±q 5.8.0 ª©¶}©l, Perl ¨ã³Æ¤F§¹µ½ªº Unicode (¸U°ê½X) ¤ä´©,
-¤]³s±a¤ä´©¤F³\¦h©Ô¤B»y¨t¥H¥~ªº½s½X¤è¦¡; CJK (¤¤¤éÁú) «K¬O¨ä¤¤ªº¤@³¡¥÷.
-Unicode ¬O°ê»Ú©Êªº¼Ğ·Ç, ¸Õ¹Ï²[»\¥@¬É¤W©Ò¦³ªº¦r²Å: ¦è¤è¥@¬É, ªF¤è¥@¬É,
-¥H¤Î¨âªÌ¶¡ªº¤@¤Á (§ÆÃ¾¤å, ±Ô§Q¨È¤å, ªü©Ô§B¤å, §Æ§B¨Ó¤å, ¦L«×¤å,
-¦L¦a¦w¤å, µ¥µ¥). ¥¦¤]®e¯Ç¤F¦hºØ§@·~¨t²Î»P¥­»O (¦p PC ¤Î³Áª÷¶ğ).
+å¾ 5.8.0 ç‰ˆé–‹å§‹, Perl å…·å‚™äº†å®Œå–„çš„ Unicode (è¬åœ‹ç¢¼) æ”¯æ´,
+ä¹Ÿé€£å¸¶æ”¯æ´äº†è¨±å¤šæ‹‰ä¸èªç³»ä»¥å¤–çš„ç·¨ç¢¼æ–¹å¼; CJK (ä¸­æ—¥éŸ“) ä¾¿æ˜¯å…¶ä¸­çš„ä¸€éƒ¨ä»½.
+Unicode æ˜¯åœ‹éš›æ€§çš„æ¨™æº–, è©¦åœ–æ¶µè“‹ä¸–ç•Œä¸Šæ‰€æœ‰çš„å­—ç¬¦: è¥¿æ–¹ä¸–ç•Œ, æ±æ–¹ä¸–ç•Œ,
+ä»¥åŠå…©è€…é–“çš„ä¸€åˆ‡ (å¸Œè‡˜æ–‡, æ•˜åˆ©äºæ–‡, é˜¿æ‹‰ä¼¯æ–‡, å¸Œä¼¯ä¾†æ–‡, å°åº¦æ–‡,
+å°åœ°å®‰æ–‡, ç­‰ç­‰). å®ƒä¹Ÿå®¹ç´äº†å¤šç¨®ä½œæ¥­ç³»çµ±èˆ‡å¹³è‡º (å¦‚ PC åŠéº¥é‡‘å¡”).
 
-Perl ¥»¨­¥H Unicode ¶i¦æ¾Ş§@. ³oªí¥Ü Perl ¤º³¡ªº¦r¦ê¸ê®Æ¥i¥Î Unicode
-ªí¥Ü; Perl ªº¨ç¦¡»Pºâ²Å (¨Ò¦p¥¿³Wªí¥Ü¦¡¤ñ¹ï) ¤]¯à¹ï Unicode ¶i¦æ¾Ş§@.
-¦b¿é¤J¤Î¿é¥X®É, ¬°¤F³B²z¥H Unicode ¤§«eªº½s½X¤è¦¡Àx¦sªº¸ê®Æ, Perl
-´£¨Ñ¤F Encode ³o­Ó¼Ò²Õ, ¥i¥HÅı§A»´©ö¦aÅª¨ú¤Î¼g¤JÂÂ¦³ªº½s½X¸ê®Æ.
+Perl æœ¬èº«ä»¥ Unicode é€²è¡Œæ“ä½œ. é€™è¡¨ç¤º Perl å…§éƒ¨çš„å­—ä¸²è³‡æ–™å¯ç”¨ Unicode
+è¡¨ç¤º; Perl çš„å‡½å¼èˆ‡ç®—ç¬¦ (ä¾‹å¦‚æ­£è¦è¡¨ç¤ºå¼æ¯”å°) ä¹Ÿèƒ½å° Unicode é€²è¡Œæ“ä½œ.
+åœ¨è¼¸å…¥åŠè¼¸å‡ºæ™‚, ç‚ºäº†è™•ç†ä»¥ Unicode ä¹‹å‰çš„ç·¨ç¢¼æ–¹å¼å„²å­˜çš„è³‡æ–™, Perl
+æä¾›äº† Encode é€™å€‹æ¨¡çµ„, å¯ä»¥è®“ä½ è¼•æ˜“åœ°è®€å–åŠå¯«å…¥èˆŠæœ‰çš„ç·¨ç¢¼è³‡æ–™.
 
-Encode ©µ¦ù¼Ò²Õ¤ä´©¤U¦C¥¿Åé¤¤¤åªº½s½X¤è¦¡ ('big5' ªí¥Ü 'big5-eten'):
+Encode å»¶ä¼¸æ¨¡çµ„æ”¯æ´ä¸‹åˆ—æ­£é«”ä¸­æ–‡çš„ç·¨ç¢¼æ–¹å¼ ('big5' è¡¨ç¤º 'big5-eten'):
 
-    big5-eten	Big5 ½s½X (§t­Ê¤Ñ©µ¦ù¦r§Î)
-    big5-hkscs	Big5 + ­»´ä¥~¦r¶°, 2001 ¦~ª©
-    cp950	¦r½X­¶ 950 (Big5 + ·L³n²K¥[ªº¦r²Å)
+    big5-eten	Big5 ç·¨ç¢¼ (å«å€šå¤©å»¶ä¼¸å­—å½¢)
+    big5-hkscs	Big5 + é¦™æ¸¯å¤–å­—é›†, 2001 å¹´ç‰ˆ
+    cp950	å­—ç¢¼é  950 (Big5 + å¾®è»Ÿæ·»åŠ çš„å­—ç¬¦)
 
-Á|¨Ò¨Ó»¡, ±N Big5 ½s½XªºÀÉ®×Âà¦¨ Unicode, ¯­»İÁä¤J¤U¦C«ü¥O:
+èˆ‰ä¾‹ä¾†èªª, å°‡ Big5 ç·¨ç¢¼çš„æª”æ¡ˆè½‰æˆ Unicode, ç¥—éœ€éµå…¥ä¸‹åˆ—æŒ‡ä»¤:
 
     perl -Mencoding=big5,STDOUT,utf8 -pe1 < file.big5 > file.utf8
 
-Perl ¤]¤ºªş¤F "piconv", ¤@¤ä§¹¥ş¥H Perl ¼g¦¨ªº¦r²ÅÂà´«¤u¨ãµ{¦¡, ¥Îªk¦p¤U:
+Perl ä¹Ÿå…§é™„äº† "piconv", ä¸€æ”¯å®Œå…¨ä»¥ Perl å¯«æˆçš„å­—ç¬¦è½‰æ›å·¥å…·ç¨‹å¼, ç”¨æ³•å¦‚ä¸‹:
 
     piconv -f big5 -t utf8 < file.big5 > file.utf8
     piconv -f utf8 -t big5 < file.utf8 > file.big5
 
-¥t¥~, §Q¥Î encoding ¼Ò²Õ, §A¥i¥H»´©ö¼g¥X¥H¦r²Å¬°³æ¦ìªºµ{¦¡½X, ¦p¤U©Ò¥Ü:
+å¦å¤–, åˆ©ç”¨ encoding æ¨¡çµ„, ä½ å¯ä»¥è¼•æ˜“å¯«å‡ºä»¥å­—ç¬¦ç‚ºå–®ä½çš„ç¨‹å¼ç¢¼, å¦‚ä¸‹æ‰€ç¤º:
 
     #!/usr/bin/env perl
-    # ±Ò°Ê big5 ¦r¦ê¸ÑªR; ¼Ğ·Ç¿é¥X¤J¤Î¼Ğ·Ç¿ù»~³£³]¬° big5 ½s½X
+    # å•Ÿå‹• big5 å­—ä¸²è§£æ; æ¨™æº–è¼¸å‡ºå…¥åŠæ¨™æº–éŒ¯èª¤éƒ½è¨­ç‚º big5 ç·¨ç¢¼
     use encoding 'big5', STDIN => 'big5', STDOUT => 'big5';
-    print length("Àd¾m");	     #  2 (Âù¤Ş¸¹ªí¥Ü¦r²Å)
-    print length('Àd¾m');	     #  4 (³æ¤Ş¸¹ªí¥Ü¦ì¤¸²Õ)
-    print index("½Î½Î±Ğ»£", "Î½Î±"); # -1 (¤£¥]§t¦¹¤l¦r¦ê)
-    print index('½Î½Î±Ğ»£', 'Î½Î±'); #  1 (±q²Ä¤G­Ó¦ì¤¸²Õ¶}©l)
+    print length("é§±é§");	     #  2 (é›™å¼•è™Ÿè¡¨ç¤ºå­—ç¬¦)
+    print length('é§±é§');	     #  4 (å–®å¼•è™Ÿè¡¨ç¤ºä½å…ƒçµ„)
+    print index("è«„è«„æ•™èª¨", "å½–å¸¢"); # -1 (ä¸åŒ…å«æ­¤å­å­—ä¸²)
+    print index('è«„è«„æ•™èª¨', 'å½–å¸¢'); #  1 (å¾ç¬¬äºŒå€‹ä½å…ƒçµ„é–‹å§‹)
 
-¦b³Ì«á¤@¦C¨Ò¤l¸Ì, "½Î" ªº²Ä¤G­Ó¦ì¤¸²Õ»P "½Î" ªº²Ä¤@­Ó¦ì¤¸²Õµ²¦X¦¨ Big5
-½Xªº "Î½"; "½Î" ªº²Ä¤G­Ó¦ì¤¸²Õ«h»P "±Ğ" ªº²Ä¤@­Ó¦ì¤¸²Õµ²¦X¦¨ "Î±".
-³o¸Ñ¨M¤F¥H«e Big5 ½X¤ñ¹ï³B²z¤W±`¨£ªº°İÃD.
+åœ¨æœ€å¾Œä¸€åˆ—ä¾‹å­è£¡, "è«„" çš„ç¬¬äºŒå€‹ä½å…ƒçµ„èˆ‡ "è«„" çš„ç¬¬ä¸€å€‹ä½å…ƒçµ„çµåˆæˆ Big5
+ç¢¼çš„ "å½–"; "è«„" çš„ç¬¬äºŒå€‹ä½å…ƒçµ„å‰‡èˆ‡ "æ•™" çš„ç¬¬ä¸€å€‹ä½å…ƒçµ„çµåˆæˆ "å¸¢".
+é€™è§£æ±ºäº†ä»¥å‰ Big5 ç¢¼æ¯”å°è™•ç†ä¸Šå¸¸è¦‹çš„å•é¡Œ.
 
-=head2 ÃB¥~ªº¤¤¤å½s½X
+=head2 é¡å¤–çš„ä¸­æ–‡ç·¨ç¢¼
 
-¦pªG»İ­n§ó¦hªº¤¤¤å½s½X, ¥i¥H±q CPAN (L<http://www.cpan.org/>) ¤U¸ü
-Encode::HanExtra ¼Ò²Õ. ¥¦¥Ø«e´£¨Ñ¤U¦C½s½X¤è¦¡:
+å¦‚æœéœ€è¦æ›´å¤šçš„ä¸­æ–‡ç·¨ç¢¼, å¯ä»¥å¾ CPAN (L<http://www.cpan.org/>) ä¸‹è¼‰
+Encode::HanExtra æ¨¡çµ„. å®ƒç›®å‰æä¾›ä¸‹åˆ—ç·¨ç¢¼æ–¹å¼:
 
-    cccii	1980 ¦~¤å«Ø·|ªº¤¤¤å¸ê°T¥æ´«½X
-    euc-tw	Unix ©µ¦ù¦r²Å¶°, ¥]§t CNS11643 ¥­­± 1-7
-    big5plus	¤¤¤å¼Æ¦ì¤Æ§Ş³N±À¼s°òª÷·|ªº Big5+
-    big5ext	¤¤¤å¼Æ¦ì¤Æ§Ş³N±À¼s°òª÷·|ªº Big5e
+    cccii	1980 å¹´æ–‡å»ºæœƒçš„ä¸­æ–‡è³‡è¨Šäº¤æ›ç¢¼
+    euc-tw	Unix å»¶ä¼¸å­—ç¬¦é›†, åŒ…å« CNS11643 å¹³é¢ 1-7
+    big5plus	ä¸­æ–‡æ•¸ä½åŒ–æŠ€è¡“æ¨å»£åŸºé‡‘æœƒçš„ Big5+
+    big5ext	ä¸­æ–‡æ•¸ä½åŒ–æŠ€è¡“æ¨å»£åŸºé‡‘æœƒçš„ Big5e
 
-¥t¥~, Encode::HanConvert ¼Ò²Õ«h´£¨Ñ¤FÂ²ÁcÂà´«¥Îªº¨âºØ½s½X:
+å¦å¤–, Encode::HanConvert æ¨¡çµ„å‰‡æä¾›äº†ç°¡ç¹è½‰æ›ç”¨çš„å…©ç¨®ç·¨ç¢¼:
 
-    big5-simp	Big5 ¥¿Åé¤¤¤å»P Unicode Â²Åé¤¤¤å¤¬Âà
-    gbk-trad	GBK Â²Åé¤¤¤å»P Unicode ¥¿Åé¤¤¤å¤¬Âà
+    big5-simp	Big5 æ­£é«”ä¸­æ–‡èˆ‡ Unicode ç°¡é«”ä¸­æ–‡äº’è½‰
+    gbk-trad	GBK ç°¡é«”ä¸­æ–‡èˆ‡ Unicode æ­£é«”ä¸­æ–‡äº’è½‰
 
-­Y·Q¦b GBK »P Big5 ¤§¶¡¤¬Âà, ½Ğ°Ñ¦Ò¸Ó¼Ò²Õ¤ºªşªº b2g.pl »P g2b.pl ¨â¤äµ{¦¡,
-©Î¦bµ{¦¡¤º¨Ï¥Î¤U¦C¼gªk:
+è‹¥æƒ³åœ¨ GBK èˆ‡ Big5 ä¹‹é–“äº’è½‰, è«‹åƒè€ƒè©²æ¨¡çµ„å…§é™„çš„ b2g.pl èˆ‡ g2b.pl å…©æ”¯ç¨‹å¼,
+æˆ–åœ¨ç¨‹å¼å…§ä½¿ç”¨ä¸‹åˆ—å¯«æ³•:
 
     use Encode::HanConvert;
-    $euc_cn = big5_to_gb($big5); # ±q Big5 Âà¬° GBK
-    $big5 = gb_to_big5($euc_cn); # ±q GBK Âà¬° Big5
+    $euc_cn = big5_to_gb($big5); # å¾ Big5 è½‰ç‚º GBK
+    $big5 = gb_to_big5($euc_cn); # å¾ GBK è½‰ç‚º Big5
 
-=head2 ¶i¤@¨Bªº¸ê°T
+=head2 é€²ä¸€æ­¥çš„è³‡è¨Š
 
-½Ğ°Ñ¦Ò Perl ¤ºªşªº¤j¶q»¡©ú¤å¥ó (¤£©¯¥ş¬O¥Î­^¤å¼gªº), ¨Ó¾Ç²ß§ó¦hÃö©ó
-Perl ªºª¾ÃÑ, ¥H¤Î Unicode ªº¨Ï¥Î¤è¦¡. ¤£¹L, ¥~³¡ªº¸ê·½¬Û·íÂ×´I:
+è«‹åƒè€ƒ Perl å…§é™„çš„å¤§é‡èªªæ˜æ–‡ä»¶ (ä¸å¹¸å…¨æ˜¯ç”¨è‹±æ–‡å¯«çš„), ä¾†å­¸ç¿’æ›´å¤šé—œæ–¼
+Perl çš„çŸ¥è­˜, ä»¥åŠ Unicode çš„ä½¿ç”¨æ–¹å¼. ä¸é, å¤–éƒ¨çš„è³‡æºç›¸ç•¶è±å¯Œ:
 
-=head2 ´£¨Ñ Perl ¸ê·½ªººô§}
+=head2 æä¾› Perl è³‡æºçš„ç¶²å€
 
 =over 4
 
 =item L<http://www.perl.com/>
 
-Perl ªº­º­¶ (¥Ñ¼ÚµÜÂ§¤½¥qºûÅ@)
+Perl çš„é¦–é  (ç”±æ­èŠç¦®å…¬å¸ç¶­è­·)
 
 =item L<http://www.cpan.org/>
 
-Perl ºî¦X¨åÂÃºô (Comprehensive Perl Archive Network)
+Perl ç¶œåˆå…¸è—ç¶² (Comprehensive Perl Archive Network)
 
 =item L<http://lists.perl.org/>
 
-Perl ¶l»¼½×¾Â¤@Äı
+Perl éƒµéè«–å£‡ä¸€è¦½
 
 =back
 
-=head2 ¾Ç²ß Perl ªººô§}
+=head2 å­¸ç¿’ Perl çš„ç¶²å€
 
 =over 4
 
 =item L<http://www.oreilly.com.tw/product_perl.php?id=index_perl>
 
-¥¿Åé¤¤¤åª©ªº¼ÚµÜÂ§ Perl ®ÑÂÇ
+æ­£é«”ä¸­æ–‡ç‰ˆçš„æ­èŠç¦® Perl æ›¸è—‰
 
 =item L<http://groups.google.com/groups?q=tw.bbs.comp.lang.perl>
 
-»OÆW Perl ³s½u°Q½×°Ï (¤]´N¬O¦U¤j BBS ªº Perl ³s½uª©)
+è‡ºç£ Perl é€£ç·šè¨è«–å€ (ä¹Ÿå°±æ˜¯å„å¤§ BBS çš„ Perl é€£ç·šç‰ˆ)
 
 =back
 
-=head2 Perl ¨Ï¥ÎªÌ¶°·|
+=head2 Perl ä½¿ç”¨è€…é›†æœƒ
 
 =over 4
 
-=item L<http://www.pm.org/groups/asia.html>
+=item L<http://www.pm.org/groups/taiwan.html>
 
-»OÆW Perl ±À¼s²Õ¤@Äı
+è‡ºç£ Perl æ¨å»£çµ„ä¸€è¦½
 
-=item L<http://irc.elixus.org/>
+=item L<irc://irc.freenode.org/#perl.tw>
 
-ÃÀ¥ß¨ó½u¤W²á¤Ñ«Ç
+Perl.tw ç·šä¸ŠèŠå¤©å®¤
 
 =back
 
-=head2 Unicode ¬ÛÃöºô§}
+=head2 Unicode ç›¸é—œç¶²å€
 
 =over 4
 
 =item L<http://www.unicode.org/>
 
-Unicode ¾Ç³N¾Ç·| (Unicode ¼Ğ·Çªº¨î©wªÌ)
+Unicode å­¸è¡“å­¸æœƒ (Unicode æ¨™æº–çš„åˆ¶å®šè€…)
 
 =item L<http://www.cl.cam.ac.uk/%7Emgk25/unicode.html>
 
-Unix/Linux ¤Wªº UTF-8 ¤Î Unicode µª«È°İ
+Unix/Linux ä¸Šçš„ UTF-8 åŠ Unicode ç­”å®¢å•
 
 =back
 
-=head2 ¤¤¤å¤Æ¸ê°T
+=head2 ä¸­æ–‡åŒ–è³‡è¨Š
 
 =over 4
 
-=item ¤¤¤å¤Æ³nÅéÁp·ù
+=item ä¸­æ–‡åŒ–è»Ÿé«”è¯ç›Ÿ
 
 L<http://www.cpatch.org/>
 
-=item Linux ³nÅé¤¤¤å¤Æ­p¹º
+=item Linux è»Ÿé«”ä¸­æ–‡åŒ–è¨ˆåŠƒ
 
 L<http://www.linux.org.tw/CLDP/>
 
@@ -167,6 +167,6 @@ L<Encode>, L<Encode::TW>, L<encoding>, L<perluniintro>, L<perlunicode>
 
 Jarkko Hietaniemi E<lt>jhi@iki.fiE<gt>
 
-Audrey Tang (­ğ»ñ) E<lt>audreyt@audreyt.orgE<gt>
+Audrey Tang (å”é³³) E<lt>audreyt@audreyt.orgE<gt>
 
 =cut

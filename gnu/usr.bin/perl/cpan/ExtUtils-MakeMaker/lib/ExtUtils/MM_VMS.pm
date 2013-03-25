@@ -15,7 +15,7 @@ BEGIN {
 
 use File::Basename;
 
-our $VERSION = '6.56';
+our $VERSION = '6.63_02';
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
@@ -248,6 +248,23 @@ sub find_perl {
     0; # false and not empty
 }
 
+=item _fixin_replace_shebang (override)
+
+Helper routine for MM->fixin(), overridden because there's no such thing as an
+actual shebang line that will be intepreted by the shell, so we just prepend
+$Config{startperl} and preserve the shebang line argument for any switches it
+may contain.
+
+=cut
+
+sub _fixin_replace_shebang {
+    my ( $self, $file, $line ) = @_;
+
+    my ( undef, $arg ) = split ' ', $line, 2;
+
+    return $Config{startperl} . "\n" . $Config{sharpbang} . "perl $arg\n";
+}
+
 =item maybe_command (override)
 
 Follows VMS naming conventions for executable files.
@@ -430,21 +447,20 @@ sub init_main {
     }
 }
 
-=item init_others (override)
+=item init_tools (override)
 
-Provide VMS-specific forms of various utility commands, then hand
-off to the default MM_Unix method.
+Provide VMS-specific forms of various utility commands.
 
-DEV_NULL should probably be overriden with something.
+Sets DEV_NULL to nothing because I don't know how to do it on VMS.
 
-Also changes EQUALIZE_TIMESTAMP to set revision date of target file to
+Changes EQUALIZE_TIMESTAMP to set revision date of target file to
 one second later than source file, since MMK interprets precisely
 equal revision dates for a source and target file as a sign that the
 target needs to be updated.
 
 =cut
 
-sub init_others {
+sub init_tools {
     my($self) = @_;
 
     $self->{NOOP}               = 'Continue';
@@ -476,16 +492,33 @@ sub init_others {
 install([ from_to => {split(' ', <STDIN>)}, verbose => '$(VERBINST)', uninstall_shadows => '$(UNINST)', dir_mode => '$(PERM_DIR)' ]);
 CODE
 
-    $self->SUPER::init_others;
+    $self->{UMASK_NULL} = '! ';
 
+    $self->SUPER::init_tools;
+
+    # Use the default shell
     $self->{SHELL}    ||= 'Posix';
-
-    $self->{UMASK_NULL} = '! ';  
 
     # Redirection on VMS goes before the command, not after as on Unix.
     # $(DEV_NULL) is used once and its not worth going nuts over making
     # it work.  However, Unix's DEV_NULL is quite wrong for VMS.
     $self->{DEV_NULL}   = '';
+
+    return;
+}
+
+
+=item init_others (override)
+
+Provide VMS-specific forms of various compile and link commands
+
+=cut
+
+sub init_others {
+    my $self = shift;
+
+    # Must come first as we're modifying and deriving from the defaults.
+    $self->SUPER::init_others;
 
     if ($self->{OBJECT} =~ /\s/) {
         $self->{OBJECT} =~ s/(\\)?\n+\s+/ /g;
@@ -497,6 +530,8 @@ CODE
     $self->{LDFROM} = $self->wraplist(
         map $self->fixpath($_,0), split /,?\s+/, $self->{LDFROM}
     );
+
+    return;
 }
 
 
@@ -1067,14 +1102,14 @@ $(INST_STATIC) : $(OBJECT) $(MYEXTLIB)
 =item extra_clean_files
 
 Clean up some OS specific files.  Plus the temp file used to shorten
-a lot of commands.
+a lot of commands.  And the name mangler database.
 
 =cut
 
 sub extra_clean_files {
     return qw(
               *.Map *.Dmp *.Lis *.cpp *.$(DLEXT) *.Opt $(BASEEXT).bso
-              .MM_Tmp
+              .MM_Tmp cxx_repository
              );
 }
 
@@ -1265,7 +1300,7 @@ sub perldepend {
 
     push @m, '
 $(OBJECT) : $(PERL_INC)EXTERN.h, $(PERL_INC)INTERN.h, $(PERL_INC)XSUB.h
-$(OBJECT) : $(PERL_INC)av.h, $(PERL_INC)cc_runtime.h, $(PERL_INC)config.h
+$(OBJECT) : $(PERL_INC)av.h, $(PERL_INC)config.h
 $(OBJECT) : $(PERL_INC)cop.h, $(PERL_INC)cv.h, $(PERL_INC)embed.h
 $(OBJECT) : $(PERL_INC)embedvar.h, $(PERL_INC)form.h
 $(OBJECT) : $(PERL_INC)gv.h, $(PERL_INC)handy.h, $(PERL_INC)hv.h
@@ -1736,13 +1771,21 @@ native Write command instead.  Besides, its faster.
 =cut
 
 sub echo {
-    my($self, $text, $file, $appending) = @_;
-    $appending ||= 0;
+    my($self, $text, $file, $opts) = @_;
 
-    my $opencmd = $appending ? 'Open/Append' : 'Open/Write';
+    # Compatibility with old options
+    if( !ref $opts ) {
+        my $append = $opts;
+        $opts = { append => $append || 0 };
+    }
+    my $opencmd = $opts->{append} ? 'Open/Append' : 'Open/Write';
+
+    $opts->{allow_variables} = 0 unless defined $opts->{allow_variables};
+
+    my $ql_opts = { allow_variables => $opts->{allow_variables} };
 
     my @cmds = ("\$(NOECHO) $opencmd MMECHOFILE $file ");
-    push @cmds, map { '$(NOECHO) Write MMECHOFILE '.$self->quote_literal($_) } 
+    push @cmds, map { '$(NOECHO) Write MMECHOFILE '.$self->quote_literal($_, $ql_opts) } 
                 split /\n/, $text;
     push @cmds, '$(NOECHO) Close MMECHOFILE';
     return @cmds;
@@ -1754,12 +1797,47 @@ sub echo {
 =cut
 
 sub quote_literal {
-    my($self, $text) = @_;
+    my($self, $text, $opts) = @_;
+    $opts->{allow_variables} = 1 unless defined $opts->{allow_variables};
 
     # I believe this is all we should need.
     $text =~ s{"}{""}g;
 
+    $text = $opts->{allow_variables}
+      ? $self->escape_dollarsigns($text) : $self->escape_all_dollarsigns($text);
+
     return qq{"$text"};
+}
+
+=item escape_dollarsigns
+
+Quote, don't escape.
+
+=cut
+
+sub escape_dollarsigns {
+    my($self, $text) = @_;
+
+    # Quote dollar signs which are not starting a variable
+    $text =~ s{\$ (?!\() }{"\$"}gx;
+
+    return $text;
+}
+
+
+=item escape_all_dollarsigns
+
+Quote, don't escape.
+
+=cut
+
+sub escape_all_dollarsigns {
+    my($self, $text) = @_;
+
+    # Quote dollar signs
+    $text =~ s{\$}{"\$\"}gx;
+
+    return $text;
 }
 
 =item escape_newlines

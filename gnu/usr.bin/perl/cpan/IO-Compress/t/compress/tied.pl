@@ -369,7 +369,7 @@ EOT
                 my @lines = <$io>;
                 ok $io->eof;
                 ok @lines == 2 
-                    or print "# exected 2 lines, got " . scalar(@lines) . "\n";
+                    or print "# expected 2 lines, got " . scalar(@lines) . "\n";
                 ok $lines[0] eq "This is an example\nof a paragraph\n\n\n"
                     or print "# [$lines[0]]\n" ;
                 ok $lines[1] eq "and a single line.\n\n";

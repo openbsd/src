@@ -17,7 +17,11 @@ Pod::Simple::Subclassing -- write a formatter as a Pod::Simple subclass
   }
 
   sub _handle_element_end {
-    my($parser, $element_name) = @_;
+    my($parser, $element_name, $attr_hash_r) = @_;
+    # NOTE: $attr_hash_r is only present when $element_name is "over" or "begin"
+    # The remaining code excerpts will mostly ignore this $attr_hash_r, as it is
+    # mostly useless. It is documented where "over-*" and "begin" events are 
+    # documented.
     ...
   }
 
@@ -214,7 +218,7 @@ There are, at first glance, three kinds of L links: URL, man, and pod.
 When a LE<lt>I<some_url>E<gt> code is parsed, it produces this event
 structure:
 
-  <L content-implicit="yes" to="that_url" type="url">
+  <L content-implicit="yes" raw="that_url" to="that_url" type="url">
     that_url
   </L>
 
@@ -227,14 +231,14 @@ For example, this Pod source:
 
 produces this event structure:
 
-  <L content-implicit="yes" to="http://www.perl.com/CPAN/authors/" type="url">
+  <L content-implicit="yes" raw="http://www.perl.com/CPAN/authors/" to="http://www.perl.com/CPAN/authors/" type="url">
     http://www.perl.com/CPAN/authors/
   </L>
 
 When a LE<lt>I<manpage(section)>E<gt> code is parsed (and these are
 fairly rare and not terribly useful), it produces this event structure:
 
-  <L content-implicit="yes" to="manpage(section)" type="man">
+  <L content-implicit="yes" raw="manpage(section)" to="manpage(section)" type="man">
     manpage(section)
   </L>
 
@@ -247,7 +251,7 @@ For example, this Pod source:
 
 produces this event structure:
 
-  <L content-implicit="yes" to="crontab(5)" type="man">
+  <L content-implicit="yes" raw="crontab(5)" to="crontab(5)" type="man">
     crontab(5)
   </L>
 
@@ -258,7 +262,7 @@ in a I<section> attribute. For example, this Pod source:
 
 will produce this event structure:
 
-  <L content-implicit="yes" section="ENVIRONMENT" to="crontab(5)" type="man">
+  <L content-implicit="yes" raw="crontab(5)/&quot;ENVIRONMENT&quot;" section="ENVIRONMENT" to="crontab(5)" type="man">
     "ENVIRONMENT" in crontab(5)
   </L>
 
@@ -275,10 +279,10 @@ some link text.)
 For example, this Pod source:
 
   L<hell itself!|crontab(5)>
-  
+
 will produce this event structure:
 
-  <L to="crontab(5)" type="man">
+  <L raw="hell itself!|crontab(5)" to="crontab(5)" type="man">
     hell itself!
   </L>
 
@@ -290,7 +294,7 @@ specified for this type of L code.
 In the most common case, the simple case of a LE<lt>podpageE<gt> code
 produces this event structure:
 
-  <L content-implicit="yes" to="Net::Ping" type="pod">
+  <L content-implicit="yes" raw="podpage" to="podpage" type="pod">
     podpage
   </L>
 
@@ -300,7 +304,7 @@ For example, this Pod source:
 
 produces this event structure:
 
-  <L content-implicit="yes" to="Net::Ping" type="pod">
+  <L content-implicit="yes" raw="Net::Ping" to="Net::Ping" type="pod">
     Net::Ping
   </L>
 
@@ -313,7 +317,7 @@ case discussed above.  For example, this Pod source:
 
 produces this event structure:
 
-  <L to="perldiag" type="pod">
+  <L raw="Perl Error Messages|perldiag" to="perldiag" type="pod">
     Perl Error Messages
   </L>
 
@@ -325,7 +329,7 @@ For example, this Pod source:
 
 produces this event structure:
 
-  <L content-implicit="yes" section="Member Data" type="pod">
+  <L content-implicit="yes" raw="/&quot;Member Data&quot;" section="Member Data" type="pod">
     "Member Data"
   </L>
 
@@ -335,7 +339,7 @@ As another example, this Pod source:
 
 produces this event structure:
 
-  <L section="Member Data" type="pod">
+  <L raw="the various attributes|/&quot;Member Data&quot;" section="Member Data" type="pod">
     the various attributes
   </L>
 
@@ -347,7 +351,7 @@ For example, this Pod source:
 
 produces this event structure:
 
-  <L content-implicit="yes" section="Basic BLOCKs and Switch Statements" to="perlsyn" type="pod">
+  <L content-implicit="yes" raw="perlsyn/&quot;Basic BLOCKs and Switch Statements&quot;" section="Basic BLOCKs and Switch Statements" to="perlsyn" type="pod">
     "Basic BLOCKs and Switch Statements" in perlsyn
   </L>
 
@@ -357,7 +361,7 @@ As another example, this Pod source:
 
 produces this event structure:
 
-  <L section="Basic BLOCKs and Switch Statements" to="perlsyn" type="pod">
+  <L raw="SWITCH statements|perlsyn/&quot;Basic BLOCKs and Switch Statements&quot;" section="Basic BLOCKs and Switch Statements" to="perlsyn" type="pod">
     SWITCH statements
   </L>
 
@@ -368,11 +372,32 @@ Incidentally, note that we do not distinguish between these syntaxes:
   L</Member Data>
   L<Member Data>    [deprecated syntax]
 
-That is, they all produce the same event structure, namely:
+That is, they all produce the same event structure (for the most part), namely:
 
-  <L content-implicit="yes" section="Member Data" type="pod">
+  <L content-implicit="yes" raw="$depends_on_syntax" section="Member Data" type="pod">
     &#34;Member Data&#34;
   </L>
+
+The I<raw> attribute depends on what the raw content of the L<> is, so that is
+why the event structure is the same "for the most part".
+
+If you have not guessed it yet, the I<raw> attribute contains the raw,
+original, unescaped content of the L<> formatting code. In addition to the
+examples above, take notice of the following event structure produced by
+the following L<> formatting code.
+
+  L<click B<here>|page/About the C<-M> switch>
+
+  <L raw="click B<here>|page/About the C<-M> switch" section="About the -M switch" to="page" type="pod">
+    click B<here>
+  </L>
+
+Specifically, notice that the formatting codes are present and unescaped
+in I<raw>.
+
+There is a known bug in the I<raw> attribute where any surrounding whitespace
+is condensed into a single ' '. For example, given LE<60>   linkE<62>, I<raw>
+will be " link".
 
 =item events with an element_name of E or Z
 
@@ -425,14 +450,43 @@ names in the event structure.
 =item events with an element_name of over-bullet
 
 When an "=over ... Z<>=back" block is parsed where the items are
-a bulletted list, it will produce this event structure:
+a bulleted list, it will produce this event structure:
 
   <over-bullet indent="4" start_line="543">
     <item-bullet start_line="545">
       ...Stuff...
     </item-bullet>
     ...more item-bullets...
-  </over-bullet>
+  </over-bullet fake-closer="1">
+
+The attribute I<fake-closer> is only present if it is a true value; it is not
+present if it is a false value. It is shown in the above example to illustrate
+where the attribute is (in the B<closing> tag). It signifies that the C<=over>
+did not have a matching C<=back>, and thus Pod::Simple had to create a fake
+closer.
+
+For example, this Pod source:
+
+  =over
+
+  =item *
+
+  Something
+
+  =back
+
+Would produce an event structure that does B<not> have the I<fake-closer>
+attribute, whereas this Pod source:
+
+  =over
+
+  =item *
+
+  Gasp! An unclosed =over block!
+
+would. The rest of the over-* examples will not demonstrate this attribute,
+but they all can have it. See L<Pod::Checker>'s source for an example of this
+attribute being used.
 
 The value of the I<indent> attribute is whatever value is after the
 "=over" directive, as in "=over 8".  If no such value is specified
@@ -490,7 +544,7 @@ message might be issued to the user.
 
 =item events with an element_name of over-text
 
-These events are are somewhat unlike the other over-*
+These events are somewhat unlike the other over-*
 structures, as far as what their contents are.  When
 an "=over ... Z<>=back" block is parsed where the items are
 a list of text "subheadings", it will produce this event structure:
@@ -504,20 +558,20 @@ a list of text "subheadings", it will produce this event structure:
     ...more item-text and/or stuff...
   </over-text>
 
-The I<indent> attribute is as with the other over-* events.
+The I<indent> and I<fake-closer> attributes are as with the other over-* events.
 
 For example, this Pod source:
 
   =over
-  
+
   =item Foo
-  
+
   Stuff
-  
+
   =item Bar I<baz>!
-  
+
   Quux
-  
+
   =back
 
 produces this event structure:
@@ -545,7 +599,7 @@ produces this event structure:
 
 =item events with an element_name of over-block
 
-These events are are somewhat unlike the other over-*
+These events are somewhat unlike the other over-*
 structures, as far as what their contents are.  When
 an "=over ... Z<>=back" block is parsed where there are no items,
 it will produce this event structure:
@@ -554,23 +608,23 @@ it will produce this event structure:
     ...stuff (generally Para or Verbatim elements)...
   </over-block>
 
-The I<indent> attribute is as with the other over-* events.
+The I<indent> and I<fake-closer> attributes are as with the other over-* events.
 
 For example, this Pod source:
 
   =over
-  
+
   For cutting off our trade with all parts of the world
-  
+
   For transporting us beyond seas to be tried for pretended offenses
-  
+
   He is at this time transporting large armies of foreign mercenaries to
   complete the works of death, desolation and tyranny, already begun with
   circumstances of cruelty and perfidy scarcely paralleled in the most
   barbarous ages, and totally unworthy the head of a civilized nation.
-  
-  =cut
-  
+
+  =back
+
 will produce this event structure:
 
   <over-block indent="4" start_line="2">
@@ -584,6 +638,41 @@ will produce this event structure:
       He is at this time transporting large armies of [...more text...]
     </Para>
   </over-block>
+
+=item events with an element_name of over-empty
+
+B<Note: These events are only triggered if C<parse_empty_lists()> is set to a
+true value.>
+
+These events are somewhat unlike the other over-* structures, as far as what
+their contents are.  When an "=over ... Z<>=back" block is parsed where there
+is no content, it will produce this event structure:
+
+  <over-empty indent="4" start_line="543">
+  </over-empty>
+
+The I<indent> and I<fake-closer> attributes are as with the other over-* events.
+
+For example, this Pod source:
+
+  =over
+
+  =over
+
+  =back
+
+  =back
+
+will produce this event structure:
+
+  <over-block indent="4" start_line="1">
+    <over-empty indent="4" start_line="3">
+    </over-empty>
+  </over-block>
+
+Note that the outer C<=over> is a block because it has no C<=item>s but still
+has content: the inner C<=over>. The inner C<=over>, in turn, is completely 
+empty, and is treated as such.
 
 =item events with an element_name of item-bullet
 
@@ -615,7 +704,7 @@ Pod::Simple provides a lot of methods that aren't generally interesting
 to the end user of an existing Pod formatter, but some of which you
 might find useful in writing a Pod formatter. They are listed below. The
 first several methods (the accept_* methods) are for declaring the
-capabilites of your parser, notably what C<=for I<targetname>> sections
+capabilities of your parser, notably what C<=for I<targetname>> sections
 it's interested in, what extra NE<lt>...E<gt> codes it accepts beyond
 the ones described in the I<perlpod>.
 
@@ -673,7 +762,7 @@ B<TODO: document how this interacts with =extend, and long element names>
 
 In the unlikely situation that you need to tell the parser that you will
 accept additional directives ("=foo" things), you need to first set the
-parset to treat its content as data (i.e., not really processed at
+parser to treat its content as data (i.e., not really processed at
 all), or as verbatim (mostly just expanding tabs), or as processed text
 (parsing formatting codes like BE<lt>...E<gt>).
 
@@ -783,6 +872,21 @@ This is just like the code_handler attribute, except that it's for
 unlikely to be interesting, but this is included for completeness.
 
 
+=item C<< $parser->pod_handler(  I<CODE_REF>  ) >>
+
+This is just like the code_handler attribute, except that it's for
+"=pod" lines, not code lines. The same caveats apply. "=pod" lines are
+unlikely to be interesting, but this is included for completeness.
+
+
+=item C<< $parser->whiteline_handler(  I<CODE_REF>  ) >>
+
+This is just like the code_handler attribute, except that it's for
+lines that are seemingly blank but have whitespace (" " and/or "\t") on them,
+not code lines. The same caveats apply. These lines are unlikely to be
+interesting, but this is included for completeness.
+
+
 =item C<< $parser->whine( I<linenumber>, I<complaint string> ) >>
 
 This notes a problem in the Pod, which will be reported to in the "Pod
@@ -793,7 +897,7 @@ C<complain_stderr>.
 =item C<< $parser->scream( I<linenumber>, I<complaint string> ) >>
 
 This notes an error like C<whine> does, except that it is not
-suppressable with C<no_whining>. This should be used only for very
+suppressible with C<no_whining>. This should be used only for very
 serious errors.
 
 
@@ -806,7 +910,7 @@ C<die>!
 
 =item C<< $parser->hide_line_numbers( I<SOMEVALUE> ) >>
 
-Some subclasses that indescriminately dump event attributes (well,
+Some subclasses that indiscriminately dump event attributes (well,
 except for ones beginning with "~") can use this object attribute for
 refraining to dump the "start_line" attribute.
 
@@ -847,8 +951,13 @@ conventions as two spaces after periods will be preserved by the parser.
 This is primarily useful for output formats that treat whitespace as
 significant (such as text or *roff, but not HTML).
 
-=back
+=item C<< $parser->parse_empty_lists( I<SOMEVALUE> ) >>
 
+If this attribute is set to true, the parser will not ignore empty
+C<=over>/C<=back> blocks. The type of C<=over> will be I<empty>, documented
+above, L<events with an element_name of over-empty>.
+
+=back
 
 =head1 SEE ALSO
 
@@ -886,6 +995,8 @@ L<Pod::Simple::Text> -- a simple plaintext formatter for Pod
 
 L<Pod::Simple::TextContent> -- like Pod::Simple::Text, but
 makes no effort for indent or wrap the text being formatted
+
+L<Pod::Simple::HTML> -- a simple HTML formatter for Pod
 
 L<perlpod|perlpod>
 

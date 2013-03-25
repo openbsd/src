@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..18\n";
+print "1..21\n";
 
 @a = (1..10);
 
@@ -82,3 +82,18 @@ print "ok 17\n";
 splice( @a, 1, 2, $a[1], $a[1] );
 print "not " unless j(@a) eq j(1,2,2);
 print "ok 18\n";
+
+# splice should invoke get magic
+
+print "not " if Foo->isa('Bar');
+print "ok 19\n";
+
+splice @Foo::ISA, 0, 0, 'Bar';
+
+print "not " if !Foo->isa('Bar');
+print "ok 20\n";
+
+# Test undef first arg
+eval { splice( $new_arrayref, 0, 0, 1, 2, 3 ) };
+print "not " unless $@ && $@ =~ /Not an ARRAY/;
+print "ok 21\n";

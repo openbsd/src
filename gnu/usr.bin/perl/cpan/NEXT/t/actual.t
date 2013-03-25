@@ -1,12 +1,5 @@
 use Test::More tests => 10;
 
-BEGIN {
-    if ($ENV{PERL_CORE}) {
-        chdir('t') if -d 't';
-        @INC = qw(../lib);
-    }
-}
-
 BEGIN { use_ok('NEXT') };
 my $order = 0;
 

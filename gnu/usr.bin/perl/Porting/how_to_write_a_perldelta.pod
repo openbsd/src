@@ -3,12 +3,12 @@
 This is intended as a guide for how to write a perldelta. There has never
 been a formal specification - the working rule is "fake up a document that
 looks something close to the existing perldeltas". So if it's unclear how
-do to do something, see if it's been done before, and if the approach works
+to do something, see if it's been done before, and if the approach works
 there, steal it.
 
 =head2 Template
 
-Note there is a file F<Porting/perldelta_template> which contains a
+Note there is a file F<Porting/perldelta_template.pod> which contains a
 skeleton version of a perldelta.pod file, which should normally be copied
 in at the start of a new release.
 
@@ -37,8 +37,13 @@ Be consistent in how bugs are referenced. One style is
 
 =item rt.perl.org
 
-C<RT #43010> inline, but enclose in square brackets after a sentence.
-C<[RT #43010]>
+C<perl #43010> inline, but enclose in square brackets after a sentence.
+C<[perl #43010]>.  This mirrors how rt.perl.org subject lines appear.
+
+=item rt.cpan.org
+
+C<rt.cpan.org #43010> inline, but enclose in square brackets after a sentence.
+C<[rt.cpan.org #43010]>.  This mirrors how rt.cpan.org subject lines appear.
 
 =item ActiveState
 
@@ -132,7 +137,7 @@ within F<ext/> and F<lib/> to a number of people.
 B<FIXME> - this could be automated better
 
 If Module::CoreList has been updated, then F<Porting/corelist-perldelta.pl>
-will automatically print out several sections if relevent that can be
+will automatically print out several sections if relevant that can be
 pasted into F<perldelta>:
 
     * New Modules and Pragmata
@@ -147,7 +152,7 @@ Each section will have stub entries following a template like this:
     Upgraded from version 0.01 to 0.02
 
 It does not include modules listed in F<Porting/Maintainers.pl> under
-C<_PERLLIB>, but it's a start.  Where relevent, a summary of changes can be
+C<_PERLLIB>, but it's a start.  Where relevant, a summary of changes can be
 added by hand.
 
 A more adventurous enhancement would be to automate grabbing
@@ -298,15 +303,9 @@ here.
 
 =item Acknowledgements
 
-The list of people to thank goes here.
+Generate this with:
 
-You can find the list of committers and authors by:
-
-  % git log --pretty='format:%an' v5.11.1..HEAD | sort | uniq
-
-And how many files where changed by:
-
-  % git diff --stat=200,200 v5.11.1..HEAD
+  perl Porting/acknowledgements.pl v5.15.0..HEAD
 
 =item Reporting Bugs
 

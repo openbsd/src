@@ -8,8 +8,8 @@ BEGIN {
 
 use strict;
 use lib '../lib';
-use Test::More tests => 48;
-#use Test::More 'no_plan';
+#use Test::More tests => 56;
+use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
 
@@ -24,6 +24,11 @@ my $MANURL = "http://man.he.net/man";
 initialize($parser, $results);
 $parser->parse_string_document( "=head1 Poit!" );
 is($results, qq{<h1 id="Poit-">Poit!</h1>\n\n}, "head1 level output");
+
+initialize($parser, $results);
+$parser->parse_string_document( "=head2 Yada Yada Operator
+X<...> X<... operator> X<yada yada operator>" );
+is($results, qq{<h2 id="Yada-Yada-Operator">Yada Yada Operator   </h2>\n\n}, "head ID with X<>");
 
 initialize($parser, $results);
 $parser->html_h_level(2);
@@ -76,13 +81,13 @@ B: Now, Pinky, if by any chance you are captured during this mission,
 remember you are Gunther Heindriksen from Appenzell. You moved to
 Grindelwald to drive the cog train to Murren. Can you repeat that?
 
-P: Mmmm, no, Brain, don't think I can.
+P: Mmmm, no, Brain, dont think I can.
 EOPOD
 
 is($results, <<'EOHTML', "multiple paragraphs");
 <p>B: Now, Pinky, if by any chance you are captured during this mission, remember you are Gunther Heindriksen from Appenzell. You moved to Grindelwald to drive the cog train to Murren. Can you repeat that?</p>
 
-<p>P: Mmmm, no, Brain, don&#39;t think I can.</p>
+<p>P: Mmmm, no, Brain, dont think I can.</p>
 
 EOHTML
 
@@ -120,6 +125,59 @@ initialize($parser, $results);
 $parser->parse_string_document(<<'EOPOD');
 =over
 
+=item *
+
+P: Gee, Brain, what do you want to do tonight?
+
+=item *
+
+B: The same thing we do every night, Pinky. Try to take over the world!
+
+=over
+
+=item *
+
+Take over world
+
+=item *
+
+Do laundry
+
+=back
+
+=back
+
+EOPOD
+
+is($results, <<'EOHTML', "nested bulleted list");
+<ul>
+
+<li><p>P: Gee, Brain, what do you want to do tonight?</p>
+
+</li>
+<li><p>B: The same thing we do every night, Pinky. Try to take over the world!</p>
+
+<ul>
+
+<li><p>Take over world</p>
+
+</li>
+<li><p>Do laundry</p>
+
+</li>
+</ul>
+
+</li>
+</ul>
+
+EOHTML
+
+
+
+initialize($parser, $results);
+$parser->parse_string_document(<<'EOPOD');
+=over
+
 =item 1
 
 P: Gee, Brain, what do you want to do tonight?
@@ -139,6 +197,58 @@ is($results, <<'EOHTML', "numbered list");
 
 </li>
 <li><p>B: The same thing we do every night, Pinky. Try to take over the world!</p>
+
+</li>
+</ol>
+
+EOHTML
+
+
+initialize($parser, $results);
+$parser->parse_string_document(<<'EOPOD');
+=over
+
+=item 1
+
+P: Gee, Brain, what do you want to do tonight?
+
+=item 2
+
+B: The same thing we do every night, Pinky. Try to take over the world!
+
+=over
+
+=item 1
+
+Take over world
+
+=item 2
+
+Do laundry
+
+=back
+
+=back
+
+EOPOD
+
+is($results, <<'EOHTML', "nested numbered list");
+<ol>
+
+<li><p>P: Gee, Brain, what do you want to do tonight?</p>
+
+</li>
+<li><p>B: The same thing we do every night, Pinky. Try to take over the world!</p>
+
+<ol>
+
+<li><p>Take over world</p>
+
+</li>
+<li><p>Do laundry</p>
+
+</li>
+</ol>
 
 </li>
 </ol>
@@ -400,7 +510,7 @@ $parser->parse_string_document(<<'EOPOD');
 
 A plain paragraph with body tags and css tags turned on.
 EOPOD
-like($results, qr/<link rel='stylesheet' href='style.css' type='text\/css'>/,
+like($results, qr/<link rel="stylesheet" href="style.css" type="text\/css" \/>/,
 "adding html body tags and css tags");
 
 
@@ -411,7 +521,7 @@ $parser->parse_string_document(<<'EOPOD');
 A plain paragraph with S<non breaking text>.
 EOPOD
 is($results, <<"EOHTML", "Non breaking text in a paragraph");
-<p>A plain paragraph with <nobr>non breaking text</nobr>.</p>
+<p>A plain paragraph with <span style="white-space: nowrap;">non breaking text</span>.</p>
 
 EOHTML
 
@@ -456,6 +566,17 @@ A plain paragraph with a L<http://link.included.here>.
 EOPOD
 is($results, <<"EOHTML", "A link in a paragraph");
 <p>A plain paragraph with a <a href="http://link.included.here">http://link.included.here</a>.</p>
+
+EOHTML
+
+initialize($parser, $results);
+$parser->parse_string_document(<<'EOPOD');
+=pod
+
+A plain paragraph with a L<http://link.included.here?o=1&p=2>.
+EOPOD
+is($results, <<"EOHTML", "A link in a paragraph");
+<p>A plain paragraph with a <a href="http://link.included.here?o=1&amp;p=2">http://link.included.here?o=1&amp;p=2</a>.</p>
 
 EOHTML
 
@@ -540,15 +661,33 @@ SKIP: for my $use_html_entities (0, 1) {
 =pod
 
   # this header is very important & dont you forget it
-  B<my $file = <FILEE<gt> || 'Blank!';>
+  B<my $file = <FILEE<gt> || Blank!;>
   my $text = "File is: " . <FILE>;
 EOPOD
 is($results, <<"EOHTML", "Verbatim text with markup and embedded formatting");
 <pre><code>  # this header is very important &amp; dont you forget it
-  <b>my \$file = &lt;FILE&gt; || &#39;Blank!&#39;;</b>
+  <b>my \$file = &lt;FILE&gt; || Blank!;</b>
   my \$text = &quot;File is: &quot; . &lt;FILE&gt;;</code></pre>
 
 EOHTML
+
+  # Specify characters to encode.
+  initialize($parser, $results);
+  $parser->html_encode_chars('><"&T');
+  $parser->parse_string_document(<<'EOPOD');
+=pod
+
+This is Anna's "Answer" to the <q>Question</q>.
+
+=cut
+
+EOPOD
+my $T = $use_html_entities ? 84 : 'x54';
+is($results, <<"EOHTML", 'HTML Entities should be only for specified characters');
+<p>&#$T;his is Anna's &quot;Answer&quot; to the &lt;q&gt;Question&lt;/q&gt;.</p>
+
+EOHTML
+
 }
 
 
@@ -556,8 +695,16 @@ ok $parser = Pod::Simple::XHTML->new, 'Construct a new parser';
 $results = '';
 $parser->output_string( \$results ); # Send the resulting output to a string
 ok $parser->parse_string_document( "=head1 Poit!" ), 'Parse with headers';
-like $results, qr{<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />},
+like $results, qr{\Q<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />},
     'Should have proper http-equiv meta tag';
+
+ok $parser = Pod::Simple::XHTML->new, 'Construct a new parser again';
+ok $parser->html_charset('UTF-8'), 'Set the html charset to UTF-8';
+$results = '';
+$parser->output_string( \$results ); # Send the resulting output to a string
+ok $parser->parse_string_document( "=head1 Poit!" ), 'Parse with headers';
+like $results, qr{\Q<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />},
+    'Should have http-equiv meta tag with UTF-8';
 
 # Test the link generation methods.
 is $parser->resolve_pod_page_link('Net::Ping', 'INSTALL'),

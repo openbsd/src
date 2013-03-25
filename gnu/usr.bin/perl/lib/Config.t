@@ -264,6 +264,11 @@ foreach my $lib (qw(applibexp archlibexp privlibexp sitearchexp sitelibexp
     skip "lib $lib not in \@INC on Win32" if $^O eq 'MSWin32';
     skip "lib $lib not defined" unless defined $dir;
     skip "lib $lib not set" unless length $dir;
+    # May be in @INC in either Unix or VMS format on VMS.
+    if ($^O eq 'VMS' && !exists($orig_inc{$dir})) {
+        $dir = VMS::Filespec::unixify($dir);
+        $dir =~ s|/$||;
+    }
     # So we expect to find it in @INC
 
     ok (exists $orig_inc{$dir}, "Expect $lib '$dir' to be in \@INC")

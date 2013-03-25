@@ -13,7 +13,7 @@ use TAP::Base;
     can_ok 'TAP::Base', 'new';
     my $base = TAP::Base->new();
     isa_ok $base, 'TAP::Base', 'object of correct type';
-    foreach my $method (qw(callback _croak _callback_for _initialize)) {
+    for my $method (qw(callback _croak _callback_for _initialize)) {
         can_ok $base, $method;
     }
 

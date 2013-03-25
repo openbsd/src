@@ -24,7 +24,7 @@ IO 1.24 -- Mon May 11 14:15:51 CDT 2009
   * Silence VC++ compiler warnings
   * IO::Socket's IO.xs fails to compile
   * IO::Socket::connect returns wrong errno on timeout
-  * Coverity correctly reports that gv might (just) be NULL. So don't derefernece it if it is.
+  * Coverity correctly reports that gv might (just) be NULL. So don't dereference it if it is.
   * Simplify tests for fork() capabilities
   * Fix syntax error in io_pipe test
   * Making IO::Socket pass test on Win32
@@ -203,11 +203,11 @@ Wed Oct 22 1997 <gbarr@pobox.com> (Graham Barr)
 Mon Oct 13 1997 <gbarr@pobox.com> (Graham Barr)
 
 	IO.xs, IO::Handle
-	- 1.17 broke compatability with 5.003, small tweaks to restore
-	  compatability
+	- 1.17 broke compatibility with 5.003, small tweaks to restore
+	  compatibility
 	
 	t/io_const.t
-	- Added new test to ensure backwards compatability with constants
+	- Added new test to ensure backwards compatibility with constants
 	  is not broken
 
 Wed Oct  8 1997 <gbarr@pobox.com> (Graham Barr)
@@ -267,7 +267,7 @@ Mon 15 Sep 1997 <gbarr@pobox.com> Graham Barr
 	o IO::Handle
 	  - Removed use of AutoLoader for constants, constants are
 	    now defined as constant XS subs
-	  - Added fsync, but will not be avaliable for use
+	  - Added fsync, but will not be available for use
 	    unless HAS_FSYNC is defined, perls configure does not define
 	    this yet.
 	  - Moved bootstrap of IO.xs to IO.pm. IO::Handle no longer
@@ -278,14 +278,14 @@ Mon 15 Sep 1997 <gbarr@pobox.com> Graham Barr
 
 	o IO.xs
 	  - Patched IO.xs with patch from Chip for setvbuf warning
-	  - Added XS sub "constant" for backwards compatability
+	  - Added XS sub "constant" for backwards compatibility
 
 	o Misc
 	  - Fixed IO::Socket::configure, it was not passing $arg to domain
 	    specific package
 	  - Changed all $fh variables in IO::Handle to $io and all $fh
 	    variables in IO::Socket to $sock as Chip suggested
-	  - Fixed usage messages to be consistant
+	  - Fixed usage messages to be consistent
 
 *** Release 1.15
 
@@ -295,12 +295,12 @@ Sun 19 Jan 1997 <bodg@tiuk.ti.com> Graham Barr
 	o Modified IO.xs so that DESTROY gets called on IO::File
 	  objects that were created with IO::File->new_tmpfile
 	o Modified the domain2pkg code in IO::Socket so that it
-	  does not use blessd refs
+	  does not use blessed refs
 	o Created a new package IO::Pipe::End so that pipe specific
 	  stuff can be moved out of IO::Handle.
 	o Added Ilya's OS/2 changes to Pipe.pm and io_pipe.t
 
-	o These changes happened somtime before the release of 1.15
+	o These changes happened sometime before the release of 1.15
 	  - added shutdown to IO::Socket
 	  - modified connect to not use alarm
 	  - modified accept and connect to use IO::Select

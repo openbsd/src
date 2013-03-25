@@ -1,14 +1,16 @@
 package ExtUtils::Constant::Utils;
 
 use strict;
-use vars qw($VERSION @EXPORT_OK @ISA $is_perl56);
+use vars qw($VERSION @EXPORT_OK @ISA);
 use Carp;
 
 @ISA = 'Exporter';
 @EXPORT_OK = qw(C_stringify perl_stringify);
-$VERSION = '0.02';
+$VERSION = '0.03';
 
-$is_perl56 = ($] < 5.007 && $] > 5.005_50);
+use constant is_perl55 => ($] < 5.005_50);
+use constant is_perl56 => ($] < 5.007 && $] > 5.005_50);
+use constant is_sane_perl => $] > 5.007;
 
 =head1 NAME
 
@@ -46,7 +48,7 @@ sub C_stringify {
     if tr/\0-\377// != length;
   # grr 5.6.1 moreso because its regexps will break on data that happens to
   # be utf8, which includes my 8 bit test cases.
-  $_ = pack 'C*', unpack 'U*', $_ . pack 'U*' if $is_perl56;
+  $_ = pack 'C*', unpack 'U*', $_ . pack 'U*' if is_perl56;
   s/\\/\\\\/g;
   s/([\"\'])/\\$1/g;	# Grr. fix perl mode.
   s/\n/\\n/g;		# Ensure newlines don't end up in octal
@@ -54,15 +56,17 @@ sub C_stringify {
   s/\t/\\t/g;
   s/\f/\\f/g;
   s/\a/\\a/g;
-  if (ord('A') == 193) { # EBCDIC has no ^\0-\177 workalike.
-      s/([[:^print:]])/sprintf "\\%03o", ord $1/ge;
-  } else {
-      s/([^\0-\177])/sprintf "\\%03o", ord $1/ge;
-  }
-  unless ($] < 5.006) {
+  unless (is_perl55) {
     # This will elicit a warning on 5.005_03 about [: :] being reserved unless
     # I cheat
     my $cheat = '([[:^print:]])';
+
+    if (ord('A') == 193) { # EBCDIC has no ^\0-\177 workalike.
+      s/$cheat/sprintf "\\%03o", ord $1/ge;
+    } else {
+      s/([^\0-\177])/sprintf "\\%03o", ord $1/ge;
+    }
+
     s/$cheat/sprintf "\\%03o", ord $1/ge;
   } else {
     require POSIX;
@@ -89,10 +93,13 @@ sub perl_stringify {
   s/\t/\\t/g;
   s/\f/\\f/g;
   s/\a/\\a/g;
-  unless ($] < 5.006) {
-    if ($] > 5.007) {
+  unless (is_perl55) {
+    # This will elicit a warning on 5.005_03 about [: :] being reserved unless
+    # I cheat
+    my $cheat = '([[:^print:]])';
+    if (is_sane_perl) {
 	if (ord('A') == 193) { # EBCDIC has no ^\0-\177 workalike.
-	    s/([[:^print:]])/sprintf "\\x{%X}", ord $1/ge;
+	    s/$cheat/sprintf "\\x{%X}", ord $1/ge;
 	} else {
 	    s/([^\0-\177])/sprintf "\\x{%X}", ord $1/ge;
 	}
@@ -107,9 +114,6 @@ sub perl_stringify {
       }
       $_ = $copy;
     }
-    # This will elicit a warning on 5.005_03 about [: :] being reserved unless
-    # I cheat
-    my $cheat = '([[:^print:]])';
     s/$cheat/sprintf "\\%03o", ord $1/ge;
   } else {
     # Turns out "\x{}" notation only arrived with 5.6

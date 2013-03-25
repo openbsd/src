@@ -83,6 +83,21 @@ Execution of - aborted due to compilation errors.
 ########
 
 # Check compile time scope of strict vars pragma
+use strict 'vars' ;
+use utf8;
+use open qw( :utf8 :std );
+{
+    no strict ;
+    $jòè = 1 ;
+}
+$jòè = 1 ;
+EXPECT
+Variable "$jòè" is not imported at - line 10.
+Global symbol "$jòè" requires explicit package name at - line 10.
+Execution of - aborted due to compilation errors.
+########
+
+# Check compile time scope of strict vars pragma
 no strict;
 {
     use strict 'vars' ;
@@ -127,6 +142,23 @@ Global symbol "$joe" requires explicit package name at ./abc line 2.
 Compilation failed in require at - line 2.
 ########
 
+--FILE-- abc
+use strict 'vars' ;
+use utf8;
+use open qw( :utf8 :std );
+$jòè = 1 ;
+1;
+--FILE-- 
+use utf8;
+use open qw( :utf8 :std );
+$jòè = 1 ;
+require "./abc";
+EXPECT
+Variable "$jòè" is not imported at ./abc line 4.
+Global symbol "$jòè" requires explicit package name at ./abc line 4.
+Compilation failed in require at - line 4.
+########
+
 --FILE-- abc.pm
 use strict 'vars' ;
 $joe = 1 ;
@@ -139,6 +171,24 @@ Variable "$joe" is not imported at abc.pm line 2.
 Global symbol "$joe" requires explicit package name at abc.pm line 2.
 Compilation failed in require at - line 2.
 BEGIN failed--compilation aborted at - line 2.
+########
+
+--FILE-- abc.pm
+use strict 'vars' ;
+use utf8;
+use open qw( :utf8 :std );
+$jòè = 1 ;
+1;
+--FILE-- 
+use utf8;
+use open qw( :utf8 :std );
+$jòè = 1 ;
+use abc;
+EXPECT
+Variable "$jòè" is not imported at abc.pm line 4.
+Global symbol "$jòè" requires explicit package name at abc.pm line 4.
+Compilation failed in require at - line 4.
+BEGIN failed--compilation aborted at - line 4.
 ########
 
 --FILE-- abc.pm
@@ -221,6 +271,22 @@ $joe = 1 ;
 EXPECT
 Variable "$joe" is not imported at - line 9.
 Global symbol "$joe" requires explicit package name at - line 9.
+Execution of - aborted due to compilation errors.
+########
+
+# Check scope of pragma with eval
+use strict 'vars' ;
+use utf8;
+use open qw( :utf8 :std );
+eval {
+    no strict ;
+    $jòè = 1 ;
+};
+print STDERR $@;
+$jòè = 1 ;
+EXPECT
+Variable "$jòè" is not imported at - line 11.
+Global symbol "$jòè" requires explicit package name at - line 11.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -337,6 +403,21 @@ Global symbol "$fred" requires explicit package name at - line 8.
 Execution of - aborted due to compilation errors.
 ########
 
+# strict vars with elapsed our - error
+use strict 'vars' ;
+use utf8;
+use open qw( :utf8 :std );
+sub fòò {
+    our $frèd;
+    $frèd;
+}
+$frèd ;
+EXPECT
+Variable "$frèd" is not imported at - line 10.
+Global symbol "$frèd" requires explicit package name at - line 10.
+Execution of - aborted due to compilation errors.
+########
+
 # nested our with local - no error
 $fred = 1;
 use strict 'vars';
@@ -415,7 +496,7 @@ ok
 ########
 
 # Make sure the strict vars failure still occurs
-# now that the `@i should be written as \@i' failure does not occur
+# now that the '@i should be written as \@i' failure does not occur
 # 20000522 mjd@plover.com (MJD)
 use strict 'vars';
 no warnings;
@@ -439,3 +520,56 @@ qr/(?{$foo++})/;
 EXPECT
 Global symbol "$foo" requires explicit package name at (re_eval 1) line 1.
 Compilation failed in regexp at - line 3.
+########
+# Regex compilation errors weren't UTF-8 clean.
+use strict 'vars';
+use utf8;
+use open qw( :utf8 :std );
+qr/(?{$fòò++})/;
+EXPECT
+Global symbol "$fòò" requires explicit package name at (re_eval 1) line 1.
+Compilation failed in regexp at - line 5.
+########
+# [perl #73712] 'Variable is not imported' should be suppressible
+$dweck;
+use strict 'vars';
+no warnings;
+eval q/$dweck/;
+EXPECT
+########
+# [perl #112316] strict vars getting confused by nulls
+# Assigning to a package whose name contains a null
+BEGIN { *Foo:: = *{"foo\0bar::"} }
+package foo;
+*Foo::bar = [];
+use strict;
+eval 'package Foo; @bar = 1' or die;
+EXPECT
+########
+# [perl #112316] strict vars getting confused by nulls
+# Assigning from within a package whose name contains a null
+BEGIN { *Foo:: = *{"foo\0bar::"} }
+package Foo;
+*foo::bar = [];
+use strict;
+eval 'package foo; @bar = 1' or die;
+EXPECT
+########
+# [perl #112316] strict vars getting confused by nulls
+# Assigning from one null package to another, with a common prefix
+BEGIN { *Foo:: = *{"foo\0foo::"};
+        *Bar:: = *{"foo\0bar::"} }
+package Foo;
+*Bar::bar = [];
+use strict;
+eval 'package Bar; @bar = 1' or die;
+EXPECT
+########
+# UTF8 and Latin1 package names equivalent at the byte level
+use utf8;
+# ĵ in UTF-8 is the same as Äµ in Latin-1
+package ĵ;
+*Äµ::bar = [];
+use strict;
+eval 'package Äµ; @bar = 1' or die;
+EXPECT

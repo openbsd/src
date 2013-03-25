@@ -8,23 +8,21 @@
 # will probably not match what is currently there. You
 # will need to adjust it to match (assuming it is correct).
 
-use Test;
+use Test::More tests => 177;
 use strict;
-
-BEGIN { plan tests => 177 }
-
-use Pod::LaTeX;
 
 # The link parsing changed between v0.22 and v0.30 of Pod::ParseUtils
 use Pod::ParseUtils;
 my $linkver = $Pod::ParseUtils::VERSION;
 
+BEGIN {
+  use_ok( "Pod::LaTeX" );
+}
+
 # Set up an END block to remove the test output file
 END {
   unlink "test.tex";
 };
-
-ok(1);
 
 # First thing to do is to read the expected output from
 # the DATA filehandle and store it in a scalar.
@@ -37,7 +35,7 @@ while (my $line = <DATA>) {
 
 # Create a new parser
 my $parser = Pod::LaTeX->new;
-ok($parser);
+isa_ok($parser, "Pod::LaTeX");
 $parser->Head1Level(1);
 # Add the preamble but remember not to compare the timestamps
 $parser->AddPreamble(1);
@@ -59,7 +57,7 @@ close(OUTFH) or die "Error closing OUTFH test.tex: $!\n";
 open(INFH, "< test.tex") or die "Unable to read test tex file: $!\n";
 my @output = <INFH>;
 
-ok(@output, @reference);
+is(scalar @output, scalar @reference, "Count lines");
 for my $i (0..$#reference) {
   next if $reference[$i] =~ /^%%/; # skip timestamp comments
 
@@ -71,7 +69,7 @@ for my $i (0..$#reference) {
     $reference[$i] =~ s/Standard link: \\emph\{Pod::LaTeX\}/Standard link: the \\emph\{Pod::LaTeX\} manpage/;
     $reference[$i] =~ s/\\textsf\{sec\} in \\emph\{Pod::LaTeX\}/the section on \\textsf\{sec\} in the \\emph\{Pod::LaTeX\} manpage/;
   }
-  ok($output[$i], $reference[$i]);
+  is($output[$i], $reference[$i], "Check line $i");
 }
 
 close(INFH) or die "Error closing INFH test.tex: $!\n";

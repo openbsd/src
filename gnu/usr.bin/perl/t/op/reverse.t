@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 23;
+plan tests => 26;
 
 is(reverse("abc"), "cba");
 
@@ -90,4 +90,16 @@ use Tie::Array;
     my $b = scalar reverse($a);
     my $c = scalar reverse($b);
     is($a, $c);
+}
+
+{
+    # Lexical $_.
+    sub blurp { my $_ = shift; reverse }
+
+    is(blurp("foo"), "oof");
+    is(sub { my $_ = shift; reverse }->("bar"), "rab");
+    {
+        local $_ = "XXX";
+        is(blurp("paz"), "zap");
+    }
 }

@@ -4,7 +4,7 @@ specifically designed to be readable as is.
 
 =head1 NAME
 
-README.freebsd - Perl version 5 on FreeBSD systems
+perlfreebsd - Perl version 5 on FreeBSD systems
 
 =head1 DESCRIPTION
 
@@ -22,21 +22,14 @@ which has been integrated into FreeBSD 4.6.
 
 =head2 $^X doesn't always contain a full path in FreeBSD
 
-perl 5.8.0 sets C<$^X> where possible to a full path by asking the operating
-system. On FreeBSD the full path of the perl interpreter is found by reading
-the symlink F</proc/curproc/file>. There is a bug on FreeBSD, where the
-result of reading this symlink is can be wrong in certain circumstances
+perl sets C<$^X> where possible to a full path by asking the operating
+system. On FreeBSD the full path of the perl interpreter is found by using
+C<sysctl> with C<KERN_PROC_PATHNAME> if that is supported, else by reading
+the symlink F</proc/curproc/file>. FreeBSD 7 and earlier has a bug where
+either approach sometimes returns an incorrect value
 (see http://www.freebsd.org/cgi/query-pr.cgi?pr=35703 ).
 In these cases perl will fall back to the old behaviour of using C's
 argv[0] value for C<$^X>.
-
-=head2 Perl will no longer be part of "base FreeBSD"
-
-Not as bad as it sounds--what this means is that Perl will no longer be
-part of the B<kernel build system> of FreeBSD.  Perl will still very
-probably be part of the "default install", and in any case the latest
-version will be in the ports system.  The first FreeBSD version this
-change will affect is 5.0, all 4.n versions will keep the status quo.
 
 =head1 AUTHOR
 

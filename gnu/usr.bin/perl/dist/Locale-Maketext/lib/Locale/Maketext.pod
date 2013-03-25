@@ -166,7 +166,8 @@ file, you might consider something like this in your project class:
     my $lh;
     if($chosen_language) {
       $lh = $class->get_handle($chosen_language)
-       || die "No language handle for \"$chosen_language\" or the like";
+       || die "No language handle for \"$chosen_language\""
+            . " or the like";
     } else {
       # Config file missing, maybe?
       $lh = $class->get_handle()
@@ -384,6 +385,14 @@ entirely.
 
 Note that numf is called by quant for stringifying all quantifying
 numbers.
+
+=item $language->numerate($number, $singular, $plural, $negative)
+
+This returns the given noun form which is appropriate for the quantity
+C<$number> according to this language's conventions.  C<numerate> is
+used internally by C<quant> to quantify nouns.  Use it directly --
+usually from bracket notation -- to avoid C<quant>'s implicit call to
+C<numf> and output of a numeric quantity.
 
 =item $language->sprintf($format, @items)
 
@@ -937,6 +946,25 @@ lexicon keys be autoable, except for possibly a few, and I
 arbitrarily decided to use a leading underscore as a signal
 to distinguish those few.
 
+=head1 READONLY LEXICONS
+
+If your lexicon is a tied hash the simple act of caching the compiled value can be fatal.
+
+For example a L<GDBM_File> GDBM_READER tied hash will die with something like:
+
+   gdbm store returned -1, errno 2, key "..." at ...
+
+All you need to do is turn on caching outside of the lexicon hash itself like so:
+
+   sub init {
+       my ($lh) = @_;
+       ...
+       $lh->{'use_external_lex_cache'} = 1;
+       ...
+   }
+
+And then instead of storing the compiled value in the lexicon hash it will store it in $lh->{'_external_lex_cache'}
+
 =head1 CONTROLLING LOOKUP FAILURE
 
 If you call $lh->maketext(I<key>, ...parameters...),
@@ -1225,7 +1253,7 @@ to infer the plural form from the singular.
 
 But for other languages (as is discussed at length
 in L<Locale::Maketext::TPJ13|Locale::Maketext::TPJ13>), simple
-C<quant>/C<numerify> is not enough.  For the particularly problematic
+C<quant>/C<numf> is not enough.  For the particularly problematic
 Slavic languages, what you may need is a method which you provide
 with the number, the citation form of the noun to quantify, and
 the case and gender that the sentence's syntax projects onto that

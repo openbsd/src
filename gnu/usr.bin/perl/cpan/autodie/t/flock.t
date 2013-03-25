@@ -2,13 +2,17 @@
 use strict;
 use Test::More;
 use Fcntl qw(:flock);
-use POSIX qw(EWOULDBLOCK);
+use POSIX qw(EWOULDBLOCK EAGAIN);
+use Config;
 
 require Fatal;
 
 my $EWOULDBLOCK = eval { EWOULDBLOCK() }
                   || $Fatal::_EWOULDBLOCK{$^O}
                   || plan skip_all => "EWOULDBLOCK not defined on this system";
+
+my $try_EAGAIN = ($^O eq 'linux' and $Config{archname} =~ /hppa|parisc/) ? 1 : 0;
+my $EAGAIN = eval { EAGAIN() };
 
 my ($self_fh, $self_fh2);
 
@@ -55,7 +59,11 @@ eval {
     $return = flock($self_fh2, LOCK_EX | LOCK_NB);
 };
 
-is($!+0, $EWOULDBLOCK, "Double-flocking should be EWOULDBLOCK");
+if (!$try_EAGAIN) {
+    is($!+0, $EWOULDBLOCK, "Double-flocking should be EWOULDBLOCK");
+} else {
+    ok($!+0 == $EWOULDBLOCK || $!+0 == $EAGAIN, "Double-flocking should be EWOULDBLOCK or EAGAIN");
+}
 ok(!$return, "flocking a file twice should fail");
 is($@, "", "Non-blocking flock should not fail on EWOULDBLOCK");
 

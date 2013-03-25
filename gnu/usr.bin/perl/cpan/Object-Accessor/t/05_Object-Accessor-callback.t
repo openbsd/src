@@ -26,18 +26,18 @@ my $Sub         = sub {
         my $obj     = shift;
         my $meth    = shift;
         my $val     = shift;
-    
+
         $Called++;
-        
+
         ok( 1,                  "   In callback now" );
         ok( $obj,               "       Object received" );
         isa_ok( $obj, $Class,   "       Object");
         is( $meth, $Acc,        "       Method is '$Acc'" );
         isa_ok( $val, "ARRAY",  "       Value" );
-        scalar @$val 
+        scalar @$val
             ? is( $val->[0], $SetVal,
                                 "       Attempted to set $SetVal" )
-            : ok( ! exists $val->[0],
+            : ok( ! scalar @$val,
                                 "       This was a GET request" );
 
         return $RetVal;
@@ -57,30 +57,30 @@ my $Sub         = sub {
 
     my $clone = $Object->mk_clone;
     ok( $clone,                 "Object cloned" );
-    
+
     my $val = $clone->___get($Acc);
     is( $val, undef,            "   Direct get returns <undef>" );
     ok( $clone->___set( $Acc => $SetVal ),
                                 "   Direct set is able to set the value" );
     is( $clone->___get( $Acc ), $SetVal,
                                 "   Direct get returns $SetVal" );
-    ok( !$Called,               "   Callbacks didn't get called" );                                
+    ok( !$Called,               "   Callbacks didn't get called" );
 }
 
 ### test callbacks on regular objects
 ### XXX callbacks DO NOT work on lvalue objects. This is verified
 ### in the lvalue test file, so we dont test here
 {   #diag("Running GET tests on regular objects");
-    
+
     my $clone   = $Object->mk_clone;
 
     $Called = 0;
     is( $clone->$Acc, $RetVal,   "   Method '$Acc' returns '$RetVal' " );
     is( $clone->___get($Acc), undef,
-                                "   Direct get returns <undef>" );    
+                                "   Direct get returns <undef>" );
     ok( $Called,                "   Callback called" );
 
-    
+
     #diag("Running SET tests on regular objects");
     $Called = 0;
     ok( $clone->$Acc($SetVal),  "   Setting $Acc" );

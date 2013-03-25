@@ -1,6 +1,6 @@
 /*    globals.c
  *
- *    Copyright (C) 1995, 1999, 2000, 2001, by Larry Wall and others
+ *    Copyright (C) 1995, 1999, 2000, 2001, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.

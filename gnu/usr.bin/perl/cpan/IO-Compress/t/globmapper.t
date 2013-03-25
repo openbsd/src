@@ -56,10 +56,12 @@ Perl $]" )
 {
     title "input glob matches zero files";
 
-    my $tmpDir = 'td';
+    #my $tmpDir = 'td';
+    my $tmpDir ;
     my $lex = new LexDir $tmpDir;
+    my $d = quotemeta $tmpDir;
 
-    my $gm = new File::GlobMapper("$tmpDir/Z*", '*.X');
+    my $gm = new File::GlobMapper("$d/Z*", '*.X');
     ok $gm, "  created GlobMapper object" ;
 
     my $map = $gm->getFileMap() ;
@@ -73,9 +75,10 @@ Perl $]" )
 {
     title 'test wildcard mapping of * in destination';
 
-    my $tmpDir = 'td';
+    #my $tmpDir = 'td';
+    my $tmpDir ;
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
 
@@ -101,9 +104,10 @@ Perl $]" )
 {
     title 'no wildcards in input or destination';
 
-    my $tmpDir = 'td';
+    #my $tmpDir = 'td';
+    my $tmpDir ;
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
 
@@ -125,9 +129,9 @@ Perl $]" )
 {
     title 'test wildcard mapping of {} in destination';
 
-    my $tmpDir = 'td';
+    my $tmpDir ;#= 'td';
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
 
@@ -160,9 +164,9 @@ Perl $]" )
 {
     title 'test wildcard mapping of multiple * to #';
 
-    my $tmpDir = 'td';
+    my $tmpDir ;#= 'td';
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
 
@@ -182,9 +186,9 @@ Perl $]" )
 {
     title 'test wildcard mapping of multiple ? to #';
 
-    my $tmpDir = 'td';
+    my $tmpDir ;#= 'td';
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
 
@@ -203,31 +207,31 @@ Perl $]" )
 {
     title 'test wildcard mapping of multiple ?,* and [] to #';
 
-    my $tmpDir = 'td';
+    my $tmpDir ;#= 'td';
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
 
-    my $gm = new File::GlobMapper("./$tmpDir/?b[a-z]*.tmp", "./$tmpDir/X-#3-#2-#1-X");
+    my $gm = new File::GlobMapper("$tmpDir/?b[a-z]*.tmp", "$tmpDir/X-#3-#2-#1-X");
     ok $gm, "  created GlobMapper object" ;
 
     #diag "Input pattern is $gm->{InputPattern}";
     my $map = $gm->getFileMap() ;
     is @{ $map }, 3, "  returned 3 maps";
     is_deeply $map,
-        [ [map { "./$tmpDir/$_" } qw(abc1.tmp X-1-c-a-X)],
-          [map { "./$tmpDir/$_" } qw(abc2.tmp X-2-c-a-X)],
-          [map { "./$tmpDir/$_" } qw(abc3.tmp X-3-c-a-X)],
+        [ [map { "$tmpDir/$_" } qw(abc1.tmp X-1-c-a-X)],
+          [map { "$tmpDir/$_" } qw(abc2.tmp X-2-c-a-X)],
+          [map { "$tmpDir/$_" } qw(abc3.tmp X-3-c-a-X)],
         ], "  got mapping";
 }
 
 {
     title 'input glob matches a file multiple times';
 
-    my $tmpDir = 'td';
+    my $tmpDir ;#= 'td';
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch "$tmpDir/abc.tmp";
 
@@ -248,9 +252,9 @@ Perl $]" )
 {
     title 'multiple input files map to one output file';
 
-    my $tmpDir = 'td';
+    my $tmpDir ;#= 'td';
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch map { "$tmpDir/$_.tmp" } qw( abc def) ;
 
@@ -268,9 +272,9 @@ Perl $]" )
 {
     title "globmap" ;
 
-    my $tmpDir = 'td';
+    my $tmpDir ;#= 'td';
     my $lex = new LexDir $tmpDir;
-    mkdir $tmpDir, 0777 ;
+    #mkdir $tmpDir, 0777 ;
 
     touch map { "$tmpDir/$_.tmp" } qw( abc1 abc2 abc3 ) ;
 

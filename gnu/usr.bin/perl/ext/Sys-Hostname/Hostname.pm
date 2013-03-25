@@ -5,9 +5,8 @@ use strict;
 use Carp;
 
 require Exporter;
-require AutoLoader;
 
-our @ISA     = qw/ Exporter AutoLoader /;
+our @ISA     = qw/ Exporter /;
 our @EXPORT  = qw/ hostname /;
 
 our $VERSION;
@@ -15,12 +14,12 @@ our $VERSION;
 our $host;
 
 BEGIN {
-    $VERSION = '1.11';
+    $VERSION = '1.16';
     {
 	local $SIG{__DIE__};
 	eval {
 	    require XSLoader;
-	    XSLoader::load('Sys::Hostname', $VERSION);
+	    XSLoader::load();
 	};
 	warn $@ if $@;
     }
@@ -112,13 +111,6 @@ sub hostname {
     || eval {
 	local $SIG{__DIE__};
 	$host = `uname -n 2>/dev/null`; ## sysVish
-    }
-
-    # method 6 - Apollo pre-SR10
-    || eval {
-	local $SIG{__DIE__};
-        my($a,$b,$c,$d);
-	($host,$a,$b,$c,$d)=split(/[:\. ]/,`/com/host`,6);
     }
 
     # bummer

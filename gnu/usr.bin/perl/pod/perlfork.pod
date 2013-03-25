@@ -37,7 +37,7 @@ thread that implements this child "process" as the pseudo-process.
 
 To the Perl program that called fork(), all this is designed to be
 transparent.  The parent returns from the fork() with a pseudo-process
-ID that can be subsequently used in any process manipulation functions;
+ID that can be subsequently used in any process-manipulation functions;
 the child returns from the fork() with a value of C<0> to signify that
 it is the child pseudo-process.
 
@@ -77,12 +77,26 @@ and return its status.
 
 =item kill()
 
-kill() can be used to terminate a pseudo-process by passing it the ID returned
-by fork().  This should not be used except under dire circumstances, because
-the operating system may not guarantee integrity of the process resources
-when a running thread is terminated.  Note that using kill() on a
-pseudo-process() may typically cause memory leaks, because the thread that
-implements the pseudo-process does not get a chance to clean up its resources.
+C<kill('KILL', ...)> can be used to terminate a pseudo-process by
+passing it the ID returned by fork(). The outcome of kill on a pseudo-process
+is unpredictable and it should not be used except
+under dire circumstances, because the operating system may not
+guarantee integrity of the process resources when a running thread is
+terminated.  The process which implements the pseudo-processes can be blocked
+and the Perl interpreter hangs. Note that using C<kill('KILL', ...)> on a
+pseudo-process() may typically cause memory leaks, because the thread
+that implements the pseudo-process does not get a chance to clean up
+its resources.
+
+C<kill('TERM', ...)> can also be used on pseudo-processes, but the
+signal will not be delivered while the pseudo-process is blocked by a
+system call, e.g. waiting for a socket to connect, or trying to read
+from a socket with no data available.  Starting in Perl 5.14 the
+parent process will not wait for children to exit once they have been
+signalled with C<kill('TERM', ...)> to avoid deadlock during process
+exit.  You will have to explicitly call waitpid() to make sure the
+child has time to clean-up itself, but you are then also responsible
+that the child is not blocking on I/O either.
 
 =item exec()
 
@@ -137,11 +151,12 @@ to complete before they exit.  This means that the parent and every
 pseudo-child created by it that is also a pseudo-parent will only exit
 after their pseudo-children have exited.
 
-A way to mark a pseudo-processes as running detached from their parent (so
-that the parent would not have to wait() for them if it doesn't want to)
-will be provided in future.
+Starting with Perl 5.14 a parent will not wait() automatically
+for any child that has been signalled with C<sig('TERM', ...)>
+to avoid a deadlock in case the child is blocking on I/O and
+never receives the signal.
 
-=head2 CAVEATS AND LIMITATIONS
+=head1 CAVEATS AND LIMITATIONS
 
 =over 8
 
@@ -184,8 +199,21 @@ On some operating systems, notably Solaris and Unixware, calling C<exit()>
 from a child process will flush and close open filehandles in the parent,
 thereby corrupting the filehandles.  On these systems, calling C<_exit()>
 is suggested instead.  C<_exit()> is available in Perl through the 
-C<POSIX> module.  Please consult your systems manpages for more information
+C<POSIX> module.  Please consult your system's manpages for more information
 on this.
+
+=item Open directory handles
+
+Perl will completely read from all open directory handles until they
+reach the end of the stream.  It will then seekdir() back to the
+original location and all future readdir() requests will be fulfilled
+from the cache buffer.  That means that neither the directory handle held
+by the parent process nor the one held by the child process will see
+any changes made to the directory after the fork() call.
+
+Note that rewinddir() has a similar limitation on Windows and will not
+force readdir() to read the directory again either.  Only a newly
+opened directory handle will reflect changes to the directory.
 
 =item Forking pipe open() not yet implemented
 
@@ -280,6 +308,12 @@ widely adopted even on platforms with a native fork(), such extensions
 are expected to be fixed for thread-safety.
 
 =back
+
+=head1 PORTABILITY CAVEATS
+
+In portable Perl code, C<kill(9, $child)> must not be used on forked processes.
+Killing a forked process is unsafe and has unpredictable results.
+See L</kill()>, above.
 
 =head1 BUGS
 

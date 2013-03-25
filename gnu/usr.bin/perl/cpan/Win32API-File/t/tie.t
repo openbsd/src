@@ -28,7 +28,7 @@ print "ok 1\n";
 
 unlink "foo.txt";
 
-my $fh = new Win32API::File "+> foo.txt"
+my $fh = Win32API::File->new("+> foo.txt")
 	or die fileLastError();
 
 my $tell = tell $fh;
@@ -77,7 +77,7 @@ print "ok 9\n";
 
 # Test out binmode (should be only LF with print, no CR).
 
-$fh = new Win32API::File "+> foo.txt"
+$fh = Win32API::File->new("+> foo.txt")
 	or die fileLastError();
 binmode $fh;
 print $fh "hello there\n";

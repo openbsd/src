@@ -7,8 +7,9 @@ use Config;
 require Exporter;
 our @ISA = qw(Exporter);
 
-our $Is_VMS   = $^O eq 'VMS';
-our $Is_MacOS = $^O eq 'MacOS';
+our $Is_VMS     = $^O eq 'VMS';
+our $Is_MacOS   = $^O eq 'MacOS';
+our $Is_FreeBSD = $^O eq 'freebsd';
 
 our @EXPORT = qw(which_perl perl_lib makefile_name makefile_backup
                  make make_run run make_macro calibrate_mtime
@@ -32,11 +33,20 @@ our @EXPORT = qw(which_perl perl_lib makefile_name makefile_backup
         MAKEFLAGS
     );
 
+    my %default_env_keys;
+
+    # Inform the BSDPAN hacks not to register modules installed for testing.
+    $default_env_keys{PORTOBJFORMAT} = 1 if $Is_FreeBSD;
+
     # Remember the ENV values because on VMS %ENV is global
     # to the user, not the process.
     my %restore_env_keys;
 
     sub clean_env {
+        for my $key (keys %default_env_keys) {
+            $ENV{$key} = $default_env_keys{$key} unless $ENV{$key};
+        }
+
         for my $key (@delete_env_keys) {
             if( exists $ENV{$key} ) {
                 $restore_env_keys{$key} = delete $ENV{$key};

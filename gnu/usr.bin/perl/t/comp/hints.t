@@ -6,7 +6,7 @@ BEGIN {
     @INC = qw(. ../lib);
 }
 
-BEGIN { print "1..24\n"; }
+BEGIN { print "1..31\n"; }
 BEGIN {
     print "not " if exists $^H{foo};
     print "ok 1 - \$^H{foo} doesn't exist initially\n";
@@ -62,10 +62,12 @@ BEGIN {
     }
     # op_entereval should keep the pragmas it was compiled with
     eval q*
+      BEGIN {
 	print "not " if $^H{foo} ne "a";
 	print "ok 13 - \$^H{foo} is 'a' at eval-\"\" time\n";
 	print "not " unless $^H & 0x00020000;
 	print "ok 14 - \$^H contains HINT_LOCALIZE_HH at eval\"\"-time\n";
+      }
     *;
 }
 BEGIN {
@@ -84,7 +86,9 @@ BEGIN {
     BEGIN{$^H{x}=1};
     for my $tno (15..16) {
         eval q(
-            print $^H{x}==1 && !$^H{y} ? "ok $tno\n" : "not ok $tno\n";
+            BEGIN {
+                print $^H{x}==1 && !$^H{y} ? "ok $tno\n" : "not ok $tno\n";
+            }
             $^H{y} = 1;
         );
         if ($@) {
@@ -124,6 +128,144 @@ BEGIN {
 	"ok 23 - \$^H{foo} correct after /unicode/i (res=$res)\n";
 }
 
+# [perl #106282] Crash when tying %^H
+# Tying %^H should not result in a crash when the hint hash is cloned.
+# Hints should also be copied properly to inner scopes.  See also
+# [rt.cpan.org #73402].
+eval q`
+    # Do something naughty enough, and you get your module mentioned in the
+    # test suite. :-)
+    package namespace::clean::_TieHintHash;
+
+    sub TIEHASH  { bless[] }
+    sub STORE    { $_[0][0]{$_[1]} = $_[2] }
+    sub FETCH    { $_[0][0]{$_[1]} }
+    sub FIRSTKEY { my $a = scalar keys %{$_[0][0]}; each %{$_[0][0]} }
+    sub NEXTKEY  { each %{$_[0][0]} }
+
+    package main;
+
+    BEGIN {
+	$^H{foo} = "bar"; # activate localisation magic
+	tie( %^H, 'namespace::clean::_TieHintHash' ); # sabotage %^H
+	$^H{foo} = "bar"; # create an element in the tied hash
+    }
+    { # clone the tied hint hash on scope entry
+	BEGIN {
+	    print "not " x ($^H{foo} ne 'bar'),
+		  "ok 24 - tied hint hash is copied to inner scope\n";
+	    %^H = ();
+	    tie( %^H, 'namespace::clean::_TieHintHash' );
+	    $^H{foo} = "bar";
+	}
+	{
+	    BEGIN{
+		print
+		  "not " x ($^H{foo} ne 'bar'),
+		  "ok 25 - tied empty hint hash is copied to inner scope\n"
+	    }    
+	}
+	1;
+    }
+    1;
+` or warn $@;
+print "ok 26 - no crash when cloning a tied hint hash\n";
+
+{
+    my $w;
+    local $SIG{__WARN__} = sub { $w = shift };
+    eval q`
+	package namespace::clean::_TieHintHasi;
+    
+	sub TIEHASH  { bless[] }
+	sub STORE    { $_[0][0]{$_[1]} = $_[2] }
+	sub FETCH    { $_[0][0]{$_[1]} }
+	sub FIRSTKEY { my $a = scalar keys %{$_[0][0]}; each %{$_[0][0]} }
+      # Intentionally commented out:
+      #  sub NEXTKEY  { each %{$_[0][0]} }
+    
+	package main;
+    
+	BEGIN {
+    	    $^H{foo} = "bar"; # activate localisation magic
+    	    tie( %^H, 'namespace::clean::_TieHintHasi' ); # sabotage %^H
+    	    $^H{foo} = "bar"; # create an element in the tied hash
+	}
+	{ ; } # clone the tied hint hash
+    `;
+    print "not " if $w;
+    print "ok 27 - double-freeing explosive tied hints hash\n";
+    print "# got: $w" if $w;
+}
+
+# Setting ${^WARNING_HINTS} to its own value should not change things.
+{
+    my $w;
+    local $SIG{__WARN__} = sub { $w++ };
+    BEGIN {
+	# should have no effect:
+	my $x = ${^WARNING_BITS};
+	${^WARNING_BITS} = $x;
+    }
+    {
+	local $^W = 1;
+	() = 1 + undef;
+    }
+    print "# ", $w//'no', " warnings\nnot " unless $w == 1;
+    print "ok 28 - ",
+          "setting \${^WARNING_BITS} to its own value has no effect\n";
+}
+
+# [perl #112326]
+# this code could cause a crash, due to PL_hints continuing to point to th
+# hints hash currently being freed
+
+{
+    package Foo;
+    my @h = qw(a 1 b 2);
+    BEGIN {
+	$^H{FOO} = bless {};
+    }
+    sub DESTROY {
+	@h = %^H;
+	delete $INC{strict}; require strict; # boom!
+    }
+    my $h = join ':', %h;
+    # this isn't the main point of the test; the main point is that
+    # it doesn't crash!
+    print "not " if $h ne '';
+    print "ok 29 - #112326\n";
+}
+
+
+# [perl #112444]
+# A destructor called while %^H is freed should not be able to stop %^H
+# from being magical (due to *^H{HASH} being undef).
+{
+    BEGIN {
+	# Make sure %^H is clear and not localised, to begin with
+	%^H = ();
+	$^H = 0;
+    }
+    DESTROY { %^H }
+    {
+	{
+	    BEGIN {
+		$^H{foom} = bless[];
+	    }
+	} # scope exit triggers destructor, which autovivifies a non-
+	  # magical %^H
+	BEGIN {
+	    # Here we have the %^H created by DESTROY, which is
+	    # not localised
+	    $^H{112444} = 'baz';
+	}
+    } # %^H leaks on scope exit
+    BEGIN { @keez = keys %^H }
+}
+print "not " if @keez;
+print "ok 30 - %^H does not leak when autovivified in destructor\n";
+print "# keys are: @keez\n" if @keez;
 
 
 # Add new tests above this require, in case it fails.
@@ -135,7 +277,7 @@ my $result = runperl(
     stderr => 1
 );
 print "not " if length $result;
-print "ok 24 - double-freeing hints hash\n";
+print "ok 31 - double-freeing hints hash\n";
 print "# got: $result\n" if length $result;
 
 __END__

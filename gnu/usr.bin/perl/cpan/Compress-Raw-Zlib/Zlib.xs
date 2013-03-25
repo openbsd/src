@@ -31,7 +31,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include <zlib.h> 
+#include "zlib.h" 
 
 /* zlib prior to 1.06 doesn't know about z_off_t */
 #ifndef z_off_t
@@ -44,6 +44,7 @@
 
 #if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1210
 #  define MAGIC_APPEND
+#  define AT_LEAST_ZLIB_1_2_1
 #endif
 
 #if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1221
@@ -60,6 +61,13 @@
 
 #if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1230
 #  define AT_LEAST_ZLIB_1_2_3
+#endif
+
+#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1252
+/* 
+    Use Z_SOLO to build source means need own malloc/free
+ */
+#  define AT_LEAST_ZLIB_1_2_5_2
 #endif
 
 #ifdef USE_PPPORT_H
@@ -482,6 +490,20 @@ DispStream(s, message)
     }
 }
 
+#ifdef AT_LEAST_ZLIB_1_2_5_2
+voidpf my_zcalloc (voidpf opaque, unsigned items, unsigned size)
+{
+    return safemalloc(items * size);
+}
+
+
+void my_zcfree (voidpf opaque, voidpf ptr)
+{
+    return safefree(ptr);
+}
+
+#endif
+
 static di_stream *
 #ifdef CAN_PROTOTYPE
 InitStream(void)
@@ -493,8 +515,12 @@ InitStream()
 
     ZMALLOC(s, di_stream) ;
 
+#ifdef AT_LEAST_ZLIB_1_2_5_2
+    s->stream.zalloc = my_zcalloc;
+    s->stream.zfree = my_zcfree;
+#endif
+
     return s ;
-    
 }
 
 static void
@@ -637,9 +663,18 @@ ZLIB_VERNUM()
         RETVAL  = (ZLIB_VERSION[0] - '0') << 12 ;
         RETVAL += (ZLIB_VERSION[2] - '0') <<  8 ;
         RETVAL += (ZLIB_VERSION[4] - '0') <<  4 ;
+        if (strlen(ZLIB_VERSION) > 5)
+            RETVAL += (ZLIB_VERSION[6] - '0')  ;
 #endif
     OUTPUT:
         RETVAL
+
+
+#ifndef AT_LEAST_ZLIB_1_2_1
+#define zlibCompileFlags() 0
+#endif
+uLong
+zlibCompileFlags()
 
 MODULE = Compress::Raw::Zlib	PACKAGE = Compress::Raw::Zlib	PREFIX = Zip_
 
@@ -669,13 +704,14 @@ Zip_adler32(buf, adler=adlerInitial)
     OUTPUT:
         RETVAL
  
-#define Zip_crc32(buf, crc) crc32(crc, buf, (uInt)len)
+#define Zip_crc32(buf, crc, offset) crc32(crc, buf+offset, (uInt)len-offset)
 
 uLong
-Zip_crc32(buf, crc=crcInitial)
+Zip_crc32(buf, crc=crcInitial, offset=0)
         uLong    crc = NO_INIT
         STRLEN   len = NO_INIT
         Bytef *  buf = NO_INIT
+        int      offset       
 	SV *	 sv = ST(0) ;
 	INIT:
     	/* If the buffer is a reference, dereference it */
@@ -692,8 +728,7 @@ Zip_crc32(buf, crc=crcInitial)
 	  crc = SvUV(ST(1)) ;
 	else
 	  crc = crcInitial;
-
-
+ 
 uLong
 crc32_combine(crc1, crc2, len2)
         uLong    crc1 
@@ -755,6 +790,9 @@ _deflateInit(flags,level, method, windowBits, memLevel, strategy, bufsize, dicti
 
         err = deflateInit2(&(s->stream), level, 
 			   method, windowBits, memLevel, strategy);
+
+        if (trace) 
+            warn(" _deflateInit2 returned %d\n", err);
 
 	/* Check if a dictionary has been specified */
 
@@ -1008,6 +1046,7 @@ flush(s, output, f=Z_FINISH)
     uInt	increment = NO_INIT
     uInt	prefix    = NO_INIT
     uLong     bufinc = NO_INIT
+    uLong     availableout = NO_INIT    
   CODE:
     bufinc = s->bufsize;
   
@@ -1057,8 +1096,8 @@ flush(s, output, f=Z_FINISH)
 #endif
 
     for (;;) {
-        if (s->stream.avail_out == 0) {
-	    /* consumed all the available output, so extend it */
+        if (s->stream.avail_out == 0) {        
+            /* consumed all the available output, so extend it */
             Sv_Grow(output, SvLEN(output) + bufinc) ;
             cur_length += increment ;
             s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length ;
@@ -1066,8 +1105,15 @@ flush(s, output, f=Z_FINISH)
             s->stream.avail_out = increment;
             bufinc *= 2 ;
         }
+        
+        availableout = s->stream.avail_out ;
+        
         RETVAL = deflate(&(s->stream), f);
     
+        /* Ignore the second of two consecutive flushes: */
+        if (availableout == s->stream.avail_out && RETVAL == Z_BUF_ERROR) 
+            RETVAL = Z_OK; 
+        
         /* deflate has finished flushing only when it hasn't used up
          * all the available space in the output buffer: 
          */

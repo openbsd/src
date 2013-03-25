@@ -1,37 +1,15 @@
 package File::Glob;
 
 use strict;
-our($VERSION, @ISA, @EXPORT_OK, @EXPORT_FAIL, %EXPORT_TAGS,
-    $AUTOLOAD, $DEFAULT_FLAGS);
+our($VERSION, @ISA, @EXPORT_OK, @EXPORT_FAIL, %EXPORT_TAGS, $DEFAULT_FLAGS);
 
-use XSLoader ();
+require XSLoader;
+use feature 'switch';
 
 @ISA = qw(Exporter);
 
 # NOTE: The glob() export is only here for compatibility with 5.6.0.
 # csh_glob() should not be used directly, unless you know what you're doing.
-
-@EXPORT_OK   = qw(
-    csh_glob
-    bsd_glob
-    glob
-    GLOB_ABEND
-    GLOB_ALPHASORT
-    GLOB_ALTDIRFUNC
-    GLOB_BRACE
-    GLOB_CSH
-    GLOB_ERR
-    GLOB_ERROR
-    GLOB_LIMIT
-    GLOB_MARK
-    GLOB_NOCASE
-    GLOB_NOCHECK
-    GLOB_NOMAGIC
-    GLOB_NOSORT
-    GLOB_NOSPACE
-    GLOB_QUOTE
-    GLOB_TILDE
-);
 
 %EXPORT_TAGS = (
     'glob' => [ qw(
@@ -51,75 +29,43 @@ use XSLoader ();
         GLOB_NOSPACE
         GLOB_QUOTE
         GLOB_TILDE
-        glob
         bsd_glob
+        glob
     ) ],
 );
+$EXPORT_TAGS{bsd_glob} = [@{$EXPORT_TAGS{glob}}];
+pop @{$EXPORT_TAGS{bsd_glob}}; # no "glob"
 
-$VERSION = '1.07';
+@EXPORT_OK   = (@{$EXPORT_TAGS{'glob'}}, 'csh_glob');
+
+$VERSION = '1.17';
 
 sub import {
     require Exporter;
-    my $i = 1;
-    while ($i < @_) {
-	if ($_[$i] =~ /^:(case|nocase|globally)$/) {
-	    splice(@_, $i, 1);
-	    $DEFAULT_FLAGS &= ~GLOB_NOCASE() if $1 eq 'case';
-	    $DEFAULT_FLAGS |= GLOB_NOCASE() if $1 eq 'nocase';
-	    if ($1 eq 'globally') {
-		local $^W;
+    local $Exporter::ExportLevel = $Exporter::ExportLevel + 1;
+    Exporter::import(grep {
+	my $passthrough;
+	given ($_) {
+	    $DEFAULT_FLAGS &= ~GLOB_NOCASE() when ':case';
+	    $DEFAULT_FLAGS |= GLOB_NOCASE() when ':nocase';
+	    when (':globally') {
+		no warnings 'redefine';
 		*CORE::GLOBAL::glob = \&File::Glob::csh_glob;
 	    }
-	    next;
+	    if ($_ eq ':bsd_glob') {
+		no strict; *{caller."::glob"} = \&bsd_glob_override;
+	    }
+	    $passthrough = 1;
 	}
-	++$i;
-    }
-    goto &Exporter::import;
+	$passthrough;
+    } @_);
 }
 
-sub AUTOLOAD {
-    # This AUTOLOAD is used to 'autoload' constants from the constant()
-    # XS function.  If a constant is not found then control is passed
-    # to the AUTOLOAD in AutoLoader.
-
-    my $constname;
-    ($constname = $AUTOLOAD) =~ s/.*:://;
-    my ($error, $val) = constant($constname);
-    if ($error) {
-	require Carp;
-	Carp::croak($error);
-    }
-    eval "sub $AUTOLOAD { $val }";
-    goto &$AUTOLOAD;
-}
-
-XSLoader::load 'File::Glob', $VERSION;
-
-# Preloaded methods go here.
-
-sub GLOB_ERROR {
-    return (constant('GLOB_ERROR'))[1];
-}
-
-sub GLOB_CSH () {
-    GLOB_BRACE()
-	| GLOB_NOMAGIC()
-	| GLOB_QUOTE()
-	| GLOB_TILDE()
-	| GLOB_ALPHASORT()
-}
+XSLoader::load();
 
 $DEFAULT_FLAGS = GLOB_CSH();
-if ($^O =~ /^(?:MSWin32|VMS|os2|dos|riscos|MacOS)$/) {
+if ($^O =~ /^(?:MSWin32|VMS|os2|dos|riscos)$/) {
     $DEFAULT_FLAGS |= GLOB_NOCASE();
-}
-
-# Autoload methods go after =cut, and are processed by the autosplit program.
-
-sub bsd_glob {
-    my ($pat,$flags) = @_;
-    $flags = $DEFAULT_FLAGS if @_ < 2;
-    return doglob($pat,$flags);
 }
 
 # File::Glob::glob() is deprecated because its prototype is different from
@@ -127,62 +73,6 @@ sub bsd_glob {
 sub glob {
     splice @_, 1; # don't pass PL_glob_index as flags!
     goto &bsd_glob;
-}
-
-## borrowed heavily from gsar's File::DosGlob
-my %iter;
-my %entries;
-
-sub csh_glob {
-    my $pat = shift;
-    my $cxix = shift;
-    my @pat;
-
-    # glob without args defaults to $_
-    $pat = $_ unless defined $pat;
-
-    # extract patterns
-    $pat =~ s/^\s+//;	# Protect against empty elements in
-    $pat =~ s/\s+$//;	# things like < *.c> and <*.c >.
-			# These alone shouldn't trigger ParseWords.
-    if ($pat =~ /\s/) {
-        # XXX this is needed for compatibility with the csh
-	# implementation in Perl.  Need to support a flag
-	# to disable this behavior.
-	require Text::ParseWords;
-	@pat = Text::ParseWords::parse_line('\s+',0,$pat);
-    }
-
-    # assume global context if not provided one
-    $cxix = '_G_' unless defined $cxix;
-    $iter{$cxix} = 0 unless exists $iter{$cxix};
-
-    # if we're just beginning, do it all first
-    if ($iter{$cxix} == 0) {
-	if (@pat) {
-	    $entries{$cxix} = [ map { doglob($_, $DEFAULT_FLAGS) } @pat ];
-	}
-	else {
-	    $entries{$cxix} = [ doglob($pat, $DEFAULT_FLAGS) ];
-	}
-    }
-
-    # chuck it all out, quick or slow
-    if (wantarray) {
-        delete $iter{$cxix};
-        return @{delete $entries{$cxix}};
-    }
-    else {
-        if ($iter{$cxix} = scalar @{$entries{$cxix}}) {
-            return shift @{$entries{$cxix}};
-        }
-        else {
-            # return undef for EOL
-            delete $iter{$cxix};
-            delete $entries{$cxix};
-            return undef;
-        }
-    }
 }
 
 1;
@@ -194,7 +84,7 @@ File::Glob - Perl extension for BSD glob routine
 
 =head1 SYNOPSIS
 
-  use File::Glob ':glob';
+  use File::Glob ':bsd_glob';
 
   @list = bsd_glob('*.[ch]');
   $homedir = bsd_glob('~gnat', GLOB_TILDE | GLOB_ERR);
@@ -237,7 +127,8 @@ Since v5.6.0, Perl's CORE::glob() is implemented in terms of bsd_glob().
 Note that they don't share the same prototype--CORE::glob() only accepts
 a single argument.  Due to historical reasons, CORE::glob() will also
 split its argument on whitespace, treating it as multiple patterns,
-whereas bsd_glob() considers them as one pattern.
+whereas bsd_glob() considers them as one pattern.  But see C<:bsd_glob>
+under L</EXPORTS>, below.
 
 =head2 META CHARACTERS
 
@@ -250,8 +141,54 @@ whereas bsd_glob() considers them as one pattern.
 
 The metanotation C<a{b,c,d}e> is a shorthand for C<abe ace ade>.  Left to
 right order is preserved, with results of matches being sorted separately
-at a low level to preserve this order. As a special case C<{>, C<}>, and
+at a low level to preserve this order.  As a special case C<{>, C<}>, and
 C<{}> are passed undisturbed.
+
+=head2 EXPORTS
+
+See also the L</POSIX FLAGS> below, which can be exported individually.
+
+=head3 C<:bsd_glob>
+
+The C<:bsd_glob> export tag exports bsd_glob() and the constants listed
+below.  It also overrides glob() in the calling package with one that
+behaves like bsd_glob() with regard to spaces (the space is treated as part
+of a file name), but supports iteration in scalar context; i.e., it
+preserves the core function's feature of returning the next item each time
+it is called.
+
+=head3 C<:glob>
+
+The C<:glob> tag, now discouraged, is the old version of C<:bsd_glob>.  It
+exports the same constants and functions, but its glob() override does not
+support iteration; it returns the last file name in scalar context.  That
+means this will loop forever:
+
+    use File::Glob ':glob';
+    while (my $file = <* copy.txt>) {
+	...
+    }
+
+=head3 C<bsd_glob>
+
+This function, which is included in the two export tags listed above,
+takes one or two arguments.  The first is the glob pattern.  The second is
+a set of flags ORed together.  The available flags are listed below under
+L</POSIX FLAGS>.  If the second argument is omitted, C<GLOB_CSH> (or
+C<GLOB_CSH|GLOB_NOCASE> on VMS and DOSish systems) is used by default.
+
+=head3 C<:nocase> and C<:case>
+
+These two export tags globally modify the default flags that bsd_glob()
+and, except on VMS, Perl's built-in C<glob> operator use.  C<GLOB_NOCASE>
+is turned on or off, respectively.
+
+=head3 C<csh_glob>
+
+The csh_glob() function can also be exported, but you should not use it
+directly unless you really know what you are doing.  It splits the pattern
+into words and feeds each one to bsd_glob().  Perl's own glob() function
+uses this internally.
 
 =head2 POSIX FLAGS
 
@@ -393,10 +330,10 @@ Remember that you can use a backslash to escape things.
 
 On DOSISH systems, backslash is a valid directory separator character.
 In this case, use of backslash as a quoting character (via GLOB_QUOTE)
-interferes with the use of backslash as a directory separator. The
+interferes with the use of backslash as a directory separator.  The
 best (simplest, most portable) solution is to use forward slashes for
-directory separators, and backslashes for quoting. However, this does
-not match "normal practice" on these systems. As a concession to user
+directory separators, and backslashes for quoting.  However, this does
+not match "normal practice" on these systems.  As a concession to user
 expectation, therefore, backslashes (under GLOB_QUOTE) only quote the
 glob metacharacters '[', ']', '{', '}', '-', '~', and backslash itself.
 All other backslashes are passed through unchanged.
@@ -406,46 +343,6 @@ All other backslashes are passed through unchanged.
 Win32 users should use the real slash.  If you really want to use
 backslashes, consider using Sarathy's File::DosGlob, which comes with
 the standard Perl distribution.
-
-=item *
-
-Mac OS (Classic) users should note a few differences. Since
-Mac OS is not Unix, when the glob code encounters a tilde glob (e.g.
-~user) and the C<GLOB_TILDE> flag is used, it simply returns that
-pattern without doing any expansion.
-
-Glob on Mac OS is case-insensitive by default (if you don't use any
-flags). If you specify any flags at all and still want glob
-to be case-insensitive, you must include C<GLOB_NOCASE> in the flags.
-
-The path separator is ':' (aka colon), not '/' (aka slash). Mac OS users
-should be careful about specifying relative pathnames. While a full path
-always begins with a volume name, a relative pathname should always
-begin with a ':'.  If specifying a volume name only, a trailing ':' is
-required.
-
-The specification of pathnames in glob patterns adheres to the usual Mac
-OS conventions: The path separator is a colon ':', not a slash '/'. A
-full path always begins with a volume name. A relative pathname on Mac
-OS must always begin with a ':', except when specifying a file or
-directory name in the current working directory, where the leading colon
-is optional. If specifying a volume name only, a trailing ':' is
-required. Due to these rules, a glob like E<lt>*:E<gt> will find all
-mounted volumes, while a glob like E<lt>*E<gt> or E<lt>:*E<gt> will find
-all files and directories in the current directory.
-
-Note that updirs in the glob pattern are resolved before the matching begins,
-i.e. a pattern like "*HD:t?p::a*" will be matched as "*HD:a*". Note also,
-that a single trailing ':' in the pattern is ignored (unless it's a volume
-name pattern like "*HD:"), i.e. a glob like E<lt>:*:E<gt> will find both
-directories I<and> files (and not, as one might expect, only directories).
-You can, however, use the C<GLOB_MARK> flag to distinguish (without a file
-test) directory names from file names.
-
-If the C<GLOB_MARK> flag is set, all directory paths will have a ':' appended.
-Since a directory like 'lib:' is I<not> a valid I<relative> path on Mac OS,
-both a leading and a trailing colon will be added, when the directory name in
-question doesn't contain any colons (e.g. 'lib' becomes ':lib:').
 
 =back
 
@@ -481,7 +378,7 @@ following copyright:
        may be used to endorse or promote products derived from this software
        without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+    THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS "AS IS" AND
     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
     IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
     ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE

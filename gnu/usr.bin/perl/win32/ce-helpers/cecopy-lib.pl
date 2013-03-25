@@ -40,6 +40,7 @@ sub BEGIN {
     bytes.pm
     Carp.pm
     charnames.pm
+    _charnames.pm
     Config.pm
     constant.pm
     Cwd.pm

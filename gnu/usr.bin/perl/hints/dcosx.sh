@@ -177,7 +177,7 @@ esac
 rm -f core
 
 # DC/OSx hides certain functions in a libc that looks dynamic but isn't
-# because of this we reinclude -lc when building dynamic extenstions
+# because of this we reinclude -lc when building dynamic extensions
 libc='/usr/ccs/lib/libc.so'
 lddlflags='-G -lc'
 

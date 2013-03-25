@@ -9,7 +9,7 @@ require ExtUtils::Constant::XS;
 use ExtUtils::Constant::Utils qw(C_stringify);
 use ExtUtils::Constant::XS qw(%XS_TypeSet);
 
-$VERSION = '0.06';
+$VERSION = '0.08';
 @ISA = 'ExtUtils::Constant::XS';
 
 %type_to_struct =
@@ -123,7 +123,7 @@ sub partition_names {
 }
 
 sub boottime_iterator {
-    my ($self, $type, $iterator, $hash, $subname) = @_;
+    my ($self, $type, $iterator, $hash, $subname, $push) = @_;
     my $extractor = $type_from_struct{$type};
     die "Can't find extractor code for type $type"
 	unless defined $extractor;
@@ -133,13 +133,24 @@ sub boottime_iterator {
 
     my $athx = $self->C_constant_prefix_param();
 
-    return sprintf <<"EOBOOT", &$generator(&$extractor($iterator));
+    if ($push) {
+	return sprintf <<"EOBOOT", &$generator(&$extractor($iterator));
+        while ($iterator->name) {
+	    he = $subname($athx $hash, $iterator->name,
+				     $iterator->namelen, %s);
+	    av_push(push, newSVhek(HeKEY_hek(he)));
+            ++$iterator;
+	}
+EOBOOT
+    } else {
+	return sprintf <<"EOBOOT", &$generator(&$extractor($iterator));
         while ($iterator->name) {
 	    $subname($athx $hash, $iterator->name,
 				$iterator->namelen, %s);
-	    ++$iterator;
+            ++$iterator;
 	}
 EOBOOT
+    }
 }
 
 sub name_len_value_macro {
@@ -164,14 +175,39 @@ sub WriteConstants {
     my $self = shift;
     my $ARGS = {@_};
 
-    my ($c_fh, $xs_fh, $c_subname, $xs_subname, $default_type, $package)
-	= @{$ARGS}{qw(C_FH XS_FH C_SUBNAME XS_SUBNAME DEFAULT_TYPE NAME)};
+    my ($c_fh, $xs_fh, $c_subname, $default_type, $package)
+	= @{$ARGS}{qw(C_FH XS_FH C_SUBNAME DEFAULT_TYPE NAME)};
+
+    my $xs_subname
+	= exists $ARGS->{XS_SUBNAME} ? $ARGS->{XS_SUBNAME} : 'constant';
 
     my $options = $ARGS->{PROXYSUBS};
     $options = {} unless ref $options;
+    my $push = $options->{push};
     my $explosives = $options->{croak_on_read};
+    my $croak_on_error = $options->{croak_on_error};
+    my $autoload = $options->{autoload};
+    {
+	my $exclusive = 0;
+	++$exclusive if $explosives;
+	++$exclusive if $croak_on_error;
+	++$exclusive if $autoload;
 
-    $xs_subname ||= 'constant';
+	# Until someone patches this (with test cases):
+	carp ("PROXYSUBS options 'autoload', 'croak_on_read' and 'croak_on_error' cannot be used together")
+	    if $exclusive > 1;
+    }
+    # Strictly it requires Perl_caller_cx
+    carp ("PROXYSUBS option 'croak_on_error' requires v5.13.5 or later")
+	if $croak_on_error && $^V < v5.13.5;
+    # Strictly this is actually 5.8.9, but it's not well tested there
+    my $can_do_pcs = $] >= 5.009;
+    # Until someone patches this (with test cases)
+    carp ("PROXYSUBS option 'push' requires v5.10 or later")
+	if $push && !$can_do_pcs;
+    # Until someone patches this (with test cases)
+    carp ("PROXYSUBS options 'push' and 'croak_on_read' cannot be used together")
+	if $explosives && $push;
 
     # If anyone is insane enough to suggest a package name containing %
     my $package_sprintf_safe = $package;
@@ -196,12 +232,29 @@ sub WriteConstants {
     my $pthx = $self->C_constant_prefix_param_defintion();
     my $athx = $self->C_constant_prefix_param();
     my $symbol_table = C_stringify($package) . '::';
-
-    my $can_do_pcs = $] >= 5.009;
+    $push = C_stringify($package . '::' . $push) if $push;
     my $cast_CONSTSUB = $] < 5.010 ? '(char *)' : '';
 
-    print $c_fh $self->header(), <<"EOADD";
-static void
+    print $c_fh $self->header();
+    if ($autoload || $croak_on_error) {
+	print $c_fh <<'EOC';
+
+/* This allows slightly more efficient code on !USE_ITHREADS: */
+#ifdef USE_ITHREADS
+#  define COP_FILE(c)	CopFILE(c)
+#  define COP_FILE_F	"s"
+#else
+#  define COP_FILE(c)	CopFILESV(c)
+#  define COP_FILE_F	SVf
+#endif
+EOC
+    }
+
+    my $return_type = $push ? 'HE *' : 'void';
+
+    print $c_fh <<"EOADD";
+
+static $return_type
 ${c_subname}_add_symbol($pthx HV *hash, const char *name, I32 namelen, SV *value) {
 EOADD
     if (!$can_do_pcs) {
@@ -210,12 +263,16 @@ EOADD
 EO_NOPCS
     } else {
 	print $c_fh <<"EO_PCS";
-    SV **sv = hv_fetch(hash, name, namelen, TRUE);
-    if (!sv) {
+    HE *he = (HE*) hv_common_key_len(hash, name, namelen, HV_FETCH_LVALUE, NULL,
+				     0);
+    SV *sv;
+
+    if (!he) {
         Perl_croak($athx "Couldn't add key '%s' to %%$package_sprintf_safe\::",
 		   name);
     }
-    if (SvOK(*sv) || SvTYPE(*sv) == SVt_PVGV) {
+    sv = HeVAL(he);
+    if (SvOK(sv) || SvTYPE(sv) == SVt_PVGV) {
 	/* Someone has been here before us - have to make a real sub.  */
 EO_PCS
     }
@@ -226,9 +283,9 @@ EOADD
     if ($can_do_pcs) {
 	print $c_fh <<'EO_PCS';
     } else {
-	SvUPGRADE(*sv, SVt_RV);
-	SvRV_set(*sv, value);
-	SvROK_on(*sv);
+	SvUPGRADE(sv, SVt_RV);
+	SvRV_set(sv, value);
+	SvROK_on(sv);
 	SvREADONLY_on(value);
     }
 EO_PCS
@@ -237,6 +294,7 @@ EO_PCS
     }
 EO_NOPCS
     }
+    print $c_fh "    return he;\n" if $push;
     print $c_fh <<'EOADD';
 }
 
@@ -319,10 +377,13 @@ BOOT:
     dTHX;
 #endif
     HV *symbol_table = get_hv("$symbol_table", GV_ADD);
-#ifndef SYMBIAN
-    HV *${c_subname}_missing;
-#endif
 EOBOOT
+    if ($push) {
+	print $xs_fh <<"EOC";
+    AV *push = get_av(\"$push\", GV_ADD);
+    HE *he;
+EOC
+    }
 
     my %iterator;
 
@@ -336,11 +397,17 @@ EOBOOT
 	die "Can't find structure definition for type $type"
 	    unless defined $struct;
 
-	my $struct_type = $type ? lc($type) . '_s' : 'notfound_s';
+	my $lc_type = $type ? lc($type) : 'notfound';
+	my $struct_type = $lc_type . '_s';
+	my $array_name = 'values_for_' . $lc_type;
+	$iterator{$type} = 'value_for_' . $lc_type;
+	# Give the notfound struct file scope. The others are scoped within the
+	# BOOT block
+	my $struct_fh = $type ? $xs_fh : $c_fh;
+
 	print $c_fh "struct $struct_type $struct;\n";
 
-	my $array_name = 'values_for_' . ($type ? lc $type : 'notfound');
-	print $xs_fh <<"EOBOOT";
+	print $struct_fh <<"EOBOOT";
 
     static const struct $struct_type $array_name\[] =
       {
@@ -356,105 +423,114 @@ EOBOOT
 		carp("Attempting to supply a default for '$name' which has no conditional macro");
 		next;
 	    }
-	    print $xs_fh $ifdef;
 	    if ($item->{invert_macro}) {
-		print $xs_fh
-		    "        /* This is the default value: */\n" if $type;
-		print $xs_fh "#else\n";
+		print $struct_fh $self->macro_to_ifndef($macro);
+		print $struct_fh
+			"        /* This is the default value: */\n" if $type;
+	    } else {
+		print $struct_fh $ifdef;
 	    }
-	    print $xs_fh "        { ", join (', ', "\"$name\"", $namelen,
-					     &$type_to_value($value)), " },\n",
+	    print $struct_fh "        { ", join (', ', "\"$name\"", $namelen,
+						 &$type_to_value($value)),
+						 " },\n",
 						 $self->macro_to_endif($macro);
 	}
 
-
     # Terminate the list with a NULL
-	print $xs_fh "        { NULL, 0", (", 0" x $number_of_args), " } };\n";
+	print $struct_fh "        { NULL, 0", (", 0" x $number_of_args), " } };\n";
 
-	$iterator{$type} = "value_for_" . ($type ? lc $type : 'notfound');
-
-	print $xs_fh <<"EOBOOT";
+	print $xs_fh <<"EOBOOT" if $type;
 	const struct $struct_type *$iterator{$type} = $array_name;
 EOBOOT
     }
 
     delete $found->{''};
 
-    print $xs_fh <<"EOBOOT";
-#ifndef SYMBIAN
-	${c_subname}_missing = get_missing_hash(aTHX);
-#endif
-EOBOOT
-
     my $add_symbol_subname = $c_subname . '_add_symbol';
     foreach my $type (sort keys %$found) {
 	print $xs_fh $self->boottime_iterator($type, $iterator{$type}, 
 					      'symbol_table',
-					      $add_symbol_subname);
+					      $add_symbol_subname, $push);
     }
 
     print $xs_fh <<"EOBOOT";
-	while (value_for_notfound->name) {
+	if (C_ARRAY_LENGTH(values_for_notfound) > 1) {
+#ifndef SYMBIAN
+	    HV *const ${c_subname}_missing = get_missing_hash(aTHX);
+#endif
+	    const struct notfound_s *value_for_notfound = values_for_notfound;
+	    do {
 EOBOOT
 
     print $xs_fh $explosives ? <<"EXPLODE" : << "DONT";
-	    SV *tripwire = newSV(0);
-	    
-	    sv_magicext(tripwire, 0, PERL_MAGIC_ext, &not_defined_vtbl, 0, 0);
-	    SvPV_set(tripwire, (char *)value_for_notfound->name);
-	    if(value_for_notfound->namelen >= 0) {
-		SvCUR_set(tripwire, value_for_notfound->namelen);
-	    } else {
-		SvCUR_set(tripwire, -value_for_notfound->namelen);
-		SvUTF8_on(tripwire);
-	    }
-	    SvPOKp_on(tripwire);
-	    SvREADONLY_on(tripwire);
-	    assert(SvLEN(tripwire) == 0);
+		SV *tripwire = newSV(0);
+		
+		sv_magicext(tripwire, 0, PERL_MAGIC_ext, &not_defined_vtbl, 0, 0);
+		SvPV_set(tripwire, (char *)value_for_notfound->name);
+		if(value_for_notfound->namelen >= 0) {
+		    SvCUR_set(tripwire, value_for_notfound->namelen);
+	    	} else {
+		    SvCUR_set(tripwire, -value_for_notfound->namelen);
+		    SvUTF8_on(tripwire);
+		}
+		SvPOKp_on(tripwire);
+		SvREADONLY_on(tripwire);
+		assert(SvLEN(tripwire) == 0);
 
-	    $add_symbol_subname($athx symbol_table, value_for_notfound->name,
-				value_for_notfound->namelen, tripwire);
+		$add_symbol_subname($athx symbol_table, value_for_notfound->name,
+				    value_for_notfound->namelen, tripwire);
 EXPLODE
 
-	    /* Need to add prototypes, else parsing will vary by platform.  */
-	    SV **sv = hv_fetch(symbol_table, value_for_notfound->name,
-			       value_for_notfound->namelen, TRUE);
-	    if (!sv) {
-		Perl_croak($athx
-			   "Couldn't add key '%s' to %%$package_sprintf_safe\::",
-			   value_for_notfound->name);
-	    }
-	    if (!SvOK(*sv) && SvTYPE(*sv) != SVt_PVGV) {
-		/* Nothing was here before, so mark a prototype of ""  */
-		sv_setpvn(*sv, "", 0);
-	    } else if (SvPOK(*sv) && SvCUR(*sv) == 0) {
-		/* There is already a prototype of "" - do nothing  */
-	    } else {
-		/* Someone has been here before us - have to make a real
-		   typeglob.  */
-		/* It turns out to be incredibly hard to deal with all the
-		   corner cases of sub foo (); and reporting errors correctly,
-		   so lets cheat a bit.  Start with a constant subroutine  */
-		CV *cv = newCONSTSUB(symbol_table,
-				     ${cast_CONSTSUB}value_for_notfound->name,
-				     &PL_sv_yes);
-		/* and then turn it into a non constant declaration only.  */
-		SvREFCNT_dec(CvXSUBANY(cv).any_ptr);
-		CvCONST_off(cv);
-		CvXSUB(cv) = NULL;
-		CvXSUBANY(cv).any_ptr = NULL;
-	    }
+		/* Need to add prototypes, else parsing will vary by platform.  */
+		HE *he = (HE*) hv_common_key_len(symbol_table,
+						 value_for_notfound->name,
+						 value_for_notfound->namelen,
+						 HV_FETCH_LVALUE, NULL, 0);
+		SV *sv;
 #ifndef SYMBIAN
-	    if (!hv_store(${c_subname}_missing, value_for_notfound->name,
-			  value_for_notfound->namelen, &PL_sv_yes, 0))
-		Perl_croak($athx "Couldn't add key '%s' to missing_hash",
-			   value_for_notfound->name);
+		HEK *hek;
+#endif
+		if (!he) {
+		    Perl_croak($athx
+			       "Couldn't add key '%s' to %%$package_sprintf_safe\::",
+			       value_for_notfound->name);
+		}
+		sv = HeVAL(he);
+		if (!SvOK(sv) && SvTYPE(sv) != SVt_PVGV) {
+		    /* Nothing was here before, so mark a prototype of ""  */
+		    sv_setpvn(sv, "", 0);
+		} else if (SvPOK(sv) && SvCUR(sv) == 0) {
+		    /* There is already a prototype of "" - do nothing  */
+		} else {
+		    /* Someone has been here before us - have to make a real
+		       typeglob.  */
+		    /* It turns out to be incredibly hard to deal with all the
+		       corner cases of sub foo (); and reporting errors correctly,
+		       so lets cheat a bit.  Start with a constant subroutine  */
+		    CV *cv = newCONSTSUB(symbol_table,
+					 ${cast_CONSTSUB}value_for_notfound->name,
+					 &PL_sv_yes);
+		    /* and then turn it into a non constant declaration only.  */
+		    SvREFCNT_dec(CvXSUBANY(cv).any_ptr);
+		    CvCONST_off(cv);
+		    CvXSUB(cv) = NULL;
+		    CvXSUBANY(cv).any_ptr = NULL;
+		}
+#ifndef SYMBIAN
+		hek = HeKEY_hek(he);
+		if (!hv_common(${c_subname}_missing, NULL, HEK_KEY(hek),
+ 			       HEK_LEN(hek), HEK_FLAGS(hek), HV_FETCH_ISSTORE,
+			       &PL_sv_yes, HEK_HASH(hek)))
+		    Perl_croak($athx "Couldn't add key '%s' to missing_hash",
+			       value_for_notfound->name);
 #endif
 DONT
 
-    print $xs_fh <<"EOBOOT";
+    print $xs_fh "		av_push(push, newSVhek(hek));\n"
+	if $push;
 
-	    ++value_for_notfound;
+    print $xs_fh <<"EOBOOT";
+	    } while ((++value_for_notfound)->name);
 	}
 EOBOOT
 
@@ -502,14 +578,69 @@ EOBOOT
         print $xs_fh $self->macro_to_endif($macro);
     }
 
-    print $xs_fh <<EOBOOT;
+    if ($] >= 5.009) {
+	print $xs_fh <<EOBOOT;
+    /* As we've been creating subroutines, we better invalidate any cached
+       methods  */
+    mro_method_changed_in(symbol_table);
+  }
+EOBOOT
+    } else {
+	print $xs_fh <<EOBOOT;
     /* As we've been creating subroutines, we better invalidate any cached
        methods  */
     ++PL_sub_generation;
   }
 EOBOOT
+    }
 
-    print $xs_fh $explosives ? <<"EXPLODE" : <<"DONT";
+    return if !defined $xs_subname;
+
+    if ($croak_on_error || $autoload) {
+        print $xs_fh $croak_on_error ? <<"EOC" : <<'EOA';
+
+void
+$xs_subname(sv)
+    INPUT:
+	SV *		sv;
+    PREINIT:
+	const PERL_CONTEXT *cx = caller_cx(0, NULL);
+	/* cx is NULL if we've been called from the top level. PL_curcop isn't
+	   ideal, but it's much cheaper than other ways of not going SEGV.  */
+	const COP *cop = cx ? cx->blk_oldcop : PL_curcop;
+EOC
+
+void
+AUTOLOAD()
+    PROTOTYPE: DISABLE
+    PREINIT:
+	SV *sv = newSVpvn_flags(SvPVX(cv), SvCUR(cv), SVs_TEMP | SvUTF8(cv));
+	const COP *cop = PL_curcop;
+EOA
+        print $xs_fh <<"EOC";
+    PPCODE:
+#ifndef SYMBIAN
+	/* It's not obvious how to calculate this at C pre-processor time.
+	   However, any compiler optimiser worth its salt should be able to
+	   remove the dead code, and hopefully the now-obviously-unused static
+	   function too.  */
+	HV *${c_subname}_missing = (C_ARRAY_LENGTH(values_for_notfound) > 1)
+	    ? get_missing_hash(aTHX) : NULL;
+	if ((C_ARRAY_LENGTH(values_for_notfound) > 1)
+	    ? hv_exists_ent(${c_subname}_missing, sv, 0) : 0) {
+	    sv = newSVpvf("Your vendor has not defined $package_sprintf_safe macro %" SVf
+			  ", used at %" COP_FILE_F " line %d\\n", sv,
+			  COP_FILE(cop), CopLINE(cop));
+	} else
+#endif
+	{
+	    sv = newSVpvf("%"SVf" is not a valid $package_sprintf_safe macro at %"
+			  COP_FILE_F " line %d\\n", sv, COP_FILE(cop), CopLINE(cop));
+	}
+	croak_sv(sv_2mortal(sv));
+EOC
+    } else {
+        print $xs_fh $explosives ? <<"EXPLODE" : <<"DONT";
 
 void
 $xs_subname(sv)
@@ -523,27 +654,29 @@ EXPLODE
 
 void
 $xs_subname(sv)
-    PREINIT:
-	STRLEN		len;
     INPUT:
 	SV *		sv;
-        const char *	s = SvPV(sv, len);
     PPCODE:
-#ifdef SYMBIAN
-	sv = newSVpvf("%"SVf" is not a valid $package_sprintf_safe macro", sv);
-#else
-	HV *${c_subname}_missing = get_missing_hash(aTHX);
-	if (hv_exists(${c_subname}_missing, s, SvUTF8(sv) ? -(I32)len : (I32)len)) {
+#ifndef SYMBIAN
+	/* It's not obvious how to calculate this at C pre-processor time.
+	   However, any compiler optimiser worth its salt should be able to
+	   remove the dead code, and hopefully the now-obviously-unused static
+	   function too.  */
+	HV *${c_subname}_missing = (C_ARRAY_LENGTH(values_for_notfound) > 1)
+	    ? get_missing_hash(aTHX) : NULL;
+	if ((C_ARRAY_LENGTH(values_for_notfound) > 1)
+	    ? hv_exists_ent(${c_subname}_missing, sv, 0) : 0) {
 	    sv = newSVpvf("Your vendor has not defined $package_sprintf_safe macro %" SVf
 			  ", used", sv);
-	} else {
+	} else
+#endif
+	{
 	    sv = newSVpvf("%"SVf" is not a valid $package_sprintf_safe macro",
 			  sv);
 	}
-#endif
 	PUSHs(sv_2mortal(sv));
 DONT
-
+    }
 }
 
 1;

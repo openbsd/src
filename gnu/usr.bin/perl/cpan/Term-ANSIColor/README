@@ -1,10 +1,10 @@
-                       Term::ANSIColor version 2.02
+                       Term::ANSIColor version 3.01
               (A simple ANSI text attribute control module)
 
-  Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2007, 2009
-  Russ Allbery <rra@stanford.edu> and Zenin.  This program is free
-  software; you may redistribute it and/or modify it under the same terms
-  as Perl itself.
+  Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2007, 2009,
+  2010, 2011 Russ Allbery <rra@stanford.edu> and Zenin.  This program is
+  free software; you may redistribute it and/or modify it under the same
+  terms as Perl itself.
 
   I welcome bug reports and patches for this package at rra@stanford.edu.
   However, please be aware that I tend to be extremely busy and to get a
@@ -151,5 +151,12 @@ THANKS
   To Tim Bellinghausen for the AUTOLOAD taint fix for Perl 5.10.
 
   To Paul Miller for the idea and initial implementation of colorstrip.
+
+  To Jakob Ilves for sixteen-color support and the initial documentation
+  of bright color issues.
+
+  To Revilo Reegiles for reporting problems with the colored function and
+  non-array references with stringification defined, and providing a test
+  case.
 
   To Larry Wall, as always, for Perl.

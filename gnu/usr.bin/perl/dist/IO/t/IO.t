@@ -21,8 +21,10 @@ plan(tests => 18);
 
 	my @load;
 	local $^W;
+	my $xsl = \&XSLoader::load;
 	local *XSLoader::load = sub {
 		push @load, \@_;
+		&$xsl(@_);
 	};
 
 	# use_ok() calls import, which we do not want to do

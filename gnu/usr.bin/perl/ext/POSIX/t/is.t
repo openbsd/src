@@ -1,15 +1,16 @@
 #!./perl -w
 
+use strict;
+use Test::More;
+use Config;
+
 BEGIN {
-    require Config; import Config;
-    if ($^O ne 'VMS' and $Config{'extensions'} !~ /\bPOSIX\b/) {
-	print "1..0\n";
-	exit 0;
-    }
+    plan(skip_all => "\$^O eq '$^O'") if $^O eq 'VMS';
+    plan(skip_all => "POSIX is unavailable")
+	unless $Config{extensions} =~ /\bPOSIX\b/;
 }
 
 use POSIX;
-use strict ;
 
 # E.g. \t might or might not be isprint() depending on the locale,
 # so let's reset to the default.
@@ -70,11 +71,8 @@ foreach my $s (keys %classes) {
 
 # Expected number of tests is one each for every combination of a
 # known is<xxx> function and string listed above.
-require '../../t/test.pl';
 plan(tests => keys(%classes) * keys(%functions));
 
-
-#
 # Main test loop: Run all POSIX::is<xxx> tests on each string defined above.
 # Only the character classes listed for that string should return 1.  We
 # always run all functions on every string, and expect to get 0 for the
@@ -85,6 +83,6 @@ foreach my $s (sort keys %classes) {
 	my $expected = exists $classes{$s}->{$f};
 	my $actual   = eval "POSIX::$f( \$s )";
 
-	ok( $actual == $expected, "$f('$s') == $actual");
+	cmp_ok($actual, '==', $expected, "$f('$s')");
     }
 }

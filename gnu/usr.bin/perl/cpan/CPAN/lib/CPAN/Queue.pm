@@ -67,7 +67,7 @@ package CPAN::Queue;
 # in CPAN::Distribution::rematein.
 
 use vars qw{ @All $VERSION };
-$VERSION = "5.5";
+$VERSION = "5.5001";
 
 # CPAN::Queue::queue_item ;
 sub queue_item {
@@ -109,9 +109,9 @@ sub jumpqueue {
     my $class = shift;
     my @what = @_;
     CPAN->debug(sprintf("before jumpqueue All[%s] what[%s]",
-                        join("",
-                             map {sprintf " %s\[%s]\n",$_->{qmod},$_->{reqtype}} @All, @what
-                            ))) if $CPAN::DEBUG;
+                        join("",map {sprintf " %s\[%s]\n",$_->{qmod},$_->{reqtype}} @All),
+                        join("",map {sprintf " %s\[%s]\n",$_->{qmod},$_->{reqtype}} @what),
+                       )) if $CPAN::DEBUG;
     unless (defined $what[0]{reqtype}) {
         # apparently it was not the Shell that sent us this enquiry,
         # treat it as commandline
@@ -119,7 +119,7 @@ sub jumpqueue {
     }
     my $inherit_reqtype = $what[0]{reqtype} =~ /^(c|r)$/ ? "r" : "b";
   WHAT: for my $what_tuple (@what) {
-        my($what,$reqtype) = @$what_tuple{qw(qmod reqtype)};
+        my($qmod,$reqtype) = @$what_tuple{qw(qmod reqtype)};
         if ($reqtype eq "r"
             &&
             $inherit_reqtype eq "b"
@@ -128,26 +128,16 @@ sub jumpqueue {
         }
         my $jumped = 0;
         for (my $i=0; $i<$#All;$i++) { #prevent deep recursion
-            # CPAN->debug("i[$i]this[$All[$i]{qmod}]what[$what]") if $CPAN::DEBUG;
-            if ($All[$i]{qmod} eq $what) {
+            if ($All[$i]{qmod} eq $qmod) {
                 $jumped++;
-                if ($jumped >= 50) {
-                    die "PANIC: object[$what] 50 instances on the queue, looks like ".
-                        "some recursiveness has hit";
-                } elsif ($jumped > 25) { # one's OK if e.g. just processing
-                                    # now; more are OK if user typed
-                                    # it several times
-                    my $sleep = sprintf "%.1f", $jumped/10;
-                    $CPAN::Frontend->mywarn(
-qq{Warning: Object [$what] queued $jumped times, sleeping $sleep secs!\n}
-                    );
-                    $CPAN::Frontend->mysleep($sleep);
-                    # next WHAT;
-                }
             }
         }
+        # high jumped values are normal for popular modules when
+        # dealing with large bundles: XML::Simple,
+        # namespace::autoclean, UNIVERSAL::require
+        CPAN->debug("qmod[$qmod]jumped[$jumped]") if $CPAN::DEBUG;
         my $obj = "$class\::Item"->new(
-                                       qmod => $what,
+                                       qmod => $qmod,
                                        reqtype => $reqtype
                                       );
         unshift @All, $obj;
@@ -184,6 +174,27 @@ sub nullify_queue {
 # CPAN::Queue::size ;
 sub size {
     return scalar @All;
+}
+
+sub reqtype_of {
+    my($self,$mod) = @_;
+    my $best = "";
+    for my $item (grep { $_->{qmod} eq $mod } @All) {
+        my $c = $item->{reqtype};
+        if ($c eq "c") {
+            $best = $c;
+            last;
+        } elsif ($c eq "r") {
+            $best = $c;
+        } elsif ($c eq "b") {
+            if ($best eq "") {
+                $best = $c;
+            }
+        } else {
+            die "Panic: in reqtype_of: reqtype[$c] seen, should never happen";
+        }
+    }
+    return $best;
 }
 
 1;

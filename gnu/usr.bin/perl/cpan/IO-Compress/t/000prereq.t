@@ -25,7 +25,7 @@ BEGIN
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
 
-    my $VERSION = '2.024';
+    my $VERSION = '2.048';
     my @NAMES = qw(
 			Compress::Raw::Bzip2
 			Compress::Raw::Zlib
@@ -64,7 +64,7 @@ BEGIN
 			
 			);
 
-    plan tests => 2 + @NAMES + @OPT + $extra ;
+    plan tests => 1 + 2 + @NAMES + @OPT + $extra ;
 
     foreach my $name (@NAMES)
     {
@@ -87,6 +87,11 @@ BEGIN
         }         
     }
 
+    # need zlib 1.2.0 or better
+    
+    cmp_ok Compress::Raw::Zlib::ZLIB_VERNUM(), ">=", 0x1200
+        or diag "IO::Compress needs zlib 1.2.0 or better, you have " . Compress::Raw::Zlib::zlib_version(); 
+    
     use_ok('Scalar::Util') ;
 
 }

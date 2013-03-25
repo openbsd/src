@@ -3,27 +3,32 @@
 BEGIN {
 	chdir 't' if -d 't';
 	@INC = '../lib';
+	require './test.pl';
+	eval 'require Config'; # assume defaults if this fails
 }
 
-my $debug = 1;
+use strict;
 
 ##
 ## If the markers used are changed (search for "MARKER1" in regcomp.c),
-## update only these two variables, and leave the {#} in the @death/@warning
+## update only these two regexs, and leave the {#} in the @death/@warning
 ## arrays below. The {#} is a meta-marker -- it marks where the marker should
 ## go.
+##
+sub fixup_expect {
+    my $expect = shift;
+    $expect =~ s/{\#}/<-- HERE/;
+    $expect =~ s/{\#}/ <-- HERE /;
+    $expect .= " at ";
+    return $expect;
+}
 
-my $marker1 = "<-- HERE";
-my $marker2 = " <-- HERE ";
+my $inf_m1 = ($Config::Config{reg_infty} || 32767) - 1;
+my $inf_p1 = $inf_m1 + 2;
 
 ##
 ## Key-value pairs of code/error of code that should have fatal errors.
 ##
-
-eval 'use Config';         # assume defaults if fail
-our %Config;
-my $inf_m1 = ($Config{reg_infty} || 32767) - 1;
-my $inf_p1 = $inf_m1 + 2;
 my @death =
 (
  '/[[=foo=]]/' => 'POSIX syntax [= =] is reserved for future extensions in regex; marked by {#} in m/[[=foo=]{#}]/',
@@ -55,6 +60,16 @@ my @death =
  '/(?\<=x/' => 'Sequence (?\...) not recognized in regex; marked by {#} in m/(?\{#}<=x/',
  '/(?\<!x/' => 'Sequence (?\...) not recognized in regex; marked by {#} in m/(?\{#}<!x/',
  '/(?\>x/' => 'Sequence (?\...) not recognized in regex; marked by {#} in m/(?\{#}>x/',
+ '/(?^-i:foo)/' => 'Sequence (?^-...) not recognized in regex; marked by {#} in m/(?^-{#}i:foo)/',
+ '/(?^-i)foo/' => 'Sequence (?^-...) not recognized in regex; marked by {#} in m/(?^-{#}i)foo/',
+ '/(?^d:foo)/' => 'Sequence (?^d...) not recognized in regex; marked by {#} in m/(?^d{#}:foo)/',
+ '/(?^d)foo/' => 'Sequence (?^d...) not recognized in regex; marked by {#} in m/(?^d{#})foo/',
+ '/(?^lu:foo)/' => 'Regexp modifiers "l" and "u" are mutually exclusive in regex; marked by {#} in m/(?^lu{#}:foo)/',
+ '/(?^lu)foo/' => 'Regexp modifiers "l" and "u" are mutually exclusive in regex; marked by {#} in m/(?^lu{#})foo/',
+'/(?da:foo)/' => 'Regexp modifiers "d" and "a" are mutually exclusive in regex; marked by {#} in m/(?da{#}:foo)/',
+'/(?lil:foo)/' => 'Regexp modifier "l" may not appear twice in regex; marked by {#} in m/(?lil{#}:foo)/',
+'/(?aaia:foo)/' => 'Regexp modifier "a" may appear a maximum of twice in regex; marked by {#} in m/(?aaia{#}:foo)/',
+'/(?i-l:foo)/' => 'Regexp modifier "l" may not appear after the "-" in regex; marked by {#} in m/(?i-l{#}:foo)/',
 
  '/((x)/' => 'Unmatched ( in regex; marked by {#} in m/({#}(x)/',
 
@@ -96,7 +111,7 @@ my @death =
 ##
 ## Key-value pairs of code/error of code that should have non-fatal warnings.
 ##
-@warning = (
+my @warning = (
     'm/\b*/' => '\b* matches null string many times in regex; marked by {#} in m/\b*{#}/',
 
     'm/[:blank:]/' => 'POSIX syntax [: :] belongs inside character classes in regex; marked by {#} in m/[:blank:]{#}/',
@@ -110,85 +125,25 @@ my @death =
     "m'\\y'"     => 'Unrecognized escape \y passed through in regex; marked by {#} in m/\y{#}/',
 );
 
-my $total = (@death + @warning)/2;
-
-# utf8 is a noop on EBCDIC platforms, it is not fatal
-my $Is_EBCDIC = (ord('A') == 193);
-if ($Is_EBCDIC) {
-    my @utf8_death = grep(/utf8/, @death); 
-    $total = $total - @utf8_death;
-}
-
-print "1..$total\n";
-
-my $count = 0;
-
-while (@death)
-{
-    my $regex = shift @death;
-    my $result = shift @death;
+while (my ($regex, $expect) = splice @death, 0, 2) {
+    my $expect = fixup_expect($expect);
     # skip the utf8 test on EBCDIC since they do not die
-    next if ($Is_EBCDIC && $regex =~ /utf8/);
-    $count++;
+    next if $::IS_EBCDIC && $regex =~ /utf8/;
 
-    $_ = "x";
-    eval $regex;
-    if (not $@) {
-	print "# oops, $regex didn't die\nnot ok $count\n";
-	next;
-    }
-    chomp $@;
-    $result =~ s/{\#}/$marker1/;
-    $result =~ s/{\#}/$marker2/;
-    $result .= " at ";
-    if ($@ !~ /^\Q$result/) {
-	print "# For $regex, expected:\n#  $result\n# Got:\n#  $@\n#\nnot ";
-    }
-    print "ok $count - $regex\n";
+    warning_is(sub {
+		   $_ = "x";
+		   eval $regex;
+		   like($@, qr/\Q$expect/);
+	       }, undef, "$regex died without any other warnings");
 }
 
-
-our $warning;
-$SIG{__WARN__} = sub { $warning = shift };
-
-while (@warning)
-{
-    $count++;
-    my $regex = shift @warning;
-    my $result = shift @warning;
-
-    undef $warning;
-    $_ = "x";
-    eval $regex;
-
-    if ($@)
-    {
-	print "# oops, $regex died with:\n#\t$@#\nnot ok $count\n";
-	next;
-    }
-
-    if (not $warning)
-    {
-	print "# oops, $regex didn't generate a warning\nnot ok $count\n";
-	next;
-    }
-    $result =~ s/{\#}/$marker1/;
-    $result =~ s/{\#}/$marker2/;
-    $result .= " at ";
-    if ($warning !~ /^\Q$result/)
-    {
-	print <<"EOM";
-# For $regex, expected:
-#   $result
-# Got:
-#   $warning
-#
-not ok $count
-EOM
-	next;
-    }
-    print "ok $count - $regex\n";
+while (my ($regex, $expect) = splice @warning, 0, 2) {
+    my $expect = fixup_expect($expect);
+    warning_like(sub {
+		     $_ = "x";
+		     eval $regex;
+		     is($@, '', "$regex did not die");
+		 }, qr/\Q$expect/);
 }
 
-
-
+done_testing();

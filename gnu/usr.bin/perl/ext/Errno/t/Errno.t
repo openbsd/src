@@ -1,6 +1,9 @@
 #!./perl -w
 
-use Test::More tests => 10;
+use Test::More tests => 12;
+
+# Keep this before the use Errno.
+my $has_einval = exists &Errno::EINVAL;
 
 BEGIN {
     use_ok("Errno");
@@ -34,3 +37,17 @@ like($@, qr/^ERRNO hash is read only!/);
 # through Acme::MetaSyntactic::batman
 is($!{EFLRBBB}, "");
 ok(! exists($!{EFLRBBB}));
+
+SKIP: {
+    skip("Errno does not have EINVAL", 1)
+	unless grep {$_ eq 'EINVAL'} @Errno::EXPORT_OK;
+    is($has_einval, 1,
+       'exists &Errno::EINVAL compiled before Errno is loaded works fine');
+}
+
+SKIP: {
+    skip("Errno does not have EBADF", 1)
+	unless grep {$_ eq 'EBADF'} @Errno::EXPORT_OK;
+    is(exists &Errno::EBADF, 1,
+       'exists &Errno::EBADF compiled after Errno is loaded works fine');
+}

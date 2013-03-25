@@ -11,9 +11,6 @@ BEGIN {
     elsif ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bIO\b/) {
       $reason = 'IO was not built';
     }
-    elsif ($^O eq 'apollo') {
-      $reason = "unknown *FIXME*";
-    }
     undef $reason if $^O eq 'VMS' and $Config{d_socket};
     skip_all($reason) if $reason;
 }

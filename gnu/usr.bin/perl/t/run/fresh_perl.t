@@ -565,47 +565,11 @@ EOT
 EXPECT
 ok
 ########
-# This test is here instead of lib/locale.t because
-# the bug depends on in the internal state of the locale
-# settings and pragma/locale messes up that state pretty badly.
-# We need a "fresh run".
-BEGIN {
-    eval { require POSIX };
-    if ($@) {
-	exit(0); # running minitest?
-    }
-}
-use Config;
-my $have_setlocale = $Config{d_setlocale} eq 'define';
-$have_setlocale = 0 if $@;
-# Visual C's CRT goes silly on strings of the form "en_US.ISO8859-1"
-# and mingw32 uses said silly CRT
-$have_setlocale = 0 if (($^O eq 'MSWin32' || $^O eq 'NetWare') && $Config{cc} =~ /^(cl|gcc)/i);
-exit(0) unless $have_setlocale;
-my @locales;
-if (-x "/usr/bin/locale" && open(LOCALES, "/usr/bin/locale -a 2>/dev/null|")) {
-    while(<LOCALES>) {
-        chomp;
-        push(@locales, $_);
-    }
-    close(LOCALES);
-}
-exit(0) unless @locales;
-for (@locales) {
-    use POSIX qw(locale_h);
-    use locale;
-    setlocale(LC_NUMERIC, $_) or next;
-    my $s = sprintf "%g %g", 3.1, 3.1;
-    next if $s eq '3.1 3.1' || $s =~ /^(3.+1) \1$/;
-    print "$_ $s\n";
-}
-EXPECT
-########
 # [ID 20001202.002] and change #8066 added 'at -e line 1';
 # reversed again as a result of [perl #17763]
 die qr(x)
 EXPECT
-(?-xism:x)
+(?^:x)
 ########
 # 20001210.003 mjd@plover.com
 format REMITOUT_TOP =
@@ -791,69 +755,73 @@ if ($name =~ /(\p{IsUpper}) (\p{IsUpper})/){
 }
 EXPECT
 It's good! >A< >B<
-######## [perl #8760] strangness with utf8 and warn
+######## [perl #8760] strangeness with utf8 and warn
 $_="foo";utf8::upgrade($_);/bar/i,warn$_;
 EXPECT
 foo at - line 1.
 ######## glob() bug Mon, 01 Sep 2003 02:25:41 -0700 <200309010925.h819Pf0X011457@smtp3.ActiveState.com>
 -lw
-BEGIN {
-  if ($^O eq 'os390') {
-    require File::Glob;
-    import File::Glob ':glob';
-  }
+# Make sure the presence of the CORE::GLOBAL::glob typeglob does not affect
+# whether File::Glob::csh_glob is called.
+if ($^O eq 'VMS') {
+    # A pattern with a double quote in it is a syntax error to LIB$FIND_FILE
+    # Should we strip quotes in Perl_vms_start_glob the way csh_glob() does?
+    print "ok1\nok2\n";
 }
-BEGIN {
-  eval 'require Fcntl';
-  if ($@) { print qq[./"TEST"\n./"TEST"\n]; exit 0 } # running minitest?
-}
-if ($^O eq 'VMS') { # VMS is not *that* kind of a glob.
-print qq[./"TEST"\n./"TEST"\n];
-} else {
-print glob(q(./"TEST"));
-use File::Glob;
-print glob(q(./"TEST"));
-}
-EXPECT
-./"TEST"
-./"TEST"
-######## glob() bug Mon, 01 Sep 2003 02:25:41 -0700 <200309010925.h819Pf0X011457@smtp3.ActiveState.com>
--lw
-BEGIN {
-  if ($^O eq 'os390') {
-    require File::Glob;
-    import File::Glob ':glob';
-  }
-}
-BEGIN {
-  eval 'require Fcntl';
-  if ($@) { print qq[./"TEST"\n./"TEST"\n]; exit 0 } # running minitest?
-}
-if ($^O eq 'VMS') { # VMS is not *that* kind of a glob.
-print qq[./"TEST"\n./"TEST"\n];
-} else {
-use File::Glob;
-print glob(q(./"TEST"));
-use File::Glob;
-print glob(q(./"TEST"));
+else {
+    ++$INC{"File/Glob.pm"}; # prevent it from loading
+    my $called1 =
+    my $called2 = 0;
+    *File::Glob::csh_glob = sub { ++$called1 };
+    my $output1 = eval q{ glob(q(./"TEST")) };
+    undef *CORE::GLOBAL::glob; # but leave the typeglob itself there
+    ++$CORE::GLOBAL::glob if 0; # "used only once"
+    undef *File::Glob::csh_glob; # avoid redefinition warnings
+    *File::Glob::csh_glob = sub { ++$called2 };
+    my $output2 = eval q{ glob(q(./"TEST")) };
+    print "ok1" if $called1 eq $called2;
+    print "ok2" if $output1 eq $output2;
 }
 EXPECT
-./"TEST"
-./"TEST"
-######## "Segfault using HTML::Entities", Richard Jolly <richardjolly@mac.com>, <A3C7D27E-C9F4-11D8-B294-003065AE00B6@mac.com> in perl-unicode@perl.org
--lw
-# SKIP: use Config; $ENV{PERL_CORE_MINITEST} or " $Config::Config{'extensions'} " !~ m[ Encode ] # Perl configured without Encode module
-BEGIN {
-  eval 'require Encode';
-  if ($@) { exit 0 } # running minitest?
-}
-# Test case cut down by jhi
-$SIG{__WARN__} = sub { $@ = shift };
-use Encode;
-my $t = ord('A') == 193 ? "\xEA" : "\xE9";
-Encode::_utf8_on($t);
-$t =~ s/([^a])//ge;
-$@ =~ s/ at .*/ at/;
-print $@
+ok1
+ok2
+######## "#75146: 27e904532594b7fb (fix for #23810) introduces a #regression"
+use strict;
+
+unshift @INC, sub {
+    my ($self, $fn) = @_;
+
+    (my $pkg = $fn) =~ s{/}{::}g;
+    $pkg =~ s{.pm$}{};
+
+    if ($pkg eq 'Credit') {
+        my $code = <<'EOC';
+package Credit;
+
+use NonsenseAndBalderdash;
+
+1;
+EOC
+        eval $code;
+        die "\$@ is $@";
+    }
+
+    #print STDERR "Generator: not one of mine, ignoring\n";
+    return undef;
+};
+
+# create load-on-demand new() constructors
+{
+    package Credit;
+    sub new {
+        eval "use Credit";
+    }
+};
+
+eval {
+    my $credit = new Credit;
+};
+
+print "If you get here, you didn't crash\n";
 EXPECT
-Malformed UTF-8 character (unexpected end of string) in substitution (s///) at
+If you get here, you didn't crash

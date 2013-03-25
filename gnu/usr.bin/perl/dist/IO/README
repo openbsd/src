@@ -5,11 +5,11 @@ only need to install this distribution if it is newer than your perl
 installation.
 
 To install this distribution you will need access rights to the perl
-install ation on your system, as it overwrites your currently installed
+installation on your system, as it overwrites your currently installed
 version of IO.
 
 This distribution relies upon the Socket module (version 1.3), which is
-avaliable from CPAN. Although you should not need to get this if your
+available from CPAN. Although you should not need to get this if your
 version of perl is fairly recent, as Socket is also distributed in the
 core perl distribution.
 

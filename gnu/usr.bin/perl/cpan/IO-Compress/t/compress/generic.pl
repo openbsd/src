@@ -4,9 +4,9 @@ use warnings;
 use bytes;
 
 use Test::More ;
-use CompTestUtils;
 
 use IO::Handle qw(SEEK_SET SEEK_CUR SEEK_END);
+use CompTestUtils;
 
 our ($UncompressClass);
 BEGIN 
@@ -18,7 +18,7 @@ BEGIN
     $extra = 1
         if $st ;
 
-    plan(tests => 666 + $extra) ;
+    plan(tests => 794 + $extra) ;
 }
 
 sub myGZreadFile
@@ -347,7 +347,7 @@ EOM
               my $x ;
               my $uncomp ;
               my $stdinFileno = fileno(STDIN);
-              # open below doesn't return 1 sometines on XP
+              # open below doesn't return 1 sometimes on XP
                  open(SAVEIN, "<&STDIN");
               ok open(STDIN, "<$name"), "  redirect STDIN";
               my $dummy = fileno SAVEIN;
@@ -677,13 +677,13 @@ EOT
             {
                 local $/;  # slurp mode
                 my $io = $UncompressClass->new($name);
-                is $., 0; 
+                is $., 0, "line 0"; 
                 is $io->input_line_number, 0; 
-                ok ! $io->eof;
+                ok ! $io->eof, "eof";
                 my @lines = $io->getlines;
-                is $., 1; 
-                is $io->input_line_number, 1; 
-                ok $io->eof;
+                is $., 1, "line 1"; 
+                is $io->input_line_number, 1, "line number 1"; 
+                ok $io->eof, "eof" ;
                 ok @lines == 1 && $lines[0] eq $str;
             
                 $io = $UncompressClass->new($name);
@@ -830,7 +830,6 @@ of a paragraph
 and a single line.
 
 EOT
-
             my $lex = new LexFile my $name ;
 
             writeFile($name, $str);
@@ -839,11 +838,11 @@ EOT
             {
                 my $io = new $UncompressClass $name, -Transparent => 1 ;
             
-                ok defined $io;
-                ok ! $io->eof;
-                ok $io->tell() == 0 ;
+                isa_ok $io, $UncompressClass ;
+                ok ! $io->eof, "eof";
+                is $io->tell(), 0, "tell == 0" ;
                 my @lines = $io->getlines();
-                is @lines, 6; 
+                is @lines, 6, "got 6 lines"; 
                 ok $lines[1] eq "of a paragraph\n" ;
                 ok join('', @lines) eq $str ;
                 is $., 6; 
@@ -875,7 +874,7 @@ EOT
                 my $line = $io->getline;
                 is $., 1; 
                 is $io->input_line_number, 1; 
-                ok $line eq $str;
+                is $line, $str;
                 ok $io->eof;
             }
             
@@ -888,7 +887,7 @@ EOT
                 is $io->input_line_number, 2; 
                 ok $io->eof;
                 ok @lines == 2 
-                    or print "# exected 2 lines, got " . scalar(@lines) . "\n";
+                    or print "# expected 2 lines, got " . scalar(@lines) . "\n";
                 ok $lines[0] eq "This is an example\nof a paragraph\n\n\n"
                     or print "# [$lines[0]]\n" ;
                 ok $lines[1] eq "and a single line.\n\n";
@@ -1580,11 +1579,129 @@ EOT
     #    }
     }
 
+    {
+        # Check can handle empty compressed files
+        # Test is for rt.cpan #67554
+
+        foreach my $type (qw(filename filehandle buffer ))
+        {
+            foreach my $append (0, 1)
+            {
+                title "$UncompressClass -- empty file read from $type, Append => $append";
+
+                my $appended = "append";
+                my $string = "some data";
+                my $compressed ; 
+
+                my $c = new $CompressClass(\$compressed);
+                $c->close();
+
+                my $comp_len = length $compressed;
+                $compressed .= $appended if $append ;
+
+                my $lex = new LexFile my $name ;
+                my $input ;
+                writeFile ($name, $compressed);
+
+                if ($type eq 'buffer')
+                {
+                    $input = \$compressed;
+                }
+                elsif ($type eq 'filename')
+                {
+                    $input = $name;
+                }
+                elsif ($type eq 'filehandle')
+                {
+                    my $fh = new IO::File "<$name" ;
+                    ok $fh, "opened file $name ok";
+                    $input = $fh ;
+                }
+
+                {
+                    # Check that eof is true immediately after creating the
+                    # uncompression object.
+
+                    # Check that readline returns undef
+
+                    my $x = new $UncompressClass $input, Transparent => 0
+                        or diag "$$UnError" ;
+                    isa_ok $x, $UncompressClass;
+
+                    # should be EOF immediately
+                    is $x->eof(), 1, "eof true";
+
+                    is <$x>, undef, "getline is undef";
+
+                    is $x->eof(), 1, "eof true";
+                }
+
+                {
+                    # Check that read return an empty string
+                    if ($type eq 'filehandle')
+                    {
+                        my $fh = new IO::File "<$name" ;
+                        ok $fh, "opened file $name ok";
+                        $input = $fh ;
+                    }
+
+                    my $x = new $UncompressClass $input, Transparent => 0 
+                        or diag "$$UnError" ;
+                    isa_ok $x, $UncompressClass;
+
+                    my $buffer;
+                    is $x->read($buffer), 0, "read 0 bytes";
+                    ok defined $buffer, "buffer is defined";
+                    is $buffer, "", "buffer is empty string";
+
+                    is $x->eof(), 1, "eof true";
+                }
+
+                {
+                    # Check that read return an empty string in Append Mode
+                    # to empty string
+
+                    if ($type eq 'filehandle')
+                    {
+                        my $fh = new IO::File "<$name" ;
+                        ok $fh, "opened file $name ok";
+                        $input = $fh ;
+                    }
+                    my $x = new $UncompressClass $input, Transparent => 0,
+                                                         Append => 1 
+                        or diag "$$UnError" ;
+                    isa_ok $x, $UncompressClass;
+
+                    my $buffer;
+                    is $x->read($buffer), 0, "read 0 bytes";
+                    ok defined $buffer, "buffer is defined";
+                    is $buffer, "", "buffer is empty string";
+
+                    is $x->eof(), 1, "eof true";
+                }
+                {
+                    # Check that read return an empty string in Append Mode
+                    # to non-empty string
+
+                    if ($type eq 'filehandle')
+                    {
+                        my $fh = new IO::File "<$name" ;
+                        ok $fh, "opened file $name ok";
+                        $input = $fh ;
+                    }
+                    my $x = new $UncompressClass($input, Append => 1 );
+                    isa_ok $x, $UncompressClass;
+
+                    my $buffer = "123";
+                    is $x->read($buffer), 0, "read 0 bytes";
+                    ok defined $buffer, "buffer is defined";
+                    is $buffer, "123", "buffer orig string";
+
+                    is $x->eof(), 1, "eof true";
+                }
+            }
+        }
+    }
 }
 
 1;
-
-
-
-
-

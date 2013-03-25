@@ -1,6 +1,6 @@
 package B::Terse;
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 use strict;
 use B qw(class @specialsv_name);
@@ -78,7 +78,15 @@ B::Terse - Walk Perl syntax tree, printing terse info about ops
 
 =head1 DESCRIPTION
 
-This version of B::Terse is really just a wrapper that calls B::Concise
+This module prints the contents of the parse tree, but without as much
+information as L<B::Debug>.  For comparison, C<print "Hello, world.">
+produced 96 lines of output from B::Debug, but only 6 from B::Terse.
+
+This module is useful for people who are writing their own back end,
+or who are learning about the Perl internals.  It's not useful to the
+average programmer.
+
+This version of B::Terse is really just a wrapper that calls L<B::Concise>
 with the B<-terse> option. It is provided for compatibility with old scripts
 (and habits) but using B::Concise directly is now recommended instead.
 

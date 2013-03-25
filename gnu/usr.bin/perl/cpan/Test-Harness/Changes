@@ -1,5 +1,108 @@
 Revision history for Test-Harness
 
+3.23    2011-02-20
+        - Merge in changes from core. Thanks BinGOs.
+        - Made SourceHandler understand that an executable binary file
+          is probably an executable.
+        - Added workaround for Getopt::Long 2.25 handling of
+          multivalue options. Fixes test failure on stock perl 5.6.2.
+
+3.22    2010-08-14
+        - Allow TAP::Parser to recognize a nested BAIL_OUT directive.
+        - Add brief HOWTO for creating and running pgTAP tests to
+          TAP::Parser::SourceHandler::pgTAP.
+        - Fix trailing plan + embedded YAML + TAP 13 case. Thanks to
+          Steffen Schwigon. #54518.
+        - Numerous spelling fixes. Thanks to Ville Skyttä.
+        - Add new option --tapversion for prove to set the default
+          assumed TAP version. Thanks to Steffen Schwigon.
+        - Fixed tests to run successfully under Devel::Cover. Thanks to
+          Phillipe Bruhat.
+        - Fixed injection of test args to work with general executables
+          as well as Perl scripts (#59186).
+        - Allow multiple --ext=.foo arguments to prove, to allow running
+          different types of tests in the same prove run.
+        - App::Prove::extension() is now App::Prove::extensions(), and
+          returns an arrayref of extensions, rather than a single scalar.
+          The same change has been made to App::Prove::State::extension().
+        - Preserve old semantics for test scripts with a shebang line
+          by favouring Perl as the intepreter for any file with a
+          shebang (#59457).
+        - Add --trap (summary on Ctrl-C) option to prove (#59427).
+        - Removed TAP::Parser::SourceHandler::pgTAP. Find it in its own
+          distribution on CPAN.
+        - Source options to prove can now be specified so as to be passed to
+          the source as a hash reference, eg:
+
+              prove --source XYZ --xyz-option pset=foo=bar
+
+          Ths "pset" option will be passed as a hash reference with the key
+          "foo" and the value "bar".
+
+3.21    2010-01-30
+        - Add test to ensure we're not depending on a module we no
+          longer ship.
+        - Fix up skip counts for Windows case - tests were failing
+          on Windows.
+
+3.20    2010-01-22
+        - Remove references / dependency on TAP::Parser::Source::Perl
+
+3.19    2010-01-20
+        - Avoid depending on Module::Build. The resulting circular
+          dependency made it impossible to install Test::Harness and/or
+          Module::Build in some cases.
+
+3.18    2010-01-19
+        - Handle the case where the filename of the perl executable
+          contains space. Thanks to kmx.
+        - Various documentation fixes.
+
+3.17_04 2010-01-04
+        - Fix failures due to unknown location of Perl in t/source_handler.t.
+        - Use EUMM style shebang magic to produce an executable 'psql'
+          for t/source_handler.t.
+
+3.17_03 2009-11-19
+        - Fix failures due to over-strict assertions in t/source.t.
+
+3.17_02 2009-11-17
+        - Merge in Steve's missing changes. Oops.
+
+3.17_01 2009-11-17
+        - Re-engineered source handling API to allow users to configure how
+          TAP is sourced by the parser.  Introduced a new 'sources' param to
+          TAP::Harness, and new options to prove, eg:
+
+              prove --source XYZ --xyz-option foo=bar
+
+          The new TAP::Parser::SourceHandler API makes it much easier to
+          write plugins.  This breaks backwards compatibility for plugins &
+          extenstions that rely on the following APIs:
+
+              TAP::Parser::Source
+              TAP::Parser::SourceFactory
+              TAP::Parser::IteratorFactory
+              TAP::Parser, specifically:
+                new: 'source' & 'tap' params
+                source_class
+                perl_source_class
+                iterator_factory_class
+                make_source
+                make_perl_source
+                make_iterator
+
+          Please see the TAP::Parser docs for more details.
+          [Steve Purkis & David Wheeler]
+        - Removed dependency on File::Spec [Schwern]
+        - Made it possible to pass different args to each test [Lee Johnson]
+        - Added HARNESS_SUBCLASS option to Test::Harness
+        - Added TAP::Parser::SourceHandler::File which lets you to stream TAP
+          from a text file (eg: *.tap).
+        - Added TAP::Parser::SourceHandler::pgTAP. All the source handlers are
+          new, but this is the only one to add major new functioality: the
+          ability to run pgTAP tests (http://pgtap.projects.postgresql.org/).
+
 3.17    2009-05-05
         - Changed the 'failures' so that it is overridden by verbosity rather
           than the other way around.

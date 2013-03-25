@@ -10,17 +10,19 @@ BEGIN {
 }
 use OptreeCheck;
 use Config;
-plan tests => 2;
+plan tests => 6;
 
 SKIP: {
-skip "no perlio in this build", 1 unless $Config::Config{useperlio};
+skip "no perlio in this build", 4 unless $Config::Config{useperlio};
 
-# The regression this is testing is that the first aelemfast, derived
+# The regression this was testing is that the first aelemfast, derived
 # from a lexical array, is supposed to be a BASEOP "<0>", while the
 # second, from a global, is an SVOP "<$>" or a PADOP "<#>" depending
 # on threading. In buggy versions, both showed up as SVOPs/PADOPs. See
 # B.xs:cc_opclass() for the relevant code.
 
+# All this is much simpler, now that aelemfast_lex has been broken out from
+# aelemfast
 checkOptree ( name	=> 'OP_AELEMFAST opclass',
 	      code	=> sub { my @x; our @y; $x[0] + $y[0]},
 	      strip_open_hints => 1,
@@ -35,7 +37,7 @@ checkOptree ( name	=> 'OP_AELEMFAST opclass',
 # 6        <;> nextstate(main 636 optree_misc.t:25) v:>,<,%,{ ->7
 # 9        <2> add[t6] sK/2 ->a
 # -           <1> ex-aelem sK/2 ->8
-# 7              <0> aelemfast[@x:634,636] sR* ->8
+# 7              <0> aelemfast_lex[@x:634,636] sR ->8
 # -              <0> ex-const s ->-
 # -           <1> ex-aelem sK/2 ->9
 # -              <1> ex-rv2av sKR/1 ->-
@@ -52,7 +54,7 @@ EOT_EOT
 # 6        <;> nextstate(main 636 optree_misc.t:27) v:>,<,%,{ ->7
 # 9        <2> add[t4] sK/2 ->a
 # -           <1> ex-aelem sK/2 ->8
-# 7              <0> aelemfast[@x:634,636] sR* ->8
+# 7              <0> aelemfast_lex[@x:634,636] sR ->8
 # -              <0> ex-const s ->-
 # -           <1> ex-aelem sK/2 ->9
 # -              <1> ex-rv2av sKR/1 ->-
@@ -60,6 +62,30 @@ EOT_EOT
 # -              <0> ex-const s ->-
 EONT_EONT
 
+checkOptree ( name	=> 'PMOP children',
+	      code	=> sub { $foo =~ s/(a)/$1/ },
+	      strip_open_hints => 1,
+	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+# 6  <1> leavesub[1 ref] K/REFC,1 ->(end)
+# -     <@> lineseq KP ->6
+# 1        <;> nextstate(main 1 -e:1) v:>,<,%,{ ->2
+# 3        </> subst(/"(a)"/ replstart->4) KS ->6
+# -           <1> ex-rv2sv sKRM/1 ->3
+# 2              <#> gvsv[*foo] s ->3
+# 5           <|> substcont(other->3) sK/1 ->(end)
+# -              <1> ex-rv2sv sK/1 ->5
+# 4                 <#> gvsv[*1] s ->5
+EOT_EOT
+# 6  <1> leavesub[1 ref] K/REFC,1 ->(end)
+# -     <@> lineseq KP ->6
+# 1        <;> nextstate(main 1 -e:1) v:>,<,%,{ ->2
+# 3        </> subst(/"(a)"/ replstart->4) KS ->6
+# -           <1> ex-rv2sv sKRM/1 ->3
+# 2              <$> gvsv(*foo) s ->3
+# 5           <|> substcont(other->3) sK/1 ->(end)
+# -              <1> ex-rv2sv sK/1 ->5
+# 4                 <$> gvsv(*1) s ->5
+EONT_EONT
 
 } #skip
 
@@ -71,7 +97,7 @@ my $t = <<'EOT_EOT';
 # 5        <@> index[t2] sK/2 ->6
 # -           <0> ex-pushmark s ->3
 # 3           <$> const[PV "foo"] s ->4
-# 4           <$> const[GV "foo"] s ->5
+# 4           <$> const[PVMG "foo"] s ->5
 # -        <1> ex-rv2sv sKRM*/1 ->7
 # 6           <#> gvsv[*_] s ->7
 EOT_EOT
@@ -83,7 +109,7 @@ my $nt = <<'EONT_EONT';
 # 5        <@> index[t1] sK/2 ->6
 # -           <0> ex-pushmark s ->3
 # 3           <$> const(PV "foo") s ->4
-# 4           <$> const(GV "foo") s ->5
+# 4           <$> const(PVMG "foo") s ->5
 # -        <1> ex-rv2sv sKRM*/1 ->7
 # 6           <$> gvsv(*_) s ->7
 EONT_EONT
@@ -97,6 +123,3 @@ checkOptree ( name      => 'index and PVBM',
 	      prog	=> '$_ = index q(foo), q(foo)',
 	      strip_open_hints => 1,
 	      expect	=> $t,  expect_nt => $nt);
-
-__END__
-

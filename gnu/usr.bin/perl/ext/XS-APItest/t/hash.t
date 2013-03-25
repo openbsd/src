@@ -1,20 +1,9 @@
 #!perl -w
 
-BEGIN {
-  push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
-  require Config; import Config;
-  if ($Config{'extensions'} !~ /\bXS\/APItest\b/) {
-    # Look, I'm using this fully-qualified variable more than once!
-    my $arch = $MacPerl::Architecture;
-    print "1..0 # Skip: XS::APItest was not built\n";
-    exit 0;
-  }
-}
-
 use strict;
 use utf8;
 use Tie::Hash;
-use Test::More 'no_plan';
+use Test::More;
 
 BEGIN {use_ok('XS::APItest')};
 
@@ -51,12 +40,12 @@ main_tests (\@keys, \@testkeys, ' [utf8 hash]');
   my $result = ($] > 5.009) ? undef : 1;
 
   is (XS::APItest::Hash::store(\%h, chr 258,  1), $result);
-    
+
   ok (!exists $h{$utf8_for_258},
       "hv_store doesn't insert a key with the raw utf8 on a tied hash");
 }
 
-if ($] > 5.009) {
+{
     my $strtab = strtab();
     is (ref $strtab, 'HASH', "The shared string table quacks like a hash");
     my $wibble = "\0";
@@ -96,7 +85,7 @@ foreach my $in ("", "N", "a\0b") {
     is ($got, $in, "test_share_unshare_pvn");
 }
 
-if ($] > 5.009) {
+{
     foreach ([\&XS::APItest::Hash::rot13_hash, \&rot13, "rot 13"],
 	     [\&XS::APItest::Hash::bitflip_hash, \&bitflip, "bitflip"],
 	    ) {
@@ -191,6 +180,87 @@ sub test_precomputed_hashes {
     }
 }
 
+{
+    use Scalar::Util 'weaken';
+    my %h;
+    fill_hash_with_nulls(\%h);
+    my @objs;
+    for("a".."z","A".."Z") {
+	weaken($objs[@objs] = $h{$_} = []);
+    }
+    undef %h;
+    no warnings 'uninitialized';
+    local $" = "";
+    is "@objs", "",
+      'explicitly undeffing a hash with nulls frees all entries';
+
+    my $h = {};
+    fill_hash_with_nulls($h);
+    @objs = ();
+    for("a".."z","A".."Z") {
+	weaken($objs[@objs] = $$h{$_} = []);
+    }
+    undef $h;
+    is "@objs", "", 'freeing a hash with nulls frees all entries';
+}
+
+# Tests for HvENAME and UTF8
+{
+    no strict;
+    no warnings 'void';
+    my $hvref;
+
+    *{"\xff::bar"}; # autovivify %ÿ:: without UTF8
+    *{"\xff::bαr::"} = $hvref = \%foo::;
+    undef *foo::;
+    is HvENAME($hvref), "\xff::bαr",
+	'stash alias (utf8 inside bytes) does not create malformed UTF8';
+
+    *{"é::foo"}; # autovivify %é:: with UTF8
+    *{"\xe9::\xe9::"} = $hvref = \%bar::;
+    undef *bar::;
+    is HvENAME($hvref), "\xe9::\xe9",
+	'stash alias (bytes inside utf8) does not create malformed UTF8';
+
+    *{"\xfe::bar"}; *{"\xfd::bar"};
+    *{"\xfe::bαr::"} = \%goo::;
+    *{"\xfd::bαr::"} = $hvref = \%goo::;
+    undef *goo::;
+    like HvENAME($hvref), qr/^[\xfe\xfd]::bαr\z/,
+	'multiple stash aliases (utf8 inside bytes) do not cause bad UTF8';
+
+    *{"è::foo"}; *{"ë::foo"};
+    *{"\xe8::\xe9::"} = $hvref = \%bear::;
+    *{"\xeb::\xe9::"} = \%bear::;
+    undef *bear::;
+    like HvENAME($hvref), qr"^[\xe8\xeb]::\xe9\z",
+	'multiple stash aliases (bytes inside utf8) do not cause bad UTF8';
+}
+
+{ # newHVhv
+    use Tie::Hash;
+    tie my %h, 'Tie::StdHash';
+    %h = 1..10;
+    is join(' ', sort %{newHVhv \%h}), '1 10 2 3 4 5 6 7 8 9',
+      'newHVhv on tied hash';
+}
+
+# helem and hslice on entry with null value
+# This is actually a test for a Perl operator, not an XS API test.  But it
+# requires a hash that can only be produced by XS (although recently it
+# could be encountered when tying hint hashes).
+{
+    my %h;
+    fill_hash_with_nulls(\%h);
+    eval{ $h{84} = 1 };
+    pass 'no crash when writing to hash elem with null value';
+    eval{ no # silly
+	  warnings; # thank you!
+	  @h{85} = 1 };
+    pass 'no crash when writing to hash elem with null value via slice';
+}
+
+done_testing;
 exit;
 
 ################################   The End   ################################

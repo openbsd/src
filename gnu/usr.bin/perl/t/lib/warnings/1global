@@ -30,6 +30,35 @@ EXPECT
 Reversed += operator at - line 4.
 Name "main::a" used only once: possible typo at - line 4.
 ########
+-w
+# warnable code, warnings enabled via command line switch
+use utf8;
+use open qw( :utf8 :std );
+$Ằ =+ 3 ;
+EXPECT
+Reversed += operator at - line 5.
+Name "main::Ằ" used only once: possible typo at - line 5.
+########
+#! perl -w
+# warnable code, warnings enabled via #! line
+use utf8;
+use open qw( :utf8 :std );
+$Ằ =+ 3 ;
+EXPECT
+Reversed += operator at - line 5.
+Name "main::Ằ" used only once: possible typo at - line 5.
+########
+
+# warnable code, warnings enabled via compile time $^W
+BEGIN { $^W = 1 }
+use utf8;
+use open qw( :utf8 :std );
+$Ằ =+ 3 ;
+EXPECT
+Reversed += operator at - line 6.
+Name "main::Ằ" used only once: possible typo at - line 6.
+
+########
 
 # compile-time warnable code, warnings enabled via runtime $^W
 # so no warning printed.

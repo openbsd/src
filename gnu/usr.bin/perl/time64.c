@@ -368,7 +368,7 @@ static struct TM *S_gmtime64_r (const Time64_T *in_time, struct TM *p)
     p->tm_isdst  = 0;
 
 #ifdef HAS_TM_TM_ZONE
-    p->tm_zone   = "UTC";
+    p->tm_zone   = (char *)"UTC";
 #endif
 
     v_tm_sec  = (int)fmod(time, 60.0);
@@ -543,7 +543,7 @@ static struct TM *S_localtime64_r (const Time64_T *time, struct TM *local_tm)
     /* GMT is Jan 1st, xx01 year, but localtime is still Dec 31st
        in a non-leap xx00.  There is one point in the cycle
        we can't account for which the safe xx00 year is a leap
-       year.  So we need to correct for Dec 31st comming out as
+       year.  So we need to correct for Dec 31st coming out as
        the 366th day of the year.
     */
     if( !IS_LEAP(local_tm->tm_year) && local_tm->tm_yday == 365 )

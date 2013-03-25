@@ -1,10 +1,3 @@
-BEGIN {
-    if( $ENV{PERL_CORE} ) {
-        chdir '../lib/Archive/Tar' if -d '../lib/Archive/Tar';
-    }       
-    use lib '../../..';
-}
-
 BEGIN { chdir 't' if -d 't' }
 
 use Test::More 'no_plan';

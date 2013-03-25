@@ -1,0 +1,131 @@
+=pod
+
+=head1 NAME
+
+Locale::Codes::Script - standard codes for script identification
+
+=head1 SYNOPSIS
+
+   use Locale::Codes::Script;
+
+   $script  = code2script('phnx');                     # 'Phoenician'
+   $code    = script2code('Phoenician');               # 'Phnx'
+   $code    = script2code('Phoenician',
+                          LOCALE_CODE_NUMERIC);        # 115
+
+   @codes   = all_script_codes();
+   @scripts = all_script_names();
+
+=head1 DESCRIPTION
+
+The C<Locale::Codes::Script> module provides access to standards codes used
+for identifying scripts, such as those defined in ISO 15924.
+
+Most of the routines take an optional additional argument which
+specifies the code set to use. If not specified, the default ISO
+15924 four-letter codes will be used.
+
+=head1 SUPPORTED CODE SETS
+
+There are several different code sets you can use for identifying
+scripts. A code set may be specified using either a name, or a
+constant that is automatically exported by this module.
+
+For example, the two are equivalent:
+
+   $script = code2script('phnx','alpha');
+   $script = code2script('phnx',LOCALE_SCRIPT_ALPHA);
+
+The codesets currently supported are:
+
+=over 4
+
+=item B<alpha, LOCALE_SCRIPT_ALPHA>
+
+This is a set of four-letter (capitalized) codes from ISO 15924
+such as 'Phnx' for Phoenician.  It also includes additions to this
+set included in the IANA language registry.
+
+The Zxxx, Zyyy, and Zzzz codes are not used.
+
+This is the default code set.
+
+=item B<num, LOCALE_SCRIPT_NUMERIC>
+
+This is a set of three-digit numeric codes from ISO 15924 such as 115
+for Phoenician.
+
+=back
+
+=head1 ROUTINES
+
+=over 4
+
+=item B<code2script ( CODE [,CODESET] )>
+
+=item B<script2code ( NAME [,CODESET] )>
+
+=item B<script_code2code ( CODE ,CODESET ,CODESET2 )>
+
+=item B<all_script_codes ( [CODESET] )>
+
+=item B<all_script_names ( [CODESET] )>
+
+=item B<Locale::Codes::Script::rename_script  ( CODE ,NEW_NAME [,CODESET] )>
+
+=item B<Locale::Codes::Script::add_script  ( CODE ,NAME [,CODESET] )>
+
+=item B<Locale::Codes::Script::delete_script  ( CODE [,CODESET] )>
+
+=item B<Locale::Codes::Script::add_script_alias  ( NAME ,NEW_NAME )>
+
+=item B<Locale::Codes::Script::delete_script_alias  ( NAME )>
+
+=item B<Locale::Codes::Script::rename_script_code  ( CODE ,NEW_CODE [,CODESET] )>
+
+=item B<Locale::Codes::Script::add_script_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
+
+=item B<Locale::Codes::Script::delete_script_code_alias  ( CODE [,CODESET] )>
+
+These routines are all documented in the Locale::Codes::API man page.
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item B<Locale::Codes>
+
+The Locale-Codes distribution.
+
+=item B<Locale::Codes::API>
+
+The list of functions supported by this module.
+
+=item B<http://www.unicode.org/iso15924/>
+
+Home page for ISO 15924.
+
+=item B<http://www.iana.org/assignments/language-subtag-registry>
+
+The IANA language subtag registry.
+
+=back
+
+=head1 AUTHOR
+
+See Locale::Codes for full author history.
+
+Currently maintained by Sullivan Beck (sbeck@cpan.org).
+
+=head1 COPYRIGHT
+
+   Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
+   Copyright (c) 2001-2010 Neil Bowers
+   Copyright (c) 2010-2012 Sullivan Beck
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=cut

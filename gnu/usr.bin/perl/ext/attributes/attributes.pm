@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.12;
+our $VERSION = 0.19;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();
@@ -33,6 +33,15 @@ sub _modify_attrs_and_deprecate {
 	$deprecated{$svtype} && /$deprecated{$svtype}/ ? do {
 	    require warnings;
 	    warnings::warnif('deprecated', "Attribute \"$1\" is deprecated");
+	    0;
+	} : $svtype eq 'CODE' && /^-?lvalue\z/ ? do {
+	    require warnings;
+	    warnings::warnif(
+		'misc',
+		"lvalue attribute "
+		   . (/^-/ ? "removed from" : "applied to")
+		   . " already-defined subroutine"
+	    );
 	    0;
 	} : 1
     } _modify_attrs(@_);
@@ -98,7 +107,7 @@ sub get ($) {
 sub require_version { goto &UNIVERSAL::VERSION }
 
 require XSLoader;
-XSLoader::load('attributes', $VERSION);
+XSLoader::load();
 
 1;
 __END__
@@ -190,8 +199,9 @@ So you want to know what C<import> actually does?
 
 First of all C<import> gets the type of the third parameter ('CODE' in this case).
 C<attributes.pm> checks if there is a subroutine called C<< MODIFY_<reftype>_ATTRIBUTES >>
-in the caller's namespace (here: 'main'). In this case a subroutine C<MODIFY_CODE_ATTRIBUTES> is
-required. Then this method is called to check if you have used a "bad attribute".
+in the caller's namespace (here: 'main').  In this case a
+subroutine C<MODIFY_CODE_ATTRIBUTES> is required.  Then this
+method is called to check if you have used a "bad attribute".
 The subroutine call in this example would look like
 
   MODIFY_CODE_ATTRIBUTES( 'main', \&foo, 'method' );
@@ -210,17 +220,28 @@ The following are the built-in attributes for subroutines:
 =item lvalue
 
 Indicates that the referenced subroutine is a valid lvalue and can
-be assigned to. The subroutine must return a modifiable value such
+be assigned to.  The subroutine must return a modifiable value such
 as a scalar variable, as described in L<perlsub>.
+
+This module allows one to set this attribute on a subroutine that is
+already defined.  For Perl subroutines (XSUBs are fine), it may or may not
+do what you want, depending on the code inside the subroutine, with details
+subject to change in future Perl versions.  You may run into problems with
+lvalue context not being propagated properly into the subroutine, or maybe
+even assertion failures.  For this reason, a warning is emitted if warnings
+are enabled.  In other words, you should only do this if you really know
+what you are doing.  You have been warned.
 
 =item method
 
-Indicates that the referenced subroutine is a method. A subroutine so marked
+Indicates that the referenced subroutine
+is a method.  A subroutine so marked
 will not trigger the "Ambiguous call resolved as CORE::%s" warning.
 
 =item locked
 
-The "locked" attribute has no effect in 5.10.0 and later. It was used as part
+The "locked" attribute has no effect in
+5.10.0 and later.  It was used as part
 of the now-removed "Perl 5.005 threads".
 
 =back
@@ -454,7 +475,8 @@ not your own.
        print "foo\n";
     }
 
-This example runs. At compile time C<MODIFY_CODE_ATTRIBUTES> is called. In that
+This example runs.  At compile time
+C<MODIFY_CODE_ATTRIBUTES> is called.  In that
 subroutine, we check if any attribute is disallowed and we return a list of
 these "bad attributes".
 
@@ -476,7 +498,8 @@ As we return an empty list, everything is fine.
   }
 
 This example is aborted at compile time as we use the attribute "Test" which
-isn't allowed. C<MODIFY_CODE_ATTRIBUTES> returns a list that contains a single
+isn't allowed.  C<MODIFY_CODE_ATTRIBUTES>
+returns a list that contains a single
 element ('Test').
 
 =back

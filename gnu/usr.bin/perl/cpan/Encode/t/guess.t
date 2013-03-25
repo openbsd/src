@@ -17,7 +17,7 @@ use File::Spec;
 use Encode qw(decode encode find_encoding _utf8_off);
 
 #use Test::More qw(no_plan);
-use Test::More tests => 30;
+use Test::More tests => 32;
 use_ok("Encode::Guess");
 {
     no warnings;
@@ -62,6 +62,16 @@ for my $jp (@jp){
 is (decode('Guess', encode('euc-jp', $utf8on)), $utf8on, "decode('Guess')");
 eval{ encode('Guess', $utf8on) };
 like($@, qr/not defined/io, "no encode()");
+
+{
+    my $warning;
+    local $SIG{__WARN__} = sub { $warning = shift };
+    my $euc_jp = my $euc_jp_clone = encode('euc-jp', $utf8on);
+    Encode::from_to($euc_jp, 'Guess', 'euc-jp');
+    is $euc_jp_clone, $euc_jp, "from_to(..., 'Guess')";
+    ok !$warning, "no warning";
+    diag $warning if $warning;
+}
 
 my %CJKT = 
     (

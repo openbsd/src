@@ -85,9 +85,9 @@ the last call) ends with an C<undef> value.
 
 =item C<< $parser->content_seen >>
 
-This returns true only if there has been any real content seen
-for this document.
-
+This returns true only if there has been any real content seen for this
+document. Returns false in cases where the document contains content,
+but does not make use of any Pod markup.
 
 =item C<< I<SomeClass>->filter( I<$filename> ); >>
 
@@ -211,6 +211,117 @@ that you don't want I<any> lines indented. You can do something like this:
 
 =back
 
+=head1 TERTIARY METHODS
+
+=over
+
+=item C<< $parser->abandon_output_fh() >>X<abandon_output_fh>
+
+Cancel output to the file handle. Any POD read by the C<$parser> is not
+effected.
+
+=item C<< $parser->abandon_output_string() >>X<abandon_output_string>
+
+Cancel output to the output string. Any POD read by the C<$parser> is not
+effected.
+
+=item C<< $parser->accept_code( @codes ) >>X<accept_code>
+
+Alias for L<< accept_codes >>.
+
+=item C<< $parser->accept_codes( @codes ) >>X<accept_codes>
+
+Allows C<$parser> to accept a list of L<perlpod/Formatting Codes>. This can be
+used to implement user-defined codes.
+
+=item C<< $parser->accept_directive_as_data( @directives ) >>X<accept_directive_as_data>
+
+Allows C<$parser> to accept a list of directives for data paragraphs. A
+directive is the label of a L<perlpod/Command Paragraph>. A data paragraph is
+one delimited by C<< =begin/=for/=end >> directives. This can be used to
+implement user-defined directives.
+
+=item C<< $parser->accept_directive_as_processed( @directives ) >>X<accept_directive_as_processed>
+
+Allows C<$parser> to accept a list of directives for processed paragraphs. A
+directive is the label of a L<perlpod/Command Paragraph>. A processed
+paragraph is also known as L<perlpod/Ordinary Paragraph>. This can be used to
+implement user-defined directives.
+
+=item C<< $parser->accept_directive_as_verbatim( @directives ) >>X<accept_directive_as_verbatim>
+
+Allows C<$parser> to accept a list of directives for L<perlpod/Verbatim
+Paragraph>. A directive is the label of a L<perlpod/Command Paragraph>. This
+can be used to implement user-defined directives.
+
+=item C<< $parser->accept_target( @targets ) >>X<accept_target>
+
+Alias for L<< accept_targets >>.
+
+=item C<< $parser->accept_target_as_text( @targets ) >>X<accept_target_as_text>
+
+Alias for L<< accept_targets_as_text >>.
+
+=item C<< $parser->accept_targets( @targets ) >>X<accept_targets>
+
+Accepts targets for C<< =begin/=for/=end >> sections of the POD.
+
+=item C<< $parser->accept_targets_as_text( @targets ) >>X<accept_targets_as_text>
+
+Accepts targets for C<< =begin/=for/=end >> sections that should be parsed as
+POD. For details, see L<< perlpodspec/About Data Paragraphs >>.
+
+=item C<< $parser->any_errata_seen() >>X<any_errata_seen>
+
+Used to check if any errata was seen.
+
+I<Example:>
+
+  die "too many errors\n" if $parser->any_errata_seen();
+
+=item C<< $parser->parse_from_file( $source, $to ) >>X<parse_from_file>
+
+Parses from C<$source> file to C<$to> file. Similar to L<<
+Pod::Parser/parse_from_file >>.
+
+=item C<< $parser->scream( @error_messages ) >>X<scream>
+
+Log an error that can't be ignored.
+
+=item C<< $parser->unaccept_code( @codes ) >>X<unaccept_code>
+
+Alias for L<< unaccept_codes >>.
+
+=item C<< $parser->unaccept_codes( @codes ) >>X<unaccept_codes>
+
+Removes C<< @codes >> as valid codes for the parse.
+
+=item C<< $parser->unaccept_directive( @directives ) >>X<unaccept_directive>
+
+Alias for L<< unaccept_directives >>.
+
+=item C<< $parser->unaccept_directives( @directives ) >>X<unaccept_directives>
+
+Removes C<< @directives >> as valid directives for the parse.
+
+=item C<< $parser->unaccept_target( @targets ) >>X<unaccept_target>
+
+Alias for L<< unaccept_targets >>.
+
+=item C<< $parser->unaccept_targets( @targets ) >>X<unaccept_targets>
+
+Removes C<< @targets >> as valid targets for the parse.
+
+=item C<< $parser->version_report() >>X<version_report>
+
+Returns a string describing the version.
+
+=item C<< $parser->whine( @error_messages ) >>X<whine>
+
+Log an error unless C<< $parser->no_whining( TRUE ); >>.
+
+=back
+
 =head1 CAVEATS
 
 This is just a beta release -- there are a good number of things still
@@ -268,6 +379,16 @@ Pod::Simple is maintained by:
 =item * Hans Dieter Pearcey C<hdp@cpan.org>
 
 =item * David E. Wheeler C<dwheeler@cpan.org>
+
+=back
+
+Documentation has been contributed by:
+
+=over
+
+=item * Gabor Szabo C<szabgab@gmail.com>
+
+=item * Shawn H Corey  C<SHCOREY at cpan.org>
 
 =back
 

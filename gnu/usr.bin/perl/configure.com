@@ -44,6 +44,7 @@ $ extra_flags = ""
 $ user_c_flags = ""
 $ use_ieee_math = "y"
 $ be_case_sensitive = "n"
+$ shorten_long_symbols = "y"
 $ unlink_all_versions = "n"
 $ builder = "MMK"
 $ use_vmsdebug_perl = "n"
@@ -479,6 +480,11 @@ $     IF ( F$SEARCH("UU.DIR").EQS."" )
 $     THEN
 $       CREATE/DIRECTORY [.UU]
 $     ELSE
+$       IF ( F$SEARCH("[.UU.CXX_REPOSITORY]*.*").NES."" )
+$       THEN
+$         DELETE/NOLOG/NOCONFIRM [.UU.CXX_REPOSITORY]*.*;*
+$         SET PROTECTION=(SYSTEM:RWED,OWNER:RWED) [.UU]CXX_REPOSITORY.DIR
+$       ENDIF
 $       IF ( F$SEARCH("[.UU]*.*").NES."" ) THEN DELETE/NOLOG/NOCONFIRM [.UU]*.*;*
 $     ENDIF
 $!: Configure runs within the UU subdirectory
@@ -922,8 +928,8 @@ $   config_symbols0 ="|archlib|archlibexp|bin|binexp|builddir|cf_email|config_sh
 $   config_symbols1 ="|installprivlib|installscript|installsitearch|installsitelib|most|oldarchlib|oldarchlibexp|osname|pager|perl_symbol|perl_verb|"
 $   config_symbols2 ="|prefix|privlib|privlibexp|scriptdir|sitearch|sitearchexp|sitebin|sitelib|sitelib_stem|sitelibexp|try_cxx|use64bitall|use64bitint|"
 $   config_symbols3 ="|usecasesensitive|usedefaulttypes|usedevel|useieee|useithreads|uselongdouble|usemultiplicity|usemymalloc|usedebugging_perl|"
-$   config_symbols4 ="|useperlio|usesecurelog|usethreads|usevmsdebug|usefaststdio|usemallocwrap|unlink_all_versions|uselargefiles|usesitecustomize|"
-$   config_symbols5 ="|buildmake|builder|usethreadupcalls|usekernelthread"
+$   config_symbols4 ="|usesecurelog|usethreads|usevmsdebug|usefaststdio|usemallocwrap|unlink_all_versions|uselargefiles|usesitecustomize|"
+$   config_symbols5 ="|buildmake|builder|usethreadupcalls|usekernelthreads|useshortenedsymbols"
 $!  
 $   open/read CONFIG 'config_sh'
 $   rd_conf_loop:
@@ -1142,11 +1148,23 @@ $Beyond_TimeZone:
 $ tz = f$fao("UTC!AS!UL:!2ZL",signothetime,tzhour,tzminrem)
 $ cf_time = "''wkday' ''mon' ''mday' ''hour':''min':''sec' ''tz' ''year'"
 $!
-$!: determine the architecture name  
-$! Note that DCL in VMS V5.4 does not have F$GETSYI("ARCH_NAME")
-$! but does have F$GETSYI("HW_MODEL").
-$! Please try to use either archname .EQS. "VMS_VAX" or archname .EQS. 
-$! "VMS_AXP" from here on to allow cross-platform configuration (e.g.
+$! This quotation from Configure has to be included on VMS:
+$!
+$ TYPE SYS$INPUT:
+$ DECK
+
+There is, however, a strange, musty smell in the air that reminds me of
+something...hmm...yes...I've got it...there's a VMS nearby, or I'm a Blit.
+$ EOD
+$!
+$! Determine the architecture name.  For now we just get the base
+$! architecture name, which may accumulate various minus sign-delimited
+$! appendages later depending on configuration options.  But we need the
+$! base name early because not all questions are worth asking on all
+$! platforms.
+$!
+$! Please use F$ELEMENT(0,"-",archname) .EQS. "VMS_VAX" (or "VMS_AXP" or
+$! "VMS_IA64") from here on to allow cross-platform configuration (e.g.
 $! configure a VAX build on an Alpha).
 $!
 $ IF (F$GETSYI("HW_MODEL") .LT. 1024 .AND. F$GETSYI("HW_MODEL") .GT. 0)
@@ -1168,164 +1186,6 @@ $       arch_type = "ARCH-TYPE=__IA64__"
 $   ENDIF
 $   alignbytes="8"
 $ ENDIF
-$ dflt = archname
-$ rp = "What is your architecture name? [''archname'] "
-$ GOSUB myread
-$ IF ans.NES.""
-$ THEN
-$   ans = F$EDIT(ans,"COLLAPSE, UPCASE")
-$   IF (ans.NES.archname) !.AND.knowitall
-$   THEN
-$     echo4 "I'll go with ''archname' anyway..."
-$   ENDIF
-$ ENDIF
-$ bool_dflt = "n"
-$ vms_prefix = "perl_root"
-$ vms_prefixup = F$EDIT(vms_prefix,"UPCASE")
-$ rp = "Will you be sharing your ''vms_prefixup' with ''otherarch'? [''bool_dflt'] "
-$ GOSUB myread
-$ IF .NOT. ans
-$ THEN
-$   sharedperl = "N"
-$ ELSE
-$   sharedperl = "Y"
-$   IF (archname.EQS."VMS_AXP")
-$   THEN
-$     macros = macros + """AXE=1"","
-$   ENDIF
-$   IF (archname.EQS."VMS_IA64")
-$   THEN
-$     macros = macros + """IXE=1"","
-$   ENDIF
-$ ENDIF
-$!
-$!: is AFS running?                       !sfn
-$!: decide how portable to be.  Allow command line overrides. !sfn
-$!: set up shell script to do ~ expansion !sfn
-$!: expand filename                       !sfn
-$!: now set up to get a file name         !sfn
-$!
-$ IF F$TYPE(prefix) .EQS. ""
-$ THEN
-$   prefix = F$ENVIRONMENT("DEFAULT") - ".UU]" + "]"
-$   prefix = F$PARSE(prefix,,,,"NO_CONCEAL") - "][" - "000000." - ".000000" - ".;"
-$   prefixbase = prefix - "]"
-$!  Add _ROOT to make install PERL_ROOT differ from build directory.
-$   prefix = prefixbase + "_ROOT.]"
-$ ENDIF
-$ ! more redundant scrubbing of values
-$ prefix = prefix - "000000."
-$ IF F$LOCATE(".]",prefix) .EQ. F$LENGTH(prefix) THEN prefix = prefix - "]" + ".]"
-$ src = prefix
-$!: determine root of directory hierarchy where package will be installed.
-$ dflt = prefix
-$ IF .NOT.silent 
-$ THEN 
-$   echo ""
-$   echo "By default, ''package' will be installed in ''dflt', pod"
-$   echo "pages under ''prefixbase'.LIB.POD], etc..., i.e. with ''dflt' as prefix for"
-$   echo "all installation directories."
-$   echo "On ''osname' the prefix is used to DEFINE the ''vms_prefixup' prior to installation"
-$   echo "as well as during subsequent use of ''package' via ''packageup'_SETUP.COM."
-$ ENDIF
-$ rp = "Installation prefix to use (for ''vms_prefixup')? [ ''dflt' ] "
-$ GOSUB myread
-$ IF ans.NES.""
-$ THEN 
-$   prefix = ans
-$   IF F$LOCATE(".]",ans) .EQ. F$LENGTH(ans) THEN prefix = prefix - "]" + ".]"
-$ ELSE 
-$   prefix = dflt
-$ ENDIF
-$ perl_root = prefix
-$!
-$! Check here for pre-existing PERL_ROOT.
-$!  -> ask if removal desired.
-$! Check here for writability of requested PERL_ROOT if it is not the default (cwd).
-$!  -> recommend letting PERL_ROOT be PERL_SRC if requested PERL_ROOT is not writable.
-$!
-$   tmp = perl_root - ".]" + "]"
-$ dflt = f$parse(tmp,,,,)
-$   IF dflt .eqs. ""
-$   THEN
-$       echo4 "''tmp' does not yet exist."
-$!      create/directory 'tmp'
-$   ELSE
-$       echo4 "''tmp' already exists."
-$   ENDIF
-$!
-$ vms_skip_install = "true"
-$ bool_dflt = "y"
-$! echo ""
-$ rp = "Skip the remaining """"where install"""" questions? [''bool_dflt'] "
-$ GOSUB myread
-$ IF (.NOT.ans) THEN vms_skip_install = "false"
-$ IF (.NOT.vms_skip_install)
-$ THEN
-$!
-$!: set the prefixit variable, to compute a suitable default value
-$!
-$!: determine where private library files go
-$!: Usual default is /usr/local/lib/perl5.  Also allow things like 
-$!: /opt/perl/lib, since /opt/perl/lib/perl5 would be redundant.
-$   IF .NOT.silent 
-$   THEN
-$     TYPE SYS$INPUT:
-$     DECK
-
-There are some auxiliary files for perl5 that need to be put into a
-private library directory that is accessible by everyone.
-$     EOD
-$   ENDIF
-$   IF F$TYPE(privlib) .NES. ""
-$   THEN dflt = privlib
-$   ELSE dflt = "''vms_prefix':[lib]"
-$   ENDIF
-$   rp = "Pathname where the private library files will reside? " 
-$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
-$   GOSUB myread
-$   privlib = ans
-$!
-$ ENDIF !%Config-I-VMS, skip remaining "where install" questions
-$!
-$ IF F$TYPE(perl_symbol) .EQS. "" THEN perl_symbol := true
-$ IF F$TYPE(perl_verb) .EQS. "" THEN perl_verb = ""
-$ IF perl_symbol
-$ THEN bool_dflt = "y"
-$ ELSE bool_dflt = "n"
-$ ENDIF
-$ IF .NOT.silent 
-$ THEN 
-$   echo ""
-$   echo "You may choose to write ''packageup'_SETUP.COM to assign a foreign"
-$   echo "symbol to invoke ''package', which is the usual method."
-$   echO "If you do not do so then you would need a DCL command verb at the"
-$   echo "process or the system wide level."
-$ ENDIF
-$ rp = "Invoke perl as a global symbol foreign command? [''bool_dflt'] "
-$ GOSUB myread
-$ IF (.NOT.ans) THEN perl_symbol = "false"
-$!
-$ IF (.NOT.perl_symbol)
-$ THEN
-$   IF perl_verb .EQS. "DCLTABLES"
-$   THEN bool_dflt = "n"
-$   ELSE bool_dflt = "y"
-$   ENDIF
-$   IF .NOT.silent 
-$   THEN 
-$     echo ""
-$     echo "Since you won't be using a symbol you must choose to put the ''packageup'"
-$     echo "verb in a per-process table or in the system wide DCLTABLES (which"
-$     echo "would require write privilege)."
-$   ENDIF
-$   rp = "Invoke perl as a per process command verb? [ ''bool_dflt' ] "
-$   GOSUB myread
-$   IF (.NOT.ans)
-$   THEN perl_verb = "DCLTABLES"
-$   ELSE perl_verb = "PROCESS"
-$   ENDIF
-$ ENDIF ! (.NOT.perl_symbol)
 $!
 $!: set the base revision
 $ baserev="5.0"
@@ -1433,175 +1293,6 @@ $ ENDIF
 $ echo "(You have ''package' ''version_patchlevel_string'.)"
 $!
 $ version = revision + "_" + patchlevel + "_" + subversion
-$!
-$ IF (.NOT.vms_skip_install)
-$ THEN
-$!: set the prefixup variable, to restore leading tilde escape !sfn
-$!
-$!: determine where public architecture dependent libraries go
-$   IF (.NOT.silent) 
-$   THEN 
-$     echo ""
-$     echo "''package' contains architecture-dependent library files.  If you are"
-$   ENDIF
-$   IF (.NOT.silent) 
-$   THEN
-$     TYPE SYS$INPUT:
-$     DECK
-sharing libraries in a heterogeneous environment, you might store
-these files in a separate location.  Otherwise, you can just include
-them with the rest of the public library files.
-$     EOD
-$   ENDIF
-$   IF F$TYPE(archlib) .NES. ""
-$   THEN dflt = archlib
-$   ELSE dflt = privlib - "]" + "." + archname + "." + version + "]"
-$   ENDIF
-$   rp = "Where do you want to put the public architecture-dependent libraries? "
-$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
-$   GOSUB myread
-$   archlib = ans
-$!
-$ ENDIF !%Config-I-VMS, skip "where install" questions
-$!
-$! This quotation from Configure has to be included on VMS:
-$!
-$ TYPE SYS$INPUT:
-$ DECK
-
-There is, however, a strange, musty smell in the air that reminds me of
-something...hmm...yes...I've got it...there's a VMS nearby, or I'm a Blit.
-$ EOD
-$ IF (.NOT.vms_skip_install)
-$ THEN
-$!: it so happens the Eunice I know will not run shell scripts in Unix format
-$!
-$!: see if setuid scripts can be secure           !sfn
-$!: now see if they want to do setuid emulation   !sfn
-$!
-$!: determine where site specific libraries go.
-$   IF .NOT.silent 
-$   THEN
-$     TYPE SYS$INPUT:
-$     DECK
-
-The installation process will also create a directory for
-site-specific extensions and modules.  Some users find it convenient
-to place all local files in this directory rather than in the main
-distribution directory.
-$     EOD
-$   ENDIF
-$   IF F$TYPE(sitelib) .NES. ""
-$   THEN dflt = sitelib
-$   ELSE dflt = privlib - "]" + ".SITE_PERL]"
-$   ENDIF
-$   rp = "Pathname for the site-specific library files? "
-$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
-$   GOSUB myread
-$   sitelib = ans
-$!
-$!: determine where site specific architecture-dependent libraries go.
-$   IF .NOT.silent 
-$   THEN TYPE SYS$INPUT:
-$     DECK
-
-The installation process will also create a directory for
-architecture-dependent site-specific extensions and modules.
-$     EOD
-$   ENDIF
-$   IF F$TYPE(sitearch) .NES. ""
-$   THEN dflt = sitearch
-$   ELSE dflt = sitelib - "]" + "." + archname + "]"
-$   ENDIF
-$   rp = "Pathname for the site-specific architecture-dependent library files? "
-$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
-$   GOSUB myread
-$   sitearch = ans
-$!
-$!: determine where old public architecture dependent libraries might be
-$!
-$!: determine where public executables go
-$   IF F$TYPE(bin) .NES. ""
-$   THEN dflt = bin
-$!   ELSE dflt = prefix - ".]" + ".BIN]"
-$   ELSE dflt = "/''vms_prefix'"
-$   ENDIF
-$   rp = "Pathname where the public executables will reside? "
-$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
-$   GOSUB myread
-$   bin = ans
-$!
-$!: determine where add-on public executables go
-$   IF F$TYPE(sitebin) .NES. ""
-$   THEN dflt = sitebin
-$   ELSE dflt = "''vms_prefix':[bin.''archname']"
-$   ENDIF
-$   rp = "Pathname where the add-on public executables should be installed? "
-$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
-$   GOSUB myread
-$   sitebin = ans
-$!
-$!: determine where manual pages are on this system
-$!: What suffix to use on installed man pages
-$!: see if we can have long filenames
-$!: determine where library module manual pages go
-$!: What suffix to use on installed man pages
-$!: see what memory models we can support
-$!
-$ ELSE ! skipping "where install" questions, we must set some symbols
-$   IF F$TYPE(archlib).EQS."" THEN -
-      archlib="''vms_prefix':[lib.''archname'.''version']"
-$   IF F$TYPE(bin) .EQS. "" THEN -
-      bin="/''vms_prefix'"
-$   IF F$TYPE(privlib) .EQS. "" THEN -
-      privlib ="''vms_prefix':[lib]"
-$   IF F$TYPE(sitearch) .EQS. "" THEN -
-      sitearch="''vms_prefix':[lib.site_perl.''archname']"
-$   IF F$TYPE(sitelib) .EQS. "" THEN -
-      sitelib ="''vms_prefix':[lib.site_perl]"
-$   IF F$TYPE(sitebin) .EQS. "" THEN -
-      sitebin="''vms_prefix':[bin.''archname']"
-$ ENDIF !%Config-I-VMS, skip "where install" questions
-$!
-$! These derived locations can be set whether we've opted to
-$! skip the where install questions or not.
-$!
-$ IF F$TYPE(archlibexp) .EQS. "" THEN -
-    archlibexp="''vms_prefix':[lib.''archname'.''version']"
-$ IF F$TYPE(binexp) .EQS. "" THEN -
-    binexp ="''vms_prefix':[000000]"
-$ IF F$TYPE(builddir) .EQS. "" THEN -
-    builddir ="''vms_prefix':[000000]"
-$ IF F$TYPE(installarchlib) .EQS. "" THEN -
-    installarchlib="''vms_prefix':[lib.''archname'.''version']"
-$ IF F$TYPE(installbin) .EQS. "" THEN -
-    installbin ="''vms_prefix':[000000]"
-$ IF F$TYPE(installscript) .EQS. "" THEN -
-    installscript ="''vms_prefix':[utils]"
-$ IF F$TYPE(installman1dir) .EQS. "" THEN -
-    installman1dir ="''vms_prefix':[man.man1]"
-$ IF F$TYPE(installman3dir) .EQS. "" THEN -
-    installman3dir ="''vms_prefix':[man.man3]"
-$ IF F$TYPE(installprivlib) .EQS. "" THEN -
-    installprivlib ="''vms_prefix':[lib]"
-$ IF F$TYPE(installsitearch) .EQS. "" THEN -
-    installsitearch="''vms_prefix':[lib.site_perl.''archname']"
-$ IF F$TYPE(installsitelib) .EQS. "" THEN -
-    installsitelib ="''vms_prefix':[lib.site_perl]"
-$ IF F$TYPE(oldarchlib) .EQS. "" THEN -
-    oldarchlib="''vms_prefix':[lib.''archname']"
-$ IF F$TYPE(oldarchlibexp) .EQS. "" THEN -
-    oldarchlibexp="''vms_prefix':[lib.''archname']"
-$ IF F$TYPE(privlibexp) .EQS. "" THEN -
-    privlibexp ="''vms_prefix':[lib]"
-$ IF F$TYPE(scriptdir) .EQS. "" THEN -
-    scriptdir ="''vms_prefix':[utils]"
-$ IF F$TYPE(sitearchexp) .EQS. "" THEN -
-    sitearchexp ="''vms_prefix':[lib.site_perl.''archname']"
-$ IF F$TYPE(sitelib_stem) .EQS. "" THEN -
-    sitelib_stem ="''vms_prefix':[lib.site_perl]"
-$ IF F$TYPE(sitelibexp) .EQS. "" THEN -
-    sitelibexp ="''vms_prefix':[lib.site_perl]"
 $!
 $!: see if we need a special compiler
 $! cc_list = "cc/decc|gcc" !%Config-I-VMS, compiler symbols/commands
@@ -1892,7 +1583,7 @@ $   CLOSE CONFIG
 $   echo "You are using Dec C ''line'"
 $   ccversion = line
 $   Dec_C_Version = F$INTEGER(line)
-$   IF Dec_C_Version .GE. 60200000 .AND. archname .NES. "VMS_VAX"
+$   IF Dec_C_Version .GE. 60200000 .AND. F$ELEMENT(0, "-", archname) .NES. "VMS_VAX"
 $   THEN
 $     echo4 "adding /NOANSI_ALIAS qualifier to ccflags."
 $     ccflags = ccflags + "/NOANSI_ALIAS"
@@ -2087,12 +1778,12 @@ $!
 $List_Parse:
 $ OPEN/READ CONFIG ccvms.lis
 $ READ CONFIG line
-$ IF archname .EQS. "VMS_VAX"
+$ IF F$ELEMENT(0, "-", archname) .EQS. "VMS_VAX"
 $ THEN
 $   read CONFIG line
 $   archsufx = "VAX"
 $ ELSE
-$   IF archname .EQS. "VMS_AXP"
+$   IF F$ELEMENT(0, "-", archname) .EQS. "VMS_AXP"
 $   THEN
 $       archsufx = "AXP"
 $   ELSE
@@ -2242,15 +1933,6 @@ $!: Looking for optional libraries
 $!: see if nm is to be used to determine whether a symbol is defined or not
 $!: get list of predefined functions in a handy place
 $!: see if we have sigaction or sigprocmask
-$!: see whether socketshr exists
-$ IF (F$SEARCH(F$PARSE("SocketShr","Sys$Share:.Exe")).NES."")
-$ THEN
-$   Has_socketshr     = "T"
-$   echo ""
-$   echo4 "Hmm... Looks like you have SOCKETSHR Berkeley networking support."
-$ ELSE
-$   Has_socketshr     = "F"
-$ ENDIF
 $ IF (ccname .EQS. "DEC" .AND. Dec_C_Version .GE. 50200000) .OR. (ccname .EQS. "CXX")
 $ THEN
 $   Has_Dec_C_Sockets = "T"
@@ -2259,20 +1941,14 @@ $   echo4 "Hmm... Looks like you have Dec C Berkeley networking support."
 $ ELSE
 $   Has_Dec_C_Sockets = "F"
 $ ENDIF
-$ ! Hey, we've got both. Default to Dec C, then, since it's better
-$ IF Has_socketshr .OR. Has_Dec_C_Sockets
+$!
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   echo ""
-$   echo "You have sockets available.  Which socket stack do you want to"
-$   echo "build into Perl?"
-$   IF Has_Dec_C_Sockets
-$   THEN
-$     dflt = "DECC"
-$   ELSE
-$     dflt = "SOCKETSHR"
-$   ENDIF
-$   rp = "Choose socket stack (NONE"
-$   IF Has_socketshr THEN rp = rp + ",SOCKETSHR"
+$   echo "You have sockets available via the C library. Should socket support"
+$   echo "be built into Perl?"
+$   dflt = "DECC"
+$   rp = "Choose socket support option (NONE"
 $   IF Has_Dec_C_Sockets THEN rp = rp + ",DECC"
 $   rp = rp + ") [''dflt'] "
 $   GOSUB myread
@@ -2280,7 +1956,6 @@ $   Has_Dec_C_Sockets = "F"
 $   Has_socketshr = "F"
 $   ans = F$EDIT(ans,"TRIM,COMPRESS,LOWERCASE")
 $   IF ans.eqs."decc" THEN Has_Dec_C_Sockets = "T"
-$   IF ans.eqs."socketshr" THEN Has_socketshr = "T"
 $ ENDIF
 $!
 $!
@@ -2322,29 +1997,142 @@ $ rp = "Build a DEBUGGING version of Perl? [''bool_dflt'] "
 $ GOSUB myread
 $ use_debugging_perl = ans
 $!
+$!
+$! Ask about threads, if appropriate
+$ IF ccname .EQS. "DEC" .OR. ccname .EQS. "CXX"
+$ THEN
+$   echo ""
+$   echo "Perl can be built to take advantage of threads on some systems."
+$   echo "To do so, configure.com can be run with -""Dusethreads""."
+$   echo ""
+$   echo "Note that Perl built with threading support runs slightly slower"
+$   echo "and uses more memory than plain Perl. The current implementation"
+$   echo "is believed to be stable, but it is fairly new, and so should be"
+$   echo "treated with caution."
+$   echo ""
+$   bool_dflt = "n"
+$   if f$type(usethreads) .nes. "" 
+$   then 
+$       if usethreads .or. usethreads .eqs. "define" then bool_dflt="y"
+$   endif
+$!  Catch cases where user specified ithreads or 5005threads but
+$!  forgot -Dusethreads 
+$   if f$type(useithreads) .nes. ""
+$   then
+$         if useithreads .or. useithreads .eqs. "define" then bool_dflt="y"
+$   endif
+$   if f$type(use5005threads) .nes. ""
+$   then
+$         if use5005threads .or. use5005threads .eqs. "define" then bool_dflt="y"
+$   endif
+$   echo "If this doesn't make any sense to you, just accept the default '" + bool_dflt + "'."
+$   rp = "Build a threading Perl? [''bool_dflt'] "
+$   GOSUB myread
+$   if ans
+$   THEN
+$     usethreads = "define"
+$     use_threads="T"
+$     ! Shall we do the 5.005-type threads, or IThreads?
+$     echo "Since release 5.6, Perl has had two different threading implementations,"
+$     echo "the newer interpreter-based version (ithreads) with one interpreter per"
+$     echo "thread, and the older 5.005 version (5005threads)."
+$     echo "The 5005threads version is effectively unmaintained and will probably be"
+$     echo "removed in Perl 5.10, so there should be no need to build a Perl using it"
+$     echo "unless needed for backwards compatibility with some existing 5.005threads"
+$     echo "code."
+$     echo ""
+$     bool_dflt = "y"
+$     if f$type(useithreads) .nes. ""
+$     then
+$         if useithreads .eqs. "undef" then bool_dflt="n"
+$     endif
+$     if f$type(use5005threads) .nes. ""
+$     then
+$         if use5005threads .or. use5005threads .eqs. "define" then bool_dflt="n"
+$     endif
+$     rp = "Use the newer interpreter-based ithreads? [''bool_dflt'] "
+$     GOSUB myread
+$     use_ithreads=ans
+$     if use_ithreads 
+$     THEN
+$       use_5005_threads="N"
+$     ELSE
+$       use_5005_threads="Y"
+$     ENDIF
+$     ! Are they on VMS 7.1 or greater?
+$     IF "''f$extract(1,3, f$getsyi(""version""))'" .GES. "7.1"
+$     THEN
+$       echo ""
+$	echo "Threaded Perl can be linked to use system upcalls on your system. This feature"
+$	echo "allows the thread scheduler to be made aware of system events (such as I/O)"
+$	echo "so as to prevent a single thread from blocking all the threads in a program,"
+$	echo "even on a single-processor machine."
+$	bool_dflt = "y"
+$	IF f$type(usethreadupcalls) .NES. ""
+$	THEN
+$       	if .not. usethreadupcalls .or. usethreadupcalls .eqs. "undef" then bool_dflt="n"
+$	ENDIF
+$       rp = "Enable thread upcalls? [''bool_dflt'] "
+$       gosub myread
+$       IF ans
+$       THEN
+$           thread_upcalls = "MTU=MTU=1"
+$	    usethreadupcalls = "define"
+$     	    ! Are they on alpha or itanium?
+$	    IF (F$ELEMENT(0, "-", archname) .NES. "VMS_VAX") .AND. ("''f$extract(1,3, f$getsyi(""version""))'" .GES. "7.2")
+$     	    THEN
+$       	echo ""
+$       	echo "Threaded Perl can be linked to use multiple kernel threads on your system."
+$       	echo "This feature allows multiple user threads to make use of multiple CPUs on"
+$		echo "a multi-processor machine."
+$       	bool_dflt = "n"
+$		IF f$type(usekernelthreads) .nes. ""
+$		THEN
+$       		if usekernelthreads .or. usekernelthreads .eqs. "define" then bool_dflt="y"
+$		ENDIF
+$       	rp = "Enable multiple kernel threads? [''bool_dflt'] "
+$       	gosub myread
+$       	IF ans
+$		THEN
+$           	    thread_kernel = "MTK=MTK=1"
+$	    	    usekernelthreads = "define"
+$           	ENDIF
+$           ENDIF
+$       ENDIF
+$     ENDIF
+$   ELSE
+$     usethreads = "undef"
+$   ENDIF
+$ ENDIF
+$ IF F$TYPE(usethreadupcalls) .EQS. "" THEN usethreadupcalls = "undef"
+$ IF F$TYPE(usekernelthreads) .EQS. "" THEN usekernelthreads = "undef"
+$!
 $! Ask if they want to build with MULTIPLICITY
 $ echo ""
 $ echo "Perl can be built so that multiple Perl interpreters can coexist"
 $ echo "within the same Perl executable."
-$ echo "There is some performance overhead, however, so you"
-$ echo "probably do not want to choose this unless you are going to be" 
-$ echo "doing things with embedded perl."
-$ bool_dflt = "n"
-$ if f$type(usemultiplicity) .nes. "" 
-$ then
-$   if usemultiplicity .or. usemultiplicity .eqs. "define" then bool_dflt = "y"
-$ endif
-$ rp = "Build Perl for multiplicity? [''bool_dflt'] "
-$ GOSUB myread
-$ IF ans
+$ IF usethreads .OR. usethreads .EQS. "define"
 $ THEN
+$   echo "This multiple interpreter support is required for interpreter-based threads."
 $   usemultiplicity="define"
 $ ELSE
-$   usemultiplicity="undef"
+$   bool_dflt = "n"
+$   if f$type(usemultiplicity) .nes. "" 
+$   then
+$     if usemultiplicity .or. usemultiplicity .eqs. "define" then bool_dflt = "y"
+$   endif
+$   rp = "Build Perl for multiplicity? [''bool_dflt'] "
+$   GOSUB myread
+$   IF ans
+$   THEN
+$     usemultiplicity="define"
+$   ELSE
+$     usemultiplicity="undef"
+$   ENDIF
 $ ENDIF
 $!
 $! Ask if they want to build with 64-bit support
-$ IF (archname.NES."VMS_VAX").and.("''f$extract(1,3, f$getsyi(""version""))'".ges."7.1")
+$ IF (F$ELEMENT(0, "-", archname).NES."VMS_VAX").and.("''f$extract(1,3, f$getsyi(""version""))'".ges."7.1")
 $ THEN
 $   bool_dflt = "n"
 $   IF F$TYPE(use64bitint) .NES. "" 
@@ -2423,113 +2211,6 @@ $ ELSE
 $       usesitecustomize = "undef"
 $ ENDIF
 $!
-$! Ask about threads, if appropriate
-$ IF ccname .EQS. "DEC" .OR. ccname .EQS. "CXX"
-$ THEN
-$   echo ""
-$   echo "Perl can be built to take advantage of threads on some systems."
-$   echo "To do so, configure.com can be run with -""Dusethreads""."
-$   echo ""
-$   echo "Note that Perl built with threading support runs slightly slower"
-$   echo "and uses more memory than plain Perl. The current implementation"
-$   echo "is believed to be stable, but it is fairly new, and so should be"
-$   echo "treated with caution."
-$   echo ""
-$   bool_dflt = "n"
-$   if f$type(usethreads) .nes. "" 
-$   then 
-$       if usethreads .or. usethreads .eqs. "define" then bool_dflt="y"
-$   endif
-$!  Catch cases where user specified ithreads or 5005threads but
-$!  forgot -Dusethreads 
-$   if f$type(useithreads) .nes. ""
-$   then
-$         if useithreads .or. useithreads .eqs. "define" then bool_dflt="y"
-$   endif
-$   if f$type(use5005threads) .nes. ""
-$   then
-$         if use5005threads .or. use5005threads .eqs. "define" then bool_dflt="y"
-$   endif
-$   echo "If this doesn't make any sense to you, just accept the default '" + bool_dflt + "'."
-$   rp = "Build a threading Perl? [''bool_dflt'] "
-$   GOSUB myread
-$   if ans
-$   THEN
-$     use_threads="T"
-$     ! Shall we do the 5.005-type threads, or IThreads?
-$     echo "Since release 5.6, Perl has had two different threading implementations,"
-$     echo "the newer interpreter-based version (ithreads) with one interpreter per"
-$     echo "thread, and the older 5.005 version (5005threads)."
-$     echo "The 5005threads version is effectively unmaintained and will probably be"
-$     echo "removed in Perl 5.10, so there should be no need to build a Perl using it"
-$     echo "unless needed for backwards compatibility with some existing 5.005threads"
-$     echo "code."
-$     echo ""
-$     bool_dflt = "y"
-$     if f$type(useithreads) .nes. ""
-$     then
-$         if useithreads .eqs. "undef" then bool_dflt="n"
-$     endif
-$     if f$type(use5005threads) .nes. ""
-$     then
-$         if use5005threads .or. use5005threads .eqs. "define" then bool_dflt="n"
-$     endif
-$     rp = "Use the newer intepreter-based ithreads? [''bool_dflt'] "
-$     GOSUB myread
-$     use_ithreads=ans
-$     if use_ithreads 
-$     THEN
-$       use_5005_threads="N"
-$     ELSE
-$       use_5005_threads="Y"
-$     ENDIF
-$     ! Are they on VMS 7.1 or greater?
-$     IF "''f$extract(1,3, f$getsyi(""version""))'" .GES. "7.1"
-$     THEN
-$       echo ""
-$	echo "Threaded Perl can be linked to use system upcalls on your system. This feature"
-$	echo "allows the thread scheduler to be made aware of system events (such as I/O)"
-$	echo "so as to prevent a single thread from blocking all the threads in a program,"
-$	echo "even on a single-processor machine."
-$	bool_dflt = "y"
-$	IF f$type(usethreadupcalls) .NES. ""
-$	THEN
-$       	if .not. usethreadupcalls .or. usethreadupcalls .eqs. "undef" then bool_dflt="n"
-$	ENDIF
-$       rp = "Enable thread upcalls? [''bool_dflt'] "
-$       gosub myread
-$       IF ans
-$       THEN
-$           thread_upcalls = "MTU=MTU=1"
-$	    usethreadupcalls = "define"
-$     	    ! Are they on alpha or itanium?
-$	    IF (archname .NES. "VMS_VAX") .AND. ("''f$extract(1,3, f$getsyi(""version""))'" .GES. "7.2")
-$     	    THEN
-$       	echo ""
-$       	echo "Threaded Perl can be linked to use multiple kernel threads on your system."
-$       	echo "This feature allows multiple user threads to make use of multiple CPUs on"
-$		echo "a multi-processor machine."
-$       	bool_dflt = "n"
-$		IF f$type(usekernelthreads) .nes. ""
-$		THEN
-$       		if usekernelthreads .or. usekernelthreads .eqs. "define" then bool_dflt="y"
-$		ENDIF
-$       	rp = "Enable multiple kernel threads? [''bool_dflt'] "
-$       	gosub myread
-$       	IF ans
-$		THEN
-$           	    thread_kernel = "MTK=MTK=1"
-$	    	    usekernelthreads = "define"
-$           	ENDIF
-$           ENDIF
-$       ENDIF
-$     ENDIF
-$   ENDIF
-$ ENDIF
-$ IF F$TYPE(usethreadupcalls) .EQS. "" THEN usethreadupcalls = "undef"
-$ IF F$TYPE(usekernelthreads) .EQS. "" THEN usekernelthreads = "undef"
-$ IF archname .NES. "VMS_VAX"
-$ THEN
 $! Case sensitive?
 $   echo ""
 $   echo "By default, perl (and pretty much everything else on VMS) uses"
@@ -2551,6 +2232,22 @@ $   endif
 $   rp = "Build with case-sensitive symbols? [''bool_dflt'] "
 $   GOSUB myread
 $   be_case_sensitive = ans
+$!
+$! Shortened symbols?
+$   echo ""
+$   echo "The VMS linker does not handle symbol names longer than 31 characters,"
+$   echo "but the compiler can shorten long symbols if requested."
+$   bool_dflt = shorten_long_symbols
+$   if f$type(useshortenedsymbols) .nes. ""
+$   then
+$       if useshortenedsymbols .or. useshortenedsymbols .eqs. "define" then bool_dflt = "y"
+$       if f$extract(0,1,f$edit(useshortenedsymbols,"collapse,upcase")) .eqs. "N" .or. useshortenedsymbols .eqs. "undef"  then bool_dflt = "n"
+$   endif
+$   rp = "Build with long symbols shortened? [''bool_dflt'] "
+$   GOSUB myread
+$   shorten_long_symbols = ans
+$ IF F$ELEMENT(0, "-", archname) .NES. "VMS_VAX"
+$ THEN
 $! IEEE math?
 $   echo ""
 $   echo "Perl normally uses IEEE format (T_FLOAT) floating point numbers on"
@@ -2571,13 +2268,14 @@ $   rp = "Use IEEE math? [''bool_dflt'] "
 $   GOSUB myread
 $   use_ieee_math = ans
 $ ELSE
-$   be_case_sensitive = "n"
 $   use_ieee_math = "n"
 $ ENDIF
 $ useieee = "undef"
 $ usecasesensitive = "undef"
+$ useshortenedsymbols = "undef"
 $ if (use_ieee_math) then useieee = "define"
 $ if (be_case_sensitive) then usecasesensitive = "define"
+$ if (shorten_long_symbols) then useshortenedsymbols = "define"
 $! Unlink all versions?
 $ echo ""
 $ echo "By default, Perl's unlink() provides VMS-like behavior and only"
@@ -2664,6 +2362,362 @@ $ GOSUB myread
 $ d_alwdeftype = ans
 $ usedefaulttypes = "undef"
 $ if (d_alwdeftype) then usedefaulttypes = "define"
+$!
+$ dflt = archname
+$ rp = "What is your architecture name? [''archname'] "
+$ GOSUB myread
+$ IF ans.NES.""
+$ THEN
+$   ans = F$EDIT(ans,"COLLAPSE, UPCASE")
+$   IF (ans.NES.archname) !.AND.knowitall
+$   THEN
+$     echo4 "I'll go with ''archname' anyway..."
+$   ENDIF
+$ ENDIF
+$!
+$ IF usethreads .OR. usethreads .EQS. "define"
+$ THEN
+$   echo4 "Threads selected."
+$   IF F$LOCATE("-thread", archname) .EQ. F$LENGTH(archname)
+$   THEN
+$     archname = "''archname'-thread"
+$     echo4 "...setting architecture name to ''archname'."
+$   ELSE
+$     echo4 "...and architecture name already has -thread."
+$   ENDIF
+$ ENDIF
+$!
+$ IF usemultiplicity .OR. usemultiplicity .EQS. "define"
+$ THEN
+$   echo4 "Multiplicity selected."
+$   IF F$LOCATE("-multi", archname) .EQ. F$LENGTH(archname)
+$   THEN
+$     archname = "''archname'-multi"
+$     echo4 "...setting architecture name to ''archname'."
+$   ELSE
+$     echo4 "...and architecture name already has -multi."
+$   ENDIF
+$ ENDIF
+$!
+$ IF uselongdouble .OR. uselongdouble .EQS. "define"
+$ THEN
+$   echo4 "Long doubles selected."
+$   IF F$LOCATE("-ld", archname) .EQ. F$LENGTH(archname)
+$   THEN
+$     archname = "''archname'-ld"
+$     echo4 "...setting architecture name to ''archname'."
+$   ELSE
+$     echo4 "...and architecture name already has -ld."
+$   ENDIF
+$ ENDIF
+$!
+$ bool_dflt = "n"
+$ vms_prefix = "perl_root"
+$ vms_prefixup = F$EDIT(vms_prefix,"UPCASE")
+$ rp = "Will you be sharing your ''vms_prefixup' with ''otherarch'? [''bool_dflt'] "
+$ GOSUB myread
+$ IF .NOT. ans
+$ THEN
+$   sharedperl = "N"
+$ ELSE
+$   sharedperl = "Y"
+$   IF (F$ELEMENT(0, "-", archname).EQS."VMS_AXP")
+$   THEN
+$     macros = macros + """AXE=1"","
+$   ENDIF
+$   IF (F$ELEMENT(0, "-", archname).EQS."VMS_IA64")
+$   THEN
+$     macros = macros + """IXE=1"","
+$   ENDIF
+$ ENDIF
+$!
+$!: is AFS running?                       !sfn
+$!: decide how portable to be.  Allow command line overrides. !sfn
+$!: set up shell script to do ~ expansion !sfn
+$!: expand filename                       !sfn
+$!: now set up to get a file name         !sfn
+$!
+$ IF F$TYPE(prefix) .EQS. ""
+$ THEN
+$   prefix = F$ENVIRONMENT("DEFAULT") - ".UU]" + "]"
+$   prefix = F$PARSE(prefix,,,,"NO_CONCEAL") - "][" - "000000." - ".000000" - ".;"
+$   prefixbase = prefix - "]"
+$!  Add _ROOT to make install PERL_ROOT differ from build directory.
+$   prefix = prefixbase + "_ROOT.]"
+$ ENDIF
+$ ! more redundant scrubbing of values
+$ prefix = prefix - "000000."
+$ IF F$LOCATE(".]",prefix) .EQ. F$LENGTH(prefix) THEN prefix = prefix - "]" + ".]"
+$ src = prefix
+$!: determine root of directory hierarchy where package will be installed.
+$ dflt = prefix
+$ IF .NOT.silent 
+$ THEN 
+$   echo ""
+$   echo "By default, ''package' will be installed in ''dflt', pod"
+$   echo "pages under ''prefixbase'.LIB.POD], etc..., i.e. with ''dflt' as prefix for"
+$   echo "all installation directories."
+$   echo "On ''osname' the prefix is used to DEFINE the ''vms_prefixup' prior to installation"
+$   echo "as well as during subsequent use of ''package' via ''packageup'_SETUP.COM."
+$ ENDIF
+$ rp = "Installation prefix to use (for ''vms_prefixup')? [ ''dflt' ] "
+$ GOSUB myread
+$ IF ans.NES.""
+$ THEN 
+$   prefix = ans
+$   IF F$LOCATE(".]",ans) .EQ. F$LENGTH(ans) THEN prefix = prefix - "]" + ".]"
+$ ELSE 
+$   prefix = dflt
+$ ENDIF
+$ perl_root = prefix
+$!
+$! Check here for pre-existing PERL_ROOT.
+$!  -> ask if removal desired.
+$! Check here for writability of requested PERL_ROOT if it is not the default (cwd).
+$!  -> recommend letting PERL_ROOT be PERL_SRC if requested PERL_ROOT is not writable.
+$!
+$   tmp = perl_root - ".]" + "]"
+$ dflt = f$parse(tmp,,,,)
+$   IF dflt .eqs. ""
+$   THEN
+$       echo4 "''tmp' does not yet exist."
+$!      create/directory 'tmp'
+$   ELSE
+$       echo4 "''tmp' already exists."
+$   ENDIF
+$!
+$ vms_skip_install = "true"
+$ bool_dflt = "y"
+$! echo ""
+$ rp = "Skip the remaining """"where install"""" questions? [''bool_dflt'] "
+$ GOSUB myread
+$ IF (.NOT.ans) THEN vms_skip_install = "false"
+$ IF (.NOT.vms_skip_install)
+$ THEN
+$!
+$!: set the prefixit variable, to compute a suitable default value
+$!
+$!: determine where private library files go
+$!: Usual default is /usr/local/lib/perl5.  Also allow things like 
+$!: /opt/perl/lib, since /opt/perl/lib/perl5 would be redundant.
+$   IF .NOT.silent 
+$   THEN
+$     TYPE SYS$INPUT:
+$     DECK
+
+There are some auxiliary files for perl5 that need to be put into a
+private library directory that is accessible by everyone.
+$     EOD
+$   ENDIF
+$   IF F$TYPE(privlib) .NES. ""
+$   THEN dflt = privlib
+$   ELSE dflt = "''vms_prefix':[lib]"
+$   ENDIF
+$   rp = "Pathname where the private library files will reside? " 
+$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
+$   GOSUB myread
+$   privlib = ans
+$!
+$ ENDIF !%Config-I-VMS, skip remaining "where install" questions
+$!
+$ IF F$TYPE(perl_symbol) .EQS. "" THEN perl_symbol := true
+$ IF F$TYPE(perl_verb) .EQS. "" THEN perl_verb = ""
+$ IF perl_symbol
+$ THEN bool_dflt = "y"
+$ ELSE bool_dflt = "n"
+$ ENDIF
+$ IF .NOT.silent 
+$ THEN 
+$   echo ""
+$   echo "You may choose to write ''packageup'_SETUP.COM to assign a foreign"
+$   echo "symbol to invoke ''package', which is the usual method."
+$   echO "If you do not do so then you would need a DCL command verb at the"
+$   echo "process or the system wide level."
+$ ENDIF
+$ rp = "Invoke perl as a global symbol foreign command? [''bool_dflt'] "
+$ GOSUB myread
+$ IF (.NOT.ans) THEN perl_symbol = "false"
+$!
+$ IF (.NOT.perl_symbol)
+$ THEN
+$   IF perl_verb .EQS. "DCLTABLES"
+$   THEN bool_dflt = "n"
+$   ELSE bool_dflt = "y"
+$   ENDIF
+$   IF .NOT.silent 
+$   THEN 
+$     echo ""
+$     echo "Since you won't be using a symbol you must choose to put the ''packageup'"
+$     echo "verb in a per-process table or in the system wide DCLTABLES (which"
+$     echo "would require write privilege)."
+$   ENDIF
+$   rp = "Invoke perl as a per process command verb? [ ''bool_dflt' ] "
+$   GOSUB myread
+$   IF (.NOT.ans)
+$   THEN perl_verb = "DCLTABLES"
+$   ELSE perl_verb = "PROCESS"
+$   ENDIF
+$ ENDIF ! (.NOT.perl_symbol)
+$!
+$ IF (.NOT.vms_skip_install)
+$ THEN
+$!: set the prefixup variable, to restore leading tilde escape !sfn
+$!
+$!: determine where public architecture dependent libraries go
+$   IF (.NOT.silent) 
+$   THEN 
+$     echo ""
+$     echo "''package' contains architecture-dependent library files.  If you are"
+$   ENDIF
+$   IF (.NOT.silent) 
+$   THEN
+$     TYPE SYS$INPUT:
+$     DECK
+sharing libraries in a heterogeneous environment, you might store
+these files in a separate location.  Otherwise, you can just include
+them with the rest of the public library files.
+$     EOD
+$   ENDIF
+$   IF F$TYPE(archlib) .NES. ""
+$   THEN dflt = archlib
+$   ELSE dflt = privlib - "]" + "." + archname + "." + version + "]"
+$   ENDIF
+$   rp = "Where do you want to put the public architecture-dependent libraries? "
+$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
+$   GOSUB myread
+$   archlib = ans
+$!
+$ ENDIF !%Config-I-VMS, skip "where install" questions
+$ IF (.NOT.vms_skip_install)
+$ THEN
+$!: it so happens the Eunice I know will not run shell scripts in Unix format
+$!
+$!: see if setuid scripts can be secure           !sfn
+$!: now see if they want to do setuid emulation   !sfn
+$!
+$!: determine where site specific libraries go.
+$   IF .NOT.silent 
+$   THEN
+$     TYPE SYS$INPUT:
+$     DECK
+
+The installation process will also create a directory for
+site-specific extensions and modules.  Some users find it convenient
+to place all local files in this directory rather than in the main
+distribution directory.
+$     EOD
+$   ENDIF
+$   IF F$TYPE(sitelib) .NES. ""
+$   THEN dflt = sitelib
+$   ELSE dflt = privlib - "]" + ".SITE_PERL]"
+$   ENDIF
+$   rp = "Pathname for the site-specific library files? "
+$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
+$   GOSUB myread
+$   sitelib = ans
+$!
+$!: determine where site specific architecture-dependent libraries go.
+$   IF .NOT.silent 
+$   THEN TYPE SYS$INPUT:
+$     DECK
+
+The installation process will also create a directory for
+architecture-dependent site-specific extensions and modules.
+$     EOD
+$   ENDIF
+$   IF F$TYPE(sitearch) .NES. ""
+$   THEN dflt = sitearch
+$   ELSE dflt = sitelib - "]" + "." + archname + "]"
+$   ENDIF
+$   rp = "Pathname for the site-specific architecture-dependent library files? "
+$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
+$   GOSUB myread
+$   sitearch = ans
+$!
+$!: determine where old public architecture dependent libraries might be
+$!
+$!: determine where public executables go
+$   IF F$TYPE(bin) .NES. ""
+$   THEN dflt = bin
+$!   ELSE dflt = prefix - ".]" + ".BIN]"
+$   ELSE dflt = "/''vms_prefix'"
+$   ENDIF
+$   rp = "Pathname where the public executables will reside? "
+$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
+$   GOSUB myread
+$   bin = ans
+$!
+$!: determine where add-on public executables go
+$   IF F$TYPE(sitebin) .NES. ""
+$   THEN dflt = sitebin
+$   ELSE dflt = "''vms_prefix':[bin.''archname']"
+$   ENDIF
+$   rp = "Pathname where the add-on public executables should be installed? "
+$   rp = F$FAO("!AS!/!AS",rp,"[ ''dflt' ] ")
+$   GOSUB myread
+$   sitebin = ans
+$!
+$!: determine where manual pages are on this system
+$!: What suffix to use on installed man pages
+$!: see if we can have long filenames
+$!: determine where library module manual pages go
+$!: What suffix to use on installed man pages
+$!: see what memory models we can support
+$!
+$ ELSE ! skipping "where install" questions, we must set some symbols
+$   IF F$TYPE(archlib).EQS."" THEN -
+      archlib="''vms_prefix':[lib.''archname'.''version']"
+$   IF F$TYPE(bin) .EQS. "" THEN -
+      bin="/''vms_prefix'"
+$   IF F$TYPE(privlib) .EQS. "" THEN -
+      privlib ="''vms_prefix':[lib]"
+$   IF F$TYPE(sitearch) .EQS. "" THEN -
+      sitearch="''vms_prefix':[lib.site_perl.''archname']"
+$   IF F$TYPE(sitelib) .EQS. "" THEN -
+      sitelib ="''vms_prefix':[lib.site_perl]"
+$   IF F$TYPE(sitebin) .EQS. "" THEN -
+      sitebin="''vms_prefix':[bin.''archname']"
+$ ENDIF !%Config-I-VMS, skip "where install" questions
+$!
+$! These derived locations can be set whether we've opted to
+$! skip the where install questions or not.
+$!
+$ IF F$TYPE(archlibexp) .EQS. "" THEN -
+    archlibexp="''vms_prefix':[lib.''archname'.''version']"
+$ IF F$TYPE(binexp) .EQS. "" THEN -
+    binexp ="''vms_prefix':[000000]"
+$ IF F$TYPE(builddir) .EQS. "" THEN -
+    builddir ="''vms_prefix':[000000]"
+$ IF F$TYPE(installarchlib) .EQS. "" THEN -
+    installarchlib="''vms_prefix':[lib.''archname'.''version']"
+$ IF F$TYPE(installbin) .EQS. "" THEN -
+    installbin ="''vms_prefix':[000000]"
+$ IF F$TYPE(installscript) .EQS. "" THEN -
+    installscript ="''vms_prefix':[utils]"
+$ IF F$TYPE(installman1dir) .EQS. "" THEN -
+    installman1dir ="''vms_prefix':[man.man1]"
+$ IF F$TYPE(installman3dir) .EQS. "" THEN -
+    installman3dir ="''vms_prefix':[man.man3]"
+$ IF F$TYPE(installprivlib) .EQS. "" THEN -
+    installprivlib ="''vms_prefix':[lib]"
+$ IF F$TYPE(installsitearch) .EQS. "" THEN -
+    installsitearch="''vms_prefix':[lib.site_perl.''archname']"
+$ IF F$TYPE(installsitelib) .EQS. "" THEN -
+    installsitelib ="''vms_prefix':[lib.site_perl]"
+$ IF F$TYPE(oldarchlib) .EQS. "" THEN -
+    oldarchlib="''vms_prefix':[lib.''archname']"
+$ IF F$TYPE(oldarchlibexp) .EQS. "" THEN -
+    oldarchlibexp="''vms_prefix':[lib.''archname']"
+$ IF F$TYPE(privlibexp) .EQS. "" THEN -
+    privlibexp ="''vms_prefix':[lib]"
+$ IF F$TYPE(scriptdir) .EQS. "" THEN -
+    scriptdir ="''vms_prefix':[utils]"
+$ IF F$TYPE(sitearchexp) .EQS. "" THEN -
+    sitearchexp ="''vms_prefix':[lib.site_perl.''archname']"
+$ IF F$TYPE(sitelib_stem) .EQS. "" THEN -
+    sitelib_stem ="''vms_prefix':[lib.site_perl]"
+$ IF F$TYPE(sitelibexp) .EQS. "" THEN -
+    sitelibexp ="''vms_prefix':[lib.site_perl]"
 $!
 $! determine whether to use malloc wrapping
 $ echo ""
@@ -2837,7 +2891,7 @@ $ dflt = dflt - "IPC/SysV"            ! needs to be ported
 $ dflt = dflt - "NDBM_File"           ! needs porting/special library
 $ dflt = dflt - "ODBM_File"           ! needs porting/special library
 $ dflt = dflt - "Sys/Syslog"          ! needs porting/special library "GDBM_File macro LOG_DEBUG"
-$ IF .NOT. Has_socketshr .AND. .NOT. Has_Dec_C_Sockets
+$ IF .NOT. Has_Dec_C_Sockets
 $ THEN
 $   dflt = dflt - "Socket"            ! optional on VMS
 $ ENDIF
@@ -3022,15 +3076,30 @@ $ IF use_ieee_math
 $ THEN
 $   extra_flags = "''extra_flags'" + "/float=ieee/ieee=denorm"
 $ ELSE
-$   IF (archname.EQS."VMS_IA64")
+$   IF (F$ELEMENT(0, "-", archname).EQS."VMS_IA64")
 $   THEN
 $     extra_flags = "''extra_flags'" + "/float=g_float"
 $   ENDIF
 $ ENDIF
+$ names_flags = ""
 $ IF be_case_sensitive
 $ THEN
-$   extra_flags = "''extra_flags'" + "/Names=As_Is"
+$   names_flags = "AS_IS"
 $ ENDIF
+$ IF shorten_long_symbols
+$ THEN
+$   IF be_case_sensitive
+$   THEN
+$     names_flags = "''names_flags',SHORTENED"
+$   ELSE
+$     names_flags = "SHORTENED"
+$   ENDIF
+$ ENDIF
+$ IF F$LENGTH(names_flags) .ne. 0
+$ THEN
+$   extra_flags = "''extra_flags'" + "/NAMES=(''names_flags')"
+$ ENDIF
+$ DELETE/SYMBOLS names_flags
 $ extra_flags = "''extra_flags'" + "''user_c_flags'"
 $!
 $ min_pgflquota = "100000"
@@ -3046,37 +3115,6 @@ $   ELSE
 $     echo4 "ABORTING..."
 $     GOTO Clean_up
 $   ENDIF
-$ ENDIF
-$!
-$! PerlIO abstraction
-$!
-$ bool_dflt = "y"
-$ IF F$TYPE(useperlio) .NES. ""
-$ then
-$   if .not. useperlio .or. useperlio .eqs. "undef" then bool_dflt = "n"
-$ endif
-$ IF .NOT. silent
-$ THEN
-$   echo "Previous versions of ''package' used the standard IO mechanisms as"
-$   TYPE SYS$INPUT:
-$   DECK
-defined in <stdio.h>.  Versions 5.003_02 and later of perl allow
-alternate IO mechanisms via the PerlIO abstraction layer, but the
-stdio mechanism is still available if needed.  The abstraction layer
-can use AT&T's sfio (if you already have sfio installed) or regular stdio.
-Using PerlIO with sfio may cause problems with some extension modules.
-
-$   EOD
-$   echo "If this does not make any sense to you, just accept the default '" + bool_dflt + "'."
-$ ENDIF
-$ rp = "Use the PerlIO abstraction layer? [''bool_dflt'] "
-$ GOSUB myread
-$ IF ans
-$ THEN
-$   useperlio = "define"
-$ ELSE
-$   echo "Ok, doing things the stdio way."
-$   useperlio = "undef"
 $ ENDIF
 $!
 $ echo ""
@@ -3155,6 +3193,12 @@ $   d_vms_be_case_sensitive = "define"
 $ ELSE
 $   d_vms_be_case_sensitive = "undef"
 $ ENDIF
+$ IF shorten_long_symbols
+$ THEN
+$   d_vms_shorten_long_symbols = "define"
+$ ELSE
+$   d_vms_shorten_long_symbols = "undef"
+$ ENDIF
 $! Some constant defaults.
 $ hwname = f$getsyi("HW_NAME")
 $ myname = myhostname
@@ -3190,13 +3234,19 @@ $ THEN
 $   uselongdouble = "define"
 $   alignbytes="16"
 $   nveformat="""Le"""
+$   nvEUformat="""LE"""
 $   nvfformat="""Lf"""
+$   nvFUformat="""LF"""
 $   nvgformat="""Lg"""
+$   nvGUformat="""LG"""
 $ ELSE
 $   uselongdouble = "undef"
 $   nveformat="""e"""
+$   nvEUformat="""E"""
 $   nvfformat="""f"""
+$   nvFUformat="""F"""
 $   nvgformat="""g"""
+$   nvGUformat="""G"""
 $ ENDIF
 $ IF use64bitall .OR. use64bitall .EQS. "define"
 $ THEN
@@ -3216,7 +3266,7 @@ $ if mymalloc then usemymalloc = "define"
 $!
 $ perl_cc=Mcc
 $!
-$ IF (sharedperl .AND. archname .EQS. "VMS_AXP")
+$ IF (sharedperl .AND. F$ELEMENT(0, "-", archname) .EQS. "VMS_AXP")
 $ THEN
 $   obj_ext=".abj"
 $   so="axe"
@@ -3224,7 +3274,7 @@ $   dlext="axe"
 $   exe_ext=".axe"
 $   lib_ext=".alb"
 $ ELSE
-$   IF (sharedperl .AND. archname .EQS. "VMS_IA64")
+$   IF (sharedperl .AND. F$ELEMENT(0, "-", archname) .EQS. "VMS_IA64")
 $   THEN
 $     obj_ext=".ibj"
 $     so="ixe"
@@ -3260,12 +3310,7 @@ $ usedl="define"
 $ startperl="""$ perl 'f$env(\""procedure\"")' \""'"+"'p1'\"" \""'"+"'p2'\"" \""'"+"'p3'\"" \""'"+"'p4'\"" \""'"+"'p5'\"" \""'"+"'p6'\"" \""'"+"'p7'\"" \""'"+"'p8'\""!\n"
 $ startperl=startperl + "$ exit++ + ++$status!=0 and $exit=$status=undef; while($#ARGV != -1 and $ARGV[$#ARGV] eq '"+"'){pop @ARGV;}"""
 $!
-$ IF ((use_threads) .AND. (vms_ver .LES. "6.2"))
-$ THEN
-$   libs="SYS$SHARE:CMA$LIB_SHR.EXE/SHARE SYS$SHARE:CMA$RTL.EXE/SHARE SYS$SHARE:CMA$OPEN_LIB_SHR.exe/SHARE SYS$SHARE:CMA$OPEN_RTL.exe/SHARE"
-$ ELSE
-$   libs=" "
-$ ENDIF
+$ libs=" "
 $ IF ccname .EQS. "DEC" .OR. ccname .EQS. "CXX"
 $ THEN
 $   libc="(DECCRTL)"
@@ -3278,9 +3323,10 @@ $!
 $ perllibs=libs
 $!
 $!
-$ IF archname .NES. "VMS_VAX"
+$ IF F$ELEMENT(0, "-", archname) .NES. "VMS_VAX"
 $ THEN
 $   d_PRId64 = "define"
+$   d_PRIi64 = "define"
 $   d_PRIu64 = "define"
 $   d_PRIo64 = "define"
 $   d_PRIx64 = "define"
@@ -3301,6 +3347,7 @@ $   d_modfl = "define"
 $   d_modflproto = "define"
 $ ELSE
 $   d_PRId64 = "undef"
+$   d_PRIi64 = "undef"
 $   d_PRIXU64 = "undef"
 $   d_PRIu64 = "undef"
 $   d_PRIo64 = "undef"
@@ -3336,15 +3383,11 @@ $ IF use_threads
 $ THEN
 $   IF use_5005_threads
 $   THEN
-$     arch = "''arch'-thread"
-$     archname = "''archname'-thread"
 $     d_old_pthread_create_joinable = "undef"
 $     old_pthread_create_joinable = " "
 $     use5005threads = "define"
 $     useithreads = "undef"
 $   ELSE
-$     arch = "''arch'-ithread"
-$     archname = "''archname'-ithread"
 $     d_old_pthread_create_joinable = "undef"
 $     old_pthread_create_joinable = " "
 $     use5005threads = "undef"
@@ -3727,7 +3770,7 @@ $ i_socks = tmp
 $!
 $! Check the prototype for select
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
@@ -3736,13 +3779,8 @@ $   WS "#endif"
 $   WS "#include <stdio.h>"
 $   WS "#include <types.h>"
 $   IF i_unistd .EQS. "define" THEN WS "#include <unistd.h>"
-$   IF Has_Socketshr
-$   THEN
-$     WS "#include <socketshr.h>"
-$   ELSE
-$     WS "#include <time.h>"
-$     WS "#include <socket.h>"
-$   ENDIF
+$   WS "#include <time.h>"
+$   WS "#include <socket.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "fd_set *foo;"
@@ -3776,10 +3814,6 @@ $ WS "#include <stdlib.h>"
 $ WS "#endif"
 $ WS "#include <stdio.h>"
 $ WS "#include <types.h>"
-$ IF Has_Socketshr
-$ THEN
-$   WS "#include <socketshr.h>"
-$ ENDIF
 $ IF Has_Dec_C_Sockets
 $ THEN
 $   WS "#include <time.h>"
@@ -3962,7 +3996,7 @@ $ ENDIF
 $!
 $! Check to see if gethostname exists
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
@@ -3970,13 +4004,8 @@ $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
 $   WS "#include <types.h>"
-$   IF Has_Socketshr
-$   THEN
-$     WS "#include <socketshr.h>"
-$   ELSE
-$     WS "#include <time.h>"
-$     WS "#include <socket.h>"
-$   ENDIF
+$   WS "#include <time.h>"
+$   WS "#include <socket.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "char name[100];"
@@ -4436,18 +4465,12 @@ $!   THEN dflt = "y"
 $!   ELSE dflt = "n"
 $!   ENDIF
 $!   echo "''package' can use the sfio library, but it is experimental."
-$!   IF useperlio .EQS. "undef"
-$!   THEN
-$!     echo "For sfio also the PerlIO abstraction layer is needed."
-$!     echo "Earlier you said you would not want that."
-$!   ENDIF
 $!   rp="You seem to have sfio available, do you want to try using it? [''dflt'] "
 $!   GOSUB myread
 $!   IF ans .EQS. "" THEN ans = dflt
 $!   IF ans
 $!   THEN
-$!     echo "Ok, turning on both sfio and PerlIO, then."
-$!     useperlio="define"
+$!     echo "Ok, turning on sfio then."
 $!     val="define"
 $!   ELSE
 $!     echo "Ok, avoiding sfio this time.  I'll use stdio instead."
@@ -4498,7 +4521,7 @@ $ d_setproctitle = tmp
 $!
 $! Check for <netinet/in.h>
 $!
-$ IF Has_Dec_C_Sockets .or. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   tmp = "netinet/in.h"
 $   GOSUB inhdr
@@ -4509,7 +4532,7 @@ $ ENDIF
 $!
 $! Check for <netinet/tcp.h>
 $!
-$ IF Has_Dec_C_Sockets .or. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   tmp = "netinet/tcp.h"
 $   GOSUB inhdr
@@ -4520,17 +4543,14 @@ $ ENDIF
 $!
 $! Check for endhostent
 $!
-$ IF Has_Dec_C_Sockets .or. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "endhostent();"
@@ -4546,17 +4566,14 @@ $ ENDIF
 $!
 $! Check for endnetent
 $!
-$ IF Has_Dec_C_Sockets .or. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "endnetent();"
@@ -4572,17 +4589,14 @@ $ ENDIF
 $!
 $! Check for endprotoent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "endprotoent();"
@@ -4598,17 +4612,14 @@ $ ENDIF
 $!
 $! Check for endservent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "endservent();"
@@ -4624,17 +4635,14 @@ $ ENDIF
 $!
 $! Check for sethostent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "sethostent(1);"
@@ -4650,17 +4658,14 @@ $ ENDIF
 $!
 $! Check for setnetent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "setnetent(1);"
@@ -4676,17 +4681,14 @@ $ ENDIF
 $!
 $! Check for setprotoent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "setprotoent(1);"
@@ -4702,17 +4704,14 @@ $ ENDIF
 $!
 $! Check for setservent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "setservent(1);"
@@ -4728,17 +4727,14 @@ $ ENDIF
 $!
 $! Check for gethostent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "gethostent();"
@@ -4754,17 +4750,14 @@ $ ENDIF
 $!
 $! Check for getnetent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "getnetent();"
@@ -4780,17 +4773,14 @@ $ ENDIF
 $!
 $! Check for getprotoent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "getprotoent();"
@@ -4806,17 +4796,14 @@ $ ENDIF
 $!
 $! Check for getservent
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   OS
 $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "getservent();"
@@ -4828,6 +4815,66 @@ $   GOSUB inlibc
 $   d_getsent = tmp
 $ ELSE
 $   d_getsent="undef"
+$ ENDIF
+$!
+$!
+$! Check for sa_len
+$!
+$ echo4 "Checking the availability of sa_len in the sockaddr struct ..."
+$ IF Has_Dec_C_Sockets
+$ THEN
+$   OS
+$   WS "#if defined(__DECC) || defined(__DECCXX)"
+$   WS "#include <stdlib.h>"
+$   WS "#endif"
+$   WS "#define _SOCKADDR_LEN"
+$   WS "#include <types.h>"
+$   WS "#include <socket.h>"
+$   WS "int main() {"
+$   WS "struct sockaddr sa;"
+$   WS "return (sa.sa_len);"
+$   WS "}"
+$   CS
+$   GOSUB compile_ok
+$   IF compile_status .EQ. good_compile
+$   THEN
+$     d_sockaddr_sa_len="define"
+$     echo "You have sa_len in the sockaddr struct."
+$   ELSE
+$     d_sockaddr_sa_len="undef"
+$     echo "You do not have sa_len in the sockaddr struct."
+$   ENDIF
+$ ELSE
+$   d_sockaddr_sa_len="undef"
+$   echo "You do not have sa_len in the sockaddr struct."
+$ ENDIF
+$!
+$! Check for sin6_scope_id
+$!
+$ echo4 "Checking the availability of sin6_scope_id in the struct sockaddr_in6 ..."
+$ IF Has_Dec_C_Sockets
+$ THEN
+$   OS
+$   WS "#include <types.h>"
+$   WS "#include <socket.h>"
+$   WS "#include <in.h>"
+$   WS "int main() {"
+$   WS "struct sockaddr_in6 sin6;"
+$   WS "return (sin6.sin6_scope_id);"
+$   WS "}"
+$   CS
+$   GOSUB compile_ok
+$   IF compile_status .EQ. good_compile
+$   THEN
+$     d_sin6_scope_id="define"
+$     echo "You have sin6_scope_id in the sockaddr_in6 struct."
+$   ELSE
+$     d_sin6_scope_id="undef"
+$     echo "You do not have sin6_scope_id in the sockaddr_in6 struct."
+$   ENDIF
+$ ELSE
+$   d_sin6_scope_id="undef"
+$   echo "You do not have sin6_scope_id in the sockaddr_in6 struct."
 $ ENDIF
 $!
 $! Check for nanosleep
@@ -4849,7 +4896,7 @@ $ d_nanosleep = tmp
 $!
 $! Check for socklen_t
 $!
-$ IF Has_Dec_C_Sockets .OR. Has_Socketshr
+$ IF Has_Dec_C_Sockets
 $ THEN
 $   echo4 "Checking to see if you have socklen_t..."
 $   OS
@@ -4857,10 +4904,7 @@ $   WS "#if defined(__DECC) || defined(__DECCXX)"
 $   WS "#include <stdlib.h>"
 $   WS "#endif"
 $   WS "#include <stdio.h>"
-$   IF Has_Socketshr
-$   THEN WS "#include <socketshr.h>"
-$   ELSE IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
-$   ENDIF
+$   IF i_netdb .EQS. "define" THEN WS "#include <netdb.h>"
 $   WS "int main()"
 $   WS "{"
 $   WS "socklen_t x = 16;"
@@ -4992,6 +5036,33 @@ $   echo4 "I'm disabling large file support."
 $   uselargefiles = "undef"
 $ ENDIF
 $!
+$! Check for st_ino size.
+$!
+$ st_ino_size = 4
+$ OS
+$ WS "#include <sys/stat.h>"
+$ WS "#include <stdio.h>"
+$ WS "#if defined(__DECC) || defined(__DECCXX)"
+$ WS "#include <stdlib.h>
+$ WS "#endif"
+$ WS "int main() {
+$ WS "#''uselargefiles' _LARGEFILE"
+$ WS "#ifdef _LARGEFILE"
+$ WS "    printf(""%d\n"", sizeof(__ino64_t));"
+$ WS "#else"
+$ WS "    printf(""%d\n"", sizeof(unsigned short)*3);"
+$ WS "#endif"
+$ WS "    exit(0);"
+$ WS "}"
+$ CS
+$ GOSUB link_ok
+$ IF link_status .EQ. good_link
+$ THEN
+$   GOSUB just_mcr_it
+$   st_ino_size = tmp
+$ ENDIF
+$ echo "Your st_ino size is ''st_ino_size' bytes."
+$!
 $! Tests for hard link, symbolic links, and 7.3 + CRTL features
 $!
 $  d_lchown = "undef"
@@ -5006,7 +5077,7 @@ $! easy to use DCL test to see if hardlinks are enabled on the build
 $! disk.  That would require more work to test, and I am only testing
 $! this on 8.2, so that is why the 8.2 test.
 $!
-$  IF (vms_ver .GES. "8.2") .AND. (archname .NES. "VMS_VAX")
+$  IF (vms_ver .GES. "8.2") .AND. (F$ELEMENT(0, "-", archname) .NES. "VMS_VAX")
 $  THEN
 $   IF f$getdvi("SYS$DISK","HARDLINKS_SUPPORTED")
 $   THEN
@@ -5024,7 +5095,7 @@ $  ENDIF
 $!
 $  IF uselargefiles .OR. uselargefiles .eqs. "define"
 $  THEN
-$    IF (vms_ver .GES. "8.2") .AND. (archname .NES. "VMS_VAX")
+$    IF (vms_ver .GES. "8.2") .AND. (F$ELEMENT(0, "-", archname) .NES. "VMS_VAX")
 $    THEN
 $      echo4 "Largefile support enabled, so enabling standard stat support too."
 $      usestdstat = "y"
@@ -5066,7 +5137,7 @@ $       echo4 "Your system does not support symbolic links."
 $       echo4 "I am disabling symbolic link support."
 $    ENDIF
 $  ELSE
-$    IF (vms_ver .GES. "8.2") .AND. (archname .NES. "VMS_VAX")
+$    IF (vms_ver .GES. "8.2") .AND. (F$ELEMENT(0, "-", archname) .NES. "VMS_VAX")
 $    THEN
 $       echo4 "-Duselargefiles is required for symbolic link support."
 $       echo4 "You did not specify that, so I am disabling symbolic link support."
@@ -5100,7 +5171,7 @@ $  d_ttyname_r = "undef"
 $  ttyname_r_proto = "0"
 $  d_snprintf = "undef"
 $  d_vsnprintf = "undef"
-$  if (vms_ver .GES. "7.3-2") .AND. (archname .NES. "VMS_VAX")
+$  if (vms_ver .GES. "7.3-2") .AND. (F$ELEMENT(0, "-", archname) .NES. "VMS_VAX")
 $  then
 $    echo "Found 64 bit OpenVMS ''vms_ver' -- will build with V7.3-2 routines"
 $    d_getgrgid_r = "define"
@@ -5134,7 +5205,7 @@ $  d_setregid = "undef"
 $  d_setreuid = "undef"
 $  d_setsid = "undef"
 $  ! Disable this section for now.
-$!$  if (vms_ver .GES. "8.2") .AND. (archname .NES. "VMS_VAX")
+$!$  if (vms_ver .GES. "8.2") .AND. (F$ELEMENT(0, "-", archname) .NES. "VMS_VAX")
 $  if .NOT. 1
 $  then
 $    echo "Found 64 bit OpenVMS ''vms_ver' -- will build with V7.3-2 UID setting routines"
@@ -5152,7 +5223,7 @@ $!
 $  d_fstatvfs = "undef"
 $!  d_statvfs = "undef"
 $  i_sysstatvfs = "undef"
-$  if (vms_ver .GES. "8.2") .AND. (archname .NES. "VMS_VAX")
+$  if (vms_ver .GES. "8.2") .AND. (F$ELEMENT(0, "-", archname) .NES. "VMS_VAX")
 $  then
 $    echo "Found 64 bit OpenVMS ''vms_ver' -- will build with 8.2 routines"
 $    d_fstatvfs = "define"
@@ -5328,8 +5399,7 @@ $   sig_name_init = psnwc1 + psnwc2
 $   sig_num="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6 16 17"
 $   sig_num_init="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,6,16,17,0"
 $   sig_size="19"
-$   sig_count="15"
-$   if (vms_ver .GES. "6.2") then sig_count="17"
+$   sig_count="17
 $   uidtype="unsigned int"
 $   d_pathconf="undef"
 $   d_fpathconf="undef"
@@ -5379,12 +5449,7 @@ $   d_wctomb="define"
 $   i_locale="define"
 $   i_langinfo="define"
 $   d_locconv="define"
-$   IF vms_ver .GES. "6.2"
-$   THEN
-$     d_nl_langinfo="define"
-$   ELSE
-$     d_nl_langinfo="undef"
-$   ENDIF
+$   d_nl_langinfo="define"
 $   d_setlocale="define"
 $   vms_cc_type="decc"
 $ ELSE
@@ -5412,13 +5477,13 @@ $ d_stdio_ptr_lval_nochange_cnt="define"
 $ usefaststdio="undef"
 $!
 $! Sockets?
-$ if Has_Socketshr .OR. Has_Dec_C_Sockets
+$ if Has_Dec_C_Sockets
 $ THEN
 $   d_vms_do_sockets="define"
 $   d_htonl="define"
 $   d_socket="define"
 $   d_sockpair = "undef"
-$   if (vms_ver .GES. "8.2") .AND. (archname .NES. "VMS_VAX")
+$   if (vms_ver .GES. "8.2") .AND. (F$ELEMENT(0, "-", archname) .NES. "VMS_VAX")
 $   then
 $     echo "Found 64 bit OpenVMS 8.2, will build with socketpair support"
 $     d_sockpair = "define"
@@ -5471,18 +5536,12 @@ $   d_getservprotos="undef"
 $   socksizetype="undef"
 $ ENDIF
 $! Threads
+$ d_oldpthreads="undef"
 $ IF use_threads
 $ THEN
 $   usethreads="define"
 $   d_pthreads_created_joinable="define"
-$   if (vms_ver .GES. "7.0")
-$   THEN
-$     d_oldpthreads="undef"
-$   ELSE
-$     d_oldpthreads="define"
-$   ENDIF
 $ ELSE
-$   d_oldpthreads="undef"
 $   usethreads="undef"
 $   d_pthreads_created_joinable="undef"
 $ ENDIF
@@ -5752,21 +5811,6 @@ $   THEN
 $       echo4 "Yep, we can."
 $       kill_by_sigprc = "define"
 $!
-$!	Use the same list of signals the CRTL does for recent systems, but cook our own for very old systems.
-$!	Note that the list controls what signals can be caught by name as well as what can be raised via kill().
-$!
-$       if  vms_ver .LTS. "6.2"
-$	then
-$!          since SIGBUS and SIGSEGV indistinguishable, make them the same here.
-$           sig_name="ZERO HUP INT QUIT ILL TRAP IOT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM ABRT"
-$           psnwc1="""ZERO"",""HUP"",""INT"",""QUIT"",""ILL"",""TRAP"",""IOT"",""EMT"",""FPE"",""KILL"",""BUS"",""SEGV"",""SYS"","
-$           psnwc2="""PIPE"",""ALRM"",""TERM"",""ABRT"",0"
-$           sig_name_init = psnwc1 + psnwc2
-$           sig_num="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6"
-$           sig_num_init="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,6,0"
-$           sig_size="17"
-$	    sig_count="15"
-$       endif
 $   ELSE
 $       echo4 "Nope, we can't."
 $   ENDIF
@@ -5834,6 +5878,10 @@ $ WC "_exe='" + exe_ext + "'"
 $ WC "_o='" + obj_ext + "'"
 $ WC "alignbytes='" + alignbytes + "'"
 $ WC "aphostname='write sys$output f$edit(f$getsyi(\""SCSNODE\""),\""TRIM,LOWERCASE\"")'"
+$ WC "api_revision='" + api_revision + "'"
+$ WC "api_subversion='" + api_subversion + "'"
+$ WC "api_version='" + api_version + "'" 
+$ WC "api_versionstring='" + version + "'" 
 $ WC "ar='" + "'"
 $ WC "archlib='" + archlib + "'"
 $ WC "archlibexp='" + archlibexp + "'"
@@ -5885,14 +5933,15 @@ $   WC "d_Gconvert='sprintf((b),""%.*" + (nvgformat-"""") + ",(n),(x))'"
 $ ELSE
 $   WC "d_Gconvert='my_gconvert(x,n,t,b)'"
 $ ENDIF
-$ WC "d_PRIEldbl='" + d_PRIEUldbl + "'"
-$ WC "d_PRIFldbl='" + d_PRIFUldbl + "'"
-$ WC "d_PRIGldbl='" + d_PRIGUldbl + "'"
+$ WC "d_PRIEUldbl='" + d_PRIEUldbl + "'"
+$ WC "d_PRIFUldbl='" + d_PRIFUldbl + "'"
+$ WC "d_PRIGUldbl='" + d_PRIGUldbl + "'"
 $ WC "d_PRIXU64='" + d_PRIXU64 + "'"
 $ WC "d_PRId64='" + d_PRId64 + "'"
 $ WC "d_PRIeldbl='" + d_PRIeldbl + "'"
 $ WC "d_PRIfldbl='" + d_PRIfldbl + "'"
 $ WC "d_PRIgldbl='" + d_PRIgldbl + "'"
+$ WC "d_PRIi64='" + d_PRIi64 + "'"
 $ WC "d_PRIo64='" + d_PRIo64 + "'"
 $ WC "d_PRIu64='" + d_PRIu64 + "'"
 $ WC "d_PRIx64='" + d_PRIx64 + "'"
@@ -5914,6 +5963,8 @@ $ WC "d_attribute_noreturn='undef'"
 $ WC "d_attribute_pure='undef'"
 $ WC "d_attribute_unused='undef'"
 $ WC "d_attribute_warn_unused_result='undef'"
+$ WC "d_prctl='undef'"
+$ WC "d_prctl_set_name='undef'"
 $ WC "d_printf_format_null='undef'"
 $ WC "d_bcmp='" + d_bcmp + "'"
 $ WC "d_bcopy='" + d_bcopy + "'"
@@ -6042,7 +6093,9 @@ $ WC "d_inetaton='undef'"
 $ WC "d_inetntop='undef'"
 $ WC "d_inetpton='undef'"
 $ WC "d_int64_t='" + d_int64_t + "'"
+$ WC "d_ipv6_mreq='define'"
 $ WC "d_isascii='define'"
+$ WC "d_isblank='undef'"
 $ WC "d_isfinite='undef'"
 $ WC "d_isinf='undef'"
 $ WC "d_isnan='" + d_isnan + "'"
@@ -6183,7 +6236,10 @@ $ WC "d_sigaction='" + d_sigaction + "'"
 $ WC "d_signbit='" + d_signbit + "'"
 $ WC "d_sigprocmask='" + d_sigprocmask + "'"
 $ WC "d_sigsetjmp='" + d_sigsetjmp + "'"
+$ WC "d_sin6_scope_id='" + d_sin6_scope_id + "'"
 $ WC "d_sitearch='define'"
+$ WC "d_sockaddr_in6='define'"
+$ WC "d_sockaddr_sa_len='" + d_sockaddr_sa_len + "'"
 $ WC "d_sockatmark='undef'"
 $ WC "d_sockatmarkproto='undef'"
 $ WC "d_socket='" + d_socket + "'"
@@ -6200,6 +6256,7 @@ $ WC "d_statblks='undef'"
 $ WC "d_statfs_f_flags='undef'"
 $ WC "d_statfs_s='undef'"
 $ WC "d_statfsflags='undef'"
+$ WC "d_static_inline='define'"
 $ WC "d_stdio_cnt_lval='" + d_stdio_cnt_lval + "'"
 $ WC "d_stdio_ptr_lval='" + d_stdio_ptr_lval + "'"
 $ WC "d_stdio_ptr_lval_nochange_cnt='" + d_stdio_ptr_lval_nochange_cnt + "'"
@@ -6266,6 +6323,7 @@ $ WC "d_vendorlib='undef'"
 $ WC "d_vfork='define'"
 $ WC "d_vms_case_sensitive_symbols='" + d_vms_be_case_sensitive + "'" ! VMS
 $ WC "d_vms_do_sockets='" + d_vms_do_sockets + "'" ! VMS
+$ WC "d_vms_shorten_long_symbols='" + d_vms_shorten_long_symbols + "'" ! VMS
 $ WC "d_void_closedir='define'"
 $ WC "d_volatile='define'"
 $ WC "d_vprintf='define'"
@@ -6370,6 +6428,12 @@ $ WC "i_sgtty='undef'"
 $ WC "i_shadow='" + i_shadow + "'"
 $ WC "i_socks='" + i_socks + "'"
 $ WC "i_stdarg='define'"
+$ IF (ccname .EQS. "DEC") .AND. (F$INTEGER(Dec_C_Version).GE.60400000)
+$ THEN
+$   WC "i_stdbool='define'"
+$ ELSE
+$   WC "i_stdbool='undef'"
+$ ENDIF
 $ WC "i_stddef='define'"
 $ WC "i_stdlib='define'"
 $ WC "i_string='define'"
@@ -6475,8 +6539,11 @@ $ WC "netdb_name_type='" + netdb_name_type + "'"
 $ WC "netdb_net_type='" + netdb_net_type + "'"
 $ WC/symbol "nonxs_ext='", nonxs_ext, " ", nonxs_ext2, "'"
 $ WC "nveformat='" + nveformat + "'"
+$ WC "nvEUformat='" + nvEUformat + "'"
 $ WC "nvfformat='" + nvfformat + "'"
+$ WC "nvFUformat='" + nvFUformat + "'"
 $ WC "nvgformat='" + nvgformat + "'"
+$ WC "nvGUformat='" + nvGUformat + "'"
 $ WC "nvsize='" + nvsize + "'"
 $ WC "nvtype='" + nvtype + "'"
 $ WC "o_nonblock=' '"
@@ -6496,6 +6563,7 @@ $ WC "perl_root='" + perl_root + "'" ! VMS specific $trnlnm()
 $ WC "perladmin='" + perladmin + "'"
 $ WC "perllibs='" + perllibs + "'"
 $ WC "perlpath='" + "''vms_prefix':[000000]Perl''exe_ext'" + "'"
+$ WC "perl_static_inline='static inline'"
 $ WC "perl_symbol='" + perl_symbol + "'"  ! VMS specific
 $ WC "perl_verb='" + perl_verb + "'"      ! VMS specific
 $ WC "pgflquota='" + pgflquota + "'"
@@ -6520,14 +6588,14 @@ $ WC "sGMTIME_min='0'"
 $ WC "sLOCALTIME_max='4294967295'"
 $ WC "sLOCALTIME_min='0'"
 $ WC "sPRId64='" + sPRId64 + "'"
-$ WC "sPRIEldbl='" + sPRIEUldbl + "'"
-$ WC "sPRIFldbl='" + sPRIFUldbl + "'"
-$ WC "sPRIGldbl='" + sPRIGUldbl + "'"
-$ WC "sPRIX64='" + sPRIXU64 + "'"
+$ WC "sPRIEUldbl='" + sPRIEUldbl + "'"
+$ WC "sPRIFUldbl='" + sPRIFUldbl + "'"
+$ WC "sPRIGUldbl='" + sPRIGUldbl + "'"
+$ WC "sPRIXU64='" + sPRIXU64 + "'"
 $ WC "sPRIeldbl='" + sPRIeldbl + "'"
 $ WC "sPRIfldbl='" + sPRIfldbl + "'"
 $ WC "sPRIgldbl='" + sPRIgldbl + "'"
-$! WC "sPRIi64='" + sPRIi64 + "'"
+$ WC "sPRIi64='" + sPRIi64 + "'"
 $ WC "sPRIo64='" + sPRIo64 + "'"
 $ WC "sPRIu64='" + sPRIu64 + "'"
 $ WC "sPRIx64='" + sPRIx64 + "'"
@@ -6581,6 +6649,8 @@ $ WC "src='" + src + "'"
 $ WC "ssizetype='int'"
 $ WC "startperl=" + startperl ! This one's special--no enclosing single quotes
 $ WC "static_ext='" + static_ext + "'"
+$ WC "st_ino_size='" + st_ino_size + "'"
+$ WC "st_ino_sign='1'"
 $ WC "stdchar='" + stdchar + "'"
 $ WC "stdio_base='((*fp)->_base)'"
 $ WC "stdio_bufsiz='((*fp)->_cnt + (*fp)->_ptr - (*fp)->_base)'"
@@ -6617,16 +6687,19 @@ $ WC "usefaststdio='" + usefaststdio + "'"
 $ WC "useieee='" + useieee + "'"                    ! VMS-specific
 $ WC "useithreads='" + useithreads + "'"
 $ WC "usekernelthreads='" + usekernelthreads + "'"	! VMS-specific
+$ WC "usekernprocpathname='undef'"
+$ WC "usensgetexecutablepath='undef'"
 $ WC "uselargefiles='" + uselargefiles + "'"
 $ WC "uselongdouble='" + uselongdouble + "'"
 $ WC "usemorebits='" + usemorebits + "'"
 $ WC "usemultiplicity='" + usemultiplicity + "'"
 $ WC "usemymalloc='" + usemymalloc + "'"
-$ WC "useperlio='" + useperlio + "'"
+$ WC "useperlio='define'"
 $ WC "useposix='false'"
 $ WC "usereentrant='undef'"
 $ WC "userelocatableinc='undef'"
 $ WC "usesecurelog='" + usesecurelog + "'"  ! VMS-specific
+$ WC "useshortenedsymbols='" + useshortenedsymbols + "'"    ! VMS-specific
 $ WC "useshrplib='true'"
 $ WC "usesitecustomize='" + usesitecustomize + "'"
 $ WC "usesocks='undef'"
@@ -6847,8 +6920,6 @@ $ IF (Has_Dec_C_Sockets)
 $ THEN
 $    WC "#define VMS_DO_SOCKETS"
 $    WC "#define DECCRTL_SOCKETS"
-$ ELSE
-$    IF Has_Socketshr THEN WC "#define VMS_DO_SOCKETS"
 $ ENDIF
 $! This is VMS-specific for now
 $ WC "#''d_setenv' HAS_SETENV"
@@ -6862,11 +6933,12 @@ $ ENDIF
 $ IF use64bitall .OR. use64bitall .EQS. "define" THEN -
     WC "#define USE_64_BIT_ALL"
 $ IF be_case_sensitive THEN WC "#define VMS_WE_ARE_CASE_SENSITIVE"
+$ IF shorten_long_symbols THEN WC "#define VMS_SHORTEN_LONG_SYMBOLS"
 $ IF use_ieee_math THEN WC "#define USE_IEEE"
 $ IF d_herrno .EQS. "undef" THEN WC "#define NEED_AN_H_ERRNO"
 $ WC "#define HAS_ENVGETENV"
 $ WC "#define PERL_EXTERNAL_GLOB"
-$ IF archname .EQS. "VMS_VAX" .AND. -
+$ IF F$ELEMENT(0, "-", archname) .EQS. "VMS_VAX" .AND. -
      ccname .EQS. "DEC" .AND. -
      ccversion .LE. 50390006
 $ THEN
@@ -6876,6 +6948,7 @@ $ ENDIF
 $ IF kill_by_sigprc .EQS. "define" then WC "#define KILL_BY_SIGPRC"
 $ IF unlink_all_versions .OR. unlink_all_versions .EQS. "define" THEN -
     WC "#define UNLINK_ALL_VERSIONS"
+$ IF d_sockaddr_sa_len .EQS. "define" then WC "#define _SOCKADDR_LEN 1"
 $ CLOSE CONFIG
 $!
 $ echo4 "Doing variable substitutions on .SH files..."
@@ -6913,21 +6986,11 @@ $ IF Has_Dec_C_Sockets
 $ THEN
 $   SOCKET_REPLACE = "SOCKET=DECC_SOCKETS=1"
 $ ELSE
-$   IF Has_Socketshr
-$   THEN
-$     SOCKET_REPLACE = "SOCKET=SOCKETSHR_SOCKETS=1"
-$   ELSE
-$     SOCKET_REPLACE = "SOCKET="
-$   ENDIF
+$   SOCKET_REPLACE = "SOCKET="
 $ ENDIF
 $ IF use_threads
 $ THEN
-$   IF (vms_ver .LES. "6.2")
-$   THEN
-$     THREAD_REPLACE = "THREAD=OLDTHREADED=1"
-$   ELSE
-$     THREAD_REPLACE = "THREAD=THREADED=1"
-$   ENDIF
+$   THREAD_REPLACE = "THREAD=THREADED=1"
 $ ELSE
 $   THREAD_REPLACE = "THREAD="
 $ ENDIF
@@ -6968,6 +7031,7 @@ $ WC "''THREAD_KERNEL'"
 $ WC "PV=''version'"
 $ WC "FLAGS=FLAGS=''extra_flags'"
 $ WC "''LARGEFILE_REPLACE'"
+$ WC "ARCHNAME=ARCHNAME=''archname'"
 $ close CONFIG
 $!
 $ echo4 "Extracting ''defmakefile' (with variable substitutions)"
@@ -7093,8 +7157,8 @@ $   echo ""
 $   echo4 "The perl.cld file is now being written..."
 $   OPEN/WRITE CONFIG 'file_2_find'
 $   ext = ".exe"
-$   IF (sharedperl .AND. F$EXTRACT(0,7,archname) .EQS. "VMS_AXP") THEN ext := .AXE
-$   IF (sharedperl .AND. F$EXTRACT(0,8,archname) .EQS. "VMS_IA64") THEN ext := .IXE
+$   IF (sharedperl .AND. F$ELEMENT(0, "-", archname) .EQS. "VMS_AXP") THEN ext := .AXE
+$   IF (sharedperl .AND. F$ELEMENT(0, "-", archname) .EQS. "VMS_IA64") THEN ext := .IXE
 $   IF (use_vmsdebug_perl)
 $   THEN
 $     WRITE CONFIG "define verb dbgperl"
@@ -7203,10 +7267,6 @@ $ WRITE CONFIG "$ cpan2dist  == """ + perl_setup_perl + " ''vms_prefix':[utils]c
 $! FIXME: "-" is an operator and illegal in a symbol name -- cpanp-run-perl can't work
 $!$ WRITE CONFIG "$ cpanp-run-perl == """ + perl_setup_perl + " ''vms_prefix':[utils]cpanp-run-perl.com"""
 $ WRITE CONFIG "$ cpanp      == """ + perl_setup_perl + " ''vms_prefix':[utils]cpanp.com"""
-$ IF F$LOCATE("Devel::DProf",dynamic_ext) .LT. F$LENGTH(dynamic_ext)
-$ THEN
-$ WRITE CONFIG "$ dprofpp    == """ + perl_setup_perl + " ''vms_prefix':[utils]dprofpp.com"""
-$ ENDIF 
 $ WRITE CONFIG "$ enc2xs     == """ + perl_setup_perl + " ''vms_prefix':[utils]enc2xs.com"""
 $ WRITE CONFIG "$ find2perl  == """ + perl_setup_perl + " ''vms_prefix':[utils]find2perl.com"""
 $ WRITE CONFIG "$ h2ph       == """ + perl_setup_perl + " ''vms_prefix':[utils]h2ph.com"""
@@ -7231,9 +7291,11 @@ $ WRITE CONFIG "$ pstruct    == """ + perl_setup_perl + " ''vms_prefix':[utils]p
 $ WRITE CONFIG "$ s2p        == """ + perl_setup_perl + " ''vms_prefix':[utils]s2p.com"""
 $ WRITE CONFIG "$ ptar       == """ + perl_setup_perl + " ''vms_prefix':[utils]ptar.com"""
 $ WRITE CONFIG "$ ptardiff   == """ + perl_setup_perl + " ''vms_prefix':[utils]ptardiff.com"""
+$ WRITE CONFIG "$ ptargrep   == """ + perl_setup_perl + " ''vms_prefix':[utils]ptargrep.com"""
 $ WRITE CONFIG "$ shasum     == """ + perl_setup_perl + " ''vms_prefix':[utils]shasum.com"""
 $ WRITE CONFIG "$ splain     == """ + perl_setup_perl + " ''vms_prefix':[utils]splain.com"""
 $ WRITE CONFIG "$ xsubpp     == """ + perl_setup_perl + " ''vms_prefix':[utils]xsubpp.com"""
+$ WRITE CONFIG "$ zipdetails == """ + perl_setup_perl + " ''vms_prefix':[utils]zipdetails.com"""
 $ CLOSE CONFIG
 $!
 $ echo  ""
@@ -7313,6 +7375,11 @@ $ ENDIF
 $ dflt = F$ENVIRONMENT("DEFAULT")
 $ IF F$LOCATE("UU]",dflt).EQS.(F$LENGTH(dflt)-3)
 $ THEN
+$   IF ( F$SEARCH("[.CXX_REPOSITORY]*.*").NES."" ) 
+$   THEN 
+$     DELETE/NOLOG/NOCONFIRM [.CXX_REPOSITORY]*.*;*
+$     SET PROTECTION=(SYSTEM:RWED,OWNER:RWED) CXX_REPOSITORY.DIR
+$   ENDIF
 $   IF ( F$SEARCH("[]*.*").NES."" ) THEN DELETE/NOLOG/NOCONFIRM []*.*;*
 $   SET DEFAULT [-]
 $   SET PROTECTION=(SYSTEM:RWED,OWNER:RWED) UU.DIR

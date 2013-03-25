@@ -1,6 +1,6 @@
 ### make sure we can find our conf.pl file
-BEGIN { 
-    use FindBin; 
+BEGIN {
+    use FindBin;
     require "$FindBin::Bin/inc/conf.pl";
 }
 
@@ -35,7 +35,7 @@ my $Prereq      = { $Dep => 0 };
 }
 
 
-### check specifically if our bundled shells dont trigger a 
+### check specifically if our bundled shells dont trigger a
 ### dependency (see #26077).
 ### do this _before_ changing the built in conf!
 {   my $meth = 'modules_for_feature';
@@ -44,15 +44,15 @@ my $Prereq      = { $Dep => 0 };
     my $cur  = $cobj->get_conf( $type );
 
     for my $shell ( SHELL_DEFAULT, SHELL_CLASSIC ) {
-        ok( $cobj->set_conf( $type => $shell ),         
+        ok( $cobj->set_conf( $type => $shell ),
                             "Testing dependencies for '$shell'" );
 
         my $rv = $CB->$Acc->$meth( $type => 1);
         ok( !$rv,           "   No dependencies for '$shell' -- bundled" );
-    }            
-    
+    }
+
     for my $shell ( 'CPANPLUS::Test::Shell' ) {
-        ok( $cobj->set_conf( $type => $shell ),         
+        ok( $cobj->set_conf( $type => $shell ),
                             "Testing dependencies for '$shell'" );
 
         my $rv = $CB->$Acc->$meth( $type => 1 );
@@ -62,7 +62,7 @@ my $Prereq      = { $Dep => 0 };
         is_deeply( $rv, { $shell => '0.0' },
                             "   With the proper entries" );
     }
-}        
+}
 
 ### test the feature list
 {   ### start with defining our OWN type of config, as not all mentioned
@@ -75,7 +75,7 @@ my $Prereq      = { $Dep => 0 };
     }
 
     is_deeply( $Conf, $Class->_get_config,
-                                "Config updated succesfully" );
+                                "Config updated successfully" );
 
     my @cat  = $CB->$Acc->list_categories;
     ok( scalar(@cat),           "Category list returned" );
@@ -87,18 +87,18 @@ my $Prereq      = { $Dep => 0 };
     for my $feat (@feat) {
         my $meth = 'modules_for_feature';
         my @mods = $CB->$Acc->$meth( $feat );
-        
+
         ok( $feat,              "Testing feature '$feat'" );
         ok( scalar( @mods ),    "   Module list returned" );
-    
+
         my $acc = 'is_installed_version_sufficient';
         for my $mod (@mods) {
             isa_ok( $mod,       "CPANPLUS::Module" );
             isa_ok( $mod,       $ModClass );
             can_ok( $mod,       $acc );
             ok( $mod->$acc,    "   Module uptodate" );
-        }                                    
-        
+        }
+
         ### check if we can get a hashref
         {   my $href = $CB->$Acc->$meth( $feat, 1 );
             ok( $href,          "Got result as hash" );
@@ -106,7 +106,7 @@ my $Prereq      = { $Dep => 0 };
             is_deeply( $href, $Prereq,
                                 "   With the proper entries" );
 
-        }        
+        }
     }
 
     ### see if we can get a list of modules to be updated
@@ -124,7 +124,7 @@ my $Prereq      = { $Dep => 0 };
 
         cmp_ok( scalar(keys(%list)), '==', 1,
                                 "Got modules for '$cat' from '$meth'" );
-        
+
         my $aref = $list{$cat};
         ok( $aref,              "   Got module list" );
         cmp_ok( scalar(@$aref), '==', 1,
@@ -136,22 +136,22 @@ my $Prereq      = { $Dep => 0 };
 
     ### find enabled features
     {   my $meth = 'list_enabled_features';
-        can_ok( $Class,         $meth );        
-        
+        can_ok( $Class,         $meth );
+
         my @list = $CB->$Acc->$meth;
         ok( scalar(@list),      "Retrieved enabled features" );
         is_deeply( [$Feat], \@list,
                                 "   Proper features found" );
     }
-    
+
     ### find dependencies/core modules
     for my $meth ( qw[list_core_dependencies list_core_modules] ) {
-        can_ok( $Class,         $meth );        
-        
+        can_ok( $Class,         $meth );
+
         my @list = $CB->$Acc->$meth;
         ok( scalar(@list),      "Retrieved modules" );
         is( scalar(@list), 1,   "   1 Found" );
-        isa_ok( $list[0],       $ModClass ); 
+        isa_ok( $list[0],       $ModClass );
         is( $list[0]->name, $Dep,
                                 "   Correct module found" );
 
@@ -163,7 +163,7 @@ my $Prereq      = { $Dep => 0 };
                                 "   With the proper entries" );
         }
     }
-    
+
 
     ### now selfupdate ourselves
     {   ### XXX just test the mechanics, make sure install returns true
@@ -171,11 +171,11 @@ my $Prereq      = { $Dep => 0 };
         ### declare in a block to quelch 'sub redefined' warnings.
         { local *CPANPLUS::Selfupdate::Module::install = sub { 1 }; }
           local *CPANPLUS::Selfupdate::Module::install = sub { 1 };
-        
+
         my $meth = 'selfupdate';
         can_ok( $Class,         $meth );
-        ok( $CB->$Acc->$meth( update => 'all'),   
+        ok( $CB->$Acc->$meth( update => 'all'),
                                 "   Selfupdate successful" );
     }
-}    
+}
 

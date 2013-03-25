@@ -1,0 +1,116 @@
+=pod
+
+=head1 NAME
+
+Locale::Codes::LangExt - standard codes for language extension identification
+
+=head1 SYNOPSIS
+
+   use Locale::Codes::LangExt;
+
+   $lext = code2langext('acm');                 # $lext gets 'Mesopotamian Arabic'
+   $code = langext2code('Mesopotamian Arabic'); # $code gets 'acm'
+
+   @codes   = all_langext_codes();
+   @names   = all_langext_names();
+
+=head1 DESCRIPTION
+
+The C<Locale::Codes::LangExt> module provides access to standard codes
+used for identifying language extensions, such as those as defined in
+the IANA language registry.
+
+Most of the routines take an optional additional argument which
+specifies the code set to use. If not specified, the default IANA
+language registry codes will be used.
+
+=head1 SUPPORTED CODE SETS
+
+There are several different code sets you can use for identifying
+language extensions. A code set may be specified using either a name, or a
+constant that is automatically exported by this module.
+
+For example, the two are equivalent:
+
+   $lext = code2langext('acm','alpha');
+   $lext = code2langext('acm',LOCALE_LANGEXT_ALPHA);
+
+The codesets currently supported are:
+
+=over 4
+
+=item B<alpha>
+
+This is the set of three-letter (lowercase) codes from the IANA
+language registry, such as 'acm' for Mesopotamian Arabic. 
+
+This is the default code set.
+
+=back
+
+=head1 ROUTINES
+
+=over 4
+
+=item B<code2langext ( CODE [,CODESET] )>
+
+=item B<langext2code ( NAME [,CODESET] )>
+
+=item B<langext_code2code ( CODE ,CODESET ,CODESET2 )>
+
+=item B<all_langext_codes ( [CODESET] )>
+
+=item B<all_langext_names ( [CODESET] )>
+
+=item B<Locale::Codes::LangExt::rename_langext  ( CODE ,NEW_NAME [,CODESET] )>
+
+=item B<Locale::Codes::LangExt::add_langext  ( CODE ,NAME [,CODESET] )>
+
+=item B<Locale::Codes::LangExt::delete_langext  ( CODE [,CODESET] )>
+
+=item B<Locale::Codes::LangExt::add_langext_alias  ( NAME ,NEW_NAME )>
+
+=item B<Locale::Codes::LangExt::delete_langext_alias  ( NAME )>
+
+=item B<Locale::Codes::LangExt::rename_langext_code  ( CODE ,NEW_CODE [,CODESET] )>
+
+=item B<Locale::Codes::LangExt::add_langext_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
+
+=item B<Locale::Codes::LangExt::delete_langext_code_alias  ( CODE [,CODESET] )>
+
+These routines are all documented in the Locale::Codes::API man page.
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item B<Locale::Codes>
+
+The Locale-Codes distribution.
+
+=item B<Locale::Codes::API>
+
+The list of functions supported by this module.
+
+=item B<http://www.iana.org/assignments/language-subtag-registry>
+
+The IANA language subtag registry.
+
+=back
+
+=head1 AUTHOR
+
+See Locale::Codes for full author history.
+
+Currently maintained by Sullivan Beck (sbeck@cpan.org).
+
+=head1 COPYRIGHT
+
+   Copyright (c) 2011-2012 Sullivan Beck
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=cut

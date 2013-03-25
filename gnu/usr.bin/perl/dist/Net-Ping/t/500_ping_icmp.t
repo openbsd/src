@@ -1,6 +1,8 @@
 # Test to perform icmp protocol testing.
 # Root access is required.
 
+use strict;
+
 BEGIN {
   unless (eval "require Socket") {
     print "1..0 \# Skip: no Socket\n";
@@ -8,24 +10,18 @@ BEGIN {
   }
 }
 
-use Test;
-use Net::Ping;
-plan tests => 2;
+use Test::More tests => 2;
+BEGIN {use_ok('Net::Ping')};
 
-# Everything loaded fine
-ok 1;
-
-if (($> and $^O ne 'VMS')
-    or (($^O eq 'MSWin32' or $^O eq 'cygwin')
-        and !IsAdminUser())
-    or ($^O eq 'VMS'
-        and (`write sys\$output f\$privilege("SYSPRV")` =~ m/FALSE/))) {
-  skip "icmp ping requires root privileges.", 1;
-} elsif ($^O eq 'MacOS') {
-  skip "icmp protocol not supported.", 1;
-} else {
+SKIP: {
+  skip "icmp ping requires root privileges.", 1
+    if ($> and $^O ne 'VMS' and $^O ne 'cygwin')
+      or ($^O eq 'MSWin32'
+	  and !IsAdminUser())
+	or ($^O eq 'VMS'
+	    and (`write sys\$output f\$privilege("SYSPRV")` =~ m/FALSE/));
   my $p = new Net::Ping "icmp";
-  ok $p->ping("127.0.0.1");
+  is($p->ping("127.0.0.1"), 1);
 }
 
 sub IsAdminUser {

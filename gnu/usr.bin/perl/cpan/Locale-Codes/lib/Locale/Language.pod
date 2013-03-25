@@ -1,115 +1,95 @@
+=pod
 
 =head1 NAME
 
-Locale::Language - ISO two letter codes for language identification (ISO 639)
+Locale::Language - standard codes for language identification
 
 =head1 SYNOPSIS
 
-    use Locale::Language;
-    
-    $lang = code2language('en');        # $lang gets 'English'
-    $code = language2code('French');    # $code gets 'fr'
-    
-    @codes   = all_language_codes();
-    @names   = all_language_names();
+   use Locale::Language;
 
+   $lang = code2language('en');        # $lang gets 'English'
+   $code = language2code('French');    # $code gets 'fr'
+
+   @codes   = all_language_codes();
+   @names   = all_language_names();
 
 =head1 DESCRIPTION
 
-The C<Locale::Language> module provides access to the ISO two-letter
-codes for identifying languages, as defined in ISO 639. You can either
-access the codes via the L<conversion routines> (described below),
-or via the two functions which return lists of all language codes or
-all language names.
+The C<Locale::Language> module provides access to standard codes used
+for identifying languages, such as those as defined in ISO 639.
 
+Most of the routines take an optional additional argument which
+specifies the code set to use. If not specified, the default ISO
+639 two-letter codes will be used.
 
-=head1 CONVERSION ROUTINES
+=head1 SUPPORTED CODE SETS
 
-There are two conversion routines: C<code2language()> and C<language2code()>.
+There are several different code sets you can use for identifying
+languages. A code set may be specified using either a name, or a
+constant that is automatically exported by this module.
+
+For example, the two are equivalent:
+
+   $lang = code2language('en','alpha-2');
+   $lang = code2language('en',LOCALE_CODE_ALPHA_2);
+
+The codesets currently supported are:
 
 =over 4
 
-=item code2language()
+=item B<alpha-2, LOCALE_LANG_ALPHA_2>
 
-This function takes a two letter language code and returns a string
-which contains the name of the language identified. If the code is
-not a valid language code, as defined by ISO 639, then C<undef>
-will be returned.
+This is the set of two-letter (lowercase) codes from ISO 639-1, such
+as 'he' for Hebrew.  It also includes additions to this set included
+in the IANA language registry.
 
-    $lang = code2language($code);
+This is the default code set.
 
-=item language2code()
+=item B<alpha-3, LOCALE_LANG_ALPHA_3>
 
-This function takes a language name and returns the corresponding
-two letter language code, if such exists.
-If the argument could not be identified as a language name,
-then C<undef> will be returned.
+This is the set of three-letter (lowercase) bibliographic codes from
+ISO 639-2 and 639-5, such as 'heb' for Hebrew.  It also includes
+additions to this set included in the IANA language registry.
 
-    $code = language2code('French');
+=item B<term, LOCALE_LANG_TERM>
 
-The case of the language name is not important.
-See the section L<KNOWN BUGS AND LIMITATIONS> below.
+This is the set of three-letter (lowercase) terminologic codes from
+ISO 639.
 
 =back
 
-
-=head1 QUERY ROUTINES
-
-There are two function which can be used to obtain a list of all
-language codes, or all language names:
+=head1 ROUTINES
 
 =over 4
 
-=item C<all_language_codes()>
+=item B<code2language ( CODE [,CODESET] )>
 
-Returns a list of all two-letter language codes.
-The codes are guaranteed to be all lower-case,
-and not in any particular order.
+=item B<language2code ( NAME [,CODESET] )>
 
-=item C<all_language_names()>
+=item B<language_code2code ( CODE ,CODESET ,CODESET2 )>
 
-Returns a list of all language names for which there is a corresponding
-two-letter language code. The names are capitalised, and not returned
-in any particular order.
+=item B<all_language_codes ( [CODESET] )>
 
-=back
+=item B<all_language_names ( [CODESET] )>
 
+=item B<Locale::Language::rename_language  ( CODE ,NEW_NAME [,CODESET] )>
 
-=head1 EXAMPLES
+=item B<Locale::Language::add_language  ( CODE ,NAME [,CODESET] )>
 
-The following example illustrates use of the C<code2language()> function.
-The user is prompted for a language code, and then told the corresponding
-language name:
+=item B<Locale::Language::delete_language  ( CODE [,CODESET] )>
 
-    $| = 1;    # turn off buffering
-    
-    print "Enter language code: ";
-    chop($code = <STDIN>);
-    $lang = code2language($code);
-    if (defined $lang)
-    {
-        print "$code = $lang\n";
-    }
-    else
-    {
-        print "'$code' is not a valid language code!\n";
-    }
+=item B<Locale::Language::add_language_alias  ( NAME ,NEW_NAME )>
 
-=head1 KNOWN BUGS AND LIMITATIONS
+=item B<Locale::Language::delete_language_alias  ( NAME )>
 
-=over 4
+=item B<Locale::Language::rename_language_code  ( CODE ,NEW_CODE [,CODESET] )>
 
-=item *
+=item B<Locale::Language::add_language_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
 
-In the current implementation, all data is read in when the
-module is loaded, and then held in memory.
-A lazy implementation would be more memory friendly.
+=item B<Locale::Language::delete_language_code_alias  ( CODE [,CODESET] )>
 
-=item *
-
-Currently just supports the two letter language codes -
-there are also three-letter codes, and numbers.
-Would these be of any use to anyone?
+These routines are all documented in the Locale::Codes::API man page.
 
 =back
 
@@ -117,42 +97,41 @@ Would these be of any use to anyone?
 
 =over 4
 
-=item Locale::Country
+=item B<Locale::Codes>
 
-ISO codes for identification of country (ISO 3166).
-Supports 2-letter, 3-letter, and numeric country codes.
+The Locale-Codes distribution.
 
-=item Locale::Script
+=item B<Locale::Codes::API>
 
-ISO codes for identification of written scripts (ISO 15924).
+The list of functions supported by this module.
 
-=item Locale::Currency
+=item B<http://www.loc.gov/standards/iso639-2/>
 
-ISO three letter codes for identification of currencies and funds (ISO 4217).
+Source of the ISO 639-2 codes.
 
-=item ISO 639:1988 (E/F)
+=item B<http://www.loc.gov/standards/iso639-5/>
 
-Code for the representation of names of languages.
+Source of the ISO 639-5 codes.
 
-=item http://lcweb.loc.gov/standards/iso639-2/langhome.html
+=item B<http://www.iana.org/assignments/language-subtag-registry>
 
-Home page for ISO 639-2.
+The IANA language subtag registry.
 
 =back
 
-
 =head1 AUTHOR
 
-Neil Bowers E<lt>neil@bowers.comE<gt>
+See Locale::Codes for full author history.
+
+Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
 =head1 COPYRIGHT
 
-Copyright (C) 2002-2004, Neil Bowers.
-
-Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
+   Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
+   Copyright (c) 2001-2010 Neil Bowers
+   Copyright (c) 2010-2012 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =cut
-

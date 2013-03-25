@@ -120,20 +120,27 @@ TODO: Document those cases.
 
 =item C</p> - RXf_PMf_KEEPCOPY
 
+TODO: Document this
+
+=item Character set
+
+The character set semantics are determined by an enum that is contained
+in this field.  This is still experimental and subject to change, but
+the current interface returns the rules by use of the in-line function
+C<get_regex_charset(const U32 flags)>.  The only currently documented
+value returned from it is REGEX_LOCALE_CHARSET, which is set if
+C<use locale> is in effect. If present in C<< rx->extflags >>,
+C<split> will use the locale dependent definition of whitespace
+when RXf_SKIPWHITE or RXf_WHITE is in effect. ASCII whitespace
+is defined as per L<isSPACE|perlapi/isSPACE>, and by the internal
+macros C<is_utf8_space> under UTF-8, and C<isSPACE_LC> under C<use
+locale>.
+
 =back
 
 Additional flags:
 
 =over 4
-
-=item RXf_PMf_LOCALE
-
-Set if C<use locale> is in effect. If present in C<< rx->extflags >>
-C<split> will use the locale dependent definition of whitespace under
-when RXf_SKIPWHITE or RXf_WHITE are in effect. Under ASCII whitespace
-is defined as per L<isSPACE|perlapi/ISSPACE>, and by the internal
-macros C<is_utf8_space> under UTF-8 and C<isSPACE_LC> under C<use
-locale>.
 
 =item RXf_UTF8
 
@@ -243,7 +250,7 @@ perl will handle releasing anything else contained in the regexp structure.
 
 Called to get/set the value of C<$`>, C<$'>, C<$&> and their named
 equivalents, ${^PREMATCH}, ${^POSTMATCH} and $^{MATCH}, as well as the
-numbered capture buffers (C<$1>, C<$2>, ...).
+numbered capture groups (C<$1>, C<$2>, ...).
 
 The C<paren> parameter will be C<-2> for C<$`>, C<-1> for C<$'>, C<0>
 for C<$&>, C<1> for C<$1> and so forth.
@@ -282,7 +289,7 @@ sure this is used as the new value (or reject it).
 Example:
 
     if ("ook" =~ /(o*)/) {
-        # `paren' will be `1' and `value' will be `ee'
+        # 'paren' will be '1' and 'value' will be 'ee'
         $1 =~ tr/o/e/;
     }
 
@@ -317,7 +324,7 @@ behave in the same situation:
 
     package main;
 
-    tie my $sv => "CatptureVar";
+    tie my $sv => "CaptureVar";
     $sv =~ y/a/b/;
 
 Because C<$sv> is C<undef> when the C<y///> operator is applied to it
@@ -492,7 +499,7 @@ values.
            in the final match, used for optimisations */
         struct reg_substr_data *substrs;
 
-        U32 nparens;  /* number of capture buffers */
+        U32 nparens;  /* number of capture groups */
 
         /* private engine specific data */
         U32 intflags;   /* Engine Specific Internal flags */
@@ -579,7 +586,7 @@ Substring data about strings that must appear in the final match. This
 is currently only used internally by perl's engine for but might be
 used in the future for all engines for optimisations.
 
-=head2 C<nparens>, C<lasparen>, and C<lastcloseparen>
+=head2 C<nparens>, C<lastparen>, and C<lastcloseparen>
 
 These fields are used to keep track of how many paren groups could be matched
 in the pattern, which was the last open paren to be entered, and which was
@@ -612,7 +619,7 @@ C<regexp_paren_pair> struct is defined as follows:
     } regexp_paren_pair;
 
 If C<< ->offs[num].start >> or C<< ->offs[num].end >> is C<-1> then that
-capture buffer did not match. C<< ->offs[0].start/end >> represents C<$&> (or
+capture group did not match. C<< ->offs[0].start/end >> represents C<$&> (or
 C<${^MATCH> under C<//p>) and C<< ->offs[paren].end >> matches C<$$paren> where
 C<$paren >= 1>.
 
@@ -633,7 +640,7 @@ The relevant snippet from C<Perl_pp_regcomp>:
 
 =head2 C<paren_names>
 
-This is a hash used internally to track named capture buffers and their
+This is a hash used internally to track named capture groups and their
 offsets. The keys are the names of the buffers the values are dualvars,
 with the IV slot holding the number of buffers with the given name and the
 pv being an embedded array of I32.  The values may also be contained
@@ -655,7 +662,7 @@ Used during execution phase for managing search and replace patterns.
 =head2 C<wrapped> C<wraplen>
 
 Stores the string C<qr//> stringifies to. The perl engine for example
-stores C<(?-xism:eek)> in the case of C<qr/eek/>.
+stores C<(?^:eek)> in the case of C<qr/eek/>.
 
 When using a custom engine that doesn't support the C<(?:)> construct
 for inline modifiers, it's probably best to have C<qr//> stringify to

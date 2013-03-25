@@ -56,12 +56,21 @@ Unrecognized escape \m passed through in regex; marked by <-- HERE in m/a\m <-- 
 # The \q should warn, the \_ should NOT warn.
 use warnings 'regexp';
 "foo" =~ /\q/;
+"foo" =~ /\q{/;
+"foo" =~ /a\b{cde/;
+"foo" =~ /a\B{cde/;
 "bar" =~ /\_/;
 no warnings 'regexp';
 "foo" =~ /\q/;
+"foo" =~ /\q{/;
+"foo" =~ /a\b{cde/;
+"foo" =~ /a\B{cde/;
 "bar" =~ /\_/;
 EXPECT
 Unrecognized escape \q passed through in regex; marked by <-- HERE in m/\q <-- HERE / at - line 4.
+Unrecognized escape \q{ passed through in regex; marked by <-- HERE in m/\q{ <-- HERE / at - line 5.
+"\b{" is deprecated; use "\b\{" instead in regex; marked by <-- HERE in m/a\ <-- HERE b{cde/ at - line 6.
+"\B{" is deprecated; use "\B\{" instead in regex; marked by <-- HERE in m/a\ <-- HERE B{cde/ at - line 7.
 ########
 # regcomp.c [S_regpposixcc S_checkposixcc]
 #
@@ -207,3 +216,51 @@ Useless (?-c) - don't use /gc modifier in regex; marked by <-- HERE in m/(?o-c <
 Useless (?o) - use /o modifier in regex; marked by <-- HERE in m/(?o <-- HERE gc)/ at - line 12.
 Useless (?g) - use /g modifier in regex; marked by <-- HERE in m/(?og <-- HERE c)/ at - line 12.
 Useless (?c) - use /gc modifier in regex; marked by <-- HERE in m/(?ogc <-- HERE )/ at - line 12.
+########
+# regcomp.c [S_regatom]
+$a = qr/\o{/;
+EXPECT
+Missing right brace on \o{ in regex; marked by <-- HERE in m/\o{ <-- HERE / at - line 2.
+########
+# regcomp.c [S_regatom]
+$a = qr/\o/;
+EXPECT
+Missing braces on \o{} in regex; marked by <-- HERE in m/\o <-- HERE / at - line 2.
+########
+# regcomp.c [S_regatom]
+$a = qr/\o{}/;
+EXPECT
+Number with no digits in regex; marked by <-- HERE in m/\o{} <-- HERE / at - line 2.
+########
+# regcomp.c [S_regclass]
+$a = qr/[\o{]/;
+EXPECT
+Missing right brace on \o{ in regex; marked by <-- HERE in m/[\o{ <-- HERE ]/ at - line 2.
+########
+# regcomp.c [S_regclass]
+$a = qr/[\o]/;
+EXPECT
+Missing braces on \o{} in regex; marked by <-- HERE in m/[\o <-- HERE ]/ at - line 2.
+########
+# regcomp.c [S_regclass]
+$a = qr/[\o{}]/;
+EXPECT
+Number with no digits in regex; marked by <-- HERE in m/[\o{} <-- HERE ]/ at - line 2.
+########
+# regcomp.c [S_regclass]
+use warnings 'regexp' ;
+$a = qr/[\8\9]/;
+$a = qr/[\_\0]/; # Should have no warnings on this and the remainder of this test
+$a = qr/[\07]/;
+$a = qr/[\006]/;
+$a = qr/[\0005]/;
+no warnings 'regexp' ;
+$a = qr/[\8\9]/;
+EXPECT
+Unrecognized escape \8 in character class passed through in regex; marked by <-- HERE in m/[\8 <-- HERE \9]/ at - line 3.
+Unrecognized escape \9 in character class passed through in regex; marked by <-- HERE in m/[\8\9 <-- HERE ]/ at - line 3.
+########
+# regcomp.c [Perl_re_compile]
+$a = qr/(?^-i:foo)/;
+EXPECT
+Sequence (?^-...) not recognized in regex; marked by <-- HERE in m/(?^- <-- HERE i:foo)/ at - line 2.

@@ -7,7 +7,7 @@ use strict;
 my $MODULE;
 
 BEGIN {
-	$MODULE = ($ENV{PERL_CORE} || -d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
 	eval "require $MODULE" || die $@;
 	$MODULE->import(qw(hmac_sha256_hex hmac_sha384_hex hmac_sha512_hex));
 }
@@ -54,7 +54,7 @@ my $skip = hmac_sha384_hex("", "") ? 0 : 1;
 while (@data_bs1024) {
 	if ($skip) {
 		print "ok ", $testnum++,
-			$skip ? " # skip: no 64 bit" : "", "\n";
+			$skip ? " # skip: no 64-bit" : "", "\n";
 		shift @data_bs1024;
 		next;
 	}
@@ -67,7 +67,7 @@ while (@data_bs1024) {
 while (@dat2_bs1024) {
 	if ($skip) {
 		print "ok ", $testnum++,
-			$skip ? " # skip: no 64 bit" : "", "\n";
+			$skip ? " # skip: no 64-bit" : "", "\n";
 		shift @dat2_bs1024;
 		next;
 	}

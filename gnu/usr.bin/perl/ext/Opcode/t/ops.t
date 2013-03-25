@@ -8,20 +8,18 @@ BEGIN {
     }
 }
 
-print "1..2\n";
+use Test::More tests => 2;
 
 eval <<'EOP';
-	no ops 'fileno';	# equiv to "perl -M-ops=fileno"
+	no ops 'fileno';
 	$a = fileno STDIN;
 EOP
 
-print $@ =~ /trapped/ ? "ok 1\n" : "not ok 1\n# $@\n";
+like($@, qr/trapped/, 'equiv to "perl -M-ops=fileno"');
 
 eval <<'EOP';
-	use ops ':default';	# equiv to "perl -M(as above) -Mops=:default"
+	use ops ':default';
 	eval 1;
 EOP
 
-print $@ =~ /trapped/ ? "ok 2\n" : "not ok 2\n# $@\n";
-
-1;
+like($@, qr/trapped/,  'equiv to "perl -Mops=:default"');

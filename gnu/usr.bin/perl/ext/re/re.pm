@@ -4,7 +4,7 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.11";
+our $VERSION     = "0.19_01";
 our @ISA         = qw(Exporter);
 our @EXPORT_OK   = ('regmust',
                     qw(is_regexp regexp_pattern
@@ -14,6 +14,22 @@ our %EXPORT_OK = map { $_ => 1 } @EXPORT_OK;
 my %bitmask = (
     taint   => 0x00100000, # HINT_RE_TAINT
     eval    => 0x00200000, # HINT_RE_EVAL
+);
+
+my $flags_hint = 0x02000000; # HINT_RE_FLAGS
+my $PMMOD_SHIFT = 0;
+my %reflags = (
+    m => 1 << ($PMMOD_SHIFT + 0),
+    s => 1 << ($PMMOD_SHIFT + 1),
+    i => 1 << ($PMMOD_SHIFT + 2),
+    x => 1 << ($PMMOD_SHIFT + 3),
+    p => 1 << ($PMMOD_SHIFT + 4),
+# special cases:
+    d => 0,
+    l => 1,
+    u => 2,
+    a => 3,
+    aa => 4,
 );
 
 sub setcolor {
@@ -66,7 +82,7 @@ $flags{TRIE} = $flags{DUMP} | $flags{EXECUTE} | $flags{TRIEC};
 
 if (defined &DynaLoader::boot_DynaLoader) {
     require XSLoader;
-    XSLoader::load( __PACKAGE__, $VERSION);
+    XSLoader::load();
 }
 # else we're miniperl
 # We need to work for miniperl, because the XS toolchain uses Text::Wrap, which
@@ -92,10 +108,7 @@ sub _load_unload {
 sub bits {
     my $on = shift;
     my $bits = 0;
-    unless (@_) {
-	require Carp;
-	Carp::carp("Useless use of \"re\" pragma"); 
-    }
+   ARG:
     foreach my $idx (0..$#_){
         my $s=$_[$idx];
         if ($s eq 'Debug' or $s eq 'Debugcolor') {
@@ -125,6 +138,68 @@ sub bits {
 	} elsif ($EXPORT_OK{$s}) {
 	    require Exporter;
 	    re->export_to_level(2, 're', $s);
+	} elsif ($s =~ s/^\///) {
+	    my $reflags = $^H{reflags} || 0;
+	    my $seen_charset;
+	    while ($s =~ m/( . )/gx) {
+                local $_ = $1;
+		if (/[adul]/) {
+                    # The 'a' may be repeated; hide this from the rest of the
+                    # code by counting and getting rid of all of them, then
+                    # changing to 'aa' if there is a repeat.
+                    if ($_ eq 'a') {
+                        my $sav_pos = pos $s;
+                        my $a_count = $s =~ s/a//g;
+                        pos $s = $sav_pos - 1;  # -1 because got rid of the 'a'
+                        if ($a_count > 2) {
+			    require Carp;
+                            Carp::carp(
+                            qq 'The "a" flag may only appear a maximum of twice'
+                            );
+                        }
+                        elsif ($a_count == 2) {
+                            $_ = 'aa';
+                        }
+                    }
+		    if ($on) {
+			if ($seen_charset) {
+			    require Carp;
+                            if ($seen_charset ne $_) {
+                                Carp::carp(
+                                qq 'The "$seen_charset" and "$_" flags '
+                                .qq 'are exclusive'
+                                );
+                            }
+                            else {
+                                Carp::carp(
+                                qq 'The "$seen_charset" flag may not appear '
+                                .qq 'twice'
+                                );
+                            }
+			}
+			$^H{reflags_charset} = $reflags{$_};
+			$seen_charset = $_;
+		    }
+		    else {
+			delete $^H{reflags_charset}
+			 if  defined $^H{reflags_charset}
+			  && $^H{reflags_charset} == $reflags{$_};
+		    }
+		} elsif (exists $reflags{$_}) {
+		    $on
+		      ? $reflags |= $reflags{$_}
+		      : ($reflags &= ~$reflags{$_});
+		} else {
+		    require Carp;
+		    Carp::carp(
+		     qq'Unknown regular expression flag "$_"'
+		    );
+		    next ARG;
+		}
+	    }
+	    ($^H{reflags} = $reflags or defined $^H{reflags_charset})
+	     ? $^H |= $flags_hint
+	     : ($^H &= ~$flags_hint);
 	} else {
 	    require Carp;
 	    Carp::carp("Unknown \"re\" subpragma '$s' (known ones are: ",
@@ -169,6 +244,11 @@ re - Perl pragma to alter regular expression behaviour
 	no re 'eval';		   # the default
 	/foo${pat}bar/;		   # disallowed (with or without -T switch)
     }
+
+    use re '/ix';
+    "FOO" =~ / foo /; # /ix implied
+    no re '/x';
+    "FOO" =~ /foo/; # just /i implied
 
     use re 'debug';		   # output debugging info during
     /^(.*)$/s;			   #     compile and run time
@@ -220,6 +300,41 @@ interpolation.  Thus:
 I<is> allowed if $pat is a precompiled regular expression, even
 if $pat contains C<(?{ ... })> assertions or C<(??{ ... })> subexpressions.
 
+=head2 '/flags' mode
+
+When C<use re '/flags'> is specified, the given flags are automatically
+added to every regular expression till the end of the lexical scope.
+
+C<no re '/flags'> will turn off the effect of C<use re '/flags'> for the
+given flags.
+
+For example, if you want all your regular expressions to have /msx on by
+default, simply put
+
+    use re '/msx';
+
+at the top of your code.
+
+The character set /adul flags cancel each other out. So, in this example,
+
+    use re "/u";
+    "ss" =~ /\xdf/;
+    use re "/d";
+    "ss" =~ /\xdf/;
+
+the second C<use re> does an implicit C<no re '/u'>.
+
+Turning on one of the character set flags with C<use re> takes precedence over the
+C<locale> pragma and the 'unicode_strings' C<feature>, for regular
+expressions. Turning off one of these flags when it is active reverts to
+the behaviour specified by whatever other pragmata are in scope. For
+example:
+
+    use feature "unicode_strings";
+    no re "/u"; # does nothing
+    use re "/l";
+    no re "/l"; # reverts to unicode_strings behaviour
+
 =head2 'debug' mode
 
 When C<use re 'debug'> is in effect, perl emits debugging messages when
@@ -231,7 +346,7 @@ form of output that can be used to get a colorful display on terminals
 that understand termcap color sequences.  Set C<$ENV{PERL_RE_TC}> to a
 comma-separated list of C<termcap> properties to use for highlighting
 strings on/off, pre-point part on/off.
-See L<perldebug/"Debugging regular expressions"> for additional info.
+See L<perldebug/"Debugging Regular Expressions"> for additional info.
 
 As of 5.9.5 the directive C<use re 'debug'> and its equivalents are
 lexically scoped, as the other directives are.  However they have both 
@@ -307,7 +422,7 @@ Turns on all "extra" debugging options.
 
 =item BUFFERS
 
-Enable debugging the capture buffer storage during match. Warning,
+Enable debugging the capture group storage during match. Warning,
 this can potentially produce extremely large output.
 
 =item TRIEM
@@ -397,7 +512,7 @@ by C<qr//>, false if it is not.
 
 This function will not be confused by overloading or blessing. In
 internals terms, this extracts the regexp pointer out of the
-PERL_MAGIC_qr structure so it it cannot be fooled.
+PERL_MAGIC_qr structure so it cannot be fooled.
 
 =item regexp_pattern($ref)
 
@@ -415,7 +530,7 @@ C<qr//> with the same pattern inside.  If the argument is not a compiled
 reference then this routine returns false but defined in scalar context,
 and the empty list in list context. Thus the following
 
-    if (regexp_pattern($ref) eq '(?i-xsm:foo)')
+    if (regexp_pattern($ref) eq '(?^i:foo)')
 
 will be warning free regardless of what $ref actually is.
 

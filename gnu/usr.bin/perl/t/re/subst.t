@@ -7,7 +7,80 @@ BEGIN {
 }
 
 require './test.pl';
-plan( tests => 143 );
+plan( tests => 189 );
+
+$_ = 'david';
+$a = s/david/rules/r;
+ok( $_ eq 'david' && $a eq 'rules', 'non-destructive substitute' );
+
+$a = "david" =~ s/david/rules/r;
+ok( $a eq 'rules', 's///r with constant' );
+
+$a = "david" =~ s/david/"is"."great"/er;
+ok( $a eq 'isgreat', 's///er' );
+
+$a = "daviddavid" =~ s/david/cool/gr;
+ok( $a eq 'coolcool', 's///gr' );
+
+$a = 'david';
+$b = $a =~ s/david/sucks/r =~ s/sucks/rules/r;
+ok( $a eq 'david' && $b eq 'rules', 'chained s///r' );
+
+$a = 'david';
+$b = $a =~ s/xxx/sucks/r;
+ok( $a eq 'david' && $b eq 'david', 'non matching s///r' );
+
+$a = 'david';
+for (0..2) {
+    ok( 'david' =~ s/$a/rules/ro eq 'rules', 's///ro '.$_ );
+}
+
+$a = 'david';
+eval '$b = $a !~ s/david/is great/r';
+like( $@, qr{Using !~ with s///r doesn't make sense}, 's///r !~ operator gives error' );
+
+{
+        no warnings 'uninitialized';
+        $a = undef;
+        $b = $a =~ s/left/right/r;
+        ok ( !defined $a && !defined $b, 's///r with undef input' );
+
+        use warnings;
+        warning_like(sub { $b = $a =~ s/left/right/r },
+		     qr/^Use of uninitialized value/,
+		     's///r Uninitialized warning');
+
+        $a = 'david';
+        warning_like(sub {eval 's/david/sucks/r; 1'},
+		     qr/^Useless use of non-destructive substitution/,
+		     's///r void context warning');
+}
+
+$a = '';
+$b = $a =~ s/david/rules/r;
+ok( $a eq '' && $b eq '', 's///r on empty string' );
+
+$_ = 'david';
+@b = s/david/rules/r;
+ok( $_ eq 'david' && $b[0] eq 'rules', 's///r in list context' );
+
+# Magic value and s///r
+require Tie::Scalar;
+tie $m, 'Tie::StdScalar';  # makes $a magical
+$m = "david";
+$b = $m =~ s/david/rules/r;
+ok( $m eq 'david' && $b eq 'rules', 's///r with magic input' );
+
+$m = $b =~ s/rules/david/r;
+ok( defined tied($m), 's///r magic isn\'t lost' );
+
+$b = $m =~ s/xxx/yyy/r;
+ok( ! defined tied($b), 's///r magic isn\'t contagious' );
+
+my $ref = \("aaa" =~ s/aaa/bbb/r);
+is (Internals::SvREFCNT($$ref), 1, 's///r does not leak');
+$ref = \("aaa" =~ s/aaa/bbb/rg);
+is (Internals::SvREFCNT($$ref), 1, 's///rg does not leak');
 
 $x = 'foo';
 $_ = "x";
@@ -598,7 +671,7 @@ is($name, "cis", q[#22351 bug with 'e' substitution modifier]);
 fresh_perl_is( '$_=q(foo);s/(.)\G//g;print' => 'foo', '[perl #69056] positive GPOS regex segfault' );
 fresh_perl_is( '$_="abcef"; s/bc|(.)\G(.)/$1 ? "[$1-$2]" : "XX"/ge; print' => 'aXX[c-e][e-f]f', 'positive GPOS regex substitution failure' );
 
-# [perl #~~~~~] $var =~ s/$qr//e calling get-magic on $_ as well as $var
+# [perl #71470] $var =~ s/$qr//e calling get-magic on $_ as well as $var
 {
  local *_;
  my $scratch;
@@ -614,3 +687,115 @@ fresh_perl_is( '$_="abcef"; s/bc|(.)\G(.)/$1 ? "[$1-$2]" : "XX"/ge; print' => 'a
   'bug: $var =~ s/$qr//e calling get-magic on $_ as well as $var',
  );
 }
+
+{ # Bug #41530; replacing non-utf8 with a utf8 causes problems
+    my $string = "a\x{a0}a";
+    my $sub_string = $string;
+    ok(! utf8::is_utf8($sub_string), "Verify that string isn't initially utf8");
+    $sub_string =~ s/a/\x{100}/g;
+    ok(utf8::is_utf8($sub_string),
+                        'Verify replace of non-utf8 with utf8 upgrades to utf8');
+    is($sub_string, "\x{100}\x{A0}\x{100}",
+                            'Verify #41530 fixed: replace of non-utf8 with utf8');
+
+    my $non_sub_string = $string;
+    ok(! utf8::is_utf8($non_sub_string),
+                                    "Verify that string isn't initially utf8");
+    $non_sub_string =~ s/b/\x{100}/g;
+    ok(! utf8::is_utf8($non_sub_string),
+            "Verify that failed substitute doesn't change string's utf8ness");
+    is($non_sub_string, $string,
+                        "Verify that failed substitute doesn't change string");
+}
+
+{ # Verify largish octal in replacement pattern
+
+    my $string = "a";
+    $string =~ s/a/\400/;
+    is($string, chr 0x100, "Verify that handles s/foo/\\400/");
+    $string =~ s/./\600/;
+    is($string, chr 0x180, "Verify that handles s/foo/\\600/");
+    $string =~ s/./\777/;
+    is($string, chr 0x1FF, "Verify that handles s/foo/\\777/");
+}
+
+# Scoping of s//the RHS/ when there is no /e
+# Tests based on [perl #19078]
+{
+ local *_;
+ my $output = ''; my %a;
+ no warnings 'uninitialized';
+
+ $_="CCCGGG";
+ s!.!<@a{$output .= ("$&"),/[$&]/g}>!g;
+ $output .= $_;
+ is(
+   $output, "CCCGGG<   ><  >< ><   ><  >< >",
+  's/// sets PL_curpm for each iteration even when the RHS has set it'
+ );
+ 
+ s/C/$a{m\G\}/;
+ is(
+  "$&", G =>
+  'Match vars reflect the last match after s/pat/$a{m|pat|}/ without /e'
+ );
+}
+
+{
+    # a tied scalar that returned a plain string, got messed up
+    # when substituted with a UTF8 replacement string, due to
+    # magic getting called multiple times, and pointers now pointing
+    # to stale/freed strings
+    package FOO;
+    my $fc;
+    sub TIESCALAR { bless [ "abcdefgh" ] }
+    sub FETCH { $fc++; $_[0][0] }
+    sub STORE { $_[0][0] = $_[1] }
+
+    my $s;
+    tie $s, 'FOO';
+    $s =~ s/..../\x{101}/;
+    ::is($fc, 1, "tied UTF8 stuff FETCH count");
+    ::is("$s", "\x{101}efgh", "tied UTF8 stuff");
+}
+
+# RT #97954
+{
+    my $count;
+
+    sub bam::DESTROY {
+	--$count;
+    }
+
+    my $z_zapp = bless [], 'bam';
+    ++$count;
+
+    is($count, 1, '1 object');
+    is($z_zapp =~ s/.*/R/r, 'R', 'substitution happens');
+    is(ref $z_zapp, 'bam', 'still 1 object');
+    is($count, 1, 'still 1 object');
+    undef $z_zapp;
+    is($count, 0, 'now 0 objects');
+
+    $z_zapp = bless [], 'bam';
+    ++$count;
+
+    is($count, 1, '1 object');
+    like($z_zapp =~ s/./R/rg, qr/\AR{8,}\z/, 'substitution happens');
+    is(ref $z_zapp, 'bam', 'still 1 object');
+    is($count, 1, 'still 1 object');
+    undef $z_zapp;
+    is($count, 0, 'now 0 objects');
+}
+
+is(*bam =~ s/\*//r, 'main::bam', 'Can s///r a tyepglob');
+is(*bam =~ s/\*//rg, 'main::bam', 'Can s///rg a tyepglob');
+
+{
+ sub cowBug::TIESCALAR { bless[], 'cowBug' }
+ sub cowBug::FETCH { __PACKAGE__ }
+ sub cowBug::STORE{}
+ tie my $kror, cowBug =>;
+ $kror =~ s/(?:)/""/e;
+}
+pass("s/// on tied var returning a cow")

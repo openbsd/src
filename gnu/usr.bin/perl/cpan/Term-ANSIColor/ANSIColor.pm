@@ -1,7 +1,7 @@
 # Term::ANSIColor -- Color screen output using ANSI escape sequences.
 #
-# Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2008, 2009
-#     Russ Allbery <rra@stanford.edu> and Zenin
+# Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2008, 2009, 2010,
+#     2011 Russ Allbery <rra@stanford.edu> and Zenin
 # PUSH/POP support submitted 2007 by openmethods.com voice solutions
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -17,7 +17,7 @@
 package Term::ANSIColor;
 require 5.001;
 
-$VERSION = '2.02';
+$VERSION = '3.01';
 
 use strict;
 use vars qw($AUTOLOAD $AUTOLOCAL $AUTORESET @COLORLIST @COLORSTACK $EACHLINE
@@ -26,10 +26,21 @@ use vars qw($AUTOLOAD $AUTOLOCAL $AUTORESET @COLORLIST @COLORSTACK $EACHLINE
 
 use Exporter ();
 BEGIN {
-    @COLORLIST   = qw(CLEAR RESET BOLD DARK FAINT UNDERLINE UNDERSCORE BLINK
-                      REVERSE CONCEALED BLACK RED GREEN YELLOW BLUE MAGENTA
-                      CYAN WHITE ON_BLACK ON_RED ON_GREEN ON_YELLOW ON_BLUE
-                      ON_MAGENTA ON_CYAN ON_WHITE);
+    @COLORLIST = qw(
+        CLEAR           RESET             BOLD            DARK
+        FAINT           UNDERLINE         UNDERSCORE      BLINK
+        REVERSE         CONCEALED
+
+        BLACK           RED               GREEN           YELLOW
+        BLUE            MAGENTA           CYAN            WHITE
+        ON_BLACK        ON_RED            ON_GREEN        ON_YELLOW
+        ON_BLUE         ON_MAGENTA        ON_CYAN         ON_WHITE
+
+        BRIGHT_BLACK    BRIGHT_RED        BRIGHT_GREEN    BRIGHT_YELLOW
+        BRIGHT_BLUE     BRIGHT_MAGENTA    BRIGHT_CYAN     BRIGHT_WHITE
+        ON_BRIGHT_BLACK ON_BRIGHT_RED     ON_BRIGHT_GREEN ON_BRIGHT_YELLOW
+        ON_BRIGHT_BLUE  ON_BRIGHT_MAGENTA ON_BRIGHT_CYAN  ON_BRIGHT_WHITE
+    );
     @ISA         = qw(Exporter);
     @EXPORT      = qw(color colored);
     @EXPORT_OK   = qw(uncolor colorstrip colorvalid);
@@ -43,25 +54,35 @@ BEGIN {
 # Internal data structures
 ##############################################################################
 
-%ATTRIBUTES = ('clear'      => 0,
-               'reset'      => 0,
-               'bold'       => 1,
-               'dark'       => 2,
-               'faint'      => 2,
-               'underline'  => 4,
-               'underscore' => 4,
-               'blink'      => 5,
-               'reverse'    => 7,
-               'concealed'  => 8,
+%ATTRIBUTES = ('clear'          => 0,
+               'reset'          => 0,
+               'bold'           => 1,
+               'dark'           => 2,
+               'faint'          => 2,
+               'underline'      => 4,
+               'underscore'     => 4,
+               'blink'          => 5,
+               'reverse'        => 7,
+               'concealed'      => 8,
 
-               'black'      => 30,   'on_black'   => 40,
-               'red'        => 31,   'on_red'     => 41,
-               'green'      => 32,   'on_green'   => 42,
-               'yellow'     => 33,   'on_yellow'  => 43,
-               'blue'       => 34,   'on_blue'    => 44,
-               'magenta'    => 35,   'on_magenta' => 45,
-               'cyan'       => 36,   'on_cyan'    => 46,
-               'white'      => 37,   'on_white'   => 47);
+               'black'          => 30,   'on_black'          => 40,
+               'red'            => 31,   'on_red'            => 41,
+               'green'          => 32,   'on_green'          => 42,
+               'yellow'         => 33,   'on_yellow'         => 43,
+               'blue'           => 34,   'on_blue'           => 44,
+               'magenta'        => 35,   'on_magenta'        => 45,
+               'cyan'           => 36,   'on_cyan'           => 46,
+               'white'          => 37,   'on_white'          => 47,
+
+               'bright_black'   => 90,   'on_bright_black'   => 100,
+               'bright_red'     => 91,   'on_bright_red'     => 101,
+               'bright_green'   => 92,   'on_bright_green'   => 102,
+               'bright_yellow'  => 93,   'on_bright_yellow'  => 103,
+               'bright_blue'    => 94,   'on_bright_blue'    => 104,
+               'bright_magenta' => 95,   'on_bright_magenta' => 105,
+               'bright_cyan'    => 96,   'on_bright_cyan'    => 106,
+               'bright_white'   => 97,   'on_bright_white'   => 107,
+               );
 
 # Reverse lookup.  Alphabetically first name for a sequence is preferred.
 for (reverse sort keys %ATTRIBUTES) {
@@ -184,13 +205,13 @@ sub uncolor {
         push (@nums, split (/;/, $1));
     }
     for (@nums) {
-	$_ += 0; # Strip leading zeroes
-	my $name = $ATTRIBUTES_R{$_};
-	if (!defined $name) {
-	    require Carp;
-	    Carp::croak ("No name for escape sequence $_" );
-	}
-	push (@result, $name);
+        $_ += 0; # Strip leading zeroes
+        my $name = $ATTRIBUTES_R{$_};
+        if (!defined $name) {
+            require Carp;
+            Carp::croak ("No name for escape sequence $_" );
+        }
+        push (@result, $name);
     }
     return @result;
 }
@@ -205,7 +226,7 @@ sub uncolor {
 # piped to a pager or some other program).
 sub colored {
     my ($string, @codes);
-    if (ref $_[0]) {
+    if (ref ($_[0]) && ref ($_[0]) eq 'ARRAY') {
         @codes = @{+shift};
         $string = join ('', @_);
     } else {
@@ -263,6 +284,7 @@ Term::ANSIColor - Color screen output using ANSI escape sequences
 cyan colorize namespace runtime TMTOWTDI cmd.exe 4nt.exe command.com NT
 ESC Delvare SSH OpenSSH aixterm ECMA-048 Fraktur overlining Zenin
 reimplemented Allbery PUSHCOLOR POPCOLOR LOCALCOLOR openmethods.com
+grey ATTR
 
 =head1 SYNOPSIS
 
@@ -273,7 +295,9 @@ reimplemented Allbery PUSHCOLOR POPCOLOR LOCALCOLOR openmethods.com
     print "This text is normal.\n";
     print colored ("Yellow on magenta.", 'yellow on_magenta'), "\n";
     print "This text is normal.\n";
-    print colored ['yellow on_magenta'], 'Yellow on magenta.';
+    print colored ['yellow on_magenta'], 'Yellow on magenta.', "\n";
+    print colored ['red on_bright_yellow'], 'Red on bright yellow.', "\n";
+    print colored ['bright_red on_black'], 'Bright red on black.', "\n";
     print "\n";
 
     use Term::ANSIColor qw(uncolor);
@@ -298,8 +322,8 @@ reimplemented Allbery PUSHCOLOR POPCOLOR LOCALCOLOR openmethods.com
 
     use Term::ANSIColor qw(:pushpop);
     print PUSHCOLOR RED ON_GREEN "This text is red on green.\n";
-    print PUSHCOLOR BLUE "This text is blue on green.\n";
-    print RESET BLUE "This text is just blue.\n";
+    print PUSHCOLOR BRIGHT_BLUE "This text is bright blue on green.\n";
+    print RESET BRIGHT_BLUE "This text is just bright blue.\n";
     print POPCOLOR "Back to red on green.\n";
     print LOCALCOLOR GREEN ON_BLUE "This text is green on blue.\n";
     print "This text is red on green.\n";
@@ -317,46 +341,105 @@ other through constants.  It also offers the utility functions uncolor(),
 colorstrip(), and colorvalid(), which have to be explicitly imported to be
 used (see L</SYNOPSIS>).
 
+=head2 Supported Colors
+
+Terminal emulators that support color divide into two types: ones that
+support only eight colors, and ones that support sixteen.  This module
+provides both the ANSI escape codes for the "normal" colors, supported by
+both types, as well as the additional colors supported by sixteen-color
+emulators.  These colors are referred to as ANSI colors 0 through 7
+(normal) and 8 through 15.
+
+Unfortunately, interpretation of colors 0 through 7 often depends on
+whether the emulator supports eight colors or sixteen colors.  Emulators
+that only support eight colors (such as the Linux console) will display
+colors 0 through 7 with normal brightness and ignore colors 8 through 15,
+treating them the same as white.  Emulators that support 16 colors, such
+as gnome-terminal, normally display colors 0 through 7 as dim or darker
+versions and colors 8 through 15 as normal brightness.  On such emulators,
+the "normal" white (color 7) usually is shown as pale grey, requiring
+bright white (15) to be used to get a real white color.  Bright black
+usually is a dark grey color, although some terminals display it as pure
+black.  Some sixteen-color terminal emulators also treat normal yellow
+(color 3) as orange or brown, and bright yellow (color 11) as yellow.
+
+Following the normal convention of sixteen-color emulators, this module
+provides a pair of attributes for each color.  For every normal color (0
+through 7), the corresponding bright color (8 through 15) is obtained by
+prepending the string C<bright_> to the normal color name.  For example,
+C<red> is color 1 and C<bright_red> is color 9.  The same applies for
+background colors: C<on_red> is the normal color and C<on_bright_red> is
+the bright color.  Capitalize these strings for the constant interface.
+
+There is unfortunately no way to know whether the current emulator
+supports sixteen colors or not, which makes the choice of colors
+difficult.  The most conservative choice is to use only the regular
+colors, which are at least displayed on all emulators.  However, they will
+appear dark in sixteen-color terminal emulators, including most common
+emulators in UNIX X environments.  If you know the display is one of those
+emulators, you may wish to use the bright variants instead.  Even better,
+offer the user a way to configure the colors for a given application to
+fit their terminal emulator.
+
+Support for colors 8 through 15 (the C<bright_> variants) was added in
+Term::ANSIColor 3.0.
+
 =head2 Function Interface
 
-color() takes any number of strings as arguments and considers them to be
-space-separated lists of attributes.  It then forms and returns the escape
-sequence to set those attributes.  It doesn't print it out, just returns
-it, so you'll have to print it yourself if you want to (this is so that
-you can save it as a string, pass it to something else, send it to a file
-handle, or do anything else with it that you might care to).  color()
-throws an exception if given an invalid attribute, so you can also use it
-to check attribute names for validity (see L</EXAMPLES>).
-
-uncolor() performs the opposite translation, turning escape sequences
-into a list of strings.
-
-colorstrip() removes all color escape sequences from the provided strings,
-returning the modified strings separately in array context or joined
-together in scalar context.  Its arguments are not modified.
-
-colorvalid() takes attribute strings the same as color() and returns true
-if all attributes are known and false otherwise.
-
-The recognized non-color attributes are clear, reset, bold, dark, faint,
-underline, underscore, blink, reverse, and concealed.  Clear and reset
-(reset to default attributes), dark and faint (dim and saturated), and
-underline and underscore are equivalent, so use whichever is the most
-intuitive to you.  The recognized foreground color attributes are black,
-red, green, yellow, blue, magenta, cyan, and white.  The recognized
-background color attributes are on_black, on_red, on_green, on_yellow,
-on_blue, on_magenta, on_cyan, and on_white.  Case is not significant.
+The function interface uses attribute strings to describe the colors and
+text attributes to assign to text.  The recognized non-color attributes
+are clear, reset, bold, dark, faint, underline, underscore, blink,
+reverse, and concealed.  Clear and reset (reset to default attributes),
+dark and faint (dim and saturated), and underline and underscore are
+equivalent, so use whichever is the most intuitive to you.
 
 Note that not all attributes are supported by all terminal types, and some
 terminals may not support any of these sequences.  Dark and faint, blink,
 and concealed in particular are frequently not implemented.
 
-Attributes, once set, last until they are unset (by sending the attribute
+The recognized normal foreground color attributes (colors 0 to 7) are:
+
+  black  red  green  yellow  blue  magenta  cyan  white
+
+The corresponding bright foreground color attributes (colors 8 to 15) are:
+
+  bright_black  bright_red      bright_green  bright_yellow
+  bright_blue   bright_magenta  bright_cyan   bright_white
+
+The recognized normal background color attributes (colors 0 to 7) are:
+
+  on_black  on_red      on_green  on yellow
+  on_blue   on_magenta  on_cyan   on_white
+
+The recognized bright background color attributes (colors 8 to 15) are:
+
+  on_bright_black  on_bright_red      on_bright_green  on_bright_yellow
+  on_bright_blue   on_bright_magenta  on_bright_cyan   on_bright_white
+
+For any of the above listed attributes, case is not significant.
+
+Attributes, once set, last until they are unset (by printing the attribute
 C<clear> or C<reset>).  Be careful to do this, or otherwise your attribute
 will last after your script is done running, and people get very annoyed
 at having their prompt and typing changed to weird colors.
 
-As an aid to help with this, colored() takes a scalar as the first
+=over 4
+
+=item color(ATTR[, ATTR ...])
+
+color() takes any number of strings as arguments and considers them to be
+space-separated lists of attributes.  It then forms and returns the escape
+sequence to set those attributes.  It doesn't print it out, just returns
+it, so you'll have to print it yourself if you want to.  This is so that
+you can save it as a string, pass it to something else, send it to a file
+handle, or do anything else with it that you might care to.  color()
+throws an exception if given an invalid attribute.
+
+=item colored(STRING, ATTRIBUTES)
+
+=item colored(ATTR-REF, STRING[, STRING...])
+
+As an aid in resetting colors, colored() takes a scalar as the first
 argument and any number of attribute strings as the second argument and
 returns the scalar wrapped in escape codes so that the attributes will be
 set as requested before the string and reset to normal after the string.
@@ -375,14 +458,46 @@ default background color for the next line.  Programs like pagers can also
 be confused by attributes that span lines.  Normally you'll want to set
 $Term::ANSIColor::EACHLINE to C<"\n"> to use this feature.
 
+=item uncolor(ESCAPE)
+
+uncolor() performs the opposite translation as color(), turning escape
+sequences into a list of strings corresponding to the attributes being set
+by those sequences.
+
+=item colorstrip(STRING[, STRING ...])
+
+colorstrip() removes all color escape sequences from the provided strings,
+returning the modified strings separately in array context or joined
+together in scalar context.  Its arguments are not modified.
+
+=item colorvalid(ATTR[, ATTR ...])
+
+colorvalid() takes attribute strings the same as color() and returns true
+if all attributes are known and false otherwise.
+
+=back
+
 =head2 Constant Interface
 
-Alternately, if you import C<:constants>, you can use the constants CLEAR,
-RESET, BOLD, DARK, FAINT, UNDERLINE, UNDERSCORE, BLINK, REVERSE,
-CONCEALED, BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE,
-ON_BLACK, ON_RED, ON_GREEN, ON_YELLOW, ON_BLUE, ON_MAGENTA, ON_CYAN, and
-ON_WHITE directly.  These are the same as color('attribute') and can be
-used if you prefer typing:
+Alternately, if you import C<:constants>, you can use the following
+constants directly:
+
+  CLEAR           RESET             BOLD            DARK
+  FAINT           UNDERLINE         UNDERSCORE      BLINK
+  REVERSE         CONCEALED
+
+  BLACK           RED               GREEN           YELLOW
+  BLUE            MAGENTA           CYAN            WHITE
+  BRIGHT_BLACK    BRIGHT_RED        BRIGHT_GREEN    BRIGHT_YELLOW
+  BRIGHT_BLUE     BRIGHT_MAGENTA    BRIGHT_CYAN     BRIGHT_WHITE
+
+  ON_BLACK        ON_RED            ON_GREEN        ON_YELLOW
+  ON_BLUE         ON_MAGENTA        ON_CYAN         ON_WHITE
+  ON_BRIGHT_BLACK ON_BRIGHT_RED     ON_BRIGHT_GREEN ON_BRIGHT_YELLOW
+  ON_BRIGHT_BLUE  ON_BRIGHT_MAGENTA ON_BRIGHT_CYAN  ON_BRIGHT_WHITE
+
+These are the same as color('attribute') and can be used if you prefer
+typing:
 
     print BOLD BLUE ON_WHITE "Text", RESET, "\n";
 
@@ -411,7 +526,7 @@ terminal.
 
 The subroutine interface has the advantage over the constants interface in
 that only two subroutines are exported into your namespace, versus
-twenty-two in the constants interface.  On the flip side, the constants
+thirty-eight in the constants interface.  On the flip side, the constants
 interface has the advantage of better compile time error checking, since
 misspelled names of colors or attributes in calls to color() and colored()
 won't be caught until runtime whereas misspelled names of constants will
@@ -529,6 +644,16 @@ For easier debugging, you may prefer to always use the commas when not
 setting $Term::ANSIColor::AUTORESET or PUSHCOLOR/POPCOLOR so that you'll
 get a fatal compile error rather than a warning.
 
+It's not possible to use this module to embed formatting and color
+attributes using Perl formats.  They replace the escape character with a
+space (as documented in L<perlform(1)>), resulting in garbled output from
+the unrecognized attribute.  Even if there were a way around that problem,
+the format doesn't know that the non-printing escape sequence is
+zero-length and would incorrectly format the output.  For formatted output
+using color or other attributes, either use sprintf() instead or use
+formline() and then add the color or other attributes after formatting and
+before output.
+
 =head1 NOTES
 
 The codes generated by this module are standard terminal control codes,
@@ -580,7 +705,7 @@ currently supported by this module.
 =head1 SEE ALSO
 
 ECMA-048 is available on-line (at least at the time of this writing) at
-L<http://www.ecma-international.org/publications/standards/ECMA-048.HTM>.
+L<http://www.ecma-international.org/publications/standards/Ecma-048.htm>.
 
 ISO 6429 is available from ISO for a charge; the author of this module
 does not own a copy of it.  Since the source material for ISO 6429 was
@@ -599,9 +724,10 @@ Russ with input from Zenin.  Russ Allbery now maintains this module.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2008, 2009 Russ
-Allbery <rra@stanford.edu> and Zenin.  This program is free software; you
-may redistribute it and/or modify it under the same terms as Perl itself.
+Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2008, 2009, 2010,
+2011 Russ Allbery <rra@stanford.edu> and Zenin.  This program is free
+software; you may redistribute it and/or modify it under the same terms as
+Perl itself.
 
 PUSHCOLOR, POPCOLOR, and LOCALCOLOR were contributed by openmethods.com
 voice solutions.

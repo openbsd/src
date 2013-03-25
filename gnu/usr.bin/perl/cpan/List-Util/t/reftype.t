@@ -13,7 +13,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 29;
+use Test::More tests => 32;
 
 use Scalar::Util qw(reftype);
 use vars qw($t $y $x *F);
@@ -23,12 +23,16 @@ use Symbol qw(gensym);
 tie *F, 'MyTie';
 my $RE = $] < 5.011 ? 'SCALAR' : 'REGEXP';
 
+my $s = []; # SvTYPE($s) is SVt_RV, and SvROK($s) is true
+$s = undef; # SvTYPE($s) is SVt_RV, but SvROK($s) is false
+
 @test = (
  [ undef, 1,		'number'	],
  [ undef, 'A',		'string'	],
  [ HASH   => {},	'HASH ref'	],
  [ ARRAY  => [],	'ARRAY ref'	],
  [ SCALAR => \$t,	'SCALAR ref'	],
+ [ SCALAR => \$s,	'SCALAR ref (but SVt_RV)' ],
  [ REF    => \(\$t),	'REF ref'	],
  [ GLOB   => \*F,	'tied GLOB ref'	],
  [ GLOB   => gensym,	'GLOB ref'	],

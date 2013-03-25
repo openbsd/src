@@ -1,3 +1,10 @@
+2.18
+    - Backport from bleadperl before 5.16.0 release
+    - base no longer sets a module's $VERSION to "-1" when a module it
+      loads does not define a $VERSION.
+    - base no longer internally skips loading modules it has already
+      loaded and instead relies on require to inspect %INC.
+
 2.15
     - Bump version to 2.15 so base and fields have the same version again
 
@@ -45,12 +52,12 @@
 
 2.03 Sun Sep 14 20:01:48 PDT 2003
     * phashes produced via fields::new() will now not warn when used for
-      forward compatiblity purposes
+      forward compatibility purposes
     - Reformatting the docs to make them a bit more readable
     - Making it clear that fields::new() is usable with or without
       pseudohashes
-    * Fixing inheritence from classes which have only private fields
-    * Fixing inheritence when an intermediate class has no fields.
+    * Fixing inheritance from classes which have only private fields
+    * Fixing inheritance when an intermediate class has no fields.
       [perlbug 20020326.004]
     - Removing uses of 'our' from tests for backwards compat.
 
@@ -62,4 +69,4 @@
     - Forgot to set the INSTALLDIRS to 'perl'
 
 2.0  Wed Aug 27 21:47:51 PDT 2003
-    * Seperated from Class::Fields
+    * Separated from Class::Fields

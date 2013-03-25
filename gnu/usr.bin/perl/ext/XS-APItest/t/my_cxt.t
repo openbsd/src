@@ -1,18 +1,11 @@
 #!perl -w
 
-# test per-interpeter static data API (MY_CXT)
+# test per-interpreter static data API (MY_CXT)
 # DAPM Dec 2005
 
 my $threads;
 BEGIN {
-    push @INC, "::lib:$MacPerl::Architecture:" if $^O eq 'MacOS';
     require Config; import Config;
-    if ($Config{'extensions'} !~ /\bXS\/APItest\b/) {
-	# Look, I'm using this fully-qualified variable more than once!
-	my $arch = $MacPerl::Architecture;
-        print "1..0 # Skip: XS::APItest was not built\n";
-        exit 0;
-    }
     $threads = $Config{'useithreads'};
     # must 'use threads' before 'use Test::More'
     eval 'use threads' if $threads;

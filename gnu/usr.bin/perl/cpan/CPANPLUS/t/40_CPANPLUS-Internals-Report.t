@@ -1,6 +1,6 @@
 ### make sure we can find our conf.pl file
-BEGIN { 
-    use FindBin; 
+BEGIN {
+    use FindBin;
     require "$FindBin::Bin/inc/conf.pl";
 }
 
@@ -25,7 +25,7 @@ my $CB          = CPANPLUS::Backend->new( $conf );
 my $ModName     = TEST_CONF_MODULE;
 my $ModPrereq   = TEST_CONF_PREREQ;
 
-### pick a high number, but not ~0 as possibly ~0 is unsigned, and we cause 
+### pick a high number, but not ~0 as possibly ~0 is unsigned, and we cause
 ### an overflow, as happens to version.pm 0.7203 among others.
 ### ANOTHER bug in version.pm, this time for 64bit:
 ### https://rt.cpan.org/Ticket/Display.html?id=45241
@@ -53,7 +53,7 @@ my $map = {
         check   => 0,
         skiptests
                 => 1,               # did we skip the tests?
-    },                    
+    },
     missing_prereq  => {
         buffer  => missing_prereq_buffer(),
         failed  => 1,
@@ -87,7 +87,7 @@ my $map = {
                     '/NA/',
                 ],
         check   => 0,
-    },    
+    },
     perl_version_too_low_build1 => {
         buffer  => perl_version_too_low_buffer_build(1),
         failed  => 1,
@@ -96,7 +96,7 @@ my $map = {
                     '/NA/',
                 ],
         check   => 0,
-    },    
+    },
     perl_version_too_low_build2 => {
         buffer  => perl_version_too_low_buffer_build(2),
         failed  => 1,
@@ -105,7 +105,7 @@ my $map = {
                     '/NA/',
                 ],
         check   => 0,
-    },    
+    },
     prereq_versions_too_low => {
         ### set the prereq version incredibly high
         pre_hook    => sub {
@@ -119,14 +119,14 @@ my $map = {
                         '/http://testers.cpan.org/',
                         '/NA/',
                     ],
-        check       => 0,    
+        check       => 0,
     },
     prereq_not_on_cpan => {
         pre_hook    => sub {
                         my $mod     = shift;
                         my $clone   = $mod->clone;
-                        $clone->status->prereqs( 
-                            { TEST_CONF_INVALID_MODULE, 0 } 
+                        $clone->status->prereqs(
+                            { TEST_CONF_INVALID_MODULE, 0 }
                         );
                         return $clone;
                     },
@@ -135,14 +135,14 @@ my $map = {
                         '/http://testers.cpan.org/',
                         '/NA/',
                     ],
-        check       => 0,    
+        check       => 0,
     },
     prereq_not_on_cpan_but_core => {
         pre_hook    => sub {
                         my $mod     = shift;
                         my $clone   = $mod->clone;
-                        $clone->status->prereqs( 
-                            { TEST_CONF_PREREQ, 0 } 
+                        $clone->status->prereqs(
+                            { TEST_CONF_PREREQ, 0 }
                         );
                         return $clone;
                     },
@@ -151,11 +151,11 @@ my $map = {
                         '/http://testers.cpan.org/',
                         '/UNKNOWN/',
                     ],
-        check       => 0,    
+        check       => 0,
     },
 };
 
-### test config settings 
+### test config settings
 {   for my $opt ( qw[cpantest cpantest_mx] ) {
         my $warnings;
         local $SIG{__WARN__} = sub { $warnings .= "@_" };
@@ -167,7 +167,7 @@ my $map = {
                                 "   Retrieved properly" );
         ok( $conf->set_conf( $opt => $org ),
                                 "   Option $opt set back to original" );
-        ok( !$warnings,         "   No warnings" );                                
+        ok( !$warnings,         "   No warnings" );
     }
 }
 
@@ -180,7 +180,7 @@ my $map = {
 
         ### test non-relevant tests ###
         my $cp = $Mod->clone;
-        $cp->module( $Mod->module . '::' . ($^O eq 'beos' ? 'MSDOS' : 'Be') );
+        $cp->module( ($^O eq 'beos' ? 'MSDOS' : 'Be') . '::' . $cp->module );
         ok(!RELEVANT_TEST_RESULT->($cp),"Test is irrelevant");
     }
 
@@ -219,15 +219,15 @@ my $map = {
                                         "Proper test fail stage found" );
     }
 
-    ### test missing prereqs        
+    ### test missing prereqs
     {   my $str = q[Can't locate Foo/Bar.pm in @INC];
-    
+
         ### standard test
         {   my @list = MISSING_PREREQS_LIST->( $str );
             is( scalar(@list),  1,      "   List of missing prereqs found" );
             is( $list[0], 'Foo::Bar',   "       Proper prereq found" );
         }
-    
+
         ### multiple mentions of same prereq
         {   my @list = MISSING_PREREQS_LIST->( $str . $str );
 
@@ -256,14 +256,14 @@ my $map = {
 
     {   my $prereqs = REPORT_MISSING_PREREQS->('foo','bar@example.com','Foo::Bar');
         ok( $prereqs,                   "Test output generated" );
-        like( $prereqs, qr/'foo \(bar\@example\.com\)'/, 
+        like( $prereqs, qr/'foo \(bar\@example\.com\)'/,
                                         "   Proper content found" );
         like( $prereqs, qr/Foo::Bar/,   "   Proper content found" );
         like( $prereqs, qr/prerequisi/, "   Proper content found" );
         like( $prereqs, qr/PREREQ_PM/,  "   Proper content found" );
     }
 
-    {   my $prereqs = REPORT_MISSING_PREREQS->(undef,undef,'Foo::Bar');    
+    {   my $prereqs = REPORT_MISSING_PREREQS->(undef,undef,'Foo::Bar');
         ok( $prereqs,                   "Test output generated" );
         like( $prereqs, qr/Your Name/,  "   Proper content found" );
         like( $prereqs, qr/Foo::Bar/,   "   Proper content found" );
@@ -291,15 +291,15 @@ my $map = {
         my @list = qw(foo bar);
         is_deeply( \@libs, \@list,      "   Proper content found" );
     }
-    
+
     {   my $clone   = $Mod->clone;
 
         my $prereqs = { $ModPrereq => $HighVersion };
-    
+
         $clone->status->prereqs( $prereqs );
 
         my $str = REPORT_LOADED_PREREQS->( $clone );
-        
+
         like($str, qr/PREREQUISITES:/,  "Listed loaded prerequisites" );
         like($str, qr/\! $ModPrereq\s+\S+\s+\S+/,
                                         "   Proper content found" );
@@ -308,7 +308,7 @@ my $map = {
     {   my $clone   = $Mod->clone;
 
         my $str = REPORT_TOOLCHAIN_VERSIONS->( $clone );
-        
+
         like($str, qr/toolchain/,  "Correct message in report" );
         use Cwd;
         like($str, qr/Cwd\s+\Q$Cwd::VERSION\E/,
@@ -317,10 +317,10 @@ my $map = {
 }
 
 ### callback tests
-{   ### as reported in bug 13086, this callback returned the wrong item 
+{   ### as reported in bug 13086, this callback returned the wrong item
     ### from the list:
-    ### $self->_callbacks->munge_test_report->($Mod, $message, $grade);     
-    my $rv = $CB->_callbacks->munge_test_report->( 1..4 );   
+    ### $self->_callbacks->munge_test_report->($Mod, $message, $grade);
+    my $rv = $CB->_callbacks->munge_test_report->( 1..4 );
     is( $rv, 2,                 "Default 'munge_test_report' callback OK" );
 }
 
@@ -334,14 +334,14 @@ SKIP: {
         unless $CB->_have_query_report_modules(verbose => 0);
 
 
-    SKIP: {   
+    SKIP: {
         my $mod = $CB->module_tree( TEST_CONF_PREREQ ); # is released to CPAN
         ok( $mod,                           "Module retrieved" );
-        
+
         ### so we're not pinned down to this specific version of perl
         my @list = $mod->fetch_report( all_versions => 1 );
         skip "Possibly no net connection, or server down", 7 unless @list;
-     
+
         my $href = $list[0];
         ok( scalar(@list),                  "Fetched test report" );
         is( ref $href, ref {},              "   Return value has hashrefs" );
@@ -389,7 +389,7 @@ SKIP: {
                     : $Mod;
 
         my $file = do {
-            ### so T::R does not try to resolve our maildomain, which can 
+            ### so T::R does not try to resolve our maildomain, which can
             ### lead to large timeouts for *every* invocation in T::R < 1.51_01
             ### see: http://code.google.com/p/test-reporter/issues/detail?id=15
             local $ENV{MAILDOMAIN} ||= 'example.com';
@@ -477,7 +477,7 @@ BEGIN failed--compilation aborted at Makefile.PL line 1.
 BEGIN failed--compilation aborted at Makefile.PL line 1.
  -- cannot continue
     ];
-}    
+}
 
 sub perl_version_too_low_buffer_build {
     my $type = shift;
@@ -493,7 +493,7 @@ ERROR: version: Prerequisite version isn't installed
 ERRORS/WARNINGS FOUND IN PREREQUISITES.  You may wish to install the versions
  of the modules indicated above before proceeding with this installation.
     ]   if($type == 2);
-}    
+}
 
 # Local variables:
 # c-indentation-style: bsd

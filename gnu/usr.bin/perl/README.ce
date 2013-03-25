@@ -20,38 +20,38 @@ software is distributed.
 
 =item *
 
-C<miniperl> is built. This is a single executable (without DLL), intended
+F<miniperl> is built. This is a single executable (without DLL), intended
 to run on Win32, and it will facilitate remaining build process; all binaries
 built after it are foreign and should not run locally.
 
-C<miniperl> is built using C<./win32/Makefile>; this is part of normal
+F<miniperl> is built using F<./win32/Makefile>; this is part of normal
 build process invoked as dependency from wince/Makefile.ce
 
 =item *
 
-After C<miniperl> is built, C<configpm> is invoked to create right C<Config.pm>
+After F<miniperl> is built, F<configpm> is invoked to create right F<Config.pm>
 in right place and its corresponding Cross.pm.
 
-Unlike Win32 build, miniperl will not have C<Config.pm> of host within reach;
-it rather will use C<Config.pm> from within cross-compilation directories.
+Unlike Win32 build, miniperl will not have F<Config.pm> of host within reach;
+it rather will use F<Config.pm> from within cross-compilation directories.
 
-File C<Cross.pm> is dead simple: for given cross-architecture places in @INC
-a path where perl modules are, and right C<Config.pm> in that place.
+File F<Cross.pm> is dead simple: for given cross-architecture places in @INC
+a path where perl modules are, and right F<Config.pm> in that place.
 
 That said, C<miniperl -Ilib -MConfig -we 1> should report an error, because
-it can not find C<Config.pm>. If it does not give an error -- wrong C<Config.pm>
+it can not find F<Config.pm>. If it does not give an error -- wrong F<Config.pm>
 is substituted, and resulting binaries will be a mess.
 
 C<miniperl -MCross -MConfig -we 1> should run okay, and it will provide right
-C<Config.pm> for further compilations.
+F<Config.pm> for further compilations.
 
 =item *
 
-During extensions build phase, a script C<./win32/buldext.pl> is invoked,
-which in turn steps in C<./ext> subdirectories and performs a build of
+During extensions build phase, a script F<./win32/buldext.pl> is invoked,
+which in turn steps in F<./ext> subdirectories and performs a build of
 each extension in turn.
 
-All invokes of C<Makefile.PL> are provided with C<-MCross> so to enable cross-
+All invokes of F<Makefile.PL> are provided with C<-MCross> so to enable cross-
 compile.
 
 =back
@@ -79,14 +79,14 @@ For compiling, you need following:
 =back
 
 Needed source files can be downloaded at
-L<http://www.rainer-keuchel.de/wince/dirlist.html>
+L<http://perlce.sourceforge.net>
 
 =head3 Make
 
-Normally you only need to edit C<./win32/ce-helpers/compile.bat>
+Normally you only need to edit F<./win32/ce-helpers/compile.bat>
 to reflect your system and run it.
 
-File C<./win32/ce-helpers/compile.bat> is actually a wrapper to call
+File F<./win32/ce-helpers/compile.bat> is actually a wrapper to call
 C<nmake -f makefile.ce> with appropriate parameters and it accepts extra
 parameters and forwards them to C<nmake> command as additional
 arguments. You should pass target this way.
@@ -95,9 +95,9 @@ To prepare distribution you need to do following:
 
 =over 4
 
-=item * go to C<./win32> subdirectory
+=item * go to F<./win32> subdirectory
 
-=item * edit file C<./win32/ce-helpers/compile.bat>
+=item * edit file F<./win32/ce-helpers/compile.bat>
 
 =item * run 
   compile.bat
@@ -107,7 +107,7 @@ To prepare distribution you need to do following:
 
 =back
 
-C<Makefile.ce> has C<CROSS_NAME> macro, and it is used further to refer to
+F<Makefile.ce> has C<CROSS_NAME> macro, and it is used further to refer to
 your cross-compilation scheme. You could assign a name to it, but this
 is not necessary, because by default it is assigned after your machine
 configuration name, such as "wince-sh3-hpc-wce211", and this is enough
@@ -115,7 +115,7 @@ to distinguish different builds at the same time. This option could be
 handy for several different builds on same platform to perform, say,
 threaded build. In a following example we assume that all required
 environment variables are set properly for C cross-compiler (a special
-*.bat file could fit perfectly to this purpose) and your C<compile.bat>
+*.bat file could fit perfectly to this purpose) and your F<compile.bat>
 has proper "MACHINE" parameter set, to, say, C<wince-mips-pocket-wce300>.
 
   compile.bat
@@ -130,10 +130,10 @@ Target C<dist> prepares distribution file set. Target C<zipdist> performs
 same as C<dist> but additionally compresses distribution files into zip
 archive.
 
-NOTE: during a build there could be created a number (or one) of C<Config.pm>
-for cross-compilation ("foreign" C<Config.pm>) and those are hidden inside
-C<../xlib/$(CROSS_NAME)> with other auxilary files, but, and this is important to
-note, there should be B<no> C<Config.pm> for host miniperl.
+NOTE: during a build there could be created a number (or one) of F<Config.pm>
+for cross-compilation ("foreign" F<Config.pm>) and those are hidden inside
+F<../xlib/$(CROSS_NAME)> with other auxiliary files, but, and this is important to
+note, there should be B<no> F<Config.pm> for host miniperl.
 If you'll get an error that perl could not find Config.pm somewhere in building
 process this means something went wrong. Most probably you forgot to
 specify a cross-compilation when invoking miniperl.exe to Makefile.PL
@@ -158,16 +158,16 @@ F<perlce-user@lists.sourceforge.net> mailing list.
 PerlCE is currently linked with a simple console window, so it also
 works on non-hpc devices.
 
-The simple stdio implementation creates the files C<stdin.txt>,
-C<stdout.txt> and C<stderr.txt>, so you might examine them if your
-console has only a liminted number of cols.
+The simple stdio implementation creates the files F<stdin.txt>,
+F<stdout.txt> and F<stderr.txt>, so you might examine them if your
+console has only a limited number of cols.
 
 When exitcode is non-zero, a message box appears, otherwise the
 console closes, so you might have to catch an exit with
 status 0 in your program to see any output.
 
-stdout/stderr now go into the files C</perl-stdout.txt> and
-C</perl-stderr.txt.>
+stdout/stderr now go into the files F</perl-stdout.txt> and
+F</perl-stderr.txt.>
 
 PerlIDE is handy to deal with perlce.
 
@@ -196,7 +196,7 @@ Semi-list for executables.
 
 =item UNIXROOTPATH
 
-- Root for accessing some special files, i.e. C</dev/null>, C</etc/services>.
+- Root for accessing some special files, i.e. F</dev/null>, F</etc/services>.
 
 =item ROWS/COLS
 
@@ -218,7 +218,7 @@ or via the PerlIDE.
 =head2 REGISTRY
 
 To start perl by clicking on a perl source file, you have
-to make the according entries in HKCR (see C<ce-helpers/wince-reg.bat>).
+to make the according entries in HKCR (see F<ce-helpers/wince-reg.bat>).
 cereg.exe (which must be executed on a desktop pc with
 ActiveSync) is reported not to work on some devices.
 You have to create the registry entries by hand using a 
@@ -271,21 +271,21 @@ The port for Win32 was used as a reference.
 =item 5.6.0
 
 Initial port of perl to WinCE. It was performed in separate directory
-named C<wince>. This port was based on contents of C<./win32> directory.
-C<miniperl> was not built, user must have HOST perl and properly edit 
-C<makefile.ce> to reflect this.
+named F<wince>. This port was based on contents of F<./win32> directory.
+F<miniperl> was not built, user must have HOST perl and properly edit
+F<makefile.ce> to reflect this.
 
 =item 5.8.0
 
-wince port was kept in the same C<./wince> directory, and C<wince/Makefile.ce>
+wince port was kept in the same F<./wince> directory, and F<wince/Makefile.ce>
 was used to invoke native compiler to create HOST miniperl, which then
 facilitates cross-compiling process.
 Extension building support was added.
 
 =item 5.9.4
 
-Two directories C<./win32> and C<./wince> were merged, so perlce build
-process comes in C<./win32> directory.
+Two directories F<./win32> and F<./wince> were merged, so perlce build
+process comes in F<./win32> directory.
 
 =back
 

@@ -33,7 +33,7 @@ no warnings 'qw';
 
 # Technically the outputted code varies from the classical Fatal.
 # However the changes are mostly whitespace.  Those that aren't are
-# improvements to error messages.
+# improvements to error messages or bug fixes.
 
 my @write_invocation_calls = (
     [
@@ -43,9 +43,9 @@ my @write_invocation_calls = (
                                                 [ 3, qw($_[0] $_[1] @_[2..$#_])]
         ],
         q{	if (@_ == 1) {
-return CORE::open($_[0]) || croak "Can't open(@_): $!"	} elsif (@_ == 2) {
-return CORE::open($_[0], $_[1]) || croak "Can't open(@_): $!"	} elsif (@_ == 3) {
-return CORE::open($_[0], $_[1], @_[2..$#_]) || croak "Can't open(@_): $!"
+return CORE::open($_[0]) || Carp::croak("Can't open(@_): $!")	} elsif (@_ == 2) {
+return CORE::open($_[0], $_[1]) || Carp::croak("Can't open(@_): $!")	} elsif (@_ >= 3) {
+return CORE::open($_[0], $_[1], @_[2..$#_]) || Carp::croak("Can't open(@_): $!")
             }
             die "Internal error: open(@_): Do not expect to get ", scalar(@_), " arguments";
     }
@@ -62,12 +62,12 @@ my @one_invocation_calls = (
         # Core  # Call          # Name  # Void   # Args
     [
         [ 1,    'CORE::open',   'open', 0,      qw($_[0] $_[1] @_[2..$#_]) ],
-        q{return CORE::open($_[0], $_[1], @_[2..$#_]) || croak "Can't open(@_): $!"},
+        q{return CORE::open($_[0], $_[1], @_[2..$#_]) || Carp::croak("Can't open(@_): $!")},
     ],
     [
         [ 1,    'CORE::open',   'open', 1,      qw($_[0] $_[1] @_[2..$#_]) ],
         q{return (defined wantarray)?CORE::open($_[0], $_[1], @_[2..$#_]):
-                   CORE::open($_[0], $_[1], @_[2..$#_]) || croak "Can't open(@_): $!"},
+                   CORE::open($_[0], $_[1], @_[2..$#_]) || Carp::croak("Can't open(@_): $!")},
     ],
 );
 

@@ -11,7 +11,7 @@ BEGIN {
 
 BEGIN { require "./test.pl"; }
 
-plan(tests => 71);
+plan(tests => 112);
 
 use Config;
 
@@ -22,7 +22,7 @@ $TODO = "runperl() unable to emulate echo -n due to pipe bug" if $^O eq 'VMS';
 
 my $r;
 my @tmpfiles = ();
-END { unlink @tmpfiles }
+END { unlink_all @tmpfiles }
 
 # Tests for -0
 
@@ -200,31 +200,35 @@ SWTESTPM
 	  '', "-MFoo::Bar allowed" );
 
     like( runperl( switches => [ "-M:$package" ], stderr => 1,
-		   prog => 'die "oops"' ),
+		   prog => 'die q{oops}' ),
 	  qr/Invalid module name [\w:]+ with -M option\b/,
           "-M:Foo not allowed" );
 
     like( runperl( switches => [ '-mA:B:C' ], stderr => 1,
-		   prog => 'die "oops"' ),
+		   prog => 'die q{oops}' ),
 	  qr/Invalid module name [\w:]+ with -m option\b/,
           "-mFoo:Bar not allowed" );
 
     like( runperl( switches => [ '-m-A:B:C' ], stderr => 1,
-		   prog => 'die "oops"' ),
+		   prog => 'die q{oops}' ),
 	  qr/Invalid module name [\w:]+ with -m option\b/,
           "-m-Foo:Bar not allowed" );
 
     like( runperl( switches => [ '-m-' ], stderr => 1,
-		   prog => 'die "oops"' ),
+		   prog => 'die q{oops}' ),
 	  qr/Module name required with -m option\b/,
   	  "-m- not allowed" );
 
     like( runperl( switches => [ '-M-=' ], stderr => 1,
-		   prog => 'die "oops"' ),
+		   prog => 'die q{oops}' ),
 	  qr/Module name required with -M option\b/,
   	  "-M- not allowed" );
   }  # disable TODO on VMS
 }
+is runperl(stderr => 1, prog => '#!perl -m'),
+   qq 'Too late for "-m" option at -e line 1.\n', '#!perl -m';
+is runperl(stderr => 1, prog => '#!perl -M'),
+   qq 'Too late for "-M" option at -e line 1.\n', '#!perl -M';
 
 # Tests for -V
 
@@ -293,10 +297,24 @@ foreach my $switch (split //, "ABbGgHJjKkLNOoPQqRrYyZz123456789_")
     local $TODO = '';   # these ones should work on VMS
 
     like( runperl( switches => ["-$switch"], stderr => 1,
-		   prog => 'die "oops"' ),
+		   prog => 'die q{oops}' ),
 	  qr/\QUnrecognized switch: -$switch  (-h will show valid options)./,
           "-$switch correctly unknown" );
 
+    # [perl #104288]
+    like( runperl( stderr => 1, prog => "#!perl -$switch" ),
+	  qr/^Unrecognized switch: -$switch  \(-h will show valid (?x:
+	     )options\) at -e line 1\./,
+          "-$switch unrecognised on #! line" );
+}
+
+# Tests for unshebangable switches
+for (qw( e f x E S V )) {
+    $r = runperl(
+	stderr   => 1,
+	prog     => "#!perl -$_",
+    );
+    is $r, "Can't emulate -$_ on #! line at -e line 1.\n","-$_ on #! line";
 }
 
 # Tests for -i
@@ -304,7 +322,7 @@ foreach my $switch (split //, "ABbGgHJjKkLNOoPQqRrYyZz123456789_")
 {
     local $TODO = '';   # these ones should work on VMS
 
-    sub do_i_unlink { 1 while unlink("file", "file.bak") }
+    sub do_i_unlink { unlink_all("file", "file.bak") }
 
     open(FILE, ">file") or die "$0: Failed to create 'file': $!";
     print FILE <<__EOF__;

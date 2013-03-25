@@ -42,8 +42,8 @@ distinction between code point and character is blurred, so the terms often
 are used interchangeably.)
 
 There are many, many code points, but computers work with bytes, and a byte has
-room for only 256 values.  Unicode has many more characters, so you need a
-method to make these accessible.
+room for only 256 values.  Unicode has many more characters than that,
+so you need a method to make these accessible.
 
 Unicode is encoded using several competing encodings, of which UTF-8 is the
 most used. In a Unicode encoding, multiple subsequent bytes can be used to

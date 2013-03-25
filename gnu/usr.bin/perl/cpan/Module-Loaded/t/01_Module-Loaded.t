@@ -10,12 +10,12 @@ my $Strict  = $ENV{'PERL_CORE'} ? 'less' : 'strict';
 ### load the thing
 {   use_ok( $Class );
     can_ok( $Class, @Funcs );
-}    
+}
 
 {   ok( !is_loaded($Mod),       "$Mod not loaded yet" );
     ok( mark_as_loaded($Mod),   "   $Mod now marked as loaded" );
     is( is_loaded($Mod), $0,    "   $Mod is loaded from $0" );
-    
+
     my $rv = eval "require $Mod; 1";
     ok( $rv,                    "$Mod required" );
     ok( !$@,                    "   require did not die" );
@@ -42,7 +42,7 @@ my $Strict  = $ENV{'PERL_CORE'} ? 'less' : 'strict';
         my $rv = eval "require $Strict; 1";
         ok( $rv,                "$Strict loaded again" );
     }
-    
-    is( is_loaded( $Strict ), $where, 
+
+    is( is_loaded( $Strict ), $where,
                                 "   $Strict is loaded" );
 }

@@ -199,9 +199,9 @@ See the documentation for C<ExtUtils::MakeMaker> or C<Module::Build> for
 more on how to specify C<configure_requires> when creating a distribution
 for CPAN.
 
-=head2 C<each> is now more flexible
+=head2 C<each>, C<keys>, C<values> are now more flexible
 
-The C<each> function can now operate on arrays.
+The C<each>, C<keys>, C<values> function can now operate on arrays.
 
 =head2 C<when> as a statement modifier
 
@@ -287,7 +287,7 @@ those installed in C<ARCHLIB> and C<PRIVLIB>.
 
 =head2 REGEXPs are now first class
 
-Internally, Perl now treates compiled regular expressions (such as
+Internally, Perl now treats compiled regular expressions (such as
 those created with C<qr//>) as first class entities. Perl modules which
 serialize, deserialize or otherwise have deep interaction with Perl's
 internal data structures need to be updated for this change.  Most
@@ -456,7 +456,6 @@ have been removed from this distribution.
 
 C<Module::CoreList> no longer contains the C<%:patchlevel> hash.
 
-
 =item *
 
 C<length undef> now returns undef.
@@ -497,7 +496,8 @@ longer be used as an attribute.
 =item *
 
 Perl's command-line switch "-P", which was deprecated in version 5.10.0, has
-now been removed.
+now been removed. The CPAN module C<< Filter::cpp >> can be used as an 
+alternative.
 
 =back
 
@@ -527,7 +527,6 @@ The following items are now deprecated:
 
 C<suidperl> is no longer part of Perl. It used to provide a mechanism to
 emulate setuid permission bits on systems that don't support it properly.
-
 
 =item Use of C<:=> to mean an empty attribute list
 
@@ -560,7 +559,6 @@ The method C<< UNIVERSAL->import() >> is now deprecated. Attempting to
 pass import arguments to a C<use UNIVERSAL> statement will result in a
 deprecation warning.
 
-
 =item Use of "goto" to jump into a construct
 
 Using C<goto> to jump from an outer scope into an inner scope is now
@@ -588,7 +586,7 @@ on CPAN which require these should add them to their prerequisites. The
 core versions of these modules warnings will issue a deprecation warning.
 
 If you ship a packaged version of Perl, either alone or as part of a
-larger system, then you should carefully consider the reprecussions of
+larger system, then you should carefully consider the repercussions of
 core module deprecations. You may want to consider shipping your default
 build of Perl with packages for some or all deprecated modules which
 install into C<vendor> or C<site> perl library directories. This will
@@ -1432,7 +1430,6 @@ the beginnings of a document on Perl porting policies.
 
 =over
 
-
 =item *
 
 The various large F<Changes*> files (which listed every change made
@@ -1446,14 +1443,12 @@ F<Porting/patching.pod> has been deleted, as it mainly described
 interacting with the old Perforce-based repository, which is now obsolete.
 Information still relevant has been moved to L<perlrepository>.
 
-
 =item *
 
 The syntax C<unless (EXPR) BLOCK else BLOCK> is now documented as valid,
 as is the syntax C<unless (EXPR) BLOCK elsif (EXPR) BLOCK ... else
 BLOCK>, although actually using the latter may not be the best idea for
 the readability of your source code.
-
 
 =item *
 
@@ -1514,7 +1509,7 @@ The documentation for C<$1> in perlvar.pod has been clarified.
 
 =item *
 
-C<\N{U+I<wide hex char>}> is now documented.
+C<\N{U+I<code point>}> is now documented.
 
 =back
 
@@ -1665,8 +1660,8 @@ C<\N{...}> now compiles better, always forces UTF-8 internal representation
 
 Perl's developers have fixed several problems with the recognition of
 C<\N{...}> constructs.  As part of this, perl will store any scalar
-or regex containing C<\N{I<name>}> or C<\N{U+I<wide hex char>}> in its
-definition in UTF-8 format. (This was true previously for all occurences
+or regex containing C<\N{I<name>}> or C<\N{U+I<code point>}> in its
+definition in UTF-8 format. (This was true previously for all occurrences
 of C<\N{I<name>}> that did not use a custom translator, but now it's
 always true.)
 
@@ -2104,7 +2099,6 @@ This new fatal error occurs when the C routine C<Perl_sv_chop()> was
 passed a position that is not within the scalar's string buffer. This
 could be caused by buggy XS code, and at this point recovery is not
 possible.
-
 
 =item *
 
@@ -3175,7 +3169,8 @@ analyzed by the Perl porting team.
 If the bug you are reporting has security implications, which make it
 inappropriate to send to a publicly archived mailing list, then please send
 it to perl5-security-report@perl.org. This points to a closed subscription
-unarchived mailing list, which includes all the core committers, who be able
+unarchived mailing list, which includes
+all the core committers, who will be able
 to help assess the impact of issues, figure out a resolution, and help
 co-ordinate the release of patches to mitigate or fix the problem across all
 platforms on which Perl is supported. Please only use this address for

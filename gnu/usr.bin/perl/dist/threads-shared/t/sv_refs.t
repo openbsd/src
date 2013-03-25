@@ -51,7 +51,7 @@ ok(5, $$foo eq "yeah", "Check that assignment works");
 $$foo = "yeah2";
 ok(6, $$foo eq "yeah2", "Check that deref assignment works");
 threads->create(sub {$bar = "yeah3"})->join();
-ok(7, $$foo eq "yeah3", "Check that other thread assignemtn works");
+ok(7, $$foo eq "yeah3", "Check that other thread assignment works");
 threads->create(sub {$foo = "artur"})->join();
 ok(8, $foo eq "artur", "Check that uncopupling the ref works");
 my $baz;

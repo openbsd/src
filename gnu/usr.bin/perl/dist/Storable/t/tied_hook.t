@@ -8,6 +8,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -16,11 +17,8 @@ sub BEGIN {
     require 'st-dump.pl';
 }
 
-sub ok;
-
 use Storable qw(freeze thaw);
-
-print "1..25\n";
+use Test::More tests => 28;
 
 ($scalar_fetch, $array_fetch, $hash_fetch) = (0, 0, 0);
 
@@ -162,48 +160,51 @@ $array[3] = "plaine scalaire";
 @a = ('first', 3, -4, -3.14159, 456, 4.5, $d, \$d,
 	$b, \$a, $a, $c, \$c, \%a, \@array, \%hash, \@tied);
 
-ok 1, defined($f = freeze(\@a));
-
+my $f = freeze(\@a);
+isnt($f, undef);
 $dumped = &dump(\@a);
-ok 2, 1;
+isnt($dumped, undef);
 
 $root = thaw($f);
-ok 3, defined $root;
+isnt($root, undef);
 
 $got = &dump($root);
-ok 4, 1;
+isnt($got, undef);
 
-ok 5, $got ne $dumped;		# our hooks did not handle refs in array
+isnt($got, $dumped);		# our hooks did not handle refs in array
 
 $g = freeze($root);
-ok 6, length($f) == length($g);
+is(length $f, length $g);
 
 # Ensure the tied items in the retrieved image work
 @old = ($scalar_fetch, $array_fetch, $hash_fetch);
 @tied = ($tscalar, $tarray, $thash) = @{$root->[$#{$root}]};
 @type = qw(SCALAR  ARRAY  HASH);
 
-ok 7, tied $$tscalar;
-ok 8, tied @{$tarray};
-ok 9, tied %{$thash};
+is(ref tied $$tscalar, 'TIED_SCALAR');
+is(ref tied @$tarray, 'TIED_ARRAY');
+is(ref tied %$thash, 'TIED_HASH');
 
 @new = ($$tscalar, $tarray->[0], $thash->{'attribute'});
 @new = ($scalar_fetch, $array_fetch, $hash_fetch);
 
 # Tests 10..15
 for ($i = 0; $i < @new; $i++) {
-	ok 10 + 2*$i, $new[$i] == $old[$i] + 1;		# Tests 10,12,14
-	ok 11 + 2*$i, ref $tied[$i] eq $type[$i];	# Tests 11,13,15
+    is($new[$i], $old[$i] + 1);		# Tests 10,12,14
+    is(ref $tied[$i], $type[$i]);	# Tests 11,13,15
 }
 
-ok 16, $$tscalar eq 'foo';
-ok 17, $tarray->[3] eq 'plaine scalaire';
-ok 18, $thash->{'attribute'} eq 'plain value';
+is($$tscalar, 'foo');
+is($tarray->[3], 'plaine scalaire');
+is($thash->{'attribute'}, 'plain value');
 
 # Ensure hooks were called
-ok 19, ($scalar_hook1 && $scalar_hook2);
-ok 20, ($array_hook1 && $array_hook2);
-ok 21, ($hash_hook1 && $hash_hook2);
+is($scalar_hook1, 2);
+is($scalar_hook2, 1);
+is($array_hook1, 2);
+is($array_hook2, 1);
+is($hash_hook1, 2);
+is($hash_hook2, 1);
 
 #
 # And now for the "blessed ref to tied hash" with "store hook" test...
@@ -212,10 +213,10 @@ ok 21, ($hash_hook1 && $hash_hook2);
 my $bc = bless \%hash, 'FOO';		# FOO does not exist -> no hook
 my $bx = thaw freeze $bc;
 
-ok 22, ref $bx eq 'FOO';
+is(ref $bx, 'FOO');
 my $old_hash_fetch = $hash_fetch;
 my $v = $bx->{attribute};
-ok 23, $hash_fetch == $old_hash_fetch + 1;	# Still tied
+is($hash_fetch, $old_hash_fetch + 1, 'Still tied');
 
 package TIED_HASH_REF;
 
@@ -236,7 +237,7 @@ package main;
 $bc = bless \%hash, 'TIED_HASH_REF';
 $bx = thaw freeze $bc;
 
-ok 24, ref $bx eq 'TIED_HASH_REF';
+is(ref $bx, 'TIED_HASH_REF');
 $old_hash_fetch = $hash_fetch;
 $v = $bx->{attribute};
-ok 25, $hash_fetch == $old_hash_fetch + 1;	# Still tied
+is($hash_fetch, $old_hash_fetch + 1, 'Still tied');

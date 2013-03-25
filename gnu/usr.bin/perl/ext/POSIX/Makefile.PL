@@ -1,9 +1,6 @@
-# Explicitly avoid including '.' in @INC; autoloader gets confused since it
-# can find POSIX.pm, but can't find autosplit.ix.
-BEGIN { @INC = '../../lib';}
-#
+# Expect this line to be read by t/posix.t, don't change it
 use ExtUtils::MakeMaker;
-use ExtUtils::Constant 0.11 'WriteConstants';
+use ExtUtils::Constant 0.23 'WriteConstants';
 use Config;
 my $rt_signals;
 if ($Config{sig_name} =~ /\bRTMIN\b/ && $Config{sig_name} =~ /\bRTMAX\b/) {
@@ -21,7 +18,8 @@ WriteMakefile(
     NAME	=> 'POSIX',
     @libs,
     XSPROTOARG	=> '-noprototypes',	# XXX remove later?
-    VERSION_FROM => 'POSIX.pm',
+    VERSION_FROM => 'lib/POSIX.pm',
+    ABSTRACT_FROM => 'lib/POSIX.pod',
     realclean	=> {FILES=> 'const-c.inc const-xs.inc'},
 );
 
@@ -44,13 +42,14 @@ my @names =
       IGNBRK IGNCR IGNPAR INLCR INPCK INT_MAX INT_MIN ISIG ISTRIP IXOFF IXON
       LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY LC_NUMERIC LC_TIME
       LINK_MAX LONG_MAX LONG_MIN L_ctermid L_cuserid L_tmpnam MAX_CANON
-      MAX_INPUT MB_LEN_MAX MSG_CTRUNC MSG_DONTROUTE MSG_EOR MSG_OOB MSG_PEEK 
+      MAX_INPUT MB_LEN_MAX MSG_CTRUNC MSG_DONTROUTE MSG_EOR MSG_OOB MSG_PEEK
       MSG_TRUNC MSG_WAITALL NAME_MAX NCCS NGROUPS_MAX NOFLSH OPEN_MAX OPOST
       PARENB PARMRK PARODD PATH_MAX PIPE_BUF RAND_MAX R_OK SCHAR_MAX
       SCHAR_MIN SHRT_MAX SHRT_MIN SIGABRT SIGALRM
       SIGCHLD SIGCONT SIGFPE SIGHUP SIGILL SIGINT SIGKILL SIGPIPE SIGQUIT
       SIGSEGV SIGSTOP SIGTERM SIGTSTP SIGTTIN SIGTTOU
       SIGUSR1 SIGUSR2 SIG_BLOCK SIG_SETMASK SIG_UNBLOCK SSIZE_MAX
+      SIGBUS SIGPOLL SIGPROF SIGSYS SIGTRAP SIGURG SIGVTALRM SIGXCPU SIGXFSZ
       STDERR_FILENO STDIN_FILENO STDOUT_FILENO STREAM_MAX TCIFLUSH TCIOFF
       TCIOFLUSH TCION TCOFLUSH TCOOFF TCOON TCSADRAIN TCSAFLUSH TCSANOW
       TMP_MAX TOSTOP TZNAME_MAX VEOF VEOL VERASE VINTR VKILL VMIN VQUIT
@@ -120,7 +119,7 @@ if ($rt_signals) {
 }
 
 WriteConstants(
-    ($] > 5.009002 ? (PROXYSUBS => 1) : ()),
+    PROXYSUBS => {croak_on_error => 1},
     NAME => 'POSIX',
     NAMES => \@names,
 );

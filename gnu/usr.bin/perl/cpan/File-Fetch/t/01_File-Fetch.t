@@ -164,7 +164,7 @@ for my $entry (@map) {
 
 ### ftp:// tests ###
 {   my $uri = 'ftp://ftp.funet.fi/pub/CPAN/index.html';
-    for (qw[lwp netftp wget curl lftp ncftp]) {
+    for (qw[lwp netftp wget curl lftp fetch ncftp]) {
 
         ### STUPID STUPID warnings ###
         next if $_ eq 'ncftp' and $File::Fetch::FTP_PASSIVE
@@ -179,7 +179,7 @@ for my $entry (@map) {
                   'http://www.cpan.org/index.html?q=1',
                   'http://www.cpan.org/index.html?q=1&y=2',
     ) {
-        for (qw[lwp wget curl lftp lynx iosock]) {
+        for (qw[lwp httptiny wget curl lftp fetch lynx httplite iosock]) {
             _fetch_uri( http => $uri, $_ );
         }
     }

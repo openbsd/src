@@ -83,11 +83,11 @@ sub SKIP_TEST {
 $Data::Dumper::Useperl = 1;
 if (defined &Data::Dumper::Dumpxs) {
   print "### XS extension loaded, will run XS tests\n";
-  $TMAX = 363; $XS = 1;
+  $TMAX = 390; $XS = 1;
 }
 else {
   print "### XS extensions not loaded, will NOT run XS tests\n";
-  $TMAX = 183; $XS = 0;
+  $TMAX = 195; $XS = 0;
 }
 
 print "1..$TMAX\n";
@@ -1429,4 +1429,93 @@ EOT
     TEST q(Data::Dumper->Dumpxs([\@foo])) if $XS;
 }
 
+############# 364
+# Make sure $obj->Dumpxs returns the right thing in list context. This was
+# broken by the initial attempt to fix [perl #74170].
+$WANT = <<'EOT';
+#$VAR1 = [];
+EOT
+TEST q(join " ", new Data::Dumper [[]],[] =>->Dumpxs),
+    '$obj->Dumpxs in list context'
+ if $XS;
 
+############# 366
+{
+  $WANT = <<'EOT';
+#$VAR1 = [
+#  "\0\1\2\3\4\5\6\a\b\t\n\13\f\r\16\17\20\21\22\23\24\25\26\27\30\31\32\e\34\35\36\37 !\"#\$%&'()*+,-./0123456789:;<=>?\@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\177\200\201\202\203\204\205\206\207\210\211\212\213\214\215\216\217\220\221\222\223\224\225\226\227\230\231\232\233\234\235\236\237\240\241\242\243\244\245\246\247\250\251\252\253\254\255\256\257\260\261\262\263\264\265\266\267\270\271\272\273\274\275\276\277\300\301\302\303\304\305\306\307\310\311\312\313\314\315\316\317\320\321\322\323\324\325\326\327\330\331\332\333\334\335\336\337\340\341\342\343\344\345\346\347\350\351\352\353\354\355\356\357\360\361\362\363\364\365\366\367\370\371\372\373\374\375\376\377"
+#];
+EOT
+
+  $foo = [ join "", map chr, 0..255 ];
+  local $Data::Dumper::Useqq = 1;
+  TEST q(Dumper($foo)), 'All latin1 characters';
+  for (1..3) { print "not ok " . (++$TNUM) . " # TODO NYI\n" if $XS } # TEST q(Data::Dumper::DumperX($foo)) if $XS;
+}
+
+############# 372
+{
+  $WANT = <<'EOT';
+#$VAR1 = [
+#  "\0\1\2\3\4\5\6\a\b\t\n\13\f\r\16\17\20\21\22\23\24\25\26\27\30\31\32\e\34\35\36\37 !\"#\$%&'()*+,-./0123456789:;<=>?\@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\177\x{80}\x{81}\x{82}\x{83}\x{84}\x{85}\x{86}\x{87}\x{88}\x{89}\x{8a}\x{8b}\x{8c}\x{8d}\x{8e}\x{8f}\x{90}\x{91}\x{92}\x{93}\x{94}\x{95}\x{96}\x{97}\x{98}\x{99}\x{9a}\x{9b}\x{9c}\x{9d}\x{9e}\x{9f}\x{a0}\x{a1}\x{a2}\x{a3}\x{a4}\x{a5}\x{a6}\x{a7}\x{a8}\x{a9}\x{aa}\x{ab}\x{ac}\x{ad}\x{ae}\x{af}\x{b0}\x{b1}\x{b2}\x{b3}\x{b4}\x{b5}\x{b6}\x{b7}\x{b8}\x{b9}\x{ba}\x{bb}\x{bc}\x{bd}\x{be}\x{bf}\x{c0}\x{c1}\x{c2}\x{c3}\x{c4}\x{c5}\x{c6}\x{c7}\x{c8}\x{c9}\x{ca}\x{cb}\x{cc}\x{cd}\x{ce}\x{cf}\x{d0}\x{d1}\x{d2}\x{d3}\x{d4}\x{d5}\x{d6}\x{d7}\x{d8}\x{d9}\x{da}\x{db}\x{dc}\x{dd}\x{de}\x{df}\x{e0}\x{e1}\x{e2}\x{e3}\x{e4}\x{e5}\x{e6}\x{e7}\x{e8}\x{e9}\x{ea}\x{eb}\x{ec}\x{ed}\x{ee}\x{ef}\x{f0}\x{f1}\x{f2}\x{f3}\x{f4}\x{f5}\x{f6}\x{f7}\x{f8}\x{f9}\x{fa}\x{fb}\x{fc}\x{fd}\x{fe}\x{ff}\x{20ac}"
+#];
+EOT
+
+  $foo = [ join "", map chr, 0..255, 0x20ac ];
+  local $Data::Dumper::Useqq = 1;
+  if ($] < 5.007) {
+    print "not ok " . (++$TNUM) . " # TODO - fails under 5.6\n" for 1..3;
+  }
+  else {
+    TEST q(Dumper($foo)),
+	 'All latin1 characters with utf8 flag including a wide character';
+  }
+  for (1..3) { print "not ok " . (++$TNUM) . " # TODO NYI\n" if $XS } # TEST q(Data::Dumper::DumperX($foo)) if $XS;
+}
+
+############# 378
+{
+  # If XS cannot load, the pure-Perl version cannot deparse vstrings with
+  # underscores properly.  In 5.8.0, vstrings are just strings.
+  $WANT = $] > 5.0080001 ? $XS ? <<'EOT' : <<'EOV' : <<'EOU';
+#$a = \v65.66.67;
+#$b = \v65.66.067;
+#$c = \v65.66.6_7;
+#$d = \'ABC';
+EOT
+#$a = \v65.66.67;
+#$b = \v65.66.67;
+#$c = \v65.66.67;
+#$d = \'ABC';
+EOV
+#$a = \'ABC';
+#$b = \'ABC';
+#$c = \'ABC';
+#$d = \'ABC';
+EOU
+  @::_v = (
+    \v65.66.67,
+    \($] < 5.007 ? v65.66.67 : eval 'v65.66.067'),
+    \v65.66.6_7,
+    \~v190.189.188
+  );
+  TEST q(Data::Dumper->Dump(\@::_v, [qw(a b c d)])), 'vstrings';
+  TEST q(Data::Dumper->Dumpxs(\@::_v, [qw(a b c d)])), 'xs vstrings'
+    if $XS;
+}
+
+############# 384
+{
+  # [perl #107372] blessed overloaded globs
+  $WANT = <<'EOW';
+#$VAR1 = bless( \*::finkle, 'overtest' );
+EOW
+  {
+    package overtest;
+    use overload fallback=>1, q\""\=>sub{"oaoaa"};
+  }
+  TEST q(Data::Dumper->Dump([bless \*finkle, "overtest"])),
+    'blessed overloaded globs';
+  TEST q(Data::Dumper->Dumpxs([\*finkle])), 'blessed overloaded globs (xs)'
+    if $XS;
+}

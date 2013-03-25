@@ -26,7 +26,7 @@ push @ISA, 'Tie::StdHash';
 sub TIEHASH {
     my $class = shift;
     my %hash  = @_;
-    
+
     my $tmpl = {
         dbh     => { required => 1 },
         table   => { required => 1 },
@@ -34,12 +34,12 @@ sub TIEHASH {
         cb      => { required => 1 },
         offset  => { default  => 0 },
     };
-    
+
     my $args = check( $tmpl, \%hash ) or return;
     my $obj  = bless { %$args, store => {} } , $class;
 
     return $obj;
-}    
+}
 
 sub FETCH {
     my $self    = shift;
@@ -47,28 +47,28 @@ sub FETCH {
     my $dbh     = $self->{dbh};
     my $cb      = $self->{cb};
     my $table   = $self->{table};
-    
-    
+
+
     ### did we look this one up before?
     if( my $obj = $self->{store}->{$key} ) {
         return $obj;
     }
-    
+
     my $res  = $dbh->query(
                     "SELECT * from $table where $self->{key} = ?", $key
                 ) or do {
                     error( $dbh->error );
                     return;
                 };
-                    
+
     my $href = $res->hash;
-    
+
     ### get rid of the primary key
     delete $href->{'id'};
-    
+
     ### no results?
     return unless keys %$href;
-    
+
     ### expand author if needed
     ### XXX no longer generic :(
     if( $table eq 'module' ) {
@@ -80,16 +80,16 @@ sub FETCH {
         author  => 'CPANPLUS::Module::Author',
     }->{ $table };
 
-    my $obj = $self->{store}->{$key} = $class->new( %$href, _id => $cb->_id );   
-    
+    my $obj = $self->{store}->{$key} = $class->new( %$href, _id => $cb->_id );
+
     return $obj;
 }
 
-sub STORE { 
+sub STORE {
     my $self = shift;
     my $key  = shift;
     my $val  = shift;
-    
+
     $self->{store}->{$key} = $val;
 }
 
@@ -104,7 +104,7 @@ sub FIRSTKEY {
                );
 
     $self->{offset} = 0;
-    
+
     my $key = $res->flat->[0];
 
     return $key;
@@ -130,7 +130,7 @@ sub NEXTKEY {
 
 sub EXISTS   { !!$_[0]->FETCH( $_[1] ) }
 
-sub SCALAR   { 
+sub SCALAR   {
     my $self = shift;
     my $dbh  = $self->{'dbh'};
 

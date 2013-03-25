@@ -1,0 +1,22 @@
+url
+  http://example.com/index.html
+expected
+  abcdefghijklmnopqrstuvwxyz1234567890abcdef
+headers
+  Accept: */*
+  X-Custom: This is a custom header
+----------
+GET /index.html HTTP/1.1
+Host: example.com
+Accept: */*
+Connection: close
+User-Agent: HTTP-Tiny/VERSION
+X-Custom: This is a custom header
+
+----------
+HTTP/1.1 200 OK
+Date: Thu, 03 Feb 1994 00:00:00 GMT
+Content-Type: text/plain
+Content-Length: 44
+
+abcdefghijklmnopqrstuvwxyz1234567890abcdef

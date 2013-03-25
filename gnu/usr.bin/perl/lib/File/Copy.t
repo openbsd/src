@@ -265,6 +265,8 @@ SKIP: {
           if $^O eq 'VMS';
     skip "Copy doesn't set file permissions correctly on Win32.",  $skips
           if $^O eq "MSWin32";
+    skip "Copy maps POSIX permissions to VOS permissions.", $skips
+          if $^O eq "vos";
 
     # Just a sub to get better failure messages.
     sub __ ($) {

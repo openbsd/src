@@ -6,7 +6,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 55;
+use Test::More tests => 57;
 
 use English qw( -no_match_vars ) ;
 use Config;
@@ -157,6 +157,16 @@ use English qw( -no_match_vars ) ;
 main::ok( !$PREMATCH, '$PREMATCH disabled' );
 main::ok( !$MATCH, '$MATCH disabled' );
 main::ok( !$POSTMATCH, '$POSTMATCH disabled' );
+
+
+# Check that both variables change when localized.
+{
+    local $LIST_SEPARATOR = "wibble";
+    ::is $", 'wibble', '$" changes when $LIST_SEPARATOR is localized';
+
+    local $" = 'frooble';
+    ::is $LIST_SEPARATOR, 'frooble';
+}
 
 __END__
 This is a line.

@@ -1,6 +1,6 @@
 package B::Showlex;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 use strict;
 use B qw(svref_2object comppadlist class);
@@ -188,8 +188,8 @@ your declared lexicals.
 
 =head1 SEE ALSO
 
-C<B::Showlex> can also be used outside of the O framework, as in the third
-example.  See C<B::Concise> for a fuller explanation of reasons.
+L<B::Showlex> can also be used outside of the O framework, as in the third
+example.  See L<B::Concise> for a fuller explanation of reasons.
 
 =head1 TODO
 

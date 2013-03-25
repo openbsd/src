@@ -9,7 +9,7 @@ BEGIN {
     skip_all("No dbm functions") if $@;
 }
 
-plan tests => 4;
+plan tests => 5;
 
 # This is [20020104.007] "coredump on dbmclose"
 
@@ -42,7 +42,7 @@ EOC
 
 $prog =~ s/\@\@\@\@/$filename/;
 
-fresh_perl_is("require AnyDBM_File;\n$prog", 'ok', {}, 'explict require');
+fresh_perl_is("require AnyDBM_File;\n$prog", 'ok', {}, 'explicit require');
 fresh_perl_is($prog, 'ok', {}, 'implicit require');
 
 $prog = <<'EOC';
@@ -58,3 +58,10 @@ fresh_perl_like($prog, qr/No dbm on this machine/, {},
 fresh_perl_like('delete $::{"AnyDBM_File::"}; ' . $prog,
 		qr/No dbm on this machine/, {},
 		'implicit require and no stash fails');
+
+{ # undef 3rd arg
+    local $^W = 1;
+    local $SIG{__WARN__} = sub { ++$w };
+    dbmopen(%truffe, 'pleaseletthisfilenotexist', undef);
+    is $w, 1, '1 warning from dbmopen with undef third arg';
+}

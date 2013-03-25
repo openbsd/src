@@ -1,6 +1,6 @@
 package PerlIO;
 
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 # Map layer name to package that defines it
 our %alias;
@@ -85,39 +85,13 @@ C<:perlio> will insert a C<:unix> layer below itself to do low level IO.
 
 A layer that implements DOS/Windows like CRLF line endings.  On read
 converts pairs of CR,LF to a single "\n" newline character.  On write
-converts each "\n" to a CR,LF pair.  Note that this layer likes to be
-one of its kind: it silently ignores attempts to be pushed into the
-layer stack more than once.
+converts each "\n" to a CR,LF pair.  Note that this layer will silently
+refuse to be pushed on top of itself.
 
 It currently does I<not> mimic MS-DOS as far as treating of Control-Z
 as being an end-of-file marker.
 
-(Gory details follow) To be more exact what happens is this: after
-pushing itself to the stack, the C<:crlf> layer checks all the layers
-below itself to find the first layer that is capable of being a CRLF
-layer but is not yet enabled to be a CRLF layer.  If it finds such a
-layer, it enables the CRLFness of that other deeper layer, and then
-pops itself off the stack.  If not, fine, use the one we just pushed.
-
-The end result is that a C<:crlf> means "please enable the first CRLF
-layer you can find, and if you can't find one, here would be a good
-spot to place a new one."
-
 Based on the C<:perlio> layer.
-
-=item :mmap
-
-A layer which implements "reading" of files by using C<mmap()> to
-make a (whole) file appear in the process's address space, and then
-using that as PerlIO's "buffer". This I<may> be faster in certain
-circumstances for large files, and may result in less physical memory
-use when multiple processes are reading the same file.
-
-Files which are not C<mmap()>-able revert to behaving like the C<:perlio>
-layer. Writes also behave like the C<:perlio> layer, as C<mmap()> for write
-needs extra house-keeping (to extend the file) which negates any advantage.
-
-The C<:mmap> layer will not exist if the platform does not support C<mmap()>.
 
 =item :utf8
 
@@ -220,6 +194,20 @@ for example from Shift-JIS to Unicode.  Note that under C<stdio>
 an C<:encoding> also enables C<:utf8>.  See L<PerlIO::encoding>
 for more information.
 
+=item :mmap
+
+A layer which implements "reading" of files by using C<mmap()> to
+make a (whole) file appear in the process's address space, and then
+using that as PerlIO's "buffer". This I<may> be faster in certain
+circumstances for large files, and may result in less physical memory
+use when multiple processes are reading the same file.
+
+Files which are not C<mmap()>-able revert to behaving like the C<:perlio>
+layer. Writes also behave like the C<:perlio> layer, as C<mmap()> for write
+needs extra house-keeping (to extend the file) which negates any advantage.
+
+The C<:mmap> layer will not exist if the platform does not support C<mmap()>.
+
 =item :via
 
 Use C<:via(MODULE)> either in open() or binmode() to install a layer
@@ -296,7 +284,6 @@ DOS-like platforms and depending on the setting of C<$ENV{PERLIO}>:
  unset / "" unix perlio / stdio [1]     unix crlf
  stdio      unix perlio / stdio [1]     stdio
  perlio     unix perlio                 unix perlio
- mmap       unix mmap                   unix mmap
 
  # [1] "stdio" if Configure found out how to do "fast stdio" (depends
  # on the stdio implementation) and in Perl 5.8, otherwise "unix perlio"

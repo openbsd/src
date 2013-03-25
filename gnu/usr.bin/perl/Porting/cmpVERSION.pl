@@ -1,104 +1,184 @@
 #!/usr/bin/perl -w
 
 #
-# cmpVERSION - compare two Perl source trees for modules
-# that have identical version numbers but different contents.
+# cmpVERSION - compare the current Perl source tree and a given tag
+# for modules that have identical version numbers but different contents.
 #
 # with -d option, output the diffs too
-# with -x option, exclude dual-life modules (after all, there are tools
-#                 like core-cpan-diff that can already deal with them)
-#                 With this option, one of the directories must be '.'.
+# with -x option, exclude files from modules where blead is not upstream
 #
-# Original by slaven@rezic.de, modified by jhi.
+# (after all, there are tools like core-cpan-diff that can already deal with
+# them)
 #
+# Original by slaven@rezic.de, modified by jhi and matt.w.johnson@gmail.com.
+# Adaptation to produce TAP by Abigail, folded back into this file by Nicholas
 
 use strict;
+use 5.006;
 
 use ExtUtils::MakeMaker;
-use File::Compare;
-use File::Find;
-use File::Spec::Functions qw(rel2abs abs2rel catfile catdir curdir);
-use Getopt::Std;
+use File::Spec::Functions qw(devnull);
+use Getopt::Long;
 
-use lib 'Porting';
-use Maintainers;
-
-sub usage {
-die <<'EOF';
-usage: $0 [ -d -x ] source_dir1 source_dir2
-EOF
+my ($diffs, $exclude_upstream, $tag_to_compare, $tap);
+unless (GetOptions('diffs' => \$diffs,
+		   'exclude|x' => \$exclude_upstream,
+		   'tag=s' => \$tag_to_compare,
+		   'tap' => \$tap,
+		   ) && @ARGV == 0) {
+    die "usage: $0 [ -d -x --tag TAG --tap]";
 }
 
-my %opts;
-getopts('dx', \%opts) or usage;
-@ARGV == 2 or usage;
+die "$0: This does not look like a Perl directory\n"
+    unless -f "perl.h" && -d "Porting";
+die "$0: 'This is a Perl directory but does not look like Git working directory\n"
+    unless -d ".git";
 
-for (@ARGV[0, 1]) {
-    die "$0: '$_' does not look like Perl directory\n"
-	unless -f catfile($_, "perl.h") && -d catdir($_, "Porting");
+my $null = devnull();
+
+unless (defined $tag_to_compare) {
+    # Thanks to David Golden for this suggestion.
+
+    $tag_to_compare = `git describe --abbrev=0`;
+    chomp $tag_to_compare;
 }
 
-my %dual_files;
-if ($opts{x}) {
-    die "With -x, one of the directories must be '.'\n"
-	unless $ARGV[0] eq '.' or  $ARGV[1] eq '.';
-    for my $m (grep $Maintainers::Modules{$_}{CPAN},
-				keys %Maintainers::Modules)
-    {
+my $tag_exists = `git --no-pager tag -l $tag_to_compare 2>$null`;
+chomp $tag_exists;
 
-	$dual_files{"./$_"} = 1 for Maintainers::get_module_files($m);
+unless ($tag_exists eq $tag_to_compare) {
+    die "$0: '$tag_to_compare' is not a known Git tag\n" unless $tap;
+    print "1..0 # SKIP: '$tag_to_compare' is not a known Git tag\n";
+    exit 0;
+}
+
+my %upstream_files;
+if ($exclude_upstream) {
+    unshift @INC, 'Porting';
+    require Maintainers;
+
+    for my $m (grep {!defined $Maintainers::Modules{$_}{UPSTREAM}
+			 or $Maintainers::Modules{$_}{UPSTREAM} ne 'blead'}
+	       keys %Maintainers::Modules) {
+	$upstream_files{$_} = 1 for Maintainers::get_module_files($m);
     }
 }
-
-my $dir2 = rel2abs($ARGV[1]);
-chdir $ARGV[0] or die "$0: chdir '$ARGV[0]' failed: $!\n";
 
 # Files to skip from the check for one reason or another,
 # usually because they pull in their version from some other file.
 my %skip;
 @skip{
-    './lib/Carp/Heavy.pm',
-    './lib/Config.pm',		# no version number but contents will vary
-    './lib/Exporter/Heavy.pm',
-    './win32/FindExt.pm',
+    'lib/Carp/Heavy.pm',
+    'lib/Config.pm',		# no version number but contents will vary
+    'lib/Exporter/Heavy.pm',
+    'win32/FindExt.pm',
 } = ();
-my $skip_dirs = qr|^\./t/lib|;
 
-my @wanted;
-my @diffs;
-find(
-     sub { /\.pm$/ &&
-	       $File::Find::dir !~ $skip_dirs &&
-	       ! exists $skip{$File::Find::name} &&
-	       ! exists $dual_files{$File::Find::name}
-	       &&
-	       do { my $file2 =
-			catfile(catdir($dir2, $File::Find::dir), $_);
-		    (my $xs_file1 = $_)     =~ s/\.pm$/.xs/;
-		    (my $xs_file2 = $file2) =~ s/\.pm$/.xs/;
-		    my $eq1 = compare($_, $file2) == 0;
-		    my $eq2 = 1;
-		    if (-e $xs_file1 && -e $xs_file2) {
-		        $eq2 = compare($xs_file1, $xs_file2) == 0;
-		    }
-		    return if $eq1 && $eq2;
-		    my $version1 = eval {MM->parse_version($_)};
-		    my $version2 = eval {MM->parse_version($file2)};
-		    return unless
-			defined $version1 &&
-			defined $version2 &&
-                        $version1 eq $version2;
-		    push @wanted, $File::Find::name;
-		    push @diffs, [ "$File::Find::dir/$_", $file2 ] unless $eq1;
-		    push @diffs, [ "$File::Find::dir/$xs_file1", $xs_file2 ]
-								   unless $eq2;
-		} }, curdir);
-for (sort @wanted) {
-    print "$_\n";
-}
-exit unless $opts{d};
-for (sort { $a->[0] cmp $b->[0] } @diffs) {
-    print "\n";
-    system "diff -du '$_->[0]' '$_->[1]'";
+# Files to skip just for particular version(s),
+# usually due to some # mix-up
+
+my %skip_versions = (
+	   # 'some/sample/file.pm' => [ '1.23', '1.24' ],
+	   'dist/threads/lib/threads.pm' => [ '1.83' ],
+	  );
+
+my $skip_dirs = qr|^t/lib|;
+
+sub pm_file_from_xs {
+    my $xs = shift;
+
+    # First try a .pm at the same level as the .xs file, with the same basename
+    my $pm = $xs;
+    $pm =~ s/xs\z/pm/;
+    return $pm if -f $pm;
+
+    # Try for a (different) .pm at the same level, based on the directory name:
+    my ($path) = $xs =~ m!^(.*)/!;
+    my ($last) = $path =~ m!([^-/]+)\z!;
+    $pm = "$path/$last.pm";
+    return $pm if -f $pm;
+
+    # Try to work out the extension's full package, and look for a .pm in lib/
+    # based on that:
+    ($last) = $path =~ m!([^/]+)\z!;
+    $last =~ tr !-!/!;
+    $pm = "$path/lib/$last.pm";
+    return $pm if -f $pm;
+
+    die "No idea which .pm file corresponds to '$xs', so aborting";
 }
 
+# Key is the .pm file from which we check the version.
+# Value is a reference to an array of files to check for differences
+# The trivial case is a pure perl module, where the array holds one element,
+# the perl module's file. The "fun" comes with XS modules, and the real fun
+# with XS modules with more than one XS file, and "interesting" layouts.
+
+my %module_diffs;
+
+foreach (`git --no-pager diff --name-only $tag_to_compare --diff-filter=ACMRTUXB`) {
+    chomp;
+    next unless m/^(.*)\//;
+    my $this_dir = $1;
+    next if $this_dir =~ $skip_dirs || exists $skip{$_};
+    next if exists $upstream_files{$_};
+    if (/\.pm\z/ || m|^lib/.*\.pl\z|) {
+	push @{$module_diffs{$_}}, $_;
+    } elsif (/\.xs\z/ && !/\bt\b/) {
+	push @{$module_diffs{pm_file_from_xs($_)}}, $_;
+    }
+}
+
+unless (%module_diffs) {
+    print "1..1\nok 1 - No difference found\n" if $tap;
+    exit;
+}
+
+printf "1..%d\n" => scalar keys %module_diffs if $tap;
+
+my $count;
+my $diff_cmd = "git --no-pager diff $tag_to_compare ";
+my (@diff);
+
+foreach my $pm_file (sort keys %module_diffs) {
+    # git has already told us that the files differ, so no need to grab each as
+    # a blob from git, and do the comparison ourselves.
+    my $pm_version = eval {MM->parse_version($pm_file)};
+    my $orig_pm_content = get_file_from_git($pm_file, $tag_to_compare);
+    my $orig_pm_version = eval {MM->parse_version(\$orig_pm_content)};
+    
+    if ((!defined $pm_version || !defined $orig_pm_version)
+	|| ($pm_version eq 'undef' || $orig_pm_version eq 'undef') # sigh
+	|| ($pm_version ne $orig_pm_version) # good
+       ) {
+        printf "ok %d - %s\n", ++$count, $pm_file if $tap;
+    } else {
+	if ($tap) {
+	    foreach (sort @{$module_diffs{$pm_file}}) {
+		print "# $_" for `$diff_cmd '$_'`;
+	    }
+	    if (exists $skip_versions{$pm_file}
+		and grep $pm_version eq $_, @{$skip_versions{$pm_file}}) {
+		printf "ok %d - SKIP $pm_file version $pm_version\n", ++$count;
+	    } else {
+		printf "not ok %d - %s\n", ++$count, $pm_file;
+	    }
+	} else {
+	    push @diff, @{$module_diffs{$pm_file}};
+	    print "$pm_file\n";
+	}
+    }
+}
+
+sub get_file_from_git {
+    my ($file, $tag) = @_;
+    local $/;
+    return scalar `git --no-pager show $tag:$file 2>$null`;
+}
+
+if ($diffs) {
+    for (sort @diff) {
+	print "\n";
+	system "$diff_cmd '$_'";
+    }
+}

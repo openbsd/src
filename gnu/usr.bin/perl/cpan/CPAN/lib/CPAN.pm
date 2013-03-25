@@ -2,7 +2,7 @@
 # vim: ts=4 sts=4 sw=4:
 use strict;
 package CPAN;
-$CPAN::VERSION = '1.94_56';
+$CPAN::VERSION = '1.9800';
 $CPAN::VERSION =~ s/_//;
 
 # we need to run chdir all over and we would get at wrong libraries
@@ -37,6 +37,7 @@ use CPAN::Shell;
 use CPAN::LWP::UserAgent;
 use CPAN::Exception::RecursiveDependency;
 use CPAN::Exception::yaml_not_installed;
+use CPAN::Exception::yaml_process_error;
 
 use Carp ();
 use Config ();
@@ -547,7 +548,7 @@ sub _yaml_loadfile {
     return +[] unless -s $local_file;
     my $yaml_module = _yaml_module;
     if ($CPAN::META->has_inst($yaml_module)) {
-        # temporarly enable yaml code deserialisation
+        # temporarily enable yaml code deserialisation
         no strict 'refs';
         # 5.6.2 could not do the local() with the reference
         # so we do it manually instead
@@ -823,15 +824,14 @@ Please make sure the directory exists and is writable.
     if (!$RUN_DEGRADED && !$self->{LOCKFH}) {
         my $fh;
         unless ($fh = FileHandle->new("+>>$lockfile")) {
-            if ($! =~ /Permission/) {
-                $CPAN::Frontend->mywarn(qq{
+            $CPAN::Frontend->mywarn(qq{
 
 Your configuration suggests that CPAN.pm should use a working
 directory of
     $CPAN::Config->{cpan_home}
 Unfortunately we could not create the lock file
     $lockfile
-due to permission problems.
+due to '$!'.
 
 Please make sure that the configuration variable
     \$CPAN::Config->{cpan_home}
@@ -839,8 +839,7 @@ points to a directory where you can write a .lock file. You can set
 this variable in either a CPAN/MyConfig.pm or a CPAN/Config.pm in your
 \@INC path;
 });
-                return suggest_myconfig;
-            }
+            return suggest_myconfig;
         }
         my $sleep = 1;
         while (!CPAN::_flock($fh, LOCK_EX|LOCK_NB)) {
@@ -923,30 +922,52 @@ sub fastcwd {Cwd::fastcwd();}
 #-> sub CPAN::backtickcwd ;
 sub backtickcwd {my $cwd = `cwd`; chomp $cwd; $cwd}
 
+# Adapted from Probe::Perl
+#-> sub CPAN::_perl_is_same
+sub _perl_is_same {
+  my ($perl) = @_;
+  return MM->maybe_command($perl)
+    && `$perl -MConfig=myconfig -e print -e myconfig` eq Config->myconfig;
+}
+
+# Adapted in part from Probe::Perl
 #-> sub CPAN::find_perl ;
 sub find_perl () {
-    my($perl) = File::Spec->file_name_is_absolute($^X) ? $^X : "";
-    unless ($perl) {
-        my $candidate = File::Spec->catfile($CPAN::iCwd,$^X);
-        $^X = $perl = $candidate if MM->maybe_command($candidate);
+    if ( File::Spec->file_name_is_absolute($^X) ) {
+        return $^X;
     }
-    unless ($perl) {
-        my ($component,$perl_name);
-      DIST_PERLNAME: foreach $perl_name ($^X, 'perl', 'perl5', "perl$]") {
-          PATH_COMPONENT: foreach $component (File::Spec->path(),
-                                                $Config::Config{'binexp'}) {
-                next unless defined($component) && $component;
-                my($abs) = File::Spec->catfile($component,$perl_name);
-                if (MM->maybe_command($abs)) {
-                    $^X = $perl = $abs;
-                    last DIST_PERLNAME;
+    else {
+        my $exe = $Config::Config{exe_ext};
+        my @candidates = (
+            File::Spec->catfile($CPAN::iCwd,$^X),
+            $Config::Config{'perlpath'},
+        );
+        for my $perl_name ($^X, 'perl', 'perl5', "perl$]") {
+            for my $path (File::Spec->path(), $Config::Config{'binexp'}) {
+                if ( defined($path) && length $path && -d $path ) {
+                    my $perl = File::Spec->catfile($path,$perl_name);
+                    push @candidates, $perl;
+                    # try with extension if not provided already
+                    if ($^O eq 'VMS') {
+                        # VMS might have a file version at the end
+                        push @candidates, $perl . $exe
+                            unless $perl =~ m/$exe(;\d+)?$/i;
+                    } elsif (defined $exe && length $exe) {
+                        push @candidates, $perl . $exe
+                            unless $perl =~ m/$exe$/i;
+                    }
                 }
             }
         }
+        for my $perl ( @candidates ) {
+            if (MM->maybe_command($perl) && _perl_is_same($perl)) {
+                $^X = $perl;
+                return $perl;
+            }
+        }
     }
-    return $perl;
+    return $^X; # default fall back
 }
-
 
 #-> sub CPAN::exists ;
 sub exists {
@@ -987,6 +1008,17 @@ sub has_usable {
                #
                # these subroutines die if they believe the installed version is unusable;
                #
+               'CPAN::Meta' => [
+                            sub {
+                                require CPAN::Meta;
+                                unless (CPAN::Version->vge(CPAN::Meta->VERSION, 2.110350)) {
+                                    for ("Will not use CPAN::Meta, need version 2.110350\n") {
+                                        $CPAN::Frontend->mywarn($_);
+                                        die $_;
+                                    }
+                                }
+                            },
+                           ],
 
                LWP => [ # we frequently had "Can't locate object
                         # method "new" via package "LWP::UserAgent" at
@@ -1006,6 +1038,17 @@ sub has_usable {
                'Net::FTP' => [
                             sub {require Net::FTP},
                             sub {require Net::Config},
+                           ],
+               'HTTP::Tiny' => [
+                            sub {
+                                require HTTP::Tiny;
+                                unless (CPAN::Version->vge(HTTP::Tiny->VERSION, 0.005)) {
+                                    for ("Will not use HTTP::Tiny, need version 0.005\n") {
+                                        $CPAN::Frontend->mywarn($_);
+                                        die $_;
+                                    }
+                                }
+                            },
                            ],
                'File::HomeDir' => [
                                    sub {require File::HomeDir;
@@ -1027,7 +1070,7 @@ sub has_usable {
                                             # don't die, because we may need
                                             # Archive::Tar to upgrade
                                             }
-                                            
+
                                        }
                                   },
                                  ],
@@ -1142,7 +1185,7 @@ sub has_inst {
   CPAN: Module::Signature security checks disabled because Module::Signature
   not installed.  Please consider installing the Module::Signature module.
   You may also need to be able to connect over the Internet to the public
-  keyservers like pgp.mit.edu (port 11371).
+  key servers like pool.sks-keyservers.net or pgp.mit.edu.
 
 });
                 $CPAN::Frontend->mysleep(2);
@@ -1169,6 +1212,12 @@ sub new {
     bless {}, shift;
 }
 
+#-> sub CPAN::_exit_messages ;
+sub _exit_messages {
+    my ($self) = @_;
+    $self->{exit_messages} ||= [];
+}
+
 #-> sub CPAN::cleanup ;
 sub cleanup {
   # warn "cleanup called with arg[@_] End[$CPAN::End] Signal[$Signal]";
@@ -1185,6 +1234,7 @@ sub cleanup {
   return unless defined $META->{LOCK};
   return unless -f $META->{LOCK};
   $META->savehist;
+  $META->{cachemgr} ||= CPAN::CacheMgr->new('atexit');
   close $META->{LOCKFH};
   unlink $META->{LOCK};
   # require Carp;
@@ -1193,6 +1243,9 @@ sub cleanup {
       $CPAN::Frontend->mywarn("Warning: Configuration not saved.\n");
   }
   $CPAN::Frontend->myprint("Lockfile removed.\n");
+  for my $msg ( @{ $META->_exit_messages } ) {
+      $CPAN::Frontend->myprint($msg);
+  }
 }
 
 #-> sub CPAN::readhist
@@ -1365,8 +1418,8 @@ Basic commands:
 
 The CPAN module automates or at least simplifies the make and install
 of perl modules and extensions. It includes some primitive searching
-capabilities and knows how to use Net::FTP, LWP, and certain external
-download clients to fetch distributions from the net.
+capabilities and knows how to use LWP, HTTP::Tiny, Net::FTP and certain
+external download clients to fetch distributions from the net.
 
 These are fetched from one or more mirrored CPAN (Comprehensive
 Perl Archive Network) sites and unpacked in a dedicated directory.
@@ -1417,14 +1470,14 @@ mentioned four. Each of the four entities is implemented as a class
 with slightly differing methods for displaying an object.
 
 Arguments to these commands are either strings exactly matching
-the identification string of an object, or regular expressions 
+the identification string of an object, or regular expressions
 matched case-insensitively against various attributes of the
 objects. The parser only recognizes a regular expression when you
 enclose it with slashes.
 
 The principle is that the number of objects found influences how an
 item is displayed. If the search finds one item, the result is
-displayed with the rather verbose method C<as_string>, but if 
+displayed with the rather verbose method C<as_string>, but if
 more than one is found, each object is displayed with the terse method
 C<as_glimpse>.
 
@@ -1536,7 +1589,7 @@ being executed within the distribution file's working directory.
 C<readme> displays the README file of the associated distribution.
 C<Look> gets and untars (if not yet done) the distribution file,
 changes to the appropriate directory and opens a subshell process in
-that directory. C<perldoc> displays the module's pod documentation 
+that directory. C<perldoc> displays the module's pod documentation
 in html or plain text format.
 
 =item C<ls> author
@@ -1647,8 +1700,11 @@ literal backslash.
 C<autobundle> writes a bundle file into the
 C<$CPAN::Config-E<gt>{cpan_home}/Bundle> directory. The file contains
 a list of all modules that are both available from CPAN and currently
-installed within @INC. The name of the bundle file is based on the
-current date and a counter.
+installed within @INC. Duplicates of each distribution are suppressed.
+The name of the bundle file is based on the current date and a
+counter.
+
+Return value: path to the written file.
 
 =head2 hosts
 
@@ -1666,10 +1722,35 @@ mkmyconfig() writes your own CPAN::MyConfig file into your C<~/.cpan/>
 directory so that you can save your own preferences instead of the
 system-wide ones.
 
+=head2 r [Module|/Regexp/]...
+
+scans current perl installation for modules that have a newer version
+available on CPAN and provides a list of them. If called without
+argument, all potential upgrades are listed; if called with arguments
+the list is filtered to the modules and regexps given as arguments.
+
+The listing looks something like this:
+
+  Package namespace         installed    latest  in CPAN file
+  CPAN                        1.94_64    1.9600  ANDK/CPAN-1.9600.tar.gz
+  CPAN::Reporter               1.1801    1.1902  DAGOLDEN/CPAN-Reporter-1.1902.tar.gz
+  YAML                           0.70      0.73  INGY/YAML-0.73.tar.gz
+  YAML::Syck                     1.14      1.17  AVAR/YAML-Syck-1.17.tar.gz
+  YAML::Tiny                     1.44      1.50  ADAMK/YAML-Tiny-1.50.tar.gz
+  CGI                            3.43      3.55  MARKSTOS/CGI.pm-3.55.tar.gz
+  Module::Build::YAML            1.40      1.41  DAGOLDEN/Module-Build-0.3800.tar.gz
+  TAP::Parser::Result::YAML      3.22      3.23  ANDYA/Test-Harness-3.23.tar.gz
+  YAML::XS                       0.34      0.35  INGY/YAML-LibYAML-0.35.tar.gz
+
+It suppresses duplicates in the column C<in CPAN file> such that
+distributions with many upgradeable modules are listed only once.
+
+Note that the list is not sorted.
+
 =head2 recent ***EXPERIMENTAL COMMAND***
 
 The C<recent> command downloads a list of recent uploads to CPAN and
-displays them I<slowly>. While the command is running, a $SIG{INT} 
+displays them I<slowly>. While the command is running, a $SIG{INT}
 exits the loop after displaying the current item.
 
 B<Note>: This command requires XML::LibXML installed.
@@ -1684,7 +1765,7 @@ B<Note>: See also L<smoke>
 
 recompile() is a special command that takes no argument and
 runs the make/test/install cycle with brute force over all installed
-dynamically loadable extensions (aka XS modules) with 'force' in
+dynamically loadable extensions (a.k.a. XS modules) with 'force' in
 effect. The primary purpose of this command is to finish a network
 installation. Imagine you have a common source tree for two different
 architectures. You decide to do a completely independent fresh
@@ -1724,7 +1805,7 @@ approach will likely remain.
 
 B<Note>: See also L<recent>
 
-=head2 upgrade [Module|/Regex/]...
+=head2 upgrade [Module|/Regexp/]...
 
 The C<upgrade> command first runs an C<r> command with the given
 arguments and then installs the newest versions of all modules that
@@ -1843,7 +1924,7 @@ Example:
   o conf shell
 
 If KEY starts and ends with a slash, the string in between is
-treated as a regular expression and only keys matching this regex
+treated as a regular expression and only keys matching this regexp
 are displayed
 
 Example:
@@ -1930,7 +2011,8 @@ currently defined:
   dontload_list      arrayref: modules in the list will not be
                      loaded by the CPAN::has_inst() routine
   ftp                path to external prg
-  ftp_passive        if set, the envariable FTP_PASSIVE is set for downloads
+  ftp_passive        if set, the environment variable FTP_PASSIVE is set
+                     for downloads
   ftp_proxy          proxy host for ftp requests
   ftpstats_period    max number of days to keep download statistics
   ftpstats_size      max number of items to keep in the download statistics
@@ -1945,7 +2027,7 @@ currently defined:
   inactivity_timeout breaks interactive Makefile.PLs or Build.PLs
                      after this many seconds inactivity. Set to 0 to
                      disable timeouts.
-  index_expire       refetch index files after this many days 
+  index_expire       refetch index files after this many days
   inhibit_startup_message
                      if true, suppress the startup message
   keep_source_where  directory in which to keep the source (if we do)
@@ -1973,6 +2055,10 @@ currently defined:
   patch              path to external prg
   patches_dir        local directory containing patch files
   perl5lib_verbosity verbosity level for PERL5LIB additions
+  prefer_external_tar
+                     per default all untar operations are done with
+                     Archive::Tar; by setting this variable to true
+                     the external tar command is used if available
   prefer_installer   legal values are MB and EUMM: if a module comes
                      with both a Makefile.PL and a Build.PL, use the
                      former (EUMM) or the latter (MB); if the module
@@ -1988,7 +2074,7 @@ currently defined:
   proxy_user         username for accessing an authenticating proxy
   proxy_pass         password for accessing an authenticating proxy
   randomize_urllist  add some randomness to the sequence of the urllist
-  scan_cache         controls scanning of cache ('atstart' or 'never')
+  scan_cache         controls scanning of cache ('atstart', 'atexit' or 'never')
   shell              your favorite shell
   show_unparsable_versions
                      boolean if r command tells which modules are versionless
@@ -2135,7 +2221,7 @@ randomness into the URL selection.
 Since CPAN.pm version 1.88_51 modules declared as C<build_requires> by
 a distribution are treated differently depending on the config
 variable C<build_requires_install_policy>. By setting
-C<build_requires_install_policy> to C<no>, such a module is not 
+C<build_requires_install_policy> to C<no>, such a module is not
 installed. It is only built and tested, and then kept in the list of
 tested but uninstalled modules. As such, it is available during the
 build of the dependent module by integrating the path to the
@@ -2189,7 +2275,7 @@ temporarily override assorted C<CPAN.pm> configuration variables
 
 =item
 
-specify dependencies the original maintainer forgot 
+specify dependencies the original maintainer forgot
 
 =item
 
@@ -2415,7 +2501,7 @@ parameter is C<0> or C<1> is determined by reading the patch
 beforehand. The path to each patch is either an absolute path on the
 local filesystem or relative to a patch directory specified in the
 C<patches_dir> configuration variable or in the format of a canonical
-distroname. For examples please consult the distroprefs/ directory in
+distro name. For examples please consult the distroprefs/ directory in
 the CPAN.pm distribution (these examples are not installed by
 default).
 
@@ -2526,7 +2612,7 @@ needs. You have been warned:-)
 
 =head1 PROGRAMMER'S INTERFACE
 
-If you do not enter the shell, shell commands are 
+If you do not enter the shell, shell commands are
 available both as methods (C<CPAN::Shell-E<gt>install(...)>) and as
 functions in the calling package (C<install(...)>).  Before calling low-level
 commands, it makes sense to initialize components of CPAN you need, e.g.:
@@ -2539,9 +2625,20 @@ High-level commands do such initializations automatically.
 
 There's currently only one class that has a stable interface -
 CPAN::Shell. All commands that are available in the CPAN shell are
-methods of the class CPAN::Shell. Each of the commands that produce
-listings of modules (C<r>, C<autobundle>, C<u>) also return a list of
-the IDs of all modules within the list.
+methods of the class CPAN::Shell. The arguments on the commandline are
+passed as arguments to the method.
+
+So if you take for example the shell command
+
+  notest install A B C
+
+the actually executed command is
+
+  CPAN::Shell->notest("install","A","B","C");
+
+Each of the commands that produce listings of modules (C<r>,
+C<autobundle>, C<u>) also return a list of the IDs of all modules
+within the list.
 
 =over 2
 
@@ -2593,7 +2690,7 @@ all modules that need updating. First a quick and dirty way:
 If you don't want any output should all modules be
 up to date, parse the output of above command for the regular
 expression C</modules are up to date/> and decide to mail the output
-only if it doesn't match. 
+only if it doesn't match.
 
 If you prefer to do it more in a programmerish style in one single
 process, something like this may better suit you:
@@ -2689,7 +2786,7 @@ Like CPAN::Bundle::inst_file, but returns the $VERSION
 
 =item CPAN::Bundle::uptodate()
 
-Returns 1 if the bundle itself and all its members are uptodate.
+Returns 1 if the bundle itself and all its members are up-to-date.
 
 =item CPAN::Bundle::install()
 
@@ -2780,14 +2877,14 @@ cancellation can be avoided by letting C<force> run the C<install> for
 you.
 
 This install method only has the power to install the distribution if
-there are no dependencies in the way. To install an object along with all 
+there are no dependencies in the way. To install an object along with all
 its dependencies, use CPAN::Shell->install.
 
 Note that install() gives no meaningful return value. See uptodate().
 
 =item CPAN::Distribution::install_tested()
 
-Install all distributions that have tested sucessfully but
+Install all distributions that have tested successfully but
 not yet installed. See also C<is_tested>.
 
 =item CPAN::Distribution::isa_perl()
@@ -2823,7 +2920,7 @@ in C<< $CPAN::Config->{pager} >>.
 Returns the hash reference from the first matching YAML file that the
 user has deposited in the C<prefs_dir/> directory. The first
 succeeding match wins. The files in the C<prefs_dir/> are processed
-alphabetically, and the canonical distroname (e.g.
+alphabetically, and the canonical distro name (e.g.
 AUTHOR/Foo-Bar-3.14.tar.gz) is matched against the regular expressions
 stored in the $root->{match}{distribution} attribute value.
 Additionally all module names contained in a distribution are matched
@@ -2868,7 +2965,7 @@ runs C<make test> there.
 =item CPAN::Distribution::uptodate()
 
 Returns 1 if all the modules contained in the distribution are
-uptodate. Relies on containsmods.
+up-to-date. Relies on containsmods.
 
 =item CPAN::Index::force_reload()
 
@@ -2891,7 +2988,7 @@ internal and thus subject to change without notice.
 Returns a one-line description of the module in four columns: The
 first column contains the word C<Module>, the second column consists
 of one character: an equals sign if this module is already installed
-and uptodate, a less-than sign if this module is installed but can be
+and up-to-date, a less-than sign if this module is installed but can be
 upgraded, and a space if the module is not installed. The third column
 is the name of the module and the fourth column gives maintainer or
 distribution information.
@@ -2953,7 +3050,7 @@ Where the 'DSLIP' characters have the following meanings:
     d   - Developer
     u   - Usenet newsgroup comp.lang.perl.modules
     n   - None known, try comp.lang.perl.modules
-    a   - abandoned; volunteers welcome to take over maintainance
+    a   - abandoned; volunteers welcome to take over maintenance
 
   L - Language Used:
     p   - Perl-only, no compiler needed, should be platform independent
@@ -2977,9 +3074,9 @@ Where the 'DSLIP' characters have the following meanings:
     b   - BSD: The BSD License
     a   - Artistic license alone
     2   - Artistic license 2.0 or later
-    o   - open source: appoved by www.opensource.org
+    o   - open source: approved by www.opensource.org
     d   - allows distribution without restrictions
-    r   - restricted distribtion
+    r   - restricted distribution
     n   - no license at all
 
 =item CPAN::Module::force($method,@args)
@@ -3098,7 +3195,7 @@ In this pod section each line obeys the format
         Module_Name [Version_String] [- optional text]
 
 The only required part is the first field, the name of a module
-(e.g. Foo::Bar, ie. I<not> the name of the distribution file). The rest
+(e.g. Foo::Bar, i.e. I<not> the name of the distribution file). The rest
 of the line is optional. The comment part is delimited by a dash just
 as in the man page header.
 
@@ -3116,7 +3213,7 @@ modules in a snapshot bundle file.
 =head1 PREREQUISITES
 
 The CPAN program is trying to depend on as little as possible so the
-user can use it in hostile enviroment. It works better the more goodies
+user can use it in hostile environment. It works better the more goodies
 the environment provides. For example if you try in the CPAN shell
 
   install Bundle::CPAN
@@ -3174,7 +3271,7 @@ the software producing the indices on CPAN, the mirroring process on CPAN,
 packaging, configuration, synchronicity, and even (gasp!) due to bugs
 within the CPAN.pm module itself.
 
-For debugging the code of CPAN.pm itself in interactive mode, some 
+For debugging the code of CPAN.pm itself in interactive mode, some
 debugging aid can be turned on for most packages within
 CPAN.pm with one of
 
@@ -3276,7 +3373,7 @@ requires that you have at least one of Crypt::OpenPGP module or the
 command-line F<gpg> tool installed.
 
 You will also need to be able to connect over the Internet to the public
-keyservers, like pgp.mit.edu, and their port 11731 (the HKP protocol).
+key servers, like pgp.mit.edu, and their port 11731 (the HKP protocol).
 
 The configuration parameter check_sigs is there to turn signature
 checking on or off.
@@ -3330,11 +3427,11 @@ Maintaining a bundle definition file means keeping track of two
 things: dependencies and interactivity. CPAN.pm sometimes fails on
 calculating dependencies because not all modules define all MakeMaker
 attributes correctly, so a bundle definition file should specify
-prerequisites as early as possible. On the other hand, it's 
+prerequisites as early as possible. On the other hand, it's
 annoying that so many distributions need some interactive configuring. So
 what you can try to accomplish in your private bundle file is to have the
 packages that need to be configured early in the file and the gentle
-ones later, so you can go out for cofeee after a few minutes and leave CPAN.pm
+ones later, so you can go out for coffee after a few minutes and leave CPAN.pm
 to churn away untended.
 
 =head1 WORKING WITH CPAN.pm BEHIND FIREWALLS
@@ -3361,7 +3458,7 @@ or in your web browser you've proxy information set, then you know
 you are running behind an http firewall.
 
 To access servers outside these types of firewalls with perl (even for
-ftp), you need LWP.
+ftp), you need LWP or HTTP::Tiny.
 
 =item ftp firewall
 
@@ -3375,7 +3472,7 @@ need Net::FTP.
 
 =item One-way visibility
 
-One-way visibility means these firewalls try to make themselves 
+One-way visibility means these firewalls try to make themselves
 invisible to users inside the firewall. An FTP data connection is
 normally created by sending your IP address to the remote server and then
 listening for the return connection. But the remote server will not be able to
@@ -3487,54 +3584,10 @@ so that STDOUT is captured in a file for later inspection.
 
 I am not root, how can I install a module in a personal directory?
 
-First of all, you will want to use your own configuration, not the one
-that your root user installed. If you do not have permission to write
-in the cpan directory that root has configured, you will be asked if
-you want to create your own config. Answering "yes" will bring you into
-CPAN's configuration stage, using the system config for all defaults except
-things that have to do with CPAN's work directory, saving your choices to
-your MyConfig.pm file.
-
-You can also manually initiate this process with the following command:
-
-    % perl -MCPAN -e 'mkmyconfig'
-
-or by running
-
-    mkmyconfig
-
-from the CPAN shell.
-
-You will most probably also want to configure something like this:
-
-  o conf makepl_arg "LIB=~/myperl/lib \
-                    INSTALLMAN1DIR=~/myperl/man/man1 \
-                    INSTALLMAN3DIR=~/myperl/man/man3 \
-                    INSTALLSCRIPT=~/myperl/bin \
-                    INSTALLBIN=~/myperl/bin"
-
-and then the equivalent command for Module::Build, which is
-
-  o conf mbuildpl_arg "--lib=~/myperl/lib \
-                    --installman1dir=~/myperl/man/man1 \
-                    --installman3dir=~/myperl/man/man3 \
-                    --installscript=~/myperl/bin \
-                    --installbin=~/myperl/bin"
-
-You can make this setting permanent like all C<o conf> settings with
-C<o conf commit> or by setting C<auto_commit> beforehand.
-
-You will have to add ~/myperl/man to the MANPATH environment variable
-and also tell your perl programs to look into ~/myperl/lib, e.g. by
-including
-
-  use lib "$ENV{HOME}/myperl/lib";
-
-or setting the PERL5LIB environment variable.
-
-While we're speaking about $ENV{HOME}, it might be worth mentioning,
-that for Windows we use the File::HomeDir module that provides an
-equivalent to the concept of the home directory on Unix.
+As of CPAN 1.9463, if you do not have permission to write the default perl
+library directories, CPAN's configuration process will ask you whether
+you want to bootstrap <local::lib>, which makes keeping a personal
+perl library directory easy.
 
 Another thing you should bear in mind is that the UNINST parameter can
 be dangerous when you are installing into a private area because you
@@ -3597,7 +3650,7 @@ would be
 
     cpan> o conf term_is_latin 1
 
-If other charset support is needed, please file a bugreport against
+If other charset support is needed, please file a bug report against
 CPAN.pm at rt.cpan.org and describe your needs. Maybe we can extend
 the support or maybe UTF-8 terminals become widely available.
 
@@ -3659,11 +3712,15 @@ http://search.cpan.org/dist/Module-Build-Convert/
 I'm frequently irritated with the CPAN shell's inability to help me
 select a good mirror.
 
-The urllist config parameter is yours. You can add and remove sites at
-will. You should find out which sites have the best uptodateness,
-bandwidth, reliability, etc. and are topologically close to you. Some
-people prefer fast downloads, others uptodateness, others reliability.
-You decide which to try in which order.
+CPAN can now help you select a "good" mirror, based on which ones have the
+lowest 'ping' round-trip times.  From the shell, use the command 'o conf init
+urllist' and allow CPAN to automatically select mirrors for you.
+
+Beyond that help, the urllist config parameter is yours. You can add and remove
+sites at will. You should find out which sites have the best up-to-dateness,
+bandwidth, reliability, etc. and are topologically close to you. Some people
+prefer fast downloads, others up-to-dateness, others reliability.  You decide
+which to try in which order.
 
 Henk P. Penning maintains a site that collects data about CPAN sites:
 
@@ -3702,9 +3759,10 @@ Speaking of the build directory. Do I have to clean it up myself?
 
 You have the choice to set the config variable C<scan_cache> to
 C<never>. Then you must clean it up yourself. The other possible
-value, C<atstart> only cleans up the build directory when you start
-the CPAN shell. If you never start up the CPAN shell, you probably
-also have to clean up the build directory yourself.
+values, C<atstart> and C<atexit> clean up the build directory when you
+start or exit the CPAN shell, respectively. If you never start up the
+CPAN shell, you probably also have to clean up the build directory
+yourself.
 
 =back
 
@@ -3728,6 +3786,11 @@ prerequisite but CPAN has reasonable workarounds if it is missing.
 This module and its competitor, the CPANPLUS module, are both much
 cooler than the other. CPAN.pm is older. CPANPLUS was designed to be
 more modular, but it was never intended to be compatible with CPAN.pm.
+
+=head2 CPANMINUS
+
+In the year 2010 App::cpanminus was launched as a new approach to a
+cpan shell with a considerably smaller footprint. Very cool stuff.
 
 =head1 SECURITY ADVICE
 

@@ -19,14 +19,14 @@ use File::stat;
 use File::Spec;
 
 @ISA = qw(Tie::Hash Exporter);
-$VERSION = "1.07";
+$VERSION = "1.10";
 $VERSION = eval $VERSION;
 @EXPORT_OK = qw(DIR_UNLINK);
 
 sub DIR_UNLINK () { 1 }
 
 sub new {
-    @_ >= 1 && @_ <= 2 or croak 'usage: new IO::Dir [DIRNAME]';
+    @_ >= 1 && @_ <= 2 or croak 'usage: IO::Dir->new([DIRNAME])';
     my $class = shift;
     my $dh = gensym;
     if (@_) {
@@ -186,7 +186,7 @@ argument which,  if given, C<new> will pass to C<open>
 =back
 
 The following methods are wrappers for the directory related functions built
-into perl (the trailing `dir' has been removed from the names). See L<perlfunc>
+into perl (the trailing 'dir' has been removed from the names). See L<perlfunc>
 for details of these functions.
 
 =over 4
@@ -237,7 +237,7 @@ L<File::stat>
 =head1 AUTHOR
 
 Graham Barr. Currently maintained by the Perl Porters.  Please report all
-bugs to <perl5-porters@perl.org>.
+bugs to <perlbug@perl.org>.
 
 =head1 COPYRIGHT
 

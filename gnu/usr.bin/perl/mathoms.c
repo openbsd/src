@@ -1,6 +1,7 @@
 /*    mathoms.c
  *
- *    Copyright (C) 2005, 2006, 2007, 2008 by Larry Wall and others
+ *    Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010,
+ *    2011, 2012 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -42,6 +43,7 @@ PERL_CALLCONV void Perl_sv_unref(pTHX_ SV *sv);
 PERL_CALLCONV void Perl_sv_taint(pTHX_ SV *sv);
 PERL_CALLCONV IV Perl_sv_2iv(pTHX_ register SV *sv);
 PERL_CALLCONV UV Perl_sv_2uv(pTHX_ register SV *sv);
+PERL_CALLCONV NV Perl_sv_2nv(pTHX_ register SV *sv);
 PERL_CALLCONV char * Perl_sv_2pv(pTHX_ register SV *sv, STRLEN *lp);
 PERL_CALLCONV char * Perl_sv_2pv_nolen(pTHX_ register SV *sv);
 PERL_CALLCONV char * Perl_sv_2pvbyte_nolen(pTHX_ register SV *sv);
@@ -65,7 +67,6 @@ PERL_CALLCONV HE * Perl_hv_iternext(pTHX_ HV *hv);
 PERL_CALLCONV void Perl_hv_magic(pTHX_ HV *hv, GV *gv, int how);
 PERL_CALLCONV bool Perl_do_open(pTHX_ GV *gv, register const char *name, I32 len, int as_raw, int rawmode, int rawperm, PerlIO *supplied_fp);
 PERL_CALLCONV bool Perl_do_aexec(pTHX_ SV *really, register SV **mark, register SV **sp);
-PERL_CALLCONV bool Perl_do_exec(pTHX_ const char *cmd);
 PERL_CALLCONV U8 * Perl_uvuni_to_utf8(pTHX_ U8 *d, UV uv);
 PERL_CALLCONV bool Perl_is_utf8_string_loc(pTHX_ const U8 *s, STRLEN len, const U8 **ep);
 PERL_CALLCONV void Perl_sv_nolocking(pTHX_ SV *sv);
@@ -77,6 +78,16 @@ PERL_CALLCONV int Perl_magic_setglob(pTHX_ SV* sv, MAGIC* mg);
 PERL_CALLCONV AV * Perl_newAV(pTHX);
 PERL_CALLCONV HV * Perl_newHV(pTHX);
 PERL_CALLCONV IO * Perl_newIO(pTHX);
+PERL_CALLCONV I32 Perl_my_stat(pTHX);
+PERL_CALLCONV I32 Perl_my_lstat(pTHX);
+PERL_CALLCONV I32 Perl_sv_eq(pTHX_ register SV *sv1, register SV *sv2);
+PERL_CALLCONV char * Perl_sv_collxfrm(pTHX_ SV *const sv, STRLEN *const nxp);
+PERL_CALLCONV bool Perl_sv_2bool(pTHX_ register SV *const sv);
+PERL_CALLCONV CV * Perl_newSUB(pTHX_ I32 floor, OP* o, OP* proto, OP* block);
+PERL_CALLCONV UV Perl_to_utf8_lower(pTHX_ const U8 *p, U8* ustrp, STRLEN *lenp);
+PERL_CALLCONV UV Perl_to_utf8_title(pTHX_ const U8 *p, U8* ustrp, STRLEN *lenp);
+PERL_CALLCONV UV Perl_to_utf8_upper(pTHX_ const U8 *p, U8* ustrp, STRLEN *lenp);
+PERL_CALLCONV UV Perl_to_utf8_fold(pTHX_ const U8 *p, U8* ustrp, STRLEN *lenp);
 
 /* ref() is now a macro using Perl_doref;
  * this version provided for binary compatibility only.
@@ -110,6 +121,7 @@ Perl_sv_unref(pTHX_ SV *sv)
 =for apidoc sv_taint
 
 Taint an SV. Use C<SvTAINTED_on> instead.
+
 =cut
 */
 
@@ -141,6 +153,17 @@ Perl_sv_2uv(pTHX_ register SV *sv)
     return sv_2uv_flags(sv, SV_GMAGIC);
 }
 
+/* sv_2nv() is now a macro using Perl_sv_2nv_flags();
+ * this function provided for binary compatibility only
+ */
+
+NV
+Perl_sv_2nv(pTHX_ register SV *sv)
+{
+    return sv_2nv_flags(sv, SV_GMAGIC);
+}
+
+
 /* sv_2pv() is now a macro using Perl_sv_2pv_flags();
  * this function provided for binary compatibility only
  */
@@ -156,12 +179,14 @@ Perl_sv_2pv(pTHX_ register SV *sv, STRLEN *lp)
 
 Like C<sv_2pv()>, but doesn't return the length too. You should usually
 use the macro wrapper C<SvPV_nolen(sv)> instead.
+
 =cut
 */
 
 char *
 Perl_sv_2pv_nolen(pTHX_ register SV *sv)
 {
+    PERL_ARGS_ASSERT_SV_2PV_NOLEN;
     return sv_2pv(sv, NULL);
 }
 
@@ -585,7 +610,7 @@ Perl_gv_efullname3(pTHX_ SV *sv, const GV *gv, const char *prefix)
 /*
 =for apidoc gv_fetchmethod
 
-See L<gv_fetchmethod_autoload>.
+See L</gv_fetchmethod_autoload>.
 
 =cut
 */
@@ -664,446 +689,11 @@ Perl_do_aexec(pTHX_ SV *really, register SV **mark, register SV **sp)
 }
 #endif
 
-#ifdef PERL_DEFAULT_DO_EXEC3_IMPLEMENTATION
-bool
-Perl_do_exec(pTHX_ const char *cmd)
-{
-    PERL_ARGS_ASSERT_DO_EXEC;
-
-    return do_exec3(cmd,0,0);
-}
-#endif
-
 /* Backwards compatibility. */
 int
 Perl_init_i18nl14n(pTHX_ int printwarn)
 {
     return init_i18nl10n(printwarn);
-}
-
-PP(pp_padany)
-{
-    DIE(aTHX_ "NOT IMPL LINE %d",__LINE__);
-    return NORMAL;
-}
-
-PP(pp_mapstart)
-{
-    DIE(aTHX_ "panic: mapstart");	/* uses grepstart */
-    return NORMAL;
-}
-
-/* These ops all have the same body as pp_null.  */
-PP(pp_scalar)
-{
-    dVAR;
-    return NORMAL;
-}
-
-PP(pp_regcmaybe)
-{
-    dVAR;
-    return NORMAL;
-}
-
-PP(pp_lineseq)
-{
-    dVAR;
-    return NORMAL;
-}
-
-PP(pp_scope)
-{
-    dVAR;
-    return NORMAL;
-}
-
-/* Ops that are calls to do_kv.  */
-PP(pp_values)
-{
-    return do_kv();
-}
-
-PP(pp_keys)
-{
-    return do_kv();
-}
-
-/* Ops that are simply calls to other ops.  */
-PP(pp_dump)
-{
-    return pp_goto();
-    /*NOTREACHED*/
-}
-
-PP(pp_dofile)
-{
-    return pp_require();
-}
-
-PP(pp_dbmclose)
-{
-    return pp_untie();
-}
-
-PP(pp_read)
-{
-    return pp_sysread();
-}
-
-PP(pp_recv)
-{
-    return pp_sysread();
-}
-
-PP(pp_seek)
-{
-    return pp_sysseek();
-}
-
-PP(pp_fcntl)
-{
-    return pp_ioctl();
-}
-
-PP(pp_gsockopt)
-{
-    return pp_ssockopt();
-}
-
-PP(pp_getsockname)
-{
-    return pp_getpeername();
-}
-
-PP(pp_lstat)
-{
-    return pp_stat();
-}
-
-PP(pp_fteowned)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftbinary)
-{
-    return pp_fttext();
-}
-
-PP(pp_localtime)
-{
-    return pp_gmtime();
-}
-
-PP(pp_shmget)
-{
-    return pp_semget();
-}
-
-PP(pp_shmctl)
-{
-    return pp_semctl();
-}
-
-PP(pp_shmread)
-{
-    return pp_shmwrite();
-}
-
-PP(pp_msgget)
-{
-    return pp_semget();
-}
-
-PP(pp_msgctl)
-{
-    return pp_semctl();
-}
-
-PP(pp_ghbyname)
-{
-    return pp_ghostent();
-}
-
-PP(pp_ghbyaddr)
-{
-    return pp_ghostent();
-}
-
-PP(pp_gnbyname)
-{
-    return pp_gnetent();
-}
-
-PP(pp_gnbyaddr)
-{
-    return pp_gnetent();
-}
-
-PP(pp_gpbyname)
-{
-    return pp_gprotoent();
-}
-
-PP(pp_gpbynumber)
-{
-    return pp_gprotoent();
-}
-
-PP(pp_gsbyname)
-{
-    return pp_gservent();
-}
-
-PP(pp_gsbyport)
-{
-    return pp_gservent();
-}
-
-PP(pp_gpwnam)
-{
-    return pp_gpwent();
-}
-
-PP(pp_gpwuid)
-{
-    return pp_gpwent();
-}
-
-PP(pp_ggrnam)
-{
-    return pp_ggrent();
-}
-
-PP(pp_ggrgid)
-{
-    return pp_ggrent();
-}
-
-PP(pp_ftsize)
-{
-    return pp_ftis();
-}
-
-PP(pp_ftmtime)
-{
-    return pp_ftis();
-}
-
-PP(pp_ftatime)
-{
-    return pp_ftis();
-}
-
-PP(pp_ftctime)
-{
-    return pp_ftis();
-}
-
-PP(pp_ftzero)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftsock)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftchr)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftblk)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftfile)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftdir)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftpipe)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftsuid)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftsgid)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_ftsvtx)
-{
-    return pp_ftrowned();
-}
-
-PP(pp_unlink)
-{
-    return pp_chown();
-}
-
-PP(pp_chmod)
-{
-    return pp_chown();
-}
-
-PP(pp_utime)
-{
-    return pp_chown();
-}
-
-PP(pp_kill)
-{
-    return pp_chown();
-}
-
-PP(pp_symlink)
-{
-    return pp_link();
-}
-
-PP(pp_ftrwrite)
-{
-    return pp_ftrread();
-}
-
-PP(pp_ftrexec)
-{
-    return pp_ftrread();
-}
-
-PP(pp_fteread)
-{
-    return pp_ftrread();
-}
-
-PP(pp_ftewrite)
-{
-    return pp_ftrread();
-}
-
-PP(pp_fteexec)
-{
-    return pp_ftrread();
-}
-
-PP(pp_msgsnd)
-{
-    return pp_shmwrite();
-}
-
-PP(pp_msgrcv)
-{
-    return pp_shmwrite();
-}
-
-PP(pp_syswrite)
-{
-    return pp_send();
-}
-
-PP(pp_semop)
-{
-    return pp_shmwrite();
-}
-
-PP(pp_dor)
-{
-    return pp_defined();
-}
-
-PP(pp_andassign)
-{
-    return pp_and();
-}
-
-PP(pp_orassign)
-{
-    return pp_or();
-}
-
-PP(pp_dorassign)
-{
-    return pp_defined();
-} 
-
-PP(pp_lcfirst)
-{
-    return pp_ucfirst();
-}
-
-PP(pp_slt)
-{
-    return pp_sle();
-}
-
-PP(pp_sgt)
-{
-    return pp_sle();
-}
-
-PP(pp_sge)
-{
-    return pp_sle();
-}
-
-PP(pp_rindex)
-{
-    return pp_index();
-}
-
-PP(pp_hex)
-{
-    return pp_oct();
-}
-
-PP(pp_pop)
-{
-    return pp_shift();
-}
-
-PP(pp_cos)
-{
-    return pp_sin();
-}
-
-PP(pp_exp)
-{
-    return pp_sin();
-}
-
-PP(pp_log)
-{
-    return pp_sin();
-}
-
-PP(pp_sqrt)
-{
-    return pp_sin();
-}
-
-PP(pp_bit_xor)
-{
-    return pp_bit_or();
-}
-
-PP(pp_rv2hv)
-{
-    return Perl_pp_rv2av(aTHX);
 }
 
 U8 *
@@ -1171,7 +761,7 @@ Perl_save_long(pTHX_ long int *longp)
     SSCHECK(3);
     SSPUSHLONG(*longp);
     SSPUSHPTR(longp);
-    SSPUSHINT(SAVEt_LONG);
+    SSPUSHUV(SAVEt_LONG);
 }
 
 void
@@ -1184,7 +774,7 @@ Perl_save_iv(pTHX_ IV *ivp)
     SSCHECK(3);
     SSPUSHIV(*ivp);
     SSPUSHPTR(ivp);
-    SSPUSHINT(SAVEt_IV);
+    SSPUSHUV(SAVEt_IV);
 }
 
 void
@@ -1196,7 +786,7 @@ Perl_save_nogv(pTHX_ GV *gv)
 
     SSCHECK(2);
     SSPUSHPTR(gv);
-    SSPUSHINT(SAVEt_NSTAB);
+    SSPUSHUV(SAVEt_NSTAB);
 }
 
 void
@@ -1213,7 +803,7 @@ Perl_save_list(pTHX_ register SV **sarg, I32 maxsarg)
 	SSCHECK(3);
 	SSPUSHPTR(sarg[i]);		/* remember the pointer */
 	SSPUSHPTR(sv);			/* remember the value */
-	SSPUSHINT(SAVEt_ITEM);
+	SSPUSHUV(SAVEt_ITEM);
     }
 }
 
@@ -1506,6 +1096,105 @@ IO *
 Perl_newIO(pTHX)
 {
     return MUTABLE_IO(newSV_type(SVt_PVIO));
+}
+
+I32
+Perl_my_stat(pTHX)
+{
+    return my_stat_flags(SV_GMAGIC);
+}
+
+I32
+Perl_my_lstat(pTHX)
+{
+    return my_lstat_flags(SV_GMAGIC);
+}
+
+I32
+Perl_sv_eq(pTHX_ register SV *sv1, register SV *sv2)
+{
+    return sv_eq_flags(sv1, sv2, SV_GMAGIC);
+}
+
+#ifdef USE_LOCALE_COLLATE
+char *
+Perl_sv_collxfrm(pTHX_ SV *const sv, STRLEN *const nxp)
+{
+    return sv_collxfrm_flags(sv, nxp, SV_GMAGIC);
+}
+#endif
+
+bool
+Perl_sv_2bool(pTHX_ register SV *const sv)
+{
+    return sv_2bool_flags(sv, SV_GMAGIC);
+}
+
+
+/*
+=for apidoc custom_op_name
+Return the name for a given custom op. This was once used by the OP_NAME
+macro, but is no longer: it has only been kept for compatibility, and
+should not be used.
+
+=for apidoc custom_op_desc
+Return the description of a given custom op. This was once used by the
+OP_DESC macro, but is no longer: it has only been kept for
+compatibility, and should not be used.
+
+=cut
+*/
+
+const char*
+Perl_custom_op_name(pTHX_ const OP* o)
+{
+    PERL_ARGS_ASSERT_CUSTOM_OP_NAME;
+    return XopENTRY(Perl_custom_op_xop(aTHX_ o), xop_name);
+}
+
+const char*
+Perl_custom_op_desc(pTHX_ const OP* o)
+{
+    PERL_ARGS_ASSERT_CUSTOM_OP_DESC;
+    return XopENTRY(Perl_custom_op_xop(aTHX_ o), xop_desc);
+}
+
+CV *
+Perl_newSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *block)
+{
+    return Perl_newATTRSUB(aTHX_ floor, o, proto, NULL, block);
+}
+
+UV
+Perl_to_utf8_fold(pTHX_ const U8 *p, U8* ustrp, STRLEN *lenp)
+{
+    PERL_ARGS_ASSERT_TO_UTF8_FOLD;
+
+    return _to_utf8_fold_flags(p, ustrp, lenp, FOLD_FLAGS_FULL, NULL);
+}
+
+UV
+Perl_to_utf8_lower(pTHX_ const U8 *p, U8* ustrp, STRLEN *lenp)
+{
+    PERL_ARGS_ASSERT_TO_UTF8_LOWER;
+
+    return _to_utf8_lower_flags(p, ustrp, lenp, FALSE, NULL);
+}
+
+UV
+Perl_to_utf8_title(pTHX_ const U8 *p, U8* ustrp, STRLEN *lenp)
+{
+    PERL_ARGS_ASSERT_TO_UTF8_TITLE;
+
+    return _to_utf8_title_flags(p, ustrp, lenp, FALSE, NULL);
+}
+
+UV
+Perl_to_utf8_upper(pTHX_ const U8 *p, U8* ustrp, STRLEN *lenp)
+{
+    PERL_ARGS_ASSERT_TO_UTF8_UPPER;
+
+    return _to_utf8_upper_flags(p, ustrp, lenp, FALSE, NULL);
 }
 
 #endif /* NO_MATHOMS */

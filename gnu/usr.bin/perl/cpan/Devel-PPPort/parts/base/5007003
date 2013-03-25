@@ -1,4 +1,7 @@
 5.007003
+OP_DESC                        # U
+OP_NAME                        # U
+PL_peepp                       # E
 PerlIO_clearerr                # U (PerlIO_clearerr)
 PerlIO_close                   # U (PerlIO_close)
 PerlIO_eof                     # U (PerlIO_eof)

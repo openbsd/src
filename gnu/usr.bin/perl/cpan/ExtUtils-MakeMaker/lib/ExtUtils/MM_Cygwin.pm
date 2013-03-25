@@ -9,7 +9,7 @@ require ExtUtils::MM_Unix;
 require ExtUtils::MM_Win32;
 our @ISA = qw( ExtUtils::MM_Unix );
 
-our $VERSION = '6.56';
+our $VERSION = '6.63_02';
 
 
 =head1 NAME
@@ -114,6 +114,39 @@ sub maybe_command {
     }
 
     return $self->SUPER::maybe_command($file);
+}
+
+=item dynamic_lib
+
+Use the default to produce the *.dll's.
+But for new archdir dll's use the same rebase address if the old exists.
+
+=cut
+
+sub dynamic_lib {
+    my($self, %attribs) = @_;
+    my $s = ExtUtils::MM_Unix::dynamic_lib($self, %attribs);
+    my $ori = "$self->{INSTALLARCHLIB}/auto/$self->{FULLEXT}/$self->{BASEEXT}.$self->{DLEXT}";
+    if (-e $ori) {
+        my $imagebase = `/bin/objdump -p $ori | /bin/grep ImageBase | /bin/cut -c12-`;
+        chomp $imagebase;
+        if ($imagebase gt "40000000") {
+            my $LDDLFLAGS = $self->{LDDLFLAGS};
+            $LDDLFLAGS =~ s/-Wl,--enable-auto-image-base/-Wl,--image-base=0x$imagebase/;
+            $s =~ s/ \$\(LDDLFLAGS\) / $LDDLFLAGS /m;
+        }
+    }
+    $s;
+}
+
+=item all_target
+
+Build man pages, too
+
+=cut
+
+sub all_target {
+    ExtUtils::MM_Unix::all_target(shift);
 }
 
 =back

@@ -17,7 +17,7 @@ The four C<filter_*> methods shown above are available in all the DBM
 modules that ship with Perl, namely DB_File, GDBM_File, NDBM_File,
 ODBM_File and SDBM_File.
 
-Each of the methods work identically, and are used to install (or
+Each of the methods works identically, and is used to install (or
 uninstall) a single DBM Filter. The only difference between them is the
 place that the filter is installed.
 
@@ -35,7 +35,6 @@ every time you write a key to a DBM database.
 If a filter has been installed with this method, it will be invoked
 every time you write a value to a DBM database.
 
-
 =item B<filter_fetch_key>
 
 If a filter has been installed with this method, it will be invoked
@@ -51,7 +50,7 @@ every time you read a value from a DBM database.
 You can use any combination of the methods from none to all four.
 
 All filter methods return the existing filter, if present, or C<undef>
-in not.
+if not.
 
 To delete a filter pass C<undef> to it.
 

@@ -26,15 +26,11 @@ libswanted=`echo " $libswanted " | sed -e 's/ m / /g'`
 # - eliminate -lutil, symbols are all in libcygwin.a
 libswanted=`echo " $libswanted " | sed -e 's/ util / /g'`
 # - add libgdbm_compat $libswanted
-# - libcygipc doesn't work much at all with
-#   the Perl SysV IPC tests so not adding it --jhi 2003-08-09
-#   (with cygwin 1.5.7, cygipc is deprecated in favor of the builtin cygserver)
 libswanted="$libswanted gdbm_compat"
 test -z "$optimize" && optimize='-O3'
 man3ext='3pm'
 test -z "$use64bitint" && use64bitint='define'
-test -z "$usethreads" && usethreads='define'
-test -z "$usemymalloc" && usemymalloc='define'
+test -z "$useithreads" && useithreads='define'
 ccflags="$ccflags -DPERL_USE_SAFE_PUTENV -U__STRICT_ANSI__"
 # - otherwise i686-cygwin
 archname='cygwin'
@@ -77,7 +73,7 @@ fi
 d_eofnblk='define'
 
 # suppress auto-import warnings
-ldflags="$ldflags -Wl,--enable-auto-import -Wl,--export-all-symbols -Wl,--stack,8388608 -Wl,--enable-auto-image-base"
+ldflags="$ldflags -Wl,--enable-auto-import -Wl,--export-all-symbols -Wl,--enable-auto-image-base"
 lddlflags="$lddlflags $ldflags"
 
 # strip exe's and dll's, better do it afterwards

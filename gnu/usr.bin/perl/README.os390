@@ -5,7 +5,7 @@ about pod in pod/perlpod.pod or the short summary in the INSTALL file.
 
 =head1 NAME
 
-README.os390 - building and installing Perl for OS/390 and z/OS
+perlos390 - building and installing Perl for OS/390 and z/OS
 
 =head1 SYNOPSIS
 
@@ -260,7 +260,7 @@ from an account with write access to the directory entry for /tmp.
 
 Out of Memory!
 
-Recent perl test suite is quite memory hunrgy. In addition to the comments
+Recent perl test suite is quite memory hungry. In addition to the comments
 above on memory limitations it is also worth checking for _CEE_RUNOPTS
 in your environment. Perl now has (in miniperlmain.c) a C #pragma
 to set CEE run options, but the environment variable wins.
@@ -416,7 +416,7 @@ To subscribe, send an empty message to perl-mvs-subscribe@perl.org.
 
 See also:
 
-    http://lists.perl.org/showlist.cgi?name=perl-mvs
+    http://lists.perl.org/list/perl-mvs.html
 
 There are web archives of the mailing list at:
 

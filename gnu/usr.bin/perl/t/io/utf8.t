@@ -3,15 +3,12 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: not perlio\n";
-	exit 0;
-    }
+    require './test.pl';
+    skip_all_without_perlio();
 }
 
 no utf8; # needed for use utf8 not griping about the raw octets
 
-BEGIN { require "./test.pl"; }
 
 plan(tests => 55);
 

@@ -3,12 +3,12 @@ require 5;
 package Pod::Simple::LinkSection;
   # Based somewhat dimly on Array::Autojoin
 use vars qw($VERSION );
-$VERSION = '3.14';
+$VERSION = '3.20';
 
 use strict;
 use Pod::Simple::BlackBox;
 use vars qw($VERSION );
-$VERSION = '3.14';
+$VERSION = '3.20';
 
 use overload( # So it'll stringify nice
   '""'   => \&Pod::Simple::BlackBox::stringify_lol,
@@ -114,7 +114,7 @@ Output:
                           ], 'Pod::Simple::LinkSection' ),
                    'baz'
                  ], 'Pod::Simple::LinkSection' );
-  
+
 But stringify it and you get just the text content:
 
   % perl -MData::Dumper -e

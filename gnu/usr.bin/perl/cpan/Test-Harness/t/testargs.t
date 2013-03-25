@@ -3,11 +3,16 @@
 use strict;
 use lib 't/lib';
 
-use Test::More tests => 19;
+use Test::More;
 use File::Spec;
 use TAP::Parser;
 use TAP::Harness;
 use App::Prove;
+
+diag( "\n\n", bigness( join ' ', @ARGV ), "\n\n" ) if @ARGV;
+
+my @cleanup = ();
+END { unlink @cleanup }
 
 my $test = File::Spec->catfile(
     't',
@@ -15,36 +20,63 @@ my $test = File::Spec->catfile(
     'echo'
 );
 
-diag( "\n\n", bigness( join ' ', @ARGV ), "\n\n" ) if @ARGV;
+my @test = ( [ perl => $test ], make_shell_test($test) );
+
+plan tests => @test * 8 + 5;
 
 sub echo_ok {
-    my $options = shift;
-    my @args    = @_;
-    my $parser  = TAP::Parser->new( { %$options, test_args => \@args } );
-    my @got     = ();
+    my ( $type, $options ) = ( shift, shift );
+    my $name   = join( ', ', sort keys %$options ) . ", $type";
+    my @args   = @_;
+    my $parser = TAP::Parser->new( { %$options, test_args => \@args } );
+    my @got    = ();
     while ( my $result = $parser->next ) {
         push @got, $result;
     }
     my $plan = shift @got;
-    ok $plan->is_plan;
-    for (@got) {
-        is $_->description, shift(@args),
-          join( ', ', keys %$options ) . ": option passed OK";
+    ok $plan->is_plan, "$name: is_plan";
+    is_deeply [ map { $_->description } @got ], [@args],
+      "$name: option passed OK";
+}
+
+for my $t (@test) {
+    my ( $type, $test ) = @$t;
+    for my $args ( [qw( yes no maybe )], [qw( 1 2 3 )] ) {
+        echo_ok( $type, { source => $test }, @$args );
+        echo_ok( $type, { exec => [ $^X, $test ] }, @$args );
     }
 }
 
-for my $args ( [qw( yes no maybe )], [qw( 1 2 3 )] ) {
-    echo_ok( { source => $test }, @$args );
-    echo_ok( { exec => [ $^X, $test ] }, @$args );
+sub make_shell_test {
+    my $test  = shift;
+    my $shell = '/bin/sh';
+    return unless -x $shell;
+    my $script = "shell_$$.sh";
+
+    push @cleanup, $script;
+    {
+        open my $sh, '>', $script;
+        print $sh "#!$shell\n\n";
+        print $sh "$^X '$test' \$*\n";
+    }
+    chmod 0775, $script;
+    return unless -x $script;
+    return [ shell => $script ];
 }
 
 {
-    my $harness = TAP::Harness->new(
-        { verbosity => -9, test_args => [qw( magic hat brigade )] } );
-    my $aggregate = $harness->runtests($test);
+    for my $test_arg_type (
+        [qw( magic hat brigade )],
+        { $test => [qw( magic hat brigade )] },
+      )
+    {
+        my $harness = TAP::Harness->new(
+            { verbosity => -9, test_args => $test_arg_type } );
+        my $aggregate = $harness->runtests($test);
 
-    is $aggregate->total,  3, "ran the right number of tests";
-    is $aggregate->passed, 3, "and they passed";
+        is $aggregate->total,  3, "ran the right number of tests";
+        is $aggregate->passed, 3, "and they passed";
+    }
 }
 
 package Test::Prove;

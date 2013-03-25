@@ -4,7 +4,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan (tests => 9);
+plan (tests => 10);
 use strict;
 
 {
@@ -40,6 +40,19 @@ foreach my $t ("ASCII", "B\366se") {
     is (length $u, $length, "length of '$t'");
 }
 
+{
+    use utf8;
+    use open qw( :utf8 :std );
+    package Tìè::UTF8 {
+        sub TIESCALAR {
+            return bless {}, shift;
+        }
+    }
+    
+    my $t;
+    tie $t, 'Tìè::UTF8';
+    is ref(tied($t)), 'Tìè::UTF8', "Tie'ing to a UTF8 package works.";
+}
 {
     local $::TODO = "Need more tests!";
     fail();

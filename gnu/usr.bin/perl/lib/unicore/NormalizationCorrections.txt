@@ -1,14 +1,14 @@
-# NormalizationCorrections-5.2.0.txt
-# Date: 2009-05-22, 13:54:00 PDT [KW]
+# NormalizationCorrections-6.1.0.txt
+# Date: 2011-06-23, 00:46:00 GMT [KW, LI]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2009 Unicode, Inc.
+# Copyright (c) 1991-2011 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
-# The normalization stabilization policy of the Unicode
-# Consortium ordinarily precludes any change to the decomposition
+# The normalization stability policy of the Unicode Consortium
+# ordinarily precludes any change to the decomposition
 # for any character, once established in a relevant version
 # of the UnicodeData.txt data file. However, under certain
 # exceptional (and rare) conditions, an error in a decomposition

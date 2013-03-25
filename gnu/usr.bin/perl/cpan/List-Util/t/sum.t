@@ -13,7 +13,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 8;
+use Test::More tests => 13;
 
 use List::Util qw(sum);
 
@@ -58,12 +58,40 @@ use overload
   }
 }
 
-SKIP: {
-  eval { require bignum; } or skip("Need bignum for testing overloading",1);
+use Math::BigInt;
+my $v1 = Math::BigInt->new(2) ** Math::BigInt->new(65);
+my $v2 = $v1 - 1;
+$v = sum($v1,$v2);
+is($v, $v1 + $v2, 'bigint');
 
-  my $v1 = 2**65;
-  my $v2 = 2**65;
-  my $v3 = $v1 + $v2;
-  $v = sum($v1,$v2);
-  is($v, $v3, 'bignum');
+$v = sum(42, $v1);
+is($v, $v1 + 42, 'bigint + builtin int');
+
+$v = sum(42, $v1, 2);
+is($v, $v1 + 42 + 2, 'bigint + builtin int');
+
+{ package example;
+
+  use overload
+    '0+' => sub { $_[0][0] },
+    '""' => sub { my $r = "$_[0][0]"; $r = "+$r" unless $r =~ m/^\-/; $r .= " [$_[0][1]]"; $r },
+    fallback => 1;
+
+  sub new {
+    my $class = shift;
+
+    my $this = bless [@_], $class;
+
+    return $this;
+  }
+}
+
+{
+  my $e1 = example->new(7, "test");
+  $t = sum($e1, 7, 7);
+  is($t, 21, 'overload returning non-overload');
+  $t = sum(8, $e1, 8);
+  is($t, 23, 'overload returning non-overload');
+  $t = sum(9, 9, $e1);
+  is($t, 25, 'overload returning non-overload');
 }

@@ -34,28 +34,10 @@ open(my $F, ">$testdir/$exename.c")
     or die "Can't create $testdir/$exename.c: $!";
 print $F <<'EOT';
 #include <stdio.h>
-#ifdef __BORLANDC__
-#include <windows.h>
-#endif
 int
 main(int ac, char **av)
 {
     int i;
-#ifdef __BORLANDC__
-    char *s = GetCommandLine();
-    int j=0;
-    av[0] = s;
-    if (s[0]=='"') {
-	for(;s[++j]!='"';)
-	  ;
-	av[0]++;
-    }
-    else {
-	for(;s[++j]!=' ';)
-	  ;
-    }
-    s[j]=0;
-#endif
     for (i = 0; i < ac; i++)
 	printf("[%s]", av[i]);
     printf("\n");

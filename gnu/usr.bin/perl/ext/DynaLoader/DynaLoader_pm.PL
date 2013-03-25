@@ -85,11 +85,8 @@ package DynaLoader;
 # Tim.Bunce@ig.co.uk, August 1994
 
 BEGIN {
-    $VERSION = '1.10';
+    $VERSION = '1.14';
 }
-
-require AutoLoader;
-*AUTOLOAD = \&AutoLoader::AUTOLOAD;
 
 use Config;
 
@@ -133,11 +130,6 @@ print OUT expand_os_specific(<<'EOT');
 $Is_VMS    = $^O eq 'VMS';
 <</$^O-eq-VMS>>
 $do_expand = <<$^O-eq-VMS>>1<<|$^O-eq-VMS>>0<</$^O-eq-VMS>>;
-
-<<$^O-eq-MacOS>>
-my $Mac_FS;
-$Mac_FS = eval { require Mac::FileSpec::Unixish };
-<</$^O-eq-MacOS>>
 
 @dl_require_symbols = ();       # names of symbols we need
 @dl_resolve_using   = ();       # names of files to link with
@@ -270,9 +262,6 @@ sub bootstrap_inherit {
     bootstrap(@_);
 }
 
-# The bootstrap function cannot be autoloaded (without complications)
-# so we define it here:
-
 sub bootstrap {
     # use local vars to enable $module.bs script to edit values
     local(@args) = @_;
@@ -312,30 +301,20 @@ sub bootstrap {
 	}
     <</$^O-eq-NetWare>>
 
-    my $modpname = join(<<$^O-eq-MacOS>>':'<<|$^O-eq-MacOS>>'/'<</$^O-eq-MacOS>>,@modparts);
+    my $modpname = join('/',@modparts);
 
     print STDERR "DynaLoader::bootstrap for $module ",
-		       <<$^O-eq-MacOS>> "(:auto:$modpname:$modfname.$dl_dlext)\n" 
-		       <<|$^O-eq-MacOS>>"(auto/$modpname/$modfname.$dl_dlext)\n"<</$^O-eq-MacOS>>
+		       "(auto/$modpname/$modfname.$dl_dlext)\n"
 	if $dl_debug;
 
     foreach (@INC) {
 	<<$^O-eq-VMS>>chop($_ = VMS::Filespec::unixpath($_));<</$^O-eq-VMS>>
-	<<$^O-eq-MacOS>>
-	    my $path = $_;
-	    if ($Mac_FS && ! -d $path) {
-		$path = Mac::FileSpec::Unixish::nativize($path);
-	    }
-	    $path .= ":"  unless /:$/;
-	    my $dir = "${path}auto:$modpname";
-	<<|$^O-eq-MacOS>>
 	    my $dir = "$_/auto/$modpname";
-	<</$^O-eq-MacOS>>
 	
 	next unless -d $dir; # skip over uninteresting directories
 	
 	# check for common cases to avoid autoload of dl_findfile
-	my $try = <<$^O-eq-MacOS>> "$dir:$modfname.$dl_dlext" <<|$^O-eq-MacOS>> "$dir/$modfname.$dl_dlext"<</$^O-eq-MacOS>>;
+	my $try = "$dir/$modfname.$dl_dlext";
 	last if $file = ($do_expand) ? dl_expandspec($try) : ((-f $try) && $try);
 	
 	# no luck here, save dir for possible later dl_findfile search
@@ -404,19 +383,6 @@ sub bootstrap {
     &$xs(@args);
 }
 
-
-#sub _check_file {   # private utility to handle dl_expandspec vs -f tests
-#    my($file) = @_;
-#    return $file if (!$do_expand && -f $file); # the common case
-#    return $file if ( $do_expand && ($file=dl_expandspec($file)));
-#    return undef;
-#}
-
-
-# Let autosplit and the autoloader deal with these functions:
-__END__
-
-
 sub dl_findfile {
     # Read ext/DynaLoader/DynaLoader.doc for detailed information.
     # This function does not automatically consider the architecture
@@ -439,12 +405,6 @@ sub dl_findfile {
 	    next;
         }
 	<</$^O-eq-VMS>>
-	<<$^O-eq-MacOS>>
-	    if (m/:/ && -f $_) {
-	    	push(@found,$_);
-	    	last arg unless wantarray;
-	    }
-	<</$^O-eq-MacOS>>
 	<<$^O-ne-VMS>>
         if (m:/: && -f $_) {
 	    push(@found,$_);
@@ -457,30 +417,6 @@ sub dl_findfile {
         #  Using a -L prefix is the preferred option (faster and more robust)
         if (m:^-L:) { s/^-L//; push(@dirs, $_); next; }
 
-	<<$^O-eq-MacOS>>
-            #  Otherwise we try to try to spot directories by a heuristic
-            #  (this is a more complicated issue than it first appears)
-	    if (m/:/ && -d $_) {   push(@dirs, $_); next; }
-            #  Only files should get this far...
-            my(@names, $name);    # what filenames to look for
-	    s/^-l//;
-	    push(@names, $_);
-            foreach $dir (@dirs, @dl_library_path) {
-            	next unless -d $dir;
-		$dir =~ s/^([^:]+)$/:$1/;
-		$dir =~ s/:$//;
-            	foreach $name (@names) {
-	    	    my($file) = "$dir:$name";
-                    print STDERR " checking in $dir for $name\n" if $dl_debug;
-		    if (-f $file) {
-                    	push(@found, $file);
-                    	next arg; # no need to look any further
-                    }
-                }
-	    }
-	    next;
-	<</$^O-eq-MacOS>>
-	
         #  Otherwise we try to try to spot directories by a heuristic
         #  (this is a more complicated issue than it first appears)
         if (m:/: && -d $_) {   push(@dirs, $_); next; }
@@ -501,6 +437,9 @@ sub dl_findfile {
             # these should be ordered with the most likely first
             push(@names,"$_.$dl_dlext")    unless m/\.$dl_dlext$/o;
             push(@names,"$_.$dl_so")     unless m/\.$dl_so$/o;
+	    <<$^O-eq-cygwin>>
+            push(@names,"cyg$_.$dl_so")  unless m:/:;
+	    <</$^O-eq-cygwin>>
             push(@names,"lib$_.$dl_so")  unless m:/:;
             push(@names,"$_.a")          if !m/\.a$/ and $dlsrc eq "dl_dld.xs";
             push(@names, $_);
@@ -542,12 +481,15 @@ sub dl_findfile {
 }
 
 
+<<$^O-eq-VMS>>
+# dl_expandspec should be defined in dl_vms.xs
+<<|$^O-eq-VMS>>
 sub dl_expandspec {
     my($spec) = @_;
     # Optional function invoked if DynaLoader.pm sets $do_expand.
     # Most systems do not require or use this function.
     # Some systems may implement it in the dl_*.xs file in which case
-    # this autoload version will not be called but is harmless.
+    # this Perl version should be excluded at build time.
 
     # This function is designed to deal with systems which treat some
     # 'filenames' in a special way. For example VMS 'Logical Names'
@@ -558,16 +500,11 @@ sub dl_expandspec {
 
     my $file = $spec; # default output to input
 
-    <<$^O-eq-VMS>>
-        # dl_expandspec should be defined in dl_vms.xs
-	require Carp;
-	Carp::croak("dl_expandspec: should be defined in XS file!\n");
-    <<|$^O-eq-VMS>>
 	return undef unless -f $file;
-    <</$^O-eq-VMS>>
     print STDERR "dl_expandspec($spec) => $file\n" if $dl_debug;
     $file;
 }
+<</$^O-eq-VMS>>
 
 sub dl_find_symbol_anywhere
 {
@@ -579,6 +516,8 @@ sub dl_find_symbol_anywhere
     }
     return undef;
 }
+
+__END__
 
 =head1 NAME
 
@@ -780,9 +719,8 @@ Some unusual systems, such as VMS, require special filename handling in
 order to deal with symbolic names for files (i.e., VMS's Logical Names).
 
 To support these systems a dl_expandspec() function can be implemented
-either in the F<dl_*.xs> file or code can be added to the autoloadable
-dl_expandspec() function in F<DynaLoader.pm>.  See F<DynaLoader.pm> for
-more information.
+either in the F<dl_*.xs> file or code can be added to the dl_expandspec()
+function in F<DynaLoader.pm>.  See F<DynaLoader_pm.PL> for more information.
 
 =item dl_load_file()
 
@@ -929,7 +867,7 @@ $filename is not defined then "DynaLoader" will be used.
 
 Syntax:
 
-bootstrap($module)
+bootstrap($module [...])
 
 This is the normal entry point for automatic dynamic loading in Perl.
 
@@ -981,6 +919,13 @@ calls &{"${module}::bootstrap"} to bootstrap the module (actually
 it uses the function reference returned by dl_install_xsub for speed)
 
 =back
+
+All arguments to bootstrap() are passed to the module's bootstrap function.
+The default code generated by F<xsubpp> expects $module [, $version]
+If the optional $version argument is not given, it defaults to
+C<$XS_VERSION // $VERSION> in the module's symbol table. The default code
+compares the Perl-space version with the version of the compiled XS code,
+and croaks with an error if they do not match.
 
 =back
 

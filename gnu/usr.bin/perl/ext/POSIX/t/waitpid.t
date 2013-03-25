@@ -21,7 +21,7 @@ use strict;
 
 $| = 1;
 
-print "1..1\n";
+use Test::More tests => 3;
 
 sub NEG1_PROHIBITED () { 0x01 }
 sub NEG1_REQUIRED   () { 0x02 }
@@ -31,11 +31,12 @@ my $max_count = 9;
 my $state     = NEG1_PROHIBITED;
 
 my $child_pid = fork();
+fail("fork failed") unless defined $child_pid;
 
 # Parent receives a nonzero child PID.
 
 if ($child_pid) {
-    my $ok = 1;
+    my @problems;
 
     while ($count++ < $max_count) {   
 	my $begin_time = time();        
@@ -45,39 +46,39 @@ if ($child_pid) {
 	printf( "# waitpid(-1,WNOHANG) returned %d after %.2f seconds\n",
 		$ret, $elapsed_time );
 	if ($elapsed_time > 0.5) {
-	    printf( "# %.2f seconds in non-blocking waitpid is too long!\n",
-		    $elapsed_time );
-	    $ok = 0;
+	    push @problems,
+		sprintf "%.2f seconds in non-blocking waitpid is too long!\n",
+		    $elapsed_time;
 	    last;
 	}
 	
 	if ($state & NEG1_PROHIBITED) { 
 	    if ($ret == -1) {
-		print "# waitpid should not have returned -1 here!\n";
-		$ok = 0;
+		push @problems, "waitpid should not have returned -1 here!\n";
 		last;
 	    }
 	    elsif ($ret == $child_pid) {
 		$state = NEG1_REQUIRED;
+		is(WIFEXITED(${^CHILD_ERROR_NATIVE}), 1, 'child exited cleanly');
+		is(WEXITSTATUS(${^CHILD_ERROR_NATIVE}), 0,
+		   'child exited with 0 (the retun value of its sleep(3) call)');
+
 	    }
 	}
 	elsif ($state & NEG1_REQUIRED) {
 	    unless ($ret == -1) {
-		print "# waitpid should have returned -1 here\n";
-		$ok = 0;
+		push @problems, "waitpid should have returned -1 here!\n";
 	    }
 	    last;
 	}
 	
 	sleep(1);
     }
-    print $ok ? "ok 1\n" : "not ok 1\n";
-    exit(0); # parent 
+    is("@problems", "", 'no problems');
+    POSIX::exit(0); # parent
+    fail("Should have exited");
 } else {
     # Child receives a zero PID and can request parent's PID with
     # getppid().
-    sleep(3);
-    exit(0);
+    POSIX::_exit(POSIX::sleep(3));
 }
-
-

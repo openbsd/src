@@ -7,7 +7,7 @@ require q(./test.pl); plan(tests => 1);
 
 =pod
 
-example taken from: L<http://gauss.gwydiondylan.org/books/drm/drm_50.html>
+example taken from: L<http://www.opendylan.org/books/drm/Method_Dispatch>
 
          Object
            ^

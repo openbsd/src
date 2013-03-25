@@ -23,7 +23,7 @@ is($x // 1, 1, 		'	// : left-hand operand undef');
 $x='';
 is($x // 0, '',		'	// : left-hand operand defined but empty');
 
-like([] // 0, qr/^ARRAY/,	'	// : left-hand operand a referece');
+like([] // 0, qr/^ARRAY/,	'	// : left-hand operand a reference');
 
 $x=undef;
 $x //= 1;

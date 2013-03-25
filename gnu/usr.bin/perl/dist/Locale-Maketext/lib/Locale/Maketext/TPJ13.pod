@@ -181,7 +181,7 @@ for "I I<didn't> scan I<any> directories.".  And ditto for "I didn't
 match any files in any directories", although he says the last part
 about "in any directories" should probably just be left off.
 
-You wonder how you'll get gettext to handle this; to accomodate the
+You wonder how you'll get gettext to handle this; to accommodate the
 ways Arabic, Chinese, and Italian deal with numbers in just these few
 very simple phrases, you need to write code that will ask gettext for
 different queries depending on whether the numerical values in
@@ -277,7 +277,7 @@ another language -- for example, strictly speaking, in Arabic, the
 depending on whether the user is male or female; so the Arabic
 translation "your[feminine] query" is applicable in fewer cases than
 the corresponding English phrase, which doesn't distinguish the user's
-gender.  (In practice, it's not feasable to have a program know the
+gender.  (In practice, it's not feasible to have a program know the
 user's gender, so the masculine "you" in Arabic is usually used, by
 default.)
 
@@ -450,7 +450,7 @@ possibly minor rewording.  In that case, you should be able to put in
 the UK English localization module I<only> those phrases that are
 UK-specific, and for all the rest, I<inherit> from the American
 English module.  (And I expect this same situation would apply with
-Brazilian and Continental Portugese, possbily with some I<very>
+Brazilian and Continental Portugese, possibly with some I<very>
 closely related languages like Czech and Slovak, and possibly with the
 slightly different "versions" of written Mandarin Chinese, as I hear exist in
 Taiwan and mainland China.)
@@ -458,7 +458,7 @@ Taiwan and mainland China.)
 As to sharing of auxiliary functions, consider the problem of Russian
 numbers from the beginning of this article; obviously, you'd want to
 write only once the hairy code that, given a numeric value, would
-return some specification of which case and number a given quanitified
+return some specification of which case and number a given quantified
 noun should use.  But suppose that you discover, while localizing an
 interface for, say, Ukranian (a Slavic language related to Russian,
 spoken by several million people, many of whom would be relieved to
@@ -470,7 +470,7 @@ Ukranian, you could still choose to have the Ukranian module inherit
 from the Russian module, just for the sake of inheriting all the
 various grammatical methods.  Or, probably better organizationally,
 you could move those functions to a module called C<_E_Slavic> or
-something, which Russian and Ukranian could inherit useful functions
+something, which Russian and Ukrainian could inherit useful functions
 from, but which would (presumably) provide no lexicon.
 
 =head2 Buzzword: Concision
@@ -589,7 +589,7 @@ A string with no brackety calls, like this:
 
   "Your search expression was malformed."
 
-is somewhat of a degerate case, and just gets turned into:
+is somewhat of a degenerate case, and just gets turned into:
 
   sub { return "Your search expression was malformed." }
 
@@ -696,7 +696,7 @@ maintaining individual language modules.
 That is all covered in the documentation for Locale::Maketext and the
 modules that come with it, available in CPAN.  After having read this
 article, which covers the why's of Maketext, the documentation,
-which covers the how's of it, should be quite straightfoward.
+which covers the how's of it, should be quite straightforward.
 
 =head2 The Proof in the Pudding: Localizing Web Sites
 
@@ -750,12 +750,12 @@ morphology and pedagogy of North American native languages.
 
 Alvestrand, Harald Tveit.  1995.  I<RFC 1766: Tags for the
 Identification of Languages.>
-C<ftp://ftp.isi.edu/in-notes/rfc1766.txt>
+C<http://www.ietf.org/rfc/rfc1766.txt>
 [Now see RFC 3066.]
 
 Callon, Ross, editor.  1996.  I<RFC 1925: The Twelve
 Networking Truths.>
-C<ftp://ftp.isi.edu/in-notes/rfc1925.txt>
+C<http://www.ietf.org/rfc/rfc1925.txt>
 
 Drepper, Ulrich, Peter Miller,
 and FranE<ccedil>ois Pinard.  1995-2001.  GNU

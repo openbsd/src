@@ -27,21 +27,27 @@
 *** ERROR: malformed link L<> : empty link at line 116 in file t/pod/poderrs.t
 *** WARNING: ignoring leading whitespace in link at line 117 in file t/pod/poderrs.t
 *** WARNING: ignoring trailing whitespace in link at line 118 in file t/pod/poderrs.t
-*** WARNING: (section) in 'passwd(5)' deprecated at line 124 in file t/pod/poderrs.t
-*** WARNING: node '$|' contains non-escaped | or / at line 125 in file t/pod/poderrs.t
-*** WARNING: alternative text '$|' contains non-escaped | or / at line 125 in file t/pod/poderrs.t
-*** ERROR: Spurious character(s) after =back at line 131 in file t/pod/poderrs.t
-*** ERROR: Nonempty Z<> at line 145 in file t/pod/poderrs.t
-*** ERROR: Empty X<> at line 147 in file t/pod/poderrs.t
-*** WARNING: preceding non-item paragraph(s) at line 153 in file t/pod/poderrs.t
-*** WARNING: No argument for =item at line 155 in file t/pod/poderrs.t
-*** WARNING: previous =item has no contents at line 157 in file t/pod/poderrs.t
-*** WARNING: No items in =over (at line 165) / =back list at line 167 in file t/pod/poderrs.t
-*** ERROR: Spurious text after =pod at line 173 in file t/pod/poderrs.t
-*** ERROR: Spurious text after =cut at line 177 in file t/pod/poderrs.t
-*** WARNING: empty section in previous paragraph at line 193 in file t/pod/poderrs.t
+*** WARNING: (section) in 'passwd(5)' deprecated at line 126 in file t/pod/poderrs.t
+*** WARNING: node '$|' contains non-escaped | or / at line 127 in file t/pod/poderrs.t
+*** WARNING: alternative text '$|' contains non-escaped | or / at line 127 in file t/pod/poderrs.t
+*** ERROR: Spurious character(s) after =back at line 133 in file t/pod/poderrs.t
+*** ERROR: Nonempty Z<> at line 147 in file t/pod/poderrs.t
+*** ERROR: Empty X<> at line 149 in file t/pod/poderrs.t
+*** WARNING: preceding non-item paragraph(s) at line 155 in file t/pod/poderrs.t
+*** WARNING: No argument for =item at line 157 in file t/pod/poderrs.t
+*** WARNING: previous =item has no contents at line 159 in file t/pod/poderrs.t
+*** WARNING: No items in =over (at line 167) / =back list at line 169 in file t/pod/poderrs.t
+*** ERROR: Spurious text after =pod at line 175 in file t/pod/poderrs.t
+*** ERROR: Spurious text after =cut at line 179 in file t/pod/poderrs.t
+*** WARNING: empty section in previous paragraph at line 195 in file t/pod/poderrs.t
+*** ERROR: Apparent command =head2 not preceded by blank line at line 198 in file t/pod/poderrs.t
+*** WARNING: empty section in previous paragraph at line 197 in file t/pod/poderrs.t
+*** ERROR: Apparent command =head2 not preceded by blank line at line 201 in file t/pod/poderrs.t
+*** ERROR: Apparent command =item not preceded by blank line at line 204 in file t/pod/poderrs.t
+*** ERROR: Spurious =cut command at line 230 in file t/pod/poderrs.t
+*** ERROR: Spurious =pod command at line 236 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'begin or begin' at line 108 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'end with begin' at line 109 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'OoPs' at line 110 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'abc def' at line 114 in file t/pod/poderrs.t
-*** ERROR: unresolved internal link 'I/O Operators' at line 202 in file t/pod/poderrs.t
+*** ERROR: unresolved internal link 'I/O Operators' at line 213 in file t/pod/poderrs.t

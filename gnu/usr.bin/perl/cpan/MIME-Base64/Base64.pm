@@ -1,19 +1,34 @@
 package MIME::Base64;
 
 use strict;
-use vars qw(@ISA @EXPORT $VERSION);
+use vars qw(@ISA @EXPORT @EXPORT_OK $VERSION);
 
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(encode_base64 decode_base64);
+@EXPORT_OK = qw(encode_base64url decode_base64url encoded_base64_length decoded_base64_length);
 
-$VERSION = '3.08';
+$VERSION = '3.13';
 
 require XSLoader;
 XSLoader::load('MIME::Base64', $VERSION);
 
 *encode = \&encode_base64;
 *decode = \&decode_base64;
+
+sub encode_base64url {
+    my $e = encode_base64(shift, "");
+    $e =~ s/=+\z//;
+    $e =~ tr[+/][-_];
+    return $e;
+}
+
+sub decode_base64url {
+    my $s = shift;
+    $s =~ tr[-_][+/];
+    $s .= '=' while length($s) % 4;
+    return decode_base64($s);
+}
 
 1;
 
@@ -39,23 +54,28 @@ arbitrary sequences of octets in a form that need not be humanly
 readable. A 65-character subset ([A-Za-z0-9+/=]) of US-ASCII is used,
 enabling 6 bits to be represented per printable character.
 
-The following functions are provided:
+The following primary functions are provided:
 
 =over 4
 
-=item encode_base64($str)
+=item encode_base64( $bytes )
 
-=item encode_base64($str, $eol);
+=item encode_base64( $bytes, $eol );
 
 Encode data by calling the encode_base64() function.  The first
-argument is the string to encode.  The second argument is the
+argument is the byte string to encode.  The second argument is the
 line-ending sequence to use.  It is optional and defaults to "\n".  The
 returned encoded string is broken into lines of no more than 76
 characters each and it will end with $eol unless it is empty.  Pass an
 empty string as second argument if you do not want the encoded string
 to be broken into lines.
 
-=item decode_base64($str)
+The function will croak with "Wide character in subroutine entry" if $bytes
+contains characters with code above 255.  The base64 encoding is only defined
+for single-byte characters.  Use the Encode module to select the byte encoding
+you want.
+
+=item decode_base64( $str )
 
 Decode a base64 string by calling the decode_base64() function.  This
 function takes a single argument which is the string to decode and
@@ -64,10 +84,6 @@ returns the decoded data.
 Any character not part of the 65-character base64 subset is
 silently ignored.  Characters occurring after a '=' padding character
 are never decoded.
-
-If the length of the string to decode, after ignoring
-non-base64 chars, is not a multiple of 4 or if padding occurs too early,
-then a warning is generated if perl is running under C<-w>.
 
 =back
 
@@ -78,37 +94,32 @@ call them as:
     $encoded = MIME::Base64::encode($decoded);
     $decoded = MIME::Base64::decode($encoded);
 
-=head1 DIAGNOSTICS
-
-The following warnings can be generated if perl is invoked with the
-C<-w> switch:
+Additional functions not exported by default:
 
 =over 4
 
-=item Premature end of base64 data
+=item encode_base64url( $bytes )
 
-The number of characters to decode is not a multiple of 4.  Legal
-base64 data should be padded with one or two "=" characters to make
-its length a multiple of 4.  The decoded result will be the same
-whether the padding is present or not.
+=item decode_base64url( $str )
 
-=item Premature padding of base64 data
+Encode and decode according to the base64 scheme for "URL applications" [1].
+This is a variant of the base64 encoding which does not use padding, does not
+break the string into multiple lines and use the characters "-" and "_" instead
+of "+" and "/" to avoid using reserved URL characters.
 
-The '=' padding character occurs as the first or second character
-in a base64 quartet.
+=item encoded_base64_length( $bytes )
 
-=back
+=item encoded_base64_length( $bytes, $eol )
 
-The following exception can be raised:
+Returns the length that the encoded string would have without actually
+encoding it.  This will return the same value as C<< length(encode_base64($bytes)) >>,
+but should be more efficient.
 
-=over 4
+=item decoded_base64_length( $str )
 
-=item Wide character in subroutine entry
-
-The string passed to encode_base64() contains characters with code
-above 255.  The base64 encoding is only defined for single-byte
-characters.  Use the Encode module to select the byte encoding you
-want.
+Returns the length that the decoded string would have without actually
+decoding it.  This will return the same value as C<< length(decode_base64($str)) >>,
+but should be more efficient.
 
 =back
 
@@ -155,7 +166,7 @@ example:
 
 =head1 COPYRIGHT
 
-Copyright 1995-1999, 2001-2004 Gisle Aas.
+Copyright 1995-1999, 2001-2004, 2010 Gisle Aas.
 
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
@@ -171,5 +182,7 @@ Communications Research, Inc. (Bellcore)
 =head1 SEE ALSO
 
 L<MIME::QuotedPrint>
+
+[1] L<http://en.wikipedia.org/wiki/Base64#URL_applications>
 
 =cut

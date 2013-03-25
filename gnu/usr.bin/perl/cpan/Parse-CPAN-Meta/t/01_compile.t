@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-# Load testing for YAML::Tiny
-
 BEGIN {
 	if( $ENV{PERL_CORE} ) {
 		chdir 't';

@@ -1,6 +1,6 @@
 
 /*
- * Copyright © 2001 Novell, Inc. All Rights Reserved.
+ * Copyright Â© 2001 Novell, Inc. All Rights Reserved.
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Artistic License, as specified in the README file.
@@ -120,10 +120,10 @@ int RunPerl(int argc, char **argv, char **env)
 
 	//__asm{int 3};
 	#ifdef PERL_GLOBAL_STRUCT
-		#define PERLVAR(var,type)
-		#define PERLVARA(var,type)
-		#define PERLVARI(var,type,init) PL_Vars.var = init;
-		#define PERLVARIC(var,type,init) PL_Vars.var = init;
+		#define PERLVAR(prefix,var,type)
+		#define PERLVARA(prefix,var,type)
+		#define PERLVARI(prefix,var,type,init) PL_Vars.prefix##var = init;
+		#define PERLVARIC(prefix,var,type,init) PL_Vars.prefix##var = init;
 
 		#include "perlvars.h"
 

@@ -1,17 +1,17 @@
 
                              Compress-Raw-Zlib
 
-                             Version 2.024
+                             Version 2.048
 
-                             7th January 2010
+                             29th January 2012
 
-       Copyright (c) 2005-2010 Paul Marquess. All rights reserved.
+       Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
           This program is free software; you can redistribute it
            and/or modify it under the same terms as Perl itself.
 
               The directory zlib-src contains a subset of the 
-             source files copied directly from zlib version 1.2.3.
-                  These files are Copyright(C) 1995-2005
+             source files copied directly from zlib version 1.2.5.
+                  These files are Copyright(C) 1995-2010
                      Jean-loup Gailly and Mark Adler.
              Full source for the zlib library is available at
                             http://www.zlib.org
@@ -71,7 +71,7 @@ zlib library is used:
     3. Use a pre-built zlib library.
 
 Note that if you intend to use either Option 2 or 3, you need to have
-zlib version 1.0.5 or better.
+zlib version 1.2.0 or better.
 
 The contents of the file config.in are used to control which of the
 three options is actually used. This file is read during the
@@ -99,16 +99,16 @@ before building this module.
   
   For option 2, fetch a copy of the zlib source distribution from
   http://www.zlib.org and unpack it into the Compress-Raw-Zlib source 
-  directory. Assuming you have fetched zlib 1.2.3, 
-  it will create a directory called zlib-1.2.3. 
+  directory. Assuming you have fetched zlib 1.2.5, 
+  it will create a directory called zlib-1.2.5. 
   
   Now set the variables in the file config.in as follows (if the version
-  you have fetched isn't 1.2.3, change the INCLUDE and LIB
+  you have fetched isn't 1.2.5, change the INCLUDE and LIB
   variables appropriately):
   
       BUILD_ZLIB   = True
-      INCLUDE      = ./zlib-1.2.3
-      LIB          = ./zlib-1.2.3
+      INCLUDE      = ./zlib-1.2.5
+      LIB          = ./zlib-1.2.5
       OLD_ZLIB     = False
       GZIP_OS_CODE = AUTO_DETECT
   
@@ -355,7 +355,7 @@ To help me help you, I need all of the following information:
         If you haven't installed Compress-Raw-Zlib then search Compress::Raw::Zlib.pm
         for a line like this:
 
-          $VERSION = "2.024" ;
+          $VERSION = "2.048" ;
 
      c. The version of zlib you have used.
         If you have successfully installed Compress-Raw-Zlib, this one-liner

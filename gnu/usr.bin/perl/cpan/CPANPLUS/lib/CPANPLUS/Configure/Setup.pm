@@ -60,20 +60,20 @@ sub new {
     my $obj = $class->SUPER::new( keys %$tmpl );
     for my $acc ( $obj->ls_accessors ) {
         $obj->$acc( $args->{$acc} );
-    }     
-    
+    }
+
     ### otherwise there's a circular use ###
     load CPANPLUS::Configure;
     load CPANPLUS::Backend;
 
     $obj->configure_object( CPANPLUS::Configure->new() )
         unless $obj->configure_object;
-        
+
     $obj->backend( CPANPLUS::Backend->new( $obj->configure_object ) )
         unless $obj->backend;
 
     ### use empty string in case user only has T::R::Stub -- it complains
-    $obj->term( Term::ReadLine->new('') ) 
+    $obj->term( Term::ReadLine->new('') )
         unless $obj->term;
 
     ### enable autoreply if that was passed ###
@@ -85,10 +85,10 @@ sub new {
 sub init {
     my $self = shift;
     my $term = $self->term;
-    
+
     ### default setting, unless changed
     $self->config_type( CONFIG_USER ) unless $self->config_type;
-    
+
     my $save = loc('Save & exit');
     my $exit = loc('Quit without saving');
     my @map  = (
@@ -99,45 +99,45 @@ sub init {
         [ loc('Setup FTP/Email settings')       => '_setup_ftp'         ],
         [ loc('Setup basic preferences')        => '_setup_conf'        ],
         [ loc('Setup installer settings')       => '_setup_installer'   ],
-        [ loc('Select mirrors'),                => '_setup_hosts'       ],      
-        [ loc('Edit configuration file')        => '_edit'              ],    
+        [ loc('Select mirrors'),                => '_setup_hosts'       ],
+        [ loc('Edit configuration file')        => '_edit'              ],
         [ $save                                 => '_save'              ],
-        [ $exit                                 => 1                    ],             
+        [ $exit                                 => 1                    ],
     );
 
     my @keys = map { $_->[0] } @map;    # sorted keys
     my %map  = map { @$_     } @map;    # lookup hash
-   
+
     PICK_SECTION: {
         print loc("
-=================>      MAIN MENU       <=================        
-        
+=================>      MAIN MENU       <=================
+
 Welcome to the CPANPLUS configuration. Please select which
 parts you wish to configure
 
 Defaults are taken from your current configuration.
 If you would save now, your settings would be written to:
-    
+
     %1
-    
+
         ", $self->config_type );
-    
+
         my $choice = $term->get_reply(
                             prompt  => "Section to configure:",
                             choices => \@keys,
                             default => $keys[0]
-                        );       
-               
+                        );
+
         ### exit configuration?
         if( $choice eq $exit ) {
             print loc("
 Quitting setup, changes will not be saved.
             ");
             return 1;
-        }      
-            
+        }
+
         my $method = $map{$choice};
-        
+
         my $rv = $self->$method or print loc("
 There was an error setting up this section. You might want to try again
         ");
@@ -146,14 +146,14 @@ There was an error setting up this section. You might want to try again
         if( $choice eq $save and $rv ) {
             print loc("
 Quitting setup, changes are saved to '%1'
-            ", $self->config_type 
+            ", $self->config_type
             );
             return 1;
         }
 
         ### otherwise, present choice again
         redo PICK_SECTION;
-    }  
+    }
 
     return 1;
 }
@@ -168,22 +168,22 @@ sub _save_where {
 
 
     ASK_CONFIG_TYPE: {
-    
-        print loc( q[  
+
+        print loc( q[
 Where would you like to save your CPANPLUS Configuration file?
 
-If you want to configure CPANPLUS for this user only, 
+If you want to configure CPANPLUS for this user only,
 select the '%1' option.
 The file will then be saved in your homedirectory.
 
-If you are the system administrator of this machine, 
-and would like to make this config available globally, 
+If you are the system administrator of this machine,
+and would like to make this config available globally,
 select the '%2' option.
-The file will be then be saved in your CPANPLUS 
+The file will be then be saved in your CPANPLUS
 installation directory.
 
         ], CONFIG_USER, CONFIG_SYSTEM );
-    
+
 
         ### ask what config type we should save to
         my $type = $term->get_reply(
@@ -191,19 +191,19 @@ installation directory.
                         default => $self->config_type || CONFIG_USER,
                         choices => [CONFIG_USER, CONFIG_SYSTEM],
                   );
-    
+
         my $file = $conf->_config_pm_to_file( $type );
-        
+
         ### can we save to this file?
         unless( $conf->can_save( $file ) ) {
             error(loc(
                 "Can not save to file '%1'-- please check permissions " .
-                "and try again", $file       
+                "and try again", $file
             ));
-            
+
             redo ASK_CONFIG_FILE;
-        } 
-        
+        }
+
         ### you already have the file -- are we allowed to overwrite
         ### or should we try again?
         if ( -e $file and -w _ ) {
@@ -214,18 +214,18 @@ I see you already have this file:
 The file will not be overwritten until you explicitly save it.
 
             ], $file );
-            
-            redo ASK_CONFIG_TYPE 
+
+            redo ASK_CONFIG_TYPE
                 unless $term->ask_yn(
                     prompt  => loc( "Do you wish to use this file?"),
                     default => 'n',
                 );
         }
-        
+
         print $/, loc("Using '%1' as your configuration type", $type);
-        
+
         return $self->config_type($type);
-    }            
+    }
 }
 
 
@@ -237,10 +237,10 @@ sub _setup_base {
 
     my $base = $conf->get_conf('base');
     my $home = File::Spec->catdir( $self->_home_dir, DOT_CPANPLUS );
-    
+
     print loc("
 CPANPLUS needs a directory of its own to cache important index
-files and maybe keep a temporary mirror of CPAN files.  
+files and maybe keep a temporary mirror of CPAN files.
 This may be a site-wide directory or a personal directory.
 
 For a single-user installation, we suggest using your home directory.
@@ -266,7 +266,7 @@ For a single-user installation, we suggest using your home directory.
             print loc("
 I see you already have a directory:
     %1
-    
+
             "), $where;
 
             my $yn = $term->ask_yn(
@@ -338,7 +338,7 @@ First of all, I'd like to create this directory.
     print loc(q[
 Your CPANPLUS build and cache directory has been set to:
     %1
-    
+
     ], $where);
 
     return 1;
@@ -422,7 +422,7 @@ is required for the 'from' field, so choose wisely.
     unless (grep { $_ eq $current } @choices) {
 	   unshift @choices, $current;
     }
-    
+
     my $email = $term->get_reply(
                     prompt  => loc('Which email address shall I use?'),
                     default => $current || $choices[0],
@@ -434,7 +434,7 @@ is required for the 'from' field, so choose wisely.
             $email = $term->get_reply(
                         prompt  => loc('Email address: '),
                     );
-            
+
             unless( $self->_valid_email($email) ) {
                 print loc("
 You did not enter a valid email address, please try again!
@@ -448,7 +448,7 @@ You did not enter a valid email address, please try again!
     print loc("
 Your 'email' is now:
     %1
-    
+
     ", $email);
 
     $conf->set_conf( email => $email );
@@ -481,16 +481,16 @@ like '%1'.
         PROGRAM: {
             print "\n", loc("Where can I find your '%1' utility? ".
                       "(Enter a single space to disable)", $prog ), "\n";
-            
+
             my $loc = $term->get_reply(
                             prompt  => "Path to your '$prog'",
                             default => $conf->get_program( $prog ),
-                        );       
-                        
-            ### empty line clears it            
+                        );
+
+            ### empty line clears it
             my $cmd     = $loc =~ /^\s*$/ ? undef : $loc;
             my ($bin)   = $cmd =~ /^(\S+)/;
-            
+
             ### did you provide a valid program ?
             if( $bin and not can_run( $bin ) ) {
                 print "\n";
@@ -505,27 +505,27 @@ like '%1'.
                     'make'
                 );
                 print loc("Please provide one!");
-                
+
                 ### show win32 where to download
-                if ( $^O eq 'MSWin32' ) {            
+                if ( $^O eq 'MSWin32' ) {
                     print loc("You can get '%1' from:", NMAKE);
                     print "\t". NMAKE_URL ."\n";
                 }
                 print "\n";
-                redo PROGRAM;                    
+                redo PROGRAM;
             }
 
             $conf->set_program( $prog => $cmd );
             print $cmd
-                ? loc(  "Your '%1' utility has been set to '%2'.", 
+                ? loc(  "Your '%1' utility has been set to '%2'.",
                         $prog, $cmd )
-                : loc(  "Your '%1' has been disabled.", $prog );           
+                : loc(  "Your '%1' has been disabled.", $prog );
             print "\n";
         }
     }
-    
+
     return 1;
-}    
+}
 
 sub _setup_installer {
     my $self = shift;
@@ -533,7 +533,7 @@ sub _setup_installer {
     my $conf = $self->configure_object;
 
     my $none = 'None';
-    {   
+    {
         print loc("
 CPANPLUS uses binary programs as well as Perl modules to accomplish
 various tasks. Normally, CPANPLUS will prefer the use of Perl modules
@@ -543,7 +543,7 @@ You can change this setting by making CPANPLUS prefer the use of
 certain binary programs if they are available.
 
         ");
-        
+
         ### default to using binaries if we don't have compress::zlib only
         ### -- it'll get very noisy otherwise
         my $type = 'prefer_bin';
@@ -670,7 +670,7 @@ Again, if you don't understand this question, just press ENTER.
 Some modules provide both a Build.PL (Module::Build) and a Makefile.PL
 (ExtUtils::MakeMaker).  By default, CPANPLUS prefers Makefile.PL.
 
-Module::Build support is not bundled standard with CPANPLUS, but 
+Module::Build support is not bundled standard with CPANPLUS, but
 requires you to install 'CPANPLUS::Dist::Build' from CPAN.
 
 Although Module::Build is a pure perl solution, which means you will
@@ -722,10 +722,10 @@ pathnames to be added to your @INC, quoting any with embedded whitespace.
 
         $conf->set_conf( $type => $lib );
     }
-    
+
     return 1;
-}    
-    
+}
+
 
 sub _setup_conf {
     my $self = shift;
@@ -834,37 +834,37 @@ Otherwise, select ASK to have us ask your permission to install them.
         ");
 
         my $type = 'prereqs';
-        
+
         my @map = (
-            [ PREREQ_IGNORE,                                # conf value 
-              loc('No, do not install prerequisites'),      # UI Value   
+            [ PREREQ_IGNORE,                                # conf value
+              loc('No, do not install prerequisites'),      # UI Value
               loc("I won't install prerequisites")          # diag message
             ],
             [ PREREQ_INSTALL,
-              loc('Yes, please install prerequisites'),  
-              loc("I will install prerequisites")     
+              loc('Yes, please install prerequisites'),
+              loc("I will install prerequisites")
             ],
-            [ PREREQ_ASK,    
-              loc('Ask me before installing a prerequisite'),  
-              loc("I will ask permission to install") 
+            [ PREREQ_ASK,
+              loc('Ask me before installing a prerequisite'),
+              loc("I will ask permission to install")
             ],
-            [ PREREQ_BUILD,  
+            [ PREREQ_BUILD,
               loc('Build prerequisites, but do not install them'),
               loc( "I will only build, but not install prerequisites" )
             ],
         );
-       
+
         my %reply = map { $_->[1] => $_->[0] } @map; # choice => value
         my %diag  = map { $_->[1] => $_->[2] } @map; # choice => diag message
         my %conf  = map { $_->[0] => $_->[1] } @map; # value => ui choice
-        
+
         my $reply   = $term->get_reply(
                         prompt  => loc('Follow prerequisites?'),
                         default => $conf{ $conf->get_conf( $type ) },
                         choices => [ @conf{ sort keys %conf } ],
                     );
         print "\n";
-        
+
         my $value = $reply{ $reply };
         my $diag  = $diag{  $reply };
 
@@ -880,7 +880,7 @@ CPANPLUS can do for you later);
 
         ");
         my $type    = 'md5';
-        
+
         my $yn = $term->ask_yn(
                     prompt  => loc("Shall I use the MD5 checksums?"),
                     default => $conf->get_conf( $type ),
@@ -894,7 +894,7 @@ CPANPLUS can do for you later);
 
     }
 
-    
+
     {   ###########################################
         ## sally sells seashells by the seashore ##
         ###########################################
@@ -909,7 +909,7 @@ please enter the full name for your shell module.
         my $type    = 'shell';
         my $other   = 'Other';
         my @choices = (qw|  CPANPLUS::Shell::Default
-                            CPANPLUS::Shell::Classic |, 
+                            CPANPLUS::Shell::Classic |,
                             $other );
         my $default = $conf->get_conf($type);
 
@@ -929,9 +929,9 @@ please enter the full name for your shell module.
                 );
 
                 unless( check_install( module => $reply ) ) {
-                    print "\n", 
+                    print "\n",
                           loc("Could not find '$reply' in your path " .
-                          "-- please try again"), 
+                          "-- please try again"),
                           "\n";
                     redo SHELL;
                 }
@@ -973,8 +973,8 @@ Would you like to do this?
         ###################
 
         print loc("
-        
-To limit the amount of RAM used by CPANPLUS, you can use the SQLite 
+
+To limit the amount of RAM used by CPANPLUS, you can use the SQLite
 source backend instead. Note that it is currently still experimental.
 Would you like to do this?
 
@@ -1197,26 +1197,26 @@ are done.
             }
 
             CHOICE: {
-                
+
                 ### doesn't play nice with Term::UI :(
                 ### should make t::ui figure out pager opens
                 #$self->_pager_open;     # host lists might be long
-            
+
                 print loc("
-You can enter multiple sites by seperating them by a space.
+You can enter multiple sites by separating them by a space.
 For example:
     1 4 2 5
-                ");    
-            
+                ");
+
                 my @reply = $term->get_reply(
                                     prompt  => loc('Please pick a site: '),
-                                    choices => [sort(keys %map), 
+                                    choices => [sort(keys %map),
                                                 qw|Custom View Up Quit|],
                                     default => $default,
                                     multi   => 1,
                             );
                 #$self->_pager_close;
-    
+
 
                 goto COUNTRY    if grep { $_ eq 'Up' }      @reply;
                 goto CUSTOM     if grep { $_ eq 'Custom' }  @reply;
@@ -1373,7 +1373,7 @@ This may take a while...
 
 ");
 
-    ### use the enew configuratoin ###
+    ### use the new configuration ###
     $cpan->configure_object( $conf );
 
     load CPANPLUS::Module::Fake;
@@ -1646,8 +1646,8 @@ post-configuration editing of the config file
 sub _save {
     my $self = shift;
     my $conf = $self->configure_object;
-    
+
     return $conf->save( $self->config_type );
-}    
+}
 
 1;

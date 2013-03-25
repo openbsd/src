@@ -1,14 +1,14 @@
 ### make sure we can find our conf.pl file
-BEGIN { 
-    use FindBin; 
+BEGIN {
+    use FindBin;
     require "$FindBin::Bin/inc/conf.pl";
 }
 
 use strict;
 
 use Module::Load;
-use Test::More eval { 
-            load $ENV{CPANPLUS_SOURCE_ENGINE} if $ENV{CPANPLUS_SOURCE_ENGINE}; 1 
+use Test::More eval {
+            load $ENV{CPANPLUS_SOURCE_ENGINE} if $ENV{CPANPLUS_SOURCE_ENGINE}; 1
         } ? 'no_plan'
           : (skip_all => "SQLite engine not available");
 
@@ -20,6 +20,7 @@ use Data::Dumper;
 use File::Basename qw[dirname];
 
 my $conf = gimme_conf();
+$conf->set_conf( enable_custom_sources => 1 );
 my $cb   = CPANPLUS::Backend->new( $conf );
 
 ### XXX temp
@@ -35,12 +36,12 @@ my $modname = TEST_CONF_MODULE;
 
     ### source files should be copied from the 'server' now
     for my $name (qw[auth mod dslip] ) {
-        my $file = File::Spec->catfile( 
+        my $file = File::Spec->catfile(
                             $conf->get_conf('base'),
                             $conf->_get_source($name)
-                    );            
+                    );
         ok( (-e $file && -f _ && -s _), "$file exists" );
-    }    
+    }
 
     ok( $at,                    "Authortree loaded successfully" );
     ok( scalar keys %$at,       "   Authortree has items in it" );
@@ -55,7 +56,7 @@ my $modname = TEST_CONF_MODULE;
 }
 
 ### save state tests
-SKIP: {   
+SKIP: {
     skip "Save state tests for custom engine $ENV{CPANPLUS_SOURCE_ENGINE}", 7
         if $ENV{CPANPLUS_SOURCE_ENGINE};
 
@@ -73,44 +74,44 @@ SKIP: {
 
         my $rv = $cb->save_state;
         ok( $rv,                "   State information saved" );
-        
-        like( CPANPLUS::Error->stack_as_string, qr/Writing compiled source/,    
+
+        like( CPANPLUS::Error->stack_as_string, qr/Writing compiled source/,
                                 "       Diagnostics confirmed" );
     }
-    
+
     ### now we rebuild the trees from disk and
     ### check if the module object has a status saved with it
     {   CPANPLUS::Error->flush;
         ok( $cb->_build_trees( uptodate => 1, use_stored => 1),
                                 "   Trees are rebuilt" );
 
-        like( CPANPLUS::Error->stack_as_string, qr/Retrieving/,    
+        like( CPANPLUS::Error->stack_as_string, qr/Retrieving/,
                                 "       Diagnostics confirmed" );
 
-    
+
         my $mod     = $cb->_module_tree->{$modname};
         ok( $mod->status,       "       Status now set in module object" );
-    }  
+    }
 }
 
 ### check custom sources
 ### XXX whitebox test
-SKIP: {   
+SKIP: {
     ### first, find a file to serve as a source
     my $mod     = $cb->_module_tree->{$modname};
     my $package = File::Spec->rel2abs(
-                        File::Spec->catfile( 
+                        File::Spec->catfile(
                             $FindBin::Bin,
                             TEST_CONF_CPAN_DIR,
                             $mod->path,
                             $mod->package,
                         )
-                    );      
-       
+                    );
+
     ok( $package,               "Found file for custom source" );
     ok( -e $package,            "   File '$package' exists" );
 
-    ### remote uri    
+    ### remote uri
     my $uri      =  $cb->_host_to_uri(
                         scheme  => 'file',
                         host    => '',
@@ -118,25 +119,25 @@ SKIP: {
                     );
 
     my $expected_file = $cb->__custom_module_source_index_file( uri => $uri );
-    
+
     ok( $expected_file,         "Sources should be written to '$uri'" );
-    
+
     skip( "Index file size too long (>260 chars). Can't write to disk", 28 )
         if length $expected_file > 260 and ON_WIN32;
-            
 
-    ### local file 
+
+    ### local file
     ### 2 tests
     my $src_file = $cb->_add_custom_module_source( uri => $uri );
-    ok( $src_file,              "Sources written to '$src_file'" );                     
-    ok( -e $src_file,           "   File exists" );                     
-                     
-    ### and write the file  
+    ok( $src_file,              "Sources written to '$src_file'" );
+    ok( -e $src_file,           "   File exists" );
+
+    ### and write the file
     ### 5 tests
     {   my $meth = '__write_custom_module_index';
         can_ok( $cb,    $meth );
 
-        my $rv = $cb->$meth( 
+        my $rv = $cb->$meth(
                         path => dirname( $package ),
                         to   => $src_file
                     );
@@ -145,26 +146,26 @@ SKIP: {
         is( $rv, $src_file,     "       Written to expected file" );
         ok( -e $src_file,       "       Source file exists" );
         ok( -s $src_file,       "       File has non-zero size" );
-    }              
-    
+    }
+
     ### let's see if we can find our custom files
     ### 3 tests
     {   my $meth = '__list_custom_module_sources';
         can_ok( $cb,    $meth );
-        
+
         my %files = $cb->$meth;
         ok( scalar(keys(%files)),
                                 "   Got list of sources" );
-        
+
         ### on VMS, we can't predict the case unfortunately
         ### so grep for it instead;
-        my $found = map { 
+        my $found = map {
             my $src_re = quotemeta($src_file);
             $_ =~ /$src_re/i;
         } keys %files;
 
         ok( $found,             "   Found proper entry for $src_file" );
-    }        
+    }
 
     ### now we can have it be loaded in
     ### 6 tests
@@ -178,7 +179,7 @@ SKIP: {
         my $add      = $cb->_module_tree->{$add_name};
         ok( $add,               "   Found added module" );
 
-        ok( $add->status->_fetch_from,  
+        ok( $add->status->_fetch_from,
                                 "       Full download path set" );
         is( $add->author->cpanid, CUSTOM_AUTHOR_ID,
                                 "       Attributed to custom author" );
@@ -193,60 +194,60 @@ SKIP: {
     ### 3 tests
     {   my $meth    = '__update_custom_module_sources';
         can_ok( $cb,    $meth );
-        
+
         ### mark what time it is now, sleep 1 second for better measuring
-        my $now     = time;        
+        my $now     = time;
         sleep 1;
-        
+
         my $ok      = $cb->$meth;
 
         ok( $ok,                    "Custom sources updated" );
         cmp_ok( [stat $src_file]->[9], '>=', $now,
-                                    "   Timestamp on sourcefile updated" );    
+                                    "   Timestamp on sourcefile updated" );
     }
-    
+
     ### now update it individually
-    ### 3 tests    
+    ### 3 tests
     {   my $meth    = '__update_custom_module_source';
         can_ok( $cb,    $meth );
-        
+
         ### mark what time it is now, sleep 1 second for better measuring
-        my $now     = time;        
+        my $now     = time;
         sleep 1;
-        
+
         my $ok      = $cb->$meth( remote => $uri );
 
         ok( $ok,                    "Custom source for '$uri' updated" );
         cmp_ok( [stat $src_file]->[9], '>=', $now,
-                                    "   Timestamp on sourcefile updated" );    
+                                    "   Timestamp on sourcefile updated" );
     }
 
     ### now update using the higher level API, see if it's part of the update
-    ### 3 tests    
+    ### 3 tests
     {   CPANPLUS::Error->flush;
 
         ### mark what time it is now, sleep 1 second for better measuring
-        my $now = time;        
+        my $now = time;
         sleep 1;
-        
+
         my $ok  = $cb->_build_trees(
                         uptodate    => 0,
                         use_stored  => 0,
                     );
-    
+
         ok( $ok,                    "All sources updated" );
         cmp_ok( [stat $src_file]->[9], '>=', $now,
-                                    "   Timestamp on sourcefile updated" );    
+                                    "   Timestamp on sourcefile updated" );
 
         like( CPANPLUS::Error->stack_as_string, qr/Updating sources from/,
                                     "   Update recorded in the log" );
     }
-    
+
     ### now remove the index file;
-    ### 3 tests    
+    ### 3 tests
     {   my $meth = '_remove_custom_module_source';
         can_ok( $cb,    $meth );
-        
+
         my $file = $cb->$meth( uri => $uri );
         ok( $file,                  "Index file removed" );
         ok( ! -e $file,             "   File '$file' no longer on disk" );

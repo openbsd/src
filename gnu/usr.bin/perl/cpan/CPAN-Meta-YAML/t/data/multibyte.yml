@@ -1,0 +1,22 @@
+--- 
+abstract: Perl-compatible regular expression engine
+author: "Ævar Arnfjörð Bjarmason <avar@cpan.org>"
+build_requires: 
+  Config: 0
+  Test::More: 0
+  XSLoader: 0
+distribution_type: module
+generated_by: Module::Install version 0.65
+license: perl
+meta-spec: 
+  url: http://module-build.sourceforge.net/META-spec-v1.3.html
+  version: 1.3
+name: re-engine-PCRE
+no_index: 
+  directory: 
+    - inc
+    - t
+requires: 
+  perl: 5.9.5
+tests: t/*.t t/*/*.t
+version: 0.10

@@ -18,7 +18,7 @@ if (!(-e $extracted_program)) {
     exit 0;
 }
 
-plan(4);
+plan(6);
 
 # quickly compare two text files
 sub txt_compare {
@@ -28,21 +28,31 @@ sub txt_compare {
     $A cmp $B;
 }
 
-my $result = runperl( progfile => $extracted_program, 
+my $result = runperl( progfile => $extracted_program,
+                      stderr => 1,
                       args => ['-d.', '-Q', 'lib/h2ph.h']);
+is( $result, '', "output is free of warnings" );
 is( $?, 0, "$extracted_program runs successfully" );
-    
-is ( txt_compare("lib/h2ph.ph", "lib/h2ph.pht"), 
+
+is ( txt_compare("lib/h2ph.ph", "lib/h2ph.pht"),
      0,
      "generated file has expected contents" );
-    
-$result = runperl( progfile => 'lib/h2ph.pht', 
-                   switches => ['-c'], 
+
+$result = runperl( progfile => 'lib/h2ph.pht',
+                   switches => ['-c'],
                    stderr => 1 );
 like( $result, qr/syntax OK$/, "output compiles");
 
-$result = runperl( switches => ["-w"], 
-                   prog => '$SIG{__WARN__} = sub { die $_[0] }; require q(lib/h2ph.pht);');
+$result = runperl( progfile => '_h2ph_pre.ph',
+                   switches => ['-c'],
+                   stderr => 1 );
+like( $result, qr/syntax OK$/, "preamble compiles");
+
+$result = runperl( switches => ["-w"],
+                   stderr => 1,
+                   prog => <<'PROG' );
+$SIG{__WARN__} = sub { die $_[0] }; require q(lib/h2ph.pht);
+PROG
 is( $result, '', "output free of warnings" );
 
 # cleanup

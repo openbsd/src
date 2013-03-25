@@ -1,5 +1,14 @@
 Revision history for Perl extension Win32API::File.
 
+0.1200 by Alexandr Ciornii 2011-07-01
+        - Spelling fixes by Peter John Acklam
+        - Upgraded Makefile.PL
+        - Don't bother checking $[
+
+0.1101_01 by Alexandr Ciornii 2011-02-26
+        - More metadata in META.yml
+        - [Set|Get]StdHandle functions added (Chris 'BinGOs' Williams)
+
 0.1101 by Alexandr Ciornii 2008-11-17
         - require Win32.pm (not core on Cygwin 5.8.8)
         - file.t uses Win32.pm only if necessary

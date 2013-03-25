@@ -3,10 +3,10 @@
  *
  * Ref: NIST FIPS PUB 180-2 Secure Hash Standard
  *
- * Copyright (C) 2003-2008 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2012 Mark Shelor, All Rights Reserved
  *
- * Version: 5.47
- * Wed Apr 30 04:00:54 MST 2008
+ * Version: 5.71
+ * Wed Feb 29 04:06:10 MST 2012
  *
  */
 
@@ -265,6 +265,8 @@ void sharewind(SHA *s)
 	else if (s->alg == SHA256) SHA_INIT(256, 256);
 	else if (s->alg == SHA384) SHA_INIT(384, 512);
 	else if (s->alg == SHA512) SHA_INIT(512, 512);
+	else if (s->alg == SHA512224) SHA_INIT(512224, 512);
+	else if (s->alg == SHA512256) SHA_INIT(512256, 512);
 }
 
 /* shaopen: creates a new digest object */
@@ -273,7 +275,8 @@ SHA *shaopen(int alg)
 	SHA *s;
 
 	if (alg != SHA1 && alg != SHA224 && alg != SHA256 &&
-		alg != SHA384 && alg != SHA512)
+		alg != SHA384    && alg != SHA512 &&
+		alg != SHA512224 && alg != SHA512256)
 		return(NULL);
 	if (alg >= SHA384 && !sha_384_512)
 		return(NULL);
@@ -468,6 +471,12 @@ char *shabase64(SHA *s)
 int shadsize(SHA *s)
 {
 	return(s->digestlen);
+}
+
+/* shaalg: returns which SHA algorithm is being used */
+int shaalg(SHA *s)
+{
+	return(s->alg);
 }
 
 /* shadup: duplicates current digest object */

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# t/strip_verbatim_indent.t.t - check verabtim indent stripping feature
+# t/strip_verbatim_indent.t.t - check verbatim indent stripping feature
 
 BEGIN {
     chdir 't' if -d 't';
@@ -8,7 +8,7 @@ BEGIN {
 
 use strict;
 use lib '../lib';
-use Test::More tests => 79;
+use Test::More tests => 87;
 #use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
@@ -84,6 +84,13 @@ for my $spec (
         qq{<Document><Verbatim\nxml:space="preserve">foo bar\nbaz blez</Verbatim></Document>},
         "<pre><code>foo bar\nbaz blez</code></pre>\n\n",
         'militant code ref'
+    ],
+    [
+        "\n=pod\n\n foo (bar\n   baz blez\n",
+        sub { (my $i = $_[0]->[0]) =~ s/S.*//; $i },
+        qq{<Document><Verbatim\nxml:space="preserve">\n   baz blez</Verbatim></Document>},
+        "<pre><code>\n   baz blez</code></pre>\n\n",
+        'code ref and paren'
     ],
 ) {
     my ($pod, $indent, $xml, $xhtml, $desc) = @$spec;

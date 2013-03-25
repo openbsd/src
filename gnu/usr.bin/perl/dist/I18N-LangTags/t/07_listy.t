@@ -1,30 +1,27 @@
-
-require 5;
- # Time-stamp: "2003-10-10 17:37:34 ADT"
 use strict;
-use Test;
-BEGIN { plan tests => 17 };
-BEGIN { ok 1 }
-use I18N::LangTags::List;
+use Test::More tests => 16;
+BEGIN {use_ok('I18N::LangTags::List');}
 
-print "# Perl v$], I18N::LangTags::List v$I18N::LangTags::List::VERSION\n";
+note("Perl v$], I18N::LangTags::List v$I18N::LangTags::List::VERSION");
 
-ok  I18N::LangTags::List::name('fr'), 'French';
-ok  I18N::LangTags::List::name('fr-fr');
-ok !I18N::LangTags::List::name('El Zorcho');
-ok !I18N::LangTags::List::name();
+is(I18N::LangTags::List::name('fr'), 'French');
+isnt(I18N::LangTags::List::name('fr-fr'), undef);
+is(I18N::LangTags::List::name('El Zorcho'), undef);
+is(I18N::LangTags::List::name(), undef);
 
-
-ok !I18N::LangTags::List::is_decent();
-ok  I18N::LangTags::List::is_decent('fr');
-ok  I18N::LangTags::List::is_decent('fr-blorch');
-ok !I18N::LangTags::List::is_decent('El Zorcho');
-ok !I18N::LangTags::List::is_decent('sgn');
-ok  I18N::LangTags::List::is_decent('sgn-us');
-ok !I18N::LangTags::List::is_decent('i');
-ok  I18N::LangTags::List::is_decent('i-mingo');
-ok  I18N::LangTags::List::is_decent('i-mingo-tom');
-ok !I18N::LangTags::List::is_decent('cel');
-ok  I18N::LangTags::List::is_decent('cel-gaulish');
-
-ok 1; # one for the road
+isnt(I18N::LangTags::List::is_decent(), undef);
+foreach(['fr', 2],
+	['fr-blorch', 2],
+	['El Zorcho', 0],
+	['sgn', 0],
+	['sgn-us', 2],
+	['i', 0],
+	['i-mingo', 2],
+	['i-mingo-tom', 2],
+	['cel', 0],
+	['cel-gaulish', 2],
+       ) {
+    my ($tag, $expect) = @$_;
+    is(I18N::LangTags::List::is_decent($tag), $expect,
+       "I18N::LangTags::List::is_decent('$tag')");
+}

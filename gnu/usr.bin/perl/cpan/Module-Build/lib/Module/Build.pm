@@ -10,67 +10,15 @@ use strict;
 use File::Spec ();
 use File::Path ();
 use File::Basename ();
+use Perl::OSType ();
 
 use Module::Build::Base;
 
 use vars qw($VERSION @ISA);
 @ISA = qw(Module::Build::Base);
-$VERSION = '0.3603';
+$VERSION = '0.39_01';
 $VERSION = eval $VERSION;
 
-# Okay, this is the brute-force method of finding out what kind of
-# platform we're on.  I don't know of a systematic way.  These values
-# came from the latest (bleadperl) perlport.pod.
-
-my %OSTYPES = qw(
-		 aix       Unix
-		 bsdos     Unix
-		 dgux      Unix
-		 dragonfly Unix
-		 dynixptx  Unix
-		 freebsd   Unix
-		 linux     Unix
-		 haiku     Unix
-		 hpux      Unix
-		 irix      Unix
-		 darwin    Unix
-		 machten   Unix
-		 midnightbsd Unix
-		 mirbsd    Unix
-		 next      Unix
-		 openbsd   Unix
-		 netbsd    Unix
-		 dec_osf   Unix
-		 nto       Unix
-		 svr4      Unix
-		 svr5      Unix
-		 sco_sv    Unix
-		 unicos    Unix
-		 unicosmk  Unix
-		 solaris   Unix
-		 sunos     Unix
-		 cygwin    Unix
-		 os2       Unix
-		 interix   Unix
-		 gnu       Unix
-		 gnukfreebsd Unix
-		 nto       Unix
-
-		 dos       Windows
-		 MSWin32   Windows
-
-		 os390     EBCDIC
-		 os400     EBCDIC
-		 posix-bc  EBCDIC
-		 vmesa     EBCDIC
-
-		 MacOS     MacOS
-		 VMS       VMS
-		 VOS       VOS
-		 riscos    RiscOS
-		 amigaos   Amiga
-		 mpeix     MPEiX
-		);
 
 # Inserts the given module into the @ISA hierarchy between
 # Module::Build and its immediate parent
@@ -93,18 +41,18 @@ sub _interpose_module {
 if (grep {-e File::Spec->catfile($_, qw(Module Build Platform), $^O) . '.pm'} @INC) {
   __PACKAGE__->_interpose_module("Module::Build::Platform::$^O");
 
-} elsif (exists $OSTYPES{$^O}) {
-  __PACKAGE__->_interpose_module("Module::Build::Platform::$OSTYPES{$^O}");
+} elsif ( my $ostype = os_type() ) {
+  __PACKAGE__->_interpose_module("Module::Build::Platform::$ostype");
 
 } else {
   warn "Unknown OS type '$^O' - using default settings\n";
 }
 
-sub os_type { $OSTYPES{$^O} }
+sub os_type { return Perl::OSType::os_type() }
 
-sub is_vmsish { return ((os_type() || '') eq 'VMS') }
-sub is_windowsish { return ((os_type() || '') eq 'Windows') }
-sub is_unixish { return ((os_type() || '') eq 'Unix') }
+sub is_vmsish { return Perl::OSType::is_os_type('VMS') }
+sub is_windowsish { return Perl::OSType::is_os_type('Windows') }
+sub is_unixish { return Perl::OSType::is_os_type('Unix') }
 
 1;
 
@@ -119,7 +67,6 @@ testall testcover testdb testpod testpodcoverage versioninstall
 =head1 NAME
 
 Module::Build - Build and install Perl modules
-
 
 =head1 SYNOPSIS
 
@@ -167,14 +114,32 @@ This illustrates initial configuration and the running of three
 'actions'.  In this case the actions run are 'build' (the default
 action), 'test', and 'install'.  Other actions defined so far include:
 
-<action_list>
+  build                          manifest
+  clean                          manifest_skip
+  code                           manpages
+  config_data                    pardist
+  diff                           ppd
+  dist                           ppmdist
+  distcheck                      prereq_data
+  distclean                      prereq_report
+  distdir                        pure_install
+  distinstall                    realclean
+  distmeta                       retest
+  distsign                       skipcheck
+  disttest                       test
+  docs                           testall
+  fakeinstall                    testcover
+  help                           testdb
+  html                           testpod
+  install                        testpodcoverage
+  installdeps                    versioninstall
 
 You can run the 'help' action for a complete list of actions.
 
 
 =head1 GUIDE TO DOCUMENTATION
 
-The documentation for C<Module::Build> is broken up into three sections:
+The documentation for C<Module::Build> is broken up into sections:
 
 =over
 
@@ -327,6 +292,15 @@ Creates a "distribution directory" named C<$dist_name-$dist_version>
 copies all the files listed in the F<MANIFEST> file to that directory.
 This directory is what the distribution tarball is created from.
 
+=item distinstall
+
+[version 0.37]
+
+Performs the 'distdir' action, then switches into that directory and runs a
+C<perl Build.PL>, followed by the 'build' and 'install' actions in that
+directory.  Use PERL_MB_OPT or F<.modulebuildrc> to set options that should be
+applied during subprocesses
+
 =item distmeta
 
 [version 0.21]
@@ -336,17 +310,13 @@ Creates the F<META.yml> file that describes the distribution.
 F<META.yml> is a file containing various bits of I<metadata> about the
 distribution.  The metadata includes the distribution name, version,
 abstract, prerequisites, license, and various other data about the
-distribution.  This file is created as F<META.yml> in YAML format.
-It is recommended that the C<YAML::Tiny> module be installed to create it.
-If the C<YAML::Tiny> module is not installed, an internal module supplied
-with Module::Build will be used to write the META.yml file, and this
-will most likely be fine.
+distribution.  This file is created as F<META.yml> in a simplified YAML format.
 
 F<META.yml> file must also be listed in F<MANIFEST> - if it's not, a
 warning will be issued.
 
-The current version of the F<META.yml> specification can be found at
-L<http://module-build.sourceforge.net/META-spec-current.html>
+The current version of the F<META.yml> specification can be found
+on CPAN as L<CPAN::Meta::Spec>.
 
 =item distsign
 
@@ -360,9 +330,11 @@ MANIFEST.
 
 [version 0.05]
 
-Performs the 'distdir' action, then switches into that directory and
-runs a C<perl Build.PL>, followed by the 'build' and 'test' actions in
-that directory.
+Performs the 'distdir' action, then switches into that directory and runs a
+C<perl Build.PL>, followed by the 'build' and 'test' actions in that directory.
+Use PERL_MB_OPT or F<.modulebuildrc> to set options that should be applied
+during subprocesses
+
 
 =item docs
 
@@ -471,6 +443,14 @@ add your own stuff to it:
 
 See the L<distcheck> and L<skipcheck> actions if you want to find out
 what the C<manifest> action would do, without actually doing anything.
+
+=item manifest_skip
+
+[version 0.3608]
+
+This is an action intended for use by module authors, not people
+installing modules.  It will generate a boilerplate MANIFEST.SKIP file
+if one does not already exist.
 
 =item manpages
 
@@ -699,7 +679,7 @@ specify the C<versionlib> parameter when you run the C<Build.PL> script:
   perl Build.PL --versionlib /my/version/place/
 
 To override which version the module is installed as, specify the
-C<versionlib> parameter when you run the C<Build.PL> script:
+C<version> parameter when you run the C<Build.PL> script:
 
   perl Build.PL --version 0.50
 
@@ -733,7 +713,8 @@ Suppress informative messages on output.
 
 =item verbose
 
-Display extra information about the Build on output.
+Display extra information about the Build on output.  C<verbose> will
+turn off C<quiet>
 
 =item cpan_client
 
@@ -874,7 +855,7 @@ This is the same as C<bindoc> above, but applies to HTML documents.
 
 =item libhtml
 
-This is the same as C<bindoc> above, but applies to HTML documents.
+This is the same as C<libdoc> above, but applies to HTML documents.
 
 =back
 
@@ -1101,8 +1082,8 @@ Module-Build mailing list at <module-build@perl.org>.
 Bug reports are also welcome at
 <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Module-Build>.
 
-The latest development version is available from the Subversion
-repository at <https://svn.perl.org/modules/Module-Build/trunk/>
+The latest development version is available from the Git
+repository at <https://github.com/dagolden/module-build/>
 
 
 =head1 COPYRIGHT
@@ -1116,10 +1097,10 @@ modify it under the same terms as Perl itself.
 =head1 SEE ALSO
 
 perl(1), L<Module::Build::Cookbook>, L<Module::Build::Authoring>,
-L<Module::Build::API>, L<ExtUtils::MakeMaker>, L<YAML::Tiny>
+L<Module::Build::API>, L<ExtUtils::MakeMaker>
 
 F<META.yml> Specification:
-L<http://module-build.sourceforge.net/META-spec-current.html>
+L<CPAN::Meta::Spec>
 
 L<http://www.dsmit.com/cons/>
 

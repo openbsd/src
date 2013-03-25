@@ -11,7 +11,7 @@ See L<Memoize>.
 =cut
 
 use vars qw(@ISA $VERSION);
-$VERSION = 0.65;
+$VERSION = '1.02';
 @ISA = qw(DB_File GDBM_File Memoize::NDBM_File Memoize::SDBM_File ODBM_File) unless @ISA;
 
 my $verbose = 1;

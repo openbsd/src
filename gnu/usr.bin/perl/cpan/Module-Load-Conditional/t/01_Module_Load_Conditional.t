@@ -120,7 +120,7 @@ use_ok( 'Module::Load::Conditional' );
     my $rv = check_install( module  => 'Module::Does::Not::Exist' );
 
     ok( !$rv->{uptodate} && !$rv->{version} && !$rv->{file},
-        q[Verify non-existant module]
+        q[Verify non-existent module]
     );
 
 }

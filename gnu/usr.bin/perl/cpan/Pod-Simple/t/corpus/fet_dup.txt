@@ -1,5 +1,5 @@
 
-We have deliberately reduntant =encoding statements here.
+We have deliberately redundant =encoding statements here.
 This should generate no errata.
 
 =encoding koi8-r

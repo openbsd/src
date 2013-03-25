@@ -1,13 +1,11 @@
 # Test against short bitwise vectors from Jim Gillogly and Francois Grieu
-#
-# http://www.chiark.greenend.org.uk/pipermail/ukcrypto/1999-February/003538.html
 
 use strict;
 
 my $MODULE;
 
 BEGIN {
-	$MODULE = ($ENV{PERL_CORE} || -d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
 	eval "require $MODULE" || die $@;
 	$MODULE->import(qw());
 }

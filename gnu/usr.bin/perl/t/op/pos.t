@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 6;
+plan tests => 8;
 
 $x='banana';
 $x=~/.a/g;
@@ -28,3 +28,22 @@ $x = "123 56"; $x =~ / /g;
 is(pos($x), 4);
 { local $x }
 is(pos($x), 4);
+
+# Explicit test that triggers the utf8_mg_len_cache_update() code path in
+# Perl_sv_pos_b2u().
+
+$x = "\x{100}BC";
+$x =~ m/.*/g;
+is(pos $x, 3);
+
+
+my $destroyed;
+{ package Class; DESTROY { ++$destroyed; } }
+
+$destroyed = 0;
+{
+    my $x = '';
+    pos($x) = 0;
+    $x = bless({}, 'Class');
+}
+is($destroyed, 1, 'Timely scalar destruction with lvalue pos');

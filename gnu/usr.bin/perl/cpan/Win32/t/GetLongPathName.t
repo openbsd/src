@@ -34,7 +34,6 @@ if ($drive) {
     for (@paths) {
 	s/^c:/$drive/;
     }
-    push @paths, $ENV{SYSTEMROOT} if $ENV{SYSTEMROOT};
 }
 my %expect;
 @expect{@paths} = map { my $x = $_;

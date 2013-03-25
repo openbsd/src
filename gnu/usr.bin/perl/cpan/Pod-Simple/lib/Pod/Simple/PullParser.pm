@@ -1,7 +1,7 @@
 
 require 5;
 package Pod::Simple::PullParser;
-$VERSION = '3.14';
+$VERSION = '3.20';
 use Pod::Simple ();
 BEGIN {@ISA = ('Pod::Simple')}
 
@@ -231,6 +231,8 @@ sub unget_token {
 sub set_source {
   my $self = shift @_;
   return $self->{'source_fh'} unless @_;
+  Carp::croak("Cannot assign new source to pull parser; create a new instance, instead")
+      if $self->{'source_fh'} || $self->{'source_scalar_ref'} || $self->{'source_arrayref'};
   my $handle;
   if(!defined $_[0]) {
     Carp::croak("Can't use empty-string as a source for set_source");
@@ -453,7 +455,7 @@ sub _get_titled_section {
   $self->unget_token(@to_unget);
   
   if(DEBUG) {
-    if(defined $title) { print "  Returing title <$title>\n" }
+    if(defined $title) { print "  Returning title <$title>\n" }
     else { print "Returning title <>\n" }
   }
   
@@ -532,7 +534,7 @@ And elsewhere:
  package SomePodProcessor;
  use strict;
  use base qw(Pod::Simple::PullParser);
- 
+
  sub run {
    my $self = shift;
   Token:
@@ -623,14 +625,14 @@ process the token-stream from the beginning.
 For example, suppose you have a document that starts out:
 
   =head1 NAME
-  
+
   Hoo::Boy::Wowza -- Stuff B<wow> yeah!
 
 $parser->get_title on that document will return "Hoo::Boy::Wowza --
 Stuff wow yeah!". If the document starts with:
 
   =head1 Name
-  
+
   Hoo::Boy::W00t -- Stuff B<w00t> yeah!
 
 Then you'll need to pass the C<nocase> option in order to recognize "Name":
@@ -648,7 +650,7 @@ the title seems to be of the form "SomeModuleName -- description".
 For example, suppose you have a document that starts out:
 
   =head1 NAME
-  
+
   Hoo::Boy::Wowza -- Stuff B<wow> yeah!
 
 then $parser->get_short_title on that document will return
@@ -657,14 +659,14 @@ then $parser->get_short_title on that document will return
 But if the document starts out:
 
   =head1 NAME
-  
+
   Hooboy, stuff B<wow> yeah!
 
 then $parser->get_short_title on that document will return "Hooboy,
 stuff wow yeah!". If the document starts with:
 
   =head1 Name
-  
+
   Hoo::Boy::W00t -- Stuff B<w00t> yeah!
 
 Then you'll need to pass the C<nocase> option in order to recognize "Name":
@@ -769,6 +771,7 @@ Pod::Simple is maintained by:
 =back
 
 =cut
+
 JUNK:
 
 sub _old_get_title {  # some witchery in here
@@ -833,7 +836,7 @@ sub _old_get_title {  # some witchery in here
   $self->unget_token(@to_unget);
   
   if(DEBUG) {
-    if(defined $title) { print "  Returing title <$title>\n" }
+    if(defined $title) { print "  Returning title <$title>\n" }
     else { print "Returning title <>\n" }
   }
   

@@ -1,7 +1,7 @@
 
 # Call.pm
 #
-# Copyright (c) 1995-2009 Paul Marquess. All rights reserved.
+# Copyright (c) 1995-2011 Paul Marquess. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
@@ -18,7 +18,7 @@ use vars qw($VERSION @ISA @EXPORT) ;
 
 @ISA = qw(Exporter DynaLoader);
 @EXPORT = qw( filter_add filter_del filter_read filter_read_exact) ;
-$VERSION = "1.08" ;
+$VERSION = "1.40" ;
 
 sub filter_read_exact($)
 {
@@ -483,8 +483,7 @@ Filter::Util::Call. Although it doesn't allow the fine control that
 Filter::Util::Call does, it should be adequate for the majority of
 applications. It's available at
 
-   http://www.cpan.org/modules/by-author/Damian_Conway/Filter-Simple.tar.gz
-   http://www.csse.monash.edu.au/~damian/CPAN/Filter-Simple.tar.gz
+   http://search.cpan.org/dist/Filter-Simple/
 
 =head1 AUTHOR
 

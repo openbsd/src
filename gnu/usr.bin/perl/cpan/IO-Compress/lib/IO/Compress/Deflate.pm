@@ -1,26 +1,29 @@
 package IO::Compress::Deflate ;
 
+require 5.006 ;
+
 use strict ;
 use warnings;
 use bytes;
 
 require Exporter ;
 
-use IO::Compress::RawDeflate 2.024 ;
+use IO::Compress::RawDeflate 2.048 ();
+use IO::Compress::Adapter::Deflate 2.048 ;
 
-use Compress::Raw::Zlib  2.024 ;
-use IO::Compress::Zlib::Constants 2.024 ;
-use IO::Compress::Base::Common  2.024 qw(createSelfTiedObject);
+use IO::Compress::Zlib::Constants 2.048 ;
+use IO::Compress::Base::Common  2.048 qw(createSelfTiedObject);
 
 
-our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $DeflateError);
+our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $DeflateError);
 
-$VERSION = '2.024';
+$VERSION = '2.048';
 $DeflateError = '';
 
 @ISA    = qw(Exporter IO::Compress::RawDeflate);
 @EXPORT_OK = qw( $DeflateError deflate ) ;
 %EXPORT_TAGS = %IO::Compress::RawDeflate::DEFLATE_CONSTANTS ;
+
 push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
 Exporter::export_ok_tags('all');
 
@@ -281,8 +284,6 @@ If C<$input> is a string that is delimited by the characters "<" and ">"
 C<deflate> will assume that it is an I<input fileglob string>. The
 input is the list of files that match the fileglob.
 
-If the fileglob does not match any files ...
-
 See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
@@ -326,6 +327,8 @@ output is the list of files that match the fileglob.
 
 When C<$output> is an fileglob string, C<$input> must also be a fileglob
 string. Anything else is an error.
+
+See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
 
@@ -394,8 +397,8 @@ data to the output data stream.
 
 So when the output is a filehandle it will carry out a seek to the eof
 before writing any compressed data. If the output is a filename, it will be opened for
-appending. If the output is a buffer, all compressed data will be appened to
-the existing buffer.
+appending. If the output is a buffer, all compressed data will be
+appended to the existing buffer.
 
 Conversely when C<Append> is not specified, or it is present and is set to
 false, it will operate as follows.
@@ -774,7 +777,7 @@ If the C<$z> object is associated with a file or a filehandle, C<fileno>
 will return the underlying file descriptor. Once the C<close> method is
 called C<fileno> will return C<undef>.
 
-If the C<$z> object is is associated with a buffer, this method will return
+If the C<$z> object is associated with a buffer, this method will return
 C<undef>.
 
 =head2 close
@@ -884,8 +887,6 @@ These symbolic constants are used by the C<Strategy> option in the constructor.
 
 See L<IO::Compress::FAQ|IO::Compress::FAQ/"Apache::GZip Revisited">
 
-    
-
 =head2 Working with Net::FTP
 
 See L<IO::Compress::FAQ|IO::Compress::FAQ/"Compressed files and Net::FTP">
@@ -894,7 +895,7 @@ See L<IO::Compress::FAQ|IO::Compress::FAQ/"Compressed files and Net::FTP">
 
 L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
 
-L<Compress::Zlib::FAQ|Compress::Zlib::FAQ>
+L<IO::Compress::FAQ|IO::Compress::FAQ>
 
 L<File::GlobMapper|File::GlobMapper>, L<Archive::Zip|Archive::Zip>,
 L<Archive::Tar|Archive::Tar>,
@@ -923,7 +924,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2010 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

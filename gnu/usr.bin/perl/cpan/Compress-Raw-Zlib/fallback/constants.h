@@ -24,7 +24,7 @@ static int
 constant_7 (pTHX_ const char *name, IV *iv_return) {
   /* When generated this function returned values for the list of names given
      here.  However, subsequent manual editing may have added or removed some.
-     OS_CODE Z_ASCII Z_BLOCK Z_ERRNO Z_FIXED */
+     OS_CODE Z_ASCII Z_BLOCK Z_ERRNO Z_FIXED Z_TREES */
   /* Offset 6 gives the best switch position.  */
   switch (name[6]) {
   case 'D':
@@ -76,6 +76,17 @@ constant_7 (pTHX_ const char *name, IV *iv_return) {
     /*                     O     */
 #ifdef Z_ERRNO
       *iv_return = Z_ERRNO;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'S':
+    if (memEQ(name, "Z_TREE", 6)) {
+    /*                     S     */
+#if ZLIB_VERNUM >= 0x1240
+      *iv_return = Z_TREES;
       return PERL_constant_ISIV;
 #else
       return PERL_constant_NOTDEF;
@@ -309,7 +320,7 @@ constant (pTHX_ const char *name, STRLEN len, IV *iv_return, const char **pv_ret
      Regenerate these constant functions by feeding this entire source file to
      perl -x
 
-#!/usr/bin/perl -w
+#!/linux-shared/base/perl/install/bin/perl -w
 use ExtUtils::Constant qw (constant_types C_constant XS_constant);
 
 my $types = {map {($_, 1)} qw(IV PV)};
@@ -320,13 +331,14 @@ my @names = (qw(DEF_WBITS MAX_MEM_LEVEL MAX_WBITS OS_CODE Z_ASCII
 	       Z_MEM_ERROR Z_NEED_DICT Z_NO_COMPRESSION Z_NO_FLUSH Z_NULL Z_OK
 	       Z_PARTIAL_FLUSH Z_RLE Z_STREAM_END Z_STREAM_ERROR Z_SYNC_FLUSH
 	       Z_UNKNOWN Z_VERSION_ERROR),
-            {name=>"ZLIB_VERSION", type=>"PV"});
+            {name=>"ZLIB_VERSION", type=>"PV"},
+            {name=>"Z_TREES", type=>"IV", macro=>["#if ZLIB_VERNUM >= 0x1240\n", "#endif\n"]});
 
-print constant_types(); # macro defs
+print constant_types(), "\n"; # macro defs
 foreach (C_constant ("Zlib", 'constant', 'IV', $types, undef, 3, @names) ) {
     print $_, "\n"; # C constant subs
 }
-print "#### XS Section:\n";
+print "\n#### XS Section:\n";
 print XS_constant ("Zlib", $types);
 __END__
    */

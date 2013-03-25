@@ -4,7 +4,7 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.hpux - Perl version 5 on Hewlett-Packard Unix (HP-UX) systems
+perlhpux - Perl version 5 on Hewlett-Packard Unix (HP-UX) systems
 
 =head1 DESCRIPTION
 
@@ -41,7 +41,7 @@ of Perl and the updated modules.
 
 The official (threaded) builds from HP, as they are shipped on the
 Application DVD/CD's are available on
-http://www.software.hp.com/portal/swdepot/displayProductInfo.do?productNumber=PERL
+L<http://www.software.hp.com/portal/swdepot/displayProductInfo.do?productNumber=PERL>
 for both PA-RISC and IPF (Itanium Processor Family). They are built
 with the HP ANSI-C compiler. Up till 5.8.8 that was done by ActiveState.
 
@@ -69,7 +69,7 @@ HP has asked the porting centre to move Open Source binaries
 from /opt to /usr/local, so binaries produced since the start
 of July 2002 are located in /usr/local.
 
-One of HP porting centres URL's is http://hpux.connect.org.uk/
+One of HP porting centres URL's is L<http://hpux.connect.org.uk/>
 The port currently available is built with GNU gcc.
 
 =head2 Compiling Perl 5 on HP-UX
@@ -122,7 +122,7 @@ ends as shown in the following table:
  | cores  |                | PA-8900/rp34x0 | 2014            |
  +--------+----------------+----------------+-----------------+
 
-From http://www.hp.com/products1/evolution/9000/faqs.html
+From L<http://www.hp.com/products1/evolution/9000/faqs.html>
 
  The last order date for HP 9000 systems was December 31, 2008.
 
@@ -272,7 +272,7 @@ support all versions of HP-UX, here is a short list
   11.31  11i v3     64   PA & IPF
 
 See for the full list of hardware/OS support and expected end-of-life
-http://www.hp.com/go/hpuxservermatrix
+L<http://www.hp.com/go/hpuxservermatrix>
 
 =head2 Building Dynamic Extensions on HP-UX
 
@@ -402,16 +402,16 @@ for updates/patches. Enter "ANSI" as keyword.
 
 When you are going to use the GNU C compiler (gcc), and you don't have
 gcc yet, you can either build it yourself from the sources (available
-from e.g. http://www.gnu.ai.mit.edu/software/gcc/releases.html) or fetch
+from e.g. L<http://gcc.gnu.org/mirrors.html>) or fetch
 a prebuilt binary from the HP porting center. gcc prebuilds can be
 fetched from
-http://h21007.www2.hp.com/dspp/tech/tech_TechSoftwareDetailPage_IDX/1,1703,547,00.html
+L<http://h21007.www2.hp.com/dspp/tech/tech_TechSoftwareDetailPage_IDX/1,1703,547,00.html>
 (Browse through the list, because there are often multiple versions of
 the same package available).
 
 Above mentioned distributions are depots. H.Merijn Brand has made prebuilt
-gcc binaries available on http://mirrors.develooper.com/hpux/ and/or
-http://www.cmve.net/~merijn/ for HP-UX 10.20, HP-UX 11.00, HP-UX 11.11
+gcc binaries available on L<http://mirrors.develooper.com/hpux/> and/or
+L<http://www.cmve.net/~merijn/> for HP-UX 10.20, HP-UX 11.00, HP-UX 11.11
 (HP-UX 11i v1), and HP-UX 11.23 (HP-UX 11i v2) in both 32- and 64-bit
 versions. These are bzipped tar archives that also include recent GNU
 binutils and GNU gdb.  Read the instructions on that page to rebuild gcc
@@ -481,7 +481,7 @@ HP-UX versions before 10.30 require a separate installation of a POSIX
 threads library package. Two examples are the HP DCE package, available
 on "HP-UX Hardware Extensions 3.0, Install and Core OS, Release 10.20,
 April 1999 (B3920-13941)" or the Freely available PTH package, available
-on H.Merijn's site (http://mirrors.develooper.com/hpux/). The use of PTH
+on H.Merijn's site (L<http://mirrors.develooper.com/hpux/>). The use of PTH
 will be unsupported in perl-5.12 and up and is rather buggy in 5.11.x.
 
 If you are going to use the HP DCE package, the library used for threading
@@ -634,6 +634,27 @@ bug seems to be to create add to the file F</etc/nsswitch.conf>
 Whether you are using NIS does not matter.  Amazingly enough,
 the same bug also affects Solaris.
 
+=head1 error: pasting ")" and "l" does not give a valid preprocessing token
+
+There seems to be a broken system header file in HP-UX 11.00 that
+breaks perl building in 32bit mode with GNU gcc-4.x causing this
+error. The same file for HP-UX 11.11 (even though the file is older)
+does not show this failure, and has the correct definition, so the
+best fix is to patch the header to match:
+
+ --- /usr/include/inttypes.h  2001-04-20 18:42:14 +0200
+ +++ /usr/include/inttypes.h  2000-11-14 09:00:00 +0200
+ @@ -72,7 +72,7 @@
+  #define UINT32_C(__c)                   __CONCAT_U__(__c)
+  #else /* __LP64 */
+  #define INT32_C(__c)                    __CONCAT__(__c,l)
+ -#define UINT32_C(__c)                   __CONCAT__(__CONCAT_U__(__c),l)
+ +#define UINT32_C(__c)                   __CONCAT__(__c,ul)
+  #endif /* __LP64 */
+
+  #define INT64_C(__c)                    __CONCAT_L__(__c,l)
+
+
 =head1 Miscellaneous
 
 HP-UX 11 Y2K patch "Y2K-1100 B.11.00.B0125 HP-UX Core OS Year 2000
@@ -649,9 +670,5 @@ H.Merijn Brand <h.m.brand@xs4all.nl>
 Jeff Okamoto <okamoto@corp.hp.com>
 
 With much assistance regarding shared libraries from Marc Sabatella.
-
-=head1 DATE
-
-Version 0.8.3: 2008-06-24
 
 =cut

@@ -19,7 +19,7 @@
 | Manfredi for providing us with this very useful module.
 +=======================================================================
 
-The Storable extension brings persistency to your data.
+The Storable extension brings persistence to your data.
 
 You may recursively store to disk any data structure, no matter how
 complex and circular it is, provided it contains only SCALAR, ARRAY,
@@ -44,10 +44,10 @@ To compile this extension, run:
     make
     make install
 
-There is an embeded POD manual page in Storable.pm.
+There is an embedded POD manual page in Storable.pm.
 
 Storable was written by Raphael Manfredi <Raphael_Manfredi@pobox.com>
-Maitainance is now done by the perl5-porters <perl5-porters@perl.org>
+Maintenance is now done by the perl5-porters <perl5-porters@perl.org>
 
 Please e-mail us with problems, bug fixes, comments and complaints,
 although if you have complements you should send them to Raphael.
@@ -59,7 +59,7 @@ Thanks to (in chronological order):
 
     Jarkko Hietaniemi <jhi@iki.fi>
     Ulrich Pfeifer <pfeifer@charly.informatik.uni-dortmund.de>
-    Benjamin A. Holzman <bah@ecnvantage.com>
+    Benjamin A. Holzman <bholzman@earthlink.net>
     Andrew Ford <A.Ford@ford-mason.co.uk>
     Gisle Aas <gisle@aas.no>
     Jeff Gresham <gresham_jeffrey@jpmorgan.com>

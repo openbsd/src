@@ -1,6 +1,158 @@
 # ChangeLog for Pod::Simple dist
 #---------------------------------------------------------------------------
 
+2012-03-01   David E. Wheeler <david@justatheory.org>
+	* Release 3.20
+
+	Removed use of 'done_testing' in t/xhtml15.t, which was added in
+	v3.19. Thanks to Paul Howarth for the catch.
+
+	Fixed quoting of links in a regular expression Pod::Simple::Text.
+	Reported by Father Chrysostomos.
+
+	Fix test failure on case-insensitive, non-case-preserving file systems
+	(VMS I'm looking at *you*). Patch from Craig A. Berry.
+
+	Pod::Simple::HTML no longer emits "href='#___top'" if a TOC
+	(index) is not output. Patch from Rick Myers.
+
+	Fixed links in the TOC of XHTML output to use IDs derived from encoded
+	text, rather than raw Pod, so that it will link to the ID actually
+	generated for the section. Thanks to Randy Stauner for the report
+	(with test case!) (RT #72544).
+
+	PullParser now throws an exception on an attempt to set a source
+	more than once. Necessary because data from the previous source
+	will be cached, so the new source would be ignored anyway. Create a
+	new PullParser, instead. Thanks to Paul Boldra for the report (RT
+	#74265).
+
+2011-08-23   David E. Wheeler <david@justatheory.org>
+	* Release 3.19
+
+	Fixed occasional test failure when tests are run in parallel
+	(HARNESS_OPTIONS=j6:c). Thanks to Alexei Znamensky for the report and
+	Marc Green for the fix.
+
+	Added "pod_handler" option. This is a callback that can be used to
+	inspect the content on a "=pod" line. Marc Green/Google Summer of
+	Code.
+
+	Added tests for proper line-ending parsing from the previous
+	release. The tests were in the repository, but didn't make it into
+	the MANIFEST or, therefore, the release. Reported by Marc Green.
+
+	Added the "parse_empty_lists" option. When enabled, Pod::Simple
+	will recognize empty lists (that is, a blocks with '=over' and
+	'=back' but nothing in between). Disabled by default. Marc
+	Green/Google Summer of Code.
+
+	Added the "whiteline_handler" attribute. It's much like
+	"code_handler", "cut_handler", and "pod_handler", except it's
+	triggered on lines that contain only whitespace characters. Marc
+	Green/Google Summer of Code.
+
+	Added "raw" attribute to L<> treelet that contains the L<>'s raw
+	contents. Marc Green/Google Summer of Code.
+
+	Pod directives autoclosed by Pod::Simple are now denoted as such
+	by the new "fake_closer" attribue. Marc Green/Google Summer of
+	Code.
+
+	Fixed incompatibility with Pod::Simple::HTMLBatch in
+	Pod::Simple::XHTML. Patch by Eric Johnson.
+
+2011-07-16   David E. Wheeler <david@justatheory.org>
+	* Release 3.18
+
+	Pod::Simple now properly parses Pod files using Mac OS Classic line-
+	endings (\r). Marc Green/Google Summer of Code.
+
+	Fixed test failure in 't/search50.t when the test finds a .pod but
+	the module is in a .pm. Thanks to the cpan-testers who reported
+	this when the test searched for Capture::Tiny.
+
+2011-07-09   David E. Wheeler <david@justatheory.org>
+	* Release 3.17
+
+	Documented tertiary methods. Patch from Shawn H Corey.
+
+	Added "backlink" option to Pod::Simple::XHTML. Thanks to Marc
+	Green/Google Summer of Code for the pull request.
+
+	Typos fixed in Pod::Simple::HTMLBatch. Reported by Shawn H Corey.
+
+	Fixed quoting of value returned by a "strip_verbatim_indent()"
+	code reference so that regex meta characters are properly escaped.
+
+	Added "anchor_items" option to Pod::Simple::XHMTL. This allows
+	text items (which are output as <dt> elements) to have IDs that
+	can be referenced in the "#" part of a URL. Marc Green/Google
+	Summer of Code.
+
+	Added "recurse" option to Pod::Simple::Search. It's enabled by
+	default; disable it to turn off recursion into subdirectories.
+	Marc Green/Google Summer of Code.
+
+	Added documentation to clarify the behavior of the "content_seen"
+	method. Thanks to Olaf Alders for the pull request.
+
+2011-03-14   David E. Wheeler <david@justatheory.org>
+	* Release 3.16
+
+	Fixed invalid HTML generated for nested lists by Pod::Simple::XHTML
+	(Fitz Elliott).
+
+	Replaced the invalid "<nobr>" tag -- created for "S<>" -- with
+	'<span style="white-space: nowrap;">' (Fitz Elliott).
+
+	Fixed some nerbles in our own Pod (Michael Stevens)
+
+	Improved the "Minimal code" example in Pod::Simple::HTML. The key
+	is to use pase_file(), not parse_from_file() (which should
+	otherwise be undocumented, and is just there for Pod::Parser
+	compatibility. Thanks to prodding from Ævar Arnfjörð Bjarmason (RT
+	#65428).
+
+	Added the html_charset() and html_encode_chars() attributes to
+	Pod::Simple::XHTML. Inspired by a bug report from Agent Zhang
+	(章亦春) (RT #29587).
+
+	Added "Minimal code" example to the Pod::Simple::XHTML documentation.
+
+	Fixed mispelling of the "=encoding" markup in the parser (it was
+	spelled "=encode"). Thanks to "TTY" for the patch. (RT #24820).
+
+2010-11-11   David E. Wheeler <david@justatheory.org>
+	* Release 3.15
+
+	Removed "perlpod.pod" and "perlpodspec.pod". These now just live
+	in the Perl core.
+
+	Fixed stylesheet names output by HTMLBatch to match the names of
+	the actual stylesheet files (broken in 3.09). Thanks to Kevin Ryde
+	for the report (RT #56725).
+
+	Added missing closing slash to the CSS links in the XHTML output.
+	Thanks to HarleyPig for the patch!
+
+	Added parens around bar "qw(...)" in t/xhtml05.t. Thanks to Jerry
+	D. Hedden for the patch.
+
+	Improved the Pod::Simple::HTML docs. Thanks to Gabor Szabo for the
+	patch.
+
+	Pod::Simple::XHTML now properly encodes entities in URLs in the
+	anchor tag. Thanks to John McNamara for the report (RT-60249).
+
+	Pod::Simple::HTML and XHTML now strip whitespace from the end of
+	section names that appear as anchor names for headers (in HTML)
+	and IDs (in XHTML). Such whitespace appeared when "X<>" entities
+	were stripped out but not the space between them (RT-56572).
+
+	Make test "t/search50.t" always pass on case-insensitive file
+	systems rather than just skip VMS.
+
 2009-04-27
 	* Release 3.14
 
@@ -59,7 +211,7 @@
 	Fixed the output of entities in L<> tags by Pod::Simple::XHTML.
 
 	Fixed the output of POD links from Pod::Simple::XHTML so that the
-	section part (/foo) is turned into a proper fragment identfier (#foo)
+	section part (/foo) is turned into a proper fragment identifier (#foo)
 	in the resulting search.cpan.org link.
 
 	Pod::Simple::Text now outputs URLs for links created in the
@@ -234,7 +386,6 @@
 
 	Just fixing some typos in the CSS generated by Pod::Simple:HTMLBatch.
 
-	
 2004-05-24   Sean M. Burke <sburke@cpan.org>
 	* Release 3.01
 

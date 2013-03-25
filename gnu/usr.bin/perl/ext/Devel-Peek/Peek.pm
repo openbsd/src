@@ -3,12 +3,12 @@
 
 package Devel::Peek;
 
-$VERSION = '1.04';
+$VERSION = '1.08';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
 require Exporter;
-use XSLoader ();
+require XSLoader;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(Dump mstat DeadCode DumpArray DumpWithOP DumpProg
@@ -16,7 +16,7 @@ use XSLoader ();
 @EXPORT_OK = qw(SvREFCNT SvREFCNT_inc SvREFCNT_dec CvGV);
 %EXPORT_TAGS = ('ALL' => [@EXPORT, @EXPORT_OK]);
 
-XSLoader::load 'Devel::Peek';
+XSLoader::load();
 
 sub import {
   my $c = shift;
@@ -139,7 +139,7 @@ When perl is compiled with support for memory footprint debugging
 
 Use mstat() function to emit a memory state statistic to the terminal.
 For more information on the format of output of mstat() see
-L<perldebguts/Using C<$ENV{PERL_DEBUG_MSTATS}>>.
+L<perldebguts/Using $ENV{PERL_DEBUG_MSTATS}>.
 
 Three additional functions allow access to this statistic from Perl.
 First, use C<mstats_fillhash(%hash)> to get the information contained
@@ -152,8 +152,9 @@ Two additional fields C<free>, C<used> contain array references which
 provide per-bucket count of free and used chunks.  Two other fields
 C<mem_size>, C<available_size> contain array references which provide
 the information about the allocated size and usable size of chunks in
-each bucket.  Again, see L<perldebguts/Using C<$ENV{PERL_DEBUG_MSTATS}>>
+each bucket.  Again, see L<perldebguts/Using $ENV{PERL_DEBUG_MSTATS}>
 for details.
+
 
 Keep in mind that only the first several "odd-numbered" buckets are
 used, so the information on size of the "odd-numbered" buckets which are
@@ -211,29 +212,32 @@ expect to see it well-thumbed.
 Let's begin by looking a simple scalar which is holding a string.
 
         use Devel::Peek;
-        $a = "hello";
+        $a = 42; $a = "hello";
         Dump $a;
 
 The output:
 
-        SV = PVIV(0xbc288)
+        SV = PVIV(0xbc288) at 0xbe9a8
           REFCNT = 1
           FLAGS = (POK,pPOK)
-          IV = 0
+          IV = 42
           PV = 0xb2048 "hello"\0
           CUR = 5
-          LEN = 6
+          LEN = 8
 
-This says C<$a> is an SV, a scalar.  The scalar is a PVIV, a string.
+This says C<$a> is an SV, a scalar.  The scalar type is a PVIV, which is
+capable of holding an integer (IV) and/or a string (PV) value. The scalar's
+head is allocated at address 0xbe9a8, while the body is at 0xbc288.
 Its reference count is 1.  It has the C<POK> flag set, meaning its
 current PV field is valid.  Because POK is set we look at the PV item
 to see what is in the scalar.  The \0 at the end indicate that this
 PV is properly NUL-terminated.
-If the FLAGS had been IOK we would look
-at the IV item.  CUR indicates the number of characters in the PV.
-LEN indicates the number of bytes requested for the PV (one more than
-CUR, in this case, because LEN includes an extra byte for the
-end-of-string marker).
+Note that the IV field still contains its old numeric value, but because
+FLAGS doesn't have IOK set, we must ignore the IV item.
+CUR indicates the number of characters in the PV.  LEN indicates the
+number of bytes allocated for the PV (at least one more than CUR, because
+LEN includes an extra byte for the end-of-string marker, then usually
+rounded up to some efficient allocation unit).
 
 =head2 A simple scalar number
 
@@ -245,7 +249,7 @@ If the scalar contains a number the raw SV will be leaner.
 
 The output:
 
-        SV = IV(0xbc818)
+        SV = IV(0xbc818) at 0xbe9a8
           REFCNT = 1
           FLAGS = (IOK,pIOK)
           IV = 42
@@ -266,7 +270,7 @@ If the scalar from the previous example had an extra reference:
 
 The output:
 
-        SV = IV(0xbe860)
+        SV = IV(0xbe860) at 0xbe9a8
           REFCNT = 2
           FLAGS = (IOK,pIOK)
           IV = 42
@@ -286,24 +290,25 @@ This shows what a reference looks like when it references a simple scalar.
 
 The output:
 
-        SV = RV(0xf041c)
+        SV = IV(0xf041c) at 0xbe9a0
           REFCNT = 1
           FLAGS = (ROK)
           RV = 0xbab08
-        SV = IV(0xbe860)
-          REFCNT = 2
-          FLAGS = (IOK,pIOK)
-          IV = 42
+          SV = IV(0xbe860) at 0xbe9a8
+            REFCNT = 2
+            FLAGS = (IOK,pIOK)
+            IV = 42
 
-Starting from the top, this says C<$b> is an SV.  The scalar is an RV, a
-reference.  It has the C<ROK> flag set, meaning it is a reference.  Because
-ROK is set we have an RV item rather than an IV or PV.  Notice that Dump
+Starting from the top, this says C<$b> is an SV.  The scalar is an IV,
+which is capable of holding an integer or reference value.
+It has the C<ROK> flag set, meaning it is a reference (rather than an
+integer or string).  Notice that Dump
 follows the reference and shows us what C<$b> was referencing.  We see the
 same C<$a> that we found in the previous example.
 
 Note that the value of C<RV> coincides with the numbers we see when we
-stringify $b. The addresses inside RV() and IV() are addresses of
-C<X***> structure which holds the current state of an C<SV>. This
+stringify $b. The addresses inside IV() are addresses of
+C<X***> structures which hold the current state of an C<SV>. This
 address may change during lifetime of an SV.
 
 =head2 A reference to an array
@@ -316,28 +321,25 @@ This shows what a reference to an array looks like.
 
 The output:
 
-        SV = RV(0xf041c)
+        SV = IV(0xc85998) at 0xc859a8
           REFCNT = 1
           FLAGS = (ROK)
-          RV = 0xb2850
-        SV = PVAV(0xbd448)
-          REFCNT = 1
-          FLAGS = ()
-          IV = 0
-          NV = 0
-          ARRAY = 0xb2048
-          ALLOC = 0xb2048
-          FILL = 0
-          MAX = 0
-          ARYLEN = 0x0
-          FLAGS = (REAL)
-        Elt No. 0 0xb5658
-        SV = IV(0xbe860)
-          REFCNT = 1
-          FLAGS = (IOK,pIOK)
-          IV = 42
+          RV = 0xc70de8
+          SV = PVAV(0xc71e10) at 0xc70de8
+            REFCNT = 1
+            FLAGS = ()
+            ARRAY = 0xc7e820
+            FILL = 0
+            MAX = 0
+            ARYLEN = 0x0
+            FLAGS = (REAL)
+            Elt No. 0
+            SV = IV(0xc70f88) at 0xc70f98
+              REFCNT = 1
+              FLAGS = (IOK,pIOK)
+              IV = 42
 
-This says C<$a> is an SV and that it is an RV.  That RV points to
+This says C<$a> is a reference (ROK), which points to
 another SV which is a PVAV, an array.  The array has one element,
 element zero, which is another SV. The field C<FILL> above indicates
 the last element in the array, similar to C<$#$a>.
@@ -351,31 +353,28 @@ following.
 
 The output:
 
-        SV = RV(0xf041c)
+        SV = IV(0x158c998) at 0x158c9a8
           REFCNT = 1
           FLAGS = (ROK)
-          RV = 0xb2850
-        SV = PVAV(0xbd448)
-          REFCNT = 1
-          FLAGS = ()
-          IV = 0
-          NV = 0
-          ARRAY = 0xb2048
-          ALLOC = 0xb2048
-          FILL = 0
-          MAX = 0
-          ARYLEN = 0x0
-          FLAGS = (REAL)
-        Elt No. 0  0xb5658
-        SV = IV(0xbe860)
-          REFCNT = 1
-          FLAGS = (IOK,pIOK)
-          IV = 42
-        Elt No. 1  0xb5680
-        SV = IV(0xbe818)
-          REFCNT = 1
-          FLAGS = (IOK,pIOK)
-          IV = 24
+          RV = 0x1577de8
+          SV = PVAV(0x1578e10) at 0x1577de8
+            REFCNT = 1
+            FLAGS = ()
+            ARRAY = 0x1585820
+            FILL = 1
+            MAX = 1
+            ARYLEN = 0x0
+            FLAGS = (REAL)
+            Elt No. 0
+            SV = IV(0x1577f88) at 0x1577f98
+              REFCNT = 1
+              FLAGS = (IOK,pIOK)
+              IV = 42
+            Elt No. 1
+            SV = IV(0x158be88) at 0x158be98
+              REFCNT = 1
+              FLAGS = (IOK,pIOK)
+              IV = 24
 
 Note that C<Dump> will not report I<all> the elements in the array,
 only several first (depending on how deep it already went into the
@@ -391,15 +390,13 @@ The following shows the raw form of a reference to a hash.
 
 The output:
 
-	SV = RV(0x8177858) at 0x816a618
+	SV = IV(0x8177858) at 0x816a618
 	  REFCNT = 1
 	  FLAGS = (ROK)
 	  RV = 0x814fc10
 	  SV = PVHV(0x8167768) at 0x814fc10
 	    REFCNT = 1
 	    FLAGS = (SHAREKEYS)
-	    IV = 1
-	    NV = 0
 	    ARRAY = 0x816c5b8  (0:7, 1:1)
 	    hash quality = 100.0%
 	    KEYS = 1
@@ -414,7 +411,7 @@ The output:
 	      IV = 42
 
 This shows C<$a> is a reference pointing to an SV.  That SV is a PVHV, a
-hash. Fields RITER and EITER are used by C<L<each>>.
+hash. Fields RITER and EITER are used by C<L<perlfunc/each>>.
 
 The "quality" of a hash is defined as the total number of comparisons needed
 to access every element once, relative to the expected number needed for a
@@ -451,19 +448,19 @@ and a reference to that SV is placed on the XSUB stack.  So the output from
 an XSUB which uses something like the T_PTROBJ map might look something like
 this:
 
-        SV = RV(0xf381c)
+        SV = IV(0xf381c) at 0xc859a8
           REFCNT = 1
           FLAGS = (ROK)
           RV = 0xb8ad8
-        SV = PVMG(0xbb3c8)
-          REFCNT = 1
-          FLAGS = (OBJECT,IOK,pIOK)
-          IV = 729160
-          NV = 0
-          PV = 0
-          STASH = 0xc1d10       "CookBookB::Opaque"
+          SV = PVMG(0xbb3c8) at 0xc859a0
+            REFCNT = 1
+            FLAGS = (OBJECT,IOK,pIOK)
+            IV = 729160
+            NV = 0
+            PV = 0
+            STASH = 0xc1d10       "CookBookB::Opaque"
 
-This shows that we have an SV which is an RV.  That RV points at another
+This shows that we have an SV which is a reference, which points at another
 SV.  In this case that second SV is a PVMG, a blessed scalar.  Because it is
 blessed it has the C<OBJECT> flag set.  Note that an SV which holds a C
 pointer also has the C<IOK> flag set.  The C<STASH> is set to the package
@@ -472,39 +469,40 @@ name which this SV was blessed into.
 The output from an XSUB which uses something like the T_PTRREF map, which
 doesn't bless the object, might look something like this:
 
-        SV = RV(0xf381c)
+        SV = IV(0xf381c) at 0xc859a8
           REFCNT = 1
           FLAGS = (ROK)
           RV = 0xb8ad8
-        SV = PVMG(0xbb3c8)
-          REFCNT = 1
-          FLAGS = (IOK,pIOK)
-          IV = 729160
-          NV = 0
-          PV = 0
+          SV = PVMG(0xbb3c8) at 0xc859a0
+            REFCNT = 1
+            FLAGS = (IOK,pIOK)
+            IV = 729160
+            NV = 0
+            PV = 0
 
 =head2 A reference to a subroutine
 
 Looks like this:
 
-	SV = RV(0x798ec)
+	SV = IV(0x24d2dd8) at 0x24d2de8
 	  REFCNT = 1
 	  FLAGS = (TEMP,ROK)
-	  RV = 0x1d453c
-	SV = PVCV(0x1c768c)
-	  REFCNT = 2
-	  FLAGS = ()
-	  IV = 0
-	  NV = 0
-	  COMP_STASH = 0x31068  "main"
-	  START = 0xb20e0
-	  ROOT = 0xbece0
-	  XSUB = 0x0
-	  XSUBANY = 0
-	  GVGV::GV = 0x1d44e8   "MY" :: "top_targets"
-	  FILE = "(eval 5)"
-	  DEPTH = 0
-	  PADLIST = 0x1c9338
+	  RV = 0x24e79d8
+	  SV = PVCV(0x24e5798) at 0x24e79d8
+	    REFCNT = 2
+	    FLAGS = ()
+	    COMP_STASH = 0x22c9c50	"main"
+	    START = 0x22eed60 ===> 0
+	    ROOT = 0x22ee490
+	    GVGV::GV = 0x22de9d8	"MY" :: "top_targets"
+	    FILE = "(eval 5)"
+	    DEPTH = 0
+	    FLAGS = 0x0
+	    OUTSIDE_SEQ = 93
+	    PADLIST = 0x22e9ed8
+	    PADNAME = 0x22e9ec0(0x22eed00) PAD = 0x22e9ea8(0x22eecd0)
+	    OUTSIDE = 0x22c9fb0 (MAIN)
+
 
 This shows that 
 
@@ -513,7 +511,7 @@ This shows that
 =item *
 
 the subroutine is not an XSUB (since C<START> and C<ROOT> are
-non-zero, and C<XSUB> is zero);
+non-zero, and C<XSUB> is not listed, and is thus null);
 
 =item *
 

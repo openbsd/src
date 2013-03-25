@@ -2,7 +2,7 @@ package Module::Build::Platform::cygwin;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.3603';
+$VERSION = '0.39_01';
 $VERSION = eval $VERSION;
 use Module::Build::Platform::Unix;
 
@@ -14,7 +14,7 @@ sub manpage_separator {
 }
 
 # Copied from ExtUtils::MM_Cygwin::maybe_command()
-# If our path begins with F</cygdrive/> then we use C<ExtUtils::MM_Win32>
+# If our path begins with F</cygdrive/> then we use the Windows version
 # to determine if it may be a command.  Otherwise we use the tests
 # from C<ExtUtils::MM_Unix>.
 
@@ -22,8 +22,8 @@ sub _maybe_command {
     my ($self, $file) = @_;
 
     if ($file =~ m{^/cygdrive/}i) {
-        require Module::Build::Platform::Win32;
-        return Module::Build::Platform::Win32->_maybe_command($file);
+        require Module::Build::Platform::Windows;
+        return Module::Build::Platform::Windows->_maybe_command($file);
     }
 
     return $self->SUPER::_maybe_command($file);

@@ -4,7 +4,7 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.tru64 - Perl version 5 on Tru64 (formerly known as Digital UNIX formerly known as DEC OSF/1) systems
+perltru64 - Perl version 5 on Tru64 (formerly known as Digital UNIX formerly known as DEC OSF/1) systems
 
 =head1 DESCRIPTION
 
@@ -37,7 +37,7 @@ necessary, and also gives advice on how to raise the process limits.
 Also, Configure might abort with
 
     Build a threading Perl? [n]
-    Configure[2437]: Syntax error at line 1 : `config.sh' is not expected.
+    Configure[2437]: Syntax error at line 1 : 'config.sh' is not expected.
 
 This indicates that Configure is being run with a broken Korn shell
 (even though you think you are using a Bourne shell by using
@@ -106,7 +106,7 @@ and then using the BerkeleyDB module from CPAN instead of DB_File.
 The BerkeleyDB works with Berkeley DB versions 2.* or greater.
 
 The Berkeley DB 4.1.25 has been tested with Tru64 V5.1A and found
-to work.  The latest Berkeley DB can be found from F<http://www.sleepycat.com>.
+to work.  The latest Berkeley DB can be found from L<http://www.sleepycat.com>.
 
 =head2 64-bit Perl on Tru64
 

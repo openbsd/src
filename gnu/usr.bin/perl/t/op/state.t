@@ -8,9 +8,15 @@ BEGIN {
 }
 
 use strict;
+
+plan tests => 131;
+
+# Before loading feature.pm, test it with CORE::
+ok eval 'CORE::state $x = 1;', 'CORE::state outside of feature.pm scope';
+
+
 use feature ":5.10";
 
-plan tests => 130;
 
 ok( ! defined state $uninit, q(state vars are undef by default) );
 

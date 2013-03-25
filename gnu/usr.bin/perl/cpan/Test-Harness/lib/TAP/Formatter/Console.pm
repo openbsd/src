@@ -14,11 +14,11 @@ TAP::Formatter::Console - Harness output delegate for default console output
 
 =head1 VERSION
 
-Version 3.17
+Version 3.23
 
 =cut
 
-$VERSION = '3.17';
+$VERSION = '3.23';
 
 =head1 DESCRIPTION
 
@@ -31,7 +31,7 @@ This provides console orientated output formatting for TAP::Harness.
 
 =head2 C<< open_test >>
 
-See L<TAP::Formatter::base>
+See L<TAP::Formatter::Base>
 
 =cut
 

@@ -16,12 +16,22 @@ BEGIN {
 
 #########################
 
-use Test;
 use strict;
 use warnings;
-BEGIN { plan tests => 58 };
+BEGIN { $| = 1; print "1..72\n"; }
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Normalize;
-ok(1); # If we made it this far, we're ok.
+
+ok(1);
 
 sub _pack_U   { Unicode::Normalize::pack_U(@_) }
 sub _unpack_U { Unicode::Normalize::unpack_U(@_) }
@@ -37,6 +47,8 @@ ok(NFD("A"), "A");
 ok(NFC("A"), "A");
 ok(NFKD("A"), "A");
 ok(NFKC("A"), "A");
+
+# 9
 
 # don't modify the source
 my $sNFD = "\x{FA19}";
@@ -55,6 +67,7 @@ my $sNFKC = "\x{FA26}";
 ok(NFKC($sNFKC), "\x{90FD}");
 ok($sNFKC, "\x{FA26}");
 
+# 17
 
 sub hexNFC {
   join " ", map sprintf("%04X", $_),
@@ -91,6 +104,8 @@ ok(hexNFC("AC00 11A9"), "AC02");
 ok(hexNFC("AC00 11C2"), "AC1B");
 ok(hexNFC("AC00 11C3"), "AC00 11C3");
 
+# 39
+
 # Test Cases from Public Review Issue #29: Normalization Issue
 # cf. http://www.unicode.org/review/pr-29.html
 ok(hexNFC("0B47 0300 0B3E"), "0B47 0300 0B3E");
@@ -113,13 +128,38 @@ ok(hexNFC("0000 0327 0061 0300"), "0000 0327 00E0");
 ok(hexNFC("0000 0301 0061 0300"), "0000 0301 00E0");
 ok(hexNFC("0000 0315 0061 0300"), "0000 0315 00E0");
 
-# NFC() should be unary.
+# 56
+
+# NFC() and NFKC() should be unary.
 my $str11 = _pack_U(0x41, 0x0302, 0x0301, 0x62);
 my $str12 = _pack_U(0x1EA4, 0x62);
 ok(NFC $str11 eq $str12);
+ok(NFKC $str11 eq $str12);
 
-# NFD() should be unary.
+# NFD() and NFKD() should be unary.
 my $str21 = _pack_U(0xE0, 0xAC00);
 my $str22 = _pack_U(0x61, 0x0300, 0x1100, 0x1161);
 ok(NFD $str21 eq $str22);
+ok(NFKD $str21 eq $str22);
+
+# 60
+
+## Bug #53197: NFKC("\x{2000}") produces...
+
+ok(NFKC("\x{2002}") eq ' ');
+ok(NFKD("\x{2002}") eq ' ');
+ok(NFKC("\x{2000}") eq ' ');
+ok(NFKD("\x{2000}") eq ' ');
+
+ok(NFKC("\x{210C}") eq 'H');
+ok(NFKD("\x{210C}") eq 'H');
+ok(NFKC("\x{210D}") eq 'H');
+ok(NFKD("\x{210D}") eq 'H');
+
+ok(NFC("\x{F907}") eq "\x{9F9C}");
+ok(NFD("\x{F907}") eq "\x{9F9C}");
+ok(NFKC("\x{F907}") eq "\x{9F9C}");
+ok(NFKD("\x{F907}") eq "\x{9F9C}");
+
+# 72
 

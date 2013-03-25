@@ -18,9 +18,16 @@ BEGIN {
 use strict;
 use Test::More;
 use Safe;
-plan(tests => 1);
+plan(tests => 2);
 
 my $c = new Safe;
 $c->permit(qw(require caller entereval unpack));
 my $r = $c->reval(q{ use version; 1 });
 ok( defined $r, "Can load version.pm in a Safe compartment" ) or diag $@;
+
+# Does this test really belong here?  We are testing the "loading" of
+# a perl version number.
+# This should died because of strictures under 5.12+ and because of the
+# perl version in 5.10-.
+ok !$c->reval(q{use 5.012; $undeclared; 1}),
+   'reval does not prevent use 5.012 from enabling strict';

@@ -2,6 +2,7 @@ use Test::More tests => 95;
 
 my $is_win32 = ($^O =~ /Win32/);
 my $is_qnx = ($^O eq 'qnx');
+my $is_vos = ($^O eq 'vos');
 BEGIN { use_ok('Time::Piece'); }
 ok(1);
 
@@ -113,7 +114,7 @@ SKIP: {
 cmp_ok($t->strftime('%U'), 'eq', '09'); # Sun cmp Mon
 
 SKIP: {
-    skip "can't strftime %V on Win32 or QNX", 1 if $is_win32 or $is_qnx;
+    skip "can't strftime %V on Win32 or QNX or VOS", 1 if $is_win32 or $is_qnx or $is_vos;
     # is this test really broken on Mac OS? -- rjbs, 2006-02-08
     cmp_ok($t->strftime('%V'), 'eq', '09'); # Sun cmp Mon
 }
@@ -219,3 +220,4 @@ cmp_ok(
   '==',
   951827696
 );
+

@@ -4,9 +4,9 @@ BEGIN {
     unshift @INC, 't/lib';
 }
 
-use Test::More tests => 34;
+use Test::More tests => 35;
 
-use_ok( 'ExtUtils::Packlist' );
+BEGIN { use_ok( 'ExtUtils::Packlist' ); }
 
 is( ref(ExtUtils::Packlist::mkfh()), 'GLOB', 'mkfh() should return a FH' );
 
@@ -161,6 +161,18 @@ is( ExtUtils::Packlist::packlist_file({ packfile => 'pl' }), 'pl',
 	'packlist_file() should fetch packlist from passed hash' );
 is( ExtUtils::Packlist::packlist_file($pl), 'eplist',
 	'packlist_file() should fetch packlist from ExtUtils::Packlist object' );
+
+BEGIN {
+	# Call mkfh at BEGIN time, to make sure it does not trigger "Used
+	# once" warnings.
+	$SIG{__WARN__} = sub { ++$w; warn $_[0] };
+	ExtUtils::Packlist::mkfh();
+	
+}
+INIT {
+	is $w, undef, '[perl #107410] no warnings from BEGIN-time mkfh';
+	delete $SIG{__WARN__};
+}
 
 END {
 	1 while unlink qw( eplist );

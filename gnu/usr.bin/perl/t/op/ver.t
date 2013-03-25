@@ -4,14 +4,14 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
     $SIG{'__WARN__'} = sub { warn $_[0] if $DOWARN };
+    require "test.pl";
 }
 
 $DOWARN = 1; # enable run-time warnings now
 
 use Config;
 
-require "test.pl";
-plan( tests => 54 );
+plan( tests => 55 );
 
 eval 'use v5.5.640';
 is( $@, '', "use v5.5.640; $@");
@@ -261,6 +261,14 @@ ok( exists $h{v65}, "v-stringness is not engaged for vX" );
 ok( exists $h{chr(65).chr(66)}, "v-stringness is engaged for vX.Y" );
 %h = (65.66.67 => 42);
 ok( exists $h{chr(65).chr(66).chr(67)}, "v-stringness is engaged for X.Y.Z" );
+
+{
+    local $|;
+    $| = v0;
+    $| = 1;
+    --$|; --$|;
+    is $|, 1, 'clobbering vstrings does not clobber all magic';
+}
 
 
 # The following tests whether v-strings are correctly

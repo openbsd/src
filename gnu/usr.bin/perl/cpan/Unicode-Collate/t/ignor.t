@@ -1,3 +1,4 @@
+
 BEGIN {
     unless ("A" eq pack('U', 0x41)) {
 	print "1..0 # Unicode::Collate " .
@@ -10,14 +11,24 @@ BEGIN {
     }
 }
 
-use Test;
-BEGIN { plan tests => 41 };
-
 use strict;
 use warnings;
+BEGIN { $| = 1; print "1..41\n"; }
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Collate;
 
 ok(1);
+
+#########################
 
 my $trad = Unicode::Collate->new(
   table => 'keys.txt',
@@ -116,10 +127,10 @@ ENTRIES
 ok($L3ignorable->lt("\cA", "!"));
 ok($L3ignorable->lt("\x{591}", "!"));
 ok($L3ignorable->eq("\cA", "\x{591}"));
-ok($L3ignorable->eq("\x{09C7}\x{09BE}A", "\x{09C7}\cA\x{09BE}A"));
-ok($L3ignorable->eq("\x{09C7}\x{09BE}A", "\x{09C7}\x{0591}\x{09BE}A"));
-ok($L3ignorable->eq("\x{09C7}\x{09BE}A", "\x{09C7}\x{1D165}\x{09BE}A"));
-ok($L3ignorable->eq("\x{09C7}\x{09BE}A", "\x{09CB}A"));
+ok($L3ignorable->eq("\x{9C7}\x{9BE}A", "\x{9C7}\cA\x{9BE}A"));
+ok($L3ignorable->eq("\x{9C7}\x{9BE}A", "\x{9C7}\x{591}\x{9BE}A"));
+ok($L3ignorable->eq("\x{9C7}\x{9BE}A", "\x{9C7}\x{1D165}\x{9BE}A"));
+ok($L3ignorable->eq("\x{9C7}\x{9BE}A", "\x{9CB}A"));
 ok($L3ignorable->lt("\x{1D1BB}", "\x{1D1BC}"));
 ok($L3ignorable->eq("\x{1D1BB}", "\x{1D1B9}"));
 ok($L3ignorable->eq("\x{1D1BC}", "\x{1D1BA}"));
@@ -145,14 +156,14 @@ ENTRIES
 
 ok($c->gt("ocho", "oc\x00\x00ho"));
 ok($c->gt("ocho", "oc\cAho"));
-ok($c->gt("ocho", "oc\x{034F}ho"));
-ok($c->gt("ocio", "oc\x{034F}ho"));
-ok($c->lt("ocgo", "oc\x{034F}ho"));
-ok($c->lt("oceo", "oc\x{034F}ho"));
+ok($c->gt("ocho", "oc\x{34F}ho"));
+ok($c->gt("ocio", "oc\x{34F}ho"));
+ok($c->lt("ocgo", "oc\x{34F}ho"));
+ok($c->lt("oceo", "oc\x{34F}ho"));
 
 ok($c->viewSortKey("ocho"),         "[0B4B 0A3F 0B4B | | |]");
 ok($c->viewSortKey("oc\x00\x00ho"), "[0B4B 0A3D 0AB9 0B4B | | |]");
 ok($c->viewSortKey("oc\cAho"),      "[0B4B 0A3D 0AB9 0B4B | | |]");
-ok($c->viewSortKey("oc\x{034F}ho"), "[0B4B 0A3D 0AB9 0B4B | | |]");
+ok($c->viewSortKey("oc\x{34F}ho"),  "[0B4B 0A3D 0AB9 0B4B | | |]");
 
 

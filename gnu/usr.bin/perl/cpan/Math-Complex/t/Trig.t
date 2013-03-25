@@ -8,25 +8,7 @@
 # 
 # -- Jarkko Hietaniemi, April 1997
 
-BEGIN {
-    if ($ENV{PERL_CORE}) {
-	chdir 't' if -d 't';
-	#@INC = '../lib';
-    }
-}
-
-BEGIN {
-    eval { require Test::More };
-    if ($@) {
-	# We are willing to lose testing in e.g. 5.00504.
-	print "1..0 # No Test::More, skipping\n";
-	exit(0);
-    } else {
-	import Test::More;
-    }
-}
-
-plan(tests => 153);
+use Test::More tests => 153;
 
 use Math::Trig 1.18;
 use Math::Trig 1.18 qw(:pi Inf);
@@ -35,7 +17,7 @@ my $pip2 = pi / 2;
 
 use strict;
 
-use vars qw($x $y $z);
+our($x, $y, $z);
 
 my $eps = 1e-11;
 

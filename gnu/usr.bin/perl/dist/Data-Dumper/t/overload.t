@@ -11,9 +11,10 @@ BEGIN {
     }
 }
 
+use strict;
 use Data::Dumper;
 
-print "1..1\n";
+use Test::More tests => 4;
 
 package Foo;
 use overload '""' => 'as_string';
@@ -25,12 +26,11 @@ package main;
 
 my $f = Foo->new;
 
-print "#\$f=$f\n";
+isa_ok($f, 'Foo');
+is("$f", '%%%%', 'String overloading works');
 
-$_ = Dumper($f);
-s/^/#/mg;
-print $_;
+my $d = Dumper($f);
 
-print "not " unless /bar/ && /Foo/;
-print "ok 1\n";
+like($d, qr/bar/);
+like($d, qr/Foo/);
 

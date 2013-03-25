@@ -129,7 +129,7 @@ sub run
 
             ok ! $CompressClass->new($buffer, Merge => 1), "  constructor fails";
             {
-                like $$Error, '/Cannot create InflateScan object: (Header Error|unexpected end of file|Inflation Error: data error)/', "  got Bad Magic" ;
+                like $$Error, '/Cannot create InflateScan object: (Header Error|unexpected end of file|Inflation Error: data error)?/', "  got Bad Magic" ;
             }
 
         }

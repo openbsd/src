@@ -265,14 +265,14 @@ created by an older version of an archive utility or a build utility
 such as MMK or MMS may generate a filename in all upper case even on an
 ODS-5 volume.  If this filename is later retrieved by a Perl script or
 module in a case preserving environment, that upper case name may not
-match the mixed-case or lower-case expections of the Perl code.  Your
+match the mixed-case or lower-case exceptions of the Perl code.  Your
 best bet is to follow an all-or-nothing approach to case preservation:
 either don't use it at all, or make sure your entire toolchain and
 application environment support and use it.
 
 OpenVMS Alpha v7.3-1 and later and all version of OpenVMS I64 support
 case sensitivity as a process setting (see C<SET PROCESS
-/CASE_LOOKUP=SENSITIVE>). Perl does not currently suppport case
+/CASE_LOOKUP=SENSITIVE>). Perl does not currently support case
 sensitivity on VMS, but it may in the future, so Perl programs should
 use the C<< File::Spec->case_tolerant >> method to determine the state, and
 not the C<$^O> variable.
@@ -409,7 +409,7 @@ internal Perl problems that would cause such a condition.
 This allows the programmer to look at the execution stack and variables to
 find out the cause of the exception.  As the debugger is being invoked as
 the Perl interpreter is about to do a fatal exit, continuing the execution
-in debug mode is usally not practical.
+in debug mode is usually not practical.
 
 Starting Perl in the VMS debugger may change the program execution
 profile in a way that such problems are not reproduced.
@@ -704,7 +704,6 @@ results of testing and further review.
 See L</"$?"> for a description of the encoding of the Unix value to
 produce a native VMS status containing it.
 
-
 =item dump
 
 Rather than causing Perl to abort and dump core, the C<dump>
@@ -848,10 +847,10 @@ Therefore, the "system time" elements will always be 0, since
 there is no difference between "user time" and "system" time 
 under VMS, and the time accumulated by a subprocess may or may 
 not appear separately in the "child time" field, depending on 
-whether L<times> keeps track of subprocesses separately.  Note
+whether C<times()> keeps track of subprocesses separately.  Note
 especially that the VAXCRTL (at least) keeps track only of
-subprocesses spawned using L<fork> and L<exec>; it will not
-accumulate the times of subprocesses spawned via pipes, L<system>,
+subprocesses spawned using C<fork()> and C<exec()>; it will not
+accumulate the times of subprocesses spawned via pipes, C<system()>,
 or backticks.
 
 =item unlink LIST
@@ -1188,7 +1187,7 @@ consequence of ignoring this advice will be undefined to allow future
 improvements in the POSIX exit handling.
 
 In general, with C<PERL_VMS_POSIX_EXIT> enabled, more detailed information
-will be availble in the exit status for DCL scripts or other native VMS tools,
+will be available in the exit status for DCL scripts or other native VMS tools,
 and will give the expected information for Posix programs.  It has not been
 made the default in order to preserve backward compatibility.
 

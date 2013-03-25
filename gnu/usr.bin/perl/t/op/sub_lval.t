@@ -3,7 +3,7 @@ BEGIN {
     @INC = '../lib';
     require './test.pl';
 }
-plan tests=>71;
+plan tests=>191;
 
 sub a : lvalue { my $a = 34; ${\(bless \$a)} }  # Return a temporary
 sub b : lvalue { ${\shift} }
@@ -131,7 +131,7 @@ EOE
 
 #@out = ($x, a3, $y, b2, $z, c4, $t);
 #@in = (34 .. 41, (undef) x 4, 46);
-#print "# `@out' ne `@in'\nnot " unless "@out" eq "@in";
+#print "# '@out' ne '@in'\nnot " unless "@out" eq "@in";
 
 like($_, qr/Can\'t return an uninitialized value from lvalue subroutine/);
 print "ok 22\n";
@@ -210,7 +210,8 @@ EOE
 like($_, qr/Can\'t modify non-lvalue subroutine call/)
   or diag "'$_', '$x0', '$x1'";
 
-sub lv0 : lvalue { }		# Converted to lv10 in scalar context
+sub lv0 : lvalue { }
+sub rlv0 : lvalue { return }
 
 $_ = undef;
 eval <<'EOE' or $_ = $@;
@@ -220,7 +221,14 @@ EOE
 
 like($_, qr/Can't return undef from lvalue subroutine/);
 
-sub lv10 : lvalue {}
+$_ = undef;
+eval <<'EOE' or $_ = $@;
+  rlv0 = (2,3);
+  1;
+EOE
+
+like($_, qr/Can't return undef from lvalue subroutine/,
+    'explicit return of nothing in scalar context');
 
 $_ = undef;
 eval <<'EOE' or $_ = $@;
@@ -230,7 +238,22 @@ EOE
 
 ok(!defined $_) or diag $_;
 
+$_ = undef;
+eval <<'EOE' or $_ = $@;
+  (rlv0) = (2,3);
+  1;
+EOE
+
+ok(!defined $_, 'explicit return of nothing in list context') or diag $_;
+
+($a,$b)=();
+(lv0($a,$b)) = (3,4);
+is +($a//'undef') . ($b//'undef'), 'undefundef',
+   'list assignment to empty lvalue sub';
+
+
 sub lv1u :lvalue { undef }
+sub rlv1u :lvalue { undef }
 
 $_ = undef;
 eval <<'EOE' or $_ = $@;
@@ -242,14 +265,28 @@ like($_, qr/Can't return undef from lvalue subroutine/);
 
 $_ = undef;
 eval <<'EOE' or $_ = $@;
+  rlv1u = (2,3);
+  1;
+EOE
+
+like($_, qr/Can't return undef from lvalue subroutine/,
+     'explicitly returning undef in scalar context');
+
+$_ = undef;
+eval <<'EOE' or $_ = $@;
   (lv1u) = (2,3);
   1;
 EOE
 
-# Fixed by change @10777
-#print "# '$_'.\nnot "
-#  unless /Can\'t return an uninitialized value from lvalue subroutine/;
-# print "ok 34 # Skip: removed test\n";
+ok(!defined, 'implicitly returning undef in list context');
+
+$_ = undef;
+eval <<'EOE' or $_ = $@;
+  (rlv1u) = (2,3);
+  1;
+EOE
+
+ok(!defined, 'explicitly returning undef in list context');
 
 $x = '1234567';
 
@@ -260,16 +297,31 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t modify index in lvalue subroutine return/);
+like($_, qr/Can\'t return a temporary from lvalue subroutine/);
 
 $_ = undef;
 eval <<'EOE' or $_ = $@;
-  sub lv2t : lvalue { shift }
-  (lv2t) = (2,3);
+  sub rlv1t : lvalue { index $x, 2 }
+  rlv1t = (2,3);
   1;
 EOE
 
-like($_, qr/Can\'t modify shift in lvalue subroutine return/);
+like($_, qr/Can\'t return a temporary from lvalue subroutine/,
+    'returning a PADTMP explicitly');
+
+$_ = undef;
+eval <<'EOE' or $_ = $@;
+  (rlv1t) = (2,3);
+  1;
+EOE
+
+like($_, qr/Can\'t return a temporary from lvalue subroutine/,
+    'returning a PADTMP explicitly (list context)');
+
+$_ = undef;
+sub lv2t : lvalue { shift }
+(lv2t($_)) = (2,3);
+is($_, 2);
 
 $xxx = 'xxx';
 sub xxx () { $xxx }  # Not lvalue
@@ -281,7 +333,7 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t modify non-lvalue subroutine call in lvalue subroutine return/);
+like($_, qr/Can\'t modify non-lvalue subroutine call at /);
 
 $_ = undef;
 eval <<'EOE' or $_ = $@;
@@ -289,7 +341,7 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t return a temporary from lvalue subroutine/);
+like($_, qr/Can\'t modify non-lvalue subroutine call at /);
 
 sub yyy () { 'yyy' } # Const, not lvalue
 
@@ -300,7 +352,7 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t modify constant item in lvalue subroutine return/);
+like($_, qr/Can\'t return a readonly value from lvalue subroutine at/);
 
 $_ = undef;
 eval <<'EOE' or $_ = $@;
@@ -333,16 +385,14 @@ EOE
 
 is("'@a' $_", "'2 3' ");
 
-$_ = undef;
-@a = ();
-$a[0] = undef;
-$a[1] = 12;
-eval <<'EOE' or $_ = $@;
-  (lva) = (2,3);
-  1;
-EOE
+is lva->${\sub { return $_[0] }}, 2,
+  'lvalue->$thing when lvalue returns array';
 
-is("'@a' $_", "'2 3' ");
+my @my = qw/ a b c /;
+sub lvmya : lvalue { @my }
+
+is lvmya->${\sub { return $_[0] }}, 3,
+  'lvalue->$thing when lvalue returns lexical array';
 
 sub lv1n : lvalue { $newvar }
 
@@ -371,6 +421,13 @@ is($nnewvar, '8');
 eval 'sub AUTOLOAD : lvalue { $newvar }';
 foobar() = 12;
 is($newvar, "12");
+
+# But autoloading should only be triggered by a call to an undefined
+# subroutine.
+&{"lv1nn"} = 14;
+is $newvar, 12, 'AUTOLOAD does not take precedence over lvalue sub';
+eval { &{"xxx"} = 14 };
+is $newvar, 12, 'AUTOLOAD does not take precedence over non-lvalue sub';
 
 {
 my %hash; my @array;
@@ -452,6 +509,11 @@ while (/f/g) {
 }
 is("@p", "1 8");
 
+sub keeze : lvalue { keys %__ }
+%__ = ("a","b");
+keeze = 64;
+is scalar %__, '1/64', 'keys assignment through lvalue sub';
+
 # Bug 20001223.002: split thought that the list had only one element
 @ary = qw(4 5 6);
 sub lval1 : lvalue { $ary[0]; }
@@ -500,10 +562,35 @@ is($@, "", "element of tied array");
 
 is ($Tie_Array::val[0], "value");
 
-TODO: {
-    local $TODO = 'test explicit return of lval expr';
 
-    # subs are corrupted copies from tests 1-~4
+# Check that tied pad vars that are returned can be assigned to
+sub TIESCALAR { bless [] }
+sub STORE {$wheel = $_[1]}
+sub FETCH {$wheel}
+sub tied_pad_var  :lvalue { tie my $tyre, ''; $tyre }
+sub tied_pad_varr :lvalue { tie my $tyre, ''; return $tyre }
+tied_pad_var = 1;
+is $wheel, 1, 'tied pad var returned in scalar lvalue context';
+tied_pad_var->${\sub{ $_[0] = 2 }};
+is $wheel, 2, 'tied pad var returned in scalar ref context';
+(tied_pad_var) = 3;
+is $wheel, 3, 'tied pad var returned in list lvalue context';
+$_ = 4 for tied_pad_var;
+is $wheel, 4, 'tied pad var returned in list ref context';
+tied_pad_varr = 5;
+is $wheel, 5, 'tied pad var explicitly returned in scalar lvalue context';
+tied_pad_varr->${\sub{ $_[0] = 6 }};
+is $wheel, 6, 'tied pad var explicitly returned in scalar ref context';
+(tied_pad_varr) = 7;
+is $wheel, 7, 'tied pad var explicitly returned in list lvalue context';
+$_ = 8 for tied_pad_varr;
+is $wheel, 8, 'tied pad var explicitly returned in list ref context';
+
+
+# Test explicit return of lvalue expression
+{
+    # subs are copies from tests 1-~18 with an explicit return added.
+    # They used not to work, which is why they are ‘badly’ named.
     sub bad_get_lex : lvalue { return $in };
     sub bad_get_st  : lvalue { return $blah }
 
@@ -525,10 +612,83 @@ TODO: {
     ++bad_get_st;
 
     is($blah, 8, "yada");
+
+    ++bad_get_lex;
+    cmp_ok($in, '==', 8);
+
+    bad_id(bad_get_st) = 10;
+    cmp_ok($blah, '==', 10);
+
+    bad_id(bad_get_lex) = 10;
+    cmp_ok($in, '==', 10);
+
+    ++bad_id(bad_get_st);
+    cmp_ok($blah, '==', 11);
+
+    ++bad_id(bad_get_lex);
+    cmp_ok($in, '==', 11);
+
+    bad_id1(bad_get_st) = 20;
+    cmp_ok($blah, '==', 20);
+
+    bad_id1(bad_get_lex) = 20;
+    cmp_ok($in, '==', 20);
+
+    ++bad_id1(bad_get_st);
+    cmp_ok($blah, '==', 21);
+
+    ++bad_id1(bad_get_lex);
+    cmp_ok($in, '==', 21);
+
+    bad_inc(bad_get_st);
+    cmp_ok($blah, '==', 22);
+
+    bad_inc(bad_get_lex);
+    cmp_ok($in, '==', 22);
+
+    bad_inc(bad_id(bad_get_st));
+    cmp_ok($blah, '==', 23);
+
+    bad_inc(bad_id(bad_get_lex));
+    cmp_ok($in, '==', 23);
+
+    ++bad_inc(bad_id1(bad_id(bad_get_st)));
+    cmp_ok($blah, '==', 25);
+
+    ++bad_inc(bad_id1(bad_id(bad_get_lex)));
+    cmp_ok($in, '==', 25);
+
+    # Recursive
+    my $r;
+    my $to_modify;
+    $r = sub :lvalue {
+      my $depth = shift//0;
+      if ($depth == 2) { return $to_modify }
+      return &$r($depth+1);
+    };
+    &$r(0) = 7;
+    is $to_modify, 7, 'recursive lvalue sub';
+
+    # Recursive with substr [perl #72706]
+    my $val = '';
+    my $pie;
+    $pie = sub :lvalue {
+	my $depth = shift;
+	return &$pie($depth) if $depth--;
+	substr $val, 0;
+    };
+    for my $depth (0, 1, 2) {
+	my $value = "Good $depth";
+	eval {
+	    &$pie($depth) = $value;
+	};
+	is($@, '', "recursive lvalue substr return depth $depth");
+	is($val, $value,
+	   "value assigned to recursive lvalue substr (depth $depth)");
+    }
 }
 
-TODO: {
-    local $TODO = "bug #23790";
+{ # bug #23790
     my @arr  = qw /one two three/;
     my $line = "zero";
     sub lval_array () : lvalue {@arr}
@@ -538,6 +698,68 @@ TODO: {
     }
 
     is($line, "zeroonetwothree");
+
+    sub trythislval { scalar(@_)."x".join "", @_ }
+    is(trythislval(lval_array()), "3xonetwothree");
+
+    sub changeme { $_[2] = "free" }
+    changeme(lval_array);
+    is("@arr", "one two free");
+
+    # test again, with explicit return
+    sub rlval_array() : lvalue {return @arr}
+    @arr  = qw /one two three/;
+    $line = "zero";
+    for (rlval_array) {
+        $line .= $_;
+    }
+    is($line, "zeroonetwothree");
+    is(trythislval(rlval_array()), "3xonetwothree");
+    changeme(rlval_array);
+    is("@arr", "one two free");
+
+    # Variations on the same theme, with multiple vars returned
+    my $scalar = 'half';
+    sub lval_scalar_array () : lvalue { $scalar, @arr }
+    @arr  = qw /one two three/;
+    $line = "zero";
+    for (lval_scalar_array) {
+        $line .= $_;
+    }
+    is($line, "zerohalfonetwothree");
+    is(trythislval(lval_scalar_array()), "4xhalfonetwothree");
+    changeme(lval_scalar_array);
+    is("@arr", "one free three");
+
+    sub lval_array_scalar () : lvalue { @arr, $scalar }
+    @arr  = qw /one two three/;
+    $line = "zero";
+    $scalar = 'four';
+    for (lval_array_scalar) {
+        $line .= $_;
+    }
+    is($line, "zeroonetwothreefour");
+    is(trythislval(lval_array_scalar()), "4xonetwothreefour");
+    changeme(lval_array_scalar);
+    is("@arr", "one two free");
+
+    # Tests for specific ops not tested above
+    # rv2av
+    @array2 = qw 'one two free';
+    is join(',', map $_, sub:lvalue{@array2}->()), 'one,two,free',
+      'rv2av in reference context';
+    is join(',', map $_, sub:lvalue{@{\@array2}}->()), 'one,two,free',
+      'rv2av-with-ref in reference context';
+    # padhv
+    my %hash = qw[a b c d];
+    like join(',', map $_, sub:lvalue{%hash}->()),
+         qr/^(?:a,b,c,d|c,d,a,b)\z/, 'padhv in reference context';
+    # rv2hv
+    %hash2 = qw[a b c d];
+    like join(',', map $_, sub:lvalue{%hash2}->()),
+         qr/^(?:a,b,c,d|c,d,a,b)\z/, 'rv2hv in reference context';
+    like join(',', map $_, sub:lvalue{%{\%hash2}}->()),
+         qr/^(?:a,b,c,d|c,d,a,b)\z/, 'rv2hv-with-ref in reference context';
 }
 
 {
@@ -551,17 +773,22 @@ TODO: {
     is ($result, 'bar', "RT #41550");
 }
 
+SKIP: { skip 'no attributes.pm', 1 unless eval 'require attributes';
 fresh_perl_is(<<'----', <<'====', "lvalue can not be set after definition. [perl #68758]");
 use warnings;
 our $x;
 sub foo { $x }
 sub foo : lvalue;
+sub MODIFY_CODE_ATTRIBUTES {}
+sub foo : lvalue : fr0g;
 foo = 3;
 ----
 lvalue attribute ignored after the subroutine has been defined at - line 4.
-Can't modify non-lvalue subroutine call in scalar assignment at - line 5, near "3;"
+lvalue attribute ignored after the subroutine has been defined at - line 6.
+Can't modify non-lvalue subroutine call in scalar assignment at - line 7, near "3;"
 Execution of - aborted due to compilation errors.
 ====
+}
 
 {
     my $x;
@@ -570,3 +797,168 @@ Execution of - aborted due to compilation errors.
     lval_decl = 5;
     is($x, 5, "subroutine declared with lvalue before definition retains lvalue. [perl #68758]");
 }
+
+SKIP: { skip "no attributes.pm", 2 unless eval { require attributes };
+  sub utf8::valid :lvalue;
+  require attributes;
+  is "@{[ &attributes::get(\&utf8::valid) ]}", 'lvalue',
+   'sub declaration with :lvalue applies it to XSUBs';
+
+  BEGIN { *wonky = \&marjibberous }
+  sub wonky :lvalue;
+  is "@{[ &attributes::get(\&wonky) ]}", 'lvalue',
+   'sub declaration with :lvalue applies it to assigned stub';
+}
+
+sub fleen : lvalue { $pnare }
+$pnare = __PACKAGE__;
+ok eval { fleen = 1 }, "lvalues can return COWs (CATTLE?) [perl #75656]";\
+is $pnare, 1, 'and returning CATTLE actually works';
+$pnare = __PACKAGE__;
+ok eval { (fleen) = 1 }, "lvalues can return COWs in list context";
+is $pnare, 1, 'and returning COWs in list context actually works';
+$pnare = __PACKAGE__;
+ok eval { $_ = 1 for(fleen); 1 }, "lvalues can return COWs in ref cx";
+is $pnare, 1, 'and returning COWs in reference context actually works';
+
+
+# Returning an arbitrary expression, not necessarily lvalue
++sub :lvalue { return $ambaga || $ambaga }->() = 73;
+is $ambaga, 73, 'explicit return of arbitrary expression (scalar context)';
+(sub :lvalue { return $ambaga || $ambaga }->()) = 74;
+is $ambaga, 74, 'explicit return of arbitrary expression (list context)';
++sub :lvalue { $ambaga || $ambaga }->() = 73;
+is $ambaga, 73, 'implicit return of arbitrary expression (scalar context)';
+(sub :lvalue { $ambaga || $ambaga }->()) = 74;
+is $ambaga, 74, 'implicit return of arbitrary expression (list context)';
+eval { +sub :lvalue { return 3 }->() = 4 };
+like $@, qr/Can\'t return a readonly value from lvalue subroutine at/,
+      'assignment to numeric constant explicitly returned from lv sub';
+eval { (sub :lvalue { return 3 }->()) = 4 };
+like $@, qr/Can\'t return a readonly value from lvalue subroutine at/,
+      'assignment to num constant explicitly returned (list cx)';
+eval { +sub :lvalue { 3 }->() = 4 };
+like $@, qr/Can\'t return a readonly value from lvalue subroutine at/,
+      'assignment to numeric constant implicitly returned from lv sub';
+eval { (sub :lvalue { 3 }->()) = 4 };
+like $@, qr/Can\'t return a readonly value from lvalue subroutine at/,
+      'assignment to num constant implicitly returned (list cx)';
+
+# reference (potential lvalue) context
+$suffix = '';
+for my $sub (sub :lvalue {$_}, sub :lvalue {return $_}) {
+    &$sub()->${\sub { $_[0] = 37 }};
+    is $_, '37', 'lvalue->method'.$suffix;
+    ${\scalar &$sub()} = 38;
+    is $_, '38', 'scalar(lvalue)'.$suffix;
+    sub assign39_with_proto ($) { $_[0] = 39 }
+    assign39_with_proto(&$sub());
+    is $_, '39', 'func(lvalue) when func has $ proto'.$suffix;
+    $_ = 1;
+    ${\(&$sub()||undef)} = 40;
+    is $_, '40', 'lvalue||...'.$suffix;
+    ${\(${\undef}||&$sub())} = 41; # extra ${\...} to bypass const folding
+    is $_, '41', '...||lvalue'.$suffix;
+    $_ = 0;
+    ${\(&$sub()&&undef)} = 42;
+    is $_, '42', 'lvalue&&...'.$suffix;
+    ${\(${\1}&&&$sub())} = 43;
+    is $_, '43', '...&&lvalue'.$suffix;
+    ${\(&$sub())[0]} = 44;
+    is $_, '44', '(lvalue)[0]'.$suffix;
+}
+continue { $suffix = ' (explicit return)' }
+
+# autovivification
+$suffix = '';
+for my $sub (sub :lvalue {$_}, sub :lvalue {return $_}) {
+    undef $_;
+    &$sub()->[3] = 4;
+    is $_->[3], 4, 'func->[...] autovivification'.$suffix;
+    undef $_;
+    &$sub()->{3} = 4;
+    is $_->{3}, 4, 'func->{...} autovivification'.$suffix;
+    undef $_;
+    ${&$sub()} = 4;
+    is $$_, 4, '${func()} autovivification'      .$suffix;
+    undef $_;
+    @{&$sub()} = 4;
+    is "@$_", 4, '@{func()} autovivification'    .$suffix;
+    undef $_;
+    %{&$sub()} = (4,5);
+    is join('-',%$_), '4-5', '%{func()} autovivification'.$suffix;
+    undef $_;
+    ${ (), &$sub()} = 4;
+    is $$_, 4, '${ (), func()} autovivification'      .$suffix;
+}
+continue { $suffix = ' (explicit return)' }
+
+# [perl #92406] [perl #92290] Returning a pad var in rvalue context
+$suffix = '';
+for my $sub (
+         sub :lvalue { my $x = 72; $x },
+         sub :lvalue { my $x = 72; return $x }
+) {
+    is scalar(&$sub), 72, "sub returning pad var in scalar context$suffix";
+    is +(&$sub)[0], 72, "sub returning pad var in list context$suffix";
+}
+continue { $suffix = ' (explicit return)' }
+
+# Returning read-only values in reference context
+$suffix = '';
+for (
+         sub :lvalue { $] }->(),
+         sub :lvalue { return $] }->()
+) {
+    is \$_, \$], 'read-only values are returned in reference context'
+	         .$suffix             # (they used to be copied)
+}
+continue { $suffix = ' (explicit return)' }
+
+# Returning unwritables from nested lvalue sub call in in rvalue context
+# First, ensure we are testing what we think we are:
+if (!Internals::SvREADONLY($])) { Internals::SvREADONLY($],1); }
+sub squibble : lvalue { return $] }
+sub squebble : lvalue {        squibble }
+sub squabble : lvalue { return squibble }
+is $x = squebble, $], 'returning ro from nested lv sub call in rv cx';
+is $x = squabble, $], 'explct. returning ro from nested lv sub in rv cx';
+is \squebble, \$], 'returning ro from nested lv sub call in ref cx';
+is \squabble, \$], 'explct. returning ro from nested lv sub in ref cx';
+
+# [perl #102486] Sub calls as the last statement of an lvalue sub
+package _102486 {
+  my $called;
+  my $x = 'nonlv';
+  sub strictlv :lvalue { use strict 'refs'; &$x }
+  sub lv :lvalue { &$x }
+  sub nonlv { ++$called }
+  eval { strictlv };
+  ::like $@, qr/^Can't use string \("nonlv"\) as a subroutine ref while/,
+        'strict mode applies to sub:lvalue{ &$string }';
+  $called = 0;
+  ::ok eval { lv },
+      'sub:lvalue{&$x}->() does not die for non-lvalue inner sub call';
+  ::is $called, 1, 'The &$x actually called the sub';
+  eval { +sub :lvalue { &$x }->() = 3 };
+  ::like $@, qr/^Can't modify non-lvalue subroutine call at /,
+        'sub:lvalue{&$x}->() dies in true lvalue context';
+}
+
+# TARG should be copied in rvalue context
+sub ucf :lvalue { ucfirst $_[0] }
+is ucf("just another ") . ucf("perl hacker,\n"),
+   "Just another Perl hacker,\n", 'TARG is copied in rvalue scalar cx';
+is join('',ucf("just another "), ucf "perl hacker,\n"),
+   "Just another Perl hacker,\n", 'TARG is copied in rvalue list cx';
+sub ucfr : lvalue {
+    @_ ? ucfirst $_[0] : do {
+	is ucfr("just another ") . ucfr("perl hacker,\n"),
+	   "Just another Perl hacker,\n",
+	   'TARG is copied in recursive rvalue scalar cx';
+	is join('',ucfr("just another "), ucfr("perl hacker,\n")),
+	   "Just another Perl hacker,\n",
+	   'TARG is copied in recursive rvalue list cx';
+    }
+}
+ucfr();

@@ -1,12 +1,12 @@
 /*    parser.h
  *
- *    Copyright (c) 2006, 2007, Larry Wall and others
+ *    Copyright (c) 2006, 2007, 2009, 2010, 2011 Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  * 
  * This file defines the layout of the parser object used by the parser
- * and lexer (perly.c, toke,c).
+ * and lexer (perly.c, toke.c).
  */
 
 #define YYEMPTY		(-2)
@@ -39,7 +39,7 @@ typedef struct yy_parser {
 
     /* lexer state */
 
-    I32		lex_brackets;	/* bracket count */
+    I32		lex_brackets;	/* square and curly bracket count */
     I32		lex_casemods;	/* casemod count */
     char	*lex_brackstack;/* what kind of brackets to pop */
     char	*lex_casestack;	/* what kind of case mods in effect */
@@ -61,7 +61,7 @@ typedef struct yy_parser {
     char	multi_close;	/* delimiter of said string */
     char	pending_ident;	/* pending identifier lookup */
     bool	preambled;
-    /* XXX I32 space */
+    I32		lex_allbrackets;/* (), [], {}, ?: bracket count */
     SUBLEXINFO	sublex_info;
     SV		*linestr;	/* current chunk of src text */
     char	*bufptr;	
@@ -105,11 +105,45 @@ typedef struct yy_parser {
     COP		*saved_curcop;	/* the previous PL_curcop */
     char	tokenbuf[256];
 
+    U8		lex_fakeeof;	/* precedence at which to fake EOF */
+    U8		lex_flags;
+    PERL_BITFIELD16	in_pod:1;      /* lexer is within a =pod section */
+    PERL_BITFIELD16	filtered:1;    /* source filters in evalbytes */
 } yy_parser;
 
 /* flags for lexer API */
 #define LEX_STUFF_UTF8		0x00000001
 #define LEX_KEEP_PREVIOUS	0x00000002
+
+#ifdef PERL_CORE
+# define LEX_START_SAME_FILTER	0x00000001
+# define LEX_IGNORE_UTF8_HINTS	0x00000002
+# define LEX_EVALBYTES		0x00000004
+# define LEX_START_COPIED	0x00000008
+# define LEX_DONT_CLOSE_RSFP	0x00000010
+# define LEX_START_FLAGS \
+	(LEX_START_SAME_FILTER|LEX_START_COPIED \
+	|LEX_IGNORE_UTF8_HINTS|LEX_EVALBYTES|LEX_DONT_CLOSE_RSFP)
+#endif
+
+/* flags for parser API */
+#define PARSE_OPTIONAL          0x00000001
+
+/* values for lex_fakeeof */
+enum {
+    LEX_FAKEEOF_NEVER,      /* don't fake EOF */
+    LEX_FAKEEOF_CLOSING,    /* fake EOF at unmatched closing punctuation */
+    LEX_FAKEEOF_NONEXPR,    /* ... and at token that can't be in expression */
+    LEX_FAKEEOF_LOWLOGIC,   /* ... and at low-precedence logic operator */
+    LEX_FAKEEOF_COMMA,      /* ... and at comma */
+    LEX_FAKEEOF_ASSIGN,     /* ... and at assignment operator */
+    LEX_FAKEEOF_IFELSE,     /* ... and at ?: operator */
+    LEX_FAKEEOF_RANGE,      /* ... and at range operator */
+    LEX_FAKEEOF_LOGIC,      /* ... and at logic operator */
+    LEX_FAKEEOF_BITWISE,    /* ... and at bitwise operator */
+    LEX_FAKEEOF_COMPARE,    /* ... and at comparison operator */
+    LEX_FAKEEOF_MAX
+};
 
 /*
  * Local variables:

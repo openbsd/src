@@ -6,7 +6,7 @@ use lib 't/lib';
 use Test::More tests => 81;
 
 use TAP::Parser;
-use TAP::Parser::IteratorFactory;
+use TAP::Parser::Iterator::Array;
 use TAP::Parser::Aggregator;
 
 my $tap = <<'END_TAP';
@@ -20,11 +20,10 @@ not ok 4 - this is a real failure
 ok 5 # skip we have no description
 END_TAP
 
-my $factory = TAP::Parser::IteratorFactory->new;
-my $stream = $factory->make_iterator( [ split /\n/ => $tap ] );
-isa_ok $stream, 'TAP::Parser::Iterator';
+my $iterator = TAP::Parser::Iterator::Array->new( [ split /\n/ => $tap ] );
+isa_ok $iterator, 'TAP::Parser::Iterator';
 
-my $parser1 = TAP::Parser->new( { stream => $stream } );
+my $parser1 = TAP::Parser->new( { iterator => $iterator } );
 isa_ok $parser1, 'TAP::Parser';
 
 $parser1->run;
@@ -149,7 +148,7 @@ my $gp = $agg->_get_parsers(qw(tap1 tap2))
 
 is @$gp, 2,
   'coverage tests for _get_parser in scalar context... and we got the right number of parsers';
-isa_ok( $_, 'TAP::Parser' ) foreach (@$gp);
+isa_ok( $_, 'TAP::Parser' ) for (@$gp);
 
 # _get_parsers
 # todo_failed - this is a deprecated method, so it  (and these tests)

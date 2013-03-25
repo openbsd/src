@@ -8,7 +8,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..10\n";
+print "1..14\n";
 
 my $i = 1;
 
@@ -18,6 +18,12 @@ my $bar = "bar";
 sub test_too_many {
     eval $_[0];
     print "not " unless $@ =~ /^Too many arguments/;
+    printf "ok %d\n",$i++;
+}
+
+sub test_too_few {
+    eval $_[0];
+    print "not " unless $@ =~ /^Not enough arguments/;
     printf "ok %d\n",$i++;
 }
 
@@ -33,6 +39,10 @@ q[	defined(&foo, $bar);
 	uc($bar,$bar);
 ];
 
+test_too_few($_) for split /\n/,
+q[	unpack;
+];
+
 test_no_error($_) for split /\n/,
 q[	scalar(&foo,$bar);
 	defined &foo, &foo, &foo;
@@ -41,4 +51,7 @@ q[	scalar(&foo,$bar);
 	grep(not($bar), $bar);
 	grep(not($bar, $bar), $bar);
 	grep((not $bar, $bar, $bar), $bar);
+        __FILE__();
+        __LINE__();
+        __PACKAGE__();
 ];

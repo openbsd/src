@@ -11,7 +11,7 @@ BEGIN {
 
 use strict;
 use Safe 1.00;
-use Test::More tests => 9;
+use Test::More tests => 10;
 
 my $safe = Safe->new('PLPerl');
 $safe->permit_only(qw(:default sort));
@@ -37,3 +37,12 @@ my $sub1w2 = $args[1][0][1]{sub};
 isnt $sub1w2, $sub1;
 is eval { $sub1w2->() }, undef;
 like $@, qr/eval .* trapped by operation mask/;
+
+# Avoid infinite recursion when looking for coderefs
+my $r = $safe->reval(<<'END');
+%a = ();
+%b = (a => \%a);
+$a{b} = \%b;
+42;
+END
+is($r, 42);

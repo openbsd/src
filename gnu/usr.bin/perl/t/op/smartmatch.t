@@ -11,7 +11,6 @@ no warnings 'uninitialized';
 
 use Tie::Array;
 use Tie::Hash;
-use if !$ENV{PERL_CORE_MINITEST}, "Tie::RefHash";
 
 # Predeclare vars used in the tests:
 my @empty;
@@ -62,7 +61,8 @@ our $obj = Test::Object::NoOverload->new;
 our $str_obj = Test::Object::StringOverload->new;
 
 my %refh;
-if (!$ENV{PERL_CORE_MINITEST}) {
+unless (is_miniperl()) {
+    require Tie::RefHash;
     tie %refh, 'Tie::RefHash';
     $refh{$ov_obj} = 1;
 }
@@ -73,7 +73,7 @@ my %keyandmore = map { $_ => 0 } @keyandmore;
 my %fooormore = map { $_ => 0 } @fooormore;
 
 # Load and run the tests
-plan tests => 335;
+plan tests => 349;
 
 while (<DATA>) {
   SKIP: {
@@ -92,10 +92,9 @@ while (<DATA>) {
     if ($note =~ /NOWARNINGS/) {
 	$res = eval "no warnings; $tstr";
     }
-    elsif ($note =~ /MINISKIP/ && $ENV{PERL_CORE_MINITEST}) {
-	skip("Doesn't work with miniperl", $yn =~ /=/ ? 2 : 1);
-    }
     else {
+	skip_if_miniperl("Doesn't work with miniperl", $yn =~ /=/ ? 2 : 1)
+	    if $note =~ /MINISKIP/;
 	$res = eval $tstr;
     }
 
@@ -224,8 +223,6 @@ __DATA__
 @	"object"	$str_obj
 @	FALSE		$str_obj
 # Those will treat the $str_obj as a string because of fallback:
-!	$ov_obj		$str_obj
-	$ov_obj_2	$str_obj
 
 # object (overloaded or not) ~~ Any
 	$obj		qr/NoOverload/
@@ -483,6 +480,30 @@ __DATA__
 	@nums		{  1, '',  2, '' }
 	@nums		{  1, '', 12, '' }
 !	@nums		{ 11, '', 12, '' }
+
+# array slices
+	@nums[0..-1]	[]
+	@nums[0..0]	[1]
+!	@nums[0..1]	[0..2]
+	@nums[0..4]	[1..5]
+
+!	undef		@nums[0..-1]
+	1		@nums[0..0]
+	2		@nums[0..1]
+!	@nums[0..1]	2
+
+	@nums[0..1]	@nums[0..1]
+
+# hash slices
+	@keyandmore{qw(not)}		[undef]
+	@keyandmore{qw(key)}		[0]
+
+	undef				@keyandmore{qw(not)}
+	0				@keyandmore{qw(key and more)}
+!	2				@keyandmore{qw(key and)}
+
+	@fooormore{qw(foo)}		@keyandmore{qw(key)}
+	@fooormore{qw(foo or more)}	@keyandmore{qw(key and more)}
 
 # UNDEF
 !	3		undef

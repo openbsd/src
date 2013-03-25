@@ -4,7 +4,7 @@ use FileHandle;
 my $MODULE;
 
 BEGIN {
-	$MODULE = ($ENV{PERL_CORE} || -d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
+	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
 	eval "require $MODULE" || die $@;
 	$MODULE->import(qw());
 }
@@ -21,7 +21,7 @@ my @out = (
 	"248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1",
 );
 
-my $numtests = 6 + scalar @out;
+my $numtests = 8 + scalar @out;
 print "1..$numtests\n";
 
 	# attempt to use an invalid algorithm, and check for failure
@@ -99,4 +99,23 @@ $fh->close;
 
 print "not " unless $sha->new(1)->addfile($tempfile, "p")->hexdigest eq
 	"d449e19c1b0b0c191294c8dc9fa2e4a6ff77fc51";
+print "ok ", $testnum++, "\n";
+
+	# test addfile BITS mode
+
+$fh = FileHandle->new($tempfile, "w");
+print $fh "0100010";			# using NIST 7-bit test vector
+$fh->close;
+
+print "not " unless $sha->new(1)->addfile($tempfile, "0")->hexdigest eq
+	"04f31807151181ad0db278a1660526b0aeef64c2";
+print "ok ", $testnum++, "\n";
+
+$fh = FileHandle->new($tempfile, "w");
+binmode($fh);
+print $fh map(chr, (0..127));		# this is actually NIST 2-bit test
+$fh->close;				# vector "01" (other chars ignored)
+
+print "not " unless $sha->new(1)->addfile($tempfile, "0")->hexdigest eq
+	"ec6b39952e1a3ec3ab3507185cf756181c84bbe2";
 print "ok ", $testnum++, "\n";

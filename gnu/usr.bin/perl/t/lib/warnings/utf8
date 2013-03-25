@@ -1,7 +1,7 @@
 
   utf8.c AOK
 
-     [utf8_to_uv]
+     [utf8_to_uvchr_buf]
      Malformed UTF-8 character
 	my $a = ord "\x80" ;
 
@@ -11,10 +11,10 @@
 
      [utf16_to_utf8]
      Malformed UTF-16 surrogate		
-     <<<<<< Add a test when somethig actually calls utf16_to_utf8
+     <<<<<< Add a test when something actually calls utf16_to_utf8
 
 __END__
-# utf8.c [utf8_to_uv] -W
+# utf8.c [utf8_to_uvchr_buf] -W
 BEGIN {
     if (ord('A') == 193) {
         print "SKIPPED\n# ebcdic platforms do not generate Malformed UTF-8 warnings.";
@@ -34,106 +34,401 @@ Malformed UTF-8 character (unexpected non-continuation byte 0x73, immediately af
 Malformed UTF-8 character (unexpected non-continuation byte 0x73, immediately after start byte 0xf8) at - line 14.
 ########
 use warnings 'utf8';
-my $d7ff  = chr(0xD7FF);
-my $d800  = chr(0xD800);
-my $dfff  = chr(0xDFFF);
-my $e000  = chr(0xE000);
-my $feff  = chr(0xFEFF);
-my $fffd  = chr(0xFFFD);
-my $fffe  = chr(0xFFFE);
-my $ffff  = chr(0xFFFF);
-my $hex4  = chr(0x10000);
-my $hex5  = chr(0x100000);
-my $maxm1 = chr(0x10FFFE);
-my $max   = chr(0x10FFFF);
+my $d7ff  = uc(chr(0xD7FF));
+my $d800  = uc(chr(0xD800));
+my $dfff  = uc(chr(0xDFFF));
+my $e000  = uc(chr(0xE000));
+my $feff  = uc(chr(0xFEFF));
+my $fffd  = uc(chr(0xFFFD));
+my $fffe  = uc(chr(0xFFFE));
+my $ffff  = uc(chr(0xFFFF));
+my $hex4  = uc(chr(0x10000));
+my $hex5  = uc(chr(0x100000));
+my $maxm1 = uc(chr(0x10FFFE));
+my $max   = uc(chr(0x10FFFF));
+my $nonUnicode =  uc(chr(0x110000));
 no warnings 'utf8';
-my $d7ff  = chr(0xD7FF);
-my $d800  = chr(0xD800);
-my $dfff  = chr(0xDFFF);
-my $e000  = chr(0xE000);
-my $feff  = chr(0xFEFF);
-my $fffd  = chr(0xFFFD);
-my $fffe  = chr(0xFFFE);
-my $ffff  = chr(0xFFFF);
-my $hex4  = chr(0x10000);
-my $hex5  = chr(0x100000);
-my $maxm1 = chr(0x10FFFE);
-my $max   = chr(0x10FFFF);
+my $d7ff  = uc(chr(0xD7FF));
+my $d800  = uc(chr(0xD800));
+my $dfff  = uc(chr(0xDFFF));
+my $e000  = uc(chr(0xE000));
+my $feff  = uc(chr(0xFEFF));
+my $fffd  = uc(chr(0xFFFD));
+my $fffe  = uc(chr(0xFFFE));
+my $ffff  = uc(chr(0xFFFF));
+my $hex4  = uc(chr(0x10000));
+my $hex5  = uc(chr(0x100000));
+my $maxm1 = uc(chr(0x10FFFE));
+my $max   = uc(chr(0x10FFFF));
+my $nonUnicode =  uc(chr(0x110000));
 EXPECT
-UTF-16 surrogate 0xd800 at - line 3.
-UTF-16 surrogate 0xdfff at - line 4.
-Unicode non-character 0xfffe is illegal for interchange at - line 8.
-Unicode non-character 0xffff is illegal for interchange at - line 9.
-Unicode non-character 0x10fffe is illegal for interchange at - line 12.
-Unicode non-character 0x10ffff is illegal for interchange at - line 13.
+Operation "uc" returns its argument for UTF-16 surrogate U+D800 at - line 3.
+Operation "uc" returns its argument for UTF-16 surrogate U+DFFF at - line 4.
+Operation "uc" returns its argument for non-Unicode code point 0x110000 at - line 14.
 ########
 use warnings 'utf8';
-my $d7ff  = pack("U", 0xD7FF);
-my $d800  = pack("U", 0xD800);
-my $dfff  = pack("U", 0xDFFF);
-my $e000  = pack("U", 0xE000);
-my $feff  = pack("U", 0xFEFF);
-my $fffd  = pack("U", 0xFFFD);
-my $fffe  = pack("U", 0xFFFE);
-my $ffff  = pack("U", 0xFFFF);
-my $hex4  = pack("U", 0x10000);
-my $hex5  = pack("U", 0x100000);
-my $maxm1 = pack("U", 0x10FFFE);
-my $max   = pack("U", 0x10FFFF);
-no warnings 'utf8';
-my $d7ff  = pack("U", 0xD7FF);
-my $d800  = pack("U", 0xD800);
-my $dfff  = pack("U", 0xDFFF);
-my $e000  = pack("U", 0xE000);
-my $feff  = pack("U", 0xFEFF);
-my $fffd  = pack("U", 0xFFFD);
-my $fffe  = pack("U", 0xFFFE);
-my $ffff  = pack("U", 0xFFFF);
-my $hex4  = pack("U", 0x10000);
-my $hex5  = pack("U", 0x100000);
-my $maxm1 = pack("U", 0x10FFFE);
-my $max   = pack("U", 0x10FFFF);
+my $d800  = uc(chr(0xD800));
+my $nonUnicode =  uc(chr(0x110000));
+no warnings 'surrogate';
+my $d800  = uc(chr(0xD800));
+my $nonUnicode =  uc(chr(0x110000));
 EXPECT
-UTF-16 surrogate 0xd800 at - line 3.
-UTF-16 surrogate 0xdfff at - line 4.
-Unicode non-character 0xfffe is illegal for interchange at - line 8.
-Unicode non-character 0xffff is illegal for interchange at - line 9.
-Unicode non-character 0x10fffe is illegal for interchange at - line 12.
-Unicode non-character 0x10ffff is illegal for interchange at - line 13.
+Operation "uc" returns its argument for UTF-16 surrogate U+D800 at - line 2.
+Operation "uc" returns its argument for non-Unicode code point 0x110000 at - line 3.
+Operation "uc" returns its argument for non-Unicode code point 0x110000 at - line 6.
 ########
 use warnings 'utf8';
-my $d7ff  = "\x{D7FF}";
-my $d800  = "\x{D800}";
-my $dfff  = "\x{DFFF}";
-my $e000  = "\x{E000}";
-my $feff  = "\x{FEFF}";
-my $fffd  = "\x{FFFD}";
-my $fffe  = "\x{FFFE}";
-my $ffff  = "\x{FFFF}";
-my $hex4  = "\x{10000}";
-my $hex5  = "\x{100000}";
-my $maxm1 = "\x{10FFFE}";
-my $max   = "\x{10FFFF}";
-uc($ffff);
-no warnings 'utf8';
-my $d7ff  = "\x{D7FF}";
-my $d800  = "\x{D800}";
-my $dfff  = "\x{DFFF}";
-my $e000  = "\x{E000}";
-my $feff  = "\x{FEFF}";
-my $fffd  = "\x{FFFD}";
-my $fffe  = "\x{FFFE}";
-my $ffff  = "\x{FFFF}";
-my $hex4  = "\x{10000}";
-my $hex5  = "\x{100000}";
-my $maxm1 = "\x{10FFFE}";
-my $max   = "\x{10FFFF}";
-uc($ffff);
+my $d800  = uc(chr(0xD800));
+my $nonUnicode =  uc(chr(0x110000));
+my $big_nonUnicode = uc(chr(0x8000_0000));
+no warnings 'non_unicode';
+my $d800  = uc(chr(0xD800));
+my $nonUnicode =  uc(chr(0x110000));
+my $big_nonUnicode = uc(chr(0x8000_0000));
 EXPECT
-UTF-16 surrogate 0xd800 at - line 3.
-UTF-16 surrogate 0xdfff at - line 4.
-Unicode non-character 0xfffe is illegal for interchange at - line 8.
-Unicode non-character 0xffff is illegal for interchange at - line 9.
-Unicode non-character 0x10fffe is illegal for interchange at - line 12.
-Unicode non-character 0x10ffff is illegal for interchange at - line 13.
-Unicode non-character 0xffff is illegal for interchange in uc at - line 14.
+Operation "uc" returns its argument for UTF-16 surrogate U+D800 at - line 2.
+Operation "uc" returns its argument for non-Unicode code point 0x110000 at - line 3.
+Operation "uc" returns its argument for non-Unicode code point 0x80000000 at - line 4.
+Operation "uc" returns its argument for UTF-16 surrogate U+D800 at - line 6.
+########
+use warnings 'utf8';
+my $d7ff  = lc pack("U", 0xD7FF);
+my $d800  = lc pack("U", 0xD800);
+my $dfff  = lc pack("U", 0xDFFF);
+my $e000  = lc pack("U", 0xE000);
+my $feff  = lc pack("U", 0xFEFF);
+my $fffd  = lc pack("U", 0xFFFD);
+my $fffe  = lc pack("U", 0xFFFE);
+my $ffff  = lc pack("U", 0xFFFF);
+my $hex4  = lc pack("U", 0x10000);
+my $hex5  = lc pack("U", 0x100000);
+my $maxm1 = lc pack("U", 0x10FFFE);
+my $max   = lc pack("U", 0x10FFFF);
+my $nonUnicode =  lc(pack("U", 0x110000));
+no warnings 'utf8';
+my $d7ff  = lc pack("U", 0xD7FF);
+my $d800  = lc pack("U", 0xD800);
+my $dfff  = lc pack("U", 0xDFFF);
+my $e000  = lc pack("U", 0xE000);
+my $feff  = lc pack("U", 0xFEFF);
+my $fffd  = lc pack("U", 0xFFFD);
+my $fffe  = lc pack("U", 0xFFFE);
+my $ffff  = lc pack("U", 0xFFFF);
+my $hex4  = lc pack("U", 0x10000);
+my $hex5  = lc pack("U", 0x100000);
+my $maxm1 = lc pack("U", 0x10FFFE);
+my $max   = lc pack("U", 0x10FFFF);
+my $nonUnicode =  lc(pack("U", 0x110000));
+EXPECT
+Operation "lc" returns its argument for UTF-16 surrogate U+D800 at - line 3.
+Operation "lc" returns its argument for UTF-16 surrogate U+DFFF at - line 4.
+Operation "lc" returns its argument for non-Unicode code point 0x110000 at - line 14.
+########
+use warnings 'utf8';
+my $d7ff  = ucfirst "\x{D7FF}";
+my $d800  = ucfirst "\x{D800}";
+my $dfff  = ucfirst "\x{DFFF}";
+my $e000  = ucfirst "\x{E000}";
+my $feff  = ucfirst "\x{FEFF}";
+my $fffd  = ucfirst "\x{FFFD}";
+my $fffe  = ucfirst "\x{FFFE}";
+my $ffff  = ucfirst "\x{FFFF}";
+my $hex4  = ucfirst "\x{10000}";
+my $hex5  = ucfirst "\x{100000}";
+my $maxm1 = ucfirst "\x{10FFFE}";
+my $max   = ucfirst "\x{10FFFF}";
+my $nonUnicode =  ucfirst "\x{110000}";
+no warnings 'utf8';
+my $d7ff  = ucfirst "\x{D7FF}";
+my $d800  = ucfirst "\x{D800}";
+my $dfff  = ucfirst "\x{DFFF}";
+my $e000  = ucfirst "\x{E000}";
+my $feff  = ucfirst "\x{FEFF}";
+my $fffd  = ucfirst "\x{FFFD}";
+my $fffe  = ucfirst "\x{FFFE}";
+my $ffff  = ucfirst "\x{FFFF}";
+my $hex4  = ucfirst "\x{10000}";
+my $hex5  = ucfirst "\x{100000}";
+my $maxm1 = ucfirst "\x{10FFFE}";
+my $max   = ucfirst "\x{10FFFF}";
+my $nonUnicode =  ucfirst "\x{110000}";
+EXPECT
+Operation "ucfirst" returns its argument for UTF-16 surrogate U+D800 at - line 3.
+Operation "ucfirst" returns its argument for UTF-16 surrogate U+DFFF at - line 4.
+Operation "ucfirst" returns its argument for non-Unicode code point 0x110000 at - line 14.
+########
+use warnings 'utf8';
+chr(0xD7FF) =~ /\p{Any}/;
+chr(0xD800) =~ /\p{Any}/;
+chr(0xDFFF) =~ /\p{Any}/;
+chr(0xE000) =~ /\p{Any}/;
+chr(0xFEFF) =~ /\p{Any}/;
+chr(0xFFFD) =~ /\p{Any}/;
+chr(0xFFFE) =~ /\p{Any}/;
+chr(0xFFFF) =~ /\p{Any}/;
+chr(0x10000) =~ /\p{Any}/;
+chr(0x100000) =~ /\p{Any}/;
+chr(0x10FFFE) =~ /\p{Any}/;
+chr(0x10FFFF) =~ /\p{Any}/;
+chr(0x110000) =~ /\p{Any}/;
+no warnings 'utf8';
+chr(0xD7FF) =~ /\p{Any}/;
+chr(0xD800) =~ /\p{Any}/;
+chr(0xDFFF) =~ /\p{Any}/;
+chr(0xE000) =~ /\p{Any}/;
+chr(0xFEFF) =~ /\p{Any}/;
+chr(0xFFFD) =~ /\p{Any}/;
+chr(0xFFFE) =~ /\p{Any}/;
+chr(0xFFFF) =~ /\p{Any}/;
+chr(0x10000) =~ /\p{Any}/;
+chr(0x100000) =~ /\p{Any}/;
+chr(0x10FFFE) =~ /\p{Any}/;
+chr(0x10FFFF) =~ /\p{Any}/;
+chr(0x110000) =~ /\p{Any}/;
+EXPECT
+Code point 0x110000 is not Unicode, all \p{} matches fail; all \P{} matches succeed at - line 14.
+########
+use warnings 'utf8';
+chr(0x110000) =~ /\p{Any}/;
+no warnings 'non_unicode';
+chr(0x110000) =~ /\p{Any}/;
+EXPECT
+Code point 0x110000 is not Unicode, all \p{} matches fail; all \P{} matches succeed at - line 2.
+########
+require "../test.pl";
+use warnings 'utf8';
+sub Is_Super { return '!utf8::Any' }
+# The extra char is to avoid an optimization that avoids the problem when the
+# property is the only non-latin1 char in a class
+print "\x{1100000}" =~ /^[\p{Is_Super}\x{100}]$/, "\n";
+EXPECT
+1
+########
+require "../test.pl";
+use warnings 'utf8';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{D7FF}", "\n";
+print $fh "\x{D800}", "\n";
+print $fh "\x{DFFF}", "\n";
+print $fh "\x{E000}", "\n";
+print $fh "\x{FDCF}", "\n";
+print $fh "\x{FDD0}", "\n";
+print $fh "\x{FDEF}", "\n";
+print $fh "\x{FDF0}", "\n";
+print $fh "\x{FEFF}", "\n";
+print $fh "\x{FFFD}", "\n";
+print $fh "\x{FFFE}", "\n";
+print $fh "\x{FFFF}", "\n";
+print $fh "\x{10000}", "\n";
+print $fh "\x{1FFFE}", "\n";
+print $fh "\x{1FFFF}", "\n";
+print $fh "\x{2FFFE}", "\n";
+print $fh "\x{2FFFF}", "\n";
+print $fh "\x{3FFFE}", "\n";
+print $fh "\x{3FFFF}", "\n";
+print $fh "\x{4FFFE}", "\n";
+print $fh "\x{4FFFF}", "\n";
+print $fh "\x{5FFFE}", "\n";
+print $fh "\x{5FFFF}", "\n";
+print $fh "\x{6FFFE}", "\n";
+print $fh "\x{6FFFF}", "\n";
+print $fh "\x{7FFFE}", "\n";
+print $fh "\x{7FFFF}", "\n";
+print $fh "\x{8FFFE}", "\n";
+print $fh "\x{8FFFF}", "\n";
+print $fh "\x{9FFFE}", "\n";
+print $fh "\x{9FFFF}", "\n";
+print $fh "\x{AFFFE}", "\n";
+print $fh "\x{AFFFF}", "\n";
+print $fh "\x{BFFFE}", "\n";
+print $fh "\x{BFFFF}", "\n";
+print $fh "\x{CFFFE}", "\n";
+print $fh "\x{CFFFF}", "\n";
+print $fh "\x{DFFFE}", "\n";
+print $fh "\x{DFFFF}", "\n";
+print $fh "\x{EFFFE}", "\n";
+print $fh "\x{EFFFF}", "\n";
+print $fh "\x{FFFFE}", "\n";
+print $fh "\x{FFFFF}", "\n";
+print $fh "\x{100000}", "\n";
+print $fh "\x{10FFFE}", "\n";
+print $fh "\x{10FFFF}", "\n";
+print $fh "\x{110000}", "\n";
+close $fh;
+EXPECT
+Unicode surrogate U+D800 is illegal in UTF-8 at - line 6.
+Unicode surrogate U+DFFF is illegal in UTF-8 at - line 7.
+Unicode non-character U+FDD0 is illegal for open interchange at - line 10.
+Unicode non-character U+FDEF is illegal for open interchange at - line 11.
+Unicode non-character U+FFFE is illegal for open interchange at - line 15.
+Unicode non-character U+FFFF is illegal for open interchange at - line 16.
+Unicode non-character U+1FFFE is illegal for open interchange at - line 18.
+Unicode non-character U+1FFFF is illegal for open interchange at - line 19.
+Unicode non-character U+2FFFE is illegal for open interchange at - line 20.
+Unicode non-character U+2FFFF is illegal for open interchange at - line 21.
+Unicode non-character U+3FFFE is illegal for open interchange at - line 22.
+Unicode non-character U+3FFFF is illegal for open interchange at - line 23.
+Unicode non-character U+4FFFE is illegal for open interchange at - line 24.
+Unicode non-character U+4FFFF is illegal for open interchange at - line 25.
+Unicode non-character U+5FFFE is illegal for open interchange at - line 26.
+Unicode non-character U+5FFFF is illegal for open interchange at - line 27.
+Unicode non-character U+6FFFE is illegal for open interchange at - line 28.
+Unicode non-character U+6FFFF is illegal for open interchange at - line 29.
+Unicode non-character U+7FFFE is illegal for open interchange at - line 30.
+Unicode non-character U+7FFFF is illegal for open interchange at - line 31.
+Unicode non-character U+8FFFE is illegal for open interchange at - line 32.
+Unicode non-character U+8FFFF is illegal for open interchange at - line 33.
+Unicode non-character U+9FFFE is illegal for open interchange at - line 34.
+Unicode non-character U+9FFFF is illegal for open interchange at - line 35.
+Unicode non-character U+AFFFE is illegal for open interchange at - line 36.
+Unicode non-character U+AFFFF is illegal for open interchange at - line 37.
+Unicode non-character U+BFFFE is illegal for open interchange at - line 38.
+Unicode non-character U+BFFFF is illegal for open interchange at - line 39.
+Unicode non-character U+CFFFE is illegal for open interchange at - line 40.
+Unicode non-character U+CFFFF is illegal for open interchange at - line 41.
+Unicode non-character U+DFFFE is illegal for open interchange at - line 42.
+Unicode non-character U+DFFFF is illegal for open interchange at - line 43.
+Unicode non-character U+EFFFE is illegal for open interchange at - line 44.
+Unicode non-character U+EFFFF is illegal for open interchange at - line 45.
+Unicode non-character U+FFFFE is illegal for open interchange at - line 46.
+Unicode non-character U+FFFFF is illegal for open interchange at - line 47.
+Unicode non-character U+10FFFE is illegal for open interchange at - line 49.
+Unicode non-character U+10FFFF is illegal for open interchange at - line 50.
+Code point 0x110000 is not Unicode, may not be portable at - line 51.
+########
+require "../test.pl";
+use warnings 'utf8';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{D800}", "\n";
+print $fh "\x{FFFF}", "\n";
+print $fh "\x{110000}", "\n";
+close $fh;
+EXPECT
+Unicode surrogate U+D800 is illegal in UTF-8 at - line 5.
+Unicode non-character U+FFFF is illegal for open interchange at - line 6.
+Code point 0x110000 is not Unicode, may not be portable at - line 7.
+########
+require "../test.pl";
+use warnings 'utf8';
+no warnings 'surrogate';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{D800}", "\n";
+print $fh "\x{FFFF}", "\n";
+print $fh "\x{110000}", "\n";
+close $fh;
+EXPECT
+Unicode non-character U+FFFF is illegal for open interchange at - line 7.
+Code point 0x110000 is not Unicode, may not be portable at - line 8.
+########
+require "../test.pl";
+use warnings 'utf8';
+no warnings 'nonchar';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{D800}", "\n";
+print $fh "\x{FFFF}", "\n";
+print $fh "\x{110000}", "\n";
+close $fh;
+EXPECT
+Unicode surrogate U+D800 is illegal in UTF-8 at - line 6.
+Code point 0x110000 is not Unicode, may not be portable at - line 8.
+########
+require "../test.pl";
+use warnings 'utf8';
+no warnings 'non_unicode';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{D800}", "\n";
+print $fh "\x{FFFF}", "\n";
+print $fh "\x{110000}", "\n";
+close $fh;
+EXPECT
+Unicode surrogate U+D800 is illegal in UTF-8 at - line 6.
+Unicode non-character U+FFFF is illegal for open interchange at - line 7.
+########
+# NAME C<use warnings "nonchar"> works in isolation
+require "../test.pl";
+use warnings 'nonchar';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{FFFF}", "\n";
+close $fh;
+EXPECT
+Unicode non-character U+FFFF is illegal for open interchange at - line 5.
+########
+# NAME C<use warnings "surrogate"> works in isolation
+require "../test.pl";
+use warnings 'surrogate';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{D800}", "\n";
+close $fh;
+EXPECT
+Unicode surrogate U+D800 is illegal in UTF-8 at - line 5.
+########
+# NAME C<use warnings "non_unicode"> works in isolation
+require "../test.pl";
+use warnings 'non_unicode';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{110000}", "\n";
+close $fh;
+EXPECT
+Code point 0x110000 is not Unicode, may not be portable at - line 5.
+########
+require "../test.pl";
+no warnings 'utf8';
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh "\x{D7FF}", "\n";
+print $fh "\x{D800}", "\n";
+print $fh "\x{DFFF}", "\n";
+print $fh "\x{E000}", "\n";
+print $fh "\x{FDCF}", "\n";
+print $fh "\x{FDD0}", "\n";
+print $fh "\x{FDEF}", "\n";
+print $fh "\x{FDF0}", "\n";
+print $fh "\x{FEFF}", "\n";
+print $fh "\x{FFFD}", "\n";
+print $fh "\x{FFFE}", "\n";
+print $fh "\x{FFFF}", "\n";
+print $fh "\x{10000}", "\n";
+print $fh "\x{1FFFE}", "\n";
+print $fh "\x{1FFFF}", "\n";
+print $fh "\x{2FFFE}", "\n";
+print $fh "\x{2FFFF}", "\n";
+print $fh "\x{3FFFE}", "\n";
+print $fh "\x{3FFFF}", "\n";
+print $fh "\x{4FFFE}", "\n";
+print $fh "\x{4FFFF}", "\n";
+print $fh "\x{5FFFE}", "\n";
+print $fh "\x{5FFFF}", "\n";
+print $fh "\x{6FFFE}", "\n";
+print $fh "\x{6FFFF}", "\n";
+print $fh "\x{7FFFE}", "\n";
+print $fh "\x{7FFFF}", "\n";
+print $fh "\x{8FFFE}", "\n";
+print $fh "\x{8FFFF}", "\n";
+print $fh "\x{9FFFE}", "\n";
+print $fh "\x{9FFFF}", "\n";
+print $fh "\x{AFFFE}", "\n";
+print $fh "\x{AFFFF}", "\n";
+print $fh "\x{BFFFE}", "\n";
+print $fh "\x{BFFFF}", "\n";
+print $fh "\x{CFFFE}", "\n";
+print $fh "\x{CFFFF}", "\n";
+print $fh "\x{DFFFE}", "\n";
+print $fh "\x{DFFFF}", "\n";
+print $fh "\x{EFFFE}", "\n";
+print $fh "\x{EFFFF}", "\n";
+print $fh "\x{FFFFE}", "\n";
+print $fh "\x{FFFFF}", "\n";
+print $fh "\x{100000}", "\n";
+print $fh "\x{10FFFE}", "\n";
+print $fh "\x{10FFFF}", "\n";
+print $fh "\x{110000}", "\n";
+close $fh;
+EXPECT

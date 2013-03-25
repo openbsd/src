@@ -8,6 +8,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -18,7 +19,7 @@ sub BEGIN {
 
 use Storable qw(store retrieve store_fd nstore_fd fd_retrieve);
 
-print "1..20\n";
+use Test::More tests => 21;
 
 $a = 'toto';
 $b = \$a;
@@ -28,21 +29,18 @@ $c->{attribute} = 'attrval';
 @a = ('first', undef, 3, -4, -3.14159, 456, 4.5,
 	$b, \$a, $a, $c, \$c, \%a);
 
-print "not " unless defined store(\@a, 'store');
-print "ok 1\n";
+isnt(store(\@a, 'store'), undef);
 
 $dumped = &dump(\@a);
-print "ok 2\n";
+isnt($dumped, undef);
 
 $root = retrieve('store');
-print "not " unless defined $root;
-print "ok 3\n";
+isnt($root, undef);
 
 $got = &dump($root);
-print "ok 4\n";
+isnt($got, undef);
 
-print "not " unless $got eq $dumped; 
-print "ok 5\n";
+is($got, $dumped);
 
 1 while unlink 'store';
 
@@ -57,53 +55,37 @@ sub make {
 package main;
 
 $foo = FOO->make;
-print "not " unless $foo->store('store');
-print "ok 6\n";
+isnt($foo->store('store'), undef);
 
-print "not " unless open(OUT, '>>store');
-print "ok 7\n";
+isnt(open(OUT, '>>store'), undef);
 binmode OUT;
 
-print "not " unless defined store_fd(\@a, ::OUT);
-print "ok 8\n";
-print "not " unless defined nstore_fd($foo, ::OUT);
-print "ok 9\n";
-print "not " unless defined nstore_fd(\%a, ::OUT);
-print "ok 10\n";
+isnt(store_fd(\@a, ::OUT), undef);
+isnt(nstore_fd($foo, ::OUT), undef);
+isnt(nstore_fd(\%a, ::OUT), undef);
 
-print "not " unless close(OUT);
-print "ok 11\n";
+isnt(close(OUT), undef);
 
-print "not " unless open(OUT, 'store');
-binmode OUT;
+isnt(open(OUT, 'store'), undef);
 
 $r = fd_retrieve(::OUT);
-print "not " unless defined $r;
-print "ok 12\n";
-print "not " unless &dump($foo) eq &dump($r);
-print "ok 13\n";
+isnt($r, undef);
+is(&dump($r), &dump($foo));
 
 $r = fd_retrieve(::OUT);
-print "not " unless defined $r;
-print "ok 14\n";
-print "not " unless &dump(\@a) eq &dump($r);
-print "ok 15\n";
+isnt($r, undef);
+is(&dump($r), &dump(\@a));
 
 $r = fd_retrieve(main::OUT);
-print "not " unless defined $r;
-print "ok 16\n";
-print "not " unless &dump($foo) eq &dump($r);
-print "ok 17\n";
+isnt($r, undef);
+is(&dump($r), &dump($foo));
 
 $r = fd_retrieve(::OUT);
-print "not " unless defined $r;
-print "ok 18\n";
-print "not " unless &dump(\%a) eq &dump($r);
-print "ok 19\n";
+isnt($r, undef);
+is(&dump($r), &dump(\%a));
 
 eval { $r = fd_retrieve(::OUT); };
-print "not " unless $@;
-print "ok 20\n";
+isnt($@, '');
 
 close OUT or die "Could not close: $!";
 END { 1 while unlink 'store' }

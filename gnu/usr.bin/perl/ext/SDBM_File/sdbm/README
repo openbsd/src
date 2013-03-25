@@ -32,7 +32,7 @@ derived  from  any  licensed,  proprietary  or   copyrighted
 software.
 
      The sdbm implementation is based on  a  1978  algorithm
-[Lar78] by P.-A. (Paul) Larson known as ``Dynamic Hashing''.
+[Lar78] by P.-A. (Paul) Larson known as "Dynamic Hashing".
 In the course of searching for a substitute for ndbm, I pro-
 totyped  three different external-hashing algorithms [Lar78,
 Fag79, Lit80] and ultimately chose Larson's algorithm  as  a
@@ -70,7 +70,7 @@ _________________________
                            - 2 -
 
 
-store operation will not ``wander away'' trying to split its
+store operation will not "wander away" trying to split its
 data  pages  to insert a datum that cannot (due to elaborate
 worst-case situations) be inserted. (It will  fail  after  a
 pre-defined number of attempts.)
@@ -298,30 +298,30 @@ References
 
 
 [Lar78]
-    P.-A. Larson, ``Dynamic Hashing'', BIT, vol.   18,   pp.
+    P.-A. Larson, "Dynamic Hashing", BIT, vol.   18,   pp.
     184-201, 1978.
 
 [Tho90]
     Ken Thompson, private communication, Nov. 1990
 
 [Lit80]
-    W. Litwin, `` Linear Hashing: A new tool  for  file  and
-    table addressing'', Proceedings of the 6th Conference on
+    W. Litwin, "Linear Hashing: A new tool  for  file  and
+    table addressing", Proceedings of the 6th Conference on
     Very Large  Dabatases  (Montreal), pp.   212-223,   Very
     Large Database Foundation, Saratoga, Calif., 1980.
 
 [Fag79]
     R. Fagin, J.  Nievergelt,  N.  Pippinger,  and   H.   R.
-    Strong,  ``Extendible Hashing - A Fast Access Method for
-    Dynamic Files'', ACM  Trans.  Database  Syst.,  vol.  4,
+    Strong,  "Extendible Hashing - A Fast Access Method for
+    Dynamic Files", ACM  Trans.  Database  Syst.,  vol.  4,
     no.3, pp. 315-344, Sept. 1979.
 
 [Wal84]
-    Rich Wales, ``Discussion of "dbm"  data  base  system'',
+    Rich Wales, "Discussion of 'dbm'  data  base  system",
     USENET newsgroup unix.wizards, Jan. 1984.
 
 [Tor87]
-    Chris Torek,  ``Re:   dbm.a   and   ndbm.a   archives'',
+    Chris Torek,  "Re:   dbm.a   and   ndbm.a   archives",
 
 
 
@@ -337,13 +337,13 @@ References
     USENET newsgroup comp.unix, 1987.
 
 [Mar79]
-    G. N. Martin, ``Spiral Storage: Incrementally   Augment-
-    able   Hash  Addressed  Storage'', Technical Report #27,
+    G. N. Martin, "Spiral Storage: Incrementally   Augment-
+    able   Hash  Addressed  Storage", Technical Report #27,
     University of Varwick, Coventry, U.K., 1979.
 
 [Enb88]
-    R.  J.  Enbody  and  H.   C.   Du,   ``Dynamic   Hashing
-    Schemes'',ACM  Computing  Surveys,  vol.  20, no. 2, pp.
+    R.  J.  Enbody  and  H.   C.   Du,   "Dynamic   Hashing
+    Schemes",ACM  Computing  Surveys,  vol.  20, no. 2, pp.
     85-113, June 1988.
 
 

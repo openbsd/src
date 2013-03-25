@@ -1,32 +1,58 @@
 package XS::APItest;
 
-use 5.008;
+{ use 5.011001; }
 use strict;
 use warnings;
 use Carp;
 
-use base qw/ DynaLoader Exporter /;
+our $VERSION = '0.39';
 
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
+require XSLoader;
 
 # Export everything since these functions are only used by a test script
-our @EXPORT = qw( print_double print_int print_long
-		  print_float print_long_double have_long_double print_flush
-		  mpushp mpushn mpushi mpushu
-		  mxpushp mxpushn mxpushi mxpushu
-		  call_sv call_pv call_method eval_sv eval_pv require_pv
-		  G_SCALAR G_ARRAY G_VOID G_DISCARD G_EVAL G_NOARGS
-		  G_KEEPERR G_NODEBUG G_METHOD G_WANT
-		  apitest_exception mycroak strtab
-		  my_cxt_getint my_cxt_getsv my_cxt_setint my_cxt_setsv
-		  sv_setsv_cow_hashkey_core sv_setsv_cow_hashkey_notcore
-		  rmagical_cast rmagical_flags
-		  DPeek utf16_to_utf8 utf16_to_utf8_reversed pmflag my_exit
-);
+# Export subpackages too - in effect, export all their routines into us, then
+# export everything from us.
+sub import {
+    my $package = shift;
+    croak ("Can't export for '$package'") unless $package eq __PACKAGE__;
+    my $exports;
+    @{$exports}{@_} = () if @_;
 
-our $VERSION = '0.17';
+    my $callpkg = caller;
+
+    my @stashes = ('XS::APItest::', \%XS::APItest::);
+    while (my ($stash_name, $stash) = splice @stashes, 0, 2) {
+	while (my ($sym_name, $glob) = each %$stash) {
+	    if ($sym_name =~ /::$/) {
+		# Skip any subpackages that are clearly OO
+		next if *{$glob}{HASH}{'new'};
+		# and any that have AUTOLOAD
+		next if *{$glob}{HASH}{AUTOLOAD};
+		push @stashes, "$stash_name$sym_name", *{$glob}{HASH};
+	    } elsif (ref $glob eq 'SCALAR' || *{$glob}{CODE}) {
+		if ($exports) {
+		    next if !exists $exports->{$sym_name};
+		    delete $exports->{$sym_name};
+		}
+		no strict 'refs';
+		*{"$callpkg\::$sym_name"} = \&{"$stash_name$sym_name"};
+	    }
+	}
+    }
+    foreach (keys %{$exports||{}}) {
+	next unless /\A(?:rpn|calcrpn|stufftest|swaptwostmts|looprest|scopelessblock|stmtasexpr|stmtsasexpr|loopblock|blockasexpr|swaplabel|labelconst|arrayfullexpr|arraylistexpr|arraytermexpr|arrayarithexpr|arrayexprflags)\z/;
+	$^H{"XS::APItest/$_"} = 1;
+	delete $exports->{$_};
+    }
+    if ($exports) {
+	my @carp = keys %$exports;
+	if (@carp) {
+	    croak(join '',
+		  (map "\"$_\" is not exported by the $package module\n", sort @carp),
+		  "Can't continue after import errors");
+	}
+    }
+}
 
 use vars '$WARNINGS_ON_BOOTSTRAP';
 use vars map "\$${_}_called_PP", qw(BEGIN UNITCHECK CHECK INIT END);
@@ -63,12 +89,15 @@ END {
 }
 
 if ($WARNINGS_ON_BOOTSTRAP) {
-    bootstrap XS::APItest $VERSION;
+    XSLoader::load();
 } else {
     # More CHECK and INIT blocks that could warn:
     local $^W;
-    bootstrap XS::APItest $VERSION;
+    XSLoader::load();
 }
+
+# This XS function needs the lvalue attr applied.
+eval 'use attributes __PACKAGE__, \\&lv_temp_object, "lvalue"; 1' or die;
 
 1;
 __END__
@@ -82,10 +111,14 @@ XS::APItest - Test the perl C API
   use XS::APItest;
   print_double(4);
 
+  use XS::APItest qw(rpn calcrpn);
+  $triangle = rpn($n $n 1 + * 2 /);
+  calcrpn $triangle { $n $n 1 + * 2 / }
+
 =head1 ABSTRACT
 
-This module tests the perl C API. Currently tests that C<printf>
-works correctly.
+This module tests the perl C API. Also exposes various bit of the perl
+internals for the use of core test scripts.
 
 =head1 DESCRIPTION
 
@@ -181,6 +214,11 @@ correctly by C<printf>.
 
 Output is sent to STDOUT.
 
+=item B<filter>
+
+Installs a source filter that substitutes "e" for "o" (witheut regard fer
+what it might be medifying).
+
 =item B<call_sv>, B<call_pv>, B<call_method>
 
 These exercise the C calls of the same names. Everything after the flags
@@ -207,6 +245,86 @@ Exercises the C function of the same name. Returns nothing.
 
 =back
 
+=head1 KEYWORDS
+
+These are not supplied by default, but must be explicitly imported.
+They are lexically scoped.
+
+=over
+
+=item rpn(EXPRESSION)
+
+This construct is a Perl expression.  I<EXPRESSION> must be an RPN
+arithmetic expression, as described below.  The RPN expression is
+evaluated, and its value is returned as the value of the Perl expression.
+
+=item calcrpn VARIABLE { EXPRESSION }
+
+This construct is a complete Perl statement.  (No semicolon should
+follow the closing brace.)  I<VARIABLE> must be a Perl scalar C<my>
+variable, and I<EXPRESSION> must be an RPN arithmetic expression as
+described below.  The RPN expression is evaluated, and its value is
+assigned to the variable.
+
+=back
+
+=head2 RPN expression syntax
+
+Tokens of an RPN expression may be separated by whitespace, but such
+separation is usually not required.  It is required only where unseparated
+tokens would look like a longer token.  For example, C<12 34 +> can be
+written as C<12 34+>, but not as C<1234 +>.
+
+An RPN expression may be any of:
+
+=over
+
+=item C<1234>
+
+A sequence of digits is an unsigned decimal literal number.
+
+=item C<$foo>
+
+An alphanumeric name preceded by dollar sign refers to a Perl scalar
+variable.  Only variables declared with C<my> or C<state> are supported.
+If the variable's value is not a native integer, it will be converted
+to an integer, by Perl's usual mechanisms, at the time it is evaluated.
+
+=item I<A> I<B> C<+>
+
+Sum of I<A> and I<B>.
+
+=item I<A> I<B> C<->
+
+Difference of I<A> and I<B>, the result of subtracting I<B> from I<A>.
+
+=item I<A> I<B> C<*>
+
+Product of I<A> and I<B>.
+
+=item I<A> I<B> C</>
+
+Quotient when I<A> is divided by I<B>, rounded towards zero.
+Division by zero generates an exception.
+
+=item I<A> I<B> C<%>
+
+Remainder when I<A> is divided by I<B> with the quotient rounded towards zero.
+Division by zero generates an exception.
+
+=back
+
+Because the arithmetic operators all have fixed arity and are postfixed,
+there is no need for operator precedence, nor for a grouping operator
+to override precedence.  This is half of the point of RPN.
+
+An RPN expression can also be interpreted in another way, as a sequence
+of operations on a stack, one operation per token.  A literal or variable
+token pushes a value onto the stack.  A binary operator pulls two items
+off the stack, performs a calculation with them, and pushes the result
+back onto the stack.  The stack starts out empty, and at the end of the
+expression there must be exactly one value left on the stack.
+
 =head1 SEE ALSO
 
 L<XS::Typemap>, L<perlapi>.
@@ -215,12 +333,15 @@ L<XS::Typemap>, L<perlapi>.
 
 Tim Jenness, E<lt>t.jenness@jach.hawaii.eduE<gt>,
 Christian Soeller, E<lt>csoelle@mph.auckland.ac.nzE<gt>,
-Hugo van der Sanden E<lt>hv@crypt.compulink.co.ukE<gt>
+Hugo van der Sanden E<lt>hv@crypt.compulink.co.ukE<gt>,
+Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2002,2004 Tim Jenness, Christian Soeller, Hugo van der Sanden.
 All Rights Reserved.
+
+Copyright (C) 2009 Andrew Main (Zefram) <zefram@fysh.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 

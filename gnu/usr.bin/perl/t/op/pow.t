@@ -7,7 +7,7 @@ BEGIN {
     require './test.pl';
 }
 
-# This calcualtion ought to be within 0.001 of the right answer.
+# This calculation ought to be within 0.001 of the right answer.
 my $bits_in_uv = int (0.001 + log (~0+1) / log 2);
 
 # 3**30 < 2**48, don't trust things outside that range on a Cray

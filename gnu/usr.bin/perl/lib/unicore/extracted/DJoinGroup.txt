@@ -1,8 +1,8 @@
-# DerivedJoiningGroup-5.2.0.txt
-# Date: 2009-05-22, 18:51:25 GMT [MD]
+# DerivedJoiningGroup-6.1.0.txt
+# Date: 2011-07-25, 00:54:14 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2009 Unicode, Inc.
+# Copyright (c) 1991-2011 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -48,8 +48,9 @@
 066E          ; Beh # Lo       ARABIC LETTER DOTLESS BEH
 0679..0680    ; Beh # Lo   [8] ARABIC LETTER TTEH..ARABIC LETTER BEHEH
 0750..0756    ; Beh # Lo   [7] ARABIC LETTER BEH WITH THREE DOTS HORIZONTALLY BELOW..ARABIC LETTER BEH WITH SMALL V
+08A0          ; Beh # Lo       ARABIC LETTER BEH WITH SMALL V BELOW
 
-# Total code points: 19
+# Total code points: 20
 
 # ================================================
 
@@ -86,8 +87,9 @@
 0641          ; Feh # Lo       ARABIC LETTER FEH
 06A1..06A6    ; Feh # Lo   [6] ARABIC LETTER DOTLESS FEH..ARABIC LETTER PEHEH
 0760..0761    ; Feh # Lo   [2] ARABIC LETTER FEH WITH TWO DOTS BELOW..ARABIC LETTER FEH WITH THREE DOTS POINTING UPWARDS BELOW
+08A4          ; Feh # Lo       ARABIC LETTER FEH WITH DOT BELOW AND THREE DOTS ABOVE
 
-# Total code points: 9
+# Total code points: 10
 
 # ================================================
 
@@ -121,12 +123,13 @@
 076E..076F    ; Hah # Lo   [2] ARABIC LETTER HAH WITH SMALL ARABIC LETTER TAH BELOW..ARABIC LETTER HAH WITH SMALL ARABIC LETTER TAH AND TWO DOTS
 0772          ; Hah # Lo       ARABIC LETTER HAH WITH SMALL ARABIC LETTER TAH ABOVE
 077C          ; Hah # Lo       ARABIC LETTER HAH WITH EXTENDED ARABIC-INDIC DIGIT FOUR BELOW
+08A2          ; Hah # Lo       ARABIC LETTER JEEM WITH TWO DOTS ABOVE
 
-# Total code points: 17
+# Total code points: 18
 
 # ================================================
 
-06C3          ; Hamza_On_Heh_Goal # Lo       ARABIC LETTER TEH MARBUTA GOAL
+06C3          ; Teh_Marbuta_Goal # Lo       ARABIC LETTER TEH MARBUTA GOAL
 
 # Total code points: 1
 
@@ -180,8 +183,9 @@
 0644          ; Lam # Lo       ARABIC LETTER LAM
 06B5..06B8    ; Lam # Lo   [4] ARABIC LETTER LAM WITH SMALL V..ARABIC LETTER LAM WITH THREE DOTS BELOW
 076A          ; Lam # Lo       ARABIC LETTER LAM WITH BAR
+08A6          ; Lam # Lo       ARABIC LETTER LAM WITH DOUBLE BAR
 
-# Total code points: 6
+# Total code points: 7
 
 # ================================================
 
@@ -193,8 +197,9 @@
 
 0645          ; Meem # Lo       ARABIC LETTER MEEM
 0765..0766    ; Meem # Lo   [2] ARABIC LETTER MEEM WITH DOT ABOVE..ARABIC LETTER MEEM WITH DOT BELOW
+08A7          ; Meem # Lo       ARABIC LETTER MEEM WITH THREE DOTS ABOVE
 
-# Total code points: 3
+# Total code points: 4
 
 # ================================================
 
@@ -227,8 +232,9 @@
 0642          ; Qaf # Lo       ARABIC LETTER QAF
 066F          ; Qaf # Lo       ARABIC LETTER DOTLESS QAF
 06A7..06A8    ; Qaf # Lo   [2] ARABIC LETTER QAF WITH DOT ABOVE..ARABIC LETTER QAF WITH THREE DOTS ABOVE
+08A5          ; Qaf # Lo       ARABIC LETTER QAF WITH DOT BELOW
 
-# Total code points: 4
+# Total code points: 5
 
 # ================================================
 
@@ -244,8 +250,9 @@
 075B          ; Reh # Lo       ARABIC LETTER REH WITH STROKE
 076B..076C    ; Reh # Lo   [2] ARABIC LETTER REH WITH TWO DOTS VERTICALLY ABOVE..ARABIC LETTER REH WITH HAMZA ABOVE
 0771          ; Reh # Lo       ARABIC LETTER REH WITH SMALL ARABIC LETTER TAH AND TWO DOTS
+08AA          ; Reh # Lo       ARABIC LETTER REH WITH LOOP
 
-# Total code points: 16
+# Total code points: 17
 
 # ================================================
 
@@ -301,8 +308,9 @@
 
 0637..0638    ; Tah # Lo   [2] ARABIC LETTER TAH..ARABIC LETTER ZAH
 069F          ; Tah # Lo       ARABIC LETTER TAH WITH THREE DOTS ABOVE
+08A3          ; Tah # Lo       ARABIC LETTER TAH WITH TWO DOTS ABOVE
 
-# Total code points: 3
+# Total code points: 4
 
 # ================================================
 
@@ -332,8 +340,9 @@
 06C4..06CB    ; Waw # Lo   [8] ARABIC LETTER WAW WITH RING..ARABIC LETTER VE
 06CF          ; Waw # Lo       ARABIC LETTER WAW WITH DOT ABOVE
 0778..0779    ; Waw # Lo   [2] ARABIC LETTER WAW WITH EXTENDED ARABIC-INDIC DIGIT TWO ABOVE..ARABIC LETTER WAW WITH EXTENDED ARABIC-INDIC DIGIT THREE ABOVE
+08AB          ; Waw # Lo       ARABIC LETTER WAW WITH DOT WITHIN
 
-# Total code points: 15
+# Total code points: 16
 
 # ================================================
 
@@ -343,13 +352,15 @@
 
 # ================================================
 
+0620          ; Yeh # Lo       ARABIC LETTER KASHMIRI YEH
 0626          ; Yeh # Lo       ARABIC LETTER YEH WITH HAMZA ABOVE
 0649..064A    ; Yeh # Lo   [2] ARABIC LETTER ALEF MAKSURA..ARABIC LETTER YEH
 0678          ; Yeh # Lo       ARABIC LETTER HIGH HAMZA YEH
 06D0..06D1    ; Yeh # Lo   [2] ARABIC LETTER E..ARABIC LETTER YEH WITH THREE DOTS BELOW
 0777          ; Yeh # Lo       ARABIC LETTER FARSI YEH WITH EXTENDED ARABIC-INDIC DIGIT FOUR BELOW
+08A8..08A9    ; Yeh # Lo   [2] ARABIC LETTER YEH WITH TWO DOTS BELOW AND HAMZA ABOVE..ARABIC LETTER YEH WITH TWO DOTS BELOW AND DOT ABOVE
 
-# Total code points: 7
+# Total code points: 10
 
 # ================================================
 
@@ -417,6 +428,12 @@
 # ================================================
 
 06BD          ; Nya # Lo       ARABIC LETTER NOON WITH THREE DOTS ABOVE
+
+# Total code points: 1
+
+# ================================================
+
+08AC          ; Rohingya_Yeh # Lo       ARABIC LETTER ROHINGYA YEH
 
 # Total code points: 1
 

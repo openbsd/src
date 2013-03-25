@@ -20,7 +20,7 @@ BEGIN {
     }
 
     $| = 1;
-    print("1..34\n");   ### Number of tests that will be run ###
+    print("1..35\n");   ### Number of tests that will be run ###
 };
 
 print("ok 1 - Loaded\n");
@@ -161,7 +161,7 @@ package main;
 
 # bugid #24165
 
-run_perl(prog => 'use threads 1.75;' .
+run_perl(prog => 'use threads 1.86;' .
                  'sub a{threads->create(shift)} $t = a sub{};' .
                  '$t->tid; $t->join; $t->tid',
          nolib => ($ENV{PERL_CORE}) ? 0 : 1,
@@ -302,6 +302,26 @@ SKIP: {
             )
         }),
         "counts of calls to DESTROY");
+}
+
+# Bug 73330 - Apply magic to arg to ->object()
+{
+    my @tids :shared;
+
+    my $thr = threads->create(sub {
+                        lock(@tids);
+                        push(@tids, threads->tid());
+                        cond_signal(@tids);
+                    });
+
+    {
+        lock(@tids);
+        cond_wait(@tids) while (! @tids);
+    }
+
+    ok(threads->object($_), 'Got threads object') foreach (@tids);
+
+    $thr->join();
 }
 
 exit(0);

@@ -1,14 +1,22 @@
-# DerivedNumericType-5.2.0.txt
-# Date: 2009-05-28, 20:37:44 GMT [MD]
+# DerivedNumericType-6.1.0.txt
+# Date: 2011-08-23, 00:47:14 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2009 Unicode, Inc.
+# Copyright (c) 1991-2011 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
 # ================================================
 
-# Numeric Type (from UnicodeData.txt, field 6/7/8 plus Unihan Database: see UAX #44: http://www.unicode.org/reports/tr44/)
+# Derived Property:   Numeric_Type
+#  The values are based on fields 6-8 of UnicodeData.txt, plus the fields
+#  kAccountingNumeric, kOtherNumeric, kPrimaryNumeric in the Unicode Han Database (Unihan).
+#  The derivations for these values are as follows.
+#   Numeric_Type=Decimal: When there is a value in field 6.
+#   Numeric_Type=Digit:   When there is a value in field 7, but not in field 6.
+#   Numeric_Type=Numeric: When there are values for kAccountingNumeric, kOtherNumeric, kPrimaryNumeric,
+#                         or there is a value in field 8, but not in field 7.
+#   Numeric_Type=None:    Otherwise
 
 #  All code points not explicitly listed for Numeric_Type
 #  have the value None.
@@ -19,6 +27,7 @@
 
 00BC..00BE    ; Numeric # No   [3] VULGAR FRACTION ONE QUARTER..VULGAR FRACTION THREE QUARTERS
 09F4..09F9    ; Numeric # No   [6] BENGALI CURRENCY NUMERATOR ONE..BENGALI CURRENCY DENOMINATOR SIXTEEN
+0B72..0B77    ; Numeric # No   [6] ORIYA FRACTION ONE QUARTER..ORIYA FRACTION THREE SIXTEENTHS
 0BF0..0BF2    ; Numeric # No   [3] TAMIL NUMBER TEN..TAMIL NUMBER ONE THOUSAND
 0C78..0C7E    ; Numeric # No   [7] TELUGU FRACTION DIGIT ZERO FOR ODD POWERS OF FOUR..TELUGU FRACTION DIGIT THREE FOR EVEN POWERS OF FOUR
 0D70..0D75    ; Numeric # No   [6] MALAYALAM NUMBER TEN..MALAYALAM FRACTION THREE QUARTERS
@@ -44,6 +53,7 @@
 3038..303A    ; Numeric # Nl   [3] HANGZHOU NUMERAL TEN..HANGZHOU NUMERAL THIRTY
 3192..3195    ; Numeric # No   [4] IDEOGRAPHIC ANNOTATION ONE MARK..IDEOGRAPHIC ANNOTATION FOUR MARK
 3220..3229    ; Numeric # No  [10] PARENTHESIZED IDEOGRAPH ONE..PARENTHESIZED IDEOGRAPH TEN
+3248..324F    ; Numeric # No   [8] CIRCLED NUMBER TEN ON BLACK SQUARE..CIRCLED NUMBER EIGHTY ON BLACK SQUARE
 3251..325F    ; Numeric # No  [15] CIRCLED NUMBER TWENTY ONE..CIRCLED NUMBER THIRTY FIVE
 3280..3289    ; Numeric # No  [10] CIRCLED IDEOGRAPH ONE..CIRCLED IDEOGRAPH TEN
 32B1..32BF    ; Numeric # No  [15] CIRCLED NUMBER THIRTY SIX..CIRCLED NUMBER FIFTY
@@ -120,6 +130,7 @@ F9FD          ; Numeric # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10B58..10B5F  ; Numeric # No   [8] INSCRIPTIONAL PARTHIAN NUMBER ONE..INSCRIPTIONAL PARTHIAN NUMBER ONE THOUSAND
 10B78..10B7F  ; Numeric # No   [8] INSCRIPTIONAL PAHLAVI NUMBER ONE..INSCRIPTIONAL PAHLAVI NUMBER ONE THOUSAND
 10E69..10E7E  ; Numeric # No  [22] RUMI NUMBER TEN..RUMI FRACTION TWO THIRDS
+1105B..11065  ; Numeric # No  [11] BRAHMI NUMBER TEN..BRAHMI NUMBER ONE THOUSAND
 12400..12431  ; Numeric # Nl  [50] CUNEIFORM NUMERIC SIGN TWO ASH..CUNEIFORM NUMERIC SIGN FIVE SHARU
 12434..12455  ; Numeric # Nl  [34] CUNEIFORM NUMERIC SIGN ONE BURU..CUNEIFORM NUMERIC SIGN FIVE BAN2 VARIANT FORM
 12458..12462  ; Numeric # Nl  [11] CUNEIFORM NUMERIC SIGN ONE ESHE3..CUNEIFORM NUMERIC SIGN OLD ASSYRIAN ONE QUARTER
@@ -141,13 +152,14 @@ F9FD          ; Numeric # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 2626D         ; Numeric # Lo       CJK UNIFIED IDEOGRAPH-2626D
 2F890         ; Numeric # Lo       CJK COMPATIBILITY IDEOGRAPH-2F890
 
-# Total code points: 612
+# Total code points: 637
 
 # ================================================
 
 00B2..00B3    ; Digit # No   [2] SUPERSCRIPT TWO..SUPERSCRIPT THREE
 00B9          ; Digit # No       SUPERSCRIPT ONE
 1369..1371    ; Digit # No   [9] ETHIOPIC DIGIT ONE..ETHIOPIC DIGIT NINE
+19DA          ; Digit # No       NEW TAI LUE THAM DIGIT ONE
 2070          ; Digit # No       SUPERSCRIPT ZERO
 2074..2079    ; Digit # No   [6] SUPERSCRIPT FOUR..SUPERSCRIPT NINE
 2080..2089    ; Digit # No  [10] SUBSCRIPT ZERO..SUBSCRIPT NINE
@@ -162,9 +174,10 @@ F9FD          ; Numeric # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 278A..2792    ; Digit # No   [9] DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ONE..DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT NINE
 10A40..10A43  ; Digit # No   [4] KHAROSHTHI DIGIT ONE..KHAROSHTHI DIGIT FOUR
 10E60..10E68  ; Digit # No   [9] RUMI DIGIT ONE..RUMI DIGIT NINE
+11052..1105A  ; Digit # No   [9] BRAHMI NUMBER ONE..BRAHMI NUMBER NINE
 1F100..1F10A  ; Digit # No  [11] DIGIT ZERO FULL STOP..DIGIT NINE COMMA
 
-# Total code points: 118
+# Total code points: 128
 
 # ================================================
 
@@ -189,7 +202,7 @@ F9FD          ; Numeric # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 17E0..17E9    ; Decimal # Nd  [10] KHMER DIGIT ZERO..KHMER DIGIT NINE
 1810..1819    ; Decimal # Nd  [10] MONGOLIAN DIGIT ZERO..MONGOLIAN DIGIT NINE
 1946..194F    ; Decimal # Nd  [10] LIMBU DIGIT ZERO..LIMBU DIGIT NINE
-19D0..19DA    ; Decimal # Nd  [11] NEW TAI LUE DIGIT ZERO..NEW TAI LUE THAM DIGIT ONE
+19D0..19D9    ; Decimal # Nd  [10] NEW TAI LUE DIGIT ZERO..NEW TAI LUE DIGIT NINE
 1A80..1A89    ; Decimal # Nd  [10] TAI THAM HORA DIGIT ZERO..TAI THAM HORA DIGIT NINE
 1A90..1A99    ; Decimal # Nd  [10] TAI THAM THAM DIGIT ZERO..TAI THAM THAM DIGIT NINE
 1B50..1B59    ; Decimal # Nd  [10] BALINESE DIGIT ZERO..BALINESE DIGIT NINE
@@ -204,8 +217,13 @@ AA50..AA59    ; Decimal # Nd  [10] CHAM DIGIT ZERO..CHAM DIGIT NINE
 ABF0..ABF9    ; Decimal # Nd  [10] MEETEI MAYEK DIGIT ZERO..MEETEI MAYEK DIGIT NINE
 FF10..FF19    ; Decimal # Nd  [10] FULLWIDTH DIGIT ZERO..FULLWIDTH DIGIT NINE
 104A0..104A9  ; Decimal # Nd  [10] OSMANYA DIGIT ZERO..OSMANYA DIGIT NINE
+11066..1106F  ; Decimal # Nd  [10] BRAHMI DIGIT ZERO..BRAHMI DIGIT NINE
+110F0..110F9  ; Decimal # Nd  [10] SORA SOMPENG DIGIT ZERO..SORA SOMPENG DIGIT NINE
+11136..1113F  ; Decimal # Nd  [10] CHAKMA DIGIT ZERO..CHAKMA DIGIT NINE
+111D0..111D9  ; Decimal # Nd  [10] SHARADA DIGIT ZERO..SHARADA DIGIT NINE
+116C0..116C9  ; Decimal # Nd  [10] TAKRI DIGIT ZERO..TAKRI DIGIT NINE
 1D7CE..1D7FF  ; Decimal # Nd  [50] MATHEMATICAL BOLD DIGIT ZERO..MATHEMATICAL MONOSPACE DIGIT NINE
 
-# Total code points: 411
+# Total code points: 460
 
 # EOF

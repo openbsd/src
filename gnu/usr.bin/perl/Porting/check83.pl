@@ -20,12 +20,15 @@ my $maxl = 30; # make up a limit for a maximum filename length
 
 sub eight_dot_three {
     return () if $seen{$_[0]}++;
-    my ($dir, $base, $ext) = ($_[0] =~ m{^(?:(.+)/)?([^/.]+)(?:\.([^/.]+))?$});
+    my ($dir, $base, $ext) = ($_[0] =~ m{^(?:(.+)/)?([^/.]*)(?:\.([^/.]+))?$});
     my $file = $base . ( defined $ext ? ".$ext" : "" );
     $base = substr($base, 0, 8);
     $ext  = substr($ext,  0, 3) if defined $ext;
     if (defined $dir && $dir =~ /\./)  {
 	print "directory name contains '.': $dir\n";
+    }
+    if ($base eq "") {
+	print "filename starts with dot: $_[0]\n";
     }
     if ($file =~ /[^A-Za-z0-9\._-]/) {
 	print "filename contains non-portable characters: $_[0]\n";
@@ -59,7 +62,7 @@ if (open(MANIFEST, "MANIFEST")) {
 	    next;
 	}
 	while (m!/|\z!g) {
-	    my ($dir, $edt) = eight_dot_three($`);
+	    my ($dir, $edt) = eight_dot_three("$`");
 	    next unless defined $dir;
 	    ($dir, $edt) = map { lc } ($dir, $edt);
 	    push @{$dir{$dir}->{$edt}}, $_;

@@ -12,28 +12,21 @@ BEGIN {
 }
 
 use strict;
-use Test;
-use Net::Ping;
+use Test::More tests => 26;
+BEGIN {use_ok('Net::Ping')};
 
 # I'm lazy so I'll just use IO::Socket
 # for the TCP Server stuff instead of doing
 # all that direct socket() junk manually.
 
-plan tests => 26, ($^O eq 'MSWin32' ? (todo => [18]) :
-		   $^O eq "hpux"    ? (todo => [9, 18]) : ());
-
-# Everything loaded fine
-ok 1;
-
-# Start a tcp listen server on ephemeral port
 my $sock1 = new IO::Socket::INET
   LocalAddr => "127.0.0.1",
   Proto => "tcp",
   Listen => 8,
   or warn "bind: $!";
 
-# Make sure it worked.
-ok !!$sock1;
+isa_ok($sock1, 'IO::Socket::INET',
+       'Start a TCP listen server on ephemeral port');
 
 # Start listening on another ephemeral port
 my $sock2 = new IO::Socket::INET
@@ -42,17 +35,17 @@ my $sock2 = new IO::Socket::INET
   Listen => 8,
   or warn "bind: $!";
 
-# Make sure it worked too.
-ok !!$sock2;
+isa_ok($sock2, 'IO::Socket::INET',
+       'Start a second TCP listen server on ephemeral port');
 
 my $port1 = $sock1->sockport;
-ok $port1;
+cmp_ok($port1, '>', 0);
 
 my $port2 = $sock2->sockport;
-ok $port2;
+cmp_ok($port2, '>', 0);
 
-# Make sure the sockets are listening on different ports.
-ok ($port1 != $port2);
+# 
+isnt($port1, $port2, 'Make sure the servers are listening on different ports');
 
 $sock2->close;
 
@@ -65,8 +58,7 @@ $sock2->close;
 # (2 seconds should be long enough to connect to loopback.)
 my $p = new Net::Ping "tcp", 2;
 
-# new() worked?
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'new() worked');
 
 # Disable service checking
 $p->service_check(0);
@@ -74,16 +66,16 @@ $p->service_check(0);
 # Try on the first port
 $p->{port_num} = $port1;
 
-# Make sure it is reachable
-ok $p -> ping("127.0.0.1");
+is($p->ping("127.0.0.1"), 1, 'first port is reachable');
 
 # Try on the other port
 $p->{port_num} = $port2;
 
-# Make sure it is reachable
-ok $p -> ping("127.0.0.1");
-
-
+{
+    local $TODO;
+    $TODO = "Believed not to work on $^O" if $^O eq 'hpux';
+    is($p->ping("127.0.0.1"), 1, 'second port is reachable');
+}
 
 # Enable service checking
 $p->service_check(1);
@@ -91,14 +83,12 @@ $p->service_check(1);
 # Try on the first port
 $p->{port_num} = $port1;
 
-# Make sure service is on
-ok $p -> ping("127.0.0.1");
+is($p->ping("127.0.0.1"), 1, 'first service is on');
 
 # Try on the other port
 $p->{port_num} = $port2;
 
-# Make sure service is off
-ok !$p -> ping("127.0.0.1");
+isnt($p->ping("127.0.0.1"), 2, 'second service is off');
 
 # test 11 just finished.
 
@@ -106,8 +96,7 @@ ok !$p -> ping("127.0.0.1");
 # Lastly, we test using the "syn" protocol.
 $p = new Net::Ping "syn", 2;
 
-# new() worked?
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'new() worked');
 
 # Disable service checking
 $p->service_check(0);
@@ -115,20 +104,16 @@ $p->service_check(0);
 # Try on the first port
 $p->{port_num} = $port1;
 
-# Send SYN
-if (!ok $p -> ping("127.0.0.1")) {warn "ERRNO: $!";}
+is($p->ping("127.0.0.1"), 1, "send SYN to first port") or diag ("ERRNO: $!");
 
-# IP should be reachable
-ok $p -> ack();
-# No more sockets?
-ok !$p -> ack();
+is($p->ack(), '127.0.0.1', 'IP should be reachable');
+is($p->ack(), undef, 'No more sockets');
 
 ###
 # Get a fresh object
 $p = new Net::Ping "syn", 2;
 
-# new() worked?
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'new() worked');
 
 # Disable service checking
 $p->service_check(0);
@@ -136,21 +121,21 @@ $p->service_check(0);
 # Try on the other port
 $p->{port_num} = $port2;
 
-# Send SYN
-if (!ok $p -> ping("127.0.0.1")) {warn "ERRNO: $!";}
+is($p->ping("127.0.0.1"), 1, "send SYN to second port") or diag ("ERRNO: $!");
 
-# IP should still be reachable
-ok $p -> ack();
-# No more sockets?
-ok !$p -> ack();
+{
+    local $TODO;
+    $TODO = "Believed not to work on $^O" if $^O eq 'hpux' || $^O eq 'MSWin32';
+    is($p->ack(), '127.0.0.1', 'IP should be reachable');
+}
+is($p->ack(), undef, 'No more sockets');
 
 
 ###
 # Get a fresh object
 $p = new Net::Ping "syn", 2;
 
-# new() worked?
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'new() worked');
 
 # Enable service checking
 $p->service_check(1);
@@ -158,21 +143,17 @@ $p->service_check(1);
 # Try on the first port
 $p->{port_num} = $port1;
 
-# Send SYN
-ok $p -> ping("127.0.0.1");
+is($p->ping("127.0.0.1"), 1, "send SYN to first port") or diag ("ERRNO: $!");
 
-# Should have service on
-ok ($p -> ack(),"127.0.0.1");
-# No more good sockets?
-ok !$p -> ack();
+is($p->ack(), '127.0.0.1', 'IP should be reachable');
+is($p->ack(), undef, 'No more sockets');
 
 
 ###
 # Get a fresh object
 $p = new Net::Ping "syn", 2;
 
-# new() worked?
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'new() worked');
 
 # Enable service checking
 $p->service_check(1);
@@ -180,8 +161,6 @@ $p->service_check(1);
 # Try on the other port
 $p->{port_num} = $port2;
 
-# Send SYN
-if (!ok $p -> ping("127.0.0.1")) {warn "ERRNO: $!";}
+is($p->ping("127.0.0.1"), 1, "send SYN to second port") or diag ("ERRNO: $!");
 
-# No sockets should have service on
-ok !$p -> ack();
+is($p->ack(), undef, 'No sockets should have service on');

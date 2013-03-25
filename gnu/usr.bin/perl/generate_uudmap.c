@@ -12,17 +12,51 @@
    "hello world" won't port easily to it.  */
 #include <errno.h>
 
-void output_block_to_file(const char *progname, const char *filename,
-			  const char *block, size_t count) {
-  FILE *const out = fopen(filename, "w");
+struct mg_data_raw_t {
+    unsigned char type;
+    const char *value;
+    const char *comment;
+};
 
-  if (!out) {
-    fprintf(stderr, "%s: Could not open '%s': %s\n", progname, filename,
-	    strerror(errno));
-    exit(1);
+static struct mg_data_raw_t mg_data_raw[] = {
+#ifdef WIN32
+#  include "..\mg_raw.h"
+#else
+#  include "mg_raw.h"
+#endif
+    {0, 0, 0}
+};
+
+struct mg_data_t {
+    const char *value;
+    const char *comment;
+};
+
+static struct mg_data_t mg_data[256];
+
+static void
+format_mg_data(FILE *out, const void *thing, size_t count) {
+  const struct mg_data_t *p = (const struct mg_data_t *)thing;
+
+  while (1) {
+      if (p->value) {
+	  fprintf(out, "    %s\n    %s", p->comment, p->value);
+      } else {
+	  fputs("    0", out);
+      }
+      ++p;
+      if (!--count)
+	  break;
+      fputs(",\n", out);
   }
+  fputc('\n', out);
+}
 
-  fputs("{\n    ", out);
+static void
+format_char_block(FILE *out, const void *thing, size_t count) {
+  const char *block = (const char *)thing;
+
+  fputs("    ", out);
   while (count--) {
     fprintf(out, "%d", *block);
     block++;
@@ -33,7 +67,24 @@ void output_block_to_file(const char *progname, const char *filename,
       }
     }
   }
-  fputs("\n}\n", out);
+  fputc('\n', out);
+}
+
+static void
+output_to_file(const char *progname, const char *filename,
+	       void (format_function)(FILE *out, const void *thing, size_t count),
+	       const void *thing, size_t count) {
+  FILE *const out = fopen(filename, "w");
+
+  if (!out) {
+    fprintf(stderr, "%s: Could not open '%s': %s\n", progname, filename,
+	    strerror(errno));
+    exit(1);
+  }
+
+  fputs("{\n", out);
+  format_function(out, thing, count);
+  fputs("}\n", out);
 
   if (fclose(out)) {
     fprintf(stderr, "%s: Could not close '%s': %s\n", progname, filename,
@@ -55,9 +106,11 @@ static char PL_bitcount[256];
 int main(int argc, char **argv) {
   size_t i;
   int bits;
+  struct mg_data_raw_t *p = mg_data_raw;
 
-  if (argc < 3 || argv[1][0] == '\0' || argv[2][0] == '\0') {
-    fprintf(stderr, "Usage: %s uudemap.h bitcount.h\n", argv[0]);
+  if (argc < 4 || argv[1][0] == '\0' || argv[2][0] == '\0'
+      || argv[3][0] == '\0') {
+    fprintf(stderr, "Usage: %s uudemap.h bitcount.h mg_data.h\n", argv[0]);
     return 1;
   }
 
@@ -69,7 +122,8 @@ int main(int argc, char **argv) {
    */
   PL_uudmap[(U8)' '] = 0;
 
-  output_block_to_file(argv[0], argv[1], PL_uudmap, sizeof(PL_uudmap));
+  output_to_file(argv[0], argv[1], &format_char_block,
+		 (const void *)PL_uudmap, sizeof(PL_uudmap));
 
   for (bits = 1; bits < 256; bits++) {
     if (bits & 1)	PL_bitcount[bits]++;
@@ -82,9 +136,17 @@ int main(int argc, char **argv) {
     if (bits & 128)	PL_bitcount[bits]++;
   }
 
-  output_block_to_file(argv[0], argv[2], PL_bitcount, sizeof(PL_bitcount));
+  output_to_file(argv[0], argv[2], &format_char_block,
+		 (const void *)PL_bitcount, sizeof(PL_bitcount));
+
+  while (p->value) {
+      mg_data[p->type].value = p->value;
+      mg_data[p->type].comment = p->comment;
+      ++p;
+  }
+      
+  output_to_file(argv[0], argv[3], &format_mg_data,
+		 (const void *)mg_data, sizeof(mg_data)/sizeof(mg_data[0]));
 
   return 0;
 }
-
-  

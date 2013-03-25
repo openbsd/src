@@ -14,6 +14,9 @@
 #  if defined(USE_NO_MINGW_SETJMP_TWO_ARGS) || (!defined(__BORLANDC__) && !defined(__MINGW64__))
 #    define setjmp(x) _setjmp(x)
 #  endif
+#  if defined(__MINGW64__)
+#    define setjmp(x) _setjmpex((x), mingw_getsp())
+#  endif
 #endif
 #ifdef HAS_PPPORT_H
 #  define NEED_PL_signals
@@ -21,6 +24,9 @@
 #  define NEED_sv_2pv_flags
 #  include "ppport.h"
 #  include "threads.h"
+#endif
+#ifndef sv_dup_inc
+#  define sv_dup_inc(s,t)	SvREFCNT_inc(sv_dup(s,t))
 #endif
 
 #ifdef USE_ITHREADS
@@ -52,7 +58,7 @@ typedef perl_os_thread pthread_t;
 
 /* Values for 'state' member */
 #define PERL_ITHR_DETACHED           1 /* Thread has been detached */
-#define PERL_ITHR_JOINED             2 /* Thread has been joined */
+#define PERL_ITHR_JOINED             2 /* Thread is being / has been joined */
 #define PERL_ITHR_FINISHED           4 /* Thread has finished execution */
 #define PERL_ITHR_THREAD_EXIT_ONLY   8 /* exit() only exits current thread */
 #define PERL_ITHR_NONVIABLE         16 /* Thread creation failed */
@@ -71,7 +77,7 @@ typedef struct _ithread {
     int state;                  /* Detached, joined, finished, etc. */
     int gimme;                  /* Context of create */
     SV *init_function;          /* Code to run */
-    SV *params;                 /* Args to pass function */
+    AV *params;                 /* Args to pass function */
 #ifdef WIN32
     DWORD  thr;                 /* OS's idea if thread id */
     HANDLE handle;              /* OS's waitable handle */
@@ -215,7 +221,7 @@ S_ithread_clear(pTHX_ ithread *thread)
         S_ithread_set(aTHX_ thread);
 
         SvREFCNT_dec(thread->params);
-        thread->params = Nullsv;
+        thread->params = NULL;
 
         if (thread->err) {
             SvREFCNT_dec(thread->err);
@@ -363,6 +369,7 @@ int
 ithread_mg_free(pTHX_ SV *sv, MAGIC *mg)
 {
     ithread *thread = (ithread *)mg->mg_ptr;
+    PERL_UNUSED_ARG(sv);
     MUTEX_LOCK(&thread->mutex);
     S_ithread_free(aTHX_ thread);   /* Releases MUTEX */
     return (0);
@@ -371,6 +378,7 @@ ithread_mg_free(pTHX_ SV *sv, MAGIC *mg)
 int
 ithread_mg_dup(pTHX_ MAGIC *mg, CLONE_PARAMS *param)
 {
+    PERL_UNUSED_ARG(param);
     S_ithread_count_inc(aTHX_ (ithread *)mg->mg_ptr);
     return (0);
 }
@@ -487,7 +495,7 @@ S_ithread_run(void * arg)
     PL_perl_destruct_level = 2;
 
     {
-        AV *params = (AV *)SvRV(thread->params);
+        AV *params = thread->params;
         int len = (int)av_len(params)+1;
         int ii;
 
@@ -671,14 +679,19 @@ S_SV_to_ithread(pTHX_ SV *sv)
  */
 STATIC ithread *
 S_ithread_create(
-        pTHX_ SV *init_function,
+        PerlInterpreter *parent_perl,
+        SV       *init_function,
         IV        stack_size,
         int       gimme,
         int       exit_opt,
-        SV       *params)
+        int       params_start,
+        int       num_params)
 {
+    dTHXa(parent_perl);
     ithread     *thread;
     ithread     *current_thread = S_ithread_get(aTHX);
+    AV          *params;
+    SV          **array;
 
 #if PERL_VERSION <= 8 && PERL_SUBVERSION <= 7
     SV         **tmps_tmp = PL_tmps_stack;
@@ -771,29 +784,54 @@ S_ithread_create(
      * context for the duration of our work for new interpreter.
      */
     {
-        CLONE_PARAMS clone_param;
-
+#if (PERL_VERSION > 13) || (PERL_VERSION == 13 && PERL_SUBVERSION > 1)
+        CLONE_PARAMS *clone_param = Perl_clone_params_new(aTHX, thread->interp);
+#else
+        CLONE_PARAMS clone_param_s;
+        CLONE_PARAMS *clone_param = &clone_param_s;
+#endif
         dTHXa(thread->interp);
 
         MY_CXT_CLONE;
+
+#if (PERL_VERSION < 13) || (PERL_VERSION == 13 && PERL_SUBVERSION <= 1)
+        clone_param->flags = 0;
+#endif
 
         /* Here we remove END blocks since they should only run in the thread
          * they are created
          */
         SvREFCNT_dec(PL_endav);
-        PL_endav = newAV();
+        PL_endav = NULL;
 
-        clone_param.flags = 0;
         if (SvPOK(init_function)) {
             thread->init_function = newSV(0);
             sv_copypv(thread->init_function, init_function);
         } else {
-            thread->init_function =
-                SvREFCNT_inc(sv_dup(init_function, &clone_param));
+            thread->init_function = sv_dup_inc(init_function, clone_param);
         }
 
-        thread->params = sv_dup(params, &clone_param);
-        SvREFCNT_inc_void(thread->params);
+        thread->params = params = newAV();
+        av_extend(params, num_params - 1);
+        AvFILLp(params) = num_params - 1;
+        array = AvARRAY(params);
+
+        /* params_start is an offset onto the Perl stack. This can be
+           reallocated (and hence move) as a side effect of calls to
+           perl_clone() and sv_dup_inc(). Hence copy the parameters
+           somewhere under our control first, before duplicating.  */
+#if (PERL_VERSION > 8)
+        Copy(parent_perl->Istack_base + params_start, array, num_params, SV *);
+#else
+        Copy(parent_perl->Tstack_base + params_start, array, num_params, SV *);
+#endif
+        while (num_params--) {
+            *array = sv_dup_inc(*array, clone_param);
+            ++array;
+        }
+#if (PERL_VERSION > 13) || (PERL_VERSION == 13 && PERL_SUBVERSION > 1)
+        Perl_clone_params_del(clone_param);
+#endif
 
 #if PERL_VERSION <= 8 && PERL_SUBVERSION <= 7
         /* The code below checks that anything living on the tmps stack and
@@ -908,7 +946,6 @@ S_ithread_create(
 #endif
         /* Must unlock mutex for destruct call */
         MUTEX_UNLOCK(&MY_POOL.create_destruct_mutex);
-        sv_2mortal(params);
         thread->state |= PERL_ITHR_NONVIABLE;
         S_ithread_free(aTHX_ thread);   /* Releases MUTEX */
 #ifndef WIN32
@@ -924,7 +961,6 @@ S_ithread_create(
     }
 
     MY_POOL.running_threads++;
-    sv_2mortal(params);
     return (thread);
 }
 
@@ -942,7 +978,6 @@ ithread_create(...)
         char *classname;
         ithread *thread;
         SV *function_to_call;
-        AV *params;
         HV *specs;
         IV stack_size;
         int context;
@@ -950,7 +985,6 @@ ithread_create(...)
         SV *thread_exit_only;
         char *str;
         int idx;
-        int ii;
         dMY_POOL;
     CODE:
         if ((items >= 2) && SvROK(ST(1)) && SvTYPE(SvRV(ST(1)))==SVt_PVHV) {
@@ -988,18 +1022,19 @@ ithread_create(...)
 
         context = -1;
         if (specs) {
+            SV **svp;
             /* stack_size */
-            if (hv_exists(specs, "stack", 5)) {
-                stack_size = SvIV(*hv_fetch(specs, "stack", 5, 0));
-            } else if (hv_exists(specs, "stacksize", 9)) {
-                stack_size = SvIV(*hv_fetch(specs, "stacksize", 9, 0));
-            } else if (hv_exists(specs, "stack_size", 10)) {
-                stack_size = SvIV(*hv_fetch(specs, "stack_size", 10, 0));
+            if ((svp = hv_fetch(specs, "stack", 5, 0))) {
+                stack_size = SvIV(*svp);
+            } else if ((svp = hv_fetch(specs, "stacksize", 9, 0))) {
+                stack_size = SvIV(*svp);
+            } else if ((svp = hv_fetch(specs, "stack_size", 10, 0))) {
+                stack_size = SvIV(*svp);
             }
 
             /* context */
-            if (hv_exists(specs, "context", 7)) {
-                str = (char *)SvPV_nolen(*hv_fetch(specs, "context", 7, 0));
+            if ((svp = hv_fetch(specs, "context", 7, 0))) {
+                str = (char *)SvPV_nolen(*svp);
                 switch (*str) {
                     case 'a':
                     case 'A':
@@ -1018,27 +1053,27 @@ ithread_create(...)
                     default:
                         Perl_croak(aTHX_ "Invalid context: %s", str);
                 }
-            } else if (hv_exists(specs, "array", 5)) {
-                if (SvTRUE(*hv_fetch(specs, "array", 5, 0))) {
+            } else if ((svp = hv_fetch(specs, "array", 5, 0))) {
+                if (SvTRUE(*svp)) {
                     context = G_ARRAY;
                 }
-            } else if (hv_exists(specs, "list", 4)) {
-                if (SvTRUE(*hv_fetch(specs, "list", 4, 0))) {
+            } else if ((svp = hv_fetch(specs, "list", 4, 0))) {
+                if (SvTRUE(*svp)) {
                     context = G_ARRAY;
                 }
-            } else if (hv_exists(specs, "scalar", 6)) {
-                if (SvTRUE(*hv_fetch(specs, "scalar", 6, 0))) {
+            } else if ((svp = hv_fetch(specs, "scalar", 6, 0))) {
+                if (SvTRUE(*svp)) {
                     context = G_SCALAR;
                 }
-            } else if (hv_exists(specs, "void", 4)) {
-                if (SvTRUE(*hv_fetch(specs, "void", 4, 0))) {
+            } else if ((svp = hv_fetch(specs, "void", 4, 0))) {
+                if (SvTRUE(*svp)) {
                     context = G_VOID;
                 }
             }
 
             /* exit => thread_only */
-            if (hv_exists(specs, "exit", 4)) {
-                str = (char *)SvPV_nolen(*hv_fetch(specs, "exit", 4, 0));
+            if ((svp = hv_fetch(specs, "exit", 4, 0))) {
+                str = (char *)SvPV_nolen(*svp);
                 exit_opt = (*str == 't' || *str == 'T')
                                     ? PERL_ITHR_THREAD_EXIT_ONLY : 0;
             }
@@ -1049,21 +1084,14 @@ ithread_create(...)
             context |= (GIMME_V & (~(G_ARRAY|G_SCALAR|G_VOID)));
         }
 
-        /* Function args */
-        params = newAV();
-        if (items > 2) {
-            for (ii=2; ii < items ; ii++) {
-                av_push(params, SvREFCNT_inc(ST(idx+ii)));
-            }
-        }
-
         /* Create thread */
         MUTEX_LOCK(&MY_POOL.create_destruct_mutex);
         thread = S_ithread_create(aTHX_ function_to_call,
                                         stack_size,
                                         context,
                                         exit_opt,
-                                        newRV_noinc((SV*)params));
+                                        ax + idx + 2,
+                                        items > 2 ? items - 2 : 0);
         if (! thread) {
             XSRETURN_UNDEF;     /* Mutex already unlocked */
         }
@@ -1232,11 +1260,12 @@ ithread_join(...)
         /* Get the return value from the call_sv */
         /* Objects do not survive this process - FIXME */
         if ((thread->gimme & G_WANT) != G_VOID) {
+#if (PERL_VERSION < 13) || (PERL_VERSION == 13 && PERL_SUBVERSION <= 1)
             AV *params_copy;
             PerlInterpreter *other_perl;
             CLONE_PARAMS clone_params;
 
-            params_copy = (AV *)SvRV(thread->params);
+            params_copy = thread->params;
             other_perl = thread->interp;
             clone_params.stashes = newAV();
             clone_params.flags = CLONEf_JOIN_IN;
@@ -1252,6 +1281,26 @@ ithread_join(...)
             SvREFCNT_inc_void(params);
             ptr_table_free(PL_ptr_table);
             PL_ptr_table = NULL;
+#else
+            AV *params_copy;
+            PerlInterpreter *other_perl = thread->interp;
+            CLONE_PARAMS *clone_params = Perl_clone_params_new(other_perl, aTHX);
+
+            params_copy = thread->params;
+            clone_params->flags |= CLONEf_JOIN_IN;
+            PL_ptr_table = ptr_table_new();
+            S_ithread_set(aTHX_ thread);
+            /* Ensure 'meaningful' addresses retain their meaning */
+            ptr_table_store(PL_ptr_table, &other_perl->Isv_undef, &PL_sv_undef);
+            ptr_table_store(PL_ptr_table, &other_perl->Isv_no, &PL_sv_no);
+            ptr_table_store(PL_ptr_table, &other_perl->Isv_yes, &PL_sv_yes);
+            params = (AV *)sv_dup((SV*)params_copy, clone_params);
+            S_ithread_set(aTHX_ current_thread);
+            Perl_clone_params_del(clone_params);
+            SvREFCNT_inc_void(params);
+            ptr_table_free(PL_ptr_table);
+            PL_ptr_table = NULL;
+#endif
         }
 
         /* If thread didn't die, then we can free its interpreter */
@@ -1337,6 +1386,7 @@ ithread_kill(...)
         ithread *thread;
         char *sig_name;
         IV signal;
+        int no_handler = 1;
     CODE:
         /* Must have safe signals */
         if (PL_signals & PERL_SIGNALS_UNSAFE_FLAG) {
@@ -1366,10 +1416,20 @@ ithread_kill(...)
         MUTEX_LOCK(&thread->mutex);
         if (thread->interp) {
             dTHXa(thread->interp);
-            PL_psig_pend[signal]++;
-            PL_sig_pending = 1;
+            if (PL_psig_pend && PL_psig_ptr[signal]) {
+                PL_psig_pend[signal]++;
+                PL_sig_pending = 1;
+                no_handler = 0;
+            }
+        } else {
+            /* Ignore signal to terminated thread */
+            no_handler = 0;
         }
         MUTEX_UNLOCK(&thread->mutex);
+
+        if (no_handler) {
+            Perl_croak(aTHX_ "Signal %s received in thread %"UVuf", but no signal handler set.", sig_name, thread->tid);
+        }
 
         /* Return the thread to allow for method chaining */
         ST(0) = ST(0);
@@ -1409,6 +1469,7 @@ void
 ithread_object(...)
     PREINIT:
         char *classname;
+        SV *arg;
         UV tid;
         ithread *thread;
         int state;
@@ -1421,34 +1482,47 @@ ithread_object(...)
         }
         classname = (char *)SvPV_nolen(ST(0));
 
-        if ((items < 2) || ! SvOK(ST(1))) {
+        /* Turn $tid from PVLV to SV if needed (bug #73330) */
+        arg = ST(1);
+        SvGETMAGIC(arg);
+
+        if ((items < 2) || ! SvOK(arg)) {
             XSRETURN_UNDEF;
         }
 
         /* threads->object($tid) */
-        tid = SvUV(ST(1));
+        tid = SvUV(arg);
 
-        /* Walk through threads list */
-        MUTEX_LOCK(&MY_POOL.create_destruct_mutex);
-        for (thread = MY_POOL.main_thread.next;
-             thread != &MY_POOL.main_thread;
-             thread = thread->next)
-        {
-            /* Look for TID */
-            if (thread->tid == tid) {
-                /* Ignore if detached or joined */
-                MUTEX_LOCK(&thread->mutex);
-                state = thread->state;
-                MUTEX_UNLOCK(&thread->mutex);
-                if (! (state & PERL_ITHR_UNCALLABLE)) {
-                    /* Put object on stack */
-                    ST(0) = sv_2mortal(S_ithread_to_SV(aTHX_ Nullsv, thread, classname, TRUE));
-                    have_obj = 1;
+        /* If current thread wants its own object, then behave the same as
+           ->self() */
+        thread = S_ithread_get(aTHX);
+        if (thread->tid == tid) {
+            ST(0) = sv_2mortal(S_ithread_to_SV(aTHX_ Nullsv, thread, classname, TRUE));
+            have_obj = 1;
+
+        } else {
+            /* Walk through threads list */
+            MUTEX_LOCK(&MY_POOL.create_destruct_mutex);
+            for (thread = MY_POOL.main_thread.next;
+                 thread != &MY_POOL.main_thread;
+                 thread = thread->next)
+            {
+                /* Look for TID */
+                if (thread->tid == tid) {
+                    /* Ignore if detached or joined */
+                    MUTEX_LOCK(&thread->mutex);
+                    state = thread->state;
+                    MUTEX_UNLOCK(&thread->mutex);
+                    if (! (state & PERL_ITHR_UNCALLABLE)) {
+                        /* Put object on stack */
+                        ST(0) = sv_2mortal(S_ithread_to_SV(aTHX_ Nullsv, thread, classname, TRUE));
+                        have_obj = 1;
+                    }
+                    break;
                 }
-                break;
             }
+            MUTEX_UNLOCK(&MY_POOL.create_destruct_mutex);
         }
-        MUTEX_UNLOCK(&MY_POOL.create_destruct_mutex);
 
         if (! have_obj) {
             XSRETURN_UNDEF;
@@ -1608,6 +1682,7 @@ ithread_error(...)
 
         /* If thread died, then clone the error into the calling thread */
         if (thread->state & PERL_ITHR_DIED) {
+#if (PERL_VERSION < 13) || (PERL_VERSION == 13 && PERL_SUBVERSION <= 1)
             PerlInterpreter *other_perl;
             CLONE_PARAMS clone_params;
             ithread *current_thread;
@@ -1632,6 +1707,30 @@ ithread_error(...)
             }
             ptr_table_free(PL_ptr_table);
             PL_ptr_table = NULL;
+#else
+            PerlInterpreter *other_perl = thread->interp;
+            CLONE_PARAMS *clone_params = Perl_clone_params_new(other_perl, aTHX);
+            ithread *current_thread;
+
+            clone_params->flags |= CLONEf_JOIN_IN;
+            PL_ptr_table = ptr_table_new();
+            current_thread = S_ithread_get(aTHX);
+            S_ithread_set(aTHX_ thread);
+            /* Ensure 'meaningful' addresses retain their meaning */
+            ptr_table_store(PL_ptr_table, &other_perl->Isv_undef, &PL_sv_undef);
+            ptr_table_store(PL_ptr_table, &other_perl->Isv_no, &PL_sv_no);
+            ptr_table_store(PL_ptr_table, &other_perl->Isv_yes, &PL_sv_yes);
+            err = sv_dup(thread->err, clone_params);
+            S_ithread_set(aTHX_ current_thread);
+            Perl_clone_params_del(clone_params);
+            SvREFCNT_inc_void(err);
+            /* If error was an object, bless it into the correct class */
+            if (thread->err_class) {
+                sv_bless(err, gv_stashpv(thread->err_class, 1));
+            }
+            ptr_table_free(PL_ptr_table);
+            PL_ptr_table = NULL;
+#endif
         }
 
         MUTEX_UNLOCK(&thread->mutex);

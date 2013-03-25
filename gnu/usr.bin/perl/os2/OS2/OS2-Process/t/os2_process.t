@@ -289,7 +289,7 @@ ok($pkid1 > 0, 'our window has a governing process');
 ok($tkid1 > 0, 'our window has a governing thread');
 is($pkid, $pkid1, 'kid\'s window is governed by the same process as our (PMSHELL:1)');
 is($tkid, $tkid1, 'likewise for threads');
-is $pkid, ppidOf($spid), 'the governer is the parent of the kid session';
+is $pkid, ppidOf($spid), 'the governor is the parent of the kid session';
 
 my $my_pos = hWindowPos($hwnd);
 ok $my_pos, 'got my position';

@@ -1,0 +1,137 @@
+=pod
+
+=head1 NAME
+
+Locale::Codes::Language - standard codes for language identification
+
+=head1 SYNOPSIS
+
+   use Locale::Codes::Language;
+
+   $lang = code2language('en');        # $lang gets 'English'
+   $code = language2code('French');    # $code gets 'fr'
+
+   @codes   = all_language_codes();
+   @names   = all_language_names();
+
+=head1 DESCRIPTION
+
+The C<Locale::Codes::Language> module provides access to standard codes used
+for identifying languages, such as those as defined in ISO 639.
+
+Most of the routines take an optional additional argument which
+specifies the code set to use. If not specified, the default ISO
+639 two-letter codes will be used.
+
+=head1 SUPPORTED CODE SETS
+
+There are several different code sets you can use for identifying
+languages. A code set may be specified using either a name, or a
+constant that is automatically exported by this module.
+
+For example, the two are equivalent:
+
+   $lang = code2language('en','alpha-2');
+   $lang = code2language('en',LOCALE_CODE_ALPHA_2);
+
+The codesets currently supported are:
+
+=over 4
+
+=item B<alpha-2, LOCALE_LANG_ALPHA_2>
+
+This is the set of two-letter (lowercase) codes from ISO 639-1, such
+as 'he' for Hebrew.  It also includes additions to this set included
+in the IANA language registry.
+
+This is the default code set.
+
+=item B<alpha-3, LOCALE_LANG_ALPHA_3>
+
+This is the set of three-letter (lowercase) bibliographic codes from
+ISO 639-2 and 639-5, such as 'heb' for Hebrew.  It also includes
+additions to this set included in the IANA language registry.
+
+=item B<term, LOCALE_LANG_TERM>
+
+This is the set of three-letter (lowercase) terminologic codes from
+ISO 639.
+
+=back
+
+=head1 ROUTINES
+
+=over 4
+
+=item B<code2language ( CODE [,CODESET] )>
+
+=item B<language2code ( NAME [,CODESET] )>
+
+=item B<language_code2code ( CODE ,CODESET ,CODESET2 )>
+
+=item B<all_language_codes ( [CODESET] )>
+
+=item B<all_language_names ( [CODESET] )>
+
+=item B<Locale::Codes::Language::rename_language  ( CODE ,NEW_NAME [,CODESET] )>
+
+=item B<Locale::Codes::Language::add_language  ( CODE ,NAME [,CODESET] )>
+
+=item B<Locale::Codes::Language::delete_language  ( CODE [,CODESET] )>
+
+=item B<Locale::Codes::Language::add_language_alias  ( NAME ,NEW_NAME )>
+
+=item B<Locale::Codes::Language::delete_language_alias  ( NAME )>
+
+=item B<Locale::Codes::Language::rename_language_code  ( CODE ,NEW_CODE [,CODESET] )>
+
+=item B<Locale::Codes::Language::add_language_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
+
+=item B<Locale::Codes::Language::delete_language_code_alias  ( CODE [,CODESET] )>
+
+These routines are all documented in the Locale::Codes::API man page.
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item B<Locale::Codes>
+
+The Locale-Codes distribution.
+
+=item B<Locale::Codes::API>
+
+The list of functions supported by this module.
+
+=item B<http://www.loc.gov/standards/iso639-2/>
+
+Source of the ISO 639-2 codes.
+
+=item B<http://www.loc.gov/standards/iso639-5/>
+
+Source of the ISO 639-5 codes.
+
+=item B<http://www.iana.org/assignments/language-subtag-registry>
+
+The IANA language subtag registry.
+
+=back
+
+=head1 AUTHOR
+
+See Locale::Codes for full author history.
+
+Currently maintained by Sullivan Beck (sbeck@cpan.org).
+
+=head1 COPYRIGHT
+
+   Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
+   Copyright (c) 2001-2010 Neil Bowers
+   Copyright (c) 2010-2012 Sullivan Beck
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=cut

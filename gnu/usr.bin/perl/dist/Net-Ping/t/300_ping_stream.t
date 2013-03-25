@@ -1,3 +1,4 @@
+use strict; 
 BEGIN {
   if ($ENV{PERL_CORE}) {
     unless ($ENV{PERL_TEST_Net_Ping}) {
@@ -29,22 +30,19 @@ BEGIN {
 #   to really test the stream protocol ping.  See
 #   the end of this document on how to enable it.
 
-use Test;
+use Test::More tests => 22;
 use Net::Ping;
-plan tests => 22;
 
 my $p = new Net::Ping "stream";
 
 # new() worked?
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'new() worked');
 
-# Attempt to connect to the echo port
-ok ($p -> ping("localhost"));
+is($p->ping("localhost"), 1, 'Attempt to connect to the echo port');
 
-# Try several pings while it is connected
 for (1..20) {
   select (undef,undef,undef,0.1);
-  ok $p -> ping("localhost");
+  is($p->ping("localhost"), 1, 'Try several pings while it is connected');
 }
 
 __END__

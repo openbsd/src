@@ -5,20 +5,20 @@ CPANPLUS::Shell::Default::Plugins::HOWTO -- documentation on how to write your o
 =head1 SYNOPSIS
 
     package CPANPLUS::Shell::Default::Plugins::MyPlugin;
-    
+
     ### return command => method mapping
     sub plugins { ( myplugin1 => 'mp1', myplugin2 => 'mp2' ) }
-    
+
     ### method called when the command '/myplugin1' is issued
     sub mp1 { .... }
 
     ### method called when the command '/? myplugin1' is issued
     sub mp1_help { return "Help Text" }
-    
+
 =head1 DESCRIPTION
 
-This pod text explains how to write your own plugins for 
-C<CPANPLUS::Shell::Default>. 
+This pod text explains how to write your own plugins for
+C<CPANPLUS::Shell::Default>.
 
 =head1 HOWTO
 
@@ -34,18 +34,18 @@ C<.pm> file.
 =head2 Registering Plugin Commands
 
 To register any plugin commands, a list of key value pairs must be returned
-by a C<plugins> method in your package. The keys are the commands you wish 
+by a C<plugins> method in your package. The keys are the commands you wish
 to register, the values are the methods in the plugin package you wish to have
 called when the command is issued.
 
 For example, a simple 'Hello, World!' plugin:
 
     package CPANPLUS::Shell::Default::Plugins::HW;
-    
+
     sub plugins { return ( helloworld => 'hw' ) };
-    
+
     sub hw { print "Hello, world!\n" }
-    
+
 When the user in the default shell now issues the C</helloworld> command,
 this command will be dispatched to the plugin, and its C<hw> method will
 be called
@@ -60,7 +60,7 @@ For example, extending the above example, when a user calls C</? helloworld>,
 the function C<hw_help> will be called, which might look like this:
 
     sub hw_help { "    /helloworld      # prints "Hello, world!\n" }
-    
+
 If you dont provide a corresponding _help function to your commands, the
 default shell will handle it gracefully, but the user will be stuck without
 usage information on your commands, so it's considered undesirable to omit
@@ -90,8 +90,8 @@ are all positional:
 For example, the following command:
 
     /helloworld bob --nofoo --bar=2 joe
-    
-Would yield the following arguments:    
+
+Would yield the following arguments:
 
     sub hw {
         my $class   = shift;    # CPANPLUS::Shell::Default::Plugins::HW
@@ -115,10 +115,10 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =head1 SEE ALSO

@@ -1,5 +1,36 @@
 Changes for Perl programming language extension Parse-CPAN-Meta
 
+1.4402 Tue Feb 07 2012
+      - Minor maintenance: standardized newlines to Unix style
+
+1.4401 Fri Feb 04 2011
+      - Removed Module::Load::Conditional dependency
+
+1.4400 Fri Feb 04 2011
+      - Added 'json_backend' and 'yaml_backend' methods to provide
+        the names of modules used for deserialization
+
+1.4200 Mon Jan 24 2011
+      - No changes from 1.41_04
+
+1.41_04 Mon Jan 3 2011
+      - Support PERL_JSON_BACKEND environment (defaulting to JSON::PP)
+      - Support PERL_YAML_BACKEND environment (defaulting to CPAN::Meta:YAML)
+      - Update Makefile.PL to install to sitelib on Perl 5.12+
+
+1.41_03 Fri Dec 17 2010
+	- Throw exception when CPAN::Meta::YAML has a parse error
+	  (RT#47608)
+
+1.41_02 Fri Dec 17 2010
+	- Convert to using CPAN::Meta::YAML instead of YAML::Tiny
+
+1.41_01 Fri Dec 10 2010
+	- add support for JSON metafiles and load_* methods (RJBS)
+	- Move binary file unpacking to test file from Makefile.PL so tests
+	  will pass in the Perl core using a generated Makefile.PL
+	- Move bundled uupacktool.pl to t/bin/
+
 1.40 Sat 25 Jul 2009
 	- Add core perl 5.10.1's uupacktool.pl
 	- Repackage t/data/utf_16_le_bom.yml as ASCII for https://rt.cpan.org/Ticket/Display.html?id=47844

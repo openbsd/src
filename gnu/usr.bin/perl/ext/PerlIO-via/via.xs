@@ -93,7 +93,7 @@ PerlIOVia_method(pTHX_ PerlIO * f, const char *method, CV ** save, int flags,
 		s->io = GvIOp(gv);
 		if (gv) {
 		    /* shamelessly stolen from IO::File's new_tmpfile() */
-		    hv_delete(GvSTASH(gv), GvNAME(gv), GvNAMELEN(gv), G_DISCARD);
+		    (void) hv_delete(GvSTASH(gv), GvNAME(gv), GvNAMELEN(gv), G_DISCARD);
 		}
 	    }
 	    IoIFP(s->io) = PerlIONext(f);
@@ -536,6 +536,7 @@ void
 PerlIOVia_set_ptrcnt(pTHX_ PerlIO * f, STDCHAR * ptr, SSize_t cnt)
 {
     PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
+    PERL_UNUSED_ARG(ptr);
     s->cnt = cnt;
 }
 
@@ -577,6 +578,8 @@ SV *
 PerlIOVia_getarg(pTHX_ PerlIO * f, CLONE_PARAMS * param, int flags)
 {
     PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
+    PERL_UNUSED_ARG(param);
+    PERL_UNUSED_ARG(flags);
     return PerlIOVia_method(aTHX_ f, MYMethod(GETARG), G_SCALAR, Nullsv);
 }
 

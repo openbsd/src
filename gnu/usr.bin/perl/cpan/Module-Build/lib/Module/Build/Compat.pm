@@ -2,7 +2,7 @@ package Module::Build::Compat;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.3603';
+$VERSION = '0.39_01';
 
 use File::Basename ();
 use File::Spec;
@@ -65,10 +65,6 @@ my %macro_to_build = %makefile_to_build;
 # "LIB=foo make" is not the same as "perl Makefile.PL LIB=foo"
 delete $macro_to_build{LIB};
 
-sub _simple_prereq {
-  return $_[0] =~ /^[0-9_]+\.?[0-9_]*$/; # crudly, a decimal literal
-}
-
 sub _merge_prereq {
   my ($req, $breq) = @_;
   $req ||= {};
@@ -78,8 +74,18 @@ sub _merge_prereq {
   for my $p ( $req, $breq ) {
     for my $k (keys %$p) {
       next if $k eq 'perl';
-      die "Prereq '$p->{$k}' for '$k' is not supported by Module::Build::Compat\n"
-        unless _simple_prereq($p->{$k});
+
+      my $v_obj = eval { Module::Build::Version->new($p->{$k}) };
+      if ( ! defined $v_obj ) {
+          die "A prereq of the form '$p->{$k}' for '$k' is not supported by Module::Build::Compat ( use a simpler version like '0.05' or 'v1.4.25' )\n";
+      }
+
+      # It seems like a lot of people trip over "0.1.2" stuff, so we help them here...
+      if ( $v_obj->is_qv ) {
+        my $proper_ver = $v_obj->numify;
+        warn "Dotted-decimal prereq '$p->{$k}' for '$k' is not portable - converting it to '$proper_ver'\n";
+        $p->{$k} = $proper_ver;
+      }
     }
   }
   # merge
@@ -201,7 +207,7 @@ EOF
   } elsif ($type eq 'traditional') {
 
     my (%MM_Args, %prereq);
-    if (eval "use Tie::IxHash; 1") {
+    if (eval "use Tie::IxHash 1.2; 1") {
       tie %MM_Args, 'Tie::IxHash'; # Don't care if it fails here
       tie %prereq,  'Tie::IxHash'; # Don't care if it fails here
     }
@@ -443,7 +449,6 @@ __END__
 =head1 NAME
 
 Module::Build::Compat - Compatibility with ExtUtils::MakeMaker
-
 
 =head1 SYNOPSIS
 

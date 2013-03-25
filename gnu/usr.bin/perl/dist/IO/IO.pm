@@ -7,7 +7,7 @@ use Carp;
 use strict;
 use warnings;
 
-our $VERSION = "1.25_02";
+our $VERSION = "1.25_06";
 XSLoader::load 'IO', $VERSION;
 
 sub import {
@@ -32,8 +32,8 @@ IO - load various IO modules
 
 =head1 SYNOPSIS
 
-    use IO qw(Handle File);  # loads IO modules, here IO::Handle, IO::File
-    use IO;                  # DEPRECATED
+   use IO qw(Handle File); # loads IO modules, here IO::Handle, IO::File
+   use IO;                 # DEPRECATED
 
 =head1 DESCRIPTION
 

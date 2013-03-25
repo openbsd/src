@@ -1,12 +1,14 @@
 # tr.t
 
+use utf8;
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
 }
 
-plan tests => 119;
+plan tests => 131;
 
 my $Is_EBCDIC = (ord('i') == 0x89 & ord('J') == 0xd1);
 
@@ -44,6 +46,27 @@ is($_, "aBCDEFGHIJKLMNOPQRSTUVWXYz",    'partial uc');
 (my $g = 1.5) =~ tr/1/3/;
 is($x + $y + $f + $g, 71,   'tr cancels IOK and NOK');
 
+# /r
+$_ = 'adam';
+is y/dam/ve/rd, 'eve', '/r';
+is $_, 'adam', '/r leaves param alone';
+$g = 'ruby';
+is $g =~ y/bury/repl/r, 'perl', '/r with explicit param';
+is $g, 'ruby', '/r leaves explicit param alone';
+is "aaa" =~ y\a\b\r, 'bbb', '/r with constant param';
+ok !eval '$_ !~ y///r', "!~ y///r is forbidden";
+like $@, qr\^Using !~ with tr///r doesn't make sense\,
+  "!~ y///r error message";
+{
+  my $w;
+  my $wc;
+  local $SIG{__WARN__} = sub { $w = shift; ++$wc };
+  local $^W = 1;
+  eval 'y///r; 1';
+  like $w, qr '^Useless use of non-destructive transliteration \(tr///r\)',
+    '/r warns in void context';
+  is $wc, 1, '/r warns just once';
+}
 
 # perlbug [ID 20000511.005]
 $_ = 'fred';
@@ -462,11 +485,13 @@ is($s, "AxBC", "utf8, DELETE");
 }
 
 ($s) = keys %{{pie => 3}};
-my $wasro = Internals::SvREADONLY($s);
-{
+SKIP: {
+    if (!eval { require B }) { skip "no B", 1 }
+    my $wasro = B::svref_2object(\$s)->FLAGS & &B::SVf_READONLY;
     $wasro or local $TODO = "didn't have a COW";
     $s =~ tr/i//;
-    ok( Internals::SvREADONLY($s), "count-only tr doesn't deCOW COWs" );
+    ok( B::svref_2object(\$s)->FLAGS & &B::SVf_READONLY,
+       "count-only tr doesn't deCOW COWs" );
 }
 
 # [ RT #61520 ]
@@ -483,4 +508,21 @@ my $wasro = Internals::SvREADONLY($s);
     is($x,"\x{143}", "utf8 + closure");
 }
 
+# Freeing of trans ops prior to pmtrans() [perl #102858].
+eval q{ $a ~= tr/a/b/; };
+ok 1;
+SKIP: {
+    skip "no encoding", 1 unless eval { require encoding; 1 };
+    eval q{ use encoding "utf8"; $a ~= tr/a/b/; };
+    ok 1;
+}
 
+{ # [perl #113584]
+
+    my $x = "Perlα";
+    $x =~ tr/αα/βγ/;
+    note $x;
+    is($x, "Perlβ", "Only first of multiple transliterations is used");
+}
+
+1;

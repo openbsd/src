@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 26;
+plan tests => 28;
 
 #
 # This file tries to test builtin override using CORE::GLOBAL
@@ -37,8 +37,8 @@ is( $r, join($dirsep, "Foo", "Bar.pm") );
 require 'Foo';
 is( $r, "Foo" );
 
-require 5.6;
-is( $r, "5.6" );
+require 5.006;
+is( $r, "5.006" );
 
 require v5.6;
 ok( abs($r - 5.006) < 0.001 && $r eq "\x05\x06" );
@@ -49,8 +49,25 @@ is( $r, "Foo.pm" );
 eval "use Foo::Bar";
 is( $r, join($dirsep, "Foo", "Bar.pm") );
 
-eval "use 5.6";
-is( $r, "5.6" );
+# use VERSION also loads feature.pm.
+{
+    my @r;
+    local *CORE::GLOBAL::require = sub { push @r, shift; 1; };
+    eval "use 5.006";
+    like( " @r ", qr " 5\.006 " );
+}
+
+{
+    local $_ = 'foo.pm';
+    require;
+    is( $r, 'foo.pm' );
+}
+
+{
+    my $_ = 'bar.pm';
+    require;
+    is( $r, 'bar.pm' );
+}
 
 # localizing *CORE::GLOBAL::foo should revert to finding CORE::foo
 {
@@ -93,7 +110,7 @@ BEGIN { *Rgs::readpipe = sub ($) { ++$r . " $_[0]" }; }
     ::is( qx/cp/,	  "11 cp", 'qx' );
 }
 
-# Verify that the parsing of overriden keywords isn't messed up
+# Verify that the parsing of overridden keywords isn't messed up
 # by the indirect object notation
 {
     local $SIG{__WARN__} = sub {

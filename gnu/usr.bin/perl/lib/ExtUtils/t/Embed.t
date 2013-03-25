@@ -20,7 +20,6 @@ $| = 1;
 print "1..9\n";
 my $cc = $Config{'cc'};
 my $cl  = ($^O eq 'MSWin32' && $cc eq 'cl');
-my $borl  = ($^O eq 'MSWin32' && $cc eq 'bcc32');
 my $skip_exe = $^O eq 'os2' && $Config{ldflags} =~ /(?<!\S)-Zexe\b/;
 my $exe = 'embed_test';
 $exe .= $Config{'exe_ext'} unless $skip_exe;	# Linker will auto-append it
@@ -57,9 +56,6 @@ if ($^O eq 'VMS') {
    if ($cl) {
     push(@cmd,$cc,"-Fe$exe");
    }
-   elsif ($borl) {
-    push(@cmd,$cc,"-o$exe");
-   }
    else {
     push(@cmd,$cc,'-o' => $exe);
    }
@@ -93,9 +89,6 @@ if ($^O eq 'VMS') {
     push(@cmd, '-Zlinker', '/PM:VIO')	# Otherwise puts a warning to STDOUT!
 	if $^O eq 'os2' and $Config{ldflags} =~ /(?<!\S)-Zomf\b/;
     push(@cmd,ldopts());
-   }
-   if ($borl) {
-     @cmd = ($cmd[0],(grep{/^-[LI]/}@cmd[1..$#cmd]),(grep{!/^-[LI]/}@cmd[1..$#cmd]));
    }
 
    if ($^O eq 'aix') { # AIX needs an explicit symbol export list.

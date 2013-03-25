@@ -1,11 +1,11 @@
 #!./perl -w
- 
+
 use warnings;
 use strict;
 use Config;
  
 BEGIN {
-    if($ENV{PERL_CORE}) {
+    if(-d "lib" && -f "TEST") {
         if ($Config{'extensions'} !~ /\bDB_File\b/ ) {
             print "1..0 # Skip: DB_File was not built\n";
             exit 0;
@@ -345,7 +345,7 @@ untie %h ;
 
 ok(43, $X = tie(%h, 'DB_File',$Dfile, O_RDWR, 0640, $DB_BTREE ));
 
-# Attempting to delete a non-existant key should fail
+# Attempting to delete a non-existent key should fail
 
 $status = $X->del('joe') ;
 ok(44, $status == 1 );
@@ -566,9 +566,9 @@ sub ArrayCompare
  
     return 0 if @$a != @$b ;
  
-    foreach (1 .. length @$a)
+    foreach (0 .. @$a - 1)
     {
-        return 0 unless $$a[$_] eq $$b[$_] ;
+        return 0 unless $$a[$_] eq $$b[$_];
     }
  
     1 ;

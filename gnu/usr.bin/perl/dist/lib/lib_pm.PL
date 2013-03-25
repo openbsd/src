@@ -86,13 +86,7 @@ my \@inc_version_list = $Config_inc_version_list;
 print OUT <<'!NO!SUBS!';
 
 our @ORIG_INC = @INC;	# take a handy copy of 'original' value
-our $VERSION = '0.62';
-my $Is_MacOS = $^O eq 'MacOS';
-my $Mac_FS;
-if ($Is_MacOS) {
-	require File::Spec;
-	$Mac_FS = eval { require Mac::FileSpec::Unixish };
-}
+our $VERSION = '0.63';
 
 sub import {
     shift;
@@ -105,8 +99,6 @@ sub import {
 	    Carp::carp("Empty compile time value given to use lib");
 	}
 
-	$path = _nativize($path);
-
 	if ($path !~ /\.par$/i && -e $path && ! -d _) {
 	    require Carp;
 	    Carp::carp("Parameter to use lib must be directory, not file");
@@ -115,9 +107,7 @@ sub import {
 	# Add any previous version directories we found at configure time
 	foreach my $incver (@inc_version_list)
 	{
-	    my $dir = $Is_MacOS
-		? File::Spec->catdir( $path, $incver )
-		: "$path/$incver";
+	    my $dir = "$path/$incver";
 	    unshift(@INC, $dir) if -d $dir;
 	}
 	# Put a corresponding archlib directory in front of $path if it
@@ -139,9 +129,7 @@ sub unimport {
     shift;
 
     my %names;
-    foreach (@_) {
-	my $path = _nativize($_);
-
+    foreach my $path (@_) {
 	my($arch_auto_dir, $arch_dir, $version_dir, $version_arch_dir)
 	    = _get_dirs($path);
 	++$names{$path};
@@ -159,31 +147,12 @@ sub _get_dirs {
     my($dir) = @_;
     my($arch_auto_dir, $arch_dir, $version_dir, $version_arch_dir);
 
-    # we could use this for all platforms in the future, but leave it
-    # Mac-only for now, until there is more time for testing it.
-    if ($Is_MacOS) {
-	$arch_auto_dir    = File::Spec->catdir( $dir, $archname, 'auto' );
-	$arch_dir         = File::Spec->catdir( $dir, $archname, );
-	$version_dir      = File::Spec->catdir( $dir, $version );
-	$version_arch_dir = File::Spec->catdir( $dir, $version, $archname );
-    } else {
-	$arch_auto_dir    = "$dir/$archname/auto";
-	$arch_dir         = "$dir/$archname";
-	$version_dir      = "$dir/$version";
-	$version_arch_dir = "$dir/$version/$archname";
-    }
+    $arch_auto_dir    = "$dir/$archname/auto";
+    $arch_dir         = "$dir/$archname";
+    $version_dir      = "$dir/$version";
+    $version_arch_dir = "$dir/$version/$archname";
+
     return($arch_auto_dir, $arch_dir, $version_dir, $version_arch_dir);
-}
-
-sub _nativize {
-    my($dir) = @_;
-
-    if ($Is_MacOS && $Mac_FS && ! -d $dir) {
-	$dir = Mac::FileSpec::Unixish::nativize($dir);
-	$dir .= ":" unless $dir =~ /:$/;
-    }
-
-    return $dir;
 }
 
 1;

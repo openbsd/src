@@ -20,6 +20,20 @@ print "ok 5\n";
 
 ok 7 unless not ok 6;
 
+=begin scrumbly
+
+=end scrumbly
+
+shromple
+
+=cut
+
+=for us
+
+shromple again
+
+=cut
+
 no Filter::Simple::FilterOnlyTest; # THE FUN STOPS HERE
 
 print "not " unless "not ok" =~ /^not /;

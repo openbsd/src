@@ -9,7 +9,7 @@ resolution orders other than the default (linear depth first search).
 The C3 method resolution order added in 5.10.0 has been re-implemented as
 a plugin, without changing its Perl-space interface.
 
-Each plugin should register itself with C<Perl_mro_register> by providing
+Each plugin should register itself by providing
 the following structure
 
     struct mro_alg {
@@ -19,6 +19,10 @@ the following structure
         U16 kflags;
         U32 hash;
     };
+
+and calling C<Perl_mro_register>:
+
+    Perl_mro_register(aTHX_ &my_mro_alg);
 
 =over 4
 
@@ -54,8 +58,12 @@ function - the parameter is provided to allow your implementation to track
 depth if it needs to recurse.
 
 The function should return a reference to an array containing the parent
-classes in order. The caller is responsible for incrementing the reference
-count if it wants to keep the structure. Hence if you have created a
+classes in order. The names of the classes should be the result of calling
+C<HvENAME()> on the stash. In those cases where C<HvENAME()> returns null,
+C<HvNAME()> should be used instead.
+
+The caller is responsible for incrementing the reference count of the array
+returned if it wants to keep the structure. Hence, if you have created a
 temporary value that you keep no pointer to, C<sv_2mortal()> to ensure that
 it is disposed of correctly. If you have cached your return value, then
 return a pointer to it without changing the reference count.

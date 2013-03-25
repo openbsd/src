@@ -1,3 +1,27 @@
+Sun  3 Jul 09:10:11 IST 2011   Abhijit Menon-Sen <ams@toroid.org>
+    Version 2.29
+
+	Various bugfixes, notably including preventing nfreeze from
+	incorrectly stringifying integers.
+
+Fri  3 Dec 14:12:32 GMT 2010   David Leadbeater <dgl@dgl.cx>
+    Version 2.25
+
+	Support for serializing coderefs containing UTF-8.
+
+Fri Nov 12 10:52:19 IST 2010   Abhijit Menon-Sen <ams@toroid.org>
+
+    Version 2.24
+
+	Performance improvement for overloaded classes from Benjamin
+	Holzman.
+
+Fri Nov 12 10:36:22 IST 2010   Abhijit Menon-Sen <ams@toroid.org>
+
+    Version 2.23
+
+	Release the latest version from the Perl repository.
+
 Thu Aug  6 10:55:50 IST 2009   Abhijit Menon-Sen <ams@toroid.org>
 
     Version 2.21
@@ -159,7 +183,7 @@ Fri Jun  7 23:55:41 BST 2002   Nicholas Clark
 	The bug was introduced as development perl change 16442 (on
 	2002/05/07), so has been present since 2.00.
 	Patches to introduce more regression tests to reduce the chance of
-	a reoccurance of this sort of goof are always welcome.
+	a reoccurence of this sort of goof are always welcome.
 	
 Thu May 30 20:31:08 BST 2002   Nicholas Clark <nick@ccl4.org>
 
@@ -168,7 +192,7 @@ Thu May 30 20:31:08 BST 2002   Nicholas Clark <nick@ccl4.org>
         5.6.x introduced the ability to have IVs as long long.  However,
         Configure still defined BYTEORDER based on the size of a long.
         Storable uses the BYTEORDER value as part of the header, but
-        doesn't explicity store sizeof(IV) anywhere in the header.
+        doesn't explicitly store sizeof(IV) anywhere in the header.
         Hence on 5.6.x built with IV as long long on a platform that
         uses Configure (ie most things except VMS and Windows) headers
         are identical for the different IV sizes, despite the files
@@ -562,7 +586,7 @@ Mon Jul 12 14:37:19 METDST 1999   Raphael Manfredi <Raphael_Manfredi@pobox.com>
 
         changed my e-mail to pobox.
 
-        mentionned it is not thread-safe.
+        mentioned it is not thread-safe.
 
         updated version number.
 
@@ -592,8 +616,8 @@ Fri Jun 12 11:50:04 METDST 1998   Raphael Manfredi <Raphael_Manfredi@grenoble.hp
         scalars tagged as being an lvalue are handled as if they were
         not an lvalue at all.  Added test for that LVALUE bug workaround.
 
-        Now handles Perl immortal scalars explicitely, by storing &sv_yes
-        as such, explicitely.
+        Now handles Perl immortal scalars explicitly, by storing &sv_yes
+        as such, explicitly.
 
         Retrieval of non-immortal undef cannot be shared. Previous
         version was over-optimizing by not creating a separate SV for
@@ -655,7 +679,7 @@ Wed Apr  8 13:14:29 METDST 1998   Raphael Manfredi <Raphael_Manfredi@grenoble.hp
 
         Wrote sizeof(SV *) instead of sizeof(I32) when portable, which
         in effect mangled the object tags and prevented portability
-        accross 32/64 bit architectures!
+        across 32/64 bit architectures!
 
 Wed Mar 25 14:57:02 MET 1998   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
 
@@ -669,7 +693,7 @@ Wed Mar 25 14:57:02 MET 1998   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.co
         exactly what nstore() is meant for...
 
         However, we continue to use SV addresses as tags for plain store(),
-        because benchamarking shows that it saves up to 8% of the store
+        because benchmarking shows that it saves up to 8% of the store
         time, and store() is meant to be fast at the expense of lack
         of portability.
 

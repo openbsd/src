@@ -4,7 +4,7 @@ specifically designed to be readable as is.
 
 =head1 NAME
 
-README.openbsd - Perl version 5 on OpenBSD systems
+perlopenbsd - Perl version 5 on OpenBSD systems
 
 =head1 DESCRIPTION
 
@@ -14,7 +14,7 @@ version 5 (hereafter just Perl) is compiled and/or runs.
 =head2 OpenBSD core dumps from getprotobyname_r and getservbyname_r with ithreads
 
 When Perl is configured to use ithreads, it will use re-entrant library calls
-in preference to non-re-entrant versions.  There is an incompatability in
+in preference to non-re-entrant versions.  There is an incompatibility in
 OpenBSD's C<getprotobyname_r> and C<getservbyname_r> function in versions 3.7
 and later that will cause a SEGV when called without doing a C<bzero> on
 their return structs prior to calling these functions.  Current Perl's

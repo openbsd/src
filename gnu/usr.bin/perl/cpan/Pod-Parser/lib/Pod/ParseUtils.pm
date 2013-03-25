@@ -11,7 +11,7 @@ package Pod::ParseUtils;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '1.36'; ## Current version of this package
+$VERSION = '1.51'; ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
@@ -844,6 +844,8 @@ Please report bugs using L<http://rt.cpan.org>.
 Marek Rouchal E<lt>marekr@cpan.orgE<gt>, borrowing
 a lot of things from L<pod2man> and L<pod2roff> as well as other POD
 processing tools by Tom Christiansen, Brad Appleton and Russ Allbery.
+
+B<Pod::ParseUtils> is part of the L<Pod::Parser> distribution.
 
 =head1 SEE ALSO
 

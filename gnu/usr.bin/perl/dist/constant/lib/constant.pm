@@ -4,7 +4,7 @@ use strict;
 use warnings::register;
 
 use vars qw($VERSION %declared);
-$VERSION = '1.20';
+$VERSION = '1.23';
 
 #=======================================================================
 
@@ -29,6 +29,19 @@ BEGIN {
     no strict 'refs';
     my $const = $] > 5.009002;
     *_CAN_PCS = sub () {$const};
+
+    # Before this makes its way into a dev perl release, we have to do
+    # browser-sniffing, as it were....
+    return unless $const;
+    *{chr 256} = \3;
+    if (exists ${__PACKAGE__."::"}{"\xc4\x80"}) {
+	delete ${__PACKAGE__."::"}{"\xc4\x80"};
+	*_DOWNGRADE = sub () {1};
+    }
+    else {
+	delete ${__PACKAGE__."::"}{chr 256};
+	*_DOWNGRADE = sub () {0};
+    }
 }
 
 #=======================================================================
@@ -116,6 +129,14 @@ sub import {
 	    $declared{$full_name}++;
 	    if ($multiple || @_ == 1) {
 		my $scalar = $multiple ? $constants->{$name} : $_[0];
+
+		if (_DOWNGRADE) { # for 5.10 to 5.14
+		    # Work around perl bug #31991: Sub names (actually glob
+		    # names in general) ignore the UTF8 flag. So we have to
+		    # turn it off to get the "right" symbol table entry.
+		    utf8::is_utf8 $name and utf8::encode $name;
+		}
+
 		# The constant serves to optimise this entire block out on
 		# 5.8 and earlier.
 		if (_CAN_PCS && $symtab && !exists $symtab->{$name}) {

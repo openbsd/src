@@ -11,11 +11,19 @@ BEGIN {
     }
 }
 
-use Test;
-BEGIN { plan tests => 23 };
-
 use strict;
 use warnings;
+BEGIN { $| = 1; print "1..23\n"; }
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Collate;
 
 ok(1);
@@ -34,8 +42,8 @@ my $Collator = Unicode::Collate->new(
 
 my %old_rearrange = $Collator->change(rearrange => undef);
 
-ok($Collator->gt("\x{0E41}A", "\x{0E40}B"));
-ok($Collator->gt("A\x{0E41}A", "A\x{0E40}B"));
+ok($Collator->gt( "\x{E41}A",  "\x{E40}B"));
+ok($Collator->gt("A\x{E41}A", "A\x{E40}B"));
 
 $Collator->change(rearrange => [ 0x61 ]);
  # U+0061, 'a': This is a Unicode value, never a native value.
@@ -45,10 +53,10 @@ ok($Collator->gt("ab", "AB")); # as 'ba' > 'AB'
 $Collator->change(%old_rearrange);
 
 ok($Collator->lt("ab", "AB"));
-ok($Collator->lt("\x{0E40}", "\x{0E41}"));
-ok($Collator->lt("\x{0E40}A", "\x{0E41}B"));
-ok($Collator->lt("\x{0E41}A", "\x{0E40}B"));
-ok($Collator->lt("A\x{0E41}A", "A\x{0E40}B"));
+ok($Collator->lt( "\x{E40}",   "\x{E41}"));
+ok($Collator->lt( "\x{E40}A",  "\x{E41}B"));
+ok($Collator->lt( "\x{E41}A",  "\x{E40}B"));
+ok($Collator->lt("A\x{E41}A", "A\x{E40}B"));
 
 ##### 10..13
 
@@ -60,10 +68,10 @@ my $all_undef_8 = Unicode::Collate->new(
   UCA_Version => 8,
 );
 
-ok($all_undef_8->lt("\x{0E40}", "\x{0E41}"));
-ok($all_undef_8->lt("\x{0E40}A", "\x{0E41}B"));
-ok($all_undef_8->lt("\x{0E41}A", "\x{0E40}B"));
-ok($all_undef_8->lt("A\x{0E41}A", "A\x{0E40}B"));
+ok($all_undef_8->lt( "\x{E40}",   "\x{E41}"));
+ok($all_undef_8->lt( "\x{E40}A",  "\x{E41}B"));
+ok($all_undef_8->lt( "\x{E41}A",  "\x{E40}B"));
+ok($all_undef_8->lt("A\x{E41}A", "A\x{E40}B"));
 
 ##### 14..18
 
@@ -75,10 +83,10 @@ my $no_rearrange = Unicode::Collate->new(
 );
 
 ok($no_rearrange->lt("A", "B"));
-ok($no_rearrange->lt("\x{0E40}", "\x{0E41}"));
-ok($no_rearrange->lt("\x{0E40}A", "\x{0E41}B"));
-ok($no_rearrange->gt("\x{0E41}A", "\x{0E40}B"));
-ok($no_rearrange->gt("A\x{0E41}A", "A\x{0E40}B"));
+ok($no_rearrange->lt( "\x{E40}",   "\x{E41}"));
+ok($no_rearrange->lt( "\x{E40}A",  "\x{E41}B"));
+ok($no_rearrange->gt( "\x{E41}A",  "\x{E40}B"));
+ok($no_rearrange->gt("A\x{E41}A", "A\x{E40}B"));
 
 ##### 19..23
 
@@ -90,8 +98,8 @@ my $undef_rearrange = Unicode::Collate->new(
 );
 
 ok($undef_rearrange->lt("A", "B"));
-ok($undef_rearrange->lt("\x{0E40}", "\x{0E41}"));
-ok($undef_rearrange->lt("\x{0E40}A", "\x{0E41}B"));
-ok($undef_rearrange->gt("\x{0E41}A", "\x{0E40}B"));
-ok($undef_rearrange->gt("A\x{0E41}A", "A\x{0E40}B"));
+ok($undef_rearrange->lt( "\x{E40}",   "\x{E41}"));
+ok($undef_rearrange->lt( "\x{E40}A",  "\x{E41}B"));
+ok($undef_rearrange->gt( "\x{E41}A",  "\x{E40}B"));
+ok($undef_rearrange->gt("A\x{E41}A", "A\x{E40}B"));
 

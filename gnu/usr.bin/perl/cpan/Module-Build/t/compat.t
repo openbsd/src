@@ -218,23 +218,25 @@ ok $mb, "Module::Build->new_from_context";
 
   (my $libdir2 = $libdir) =~ s/libdir/lbiidr/;
   my $libarch2 = File::Spec->catdir($libdir2, 'arch');
+  my $check_base = $libdir2;
+  $check_base =~ s/\]\z// if $^O eq 'VMS'; # trim trailing ] for appending other dirs
 
   SKIP: {
     my @cases = (
       {
         label => "INSTALLDIRS=vendor",
         args => [ 'INSTALLDIRS=vendor', "INSTALLVENDORLIB=$libdir2", "INSTALLVENDORARCH=$libarch2"],
-        check => qr/\Q$libdir2\E .* Simple\.pm/ix,
+        check => qr/\Q$check_base\E .* Simple\.pm/ix,
       },
       {
         label => "PREFIX=\$libdir2",
         args => [ "PREFIX=$libdir2"],
-        check => qr/\Q$libdir2\E .* Simple\.pm/ix,
+        check => qr/\Q$check_base\E .* Simple\.pm/ix,
       },
       {
         label => "PREFIX=\$libdir2 LIB=mylib",
         args => [ "PREFIX=$libdir2", "LIB=mylib" ],
-        check => qr{\Q$libdir2\E[/\\]mylib[/\\]Simple\.pm}ix,
+        check => qr{\Q$check_base\E[/\\\.]mylib[/\\\]]Simple\.pm}ix,
       },
     );
 
@@ -242,15 +244,8 @@ ok $mb, "Module::Build->new_from_context";
     skip "Needs ExtUtils::Install 1.32 or later", 2 * @cases
       if ExtUtils::Install->VERSION < 1.32;
 
-    skip "Needs upstream patch at http://rt.cpan.org/Public/Bug/Display.html?id=55288", 2 * @cases
-      if $^O eq 'VMS';
-
     for my $c (@cases) {
       my @make_args = @{$c->{args}};
-      if ($is_vms_mms) { # VMS MMK/MMS macros use different syntax.
-        $make_args[0] = '/macro=("' . join('","',@make_args) . '")';
-        pop @make_args while scalar(@make_args) > 1;
-      }
       ($output) = stdout_stderr_of(
         sub {
           $result = $mb->run_perl_script('Makefile.PL', [], \@make_args);
@@ -318,6 +313,63 @@ ok $mb, "Module::Build->new_from_context";
     ok( ! exists $args->{TESTS}, 'Not using incorrect recursive tests key' );
   }
 
+  1 while unlink 'Makefile.PL';
+  ok ! -e 'Makefile.PL', "Makefile.PL cleaned up";
+}
+
+{
+  # make sure using prereq with '0.1.2' complains
+  $dist->change_build_pl({
+    module_name         => $distname,
+    license             => 'perl',
+    requires            => {
+      'Foo::Frobnicate' => '0.1.2',
+    },
+    create_makefile_pl  => 'traditional',
+  });
+  $dist->regen;
+
+  my $mb;
+  stdout_stderr_of( sub {
+    $mb = Module::Build->new_from_context;
+  });
+
+  my $output = stdout_stderr_of( sub { $mb->do_create_makefile_pl } );
+  ok -e 'Makefile.PL', "Makefile.PL created";
+  like $output, qr/is not portable/, "Correctly complains and converts dotted-decimal";
+
+  my $file_contents = slurp 'Makefile.PL';
+  like $file_contents, qr/Foo::Frobnicate.+0\.001002/, "Properly converted dotted-decimal";
+
+  1 while unlink 'Makefile.PL';
+  ok ! -e 'Makefile.PL', "Makefile.PL cleaned up";
+}
+
+{
+  # make sure using invalid prereq blows up
+  $dist->change_build_pl({
+    module_name         => $distname,
+    license             => 'perl',
+    requires            => {
+      'Foo::Frobnicate' => '3.5_2_7',
+    },
+    create_makefile_pl  => 'traditional',
+  });
+  $dist->regen;
+
+  ok ! -e 'Makefile.PL', "Makefile.PL doesn't exist before we start";
+
+  my $mb;
+  stdout_stderr_of( sub {
+    $mb = $dist->run_build_pl;
+  });
+
+  my ($output, $error) = stdout_stderr_of( sub { $dist->run_build('distmeta') } );
+  like $error, qr/is not supported/ms, "Correctly dies when it encounters invalid prereq";
+  ok ! -e 'Makefile.PL', "Makefile.PL NOT created";
+
+  1 while unlink 'Makefile.PL';
+  ok ! -e 'Makefile.PL', "Makefile.PL cleaned up";
 }
 
 #########################################################

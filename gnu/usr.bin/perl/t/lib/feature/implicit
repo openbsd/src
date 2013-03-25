@@ -21,15 +21,9 @@ Helloworld
 ########
 # VERSION requirement, decimal notation
 use 5.009005;
-say defined $INC{"feature.pm"} ? "Helloworld" : "Good bye";
+say "Helloworld";
 EXPECT
 Helloworld
-########
-# VERSION requirement, doesn't load anything for < 5.9.5
-use 5.8.8;
-print "<".$INC{"feature.pm"}.">\n";
-EXPECT
-<>
 ########
 # VERSION requirement, doesn't load anything with require
 require 5.9.5;
@@ -64,3 +58,67 @@ Helloworld
 # no implicit features with 'no'
 eval "no " . ($]+1); print $@;
 EXPECT
+########
+# lower version after higher version
+sub evalbytes { print "evalbytes sub\n" }
+sub say { print "say sub\n" }
+use 5.015;
+evalbytes "say 'yes'";
+use 5.014;
+evalbytes;
+use 5;
+say "no"
+EXPECT
+yes
+evalbytes sub
+say sub
+########
+# No $[ under 5.15
+# SKIP ? not defined DynaLoader::boot_DynaLoader
+use v5.14;
+no warnings 'deprecated';
+$[ = 1;
+print qw[a b c][2], "\n";
+use v5.15;
+print qw[a b c][2], "\n";
+EXPECT
+b
+c
+########
+# $[ under < 5.10
+# SKIP ? not defined DynaLoader::boot_DynaLoader
+use feature 'say'; # make sure it is loaded and modifies %^H; we are test-
+use v5.8.8;        # ing to make sure it does not disable $[
+no warnings 'deprecated';
+$[ = 1;
+print qw[a b c][2], "\n";
+EXPECT
+b
+########
+# $[ under < 5.10 after use v5.15
+# SKIP ? not defined DynaLoader::boot_DynaLoader
+use v5.15;
+use v5.8.8;
+no warnings 'deprecated';
+$[ = 1;
+print qw[a b c][2], "\n";
+EXPECT
+b
+########
+# Implicit unicode_string feature
+use v5.14;
+print 'ss' =~ /\xdf/i ? "ok\n" : "nok\n";
+use v5.8.8;
+print 'ss' =~ /\xdf/i ? "ok\n" : "nok\n";
+EXPECT
+ok
+nok
+########
+# Implicit unicode_eval feature
+use v5.15;
+print eval "use utf8; q|\xc5\xbf|" eq "\xc5\xbf" ? "ok\n" : "nok\n";
+use v5.8.8;
+print eval "use utf8; q|\xc5\xbf|" eq "\x{17f}" ? "ok\n" : "nok\n";
+EXPECT
+ok
+ok

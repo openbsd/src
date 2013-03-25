@@ -14,6 +14,7 @@
 # 	n	expect no match
 # 	c	expect an error
 #	T	the test is a TODO (can be combined with y/n/c)
+#	M	skip test on miniperl (combine with y/n/c/T)
 #	B	test exposes a known bug in Perl, should be skipped
 #	b	test exposes a known bug in Perl, should be skipped if noamp
 #	t	test exposes a bug with threading, TODO if qr_embed_thr
@@ -43,7 +44,7 @@
 # Note that columns 2,3 and 5 are all enclosed in double quotes and then
 # evalled; so something like a\"\x{100}$1 has length 3+length($1).
 
-my $file;
+my ($file, $iters);
 BEGIN {
     $iters = shift || 1;	# Poor man performance suite, 10000 is OK.
 
@@ -56,29 +57,21 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
 
-    if ($qr_embed_thr) {
-	require Config;
-	if (!$Config::Config{useithreads}) {
-	    print "1..0 # Skip: no ithreads\n";
-		exit 0;
-	}
-	if ($ENV{PERL_CORE_MINITEST}) {
-	    print "1..0 # Skip: no dynamic loading on miniperl, no threads\n";
-		exit 0;
-	}
-	require threads;
-    }
+}
+
+sub _comment {
+    return map { /^#/ ? "$_\n" : "# $_\n" }
+           map { split /\n/ } @_;
 }
 
 use strict;
 use warnings FATAL=>"all";
-use vars qw($iters $numtests $bang $ffff $nulnul $OP);
+use vars qw($bang $ffff $nulnul); # used by the tests
 use vars qw($qr $skip_amp $qr_embed $qr_embed_thr); # set by our callers
 
 
 if (!defined $file) {
-    open(TESTS,'re/re_tests') || open(TESTS,'t/re/re_tests')
-	|| open(TESTS,':re:re_tests') || die "Can't open re_tests";
+    open TESTS, 're/re_tests' or die "Can't open re/re_tests: $!";
 }
 
 my @tests = <TESTS>;
@@ -88,7 +81,7 @@ close TESTS;
 $bang = sprintf "\\%03o", ord "!"; # \41 would not be portable.
 $ffff  = chr(0xff) x 2;
 $nulnul = "\0" x 2;
-$OP = $qr ? 'qr' : 'm';
+my $OP = $qr ? 'qr' : 'm';
 
 $| = 1;
 printf "1..%d\n# $iters iterations\n", scalar @tests;
@@ -116,6 +109,7 @@ foreach (@tests) {
     $expect = $repl = '-' if $skip_amp and $input =~ /\$[&\`\']/;
     my $todo_qr = $qr_embed_thr && ($result =~ s/t//);
     my $skip = ($skip_amp ? ($result =~ s/B//i) : ($result =~ s/B//));
+    ++$skip if $result =~ s/M// && !defined &DynaLoader::boot_DynaLoader;
     $reason = 'skipping $&' if $reason eq  '' && $skip_amp;
     $result =~ s/B//i unless $skip;
     my $todo= $result =~ s/T// ? " # TODO" : "";
@@ -123,7 +117,7 @@ foreach (@tests) {
 
     for my $study ('', 'study $subject', 'utf8::upgrade($subject)',
 		   'utf8::upgrade($subject); study $subject') {
-	# Need to make a copy, else the utf8::upgrade of an alreay studied
+	# Need to make a copy, else the utf8::upgrade of an already studied
 	# scalar confuses things.
 	my $subject = $subject;
 	my $c = $iters;
@@ -173,7 +167,7 @@ EOFCODE
 	}
 	chomp( my $err = $@ );
 	if ($result eq 'c') {
-	    if ($err !~ m!^\Q$expect!) { print "not ok $test$todo (compile) $input => `$err'\n"; next TEST }
+	    if ($err !~ m!^\Q$expect!) { print "not ok $test$todo (compile) $input => '$err'\n"; next TEST }
 	    last;  # no need to study a syntax error
 	}
 	elsif ( $skip ) {
@@ -185,7 +179,7 @@ EOFCODE
 	    next TEST;
 	}
 	elsif ($@) {
-	    print "not ok $test$todo $input => error `$err'\n$code\n$@\n"; next TEST;
+	    print "not ok $test$todo $input => error '$err'\n", _comment("$code\n$@\n"); next TEST;
 	}
 	elsif ($result =~ /^n/) {
 	    if ($match) { print "not ok $test$todo ($study) $input => false positive\n"; next TEST }
@@ -193,13 +187,17 @@ EOFCODE
 	else {
 	    if (!$match || $got ne $expect) {
 	        eval { require Data::Dumper };
-		if ($@) {
-		    print "not ok $test$todo ($study) $input => `$got', match=$match\n$code\n";
+		if ($@ || !defined &DynaLoader::boot_DynaLoader) {
+		    # Data::Dumper will load on miniperl, but fail when used in
+		    # anger as it tries to load B. I'd prefer to keep the
+		    # regular calls below outside of an eval so that real
+		    # (unknown) failures get spotted, not ignored.
+		    print "not ok $test$todo ($study) $input => '$got', match=$match\n", _comment("$code\n");
 		}
 		else { # better diagnostics
 		    my $s = Data::Dumper->new([$subject],['subject'])->Useqq(1)->Dump;
 		    my $g = Data::Dumper->new([$got],['got'])->Useqq(1)->Dump;
-		    print "not ok $test$todo ($study) $input => `$got', match=$match\n$s\n$g\n$code\n";
+		    print "not ok $test$todo ($study) $input => '$got', match=$match\n", _comment("$s\n$g\n$code\n");
 		}
 		next TEST;
 	    }

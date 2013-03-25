@@ -4,9 +4,10 @@ BEGIN {
 	chdir 't' if -d 't';
 	@INC = '../lib';
 	require Config; import Config;
+	require './test.pl';
 }
 
-use Test::More tests => 23;
+plan 23;
 
 # open::import expects 'open' as its first argument, but it clashes with open()
 sub import {
@@ -185,13 +186,26 @@ SKIP: {
 
     eval q[use Encode::Alias;use open ":std", ":locale"];
     is($@, '', 'can use :std and :locale');
+}
 
-    use open IN => ':non-existent';
-    eval {
-	require Symbol; # Anything that exists but we havn't loaded
-    };
-    like($@, qr/Can't locate Symbol|Recursive call/i,
-	 "test for an endless loop in PerlIO_find_layer");
+{
+    local $ENV{PERL_UNICODE};
+    delete $ENV{PERL_UNICODE};
+    is runperl(
+         progs => [
+            'use open q\:encoding(UTF-8)\, q-:std-;',
+            'use open q\:encoding(UTF-8)\;',
+            'if(($_ = <STDIN>) eq qq-\x{100}\n-) { print qq-stdin ok\n- }',
+            'else { print qq-got -, join(q q q, map ord, split//), "\n" }',
+            'print STDOUT qq-\x{ff}\n-;',
+            'print STDERR qq-\x{ff}\n-;',
+         ],
+         stdin => "\xc4\x80\n",
+         stderr => 1,
+       ),
+       "stdin ok\n\xc3\xbf\n\xc3\xbf\n",
+       "use open without :std does not affect standard handles",
+    ;
 }
 
 END {

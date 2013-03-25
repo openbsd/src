@@ -5,11 +5,16 @@ BEGIN {
     # chdir() works!  Instead, we'll hedge our bets and put both
     # possibilities into @INC.
     @INC = qw(t . lib ../lib);
+    require "test.pl";
+    # Really want to know if chdir is working, as the build process will all go
+    # wrong if it is not.
+    if (is_miniperl() && !eval {require File::Spec::Functions; 1}) {
+	push @INC, qw(dist/Cwd/lib dist/Cwd ../dist/Cwd/lib ../dist/Cwd);
+    }
+    plan(tests => 48);
 }
 
 use Config;
-require "test.pl";
-plan(tests => 48);
 
 my $IsVMS   = $^O eq 'VMS';
 

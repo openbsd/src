@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan (108);
+plan (109);
 
 sub expected {
     my($object, $package, $type) = @_;
@@ -139,3 +139,6 @@ expected($c4, 'C4', "SCALAR");
     my $a = bless \(keys %h), 'zap';
     is(ref $a, 'zap');
 }
+
+bless [], "main::";
+ok(1, 'blessing into main:: does not crash'); # [perl #87388]

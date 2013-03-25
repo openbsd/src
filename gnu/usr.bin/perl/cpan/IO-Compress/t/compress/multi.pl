@@ -13,7 +13,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 1324 + $extra ;
+    plan tests => 1828 + $extra ;
 
     use_ok('IO::Uncompress::AnyUncompress', qw($AnyUncompressError)) ;
 
@@ -179,7 +179,9 @@ EOM
                 }
 
                 foreach my $unc ($UncompressClass, 'IO::Uncompress::AnyUncompress') {
-                    title "  Testing $CompressClass with $unc nextStream and $i streams, from $fb";
+
+                foreach my $trans (0, 1) {
+                    title "  Testing $CompressClass with $unc nextStream and $i streams, from $fb, Transparent => $trans";
                     $cc = $output ;
                     if ($fb eq 'filehandle')
                     {
@@ -194,7 +196,7 @@ EOM
                                    AutoClose   => 1,
                                    Append      => 1,
                                    MultiStream => 0,
-                                   Transparent => 0)
+                                   Transparent => $trans)
                         or diag $$UnError;
                     isa_ok $gz, $UncompressClass, '    $gz' ;
 
@@ -248,6 +250,7 @@ EOM
                         or diag "Stream count is " . $gz->streamCount();
 
                 }
+              }
             }
         }
     }

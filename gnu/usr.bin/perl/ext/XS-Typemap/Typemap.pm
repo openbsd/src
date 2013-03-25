@@ -31,19 +31,23 @@ to the test script.
 
 =cut
 
-use base qw/ DynaLoader Exporter /;
-
+use parent qw/ Exporter /;
+require XSLoader;
 
 use vars qw/ $VERSION @EXPORT /;
 
-$VERSION = '0.03';
+$VERSION = '0.08';
 
 @EXPORT = (qw/
 	   T_SV
 	   T_SVREF
+	   T_SVREF_REFCOUNT_FIXED
 	   T_AVREF
+	   T_AVREF_REFCOUNT_FIXED
 	   T_HVREF
+	   T_HVREF_REFCOUNT_FIXED
 	   T_CVREF
+	   T_CVREF_REFCOUNT_FIXED
 	   T_SYSRET_fail T_SYSRET_pass
 	   T_UV
 	   T_IV
@@ -71,10 +75,12 @@ $VERSION = '0.03';
            T_OPAQUEPTR_IN_struct T_OPAQUEPTR_OUT_struct
 	   T_ARRAY
 	   T_STDIO_open T_STDIO_close T_STDIO_print
+           T_PACKED_in T_PACKED_out
+           T_PACKEDARRAY_in T_PACKEDARRAY_out
+           T_INOUT T_IN T_OUT
 	   /);
 
-
-bootstrap XS::Typemap;
+XSLoader::load();
 
 =head1 NOTES
 

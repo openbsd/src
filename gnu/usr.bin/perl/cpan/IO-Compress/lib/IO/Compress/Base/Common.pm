@@ -11,14 +11,19 @@ use File::GlobMapper;
 require Exporter;
 our ($VERSION, @ISA, @EXPORT, %EXPORT_TAGS, $HAS_ENCODE);
 @ISA = qw(Exporter);
-$VERSION = '2.024';
+$VERSION = '2.048';
 
-@EXPORT = qw( isaFilehandle isaFilename whatIsInput whatIsOutput 
+@EXPORT = qw( isaFilehandle isaFilename isaScalar
+              whatIsInput whatIsOutput 
               isaFileGlobString cleanFileGlobString oneTarget
               setBinModeInput setBinModeOutput
               ckInOutParams 
               createSelfTiedObject
               getEncoding
+
+              isGeMax32
+
+              MAX32
 
               WANT_CODE
               WANT_EXT
@@ -42,7 +47,16 @@ use constant STATUS_OK        => 0;
 use constant STATUS_ENDSTREAM => 1;
 use constant STATUS_EOF       => 2;
 use constant STATUS_ERROR     => -1;
+use constant MAX16            => 0xFFFF ;  
+use constant MAX32            => 0xFFFFFFFF ;  
+use constant MAX32cmp         => 0xFFFFFFFF + 1 - 1; # for 5.6.x on 32-bit need to force an non-IV value 
           
+
+sub isGeMax32
+{
+    return $_[0] >= MAX32cmp ;
+}
+
 sub hasEncode()
 {
     if (! defined $HAS_ENCODE) {
@@ -104,6 +118,11 @@ sub isaFilehandle($)
               UNIVERSAL::isa($_[0],'IO::Handle') or
               UNIVERSAL::isa(\$_[0],'GLOB')) 
           )
+}
+
+sub isaScalar
+{
+    return ( defined($_[0]) and ref($_[0]) eq 'SCALAR' and defined ${ $_[0] } ) ;
 }
 
 sub isaFilename($)
@@ -451,7 +470,8 @@ sub createSelfTiedObject
 
 $EXPORT_TAGS{Parse} = [qw( ParseParameters 
                            Parse_any Parse_unsigned Parse_signed 
-                           Parse_boolean Parse_custom Parse_string
+                           Parse_boolean Parse_string
+                           Parse_code
                            Parse_multiple Parse_writable_scalar
                          )
                       ];              
@@ -463,7 +483,7 @@ use constant Parse_unsigned => 0x02;
 use constant Parse_signed   => 0x04;
 use constant Parse_boolean  => 0x08;
 use constant Parse_string   => 0x10;
-use constant Parse_custom   => 0x12;
+use constant Parse_code     => 0x20;
 
 #use constant Parse_store_ref        => 0x100 ;
 use constant Parse_multiple         => 0x100 ;
@@ -499,6 +519,7 @@ sub ParseParameters
 #package IO::Compress::Base::Parameters;
 
 use strict;
+
 use warnings;
 use Carp;
 
@@ -635,7 +656,7 @@ sub IO::Compress::Base::Parameters::parse
             ++ $parsed{$canonkey};
 
             return $self->setError("Muliple instances of '$key' found") 
-                if $parsed && $type & Parse_multiple == 0 ;
+                if $parsed && ($type & Parse_multiple) == 0 ;
 
             my $s ;
             $self->_checkType($key, $value, $type, 1, \$s)
@@ -739,6 +760,13 @@ sub IO::Compress::Base::Parameters::_checkType
         return $self->setError("Parameter '$key' must be an int, got '$value'")
             if $validate && defined $value && $value !~ /^\d*$/;
         $$output =  defined $value ? $value != 0 : 0 ;    
+        return 1;
+    }
+    elsif ($type & Parse_code)
+    {
+        return $self->setError("Parameter '$key' must be a code reference, got '$value'")
+            if $validate && (! defined $value || ref $value ne 'CODE') ;
+        $$output = defined $value ? $value : "" ;    
         return 1;
     }
     elsif ($type & Parse_string)
@@ -901,9 +929,13 @@ sub add
         $self->[HIGH] += $value->[HIGH] ;
         $value = $value->[LOW];
     }
+    elsif ($value > MAX32) {      
+        $self->[HIGH] += int($value / HI_1) ;
+        $value = $value % HI_1;
+    }
      
     my $available = MAX32 - $self->[LOW] ;
-
+ 
     if ($value > $available) {
        ++ $self->[HIGH] ;
        $self->[LOW] = $value - $available - 1;
@@ -911,7 +943,33 @@ sub add
     else {
        $self->[LOW] += $value ;
     }
+}
 
+sub subtract
+{
+    my $self = shift;
+    my $value = shift;
+
+    if (ref $value eq 'U64') {
+
+        if ($value->[HIGH]) {
+            die "bad"
+                if $self->[HIGH] == 0 ||
+                   $value->[HIGH] > $self->[HIGH] ;
+
+           $self->[HIGH] -= $value->[HIGH] ;
+        }
+
+        $value = $value->[LOW] ;
+    }
+
+    if ($value > $self->[LOW]) {
+       -- $self->[HIGH] ;
+       $self->[LOW] = MAX32 - $value + $self->[LOW] + 1 ;
+    }
+    else {
+       $self->[LOW] -= $value;
+    }
 }
 
 sub equal
@@ -923,10 +981,38 @@ sub equal
            $self->[HIGH] == $other->[HIGH] ;
 }
 
+sub gt
+{
+    my $self = shift;
+    my $other = shift;
+
+    return $self->cmp($other) > 0 ;
+}
+
+sub cmp
+{
+    my $self = shift;
+    my $other = shift ;
+
+    if ($self->[LOW] == $other->[LOW]) {
+        return $self->[HIGH] - $other->[HIGH] ;
+    }
+    else {
+        return $self->[LOW] - $other->[LOW] ;
+    }
+}
+    
+
 sub is64bit
 {
     my $self = shift;
     return $self->[HIGH] > 0 ;
+}
+
+sub isAlmost64bit
+{
+    my $self = shift;
+    return $self->[HIGH] > 0 ||  $self->[LOW] == MAX32 ;
 }
 
 sub getPacked_V64
@@ -948,6 +1034,21 @@ sub pack_V64
     my $low  = shift;
 
     return pack "V V", $low, 0;
+}
+
+
+sub full32 
+{
+    return $_[0] == MAX32 ;
+}
+
+sub Value_VV64
+{
+    my $buffer = shift;
+
+    my ($lo, $hi) = unpack ("V V" , $buffer);
+    no warnings 'uninitialized';
+    return $hi * HI_1 + $lo;
 }
 
 

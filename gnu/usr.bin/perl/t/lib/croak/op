@@ -1,0 +1,58 @@
+__END__
+# NAME my $<special>
+my $!;
+EXPECT
+Can't use global $! in "my" at - line 1, near "my $!"
+Execution of - aborted due to compilation errors.
+########
+# NAME my $<special_unicode>
+use utf8;
+BEGIN { binmode STDERR, ":utf8" }
+my $♠;
+EXPECT
+Can't use global $♠ in "my" at - line 3, near "my $♠"
+Execution of - aborted due to compilation errors.
+########
+# NAME OP_HELEM fields
+package Foo;
+use fields qw(a b);
+sub new {
+    my $class = shift;
+    return fields::new($class);
+}
+my Foo $f = Foo->new;
+$f->{c} = 1;
+EXPECT
+No such class field "c" in variable $f of type Foo at - line 8.
+########
+# NAME OP_HSLICE fields
+package Foo;
+use fields qw(a b);
+sub new {
+    my $class = shift;
+    return fields::new($class);
+}
+my Foo $f = Foo->new;
+@$f{"a", "c"} = ( 1, 2 );
+EXPECT
+No such class field "c" in variable $f of type Foo at - line 8.
+########
+# NAME my sub
+my sub foo { }
+EXPECT
+"my sub" not yet implemented at - line 1.
+########
+# NAME delete BAD
+delete $x;
+EXPECT
+delete argument is not a HASH or ARRAY element or slice at - line 1.
+########
+# NAME exists BAD
+exists $x;
+EXPECT
+exists argument is not a HASH or ARRAY element or a subroutine at - line 1.
+########
+# NAME exists non-sub
+exists &foo()
+EXPECT
+exists argument is not a subroutine name at - line 1.

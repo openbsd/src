@@ -3,7 +3,6 @@ use strict;
 use File::Spec;
 use Test::More;
 
-# NB. For PERL_CORE to be set, taint mode must not be enabled
 my $macrosall = 'macros.all';
 open(MACROS, $macrosall) or plan skip_all => "can't read '$macrosall': $!";
 my @names = map {chomp;$_} <MACROS>;

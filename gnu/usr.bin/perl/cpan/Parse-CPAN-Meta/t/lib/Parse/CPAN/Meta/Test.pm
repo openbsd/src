@@ -59,7 +59,7 @@ sub yaml_ok {
 sub yaml_error {
 	my $string = shift;
 	my $yaml   = eval { Parse::CPAN::Meta::Load( $string ); };
-	Test::More::like( $@, qr/$_[0]/, "YAML::Tiny throws expected error" );
+	Test::More::like( $@, qr/$_[0]/, "CPAN::Meta::YAML throws expected error" );
 }
 
 sub slurp {

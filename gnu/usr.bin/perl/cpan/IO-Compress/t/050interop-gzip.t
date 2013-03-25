@@ -10,6 +10,7 @@ use strict;
 use warnings;
 use bytes;
 
+use File::Spec ;
 use Test::More ;
 use CompTestUtils;
 
@@ -91,9 +92,12 @@ BEGIN {
 
     for my $dir (reverse split $split, $ENV{PATH})    
     {
-        $GZIP = "$dir/$name"
-            if -x "$dir/$name" ;
+        $GZIP = File::Spec->catfile($dir,$name)
+            if -x File::Spec->catfile($dir,$name)
     }
+
+    # Handle spaces in path to gzip 
+    $GZIP = "\"$GZIP\"" if defined $GZIP && $GZIP =~ /\s/;    
 
     plan(skip_all => "Cannot find $name")
         if ! $GZIP ;

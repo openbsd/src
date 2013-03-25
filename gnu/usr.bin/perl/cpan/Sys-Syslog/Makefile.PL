@@ -1,11 +1,8 @@
+use 5.005;
 use strict;
-use Config;
 use ExtUtils::MakeMaker;
-eval 'use ExtUtils::MakeMaker::Coverage';
 use File::Copy;
-use File::Path;
 use File::Spec;
-require 5.005;
 
 
 # create a typemap for Perl 5.6
@@ -23,14 +20,15 @@ my %virtual_path = ( 'Syslog.pm' => '$(INST_LIBDIR)/Syslog.pm' );
 
 # detect when to use Win32::EvenLog
 my (@extra_params, @extra_prereqs);
-my $use_eventlog = eval "use Win32::EventLog; 1";
 
-if ($use_eventlog) {
+if ($^O =~ /Win32/) {
     print " * Win32::EventLog detected.\n";
     my $name = "PerlLog";
 
     push @extra_prereqs, 
-        Win32 => 0,  "Win32::TieRegistry" => 0,  "Win32::EventLog" => 0;
+        "Win32::EventLog"    => 0,
+        "Win32::TieRegistry" => 0,
+        "Win32::EventLog"    => 0;
 
     $virtual_path{'win32/Win32.pm'   } = '$(INST_LIBDIR)/Syslog/Win32.pm';
     $virtual_path{'win32/PerlLog.dll'} = '$(INST_ARCHAUTODIR)/PerlLog.dll';
@@ -53,22 +51,9 @@ if ($use_eventlog) {
         close(DLL);
     }
 }
-elsif ($^O =~ /Win32/) {
-    print <<"NOTICE"
- *** You're running on a Win32 system,  but you lack the Win32::EventLog\a
- *** module, part of the libwin32 distribution. Although Sys::Syslog can 
- *** be used without Win32::EventLog, it won't be very useful except for 
- *** sending remote syslog messages.  If you want to log messages on the 
- *** local host as well, please install libwin32 then Sys::Syslog again.
-NOTICE
-}
 
 # detect when being built in Perl core
-if (grep { $_ eq 'PERL_CORE=1' } @ARGV) {
-    push @extra_params, 
-        MAN3PODS    => {};      # Pods will be built by installman.
-}
-else {
+if (not grep { $_ eq 'PERL_CORE=1' } @ARGV) {
     push @extra_params, 
         DEFINE      => '-DUSE_PPPORT_H';
 }
@@ -76,13 +61,18 @@ else {
 # on pre-5.6 Perls, add warnings::compat to the prereq modules
 push @extra_prereqs, "warnings::compat" => "0.06"  if $] < 5.006;
 
+# starting with Perl 5.11, "site" and "vendor" directories finally are
+# before "perl" (core) in @INC, thus allowing dual-life modules to be
+# updated without the need to overwrite the old version
+my $installdirs = $] < 5.011 ? "perl" : "site";
+
 WriteMakefile(
     NAME            => 'Sys::Syslog',
     LICENSE         => 'perl',
     AUTHOR          => 'Sebastien Aperghis-Tramoni <sebastien@aperghis.net>',
     VERSION_FROM    => 'Syslog.pm', 
     ABSTRACT_FROM   => 'Syslog.pm', 
-    INSTALLDIRS     => 'perl',
+    INSTALLDIRS     => $installdirs,
     XSPROTOARG      => '-noprototypes',
     PM              => \%virtual_path, 
     PREREQ_PM       => {

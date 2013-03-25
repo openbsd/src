@@ -8,7 +8,7 @@ BEGIN {
 use strict;
 use Pod::Simple::Search;
 use Test;
-BEGIN { plan tests => 15 }
+BEGIN { plan tests => 16 }
 
 print "# Some basic sanity tests...\n";
 
@@ -22,6 +22,7 @@ ok defined $x->can('inc');
 ok defined $x->can('laborious');
 ok defined $x->can('limit_glob');
 ok defined $x->can('limit_re');
+ok defined $x->can('recurse');
 ok defined $x->can('shadows');
 ok defined $x->can('verbose');
 ok defined $x->can('survey');

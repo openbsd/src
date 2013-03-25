@@ -1,5 +1,44 @@
 Revision history for the Perl extension Win32.
 
+0.44	[2011-01-12]
+	- fix memory leak introduced in 0.43
+
+0.43	[2011-01-12]
+	- fix a few potential buffer overrun bugs reported by Alex Davies.
+	  [perl#78710]
+
+0.42	[2011-01-06]
+	- remove brittle test for Win32::GetLongPathName($ENV{SYSTEMROOT})
+	  which will fail if the case of the environment value doesn't
+	  exactly match the case of the directory name on the filesystem.
+
+0.41	[2010-12-10]
+	- Fix Win32::GetChipName() to return the native processor type when
+	  running 32-bit Perl on 64-bit Windows (WOW64).  This will also
+	  affect the values returned by Win32::GetOSDisplayName() and
+	  Win32::GetOSName(). [rt#63797]
+	- Fix Win32::GetOSDisplayName() to return the correct values for
+	  all products even when a service pack has been installed. (This
+	  was only an issue for some "special" editions).
+	- The display name for "Windows 7 Business Edition" is actually
+	  "Windows 7 Professional".
+	- Fix t/GetOSName.t tests to avoid using the values returned by
+	  GetSystemMetrics() when the test template didn't specify any
+	  value at all.
+
+0.40	[2010-12-08]
+	- Add Win32::GetSystemMetrics function.
+	- Add Win32::GetProductInfo() function.
+	- Add Win32::GetOSDisplayName() function.
+	- Detect "Windows Server 2008 R2" as "Win2008" in Win32::GetOSName()
+	  (used to return "Win7" before). [rt#57172]
+	- Detect "Windows Home Server" as "WinHomeSvr" in Win32::GetOSName()
+	  (used to return "Win2003" before).
+	- Add "R2", "Media Center", "Tablet PC", "Starter Edition" etc.
+	  tags to the description returned by Win32::GetOSName() in
+	  list context.
+	- Rewrite the t/GetOSName.t tests
+
 0.39	[2009-01-19]
 	- Add support for Windows 2008 Server and Windows 7 in
 	  Win32::GetOSName() and in the documentation for

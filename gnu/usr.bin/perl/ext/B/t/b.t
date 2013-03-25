@@ -12,7 +12,7 @@ BEGIN {
 $|  = 1;
 use warnings;
 use strict;
-use Test::More tests => 57;
+use Test::More;
 
 BEGIN { use_ok( 'B' ); }
 
@@ -64,6 +64,45 @@ ok( B::svref_2object(\$.)->MAGIC->TYPE eq "\0", '$. has \0 magic' );
 	'$. has no more magic' );
 }
 
+{
+    my $pie = 'Good';
+    # This needs to be a package variable, as vars in the pad have some flags.
+    my $r = B::svref_2object(\$::data2);
+    is($r->FLAGS(), 0, "uninitialised package variable has flags of 0");
+    is($r->SvTYPE(), 0, "uninitialised package variable has type 0");
+    is($r->POK(), 0, "POK false");
+    is($r->ROK(), 0, "ROK false");
+    is($r->MAGICAL(), 0, "MAGICAL false");
+    $::data2 = $pie;
+    isnt($r->FLAGS(), 0, "initialised package variable has nonzero flags");
+    isnt($r->SvTYPE(), 0, "initialised package variable has nonzero type");
+    isnt($r->POK(), 0, "POK true");
+    is($r->ROK(), 0, "ROK false");
+    is($r->MAGICAL(), 0, "MAGICAL false");
+
+    $::data2 = substr $pie, 0, 1;
+    isnt($r->FLAGS(), 0, "initialised package variable has nonzero flags");
+    isnt($r->SvTYPE(), 0, "initialised package variable has nonzero type");
+    isnt($r->POK(), 0, "POK true");
+    is($r->ROK(), 0, "ROK false");
+    is($r->MAGICAL(), 0, "MAGICAL true");
+
+    $::data2 = \$pie;
+    isnt($r->FLAGS(), 0, "initialised package variable has nonzero flags");
+    isnt($r->SvTYPE(), 0, "initialised package variable has nonzero type");
+    is($r->POK(), 0, "POK false");
+    isnt($r->ROK(), 0, "ROK true");
+    is($r->MAGICAL(), 0, "MAGICAL false");
+
+    is($r->REFCNT(), 1, "Reference count is 1");
+    {
+	my $ref = \$::data2;
+	is($r->REFCNT(), 2, "Second reference");
+    }
+    is($r->REFCNT(), 1, "Reference count is 1");
+
+}
+
 my $r = qr/foo/;
 my $obj = B::svref_2object($r);
 my $regexp =  ($] < 5.011) ? $obj->MAGIC : $obj;
@@ -82,6 +121,13 @@ is($iv_ref->int_value, $iv, "Test int_value()");
 is($iv_ref->IV, $iv, "Test IV()");
 is($iv_ref->IVX(), $iv, "Test IVX()");
 is($iv_ref->UVX(), $iv, "Test UVX()");
+is(eval { $iv_ref->RV() }, undef, 'Test RV() on IV');
+like($@, qr/argument is not SvROK/, 'Test RV() IV');
+$iv = \"Pie";
+my $val = eval { $iv_ref->RV() };
+is(ref $val, 'B::PV', 'Test RV() on a reference');
+is($val->PV(), 'Pie', 'Value expected');
+is($@, '', "Test RV()");
 
 my $pv = "Foo";
 my $pv_ref = B::svref_2object(\$pv);
@@ -93,9 +139,14 @@ my $pv_ret = $pv_ref->object_2svref();
 is(ref $pv_ret, "SCALAR", "Test object_2svref() return is SCALAR");
 is($$pv_ret, $pv, "Test object_2svref()");
 is($pv_ref->PV(), $pv, "Test PV()");
-eval { is($pv_ref->RV(), $pv, "Test RV()"); };
-ok($@, "Test RV()");
+is(eval { $pv_ref->RV() }, undef, 'Test RV() on PV');
+like($@, qr/argument is not SvROK/, 'Test RV() on PV');
 is($pv_ref->PVX(), $pv, "Test PVX()");
+$pv = \"Pie";
+$val = eval { $pv_ref->RV() };
+is(ref $val, 'B::PV', 'Test RV() on a reference');
+is($val->PV(), 'Pie', 'Value expected');
+is($@, '', "Test RV()");
 
 my $nv = 1.1;
 my $nv_ref = B::svref_2object(\$nv);
@@ -108,6 +159,9 @@ is(ref $nv_ret, "SCALAR", "Test object_2svref() return is SCALAR");
 is($$nv_ret, $nv, "Test object_2svref()");
 is($nv_ref->NV, $nv, "Test NV()");
 is($nv_ref->NVX(), $nv, "Test NVX()");
+is(eval { $nv_ref->RV() }, undef, 'Test RV() on NV');
+like($@, qr/Can't locate object method "RV" via package "B::NV"/,
+     'Test RV() on NV');
 
 my $null = undef;
 my $null_ref = B::svref_2object(\$null);
@@ -143,9 +197,12 @@ local *gv = *STDOUT;
 my $gv_ref = B::svref_2object(\*gv);
 is(ref $gv_ref, "B::GV", "Test B::GV return from svref_2object");
 ok(! $gv_ref->is_empty(), "Test is_empty()");
+ok($gv_ref->isGV_with_GP(), "Test isGV_with_GP()");
 is($gv_ref->NAME(), "gv", "Test NAME()");
 is($gv_ref->SAFENAME(), "gv", "Test SAFENAME()");
 like($gv_ref->FILE(), qr/b\.t$/, "Testing FILE()");
+is($gv_ref->SvTYPE(), B::SVt_PVGV, "Test SvTYPE()");
+is($gv_ref->FLAGS() & B::SVTYPEMASK, B::SVt_PVGV, "Test SVTYPEMASK");
 
 # The following return B::SPECIALs.
 is(ref B::sv_yes(), "B::SPECIAL", "B::sv_yes()");
@@ -156,12 +213,62 @@ is(ref B::sv_undef(), "B::SPECIAL", "B::sv_undef()");
 is(B::ppname(0), "pp_null", "Testing ppname (this might break if opnames.h is changed)");
 is(B::opnumber("null"), 0, "Testing opnumber with opname (null)");
 is(B::opnumber("pp_null"), 0, "Testing opnumber with opname (pp_null)");
-like(B::hash("wibble"), qr/0x[0-9a-f]*/, "Testing B::hash()");
-is(B::cstring("wibble"), '"wibble"', "Testing B::cstring()");
-is(B::perlstring("wibble"), '"wibble"', "Testing B::perlstring()");
+{
+    my $hash = B::hash("wibble");
+    like($hash, qr/\A0x[0-9a-f]+\z/, "Testing B::hash(\"wibble\")");
+    unlike($hash, qr/\A0x0+\z/, "Testing B::hash(\"wibble\")");
+
+    like(B::hash("\0" x $_), qr/\A0x0+\z/, "Testing B::hash(\"0\" x $_)")
+	 for 0..19;
+
+    $hash = eval {B::hash(chr 256)};
+    is($hash, undef, "B::hash() refuses non-octets");
+    like($@, qr/^Wide character in subroutine entry/);
+
+    $hash = B::hash(chr 163);
+    my $str = chr(163) . chr 256;
+    chop $str;
+    is(B::hash($str), $hash, 'B::hash() with chr 128-256 is well-behaved');
+}
+{
+    is(B::cstring(undef), '0', "Testing B::cstring(undef)");
+    is(B::perlstring(undef), '0', "Testing B::perlstring(undef)");
+
+    my @common = map {eval $_, $_}
+	'"wibble"', '"\""', '"\'"', '"\\\\"', '"\\n\\r\\t\\b\\a\\f"', '"\000"',
+	    '"\000\000"', '"\000Bing\000"', ord 'N' == 78 ? '"\\177"' : ();
+
+    my $oct = sprintf "\\%03o", ord '?';
+    my @tests = (@common, '$_', '"$_"', '@_', '"@_"', '??N', qq{"$oct?N"},
+		 ord 'N' == 78 ? (chr 11, '"\v"'): ());
+    while (my ($test, $expect) = splice @tests, 0, 2) {
+	is(B::cstring($test), $expect, "B::cstring($expect)");
+    }
+
+    @tests = (@common, '$_', '"\$_"', '@_', '"\@_"', '??N', '"??N"',
+	      chr 256, '"\x{100}"', chr 65536, '"\x{10000}"',
+	      ord 'N' == 78 ? (chr 11, '"\013"'): ());
+    while (my ($test, $expect) = splice @tests, 0, 2) {
+	is(B::perlstring($test), $expect, "B::perlstring($expect)");
+	utf8::upgrade $test;
+	$expect =~ s/\\b/\\x\{8\}/g;
+	$expect =~ s/\\([0-7]{3})/sprintf "\\x\{%x\}", oct $1/eg;
+	is(B::perlstring($test), $expect, "B::perlstring($expect) (Unicode)");
+    }
+}
+{
+    my @tests = ((map {eval(qq{"$_"}), $_} '\\n', '\\r', '\\t',
+		  '\\b', '\\a', '\\f', '\\000', '\\\'', '?'), '"', '"',
+		 ord 'N' == 78 ? (chr 11, '\v', "\177", '\\177') : ());
+
+    while (my ($test, $expect) = splice @tests, 0, 2) {
+	is(B::cchar($test), "'${expect}'", "B::cchar(qq{$expect})");
+    }
+}
+
 is(B::class(bless {}, "Wibble::Bibble"), "Bibble", "Testing B::class()");
 is(B::cast_I32(3.14), 3, "Testing B::cast_I32()");
-is(B::opnumber("chop"), 38, "Testing opnumber with opname (chop)");
+is(B::opnumber("chop"), 39, "Testing opnumber with opname (chop)");
 
 {
     no warnings 'once';
@@ -180,3 +287,21 @@ is(B::opnumber("chop"), 38, "Testing opnumber with opname (chop)");
     }
     ok( $ag < B::amagic_generation, "amagic_generation increments" );
 }
+
+is(B::svref_2object(sub {})->ROOT->ppaddr, 'PL_ppaddr[OP_LEAVESUB]',
+   'OP->ppaddr');
+
+# This one crashes from perl 5.8.9 to B 1.24 (perl 5.13.6):
+B::svref_2object(sub{y/\x{100}//})->ROOT->first->first->sibling->sv;
+ok 1, 'B knows that UTF trans is a padop in 5.8.9, not an svop';
+
+{
+    format FOO =
+foo
+.
+    my $f = B::svref_2object(*FOO{FORMAT});
+    isa_ok $f, 'B::FM';
+    can_ok $f, 'LINES';
+}
+
+done_testing();

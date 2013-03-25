@@ -523,7 +523,7 @@ encapsulation of Perl.  GCC and EGCS are now supported on Win32.
 See F<README.win32>, aka L<perlwin32>.
 
 VMS configuration system has been rewritten.  See F<README.vms> (installed 
-as L<README_vms> on some systems).
+as F<README_vms> on some systems).
 
 The hints files for most Unix platforms have seen incremental improvements.
 
@@ -722,7 +722,7 @@ imported with the C<use subs> pragma).
 
 To silently interpret it as the Perl operator, use the C<CORE::> prefix
 on the operator (e.g. C<CORE::log($x)>) or by declaring the subroutine
-to be an object method (see L<attrs>).
+to be an object method (see L</attrs>).
 
 =item Bad index while coercing array into hash
 

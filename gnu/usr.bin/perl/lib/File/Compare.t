@@ -112,6 +112,7 @@ if (@donetests == 3) {
   print "not " unless $donetests[2] == 0;
   print "ok 13 # ";
   print "TODO" if $^O eq "cygwin"; # spaces after filename silently trunc'd
+  print "TODO" if $^O eq "vos"; # spaces after filename silently trunc'd
   print " file/fileCR [$donetests[2]]\n";
 }
 else {

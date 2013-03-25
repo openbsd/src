@@ -1,3 +1,54 @@
+2010-10-26   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.13
+
+   The fix in v3.12 to try to preserve the SvUTF8 flag was buggy
+   and actually managed to set the flag on strings that did not
+   have it originally.
+
+
+
+2010-10-25   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.12
+
+   Don't change SvUTF8 flag on the strings encoded [RT#60105]
+
+   Documentation tweaks
+
+
+
+2010-10-24   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.11
+
+   Provide encode_base64url and decode_base64url functions to process
+   the base64 scheme for "URL applications".
+
+   The decode_base64() does not issue warnings on suspect input data
+   any more.
+
+
+
+2010-10-11   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.10
+
+   Provide functions to calculate the length of encoded and decoded
+   base64 strings [RT#62404]
+
+
+
+2010-01-25   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.09
+
+   The Quoted-Printable encoder would sometimes output lines
+   that were 77 characters long.  The max line length should be 76.
+   [RT#53919]
+
+
+
 2009-06-09   Gisle Aas <gisle@ActiveState.com>
 
    Release 3.08

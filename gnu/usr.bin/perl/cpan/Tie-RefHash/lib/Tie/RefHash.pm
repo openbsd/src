@@ -2,7 +2,7 @@ package Tie::RefHash;
 
 use vars qw/$VERSION/;
 
-$VERSION = "1.38";
+$VERSION = "1.39";
 
 use 5.005;
 
@@ -70,6 +70,11 @@ cloning of tied refhashes.
 
 This version of Tie::RefHash seems to no longer work with 5.004. This has not
 been throughly investigated. Patches welcome ;-)
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself
 
 =head1 MAINTAINER
 
@@ -159,7 +164,7 @@ my $storable_format_version = join("/", __PACKAGE__, "0.01");
 sub STORABLE_freeze {
   my ( $self, $is_cloning ) = @_;
   my ( $refs, $reg ) = @$self;
-  return ( $storable_format_version, [ values %$refs ], $reg );
+  return ( $storable_format_version, [ values %$refs ], $reg || {} );
 }
 
 sub STORABLE_thaw {

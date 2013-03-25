@@ -4,11 +4,12 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
+    skip_all_if_miniperl("no dynamic loading on miniperl, no Tie::Hash::NamedCapture");
 }
 
 # Do a basic test on all the tied methods of Tie::Hash::NamedCapture
 
-plan(tests => 21);
+plan(tests => 37);
 
 # PL_curpm->paren_names can be a null pointer. See that this succeeds anyway.
 'x' =~ /(.)/;
@@ -31,15 +32,15 @@ is($-{a}[1], "a", "FETCH");
 
 # STORE
 eval { $+{a} = "yon" };
-ok(index($@, "read-only") != -1, "STORE");
+like($@, qr/read-only/, "STORE");
 
 # DELETE
 eval { delete $+{a} };
-ok(index($@, "read-only") != -1, "DELETE");
+like($@, qr/read-only/, "DELETE");
 
 # CLEAR
 eval { %+ = () };
-ok(index($@, "read-only") != -1, "CLEAR");
+like($@, qr/read-only/, "CLEAR");
 
 # EXISTS
 ok(exists $+{e}, "EXISTS");
@@ -66,3 +67,20 @@ is(Tie::Hash::NamedCapture::EXISTS(undef, undef), undef, 'EXISTS with undef');
 is(Tie::Hash::NamedCapture::FIRSTKEY(undef), undef, 'FIRSTKEY with undef');
 is(Tie::Hash::NamedCapture::NEXTKEY(undef, undef), undef, 'NEXTKEY with undef');
 is(Tie::Hash::NamedCapture::SCALAR(undef), undef, 'SCALAR with undef');
+
+my $obj = tied %+;
+foreach ([FETCH => '$key'],
+	 [STORE => '$key, $value'],
+	 [DELETE => '$key'],
+	 [CLEAR => ''],
+	 [EXISTS => '$key'],
+	 [FIRSTKEY => ''],
+	 [NEXTKEY => '$lastkey'],
+	 [SCALAR => ''],
+	) {
+    my ($method, $error) = @$_;
+
+    is(eval {$obj->$method(0..3); 1}, undef, "$method with undef");
+    like($@, qr/Usage: Tie::Hash::NamedCapture::$method\(\Q$error\E\)/,
+	 "usage method for $method");
+}

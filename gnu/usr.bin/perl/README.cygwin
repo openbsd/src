@@ -1,10 +1,10 @@
 If you read this file _as_is_, just ignore the funny characters you
-see. It is written in the POD format (see pod/perlpod.pod) which is
+see. It is written in the POD format (see F<pod/perlpod.pod>) which is
 specially designed to be readable as is.
 
 =head1 NAME
 
-README.cygwin - Perl for Cygwin
+perlcygwin - Perl for Cygwin
 
 =head1 SYNOPSIS
 
@@ -27,11 +27,11 @@ platforms.  They run thanks to the Cygwin library which provides the UNIX
 system calls and environment these programs expect.  More information
 about this project can be found at:
 
-  F<http://www.cygwin.com/>
+L<http://www.cygwin.com/>
 
 A recent net or commercial release of Cygwin is required.
 
-At the time this document was last updated, Cygwin 1.5.24 was current.
+At the time this document was last updated, Cygwin 1.7.10 was current.
 
 
 =head2 Cygwin Configuration
@@ -41,8 +41,8 @@ that Perl builds cleanly.  These changes are B<not> required for normal
 Perl usage.
 
 B<NOTE:> The binaries that are built will run on all Win32 versions.
-They do not depend on your host system (Win9x/WinME, WinNT/Win2K)
-or your Cygwin configuration (I<ntea>, I<ntsec>, binary/text mounts).
+They do not depend on your host system (WinXP/Win2K/Win7) or your
+Cygwin configuration (binary/text mounts, cvgserver).
 The only dependencies come from hard-coded pathnames like C</usr/local>.
 However, your host system and Cygwin configuration will affect Perl's
 runtime behavior (see L</"TEST">).
@@ -52,7 +52,7 @@ runtime behavior (see L</"TEST">).
 =item * C<PATH>
 
 Set the C<PATH> environment variable so that Configure finds the Cygwin
-versions of programs.  Any Windows directories should be removed or
+versions of programs. Any not-needed Windows directories should be removed or
 moved to the end of your C<PATH>.
 
 =item * I<nroff>
@@ -60,28 +60,13 @@ moved to the end of your C<PATH>.
 If you do not have I<nroff> (which is part of the I<groff> package),
 Configure will B<not> prompt you to install I<man> pages.
 
-=item * Permissions
-
-On WinNT with either the I<ntea> or I<ntsec> C<CYGWIN> settings, directory
-and file permissions may not be set correctly.  Since the build process
-creates directories and files, to be safe you may want to run a
-C<chmod -R +w *> on the entire Perl source tree.
-
-Also, it is a well known WinNT "feature" that files created by a login
-that is a member of the I<Administrators> group will be owned by the
-I<Administrators> group.  Depending on your umask, you may find that you
-can not write to files that you just created (because you are no longer
-the owner).  When using the I<ntsec> C<CYGWIN> setting, this is not an
-issue because it "corrects" the ownership to what you would expect on
-a UNIX system.
-
 =back
 
 =head1 CONFIGURE PERL ON CYGWIN
 
 The default options gathered by Configure with the assistance of
 F<hints/cygwin.sh> will build a Perl that supports dynamic loading
-(which requires a shared F<libperl.dll>).
+(which requires a shared F<cygperl5_16.dll>).
 
 This will run Configure and keep a record:
 
@@ -122,17 +107,6 @@ DES crypt port by Corinna Vinschen.
 
 Alternatively, the crypt libraries in GNU libc have been ported to Cygwin.
 
-The DES based Ultra Fast Crypt port was done by Alexey Truhan:
-
-  ftp://ftp.franken.de/pub/win32/develop/gnuwin32/cygwin/porters/Okhapkin_Sergey/cw32crypt-dist-0.tgz
-
-NOTE: There are various export restrictions on DES implementations,
-see the glibc README for more details.
-
-The MD5 port was done by Andy Piper:
-
-  ftp://ftp.franken.de/pub/win32/develop/gnuwin32/cygwin/porters/Okhapkin_Sergey/libcrypt.tgz
-
 =item * C<-lgdbm_compat> (C<use GDBM_File>)
 
 GDBM is available for Cygwin.
@@ -143,8 +117,7 @@ NOTE: The GDBM library only works on NTFS partitions.
 
 BerkeleyDB is available for Cygwin.
 
-NOTE: The BerkeleyDB library only completely works on NTFS partitions
-and db-4.3 is flawed.
+NOTE: The BerkeleyDB library only completely works on NTFS partitions.
 
 =item * C<cygserver> (C<use IPC::SysV>)
 
@@ -177,10 +150,11 @@ prompts you or you can define (undefine) symbols on the command line.
 
 Undefining this symbol forces Perl to be compiled statically.
 
-=item * C<-Uusemymalloc>
+=item * C<-Dusemymalloc>
 
-By default Perl uses the C<malloc()> included with the Perl source.  If you
-want to force Perl to build with the system C<malloc()> undefine this symbol.
+By default Perl does not use the C<malloc()> included with the Perl source,
+because it was slower and not entirely thread-safe.  If you want to force
+Perl to build with the old -Dusemymalloc define this.
 
 =item * C<-Uuseperlio>
 
@@ -190,12 +164,13 @@ default; it is not recommended to disable PerlIO.
 =item * C<-Dusemultiplicity>
 
 Multiplicity is required when embedding Perl in a C program and using
-more than one interpreter instance.  This works with the Cygwin port.
+more than one interpreter instance.  This is only required when you build
+a not-threaded perl with C<-Uuseithreads>.
 
-=item * C<-Duse64bitint>
+=item * C<-Uuse64bitint>
 
-By default Perl uses 32 bit integers.  If you want to use larger 64
-bit integers, define this symbol.
+By default Perl uses 64 bit integers.  If you want to use smaller 32 bit
+integers, define this symbol.
 
 =item * C<-Duselongdouble>
 
@@ -203,12 +178,11 @@ I<gcc> supports long doubles (12 bytes).  However, several additional
 long double math functions are necessary to use them within Perl
 (I<{atan2, cos, exp, floor, fmod, frexp, isnan, log, modf, pow, sin, sqrt}l,
 strtold>).
-These are B<not> yet available with Cygwin.
+These are B<not> yet available with newlib, the Cygwin libc.
 
-=item * C<-Dusethreads>
+=item * C<-Uuseithreads>
 
-POSIX threads are implemented in Cygwin, define this symbol if you want
-a threaded perl.
+Define this symbol if you want not-threaded faster perl.
 
 =item * C<-Duselargefiles>
 
@@ -217,9 +191,9 @@ this will be correctly detected and defined by Configure.
 
 =item * C<-Dmksymlinks>
 
-Use this to build perl outside of the source tree.  This works with Cygwin.
-Details can be found in the F<INSTALL> document.  This is the recommended
-way to build perl from sources.
+Use this to build perl outside of the source tree.  Details can be
+found in the F<INSTALL> document.  This is the recommended way to
+build perl from sources.
 
 =back
 
@@ -334,7 +308,7 @@ A C<fork()> failure may result in the following tests failing:
   ext/IO/lib/IO/t/io_sock.t
   ext/IO/lib/IO/t/io_unix.t
 
-See comment on fork in L<Miscellaneous> below.
+See comment on fork in L</Miscellaneous> below.
 
 =head1 Specific features of the Cygwin port
 
@@ -349,33 +323,29 @@ to portability, more information can be found in the Cygwin documentation.
 
 =item * Pathnames
 
-Cygwin pathnames can be separated by forward (F</>) or backward (F<\\>)
-slashes.  They may also begin with drive letters (F<C:>) or Universal
-Naming Codes (F<//UNC>).  DOS device names (F<aux>, F<con>, F<prn>,
-F<com*>, F<lpt?>, F<nul>) are invalid as base filenames.  However, they
-can be used in extensions (e.g., F<hello.aux>).  Names may contain all
-printable characters except these:
-
-  : * ? " < > |
+Cygwin pathnames are separated by forward (F</>) slashes, Universal
+Naming Codes (F<//UNC>) are also supported Since cygwin-1.7 non-POSIX
+pathnames are disencouraged.  Names may contain all printable
+characters.
 
 File names are case insensitive, but case preserving.  A pathname that
-contains a backslash or drive letter is a Win32 pathname (and not subject
-to the translations applied to POSIX style pathnames).
+contains a backslash or drive letter is a Win32 pathname, and not
+subject to the translations applied to POSIX style pathnames, but
+cygwin will warn you, so better convert them to POSIX.
 
 For conversion we have C<Cygwin::win_to_posix_path()> and
 C<Cygwin::posix_to_win_path()>.
 
-Pathnames may not contain Unicode characters. C<Cygwin> still uses the
-ANSI API calls and no Unicode calls because of newlib deficiencies.
-There's an unofficial unicode patch for cygwin at
-F<http://www.okisoft.co.jp/esc/utf8-cygwin/>
+Since cygwin-1.7 pathnames are UTF-8 encoded.
 
 =item * Text/Binary
+
+Since cywgin-1.7 textmounts are deprecated and stronlgy discouraged.
 
 When a file is opened it is in either text or binary mode.  In text mode
 a file is subject to CR/LF/Ctrl-Z translations.  With Cygwin, the default
 mode for an C<open()> is determined by the mode of the mount that underlies
-the file. See C<Cygwin::is_binmount()>. Perl provides a C<binmode()> function
+the file. See L</Cygwin::is_binmount>(). Perl provides a C<binmode()> function
 to set binary mode on files that otherwise would be treated as text.
 C<sysopen()> with the C<O_TEXT> flag sets text mode on files that otherwise
 would be treated as binary:
@@ -411,8 +381,8 @@ extension transparent by looking for F<foo.exe> when you ask for F<foo>
 (unless a F<foo> also exists).  Cygwin does not require a F<.exe>
 extension, but I<gcc> adds it automatically when building a program.
 However, when accessing an executable as a normal file (e.g., I<cp>
-in a makefile) the F<.exe> is not transparent.  The I<install> included
-with Cygwin automatically appends a F<.exe> when necessary.
+in a makefile) the F<.exe> is not transparent.  The I<install> program
+included with Cygwin automatically appends a F<.exe> when necessary.
 
 =item * Cygwin vs. Windows process ids
 
@@ -427,6 +397,32 @@ to translate between them.
 
 Under Cygwin, $^E is the same as $!.  When using L<Win32 API Functions|Win32>,
 use C<Win32::GetLastError()> to get the last Windows error.
+
+=item * rebase errors on fork or system
+
+Using C<fork()> or C<system()> out to another perl after loading multiple dlls
+may result on a DLL baseaddress conflict. The internal cygwin error
+looks like like the following:
+
+  0 [main] perl 8916 child_info_fork::abort: data segment start: parent
+  (0xC1A000) != child(0xA6A000)
+
+or:
+
+  183 [main] perl 3588 C:\cygwin\bin\perl.exe: *** fatal error - unable to remap C:\cygwin\bin\cygsvn_subr-1-0.dll to same address as parent(0x6FB30000) != 0x6FE60000
+  46 [main] perl 3488 fork: child 3588 - died waiting for dll loading, errno11
+
+See L<http://cygwin.com/faq/faq-nochunks.html#faq.using.fixing-fork-failures>
+It helps if not too many DLLs are loaded in memory so the available address space is larger,
+e.g. stopping the MS Internet Explorer might help.
+
+Use the perlrebase or rebase utilities to resolve the conflicting dll addresses.
+The rebase package is included in the Cygwin setup. Use F<setup.exe>
+from L<http://www.cygwin.com/setup.exe> to install it.
+
+1. kill all perl processes and run C<perlrebase> or
+
+2. kill all cygwin processes and services, start dash from cmd.exe and run C<rebaseall>.
 
 =item * C<chown()>
 
@@ -447,18 +443,6 @@ Inplace editing C<perl -i> of files doesn't work without doing a backup
 of the file being edited C<perl -i.bak> because of windowish restrictions,
 therefore Perl adds the suffix C<.bak> automatically if you use C<perl -i>
 without specifying a backup extension.
-
-Using C<fork()> after loading multiple dlls may fail with an internal cygwin
-error like the following:
-
-  C:\CYGWIN\BIN\PERL.EXE: *** couldn't allocate memory 0x10000(4128768) for 'C:\CYGWIN\LIB\PERL5\5.6.1\CYGWIN-MULTI\AUTO\SOCKET\SOCKET.DLL' alignment, Win32 error 8
-
-    200 [main] perl 377147 sync_with_child: child -395691(0xB8) died before initialization with status code 0x1
-   1370 [main] perl 377147 sync_with_child: *** child state child loading dlls
-
-Use the rebase utility to resolve the conflicting dll addresses.  The
-rebase package is included in the Cygwin netrelease.  Use setup.exe from
-F<http://www.cygwin.com/setup.exe> to install it and run rebaseall.
 
 =back
 
@@ -529,6 +513,17 @@ User mounts override system mounts.
 Returns true if the given cygwin path is binary mounted, false if the
 path is mounted in textmode.
 
+=item C<Cygwin::sync_winenv>
+
+Cygwin does not initialize all original Win32 environment variables.
+See the bottom of this page L<http://cygwin.com/cygwin-ug-net/setup-env.html>
+for "Restricted Win32 environment".
+
+Certain Win32 programs called from cygwin programs might need some environment
+variable, such as e.g. ADODB needs %COMMONPROGRAMFILES%.
+Call Cygwin::sync_winenv() to copy all Win32 environment variables to your
+process and note that cygwin will warn on every encounter of non-POSIX paths.
+
 =back
 
 =head1 INSTALL PERL ON CYGWIN
@@ -563,17 +558,17 @@ be kept as clean as possible.
   pod/perl561delta.pod pod/perl570delta.pod pod/perl572delta.pod
   pod/perl573delta.pod pod/perl58delta.pod pod/perl581delta.pod
   pod/perl590delta.pod pod/perlhist.pod pod/perlmodlib.pod
-  pod/perltoc.pod pod.lst Porting/Glossary pod/perlrepository.pod
+  pod/perltoc.pod Porting/Glossary pod/perlgit.pod
   Porting/checkAUTHORS.pl
-  ext/Compress-Raw-Zlib/Changes ext/Compress-Raw-Zlib/README
-  ext/Compress-Zlib/Changes cpan/Cwd/Changes ext/DB_File/Changes
-  ext/Encode/Changes ext/Sys-Syslog/Changes ext/Time-HiRes/Changes
-  ext/Win32API-File/Changes lib/CGI/Changes lib/ExtUtils/CBuilder/Changes
-  lib/ExtUtils/Changes lib/ExtUtils/NOTES lib/ExtUtils/PATCHING
-  lib/ExtUtils/README lib/Module/Build/Changes lib/Net/Ping/Changes
-  lib/Test/Harness/Changes
-  lib/Term/ANSIColor/ChangeLog lib/Term/ANSIColor/README
-  README.symbian symbian/TODO
+  dist/Cwd/Changes ext/Compress-Raw-Zlib/Changes
+  ext/Compress-Raw-Zlib/README ext/Compress-Zlib/Changes
+  ext/DB_File/Changes ext/Encode/Changes ext/Sys-Syslog/Changes
+  ext/Time-HiRes/Changes ext/Win32API-File/Changes lib/CGI/Changes
+  lib/ExtUtils/CBuilder/Changes lib/ExtUtils/Changes lib/ExtUtils/NOTES
+  lib/ExtUtils/PATCHING lib/ExtUtils/README lib/Module/Build/Changes
+  lib/Net/Ping/Changes lib/Test/Harness/Changes
+  lib/Term/ANSIColor/ChangeLog lib/Term/ANSIColor/README README.symbian
+  symbian/TODO
 
 =item Build, Configure, Make, Install
 
@@ -673,7 +668,7 @@ be kept as clean as possible.
   lib/CPANPLUS/Internals/Constants/Report.pm
                         - OS classifications
   lib/CPANPLUS/Internals/Constants.pm
-                        - Contants for Cygwin
+                        - Constants for Cygwin
   lib/CPANPLUS/Internals/Report.pm
                         - Example of Cygwin report
   lib/CPANPLUS/Module.pm
@@ -714,8 +709,8 @@ be kept as clean as possible.
 
 =item Perl Module Tests
 
+  dist/Cwd/t/cwd.t
   ext/Compress-Zlib/t/14gzopen.t
-  cpan/Cwd/t/cwd.t
   ext/DB_File/t/db-btree.t
   ext/DB_File/t/db-hash.t
   ext/DB_File/t/db-recno.t
@@ -781,4 +776,4 @@ Jerry D. Hedden <jdhedden@cpan.org>.
 
 =head1 HISTORY
 
-Last updated: 2007-09-25
+Last updated: 2012-02-08

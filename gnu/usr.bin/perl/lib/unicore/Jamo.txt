@@ -1,22 +1,22 @@
-# Jamo-5.2.0.txt
-# Date: 2009-05-22, 13:02:00 PDT [KW]
+# Jamo-6.1.0.txt
+# Date: 2011-06-22, 23:07:00 GMT [KW, LI]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2009 Unicode, Inc.
+# Copyright (c) 1991-2011 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
-# This file defines the Jamo Short Name property.
+# This file defines the Jamo_Short_Name property.
 #
-# See Section 3.12 of The Unicode Standard, Version 5.2
+# See Section 3.12 of The Unicode Standard, Version 6.1
 # for more information.
 #
 # Each line contains two fields, separated by a semicolon.
 #
 # The first field gives the code point, in 4-digit hexadecimal
-# form, of a combining jamo character that participates in
-# the algorithmic determination Hangul syllable character names.
-# The second field gives the Jamo Short Name as a one-, two-,
+# form, of a conjoining jamo character that participates in the
+# algorithmic determination of Hangul syllable character names.
+# The second field gives the Jamo_Short_Name as a one-, two-,
 # or three-character ASCII string (or in one case, for U+110B,
 # the null string).
 #

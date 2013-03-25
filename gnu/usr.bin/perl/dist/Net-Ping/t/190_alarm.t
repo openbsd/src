@@ -25,22 +25,17 @@ BEGIN {
 }
 
 use strict;
-use Test;
-use Net::Ping;
-
-plan tests => 6;
-
-# Everything compiled
-ok 1;
+use Test::More tests => 6;
+BEGIN {use_ok 'Net::Ping'};
 
 eval {
   my $timeout = 11;
 
-  ok 1; # In eval
+  pass('In eval');
   local $SIG{ALRM} = sub { die "alarm works" };
-  ok 1; # SIGALRM can be set on this platform
+  pass('SIGALRM can be set on this platform');
   alarm $timeout;
-  ok 1; # alarm() can be set on this platform
+  pass('alarm() can be set on this platform');
 
   my $start = time;
   while (1) {
@@ -51,10 +46,8 @@ eval {
     die "alarm failed" if time > $start + $timeout + 1;
   }
 };
-# Got out of "infinite loop" okay
-ok 1;
+pass('Got out of "infinite loop" okay');
 
-# Make sure it died for a good excuse
-ok $@ =~ /alarm works/ or die $@;
+like($@, qr/alarm works/, 'Make sure it died for a good excuse');
 
 alarm 0; # Reset alarm

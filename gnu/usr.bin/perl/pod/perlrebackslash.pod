@@ -16,7 +16,6 @@ Most sequences are described in detail in different documents; the primary
 purpose of this document is to have a quick reference guide describing all
 backslash and escape sequences.
 
-
 =head2 The backslash
 
 In a regular expression, the backslash can perform one of two tasks:
@@ -26,14 +25,14 @@ or it is the start of a backslash or escape sequence.
 
 The rules determining what it is are quite simple: if the character
 following the backslash is an ASCII punctuation (non-word) character (that is,
-anything that is not a letter, digit or underscore), then the backslash just
-takes away the special meaning (if any) of the character following it.
+anything that is not a letter, digit, or underscore), then the backslash just
+takes away any special meaning of the character following it.
 
 If the character following the backslash is an ASCII letter or an ASCII digit,
 then the sequence may be special; if so, it's listed below. A few letters have
 not been used yet, so escaping them with a backslash doesn't change them to be
 special.  A future version of Perl may assign a special meaning to them, so if
-you have warnings turned on, Perl will issue a warning if you use such a
+you have warnings turned on, Perl issues a warning if you use such a
 sequence.  [1].
 
 It is however guaranteed that backslash or escape sequences never have a
@@ -49,9 +48,9 @@ backslash.
 
 =item [1]
 
-There is one exception. If you use an alphanumerical character as the
+There is one exception. If you use an alphanumeric character as the
 delimiter of your pattern (which you probably shouldn't do for readability
-reasons), you will have to escape the delimiter if you want to match
+reasons), you have to escape the delimiter if you want to match
 it. Perl won't warn then. See also L<perlop/Gory details of parsing
 quoted constructs>.
 
@@ -63,20 +62,21 @@ quoted constructs>.
 Those not usable within a bracketed character class (like C<[\da-z]>) are marked
 as C<Not in [].>
 
- \000              Octal escape sequence.
+ \000              Octal escape sequence.  See also \o{}.
  \1                Absolute backreference.  Not in [].
  \a                Alarm or bell.
  \A                Beginning of string.  Not in [].
  \b                Word/non-word boundary. (Backspace in []).
  \B                Not a word/non-word boundary.  Not in [].
- \cX               Control-X (X can be any ASCII character).
+ \cX               Control-X
  \C                Single octet, even under UTF-8.  Not in [].
  \d                Character class for digits.
  \D                Character class for non-digits.
  \e                Escape character.
  \E                Turn off \Q, \L and \U processing.  Not in [].
  \f                Form feed.
- \g{}, \g1         Named, absolute or relative backreference.  Not in [].
+ \F                Foldcase till \E.  Not in [].
+ \g{}, \g1         Named, absolute or relative backreference.  Not in []
  \G                Pos assertion.  Not in [].
  \h                Character class for horizontal whitespace.
  \H                Character class for non horizontal whitespace.
@@ -86,10 +86,12 @@ as C<Not in [].>
  \L                Lowercase till \E.  Not in [].
  \n                (Logical) newline character.
  \N                Any character but newline.  Experimental.  Not in [].
- \N{}              Named or numbered (Unicode) character.
+ \N{}              Named or numbered (Unicode) character or sequence.
+ \o{}              Octal escape sequence.
  \p{}, \pP         Character with the given Unicode property.
  \P{}, \PP         Character without the given Unicode property.
- \Q                Quotemeta till \E.  Not in [].
+ \Q                Quote (disable) pattern metacharacters till \E.  Not
+                   in [].
  \r                Return character.
  \R                Generic new line.  Not in [].
  \s                Character class for whitespace.
@@ -112,9 +114,10 @@ as C<Not in [].>
 
 A handful of characters have a dedicated I<character escape>. The following
 table shows them, along with their ASCII code points (in decimal and hex),
-their ASCII name, the control escape (see below) and a short description.
+their ASCII name, the control escape on ASCII platforms and a short
+description.  (For EBCDIC platforms, see L<perlebcdic/OPERATOR DIFFERENCES>.)
 
- Seq.  Code Point  ASCII   Cntr    Description.
+ Seq.  Code Point  ASCII   Cntrl   Description.
        Dec    Hex
   \a     7     07    BEL    \cG    alarm or bell
   \b     8     08     BS    \cH    backspace [1]
@@ -128,13 +131,13 @@ their ASCII name, the control escape (see below) and a short description.
 
 =item [1]
 
-C<\b> is only the backspace character inside a character class. Outside a
+C<\b> is the backspace character only inside a character class. Outside a
 character class, C<\b> is a word/non-word boundary.
 
 =item [2]
 
-C<\n> matches a logical newline. Perl will convert between C<\n> and your
-OSses native newline character when reading from or writing to text files.
+C<\n> matches a logical newline. Perl converts between C<\n> and your
+OS's native newline character when reading from or writing to text files.
 
 =back
 
@@ -145,10 +148,18 @@ OSses native newline character when reading from or writing to text files.
 =head3 Control characters
 
 C<\c> is used to denote a control character; the character following C<\c>
-is the name of the control character. For instance, C</\cM/> matches the
-character I<control-M> (a carriage return, code point 13). The case of the
-character following C<\c> doesn't matter: C<\cM> and C<\cm> match the same
-character.
+determines the value of the construct.  For example the value of C<\cA> is
+C<chr(1)>, and the value of C<\cb> is C<chr(2)>, etc.
+The gory details are in L<perlop/"Regexp Quote-Like Operators">.  A complete
+list of what C<chr(1)>, etc. means for ASCII and EBCDIC platforms is in
+L<perlebcdic/OPERATOR DIFFERENCES>.
+
+Note that C<\c\> alone at the end of a regular expression (or doubled-quoted
+string) is not valid.  The backslash must be followed by another character.
+That is, C<\c\I<X>> means C<chr(28) . 'I<X>'> for all characters I<X>.
+
+To write platform-independent code, you must use C<\N{I<NAME>}> instead, like
+C<\N{ESCAPE}> or C<\N{U+001B}>, see L<charnames>.
 
 Mnemonic: I<c>ontrol character.
 
@@ -156,42 +167,41 @@ Mnemonic: I<c>ontrol character.
 
  $str =~ /\cK/;  # Matches if $str contains a vertical tab (control-K).
 
-=head3 Named or numbered characters
+=head3 Named or numbered characters and character sequences
 
-All Unicode characters have a Unicode name and numeric ordinal value.  Use the
+Unicode characters have a Unicode name and numeric code point (ordinal)
+value.  Use the
 C<\N{}> construct to specify a character by either of these values.
+Certain sequences of characters also have names.
 
-To specify by name, the name of the character goes between the curly braces.
-In this case, you have to C<use charnames> to load the Unicode names of the
-characters, otherwise Perl will complain.
+To specify by name, the name of the character or character sequence goes
+between the curly braces.
 
-To specify by Unicode ordinal number, use the form
-C<\N{U+I<wide hex character>}>, where I<wide hex character> is a number in
-hexadecimal that gives the ordinal number that Unicode has assigned to the
-desired character.  It is customary (but not required) to use leading zeros to
-pad the number to 4 digits.  Thus C<\N{U+0041}> means
-C<Latin Capital Letter A>, and you will rarely see it written without the two
-leading zeros.  C<\N{U+0041}> means C<A> even on EBCDIC machines (where the
-ordinal value of C<A> is not 0x41).
+To specify a character by Unicode code point, use the form C<\N{U+I<code
+point>}>, where I<code point> is a number in hexadecimal that gives the
+code point that Unicode has assigned to the desired character.  It is
+customary but not required to use leading zeros to pad the number to 4
+digits.  Thus C<\N{U+0041}> means C<LATIN CAPITAL LETTER A>, and you will
+rarely see it written without the two leading zeros.  C<\N{U+0041}> means
+"A" even on EBCDIC machines (where the ordinal value of "A" is not 0x41).
 
-It is even possible to give your own names to characters, and even to short
-sequences of characters.  For details, see L<charnames>.
+It is even possible to give your own names to characters and character
+sequences.  For details, see L<charnames>.
 
 (There is an expanded internal form that you may see in debug output:
-C<\N{U+I<wide hex character>.I<wide hex character>...}>.
-The C<...> means any number of these I<wide hex character>s separated by dots.
+C<\N{U+I<code point>.I<code point>...}>.
+The C<...> means any number of these I<code point>s separated by dots.
 This represents the sequence formed by the characters.  This is an internal
 form only, subject to change, and you should not try to use it yourself.)
 
 Mnemonic: I<N>amed character.
 
-Note that a character that is expressed as a named or numbered character is
-considered as a character without special meaning by the regex engine, and will
-match "as is".
+Note that a character or character sequence expressed as a named
+or numbered character is considered a character without special
+meaning by the regex engine, and will match "as is".
 
 =head4 Example
 
- use charnames ':full';               # Loads the Unicode names.
  $str =~ /\N{THAI CHARACTER SO SO}/;  # Matches the Thai SO SO character
 
  use charnames 'Cyrillic';            # Loads Cyrillic names.
@@ -199,30 +209,56 @@ match "as is".
 
 =head3 Octal escapes
 
-Octal escapes consist of a backslash followed by two or three octal digits
-matching the code point of the character you want to use. This allows for
-512 characters (C<\00> up to C<\777>) that can be expressed this way (but
-anything above C<\377> is deprecated).
-Enough in pre-Unicode days, but most Unicode characters cannot be escaped
-this way.
+There are two forms of octal escapes.  Each is used to specify a character by
+its code point specified in octal notation.
 
-Note that a character that is expressed as an octal escape is considered
-as a character without special meaning by the regex engine, and will match
+One form, available starting in Perl 5.14 looks like C<\o{...}>, where the dots
+represent one or more octal digits.  It can be used for any Unicode character.
+
+It was introduced to avoid the potential problems with the other form,
+available in all Perls.  That form consists of a backslash followed by three
+octal digits.  One problem with this form is that it can look exactly like an
+old-style backreference (see
+L</Disambiguation rules between old-style octal escapes and backreferences>
+below.)  You can avoid this by making the first of the three digits always a
+zero, but that makes \077 the largest code point specifiable.
+
+In some contexts, a backslash followed by two or even one octal digits may be
+interpreted as an octal escape, sometimes with a warning, and because of some
+bugs, sometimes with surprising results.  Also, if you are creating a regex
+out of smaller snippets concatenated together, and you use fewer than three
+digits, the beginning of one snippet may be interpreted as adding digits to the
+ending of the snippet before it.  See L</Absolute referencing> for more
+discussion and examples of the snippet problem.
+
+Note that a character expressed as an octal escape is considered
+a character without special meaning by the regex engine, and will match
 "as is".
+
+To summarize, the C<\o{}> form is always safe to use, and the other form is
+safe to use for code points through \077 when you use exactly three digits to
+specify them.
+
+Mnemonic: I<0>ctal or I<o>ctal.
 
 =head4 Examples (assuming an ASCII platform)
 
  $str = "Perl";
- $str =~ /\120/;    # Match, "\120" is "P".
- $str =~ /\120+/;   # Match, "\120" is "P", it is repeated at least once.
- $str =~ /P\053/;   # No match, "\053" is "+" and taken literally.
+ $str =~ /\o{120}/;  # Match, "\120" is "P".
+ $str =~ /\120/;     # Same.
+ $str =~ /\o{120}+/; # Match, "\120" is "P", it's repeated at least once
+ $str =~ /\120+/;    # Same.
+ $str =~ /P\053/;    # No match, "\053" is "+" and taken literally.
+ /\o{23073}/         # Black foreground, white background smiling face.
+ /\o{4801234567}/    # Raises a warning, and yields chr(4)
 
-=head4 Caveat
+=head4 Disambiguation rules between old-style octal escapes and backreferences
 
-Octal escapes potentially clash with backreferences. They both consist
-of a backslash followed by numbers. So Perl has to use heuristics to
-determine whether it is a backreference or an octal escape. Perl uses
-the following rules:
+Octal escapes of the C<\000> form outside of bracketed character classes
+potentially clash with old-style backreferences.  (see L</Absolute referencing>
+below).  They both consist of a backslash followed by numbers.  So Perl has to
+use heuristics to determine whether it is a backreference or an octal escape.
+Perl uses the following rules to disambiguate:
 
 =over 4
 
@@ -236,30 +272,35 @@ If the first digit following the backslash is a 0, it's an octal escape.
 
 =item 3
 
-If the number following the backslash is N (decimal), and Perl already has
-seen N capture groups, Perl will consider this to be a backreference.
-Otherwise, it will consider it to be an octal escape. Note that if N > 999,
-Perl only takes the first three digits for the octal escape; the rest is
-matched as is.
+If the number following the backslash is N (in decimal), and Perl already
+has seen N capture groups, Perl considers this a backreference.  Otherwise,
+it considers it an octal escape. If N has more than three digits, Perl
+takes only the first three for the octal escape; the rest are matched as is.
 
  my $pat  = "(" x 999;
     $pat .= "a";
     $pat .= ")" x 999;
  /^($pat)\1000$/;   #  Matches 'aa'; there are 1000 capture groups.
  /^$pat\1000$/;     #  Matches 'a@0'; there are 999 capture groups
-                    #    and \1000 is seen as \100 (a '@') and a '0'.
+                    #    and \1000 is seen as \100 (a '@') and a '0'
 
 =back
 
+You can force a backreference interpretation always by using the C<\g{...}>
+form.  You can the force an octal interpretation always by using the C<\o{...}>
+form, or for numbers up through \077 (= 63 decimal), by using three digits,
+beginning with a "0".
+
 =head3 Hexadecimal escapes
 
-Hexadecimal escapes start with C<\x> and are then either followed by a
-two digit hexadecimal number, or a hexadecimal number of arbitrary length
-surrounded by curly braces. The hexadecimal number is the code point of
-the character you want to express.
+Like octal escapes, there are two forms of hexadecimal escapes, but both start
+with the same thing, C<\x>.  This is followed by either exactly two hexadecimal
+digits forming a number, or a hexadecimal number of arbitrary length surrounded
+by curly braces. The hexadecimal number is the code point of the character you
+want to express.
 
-Note that a character that is expressed as a hexadecimal escape is considered
-as a character without special meaning by the regex engine, and will match
+Note that a character expressed as one of these escapes is considered a
+character without special meaning by the regex engine, and will match
 "as is".
 
 Mnemonic: heI<x>adecimal.
@@ -268,7 +309,7 @@ Mnemonic: heI<x>adecimal.
 
  $str = "Perl";
  $str =~ /\x50/;    # Match, "\x50" is "P".
- $str =~ /\x50+/;   # Match, "\x50" is "P", it is repeated at least once.
+ $str =~ /\x50+/;   # Match, "\x50" is "P", it is repeated at least once
  $str =~ /P\x2B/;   # No match, "\x2B" is "+" and taken literally.
 
  /\x{2603}\x{2602}/ # Snowman with an umbrella.
@@ -282,22 +323,29 @@ Mnemonic: heI<x>adecimal.
 A number of backslash sequences have to do with changing the character,
 or characters following them. C<\l> will lowercase the character following
 it, while C<\u> will uppercase (or, more accurately, titlecase) the
-character following it. (They perform similar functionality as the
-functions C<lcfirst> and C<ucfirst>).
+character following it. They provide functionality similar to the
+functions C<lcfirst> and C<ucfirst>.
 
 To uppercase or lowercase several characters, one might want to use
 C<\L> or C<\U>, which will lowercase/uppercase all characters following
-them, until either the end of the pattern, or the next occurrence of
-C<\E>, whatever comes first. They perform similar functionality as the
-functions C<lc> and C<uc> do.
+them, until either the end of the pattern or the next occurrence of
+C<\E>, whichever comes first. They provide functionality similar to what
+the functions C<lc> and C<uc> provide.
 
-C<\Q> is used to escape all characters following, up to the next C<\E>
-or the end of the pattern. C<\Q> adds a backslash to any character that
-isn't a letter, digit or underscore. This will ensure that any character
-between C<\Q> and C<\E> is matched literally, and will not be interpreted
-by the regexp engine.
+C<\Q> is used to quote (disable) pattern metacharacters, up to the next
+C<\E> or the end of the pattern. C<\Q> adds a backslash to any character
+that could have special meaning to Perl.  In the ASCII range, it quotes
+every character that isn't a letter, digit, or underscore.  See
+L<perlfunc/quotemeta> for details on what gets quoted for non-ASCII
+code points.  Using this ensures that any character between C<\Q> and
+C<\E> will be matched literally, not interpreted as a metacharacter by
+the regex engine.
 
-Mnemonic: I<L>owercase, I<U>ppercase, I<Q>uotemeta, I<E>nd.
+C<\F> can be used to casefold all characters following, up to the next C<\E>
+or the end of the pattern. It provides the functionality similar to
+the C<fc> function.
+
+Mnemonic: I<L>owercase, I<U>ppercase, I<F>old-case, I<Q>uotemeta, I<E>nd.
 
 =head4 Examples
 
@@ -316,15 +364,22 @@ the character classes are written as a backslash sequence. We will briefly
 discuss those here; full details of character classes can be found in
 L<perlrecharclass>.
 
-C<\w> is a character class that matches any single I<word> character (letters,
-digits, underscore). C<\d> is a character class that matches any decimal digit,
-while the character class C<\s> matches any whitespace character.
+C<\w> is a character class that matches any single I<word> character
+(letters, digits, Unicode marks, and connector punctuation (like the
+underscore)).  C<\d> is a character class that matches any decimal
+digit, while the character class C<\s> matches any whitespace character.
 New in perl 5.10.0 are the classes C<\h> and C<\v> which match horizontal
 and vertical whitespace characters.
 
+The exact set of characters matched by C<\d>, C<\s>, and C<\w> varies
+depending on various pragma and regular expression modifiers.  It is
+possible to restrict the match to the ASCII range by using the C</a>
+regular expression modifier.  See L<perlrecharclass>.
+
 The uppercase variants (C<\W>, C<\D>, C<\S>, C<\H>, and C<\V>) are
-character classes that match any character that isn't a word character,
-digit, whitespace, horizontal whitespace nor vertical whitespace.
+character classes that match, respectively, any character that isn't a
+word character, digit, whitespace, horizontal whitespace, or vertical
+whitespace.
 
 Mnemonics: I<w>ord, I<d>igit, I<s>pace, I<h>orizontal, I<v>ertical.
 
@@ -335,11 +390,10 @@ match a character that matches the given Unicode property; properties
 include things like "letter", or "thai character". Capitalizing the
 sequence to C<\PP> and C<\P{Property}> make the sequence match a character
 that doesn't match the given Unicode property. For more details, see
-L<perlrecharclass/Backslashed sequences> and
+L<perlrecharclass/Backslash sequences> and
 L<perlunicode/Unicode Character Properties>.
 
 Mnemonic: I<p>roperty.
-
 
 =head2 Referencing
 
@@ -352,41 +406,51 @@ absolutely, relatively, and by name.
 
 =head3 Absolute referencing
 
-A backslash sequence that starts with a backslash and is followed by a
-number is an absolute reference (but be aware of the caveat mentioned above).
-If the number is I<N>, it refers to the Nth set of parentheses - whatever
-has been matched by that set of parenthesis has to be matched by the C<\N>
-as well.
+Either C<\gI<N>> (starting in Perl 5.10.0), or C<\I<N>> (old-style) where I<N>
+is a positive (unsigned) decimal number of any length is an absolute reference
+to a capturing group.
 
-=head4 Examples
+I<N> refers to the Nth set of parentheses, so C<\gI<N>> refers to whatever has
+been matched by that set of parentheses.  Thus C<\g1> refers to the first
+capture group in the regex.
 
- /(\w+) \1/;    # Finds a duplicated word, (e.g. "cat cat").
- /(.)(.)\2\1/;  # Match a four letter palindrome (e.g. "ABBA").
+The C<\gI<N>> form can be equivalently written as C<\g{I<N>}>
+which avoids ambiguity when building a regex by concatenating shorter
+strings.  Otherwise if you had a regex C<qr/$a$b/>, and C<$a> contained
+C<"\g1">, and C<$b> contained C<"37">, you would get C</\g137/> which is
+probably not what you intended.
 
-
-=head3 Relative referencing
-
-New in perl 5.10.0 is a different way of referring to capture buffers: C<\g>.
-C<\g> takes a number as argument, with the number in curly braces (the
-braces are optional). If the number (N) does not have a sign, it's a reference
-to the Nth capture group (so C<\g{2}> is equivalent to C<\2> - except that
-C<\g> always refers to a capture group and will never be seen as an octal
-escape). If the number is negative, the reference is relative, referring to
-the Nth group before the C<\g{-N}>.
-
-The big advantage of C<\g{-N}> is that it makes it much easier to write
-patterns with references that can be interpolated in larger patterns,
-even if the larger pattern also contains capture groups.
+In the C<\I<N>> form, I<N> must not begin with a "0", and there must be at
+least I<N> capturing groups, or else I<N> is considered an octal escape
+(but something like C<\18> is the same as C<\0018>; that is, the octal escape
+C<"\001"> followed by a literal digit C<"8">).
 
 Mnemonic: I<g>roup.
 
 =head4 Examples
 
- /(A)        # Buffer 1
-  (          # Buffer 2
-    (B)      # Buffer 3
-    \g{-1}   # Refers to buffer 3 (B)
-    \g{-3}   # Refers to buffer 1 (A)
+ /(\w+) \g1/;    # Finds a duplicated word, (e.g. "cat cat").
+ /(\w+) \1/;     # Same thing; written old-style
+ /(.)(.)\g2\g1/;  # Match a four letter palindrome (e.g. "ABBA").
+
+
+=head3 Relative referencing
+
+C<\g-I<N>> (starting in Perl 5.10.0) is used for relative addressing.  (It can
+be written as C<\g{-I<N>>.)  It refers to the I<N>th group before the
+C<\g{-I<N>}>.
+
+The big advantage of this form is that it makes it much easier to write
+patterns with references that can be interpolated in larger patterns,
+even if the larger pattern also contains capture groups.
+
+=head4 Examples
+
+ /(A)        # Group 1
+  (          # Group 2
+    (B)      # Group 3
+    \g{-1}   # Refers to group 3 (B)
+    \g{-3}   # Refers to group 1 (A)
   )
  /x;         # Matches "ABBA".
 
@@ -395,17 +459,15 @@ Mnemonic: I<g>roup.
 
 =head3 Named referencing
 
-Also new in perl 5.10.0 is the use of named capture buffers, which can be
-referred to by name. This is done with C<\g{name}>, which is a
-backreference to the capture buffer with the name I<name>.
+C<\g{I<name>}> (starting in Perl 5.10.0) can be used to back refer to a
+named capture group, dispensing completely with having to think about capture
+buffer positions.
 
 To be compatible with .Net regular expressions, C<\g{name}> may also be
 written as C<\k{name}>, C<< \k<name> >> or C<\k'name'>.
 
-Note that C<\g{}> has the potential to be ambiguous, as it could be a named
-reference, or an absolute or relative reference (if its argument is numeric).
-However, names are not allowed to start with digits, nor are they allowed to
-contain a hyphen, so there is no ambiguity.
+To prevent any ambiguity, I<name> must not start with a digit nor contain a
+hyphen.
 
 =head4 Examples
 
@@ -426,7 +488,7 @@ backslash sequences.
 =item \A
 
 C<\A> only matches at the beginning of the string. If the C</m> modifier
-isn't used, then C</\A/> is equivalent with C</^/>. However, if the C</m>
+isn't used, then C</\A/> is equivalent to C</^/>. However, if the C</m>
 modifier is used, then C</^/> matches internal newlines, but the meaning
 of C</\A/> isn't changed by the C</m> modifier. C<\A> matches at the beginning
 of the string regardless whether the C</m> modifier is used.
@@ -434,26 +496,27 @@ of the string regardless whether the C</m> modifier is used.
 =item \z, \Z
 
 C<\z> and C<\Z> match at the end of the string. If the C</m> modifier isn't
-used, then C</\Z/> is equivalent with C</$/>, that is, it matches at the
-end of the string, or before the newline at the end of the string. If the
+used, then C</\Z/> is equivalent to C</$/>; that is, it matches at the
+end of the string, or one before the newline at the end of the string. If the
 C</m> modifier is used, then C</$/> matches at internal newlines, but the
 meaning of C</\Z/> isn't changed by the C</m> modifier. C<\Z> matches at
 the end of the string (or just before a trailing newline) regardless whether
 the C</m> modifier is used.
 
-C<\z> is just like C<\Z>, except that it will not match before a trailing
-newline. C<\z> will only match at the end of the string - regardless of the
-modifiers used, and not before a newline.
+C<\z> is just like C<\Z>, except that it does not match before a trailing
+newline. C<\z> matches at the end of the string only, regardless of the
+modifiers used, and not just before a newline.  It is how to anchor the
+match to the true end of the string under all conditions.
 
 =item \G
 
-C<\G> is usually only used in combination with the C</g> modifier. If the
-C</g> modifier is used (and the match is done in scalar context), Perl will
-remember where in the source string the last match ended, and the next time,
+C<\G> is usually used only in combination with the C</g> modifier. If the
+C</g> modifier is used and the match is done in scalar context, Perl 
+remembers where in the source string the last match ended, and the next time,
 it will start the match from where it ended the previous time.
 
-C<\G> matches the point where the previous match ended, or the beginning
-of the string if there was no previous match.
+C<\G> matches the point where the previous match on that string ended, 
+or the beginning of that string if there was no previous match.
 
 =for later add link to perlremodifiers
 
@@ -466,7 +529,17 @@ matches at any place between characters where C<\b> doesn't match. C<\b>
 and C<\B> assume there's a non-word character before the beginning and after
 the end of the source string; so C<\b> will match at the beginning (or end)
 of the source string if the source string begins (or ends) with a word
-character. Otherwise, C<\B> will match.
+character. Otherwise, C<\B> will match.   
+
+Do not use something like C<\b=head\d\b> and expect it to match the
+beginning of a line.  It can't, because for there to be a boundary before
+the non-word "=", there must be a word character immediately previous.  
+All boundary determinations look for word characters alone, not for
+non-words characters nor for string ends.  It may help to understand how
+<\b> and <\B> work by equating them as follows:
+
+    \b	really means	(?:(?<=\w)(?!\w)|(?<!\w)(?=\w))
+    \B	really means	(?:(?<=\w)(?=\w)|(?<!\w)(?!\w))
 
 Mnemonic: I<b>oundary.
 
@@ -494,7 +567,7 @@ Mnemonic: I<b>oundary.
 =head2 Misc
 
 Here we document the backslash sequences that don't fall in one of the
-categories above. They are:
+categories above. These are:
 
 =over 4
 
@@ -502,46 +575,59 @@ categories above. They are:
 
 C<\C> always matches a single octet, even if the source string is encoded
 in UTF-8 format, and the character to be matched is a multi-octet character.
-C<\C> was introduced in perl 5.6.
+C<\C> was introduced in perl 5.6.  This is very dangerous, because it violates
+the logical character abstraction and can cause UTF-8 sequences to become malformed.
 
 Mnemonic: oI<C>tet.
 
 =item \K
 
-This is new in perl 5.10.0. Anything that is matched left of C<\K> is
-not included in C<$&> - and will not be replaced if the pattern is
-used in a substitution. This will allow you to write C<s/PAT1 \K PAT2/REPL/x>
+This appeared in perl 5.10.0. Anything matched left of C<\K> is
+not included in C<$&>, and will not be replaced if the pattern is
+used in a substitution. This lets you write C<s/PAT1 \K PAT2/REPL/x>
 instead of C<s/(PAT1) PAT2/${1}REPL/x> or C<s/(?<=PAT1) PAT2/REPL/x>.
 
 Mnemonic: I<K>eep.
 
 =item \N
 
-This is a new experimental feature in perl 5.12.0.  It matches any character
-that is not a newline.  It is a short-hand for writing C<[^\n]>, and is
+This is an experimental feature new to perl 5.12.0.  It matches any character
+that is B<not> a newline.  It is a short-hand for writing C<[^\n]>, and is
 identical to the C<.> metasymbol, except under the C</s> flag, which changes
 the meaning of C<.>, but not C<\N>.
 
 Note that C<\N{...}> can mean a
-L<named or numbered character|/Named or numbered characters>.
+L<named or numbered character
+|/Named or numbered characters and character sequences>.
 
 Mnemonic: Complement of I<\n>.
 
 =item \R
 X<\R>
 
-C<\R> matches a I<generic newline>, that is, anything that is considered
-a newline by Unicode. This includes all characters matched by C<\v>
-(vertical whitespace), and the multi character sequence C<"\x0D\x0A">
-(carriage return followed by a line feed, aka the network newline, or
-the newline used in Windows text files). C<\R> is equivalent to
-C<< (?>\x0D\x0A)|\v) >>. Since C<\R> can match a sequence of more than one
-character, it cannot be put inside a bracketed character class; C</[\R]/> is an
-error; use C<\v> instead.  C<\R> was introduced in perl 5.10.0.
+C<\R> matches a I<generic newline>; that is, anything considered a
+linebreak sequence by Unicode. This includes all characters matched by
+C<\v> (vertical whitespace), and the multi character sequence C<"\x0D\x0A">
+(carriage return followed by a line feed, sometimes called the network
+newline; it's the end of line sequence used in Microsoft text files opened
+in binary mode). C<\R> is equivalent to C<< (?>\x0D\x0A|\v) >>.  (The
+reason it doesn't backtrack is that the sequence is considered
+inseparable.  That means that
+
+ "\x0D\x0A" =~ /^\R\x0A$/   # No match
+
+fails, because the C<\R> matches the entire string, and won't backtrack
+to match just the C<"\x0D">.)  Since
+C<\R> can match a sequence of more than one character, it cannot be put
+inside a bracketed character class; C</[\R]/> is an error; use C<\v>
+instead.  C<\R> was introduced in perl 5.10.0.
+
+Note that this does not respect any locale that might be in effect; it
+matches according to the platform's native character set.
 
 Mnemonic: none really. C<\R> was picked because PCRE already uses C<\R>,
 and more importantly because Unicode recommends such a regular expression
-metacharacter, and suggests C<\R> as the notation.
+metacharacter, and suggests C<\R> as its notation.
 
 =item \X
 X<\X>
@@ -561,15 +647,15 @@ Mnemonic: eI<X>tended Unicode character.
 
 =head4 Examples
 
- "\x{256}" =~ /^\C\C$/;    # Match as chr (256) takes 2 octets in UTF-8.
+ "\x{256}" =~ /^\C\C$/;    # Match as chr (0x256) takes 2 octets in UTF-8.
 
- $str =~ s/foo\Kbar/baz/g; # Change any 'bar' following a 'foo' to 'baz'.
- $str =~ s/(.)\K\1//g;     # Delete duplicated characters.
+ $str =~ s/foo\Kbar/baz/g; # Change any 'bar' following a 'foo' to 'baz'
+ $str =~ s/(.)\K\g1//g;    # Delete duplicated characters.
 
  "\n"   =~ /^\R$/;         # Match, \n   is a generic newline.
  "\r"   =~ /^\R$/;         # Match, \r   is a generic newline.
  "\r\n" =~ /^\R$/;         # Match, \r\n is a generic newline.
 
- "P\x{0307}" =~ /^\X$/     # \X matches a P with a dot above.
+ "P\x{307}" =~ /^\X$/     # \X matches a P with a dot above.
 
 =cut

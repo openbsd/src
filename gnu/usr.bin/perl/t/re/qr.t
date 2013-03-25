@@ -10,7 +10,7 @@ plan tests => 5;
 
 my $rx = qr//;
 
-is(ref $rx, "Regexp", "qr// blessed into `Regexp' by default");
+is(ref $rx, "Regexp", "qr// blessed into 'Regexp' by default");
 
 
 # Make sure /$qr/ doesn’t clobber match vars before the match (bug 70764).
@@ -72,7 +72,7 @@ for($'){
  is $output, "5\n1: 5\n2: 5\n", q|/$qr/ with $'_ aliased to a match var|;
 }
 
-# Make sure /$qr/ calls get-magic on its LHS (bug ~~~~~).
+# Make sure /$qr/ calls get-magic on its LHS (bug 71470).
 {
  my $scratch;
  sub qrBug::TIESCALAR{bless[], 'qrBug'}

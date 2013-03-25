@@ -25,7 +25,7 @@ sub ok ($;$) {
 
 BEGIN {
     $test = 1;
-    print "1..30\n";
+    print "1..31\n";
     require Exporter;
     ok( 1, 'Exporter compiled' );
 }
@@ -233,3 +233,20 @@ eval { Carp::croak() };
 ::ok($Carp::Internal{Exporter}, "Carp recognizes Exporter");
 ::ok($Carp::Internal{'Exporter::Heavy'}, "Carp recognizes Exporter::Heavy");
 
+package Exporter::for::Tied::_;
+
+@ISA = 'Exporter';
+@EXPORT = 'foo';
+
+package Tied::_;
+
+sub TIESCALAR{bless[]}
+# no tie methods!
+
+{
+ tie my $t, __PACKAGE__;
+ for($t) { # $_ is now tied
+  import Exporter::for::Tied::_;
+ }
+}
+::ok(1, 'import with tied $_');

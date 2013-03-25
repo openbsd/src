@@ -16,12 +16,22 @@ BEGIN {
 
 #########################
 
-use Test;
 use strict;
 use warnings;
-BEGIN { plan tests => 211 };
+BEGIN { $| = 1; print "1..217\n"; }
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Normalize qw(:all);
-ok(1); # If we made it this far, we're ok.
+
+ok(1);
 
 sub _pack_U { Unicode::Normalize::pack_U(@_) }
 sub hexU { _pack_U map hex, split ' ', shift }
@@ -49,6 +59,8 @@ ok(getCanon(0x212C), undef);
 ok(getCanon(0x3243), undef);
 ok(getCanon(0xFA2D), _pack_U(0x9DB4));
 
+# 20
+
 ok(getCompat(   0), undef);
 ok(getCompat(0x29), undef);
 ok(getCompat(0x41), undef);
@@ -63,6 +75,8 @@ ok(getCompat(0x3243), _pack_U(0x0028, 0x81F3, 0x0029));
 ok(getCompat(0xAC00), _pack_U(0x1100, 0x1161));
 ok(getCompat(0xAE00), _pack_U(0x1100, 0x1173, 0x11AF));
 ok(getCompat(0xFA2D), _pack_U(0x9DB4));
+
+# 34
 
 ok(getComposite(   0,    0), undef);
 ok(getComposite(   0, 0x29), undef);
@@ -83,6 +97,8 @@ ok(getComposite(0x1173, 0x11AF), undef);
 ok(getComposite(0xAC00, 0x11A7), undef);
 ok(getComposite(0xAC00, 0x11A8), 0xAC01);
 ok(getComposite(0xADF8, 0x11AF), 0xAE00);
+
+# 53
 
 sub uprops {
   my $uv = shift;
@@ -120,6 +136,8 @@ ok(uprops(0xF900), 'xSnFbDmCKyG'); # CJK COMPATIBILITY IDEOGRAPH-F900
 ok(uprops(0xFB4E), 'XsnFbDmCKyG'); # HEBREW LETTER PE WITH RAFE
 ok(uprops(0xFF71), 'xsnfbdmcKyG'); # HALFWIDTH KATAKANA LETTER A
 
+# 71
+
 ok(decompose(""), "");
 ok(decompose("A"), "A");
 ok(decompose("", 1), "");
@@ -138,6 +156,8 @@ my $sDec = "\x{FA19}";
 ok(decompose($sDec), "\x{795E}");
 ok($sDec, "\x{FA19}");
 
+# 83
+
 ok(reorder(""), "");
 ok(reorder("A"), "A");
 ok(reorder(hexU("0041 0300 0315 0313 031b 0061")),
@@ -149,6 +169,8 @@ ok(reorder(hexU("00C1 0300 0315 0313 031b 0061 309A 3099")),
 my $sReord = "\x{3000}\x{300}\x{31b}";
 ok(reorder($sReord), "\x{3000}\x{31b}\x{300}");
 ok($sReord, "\x{3000}\x{300}\x{31b}");
+
+# 89
 
 ok(compose(""), "");
 ok(compose("A"), "A");
@@ -165,6 +187,8 @@ my $sCom = "\x{304B}\x{3099}";
 ok(compose($sCom), "\x{304C}");
 ok($sCom, "\x{304B}\x{3099}");
 
+# 100
+
 ok(composeContiguous(""), "");
 ok(composeContiguous("A"), "A");
 ok(composeContiguous(hexU("0061 0300")),      hexU("00E0"));
@@ -179,6 +203,8 @@ ok(composeContiguous(hexU("0061 0313 0300")), hexU("0061 0313 0300"));
 my $sCtg = "\x{30DB}\x{309A}";
 ok(composeContiguous($sCtg), "\x{30DD}");
 ok($sCtg, "\x{30DB}\x{309A}");
+
+# 111
 
 sub answer { defined $_[0] ? $_[0] ? "YES" : "NO" : "MAYBE" }
 
@@ -220,6 +246,8 @@ ok(answer(checkNFKC(hexU("0041 0327 030A"))), "MAYBE"); # A+cedilla+ring
 ok(answer(checkNFKC(hexU("0041 030A 0327"))), "NO");    # A+ring+cedilla
 ok(answer(check("NFKC", hexU("20 C1 212B 300"))), "NO");
 
+# 145
+
 "012ABC" =~ /(\d+)(\w+)/;
 ok("012" eq NFC $1 && "ABC" eq NFC $2);
 
@@ -229,6 +257,8 @@ ok(normalize('C', $2), "ABC");
 ok(normalize('NFC', $1), "012");
 ok(normalize('NFC', $2), "ABC");
  # s/^NF// in normalize() must not prevent using $1, $&, etc.
+
+# 150
 
 # a string with initial zero should be treated like a number
 
@@ -276,6 +306,8 @@ ok(getCanon("044032"),  _pack_U(0x1100, 0x1161));
 ok(getCompat("044032"), _pack_U(0x1100, 0x1161));
 ok(getComposite("04352", "04449"), 0xAC00);
 
+# 182
+
 # string with 22 combining characters: (0x300..0x315)
 my $str_cc22 = _pack_U(0x3041, 0x300..0x315, 0x3042);
 ok(decompose($str_cc22), $str_cc22);
@@ -289,6 +321,8 @@ ok(NFKC($str_cc22), $str_cc22);
 ok(FCD($str_cc22), $str_cc22);
 ok(FCC($str_cc22), $str_cc22);
 
+# 192
+
 # string with 40 combining characters of the same class: (0x300..0x313)x2
 my $str_cc40 = _pack_U(0x3041, 0x300..0x313, 0x300..0x313, 0x3042);
 ok(decompose($str_cc40), $str_cc40);
@@ -301,6 +335,8 @@ ok(NFKD($str_cc40), $str_cc40);
 ok(NFKC($str_cc40), $str_cc40);
 ok(FCD($str_cc40), $str_cc40);
 ok(FCC($str_cc40), $str_cc40);
+
+# 202
 
 my $precomp = hexU("304C 304E 3050 3052 3054");
 my $combseq = hexU("304B 3099 304D 3099 304F 3099 3051 3099 3053 3099");
@@ -319,4 +355,22 @@ ok(decompose($precomp . $notcomp),     $combseq . $notcomp);
 ok(decompose($precomp . $notcomp x 5), $combseq . $notcomp x 5);
 ok(decompose($precomp . $notcomp x10), $combseq . $notcomp x10);
 
+# 211
+
+my $preUnicode3_1 = !defined getCanon(0x1D15E);
+my $preUnicode3_2 = !defined getCanon(0x2ADC);
+
+# HEBREW LETTER YOD WITH HIRIQ
+ok($preUnicode3_1 xor isExclusion(0xFB1D));
+ok($preUnicode3_1 xor isComp_Ex  (0xFB1D));
+
+# MUSICAL SYMBOL HALF NOTE
+ok($preUnicode3_1 xor isExclusion(0x1D15E));
+ok($preUnicode3_1 xor isComp_Ex  (0x1D15E));
+
+# FORKING
+ok($preUnicode3_2 xor isExclusion(0x2ADC));
+ok($preUnicode3_2 xor isComp_Ex  (0x2ADC));
+
+# 217
 

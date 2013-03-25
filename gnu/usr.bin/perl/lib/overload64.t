@@ -11,7 +11,7 @@ BEGIN {
 }
 
 $| = 1;
-use Test::More 'tests' => 100;
+use Test::More 'tests' => 140;
 
 
 my $ii = 36028797018963971;  # 2^55 + 3
@@ -212,5 +212,65 @@ is($$oo, $cnt++, 'overload called once');
 
 is($oo**1, $ii, '** overload');
 is($$oo, $cnt++, 'overload called once');
+
+# RT #77456: when conversion method returns an IV/UV,
+# avoid IV -> NV upgrade if possible .
+
+{
+    package P77456;
+    use overload '0+' => sub  { $_[0][0] }, fallback => 1;
+
+    package main;
+
+    for my $expr (
+	'(%531 + 1) - $a531  == 1',			# pp_add
+	'$a531 - (%531 - 1) == 1',			# pp_subtract
+	'(%531 * 2  + 1) - (%531 * 2)  == 1',		# pp_multiply
+	'(%54  / 2  + 1) - (%54 / 2)   == 1',		# pp_divide
+	'(%271 ** 2 + 1) - (%271 ** 2) == 1',		# pp_pow
+	'(%541 % 2) == 1',				# pp_modulo
+	'$a54  + (-%531)*2  == -2',			# pp_negate
+	'(abs(%53m)+1) - $a53 == 1',			# pp_abs
+	'(%531 << 1) - 2  == $a54',			# pp_left_shift
+	'(%541 >> 1) + 1  == $a531',			# pp_right_shift
+	'!(%53 == %531)',				# pp_eq
+	'(%53 != %531)',				# pp_ne
+	'(%53 < %531)',					# pp_lt
+	'!(%531 <= %53)',				# pp_le
+	'(%531 > %53)',					# pp_gt
+	'!(%53 >= %531)',				# pp_ge
+	'(%53 <=> %531) == -1',				# pp_ncmp
+	'(%531 & %53) == $a53',				# pp_bit_and
+	'(%531 | %53) == $a531',			# pp_bit_or
+	'~(~ %531 + $a531) == 0',			# pp_complement
+    ) {
+	for my $int ('', 'use integer; ') {
+	    (my $aexpr = "$int$expr") =~ s/\%(\d+m?)/\$a$1/g;
+	    (my $bexpr = "$int$expr") =~ s/\%(\d+m?)/\$b$1/g;
+
+	    my $a27   = 1 << 27;
+	    my $a271  = $a27 + 1;
+	    my $a53   = 1 << 53;
+	    my $a53m  = -$a53;
+	    my $a531  = $a53 + 1;
+	    my $a54   = 1 << 54;
+	    my $a541  = $a54 + 1;
+
+	    my $b27   = bless [ $a27   ], 'P77456';
+	    my $b271  = bless [ $a271  ], 'P77456';
+	    my $b53   = bless [ $a53   ], 'P77456';
+	    my $b53m  = bless [ $a53m  ], 'P77456';
+	    my $b531  = bless [ $a531  ], 'P77456';
+	    my $b54   = bless [ $a54   ], 'P77456';
+	    my $b541  = bless [ $a541  ], 'P77456';
+
+	    SKIP: {
+		skip("IV/NV not suitable on this platform: $aexpr", 1)
+		    unless eval $aexpr;
+		ok(eval $bexpr, "IV: $bexpr");
+	    }
+	}
+    }
+}
 
 # EOF

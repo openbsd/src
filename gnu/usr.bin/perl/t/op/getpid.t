@@ -12,18 +12,8 @@ use strict;
 use Config;
 
 BEGIN {
-    if (!$Config{useithreads}) {
-	print "1..0 # Skip: no ithreads\n";
-	exit;
-    }
-    if (!$Config{d_getppid}) {
-	print "1..0 # Skip: no getppid\n";
-	exit;
-    }
-    if ($ENV{PERL_CORE_MINITEST}) {
-        print "1..0 # Skip: no dynamic loading on miniperl, no threads\n";
-        exit 0;
-    }
+    skip_all_without_config(qw(useithreads d_getppid));
+    skip_all_if_miniperl("no dynamic loading on miniperl, no threads");
     eval 'use threads; use threads::shared';
     plan tests => 3;
     if ($@) {
@@ -40,5 +30,16 @@ my $ppid2 : shared = 0;
 
 new threads( sub { ($pid2, $ppid2) = ($$, getppid()); } ) -> join();
 
-is($pid,  $pid2,  'pids');
-is($ppid, $ppid2, 'ppids');
+# If this breaks you're either running under LinuxThreads (and we
+# haven't detected it) or your system doesn't have POSIX thread
+# semantics.
+if ($^O =~ /^(?:gnukfreebsd|linux)$/ and
+    (my $linuxthreads = qx[getconf GNU_LIBPTHREAD_VERSION 2>&1]) =~ /linuxthreads/) {
+    chomp $linuxthreads;
+    diag "We're running under $^O with linuxthreads <$linuxthreads>";
+    isnt($pid,  $pid2, "getpid() in a thread is different from the parent on this non-POSIX system");
+    isnt($ppid, $ppid2, "getppid() in a thread is different from the parent on this non-POSIX system");
+} else {
+    is($pid,  $pid2, 'getpid() in a thread is the same as in the parent');
+    is($ppid, $ppid2, 'getppid() in a thread is the same as in the parent');
+}

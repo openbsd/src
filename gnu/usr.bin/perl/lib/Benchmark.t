@@ -8,7 +8,7 @@ BEGIN {
 use warnings;
 use strict;
 use vars qw($foo $bar $baz $ballast);
-use Test::More tests => 194;
+use Test::More tests => 196;
 
 use Benchmark qw(:all);
 
@@ -28,7 +28,7 @@ my $Noc_Pattern =
     qr/(\d+) +wallclock secs? +\( *(-?\d+\.\d\d) +usr +\+ +(-?\d+\.\d\d) +sys += +(-?\d+\.\d\d) +CPU\)/;
 my $Nop_Pattern =
     qr/(\d+) +wallclock secs? +\( *(-?\d+\.\d\d) +cusr +\+ +(-?\d+\.\d\d) +csys += +\d+\.\d\d +CPU\)/;
-# Please don't trust the matching parenthises to be useful in this :-)
+# Please don't trust the matching parentheses to be useful in this :-)
 my $Default_Pattern = qr/$All_Pattern|$Noc_Pattern/;
 
 my $t0 = new Benchmark;
@@ -61,24 +61,46 @@ my $threesecs = countit(0, $coderef);
 isa_ok($threesecs, 'Benchmark', "countit 0, CODEREF");
 isnt ($baz, 0, "benchmarked code was run");
 my $in_threesecs = $threesecs->iters;
-print "# $in_threesecs iterations\n";
+print "# in_threesecs=$in_threesecs iterations\n";
 ok ($in_threesecs > 0, "iters returned positive iterations");
+my $cpu3 = $threesecs->[1]; # user
+my $sys3 = $threesecs->[2]; # sys
+cmp_ok($cpu3+$sys3, '>=', 3.0, "3s cpu3 is at least 3s");
+my $in_threesecs_adj = $in_threesecs;
+$in_threesecs_adj *= (3/$cpu3); # adjust because may not have run for exactly 3s
+print "# in_threesecs_adj=$in_threesecs_adj adjusted iterations\n";
 
-my $estimate = int (100 * $in_threesecs / 3) / 100;
+my $estimate = int (100 * $in_threesecs_adj / 3) / 100;
 print "# from the 3 second run estimate $estimate iterations in 1 second...\n";
 $baz = 0;
 my $onesec = countit(1, $coderef);
 isa_ok($onesec, 'Benchmark', "countit 1, CODEREF");
 isnt ($baz, 0, "benchmarked code was run");
 my $in_onesec = $onesec->iters;
-print "# $in_onesec iterations\n";
+print "# in_onesec=$in_onesec iterations\n";
 ok ($in_onesec > 0, "iters returned positive iterations");
+my $cpu1 = $onesec->[1]; # user
+my $sys1 = $onesec->[2]; # sys
+cmp_ok($cpu1+$sys1, '>=', 1.0, "is cpu1 is at least 1s");
+my $in_onesec_adj = $in_onesec;
+$in_onesec_adj *= (1/$cpu1); # adjust because may not have run for exactly 1s
+print "# in_onesec_adj=$in_onesec_adj adjusted iterations\n";
 
 {
-  my $difference = $in_onesec - $estimate;
-  my $actual = abs ($difference / $in_onesec);
-  cmp_ok($actual, '<=', $delta, "is $in_onesec within $delta of estimate ($estimate)")
-    or diag("# $in_onesec is between " . ($delta / 2) . " and $delta of estimate. Not that safe.");
+  my $difference = $in_onesec_adj - $estimate;
+  my $actual = abs ($difference / $in_onesec_adj);
+  cmp_ok($actual, '<=', $delta, "is $in_onesec_adj within $delta of estimate ($estimate)")
+    or do {
+	diag("  in_threesecs     = $in_threesecs");
+	diag("  in_threesecs_adj = $in_threesecs_adj");
+	diag("  cpu3             = $cpu3");
+	diag("  sys3             = $sys3");
+	diag("  estimate         = $estimate");
+	diag("  in_onesec        = $in_onesec");
+	diag("  in_onesec_adj    = $in_onesec_adj");
+	diag("  cpu1             = $cpu1");
+	diag("  sys1             = $sys1");
+    };
 }
 
 # I found that the eval'ed version was 3 times faster than the coderef.
@@ -111,10 +133,10 @@ is ($auto, $default, 'timestr ($diff, "auto") matches timestr ($diff)');
 
     my ($wallclock, $usr, $sys, $cusr, $csys, $cpu) = $all =~ $All_Pattern;
 
-    is (timestr ($diff, 'none'), '', "none supresses output");
+    is (timestr ($diff, 'none'), '', "none suppresses output");
 
     my $noc = timestr ($diff, 'noc');
-    like ($noc, qr/$wallclock +wallclock secs? +\( *$usr +usr +\+ +$sys +sys += +$cpu +CPU\)/, 'timestr ($diff, "noc")');
+    like ($noc, qr/$wallclock +wallclock secs? +\( *$usr +usr +\+ +$sys +sys += +\d+\.\d\d +CPU\)/, 'timestr ($diff, "noc")');
 
     my $nop = timestr ($diff, 'nop');
     like ($nop, qr/$wallclock +wallclock secs? +\( *$cusr +cusr +\+ +$csys +csys += +\d+\.\d\d +CPU\)/, 'timestr ($diff, "nop")');
@@ -295,6 +317,7 @@ sub check_graph_consistency {
         $slowr, $slowratet, $slowslow, $slowfastt,
         $fastr, $fastratet, $fastslowt, $fastfast)
         = @_;
+    note("calling check_graph_consistency from line " . (caller(1))[2]);
     my $all_passed = 1;
     $all_passed
       &= is ($slowc, $slowr, "left col tag should be top row tag");
@@ -529,7 +552,7 @@ undef $debug;
 untie *STDERR;
 
 # To check the cache we are poking where we don't belong, inside the namespace.
-# The way benchmark is written We can't actually check whehter the cache is
+# The way benchmark is written we can't actually check whether the cache is
 # being used, merely what's become cached.
 
 clearallcache();

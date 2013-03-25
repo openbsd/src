@@ -74,7 +74,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     my $status           = pop @output;
     my $expected_status  = qr{^Result: PASS$};
     my $summary          = pop @output;
-    my $expected_summary = qr{^Files=1, Tests=1,  \d+ wallclock secs};
+    my $expected_summary = qr{^Files=1, Tests=1, +\d+ wallclock secs};
 
     is_deeply \@output, \@expected, '... the output should be correct';
     like $status, $expected_status,
@@ -103,7 +103,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     $status           = pop @output;
     $expected_status  = qr{^Result: PASS$};
     $summary          = pop @output;
-    $expected_summary = qr{^Files=1, Tests=1,  \d+ wallclock secs};
+    $expected_summary = qr{^Files=1, Tests=1, +\d+ wallclock secs};
 
     is_deeply \@output, \@expected, '... the output should be correct';
     like $status, $expected_status,
@@ -138,7 +138,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     $status           = pop @output;
     $expected_status  = qr{^Result: PASS$};
     $summary          = pop @output;
-    $expected_summary = qr{^Files=2, Tests=2,  \d+ wallclock secs};
+    $expected_summary = qr{^Files=2, Tests=2, +\d+ wallclock secs};
 
     is_deeply \@output, \@expected, '... the output should be correct';
     like $status, $expected_status,
@@ -161,7 +161,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     $status           = pop @output;
     $expected_status  = qr{^Result: PASS$};
     $summary          = pop @output;
-    $expected_summary = qr/^Files=1, Tests=1,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=1, +\d+ wallclock secs/;
 
     is_deeply \@output, \@expected, '... the output should be correct';
     like $status, $expected_status,
@@ -182,7 +182,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     $status           = pop @output;
     $expected_status  = qr{^Result: PASS$};
     $summary          = pop @output;
-    $expected_summary = qr/^Files=1, Tests=1,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=1, +\d+ wallclock secs/;
 
     is_deeply \@output, \@expected, '... the output should be correct';
     like $status, $expected_status,
@@ -303,7 +303,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
 
     $status           = pop @output;
     $summary          = pop @output;
-    $expected_summary = qr/^Files=1, Tests=3,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=3, +\d+ wallclock secs/;
 
     is_deeply \@output, \@expected, '... the output should be correct';
     like $summary, $expected_summary,
@@ -370,7 +370,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     $summary = pop @output;
 
     like $status, qr{^Result: FAIL$}, '... the status line should be correct';
-    $expected_summary = qr/^Files=1, Tests=2,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=2, +\d+ wallclock secs/;
     is_deeply \@output, \@expected, '... and the output should be correct';
 
     # check the status output for no tests
@@ -394,7 +394,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     $summary = pop @output;
 
     like $status, qr{^Result: FAIL$}, '... the status line should be correct';
-    $expected_summary = qr/^Files=1, Tests=2,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=2, +\d+ wallclock secs/;
     is_deeply \@output, \@expected, '... and the output should be correct';
 
     # coverage testing for _should_show_comments
@@ -423,7 +423,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     $summary = pop @output;
 
     like $status, qr{^Result: FAIL$}, '... the status line should be correct';
-    $expected_summary = qr/^Files=1, Tests=2,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=2, +\d+ wallclock secs/;
     is_deeply \@output, \@expected, '... and the output should be correct';
 
     # coverage testing for _should_show_comments and _should_show_failures
@@ -455,7 +455,7 @@ ok $ENV{HARNESS_VERSION}, 'HARNESS_VERSION env variable should be set';
     $summary = pop @output;
 
     like $status, qr{^Result: FAIL$}, '... the status line should be correct';
-    $expected_summary = qr/^Files=1, Tests=2,  \d+ wallclock secs/;
+    $expected_summary = qr/^Files=1, Tests=2, +\d+ wallclock secs/;
     is_deeply \@output, \@expected, '... and the output should be correct';
 
     #XXXX

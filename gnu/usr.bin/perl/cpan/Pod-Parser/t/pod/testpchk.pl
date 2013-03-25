@@ -23,6 +23,7 @@ use Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(&testpodchecker);
+@EXPORT_OK = qw(&testpodcheck);
 $MYPKG = eval { (caller)[0] };
 
 sub stripname( $ ) {
@@ -49,7 +50,7 @@ sub testpodcheck( @ ) {
    my $cmpfile = $args{'-Cmp'} || croak "No compare-result file given!";
 
    my $different = '';
-   my $testname = basename $cmpfile, '.t', '.xr';
+   my $testname = basename $infile, '.t', '.xr';
 
    unless (-e $cmpfile) {
       my $msg = "*** Can't find comparison file $cmpfile for testing $infile";

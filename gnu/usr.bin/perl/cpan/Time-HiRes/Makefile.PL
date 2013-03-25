@@ -5,7 +5,7 @@
 # Use $ENV{FORCE_NANOSLEEP_SCAN} to force rescanning whether there
 # really is hope.
 
-require 5.002;
+{ use 5.006; }
 
 use Config;
 use ExtUtils::MakeMaker;
@@ -17,7 +17,7 @@ my $LIBS = [];
 my $XSOPT = '';
 my $SYSCALL_H;
 
-use vars qw($self); # Used in 'sourcing' the hints.
+our $self; # Used in 'sourcing' the hints.
 
 # TBD: Can we just use $Config(exe_ext) here instead of this complex
 #      expression?
@@ -118,15 +118,7 @@ __EOD__
 	my $ccflags = $Config{'ccflags'} . ' ' . "-I$COREincdir";
 
 	if ($^O eq 'VMS') {
-	    if ($ENV{PERL_CORE}) {
-		# Fragile if the extensions change hierarchy within
-		# the Perl core but this should do for now.
-                $cccmd = "$Config{'cc'} /include=([---]) $tmp.c";
-	    } else {
-		my $perl_core = $Config{'installarchlib'};
-		$perl_core =~ s/\]$/.CORE]/;
-                $cccmd = "$Config{'cc'} /include=(perl_root:[000000],$perl_core) $tmp.c";
-	    }
+            $cccmd = "$Config{'cc'} /include=($COREincdir) $tmp.c";
         }
 
         if ($args{silent} || !$VERBOSE) {
@@ -767,6 +759,15 @@ sub doMakefile {
 	  # Solaris will avenge.
 	'INC'	=> '',     # e.g., '-I/usr/include/other'
 	'INSTALLDIRS' => ($] >= 5.008 ? 'perl' : 'site'),
+	'PREREQ_PM' => {
+	    'Carp' => 0,
+	    'Config' => 0,
+	    'DynaLoader' => 0,
+	    'Exporter' => 0,
+	    'ExtUtils::MakeMaker' => 0,
+	    'Test::More' => "0.82",
+	    'strict' => 0,
+	},
 	'dist'      => {
 	    'CI'       => 'ci -l',
 	    'COMPRESS' => 'gzip -9f',
@@ -775,6 +776,27 @@ sub doMakefile {
         clean => { FILES => "xdefine" },
         realclean => { FILES=> 'const-c.inc const-xs.inc' },
     );
+
+    if ($^O eq "MSWin32" && !(grep { /\ALD[A-Z]*=/ } @ARGV)) {
+	my $libperl = $Config{libperl} || "";
+	my $gccversion = $Config{gccversion} || "";
+	if ($gccversion =~ /\A3\.4\.[0-9]+/ and $libperl =~ /\.lib\z/) {
+	    # Avoid broken linkage with ActivePerl, by linking directly
+	    # against the Perl DLL rather than the import library.
+	    (my $llibperl = "-l$libperl") =~ s/\.lib\z//;
+	    my $lddlflags = $Config{lddlflags} || "";
+	    my $ldflags = $Config{ldflags} || "";
+	    s/-L(?:".*?"|\S+)//g foreach $lddlflags, $ldflags;
+	    my $libdirs = join ' ',
+		map { s/(?<!\\)((?:\\\\)*")/\\$1/g; qq[-L"$_"] }
+		@Config{qw/bin sitebin/};
+	    push @makefileopts, macro => {
+		LDDLFLAGS => "$lddlflags $libdirs $llibperl",
+		LDFLAGS => "$ldflags $libdirs $llibperl",
+		PERL_ARCHIVE => "",
+	    };
+	}
+    }
 
     if ($ENV{PERL_CORE}) {
 	push @makefileopts, MAN3PODS => {};
@@ -832,7 +854,7 @@ sub doConstants {
 }
 
 sub main {
-    if (-f "Makefile" and -f "xdefine" && !(@ARGV  && $ARGV[0] eq '--configure')) {
+    if (-f "xdefine" && !(@ARGV  && $ARGV[0] eq '--configure')) {
 	print qq[$0: The "xdefine" exists, skipping the configure step.\n];
 	print qq[("$^X $0 --configure" to force the configure step)\n];
     } else {

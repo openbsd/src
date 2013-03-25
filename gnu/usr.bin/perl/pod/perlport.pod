@@ -480,17 +480,17 @@ file name.
 To convert $^X to a file pathname, taking account of the requirements
 of the various operating system possibilities, say:
 
-  use Config;
-  my $thisperl = $^X;
-  if ($^O ne 'VMS')
-     {$thisperl .= $Config{_exe} unless $thisperl =~ m/$Config{_exe}$/i;}
+ use Config;
+ my $thisperl = $^X;
+ if ($^O ne 'VMS')
+    {$thisperl .= $Config{_exe} unless $thisperl =~ m/$Config{_exe}$/i;}
 
 To convert $Config{perlpath} to a file pathname, say:
 
-  use Config;
-  my $thisperl = $Config{perlpath};
-  if ($^O ne 'VMS')
-     {$thisperl .= $Config{_exe} unless $thisperl =~ m/$Config{_exe}$/i;}
+ use Config;
+ my $thisperl = $Config{perlpath};
+ if ($^O ne 'VMS')
+    {$thisperl .= $Config{_exe} unless $thisperl =~ m/$Config{_exe}$/i;}
 
 =head2 Networking
 
@@ -622,9 +622,9 @@ format.
 Don't assume that the epoch starts at 00:00:00, January 1, 1970,
 because that is OS- and implementation-specific.  It is better to
 store a date in an unambiguous representation.  The ISO 8601 standard
-defines YYYY-MM-DD as the date format, or YYYY-MM-DDTHH-MM-SS
+defines YYYY-MM-DD as the date format, or YYYY-MM-DDTHH:MM:SS
 (that's a literal "T" separating the date from the time).
-Please do use the ISO 8601 instead of making us to guess what
+Please do use the ISO 8601 instead of making us guess what
 date 02/03/04 might be.  ISO 8601 even sorts nicely as-is.
 A text representation (like "1987-12-18") can be easily converted
 into an OS-specific value using a module like Date::Parse.
@@ -688,10 +688,6 @@ available since Perl 5.6.0.
 If your code is destined for systems with severely constrained (or
 missing!) virtual memory systems then you want to be I<especially> mindful
 of avoiding wasteful constructs such as:
-
-    # NOTE: this is no longer "bad" in perl5.005
-    for (0..10000000) {}                       # bad
-    for (my $x = 0; $x <= 10000000; ++$x) {}   # good
 
     my @lines = <$very_large_file>;            # bad
 
@@ -771,11 +767,11 @@ Also see:
 
 =item *
 
-Mailing list: cpan-testers@perl.org
+Mailing list: cpan-testers-discuss@perl.org
 
 =item *
 
-Testing results: http://testers.cpan.org/
+Testing results: L<http://www.cpantesters.org/>
 
 =back
 
@@ -904,6 +900,8 @@ DOSish perls are as follows:
      Windows Vista MSWin32    MSWin32-x86       2      6 00
      Windows 7     MSWin32    MSWin32-x86       2      6 01
      Windows 7     MSWin32    MSWin32-x64       2      6 01
+     Windows 2008  MSWin32    MSWin32-x86       2      6 01
+     Windows 2008  MSWin32    MSWin32-x64       2      6 01
      Windows CE    MSWin32    ?                 3           
      Cygwin        cygwin     cygwin
 
@@ -929,13 +927,13 @@ Also see:
 
 =item *
 
-The djgpp environment for DOS, http://www.delorie.com/djgpp/
+The djgpp environment for DOS, L<http://www.delorie.com/djgpp/>
 and L<perldos>.
 
 =item *
 
 The EMX environment for DOS, OS/2, etc. emx@iaehv.nl,
-ftp://hobbes.nmsu.edu/pub/os2/dev/emx/  Also L<perlos2>.
+L<ftp://hobbes.nmsu.edu/pub/os2/dev/emx/>  Also L<perlos2>.
 
 =item *
 
@@ -948,17 +946,17 @@ The C<Win32::*> modules in L<Win32>.
 
 =item *
 
-The ActiveState Pages, http://www.activestate.com/
+The ActiveState Pages, L<http://www.activestate.com/>
 
 =item *
 
 The Cygwin environment for Win32; F<README.cygwin> (installed 
-as L<perlcygwin>), http://www.cygwin.com/
+as L<perlcygwin>), L<http://www.cygwin.com/>
 
 =item *
 
 The U/WIN environment for Win32,
-http://www.research.att.com/sw/tools/uwin/
+L<http://www.research.att.com/sw/tools/uwin/>
 
 =item *
 
@@ -1092,7 +1090,7 @@ Pumpkings and module integrators can easily see whether files with too many
 directory levels have snuck into the core by running the following in the
 top-level source directory:
 
-   $ perl -ne "$_=~s/\s+.*//; print if scalar(split /\//) > 8;" < MANIFEST
+ $ perl -ne "$_=~s/\s+.*//; print if scalar(split /\//) > 8;" < MANIFEST
 
 
 The VMS::Filespec module, which gets installed as part of the build
@@ -1145,7 +1143,7 @@ Also see:
 
 =item *
 
-F<README.vms> (installed as L<README_vms>), L<perlvms>
+F<README.vms> (installed as F<README_vms>), L<perlvms>
 
 =item *
 
@@ -1153,15 +1151,16 @@ vmsperl list, vmsperl-subscribe@perl.org
 
 =item *
 
-vmsperl on the web, http://www.sidhe.org/vmsperl/index.html
+vmsperl on the web, L<http://www.sidhe.org/vmsperl/index.html>
 
 =back
 
 =head2 VOS
 
-Perl on VOS is discussed in F<README.vos> in the perl distribution
-(installed as L<perlvos>).  Perl on VOS can accept either VOS- or
-Unix-style file specifications as in either of the following:
+Perl on VOS (also known as OpenVOS) is discussed in F<README.vos>
+in the perl distribution (installed as L<perlvos>).  Perl on VOS
+can accept either VOS- or Unix-style file specifications as in
+either of the following:
 
     $ perl -ne "print if /perl_setup/i" >system>notices
     $ perl -ne "print if /perl_setup/i" /system/notices
@@ -1172,15 +1171,35 @@ or even a mixture of both as in:
 
 Even though VOS allows the slash character to appear in object
 names, because the VOS port of Perl interprets it as a pathname
-delimiting character, VOS files, directories, or links whose names
-contain a slash character cannot be processed.  Such files must be
-renamed before they can be processed by Perl.  Note that VOS limits
-file names to 32 or fewer characters, file names cannot start with a
-C<-> character, or contain any character matching C<< tr/ !%&'()*+;<>?// >>
+delimiting character, VOS files, directories, or links whose
+names contain a slash character cannot be processed.  Such files
+must be renamed before they can be processed by Perl.
 
-The value of C<$^O> on VOS is "VOS".  To determine the architecture that
-you are running on without resorting to loading all of C<%Config> you
-can examine the content of the @INC array like so:
+Older releases of VOS (prior to OpenVOS Release 17.0) limit file
+names to 32 or fewer characters, prohibit file names from
+starting with a C<-> character, and prohibit file names from
+containing any character matching C<< tr/ !#%&'()*;<=>?// >>.
+
+Newer releases of VOS (OpenVOS Release 17.0 or later) support a
+feature known as extended names.  On these releases, file names
+can contain up to 255 characters, are prohibited from starting
+with a C<-> character, and the set of prohibited characters is
+reduced to any character matching C<< tr/#%*<>?// >>.  There are
+restrictions involving spaces and apostrophes:  these characters
+must not begin or end a name, nor can they immediately precede or
+follow a period.  Additionally, a space must not immediately
+precede another space or hyphen.  Specifically, the following
+character combinations are prohibited:  space-space,
+space-hyphen, period-space, space-period, period-apostrophe,
+apostrophe-period, leading or trailing space, and leading or
+trailing apostrophe.  Although an extended file name is limited
+to 255 characters, a path name is still limited to 256
+characters.
+
+The value of C<$^O> on VOS is "VOS".  To determine the
+architecture that you are running on without resorting to loading
+all of C<%Config> you can examine the content of the @INC array
+like so:
 
     if ($^O =~ /VOS/) {
         print "I'm on a Stratus box!\n";
@@ -1202,13 +1221,13 @@ F<README.vos> (installed as L<perlvos>)
 The VOS mailing list.
 
 There is no specific mailing list for Perl on VOS.  You can post
-comments to the comp.sys.stratus newsgroup, or subscribe to the general
-Stratus mailing list.  Send a letter with "subscribe Info-Stratus" in
-the message body to majordomo@list.stratagy.com.
+comments to the comp.sys.stratus newsgroup, or use the contact
+information located in the distribution files on the Stratus
+Anonymous FTP site.
 
 =item *
 
-VOS Perl on the web at http://ftp.stratus.com/pub/vos/posix/posix.html
+VOS Perl on the web at L<http://ftp.stratus.com/pub/vos/posix/posix.html>
 
 =back
 
@@ -1277,7 +1296,7 @@ The values of C<$^O> on some of these platforms includes:
 Some simple tricks for determining if you are running on an EBCDIC
 platform could include any of the following (perhaps all):
 
-    if ("\t" eq "\05")   { print "EBCDIC may be spoken here!\n"; }
+    if ("\t" eq "\005")   { print "EBCDIC may be spoken here!\n"; }
 
     if (ord('A') == 193) { print "EBCDIC may be spoken here!\n"; }
 
@@ -1306,7 +1325,7 @@ general usage issues for all EBCDIC Perls.  Send a message body of
 =item *
 
 AS/400 Perl information at
-http://as400.rochester.ibm.com/
+L<http://as400.rochester.ibm.com/>
 as well as on CPAN in the F<ports/> directory.
 
 =back
@@ -1373,8 +1392,8 @@ subdirectories named after the suffix.  Hence files are translated:
 The Unix emulation library's translation of filenames to native assumes
 that this sort of translation is required, and it allows a user-defined list
 of known suffixes that it will transpose in this fashion.  This may
-seem transparent, but consider that with these rules C<foo/bar/baz.h>
-and C<foo/bar/h/baz> both map to C<foo.bar.h.baz>, and that C<readdir> and
+seem transparent, but consider that with these rules F<foo/bar/baz.h>
+and F<foo/bar/h/baz> both map to F<foo.bar.h.baz>, and that C<readdir> and
 C<glob> cannot and do not attempt to emulate the reverse mapping.  Other
 C<.>'s in filenames are translated to C</>.
 
@@ -1449,12 +1468,12 @@ Be OS, F<README.beos>
 =item *
 
 HP 300 MPE/iX, F<README.mpeix> and Mark Bixby's web page
-http://www.bixby.org/mark/porting.html
+L<http://www.bixby.org/mark/porting.html>
 
 =item *
 
 A free perl5-based PERL.NLM for Novell Netware is available in
-precompiled binary and source code form from http://www.novell.com/
+precompiled binary and source code form from L<http://www.novell.com/>
 as well as from CPAN.
 
 =item  *
@@ -1597,6 +1616,8 @@ Implemented via Spawn. (VM/ESA)
 Does not automatically flush output handles on some platforms.
 (SunOS, Solaris, HP-UX)
 
+Not supported. (Symbian OS)
+
 =item exit
 
 Emulates Unix exit() (which considers C<exit 1> to indicate an error) by
@@ -1611,16 +1632,22 @@ enabled, a generic number will be encoded in a method compatible with
 the C library _POSIX_EXIT macro so that it can be decoded by other
 programs, particularly ones written in C, like the GNV package.  (VMS)
 
+C<exit()> resets file pointers, which is a problem when called 
+from a child process (created by C<fork()>) in C<BEGIN>.  
+A workaround is to use C<POSIX::_exit>.  (Solaris)
+
+    exit unless $Config{archname} =~ /\bsolaris\b/;
+    require POSIX and POSIX::_exit(0);
+
 =item fcntl
 
 Not implemented. (Win32)
+
 Some functions available based on the version of VMS. (VMS)
 
 =item flock
 
 Not implemented (VMS, S<RISC OS>, VOS).
-
-Available only on Windows NT (not on Windows 95). (Win32)
 
 =item fork
 
@@ -1764,6 +1791,8 @@ because work arounds in the implementation use floating point numbers,
 it will become inaccurate as the time gets larger.  This is a bug and
 will be fixed in the future.
 
+On VOS, time values are 32-bit quantities.
+
 =item ioctl FILEHANDLE,FUNCTION,SCALAR
 
 Not implemented. (VMS)
@@ -1795,7 +1824,7 @@ numbers. (VMS)
 
 =item link
 
-Not implemented. (MPE/iX, S<RISC OS>)
+Not implemented. (MPE/iX, S<RISC OS>, VOS)
 
 Link count not updated because hard links are not quite that hard
 (They are sort of half-way between hard and soft links). (AmigaOS)
@@ -1810,7 +1839,7 @@ Available on 64 bit OpenVMS 8.2 and later.  (VMS)
 
 =item localtime
 
-localtime() has the same range as L<gmtime>, but because time zone
+localtime() has the same range as L</gmtime>, but because time zone
 rules change its accuracy for historical and future times may degrade
 but usually by no more than an hour.
 
@@ -1845,6 +1874,12 @@ Not implemented. (Win32, VMS, S<RISC OS>)
 
 Can't move directories between directories on different logical volumes. (Win32)
 
+=item rewinddir
+
+Will not cause readdir() to re-read the directory stream.  The entries
+already read before the rewinddir() call will just be returned again
+from a cache buffer. (Win32)
+
 =item select
 
 Only implemented on sockets. (Win32, VMS)
@@ -1859,11 +1894,11 @@ Note that the C<select FILEHANDLE> form is generally portable.
 
 =item semop
 
-Not implemented. ( Win32, VMS, S<RISC OS>, VOS)
+Not implemented. (Win32, VMS, S<RISC OS>)
 
 =item setgrent
 
-Not implemented. (MPE/iX, VMS, Win32, S<RISC OS>, VOS)
+Not implemented. (MPE/iX, VMS, Win32, S<RISC OS>)
 
 =item setpgrp
 
@@ -1875,7 +1910,7 @@ Not implemented. (Win32, VMS, S<RISC OS>, VOS)
 
 =item setpwent
 
-Not implemented. (MPE/iX, Win32, S<RISC OS>, VOS)
+Not implemented. (MPE/iX, Win32, S<RISC OS>)
 
 =item setsockopt
 
@@ -1898,7 +1933,9 @@ be implemented even in Unix platforms.
 
 =item socketpair
 
-Not implemented. (S<RISC OS>, VOS, VM/ESA)
+Not implemented. (S<RISC OS>, VM/ESA)
+
+Available on OpenVOS Release 17.0 or later. (VOS)
 
 Available on 64 bit OpenVMS 8.2 and later.  (VMS)
 
@@ -2032,7 +2069,7 @@ Not useful. (S<RISC OS>)
 
 The following platforms are known to build Perl 5.12 (as of April 2010,
 its release date) from the standard source code distribution available
-at http://www.cpan.org/src
+at L<http://www.cpan.org/src>
 
 =over
 
@@ -2080,6 +2117,8 @@ at http://www.cpan.org/src
 
 =item FreeBSD
 
+=item Debian GNU/kFreeBSD
+
 =item Haiku
 
 =item Irix (6.5. What else?)
@@ -2087,6 +2126,8 @@ at http://www.cpan.org/src
 =item OpenBSD
 
 =item Dragonfly BSD
+
+=item QNX Neutrino RTOS (6.5.0)
 
 =item MirOS BSD
 
@@ -2098,16 +2139,15 @@ Caveats:
 
 =back
 
-
 =item Symbian (Series 60 v3, 3.2 and 5 - what else?)
 
-=item Stratus VOS
+=item Stratus VOS / OpenVOS
 
 =item AIX
 
 =back
 
-=head1 EOL Platforms (Perl 5.12)
+=head1 EOL Platforms (Perl 5.14)
 
 The following platforms were supported by a previous version of
 Perl but have been officially removed from Perl's source code
@@ -2125,9 +2165,8 @@ as of 5.12:
 
 =back
 
-The following platforms may still work as of Perl 5.12, but Perl's
-developers have made an explicit decision to discontinue support for
-them:
+The following platforms were supported up to 5.10.  They may still
+have worked in 5.12, but supporting code has been removed for 5.14:
 
 =over
 
@@ -2145,7 +2184,7 @@ them:
 
 As of July 2002 (the Perl release 5.8.0), the following platforms were
 able to build Perl from the standard source code distribution
-available at http://www.cpan.org/src/
+available at L<http://www.cpan.org/src/>
 
         AIX
         BeOS
@@ -2250,7 +2289,7 @@ of any trouble.
         Unisys Dynix
 
 The following platforms have their own source code distributions and
-binaries available via http://www.cpan.org/ports/
+binaries available via L<http://www.cpan.org/ports/>
 
                                 Perl release
 
@@ -2258,7 +2297,7 @@ binaries available via http://www.cpan.org/ports/
         Tandem Guardian         5.004
 
 The following platforms have only binaries available via
-http://www.cpan.org/ports/index.html :
+L<http://www.cpan.org/ports/index.html> :
 
                                 Perl release
 
@@ -2269,11 +2308,11 @@ http://www.cpan.org/ports/index.html :
 Although we do suggest that you always build your own Perl from
 the source code, both for maximal configurability and for security,
 in case you are in a hurry you can check
-http://www.cpan.org/ports/index.html for binary distributions.
+L<http://www.cpan.org/ports/index.html> for binary distributions.
 
 =head1 SEE ALSO
 
-L<perlaix>, L<perlamiga>, L<perlapollo>, L<perlbeos>, L<perlbs2000>,
+L<perlaix>, L<perlamiga>, L<perlbeos>, L<perlbs2000>,
 L<perlce>, L<perlcygwin>, L<perldgux>, L<perldos>, L<perlepoc>,
 L<perlebcdic>, L<perlfreebsd>, L<perlhurd>, L<perlhpux>, L<perlirix>,
 L<perlmacos>, L<perlmacosx>, L<perlmpeix>,
@@ -2316,5 +2355,5 @@ Gurusamy Sarathy <gsar@activestate.com>,
 Paul J. Schinder <schinder@pobox.com>,
 Michael G Schwern <schwern@pobox.com>,
 Dan Sugalski <dan@sidhe.org>,
-Nathan Torkington <gnat@frii.com>.
+Nathan Torkington <gnat@frii.com>,
 John Malmberg <wb8tyw@qsl.net>

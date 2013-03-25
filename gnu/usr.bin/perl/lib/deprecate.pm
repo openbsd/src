@@ -1,16 +1,17 @@
 package deprecate;
 use strict;
 use warnings;
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 # our %Config can ignore %Config::Config, e.g. for testing
 our %Config;
 unless (%Config) { require Config; *Config = \%Config::Config; }
 
-sub import {
-    my ($package, $file, $line) = caller;
-    my $expect_leaf = "$package.pm";
-    $expect_leaf =~ s!::!/!g;
+# This isn't a public API. It's internal to code maintained by the perl-porters
+# If you would like it to be a public API, please send a patch with
+# documentation and tests. Until then, it may change without warning.
+sub __loaded_from_core {
+    my ($package, $file, $expect_leaf) = @_;
 
     foreach my $pair ([qw(sitearchexp archlibexp)],
 		      [qw(sitelibexp privlibexp)]) {
@@ -23,32 +24,43 @@ sub import {
 
 	next if $site eq $priv;
 	if (uc("$priv/$expect_leaf") eq uc($file)) {
-	    my $call_depth=1;
-	    my @caller;
-	    while (@caller = caller $call_depth++) {
-		last if $caller[7]			# use/require
-		    and $caller[6] eq $expect_leaf;	# the package file
-	    }
-	    unless (@caller) {
-		require Carp;
-		Carp::cluck(<<"EOM");
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+sub import {
+    my ($package, $file) = caller;
+
+    my $expect_leaf = "$package.pm";
+    $expect_leaf =~ s!::!/!g;
+
+    if (__loaded_from_core($package, $file, $expect_leaf)) {
+	my $call_depth=1;
+	my @caller;
+	while (@caller = caller $call_depth++) {
+	    last if $caller[7]			# use/require
+		and $caller[6] eq $expect_leaf;	# the package file
+	}
+	unless (@caller) {
+	    require Carp;
+	    Carp::cluck(<<"EOM");
 Can't find use/require $expect_leaf in caller stack
 EOM
-		next;
-	    }
+	    return;
+	}
 
-	    # This is fragile, because it
-	    # is directly poking in the internals of warnings.pm
-	    my ($call_file, $call_line, $callers_bitmask) = @caller[1,2,9];
+	# This is fragile, because it
+	# is directly poking in the internals of warnings.pm
+	my ($call_file, $call_line, $callers_bitmask) = @caller[1,2,9];
 
-	    if (defined $callers_bitmask
-            	&& (vec($callers_bitmask, $warnings::Offsets{deprecated}, 1)
-		    || vec($callers_bitmask, $warnings::Offsets{all}, 1))) {
-		warn <<"EOM";
+	if (defined $callers_bitmask
+	    && (vec($callers_bitmask, $warnings::Offsets{deprecated}, 1)
+		|| vec($callers_bitmask, $warnings::Offsets{all}, 1))) {
+	    warn <<"EOM";
 $package will be removed from the Perl core distribution in the next major release. Please install it from CPAN. It is being used at $call_file, line $call_line.
 EOM
-	    }
-	    return;
 	}
     }
 }
@@ -95,7 +107,7 @@ Original version by Nicholas Clark
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 
+Copyright (C) 2009, 2011
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

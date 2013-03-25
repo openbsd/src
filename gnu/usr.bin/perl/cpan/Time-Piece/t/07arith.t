@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 25;
 
 BEGIN { use_ok('Time::Piece'); }
 
@@ -24,3 +24,24 @@ my $t4 = $t->add_years(1);
 is($t4->year, 2001);
 is($t4->mon, 3);
 is($t4->mday, 1);
+
+$t = Time::Piece->strptime("01 01 2010","%d %m %Y");
+my $t6 = $t->add_months(-12);
+is($t6->year, 2009);
+is($t6->mon, 1);
+is($t6->mday, 1);
+
+my $t7 = $t->add_months(-1);
+is($t7->year, 2009);
+is($t7->mon, 12);
+is($t7->mday, 1);
+
+my $t8 = $t->add_months(-240);
+is($t8->year, 1990);
+is($t8->mon, 1);
+is($t8->mday, 1);
+
+my $t9 = $t->add_months(-13);
+is($t9->year, 2008);
+is($t9->mon, 12);
+is($t9->mday, 1);

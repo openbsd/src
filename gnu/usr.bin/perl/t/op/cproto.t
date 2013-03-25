@@ -7,7 +7,7 @@ BEGIN {
 }
 
 BEGIN { require './test.pl'; }
-plan tests => 237;
+plan tests => 248;
 
 while (<DATA>) {
     chomp;
@@ -27,14 +27,22 @@ while (<DATA>) {
 # the keyword list :
 
 __DATA__
+__FILE__ ()
+__LINE__ ()
+__PACKAGE__ ()
+__DATA__ undef
+__END__ undef
+__SUB__ ()
+CORE unknown
 abs (_)
 accept (**)
 alarm (_)
-and ()
+and undef
 atan2 ($$)
 bind (*$)
 binmode (*;$)
 bless ($;$)
+break ()
 caller (;$)
 chdir (;$)
 chmod (@)
@@ -45,19 +53,20 @@ chr (_)
 chroot (_)
 close (;*)
 closedir (*)
-cmp unknown
+cmp undef
 connect (*$)
 continue ()
 cos (_)
 crypt ($$)
 dbmclose (\%)
 dbmopen (\%$$)
+default undef
 defined undef
 delete undef
 die (@)
 do undef
 dump ()
-each (\[@%])
+each (+)
 else undef
 elsif undef
 endgrent ()
@@ -67,12 +76,14 @@ endprotoent ()
 endpwent ()
 endservent ()
 eof (;*)
-eq ($$)
+eq undef
 eval undef
+evalbytes (_)
 exec undef
 exists undef
 exit (;$)
 exp (_)
+fc (_)
 fcntl (*$$)
 fileno (*)
 flock (*$)
@@ -81,7 +92,7 @@ foreach undef
 fork ()
 format undef
 formline ($@)
-ge ($$)
+ge undef
 getc (;*)
 getgrent ()
 getgrgid ($)
@@ -98,7 +109,7 @@ getpgrp (;$)
 getppid ()
 getpriority ($$)
 getprotobyname ($)
-getprotobynumber ($)
+getprotobynumber ($;)
 getprotoent ()
 getpwent ()
 getpwnam ($)
@@ -113,28 +124,28 @@ glob undef
 gmtime (;$)
 goto undef
 grep undef
-gt ($$)
+gt undef
 hex (_)
 if undef
 index ($$;$)
 int (_)
 ioctl (*$$)
 join ($@)
-keys (\[@%])
+keys (+)
 kill (@)
 last undef
 lc (_)
 lcfirst (_)
-le ($$)
+le undef
 length (_)
 link ($$)
 listen (*$)
 local undef
 localtime (;$)
-lock (\$)
+lock (\[$@%&*])
 log (_)
-lstat (*)
-lt ($$)
+lstat (;*)
+lt undef
 m undef
 map undef
 mkdir (_;$)
@@ -143,25 +154,25 @@ msgget ($$)
 msgrcv ($$$$$)
 msgsnd ($$$)
 my undef
-ne ($$)
+ne undef
 next undef
 no undef
-not ($)
+not ($;)
 oct (_)
 open (*;$@)
 opendir (*$)
-or ()
+or undef
 ord (_)
 our undef
 pack ($@)
 package undef
 pipe (**)
-pop (;\@)
+pop (;+)
 pos undef
 print undef
 printf undef
 prototype undef
-push (\@@)
+push (+@)
 q undef
 qq undef
 qr undef
@@ -190,7 +201,7 @@ say undef
 scalar undef
 seek (*$$)
 seekdir (*$)
-select (;*)
+select undef
 semctl ($$$$)
 semget ($$$)
 semop ($$)
@@ -204,7 +215,7 @@ setprotoent ($)
 setpwent ()
 setservent ($)
 setsockopt (*$$$)
-shift (;\@)
+shift (;+)
 shmctl ($$$)
 shmget ($$$)
 shmread ($$$$)
@@ -215,12 +226,12 @@ sleep (;$)
 socket (*$$$)
 socketpair (**$$$)
 sort undef
-splice (\@;$$@)
+splice (+;$$@)
 split undef
 sprintf ($@)
 sqrt (_)
 srand (;$)
-stat (*)
+stat (;*)
 state undef
 study undef
 sub undef
@@ -234,8 +245,8 @@ system undef
 syswrite (*$;$$)
 tell (;*)
 telldir (*)
-tie undef
-tied undef
+tie (\[$@%*]$@)
+tied (\[$@%*])
 time ()
 times ()
 tr undef
@@ -246,13 +257,13 @@ umask (;$)
 undef undef
 unless undef
 unlink (@)
-unpack ($;$)
-unshift (\@@)
-untie undef
+unpack ($_)
+unshift (+@)
+untie (\[$@%*])
 until undef
 use undef
 utime (@)
-values (\[@%])
+values (+)
 vec ($$$)
 wait ()
 waitpid ($$)
@@ -261,6 +272,6 @@ warn (@)
 when undef
 while undef
 write (;*)
-x unknown
-xor ($$)
+x undef
+xor undef
 y undef

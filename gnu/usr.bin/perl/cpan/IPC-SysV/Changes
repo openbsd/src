@@ -1,3 +1,15 @@
+2.03 - 2010-05-23
+
+    * fix CPAN #57530: IPC::Msg Documentation Bug
+      (thanks to Jonathan Hartzog for spotting this)
+
+2.02 - 2010-03-07
+
+    * fix CPAN #50762: mistaken use of $[
+      (thanks to Zefram for spotting this)
+    * no need to specify an empty MAN3PODS in the core anymore
+      (thanks to Nicholas Clark for providing a patch)
+
 2.01 - 2009-03-15
 
     released without changes

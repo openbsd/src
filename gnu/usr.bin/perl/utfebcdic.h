@@ -1,13 +1,13 @@
 /*    utfebcdic.h
  *
- *    Copyright (C) 2001, 2002, 2003, 2005, 2006, 2007, 2009 by Larry Wall,
- *    Nick Ing-Simmons, and others
+ *    Copyright (C) 2001, 2002, 2003, 2005, 2006, 2007, 2009,
+ *    2010, 2011 by Larry Wall, Nick Ing-Simmons, and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
  * Macros to implement UTF-EBCDIC as perl's internal encoding
- * Taken from version 7.1 of Unicode Techical Report #16:
+ * Taken from version 7.1 of Unicode Technical Report #16:
  *  http://www.unicode.org/unicode/reports/tr16
  *
  * To summarize, the way it works is:
@@ -36,7 +36,7 @@
  *	ordinal value of 'A' is 193 in EBCDIC, and also is 193 in UTF-EBCDIC.
  *	Step 1) converts it to 65, Step 2 leaves it at 65, and Step 3 converts
  *	it back to 193.  As an example of how a variant character works, take
- *	LATIN SMALL LETTER Y WITH DIAERESIS, which is typicially 0xDF in
+ *	LATIN SMALL LETTER Y WITH DIAERESIS, which is typically 0xDF in
  *	EBCDIC.  Step 1 converts it to the Unicode value, 0xFF.  Step 2
  *	converts that to two bytes = 11000111 10111111 = C7 BF, and Step 3
  *	converts those to 0x8B 0x73.  The table is constructed so that the
@@ -81,7 +81,7 @@ START_EXTERN_C
 #ifdef DOINIT
 /* Indexed by encoded byte this table gives the length of the sequence.
    Adapted from the shadow flags table in tr16.
-   The entries marked 9 in tr6 are continuation bytes and are marked
+   The entries marked 9 in tr16 are continuation bytes and are marked
    as length 1 here so that we can recover.
 */
 #if '^' == 95   /* if defined(__MVS__) || defined(??) (VM/ESA?) 1047 */
@@ -272,7 +272,7 @@ unsigned char PL_e2utf[] = { /* EBCDIC (IBM-037) to I8 */
 #endif          /* 037 */
 
 /* These tables moved from perl.h and converted to hex.
-   They map platfrom code page from/to bottom 256 codes of Unicode (i.e. iso-8859-1).
+   They map platform code page from/to bottom 256 codes of Unicode (i.e. iso-8859-1).
 */
 
 #if '^' == 95   /* if defined(__MVS__) || defined(??) (VM/ESA?) 1047 */
@@ -298,6 +298,8 @@ EXTCONST unsigned char PL_a2e[] = { /* ASCII (iso-8859-1) to EBCDIC (IBM-1047) *
 #define LATIN_SMALL_LETTER_Y_WITH_DIAERESIS 0xDF
 #define LATIN_SMALL_LETTER_SHARP_S 0x59
 #define MICRO_SIGN 0xA0
+#define LATIN_CAPITAL_LETTER_A_WITH_RING_ABOVE 0x0067
+#define LATIN_SMALL_LETTER_A_WITH_RING_ABOVE 0x0047
 
 EXTCONST unsigned char PL_e2a[] = { /* EBCDIC (IBM-1047) to ASCII (iso-8859-1) */
  0x00, 0x01, 0x02, 0x03, 0x9C, 0x09, 0x86, 0x7F, 0x97, 0x8D, 0x8E, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
@@ -316,6 +318,42 @@ EXTCONST unsigned char PL_e2a[] = { /* EBCDIC (IBM-1047) to ASCII (iso-8859-1) *
  0x7D, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0xB9, 0xFB, 0xFC, 0xF9, 0xFA, 0xFF,
  0x5C, 0xF7, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0xB2, 0xD4, 0xD6, 0xD2, 0xD3, 0xD5,
  0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0xB3, 0xDB, 0xDC, 0xD9, 0xDA, 0x9F
+};
+
+EXTCONST unsigned char PL_fold[] = { /* fast EBCDIC case folding table, 'A' =>
+					'a'; 'a' => 'A' */
+	0,	1,	2,	3,	4,	5,	6,	7,
+	8,	9,	10,	11,	12,	13,	14,	15,
+	16,	17,	18,	19,	20,	21,	22,	23,
+	24,	25,	26,	27,	28,	29,	30,	31,
+	32,	33,	34,	35,	36,	37,	38,	39,
+	40,	41,	42,	43,	44,	45,	46,	47,
+	48,	49,	50,	51,	52,	53,	54,	55,
+	56,	57,	58,	59,	60,	61,	62,	63,
+	64,	65,	98,	99,	100,	101,	102,	103,
+	104,	105,	74,	75,	76,	77,	78,	79,
+	80,	113,	114,	115,	116,	117,	118,	119,
+	120,	89,	90,	91,	92,	93,	94,	95,
+	96,	97,	66,	67,	68,	69,	70,	71,
+	72,	73,	106,	107,	108,	109,	110,	111,
+	128,	81,	82,	83,	84,	85,	86,	87,
+	88,	121,	122,	123,	124,	125,	126,	127,
+	112,	'A',	'B',	'C',	'D',	'E',	'F',	'G',
+	'H',	'I',	138,	139,	172,	186,	174,	143,
+	144,	'J',	'K',	'L',	'M',	'N',	'O',	'P',
+	'Q',	'R',	154,	155,	158,	157,	156,	159,
+	160,	161,	'S',	'T',	'U',	'V',	'W',	'X',
+	'Y',	'Z',	170,	171,	140,	173,	142,	175,
+	176,	177,	178,	179,	180,	181,	182,	183,
+	184,	185,	141,	187,	188,	189,	190,	191,
+	192,	'a',	'b',	'c',	'd',	'e',	'f',	'g',
+	'h',	'i',	202,	235,	236,	237,	238,	239,
+	208,	'j',	'k',	'l',	'm',	'n',	'o',	'p',
+	'q',	'r',	218,	251,	252,	253,	254,	223,
+	224,	225,	's',	't',	'u',	'v',	'w',	'x',
+	'y',	'z',	234,	203,	204,	205,	206,	207,
+	240,	241,	242,	243,	244,	245,	246,	247,
+	248,	249,	250,	219,	220,	221,	222,	255
 };
 #endif /* 1047 */
 
@@ -342,6 +380,8 @@ EXTCONST unsigned char PL_a2e[] = { /* ASCII (ISO8859-1) to EBCDIC (POSIX-BC) */
 #define LATIN_SMALL_LETTER_Y_WITH_DIAERESIS 0xDF
 #define LATIN_SMALL_LETTER_SHARP_S 0x59
 #define MICRO_SIGN 0xA0
+#define LATIN_CAPITAL_LETTER_A_WITH_RING_ABOVE 0x0067
+#define LATIN_SMALL_LETTER_A_WITH_RING_ABOVE 0x0047
 
 EXTCONST unsigned char PL_e2a[] = { /* EBCDIC (POSIX-BC) to ASCII (ISO8859-1) */
  0x00, 0x01, 0x02, 0x03, 0x9C, 0x09, 0x86, 0x7F, 0x97, 0x8D, 0x8E, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
@@ -360,6 +400,42 @@ EXTCONST unsigned char PL_e2a[] = { /* EBCDIC (POSIX-BC) to ASCII (ISO8859-1) */
  0xA6, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0xB9, 0xFB, 0xFC, 0xDB, 0xFA, 0xFF,
  0xD9, 0xF7, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0xB2, 0xD4, 0xD6, 0xD2, 0xD3, 0xD5,
  0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0xB3, 0x7B, 0xDC, 0x7D, 0xDA, 0x7E
+};
+
+EXTCONST unsigned char PL_fold[] = { /* fast EBCDIC case folding table, 'A' =>
+					'a'; 'a' => 'A' */
+	0,	1,	2,	3,	4,	5,	6,	7,
+	8,	9,	10,	11,	12,	13,	14,	15,
+	16,	17,	18,	19,	20,	21,	22,	23,
+	24,	25,	26,	27,	28,	29,	30,	31,
+	32,	33,	34,	35,	36,	37,	38,	39,
+	40,	41,	42,	43,	44,	45,	46,	47,
+	48,	49,	50,	51,	52,	53,	54,	55,
+	56,	57,	58,	59,	60,	61,	62,	63,
+	64,	65,	98,	99,	100,	101,	102,	103,
+	104,	105,	74,	75,	76,	77,	78,	79,
+	80,	113,	114,	115,	116,	117,	118,	119,
+	120,	89,	90,	91,	92,	93,	94,	95,
+	96,	97,	66,	67,	68,	69,	70,	71,
+	72,	73,	106,	107,	108,	109,	110,	111,
+	128,	81,	82,	83,	84,	85,	86,	87,
+	88,	121,	122,	123,	124,	125,	126,	127,
+	112,	'A',	'B',	'C',	'D',	'E',	'F',	'G',
+	'H',	'I',	138,	139,	172,	173,	174,	143,
+	144,	'J',	'K',	'L',	'M',	'N',	'O',	'P',
+	'Q',	'R',	154,	155,	158,	157,	156,	159,
+	160,	161,	'S',	'T',	'U',	'V',	'W',	'X',
+	'Y',	'Z',	170,	171,	140,	141,	142,	175,
+	176,	177,	178,	179,	180,	181,	182,	183,
+	184,	185,	186,	187,	188,	189,	190,	191,
+	224,	'a',	'b',	'c',	'd',	'e',	'f',	'g',
+	'h',	'i',	202,	235,	236,	237,	238,	239,
+	208,	'j',	'k',	'l',	'm',	'n',	'o',	'p',
+	'q',	'r',	218,	221,	252,	219,	254,	223,
+	192,	225,	's',	't',	'u',	'v',	'w',	'x',
+	'y',	'z',	234,	203,	204,	205,	206,	207,
+	240,	241,	242,	243,	244,	245,	246,	247,
+	248,	249,	250,	251,	220,	253,	222,	255
 };
 #endif          /* POSIX-BC */
 
@@ -387,6 +463,8 @@ EXTCONST unsigned char PL_a2e[] = { /* ASCII (ISO8859-1) to EBCDIC (IBM-037) */
 #define LATIN_SMALL_LETTER_Y_WITH_DIAERESIS 0xDF
 #define LATIN_SMALL_LETTER_SHARP_S 0x59
 #define MICRO_SIGN 0xA0
+#define LATIN_CAPITAL_LETTER_A_WITH_RING_ABOVE 0x0067
+#define LATIN_SMALL_LETTER_A_WITH_RING_ABOVE 0x0047
 
 EXTCONST unsigned char PL_e2a[] = { /* EBCDIC (IBM-037) to ASCII (ISO8859-1) */
  0x00, 0x01, 0x02, 0x03, 0x9C, 0x09, 0x86, 0x7F, 0x97, 0x8D, 0x8E, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
@@ -406,6 +484,42 @@ EXTCONST unsigned char PL_e2a[] = { /* EBCDIC (IBM-037) to ASCII (ISO8859-1) */
  0x5C, 0xF7, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0xB2, 0xD4, 0xD6, 0xD2, 0xD3, 0xD5,
  0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0xB3, 0xDB, 0xDC, 0xD9, 0xDA, 0x9F
 };
+
+EXTCONST unsigned char PL_fold[] = { /* fast EBCDIC case folding table, 'A' =>
+					'a'; 'a' => 'A' */
+	0,	1,	2,	3,	4,	5,	6,	7,
+	8,	9,	10,	11,	12,	13,	14,	15,
+	16,	17,	18,	19,	20,	21,	22,	23,
+	24,	25,	26,	27,	28,	29,	30,	31,
+	32,	33,	34,	35,	36,	37,	38,	39,
+	40,	41,	42,	43,	44,	45,	46,	47,
+	48,	49,	50,	51,	52,	53,	54,	55,
+	56,	57,	58,	59,	60,	61,	62,	63,
+	64,	65,	98,	99,	100,	101,	102,	103,
+	104,	105,	74,	75,	76,	77,	78,	79,
+	80,	113,	114,	115,	116,	117,	118,	119,
+	120,	89,	90,	91,	92,	93,	94,	95,
+	96,	97,	66,	67,	68,	69,	70,	71,
+	72,	73,	106,	107,	108,	109,	110,	111,
+	128,	81,	82,	83,	84,	85,	86,	87,
+	88,	121,	122,	123,	124,	125,	126,	127,
+	112,	'A',	'B',	'C',	'D',	'E',	'F',	'G',
+	'H',	'I',	138,	139,	172,	173,	174,	143,
+	144,	'J',	'K',	'L',	'M',	'N',	'O',	'P',
+	'Q',	'R',	154,	155,	158,	157,	156,	159,
+	160,	161,	'S',	'T',	'U',	'V',	'W',	'X',
+	'Y',	'Z',	170,	171,	140,	141,	142,	175,
+	176,	177,	178,	179,	180,	181,	182,	183,
+	184,	185,	186,	187,	188,	189,	190,	191,
+	192,	'a',	'b',	'c',	'd',	'e',	'f',	'g',
+	'h',	'i',	202,	235,	236,	237,	238,	239,
+	208,	'j',	'k',	'l',	'm',	'n',	'o',	'p',
+	'q',	'r',	218,	251,	252,	253,	254,	223,
+	224,	225,	's',	't',	'u',	'v',	'w',	'x',
+	'y',	'z',	234,	203,	204,	205,	206,	207,
+	240,	241,	242,	243,	244,	245,	246,	247,
+	248,	249,	250,	219,	220,	221,	222,	255
+};
 #endif          /* 037 */
 
 #else
@@ -414,7 +528,12 @@ EXTCONST unsigned char PL_e2utf[];
 EXTCONST unsigned char PL_utf2e[];
 EXTCONST unsigned char PL_e2a[];
 EXTCONST unsigned char PL_a2e[];
+EXTCONST unsigned char PL_fold[];
 #endif
+
+/* Since the EBCDIC code pages are isomorphic to Latin1, that table is merely a
+ * duplicate */
+EXTCONST unsigned char * PL_fold_latin1 = PL_fold;
 
 END_EXTERN_C
 
@@ -423,9 +542,11 @@ END_EXTERN_C
 /* Native to iso-8859-1 */
 #define NATIVE_TO_ASCII(ch)      PL_e2a[(U8)(ch)]
 #define ASCII_TO_NATIVE(ch)      PL_a2e[(U8)(ch)]
-/* Transform after encoding */
-#define NATIVE_TO_UTF(ch)        PL_e2utf[(U8)(ch)]
-#define UTF_TO_NATIVE(ch)        PL_utf2e[(U8)(ch)]
+/* Transform after encoding, essentially converts to/from I8 */
+#define NATIVE_TO_UTF(ch)        PL_e2utf[(U8)(ch)]	/* to I8 */
+#define NATIVE_TO_I8(ch)         NATIVE_TO_UTF(ch)	/* synonym */
+#define UTF_TO_NATIVE(ch)        PL_utf2e[(U8)(ch)]	/* from I8 */
+#define I8_TO_NATIVE(ch)         UTF_TO_NATIVE(ch)	/* synonym */
 /* Transform in wide UV char space */
 #define NATIVE_TO_UNI(ch)        (((ch) > 255) ? (ch) : NATIVE_TO_ASCII(ch))
 #define UNI_TO_NATIVE(ch)        (((ch) > 255) ? (ch) : ASCII_TO_NATIVE(ch))
@@ -463,10 +584,11 @@ END_EXTERN_C
 
 #define UNI_IS_INVARIANT(c)		((c) <  0xA0)
 /* UTF-EBCDIC semantic macros - transform back into I8 and then compare */
-#define UTF8_IS_START(c)		(NATIVE_TO_UTF(c) >= 0xA0 && (NATIVE_TO_UTF(c) & 0xE0) != 0xA0)
+
+#define UTF8_IS_START(c)		(NATIVE_TO_UTF(c) >= 0xC5 && NATIVE_TO_UTF(c) != 0xE0)
 #define UTF8_IS_CONTINUATION(c)		((NATIVE_TO_UTF(c) & 0xE0) == 0xA0)
 #define UTF8_IS_CONTINUED(c) 		(NATIVE_TO_UTF(c) >= 0xA0)
-#define UTF8_IS_DOWNGRADEABLE_START(c)	(NATIVE_TO_UTF(c) >= 0xA0 && (NATIVE_TO_UTF(c) & 0xF8) == 0xC0)
+#define UTF8_IS_DOWNGRADEABLE_START(c)	(NATIVE_TO_UTF(c) >= 0xC5 && NATIVE_TO_UTF(c) <= 0xC7)
 
 #define UTF_START_MARK(len) (((len) >  7) ? 0xFF : ((U8)(0xFE << (7-(len)))))
 #define UTF_START_MASK(len) (((len) >= 6) ? 0x01 : (0x1F >> ((len)-2)))

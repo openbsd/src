@@ -84,9 +84,10 @@ ok($h{sv}, 4711);
 &Devel::PPPort::sv_usepvn_mg($h{sv}, 'Perl');
 ok($h{sv}, 'Perl');
 
-my $ver = eval qq[qv("v1.2.0")];
-ok($[ < 5.009 || $@ eq '');
-ok($@ || Devel::PPPort::SvVSTRING_mg($ver));
+# v1 is treated as a bareword in older perls...
+my $ver = do { local $SIG{'__WARN__'} = sub {}; eval qq[v1.2.0] };
+ok($] < 5.009 || $@ eq '');
+ok($] < 5.009 || Devel::PPPort::SvVSTRING_mg($ver));
 ok(!Devel::PPPort::SvVSTRING_mg(4711));
 
 my $foo = 'bar';

@@ -1,3 +1,4 @@
+
 BEGIN {
     unless ("A" eq pack('U', 0x41)) {
 	print "1..0 # Unicode::Collate " .
@@ -10,12 +11,24 @@ BEGIN {
     }
 }
 
-use Test;
-BEGIN { plan tests => 40 };
-
 use strict;
 use warnings;
+BEGIN { $| = 1; print "1..74\n"; }
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Collate;
+
+ok(1);
+
+#########################
 
 our $kjeEntry = <<'ENTRIES';
 0301  ; [.0000.0032.0002.0301] # COMBINING ACUTE ACCENT
@@ -45,8 +58,6 @@ ENTRIES
 
 #########################
 
-ok(1);
-
 my $kjeNoN = Unicode::Collate->new(
     level => 1,
     table => undef,
@@ -54,16 +65,18 @@ my $kjeNoN = Unicode::Collate->new(
     entry => $kjeEntry,
 );
 
-ok($kjeNoN->lt("\x{043A}", "\x{043A}\x{0301}"));
-ok($kjeNoN->gt("\x{045C}", "\x{043A}\x{0334}\x{0301}"));
-ok($kjeNoN->eq("\x{043A}", "\x{043A}\x{0334}\x{0301}"));
-ok($kjeNoN->eq("\x{045C}", "\x{043A}\x{0301}\x{0334}"));
+ok($kjeNoN->lt("\x{43A}", "\x{43A}\x{301}"));
+ok($kjeNoN->gt("\x{45C}", "\x{43A}\x{334}\x{301}"));
+ok($kjeNoN->eq("\x{43A}", "\x{43A}\x{334}\x{301}"));
+ok($kjeNoN->eq("\x{45C}", "\x{43A}\x{301}\x{334}"));
+
+# 5
 
 our %sortkeys;
 
-$sortkeys{'KAac'} = $kjeNoN->viewSortKey("\x{043A}\x{0301}");
-$sortkeys{'KAta'} = $kjeNoN->viewSortKey("\x{043A}\x{0334}\x{0301}");
-$sortkeys{'KAat'} = $kjeNoN->viewSortKey("\x{043A}\x{0301}\x{0334}");
+$sortkeys{'KAac'} = $kjeNoN->viewSortKey("\x{43A}\x{301}");
+$sortkeys{'KAta'} = $kjeNoN->viewSortKey("\x{43A}\x{334}\x{301}");
+$sortkeys{'KAat'} = $kjeNoN->viewSortKey("\x{43A}\x{301}\x{334}");
 
 eval { require Unicode::Normalize };
 if (!$@) {
@@ -72,10 +85,12 @@ if (!$@) {
 	table => undef,
 	entry => $kjeEntry,
     );
-ok($kjeNFD->lt("\x{043A}", "\x{043A}\x{0301}"));
-ok($kjeNFD->eq("\x{045C}", "\x{043A}\x{0334}\x{0301}"));
-ok($kjeNFD->lt("\x{043A}", "\x{043A}\x{0334}\x{0301}"));
-ok($kjeNFD->eq("\x{045C}", "\x{043A}\x{0301}\x{0334}"));
+
+ok($kjeNFD->lt("\x{43A}", "\x{43A}\x{301}"));
+ok($kjeNFD->eq("\x{45C}", "\x{43A}\x{334}\x{301}"));
+ok($kjeNFD->lt("\x{43A}", "\x{43A}\x{334}\x{301}"));
+ok($kjeNFD->eq("\x{45C}", "\x{43A}\x{301}\x{334}"));
+# 9
 
     my $aaNFD = Unicode::Collate->new(
 	level => 1,
@@ -91,6 +106,7 @@ ok($aaNFD->lt("Z", "A\x{327}\x{30A}"));
 ok($aaNFD->lt("Z", "A\x{30A}\x{327}"));
 ok($aaNFD->lt("Z", "A\x{31A}\x{30A}"));
 ok($aaNFD->lt("Z", "A\x{30A}\x{31A}"));
+# 17
 
     my $aaPre = Unicode::Collate->new(
 	level => 1,
@@ -107,20 +123,22 @@ ok($aaPre->lt("Z", "A\x{327}\x{30A}"));
 ok($aaPre->lt("Z", "A\x{30A}\x{327}"));
 ok($aaPre->lt("Z", "A\x{31A}\x{30A}"));
 ok($aaPre->lt("Z", "A\x{30A}\x{31A}"));
-}
-else {
-  ok(1) for 1..20;
+# 25
+} else {
+    ok(1) for 1..20;
 }
 
 # again: loading Unicode::Normalize should not affect $kjeNoN.
-ok($kjeNoN->lt("\x{043A}", "\x{043A}\x{0301}"));
-ok($kjeNoN->gt("\x{045C}", "\x{043A}\x{0334}\x{0301}"));
-ok($kjeNoN->eq("\x{043A}", "\x{043A}\x{0334}\x{0301}"));
-ok($kjeNoN->eq("\x{045C}", "\x{043A}\x{0301}\x{0334}"));
+ok($kjeNoN->lt("\x{43A}", "\x{43A}\x{301}"));
+ok($kjeNoN->gt("\x{45C}", "\x{43A}\x{334}\x{301}"));
+ok($kjeNoN->eq("\x{43A}", "\x{43A}\x{334}\x{301}"));
+ok($kjeNoN->eq("\x{45C}", "\x{43A}\x{301}\x{334}"));
 
-ok($sortkeys{'KAac'}, $kjeNoN->viewSortKey("\x{043A}\x{0301}"));
-ok($sortkeys{'KAta'}, $kjeNoN->viewSortKey("\x{043A}\x{0334}\x{0301}"));
-ok($sortkeys{'KAat'}, $kjeNoN->viewSortKey("\x{043A}\x{0301}\x{0334}"));
+ok($sortkeys{'KAac'}, $kjeNoN->viewSortKey("\x{43A}\x{301}"));
+ok($sortkeys{'KAta'}, $kjeNoN->viewSortKey("\x{43A}\x{334}\x{301}"));
+ok($sortkeys{'KAat'}, $kjeNoN->viewSortKey("\x{43A}\x{301}\x{334}"));
+
+# 32
 
 my $aaNoN = Unicode::Collate->new(
     level => 1,
@@ -138,3 +156,115 @@ ok($aaNoN->lt("Z", "A\x{30A}\x{327}"));
 ok($aaNoN->eq("A", "A\x{31A}\x{30A}"));
 ok($aaNoN->lt("Z", "A\x{30A}\x{31A}"));
 
+# 40
+
+# suppress contractions (not affected)
+
+my $kjeSup = Unicode::Collate->new(
+    level => 1,
+    table => undef,
+    normalization => undef,
+    entry => $kjeEntry,
+    suppress => [0x400..0x45F],
+);
+
+ok($kjeSup->lt("\x{43A}", "\x{43A}\x{301}"));
+ok($kjeSup->eq("\x{45C}", "\x{43A}\x{301}"));
+ok($kjeSup->lt("\x{41A}", "\x{41A}\x{301}"));
+ok($kjeSup->eq("\x{40C}", "\x{41A}\x{301}"));
+
+# 44
+
+our $tibetanEntry = <<'ENTRIES';
+0000  ; [.0000.0000.0000.0000] # [0000] NULL (in 6429)
+0F71           ; [.206D.0020.0002.0F71] # TIBETAN VOWEL SIGN AA
+0F72           ; [.206E.0020.0002.0F72] # TIBETAN VOWEL SIGN I
+0F73           ; [.206F.0020.0002.0F73] # TIBETAN VOWEL SIGN II
+0F71 0F72      ; [.206F.0020.0002.0F73] # TIBETAN VOWEL SIGN II
+0F80           ; [.2070.0020.0002.0F80] # TIBETAN VOWEL SIGN REVERSED I
+0F81           ; [.2071.0020.0002.0F81] # TIBETAN VOWEL SIGN REVERSED II
+0F71 0F80      ; [.2071.0020.0002.0F81] # TIBETAN VOWEL SIGN REVERSED II
+0F74           ; [.2072.0020.0002.0F74] # TIBETAN VOWEL SIGN U
+0F75           ; [.2073.0020.0002.0F75] # TIBETAN VOWEL SIGN UU
+0F71 0F74      ; [.2073.0020.0002.0F75] # TIBETAN VOWEL SIGN UU
+0F76           ; [.2074.0020.0002.0F76] # TIBETAN VOWEL SIGN VOCALIC R
+0FB2 0F80      ; [.2074.0020.0002.0F76] # TIBETAN VOWEL SIGN VOCALIC R
+0F77           ; [.2075.0020.0002.0F77] # TIBETAN VOWEL SIGN VOCALIC RR
+0FB2 0F81      ; [.2075.0020.0002.0F77] # TIBETAN VOWEL SIGN VOCALIC RR
+0FB2 0F71 0F80 ; [.2075.0020.0002.0F77] # TIBETAN VOWEL SIGN VOCALIC RR
+0F78           ; [.2076.0020.0002.0F78] # TIBETAN VOWEL SIGN VOCALIC L
+0FB3 0F80      ; [.2076.0020.0002.0F78] # TIBETAN VOWEL SIGN VOCALIC L
+0F79           ; [.2077.0020.0002.0F79] # TIBETAN VOWEL SIGN VOCALIC LL
+0FB3 0F81      ; [.2077.0020.0002.0F79] # TIBETAN VOWEL SIGN VOCALIC LL
+0FB3 0F71 0F80 ; [.2077.0020.0002.0F79] # TIBETAN VOWEL SIGN VOCALIC LL
+ENTRIES
+
+# ccc(0F71) = 129
+# ccc(0F80) = 130
+# 0F76 = 0FB2 0F80
+# 0F78 = 0FB3 0F80
+# 0F81 = 0F71 0F80
+# 0F77 = <compat> 0FB2 0F81 = 0FB2 0F71 0F80 = 0F76 0F71
+# 0F79 = <compat> 0FB3 0F81 = 0FB3 0F71 0F80 = 0F78 0F71
+
+eval { require Unicode::Normalize };
+if (!$@) {
+    my $tibNFD = Unicode::Collate->new(
+	table => undef,
+	entry => $tibetanEntry,
+    );
+
+    # VOCALIC RR
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{334}\x{F81}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{F81}\x{334}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{F81}\0\x{334}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{F76}\x{334}\x{F71}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{F76}\x{F71}\x{334}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{F76}\x{F71}\0\x{334}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{334}\x{F71}\x{F80}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{F71}\x{334}\x{F80}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{F71}\x{F80}\x{334}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{F71}\x{F80}\0\x{334}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{334}\x{F80}\x{F71}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{F80}\x{334}\x{F71}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{F80}\x{F71}\x{334}"));
+    ok($tibNFD->eq("\x{F77}\0\x{334}", "\x{FB2}\x{F80}\x{F71}\0\x{334}"));
+# 58
+
+    # VOCALIC LL
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{334}\x{F81}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F81}\x{334}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F81}\0\x{334}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{F78}\x{334}\x{F71}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{F78}\x{F71}\x{334}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{F78}\x{F71}\0\x{334}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{334}\x{F71}\x{F80}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F71}\x{334}\x{F80}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F71}\x{F80}\x{334}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F71}\x{F80}\0\x{334}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{334}\x{F80}\x{F71}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F80}\x{334}\x{F71}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F80}\x{F71}\x{334}"));
+    ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F80}\x{F71}\0\x{334}"));
+# 72
+
+    my $discontNFD = Unicode::Collate->new(
+	table => undef,
+	entry => <<'ENTRIES',
+0000  ; [.0000.0000.0000.0000] # [0000] NULL (in 6429)
+0301  ; [.0000.0032.0002.0301] # COMBINING ACUTE ACCENT
+0300  ; [.0000.0035.0002.0300] # COMBINING GRAVE ACCENT
+0327  ; [.0000.0055.0002.0327] # COMBINING CEDILLA
+0334  ; [.0000.008B.0002.0334] # COMBINING TILDE OVERLAY
+0041  ; [.0101.0020.0008.0041] # LATIN CAPITAL LETTER A
+0041 0327 0301 ; [.0102.0020.0008.0041]
+0041 0300 ; [.0103.0020.0008.0041]
+ENTRIES
+    );
+
+    ok($discontNFD->eq("A\x{327}\x{301}\0\x{334}", "A\x{334}\x{327}\x{301}"));
+    ok($discontNFD->eq("A\x{300}\0\x{327}",        "A\x{327}\x{300}"));
+} else {
+    ok(1) for 1..30;
+}
+# 74

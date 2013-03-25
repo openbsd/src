@@ -13,7 +13,7 @@ use strict;
 
 use Pod::Simple::Search;
 use Test;
-BEGIN { plan tests => 7 }
+BEGIN { plan tests => 11 }
 
 print "# ", __FILE__,
  ": Testing the surveying of a single specified docroot...\n";
@@ -21,7 +21,7 @@ print "# ", __FILE__,
 my $x = Pod::Simple::Search->new;
 die "Couldn't make an object!?" unless ok defined $x;
 
-print "# Testing the surveying of the current directory...\n";
+print "# Testing the surveying of a single docroot...\n";
 
 $x->inc(0);
 
@@ -74,6 +74,32 @@ ok $names, "Blorm|Zonk::Pronk|hinkhonk::Glunk|hinkhonk::Vliff|perlflif|perlthng|
 {
 my $names = join "|", sort keys %$name2where;
 ok $names, "Blorm|Zonk::Pronk|hinkhonk::Glunk|hinkhonk::Vliff|perlflif|perlthng|squaa|squaa::Glunk|squaa::Vliff|zikzik";
+}
+
+ok( ($name2where->{'squaa'} || 'huh???'), '/squaa\.pm$/');
+
+ok grep( m/squaa\.pm/, keys %$where2name ), 1;
+
+###### Now with recurse(0)
+
+print "# Testing the surveying of a single docroot without recursing...\n";
+
+$x->recurse(0);
+($name2where, $where2name) = $x->survey($here);
+
+$p = pretty( $where2name, $name2where )."\n";
+$p =~ s/, +/,\n/g;
+$p =~ s/^/#  /mg;
+print $p;
+
+{
+my $names = join "|", sort values %$where2name;
+ok $names, "Blorm|squaa|zikzik";
+}
+
+{
+my $names = join "|", sort keys %$name2where;
+ok $names, "Blorm|squaa|zikzik";
 }
 
 ok( ($name2where->{'squaa'} || 'huh???'), '/squaa\.pm$/');

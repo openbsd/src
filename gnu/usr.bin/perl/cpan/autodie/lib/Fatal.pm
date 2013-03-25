@@ -5,6 +5,7 @@ use Carp;
 use strict;
 use warnings;
 use Tie::RefHash;   # To cache subroutine refs
+use Config;
 
 use constant PERL510     => ( $] >= 5.010 );
 
@@ -39,7 +40,7 @@ use constant ERROR_58_HINTS => q{Non-subroutine %s hints for %s are not supporte
 use constant MIN_IPC_SYS_SIMPLE_VER => 0.12;
 
 # All the Fatal/autodie modules share the same version number.
-our $VERSION = '2.06_01';
+our $VERSION = '2.10';
 
 our $Debug ||= 0;
 
@@ -52,6 +53,10 @@ our %_EWOULDBLOCK = (
     MSWin32 => 33,
 );
 
+# the linux parisc port has separate EAGAIN and EWOULDBLOCK,
+# and the kernel returns EAGAIN
+my $try_EAGAIN = ($^O eq 'linux' and $Config{archname} =~ /hppa|parisc/) ? 1 : 0;
+
 # We have some tags that can be passed in for use with import.
 # These are all assumed to be CORE::
 
@@ -60,7 +65,7 @@ my %TAGS = (
                        read seek sysread syswrite sysseek )],
     ':dbm'     => [qw(dbmopen dbmclose)],
     ':file'    => [qw(open close flock sysopen fcntl fileno binmode
-                     ioctl truncate)],
+                     ioctl truncate chmod)],
     ':filesys' => [qw(opendir closedir chdir link unlink rename mkdir
                       symlink rmdir readlink umask)],
     ':ipc'     => [qw(:msg :semaphore :shm pipe)],
@@ -84,25 +89,36 @@ my %TAGS = (
 
     ':default' => [qw(:io :threads)],
 
+    # Everything in v2.07 and brefore. This was :default less chmod.
+    ':v207'    => [qw(:threads :dbm :filesys :ipc :socket read seek sysread
+                   syswrite sysseek open close flock sysopen fcntl fileno
+                   binmode ioctl truncate)],
+
     # Version specific tags.  These allow someone to specify
     # use autodie qw(:1.994) and know exactly what they'll get.
 
-    ':1.994' => [qw(:default)],
-    ':1.995' => [qw(:default)],
-    ':1.996' => [qw(:default)],
-    ':1.997' => [qw(:default)],
-    ':1.998' => [qw(:default)],
-    ':1.999' => [qw(:default)],
-    ':1.999_01' => [qw(:default)],
-    ':2.00'  => [qw(:default)],
-    ':2.01'  => [qw(:default)],
-    ':2.02'  => [qw(:default)],
-    ':2.03'  => [qw(:default)],
-    ':2.04'  => [qw(:default)],
-    ':2.05'  => [qw(:default)],
-    ':2.06'  => [qw(:default)],
-    ':2.06_01' => [qw(:default)],
+    ':1.994' => [qw(:v207)],
+    ':1.995' => [qw(:v207)],
+    ':1.996' => [qw(:v207)],
+    ':1.997' => [qw(:v207)],
+    ':1.998' => [qw(:v207)],
+    ':1.999' => [qw(:v207)],
+    ':1.999_01' => [qw(:v207)],
+    ':2.00'  => [qw(:v207)],
+    ':2.01'  => [qw(:v207)],
+    ':2.02'  => [qw(:v207)],
+    ':2.03'  => [qw(:v207)],
+    ':2.04'  => [qw(:v207)],
+    ':2.05'  => [qw(:v207)],
+    ':2.06'  => [qw(:v207)],
+    ':2.06_01' => [qw(:v207)],
+    ':2.07'  => [qw(:v207)],     # Last release without chmod
+    ':2.08'  => [qw(:default)],
+    ':2.09'  => [qw(:default)],
+    ':2.10'  => [qw(:default)],
 );
+
+# chmod was only introduced in 2.07
 
 $TAGS{':all'}  = [ keys %TAGS ];
 
@@ -168,6 +184,7 @@ my $NO_PACKAGE    = "no $PACKAGE";      # Used to detect 'no autodie'
 
 sub import {
     my $class        = shift(@_);
+    my @original_args = @_;
     my $void         = 0;
     my $lexical      = 0;
     my $insist_hints = 0;
@@ -305,6 +322,16 @@ sub import {
         push(@ { $^H{$PACKAGE_GUARD} }, autodie::Scope::Guard->new(sub {
             $class->_install_subs($pkg, \%unload_later);
         }));
+
+        # To allow others to determine when autodie was in scope,
+        # and with what arguments, we also set a %^H hint which
+        # is how we were called.
+
+        # This feature should be considered EXPERIMENTAL, and
+        # may change without notice.  Please e-mail pjf@cpan.org
+        # if you're actually using it.
+
+        $^H{autodie} = "$PACKAGE @original_args";
 
     }
 
@@ -449,8 +476,10 @@ sub unimport {
 
         while (my $item = shift @to_process) {
             if ($item =~ /^:/) {
+                # Expand :tags
                 push(@to_process, @{$TAGS{$item}} );
-            } else {
+            }
+            else {
                 push(@taglist, "CORE::$item");
             }
         }
@@ -520,7 +549,17 @@ sub _write_invocation {
             @argv = @{shift @argvs};
             $n = shift @argv;
 
-            push @out, "${else}if (\@_ == $n) {\n";
+            my $condition = "\@_ == $n";
+
+            if (@argv and $argv[-1] =~ /#_/) {
+                # This argv ends with '@' in the prototype, so it matches
+                # any number of args >= the number of expressions in the
+                # argv.
+                $condition = "\@_ >= $n";
+            }
+
+            push @out, "${else}if ($condition) {\n";
+
             $else = "\t} els";
 
         push @out, $class->_one_invocation($core,$call,$name,$void,$sub,! $lexical, $sref, @argv);
@@ -594,11 +633,11 @@ sub _one_invocation {
 
         if ($void) {
             return qq/return (defined wantarray)?$call(@argv):
-                   $call(@argv) || croak "Can't $name(\@_)/ .
-                   ($core ? ': $!' : ', \$! is \"$!\"') . '"'
+                   $call(@argv) || Carp::croak("Can't $name(\@_)/ .
+                   ($core ? ': $!' : ', \$! is \"$!\"') . '")'
         } else {
-            return qq{return $call(@argv) || croak "Can't $name(\@_)} .
-                   ($core ? ': $!' : ', \$! is \"$!\"') . '"';
+            return qq{return $call(@argv) || Carp::croak("Can't $name(\@_)} .
+                   ($core ? ': $!' : ', \$! is \"$!\"') . '")';
         }
     }
 
@@ -720,6 +759,11 @@ sub _one_invocation {
         my $EWOULDBLOCK = eval { POSIX::EWOULDBLOCK(); }
                           || $_EWOULDBLOCK{$^O}
                           || _autocroak("Internal error - can't overload flock - EWOULDBLOCK not defined on this system.");
+        my $EAGAIN = $EWOULDBLOCK;
+        if ($try_EAGAIN) {
+            $EAGAIN = eval { POSIX::EAGAIN(); }
+                          || _autocroak("Internal error - can't overload flock - EAGAIN not defined on this system.");
+        }
 
         require Fcntl;      # For Fcntl::LOCK_NB
 
@@ -735,7 +779,9 @@ sub _one_invocation {
             # If we failed, but we're using LOCK_NB and
             # returned EWOULDBLOCK, it's not a real error.
 
-            if (\$_[1] & Fcntl::LOCK_NB() and \$! == $EWOULDBLOCK ) {
+            if (\$_[1] & Fcntl::LOCK_NB() and
+                (\$! == $EWOULDBLOCK or
+                ($try_EAGAIN and \$! == $EAGAIN ))) {
                 return \$retval;
             }
 
@@ -1053,7 +1099,7 @@ sub _make_fatal {
 
         {
             local $@;
-            $code = eval("package $pkg; use Carp; $code");  ## no critic
+            $code = eval("package $pkg; require Carp; $code");  ## no critic
             $E = $@;
         }
 
@@ -1131,7 +1177,7 @@ sub _make_fatal {
             >;
         }
 
-        $leak_guard .= qq< croak "Internal error in Fatal/autodie.  Leak-guard failure"; } >;
+        $leak_guard .= qq< Carp::croak("Internal error in Fatal/autodie.  Leak-guard failure"); } >;
 
         # warn "$leak_guard\n";
 

@@ -44,7 +44,7 @@ our $opt_h and usage;
 our $opt_t;
 
 my @sources = @ARGV ? @ARGV : '.';
-die "Too many directories speficied without -t option\n"
+die "Too many directories specified without -t option\n"
     if @sources != 1 and ! $opt_t;
 
 @sources = map {
@@ -159,7 +159,7 @@ else {
 	for my $file (sort keys %{$results{$dist}}) {
 	    my ($vcore, $vcpan) = @{$results{$dist}{$file}}{@labels};
 	    if (our $opt_v or $vcore ne $vcpan) {
-		print "\n$dist:\n" unless ($distname_printed++);
+		print "\n$dist ($Modules{$dist}{MAINTAINER}):\n" unless ($distname_printed++);
 		print "\t$file: core=$vcore, cpan=$vcpan\n";
 	    }
 	}

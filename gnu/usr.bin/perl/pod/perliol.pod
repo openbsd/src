@@ -526,11 +526,12 @@ passed to C<open>, otherwise it will be 1 if for example
 C<PerlIO_open> was called.  In simple cases SvPV_nolen(*args) is the
 pathname to open.
 
-Having said all that translation-only layers do not need to provide
-C<Open()> at all, but rather leave the opening to a lower level layer
-and wait to be "pushed".  If a layer does provide C<Open()> it should
-normally call the C<Open()> method of next layer down (if any) and
-then push itself on top if that succeeds.
+If a layer provides C<Open()> it should normally call the C<Open()>
+method of next layer down (if any) and then push itself on top if that
+succeeds.  C<PerlIOBase_open> is provided to do exactly that, so in
+most cases you don't have to write your own C<Open()> method.  If this
+method is not defined, other layers may have difficulty pushing
+themselves on top of it during open.
 
 If C<PerlIO_push> was performed and open has failed, it must
 C<PerlIO_pop> itself, since if it's not, the layer won't be removed
@@ -922,7 +923,7 @@ which do not need to do anything special for a particular method.
 
 =head2 Extension Layers
 
-Layers can made available by extension modules. When an unknown layer
+Layers can be made available by extension modules. When an unknown layer
 is encountered the PerlIO code will perform the equivalent of :
 
    use PerlIO 'layer';

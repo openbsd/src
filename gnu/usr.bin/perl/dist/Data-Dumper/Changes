@@ -6,6 +6,67 @@ HISTORY - public release history for Data::Dumper
 
 =over 8
 
+=item 2.135_01 (Dec 19 2011)
+
+Make Data::Dumper UTF8- and null-clean with GVs.
+
+In Dumper.xs, use sv_newmortal() instead of sv_mortalcopy(&PL_sv_undef)
+for efficiency.
+
+Suppress compiler warning
+
+Keep verbatim pod in Data::Dumper within 80 cols
+
+=item 2.131 (May 27 2011)
+
+Essentially the same as version 2.130_02, but a production release.
+
+=item 2.130_03 (May 20 2011)
+
+Essentially the same as version 2.130_02, but a CPAN release
+for the eventual 2.131.
+
+=item 2.130_02
+
+This was only shipped with the perl core, never released to CPAN.
+
+Convert overload.t to Test::More
+
+Fix some spelling errors
+
+Fix some compiler warnings
+
+Fix an out of bounds write in Data-Dumper with malformed utf8 input
+
+=item 2.130 (Nov 20 2010)
+
+C<Dumpxs> can now handle malformed UTF-8.
+
+=item 2.129 (Oct 20 2010)
+
+C<Dumpxs> no longer crashes with globs returned by C<*$io_ref>
+[perl #72332].
+
+=item 2.128 (Sep 10 2010)
+
+Promote previous release to stable version with the correct version.
+
+=item 2.127 (Sep 10 2010)
+
+Promote previous release to stable version.
+
+=item 2.126_01 (Sep  6 2010)
+
+Port core perl changes e3ec2293dc, fe642606b19.
+Fixes core perl RT #74170 (handle the stack changing in the
+custom sort functions) and adds a test.
+
+=item 2.126 (Apr 15 2010)
+
+Fix Data::Dumper's Fix Terse(1) + Indent(2):
+perl-RT #73604: When $Data::Dumper::Terse is true, the indentation is thrown
+off. It appears to be acting as if the $VAR1 = is still there.
+
 =item 2.125 (Aug  8 2009)
 
 CPAN distribution fixes (meta information for META.yml).

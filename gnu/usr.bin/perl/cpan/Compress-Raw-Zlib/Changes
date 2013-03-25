@@ -1,10 +1,104 @@
 CHANGES
 -------
 
+  2.048 29 January 2012
+
+      * Set minimum zlib version to 1.2.0
+
+  2.047 28 January 2012
+
+      * Allow flush to be called multiple times without any intermediate 
+        call to deflate and still return Z_OK.
+        In the code below $status was Z_BUF_ERROR before this change.  
+                      
+          $def->flush(...);
+          $status = $def->flush(...); 
+      
+      * Added support for zlibCompileFlags
+
+      * Set minimum Perl version to 5.6
+
+  2.045 3 December 2011
+
+      * Moved FAQ.pod into Zlib.pm
+
+  2.044 2 December 2011
+
+      * Moved FAQ.pod under the lib directory so it can get installed
+
+  2.043 20 November 2011
+
+      * No Changes
+
+  2.042 17 November 2011
+
+      * No Changes
+
+  2.040 28 October 2011
+
+      * No Changes
+
+  2.039 28 October 2011
+
+      * croak if attempt to freeze/thaw compression object
+        [RT #69985]
+
+  2.037 22 June 2011
+
+      * No Changes
+
+  2.036 6 May 2011
+
+      * Added offset patramter to CRC32
+
+  2.035 6 May 2011
+
+      * No Changes
+
+  2.033 11 Jan 2011
+      * Fixed typos & spelling errors.
+        [perl# 81782]
+
+  2.032 4 Jan 2011
+
+      * Document inflateReset
+        [RT #61082]
+
+  2.030 22 July 2010 
+
+      * Ran the zlib2ansi script against the files in zlib-src.
+        Thanks to Nicholas Clark for the reminder.
+
+      * Added "-DNO_VIZ" to DEFINE in Makefile.PL
+        [RT #65293]
+
+  2.027 24 April 2010 
+
+      * Updated to include zlib 1.2.5
+
+  2.026 7 April 2010 
+
+      * Fixed definition of Z_TREES in Makefile.PL
+        [RT #65293]
+
+      * Fixed build issue with definition of off64_t not found on Solaris
+        by modifying the zlib source - changed the symbol
+        _LARGEFILE64_SOURCE to _LARGEFILE64_SOURCE_dummy in zconf.h, 
+        zlib.h and zutil.h 
+        [RT #56108]
+
+  2.025 27 March 2010 
+
+      * Updated to include zlib 1.2.4
+
+      * Allow zlib version check to be disabled by setting
+        TEST_SKIP_VERSION_CHECK environment variable.
+        [RT #54510]
+
   2.023 9 November 2009
 
       * fixed instance where $[ should have been $] in t/02zlib.t
-        Thanks to Robin Barker and zefram [RT #50765] for independantly
+        Thanks to Robin Barker and zefram [RT #50765] for independently
         spotting the issue.
 
   2.021 30 August 2009

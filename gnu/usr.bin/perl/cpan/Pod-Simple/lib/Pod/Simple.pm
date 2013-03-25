@@ -18,7 +18,7 @@ use vars qw(
 );
 
 @ISA = ('Pod::Simple::BlackBox');
-$VERSION = '3.14';
+$VERSION = '3.20';
 
 @Known_formatting_codes = qw(I B C L E F S X Z); 
 %Known_formatting_codes = map(($_=>1), @Known_formatting_codes);
@@ -93,10 +93,15 @@ __PACKAGE__->_accessorize(
  'codes_in_verbatim', # for PseudoPod extensions
 
  'code_handler',      # coderef to call when a code (non-pod) line is seen
- 'cut_handler',       # coderef to call when a =cut line is seen
+ 'cut_handler',       # ... when a =cut line is seen
+ 'pod_handler',       # ... when a =pod line is seen
+ 'whiteline_handler', # ... when a line with only whitespace is seen
  #Called like:
  # $code_handler->($line, $self->{'line_count'}, $self) if $code_handler;
  #  $cut_handler->($line, $self->{'line_count'}, $self) if $cut_handler;
+ #  $pod_handler->($line, $self->{'line_count'}, $self) if $pod_handler;
+ #   $wl_handler->($line, $self->{'line_count'}, $self) if $wl_handler;
+ 'parse_empty_lists', # whether to acknowledge empty =over/=back blocks
 
 );
 
@@ -356,7 +361,8 @@ sub parse_string_document {
     next unless defined $line_group and length $line_group;
     pos($line_group) = 0;
     while($line_group =~
-      m/([^\n\r]*)((?:\r?\n)?)/g
+      m/([^\n\r]*)(\r?\n?)/g # supports \r, \n ,\r\n
+      #m/([^\n\r]*)((?:\r?\n)?)/g
     ) {
       #print(">> $1\n"),
       $self->parse_lines($1)
@@ -406,16 +412,30 @@ sub parse_file {
   # By here, $source is a FH.
 
   $self->{'source_fh'} = $source;
-  
+
   my($i, @lines);
   until( $self->{'source_dead'} ) {
     splice @lines;
+
     for($i = MANY_LINES; $i--;) {  # read those many lines at a time
       local $/ = $NL;
       push @lines, scalar(<$source>);  # readline
       last unless defined $lines[-1];
        # but pass thru the undef, which will set source_dead to true
     }
+
+    my $at_eof = ! $lines[-1]; # keep track of the undef
+    pop @lines if $at_eof; # silence warnings
+
+    # be eol agnostic
+    s/\r\n?/\n/g for @lines;
+ 
+    # make sure there are only one line elements for parse_lines
+    @lines = split(/(?<=\n)/, join('', @lines));
+
+    # push the undef back after popping it to set source_dead to true
+    push @lines, undef if $at_eof;
+
     $self->parse_lines(@lines);
   }
   delete($self->{'source_fh'}); # so it can be GC'd
@@ -474,7 +494,7 @@ sub whine {
   return $self->_complain_errata(@_);
 }
 
-sub scream {    # like whine, but not suppressable
+sub scream {    # like whine, but not suppressible
   #my($self,$line,$complaint) = @_;
   my $self = shift(@_);
   ++$self->{'errors_seen'};
@@ -960,7 +980,7 @@ sub _treat_Zs {  # Nix Z<...>'s
 # possibly a man page name (like "crontab(5)" is).
 #
 
-############# Not implemented, I guess.
+############# The "raw" attribute that is already there.
 # Sixth:
 # The raw original L<...> content, before text is split on "|", "/", etc,
 # and before E<...> codes are expanded.
@@ -1329,6 +1349,10 @@ sub _treat_Es {
       }
 
       DEBUG > 1 and print "Ogling E<$content>\n";
+
+      # XXX E<>'s contents *should* be a valid char in the scope of the current
+      # =encoding directive. Defaults to iso-8859-1, I believe. Fix this in the
+      # future sometime.
 
       $charnum  = Pod::Escapes::e2charnum($content);
       DEBUG > 1 and print " Considering E<$content> with char ",

@@ -19,7 +19,7 @@ use strict;
 use vars qw($VERSION $VMS_TERMCAP);
 use vars qw($termpat $state $first $entry);
 
-$VERSION = '1.12';
+$VERSION = '1.13';
 
 # Version undef: Thu Dec 14 20:02:42 CST 1995 by sanders@bsdi.com
 # Version 1.00:  Thu Nov 30 23:34:29 EST 2000 by schwern@pobox.com
@@ -57,6 +57,8 @@ $VERSION = '1.12';
 #       EBDIC fixes from Chun Bing Ge <gecb@cn.ibm.com>
 # Version 1.12: Sat Dec  8 00:10:21 GMT 2007
 #       QNX test fix from Matt Kraai <kraai@ftbfs.org>
+# Version 1.13: Thu Dec 22 22:21:09 GMT 2011
+#       POD error fix from Domin Hargreaves <dom@earth.li>
 #
 # TODO:
 # support Berkeley DB termcaps
@@ -85,8 +87,6 @@ More information on the terminal capabilities will be found in the
 termcap manpage on most Unix-like systems.
 
 =head2 METHODS
-
-=over 4
 
 The output strings for B<Tputs> are cached for counts of 1 for performance.
 B<Tgoto> and B<Tpad> do not cache.  C<$self-E<gt>{_xx}> is the raw termcap
@@ -144,6 +144,8 @@ sub termcap_path
     # return the list of those termcaps that exist
     return grep { defined $_ && -f $_ } @termcap_path;
 }
+
+=over 4
 
 =item B<Tgetent>
 

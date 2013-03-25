@@ -267,8 +267,9 @@ YAML
 
 
     SKIP: {
+        # Load() behaves diffrently in versions prior to 1.06 
         skip "Need YAML::Tiny to test if it can load META.yml", 2
-          unless eval { require YAML::Tiny };
+          unless eval { require YAML::Tiny } and $YAML::Tiny::VERSION >= 1.06;
 
         my @yaml_load = YAML::Tiny::Load($mm->metafile_file(@meta));
         is @yaml_load, 1,               "YAML::Tiny saw one document in META.yml";

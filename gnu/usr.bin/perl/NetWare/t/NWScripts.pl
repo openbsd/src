@@ -24,7 +24,7 @@ foreach $DirItem(@Dirs)
 	if(-d $DirItem1)
 	{	# If an item is a folder, then open it further.
 
-		# Intemediary automated script like base.pl, lib.pl, cmd.pl etc.
+		# Intermediary automated script like base.pl, lib.pl, cmd.pl etc.
 		$IntAutoScript = "t/".$DirItem.".pl";
 
 		# Open once in write mode since later files are opened in append mode,
@@ -61,7 +61,7 @@ foreach $FileName(@DirNames)
 			{
 				$DirItem = $DirItem1;
 
-				# Intemediary automated script like base.pl, lib.pl, cmd.pl etc.
+				# Intermediary automated script like base.pl, lib.pl, cmd.pl etc.
 				$IntAutoScript = "t/".$DirItem.".pl";
 			}
 		}
@@ -160,7 +160,7 @@ foreach $DirItem(@Dirs)
 		{
 			# The folder not empty.
 
-			# Intemediary automated script like base.pl, lib.pl, cmd.pl etc.
+			# Intermediary automated script like base.pl, lib.pl, cmd.pl etc.
 			$IntAutoScript = "t/".$DirItem.".pl";
 
 			# Write into the intermediary auto script.

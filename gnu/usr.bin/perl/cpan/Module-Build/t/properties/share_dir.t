@@ -9,7 +9,7 @@ use File::Spec::Functions qw/catdir catfile/;
 # Begin testing
 #--------------------------------------------------------------------------#
 
-plan tests => 21;
+plan tests => 23;
 
 blib_load('Module::Build');
 
@@ -43,11 +43,19 @@ ok( ! exists $mb->{properties}{requires}{'File::ShareDir'},
 $dist->add_file('share/foo.txt',<< '---');
 This is foo.txt
 ---
+$dist->add_file('share/subdir/share/anotherbar.txt',<< '---');
+This is anotherbar.txt in a subdir - test for a bug in M::B 0.38 when full path contains 'share/.../*share/...' subdir
+---
+$dist->add_file('share/subdir/whatever/anotherfoo.txt',<< '---');
+This is anotherfoo.txt in a subdir - this shoud work on M::B 0.38
+---
 $dist->add_file('other/share/bar.txt',<< '---');
 This is bar.txt
 ---
 $dist->regen;
 ok( -e catfile(qw/share foo.txt/), "Created 'share' directory" );
+ok( -d catfile(qw/share subdir share/), "Created 'share/subdir/share' directory" );
+ok( -d catfile(qw/share subdir whatever/), "Created 'share/subdir/whatever' directory" );
 ok( -e catfile(qw/other share bar.txt/), "Created 'other/share' directory" );
 
 # Check default when share_dir is not given
@@ -163,6 +171,8 @@ is_deeply( $mb->share_dir,
 is_deeply( $mb->_find_share_dir_files,
   {
     "share/foo.txt" => "dist/Simple-Share/foo.txt",
+    "share/subdir/share/anotherbar.txt" => "dist/Simple-Share/subdir/share/anotherbar.txt",
+    "share/subdir/whatever/anotherfoo.txt" => "dist/Simple-Share/subdir/whatever/anotherfoo.txt",
     "other/share/bar.txt" => "module/Simple-Share/bar.txt",
   },
   "share_dir filemap for copying to lib complete"
@@ -187,6 +197,8 @@ skip 'filename case not necessarily preserved', 1 if $^O eq 'VMS';
 is_deeply(
   [ sort @$share_list ], [
     'blib/lib/auto/share/dist/Simple-Share/foo.txt',
+    'blib/lib/auto/share/dist/Simple-Share/subdir/share/anotherbar.txt',
+    'blib/lib/auto/share/dist/Simple-Share/subdir/whatever/anotherfoo.txt',
     'blib/lib/auto/share/module/Simple-Share/bar.txt',
   ],
   "share_dir files copied to blib"
@@ -217,6 +229,8 @@ skip 'filename case not necessarily preserved', 1 if $^O eq 'VMS';
 is_deeply(
   [ sort @$share_list ], [
     "$temp_install/lib/perl5/auto/share/dist/Simple-Share/foo.txt",
+    "$temp_install/lib/perl5/auto/share/dist/Simple-Share/subdir/share/anotherbar.txt",
+    "$temp_install/lib/perl5/auto/share/dist/Simple-Share/subdir/whatever/anotherfoo.txt",
     "$temp_install/lib/perl5/auto/share/module/Simple-Share/bar.txt",
   ],
   "share_dir files correctly installed"

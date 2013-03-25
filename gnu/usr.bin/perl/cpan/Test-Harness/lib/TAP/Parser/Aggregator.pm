@@ -14,11 +14,11 @@ TAP::Parser::Aggregator - Aggregate TAP::Parser results
 
 =head1 VERSION
 
-Version 3.17
+Version 3.23
 
 =cut
 
-$VERSION = '3.17';
+$VERSION = '3.23';
 
 =head1 SYNOPSIS
 
@@ -74,7 +74,7 @@ BEGIN {    # install summary methods
     $SUMMARY_METHOD_FOR{total}   = 'tests_run';
     $SUMMARY_METHOD_FOR{planned} = 'tests_planned';
 
-    foreach my $method ( keys %SUMMARY_METHOD_FOR ) {
+    for my $method ( keys %SUMMARY_METHOD_FOR ) {
         next if 'total' eq $method;
         no strict 'refs';
         *$method = sub {
@@ -90,7 +90,7 @@ sub _initialize {
     my ($self) = @_;
     $self->{parser_for}  = {};
     $self->{parse_order} = [];
-    foreach my $summary ( keys %SUMMARY_METHOD_FOR ) {
+    for my $summary ( keys %SUMMARY_METHOD_FOR ) {
         $self->{$summary} = 0;
         next if 'total' eq $summary;
         $self->{"descriptions_for_$summary"} = [];
@@ -175,7 +175,7 @@ sub parsers {
 sub _get_parsers {
     my ( $self, @descriptions ) = @_;
     my @parsers;
-    foreach my $description (@descriptions) {
+    for my $description (@descriptions) {
         $self->_croak("A parser for ($description) could not be found")
           unless exists $self->{parser_for}{$description};
         push @parsers => $self->{parser_for}{$description};

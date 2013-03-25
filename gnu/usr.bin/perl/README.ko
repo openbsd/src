@@ -157,7 +157,7 @@ Perl 전반 뿐 아니라 유니코드 지원, Encode의 사용법 등에 많은 것을
 
   한국어 Perl 뉴스 그룹
 
-=item L<http://www.hanb.co.kr/search/searchResult.php?keyword=perl>
+=item L<http://www.hanb.co.kr/search/searchResult.html?keyword=perl>
 
   O'Reilly에서 나온 한국어 Perl 서적 목록
 
@@ -188,7 +188,7 @@ Character Set)을 만드는  ISO/IEC JTC1/SC2/WG2의 웹 페이지.
 
   유닉스/리눅스에서 유니코드와 UTF-8 사용에 대한 문답집(FAQ)
 
-=item L<http://kldp.org/Translations/html/UTF8-Unicode-KLDP/UTF8-Unicode-KLDP.html>
+=item L<http://wiki.kldp.org/Translations/html/UTF8-Unicode-KLDP/UTF8-Unicode-KLDP.html>
 
   유닉스/리눅스에서 유니코드와 UTF-8 사용에 대한 문답집(FAQ)의  한국어 번역
 

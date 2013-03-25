@@ -16,12 +16,22 @@ BEGIN {
 
 #########################
 
-use Test;
 use strict;
 use warnings;
-BEGIN { plan tests => 70 };
+BEGIN { $| = 1; print "1..70\n"; }
+my $count = 0;
+sub ok ($;$) {
+    my $p = my $r = shift;
+    if (@_) {
+	my $x = shift;
+	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
+    }
+    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
+}
+
 use Unicode::Normalize qw(:all);
-ok(1); # If we made it this far, we're ok.
+
+ok(1);
 
 sub _pack_U { Unicode::Normalize::pack_U(@_) }
 sub hexU { _pack_U map hex, split ' ', shift }
@@ -39,6 +49,8 @@ ok(normalize('FCC', ""), "");
 ok(normalize('FCC', "A"), "A");
 ok(normalize('FCD', "A"), "A");
 
+# 9
+
 # if checkFCD is YES, the return value from FCD should be same as the original
 ok(FCD(hexU("00C5")),		hexU("00C5"));		# A with ring above
 ok(FCD(hexU("0041 030A")),	hexU("0041 030A"));	# A+ring
@@ -52,6 +64,8 @@ ok(normalize('FCD', hexU("0041 0327 030A")),	hexU("0041 0327 030A"));
 ok(normalize('FCD', hexU("AC01 1100 1161")),	hexU("AC01 1100 1161"));
 ok(normalize('FCD', hexU("212B F900")),		hexU("212B F900"));
 
+# 19
+
 # if checkFCD is MAYBE or NO, FCD returns NFD (this behavior isn't documented)
 ok(FCD(hexU("00C5 0327")),	hexU("0041 0327 030A"));
 ok(FCD(hexU("0041 030A 0327")),	hexU("0041 0327 030A"));
@@ -62,6 +76,8 @@ ok(normalize('FCD', hexU("00C5 0327")),		hexU("0041 0327 030A"));
 ok(normalize('FCD', hexU("0041 030A 0327")),	hexU("0041 0327 030A"));
 ok(normalize('FCD', hexU("00C5 0327")),		NFD(hexU("00C5 0327")));
 ok(normalize('FCD', hexU("0041 030A 0327")),	NFD(hexU("0041 030A 0327")));
+
+# 27
 
 ok(answer(checkFCD('')), 'YES');
 ok(answer(checkFCD('A')), 'YES');
@@ -83,6 +99,8 @@ ok(answer(checkFCC(hexU("1EA7 05AE 0315 0062"))), "NO");
 ok(answer(check('FCD', hexU("1EA7 05AE 0315 0062"))), "NO");
 ok(answer(check('FCC', hexU("1EA7 05AE 0315 0062"))), "NO");
 
+# 45
+
 ok(FCC(hexU("00C5 0327")), hexU("0041 0327 030A"));
 ok(FCC(hexU("0045 0304 0300")), "\x{1E14}");
 ok(FCC("\x{1100}\x{1161}\x{1100}\x{1173}\x{11AF}"), "\x{AC00}\x{AE00}");
@@ -97,6 +115,8 @@ ok(FCC("\x{1100}\x{1161}\x{0300}"), "\x{AC00}\x{0300}");
 ok(FCC("\x{0B47}\x{300}\x{0B3E}\x{327}"), "\x{0B47}\x{300}\x{0B3E}\x{327}");
 ok(FCC("\x{1100}\x{300}\x{1161}\x{327}"), "\x{1100}\x{300}\x{1161}\x{327}");
 
+# 57
+
 ok(answer(checkFCC('')), 'YES');
 ok(answer(checkFCC('A')), 'YES');
 ok(answer(checkFCC("\x{030A}")), 'MAYBE');  # 030A;COMBINING RING ABOVE
@@ -110,4 +130,6 @@ ok(answer(checkFCC("\x{AC01}\x{1100}\x{1161}")), 'MAYBE'); # hangul
 ok(answer(checkFCC("\x{212B}\x{F900}")), 'NO'); # compat
 ok(answer(checkFCC("\x{212B}\x{0327}")), 'NO'); # compat
 ok(answer(checkFCC("\x{0327}\x{212B}")), 'NO'); # compat
+
+# 70
 

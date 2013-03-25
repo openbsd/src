@@ -12,20 +12,18 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
         exit 0;
     }
-    require 'st-dump.pl';
 }
 
-sub ok;
 $^W = 0;
 
-print "1..8\n";
-
 use Storable qw(dclone);
+use Test::More tests => 8;
 
 $h_fetches = 0;
 
@@ -37,10 +35,10 @@ tie %h, "H";
 $ref = \$h{77};
 $ref2 = dclone $ref;
 
-ok 1, $h_fetches == 0;
-ok 2, $$ref2 eq $$ref;
-ok 3, $$ref2 == 7;
-ok 4, $h_fetches == 2;
+is($h_fetches, 0);
+is($$ref2, $$ref);
+is($$ref2, 7);
+is($h_fetches, 2);
 
 $a_fetches = 0;
 
@@ -52,8 +50,8 @@ tie @a, "A";
 $ref = \$a[78];
 $ref2 = dclone $ref;
 
-ok 5, $a_fetches == 0;
-ok 6, $$ref2 eq $$ref;
-ok 7, $$ref2 == 8;
-# I don't understand why it's 3 and not 2
-ok 8, $a_fetches == 3;
+is($a_fetches, 0);
+is($$ref2, $$ref);
+is($$ref2, 8);
+# a bug in 5.12 and earlier caused an extra FETCH
+is($a_fetches, $] < 5.013 ? 3 : 2);

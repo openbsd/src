@@ -7,7 +7,7 @@ use Module::CoreList;
 use Text::Table;
 
 my $old_ver = "5.010000";
-my $new_ver = "5.012001";
+my $new_ver = "5.011005";
 
 my $old = $Module::CoreList::version{ $old_ver };
 my $new = $Module::CoreList::version{ $new_ver };

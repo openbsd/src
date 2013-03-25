@@ -5,7 +5,7 @@ use Config;
 use vars qw($VERSION);
 use IO::File;
 
-$VERSION = '0.3603';
+$VERSION = '0.39_01';
 $VERSION = eval $VERSION;
 
 # This code is mostly borrowed from ExtUtils::MM_Unix 6.10_03, with a
@@ -153,7 +153,6 @@ __END__
 =head1 NAME
 
 Module::Build::PPMMaker - Perl Package Manager file creation
-
 
 =head1 SYNOPSIS
 

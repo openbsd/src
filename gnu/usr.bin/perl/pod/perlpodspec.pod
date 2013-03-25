@@ -1,3 +1,4 @@
+=encoding utf8
 
 =head1 NAME
 
@@ -304,7 +305,7 @@ or data paragraphs.  This is discussed in detail in the section
 L</About Data Paragraphs and "=beginE<sol>=end" Regions>.
 
 It is advised that formatnames match the regexp
-C<m/\A:?[−a−zA−Z0−9_]+\z/>.  Everything following whitespace after the
+C<m/\A:?[-a-zA-Z0-9_]+\z/>.  Everything following whitespace after the
 formatname is a parameter that may be used by the formatter when dealing
 with this region.  This parameter must not be repeated in the "=end"
 paragraph.  Implementors should anticipate future expansion in the
@@ -1297,14 +1298,6 @@ But for some processors/formats this cannot be easily controlled; as
 with the HTML example, the behavior of multiple ambiguous
 <a name="I<anchorname>">...</a> is most easily just left up to
 browsers to decide.
-
-=item *
-
-Authors wanting to link to a particular (absolute) URL, must do so
-only with "LE<lt>scheme:...>" codes (like
-LE<lt>http://www.perl.org>), and must not attempt "LE<lt>Some Site
-Name|scheme:...>" codes.  This restriction avoids many problems
-in parsing and rendering LE<lt>...> codes.
 
 =item *
 

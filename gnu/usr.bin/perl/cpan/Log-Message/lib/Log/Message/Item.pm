@@ -1,6 +1,7 @@
 package Log::Message::Item;
 
 use strict;
+use vars qw[$VERSION];
 use Params::Check qw[check];
 use Log::Message::Handlers;
 
@@ -10,7 +11,7 @@ use Carp ();
 BEGIN {
     use vars qw[$AUTOLOAD $VERSION];
 
-    $VERSION    =   $Log::Message::VERSION;
+    $VERSION    =   '0.04';
 }
 
 ### create a new item.
@@ -88,7 +89,7 @@ Log::Message::Item  - Message objects for Log::Message
     $item->remove;  # delete the item from the stack it was on
 
     # Besides these methods, you can also call the handlers on
-    # the object specificallly.
+    # the object specifically.
     # See the Log::Message::Handlers manpage for documentation on what
     # handlers are available by default and how to add your own
 

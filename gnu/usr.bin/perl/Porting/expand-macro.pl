@@ -3,12 +3,13 @@ use strict;
 
 use Pod::Usage;
 use Getopt::Std;
+use Config;
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
 
 my $trysource = "try.c";
 my $tryout = "try.i";
 
-getopts('fF:ekvI:', \my %opt) or pod2usage();
+getopts('fF:ekvI:X', \my %opt) or pod2usage();
 
 my($expr, @headers) = @ARGV ? splice @ARGV : "-";
 
@@ -50,17 +51,37 @@ while (<>) {
 }
 die "$macro not found\n" unless defined $header;
 
+if ($^O =~ /MSWin(32|64)/) {
+    # The Win32 (and Win64) build process expects to be run from
+    # bleadperl/Win32
+    chdir "Win32"
+	or die "Couldn't chdir to win32: $!";
+};
+
 open my $out, '>', $trysource or die "Can't open $trysource: $!";
 
 my $sentinel = "$macro expands to";
 
-print $out <<"EOF";
-#include "EXTERN.h"
-#include "perl.h"
+# These two are included from perl.h, and perl.h sometimes redefines their
+# macros. So no need to include them.
+my %done_header = ('embed.h' => 1, 'embedvar.h' => 1);
+
+sub do_header {
+    my $header = shift;
+    return if $done_header{$header}++;
+    print $out qq{#include "$header"\n};
+}
+
+print $out <<'EOF' if $opt{X};
+/* Need to do this like this, as cflags.sh sets it for us come what may.  */
+#undef PERL_CORE
+
 EOF
 
-print $out qq{#include "$header"\n}
-    unless $header eq 'perl.h' or $header eq 'EXTERN.h';
+do_header('EXTERN.h');
+do_header('perl.h');
+do_header($header);
+do_header('XSUB.h') if $opt{X};
 
 print $out <<"EOF";
 #line 4 "$sentinel"
@@ -69,8 +90,10 @@ EOF
 
 close $out or die "Can't close $trysource: $!";
 
-print "doing: make $tryout\n" if $opt{v};
-system "make $tryout" and die;
+print "doing: $Config{make} $tryout\n" if $opt{v};
+my $cmd = "$Config{make} $tryout";
+system( $cmd ) == 0
+    or die "Couldn't launch [$cmd]: $! / $?";
 
 # if user wants 'indent' formatting ..
 my $out_fh;
@@ -93,15 +116,17 @@ if ($opt{f} || $opt{F}) {
     $out_fh = \*STDOUT;
 }
 
-open my $fh, '<', $tryout or die "Can't open $tryout: $!";
+{
+    open my $fh, '<', $tryout or die "Can't open $tryout: $!";
 
-while (<$fh>) {
-    print $out_fh $_ if /$sentinel/o .. 1;
-}
+    while (<$fh>) {
+	print $out_fh $_ if /$sentinel/o .. 1;
+    }
+};
 
 unless ($opt{k}) {
     foreach($trysource, $tryout) {
-	die "Can't unlink $_" unless unlink $_;
+	die "Can't unlink $_: $!" unless unlink $_;
     }
 }
 
@@ -122,5 +147,6 @@ expand-macro.pl - expand C macros using the C preprocessor
     -k		keep them after generating (for handy inspection)
     -v		verbose
     -I <indent-opts>	passed into indent
+    -X		include "XSUB.h" (and undefine PERL_CORE)
 
 =cut

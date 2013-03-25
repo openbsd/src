@@ -2,6 +2,7 @@
 
 BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -17,6 +18,7 @@ BEGIN {
 
 use strict;
 use Storable qw(retrieve);
+use Test::More;
 
 my $file = "xx-$$.pst";
 my @dumps = (
@@ -25,7 +27,7 @@ my @dumps = (
     "perl-store\0\x041234\4\4\4\x94y\22\b\3\1\0\0\0vxz\22\b\b\x81Xk\3\0\0\0oneX",      # 0.4@7
 );
 
-print "1.." . @dumps . "\n";
+plan(tests => 3 * @dumps);
 
 my $testno;
 for my $dump (@dumps) {
@@ -36,16 +38,10 @@ for my $dump (@dumps) {
     print FH $dump;
     close(FH) || die "Can't write $file: $!";
 
-    eval {
-	my $data = retrieve($file);
-	if (ref($data) eq "HASH" && $data->{one} eq "1") {
-	    print "ok $testno\n";
-	}
-	else {
-	    print "not ok $testno\n";
-	}
-    };
-    warn $@ if $@;
+    my $data = eval { retrieve($file) };
+    is($@, '', "No errors for $file");
+    is(ref $data, 'HASH', "Got HASH for $file");
+    is($data->{one}, 1, "Got data for $file");
 
     unlink($file);
 }

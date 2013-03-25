@@ -1,5 +1,20 @@
 Revision history for ExtUtils-Install
 
+1.57
+
+Adds 'skip_cwd' parameter to ExtUtils::Installed.  With this new parameter,
+the current directory is not included in the installed module search.  This
+avoids finding modules from other perls which happen to be below the
+current directory.
+
+1.56
+
+Pod fixes.
+
+1.55
+
+Pod fixes.
+
 1.54
 
 This is a "no-change" version bump because I pushed the v1.53 change
@@ -85,7 +100,7 @@ SVN revision 39.
 Synchronize with the changes that were made in blead perl
 patch #33567. VMS changes by Craig Berry. See
 
-http://public.activestate.com/cgi-bin/perlbrowse/p/33567
+http://perl5.git.perl.org/perl.git/commit/553b5000d7907cb0cb8f4658c1d6a2aac379415b
 
 This was marked in the pod as 1.51 but not actually version bumped.
 
@@ -113,7 +128,7 @@ http://rt.cpan.org/Ticket/Display.html?id=37727
 Version only released as part of bleadperl added in revision #33566.
 Cygwin related changes by Steve Hay, and others, see
 
-http://public.activestate.com/cgi-bin/perlbrowse/p/33566
+http://perl5.git.perl.org/perl.git/commit/038ae9a45711aea142f721498a4a61353b40c4e4
 
 and discussion at
 
@@ -128,7 +143,7 @@ highlight the pod properly.
 
 1.49
 
-Turns out that the new can_write_dir.t doesnt work properly under root
+Turns out that the new can_write_dir.t doesn't work properly under root
 as root can read the files regardless as to their mode. So we skip those
 tests when the effective UID is 0 indicating root.
 
@@ -276,7 +291,7 @@ This means that you can make .svn directories be ignored on install.
 
 - Integrated patch from Randy Sims.
 
-    1. Fixes error during `perl Makefile.PL` because it MakeMaker can't
+    1. Fixes error during 'perl Makefile.PL' because it MakeMaker can't
     find the NAME section describing DISTNAME (which has the 'ex-'
     prefix).
 

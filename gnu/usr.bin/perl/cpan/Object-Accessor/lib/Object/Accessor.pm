@@ -10,7 +10,7 @@ use Data::Dumper;
 ### disable string overloading for callbacks
 require overload;
 
-$VERSION    = '0.36';
+$VERSION    = '0.42';
 $FATAL      = 0;
 $DEBUG      = 0;
 
@@ -36,7 +36,7 @@ Object::Accessor - interface to create per object accessors
 
     $bool   = $obj->mk_aliases(          # create an alias to an existing
                 alias_name => 'method'); # method name
-                
+
     $clone  = $obj->mk_clone;            # create a clone of original
                                          # object without data
     $bool   = $obj->mk_flush;            # clean out all data
@@ -59,7 +59,7 @@ Object::Accessor - interface to create per object accessors
     $obj    = My::Class->new;               # create base object
     $bool   = $obj->mk_accessors('foo');    # create accessors, etc...
 
-    ### make all attempted access to non-existant accessors fatal
+    ### make all attempted access to non-existent accessors fatal
     ### (defaults to false)
     $Object::Accessor::FATAL = 1;
 
@@ -69,11 +69,11 @@ Object::Accessor - interface to create per object accessors
     ### advanced usage -- callbacks
     {   my $obj = Object::Accessor->new('foo');
         $obj->register_callback( sub { ... } );
-        
+
         $obj->foo( 1 ); # these calls invoke the callback you registered
-        $obj->foo()     # which allows you to change the get/set 
+        $obj->foo()     # which allows you to change the get/set
                         # behaviour and what is returned to the caller.
-    }        
+    }
 
     ### advanced usage -- lvalue attributes
     {   my $obj = Object::Accessor::Lvalue->new('foo');
@@ -82,12 +82,12 @@ Object::Accessor - interface to create per object accessors
 
     ### advanced usage -- scoped attribute values
     {   my $obj = Object::Accessor->new('foo');
-        
+
         $obj->foo( 1 );
         print $obj->foo;                # will print 1
 
         ### bind the scope of the value of attribute 'foo'
-        ### to the scope of '$x' -- when $x goes out of 
+        ### to the scope of '$x' -- when $x goes out of
         ### scope, 'foo's previous value will be restored
         {   $obj->foo( 2 => \my $x );
             print $obj->foo, ' ', $x;   # will print '2 2'
@@ -117,8 +117,8 @@ inheritable.
 Any arguments given to C<new> are passed straight to C<mk_accessors>.
 
 If you want to be able to assign to your accessors as if they
-were C<lvalue>s, you should create your object in the 
-C<Object::Acccessor::Lvalue> namespace instead. See the section
+were C<lvalue>s, you should create your object in the
+C<Object::Accessor::Lvalue> namespace instead. See the section
 on C<LVALUE ACCESSORS> below.
 
 =cut
@@ -126,9 +126,9 @@ on C<LVALUE ACCESSORS> below.
 sub new {
     my $class   = shift;
     my $obj     = bless {}, $class;
-    
+
     $obj->mk_accessors( @_ ) if @_;
-    
+
     return $obj;
 }
 
@@ -151,7 +151,7 @@ For example:
         foo     => qr/^\d+$/,       # digits only
         bar     => [0,1],           # booleans
         zot     => \&my_sub         # a custom verification sub
-    } );        
+    } );
 
 Returns true on success, false on failure.
 
@@ -161,27 +161,27 @@ global variable C<$FATAL> to true. See the section on C<GLOBAL
 VARIABLES> for details.
 
 Note that you can bind the values of attributes to a scope. This allows
-you to C<temporarily> change a value of an attribute, and have it's 
+you to C<temporarily> change a value of an attribute, and have it's
 original value restored up on the end of it's bound variable's scope;
 
-For example, in this snippet of code, the attribute C<foo> will 
-temporarily be set to C<2>, until the end of the scope of C<$x>, at 
+For example, in this snippet of code, the attribute C<foo> will
+temporarily be set to C<2>, until the end of the scope of C<$x>, at
 which point the original value of C<1> will be restored.
 
     my $obj = Object::Accessor->new;
-    
+
     $obj->mk_accessors('foo');
     $obj->foo( 1 );
     print $obj->foo;                # will print 1
 
     ### bind the scope of the value of attribute 'foo'
-    ### to the scope of '$x' -- when $x goes out of 
+    ### to the scope of '$x' -- when $x goes out of
     ### scope, 'foo' previous value will be restored
     {   $obj->foo( 2 => \my $x );
         print $obj->foo, ' ', $x;   # will print '2 2'
     }
     print $obj->foo;                # will print 1
-    
+
 
 Note that all accessors are read/write for everyone. See the C<TODO>
 section for details.
@@ -191,11 +191,11 @@ section for details.
 sub mk_accessors {
     my $self    = $_[0];
     my $is_hash = UNIVERSAL::isa( $_[1], 'HASH' );
-    
+
     ### first argument is a hashref, which means key/val pairs
     ### as keys + allow handlers
     for my $acc ( $is_hash ? keys %{$_[1]} : @_[1..$#_] ) {
-    
+
         ### already created apparently
         if( exists $self->{$acc} ) {
             __PACKAGE__->___debug( "Accessor '$acc' already exists");
@@ -206,7 +206,7 @@ sub mk_accessors {
 
         ### explicitly vivify it, so that exists works in ls_accessors()
         $self->{$acc}->[VALUE] = undef;
-        
+
         ### set the allow handler only if one was specified
         $self->{$acc}->[ALLOW] = $_[1]->{$acc} if $is_hash;
     }
@@ -223,7 +223,7 @@ by one to the C<can> method.
 =cut
 
 sub ls_accessors {
-    ### metainformation is stored in the stringified 
+    ### metainformation is stored in the stringified
     ### key of the object, so skip that when listing accessors
     return sort grep { $_ ne "$_[0]" } keys %{$_[0]};
 }
@@ -240,7 +240,7 @@ sub ls_allow {
     my $self = shift;
     my $key  = shift or return;
     return exists $self->{$key}->[ALLOW]
-                ? $self->{$key}->[ALLOW] 
+                ? $self->{$key}->[ALLOW]
                 : sub { 1 };
 }
 
@@ -256,7 +256,7 @@ This allows you to do the following:
 
   $self->mk_accessors('foo');
   $self->mk_aliases( bar => 'foo' );
-  
+
   $self->bar( 42 );
   print $self->foo;     # will print 42
 
@@ -265,7 +265,7 @@ This allows you to do the following:
 sub mk_aliases {
     my $self    = shift;
     my %aliases = @_;
-    
+
     while( my($alias, $method) = each %aliases ) {
 
         ### already created apparently
@@ -294,7 +294,7 @@ sub mk_clone {
     my $class   = ref $self;
 
     my $clone   = $class->new;
-    
+
     ### split out accessors with and without allow handlers, so we
     ### don't install dummy allow handers (which makes O::A::lvalue
     ### warn for example)
@@ -348,7 +348,7 @@ object has been filled with values satisfying their own allow criteria.
 
 sub mk_verify {
     my $self = $_[0];
-    
+
     my $fail;
     for my $name ( $self->ls_accessors ) {
         unless( allow( $self->$name, $self->ls_allow( $name ) ) ) {
@@ -361,7 +361,7 @@ sub mk_verify {
 
     return if $fail;
     return 1;
-}   
+}
 
 =head2 $bool = $self->register_callback( sub { ... } );
 
@@ -373,31 +373,31 @@ You are free to return whatever you wish. On a C<set> call, the
 data is even stored in the object.
 
 Below is an example of the use of a callback.
-    
+
     $object->some_method( "some_value" );
-    
+
     my $callback = sub {
         my $self    = shift; # the object
         my $meth    = shift; # "some_method"
-        my $val     = shift; # ["some_value"]  
+        my $val     = shift; # ["some_value"]
                              # could be undef -- check 'exists';
                              # if scalar @$val is empty, it was a 'get'
-    
+
         # your code here
 
         return $new_val;     # the value you want to be set/returned
-    }        
+    }
 
 To access the values stored in the object, circumventing the
 callback structure, you should use the C<___get> and C<___set> methods
-documented further down. 
+documented further down.
 
 =cut
 
 sub register_callback {
     my $self    = shift;
     my $sub     = shift or return;
-    
+
     ### use the memory address as key, it's not used EVER as an
     ### accessor --kane
     $self->___callback( $sub );
@@ -470,21 +470,21 @@ sub ___autoload {
         if ( not exists $self->{$method} ) {
             __PACKAGE__->___error("No such accessor '$method'", 1);
             return;
-        } 
-   
+        }
+
     ### a method on something else, die with a descriptive error;
-    } else {     
+    } else {
         local $FATAL = 1;
-        __PACKAGE__->___error( 
+        __PACKAGE__->___error(
                 "You called '$AUTOLOAD' on '$self' which was interpreted by ".
                 __PACKAGE__ . " as an object call. Did you mean to include ".
                 "'$method' from somewhere else?", 1 );
-    }        
+    }
 
     ### is this is an alias, redispatch to the original method
     if( my $original = $self->{ $method }->[ALIAS] ) {
         return $self->___autoload( $original, @_ );
-    }        
+    }
 
     ### assign?
     my $val = $assign ? shift(@_) : $self->___get( $method );
@@ -494,43 +494,43 @@ sub ___autoload {
         ### any binding?
         if( $_[0] ) {
             if( ref $_[0] and UNIVERSAL::isa( $_[0], 'SCALAR' ) ) {
-            
+
                 ### tie the reference, so we get an object and
                 ### we can use it's going out of scope to restore
                 ### the old value
                 my $cur = $self->{$method}->[VALUE];
-                
-                tie ${$_[0]}, __PACKAGE__ . '::TIE', 
+
+                tie ${$_[0]}, __PACKAGE__ . '::TIE',
                         sub { $self->$method( $cur ) };
-    
+
                 ${$_[0]} = $val;
-            
+
             } else {
-                __PACKAGE__->___error( 
-                    "Can not bind '$method' to anything but a SCALAR", 1 
+                __PACKAGE__->___error(
+                    "Can not bind '$method' to anything but a SCALAR", 1
                 );
             }
         }
-        
+
         ### need to check the value?
-        if( exists $self->{$method}->[ALLOW] ) {
+        if( defined $self->{$method}->[ALLOW] ) {
 
             ### double assignment due to 'used only once' warnings
             local $Params::Check::VERBOSE = 0;
             local $Params::Check::VERBOSE = 0;
-            
+
             allow( $val, $self->{$method}->[ALLOW] ) or (
-                __PACKAGE__->___error( 
-                    "'$val' is an invalid value for '$method'", 1), 
-                return 
-            ); 
+                __PACKAGE__->___error(
+                    "'$val' is an invalid value for '$method'", 1),
+                return
+            );
         }
     }
-    
+
     ### callbacks?
     if( my $sub = $self->___callback ) {
         $val = eval { $sub->( $self, $method, ($assign ? [$val] : []) ) };
-        
+
         ### register the error
         $self->___error( $@, 1 ), return if $@;
     }
@@ -539,16 +539,16 @@ sub ___autoload {
     if( $assign ) {
         $self->___set( $method, $val ) or return;
     }
-    
+
     return [$val];
 }
 
 =head2 $val = $self->___get( METHOD_NAME );
 
 Method to directly access the value of the given accessor in the
-object. It circumvents all calls to allow checks, callbakcs, etc.
+object. It circumvents all calls to allow checks, callbacks, etc.
 
-Use only if you C<Know What You Are Doing>! General usage for 
+Use only if you C<Know What You Are Doing>! General usage for
 this functionality would be in your own custom callbacks.
 
 =cut
@@ -564,21 +564,21 @@ sub ___get {
 =head2 $bool = $self->___set( METHOD_NAME => VALUE );
 
 Method to directly set the value of the given accessor in the
-object. It circumvents all calls to allow checks, callbakcs, etc.
+object. It circumvents all calls to allow checks, callbacks, etc.
 
-Use only if you C<Know What You Are Doing>! General usage for 
+Use only if you C<Know What You Are Doing>! General usage for
 this functionality would be in your own custom callbacks.
 
-=cut 
+=cut
 
 sub ___set {
     my $self    = shift;
     my $method  = shift or return;
-   
+
     ### you didn't give us a value to set!
-    exists $_[0] or return;
+    @_ or return;
     my $val     = shift;
- 
+
     ### if there's more arguments than $self, then
     ### replace the method called by the accessor.
     ### XXX implement rw vs ro accessors!
@@ -592,7 +592,7 @@ sub ___set {
 Method to directly alias one accessor to another for
 this object. It circumvents all sanity checks, etc.
 
-Use only if you C<Know What You Are Doing>! 
+Use only if you C<Know What You Are Doing>!
 
 =cut
 
@@ -600,9 +600,9 @@ sub ___alias {
     my $self    = shift;
     my $alias   = shift or return;
     my $method  = shift or return;
-    
+
     $self->{ $alias }->[ALIAS] = $method;
-    
+
     return 1;
 }
 
@@ -614,7 +614,7 @@ sub ___debug {
     my $lvl  = shift || 0;
 
     local $Carp::CarpLevel += 1;
-    
+
     carp($msg);
 }
 
@@ -632,13 +632,13 @@ sub ___error {
 sub ___callback {
     my $self = shift;
     my $sub  = shift;
-    
+
     my $mem  = overload::Overloaded( $self )
                 ? overload::StrVal( $self )
                 : "$self";
 
     $self->{$mem} = $sub if $sub;
-    
+
     return $self->{$mem};
 }
 
@@ -651,7 +651,7 @@ C<Object::Accessor::Lvalue>. For example:
     my $obj = Object::Accessor::Lvalue->new('foo');
     $obj->foo += 1;
     print $obj->foo;
-    
+
 will actually print C<1> and work as expected. Since this is an
 optional feature, that's not desirable in all cases, we require
 you to explicitly use the C<Object::Accessor::Lvalue> class.
@@ -674,7 +674,7 @@ C<perl 5.8.x> feature. See perldoc L<perl58delta> for details.
 =item * Allow handlers
 
 Due to the nature of C<lvalue subs>, we never get access to the
-value you are assigning, so we can not check it againt your allow
+value you are assigning, so we can not check it against your allow
 handler. Allow handlers are therefor unsupported under C<lvalue>
 conditions.
 
@@ -685,7 +685,7 @@ See C<perldoc perlsub> for details.
 Due to the nature of C<lvalue subs>, we never get access to the
 value you are assigning, so we can not check provide this value
 to your callback. Furthermore, we can not distinguish between
-a C<get> and a C<set> call. Callbacks are therefor unsupported 
+a C<get> and a C<set> call. Callbacks are therefor unsupported
 under C<lvalue> conditions.
 
 See C<perldoc perlsub> for details.
@@ -702,7 +702,7 @@ See C<perldoc perlsub> for details.
     *VALUE = *Object::Accessor::VALUE;
     *ALLOW = *Object::Accessor::ALLOW;
 
-    ### largely copied from O::A::Autoload 
+    ### largely copied from O::A::Autoload
     sub AUTOLOAD : lvalue {
         my $self    = shift;
         my($method) = ($AUTOLOAD =~ /([^:']+$)/);
@@ -720,22 +720,22 @@ See C<perldoc perlsub> for details.
     sub mk_accessors {
         my $self    = shift;
         my $is_hash = UNIVERSAL::isa( $_[0], 'HASH' );
-        
+
         $self->___error(
             "Allow handlers are not supported for '". __PACKAGE__ ."' objects"
         ) if $is_hash;
-        
+
         return $self->SUPER::mk_accessors( @_ );
-    }                    
-    
+    }
+
     sub register_callback {
         my $self = shift;
         $self->___error(
             "Callbacks are not supported for '". __PACKAGE__ ."' objects"
         );
         return;
-    }        
-}    
+    }
+}
 
 
 ### standard tie class for bound attributes
@@ -752,18 +752,18 @@ See C<perldoc perlsub> for details.
         my $ref     = undef;
         my $obj     =  bless \$ref, $class;
 
-        ### store the restore sub 
+        ### store the restore sub
         $local{ $obj } = $sub;
         return $obj;
     }
-    
+
     sub DESTROY {
         my $tied    = shift;
         my $sub     = delete $local{ $tied };
 
         ### run the restore sub to set the old value back
-        return $sub->();        
-    }              
+        return $sub->();
+    }
 }
 
 =back
@@ -772,7 +772,7 @@ See C<perldoc perlsub> for details.
 
 =head2 $Object::Accessor::FATAL
 
-Set this variable to true to make all attempted access to non-existant
+Set this variable to true to make all attempted access to non-existent
 accessors be fatal.
 This defaults to C<false>.
 
@@ -793,11 +793,11 @@ release should make it possible to have read-only accessors as well.
 If you use codereferences for your allow handlers, you will not be able
 to freeze the data structures using C<Storable>.
 
-Due to a bug in storable (until at least version 2.15), C<qr//> compiled 
-regexes also don't de-serialize properly. Although this bug has been 
+Due to a bug in storable (until at least version 2.15), C<qr//> compiled
+regexes also don't de-serialize properly. Although this bug has been
 reported, you should be aware of this issue when serializing your objects.
 
-You can track the bug here: 
+You can track the bug here:
 
     http://rt.cpan.org/Ticket/Display.html?id=1827
 
@@ -811,7 +811,7 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =cut

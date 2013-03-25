@@ -15,7 +15,7 @@ BEGIN {
 
 use List::Util qw(first);
 use Test::More;
-plan tests => 19 + ($::PERL_ONLY ? 0 : 2);
+plan tests => 22 + ($::PERL_ONLY ? 0 : 2);
 my $v;
 
 ok(defined &first,	'defined');
@@ -114,6 +114,15 @@ if (!$::PERL_ONLY) { SKIP: {
 
 } }
 
+use constant XSUBC_TRUE  => 1;
+use constant XSUBC_FALSE => 0;
+
+is first(\&XSUBC_TRUE,  42, 1, 2, 3), 42,    'XSUB callbacks';
+is first(\&XSUBC_FALSE, 42, 1, 2, 3), undef, 'XSUB callbacks';
+
+
+eval { &first(1) };
+ok($@ =~ /^Not a subroutine reference/, 'check for code reference');
 eval { &first(1,2) };
 ok($@ =~ /^Not a subroutine reference/, 'check for code reference');
 eval { &first(qw(a b)) };

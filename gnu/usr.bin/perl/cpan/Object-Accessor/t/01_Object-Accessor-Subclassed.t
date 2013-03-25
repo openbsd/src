@@ -14,7 +14,7 @@ use_ok($Class);
 ### establish another package that subclasses our own
 {   package My::Class;
     use base 'Object::Accessor';
-}    
+}
 
 my $Object  = $MyClass->new;
 
@@ -22,24 +22,24 @@ my $Object  = $MyClass->new;
 {   ok( $Object,                "Object created" );
     isa_ok( $Object,            $MyClass );
     isa_ok( $Object,            $Class );
-}    
+}
 
-### create an accessor 
+### create an accessor
 {   ok( $Object->mk_accessors( $Acc ),
                                 "Accessor '$Acc' created" );
     ok( $Object->can( $Acc ),   "   Object can '$Acc'" );
     ok( $Object->$Acc(1),       "   Objects '$Acc' set" );
     ok( $Object->$Acc(),        "   Objects '$Acc' retrieved" );
-}    
-    
+}
+
 ### check if we do the right thing when we call an accessor that's
-### not a defined function in the base class, and not an accessors 
+### not a defined function in the base class, and not an accessors
 ### in the object either
 {   my $sub = eval { $MyClass->can( $$ ); };
 
     ok( !$sub,                  "No sub from non-existing function" );
     ok( !$@,                    "   Code handled it gracefully" );
-}    
+}
 
 ### check if a method called on a class, that's not actually there
 ### doesn't get confused as an object call;
@@ -48,4 +48,4 @@ my $Object  = $MyClass->new;
     ok( $@,                     "Calling '$$' on '$MyClass' dies" );
     like( $@, qr/from somewhere else/,
                                 "   Dies with an informative message" );
-}                                
+}

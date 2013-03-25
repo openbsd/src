@@ -4,7 +4,7 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.os400 - Perl version 5 on OS/400
+perlos400 - Perl version 5 on OS/400
 
 =head1 DESCRIPTION
 
@@ -14,7 +14,7 @@ compiled and/or runs.
 
 By far the easiest way to build Perl for OS/400 is to use the PASE
 (Portable Application Solutions Environment), for more information see
-http://www.iseries.ibm.com/developer/factory/pase/index.html
+L<http://www.iseries.ibm.com/developer/factory/pase/index.html>
 This environment allows one to use AIX APIs while programming, and it
 provides a runtime that allows AIX binaries to execute directly on the
 PowerPC iSeries.
@@ -105,7 +105,7 @@ There exists a port of Perl to the ILE environment.  This port, however,
 is based quite an old release of Perl, Perl 5.00502 (August 1998).
 (As of July 2002 the latest release of Perl is 5.8.0, and even 5.6.1
 has been out since April 2001.)  If you need to run Perl on ILE, though,
-you may need this older port: http://www.cpan.org/ports/#os400
+you may need this older port: L<http://www.cpan.org/ports/#os400>
 Note that any Perl release later than 5.00502 has not been ported to ILE.
 
 If you need to use Perl in the ILE environment, you may want to consider

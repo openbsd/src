@@ -11,7 +11,7 @@ unless( eval q{require warnings::register; warnings::register->import; 1} ) {
 }
 use vars qw(%attr $VERSION);
 
-$VERSION = '2.15';
+$VERSION = '2.16';
 
 # constant.pm is slow
 sub PUBLIC     () { 2**0  }
@@ -278,8 +278,8 @@ This makes it possible to write a constructor like this:
     sub new {
         my $self = shift;
         $self = fields::new($self) unless ref $self;
-        $self->{cat} = 'meow';                          # scalar element
-        @$self{'dog','bird'} = ('bark','tweet');        # slice
+        $self->{cat} = 'meow';                      # scalar element
+        @$self{'dog','bird'} = ('bark','tweet');    # slice
         return $self;
     }
 

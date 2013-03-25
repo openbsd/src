@@ -4,40 +4,45 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.024 qw(:Status createSelfTiedObject);
-use IO::Compress::RawDeflate 2.024 ;
-use IO::Compress::Adapter::Deflate 2.024 ;
-use IO::Compress::Adapter::Identity 2.024 ;
-use IO::Compress::Zlib::Extra 2.024 ;
-use IO::Compress::Zip::Constants 2.024 ;
+use IO::Compress::Base::Common  2.048 qw(:Status MAX32 isGeMax32 isaScalar createSelfTiedObject);
+use IO::Compress::RawDeflate 2.048 ();
+use IO::Compress::Adapter::Deflate 2.048 ;
+use IO::Compress::Adapter::Identity 2.048 ;
+use IO::Compress::Zlib::Extra 2.048 ;
+use IO::Compress::Zip::Constants 2.048 ;
 
+use File::Spec();
+use Config;
 
-use Compress::Raw::Zlib  2.024 qw(crc32) ;
+use Compress::Raw::Zlib  2.048 (); 
+
 BEGIN
 {
     eval { require IO::Compress::Adapter::Bzip2 ; 
-           import  IO::Compress::Adapter::Bzip2 2.024 ; 
+           import  IO::Compress::Adapter::Bzip2 2.048 ; 
            require IO::Compress::Bzip2 ; 
-           import  IO::Compress::Bzip2 2.024 ; 
+           import  IO::Compress::Bzip2 2.048 ; 
          } ;
-#    eval { require IO::Compress::Adapter::Lzma ; 
-#           import  IO::Compress::Adapter::Lzma 2.020 ; 
-#           require IO::Compress::Lzma ; 
-#           import  IO::Compress::Lzma 2.024 ; 
-#         } ;
+         
+    eval { require IO::Compress::Adapter::Lzma ; 
+           import  IO::Compress::Adapter::Lzma 2.048 ; 
+           require IO::Compress::Lzma ; 
+           import  IO::Compress::Lzma 2.048 ; 
+         } ;
 }
 
 
 require Exporter ;
 
-our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $ZipError);
+our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $ZipError);
 
-$VERSION = '2.024';
+$VERSION = '2.048';
 $ZipError = '';
 
 @ISA = qw(Exporter IO::Compress::RawDeflate);
 @EXPORT_OK = qw( $ZipError zip ) ;
 %EXPORT_TAGS = %IO::Compress::RawDeflate::DEFLATE_CONSTANTS ;
+
 push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
 
 $EXPORT_TAGS{zip_method} = [qw( ZIP_CM_STORE ZIP_CM_DEFLATE ZIP_CM_BZIP2 ZIP_CM_LZMA)];
@@ -51,12 +56,53 @@ sub new
 
     my $obj = createSelfTiedObject($class, \$ZipError);    
     $obj->_create(undef, @_);
+
 }
 
 sub zip
 {
     my $obj = createSelfTiedObject(undef, \$ZipError);    
     return $obj->_def(@_);
+}
+
+sub isMethodAvailable
+{
+    my $method = shift;
+    
+    # Store & Deflate are always available
+    return 1
+        if $method == ZIP_CM_STORE || $method == ZIP_CM_DEFLATE ;
+        
+    return 1 
+        if $method == ZIP_CM_BZIP2 and 
+           defined $IO::Compress::Adapter::Bzip2::VERSION;
+           
+    return 1
+        if $method == ZIP_CM_LZMA and
+           defined $IO::Compress::Adapter::Lzma::VERSION;
+           
+    return 0;       
+}
+
+sub beforePayload
+{
+    my $self = shift ;
+
+    if (*$self->{ZipData}{Sparse} ) {
+        my $inc = 1024 * 100 ;
+        my $NULLS = ("\x00" x $inc) ;
+        my $sparse = *$self->{ZipData}{Sparse} ;
+        *$self->{CompSize}->add( $sparse );
+        *$self->{UnCompSize}->add( $sparse );
+        
+        *$self->{FH}->seek($sparse, IO::Handle::SEEK_CUR);
+        
+        *$self->{ZipData}{CRC32} = Compress::Raw::Zlib::crc32($NULLS, *$self->{ZipData}{CRC32})
+            for 1 .. int $sparse / $inc;
+        *$self->{ZipData}{CRC32} = Compress::Raw::Zlib::crc32(substr($NULLS, 0,  $sparse % $inc), 
+                                         *$self->{ZipData}{CRC32})
+            if $sparse % $inc;
+    }
 }
 
 sub mkComp
@@ -71,7 +117,7 @@ sub mkComp
                                                  $got->value('Level'),
                                                  $got->value('Strategy')
                                                  );
-        *$self->{ZipData}{CRC32} = crc32(undef);
+        *$self->{ZipData}{CRC32} = Compress::Raw::Zlib::crc32(undef);
     }
     elsif (*$self->{ZipData}{Method} == ZIP_CM_DEFLATE) {
         ($obj, $errstr, $errno) = IO::Compress::Adapter::Deflate::mkCompObject(
@@ -87,12 +133,14 @@ sub mkComp
                                                 $got->value('WorkFactor'),
                                                 $got->value('Verbosity')
                                                );
-        *$self->{ZipData}{CRC32} = crc32(undef);
+        *$self->{ZipData}{CRC32} = Compress::Raw::Zlib::crc32(undef);
     }
-#    elsif (*$self->{ZipData}{Method} == ZIP_CM_LZMA) {
-#        ($obj, $errstr, $errno) = IO::Compress::Adapter::Lzma::mkCompObject();
-#        *$self->{ZipData}{CRC32} = crc32(undef);
-#    }
+    elsif (*$self->{ZipData}{Method} == ZIP_CM_LZMA) {
+        ($obj, $errstr, $errno) = IO::Compress::Adapter::Lzma::mkRawZipCompObject($got->value('Preset'),
+                                                                                 $got->value('Extreme'),
+                                                                                 );
+        *$self->{ZipData}{CRC32} = Compress::Raw::Zlib::crc32(undef);
+    }
 
     return $self->saveErrorString(undef, $errstr, $errno)
        if ! defined $obj;
@@ -126,10 +174,56 @@ sub filterUncompressed
         *$self->{ZipData}{CRC32} = *$self->{Compress}->crc32();
     }
     else {
-        *$self->{ZipData}{CRC32} = crc32(${$_[0]}, *$self->{ZipData}{CRC32});
+        *$self->{ZipData}{CRC32} = Compress::Raw::Zlib::crc32(${$_[0]}, *$self->{ZipData}{CRC32});
 
     }
 }
+
+sub canonicalName
+{
+    # This sub is derived from Archive::Zip::_asZipDirName
+
+    # Return the normalized name as used in a zip file (path
+    # separators become slashes, etc.).
+    # Will translate internal slashes in path components (i.e. on Macs) to
+    # underscores.  Discards volume names.
+    # When $forceDir is set, returns paths with trailing slashes 
+    #
+    # input         output
+    # .             '.'
+    # ./a           a
+    # ./a/b         a/b
+    # ./a/b/        a/b
+    # a/b/          a/b
+    # /a/b/         a/b
+    # c:\a\b\c.doc  a/b/c.doc      # on Windows
+    # "i/o maps:whatever"   i_o maps/whatever   # on Macs
+
+    my $name      = shift;
+    my $forceDir  = shift ;
+
+    my ( $volume, $directories, $file ) =
+      File::Spec->splitpath( File::Spec->canonpath($name), $forceDir );
+      
+    my @dirs = map { $_ =~ s{/}{_}g; $_ } 
+               File::Spec->splitdir($directories);
+
+    if ( @dirs > 0 ) { pop (@dirs) if $dirs[-1] eq '' }   # remove empty component
+    push @dirs, defined($file) ? $file : '' ;
+
+    my $normalised_path = join '/', @dirs;
+
+    # Leading directory separators should not be stored in zip archives.
+    # Example:
+    #   C:\a\b\c\      a/b/c
+    #   C:\a\b\c.txt   a/b/c.txt
+    #   /a/b/c/        a/b/c
+    #   /a/b/c.txt     a/b/c.txt
+    $normalised_path =~ s{^/}{};  # remove leading separator
+
+    return $normalised_path;
+}
+
 
 sub mkHeader
 {
@@ -139,11 +233,27 @@ sub mkHeader
 
     *$self->{ZipData}{LocalHdrOffset} = U64::clone(*$self->{ZipData}{Offset});
 
+    my $comment = '';
+    $comment = $param->value('Comment') || '';
+
     my $filename = '';
     $filename = $param->value('Name') || '';
 
-    my $comment = '';
-    $comment = $param->value('Comment') || '';
+    $filename = canonicalName($filename)
+        if length $filename && $param->value('CanonicalName') ;
+
+    if (defined *$self->{ZipData}{FilterName} ) {
+        local *_ = \$filename ;
+        &{ *$self->{ZipData}{FilterName} }() ;
+    }
+
+#    if ( $param->value('UTF8') ) {
+#        require Encode ;
+#        $filename = Encode::encode_utf8($filename)
+#            if length $filename ;
+#        $comment = Encode::encode_utf8($filename)
+#            if length $comment ;
+#    }
 
     my $hdr = '';
 
@@ -156,11 +266,12 @@ sub mkHeader
     my $extFileAttr = 0 ;
     
     # This code assumes Unix.
-    $extFileAttr = 0666 << 16 
+    # TODO - revisit this
+    $extFileAttr = 0100644 << 16 
         if $osCode == ZIP_OS_CODE_UNIX ;
 
     if (*$self->{ZipData}{Zip64}) {
-        $empty = 0xFFFFFFFF;
+        $empty = MAX32;
 
         my $x = '';
         $x .= pack "V V", 0, 0 ; # uncompressedLength   
@@ -169,7 +280,7 @@ sub mkHeader
     }
 
     if (! $param->value('Minimal')) {
-        if (defined $param->value('exTime'))
+        if ($param->parsed('MTime'))
         {
             $extra .= mkExtendedTime($param->value('MTime'), 
                                     $param->value('ATime'), 
@@ -178,10 +289,20 @@ sub mkHeader
             $ctlExtra .= mkExtendedTime($param->value('MTime'));
         }
 
-        if ( $param->value('UID') && $osCode == ZIP_OS_CODE_UNIX)
+        if ( $osCode == ZIP_OS_CODE_UNIX )
         {
-            $extra    .= mkUnix2Extra( $param->value('UID'), $param->value('GID'));
-            $ctlExtra .= mkUnix2Extra();
+            if ( $param->value('want_exUnixN') )
+            {
+                    my $ux3 = mkUnixNExtra( @{ $param->value('want_exUnixN') }); 
+                    $extra    .= $ux3;
+                    $ctlExtra .= $ux3;
+            }
+
+            if ( $param->value('exUnix2') )
+            {
+                    $extra    .= mkUnix2Extra( @{ $param->value('exUnix2') }); 
+                    $ctlExtra .= mkUnix2Extra();
+            }
         }
 
         $extFileAttr = $param->value('ExtAttr') 
@@ -194,15 +315,21 @@ sub mkHeader
             if defined $param->value('ExtraFieldCentral');
     }
 
+    my $method = *$self->{ZipData}{Method} ;
     my $gpFlag = 0 ;    
     $gpFlag |= ZIP_GP_FLAG_STREAMING_MASK
         if *$self->{ZipData}{Stream} ;
 
-    my $method = *$self->{ZipData}{Method} ;
+    $gpFlag |= ZIP_GP_FLAG_LZMA_EOS_PRESENT
+        if $method == ZIP_CM_LZMA ;
+
+    #$gpFlag |= ZIP_GP_FLAG_LANGUAGE_ENCODING
+        #if  $param->value('UTF8') && length($filename) + length($comment);
 
     my $version = $ZIP_CM_MIN_VERSIONS{$method};
     $version = ZIP64_MIN_VERSION
         if ZIP64_MIN_VERSION > $version && *$self->{ZipData}{Zip64};
+
     my $madeBy = ($param->value('OS_Code') << 8) + $version;
     my $extract = $version;
 
@@ -264,7 +391,7 @@ sub mkHeader
 
     # offset to local hdr
     if (*$self->{ZipData}{LocalHdrOffset}->is64bit() ) { 
-        $ctl .= pack 'V', 0xFFFFFFFF ;
+        $ctl .= pack 'V', MAX32 ;
     }
     else {
         $ctl .= *$self->{ZipData}{LocalHdrOffset}->getPacked_V32() ; 
@@ -277,6 +404,7 @@ sub mkHeader
     *$self->{ZipData}{Offset}->add(length $hdr) ;
 
     *$self->{ZipData}{CentralHeader} = $ctl;
+
 
     return $hdr;
 }
@@ -307,6 +435,7 @@ sub mkTrailer
 
     my $data = $crc32 . $sizes ;
 
+
     my $xtrasize  = *$self->{UnCompSize}->getPacked_V64() ; # Uncompressed size
        $xtrasize .= *$self->{CompSize}->getPacked_V64() ;   # Compressed size
 
@@ -331,14 +460,14 @@ sub mkTrailer
     my $x = '';
 
     # uncompressed length
-    if (*$self->{UnCompSize}->is64bit() ) {
+    if (*$self->{UnCompSize}->isAlmost64bit() || *$self->{ZipData}{Zip64} > 1) {
         $x .= *$self->{UnCompSize}->getPacked_V64() ; 
     } else {
         substr($ctl, 24, 4) = *$self->{UnCompSize}->getPacked_V32() ;
     }
 
     # compressed length
-    if (*$self->{CompSize}->is64bit() ) {
+    if (*$self->{CompSize}->isAlmost64bit() || *$self->{ZipData}{Zip64} > 1) {
         $x .= *$self->{CompSize}->getPacked_V64() ; 
     } else {
         substr($ctl, 20, 4) = *$self->{CompSize}->getPacked_V32() ;
@@ -406,8 +535,8 @@ sub mkFinalTrailer
         $z64e .= *$self->{ZipData}{Offset}->getPacked_V64() ; # offset to end zip64 central dir
         $z64e .= pack 'V', 1              ; # Total number of disks 
 
-        $cd_offset = 0xFFFFFFFF ;
-        $cd_len = 0xFFFFFFFF if $cd_len >= 0xFFFFFFFF ;
+        $cd_offset = MAX32 ;
+        $cd_len = MAX32 if isGeMax32 $cd_len ;
         $entries = 0xFFFF if $entries >= 0xFFFF ;
     }
 
@@ -449,16 +578,20 @@ sub ckParams
         $got->value("CTime", $timeRef->[2]);
     }
     
-    # Unix2 Extended Attribute
-    if ($got->parsed('exUnix2') ) {
-        my $timeRef = $got->value('exUnix2');
-        if ( defined $timeRef) {
-            return $self->saveErrorString(undef, "exUnix2 not a 2-element array ref")   
-                if ref $timeRef ne 'ARRAY' || @$timeRef != 2;
-        }
+    # Unix2/3 Extended Attribute
+    for my $name (qw(exUnix2 exUnixN))
+    {
+        if ($got->parsed($name) ) {
+            my $idRef = $got->value($name);
+            if ( defined $idRef) {
+                return $self->saveErrorString(undef, "$name not a 2-element array ref")   
+                    if ref $idRef ne 'ARRAY' || @$idRef != 2;
+            }
 
-        $got->value("UID", $timeRef->[0]);
-        $got->value("GID", $timeRef->[1]);
+            $got->value("UID", $idRef->[0]);
+            $got->value("GID", $idRef->[1]);
+            $got->value("want_$name", $idRef);
+        }
     }
 
     *$self->{ZipData}{AnyZip64} = 1
@@ -475,9 +608,8 @@ sub ckParams
            ! defined $IO::Compress::Adapter::Bzip2::VERSION;
 
     return $self->saveErrorString(undef, "Lzma not available")
-        if $method == ZIP_CM_LZMA ;
-        #and 
-           #! defined $IO::Compress::Adapter::Lzma::VERSION;
+        if $method == ZIP_CM_LZMA 
+        and ! defined $IO::Compress::Adapter::Lzma::VERSION;
 
     *$self->{ZipData}{Method} = $method;
 
@@ -499,8 +631,27 @@ sub ckParams
         if defined $IO::Compress::Bzip2::VERSION
             and ! IO::Compress::Bzip2::ckParams($self, $got);
 
+    if ($got->parsed('Sparse') ) {
+        *$self->{ZipData}{Sparse} = $got->value('Sparse') ;
+        *$self->{ZipData}{Method} = ZIP_CM_STORE;
+    }
+
+    if ($got->parsed('FilterName')) {
+        my $v = $got->value('FilterName') ;
+        *$self->{ZipData}{FilterName} = $v
+            if ref $v eq 'CODE' ;
+    }
+
     return 1 ;
 }
+
+sub outputPayload
+{
+    my $self = shift ;
+    return 1 if *$self->{ZipData}{Sparse} ;
+    return $self->output(@_);
+}
+
 
 #sub newHeader
 #{
@@ -513,14 +664,14 @@ sub getExtraParams
 {
     my $self = shift ;
 
-    use IO::Compress::Base::Common  2.024 qw(:Parse);
-    use Compress::Raw::Zlib  2.024 qw(Z_DEFLATED Z_DEFAULT_COMPRESSION Z_DEFAULT_STRATEGY);
+    use IO::Compress::Base::Common  2.048 qw(:Parse);
+    use Compress::Raw::Zlib  2.048 qw(Z_DEFLATED Z_DEFAULT_COMPRESSION Z_DEFAULT_STRATEGY);
 
     my @Bzip2 = ();
     
     @Bzip2 = IO::Compress::Bzip2::getExtraParams($self)
         if defined $IO::Compress::Bzip2::VERSION;
-    
+
     return (
             # zlib behaviour
             $self->getZlibParams(),
@@ -535,15 +686,29 @@ sub getExtraParams
             'Comment'   => [0, 1, Parse_any,       ''],
             'ZipComment'=> [0, 1, Parse_any,       ''],
             'Name'      => [0, 1, Parse_any,       ''],
+            'FilterName'=> [0, 1, Parse_code,      undef],
+            'CanonicalName'=> [0, 1, Parse_boolean,   0],
+            #'UTF8'      => [0, 1, Parse_boolean,   0],
             'Time'      => [0, 1, Parse_any,       undef],
             'exTime'    => [0, 1, Parse_any,       undef],
             'exUnix2'   => [0, 1, Parse_any,       undef], 
-            'ExtAttr'   => [0, 1, Parse_any,       0],
+            'exUnixN'   => [0, 1, Parse_any,       undef], 
+            'ExtAttr'   => [0, 1, Parse_any, 
+                    $Compress::Raw::Zlib::gzip_os_code == 3 
+                        ? 0100644 << 16 
+                        : 0],
             'OS_Code'   => [0, 1, Parse_unsigned,  $Compress::Raw::Zlib::gzip_os_code],
             
            'TextFlag'  => [0, 1, Parse_boolean,   0],
            'ExtraFieldLocal'  => [0, 1, Parse_any,    undef],
            'ExtraFieldCentral'=> [0, 1, Parse_any,    undef],
+
+            # Lzma
+            'Preset'   => [0, 1, Parse_unsigned, 6],
+            'Extreme'  => [1, 1, Parse_boolean,  0],
+
+            # For internal use only         
+           'Sparse'    => [0, 1, Parse_unsigned,  0],
 
             @Bzip2,
         );
@@ -561,8 +726,31 @@ sub getFileInfo
     my $params = shift;
     my $filename = shift ;
 
-    my ($mode, $uid, $gid, $atime, $mtime, $ctime) 
-                = (stat($filename))[2, 4,5, 8,9,10] ;
+    if (isaScalar($filename))
+    {
+        $params->value(Zip64 => 1)
+            if isGeMax32 length (${ $filename }) ;
+
+        return ;
+    }
+
+    my ($mode, $uid, $gid, $size, $atime, $mtime, $ctime) ;
+    if ( $params->parsed('StoreLinks') )
+    {
+        ($mode, $uid, $gid, $size, $atime, $mtime, $ctime) 
+                = (lstat($filename))[2, 4,5,7, 8,9,10] ;
+    }
+    else
+    {
+        ($mode, $uid, $gid, $size, $atime, $mtime, $ctime) 
+                = (stat($filename))[2, 4,5,7, 8,9,10] ;
+    }
+
+    $params->value(TextFlag => -T $filename )
+        if ! $params->parsed('TextFlag');
+
+    $params->value(Zip64 => 1)
+        if isGeMax32 $size ;
 
     $params->value('Name' => $filename)
         if ! $params->parsed('Name') ;
@@ -575,13 +763,21 @@ sub getFileInfo
         $params->value('MTime' => $mtime) ;
         $params->value('ATime' => $atime) ;
         $params->value('CTime' => undef) ; # No Creation time
-        $params->value("exTime", [$mtime, $atime, undef]);
+        # TODO - see if can fillout creation time on non-Unix
     }
 
     # NOTE - Unix specific code alert
-    $params->value('ExtAttr' => $mode << 16) 
-        if ! $params->parsed('ExtAttr');
+    if (! $params->parsed('ExtAttr'))
+    {
+        use Fcntl qw(:mode) ;
+        my $attr = $mode << 16;
+        $attr |= ZIP_A_RONLY if ($mode & S_IWRITE) == 0 ;
+        $attr |= ZIP_A_DIR   if ($mode & S_IFMT  ) == S_IFDIR ;
+        
+        $params->value('ExtAttr' => $attr);
+    }
 
+    $params->value('want_exUnixN', [$uid, $gid]);
     $params->value('UID' => $uid) ;
     $params->value('GID' => $gid) ;
     
@@ -622,11 +818,29 @@ sub mkUnix2Extra
                                                  $ids);
 }
 
+sub mkUnixNExtra
+{
+    my $uid = shift;
+    my $gid = shift;
+
+    # Assumes UID/GID are 32-bit
+    my $ids ;
+    $ids .= pack "C", 1; # version
+    $ids .= pack "C", $Config{uidsize};
+    $ids .= pack "V", $uid;
+    $ids .= pack "C", $Config{gidsize};
+    $ids .= pack "V", $gid;
+
+    return IO::Compress::Zlib::Extra::mkSubField(ZIP_EXTRA_ID_INFO_ZIP_UNIXN, 
+                                                 $ids);
+}
+
 
 # from Archive::Zip
 sub _unixToDosTime    # Archive::Zip::Member
 {
 	my $time_t = shift;
+    
     # TODO - add something to cope with unix time < 1980 
 	my ( $sec, $min, $hour, $mday, $mon, $year ) = localtime($time_t);
 	my $dt = 0;
@@ -702,9 +916,12 @@ zip files and buffers. It is not a general-purpose file archiver. If that
 is what you want, check out C<Archive::Zip>.
 
 At present three compression methods are supported by IO::Compress::Zip,
-namely Store (no compression at all), Deflate and Bzip2.
+namely Store (no compression at all), Deflate, Bzip2 and LZMA.
 
 Note that to create Bzip2 content, the module C<IO::Compress::Bzip2> must
+be installed.
+
+Note that to create LZMA content, the module C<IO::Compress::Lzma> must
 be installed.
 
 For reading zip files/buffers, see the companion module 
@@ -770,8 +987,6 @@ If C<$input> is a string that is delimited by the characters "<" and ">"
 C<zip> will assume that it is an I<input fileglob string>. The
 input is the list of files that match the fileglob.
 
-If the fileglob does not match any files ...
-
 See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
@@ -779,10 +994,10 @@ See L<File::GlobMapper|File::GlobMapper> for more details.
 If the C<$input> parameter is any other type, C<undef> will be returned.
 
 In addition, if C<$input> is a simple filename, the default values for
-the C<Name>, C<Time>, C<ExtAttr> and C<exTime> options will be sourced from that file.
+the C<Name>, C<Time>, C<TextFlag>, C<ExtAttr>, C<exUnixN> and C<exTime> options will be sourced from that file.
 
 If you do not want to use these defaults they can be overridden by
-explicitly setting the C<Name>, C<Time>, C<ExtAttr> and C<exTime> options or by setting the
+explicitly setting the C<Name>, C<Time>, C<TextFlag>, C<ExtAttr>, C<exUnixN> and C<exTime> options or by setting the
 C<Minimal> parameter.
 
 =head3 The C<$output> parameter
@@ -822,6 +1037,8 @@ output is the list of files that match the fileglob.
 
 When C<$output> is an fileglob string, C<$input> must also be a fileglob
 string. Anything else is an error.
+
+See L<File::GlobMapper|File::GlobMapper> for more details.
 
 =back
 
@@ -890,8 +1107,8 @@ data to the output data stream.
 
 So when the output is a filehandle it will carry out a seek to the eof
 before writing any compressed data. If the output is a filename, it will be opened for
-appending. If the output is a buffer, all compressed data will be appened to
-the existing buffer.
+appending. If the output is a buffer, all compressed data will be
+appended to the existing buffer.
 
 Conversely when C<Append> is not specified, or it is present and is set to
 false, it will operate as follows.
@@ -932,28 +1149,32 @@ compressed data to a buffer, C<$buffer>.
     zip $input => \$buffer 
         or die "zip failed: $ZipError\n";
 
-To compress all files in the directory "/my/home" that match "*.txt"
-and store the compressed data in the same directory
+To create a zip file, C<output.zip>, that contains the compressed contents
+of the files C<alpha.txt> and C<beta.txt>
 
     use strict ;
     use warnings ;
     use IO::Compress::Zip qw(zip $ZipError) ;
 
-    zip '</my/home/*.txt>' => '<*.zip>'
+    zip [ 'alpha.txt', 'beta.txt' ] => 'output.zip'
         or die "zip failed: $ZipError\n";
 
-and if you want to compress each file one at a time, this will do the trick
+Alternatively, rather than having to explicitly name each of the files that
+you want to compress, you could use a fileglob to select all the C<txt>
+files in the current directory, as follows
 
     use strict ;
     use warnings ;
     use IO::Compress::Zip qw(zip $ZipError) ;
 
-    for my $input ( glob "/my/home/*.txt" )
-    {
-        my $output = "$input.zip" ;
-        zip $input => $output 
-            or die "Error compressing '$input': $ZipError\n";
-    }
+    my @files = <*.txt>;
+    zip \@files => 'output.zip'
+        or die "zip failed: $ZipError\n";
+
+or more succinctly
+
+    zip [ <*.txt> ] => 'output.zip'
+        or die "zip failed: $ZipError\n";
 
 =head1 OO Interface
 
@@ -1051,15 +1272,76 @@ This parameter defaults to 0.
 
 =item C<< Name => $string >>
 
-Stores the contents of C<$string> in the zip filename header field. If
-C<Name> is not specified, no zip filename field will be created.
+Stores the contents of C<$string> in the zip filename header field. 
+
+If C<Name> is not specified and the C<$input> parameter is a filename, the
+value of C<$input> will be used for the zip filename header field.
+
+If C<Name> is not specified and the C<$input> parameter is not a filename,
+no zip filename field will be created.
+
+Note that both the C<CanonicalName> and C<FilterName> options
+can modify the value used for the zip filename header field.
+
+=item C<< CanonicalName => 0|1 >>
+
+This option controls whether the filename field in the zip header is
+I<normalized> into Unix format before being written to the zip file.
+
+It is recommended that you enable this option unless you really need
+to create a non-standard Zip file.
+
+This is what APPNOTE.TXT has to say on what should be stored in the zip
+filename header field.
+
+    The name of the file, with optional relative path.          
+    The path stored should not contain a drive or
+    device letter, or a leading slash.  All slashes
+    should be forward slashes '/' as opposed to
+    backwards slashes '\' for compatibility with Amiga
+    and UNIX file systems etc.
+
+This option defaults to B<false>.
+
+=item C<< FilterName => sub { ... }  >>
+
+This option allow the filename field in the zip header to be modified
+before it is written to the zip file.
+
+This option takes a parameter that must be a reference to a sub.  On entry
+to the sub the C<$_> variable will contain the name to be filtered. If no
+filename is available C<$_> will contain an empty string.
+
+The value of C<$_> when the sub returns will be  stored in the filename
+header field.
+
+Note that if C<CanonicalName> is enabled, a
+normalized filename will be passed to the sub.
+
+If you use C<FilterName> to modify the filename, it is your responsibility
+to keep the filename in Unix format.
+
+Although this option can be used with the OO ointerface, it is of most use
+with the one-shot interface. For example, the code below shows how
+C<FilterName> can be used to remove the path component from a series of
+filenames before they are stored in C<$zipfile>.
+
+    sub compressTxtFiles
+    {
+        my $zipfile = shift ;
+        my $dir     = shift ;
+
+        zip [ <$dir/*.txt> ] => $zipfile,
+            FilterName => sub { s[^$dir/][] } ;  
+    }    
 
 =item C<< Time => $number >>
 
 Sets the last modified time field in the zip header to $number.
 
 This field defaults to the time the C<IO::Compress::Zip> object was created
-if this option is not specified.
+if this option is not specified and the C<$input> parameter is not a
+filename.
 
 =item C<< ExtAttr => $attr >>
 
@@ -1068,10 +1350,10 @@ header of the zip file. This is a 4 byte field.
 
 If you are running a Unix derivative this value defaults to 
 
-    0666 << 16
+    0100644 << 16
 
 This should allow read/write access to any files that are extracted from
-the zip file/buffer.
+the zip file/buffer`.
 
 For all other systems it defaults to 0.
 
@@ -1098,17 +1380,36 @@ By default no extended time field is created.
 =item C<< exUnix2 => [$uid, $gid] >>
 
 This option expects an array reference with exactly two elements: C<$uid>
-and C<$gid>. These values correspond to the numeric user ID and group ID
-of the owner of the files respectively.
+and C<$gid>. These values correspond to the numeric User ID (UID) and Group ID
+(GID) of the owner of the files respectively.
 
 When the C<exUnix2> option is present it will trigger the creation of a
-Unix2 extra field (ID is "Ux") in the local zip. This will be populated
-with C<$uid> and C<$gid>. In addition an empty Unix2 extra field will also
-be created in the central zip header
+Unix2 extra field (ID is "Ux") in the local zip header. This will be populated
+with C<$uid> and C<$gid>. An empty Unix2 extra field will also
+be created in the central zip header. 
+
+Note - The UID & GID are stored as 16-bit
+integers in the "Ux" field. Use C<< exUnixN >> if your UID or GID are
+32-bit.
 
 If the C<Minimal> option is set to true, this option will be ignored.
 
 By default no Unix2 extra field is created.
+
+=item C<< exUnixN => [$uid, $gid] >>
+
+This option expects an array reference with exactly two elements: C<$uid>
+and C<$gid>. These values correspond to the numeric User ID (UID) and Group ID
+(GID) of the owner of the files respectively.
+
+When the C<exUnixN> option is present it will trigger the creation of a
+UnixN extra field (ID is "ux") in bothe the local and central zip headers. 
+This will be populated with C<$uid> and C<$gid>. 
+The UID & GID are stored as 32-bit integers.
+
+If the C<Minimal> option is set to true, this option will be ignored.
+
+By default no UnixN extra field is created.
 
 =item C<< Comment => $comment >>
 
@@ -1126,12 +1427,12 @@ By default, no comment field is written to the zip file.
 
 =item C<< Method => $method >>
 
-Controls which compression method is used. At present three compression
-methods are supported, namely Store (no compression at all), Deflate and
-Bzip2.
+Controls which compression method is used. At present four compression
+methods are supported, namely Store (no compression at all), Deflate, 
+Bzip2 and Lzma.
 
-The symbols, ZIP_CM_STORE, ZIP_CM_DEFLATE and ZIP_CM_BZIP2 are used to
-select the compression method.
+The symbols, ZIP_CM_STORE, ZIP_CM_DEFLATE, ZIP_CM_BZIP2 and ZIP_CM_LZMA 
+are used to select the compression method.
 
 These constants are not imported by C<IO::Compress::Zip> by default.
 
@@ -1142,6 +1443,10 @@ These constants are not imported by C<IO::Compress::Zip> by default.
 Note that to create Bzip2 content, the module C<IO::Compress::Bzip2> must
 be installed. A fatal error will be thrown if you attempt to create Bzip2
 content when C<IO::Compress::Bzip2> is not available.
+
+Note that to create Lzma content, the module C<IO::Compress::Lzma> must
+be installed. A fatal error will be thrown if you attempt to create Lzma
+content when C<IO::Compress::Lzma> is not available.
 
 The default method is ZIP_CM_DEFLATE.
 
@@ -1157,11 +1462,14 @@ The default is 1.
 
 =item C<< Zip64 => 0|1 >>
 
-Create a Zip64 zip file/buffer. This option should only be used if you want
-to store files larger than 4 Gig.
+Create a Zip64 zip file/buffer. This option is used if you want
+to store files larger than 4 Gig. 
+
+C<Zip64> will be automatically set, as needed, if working with the one-shot 
+interface when the input is either a filename or a scalar reference.
 
 If you intend to manipulate the Zip64 zip files created with this module
-using an external zip/unzip make sure that it supports Zip64.  
+using an external zip/unzip, make sure that it supports Zip64.  
 
 In particular, if you are using Info-Zip you need to have zip version 3.x
 or better to update a Zip64 archive and unzip version 6.x to read a zip64
@@ -1174,6 +1482,9 @@ The default is 0.
 This parameter controls the setting of a bit in the zip central header. It
 is used to signal that the data stored in the zip file/buffer is probably
 text.
+
+In one-shot mode this flag will be set to true if the Perl C<-T> operator thinks
+the file contains text.
 
 The default is 0. 
 
@@ -1214,6 +1525,9 @@ Alternatively the list of subfields can by supplied as a scalar, thus
 
     ExtraField => $rawdata
 
+In this case C<IO::Compress::Zip> will check that C<$rawdata> consists of 
+zero or more conformant sub-fields. 
+
 The Extended Time field (ID "UT"), set using the C<exTime> option, and the
 Unix2 extra field (ID "Ux), set using the C<exUnix2> option, are examples
 of extra fields.
@@ -1226,7 +1540,8 @@ The maximum size of an extra field 65535 bytes.
 
 If specified, this option will disable the creation of all extra fields
 in the zip local and central headers. So the C<exTime>, C<exUnix2>,
-C<ExtraFieldLocal> and C<ExtraFieldCentral> options will be ignored.
+C<exUnixN>, C<ExtraFieldLocal> and C<ExtraFieldCentral> options will 
+be ignored.
 
 This parameter defaults to 0.
 
@@ -1252,6 +1567,32 @@ This option is only valid if the C<Method> is ZIP_CM_BZIP2. It is ignored
 otherwise.
 
 The default is 0.
+
+=item C<< Preset => number >>
+
+Used to choose the LZMA compression preset.
+
+Valid values are 0-9 and C<LZMA_PRESET_DEFAULT>.
+
+0 is the fastest compression with the lowest memory usage and the lowest
+compression.
+
+9 is the slowest compession with the highest memory usage but with the best
+compression.
+
+This option is only valid if the C<Method> is ZIP_CM_LZMA. It is ignored
+otherwise.
+
+Defaults to C<LZMA_PRESET_DEFAULT> (6).
+
+=item C<< Extreme => 0|1 >>
+
+Makes LZMA compression a lot slower, but a small compression gain.
+
+This option is only valid if the C<Method> is ZIP_CM_LZMA. It is ignored
+otherwise.
+
+Defaults to 0.
 
 =item -Level 
 
@@ -1447,7 +1788,7 @@ If the C<$z> object is associated with a file or a filehandle, C<fileno>
 will return the underlying file descriptor. Once the C<close> method is
 called C<fileno> will return C<undef>.
 
-If the C<$z> object is is associated with a buffer, this method will return
+If the C<$z> object is associated with a buffer, this method will return
 C<undef>.
 
 =head2 close
@@ -1566,8 +1907,6 @@ constructor.
 
 See L<IO::Compress::FAQ|IO::Compress::FAQ/"Apache::GZip Revisited">
 
-    
-
 =head2 Working with Net::FTP
 
 See L<IO::Compress::FAQ|IO::Compress::FAQ/"Compressed files and Net::FTP">
@@ -1576,7 +1915,7 @@ See L<IO::Compress::FAQ|IO::Compress::FAQ/"Compressed files and Net::FTP">
 
 L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
 
-L<Compress::Zlib::FAQ|Compress::Zlib::FAQ>
+L<IO::Compress::FAQ|IO::Compress::FAQ>
 
 L<File::GlobMapper|File::GlobMapper>, L<Archive::Zip|Archive::Zip>,
 L<Archive::Tar|Archive::Tar>,
@@ -1605,7 +1944,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2010 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

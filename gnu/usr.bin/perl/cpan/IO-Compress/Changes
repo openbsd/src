@@ -1,6 +1,209 @@
 CHANGES
 -------
 
+  2.048 29 January 2012
+
+      * Set minimum zlib version to 1.2.0
+      
+      * IO::Compress test suite fails with Compress::Raw::Zlib 2.047 and zlib < 1.2.4
+        [RT# 74503]
+      
+  2.047 28 January 2012
+
+      * Set minimum Perl version to 5.6
+
+      * IO::Compress::Zip
+        - In one-shot zip, set the Text Flag if "-T" thinks the file is a
+          text file.
+        - In one-shot mode, wrote mod time & access time in wrong order 
+          in the "UT" extended field.
+
+  2.046 18 December 2011
+
+      * Minor update to bin/zipdetails
+
+      * Typo in name of IO::Compress::FAQ.pod
+
+      * IO::Uncompress::Unzip
+        - Example for walking a zip file used eof to control the outer
+          loop. This is wrong.
+
+      * IO::Compress::Zip
+        - Change default for CanonicalName to false.
+          [RT# 72974]
+
+  2.045 3 December 2011
+
+      * Restructured IO::Compress::FAQ.pod
+
+  2.044 2 December 2011
+
+      * Moved FAQ.pod under the lib directory so it can get installed
+
+      * Added bin/zipdetails
+
+      * IO::Compress::Zip
+        - In one-shot mode enable Zip64 mode if the input file/buffer 
+          >= 0xFFFFFFFF bytes.
+
+      * IO::Compress::FAQ
+        - Updates 
+
+  2.043 20 November 2011
+
+      * IO::Compress::Base
+        - Fixed issue that with handling of Zip files with two (or more) 
+          entries that were STORED. Symptom is the first is uncompressed
+          ok, but the next will terminate early if the size of the file is
+          greater than BlockSize.
+          Regression test added to t/006zip.t
+          [RT# 72548]
+
+  2.042 17 November 2011
+
+      * IO::Compress::Zip
+        - Added exUnixN option to allow creation of the "ux" extra field.
+          This allows 32-bit UID/GID to be stored.
+        - In one-shot mode use exUnixN rather than exUnix2 for the UID/GID.
+
+      * IO::Compress::Zlib::Extra::parseExtraField
+        - Fixed bad test for length of ID field
+          [RT# 72329 & #72505]
+
+  2.040 28 October 2011
+
+      * t/105oneshot-zip-only.t
+        - CanonicalName test failure on Windows
+          [RT# 68926]
+
+      * IO::Compress::Zip
+        - ExtAttr now populates MSDOS attributes 
+
+  2.039 28 October 2011
+
+      * IO::Compress::Zip
+        - Added CanonicalName option.
+          Note this option is set to true by default.
+        - Added FilterName option
+
+      * IO::Unompress::Base
+        - Fixed issue where setting $\ would corrupt the uncompressed data.
+          Thanks to Steffen Goeldner for reporting the issue.
+
+      * t/050interop-*.t
+        - Handle case when external command contains a whitespace
+          RT #71335
+
+  2.037 22 June 2011
+
+      * IO::Uncompress
+        - get globmapper tests working on VMS
+          [RT# 68926]
+
+      * IO::Uncompress::Unzip
+        - Fixed limitation where Streamed Stored content was not supported.
+
+  2.036 18 June 2011
+
+      * IO::Compress::Zip & IO::Uncompress::Unzip
+        - Added support for LZMA (method 14) compression/uncompresion.  
+
+      * IO::Compress::Unzip
+        - Fixed CRC issue when compression is Store or Bzip2 and Strict option
+          is set.
+
+      * IO::Compress::Zip
+        - Fixed Zip64 issue where the content size is exactly 0xFFFFFFFF
+
+  2.035 6 May 2011
+
+      * RT #67931: Test failure on Windows
+
+  2.034 2 May 2011
+
+      * Compress::Zlib
+        - Silence pod warnings.
+          [RT# 64876]
+
+        - Removed duplicate words in pod.
+
+      * IO::Compress::Base
+
+        - RT #56942: Testsuite fails when being run in parallel
+
+        - Reduce symbol import - patch from J. Nick Koston
+
+        - If the output buffer parameter passed to read has a value of
+          undef, and Append mode was specified when the file was opened,
+          and eof is reached, then the buffer paramer was left as undef.  
+          This is different from when Append isn't specified - the buffer 
+          parameter is set to an empty string.
+
+        - There area couple of issues with reading a file that contains an 
+          empty file that is compressed. 
+          Create with -- touch /tmp/empty; gzip /tmp/empty.
+          Issue 1 - eof is not true immediately. Have to read from the file
+                    to trigger eof.
+          Issue 2 - readline incorrectly returns an empty string the first 
+                    time it is called, and (correctly) undef thereafter.
+          [RT #67554]
+
+  2.033 11 Jan 2011
+
+      * Fixed typos & spelling errors.
+        [perl# 81816]
+
+  2.032 4 Jan 2011
+
+      * IO::Uncompress::Base
+        - An input file that had a valid header, and so would allow
+          creation of the uncompression object, but was then followed by
+          corrupt data would trigger an infinite loop when using the 
+          input line oprator.
+          [RT #61915]
+
+      * IO::Compress::Gzip
+        - XFL default settings for max compression & fastest algorithm were 
+          the wrong way around. Thanks to Andrey Zholos for spotting this.
+
+      * IO::Compress::Base::Common
+        - Fixed precedence problem in parameter parsing code.
+
+  2.030 22 July 2010
+
+      * IO::Compress::Zip
+        - Updates to documentation.
+        - Changes default value for ExtAttr on Unix to 0100644
+
+      * IO::Uncompress::Unzip
+        Reworked the "Name" option and examples in the pod.
+
+      * IO::Uncompress::Base
+        Fixed problem with nextStream not returning 0 when there is no 
+        next stream and Transparent is false.
+
+  2.027 24 April 2010
+
+      * Compress::Zlib
+        Remove autoload code from Zlib.pm.
+        [perl #74088]
+
+  2.026 7 April 2010
+
+      * IO::Uncompress::Zip
+        - Some updates to IO::Compress::Zip documentation.
+        - Fixed default setting for ExtAttr.
+
+
+  2.025 27 March 2010
+
+      * IO::Uncompress::Unzip
+        The "Name" option wasn't documented.
+
+      * Allow zlib version check to be disabled by setting
+        TEST_SKIP_VERSION_CHECK environment variable.
+        [RT #54510]
+
   2.024 7 January 2010
 
       * Compress::Zlib
@@ -82,7 +285,7 @@ CHANGES
 
   2.018 3 May 2009
 
-      * IO::Unompress::Bunzip2
+      * IO::Uncompress::Bunzip2
         - The interface to Compress-Raw-Bzip2 now uses the new LimitOutput
           feature. This will make all of the bzip2-related IO-Compress modules
           less greedy in their memory consumption. 
@@ -232,7 +435,7 @@ CHANGES
         FNAME & FCOMMENT fields for EBCDIC.
 
       * Compress::Zlib 
-        lib/Compress/Zlib.pm -- 1.x Backward Compatability issues
+        lib/Compress/Zlib.pm -- 1.x Backward Compatibility issues
         gzclose - documented return value was wrong, should be 0 for ok.
         gzflush - return value didn't match 1.x, should return 0 if ok.
         [rt.cpan.org #29215] and Debian bug #440943 http://bugs.debian.org/440943
@@ -328,7 +531,7 @@ CHANGES
       * Add an explicit use_ok test for Scalar::Util in the test harness.
         The error message reported by 01misc implied the problem was
         somewhere else.
-        Also explictly check that 'dualvar' is available.
+        Also explicitly check that 'dualvar' is available.
 
       * Compress::Zlib 
         - Fix append mode with gzopen.
@@ -351,7 +554,7 @@ CHANGES
         Thanks to Andreas J. Koenig for spotting the problem.
 
       * IO::Uncompress::AnyUncompress
-        Added IO::Uncompress::Lzf to the list of supported uncompresors.
+        Added IO::Uncompress::Lzf to the list of supported uncompressors.
 
       * IO::Uncompress::Base
         Added TrailingData to one-shot interface.
@@ -378,7 +581,7 @@ CHANGES
 
       * IO::Uncompress::UnZip
         Tighten up the zip64 extra field processing to cope with the case
-        wheere only some of the local header fields are superceeded.
+        wheere only some of the local header fields are superseded.
 
       * IO::Uncompress::AnyInflate
         Remove raw-deflate (RFC 1951) from the default list of compressors 
@@ -478,7 +681,7 @@ CHANGES
         Changed gzread so that its behaviour matches C::Z::gzread 1.x if it
         is called after eof. In this case it will write an empty string
         into the output parameter. This change is solely for backward
-        compatability reasons.
+        compatibility reasons.
 
   2.000_09 3 March 2006
 
@@ -632,7 +835,7 @@ Compress-Zlib version 1 Changes
   1.31 - 29 October 2003
 
       * Reinstated the creation of .bak files - $^I seems to need a
-        backup file on Windows. For OpenVMS, the extenstion _bak is used.
+        backup file on Windows. For OpenVMS, the extension _bak is used.
 
   1.30 - 28 October 2003
 
@@ -729,7 +932,7 @@ Compress-Zlib version 1 Changes
 
   1.13 - 31st June 2001
 
-      * Make sure config.in is consistant when released.
+      * Make sure config.in is consistent when released.
 
   1.12 - 28th April 2001
 

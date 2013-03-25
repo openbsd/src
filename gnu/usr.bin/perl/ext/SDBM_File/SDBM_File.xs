@@ -4,12 +4,14 @@
 #include "XSUB.h"
 #include "sdbm/sdbm.h"
 
+#define fetch_key 0
+#define store_key 1
+#define fetch_value 2
+#define store_value 3
+
 typedef struct {
 	DBM * 	dbp ;
-	SV *    filter_fetch_key ;
-	SV *    filter_store_key ;
-	SV *    filter_fetch_value ;
-	SV *    filter_store_value ;
+	SV *    filter[4];
 	int     filtering ;
 	} SDBM_File_type;
 
@@ -40,8 +42,7 @@ sdbm_TIEHASH(dbtype, filename, flags, mode)
 
 	    RETVAL = NULL ;
 	    if ((dbp = sdbm_open(filename,flags,mode))) {
-	        RETVAL = (SDBM_File)safemalloc(sizeof(SDBM_File_type)) ;
-    	        Zero(RETVAL, 1, SDBM_File_type) ;
+	        RETVAL = (SDBM_File)safecalloc(1, sizeof(SDBM_File_type));
 		RETVAL->dbp = dbp ;
 	    }
 	    
@@ -54,15 +55,12 @@ sdbm_DESTROY(db)
 	SDBM_File	db
 	CODE:
 	if (db) {
+	    int i = store_value;
 	    sdbm_close(db->dbp);
-	    if (db->filter_fetch_key)
-		SvREFCNT_dec(db->filter_fetch_key) ;
-	    if (db->filter_store_key)
-		SvREFCNT_dec(db->filter_store_key) ;
-	    if (db->filter_fetch_value)
-		SvREFCNT_dec(db->filter_fetch_value) ;
-	    if (db->filter_store_value)
-		SvREFCNT_dec(db->filter_store_value) ;
+	    do {
+		if (db->filter[i])
+		    SvREFCNT_dec(db->filter[i]);
+	    } while (i-- > 0);
 	    safefree(db) ;
 	}
 
@@ -108,49 +106,22 @@ sdbm_NEXTKEY(db, key)
 int
 sdbm_error(db)
 	SDBM_File	db
+	ALIAS:
+	sdbm_clearerr = 1
 	CODE:
-	RETVAL = sdbm_error(db->dbp) ;
+	RETVAL = ix ? sdbm_clearerr(db->dbp) : sdbm_error(db->dbp);
 	OUTPUT:
 	  RETVAL
-
-int
-sdbm_clearerr(db)
-	SDBM_File	db
-	CODE:
-	RETVAL = sdbm_clearerr(db->dbp) ;
-	OUTPUT:
-	  RETVAL
-
 
 SV *
 filter_fetch_key(db, code)
 	SDBM_File	db
 	SV *		code
 	SV *		RETVAL = &PL_sv_undef ;
+	ALIAS:
+	SDBM_File::filter_fetch_key = fetch_key
+	SDBM_File::filter_store_key = store_key
+	SDBM_File::filter_fetch_value = fetch_value
+	SDBM_File::filter_store_value = store_value
 	CODE:
-	    DBM_setFilter(db->filter_fetch_key, code) ;
-
-SV *
-filter_store_key(db, code)
-	SDBM_File	db
-	SV *		code
-	SV *		RETVAL =  &PL_sv_undef ;
-	CODE:
-	    DBM_setFilter(db->filter_store_key, code) ;
-
-SV *
-filter_fetch_value(db, code)
-	SDBM_File	db
-	SV *		code
-	SV *		RETVAL =  &PL_sv_undef ;
-	CODE:
-	    DBM_setFilter(db->filter_fetch_value, code) ;
-
-SV *
-filter_store_value(db, code)
-	SDBM_File	db
-	SV *		code
-	SV *		RETVAL =  &PL_sv_undef ;
-	CODE:
-	    DBM_setFilter(db->filter_store_value, code) ;
-
+	    DBM_setFilter(db->filter[ix], code);

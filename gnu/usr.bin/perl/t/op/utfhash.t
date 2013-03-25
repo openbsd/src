@@ -21,7 +21,7 @@ my %hashu = ( "\xff" => 0xff,
               "\x{1ff}" => 0x1ff,
             );
 
-# Check that we can find the 8-bit things by various litterals
+# Check that we can find the 8-bit things by various literals
 is($hash8{"\x{00ff}"},0xFF);
 is($hash8{"\x{007f}"},0x7F);
 is($hash8{"\xff"},0xFF);

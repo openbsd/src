@@ -61,7 +61,7 @@ sub ok
 ### Start of Testing ###
 ok(1, 'Loaded');
 
-# Tests freeing the Perl interperter for each thread
+# Tests freeing the Perl interpreter for each thread
 # See http://www.nntp.perl.org/group/perl.perl5.porters/110772 for details
 
 my $COUNT;

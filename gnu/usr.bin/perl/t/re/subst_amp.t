@@ -1,75 +1,67 @@
-#!./perl
+#!./perl -w
 
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require Config; import Config;
+    require './test.pl';
 }
 
-print "1..13\n";
+use strict;
 
 $_ = 'x' x 20; 
 s/\d*|x/<$&>/g; 
-$foo = '<>' . ('<x><>' x 20) ;
-print ($_ eq $foo ? "ok 1\n" : "not ok 1\n#'$_'\n#'$foo'\n");
+my $foo = '<>' . ('<x><>' x 20) ;
+is($_, $foo);
 
-$t = 'aaa';
+my $t = 'aaa';
 
 $_ = $t;
-@res = ();
+my @res;
 pos = 1;
 s/\Ga(?{push @res, $_, $`})/xx/g;
-print "not " unless "$_ @res" eq 'axxxx aaa a aaa aa';
-print "ok 2\n";
+is("$_ @res", 'axxxx aaa a aaa aa');
 
 $_ = $t;
 @res = ();
 pos = 1;
 s/\Ga(?{push @res, $_, $`})/x/g;
-print "not " unless "$_ @res" eq 'axx aaa a aaa aa';
-print "ok 3\n";
+is("$_ @res", 'axx aaa a aaa aa');
 
 $_ = $t;
 @res = ();
 pos = 1;
 s/\Ga(?{push @res, $_, $`})/xx/;
-print "not " unless "$_ @res" eq 'axxa aaa a';
-print "ok 4\n";
+is("$_ @res", 'axxa aaa a');
 
 $_ = $t;
 @res = ();
 pos = 1;
 s/\Ga(?{push @res, $_, $`})/x/;
-print "not " unless "$_ @res" eq 'axa aaa a';
-print "ok 5\n";
+is("$_ @res", 'axa aaa a');
 
 $a = $t;
 @res = ();
 pos ($a) = 1;
 $a =~ s/\Ga(?{push @res, $_, $`})/xx/g;
-print "#'$a' '@res'\nnot " unless "$a @res" eq 'axxxx aaa a aaa aa';
-print "ok 6\n";
+is("$a @res", 'axxxx aaa a aaa aa');
 
 $a = $t;
 @res = ();
 pos ($a) = 1;
 $a =~ s/\Ga(?{push @res, $_, $`})/x/g;
-print "#'$a' '@res'\nnot " unless "$a @res" eq 'axx aaa a aaa aa';
-print "ok 7\n";
+is("$a @res", 'axx aaa a aaa aa');
 
 $a = $t;
 @res = ();
 pos ($a) = 1;
 $a =~ s/\Ga(?{push @res, $_, $`})/xx/;
-print "#'$a' '@res'\nnot " unless "$a @res" eq 'axxa aaa a';
-print "ok 8\n";
+is("$a @res", 'axxa aaa a');
 
 $a = $t;
 @res = ();
 pos ($a) = 1;
 $a =~ s/\Ga(?{push @res, $_, $`})/x/;
-print "#'$a' '@res'\nnot " unless "$a @res" eq 'axa aaa a';
-print "ok 9\n";
+is("$a @res", 'axa aaa a');
 
 sub x2 {'xx'}
 sub x1 {'x'}
@@ -78,27 +70,24 @@ $a = $t;
 @res = ();
 pos ($a) = 1;
 $a =~ s/\Ga(?{push @res, $_, $`})/x2/ge;
-print "#'$a' '@res'\nnot " unless "$a @res" eq 'axxxx aaa a aaa aa';
-print "ok 10\n";
+is("$a @res", 'axxxx aaa a aaa aa');
 
 $a = $t;
 @res = ();
 pos ($a) = 1;
 $a =~ s/\Ga(?{push @res, $_, $`})/x1/ge;
-print "#'$a' '@res'\nnot " unless "$a @res" eq 'axx aaa a aaa aa';
-print "ok 11\n";
+is("$a @res", 'axx aaa a aaa aa');
 
 $a = $t;
 @res = ();
 pos ($a) = 1;
 $a =~ s/\Ga(?{push @res, $_, $`})/x2/e;
-print "#'$a' '@res'\nnot " unless "$a @res" eq 'axxa aaa a';
-print "ok 12\n";
+is("$a @res", 'axxa aaa a');
 
 $a = $t;
 @res = ();
 pos ($a) = 1;
 $a =~ s/\Ga(?{push @res, $_, $`})/x1/e;
-print "#'$a' '@res'\nnot " unless "$a @res" eq 'axa aaa a';
-print "ok 13\n";
+is("$a @res", 'axa aaa a');
 
+done_testing();

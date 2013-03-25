@@ -10,25 +10,25 @@ IO::File - supply object methods for filehandles
 
     use IO::File;
 
-    $fh = new IO::File;
+    $fh = IO::File->new();
     if ($fh->open("< file")) {
         print <$fh>;
         $fh->close;
     }
 
-    $fh = new IO::File "> file";
+    $fh = IO::File->new("> file");
     if (defined $fh) {
         print $fh "bar\n";
         $fh->close;
     }
 
-    $fh = new IO::File "file", "r";
+    $fh = IO::File->new("file", "r");
     if (defined $fh) {
         print <$fh>;
         undef $fh;       # automatically closes the file
     }
 
-    $fh = new IO::File "file", O_WRONLY|O_APPEND;
+    $fh = IO::File->new("file", O_WRONLY|O_APPEND);
     if (defined $fh) {
         print $fh "corge\n";
 
@@ -131,13 +131,12 @@ use Carp;
 use Symbol;
 use SelectSaver;
 use IO::Seekable;
-use File::Spec;
 
 require Exporter;
 
 @ISA = qw(IO::Handle IO::Seekable Exporter);
 
-$VERSION = "1.14";
+$VERSION = "1.16";
 
 @EXPORT = @IO::Seekable::EXPORT;
 
@@ -157,7 +156,7 @@ sub new {
     my $type = shift;
     my $class = ref($type) || $type || "IO::File";
     @_ >= 0 && @_ <= 3
-	or croak "usage: new $class [FILENAME [,MODE [,PERMS]]]";
+	or croak "usage: $class->new([FILENAME [,MODE [,PERMS]]])";
     my $fh = $class->SUPER::new();
     if (@_) {
 	$fh->open(@_)

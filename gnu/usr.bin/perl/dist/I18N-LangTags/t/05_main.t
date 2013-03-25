@@ -1,37 +1,37 @@
-
-require 5;
- # Time-stamp: "2004-03-30 17:52:14 AST"
 use strict;
-use Test;
-BEGIN { plan tests => 64 };
-BEGIN { ok 1 }
-use I18N::LangTags (':ALL');
+use Test::More tests => 64;
+BEGIN {use_ok('I18N::LangTags', ':ALL');}
 
-print "# Perl v$], I18N::LangTags v$I18N::LangTags::VERSION\n";
+note("Perl v$], I18N::LangTags v$I18N::LangTags::VERSION");
 
-ok !is_language_tag('');
-ok  is_language_tag('fr');
-ok  is_language_tag('fr-ca');
-ok  is_language_tag('fr-CA');
-ok !is_language_tag('fr-CA-');
-ok !is_language_tag('fr_CA');
-ok  is_language_tag('fr-ca-joual');
-ok !is_language_tag('frca');
-ok  is_language_tag('nav'); # (not actual tag)
-ok  is_language_tag('nav-shiprock'); # (not actual tag)
-ok !is_language_tag('nav-ceremonial'); # subtag too long
-ok !is_language_tag('x');
-ok !is_language_tag('i');
-ok  is_language_tag('i-borg'); # NB: fictitious tag
-ok  is_language_tag('x-borg');
-ok  is_language_tag('x-borg-prot5123');
-ok  same_language_tag('x-borg-prot5123', 'i-BORG-Prot5123' );
-ok !same_language_tag('en', 'en-us' );
+foreach (['', 0],
+	 ['fr', 1],
+	 ['fr-ca', 1],
+	 ['fr-CA', 1],
+	 ['fr-CA-', 0],
+	 ['fr_CA', 0],
+	 ['fr-ca-joal', 1],
+	 ['frca', 0],
+	 ['nav', 1, 'not actual tag'],
+	 ['nav-shiprock', 1, 'not actual tag'],
+	 ['nav-ceremonial', 0, 'subtag too long'],
+	 ['x', 0],
+	 ['i', 0],
+	 ['i-borg', 1, 'fictitious tag'],
+	 ['x-borg', 1],
+	 ['x-borg-prot5123', 1],
+	) {
+    my ($tag, $expect, $note) = @$_;
+    $note = $note ? " # $note" : '';
+    is(is_language_tag($tag), $expect, "is_language_tag('$tag')$note");
+}
+is(same_language_tag('x-borg-prot5123', 'i-BORG-Prot5123'), 1);
+is(same_language_tag('en', 'en-us'), 0);
 
-ok 0 == similarity_language_tag('en-ca', 'fr-ca');
-ok 1 == similarity_language_tag('en-ca', 'en-us');
-ok 2 == similarity_language_tag('en-us-southern', 'en-us-western');
-ok 2 == similarity_language_tag('en-us-southern', 'en-us');
+is(similarity_language_tag('en-ca', 'fr-ca'), 0);
+is(similarity_language_tag('en-ca', 'en-us'), 1);
+is(similarity_language_tag('en-us-southern', 'en-us-western'), 2);
+is(similarity_language_tag('en-us-southern', 'en-us'), 2);
 
 ok grep $_ eq 'hi', panic_languages('kok');
 ok grep $_ eq 'en', panic_languages('x-woozle-wuzzle');
@@ -40,8 +40,8 @@ ok grep $_ eq 'es', panic_languages('it');
 ok grep $_ eq 'it', panic_languages('es');
 
 
-print "# Now the ::List tests...\n";
-print "# Perl v$], I18N::LangTags::List v$I18N::LangTags::List::VERSION\n";
+note("Now the ::List tests...");
+note("# Perl v$], I18N::LangTags::List v$I18N::LangTags::List::VERSION");
 
 use I18N::LangTags::List;
 foreach my $lt (qw(
@@ -83,16 +83,5 @@ foreach my $lt (qw(
  cr-latin
 )) {
   my $name = I18N::LangTags::List::name($lt);
-  if($name) {
-    ok(1);
-    print "#        $lt -> $name\n";
-  } else {
-    ok(0);
-    print "#        Failed lookup on $lt\n";
-  }
+  isnt($name, undef, "I18N::LangTags::List::name('$lt')");
 }
-
-
-
-print "# So there!\n";
-

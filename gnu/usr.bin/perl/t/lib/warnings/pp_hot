@@ -116,7 +116,7 @@ my $fh = *STDOUT{IO};
 close STDOUT or die "Can't close STDOUT";
 print $fh "Shouldn't print anything, but shouldn't SEGV either\n";
 EXPECT
-print() on closed filehandle at - line 7.
+print() on closed filehandle __ANONIO__ at - line 7.
 ########
 # pp_hot.c [pp_print]
 package foo;

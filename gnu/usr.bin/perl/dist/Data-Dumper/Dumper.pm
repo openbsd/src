@@ -9,7 +9,9 @@
 
 package Data::Dumper;
 
-$VERSION = '2.125'; # Don't forget to set version and release date in POD!
+BEGIN {
+    $VERSION = '2.135_06'; # Don't forget to set version and release
+}			   # date in POD!
 
 #$| = 1;
 
@@ -29,11 +31,11 @@ BEGIN {
     # toggled on load failure.
     eval {
 	require XSLoader;
-    };
-    $Useperl = 1 if $@;
+	XSLoader::load( 'Data::Dumper' );
+	1
+    }
+    or $Useperl = 1;
 }
-
-XSLoader::load( 'Data::Dumper' ) unless $Useperl;
 
 # module vars and their defaults
 $Indent     = 2         unless defined $Indent;
@@ -101,26 +103,39 @@ sub new {
   return bless($s, $c);
 }
 
-if ($] >= 5.008) {
-  # Packed numeric addresses take less memory. Plus pack is faster than sprintf
-  *init_refaddr_format = sub {};
+# Packed numeric addresses take less memory. Plus pack is faster than sprintf
 
-  *format_refaddr  = sub {
+# Most users of current versions of Data::Dumper will be 5.008 or later.
+# Anyone on 5.6.1 and 5.6.2 upgrading will be rare (particularly judging by
+# the bug reports from users on those platforms), so for the common case avoid
+# complexity, and avoid even compiling the unneeded code.
+
+sub init_refaddr_format {
+}
+
+sub format_refaddr {
     require Scalar::Util;
     pack "J", Scalar::Util::refaddr(shift);
-  };
-} else {
-  *init_refaddr_format = sub {
-    require Config;
-    my $f = $Config::Config{uvxformat};
-    $f =~ tr/"//d;
-    our $refaddr_format = "0x%" . $f;
-  };
+};
 
-  *format_refaddr = sub {
-    require Scalar::Util;
-    sprintf our $refaddr_format, Scalar::Util::refaddr(shift);
-  }
+if ($] < 5.008) {
+    eval <<'EOC' or die;
+    no warnings 'redefine';
+    my $refaddr_format;
+    sub init_refaddr_format {
+        require Config;
+        my $f = $Config::Config{uvxformat};
+        $f =~ tr/"//d;
+        $refaddr_format = "0x%" . $f;
+    }
+
+    sub format_refaddr {
+        require Scalar::Util;
+        sprintf $refaddr_format, Scalar::Util::refaddr(shift);
+    }
+
+    1
+EOC
 }
 
 #
@@ -234,7 +249,7 @@ sub Dumpperl {
     my $valstr;
     {
       local($s->{apad}) = $s->{apad};
-      $s->{apad} .= ' ' x (length($name) + 3) if $s->{indent} >= 2;
+      $s->{apad} .= ' ' x (length($name) + 3) if $s->{indent} >= 2 and !$s->{terse};
       $valstr = $s->_dump($val, $name);
     }
 
@@ -254,6 +269,10 @@ sub _quote {
     $val =~ s/([\\\'])/\\$1/g;
     return  "'" . $val .  "'";
 }
+
+# Old Perls (5.14-) have trouble resetting vstring magic when it is no
+# longer valid.
+use constant _bad_vsmg => defined &_vstring && (_vstring(~v0)||'') eq "v0";
 
 #
 # twist, toil and turn;
@@ -367,10 +386,11 @@ sub _dump {
         } else {
             $pat = "$val";
         }
-        $pat =~ s,/,\\/,g;
+        $pat =~ s <(\\.)|/> { $1 || '\\/' }ge;
         $out .= "qr/$pat/";
     }
-    elsif ($realtype eq 'SCALAR' || $realtype eq 'REF') {
+    elsif ($realtype eq 'SCALAR' || $realtype eq 'REF'
+	|| $realtype eq 'VSTRING') {
       if ($realpack) {
 	$out .= 'do{\\(my $o = ' . $s->_dump($$val, "\${$name}") . ')}';
       }
@@ -475,6 +495,7 @@ sub _dump {
   else {                                 # simple scalar
 
     my $ref = \$_[1];
+    my $v;
     # first, catalog the scalar
     if ($name ne '') {
       $id = format_refaddr($ref);
@@ -490,14 +511,20 @@ sub _dump {
 	$s->{seen}{$id} = ["\\$name", $ref];
       }
     }
-    if (ref($ref) eq 'GLOB' or "$ref" =~ /=GLOB\([^()]+\)$/) {  # glob
+    $ref = \$val;
+    if (ref($ref) eq 'GLOB') {  # glob
       my $name = substr($val, 1);
-      if ($name =~ /^[A-Za-z_][\w:]*$/) {
+      if ($name =~ /^[A-Za-z_][\w:]*$/ && $name ne 'main::') {
 	$name =~ s/^main::/::/;
 	$sname = $name;
       }
       else {
-	$sname = $s->_dump($name, "");
+	$sname = $s->_dump(
+	  $name eq 'main::' || $] < 5.007 && $name eq "main::\0"
+	    ? ''
+	    : $name,
+	  "",
+	);
 	$sname = '{' . $sname . '}';
       }
       if ($s->{purity}) {
@@ -519,6 +546,14 @@ sub _dump {
     }
     elsif (!defined($val)) {
       $out .= "undef";
+    }
+    elsif (defined &_vstring and $v = _vstring($val)
+	and !_bad_vsmg || eval $v eq $val) {
+      $out .= $v;
+    }
+    elsif (!defined &_vstring
+       and ref $ref eq 'VSTRING' || eval{Scalar::Util::isvstring($val)}) {
+      $out .= sprintf "%vd", $val;
     }
     elsif ($val =~ /^(?:0|-?[1-9]\d{0,8})\z/) { # safe decimal number
       $out .= $val;
@@ -1106,20 +1141,20 @@ distribution for more examples.)
     print($@) if $@;
     print Dumper($boo), Dumper($bar);  # pretty print (no array indices)
 
-    $Data::Dumper::Terse = 1;          # don't output names where feasible
-    $Data::Dumper::Indent = 0;         # turn off all pretty print
+    $Data::Dumper::Terse = 1;        # don't output names where feasible
+    $Data::Dumper::Indent = 0;       # turn off all pretty print
     print Dumper($boo), "\n";
 
-    $Data::Dumper::Indent = 1;         # mild pretty print
+    $Data::Dumper::Indent = 1;       # mild pretty print
     print Dumper($boo);
 
-    $Data::Dumper::Indent = 3;         # pretty print with array indices
+    $Data::Dumper::Indent = 3;       # pretty print with array indices
     print Dumper($boo);
 
-    $Data::Dumper::Useqq = 1;          # print strings in double quotes
+    $Data::Dumper::Useqq = 1;        # print strings in double quotes
     print Dumper($boo);
 
-    $Data::Dumper::Pair = " : ";       # specify hash key/value separator
+    $Data::Dumper::Pair = " : ";     # specify hash key/value separator
     print Dumper($boo);
 
 
@@ -1297,7 +1332,7 @@ modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.125  (Aug  8 2009)
+Version 2.135_06  (March 20 2012)
 
 =head1 SEE ALSO
 

@@ -2,7 +2,7 @@ package DBM_Filter ;
 
 use strict;
 use warnings;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 package Tie::Hash ;
 
@@ -323,11 +323,7 @@ to be packaged into a stand-alone module.
 This module will arrange for the following methods to be available via
 the object returned from the C<tie> call.
 
-=head2 $db->Filter_Push()
-
-=head2 $db->Filter_Key_Push()
-
-=head2 $db->Filter_Value_Push()
+=head2 $db->Filter_Push() / $db->Filter_Key_Push() / $db->Filter_Value_Push()
 
 Add a filter to filter stack for the database, C<$db>. The three formats
 vary only in whether they apply to the DBM key, the DBM value or both.

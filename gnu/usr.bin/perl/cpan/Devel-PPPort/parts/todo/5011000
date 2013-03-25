@@ -1,27 +1,15 @@
 5.011000
-HeUTF8                         # U
-MULTICALL                      # E
-PERL_SYS_TERM                  # E
-POP_MULTICALL                  # E
-PUSH_MULTICALL                 # E
+Gv_AMupdate                    # E (Perl_Gv_AMupdate)
+PL_opfreehook                  # E
 SvOOK_offset                   # U
 av_iter_p                      # U
-croak_xs_usage                 # U
 fetch_cop_label                # U
+gv_add_by_type                 # U
 gv_fetchmethod_flags           # U
-hv_assert                      # U
-mro_get_from_name              # U
-mro_get_private_data           # U
-mro_register                   # U
-mro_set_mro                    # U
-mro_set_private_data           # U
-pad_sv                         # U
+is_ascii_string                # U
 pregfree2                      # U
-ref                            # U (Perl_ref)
 save_adelete                   # U
+save_aelem_flags               # U
+save_hdelete                   # U
 save_helem_flags               # U
-save_padsv_and_mortalize       # U
-save_pushptr                   # U
-stashpv_hvname_match           # U
-sv_insert_flags                # U
 sv_utf8_upgrade_flags_grow     # U

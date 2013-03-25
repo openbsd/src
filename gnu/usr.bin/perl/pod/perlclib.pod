@@ -138,7 +138,7 @@ pattern into it that should be illegal as pointers (and floating point
 numbers), and also hopefully surprising enough as integers, so that
 any code attempting to use the data without forethought will break
 sooner rather than later.  Poisoning can be done using the Poison()
-macros, which have similar arguments as Zero():
+macros, which have similar arguments to Zero():
 
     PoisonWith(dst, n, t, b)    scribble memory with byte b
     PoisonNew(dst, n, t)        equal to PoisonWith(dst, n, t, 0xAB)

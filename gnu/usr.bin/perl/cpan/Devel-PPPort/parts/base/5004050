@@ -7,7 +7,7 @@ SvGETMAGIC                     # U
 do_binmode                     # E
 newCONSTSUB                    # E
 newSVpvn                       # E
-save_aelem                     # E
+save_aelem                     # U
 save_helem                     # U
 sv_catpv_mg                    # E
 sv_catpvn_mg                   # U
@@ -31,8 +31,6 @@ PL_dirty                       # added by devel/scanprov
 PL_errgv                       # added by devel/scanprov
 PL_perl_destruct_level         # added by devel/scanprov
 PL_perldb                      # added by devel/scanprov
-PL_rsfp                        # added by devel/scanprov
-PL_rsfp_filters                # added by devel/scanprov
 PL_stack_base                  # added by devel/scanprov
 PL_stack_sp                    # added by devel/scanprov
 PL_stdingv                     # added by devel/scanprov

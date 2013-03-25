@@ -4,18 +4,29 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.macosx - Perl under Mac OS X
+perlmacosx - Perl under Mac OS X
 
 =head1 SYNOPSIS
 
-This document briefly describes perl under Mac OS X.
+This document briefly describes Perl under Mac OS X.
 
+  curl http://www.cpan.org/src/perl-5.12.3.tar.gz > perl-5.12.3.tar.gz 
+  tar -xzf perl-5.12.3.tar.gz 
+  cd perl-5.12.3
+  ./Configure -des -Dprefix=/usr/local/
+  make
+  make test
+  sudo make install
 
 =head1 DESCRIPTION
 
-The latest Perl release (5.8.8 as of this writing) builds without changes
-under Mac OS X. Under 10.3 "Panther" and newer OS versions, all self-tests
-pass, and all standard features are supported.
+The latest Perl release (5.12.3 as of this writing) builds without changes
+under all versions of Mac OS X from 10.3 "Panther" onwards. 
+
+In order to build your own version of Perl you will need 'make'
+this is part of the Apples developer tools (you only need the 'unix tools'),
+usually supplied with Mac OS install DVDs. You do not need the latest 
+version of Xcode (which is now charged for) in order to install make.
 
 Earlier Mac OS X releases (10.2 "Jaguar" and older) did not include a
 completely thread-safe libc, so threading is not fully supported. Also,
@@ -93,7 +104,7 @@ omitted or buggy. Note the messages output by F<Configure> for further
 information. Please use C<perlbug> to submit a problem report in the
 event that you encounter difficulties.
 
-When building 64-bit modules, it is your responsiblity to ensure that linked
+When building 64-bit modules, it is your responsibility to ensure that linked
 external libraries and frameworks provide 64-bit support: if they do not,
 module building may appear to succeed, but attempts to use the module will
 result in run-time dynamic linking errors, and subsequent test failures.
@@ -125,7 +136,7 @@ need to go to a great deal of effort to obtain the information needed
 for pre-binding.
 
 You can override the default and build a shared libperl if you wish
-(S<Configure ... -Duseshrlib>), but the load time on pre-10.4 OS
+(S<Configure ... -Duseshrplib>), but the load time on pre-10.4 OS
 releases will be greater than either the static library, or Apple's
 pre-bound dynamic library.
 
@@ -179,34 +190,9 @@ but remember that there's a startup cost to pay in that case (see above
 
 Starting with Tiger (Mac OS X 10.4), Apple shipped broken locale files for
 the eu_ES locale (Basque-Spain).  In previous releases of Perl, this resulted in
-failures in the C<lib/locale> test. These failures have been supressed
+failures in the F<lib/locale> test. These failures have been suppressed
 in the current release of Perl by making the test ignore the broken locale.
 If you need to use the eu_ES locale, you should contact Apple support.
-
-=head2 MacPerl
-
-Quite a bit has been written about MacPerl, the Perl distribution for
-"Classic MacOS" - that is, versions 9 and earlier of MacOS. Because it
-runs in environment that's very different from that of UNIX, many things
-are done differently in MacPerl. Modules are installed using a different
-procedure, Perl itself is built differently, path names are different,
-etc.
-
-From the perspective of a Perl programmer, Mac OS X is more like a
-traditional UNIX than Classic MacOS. If you find documentation that
-refers to a special procedure that's needed for MacOS that's drastically
-different from the instructions provided for UNIX, the MacOS
-instructions are quite often intended for MacPerl on Classic MacOS. In
-that case, the correct procedure on Mac OS X is usually to follow the
-UNIX instructions, rather than the MacPerl instructions.
-
-
-=head2 Carbon
-
-MacPerl ships with a number of modules that are used to access the
-classic MacOS toolbox. Many of these modules have been updated to use
-Mac OS X's newer "Carbon" toolbox, and are available from CPAN in the
-"Mac::Carbon" module.
 
 
 =head2 Cocoa
@@ -249,7 +235,7 @@ You can find them for example by
 After this you can either copy Perl from your operating system media
 (you will need at least the /System/Library/Perl and /usr/bin/perl),
 or rebuild Perl from the source code with C<Configure -Dprefix=/usr
--Dusershrplib> NOTE: the C<-Dprefix=/usr> to replace the system Perl
+-Duseshrplib> NOTE: the C<-Dprefix=/usr> to replace the system Perl
 works much better with Perl 5.8.1 and later, in Perl 5.8.0 the
 settings were not quite right.
 

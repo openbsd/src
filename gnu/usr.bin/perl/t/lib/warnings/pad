@@ -327,3 +327,248 @@ our $ouch;
 our $_;
 EXPECT
 "our" variable $_ redeclared at - line 6.
+########
+use warnings 'misc';
+BEGIN { binmode STDERR, 'utf8'; }
+{
+    use utf8;
+    my $ニコニコ;
+    my $ニコニコ;
+}
+EXPECT
+"my" variable $ニコニコ masks earlier declaration in same scope at - line 6.
+########
+use warnings 'misc';
+BEGIN { binmode STDERR, 'utf8'; }
+{
+    use utf8;
+    my $thìs;
+    my $thìs;
+}
+EXPECT
+"my" variable $thìs masks earlier declaration in same scope at - line 6.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub {
+    use utf8;
+    my $è;
+    sub f { $è }
+}->();
+EXPECT
+Variable "$è" is not available at - line 7.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub {
+    use utf8;
+    my $ニ;
+    sub f { $ニ }
+}->();
+EXPECT
+Variable "$ニ" is not available at - line 7.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub x {
+      use utf8;
+      my $に;
+      sub y {
+         $に
+      }
+   }
+EXPECT
+Variable "$に" will not stay shared at - line 9.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub x {
+      use utf8;
+      my $に;
+      sub y {
+         sub { $に }
+      }
+   }
+EXPECT
+Variable "$に" will not stay shared at - line 8.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub x {
+    use utf8;
+    my $に;
+    sub {
+	$に;
+	sub y {
+	    $に
+	}
+    }->();
+}
+EXPECT
+Variable "$に" will not stay shared at - line 11.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub {
+    use utf8;
+    my $に;
+    sub f { $に }
+}->();
+EXPECT
+Variable "$に" is not available at - line 7.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub {
+    use utf8;
+    my $に;
+    sub f { eval '$に' }
+}->();
+f();
+EXPECT
+Variable "$に" is not available at (eval 1) line 2.
+########
+# pad.c
+# see bugid 1754
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub f {
+    use utf8;
+    my $に;
+    sub { eval '$に' };
+}
+f()->();
+EXPECT
+Variable "$に" is not available at (eval 1) line 2.
+########
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+{
+    use utf8;
+    my $に = 1;
+    $y = \$に; # force abandonment rather than clear-in-place at scope exit
+    sub f2 { eval '$に' }
+}
+f2();
+EXPECT
+Variable "$に" is not available at (eval 1) line 2.
+########
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+use utf8;
+for my $に (1,2,3) {
+    sub f { eval '$に' }
+    f();
+}
+f();
+EXPECT
+Variable "$に" is not available at (eval 4) line 2.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub x {
+      use utf8;
+      my $è;
+      sub y {
+         $è
+      }
+   }
+EXPECT
+Variable "$è" will not stay shared at - line 9.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub x {
+      use utf8;
+      my $è;
+      sub y {
+         sub { $è }
+      }
+   }
+EXPECT
+Variable "$è" will not stay shared at - line 8.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub x {
+    use utf8;
+    my $è;
+    sub {
+	$è;
+	sub y {
+	    $è
+	}
+    }->();
+}
+EXPECT
+Variable "$è" will not stay shared at - line 11.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub {
+    use utf8;
+    my $è;
+    sub f { $è }
+}->();
+EXPECT
+Variable "$è" is not available at - line 7.
+########
+# pad.c
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub {
+    use utf8;
+    my $è;
+    sub f { eval '$è' }
+}->();
+f();
+EXPECT
+Variable "$è" is not available at (eval 1) line 2.
+########
+# pad.c
+# see bugid 1754
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+sub f {
+    use utf8;
+    my $è;
+    sub { eval '$è' };
+}
+f()->();
+EXPECT
+Variable "$è" is not available at (eval 1) line 2.
+########
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+{
+    use utf8;
+    my $è = 1;
+    $y = \$è; # force abandonment rather than clear-in-place at scope exit
+    sub f2 { eval '$è' }
+}
+f2();
+EXPECT
+Variable "$è" is not available at (eval 1) line 2.
+########
+use warnings 'closure' ;
+BEGIN { binmode STDERR, 'utf8'; }
+use utf8;
+for my $è (1,2,3) {
+    sub f { eval '$è' }
+    f();
+}
+f();
+EXPECT
+Variable "$è" is not available at (eval 4) line 2.
+########

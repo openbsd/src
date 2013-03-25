@@ -1,16 +1,14 @@
 #!./perl
 
 BEGIN {
-    if ($^O eq 'VMS') {
-        print "1..0 # Skip on VMS -- too picky about line endings for record-oriented pipes\n";
-        exit;
-    }
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
+    skip_all("VMS too picky about line endings for record-oriented pipes")
+	if $^O eq 'VMS';
 }
 
 use strict;
-require './test.pl';
 
 my $Perl = which_perl();
 

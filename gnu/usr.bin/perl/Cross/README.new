@@ -9,7 +9,7 @@ README.new - Cross-compilation for linux
 =head1 DESCRIPTION
 
 This is second approach to linux cross-compilation, which should allow
-building full perl and entensions for target platform. Cross-compilation
+building full perl and extensions for target platform. Cross-compilation
 for linux uses similar approach and shares the same files as
 cross-compilation for WinCE.
 

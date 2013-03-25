@@ -5,7 +5,7 @@ use strict;
 
 sub custom {
     my $self = shift;
-    $main::CUSTOM{ ref($self) }++;
+    $main::CUSTOM{ ref($self) || $self }++;
     return $self;
 }
 

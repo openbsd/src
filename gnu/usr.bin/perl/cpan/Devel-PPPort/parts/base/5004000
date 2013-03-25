@@ -24,7 +24,7 @@ XPUSHu                         # U
 block_gimme                    # E
 call_list                      # E
 cv_const_sv                    # E
-delimcpy                       # E
+delimcpy                       # U
 do_open                        # E (Perl_do_open)
 gv_autoload4                   # E
 gv_efullname3                  # U
@@ -39,7 +39,7 @@ hv_free_ent                    # E
 hv_iterkeysv                   # E
 hv_ksplit                      # E
 hv_store_ent                   # U
-ibcmp_locale                   # E
+ibcmp_locale                   # U
 my_failure_exit                # E
 my_memcmp                      # U
 my_pclose                      # E (Perl_my_pclose)

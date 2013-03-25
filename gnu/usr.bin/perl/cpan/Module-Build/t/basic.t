@@ -60,8 +60,8 @@ $dist->chdir_in;
   ok $flagged;
   ok $mb->prereq_failures;
   ok $mb->prereq_failures->{requires}{$dist->name};
-  is $mb->prereq_failures->{requires}{$dist->name}{have}, 0.01;
-  is $mb->prereq_failures->{requires}{$dist->name}{need}, 3.14159265;
+  is $mb->prereq_failures->{requires}{$dist->name}{have}, "0.01";
+  is $mb->prereq_failures->{requires}{$dist->name}{need}, "3.14159265";
 
   $mb->dispatch('realclean');
   $dist->clean;

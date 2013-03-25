@@ -1,0 +1,145 @@
+#!perl
+use strict;
+use warnings;
+use autodie;
+
+use Getopt::Long;
+use Pod::Simple::HTML;
+
+sub main {
+    my ( $help, $type, $html );
+    GetOptions(
+        'type:s' => \$type,
+        'html'   => \$html,
+        'help'   => \$help,
+    );
+
+    if ($help) {
+        print <<'EOF';
+make-rmg-checklist [--type TYPE]
+
+This script creates a release checklist as a simple HTML document. It accepts
+the following arguments:
+
+  --type    The release type for the checklist. This can be BLEAD-FINAL,
+            BLEAD-POINT, MAINT, or RC. This defaults to BLEAD-POINT.
+
+  --html    Output HTML instead of POD
+
+EOF
+
+        exit;
+    }
+
+    $type = _validate_type($type);
+
+    open my $fh, '<', 'Porting/release_managers_guide.pod';
+    my $pod = do { local $/; <$fh> };
+    close $fh;
+
+    my $heads = _parse_rmg( $pod, $type );
+    my $new_pod = _munge_pod( $pod, $heads );
+
+    if ($html) {
+        my $simple = Pod::Simple::HTML->new();
+        $simple->output_fh(*STDOUT);
+        $simple->parse_string_document($new_pod);
+    }
+    else {
+        print $new_pod;
+    }
+}
+
+sub _validate_type {
+    my $type = shift || 'BLEAD-POINT';
+
+    my @valid = qw( BLEAD-FINAL BLEAD-POINT MAINT RC );
+    my %valid = map { $_ => 1 } @valid;
+
+    unless ( $valid{ uc $type } ) {
+        my $err
+            = "The type you provided ($type) is not a valid release type. It must be one of ";
+        $err .= join ', ', @valid;
+        $err .= "\n";
+
+        die $err;
+    }
+
+    return $type;
+}
+
+sub _parse_rmg {
+    my $pod  = shift;
+    my $type = shift;
+
+    my @heads;
+    my $include = 0;
+    my %skip;
+
+    for ( split /\n/, $pod ) {
+        if (/^=for checklist begin/) {
+            $include = 1;
+            next;
+        }
+
+        next unless $include;
+
+        last if /^=for checklist end/;
+
+        if (/^=for checklist skip (.+)/) {
+            %skip = map { $_ => 1 } split / /, $1;
+            next;
+        }
+
+        if (/^=head(\d) (.+)/) {
+            unless ( keys %skip && $skip{$type} ) {
+                push @heads, [ $1, $2 ];
+            }
+
+            %skip = ();
+        }
+    }
+
+    return \@heads;
+}
+
+sub _munge_pod {
+    my $pod   = shift;
+    my $heads = shift;
+
+    $pod =~ s/=head1 NAME.+?(=head1 SYNOPSIS)/$1/s;
+
+    my $new_pod = <<'EOF';
+=head1 NAME
+
+Release Manager's Guide with Checklist
+
+=head2 Checklist
+
+EOF
+
+    my $last_level = 0;
+    for my $head ( @{$heads} ) {
+        my $level = $head->[0] - 1;
+
+        if ( $level > $last_level ) {
+            $new_pod .= '=over ' . $level * 4;
+            $new_pod .= "\n\n";
+        }
+        elsif ( $level < $last_level ) {
+            $new_pod .= "=back\n\n" for 1 .. ( $last_level - $level );
+        }
+
+        $new_pod .= '=item * ' . 'L<< /' . $head->[1] . " >>\n\n";
+
+        $last_level = $level;
+    }
+
+    $new_pod .= "=back\n\n" while $last_level--;
+
+    $new_pod .= $pod;
+
+    return $new_pod;
+}
+
+main();

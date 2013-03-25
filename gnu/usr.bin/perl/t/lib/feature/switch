@@ -33,8 +33,7 @@ break
 # No switch; but continue is still a keyword
 print STDOUT continue;
 EXPECT
-syntax error at - line 2, near "STDOUT continue"
-Execution of - aborted due to compilation errors.
+Can't "continue" outside a when block at - line 2.
 ########
 # Use switch; so given is a keyword
 use feature 'switch';
@@ -59,12 +58,6 @@ use feature 'switch';
 break;
 EXPECT
 Can't "break" outside a given block at - line 3.
-########
-# Use switch; so continue is a keyword
-use feature 'switch';
-continue;
-EXPECT
-Can't "continue" outside a when block at - line 3.
 ########
 # switch out of scope; given should be a bareword.
 use warnings;
@@ -108,15 +101,6 @@ print STDOUT break;
 EXPECT
 Unquoted string "break" may clash with future reserved word at - line 6.
 break
-########
-# switch out of scope; continue should not work
-{ use feature 'switch';
-  given (1) { default {continue} }  
-}
-print STDOUT continue;
-EXPECT
-syntax error at - line 5, near "STDOUT continue"
-Execution of - aborted due to compilation errors.
 ########
 # C<no feature 'switch'> should work
 use warnings;

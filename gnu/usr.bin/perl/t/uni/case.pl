@@ -1,5 +1,3 @@
-use File::Spec;
-
 require "test.pl";
 
 sub unidump {
@@ -7,9 +5,11 @@ sub unidump {
 }
 
 sub casetest {
-    my ($base, $spec, @funcs) = @_;
+    my ($already_run, $base, $spec, @funcs) = @_;
     # For each provided function run it, and run a version with some extra
     # characters afterwards. Use a recycling symbol, as it doesn't change case.
+    # $already_run is the number of extra tests the caller has run before this
+    # call.
     my $ballast = chr (0x2672) x 3;
     @funcs = map {my $f = $_;
 		  ($f,
@@ -20,14 +20,17 @@ sub casetest {
 		    },
 		   )} @funcs;
 
-    my $file = File::Spec->catfile(File::Spec->catdir(File::Spec->updir,
-						      "lib", "unicore", "To"),
-				   "$base.pl");
+    my $file = "../lib/unicore/To/$base.pl";
     my $simple = do $file or die $@;
     my %simple;
     for my $i (split(/\n/, $simple)) {
 	my ($k, $v) = split(' ', $i);
-	$simple{$k} = $v;
+
+        # Add the simple mapping to the simples test list, except the input
+        # may include code points that the specials override, so don't add
+        # those to the test list.  The specials keys are the code points,
+        # encoded in utf8,, but without the utf8 flag on, so pack with C0.
+	$simple{$k} = $v unless exists $spec->{pack("C0U", hex $k)};
     }
     my %seen;
 
@@ -57,12 +60,12 @@ sub casetest {
     print "# ", scalar keys %none, " noncase mappings\n";
 
     my $tests = 
+        $already_run +
 	((scalar keys %simple) +
 	 (scalar keys %$spec) +
 	 (scalar keys %none)) * @funcs;
-    print "1..$tests\n";
 
-    my $test = 1;
+    my $test = $already_run + 1;
 
     for my $i (sort keys %simple) {
 	my $w = $simple{$i};
@@ -152,6 +155,8 @@ sub casetest {
 		$test++;
 	}
     }
+
+    print "1..$tests\n";
 }
 
 1;

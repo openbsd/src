@@ -7,4 +7,4 @@ BEGIN {
 use strict;
 
 use NoFork;
-require( 't/multiplexer.t' );
+require('t/multiplexer.t');

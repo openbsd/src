@@ -645,3 +645,23 @@ WriteFile( hFile, pBuffer, lBytes, ouBytesWritten, pOverlapped )
     OUTPUT:
 	RETVAL
 	ouBytesWritten
+
+void
+GetStdHandle(fd)
+    DWORD fd
+PPCODE:
+#ifdef _WIN64
+    XSRETURN_IV((DWORD_PTR)GetStdHandle(fd));
+#else
+    XSRETURN_IV((DWORD)GetStdHandle(fd));
+#endif
+
+void
+SetStdHandle(fd,handle)
+    DWORD fd
+    HANDLE handle
+PPCODE:
+    if (SetStdHandle(fd, handle))
+	XSRETURN_YES;
+    else
+	XSRETURN_NO;

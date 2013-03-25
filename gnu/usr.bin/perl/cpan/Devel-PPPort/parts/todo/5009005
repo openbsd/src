@@ -1,11 +1,12 @@
 5.009005
+PL_parser                      # E
 Perl_signbit                   # U
 SvRX                           # U
 SvRXOK                         # U
 av_create_and_push             # U
 av_create_and_unshift_one      # U
-get_cvn_flags                  # U
 gv_fetchfile_flags             # U
+lex_start                      # E (Perl_lex_start)
 mro_get_linear_isa             # U
 mro_method_changed_in          # U
 my_dirfd                       # U

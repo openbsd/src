@@ -2,59 +2,44 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    if ($^O eq 'MacOS') { 
-	@INC = qw(: ::lib ::macos:lib); 
-    } else { 
-	@INC = '.'; 
-	push @INC, '../lib'; 
-    }
+    @INC = '../lib';
     require Config; import Config;
     if ($Config{'extensions'} !~ /\bFile\/Glob\b/i) {
         print "1..0\n";
         exit 0;
     }
-    print "1..7\n";
 }
-END {
-    print "not ok 1\n" unless $loaded;
+
+use Test::More tests => 7;
+
+BEGIN {
+    use_ok('File::Glob', qw(:glob csh_glob));
 }
-use File::Glob qw(:glob csh_glob);
-$loaded = 1;
-print "ok 1\n";
 
-my $pat = $^O eq "MacOS" ? ":op:G*.t" : "op/G*.t";
+my $pat = "op/G*.t";
 
-# Test the actual use of the case sensitivity tags, via csh_glob()
 import File::Glob ':nocase';
 @a = csh_glob($pat);
-print "not " unless @a >= 8;
-print "ok 2\n";
+cmp_ok(scalar @a, '>=', 8, 'use of the case sensitivity tags, via csh_glob()');
 
 # This may fail on systems which are not case-PRESERVING
 import File::Glob ':case';
-@a = csh_glob($pat); # None should be uppercase
-print "not " unless @a == 0;
-print "ok 3\n";
+@a = csh_glob($pat);
+is(scalar @a, 0, 'None should be uppercase');
 
-# Test the explicit use of the GLOB_NOCASE flag
 @a = bsd_glob($pat, GLOB_NOCASE);
-print "not " unless @a >= 3;
-print "ok 4\n";
+cmp_ok(scalar @a, '>=', 3, 'explicit use of the GLOB_NOCASE flag');
 
 # Test Win32 backslash nastiness...
-if ($^O ne 'MSWin32' && $^O ne 'NetWare') {
-    print "ok 5\nok 6\nok 7\n";
-}
-else {
+SKIP: {
+    skip 'Not Win32 or NetWare', 3 unless $^O eq 'MSWin32' || $^O eq 'NetWare';
+
     @a = File::Glob::glob("op\\g*.t");
-    print "not " unless @a >= 8;
-    print "ok 5\n";
+    cmp_ok(scalar @a, '>=', 8);
     mkdir "[]", 0;
     @a = File::Glob::glob("\\[\\]", GLOB_QUOTE);
     rmdir "[]";
-    print "# returned @a\nnot " unless @a == 1;
-    print "ok 6\n";
+    is(scalar @a, 1);
     @a = bsd_glob("op\\*", GLOB_QUOTE);
-    print "not " if @a == 0;
-    print "ok 7\n";
+    isnt(scalar @a, 0);
 }

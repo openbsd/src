@@ -3,18 +3,13 @@
 # Regression tests for attributes.pm and the C< : attrs> syntax.
 
 BEGIN {
-    if ($ENV{PERL_CORE_MINITEST}) {
-	print "1..0 # skip: miniperl can't load attributes\n";
-	exit 0;
-    }
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
+    skip_all_if_miniperl("miniperl can't load attributes");
 }
 
 use warnings;
-
-plan 92;
 
 $SIG{__WARN__} = sub { die @_ };
 
@@ -22,6 +17,9 @@ sub eval_ok ($;$) {
     eval shift;
     is( $@, '', @_);
 }
+
+fresh_perl_is 'use attributes; print "ok"', 'ok',
+   'attributes.pm can load without warnings.pm already loaded';
 
 our $anon1; eval_ok '$anon1 = sub : method { $_[0]++ }';
 
@@ -34,7 +32,7 @@ like $@, qr/^Invalid CODE attributes: ["']?plugh\(0,0\)["']? /;
 eval 'sub e3 ($) : plugh(0,0 xyzzy ;';
 like $@, qr/Unterminated attribute parameter in attribute list at/;
 
-eval 'sub e4 ($) : plugh + xyzzy ;';
+eval 'sub e4 ($) : plugh + XYZZY ;';
 like $@, qr/Invalid separator character '[+]' in attribute list at/;
 
 eval_ok 'my main $x : = 0;';
@@ -199,11 +197,11 @@ foreach my $value (\&foo, \$scalar, \@array, \%hash) {
 sub PVBM () { 'foo' }
 { my $dummy = index 'foo', PVBM }
 
-ok !defined(attributes::get(\PVBM)), 
+ok !defined(eval 'attributes::get(\PVBM)'), 
     'PVBMs don\'t segfault attributes::get';
 
 {
-    #  [perl #49472] Attributes + Unkown Error
+    #  [perl #49472] Attributes + Unknown Error
     eval '
 	use strict;
 	sub MODIFY_CODE_ATTRIBUTE{}
@@ -243,3 +241,136 @@ ok !defined(attributes::get(\PVBM)),
 	$c=undef; eval 'sub t5 :Foo { }';
 	main::ok $c == \&{"t5"} && $c == $t5b && $c == $t5a;
 }
+
+my @tests = grep {/^[^#]/} split /\n/, <<'EOT';
+# This one is fine as an empty attribute list
+my $holy_Einstein : = '';
+# This one is deprecated
+my $krunch := 4;
+our $FWISK_FWISK_FWIZZACH_FWACH_ZACHITTY_ZICH_SHAZZATZ_FWISK := '';
+state $thump := 'Trumpets';
+# Lather rinse repeat in my usual obsessive style
+my @holy_perfect_pitch : = ();
+my @zok := ();
+our @GUKGUK := ();
+# state @widget_mark := ();
+my %holy_seditives : = ();
+my %bang := ();
+our %GIGAZING := ();
+# state %hex := ();
+my $holy_giveaways : = '';
+my $eee_yow := [];
+our $TWOYYOYYOING_THUK_UGH := 1 == 1;
+state $octothorn := 'Tinky Winky';
+my @holy_Taj_Mahal : = ();
+my @touche := ();
+our @PLAK_DAK_THUK_FRIT := ();
+# state @hash_mark := ();
+my %holy_priceless_collection_of_Etruscan_snoods : = ();
+my %wham_eth := ();
+our %THWUK := ();
+# state %octalthorpe := ();
+my $holy_sewer_pipe : = '';
+my $thunk := undef;
+our $BLIT := time;
+state $crunch := 'Laa Laa';
+my @glurpp := ();
+my @holy_harem : = ();
+our @FABADAP := ();
+# state @square := ();
+my %holy_pin_cushions : = ();
+my %swoosh := ();
+our %RRRRR := ();
+# state %scratchmark := ();
+EOT
+
+foreach my $test (@tests) {
+    use feature 'state';
+    eval $test;
+    if ($test =~ /:=/) {
+	like $@, qr/Use of := for an empty attribute list is not allowed/,
+	    "Parse error for q{$test}";
+    } else {
+	is $@, '', "No error for q{$test}";
+    }
+}
+
+# [perl #68560] Calling closure prototypes (only accessible via :attr)
+{
+  package brength;
+  my $proto;
+  sub MODIFY_CODE_ATTRIBUTES { $proto = $_[1]; _: }
+  eval q{
+     my $x;
+     () = sub :a0 { $x };
+  };
+  package main;
+  eval { $proto->() };               # used to crash in pp_entersub
+  like $@, qr/^Closure prototype called/,
+     "Calling closure proto with (no) args";
+  eval { () = &$proto };             # used to crash in pp_leavesub
+  like $@, qr/^Closure prototype called/,
+     'Calling closure proto with no @_ that returns a lexical';
+}
+
+# [perl #68658] Attributes on stately variables
+{
+  package thwext;
+  sub MODIFY_SCALAR_ATTRIBUTES { () }
+  my $i = 0;
+  my $x_values = '';
+  eval 'sub foo { use 5.01; state $x :A0 = $i++; $x_values .= $x }';
+  foo(); foo();
+  package main;
+  is $x_values, '00', 'state with attributes';
+}
+
+{
+  package ningnangnong;
+  sub MODIFY_SCALAR_ATTRIBUTES{}
+  sub MODIFY_ARRAY_ATTRIBUTES{  }
+  sub MODIFY_HASH_ATTRIBUTES{    }
+  my ($cows, @go, %bong) : teapots = qw[ jibber jabber joo ];
+  ::is $cows, 'jibber', 'list assignment to scalar with attrs';
+  ::is "@go", 'jabber joo', 'list assignment to array with attrs';
+}
+
+{
+  my $w;
+  local $SIG{__WARN__} = sub { $w = shift };
+  sub  ent         {}
+  sub lent :lvalue {}
+  my $posmsg =
+      'lvalue attribute applied to already-defined subroutine at '
+     .'\(eval';
+  my $negmsg =
+      'lvalue attribute removed from already-defined subroutine at '
+     .'\(eval';
+  eval 'use attributes __PACKAGE__, \&ent, "lvalue"';
+  like $w, qr/^$posmsg/, 'lvalue attr warning on def sub';
+  is join("",&attributes::get(\&ent)), "lvalue",':lvalue applied anyway';
+  $w = '';
+  eval 'use attributes __PACKAGE__, \&lent, "lvalue"; 1' or die;
+  is $w, "", 'no lvalue warning on def lvalue sub';
+  eval 'use attributes __PACKAGE__, \&lent, "-lvalue"';
+  like $w, qr/^$negmsg/, '-lvalue attr warning on def sub';
+  is join("",&attributes::get(\&lent)), "",
+       'lvalue attribute removed anyway';
+  $w = '';
+  eval 'use attributes __PACKAGE__, \&lent, "-lvalue"; 1' or die;
+  is $w, "", 'no -lvalue warning on def non-lvalue sub';
+  no warnings 'misc';
+  eval 'use attributes __PACKAGE__, \&lent, "lvalue"';
+  is $w, "", 'no lvalue warnings under no warnings misc';
+  eval 'use attributes __PACKAGE__, \&ent, "-lvalue"';
+  is $w, "", 'no -lvalue warnings under no warnings misc';
+}
+
+unlike runperl(
+         prog => 'BEGIN {$^H{a}=b} sub foo:bar{1}',
+         stderr => 1,
+       ),
+       qr/Unbalanced/,
+      'attribute errors do not cause op trees to leak';
+
+done_testing();

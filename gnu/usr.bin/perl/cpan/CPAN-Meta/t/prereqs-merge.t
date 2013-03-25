@@ -1,0 +1,106 @@
+use strict;
+use warnings;
+use Test::More 0.88;
+
+use CPAN::Meta::Prereqs;
+
+delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
+
+my $prereq_struct_1 = {
+  runtime => {
+    requires => {
+      'Config' => 0,
+      'Cwd'    => 0,
+      'perl'   => '5.005_03',
+    },
+    recommends => {
+      'Pod::Text' => 0,
+      'YAML'      => 0.35,
+    },
+  },
+  build => {
+    requires => {
+      'Test' => 0,
+    },
+  }
+};
+
+my $prereq_1 = CPAN::Meta::Prereqs->new($prereq_struct_1);
+
+isa_ok($prereq_1, 'CPAN::Meta::Prereqs', 'first prereq');
+
+is_deeply($prereq_1->as_string_hash, $prereq_struct_1, '...and it round trips');
+
+my $prereq_struct_2 = {
+  develop => {
+    requires => {
+      'Dist::Mothra' => '1.230',
+    },
+    suggests => {
+      'Blort::Blortex' => '== 10.20',
+    },
+  },
+  runtime => {
+    requires => {
+      'Config' => 1,
+      'perl'       => '< 6',
+    },
+  },
+  build => {
+    suggests => {
+      'Module::Build::Bob' => '20100101',
+    },
+  }
+};
+
+my $prereq_2 = CPAN::Meta::Prereqs->new($prereq_struct_2);
+
+isa_ok($prereq_2, 'CPAN::Meta::Prereqs', 'second prereq');
+
+is_deeply($prereq_1->as_string_hash, $prereq_struct_1, '...and it round trips');
+
+my $merged = $prereq_1->with_merged_prereqs($prereq_2);
+
+my $want = {
+  develop => {
+    requires => {
+      'Dist::Mothra' => '1.230',
+    },
+    suggests => {
+      'Blort::Blortex' => '== 10.20',
+    },
+  },
+  runtime => {
+    requires => {
+      'Config' => 1,
+      'Cwd'    => 0,
+      'perl'   => '>= 5.005_03, < 6',
+    },
+    recommends => {
+      'Pod::Text' => 0,
+      'YAML'      => 0.35,
+    },
+  },
+  build => {
+    requires => {
+      'Test' => 0,
+    },
+    suggests => {
+      'Module::Build::Bob' => '20100101',
+    },
+  },
+};
+
+is_deeply(
+  $merged->as_string_hash,
+  $want,
+  "we get the right result of merging two prereqs",
+);
+
+is_deeply(
+  $prereq_2->with_merged_prereqs($prereq_1)->as_string_hash,
+  $want,
+  "...and the merge works the same in reverse",
+);
+
+done_testing;

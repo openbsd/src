@@ -4,9 +4,6 @@ BEGIN {
     chdir 't' if -d 't';
     unshift @INC, '../lib';
     require './test.pl';	# for which_perl() etc
-}
-
-BEGIN {
     plan(4);
 }
 
@@ -23,10 +20,10 @@ SKIP: {
 
 $lib = 'Bla2';
 fresh_perl_is("print grep { \$_ eq '$lib' } \@INC[0..(\$#INC-1)]", $lib,
-	      { switches => ['-IBla2'] }, '-I');
+	      { switches => ['-IBla2'], nolib => 1 }, '-I');
 SKIP: {
   skip 'Double colons not allowed in dir spec', 1 if $Is_VMS;
   $lib = 'Foo::Bar2';
   fresh_perl_is("print grep { \$_ eq '$lib' } \@INC", $lib,
-	        { switches => ['-IFoo::Bar2'] }, '-I with colons');
+	        { switches => ['-IFoo::Bar2'], nolib => 1 }, '-I with colons');
 }

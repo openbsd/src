@@ -45,8 +45,6 @@ init_i18nl10n                  # U (perl_init_i18nl10n)
 init_i18nl14n                  # U (perl_init_i18nl14n)
 is_uni_alnum                   # U
 is_uni_alnum_lc                # U
-is_uni_alnumc                  # U
-is_uni_alnumc_lc               # U
 is_uni_alpha                   # U
 is_uni_alpha_lc                # U
 is_uni_ascii                   # U
@@ -72,7 +70,6 @@ is_uni_upper_lc                # U
 is_uni_xdigit                  # U
 is_uni_xdigit_lc               # U
 is_utf8_alnum                  # U
-is_utf8_alnumc                 # U
 is_utf8_alpha                  # U
 is_utf8_ascii                  # U
 is_utf8_char                   # U

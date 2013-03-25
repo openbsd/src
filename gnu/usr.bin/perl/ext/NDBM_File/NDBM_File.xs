@@ -1,3 +1,5 @@
+#define PERL_NO_GET_CONTEXT
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -25,12 +27,14 @@ START_EXTERN_C
 END_EXTERN_C
 #endif
 
+#define fetch_key 0
+#define store_key 1
+#define fetch_value 2
+#define store_value 3
+
 typedef struct {
 	DBM * 	dbp ;
-	SV *    filter_fetch_key ;
-	SV *    filter_store_key ;
-	SV *    filter_fetch_value ;
-	SV *    filter_store_value ;
+	SV *    filter[4];
 	int     filtering ;
 	} NDBM_File_type;
 
@@ -66,8 +70,7 @@ ndbm_TIEHASH(dbtype, filename, flags, mode)
 
 	    RETVAL = NULL ;
 	    if ((dbp =  dbm_open(filename, flags, mode))) {
-	        RETVAL = (NDBM_File)safemalloc(sizeof(NDBM_File_type)) ;
-    	        Zero(RETVAL, 1, NDBM_File_type) ;
+	        RETVAL = (NDBM_File)safecalloc(1, sizeof(NDBM_File_type));
 		RETVAL->dbp = dbp ;
 	    }
 	    
@@ -78,8 +81,14 @@ ndbm_TIEHASH(dbtype, filename, flags, mode)
 void
 ndbm_DESTROY(db)
 	NDBM_File	db
+	PREINIT:
+	int i = store_value;
 	CODE:
 	dbm_close(db->dbp);
+	do {
+	    if (db->filter[i])
+		SvREFCNT_dec(db->filter[i]);
+	} while (i-- > 0);
 	safefree(db);
 
 #define ndbm_FETCH(db,key)			dbm_fetch(db->dbp,key)
@@ -137,30 +146,10 @@ filter_fetch_key(db, code)
 	NDBM_File	db
 	SV *		code
 	SV *		RETVAL = &PL_sv_undef ;
+	ALIAS:
+	NDBM_File::filter_fetch_key = fetch_key
+	NDBM_File::filter_store_key = store_key
+	NDBM_File::filter_fetch_value = fetch_value
+	NDBM_File::filter_store_value = store_value
 	CODE:
-	    DBM_setFilter(db->filter_fetch_key, code) ;
-
-SV *
-filter_store_key(db, code)
-	NDBM_File	db
-	SV *		code
-	SV *		RETVAL =  &PL_sv_undef ;
-	CODE:
-	    DBM_setFilter(db->filter_store_key, code) ;
-
-SV *
-filter_fetch_value(db, code)
-	NDBM_File	db
-	SV *		code
-	SV *		RETVAL =  &PL_sv_undef ;
-	CODE:
-	    DBM_setFilter(db->filter_fetch_value, code) ;
-
-SV *
-filter_store_value(db, code)
-	NDBM_File	db
-	SV *		code
-	SV *		RETVAL =  &PL_sv_undef ;
-	CODE:
-	    DBM_setFilter(db->filter_store_value, code) ;
-
+	    DBM_setFilter(db->filter[ix], code);

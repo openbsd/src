@@ -38,8 +38,7 @@ $saved_filename = './0';
 
 cmp_ok($warns,'==',0,'no warns at start');
 
-open(FILE,">$saved_filename");
-ok(defined(FILE),'created work file');
+ok(open(FILE,">$saved_filename"),'created work file');
 print FILE "1\n";
 print FILE "0";
 close(FILE);

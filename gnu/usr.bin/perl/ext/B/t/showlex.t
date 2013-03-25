@@ -22,17 +22,15 @@ my $verbose = @ARGV; # set if ANY ARGS
 
 my $a;
 my $Is_VMS = $^O eq 'VMS';
-my $Is_MacOS = $^O eq 'MacOS';
 
 my $path = join " ", map { qq["-I$_"] } @INC;
 $path = '"-I../lib" "-Iperl_root:[lib]"' if $Is_VMS;   # gets too long otherwise
-my $redir = $Is_MacOS ? "" : "2>&1";
 my $is_thread = $Config{use5005threads} && $Config{use5005threads} eq 'define';
 
 if ($is_thread) {
     ok "# use5005threads: test skipped\n";
 } else {
-    $a = `$^X $path "-MO=Showlex" -e "my \@one" $redir`;
+    $a = `$^X $path "-MO=Showlex" -e "my \@one" 2>&1`;
     like ($a, qr/sv_undef.*PVNV.*\@one.*sv_undef.*AV/s,
 	  "canonical usage works");
 }

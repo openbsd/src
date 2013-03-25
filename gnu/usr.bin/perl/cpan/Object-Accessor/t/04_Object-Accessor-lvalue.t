@@ -6,10 +6,10 @@ use Data::Dumper;
 
 BEGIN {
     require Test::More;
-    Test::More->import( 
+    Test::More->import(
         # silly bbedit [
-        $] >= 5.008         
-            ? 'no_plan' 
+        $] >= 5.008
+            ? 'no_plan'
             : ( skip_all => "Lvalue objects require perl >= 5.8" )
     );
 }
@@ -37,7 +37,7 @@ $Object::Accessor::DEBUG = $Object::Accessor::DEBUG = 1 if @ARGV;
 ### create an accessor;
 {   ok( $Object->mk_accessors( $Acc ),
                                 "Accessor '$Acc' created" );
-    
+
     eval { $Object->$Acc = $$ };
     ok( !$@,                    "lvalue assign successful $@" );
     ok( $Object->$Acc,          "Accessor '$Acc' set" );
@@ -60,8 +60,8 @@ $Object::Accessor::DEBUG = $Object::Accessor::DEBUG = 1 if @ARGV;
                                 "       Got warning about allow handlers" );
     }
 
-    ok( eval{ $clone->$acc = $$ },      
-                                "   Allow handler ignored" );       
+    ok( eval{ $clone->$acc = $$ },
+                                "   Allow handler ignored" );
     ok( ! $@,                   "   No error occurred" );
     is( $clone->$acc, $$,       "   Setting '$acc' worked" );
 }
@@ -69,7 +69,7 @@ $Object::Accessor::DEBUG = $Object::Accessor::DEBUG = 1 if @ARGV;
 ### test registering callbacks
 {   my $clone = $Object->mk_clone;
     ok( $clone,                 "Cloned the lvalue object" );
-    
+
     {   my $warnings;
         local $SIG{__WARN__} = sub { $warnings .= "@_" };
         ok( ! $clone->register_callback( sub { } ),
@@ -77,6 +77,6 @@ $Object::Accessor::DEBUG = $Object::Accessor::DEBUG = 1 if @ARGV;
 
         like( $warnings, qr/not supported/,
                                 "   Got warning about callbacks" );
-    }                                
+    }
 }
 

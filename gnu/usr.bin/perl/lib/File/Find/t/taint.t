@@ -147,29 +147,18 @@ sub simple_wanted {
 # there are limitations. Don't try to create an absolute path,
 # because that may fail on operating systems that have the concept of
 # volume names (e.g. Mac OS). As a special case, you can pass it a "."
-# as first argument, to create a directory path like "./fa/dir" on
-# operating systems other than Mac OS (actually, Mac OS will ignore
-# the ".", if it's the first argument). If there's no second argument,
-# this function will return the empty string on Mac OS and the string
-# "./" otherwise.
+# as first argument, to create a directory path like "./fa/dir". If there's
+# no second argument this function will return the string "./"
 
 sub dir_path {
     my $first_arg = shift @_;
 
     if ($first_arg eq '.') {
-        if ($^O eq 'MacOS') {
-            return '' unless @_;
-            # ignore first argument; return a relative path
-            # with leading ":" and with trailing ":"
-            return File::Spec->catdir(@_);
-        } else { # other OS
-            return './' unless @_;
-            my $path = File::Spec->catdir(@_);
-            # add leading "./"
-            $path = "./$path";
-            return $path;
-        }
-
+	return './' unless @_;
+	my $path = File::Spec->catdir(@_);
+	# add leading "./"
+	$path = "./$path";
+	return $path;
     } else { # $first_arg ne '.'
         return $first_arg unless @_; # return plain filename
 	my $fname = File::Spec->catdir($first_arg, @_); # relative path
@@ -180,14 +169,9 @@ sub dir_path {
 
 
 # Use topdir() to specify a directory path that you want to pass to
-# find/finddepth. Basically, topdir() does the same as dir_path() (see
-# above), except that there's no trailing ":" on Mac OS.
+# find/finddepth. Historically topdir() differed on Mac OS classic.
 
-sub topdir {
-    my $path = dir_path(@_);
-    $path =~ s/:$// if ($^O eq 'MacOS');
-    return $path;
-}
+*topdir = \&dir_path;
 
 
 # Use file_path() to specify a file path that's expected for $_
@@ -197,29 +181,18 @@ sub topdir {
 # form a *relative* file path (the last argument is assumed to be a
 # file). It's independent from the platform it's run on, although
 # there are limitations. As a special case, you can pass it a "." as
-# first argument, to create a file path like "./fa/file" on operating
-# systems other than Mac OS (actually, Mac OS will ignore the ".", if
-# it's the first argument). If there's no second argument, this
-# function will return the empty string on Mac OS and the string "./"
-# otherwise.
+# first argument, to create a file path like "./fa/file". If there's no
+# second argument, this function will return the string "./" otherwise.
 
 sub file_path {
     my $first_arg = shift @_;
 
     if ($first_arg eq '.') {
-        if ($^O eq 'MacOS') {
-            return '' unless @_;
-            # ignore first argument; return a relative path
-            # with leading ":", but without trailing ":"
-            return File::Spec->catfile(@_);
-        } else { # other OS
-            return './' unless @_;
-            my $path = File::Spec->catfile(@_);
-            # add leading "./"
-            $path = "./$path";
-            return $path;
-        }
-
+	return './' unless @_;
+	my $path = File::Spec->catfile(@_);
+	# add leading "./"
+	$path = "./$path";
+	return $path;
     } else { # $first_arg ne '.'
         return $first_arg unless @_; # return plain filename
 	my $fname = File::Spec->catfile($first_arg, @_); # relative path
@@ -235,15 +208,9 @@ sub file_path {
 # case, also use this function to specify a file path that's expected
 # for $_.
 #
-# Basically, file_path_name() does the same as file_path() (see
-# above), except that there's always a leading ":" on Mac OS, even for
-# plain file/directory names.
+# Historically file_path_name differed on Mac OS classic.
 
-sub file_path_name {
-    my $path = file_path(@_);
-    $path = ":$path" if (($^O eq 'MacOS') && ($path !~ /:/));
-    return $path;
-}
+*file_path_name = \&file_path;
 
 
 MkDir( dir_path('for_find'), 0770 );
@@ -259,11 +226,7 @@ MkDir( dir_path('fb', 'fba'), 0770  );
 touch( file_path('fb', 'fba', 'fba_ord') );
 SKIP: {
 	skip "Creating symlink", 1, unless $symlink_exists;
-if ($^O eq 'MacOS') {
-      ok( symlink(':fb',':fa:fsl'), 'Created symbolic link' );
-} else {
-      ok( symlink('../fb','fa/fsl'), 'Created symbolic link' );
-}
+	ok( symlink('../fb','fa/fsl'), 'Created symbolic link' );
 }
 touch( file_path('fa', 'fa_ord') );
 

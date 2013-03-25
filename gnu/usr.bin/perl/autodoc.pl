@@ -15,6 +15,13 @@
 #
 # This script is normally invoked as part of 'make all', but is also
 # called from from regen.pl.
+#
+# '=head1' are the only headings looked for.  If the next line after the
+# heading begins with a word character, it is considered to be the first line
+# of documentation that applies to the heading itself.  That is, it is output
+# immediately after the heading, before the first function, and not indented.
+# The next input line that is a pod directive terminates this heading-level
+# documentation.
 
 use strict;
 
@@ -39,7 +46,7 @@ my $curheader = "Unknown section";
 
 sub autodoc ($$) { # parse a file and extract documentation info
     my($fh,$file) = @_;
-    my($in, $doc, $line);
+    my($in, $doc, $line, $header_doc);
 FUNC:
     while (defined($in = <$fh>)) {
 	if ($in =~ /^#\s*define\s+([A-Za-z_][A-Za-z_0-9]+)\(/ &&
@@ -49,6 +56,35 @@ FUNC:
 	}
         if ($in=~ /^=head1 (.*)/) {
             $curheader = $1;
+
+            # If the next line begins with a word char, then is the start of
+            # heading-level documentation.
+	    if (defined($doc = <$fh>)) {
+                if ($doc !~ /^\w/) {
+                    $in = $doc;
+                    redo FUNC;
+                }
+                $header_doc = $doc;
+                $line++;
+
+                # Continue getting the heading-level documentation until read
+                # in any pod directive (or as a fail-safe, find a closing
+                # comment to this pod in a C language file
+HDR_DOC:
+                while (defined($doc = <$fh>)) {
+                    if ($doc =~ /^=\w/) {
+                        $in = $doc;
+                        redo FUNC;
+                    }
+                    $line++;
+
+                    if ($doc =~ m:^\s*\*/$:) {
+                        warn "=cut missing? $file:$line:$doc";;
+                        last HDR_DOC;
+                    }
+                    $header_doc .= $doc;
+                }
+            }
             next FUNC;
         }
 	$line++;
@@ -111,6 +147,13 @@ DOC:
 	    $docs{$inline_where}{$curheader}{$name}
 		= [$flags, $docs, $ret, $file, @args];
 
+            # Create a special entry with an empty-string name for the
+            # heading-level documentation.
+	    if (defined $header_doc) {
+                $docs{$inline_where}{$curheader}{""} = $header_doc;
+                undef $header_doc;
+            }
+
 	    if (defined $doc) {
 		if ($doc =~ /^=(?:for|head)/) {
 		    $in = $doc;
@@ -132,6 +175,8 @@ sub docout ($$$) { # output the docs for one function
 removed without notice.\n\n" if $flags =~ /x/;
     $docs .= "NOTE: the perl_ form of this function is deprecated.\n\n"
 	if $flags =~ /p/;
+    $docs .= "NOTE: this function must be explicitly called as Perl_$name with an aTHX_ parameter.\n\n"
+        if $flags =~ /o/;
 
     print $fh "=item $name\nX<$name>\n$docs";
 
@@ -142,9 +187,49 @@ removed without notice.\n\n" if $flags =~ /x/;
     } elsif ($flags =~ /n/) { # no args
 	print $fh "\t$ret\t$name\n\n";
     } else { # full usage
-	print $fh "\t$ret\t$name";
-	print $fh "(" . join(", ", @args) . ")";
-	print $fh "\n\n";
+	my $p            = $flags =~ /o/; # no #define foo Perl_foo
+	my $n            = "Perl_"x$p . $name;
+	my $large_ret    = length $ret > 7;
+	my $indent_size  = 7+8 # nroff: 7 under =head + 8 under =item
+	                  +8+($large_ret ? 1 + length $ret : 8)
+	                  +length($n) + 1;
+	my $indent;
+	print $fh "\t$ret" . ($large_ret ? ' ' : "\t") . "$n(";
+	my $long_args;
+	for (@args) {
+	    if ($indent_size + 2 + length > 79) {
+		$long_args=1;
+		$indent_size -= length($n) - 3;
+		last;
+	    }
+	}
+	my $args = '';
+	if ($p) {
+	    $args = @args ? "pTHX_ " : "pTHX";
+	    if ($long_args) { print $fh $args; $args = '' }
+	}
+	$long_args and print $fh "\n";
+	my $first = !$long_args;
+	while () {
+	    if (!@args or
+	         length $args
+	         && $indent_size + 3 + length($args[0]) + length $args > 79
+	    ) {
+		print $fh
+		  $first ? '' : (
+		    $indent //=
+		       "\t".($large_ret ? " " x (1+length $ret) : "\t")
+		      ." "x($long_args ? 4 : 1 + length $n)
+		  ),
+		  $args, (","x($args ne 'pTHX_ ') . "\n")x!!@args;
+		$args = $first = '';
+	    }
+	    @args or last;
+	    $args .= ", "x!!(length $args && $args ne 'pTHX_ ')
+	           . shift @args;
+	}
+	if ($long_args) { print $fh "\n", substr $indent, 0, -4 }
+	print $fh ")\n\n";
     }
     print $fh "=for hackers\nFound in file $file\n\n";
 }
@@ -167,7 +252,16 @@ _EOH_
     # case insensitive sort, with fallback for determinacy
     for $key (sort { uc($a) cmp uc($b) || $a cmp $b } keys %$dochash) {
 	my $section = $dochash->{$key}; 
-	print $fh "\n=head1 $key\n\n=over 8\n\n";
+	print $fh "\n=head1 $key\n\n";
+
+        # Output any heading-level documentation and delete so won't get in
+        # the way later
+        if (exists $section->{""}) {
+            print $fh $section->{""} . "\n";
+            delete $section->{""};
+        }
+	print $fh "=over 8\n\n";
+
 	# Again, fallback for determinacy
 	for my $key (sort { uc($a) cmp uc($b) || $a cmp $b } keys %$section) {
 	    docout($fh, $key, $section->{$key});
@@ -177,14 +271,32 @@ _EOH_
 
     if (@$missing) {
         print $fh "\n=head1 Undocumented functions\n\n";
-	print $fh "These functions are currently undocumented:\n\n=over\n\n";
-	for my $missing (sort @$missing) {
-	    print $fh "=item $missing\nX<$missing>\n\n";
-	}
-	print $fh "=back\n\n";
-    }
+    print $fh $podname eq 'perlapi' ? <<'_EOB_' : <<'_EOB_';
+The following functions have been flagged as part of the public API,
+but are currently undocumented. Use them at your own risk, as the
+interfaces are subject to change.
 
-    print $fh $footer, <<'_EOF_';
+If you use one of them, you may wish to consider creating and submitting
+documentation for it. If your patch is accepted, this will indicate that
+the interface is stable (unless it is explicitly marked otherwise).
+
+=over
+
+_EOB_
+The following functions are currently undocumented.  If you use one of
+them, you may wish to consider creating and submitting documentation for
+it.
+
+=over
+
+_EOB_
+    for my $missing (sort @$missing) {
+        print $fh "=item $missing\nX<$missing>\n\n";
+    }
+    print $fh "=back\n\n";
+}
+
+print $fh $footer, <<'_EOF_';
 =cut
 
  ex: set ro:
@@ -259,7 +371,8 @@ foreach (sort keys %missing) {
 # walk table providing an array of components in each line to
 # subroutine, printing the result
 
-my @missing_api = grep $funcflags{$_}{flags} =~ /A/ && !$docs{api}{$_}, keys %funcflags;
+# List of funcs in the public API that aren't also marked as experimental.
+my @missing_api = grep $funcflags{$_}{flags} =~ /A/ && $funcflags{$_}{flags} !~ /M/ && !$docs{api}{$_}, keys %funcflags;
 output('perlapi', <<'_EOB_', $docs{api}, \@missing_api, <<'_EOE_');
 =head1 NAME
 
@@ -269,11 +382,13 @@ perlapi - autogenerated documentation for the perl public API
 X<Perl API> X<API> X<api>
 
 This file contains the documentation of the perl public API generated by
-embed.pl, specifically a listing of functions, macros, flags, and variables
-that may be used by extension writers.  The interfaces of any functions that
-are not listed here are subject to change without notice.  For this reason,
-blindly using functions listed in proto.h is to be avoided when writing
-extensions.
+F<embed.pl>, specifically a listing of functions, macros, flags, and variables
+that may be used by extension writers.  L<At the end|/Undocumented functions>
+is a list of functions which have yet to be documented.  The interfaces of
+those are subject to change without notice.  Any functions not listed here are
+not part of the public API, and should not be used by extension writers at
+all.  For these reasons, blindly using functions listed in proto.h is to be
+avoided when writing extensions.
 
 Note that all Perl API global variables must be referenced with the C<PL_>
 prefix.  Some macros are provided for compatibility with the older,
@@ -326,7 +441,9 @@ L<perlguts>, L<perlxs>, L<perlxstut>, L<perlintern>
 
 _EOE_
 
-my @missing_guts = grep $funcflags{$_}{flags} !~ /A/ && !$docs{guts}{$_}, keys %funcflags;
+# List of non-static internal functions
+my @missing_guts =
+ grep $funcflags{$_}{flags} !~ /[As]/ && !$docs{guts}{$_}, keys %funcflags;
 
 output('perlintern', <<'END', $docs{guts}, \@missing_guts, <<'END');
 =head1 NAME

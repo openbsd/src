@@ -3,12 +3,13 @@
 BEGIN {
 	chdir 't' if -d 't';
 	@INC = '../lib';
+	require './test.pl';
 }
 
 use strict;
 use Config;
 
-use Test::More tests => 15;
+plan 16;
 
 use_ok( 'sigtrap' );
 
@@ -56,12 +57,26 @@ $SIG{FAKE} = 'IGNORE';
 sigtrap->import('untrapped', 'FAKE');
 is( $SIG{FAKE}, 'IGNORE', 'respect existing handler set to IGNORE' );
 
+fresh_perl_like
+  '
+    BEGIN { *CORE::GLOBAL::kill = sub {} }
+    require sigtrap;
+    import sigtrap "INT";
+    sub { $SIG{INT}->("INT") } -> (3)
+  ',
+   qr/\$ = main::__ANON__\(3\) called/,
+  { stderr => 1 },
+  "stack-trace does not try to modify read-only arguments"
+;
+
 my $out = tie *STDOUT, 'TieOut';
 $SIG{FAKE} = 'DEFAULT';
 $sigtrap::Verbose = 1;
 sigtrap->import('any', 'FAKE');
+my $read = $out->read;
+untie *STDOUT;
 is( $SIG{FAKE}, \&sigtrap::handler_traceback, 'should set default handler' );
-like( $out->read, qr/^Installing handler/, 'does it talk with $Verbose set?' );
+like( $read, qr/^Installing handler/, 'does it talk with $Verbose set?' );
 
 # handler_die croaks with first argument
 eval { sigtrap::handler_die('FAKE') };

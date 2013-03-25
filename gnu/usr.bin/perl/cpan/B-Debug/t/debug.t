@@ -24,25 +24,25 @@ $|  = 1;
 use warnings;
 use strict;
 use Config;
-use Test::More tests => 8;
+use Test::More tests => 11;
 use B;
 use B::Debug;
+use File::Spec;
 
 my $a;
-my $Is_VMS = $^O eq 'VMS';
-my $Is_MacOS = $^O eq 'MacOS';
+my $X = $^X =~ m/\s/ ? qq{"$^X"} : $^X;
 
-my $path = join " ", map { qq["-I$_"] } @INC;
-my $redir = $Is_MacOS ? "" : "2>&1";
+my $path = join " ", map { qq["-I$_"] } (File::Spec->catfile("blib","lib"), @INC);
+my $redir = $^O =~ /VMS|MSWin32|MacOS/ ? "" : "2>&1";
 
-$a = `$^X $path "-MO=Debug" -e 1 $redir`;
+$a = `$X $path "-MO=Debug" -e 1 $redir`;
 like($a, qr/\bLISTOP\b.*\bOP\b.*\bCOP\b.*\bOP\b/s);
 
 
-$a = `$^X $path "-MO=Terse" -e 1 $redir`;
+$a = `$X $path "-MO=Terse" -e 1 $redir`;
 like($a, qr/\bLISTOP\b.*leave.*\n    OP\b.*enter.*\n    COP\b.*nextstate.*\n    OP\b.*null/s);
 
-$a = `$^X $path "-MO=Terse" -ane "s/foo/bar/" $redir`;
+$a = `$X $path "-MO=Terse" -ane "s/foo/bar/" $redir`;
 $a =~ s/\(0x[^)]+\)//g;
 $a =~ s/\[[^\]]+\]//g;
 $a =~ s/-e syntax OK//;
@@ -67,24 +67,31 @@ gvsv const null pushmark rvav gv nextstate subst const unstack
 EOF
 }
 #$b .= " nextstate" if $] < 5.008001; # ??
-$b=~s/\n/ /g;$b=~s/\s+/ /g;
+$b=~s/\n/ /g; $b=~s/\s+/ /g;
 $b =~ s/\s+$//;
 is($a, $b);
 
 like(B::Debug::_printop(B::main_root),  qr/LISTOP\s+\[OP_LEAVE\]/);
 like(B::Debug::_printop(B::main_start), qr/OP\s+\[OP_ENTER\]/);
 
-$a = `$^X $path "-MO=Debug" -e "B::main_root->debug" $redir`;
+$a = `$X $path "-MO=Debug" -e "B::main_root->debug" $redir`;
 like($a, qr/op_next\s+0x0/m);
-$a = `$^X $path "-MO=Debug" -e "B::main_start->debug" $redir`;
-like($a, qr/PL_ppaddr\[OP_ENTER\]/m);
+$a = `$X $path "-MO=Debug" -e "B::main_start->debug" $redir`;
+like($a, qr/\[OP_ENTER\]/m);
 
 # pass missing FETCHSIZE, fixed with 1.06
-my $tmp = "tmp.pl";
-open TMP, "> $tmp";
-print TMP 'BEGIN{tie @a, __PACKAGE__;sub TIEARRAY {bless{}} sub FETCH{1}};
-print $a[1]';
-close TMP;
-$a = `$^X $path "-MO=Debug" $tmp $redir`;
-unlink $tmp;
+my $e = q(BEGIN{tie @a, __PACKAGE__;sub TIEARRAY {bless{}} sub FETCH{1}};print $a[1]);
+$a = `$X $path "-MO=Debug" -e"$e" $redir`;
 unlike($a, qr/locate object method "FETCHSIZE"/m);
+
+# NV assertion with CV, fixed with 1.13
+my $tmp = "tmp.pl";
+open TMP, ">", $tmp;
+print TMP 'my $p=1;$g=2;sub p($){my $i=1;$i+1};print p(0)+$g;';
+close TMP;
+$a = `$X $path "-MO=Debug" $tmp $redir`;
+ok(! $?);
+unlike($a, qr/assertion "SvTYPE(sv) != SVt_PVCV" failed.*function: S_sv_2iuv_common/m);
+unlike($a, qr/Use of uninitialized value in print/m);
+
+END { unlink $tmp if $tmp; }

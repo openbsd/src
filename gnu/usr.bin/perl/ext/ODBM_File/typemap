@@ -18,7 +18,7 @@ INPUT
 T_DATUM_K
 	{
 	    STRLEN len;
-	    DBM_ckFilter($arg, filter_store_key, \"filter_store_key\");
+	    DBM_ckFilter($arg, filter[store_key], \"filter_store_key\");
 	    $var.dptr = SvPVbyte($arg, len);
 	    $var.dsize = (int)len;
 	}
@@ -26,9 +26,9 @@ T_DATUM_K_C
 	{
 	    SV * tmpSV ;
 	    STRLEN len;
-	    if (db->filter_store_key){
+	    if (db->filter[store_key]){
 	        tmpSV = sv_2mortal(newSVsv($arg));
-	        DBM_ckFilter(tmpSV, filter_store_key, \"filter_store_key\");
+	        DBM_ckFilter(tmpSV, filter[store_key], \"filter_store_key\");
 	    }
 	    else
 		tmpSV = $arg;
@@ -36,7 +36,7 @@ T_DATUM_K_C
 	    $var.dsize = (int)len;
 	}
 T_DATUM_V
-        DBM_ckFilter($arg, filter_store_value, \"filter_store_value\");
+        DBM_ckFilter($arg, filter[store_value], \"filter_store_value\");
 	if (SvOK($arg)) {
 	    STRLEN len;
 	    $var.dptr = SvPVbyte($arg, len);
@@ -51,9 +51,11 @@ T_GDATUM
 OUTPUT
 T_DATUM_K
 	sv_setpvn($arg, $var.dptr, $var.dsize);
-	DBM_ckFilter($arg, filter_fetch_key,\"filter_fetch_key\");
+	DBM_ckFilter($arg, filter[fetch_key],\"filter_fetch_key\");
 T_DATUM_V
 	sv_setpvn($arg, $var.dptr, $var.dsize);
-	DBM_ckFilter($arg, filter_fetch_value,\"filter_fetch_value\");
+	DBM_ckFilter($arg, filter[fetch_value],\"filter_fetch_value\");
 T_GDATUM
 	sv_usepvn($arg, $var.dptr, $var.dsize);
+T_PTROBJ
+        sv_setref_pv($arg, dbtype, (void*)$var);

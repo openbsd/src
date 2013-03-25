@@ -1,26 +1,26 @@
 
 package IO::Compress::Base ;
 
-require 5.004 ;
+require 5.006 ;
 
 use strict ;
 use warnings;
 
-use IO::Compress::Base::Common 2.024 ;
+use IO::Compress::Base::Common 2.048 ;
 
-use IO::File ;
+use IO::File qw(SEEK_SET SEEK_END); ;
 use Scalar::Util qw(blessed readonly);
 
 #use File::Glob;
 #require Exporter ;
-use Carp ;
-use Symbol;
+use Carp() ;
+use Symbol();
 use bytes;
 
 our (@ISA, $VERSION);
 @ISA    = qw(Exporter IO::File);
 
-$VERSION = '2.024';
+$VERSION = '2.048';
 
 #Can't locate object method "SWASHNEW" via package "utf8" (perhaps you forgot to load "utf8"?) at .../ext/Compress-Zlib/Gzip/blib/lib/Compress/Zlib/Common.pm line 16.
 
@@ -48,7 +48,7 @@ sub croakError
 {
     my $self   = shift ;
     $self->saveErrorString(0, $_[0]);
-    croak $_[0];
+    Carp::croak $_[0];
 }
 
 sub closeError
@@ -106,6 +106,14 @@ sub writeAt
     return 1;
 }
 
+sub outputPayload
+{
+
+    my $self = shift ;
+    return $self->output(@_);
+}
+
+
 sub output
 {
     my $self = shift ;
@@ -115,9 +123,9 @@ sub output
     return 1 
         if length $data == 0 && ! $last ;
 
-    if ( *$self->{FilterEnvelope} ) {
+    if ( *$self->{FilterContainer} ) {
         *_ = \$data;
-        &{ *$self->{FilterEnvelope} }();
+        &{ *$self->{FilterContainer} }();
     }
 
     if (length $data) {
@@ -155,7 +163,7 @@ sub checkParams
             'Append'    => [1, 1, Parse_boolean,   0],
             'BinModeIn' => [1, 1, Parse_boolean,   0],
 
-            'FilterEnvelope' => [1, 1, Parse_any,   undef],
+            'FilterContainer' => [1, 1, Parse_code,  undef],
 
             $self->getExtraParams(),
             *$self->{OneShot} ? $self->getOneShotParams() 
@@ -206,7 +214,7 @@ sub _create
     my $merge = $got->value('Merge') ;
     my $appendOutput = $got->value('Append') || $merge ;
     *$obj->{Append} = $appendOutput;
-    *$obj->{FilterEnvelope} = $got->value('FilterEnvelope') ;
+    *$obj->{FilterContainer} = $got->value('FilterContainer') ;
 
     if ($merge)
     {
@@ -275,6 +283,7 @@ sub _create
         *$obj->{Header} = $obj->mkHeader($got) ;
         $obj->output( *$obj->{Header} )
             or return undef;
+        $obj->beforePayload();
     }
     else
     {
@@ -392,7 +401,7 @@ sub _def
     # finally the 1 to 1 and n to 1
     return $obj->_singleTarget($x, 1, $input, $output, @_);
 
-    croak "should not be here" ;
+    Carp::croak "should not be here" ;
 }
 
 sub _singleTarget
@@ -405,7 +414,7 @@ sub _singleTarget
     if ($x->{oneInput})
     {
         $obj->getFileInfo($x->{Got}, $input)
-            if isaFilename($input) and $inputIsFilename ;
+            if isaScalar($input) || (isaFilename($input) and $inputIsFilename) ;
 
         my $z = $obj->_create($x->{Got}, @_)
             or return undef ;
@@ -435,7 +444,7 @@ sub _singleTarget
             else
             {
                 $obj->getFileInfo($x->{Got}, $element)
-                    if $isFilename;
+                    if isaScalar($element) || $isFilename;
 
                 $obj->_create($x->{Got}, @_)
                     or return undef ;
@@ -504,7 +513,7 @@ sub _wr2
         return $count ;
     }
 
-    croak "Should not be here";
+    Carp::croak "Should not be here";
     return undef;
 }
 
@@ -518,7 +527,7 @@ sub addInterStream
     {
         $self->getFileInfo(*$self->{Got}, $input)
             #if isaFilename($input) and $inputIsFilename ;
-            if isaFilename($input) ;
+            if isaScalar($input) || isaFilename($input) ;
 
         # TODO -- newStream needs to allow gzip/zip header to be modified
         return $self->newStream();
@@ -581,7 +590,7 @@ sub syswrite
     }
 
     $] >= 5.008 and ( utf8::downgrade($$buffer, 1) 
-        or croak "Wide character in " .  *$self->{ClassName} . "::write:");
+        or Carp::croak "Wide character in " .  *$self->{ClassName} . "::write:");
 
 
     if (@_ > 1) {
@@ -625,7 +634,7 @@ sub syswrite
 
     *$self->{CompSize}->add(length $outBuffer) ;
 
-    $self->output($outBuffer)
+    $self->outputPayload($outBuffer)
         or return undef;
 
     return $buffer_length;
@@ -679,7 +688,7 @@ sub flush
 
     *$self->{CompSize}->add(length $outBuffer) ;
 
-    $self->output($outBuffer)
+    $self->outputPayload($outBuffer)
         or return 0;
 
     if ( defined *$self->{FH} ) {
@@ -690,15 +699,17 @@ sub flush
     return 1;
 }
 
-sub newStream
+sub beforePayload
+{
+}
+
+sub _newStream
 {
     my $self = shift ;
-  
+    my $got  = shift;
+
     $self->_writeTrailer()
         or return 0 ;
-
-    my $got = $self->checkParams('newStream', *$self->{Got}, @_)
-        or return 0 ;    
 
     $self->ckParams($got)
         or $self->croakError("newStream: $self->{Error}");
@@ -713,7 +724,33 @@ sub newStream
     *$self->{UnCompSize}->reset();
     *$self->{CompSize}->reset();
 
+    $self->beforePayload();
+
     return 1 ;
+}
+
+sub newStream
+{
+    my $self = shift ;
+  
+    my $got = $self->checkParams('newStream', *$self->{Got}, @_)
+        or return 0 ;    
+
+    $self->_newStream($got);
+
+#    *$self->{Compress} = $self->mkComp($got)
+#        or return 0;
+#
+#    *$self->{Header} = $self->mkHeader($got) ;
+#    $self->output(*$self->{Header} )
+#        or return 0;
+#    
+#    *$self->{UnCompSize}->reset();
+#    *$self->{CompSize}->reset();
+#
+#    $self->beforePayload();
+#
+#    return 1 ;
 }
 
 sub reset
@@ -913,7 +950,7 @@ sub input_line_number
 sub _notAvailable
 {
     my $name = shift ;
-    return sub { croak "$name Not Available: File opened only for output" ; } ;
+    return sub { Carp::croak "$name Not Available: File opened only for output" ; } ;
 }
 
 *read     = _notAvailable('read');
@@ -958,7 +995,7 @@ purpose if to to be sub-classed by IO::Compress modules.
 
 L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
 
-L<Compress::Zlib::FAQ|Compress::Zlib::FAQ>
+L<IO::Compress::FAQ|IO::Compress::FAQ>
 
 L<File::GlobMapper|File::GlobMapper>, L<Archive::Zip|Archive::Zip>,
 L<Archive::Tar|Archive::Tar>,
@@ -974,7 +1011,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2010 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

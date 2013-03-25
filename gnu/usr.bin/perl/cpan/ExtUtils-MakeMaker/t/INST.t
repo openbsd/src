@@ -46,10 +46,12 @@ my $mm = WriteMakefile(
 );
 like( $stdout->read, qr{
                         Writing\ $Makefile\ for\ Big::Liar\n
+                        (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
                         Big::Liar's\ vars\n
                         INST_LIB\ =\ \S+\n
                         INST_ARCHLIB\ =\ \S+\n
                         Writing\ $Makefile\ for\ Big::Dummy\n
+                        (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
 }x );
 undef $stdout;
 untie *STDOUT;
@@ -126,10 +128,12 @@ $mm = WriteMakefile(
 );
 like( $stdout->read, qr{
                         Writing\ $Makefile\ for\ Big::Liar\n
+                        (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
                         Big::Liar's\ vars\n
                         INST_LIB\ =\ \S+\n
                         INST_ARCHLIB\ =\ \S+\n
                         Writing\ $Makefile\ for\ Big::Dummy\n
+                        (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
 }x );
 undef $stdout;
 untie *STDOUT;

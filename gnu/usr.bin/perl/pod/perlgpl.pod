@@ -37,7 +37,8 @@ For the Perl Artistic License, see L<perlartistic>.
                      Version 1, February 1989
  
   Copyright (C) 1989 Free Software Foundation, Inc.
-                 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+                     51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ 
   Everyone is permitted to copy and distribute verbatim copies
   of this license document, but changing it is not allowed.
  
@@ -250,8 +251,10 @@ For the Perl Artistic License, see L<perlartistic>.
      GNU General Public License for more details.
  
      You should have received a copy of the GNU General Public License
-     along with this program; if not, write to the Free Software Foundation,
-     Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+     along with this program; if not, write to the Free Software
+     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+     02110-1301 USA
+ 
  
  Also add information on how to contact you by electronic and paper mail.
  
@@ -259,13 +262,13 @@ For the Perl Artistic License, see L<perlartistic>.
  when it starts in an interactive mode:
  
      Gnomovision version 69, Copyright (C) 19xx name of author
-     Gnomovision comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+     Gnomovision comes with ABSOLUTELY NO WARRANTY; for details type 'show w'.
      This is free software, and you are welcome to redistribute it
-     under certain conditions; type `show c' for details.
+     under certain conditions; type 'show c' for details.
  
- The hypothetical commands `show w' and `show c' should show the
+ The hypothetical commands 'show w' and 'show c' should show the
  appropriate parts of the General Public License.  Of course, the
- commands you use may be called something other than `show w' and `show
+ commands you use may be called something other than 'show w' and 'show
  c'; they could even be mouse-clicks or menu items--whatever suits your
  program.
  
@@ -274,7 +277,7 @@ For the Perl Artistic License, see L<perlartistic>.
  necessary.  Here a sample; alter the names:
  
    Yoyodyne, Inc., hereby disclaims all copyright interest in the
-   program `Gnomovision' (a program to direct compilers to make passes
+   program 'Gnomovision' (a program to direct compilers to make passes
    at assemblers) written by James Hacker.
  
    <signature of Ty Coon>, 1 April 1989
@@ -283,5 +286,3 @@ For the Perl Artistic License, see L<perlartistic>.
  That's all there is to it!
 
 =cut
-
-

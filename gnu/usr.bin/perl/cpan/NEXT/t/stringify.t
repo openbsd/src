@@ -2,13 +2,6 @@ use warnings;
 use strict;
 use Test::More tests => 2;
 
-BEGIN {
-    if ($ENV{PERL_CORE}) {
-        chdir('t') if -d 't';
-        @INC = qw(../lib);
-    }
-}
-
 BEGIN { use_ok('NEXT') };
 
 

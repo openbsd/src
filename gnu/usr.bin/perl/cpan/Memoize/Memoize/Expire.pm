@@ -3,7 +3,7 @@ package Memoize::Expire;
 # require 5.00556;
 use Carp;
 $DEBUG = 0;
-$VERSION = '1.00';
+$VERSION = '1.02';
 
 # This package will implement expiration by prepending a fixed-length header
 # to the font of the cached data.  The format of the header will be:
@@ -310,6 +310,11 @@ You should always support a C<HASH> argument to C<TIEHASH> that ties
 the underlying cache so that the user can specify that the cache is
 also persistent or that it has some other interesting semantics.  The
 example above demonstrates how to do this, as does C<Memoize::Expire>.
+
+Another sample module, L<Memoize::Saves>, is available in a separate
+distribution on CPAN.  It implements a policy that allows you to
+specify that certain function values would always be looked up afresh.
+See the documentation for details.
 
 =head1 ALTERNATIVES
 

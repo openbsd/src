@@ -4,7 +4,7 @@ specifically designed to be readable as is.
 
 =head1 NAME
 
-README.linux - Perl version 5 on Linux systems
+perllinux - Perl version 5 on Linux systems
 
 =head1 DESCRIPTION
 
@@ -13,7 +13,7 @@ version 5 (hereafter just Perl) is compiled and/or runs.
 
 =head2 Experimental Support for Sun Studio Compilers for Linux OS
 
-Sun Microsystems has released a port of their Sun Studio compiliers for
+Sun Microsystems has released a port of their Sun Studio compilers for
 Linux.  As of November 2005, only an alpha version has been released.  
 Until a release of these compilers is made, support for compiling Perl with
 these compiler experimental.

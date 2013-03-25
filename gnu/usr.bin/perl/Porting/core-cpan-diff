@@ -3,20 +3,24 @@
 # core-cpan-diff: Compare CPAN modules with their equivalent in core
 
 # Originally based on App::DualLivedDiff by Steffen Mueller.
- 
+
 use strict;
 use warnings;
 
 use 5.010;
 
 use Getopt::Long;
-use File::Temp ();
-use File::Path ();
-use File::Spec;
+use File::Basename ();
+use File::Copy     ();
+use File::Temp     ();
+use File::Path     ();
+use File::Spec::Functions;
 use Archive::Extract;
 use IO::Uncompress::Gunzip ();
-use File::Compare ();
+use File::Compare          ();
 use ExtUtils::Manifest;
+use ExtUtils::MakeMaker ();
+use HTTP::Tiny;
 
 BEGIN { die "Must be run from root of perl source tree\n" unless -d 'Porting' }
 use lib 'Porting';
@@ -30,27 +34,18 @@ use Archive::Tar;
 use IPC::Open3;
 use IO::Select;
 $Module::Load::Conditional::CHECK_INC_HASH = 1;
+
 # stop Archive::Extract whinging about lack of Archive::Zip
 $Archive::Extract::WARN = 0;
 
-
-# Files, which if they exist in CPAN but not in perl, will not generate
-# an 'Only in CPAN' listing
-#
-our %IGNORABLE = map { ($_ => 1) }
-	qw(.cvsignore .dualLivedDiffConfig .gitignore
-	      ANNOUNCE Announce Artistic AUTHORS BENCHMARK BUGS Build.PL
-	      CHANGELOG ChangeLog CHANGES Changes COPYING Copying CREDITS
-	      GOALS HISTORY INSTALL INSTALL.SKIP LICENSE Makefile.PL
-	      MANIFEST MANIFEST.SKIP META.yml NEW NOTES ppport.h README
-	      SIGNATURE THANKS TODO Todo VERSION WHATSNEW);
+# where, under the cache dir, to download tarballs to
+use constant SRC_DIR => 'tarballs';
 
 # where, under the cache dir, to untar stuff to
-
 use constant UNTAR_DIR => 'untarred';
 
-use constant DIFF_CMD  => 'diff';
-use constant WGET_CMD  => 'wget';
+use constant DIFF_CMD => 'diff';
+use constant WGET_CMD => 'wget';
 
 sub usage {
     print STDERR "\n@_\n\n" if @_;
@@ -70,6 +65,9 @@ Usage: $0 [opts] [ -d | -v | -x ] [ -a | module ... ]
 
 -f|force      Force download from CPAN of new 02packages.details.txt file
               (with --crosscheck only).
+
+-m|mirror     Preferred CPAN mirror URI (http:// or file:///)
+              (Local mirror must be a complete mirror, not minicpan)
 
 -o/--output   File name to write output to (defaults to STDOUT).
 
@@ -94,13 +92,13 @@ HERE
     exit(1);
 }
 
-
 sub run {
     my $scan_all;
     my $diff_opts;
-    my $reverse    = 0;
+    my $reverse = 0;
     my @wanted_upstreams;
     my $cache_dir;
+    my $mirror_url = "http://www.cpan.org/";
     my $use_diff;
     my $output_file;
     my $verbose;
@@ -108,223 +106,302 @@ sub run {
     my $do_crosscheck;
 
     GetOptions(
-	'a|all'        => \$scan_all,
-	'c|cachedir=s' => \$cache_dir,
-	'd|diff'       => \$use_diff,
-	'diffopts:s'   => \$diff_opts,
-	'f|force'      => \$force,
-	'h|help'       => \&usage,
-	'o|output=s'   => \$output_file,
-	'r|reverse'    => \$reverse,
-	'u|upstream=s@'=> \@wanted_upstreams,
-	'v|verbose'    => \$verbose,
-	'x|crosscheck' => \$do_crosscheck,
+        'a|all'         => \$scan_all,
+        'c|cachedir=s'  => \$cache_dir,
+        'd|diff'        => \$use_diff,
+        'diffopts:s'    => \$diff_opts,
+        'f|force'       => \$force,
+        'h|help'        => \&usage,
+        'm|mirror=s'    => \$mirror_url,
+        'o|output=s'    => \$output_file,
+        'r|reverse'     => \$reverse,
+        'u|upstream=s@' => \@wanted_upstreams,
+        'v|verbose'     => \$verbose,
+        'x|crosscheck'  => \$do_crosscheck,
     ) or usage;
-
 
     my @modules;
 
     usage("Cannot mix -a with module list") if $scan_all && @ARGV;
 
     if ($do_crosscheck) {
-	usage("can't use -r, -d, --diffopts, -v with --crosscheck")
-	    if ($reverse || $use_diff || $diff_opts || $verbose);
+        usage("can't use -r, -d, --diffopts, -v with --crosscheck")
+          if ( $reverse || $use_diff || $diff_opts || $verbose );
     }
     else {
-	$diff_opts = '-u' unless defined $diff_opts;
-	usage("can't use -f without --crosscheck") if $force;
+        $diff_opts = '-u -b' unless defined $diff_opts;
+        usage("can't use -f without --crosscheck") if $force;
     }
 
-    @modules = $scan_all
-	        ? grep $Maintainers::Modules{$_}{CPAN},
-		    (sort {lc $a cmp lc $b } keys %Maintainers::Modules)
-	        : @ARGV;
+    @modules =
+      $scan_all
+      ? grep $Maintainers::Modules{$_}{CPAN},
+      ( sort { lc $a cmp lc $b } keys %Maintainers::Modules )
+      : @ARGV;
     usage("No modules specified") unless @modules;
 
-
     my $outfh;
-    if (defined $output_file) {
-	open $outfh, '>', $output_file
-	    or die "ERROR: could not open file '$output_file' for writing: $!\n";
+    if ( defined $output_file ) {
+        open $outfh, '>', $output_file
+          or die "ERROR: could not open file '$output_file' for writing: $!\n";
     }
     else {
-	open $outfh, ">&STDOUT"
-			    or die "ERROR: can't dup STDOUT: $!\n";
+        open $outfh, ">&STDOUT"
+          or die "ERROR: can't dup STDOUT: $!\n";
     }
 
-    if (defined $cache_dir) {
-	die "ERROR: no such directory: '$cache_dir'\n" unless -d $cache_dir;
+    if ( defined $cache_dir ) {
+        die "ERROR: no such directory: '$cache_dir'\n" unless -d $cache_dir;
     }
+    else {
+        $cache_dir = File::Temp::tempdir( CLEANUP => 1 );
+    }
+
+    $mirror_url .= "/" unless substr( $mirror_url, -1 ) eq "/";
+    my $test_file = "modules/03modlist.data.gz";
+    my_getstore(
+        cpan_url( $mirror_url, $test_file ),
+        catfile( $cache_dir, $test_file )
+    ) or die "ERROR: not a CPAN mirror '$mirror_url'\n";
 
     if ($do_crosscheck) {
-	do_crosscheck($outfh, $cache_dir, $force, \@modules);
+        do_crosscheck( $outfh, $cache_dir, $mirror_url, $force, \@modules );
     }
     else {
-	do_compare(\@modules, $outfh, $output_file, $cache_dir, $verbose, $use_diff,
-	    $reverse, $diff_opts, \@wanted_upstreams);
+        do_compare(
+            \@modules,  $outfh,      $output_file,
+            $cache_dir, $mirror_url, $verbose,
+            $use_diff,  $reverse,    $diff_opts,
+            \@wanted_upstreams
+        );
     }
 }
 
+# construct a CPAN url
 
+sub cpan_url {
+    my ( $mirror_url, @path ) = @_;
+    return $mirror_url unless @path;
+    my $cpan_path = join( "/", map { split "/", $_ } @path );
+    $cpan_path =~ s{\A/}{};    # remove leading slash since url has one trailing
+    return $mirror_url . $cpan_path;
+}
+
+# construct a CPAN URL for a author/distribution string like:
+# BINGOS/Archive-Extract-0.52.tar.gz
+
+sub cpan_url_distribution {
+    my ( $mirror_url, $distribution ) = @_;
+    $distribution =~ /^([A-Z])([A-Z])/
+        or die "ERROR: invalid DISTRIBUTION name (not /^[A-Z]{2}/): $distribution\n";
+    my $path = "modules/by-authors/id/$1/$1$2/$distribution";
+    return cpan_url( $mirror_url, $path );
+}
 
 # compare a list of modules against their CPAN equivalents
 
 sub do_compare {
-    my ($modules, $outfh, $output_file, $cache_dir, $verbose,
-		$use_diff, $reverse, $diff_opts, $wanted_upstreams) = @_;
-
+    my (
+        $modules,    $outfh,   $output_file, $cache_dir,
+        $mirror_url, $verbose, $use_diff,    $reverse,
+        $diff_opts,  $wanted_upstreams
+    ) = @_;
 
     # first, make sure we have a directory where they can all be untarred,
     # and if its a permanent directory, clear any previous content
-    my $untar_dir;
-    if ($cache_dir) {
-	$untar_dir = File::Spec->catdir($cache_dir, UNTAR_DIR); 
-	if (-d $untar_dir) {
-	    File::Path::rmtree($untar_dir)
-		    or die "failed to remove $untar_dir\n";
-	}
-	mkdir $untar_dir
-	    or die "mkdir $untar_dir: $!\n";
-    }
-    else {
-	$untar_dir = File::Temp::tempdir( CLEANUP => 1 );
+    my $untar_dir = catdir( $cache_dir, UNTAR_DIR );
+    my $src_dir   = catdir( $cache_dir, SRC_DIR );
+    for my $d ( $src_dir, $untar_dir ) {
+        next if -d $d;
+        mkdir $d or die "mkdir $d: $!\n";
     }
 
-    my %ignorable = map { ($_ => 1) } @Maintainers::IGNORABLE;
+    my %ignorable = map { ( $_ => 1 ) } @Maintainers::IGNORABLE;
 
     my %seen_dist;
     for my $module (@$modules) {
-	warn "Processing $module ...\n" if defined $output_file;
+        warn "Processing $module ...\n" if defined $output_file;
 
-	my $m = $Maintainers::Modules{$module} 
-	    or die "ERROR: No such module in Maintainers.pl: '$module'\n";
+        my $m = $Maintainers::Modules{$module}
+          or die "ERROR: No such module in Maintainers.pl: '$module'\n";
 
-	unless ($m->{CPAN}) {
-	    print $outfh "WARNING: $module is not dual-life; skipping\n";
-	    next;
-	}
+        unless ( $m->{CPAN} ) {
+            print $outfh "WARNING: $module is not dual-life; skipping\n";
+            next;
+        }
 
-	my $dist = $m->{DISTRIBUTION};
-	die "ERROR: $module has no DISTRIBUTION entry\n" unless defined $dist;
+        my $dist = $m->{DISTRIBUTION};
+        die "ERROR: $module has no DISTRIBUTION entry\n" unless defined $dist;
 
-	if ($seen_dist{$dist}) {
-	    warn "WARNING: duplicate entry for $dist in $module\n"
-	}
+        if ( $seen_dist{$dist}++ ) {
+            warn "WARNING: duplicate entry for $dist in $module\n";
+        }
 
-	my $upstream = $m->{UPSTREAM} || 'UNKNOWN';
-	next if @$wanted_upstreams and ! ($upstream ~~ $wanted_upstreams);
-	print $outfh "\n$module - ".$Maintainers::Modules{$module}->{DISTRIBUTION}."\n" unless $use_diff;
-	print $outfh "  upstream is: ".($m->{UPSTREAM} || 'UNKNOWN!')."\n";
+        my $upstream = $m->{UPSTREAM} || 'UNKNOWN';
+        next if @$wanted_upstreams and !( $upstream ~~ $wanted_upstreams );
 
-	$seen_dist{$dist}++;
+        print $outfh "\n$module - "
+          . $Maintainers::Modules{$module}->{DISTRIBUTION} . "\n";
+        print $outfh "  upstream is: "
+          . ( $m->{UPSTREAM} || 'UNKNOWN!' ) . "\n";
 
-	my $cpan_dir;
-	eval {
-	    $cpan_dir = get_distribution($cache_dir, $untar_dir, $module, $dist)
-	};
-	if ($@) {
-	    print $outfh "  ", $@;
-	    print $outfh "  (skipping)\n";
-	    next;
-	}
+        my $cpan_dir;
+        eval {
+            $cpan_dir =
+              get_distribution( $src_dir, $mirror_url, $untar_dir, $module,
+                $dist );
+        };
+        if ($@) {
+            print $outfh "  ", $@;
+            print $outfh "  (skipping)\n";
+            next;
+        }
 
-	my @perl_files = Maintainers::get_module_files($module);
+        my @perl_files = Maintainers::get_module_files($module);
 
-	my $manifest = File::Spec->catfile($cpan_dir, 'MANIFEST');
-	die "ERROR: no such file: $manifest\n" unless  -f $manifest;
+        my $manifest = catfile( $cpan_dir, 'MANIFEST' );
+        die "ERROR: no such file: $manifest\n" unless -f $manifest;
 
-	my $cpan_files = ExtUtils::Manifest::maniread($manifest);
-	my @cpan_files = sort keys %$cpan_files;
+        my $cpan_files = ExtUtils::Manifest::maniread($manifest);
+        my @cpan_files = sort keys %$cpan_files;
 
-	my ($excluded, $map) =  get_map($m, $module, \@perl_files);
+        ( my $main_pm = $module ) =~ s{::}{/}g;
+        $main_pm .= ".pm";
 
-	my %perl_unseen;
-	@perl_unseen{@perl_files} = ();
-	my %perl_files = %perl_unseen;
+        my ( $excluded, $map, $customized ) =
+          get_map( $m, $module, \@perl_files );
 
-	foreach my $cpan_file (@cpan_files) {
-	    my $mapped_file = cpan_to_perl($excluded, $map, $cpan_file);
-	    unless (defined $mapped_file) {
-	        print $outfh "  Excluded:  $cpan_file\n" if $verbose;
-	        next;
-	    }
+        my %perl_unseen;
+        @perl_unseen{@perl_files} = ();
+        my %perl_files = %perl_unseen;
 
-	    if (exists $perl_files{$mapped_file}) {
-	        delete $perl_unseen{$mapped_file};
-	    }
-	    else {
-	        # some CPAN files foo are stored in core as foo.packed,
-	        # which are then unpacked by 'make test_prep'
-	        my $packed_file = "$mapped_file.packed";
-	        if (exists $perl_files{$packed_file} ) {
-	            if (! -f $mapped_file and -f $packed_file) {
-	                print $outfh <<EOF;
+        foreach my $cpan_file (@cpan_files) {
+            my $mapped_file =
+              cpan_to_perl( $excluded, $map, $customized, $cpan_file );
+            unless ( defined $mapped_file ) {
+                print $outfh "  Excluded:  $cpan_file\n" if $verbose;
+                next;
+            }
+
+            if ( exists $perl_files{$mapped_file} ) {
+                delete $perl_unseen{$mapped_file};
+            }
+            else {
+
+                # some CPAN files foo are stored in core as foo.packed,
+                # which are then unpacked by 'make test_prep'
+                my $packed_file = "$mapped_file.packed";
+                if ( exists $perl_files{$packed_file} ) {
+                    if ( !-f $mapped_file and -f $packed_file ) {
+                        print $outfh <<EOF;
 WARNING: $mapped_file not found, but .packed variant exists.
 Perhaps you need to run 'make test_prep'?
 EOF
-	                next;
-	            }
-	            delete $perl_unseen{$packed_file};
-	        }
-	        else {
-	            if ($ignorable{$cpan_file}) {
-	                print $outfh "  Ignored:   $cpan_file\n" if $verbose;
-	                next;
-	            }
+                        next;
+                    }
+                    delete $perl_unseen{$packed_file};
+                }
+                else {
+                    if ( $ignorable{$cpan_file} ) {
+                        print $outfh "  Ignored:   $cpan_file\n" if $verbose;
+                        next;
+                    }
 
-	            unless ($use_diff) {
-	                print $outfh "  CPAN only: $cpan_file",
-	                    ($cpan_file eq $mapped_file) ? "\n"
-				: " (expected $mapped_file)\n";
-	            }
-	            next;
-	        }
-	    }
+                    unless ($use_diff) {
+                        print $outfh "  CPAN only: $cpan_file",
+                          ( $cpan_file eq $mapped_file )
+                          ? "\n"
+                          : " (missing $mapped_file)\n";
+                    }
+                    next;
+                }
+            }
 
+            my $abs_cpan_file = catfile( $cpan_dir, $cpan_file );
 
-	    my $abs_cpan_file = File::Spec->catfile($cpan_dir, $cpan_file);
+            # should never happen
+            die "ERROR: can't find file $abs_cpan_file\n"
+              unless -f $abs_cpan_file;
 
-	    # should never happen
-	    die "ERROR: can't find file $abs_cpan_file\n" unless -f $abs_cpan_file;
+            # might happen if the FILES entry in Maintainers.pl is wrong
+            unless ( -f $mapped_file ) {
+                print $outfh "WARNING: perl file not found: $mapped_file\n";
+                next;
+            }
 
-	    # might happen if the FILES entry in Maintainers.pl is wrong
-	    unless (-f $mapped_file) {
-	        print $outfh "WARNING: perl file not found: $mapped_file\n";
-	        next;
-	    }
+            my $relative_mapped_file = relatively_mapped($mapped_file);
 
-			my $relative_mapped_file = $mapped_file;
-			$relative_mapped_file =~ s/^(cpan|dist|ext)\/.*?\///;
+            my $different =
+              file_diff( $outfh, $abs_cpan_file, $mapped_file, $reverse,
+                $diff_opts );
+            if ( $different && customized( $m, $relative_mapped_file ) ) {
+                if (! $use_diff ) {
+                    print $outfh "  Customized for blead: $relative_mapped_file\n";
+                }
+            }
+            elsif ($different) {
+                if ($use_diff) {
+                    $different =~ s{^(--- |\+\+\+ )/tmp/[^/]+/}{$1}gm;
+                    print $outfh $different;
+                }
+                else {
+                    if ( $cpan_file eq $relative_mapped_file ) {
+                        print $outfh "  Modified:  $relative_mapped_file\n";
+                    }
+                    else {
+                        print $outfh
+                          "  Modified:  $cpan_file $relative_mapped_file\n";
+                    }
 
-	    if (File::Compare::compare($abs_cpan_file, $mapped_file)) {
+                    if ( $cpan_file =~ m{\.pm\z} ) {
+                        my $pv = MM->parse_version($mapped_file)   || 'unknown';
+                        my $cv = MM->parse_version($abs_cpan_file) || 'unknown';
+                        if ( $pv ne $cv ) {
+                            print $outfh
+"  Version mismatch in '$cpan_file':\n    $cv (cpan) vs $pv (perl)\n";
+                        }
+                    }
 
-
-	         if ($use_diff) {
-	            file_diff($outfh, $abs_cpan_file, $mapped_file,
-	                                $reverse, $diff_opts);
-	        }
-	        else {
-	            if ($cpan_file eq $relative_mapped_file) {
-	                print $outfh "  Modified:  $relative_mapped_file\n";
-	            }
-	            else {
-	                print $outfh "  Modified:  $cpan_file $relative_mapped_file\n";
-	            }
-	        }
-	    }
-	    elsif ($verbose) {
-	            if ($cpan_file eq $relative_mapped_file) {
-	                print $outfh "  Unchanged: $cpan_file\n";
-	            }
-	            else {
-	                print $outfh "  Unchanged: $cpan_file $relative_mapped_file\n";
-	            }
-	    }
-	}
-	for (sort keys %perl_unseen) {
-	    print $outfh "  Perl only: $_\n" unless $use_diff;
-	}
+                }
+            }
+            elsif ( customized( $m, $relative_mapped_file ) ) {
+                # Maintainers.pl says we customized it, but it looks the
+                # same as CPAN so maybe we lost the customization, which
+                # could be bad
+                if ( $cpan_file eq $relative_mapped_file ) {
+                    print $outfh "  Blead customization missing: $cpan_file\n";
+                }
+                else {
+                    print $outfh
+                      "  Blead customization missing: $cpan_file $relative_mapped_file\n";
+                }
+            }
+            elsif ($verbose) {
+                if ( $cpan_file eq $relative_mapped_file ) {
+                    print $outfh "  Unchanged: $cpan_file\n";
+                }
+                else {
+                    print $outfh
+                      "  Unchanged: $cpan_file $relative_mapped_file\n";
+                }
+            }
+        }
+        for ( sort keys %perl_unseen ) {
+            my $relative_mapped_file = relatively_mapped($_);
+            if ( customized( $m, $relative_mapped_file ) ) {
+                print $outfh "  Customized for blead: $_\n";
+            }
+            else {
+                print $outfh "  Perl only: $_\n" unless $use_diff;
+            }
+        }
     }
+}
+
+sub relatively_mapped {
+    my $relative = shift;
+    $relative =~ s/^(cpan|dist|ext)\/.*?\///;
+    return $relative;
 }
 
 # given FooBar-1.23_45.tar.gz, return FooBar
@@ -342,244 +419,248 @@ sub distro_base {
 # Maintainers.pl
 
 sub do_crosscheck {
-    my ($outfh, $cache_dir, $force, $modules) = @_;
+    my ( $outfh, $cache_dir, $mirror_url, $force, $modules ) = @_;
 
-    my $file = '02packages.details.txt';
+    my $file         = '02packages.details.txt';
     my $download_dir = $cache_dir || File::Temp::tempdir( CLEANUP => 1 );
-    my $path = File::Spec->catfile($download_dir, $file);
-    my $gzfile = "$path.gz";
+    my $path         = catfile( $download_dir, $file );
+    my $gzfile       = "$path.gz";
 
     # grab 02packages.details.txt
 
-    my $url = 'http://www.cpan.org/modules/02packages.details.txt.gz';
+    my $url = cpan_url( $mirror_url, "modules/02packages.details.txt.gz" );
 
-    if (! -f $gzfile or $force) {
-	unlink $gzfile;
-	my_getstore($url, $gzfile);
+    if ( !-f $gzfile or $force ) {
+        unlink $gzfile;
+        my_getstore( $url, $gzfile );
     }
     unlink $path;
-    IO::Uncompress::Gunzip::gunzip($gzfile, $path)
-	or die "ERROR: failed to ungzip $gzfile: $IO::Uncompress::Gunzip::GunzipError\n";
+    IO::Uncompress::Gunzip::gunzip( $gzfile, $path )
+      or die
+      "ERROR: failed to ungzip $gzfile: $IO::Uncompress::Gunzip::GunzipError\n";
 
     # suck in the data from it
-    
+
     open my $fh, '<', $path
-	or die "ERROR: open: $file: $!\n";
+      or die "ERROR: open: $file: $!\n";
 
     my %distros;
     my %modules;
 
     while (<$fh>) {
-	next if 1../^$/;
-	chomp;
-	my @f = split ' ', $_;
-	if (@f != 3) {
-	    warn "WARNING: $file:$.: line doesn't have three fields (skipping)\n";
-	    next;
-	}
-	my $distro = $f[2];
-	$distro =~ s{^[A-Z]/[A-Z]{2}/}{}; # strip leading A/AB/
-	$modules{$f[0]} = $distro;
+        next if 1 .. /^$/;
+        chomp;
+        my @f = split ' ', $_;
+        if ( @f != 3 ) {
+            warn
+              "WARNING: $file:$.: line doesn't have three fields (skipping)\n";
+            next;
+        }
+        my $distro = $f[2];
+        $distro =~ s{^[A-Z]/[A-Z]{2}/}{};    # strip leading A/AB/
+        $modules{ $f[0] } = $distro;
 
-	(my $short_distro = $distro) =~ s{^.*/}{};
+        ( my $short_distro = $distro ) =~ s{^.*/}{};
 
-	$distros{distro_base($short_distro)}{$distro} = 1;
+        $distros{ distro_base($short_distro) }{$distro} = 1;
     }
 
     for my $module (@$modules) {
-	my $m = $Maintainers::Modules{$module} 
-	    or die "ERROR: No such module in Maintainers.pl: '$module'\n";
+        my $m = $Maintainers::Modules{$module}
+          or die "ERROR: No such module in Maintainers.pl: '$module'\n";
 
-	unless ($m->{CPAN}) {
-	    print $outfh "\nWARNING: $module is not dual-life; skipping\n";
-	    next;
-	}
+        unless ( $m->{CPAN} ) {
+            print $outfh "\nWARNING: $module is not dual-life; skipping\n";
+            next;
+        }
 
-	# given an entry like
-	#   Foo::Bar 1.23 foo-bar-1.23.tar.gz,
-	# first compare the module name against Foo::Bar, and failing that,
-	# against foo-bar
+        # given an entry like
+        #   Foo::Bar 1.23 foo-bar-1.23.tar.gz,
+        # first compare the module name against Foo::Bar, and failing that,
+        # against foo-bar
 
-	my $pdist = $m->{DISTRIBUTION};
-	die "ERROR: $module has no DISTRIBUTION entry\n" unless defined $pdist;
+        my $pdist = $m->{DISTRIBUTION};
+        die "ERROR: $module has no DISTRIBUTION entry\n" unless defined $pdist;
 
-	my $cdist = $modules{$module};
-	(my $short_pdist = $pdist) =~ s{^.*/}{};
+        my $cdist = $modules{$module};
+        ( my $short_pdist = $pdist ) =~ s{^.*/}{};
 
-	unless (defined $cdist) {
-	    my $d = $distros{distro_base($short_pdist)};
-	    unless (defined $d) {
-	        print $outfh "\n$module: Can't determine current CPAN entry\n";
-	        next;
-	    }
-	    if (keys %$d > 1) {
-	        print $outfh "\n$module: (found more than one CPAN candidate):\n";
-	        print $outfh "    perl: $pdist\n";
-	        print $outfh "    CPAN: $_\n" for sort keys %$d;
-	        next;
-	    }
-	    $cdist = (keys %$d)[0];
-	}
+        unless ( defined $cdist ) {
+            my $d = $distros{ distro_base($short_pdist) };
+            unless ( defined $d ) {
+                print $outfh "\n$module: Can't determine current CPAN entry\n";
+                next;
+            }
+            if ( keys %$d > 1 ) {
+                print $outfh
+                  "\n$module: (found more than one CPAN candidate):\n";
+                print $outfh "    perl: $pdist\n";
+                print $outfh "    CPAN: $_\n" for sort keys %$d;
+                next;
+            }
+            $cdist = ( keys %$d )[0];
+        }
 
-	if ($cdist ne $pdist) {
-	    print $outfh "\n$module:\n    Perl: $pdist\n    CPAN: $cdist\n";
-	}
+        if ( $cdist ne $pdist ) {
+            print $outfh "\n$module:\n    Perl: $pdist\n    CPAN: $cdist\n";
+        }
     }
 }
-
-
 
 # get the EXCLUDED and MAP entries for this module, or
 # make up defauts if they don't exist
 
 sub get_map {
-    my ($m, $module_name, $perl_files) = @_;
+    my ( $m, $module_name, $perl_files ) = @_;
 
-    my ($excluded, $map) = @$m{qw(EXCLUDED MAP)};
+    my ( $excluded, $map, $customized ) = @$m{qw(EXCLUDED MAP CUSTOMIZED)};
 
-    $excluded ||= [];
+    $excluded   ||= [];
+    $customized ||= [];
 
-    return $excluded, $map if $map;
+    return $excluded, $map, $customized if $map;
 
     # all files under ext/foo-bar (plus maybe some under t/lib)???
 
     my $ext;
     for (@$perl_files) {
-	if (m{^((?:ext|dist|cpan)/[^/]+/)}) {
-	    if (defined $ext and $ext ne $1) {
-	        # more than one ext/$ext/
-	        undef $ext;
-	        last;
-	    }
-	    $ext = $1;
-	}
-	elsif (m{^t/lib/}) {
-	    next;
-	}
-	else {
-	    undef $ext;
-	    last;
-	}
+        if (m{^((?:ext|dist|cpan)/[^/]+/)}) {
+            if ( defined $ext and $ext ne $1 ) {
+
+                # more than one ext/$ext/
+                undef $ext;
+                last;
+            }
+            $ext = $1;
+        }
+        elsif (m{^t/lib/}) {
+            next;
+        }
+        else {
+            undef $ext;
+            last;
+        }
     }
-    
-    if (defined $ext) {
-	    $map = { '' => $ext },
+
+    if ( defined $ext ) {
+        $map = { '' => $ext },;
     }
     else {
-	(my $base = $module_name) =~ s{::}{/}g;
-	$base ="lib/$base";
-	$map = {
-	    'lib/'	=> 'lib/',
-	    ''	=> "$base/",
-	};
+        ( my $base = $module_name ) =~ s{::}{/}g;
+        $base = "lib/$base";
+        $map  = {
+            'lib/' => 'lib/',
+            ''     => "$base/",
+        };
     }
-    return $excluded, $map;
+    return $excluded, $map, $customized;
 }
-
 
 # Given an exclude list and a mapping hash, convert a CPAN filename
 # (eg 't/bar.t') to the equivalent perl filename (eg 'lib/Foo/Bar/t/bar.t').
 # Returns an empty list for an excluded file
 
 sub cpan_to_perl {
-    my ($excluded, $map, $cpan_file) = @_;
+    my ( $excluded, $map, $customized, $cpan_file ) = @_;
 
     for my $exclude (@$excluded) {
-	# may be a simple string to match exactly, or a pattern
-	if (ref $exclude) {
-	    return if $cpan_file =~ $exclude;
-	}
-	else {
-	    return if $cpan_file eq $exclude;
-	}
+        next if $exclude ~~ $customized;
+
+        # may be a simple string to match exactly, or a pattern
+        if ( ref $exclude ) {
+            return if $cpan_file =~ $exclude;
+        }
+        else {
+            return if $cpan_file eq $exclude;
+        }
     }
 
     my $perl_file = $cpan_file;
 
     # try longest prefix first, then alphabetically on tie-break
-    for my $prefix (sort { length($b) <=> length($a) || $a cmp $b } keys %$map)
+    for
+      my $prefix ( sort { length($b) <=> length($a) || $a cmp $b } keys %$map )
     {
-	last if $perl_file =~ s/^\Q$prefix/$map->{$prefix}/;
+        last if $perl_file =~ s/^\Q$prefix/$map->{$prefix}/;
     }
     return $perl_file;
 }
 
-
-
-# do LWP::Simple::getstore, possibly without LWP::Simple being available
-
-my $lwp_simple_available;
+# fetch a file from a URL and store it in a file given by a filename
 
 sub my_getstore {
-    my ($url, $file) = @_;
-    unless (defined $lwp_simple_available) {
-	eval { require LWP::Simple };
-	$lwp_simple_available = $@ eq '';
-    }
-    if ($lwp_simple_available) {
-	return LWP::Simple::is_success(LWP::Simple::getstore($url, $file));
-    }
-    else {
-	return system(WGET_CMD, "-O", $file, $url) == 0;
+    my ( $url, $file ) = @_;
+    File::Path::mkpath( File::Basename::dirname($file) );
+    if ( $url =~ qr{\Afile://(?:localhost)?/} ) {
+        ( my $local_path = $url ) =~ s{\Afile://(?:localhost)?}{};
+        File::Copy::copy( $local_path, $file );
+    } else {
+        my $http = HTTP::Tiny->new;
+        my $response = $http->mirror($url, $file);
+        return $response->{success};
     }
 }
-
 
 # download and unpack a distribution
 # Returns the full pathname of the extracted directory
 # (eg '/tmp/XYZ/Foo_bar-1.23')
 
-# cache_dir: where to dowenload the .tar.gz file to
-# untar_dir: where to untar or unzup the file 
-# module:    name of module
-# dist:      name of the distribution
+# cache_dir:  where to download the .tar.gz file to
+# mirror_url: CPAN mirror to download from
+# untar_dir:  where to untar or unzup the file
+# module:     name of module
+# dist:       name of the distribution
 
 sub get_distribution {
-    my ($cache_dir, $untar_dir, $module, $dist) = @_;
+    my ( $src_dir, $mirror_url, $untar_dir, $module, $dist ) = @_;
 
     $dist =~ m{.+/([^/]+)$}
-	or die "ERROR: $module: invalid DISTRIBUTION name (no AUTHOR/ prefix): $dist\n";
+      or die
+      "ERROR: $module: invalid DISTRIBUTION name (no AUTHOR/ prefix): $dist\n";
     my $filename = $1;
 
-    my $download_dir = $cache_dir || File::Temp::tempdir( CLEANUP => 1 );
-    my $download_file = File::Spec->catfile($download_dir, $filename);
+    my $download_file = catfile( $src_dir, $filename );
 
     # download distribution
 
-    if (-f $download_file and ! -s $download_file ) {
-	# wget can leave a zero-length file on failed download
-	unlink $download_file;
+    if ( -f $download_file and !-s $download_file ) {
+
+        # wget can leave a zero-length file on failed download
+        unlink $download_file;
     }
 
-    unless (-f $download_file) {
-	# not cached
-	$dist =~ /^([A-Z])([A-Z])/
-	    or die "ERROR: $module: invalid DISTRIBUTION name (not /^[A-Z]{2}/): $dist\n";
+    unless ( -f $download_file ) {
 
-	my $url = "http://www.cpan.org/modules/by-authors/id/$1/$1$2/$dist";
-	my_getstore($url, $download_file)
-	    or die "ERROR: Could not fetch '$url'\n";
+        # not cached
+        my $url = cpan_url_distribution( $mirror_url, $dist );
+        my_getstore( $url, $download_file )
+          or die "ERROR: Could not fetch '$url'\n";
     }
 
-    # extract distribution
+    # get the expected name of the extracted distribution dir
 
-    my $ae = Archive::Extract->new( archive => $download_file);
-    $ae->extract( to => $untar_dir )
-	or die "ERROR: failed to extract distribution '$download_file to temp. dir: " . $ae->error() . "\n";
+    my $path = catfile( $untar_dir, $filename );
 
-    # get the name of the extracted distribution dir
+    $path =~ s/\.tar\.gz$//
+      or $path =~ s/\.zip$//
+      or die
+      "ERROR: downloaded file does not have a recognised suffix: $path\n";
 
-    my $path = File::Spec->catfile($untar_dir, $filename);
+    # extract it unless we already have it cached or tarball is newer
+    if ( !-d $path || ( -M $download_file < -M $path ) ) {
+        my $ae = Archive::Extract->new( archive => $download_file );
+        $ae->extract( to => $untar_dir )
+          or die
+          "ERROR: failed to extract distribution '$download_file to temp. dir: "
+          . $ae->error() . "\n";
 
-    $path =~ s/\.tar\.gz$// or
-    $path =~ s/\.zip$// or
-      die "ERROR: downloaded file does not have a recognised suffix: $path\n";
+        $path = $ae->extract_path;
+    }
 
     die "ERROR: Extracted tarball does not appear as $path\n" unless -d $path;
 
     return $path;
 }
-
 
 # produce the diff of a single file
 sub file_diff {
@@ -589,21 +670,21 @@ sub file_diff {
     my $reverse   = shift;
     my $diff_opts = shift;
 
-
-    my @cmd = (DIFF_CMD, split ' ', $diff_opts);
+    my @cmd = ( DIFF_CMD, split ' ', $diff_opts );
     if ($reverse) {
-	push @cmd, $perl_file, $cpan_file;
+        push @cmd, $perl_file, $cpan_file;
     }
     else {
-	push @cmd, $cpan_file, $perl_file;
+        push @cmd, $cpan_file, $perl_file;
     }
-    my $result = `@cmd`;
+    return `@cmd`;
 
-    $result =~ s{^(--- |\+\+\+ )/tmp/[^/]+/}{$1}gm;
-
-    print $outfh $result;
 }
 
+sub customized {
+    my ( $module_data, $file ) = @_;
+    return grep { $file eq $_ } @{ $module_data->{CUSTOMIZED} };
+}
 
 run();
 

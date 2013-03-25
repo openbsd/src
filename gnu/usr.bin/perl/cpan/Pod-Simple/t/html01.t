@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 use Test;
-BEGIN { plan tests => 11 };
+BEGIN { plan tests => 12 };
 
 #use Pod::Simple::Debug (10);
 
@@ -76,6 +76,13 @@ ok(x(
 '=head4 This, too, is a heading')
  => q{/\s*<h4><a[^<>]+>This,\s+too,\s+is\s+a\s+heading</a></h4>\s*$/},
   "heading building"
+);
+
+ok(x(
+'=head2 Yada Yada Operator
+X<...> X<... operator> X<yada yada operator>')
+ => q{/name="Yada_Yada_Operator"/},
+  "heading anchor name"
 );
 
 ok(

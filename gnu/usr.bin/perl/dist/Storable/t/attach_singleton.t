@@ -11,6 +11,7 @@
 
 sub BEGIN {
     unshift @INC, 't';
+    unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built\n";
@@ -50,7 +51,7 @@ is( "$struct->[1]", "$thawed->[1]", 'Singleton thaws correctly' );
 
 # We can also test this empirically
 $struct->[1]->{value} = 'Goodbye cruel world!';
-is_deeply( $struct, $thawed, 'Empiric testing corfirms correct behaviour' );
+is_deeply( $struct, $thawed, 'Empiric testing confirms correct behaviour' );
 
 # End Tests
 ###########

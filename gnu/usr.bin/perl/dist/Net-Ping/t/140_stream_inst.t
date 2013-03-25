@@ -1,5 +1,7 @@
 # Test to make sure object can be instantiated for stream protocol.
 
+use strict;
+
 BEGIN {
   unless (eval "require Socket") {
     print "1..0 \# Skip: no Socket\n";
@@ -11,12 +13,8 @@ BEGIN {
   }
 }
 
-use Test;
-use Net::Ping;
-plan tests => 2;
-
-# Everything loaded fine
-ok 1;
+use Test::More tests => 2;
+BEGIN {use_ok 'Net::Ping'};
 
 my $p = new Net::Ping "stream";
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'object can be instantiated for stream protocol');

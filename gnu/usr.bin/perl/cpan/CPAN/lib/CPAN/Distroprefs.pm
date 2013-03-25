@@ -169,7 +169,7 @@ sub find {
             file => $_, ext => $ext, dir => $dir
         });
         # copied from CPAN.pm; is this ever actually possible?
-        redo unless -f $result->abs; 
+        redo unless -f $result->abs;
 
         my $load_method = $self->_load_method($loader, $result);
         my @prefs = eval { $self->$load_method($loader, $result) };
@@ -314,7 +314,7 @@ __END__
 
 CPAN::Distroprefs -- read and match distroprefs
 
-=head1 SYNOPSIS 
+=head1 SYNOPSIS
 
     use CPAN::Distroprefs;
 
@@ -381,7 +381,7 @@ All results share some common attributes:
 
 C<success>, C<warning>, or C<fatal>
 
-=head3 file 
+=head3 file
 
 the file from which these prefs were read, or to which this error refers (relative filename)
 
@@ -413,7 +413,7 @@ Success results contain:
 
 an arrayref of CPAN::Distroprefs::Pref objects
 
-=head1 PREFS 
+=head1 PREFS
 
 CPAN::Distroprefs::Pref objects represent individual distroprefs documents.
 They are constructed automatically as part of C<success> results from C<find()>.

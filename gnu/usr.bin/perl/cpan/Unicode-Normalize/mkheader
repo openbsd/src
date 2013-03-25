@@ -9,7 +9,6 @@
 # Input files:
 #    unicore/CombiningClass.pl (or unicode/CombiningClass.pl)
 #    unicore/Decomposition.pl (or unicode/Decomposition.pl)
-#    unicore/CompositionExclusions.txt (or unicode/CompExcl.txt)
 #
 # Output files:
 #    unfcan.h
@@ -32,30 +31,48 @@ BEGIN {
 
 our $PACKAGE = 'Unicode::Normalize, mkheader';
 
-our $Combin = do "unicore/CombiningClass.pl"
-    || do "unicode/CombiningClass.pl"
-    || croak "$PACKAGE: CombiningClass.pl not found";
+our $prefix = "UNF_";
+our $structname = "${prefix}complist";
 
-our $Decomp = do "unicore/Decomposition.pl"
-    || do "unicode/Decomposition.pl"
-    || croak "$PACKAGE: Decomposition.pl not found";
+sub pack_U {
+    return pack('U*', @_);
+}
+
+# %Canon and %Compat will be ($codepoint => $hexstring) after _U_stringify()
+our %Comp1st;	# $codepoint => $listname  : may be composed with a next char.
+our %CompList;	# $listname,$2nd  => $codepoint : composite
+
+##### The below part is common to mkheader and PP #####
 
 our %Combin;	# $codepoint => $number    : combination class
 our %Canon;	# $codepoint => \@codepoints : canonical decomp.
 our %Compat;	# $codepoint => \@codepoints : compat. decomp.
-# after _U_stringify(), ($codepoint => $hexstring) for %Canon and %Compat
+our %Compos;	# $1st,$2nd  => $codepoint : composite
 our %Exclus;	# $codepoint => 1          : composition exclusions
 our %Single;	# $codepoint => 1          : singletons
 our %NonStD;	# $codepoint => 1          : non-starter decompositions
-
-our %Comp1st;	# $codepoint => $listname  : may be composed with a next char.
 our %Comp2nd;	# $codepoint => 1          : may be composed with a prev char.
-our %CompList;	# $listname,$2nd  => $codepoint : composite
 
-our $prefix = "UNF_";
-our $structname = "${prefix}complist";
+# from core Unicode database
+our $Combin = do "unicore/CombiningClass.pl"
+    || do "unicode/CombiningClass.pl"
+    || croak "$PACKAGE: CombiningClass.pl not found";
+our $Decomp = do "unicore/Decomposition.pl"
+    || do "unicode/Decomposition.pl"
+    || croak "$PACKAGE: Decomposition.pl not found";
 
-########## definition of Hangul constants ##########
+# CompositionExclusions.txt since Unicode 3.2.0
+our @CompEx = qw(
+    0958 0959 095A 095B 095C 095D 095E 095F 09DC 09DD 09DF 0A33 0A36
+    0A59 0A5A 0A5B 0A5E 0B5C 0B5D 0F43 0F4D 0F52 0F57 0F5C 0F69 0F76
+    0F78 0F93 0F9D 0FA2 0FA7 0FAC 0FB9 FB1D FB1F FB2A FB2B FB2C FB2D
+    FB2E FB2F FB30 FB31 FB32 FB33 FB34 FB35 FB36 FB38 FB39 FB3A FB3B
+    FB3C FB3E FB40 FB41 FB43 FB44 FB46 FB47 FB48 FB49 FB4A FB4B FB4C
+    FB4D FB4E 2ADC 1D15E 1D15F 1D160 1D161 1D162 1D163 1D164 1D1BB
+    1D1BC 1D1BD 1D1BE 1D1BF 1D1C0
+);
+
+# definition of Hangul constants
 use constant SBase  => 0xAC00;
 use constant SFinal => 0xD7A3; # SBase -1 + SCount
 use constant SCount =>  11172; # LCount * NCount
@@ -71,67 +88,23 @@ use constant TFinal => 0x11C2;
 use constant TCount =>     28;
 
 sub decomposeHangul {
-    my $SIndex = $_[0] - SBase;
-    my $LIndex = int( $SIndex / NCount);
-    my $VIndex = int(($SIndex % NCount) / TCount);
-    my $TIndex =      $SIndex % TCount;
+    my $sindex = $_[0] - SBase;
+    my $lindex = int( $sindex / NCount);
+    my $vindex = int(($sindex % NCount) / TCount);
+    my $tindex =      $sindex % TCount;
     my @ret = (
-       LBase + $LIndex,
-       VBase + $VIndex,
-      $TIndex ? (TBase + $TIndex) : (),
+       LBase + $lindex,
+       VBase + $vindex,
+      $tindex ? (TBase + $tindex) : (),
     );
-    return @ret;
+    return wantarray ? @ret : pack_U(@ret);
 }
 
-########## length of a character ##########
+########## getting full decomposition ##########
 
-sub utf8len {
-  my $uv = shift;
-  return $uv < 0x80 ? 1 :
-        $uv < 0x800 ? 2 :
-      $uv < 0x10000 ? 3 :
-     $uv < 0x110000 ? 4 :
-  croak "$PACKAGE: illegal char in the composite. codepoint max is 0x10ffff.";
-}
-
-sub utfelen {
-  my $uv = shift;
-  return $uv < 0xA0 ? 1 :
-        $uv < 0x400 ? 2 :
-       $uv < 0x4000 ? 3 :
-      $uv < 0x40000 ? 4 :
-     $uv < 0x110000 ? 5 :
-  croak "$PACKAGE: illegal char in the composite. codepoint max is 0x10ffff.";
-}
-
-my $errExpand = "$PACKAGE: Composition to U+%04X (from U+%04X and U+%04X) " .
-    "needs growing the string in %s! Quit. Please inform the author...";
-
-########## getting full decomposion ##########
-{
-    my($f, $fh);
-    foreach my $d (@INC) {
-	$f = File::Spec->catfile($d, "unicore", "CompositionExclusions.txt");
-	last if open($fh, $f);
-	$f = File::Spec->catfile($d, "unicode", "CompExcl.txt");
-	last if open($fh, $f);
-	$f = undef;
-    }
-    croak "$PACKAGE: neither unicore/CompositionExclusions.txt "
-	. "nor unicode/CompExcl.txt is found in @INC" unless defined $f;
-
-    while (<$fh>) {
-	next if /^#/ or /^$/;
-	s/#.*//;
-	$Exclus{ hex($1) } = 1 if /([0-9A-Fa-f]+)/;
-    }
-    close $fh;
-}
-
-##
 ## converts string "hhhh hhhh hhhh" to a numeric list
-##
-sub _getHexArray { map hex, $_[0] =~ /([0-9A-Fa-f]+)/g }
+## (hex digits separated by spaces)
+sub _getHexArray { map hex, $_[0] =~ /\G *([0-9A-Fa-f]+)/g }
 
 while ($Combin =~ /(.+)/g) {
     my @tab = split /\t/, $1;
@@ -147,43 +120,38 @@ while ($Decomp =~ /(.+)/g) {
     my @tab = split /\t/, $1;
     my $compat = $tab[2] =~ s/<[^>]+>//;
     my $dec = [ _getHexArray($tab[2]) ]; # decomposition
-    my $ini = hex($tab[0]);
+    my $ini = hex($tab[0]); # initial decomposable character
     my $end = $tab[1] eq '' ? $ini : hex($tab[1]);
     # ($ini .. $end) is the range of decomposable characters.
 
-    my $listname =
-	@$dec == 2 ? sprintf("${structname}_%06x", $dec->[0]) : 'USELESS';
-		# %04x is bad since it'd place _3046 after _1d157.
-
     foreach my $u ($ini .. $end) {
 	$Compat{$u} = $dec;
+	$Canon{$u} = $dec if ! $compat;
+    }
+}
 
-	if (! $compat) {
-	    $Canon{$u} = $dec;
+for my $s (@CompEx) {
+    my $u = hex $s;
+    next if !$Canon{$u}; # not assigned
+    next if $u == 0xFB1D && !$Canon{0x1D15E}; # 3.0.1 before Corrigendum #2
+    $Exclus{$u} = 1;
+}
 
-	    if (@$dec == 2) {
-		if (utf8len($dec->[0]) + utf8len($dec->[1]) < utf8len($u)) {
-		    croak sprintf $errExpand, $u, $dec->[0], $dec->[1],
-				  "utf-8";
-		}
-		if (utfelen($dec->[0]) + utfelen($dec->[1]) < utfelen($u)) {
-		    croak sprintf $errExpand, $u, $dec->[0], $dec->[1],
-				  "utf-ebcdic";
-		}
+foreach my $u (keys %Canon) {
+    my $dec = $Canon{$u};
 
-		if ($Combin{ $dec->[0] }) {
-		    $NonStD{$u} = 1;
-		} else {
-		    $CompList{ $listname }{ $dec->[1] } = $u;
-		    $Comp1st{ $dec->[0] } = $listname;
-		    $Comp2nd{ $dec->[1] } = 1 if ! $Exclus{$u};
-		}
-	    } elsif (@$dec == 1) {
-		$Single{$u} = 1;
-	    } else {
-		croak("Weird Canonical Decomposition of U+$tab[0]");
-	    }
+    if (@$dec == 2) {
+	if ($Combin{ $dec->[0] }) {
+	    $NonStD{$u} = 1;
+	} else {
+	    $Compos{ $dec->[0] }{ $dec->[1] } = $u;
+	    $Comp2nd{ $dec->[1] } = 1 if ! $Exclus{$u};
 	}
+    } elsif (@$dec == 1) {
+	$Single{$u} = 1;
+    } else {
+	my $h = sprintf '%04X', $u;
+	croak("Weird Canonical Decomposition of U+$h");
     }
 }
 
@@ -222,8 +190,18 @@ foreach my $key (keys %Compat) {
     $Compat{$key} = [ getCompatList($key) ];
 }
 
-sub _pack_U {
-    return pack('U*', @_);
+##### The above part is common to mkheader and PP #####
+
+foreach my $comp1st (keys %Compos) {
+    my $listname = sprintf("${structname}_%06x", $comp1st);
+		# %04x is bad since it'd place _3046 after _1d157.
+    $Comp1st{$comp1st} = $listname;
+    my $rh1st = $Compos{$comp1st};
+
+    foreach my $comp2nd (keys %$rh1st) {
+	my $uc = $rh1st->{$comp2nd};
+	$CompList{$listname}{$comp2nd} = $uc;
+    }
 }
 
 sub split_into_char {
@@ -239,7 +217,7 @@ sub split_into_char {
 
 sub _U_stringify {
     sprintf '"%s"', join '',
-	map sprintf("\\x%02x", $_), split_into_char(_pack_U(@_));
+	map sprintf("\\x%02x", $_), split_into_char(pack_U(@_));
 }
 
 foreach my $hash (\%Canon, \%Compat) {

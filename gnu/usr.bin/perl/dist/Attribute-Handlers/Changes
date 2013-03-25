@@ -133,7 +133,7 @@ t Revision history for Perl extension Attribute-Handlers
         - Add resources (bugtracker, ...) section to META.yml
 
 0.86_01	Thu Sep 17 10:01:00 CET 2009
-        - From perl change 09330df80caf214f375fcf0c04857347e3b17c69 (Zefram):
+	- From perl change 09330df80caf214f375fcf0c04857347e3b17c69 (Zefram):
 
           Fix [perl #66970] Incorrect coderef in MODIFY_CODE_ATTRIBUTES
 
@@ -153,3 +153,16 @@ t Revision history for Perl extension Attribute-Handlers
 
 0.87	Mon Sep 21 15:55:00 CET 2009
         - Promote to stable release
+
+0.88   Mon Apr  5 16:33:00 CET 2010
+	- Avoid clobbering $_ (perl #74052, LanX)
+
+0.91	Fri May 20 20:00:00 CET 2011
+	- Typo fixes in documentation
+	- POD link fix.
+
+0.93	Mon Dec 19 09:19:00 CET 2011
+	- documentation: "my" should be "till" (Frederic Briere)
+	- Spelling fixes (Father Chrysostomos)
+	- Indentation fixes (Father Chrysostomos)
+

@@ -159,7 +159,7 @@ ok( Pod::Simple::DumpAsXML->_out( \&nixy_mergy, "=pod\n\nZ<>F<C<Z<>fE<111>o> I<b
 # Now the scary bits... with L's!
 print "# A wee L<...> sanity test...\n";
 ok( Pod::Simple::XMLOutStream->_out(qq{=pod\n\nL<E<78>et::Ping/Ping-E<112>ong>\n}),
- '<Document><Para><L content-implicit="yes" section="Ping-pong" to="Net::Ping" type="pod">&#34;Ping-pong&#34; in Net::Ping</L></Para></Document>'
+ '<Document><Para><L content-implicit="yes" raw="E&#60;78&#62;et::Ping/Ping-E&#60;112&#62;ong" section="Ping-pong" to="Net::Ping" type="pod">&#34;Ping-pong&#34; in Net::Ping</L></Para></Document>'
 );
 print "# Now a wee L<...> with mergy...\n";
 
@@ -170,7 +170,7 @@ ok( Pod::Simple::DumpAsXML->_out(\&mergy, qq{=pod\n\nL<E<78>et::Ping/Ping-E<112>
 
  '<Document>',
  '  <Para>',
- '    <L content-implicit="yes" section="Ping-pong" to="Net::Ping" type="pod">',
+ '    <L content-implicit="yes" raw="E&#60;78&#62;et::Ping/Ping-E&#60;112&#62;ong" section="Ping-pong" to="Net::Ping" type="pod">',
  '      &#34;Ping-pong&#34; in Net::Ping',
  '    </L>',
  '  </Para>',

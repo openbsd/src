@@ -2,7 +2,7 @@
 #
 # man.t -- Additional specialized tests for Pod::Man.
 #
-# Copyright 2002, 2003, 2004, 2006, 2007, 2008, 2009
+# Copyright 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010
 #     Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -19,7 +19,7 @@ BEGIN {
 
 use strict;
 
-use Test::More tests => 30;
+use Test::More tests => 31;
 BEGIN { use_ok ('Pod::Man') }
 
 # Test whether we can use binmode to set encoding.
@@ -509,4 +509,22 @@ test - B<test> I<italics> F<file>
 ###
 .SH "NAME"
 test \- test italics file
+###
+
+###
+=head1 TRAILING SPACE
+
+HelloS< >
+
+worldS<   >
+
+.
+###
+.SH "TRAILING SPACE"
+.IX Header "TRAILING SPACE"
+Hello\ 
+.PP
+world\ \ \ 
+.PP
+\&.
 ###

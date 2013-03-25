@@ -11,15 +11,15 @@ version - Perl extension for Version Objects
 
   # Declaring a dotted-decimal $VERSION (keep on one line!)
 
-  use version 0.77; our $VERSION = version->declare("v1.2.3"); # formal
-  use version 0.77; our $VERSION = qv("v1.2.3");               # shorthand
-  use version 0.77; our $VERSION = qv("v1.2_3");               # alpha
+  use version; our $VERSION = version->declare("v1.2.3"); # formal
+  use version; our $VERSION = qv("v1.2.3");               # shorthand
+  use version; our $VERSION = qv("v1.2_3");               # alpha
 
   # Declaring an old-style decimal $VERSION (use quotes!)
 
   our $VERSION = "1.0203";                                     # recommended
-  use version 0.77; our $VERSION = version->parse("1.0203");   # formal
-  use version 0.77; our $VERSION = version->parse("1.02_03");  # alpha
+  use version; our $VERSION = version->parse("1.0203");   # formal
+  use version; our $VERSION = version->parse("1.02_03");  # alpha
 
   # Comparing mixed version styles (decimals, dotted-decimals, objects)
 
@@ -59,10 +59,11 @@ source file.  Quoting is recommended, as it ensures that trailing zeroes
 =item Dotted Decimal Versions
 
 The more modern form of version assignment, with 3 (or potentially more)
-integers seperated by decimal points (e.g. v1.2.3).  This is the form that
-Perl itself has used since 5.6.0 was released.  The leading "v" is now
+integers separated by decimal points (e.g. v1.2.3).  This is the form that
+Perl itself has used since 5.6.0 was released.  The leading 'v' is now
 strongly recommended for clarity, and will throw a warning in a future
-release if omitted.
+release if omitted.  A leading 'v' character is required to pass the
+L</is_strict()> test.
 
 =back
 
@@ -95,7 +96,7 @@ Then increment any of the dotted-decimal components (v1.20.1 or v1.21.0).
 
 =head2 How to C<declare()> a dotted-decimal version
 
-  use version 0.77; our $VERSION = version->declare("v1.2.3");
+  use version; our $VERSION = version->declare("v1.2.3");
 
 The C<declare()> method always creates dotted-decimal version objects.  When
 used in a module, you B<must> put it on the same line as "use version" to
@@ -194,7 +195,7 @@ for dotted-decimal formats strings:
 
 =item C<is_strict()>
 
-If you want to limit youself to a much more narrow definition of what
+If you want to limit yourself to a much more narrow definition of what
 a version string constitutes, C<is_strict()> is limited to version
 strings like the following list:
 
@@ -210,7 +211,7 @@ C<is_strict()> are not sufficient for your needs.
 
 =head2 How to compare version objects
 
-Version objects overload the C<cmp> and C<< E<lt>=E<gt> >> operators.  Perl
+Version objects overload the C<cmp> and C<< <=> >> operators.  Perl
 automatically generates all of the other comparison operators based on those
 two so all the normal logical comparisons will work.
 

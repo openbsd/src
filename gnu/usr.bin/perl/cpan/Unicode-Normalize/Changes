@@ -1,12 +1,51 @@
 Revision history for Perl extension Unicode::Normalize.
 
+1.14  Sat Mar 10 13:34:53 2012
+    - avoid "use Test".
+
+1.13  Mon Jul 25 21:07:49 2011
+    - tried fixing the tarball with world writable files.
+      ( http://www.perlmonks.org/?node_id=731935 )
+
+1.12  Mon May 16 23:36:07 2011
+    - removed Normalize/CompExcl.pl and coded Composition Exclusions;
+      how to load CompExcl.pl seems not good, but I'm not sure...
+
+1.11  Sun May 15 20:31:09 2011
+    - As perl 5.14.0 has removed unicore/CompositionExclusions.txt
+      from the installation, Normalize/CompExcl.pl in this distribution
+      is used instead. (see [rt.cpan.org #68106])
+
+1.10  Sun Jan 16 21:00:34 2011
+    - XSUB: reorder() and compose() treat with growing the string.
+    - XSUB: provision against UTF8_ALLOW_* flags to be undefined in future.
+    - doc: about perl 5.13.x and Unicode 6.0.0
+    - doc and comments: [perl #81876] Fix typos by Peter J. Acklam.
+
+1.07  Mon Sep 20 20:20:02 2010
+    - doc: about perl 5.12.x and Unicode 5.2.0
+    - test: prototype of normalize_partial() and cousins in proto.t.
+
+1.06  Thu Feb 11 16:19:54 2010
+    - mkheader/Pure Perl: fixed the internal _getHexArray() for perl 5.11.3
+      changes (Bug #53197).
+
+1.05  Mon Sep 28 21:43:17 2009
+    - normalize_partial() and NFX_partial(). { NFX =~ /^NFK?[CD]\z/ }
+    - added partial1.t for NFX_partial().
+    - added partial2.t for normalize_partial().
+
+1.04  Wed Sep 23 22:32:57 2009
+    - doc: splitOnLastStarter() since 0.24 is now documented.
+    - test: some new tests are added to split.t.
+
 1.03  Sun Mar 29 12:56:23 2009
     - mkheader: check if no composition needs growing the string.
     - Makefile.PL: a tweak
 
 1.02  Tue Jun  5 22:46:45 2007
     - XSUB: mkheader, _U_stringify() - avoid unpack('C*') on unicode.
-    - test: short.t removed - pure perl is not inapprotiate for test of
+    - test: short.t removed - pure perl is not appropriate for test of
             unicode edge cases.
 
 1.01  Tue Jun 13 22:01:53 2006
@@ -43,7 +82,7 @@ Revision history for Perl extension Unicode::Normalize.
     - XSUB: even if string contains a malformed, "short" Unicode character,
       decompose() and reorder() will be safe. Garbage will be no longer added.
     - added null.t and short.t.
-    - now truely added illegal.t (in 0.27, forgot to change MANIFEST).
+    - now truly added illegal.t (in 0.27, forgot to change MANIFEST).
 
 0.27  Sun Nov 16 13:16:21 2003
     - Illegal code points (surrogate and noncharacter) will be allowed
@@ -69,7 +108,8 @@ Revision history for Perl extension Unicode::Normalize.
         script files, named "enableXS" and "disableXS".
         (no longer <perl Makefile.PL xs> and <perl Makefile.PL noxs>.)
       * simplified Makefile.PL.
-    - added fcdc.t and split.t.
+    - added fcdc.t for FCD() and FCC().
+    - added split.t for splitOnLastStarter(): an undocumented function.
 
 0.23  Sat Jun 28 20:38:10 2003
     - bug fix: \0-terminate in compose() in XS.

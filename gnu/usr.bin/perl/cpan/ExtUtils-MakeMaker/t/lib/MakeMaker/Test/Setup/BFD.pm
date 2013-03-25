@@ -19,7 +19,7 @@ $VERSION = 0.01;
 
 =head1 NAME
 
-Big::Dummy - Try "our" hot dog's
+Big::Dummy - Try "our" hot dog's, $andwiche$ and $(ub)$!
 
 =cut
 

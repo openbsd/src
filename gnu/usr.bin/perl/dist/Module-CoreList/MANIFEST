@@ -2,6 +2,8 @@ Changes
 corelist
 identify-dependencies
 lib/Module/CoreList.pm
+lib/Module/CoreList.pod
+lib/Module/CoreList/TieHashDelta.pm
 README
 MANIFEST
 Makefile.PL
@@ -10,3 +12,4 @@ t/corelist.t
 t/deprecated.t
 t/find_modules.t
 t/pod.t
+META.json                                Module JSON meta-data (added by MakeMaker)

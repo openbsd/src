@@ -12,10 +12,7 @@ use DistGen;
 
 ############################## ACTION distmeta works without a MANIFEST file
 
-SKIP: {
-  skip( 'YAML_support feature is not enabled', 4 )
-      unless Module::Build::ConfigData->feature('YAML_support');
-
+{
   my $dist = DistGen->new( no_manifest => 1 )->chdir_in->regen;
 
   ok ! -e 'MANIFEST';

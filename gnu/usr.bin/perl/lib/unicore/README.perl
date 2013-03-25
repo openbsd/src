@@ -105,6 +105,19 @@ current one is
 mktables has many checks to warn you if there are unexpected or novel things
 that it doesn't know how to handle.
 
+perl.pod should be changed so that it gives the new name (which includes the
+Unicode release number) for perluniprops.pod
+
+Module::CoreList should be changed to include the new release
+
+Also, you should regen l1_char_class_tab.h, by
+
+perl regen/mk_L_charclass.pl
+
+and, regen charclass_invlists.h by
+
+perl regen/mk_invlists.pl
+
 Finally:
 
 	p4 submit

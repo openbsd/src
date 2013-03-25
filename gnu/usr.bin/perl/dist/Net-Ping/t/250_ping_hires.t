@@ -1,5 +1,7 @@
 # Test to make sure hires feature works.
 
+use strict;
+
 BEGIN {
   if ($ENV{PERL_CORE}) {
     unless ($ENV{PERL_TEST_Net_Ping}) {
@@ -21,42 +23,30 @@ BEGIN {
   }
 }
 
-use Test qw(plan ok $TESTERR);
-use Net::Ping;
-plan tests => 8;
-
-# Everything loaded fine
-ok 1;
+use Test::More tests => 8;
+BEGIN {use_ok('Net::Ping');}
 
 my $p = new Net::Ping "tcp";
 
-# new() worked?
-ok !!$p;
+isa_ok($p, 'Net::Ping', 'new() worked');
 
-# Default is to not use Time::HiRes
-ok !$Net::Ping::hires;
+is($Net::Ping::hires, 0, 'Default is to not use Time::HiRes');
 
-# Enable hires
 $p -> hires();
-ok $Net::Ping::hires;
+isnt($Net::Ping::hires, 0, 'Enabled hires');
 
-# Make sure disable works
 $p -> hires(0);
-ok !$Net::Ping::hires;
+is($Net::Ping::hires, 0, 'Make sure disable works');
 
-# Enable again
 $p -> hires(1);
-ok $Net::Ping::hires;
+isnt($Net::Ping::hires, 0, 'Enable hires again');
 
 # Test on the default port
 my ($ret, $duration) = $p -> ping("localhost");
 
-# localhost should always be reachable, right?
-ok $ret;
+isnt($ret, 0, 'localhost should always be reachable');
 
 # It is extremely likely that the duration contains a decimal
 # point if Time::HiRes is functioning properly, except when it
 # is fast enough to be "0", or slow enough to be exactly "1".
-if (! ok($duration =~ /\.|^[01]$/)) {
-    print($TESTERR "# duration=[$duration]\n");
-}
+like($duration, qr/\.|^[01]$/, 'returned duration is valid');

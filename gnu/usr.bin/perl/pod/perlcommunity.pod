@@ -14,15 +14,15 @@ evidence that the Perl users apply TMTOWTDI to all endeavors, not just
 programming. From websites, to IRC, to mailing lists, there is more than one
 way to get involved in the community.
 
-=head2 Where to find the community
+=head2 Where to Find the Community
 
 There is a central directory for the Perl community: L<http://perl.org>
 maintained by the Perl Foundation (L<http://www.perlfoundation.org/>),
 which tracks and provides services for a variety of other community sites.
 
-=head2 Mailing lists and Newsgroups
+=head2 Mailing Lists and Newsgroups
 
-Perl runs on e-mail, there is no doubt about it. The Camel book was originally
+Perl runs on e-mail; there is no doubt about it. The Camel book was originally
 written mostly over e-mail and today Perl's development is co-ordinated through
 mailing lists. The largest repository of Perl mailing lists is located at
 L<http://lists.perl.org>.
@@ -41,7 +41,7 @@ The Perl community has a rather large IRC presence. For starters, it has its
 own IRC network, L<irc://irc.perl.org>. General (not help-oriented) chat can be
 found at L<irc://irc.perl.org/#perl>. Many other more specific chats are also
 hosted on the network. Information about irc.perl.org is located on the
-network's website: L<http://www.irc.perl.org>. For a more help oriented #perl,
+network's website: L<http://www.irc.perl.org>. For a more help-oriented #perl,
 check out L<irc://irc.freenode.net/#perl>. Perl 6 development also has a
 presence in L<irc://irc.freenode.net/#perl6>. Most Perl-related channels will
 be kind enough to point you in the right direction if you ask nicely.
@@ -52,7 +52,7 @@ with varying activity levels.
 =head2 Websites
 
 Perl websites come in a variety of forms, but they fit into two large
-categories: forums and news websites. There are many Perl related
+categories: forums and news websites. There are many Perl-related
 websites, so only a few of the community's largest are mentioned here.
 
 =head3 News sites
@@ -61,7 +61,7 @@ websites, so only a few of the community's largest are mentioned here.
 
 =item L<http://perl.com/>
 
-Run by O'Reilly Media (The publisher of L<the Camel Book|perlbook> among other
+Run by O'Reilly Media (the publisher of L<the Camel Book|perlbook>, among other
 Perl-related literature), perl.com provides current Perl news, articles, and
 resources for Perl developers as well as a directory of other useful websites.
 
@@ -119,7 +119,7 @@ L<irc://irc.perl.org/#perl>.
 
 If you have never been to a hackathon, here are a few basic things you need to
 know before attending: have a working laptop and know how to use it; check out
-the involved projects before hand; have the necessary version control client;
+the involved projects beforehand; have the necessary version control client;
 and bring backup equipment (an extra LAN cable, additional power strips, etc.)
 because someone will forget.
 

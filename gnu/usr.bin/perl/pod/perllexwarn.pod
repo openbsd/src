@@ -158,7 +158,7 @@ Does the exact opposite to the B<-W> flag, i.e. it disables all warnings.
 
 =head2 Backward Compatibility
 
-If you are used with working with a version of Perl prior to the
+If you are used to working with a version of Perl prior to the
 introduction of lexically scoped warnings, or have code that uses both
 lexical warnings and C<$^W>, this section will describe how they interact.
 
@@ -169,7 +169,7 @@ How Lexical Warnings interact with B<-w>/C<$^W>:
 =item 1.
 
 If none of the three command line flags (B<-w>, B<-W> or B<-X>) that
-control warnings is used and neither C<$^W> or the C<warnings> pragma
+control warnings is used and neither C<$^W> nor the C<warnings> pragma
 are used, then default warnings will be enabled and optional warnings
 disabled.
 This means that legacy code that doesn't attempt to control the warnings
@@ -304,7 +304,13 @@ The current hierarchy is:
        |
        +- untie
        |
-       +- utf8
+       +- utf8----------+
+       |                |
+       |                +- surrogate
+       |                |
+       |                +- non_unicode
+       |                |
+       |                +- nonchar
        |
        +- void
 
@@ -519,6 +525,16 @@ a warning.
 
 Notice also that the warning is reported at the line where the object is first
 used.
+
+When registering new categories of warning, you can supply more names to
+warnings::register like this:
+
+    package MyModule;
+    use warnings::register qw(format precision);
+
+    ...
+
+    warnings::warnif('MyModule::format', '...');
 
 =head1 SEE ALSO
 

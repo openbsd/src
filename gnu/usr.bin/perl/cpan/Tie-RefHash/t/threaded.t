@@ -21,7 +21,7 @@ BEGIN {
   }
   if ( $Config{usethreads} and !$Config{use5005threads}
       and defined(&Scalar::Util::weaken)
-      and eval { require threads; "threads"->import }
+      and eval { require threads; threads->import; 1 }
   ) {
     print "1..14\n";
   } else {

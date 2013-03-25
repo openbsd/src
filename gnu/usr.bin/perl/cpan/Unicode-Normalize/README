@@ -1,4 +1,4 @@
-Unicode/Normalize version 1.03
+Unicode/Normalize version 1.14
 ===================================
 
 Unicode::Normalize - Unicode Normalization Forms
@@ -62,7 +62,6 @@ which are included in recent perl core distributions.
 
 - unicore/CombiningClass.pl (or unicode/CombiningClass.pl)
 - unicore/Decomposition.pl (or unicode/Decomposition.pl)
-- unicore/CompositionExclusions.txt (or unicode/CompExcl.txt)
 
 NOTES
 
@@ -83,7 +82,7 @@ COPYRIGHT AND LICENSE
 
 SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
 
-Copyright(C) 2001-2007, SADAHIRO Tomoyuki. Japan. All rights reserved.
+Copyright(C) 2001-2012, SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
