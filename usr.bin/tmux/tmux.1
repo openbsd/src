@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.339 2013/03/25 10:02:17 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.340 2013/03/25 10:04:04 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1062,7 +1062,7 @@ By default, it uses the format
 but a different format may be specified with
 .Fl F .
 .It Xo Ic capture-pane
-.Op Fl aep
+.Op Fl aepq
 .Op Fl b Ar buffer-index
 .Op Fl E Ar end-line
 .Op Fl S Ar start-line
@@ -1078,6 +1078,9 @@ or a new buffer if omitted.
 If
 .Fl a
 is given, the alternate screen is used, and the history is not accessible.
+If no alternate screen exists, an error will be returned unless
+.Fl q
+is given.
 If
 .Fl e
 is given, the output includes escape sequences for text and background
@@ -2948,7 +2951,7 @@ If this option is set, searches will wrap around the end of the pane contents.
 The default is on.
 .El
 .It Xo Ic show-options
-.Op Fl gsvw
+.Op Fl gqsvw
 .Op Fl t Ar target-session | Ar target-window
 .Op Ar option
 .Xc
@@ -2966,6 +2969,11 @@ Global session or window options are listed if
 is used.
 .Fl v
 shows only the option value, not the name.
+If
+.Fl q
+is set, no error will be returned if
+.Ar option
+is unset.
 .It Xo Ic show-window-options
 .Op Fl gv
 .Op Fl t Ar target-window
