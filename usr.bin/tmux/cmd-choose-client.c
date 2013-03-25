@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-client.c,v 1.17 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.18 2013/03/25 10:04:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -79,7 +79,7 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	cur = idx = 0;
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 		c1 = ARRAY_ITEM(&clients, i);
-		if (c1 == NULL || c1->session == NULL)
+		if (c1 == NULL || c1->session == NULL || c1->tty.path == NULL)
 			continue;
 		if (c1 == cmdq->client)
 			cur = idx;

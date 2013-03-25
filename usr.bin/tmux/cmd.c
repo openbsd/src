@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.80 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.81 2013/03/25 10:04:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -327,9 +327,9 @@ cmd_current_session(struct cmd_q *cmdq, int prefer_unattached)
 		return (c->session);
 
 	/*
-	 * If the name of the calling client's pty is know, build a list of the
-	 * sessions that contain it and if any choose either the first or the
-	 * newest.
+	 * If the name of the calling client's pty is known, build a list of
+	 * the sessions that contain it and if any choose either the first or
+	 * the newest.
 	 */
 	path = c == NULL ? NULL : c->tty.path;
 	if (path != NULL) {
@@ -532,7 +532,7 @@ cmd_lookup_client(const char *name)
 
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 		c = ARRAY_ITEM(&clients, i);
-		if (c == NULL || c->session == NULL)
+		if (c == NULL || c->session == NULL || c->tty.path == NULL)
 			continue;
 		path = c->tty.path;
 
