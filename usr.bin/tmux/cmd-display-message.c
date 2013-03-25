@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.20 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.21 2013/03/25 11:41:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -90,7 +90,10 @@ cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 	msg = format_expand(ft, out);
 	if (args_has(self->args, 'p'))
 		cmdq_print(cmdq, "%s", msg);
-	else
+	else if (c == NULL) {
+		cmdq_error(cmdq, "no client available");
+		return (CMD_RETURN_ERROR);
+	} else
 		status_message_set(c, "%s", msg);
 	free(msg);
 	format_free(ft);
