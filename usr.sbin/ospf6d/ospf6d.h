@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.27 2013/03/22 14:25:31 sthen Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.28 2013/03/25 14:29:35 markus Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -112,6 +112,7 @@ enum imsg_type {
 	IMSG_DB_END,
 	IMSG_LS_REQ,
 	IMSG_LS_UPD,
+	IMSG_LS_SNAP,
 	IMSG_LS_ACK,
 	IMSG_LS_FLOOD,
 	IMSG_LS_BADREQ,

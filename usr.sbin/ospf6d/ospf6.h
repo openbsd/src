@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.20 2013/03/25 14:22:02 markus Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.21 2013/03/25 14:29:35 markus Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.12 2013/03/25 14:27:33 markus Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.13 2013/03/25 14:29:35 markus Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,7 +56,7 @@ struct {
 	int		state;
 	enum nbr_event	event;
 	enum nbr_action	action;
-	int		new_state;
+	int		new_state; /* 0 means action decides or unchanged */
 } nbr_fsm_tbl[] = {
     /* current state	event that happened	action to take		resulting state */
     {NBR_STA_ACTIVE,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	0},
@@ -65,7 +65,7 @@ struct {
     {NBR_STA_DOWN,	NBR_EVT_HELLO_RCVD,	NBR_ACT_STRT_ITIMER,	NBR_STA_INIT},
     {NBR_STA_ATTEMPT,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	NBR_STA_INIT},
     {NBR_STA_INIT,	NBR_EVT_2_WAY_RCVD,	NBR_ACT_EVAL,		0},
-    {NBR_STA_XSTRT,	NBR_EVT_NEG_DONE,	NBR_ACT_SNAP,		NBR_STA_SNAP},
+    {NBR_STA_XSTRT,	NBR_EVT_NEG_DONE,	NBR_ACT_SNAP,		0},
     {NBR_STA_SNAP,	NBR_EVT_SNAP_DONE,	NBR_ACT_SNAP_DONE,	NBR_STA_XCHNG},
     {NBR_STA_XCHNG,	NBR_EVT_XCHNG_DONE,	NBR_ACT_XCHNG_DONE,	0},
     {NBR_STA_LOAD,	NBR_EVT_LOAD_DONE,	NBR_ACT_NOTHING,	NBR_STA_FULL},
@@ -73,8 +73,8 @@ struct {
     {NBR_STA_ADJFORM,	NBR_EVT_ADJ_OK,		NBR_ACT_ADJ_OK,		0},
     {NBR_STA_PRELIM,	NBR_EVT_ADJ_OK,		NBR_ACT_HELLO_CHK,	0},
     {NBR_STA_ADJFORM,	NBR_EVT_ADJTMOUT,	NBR_ACT_RESTRT_DD,	0},
-    {NBR_STA_FLOOD,	NBR_EVT_SEQ_NUM_MIS,	NBR_ACT_RESTRT_DD,	NBR_STA_XSTRT},
-    {NBR_STA_FLOOD,	NBR_EVT_BAD_LS_REQ,	NBR_ACT_RESTRT_DD,	NBR_STA_XSTRT},
+    {NBR_STA_FLOOD,	NBR_EVT_SEQ_NUM_MIS,	NBR_ACT_RESTRT_DD,	0},
+    {NBR_STA_FLOOD,	NBR_EVT_BAD_LS_REQ,	NBR_ACT_RESTRT_DD,	0},
     {NBR_STA_ANY,	NBR_EVT_KILL_NBR,	NBR_ACT_DEL,		NBR_STA_DOWN},
     {NBR_STA_ANY,	NBR_EVT_LL_DOWN,	NBR_ACT_DEL,		NBR_STA_DOWN},
     {NBR_STA_ANY,	NBR_EVT_ITIMER,		NBR_ACT_DEL,		NBR_STA_DOWN},
@@ -527,7 +527,16 @@ nbr_act_snapshot(struct nbr *nbr)
 {
 	stop_db_tx_timer(nbr);
 
+	/* we need to wait for the old snapshot to finish */
+	if (nbr->dd_snapshot) {
+		log_debug("nbr_act_snapshot: giving up, old snapshot running "
+		    "for neigbor ID %s", inet_ntoa(nbr->id));
+		return (nbr_act_restart_dd(nbr));
+	}
 	ospfe_imsg_compose_rde(IMSG_DB_SNAPSHOT, nbr->peerid, 0, NULL, 0);
+
+	nbr->dd_snapshot = 1;	/* wait for IMSG_DB_END */
+	nbr->state = NBR_STA_SNAP;
 
 	return (0);
 }
