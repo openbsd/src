@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.27 2005/04/07 00:19:28 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.28 2013/03/25 19:59:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -60,8 +60,8 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 
-#define tlbbtop(b) ((b) >> (PGSHIFT - 5))
-#define tlbptob(p) ((p) << (PGSHIFT - 5))
+#define tlbbtop(b) ((b) >> (PAGE_SHIFT - 5))
+#define tlbptob(p) ((p) << (PAGE_SHIFT - 5))
 
 #define hptbtop(b) ((b) >> 17)
 

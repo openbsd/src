@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.15 2012/09/29 21:37:03 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.16 2013/03/25 19:57:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,9 +142,9 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 
 /* Kernel virtual address to page table entry */
 #define	kvtopte(va) \
-	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
+	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT))
 /* User virtual address to pte page entry */
-#define uvtopte(adr)	(((adr) >> PGSHIFT) & (NPTEPG -1))
+#define uvtopte(adr)	(((adr) >> PAGE_SHIFT) & (NPTEPG -1))
 
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
