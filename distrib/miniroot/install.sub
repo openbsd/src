@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.674 2013/01/02 20:35:00 krw Exp $
+#	$OpenBSD: install.sub,v 1.675 2013/03/25 21:35:45 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1006,7 +1006,11 @@ enable_network() {
 				[ "$bcaddr" = "NONE" ] && bcaddr=
 				dhcpif="$dhcpif $if"
 				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
-				cmd="$cmd; dhclient $if"
+				if [[ -x /sbin/dhclient ]]; then
+					cmd="$cmd; dhclient $if"
+				else
+					cmd="$cmd; echo /sbin/dhclient missing - skipping dhcp request."
+				fi
 				# Create a new bpf in case we start another dhclient
 				makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
 				;;
