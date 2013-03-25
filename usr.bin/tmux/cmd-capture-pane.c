@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.23 2013/03/25 11:38:15 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.24 2013/03/25 11:42:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -69,7 +69,7 @@ cmd_capture_pane_pending(struct args *args, struct window_pane *wp,
 	line = EVBUFFER_DATA(wp->ictx.since_ground);
 	linelen = EVBUFFER_LENGTH(wp->ictx.since_ground);
 
-	buf = NULL;
+	buf = xstrdup("");
 	if (args_has(args, 'C')) {
 		for (i = 0; i < linelen; i++) {
 			if (line[i] >= ' ') {
@@ -189,6 +189,8 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 			return (CMD_RETURN_ERROR);
 		}
 		evbuffer_add(c->stdout_data, buf, len);
+		if (args_has(args, 'P') && len > 0)
+		    evbuffer_add(c->stdout_data, "\n", 1);
 		server_push_stdout(c);
 	} else {
 		limit = options_get_number(&global_options, "buffer-limit");
