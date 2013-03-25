@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.227 2012/09/20 12:51:43 yasuoka Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.228 2013/03/25 17:22:11 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1314,8 +1314,6 @@ macppc
 mvme68k
 ..
 mvme88k
-..
-palm
 ..
 sgi
 ..
