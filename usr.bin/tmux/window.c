@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.94 2013/03/25 11:39:11 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.95 2013/03/25 11:55:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -918,6 +918,8 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	screen_resize(&wp->base, sx, sy, wp->saved_grid == NULL);
 	if (wp->mode != NULL)
 		wp->mode->resize(wp, sx, sy);
+
+	wp->flags |= PANE_RESIZE;
 }
 
 /*
