@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.28 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.29 2013/03/25 10:06:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,6 +41,7 @@ load_cfg(const char *path, struct cmd_q *cmdq, char **cause)
 	size_t		 len, oldlen;
 	struct cmd_list	*cmdlist;
 
+	log_debug("loading %s", path);
 	if ((f = fopen(path, "rb")) == NULL) {
 		xasprintf(cause, "%s: %s", path, strerror(errno));
 		return (-1);
