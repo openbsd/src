@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.9 2013/03/23 16:12:27 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.10 2013/03/25 20:19:03 deraadt Exp $	*/
 /*	$NetBSD: pte.h,v 1.19 1997/08/05 11:00:10 pk Exp $ */
 
 /*
@@ -174,7 +174,7 @@ typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
  *	pte |= PG_U;					(mark used/accessed)
  *	if (writing) pte |= PG_M;			(mark modified)
  *	ptetable[physseg][va.va_pg] = pte;
- *	physadr = ((pte & PG_PFNUM) << PGSHIFT) | va.va_off;
+ *	physadr = ((pte & PG_PFNUM) << PAGE_SHIFT) | va.va_off;
  */
 
 #if defined(SUN4_MMU3L) && !defined(SUN4)
