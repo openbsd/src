@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.93 2013/03/24 09:57:59 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.94 2013/03/25 11:39:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -483,6 +483,10 @@ window_zoom(struct window_pane *wp)
 
 	if (!window_pane_visible(wp))
 		return (-1);
+
+	if (window_count_panes(w) == 1)
+		return (-1);
+
 	if (w->active != wp)
 		window_set_active_pane(w, wp);
 
