@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2010/01/30 20:48:21 miod Exp $
+# $OpenBSD: Makefile,v 1.10 2013/03/25 17:40:12 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -10,7 +10,7 @@ CC=${HOSTCC}
     ${MACHINE} == "armish" || ${MACHINE} == "hppa" || \
     ${MACHINE} == "hppa64" || ${MACHINE} == "i386" || \
     ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
-    ${MACHINE} == "palm" || ${MACHINE} == "sgi" || \
+    ${MACHINE} == "sgi" || \
     ${MACHINE} == "sparc64" || ${MACHINE} == "zaurus")
 
 FIRM=	zd1211 zd1211b

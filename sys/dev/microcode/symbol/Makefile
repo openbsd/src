@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2010/04/04 21:54:00 deraadt Exp $
+# $OpenBSD: Makefile,v 1.9 2013/03/25 17:40:12 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -9,7 +9,7 @@ CC=${HOSTCC}
     (${MACHINE} == "macppc") || (${MACHINE} == "sparc") || \
     (${MACHINE} == "sparc64") || (${MACHINE} == "hppa") || \
     (${MACHINE} == "hppa64") || (${MACHINE} == "sgi") || \
-    (${MACHINE} == "zaurus") || (${MACHINE} == "palm")
+    (${MACHINE} == "zaurus")
 
 afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
