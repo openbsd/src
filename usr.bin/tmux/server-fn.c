@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.67 2013/03/25 10:11:45 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.68 2013/03/25 11:36:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -546,6 +546,10 @@ server_push_stderr(struct client *c)
 	struct msg_stderr_data data;
 	size_t                 size;
 
+	if (c->stderr_data == c->stdout_data) {
+		server_push_stdout(c);
+		return;
+	}
 	size = EVBUFFER_LENGTH(c->stderr_data);
 	if (size == 0)
 		return;
