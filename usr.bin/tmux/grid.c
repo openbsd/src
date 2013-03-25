@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.28 2013/03/25 10:05:35 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.29 2013/03/25 10:07:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -595,7 +595,7 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 
 	GRID_DEBUG(gd, "px=%u, py=%u, nx=%u", px, py, nx);
 
-	if (*lastgc == NULL) {
+	if (lastgc != NULL && *lastgc == NULL) {
 		memcpy(&lastgc1, &grid_default_cell, sizeof lastgc1);
 		*lastgc = &lastgc1;
 	}
