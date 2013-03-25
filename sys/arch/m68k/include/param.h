@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.29 2013/03/25 17:46:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.30 2013/03/25 18:17:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,22 +54,6 @@
 
 #define	NBPG		PAGE_SIZE
 
-#define	SEGSHIFT020	(34 - PAGE_SHIFT)
-#define	SEGSHIFT040	(18)
-#ifndef	SEGSHIFT
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-#define	SEGSHIFT	((mmutype <= MMU_68040) ? SEGSHIFT040 : SEGSHIFT020)
-#else
-#define	SEGSHIFT	SEGSHIFT040
-#endif
-#else
-#define	SEGSHIFT	SEGSHIFT020
-#endif
-#define	NBSEG		(1 << SEGSHIFT)
-#define	SEGOFSET	(NBSEG - 1)
-#endif
-
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
 #define	USPACE_ALIGN	0			/* u-area alignment 0-none */
@@ -81,13 +65,6 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
-
-/*
- * Mach derived conversion macros
- */
-#define	m68k_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
-#define	m68k_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
-#define	m68k_page_offset(x)	((unsigned)(x) & PGOFSET)
 
 #include <machine/cpu.h>
 
