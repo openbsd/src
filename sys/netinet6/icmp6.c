@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.121 2013/03/22 01:41:12 tedu Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.122 2013/03/25 14:40:56 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2040,7 +2040,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	 * (for example) when we encounter an error while forwarding procedure
 	 * destined to a duplicated address of ours.
 	 */
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next)
+	TAILQ_FOREACH(ia, &in6_ifaddr, ia_list)
 		if (IN6_ARE_ADDR_EQUAL(&t, &ia->ia_addr.sin6_addr) &&
 		    (ia->ia6_flags & (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0) {
 			src = &t;

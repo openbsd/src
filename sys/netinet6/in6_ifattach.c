@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.58 2013/03/07 09:03:16 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.59 2013/03/25 14:40:57 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -653,7 +653,7 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 void
 in6_ifdetach(struct ifnet *ifp)
 {
-	struct in6_ifaddr *ia, *oia;
+	struct in6_ifaddr *ia;
 	struct ifaddr *ifa, *next;
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
@@ -717,23 +717,9 @@ in6_ifdetach(struct ifnet *ifp)
 		ifa_del(ifp, &ia->ia_ifa);
 		ifafree(&ia->ia_ifa);
 
-		/* also remove from the IPv6 address chain(itojun&jinmei) */
-		oia = ia;
-		if (oia == (ia = in6_ifaddr))
-			in6_ifaddr = ia->ia_next;
-		else {
-			while (ia->ia_next && (ia->ia_next != oia))
-				ia = ia->ia_next;
-			if (ia->ia_next)
-				ia->ia_next = oia->ia_next;
-			else {
-				nd6log((LOG_ERR,
-				    "%s: didn't unlink in6ifaddr from list\n",
-				    ifp->if_xname));
-			}
-		}
-
-		ifafree(&oia->ia_ifa);
+		/* also remove from the IPv6 address list */
+		TAILQ_REMOVE(&in6_ifaddr, ia, ia_list);
+		ifafree(&ia->ia_ifa);
 	}
 
 	/* cleanup multicast address kludge table, if there is any */

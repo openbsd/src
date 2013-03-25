@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.38 2013/03/22 01:41:12 tedu Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.39 2013/03/25 14:40:57 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -99,12 +99,13 @@ struct	in6_ifaddr {
 	struct	ifaddr ia_ifa;		/* protocol-independent info */
 #define	ia_ifp		ia_ifa.ifa_ifp
 #define ia_flags	ia_ifa.ifa_flags
+
 	struct	sockaddr_in6 ia_addr;	/* interface address */
 	struct	sockaddr_in6 ia_net;	/* network number of interface */
 	struct	sockaddr_in6 ia_dstaddr; /* space for destination addr */
 	struct	sockaddr_in6 ia_prefixmask; /* prefix mask */
 	u_int32_t ia_plen;		/* prefix length */
-	struct	in6_ifaddr *ia_next;	/* next in6 list of IP6 addresses */
+	TAILQ_ENTRY(in6_ifaddr) ia_list;	/* list of IP6 addresses */
 	LIST_HEAD(in6_multihead, in6_multi) ia6_multiaddrs;
 					/* list of multicast addresses */
 	int	ia6_flags;
@@ -452,7 +453,8 @@ struct	in6_rrenumreq {
 #endif
 
 #ifdef _KERNEL
-extern struct in6_ifaddr *in6_ifaddr;
+TAILQ_HEAD(in6_ifaddrhead, in6_ifaddr);
+extern struct in6_ifaddrhead in6_ifaddr;
 
 extern struct icmp6stat icmp6stat;
 #define in6_ifstat_inc(ifp, tag) \
@@ -554,7 +556,7 @@ do {									\
 	else								\
 		while ((step).i_ia != NULL) {				\
 			(in6m) = LIST_FIRST(&(step).i_ia->ia6_multiaddrs); \
-			(step).i_ia = (step).i_ia->ia_next;		\
+			(step).i_ia = TAILQ_NEXT((step).i_ia, ia_list);	\
 			if ((in6m) != NULL) {				\
 				(step).i_in6m = LIST_NEXT((in6m), in6m_entry); \
 				break;					\
@@ -566,7 +568,7 @@ do {									\
 /* struct in6_multistep step; */		\
 /* struct in6_multi *in6m */			\
 do {						\
-	(step).i_ia = in6_ifaddr;		\
+	(step).i_ia = TAILQ_FIRST(&in6_ifaddr);	\
 	(step).i_in6m = NULL;			\
 	IN6_NEXT_MULTI((step), (in6m));		\
 } while (0)

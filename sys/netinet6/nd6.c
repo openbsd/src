@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.96 2013/03/22 00:59:25 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.97 2013/03/25 14:40:57 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -526,8 +526,7 @@ nd6_timer(void *ignored_arg)
 	 * However, from a stricter spec-conformance standpoint, we should
 	 * rather separate address lifetimes and prefix lifetimes.
 	 */
-	for (ia6 = in6_ifaddr; ia6; ia6 = nia6) {
-		nia6 = ia6->ia_next;
+	TAILQ_FOREACH_SAFE(ia6, &in6_ifaddr, ia_list, nia6) {
 		/* check address lifetime */
 		if (IFA6_IS_INVALID(ia6)) {
 			in6_purgeaddr(&ia6->ia_ifa);
@@ -1372,10 +1371,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 				continue; /* XXX */
 
 			/* do we really have to remove addresses as well? */
-			for (ia = in6_ifaddr; ia; ia = ia_next) {
-				/* ia might be removed.  keep the next ptr. */
-				ia_next = ia->ia_next;
-
+			TAILQ_FOREACH_SAFE(ia, &in6_ifaddr, ia_list, ia_next) {
 				if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 					continue;
 

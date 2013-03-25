@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.199 2013/03/22 01:41:12 tedu Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.200 2013/03/25 14:40:56 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2109,7 +2109,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 
 	/* we have to do this by hand to ensure we don't match on ourselves */
 	ia_if = NULL;
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	TAILQ_FOREACH(ia, &in6_ifaddr, ia_list) {
 		int i;
 
 		for (i = 0; i < 4; i++) {

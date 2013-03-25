@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.68 2013/03/11 14:08:04 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.69 2013/03/25 14:40:57 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1508,7 +1508,7 @@ pfxlist_onlink_check(void)
 	 * always be attached.
 	 * The precise detection logic is same as the one for prefixes.
 	 */
-	for (ifa = in6_ifaddr; ifa; ifa = ifa->ia_next) {
+	TAILQ_FOREACH(ifa, &in6_ifaddr, ia_list) {
 		if (!(ifa->ia6_flags & IN6_IFF_AUTOCONF))
 			continue;
 
@@ -1525,7 +1525,7 @@ pfxlist_onlink_check(void)
 			break;
 	}
 	if (ifa) {
-		for (ifa = in6_ifaddr; ifa; ifa = ifa->ia_next) {
+		TAILQ_FOREACH(ifa, &in6_ifaddr, ia_list) {
 			if ((ifa->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 				continue;
 
@@ -1539,7 +1539,7 @@ pfxlist_onlink_check(void)
 		}
 	}
 	else {
-		for (ifa = in6_ifaddr; ifa; ifa = ifa->ia_next) {
+		TAILQ_FOREACH(ifa, &in6_ifaddr, ia_list) {
 			if ((ifa->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 				continue;
 

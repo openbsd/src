@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.108 2013/03/22 01:41:12 tedu Exp $	*/
+/*	$OpenBSD: in6.c,v 1.109 2013/03/25 14:40:57 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ in6_ifremloop(struct ifaddr *ifa)
 	 * (probably p2p) interfaces.
 	 * XXX: we should avoid such a configuration in IPv6...
 	 */
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	TAILQ_FOREACH(ia, &in6_ifaddr, ia_list) {
 		if (IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), &ia->ia_addr.sin6_addr)) {
 			ia_count++;
 			if (ia_count > 1)
@@ -743,7 +743,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
     struct in6_ifaddr *ia)
 {
 	int error = 0, hostIsNew = 0, plen = -1;
-	struct in6_ifaddr *oia;
 	struct sockaddr_in6 dst6;
 	struct in6_addrlifetime *lt;
 	struct in6_multi_mship *imm;
@@ -899,12 +898,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    (struct sockaddr *)&ia->ia_prefixmask;
 
 		ia->ia_ifp = ifp;
-		if ((oia = in6_ifaddr) != NULL) {
-			for ( ; oia->ia_next; oia = oia->ia_next)
-				continue;
-			oia->ia_next = ia;
-		} else
-			in6_ifaddr = ia;
+		TAILQ_INSERT_TAIL(&in6_ifaddr, ia, ia_list);
 		ia->ia_addr = ifra->ifra_addr;
 		ifa_add(ifp, &ia->ia_ifa);
 	}
@@ -1235,46 +1229,33 @@ in6_purgeaddr(struct ifaddr *ifa)
 void
 in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 {
-	struct in6_ifaddr *oia;
 	int	s = splnet();
 
 	ifa_del(ifp, &ia->ia_ifa);
 
-	oia = ia;
-	if (oia == (ia = in6_ifaddr))
-		in6_ifaddr = ia->ia_next;
-	else {
-		while (ia->ia_next && (ia->ia_next != oia))
-			ia = ia->ia_next;
-		if (ia->ia_next)
-			ia->ia_next = oia->ia_next;
-		else {
-			/* search failed */
-			printf("Couldn't unlink in6_ifaddr from in6_ifaddr\n");
-		}
-	}
+	TAILQ_REMOVE(&in6_ifaddr, ia, ia_list);
 
-	if (!LIST_EMPTY(&oia->ia6_multiaddrs)) {
-		in6_savemkludge(oia);
+	if (!LIST_EMPTY(&ia->ia6_multiaddrs)) {
+		in6_savemkludge(ia);
 	}
 
 	/* Release the reference to the base prefix. */
-	if (oia->ia6_ndpr == NULL) {
-		if (!IN6_IS_ADDR_LINKLOCAL(IA6_IN6(oia)))
+	if (ia->ia6_ndpr == NULL) {
+		if (!IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia)))
 			log(LOG_NOTICE, "in6_unlink_ifa: interface address "
-			    "%p has no prefix\n", oia);
+			    "%p has no prefix\n", ia);
 	} else {
-		oia->ia6_flags &= ~IN6_IFF_AUTOCONF;
-		if (--oia->ia6_ndpr->ndpr_refcnt == 0)
-			prelist_remove(oia->ia6_ndpr);
-		oia->ia6_ndpr = NULL;
+		ia->ia6_flags &= ~IN6_IFF_AUTOCONF;
+		if (--ia->ia6_ndpr->ndpr_refcnt == 0)
+			prelist_remove(ia->ia6_ndpr);
+		ia->ia6_ndpr = NULL;
 	}
 
 	/*
 	 * release another refcnt for the link from in6_ifaddr.
 	 * Note that we should decrement the refcnt at least once for all *BSD.
 	 */
-	ifafree(&oia->ia_ifa);
+	ifafree(&ia->ia_ifa);
 
 	splx(s);
 }

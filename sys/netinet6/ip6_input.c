@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.107 2013/03/14 11:18:37 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.108 2013/03/25 14:40:57 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ extern struct ip6protosw inet6sw[];
 
 u_char ip6_protox[IPPROTO_MAX];
 static int ip6qmaxlen = IFQ_MAXLEN;
-struct in6_ifaddr *in6_ifaddr;
+struct in6_ifaddrhead in6_ifaddr;
 struct ifqueue ip6intrq;
 
 struct ip6stat ip6stat;
@@ -155,6 +155,7 @@ ip6_init(void)
 		    pr->pr_protocol < IPPROTO_MAX)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
 	IFQ_SET_MAXLEN(&ip6intrq, ip6qmaxlen);
+	TAILQ_INIT(&in6_ifaddr);
 	ip6_randomid_init();
 	nd6_init();
 	frag6_init();
