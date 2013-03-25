@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte_motorola.h,v 1.7 2013/03/25 18:17:22 miod Exp $	*/
+/*	$OpenBSD: pte_motorola.h,v 1.8 2013/03/25 18:21:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,7 @@ typedef int	pt_entry_t;	/* Mach page table entry */
  * Kernel virtual address to page table entry and to physical address.
  */
 #define	kvtopte(va) \
-	(&Sysmap[((unsigned)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT])
+	(&Sysmap[((unsigned)(va) - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT])
 
 #define	SEGSHIFT020	(34 - PAGE_SHIFT)
 #define	SEGSHIFT040	(18)
