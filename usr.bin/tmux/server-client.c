@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.95 2013/03/24 09:57:59 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.96 2013/03/25 10:03:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -957,6 +957,8 @@ server_client_msg_identify(
 	if (data->flags & IDENTIFY_CONTROL) {
 		c->stdin_callback = control_callback;
 		c->flags |= CLIENT_CONTROL;
+		if (data->flags & IDENTIFY_TERMIOS)
+			evbuffer_add_printf(c->stdout_data, "\033P1000p");
 		server_write_client(c, MSG_STDIN, NULL, 0);
 
 		c->tty.fd = -1;
