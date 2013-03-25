@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.12 2011/11/10 22:48:13 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.13 2013/03/25 20:14:30 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1990,1993,1994 The University of Utah and
@@ -33,7 +33,7 @@
 #define	PDE_MASK	(0xffc00000)
 #define	PDE_SIZE	(0x00400000)
 #define	PTE_MASK	(0x003ff000)
-#define	PTE_PAGE(pte)	((pte) & ~PGOFSET)
+#define	PTE_PAGE(pte)	((pte) & ~PAGE_MASK)
 
 /* TLB access/protection values */
 #define TLB_WIRED	0x40000000	/* software only */
