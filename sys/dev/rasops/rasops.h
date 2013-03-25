@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.10 2009/09/05 14:09:35 miod Exp $ */
+/*	$OpenBSD: rasops.h,v 1.11 2013/03/25 19:49:08 kettenis Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -33,6 +33,8 @@
 #ifndef _RASOPS_H_
 #define _RASOPS_H_ 1
 
+#include <sys/workq.h>
+
 #ifdef	SMALL_KERNEL
 #define	RASOPS_SMALL
 #endif
@@ -52,6 +54,9 @@ struct wsdisplay_font;
 #define RI_CURSORCLIP	0x0080	/* cursor is currently clipped */
 #define	RI_ROTATE_CW	0x0100	/* display is rotated, quarter clockwise */
 #define RI_CFGDONE	0x0200	/* rasops_reconfig() completed successfully */
+#define RI_VCONS	0x0400	/* virtual consoles */
+
+struct rasops_screen;
 
 struct rasops_info {
 	/* These must be filled in by the caller */
@@ -112,6 +117,21 @@ struct rasops_info {
 	/* Used to intercept putchar to permit display rotation */
 	struct	wsdisplay_emulops ri_real_ops;
 #endif
+
+	int	ri_nscreens;
+	LIST_HEAD(, rasops_screen) ri_screens;
+	struct rasops_screen *ri_active;
+
+	void	(*ri_switchcb)(void *, int, int);
+	void	*ri_switchcbarg;
+	struct workq_task ri_switchwqt;
+
+	int	(*ri_putchar)(void *, int, int, u_int, long);
+	int	(*ri_copycols)(void *, int, int, int, int);
+	int	(*ri_erasecols)(void *, int, int, int, long);
+	int	(*ri_copyrows)(void *, int, int, int);
+	int	(*ri_eraserows)(void *, int, int, long);
+	int	(*ri_alloc_attr)(void *, int, int, int, long *);
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))
@@ -147,6 +167,11 @@ int	rasops_init(struct rasops_info *, int, int);
 int	rasops_reconfig(struct rasops_info *, int, int);
 int	rasops_eraserows(void *, int, int, long);
 int	rasops_erasecols(void *, int, int, int, long);
+
+int	rasops_alloc_screen(void *, void **, int *, int *, long *);
+void	rasops_free_screen(void *, void *);
+int	rasops_show_screen(void *, void *, int,
+	    void (*)(void *, int, int), void *);
 
 extern const u_char	rasops_isgray[16];
 extern const u_char	rasops_cmap[256*3];
