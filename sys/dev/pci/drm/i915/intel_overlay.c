@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.2 2013/03/25 06:22:28 jsg Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -1472,7 +1472,7 @@ intel_setup_overlay(struct drm_device *dev)
 
 	dev_priv->overlay = overlay;
 	DRM_UNLOCK();
-	DRM_INFO("initialized overlay support\n");
+	DRM_DEBUG("initialized overlay support\n");
 	return;
 
 out_unpin_bo:
