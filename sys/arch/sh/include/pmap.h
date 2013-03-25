@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 2011/04/28 20:40:36 ariane Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 2013/03/25 20:15:34 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * OpenBSD/sh pmap:
  *	pmap.pm_ptp[512] ... 512 slot of page table page
  *	page table page contains 1024 PTEs. (PAGE_SIZE / sizeof(pt_entry_t))
- *	  | PTP 11bit | PTOFSET 10bit | PGOFSET 12bit |
+ *	  | PTP 11bit | PTOFSET 10bit | PAGE_MASK 12bit |
  */
 
 #ifndef _SH_PMAP_H_
