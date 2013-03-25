@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.1 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.2 2013/03/25 10:05:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -207,8 +207,12 @@ cmdq_continue(struct cmd_q *cmdq)
 			if (guards)
 				cmdq_print(cmdq, "%%begin");
 			retval = cmdq->cmd->entry->exec(cmdq->cmd, cmdq);
-			if (guards)
-				cmdq_print(cmdq, "%%end");
+			if (guards) {
+				if (retval == CMD_RETURN_ERROR)
+					cmdq_print(cmdq, "%%error");
+				else
+					cmdq_print(cmdq, "%%end");
+			}
 
 			if (retval == CMD_RETURN_ERROR)
 				break;
