@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.26 2013/03/22 15:56:11 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.27 2013/03/25 10:01:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -621,7 +621,7 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 		data = ud.data;
 		size = ud.size;
 		if (escape_c0 && size == 1 && *data == '\\') {
-			data = "\\";
+			data = "\\\\";
 			size = 2;
 		}
 
