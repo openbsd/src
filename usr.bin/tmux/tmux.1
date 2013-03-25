@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.352 2013/03/25 11:46:28 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.353 2013/03/25 15:59:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -2749,13 +2749,6 @@ Set clock colour.
 .Op Ic 12 | 24
 .Xc
 Set clock hour format.
-.Pp
-.It Ic command-prefix Ar string
-String prefixed to commands (apart from a plain shell as set by the
-.Ic default-shell
-option).
-The default is
-.Ql "exec\ " .
 .Pp
 .It Ic force-height Ar height
 .It Ic force-width Ar width

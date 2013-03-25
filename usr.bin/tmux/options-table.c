@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.34 2013/03/24 09:21:27 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.35 2013/03/25 15:59:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -500,11 +500,6 @@ const struct options_table_entry window_options_table[] = {
 	  .type = OPTIONS_TABLE_CHOICE,
 	  .choices = options_table_clock_mode_style_list,
 	  .default_num = 1
-	},
-
-	{ .name = "command-prefix",
-	  .type = OPTIONS_TABLE_STRING,
-	  .default_str = "exec "
 	},
 
 	{ .name = "force-height",
