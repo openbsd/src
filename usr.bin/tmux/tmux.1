@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.340 2013/03/25 10:04:04 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.341 2013/03/25 10:05:35 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1088,7 +1088,7 @@ attributes.
 .Fl C
 also escapes non-printable characters as octal \exxx.
 .Fl J
-joins wrapped lines.
+joins wrapped lines and preserves trailing spaces at each line's end.
 .Pp
 .Fl S
 and

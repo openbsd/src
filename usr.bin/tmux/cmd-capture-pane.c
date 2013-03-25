@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.21 2013/03/25 10:04:04 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.22 2013/03/25 10:05:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -111,7 +111,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		gc = NULL;
 		for (i = top; i <= bottom; i++) {
 			line = grid_string_cells(gd, 0, i, sx, &gc, with_codes,
-			    escape_c0);
+			    escape_c0, !join_lines);
 			linelen = strlen(line);
 
 			buf = xrealloc(buf, 1, len + linelen + 1);
