@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.56 2013/03/24 09:28:59 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.57 2013/03/25 11:36:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -81,6 +81,13 @@ const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[B", KEYC_DOWN },
 	{ "\033[C", KEYC_RIGHT },
 	{ "\033[D", KEYC_LEFT },
+
+	/* Other (xterm) "cursor" keys. */
+	{ "\033OH", KEYC_HOME },
+	{ "\033OF", KEYC_END },
+
+	{ "\033[H", KEYC_HOME },
+	{ "\033[F", KEYC_END },
 
 	/* rxvt-style arrow + modifier keys. */
 	{ "\033Oa", KEYC_UP|KEYC_CTRL },
