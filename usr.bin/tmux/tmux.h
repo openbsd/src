@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.405 2013/03/25 11:43:01 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.406 2013/03/25 11:44:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -159,6 +159,7 @@ extern char   **environ;
 
 /* Default templates for break-pane, new-window and split-window. */
 #define BREAK_PANE_TEMPLATE "#{session_name}:#{window_index}.#{pane_index}"
+#define NEW_SESSION_TEMPLATE "#{session_name}:"
 #define NEW_WINDOW_TEMPLATE BREAK_PANE_TEMPLATE
 #define SPLIT_WINDOW_TEMPLATE BREAK_PANE_TEMPLATE
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.350 2013/03/25 11:40:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.351 2013/03/25 11:44:00 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -671,7 +671,8 @@ command.
 Lock all clients attached to
 .Ar target-session .
 .It Xo Ic new-session
-.Op Fl AdD
+.Op Fl AdDP
+.Op Fl F Ar format
 .Op Fl n Ar window-name
 .Op Fl s Ar session-name
 .Op Fl t Ar target-session
@@ -736,6 +737,14 @@ or
 are invalid if
 .Fl t
 is used.
+.Pp
+The
+.Fl P
+option prints information about the new session after it has been created.
+By default, it uses the format
+.Ql #{session_name}:
+but a different format may be specified with
+.Fl F .
 .It Xo Ic refresh-client
 .Op Fl S
 .Op Fl t Ar target-client
@@ -1466,9 +1475,9 @@ option.
 .It Xo Ic new-window
 .Op Fl adkP
 .Op Fl c Ar start-directory
+.Op Fl F Ar format
 .Op Fl n Ar window-name
 .Op Fl t Ar target-window
-.Op Fl F Ar format
 .Op Ar shell-command
 .Xc
 .D1 (alias: Ic neww )
