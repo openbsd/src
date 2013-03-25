@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.41 2013/03/02 12:50:01 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.42 2013/03/25 16:01:49 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -52,7 +52,6 @@ int	sr_raid1_alloc_resources(struct sr_discipline *);
 int	sr_raid1_free_resources(struct sr_discipline *);
 int	sr_raid1_rw(struct sr_workunit *);
 void	sr_raid1_intr(struct buf *);
-void	sr_raid1_recreate_wu(struct sr_workunit *);
 void	sr_raid1_set_chunk_state(struct sr_discipline *, int, int);
 void	sr_raid1_set_vol_state(struct sr_discipline *);
 
@@ -521,7 +520,7 @@ sr_raid1_intr(struct buf *bp)
 				if (wu->swu_collider) {
 					if (wu->swu_ios_failed)
 						/* toss all ccbs and recreate */
-						sr_raid1_recreate_wu(wu->swu_collider);
+						sr_raid_recreate_wu(wu->swu_collider);
 
 					/* restart deferred wu */
 					wu->swu_collider->swu_state =
@@ -564,25 +563,4 @@ bad:
 	}
 
 	splx(s);
-}
-
-void
-sr_raid1_recreate_wu(struct sr_workunit *wu)
-{
-	struct sr_discipline	*sd = wu->swu_dis;
-	struct sr_workunit	*wup = wu;
-
-	do {
-		DNPRINTF(SR_D_INTR, "%s: sr_raid1_recreate_wu: %p\n", wup);
-
-		/* toss all ccbs */
-		sr_wu_release_ccbs(wup);
-
-		/* recreate ccbs */
-		wup->swu_state = SR_WU_REQUEUE;
-		if (sd->sd_scsi_rw(wup))
-			panic("could not requeue io");
-
-		wup = wup->swu_collider;
-	} while (wup);
 }

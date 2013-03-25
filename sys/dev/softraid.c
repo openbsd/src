@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.290 2013/03/10 09:05:12 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.291 2013/03/25 16:01:48 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4125,6 +4125,28 @@ sr_raid_startwu(struct sr_workunit *wu)
 	/* start all individual ios */
 	workq_queue_task(sd->sd_workq, &wu->swu_wqt, 0, sr_startwu_callback,
 	    sd, wu);
+}
+
+void
+sr_raid_recreate_wu(struct sr_workunit *wu)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_workunit	*wup = wu;
+
+	/*
+	 * Recreate a work unit by releasing the associated CCBs and reissuing
+	 * the SCSI I/O request. This process is then repeated for all of the
+	 * colliding work units.
+	 */
+	do {
+		sr_wu_release_ccbs(wup);
+
+		wup->swu_state = SR_WU_REQUEUE;
+		if (sd->sd_scsi_rw(wup))
+			panic("could not requeue I/O");
+
+		wup = wup->swu_collider;
+	} while (wup);
 }
 
 void
