@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.19 2013/03/22 12:00:57 sthen Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.20 2013/03/25 14:22:02 markus Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -57,7 +57,7 @@
 #define MIN_TRANSMIT_DELAY	1
 #define MAX_TRANSMIT_DELAY	3600
 
-#define DEFAULT_ADJ_TMOUT	60
+#define DEFAULT_ADJ_TMOUT	120
 
 #define DEFAULT_NBR_TMOUT	86400	/* 24 hours */
 
