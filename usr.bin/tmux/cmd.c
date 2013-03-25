@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.81 2013/03/25 10:04:44 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.82 2013/03/25 10:09:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -113,6 +113,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_switch_client_entry,
 	&cmd_unbind_key_entry,
 	&cmd_unlink_window_entry,
+	&cmd_wait_for_entry,
 	NULL
 };
 

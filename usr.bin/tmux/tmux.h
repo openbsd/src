@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.400 2013/03/25 10:05:35 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.401 2013/03/25 10:09:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1420,6 +1420,8 @@ struct cmd_q {
 	void			*data;
 
 	struct msg_command_data	*msgdata;
+
+	TAILQ_ENTRY(cmd_q)       waitentry;
 };
 
 /* Command definition. */
@@ -1839,6 +1841,7 @@ extern const struct cmd_entry cmd_switch_client_entry;
 extern const struct cmd_entry cmd_unbind_key_entry;
 extern const struct cmd_entry cmd_unlink_window_entry;
 extern const struct cmd_entry cmd_up_pane_entry;
+extern const struct cmd_entry cmd_wait_for_entry;
 
 /* cmd-attach-session.c */
 enum cmd_retval	 cmd_attach_session(struct cmd_q *, const char*, int, int);
