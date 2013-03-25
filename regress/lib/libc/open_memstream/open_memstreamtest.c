@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstreamtest.c,v 1.1 2013/01/01 17:43:07 mpi Exp $ */
+/*	$OpenBSD: open_memstreamtest.c,v 1.2 2013/03/25 03:33:28 guenther Exp $ */
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
  *
@@ -23,6 +23,9 @@
 
 #define OFFSET 16384
 
+const char start[] = "start";
+const char hello[] = "hello";
+
 int
 main(void)
 {
@@ -30,7 +33,7 @@ main(void)
 	char	*buf = (char *)0xff;
 	size_t	 size = 0;
 	off_t	 off;
-	int	 i = 0, failures = 0;
+	int	 i, failures = 0;
 
 	if ((fp = open_memstream(&buf, &size)) == NULL) {
 		warn("open_memstream failed");
@@ -63,31 +66,74 @@ main(void)
 		failures++;
 	}
 
-	if (fprintf(fp, "hello") == EOF) {
+	if (fprintf(fp, hello) == EOF) {
 		warnx("fprintf failed. (6)");
 		failures++;
 	}
 
-	if (fclose(fp) == EOF) {
-		warnx("fclose failed. (7)");
+	if (fflush(fp) == EOF) {
+		warnx("fflush failed. (7)");
 		failures++;
 	}
 
-	if (size != OFFSET + 5) {
-		warnx("failed, size %zu should be %u\n", size, OFFSET + 5);
+	if (size != OFFSET + sizeof(hello)-1) {
+		warnx("failed, size %zu should be %u. (8)",
+		    size, OFFSET + sizeof(hello)-1);
+		failures++;
+	}
+
+	if (fseek(fp, 0, SEEK_SET) != 0) {
+		warnx("failed to fseek. (9)");
+		failures++;
+	}
+
+	if (fprintf(fp, start) == EOF) {
+		warnx("fprintf failed. (10)");
+		failures++;
+	}
+
+	if (fflush(fp) == EOF) {
+		warnx("fflush failed. (11)");
+		failures++;
+	}
+
+	if (size != sizeof(start)-1) {
+		warnx("failed, size %zu should be %u. (12)",
+		    size, sizeof(start)-1);
 		failures++;
 	}
 
 	/* Needed for sparse files */
-	while (i != OFFSET)
-		if (buf[i++] != '\0') {
-			warnx("failed, buffer non zero'ed (offset %d). (8)", i);
+	if (strncmp(buf, start, sizeof(start)-1) != 0) {
+		warnx("failed, buffer didn't start with '%s'. (13)", start);
+		failures++;
+	}
+	for (i = sizeof(start)-1; i < OFFSET; i++)
+		if (buf[i] != '\0') {
+			warnx("failed, buffer non zero (offset %d). (14)", i);
 			failures++;
 			break;
 		}
 
-	if (memcmp(buf + OFFSET, "hello", 5) != 0) {
-		warnx("written string incorrect. (9)");
+	if (memcmp(buf + OFFSET, hello, sizeof(hello)-1) != 0) {
+		warnx("written string incorrect. (15)");
+		failures++;
+	}
+
+	/* verify that simply seeking past the end doesn't increase the size */
+	if (fseek(fp, 100, SEEK_END) != 0) {
+		warnx("failed to fseek. (16)");
+		failures++;
+	}
+
+	if (fclose(fp) == EOF) {
+		warnx("fclose failed. (17)");
+		failures++;
+	}
+
+	if (size != OFFSET + sizeof(hello)-1) {
+		warnx("failed, size %zu should be %u. (18)",
+		    size, OFFSET + sizeof(hello)-1);
 		failures++;
 	}
 
