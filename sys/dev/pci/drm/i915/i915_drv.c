@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.6 2013/03/22 22:51:00 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.7 2013/03/25 19:50:56 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -682,23 +682,16 @@ inteldrm_alloc_screen(void *v, const struct wsscreen_descr *type,
 	struct inteldrm_softc *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
 
-	if (dev_priv->nscreens > 8)
-		return (ENOMEM);
-
-	*cookiep = ri;
-	*curxp = 0;
-	*curyp =0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
-	dev_priv->nscreens++;
-	return (0);
+	return rasops_alloc_screen(ri, cookiep, curxp, curyp, attrp);
 }
 
 void
 inteldrm_free_screen(void *v, void *cookie)
 {
 	struct inteldrm_softc *dev_priv = v;
+	struct rasops_info *ri = &dev_priv->ro;
 
-	dev_priv->nscreens--;
+	return rasops_free_screen(ri, cookie);
 }
 
 int
@@ -724,8 +717,10 @@ void
 inteldrm_doswitch(void *v, void *cookie)
 {
 	struct inteldrm_softc *dev_priv = v;
+	struct rasops_info *ri = &dev_priv->ro;
 	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 
+	rasops_show_screen(ri, cookie, 0, NULL, NULL);
 	intel_fb_restore_mode(dev);
 
 	if (dev_priv->switchcb)
@@ -751,7 +746,7 @@ inteldrm_copycols(void *cookie, int row, int src, int dst, int num)
 	struct drm_device *dev = (struct drm_device *)sc->drmdev;
 
 	if (dev->open_count > 0 || sc->noaccel)
-		return sc->noaccel_ops.copycols(cookie, row, src, dst, num);
+		return sc->noaccel_copycols(cookie, row, src, dst, num);
 
 	num *= ri->ri_font->fontwidth;
 	src *= ri->ri_font->fontwidth;
@@ -774,7 +769,7 @@ inteldrm_erasecols(void *cookie, int row, int col, int num, long attr)
 	int bg, fg;
 
 	if (dev->open_count > 0 || sc->noaccel)
-		return sc->noaccel_ops.erasecols(cookie, row, col, num, attr);
+		return sc->noaccel_erasecols(cookie, row, col, num, attr);
 
 	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 
@@ -796,7 +791,7 @@ inteldrm_copyrows(void *cookie, int src, int dst, int num)
 	struct drm_device *dev = (struct drm_device *)sc->drmdev;
 
 	if (dev->open_count > 0 || sc->noaccel)
-		return sc->noaccel_ops.copyrows(cookie, src, dst, num);
+		return sc->noaccel_copyrows(cookie, src, dst, num);
 
 	num *= ri->ri_font->fontheight;
 	src *= ri->ri_font->fontheight;
@@ -818,7 +813,7 @@ inteldrm_eraserows(void *cookie, int row, int num, long attr)
 	int x, y, w;
 
 	if (dev->open_count > 0 || sc->noaccel)
-		return sc->noaccel_ops.eraserows(cookie, row, num, attr);
+		return sc->noaccel_eraserows(cookie, row, num, attr);
 
 	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 
@@ -1152,16 +1147,18 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	intel_fb_restore_mode(dev);
 
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_VCONS;
 	rasops_init(ri, 96, 132);
 
-	dev_priv->noaccel_ops = ri->ri_ops;
-
 	ri->ri_hw = dev_priv;
-	ri->ri_ops.copyrows = inteldrm_copyrows;
-	ri->ri_ops.copycols = inteldrm_copycols;
-	ri->ri_ops.eraserows = inteldrm_eraserows;
-	ri->ri_ops.erasecols = inteldrm_erasecols;
+	dev_priv->noaccel_copyrows = ri->ri_copyrows;
+	dev_priv->noaccel_copycols = ri->ri_copycols;
+	dev_priv->noaccel_eraserows = ri->ri_eraserows;
+	dev_priv->noaccel_erasecols = ri->ri_erasecols;
+	ri->ri_copyrows = inteldrm_copyrows;
+	ri->ri_copycols = inteldrm_copycols;
+	ri->ri_eraserows = inteldrm_eraserows;
+	ri->ri_erasecols = inteldrm_erasecols;
 
 	inteldrm_stdscreen.capabilities = ri->ri_caps;
 	inteldrm_stdscreen.nrows = ri->ri_rows;
@@ -1179,8 +1176,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	if (wsdisplay_console_initted) {
 		long defattr;
 
-		ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
-		wsdisplay_cnattach(&inteldrm_stdscreen, ri, 0, 0, defattr);
+		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		wsdisplay_cnattach(&inteldrm_stdscreen, ri->ri_active,
+		    0, 0, defattr);
 		aa.console = 1;
 	}
 
