@@ -126,7 +126,6 @@ sub Getopts {
     my (@args, $first, $rest, $pos);
     my ($errs) = 0;
     local ($_);
-    local ($[) = 0;
 
     @args = split( / */, $argumentative);
     while(@ARGV && ($_ = $ARGV[0]) =~ /^-(.)(.*)/) {
