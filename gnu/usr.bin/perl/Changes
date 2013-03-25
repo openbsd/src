@@ -10,13 +10,13 @@ If you need a detailed commit history (i.e. descriptions of each
 individual commit),  you can view the git version control history online
 at http://perl5.git.perl.org/perl.git (follow the 'shortlog' link beside
 the relevant tag). Or, you can download a copy of the git repository and
-then run a command like 
+then run a command like
 
-    git log --name-status perl-5.10.0..perl-5.11.0
+    git log --name-status v5.12.0..v5.14.0
 
-to view all the changes between 5.10.0 and 5.11.0.
+to view all the changes between 5.12.0 and 5.14.0.
 
-See pod/perlrepository.pod for more details on using git and accessing the
+See pod/perlgit.pod for more details on using git and accessing the
 commit history.
 
 In perl releases prior to 2009, the source tarball included a collection
@@ -28,8 +28,8 @@ them from subsequent releases.
 If you need access to these removed files, then they can be be found most
 recently in the 5.8.9 and 5.10.0 tarballs, at
 
-    http://www.cpan.org/src/perl-5.8.9.tar.gz 
-    http://www.cpan.org/src/perl-5.10.0.tar.gz
+    http://www.cpan.org/src/perl-5.8.9.tar.gz
+    http://www.cpan.org/src/5.0/perl-5.10.0.tar.gz
 
 The contents of the files in question can mostly be regenerated using git
 commands. The following table shows the equivalents. Note that the files

@@ -17,7 +17,7 @@
 #Note that Watcom 10.6 supports ar directly, so this
 #cover is not necessary.
 #
-#Increased the record size to 32 to accomodate a large library
+#Increased the record size to 32 to accommodate a large library
 #in the perl 5.003 distribution
 #
 #Submitted by Norton T. Allen (allen@huarp.harvard.edu)

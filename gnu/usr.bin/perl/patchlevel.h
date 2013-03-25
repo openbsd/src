@@ -14,8 +14,8 @@
  * exactly on the third column */
 
 #define PERL_REVISION	5		/* age */
-#define PERL_VERSION	12		/* epoch */
-#define PERL_SUBVERSION	2		/* generation */
+#define PERL_VERSION	16		/* epoch */
+#define PERL_SUBVERSION	3		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API
@@ -26,13 +26,17 @@
    options such as usemultiplicity tend to break binary compatibility
    more often.
 
-   This is used by Configure et al to figure out 
+   This is used by Configure et al to figure out
    PERL_INC_VERSION_LIST, which lists version libraries
    to include in @INC.  See INSTALL for how this works.
+
+   Porting/bump-perl-version will automatically set these to the version of perl
+   to be released for blead releases, and to 5.X.0 for maint releases. Manually
+   changing them should not be necessary.
 */
-#define PERL_API_REVISION	5	/* Adjust manually as needed.  */
-#define PERL_API_VERSION	12	/* Adjust manually as needed.  */
-#define PERL_API_SUBVERSION	0	/* Adjust manually as needed.  */
+#define PERL_API_REVISION	5
+#define PERL_API_VERSION	16
+#define PERL_API_SUBVERSION	0
 /*
    XXX Note:  The selection of non-default Configure options, such
    as -Duselonglong may invalidate these settings.  Currently, Configure
@@ -66,8 +70,8 @@
 	   + 	,"MINE001 - my new patch"
 	     	,NULL
 	     };
-	
-	please change it to 
+
+	please change it to
 	   *** patchlevel.h.orig	<date here>
 	   --- patchlevel.h	<date here>
 	   *** 41,43 ***
@@ -75,7 +79,7 @@
 	   + 	,"MINE001 - my new patch"
 	     	,NULL
 	     };
-	
+
 	(Note changes to line numbers as well as removal of context lines.)
 	This will prevent patch from choking if someone has previously
 	applied different patches than you.
@@ -92,6 +96,8 @@ my $seen=0;
 while (<PLIN>) {
     if (/\t,NULL/ and $seen) {
        while (my $c = shift @ARGV){
+	    $c =~ s|\\|\\\\|g;
+	    $c =~ s|"|\\"|g;
             print PLOUT qq{\t,"$c"\n};
        }
     }
@@ -127,16 +133,6 @@ hunk.
 #  endif
 static const char * const local_patches[] = {
 	NULL
-	,"CVE-2010-0405"
-	,"Updated CGI to 3.51"
-	,"Updated Test::Simple to 0.98"
-	,"Updated List::Util to 1.23"
-	,"CVE-2011-1487"
-	,"Updated Digest to 1.17"
-	,"CVE-2011-2939"
-	,"CVE-2012-5195"
-	,"CVE-2012-6329"
-	,"CVE-2013-1667"
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
 	,"uncommitted-changes"
 #endif

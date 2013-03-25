@@ -16,7 +16,7 @@ use Carp;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(pingecho);
-$VERSION = "2.36";
+$VERSION = "2.38";
 
 sub SOL_IP { 0; };
 sub IP_TOS { 1; };
@@ -1545,7 +1545,7 @@ be 1 if the host is reachable and 0 if it is not.  For most practical
 purposes, undef and 0 and can be treated as the same case.  In array
 context, the elapsed time as well as the string form of the ip the
 host resolved to are also returned.  The elapsed time value will
-be a float, as retuned by the Time::HiRes::time() function, if hires()
+be a float, as returned by the Time::HiRes::time() function, if hires()
 has been previously called, otherwise it is returned as an integer.
 
 =item $p->source_verify( { 0 | 1 } );
@@ -1771,7 +1771,5 @@ Copyright (c) 2001, Colin McMillen.  All rights reserved.
 
 This program is free software; you may redistribute it and/or
 modify it under the same terms as Perl itself.
-
-$Id: Ping.pm,v 1.86 2003/06/27 21:31:07 rob Exp $
 
 =cut

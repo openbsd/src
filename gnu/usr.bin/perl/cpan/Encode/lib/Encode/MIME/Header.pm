@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = do { my @r = ( q$Revision: 2.11 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.13 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 use Encode qw(find_encoding encode_utf8 decode_utf8);
 use MIME::Base64;
 use Carp;
@@ -95,7 +95,7 @@ sub decode_q {
 
 my $especials =
   join( '|' => map { quotemeta( chr($_) ) }
-      unpack( "C*", qq{()<>@,;:"'/[]?.=} ) );
+      unpack( "C*", qq{()<>,;:"'/[]?=} ) );
 
 my $re_encoded_word = qr{
     =\?                # begin encoded word
@@ -127,11 +127,12 @@ sub encode($$;$) {
         for my $word (@word) {
             use bytes ();
             if ( bytes::length($subline) + bytes::length($word) >
-                $obj->{bpl} )
+                $obj->{bpl} - 1 )
             {
                 push @subline, $subline;
                 $subline = '';
             }
+            $subline .= ' ' if ($subline =~ /\?=$/ and $word =~ /^=\?/);
             $subline .= $word;
         }
         $subline and push @subline, $subline;

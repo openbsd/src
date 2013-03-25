@@ -85,7 +85,6 @@ my \@patches = (
 print OUT <<'!NO!SUBS!';
 
 use warnings;
-no warnings 'once'; # Eventually, the $::opt_ stuff should get cleaned up
 use strict;
 use Config;
 use File::Spec;		# keep perlbug Perl 5.005 compatible
@@ -108,58 +107,6 @@ BEGIN {
 
 my $Version = "1.39";
 
-# Changed in 1.06 to skip Mail::Send and Mail::Util if not available.
-# Changed in 1.07 to see more sendmail execs, and added pipe output.
-# Changed in 1.08 to use correct address for sendmail.
-# Changed in 1.09 to close the REP file before calling it up in the editor.
-#                 Also removed some old comments duplicated elsewhere.
-# Changed in 1.10 to run under VMS without Mail::Send; also fixed
-#                 temp filename generation.
-# Changed in 1.11 to clean up some text and removed Mail::Send deactivator.
-# Changed in 1.12 to check for editor errors, make save/send distinction
-#                 clearer and add $ENV{REPLYTO}.
-# Changed in 1.13 to hopefully make it more difficult to accidentally
-#                 send mail
-# Changed in 1.14 to make the prompts a little more clear on providing
-#                 helpful information. Also let file read fail gracefully.
-# Changed in 1.15 to add warnings to stop people using perlbug for non-bugs.
-#                 Also report selected environment variables.
-# Changed in 1.16 to include @INC, and allow user to re-edit if no changes.
-# Changed in 1.17 Win32 support added.  GSAR 97-04-12
-# Changed in 1.18 add '-ok' option for reporting build success. CFR 97-06-18
-# Changed in 1.19 '-ok' default not '-v'
-#                 add local patch information
-#                 warn on '-ok' if this is an old system; add '-okay'
-# Changed in 1.20 Added patchlevel.h reading and version/config checks
-# Changed in 1.21 Added '-nok' for reporting build failure DFD 98-05-05
-# Changed in 1.22 Heavy reformatting & minor bugfixes HVDS 98-05-10
-# Changed in 1.23 Restore -ok(ay): say 'success'; don't prompt
-# Changed in 1.24 Added '-F<file>' to save report HVDS 98-07-01
-# Changed in 1.25 Warn on failure to open save file. HVDS 98-07-12
-# Changed in 1.26 Don't require -t STDIN for -ok. HVDS 98-07-15
-# Changed in 1.27 Added Mac OS and File::Spec support CNANDOR 99-07-27
-# Changed in 1.28 Additional questions for Perlbugtron RFOLEY 20.03.2000
-# Changed in 1.29 Perlbug(tron): auto(-ok), short prompts RFOLEY 05-05-2000
-# Changed in 1.30 Added warnings on failure to open files MSTEVENS 13-07-2000
-# Changed in 1.31 Add checks on close().Fix my $var unless. TJENNESS 26-07-2000
-# Changed in 1.32 Use File::Spec->tmpdir TJENNESS 20-08-2000
-# Changed in 1.33 Don't require -t STDOUT for -ok.
-# Changed in 1.34 Added Message-Id RFOLEY 18-06-2002 
-# Changed in 1.35 Use File::Temp (patch from Solar Designer) NWCLARK 28-02-2004
-# Changed in 1.36 Initial Module::CoreList support Alexandr Ciornii 11-07-2007
-# Changed in 1.37 Killed some string evals, rewrote most prose JESSE 2008-06-08
-# Changed in 1.38 Actually enforce the CoreList check,
-#                 Record the module the user enters if they do so
-#                 Refactor prompts to use common code           JESSE 2008-06-08
-# Changed in 1.39 Trap mail sending failures (simple ones) so   JESSE 2008-06-08
-#                 users might be able to recover their bug reports
-#                 Refactor mail sending routines
-#                 Unify message building code
-#                 Unify message header building
-#                 Fix "module" prompting to not squish "category" prompting 
-#                 use warnings; (except 'once' warnings)
-#                 Unified report fingerprint/change detection code
-#                 Removed some labeled 'gotos'
 #TODO:
 #       make sure failure (transmission-wise) of Mail::Send is accounted for.
 #       (This may work now. Unsure of the original author's issue -JESSE 2008-06-08)
@@ -168,9 +115,9 @@ my $Version = "1.39";
 my( $file, $usefile, $cc, $address, $bugaddress, $testaddress, $thanksaddress,
     $filename, $messageid, $domain, $subject, $from, $verbose, $ed, $outfile,
     $fh, $me, $body, $andcc, %REP, $ok, $thanks, $progname,
-    $Is_MacOS, $Is_MSWin32, $Is_Linux, $Is_VMS, $Is_OpenBSD,
+    $Is_MSWin32, $Is_Linux, $Is_VMS, $Is_OpenBSD,
     $report_about_module, $category, $severity,
-
+    %opt,
 );
 
 my $perl_version = $^V ? sprintf("%vd", $^V) : $];
@@ -179,9 +126,9 @@ my $config_tag2 = "$perl_version - $Config{cf_time}";
 
 Init();
 
-if ($::opt_h) { Help(); exit; }
-if ($::opt_d) { Dump(*STDOUT); exit; }
-if (!-t STDIN && !($ok and not $::opt_n)) {
+if ($opt{h}) { Help(); exit; }
+if ($opt{d}) { Dump(*STDOUT); exit; }
+if (!-t STDIN && !($ok and not $opt{n})) {
     paraprint <<"EOF";
 Please use $progname interactively. If you want to
 include a file, you can use the -f switch.
@@ -190,7 +137,7 @@ EOF
 }
 
 Query();
-Edit() unless $usefile || ($ok and not $::opt_n);
+Edit() unless $usefile || ($ok and not $opt{n});
 NowWhat();
 if ($outfile) {
     save_message_to_disk($outfile);
@@ -254,13 +201,8 @@ sub Init {
     $Is_VMS = $^O eq 'VMS';
     $Is_Linux = lc($^O) eq 'linux';
     $Is_OpenBSD = lc($^O) eq 'openbsd';
-    $Is_MacOS = $^O eq 'MacOS';
 
-    @ARGV = split m/\s+/,
-        MacPerl::Ask('Provide command line args here (-h for help):')
-        if $Is_MacOS && $MacPerl::Version =~ /App/;
-
-    if (!getopts("Adhva:s:b:f:F:r:e:SCc:to:n:T")) { Help(); exit; };
+    if (!getopts("Adhva:s:b:f:F:r:e:SCc:to:n:T", \%opt)) { Help(); exit; };
 
     # This comment is needed to notify metaconfig that we are
     # using the $perladmin, $cf_by, and $cf_time definitions.
@@ -278,51 +220,50 @@ sub Init {
 
     if (basename ($0) =~ /^perlthanks/i) {
 	# invoked as perlthanks
-	$::opt_T = 1;
-	$::opt_C = 1; # don't send a copy to the local admin
+	$opt{T} = 1;
+	$opt{C} = 1; # don't send a copy to the local admin
     }
 
-    if ($::opt_T) {
+    if ($opt{T}) {
 	$thanks = 'thanks';
     }
     
     $progname = $thanks ? 'perlthanks' : 'perlbug';
     # Target address
-    $address = $::opt_a || ($::opt_t ? $testaddress
+    $address = $opt{a} || ($opt{t} ? $testaddress
 			    : $thanks ? $thanksaddress : $bugaddress);
 
-    # Users address, used in message and in Reply-To header
-    $from = $::opt_r || "";
+    # Users address, used in message and in From and Reply-To headers
+    $from = $opt{r} || "";
 
     # Include verbose configuration information
-    $verbose = $::opt_v || 0;
+    $verbose = $opt{v} || 0;
 
     # Subject of bug-report message
-    $subject = $::opt_s || "";
+    $subject = $opt{s} || "";
 
     # Send a file
-    $usefile = ($::opt_f || 0);
+    $usefile = ($opt{f} || 0);
 
     # File to send as report
-    $file = $::opt_f || "";
+    $file = $opt{f} || "";
 
     # File to output to
-    $outfile = $::opt_F || "";
+    $outfile = $opt{F} || "";
 
     # Body of report
-    $body = $::opt_b || "";
+    $body = $opt{b} || "";
 	
     # Editor
-    $ed = $::opt_e || $ENV{VISUAL} || $ENV{EDITOR} || $ENV{EDIT}
+    $ed = $opt{e} || $ENV{VISUAL} || $ENV{EDITOR} || $ENV{EDIT}
 	|| ($Is_VMS && "edit/tpu")
 	|| ($Is_MSWin32 && "notepad")
-	|| ($Is_MacOS && '')
 	|| "vi";
 
     # Not OK - provide build failure template by finessing OK report
-    if ($::opt_n) {
-	if (substr($::opt_n, 0, 2) eq 'ok' )	{
-	    $::opt_o = substr($::opt_n, 1);
+    if ($opt{n}) {
+	if (substr($opt{n}, 0, 2) eq 'ok' )	{
+	    $opt{o} = substr($opt{n}, 1);
 	} else {
 	    Help();
 	    exit();
@@ -331,10 +272,10 @@ sub Init {
 
     # OK - send "OK" report for build on this system
     $ok = '';
-    if ($::opt_o) {
-	if ($::opt_o eq 'k' or $::opt_o eq 'kay') {
+    if ($opt{o}) {
+	if ($opt{o} eq 'k' or $opt{o} eq 'kay') {
 	    my $age = time - $patchlevel_date;
-	    if ($::opt_o eq 'k' and $age > 60 * 24 * 60 * 60 ) {
+	    if ($opt{o} eq 'k' and $age > 60 * 24 * 60 * 60 ) {
 		my $date = localtime $patchlevel_date;
 		print <<"EOF";
 "perlbug -ok" and "perlbug -nok" do not report on Perl versions which
@@ -345,14 +286,14 @@ EOF
 		exit();
 	    }
 	    # force these options
-	    unless ($::opt_n) {
-		$::opt_S = 1; # don't prompt for send
-		$::opt_b = 1; # we have a body
+	    unless ($opt{n}) {
+		$opt{S} = 1; # don't prompt for send
+		$opt{b} = 1; # we have a body
 		$body = "Perl reported to build OK on this system.\n";
 	    }
-	    $::opt_C = 1; # don't send a copy to the local admin
-	    $::opt_s = 1; # we have a subject line
-	    $subject = ($::opt_n ? 'Not ' : '')
+	    $opt{C} = 1; # don't send a copy to the local admin
+	    $opt{s} = 1; # we have a subject line
+	    $subject = ($opt{n} ? 'Not ' : '')
 		    . "OK: perl $perl_version ${patch_tags}on"
 		    ." $::Config{'archname'} $::Config{'osvers'} $subject";
 	    $ok = 'ok';
@@ -367,9 +308,9 @@ EOF
     # we don't really want it. We'll just take it if we have to.)
     #
     # This has to be after the $ok stuff above because of the way
-    # that $::opt_C is forced.
-    $cc = $::opt_C ? "" : (
-	$::opt_c || $::Config{'perladmin'}
+    # that $opt{C} is forced.
+    $cc = $opt{C} ? "" : (
+	$opt{c} || $::Config{'perladmin'}
 	|| $::Config{'cf_email'} || $::Config{'cf_by'}
     );
 
@@ -388,7 +329,6 @@ EOF
     # My username
     $me = $Is_MSWin32 ? $ENV{'USERNAME'}
 	    : $^O eq 'os2' ? $ENV{'USER'} || $ENV{'LOGNAME'}
-	    : $Is_MacOS ? $ENV{'USER'}
 	    : eval { getpwuid($<) };	# May be missing
 
     $from = $::Config{'cf_email'}
@@ -455,17 +395,12 @@ EOF
     }
 
     # Prompt for return address, if needed
-    unless ($::opt_r) {
+    unless ($opt{r}) {
 	# Try and guess return address
 	my $guess;
 
-	$guess = $ENV{'REPLY-TO'} || $ENV{'REPLYTO'} || $from || '';
-        if ($Is_MacOS) {
-            require Mac::InternetConfig;
-            $guess = $Mac::InternetConfig::InternetConfig{
-                Mac::InternetConfig::kICEmail()
-            };
-        }
+	$guess = $ENV{'REPLY-TO'} || $ENV{'REPLYTO'} || $ENV{'EMAIL'}
+	    || $from || '';
 
 	unless ($guess) {
 		# move $domain to where we can use it elsewhere	
@@ -511,7 +446,7 @@ EOF
     }
 
     # Prompt for administrator address, unless an override was given
-    if( !$::opt_C and !$::opt_c ) {
+    if( !$opt{C} and !$opt{c} ) {
 	my $description =  <<EOF;
 $0 can send a copy of this report to your local perl
 administrator.  If the address below is wrong, please correct it,
@@ -534,7 +469,7 @@ EOF
 
     # Prompt for editor, if no override is given
 editor:
-    unless ($::opt_e || $::opt_f || $::opt_b) {
+    unless ($opt{e} || $opt{f} || $opt{b}) {
 
     my $description;
 
@@ -662,7 +597,7 @@ EOF
     # Generate report
     open(REP,">$filename") or die "Unable to create report file '$filename': $!\n";
     my $reptype = !$ok ? ($thanks ? 'thank-you' : 'bug')
-	: $::opt_n ? "build failure" : "success";
+	: $opt{n} ? "build failure" : "success";
 
     print REP <<EOF;
 This is a $reptype report for perl from $from,
@@ -731,7 +666,7 @@ EFF
     module=$report_about_module
 EFF
     }
-    if ($::opt_A) {
+    if ($opt{A}) {
 	print OUT <<EFF;
     ack=no
 EFF
@@ -811,32 +746,26 @@ sub _edit_file {
     my $report_written = 0;
 
     while ( !$report_written ) {
-        if ($Is_MacOS) {
-            require ExtUtils::MakeMaker;
-            ExtUtils::MM_MacOS::launch_file($filename);
-            _prompt('', "Press Enter when done." );
-        } else {    # we're not on oldschool mac os
-            my $exit_status = system("$editor $filename");
-            if ($exit_status) {
-                my $desc = <<EOF;
+        my $exit_status = system("$editor $filename");
+        if ($exit_status) {
+            my $desc = <<EOF;
 The editor you chose ('$editor') could not be run!
 
 If you mistyped its name, please enter it now, otherwise just press Enter.
 EOF
-                my $entry = _prompt( $desc, 'Editor', $editor );
-                if ( $entry ne "" ) {
-                    $editor = $entry;
-                    next;
-                } else {
-                    paraprint <<EOF;
+            my $entry = _prompt( $desc, 'Editor', $editor );
+            if ( $entry ne "" ) {
+                $editor = $entry;
+                next;
+            } else {
+                paraprint <<EOF;
 You may want to save your report to a file, so you can edit and
 mail it later.
 EOF
-                    return;
-                }
+                return;
             }
         }
-        return if ( $ok and not $::opt_n ) || $body;
+        return if ( $ok and not $opt{n} ) || $body;
 
         # Check that we have a report that has some, eh, report in it.
 
@@ -867,7 +796,7 @@ sub Cancel {
 
 sub NowWhat {
     # Report is done, prompt for further action
-    if( !$::opt_S ) {
+    if( !$opt{S} ) {
 	while(1) {
 	    my $menu = <<EOF;
 
@@ -1087,6 +1016,7 @@ sub _message_headers {
     $headers{'Cc'}         = $cc        if ($cc);
     $headers{'Message-Id'} = $messageid if ($messageid);
     $headers{'Reply-To'}   = $from      if ($from);
+    $headers{'From'}       = $from      if ($from);
     return \%headers;
 }
 
@@ -1180,8 +1110,8 @@ send to '$address' with your normal mail client.
 EOF
     }
 
-    open( SENDMAIL, "|$sendmail -t -oi" )
-        || die "'|$sendmail -t -oi' failed: $!";
+    open( SENDMAIL, "|-", $sendmail, "-t", "-oi", "-f", $from )
+        || die "'|$sendmail -t -oi -f $from' failed: $!";
     print SENDMAIL build_complete_message();
     if ( close(SENDMAIL) ) {
         print "\nMessage sent\n";
@@ -1287,7 +1217,7 @@ release of Perl, are likely to receive less attention from the
 volunteers who build and maintain Perl than reports about bugs in
 the current release.
 
-This tool isn't apropriate for reporting bugs in any version
+This tool isn't appropriate for reporting bugs in any version
 prior to Perl 5.0.
 
 =item Are you sure what you have is a bug?

@@ -5,7 +5,7 @@ BEGIN {
     @INC = qw(. ../lib);
     require './test.pl';
 }
-plan tests => 296;
+plan tests => 305;
 
 my $list_assignment_supported = 1;
 
@@ -325,6 +325,21 @@ ok(!defined $a[0]);
     local @a = @a;
     is("@a", $d);
 }
+# RT #7938: localising an array should make it temporarily untied
+{
+    @a = qw(a b c);
+    local @a = (6,7,8);
+    is("@a", "6 7 8", 'local @a assigned 6,7,8');
+    {
+	my $c = 0;
+	local *TA::STORE = sub { $c++ };
+	$a[0] = 9;
+	is($c, 0, 'STORE not called after array localised');
+    }
+    is("@a", "9 7 8", 'local @a should now be 9 7 8');
+}
+is("@a", "a b c", '@a should now contain original value');
+
 
 # local() should preserve the existenceness of tied array elements
 @a = ('a', 'b', 'c');
@@ -450,6 +465,7 @@ tie %h, 'TH';
 is($h{'a'}, 1);
 is($h{'b'}, 2);
 is($h{'c'}, 3);
+
 # local() should preserve the existenceness of tied hash elements
 ok(! exists $h{'y'});
 ok(! exists $h{'z'});
@@ -459,6 +475,24 @@ TODO: {
     local %h = %h;
     is(join("\n", map { "$_=>$h{$_}" } sort keys %h), $d);
 }
+
+# RT #7939: localising a hash should make it temporarily untied
+{
+    %h = qw(a 1 b 2 c 3);
+    local %h = qw(x 6 y 7 z 8);
+    is(join('', sort keys   %h), "xyz", 'local %h has new keys');
+    is(join('', sort values %h), "678", 'local %h has new values');
+    {
+	my $c = 0;
+	local *TH::STORE = sub { $c++ };
+	$h{x} = 9;
+	is($c, 0, 'STORE not called after hash localised');
+    }
+    is($h{x}, 9, '$h{x} should now be 9');
+}
+is(join('', sort keys   %h), "abc", 'restored %h has original keys');
+is(join('', sort values %h), "123", 'restored %h has original values');
+
 
 %h = (a => 1, b => 2, c => 3, d => 4);
 {
@@ -584,8 +618,6 @@ while (/(o.+?),/gc) {
 	"Chop"        => sub { chop },				0,
 	"Filetest"    => sub { -x },				0,
 	"Assignment"  => sub { $_ = "Bad" },			0,
-	# XXX whether next one should fail is debatable
-	"Local \$_"   => sub { local $_  = 'ok?'; print },	0,
 	"for local"   => sub { for("#ok?\n"){ print } },	1,
     );
     while ( ($name, $code, $ok) = splice(@tests, 0, 3) ) {
@@ -610,26 +642,28 @@ while (/(o.+?),/gc) {
 eval { local $1 = 1 };
 like($@, qr/Modification of a read-only value attempted/);
 
+# local($_) always strips all magic
 eval { for ($1) { local $_ = 1 } };
-like($@, qr/Modification of a read-only value attempted/);
+is($@, "");
 
-# make sure $1 is still read-only
-eval { for ($1) { local $_ = 1 } };
-like($@, qr/Modification of a read-only value attempted/);
+{
+    my $STORE = my $FETCH = 0;
+    package TieHash;
+    sub TIEHASH { bless $_[1], $_[0] }
+    sub FETCH   { ++$FETCH; 42 }
+    sub STORE   { ++$STORE }
+
+    package main;
+    tie my %hash, "TieHash", {};
+
+    eval { for ($hash{key}) {local $_ = 2} };
+    is($STORE, 0);
+    is($FETCH, 0);
+}
 
 # The s/// adds 'g' magic to $_, but it should remain non-readonly
 eval { for("a") { for $x (1,2) { local $_="b"; s/(.*)/+$1/ } } };
 is($@, "");
-
-# RT #4342 Special local() behavior for $[
-{
-    no warnings 'deprecated';
-    local $[ = 1;
-    ok(1 == $[, 'lexcical scope of local $[');
-    f();
-}
-
-sub f { ok(0 == $[); }
 
 # sub localisation
 {
@@ -747,11 +781,15 @@ like( runperl(stderr => 1,
                       'index(q(a), foo);' .
                       'local *g=${::}{foo};print q(ok);'), "ok", "[perl #52740]");
 
-# Keep this test last, as it can SEGV
+# Keep these tests last, as they can SEGV
 {
     local *@;
     pass("Localised *@");
     eval {1};
     pass("Can eval with *@ localised");
-}
 
+    local @{"nugguton"};
+    local %{"netgonch"};
+    delete $::{$_} for 'nugguton','netgonch';
+}
+pass ('localised arrays and hashes do not crash if glob is deleted');

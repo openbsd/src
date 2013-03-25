@@ -38,7 +38,7 @@ my $template = $base . "X" x 10;
 my($fh1, $file1) = mkstemp($template);
 
 like($file1, qr/^\Q$base\E[a-zA-Z0-9]{10}$/, "mkstemp output format");
-ok(-f $file1, "mkstemp created file");
+ok(-f $file1, "mkstemp created filed");
 my @stat = stat(_);
 cmp_ok($stat[2] & 07777, '==', 0600, "mkstemp file mode");
 
@@ -46,17 +46,10 @@ my @fstat = stat($fh1);
 is_deeply(\@stat, \@fstat, "file name matches the handle");
 
 
-# Verify scalar return case
-my $fh = mkstemp($template);
-ok(-f $fh, "mkstemp created file");
-my @stat = stat(_);
-cmp_ok($stat[2] & 07777, '==', 0600, "mkstemp file mode");
-
-
 my($fh2, $file2) = OpenBSD::MkTemp::mkstemps($template, ".foo");
 
 like($file2, qr/^\Q$base\E[a-zA-Z0-9]{10}\.foo$/, "mkstemps output format");
-ok(-f $file2, "mkstemps created file");
+ok(-f $file2, "mkstemps created filed");
 @stat = stat(_);
 cmp_ok($stat[2] & 07777, '==', 0600, "mkstemps file mode");
 
@@ -74,34 +67,49 @@ cmp_ok(fileno(F), '==', $fileno, "mkstemp file handle ref counting");
 # How about some failures?
 #
 
-sub test_failure
-{
-    my($description, $func, $template, $expected_errno) = @_;
-    my(@results, $err, $msg);
+my $d2 = OpenBSD::MkTemp::mkdtemp($file1 . "/fXXXXXXXXXX");
+my $err = $!;
+subtest "mkdtemp failed on bad prefix" => sub {
+    plan tests => 2;
+    ok(! defined($d2),				"no directory name");
+    cmp_ok($err, '==', Errno::ENOTDIR,		"right errno");
+};
 
-    eval {
-	no strict 'refs';
-	@results = &{"OpenBSD::MkTemp::$func"}($template)
-    };
-    $err = $!; $msg = $@;
-    subtest $description => sub {
-	plan tests => 3;
-	ok(@results == 0,				"empty return");
-	cmp_ok($err, '==', $expected_errno,		"correct errno");
-	like($msg, qr/Unable to \Q$func\E\(\Q$template\E\): /,
-							"correct die message");
+if ($> != 0) {
+    $d2 = OpenBSD::MkTemp::mkdtemp("/fXXXXXXXXXX");
+    $err = $!;
+    subtest "mkdtemp failed on no access" => sub {
+	plan tests => 2;
+	ok(! defined($d2),			"no directory name");
+	cmp_ok($err, '==', Errno::EACCES,	"right errno");
     };
 }
 
-test_failure("mkdtemp failed on bad prefix", "mkdtemp",
-	$file1 . "/fXXXXXXXXXX", Errno::ENOTDIR);
-test_failure("mkdtemp failed on no access", "mkdtemp",
-	"/fXXXXXXXXXX", Errno::EACCES)				if $> != 0;
+my($fh3, $file3) = mkstemp($file1 . "/fXXXXXXXXXX");
+$err = $!;
+subtest "mkstemp failed on bad prefix" => sub {
+    plan tests => 3;
+    ok(! defined($fh3),				"no filehandle");
+    ok(! defined($file3),			"no filename");
+    cmp_ok($err, '==', Errno::ENOTDIR,		"right errno");
+};
 
-test_failure("mkstemp failed on bad prefix", "mkstemp",
-	$file1 . "/fXXXXXXXXXX", Errno::ENOTDIR);
-test_failure("mkstemp failed on no access", "mkstemp",
-	"/fXXXXXXXXXX", Errno::EACCES)				if $> != 0;
+if ($> != 0) {
+    ($fh3, $file3) = mkstemp("/fXXXXXXXXXX");
+    $err = $!;
+    subtest "mkstemp failed on no access" => sub {
+	plan tests => 3;
+	ok(! defined($fh3),			"no filehandle");
+	ok(! defined($file3),			"no filename");
+	cmp_ok($err, '==', Errno::EACCES,	"right errno");
+    };
+}
+
+eval { OpenBSD::MkTemp::mkstemps_real("foo", 0) };
+like($@, qr/read-only value/, "unwritable template");
+
+eval { my $f = "foo"; OpenBSD::MkTemp::mkstemps_real($f, -3) };
+like($@, qr/invalid suffix/, "invalid suffix");
 
 done_testing();
 

@@ -1,9 +1,64 @@
 CHANGES
 -------
 
+  2.048 29 January 2012
+
+      * No Changes
+
+  2.047 28 January 2012
+
+      * Set minimum Perl version to 5.6
+
+  2.045 3 December 2011
+
+      * Moved FAQ.pod to IO::Compress
+
+  2.044 2 December 2011
+
+      * Moved FAQ.pod under the lib directory so it can get installed
+
+  2.043 20 November 2011
+
+      * No Changes
+
+  2.042 17 November 2011
+
+      * No Changes
+
+  2.040 28 October 2011
+
+      * No Changes
+
+  2.039 28 October 2011
+
+      * croak if attempt to freeze/thaw compression object
+        [RT #69985]
+
+  2.037 22 June 2011
+
+      * No Changes
+
+  2.036 18 June 2011
+
+      * No Changes
+
+  2.035 6 May 2011
+
+      * No Changes
+
+  2.033 11 Jan 2011
+      * Fixed typos & spelling errors.
+        [perl# 81782]
+
+  2.032 4 Jan 2011
+
+      * No Changes
+
   2.031 21 September 2010
 
       * Updated to use bzip2 1.0.6
+        Version 1.0.6 removes a potential security vulnerability,
+        CVE-2010-0405, so all users are recommended to upgrade immediately.
 
   2.030 22 July 2010
 
@@ -29,7 +84,7 @@ CHANGES
         [RT# 47225]
 
       * Fixed instance where $[ should have been $] in t/01bzip2.t
-        Thanks to Robin Barker and zefram [RT #50764] for independantly
+        Thanks to Robin Barker and zefram [RT #50764] for independently
         spotting the issue.
 
   2.021 30 August 2009

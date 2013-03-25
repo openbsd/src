@@ -1,10 +1,11 @@
-#!./perl
+#!./perl -w
 
 #
 # Verify which OP= operators warn if their targets are undefined.
 # Based on redef.t, contributed by Graham Barr <Graham.Barr@tiuk.ti.com>
 #	-- Robin Barker 
 #
+# Now almost completely rewritten.
 
 BEGIN {
     chdir 't' if -d 't';
@@ -13,81 +14,51 @@ BEGIN {
 }
 
 use strict;
-use warnings;
 
-my $warn = "";
-$SIG{q(__WARN__)} = sub { print $warn; $warn .= join("",@_) };
+my (%should_warn, %should_not);
+++$should_warn{$_} foreach qw(* / x & ** << >>);
+++$should_not{$_} foreach qw(+ - . | ^ && ||);
 
-sub uninitialized { $warn =~ s/Use of uninitialized value[^\n]+\n//s; }
-sub tiex { tie $_[0], 'main' }
+my %integer;
+$integer{$_} = 0 foreach qw(* / % + -);
+
 sub TIESCALAR { my $x; bless \$x }
 sub FETCH { ${$_[0]} }
 sub STORE { ${$_[0]} = $_[1] }
-our $TODO;
 
-print "1..63\n";
+sub test_op {
+    my ($tie, $int, $op_seq, $warn) = @_;
+    my $code = "sub {\n";
+    $code .= "use integer;" if $int;
+    $code .= "my \$x;\n";
+    $code .= "tie \$x, 'main';\n" if $tie;
+    $code .= "$op_seq;\n}\n";
+
+    my $sub = eval $code;
+    is($@, '', "Can eval code for $op_seq");
+    if ($warn) {
+	warning_like($sub, qr/^Use of uninitialized value/,
+		     "$op_seq$tie$int warns");
+    } else {
+	warning_is($sub, undef, "$op_seq$tie$int does not warn");
+    }
+}
 
 # go through all tests once normally and once with tied $x
 for my $tie ("", ", tied") {
+    foreach my $integer ('', ', int') {
+	test_op($tie, $integer, $_, 0) foreach qw($x++ $x-- ++$x --$x);
+    }
 
-{ my $x; tiex $x if $tie; $x ++;     ok ! uninitialized, "postinc$tie"; }
-{ my $x; tiex $x if $tie; $x --;     ok ! uninitialized, "postdec$tie"; }
-{ my $x; tiex $x if $tie; ++ $x;     ok ! uninitialized, "preinc$tie"; }
-{ my $x; tiex $x if $tie; -- $x;     ok ! uninitialized, "predec$tie"; }
+    foreach (keys %should_warn, keys %should_not) {
+	test_op($tie, '', "\$x $_= 1", $should_warn{$_});
+	next unless exists $integer{$_};
+	test_op($tie, ', int', "\$x $_= 1", $should_warn{$_});
+    }
 
-{ my $x; tiex $x if $tie; $x **= 1;  ok uninitialized,   "**=$tie"; }
-
-{ local $TODO = $tie && '[perl #17809] pp_add & pp_subtract';
-    { my $x; tiex $x if $tie; $x += 1;   ok ! uninitialized, "+=$tie"; }
-    { my $x; tiex $x if $tie; $x -= 1;   ok ! uninitialized, "-=$tie"; }
+    foreach (qw(| ^ &)) {
+	test_op($tie, '', "\$x $_= 'x'", $should_warn{$_});
+    }
 }
 
-{ my $x; tiex $x if $tie; $x .= 1;   ok ! uninitialized, ".=$tie"; }
-
-{ my $x; tiex $x if $tie; $x *= 1;   ok uninitialized,   "*=$tie"; }
-{ my $x; tiex $x if $tie; $x /= 1;   ok uninitialized,   "/=$tie"; }
-{ my $x; tiex $x if $tie; $x %= 1;   ok uninitialized,   "\%=$tie"; }
-
-{ my $x; tiex $x if $tie; $x x= 1;   ok uninitialized, "x=$tie"; }
-
-{ my $x; tiex $x if $tie; $x &= 1;   ok uninitialized, "&=$tie"; }
-
-{ local $TODO = $tie && '[perl #17809] pp_bit_or & pp_bit_xor';
-    { my $x; tiex $x if $tie; $x |= 1;   ok ! uninitialized, "|=$tie"; }
-    { my $x; tiex $x if $tie; $x ^= 1;   ok ! uninitialized, "^=$tie"; }
-}
-
-{ my $x; tiex $x if $tie; $x &&= 1;  ok ! uninitialized, "&&=$tie"; }
-{ my $x; tiex $x if $tie; $x ||= 1;  ok ! uninitialized, "||=$tie"; }
-
-{ my $x; tiex $x if $tie; $x <<= 1;  ok uninitialized, "<<=$tie"; }
-{ my $x; tiex $x if $tie; $x >>= 1;  ok uninitialized, ">>=$tie"; }
-
-{ my $x; tiex $x if $tie; $x &= "x"; ok uninitialized, "&=$tie, string"; }
-
-{ local $TODO = $tie && '[perl #17809] pp_bit_or & pp_bit_xor';
-    { my $x; tiex $x if $tie; $x |= "x"; ok ! uninitialized, "|=$tie, string"; }
-    { my $x; tiex $x if $tie; $x ^= "x"; ok ! uninitialized, "^=$tie, string"; }
-}
-
-{ use integer;
-
-{ local $TODO = $tie && '[perl #17809] pp_i_add & pp_i_subtract';
-    { my $x; tiex $x if $tie; $x += 1; ok ! uninitialized, "+=$tie, int"; }
-    { my $x; tiex $x if $tie; $x -= 1; ok ! uninitialized, "-=$tie, int"; }
-}
-
-{ my $x; tiex $x if $tie; $x *= 1; ok uninitialized, "*=$tie, int"; }
-{ my $x; tiex $x if $tie; $x /= 1; ok uninitialized, "/=$tie, int"; }
-{ my $x; tiex $x if $tie; $x %= 1; ok uninitialized, "\%=$tie, int"; }
-
-{ my $x; tiex $x if $tie; $x ++;   ok ! uninitialized, "postinc$tie, int"; }
-{ my $x; tiex $x if $tie; $x --;   ok ! uninitialized, "postdec$tie, int"; }
-{ my $x; tiex $x if $tie; ++ $x;   ok ! uninitialized, "preinc$tie, int"; }
-{ my $x; tiex $x if $tie; -- $x;   ok ! uninitialized, "predec$tie, int"; }
-
-} # end of use integer;
-
-} # end of for $tie
-
-is $warn, '', "no spurious warnings";
+done_testing();

@@ -96,7 +96,7 @@ cc=${cc:-cc}
 ccflags="$ccflags -D_ALL_SOURCE -D_ANSI_C_SOURCE -D_POSIX_SOURCE"
 case "$cc" in
     *gcc*) ;;
-    *) ccflags="$ccflags -qmaxmem=-1 -qnoansialias" ;;
+    *) ccflags="$ccflags -qmaxmem=-1 -qnoansialias -qlanglvl=extc99" ;;
     esac
 nm_opt='-B'
 
@@ -245,13 +245,9 @@ case "$usethreads" in
 	    cc_r) 
 	      ;;
 	    xlc_r) 
-	      # for -qlonglong
-	      ccflags="$ccflags -qlanglvl=extended"
 	      ;;
 	    # we do not need the C++ compiler
 	    xlC_r) 
-	      # for -qlonglong
-	      ccflags="$ccflags -qlanglvl=extended"
 	      cc=xlc_r 
 	      ;;
 	    '') 
@@ -272,13 +268,9 @@ case "$usethreads" in
     *)
 	case "$cc" in
 	    xlc) 
-	      # for -qlonglong
-	      ccflags="$ccflags -qlanglvl=extended"
 	      ;;
 	    # we do not need the C++ compiler
 	    xlC) 
-	      # for -qlonglong
-	      ccflags="$ccflags -qlanglvl=extended"
 	      cc=xlc 
 	      ;;
 	    *)
@@ -348,6 +340,9 @@ libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@
 		    $define|true|[yY]*) cc="$cc -q64"	;;
 		    *)			cc="$cc -q32"	;;
 		    esac
+                # Some 32-bit getconfs will set ccflags to include -qlonglong
+                # but that's no longer needed with an explicit -qextc99.
+                ccflags="`echo $ccflags | sed -e 's@ -qlonglong@@`"
 		;;
 	    *)  # Remove xlc-specific -qflags.
 		ccflags="`echo $ccflags | sed -e 's@ -q[^ ]*@ @g' -e 's@^-q[^ ]* @@g'`"

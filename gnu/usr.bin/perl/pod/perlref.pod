@@ -24,7 +24,7 @@ Hard references are smart--they keep track of reference counts for you,
 automatically freeing the thing referred to when its reference count goes
 to zero.  (Reference counts for values in self-referential or
 cyclic data structures may not go to zero without a little help; see
-L<perlobj/"Two-Phased Garbage Collection"> for a detailed explanation.)
+L</"Circular References"> for a detailed explanation.)
 If that thing happens to be an object, the object is destructed.  See
 L<perlobj> for more about objects.  (In a sense, everything in Perl is an
 object, but we usually reserve the word for references to objects that
@@ -50,6 +50,19 @@ principle: Perl does no implicit referencing or dereferencing.  When a
 scalar is holding a reference, it always behaves as a simple scalar.  It
 doesn't magically start being an array or hash or subroutine; you have to
 tell it explicitly to do so, by dereferencing it.
+
+References are easy to use in Perl.  There is just one overriding
+principle: in general, Perl does no implicit referencing or dereferencing.
+When a scalar is holding a reference, it always behaves as a simple scalar.
+It doesn't magically start being an array or hash or subroutine; you have to
+tell it explicitly to do so, by dereferencing it.
+
+That said, be aware that Perl version 5.14 introduces an exception
+to the rule, for syntactic convenience.  Experimental array and hash container
+function behavior allows array and hash references to be handled by Perl as
+if they had been explicitly syntactically dereferenced.  See
+L<perl5140delta/"Syntactical Enhancements">
+and L<perlfunc> for details.
 
 =head2 Making References
 X<reference, creation> X<referencing>
@@ -458,6 +471,58 @@ as:
 
     print "That yields ${\($n + 5)} widgets\n";
 
+=head2 Circular References
+X<circular reference> X<reference, circular>
+
+It is possible to create a "circular reference" in Perl, which can lead
+to memory leaks. A circular reference occurs when two references
+contain a reference to each other, like this:
+
+    my $foo = {};
+    my $bar = { foo => $foo };
+    $foo->{bar} = $bar;
+
+You can also create a circular reference with a single variable:
+
+    my $foo;
+    $foo = \$foo;
+
+In this case, the reference count for the variables will never reach 0,
+and the references will never be garbage-collected. This can lead to
+memory leaks.
+
+Because objects in Perl are implemented as references, it's possible to
+have circular references with objects as well. Imagine a TreeNode class
+where each node references its parent and child nodes. Any node with a
+parent will be part of a circular reference.
+
+You can break circular references by creating a "weak reference". A
+weak reference does not increment the reference count for a variable,
+which means that the object can go out of scope and be destroyed. You
+can weaken a reference with the C<weaken> function exported by the
+L<Scalar::Util> module.
+
+Here's how we can make the first example safer:
+
+    use Scalar::Util 'weaken';
+
+    my $foo = {};
+    my $bar = { foo => $foo };
+    $foo->{bar} = $bar;
+
+    weaken $foo->{bar};
+
+The reference from C<$foo> to C<$bar> has been weakened. When the
+C<$bar> variable goes out of scope, it will be garbage-collected. The
+next time you look at the value of the C<< $foo->{bar} >> key, it will
+be C<undef>.
+
+This action at a distance can be confusing, so you should be careful
+with your use of weaken. You should weaken the reference in the
+variable that will go out of scope I<first>. That way, the longer-lived
+variable will contain the expected reference until it goes out of
+scope.
+
 =head2 Symbolic references
 X<reference, symbolic> X<reference, soft>
 X<symbolic reference> X<soft reference>
@@ -510,16 +575,16 @@ variables, which are all "global" to the package.
 
 =head2 Not-so-symbolic references
 
-A new feature contributing to readability in perl version 5.001 is that the
-brackets around a symbolic reference behave more like quotes, just as they
-always have within a string.  That is,
+Since Perl verion 5.001, brackets around a symbolic reference can simply
+serve to isolate an identifier or variable name from the rest of an
+expression, just as they always have within a string.  For example,
 
     $push = "pop on ";
     print "${push}over";
 
 has always meant to print "pop on over", even though push is
-a reserved word.  This has been generalized to work the same outside
-of quotes, so that
+a reserved word.  In 5.001, this was generalized to work the same
+without the enclosing double quotes, so that
 
     print ${push} . "over";
 
@@ -536,9 +601,9 @@ using strict refs:
     ${ bareword };	# Okay, means $bareword.
     ${ "bareword" };	# Error, symbolic reference.
 
-Similarly, because of all the subscripting that is done using single
-words, we've applied the same rule to any bareword that is used for
-subscripting a hash.  So now, instead of writing
+Similarly, because of all the subscripting that is done using single words,
+the same rule applies to any bareword that is used for subscripting a hash.
+So now, instead of writing
 
     $array{ "aaa" }{ "bbb" }{ "ccc" }
 
@@ -682,5 +747,5 @@ Some pathological examples of the use of references can be found
 in the F<t/op/ref.t> regression test in the Perl source directory.
 
 See also L<perldsc> and L<perllol> for how to use references to create
-complex data structures, and L<perltoot>, L<perlobj>, and L<perlbot>
+complex data structures, and L<perlootut> and L<perlobj>
 for how to use them to create objects.

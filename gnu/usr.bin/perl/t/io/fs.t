@@ -7,7 +7,6 @@ BEGIN {
 }
 
 use Config;
-use File::Spec::Functions;
 
 my $Is_VMSish = ($^O eq 'VMS');
 
@@ -66,7 +65,7 @@ else {
     `rm -f $tmpdir 2>/dev/null; mkdir $tmpdir 2>/dev/null`;
 }
 
-chdir catdir(curdir(), $tmpdir);
+chdir $tmpdir;
 
 `/bin/rm -rf a b c x` if -x '/bin/rm';
 
@@ -424,7 +423,7 @@ SKIP: {
     # this works on win32 only, because fs isn't casesensitive
     ok(-e 'X', "rename working");
 
-    1 while unlink 'X';
+    unlink_all 'X';
     chdir $wd || die "Can't cd back to $wd";
 }
 

@@ -218,7 +218,7 @@ sub get_hostname
    print <<"EDQ";
 
 *** ERROR:
-    Hostname `$host' does not seem to exist, please enter again
+    Hostname '$host' does not seem to exist, please enter again
     or a single space to clear any default
 
 EDQ
@@ -684,9 +684,9 @@ $cfg{'inet_domain'} = ($ans =~ /(\S+)/)[0];
 $msg = <<EDQ;
 
 If you specified some default hosts above, it is possible for me to
-do some basic tests when you run `make test'
+do some basic tests when you run 'make test'
 
-This will cause `make test' to be quite a bit slower and, if your
+This will cause 'make test' to be quite a bit slower and, if your
 internet connection is via dialup, will require you to be on-line
 unless the hosts are local.
 
@@ -714,7 +714,7 @@ print "\n";
 #---------------------------------------------------------------------------
 
 my $fh = IO::File->new($libnet_cfg_out, "w") or
-	die "Cannot create `$libnet_cfg_out': $!";
+	die "Cannot create '$libnet_cfg_out': $!";
 
 print "Writing $libnet_cfg_out\n";
 

@@ -123,7 +123,7 @@ case "$ldlibpthname" in
 '') ldlibpthname=LIBPATH ;;
 esac
 
-# The folowing should always be used
+# The following should always be used
 d_oldpthreads='define'
 
 # Header files to include.

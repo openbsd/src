@@ -12,16 +12,16 @@ blib - Use MakeMaker's uninstalled version of a package
 
 =head1 DESCRIPTION
 
-Looks for MakeMaker-like I<'blib'> directory structure starting in 
+Looks for MakeMaker-like I<'blib'> directory structure starting in
 I<dir> (or current directory) and working back up to five levels of '..'.
 
 Intended for use on command line with B<-M> option as a way of testing
 arbitrary scripts against an uninstalled version of a package.
 
-However it is possible to : 
+However it is possible to :
 
- use blib; 
- or 
+ use blib;
+ or
  use blib '..';
 
 etc. if you really must.
@@ -40,7 +40,7 @@ use Cwd;
 use File::Spec;
 
 use vars qw($VERSION $Verbose);
-$VERSION = '1.04';
+$VERSION = '1.06';
 $Verbose = 0;
 
 sub import
@@ -67,21 +67,18 @@ sub import
    $dir = File::Spec->curdir unless ($dir);
    die "$dir is not a directory\n" unless (-d $dir);
   }
+
+ # detaint: if the user asked for blib, s/he presumably knew
+ # what s/he wanted
+ $dir = $1 if $dir =~ /^(.*)$/;
+
  my $i = 5;
  my($blib, $blib_lib, $blib_arch);
  while ($i--)
   {
    $blib = File::Spec->catdir($dir, "blib");
    $blib_lib = File::Spec->catdir($blib, "lib");
-
-   if ($^O eq 'MacOS')
-    {
-     $blib_arch = File::Spec->catdir($blib_lib, $MacPerl::Architecture);
-    }
-   else
-    {
-     $blib_arch = File::Spec->catdir($blib, "arch");
-    }
+   $blib_arch = File::Spec->catdir($blib, "arch");
 
    if (-d $blib && -d $blib_arch && -d $blib_lib)
     {

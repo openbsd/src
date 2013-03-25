@@ -3,10 +3,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
+    require "test.pl";
 }
 
-require "test.pl";
-plan( tests => 39 );
+plan( tests => 47 );
 
 $x = 10000;
 cmp_ok(0 + ++$x - 1,'==',10000,'scalar ++x - 1');
@@ -55,3 +55,11 @@ cmp_ok(++($foo = 'zz'), 'eq','aaa','zzz incr aaa');
 cmp_ok(++($foo = 'A99'),'eq','B00','A99 incr B00');
 cmp_ok(++($foo = 'zi'), 'eq','zj','zi incr zj (EBCDIC i,j non-contiguous check)');
 cmp_ok(++($foo = 'zr'), 'eq','zs','zr incr zs (EBCDIC r,s non-contiguous check)');
+
+# test with glob copies
+
+for(qw '$x++ ++$x $x-- --$x') {
+  my $x = *foo;
+  ok eval "$_; 1", "$_ does not die on a glob copy";
+  is $x, /-/ ? -1 : 1, "result of $_ on a glob copy";
+}

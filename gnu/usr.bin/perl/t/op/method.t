@@ -1,4 +1,4 @@
-#!./perl
+#!./perl -w
 
 #
 # test method calls and autoloading.
@@ -10,7 +10,10 @@ BEGIN {
     require "test.pl";
 }
 
-print "1..79\n";
+use strict;
+no warnings 'once';
+
+plan(tests => 95);
 
 @A::ISA = 'B';
 @B::ISA = 'C';
@@ -19,9 +22,9 @@ sub C::d {"C::d"}
 sub D::d {"D::d"}
 
 # First, some basic checks of method-calling syntax:
-$obj = bless [], "Pack";
+my $obj = bless [], "Pack";
 sub Pack::method { shift; join(",", "method", @_) }
-$mname = "method";
+my $mname = "method";
 
 is(Pack->method("a","b","c"), "method,a,b,c");
 is(Pack->$mname("a","b","c"), "method,a,b,c");
@@ -73,15 +76,20 @@ is(A->d, "D::d");
 
 is(A->d, "D::d");		# Back to previous state
 
-eval 'sub B::d {"B::d2"}';	# Import now.
+eval 'no warnings "redefine"; sub B::d {"B::d2"}';	# Import now.
 is(A->d, "B::d2");		# Update hash table;
 
 # What follows is hardly guarantied to work, since the names in scripts
-# are already linked to "pruned" globs. Say, `undef &B::d' if it were
-# after `delete $B::{d}; sub B::d {}' would reach an old subroutine.
+# are already linked to "pruned" globs. Say, 'undef &B::d' if it were
+# after 'delete $B::{d}; sub B::d {}' would reach an old subroutine.
 
 undef &B::d;
 delete $B::{d};
+is(A->d, "C::d");
+
+eval 'sub B::d {"B::d2.5"}';
+A->d;				# Update hash table;
+my $glob = \delete $B::{d};	# non-void context; hang on to the glob
 is(A->d, "C::d");		# Update hash table;
 
 eval 'sub B::d {"B::d3"}';	# Import now.
@@ -103,9 +111,11 @@ is(A->d, "C::d");
 }
 is(A->d, "C::d");
 
-*A::x = *A::d;			# See if cache incorrectly follows synonyms
+*A::x = *A::d;
 A->d;
-is(eval { A->x } || "nope", "nope");
+is(eval { A->x } || "nope", "nope", 'cache should not follow synonyms');
+
+my $counter;
 
 eval <<'EOF';
 sub C::e;
@@ -145,25 +155,36 @@ is(Y->f(), "B: In Y::f, 3");	# Which sticks
 # know that you broke some old construction. Feel free to rewrite the test
 # if your patch breaks it.
 
+{
+no warnings 'redefine';
 *B::AUTOLOAD = sub {
+  use warnings;
   my $c = ++$counter;
-  my $method = $AUTOLOAD; 
-  *$AUTOLOAD = sub { "new B: In $method, $c" };
-  goto &$AUTOLOAD;
+  my $method = $::AUTOLOAD; 
+  no strict 'refs';
+  *$::AUTOLOAD = sub { "new B: In $method, $c" };
+  goto &$::AUTOLOAD;
 };
+}
 
 is(A->eee(), "new B: In A::eee, 4");	# We get a correct $autoload
 is(A->eee(), "new B: In A::eee, 4");	# Which sticks
 
-# this test added due to bug discovery
-is(defined(@{"unknown_package::ISA"}) ? "defined" : "undefined", "undefined");
+{
+    no strict 'refs';
+    no warnings 'deprecated';
+    # this test added due to bug discovery (in 5.004_04, fb73857aa0bfa8ed)
+    # Possibly kill this test now that defined @::array is finally properly
+    # deprecated?
+    is(defined(@{"unknown_package::ISA"}) ? "defined" : "undefined", "undefined");
+}
 
 # test that failed subroutine calls don't affect method calls
 {
     package A1;
     sub foo { "foo" }
     package A2;
-    @ISA = 'A1';
+    @A2::ISA = 'A1';
     package main;
     is(A2->foo(), "foo");
     is(do { eval 'A2::foo()'; $@ ? 1 : 0}, 1);
@@ -181,8 +202,9 @@ is(defined(@{"unknown_package::ISA"}) ? "defined" : "undefined", "undefined");
 #  	      $@ =~ /^\QCan't locate object method "foo" via package "Config" at/ ? 1 : $@}, 1);
 #  }
 
-
 # test error messages if method loading fails
+my $e;
+
 eval '$e = bless {}, "E::A"; E::A->foo()';
 like ($@, qr/^\QCan't locate object method "foo" via package "E::A" at/);
 eval '$e = bless {}, "E::B"; $e->foo()';  
@@ -192,7 +214,7 @@ like ($@, qr/^\QCan't locate object method "foo" via package "E::C" (perhaps /);
 
 eval 'UNIVERSAL->E::D::foo()';
 like ($@, qr/^\QCan't locate object method "foo" via package "E::D" (perhaps /);
-eval '$e = bless {}, "UNIVERSAL"; $e->E::E::foo()';
+eval 'my $e = bless {}, "UNIVERSAL"; $e->E::E::foo()';
 like ($@, qr/^\QCan't locate object method "foo" via package "E::E" (perhaps /);
 
 $e = bless {}, "E::F";  # force package to exist
@@ -237,7 +259,7 @@ ok(1);
 # Bug ID 20010902.002
 is(
     eval q[
-	$x = 'x';
+	my $x = 'x'; # Lexical or package variable, 5.6.1 panics.
 	sub Foo::x : lvalue { $x }
 	Foo->$x = 'ok';
     ] || $@, 'ok'
@@ -305,3 +327,80 @@ EOT
     );
 }
 
+# Test for calling a method on a packag name return by a magic variable
+sub TIESCALAR{bless[]}
+sub FETCH{"main"}
+my $kalled;
+sub bolgy { ++$kalled; }
+tie my $a, "";
+$a->bolgy;
+is $kalled, 1, 'calling a class method via a magic variable';
+
+{
+    package NulTest;
+    sub method { 1 }
+
+    package main;
+    eval {
+        NulTest->${ \"method\0Whoops" };
+    };
+    like $@, qr/Can't locate object method "method\0Whoops" via package "NulTest" at/,
+            "method lookup is nul-clean";
+
+    *NulTest::AUTOLOAD = sub { our $AUTOLOAD; return $AUTOLOAD };
+
+    like(NulTest->${ \"nul\0test" }, "nul\0test", "AUTOLOAD is nul-clean");
+}
+
+
+{
+    fresh_perl_is(
+    q! sub T::DESTROY { $x = $_[0]; } bless [], "T";!,
+    "DESTROY created new reference to dead object 'T' during global destruction.",
+    {},
+	"DESTROY creating a new reference to the object generates a warning."
+    );
+}
+
+# [perl #43663]
+{
+    $::{"Just"} = \1;
+    sub Just::a_japh { return "$_[0] another Perl hacker," }
+    is eval { "Just"->a_japh }, "Just another Perl hacker,",
+	'constants do not interfere with class methods';
+}
+
+# [perl #109264]
+{
+    no strict 'vars';
+    sub bliggles { 1 }
+    sub lbiggles :lvalue { index "foo", "f" }
+    ok eval { main->bliggles(my($foo,$bar)) },
+      'foo->bar(my($foo,$bar)) is not called in lvalue context';
+    ok eval { main->bliggles(our($foo,$bar)) },
+      'foo->bar(our($foo,$bar)) is not called in lvalue context';
+    ok eval { main->bliggles(local($foo,$bar)) },
+      'foo->bar(local($foo,$bar)) is not called in lvalue context';
+    ok eval { () = main->lbiggles(my($foo,$bar)); 1 },
+      'foo->lv(my($foo,$bar)) is not called in lvalue context';
+    ok eval { () = main->lbiggles(our($foo,$bar)); 1 },
+      'foo->lv(our($foo,$bar)) is not called in lvalue context';
+    ok eval { () = main->lbiggles(local($foo,$bar)); 1 },
+      'foo->lv(local($foo,$bar)) is not called in lvalue context';
+}
+
+{
+   # AUTOLOAD and DESTROY can be declared without a leading sub,
+   # like BEGIN and friends.
+   package NoSub;
+
+   eval 'AUTOLOAD { our $AUTOLOAD; return $AUTOLOAD }';
+   ::ok( !$@, "AUTOLOAD without a leading sub is legal" );
+
+   eval "DESTROY { ::pass( q!DESTROY without a leading sub is legal and gets called! ) }";
+   {
+      ::ok( NoSub->can("AUTOLOAD"), "...and sets up an AUTOLOAD normally" );
+      ::is( eval { NoSub->bluh }, "NoSub::bluh", "...which works as expected" );
+   }
+   { bless {}, "NoSub"; }
+}

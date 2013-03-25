@@ -26,6 +26,14 @@ esac
 
 echo "Extracting x2p/Makefile (with variable substitutions)"
 rm -f Makefile
+
+# The .PL extractions use the Cwd extension.  For statically-built
+# perls, we need perl, not just miniperl.
+case "$usedl" in
+    define) perl="../miniperl" ;;
+    *)      perl="../perl" ;;
+esac
+
 cat >Makefile <<!GROK!THIS!
 # $RCSfile: Makefile.SH,v $$Revision: 4.1 $$Date: 92/08/07 18:29:07 $
 #
@@ -34,9 +42,6 @@ cat >Makefile <<!GROK!THIS!
 CC = $cc
 BYACC = $byacc
 LDFLAGS = $ldflags
-# XXX Perl malloc temporarily unusable (declaration collisions with stdlib.h)
-#mallocsrc = $mallocsrc
-#mallocobj = $mallocobj
 shellflags = $shellflags
 
 libs = $perllibs
@@ -63,6 +68,7 @@ OPTIMIZE = $optimize
 .SUFFIXES: .c \$(OBJ_EXT)
 
 RUN = $run
+PERL = $perl
 
 !GROK!THIS!
 
@@ -92,9 +98,9 @@ addedbyconf = $(shextract) $(plextract)
 
 h = EXTERN.h INTERN.h ../config.h ../handy.h hash.h a2p.h str.h util.h
 
-c = hash.c $(mallocsrc) str.c util.c walk.c
+c = hash.c str.c util.c walk.c
 
-obj = hash$(OBJ_EXT) $(mallocobj) str$(OBJ_EXT) util$(OBJ_EXT) walk$(OBJ_EXT)
+obj = hash$(OBJ_EXT) str$(OBJ_EXT) util$(OBJ_EXT) walk$(OBJ_EXT)
 
 lintflags = -phbvxac
 
@@ -147,7 +153,7 @@ distclean: veryclean
 
 realclean: clean
 	-rmdir .depending
-	rm -f core $(addedbyconf) all malloc.c
+	rm -f core $(addedbyconf) all
 	rm -f $(FIRSTMAKEFILE) $(FIRSTMAKEFILE).old makefile.old
 
 veryclean: realclean
@@ -161,7 +167,7 @@ veryclean: realclean
 lint:
 	lint $(lintflags) $(defs) $(c) > a2p.fuzz
 
-depend: $(mallocsrc) ../makedepend
+depend: ../makedepend
 	sh ../makedepend MAKE=$(MAKE)
 
 clist:
@@ -173,22 +179,12 @@ hlist:
 shlist:
 	echo $(sh) | tr ' ' $(TRNL) >.shlist
 
-# These should be automatically generated
-
 $(plextract):
-	$(RUN) ../miniperl -I../lib $@.PL
+	$(RUN) $(PERL) -I../lib $@.PL
 
-find2perl: find2perl.PL
+find2perl: find2perl.PL ../config.sh
 
-s2p: s2p.PL
-
-malloc.c: ../malloc.c
-	rm -f malloc.c
-	sed <../malloc.c >malloc.c \
-	    -e 's/"EXTERN.h"/"..\/EXTERN.h"/' \
-	    -e 's/"perl.h"/"..\/perl.h"/' \
-	    -e 's/my_exit/exit/' \
-	    -e 's/MUTEX_[A-Z_]*(&PL_malloc_mutex);//'
+s2p: s2p.PL ../config.sh
 
 # AUTOMATICALLY GENERATED MAKE DEPENDENCIES--PUT NOTHING BELOW THIS LINE
 $(obj):

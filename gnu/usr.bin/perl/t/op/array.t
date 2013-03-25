@@ -3,9 +3,8 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = ('.', '../lib');
+    require 'test.pl';
 }
-
-require 'test.pl';
 
 plan (127);
 
@@ -24,23 +23,6 @@ is(join('',@ary), '1234');
 {
     no warnings 'deprecated';
 
-$[ = 1;
-@ary = (1,2,3,4,5);
-is(join('',@ary), '12345');
-
-$tmp = $ary[$#ary]; --$#ary;
-is($tmp, 5);
-# Must do == here beacuse $[ isn't 0
-ok($#ary == 4);
-is(join('',@ary), '1234');
-
-is($ary[5], undef);
-
-$#ary += 1;	# see if element 5 gone for good
-ok($#ary == 5);
-ok(!defined $ary[5]);
-
-$[ = 0;
 @foo = ();
 $r = join(',', $#foo, @foo);
 is($r, "-1");
@@ -254,29 +236,13 @@ sub foo { "a" }
 @foo=(foo())[0,0];
 is ($foo[1], "a");
 
-# $[ should have the same effect regardless of whether the aelem
-#    op is optimized to aelemfast.
-
-
-
-sub tary {
-  no warnings 'deprecated';
-  local $[ = 10;
-  my $five = 5;
-  is ($tary[5], $tary[$five]);
-}
-
-@tary = (0..50);
-tary();
-
-
 # bugid #15439 - clearing an array calls destructors which may try
 # to modify the array - caused 'Attempt to free unreferenced scalar'
 
 my $got = runperl (
 	prog => q{
 		    sub X::DESTROY { @a = () }
-		    @a = (bless {}, 'X');
+		    @a = (bless {}, q{X});
 		    @a = ();
 		},
 	stderr => 1
@@ -427,6 +393,13 @@ sub test_arylen {
     (our $y, our $z) = ($x,$y);
     is("$x $y $z", "1 1 2");
 }
+{
+    # AASSIGN_COMMON detection with logical operators
+    my $true = 1;
+    our($x,$y,$z) = (1..3);
+    (our $y, our $z) = $true && ($x,$y);
+    is("$x $y $z", "1 1 2");
+}
 
 # [perl #70171]
 {
@@ -440,6 +413,62 @@ sub test_arylen {
   "@y", "1 2 3 4",
   'bug 70171 (self-assignment via my @x = @$x)'
  );
+}
+
+# [perl #70171], [perl #82110]
+{
+    my ($i, $ra, $rh);
+  again:
+    my @a = @$ra; # common assignment on 2nd attempt
+    my %h = %$rh; # common assignment on 2nd attempt
+    @a = qw(1 2 3 4);
+    %h = qw(a 1 b 2 c 3 d 4);
+    $ra = \@a;
+    $rh = \%h;
+    goto again unless $i++;
+
+    is("@a", "1 2 3 4",
+	'bug 70171 (self-assignment via my @x = @$x) - goto variant'
+    );
+    is(
+	join(" ", map +($_,$h{$_}), sort keys %h), "a 1 b 2 c 3 d 4",
+	'bug 70171 (self-assignment via my %x = %$x) - goto variant'
+    );
+}
+
+
+*trit = *scile;  $trit[0];
+ok(1, 'aelem_fast on a nonexistent array does not crash');
+
+# [perl #107440]
+sub A::DESTROY { $::ra = 0 }
+$::ra = [ bless [], 'A' ];
+undef @$::ra;
+pass 'no crash when freeing array that is being undeffed';
+$::ra = [ bless [], 'A' ];
+@$::ra = ('a'..'z');
+pass 'no crash when freeing array that is being cleared';
+
+# [perl #85670] Copying magic to elements
+SKIP: {
+    skip "no Scalar::Util::weaken on miniperl", 1, if is_miniperl;
+    require Scalar::Util;
+    package glelp {
+	Scalar::Util::weaken ($a = \@ISA);
+	@ISA = qw(Foo);
+	Scalar::Util::weaken ($a = \$ISA[0]);
+	::is @ISA, 1, 'backref magic is not copied to elements';
+    }
+}
+package peen {
+    $#ISA = -1;
+    @ISA = qw(Foo);
+    $ISA[0] = qw(Sphare);
+
+    sub Sphare::pling { 'pling' }
+
+    ::is eval { pling peen }, 'pling',
+	'arylen_p magic does not stop isa magic from being copied';
 }
 
 

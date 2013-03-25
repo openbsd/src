@@ -11,14 +11,14 @@ package Pod::Checker;
 use strict;
 
 use vars qw($VERSION @ISA @EXPORT %VALID_COMMANDS %VALID_SEQUENCES);
-$VERSION = '1.45';  ## Current version of this package
+$VERSION = '1.51';  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 use Pod::ParseUtils; ## for hyperlinks and lists
 
 =head1 NAME
 
-Pod::Checker, podchecker - check pod documents for syntax errors
+Pod::Checker, podchecker() - check pod documents for syntax errors
 
 =head1 SYNOPSIS
 
@@ -140,6 +140,14 @@ a time.
 
 There is no specification of the formatter after the C<=for> command.
 
+=item * Apparent command =foo not preceded by blank line
+
+A command which has ended up in the middle of a paragraph or other command,
+such as
+
+  =item one
+  =item two <-- bad
+
 =item * unresolved internal link I<NAME>
 
 The given link to I<NAME> does not have a matching node in the current
@@ -188,6 +196,14 @@ The index entry specified contains nothing but whitespace.
 =item * Spurious text after =pod / =cut
 
 The commands C<=pod> and C<=cut> do not take any arguments.
+
+=item * Spurious =cut command
+
+A C<=cut> command was found without a preceding POD paragraph.
+
+=item * Spurious =pod command
+
+A C<=pod> command was found after a preceding POD paragraph.
 
 =item * Spurious character(s) after =back
 
@@ -813,6 +829,8 @@ sub command {
     else { # found a valid command
         $self->{_commands}++; # delete this line if below is enabled again
 
+	$self->_commands_in_paragraphs($paragraph, $pod_para);
+
         ##### following check disabled due to strong request
         #if(!$self->{_commands}++ && $cmd !~ /^head/) {
         #    $self->poderror({ -line => $line, -file => $file,
@@ -1022,6 +1040,16 @@ sub command {
                       -severity => 'ERROR',
                       -msg => "Spurious text after =$cmd"});
             }
+	    if($cmd eq 'cut' && (!$self->{_PREVIOUS} || $self->{_PREVIOUS} eq 'cut')) {
+                $self->poderror({ -line => $line, -file => $file,
+                      -severity => 'ERROR',
+                      -msg => "Spurious =cut command"});
+	    }
+	    if($cmd eq 'pod' && $self->{_PREVIOUS} && $self->{_PREVIOUS} ne 'cut') {
+                $self->poderror({ -line => $line, -file => $file,
+                      -severity => 'ERROR',
+                      -msg => "Spurious =pod command"});
+	    }
         }
     $self->{_commands_in_head}++;
     ## Check the interior sequences in the command-text
@@ -1099,7 +1127,7 @@ sub _check_ptree {
             $text .= $self->_check_ptree($contents, $line, $file, "$nestlist$cmd");
             next;
         }
-        if($nestlist =~ /$cmd/) {
+        if(index($nestlist, $cmd) != -1) {
             $self->poderror({ -line => $line, -file => $file,
                  -severity => 'WARNING',
                  -msg => "nested commands $cmd<...$cmd<...>...>"});
@@ -1209,6 +1237,7 @@ sub verbatim {
     my ($self, $paragraph, $line_num, $pod_para) = @_;
 
     $self->_preproc_par($paragraph);
+    $self->_commands_in_paragraphs($paragraph, $pod_para);
 
     if($self->{_current_head1} eq 'NAME') {
         my ($file, $line) = $pod_para->file_line;
@@ -1224,6 +1253,7 @@ sub textblock {
     my ($file, $line) = $pod_para->file_line;
 
     $self->_preproc_par($paragraph);
+    $self->_commands_in_paragraphs($paragraph, $pod_para);
 
     # skip this paragraph if in a =begin block
     unless($self->{_have_begin}) {
@@ -1250,6 +1280,35 @@ sub _preproc_par
     }
 }
 
+# look for =foo commands at the start of a line within a paragraph, as for
+# instance the following which prints as "* one =item two".
+#
+#     =item one
+#     =item two
+#
+# Examples of =foo written in docs are expected to be indented in a verbatim
+# or marked up C<=foo> so won't be caught.  A double-angle C<< =foo >> could
+# have the =foo at the start of a line, but that should be unlikely and is
+# easily enough dealt with by not putting a newline after the C<<.
+#
+sub _commands_in_paragraphs {
+  my ($self, $str, $pod_para) = @_;
+  while ($str =~ /[^\n]\n=([a-z][a-z0-9]+)/sg) {
+    my $cmd = $1;
+    my $pos = pos($str);
+    if ($VALID_COMMANDS{$cmd}) {
+      my ($file, $line) = $pod_para->file_line;
+      my $part = substr($str, 0, $pos);
+      $line += ($part =~ tr/\n//);  # count of newlines
+
+      $self->poderror
+        ({ -line => $line, -file => $file,
+           -severity => 'ERROR',
+           -msg => "Apparent command =$cmd not preceded by blank line"});
+    }
+  }
+}
+
 1;
 
 __END__
@@ -1263,6 +1322,8 @@ Marek Rouchal E<lt>marekr@cpan.orgE<gt>
 
 Based on code for B<Pod::Text::pod2text()> written by
 Tom Christiansen E<lt>tchrist@mox.perl.comE<gt>
+
+B<Pod::Checker> is part of the L<Pod::Parser> distribution.
 
 =cut
 

@@ -730,7 +730,7 @@ for details. [561]
 
 =item *
 
-L<utime> now supports C<utime undef, undef, @files> to change the
+L<perlfunc/utime> now supports C<utime undef, undef, @files> to change the
 file timestamps to the current time.
 
 =item *

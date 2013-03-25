@@ -33,22 +33,15 @@ my %abs = (
 	   '../cpan/AutoLoader' => 1,
 	   '../cpan/CPAN' => 1,
 	   '../cpan/Class-ISA' => 1,
-	   '../cpan/Cwd' => 1,
 	   '../cpan/Devel-PPPort' => 1,
 	   '../cpan/Encode' => 1,
-	   '../cpan/ExtUtils-Command' => 1,
 	   '../cpan/ExtUtils-Constant' => 1,
 	   '../cpan/ExtUtils-MakeMaker' => 1,
-	   '../cpan/ExtUtils-Manifest' => 1,
-	   '../cpan/ExtUtils-ParseXS' => 1,
 	   '../cpan/File-Fetch' => 1,
 	   '../cpan/IPC-Cmd' => 1,
 	   '../cpan/IPC-SysV' => 1,
 	   '../cpan/Locale-Codes' => 1,
 	   '../cpan/Log-Message' => 1,
-	   '../cpan/Math-BigInt' => 1,
-	   '../cpan/Math-BigRat' => 1,
-	   '../cpan/Math-Complex' => 1,
 	   '../cpan/Module-Build' => 1,
 	   '../cpan/Module-Load' => 1,
 	   '../cpan/Module-Load-Conditional' => 1,
@@ -58,12 +51,15 @@ my %abs = (
 	   '../cpan/Pod-Simple' => 1,
 	   '../cpan/Term-UI' => 1,
 	   '../cpan/Test-Simple' => 1,
-	   '../cpan/Tie-File' => 1,
-	   '../cpan/bignum' => 1,
 	   '../cpan/podlators' => 1,
+	   '../dist/Cwd' => 1,
+	   '../dist/ExtUtils-Command' => 1,
 	   '../dist/ExtUtils-Install' => 1,
+	   '../dist/ExtUtils-Manifest' => 1,
+	   '../dist/ExtUtils-ParseXS' => 1,
+	   '../dist/Tie-File' => 1,
 	  );
-	      
+
 my %temp_no_core =
     ('../cpan/B-Debug' => 1,
      '../cpan/Compress-Raw-Bzip2' => 1,
@@ -71,38 +67,26 @@ my %temp_no_core =
      '../cpan/Devel-PPPort' => 1,
      '../cpan/Getopt-Long' => 1,
      '../cpan/IO-Compress' => 1,
-     '../cpan/Math-BigInt' => 1,
-     '../cpan/Math-BigRat' => 1,
      '../cpan/MIME-Base64' => 1,
-     '../cpan/NEXT' => 1,
      '../cpan/parent' => 1,
      '../cpan/Parse-CPAN-Meta' => 1,
      '../cpan/Pod-Simple' => 1,
      '../cpan/podlators' => 1,
      '../cpan/Test-Simple' => 1,
      '../cpan/Tie-RefHash' => 1,
-     '../cpan/Time-HiRes' => 1,
      '../cpan/Unicode-Collate' => 1,
      '../cpan/Unicode-Normalize' => 1,
     );
 
-if ($::do_nothing) {
-    return 1;
-}
-
-# Location to put the Valgrind log.
-my $Valgrind_Log = 'current.valgrind';
-
-$| = 1;
-
-# for testing TEST only
-#BEGIN { require '../lib/strict.pm'; "strict"->import() };
-#BEGIN { require '../lib/warnings.pm'; "warnings"->import() };
-
 # delete env vars that may influence the results
 # but allow override via *_TEST env var if wanted
 # (e.g. PERL5OPT_TEST=-d:NYTProf)
-for my $envname (qw(PERL5LIB PERLLIB PERL5OPT)) {
+my @bad_env_vars = qw(
+    PERL5LIB PERLLIB PERL5OPT
+    PERL_YAML_BACKEND PERL_JSON_BACKEND
+);
+
+for my $envname (@bad_env_vars) {
     my $override = $ENV{"${envname}_TEST"};
     if (defined $override) {
 	warn "$0: $envname=$override\n";
@@ -112,6 +96,19 @@ for my $envname (qw(PERL5LIB PERLLIB PERL5OPT)) {
 	delete $ENV{$envname};
     }
 }
+
+if ($::do_nothing) {
+    return 1;
+}
+
+# Location to put the Valgrind log.
+our $Valgrind_Log;
+
+$| = 1;
+
+# for testing TEST only
+#BEGIN { require '../lib/strict.pm'; "strict"->import() };
+#BEGIN { require '../lib/warnings.pm'; "warnings"->import() };
 
 # remove empty elements due to insertion of empty symbols via "''p1'" syntax
 @ARGV = grep($_,@ARGV) if $^O eq 'VMS';
@@ -130,7 +127,6 @@ our $show_elapsed_time = $ENV{HARNESS_TIMER} || 0;
 	$::with_utf8 = 1 if $1 eq 'utf8';
 	$::with_utf16 = 1 if $1 eq 'utf16';
 	$::taintwarn = 1 if $1 eq 'taintwarn';
-	$ENV{PERL_CORE_MINITEST} = 1 if $1 eq 'minitest';
 	if ($1 =~ /^deparse(,.+)?$/) {
 	    $::deparse = 1;
 	    $::deparse_opts = $1;
@@ -164,10 +160,13 @@ if ($ENV{PERL_3LOG}) { # Tru64 third(1) tool, see perlhack
 
 # check leakage for embedders
 $ENV{PERL_DESTRUCT_LEVEL} = 2 unless exists $ENV{PERL_DESTRUCT_LEVEL};
+# check existence of all symbols
+$ENV{PERL_DL_NONLAZY} = 1 unless exists $ENV{PERL_DL_NONLAZY};
 
 $ENV{EMXSHELL} = 'sh';        # For OS/2
 
 if ($show_elapsed_time) { require Time::HiRes }
+my %timings = (); # testname => [@et] pairs if $show_elapsed_time.
 
 my %skip = (
 	    '.' => 1,
@@ -179,20 +178,24 @@ my %skip = (
 	   );
 
 # Roll your own File::Find!
-sub _find_tests {
-    my($dir) = @_;
-    opendir DIR, $dir or die "Trouble opening $dir: $!";
-    foreach my $f (sort { $a cmp $b } readdir DIR) {
-	next if $skip{$f};
+sub _find_tests { our @found=(); push @ARGV, _find_files('\.t$', $_[0]) }
+sub _find_files {
+    my($patt, @dirs) = @_;
+    for my $dir (@dirs) {
+	opendir DIR, $dir or die "Trouble opening $dir: $!";
+	foreach my $f (sort { $a cmp $b } readdir DIR) {
+	    next if $skip{$f};
 
-	my $fullpath = "$dir/$f";
-
-	if (-d $fullpath) {
-	    _find_tests($fullpath);
-	} elsif ($f =~ /\.t$/) {
-	    push @ARGV, $fullpath;
+	    my $fullpath = "$dir/$f";
+	    
+	    if (-d $fullpath) {
+		_find_files($patt, $fullpath);
+	    } elsif ($f =~ /$patt/) {
+		push @found, $fullpath;
+	    }
 	}
     }
+    @found;
 }
 
 
@@ -252,6 +255,8 @@ sub _scan_test {
 		    $testswitch = $testswitch . ',NC';
 		}
 	    }
+	} elsif ($test =~ m!^\.\./lib!) {
+	    $testswitch = '-I.. -MTestInit=U1'; # -T will remove . from @INC
 	} else {
 	    $testswitch = '-I.. -MTestInit';  # -T will remove . from @INC
 	}
@@ -296,19 +301,23 @@ sub _cmd {
         my $redir = $^O eq 'VMS' ? '2>&1' : '';
 
         if ($ENV{PERL_VALGRIND}) {
-            my $valgrind = $ENV{VALGRIND} // 'valgrind';
+            my $perl_supp = $options->{return_dir} ? "$options->{return_dir}/perl.supp" : "perl.supp";
+            my $valgrind_exe = $ENV{VALGRIND} // 'valgrind';
             my $vg_opts = $ENV{VG_OPTS}
-              //  "--suppressions=perl.supp --leak-check=yes "
-                . "--leak-resolution=high --show-reachable=yes "
-                  . "--num-callers=50";
-            $perl = "$valgrind --log-fd=3 $vg_opts $perl";
+              // '--log-fd=3 '
+		  . "--suppressions=$perl_supp --leak-check=yes "
+		  . "--leak-resolution=high --show-reachable=yes "
+                  . "--num-callers=50 --track-origins=yes";
+            $perl = "$valgrind_exe $vg_opts $perl";
             $redir = "3>$Valgrind_Log";
+            if ($options->{run_dir}) {
+                $Valgrind_Log = "$options->{run_dir}/$Valgrind_Log";
+            }
         }
 
         my $args = "$options->{testswitch} $options->{switch} $options->{utf8}";
         $cmd = $perl . _quote_args($args) . " $test $redir";
     }
-
     return $cmd;
 }
 
@@ -396,7 +405,7 @@ sub _tests_from_manifest {
 		my $extension = $2;
 		if (!$::core || $t =~ m!^lib/[a-z]!) {
 		    if (defined $extension) {
-			$extension =~ s!/t$!!;
+			$extension =~ s!/t(:?/\S+)*$!!;
 			# XXX Do I want to warn that I'm skipping these?
 			next if $skip{$extension};
 			my $flat_extension = $extension;
@@ -424,7 +433,10 @@ unless (@ARGV) {
     foreach my $dir (qw(base comp run cmd io re op uni mro)) {
 	_find_tests($dir);
     }
-    _find_tests("lib") unless $::core;
+    unless ($::core) {
+	_find_tests('porting');
+	_find_tests("lib"); 
+    }
     # Config.pm may be broken for make minitest. And this is only a refinement
     # for skipping tests on non-default builds, so it is allowed to fail.
     # What we want to to is make a list of extensions which we did not build.
@@ -454,7 +466,6 @@ unless (@ARGV) {
     push @ARGV, _tests_from_manifest($extensions, $known_extensions);
     unless ($::core) {
 	_find_tests('x2p');
-	_find_tests('porting');
 	_find_tests('japh') if $::torture;
 	_find_tests('t/benchmark') if $::benchmark or $ENV{PERL_BENCHMARK};
     }
@@ -512,22 +523,33 @@ EOT
     }
     my $maxlen = 0;
     foreach (@::path_to_name{@tests}) {
-	s/\.\w+\z/./;
+	s/\.\w+\z/ /; # space gives easy doubleclick to select fname
 	my $len = length ;
 	$maxlen = $len if $len > $maxlen;
     }
     # + 3 : we want three dots between the test name and the "ok"
     my $dotdotdot = $maxlen + 3 ;
-    my $valgrind = 0;
+    my $grind_ct = 0;		# count of non-empty valgrind reports
     my $total_files = @tests;
     my $good_files = 0;
     my $tested_files  = 0;
     my $totmax = 0;
     my %failed_tests;
+    my $toolnm;		# valgrind, cachegrind, perf
 
     while (my $test = shift @tests) {
-        my $test_start_time = $show_elapsed_time ? Time::HiRes::time() : 0;
-
+        my ($test_start_time, @starttimes) = 0;
+	if ($show_elapsed_time) {
+	    $test_start_time = Time::HiRes::time();
+	    # times() reports usage by TEST, but we want usage of each
+	    # testprog it calls, so record accumulated times now,
+	    # subtract them out afterwards.  Ideally, we'd take times
+	    # in BEGIN/END blocks (giving better visibility of self vs
+	    # children of each testprog), but that would require some
+	    # IPC to send results back here, or a completely different
+	    # collection scheme (Storable isnt tuned for incremental use)
+	    @starttimes = times;
+	}
 	if ($test =~ /^$/) {
 	    next;
 	}
@@ -542,13 +564,14 @@ EOT
 	    }
 	}
 	my $te = $::path_to_name{$test} . '.'
-		    x ($dotdotdot - length($::path_to_name{$test}));
+		    x ($dotdotdot - length($::path_to_name{$test})) .' ';
 
 	if ($^O ne 'VMS') {  # defer printing on VMS due to piping bug
 	    print $te;
 	    $te = '';
 	}
 
+        (local $Valgrind_Log = "$test.valgrind-current") =~ s/^.*\///;
 	my $results = _run_test($test, $type);
 
 	my $failure;
@@ -615,7 +638,7 @@ EOT
 
 			    # SKIP is essentially the same as TODO for t/TEST
 			    # this still conforms to TAP:
-			    # http://search.cpan.org/dist/TAP/TAP.pm
+			    # http://testanything.org/wiki/index.php/TAP_specification
 			    $extra and $istodo = $extra =~ /#\s*(?:TODO|SKIP)\b/;
 			    $istodo = 1 if $todo{$num};
 
@@ -649,7 +672,9 @@ EOT
 	}
 
 	if ($ENV{PERL_VALGRIND}) {
-	    my @valgrind;
+	    $toolnm = $ENV{VALGRIND};
+	    $toolnm =~ s|.*/||;  # keep basename
+	    my @valgrind;	# gets content of file
 	    if (-e $Valgrind_Log) {
 		if (open(V, $Valgrind_Log)) {
 		    @valgrind = <V>;
@@ -658,11 +683,17 @@ EOT
 		    warn "$0: Failed to open '$Valgrind_Log': $!\n";
 		}
 	    }
-	    if ($ENV{VG_OPTS} =~ /cachegrind/) {
-		if (rename $Valgrind_Log, "$test.valgrind") {
-		    $valgrind = $valgrind + 1;
+	    if ($ENV{VG_OPTS} =~ /(cachegrind)/ or $toolnm =~ /(perf)/) {
+		$toolnm = $1;
+		if ($toolnm eq 'perf') {
+		    # append perfs subcommand, not just stat
+		    my ($sub) = split /\s/, $ENV{VG_OPTS};
+		    $toolnm .= "-$sub";
+		}
+		if (rename $Valgrind_Log, "$test.$toolnm") {
+		    $grind_ct++;
 		} else {
-		    warn "$0: Failed to create '$test.valgrind': $!\n";
+		    warn "$0: Failed to create '$test.$toolnm': $!\n";
 		}
 	    }
 	    elsif (@valgrind) {
@@ -683,7 +714,7 @@ EOT
 		}
 		if ($errors or $leaks) {
 		    if (rename $Valgrind_Log, "$test.valgrind") {
-			$valgrind = $valgrind + 1;
+			$grind_ct = $grind_ct + 1;
 		    } else {
 			warn "$0: Failed to create '$test.valgrind': $!\n";
 		    }
@@ -727,12 +758,17 @@ EOT
 	}
 	else {
 	    if ($max) {
-		my $elapsed;
+		my ($elapsed, $etms) = ("", 0);
 		if ( $show_elapsed_time ) {
-		    $elapsed = sprintf( " %8.0f ms", (Time::HiRes::time() - $test_start_time) * 1000 );
-		}
-		else {
-		    $elapsed = "";
+		    $etms = (Time::HiRes::time() - $test_start_time) * 1000;
+		    $elapsed = sprintf(" %8.0f ms", $etms);
+
+		    my (@endtimes) = times;
+		    $endtimes[$_] -= $starttimes[$_] for 0..$#endtimes;
+		    splice @endtimes, 0, 2;    # drop self/harness times
+		    $_ *= 1000 for @endtimes;  # and scale to ms
+		    $timings{$test} = [$etms,@endtimes];
+		    $elapsed .= sprintf(" %5.0f ms", $_) for @endtimes;
 		}
 		print "${te}ok$elapsed\n";
 		$good_files = $good_files + 1;
@@ -797,13 +833,68 @@ SHRDLU_5
 	}
     }
     my ($user,$sys,$cuser,$csys) = times;
-    print sprintf("u=%.2f  s=%.2f  cu=%.2f  cs=%.2f  scripts=%d  tests=%d\n",
-	$user,$sys,$cuser,$csys,$tested_files,$totmax);
+    my $tot = sprintf("u=%.2f  s=%.2f  cu=%.2f  cs=%.2f  scripts=%d  tests=%d",
+		      $user,$sys,$cuser,$csys,$tested_files,$totmax);
+    print "$tot\n";
+    if ($good_files) {
+	if (-d $show_elapsed_time) {
+	    # HARNESS_TIMER = <a-directory>.  Save timings etc to
+	    # storable file there.  NB: the test cds to ./t/, so
+	    # relative path must account for that, ie ../../perf
+	    # points to dir next to source tree.
+	    require Storable;
+	    my @dt = localtime;
+	    $dt[5] += 1900; $dt[4] += 1; # fix year, month
+	    my $fn = "$show_elapsed_time/".join('-', @dt[5,4,3,2,1]).".ttimes";
+	    Storable::store({ perf => \%timings,
+			      gather_conf_platform_info(),
+			      total => $tot,
+			    }, $fn);
+	    print "wrote storable file: $fn\n";
+	}
+    }
     if ($ENV{PERL_VALGRIND}) {
-	my $s = $valgrind == 1 ? '' : 's';
-	print "$valgrind valgrind report$s created.\n", ;
+	my $s = $grind_ct == 1 ? '' : 's';
+	print "$grind_ct valgrind report$s created.\n", ;
+	if ($toolnm eq 'cachegrind') {
+	    # cachegrind leaves a lot of cachegrind.out.$pid litter
+	    # around the tree, find and delete them
+	    unlink _find_files('cachegrind.out.\d+$',
+			     qw ( ../t ../cpan ../ext ../dist/ ));
+	}
     }
 }
 exit ($::bad_files != 0);
+
+# Collect platform, config data that should allow comparing
+# performance data between different machines.  With enough data,
+# and/or clever statistical analysis, it should be possible to
+# determine the effect of config choices, more memory, etc
+
+sub gather_conf_platform_info {
+    # currently rather quick & dirty, and subject to change
+    # for both content and format.
+    require Config;
+    my (%conf, @platform) = ();
+    $conf{$_} = $Config::Config{$_} for
+	grep /cc|git|config_arg\d+/, keys %Config::Config;
+    if (-f '/proc/cpuinfo') {
+	open my $fh, '/proc/cpuinfo' or warn "$!: /proc/cpuinfo\n";
+	@platform = grep /name|cpu/, <$fh>;
+	chomp $_ for @platform;
+    }
+    unshift @platform, $^O;
+
+    return (
+	conf => \%conf,
+	platform => {cpu => \@platform,
+		     mem => [ grep s/\s+/ /,
+			      grep chomp, `free` ],
+		     load => [ grep chomp, `uptime` ],
+	},
+	host => (grep chomp, `hostname -f`),
+	version => '0.03', # bump for conf, platform, or data collection changes
+	);
+}
 
 # ex: set ts=8 sts=4 sw=4 noet:

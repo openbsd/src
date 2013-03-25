@@ -1,5 +1,3 @@
-# $Id: Piece.pm 82 2009-06-27 13:20:23Z matt $
-
 package Time::Piece;
 
 use strict;
@@ -9,7 +7,6 @@ require DynaLoader;
 use Time::Seconds;
 use Carp;
 use Time::Local;
-#use UNIVERSAL qw(isa); # Commented out for Perl 5.12.0 by JRV to avoid a deprecation warning
 
 our @ISA = qw(Exporter DynaLoader);
 
@@ -22,7 +19,7 @@ our %EXPORT_TAGS = (
     ':override' => 'internal',
     );
 
-our $VERSION = '1.15_01';
+our $VERSION = '1.20_01';
 
 bootstrap Time::Piece $VERSION;
 
@@ -78,7 +75,7 @@ sub new {
         $self = $class->localtime();
     }
     
-    return bless $self, $class;
+    return bless $self, ref($class) || $class;
 }
 
 sub parse {
@@ -102,7 +99,7 @@ sub _mktime {
            : $class;
     if (ref($time)) {
         $time->[c_epoch] = undef;
-        return wantarray ? @$time : bless [@$time, $islocal], $class;
+        return wantarray ? @$time : bless [@$time[0..9], $islocal], $class;
     }
     _tzset();
     my @time = $islocal ?
@@ -297,7 +294,9 @@ sub tzoffset {
 
     # Compute floating offset in hours.
     #
-    my $delta = 24 * (&$j(CORE::localtime $epoch) - &$j(CORE::gmtime $epoch));
+    # Note use of crt methods so the tz is properly set...
+    # See: http://perlmonks.org/?node_id=820347
+    my $delta = 24 * ($j->(_crt_localtime($epoch)) - $j->(_crt_gmtime($epoch)));
 
     # Return value in seconds rounded to nearest minute.
     return Time::Seconds->new( int($delta * 60 + ($delta >= 0 ? 0.5 : -0.5)) * 60 );
@@ -601,7 +600,12 @@ sub add_months {
     if ($final_month > 11 || $final_month < 0) {
         # these two ops required because we have no POSIX::floor and don't
         # want to load POSIX.pm
-        $num_years = int($final_month / 12);
+        if ($final_month < 0 && $final_month % 12 == 0) {
+            $num_years = int($final_month / 12) + 1;
+        }
+        else {
+            $num_years = int($final_month / 12);
+        }
         $num_years-- if ($final_month < 0);
         
         $final_month = $final_month % 12;
@@ -609,7 +613,7 @@ sub add_months {
     
     my @vals = _mini_mktime($time->sec, $time->min, $time->hour,
                             $time->mday, $final_month, $time->year - 1900 + $num_years);
-#    warn(sprintf("got vals: %d-%d-%d %d:%d:%d\n", reverse(@vals)));
+    # warn(sprintf("got %d vals: %d-%d-%d %d:%d:%d [%d]\n", scalar(@vals), reverse(@vals), $time->[c_islocal]));
     return scalar $time->_mktime(\@vals, $time->[c_islocal]);
 }
 
@@ -780,10 +784,10 @@ Date comparisons are also possible, using the full suite of "<", ">",
 
 =head2 Date Parsing
 
-Time::Piece links to your C library's strptime() function, allowing
+Time::Piece has a built-in strptime() function (from FreeBSD), allowing
 you incredibly flexible date parsing routines. For example:
 
-  my $t = Time::Piece->strptime("Sun 3rd Nov, 1943",
+  my $t = Time::Piece->strptime("Sunday 3rd Nov, 1943",
                                 "%A %drd %b, %Y");
   
   print $t->strftime("%a, %d %b %Y");
@@ -796,6 +800,8 @@ Outputs:
 
 For more information see "man strptime", which should be on all unix
 systems.
+
+Alternatively look here: http://www.unix.com/man-page/FreeBSD/3/strftime/
 
 =head2 YYYY-MM-DDThh:mm:ss
 
@@ -837,6 +843,17 @@ also call _tzset() in the main thread to register the environment change).
 
 Furthermore, remember that this caveat also applies to fork(), which is
 emulated by threads on Win32.
+
+=head2 Use of epoch seconds
+
+This module internally uses the epoch seconds system that is provided via
+the perl C<time()> function and supported by C<gmtime()> and C<localtime()>.
+
+If your perl does not support times larger than C<2^31> seconds then this
+module is likely to fail at processing dates beyond the year 2038. There are
+moves afoot to fix that in perl. Alternatively use 64 bit perl. Or if none
+of those are options, use the L<DateTime> module which has support for years
+well into the future and past.
 
 =head1 AUTHOR
 

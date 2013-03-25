@@ -152,7 +152,7 @@ value.
 Note that just as in C, Perl doesn't define B<when> the variable is
 incremented or decremented. You just know it will be done sometime
 before or after the value is returned. This also means that modifying
-a variable twice in the same statement will lead to undefined behaviour.
+a variable twice in the same statement will lead to undefined behavior.
 Avoid statements like:
 
     $i = $i ++;
@@ -168,10 +168,10 @@ has a value that is not the empty string and matches the pattern
 C</^[a-zA-Z]*[0-9]*\z/>, the increment is done as a string, preserving each
 character within its range, with carry:
 
-    print ++($foo = '99');	# prints '100'
-    print ++($foo = 'a0');	# prints 'a1'
-    print ++($foo = 'Az');	# prints 'Ba'
-    print ++($foo = 'zz');	# prints 'aaa'
+    print ++($foo = "99");	# prints "100"
+    print ++($foo = "a0");	# prints "a1"
+    print ++($foo = "Az");	# prints "Ba"
+    print ++($foo = "zz");	# prints "aaa"
 
 C<undef> is always treated as numeric, and in particular is changed
 to C<0> before incrementing (so that a post-increment of an undef value
@@ -190,15 +190,16 @@ internally.)
 =head2 Symbolic Unary Operators
 X<unary operator> X<operator, unary>
 
-Unary "!" performs logical negation, i.e., "not".  See also C<not> for a lower
+Unary "!" performs logical negation, that is, "not".  See also C<not> for a lower
 precedence version of this.
 X<!>
 
-Unary "-" performs arithmetic negation if the operand is numeric.  If
-the operand is an identifier, a string consisting of a minus sign
-concatenated with the identifier is returned.  Otherwise, if the string
-starts with a plus or minus, a string starting with the opposite sign
-is returned.  One effect of these rules is that -bareword is equivalent
+Unary "-" performs arithmetic negation if the operand is numeric,
+including any string that looks like a number.  If the operand is
+an identifier, a string consisting of a minus sign concatenated
+with the identifier is returned.  Otherwise, if the string starts
+with a plus or minus, a string starting with the opposite sign is
+returned.  One effect of these rules is that -bareword is equivalent
 to the string "-bareword".  If, however, the string begins with a
 non-alphabetic character (excluding "+" or "-"), Perl will attempt to convert
 the string to a numeric and the arithmetic negation is performed. If the
@@ -206,13 +207,19 @@ string cannot be cleanly converted to a numeric, Perl will give the warning
 B<Argument "the string" isn't numeric in negation (-) at ...>.
 X<-> X<negation, arithmetic>
 
-Unary "~" performs bitwise negation, i.e., 1's complement.  For
+Unary "~" performs bitwise negation, that is, 1's complement.  For
 example, C<0666 & ~027> is 0640.  (See also L<Integer Arithmetic> and
 L<Bitwise String Operators>.)  Note that the width of the result is
 platform-dependent: ~0 is 32 bits wide on a 32-bit platform, but 64
 bits wide on a 64-bit platform, so if you are expecting a certain bit
-width, remember to use the & operator to mask off the excess bits.
+width, remember to use the "&" operator to mask off the excess bits.
 X<~> X<negation, binary>
+
+When complementing strings, if all characters have ordinal values under
+256, then their complements will, also.  But if they do not, all
+characters will be in either 32- or 64-bit complements, depending on your
+architecture.  So for example, C<~"\x{3B1}"> is C<"\x{FFFF_FC4E}"> on
+32-bit machines and C<"\x{FFFF_FFFF_FFFF_FC4E}"> on 64-bit machines.
 
 Unary "+" has no effect whatsoever, even on strings.  It is useful
 syntactically for separating a function name from a parenthesized expression
@@ -235,21 +242,27 @@ of operation work on some other string.  The right argument is a search
 pattern, substitution, or transliteration.  The left argument is what is
 supposed to be searched, substituted, or transliterated instead of the default
 $_.  When used in scalar context, the return value generally indicates the
-success of the operation.  Behavior in list context depends on the particular
-operator.  See L</"Regexp Quote-Like Operators"> for details and
-L<perlretut> for examples using these operators.
+success of the operation.  The exceptions are substitution (s///)
+and transliteration (y///) with the C</r> (non-destructive) option,
+which cause the B<r>eturn value to be the result of the substitution.
+Behavior in list context depends on the particular operator.
+See L</"Regexp Quote-Like Operators"> for details and L<perlretut> for
+examples using these operators.
 
 If the right argument is an expression rather than a search pattern,
 substitution, or transliteration, it is interpreted as a search pattern at run
 time. Note that this means that its contents will be interpolated twice, so
 
-  '\\' =~ q'\\';
+    '\\' =~ q'\\';
 
 is not ok, as the regex engine will end up trying to compile the
 pattern C<\>, which it will consider a syntax error.
 
 Binary "!~" is just like "=~" except the return value is negated in
 the logical sense.
+
+Binary "!~" with a non-destructive substitution (s///r) or transliteration
+(y///r) is a syntax error.
 
 =head2 Multiplicative Operators
 X<operator, multiplicative>
@@ -266,7 +279,7 @@ Given integer
 operands C<$a> and C<$b>: If C<$b> is positive, then C<$a % $b> is
 C<$a> minus the largest multiple of C<$b> less than or equal to
 C<$a>.  If C<$b> is negative, then C<$a % $b> is C<$a> minus the
-smallest multiple of C<$b> that is not less than C<$a> (i.e. the
+smallest multiple of C<$b> that is not less than C<$a> (that is, the
 result will be less than or equal to zero).  If the operands
 C<$a> and C<$b> are floating point values and the absolute value of
 C<$b> (that is C<abs($b)>) is less than C<(UV_MAX + 1)>, only
@@ -304,13 +317,13 @@ X<x>
 =head2 Additive Operators
 X<operator, additive>
 
-Binary "+" returns the sum of two numbers.
+Binary C<+> returns the sum of two numbers.
 X<+>
 
-Binary "-" returns the difference of two numbers.
+Binary C<-> returns the difference of two numbers.
 X<->
 
-Binary "." concatenates two strings.
+Binary C<.> concatenates two strings.
 X<string, concatenation> X<concatenation>
 X<cat> X<concat> X<concatenate> X<.>
 
@@ -319,16 +332,16 @@ X<shift operator> X<operator, shift> X<<< << >>>
 X<<< >> >>> X<right shift> X<left shift> X<bitwise shift>
 X<shl> X<shr> X<shift, right> X<shift, left>
 
-Binary "<<" returns the value of its left argument shifted left by the
+Binary C<<< << >>> returns the value of its left argument shifted left by the
 number of bits specified by the right argument.  Arguments should be
 integers.  (See also L<Integer Arithmetic>.)
 
-Binary ">>" returns the value of its left argument shifted right by
+Binary C<<< >> >>> returns the value of its left argument shifted right by
 the number of bits specified by the right argument.  Arguments should
 be integers.  (See also L<Integer Arithmetic>.)
 
-Note that both "<<" and ">>" in Perl are implemented directly using
-"<<" and ">>" in C.  If C<use integer> (see L<Integer Arithmetic>) is
+Note that both C<<< << >>> and C<<< >> >>> in Perl are implemented directly using
+C<<< << >>> and C<<< >> >>>  in C.  If C<use integer> (see L<Integer Arithmetic>) is
 in force then signed C integers are used, else unsigned C integers are
 used.  Either way, the implementation isn't going to generate results
 larger than the size of the integer type Perl was built with (32 bits
@@ -338,6 +351,15 @@ The result of overflowing the range of the integers is undefined
 because it is undefined also in C.  In other words, using 32-bit
 integers, C<< 1 << 32 >> is undefined.  Shifting by a negative number
 of bits is also undefined.
+
+If you get tired of being subject to your platform's native integers,
+the C<use bigint> pragma neatly sidesteps the issue altogether:
+
+    print 20 << 20;  # 20971520
+    print 20 << 40;  # 5120 on 32-bit machines, 
+                     # 21990232555520 on 64-bit machines
+    use bigint;
+    print 20 << 100; # 25353012004564588029934064107520
 
 =head2 Named Unary Operators
 X<operator, named unary>
@@ -349,7 +371,7 @@ If any list operator (print(), etc.) or any unary operator (chdir(), etc.)
 is followed by a left parenthesis as the next token, the operator and
 arguments within parentheses are taken to be of highest precedence,
 just like a normal function call.  For example,
-because named unary operators are higher precedence than ||:
+because named unary operators are higher precedence than C<||>:
 
     chdir $foo    || die;	# (chdir $foo) || die
     chdir($foo)   || die;	# (chdir $foo) || die
@@ -378,6 +400,13 @@ See also L<"Terms and List Operators (Leftward)">.
 
 =head2 Relational Operators
 X<relational operator> X<operator, relational>
+
+Perl operators that return true or false generally return values 
+that can be safely used as numbers.  For example, the relational
+operators in this section and the equality operators in the next
+one return C<1> for true and a special version of the defined empty
+string, C<"">, which counts as a zero but is exempt from warnings
+about improper numeric conversions, just as C<"0 but true"> is.
 
 Binary "<" returns true if the left argument is numerically less than
 the right argument.
@@ -431,8 +460,11 @@ returns true, as does NaN != anything else. If your platform doesn't
 support NaNs then NaN is just a string with numeric value 0.
 X<< <=> >> X<spaceship>
 
-    perl -le '$a = "NaN"; print "No NaN support here" if $a == $a'
-    perl -le '$a = "NaN"; print "NaN support here" if $a != $a'
+    $ perl -le '$a = "NaN"; print "No NaN support here" if $a == $a'
+    $ perl -le '$a = "NaN"; print "NaN support here" if $a != $a'
+
+(Note that the L<bigint>, L<bigrat>, and L<bignum> pragmas all 
+support "NaN".)
 
 Binary "eq" returns true if the left argument is stringwise equal to
 the right argument.
@@ -447,12 +479,307 @@ argument is stringwise less than, equal to, or greater than the right
 argument.
 X<cmp>
 
-Binary "~~" does a smart match between its arguments. Smart matching
-is described in L<perlsyn/"Smart matching in detail">.
+Binary "~~" does a smartmatch between its arguments.  Smart matching
+is described in the next section.
 X<~~>
 
 "lt", "le", "ge", "gt" and "cmp" use the collation (sort) order specified
-by the current locale if C<use locale> is in effect.  See L<perllocale>.
+by the current locale if a legacy C<use locale> (but not
+C<use locale ':not_characters'>) is in effect.  See
+L<perllocale>.  Do not mix these with Unicode, only with legacy binary
+encodings.  The standard L<Unicode::Collate> and
+L<Unicode::Collate::Locale> modules offer much more powerful solutions to
+collation issues.
+
+=head2 Smartmatch Operator
+
+First available in Perl 5.10.1 (the 5.10.0 version behaved differently),
+binary C<~~> does a "smartmatch" between its arguments.  This is mostly
+used implicitly in the C<when> construct described in L<perlsyn>, although
+not all C<when> clauses call the smartmatch operator.  Unique among all of
+Perl's operators, the smartmatch operator can recurse.
+
+It is also unique in that all other Perl operators impose a context
+(usually string or numeric context) on their operands, autoconverting
+those operands to those imposed contexts.  In contrast, smartmatch
+I<infers> contexts from the actual types of its operands and uses that
+type information to select a suitable comparison mechanism.
+
+The C<~~> operator compares its operands "polymorphically", determining how
+to compare them according to their actual types (numeric, string, array,
+hash, etc.)  Like the equality operators with which it shares the same
+precedence, C<~~> returns 1 for true and C<""> for false.  It is often best
+read aloud as "in", "inside of", or "is contained in", because the left
+operand is often looked for I<inside> the right operand.  That makes the
+order of the operands to the smartmatch operand often opposite that of
+the regular match operator.  In other words, the "smaller" thing is usually
+placed in the left operand and the larger one in the right.
+
+The behavior of a smartmatch depends on what type of things its arguments
+are, as determined by the following table.  The first row of the table
+whose types apply determines the smartmatch behavior.  Because what
+actually happens is mostly determined by the type of the second operand,
+the table is sorted on the right operand instead of on the left.
+
+ Left      Right      Description and pseudocode                               
+ ===============================================================
+ Any       undef      check whether Any is undefined                    
+                like: !defined Any
+
+ Any       Object     invoke ~~ overloading on Object, or die
+
+ Right operand is an ARRAY:
+
+ Left      Right      Description and pseudocode                               
+ ===============================================================
+ ARRAY1    ARRAY2     recurse on paired elements of ARRAY1 and ARRAY2[2]
+                like: (ARRAY1[0] ~~ ARRAY2[0])
+                        && (ARRAY1[1] ~~ ARRAY2[1]) && ...
+ HASH      ARRAY      any ARRAY elements exist as HASH keys             
+                like: grep { exists HASH->{$_} } ARRAY
+ Regexp    ARRAY      any ARRAY elements pattern match Regexp
+                like: grep { /Regexp/ } ARRAY
+ undef     ARRAY      undef in ARRAY                                    
+                like: grep { !defined } ARRAY
+ Any       ARRAY      smartmatch each ARRAY element[3]                   
+                like: grep { Any ~~ $_ } ARRAY
+
+ Right operand is a HASH:
+
+ Left      Right      Description and pseudocode                               
+ ===============================================================
+ HASH1     HASH2      all same keys in both HASHes                      
+                like: keys HASH1 ==
+                         grep { exists HASH2->{$_} } keys HASH1
+ ARRAY     HASH       any ARRAY elements exist as HASH keys             
+                like: grep { exists HASH->{$_} } ARRAY
+ Regexp    HASH       any HASH keys pattern match Regexp                
+                like: grep { /Regexp/ } keys HASH
+ undef     HASH       always false (undef can't be a key)               
+                like: 0 == 1
+ Any       HASH       HASH key existence                                
+                like: exists HASH->{Any}
+
+ Right operand is CODE:
+   
+ Left      Right      Description and pseudocode                               
+ ===============================================================
+ ARRAY     CODE       sub returns true on all ARRAY elements[1]
+                like: !grep { !CODE->($_) } ARRAY
+ HASH      CODE       sub returns true on all HASH keys[1]
+                like: !grep { !CODE->($_) } keys HASH
+ Any       CODE       sub passed Any returns true              
+                like: CODE->(Any)
+
+Right operand is a Regexp:
+
+ Left      Right      Description and pseudocode                               
+ ===============================================================
+ ARRAY     Regexp     any ARRAY elements match Regexp                   
+                like: grep { /Regexp/ } ARRAY
+ HASH      Regexp     any HASH keys match Regexp                        
+                like: grep { /Regexp/ } keys HASH
+ Any       Regexp     pattern match                                     
+                like: Any =~ /Regexp/
+
+ Other:
+
+ Left      Right      Description and pseudocode                               
+ ===============================================================
+ Object    Any        invoke ~~ overloading on Object,
+                      or fall back to...
+
+ Any       Num        numeric equality                                  
+                 like: Any == Num
+ Num       nummy[4]    numeric equality
+                 like: Num == nummy
+ undef     Any        check whether undefined
+                 like: !defined(Any)
+ Any       Any        string equality                                   
+                 like: Any eq Any
+
+
+Notes:
+
+=over
+
+=item 1.
+Empty hashes or arrays match. 
+
+=item 2.
+That is, each element smartmatches the element of the same index in the other array.[3]
+
+=item 3.
+If a circular reference is found, fall back to referential equality. 
+
+=item 4.
+Either an actual number, or a string that looks like one.
+
+=back
+
+The smartmatch implicitly dereferences any non-blessed hash or array
+reference, so the C<I<HASH>> and C<I<ARRAY>> entries apply in those cases.
+For blessed references, the C<I<Object>> entries apply.  Smartmatches
+involving hashes only consider hash keys, never hash values.
+
+The "like" code entry is not always an exact rendition.  For example, the
+smartmatch operator short-circuits whenever possible, but C<grep> does
+not.  Also, C<grep> in scalar context returns the number of matches, but
+C<~~> returns only true or false.
+
+Unlike most operators, the smartmatch operator knows to treat C<undef>
+specially:
+
+    use v5.10.1;
+    @array = (1, 2, 3, undef, 4, 5);
+    say "some elements undefined" if undef ~~ @array;
+
+Each operand is considered in a modified scalar context, the modification
+being that array and hash variables are passed by reference to the
+operator, which implicitly dereferences them.  Both elements
+of each pair are the same:
+
+    use v5.10.1;
+
+    my %hash = (red    => 1, blue   => 2, green  => 3,
+                orange => 4, yellow => 5, purple => 6,
+                black  => 7, grey   => 8, white  => 9);
+
+    my @array = qw(red blue green);
+
+    say "some array elements in hash keys" if  @array ~~  %hash;
+    say "some array elements in hash keys" if \@array ~~ \%hash;
+
+    say "red in array" if "red" ~~  @array;
+    say "red in array" if "red" ~~ \@array;
+
+    say "some keys end in e" if /e$/ ~~  %hash;
+    say "some keys end in e" if /e$/ ~~ \%hash;
+
+Two arrays smartmatch if each element in the first array smartmatches
+(that is, is "in") the corresponding element in the second array,
+recursively.
+
+    use v5.10.1;
+    my @little = qw(red blue green);
+    my @bigger = ("red", "blue", [ "orange", "green" ] );
+    if (@little ~~ @bigger) {  # true!
+        say "little is contained in bigger";
+    } 
+
+Because the smartmatch operator recurses on nested arrays, this
+will still report that "red" is in the array.
+
+    use v5.10.1;
+    my @array = qw(red blue green);
+    my $nested_array = [[[[[[[ @array ]]]]]]];
+    say "red in array" if "red" ~~ $nested_array;
+
+If two arrays smartmatch each other, then they are deep
+copies of each others' values, as this example reports:
+
+    use v5.12.0;
+    my @a = (0, 1, 2, [3, [4, 5], 6], 7); 
+    my @b = (0, 1, 2, [3, [4, 5], 6], 7); 
+
+    if (@a ~~ @b && @b ~~ @a) {
+        say "a and b are deep copies of each other";
+    } 
+    elsif (@a ~~ @b) {
+        say "a smartmatches in b";
+    } 
+    elsif (@b ~~ @a) {
+        say "b smartmatches in a";
+    } 
+    else {
+        say "a and b don't smartmatch each other at all";
+    } 
+
+
+If you were to set C<$b[3] = 4>, then instead of reporting that "a and b
+are deep copies of each other", it now reports that "b smartmatches in a".
+That because the corresponding position in C<@a> contains an array that
+(eventually) has a 4 in it.
+
+Smartmatching one hash against another reports whether both contain the
+same keys, no more and no less. This could be used to see whether two
+records have the same field names, without caring what values those fields
+might have.  For example:
+
+    use v5.10.1;
+    sub make_dogtag {
+        state $REQUIRED_FIELDS = { name=>1, rank=>1, serial_num=>1 };
+
+        my ($class, $init_fields) = @_;
+
+        die "Must supply (only) name, rank, and serial number"
+            unless $init_fields ~~ $REQUIRED_FIELDS;
+
+        ...
+    }
+
+or, if other non-required fields are allowed, use ARRAY ~~ HASH:
+
+    use v5.10.1;
+    sub make_dogtag {
+        state $REQUIRED_FIELDS = { name=>1, rank=>1, serial_num=>1 };
+
+        my ($class, $init_fields) = @_;
+
+        die "Must supply (at least) name, rank, and serial number"
+            unless [keys %{$init_fields}] ~~ $REQUIRED_FIELDS;
+
+        ...
+    }
+
+The smartmatch operator is most often used as the implicit operator of a
+C<when> clause.  See the section on "Switch Statements" in L<perlsyn>.
+
+=head3 Smartmatching of Objects
+
+To avoid relying on an object's underlying representation, if the
+smartmatch's right operand is an object that doesn't overload C<~~>,
+it raises the exception "C<Smartmatching a non-overloaded object
+breaks encapsulation>". That's because one has no business digging
+around to see whether something is "in" an object. These are all
+illegal on objects without a C<~~> overload:
+
+    %hash ~~ $object
+       42 ~~ $object
+   "fred" ~~ $object
+
+However, you can change the way an object is smartmatched by overloading
+the C<~~> operator. This is allowed to extend the usual smartmatch semantics.
+For objects that do have an C<~~> overload, see L<overload>.
+
+Using an object as the left operand is allowed, although not very useful.
+Smartmatching rules take precedence over overloading, so even if the
+object in the left operand has smartmatch overloading, this will be
+ignored.  A left operand that is a non-overloaded object falls back on a
+string or numeric comparison of whatever the C<ref> operator returns.  That
+means that
+
+    $object ~~ X
+
+does I<not> invoke the overload method with C<I<X>> as an argument.
+Instead the above table is consulted as normal, and based on the type of
+C<I<X>>, overloading may or may not be invoked.  For simple strings or
+numbers, in becomes equivalent to this:
+
+    $object ~~ $number          ref($object) == $number
+    $object ~~ $string          ref($object) eq $string 
+
+For example, this reports that the handle smells IOish
+(but please don't really do this!):
+
+    use IO::Handle;
+    my $fh = IO::Handle->new();
+    if ($fh ~~ /\bIO\b/) {
+        say "handle smells IOish";
+    } 
+
+That's because it treats C<$fh> as a string like
+C<"IO::Handle=GLOB(0x8039e0)">, then pattern matches against that.
 
 =head2 Bitwise And
 X<operator, bitwise, and> X<bitwise and> X<&>
@@ -461,9 +788,9 @@ Binary "&" returns its operands ANDed together bit by bit.
 (See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
 
 Note that "&" has lower priority than relational operators, so for example
-the brackets are essential in a test like
+the parentheses are essential in a test like
 
-	print "Even\n" if ($x & 1) == 0;
+    print "Even\n" if ($x & 1) == 0;
 
 =head2 Bitwise Or and Exclusive Or
 X<operator, bitwise, or> X<bitwise or> X<|> X<operator, bitwise, xor>
@@ -478,7 +805,7 @@ Binary "^" returns its operands XORed together bit by bit.
 Note that "|" and "^" have lower priority than relational operators, so
 for example the brackets are essential in a test like
 
-	print "false\n" if (8 | 2) != 10;
+    print "false\n" if (8 | 2) != 10;
 
 =head2 C-style Logical And
 X<&&> X<logical and> X<operator, logical, and>
@@ -496,24 +823,29 @@ if the left operand is true, the right operand is not even evaluated.
 Scalar or list context propagates down to the right operand if it
 is evaluated.
 
-=head2 C-style Logical Defined-Or
+=head2 Logical Defined-Or
 X<//> X<operator, logical, defined-or>
 
 Although it has no direct equivalent in C, Perl's C<//> operator is related
 to its C-style or.  In fact, it's exactly the same as C<||>, except that it
-tests the left hand side's definedness instead of its truth.  Thus, C<$a // $b>
-is similar to C<defined($a) || $b> (except that it returns the value of C<$a>
-rather than the value of C<defined($a)>) and is exactly equivalent to
-C<defined($a) ? $a : $b>.  This is very useful for providing default values
-for variables.  If you actually want to test if at least one of C<$a> and
-C<$b> is defined, use C<defined($a // $b)>.
+tests the left hand side's definedness instead of its truth.  Thus,
+C<< EXPR1 // EXPR2 >> returns the value of C<< EXPR1 >> if it's defined,
+otherwise, the value of C<< EXPR2 >> is returned. (C<< EXPR1 >> is evaluated
+in scalar context, C<< EXPR2 >> in the context of C<< // >> itself). Usually,
+this is the same result as C<< defined(EXPR1) ? EXPR1 : EXPR2 >> (except that
+the ternary-operator form can be used as a lvalue, while C<< EXPR1 // EXPR2 >>
+cannot). This is very useful for
+providing default values for variables.  If you actually want to test if
+at least one of C<$a> and C<$b> is defined, use C<defined($a // $b)>.
 
 The C<||>, C<//> and C<&&> operators return the last value evaluated
 (unlike C's C<||> and C<&&>, which return 0 or 1). Thus, a reasonably
 portable way to find out the home directory might be:
 
-    $home = $ENV{'HOME'} // $ENV{'LOGDIR'} //
-	(getpwuid($<))[7] // die "You're homeless!\n";
+    $home =  $ENV{HOME}
+	  // $ENV{LOGDIR}
+	  // (getpwuid($<))[7]
+	  // die "You're homeless!\n";
 
 In particular, this means that you shouldn't use this
 for selecting between two aggregates for assignment:
@@ -522,7 +854,7 @@ for selecting between two aggregates for assignment:
     @a = scalar(@b) || @c;	# really meant this
     @a = @b ? @b : @c;		# this works fine, though
 
-As more readable alternatives to C<&&> and C<||> when used for
+As alternatives to C<&&> and C<||> when used for
 control flow, Perl provides the C<and> and C<or> operators (see below).
 The short-circuit behavior is identical.  The precedence of "and"
 and "or" is much lower, however, so that you can safely use them after a
@@ -535,6 +867,13 @@ With the C-style operators that would have been written like this:
 
     unlink("alpha", "beta", "gamma")
 	    || (gripe(), next LINE);
+
+It would be even more readable to write that this way:
+
+    unless(unlink("alpha", "beta", "gamma")) {
+        gripe();
+        next LINE;
+    } 
 
 Using "or" for assignment is unlikely to do what you want; see below.
 
@@ -602,7 +941,7 @@ Examples:
 As a scalar operator:
 
     if (101 .. 200) { print; } # print 2nd hundred lines, short for
-                               #   if ($. == 101 .. $. == 200) { print; }
+                               #  if ($. == 101 .. $. == 200) { print; }
 
     next LINE if (1 .. /^$/);  # skip header lines, short for
                                #   next LINE if ($. == 1 .. /^$/);
@@ -643,23 +982,24 @@ the range operator is changed to C<...>, it will also print the
 
 And now some examples as a list operator:
 
-    for (101 .. 200) { print; }	# print $_ 100 times
-    @foo = @foo[0 .. $#foo];	# an expensive no-op
-    @foo = @foo[$#foo-4 .. $#foo];	# slice last 5 items
+    for (101 .. 200) { print }      # print $_ 100 times
+    @foo = @foo[0 .. $#foo];        # an expensive no-op
+    @foo = @foo[$#foo-4 .. $#foo];  # slice last 5 items
 
 The range operator (in list context) makes use of the magical
 auto-increment algorithm if the operands are strings.  You
 can say
 
-    @alphabet = ('A' .. 'Z');
+    @alphabet = ("A" .. "Z");
 
 to get all normal letters of the English alphabet, or
 
-    $hexdigit = (0 .. 9, 'a' .. 'f')[$num & 15];
+    $hexdigit = (0 .. 9, "a" .. "f")[$num & 15];
 
 to get a hexadecimal digit, or
 
-    @z2 = ('01' .. '31');  print $z2[$mday];
+    @z2 = ("01" .. "31");
+    print $z2[$mday];
 
 to get dates with leading zeros.
 
@@ -668,16 +1008,25 @@ increment would produce, the sequence goes until the next value would
 be longer than the final value specified.
 
 If the initial value specified isn't part of a magical increment
-sequence (that is, a non-empty string matching "/^[a-zA-Z]*[0-9]*\z/"),
+sequence (that is, a non-empty string matching C</^[a-zA-Z]*[0-9]*\z/>),
 only the initial value will be returned.  So the following will only
 return an alpha:
 
-    use charnames 'greek';
+    use charnames "greek";
     my @greek_small =  ("\N{alpha}" .. "\N{omega}");
 
-To get lower-case greek letters, use this instead:
+To get the 25 traditional lowercase Greek letters, including both sigmas,
+you could use this instead:
 
-    my @greek_small =  map { chr } ( ord("\N{alpha}") .. ord("\N{omega}") );
+    use charnames "greek";
+    my @greek_small =  map { chr } ( ord("\N{alpha}") 
+                                        ..
+                                     ord("\N{omega}") 
+                                   );
+
+However, because there are I<many> other lowercase Greek characters than
+just those, to match lowercase Greek characters in a regular expression,
+you would use the pattern C</(?:(?=\p{Greek})\p{Lower})+/>.
 
 Because each operand is evaluated in integer form, C<2.18 .. 3.14> will
 return two elements in list context.
@@ -693,7 +1042,7 @@ argument before the : is returned, otherwise the argument after the :
 is returned.  For example:
 
     printf "I have %d dog%s.\n", $n,
-	    ($n == 1) ? '' : "s";
+	    ($n == 1) ? "" : "s";
 
 Scalar or list context propagates downward into the 2nd
 or 3rd argument, whichever is selected.
@@ -756,7 +1105,12 @@ Modifying an assignment is equivalent to doing the assignment and
 then modifying the variable that was assigned to.  This is useful
 for modifying a copy of something, like this:
 
-    ($tmp = $global) =~ tr [A-Z] [a-z];
+    ($tmp = $global) =~ tr/13579/24680/;
+
+Although as of 5.14, that can be also be accomplished this way:
+
+    use v5.14;
+    $tmp = ($global =~  tr/13579/24680/r);
 
 Likewise,
 
@@ -783,12 +1137,12 @@ In list context, it's just the list argument separator, and inserts
 both its arguments into the list.  These arguments are also evaluated
 from left to right.
 
-The C<< => >> operator is a synonym for the comma except that it causes
-its left operand to be interpreted as a string if it begins with a letter
+The C<< => >> operator is a synonym for the comma except that it causes a
+word on its left to be interpreted as a string if it begins with a letter
 or underscore and is composed only of letters, digits and underscores.
 This includes operands that might otherwise be interpreted as operators,
 constants, single number v-strings or function calls. If in doubt about
-this behaviour, the left operand can be quoted explicitly.
+this behavior, the left operand can be quoted explicitly.
 
 Otherwise, the C<< => >> operator behaves exactly as the comma operator
 or list argument separator, according to context.
@@ -810,81 +1164,37 @@ It is I<NOT>:
 The C<< => >> operator is helpful in documenting the correspondence
 between keys and values in hashes, and other paired elements in lists.
 
-        %hash = ( $key => $value );
-        login( $username => $password );
+    %hash = ( $key => $value );
+    login( $username => $password );
 
-=head2 Yada Yada Operator
-X<...> X<... operator> X<yada yada operator>
+The special quoting behavior ignores precedence, and hence may apply to
+I<part> of the left operand:
 
-The yada yada operator (noted C<...>) is a placeholder for code. Perl
-parses it without error, but when you try to execute a yada yada, it
-throws an exception with the text C<Unimplemented>:
+    print time.shift => "bbb";
 
-	sub unimplemented { ... }
-	
-	eval { unimplemented() };
-	if( $@ eq 'Unimplemented' ) {
-	  print "I found the yada yada!\n";
-	  }
-
-You can only use the yada yada to stand in for a complete statement.
-These examples of the yada yada work:
-
-	{ ... }
-	
-	sub foo { ... }
-	
-	...;
-	
-	eval { ... };
-	
-	sub foo {
-			my( $self ) = shift;
-			
-			...;
-			}
-			
-	do { my $n; ...; print 'Hurrah!' };
-
-The yada yada cannot stand in for an expression that is part of a
-larger statement since the C<...> is also the three-dot version of the
-range operator (see L<Range Operators>). These examples of the yada
-yada are still syntax errors:
-
-	print ...;
-	
-	open my($fh), '>', '/dev/passwd' or ...;
-	
-	if( $condition && ... ) { print "Hello\n" };
-
-There are some cases where Perl can't immediately tell the difference
-between an expression and a statement. For instance, the syntax for a
-block and an anonymous hash reference constructor look the same unless
-there's something in the braces that give Perl a hint. The yada yada
-is a syntax error if Perl doesn't guess that the C<{ ... }> is a
-block. In that case, it doesn't think the C<...> is the yada yada
-because it's expecting an expression instead of a statement:
-
-	my @transformed = map { ... } @input;  # syntax error
-
-You can use a C<;> inside your block to denote that the C<{ ... }> is
-a block and not a hash reference constructor. Now the yada yada works:
-
-	my @transformed = map {; ... } @input; # ; disambiguates
-
-	my @transformed = map { ...; } @input; # ; disambiguates
+That example prints something like "1314363215shiftbbb", because the
+C<< => >> implicitly quotes the C<shift> immediately on its left, ignoring
+the fact that C<time.shift> is the entire left operand.
 
 =head2 List Operators (Rightward)
 X<operator, list, rightward> X<list operator>
 
-On the right side of a list operator, it has very low precedence,
+On the right side of a list operator, the comma has very low precedence,
 such that it controls all comma-separated expressions found there.
 The only operators with lower precedence are the logical operators
 "and", "or", and "not", which may be used to evaluate calls to list
-operators without the need for extra parentheses:
+operators without the need for parentheses:
 
-    open HANDLE, "filename"
-	or die "Can't open: $!\n";
+    open HANDLE, "< :utf8", "filename" or die "Can't open: $!\n";
+
+However, some people find that code harder to read than writing
+it with parentheses:
+
+    open(HANDLE, "< :utf8", "filename") or die "Can't open: $!\n";
+
+in which case you might as well just use the more customary "||" operator:
+
+    open(HANDLE, "< :utf8", "filename") || die "Can't open: $!\n";
 
 See also discussion of list operators in L<Terms and List Operators (Leftward)>.
 
@@ -898,31 +1208,32 @@ It's the equivalent of "!" except for the very low precedence.
 X<operator, logical, and> X<and>
 
 Binary "and" returns the logical conjunction of the two surrounding
-expressions.  It's equivalent to && except for the very low
-precedence.  This means that it short-circuits: i.e., the right
+expressions.  It's equivalent to C<&&> except for the very low
+precedence.  This means that it short-circuits: the right
 expression is evaluated only if the left expression is true.
 
-=head2 Logical or, Defined or, and Exclusive Or
+=head2 Logical or and Exclusive Or
 X<operator, logical, or> X<operator, logical, xor>
-X<operator, logical, defined or> X<operator, logical, exclusive or>
+X<operator, logical, exclusive or>
 X<or> X<xor>
 
 Binary "or" returns the logical disjunction of the two surrounding
-expressions.  It's equivalent to || except for the very low precedence.
-This makes it useful for control flow
+expressions.  It's equivalent to C<||> except for the very low precedence.
+This makes it useful for control flow:
 
     print FH $data		or die "Can't write to FH: $!";
 
-This means that it short-circuits: i.e., the right expression is evaluated
-only if the left expression is false.  Due to its precedence, you should
-probably avoid using this for assignment, only for control flow.
+This means that it short-circuits: the right expression is evaluated
+only if the left expression is false.  Due to its precedence, you must
+be careful to avoid using it as replacement for the C<||> operator.
+It usually works out better for flow control than in assignments:
 
     $a = $b or $c;		# bug: this is wrong
     ($a = $b) or $c;		# really means this
     $a = $b || $c;		# better written this way
 
 However, when it's a list-context assignment and you're trying to use
-"||" for control flow, you probably need "or" so that the assignment
+C<||> for control flow, you probably need "or" so that the assignment
 takes higher precedence.
 
     @info = stat($file) || die;     # oops, scalar sense of stat!
@@ -930,8 +1241,10 @@ takes higher precedence.
 
 Then again, you could always use parentheses.
 
-Binary "xor" returns the exclusive-OR of the two surrounding expressions.
-It cannot short circuit, of course.
+Binary C<xor> returns the exclusive-OR of the two surrounding expressions.
+It cannot short-circuit (of course).
+
+There is no low precedence operator for defined-OR.
 
 =head2 C Operators Missing From Perl
 X<operator, missing from perl> X<&> X<*>
@@ -961,7 +1274,6 @@ X<operator, quote> X<operator, quote-like> X<q> X<qq> X<qx> X<qw> X<m>
 X<qr> X<s> X<tr> X<'> X<''> X<"> X<""> X<//> X<`> X<``> X<<< << >>>
 X<escape sequence> X<escape>
 
-
 While we usually think of quotes as literal values, in Perl they
 function as operators, providing various kinds of interpolating and
 pattern matching capabilities.  Perl provides customary quote characters
@@ -978,27 +1290,27 @@ any pair of delimiters you choose.
 		qr{}	      Pattern		  yes*
 		 s{}{}	    Substitution	  yes*
 		tr{}{}	  Transliteration	  no (but see below)
+		 y{}{}	  Transliteration	  no (but see below)
         <<EOF                 here-doc            yes*
 
 	* unless the delimiter is ''.
 
 Non-bracketing delimiters use the same character fore and aft, but the four
-sorts of brackets (round, angle, square, curly) will all nest, which means
+sorts of ASCII brackets (round, angle, square, curly) all nest, which means
 that
 
-	q{foo{bar}baz}
+    q{foo{bar}baz}
 
 is the same as
 
-	'foo{bar}baz'
+    'foo{bar}baz'
 
 Note, however, that this does not always work for quoting Perl code:
 
-	$s = q{ if($a eq "}") ... }; # WRONG
+    $s = q{ if($a eq "}") ... }; # WRONG
 
-is a syntax error. The C<Text::Balanced> module (from CPAN, and
-starting from Perl 5.8 part of the standard distribution) is able
-to do this properly.
+is a syntax error. The C<Text::Balanced> module (standard as of v5.8,
+and from CPAN before then) is able to do this properly.
 
 There can be whitespace between the operator and the quoting
 characters, except when C<#> is being used as the quoting character.
@@ -1009,36 +1321,172 @@ from the next line.  This allows you to write:
     s {foo}  # Replace foo
       {bar}  # with bar.
 
-The following escape sequences are available in constructs that interpolate
-and in transliterations.
-X<\t> X<\n> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N>
-X<\t> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N>
+The following escape sequences are available in constructs that interpolate,
+and in transliterations:
+X<\t> X<\n> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N> X<\N{}>
+X<\o{}>
 
-    \t		tab             (HT, TAB)
-    \n		newline         (NL)
-    \r		return          (CR)
-    \f		form feed       (FF)
-    \b		backspace       (BS)
-    \a		alarm (bell)    (BEL)
-    \e		escape          (ESC)
-    \033	octal char	(example: ESC)
-    \x1b	hex char	(example: ESC)
-    \x{263a}	wide hex char	(example: SMILEY)
-    \c[		control char    (example: ESC)
-    \N{name}	named Unicode character
-    \N{U+263D}	Unicode character (example: FIRST QUARTER MOON)
+    Sequence     Note  Description
+    \t                  tab               (HT, TAB)
+    \n                  newline           (NL)
+    \r                  return            (CR)
+    \f                  form feed         (FF)
+    \b                  backspace         (BS)
+    \a                  alarm (bell)      (BEL)
+    \e                  escape            (ESC)
+    \x{263A}     [1,8]  hex char          (example: SMILEY)
+    \x1b         [2,8]  restricted range hex char (example: ESC)
+    \N{name}     [3]    named Unicode character or character sequence
+    \N{U+263D}   [4,8]  Unicode character (example: FIRST QUARTER MOON)
+    \c[          [5]    control char      (example: chr(27))
+    \o{23072}    [6,8]  octal char        (example: SMILEY)
+    \033         [7,8]  restricted range octal char  (example: ESC)
 
-The character following C<\c> is mapped to some other character by
-converting letters to upper case and then (on ASCII systems) by inverting
-the 7th bit (0x40). The most interesting range is from '@' to '_'
-(0x40 through 0x5F), resulting in a control character from 0x00
-through 0x1F. A '?' maps to the DEL character. On EBCDIC systems only
-'@', the letters, '[', '\', ']', '^', '_' and '?' will work, resulting
-in 0x00 through 0x1F and 0x7F.
+=over 4
 
-C<\N{U+I<wide hex char>}> means the Unicode character whose Unicode ordinal
-number is I<wide hex char>.
-For documentation of C<\N{name}>, see L<charnames>.
+=item [1]
+
+The result is the character specified by the hexadecimal number between
+the braces.  See L</[8]> below for details on which character.
+
+Only hexadecimal digits are valid between the braces. If an invalid
+character is encountered, a warning will be issued and the invalid
+character and all subsequent characters (valid or invalid) within the
+braces will be discarded.
+
+If there are no valid digits between the braces, the generated character is
+the NULL character (C<\x{00}>).  However, an explicit empty brace (C<\x{}>)
+will not cause a warning (currently).
+
+=item [2]
+
+The result is the character specified by the hexadecimal number in the range
+0x00 to 0xFF.  See L</[8]> below for details on which character.
+
+Only hexadecimal digits are valid following C<\x>.  When C<\x> is followed
+by fewer than two valid digits, any valid digits will be zero-padded.  This
+means that C<\x7> will be interpreted as C<\x07>, and a lone <\x> will be
+interpreted as C<\x00>.  Except at the end of a string, having fewer than
+two valid digits will result in a warning.  Note that although the warning
+says the illegal character is ignored, it is only ignored as part of the
+escape and will still be used as the subsequent character in the string.
+For example:
+
+  Original    Result    Warns?
+  "\x7"       "\x07"    no
+  "\x"        "\x00"    no
+  "\x7q"      "\x07q"   yes
+  "\xq"       "\x00q"   yes
+
+=item [3]
+
+The result is the Unicode character or character sequence given by I<name>.
+See L<charnames>.
+
+=item [4]
+
+C<\N{U+I<hexadecimal number>}> means the Unicode character whose Unicode code
+point is I<hexadecimal number>.
+
+=item [5]
+
+The character following C<\c> is mapped to some other character as shown in the
+table:
+
+ Sequence   Value
+   \c@      chr(0)
+   \cA      chr(1)
+   \ca      chr(1)
+   \cB      chr(2)
+   \cb      chr(2)
+   ...
+   \cZ      chr(26)
+   \cz      chr(26)
+   \c[      chr(27)
+   \c]      chr(29)
+   \c^      chr(30)
+   \c?      chr(127)
+
+In other words, it's the character whose code point has had 64 xor'd with
+its uppercase.  C<\c?> is DELETE because C<ord("@") ^ 64> is 127, and
+C<\c@> is NULL because the ord of "@" is 64, so xor'ing 64 itself produces 0.
+
+Also, C<\c\I<X>> yields C< chr(28) . "I<X>"> for any I<X>, but cannot come at the
+end of a string, because the backslash would be parsed as escaping the end
+quote.
+
+On ASCII platforms, the resulting characters from the list above are the
+complete set of ASCII controls.  This isn't the case on EBCDIC platforms; see
+L<perlebcdic/OPERATOR DIFFERENCES> for the complete list of what these
+sequences mean on both ASCII and EBCDIC platforms.
+
+Use of any other character following the "c" besides those listed above is
+discouraged, and some are deprecated with the intention of removing
+those in a later Perl version.  What happens for any of these
+other characters currently though, is that the value is derived by xor'ing
+with the seventh bit, which is 64.
+
+To get platform independent controls, you can use C<\N{...}>.
+
+=item [6]
+
+The result is the character specified by the octal number between the braces.
+See L</[8]> below for details on which character.
+
+If a character that isn't an octal digit is encountered, a warning is raised,
+and the value is based on the octal digits before it, discarding it and all
+following characters up to the closing brace.  It is a fatal error if there are
+no octal digits at all.
+
+=item [7]
+
+The result is the character specified by the three-digit octal number in the
+range 000 to 777 (but best to not use above 077, see next paragraph).  See
+L</[8]> below for details on which character.
+
+Some contexts allow 2 or even 1 digit, but any usage without exactly
+three digits, the first being a zero, may give unintended results.  (For
+example, in a regular expression it may be confused with a backreference;
+see L<perlrebackslash/Octal escapes>.)  Starting in Perl 5.14, you may
+use C<\o{}> instead, which avoids all these problems.  Otherwise, it is best to
+use this construct only for ordinals C<\077> and below, remembering to pad to
+the left with zeros to make three digits.  For larger ordinals, either use
+C<\o{}>, or convert to something else, such as to hex and use C<\x{}>
+instead.
+
+Having fewer than 3 digits may lead to a misleading warning message that says
+that what follows is ignored.  For example, C<"\128"> in the ASCII character set
+is equivalent to the two characters C<"\n8">, but the warning C<Illegal octal
+digit '8' ignored> will be thrown.  If C<"\n8"> is what you want, you can
+avoid this warning by padding your octal number with C<0>'s: C<"\0128">.
+
+=item [8]
+
+Several constructs above specify a character by a number.  That number
+gives the character's position in the character set encoding (indexed from 0).
+This is called synonymously its ordinal, code position, or code point.  Perl
+works on platforms that have a native encoding currently of either ASCII/Latin1
+or EBCDIC, each of which allow specification of 256 characters.  In general, if
+the number is 255 (0xFF, 0377) or below, Perl interprets this in the platform's
+native encoding.  If the number is 256 (0x100, 0400) or above, Perl interprets
+it as a Unicode code point and the result is the corresponding Unicode
+character.  For example C<\x{50}> and C<\o{120}> both are the number 80 in
+decimal, which is less than 256, so the number is interpreted in the native
+character set encoding.  In ASCII the character in the 80th position (indexed
+from 0) is the letter "P", and in EBCDIC it is the ampersand symbol "&".
+C<\x{100}> and C<\o{400}> are both 256 in decimal, so the number is interpreted
+as a Unicode code point no matter what the native encoding is.  The name of the
+character in the 256th position (indexed by 0) in Unicode is
+C<LATIN CAPITAL LETTER A WITH MACRON>.
+
+There are a couple of exceptions to the above rule.  S<C<\N{U+I<hex number>}>> is
+always interpreted as a Unicode code point, so that C<\N{U+0050}> is "P" even
+on EBCDIC platforms.  And if L<C<S<use encoding>>|encoding> is in effect, the
+number is considered to be in that encoding, and is translated from that into
+the platform's native encoding if there is a corresponding native character;
+otherwise to Unicode.
+
+=back
 
 B<NOTE>: Unlike C and other languages, Perl has no C<\v> escape sequence for
 the vertical tab (VT - ASCII 11), but you may use C<\ck> or C<\x0b>.  (C<\v>
@@ -1046,28 +1494,44 @@ does have meaning in regular expression patterns in Perl, see L<perlre>.)
 
 The following escape sequences are available in constructs that interpolate,
 but not in transliterations.
-X<\l> X<\u> X<\L> X<\U> X<\E> X<\Q>
+X<\l> X<\u> X<\L> X<\U> X<\E> X<\Q> X<\F>
 
-    \l		lowercase next char
-    \u		uppercase next char
-    \L		lowercase till \E
-    \U		uppercase till \E
-    \E		end case modification
-    \Q		quote non-word characters till \E
+    \l		lowercase next character only
+    \u		titlecase (not uppercase!) next character only
+    \L		lowercase all characters till \E or end of string
+    \U		uppercase all characters till \E or end of string
+    \F		foldcase all characters till \E or end of string
+    \Q          quote (disable) pattern metacharacters till \E or
+                end of string
+    \E		end either case modification or quoted section
+		(whichever was last seen)
 
-If C<use locale> is in effect, the case map used by C<\l>, C<\L>,
-C<\u> and C<\U> is taken from the current locale.  See L<perllocale>.
-If Unicode (for example, C<\N{}> or wide hex characters of 0x100 or
-beyond) is being used, the case map used by C<\l>, C<\L>, C<\u> and
-C<\U> is as defined by Unicode.
+See L<perlfunc/quotemeta> for the exact definition of characters that
+are quoted by C<\Q>.
+
+C<\L>, C<\U>, C<\F>, and C<\Q> can stack, in which case you need one
+C<\E> for each.  For example:
+
+ say"This \Qquoting \ubusiness \Uhere isn't quite\E done yet,\E is it?";
+ This quoting\ Business\ HERE\ ISN\'T\ QUITE\ done\ yet\, is it?
+
+If C<use locale> is in effect (but not C<use locale ':not_characters'>),
+the case map used by C<\l>, C<\L>,
+C<\u>, and C<\U> is taken from the current locale.  See L<perllocale>.
+If Unicode (for example, C<\N{}> or code points of 0x100 or
+beyond) is being used, the case map used by C<\l>, C<\L>, C<\u>, and
+C<\U> is as defined by Unicode.  That means that case-mapping
+a single character can sometimes produce several characters.
+Under C<use locale>, C<\F> produces the same results as C<\L>.
 
 All systems use the virtual C<"\n"> to represent a line terminator,
 called a "newline".  There is no such thing as an unvarying, physical
 newline character.  It is only an illusion that the operating system,
 device drivers, C libraries, and Perl all conspire to preserve.  Not all
 systems read C<"\r"> as ASCII CR and C<"\n"> as ASCII LF.  For example,
-on a Mac, these are reversed, and on systems without line terminator,
-printing C<"\n"> may emit no actual data.  In general, use C<"\n"> when
+on the ancient Macs (pre-MacOS X) of yesteryear, these used to be reversed,
+and on systems without line terminator,
+printing C<"\n"> might emit no actual data.  In general, use C<"\n"> when
 you mean a "newline" for your system, but use the literal ASCII when you
 need an exact character.  For example, most networking protocols expect
 and prefer a CR+LF (C<"\015\012"> or C<"\cM\cJ">) for line terminators,
@@ -1084,14 +1548,28 @@ But method calls such as C<< $obj->meth >> are not.
 
 Interpolating an array or slice interpolates the elements in order,
 separated by the value of C<$">, so is equivalent to interpolating
-C<join $", @array>.    "Punctuation" arrays such as C<@*> are only
-interpolated if the name is enclosed in braces C<@{*}>, but special
-arrays C<@_>, C<@+>, and C<@-> are interpolated, even without braces.
+C<join $", @array>.  "Punctuation" arrays such as C<@*> are usually
+interpolated only if the name is enclosed in braces C<@{*}>, but the
+arrays C<@_>, C<@+>, and C<@-> are interpolated even without braces.
 
-You cannot include a literal C<$> or C<@> within a C<\Q> sequence.
-An unescaped C<$> or C<@> interpolates the corresponding variable,
-while escaping will cause the literal string C<\$> to be inserted.
-You'll need to write something like C<m/\Quser\E\@\Qhost/>.
+For double-quoted strings, the quoting from C<\Q> is applied after
+interpolation and escapes are processed.
+
+    "abc\Qfoo\tbar$s\Exyz"
+
+is equivalent to
+
+    "abc" . quotemeta("foo\tbar$s") . "xyz"
+
+For the pattern of regex operators (C<qr//>, C<m//> and C<s///>),
+the quoting from C<\Q> is applied after interpolation is processed,
+but before escapes are processed. This allows the pattern to match
+literally (except for C<$> and C<@>). For example, the following matches:
+
+    '\s\t' =~ /\Q\s\t/
+
+Because C<$> or C<@> trigger interpolation, you'll need to use something
+like C</\Quser\E\@\Qhost/> to match them literally.
 
 Patterns are subject to an additional level of interpretation as a
 regular expression.  This is done as a second pass, after variables are
@@ -1113,17 +1591,19 @@ matching and related activities.
 
 =over 8
 
-=item qr/STRING/msixpo
+=item qr/STRING/msixpodual
 X<qr> X</i> X</m> X</o> X</s> X</x> X</p>
 
 This operator quotes (and possibly compiles) its I<STRING> as a regular
 expression.  I<STRING> is interpolated the same way as I<PATTERN>
 in C<m/PATTERN/>.  If "'" is used as the delimiter, no interpolation
 is done.  Returns a Perl value which may be used instead of the
-corresponding C</STRING/msixpo> expression. The returned value is a
+corresponding C</STRING/msixpodual> expression. The returned value is a
 normalized version of the original pattern. It magically differs from
-a string containing the same characters: C<ref(qr/x/)> returns "Regexp",
-even though dereferencing the result returns undef.
+a string containing the same characters: C<ref(qr/x/)> returns "Regexp";
+however, dereferencing it is not well defined (you currently get the 
+normalized version of the original pattern, but this may change).
+
 
 For example,
 
@@ -1142,7 +1622,7 @@ The result may be used as a subpattern in a match:
     $string =~ $re;		# or used standalone
     $string =~ /$re/;		# or this way
 
-Since Perl may compile the pattern at the moment of execution of qr()
+Since Perl may compile the pattern at the moment of execution of the qr()
 operator, using qr() may have speed advantages in some situations,
 notably if the result of qr() is used standalone:
 
@@ -1164,7 +1644,7 @@ time a match C</$pat/> is attempted.  (Perl has many other internal
 optimizations, but none would be triggered in the above example if
 we did not use qr() operator.)
 
-Options are:
+Options (specified by the following modifiers) are:
 
     m	Treat string as multiple lines.
     s	Treat string as single line. (Make . match a newline)
@@ -1173,62 +1653,96 @@ Options are:
     p	When matching preserve a copy of the matched string so
         that ${^PREMATCH}, ${^MATCH}, ${^POSTMATCH} will be defined.
     o	Compile pattern only once.
+    a   ASCII-restrict: Use ASCII for \d, \s, \w; specifying two a's
+        further restricts /i matching so that no ASCII character will
+        match a non-ASCII one
+    l   Use the locale
+    u   Use Unicode rules
+    d   Use Unicode or native charset, as in 5.12 and earlier
 
 If a precompiled pattern is embedded in a larger pattern then the effect
-of 'msixp' will be propagated appropriately.  The effect of the 'o'
+of "msixpluad" will be propagated appropriately.  The effect the "o"
 modifier has is not propagated, being restricted to those patterns
 explicitly using it.
 
-See L<perlre> for additional information on valid syntax for STRING, and
-for a detailed look at the semantics of regular expressions.
+The last four modifiers listed above, added in Perl 5.14,
+control the character set semantics, but C</a> is the only one you are likely
+to want to specify explicitly; the other three are selected
+automatically by various pragmas.
 
-=item m/PATTERN/msixpogc
+See L<perlre> for additional information on valid syntax for STRING, and
+for a detailed look at the semantics of regular expressions.  In
+particular, all modifiers except the largely obsolete C</o> are further
+explained in L<perlre/Modifiers>.  C</o> is described in the next section.
+
+=item m/PATTERN/msixpodualgc
 X<m> X<operator, match>
 X<regexp, options> X<regexp> X<regex, options> X<regex>
 X</m> X</s> X</i> X</x> X</p> X</o> X</g> X</c>
 
-=item /PATTERN/msixpogc
+=item /PATTERN/msixpodualgc
 
 Searches a string for a pattern match, and in scalar context returns
 true if it succeeds, false if it fails.  If no string is specified
 via the C<=~> or C<!~> operator, the $_ string is searched.  (The
 string specified with C<=~> need not be an lvalue--it may be the
 result of an expression evaluation, but remember the C<=~> binds
-rather tightly.)  See also L<perlre>.  See L<perllocale> for
-discussion of additional considerations that apply when C<use locale>
-is in effect.
+rather tightly.)  See also L<perlre>.
 
-Options are as described in C<qr//>; in addition, the following match
+Options are as described in C<qr//> above; in addition, the following match
 process modifiers are available:
 
-    g	Match globally, i.e., find all occurrences.
-    c	Do not reset search position on a failed match when /g is in effect.
+ g  Match globally, i.e., find all occurrences.
+ c  Do not reset search position on a failed match when /g is in effect.
 
 If "/" is the delimiter then the initial C<m> is optional.  With the C<m>
-you can use any pair of non-whitespace characters
+you can use any pair of non-whitespace (ASCII) characters
 as delimiters.  This is particularly useful for matching path names
 that contain "/", to avoid LTS (leaning toothpick syndrome).  If "?" is
-the delimiter, then the match-only-once rule of C<?PATTERN?> applies.
+the delimiter, then a match-only-once rule applies,
+described in C<m?PATTERN?> below.
 If "'" is the delimiter, no interpolation is performed on the PATTERN.
 When using a character valid in an identifier, whitespace is required
 after the C<m>.
 
-PATTERN may contain variables, which will be interpolated (and the
-pattern recompiled) every time the pattern search is evaluated, except
+PATTERN may contain variables, which will be interpolated
+every time the pattern search is evaluated, except
 for when the delimiter is a single quote.  (Note that C<$(>, C<$)>, and
 C<$|> are not interpolated because they look like end-of-string tests.)
-If you want such a pattern to be compiled only once, add a C</o> after
-the trailing delimiter.  This avoids expensive run-time recompilations,
-and is useful when the value you are interpolating won't change over
-the life of the script.  However, mentioning C</o> constitutes a promise
-that you won't change the variables in the pattern.  If you change them,
-Perl won't even notice.  See also L<"qr/STRING/msixpo">.
+Perl will not recompile the pattern unless an interpolated
+variable that it contains changes.  You can force Perl to skip the
+test and never recompile by adding a C</o> (which stands for "once")
+after the trailing delimiter.
+Once upon a time, Perl would recompile regular expressions
+unnecessarily, and this modifier was useful to tell it not to do so, in the
+interests of speed.  But now, the only reasons to use C</o> are either:
+
+=over
+
+=item 1
+
+The variables are thousands of characters long and you know that they
+don't change, and you need to wring out the last little bit of speed by
+having Perl skip testing for that.  (There is a maintenance penalty for
+doing this, as mentioning C</o> constitutes a promise that you won't
+change the variables in the pattern.  If you do change them, Perl won't
+even notice.)
+
+=item 2
+
+you want the pattern to use the initial values of the variables
+regardless of whether they change or not.  (But there are saner ways
+of accomplishing this than using C</o>.)
+
+=back
+
+The bottom line is that using C</o> is almost never a good idea.
 
 =item The empty pattern //
 
 If the PATTERN evaluates to the empty string, the last
 I<successfully> matched regular expression is used instead. In this
-case, only the C<g> and C<c> flags on the empty pattern is honoured -
+case, only the C<g> and C<c> flags on the empty pattern are honored;
 the other flags are taken from the original pattern. If no match has
 previously succeeded, this will (silently) act instead as a genuine
 empty pattern (which will always match).
@@ -1246,7 +1760,7 @@ regex with an C<m> (so C<//> becomes C<m//>).
 
 If the C</g> option is not used, C<m//> in list context returns a
 list consisting of the subexpressions matched by the parentheses in the
-pattern, i.e., (C<$1>, C<$2>, C<$3>...).  (Note that here C<$1> etc. are
+pattern, that is, (C<$1>, C<$2>, C<$3>...).  (Note that here C<$1> etc. are
 also set, and that this differs from Perl 4's behavior.)  When there are
 no parentheses in the pattern, the return value is the list C<(1)> for
 success.  With or without parentheses, an empty list is returned upon
@@ -1254,7 +1768,9 @@ failure.
 
 Examples:
 
-    open(TTY, '/dev/tty');
+    open(TTY, "+</dev/tty")
+	|| die "can't access /dev/tty: $!";
+
     <TTY> =~ /^y/i && foo();	# do foo if desired
 
     if (/Version: *([0-9.]*)/) { $version = $1; }
@@ -1264,42 +1780,44 @@ Examples:
     # poor man's grep
     $arg = shift;
     while (<>) {
-	print if /$arg/o;	# compile only once
+	print if /$arg/o;	# compile only once (no longer needed!)
     }
 
     if (($F1, $F2, $Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/))
 
 This last example splits $foo into the first two words and the
 remainder of the line, and assigns those three fields to $F1, $F2, and
-$Etc.  The conditional is true if any variables were assigned, i.e., if
-the pattern matched.
+$Etc.  The conditional is true if any variables were assigned; that is,
+if the pattern matched.
 
 The C</g> modifier specifies global pattern matching--that is,
-matching as many times as possible within the string.  How it behaves
-depends on the context.  In list context, it returns a list of the
+matching as many times as possible within the string. How it behaves
+depends on the context. In list context, it returns a list of the
 substrings matched by any capturing parentheses in the regular
-expression.  If there are no parentheses, it returns a list of all
+expression. If there are no parentheses, it returns a list of all
 the matched strings, as if there were parentheses around the whole
 pattern.
 
 In scalar context, each execution of C<m//g> finds the next match,
 returning true if it matches, and false if there is no further match.
-The position after the last match can be read or set using the pos()
-function; see L<perlfunc/pos>.   A failed match normally resets the
+The position after the last match can be read or set using the C<pos()>
+function; see L<perlfunc/pos>. A failed match normally resets the
 search position to the beginning of the string, but you can avoid that
-by adding the C</c> modifier (e.g. C<m//gc>).  Modifying the target
+by adding the C</c> modifier (for example, C<m//gc>). Modifying the target
 string also resets the search position.
 
 =item \G assertion
 
 You can intermix C<m//g> matches with C<m/\G.../g>, where C<\G> is a
-zero-width assertion that matches the exact position where the previous
-C<m//g>, if any, left off.  Without the C</g> modifier, the C<\G> assertion
-still anchors at pos(), but the match is of course only attempted once.
-Using C<\G> without C</g> on a target string that has not previously had a
-C</g> match applied to it is the same as using the C<\A> assertion to match
-the beginning of the string.  Note also that, currently, C<\G> is only
-properly supported when anchored at the very beginning of the pattern.
+zero-width assertion that matches the exact position where the
+previous C<m//g>, if any, left off. Without the C</g> modifier, the
+C<\G> assertion still anchors at C<pos()> as it was at the start of
+the operation (see L<perlfunc/pos>), but the match is of course only
+attempted once. Using C<\G> without C</g> on a target string that has
+not previously had a C</g> match applied to it is the same as using
+the C<\A> assertion to match the beginning of the string.  Note also
+that, currently, C<\G> is only properly supported when anchored at the
+very beginning of the pattern.
 
 Examples:
 
@@ -1307,15 +1825,39 @@ Examples:
     ($one,$five,$fifteen) = (`uptime` =~ /(\d+\.\d+)/g);
 
     # scalar context
-    $/ = "";
-    while (defined($paragraph = <>)) {
-	while ($paragraph =~ /[a-z]['")]*[.!?]+['")]*\s/g) {
+    local $/ = "";
+    while ($paragraph = <>) {
+	while ($paragraph =~ /\p{Ll}['")]*[.!?]+['")]*\s/g) {
 	    $sentences++;
 	}
     }
-    print "$sentences\n";
+    say $sentences;
 
-    # using m//gc with \G
+Here's another way to check for sentences in a paragraph:
+
+    my $sentence_rx = qr{
+	(?: (?<= ^ ) | (?<= \s ) )  # after start-of-string or whitespace
+	\p{Lu}                      # capital letter
+	.*?                         # a bunch of anything
+	(?<= \S )                   # that ends in non-whitespace
+	(?<! \b [DMS]r  )           # but isn't a common abbreviation
+	(?<! \b Mrs )
+	(?<! \b Sra )
+	(?<! \b St  )
+	[.?!]                       # followed by a sentence ender
+	(?= $ | \s )                # in front of end-of-string or whitespace
+    }sx;
+    local $/ = "";
+    while (my $paragraph = <>) {
+	say "NEW PARAGRAPH";
+	my $count = 0;
+	while ($paragraph =~ /($sentence_rx)/g) {
+	    printf "\tgot sentence %d: <%s>\n", ++$count, $1;
+	}
+    }
+
+Here's how to use C<m//gc> with C<\G>:
+
     $_ = "ppooqppqq";
     while ($i++ < 2) {
         print "1: '";
@@ -1340,8 +1882,8 @@ The last example should print:
 Notice that the final match matched C<q> instead of C<p>, which a match
 without the C<\G> anchor would have done. Also note that the final match
 did not update C<pos>. C<pos> is only updated on a C</g> match. If the
-final match did indeed match C<p>, it's a good bet that you're running an
-older (pre-5.6.0) Perl.
+final match did indeed match C<p>, it's a good bet that you're running a
+very old (pre-5.6.0) version of Perl.
 
 A useful idiom for C<lex>-like scanners is C</\G.../gc>.  You can
 combine several regexps like this to process a string part-by-part,
@@ -1349,60 +1891,79 @@ doing different actions depending on which regexp matched.  Each
 regexp tries to match where the previous one leaves off.
 
  $_ = <<'EOL';
-      $url = URI::URL->new( "http://example.com/" ); die if $url eq "xXx";
+    $url = URI::URL->new( "http://example.com/" ); die if $url eq "xXx";
  EOL
- LOOP:
-    {
-      print(" digits"),		redo LOOP if /\G\d+\b[,.;]?\s*/gc;
-      print(" lowercase"),	redo LOOP if /\G[a-z]+\b[,.;]?\s*/gc;
-      print(" UPPERCASE"),	redo LOOP if /\G[A-Z]+\b[,.;]?\s*/gc;
-      print(" Capitalized"),	redo LOOP if /\G[A-Z][a-z]+\b[,.;]?\s*/gc;
-      print(" MiXeD"),		redo LOOP if /\G[A-Za-z]+\b[,.;]?\s*/gc;
-      print(" alphanumeric"),	redo LOOP if /\G[A-Za-z0-9]+\b[,.;]?\s*/gc;
-      print(" line-noise"),	redo LOOP if /\G[^A-Za-z0-9]+/gc;
-      print ". That's all!\n";
-    }
+
+ LOOP: {
+     print(" digits"),       redo LOOP if /\G\d+\b[,.;]?\s*/gc;
+     print(" lowercase"),    redo LOOP if /\G\p{Ll}+\b[,.;]?\s*/gc;
+     print(" UPPERCASE"),    redo LOOP if /\G\p{Lu}+\b[,.;]?\s*/gc;
+     print(" Capitalized"),  redo LOOP if /\G\p{Lu}\p{Ll}+\b[,.;]?\s*/gc;
+     print(" MiXeD"),        redo LOOP if /\G\pL+\b[,.;]?\s*/gc;
+     print(" alphanumeric"), redo LOOP if /\G[\p{Alpha}\pN]+\b[,.;]?\s*/gc;
+     print(" line-noise"),   redo LOOP if /\G\W+/gc;
+     print ". That's all!\n";
+ }
 
 Here is the output (split into several lines):
 
- line-noise lowercase line-noise lowercase UPPERCASE line-noise
- UPPERCASE line-noise lowercase line-noise lowercase line-noise
- lowercase lowercase line-noise lowercase lowercase line-noise
- MiXeD line-noise. That's all!
+    line-noise lowercase line-noise UPPERCASE line-noise UPPERCASE
+    line-noise lowercase line-noise lowercase line-noise lowercase
+    lowercase line-noise lowercase lowercase line-noise lowercase
+    lowercase line-noise MiXeD line-noise. That's all!
 
-=item ?PATTERN?
-X<?>
+=item m?PATTERN?msixpodualgc
+X<?> X<operator, match-once>
 
-This is just like the C</pattern/> search, except that it matches only
-once between calls to the reset() operator.  This is a useful
+=item ?PATTERN?msixpodualgc
+
+This is just like the C<m/PATTERN/> search, except that it matches
+only once between calls to the reset() operator.  This is a useful
 optimization when you want to see only the first occurrence of
-something in each file of a set of files, for instance.  Only C<??>
+something in each file of a set of files, for instance.  Only C<m??>
 patterns local to the current package are reset.
 
     while (<>) {
-	if (?^$?) {
+	if (m?^$?) {
 			    # blank line between header and body
 	}
     } continue {
-	reset if eof;	    # clear ?? status for next file
+	reset if eof;	    # clear m?? status for next file
     }
 
-This usage is vaguely deprecated, which means it just might possibly
-be removed in some distant future version of Perl, perhaps somewhere
-around the year 2168.
+Another example switched the first "latin1" encoding it finds
+to "utf8" in a pod file:
 
-=item s/PATTERN/REPLACEMENT/msixpogce
+    s//utf8/ if m? ^ =encoding \h+ \K latin1 ?x;
+
+The match-once behavior is controlled by the match delimiter being
+C<?>; with any other delimiter this is the normal C<m//> operator.  
+
+For historical reasons, the leading C<m> in C<m?PATTERN?> is optional,
+but the resulting C<?PATTERN?> syntax is deprecated, will warn on
+usage and might be removed from a future stable release of Perl (without
+further notice!).
+
+=item s/PATTERN/REPLACEMENT/msixpodualgcer
 X<substitute> X<substitution> X<replace> X<regexp, replace>
-X<regexp, substitute> X</m> X</s> X</i> X</x> X</p> X</o> X</g> X</c> X</e>
+X<regexp, substitute> X</m> X</s> X</i> X</x> X</p> X</o> X</g> X</c> X</e> X</r>
 
 Searches a string for a pattern, and if found, replaces that pattern
 with the replacement text and returns the number of substitutions
 made.  Otherwise it returns false (specifically, the empty string).
 
+If the C</r> (non-destructive) option is used then it runs the
+substitution on a copy of the string and instead of returning the
+number of substitutions, it returns the copy whether or not a
+substitution occurred.  The original string is never changed when
+C</r> is used.  The copy will always be a plain string, even if the
+input is an object or a tied variable.
+
 If no string is specified via the C<=~> or C<!~> operator, the C<$_>
-variable is searched and modified.  (The string specified with C<=~> must
-be scalar variable, an array element, a hash element, or an assignment
-to one of those, i.e., an lvalue.)
+variable is searched and modified.  Unless the C</r> option is used,
+the string specified must be a scalar variable, an array element, a
+hash element, or an assignment to one of those; that is, some sort of
+scalar lvalue.
 
 If the delimiter chosen is a single quote, no interpolation is
 done on either the PATTERN or the REPLACEMENT.  Otherwise, if the
@@ -1412,14 +1973,13 @@ at run-time.  If you want the pattern compiled only once the first time
 the variable is interpolated, use the C</o> option.  If the pattern
 evaluates to the empty string, the last successfully executed regular
 expression is used instead.  See L<perlre> for further explanation on these.
-See L<perllocale> for discussion of additional considerations that apply
-when C<use locale> is in effect.
 
 Options are as with m// with the addition of the following replacement
 specific options:
 
     e	Evaluate the right side as an expression.
-    ee  Evaluate the right side as a string then eval the result
+    ee  Evaluate the right side as a string then eval the result.
+    r   Return substitution and leave the original string untouched.
 
 Any non-whitespace delimiter may replace the slashes.  Add space after
 the C<s> when using a character allowed in identifiers.  If single quotes
@@ -1427,7 +1987,7 @@ are used, no interpretation is done on the replacement string (the C</e>
 modifier overrides this, however).  Unlike Perl 4, Perl 5 treats backticks
 as normal delimiters; the replacement text is not evaluated as a command.
 If the PATTERN is delimited by bracketing quotes, the REPLACEMENT has
-its own pair of quotes, which may or may not be bracketing quotes, e.g.,
+its own pair of quotes, which may or may not be bracketing quotes, for example,
 C<s(foo)(bar)> or C<< s<foo>/bar/ >>.  A C</e> will cause the
 replacement portion to be treated as a full-fledged Perl expression
 and evaluated right then and there.  It is, however, syntax checked at
@@ -1443,6 +2003,11 @@ Examples:
     s/Login: $foo/Login: $bar/; # run-time pattern
 
     ($foo = $bar) =~ s/this/that/;	# copy first, then change
+    ($foo = "$bar") =~ s/this/that/;	# convert to string, copy, then change
+    $foo = $bar =~ s/this/that/r;	# Same as above using /r
+    $foo = $bar =~ s/this/that/r
+                =~ s/that/the other/r;	# Chained substitutes using /r
+    @foo = map { s/this/that/r } @bar	# /r is very useful in maps
 
     $count = ($paragraph =~ s/Mister\b/Mr./g);  # get change-count
 
@@ -1455,12 +2020,19 @@ Examples:
     s/%(.)/$percent{$1} || $&/ge;	# expr now, so /e
     s/^=(\w+)/pod($1)/ge;	# use function call
 
+    $_ = 'abc123xyz';
+    $a = s/abc/def/r;           # $a is 'def123xyz' and
+                                # $_ remains 'abc123xyz'.
+
     # expand variables in $_, but dynamics only, using
     # symbolic dereferencing
     s/\$(\w+)/${$1}/g;
 
     # Add one to the value of any numbers in the string
     s/(\d+)/1 + $1/eg;
+
+    # Titlecase words in the last 30 characters only
+    substr($str, -30) =~ s/\b(\p{Alpha}+)\b/\u\L$1/g;
 
     # This will expand any embedded scalar variable
     # (including lexicals) in $_ : First $1 is interpolated
@@ -1495,6 +2067,14 @@ to occur that you might want.  Here are two common cases:
 
     # expand tabs to 8-column spacing
     1 while s/\t+/' ' x (length($&)*8 - length($`)%8)/e;
+
+C<s///le> is treated as a substitution followed by the C<le> operator, not
+the C</le> flags.  This may change in a future version of Perl.  It
+produces a warning if warnings are enabled.  To disambiguate, use a space
+or change the order of the flags:
+
+    s/foo/bar/ le 5;  # "le" infix operator
+    s/foo/bar/el;     # "e" and "l" flags
 
 =back
 
@@ -1571,11 +2151,11 @@ when the program is done:
 The STDIN filehandle used by the command is inherited from Perl's STDIN.
 For example:
 
-    open BLAM, "blam" || die "Can't open: $!";
-    open STDIN, "<&BLAM";
-    print `sort`;
+    open(SPLAT, "stuff")   || die "can't open stuff: $!";
+    open(STDIN, "<&SPLAT") || die "can't dupe SPLAT: $!";
+    print STDOUT `sort`;
 
-will print the sorted contents of the file "blam".
+will print the sorted contents of the file named F<"stuff">.
 
 Using single-quote as a delimiter protects the command from Perl's
 double-quote interpolation, passing it on to the shell instead:
@@ -1594,8 +2174,8 @@ On some platforms (notably DOS-like ones), the shell may not be
 capable of dealing with multiline commands, so putting newlines in
 the string may not get you what you want.  You may be able to evaluate
 multiple commands in a single line by separating them with the command
-separator character, if your shell supports that (e.g. C<;> on many Unix
-shells; C<&> on the Windows NT C<cmd> shell).
+separator character, if your shell supports that (for example, C<;> on 
+many Unix shells and C<&> on the Windows NT C<cmd> shell).
 
 Beginning with v5.6.0, Perl will attempt to flush all files opened for
 output before starting the child process, but this may not be supported
@@ -1626,7 +2206,7 @@ Evaluates to a list of the words extracted out of STRING, using embedded
 whitespace as the word delimiters.  It can be understood as being roughly
 equivalent to:
 
-    split(' ', q/STRING/);
+    split(" ", q/STRING/);
 
 the differences being that it generates a real list at compile time, and
 in scalar context it returns the last element in the list.  So
@@ -1636,7 +2216,7 @@ this expression:
 
 is semantically equivalent to the list:
 
-    'foo', 'bar', 'baz'
+    "foo", "bar", "baz"
 
 Some frequently seen examples:
 
@@ -1648,31 +2228,41 @@ put comments into a multi-line C<qw>-string.  For this reason, the
 C<use warnings> pragma and the B<-w> switch (that is, the C<$^W> variable)
 produces warnings if the STRING contains the "," or the "#" character.
 
-
-=item tr/SEARCHLIST/REPLACEMENTLIST/cds
+=item tr/SEARCHLIST/REPLACEMENTLIST/cdsr
 X<tr> X<y> X<transliterate> X</c> X</d> X</s>
 
-=item y/SEARCHLIST/REPLACEMENTLIST/cds
+=item y/SEARCHLIST/REPLACEMENTLIST/cdsr
 
 Transliterates all occurrences of the characters found in the search list
 with the corresponding character in the replacement list.  It returns
 the number of characters replaced or deleted.  If no string is
-specified via the =~ or !~ operator, the $_ string is transliterated.  (The
-string specified with =~ must be a scalar variable, an array element, a
-hash element, or an assignment to one of those, i.e., an lvalue.)
+specified via the C<=~> or C<!~> operator, the $_ string is transliterated.
+
+If the C</r> (non-destructive) option is present, a new copy of the string
+is made and its characters transliterated, and this copy is returned no
+matter whether it was modified or not: the original string is always
+left unchanged.  The new copy is always a plain string, even if the input
+string is an object or a tied variable.
+
+Unless the C</r> option is used, the string specified with C<=~> must be a
+scalar variable, an array element, a hash element, or an assignment to one
+of those; in other words, an lvalue.
 
 A character range may be specified with a hyphen, so C<tr/A-J/0-9/>
 does the same replacement as C<tr/ACEGIBDFHJ/0246813579/>.
 For B<sed> devotees, C<y> is provided as a synonym for C<tr>.  If the
 SEARCHLIST is delimited by bracketing quotes, the REPLACEMENTLIST has
-its own pair of quotes, which may or may not be bracketing quotes,
-e.g., C<tr[A-Z][a-z]> or C<tr(+\-*/)/ABCD/>.
+its own pair of quotes, which may or may not be bracketing quotes;
+for example, C<tr[aeiouy][yuoiea]> or C<tr(+\-*/)/ABCD/>.
 
-Note that C<tr> does B<not> do regular expression character classes
-such as C<\d> or C<[:lower:]>.  The C<tr> operator is not equivalent to
-the tr(1) utility.  If you want to map strings between lower/upper
-cases, see L<perlfunc/lc> and L<perlfunc/uc>, and in general consider
-using the C<s> operator if you need regular expressions.
+Note that C<tr> does B<not> do regular expression character classes such as
+C<\d> or C<\pL>.  The C<tr> operator is not equivalent to the tr(1)
+utility.  If you want to map strings between lower/upper cases, see
+L<perlfunc/lc> and L<perlfunc/uc>, and in general consider using the C<s>
+operator if you need regular expressions.  The C<\U>, C<\u>, C<\L>, and
+C<\l> string-interpolation escapes on the right side of a substitution
+operator will perform correct case-mappings, but C<tr[a-z][A-Z]> will not
+(except sometimes on legacy 7-bit data).
 
 Note also that the whole range idea is rather unportable between
 character sets--and even within character sets they may cause results
@@ -1686,6 +2276,8 @@ Options:
     c	Complement the SEARCHLIST.
     d	Delete found but unreplaced characters.
     s	Squash duplicate replaced characters.
+    r	Return the modified string and leave the original string
+	untouched.
 
 If the C</c> modifier is specified, the SEARCHLIST character set
 is complemented.  If the C</d> modifier is specified, any characters
@@ -1705,7 +2297,7 @@ squashing character sequences in a class.
 
 Examples:
 
-    $ARGV[1] =~ tr/A-Z/a-z/;	# canonicalize to lower case
+    $ARGV[1] =~ tr/A-Z/a-z/;	# canonicalize to lower case ASCII
 
     $cnt = tr/*/*/;		# count the stars in $_
 
@@ -1716,11 +2308,18 @@ Examples:
     tr/a-zA-Z//s;		# bookkeeper -> bokeper
 
     ($HOST = $host) =~ tr/a-z/A-Z/;
+     $HOST = $host  =~ tr/a-z/A-Z/r;   # same thing
+
+    $HOST = $host =~ tr/a-z/A-Z/r    # chained with s///r
+                  =~ s/:/ -p/r;
 
     tr/a-zA-Z/ /cs;		# change non-alphas to single space
 
+    @stripped = map tr/a-zA-Z/ /csr, @original;
+				# /r with map
+
     tr [\200-\377]
-       [\000-\177];		# delete 8th bit
+       [\000-\177];		# wickedly delete 8th bit
 
 If multiple transliterations are given for a character, only the
 first one is used:
@@ -1781,6 +2380,17 @@ interpolation of its content. This is similar to single quoted
 strings except that backslashes have no special meaning, with C<\\>
 being treated as two backslashes and not one as they would in every
 other quoting construct.
+
+Just as in the shell, a backslashed bareword following the C<<< << >>>
+means the same thing as a single-quoted string does:
+
+	$cost = <<'VISTA';  # hasta la ...
+    That'll be $10 please, ma'am.
+    VISTA
+
+	$cost = <<\VISTA;   # Same thing!
+    That'll be $10 please, ma'am.
+    VISTA
 
 This is the only form of quoting in perl where there is no need
 to worry about escaping content, something that code generators
@@ -1858,8 +2468,8 @@ If the terminating identifier is on the last line of the program, you
 must be sure there is a newline after it; otherwise, Perl will give the
 warning B<Can't find string terminator "END" anywhere before EOF...>.
 
-Additionally, the quoting rules for the end of string identifier are not
-related to Perl's quoting rules. C<q()>, C<qq()>, and the like are not
+Additionally, quoting rules for the end-of-string identifier are
+unrelated to Perl's quoting rules. C<q()>, C<qq()>, and the like are not
 supported in place of C<''> and C<"">, and the only interpolation is for
 backslashing the quoting character:
 
@@ -1927,27 +2537,28 @@ Therefore a C</> terminates a C<qq//> construct, while a C<]> terminates
 C<qq[]> and C<qq]]> constructs.
 
 When searching for single-character delimiters, escaped delimiters
-and C<\\> are skipped. For example, while searching for terminating C</>,
+and C<\\> are skipped.  For example, while searching for terminating C</>,
 combinations of C<\\> and C<\/> are skipped.  If the delimiters are
 bracketing, nested pairs are also skipped.  For example, while searching
 for closing C<]> paired with the opening C<[>, combinations of C<\\>, C<\]>,
 and C<\[> are all skipped, and nested C<[> and C<]> are skipped as well.
 However, when backslashes are used as the delimiters (like C<qq\\> and
 C<tr\\\>), nothing is skipped.
-During the search for the end, backslashes that escape delimiters
-are removed (exactly speaking, they are not copied to the safe location).
+During the search for the end, backslashes that escape delimiters or
+backslashes are removed (exactly speaking, they are not copied to the
+safe location).
 
 For constructs with three-part delimiters (C<s///>, C<y///>, and
 C<tr///>), the search is repeated once more.
 If the first delimiter is not an opening punctuation, three delimiters must
 be same such as C<s!!!> and C<tr)))>, in which case the second delimiter
 terminates the left part and starts the right part at once.
-If the left part is delimited by bracketing punctuations (that is C<()>,
+If the left part is delimited by bracketing punctuation (that is C<()>,
 C<[]>, C<{}>, or C<< <> >>), the right part needs another pair of
-delimiters such as C<s(){}> and C<tr[]//>.  In these cases, whitespaces
+delimiters such as C<s(){}> and C<tr[]//>.  In these cases, whitespace
 and comments are allowed between both parts, though the comment must follow
-at least one whitespace; otherwise a character expected as the start of
-the comment may be regarded as the starting delimiter of the right part.
+at least one whitespace character; otherwise a character expected as the 
+start of the comment may be regarded as the starting delimiter of the right part.
 
 During this search no attention is paid to the semantics of the construct.
 Thus:
@@ -2009,7 +2620,7 @@ as a literal C<->.
 
 =item C<"">, C<``>, C<qq//>, C<qx//>, C<< <file*glob> >>, C<<<"EOF">
 
-C<\Q>, C<\U>, C<\u>, C<\L>, C<\l> (possibly paired with C<\E>) are
+C<\Q>, C<\U>, C<\u>, C<\L>, C<\l>, C<\F> (possibly paired with C<\E>) are
 converted to corresponding Perl constructs.  Thus, C<"$foo\Qbaz$bar">
 is converted to C<$foo . (quotemeta("baz" . $bar))> internally.
 The other escape sequences such as C<\200> and C<\t> and backslashed
@@ -2060,7 +2671,7 @@ Fortunately, it's usually correct for ambiguous cases.
 
 =item the replacement of C<s///>
 
-Processing of C<\Q>, C<\U>, C<\u>, C<\L>, C<\l>, and interpolation
+Processing of C<\Q>, C<\U>, C<\u>, C<\L>, C<\l>, C<\F> and interpolation
 happens as with C<qq//> constructs.
 
 It is at this step that C<\1> is begrudgingly converted to C<$1> in
@@ -2071,7 +2682,7 @@ is emitted if the C<use warnings> pragma or the B<-w> command-line flag
 
 =item C<RE> in C<?RE?>, C</RE/>, C<m/RE/>, C<s/RE/foo/>,
 
-Processing of C<\Q>, C<\U>, C<\u>, C<\L>, C<\l>, C<\E>,
+Processing of C<\Q>, C<\U>, C<\u>, C<\L>, C<\l>, C<\F>, C<\E>,
 and interpolation happens (almost) as with C<qq//> constructs.
 
 Processing of C<\N{...}> is also done here, and compiled into an intermediate
@@ -2227,21 +2838,22 @@ The following lines are equivalent:
     print while ($_ = <STDIN>);
     print while <STDIN>;
 
-This also behaves similarly, but avoids $_ :
+This also behaves similarly, but assigns to a lexical variable 
+instead of to C<$_>:
 
     while (my $line = <STDIN>) { print $line }
 
 In these loop constructs, the assigned value (whether assignment
 is automatic or explicit) is then tested to see whether it is
-defined.  The defined test avoids problems where line has a string
-value that would be treated as false by Perl, for example a "" or
+defined.  The defined test avoids problems where the line has a string
+value that would be treated as false by Perl; for example a "" or
 a "0" with no trailing newline.  If you really mean for such values
 to terminate the loop, they should be tested for explicitly:
 
     while (($_ = <STDIN>) ne '0') { ... }
     while (<STDIN>) { last unless $_; ... }
 
-In other boolean contexts, C<< <filehandle> >> without an
+In other boolean contexts, C<< <FILEHANDLE> >> without an
 explicit C<defined> test or comparison elicits a warning if the
 C<use warnings> pragma or the B<-w>
 command-line switch (the C<$^W> variable) is in effect.
@@ -2263,7 +2875,9 @@ way, so use with care.
 See L<perlfunc/readline>.
 
 The null filehandle <> is special: it can be used to emulate the
-behavior of B<sed> and B<awk>.  Input from <> comes either from
+behavior of B<sed> and B<awk>, and any other Unix filter program
+that takes a list of filenames, doing the same to each line
+of input from all of them.  Input from <> comes either from
 standard input, or from each file listed on the command line.  Here's
 how it works: the first time <> is evaluated, the @ARGV array is
 checked, and if it is empty, C<$ARGV[0]> is set to "-", which when opened
@@ -2337,7 +2951,7 @@ The <> symbol will return C<undef> for end-of-file only once.
 If you call it again after this, it will assume you are processing another
 @ARGV list, and if you haven't set @ARGV, will read input from STDIN.
 
-If what the angle brackets contain is a simple scalar variable (e.g.,
+If what the angle brackets contain is a simple scalar variable (for example,
 <$foo>), then that variable contains the name of the
 filehandle to input from, or its typeglob, or a reference to the
 same.  For example:
@@ -2388,7 +3002,8 @@ get them all anyway.  However, in scalar context the operator returns
 the next value each time it's called, or C<undef> when the list has
 run out.  As with filehandle reads, an automatic C<defined> is
 generated when the glob occurs in the test part of a C<while>,
-because legal glob returns (e.g. a file called F<0>) would otherwise
+because legal glob returns (for example,
+a file called F<0>) would otherwise
 terminate the loop.  Again, C<undef> is returned only once.  So if
 you're expecting a single value from a glob, it is much better to
 say
@@ -2419,8 +3034,9 @@ concatenation happens at compile time between literals that don't do
 variable substitution.  Backslash interpolation also happens at
 compile time.  You can say
 
-    'Now is the time for all' . "\n" .
-	'good men to come to.'
+      'Now is the time for all'
+    . "\n" 
+    .  'good men to come to.'
 
 and this all reduces to one string internally.  Likewise, if
 you say
@@ -2429,14 +3045,14 @@ you say
 	if (-s $file > 5 + 100 * 2**16) {  }
     }
 
-the compiler will precompute the number which that expression
+the compiler precomputes the number which that expression
 represents so that the interpreter won't have to.
 
 =head2 No-ops
 X<no-op> X<nop>
 
 Perl doesn't officially have a no-op operator, but the bare constants
-C<0> and C<1> are special-cased to not produce a warning in a void
+C<0> and C<1> are special-cased not to produce a warning in void
 context, so you can for example safely do
 
     1 while foo();
@@ -2484,17 +3100,17 @@ floating point.  But by saying
 
     use integer;
 
-you may tell the compiler that it's okay to use integer operations
-(if it feels like it) from here to the end of the enclosing BLOCK.
-An inner BLOCK may countermand this by saying
+you may tell the compiler to use integer operations
+(see L<integer> for a detailed explanation) from here to the end of
+the enclosing BLOCK.  An inner BLOCK may countermand this by saying
 
     no integer;
 
 which lasts until the end of that BLOCK.  Note that this doesn't
-mean everything is only an integer, merely that Perl may use integer
-operations if it is so inclined.  For example, even under C<use
-integer>, if you take the C<sqrt(2)>, you'll still get C<1.4142135623731>
-or so.
+mean everything is an integer, merely that Perl will use integer
+operations for arithmetic, comparison, and bitwise operators.  For
+example, even under C<use integer>, if you take the C<sqrt(2)>, you'll
+still get C<1.4142135623731> or so.
 
 Used on numbers, the bitwise operators ("&", "|", "^", "~", "<<",
 and ">>") always produce integral results.  (But see also
@@ -2506,6 +3122,7 @@ integral value.  However, C<use integer; ~0> is C<-1> on two's-complement
 machines.
 
 =head2 Floating-point Arithmetic
+
 X<floating-point> X<floating point> X<float> X<real>
 
 While C<use integer> provides integer-only arithmetic, there is no
@@ -2551,36 +3168,47 @@ need yourself.
 =head2 Bigger Numbers
 X<number, arbitrary precision>
 
-The standard Math::BigInt and Math::BigFloat modules provide
+The standard C<Math::BigInt>, C<Math::BigRat>, and C<Math::BigFloat> modules,
+along with the C<bigint>, C<bigrat>, and C<bitfloat> pragmas, provide
 variable-precision arithmetic and overloaded operators, although
 they're currently pretty slow. At the cost of some space and
 considerable speed, they avoid the normal pitfalls associated with
 limited-precision representations.
 
-    use Math::BigInt;
-    $x = Math::BigInt->new('123456789123456789');
-    print $x * $x;
+	use 5.010;
+	use bigint;  # easy interface to Math::BigInt
+	$x = 123456789123456789;
+	say $x * $x;
+    +15241578780673678515622620750190521
 
-    # prints +15241578780673678515622620750190521
+Or with rationals:
 
-There are several modules that let you calculate with (bound only by
-memory and cpu-time) unlimited or fixed precision. There are also
-some non-standard modules that provide faster implementations via
-external C libraries.
+	use 5.010;
+	use bigrat;
+	$a = 3/22;
+	$b = 4/6;
+	say "a/b is ", $a/$b;
+	say "a*b is ", $a*$b;
+    a/b is 9/44
+    a*b is 1/11
+
+Several modules let you calculate with (bound only by memory and CPU time)
+unlimited or fixed precision. There are also some non-standard modules that
+provide faster implementations via external C libraries.
 
 Here is a short, but incomplete summary:
 
-	Math::Fraction		big, unlimited fractions like 9973 / 12967
-	Math::String		treat string sequences like numbers
-	Math::FixedPrecision	calculate with a fixed precision
-	Math::Currency		for currency calculations
-	Bit::Vector		manipulate bit vectors fast (uses C)
-	Math::BigIntFast	Bit::Vector wrapper for big numbers
-	Math::Pari		provides access to the Pari C library
-	Math::BigInteger	uses an external C library
-	Math::Cephes		uses external Cephes C library (no big numbers)
-	Math::Cephes::Fraction	fractions via the Cephes library
-	Math::GMP		another one using an external C library
+  Math::Fraction         big, unlimited fractions like 9973 / 12967
+  Math::String           treat string sequences like numbers
+  Math::FixedPrecision   calculate with a fixed precision
+  Math::Currency         for currency calculations
+  Bit::Vector            manipulate bit vectors fast (uses C)
+  Math::BigIntFast       Bit::Vector wrapper for big numbers
+  Math::Pari             provides access to the Pari C library
+  Math::BigInteger       uses an external C library
+  Math::Cephes           uses external Cephes C library (no big numbers)
+  Math::Cephes::Fraction fractions via the Cephes library
+  Math::GMP              another one using an external C library
 
 Choose wisely.
 

@@ -11,7 +11,7 @@
 /*
  * '...we will have peace, when you and all your works have perished--and
  *  the works of your dark master to whom you would deliver us.  You are a
- *  liar, Saruman, and a corrupter of men's hearts.'       --Théoden
+ *  liar, Saruman, and a corrupter of men's hearts.'       --ThÃ©oden
  *
  *     [p.580 of _The Lord of the Rings_, III/x: "The Voice of Saruman"]
  */
@@ -33,8 +33,8 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 
 #   if Uid_t_size == 1
     {
-	const UV  uid = PL_uid;
-	const UV euid = PL_euid;
+	const UV  uid = PerlProc_getuid();
+	const UV euid = PerlProc_geteuid();
 
 	DEBUG_u(PerlIO_printf(Perl_debug_log,
 			       "%s %d %"UVuf" %"UVuf"\n",
@@ -42,8 +42,8 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
     }
 #   else
     {
-	const IV  uid = PL_uid;
-	const IV euid = PL_euid;
+	const IV  uid = PerlProc_getuid();
+	const IV euid = PerlProc_geteuid();
 
 	DEBUG_u(PerlIO_printf(Perl_debug_log,
 			       "%s %d %"IVdf" %"IVdf"\n",
@@ -57,9 +57,9 @@ Perl_taint_proper(pTHX_ const char *f, const char *const s)
 
 	if (!f)
 	    f = PL_no_security;
-	if (PL_euid != PL_uid)
+	if (PerlProc_getuid() != PerlProc_geteuid())
 	    ug = " while running setuid";
-	else if (PL_egid != PL_gid)
+	else if (PerlProc_getgid() != PerlProc_getegid())
 	    ug = " while running setgid";
 	else if (PL_taint_warn)
             ug = " while running with -t switch";

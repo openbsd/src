@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CPANPLUS::Hacking - developing with the CPANPLUS environment
+CPANPLUS::Hacking - developing CPANPLUS
 
 =head1 DESCRIPTION
 
@@ -14,8 +14,8 @@ features or patches to CPANPLUS.
 
 =head1 OBTAINING CPANPLUS
 
-Checkout CPANPLUS from its Subversion repository at 
-L<http://oss.dwim.org/cpanplus-devel> .
+Checkout CPANPLUS from its GIT repository at
+L<https://github.com/jib/cpanplus-devel> .
 
 =head1 INSTALLING CPANPLUS
 
@@ -49,7 +49,7 @@ from there.
 =head1 RUNNING CPANPLUS TESTS
 
 Tests are what tells us if CPANPLUS is working. If a test is not working,
-try to run it explicilty like this:
+try to run it explicitly like this:
 
     perl -I/path/to/cpanplus/lib t/XX_name_of_test.t 1
 
@@ -73,7 +73,7 @@ better than not reporting it at all. Before you do so though, make
 sure you have the B<latest> development snapshot, and the bug still
 persists there. If so, report the bug to this address:
 
-    cpanplus-devel@lists.sourceforge.net
+    bug-cpanplus@rt.cpan.org
 
 A good C<patch> would have the following characteristics:
 
@@ -115,7 +115,7 @@ We prefer patches in the following format:
 
 =item * Including patches for code + tests + docs
 
-=item * Sent per mail to cpanplus-devel@lists.sourceforge.net
+=item * Sent per mail to bug-cpanplus@rt.cpan.org
 
 =item * With subject containing C<[PATCH]> + description of the patch
 

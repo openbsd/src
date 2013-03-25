@@ -10,7 +10,7 @@ BEGIN { *warnif = \&warnings::warnif }
 
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
-our $VERSION = '1.02';
+our $VERSION = '1.05';
 
 my @fields;
 BEGIN { 
@@ -45,9 +45,6 @@ BEGIN {
 
 # from doio.c
 sub _ingroup {
-
-    $^O eq "MacOS"  and return 1;
-    
     my ($gid, $eff)   = @_;
 
     # I am assuming that since VMS doesn't have getgroups(2), $) will
@@ -87,7 +84,9 @@ else {
         my ($s, $mode, $eff) = @_;
         my $uid = $eff ? $> : $<;
 
-        $^O ne "VMS" and $uid == 0  and return 1;
+        # If we're root on unix and we are not testing for executable
+        # status, then all file tests are true.
+        $^O ne "VMS" and $uid == 0 and !($mode & 0111) and return 1;
 
         my ($stmode, $stuid, $stgid) = @$s[2,4,5];
 

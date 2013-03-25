@@ -8,7 +8,7 @@
  *
  *  I did change all malloc's, free's, strdup's, calloc's to use the perl
  *  equilvant.  I also removed some stuff we will not need.  Call fini()
- *  on statup...   It can probably be trimmed more.
+ *  on startup...   It can probably be trimmed more.
  */
 
 #define PERLIO_NOT_STDIO 0

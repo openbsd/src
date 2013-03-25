@@ -7,31 +7,23 @@
 #include <perl.h>
 #include <XSUB.h>
 
-#ifndef PERL_VERSION
-#    include <patchlevel.h>
-#    if !(defined(PERL_VERSION) || (SUBVERSION > 0 && defined(PATCHLEVEL)))
-#        include <could_not_find_Perl_patchlevel.h>
-#    endif
-#    define PERL_REVISION	5
-#    define PERL_VERSION	PATCHLEVEL
-#    define PERL_SUBVERSION	SUBVERSION
-#endif
+#define NEED_sv_2pv_flags 1
+#include "ppport.h"
 
-#if PERL_VERSION >= 6
+#if PERL_BCDVERSION >= 0x5006000
 #  include "multicall.h"
 #endif
 
-#ifndef aTHX
-#  define aTHX
-#  define pTHX
+#ifndef CvISXSUB
+#  define CvISXSUB(cv) CvXSUB(cv)
 #endif
+
 /* Some platforms have strict exports. And before 5.7.3 cxinc (or Perl_cxinc)
    was not exported. Therefore platforms like win32, VMS etc have problems
    so we redefine it here -- GMB
 */
-#if PERL_VERSION < 7
+#if PERL_BCDVERSION < 0x5007000
 /* Not in 5.6.1. */
-#  define SvUOK(sv)           SvIOK_UV(sv)
 #  ifdef cxinc
 #    undef cxinc
 #  endif
@@ -40,94 +32,30 @@ static I32
 my_cxinc(pTHX)
 {
     cxstack_max = cxstack_max * 3 / 2;
-    Renew(cxstack, cxstack_max + 1, struct context);      /* XXX should fix CXINC macro */
+    Renew(cxstack, cxstack_max + 1, struct context); /* fencepost bug in older CXINC macros requires +1 here */
     return cxstack_ix + 1;
 }
 #endif
 
-#if PERL_VERSION < 6
-#    define NV double
+#ifndef sv_copypv
+#define sv_copypv(a, b) my_sv_copypv(aTHX_ a, b)
+static void
+my_sv_copypv(pTHX_ SV *const dsv, SV *const ssv)
+{
+    STRLEN len;
+    const char * const s = SvPV_const(ssv,len);
+    sv_setpvn(dsv,s,len);
+    if (SvUTF8(ssv))
+        SvUTF8_on(dsv);
+    else
+        SvUTF8_off(dsv);
+}
 #endif
 
 #ifdef SVf_IVisUV
 #  define slu_sv_value(sv) (SvIOK(sv)) ? (SvIOK_UV(sv)) ? (NV)(SvUVX(sv)) : (NV)(SvIVX(sv)) : (SvNV(sv))
 #else
 #  define slu_sv_value(sv) (SvIOK(sv)) ? (NV)(SvIVX(sv)) : (SvNV(sv))
-#endif
-
-#ifndef Drand01
-#    define Drand01()		((rand() & 0x7FFF) / (double) ((unsigned long)1 << 15))
-#endif
-
-#if PERL_VERSION < 5
-#  ifndef gv_stashpvn
-#    define gv_stashpvn(n,l,c) gv_stashpv(n,c)
-#  endif
-#  ifndef SvTAINTED
-
-static bool
-sv_tainted(pTHX_ SV *sv)
-{
-    if (SvTYPE(sv) >= SVt_PVMG && SvMAGIC(sv)) {
-	MAGIC *mg = mg_find(sv, 't');
-	if (mg && ((mg->mg_len & 1) || (mg->mg_len & 2) && mg->mg_obj == sv))
-	    return TRUE;
-    }
-    return FALSE;
-}
-
-#    define SvTAINTED_on(sv) sv_magic((sv), Nullsv, 't', Nullch, 0)
-#    define SvTAINTED(sv) (SvMAGICAL(sv) && sv_tainted(aTHX_ sv))
-#  endif
-#  define PL_defgv defgv
-#  define PL_op op
-#  define PL_curpad curpad
-#  define CALLRUNOPS runops
-#  define PL_curpm curpm
-#  define PL_sv_undef sv_undef
-#  define PERL_CONTEXT struct context
-#endif
-#if (PERL_VERSION < 5) || (PERL_VERSION == 5 && PERL_SUBVERSION <50)
-#  ifndef PL_tainting
-#    define PL_tainting tainting
-#  endif
-#  ifndef PL_stack_base
-#    define PL_stack_base stack_base
-#  endif
-#  ifndef PL_stack_sp
-#    define PL_stack_sp stack_sp
-#  endif
-#  ifndef PL_ppaddr
-#    define PL_ppaddr ppaddr
-#  endif
-#endif
-
-#ifndef PTR2UV
-#  define PTR2UV(ptr) (UV)(ptr)
-#endif
-
-#ifndef SvUV_set
-#  define SvUV_set(sv, val) (((XPVUV*)SvANY(sv))->xuv_uv = (val))
-#endif
-
-#ifndef PERL_UNUSED_DECL
-#  ifdef HASATTRIBUTE
-#    if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
-#      define PERL_UNUSED_DECL
-#    else
-#      define PERL_UNUSED_DECL __attribute__((unused))
-#    endif
-#  else
-#    define PERL_UNUSED_DECL
-#  endif
-#endif
-
-#ifndef dNOOP
-#define dNOOP extern int Perl___notused PERL_UNUSED_DECL
-#endif
-
-#ifndef GvSVn
-#  define GvSVn GvSV
 #endif
 
 MODULE=List::Util	PACKAGE=List::Util
@@ -187,51 +115,71 @@ sum(...)
 PROTOTYPE: @
 CODE:
 {
+    dXSTARG;
     SV *sv;
     SV *retsv = NULL;
     int index;
     NV retval = 0;
+    int magic;
     if(!items) {
 	XSRETURN_UNDEF;
     }
-    sv = ST(0);
-    if (SvAMAGIC(sv)) {
-        retsv = sv_newmortal();
+    sv    = ST(0);
+    magic = SvAMAGIC(sv);
+    if (magic) {
+        retsv = TARG;
         sv_setsv(retsv, sv);
     }
     else {
         retval = slu_sv_value(sv);
     }
     for(index = 1 ; index < items ; index++) {
-	sv = ST(index);
-        if (retsv || SvAMAGIC(sv)) {
-            if (!retsv) {
-                retsv = sv_newmortal();
-                sv_setnv(retsv,retval);
+        sv = ST(index);
+        if(!magic && SvAMAGIC(sv)){
+            magic = TRUE;
+            if (!retsv)
+                retsv = TARG;
+            sv_setnv(retsv,retval);
+        }
+        if (magic) {
+            SV* const tmpsv = amagic_call(retsv, sv, add_amg, SvAMAGIC(retsv) ? AMGf_assign : 0);
+            if(tmpsv) {
+                magic = SvAMAGIC(tmpsv);
+                if (!magic) {
+                    retval = slu_sv_value(tmpsv);
+                }
+                else {
+                    retsv = tmpsv;
+                }
             }
-            if (!amagic_call(retsv, sv, add_amg, AMGf_assign)) {
-                sv_setnv(retsv, SvNV(retsv) + SvNV(sv));
+            else {
+                /* fall back to default */
+                magic = FALSE;
+                retval = SvNV(retsv) + SvNV(sv);
             }
         }
         else {
           retval += slu_sv_value(sv);
         }
     }
-    if (!retsv) {
-        retsv = sv_newmortal();
+    if (!magic) {
+        if (!retsv)
+            retsv = TARG;
         sv_setnv(retsv,retval);
     }
     ST(0) = retsv;
     XSRETURN(1);
 }
 
+#define SLU_CMP_LARGER   1
+#define SLU_CMP_SMALLER -1
 
 void
 minstr(...)
 PROTOTYPE: @
 ALIAS:
-    minstr = 2
-    maxstr = 0
+    minstr = SLU_CMP_LARGER
+    maxstr = SLU_CMP_SMALLER
 CODE:
 {
     SV *left;
@@ -239,12 +187,6 @@ CODE:
     if(!items) {
 	XSRETURN_UNDEF;
     }
-    /*
-      sv_cmp & sv_cmp_locale return 1,0,-1 for gt,eq,lt
-      so we set ix to the value we are looking for
-      xsubpp does not allow -ve values, so we start with 0,2 and subtract 1
-    */
-    ix -= 1;
     left = ST(0);
 #ifdef OPpLOCALE
     if(MAXARG & OPpLOCALE) {
@@ -278,35 +220,52 @@ reduce(block,...)
 PROTOTYPE: &@
 CODE:
 {
-    dMULTICALL;
     SV *ret = sv_newmortal();
     int index;
     GV *agv,*bgv,*gv;
     HV *stash;
-    I32 gimme = G_SCALAR;
     SV **args = &PL_stack_base[ax];
-    CV *cv;
+    CV* cv    = sv_2cv(block, &stash, &gv, 0);
+
+    if (cv == Nullcv) {
+       croak("Not a subroutine reference");
+    }
 
     if(items <= 1) {
 	XSRETURN_UNDEF;
     }
-    cv = sv_2cv(block, &stash, &gv, 0);
-    if (cv == Nullcv) {
-       croak("Not a subroutine reference");
-    }
-    PUSH_MULTICALL(cv);
-    agv = gv_fetchpv("a", TRUE, SVt_PV);
-    bgv = gv_fetchpv("b", TRUE, SVt_PV);
+
+    agv = gv_fetchpv("a", GV_ADD, SVt_PV);
+    bgv = gv_fetchpv("b", GV_ADD, SVt_PV);
     SAVESPTR(GvSV(agv));
     SAVESPTR(GvSV(bgv));
     GvSV(agv) = ret;
     SvSetSV(ret, args[1]);
-    for(index = 2 ; index < items ; index++) {
-	GvSV(bgv) = args[index];
-	MULTICALL;
-	SvSetSV(ret, *PL_stack_sp);
+
+    if(!CvISXSUB(cv)) {
+        dMULTICALL;
+        I32 gimme = G_SCALAR;
+
+        PUSH_MULTICALL(cv);
+        for(index = 2 ; index < items ; index++) {
+            GvSV(bgv) = args[index];
+            MULTICALL;
+            SvSetSV(ret, *PL_stack_sp);
+        }
+        POP_MULTICALL;
     }
-    POP_MULTICALL;
+    else {
+        for(index = 2 ; index < items ; index++) {
+            dSP;
+            GvSV(bgv) = args[index];
+
+            PUSHMARK(SP);
+            call_sv((SV*)cv, G_SCALAR);
+
+            SvSetSV(ret, *PL_stack_sp);
+        }
+    }
+
     ST(0) = ret;
     XSRETURN(1);
 }
@@ -317,34 +276,50 @@ first(block,...)
 PROTOTYPE: &@
 CODE:
 {
-    dMULTICALL;
     int index;
     GV *gv;
     HV *stash;
-    I32 gimme = G_SCALAR;
     SV **args = &PL_stack_base[ax];
-    CV *cv;
+    CV *cv    = sv_2cv(block, &stash, &gv, 0);
+    if (cv == Nullcv) {
+       croak("Not a subroutine reference");
+    }
 
     if(items <= 1) {
 	XSRETURN_UNDEF;
     }
-    cv = sv_2cv(block, &stash, &gv, 0);
-    if (cv == Nullcv) {
-       croak("Not a subroutine reference");
-    }
-    PUSH_MULTICALL(cv);
+
     SAVESPTR(GvSV(PL_defgv));
 
-    for(index = 1 ; index < items ; index++) {
-	GvSV(PL_defgv) = args[index];
-	MULTICALL;
-	if (SvTRUE(*PL_stack_sp)) {
-	  POP_MULTICALL;
-	  ST(0) = ST(index);
-	  XSRETURN(1);
-	}
+    if(!CvISXSUB(cv)) {
+        dMULTICALL;
+        I32 gimme = G_SCALAR;
+        PUSH_MULTICALL(cv);
+
+        for(index = 1 ; index < items ; index++) {
+            GvSV(PL_defgv) = args[index];
+            MULTICALL;
+            if (SvTRUEx(*PL_stack_sp)) {
+                POP_MULTICALL;
+                ST(0) = ST(index);
+                XSRETURN(1);
+            }
+        }
+        POP_MULTICALL;
     }
-    POP_MULTICALL;
+    else {
+        for(index = 1 ; index < items ; index++) {
+            dSP;
+            GvSV(PL_defgv) = args[index];
+
+            PUSHMARK(SP);
+            call_sv((SV*)cv, G_SCALAR);
+            if (SvTRUEx(*PL_stack_sp)) {
+                ST(0) = ST(index);
+                XSRETURN(1);
+            }
+        }
+    }
     XSRETURN_UNDEF;
 }
 
@@ -398,30 +373,27 @@ dualvar(num,str)
 PROTOTYPE: $$
 CODE:
 {
-    STRLEN len;
-    char *ptr = SvPV(str,len);
-    ST(0) = sv_newmortal();
-    (void)SvUPGRADE(ST(0),SVt_PVNV);
-    sv_setpvn(ST(0),ptr,len);
-    if (SvUTF8(str))
-        SvUTF8_on(ST(0));
+    dXSTARG;
+    (void)SvUPGRADE(TARG, SVt_PVNV);
+    sv_copypv(TARG,str);
     if(SvNOK(num) || SvPOK(num) || SvMAGICAL(num)) {
-	SvNV_set(ST(0), SvNV(num));
-	SvNOK_on(ST(0));
+	SvNV_set(TARG, SvNV(num));
+	SvNOK_on(TARG);
     }
 #ifdef SVf_IVisUV
     else if (SvUOK(num)) {
-	SvUV_set(ST(0), SvUV(num));
-	SvIOK_on(ST(0));
-	SvIsUV_on(ST(0));
+	SvUV_set(TARG, SvUV(num));
+	SvIOK_on(TARG);
+	SvIsUV_on(TARG);
     }
 #endif
     else {
-	SvIV_set(ST(0), SvIV(num));
-	SvIOK_on(ST(0));
+	SvIV_set(TARG, SvIV(num));
+	SvIOK_on(TARG);
     }
     if(PL_tainting && (SvTAINTED(num) || SvTAINTED(str)))
-	SvTAINTED_on(ST(0));
+	SvTAINTED_on(TARG);
+	ST(0) = TARG;
     XSRETURN(1);
 }
 
@@ -431,8 +403,7 @@ blessed(sv)
 PROTOTYPE: $
 CODE:
 {
-    if (SvMAGICAL(sv))
-	mg_get(sv);
+    SvGETMAGIC(sv);
     if(!(SvROK(sv) && SvOBJECT(SvRV(sv)))) {
 	XSRETURN_UNDEF;
     }
@@ -447,8 +418,7 @@ reftype(sv)
 PROTOTYPE: $
 CODE:
 {
-    if (SvMAGICAL(sv))
-	mg_get(sv);
+    SvGETMAGIC(sv);
     if(!SvROK(sv)) {
 	XSRETURN_UNDEF;
     }
@@ -463,8 +433,7 @@ refaddr(sv)
 PROTOTYPE: $
 CODE:
 {
-    if (SvMAGICAL(sv))
-	mg_get(sv);
+    SvGETMAGIC(sv);
     if(!SvROK(sv)) {
 	XSRETURN_UNDEF;
     }
@@ -501,6 +470,7 @@ readonly(sv)
 	SV *sv
 PROTOTYPE: $
 CODE:
+  SvGETMAGIC(sv);
   RETVAL = SvREADONLY(sv);
 OUTPUT:
   RETVAL
@@ -510,6 +480,7 @@ tainted(sv)
 	SV *sv
 PROTOTYPE: $
 CODE:
+  SvGETMAGIC(sv);
   RETVAL = SvTAINTED(sv);
 OUTPUT:
   RETVAL
@@ -520,6 +491,7 @@ isvstring(sv)
 PROTOTYPE: $
 CODE:
 #ifdef SvVOK
+  SvGETMAGIC(sv);
   ST(0) = boolSV(SvVOK(sv));
   XSRETURN(1);
 #else
@@ -532,13 +504,11 @@ looks_like_number(sv)
 PROTOTYPE: $
 CODE:
   SV *tempsv;
+  SvGETMAGIC(sv);
   if (SvAMAGIC(sv) && (tempsv = AMG_CALLun(sv, numer))) {
     sv = tempsv;
   }
-  else if (SvMAGICAL(sv)) {
-      SvGETMAGIC(sv);
-  }
-#if (PERL_VERSION < 8) || (PERL_VERSION == 8 && PERL_SUBVERSION <5)
+#if PERL_BCDVERSION < 0x5008005
   if (SvPOK(sv) || SvPOKp(sv)) {
     RETVAL = looks_like_number(sv);
   }
@@ -566,9 +536,7 @@ CODE:
 	}
 	if (SvPOK(proto)) {
 	    /* set the prototype */
-	    STRLEN len;
-	    char *ptr = SvPV(proto, len);
-	    sv_setpvn(sv, ptr, len);
+	    sv_copypv(sv, proto);
 	}
 	else {
 	    /* delete the prototype */
@@ -579,6 +547,35 @@ CODE:
 	croak("set_prototype: not a reference");
     }
     XSRETURN(1);
+}
+
+void
+openhandle(SV* sv)
+PROTOTYPE: $
+CODE:
+{
+    IO* io = NULL;
+    SvGETMAGIC(sv);
+    if(SvROK(sv)){
+        /* deref first */
+        sv = SvRV(sv);
+    }
+
+    /* must be GLOB or IO */
+    if(isGV(sv)){
+        io = GvIO((GV*)sv);
+    }
+    else if(SvTYPE(sv) == SVt_PVIO){
+        io = (IO*)sv;
+    }
+
+    if(io){
+        /* real or tied filehandle? */
+        if(IoIFP(io) || SvTIED_mg((SV*)io, PERL_MAGIC_tiedscalar)){
+            XSRETURN(1);
+        }
+    }
+    XSRETURN_UNDEF;
 }
 
 BOOT:
@@ -595,7 +592,7 @@ BOOT:
     varav = GvAVn(vargv);
 #endif
     if (SvTYPE(rmcgv) != SVt_PVGV)
-	gv_init(rmcgv, lu_stash, "List::Util", 12, TRUE);
+	gv_init(rmcgv, lu_stash, "List::Util", 10, TRUE);
     rmcsv = GvSVn(rmcgv);
 #ifndef SvWEAKREF
     av_push(varav, newSVpv("weaken",6));

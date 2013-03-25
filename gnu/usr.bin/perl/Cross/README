@@ -3,7 +3,7 @@ Building for arm-linux
 
 The files in this directory add another cross-compilation
 target to the Perl buildsystem.  It was built as a part of
-the Open Zaurus (http://www.openzaurus.com/) distribution.
+the Open Zaurus (http://www.openzaurus.org/) distribution.
 Most / All of the arm compiler optimisations are "borrowed"
 from this excellent project.
 

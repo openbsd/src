@@ -19,7 +19,7 @@ local $^W = 1;
 # wish, but if you redistribute a modified version, please attach a note
 # listing the modifications you have made.
 
-$CGI::Fast::VERSION='1.08';
+$CGI::Fast::VERSION='1.09';
 
 use CGI;
 use FCGI;
@@ -43,27 +43,23 @@ sub save_request {
 # in this package variable.
 use vars qw($Ext_Request);
 BEGIN {
-   # If ENV{FCGI_SOCKET_PATH} is given, explicitly open the socket,
-   # and keep the request handle around from which to call Accept().
-   if ($ENV{FCGI_SOCKET_PATH}) {
-	my $path    = $ENV{FCGI_SOCKET_PATH};
-	my $backlog = $ENV{FCGI_LISTEN_QUEUE} || 100;
-	my $socket  = FCGI::OpenSocket( $path, $backlog );
-	$Ext_Request = FCGI::Request( \*STDIN, \*STDOUT, \*STDERR,
-					\%ENV, $socket, 1 );
-   }
+    # If ENV{FCGI_SOCKET_PATH} is given, explicitly open the socket.
+    if ($ENV{FCGI_SOCKET_PATH}) {
+        my $path    = $ENV{FCGI_SOCKET_PATH};
+        my $backlog = $ENV{FCGI_LISTEN_QUEUE} || 100;
+        my $socket  = FCGI::OpenSocket( $path, $backlog );
+        $Ext_Request = FCGI::Request( \*STDIN, \*STDOUT, \*STDERR,
+                    \%ENV, $socket, 1 );
+    }
+    else {
+        $Ext_Request = FCGI::Request();
+    }
 }
 
-# New is slightly different in that it calls FCGI's
-# accept() method.
 sub new {
      my ($self, $initializer, @param) = @_;
      unless (defined $initializer) {
-	if ($Ext_Request) {
-          return undef unless $Ext_Request->Accept() >= 0;
-	} else {
-         return undef unless FCGI::accept() >= 0;
-     }
+         return undef unless $Ext_Request->Accept() >= 0;
      }
      CGI->_reset_globals;
      $self->_setup_symbols(@CGI::SAVED_SYMBOLS) if @CGI::SAVED_SYMBOLS;

@@ -2,10 +2,10 @@ package Encode::Guess;
 use strict;
 use warnings;
 use Encode qw(:fallbacks find_encoding);
-our $VERSION = do { my @r = ( q$Revision: 2.3 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.5 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 my $Canon = 'Guess';
-sub DEBUG () { 0 }
+use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 our %DEF_SUSPECTS = map { $_ => find_encoding($_) } qw(ascii utf8);
 $Encode::Encoding{$Canon} = bless {
     Name     => $Canon,
@@ -53,7 +53,7 @@ sub decode($$;$) {
         require Carp;
         Carp::croak($guessed);
     }
-    my $utf8 = $guessed->decode( $octet, $chk );
+    my $utf8 = $guessed->decode( $octet, $chk || 0 );
     $_[1] = $octet if $chk;
     return $utf8;
 }
@@ -279,7 +279,7 @@ the internal suspects list.
   my $decoder = guess_encoding($data, qw/euc-jp euc-kr euc-cn/);
   die $decoder unless ref($decoder);
   my $utf8 = $decoder->decode($data);
-  # check only ascii and utf8
+  # check only ascii, utf8 and UTF-(16|32) with BOM
   my $decoder = guess_encoding($data);
 
 =back

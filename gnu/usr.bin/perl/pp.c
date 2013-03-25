@@ -71,11 +71,15 @@ PP(pp_padav)
     if (PL_op->op_flags & OPf_REF) {
 	PUSHs(TARG);
 	RETURN;
-    } else if (LVRET) {
+    } else if (PL_op->op_private & OPpMAYBE_LVSUB) {
+       const I32 flags = is_lvalue_sub();
+       if (flags && !(flags & OPpENTERSUB_INARGS)) {
 	if (GIMME == G_SCALAR)
+	    /* diag_listed_as: Can't return %s to lvalue scalar context */
 	    Perl_croak(aTHX_ "Can't return array to lvalue scalar context");
 	PUSHs(TARG);
 	RETURN;
+       }
     }
     gimme = GIMME_V;
     if (gimme == G_ARRAY) {
@@ -114,14 +118,18 @@ PP(pp_padhv)
 	    SAVECLEARSV(PAD_SVl(PL_op->op_targ));
     if (PL_op->op_flags & OPf_REF)
 	RETURN;
-    else if (LVRET) {
+    else if (PL_op->op_private & OPpMAYBE_LVSUB) {
+      const I32 flags = is_lvalue_sub();
+      if (flags && !(flags & OPpENTERSUB_INARGS)) {
 	if (GIMME == G_SCALAR)
+	    /* diag_listed_as: Can't return %s to lvalue scalar context */
 	    Perl_croak(aTHX_ "Can't return hash to lvalue scalar context");
 	RETURN;
+      }
     }
     gimme = GIMME_V;
     if (gimme == G_ARRAY) {
-	RETURNOP(do_kv());
+	RETURNOP(Perl_do_kv(aTHX));
     }
     else if (gimme == G_SCALAR) {
 	SV* const sv = Perl_hv_scalar(aTHX_ MUTABLE_HV(TARG));
@@ -135,50 +143,55 @@ PP(pp_padhv)
 static const char S_no_symref_sv[] =
     "Can't use string (\"%" SVf32 "\"%s) as %s ref while \"strict refs\" in use";
 
-PP(pp_rv2gv)
+/* In some cases this function inspects PL_op.  If this function is called
+   for new op types, more bool parameters may need to be added in place of
+   the checks.
+
+   When noinit is true, the absence of a gv will cause a retval of undef.
+   This is unrelated to the cv-to-gv assignment case.
+*/
+
+static SV *
+S_rv2gv(pTHX_ SV *sv, const bool vivify_sv, const bool strict,
+              const bool noinit)
 {
-    dVAR; dSP; dTOPss;
-
+    dVAR;
+    if (!isGV(sv) || SvFAKE(sv)) SvGETMAGIC(sv);
     if (SvROK(sv)) {
+	if (SvAMAGIC(sv)) {
+	    sv = amagic_deref_call(sv, to_gv_amg);
+	}
       wasref:
-	tryAMAGICunDEREF(to_gv);
-
 	sv = SvRV(sv);
 	if (SvTYPE(sv) == SVt_PVIO) {
 	    GV * const gv = MUTABLE_GV(sv_newmortal());
-	    gv_init(gv, 0, "", 0, 0);
+	    gv_init(gv, 0, "__ANONIO__", 10, 0);
 	    GvIOp(gv) = MUTABLE_IO(sv);
 	    SvREFCNT_inc_void_NN(sv);
 	    sv = MUTABLE_SV(gv);
 	}
 	else if (!isGV_with_GP(sv))
-	    DIE(aTHX_ "Not a GLOB reference");
+	    return (SV *)Perl_die(aTHX_ "Not a GLOB reference");
     }
     else {
 	if (!isGV_with_GP(sv)) {
-	    if (SvGMAGICAL(sv)) {
-		mg_get(sv);
-		if (SvROK(sv))
-		    goto wasref;
-	    }
-	    if (!SvOK(sv) && sv != &PL_sv_undef) {
+	    if (!SvOK(sv)) {
 		/* If this is a 'my' scalar and flag is set then vivify
 		 * NI-S 1999/05/07
 		 */
-		if (SvREADONLY(sv))
-		    Perl_croak(aTHX_ "%s", PL_no_modify);
-		if (PL_op->op_private & OPpDEREF) {
+		if (vivify_sv && sv != &PL_sv_undef) {
 		    GV *gv;
+		    if (SvREADONLY(sv))
+			Perl_croak_no_modify(aTHX);
 		    if (cUNOP->op_targ) {
-			STRLEN len;
 			SV * const namesv = PAD_SV(cUNOP->op_targ);
-			const char * const name = SvPV(namesv, len);
 			gv = MUTABLE_GV(newSV(0));
-			gv_init(gv, CopSTASH(PL_curcop), name, len, 0);
+			gv_init_sv(gv, CopSTASH(PL_curcop), namesv, 0);
 		    }
 		    else {
 			const char * const name = CopSTASHPV(PL_curcop);
-			gv = newGVgen(name);
+			gv = newGVgen_flags(name,
+                                        HvNAMEUTF8(CopSTASH(PL_curcop)) ? SVf_UTF8 : 0 );
 		    }
 		    prepare_SV_for_RV(sv);
 		    SvRV_set(sv, MUTABLE_SV(gv));
@@ -186,39 +199,60 @@ PP(pp_rv2gv)
 		    SvSETMAGIC(sv);
 		    goto wasref;
 		}
-		if (PL_op->op_flags & OPf_REF ||
-		    PL_op->op_private & HINT_STRICT_REFS)
-		    DIE(aTHX_ PL_no_usym, "a symbol");
+		if (PL_op->op_flags & OPf_REF || strict)
+		    return (SV *)Perl_die(aTHX_ PL_no_usym, "a symbol");
 		if (ckWARN(WARN_UNINITIALIZED))
 		    report_uninit(sv);
-		RETSETUNDEF;
+		return &PL_sv_undef;
 	    }
-	    if ((PL_op->op_flags & OPf_SPECIAL) &&
-		!(PL_op->op_flags & OPf_MOD))
+	    if (noinit)
 	    {
-		SV * const temp = MUTABLE_SV(gv_fetchsv(sv, 0, SVt_PVGV));
-		if (!temp
-		    && (!is_gv_magical_sv(sv,0)
-			|| !(sv = MUTABLE_SV(gv_fetchsv(sv, GV_ADD,
-							SVt_PVGV))))) {
-		    RETSETUNDEF;
-		}
-		sv = temp;
+		if (!(sv = MUTABLE_SV(gv_fetchsv_nomg(
+		           sv, GV_ADDMG, SVt_PVGV
+		   ))))
+		    return &PL_sv_undef;
 	    }
 	    else {
-		if (PL_op->op_private & HINT_STRICT_REFS)
-		    DIE(aTHX_ S_no_symref_sv, sv, (SvPOK(sv) && SvCUR(sv)>32 ? "..." : ""), "a symbol");
+		if (strict)
+		    return
+		     (SV *)Perl_die(aTHX_
+		            S_no_symref_sv,
+		            sv,
+		            (SvPOK(sv) && SvCUR(sv)>32 ? "..." : ""),
+		            "a symbol"
+		           );
 		if ((PL_op->op_private & (OPpLVAL_INTRO|OPpDONT_INIT_GV))
 		    == OPpDONT_INIT_GV) {
 		    /* We are the target of a coderef assignment.  Return
 		       the scalar unchanged, and let pp_sasssign deal with
 		       things.  */
-		    RETURN;
+		    return sv;
 		}
-		sv = MUTABLE_SV(gv_fetchsv(sv, GV_ADD, SVt_PVGV));
+		sv = MUTABLE_SV(gv_fetchsv_nomg(sv, GV_ADD, SVt_PVGV));
 	    }
+	    /* FAKE globs in the symbol table cause weird bugs (#77810) */
+	    SvFAKE_off(sv);
 	}
     }
+    if (SvFAKE(sv) && !(PL_op->op_private & OPpALLOW_FAKE)) {
+	SV *newsv = sv_newmortal();
+	sv_setsv_flags(newsv, sv, 0);
+	SvFAKE_off(newsv);
+	sv = newsv;
+    }
+    return sv;
+}
+
+PP(pp_rv2gv)
+{
+    dVAR; dSP; dTOPss;
+
+    sv = S_rv2gv(aTHX_
+          sv, PL_op->op_private & OPpDEREF,
+          PL_op->op_private & HINT_STRICT_REFS,
+          ((PL_op->op_flags & OPf_SPECIAL) && !(PL_op->op_flags & OPf_MOD))
+             || PL_op->op_type == OP_READLINE
+         );
     if (PL_op->op_private & OPpLVAL_INTRO)
 	save_gp(MUTABLE_GV(sv), !(PL_op->op_flags & OPf_SPECIAL));
     SETs(sv);
@@ -242,7 +276,10 @@ Perl_softref2xv(pTHX_ SV *const sv, const char *const what,
 	    Perl_die(aTHX_ PL_no_usym, what);
     }
     if (!SvOK(sv)) {
-	if (PL_op->op_flags & OPf_REF)
+	if (
+	  PL_op->op_flags & OPf_REF &&
+	  PL_op->op_next->op_type != OP_BOOLKEYS
+	)
 	    Perl_die(aTHX_ PL_no_usym, what);
 	if (ckWARN(WARN_UNINITIALIZED))
 	    report_uninit(sv);
@@ -256,17 +293,14 @@ Perl_softref2xv(pTHX_ SV *const sv, const char *const what,
     if ((PL_op->op_flags & OPf_SPECIAL) &&
 	!(PL_op->op_flags & OPf_MOD))
 	{
-	    gv = gv_fetchsv(sv, 0, type);
-	    if (!gv
-		&& (!is_gv_magical_sv(sv,0)
-		    || !(gv = gv_fetchsv(sv, GV_ADD, type))))
+	    if (!(gv = gv_fetchsv_nomg(sv, GV_ADDMG, type)))
 		{
 		    **spp = &PL_sv_undef;
 		    return NULL;
 		}
 	}
     else {
-	gv = gv_fetchsv(sv, GV_ADD, type);
+	gv = gv_fetchsv_nomg(sv, GV_ADD, type);
     }
     return gv;
 }
@@ -276,9 +310,11 @@ PP(pp_rv2sv)
     dVAR; dSP; dTOPss;
     GV *gv = NULL;
 
+    SvGETMAGIC(sv);
     if (SvROK(sv)) {
-      wasref:
-	tryAMAGICunDEREF(to_sv);
+	if (SvAMAGIC(sv)) {
+	    sv = amagic_deref_call(sv, to_sv_amg);
+	}
 
 	sv = SvRV(sv);
 	switch (SvTYPE(sv)) {
@@ -295,11 +331,6 @@ PP(pp_rv2sv)
 	gv = MUTABLE_GV(sv);
 
 	if (!isGV_with_GP(gv)) {
-	    if (SvGMAGICAL(sv)) {
-		mg_get(sv);
-		if (SvROK(sv))
-		    goto wasref;
-	    }
 	    gv = Perl_softref2xv(aTHX_ sv, "a SCALAR", SVt_PV, &sp);
 	    if (!gv)
 		RETURN;
@@ -316,7 +347,7 @@ PP(pp_rv2sv)
 		Perl_croak(aTHX_ "%s", PL_no_localize_ref);
 	}
 	else if (PL_op->op_private & OPpDEREF)
-	    vivify_ref(sv, PL_op->op_private & OPpDEREF);
+	    sv = vivify_ref(sv, PL_op->op_private & OPpDEREF);
     }
     SETs(sv);
     RETURN;
@@ -335,39 +366,32 @@ PP(pp_av2arylen)
 	}
 	SETs(*sv);
     } else {
-	SETs(sv_2mortal(newSViv(
-	    AvFILL(MUTABLE_AV(av)) + CopARYBASE_get(PL_curcop)
-	)));
+	SETs(sv_2mortal(newSViv(AvFILL(MUTABLE_AV(av)))));
     }
     RETURN;
 }
 
 PP(pp_pos)
 {
-    dVAR; dSP; dTARGET; dPOPss;
+    dVAR; dSP; dPOPss;
 
     if (PL_op->op_flags & OPf_MOD || LVRET) {
-	if (SvTYPE(TARG) < SVt_PVLV) {
-	    sv_upgrade(TARG, SVt_PVLV);
-	    sv_magic(TARG, NULL, PERL_MAGIC_pos, NULL, 0);
-	}
-
-	LvTYPE(TARG) = '.';
-	if (LvTARG(TARG) != sv) {
-	    SvREFCNT_dec(LvTARG(TARG));
-	    LvTARG(TARG) = SvREFCNT_inc_simple(sv);
-	}
-	PUSHs(TARG);	/* no SvSETMAGIC */
+	SV * const ret = sv_2mortal(newSV_type(SVt_PVLV));  /* Not TARG RT#67838 */
+	sv_magic(ret, NULL, PERL_MAGIC_pos, NULL, 0);
+	LvTYPE(ret) = '.';
+	LvTARG(ret) = SvREFCNT_inc_simple(sv);
+	PUSHs(ret);    /* no SvSETMAGIC */
 	RETURN;
     }
     else {
 	if (SvTYPE(sv) >= SVt_PVMG && SvMAGIC(sv)) {
 	    const MAGIC * const mg = mg_find(sv, PERL_MAGIC_regex_global);
 	    if (mg && mg->mg_len >= 0) {
+		dTARGET;
 		I32 i = mg->mg_len;
 		if (DO_UTF8(sv))
 		    sv_pos_b2u(sv, &i);
-		PUSHi(i + CopARYBASE_get(PL_curcop));
+		PUSHi(i);
 		RETURN;
 	    }
 	}
@@ -381,7 +405,7 @@ PP(pp_rv2cv)
     GV *gv;
     HV *stash_unused;
     const I32 flags = (PL_op->op_flags & OPf_SPECIAL)
-	? 0
+	? GV_ADDMG
 	: ((PL_op->op_private & (OPpLVAL_INTRO|OPpMAY_RETURN_CONSTANT)) == OPpMAY_RETURN_CONSTANT)
 	    ? GV_ADD|GV_NOEXPAND
 	    : GV_ADD;
@@ -392,12 +416,6 @@ PP(pp_rv2cv)
     if (cv) {
 	if (CvCLONE(cv))
 	    cv = MUTABLE_CV(sv_2mortal(MUTABLE_SV(cv_clone(cv))));
-	if ((PL_op->op_private & OPpLVAL_INTRO)) {
-	    if (gv && GvCV(gv) == cv && (gv = gv_autoload4(GvSTASH(gv), GvNAME(gv), GvNAMELEN(gv), FALSE)))
-		cv = GvCV(gv);
-	    if (!CvLVALUE(cv))
-		DIE(aTHX_ "Can't modify non-lvalue subroutine call");
-	}
     }
     else if ((flags == (GV_ADD|GV_NOEXPAND)) && gv && SvROK(gv)) {
 	cv = MUTABLE_CV(gv);
@@ -420,69 +438,20 @@ PP(pp_prototype)
 	const char * s = SvPVX_const(TOPs);
 	if (strnEQ(s, "CORE::", 6)) {
 	    const int code = keyword(s + 6, SvCUR(TOPs) - 6, 1);
-	    if (code < 0) {	/* Overridable. */
-#define MAX_ARGS_OP ((sizeof(I32) - 1) * 2)
-		int i = 0, n = 0, seen_question = 0, defgv = 0;
-		I32 oa;
-		char str[ MAX_ARGS_OP * 2 + 2 ]; /* One ';', one '\0' */
-
-		if (code == -KEY_chop || code == -KEY_chomp
-			|| code == -KEY_exec || code == -KEY_system)
-		    goto set;
-		if (code == -KEY_mkdir) {
-		    ret = newSVpvs_flags("_;$", SVs_TEMP);
-		    goto set;
-		}
-		if (code == -KEY_keys || code == -KEY_values || code == -KEY_each) {
-		    ret = newSVpvs_flags("\\[@%]", SVs_TEMP);
-		    goto set;
-		}
-		if (code == -KEY_readpipe) {
-		    s = "CORE::backtick";
-		}
-		while (i < MAXO) {	/* The slow way. */
-		    if (strEQ(s + 6, PL_op_name[i])
-			|| strEQ(s + 6, PL_op_desc[i]))
-		    {
-			goto found;
-		    }
-		    i++;
-		}
-		goto nonesuch;		/* Should not happen... */
-	      found:
-		defgv = PL_opargs[i] & OA_DEFGV;
-		oa = PL_opargs[i] >> OASHIFT;
-		while (oa) {
-		    if (oa & OA_OPTIONAL && !seen_question && !defgv) {
-			seen_question = 1;
-			str[n++] = ';';
-		    }
-		    if ((oa & (OA_OPTIONAL - 1)) >= OA_AVREF
-			&& (oa & (OA_OPTIONAL - 1)) <= OA_SCALARREF
-			/* But globs are already references (kinda) */
-			&& (oa & (OA_OPTIONAL - 1)) != OA_FILEREF
-		    ) {
-			str[n++] = '\\';
-		    }
-		    str[n++] = ("?$@@%&*$")[oa & (OA_OPTIONAL - 1)];
-		    oa = oa >> 4;
-		}
-		if (defgv && str[n - 1] == '$')
-		    str[n - 1] = '_';
-		str[n++] = '\0';
-		ret = newSVpvn_flags(str, n - 1, SVs_TEMP);
-	    }
-	    else if (code)		/* Non-Overridable */
-		goto set;
-	    else {			/* None such */
-	      nonesuch:
+	    if (!code || code == -KEY_CORE)
 		DIE(aTHX_ "Can't find an opnumber for \"%s\"", s+6);
+	    if (code < 0) {	/* Overridable. */
+		SV * const sv = core_prototype(NULL, s + 6, code, NULL);
+		if (sv) ret = sv;
 	    }
+	    goto set;
 	}
     }
     cv = sv_2cv(TOPs, &stash, &gv, 0);
     if (cv && SvPOK(cv))
-	ret = newSVpvn_flags(SvPVX_const(cv), SvCUR(cv), SVs_TEMP);
+	ret = newSVpvn_flags(
+	    CvPROTO(cv), CvPROTOLEN(cv), SVs_TEMP | SvUTF8(cv)
+	);
   set:
     SETs(ret);
     RETURN;
@@ -562,7 +531,6 @@ S_refto(pTHX_ SV *sv)
 PP(pp_ref)
 {
     dVAR; dSP; dTARGET;
-    const char *pv;
     SV * const sv = POPs;
 
     if (sv)
@@ -571,8 +539,8 @@ PP(pp_ref)
     if (!sv || !SvROK(sv))
 	RETPUSHNO;
 
-    pv = sv_reftype(SvRV(sv),TRUE);
-    PUSHp(pv, strlen(pv));
+    (void)sv_ref(TARG,SvRV(sv),TRUE);
+    PUSHTARG;
     RETURN;
 }
 
@@ -582,19 +550,21 @@ PP(pp_bless)
     HV *stash;
 
     if (MAXARG == 1)
+      curstash:
 	stash = CopSTASH(PL_curcop);
     else {
 	SV * const ssv = POPs;
 	STRLEN len;
 	const char *ptr;
 
-	if (ssv && !SvGMAGICAL(ssv) && !SvAMAGIC(ssv) && SvROK(ssv))
+	if (!ssv) goto curstash;
+	if (!SvGMAGICAL(ssv) && !SvAMAGIC(ssv) && SvROK(ssv))
 	    Perl_croak(aTHX_ "Attempt to bless into a reference");
 	ptr = SvPV_const(ssv,len);
 	if (len == 0)
 	    Perl_ck_warner(aTHX_ packWARN(WARN_MISC),
 			   "Explicit blessing to '' (assuming package main)");
-	stash = gv_stashpvn(ptr, len, GV_ADD);
+	stash = gv_stashpvn(ptr, len, GV_ADD|SvUTF8(ssv));
     }
 
     (void)sv_bless(TOPs, stash);
@@ -606,7 +576,8 @@ PP(pp_gelem)
     dVAR; dSP;
 
     SV *sv = POPs;
-    const char * const elem = SvPV_nolen_const(sv);
+    STRLEN len;
+    const char * const elem = SvPV_const(sv, len);
     GV * const gv = MUTABLE_GV(POPs);
     SV * tmpRef = NULL;
 
@@ -616,48 +587,48 @@ PP(pp_gelem)
 	const char * const second_letter = elem + 1;
 	switch (*elem) {
 	case 'A':
-	    if (strEQ(second_letter, "RRAY"))
+	    if (len == 5 && strEQ(second_letter, "RRAY"))
 		tmpRef = MUTABLE_SV(GvAV(gv));
 	    break;
 	case 'C':
-	    if (strEQ(second_letter, "ODE"))
+	    if (len == 4 && strEQ(second_letter, "ODE"))
 		tmpRef = MUTABLE_SV(GvCVu(gv));
 	    break;
 	case 'F':
-	    if (strEQ(second_letter, "ILEHANDLE")) {
+	    if (len == 10 && strEQ(second_letter, "ILEHANDLE")) {
 		/* finally deprecated in 5.8.0 */
 		deprecate("*glob{FILEHANDLE}");
 		tmpRef = MUTABLE_SV(GvIOp(gv));
 	    }
 	    else
-		if (strEQ(second_letter, "ORMAT"))
+		if (len == 6 && strEQ(second_letter, "ORMAT"))
 		    tmpRef = MUTABLE_SV(GvFORM(gv));
 	    break;
 	case 'G':
-	    if (strEQ(second_letter, "LOB"))
+	    if (len == 4 && strEQ(second_letter, "LOB"))
 		tmpRef = MUTABLE_SV(gv);
 	    break;
 	case 'H':
-	    if (strEQ(second_letter, "ASH"))
+	    if (len == 4 && strEQ(second_letter, "ASH"))
 		tmpRef = MUTABLE_SV(GvHV(gv));
 	    break;
 	case 'I':
-	    if (*second_letter == 'O' && !elem[2])
+	    if (*second_letter == 'O' && !elem[2] && len == 2)
 		tmpRef = MUTABLE_SV(GvIOp(gv));
 	    break;
 	case 'N':
-	    if (strEQ(second_letter, "AME"))
+	    if (len == 4 && strEQ(second_letter, "AME"))
 		sv = newSVhek(GvNAME_HEK(gv));
 	    break;
 	case 'P':
-	    if (strEQ(second_letter, "ACKAGE")) {
+	    if (len == 7 && strEQ(second_letter, "ACKAGE")) {
 		const HV * const stash = GvSTASH(gv);
 		const HEK * const hek = stash ? HvNAME_HEK(stash) : NULL;
 		sv = hek ? newSVhek(hek) : newSVpvs("__ANON__");
 	    }
 	    break;
 	case 'S':
-	    if (strEQ(second_letter, "CALAR"))
+	    if (len == 6 && strEQ(second_letter, "CALAR"))
 		tmpRef = GvSVn(gv);
 	    break;
 	}
@@ -678,71 +649,89 @@ PP(pp_study)
 {
     dVAR; dSP; dPOPss;
     register unsigned char *s;
-    register I32 pos;
-    register I32 ch;
-    register I32 *sfirst;
-    register I32 *snext;
+    char *sfirst_raw;
     STRLEN len;
+    MAGIC *mg = SvMAGICAL(sv) ? mg_find(sv, PERL_MAGIC_study) : NULL;
+    U8 quanta;
+    STRLEN size;
 
-    if (sv == PL_lastscream) {
-	if (SvSCREAM(sv))
-	    RETPUSHYES;
-    }
+    if (mg && SvSCREAM(sv))
+	RETPUSHYES;
+
     s = (unsigned char*)(SvPV(sv, len));
-    pos = len;
-    if (pos <= 0 || !SvPOK(sv) || SvUTF8(sv)) {
+    if (len == 0 || len > I32_MAX || !SvPOK(sv) || SvUTF8(sv) || SvVALID(sv)) {
 	/* No point in studying a zero length string, and not safe to study
 	   anything that doesn't appear to be a simple scalar (and hence might
 	   change between now and when the regexp engine runs without our set
 	   magic ever running) such as a reference to an object with overloaded
-	   stringification.  */
+	   stringification.  Also refuse to study an FBM scalar, as this gives
+	   more flexibility in SV flag usage.  No real-world code would ever
+	   end up studying an FBM scalar, so this isn't a real pessimisation.
+	   Endemic use of I32 in Perl_screaminstr makes it hard to safely push
+	   the study length limit from I32_MAX to U32_MAX - 1.
+	*/
 	RETPUSHNO;
     }
 
-    if (PL_lastscream) {
-	SvSCREAM_off(PL_lastscream);
-	SvREFCNT_dec(PL_lastscream);
-    }
-    PL_lastscream = SvREFCNT_inc_simple(sv);
+    /* Make study a no-op. It's no longer useful and its existence
+       complicates matters elsewhere. This is a low-impact band-aid.
+       The relevant code will be neatly removed in a future release. */
+    RETPUSHYES;
 
-    s = (unsigned char*)(SvPV(sv, len));
-    pos = len;
-    if (pos <= 0)
-	RETPUSHNO;
-    if (pos > PL_maxscream) {
-	if (PL_maxscream < 0) {
-	    PL_maxscream = pos + 80;
-	    Newx(PL_screamfirst, 256, I32);
-	    Newx(PL_screamnext, PL_maxscream, I32);
-	}
-	else {
-	    PL_maxscream = pos + pos / 4;
-	    Renew(PL_screamnext, PL_maxscream, I32);
-	}
-    }
+    if (len < 0xFF) {
+	quanta = 1;
+    } else if (len < 0xFFFF) {
+	quanta = 2;
+    } else
+	quanta = 4;
 
-    sfirst = PL_screamfirst;
-    snext = PL_screamnext;
+    size = (256 + len) * quanta;
+    sfirst_raw = (char *)safemalloc(size);
 
-    if (!sfirst || !snext)
+    if (!sfirst_raw)
 	DIE(aTHX_ "do_study: out of memory");
 
-    for (ch = 256; ch; --ch)
-	*sfirst++ = -1;
-    sfirst -= 256;
+    SvSCREAM_on(sv);
+    if (!mg)
+	mg = sv_magicext(sv, NULL, PERL_MAGIC_study, &PL_vtbl_regexp, NULL, 0);
+    mg->mg_ptr = sfirst_raw;
+    mg->mg_len = size;
+    mg->mg_private = quanta;
 
-    while (--pos >= 0) {
-	register const I32 ch = s[pos];
-	if (sfirst[ch] >= 0)
-	    snext[pos] = sfirst[ch] - pos;
-	else
-	    snext[pos] = -pos;
-	sfirst[ch] = pos;
+    memset(sfirst_raw, ~0, 256 * quanta);
+
+    /* The assumption here is that most studied strings are fairly short, hence
+       the pain of the extra code is worth it, given the memory savings.
+       80 character string, 336 bytes as U8, down from 1344 as U32
+       800 character string, 2112 bytes as U16, down from 4224 as U32
+    */
+       
+    if (quanta == 1) {
+	U8 *const sfirst = (U8 *)sfirst_raw;
+	U8 *const snext = sfirst + 256;
+	while (len-- > 0) {
+	    const U8 ch = s[len];
+	    snext[len] = sfirst[ch];
+	    sfirst[ch] = len;
+	}
+    } else if (quanta == 2) {
+	U16 *const sfirst = (U16 *)sfirst_raw;
+	U16 *const snext = sfirst + 256;
+	while (len-- > 0) {
+	    const U8 ch = s[len];
+	    snext[len] = sfirst[ch];
+	    sfirst[ch] = len;
+	}
+    } else  {
+	U32 *const sfirst = (U32 *)sfirst_raw;
+	U32 *const snext = sfirst + 256;
+	while (len-- > 0) {
+	    const U8 ch = s[len];
+	    snext[len] = sfirst[ch];
+	    sfirst[ch] = len;
+	}
     }
 
-    SvSCREAM_on(sv);
-    /* piggyback on m//g magic */
-    sv_magic(sv, NULL, PERL_MAGIC_regex_global, NULL, 0);
     RETPUSHYES;
 }
 
@@ -760,16 +749,194 @@ PP(pp_trans)
 	EXTEND(SP,1);
     }
     TARG = sv_newmortal();
-    PUSHi(do_trans(sv));
+    if(PL_op->op_type == OP_TRANSR) {
+	STRLEN len;
+	const char * const pv = SvPV(sv,len);
+	SV * const newsv = newSVpvn_flags(pv, len, SVs_TEMP|SvUTF8(sv));
+	do_trans(newsv);
+	PUSHs(newsv);
+    }
+    else PUSHi(do_trans(sv));
     RETURN;
 }
 
 /* Lvalue operators. */
 
+static void
+S_do_chomp(pTHX_ SV *retval, SV *sv, bool chomping)
+{
+    dVAR;
+    STRLEN len;
+    char *s;
+
+    PERL_ARGS_ASSERT_DO_CHOMP;
+
+    if (chomping && (RsSNARF(PL_rs) || RsRECORD(PL_rs)))
+	return;
+    if (SvTYPE(sv) == SVt_PVAV) {
+	I32 i;
+	AV *const av = MUTABLE_AV(sv);
+	const I32 max = AvFILL(av);
+
+	for (i = 0; i <= max; i++) {
+	    sv = MUTABLE_SV(av_fetch(av, i, FALSE));
+	    if (sv && ((sv = *(SV**)sv), sv != &PL_sv_undef))
+		do_chomp(retval, sv, chomping);
+	}
+        return;
+    }
+    else if (SvTYPE(sv) == SVt_PVHV) {
+	HV* const hv = MUTABLE_HV(sv);
+	HE* entry;
+        (void)hv_iterinit(hv);
+        while ((entry = hv_iternext(hv)))
+            do_chomp(retval, hv_iterval(hv,entry), chomping);
+	return;
+    }
+    else if (SvREADONLY(sv)) {
+        if (SvFAKE(sv)) {
+            /* SV is copy-on-write */
+	    sv_force_normal_flags(sv, 0);
+        }
+        else
+            Perl_croak_no_modify(aTHX);
+    }
+
+    if (PL_encoding) {
+	if (!SvUTF8(sv)) {
+	    /* XXX, here sv is utf8-ized as a side-effect!
+	       If encoding.pm is used properly, almost string-generating
+	       operations, including literal strings, chr(), input data, etc.
+	       should have been utf8-ized already, right?
+	    */
+	    sv_recode_to_utf8(sv, PL_encoding);
+	}
+    }
+
+    s = SvPV(sv, len);
+    if (chomping) {
+	char *temp_buffer = NULL;
+	SV *svrecode = NULL;
+
+	if (s && len) {
+	    s += --len;
+	    if (RsPARA(PL_rs)) {
+		if (*s != '\n')
+		    goto nope;
+		++SvIVX(retval);
+		while (len && s[-1] == '\n') {
+		    --len;
+		    --s;
+		    ++SvIVX(retval);
+		}
+	    }
+	    else {
+		STRLEN rslen, rs_charlen;
+		const char *rsptr = SvPV_const(PL_rs, rslen);
+
+		rs_charlen = SvUTF8(PL_rs)
+		    ? sv_len_utf8(PL_rs)
+		    : rslen;
+
+		if (SvUTF8(PL_rs) != SvUTF8(sv)) {
+		    /* Assumption is that rs is shorter than the scalar.  */
+		    if (SvUTF8(PL_rs)) {
+			/* RS is utf8, scalar is 8 bit.  */
+			bool is_utf8 = TRUE;
+			temp_buffer = (char*)bytes_from_utf8((U8*)rsptr,
+							     &rslen, &is_utf8);
+			if (is_utf8) {
+			    /* Cannot downgrade, therefore cannot possibly match
+			     */
+			    assert (temp_buffer == rsptr);
+			    temp_buffer = NULL;
+			    goto nope;
+			}
+			rsptr = temp_buffer;
+		    }
+		    else if (PL_encoding) {
+			/* RS is 8 bit, encoding.pm is used.
+			 * Do not recode PL_rs as a side-effect. */
+			svrecode = newSVpvn(rsptr, rslen);
+			sv_recode_to_utf8(svrecode, PL_encoding);
+			rsptr = SvPV_const(svrecode, rslen);
+			rs_charlen = sv_len_utf8(svrecode);
+		    }
+		    else {
+			/* RS is 8 bit, scalar is utf8.  */
+			temp_buffer = (char*)bytes_to_utf8((U8*)rsptr, &rslen);
+			rsptr = temp_buffer;
+		    }
+		}
+		if (rslen == 1) {
+		    if (*s != *rsptr)
+			goto nope;
+		    ++SvIVX(retval);
+		}
+		else {
+		    if (len < rslen - 1)
+			goto nope;
+		    len -= rslen - 1;
+		    s -= rslen - 1;
+		    if (memNE(s, rsptr, rslen))
+			goto nope;
+		    SvIVX(retval) += rs_charlen;
+		}
+	    }
+	    s = SvPV_force_nomg_nolen(sv);
+	    SvCUR_set(sv, len);
+	    *SvEND(sv) = '\0';
+	    SvNIOK_off(sv);
+	    SvSETMAGIC(sv);
+	}
+    nope:
+
+	SvREFCNT_dec(svrecode);
+
+	Safefree(temp_buffer);
+    } else {
+	if (len && !SvPOK(sv))
+	    s = SvPV_force_nomg(sv, len);
+	if (DO_UTF8(sv)) {
+	    if (s && len) {
+		char * const send = s + len;
+		char * const start = s;
+		s = send - 1;
+		while (s > start && UTF8_IS_CONTINUATION(*s))
+		    s--;
+		if (is_utf8_string((U8*)s, send - s)) {
+		    sv_setpvn(retval, s, send - s);
+		    *s = '\0';
+		    SvCUR_set(sv, s - start);
+		    SvNIOK_off(sv);
+		    SvUTF8_on(retval);
+		}
+	    }
+	    else
+		sv_setpvs(retval, "");
+	}
+	else if (s && len) {
+	    s += --len;
+	    sv_setpvn(retval, s, 1);
+	    *s = '\0';
+	    SvCUR_set(sv, len);
+	    SvUTF8_off(sv);
+	    SvNIOK_off(sv);
+	}
+	else
+	    sv_setpvs(retval, "");
+	SvSETMAGIC(sv);
+    }
+}
+
 PP(pp_schop)
 {
     dVAR; dSP; dTARGET;
-    do_chop(TARG, TOPs);
+    const bool chomping = PL_op->op_type == OP_SCHOMP;
+
+    if (chomping)
+	sv_setiv(TARG, 0);
+    do_chomp(TARG, TOPs, chomping);
     SETTARG;
     RETURN;
 }
@@ -777,28 +944,14 @@ PP(pp_schop)
 PP(pp_chop)
 {
     dVAR; dSP; dMARK; dTARGET; dORIGMARK;
+    const bool chomping = PL_op->op_type == OP_CHOMP;
+
+    if (chomping)
+	sv_setiv(TARG, 0);
     while (MARK < SP)
-	do_chop(TARG, *++MARK);
+	do_chomp(TARG, *++MARK, chomping);
     SP = ORIGMARK;
     XPUSHTARG;
-    RETURN;
-}
-
-PP(pp_schomp)
-{
-    dVAR; dSP; dTARGET;
-    SETi(do_chomp(TOPs));
-    RETURN;
-}
-
-PP(pp_chomp)
-{
-    dVAR; dSP; dMARK; dTARGET;
-    register I32 count = 0;
-
-    while (SP > MARK)
-	count += do_chomp(POPs);
-    XPUSHi(count);
     RETURN;
 }
 
@@ -829,16 +982,18 @@ PP(pp_undef)
 	break;
     case SVt_PVCV:
 	if (cv_const_sv((const CV *)sv))
-	    Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "Constant subroutine %s undefined",
-			   CvANON((const CV *)sv) ? "(anonymous)"
-			   : GvENAME(CvGV((const CV *)sv)));
+	    Perl_ck_warner(aTHX_ packWARN(WARN_MISC),
+                          "Constant subroutine %"SVf" undefined",
+			   SVfARG(CvANON((const CV *)sv)
+                             ? newSVpvs_flags("(anonymous)", SVs_TEMP)
+                             : sv_2mortal(newSVhek(GvENAME_HEK(CvGV((const CV *)sv))))));
 	/* FALLTHROUGH */
     case SVt_PVFM:
 	{
 	    /* let user-undef'd sub keep its identity */
 	    GV* const gv = CvGV((const CV *)sv);
 	    cv_undef(MUTABLE_CV(sv));
-	    CvGV((const CV *)sv) = gv;
+	    CvGV_set(MUTABLE_CV(sv), gv);
 	}
 	break;
     case SVt_PVGV:
@@ -850,21 +1005,38 @@ PP(pp_undef)
 	    GP *gp;
             HV *stash;
 
-            /* undef *Foo:: */
-            if((stash = GvHV((const GV *)sv)) && HvNAME_get(stash))
-                mro_isa_changed_in(stash);
             /* undef *Pkg::meth_name ... */
-            else if(GvCVu((const GV *)sv) && (stash = GvSTASH((const GV *)sv))
-		    && HvNAME_get(stash))
-                mro_method_changed_in(stash);
+            bool method_changed
+             =   GvCVu((const GV *)sv) && (stash = GvSTASH((const GV *)sv))
+	      && HvENAME_get(stash);
+            /* undef *Foo:: */
+            if((stash = GvHV((const GV *)sv))) {
+                if(HvENAME_get(stash))
+                    SvREFCNT_inc_simple_void_NN(sv_2mortal((SV *)stash));
+                else stash = NULL;
+            }
 
 	    gp_free(MUTABLE_GV(sv));
 	    Newxz(gp, 1, GP);
-	    GvGP(sv) = gp_ref(gp);
+	    GvGP_set(sv, gp_ref(gp));
 	    GvSV(sv) = newSV(0);
 	    GvLINE(sv) = CopLINE(PL_curcop);
 	    GvEGV(sv) = MUTABLE_GV(sv);
 	    GvMULTI_on(sv);
+
+            if(stash)
+                mro_package_moved(NULL, stash, (const GV *)sv, 0);
+            stash = NULL;
+            /* undef *Foo::ISA */
+            if( strEQ(GvNAME((const GV *)sv), "ISA")
+             && (stash = GvSTASH((const GV *)sv))
+             && (method_changed || HvENAME(stash)) )
+                mro_isa_changed_in(stash);
+            else if(method_changed)
+                mro_method_changed_in(
+                 GvSTASH((const GV *)sv)
+                );
+
 	    break;
 	}
 	/* FALL THROUGH */
@@ -881,60 +1053,29 @@ PP(pp_undef)
     RETPUSHUNDEF;
 }
 
-PP(pp_predec)
-{
-    dVAR; dSP;
-    if (SvTYPE(TOPs) >= SVt_PVAV || isGV_with_GP(TOPs))
-	DIE(aTHX_ "%s", PL_no_modify);
-    if (!SvREADONLY(TOPs) && SvIOK_notUV(TOPs) && !SvNOK(TOPs) && !SvPOK(TOPs)
-        && SvIVX(TOPs) != IV_MIN)
-    {
-	SvIV_set(TOPs, SvIVX(TOPs) - 1);
-	SvFLAGS(TOPs) &= ~(SVp_NOK|SVp_POK);
-    }
-    else
-	sv_dec(TOPs);
-    SvSETMAGIC(TOPs);
-    return NORMAL;
-}
-
 PP(pp_postinc)
 {
     dVAR; dSP; dTARGET;
-    if (SvTYPE(TOPs) >= SVt_PVAV || isGV_with_GP(TOPs))
-	DIE(aTHX_ "%s", PL_no_modify);
+    const bool inc =
+	PL_op->op_type == OP_POSTINC || PL_op->op_type == OP_I_POSTINC;
+    if (SvTYPE(TOPs) >= SVt_PVAV || (isGV_with_GP(TOPs) && !SvFAKE(TOPs)))
+	Perl_croak_no_modify(aTHX);
+    if (SvROK(TOPs))
+	TARG = sv_newmortal();
     sv_setsv(TARG, TOPs);
     if (!SvREADONLY(TOPs) && SvIOK_notUV(TOPs) && !SvNOK(TOPs) && !SvPOK(TOPs)
-        && SvIVX(TOPs) != IV_MAX)
+        && SvIVX(TOPs) != (inc ? IV_MAX : IV_MIN))
     {
-	SvIV_set(TOPs, SvIVX(TOPs) + 1);
+	SvIV_set(TOPs, SvIVX(TOPs) + (inc ? 1 : -1));
 	SvFLAGS(TOPs) &= ~(SVp_NOK|SVp_POK);
     }
-    else
-	sv_inc(TOPs);
+    else if (inc)
+	sv_inc_nomg(TOPs);
+    else sv_dec_nomg(TOPs);
     SvSETMAGIC(TOPs);
     /* special case for undef: see thread at 2003-03/msg00536.html in archive */
-    if (!SvOK(TARG))
+    if (inc && !SvOK(TARG))
 	sv_setiv(TARG, 0);
-    SETs(TARG);
-    return NORMAL;
-}
-
-PP(pp_postdec)
-{
-    dVAR; dSP; dTARGET;
-    if (SvTYPE(TOPs) >= SVt_PVAV || isGV_with_GP(TOPs))
-	DIE(aTHX_ "%s", PL_no_modify);
-    sv_setsv(TARG, TOPs);
-    if (!SvREADONLY(TOPs) && SvIOK_notUV(TOPs) && !SvNOK(TOPs) && !SvPOK(TOPs)
-        && SvIVX(TOPs) != IV_MIN)
-    {
-	SvIV_set(TOPs, SvIVX(TOPs) - 1);
-	SvFLAGS(TOPs) &= ~(SVp_NOK|SVp_POK);
-    }
-    else
-	sv_dec(TOPs);
-    SvSETMAGIC(TOPs);
     SETs(TARG);
     return NORMAL;
 }
@@ -947,17 +1088,17 @@ PP(pp_pow)
 #ifdef PERL_PRESERVE_IVUV
     bool is_int = 0;
 #endif
-    tryAMAGICbin(pow,opASSIGN);
-    svl = sv_2num(TOPm1s);
-    svr = sv_2num(TOPs);
+    tryAMAGICbin_MG(pow_amg, AMGf_assign|AMGf_numeric);
+    svr = TOPs;
+    svl = TOPm1s;
 #ifdef PERL_PRESERVE_IVUV
     /* For integer to integer power, we do the calculation by hand wherever
        we're sure it is safe; otherwise we call pow() and try to convert to
        integer afterwards. */
     {
-	SvIV_please(svr);
+	SvIV_please_nomg(svr);
 	if (SvIOK(svr)) {
-	    SvIV_please(svl);
+	    SvIV_please_nomg(svl);
 	    if (SvIOK(svl)) {
 		UV power;
 		bool baseuok;
@@ -1013,7 +1154,7 @@ PP(pp_pow)
 		    }
                     SP--;
                     SETn( result );
-                    SvIV_please(svr);
+                    SvIV_please_nomg(svr);
                     RETURN;
 		} else {
 		    register unsigned int highbit = 8 * sizeof(UV);
@@ -1030,7 +1171,7 @@ PP(pp_pow)
 			   on same algorithm as above */
 			register UV result = 1;
 			register UV base = baseuv;
-			const bool odd_power = (bool)(power & 1);
+			const bool odd_power = cBOOL(power & 1);
 			if (odd_power) {
 			    result *= base;
 			}
@@ -1062,8 +1203,8 @@ PP(pp_pow)
   float_it:
 #endif    
     {
-	NV right = SvNV(svr);
-	NV left  = SvNV(svl);
+	NV right = SvNV_nomg(svr);
+	NV left  = SvNV_nomg(svl);
 	(void)POPs;
 
 #if defined(USE_LONG_DOUBLE) && defined(HAS_AIX_POWL_NEG_BASE_BUG)
@@ -1108,7 +1249,7 @@ PP(pp_pow)
 
 #ifdef PERL_PRESERVE_IVUV
 	if (is_int)
-	    SvIV_please(svr);
+	    SvIV_please_nomg(svr);
 #endif
 	RETURN;
     }
@@ -1117,17 +1258,17 @@ PP(pp_pow)
 PP(pp_multiply)
 {
     dVAR; dSP; dATARGET; SV *svl, *svr;
-    tryAMAGICbin(mult,opASSIGN);
-    svl = sv_2num(TOPm1s);
-    svr = sv_2num(TOPs);
+    tryAMAGICbin_MG(mult_amg, AMGf_assign|AMGf_numeric);
+    svr = TOPs;
+    svl = TOPm1s;
 #ifdef PERL_PRESERVE_IVUV
-    SvIV_please(svr);
+    SvIV_please_nomg(svr);
     if (SvIOK(svr)) {
 	/* Unless the left argument is integer in range we are going to have to
 	   use NV maths. Hence only attempt to coerce the right argument if
 	   we know the left is integer.  */
 	/* Left operand is defined, so is it IV? */
-	SvIV_please(svl);
+	SvIV_please_nomg(svl);
 	if (SvIOK(svl)) {
 	    bool auvok = SvUOK(svl);
 	    bool buvok = SvUOK(svr);
@@ -1230,8 +1371,8 @@ PP(pp_multiply)
     } /* SvIOK(svr) */
 #endif
     {
-      NV right = SvNV(svr);
-      NV left  = SvNV(svl);
+      NV right = SvNV_nomg(svr);
+      NV left  = SvNV_nomg(svl);
       (void)POPs;
       SETn( left * right );
       RETURN;
@@ -1241,9 +1382,9 @@ PP(pp_multiply)
 PP(pp_divide)
 {
     dVAR; dSP; dATARGET; SV *svl, *svr;
-    tryAMAGICbin(div,opASSIGN);
-    svl = sv_2num(TOPm1s);
-    svr = sv_2num(TOPs);
+    tryAMAGICbin_MG(div_amg, AMGf_assign|AMGf_numeric);
+    svr = TOPs;
+    svl = TOPm1s;
     /* Only try to do UV divide first
        if ((SLOPPYDIVIDE is true) or
            (PERL_PRESERVE_IVUV is true and one or both SV is a UV too large
@@ -1266,9 +1407,9 @@ PP(pp_divide)
 #endif
 
 #ifdef PERL_TRY_UV_DIVIDE
-    SvIV_please(svr);
+    SvIV_please_nomg(svr);
     if (SvIOK(svr)) {
-        SvIV_please(svl);
+        SvIV_please_nomg(svl);
         if (SvIOK(svl)) {
             bool left_non_neg = SvUOK(svl);
             bool right_non_neg = SvUOK(svr);
@@ -1292,7 +1433,7 @@ PP(pp_divide)
                warning before dieing, hence this test goes here.
                If it were immediately before the second SvIV_please, then
                DIE() would be invoked before left was even inspected, so
-               no inpsection would give no warning.  */
+               no inspection would give no warning.  */
             if (right == 0)
                 DIE(aTHX_ "Illegal division by zero");
 
@@ -1348,8 +1489,8 @@ PP(pp_divide)
     } /* right wasn't SvIOK */
 #endif /* PERL_TRY_UV_DIVIDE */
     {
-	NV right = SvNV(svr);
-	NV left  = SvNV(svl);
+	NV right = SvNV_nomg(svr);
+	NV left  = SvNV_nomg(svl);
 	(void)POPs;(void)POPs;
 #if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
 	if (! Perl_isnan(right) && right == 0.0)
@@ -1364,7 +1505,8 @@ PP(pp_divide)
 
 PP(pp_modulo)
 {
-    dVAR; dSP; dATARGET; tryAMAGICbin(modulo,opASSIGN);
+    dVAR; dSP; dATARGET;
+    tryAMAGICbin_MG(modulo_amg, AMGf_assign|AMGf_numeric);
     {
 	UV left  = 0;
 	UV right = 0;
@@ -1374,9 +1516,9 @@ PP(pp_modulo)
 	bool dright_valid = FALSE;
 	NV dright = 0.0;
 	NV dleft  = 0.0;
-        SV * svl;
-        SV * const svr = sv_2num(TOPs);
-        SvIV_please(svr);
+	SV * const svr = TOPs;
+	SV * const svl = TOPm1s;
+	SvIV_please_nomg(svr);
         if (SvIOK(svr)) {
             right_neg = !SvUOK(svr);
             if (!right_neg) {
@@ -1392,7 +1534,7 @@ PP(pp_modulo)
             }
         }
         else {
-	    dright = SvNV(svr);
+	    dright = SvNV_nomg(svr);
 	    right_neg = dright < 0;
 	    if (right_neg)
 		dright = -dright;
@@ -1403,13 +1545,11 @@ PP(pp_modulo)
                 use_double = TRUE;
             }
 	}
-	sp--;
 
         /* At this point use_double is only true if right is out of range for
            a UV.  In range NV has been rounded down to nearest UV and
            use_double false.  */
-        svl = sv_2num(TOPs);
-        SvIV_please(svl);
+        SvIV_please_nomg(svl);
 	if (!use_double && SvIOK(svl)) {
             if (SvIOK(svl)) {
                 left_neg = !SvUOK(svl);
@@ -1427,7 +1567,7 @@ PP(pp_modulo)
             }
         }
 	else {
-	    dleft = SvNV(svl);
+	    dleft = SvNV_nomg(svl);
 	    left_neg = dleft < 0;
 	    if (left_neg)
 		dleft = -dleft;
@@ -1455,7 +1595,7 @@ PP(pp_modulo)
                 }
             }
         }
-	sp--;
+	sp -= 2;
 	if (use_double) {
 	    NV dans;
 
@@ -1496,20 +1636,29 @@ PP(pp_modulo)
 
 PP(pp_repeat)
 {
-  dVAR; dSP; dATARGET; tryAMAGICbin(repeat,opASSIGN);
-  {
+    dVAR; dSP; dATARGET;
     register IV count;
-    dPOPss;
-    SvGETMAGIC(sv);
+    SV *sv;
+
+    if (GIMME == G_ARRAY && PL_op->op_private & OPpREPEAT_DOLIST) {
+	/* TODO: think of some way of doing list-repeat overloading ??? */
+	sv = POPs;
+	SvGETMAGIC(sv);
+    }
+    else {
+	tryAMAGICbin_MG(repeat_amg, AMGf_assign);
+	sv = POPs;
+    }
+
     if (SvIOKp(sv)) {
 	 if (SvUOK(sv)) {
-	      const UV uv = SvUV(sv);
+	      const UV uv = SvUV_nomg(sv);
 	      if (uv > IV_MAX)
 		   count = IV_MAX; /* The best we can do? */
 	      else
 		   count = uv;
 	 } else {
-	      const IV iv = SvIV(sv);
+	      const IV iv = SvIV_nomg(sv);
 	      if (iv < 0)
 		   count = 0;
 	      else
@@ -1517,14 +1666,15 @@ PP(pp_repeat)
 	 }
     }
     else if (SvNOKp(sv)) {
-	 const NV nv = SvNV(sv);
+	 const NV nv = SvNV_nomg(sv);
 	 if (nv < 0.0)
 	      count = 0;
 	 else
 	      count = (IV)nv;
     }
     else
-	 count = SvIV(sv);
+	 count = SvIV_nomg(sv);
+
     if (GIMME == G_ARRAY && PL_op->op_private & OPpREPEAT_DOLIST) {
 	dMARK;
 	static const char oom_list_extend[] = "Out of memory during list extend";
@@ -1582,8 +1732,9 @@ PP(pp_repeat)
 	static const char oom_string_extend[] =
 	  "Out of memory during string extend";
 
-	SvSetSV(TARG, tmpstr);
-	SvPV_force(TARG, len);
+	if (TARG != tmpstr)
+	    sv_setsv_nomg(TARG, tmpstr);
+	SvPV_force_nomg(TARG, len);
 	isutf = DO_UTF8(TARG);
 	if (count != 1) {
 	    if (count < 1)
@@ -1616,20 +1767,19 @@ PP(pp_repeat)
 	PUSHTARG;
     }
     RETURN;
-  }
 }
 
 PP(pp_subtract)
 {
     dVAR; dSP; dATARGET; bool useleft; SV *svl, *svr;
-    tryAMAGICbin(subtr,opASSIGN);
-    svl = sv_2num(TOPm1s);
-    svr = sv_2num(TOPs);
+    tryAMAGICbin_MG(subtr_amg, AMGf_assign|AMGf_numeric);
+    svr = TOPs;
+    svl = TOPm1s;
     useleft = USE_LEFT(svl);
 #ifdef PERL_PRESERVE_IVUV
     /* See comments in pp_add (in pp_hot.c) about Overflow, and how
        "bad things" happen if you rely on signed integers wrapping.  */
-    SvIV_please(svr);
+    SvIV_please_nomg(svr);
     if (SvIOK(svr)) {
 	/* Unless the left argument is integer in range we are going to have to
 	   use NV maths. Hence only attempt to coerce the right argument if
@@ -1644,7 +1794,7 @@ PP(pp_subtract)
 	    /* left operand is undef, treat as zero.  */
 	} else {
 	    /* Left operand is defined, so is it IV? */
-	    SvIV_please(svl);
+	    SvIV_please_nomg(svl);
 	    if (SvIOK(svl)) {
 		if ((auvok = SvUOK(svl)))
 		    auv = SvUVX(svl);
@@ -1727,7 +1877,7 @@ PP(pp_subtract)
     }
 #endif
     {
-	NV value = SvNV(svr);
+	NV value = SvNV_nomg(svr);
 	(void)POPs;
 
 	if (!useleft) {
@@ -1735,22 +1885,25 @@ PP(pp_subtract)
 	    SETn(-value);
 	    RETURN;
 	}
-	SETn( SvNV(svl) - value );
+	SETn( SvNV_nomg(svl) - value );
 	RETURN;
     }
 }
 
 PP(pp_left_shift)
 {
-    dVAR; dSP; dATARGET; tryAMAGICbin(lshift,opASSIGN);
+    dVAR; dSP; dATARGET; SV *svl, *svr;
+    tryAMAGICbin_MG(lshift_amg, AMGf_assign|AMGf_numeric);
+    svr = POPs;
+    svl = TOPs;
     {
-      const IV shift = POPi;
+      const IV shift = SvIV_nomg(svr);
       if (PL_op->op_private & HINT_INTEGER) {
-	const IV i = TOPi;
+	const IV i = SvIV_nomg(svl);
 	SETi(i << shift);
       }
       else {
-	const UV u = TOPu;
+	const UV u = SvUV_nomg(svl);
 	SETu(u << shift);
       }
       RETURN;
@@ -1759,15 +1912,18 @@ PP(pp_left_shift)
 
 PP(pp_right_shift)
 {
-    dVAR; dSP; dATARGET; tryAMAGICbin(rshift,opASSIGN);
+    dVAR; dSP; dATARGET; SV *svl, *svr;
+    tryAMAGICbin_MG(rshift_amg, AMGf_assign|AMGf_numeric);
+    svr = POPs;
+    svl = TOPs;
     {
-      const IV shift = POPi;
+      const IV shift = SvIV_nomg(svr);
       if (PL_op->op_private & HINT_INTEGER) {
-	const IV i = TOPi;
+	const IV i = SvIV_nomg(svl);
 	SETi(i >> shift);
       }
       else {
-	const UV u = TOPu;
+	const UV u = SvUV_nomg(svl);
 	SETu(u >> shift);
       }
       RETURN;
@@ -1776,513 +1932,179 @@ PP(pp_right_shift)
 
 PP(pp_lt)
 {
-    dVAR; dSP; tryAMAGICbinSET(lt,0);
-#ifdef PERL_PRESERVE_IVUV
-    SvIV_please(TOPs);
-    if (SvIOK(TOPs)) {
-	SvIV_please(TOPm1s);
-	if (SvIOK(TOPm1s)) {
-	    bool auvok = SvUOK(TOPm1s);
-	    bool buvok = SvUOK(TOPs);
-	
-	    if (!auvok && !buvok) { /* ## IV < IV ## */
-		const IV aiv = SvIVX(TOPm1s);
-		const IV biv = SvIVX(TOPs);
-		
-		SP--;
-		SETs(boolSV(aiv < biv));
-		RETURN;
-	    }
-	    if (auvok && buvok) { /* ## UV < UV ## */
-		const UV auv = SvUVX(TOPm1s);
-		const UV buv = SvUVX(TOPs);
-		
-		SP--;
-		SETs(boolSV(auv < buv));
-		RETURN;
-	    }
-	    if (auvok) { /* ## UV < IV ## */
-		UV auv;
-		const IV biv = SvIVX(TOPs);
-		SP--;
-		if (biv < 0) {
-		    /* As (a) is a UV, it's >=0, so it cannot be < */
-		    SETs(&PL_sv_no);
-		    RETURN;
-		}
-		auv = SvUVX(TOPs);
-		SETs(boolSV(auv < (UV)biv));
-		RETURN;
-	    }
-	    { /* ## IV < UV ## */
-		const IV aiv = SvIVX(TOPm1s);
-		UV buv;
-		
-		if (aiv < 0) {
-		    /* As (b) is a UV, it's >=0, so it must be < */
-		    SP--;
-		    SETs(&PL_sv_yes);
-		    RETURN;
-		}
-		buv = SvUVX(TOPs);
-		SP--;
-		SETs(boolSV((UV)aiv < buv));
-		RETURN;
-	    }
-	}
-    }
-#endif
-#ifndef NV_PRESERVES_UV
-#ifdef PERL_PRESERVE_IVUV
-    else
-#endif
-    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
-	SP--;
-	SETs(boolSV(SvRV(TOPs) < SvRV(TOPp1s)));
-	RETURN;
-    }
-#endif
-    {
-#if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-      dPOPTOPnnrl;
-      if (Perl_isnan(left) || Perl_isnan(right))
-	  RETSETNO;
-      SETs(boolSV(left < right));
-#else
-      dPOPnv;
-      SETs(boolSV(TOPn < value));
-#endif
-      RETURN;
-    }
+    dVAR; dSP;
+    SV *left, *right;
+
+    tryAMAGICbin_MG(lt_amg, AMGf_set|AMGf_numeric);
+    right = POPs;
+    left  = TOPs;
+    SETs(boolSV(
+	(SvIOK_notUV(left) && SvIOK_notUV(right))
+	? (SvIVX(left) < SvIVX(right))
+	: (do_ncmp(left, right) == -1)
+    ));
+    RETURN;
 }
 
 PP(pp_gt)
 {
-    dVAR; dSP; tryAMAGICbinSET(gt,0);
-#ifdef PERL_PRESERVE_IVUV
-    SvIV_please(TOPs);
-    if (SvIOK(TOPs)) {
-	SvIV_please(TOPm1s);
-	if (SvIOK(TOPm1s)) {
-	    bool auvok = SvUOK(TOPm1s);
-	    bool buvok = SvUOK(TOPs);
-	
-	    if (!auvok && !buvok) { /* ## IV > IV ## */
-		const IV aiv = SvIVX(TOPm1s);
-		const IV biv = SvIVX(TOPs);
+    dVAR; dSP;
+    SV *left, *right;
 
-		SP--;
-		SETs(boolSV(aiv > biv));
-		RETURN;
-	    }
-	    if (auvok && buvok) { /* ## UV > UV ## */
-		const UV auv = SvUVX(TOPm1s);
-		const UV buv = SvUVX(TOPs);
-		
-		SP--;
-		SETs(boolSV(auv > buv));
-		RETURN;
-	    }
-	    if (auvok) { /* ## UV > IV ## */
-		UV auv;
-		const IV biv = SvIVX(TOPs);
-
-		SP--;
-		if (biv < 0) {
-		    /* As (a) is a UV, it's >=0, so it must be > */
-		    SETs(&PL_sv_yes);
-		    RETURN;
-		}
-		auv = SvUVX(TOPs);
-		SETs(boolSV(auv > (UV)biv));
-		RETURN;
-	    }
-	    { /* ## IV > UV ## */
-		const IV aiv = SvIVX(TOPm1s);
-		UV buv;
-		
-		if (aiv < 0) {
-		    /* As (b) is a UV, it's >=0, so it cannot be > */
-		    SP--;
-		    SETs(&PL_sv_no);
-		    RETURN;
-		}
-		buv = SvUVX(TOPs);
-		SP--;
-		SETs(boolSV((UV)aiv > buv));
-		RETURN;
-	    }
-	}
-    }
-#endif
-#ifndef NV_PRESERVES_UV
-#ifdef PERL_PRESERVE_IVUV
-    else
-#endif
-    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
-        SP--;
-        SETs(boolSV(SvRV(TOPs) > SvRV(TOPp1s)));
-        RETURN;
-    }
-#endif
-    {
-#if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-      dPOPTOPnnrl;
-      if (Perl_isnan(left) || Perl_isnan(right))
-	  RETSETNO;
-      SETs(boolSV(left > right));
-#else
-      dPOPnv;
-      SETs(boolSV(TOPn > value));
-#endif
-      RETURN;
-    }
+    tryAMAGICbin_MG(gt_amg, AMGf_set|AMGf_numeric);
+    right = POPs;
+    left  = TOPs;
+    SETs(boolSV(
+	(SvIOK_notUV(left) && SvIOK_notUV(right))
+	? (SvIVX(left) > SvIVX(right))
+	: (do_ncmp(left, right) == 1)
+    ));
+    RETURN;
 }
 
 PP(pp_le)
 {
-    dVAR; dSP; tryAMAGICbinSET(le,0);
-#ifdef PERL_PRESERVE_IVUV
-    SvIV_please(TOPs);
-    if (SvIOK(TOPs)) {
-	SvIV_please(TOPm1s);
-	if (SvIOK(TOPm1s)) {
-	    bool auvok = SvUOK(TOPm1s);
-	    bool buvok = SvUOK(TOPs);
-	
-	    if (!auvok && !buvok) { /* ## IV <= IV ## */
-		const IV aiv = SvIVX(TOPm1s);
-		const IV biv = SvIVX(TOPs);
-		
-		SP--;
-		SETs(boolSV(aiv <= biv));
-		RETURN;
-	    }
-	    if (auvok && buvok) { /* ## UV <= UV ## */
-		UV auv = SvUVX(TOPm1s);
-		UV buv = SvUVX(TOPs);
-		
-		SP--;
-		SETs(boolSV(auv <= buv));
-		RETURN;
-	    }
-	    if (auvok) { /* ## UV <= IV ## */
-		UV auv;
-		const IV biv = SvIVX(TOPs);
+    dVAR; dSP;
+    SV *left, *right;
 
-		SP--;
-		if (biv < 0) {
-		    /* As (a) is a UV, it's >=0, so a cannot be <= */
-		    SETs(&PL_sv_no);
-		    RETURN;
-		}
-		auv = SvUVX(TOPs);
-		SETs(boolSV(auv <= (UV)biv));
-		RETURN;
-	    }
-	    { /* ## IV <= UV ## */
-		const IV aiv = SvIVX(TOPm1s);
-		UV buv;
-
-		if (aiv < 0) {
-		    /* As (b) is a UV, it's >=0, so a must be <= */
-		    SP--;
-		    SETs(&PL_sv_yes);
-		    RETURN;
-		}
-		buv = SvUVX(TOPs);
-		SP--;
-		SETs(boolSV((UV)aiv <= buv));
-		RETURN;
-	    }
-	}
-    }
-#endif
-#ifndef NV_PRESERVES_UV
-#ifdef PERL_PRESERVE_IVUV
-    else
-#endif
-    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
-        SP--;
-        SETs(boolSV(SvRV(TOPs) <= SvRV(TOPp1s)));
-        RETURN;
-    }
-#endif
-    {
-#if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-      dPOPTOPnnrl;
-      if (Perl_isnan(left) || Perl_isnan(right))
-	  RETSETNO;
-      SETs(boolSV(left <= right));
-#else
-      dPOPnv;
-      SETs(boolSV(TOPn <= value));
-#endif
-      RETURN;
-    }
+    tryAMAGICbin_MG(le_amg, AMGf_set|AMGf_numeric);
+    right = POPs;
+    left  = TOPs;
+    SETs(boolSV(
+	(SvIOK_notUV(left) && SvIOK_notUV(right))
+	? (SvIVX(left) <= SvIVX(right))
+	: (do_ncmp(left, right) <= 0)
+    ));
+    RETURN;
 }
 
 PP(pp_ge)
 {
-    dVAR; dSP; tryAMAGICbinSET(ge,0);
-#ifdef PERL_PRESERVE_IVUV
-    SvIV_please(TOPs);
-    if (SvIOK(TOPs)) {
-	SvIV_please(TOPm1s);
-	if (SvIOK(TOPm1s)) {
-	    bool auvok = SvUOK(TOPm1s);
-	    bool buvok = SvUOK(TOPs);
-	
-	    if (!auvok && !buvok) { /* ## IV >= IV ## */
-		const IV aiv = SvIVX(TOPm1s);
-		const IV biv = SvIVX(TOPs);
+    dVAR; dSP;
+    SV *left, *right;
 
-		SP--;
-		SETs(boolSV(aiv >= biv));
-		RETURN;
-	    }
-	    if (auvok && buvok) { /* ## UV >= UV ## */
-		const UV auv = SvUVX(TOPm1s);
-		const UV buv = SvUVX(TOPs);
-
-		SP--;
-		SETs(boolSV(auv >= buv));
-		RETURN;
-	    }
-	    if (auvok) { /* ## UV >= IV ## */
-		UV auv;
-		const IV biv = SvIVX(TOPs);
-
-		SP--;
-		if (biv < 0) {
-		    /* As (a) is a UV, it's >=0, so it must be >= */
-		    SETs(&PL_sv_yes);
-		    RETURN;
-		}
-		auv = SvUVX(TOPs);
-		SETs(boolSV(auv >= (UV)biv));
-		RETURN;
-	    }
-	    { /* ## IV >= UV ## */
-		const IV aiv = SvIVX(TOPm1s);
-		UV buv;
-
-		if (aiv < 0) {
-		    /* As (b) is a UV, it's >=0, so a cannot be >= */
-		    SP--;
-		    SETs(&PL_sv_no);
-		    RETURN;
-		}
-		buv = SvUVX(TOPs);
-		SP--;
-		SETs(boolSV((UV)aiv >= buv));
-		RETURN;
-	    }
-	}
-    }
-#endif
-#ifndef NV_PRESERVES_UV
-#ifdef PERL_PRESERVE_IVUV
-    else
-#endif
-    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
-        SP--;
-        SETs(boolSV(SvRV(TOPs) >= SvRV(TOPp1s)));
-        RETURN;
-    }
-#endif
-    {
-#if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-      dPOPTOPnnrl;
-      if (Perl_isnan(left) || Perl_isnan(right))
-	  RETSETNO;
-      SETs(boolSV(left >= right));
-#else
-      dPOPnv;
-      SETs(boolSV(TOPn >= value));
-#endif
-      RETURN;
-    }
+    tryAMAGICbin_MG(ge_amg, AMGf_set|AMGf_numeric);
+    right = POPs;
+    left  = TOPs;
+    SETs(boolSV(
+	(SvIOK_notUV(left) && SvIOK_notUV(right))
+	? (SvIVX(left) >= SvIVX(right))
+	: ( (do_ncmp(left, right) & 2) == 0)
+    ));
+    RETURN;
 }
 
 PP(pp_ne)
 {
-    dVAR; dSP; tryAMAGICbinSET(ne,0);
-#ifndef NV_PRESERVES_UV
-    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
-        SP--;
-	SETs(boolSV(SvRV(TOPs) != SvRV(TOPp1s)));
-	RETURN;
-    }
-#endif
-#ifdef PERL_PRESERVE_IVUV
-    SvIV_please(TOPs);
-    if (SvIOK(TOPs)) {
-	SvIV_please(TOPm1s);
-	if (SvIOK(TOPm1s)) {
-	    const bool auvok = SvUOK(TOPm1s);
-	    const bool buvok = SvUOK(TOPs);
-	
-	    if (auvok == buvok) { /* ## IV == IV or UV == UV ## */
-                /* Casting IV to UV before comparison isn't going to matter
-                   on 2s complement. On 1s complement or sign&magnitude
-                   (if we have any of them) it could make negative zero
-                   differ from normal zero. As I understand it. (Need to
-                   check - is negative zero implementation defined behaviour
-                   anyway?). NWC  */
-		const UV buv = SvUVX(POPs);
-		const UV auv = SvUVX(TOPs);
+    dVAR; dSP;
+    SV *left, *right;
 
-		SETs(boolSV(auv != buv));
-		RETURN;
-	    }
-	    {			/* ## Mixed IV,UV ## */
-		IV iv;
-		UV uv;
-		
-		/* != is commutative so swap if needed (save code) */
-		if (auvok) {
-		    /* swap. top of stack (b) is the iv */
-		    iv = SvIVX(TOPs);
-		    SP--;
-		    if (iv < 0) {
-			/* As (a) is a UV, it's >0, so it cannot be == */
-			SETs(&PL_sv_yes);
-			RETURN;
-		    }
-		    uv = SvUVX(TOPs);
-		} else {
-		    iv = SvIVX(TOPm1s);
-		    SP--;
-		    if (iv < 0) {
-			/* As (b) is a UV, it's >0, so it cannot be == */
-			SETs(&PL_sv_yes);
-			RETURN;
-		    }
-		    uv = SvUVX(*(SP+1)); /* Do I want TOPp1s() ? */
+    tryAMAGICbin_MG(ne_amg, AMGf_set|AMGf_numeric);
+    right = POPs;
+    left  = TOPs;
+    SETs(boolSV(
+	(SvIOK_notUV(left) && SvIOK_notUV(right))
+	? (SvIVX(left) != SvIVX(right))
+	: (do_ncmp(left, right) != 0)
+    ));
+    RETURN;
+}
+
+/* compare left and right SVs. Returns:
+ * -1: <
+ *  0: ==
+ *  1: >
+ *  2: left or right was a NaN
+ */
+I32
+Perl_do_ncmp(pTHX_ SV* const left, SV * const right)
+{
+    dVAR;
+
+    PERL_ARGS_ASSERT_DO_NCMP;
+#ifdef PERL_PRESERVE_IVUV
+    SvIV_please_nomg(right);
+    /* Fortunately it seems NaN isn't IOK */
+    if (SvIOK(right)) {
+	SvIV_please_nomg(left);
+	if (SvIOK(left)) {
+	    if (!SvUOK(left)) {
+		const IV leftiv = SvIVX(left);
+		if (!SvUOK(right)) {
+		    /* ## IV <=> IV ## */
+		    const IV rightiv = SvIVX(right);
+		    return (leftiv > rightiv) - (leftiv < rightiv);
 		}
-		SETs(boolSV((UV)iv != uv));
-		RETURN;
+		/* ## IV <=> UV ## */
+		if (leftiv < 0)
+		    /* As (b) is a UV, it's >=0, so it must be < */
+		    return -1;
+		{
+		    const UV rightuv = SvUVX(right);
+		    return ((UV)leftiv > rightuv) - ((UV)leftiv < rightuv);
+		}
 	    }
+
+	    if (SvUOK(right)) {
+		/* ## UV <=> UV ## */
+		const UV leftuv = SvUVX(left);
+		const UV rightuv = SvUVX(right);
+		return (leftuv > rightuv) - (leftuv < rightuv);
+	    }
+	    /* ## UV <=> IV ## */
+	    {
+		const IV rightiv = SvIVX(right);
+		if (rightiv < 0)
+		    /* As (a) is a UV, it's >=0, so it cannot be < */
+		    return 1;
+		{
+		    const UV leftuv = SvUVX(left);
+		    return (leftuv > (UV)rightiv) - (leftuv < (UV)rightiv);
+		}
+	    }
+	    /* NOTREACHED */
 	}
     }
 #endif
     {
+      NV const rnv = SvNV_nomg(right);
+      NV const lnv = SvNV_nomg(left);
+
 #if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-      dPOPTOPnnrl;
-      if (Perl_isnan(left) || Perl_isnan(right))
-	  RETSETYES;
-      SETs(boolSV(left != right));
+      if (Perl_isnan(lnv) || Perl_isnan(rnv)) {
+	  return 2;
+       }
+      return (lnv > rnv) - (lnv < rnv);
 #else
-      dPOPnv;
-      SETs(boolSV(TOPn != value));
+      if (lnv < rnv)
+	return -1;
+      if (lnv > rnv)
+	return 1;
+      if (lnv == rnv)
+	return 0;
+      return 2;
 #endif
-      RETURN;
     }
 }
 
+
 PP(pp_ncmp)
 {
-    dVAR; dSP; dTARGET; tryAMAGICbin(ncmp,0);
-#ifndef NV_PRESERVES_UV
-    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
-	const UV right = PTR2UV(SvRV(POPs));
-	const UV left = PTR2UV(SvRV(TOPs));
-	SETi((left > right) - (left < right));
-	RETURN;
-    }
-#endif
-#ifdef PERL_PRESERVE_IVUV
-    /* Fortunately it seems NaN isn't IOK */
-    SvIV_please(TOPs);
-    if (SvIOK(TOPs)) {
-	SvIV_please(TOPm1s);
-	if (SvIOK(TOPm1s)) {
-	    const bool leftuvok = SvUOK(TOPm1s);
-	    const bool rightuvok = SvUOK(TOPs);
-	    I32 value;
-	    if (!leftuvok && !rightuvok) { /* ## IV <=> IV ## */
-		const IV leftiv = SvIVX(TOPm1s);
-		const IV rightiv = SvIVX(TOPs);
-		
-		if (leftiv > rightiv)
-		    value = 1;
-		else if (leftiv < rightiv)
-		    value = -1;
-		else
-		    value = 0;
-	    } else if (leftuvok && rightuvok) { /* ## UV <=> UV ## */
-		const UV leftuv = SvUVX(TOPm1s);
-		const UV rightuv = SvUVX(TOPs);
-		
-		if (leftuv > rightuv)
-		    value = 1;
-		else if (leftuv < rightuv)
-		    value = -1;
-		else
-		    value = 0;
-	    } else if (leftuvok) { /* ## UV <=> IV ## */
-		const IV rightiv = SvIVX(TOPs);
-		if (rightiv < 0) {
-		    /* As (a) is a UV, it's >=0, so it cannot be < */
-		    value = 1;
-		} else {
-		    const UV leftuv = SvUVX(TOPm1s);
-		    if (leftuv > (UV)rightiv) {
-			value = 1;
-		    } else if (leftuv < (UV)rightiv) {
-			value = -1;
-		    } else {
-			value = 0;
-		    }
-		}
-	    } else { /* ## IV <=> UV ## */
-		const IV leftiv = SvIVX(TOPm1s);
-		if (leftiv < 0) {
-		    /* As (b) is a UV, it's >=0, so it must be < */
-		    value = -1;
-		} else {
-		    const UV rightuv = SvUVX(TOPs);
-		    if ((UV)leftiv > rightuv) {
-			value = 1;
-		    } else if ((UV)leftiv < rightuv) {
-			value = -1;
-		    } else {
-			value = 0;
-		    }
-		}
-	    }
-	    SP--;
-	    SETi(value);
-	    RETURN;
-	}
-    }
-#endif
-    {
-      dPOPTOPnnrl;
-      I32 value;
-
-#ifdef Perl_isnan
-      if (Perl_isnan(left) || Perl_isnan(right)) {
-	  SETs(&PL_sv_undef);
-	  RETURN;
-       }
-      value = (left > right) - (left < right);
-#else
-      if (left == right)
-	value = 0;
-      else if (left < right)
-	value = -1;
-      else if (left > right)
-	value = 1;
-      else {
+    dVAR; dSP;
+    SV *left, *right;
+    I32 value;
+    tryAMAGICbin_MG(ncmp_amg, AMGf_numeric);
+    right = POPs;
+    left  = TOPs;
+    value = do_ncmp(left, right);
+    if (value == 2) {
 	SETs(&PL_sv_undef);
-	RETURN;
-      }
-#endif
-      SETi(value);
-      RETURN;
     }
+    else {
+	dTARGET;
+	SETi(value);
+    }
+    RETURN;
 }
 
 PP(pp_sle)
@@ -2312,12 +2134,12 @@ PP(pp_sle)
 	break;
     }
 
-    tryAMAGICbinSET_var(amg_type,0);
+    tryAMAGICbin_MG(amg_type, AMGf_set);
     {
       dPOPTOPssrl;
       const int cmp = (IN_LOCALE_RUNTIME
-		 ? sv_cmp_locale(left, right)
-		 : sv_cmp(left, right));
+		 ? sv_cmp_locale_flags(left, right, 0)
+		 : sv_cmp_flags(left, right, 0));
       SETs(boolSV(cmp * multiplier < rhs));
       RETURN;
     }
@@ -2325,32 +2147,35 @@ PP(pp_sle)
 
 PP(pp_seq)
 {
-    dVAR; dSP; tryAMAGICbinSET(seq,0);
+    dVAR; dSP;
+    tryAMAGICbin_MG(seq_amg, AMGf_set);
     {
       dPOPTOPssrl;
-      SETs(boolSV(sv_eq(left, right)));
+      SETs(boolSV(sv_eq_flags(left, right, 0)));
       RETURN;
     }
 }
 
 PP(pp_sne)
 {
-    dVAR; dSP; tryAMAGICbinSET(sne,0);
+    dVAR; dSP;
+    tryAMAGICbin_MG(sne_amg, AMGf_set);
     {
       dPOPTOPssrl;
-      SETs(boolSV(!sv_eq(left, right)));
+      SETs(boolSV(!sv_eq_flags(left, right, 0)));
       RETURN;
     }
 }
 
 PP(pp_scmp)
 {
-    dVAR; dSP; dTARGET;  tryAMAGICbin(scmp,0);
+    dVAR; dSP; dTARGET;
+    tryAMAGICbin_MG(scmp_amg, 0);
     {
       dPOPTOPssrl;
       const int cmp = (IN_LOCALE_RUNTIME
-		 ? sv_cmp_locale(left, right)
-		 : sv_cmp(left, right));
+		 ? sv_cmp_locale_flags(left, right, 0)
+		 : sv_cmp_flags(left, right, 0));
       SETi( cmp );
       RETURN;
     }
@@ -2358,12 +2183,13 @@ PP(pp_scmp)
 
 PP(pp_bit_and)
 {
-    dVAR; dSP; dATARGET; tryAMAGICbin(band,opASSIGN);
+    dVAR; dSP; dATARGET;
+    tryAMAGICbin_MG(band_amg, AMGf_assign);
     {
       dPOPTOPssrl;
-      SvGETMAGIC(left);
-      SvGETMAGIC(right);
       if (SvNIOKp(left) || SvNIOKp(right)) {
+	const bool left_ro_nonnum  = !SvNIOKp(left) && SvREADONLY(left);
+	const bool right_ro_nonnum = !SvNIOKp(right) && SvREADONLY(right);
 	if (PL_op->op_private & HINT_INTEGER) {
 	  const IV i = SvIV_nomg(left) & SvIV_nomg(right);
 	  SETi(i);
@@ -2372,6 +2198,8 @@ PP(pp_bit_and)
 	  const UV u = SvUV_nomg(left) & SvUV_nomg(right);
 	  SETu(u);
 	}
+	if (left_ro_nonnum && left != TARG) SvNIOK_off(left);
+	if (right_ro_nonnum) SvNIOK_off(right);
       }
       else {
 	do_vop(PL_op->op_type, TARG, left, right);
@@ -2386,12 +2214,12 @@ PP(pp_bit_or)
     dVAR; dSP; dATARGET;
     const int op_type = PL_op->op_type;
 
-    tryAMAGICbin_var((op_type == OP_BIT_OR ? bor_amg : bxor_amg), opASSIGN);
+    tryAMAGICbin_MG((op_type == OP_BIT_OR ? bor_amg : bxor_amg), AMGf_assign);
     {
       dPOPTOPssrl;
-      SvGETMAGIC(left);
-      SvGETMAGIC(right);
       if (SvNIOKp(left) || SvNIOKp(right)) {
+	const bool left_ro_nonnum  = !SvNIOKp(left) && SvREADONLY(left);
+	const bool right_ro_nonnum = !SvNIOKp(right) && SvREADONLY(right);
 	if (PL_op->op_private & HINT_INTEGER) {
 	  const IV l = (USE_LEFT(left) ? SvIV_nomg(left) : 0);
 	  const IV r = SvIV_nomg(right);
@@ -2404,6 +2232,8 @@ PP(pp_bit_or)
 	  const UV result = op_type == OP_BIT_OR ? (l | r) : (l ^ r);
 	  SETu(result);
 	}
+	if (left_ro_nonnum && left != TARG) SvNIOK_off(left);
+	if (right_ro_nonnum) SvNIOK_off(right);
       }
       else {
 	do_vop(op_type, TARG, left, right);
@@ -2415,11 +2245,16 @@ PP(pp_bit_or)
 
 PP(pp_negate)
 {
-    dVAR; dSP; dTARGET; tryAMAGICun(neg);
+    dVAR; dSP; dTARGET;
+    tryAMAGICun_MG(neg_amg, AMGf_numeric);
     {
-	SV * const sv = sv_2num(TOPs);
+	SV * const sv = TOPs;
 	const int flags = SvFLAGS(sv);
-	SvGETMAGIC(sv);
+
+        if( !SvNIOK( sv ) && looks_like_number( sv ) ){
+           SvIV_please( sv );
+        }   
+
 	if ((flags & SVf_IOK) || ((flags & (SVp_IOK | SVp_NOK)) == SVp_IOK)) {
 	    /* It's publicly an integer, or privately an integer-not-float */
 	oops_its_an_int:
@@ -2446,56 +2281,57 @@ PP(pp_negate)
 #endif
 	}
 	if (SvNIOKp(sv))
-	    SETn(-SvNV(sv));
+	    SETn(-SvNV_nomg(sv));
 	else if (SvPOKp(sv)) {
 	    STRLEN len;
-	    const char * const s = SvPV_const(sv, len);
+	    const char * const s = SvPV_nomg_const(sv, len);
 	    if (isIDFIRST(*s)) {
 		sv_setpvs(TARG, "-");
 		sv_catsv(TARG, sv);
 	    }
 	    else if (*s == '+' || *s == '-') {
-		sv_setsv(TARG, sv);
-		*SvPV_force(TARG, len) = *s == '-' ? '+' : '-';
+		sv_setsv_nomg(TARG, sv);
+		*SvPV_force_nomg(TARG, len) = *s == '-' ? '+' : '-';
 	    }
 	    else if (DO_UTF8(sv)) {
-		SvIV_please(sv);
+		SvIV_please_nomg(sv);
 		if (SvIOK(sv))
 		    goto oops_its_an_int;
 		if (SvNOK(sv))
-		    sv_setnv(TARG, -SvNV(sv));
+		    sv_setnv(TARG, -SvNV_nomg(sv));
 		else {
 		    sv_setpvs(TARG, "-");
 		    sv_catsv(TARG, sv);
 		}
 	    }
 	    else {
-		SvIV_please(sv);
+		SvIV_please_nomg(sv);
 		if (SvIOK(sv))
 		  goto oops_its_an_int;
-		sv_setnv(TARG, -SvNV(sv));
+		sv_setnv(TARG, -SvNV_nomg(sv));
 	    }
 	    SETTARG;
 	}
 	else
-	    SETn(-SvNV(sv));
+	    SETn(-SvNV_nomg(sv));
     }
     RETURN;
 }
 
 PP(pp_not)
 {
-    dVAR; dSP; tryAMAGICunSET(not);
-    *PL_stack_sp = boolSV(!SvTRUE(*PL_stack_sp));
+    dVAR; dSP;
+    tryAMAGICun_MG(not_amg, AMGf_set);
+    *PL_stack_sp = boolSV(!SvTRUE_nomg(*PL_stack_sp));
     return NORMAL;
 }
 
 PP(pp_complement)
 {
-    dVAR; dSP; dTARGET; tryAMAGICun(compl);
+    dVAR; dSP; dTARGET;
+    tryAMAGICun_MG(compl_amg, AMGf_numeric);
     {
       dTOPss;
-      SvGETMAGIC(sv);
       if (SvNIOKp(sv)) {
 	if (PL_op->op_private & HINT_INTEGER) {
 	  const IV i = ~SvIV_nomg(sv);
@@ -2513,7 +2349,7 @@ PP(pp_complement)
 
 	(void)SvPV_nomg_const(sv,len); /* force check for uninit var */
 	sv_setsv_nomg(TARG, sv);
-	tmps = (U8*)SvPV_force(TARG, len);
+	tmps = (U8*)SvPV_force_nomg(TARG, len);
 	anum = len;
 	if (SvUTF8(TARG)) {
 	  /* Calculate exact length, let's not estimate. */
@@ -2594,9 +2430,10 @@ PP(pp_complement)
 
 PP(pp_i_multiply)
 {
-    dVAR; dSP; dATARGET; tryAMAGICbin(mult,opASSIGN);
+    dVAR; dSP; dATARGET;
+    tryAMAGICbin_MG(mult_amg, AMGf_assign);
     {
-      dPOPTOPiirl;
+      dPOPTOPiirl_nomg;
       SETi( left * right );
       RETURN;
     }
@@ -2605,19 +2442,21 @@ PP(pp_i_multiply)
 PP(pp_i_divide)
 {
     IV num;
-    dVAR; dSP; dATARGET; tryAMAGICbin(div,opASSIGN);
+    dVAR; dSP; dATARGET;
+    tryAMAGICbin_MG(div_amg, AMGf_assign);
     {
-      dPOPiv;
+      dPOPTOPssrl;
+      IV value = SvIV_nomg(right);
       if (value == 0)
 	  DIE(aTHX_ "Illegal division by zero");
-      num = POPi;
+      num = SvIV_nomg(left);
 
       /* avoid FPE_INTOVF on some platforms when num is IV_MIN */
       if (value == -1)
           value = - num;
       else
           value = num / value;
-      PUSHi( value );
+      SETi(value);
       RETURN;
     }
 }
@@ -2630,9 +2469,10 @@ PP(pp_i_modulo)
 #endif
 {
      /* This is the vanilla old i_modulo. */
-     dVAR; dSP; dATARGET; tryAMAGICbin(modulo,opASSIGN);
+     dVAR; dSP; dATARGET;
+     tryAMAGICbin_MG(modulo_amg, AMGf_assign);
      {
-	  dPOPTOPiirl;
+	  dPOPTOPiirl_nomg;
 	  if (!right)
 	       DIE(aTHX_ "Illegal modulus zero");
 	  /* avoid FPE_INTOVF on some platforms when left is IV_MIN */
@@ -2652,9 +2492,10 @@ PP(pp_i_modulo_1)
      /* This is the i_modulo with the workaround for the _moddi3 bug
       * in (at least) glibc 2.2.5 (the PERL_ABS() the workaround).
       * See below for pp_i_modulo. */
-     dVAR; dSP; dATARGET; tryAMAGICbin(modulo,opASSIGN);
+     dVAR; dSP; dATARGET;
+     tryAMAGICbin_MG(modulo_amg, AMGf_assign);
      {
-	  dPOPTOPiirl;
+	  dPOPTOPiirl_nomg;
 	  if (!right)
 	       DIE(aTHX_ "Illegal modulus zero");
 	  /* avoid FPE_INTOVF on some platforms when left is IV_MIN */
@@ -2668,9 +2509,10 @@ PP(pp_i_modulo_1)
 
 PP(pp_i_modulo)
 {
-     dVAR; dSP; dATARGET; tryAMAGICbin(modulo,opASSIGN);
+     dVAR; dSP; dATARGET;
+     tryAMAGICbin_MG(modulo_amg, AMGf_assign);
      {
-	  dPOPTOPiirl;
+	  dPOPTOPiirl_nomg;
 	  if (!right)
 	       DIE(aTHX_ "Illegal modulus zero");
 	  /* The assumption is to use hereafter the old vanilla version... */
@@ -2711,9 +2553,10 @@ PP(pp_i_modulo)
 
 PP(pp_i_add)
 {
-    dVAR; dSP; dATARGET; tryAMAGICbin(add,opASSIGN);
+    dVAR; dSP; dATARGET;
+    tryAMAGICbin_MG(add_amg, AMGf_assign);
     {
-      dPOPTOPiirl_ul;
+      dPOPTOPiirl_ul_nomg;
       SETi( left + right );
       RETURN;
     }
@@ -2721,9 +2564,10 @@ PP(pp_i_add)
 
 PP(pp_i_subtract)
 {
-    dVAR; dSP; dATARGET; tryAMAGICbin(subtr,opASSIGN);
+    dVAR; dSP; dATARGET;
+    tryAMAGICbin_MG(subtr_amg, AMGf_assign);
     {
-      dPOPTOPiirl_ul;
+      dPOPTOPiirl_ul_nomg;
       SETi( left - right );
       RETURN;
     }
@@ -2731,9 +2575,10 @@ PP(pp_i_subtract)
 
 PP(pp_i_lt)
 {
-    dVAR; dSP; tryAMAGICbinSET(lt,0);
+    dVAR; dSP;
+    tryAMAGICbin_MG(lt_amg, AMGf_set);
     {
-      dPOPTOPiirl;
+      dPOPTOPiirl_nomg;
       SETs(boolSV(left < right));
       RETURN;
     }
@@ -2741,9 +2586,10 @@ PP(pp_i_lt)
 
 PP(pp_i_gt)
 {
-    dVAR; dSP; tryAMAGICbinSET(gt,0);
+    dVAR; dSP;
+    tryAMAGICbin_MG(gt_amg, AMGf_set);
     {
-      dPOPTOPiirl;
+      dPOPTOPiirl_nomg;
       SETs(boolSV(left > right));
       RETURN;
     }
@@ -2751,9 +2597,10 @@ PP(pp_i_gt)
 
 PP(pp_i_le)
 {
-    dVAR; dSP; tryAMAGICbinSET(le,0);
+    dVAR; dSP;
+    tryAMAGICbin_MG(le_amg, AMGf_set);
     {
-      dPOPTOPiirl;
+      dPOPTOPiirl_nomg;
       SETs(boolSV(left <= right));
       RETURN;
     }
@@ -2761,9 +2608,10 @@ PP(pp_i_le)
 
 PP(pp_i_ge)
 {
-    dVAR; dSP; tryAMAGICbinSET(ge,0);
+    dVAR; dSP;
+    tryAMAGICbin_MG(ge_amg, AMGf_set);
     {
-      dPOPTOPiirl;
+      dPOPTOPiirl_nomg;
       SETs(boolSV(left >= right));
       RETURN;
     }
@@ -2771,9 +2619,10 @@ PP(pp_i_ge)
 
 PP(pp_i_eq)
 {
-    dVAR; dSP; tryAMAGICbinSET(eq,0);
+    dVAR; dSP;
+    tryAMAGICbin_MG(eq_amg, AMGf_set);
     {
-      dPOPTOPiirl;
+      dPOPTOPiirl_nomg;
       SETs(boolSV(left == right));
       RETURN;
     }
@@ -2781,9 +2630,10 @@ PP(pp_i_eq)
 
 PP(pp_i_ne)
 {
-    dVAR; dSP; tryAMAGICbinSET(ne,0);
+    dVAR; dSP;
+    tryAMAGICbin_MG(ne_amg, AMGf_set);
     {
-      dPOPTOPiirl;
+      dPOPTOPiirl_nomg;
       SETs(boolSV(left != right));
       RETURN;
     }
@@ -2791,9 +2641,10 @@ PP(pp_i_ne)
 
 PP(pp_i_ncmp)
 {
-    dVAR; dSP; dTARGET; tryAMAGICbin(ncmp,0);
+    dVAR; dSP; dTARGET;
+    tryAMAGICbin_MG(ncmp_amg, 0);
     {
-      dPOPTOPiirl;
+      dPOPTOPiirl_nomg;
       I32 value;
 
       if (left > right)
@@ -2809,18 +2660,24 @@ PP(pp_i_ncmp)
 
 PP(pp_i_negate)
 {
-    dVAR; dSP; dTARGET; tryAMAGICun(neg);
-    SETi(-TOPi);
-    RETURN;
+    dVAR; dSP; dTARGET;
+    tryAMAGICun_MG(neg_amg, 0);
+    {
+	SV * const sv = TOPs;
+	IV const i = SvIV_nomg(sv);
+	SETi(-i);
+	RETURN;
+    }
 }
 
 /* High falutin' math. */
 
 PP(pp_atan2)
 {
-    dVAR; dSP; dTARGET; tryAMAGICbin(atan2,0);
+    dVAR; dSP; dTARGET;
+    tryAMAGICbin_MG(atan2_amg, 0);
     {
-      dPOPTOPnnrl;
+      dPOPTOPnnrl_nomg;
       SETn(Perl_atan2(left, right));
       RETURN;
     }
@@ -2855,12 +2712,15 @@ PP(pp_sin)
 	break;
     }
 
-    tryAMAGICun_var(amg_type);
+
+    tryAMAGICun_MG(amg_type, 0);
     {
-      const NV value = POPn;
+      SV * const arg = POPs;
+      const NV value = SvNV_nomg(arg);
       if (neg_report) {
 	  if (op_type == OP_LOG ? (value <= 0.0) : (value < 0.0)) {
 	      SET_NUMERIC_STANDARD();
+	      /* diag_listed_as: Can't take log of %g */
 	      DIE(aTHX_ "Can't take %s of %"NVgf, neg_report, value);
 	  }
       }
@@ -2890,6 +2750,9 @@ PP(pp_rand)
     NV value;
     if (MAXARG < 1)
 	value = 1.0;
+    else if (!TOPs) {
+	value = 1.0; (void)POPs;
+    }
     else
 	value = POPn;
     if (value == 0.0)
@@ -2905,20 +2768,28 @@ PP(pp_rand)
 
 PP(pp_srand)
 {
-    dVAR; dSP;
-    const UV anum = (MAXARG < 1) ? seed() : POPu;
+    dVAR; dSP; dTARGET;
+    const UV anum = (MAXARG < 1 || (!TOPs && !POPs)) ? seed() : POPu;
     (void)seedDrand01((Rand_seed_t)anum);
     PL_srand_called = TRUE;
-    EXTEND(SP, 1);
-    RETPUSHYES;
+    if (anum)
+	XPUSHu(anum);
+    else {
+	/* Historically srand always returned true. We can avoid breaking
+	   that like this:  */
+	sv_setpvs(TARG, "0 but true");
+	XPUSHTARG;
+    }
+    RETURN;
 }
 
 PP(pp_int)
 {
-    dVAR; dSP; dTARGET; tryAMAGICun(int);
+    dVAR; dSP; dTARGET;
+    tryAMAGICun_MG(int_amg, AMGf_numeric);
     {
-      SV * const sv = sv_2num(TOPs);
-      const IV iv = SvIV(sv);
+      SV * const sv = TOPs;
+      const IV iv = SvIV_nomg(sv);
       /* XXX it's arguable that compiler casting to IV might be subtly
 	 different from modf (for numbers inside (IV_MIN,UV_MAX)) in which
 	 else preferring IV has introduced a subtle behaviour change bug. OTOH
@@ -2929,12 +2800,12 @@ PP(pp_int)
       }
       else if (SvIOK(sv)) {
 	if (SvIsUV(sv))
-	    SETu(SvUV(sv));
+	    SETu(SvUV_nomg(sv));
 	else
 	    SETi(iv);
       }
       else {
-	  const NV value = SvNV(sv);
+	  const NV value = SvNV_nomg(sv);
 	  if (value >= 0.0) {
 	      if (value < (NV)UV_MAX + 0.5) {
 		  SETu(U_V(value));
@@ -2956,11 +2827,12 @@ PP(pp_int)
 
 PP(pp_abs)
 {
-    dVAR; dSP; dTARGET; tryAMAGICun(abs);
+    dVAR; dSP; dTARGET;
+    tryAMAGICun_MG(abs_amg, AMGf_numeric);
     {
-      SV * const sv = sv_2num(TOPs);
+      SV * const sv = TOPs;
       /* This will cache the NV value if string isn't actually integer  */
-      const IV iv = SvIV(sv);
+      const IV iv = SvIV_nomg(sv);
 
       if (!SvOK(sv)) {
         SETu(0);
@@ -2968,7 +2840,7 @@ PP(pp_abs)
       else if (SvIOK(sv)) {
 	/* IVX is precise  */
 	if (SvIsUV(sv)) {
-	  SETu(SvUV(sv));	/* force it to be numeric only */
+	  SETu(SvUV_nomg(sv));	/* force it to be numeric only */
 	} else {
 	  if (iv >= 0) {
 	    SETi(iv);
@@ -2983,7 +2855,7 @@ PP(pp_abs)
 	  }
 	}
       } else{
-	const NV value = SvNV(sv);
+	const NV value = SvNV_nomg(sv);
 	if (value < 0.0)
 	  SETn(-value);
 	else
@@ -3020,11 +2892,11 @@ PP(pp_oct)
         tmps++, len--;
     if (*tmps == '0')
         tmps++, len--;
-    if (*tmps == 'x') {
+    if (*tmps == 'x' || *tmps == 'X') {
     hex:
         result_uv = grok_hex (tmps, &len, &flags, &result_nv);
     }
-    else if (*tmps == 'b')
+    else if (*tmps == 'b' || *tmps == 'B')
         result_uv = grok_bin (tmps, &len, &flags, &result_nv);
     else
         result_uv = grok_oct (tmps, &len, &flags, &result_nv);
@@ -3057,8 +2929,11 @@ PP(pp_length)
 			   SV_UNDEF_RETURNS_NULL|SV_CONST_RETURN|SV_GMAGIC);
 
 	if (!p) {
-	    sv_setsv(TARG, &PL_sv_undef);
-	    SETTARG;
+	    if (!SvPADTMP(TARG)) {
+		sv_setsv(TARG, &PL_sv_undef);
+		SETTARG;
+	    }
+	    SETs(&PL_sv_undef);
 	}
 	else if (DO_UTF8(sv)) {
 	    SETi(utf8_length((U8*)p, (U8*)p + len));
@@ -3072,100 +2947,38 @@ PP(pp_length)
 	else
 	    SETi(sv_len(sv));
     } else {
-	sv_setsv_nomg(TARG, &PL_sv_undef);
-	SETTARG;
+	if (!SvPADTMP(TARG)) {
+	    sv_setsv_nomg(TARG, &PL_sv_undef);
+	    SETTARG;
+	}
+	SETs(&PL_sv_undef);
     }
     RETURN;
 }
 
-PP(pp_substr)
+/* Returns false if substring is completely outside original string.
+   No length is indicated by len_iv = 0 and len_is_uv = 0.  len_is_uv must
+   always be true for an explicit 0.
+*/
+bool
+Perl_translate_substr_offsets(pTHX_ STRLEN curlen, IV pos1_iv,
+				    bool pos1_is_uv, IV len_iv,
+				    bool len_is_uv, STRLEN *posp,
+				    STRLEN *lenp)
 {
-    dVAR; dSP; dTARGET;
-    SV *sv;
-    STRLEN curlen;
-    STRLEN utf8_curlen;
-    SV *   pos_sv;
-    IV     pos1_iv;
-    int    pos1_is_uv;
-    IV     pos2_iv;
+    IV pos2_iv;
     int    pos2_is_uv;
-    SV *   len_sv;
-    IV     len_iv = 0;
-    int    len_is_uv = 1;
-    const I32 lvalue = PL_op->op_flags & OPf_MOD || LVRET;
-    const char *tmps;
-    const IV arybase = CopARYBASE_get(PL_curcop);
-    SV *repl_sv = NULL;
-    const char *repl = NULL;
-    STRLEN repl_len;
-    const int num_args = PL_op->op_private & 7;
-    bool repl_need_utf8_upgrade = FALSE;
-    bool repl_is_utf8 = FALSE;
 
-    SvTAINTED_off(TARG);			/* decontaminate */
-    SvUTF8_off(TARG);				/* decontaminate */
-    if (num_args > 2) {
-	if (num_args > 3) {
-	    repl_sv = POPs;
-	    repl = SvPV_const(repl_sv, repl_len);
-	    repl_is_utf8 = DO_UTF8(repl_sv) && SvCUR(repl_sv);
-	}
-	len_sv    = POPs;
-	len_iv    = SvIV(len_sv);
-	len_is_uv = SvIOK_UV(len_sv);
-    }
-    pos_sv     = POPs;
-    pos1_iv    = SvIV(pos_sv);
-    pos1_is_uv = SvIOK_UV(pos_sv);
-    sv = POPs;
-    PUTBACK;
-    if (repl_sv) {
-	if (repl_is_utf8) {
-	    if (!DO_UTF8(sv))
-		sv_utf8_upgrade(sv);
-	}
-	else if (DO_UTF8(sv))
-	    repl_need_utf8_upgrade = TRUE;
-    }
-    tmps = SvPV_const(sv, curlen);
-    if (DO_UTF8(sv)) {
-        utf8_curlen = sv_len_utf8(sv);
-	if (utf8_curlen == curlen)
-	    utf8_curlen = 0;
-	else
-	    curlen = utf8_curlen;
-    }
-    else
-	utf8_curlen = 0;
+    PERL_ARGS_ASSERT_TRANSLATE_SUBSTR_OFFSETS;
 
-    if ( (pos1_is_uv && arybase < 0) || (pos1_iv >= arybase) ) { /* pos >= $[ */
-	UV pos1_uv = pos1_iv-arybase;
-	/* Overflow can occur when $[ < 0 */
-	if (arybase < 0 && pos1_uv < (UV)pos1_iv)
-	    goto bound_fail;
-	pos1_iv = pos1_uv;
-	pos1_is_uv = 1;
+    if (!pos1_is_uv && pos1_iv < 0 && curlen) {
+	pos1_is_uv = curlen-1 > ~(UV)pos1_iv;
+	pos1_iv += curlen;
     }
-    else if (pos1_is_uv ? (UV)pos1_iv > 0 : pos1_iv > 0) {
-	goto bound_fail;  /* $[=3; substr($_,2,...) */
-    }
-    else { /* pos < $[ */
-	if (pos1_iv == 0) { /* $[=1; substr($_,0,...) */
-	    pos1_iv = curlen;
-	    pos1_is_uv = 1;
-	} else {
-	    if (curlen) {
-		pos1_is_uv = curlen-1 > ~(UV)pos1_iv;
-		pos1_iv += curlen;
-	   }
-	}
-    }
-    if (pos1_is_uv || pos1_iv > 0) {
-	if ((UV)pos1_iv > curlen)
-	    goto bound_fail;
-    }
+    if ((pos1_is_uv || pos1_iv > 0) && (UV)pos1_iv > curlen)
+	return FALSE;
 
-    if (num_args > 2) {
+    if (len_iv || len_is_uv) {
 	if (!len_is_uv && len_iv < 0) {
 	    pos2_iv = curlen + len_iv;
 	    if (curlen)
@@ -3192,7 +3005,7 @@ PP(pp_substr)
 
     if (!pos2_is_uv && pos2_iv < 0) {
 	if (!pos1_is_uv && pos1_iv < 0)
-	    goto bound_fail;
+	    return FALSE;
 	pos2_iv = 0;
     }
     else if (!pos1_is_uv && pos1_iv < 0)
@@ -3203,34 +3016,118 @@ PP(pp_substr)
     if ((UV)pos2_iv > curlen)
 	pos2_iv = curlen;
 
+    /* pos1_iv and pos2_iv both in 0..curlen, so the cast is safe */
+    *posp = (STRLEN)( (UV)pos1_iv );
+    *lenp = (STRLEN)( (UV)pos2_iv - (UV)pos1_iv );
+
+    return TRUE;
+}
+
+PP(pp_substr)
+{
+    dVAR; dSP; dTARGET;
+    SV *sv;
+    STRLEN curlen;
+    STRLEN utf8_curlen;
+    SV *   pos_sv;
+    IV     pos1_iv;
+    int    pos1_is_uv;
+    SV *   len_sv;
+    IV     len_iv = 0;
+    int    len_is_uv = 0;
+    I32 lvalue = PL_op->op_flags & OPf_MOD || LVRET;
+    const bool rvalue = (GIMME_V != G_VOID);
+    const char *tmps;
+    SV *repl_sv = NULL;
+    const char *repl = NULL;
+    STRLEN repl_len;
+    int num_args = PL_op->op_private & 7;
+    bool repl_need_utf8_upgrade = FALSE;
+    bool repl_is_utf8 = FALSE;
+
+    if (num_args > 2) {
+	if (num_args > 3) {
+	  if(!(repl_sv = POPs)) num_args--;
+	}
+	if ((len_sv = POPs)) {
+	    len_iv    = SvIV(len_sv);
+	    len_is_uv = len_iv ? SvIOK_UV(len_sv) : 1;
+	}
+	else num_args--;
+    }
+    pos_sv     = POPs;
+    pos1_iv    = SvIV(pos_sv);
+    pos1_is_uv = SvIOK_UV(pos_sv);
+    sv = POPs;
+    if (PL_op->op_private & OPpSUBSTR_REPL_FIRST) {
+	assert(!repl_sv);
+	repl_sv = POPs;
+    }
+    PUTBACK;
+    if (repl_sv) {
+	repl = SvPV_const(repl_sv, repl_len);
+	repl_is_utf8 = DO_UTF8(repl_sv) && repl_len;
+	if (repl_is_utf8) {
+	    if (!DO_UTF8(sv))
+		sv_utf8_upgrade(sv);
+	}
+	else if (DO_UTF8(sv))
+	    repl_need_utf8_upgrade = TRUE;
+    }
+    else if (lvalue) {
+	SV * ret;
+	ret = sv_2mortal(newSV_type(SVt_PVLV));  /* Not TARG RT#67838 */
+	sv_magic(ret, NULL, PERL_MAGIC_substr, NULL, 0);
+	LvTYPE(ret) = 'x';
+	LvTARG(ret) = SvREFCNT_inc_simple(sv);
+	LvTARGOFF(ret) =
+	    pos1_is_uv || pos1_iv >= 0
+		? (STRLEN)(UV)pos1_iv
+		: (LvFLAGS(ret) |= 1, (STRLEN)(UV)-pos1_iv);
+	LvTARGLEN(ret) =
+	    len_is_uv || len_iv > 0
+		? (STRLEN)(UV)len_iv
+		: (LvFLAGS(ret) |= 2, (STRLEN)(UV)-len_iv);
+
+	SPAGAIN;
+	PUSHs(ret);    /* avoid SvSETMAGIC here */
+	RETURN;
+    }
+    tmps = SvPV_const(sv, curlen);
+    if (DO_UTF8(sv)) {
+        utf8_curlen = sv_len_utf8(sv);
+	if (utf8_curlen == curlen)
+	    utf8_curlen = 0;
+	else
+	    curlen = utf8_curlen;
+    }
+    else
+	utf8_curlen = 0;
+
     {
-	/* pos1_iv and pos2_iv both in 0..curlen, so the cast is safe */
-	const STRLEN pos = (STRLEN)( (UV)pos1_iv );
-	const STRLEN len = (STRLEN)( (UV)pos2_iv - (UV)pos1_iv );
-	STRLEN byte_len = len;
-	STRLEN byte_pos = utf8_curlen
+	STRLEN pos, len, byte_len, byte_pos;
+
+	if (!translate_substr_offsets(
+		curlen, pos1_iv, pos1_is_uv, len_iv, len_is_uv, &pos, &len
+	)) goto bound_fail;
+
+	byte_len = len;
+	byte_pos = utf8_curlen
 	    ? sv_pos_u2b_flags(sv, pos, &byte_len, SV_CONST_RETURN) : pos;
 
 	tmps += byte_pos;
-	/* we either return a PV or an LV. If the TARG hasn't been used
-	 * before, or is of that type, reuse it; otherwise use a mortal
-	 * instead. Note that LVs can have an extended lifetime, so also
-	 * dont reuse if refcount > 1 (bug #20933) */
-	if (SvTYPE(TARG) > SVt_NULL) {
-	    if ( (SvTYPE(TARG) == SVt_PVLV)
-		    ? (!lvalue || SvREFCNT(TARG) > 1)
-		    : lvalue)
-	    {
-		TARG = sv_newmortal();
-	    }
+
+	if (rvalue) {
+	    SvTAINTED_off(TARG);			/* decontaminate */
+	    SvUTF8_off(TARG);			/* decontaminate */
+	    sv_setpvn(TARG, tmps, byte_len);
+#ifdef USE_LOCALE_COLLATE
+	    sv_unmagic(TARG, PERL_MAGIC_collxfrm);
+#endif
+	    if (utf8_curlen)
+		SvUTF8_on(TARG);
 	}
 
-	sv_setpvn(TARG, tmps, byte_len);
-#ifdef USE_LOCALE_COLLATE
-	sv_unmagic(TARG, PERL_MAGIC_collxfrm);
-#endif
-	if (utf8_curlen)
-	    SvUTF8_on(TARG);
 	if (repl) {
 	    SV* repl_sv_copy = NULL;
 
@@ -3238,8 +3135,12 @@ PP(pp_substr)
 		repl_sv_copy = newSVsv(repl_sv);
 		sv_utf8_upgrade(repl_sv_copy);
 		repl = SvPV_const(repl_sv_copy, repl_len);
-		repl_is_utf8 = DO_UTF8(repl_sv_copy) && SvCUR(sv);
+		repl_is_utf8 = DO_UTF8(repl_sv_copy) && repl_len;
 	    }
+	    if (SvROK(sv))
+		Perl_ck_warner(aTHX_ packWARN(WARN_SUBSTR),
+			    "Attempt to use reference as lvalue in substr"
+		);
 	    if (!SvOK(sv))
 		sv_setpvs(sv, "");
 	    sv_insert_flags(sv, byte_pos, byte_len, repl, repl_len, 0);
@@ -3247,41 +3148,16 @@ PP(pp_substr)
 		SvUTF8_on(sv);
 	    SvREFCNT_dec(repl_sv_copy);
 	}
-	else if (lvalue) {		/* it's an lvalue! */
-	    if (!SvGMAGICAL(sv)) {
-		if (SvROK(sv)) {
-		    SvPV_force_nolen(sv);
-		    Perl_ck_warner(aTHX_ packWARN(WARN_SUBSTR),
-				   "Attempt to use reference as lvalue in substr");
-		}
-		if (isGV_with_GP(sv))
-		    SvPV_force_nolen(sv);
-		else if (SvOK(sv))	/* is it defined ? */
-		    (void)SvPOK_only_UTF8(sv);
-		else
-		    sv_setpvs(sv, ""); /* avoid lexical reincarnation */
-	    }
-
-	    if (SvTYPE(TARG) < SVt_PVLV) {
-		sv_upgrade(TARG, SVt_PVLV);
-		sv_magic(TARG, NULL, PERL_MAGIC_substr, NULL, 0);
-	    }
-
-	    LvTYPE(TARG) = 'x';
-	    if (LvTARG(TARG) != sv) {
-		SvREFCNT_dec(LvTARG(TARG));
-		LvTARG(TARG) = SvREFCNT_inc_simple(sv);
-	    }
-	    LvTARGOFF(TARG) = pos;
-	    LvTARGLEN(TARG) = len;
-	}
     }
     SPAGAIN;
-    PUSHs(TARG);		/* avoid SvSETMAGIC here */
+    if (rvalue) {
+	SvSETMAGIC(TARG);
+	PUSHs(TARG);
+    }
     RETURN;
 
 bound_fail:
-    if (lvalue || repl)
+    if (repl)
 	Perl_croak(aTHX_ "substr outside of string");
     Perl_ck_warner(aTHX_ packWARN(WARN_SUBSTR), "substr outside of string");
     RETPUSHUNDEF;
@@ -3289,31 +3165,29 @@ bound_fail:
 
 PP(pp_vec)
 {
-    dVAR; dSP; dTARGET;
+    dVAR; dSP;
     register const IV size   = POPi;
     register const IV offset = POPi;
     register SV * const src = POPs;
     const I32 lvalue = PL_op->op_flags & OPf_MOD || LVRET;
+    SV * ret;
 
-    SvTAINTED_off(TARG);		/* decontaminate */
     if (lvalue) {			/* it's an lvalue! */
-	if (SvREFCNT(TARG) > 1)	/* don't share the TARG (#20933) */
-	    TARG = sv_newmortal();
-	if (SvTYPE(TARG) < SVt_PVLV) {
-	    sv_upgrade(TARG, SVt_PVLV);
-	    sv_magic(TARG, NULL, PERL_MAGIC_vec, NULL, 0);
-	}
-	LvTYPE(TARG) = 'v';
-	if (LvTARG(TARG) != src) {
-	    SvREFCNT_dec(LvTARG(TARG));
-	    LvTARG(TARG) = SvREFCNT_inc_simple(src);
-	}
-	LvTARGOFF(TARG) = offset;
-	LvTARGLEN(TARG) = size;
+	ret = sv_2mortal(newSV_type(SVt_PVLV));  /* Not TARG RT#67838 */
+	sv_magic(ret, NULL, PERL_MAGIC_vec, NULL, 0);
+	LvTYPE(ret) = 'v';
+	LvTARG(ret) = SvREFCNT_inc_simple(src);
+	LvTARGOFF(ret) = offset;
+	LvTARGLEN(ret) = size;
+    }
+    else {
+	dTARGET;
+	SvTAINTED_off(TARG);		/* decontaminate */
+	ret = TARG;
     }
 
-    sv_setuv(TARG, do_vecget(src, offset, size));
-    PUSHs(TARG);
+    sv_setuv(ret, do_vecget(src, offset, size));
+    PUSHs(ret);
     RETURN;
 }
 
@@ -3329,16 +3203,13 @@ PP(pp_index)
     I32 retval;
     const char *big_p;
     const char *little_p;
-    const I32 arybase = CopARYBASE_get(PL_curcop);
     bool big_utf8;
     bool little_utf8;
     const bool is_index = PL_op->op_type == OP_INDEX;
+    const bool threeargs = MAXARG >= 3 && (TOPs || ((void)POPs,0));
 
-    if (MAXARG >= 3) {
-	/* arybase is in characters, like offset, so combine prior to the
-	   UTF-8 to bytes calculation.  */
-	offset = POPi - arybase;
-    }
+    if (threeargs)
+	offset = POPi;
     little = POPs;
     big = POPs;
     big_p = SvPV_const(big, biglen);
@@ -3408,7 +3279,7 @@ PP(pp_index)
 	little_p = SvPVX(little);
     }
 
-    if (MAXARG < 3)
+    if (!threeargs)
 	offset = is_index ? 0 : biglen;
     else {
 	if (big_utf8 && offset > 0)
@@ -3433,15 +3304,14 @@ PP(pp_index)
     }
     SvREFCNT_dec(temp);
  fail:
-    PUSHi(retval + arybase);
+    PUSHi(retval);
     RETURN;
 }
 
 PP(pp_sprintf)
 {
     dVAR; dSP; dMARK; dORIGMARK; dTARGET;
-    if (SvTAINTED(MARK[1]))
-	TAINT_PROPER("sprintf");
+    SvTAINTED_off(TARG);
     do_sprintf(TARG, SP-MARK, MARK+1);
     TAINT_IF(SvTAINTED(TARG));
     SP = ORIGMARK;
@@ -3513,7 +3383,7 @@ PP(pp_chr)
         sv_recode_to_utf8(TARG, PL_encoding);
 	tmps = SvPVX(TARG);
 	if (SvCUR(TARG) == 0 || !is_utf8_string((U8*)tmps, SvCUR(TARG)) ||
-	    UNICODE_IS_REPLACEMENT(utf8_to_uvchr((U8*)tmps, NULL))) {
+	    UNICODE_IS_REPLACEMENT(utf8_to_uvchr_buf((U8*)tmps, (U8*) tmps + SvCUR(TARG), NULL))) {
 	    SvGROW(TARG, 2);
 	    tmps = SvPVX(TARG);
 	    SvCUR_set(TARG, 1);
@@ -3573,75 +3443,20 @@ PP(pp_crypt)
 #else
     DIE(aTHX_
       "The crypt() function is unimplemented due to excessive paranoia.");
-    return NORMAL;
 #endif
 }
 
 /* Generally UTF-8 and UTF-EBCDIC are indistinguishable at this level.  So 
  * most comments below say UTF-8, when in fact they mean UTF-EBCDIC as well */
 
-/* Both the characters below can be stored in two UTF-8 bytes.  In UTF-8 the max
- * character that 2 bytes can hold is U+07FF, and in UTF-EBCDIC it is U+03FF.
- * See http://www.unicode.org/unicode/reports/tr16 */
-#define LATIN_CAPITAL_LETTER_Y_WITH_DIAERESIS 0x0178	/* Also is title case */
-#define GREEK_CAPITAL_LETTER_MU 0x039C	/* Upper and title case of MICRON */
-
-/* Below are several macros that generate code */
 /* Generates code to store a unicode codepoint c that is known to occupy
- * exactly two UTF-8 and UTF-EBCDIC bytes; it is stored into p and p+1. */
-#define STORE_UNI_TO_UTF8_TWO_BYTE(p, c)				    \
-    STMT_START {							    \
-	*(p) = UTF8_TWO_BYTE_HI(c);					    \
-	*((p)+1) = UTF8_TWO_BYTE_LO(c);					    \
-    } STMT_END
-
-/* Like STORE_UNI_TO_UTF8_TWO_BYTE, but advances p to point to the next
- * available byte after the two bytes */
+ * exactly two UTF-8 and UTF-EBCDIC bytes; it is stored into p and p+1,
+ * and p is advanced to point to the next available byte after the two bytes */
 #define CAT_UNI_TO_UTF8_TWO_BYTE(p, c)					    \
     STMT_START {							    \
 	*(p)++ = UTF8_TWO_BYTE_HI(c);					    \
 	*((p)++) = UTF8_TWO_BYTE_LO(c);					    \
     } STMT_END
-
-/* Generates code to store the upper case of latin1 character l which is known
- * to have its upper case be non-latin1 into the two bytes p and p+1.  There
- * are only two characters that fit this description, and this macro knows
- * about them, and that the upper case values fit into two UTF-8 or UTF-EBCDIC
- * bytes */
-#define STORE_NON_LATIN1_UC(p, l)					    \
-STMT_START {								    \
-    if ((l) == LATIN_SMALL_LETTER_Y_WITH_DIAERESIS) {			    \
-	STORE_UNI_TO_UTF8_TWO_BYTE((p), LATIN_CAPITAL_LETTER_Y_WITH_DIAERESIS);  \
-    } else { /* Must be the following letter */								    \
-	STORE_UNI_TO_UTF8_TWO_BYTE((p), GREEK_CAPITAL_LETTER_MU);	    \
-    }									    \
-} STMT_END
-
-/* Like STORE_NON_LATIN1_UC, but advances p to point to the next available byte
- * after the character stored */
-#define CAT_NON_LATIN1_UC(p, l)						    \
-STMT_START {								    \
-    if ((l) == LATIN_SMALL_LETTER_Y_WITH_DIAERESIS) {			    \
-	CAT_UNI_TO_UTF8_TWO_BYTE((p), LATIN_CAPITAL_LETTER_Y_WITH_DIAERESIS);    \
-    } else {								    \
-	CAT_UNI_TO_UTF8_TWO_BYTE((p), GREEK_CAPITAL_LETTER_MU);		    \
-    }									    \
-} STMT_END
-
-/* Generates code to add the two UTF-8 bytes (probably u) that are the upper
- * case of l into p and p+1.  u must be the result of toUPPER_LATIN1_MOD(l),
- * and must require two bytes to store it.  Advances p to point to the next
- * available position */
-#define CAT_TWO_BYTE_UNI_UPPER_MOD(p, l, u)				    \
-STMT_START {								    \
-    if ((u) != LATIN_SMALL_LETTER_Y_WITH_DIAERESIS) {			    \
-	CAT_UNI_TO_UTF8_TWO_BYTE((p), (u)); /* not special, just save it */ \
-    } else if (l == LATIN_SMALL_LETTER_SHARP_S) {			    \
-	*(p)++ = 'S'; *(p)++ = 'S'; /* upper case is 'SS' */		    \
-    } else {/* else is one of the other two special cases */		    \
-	CAT_NON_LATIN1_UC((p), (l));					    \
-    }									    \
-} STMT_END
 
 PP(pp_ucfirst)
 {
@@ -3668,6 +3483,7 @@ PP(pp_ucfirst)
     STRLEN tculen;  /* tculen is the byte length of the freshly titlecased (or
 		     * lowercased) character stored in tmpbuf.  May be either
 		     * UTF-8 or not, but in either case is the number of bytes */
+    bool tainted = FALSE;
 
     SvGETMAGIC(source);
     if (SvOK(source)) {
@@ -3690,107 +3506,28 @@ PP(pp_ucfirst)
 
     if (! slen) {   /* If empty */
 	need = 1; /* still need a trailing NUL */
+	ulen = 0;
     }
     else if (DO_UTF8(source)) {	/* Is the source utf8? */
 	doing_utf8 = TRUE;
-
-/* TODO: This is #ifdefd out because it has hard-coded the standard mappings,
- * and doesn't allow for the user to specify their own.  When code is added to
- * detect if there is a user-defined mapping in force here, and if so to use
- * that, then the code below can be compiled.  The detection would be a good
- * thing anyway, as currently the user-defined mappings only work on utf8
- * strings, and thus depend on the chosen internal storage method, which is a
- * bad thing */
-#ifdef GO_AHEAD_AND_BREAK_USER_DEFINED_CASE_MAPPINGS
-	if (UTF8_IS_INVARIANT(*s)) {
-
-	    /* An invariant source character is either ASCII or, in EBCDIC, an
-	     * ASCII equivalent or a caseless C1 control.  In both these cases,
-	     * the lower and upper cases of any character are also invariants
-	     * (and title case is the same as upper case).  So it is safe to
-	     * use the simple case change macros which avoid the overhead of
-	     * the general functions.  Note that if perl were to be extended to
-	     * do locale handling in UTF-8 strings, this wouldn't be true in,
-	     * for example, Lithuanian or Turkic.  */
-	    *tmpbuf = (op_type == OP_LCFIRST) ? toLOWER(*s) : toUPPER(*s);
-	    tculen = ulen = 1;
-	    need = slen + 1;
+        ulen = UTF8SKIP(s);
+        if (op_type == OP_UCFIRST) {
+	    _to_utf8_title_flags(s, tmpbuf, &tculen,
+				 cBOOL(IN_LOCALE_RUNTIME), &tainted);
 	}
-	else if (UTF8_IS_DOWNGRADEABLE_START(*s)) {
-	    U8 chr;
-
-	    /* Similarly, if the source character isn't invariant but is in the
-	     * latin1 range (or EBCDIC equivalent thereof), we have the case
-	     * changes compiled into perl, and can avoid the overhead of the
-	     * general functions.  In this range, the characters are stored as
-	     * two UTF-8 bytes, and it so happens that any changed-case version
-	     * is also two bytes (in both ASCIIish and EBCDIC machines). */
-	    tculen = ulen = 2;
-	    need = slen + 1;
-
-	    /* Convert the two source bytes to a single Unicode code point
-	     * value, change case and save for below */
-	    chr = UTF8_ACCUMULATE(*s, *(s+1));
-	    if (op_type == OP_LCFIRST) {    /* lower casing is easy */
-		U8 lower = toLOWER_LATIN1(chr);
-		STORE_UNI_TO_UTF8_TWO_BYTE(tmpbuf, lower);
-	    }
-	    else {	/* ucfirst */
-		U8 upper = toUPPER_LATIN1_MOD(chr);
-
-		/* Most of the latin1 range characters are well-behaved.  Their
-		 * title and upper cases are the same, and are also in the
-		 * latin1 range.  The macro above returns their upper (hence
-		 * title) case, and all that need be done is to save the result
-		 * for below.  However, several characters are problematic, and
-		 * have to be handled specially.  The MOD in the macro name
-		 * above means that these tricky characters all get mapped to
-		 * the single character LATIN_SMALL_LETTER_Y_WITH_DIAERESIS.
-		 * This mapping saves some tests for the majority of the
-		 * characters */
-
-		if (upper != LATIN_SMALL_LETTER_Y_WITH_DIAERESIS) {
-
-		    /* Not tricky.  Just save it. */
-		    STORE_UNI_TO_UTF8_TWO_BYTE(tmpbuf, upper);
-		}
-		else if (chr == LATIN_SMALL_LETTER_SHARP_S) {
-
-		    /* This one is tricky because it is two characters long,
-		     * though the UTF-8 is still two bytes, so the stored
-		     * length doesn't change */
-		    *tmpbuf = 'S';  /* The UTF-8 is 'Ss' */
-		    *(tmpbuf + 1) = 's';
-		}
-		else {
-
-		    /* The other two have their title and upper cases the same,
-		     * but are tricky because the changed-case characters
-		     * aren't in the latin1 range.  They, however, do fit into
-		     * two UTF-8 bytes */
-		    STORE_NON_LATIN1_UC(tmpbuf, chr);    
-		}
-	    }
+        else {
+	    _to_utf8_lower_flags(s, tmpbuf, &tculen,
+				 cBOOL(IN_LOCALE_RUNTIME), &tainted);
 	}
-	else {
-#endif	/* end of dont want to break user-defined casing */
 
-	    /* Here, can't short-cut the general case */
-
-	    utf8_to_uvchr(s, &ulen);
-	    if (op_type == OP_UCFIRST) toTITLE_utf8(s, tmpbuf, &tculen);
-	    else toLOWER_utf8(s, tmpbuf, &tculen);
-
-	    /* we can't do in-place if the length changes.  */
-	    if (ulen != tculen) inplace = FALSE;
-	    need = slen + 1 - ulen + tculen;
-#ifdef GO_AHEAD_AND_BREAK_USER_DEFINED_CASE_MAPPINGS
-	}
-#endif
+        /* we can't do in-place if the length changes.  */
+        if (ulen != tculen) inplace = FALSE;
+        need = slen + 1 - ulen + tculen;
     }
     else { /* Non-zero length, non-UTF-8,  Need to consider locale and if
 	    * latin1 is treated as caseless.  Note that a locale takes
 	    * precedence */ 
+	ulen = 1;	/* Original character is 1 byte */
 	tculen = 1;	/* Most characters will require one byte, but this will
 			 * need to be overridden for the tricky ones */
 	need = slen + 1;
@@ -3813,44 +3550,42 @@ PP(pp_ucfirst)
 					 * native function does */
 	}
 	else { /* is ucfirst non-UTF-8, not in locale, and cased latin1 */
-	    *tmpbuf = toUPPER_LATIN1_MOD(*s);
+	    UV title_ord = _to_upper_title_latin1(*s, tmpbuf, &tculen, 's');
+	    if (tculen > 1) {
+		assert(tculen == 2);
 
-	    /* tmpbuf now has the correct title case for all latin1 characters
-	     * except for the several ones that have tricky handling.  All
-	     * of these are mapped by the MOD to the letter below. */
-	    if (*tmpbuf == LATIN_SMALL_LETTER_Y_WITH_DIAERESIS) {
-
-		/* The length is going to change, with all three of these, so
-		 * can't replace just the first character */
-		inplace = FALSE;
-
-		/* We use the original to distinguish between these tricky
-		 * cases */
-		if (*s == LATIN_SMALL_LETTER_SHARP_S) {
-		    /* Two character title case 'Ss', but can remain non-UTF-8 */
-		    need = slen + 2;
-		    *tmpbuf = 'S';
-		    *(tmpbuf + 1) = 's';   /* Assert: length(tmpbuf) >= 2 */
-		    tculen = 2;
+                /* If the result is an upper Latin1-range character, it can
+                 * still be represented in one byte, which is its ordinal */
+		if (UTF8_IS_DOWNGRADEABLE_START(*tmpbuf)) {
+		    *tmpbuf = (U8) title_ord;
+		    tculen = 1;
 		}
 		else {
+                    /* Otherwise it became more than one ASCII character (in
+                     * the case of LATIN_SMALL_LETTER_SHARP_S) or changed to
+                     * beyond Latin1, so the number of bytes changed, so can't
+                     * replace just the first character in place. */
+		    inplace = FALSE;
 
-		    /* The other two tricky ones have their title case outside
-		     * latin1.  It is the same as their upper case. */
-		    doing_utf8 = TRUE;
-		    STORE_NON_LATIN1_UC(tmpbuf, *s);
+		    /* If the result won't fit in a byte, the entire result will
+		     * have to be in UTF-8.  Assume worst case sizing in
+		     * conversion. (all latin1 characters occupy at most two bytes
+		     * in utf8) */
+		    if (title_ord > 255) {
+			doing_utf8 = TRUE;
+			convert_source_to_utf8 = TRUE;
+			need = slen * 2 + 1;
 
-		    /* The UTF-8 and UTF-EBCDIC lengths of both these characters
-		     * and their upper cases is 2. */
-		    tculen = ulen = 2;
-
-		    /* The entire result will have to be in UTF-8.  Assume worst
-		     * case sizing in conversion. (all latin1 characters occupy
-		     * at most two bytes in utf8) */
-		    convert_source_to_utf8 = TRUE;
-		    need = slen * 2 + 1;
+                        /* The (converted) UTF-8 and UTF-EBCDIC lengths of all
+                         * (both) characters whose title case is above 255 is
+                         * 2. */
+			ulen = 2;
+		    }
+                    else { /* LATIN_SMALL_LETTER_SHARP_S expands by 1 byte */
+			need = slen + 1 + 1;
+		    }
 		}
-	    } /* End of is one of the three special chars */
+	    }
 	} /* End of use Unicode (Latin1) semantics */
     } /* End of changing the case of the first character */
 
@@ -3914,6 +3649,11 @@ PP(pp_ucfirst)
 	else {   /* in-place UTF-8.  Just overwrite the first character */
 	    Copy(tmpbuf, d, tculen, U8);
 	    SvCUR_set(dest, need - 1);
+	}
+
+	if (tainted) {
+	    TAINT;
+	    SvTAINTED_on(dest);
 	}
     }
     else {  /* Neither source nor dest are in or need to be UTF-8 */
@@ -4020,96 +3760,77 @@ PP(pp_uc)
     if (DO_UTF8(source)) {
 	const U8 *const send = s + len;
 	U8 tmpbuf[UTF8_MAXBYTES+1];
+	bool tainted = FALSE;
 
-/* This is ifdefd out because it needs more work and thought.  It isn't clear
- * that we should do it.  These are hard-coded rules from the Unicode standard,
- * and may change.  5.2 gives new guidance on the iota subscript, for example,
- * which has not been checked against this; and secondly it may be that we are
- * passed a subset of the context, via a \U...\E, for example, and its not
- * clear what the best approach is to that */
-#ifdef CONTEXT_DEPENDENT_CASING
+	/* All occurrences of these are to be moved to follow any other marks.
+	 * This is context-dependent.  We may not be passed enough context to
+	 * move the iota subscript beyond all of them, but we do the best we can
+	 * with what we're given.  The result is always better than if we
+	 * hadn't done this.  And, the problem would only arise if we are
+	 * passed a character without all its combining marks, which would be
+	 * the caller's mistake.  The information this is based on comes from a
+	 * comment in Unicode SpecialCasing.txt, (and the Standard's text
+	 * itself) and so can't be checked properly to see if it ever gets
+	 * revised.  But the likelihood of it changing is remote */
 	bool in_iota_subscript = FALSE;
-#endif
 
 	while (s < send) {
-#ifdef CONTEXT_DEPENDENT_CASING
+	    STRLEN u;
+	    STRLEN ulen;
+	    UV uv;
 	    if (in_iota_subscript && ! is_utf8_mark(s)) {
+
 		/* A non-mark.  Time to output the iota subscript */
 #define GREEK_CAPITAL_LETTER_IOTA 0x0399
 #define COMBINING_GREEK_YPOGEGRAMMENI 0x0345
 
 		CAT_UNI_TO_UTF8_TWO_BYTE(d, GREEK_CAPITAL_LETTER_IOTA);
 		in_iota_subscript = FALSE;
-	    }
-#endif
+            }
 
+            /* Then handle the current character.  Get the changed case value
+             * and copy it to the output buffer */
 
-/* See comments at the first instance in this file of this ifdef */
-#ifdef GO_AHEAD_AND_BREAK_USER_DEFINED_CASE_MAPPINGS
+            u = UTF8SKIP(s);
+            uv = _to_utf8_upper_flags(s, tmpbuf, &ulen,
+				      cBOOL(IN_LOCALE_RUNTIME), &tainted);
+            if (uv == GREEK_CAPITAL_LETTER_IOTA
+                && utf8_to_uvchr_buf(s, send, 0) == COMBINING_GREEK_YPOGEGRAMMENI)
+            {
+                in_iota_subscript = TRUE;
+            }
+            else {
+                if (ulen > u && (SvLEN(dest) < (min += ulen - u))) {
+                    /* If the eventually required minimum size outgrows the
+                     * available space, we need to grow. */
+                    const UV o = d - (U8*)SvPVX_const(dest);
 
-	    /* If the UTF-8 character is invariant, then it is in the range
-	     * known by the standard macro; result is only one byte long */
-	    if (UTF8_IS_INVARIANT(*s)) {
-		*d++ = toUPPER(*s);
-		s++;
-	    }
-	    else if (UTF8_IS_DOWNGRADEABLE_START(*s)) {
-
-		/* Likewise, if it fits in a byte, its case change is in our
-		 * table */
-		U8 orig = UTF8_ACCUMULATE(*s, *(s+1));
-		U8 upper = toUPPER_LATIN1_MOD(orig);
-		CAT_TWO_BYTE_UNI_UPPER_MOD(d, orig, upper);
-		s += 2;
-	    }
-	    else {
-#else
-	    {
-#endif
-
-		/* Otherwise, need the general UTF-8 case.  Get the changed
-		 * case value and copy it to the output buffer */
-
-		const STRLEN u = UTF8SKIP(s);
-		STRLEN ulen;
-
-#ifndef CONTEXT_DEPENDENT_CASING
-		toUPPER_utf8(s, tmpbuf, &ulen);
-#else
-		const UV uv = toUPPER_utf8(s, tmpbuf, &ulen);
-		if (uv == GREEK_CAPITAL_LETTER_IOTA && utf8_to_uvchr(s, 0) == COMBINING_GREEK_YPOGEGRAMMENI) {
-		    in_iota_subscript = TRUE;
-		}
-		else {
-#endif
-		    if (ulen > u && (SvLEN(dest) < (min += ulen - u))) {
-			/* If the eventually required minimum size outgrows
-			 * the available space, we need to grow. */
-			const UV o = d - (U8*)SvPVX_const(dest);
-
-			/* If someone uppercases one million U+03B0s we
-			 * SvGROW() one million times.  Or we could try
-			 * guessing how much to allocate without allocating too
-			 * much.  Such is life.  See corresponding comment in lc code
-			 * for another option */
-			SvGROW(dest, min);
-			d = (U8*)SvPVX(dest) + o;
-		    }
-		    Copy(tmpbuf, d, ulen, U8);
-		    d += ulen;
-#ifdef CONTEXT_DEPENDENT_CASING
-		}
-#endif
-		s += u;
-	    }
+                    /* If someone uppercases one million U+03B0s we SvGROW()
+                     * one million times.  Or we could try guessing how much to
+                     * allocate without allocating too much.  Such is life.
+                     * See corresponding comment in lc code for another option
+                     * */
+                    SvGROW(dest, min);
+                    d = (U8*)SvPVX(dest) + o;
+                }
+                Copy(tmpbuf, d, ulen, U8);
+                d += ulen;
+            }
+            s += u;
 	}
-#ifdef CONTEXT_DEPENDENT_CASING
-	if (in_iota_subscript) CAT_UNI_TO_UTF8_TWO_BYTE(d, GREEK_CAPITAL_LETTER_IOTA);
-#endif
+	if (in_iota_subscript) {
+	    CAT_UNI_TO_UTF8_TWO_BYTE(d, GREEK_CAPITAL_LETTER_IOTA);
+	}
 	SvUTF8_on(dest);
 	*d = '\0';
+
 	SvCUR_set(dest, d - (U8*)SvPVX_const(dest));
-    } else {	/* Not UTF-8 */
+	if (tainted) {
+	    TAINT;
+	    SvTAINTED_on(dest);
+	}
+    }
+    else {	/* Not UTF-8 */
 	if (len) {
 	    const U8 *const send = s + len;
 
@@ -4130,7 +3851,7 @@ PP(pp_uc)
 	    else {
 		for (; s < send; d++, s++) {
 		    *d = toUPPER_LATIN1_MOD(*s);
-		    if (*d != LATIN_SMALL_LETTER_Y_WITH_DIAERESIS) continue;
+		    if (LIKELY(*d != LATIN_SMALL_LETTER_Y_WITH_DIAERESIS)) continue;
 
 		    /* The mainstream case is the tight loop above.  To avoid
 		     * extra tests in that, all three characters that require
@@ -4191,23 +3912,13 @@ PP(pp_uc)
 						(send -s) * 2 + 1);
 		    d = (U8*)SvPVX(dest) + len;
 
-		    /* And append the current character's upper case in UTF-8 */
-		    CAT_NON_LATIN1_UC(d, *s);
-
 		    /* Now process the remainder of the source, converting to
 		     * upper and UTF-8.  If a resulting byte is invariant in
 		     * UTF-8, output it as-is, otherwise convert to UTF-8 and
 		     * append it to the output. */
-
-		    s++;
 		    for (; s < send; s++) {
-			U8 upper = toUPPER_LATIN1_MOD(*s);
-			if UTF8_IS_INVARIANT(upper) {
-			    *d++ = upper;
-			}
-			else {
-			    CAT_TWO_BYTE_UNI_UPPER_MOD(d, *s, upper);
-			}
+			(void) _to_upper_title_latin1(*s, d, &len, 'S');
+			d += len;
 		    }
 
 		    /* Here have processed the whole source; no need to continue
@@ -4286,128 +3997,47 @@ PP(pp_lc)
     if (DO_UTF8(source)) {
 	const U8 *const send = s + len;
 	U8 tmpbuf[UTF8_MAXBYTES_CASE+1];
+	bool tainted = FALSE;
 
 	while (s < send) {
-/* See comments at the first instance in this file of this ifdef */
-#ifdef GO_AHEAD_AND_BREAK_USER_DEFINED_CASE_MAPPINGS
-	    if (UTF8_IS_INVARIANT(*s)) {
+	    const STRLEN u = UTF8SKIP(s);
+	    STRLEN ulen;
 
-		/* Invariant characters use the standard mappings compiled in.
-		 */
-		*d++ = toLOWER(*s);
-		s++;
+	    _to_utf8_lower_flags(s, tmpbuf, &ulen,
+				 cBOOL(IN_LOCALE_RUNTIME), &tainted);
+
+	    /* Here is where we would do context-sensitive actions.  See the
+	     * commit message for this comment for why there isn't any */
+
+	    if (ulen > u && (SvLEN(dest) < (min += ulen - u))) {
+
+		/* If the eventually required minimum size outgrows the
+		 * available space, we need to grow. */
+		const UV o = d - (U8*)SvPVX_const(dest);
+
+		/* If someone lowercases one million U+0130s we SvGROW() one
+		 * million times.  Or we could try guessing how much to
+		 * allocate without allocating too much.  Such is life.
+		 * Another option would be to grow an extra byte or two more
+		 * each time we need to grow, which would cut down the million
+		 * to 500K, with little waste */
+		SvGROW(dest, min);
+		d = (U8*)SvPVX(dest) + o;
 	    }
-	    else if (UTF8_IS_DOWNGRADEABLE_START(*s)) {
 
-		/* As do the ones in the Latin1 range */
-		U8 lower = toLOWER_LATIN1(UTF8_ACCUMULATE(*s, *(s+1)));
-		CAT_UNI_TO_UTF8_TWO_BYTE(d, lower);
-		s += 2;
-	    }
-	    else {
-#endif
-		/* Here, is utf8 not in Latin-1 range, have to go out and get
-		 * the mappings from the tables. */
-
-		const STRLEN u = UTF8SKIP(s);
-		STRLEN ulen;
-
-/* See comments at the first instance in this file of this ifdef */
-#ifndef CONTEXT_DEPENDENT_CASING
-		toLOWER_utf8(s, tmpbuf, &ulen);
-#else
-		/* Here is context dependent casing, not compiled in currently;
-		 * needs more thought and work */
-
-		const UV uv = toLOWER_utf8(s, tmpbuf, &ulen);
-
-		/* If the lower case is a small sigma, it may be that we need
-		 * to change it to a final sigma.  This happens at the end of 
-		 * a word that contains more than just this character, and only
-		 * when we started with a capital sigma. */
-		if (uv == UNICODE_GREEK_SMALL_LETTER_SIGMA &&
-		    s > send - len &&	/* Makes sure not the first letter */
-		    utf8_to_uvchr(s, 0) == UNICODE_GREEK_CAPITAL_LETTER_SIGMA
-		) {
-
-		    /* We use the algorithm in:
-		     * http://www.unicode.org/versions/Unicode5.0.0/ch03.pdf (C
-		     * is a CAPITAL SIGMA): If C is preceded by a sequence
-		     * consisting of a cased letter and a case-ignorable
-		     * sequence, and C is not followed by a sequence consisting
-		     * of a case ignorable sequence and then a cased letter,
-		     * then when lowercasing C, C becomes a final sigma */
-
-		    /* To determine if this is the end of a word, need to peek
-		     * ahead.  Look at the next character */
-		    const U8 *peek = s + u;
-
-		    /* Skip any case ignorable characters */
-		    while (peek < send && is_utf8_case_ignorable(peek)) {
-			peek += UTF8SKIP(peek);
-		    }
-
-		    /* If we reached the end of the string without finding any
-		     * non-case ignorable characters, or if the next such one
-		     * is not-cased, then we have met the conditions for it
-		     * being a final sigma with regards to peek ahead, and so
-		     * must do peek behind for the remaining conditions. (We
-		     * know there is stuff behind to look at since we tested
-		     * above that this isn't the first letter) */
-		    if (peek >= send || ! is_utf8_cased(peek)) {
-			peek = utf8_hop(s, -1);
-
-			/* Here are at the beginning of the first character
-			 * before the original upper case sigma.  Keep backing
-			 * up, skipping any case ignorable characters */
-			while (is_utf8_case_ignorable(peek)) {
-			    peek = utf8_hop(peek, -1);
-			}
-
-			/* Here peek points to the first byte of the closest
-			 * non-case-ignorable character before the capital
-			 * sigma.  If it is cased, then by the Unicode
-			 * algorithm, we should use a small final sigma instead
-			 * of what we have */
-			if (is_utf8_cased(peek)) {
-			    STORE_UNI_TO_UTF8_TWO_BYTE(tmpbuf,
-					UNICODE_GREEK_SMALL_LETTER_FINAL_SIGMA);
-			}
-		    }
-		}
-		else {	/* Not a context sensitive mapping */
-#endif	/* End of commented out context sensitive */
-		    if (ulen > u && (SvLEN(dest) < (min += ulen - u))) {
-
-			/* If the eventually required minimum size outgrows
-			 * the available space, we need to grow. */
-			const UV o = d - (U8*)SvPVX_const(dest);
-
-			/* If someone lowercases one million U+0130s we
-			 * SvGROW() one million times.  Or we could try
-			 * guessing how much to allocate without allocating too
-			 * much.  Such is life.  Another option would be to
-			 * grow an extra byte or two more each time we need to
-			 * grow, which would cut down the million to 500K, with
-			 * little waste */
-			SvGROW(dest, min);
-			d = (U8*)SvPVX(dest) + o;
-		    }
-#ifdef CONTEXT_DEPENDENT_CASING
-		}
-#endif
-		/* Copy the newly lowercased letter to the output buffer we're
-		 * building */
-		Copy(tmpbuf, d, ulen, U8);
-		d += ulen;
-		s += u;
-#ifdef GO_AHEAD_AND_BREAK_USER_DEFINED_CASE_MAPPINGS
-	    }
-#endif
+	    /* Copy the newly lowercased letter to the output buffer we're
+	     * building */
+	    Copy(tmpbuf, d, ulen, U8);
+	    d += ulen;
+	    s += u;
 	}   /* End of looping through the source string */
 	SvUTF8_on(dest);
 	*d = '\0';
 	SvCUR_set(dest, d - (U8*)SvPVX_const(dest));
+	if (tainted) {
+	    TAINT;
+	    SvTAINTED_on(dest);
+	}
     } else {	/* Not utf8 */
 	if (len) {
 	    const U8 *const send = s + len;
@@ -4458,26 +4088,51 @@ PP(pp_quotemeta)
 	d = SvPVX(TARG);
 	if (DO_UTF8(sv)) {
 	    while (len) {
-		if (UTF8_IS_CONTINUED(*s)) {
-		    STRLEN ulen = UTF8SKIP(s);
-		    if (ulen > len)
-			ulen = len;
-		    len -= ulen;
-		    while (ulen--)
-			*d++ = *s++;
+		STRLEN ulen = UTF8SKIP(s);
+		bool to_quote = FALSE;
+
+		if (UTF8_IS_INVARIANT(*s)) {
+		    if (_isQUOTEMETA(*s)) {
+			to_quote = TRUE;
+		    }
 		}
-		else {
-		    if (!isALNUM(*s))
-			*d++ = '\\';
+		else if (UTF8_IS_DOWNGRADEABLE_START(*s)) {
+
+		    /* In locale, we quote all non-ASCII Latin1 chars.
+		     * Otherwise use the quoting rules */
+		    if (IN_LOCALE_RUNTIME
+			|| _isQUOTEMETA(TWO_BYTE_UTF8_TO_UNI(*s, *(s + 1))))
+		    {
+			to_quote = TRUE;
+		    }
+		}
+		else if (_is_utf8_quotemeta((U8 *) s)) {
+		    to_quote = TRUE;
+		}
+
+		if (to_quote) {
+		    *d++ = '\\';
+		}
+		if (ulen > len)
+		    ulen = len;
+		len -= ulen;
+		while (ulen--)
 		    *d++ = *s++;
-		    len--;
-		}
 	    }
 	    SvUTF8_on(TARG);
 	}
-	else {
+	else if (IN_UNI_8_BIT) {
 	    while (len--) {
-		if (!isALNUM(*s))
+		if (_isQUOTEMETA(*s))
+		    *d++ = '\\';
+		*d++ = *s++;
+	    }
+	}
+	else {
+	    /* For non UNI_8_BIT (and hence in locale) just quote all \W
+	     * including everything above ASCII */
+	    while (len--) {
+		if (!isWORDCHAR_A(*s))
 		    *d++ = '\\';
 		*d++ = *s++;
 	    }
@@ -4492,6 +4147,159 @@ PP(pp_quotemeta)
     RETURN;
 }
 
+PP(pp_fc)
+{
+    dVAR;
+    dTARGET;
+    dSP;
+    SV *source = TOPs;
+    STRLEN len;
+    STRLEN min;
+    SV *dest;
+    const U8 *s;
+    const U8 *send;
+    U8 *d;
+    U8 tmpbuf[UTF8_MAXBYTES * UTF8_MAX_FOLD_CHAR_EXPAND + 1];
+    const bool full_folding = TRUE;
+    const U8 flags = ( full_folding      ? FOLD_FLAGS_FULL   : 0 )
+                   | ( IN_LOCALE_RUNTIME ? FOLD_FLAGS_LOCALE : 0 );
+
+    /* This is a facsimile of pp_lc, but with a thousand bugs thanks to me.
+     * You are welcome(?) -Hugmeir
+     */
+
+    SvGETMAGIC(source);
+
+    dest = TARG;
+
+    if (SvOK(source)) {
+        s = (const U8*)SvPV_nomg_const(source, len);
+    } else {
+        if (ckWARN(WARN_UNINITIALIZED))
+	    report_uninit(source);
+	s = (const U8*)"";
+	len = 0;
+    }
+
+    min = len + 1;
+
+    SvUPGRADE(dest, SVt_PV);
+    d = (U8*)SvGROW(dest, min);
+    (void)SvPOK_only(dest);
+
+    SETs(dest);
+
+    send = s + len;
+    if (DO_UTF8(source)) { /* UTF-8 flagged string. */
+        bool tainted = FALSE;
+        while (s < send) {
+            const STRLEN u = UTF8SKIP(s);
+            STRLEN ulen;
+
+            _to_utf8_fold_flags(s, tmpbuf, &ulen, flags, &tainted);
+
+            if (ulen > u && (SvLEN(dest) < (min += ulen - u))) {
+                const UV o = d - (U8*)SvPVX_const(dest);
+                SvGROW(dest, min);
+                d = (U8*)SvPVX(dest) + o;
+            }
+
+            Copy(tmpbuf, d, ulen, U8);
+            d += ulen;
+            s += u;
+        }
+        SvUTF8_on(dest);
+	if (tainted) {
+	    TAINT;
+	    SvTAINTED_on(dest);
+	}
+    } /* Unflagged string */
+    else if (len) {
+        /* For locale, bytes, and nothing, the behavior is supposed to be the
+         * same as lc().
+         */
+        if ( IN_LOCALE_RUNTIME ) { /* Under locale */
+            TAINT;
+            SvTAINTED_on(dest);
+            for (; s < send; d++, s++)
+                *d = toLOWER_LC(*s);
+        }
+        else if ( !IN_UNI_8_BIT ) { /* Under nothing, or bytes */
+            for (; s < send; d++, s++)
+                *d = toLOWER(*s);
+        }
+        else {
+            /* For ASCII and the Latin-1 range, there's only two troublesome folds,
+            * \x{DF} (\N{LATIN SMALL LETTER SHARP S}), which under full casefolding
+            * becomes 'ss', and \x{B5} (\N{MICRO SIGN}), which under any fold becomes
+            * \x{3BC} (\N{GREEK SMALL LETTER MU}) -- For the rest, the casefold is
+            * their lowercase.
+            */
+            for (; s < send; d++, s++) {
+                if (*s == MICRO_SIGN) {
+                    /* \N{MICRO SIGN}'s casefold is \N{GREEK SMALL LETTER MU}, which
+                    * is outside of the latin-1 range. There's a couple of ways to
+                    * deal with this -- khw discusses them in pp_lc/uc, so go there :)
+                    * What we do here is upgrade what we had already casefolded,
+                    * then enter an inner loop that appends the rest of the characters
+                    * as UTF-8.
+                    */
+                    len = d - (U8*)SvPVX_const(dest);
+                    SvCUR_set(dest, len);
+                    len = sv_utf8_upgrade_flags_grow(dest,
+                                                SV_GMAGIC|SV_FORCE_UTF8_UPGRADE,
+						/* The max expansion for latin1
+						 * chars is 1 byte becomes 2 */
+                                                (send -s) * 2 + 1);
+                    d = (U8*)SvPVX(dest) + len;
+
+                    CAT_UNI_TO_UTF8_TWO_BYTE(d, GREEK_SMALL_LETTER_MU);
+                    s++;
+                    for (; s < send; s++) {
+                        STRLEN ulen;
+                        UV fc = _to_uni_fold_flags(*s, tmpbuf, &ulen, flags);
+                        if UNI_IS_INVARIANT(fc) {
+                            if ( full_folding && *s == LATIN_SMALL_LETTER_SHARP_S) {
+                                *d++ = 's';
+                                *d++ = 's';
+                            }
+                            else
+                                *d++ = (U8)fc;
+                        }
+                        else {
+                            Copy(tmpbuf, d, ulen, U8);
+                            d += ulen;
+                        }
+                    }
+                    break;
+                }
+                else if (full_folding && *s == LATIN_SMALL_LETTER_SHARP_S) {
+                    /* Under full casefolding, LATIN SMALL LETTER SHARP S becomes "ss",
+                    * which may require growing the SV.
+                    */
+                    if (SvLEN(dest) < ++min) {
+                        const UV o = d - (U8*)SvPVX_const(dest);
+                        SvGROW(dest, min);
+                        d = (U8*)SvPVX(dest) + o;
+                     }
+                    *(d)++ = 's';
+                    *d = 's';
+                }
+                else { /* If it's not one of those two, the fold is their lower case */
+                    *d = toLOWER_LATIN1(*s);
+                }
+             }
+        }
+    }
+    *d = '\0';
+    SvCUR_set(dest, d - (U8*)SvPVX_const(dest));
+
+    if (SvTAINTED(source))
+	SvTAINT(dest);
+    SvSETMAGIC(dest);
+    RETURN;
+}
+
 /* Arrays. */
 
 PP(pp_aslice)
@@ -4501,7 +4309,6 @@ PP(pp_aslice)
     register const I32 lval = (PL_op->op_flags & OPf_MOD || LVRET);
 
     if (SvTYPE(av) == SVt_PVAV) {
-	const I32 arybase = CopARYBASE_get(PL_curcop);
 	const bool localizing = PL_op->op_private & OPpLVAL_INTRO;
 	bool can_preserve = FALSE;
 
@@ -4529,8 +4336,6 @@ PP(pp_aslice)
 	    I32 elem = SvIV(*MARK);
 	    bool preeminent = TRUE;
 
-	    if (elem > 0)
-		elem -= arybase;
 	    if (localizing && can_preserve) {
 		/* If we can determine whether the element exist,
 		 * Try to preserve the existenceness of a tied array
@@ -4561,6 +4366,43 @@ PP(pp_aslice)
     RETURN;
 }
 
+/* Smart dereferencing for keys, values and each */
+PP(pp_rkeys)
+{
+    dVAR;
+    dSP;
+    dPOPss;
+
+    SvGETMAGIC(sv);
+
+    if (
+         !SvROK(sv)
+      || (sv = SvRV(sv),
+            (SvTYPE(sv) != SVt_PVHV && SvTYPE(sv) != SVt_PVAV)
+          || SvOBJECT(sv)
+         )
+    ) {
+	DIE(aTHX_
+	   "Type of argument to %s must be unblessed hashref or arrayref",
+	    PL_op_desc[PL_op->op_type] );
+    }
+
+    if (PL_op->op_flags & OPf_SPECIAL && SvTYPE(sv) == SVt_PVAV)
+	DIE(aTHX_
+	   "Can't modify %s in %s",
+	    PL_op_desc[PL_op->op_type], PL_op_desc[PL_op->op_next->op_type]
+	);
+
+    /* Delegate to correct function for op type */
+    PUSHs(sv);
+    if (PL_op->op_type == OP_RKEYS || PL_op->op_type == OP_RVALUES) {
+	return (SvTYPE(sv) == SVt_PVHV) ? Perl_do_kv(aTHX) : Perl_pp_akeys(aTHX);
+    }
+    else {
+	return (SvTYPE(sv) == SVt_PVHV) ? Perl_pp_each(aTHX) : Perl_pp_aeach(aTHX);
+    }
+}
+
 PP(pp_aeach)
 {
     dVAR;
@@ -4579,7 +4421,7 @@ PP(pp_aeach)
     }
 
     EXTEND(SP, 2);
-    mPUSHi(CopARYBASE_get(PL_curcop) + current);
+    mPUSHi(current);
     if (gimme == G_ARRAY) {
 	SV **const element = av_fetch(array, current, 0);
         PUSHs(element ? *element : &PL_sv_undef);
@@ -4602,13 +4444,12 @@ PP(pp_akeys)
     }
     else if (gimme == G_ARRAY) {
         IV n = Perl_av_len(aTHX_ array);
-        IV i = CopARYBASE_get(PL_curcop);
+        IV i;
 
         EXTEND(SP, n + 1);
 
-	if (PL_op->op_type == OP_AKEYS) {
-	    n += i;
-	    for (;  i <= n;  i++) {
+	if (PL_op->op_type == OP_AKEYS || PL_op->op_type == OP_RKEYS) {
+	    for (i = 0;  i <= n;  i++) {
 		mPUSHi(i);
 	    }
 	}
@@ -4968,7 +4809,7 @@ PP(pp_hslice)
         svp = he ? &HeVAL(he) : NULL;
 
         if (lval) {
-            if (!svp || *svp == &PL_sv_undef) {
+            if (!svp || !*svp || *svp == &PL_sv_undef) {
                 DIE(aTHX_ PL_no_helem_sv, SVfARG(keysv));
             }
             if (localizing) {
@@ -4981,7 +4822,7 @@ PP(pp_hslice)
 		    SAVEHDELETE(hv, keysv);
             }
         }
-        *MARK = svp ? *svp : &PL_sv_undef;
+        *MARK = svp && *svp ? *svp : &PL_sv_undef;
     }
     if (GIMME != G_ARRAY) {
 	MARK = ORIGMARK;
@@ -5014,7 +4855,6 @@ PP(pp_lslice)
     SV ** const lastlelem = PL_stack_base + POPMARK;
     SV ** const firstlelem = PL_stack_base + POPMARK + 1;
     register SV ** const firstrelem = lastlelem + 1;
-    const I32 arybase = CopARYBASE_get(PL_curcop);
     I32 is_something_there = FALSE;
 
     register const I32 max = lastrelem - lastlelem;
@@ -5024,8 +4864,6 @@ PP(pp_lslice)
 	I32 ix = SvIV(*lastlelem);
 	if (ix < 0)
 	    ix += max;
-	else
-	    ix -= arybase;
 	if (ix < 0 || ix >= max)
 	    *firstlelem = &PL_sv_undef;
 	else
@@ -5043,8 +4881,6 @@ PP(pp_lslice)
 	I32 ix = SvIV(*lelem);
 	if (ix < 0)
 	    ix += max;
-	else
-	    ix -= arybase;
 	if (ix < 0 || ix >= max)
 	    *lelem = &PL_sv_undef;
 	else {
@@ -5091,10 +4927,41 @@ PP(pp_anonhash)
     RETURN;
 }
 
+static AV *
+S_deref_plain_array(pTHX_ AV *ary)
+{
+    if (SvTYPE(ary) == SVt_PVAV) return ary;
+    SvGETMAGIC((SV *)ary);
+    if (!SvROK(ary) || SvTYPE(SvRV(ary)) != SVt_PVAV)
+	Perl_die(aTHX_ "Not an ARRAY reference");
+    else if (SvOBJECT(SvRV(ary)))
+	Perl_die(aTHX_ "Not an unblessed ARRAY reference");
+    return (AV *)SvRV(ary);
+}
+
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+# define DEREF_PLAIN_ARRAY(ary)       \
+   ({                                  \
+     AV *aRrRay = ary;                  \
+     SvTYPE(aRrRay) == SVt_PVAV          \
+      ? aRrRay                            \
+      : S_deref_plain_array(aTHX_ aRrRay); \
+   })
+#else
+# define DEREF_PLAIN_ARRAY(ary)            \
+   (                                        \
+     PL_Sv = (SV *)(ary),                    \
+     SvTYPE(PL_Sv) == SVt_PVAV                \
+      ? (AV *)PL_Sv                            \
+      : S_deref_plain_array(aTHX_ (AV *)PL_Sv)  \
+   )
+#endif
+
 PP(pp_splice)
 {
     dVAR; dSP; dMARK; dORIGMARK;
-    register AV *ary = MUTABLE_AV(*++MARK);
+    int num_args = (SP - MARK);
+    register AV *ary = DEREF_PLAIN_ARRAY(MUTABLE_AV(*++MARK));
     register SV **src;
     register SV **dst;
     register I32 i;
@@ -5106,14 +4973,9 @@ PP(pp_splice)
     const MAGIC * const mg = SvTIED_mg((const SV *)ary, PERL_MAGIC_tied);
 
     if (mg) {
-	*MARK-- = SvTIED_obj(MUTABLE_SV(ary), mg);
-	PUSHMARK(MARK);
-	PUTBACK;
-	ENTER_with_name("call_SPLICE");
-	call_method("SPLICE",GIMME_V);
-	LEAVE_with_name("call_SPLICE");
-	SPAGAIN;
-	RETURN;
+	return Perl_tied_method(aTHX_ "SPLICE", mark - 1, MUTABLE_SV(ary), mg,
+				    GIMME_V | TIED_METHOD_ARGUMENTS_ON_STACK,
+				    sp - mark);
     }
 
     SP++;
@@ -5122,8 +4984,6 @@ PP(pp_splice)
 	offset = i = SvIV(*MARK);
 	if (offset < 0)
 	    offset += AvFILLp(ary) + 1;
-	else
-	    offset -= CopARYBASE_get(PL_curcop);
 	if (offset < 0)
 	    DIE(aTHX_ PL_no_aelem, i);
 	if (++MARK < SP) {
@@ -5142,7 +5002,8 @@ PP(pp_splice)
 	length = AvMAX(ary) + 1;
     }
     if (offset > AvFILLp(ary) + 1) {
-	Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "splice() offset past end of array" );
+	if (num_args > 2)
+	    Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "splice() offset past end of array" );
 	offset = AvFILLp(ary) + 1;
     }
     after = AvFILLp(ary) + 1 - (offset + length);
@@ -5180,7 +5041,7 @@ PP(pp_splice)
 	    if (AvREAL(ary)) {
 		EXTEND_MORTAL(length);
 		for (i = length, dst = MARK; i; i--) {
-		    sv_2mortal(*dst);	/* free them eventualy */
+		    sv_2mortal(*dst);	/* free them eventually */
 		    dst++;
 		}
 	    }
@@ -5272,7 +5133,7 @@ PP(pp_splice)
 		if (AvREAL(ary)) {
 		    EXTEND_MORTAL(length);
 		    for (i = length, dst = MARK; i; i--) {
-			sv_2mortal(*dst);	/* free them eventualy */
+			sv_2mortal(*dst);	/* free them eventually */
 			dst++;
 		    }
 		}
@@ -5291,6 +5152,10 @@ PP(pp_splice)
 	    *MARK = &PL_sv_undef;
 	Safefree(tmparyval);
     }
+
+    if (SvMAGICAL(ary))
+	mg_set(MUTABLE_SV(ary));
+
     SP = MARK;
     RETURN;
 }
@@ -5298,7 +5163,7 @@ PP(pp_splice)
 PP(pp_push)
 {
     dVAR; dSP; dMARK; dORIGMARK; dTARGET;
-    register AV * const ary = MUTABLE_AV(*++MARK);
+    register AV * const ary = DEREF_PLAIN_ARRAY(MUTABLE_AV(*++MARK));
     const MAGIC * const mg = SvTIED_mg((const SV *)ary, PERL_MAGIC_tied);
 
     if (mg) {
@@ -5318,7 +5183,7 @@ PP(pp_push)
 		sv_setsv(sv, *MARK);
 	    av_store(ary, AvFILLp(ary)+1, sv);
 	}
-	if (PL_delaymagic & DM_ARRAY)
+	if (PL_delaymagic & DM_ARRAY_ISA)
 	    mg_set(MUTABLE_SV(ary));
 
 	PL_delaymagic = 0;
@@ -5334,7 +5199,8 @@ PP(pp_shift)
 {
     dVAR;
     dSP;
-    AV * const av = MUTABLE_AV(POPs);
+    AV * const av = PL_op->op_flags & OPf_SPECIAL
+	? MUTABLE_AV(GvAV(PL_defgv)) : DEREF_PLAIN_ARRAY(MUTABLE_AV(POPs));
     SV * const sv = PL_op->op_type == OP_SHIFT ? av_shift(av) : av_pop(av);
     EXTEND(SP, 1);
     assert (sv);
@@ -5347,7 +5213,7 @@ PP(pp_shift)
 PP(pp_unshift)
 {
     dVAR; dSP; dMARK; dORIGMARK; dTARGET;
-    register AV *ary = MUTABLE_AV(*++MARK);
+    register AV *ary = DEREF_PLAIN_ARRAY(MUTABLE_AV(*++MARK));
     const MAGIC * const mg = SvTIED_mg((const SV *)ary, PERL_MAGIC_tied);
 
     if (mg) {
@@ -5457,19 +5323,12 @@ PP(pp_reverse)
 	register I32 tmp;
 	dTARGET;
 	STRLEN len;
-	PADOFFSET padoff_du;
 
 	SvUTF8_off(TARG);				/* decontaminate */
 	if (SP - MARK > 1)
 	    do_join(TARG, &PL_sv_no, MARK, SP);
 	else {
-	    sv_setsv(TARG, (SP > MARK)
-		    ? *SP
-		    : (padoff_du = find_rundefsvoffset(),
-			(padoff_du == NOT_IN_PAD
-			 || PAD_COMPNAME_FLAGS_isOUR(padoff_du))
-			? DEFSV : PAD_SVl(padoff_du)));
-
+	    sv_setsv(TARG, SP > MARK ? *SP : find_rundefsv());
 	    if (! SvOK(TARG) && ckWARN(WARN_UNINITIALIZED))
 		report_uninit(TARG);
 	}
@@ -5485,7 +5344,7 @@ PP(pp_reverse)
 			continue;
 		    }
 		    else {
-			if (!utf8_to_uvchr(s, 0))
+			if (!utf8_to_uvchr_buf(s, send, 0))
 			    break;
 			up = (char*)s;
 			s += UTF8SKIP(s);
@@ -5549,10 +5408,10 @@ PP(pp_split)
     pm = (PMOP*)POPs;
 #endif
     if (!pm || !s)
-	DIE(aTHX_ "panic: pp_split");
+	DIE(aTHX_ "panic: pp_split, pm=%p, s=%p", pm, s);
     rx = PM_GETRE(pm);
 
-    TAINT_IF((RX_EXTFLAGS(rx) & RXf_PMf_LOCALE) &&
+    TAINT_IF(get_regex_charset(RX_EXTFLAGS(rx)) == REGEX_LOCALE_CHARSET &&
 	     (RX_EXTFLAGS(rx) & (RXf_WHITE | RXf_SKIPWHITE)));
 
     RX_MATCH_UTF8_set(rx, do_utf8);
@@ -5598,7 +5457,7 @@ PP(pp_split)
 	    while (*s == ' ' || is_utf8_space((U8*)s))
 		s += UTF8SKIP(s);
 	}
-	else if (RX_EXTFLAGS(rx) & RXf_PMf_LOCALE) {
+	else if (get_regex_charset(RX_EXTFLAGS(rx)) == REGEX_LOCALE_CHARSET) {
 	    while (isSPACE_LC(*s))
 		s++;
 	}
@@ -5607,7 +5466,7 @@ PP(pp_split)
 		s++;
 	}
     }
-    if (RX_EXTFLAGS(rx) & PMf_MULTILINE) {
+    if (RX_EXTFLAGS(rx) & RXf_PMf_MULTILINE) {
 	multiline = 1;
     }
 
@@ -5628,7 +5487,8 @@ PP(pp_split)
 		    else
 			m += t;
 		}
-            } else if (RX_EXTFLAGS(rx) & RXf_PMf_LOCALE) {
+	    }
+	    else if (get_regex_charset(RX_EXTFLAGS(rx)) == REGEX_LOCALE_CHARSET) {
 	        while (m < strend && !isSPACE_LC(*m))
 		    ++m;
             } else {
@@ -5660,7 +5520,8 @@ PP(pp_split)
 	    if (do_utf8) {
 		while (s < strend && ( *s == ' ' || is_utf8_space((U8*)s) ))
 	            s +=  UTF8SKIP(s);
-            } else if (RX_EXTFLAGS(rx) & RXf_PMf_LOCALE) {
+	    }
+	    else if (get_regex_charset(RX_EXTFLAGS(rx)) == REGEX_LOCALE_CHARSET) {
 	        while (s < strend && isSPACE_LC(*s))
 		    ++s;
             } else {
@@ -5815,7 +5676,7 @@ PP(pp_split)
 	    I32 rex_return;
 	    PUTBACK;
 	    rex_return = CALLREGEXEC(rx, (char*)s, (char*)strend, (char*)orig, 1 ,
-			    sv, NULL, 0);
+				     sv, NULL, SvSCREAM(sv) ? REXEC_SCREAM : 0);
 	    SPAGAIN;
 	    if (rex_return == 0)
 		break;
@@ -5964,9 +5825,9 @@ PP(pp_lock)
     dSP;
     dTOPss;
     SV *retsv = sv;
-    assert(SvTYPE(retsv) != SVt_PVCV);
     SvLOCK(sv);
-    if (SvTYPE(retsv) == SVt_PVAV || SvTYPE(retsv) == SVt_PVHV) {
+    if (SvTYPE(retsv) == SVt_PVAV || SvTYPE(retsv) == SVt_PVHV
+     || SvTYPE(retsv) == SVt_PVCV) {
 	retsv = refto(retsv);
     }
     SETs(retsv);
@@ -5977,9 +5838,20 @@ PP(pp_lock)
 PP(unimplemented_op)
 {
     dVAR;
-    DIE(aTHX_ "panic: unimplemented op %s (#%d) called", OP_NAME(PL_op),
-	PL_op->op_type);
-    return NORMAL;
+    const Optype op_type = PL_op->op_type;
+    /* Using OP_NAME() isn't going to be helpful here. Firstly, it doesn't cope
+       with out of range op numbers - it only "special" cases op_custom.
+       Secondly, as the three ops we "panic" on are padmy, mapstart and custom,
+       if we get here for a custom op then that means that the custom op didn't
+       have an implementation. Given that OP_NAME() looks up the custom op
+       by its pp_addr, likely it will return NULL, unless someone (unhelpfully)
+       registers &PL_unimplemented_op as the address of their custom op.
+       NULL doesn't generate a useful error message. "custom" does. */
+    const char *const name = op_type >= OP_max
+	? "[out of range]" : PL_op_name[PL_op->op_type];
+    if(OP_IS_SOCKET(op_type))
+	DIE(aTHX_ PL_no_sock_func, name);
+    DIE(aTHX_ "panic: unimplemented op %s (#%d) called", name,	op_type);
 }
 
 PP(pp_boolkeys)
@@ -5988,6 +5860,8 @@ PP(pp_boolkeys)
     dSP;
     HV * const hv = (HV*)POPs;
     
+    if (SvTYPE(hv) != SVt_PVHV) { XPUSHs(&PL_sv_no); RETURN; }
+
     if (SvRMAGICAL(hv)) {
 	MAGIC * const mg = mg_find((SV*)hv, PERL_MAGIC_tied);
 	if (mg) {
@@ -5996,9 +5870,168 @@ PP(pp_boolkeys)
         }	    
     }
 
-    XPUSHs(boolSV(HvKEYS(hv) != 0));
+    XPUSHs(boolSV(HvUSEDKEYS(hv) != 0));
     RETURN;
 }
+
+/* For sorting out arguments passed to a &CORE:: subroutine */
+PP(pp_coreargs)
+{
+    dSP;
+    int opnum = SvIOK(cSVOP_sv) ? (int)SvUV(cSVOP_sv) : 0;
+    int defgv = PL_opargs[opnum] & OA_DEFGV, whicharg = 0;
+    AV * const at_ = GvAV(PL_defgv);
+    SV **svp = AvARRAY(at_);
+    I32 minargs = 0, maxargs = 0, numargs = AvFILLp(at_)+1;
+    I32 oa = opnum ? PL_opargs[opnum] >> OASHIFT : 0;
+    bool seen_question = 0;
+    const char *err = NULL;
+    const bool pushmark = PL_op->op_private & OPpCOREARGS_PUSHMARK;
+
+    /* Count how many args there are first, to get some idea how far to
+       extend the stack. */
+    while (oa) {
+	if ((oa & 7) == OA_LIST) { maxargs = I32_MAX; break; }
+	maxargs++;
+	if (oa & OA_OPTIONAL) seen_question = 1;
+	if (!seen_question) minargs++;
+	oa >>= 4;
+    }
+
+    if(numargs < minargs) err = "Not enough";
+    else if(numargs > maxargs) err = "Too many";
+    if (err)
+	/* diag_listed_as: Too many arguments for %s */
+	Perl_croak(aTHX_
+	  "%s arguments for %s", err,
+	   opnum ? OP_DESC(PL_op->op_next) : SvPV_nolen_const(cSVOP_sv)
+	);
+
+    /* Reset the stack pointer.  Without this, we end up returning our own
+       arguments in list context, in addition to the values we are supposed
+       to return.  nextstate usually does this on sub entry, but we need
+       to run the next op with the caller's hints, so we cannot have a
+       nextstate. */
+    SP = PL_stack_base + cxstack[cxstack_ix].blk_oldsp;
+
+    if(!maxargs) RETURN;
+
+    /* We do this here, rather than with a separate pushmark op, as it has
+       to come in between two things this function does (stack reset and
+       arg pushing).  This seems the easiest way to do it. */
+    if (pushmark) {
+	PUTBACK;
+	(void)Perl_pp_pushmark(aTHX);
+    }
+
+    EXTEND(SP, maxargs == I32_MAX ? numargs : maxargs);
+    PUTBACK; /* The code below can die in various places. */
+
+    oa = PL_opargs[opnum] >> OASHIFT;
+    for (; oa&&(numargs||!pushmark); (void)(numargs&&(++svp,--numargs))) {
+	whicharg++;
+	switch (oa & 7) {
+	case OA_SCALAR:
+	    if (!numargs && defgv && whicharg == minargs + 1) {
+		PERL_SI * const oldsi = PL_curstackinfo;
+		I32 const oldcxix = oldsi->si_cxix;
+		CV *caller;
+		if (oldcxix) oldsi->si_cxix--;
+		else PL_curstackinfo = oldsi->si_prev;
+		caller = find_runcv(NULL);
+		PL_curstackinfo = oldsi;
+		oldsi->si_cxix = oldcxix;
+		PUSHs(find_rundefsv2(
+		    caller,cxstack[cxstack_ix].blk_oldcop->cop_seq
+		));
+	    }
+	    else PUSHs(numargs ? svp && *svp ? *svp : &PL_sv_undef : NULL);
+	    break;
+	case OA_LIST:
+	    while (numargs--) {
+		PUSHs(svp && *svp ? *svp : &PL_sv_undef);
+		svp++;
+	    }
+	    RETURN;
+	case OA_HVREF:
+	    if (!svp || !*svp || !SvROK(*svp)
+	     || SvTYPE(SvRV(*svp)) != SVt_PVHV)
+		DIE(aTHX_
+		/* diag_listed_as: Type of arg %d to &CORE::%s must be %s*/
+		 "Type of arg %d to &CORE::%s must be hash reference",
+		  whicharg, OP_DESC(PL_op->op_next)
+		);
+	    PUSHs(SvRV(*svp));
+	    break;
+	case OA_FILEREF:
+	    if (!numargs) PUSHs(NULL);
+	    else if(svp && *svp && SvROK(*svp) && isGV_with_GP(SvRV(*svp)))
+		/* no magic here, as the prototype will have added an extra
+		   refgen and we just want what was there before that */
+		PUSHs(SvRV(*svp));
+	    else {
+		const bool constr = PL_op->op_private & whicharg;
+		PUSHs(S_rv2gv(aTHX_
+		    svp && *svp ? *svp : &PL_sv_undef,
+		    constr, CopHINTS_get(PL_curcop) & HINT_STRICT_REFS,
+		    !constr
+		));
+	    }
+	    break;
+	case OA_SCALARREF:
+	  {
+	    const bool wantscalar =
+		PL_op->op_private & OPpCOREARGS_SCALARMOD;
+	    if (!svp || !*svp || !SvROK(*svp)
+	        /* We have to permit globrefs even for the \$ proto, as
+	           *foo is indistinguishable from ${\*foo}, and the proto-
+	           type permits the latter. */
+	     || SvTYPE(SvRV(*svp)) > (
+	             wantscalar       ? SVt_PVLV
+	           : opnum == OP_LOCK ? SVt_PVCV
+	           :                    SVt_PVHV
+	        )
+	       )
+		DIE(aTHX_
+		/* diag_listed_as: Type of arg %d to &CORE::%s must be %s*/
+		 "Type of arg %d to &CORE::%s must be %s",
+		  whicharg, OP_DESC(PL_op->op_next),
+		  wantscalar
+		    ? "scalar reference"
+		    : opnum == OP_LOCK
+		       ? "reference to one of [$@%&*]"
+		       : "reference to one of [$@%*]"
+		);
+	    PUSHs(SvRV(*svp));
+	    break;
+	  }
+	default:
+	    DIE(aTHX_ "panic: unknown OA_*: %x", (unsigned)(oa&7));
+	}
+	oa = oa >> 4;
+    }
+
+    RETURN;
+}
+
+PP(pp_runcv)
+{
+    dSP;
+    CV *cv;
+    if (PL_op->op_private & OPpOFFBYONE) {
+	PERL_SI * const oldsi = PL_curstackinfo;
+	I32 const oldcxix = oldsi->si_cxix;
+	if (oldcxix) oldsi->si_cxix--;
+	else PL_curstackinfo = oldsi->si_prev;
+	cv = find_runcv(NULL);
+	PL_curstackinfo = oldsi;
+	oldsi->si_cxix = oldcxix;
+    }
+    else cv = find_runcv(NULL);
+    XPUSHs(CvEVAL(cv) ? &PL_sv_undef : sv_2mortal(newRV((SV *)cv)));
+    RETURN;
+}
+
 
 /*
  * Local variables:

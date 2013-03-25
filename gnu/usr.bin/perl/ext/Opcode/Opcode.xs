@@ -52,19 +52,17 @@ op_names_init(pTHX)
     for(i=0; i < PL_maxo; ++i) {
 	SV * const sv = newSViv(i);
 	SvREADONLY_on(sv);
-	hv_store(op_named_bits, op_names[i], strlen(op_names[i]), sv, 0);
+	(void) hv_store(op_named_bits, op_names[i], strlen(op_names[i]), sv, 0);
     }
 
-    put_op_bitspec(aTHX_ ":none",0, sv_2mortal(new_opset(aTHX_ Nullsv)));
+    put_op_bitspec(aTHX_ STR_WITH_LEN(":none"), sv_2mortal(new_opset(aTHX_ Nullsv)));
 
     opset_all = new_opset(aTHX_ Nullsv);
     bitmap = SvPV(opset_all, len);
-    i = len-1; /* deal with last byte specially, see below */
-    while(i-- > 0)
-	bitmap[i] = (char)0xFF;
+    memset(bitmap, 0xFF, len-1); /* deal with last byte specially, see below */
     /* Take care to set the right number of bits in the last byte */
     bitmap[len-1] = (PL_maxo & 0x07) ? ~(0xFF << (PL_maxo & 0x07)) : 0xFF;
-    put_op_bitspec(aTHX_ ":all",0, opset_all); /* don't mortalise */
+    put_op_bitspec(aTHX_ STR_WITH_LEN(":all"), opset_all); /* don't mortalise */
 }
 
 
@@ -80,8 +78,6 @@ put_op_bitspec(pTHX_ const char *optag, STRLEN len, SV *mask)
     dMY_CXT;
 
     verify_opset(aTHX_ mask,1);
-    if (!len)
-	len = strlen(optag);
     svp = hv_fetch(op_named_bits, optag, len, 1);
     if (SvOK(*svp))
 	croak("Opcode tag \"%s\" already defined", optag);
@@ -93,7 +89,7 @@ put_op_bitspec(pTHX_ const char *optag, STRLEN len, SV *mask)
 
 /* Fetch a 'bits' entry for an opname or optag (IV/PV).
  * Note that we return the actual entry for speed.
- * Always sv_mortalcopy() if returing it to user code.
+ * Always sv_mortalcopy() if returning it to user code.
  */
 
 static SV *
@@ -102,8 +98,6 @@ get_op_bitspec(pTHX_ const char *opname, STRLEN len, int fatal)
     SV **svp;
     dMY_CXT;
 
-    if (!len)
-	len = strlen(opname);
     svp = hv_fetch(op_named_bits, opname, len, 0);
     if (!svp || !SvOK(*svp)) {
 	if (!fatal)
@@ -270,7 +264,7 @@ PPCODE:
     if (strNE(HvNAME_get(hv),"main")) {
         /* make it think it's in main:: */
 	hv_name_set(hv, "main", 4, 0);
-        hv_store(hv,"_",1,(SV *)PL_defgv,0);  /* connect _ to global */
+        (void) hv_store(hv,"_",1,(SV *)PL_defgv,0);  /* connect _ to global */
         SvREFCNT_inc((SV *)PL_defgv);  /* want to keep _ around! */
     }
     LEAVE;
@@ -300,8 +294,8 @@ PPCODE:
     /* the assignment to global defstash changes our sense of 'main'	*/
     PL_defstash = gv_stashsv(Package, GV_ADDWARN); /* should exist already	*/
 
-    save_hptr(&PL_curstash);
-    PL_curstash = PL_defstash;
+    SAVEGENERICSV(PL_curstash);
+    PL_curstash = (HV *)SvREFCNT_inc_simple(PL_defstash);
 
     /* defstash must itself contain a main:: so we'll add that now	*/
     /* take care with the ref counts (was cause of long standing bug)	*/

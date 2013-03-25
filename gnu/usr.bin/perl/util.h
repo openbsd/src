@@ -39,6 +39,21 @@
 #endif		/* VMS */
 
 /*
+=for apidoc ibcmp
+
+This is a synonym for (! foldEQ())
+
+=for apidoc ibcmp_locale
+
+This is a synonym for (! foldEQ_locale())
+
+=cut
+*/
+#define ibcmp(s1, s2, len)         cBOOL(! foldEQ(s1, s2, len))
+#define ibcmp_locale(s1, s2, len)  cBOOL(! foldEQ_locale(s1, s2, len))
+
+
+/*
  * Local variables:
  * c-indentation-style: bsd
  * c-basic-offset: 4

@@ -79,6 +79,15 @@ ok(rmdir('testdir/'),           '    rmdir()');
 
 __DATA__
 
+# Column definitions:
+#
+#  Column 1: Argument (path spec to be transformed)
+#  Column 2: Function that is to do the transformation
+#  Column 3: Expected result when DECC$EFS_CHARSET is not in effect
+#  Column 4: Expected result when DECC$EFS_CHARSET is in effect
+#            ^ means expect same result for EFS as for non-EFS
+#            ^* means TODO when EFS is in effect
+
 # lots of underscores used to minimize collision with existing logical names
 
 # Basic VMS to Unix filespecs
@@ -87,48 +96,48 @@ __some_:<__where_.__over_>__the_.__rainbow_    unixify /__some_/__where_/__over_
 [.__some_.__where_.__over_]__the_.__rainbow_   unixify __some_/__where_/__over_/__the_.__rainbow_ ^
 [-.__some_.__where_.__over_]__the_.__rainbow_  unixify ../__some_/__where_/__over_/__the_.__rainbow_ ^
 [.__some_.--.__where_.__over_]__the_.__rainbow_        unixify __some_/../../__where_/__over_/__the_.__rainbow_ ^
-[.__some_...__where_.__over_]__the_.__rainbow_ unixify __some_/.../__where_/__over_/__the_.__rainbow_ ^*
-[...__some_.__where_.__over_]__the_.__rainbow_ unixify .../__some_/__where_/__over_/__the_.__rainbow_ ^*
-[.__some_.__where_.__over_...]__the_.__rainbow_        unixify __some_/__where_/__over_/.../__the_.__rainbow_ ^*
-[.__some_.__where_.__over_...] unixify __some_/__where_/__over_/.../ ^*
+[.__some_...__where_.__over_]__the_.__rainbow_ unixify __some_/.../__where_/__over_/__the_.__rainbow_ ^
+[...__some_.__where_.__over_]__the_.__rainbow_ unixify .../__some_/__where_/__over_/__the_.__rainbow_ ^
+[.__some_.__where_.__over_...]__the_.__rainbow_        unixify __some_/__where_/__over_/.../__the_.__rainbow_ ^
+[.__some_.__where_.__over_...] unixify __some_/__where_/__over_/.../ ^
 [.__some_.__where_.__over_.-]  unixify __some_/__where_/__over_/../ ^
 []	unixify		./	^
 [-]	unixify		../	^
 [--]	unixify		../../	^
-[...]	unixify		.../	^*
+[...]	unixify		.../	^
+__lyrics_:[__are_.__very_^.__sappy_]__but_^.__rhymes_^.__are_.__true_    unixify   /__lyrics_/__are_/__very_.__sappy_/__but_.__rhymes_.__are_.__true_ ^
 [.$(macro)]	unixify	$(macro)/ ^
 
 # and back again
 /__some_/__where_/__over_/__the_.__rainbow_    vmsify  __some_:[__where_.__over_]__the_.__rainbow_ ^
 __some_/__where_/__over_/__the_.__rainbow_     vmsify  [.__some_.__where_.__over_]__the_.__rainbow_ ^
 ../__some_/__where_/__over_/__the_.__rainbow_  vmsify  [-.__some_.__where_.__over_]__the_.__rainbow_ ^
-__some_/../../__where_/__over_/__the_.__rainbow_       vmsify  [-.__where_.__over_]__the_.__rainbow_  [.__some_.--.__where_.__over_]__the_.__rainbow_
-.../__some_/__where_/__over_/__the_.__rainbow_ vmsify  [...__some_.__where_.__over_]__the_.__rainbow_ [.^.^.^..__some_.__where_.__over_]__the_.__rainbow_
-__some_/.../__where_/__over_/__the_.__rainbow_ vmsify  [.__some_...__where_.__over_]__the_.__rainbow_  [.__some_.^.^.^..__where_.__over_]__the_.__rainbow_
-/__some_/.../__where_/__over_/__the_.__rainbow_        vmsify  __some_:[...__where_.__over_]__the_.__rainbow_ __some_:[^.^.^..__where_.__over_]__the_.__rainbow_
-__some_/__where_/...   vmsify  [.__some_.__where_...] [.__some_.__where_]^.^.^..
-/__where_/...  vmsify  __where_:[...] __where_:[]^.^.^..
+__some_/../../__where_/__over_/__the_.__rainbow_       vmsify  [.__some_.--.__where_.__over_]__the_.__rainbow_ ^
+.../__some_/__where_/__over_/__the_.__rainbow_ vmsify  [...__some_.__where_.__over_]__the_.__rainbow_ ^
+__some_/.../__where_/__over_/__the_.__rainbow_ vmsify  [.__some_...__where_.__over_]__the_.__rainbow_  ^
+/__some_/.../__where_/__over_/__the_.__rainbow_        vmsify  __some_:[...__where_.__over_]__the_.__rainbow_ ^
+__some_/__where_/...   vmsify  [.__some_.__where_...] ^*
+/__where_/...  vmsify  __where_:[...] ^*
 .	vmsify	[]	^
 ..	vmsify	[-]	^
 ../..	vmsify	[--]	^
-.../	vmsify	[...]	[.^.^.^.]
-# Can not predict what / will translate to.
-/	vmsify	sys$disk:[000000] ^*
+.../	vmsify	[...]	^
+/	vmsify	sys$disk:[000000] ^
 ./$(macro)/	vmsify	[.$(macro)] ^
 ./$(macro)	vmsify	[]$(macro) ^
-./$(m+	vmsify	[]$^(m^+	[]$^(m^+.
+./$(m+	vmsify	[]$^(m^+	^
 
 # Fileifying directory specs
 __down_:[__the_.__garden_.__path_]     fileify __down_:[__the_.__garden_]__path_.dir;1 ^
 [.__down_.__the_.__garden_.__path_]    fileify [.__down_.__the_.__garden_]__path_.dir;1 ^
-/__down_/__the_/__garden_/__path_      fileify /__down_/__the_/__garden_/__path_.dir;1 /__down_/__the_/__garden_/__path_
-/__down_/__the_/__garden_/__path_/     fileify /__down_/__the_/__garden_/__path_.dir;1 /__down_/__the_/__garden_/__path_
-__down_/__the_/__garden_/__path_       fileify __down_/__the_/__garden_/__path_.dir;1 __down_/__the_/__garden_/__path_
+/__down_/__the_/__garden_/__path_      fileify /__down_/__the_/__garden_/__path_.dir;1 ^
+/__down_/__the_/__garden_/__path_/     fileify /__down_/__the_/__garden_/__path_.dir;1 ^
+__down_/__the_/__garden_/__path_       fileify __down_/__the_/__garden_/__path_.dir;1 ^
 __down_:[__the_.__garden_]__path_      fileify __down_:[__the_.__garden_]__path_.dir;1 ^
 __down_:[__the_.__garden_]__path_.     fileify ^ __down_:[__the_.__garden_]__path_^..dir;1 # N.B. trailing . ==> null type
 __down_:[__the_]__garden_.__path_      fileify ^ __down_:[__the_]__garden_^.__path_.dir;1 #undef
-/__down_/__the_/__garden_/__path_.     fileify ^ /__down_/__the_/__garden_/__path_. # N.B. trailing . ==> null type
-/__down_/__the_/__garden_.__path_      fileify ^ /__down_/__the_/__garden_.__path_
+/__down_/__the_/__garden_/__path_.     fileify ^ /__down_/__the_/__garden_/__path_..dir;1 # N.B. trailing . ==> null type
+/__down_/__the_/__garden_.__path_      fileify ^ /__down_/__the_/__garden_.__path_.dir;1
 
 # and pathifying them
 __down_:[__the_.__garden_]__path_.dir;1        pathify __down_:[__the_.__garden_.__path_] ^
@@ -136,7 +145,7 @@ __down_:[__the_.__garden_]__path_.dir;1        pathify __down_:[__the_.__garden_
 /__down_/__the_/__garden_/__path_.dir  pathify /__down_/__the_/__garden_/__path_/ ^
 __down_/__the_/__garden_/__path_.dir   pathify __down_/__the_/__garden_/__path_/ ^
 __down_:[__the_.__garden_]__path_      pathify __down_:[__the_.__garden_.__path_] ^
-__down_:[__the_.__garden_]__path_.     pathify ^ __down_:[__the.__garden_.__path_^.] # N.B. trailing . ==> null type
+__down_:[__the_.__garden_]__path_.     pathify ^ __down_:[__the_.__garden_.__path_^.] # N.B. trailing . ==> null type
 __down_:[__the_]__garden_.__path_      pathify ^ __down_:[__the_.__garden_^.__path_] # undef
 /__down_/__the_/__garden_/__path_.     pathify /__down_/__the_/__garden_/__path__/ /__down_/__the_/__garden_/__path_./ # N.B. trailing . ==> null type
 /__down_/__the_/__garden_.__path_      pathify /__down_/__the_/__garden____path_/ /__down_/__the_/__garden_.__path_/
@@ -151,16 +160,16 @@ __path_.notdir pathify __path__notdir/ __path_.notdir/
 __down_:[__the_.__garden_]__path_.dir;1        unixpath        /__down_/__the_/__garden_/__path_/ ^
 /__down_/__the_/__garden_/__path_      vmspath __down_:[__the_.__garden_.__path_] ^
 __down_:[__the_.__garden_.__path_]     unixpath        /__down_/__the_/__garden_/__path_/ ^
-__down_:[__the_.__garden_.__path_...]  unixpath        /__down_/__the_/__garden_/__path_/.../ # Not translatable
+__down_:[__the_.__garden_.__path_...]  unixpath        /__down_/__the_/__garden_/__path_/.../ ^
 /__down_/__the_/__garden_/__path_.dir  vmspath __down_:[__the_.__garden_.__path_] ^
 [.__down_.__the_.__garden_]__path_.dir unixpath        __down_/__the_/__garden_/__path_/ ^
 __down_/__the_/__garden_/__path_       vmspath [.__down_.__the_.__garden_.__path_] ^
 __path_        vmspath [.__path_] ^
-/	vmspath	sys$disk:[000000] ^*
+/	vmspath	sys$disk:[000000] ^
 /sys$scratch	vmspath	sys$scratch: ^
 
 # Redundant characters in Unix paths
-//__some_/__where_//__over_/../__the_.__rainbow_       vmsify  __some_:[__where_]__the_.__rainbow_ __some_:[__where_.__over_.-]__the_.__rainbow_
+//__some_/__where_//__over_/../__the_.__rainbow_       vmsify  __some_:[__where_.__over_.-]__the_.__rainbow_ ^
 /__some_/__where_//__over_/./__the_.__rainbow_ vmsify  __some_:[__where_.__over_]__the_.__rainbow_ ^
 ..//../	vmspath	[--] ^
 ./././	vmspath	[] ^

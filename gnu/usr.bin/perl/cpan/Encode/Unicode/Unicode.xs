@@ -1,5 +1,5 @@
 /*
- $Id: Unicode.xs,v 2.6 2009/11/16 14:08:13 dankogai Exp $
+ $Id: Unicode.xs,v 2.8 2011/08/09 07:49:44 dankogai Exp dankogai $
  */
 
 #define PERL_NO_GET_CONTEXT
@@ -17,6 +17,16 @@
 #define isHiSurrogate(x)	(0xD800 <= (x)  && (x) <  0xDC00 )
 #define isLoSurrogate(x)	(0xDC00 <= (x)  && (x) <= 0xDFFF )
 #define invalid_ucs2(x)         ( issurrogate(x) || 0xFFFF < (x) )
+
+/* For pre-5.14 source compatibility */
+#ifndef UNICODE_WARN_ILLEGAL_INTERCHANGE
+#   define UNICODE_WARN_ILLEGAL_INTERCHANGE 0
+#   define UTF8_DISALLOW_SURROGATE 0
+#   define UTF8_WARN_SURROGATE 0
+#   define UTF8_DISALLOW_FE_FF 0
+#   define UTF8_WARN_FE_FF 0
+#   define UTF8_WARN_NONCHAR 0
+#endif
 
 #define PERLIO_BUFSIZ 1024 /* XXX value comes from PerlIOEncode_get_base */
 
@@ -246,7 +256,7 @@ CODE:
 	       This prevents allocating too much in the rogue case of a large
 	       input consisting initially of long sequence uft8-byte unicode
 	       chars followed by single utf8-byte chars. */
-	    /* +1 
+            /* +1 
                fixes  Unicode.xs!decode_xs n-byte heap-overflow
               */
 	    STRLEN remaining = (e - s)/usize + 1; /* +1 to avoid the leak */
@@ -258,7 +268,8 @@ CODE:
 	    resultbuflen = SvLEN(result);
 	}
 
-	d = uvuni_to_utf8_flags(resultbuf+SvCUR(result), ord, 0);
+	d = uvuni_to_utf8_flags(resultbuf+SvCUR(result), ord,
+                                            UNICODE_WARN_ILLEGAL_INTERCHANGE);
 	SvCUR_set(result, d - (U8 *)SvPVX(result));
     }
 
@@ -326,7 +337,11 @@ CODE:
     }
     while (s < e && s+UTF8SKIP(s) <= e) {
 	STRLEN len;
-	UV ord = utf8n_to_uvuni(s, e-s, &len, 0);
+	UV ord = utf8n_to_uvuni(s, e-s, &len, (UTF8_DISALLOW_SURROGATE
+                                               |UTF8_WARN_SURROGATE
+                                               |UTF8_DISALLOW_FE_FF
+                                               |UTF8_WARN_FE_FF
+                                               |UTF8_WARN_NONCHAR));
 	s += len;
 	if (size != 4 && invalid_ucs2(ord)) {
 	    if (!issurrogate(ord)) {

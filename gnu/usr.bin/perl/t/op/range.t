@@ -341,7 +341,7 @@ foreach my $ii (~0, ~0+1, ~0+(~0>>4)) {
     ok($@, 'Lower bound rejected: ' . -$ii);
 }
 
-# double/tripple magic tests
+# double/triple magic tests
 sub TIESCALAR { bless { value => $_[1], orig => $_[1] } }
 sub STORE { $_[0]{store}++; $_[0]{value} = $_[1] }
 sub FETCH { $_[0]{fetch}++; $_[0]{value} }
@@ -355,28 +355,19 @@ my @foo;
 @foo = 4 .. $x;
 is(scalar @foo, 3);
 is("@foo", "4 5 6");
-{
-  local $TODO = "test for double magic with range operator";
-  is(fetches($x), 1);
-}
+is(fetches($x), 1);
 is(stores($x), 0);
 
 @foo = $x .. 8;
 is(scalar @foo, 3);
 is("@foo", "6 7 8");
-{
-  local $TODO = "test for double magic with range operator";
-  is(fetches($x), 1);
-}
+is(fetches($x), 1);
 is(stores($x), 0);
 
 @foo = $x .. $x + 1;
 is(scalar @foo, 2);
 is("@foo", "6 7");
-{
-  local $TODO = "test for double magic with range operator";
-  is(fetches($x), 2);
-}
+is(fetches($x), 2);
 is(stores($x), 0);
 
 @foo = ();
@@ -385,10 +376,7 @@ for (4 .. $x) {
 }
 is(scalar @foo, 3);
 is("@foo", "4 5 6");
-{
-  local $TODO = "test for double magic with range operator";
-  is(fetches($x), 1);
-}
+is(fetches($x), 1);
 is(stores($x), 0);
 
 @foo = ();
@@ -397,10 +385,7 @@ for (reverse 4 .. $x) {
 }
 is(scalar @foo, 3);
 is("@foo", "6 5 4");
-{
-  local $TODO = "test for double magic with range operator";
-  is(fetches($x), 1);
-}
+is(fetches($x), 1);
 is(stores($x), 0);
 
 is( ( join ' ', map { join '', map ++$_, ($x=1)..4 } 1..2 ), '2345 2345',

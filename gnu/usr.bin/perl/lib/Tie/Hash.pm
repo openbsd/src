@@ -1,6 +1,6 @@
 package Tie::Hash;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 =head1 NAME
 
@@ -197,9 +197,20 @@ sub new {
 
 sub TIEHASH {
     my $pkg = shift;
-    if (defined &{"${pkg}::new"}) {
-	warnings::warnif("WARNING: calling ${pkg}->new since ${pkg}->TIEHASH is missing");
-	$pkg->new(@_);
+    my $pkg_new = $pkg -> can ('new');
+
+    if ($pkg_new and $pkg ne __PACKAGE__) {
+        my $my_new = __PACKAGE__ -> can ('new');
+        if ($pkg_new == $my_new) {  
+            #
+            # Prevent recursion
+            #
+            croak "$pkg must define either a TIEHASH() or a new() method";
+        }
+
+	warnings::warnif ("WARNING: calling ${pkg}->new since " .
+                          "${pkg}->TIEHASH is missing");
+	$pkg -> new (@_);
     }
     else {
 	croak "$pkg doesn't define a TIEHASH method";

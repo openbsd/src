@@ -42,7 +42,7 @@ use threads::shared;
 {
     my $cnt = 50;
 
-    my $TIMEOUT = 60;
+    my $TIMEOUT = 600;
 
     my $mutex = 1;
     share($mutex);

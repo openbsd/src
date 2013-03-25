@@ -20,7 +20,7 @@ $DEFAULT    = SHELL_DEFAULT;
 
 =head1 NAME
 
-CPANPLUS::Shell - base class for all CPANPLUS shells
+CPANPLUS::Shell - base class for CPANPLUS shells
 
 =head1 SYNOPSIS
 
@@ -56,17 +56,17 @@ sub import {
     ### find out what shell we're supposed to load ###
     $SHELL      = $option
                     ? $class . '::' . $option
-                    : do {  ### XXX this should offer to reconfigure 
+                    : do {  ### XXX this should offer to reconfigure
                             ### CPANPLUS, somehow.  --rs
                             ### XXX load Configure only if we really have to
                             ### as that means any $Conf passed later on will
-                            ### be ignored in favour of the one that was 
+                            ### be ignored in favour of the one that was
                             ### retrieved via ->new --kane
-                        my $conf = CPANPLUS::Configure->new() or 
+                        my $conf = CPANPLUS::Configure->new() or
                         die loc("No configuration available -- aborting") . $/;
                         $conf->get_conf('shell') || $DEFAULT;
                     };
-                    
+
     ### load the shell, fall back to the default if required
     ### and die if even that doesn't work
     EVAL: {
@@ -294,13 +294,13 @@ sub _pager_close {
         my $self = shift;
         print @_;
     }
-    
+
     sub __printf {
         my $self = shift;
         my $fmt  = shift;
-        
-        ### MUST specify $fmt as a seperate param, and not as part
-        ### of @_, as it will then miss the $fmt and return the 
+
+        ### MUST specify $fmt as a separate param, and not as part
+        ### of @_, as it will then miss the $fmt and return the
         ### number of elements in the list... =/ --kane
         $self->__print( sprintf( $fmt, @_ ) );
     }
@@ -320,10 +320,10 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =head1 SEE ALSO

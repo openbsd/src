@@ -1,6 +1,6 @@
 package UNIVERSAL;
 
-our $VERSION = '1.06';
+our $VERSION = '1.11';
 
 # UNIVERSAL should not contain any extra subs/methods beyond those
 # that it exists to define. The use of Exporter below is a historical
@@ -99,11 +99,11 @@ If you're not sure what you have (the C<VAL> case), wrap the method call in an
 C<eval> block to catch the exception if C<VAL> is undefined.
 
 If you want to be sure that you're calling C<isa> as a method, not a class,
-check the invocant with C<blessed> from L<Scalar::Util> first:
+check the invocand with C<blessed> from L<Scalar::Util> first:
 
   use Scalar::Util 'blessed';
 
-  if ( blessed( $obj ) && $obj->isa("Some::Class") {
+  if ( blessed( $obj ) && $obj->isa("Some::Class") ) {
       ...
   }
 
@@ -119,7 +119,7 @@ itself.  For example, logging or serialization may be roles.
 C<DOES> and C<isa> are similar, in that if either is true, you know that the
 object or class on which you call the method can perform specific behavior.
 However, C<DOES> is different from C<isa> in that it does not care I<how> the
-invocant performs the operations, merely that it does.  (C<isa> of course
+invocand performs the operations, merely that it does.  (C<isa> of course
 mandates an inheritance relationship.  Other relationships include aggregation,
 delegation, and mocking.)
 
@@ -157,7 +157,7 @@ calling the coderef will cause an error.
 
 You may call C<can> as a class (static) method or an object method.
 
-Again, the same rule about having a valid invocant applies -- use an C<eval>
+Again, the same rule about having a valid invocand applies -- use an C<eval>
 block or C<blessed> if you need to be extra paranoid.
 
 =item C<VERSION ( [ REQUIRE ] )>
@@ -165,9 +165,13 @@ block or C<blessed> if you need to be extra paranoid.
 C<VERSION> will return the value of the variable C<$VERSION> in the
 package the object is blessed into. If C<REQUIRE> is given then
 it will do a comparison and die if the package version is not
-greater than or equal to C<REQUIRE>.  Both C<$VERSION> or C<REQUIRE>
-must be "lax" version numbers (as defined by the L<version> module)
-or C<VERSION> will die with an error.
+greater than or equal to C<REQUIRE>, or if either C<$VERSION> or C<REQUIRE>
+is not a "lax" version number (as defined by the L<version> module).
+
+The return from C<VERSION> will actually be the stringified version object
+using the package C<$VERSION> scalar, which is guaranteed to be equivalent
+but may not be precisely the contents of the C<$VERSION> scalar.  If you want
+the actual contents of C<$VERSION>, use C<$CLASS::VERSION> instead.
 
 C<VERSION> can be called as either a class (static) method or an object
 method.

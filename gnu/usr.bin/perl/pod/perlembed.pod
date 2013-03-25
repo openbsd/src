@@ -490,7 +490,7 @@ been wrapped here):
      SvREFCNT_dec(command);
 
      *match_list = get_av("array", 0);
-     num_matches = av_len(*match_list) + 1; /** assume $[ is 0 **/
+     num_matches = av_len(*match_list) + 1;
 
      return num_matches;
  }
@@ -931,7 +931,6 @@ Let's give it a try:
  #include <perl.h>
 
  /* we're going to embed two interpreters */
- /* we're going to embed two interpreters */
 
  #define SAY_HELLO "-e", "print qq(Hi, I'm $^X\n)"
 
@@ -1070,34 +1069,6 @@ B<ExtUtils::Embed> can also automate writing the I<xs_init> glue code.
 
 Consult L<perlxs>, L<perlguts>, and L<perlapi> for more details.
 
-=head1 Embedding Perl under Win32
-
-In general, all of the source code shown here should work unmodified under
-Windows.
-
-However, there are some caveats about the command-line examples shown.
-For starters, backticks won't work under the Win32 native command shell.
-The ExtUtils::Embed kit on CPAN ships with a script called
-B<genmake>, which generates a simple makefile to build a program from
-a single C source file.  It can be used like this:
-
- C:\ExtUtils-Embed\eg> perl genmake interp.c
- C:\ExtUtils-Embed\eg> nmake
- C:\ExtUtils-Embed\eg> interp -e "print qq{I'm embedded in Win32!\n}"
-
-You may wish to use a more robust environment such as the Microsoft
-Developer Studio.  In this case, run this to generate perlxsi.c:
-
- perl -MExtUtils::Embed -e xsinit
-
-Create a new project and Insert -> Files into Project: perlxsi.c,
-perl.lib, and your own source files, e.g. interp.c.  Typically you'll
-find perl.lib in B<C:\perl\lib\CORE>, if not, you should see the
-B<CORE> directory relative to C<perl -V:archlib>.  The studio will
-also need this path so it knows where to find Perl include files.
-This path can be added via the Tools -> Options -> Directories menu.
-Finally, select Build -> Build interp.exe and you're ready to go.
-
 =head1 Hiding Perl_
 
 If you completely hide the short forms of the Perl public API,
@@ -1110,8 +1081,8 @@ you will have to write the explicit full form
 
     Perl_warn(aTHX_ "%d bottles of beer on the wall", bottlecount);
 
-(See L<perlguts/Background and PERL_IMPLICIT_CONTEXT for the explanation
-of the C<aTHX_>.> )  Hiding the short forms is very useful for avoiding
+(See L<perlguts/"Background and PERL_IMPLICIT_CONTEXT"> for the explanation
+of the C<aTHX_>. )  Hiding the short forms is very useful for avoiding
 all sorts of nasty (C preprocessor or otherwise) conflicts with other
 software packages (Perl defines about 2400 APIs with these short names,
 take or leave few hundred, so there certainly is room for conflict.)
@@ -1143,18 +1114,4 @@ Server Perl plugins.
 Copyright (C) 1995, 1996, 1997, 1998 Doug MacEachern and Jon Orwant.  All
 Rights Reserved.
 
-Permission is granted to make and distribute verbatim copies of this
-documentation provided the copyright notice and this permission notice are
-preserved on all copies.
-
-Permission is granted to copy and distribute modified versions of this
-documentation under the conditions for verbatim copying, provided also
-that they are marked clearly as modified versions, that the authors'
-names and title are unchanged (though subtitles and additional
-authors' names may be added), and that the entire resulting derived
-work is distributed under the terms of a permission notice identical
-to this one.
-
-Permission is granted to copy and distribute translations of this
-documentation into another language, under the above conditions for
-modified versions.
+This document may be distributed under the same terms as Perl itself.

@@ -1,9 +1,0 @@
-Changes
-MANIFEST
-Makefile.PL
-README
-Switch.pm
-t/given.t
-t/nested.t
-t/switch.t
-META.yml                                 Module meta-data (added by MakeMaker)

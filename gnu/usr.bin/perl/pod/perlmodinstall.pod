@@ -436,19 +436,4 @@ First version July 22, 1998; last revised November 21, 2001.
 
 Copyright (C) 1998, 2002, 2003 Jon Orwant.  All Rights Reserved.
 
-Permission is granted to make and distribute verbatim copies of this
-documentation provided the copyright notice and this permission notice are
-preserved on all copies.
-
-Permission is granted to copy and distribute modified versions of this
-documentation under the conditions for verbatim copying, provided also
-that they are marked clearly as modified versions, that the authors'
-names and title are unchanged (though subtitles and additional
-authors' names may be added), and that the entire resulting derived
-work is distributed under the terms of a permission notice identical
-to this one.
-
-Permission is granted to copy and distribute translations of this
-documentation into another language, under the above conditions for
-modified versions.
-
+This document may be distributed under the same terms as Perl itself.

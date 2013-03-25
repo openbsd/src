@@ -55,6 +55,15 @@ typedef struct regexp_paren_pair {
     I32 end;
 } regexp_paren_pair;
 
+#if defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_UTF8_C)
+#define _invlist_union(a, b, output) _invlist_union_maybe_complement_2nd(a, b, FALSE, output)
+#define _invlist_intersection(a, b, output) _invlist_intersection_maybe_complement_2nd(a, b, FALSE, output)
+
+/* Subtracting b from a leaves in a everything that was there that isn't in b,
+ * that is the intersection of a with b's complement */
+#define _invlist_subtract(a, b, output) _invlist_intersection_maybe_complement_2nd(a, b, TRUE, output)
+#endif
+
 /*
   The regexp/REGEXP struct, see L<perlreapi> for further documentation
   on the individual fields. The struct is ordered so that the most
@@ -70,6 +79,7 @@ typedef struct regexp_paren_pair {
         /* what engine created this regexp? */				\
 	const struct regexp_engine* engine; 				\
 	REGEXP *mother_re; /* what re is this a lightweight copy of? */	\
+	HV *paren_names;   /* Optional hash of paren names */		\
 	/* Information about the match that the perl core uses to */	\
 	/* manage things */						\
 	U32 extflags;	/* Flags used both externally and internally */	\
@@ -103,14 +113,10 @@ typedef struct regexp_paren_pair {
 
 typedef struct regexp {
 	_XPV_HEAD;
-	_XPVMG_HEAD;
 	_REGEXP_COMMON;
 } regexp;
 
-/*        HV *paren_names;	 Optional hash of paren names
-	  now stored in the IV union */
-
-#define RXp_PAREN_NAMES(rx)	((rx)->xiv_u.xivu_hv)
+#define RXp_PAREN_NAMES(rx)	((rx)->paren_names)
 
 /* used for high speed searches */
 typedef struct re_scream_pos_data_s
@@ -193,20 +199,17 @@ equivalent to the following snippet:
 
     if (SvMAGICAL(sv))
         mg_get(sv);
-    if (SvROK(sv) &&
-        (tmpsv = (SV*)SvRV(sv)) &&
-        SvTYPE(tmpsv) == SVt_PVMG &&
-        (tmpmg = mg_find(tmpsv, PERL_MAGIC_qr)))
-    {
-        return (REGEXP *)tmpmg->mg_obj;
-    }
+    if (SvROK(sv))
+        sv = MUTABLE_SV(SvRV(sv));
+    if (SvTYPE(sv) == SVt_REGEXP)
+        return (REGEXP*) sv;
 
 NULL will be returned if a REGEXP* is not found.
 
 =for apidoc Am|bool|SvRXOK|SV* sv
 
-Returns a boolean indicating whether the SV contains qr magic
-(PERL_MAGIC_qr).
+Returns a boolean indicating whether the SV (or the one it references)
+is a REGEXP.
 
 If you want to do something with the REGEXP* later use SvRX instead
 and check for NULL.
@@ -221,28 +224,17 @@ and check for NULL.
 /* Flags stored in regexp->extflags
  * These are used by code external to the regexp engine
  *
- * Note that flags starting with RXf_PMf_ have exact equivalents
- * stored in op_pmflags and which are defined in op.h, they are defined
- * numerically here only for clarity.
+ * Note that the flags whose names start with RXf_PMf_ are defined in
+ * op_reg_common.h, being copied from the parallel flags of op_pmflags
  *
- * NOTE: if you modify any RXf flags you should run regen.pl or regcomp.pl
- * so that regnodes.h is updated with the changes.
+ * NOTE: if you modify any RXf flags you should run regen.pl or
+ * regen/regcomp.pl so that regnodes.h is updated with the changes.
  *
  */
 
-/* 0x3F of extflags is used by (RXf_)PMf_COMPILETIME
- * If you change these you need to change the equivalent flags in op.h, and
- * vice versa.  */
-#define RXf_PMf_MULTILINE	0x00000001 /* /m         */
-#define RXf_PMf_SINGLELINE	0x00000002 /* /s         */
-#define RXf_PMf_FOLD    	0x00000004 /* /i         */
-#define RXf_PMf_EXTENDED	0x00000008 /* /x         */
-#define RXf_PMf_KEEPCOPY	0x00000010 /* /p         */
-#define RXf_PMf_LOCALE  	0x00000020 /* use locale */
-/* these flags are transfered from the PMOP->op_pmflags member during compilation */
-#define RXf_PMf_STD_PMMOD_SHIFT	0
+#include "op_reg_common.h"
+
 #define RXf_PMf_STD_PMMOD	(RXf_PMf_MULTILINE|RXf_PMf_SINGLELINE|RXf_PMf_FOLD|RXf_PMf_EXTENDED)
-#define RXf_PMf_COMPILETIME	(RXf_PMf_MULTILINE|RXf_PMf_SINGLELINE|RXf_PMf_LOCALE|RXf_PMf_FOLD|RXf_PMf_EXTENDED|RXf_PMf_KEEPCOPY)
 
 #define CASE_STD_PMMOD_FLAGS_PARSE_SET(pmfl)                        \
     case IGNORE_PAT_MOD:    *(pmfl) |= RXf_PMf_FOLD;       break;   \
@@ -250,13 +242,18 @@ and check for NULL.
     case SINGLE_PAT_MOD:    *(pmfl) |= RXf_PMf_SINGLELINE; break;   \
     case XTENDED_PAT_MOD:   *(pmfl) |= RXf_PMf_EXTENDED;   break
 
+/* Note, includes charset ones, assumes 0 is the default for them */
+#define STD_PMMOD_FLAGS_CLEAR(pmfl)                        \
+    *(pmfl) &= ~(RXf_PMf_FOLD|RXf_PMf_MULTILINE|RXf_PMf_SINGLELINE|RXf_PMf_EXTENDED|RXf_PMf_CHARSET)
+
 /* chars and strings used as regex pattern modifiers
- * Singlular is a 'c'har, plural is a "string"
+ * Singular is a 'c'har, plural is a "string"
  *
  * NOTE, KEEPCOPY was originally 'k', but was changed to 'p' for preserve
  * for compatibility reasons with Regexp::Common which highjacked (?k:...)
  * for its own uses. So 'k' is out as well.
  */
+#define DEFAULT_PAT_MOD      '^'    /* Short for all the default modifiers */
 #define EXEC_PAT_MOD         'e'
 #define KEEPCOPY_PAT_MOD     'p'
 #define ONCE_PAT_MOD         'o'
@@ -266,79 +263,140 @@ and check for NULL.
 #define SINGLE_PAT_MOD       's'
 #define IGNORE_PAT_MOD       'i'
 #define XTENDED_PAT_MOD      'x'
+#define NONDESTRUCT_PAT_MOD  'r'
+#define LOCALE_PAT_MOD       'l'
+#define UNICODE_PAT_MOD      'u'
+#define DEPENDS_PAT_MOD      'd'
+#define ASCII_RESTRICT_PAT_MOD 'a'
 
 #define ONCE_PAT_MODS        "o"
 #define KEEPCOPY_PAT_MODS    "p"
 #define EXEC_PAT_MODS        "e"
 #define LOOP_PAT_MODS        "gc"
+#define NONDESTRUCT_PAT_MODS "r"
+#define LOCALE_PAT_MODS      "l"
+#define UNICODE_PAT_MODS     "u"
+#define DEPENDS_PAT_MODS     "d"
+#define ASCII_RESTRICT_PAT_MODS "a"
+#define ASCII_MORE_RESTRICT_PAT_MODS "aa"
 
+/* This string is expected by regcomp.c to be ordered so that the first
+ * character is the flag in bit RXf_PMf_STD_PMMOD_SHIFT of extflags; the next
+ * character is bit +1, etc. */
 #define STD_PAT_MODS        "msix"
 
+#define CHARSET_PAT_MODS    ASCII_RESTRICT_PAT_MODS DEPENDS_PAT_MODS LOCALE_PAT_MODS UNICODE_PAT_MODS
+
+/* This string is expected by XS_re_regexp_pattern() in universal.c to be ordered
+ * so that the first character is the flag in bit RXf_PMf_STD_PMMOD_SHIFT of
+ * extflags; the next character is in bit +1, etc. */
 #define INT_PAT_MODS    STD_PAT_MODS    KEEPCOPY_PAT_MODS
 
 #define EXT_PAT_MODS    ONCE_PAT_MODS   KEEPCOPY_PAT_MODS
-#define QR_PAT_MODS     STD_PAT_MODS    EXT_PAT_MODS
+#define QR_PAT_MODS     STD_PAT_MODS    EXT_PAT_MODS	   CHARSET_PAT_MODS
 #define M_PAT_MODS      QR_PAT_MODS     LOOP_PAT_MODS
-#define S_PAT_MODS      M_PAT_MODS      EXEC_PAT_MODS
+#define S_PAT_MODS      M_PAT_MODS      EXEC_PAT_MODS      NONDESTRUCT_PAT_MODS
 
 /*
- * NOTE: if you modify any RXf flags you should run regen.pl or regcomp.pl
- * so that regnodes.h is updated with the changes.
+ * NOTE: if you modify any RXf flags you should run regen.pl or
+ * regen/regcomp.pl so that regnodes.h is updated with the changes.
  *
  */
 
+/* Leave some space, so future bit allocations can go either in the shared or
+ * unshared area without affecting binary compatibility */
+#define RXf_BASE_SHIFT (_RXf_PMf_SHIFT_NEXT+1)
+
+/* Manually decorate this function with gcc-style attributes just to
+ * avoid having to restructure the header files and their called order,
+ * as proto.h would have to be included before this file, and isn't */
+
+PERL_STATIC_INLINE const char *
+get_regex_charset_name(const U32 flags, STRLEN* const lenp)
+    __attribute__warn_unused_result__;
+
+#define MAX_CHARSET_NAME_LENGTH 2
+
+PERL_STATIC_INLINE const char *
+get_regex_charset_name(const U32 flags, STRLEN* const lenp)
+{
+    /* Returns a string that corresponds to the name of the regex character set
+     * given by 'flags', and *lenp is set the length of that string, which
+     * cannot exceed MAX_CHARSET_NAME_LENGTH characters */
+
+    *lenp = 1;
+    switch (get_regex_charset(flags)) {
+        case REGEX_DEPENDS_CHARSET: return DEPENDS_PAT_MODS;
+        case REGEX_LOCALE_CHARSET:  return LOCALE_PAT_MODS;
+        case REGEX_UNICODE_CHARSET: return UNICODE_PAT_MODS;
+	case REGEX_ASCII_RESTRICTED_CHARSET: return ASCII_RESTRICT_PAT_MODS;
+	case REGEX_ASCII_MORE_RESTRICTED_CHARSET:
+	    *lenp = 2;
+	    return ASCII_MORE_RESTRICT_PAT_MODS;
+        default:
+	    return "?";	    /* Unknown */
+    }
+}
+
 /* Anchor and GPOS related stuff */
-#define RXf_ANCH_BOL    	0x00000100
-#define RXf_ANCH_MBOL   	0x00000200
-#define RXf_ANCH_SBOL   	0x00000400
-#define RXf_ANCH_GPOS   	0x00000800
-#define RXf_GPOS_SEEN   	0x00001000
-#define RXf_GPOS_FLOAT  	0x00002000
+#define RXf_ANCH_BOL    	(1<<(RXf_BASE_SHIFT+0))
+#define RXf_ANCH_MBOL   	(1<<(RXf_BASE_SHIFT+1))
+#define RXf_ANCH_SBOL   	(1<<(RXf_BASE_SHIFT+2))
+#define RXf_ANCH_GPOS   	(1<<(RXf_BASE_SHIFT+3))
+#define RXf_GPOS_SEEN   	(1<<(RXf_BASE_SHIFT+4))
+#define RXf_GPOS_FLOAT  	(1<<(RXf_BASE_SHIFT+5))
 /* two bits here */
 #define RXf_ANCH        	(RXf_ANCH_BOL|RXf_ANCH_MBOL|RXf_ANCH_GPOS|RXf_ANCH_SBOL)
 #define RXf_GPOS_CHECK          (RXf_GPOS_SEEN|RXf_ANCH_GPOS)
 #define RXf_ANCH_SINGLE         (RXf_ANCH_SBOL|RXf_ANCH_GPOS)
 
 /* What we have seen */
-#define RXf_LOOKBEHIND_SEEN	0x00004000
-#define RXf_EVAL_SEEN   	0x00008000
-#define RXf_CANY_SEEN   	0x00010000
+#define RXf_LOOKBEHIND_SEEN	(1<<(RXf_BASE_SHIFT+6))
+#define RXf_EVAL_SEEN   	(1<<(RXf_BASE_SHIFT+7))
+#define RXf_CANY_SEEN   	(1<<(RXf_BASE_SHIFT+8))
 
 /* Special */
-#define RXf_NOSCAN      	0x00020000
-#define RXf_CHECK_ALL   	0x00040000
+#define RXf_NOSCAN      	(1<<(RXf_BASE_SHIFT+9))
+#define RXf_CHECK_ALL   	(1<<(RXf_BASE_SHIFT+10))
 
 /* UTF8 related */
-#define RXf_MATCH_UTF8  	0x00100000
+#define RXf_MATCH_UTF8  	(1<<(RXf_BASE_SHIFT+11))
 
 /* Intuit related */
-#define RXf_USE_INTUIT_NOML	0x00200000
-#define RXf_USE_INTUIT_ML	0x00400000
-#define RXf_INTUIT_TAIL 	0x00800000
+#define RXf_USE_INTUIT_NOML	(1<<(RXf_BASE_SHIFT+12))
+#define RXf_USE_INTUIT_ML	(1<<(RXf_BASE_SHIFT+13))
+#define RXf_INTUIT_TAIL 	(1<<(RXf_BASE_SHIFT+14))
 
 /*
   Set in Perl_pmruntime if op_flags & OPf_SPECIAL, i.e. split. Will
   be used by regex engines to check whether they should set
   RXf_SKIPWHITE
 */
-#define RXf_SPLIT		0x01000000
+#define RXf_SPLIT		(1<<(RXf_BASE_SHIFT+15))
 
 #define RXf_USE_INTUIT		(RXf_USE_INTUIT_NOML|RXf_USE_INTUIT_ML)
 
 /* Copy and tainted info */
-#define RXf_COPY_DONE   	0x02000000
-#define RXf_TAINTED_SEEN	0x04000000
-#define RXf_TAINTED		0x08000000 /* this pattern is tainted */
+#define RXf_COPY_DONE   	(1<<(RXf_BASE_SHIFT+16))
+
+/* during execution: pattern temporarily tainted by executing locale ops;
+ * post-execution: $1 et al are tainted */
+#define RXf_TAINTED_SEEN	(1<<(RXf_BASE_SHIFT+17))
+/* this pattern was tainted during compilation */
+#define RXf_TAINTED		(1<<(RXf_BASE_SHIFT+18))
 
 /* Flags indicating special patterns */
-#define RXf_START_ONLY		0x10000000 /* Pattern is /^/ */
-#define RXf_SKIPWHITE		0x20000000 /* Pattern is for a split / / */
-#define RXf_WHITE		0x40000000 /* Pattern is /\s+/ */
-#define RXf_NULL		0x80000000 /* Pattern is // */
+#define RXf_START_ONLY		(1<<(RXf_BASE_SHIFT+19)) /* Pattern is /^/ */
+#define RXf_SKIPWHITE		(1<<(RXf_BASE_SHIFT+20)) /* Pattern is for a split / / */
+#define RXf_WHITE		(1<<(RXf_BASE_SHIFT+21)) /* Pattern is /\s+/ */
+#define RXf_NULL		(1U<<(RXf_BASE_SHIFT+22)) /* Pattern is // */
+#if RXf_BASE_SHIFT+22 > 31
+#   error Too many RXf_PMf bits used.  See regnodes.h for any spare in middle
+#endif
 
 /*
- * NOTE: if you modify any RXf flags you should run regen.pl or regcomp.pl
- * so that regnodes.h is updated with the changes.
+ * NOTE: if you modify any RXf flags you should run regen.pl or
+ * regen/regcomp.pl so that regnodes.h is updated with the changes.
  *
  */
 
@@ -424,7 +482,7 @@ and check for NULL.
 
 #endif /* PLUGGABLE_RE_EXTENSION */
 
-/* Stuff that needs to be included in the plugable extension goes below here */
+/* Stuff that needs to be included in the pluggable extension goes below here */
 
 #ifdef PERL_OLD_COPY_ON_WRITE
 #define RX_MATCH_COPY_FREE(rx) \
@@ -490,13 +548,6 @@ and check for NULL.
 
 #define FBMrf_MULTILINE	1
 
-/* an accepting state/position*/
-struct _reg_trie_accepted {
-    U8   *endpos;
-    U16  wordnum;
-};
-typedef struct _reg_trie_accepted reg_trie_accepted;
-
 /* some basic information about the current match that is created by
  * Perl_regexec_flags and then passed to regtry(), regmatch() etc */
 
@@ -557,11 +608,15 @@ typedef struct regmatch_state {
 	    U32 lastparen;
 	    CHECKPOINT cp;
 
-	    reg_trie_accepted *accept_buff; /* accepting states we have seen */
-	    U32		accepted; /* how many accepting states we have seen */
+	    U32		accepted; /* how many accepting states left */
 	    U16         *jump;  /* positive offsets from me */
 	    regnode	*B;	/* node following the trie */
 	    regnode	*me;	/* Which node am I - needed for jump tries*/
+	    U8		*firstpos;/* pos in string of first trie match */
+	    U32		firstchars;/* len in chars of firstpos from start */
+	    U16		nextword;/* next word to try */
+	    U16		topword; /* longest accepted word */
+	    bool	longfold;/* saw a fold with a 1->n char mapping */
 	} trie;
 
         /* special types - these members are used to store state for special
@@ -607,12 +662,11 @@ typedef struct regmatch_state {
 	    /* this first element must match u.yes */
 	    struct regmatch_state *prev_yes_state;
 	    struct regmatch_state *prev_curlyx; /* previous cur_curlyx */
-	    regnode	*A, *B;	/* the nodes corresponding to /A*B/  */
+	    regnode	*me;	/* the CURLYX node  */
+	    regnode	*B;	/* the B node in /A*B/  */
 	    CHECKPOINT	cp;	/* remember current savestack index */
 	    bool	minmod;
 	    int		parenfloor;/* how far back to strip paren data */
-	    int		min;	/* the minimal number of A's to match */
-	    int		max;	/* the maximal number of A's to match */
 
 	    /* these two are modified by WHILEM */
 	    int		count;	/* how many instances of A we've matched */

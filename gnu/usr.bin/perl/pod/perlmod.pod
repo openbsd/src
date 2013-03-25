@@ -66,7 +66,7 @@ main, but we decided it was more useful for package writers to be able
 to use leading underscore to indicate private variables and method names.
 However, variables and functions named with a single C<_>, such as
 $_ and C<sub _>, are still forced into the package C<main>.  See also
-L<perlvar/"Technical Note on the Syntax of Variable Names">.
+L<perlvar/"The Syntax of Variable Names">.
 
 C<eval>ed strings are compiled in the package in which the eval() was
 compiled.  (Assignments to C<$SIG{}>, however, assume the signal
@@ -101,6 +101,10 @@ use the C<*name> typeglob notation.
 You can use this to print out all the variables in a package, for
 instance.  The standard but antiquated F<dumpvar.pl> library and
 the CPAN module Devel::Symdump make use of this.
+
+The results of creating new symbol table entries directly or modifying any
+entries that are not already typeglobs are undefined and subject to change
+between releases of perl.
 
 Assignment to a typeglob performs an aliasing operation, i.e.,
 
@@ -294,6 +298,9 @@ value of the program.  Beware of changing C<$?> by accident (e.g. by
 running something via C<system>).
 X<$?>
 
+Inside of a C<END> block, the value of C<${^GLOBAL_PHASE}> will be
+C<"END">.
+
 C<UNITCHECK>, C<CHECK> and C<INIT> code blocks are useful to catch the
 transition between the compilation phase and the execution phase of
 the main program.
@@ -304,17 +311,25 @@ compilation units, as are string C<eval>s, code compiled using the
 C<(?{ })> construct in a regex, calls to C<do FILE>, C<require FILE>,
 and code after the C<-e> switch on the command line.
 
+C<BEGIN> and C<UNITCHECK> blocks are not directly related to the phase of
+the interpreter.  They can be created and executed during any phase.
+
 C<CHECK> code blocks are run just after the B<initial> Perl compile phase ends
 and before the run time begins, in LIFO order.  C<CHECK> code blocks are used
 in the Perl compiler suite to save the compiled state of the program.
 
+Inside of a C<CHECK> block, the value of C<${^GLOBAL_PHASE}> will be
+C<"CHECK">.
+
 C<INIT> blocks are run just before the Perl runtime begins execution, in
 "first in, first out" (FIFO) order.
 
-The C<CHECK> and C<INIT> code blocks will not be executed inside a string
-eval(), if that eval() happens after the end of the main compilation
-phase; that can be a problem in mod_perl and other persistent environments
-which use C<eval STRING> to load code at runtime.
+Inside of an C<INIT> block, the value of C<${^GLOBAL_PHASE}> will be C<"INIT">.
+
+The C<CHECK> and C<INIT> blocks in code compiled by C<require>, string C<do>,
+or string C<eval> will not be executed if they occur after the end of the
+main compilation phase; that can be a problem in mod_perl and other persistent
+environments which use those functions to load code at runtime.
 
 When you use the B<-n> and B<-p> switches to Perl, C<BEGIN> and
 C<END> work just as they do in B<awk>, as a degenerate case.
@@ -366,7 +381,7 @@ package may also derive some of its methods from another class (package)
 by listing the other package name(s) in its global @ISA array (which
 must be a package global, not a lexical).
 
-For more on this, see L<perltoot> and L<perlobj>.
+For more on this, see L<perlootut> and L<perlobj>.
 
 =head2 Perl Modules
 X<module>
@@ -389,65 +404,50 @@ create a file called F<Some/Module.pm> and start with this template:
     use warnings;
 
     BEGIN {
-        use Exporter   ();
-        our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
+        require Exporter;
 
         # set the version for version checking
-        $VERSION     = 1.00;
-        # if using RCS/CVS, this may be preferred
-        $VERSION = sprintf "%d.%03d", q$Revision: 1.1 $ =~ /(\d+)/g;
+        our $VERSION     = 1.00;
 
-        @ISA         = qw(Exporter);
-        @EXPORT      = qw(&func1 &func2 &func4);
-        %EXPORT_TAGS = ( );     # eg: TAG => [ qw!name1 name2! ],
+        # Inherit from Exporter to export functions and variables
+        our @ISA         = qw(Exporter);
 
-        # your exported package globals go here,
-        # as well as any optionally exported functions
-        @EXPORT_OK   = qw($Var1 %Hashit &func3);
+        # Functions and variables which are exported by default
+        our @EXPORT      = qw(func1 func2);
+
+        # Functions and variables which can be optionally exported
+        our @EXPORT_OK   = qw($Var1 %Hashit func3);
     }
-    our @EXPORT_OK;
 
     # exported package globals go here
-    our $Var1;
-    our %Hashit;
+    our $Var1    = '';
+    our %Hashit  = ();
 
     # non-exported package globals go here
-    our @more;
-    our $stuff;
+    # (they are still accessible as $Some::Module::stuff)
+    our @more    = ();
+    our $stuff   = '';
 
-    # initialize package globals, first exported ones
-    $Var1   = '';
-    %Hashit = ();
-
-    # then the others (which are still accessible as $Some::Module::stuff)
-    $stuff  = '';
-    @more   = ();
-
-    # all file-scoped lexicals must be created before
-    # the functions below that use them.
-
-    # file-private lexicals go here
+    # file-private lexicals go here, before any functions which use them
     my $priv_var    = '';
     my %secret_hash = ();
 
     # here's a file-private function as a closure,
-    # callable as &$priv_func;  it cannot be prototyped.
+    # callable as $priv_func->();
     my $priv_func = sub {
-        # stuff goes here.
+        ...
     };
 
     # make all your functions, whether exported or not;
     # remember to put something interesting in the {} stubs
-    sub func1      {}    # no prototype
-    sub func2()    {}    # proto'd void
-    sub func3($$)  {}    # proto'd to 2 scalars
+    sub func1      { ... }
+    sub func2      { ... }
 
-    # this one isn't exported, but could be called!
-    sub func4(\%)  {}    # proto'd to 1 hash ref
+    # this one isn't exported, but could be called directly
+    # as Some::Module::func3()
+    sub func3      { ... }
 
-    END { }       # module clean-up code here (global destructor)
-
-    ## YOUR CODE GOES HERE
+    END { ... }       # module clean-up code here (global destructor)
 
     1;  # don't forget to return a true value from the file
 
@@ -465,11 +465,11 @@ or
 
 This is exactly equivalent to
 
-    BEGIN { require Module; import Module; }
+    BEGIN { require 'Module.pm'; 'Module'->import; }
 
 or
 
-    BEGIN { require Module; import Module LIST; }
+    BEGIN { require 'Module.pm'; 'Module'->import( LIST ); }
 
 As a special case
 
@@ -477,7 +477,7 @@ As a special case
 
 is exactly equivalent to
 
-    BEGIN { require Module; }
+    BEGIN { require 'Module.pm'; }
 
 All Perl module files have the extension F<.pm>.  The C<use> operator
 assumes this so you don't have to spell out "F<Module.pm>" in quotes.
@@ -576,7 +576,7 @@ For example: if in the parent there are two references to a single blessed
 hash, then in the child there will be two references to a single undefined
 scalar value instead.
 This provides a simple mechanism for making a module threadsafe; just add
-C<sub CLONE_SKIP { 1 }> at the top of the class, and C<DESTROY()> will be
+C<sub CLONE_SKIP { 1 }> at the top of the class, and C<DESTROY()> will
 now only be called once per object. Of course, if the child thread needs
 to make use of the objects, then a more sophisticated approach is
 needed.
@@ -591,7 +591,7 @@ C<1> value.
 See L<perlmodlib> for general style issues related to building Perl
 modules and classes, as well as descriptions of the standard library
 and CPAN, L<Exporter> for how Perl's standard import/export mechanism
-works, L<perltoot> and L<perltooc> for an in-depth tutorial on
+works, L<perlootut> and L<perlobj> for in-depth information on
 creating classes, L<perlobj> for a hard-core reference document on
 objects, L<perlsub> for an explanation of functions and scoping,
 and L<perlxstut> and L<perlguts> for more information on writing

@@ -49,15 +49,21 @@
 #define SAVEt_BOOL		38
 #define SAVEt_SET_SVFLAGS	39
 #define SAVEt_SAVESWITCHSTACK	40
-#define SAVEt_COP_ARYBASE	41
 #define SAVEt_RE_STATE		42
 #define SAVEt_COMPILE_WARNINGS	43
 #define SAVEt_STACK_CXPOS	44
 #define SAVEt_PARSER		45
 #define SAVEt_ADELETE		46
+#define SAVEt_I32_SMALL		47
+#define SAVEt_INT_SMALL		48
+#define SAVEt_GVSV		49
+#define SAVEt_FREECOPHH		50
 
 #define SAVEf_SETMAGIC		1
 #define SAVEf_KEEPOLDELEM	2
+
+#define SAVE_TIGHT_SHIFT	6
+#define SAVE_MASK		0x3F
 
 #define save_aelem(av,idx,sptr)	save_aelem_flags(av,idx,sptr,SAVEf_SETMAGIC)
 #define save_helem(hv,key,sptr)	save_helem_flags(hv,key,sptr,SAVEf_SETMAGIC)
@@ -72,6 +78,7 @@
 #define SSPUSHLONG(i) (PL_savestack[PL_savestack_ix++].any_long = (long)(i))
 #define SSPUSHBOOL(p) (PL_savestack[PL_savestack_ix++].any_bool = (p))
 #define SSPUSHIV(i) (PL_savestack[PL_savestack_ix++].any_iv = (IV)(i))
+#define SSPUSHUV(u) (PL_savestack[PL_savestack_ix++].any_uv = (UV)(u))
 #define SSPUSHPTR(p) (PL_savestack[PL_savestack_ix++].any_ptr = (void*)(p))
 #define SSPUSHDPTR(p) (PL_savestack[PL_savestack_ix++].any_dptr = (p))
 #define SSPUSHDXPTR(p) (PL_savestack[PL_savestack_ix++].any_dxptr = (p))
@@ -79,6 +86,7 @@
 #define SSPOPLONG (PL_savestack[--PL_savestack_ix].any_long)
 #define SSPOPBOOL (PL_savestack[--PL_savestack_ix].any_bool)
 #define SSPOPIV (PL_savestack[--PL_savestack_ix].any_iv)
+#define SSPOPUV (PL_savestack[--PL_savestack_ix].any_uv)
 #define SSPOPPTR (PL_savestack[--PL_savestack_ix].any_ptr)
 #define SSPOPDPTR (PL_savestack[--PL_savestack_ix].any_dptr)
 #define SSPOPDXPTR (PL_savestack[--PL_savestack_ix].any_dxptr)
@@ -162,7 +170,7 @@ scope has the given name. Name must be a literal string.
 #define SAVEINT(i)	save_int((int*)&(i))
 #define SAVEIV(i)	save_iv((IV*)&(i))
 #define SAVELONG(l)	save_long((long*)&(l))
-#define SAVEBOOL(b)	save_bool((bool*)&(b))
+#define SAVEBOOL(b)	save_bool(&(b))
 #define SAVESPTR(s)	save_sptr((SV**)&(s))
 #define SAVEPPTR(s)	save_pptr((char**)&(s))
 #define SAVEVPTR(s)	save_vptr((void*)&(s))
@@ -176,6 +184,7 @@ scope has the given name. Name must be a literal string.
 #define SAVEGENERICPV(s)	save_generic_pvref((char**)&(s))
 #define SAVESHAREDPV(s)		save_shared_pvref((char**)&(s))
 #define SAVESETSVFLAGS(sv,mask,val)	save_set_svflags(sv,mask,val)
+#define SAVEFREECOPHH(h)	save_pushptr((void *)(h), SAVEt_FREECOPHH)
 #define SAVEDELETE(h,k,l) \
 	  save_delete(MUTABLE_HV(h), (char*)(k), (I32)(l))
 #define SAVEHDELETE(h,s) \
@@ -192,7 +201,7 @@ scope has the given name. Name must be a literal string.
     STMT_START {				\
 	SSCHECK(2);				\
 	SSPUSHINT(PL_stack_sp - PL_stack_base);	\
-	SSPUSHINT(SAVEt_STACK_POS);		\
+	SSPUSHUV(SAVEt_STACK_POS);		\
     } STMT_END
 
 #define SAVEOP()	save_op()
@@ -208,8 +217,6 @@ scope has the given name. Name must be a literal string.
 	PL_curstackinfo->si_stack = (t);		\
     } STMT_END
 
-#define SAVECOPARYBASE(c) save_pushi32ptr(CopARYBASE_get(c), c, SAVEt_COP_ARYBASE);
-
 /* Need to do the cop warnings like this, rather than a "SAVEFREESHAREDPV",
    because realloc() means that the value can actually change. Possibly
    could have done savefreesharedpvREF, but this way actually seems cleaner,
@@ -222,14 +229,16 @@ scope has the given name. Name must be a literal string.
         SSCHECK(3);                               \
         SSPUSHINT(cxstack[cxstack_ix].blk_oldsp); \
         SSPUSHINT(cxstack_ix);                    \
-        SSPUSHINT(SAVEt_STACK_CXPOS);             \
+        SSPUSHUV(SAVEt_STACK_CXPOS);              \
     } STMT_END
 
 #define SAVEPARSER(p) save_pushptr((p), SAVEt_PARSER)
 
 #ifdef USE_ITHREADS
-#  define SAVECOPSTASH(c)	SAVEPPTR(CopSTASHPV(c))
-#  define SAVECOPSTASH_FREE(c)	SAVESHAREDPV(CopSTASHPV(c))
+#  define SAVECOPSTASH(c)	(SAVEPPTR(CopSTASHPV(c)), \
+				 SAVEI32(CopSTASH_len(c)))
+#  define SAVECOPSTASH_FREE(c)	(SAVESHAREDPV(CopSTASHPV(c)), \
+	                         SAVEI32(CopSTASH_len(c)))
 #  define SAVECOPFILE(c)	SAVEPPTR(CopFILE(c))
 #  define SAVECOPFILE_FREE(c)	SAVESHAREDPV(CopFILE(c))
 #else
@@ -246,7 +255,7 @@ scope has the given name. Name must be a literal string.
  * pointer would get broken if the savestack is moved on reallocation.
  * SSNEWa() works like SSNEW(), but also aligns the data to the specified
  * number of bytes.  MEM_ALIGNBYTES is perhaps the most useful.  The
- * alignment will be preserved therough savestack reallocation *only* if
+ * alignment will be preserved through savestack reallocation *only* if
  * realloc returns data aligned to a size divisible by "align"!
  *
  * SSPTR() converts the index returned by SSNEW/SSNEWa() into a pointer.

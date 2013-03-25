@@ -19,7 +19,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Module::Checksums - distribution checksum validation
+CPANPLUS::Module::Checksums - checking the checksum of a distribution
 
 =head1 SYNOPSIS
 
@@ -28,7 +28,7 @@ CPANPLUS::Module::Checksums - distribution checksum validation
 
 =head1 DESCRIPTION
 
-This is a class that provides functions for checking the checksum 
+This is a class that provides functions for checking the checksum
 of a distribution. Should not be loaded directly, but used via the
 interface provided via C<CPANPLUS::Module>.
 
@@ -75,7 +75,7 @@ sub _validate_checksum {
 
     ### if we can't check it, we must assume it's ok ###
     return $self->status->checksum_ok(1)
-            unless can_load( modules => { 'Digest::MD5' => '0.0' } );
+            unless can_load( modules => { 'Digest::SHA' => '0.0' } );
     #class CPANPLUS::Module::Status is runtime-generated
 
     my $file = $self->_get_checksums_file( verbose => $verbose ) or (
@@ -102,30 +102,31 @@ sub _validate_checksum {
     } else {
         msg(loc("Archive size is not known for '%1'",$self->package),$verbose);
     }
-    
-    my $md5 = $href->{ $self->package }->{'md5'};
 
-    unless( defined $md5 ) {
-        msg(loc("No 'md5' checksum known for '%1'",$self->package),$verbose);
+    my $sha = $href->{ $self->package }->{'sha256'};
+
+    unless( defined $sha ) {
+        msg(loc("No 'sha256' checksum known for '%1'",$self->package),$verbose);
 
         return $self->status->checksum_ok(1);
     }
 
-    $self->status->checksum_value($md5);
+    $self->status->checksum_value($sha);
 
 
     my $fh = FileHandle->new( $self->status->fetch ) or return;
     binmode $fh;
 
-    my $ctx = Digest::MD5->new;
+    my $ctx = Digest::SHA->new(256);
     $ctx->addfile( $fh );
 
-    my $flag = $ctx->hexdigest eq $md5;
+    my $hexdigest = $ctx->hexdigest;
+    my $flag = $hexdigest eq $sha;
     $flag
         ? msg(loc("Checksum matches for '%1'", $self->package),$verbose)
         : error(loc("Checksum does not match for '%1': " .
-                    "MD5 is '%2' but should be '%3'",
-                    $self->package, $ctx->hexdigest, $md5),$verbose);
+                    "SHA256 is '%2' but should be '%3'",
+                    $self->package, $hexdigest, $sha),$verbose);
 
 
     return $self->status->checksum_ok(1) if $flag;

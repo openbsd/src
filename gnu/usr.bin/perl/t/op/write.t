@@ -61,7 +61,7 @@ for my $tref ( @NumTests ){
 my $bas_tests = 20;
 
 # number of tests in section 3
-my $bug_tests = 4 + 3 * 3 * 5 * 2 * 3 + 2 + 1 + 1;
+my $bug_tests = 4 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 4 + 2 + 3;
 
 # number of tests in section 4
 my $hmb_tests = 35;
@@ -95,7 +95,7 @@ now @<<the@>>>> for all@|||||men to come @<<<<
 .
 
 open(OUT, '>Op_write.tmp') || die "Can't create Op_write.tmp";
-END { 1 while unlink 'Op_write.tmp' }
+END { unlink_all 'Op_write.tmp' }
 
 $fox = 'foxiness';
 $good = 'good';
@@ -115,7 +115,7 @@ the course
 of huma...
 now is the time for all good men to come to\n";
 
-is cat('Op_write.tmp'), $right and do { 1 while unlink 'Op_write.tmp'; };
+is cat('Op_write.tmp'), $right and unlink_all 'Op_write.tmp';
 
 $fox = 'wolfishness';
 my $fox = 'foxiness';		# Test a lexical variable.
@@ -154,7 +154,7 @@ becomes
 necessary
 now is the time for all good men to come to\n";
 
-is cat('Op_write.tmp'), $right and do { 1 while unlink 'Op_write.tmp'; };
+is cat('Op_write.tmp'), $right and unlink_all 'Op_write.tmp';
 
 eval <<'EOFORMAT';
 format OUT2 =
@@ -195,7 +195,7 @@ becomes
 necessary
 now is the time for all good men to come to\n";
 
-is cat('Op_write.tmp'), $right and do { 1 while unlink 'Op_write.tmp' };
+is cat('Op_write.tmp'), $right and unlink_all 'Op_write.tmp';
 
 # formline tests
 
@@ -248,7 +248,7 @@ close OUT3 or die "Could not close: $!";
 $right =
 "fit\n";
 
-is cat('Op_write.tmp'), $right and do { 1 while unlink 'Op_write.tmp' };
+is cat('Op_write.tmp'), $right and unlink_all 'Op_write.tmp';
 
 
 # test lexicals and globals
@@ -276,7 +276,7 @@ format OUT4 =
 open   OUT4, ">Op_write.tmp" or die "Can't create Op_write.tmp";
 write (OUT4);
 close  OUT4 or die "Could not close: $!";
-is cat('Op_write.tmp'), "1\n" and do { 1 while unlink "Op_write.tmp" };
+is cat('Op_write.tmp'), "1\n" and unlink_all "Op_write.tmp";
 
 eval <<'EOFORMAT';
 format OUT10 =
@@ -293,7 +293,7 @@ write(OUT10);
 close OUT10 or die "Could not close: $!";
 
 $right = "   12.95 00012.95\n";
-is cat('Op_write.tmp'), $right and do { 1 while unlink 'Op_write.tmp' };
+is cat('Op_write.tmp'), $right and unlink_all 'Op_write.tmp';
 
 eval <<'EOFORMAT';
 format OUT11 =
@@ -316,7 +316,7 @@ $right =
 "00012.95
 1 0#
 10 #\n";
-is cat('Op_write.tmp'), $right and do { 1 while unlink 'Op_write.tmp' };
+is cat('Op_write.tmp'), $right and unlink_all 'Op_write.tmp';
 
 {
     my $test = curr_test();
@@ -542,9 +542,13 @@ for my $tref ( @NumTests ){
 			  "$base\nMoo!\n",) {
 	foreach (['^*', qr/(.+)/], ['@*', qr/(.*?)$/s]) {
 	  my ($format, $re) = @$_;
+	  $format = "1^*2 3${format}4";
 	  foreach my $class ('', 'Count') {
-	    my $name = "$first, $second $format $class";
+	    my $name = qq{swrite("$format", "$first", "$second") class="$class"};
 	    $name =~ s/\n/\\n/g;
+	    $name =~ s{(.)}{
+			ord($1) > 126 ? sprintf("\\x{%x}",ord($1)) : $1
+		    }ge;
 
 	    $first =~ /(.+)/ or die $first;
 	    my $expect = "1${1}2";
@@ -555,12 +559,12 @@ for my $tref ( @NumTests ){
 	      my $copy1 = $first;
 	      my $copy2;
 	      tie $copy2, $class, $second;
-	      is swrite("1^*2 3${format}4", $copy1, $copy2), $expect, $name;
+	      is swrite("$format", $copy1, $copy2), $expect, $name;
 	      my $obj = tied $copy2;
 	      is $obj->[1], 1, 'value read exactly once';
 	    } else {
 	      my ($copy1, $copy2) = ($first, $second);
-	      is swrite("1^*2 3${format}4", $copy1, $copy2), $expect, $name;
+	      is swrite("$format", $copy1, $copy2), $expect, $name;
 	    }
 	  }
 	}
@@ -589,7 +593,7 @@ $test
 .
 
 
-# [ID 20020227.005] format bug with undefined _TOP
+# RT #8698 format bug with undefined _TOP
 
 open STDOUT_DUP, ">&STDOUT";
 my $oldfh = select STDOUT_DUP;
@@ -598,10 +602,7 @@ $= = 10;
   local $~ = "Comment";
   write;
   curr_test($test + 1);
-  {
-    local $::TODO = '[ID 20020227.005] format bug with undefined _TOP';
-    is $-, 9;
-  }
+  is $-, 9;
   is $^, "STDOUT_DUP_TOP";
 }
 select $oldfh;
@@ -609,6 +610,154 @@ close STDOUT_DUP;
 
 *CmT =  *{$::{Comment}}{FORMAT};
 ok  defined *{$::{CmT}}{FORMAT}, "glob assign";
+
+
+# RT #91032: Check that "non-real" strings like tie and overload work,
+# especially that they re-compile the pattern on each FETCH, and that
+# they don't overrun the buffer
+
+
+{
+    package RT91032;
+
+    sub TIESCALAR { bless [] }
+    my $i = 0;
+    sub FETCH { $i++; "A$i @> Z\n" }
+
+    use overload '""' => \&FETCH;
+
+    tie my $f, 'RT91032';
+
+    formline $f, "a";
+    formline $f, "bc";
+    ::is $^A, "A1  a Z\nA2 bc Z\n", "RT 91032: tied";
+    $^A = '';
+
+    my $g = bless []; # has overloaded stringify
+    formline $g, "de";
+    formline $g, "f";
+    ::is $^A, "A3 de Z\nA4  f Z\n", "RT 91032: overloaded";
+    $^A = '';
+
+    my $h = [];
+    formline $h, "junk1";
+    formline $h, "junk2";
+    ::is ref($h), 'ARRAY', "RT 91032: array ref still a ref";
+    ::like "$h", qr/^ARRAY\(0x[0-9a-f]+\)$/, "RT 91032: array stringifies ok";
+    ::is $^A, "$h$h","RT 91032: stringified array";
+    $^A = '';
+
+    # used to overwrite the ~~ in the *original SV with spaces. Naughty!
+
+    my $orig = my $format = "^<<<<< ~~\n";
+    my $abc = "abc";
+    formline $format, $abc;
+    $^A ='';
+    ::is $format, $orig, "RT91032: don't overwrite orig format string";
+
+    # check that ~ and ~~ are displayed correctly as whitespace,
+    # under the influence of various different types of border
+
+    for my $n (1,2) {
+	for my $lhs (' ', 'Y', '^<<<', '^|||', '^>>>') {
+	    for my $rhs ('', ' ', 'Z', '^<<<', '^|||', '^>>>') {
+		my $fmt = "^<B$lhs" . ('~' x $n) . "$rhs\n";
+		my $sfmt = ($fmt =~ s/~/ /gr);
+		my ($a, $bc, $stop);
+		($a, $bc, $stop) = ('a', 'bc', 's');
+		# $stop is to stop '~~' deleting the whole line
+		formline $sfmt, $stop, $a, $bc;
+		my $exp = $^A;
+		$^A = '';
+		($a, $bc, $stop) = ('a', 'bc', 's');
+		formline $fmt, $stop, $a, $bc;
+		my $got = $^A;
+		$^A = '';
+		$fmt =~ s/\n/\\n/;
+		::is($got, $exp, "chop munging: [$fmt]");
+	    }
+	}
+    }
+}
+
+# check that '~  (delete current line if empty) works when
+# the target gets upgraded to uft8 (and re-allocated) midstream.
+
+{
+    my $format = "\x{100}@~\n"; # format is utf8
+    # this target is not utf8, but will expand (and get reallocated)
+    # when upgraded to utf8.
+    my $orig = "\x80\x81\x82";
+    local $^A = $orig;
+    my $empty = "";
+    formline $format, $empty;
+    is $^A , $orig, "~ and realloc";
+
+    # check similarly that trailing blank removal works ok
+
+    $format = "@<\n\x{100}"; # format is utf8
+    chop $format;
+    $orig = "   ";
+    $^A = $orig;
+    formline $format, "  ";
+    is $^A, "$orig\n", "end-of-line blanks and realloc";
+
+    # and check this doesn't overflow the buffer
+
+    local $^A = '';
+    $format = "@* @####\n";
+    $orig = "x" x 100 . "\n";
+    formline $format, $orig, 12345;
+    is $^A, ("x" x 100) . " 12345\n", "\@* doesn't overflow";
+
+    # make sure it can cope with formats > 64k
+
+    $format = 'x' x 65537;
+    $^A = '';
+    formline $format;
+    # don't use 'is' here, as the diag output will be too long!
+    ok $^A eq $format, ">64K";
+}
+
+
+SKIP: {
+    skip_if_miniperl('miniperl does not support scalario');
+    my $buf = "";
+    open my $fh, ">", \$buf;
+    my $old_fh = select $fh;
+    local $~ = "CmT";
+    write;
+    select $old_fh;
+    close $fh;
+    is $buf, "ok $test\n", "write to duplicated format";
+}
+
+format caret_A_test_TOP =
+T
+.
+
+format caret_A_test =
+L1
+L2
+L3
+L4
+.
+
+SKIP: {
+    skip_if_miniperl('miniperl does not support scalario');
+    my $buf = "";
+    open my $fh, ">", \$buf;
+    my $old_fh = select $fh;
+    local $^ = "caret_A_test_TOP";
+    local $~ = "caret_A_test";
+    local $= = 3;
+    local $^A = "A1\nA2\nA3\nA4\n";
+    write;
+    select $old_fh;
+    close $fh;
+    is $buf, "T\nA1\nA2\n\fT\nA3\nA4\n\fT\nL1\nL2\n\fT\nL3\nL4\n",
+		    "assign to ^A sets FmLINES";
+}
 
 fresh_perl_like(<<'EOP', qr/^Format STDOUT redefined at/, {stderr => 1}, '#64562 - Segmentation fault with redefined formats and warnings');
 #!./perl
@@ -625,6 +774,15 @@ format =
 .
 
 write;
+EOP
+
+fresh_perl_is(<<'EOP', ">ARRAY<\ncrunch_eth\n", {stderr => 1}, '#79532 - formline coerces its arguments');
+use strict;
+use warnings;
+my $zamm = ['crunch_eth'];
+formline $zamm;
+printf ">%s<\n", ref $zamm;
+print "$zamm->[0]\n";
 EOP
 
 #############################

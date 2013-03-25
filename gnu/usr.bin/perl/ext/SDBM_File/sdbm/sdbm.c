@@ -78,27 +78,27 @@ sdbm_open(register char *file, register int flags, register int mode)
 	register char *dirname;
 	register char *pagname;
 	size_t filelen;
-	const size_t dirfext_len = sizeof(DIRFEXT "");
-	const size_t pagfext_len = sizeof(PAGFEXT "");
+	const size_t dirfext_size = sizeof(DIRFEXT "");
+	const size_t pagfext_size = sizeof(PAGFEXT "");
 
 	if (file == NULL || !*file)
 		return errno = EINVAL, (DBM *) NULL;
 /*
- * need space for two seperate filenames
+ * need space for two separate filenames
  */
 	filelen = strlen(file);
 
-	if ((dirname = (char *) malloc(filelen + dirfext_len + 1
-				       + filelen + pagfext_len + 1)) == NULL)
+	if ((dirname = (char *) malloc(filelen + dirfext_size
+				       + filelen + pagfext_size)) == NULL)
 		return errno = ENOMEM, (DBM *) NULL;
 /*
  * build the file names
  */
 	memcpy(dirname, file, filelen);
-	memcpy(dirname + filelen, DIRFEXT, dirfext_len + 1);
-	pagname = dirname + filelen + dirfext_len + 1;
+	memcpy(dirname + filelen, DIRFEXT, dirfext_size);
+	pagname = dirname + filelen + dirfext_size;
 	memcpy(pagname, file, filelen);
-	memcpy(pagname + filelen, PAGFEXT, pagfext_len + 1);
+	memcpy(pagname + filelen, PAGFEXT, pagfext_size);
 
 	db = sdbm_prep(dirname, pagname, flags, mode);
 	free((char *) dirname);
@@ -306,7 +306,7 @@ makroom(register DBM *db, long int hash, int need)
 		newp = (hash & db->hmask) | (db->hmask + 1);
 
 /*
- * write delay, read avoidence/cache shuffle:
+ * write delay, read avoidance/cache shuffle:
  * select the page for incoming pair: if key is to go to the new page,
  * write out the previous one, and copy the new one over, thus making
  * it the current page. If not, simply write the new page, and we are

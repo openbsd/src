@@ -6,7 +6,7 @@ BEGIN {
 }
 
 require "test.pl";
-plan( tests => 31 );
+plan( tests => 32 );
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 
@@ -95,3 +95,15 @@ is($foo, "\x61\x62\x63\x34\x65\x66");
     $r[$_] = \ vec $s, $_, 1 for (0, 1);
     ok(!(${ $r[0] } != 0 || ${ $r[1] } != 1)); 
 }
+
+
+my $destroyed;
+{ package Class; DESTROY { ++$destroyed; } }
+
+$destroyed = 0;
+{
+    my $x = '';
+    vec($x,0,1) = 0;
+    $x = bless({}, 'Class');
+}
+is($destroyed, 1, 'Timely scalar destruction with lvalue vec');

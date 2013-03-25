@@ -18,8 +18,7 @@ installhtml - converts a collection of POD pages to HTML format.
     installhtml  [--help] [--podpath=<name>:...:<name>] [--podroot=<name>]
          [--htmldir=<name>] [--htmlroot=<name>]  [--norecurse] [--recurse]
          [--splithead=<name>,...,<name>]   [--splititem=<name>,...,<name>]
-         [--libpods=<name>,...,<name>]        [--ignore=<name>,...,<name>]
-         [--verbose]
+         [--ignore=<name>,...,<name>]  [--verbose]
 
 =head1 DESCRIPTION
 
@@ -77,11 +76,6 @@ split, rather it invokes I<splitpod> to do the dirty work.  As with
 
 The directory containing the splitpod program. The default is 'podroot/pod'.
 
-=item B<--libpods> library PODs for LE<lt>E<gt> links
-
-Comma-separated list of "library" pod files.  This is the same list that
-will be passed to pod2html when any pod is converted.
-
 =item B<--ignore> files to be ignored
 
 Comma-separated of files that shouldn't be installed, given relative
@@ -104,7 +98,6 @@ perl documentation:
 			--htmlroot=/perl/nmanual    \
 			--splithead=pod/perlipc     \
 			--splititem=pod/perlfunc    \
-			--libpods=perlfunc,perlguts,perlvar,perlrun,perlop \
 			--recurse \
 			--verbose
 
@@ -120,7 +113,7 @@ $usage =<<END_OF_USAGE;
 Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
          --htmldir=<name> --htmlroot=<name> --norecurse --recurse
          --splithead=<name>,...,<name> --splititem=<name>,...,<name>
-         --libpods=<name>,...,<name> --ignore=<name>,...,<name> --verbose
+         --ignore=<name>,...,<name> --verbose
 
     --help      - this message
     --podpath   - colon-separated list of directories containing .pod and
@@ -131,9 +124,6 @@ Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
                   to the filesystem (\$podroot/html by default).
     --htmlroot  - http-server base directory from which all relative paths
                   in podpath stem (default is /).
-    --libpods   - comma-separated list of files to search for =item pod
-                  directives in as targets of C<> and implicit links (empty
-                  by default).
     --norecurse - don't recurse on those subdirectories listed in podpath.
                   (default behavior).
     --recurse   - recurse on those subdirectories listed in podpath
@@ -149,10 +139,9 @@ Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
 
 END_OF_USAGE
 
-my (@libpods, @podpath, $podroot, $htmldir, $htmlroot, $recurse, @splithead,
+my (@podpath, $podroot, $htmldir, $htmlroot, $recurse, @splithead,
     @splititem, $splitpod, $verbose, $pod2html, @ignore);
 
-@libpods = ();
 @podpath = ( "." );	# colon-separated list of directories containing .pod
 			# and .pm files to be converted.
 $podroot = ".";		# assume the pods we want are here
@@ -170,7 +159,7 @@ $pod2html = "pod/pod2html";
 usage("") unless @ARGV;
 
 # Overcome shell's p1,..,p8 limitation.  
-# See vms/descrip_mms.template -> descrip.mms for invokation.
+# See vms/descrip_mms.template -> descrip.mms for invocation.
 if ( $^O eq 'VMS' ) { @ARGV = split(/\s+/,$ARGV[0]); }
 
 use vars qw( %Options );
@@ -182,7 +171,6 @@ my $result = GetOptions( \%Options, qw(
 	podroot=s
 	htmldir=s
 	htmlroot=s
-	libpods=s
 	ignore=s
 	recurse!
 	splithead=s
@@ -287,7 +275,6 @@ sub parse_command_line {
     # lists of files
     @splithead = split(",", $Options{splithead}) if defined $Options{splithead};
     @splititem = split(",", $Options{splititem}) if defined $Options{splititem};
-    @libpods   = split(",", $Options{libpods}) if defined $Options{libpods};
 
     $htmldir  = $Options{htmldir}	    if defined $Options{htmldir};
     $htmlroot = $Options{htmlroot}	    if defined $Options{htmlroot};
@@ -304,14 +291,11 @@ sub parse_command_line {
 sub create_index {
     my($html, $dir) = @_;
     (my $pod = $dir) =~ s,^.*/,,;
-    my(@files, @filedata, @index, $file);
-    my($lcp1,$lcp2);
-
 
     # get the list of .html files in this directory
     opendir(DIR, $dir) ||
 	die "$0: error opening directory $dir for reading: $!\n";
-    @files = sort(grep(/\.html?$/, readdir(DIR)));
+    my @files = sort(grep(/\.html?$/, readdir(DIR)));
     closedir(DIR);
 
     open(HTML, ">$html") ||
@@ -320,40 +304,28 @@ sub create_index {
     # for each .html file in the directory, extract the index
     #	embedded in the file and throw it into the big index.
     print HTML "<DL COMPACT>\n";
-    foreach $file (@files) {
-	$/ = "";
+    foreach my $file (@files) {
 
-	open(IN, "<$dir/$file") ||
-	    die "$0: error opening $dir/$file for input: $!\n";
-	@filedata = <IN>;
-	close(IN);
+	my $filedata = do {
+	    open(my $in, "<$dir/$file") ||
+		die "$0: error opening $dir/$file for input: $!\n";
+	    local $/ = undef;
+	    <$in>;
+	};
 
 	# pull out the NAME section
-	my $name;
-	($name) = grep(/name="name"/i, @filedata);
-	($lcp1,$lcp2) = ($name =~ m,/H1>\s(\S+)\s[\s-]*(.*?)\s*$,smi);
-	if (defined $lcp1 and $lcp1 =~ m,^<P>$,i) { # Uninteresting.  Try again.
-	    ($lcp1,$lcp2) = ($name =~ m,/H1>\s<P>\s*(\S+)\s[\s-]*(.*?)\s*$,smi);
-	}
+	my($lcp1, $lcp2) =
+	    ($filedata =~
+		m#<h1 id="NAME">NAME</h1>\s*<p>\s*(\S+)\s+-\s+(\S.*?\S)</p>#);
+	defined $lcp1 or die "$0: can't find NAME section in $dir/$file\n";
+
 	my $url= "$pod/$file" ;
 	if ( ! defined $Options{htmlroot} || $Options{htmlroot} eq '' ) {
 	    $url = Pod::Html::relativize_url( "$pod/$file", $html ) ;
 	}
 
-	if (defined $lcp1) {
-	    print HTML qq(<DT><A HREF="$url">);
-	    print HTML "$lcp1</A></DT><DD>$lcp2</DD>\n";
-	}
-
-	next;
-
-	@index = grep(/<!-- INDEX BEGIN -->.*<!-- INDEX END -->/s,
-		    @filedata);
-	for (@index) {
-	    s/<!-- INDEX BEGIN -->(\s*<!--)(.*)(-->\s*)<!-- INDEX END -->/$lcp2/s;
-	    s,#,$dir/$file#,g;
-	    print HTML "$_\n<P><HR><P>\n";
-	}
+	print HTML qq(<DT><A HREF="$url">);
+	print HTML "$lcp1</A></DT><DD>$lcp2</DD>\n";
     }
     print HTML "</DL>\n";
 
@@ -600,11 +572,10 @@ sub runpod2html {
         "--htmldir=$htmldir",
 	"--htmlroot=$htmlroot",
 	"--podpath=".join(":", @podpath),
-	"--podroot=$podroot", "--netscape",
+	"--podroot=$podroot",
 	"--header",
 	($doindex ? "--index" : "--noindex"),
 	"--" . ($recurse ? "" : "no") . "recurse",
-	($#libpods >= 0) ? "--libpods=" . join(":", @libpods) : "",
 	"--infile=$podroot/$pod", "--outfile=$htmldir/$html");
     die "$0: error running $pod2html: $!\n" if $?;
 }

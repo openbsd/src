@@ -1,7 +1,9 @@
 package AnyDBM_File;
+use warnings;
+use strict;
 
 use 5.006_001;
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 our @ISA = qw(NDBM_File DB_File GDBM_File SDBM_File ODBM_File) unless @ISA;
 
 my $mod;
@@ -13,7 +15,8 @@ for $mod (@ISA) {
 }
 
 die "No DBM package was successfully found or installed";
-#return 0;
+
+__END__
 
 =head1 NAME
 
@@ -37,7 +40,7 @@ can still do so, but new ones can reorder @ISA:
 
 Having multiple DBM implementations makes it trivial to copy database formats:
 
-    use POSIX; use NDBM_File; use DB_File;
+    use Fcntl; use NDBM_File; use DB_File;
     tie %newhash,  'DB_File', $new_filename, O_CREAT|O_RDWR;
     tie %oldhash,  'NDBM_File', $old_filename, 1, 0;
     %newhash = %oldhash;

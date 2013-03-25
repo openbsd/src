@@ -57,11 +57,11 @@ print '1..', scalar @tests, "\n";
 
 $SIG{__WARN__} = sub {
     if ($_[0] =~ /^Invalid conversion/) {
-	$w = ' INVALID';
+	$w .= ' INVALID';
     } elsif ($_[0] =~ /^Use of uninitialized value/) {
-	$w = ' UNINIT';
+	$w .= ' UNINIT';
     } elsif ($_[0] =~ /^Missing argument/) {
-	$w = ' MISSING';
+	$w .= ' MISSING';
     } else {
 	warn @_;
     }
@@ -70,7 +70,8 @@ $SIG{__WARN__} = sub {
 for ($i = 1; @tests; $i++) {
     ($template, $evalData, $result, $comment, $data) = @{shift @tests};
     $w = undef;
-    $x = sprintf(">$template<", @$evalData);
+    $x = sprintf($template, @$evalData);
+    $x = ">$x<" if defined $x;
     substr($x, -1, 0) = $w if $w;
     # $x may have 3 exponent digits, not 2
     my $y = $x;
@@ -300,8 +301,11 @@ __END__
 >% 3d<      >-1<          > -1<
 >%03d<      >-1<          >-01<
 >%hd<       >1<           >1<              >More extensive testing of<
->%ld<       >1<           >1<              >length modifiers would be<
->%Vd<       >1<           >1<              >platform-specific<
+>%hhd<      >1<           >1<              >length modifiers would be<
+>%ld<       >1<           >1<              >platform-specific<
+>%Vd<       >1<           >1<
+>%zd<       >1<           >1<
+>%td<       >1<           >1<
 >%vd<       >chr(1)<      >1<
 >%+vd<      >chr(1)<      >+1<
 >%#vd<      >chr(1)<      >1<
@@ -322,14 +326,14 @@ __END__
 >%v4.3d<    >"\01\02\03"< > 001. 002. 003<
 >%0v4.3d<   >"\01\02\03"< > 001. 002. 003<
 >%0*v2d<    >['-', "\0\7\14"]< >00-07-12<
->%v.*d<     >["\01\02\03", 3]< >001.002.003<
->%0v*d<     >["\01\02\03", 3]< >001.002.003<
->%-v*d<     >["\01\02\03", 3]< >1  .2  .3  <
->%+-v*d<    >["\01\02\03", 3]< >+1 .2  .3  <
->%v*.*d<    >["\01\02\03", 4, 3]< > 001. 002. 003<
->%0v*.*d<   >["\01\02\03", 4, 3]< > 001. 002. 003<
->%0*v*d<    >['-', "\0\7\13", 2]< >00-07-11<
->%0*v*d<    >['-', version::qv("0.7.11"), 2]< >00-07-11<
+>%v.*d<     >[3, "\01\02\03"]< >001.002.003< >cf perl #83194<
+>%0v*d<     >[3, "\01\02\03"]< >001.002.003< >cf perl #83194<
+>%-v*d<     >[3, "\01\02\03"]< >1  .2  .3  < >cf perl #83194<
+>%+-v*d<    >[3, "\01\02\03"]< >+1 .2  .3  < >cf perl #83194<
+>%v*.*d<    >[4, 3, "\01\02\03"]< > 001. 002. 003< >cf perl #83194<
+>%0v*.*d<   >[4, 3, "\01\02\03"]< > 001. 002. 003< >cf perl #83194<
+>%0*v*d<    >['-', 2, "\0\7\13"]< >00-07-11< >cf perl #83194<
+>%0*v*d<    >['-', 2, version::qv("0.7.11")]< >00-07-11< >cf perl #83194<
 >%e<        >1234.875<    >1.234875e+03<
 >%e<        >0.000012345< >1.234500e-05<
 >%e<        >1234567E96<  >1.234567e+102<
@@ -373,6 +377,10 @@ __END__
 >%+8.1f<    >-1234.875<   > -1234.9<
 >%*.*f<     >[5, 2, 12.3456]< >12.35<
 >%f<        >0<           >0.000000<
+>%.0f<      >[]<          >0 MISSING<
+> %.0f<     >[]<          > 0 MISSING<
+>%.2f<      >[]<          >0.00 MISSING<
+>%.2fC<      >[]<          >0.00C MISSING<
 >%.0f<      >0<           >0<
 >%.0f<      >2**38<       >274877906944<   >Should have exact int'l rep'n<
 >%.0f<      >0.1<         >0<
@@ -387,7 +395,11 @@ __END__
 >%g<        >12345.6789<  >12345.7<
 >%+g<       >12345.6789<  >+12345.7<
 >%#g<       >12345.6789<  >12345.7<
->%.0g<      >-0.0<	  >-0<		   >C99 standard mandates minus sign but C89 does not skip: MSWin32 VMS hpux:10.20 openbsd netbsd:1.5 irix darwin<
+>%.0g<      >[]<          >0 MISSING<
+> %.0g<     >[]<          > 0 MISSING<
+>%.2g<      >[]<          >0 MISSING<
+>%.2gC<      >[]<          >0C MISSING<
+>%.0g<      >-0.0<        >-0<		   >C99 standard mandates minus sign but C89 does not skip: MSWin32 VMS hpux:10.20 openbsd netbsd:1.5 irix darwin<
 >%.0g<      >12345.6789<  >1e+04<
 >%#.0g<     >12345.6789<  >1.e+04<
 >%.2g<      >12345.6789<  >1.2e+04<
@@ -424,6 +436,8 @@ __END__
 >%l<        >''<          >%l INVALID<
 >%m<        >''<          >%m INVALID<
 >%s< >sprintf('%%n%n %d', $n, $n)< >%n 2< >Slight sneakiness to test %n<
+>%s< >$n="abc"; sprintf(' %n%s', substr($n,1,1), $n)< > a1c< >%n w/magic<
+>%s< >no warnings; sprintf('%s%n', chr(256)x5, $n),$n< >5< >Unicode %n<
 >%o<        >2**32-1<     >37777777777<
 >%+o<       >2**32-1<     >37777777777<
 >%#o<       >2**32-1<     >037777777777<
@@ -494,6 +508,8 @@ __END__
 >%#p<       >''<          >%#p INVALID<
 >%q<        >''<          >%q INVALID<
 >%r<        >''<          >%r INVALID<
+>%s<        >[]<          > MISSING<
+> %s<       >[]<          >  MISSING<
 >%s<        >'string'<    >string<
 >%10s<      >'string'<    >    string<
 >%+10s<     >'string'<    >    string<
@@ -680,7 +696,7 @@ __END__
 >%V-%s<		>["Hello"]<	>%V-Hello INVALID<
 >%K %d %d<	>[13, 29]<	>%K 13 29 INVALID<
 >%*.*K %d<	>[13, 29, 76]<	>%*.*K 13 INVALID<
->%4$K %d<	>[45, 67]<	>%4$K 45 INVALID<
+>%4$K %d<	>[45, 67]<	>%4$K 45 MISSING INVALID<
 >%d %K %d<	>[23, 45]<	>23 %K 45 INVALID<
 >%*v*999\$d %d %d<	>[11, 22, 33]<	>%*v*999\$d 11 22 INVALID<
 >%#b<		>0<	>0<
@@ -688,3 +704,12 @@ __END__
 >%#x<		>0<	>0<
 >%2147483647$v2d<	>''<	><
 >%*2147483647$v2d<	>''<	> MISSING<
+>%.3X<		>[11]<			>00B<		>perl #83194: hex, zero-padded to 3 places<
+>%.*X<		>[3, 11]<		>00B<		>perl #83194: dynamic precision<
+>%vX<		>['012']<		>30.31.32<	>perl #83194: vector flag<
+>%*vX<		>[':', '012']<		>30:31:32<	>perl #83194: vector flag + custom separator<
+>%v.3X<		>['012']<		>030.031.032<	>perl #83194: vector flag + static precision<
+>%v.*X<		>[3, '012']<		>030.031.032<	>perl #83194: vector flag + dynamic precision<
+>%*v.3X<	>[':', '012']<		>030:031:032<	>perl #83194: vector flag + custom separator + static precision<
+>%*v.*X<	>[':', 3, '012']<	>030:031:032<	>perl #83194: vector flag + custom separator + dynamic precision<
+>%vd<	>"version"<	>118.101.114.115.105.111.110<	>perl #102586: vector flag + "version"<

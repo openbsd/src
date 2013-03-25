@@ -170,6 +170,7 @@ nearby CPAN mirror, and included in Perl starting from the release 5.8.0.
 Or you may be able to use the following C<is_tainted()> function.
 
     sub is_tainted {
+        local $@;   # Don't pollute caller's value.
         return ! eval { eval("#" . substr(join("", @_), 0, 0)); 1 };
     }
 

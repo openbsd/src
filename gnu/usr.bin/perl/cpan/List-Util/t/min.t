@@ -14,7 +14,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 8;
+use Test::More tests => 10;
 use List::Util qw(min);
 
 my $v;
@@ -59,12 +59,17 @@ use overload
   }
 }
 
-SKIP: {
-  eval { require bignum; } or skip("Need bignum for testing overloading",1);
+use Math::BigInt;
 
-  my $v1 = 2**65;
-  my $v2 = $v1 - 1;
-  my $v3 = $v2 - 1;
-  $v = min($v1,$v2,$v1,$v3,$v1);
-  is($v, $v3, 'bigint');
-}
+my $v1 = Math::BigInt->new(2) ** Math::BigInt->new(65);
+my $v2 = $v1 - 1;
+my $v3 = $v2 - 1;
+$v = min($v1,$v2,$v1,$v3,$v1);
+is($v, $v3, 'bigint');
+
+$v = min($v1, 1, 2, 3);
+is($v, 1, 'bigint and normal int');
+
+$v = min(1, 2, $v1, 3);
+is($v, 1, 'bigint and normal int');
+

@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 5 $
+##  $Revision: 7 $
 ##  $Author: mhx $
-##  $Date: 2009/01/18 14:10:53 +0100 $
+##  $Date: 2010/03/07 13:15:46 +0100 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -28,6 +28,10 @@ __UNDEFINED__  memEQ(s1,s2,l)  (!memcmp(s1,s2,l))
 __UNDEFINED__  memNE(s1,s2,l)  (bcmp(s1,s2,l))
 __UNDEFINED__  memEQ(s1,s2,l)  (!bcmp(s1,s2,l))
 #endif
+
+__UNDEFINED__  memEQs(s1, l, s2) \
+                   (sizeof(s2)-1 == l && memEQ(s1, (s2 ""), (sizeof(s2)-1)))
+__UNDEFINED__  memNEs(s1, l, s2) !memEQs(s1, l, s2)
 
 __UNDEFINED__  MoveD(s,d,n,t)  memmove((char*)(d),(char*)(s), (n) * sizeof(t))
 __UNDEFINED__  CopyD(s,d,n,t)  memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
@@ -62,8 +66,12 @@ checkmem()
     ZeroD(p, 6, char);
     if (memEQ(p, "\0\0\0\0\0\0", 6))
       RETVAL++;
+    if (memEQs(p, 6, "\0\0\0\0\0\0"))
+      RETVAL++;
     Poison(p, 6, char);
     if (memNE(p, "\0\0\0\0\0\0", 6))
+      RETVAL++;
+    if (memNEs(p, 6, "\0\0\0\0\0\0"))
       RETVAL++;
     Safefree(p);
 
@@ -80,5 +88,5 @@ checkmem()
 
 =tests plan => 1
 
-ok(Devel::PPPort::checkmem(), 4);
+ok(Devel::PPPort::checkmem(), 6);
 

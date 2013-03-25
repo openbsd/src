@@ -390,8 +390,7 @@ vary from handle to handle.
 
   PerlIO_fast_gets(f) = PerlIO_has_cntptr(f) && \
                         PerlIO_canset_cnt(f) && \
-                        `Can set pointer into buffer'
-
+                        'Can set pointer into buffer'
 
 =item B<PerlIO_has_cntptr(f)>
 

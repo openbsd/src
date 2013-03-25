@@ -30,15 +30,15 @@
  *  Now we are come to the lands where you were foaled, and every stone you
  *  know.  Run now!  Hope is in speed!'                    --Gandalf
  *
- *     [p.600 of _The Lord of the Rings_, III/xi: "The Palantír"]
+ *     [p.600 of _The Lord of the Rings_, III/xi: "The PalantÃ­r"]
  */
 
 int
 Perl_runops_standard(pTHX)
 {
     dVAR;
-    while ((PL_op = CALL_FPTR(PL_op->op_ppaddr)(aTHX))) {
-	PERL_ASYNC_CHECK();
+    register OP *op = PL_op;
+    while ((PL_op = op = op->op_ppaddr(aTHX))) {
     }
 
     TAINT_NOT;

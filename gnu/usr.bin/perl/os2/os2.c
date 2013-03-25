@@ -3720,7 +3720,7 @@ fill_extLibpath(int type, char *pre, char *post, int replace, char *msg)
 	s = pre - 1;
 	while (*++s)
 	    if (*s == '/')
-		*s = '\\';			/* Be extra causious */
+		*s = '\\';			/* Be extra cautious */
 	memcpy(to, pre, l);
 	if (!l || to[l-1] != ';')
 	    to[l++] = ';';
@@ -3751,7 +3751,7 @@ fill_extLibpath(int type, char *pre, char *post, int replace, char *msg)
 	s = post - 1;
 	while (*++s)
 	    if (*s == '/')
-		*s = '\\';			/* Be extra causious */
+		*s = '\\';			/* Be extra cautious */
 	memcpy(to, post, l);
 	if (!l || to[l-1] != ';')
 	    to[l++] = ';';

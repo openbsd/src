@@ -530,7 +530,7 @@ OPTIONS:
     -X, --omit-XS         Omit the XS portion (implies both -c and -f).
     -a, --gen-accessors   Generate get/set accessors for struct and union members
                           (used with -x).
-    -b, --compat-version  Specify a perl version to be backwards compatibile with.
+    -b, --compat-version  Specify a perl version to be backwards compatible with.
     -c, --omit-constant   Omit the constant() function and specialised AUTOLOAD
                           from the XS file.
     -d, --debugging       Turn on debugging messages.
@@ -789,7 +789,7 @@ if( @path_h ){
     }
     else {
       @paths = (File::Spec->curdir(), $Config{usrinc},
-		(split ' ', $Config{locincpth}), '/usr/include');
+		(split / +/, $Config{locincpth} // ""), '/usr/include');
     }
     foreach my $path_h (@path_h) {
         $name ||= $path_h;
@@ -893,7 +893,7 @@ if( @path_h ){
       }
       else {
 	# Work from miniperl too - on "normal" systems
-        my $SEEK_SET = eval 'use Fcntl qw/SEEK_SET/; SEEK_SET' or 0;
+        my $SEEK_SET = eval 'use Fcntl qw/SEEK_SET/; SEEK_SET' || 0;
         seek CH, 0, $SEEK_SET;
         my $src = do { local $/; <CH> };
         close CH;
@@ -1724,7 +1724,7 @@ sub accessor_docs {
 #  my \$buffer = $name->new();
 #  my \$obj = \$buffer->_to_ptr();
 #
-#This exersizes the following two methods, and an additional class
+#This exercises the following two methods, and an additional class
 #C<$name>, the internal representation of which is a reference to a
 #packed string with the C structure.  Keep in mind that \$buffer should
 #better survive longer than \$obj.
@@ -1801,7 +1801,7 @@ sub get_typemap {
 sub normalize_type {		# Second arg: do not strip const's before \*
   my $type = shift;
   my $do_keep_deep_const = shift;
-  # If $do_keep_deep_const this is heuristical only
+  # If $do_keep_deep_const this is heuristic only
   my $keep_deep_const = ($do_keep_deep_const ? '\b(?![^(,)]*\*)' : '');
   my $ignore_mods
     = "(?:\\b(?:(?:__const__|const)$keep_deep_const|static|inline|__inline__)\\b\\s*)*";
@@ -2021,7 +2021,7 @@ EOM
 close(PL) || die "Can't close $ext$modpname/Makefile.PL: $!\n";
 
 # Create a simple README since this is a CPAN requirement
-# and it doesnt hurt to have one
+# and it doesn't hurt to have one
 warn "Writing $ext$modpname/README\n";
 open(RM, ">README") || die "Can't create $ext$modpname/README:$!\n";
 my $thisyear = (gmtime)[5] + 1900;
@@ -2093,8 +2093,8 @@ my $tests = @const_names ? 2 : 1;
 open EX, ">$testfile" or die "Can't create $ext$modpname/$testfile: $!\n";
 
 print EX <<_END_;
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl $modpname.t'
+# Before 'make install' is performed this script should be runnable with
+# 'make test'. After 'make install' it should work as 'perl $modpname.t'
 
 #########################
 

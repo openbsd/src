@@ -72,7 +72,7 @@ and version_mess() with the switches string as an argument.
 
 @ISA = qw(Exporter);
 @EXPORT = qw(getopt getopts);
-$VERSION = '1.06';
+$VERSION = '1.07';
 # uncomment the next line to disable 1.03-backward compatibility paranoia
 # $STANDARD_HELP_VERSION = 1;
 
@@ -147,7 +147,7 @@ sub try_exit () {
     my $p = __PACKAGE__;
     print {output_h()} <<EOM;
   [Now continuing due to backward compatibility and excessive paranoia.
-   See ``perldoc $p'' about \$$p\::STANDARD_HELP_VERSION.]
+   See 'perldoc $p' about \$$p\::STANDARD_HELP_VERSION.]
 EOM
 }
 

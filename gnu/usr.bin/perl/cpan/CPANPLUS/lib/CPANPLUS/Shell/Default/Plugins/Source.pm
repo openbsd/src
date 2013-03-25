@@ -6,7 +6,7 @@ use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 
 =head1 NAME
 
-CPANPLUS::Shell::Default::Plugins::Source - plugin to read an execute CPANPLUS shell commands
+CPANPLUS::Shell::Default::Plugins::Source - read in CPANPLUS commands
 
 =head1 SYNOPSIS
 
@@ -23,12 +23,12 @@ A sample file might look like this:
     # first, update all the source files
     x --update_source
 
-    # find all of my modules that are on the CPAN 
+    # find all of my modules that are on the CPAN
     # test them, and store the error log
     a ^KANE$'
     t *
     p /home/kane/cpan-autotest/log
-    
+
     # and inform us we're good to go
     ! print "Autotest complete, log stored; please enter your commands!"
 
@@ -48,20 +48,20 @@ sub source {
     my $input   = shift || '';
     my $opts    = shift || {};
     my $verbose = $cb->configure_object->get_conf('verbose');
-    
+
     for my $file ( split /\s+/, $input ) {
-        my $fh = FileHandle->new("$file") or( 
+        my $fh = FileHandle->new("$file") or(
             error(loc("Could not open file '%1': %2", $file, $!)),
             next
         );
-        
+
         while( my $line = <$fh> ) {
             chomp $line;
-            
+
             next if $line !~ /\S+/; # skip empty/whitespace only lines
             next if $line =~ /^#/;  # skip comments
-            
-            msg(loc("Dispatching '%1'", $line), $verbose); 
+
+            msg(loc("Dispatching '%1'", $line), $verbose);
             return 1 if $shell->dispatch_on_input( input => $line );
         }
     }
@@ -86,10 +86,10 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =head1 SEE ALSO

@@ -1,9 +1,0 @@
-BEGIN {
-	print "in BEGIN\n";
-}
-
-sub foo {
-	print "in sub foo\n";
-}
-
-foo();

@@ -70,7 +70,7 @@ The \fIsdbm\fP library is not derived from any licensed, proprietary or
 copyrighted software.
 .PP
 The \fIsdbm\fP implementation is based on a 1978 algorithm
-[Lar78] by P.-A. (Paul) Larson known as ``Dynamic Hashing''.
+[Lar78] by P.-A. (Paul) Larson known as "Dynamic Hashing".
 In the course of searching for a substitute for \fIndbm\fP, I
 prototyped three different external-hashing algorithms [Lar78, Fag79, Lit80]
 and ultimately chose Larson's algorithm as a basis of the \fIsdbm\fP
@@ -94,7 +94,7 @@ smaller. The \fIsdbm\fP implementation is also faster than \fIndbm\fP
 in database creation.
 Unlike the \fIndbm\fP, the \fIsdbm\fP
 .CW store
-operation will not ``wander away'' trying to split its
+operation will not "wander away" trying to split its
 data pages to insert a datum that \fIcannot\fP (due to elaborate worst-case
 situations) be inserted. (It will fail after a pre-defined number of attempts.)
 .SH
@@ -323,31 +323,31 @@ References
 .LP
 .IP [Lar78] 4m
 P.-A. Larson,
-``Dynamic Hashing'', \fIBIT\fP, vol.  18,  pp. 184-201, 1978.
+"Dynamic Hashing", \fIBIT\fP, vol.  18,  pp. 184-201, 1978.
 .IP [Tho90] 4m
 Ken Thompson, \fIprivate communication\fP, Nov. 1990
 .IP [Lit80] 4m
 W. Litwin,
-`` Linear Hashing: A new tool  for  file  and table addressing'',
+"Linear Hashing: A new tool  for  file  and table addressing",
 \fIProceedings of the 6th Conference on Very Large  Dabatases  (Montreal)\fP,
 pp.  212-223,  Very Large Database Foundation, Saratoga, Calif., 1980.
 .IP [Fag79] 4m
 R. Fagin, J.  Nievergelt,  N.  Pippinger,  and  H.  R. Strong,
-``Extendible Hashing - A Fast Access Method for Dynamic Files'',
+"Extendible Hashing - A Fast Access Method for Dynamic Files",
 \fIACM Trans. Database Syst.\fP, vol. 4,  no.3, pp. 315-344, Sept. 1979.
 .IP [Wal84] 4m
 Rich Wales,
-``Discussion of "dbm" data base system'', \fIUSENET newsgroup unix.wizards\fP,
+"Discussion of 'dbm' data base system", \fIUSENET newsgroup unix.wizards\fP,
 Jan. 1984.
 .IP [Tor87] 4m
 Chris Torek,
-``Re:  dbm.a  and  ndbm.a  archives'', \fIUSENET newsgroup comp.unix\fP,
+"Re:  dbm.a  and  ndbm.a  archives", \fIUSENET newsgroup comp.unix\fP,
 1987.
 .IP [Mar79] 4m
 G. N. Martin,
-``Spiral Storage: Incrementally  Augmentable  Hash  Addressed  Storage'',
+"Spiral Storage: Incrementally  Augmentable  Hash  Addressed  Storage",
 \fITechnical Report #27\fP, University of Varwick, Coventry, U.K., 1979.
 .IP [Enb88] 4m
 R. J. Enbody and H. C. Du,
-``Dynamic Hashing  Schemes'',\fIACM Computing Surveys\fP,
+"Dynamic Hashing  Schemes",\fIACM Computing Surveys\fP,
 vol. 20, no. 2, pp. 85-113, June 1988.

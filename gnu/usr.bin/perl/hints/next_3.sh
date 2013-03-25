@@ -26,7 +26,7 @@
 # sbrk makes it possible to run perl with its own malloc. Thanks to
 # Ilya who showed me the way to his sbrk for OS/2!!
 #
-# The whole malloc desaster lead to a failing gdbm test. It is far
+# The whole malloc disaster lead to a failing gdbm test. It is far
 # beyond my understanding, why GDBM_File breaks with the "fix", but in
 # general I consider it better to have a working perl with broken GDBM
 # than no perl at all.
@@ -38,7 +38,7 @@
 # 1997:
 # From perl5.003_22 the malloc bug has no impact any more. We can run
 # a perl without a special sbrk. Apparently Chip Salzenberg, the hero
-# of 5.004 anyway, earned another trophy during Australien Open.
+# of 5.004 anyway, earned another trophy during Australian Open.
 #
 # use the following two lines to enable USE_PERL_SBRK. Try this if you
 # encounter intermittent core dumps:

@@ -59,13 +59,14 @@ descriptions).  User code generated warnings a la warn() are unaffected,
 allowing duplicate user messages to be displayed.
 
 This module also adds a stack trace to the error message when perl dies.
-This is useful for pinpointing what caused the death. The B<-traceonly> (or
+This is useful for pinpointing what
+caused the death.  The B<-traceonly> (or
 just B<-t>) flag turns off the explanations of warning messages leaving just
-the stack traces. So if your script is dieing, run it again with
+the stack traces.  So if your script is dieing, run it again with
 
   perl -Mdiagnostics=-traceonly my_bad_script
 
-to see the call stack at the time of death. By supplying the B<-warntrace>
+to see the call stack at the time of death.  By supplying the B<-warntrace>
 (or just B<-w>) flag, any warnings emitted will also come with a stack
 trace.
 
@@ -185,7 +186,7 @@ use 5.009001;
 use Carp;
 $Carp::Internal{__PACKAGE__.""}++;
 
-our $VERSION = '1.19';
+our $VERSION = '1.28';
 our $DEBUG;
 our $VERBOSE;
 our $PRETTY;
@@ -193,35 +194,24 @@ our $TRACEONLY = 0;
 our $WARNTRACE = 0;
 
 use Config;
-my($privlib, $archlib) = @Config{qw(privlibexp archlibexp)};
+my $privlib = $Config{privlibexp};
 if ($^O eq 'VMS') {
     require VMS::Filespec;
     $privlib = VMS::Filespec::unixify($privlib);
-    $archlib = VMS::Filespec::unixify($archlib);
 }
 my @trypod = (
-	   "$archlib/pod/perldiag.pod",
-	   "$privlib/pod/perldiag-$Config{version}.pod",
 	   "$privlib/pod/perldiag.pod",
-	   "$archlib/pods/perldiag.pod",
-	   "$privlib/pods/perldiag-$Config{version}.pod",
 	   "$privlib/pods/perldiag.pod",
 	  );
 # handy for development testing of new warnings etc
 unshift @trypod, "./pod/perldiag.pod" if -e "pod/perldiag.pod";
 (my $PODFILE) = ((grep { -e } @trypod), $trypod[$#trypod])[0];
 
-if ($^O eq 'MacOS') {
-    # just updir one from each lib dir, we'll find it ...
-    ($PODFILE) = grep { -e } map { "$_:pod:perldiag.pod" } @INC;
-}
-
-
 $DEBUG ||= 0;
 my $WHOAMI = ref bless [];  # nobody's business, prolly not even mine
 
 local $| = 1;
-my $_;
+local $_;
 local $.;
 
 my $standalone;
@@ -317,16 +307,23 @@ my %transfmt = ();
 my $transmo = <<EOFUNC;
 sub transmo {
     #local \$^W = 0;  # recursive warnings we do NOT need!
-    study;
 EOFUNC
 
 my %msg;
 {
     print STDERR "FINISHING COMPILATION for $_\n" if $DEBUG;
     local $/ = '';
+    local $_;
     my $header;
+    my @headers;
     my $for_item;
+    my $seen_body;
     while (<POD_DIAG>) {
+
+	sub _split_pod_link {
+	    $_[0] =~ '(?:([^|]*)\|)?([^/]*)(?:/("?)(.*)\3)?';
+	    ($1,$2,$4);
+	}
 
 	unescape();
 	if ($PRETTY) {
@@ -334,10 +331,32 @@ my %msg;
 	    sub bold   { my $str =$_[0];  $str =~ s/(.)/$1\b$1/g; return $str; } 
 	    sub italic { my $str = $_[0]; $str =~ s/(.)/_\b$1/g;  return $str; } 
 	    s/C<<< (.*?) >>>|C<< (.*?) >>|[BC]<(.*?)>/bold($+)/ges;
-	    s/[LIF]<(.*?)>/italic($1)/ges;
+	    s/[IF]<(.*?)>/italic($1)/ges;
+	    s/L<(.*?)>/
+	       my($text,$page,$sect) = _split_pod_link($1);
+	       defined $text
+	        ? $text
+	        : defined $sect
+	           ? italic($sect) . ' in ' . italic($page)
+	           : italic($page)
+	     /ges;
+	     s/S<(.*?)>/
+               $1
+             /ges;
 	} else {
 	    s/C<<< (.*?) >>>|C<< (.*?) >>|[BC]<(.*?)>/$+/gs;
-	    s/[LIF]<(.*?)>/$1/gs;
+	    s/[IF]<(.*?)>/$1/gs;
+	    s/L<(.*?)>/
+	       my($text,$page,$sect) = _split_pod_link($1);
+	       defined $text
+	        ? $text
+	        : defined $sect
+	           ? qq '"$sect" in $page'
+	           : $page
+	     /ges;
+	    s/S<(.*?)>/
+               $1
+             /ges;
 	} 
 	unless (/^=/) {
 	    if (defined $header) { 
@@ -350,10 +369,22 @@ my %msg;
 		}
 		s/^/    /gm;
 		$msg{$header} .= $_;
+		for my $h(@headers) { $msg{$h} .= $_ }
+		++$seen_body;
 	 	undef $for_item;	
 	    }
 	    next;
 	} 
+
+	# If we have not come across the body of the description yet, then
+	# the previous header needs to share the same description.
+	if ($seen_body) {
+	    @headers = ();
+	}
+	else {
+	    push @headers, $header if defined $header;
+	}
+
 	unless ( s/=item (.*?)\s*\z//) {
 
 	    if ( s/=head1\sDESCRIPTION//) {
@@ -378,22 +409,25 @@ my %msg;
 	# strip formatting directives from =item line
 	$header =~ s/[A-Z]<(.*?)>/$1/g;
 
-        my @toks = split( /(%l?[dx]|%c|%(?:\.\d+)?[fs])/, $header );
+	# Since we strip "\.\n" when we search a warning, strip it here as well
+	$header =~ s/\.?$//;
+
+        my @toks = split( /(%l?[dxX]|%u|%c|%(?:\.\d+)?[fs])/, $header );
 	if (@toks > 1) {
             my $conlen = 0;
             for my $i (0..$#toks){
                 if( $i % 2 ){
                     if(      $toks[$i] eq '%c' ){
                         $toks[$i] = '.';
-                    } elsif( $toks[$i] eq '%d' ){
+                    } elsif( $toks[$i] =~ /^%(?:d|u)$/ ){
                         $toks[$i] = '\d+';
                     } elsif( $toks[$i] =~ '^%(?:s|.*f)$' ){
                         $toks[$i] = $i == $#toks ? '.*' : '.*?';
                     } elsif( $toks[$i] =~ '%.(\d+)s' ){
                         $toks[$i] = ".{$1}";
-                     } elsif( $toks[$i] =~ '^%l*x$' ){
-                        $toks[$i] = '[\da-f]+';
-                   }
+                    } elsif( $toks[$i] =~ '^%l*([xX])$' ){
+                        $toks[$i] = $1 eq 'x' ? '[\da-f]+' : '[\dA-F]+';
+                    }
                 } elsif( length( $toks[$i] ) ){
                     $toks[$i] = quotemeta $toks[$i];
                     $conlen += length( $toks[$i] );
@@ -413,6 +447,7 @@ my %msg;
 	    if $msg{$header};
 
 	$msg{$header} = '';
+	$seen_body = 0;
     } 
 
 
@@ -533,10 +568,12 @@ sub death_trap {
     # traps.
     $SIG{__DIE__} = $SIG{__WARN__} = '';
 
-    # Have carp skip over death_trap() when showing the stack trace.
-    local($Carp::CarpLevel) = 1;
+    $exception =~ s/\n(?=.)/\n\t/gas;
 
-    confess "Uncaught exception from user code:\n\t$exception";
+    die Carp::longmess("__diagnostics__")
+	  =~ s/^__diagnostics__.*?line \d+\.?\n/
+		  "Uncaught exception from user code:\n\t$exception"
+	      /re;
 	# up we go; where we stop, nobody knows, but i think we die now
 	# but i'm deeply afraid of the &$olddie guy reraising and us getting
 	# into an indirect recursion loop
@@ -547,8 +584,8 @@ my %old_diag;
 my $count;
 my $wantspace;
 sub splainthis {
-    return 0 if $TRACEONLY;
-    $_ = shift;
+  return 0 if $TRACEONLY;
+  for (my $tmp = shift) {
     local $\;
     local $!;
     ### &finish_compilation unless %msg;
@@ -560,7 +597,7 @@ sub splainthis {
     s/, <.*?> (?:line|chunk).*$//;
 
     # Discard 1st " at <file> line <no>" and all text beyond
-    # but be aware of messsages containing " at this-or-that"
+    # but be aware of messages containing " at this-or-that"
     my $real = 0;
     my @secs = split( / at / );
     return unless @secs;
@@ -583,17 +620,25 @@ sub splainthis {
 	return 0 unless &transmo;
     }
 
-    $orig = shorten($orig);
+    my $short = shorten($orig);
     if ($old_diag{$_}) {
 	autodescribe();
-	print THITHER "$orig (#$old_diag{$_})\n";
+	print THITHER "$short (#$old_diag{$_})\n";
 	$wantspace = 1;
+    } elsif (!$msg{$_} && $orig =~ /\n./s) {
+	# A multiline message, like "Attempt to reload /
+	# Compilation failed"
+	my $found;
+	for (split /^/, $orig) {
+	    splainthis($_) and $found = 1;
+	}
+	return $found;
     } else {
 	autodescribe();
 	$old_diag{$_} = ++$count;
 	print THITHER "\n" if $wantspace;
 	$wantspace = 0;
-	print THITHER "$orig (#$old_diag{$_})\n";
+	print THITHER "$short (#$old_diag{$_})\n";
 	if ($msg{$_}) {
 	    print THITHER $msg{$_};
 	} else {
@@ -606,6 +651,7 @@ sub splainthis {
 	} 
     }
     return 1;
+  }
 } 
 
 sub autodescribe {

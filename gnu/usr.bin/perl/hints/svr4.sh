@@ -172,5 +172,5 @@ fi
 # SVR4 derivatives.  (Though UnixWare has it in /usr/ccs/lib/libc.so.)
 d_lstat=define
 
-d_suidsafe='define'	# "./Configure -d" can't figure this out easilly
+d_suidsafe='define'	# "./Configure -d" can't figure this out easily
 

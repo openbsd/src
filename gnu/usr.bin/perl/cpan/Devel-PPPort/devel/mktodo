@@ -5,13 +5,13 @@
 #
 ################################################################################
 #
-#  $Revision: 16 $
+#  $Revision: 18 $
 #  $Author: mhx $
-#  $Date: 2009/01/18 14:10:50 +0100 $
+#  $Date: 2010/03/07 13:15:43 +0100 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -29,20 +29,23 @@ our %opt = (
   base    => 0,
   check   => 1,
   verbose => 0,
+  install => '/tmp/perl/install/default',
+  blead   => 'bleadperl',
 );
 
-GetOptions(\%opt, qw( base check! verbose )) or die;
+GetOptions(\%opt, qw( base check! verbose install=s blead=s blead-version=s )) or die;
 
 identify();
 
 my $outdir = 'parts/todo';
 
-my $install = '/tmp/perl/install/default';
-# my $install = '/tmp/perl/install/thread';
-
 my @perls = sort { $b->{version} <=> $a->{version} }
             map { { version => `$_ -e 'printf "%.6f", \$]'`, path => $_ } }
-            ('bleadperl', glob "$install/*/bin/perl5.*");
+            ($opt{blead}, glob "$opt{install}/*/bin/perl5.*");
+
+if (exists $opt{'blead-version'}) {
+  $perls[0]{version} = $opt{'blead-version'};
+}
 
 for (1 .. $#perls) {
   $perls[$_]{todo} = $perls[$_-1]{version};

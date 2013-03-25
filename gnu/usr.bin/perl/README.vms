@@ -4,7 +4,7 @@ specially designed to be readable as is.
 
 =head1 NAME
 
-README.vms - Configuring, building, testing, and installing perl on VMS
+perlvms - Configuring, building, testing, and installing perl on VMS
 
 =head1 SYNOPSIS
 
@@ -152,14 +152,14 @@ underscores and the tests will have difficulty finding them.  So your
 best bet is to unpack the Perl source kit on an ODS-5 volume using
 recent versions of vmstar (e.g. V3.4 or later).  Contrary to advice
 provided with previous versions of Perl, do I<not> use the ODS-2
-compatability qualifier.  Instead, use a command like the following:
+compatibility qualifier.  Instead, use a command like the following:
 
-    vmstar -xvf perl-5^.12^.2.tar
+    vmstar -xvf perl-5^.16^.3.tar
 
 Then rename the top-level source directory like so:
 
-    set security/protection=(o:rwed) perl-5^.12^.2.dir
-    rename perl-5^.12^.2.dir perl-5_12_2.dir
+    set security/protection=(o:rwed) perl-5^.16^.3.dir
+    rename perl-5^.16^.3.dir perl-5_16_3.dir
 
 The reason for this last step is that while filenames with multiple dots
 are generally supported by Perl on VMS, I<directory> names with multiple
@@ -212,10 +212,9 @@ As a handy shortcut, the command:
     @ Configure "-des"
 
 (note the quotation marks and case) will choose reasonable defaults 
-automatically (it takes DEC C over Gnu C, DEC C sockets over SOCKETSHR 
-sockets, and either over no sockets).  Some options can be given
-explicitly on the command line; the following example specifies a 
-non-default location for where Perl will be installed:
+automatically.  Some options can be given explicitly on the command line;
+the following example specifies a non-default location for where Perl
+will be installed:
 
     @ Configure "-d" "-Dprefix=dka100:[utils.perl5.]"
 
@@ -254,40 +253,9 @@ change.
 =head2 Socket Support (optional) for Perl on VMS
 
 Perl includes a number of functions for IP sockets, which are available if
-you choose to compile Perl with socket support.  Since IP networking is an 
-optional addition to VMS, there are several different IP stacks available.  
-How well integrated they are into the system depends on the stack, your 
-version of VMS, and the version of your C compiler.
-
-The default solution available is to use the socket routines built into DEC
-C. Which routines are available depend on the version of VMS you're
-running, and require proper UCX emulation by your TCP/IP vendor.
-Relatively current versions of Multinet, TCPWare, Pathway, and UCX all
-provide the required libraries--check your manuals or release notes to see
-if your version is new enough.
-
-The other solution uses the SOCKETSHR library. Before VAX/VMS 5.5-2 it was
-the most portable solution.  The SOCKETSHR library has not been maintained
-since VAX/VMS 5.5-2, and it is not known if will even compile with the ANSI
-C that Perl currently requires.  It remains an option for historical reasons,
-just in case someone might find it useful.
-
-In combination with either UCX or NetLib, this supported all the major TCP
-stacks (Multinet, Pathways, TCPWare, UCX, and CMU) on all versions of VMS
-Perl ran on up to VAX/VMS 6.2 and Alpha VMS 1.5 with all the compilers on
-both VAX and Alpha. The portion of the socket interface was also consistent
-across versions of VMS and C compilers.
-
-It has a problem with UDP sockets when used with Multinet, though, so you
-should be aware of that.
-
-As of VAX/VMS 5.5-2 and later, CMU is the only TCP/IP program that requires
-socketshr, and the sources have been lost to the most recent CMU bug fixes,
-so CMU is limited to OpenVMS/VAX 6.2 or earlier, which is the last release
-that binaries for the last released patches are known to exist.
-
-There is currently no official web site for downloading either CMU or
-SOCKETSHR; however, copies may be found in the DECUS archives.
+you choose to compile Perl with socket support.  It does this via the socket
+routines built into the CRTL regarless of which TCP/IP stack your system
+has.
 
 =head1 Building Perl
 

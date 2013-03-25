@@ -18,7 +18,7 @@ BEGIN {
 # strict
 use strict;
 
-print "1..153\n";
+print "1..177\n";
 
 my $i = 1;
 
@@ -409,7 +409,7 @@ print "ok ", $i++, "\n";
 print "# CORE::open => ($p)\nnot " if ($p = prototype('CORE::open')) ne '*;$@';
 print "ok ", $i++, "\n";
 
-print "# CORE:Foo => ($p), \$@ => `$@'\nnot " 
+print "# CORE:Foo => ($p), \$@ => '$@'\nnot " 
     if defined ($p = eval { prototype('CORE::Foo') or 1 }) or $@ !~ /^Can't find an opnumber/;
 print "ok ", $i++, "\n";
 
@@ -544,6 +544,29 @@ sub sreftest (\$$) {
     sreftest my $sref, $i++;
     sreftest($helem{$i}, $i++);
     sreftest $aelem[0], $i++;
+    sreftest sub { [0] }->()[0], $i++;
+    sreftest my $a = 'quidgley', $i++;
+    print "not " if eval 'return 1; sreftest(3+4)';
+    print "ok ", $i++, ' - \$ with invalid argument', "\n";
+}
+
+# test single term
+sub lazy (+$$) {
+    print "not " unless @_ == 3 && ref $_[0] eq $_[1];
+    print "ok $_[2] - non container test\n";
+}
+sub quietlazy (+) { return shift(@_) }
+sub give_aref { [] }
+sub list_or_scalar { wantarray ? (1..10) : [] }
+{
+    my @multiarray = ("a".."z");
+    my %bighash = @multiarray;
+    lazy(\@multiarray, 'ARRAY', $i++);
+    lazy(\%bighash, 'HASH', $i++);
+    lazy({}, 'HASH', $i++);
+    lazy(give_aref, 'ARRAY', $i++);
+    lazy(3, '', $i++); # allowed by prototype, even if runtime error
+    lazy(list_or_scalar, 'ARRAY', $i++); # propagate scalar context
 }
 
 # test prototypes when they are evaled and there is a syntax error
@@ -568,14 +591,6 @@ for my $p ( "", qw{ () ($) ($@) ($%) ($;$) (&) (&\@) (&@) (%) (\%) (\@) } ) {
   }
 }
 
-# Not $$;$;$
-print "not " unless prototype "CORE::substr" eq '$$;$$';
-print "ok ", $i++, "\n";
-
-# recv takes a scalar reference for its second argument
-print "not " unless prototype "CORE::recv" eq '*\\$$$';
-print "ok ", $i++, "\n";
-
 {
     my $myvar;
     my @myarray;
@@ -586,6 +601,8 @@ print "ok ", $i++, "\n";
     sub myref (\[$@%&*]) { print "# $_[0]\n"; return "$_[0]" }
 
     print "not " unless myref($myvar)   =~ /^SCALAR\(/;
+    print "ok ", $i++, "\n";
+    print "not " unless myref($myvar=7) =~ /^SCALAR\(/;
     print "ok ", $i++, "\n";
     print "not " unless myref(@myarray) =~ /^ARRAY\(/;
     print "ok ", $i++, "\n";
@@ -651,3 +668,85 @@ print "ok ", $i++, "\n";
 eval 'sub bug (\[%@]) {  } my $array = [0 .. 1]; bug %$array;';
 print "not " unless $@ =~ /Not a HASH reference/;
 print "ok ", $i++, "\n";
+
+# [perl #75904]
+# Test that the following prototypes make subs parse as unary functions:
+#  * \sigil \[...] ;$ ;* ;\sigil ;\[...]
+print "not "
+ unless eval 'sub uniproto1 (*) {} uniproto1 $_, 1' or warn $@;
+print "ok ", $i++, "\n";
+print "not "
+ unless eval 'sub uniproto2 (\$) {} uniproto2 $_, 1' or warn $@;
+print "ok ", $i++, "\n";
+print "not "
+ unless eval 'sub uniproto3 (\[$%]) {} uniproto3 %_, 1' or warn $@;
+print "ok ", $i++, "\n";
+print "not "
+ unless eval 'sub uniproto4 (;$) {} uniproto4 $_, 1' or warn $@;
+print "ok ", $i++, "\n";
+print "not "
+ unless eval 'sub uniproto5 (;*) {} uniproto5 $_, 1' or warn $@;
+print "ok ", $i++, "\n";
+print "not "
+ unless eval 'sub uniproto6 (;\@) {} uniproto6 @_, 1' or warn $@;
+print "ok ", $i++, "\n";
+print "not "
+ unless eval 'sub uniproto7 (;\[$%@]) {} uniproto7 @_, 1' or warn $@;
+print "ok ", $i++, "\n";
+print "not "
+ unless eval 'sub uniproto8 (+) {} uniproto8 $_, 1' or warn $@;
+print "ok ", $i++, "\n";
+print "not "
+ unless eval 'sub uniproto9 (;+) {} uniproto9 $_, 1' or warn $@;
+print "ok ", $i++, "\n";
+
+# Test that a trailing semicolon makes a sub have listop precedence
+sub unilist ($;)  { $_[0]+1 }
+sub unilist2(_;)  { $_[0]+1 }
+sub unilist3(;$;) { $_[0]+1 }
+print "not " unless (unilist 0 || 5) == 6;
+print "ok ", $i++, "\n";
+print "not " unless (unilist2 0 || 5) == 6;
+print "ok ", $i++, "\n";
+print "not " unless (unilist3 0 || 5) == 6;
+print "ok ", $i++, "\n";
+
+{
+  # Lack of prototype on a subroutine definition should override any prototype
+  # on the declaration.
+  sub z_zwap (&);
+
+  local $SIG{__WARN__} = sub {
+    my $thiswarn = join "",@_;
+    if ($thiswarn =~ /^Prototype mismatch: sub main::z_zwap/) {
+      print 'ok ', $i++, "\n";
+    } else {
+      print 'not ok ', $i++, "\n";
+      print STDERR $thiswarn;
+    }
+  };
+
+  eval q{sub z_zwap {return @_}};
+
+  if ($@) {
+    print "not ok ", $i++, "# $@";
+  } else {
+    print "ok ", $i++, "\n";
+  }
+
+
+  my @a = (6,4,2);
+  my @got  = eval q{z_zwap(@a)};
+
+  if ($@) {
+    print "not ok ", $i++, " # $@";
+  } else {
+    print "ok ", $i++, "\n";
+  }
+
+  if ("@got" eq "@a") {
+    print "ok ", $i++, "\n";
+  } else {
+    print "not ok ", $i++, " # >@got<\n";
+  }
+}

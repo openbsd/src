@@ -1,5 +1,5 @@
 #
-# $Id: UTF7.pm,v 2.4 2006/06/03 20:28:48 dankogai Exp $
+# $Id: UTF7.pm,v 2.5 2010/09/18 18:39:51 dankogai Exp $
 #
 package Encode::Unicode::UTF7;
 use strict;
@@ -7,7 +7,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(Encode::Encoding);
 __PACKAGE__->Define('UTF-7');
-our $VERSION = do { my @r = ( q$Revision: 2.4 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.5 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 use MIME::Base64;
 use Encode;
 
@@ -35,7 +35,9 @@ sub encode($$;$) {
     my $bytes = '';
     while ( pos($str) < $len ) {
         if ( $str =~ /\G($re_asis+)/ogc ) {
-            $bytes .= $1;
+	    my $octets = $1;
+	    utf8::downgrade($octets);
+	    $bytes .= $octets;
         }
         elsif ( $str =~ /\G($re_encoded+)/ogsc ) {
             if ( $1 eq "+" ) {

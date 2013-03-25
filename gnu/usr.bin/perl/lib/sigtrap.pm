@@ -8,7 +8,7 @@ sigtrap - Perl pragma to enable simple signal handling
 
 use Carp;
 
-$VERSION = 1.04;
+$VERSION = 1.06;
 $Verbose ||= 0;
 
 sub import {
@@ -95,7 +95,8 @@ sub handler_traceback {
     # Now go for broke.
     for ($i = 1; ($p,$f,$l,$s,$h,$w,$e,$r) = caller($i); $i++) {
         @a = ();
-	for (@args) {
+	for my $fr (@args) {
+            my $_ = $fr;
 	    s/([\'\\])/\\$1/g;
 	    s/([^\0]*)/'$1'/
 	      unless /^(?: -?[\d.]+ | \*[\w:]* )$/x;
@@ -114,7 +115,7 @@ sub handler_traceback {
 	} elsif ($s eq '(eval)') {
 	    $s = "eval {...}";
 	}
-	$f = "file `$f'" unless $f eq '-e';
+	$f = "file '$f'" unless $f eq '-e';
 	$mess = "$w$s$a called from $f line $l\n";
 	syswrite(STDERR, $mess, length($mess));
     }

@@ -1,6 +1,29 @@
 package overload;
 
-our $VERSION = '1.10';
+our $VERSION = '1.18';
+
+%ops = (
+    with_assign         => "+ - * / % ** << >> x .",
+    assign              => "+= -= *= /= %= **= <<= >>= x= .=",
+    num_comparison      => "< <= >  >= == !=",
+    '3way_comparison'   => "<=> cmp",
+    str_comparison      => "lt le gt ge eq ne",
+    binary              => '& &= | |= ^ ^=',
+    unary               => "neg ! ~",
+    mutators            => '++ --',
+    func                => "atan2 cos sin exp abs log sqrt int",
+    conversion          => 'bool "" 0+ qr',
+    iterators           => '<>',
+    filetest            => "-X",
+    dereferencing       => '${} @{} %{} &{} *{}',
+    matching            => '~~',
+    special             => 'nomethod fallback =',
+);
+
+my %ops_seen;
+for $category (keys %ops) {
+    $ops_seen{$_}++ for (split /\s+/, $ops{$category});
+}
 
 sub nil {}
 
@@ -15,12 +38,14 @@ sub OVERLOAD {
     if ($_ eq 'fallback') {
       $fb = $arg{$_};
     } else {
+      warnings::warnif("overload arg '$_' is invalid")
+        unless $ops_seen{$_};
       $sub = $arg{$_};
       if (not ref $sub and $sub !~ /::/) {
 	$ {$package . "::(" . $_} = $sub;
 	$sub = \&nil;
       }
-      #print STDERR "Setting `$ {'package'}::\cO$_' to \\&`$sub'.\n";
+      #print STDERR "Setting '$ {'package'}::\cO$_' to \\&'$sub'.\n";
       *{$package . "::(" . $_} = \&{ $sub };
     }
   }
@@ -50,14 +75,15 @@ sub unimport {
 sub Overloaded {
   my $package = shift;
   $package = ref $package if ref $package;
-  $package->can('()');
+  mycan ($package, '()');
 }
 
 sub ov_method {
   my $globref = shift;
   return undef unless $globref;
   my $sub = \&{*$globref};
-  return $sub if $sub ne \&nil;
+  no overloading;
+  return $sub if !ref $sub or $sub != \&nil;
   return shift->can($ {*$globref});
 }
 
@@ -87,17 +113,8 @@ sub Method {
 }
 
 sub AddrRef {
-  my $package = ref $_[0];
-  return "$_[0]" unless $package;
-
-  local $@;
-  local $!;
-  require Scalar::Util;
-  my $class = Scalar::Util::blessed($_[0]);
-  my $class_prefix = defined($class) ? "$class=" : "";
-  my $type = Scalar::Util::reftype($_[0]);
-  my $addr = Scalar::Util::refaddr($_[0]);
-  return sprintf("$class_prefix$type(0x%x)", $addr);
+  no overloading;
+  "$_[0]";
 }
 
 *StrVal = *AddrRef;
@@ -126,22 +143,6 @@ sub mycan {				# Real can would leave stubs.
 	      'qr'	  => 0x10000, # HINT_NEW_RE
 	     );
 
-%ops = ( with_assign	  => "+ - * / % ** << >> x .",
-	 assign		  => "+= -= *= /= %= **= <<= >>= x= .=",
-	 num_comparison	  => "< <= >  >= == !=",
-	 '3way_comparison'=> "<=> cmp",
-	 str_comparison	  => "lt le gt ge eq ne",
-	 binary		  => '& &= | |= ^ ^=',
-	 unary		  => "neg ! ~",
-	 mutators	  => '++ --',
-	 func		  => "atan2 cos sin exp abs log sqrt int",
-	 conversion	  => 'bool "" 0+ qr',
-	 iterators	  => '<>',
-         filetest         => "-X",
-	 dereferencing	  => '${} @{} %{} &{} *{}',
-	 matching	  => '~~',
-	 special	  => 'nomethod fallback =');
-
 use warnings::register;
 sub constant {
   # Arguments: what, sub
@@ -151,14 +152,14 @@ sub constant {
         last;
     }
     elsif (!exists $constants {$_ [0]}) {
-        warnings::warnif ("`$_[0]' is not an overloadable type");
+        warnings::warnif ("'$_[0]' is not an overloadable type");
     }
     elsif (!ref $_ [1] || "$_[1]" !~ /(^|=)CODE\(0x[0-9a-f]+\)$/) {
         # Can't use C<ref $_[1] eq "CODE"> above as code references can be
         # blessed, and C<ref> would return the package the ref is blessed into.
         if (warnings::enabled) {
             $_ [1] = "undef" unless defined $_ [1];
-            warnings::warn ("`$_[1]' is not a code reference");
+            warnings::warn ("'$_[1]' is not a code reference");
         }
     }
     else {
@@ -198,7 +199,7 @@ overload - Package for overloading Perl operations
 
     package main;
     $a = SomeThing->new( 57 );
-    $b=5+$a;
+    $b = 5 + $a;
     ...
     if (overload::Overloaded $b) {...}
     ...
@@ -209,224 +210,292 @@ overload - Package for overloading Perl operations
 This pragma allows overloading of Perl's operators for a class.
 To overload built-in functions, see L<perlsub/Overriding Built-in Functions> instead.
 
-=head2 Declaration of overloaded functions
+=head2 Fundamentals
 
-The compilation directive
+=head3 Declaration
+
+Arguments of the C<use overload> directive are (key, value) pairs.
+For the full set of legal keys, see L<Overloadable Operations> below.
+
+Operator implementations (the values) can be subroutines,
+references to subroutines, or anonymous subroutines
+- in other words, anything legal inside a C<&{ ... }> call.
+Values specified as strings are interpreted as method names.
+Thus
 
     package Number;
     use overload
-	"+" => \&add,
-	"*=" => "muas";
+        "-" => "minus",
+        "*=" => \&muas,
+        '""' => sub { ...; };
 
-declares function Number::add() for addition, and method muas() in
-the "class" C<Number> (or one of its base classes)
-for the assignment form C<*=> of multiplication.
+declares that subtraction is to be implemented by method C<minus()>
+in the class C<Number> (or one of its base classes),
+and that the function C<Number::muas()> is to be used for the
+assignment form of multiplication, C<*=>.
+It also defines an anonymous subroutine to implement stringification:
+this is called whenever an object blessed into the package C<Number>
+is used in a string context (this subroutine might, for example,
+return the number as a Roman numeral).
 
-Arguments of this directive come in (key, value) pairs.  Legal values
-are values legal inside a C<&{ ... }> call, so the name of a
-subroutine, a reference to a subroutine, or an anonymous subroutine
-will all work.  Note that values specified as strings are
-interpreted as methods, not subroutines.  Legal keys are listed below.
+=head3 Calling Conventions and Magic Autogeneration
 
-The subroutine C<add> will be called to execute C<$a+$b> if $a
-is a reference to an object blessed into the package C<Number>, or if $a is
-not an object from a package with defined mathemagic addition, but $b is a
-reference to a C<Number>.  It can also be called in other situations, like
-C<$a+=7>, or C<$a++>.  See L<MAGIC AUTOGENERATION>.  (Mathemagical
-methods refer to methods triggered by an overloaded mathematical
-operator.)
+The following sample implementation of C<minus()> (which assumes
+that C<Number> objects are simply blessed references to scalars)
+illustrates the calling conventions:
 
-Since overloading respects inheritance via the @ISA hierarchy, the
-above declaration would also trigger overloading of C<+> and C<*=> in
-all the packages which inherit from C<Number>.
+    package Number;
+    sub minus {
+        my ($self, $other, $swap) = @_;
+        my $result = $$self - $other;         # *
+        $result = -$result if $swap;
+        ref $result ? $result : bless \$result;
+    }
+    # * may recurse once - see table below
 
-=head2 Calling Conventions for Binary Operations
+Three arguments are passed to all subroutines specified in the
+C<use overload> directive (with one exception - see L</nomethod>).
+The first of these is the operand providing the overloaded
+operator implementation -
+in this case, the object whose C<minus()> method is being called.
 
-The functions specified in the C<use overload ...> directive are called
-with three (in one particular case with four, see L<Last Resort>)
-arguments.  If the corresponding operation is binary, then the first
-two arguments are the two arguments of the operation.  However, due to
-general object calling conventions, the first argument should always be
-an object in the package, so in the situation of C<7+$a>, the
-order of the arguments is interchanged.  It probably does not matter
-when implementing the addition method, but whether the arguments
-are reversed is vital to the subtraction method.  The method can
-query this information by examining the third argument, which can take
-three different values:
+The second argument is the other operand, or C<undef> in the
+case of a unary operator.
 
-=over 7
+The third argument is set to TRUE if (and only if) the two
+operands have been swapped.  Perl may do this to ensure that the
+first argument (C<$self>) is an object implementing the overloaded
+operation, in line with general object calling conventions.
+For example, if C<$x> and C<$y> are C<Number>s:
 
-=item FALSE
+    operation   |   generates a call to
+    ============|======================
+    $x - $y     |   minus($x, $y, '')
+    $x - 7      |   minus($x, 7, '')
+    7 - $x      |   minus($x, 7, 1)
 
-the order of arguments is as in the current operation.
+Perl may also use C<minus()> to implement other operators which
+have not been specified in the C<use overload> directive,
+according to the rules for L<Magic Autogeneration> described later.
+For example, the C<use overload> above declared no subroutine
+for any of the operators C<-->, C<neg> (the overload key for
+unary minus), or C<-=>.  Thus
 
-=item TRUE
+    operation   |   generates a call to
+    ============|======================
+    -$x         |   minus($x, 0, 1)
+    $x--        |   minus($x, 1, undef)
+    $x -= 3     |   minus($x, 3, undef)
 
-the arguments are reversed.
+Note the C<undef>s:
+where autogeneration results in the method for a standard
+operator which does not change either of its operands, such
+as C<->, being used to implement an operator which changes
+the operand ("mutators": here, C<--> and C<-=>),
+Perl passes undef as the third argument.
+This still evaluates as FALSE, consistent with the fact that
+the operands have not been swapped, but gives the subroutine
+a chance to alter its behaviour in these cases.
 
-=item C<undef>
+In all the above examples, C<minus()> is required
+only to return the result of the subtraction:
+Perl takes care of the assignment to $x.
+In fact, such methods should I<not> modify their operands,
+even if C<undef> is passed as the third argument
+(see L<Overloadable Operations>).
 
-the current operation is an assignment variant (as in
-C<$a+=7>), but the usual function is called instead.  This additional
-information can be used to generate some optimizations.  Compare
-L<Calling Conventions for Mutators>.
+The same is not true of implementations of C<++> and C<-->:
+these are expected to modify their operand.
+An appropriate implementation of C<--> might look like
 
-=back
+    use overload '--' => "decr",
+        # ...
+    sub decr { --${$_[0]}; }
 
-=head2 Calling Conventions for Unary Operations
+=head3 Mathemagic, Mutators, and Copy Constructors
 
-Unary operation are considered binary operations with the second
-argument being C<undef>.  Thus the functions that overloads C<{"++"}>
-is called with arguments C<($a,undef,'')> when $a++ is executed.
+The term 'mathemagic' describes the overloaded implementation
+of mathematical operators.
+Mathemagical operations raise an issue.
+Consider the code:
 
-=head2 Calling Conventions for Mutators
+    $a = $b;
+    --$a;
 
-Two types of mutators have different calling conventions:
+If C<$a> and C<$b> are scalars then after these statements
 
-=over
+    $a == $b - 1
 
-=item C<++> and C<-->
+An object, however, is a reference to blessed data, so if
+C<$a> and C<$b> are objects then the assignment C<$a = $b>
+copies only the reference, leaving C<$a> and C<$b> referring
+to the same object data.
+One might therefore expect the operation C<--$a> to decrement
+C<$b> as well as C<$a>.
+However, this would not be consistent with how we expect the
+mathematical operators to work.
 
-The routines which implement these operators are expected to actually
-I<mutate> their arguments.  So, assuming that $obj is a reference to a
-number,
+Perl resolves this dilemma by transparently calling a copy
+constructor before calling a method defined to implement
+a mutator (C<-->, C<+=>, and so on.).
+In the above example, when Perl reaches the decrement
+statement, it makes a copy of the object data in C<$a> and
+assigns to C<$a> a reference to the copied data.
+Only then does it call C<decr()>, which alters the copied
+data, leaving C<$b> unchanged.
+Thus the object metaphor is preserved as far as possible,
+while mathemagical operations still work according to the
+arithmetic metaphor.
 
-  sub incr { my $n = $ {$_[0]}; ++$n; $_[0] = bless \$n}
-
-is an appropriate implementation of overloaded C<++>.  Note that
-
-  sub incr { ++$ {$_[0]} ; shift }
-
-is OK if used with preincrement and with postincrement. (In the case
-of postincrement a copying will be performed, see L<Copy Constructor>.)
-
-=item C<x=> and other assignment versions
-
-There is nothing special about these methods.  They may change the
-value of their arguments, and may leave it as is.  The result is going
-to be assigned to the value in the left-hand-side if different from
-this value.
-
-This allows for the same method to be used as overloaded C<+=> and
-C<+>.  Note that this is I<allowed>, but not recommended, since by the
-semantic of L<"Fallback"> Perl will call the method for C<+> anyway,
-if C<+=> is not overloaded.
-
-=back
-
-B<Warning.>  Due to the presence of assignment versions of operations,
-routines which may be called in assignment context may create
-self-referential structures.  Currently Perl will not free self-referential
-structures until cycles are C<explicitly> broken.  You may get problems
-when traversing your structures too.
-
-Say,
-
-  use overload '+' => sub { bless [ \$_[0], \$_[1] ] };
-
-is asking for trouble, since for code C<$obj += $foo> the subroutine
-is called as C<$obj = add($obj, $foo, undef)>, or C<$obj = [\$obj,
-\$foo]>.  If using such a subroutine is an important optimization, one
-can overload C<+=> explicitly by a non-"optimized" version, or switch
-to non-optimized version if C<not defined $_[2]> (see
-L<Calling Conventions for Binary Operations>).
-
-Even if no I<explicit> assignment-variants of operators are present in
-the script, they may be generated by the optimizer.  Say, C<",$obj,"> or
-C<',' . $obj . ','> may be both optimized to
-
-  my $tmp = ',' . $obj;    $tmp .= ',';
+Note: the preceding paragraph describes what happens when
+Perl autogenerates the copy constructor for an object based
+on a scalar.
+For other cases, see L<Copy Constructor>.
 
 =head2 Overloadable Operations
 
-The following symbols can be specified in C<use overload> directive:
+The complete list of keys that can be specified in the C<use overload>
+directive are given, separated by spaces, in the values of the
+hash C<%overload::ops>:
+
+ with_assign	  => '+ - * / % ** << >> x .',
+ assign		  => '+= -= *= /= %= **= <<= >>= x= .=',
+ num_comparison	  => '< <= > >= == !=',
+ '3way_comparison'=> '<=> cmp',
+ str_comparison	  => 'lt le gt ge eq ne',
+ binary		  => '& &= | |= ^ ^=',
+ unary		  => 'neg ! ~',
+ mutators	  => '++ --',
+ func		  => 'atan2 cos sin exp abs log sqrt int',
+ conversion	  => 'bool "" 0+ qr',
+ iterators	  => '<>',
+ filetest         => '-X',
+ dereferencing	  => '${} @{} %{} &{} *{}',
+ matching	  => '~~',
+ special	  => 'nomethod fallback ='
+
+Most of the overloadable operators map one-to-one to these keys.
+Exceptions, including additional overloadable operations not
+apparent from this hash, are included in the notes which follow.
+
+A warning is issued if an attempt is made to register an operator not found
+above.
 
 =over 5
 
-=item * I<Arithmetic operations>
+=item * C<not>
 
-    "+", "+=", "-", "-=", "*", "*=", "/", "/=", "%", "%=",
-    "**", "**=", "<<", "<<=", ">>", ">>=", "x", "x=", ".", ".=",
+The operator C<not> is not a valid key for C<use overload>.
+However, if the operator C<!> is overloaded then the same
+implementation will be used for C<not>
+(since the two operators differ only in precedence).
 
-For these operations a substituted non-assignment variant can be called if
-the assignment variant is not available.  Methods for operations C<+>,
-C<->, C<+=>, and C<-=> can be called to automatically generate
-increment and decrement methods.  The operation C<-> can be used to
-autogenerate missing methods for unary minus or C<abs>.
+=item * C<neg>
 
-See L<"MAGIC AUTOGENERATION">, L<"Calling Conventions for Mutators"> and
-L<"Calling Conventions for Binary Operations">) for details of these
-substitutions.
+The key C<neg> is used for unary minus to disambiguate it from
+binary C<->.
 
-=item * I<Comparison operations>
+=item * C<++>, C<-->
 
-    "<",  "<=", ">",  ">=", "==", "!=", "<=>",
-    "lt", "le", "gt", "ge", "eq", "ne", "cmp",
+Assuming they are to behave analogously to Perl's C<++> and C<-->,
+overloaded implementations of these operators are required to
+mutate their operands.
 
-If the corresponding "spaceship" variant is available, it can be
-used to substitute for the missing operation.  During C<sort>ing
-arrays, C<cmp> is used to compare values subject to C<use overload>.
+No distinction is made between prefix and postfix forms of the
+increment and decrement operators: these differ only in the
+point at which Perl calls the associated subroutine when
+evaluating an expression.
 
-=item * I<Bit operations>
+=item * I<Assignments>
 
-    "&", "&=", "^", "^=", "|", "|=", "neg", "!", "~",
+    +=  -=  *=  /=  %=  **=  <<=  >>=  x=  .=
+    &=  |=  ^=
 
-C<neg> stands for unary minus.  If the method for C<neg> is not
-specified, it can be autogenerated using the method for
-subtraction. If the method for C<!> is not specified, it can be
-autogenerated using the methods for C<bool>, or C<"">, or C<0+>.
+Simple assignment is not overloadable (the C<'='> key is used
+for the L<Copy Constructor>).
+Perl does have a way to make assignments to an object do whatever
+you want, but this involves using tie(), not overload -
+see L<perlfunc/tie> and the L</COOKBOOK> examples below.
 
-The same remarks in L<"Arithmetic operations"> about
-assignment-variants and autogeneration apply for
-bit operations C<"&">, C<"^">, and C<"|"> as well.
+The subroutine for the assignment variant of an operator is
+required only to return the result of the operation.
+It is permitted to change the value of its operand
+(this is safe because Perl calls the copy constructor first),
+but this is optional since Perl assigns the returned value to
+the left-hand operand anyway.
 
-=item * I<Increment and decrement>
+An object that overloads an assignment operator does so only in
+respect of assignments to that object.
+In other words, Perl never calls the corresponding methods with
+the third argument (the "swap" argument) set to TRUE.
+For example, the operation
 
-    "++", "--",
+    $a *= $b
 
-If undefined, addition and subtraction methods can be
-used instead.  These operations are called both in prefix and
-postfix form.
+cannot lead to C<$b>'s implementation of C<*=> being called,
+even if C<$a> is a scalar.
+(It can, however, generate a call to C<$b>'s method for C<*>).
 
-=item * I<Transcendental functions>
+=item * I<Non-mutators with a mutator variant>
 
-    "atan2", "cos", "sin", "exp", "abs", "log", "sqrt", "int"
+     +  -  *  /  %  **  <<  >>  x  .
+     &  |  ^
 
-If C<abs> is unavailable, it can be autogenerated using methods
-for "E<lt>" or "E<lt>=E<gt>" combined with either unary minus or subtraction.
+As described L<above|"Calling Conventions and Magic Autogeneration">,
+Perl may call methods for operators like C<+> and C<&> in the course
+of implementing missing operations like C<++>, C<+=>, and C<&=>.
+While these methods may detect this usage by testing the definedness
+of the third argument, they should in all cases avoid changing their
+operands.
+This is because Perl does not call the copy constructor before
+invoking these methods.
 
-Note that traditionally the Perl function L<int> rounds to 0, thus for
-floating-point-like types one should follow the same semantic.  If
-C<int> is unavailable, it can be autogenerated using the overloading of
-C<0+>.
+=item * C<int>
 
-=item * I<Boolean, string, numeric and regexp conversions>
+Traditionally, the Perl function C<int> rounds to 0
+(see L<perlfunc/int>), and so for floating-point-like types one
+should follow the same semantic.
 
-    'bool', '""', '0+', 'qr'
+=item * I<String, numeric, boolean, and regexp conversions>
 
-If one or two of these operations are not overloaded, the remaining ones
-can be used instead.  C<bool> is used in the flow control operators
-(like C<while>) and for the ternary C<?:> operation; C<qr> is used for
-the RHS of C<=~> and when an object is interpolated into a regexp.
+    ""  0+  bool
 
-C<bool>, C<"">, and C<0+> can return any arbitrary Perl value.  If the
-corresponding operation for this value is overloaded too, that operation
-will be called again with this value. C<qr> must return a compiled
-regexp, or a ref to a compiled regexp (such as C<qr//> returns), and any
-further overloading on the return value will be ignored.
+These conversions are invoked according to context as necessary.
+For example, the subroutine for C<'""'> (stringify) may be used
+where the overloaded object is passed as an argument to C<print>,
+and that for C<'bool'> where it is tested in the condition of a flow
+control statement (like C<while>) or the ternary C<?:> operation.
+
+Of course, in contexts like, for example, C<$obj + 1>, Perl will
+invoke C<$obj>'s implementation of C<+> rather than (in this
+example) converting C<$obj> to a number using the numify method
+C<'0+'> (an exception to this is when no method has been provided
+for C<'+'> and L</fallback> is set to TRUE).
+
+The subroutines for C<'""'>, C<'0+'>, and C<'bool'> can return
+any arbitrary Perl value.
+If the corresponding operation for this value is overloaded too,
+the operation will be called again with this value.
 
 As a special case if the overload returns the object itself then it will
-be used directly. An overloaded conversion returning the object is
+be used directly.  An overloaded conversion returning the object is
 probably a bug, because you're likely to get something that looks like
 C<YourPackage=HASH(0x8172b34)>.
 
+    qr
+
+The subroutine for C<'qr'> is used wherever the object is
+interpolated into or used as a regexp, including when it
+appears on the RHS of a C<=~> or C<!~> operator.
+
+C<qr> must return a compiled regexp, or a ref to a compiled regexp
+(such as C<qr//> returns), and any further overloading on the return
+value will be ignored.
+
 =item * I<Iteration>
 
-    "<>"
-
-If not overloaded, the argument will be converted to a filehandle or
-glob (which may require a stringification).  The same overloading
-happens both for the I<read-filehandle> syntax C<E<lt>$varE<gt>> and
+If C<E<lt>E<gt>> is overloaded then the same implementation is used
+for both the I<read-filehandle> syntax C<E<lt>$varE<gt>> and
 I<globbing> syntax C<E<lt>${var}E<gt>>.
 
 B<BUGS> Even in list context, the iterator is currently called only
@@ -434,36 +503,29 @@ once and with scalar context.
 
 =item * I<File tests>
 
-    "-X"
-
-This overload is used for all the filetest operators (C<-f>, C<-x> and
-so on: see L<perlfunc/-X> for the full list). Even though these are
-unary operators, the method will be called with a second argument which
-is a single letter indicating which test was performed. Note that the
-overload key is the literal string C<"-X">: you can't provide separate
-overloads for the different tests.
+The key C<'-X'> is used to specify a subroutine to handle all the
+filetest operators (C<-f>, C<-x>, and so on: see L<perlfunc/-X> for
+the full list);
+it is not possible to overload any filetest operator individually.
+To distinguish them, the letter following the '-' is passed as the
+second argument (that is, in the slot that for binary operators
+is used to pass the second operand).
 
 Calling an overloaded filetest operator does not affect the stat value
-associated with the special filehandle C<_>. It still refers to the
+associated with the special filehandle C<_>.  It still refers to the
 result of the last C<stat>, C<lstat> or unoverloaded filetest.
 
-If not overloaded, these operators will fall back to the default
-behaviour even without C<< fallback => 1 >>. This means that if the
-object is a blessed glob or blessed IO ref it will be treated as a
-filehandle, otherwise string overloading will be invoked and the result
-treated as a filename.
-
-This overload was introduced in perl 5.12.
+This overload was introduced in Perl 5.12.
 
 =item * I<Matching>
 
 The key C<"~~"> allows you to override the smart matching logic used by
 the C<~~> operator and the switch construct (C<given>/C<when>).  See
-L<perlsyn/switch> and L<feature>.
+L<perlsyn/Switch Statements> and L<feature>.
 
-Unusually, overloading of the smart match operator does not automatically
-take precedence over normal smart match behaviour. In particular, in the
-following code:
+Unusually, the overloaded implementation of the smart match operator
+does not get full control of the smart match behaviour.
+In particular, in the following code:
 
     package Foo;
     use overload '~~' => 'match';
@@ -483,293 +545,356 @@ so you may see between one and three of these calls instead:
     $obj->match(2,0);
     $obj->match(3,0);
 
-Consult the match table in  L<perlsyn/"Smart matching in detail"> for
+Consult the match table in  L<perlop/"Smartmatch Operator"> for
 details of when overloading is invoked.
 
 =item * I<Dereferencing>
 
-    '${}', '@{}', '%{}', '&{}', '*{}'.
+    ${}  @{}  %{}  &{}  *{}
 
-If not overloaded, the argument will be dereferenced I<as is>, thus
-should be of correct type.  These functions should return a reference
-of correct type, or another object with overloaded dereferencing.
+If these operators are not explicitly overloaded then they
+work in the normal way, yielding the underlying scalar,
+array, or whatever stores the object data (or the appropriate
+error message if the dereference operator doesn't match it).
+Defining a catch-all C<'nomethod'> (see L<below|/nomethod>)
+makes no difference to this as the catch-all function will
+not be called to implement a missing dereference operator.
 
-As a special case if the overload returns the object itself then it
-will be used directly (provided it is the correct type).
-
-The dereference operators must be specified explicitly they will not be passed to
-"nomethod".
+If a dereference operator is overloaded then it must return a
+I<reference> of the appropriate type (for example, the
+subroutine for key C<'${}'> should return a reference to a
+scalar, not a scalar), or another object which overloads the
+operator: that is, the subroutine only determines what is
+dereferenced and the actual dereferencing is left to Perl.
+As a special case, if the subroutine returns the object itself
+then it will not be called again - avoiding infinite recursion.
 
 =item * I<Special>
 
-    "nomethod", "fallback", "=".
+    nomethod  fallback  =
 
-see L<SPECIAL SYMBOLS FOR C<use overload>>.
-
-=back
-
-See L<"Fallback"> for an explanation of when a missing method can be
-autogenerated.
-
-A computer-readable form of the above table is available in the hash
-%overload::ops, with values being space-separated lists of names:
-
- with_assign	  => '+ - * / % ** << >> x .',
- assign		  => '+= -= *= /= %= **= <<= >>= x= .=',
- num_comparison	  => '< <= > >= == !=',
- '3way_comparison'=> '<=> cmp',
- str_comparison	  => 'lt le gt ge eq ne',
- binary		  => '& &= | |= ^ ^=',
- unary		  => 'neg ! ~',
- mutators	  => '++ --',
- func		  => 'atan2 cos sin exp abs log sqrt',
- conversion	  => 'bool "" 0+ qr',
- iterators	  => '<>',
- filetest         => '-X',
- dereferencing	  => '${} @{} %{} &{} *{}',
- matching	  => '~~',
- special	  => 'nomethod fallback ='
-
-=head2 Inheritance and overloading
-
-Inheritance interacts with overloading in two ways.
-
-=over
-
-=item Strings as values of C<use overload> directive
-
-If C<value> in
-
-  use overload key => value;
-
-is a string, it is interpreted as a method name.
-
-=item Overloading of an operation is inherited by derived classes
-
-Any class derived from an overloaded class is also overloaded.  The
-set of overloaded methods is the union of overloaded methods of all
-the ancestors. If some method is overloaded in several ancestor, then
-which description will be used is decided by the usual inheritance
-rules:
-
-If C<A> inherits from C<B> and C<C> (in this order), C<B> overloads
-C<+> with C<\&D::plus_sub>, and C<C> overloads C<+> by C<"plus_meth">,
-then the subroutine C<D::plus_sub> will be called to implement
-operation C<+> for an object in package C<A>.
+See L<Special Keys for C<use overload>>.
 
 =back
 
-Note that since the value of the C<fallback> key is not a subroutine,
-its inheritance is not governed by the above rules.  In the current
-implementation, the value of C<fallback> in the first overloaded
-ancestor is used, but this is accidental and subject to change.
-
-=head1 SPECIAL SYMBOLS FOR C<use overload>
-
-Three keys are recognized by Perl that are not covered by the above
-description.
-
-=head2 Last Resort
-
-C<"nomethod"> should be followed by a reference to a function of four
-parameters.  If defined, it is called when the overloading mechanism
-cannot find a method for some operation.  The first three arguments of
-this function coincide with the arguments for the corresponding method if
-it were found, the fourth argument is the symbol
-corresponding to the missing method.  If several methods are tried,
-the last one is used.  Say, C<1-$a> can be equivalent to
-
-	&nomethodMethod($a,1,1,"-")
-
-if the pair C<"nomethod" =E<gt> "nomethodMethod"> was specified in the
-C<use overload> directive.
-
-The C<"nomethod"> mechanism is I<not> used for the dereference operators
-( ${} @{} %{} &{} *{} ).
-
-
-If some operation cannot be resolved, and there is no function
-assigned to C<"nomethod">, then an exception will be raised via die()--
-unless C<"fallback"> was specified as a key in C<use overload> directive.
-
-
-=head2 Fallback
-
-The key C<"fallback"> governs what to do if a method for a particular
-operation is not found.  Three different cases are possible depending on
-the value of C<"fallback">:
-
-=over 16
-
-=item * C<undef>
-
-Perl tries to use a
-substituted method (see L<MAGIC AUTOGENERATION>).  If this fails, it
-then tries to calls C<"nomethod"> value; if missing, an exception
-will be raised.
-
-=item * TRUE
-
-The same as for the C<undef> value, but no exception is raised.  Instead,
-it silently reverts to what it would have done were there no C<use overload>
-present.
-
-=item * defined, but FALSE
-
-No autogeneration is tried.  Perl tries to call
-C<"nomethod"> value, and if this is missing, raises an exception.
-
-=back
-
-B<Note.> C<"fallback"> inheritance via @ISA is not carved in stone
-yet, see L<"Inheritance and overloading">.
-
-=head2 Copy Constructor
-
-The value for C<"="> is a reference to a function with three
-arguments, i.e., it looks like the other values in C<use
-overload>. However, it does not overload the Perl assignment
-operator. This would go against Camel hair.
-
-This operation is called in the situations when a mutator is applied
-to a reference that shares its object with some other reference, such
-as
-
-	$a=$b;
-	++$a;
-
-To make this change $a and not change $b, a copy of C<$$a> is made,
-and $a is assigned a reference to this new object.  This operation is
-done during execution of the C<++$a>, and not during the assignment,
-(so before the increment C<$$a> coincides with C<$$b>).  This is only
-done if C<++> is expressed via a method for C<'++'> or C<'+='> (or
-C<nomethod>).  Note that if this operation is expressed via C<'+'>
-a nonmutator, i.e., as in
-
-	$a=$b;
-	$a=$a+1;
-
-then C<$a> does not reference a new copy of C<$$a>, since $$a does not
-appear as lvalue when the above code is executed.
-
-If the copy constructor is required during the execution of some mutator,
-but a method for C<'='> was not specified, it can be autogenerated as a
-string copy if the object is a plain scalar or a simple assignment if it
-is not.
-
-=over 5
-
-=item B<Example>
-
-The actually executed code for
-
-	$a=$b;
-        Something else which does not modify $a or $b....
-	++$a;
-
-may be
-
-	$a=$b;
-        Something else which does not modify $a or $b....
-	$a = $a->clone(undef,"");
-        $a->incr(undef,"");
-
-if $b was mathemagical, and C<'++'> was overloaded with C<\&incr>,
-C<'='> was overloaded with C<\&clone>.
-
-=back
-
-Same behaviour is triggered by C<$b = $a++>, which is consider a synonym for
-C<$b = $a; ++$a>.
-
-=head1 MAGIC AUTOGENERATION
-
-If a method for an operation is not found, and the value for  C<"fallback"> is
-TRUE or undefined, Perl tries to autogenerate a substitute method for
-the missing operation based on the defined operations.  Autogenerated method
-substitutions are possible for the following operations:
-
-=over 16
-
-=item I<Assignment forms of arithmetic operations>
-
-C<$a+=$b> can use the method for C<"+"> if the method for C<"+=">
-is not defined.
-
-=item I<Conversion operations>
-
-String, numeric, boolean and regexp conversions are calculated in terms
-of one another if not all of them are defined.
-
-=item I<Increment and decrement>
-
-The C<++$a> operation can be expressed in terms of C<$a+=1> or C<$a+1>,
-and C<$a--> in terms of C<$a-=1> and C<$a-1>.
-
-=item C<abs($a)>
-
-can be expressed in terms of C<$aE<lt>0> and C<-$a> (or C<0-$a>).
-
-=item I<Unary minus>
-
-can be expressed in terms of subtraction.
-
-=item I<Negation>
-
-C<!> and C<not> can be expressed in terms of boolean conversion, or
-string or numerical conversion.
-
-=item I<Concatenation>
-
-can be expressed in terms of string conversion.
-
-=item I<Comparison operations>
-
-can be expressed in terms of its "spaceship" counterpart: either
-C<E<lt>=E<gt>> or C<cmp>:
-
-    <, >, <=, >=, ==, != 	in terms of <=>
-    lt, gt, le, ge, eq, ne 	in terms of cmp
-
-=item I<Iterator>
-
-    <>				in terms of builtin operations
-
-=item I<Dereferencing>
-
-    ${} @{} %{} &{} *{}		in terms of builtin operations
-
-=item I<Copy operator>
-
-can be expressed in terms of an assignment to the dereferenced value, if this
-value is a scalar and not a reference, or simply a reference assignment
-otherwise.
-
-=back
-
-=head1 Minimal set of overloaded operations
+=head2 Magic Autogeneration
+
+If a method for an operation is not found then Perl tries to
+autogenerate a substitute implementation from the operations
+that have been defined.
+
+Note: the behaviour described in this section can be disabled
+by setting C<fallback> to FALSE (see L</fallback>).
+
+In the following tables, numbers indicate priority.
+For example, the table below states that,
+if no implementation for C<'!'> has been defined then Perl will
+implement it using C<'bool'> (that is, by inverting the value
+returned by the method for C<'bool'>);
+if boolean conversion is also unimplemented then Perl will
+use C<'0+'> or, failing that, C<'""'>.
+
+    operator | can be autogenerated from
+             |
+             | 0+   ""   bool   .   x
+    =========|==========================
+       0+    |       1     2
+       ""    |  1          2
+       bool  |  1    2
+       int   |  1    2     3
+       !     |  2    3     1
+       qr    |  2    1     3
+       .     |  2    1     3
+       x     |  2    1     3
+       .=    |  3    2     4    1
+       x=    |  3    2     4        1
+       <>    |  2    1     3
+       -X    |  2    1     3
+
+Note: The iterator (C<'E<lt>E<gt>'>) and file test (C<'-X'>)
+operators work as normal: if the operand is not a blessed glob or
+IO reference then it is converted to a string (using the method
+for C<'""'>, C<'0+'>, or C<'bool'>) to be interpreted as a glob
+or filename.
+
+    operator | can be autogenerated from
+             |
+             |  <   <=>   neg   -=    -
+    =========|==========================
+       neg   |                        1
+       -=    |                        1
+       --    |                   1    2
+       abs   | a1    a2    b1        b2    [*]
+       <     |        1
+       <=    |        1
+       >     |        1
+       >=    |        1
+       ==    |        1
+       !=    |        1
+
+    * one from [a1, a2] and one from [b1, b2]
+
+Just as numeric comparisons can be autogenerated from the method
+for C<< '<=>' >>, string comparisons can be autogenerated from
+that for C<'cmp'>:
+
+     operators          |  can be autogenerated from
+    ====================|===========================
+     lt gt le ge eq ne  |  cmp
+
+Similarly, autogeneration for keys C<'+='> and C<'++'> is analogous
+to C<'-='> and C<'--'> above:
+
+    operator | can be autogenerated from
+             |
+             |  +=    +
+    =========|==========================
+        +=   |        1
+        ++   |   1    2
+
+And other assignment variations are analogous to
+C<'+='> and C<'-='> (and similar to C<'.='> and C<'x='> above):
+
+              operator ||  *= /= %= **= <<= >>= &= ^= |=
+    -------------------||--------------------------------
+    autogenerated from ||  *  /  %  **  <<  >>  &  ^  |
+
+Note also that the copy constructor (key C<'='>) may be
+autogenerated, but only for objects based on scalars.
+See L<Copy Constructor>.
+
+=head3 Minimal Set of Overloaded Operations
 
 Since some operations can be automatically generated from others, there is
 a minimal set of operations that need to be overloaded in order to have
 the complete set of overloaded operations at one's disposal.
 Of course, the autogenerated operations may not do exactly what the user
-expects. See L<MAGIC AUTOGENERATION> above. The minimal set is:
+expects.  The minimal set is:
 
     + - * / % ** << >> x
     <=> cmp
     & | ^ ~
     atan2 cos sin exp log sqrt int
+    "" 0+ bool
+    ~~
 
-Additionally, you need to define at least one of string, boolean or
-numeric conversions because any one can be used to emulate the others.
-The string conversion can also be used to emulate concatenation.
+Of the conversions, only one of string, boolean or numeric is
+needed because each can be generated from either of the other two.
 
-=head1 Losing overloading
+=head2 Special Keys for C<use overload>
+
+=head3 C<nomethod>
+
+The C<'nomethod'> key is used to specify a catch-all function to
+be called for any operator that is not individually overloaded.
+The specified function will be passed four parameters.
+The first three arguments coincide with those that would have been
+passed to the corresponding method if it had been defined.
+The fourth argument is the C<use overload> key for that missing
+method.
+
+For example, if C<$a> is an object blessed into a package declaring
+
+    use overload 'nomethod' => 'catch_all', # ...
+
+then the operation
+
+    3 + $a
+
+could (unless a method is specifically declared for the key
+C<'+'>) result in a call
+
+    catch_all($a, 3, 1, '+')
+
+See L<How Perl Chooses an Operator Implementation>.
+
+=head3 C<fallback>
+
+The value assigned to the key C<'fallback'> tells Perl how hard
+it should try to find an alternative way to implement a missing
+operator.
+
+=over
+
+=item * defined, but FALSE
+
+    use overload "fallback" => 0, # ... ;
+
+This disables L<Magic Autogeneration>.
+
+=item * C<undef>
+
+In the default case where no value is explicitly assigned to
+C<fallback>, magic autogeneration is enabled.
+
+=item * TRUE
+
+The same as for C<undef>, but if a missing operator cannot be
+autogenerated then, instead of issuing an error message, Perl
+is allowed to revert to what it would have done for that
+operator if there had been no C<use overload> directive.
+
+Note: in most cases, particularly the L<Copy Constructor>,
+this is unlikely to be appropriate behaviour.
+
+=back
+
+See L<How Perl Chooses an Operator Implementation>.
+
+=head3 Copy Constructor
+
+As mentioned L<above|"Mathemagic, Mutators, and Copy Constructors">,
+this operation is called when a mutator is applied to a reference
+that shares its object with some other reference.
+For example, if C<$b> is mathemagical, and C<'++'> is overloaded
+with C<'incr'>, and C<'='> is overloaded with C<'clone'>, then the
+code
+
+    $a = $b;
+    # ... (other code which does not modify $a or $b) ...
+    ++$b;
+
+would be executed in a manner equivalent to
+
+    $a = $b;
+    # ...
+    $b = $b->clone(undef, "");
+    $b->incr(undef, "");
+
+Note:
+
+=over
+
+=item *
+
+The subroutine for C<'='> does not overload the Perl assignment
+operator: it is used only to allow mutators to work as described
+here.  (See L</Assignments> above.)
+
+=item *
+
+As for other operations, the subroutine implementing '=' is passed
+three arguments, though the last two are always C<undef> and C<''>.
+
+=item *
+
+The copy constructor is called only before a call to a function
+declared to implement a mutator, for example, if C<++$b;> in the
+code above is effected via a method declared for key C<'++'>
+(or 'nomethod', passed C<'++'> as the fourth argument) or, by
+autogeneration, C<'+='>.
+It is not called if the increment operation is effected by a call
+to the method for C<'+'> since, in the equivalent code,
+
+    $a = $b;
+    $b = $b + 1;
+
+the data referred to by C<$a> is unchanged by the assignment to
+C<$b> of a reference to new object data.
+
+=item *
+
+The copy constructor is not called if Perl determines that it is
+unnecessary because there is no other reference to the data being
+modified.
+
+=item *
+
+If C<'fallback'> is undefined or TRUE then a copy constructor
+can be autogenerated, but only for objects based on scalars.
+In other cases it needs to be defined explicitly.
+Where an object's data is stored as, for example, an array of
+scalars, the following might be appropriate:
+
+    use overload '=' => sub { bless [ @{$_[0]} ] },  # ...
+
+=item *
+
+If C<'fallback'> is TRUE and no copy constructor is defined then,
+for objects not based on scalars, Perl may silently fall back on
+simple assignment - that is, assignment of the object reference.
+In effect, this disables the copy constructor mechanism since
+no new copy of the object data is created.
+This is almost certainly not what you want.
+(It is, however, consistent: for example, Perl's fallback for the
+C<++> operator is to increment the reference itself.)
+
+=back
+
+=head2 How Perl Chooses an Operator Implementation
+
+Which is checked first, C<nomethod> or C<fallback>?
+If the two operands of an operator are of different types and
+both overload the operator, which implementation is used?
+The following are the precedence rules:
+
+=over
+
+=item 1.
+
+If the first operand has declared a subroutine to overload the
+operator then use that implementation.
+
+=item 2.
+
+Otherwise, if fallback is TRUE or undefined for the
+first operand then see if the
+L<rules for autogeneration|"Magic Autogeneration">
+allows another of its operators to be used instead.
+
+=item 3.
+
+Unless the operator is an assignment (C<+=>, C<-=>, etc.),
+repeat step (1) in respect of the second operand.
+
+=item 4.
+
+Repeat Step (2) in respect of the second operand.
+
+=item 5.
+
+If the first operand has a "nomethod" method then use that.
+
+=item 6.
+
+If the second operand has a "nomethod" method then use that.
+
+=item 7.
+
+If C<fallback> is TRUE for both operands
+then perform the usual operation for the operator,
+treating the operands as numbers, strings, or booleans
+as appropriate for the operator (see note).
+
+=item 8.
+
+Nothing worked - die.
+
+=back
+
+Where there is only one operand (or only one operand with
+overloading) the checks in respect of the other operand above are
+skipped.
+
+There are exceptions to the above rules for dereference operations
+(which, if Step 1 fails, always fall back to the normal, built-in
+implementations - see Dereferencing), and for C<~~> (which has its
+own set of rules - see C<Matching> under L</Overloadable Operations>
+above).
+
+Note on Step 7: some operators have a different semantic depending
+on the type of their operands.
+As there is no way to instruct Perl to treat the operands as, e.g.,
+numbers instead of strings, the result here may not be what you
+expect.
+See L<BUGS AND PITFALLS>.
+
+=head2 Losing Overloading
 
 The restriction for the comparison operation is that even if, for example,
-`C<cmp>' should return a blessed reference, the autogenerated `C<lt>'
+C<cmp> should return a blessed reference, the autogenerated C<lt>
 function will produce only a standard logical value based on the
-numerical value of the result of `C<cmp>'.  In particular, a working
+numerical value of the result of C<cmp>.  In particular, a working
 numeric conversion is needed in this case (possibly expressed in terms of
 other conversions).
 
@@ -780,7 +905,43 @@ When you chop() a mathemagical object it is promoted to a string and its
 mathemagical properties are lost.  The same can happen with other
 operations as well.
 
-=head1 Run-time Overloading
+=head2 Inheritance and Overloading
+
+Overloading respects inheritance via the @ISA hierarchy.
+Inheritance interacts with overloading in two ways.
+
+=over
+
+=item Method names in the C<use overload> directive
+
+If C<value> in
+
+  use overload key => value;
+
+is a string, it is interpreted as a method name - which may
+(in the usual way) be inherited from another class.
+
+=item Overloading of an operation is inherited by derived classes
+
+Any class derived from an overloaded class is also overloaded
+and inherits its operator implementations.
+If the same operator is overloaded in more than one ancestor
+then the implementation is determined by the usual inheritance
+rules.
+
+For example, if C<A> inherits from C<B> and C<C> (in that order),
+C<B> overloads C<+> with C<\&D::plus_sub>, and C<C> overloads
+C<+> by C<"plus_meth">, then the subroutine C<D::plus_sub> will
+be called to implement operation C<+> for an object in package C<A>.
+
+=back
+
+Note that since the value of the C<fallback> key is not a subroutine,
+its inheritance is not governed by the above rules.  In the current
+implementation, the value of C<fallback> in the first overloaded
+ancestor is used, but this is accidental and subject to change.
+
+=head2 Run-time Overloading
 
 Since all C<use> directives are executed at compile-time, the only way to
 change overloading during run-time is to
@@ -793,7 +954,7 @@ You can also use
 
 though the use of these constructs during run-time is questionable.
 
-=head1 Public functions
+=head2 Public Functions
 
 Package C<overload.pm> provides the following public functions:
 
@@ -801,7 +962,8 @@ Package C<overload.pm> provides the following public functions:
 
 =item overload::StrVal(arg)
 
-Gives string value of C<arg> as in absence of stringify overloading. If you
+Gives the string value of C<arg> as in the
+absence of stringify overloading.  If you
 are using this to get the address of a reference (useful for checking if two
 references point to the same thing) then you may be better off using
 C<Scalar::Util::refaddr()>, which is faster.
@@ -816,7 +978,7 @@ Returns C<undef> or a reference to the method that implements C<op>.
 
 =back
 
-=head1 Overloading constants
+=head2 Overloading Constants
 
 For some applications, the Perl parser mangles constants too much.
 It is possible to hook into this process via C<overload::constant()>
@@ -872,12 +1034,12 @@ Note that it is probably meaningless to call the functions overload::constant()
 and overload::remove_constant() from anywhere but import() and unimport() methods.
 From these methods they may be called as
 
-	sub import {
-	  shift;
-	  return unless @_;
-	  die "unknown import: @_" unless @_ == 1 and $_[0] eq ':constant';
-	  overload::constant integer => sub {Math::BigInt->new(shift)};
-	}
+    sub import {
+       shift;
+       return unless @_;
+       die "unknown import: @_" unless @_ == 1 and $_[0] eq ':constant';
+       overload::constant integer => sub {Math::BigInt->new(shift)};
+    }
 
 =head1 IMPLEMENTATION
 
@@ -886,8 +1048,8 @@ What follows is subject to change RSN.
 The table of methods for all operations is cached in magic for the
 symbol table hash for the package.  The cache is invalidated during
 processing of C<use overload>, C<no overload>, new function
-definitions, and changes in @ISA. However, this invalidation remains
-unprocessed until the next C<bless>ing into the package. Hence if you
+definitions, and changes in @ISA.  However, this invalidation remains
+unprocessed until the next C<bless>ing into the package.  Hence if you
 want to change overloading structure dynamically, you'll need an
 additional (fake) C<bless>ing to update the table.
 
@@ -895,7 +1057,7 @@ additional (fake) C<bless>ing to update the table.
 queue.  This is how a single variable may participate in multiple
 forms of magic simultaneously.  For instance, environment variables
 regularly have two forms at once: their %ENV magic and their taint
-magic. However, the magic which implements overloading is applied to
+magic.  However, the magic which implements overloading is applied to
 the stashes, which are rarely used directly, thus should not slow down
 Perl.)
 
@@ -912,90 +1074,20 @@ in doubt, test your speed with C<use overload> and without it.  So far
 there have been no reports of substantial speed degradation if Perl is
 compiled with optimization turned on.
 
-There is no size penalty for data if overload is not used. The only
+There is no size penalty for data if overload is not used.  The only
 size penalty if overload is used in some package is that I<all> the
 packages acquire a magic during the next C<bless>ing into the
-package. This magic is three-words-long for packages without
+package.  This magic is three-words-long for packages without
 overloading, and carries the cache table if the package is overloaded.
-
-Copying (C<$a=$b>) is shallow; however, a one-level-deep copying is
-carried out before any operation that can imply an assignment to the
-object $a (or $b) refers to, like C<$a++>.  You can override this
-behavior by defining your own copy constructor (see L<"Copy Constructor">).
 
 It is expected that arguments to methods that are not explicitly supposed
 to be changed are constant (but this is not enforced).
 
-=head1 Metaphor clash
-
-One may wonder why the semantic of overloaded C<=> is so counter intuitive.
-If it I<looks> counter intuitive to you, you are subject to a metaphor
-clash.
-
-Here is a Perl object metaphor:
-
-I<  object is a reference to blessed data>
-
-and an arithmetic metaphor:
-
-I<  object is a thing by itself>.
-
-The I<main> problem of overloading C<=> is the fact that these metaphors
-imply different actions on the assignment C<$a = $b> if $a and $b are
-objects.  Perl-think implies that $a becomes a reference to whatever
-$b was referencing.  Arithmetic-think implies that the value of "object"
-$a is changed to become the value of the object $b, preserving the fact
-that $a and $b are separate entities.
-
-The difference is not relevant in the absence of mutators.  After
-a Perl-way assignment an operation which mutates the data referenced by $a
-would change the data referenced by $b too.  Effectively, after
-C<$a = $b> values of $a and $b become I<indistinguishable>.
-
-On the other hand, anyone who has used algebraic notation knows the
-expressive power of the arithmetic metaphor.  Overloading works hard
-to enable this metaphor while preserving the Perlian way as far as
-possible.  Since it is not possible to freely mix two contradicting
-metaphors, overloading allows the arithmetic way to write things I<as
-far as all the mutators are called via overloaded access only>.  The
-way it is done is described in L<Copy Constructor>.
-
-If some mutator methods are directly applied to the overloaded values,
-one may need to I<explicitly unlink> other values which references the
-same value:
-
-    $a = Data->new(23);
-    ...
-    $b = $a;		# $b is "linked" to $a
-    ...
-    $a = $a->clone;	# Unlink $b from $a
-    $a->increment_by(4);
-
-Note that overloaded access makes this transparent:
-
-    $a = Data->new(23);
-    $b = $a;		# $b is "linked" to $a
-    $a += 4;		# would unlink $b automagically
-
-However, it would not make
-
-    $a = Data->new(23);
-    $a = 4;		# Now $a is a plain 4, not 'Data'
-
-preserve "objectness" of $a.  But Perl I<has> a way to make assignments
-to an object do whatever you want.  It is just not the overload, but
-tie()ing interface (see L<perlfunc/tie>).  Adding a FETCH() method
-which returns the object itself, and STORE() method which changes the
-value of the object, one can reproduce the arithmetic metaphor in its
-completeness, at least for variables which were tie()d from the start.
-
-(Note that a workaround for a bug may be needed, see L<"BUGS">.)
-
-=head1 Cookbook
+=head1 COOKBOOK
 
 Please add examples to what follows!
 
-=head2 Two-face scalars
+=head2 Two-face Scalars
 
 Put this in F<two_face.pm> in your Perl library directory:
 
@@ -1011,15 +1103,15 @@ Use it as follows:
   require two_face;
   my $seven = two_face->new("vii", 7);
   printf "seven=$seven, seven=%d, eight=%d\n", $seven, $seven+1;
-  print "seven contains `i'\n" if $seven =~ /i/;
+  print "seven contains 'i'\n" if $seven =~ /i/;
 
 (The second line creates a scalar which has both a string value, and a
 numeric value.)  This prints:
 
   seven=vii, seven=7, eight=8
-  seven contains `i'
+  seven contains 'i'
 
-=head2 Two-face references
+=head2 Two-face References
 
 Suppose you want to create an object which is accessible as both an
 array reference and a hash reference.
@@ -1143,7 +1235,7 @@ overloaded operations.
 
 =back
 
-=head2 Symbolic calculator
+=head2 Symbolic Calculator
 
 Put this in F<symbolic.pm> in your Perl library directory:
 
@@ -1158,8 +1250,8 @@ Put this in F<symbolic.pm> in your Perl library directory:
   }
 
 This module is very unusual as overloaded modules go: it does not
-provide any usual overloaded operators, instead it provides the L<Last
-Resort> operator C<nomethod>.  In this example the corresponding
+provide any usual overloaded operators, instead it provides an
+implementation for L<C<nomethod>>.  In this example the C<nomethod>
 subroutine returns an object which encapsulates operations done over
 the objects: C<< symbolic->new(3) >> contains C<['n', 3]>, C<< 2 +
 symbolic->new(3) >> contains C<['+', 2, ['n', 3]]>.
@@ -1298,7 +1390,7 @@ Use this module like this:
   my $cnt = $iter;
 
   while ($cnt) {
-    $cnt = $cnt - 1;		# Mutator `--' not implemented
+    $cnt = $cnt - 1;		# Mutator '--' not implemented
     $side = (sqrt(1 + $side**2) - 1)/$side;
   }
   printf "%s=%f\n", $side, $side;
@@ -1328,15 +1420,17 @@ the tables of operations, and change the code which fills %subr to
     $subr{$op} = eval "sub {shift() $op shift()}";
   }
   foreach my $op (split " ", "@overload::ops{qw(unary func)}") {
-    print "defining `$op'\n";
+    print "defining '$op'\n";
     $subr{$op} = eval "sub {$op shift()}";
   }
 
-Due to L<Calling Conventions for Mutators>, we do not need anything
-special to make C<+=> and friends work, except filling C<+=> entry of
-%subr, and defining a copy constructor (needed since Perl has no
-way to know that the implementation of C<'+='> does not mutate
-the argument, compare L<Copy Constructor>).
+Since subroutines implementing assignment operators are not required
+to modify their operands (see L<Overloadable Operations> above),
+we do not need anything special to make C<+=> and friends work,
+besides adding these operators to %subr and defining a copy
+constructor (needed since Perl has no way to know that the
+implementation of C<'+='> does not mutate the argument -
+see L<Copy Constructor>).
 
 To implement a copy constructor, add C<< '=' => \&cpy >> to C<use overload>
 line, and code (this code assumes that mutators change things one level
@@ -1398,7 +1492,7 @@ note: due to the explicit recursion num() is more fragile than sym():
 we need to explicitly check for the type of $a and $b.  If components
 $a and $b happen to be of some related type, this may lead to problems.
 
-=head2 I<Really> symbolic calculator
+=head2 I<Really> Symbolic Calculator
 
 One may wonder why we call the above calculator symbolic.  The reason
 is that the actual calculation of the value of expression is postponed
@@ -1426,13 +1520,14 @@ the numeric value of $c becomes 13.  There is no doubt now that the module
 symbolic provides a I<symbolic> calculator indeed.
 
 To hide the rough edges under the hood, provide a tie()d interface to the
-package C<symbolic> (compare with L<Metaphor clash>).  Add methods
+package C<symbolic>.  Add methods
 
   sub TIESCALAR { my $pack = shift; $pack->new(@_) }
   sub FETCH { shift }
   sub nop {  }		# Around a bug
 
-(the bug is described in L<"BUGS">).  One can use this new interface as
+(the bug, fixed in Perl 5.14, is described in L<"BUGS">).  One can use this
+new interface as
 
   tie $a, 'symbolic', 3;
   tie $b, 'symbolic', 4;
@@ -1466,8 +1561,8 @@ Ilya Zakharevich E<lt>F<ilya@math.mps.ohio-state.edu>E<gt>.
 
 =head1 SEE ALSO
 
-The L<overloading> pragma can be used to enable or disable overloaded
-operations within a lexical scope.
+The C<overloading> pragma can be used to enable or disable overloaded
+operations within a lexical scope - see L<overloading>.
 
 =head1 DIAGNOSTICS
 
@@ -1476,8 +1571,8 @@ induces diagnostic messages.
 
 Using the C<m> command of Perl debugger (see L<perldebug>) one can
 deduce which operations are overloaded (and which ancestor triggers
-this overloading). Say, if C<eq> is overloaded, then the method C<(eq>
-is shown by debugger. The method C<()> corresponds to the C<fallback>
+this overloading).  Say, if C<eq> is overloaded, then the method C<(eq>
+is shown by debugger.  The method C<()> corresponds to the C<fallback>
 key (in fact a presence of this method shows that this package has
 overloading enabled, and it is what is used by the C<Overloaded>
 function of module C<overload>).
@@ -1491,44 +1586,125 @@ The module might issue the following warnings:
 (W) The call to overload::constant contained an odd number of arguments.
 The arguments should come in pairs.
 
-=item `%s' is not an overloadable type
+=item '%s' is not an overloadable type
 
 (W) You tried to overload a constant type the overload package is unaware of.
 
-=item `%s' is not a code reference
+=item '%s' is not a code reference
 
 (W) The second (fourth, sixth, ...) argument of overload::constant needs
-to be a code reference. Either an anonymous subroutine, or a reference
+to be a code reference.  Either an anonymous subroutine, or a reference
 to a subroutine.
+
+=item overload arg '%s' is invalid
+
+(W) C<use overload> was passed an argument it did not
+recognize.  Did you mistype an operator?
 
 =back
 
-=head1 BUGS
+=head1 BUGS AND PITFALLS
 
-Because it is used for overloading, the per-package hash %OVERLOAD now
-has a special meaning in Perl. The symbol table is filled with names
-looking like line-noise.
+=over
+
+=item *
+
+No warning is issued for invalid C<use overload> keys.
+Such errors are not always obvious:
+
+        use overload "+0" => sub { ...; },   # should be "0+"
+            "not" => sub { ...; };           # should be "!"
+
+(Bug #74098)
+
+=item *
+
+A pitfall when fallback is TRUE and Perl resorts to a built-in
+implementation of an operator is that some operators have more
+than one semantic, for example C<|>:
+
+        use overload '0+' => sub { $_[0]->{n}; },
+            fallback => 1;
+        my $x = bless { n => 4 }, "main";
+        my $y = bless { n => 8 }, "main";
+        print $x | $y, "\n";
+
+You might expect this to output "12".
+In fact, it prints "<": the ASCII result of treating "|"
+as a bitwise string operator - that is, the result of treating
+the operands as the strings "4" and "8" rather than numbers.
+The fact that numify (C<0+>) is implemented but stringify
+(C<"">) isn't makes no difference since the latter is simply
+autogenerated from the former.
+
+The only way to change this is to provide your own subroutine
+for C<'|'>.
+
+=item *
+
+Magic autogeneration increases the potential for inadvertently
+creating self-referential structures.
+Currently Perl will not free self-referential
+structures until cycles are explicitly broken.
+For example,
+
+    use overload '+' => 'add';
+    sub add { bless [ \$_[0], \$_[1] ] };
+
+is asking for trouble, since
+
+    $obj += $y;
+
+will effectively become
+
+    $obj = add($obj, $y, undef);
+
+with the same result as
+
+    $obj = [\$obj, \$foo];
+
+Even if no I<explicit> assignment-variants of operators are present in
+the script, they may be generated by the optimizer.
+For example,
+
+    "obj = $obj\n"
+
+may be optimized to
+
+    my $tmp = 'obj = ' . $obj;  $tmp .= "\n";
+
+=item *
+
+Because it is used for overloading, the per-package hash
+C<%OVERLOAD> now has a special meaning in Perl.
+The symbol table is filled with names looking like line-noise.
+
+=item *
 
 For the purpose of inheritance every overloaded package behaves as if
-C<fallback> is present (possibly undefined). This may create
+C<fallback> is present (possibly undefined).  This may create
 interesting effects if some package is not overloaded, but inherits
 from two overloaded packages.
 
-Relation between overloading and tie()ing is broken.  Overloading is
-triggered or not basing on the I<previous> class of tie()d value.
+=item *
 
-This happens because the presence of overloading is checked too early,
-before any tie()d access is attempted.  If the FETCH()ed class of the
-tie()d value does not change, a simple workaround is to access the value
+Before Perl 5.14, the relation between overloading and tie()ing was broken.
+Overloading was triggered or not based on the I<previous> class of the
+tie()d variable.
+
+This happened because the presence of overloading was checked
+too early, before any tie()d access was attempted.  If the
+class of the value FETCH()ed from the tied variable does not
+change, a simple workaround for code that is to run on older Perl
+versions is to access the value (via C<() = $foo> or some such)
 immediately after tie()ing, so that after this call the I<previous> class
 coincides with the current one.
 
-B<Needed:> a way to fix this without a speed penalty.
+=item *
 
 Barewords are not covered by overloaded string constants.
 
-This document is confusing.  There are grammos and misleading language
-used in places.  It would seem a total rewrite is needed.
+=back
 
 =cut
 

@@ -9,7 +9,7 @@ package File::Copy;
 
 use 5.006;
 use strict;
-use warnings;
+use warnings; no warnings 'newline';
 use File::Spec;
 use Config;
 # During perl build, we need File::Copy but Scalar::Util might not be built yet
@@ -22,7 +22,7 @@ sub syscopy;
 sub cp;
 sub mv;
 
-$VERSION = '2.18';
+$VERSION = '2.23';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -39,13 +39,6 @@ sub croak {
 sub carp {
     require Carp;
     goto &Carp::carp;
-}
-
-my $macfiles;
-if ($^O eq 'MacOS') {
-	$macfiles = eval { require Mac::MoreFiles };
-	warn 'Mac::MoreFiles could not be loaded; using non-native syscopy'
-		if $@ && $^W;
 }
 
 # Look up the feature settings on VMS using VMS::Feature when available.
@@ -91,11 +84,6 @@ sub _catname {
     if (not defined &basename) {
 	require File::Basename;
 	import  File::Basename 'basename';
-    }
-
-    if ($^O eq 'MacOS') {
-	# a partial dir name that's valid only in the cwd (e.g. 'tmp')
-	$to = ':' . $to if $to !~ /:/;
     }
 
     return File::Spec->catfile($to, basename($from));
@@ -166,7 +154,6 @@ sub copy {
 	&& !($from_a_handle && $^O eq 'os2' )	# OS/2 cannot handle handles
 	&& !($from_a_handle && $^O eq 'mpeix')	# and neither can MPE/iX.
 	&& !($from_a_handle && $^O eq 'MSWin32')
-	&& !($from_a_handle && $^O eq 'MacOS')
 	&& !($from_a_handle && $^O eq 'NetWare')
        )
     {
@@ -436,22 +423,6 @@ unless (defined &syscopy) {
 	    return 0 unless @_ == 2;
 	    return Win32::CopyFile(@_, 1);
 	};
-    } elsif ($macfiles) {
-	*syscopy = sub {
-	    my($from, $to) = @_;
-	    my($dir, $toname);
-
-	    return 0 unless -e $from;
-
-	    if ($to =~ /(.*:)([^:]+):?$/) {
-		($dir, $toname) = ($1, $2);
-	    } else {
-		($dir, $toname) = (":", $to);
-	    }
-
-	    unlink($to);
-	    Mac::MoreFiles::FSpFileCopy($from, $dir, $toname, 1);
-	};
     } else {
 	$Syscopy_is_copy = 1;
 	*syscopy = \&copy;
@@ -558,9 +529,6 @@ VMS systems, this calls the C<rmscopy> routine (see below).  For OS/2
 systems, this calls the C<syscopy> XSUB directly. For Win32 systems,
 this calls C<Win32::CopyFile>.
 
-On Mac OS (Classic), C<syscopy> calls C<Mac::MoreFiles::FSpFileCopy>,
-if available.
-
 B<Special behaviour if C<syscopy> is defined (OS/2, VMS and Win32)>:
 
 If both arguments to C<copy> are not file handles,
@@ -618,34 +586,6 @@ it sets C<$!>, deletes the output file, and returns 0.
 
 All functions return 1 on success, 0 on failure.
 $! will be set if an error was encountered.
-
-=head1 NOTES
-
-=over 4
-
-=item *
-
-On Mac OS (Classic), the path separator is ':', not '/', and the 
-current directory is denoted as ':', not '.'. You should be careful 
-about specifying relative pathnames. While a full path always begins 
-with a volume name, a relative pathname should always begin with a 
-':'.  If specifying a volume name only, a trailing ':' is required.
-
-E.g.
-
-  copy("file1", "tmp");        # creates the file 'tmp' in the current directory
-  copy("file1", ":tmp:");      # creates :tmp:file1
-  copy("file1", ":tmp");       # same as above
-  copy("file1", "tmp");        # same as above, if 'tmp' is a directory (but don't do
-                               # that, since it may cause confusion, see example #1)
-  copy("file1", "tmp:file1");  # error, since 'tmp:' is not a volume
-  copy("file1", ":tmp:file1"); # ok, partial path
-  copy("file1", "DataHD:");    # creates DataHD:file1
-
-  move("MacintoshHD:fileA", "DataHD:fileB"); # moves (doesn't copy) files from one
-                                             # volume to another
-
-=back
 
 =head1 AUTHOR
 

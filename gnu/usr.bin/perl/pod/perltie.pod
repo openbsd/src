@@ -673,9 +673,9 @@ method on the original object reference returned by tie().
 	croak "@{[&whowasi]}: $file not clobberable"
 	    unless $self->{CLOBBER};
 
-	open(F, "> $file") || croak "can't open $file: $!";
-	print F $value;
-	close(F);
+	open(my $f, '>', $file) || croak "can't open $file: $!";
+	print $f $value;
+	close($f);
     }
 
 If they wanted to clobber something, they might say:
@@ -869,6 +869,12 @@ All of this is especially useful when perl is embedded in some other
 program, where output to STDOUT and STDERR may have to be redirected 
 in some special way.  See nvi and the Apache module for examples.
 
+When tying a handle, the first argument to C<tie> should begin with an
+asterisk.  So, if you are tying STDOUT, use C<*STDOUT>.  If you have
+assigned it to a scalar variable, say C<$handle>, use C<*$handle>.
+C<tie $handle> ties the scalar variable C<$handle>, not the handle inside
+it.
+
 In our example we're going to create a shouting handle.
 
     package Shout;
@@ -940,10 +946,25 @@ or C<sysread> functions.
 =item READLINE this
 X<READLINE>
 
-This method will be called when the handle is read from via <HANDLE>.
-The method should return undef when there is no more data.
+This method is called when the handle is read via C<E<lt>HANDLEE<gt>>
+or C<readline HANDLE>.
 
-    sub READLINE { $r = shift; "READLINE called $$r times\n"; }
+As per L<C<readline>|perlfunc/readline>, in scalar context it should return
+the next line, or C<undef> for no more data.  In list context it should
+return all remaining lines, or an empty list for no more data.  The strings
+returned should include the input record separator C<$/> (see L<perlvar>),
+unless it is C<undef> (which means "slurp" mode).
+
+    sub READLINE {
+      my $r = shift;
+      if (wantarray) {
+        return ("all remaining\n",
+                "lines up\n",
+                "to eof\n");
+      } else {
+        return "READLINE called " . ++$$r . " times\n";
+      }
+    }
 
 =item GETC this
 X<GETC>

@@ -9,19 +9,19 @@ use Locale::Maketext::Simple        Class => 'CPANPLUS', Style => 'gettext';
 
 =head1 NAME
 
-CPANPLUS::Shell::Default::Plugins::CustomSource - plugin support for the CPANPLUS shell
+CPANPLUS::Shell::Default::Plugins::CustomSource - add custom sources to CPANPLUS
 
 =head1 SYNOPSIS
-    
+
     ### elaborate help text
     CPAN Terminal> /? cs
 
     ### add a new custom source
     CPAN Terminal> /cs --add file:///path/to/releases
-    
-    ### list all your custom sources by 
+
+    ### list all your custom sources by
     CPAN Terminal> /cs --list
-    
+
     ### display the contents of a custom source by URI or ID
     CPAN Terminal> /cs --contents file:///path/to/releases
     CPAN Terminal> /cs --contents 1
@@ -29,11 +29,11 @@ CPANPLUS::Shell::Default::Plugins::CustomSource - plugin support for the CPANPLU
     ### Update a custom source by URI or ID
     CPAN Terminal> /cs --update file:///path/to/releases
     CPAN Terminal> /cs --update 1
-    
+
     ### Remove a custom source by URI or ID
     CPAN Terminal> /cs --remove file:///path/to/releases
     CPAN Terminal> /cs --remove 1
-    
+
     ### Write an index file for a custom source, to share
     ### with 3rd parties or remote users
     CPAN Terminal> /cs --write file:///path/to/releases
@@ -44,13 +44,13 @@ CPANPLUS::Shell::Default::Plugins::CustomSource - plugin support for the CPANPLU
 
 =head1 DESCRIPTION
 
-This is a C<CPANPLUS::Shell::Default> plugin that can add 
-custom sources to your CPANPLUS installation. This is a 
+This is a C<CPANPLUS::Shell::Default> plugin that can add
+custom sources to your CPANPLUS installation. This is a
 wrapper around the C<custom module sources> code as outlined
 in L<CPANPLUS::Backend/CUSTOM MODULE SOURCES>.
 
 This allows you to extend your index of available modules
-beyond what's available on C<CPAN> with your own local 
+beyond what's available on C<CPAN> with your own local
 distributions, or ones offered by third parties.
 
 =cut
@@ -68,8 +68,8 @@ sub _uri_from_cache {
     my $self    = shift;
     my $input   = shift or return;
 
-    ### you gave us a search number    
-    my $uri = $input =~ /^\d+$/    
+    ### you gave us a search number
+    my $uri = $input =~ /^\d+$/
                 ? $Index[ $input - 1 ] # remember, off by 1!
                 : $input;
 
@@ -79,13 +79,13 @@ sub _uri_from_cache {
     ### VMS can lower case all files, so make sure we check that too
     my $local = $files{ $uri };
        $local = $files{ lc $uri } if !$local && ON_VMS;
-       
+
     if( $local ) {
-        return wantarray 
+        return wantarray
             ? ($uri, $local)
             : $uri;
     }
-    
+
     ### couldn't resolve the input
     error(loc("Unknown URI/index: '%1'", $input));
     return;
@@ -93,11 +93,11 @@ sub _uri_from_cache {
 
 sub _list_custom_sources {
     my $class = shift;
-    
+
     my %files = $Cb->list_custom_sources;
-    
+
     $Shell->__print( loc("Your remote sources:"), $/ ) if keys %files;
-    
+
     my $i = 0;
     while(my($local,$remote) = each %files) {
         $Shell->__printf( "   [%2d] %s\n", ++$i, $remote );
@@ -105,7 +105,7 @@ sub _list_custom_sources {
         ### remember, off by 1!
         push @Index, $remote;
     }
-    
+
     $Shell->__print( $/ );
 }
 
@@ -117,7 +117,7 @@ sub _list_contents {
     unless( $uri ) {
         error(loc("--contents needs URI parameter"));
         return;
-    }        
+    }
 
     my $fh = OPEN_FILE->( $local ) or return;
 
@@ -139,45 +139,45 @@ sub custom_source {
 
     } elsif ( $opts->{'contents'} ) {
         $class->_list_contents( $input );
-    
-    } elsif ( $opts->{'add'} ) {        
+
+    } elsif ( $opts->{'add'} ) {
         unless( $input ) {
             error(loc("--add needs URI parameter"));
             return;
-        }        
-        
-        $cb->add_custom_source( uri => $input ) 
+        }
+
+        $cb->add_custom_source( uri => $input )
             and $shell->__print(loc("Added remote source '%1'", $input), $/);
-        
+
         $Shell->__print($/, loc("Remote source contains:"), $/, $/);
         $class->_list_contents( $input );
-        
+
     } elsif ( $opts->{'remove'} ) {
         my($uri,$local) = $class->_uri_from_cache( $input );
         unless( $uri ) {
             error(loc("--remove needs URI parameter"));
             return;
-        }        
-    
-        1 while unlink $local;    
-    
+        }
+
+        1 while unlink $local;
+
         $shell->__print( loc("Removed remote source '%1'", $uri), $/ );
 
     } elsif ( $opts->{'update'} ) {
         ### did we get input? if so, it's a remote part
         my $uri = $class->_uri_from_cache( $input );
 
-        $cb->update_custom_source( $uri ? ( remote => $uri ) : () ) 
-            and do { $shell->__print( loc("Updated remote sources"), $/ ) };      
+        $cb->update_custom_source( $uri ? ( remote => $uri ) : () )
+            and do { $shell->__print( loc("Updated remote sources"), $/ ) };
 
     } elsif ( $opts->{'write'} ) {
         $cb->write_custom_source_index( path => $input ) and
-            $shell->__print( loc("Wrote remote source index for '%1'", $input), $/);              
-            
+            $shell->__print( loc("Wrote remote source index for '%1'", $input), $/);
+
     } else {
         error(loc("Unrecognized command, see '%1' for help", '/? cs'));
     }
-    
+
     return;
 }
 
@@ -192,10 +192,10 @@ sub custom_source_help {
         '    /cs --remove    URI | INDEX    # remove source'            . $/ .
         '    /cs --contents  URI | INDEX    # show packages from source'. $/ .
         '    /cs --update   [URI | INDEX]   # update source index'      . $/ .
-        '    /cs --write     PATH           # write source index'       . $/ 
-    );        
+        '    /cs --write     PATH           # write source index'       . $/
+    );
 
 }
 
 1;
-    
+

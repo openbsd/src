@@ -36,6 +36,7 @@ my %versions = (q[$VERSION = '1.00']            => '1.00',
 
                 '$VERSION = sprintf("%d.%03d", q$Revision: 3.74 $ =~ /(\d+)\.(\d+)/);' => '3.074',
                 '$VERSION = substr(q$Revision: 2.8 $, 10) + 2 . "";'                   => '4.8',
+                'elsif ( $Something::VERSION >= 1.99 )' => 'undef',
 
                );
 
@@ -72,12 +73,15 @@ our $VERSION = 2.34;
 END
 }
 
-plan tests => (2 * keys %versions) + 4;
+plan tests => (3 * keys %versions) + 4;
 
 for my $code ( sort keys %versions ) {
     my $expect = $versions{$code};
     (my $label = $code) =~ s/\n/\\n/g;
+    my $warnings = "";
+    local $SIG{__WARN__} = sub { $warnings .= "@_\n"; };
     is( parse_version_string($code), $expect, $label );
+    is($warnings, '', "$label does not cause warnings");
 }
 
 

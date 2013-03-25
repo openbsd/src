@@ -86,7 +86,7 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 #define dTARG SV *targ
 
 #define NORMAL PL_op->op_next
-#define DIE Perl_die
+#define DIE return Perl_die
 
 /*
 =for apidoc Ams||PUTBACK
@@ -328,6 +328,7 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 #define dPOPss		SV *sv = POPs
 #define dTOPnv		NV value = TOPn
 #define dPOPnv		NV value = POPn
+#define dPOPnv_nomg	NV value = (sp--, SvNV_nomg(TOPp1s))
 #define dTOPiv		IV value = TOPi
 #define dPOPiv		IV value = POPi
 #define dTOPuv		UV value = TOPu
@@ -344,27 +345,24 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 #define dPOPXiirl(X)	IV right = POPi; IV left = CAT2(X,i)
 
 #define USE_LEFT(sv) \
-	(SvOK(sv) || SvGMAGICAL(sv) || !(PL_op->op_flags & OPf_STACKED))
-#define dPOPXnnrl_ul(X)	\
-    NV right = POPn;				\
+	(SvOK(sv) || !(PL_op->op_flags & OPf_STACKED))
+#define dPOPXiirl_ul_nomg(X) \
+    IV right = (sp--, SvIV_nomg(TOPp1s));		\
     SV *leftsv = CAT2(X,s);				\
-    NV left = USE_LEFT(leftsv) ? SvNV(leftsv) : 0.0
-#define dPOPXiirl_ul(X) \
-    IV right = POPi;					\
-    SV *leftsv = CAT2(X,s);				\
-    IV left = USE_LEFT(leftsv) ? SvIV(leftsv) : 0
+    IV left = USE_LEFT(leftsv) ? SvIV_nomg(leftsv) : 0
 
 #define dPOPPOPssrl	dPOPXssrl(POP)
 #define dPOPPOPnnrl	dPOPXnnrl(POP)
-#define dPOPPOPnnrl_ul	dPOPXnnrl_ul(POP)
 #define dPOPPOPiirl	dPOPXiirl(POP)
-#define dPOPPOPiirl_ul	dPOPXiirl_ul(POP)
 
 #define dPOPTOPssrl	dPOPXssrl(TOP)
 #define dPOPTOPnnrl	dPOPXnnrl(TOP)
-#define dPOPTOPnnrl_ul	dPOPXnnrl_ul(TOP)
+#define dPOPTOPnnrl_nomg \
+    NV right = SvNV_nomg(TOPs); NV left = (sp--, SvNV_nomg(TOPs))
 #define dPOPTOPiirl	dPOPXiirl(TOP)
-#define dPOPTOPiirl_ul	dPOPXiirl_ul(TOP)
+#define dPOPTOPiirl_ul_nomg dPOPXiirl_ul_nomg(TOP)
+#define dPOPTOPiirl_nomg \
+    IV right = SvIV_nomg(TOPs); IV left = (sp--, SvIV_nomg(TOPs))
 
 #define RETPUSHYES	RETURNX(PUSHs(&PL_sv_yes))
 #define RETPUSHNO	RETURNX(PUSHs(&PL_sv_no))
@@ -398,107 +396,63 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 #define AMGf_noleft	2
 #define AMGf_assign	4
 #define AMGf_unary	8
+#define AMGf_numeric	0x10	/* for Perl_try_amagic_bin */
+#define AMGf_set	0x20	/* for Perl_try_amagic_bin */
 
-#define tryAMAGICbinW_var(meth_enum,assign,set) STMT_START { \
-	    SV* const left = *(sp-1); \
-	    SV* const right = *(sp); \
-	    if ((SvAMAGIC(left)||SvAMAGIC(right))) {\
-		SV * const tmpsv = amagic_call(left, \
-				   right, \
-				   (meth_enum), \
-				   (assign)? AMGf_assign: 0); \
-		if (tmpsv) { \
-		    SPAGAIN; \
-		    (void)POPs; set(tmpsv); RETURN; } \
-		} \
-	} STMT_END
 
-#define tryAMAGICbinW(meth,assign,set) \
-    tryAMAGICbinW_var(CAT2(meth,_amg),assign,set)
+/* do SvGETMAGIC on the stack args before checking for overload */
 
-#define tryAMAGICbin_var(meth_enum,assign) \
-		tryAMAGICbinW_var(meth_enum,assign,SETsv)
-#define tryAMAGICbin(meth,assign) \
-		tryAMAGICbin_var(CAT2(meth,_amg),assign)
-
-#define tryAMAGICbinSET(meth,assign) tryAMAGICbinW(meth,assign,SETs)
-
-#define tryAMAGICbinSET_var(meth_enum,assign) \
-    tryAMAGICbinW_var(meth_enum,assign,SETs)
-
-#define AMG_CALLun_var(sv,meth_enum) amagic_call(sv,&PL_sv_undef,  \
-					meth_enum,AMGf_noright | AMGf_unary)
-#define AMG_CALLun(sv,meth) AMG_CALLun_var(sv,CAT2(meth,_amg))
-
-#define AMG_CALLbinL(left,right,meth) \
-            amagic_call(left,right,CAT2(meth,_amg),AMGf_noright)
-
-#define tryAMAGICunW_var(meth_enum,set,shift,ret) STMT_START { \
-	    SV* tmpsv; \
-	    SV* arg= sp[shift]; \
-          if(0) goto am_again;  /* shut up unused warning */ \
-	  am_again: \
-	    if ((SvAMAGIC(arg))&&\
-		(tmpsv=AMG_CALLun_var(arg,(meth_enum)))) {\
-	       SPAGAIN; if (shift) sp += shift; \
-	       set(tmpsv); ret; } \
-	} STMT_END
-#define tryAMAGICunW(meth,set,shift,ret) \
-	tryAMAGICunW_var(CAT2(meth,_amg),set,shift,ret)
-
-#define FORCE_SETs(sv) STMT_START { sv_setsv(TARG, (sv)); SETTARG; } STMT_END
-
-#define tryAMAGICun_var(meth_enum) tryAMAGICunW_var(meth_enum,SETsvUN,0,RETURN)
-#define tryAMAGICun(meth)	tryAMAGICun_var(CAT2(meth,_amg))
-#define tryAMAGICunSET(meth)	tryAMAGICunW(meth,SETs,0,RETURN)
-#define tryAMAGICunTARGET(meth, shift)					\
-	STMT_START { dSP; sp--; 	/* get TARGET from below PL_stack_sp */		\
-	    { dTARGETSTACKED; 						\
-		{ dSP; tryAMAGICunW(meth,FORCE_SETs,shift,RETURN);}}} STMT_END
-
-#define setAGAIN(ref)	\
-    STMT_START {					\
-	sv = ref;					\
-	if (!SvROK(ref))				\
-	    Perl_croak(aTHX_ "Overloaded dereference did not return a reference");	\
-	if (ref != arg && SvRV(ref) != SvRV(arg)) {	\
-	    arg = ref;					\
-	    goto am_again;				\
-	}						\
+#define tryAMAGICun_MG(method, flags) STMT_START { \
+	if ( (SvFLAGS(TOPs) & (SVf_ROK|SVs_GMG)) \
+		&& Perl_try_amagic_un(aTHX_ method, flags)) \
+	    return NORMAL; \
+    } STMT_END
+#define tryAMAGICbin_MG(method, flags) STMT_START { \
+	if ( ((SvFLAGS(TOPm1s)|SvFLAGS(TOPs)) & (SVf_ROK|SVs_GMG)) \
+		&& Perl_try_amagic_bin(aTHX_ method, flags)) \
+	    return NORMAL; \
     } STMT_END
 
-#define tryAMAGICunDEREF(meth) tryAMAGICunW(meth,setAGAIN,0,(void)0)
-#define tryAMAGICunDEREF_var(meth_enum) \
-	tryAMAGICunW_var(meth_enum,setAGAIN,0,(void)0)
+#define AMG_CALLunary(sv,meth) \
+    amagic_call(sv,&PL_sv_undef, meth, AMGf_noright | AMGf_unary)
 
-#define tryAMAGICftest(chr)				\
-    STMT_START {					\
-	assert(chr != '?');				\
-	if ((PL_op->op_flags & OPf_KIDS)		\
-		&& SvAMAGIC(TOPs)) {			\
-	    const char tmpchr = (chr);			\
-	    SV * const tmpsv = amagic_call(TOPs,	\
-		newSVpvn_flags(&tmpchr, 1, SVs_TEMP),	\
-		ftest_amg, AMGf_unary);			\
-							\
-	    if (tmpsv) {				\
-		const OP *next = PL_op->op_next;	\
-							\
-		SPAGAIN;				\
-							\
-		if (next->op_type >= OP_FTRREAD &&	\
-		    next->op_type <= OP_FTBINARY &&	\
-		    next->op_private & OPpFT_STACKED	\
-		) {					\
-		    if (SvTRUE(tmpsv))			\
-			/* leave the object alone */	\
-			RETURN;				\
-		}					\
-							\
-		SETs(tmpsv);				\
-		RETURN;					\
-	    }						\
-	}						\
+/* No longer used in core. Use AMG_CALLunary instead */
+#define AMG_CALLun(sv,meth) AMG_CALLunary(sv, CAT2(meth,_amg))
+
+#define tryAMAGICunTARGET(meth, shift, jump)			\
+    STMT_START {						\
+	dATARGET;						\
+	dSP;							\
+	SV *tmpsv;						\
+	SV *arg= sp[shift];					\
+	if (SvAMAGIC(arg) &&					\
+	    (tmpsv = amagic_call(arg, &PL_sv_undef, meth,	\
+				 AMGf_noright | AMGf_unary))) {	\
+	    SPAGAIN;						\
+	    sp += shift;					\
+	    sv_setsv(TARG, tmpsv);				\
+	    if (opASSIGN)					\
+		sp--;						\
+	    SETTARG;						\
+	    PUTBACK;						\
+	    if (jump) {						\
+	        OP *jump_o = NORMAL->op_next;                   \
+		while (jump_o->op_type == OP_NULL)		\
+		    jump_o = jump_o->op_next;			\
+		assert(jump_o->op_type == OP_ENTERSUB);		\
+		PL_markstack_ptr--;				\
+		return jump_o->op_next;				\
+	    }							\
+	    return NORMAL;					\
+	}							\
+    } STMT_END
+
+/* This is no longer used anywhere in the core. You might wish to consider
+   calling amagic_deref_call() directly, as it has a cleaner interface.  */
+#define tryAMAGICunDEREF(meth)						\
+    STMT_START {							\
+	sv = amagic_deref_call(*sp, CAT2(meth,_amg));			\
+	SPAGAIN;							\
     } STMT_END
 
 
@@ -512,17 +466,6 @@ Does not use C<TARG>.  See also C<XPUSHu>, C<mPUSHu> and C<PUSHu>.
 		if (SvFLAGS(TARG) & SVs_PADMY)		\
 		   { sv_setsv(TARG, (sv)); SETTARG; }			\
 		else SETs(sv); } STMT_END
-
-/* newSVsv does not behave as advertised, so we copy missing
- * information by hand */
-
-/* SV* ref causes confusion with the member variable
-   changed SV* ref to SV* tmpRef */
-#define RvDEEPCP(rv) STMT_START { SV* tmpRef=SvRV(rv); SV* rv_copy;     \
-  if (SvREFCNT(tmpRef)>1 && (rv_copy = AMG_CALLun(rv,copy))) {          \
-    SvRV_set(rv, rv_copy);		    \
-    SvREFCNT_dec(tmpRef);                   \
-  } } STMT_END
 
 /*
 =for apidoc mU||LVRET
@@ -539,6 +482,31 @@ True if this op will be the return value of an lvalue subroutine
       && gv_fetchmethod_autoload(stash, "DELETE", TRUE)          \
      )                       \
   )
+
+#ifdef PERL_CORE
+
+/* These are just for Perl_tied_method(), which is not part of the public API.
+   Use 0x04 rather than the next available bit, to help the compiler if the
+   architecture can generate more efficient instructions.  */
+#  define TIED_METHOD_MORTALIZE_NOT_NEEDED	0x04
+#  define TIED_METHOD_ARGUMENTS_ON_STACK	0x08
+#  define TIED_METHOD_SAY			0x10
+
+/* Used in various places that need to dereference a glob or globref */
+#  define MAYBE_DEREF_GV_flags(sv,phlags)                          \
+    (                                                               \
+	(void)(phlags & SV_GMAGIC && (SvGETMAGIC(sv),0)),            \
+	isGV_with_GP(sv)                                              \
+	  ? (GV *)sv                                                   \
+	  : SvROK(sv) && SvTYPE(SvRV(sv)) <= SVt_PVLV &&               \
+	    (SvGETMAGIC(SvRV(sv)), isGV_with_GP(SvRV(sv)))              \
+	     ? (GV *)SvRV(sv)                                            \
+	     : NULL                                                       \
+    )
+#  define MAYBE_DEREF_GV(sv)      MAYBE_DEREF_GV_flags(sv,SV_GMAGIC)
+#  define MAYBE_DEREF_GV_nomg(sv) MAYBE_DEREF_GV_flags(sv,0)
+
+#endif
 
 /*
  * Local variables:

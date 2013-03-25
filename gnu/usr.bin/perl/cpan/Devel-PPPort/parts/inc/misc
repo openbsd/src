@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 53 $
+##  $Revision: 56 $
 ##  $Author: mhx $
-##  $Date: 2009/03/31 23:05:55 +0200 $
+##  $Date: 2011/09/10 20:38:10 +0200 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -275,8 +275,8 @@ __UNDEFINED__ isXDIGIT(c)	isxdigit(c)
 #  undef isPRINT
 # endif
 __UNDEFINED__ isALNUMC(c)	(isALPHA(c) || isDIGIT(c))
-__UNDEFINED__ isASCII(c)	((c) <= 127)
-__UNDEFINED__ isCNTRL(c)	((c) < ' ' || (c) == 127)
+__UNDEFINED__ isASCII(c)	((U8) (c) <= 127)
+__UNDEFINED__ isCNTRL(c)	((U8) (c) < ' ' || (c) == 127)
 __UNDEFINED__ isGRAPH(c)	(isALNUM(c) || isPUNCT(c))
 __UNDEFINED__ isPRINT(c)	(((c) >= 32 && (c) < 127))
 __UNDEFINED__ isPUNCT(c)	(((c) >= 33 && (c) <= 47) || ((c) >= 58 && (c) <= 64)  || ((c) >= 91 && (c) <= 96) || ((c) >= 123 && (c) <= 126))
@@ -475,7 +475,6 @@ Perl_ppaddr_t(string)
 		Perl_ppaddr_t lower;
 	PPCODE:
 		lower = PL_ppaddr[OP_LC];
-		PUSHMARK(SP);
 		mXPUSHs(newSVpv(string, 0));
 		PUTBACK;
 		ENTER;

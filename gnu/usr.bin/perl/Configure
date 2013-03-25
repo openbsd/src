@@ -28,9 +28,7 @@
 # See Porting/pumpkin.pod for more information on metaconfig.
 #
 
-# $Id: Head.U 6 2006-08-25 22:21:46Z rmanfredi $
-#
-# Generated on Wed Jun 23 16:03:55 CEST 2010 [metaconfig 3.5 PL0]
+# Generated on Sun Apr  1 12:00:35 CEST 2012 [metaconfig 3.5 PL0]
 # (with additional metaconfig patches by perlbug@perl.org)
 
 cat >c1$$ <<EOF
@@ -567,6 +565,7 @@ d_inetntop=''
 d_inetpton=''
 d_int64_t=''
 d_isascii=''
+d_isblank=''
 d_isfinite=''
 d_isinf=''
 d_isnan=''
@@ -628,6 +627,8 @@ d_pause=''
 d_pipe=''
 d_poll=''
 d_portable=''
+d_prctl=''
+d_prctl_set_name=''
 d_procselfexe=''
 procselfexe=''
 d_old_pthread_create_joinable=''
@@ -722,6 +723,7 @@ d_snprintf=''
 d_vsnprintf=''
 d_sockatmark=''
 d_sockatmarkproto=''
+d_ipv6_mreq=''
 d_msg_ctrunc=''
 d_msg_dontroute=''
 d_msg_oob=''
@@ -729,6 +731,9 @@ d_msg_peek=''
 d_msg_proxy=''
 d_oldsock=''
 d_scm_rights=''
+d_sin6_scope_id=''
+d_sockaddr_in6=''
+d_sockaddr_sa_len=''
 d_socket=''
 d_sockpair=''
 sockethdr=''
@@ -746,6 +751,8 @@ d_sresuproto=''
 d_statblks=''
 d_statfs_f_flags=''
 d_statfs_s=''
+d_static_inline=''
+perl_static_inline=''
 d_fstatvfs=''
 d_statvfs=''
 d_stdio_cnt_lval=''
@@ -836,6 +843,7 @@ cccdlflags=''
 ccdlflags=''
 dlsrc=''
 ld=''
+ld_can_script=''
 lddlflags=''
 usedl=''
 doublesize=''
@@ -922,6 +930,7 @@ i_pwd=''
 i_sfio=''
 i_shadow=''
 i_socks=''
+i_stdbool=''
 i_stddef=''
 i_stdlib=''
 i_string=''
@@ -1190,6 +1199,8 @@ shsharp=''
 spitshell=''
 src=''
 ssizetype=''
+st_ino_sign=''
+st_ino_size=''
 startperl=''
 startsh=''
 stdchar=''
@@ -1211,6 +1222,7 @@ use64bitint=''
 dtrace=''
 usedtrace=''
 usefaststdio=''
+usekernprocpathname=''
 ccflags_uselargefiles=''
 ldflags_uselargefiles=''
 libswanted_uselargefiles=''
@@ -1222,6 +1234,7 @@ nm_opt=''
 nm_so_opt=''
 runnm=''
 usenm=''
+usensgetexecutablepath=''
 useperlio=''
 usesocks=''
 d_oldpthreads=''
@@ -1308,6 +1321,18 @@ i_whoami=''
 : Extra object files, if any, needed on this platform.
 archobjs=''
 archname=''
+: Possible local include directories to search.
+: Set locincpth to "" in a hint file to defeat local include searches.
+locincpth="/usr/local/include /opt/local/include /usr/gnu/include"
+locincpth="$locincpth /opt/gnu/include /usr/GNU/include /opt/GNU/include"
+:
+: no include file wanted by default
+inclwanted=''
+
+: Enable -DEBUGGING and -DDEBUGGING from the command line
+EBUGGING=''
+DEBUGGING=''
+
 libnames=''
 : change the next line if compiling for Xenix/286 on Xenix/386
 xlibpth='/usr/lib/386 /lib/386'
@@ -1335,18 +1360,6 @@ ignore_versioned_solibs=''
 usereentrant='undef'
 : full support for void wanted by default
 defvoidused=15
-
-: Possible local include directories to search.
-: Set locincpth to "" in a hint file to defeat local include searches.
-locincpth="/usr/local/include /opt/local/include /usr/gnu/include"
-locincpth="$locincpth /opt/gnu/include /usr/GNU/include /opt/GNU/include"
-:
-: no include file wanted by default
-inclwanted=''
-
-: Enable -DEBUGGING and -DDEBUGGING from the command line
-EBUGGING=''
-DEBUGGING=old
 
 ccname=''
 ccversion=''
@@ -2249,7 +2262,7 @@ in the default answer, as if the default line was a set of arguments given to a
 script shell.  This means you may also use $* to repeat the whole default line,
 so you do not have to re-type everything to add something to the default.
 
-Everytime there is a substitution, you will have to confirm.  If there is an
+Every time there is a substitution, you will have to confirm.  If there is an
 error (e.g. an unmatched backtick), the default answer will remain unchanged
 and you will be prompted again.
 
@@ -2369,6 +2382,7 @@ make
 more
 nm
 nroff
+perl
 pg
 test
 uname
@@ -4059,77 +4073,6 @@ $undef$define) . ./whoa; eval "$var=\$tu";;
 *) eval "$var=$val";;
 esac'
 
-: Check is we will use socks
-case "$usesocks" in
-$define|true|[yY]*)	dflt='y';;
-*) dflt='n';;
-esac
-cat <<EOM
-
-Perl can be built to use the SOCKS proxy protocol library.  To do so,
-Configure must be run with -Dusesocks.  If you use SOCKS you also need
-to use the PerlIO abstraction layer, this will be implicitly selected.
-
-If this doesn't make any sense to you, just accept the default '$dflt'.
-EOM
-rp='Build Perl for SOCKS?'
-. ./myread
-case "$ans" in
-y|Y)	val="$define" ;;
-*)      val="$undef" ;;
-esac
-set usesocks
-eval $setvar
-
-case "$usesocks" in
-$define|true|[yY]*) useperlio="$define";;
-esac
-
-: Check if we want perlio
-case "$useperlio" in
-$define|true|[yY]*|'')	dflt='y';;
-*) dflt='n';;
-esac
-cat <<EOM
-
-Previous version of $package used the standard IO mechanisms as
-defined in <stdio.h>.  Versions 5.003_02 and later of $package allow
-alternate IO mechanisms via the PerlIO abstraction layer, but the
-stdio mechanism is still available if needed.  The abstraction layer
-can use AT&T's sfio (if you already have sfio installed) or regular stdio.
-Using PerlIO with sfio may cause problems with some extension modules.
-
-If this doesn't make any sense to you, just accept the default '$dflt'.
-EOM
-rp='Use the PerlIO abstraction layer?'
-. ./myread
-case "$ans" in
-y|Y)
-	val="$define"
-	;;
-*)
-	echo "Ok, doing things the stdio way."
-	val="$undef"
-	;;
-esac
-set useperlio
-eval $setvar
-
-case "$usesocks" in
-$define|true|[yY]*)
-	case "$useperlio" in
-	$define|true|[yY]*) ;;
-	*)	cat >&4 <<EOM
-
-You are using the SOCKS proxy protocol library which means that you
-should also use the PerlIO layer.  You may be headed for trouble.
-
-EOM
-		;;
-	esac
-	;;
-esac
-
 : get the patchlevel
 echo " "
 echo "Getting the current patchlevel..." >&4
@@ -4150,11 +4093,6 @@ else
 	api_subversion=0
 	perl_patchlevel=0
 	$echo "(You do not have patchlevel.h.  Eek.)"
-fi
-if $test -r $rsrc/.patch ; then
-	if $test "X$perl_patchlevel" = "X" || $test "`cat $rsrc/.patch`" -gt "$perl_patchlevel" ; then
-		perl_patchlevel=`cat $rsrc/.patch`
-	fi
 fi
 : Define a handy string here to avoid duplication in myconfig.SH and configpm.
 version_patchlevel_string="version $patchlevel subversion $subversion"
@@ -4194,13 +4132,8 @@ $define|true|[yY]*)     dflt='y';;
 *)     # Catch case where user specified ithreads or 5005threads but
        # forgot -Dusethreads (A.D. 4/2002)
        case "$useithreads$use5005threads" in
-       *$define*)
-		case "$useperlio" in
-		"$define")	dflt='y' ;;
-		*)		dflt='n' ;;
-		esac
-		;;
-       *)	dflt='n';;
+       *$define*)	dflt='y';;
+       *)		dflt='n';;
        esac
        ;;
 esac
@@ -4300,16 +4233,6 @@ EOM
 
     use5005threads="$undef"
     useithreads="$usethreads"
-fi
-
-if test X"$usethreads" = "X$define" -a "X$useperlio" = "Xundef"; then
-	cat >&4 <<EOF
-***
-*** To build with ithreads you must also use the PerlIO layer.
-*** Cannot continue, aborting.
-***
-EOF
-	exit 1
 fi
 
 case "$d_oldpthreads" in
@@ -4886,6 +4809,28 @@ rm_try="$rm -f try try$_exe a.out .out try.[cho] try.$_o core core.try* try.core
 case "$firstmakefile" in
 '') firstmakefile='makefile';;
 esac
+
+: Check is we will use socks
+case "$usesocks" in
+$define|true|[yY]*)	dflt='y';;
+*) dflt='n';;
+esac
+cat <<EOM
+
+Perl can be built to use the SOCKS proxy protocol library.  To do so,
+Configure must be run with -Dusesocks.  If you use SOCKS you also need
+to use the PerlIO abstraction layer, this will be implicitly selected.
+
+If this doesn't make any sense to you, just accept the default '$dflt'.
+EOM
+rp='Build Perl for SOCKS?'
+. ./myread
+case "$ans" in
+y|Y)	val="$define" ;;
+*)      val="$undef" ;;
+esac
+set usesocks
+eval $setvar
 
 : Check for uselongdouble support
 case "$ccflags" in
@@ -6147,21 +6092,6 @@ $define)
 	esac
 	;;
 esac
-case "$useperlio" in
-$define)
-	echo "Perlio selected." >&4
-	;;
-*)
-	echo "Perlio not selected, using stdio." >&4
-	case "$archname" in
-        *-stdio*) echo "...and architecture name already has -stdio." >&4
-                ;;
-        *)      archname="$archname-stdio"
-                echo "...setting architecture name to $archname." >&4
-                ;;
-        esac
-	;;
-esac
 if $test -f archname.cbu; then
 	echo "Your platform has some specific hints for architecture name, using them..."
 	. ./archname.cbu
@@ -6859,6 +6789,7 @@ case "$usemymalloc" in
 	4) dflt='y' ;;
 	*) dflt='n' ;;
 	esac
+	if test "$useithreads" = "$define"; then dflt='n'; fi
 	;;
 esac
 rp="Do you wish to attempt to use the malloc that comes with $package?"
@@ -7682,7 +7613,7 @@ $echo $n ".$c"
 $grep fprintf libc.tmp > libc.ptf
 xscan='eval "<libc.ptf $com >libc.list"; $echo $n ".$c" >&4'
 xrun='eval "<libc.tmp $com >libc.list"; echo "done." >&4'
-xxx='[ADTSIW]'
+xxx='[ADTSIWi]'
 if com="$sed -n -e 's/__IO//' -e 's/^.* $xxx  *//p'";\
 	eval $xscan;\
 	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
@@ -8027,8 +7958,9 @@ Some systems use ld to create libraries that can be dynamically loaded,
 while other systems (such as those using ELF) use $cc.
 
 EOM
-	case "$ld" in
-	'')	$cat >try.c <<EOM
+
+: Determine if this is ELF
+	$cat >try.c <<EOM
 /* Test for whether ELF binaries are produced */
 #include <fcntl.h>
 #$i_stdlib I_STDLIB
@@ -8045,22 +7977,26 @@ int main() {
 	if(i == -1)
 		exit(1); /* fail */
 	if(read(i,b,4)==4 && b[0]==127 && b[1]=='E' && b[2]=='L' && b[3]=='F')
-		exit(0); /* succeed (yes, it's ELF) */
+		exit(0); /* succeed (yes, it is ELF) */
 	else
 		exit(1); /* fail */
 }
 EOM
-		if $cc $ccflags $ldflags try.c >/dev/null 2>&1 && $run ./a.out; then
+	if $cc $ccflags $ldflags try.c >/dev/null 2>&1 && $run ./a.out; then
+		bin_ELF="$define"
+	fi
+	$rm_try
+
+	case "$ld" in
+	'')	if $test $bin_ELF = "$define"; then
 			cat <<EOM
 You appear to have ELF support.  I'll use $cc to build dynamic libraries.
 EOM
 			dflt="$cc"
-			bin_ELF="$define"
 		else
 			echo "I'll use ld to build dynamic libraries."
 			dflt='ld'
 		fi
-		$rm_try
 		;;
 	*)	dflt="$ld"
 		;;
@@ -8164,6 +8100,34 @@ EOM
     dlsrc='dl_none.xs'
     lddlflags=''
     ccdlflags=''
+    ;;
+esac
+
+ld_can_script="$undef"
+case "$bin_ELF$usedl" in
+$define$define)
+    # Abuse try.h and a.out names for neat cleanup
+    $cat >try.c <<EOM
+void foo() {}
+void bar() {}
+EOM
+    $cat >try.h <<EOM
+LIBTEST_42 {
+ global:
+  foo;
+ local: *;
+ };
+EOM
+    if $cc $cccdlflags $ccdlflags $ccflags \
+           $ldflags $lddlflags -o a.out try.c \
+           -Wl,--version-script=try.h >/dev/null 2>&1 \
+       &&  $test -s a.out ; then
+	echo "ld supports scripting" >&4
+	ld_can_script="$define"
+    else
+	echo "ld does not support scripting" >&4
+    fi
+    $rm_try
     ;;
 esac
 
@@ -8338,7 +8302,7 @@ if "$useshrplib"; then
 	solaris)
 		xxx="-R $shrpdir"
 		;;
-	freebsd|netbsd|openbsd|interix|dragonfly)
+	freebsd|mirbsd|netbsd|openbsd|interix|dragonfly)
 		xxx="-Wl,-R$shrpdir"
 		;;
 	bsdos|linux|irix*|dec_osf|gnu*)
@@ -9422,6 +9386,9 @@ EOCP
 	;;
 esac
 
+: Check if we want perlio
+useperlio="$define"
+
 : Set the vendorbin variables
 case "$vendorprefix" in
 '')	d_vendorbin="$undef"
@@ -9909,7 +9876,7 @@ done
 
 case "$d_longdbl$uselongdouble" in
 "$define$define")
-    : again, add prefered functions to our list first
+    : again, add preferred functions to our list first
     xxx_ld_list=""
     for xxx_convert in $gconvert_ld_preference; do
         case $xxx_convert in
@@ -10070,7 +10037,7 @@ eval $inlibc
 set pthread.h i_pthread
 eval $inhdr
 
-: define a fucntion to check prototypes
+: define a function to check prototypes
 $cat > protochk <<EOSH
 $startsh
 cc="$cc"
@@ -11361,6 +11328,77 @@ fi
 set socketpair d_sockpair
 eval $inlibc
 
+
+echo " "
+echo "Checking the availability sa_len in the sock struct ..." >&4
+$cat >try.c <<EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+int main() {
+struct sockaddr sa;
+return (sa.sa_len);
+}
+EOF
+val="$undef"
+set try; if eval $compile; then
+	val="$define"
+fi
+set d_sockaddr_sa_len; eval $setvar
+$rm_try
+
+echo " "
+echo "Checking the availability struct sockaddr_in6 ..." >&4
+$cat >try.c <<EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+int main() {
+struct sockaddr_in6 sin6;
+return (sin6.sin6_family);
+}
+EOF
+val="$undef"
+set try; if eval $compile; then
+	val="$define"
+fi
+set d_sockaddr_in6; eval $setvar
+$rm_try
+
+echo " "
+echo "Checking the availability sin6_scope_id in struct sockaddr_in6 ..." >&4
+$cat >try.c <<EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+int main() {
+struct sockaddr_in6 sin6;
+return (sin6.sin6_scope_id);
+}
+EOF
+val="$undef"
+set try; if eval $compile; then
+	val="$define"
+fi
+set d_sin6_scope_id; eval $setvar
+$rm_try
+
+echo " "
+echo "Checking the availability struct ipv6_mreq ..." >&4
+$cat >try.c <<EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+int main() {
+struct ipv6_mreq mreq;
+return (mreq.ipv6mr_interface);
+}
+EOF
+val="$undef"
+set try; if eval $compile; then
+	val="$define"
+fi
+set d_ipv6_mreq; eval $setvar
+$rm_try
 
 echo " "
 echo "Checking the availability of certain socket constants..." >&4
@@ -14977,6 +15015,30 @@ set d_isascii
 eval $setvar
 $rm -f isascii*
 
+: Look for isblank
+echo " "
+$cat >isblank.c <<'EOCP'
+#include <stdio.h>
+#include <ctype.h>
+int main() {
+	int c = ' ';
+	if (isblank(c))
+		exit(0);
+	else
+		exit(1);
+}
+EOCP
+if $cc $ccflags $ldflags -o isblank isblank.c $libs >/dev/null 2>&1 ; then
+	echo "isblank() found." >&4
+	val="$define"
+else
+	echo "isblank() NOT found." >&4
+	val="$undef"
+fi
+set d_isblank
+eval $setvar
+$rm -f isblank*
+
 : see if isfinite exists
 set isfinite d_isfinite
 eval $inlibc
@@ -16061,6 +16123,31 @@ eval $inlibc
 set poll d_poll
 eval $inlibc
 
+: see if prctl exists
+set prctl d_prctl
+eval $inlibc
+
+: see if prctl supports PR_SET_NAME
+d_prctl_set_name=$undef
+case $d_prctl in
+    $define)
+	$cat >try.c <<EOM
+#include <sys/prctl.h>
+
+int main (int argc, char *argv[])
+{
+    return (prctl (PR_SET_NAME, "Test"));
+    } /* main */
+EOM
+	set try
+	if eval $compile_ok && $run ./try; then
+	    echo "Your prctl (PR_SET_NAME, ...) works"
+	    d_prctl_set_name=$define
+	    fi
+	$rm_try
+	;;
+    esac
+
 : see if readlink exists
 set readlink d_readlink
 eval $inlibc
@@ -16070,23 +16157,24 @@ echo " "
 procselfexe=''
 val="$undef"
 case "$d_readlink" in
-"$define")
-	if $issymlink /proc/self/exe ; then
-		$ls -l /proc/self/exe > reflect
+    "$define")
+	: NetBSD first as /proc/self is a symlink to /proc/curproc, and it feels
+	: more tidy to avoid an extra level of symlink
+	set NetBSD /proc/curproc/exe Linux /proc/self/exe FreeBSD /proc/curproc/file Solaris /proc/self/path/a.out
+	while test $# -gt 0; do
+	    type=$1; try=$2
+	    shift; shift
+	    if $issymlink $try; then
+		$ls -l $try > reflect
 		if $contains /`basename $ls` reflect >/dev/null 2>&1; then
-			echo "You have Linux-like /proc/self/exe."
-			procselfexe='"/proc/self/exe"'
-			val="$define"
+		    echo "You have $type-like $try."
+		    procselfexe='"'$try'"'
+		    val="$define"
+		    : This will break out of the loop
+		    set X; shift
 		fi
-	fi
-	if $issymlink /proc/curproc/file ; then
-		$ls -l /proc/curproc/file > reflect
-		if $contains /`basename $ls` reflect >/dev/null 2>&1; then
-			echo "You have BSD-like /proc/curproc/file."
-			procselfexe='"/proc/curproc/file"'
-			val="$define"
-		fi
-	fi
+	    fi
+	done
 	;;
 esac
 $rm -f reflect
@@ -17316,17 +17404,10 @@ $define)
 	*) dflt='n';;
 	esac
 	echo "$package can use the sfio library, but it is experimental."
-	case "$useperlio" in
-	"$undef")
-	    echo "For sfio also the PerlIO abstraction layer is needed."
-	    echo "Earlier you said you wouldn't want that."
-	    ;;
-	esac
 	rp="You seem to have sfio available, do you want to try using it?"
 	. ./myread
 	case "$ans" in
-	y|Y)	echo "Ok, turning on both sfio and PerlIO, then."
-		useperlio="$define"
+	y|Y)	echo "Ok, turning on sfio then."
 		val="$define"
 		;;
 	*)	echo "Ok, avoiding sfio this time.  I'll use stdio instead."
@@ -17858,6 +17939,112 @@ case "$d_statfs_f_flags" in
 "$define")      echo "Yes, it does."   ;;
 *)              echo "No, it doesn't." ;;
 esac
+
+: see what flavor, if any, of static inline is supported
+echo " "
+echo "Checking to see if your system supports static inline..."
+$cat > try.c <<'EOCP'
+#include <stdlib.h>
+extern int f_via_a(int x);
+extern int f_via_b(int x);
+int main(int argc, char **argv)
+{
+    int y;
+
+    y = f_via_a(0);
+#ifdef USE_B
+    y = f_via_b(0);
+#endif
+    if (y == 42) {
+        return EXIT_SUCCESS;
+    }
+    else {
+        return EXIT_FAILURE;
+    }
+}
+EOCP
+$cat > a.c <<'EOCP'
+static INLINE int f(int x) {
+    int y;
+    y = x + 42;
+    return y;
+}
+
+int f_via_a(int x)
+{
+    return f(x);
+}
+EOCP
+$cat > b.c <<'EOCP'
+extern int f(int x);
+
+int f_via_b(int x)
+{
+    return f(x);
+}
+EOCP
+
+# Respect a hint (or previous) value for perl_static_inline, if there is one.
+case "$perl_static_inline" in
+'')	# Check the various possibilities, and break out on success.
+	# For gcc, prefer __inline__, which will still permit 
+	# cflags.SH to add in -ansi.
+	case "$gccversion" in
+		'') xxx="inline __inline__ __inline _inline";;
+		*)  xxx="__inline__ inline __inline _inline";;
+	esac
+	for inline in $xxx; do
+		set try -DINLINE=$inline a.c
+		if eval $compile && $run ./try; then
+			# Now make sure there is no external linkage of static
+			# functions
+			set try -DINLINE=$inline -DUSE_B a.c b.c
+			if eval $compile && $run ./try; then
+				$echo "Your compiler supports static $inline, " >&4
+				$echo "but it also creates an external definition," >&4
+				$echo "so I won't use it." >&4
+				val=$undef
+			else
+				$echo "Your compiler supports static $inline." >&4
+				val=$define
+				perl_static_inline="static $inline";
+				break;
+			fi
+		else
+			$echo "Your compiler does NOT support static $inline." >&4
+			val="$undef"
+		fi
+	done
+	;;
+*inline*) # Some variant of inline exists.
+	echo "Keeping your $hint value of $perl_static_inline."
+	val=$define
+	;;
+static)  # No inline capabilities
+	echo "Keeping your $hint value of $perl_static_inline."
+	val=$undef
+	;;
+*)  # Unrecognized previous value -- blindly trust the supplied
+	# value and hope it makes sense.  Use old value for
+	# d_static_inline, if there is one.
+	echo "Keeping your $hint value of $perl_static_inline."
+	case "$d_static_inline" in
+		'') val=$define ;;
+		*)  val=$d_static_inline ;;
+	esac
+	;;
+esac
+# Fallback to plain 'static' if nothing worked.
+case "$perl_static_inline" in
+'')
+	perl_static_inline="static"
+	val=$undef
+	;;
+esac
+set d_static_inline
+eval $setvar
+$rm -f a.[co] b.[co]
+$rm_try
 
 : Check stream access
 $cat >&4 <<EOM
@@ -18569,7 +18756,7 @@ EOM
 	;;
 esac
 
-: Checking 32bit aligndness
+: Checking 32bit alignedness
 $cat <<EOM
 
 Checking to see whether you can access character data unalignedly...
@@ -18847,39 +19034,9 @@ esac
 : set the base revision
 baserev=5.0
 
-: check for length of character
-echo " "
-case "$charsize" in
-'')
-	echo "Checking to see how big your characters are (hey, you never know)..." >&4
-	$cat >try.c <<EOCP
-#include <stdio.h>
-#$i_stdlib I_STDLIB
-#ifdef I_STDLIB
-#include <stdlib.h>
-#endif
-int main()
-{
-    printf("%d\n", (int)sizeof(char));
-    exit(0);
-}
-EOCP
-	set try
-	if eval $compile_ok; then
-		dflt=`$run ./try`
-	else
-		dflt='1'
-		echo "(I can't seem to compile the test program.  Guessing...)"
-	fi
-	;;
-*)
-	dflt="$charsize"
-	;;
-esac
-rp="What is the size of a character (in bytes)?"
-. ./myread
-charsize="$ans"
-$rm_try
+: length of character in bytes. Is always 1, otherwise it isnt C
+: This used to be a test using sizeof
+charsize=1
 
 : Check for the number of bits in a character
 case "$charbits" in
@@ -21076,6 +21233,74 @@ EOM
 fi
 $rm_try
 
+: Check the size of st_ino
+$echo " "
+$echo "Checking the size of st_ino..." >&4
+$cat > try.c <<EOCP
+#include <sys/stat.h>
+#include <stdio.h>
+#$i_stdlib I_STDLIB
+#ifdef I_STDLIB
+#include <stdlib.h>
+#endif
+int main() {
+    struct stat st;
+    printf("%d\n", (int)sizeof(st.st_ino));
+    exit(0);
+}
+EOCP
+set try
+if eval $compile_ok; then
+	val=`$run ./try`
+	case "$val" in
+	'')	st_ino_size=4
+		$echo "(I can't execute the test program--guessing $st_ino_size.)" >&4
+		;;
+	*)	st_ino_size=$val
+		$echo "Your st_ino is $st_ino_size bytes long."
+		;;
+	esac
+else
+	st_ino_size=4
+	$echo "(I can't compile the test program--guessing $st_ino_size.)" >&4
+fi
+$rm_try
+
+: Check if st_ino is signed
+$echo " "
+$echo "Checking the sign of st_ino..." >&4
+$cat > try.c <<EOCP
+#include <sys/stat.h>
+#include <stdio.h>
+int main() {
+	struct stat foo;
+        foo.st_ino = -1;
+	if (foo.st_ino < 0)
+		printf("-1\n");
+	else
+		printf("1\n");
+}
+EOCP
+set try
+if eval $compile; then
+	val=`$run ./try`
+	case "$val" in
+	'')	st_ino_sign=1
+		$echo "(I can't execute the test program--guessing unsigned.)" >&4
+		;;
+	*)	st_ino_sign=$val
+		case "$st_ino_sign" in
+		 1) $echo "Your st_ino is unsigned." ;;
+		-1) $echo "Your st_ino is signed."   ;;
+		esac
+		;;
+	esac
+else
+	st_ino_sign=1
+	$echo "(I can't compile the test program--guessing unsigned.)" >&4
+fi
+$rm_try
+
 : see what type of char stdio uses.
 echo " "
 echo '#include <stdio.h>' | $cppstdin $cppminus > stdioh
@@ -21223,6 +21448,221 @@ case "$uidsign" in
 	fi
 	;;
 esac
+
+: Determine if we can use sysctl with KERN_PROC_PATHNAME to find executing program
+echo " "
+echo "Determining whether we can use sysctl with KERN_PROC_PATHNAME to find executing program..." >&4
+$cat >try.c <<'EOM'
+/* Intentionally a long probe as I'd like to sanity check that the exact
+   approach is going to work, as thinking it will work, but only having it
+   part working at runtime is worse than not having it.  */
+
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <sys/param.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int
+main(int argc, char **argv) {
+    char *buffer;
+    char *argv_leaf = strrchr(argv[0], '/');
+    char *buffer_leaf;
+    size_t size = 0;
+    int mib[4];
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PATHNAME;
+    mib[3] = -1;
+
+    if (!argv_leaf) {
+	fprintf(stderr, "Can't locate / in '%s'\n", argv[0]);
+	return 1;
+    }
+
+    if (sysctl(mib, 4, NULL, &size, NULL, 0)) {
+	perror("sysctl");
+	return 2;
+    }
+
+    if (size < strlen(argv_leaf) + 1) {
+	fprintf(stderr, "size %lu is too short for a path\n",
+		(unsigned long) size);
+	return 3;
+    }
+
+    if (size > MAXPATHLEN * MAXPATHLEN) {
+	fprintf(stderr, "size %lu is too long for a path\n",
+		(unsigned long) size);
+	return 4;
+    }
+
+    buffer = malloc(size);
+    if (!buffer) {
+	perror("malloc");
+	return 5;
+    }
+
+    if (sysctl(mib, 4, buffer, &size, NULL, 0)) {
+	perror("sysctl");
+	return 6;
+    }
+
+    if (strlen(buffer) + 1 != size) {
+	fprintf(stderr, "size != strlen(buffer) + 1 (%lu != %lu)\n",
+		(unsigned long)size, (unsigned long)strlen(buffer) + 1);
+        return 7;
+    }
+
+
+    if (*buffer != '/') {
+	fprintf(stderr, "Not an absolute path: '%s'\n", buffer);
+	return 8;
+    }
+
+    if (strstr(buffer, "/./")) {
+	fprintf(stderr, "Contains /./: '%s'\n", buffer);
+	return 9;
+    }
+
+    if (strstr(buffer, "/../")) {
+	fprintf(stderr, "Contains /../: '%s'\n", buffer);
+	return 10;
+    }
+
+    buffer_leaf = strrchr(buffer, '/');
+    if (strcmp(buffer_leaf, argv_leaf) != 0) {
+	fprintf(stderr, "Leafnames differ: '%s' vs '%s'\n", argv[0], buffer);
+	return 11;
+    }
+
+    free(buffer);
+
+    return 0;
+}
+EOM
+
+val=$undef
+set try
+if eval $compile_ok; then
+	if $run ./try; then
+		echo "You can use sysctl with KERN_PROC_PATHNAME to find the executing program." >&4
+		val="$define"
+	else
+		echo "Nope, sysctl with KERN_PROC_PATHNAME doesn't work here." >&4
+		val="$undef"
+	fi
+else
+	echo "I'm unable to compile the test program." >&4
+	echo "I'll assume no sysctl with KERN_PROC_PATHNAME here." >&4
+	val="$undef"
+fi
+$rm_try
+set usekernprocpathname
+eval $setvar
+
+: Determine if we can use _NSGetExecutablePath to find executing program
+echo " "
+echo "Determining whether we can use _NSGetExecutablePath to find executing program..." >&4
+$cat >try.c <<'EOM'
+/* Intentionally a long probe as I'd like to sanity check that the exact
+   approach is going to work, as thinking it will work, but only having it
+   part working at runtime is worse than not having it.  */
+#include <mach-o/dyld.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/param.h>
+#include <string.h>
+
+int
+main(int argc, char **argv) {
+    char buf[1];
+    uint32_t size = sizeof(buf);
+    int result;
+    char *buffer;
+    char *tidied;
+    char *argv_leaf = strrchr(argv[0], '/');
+    char *tidied_leaf;
+
+    if (!argv_leaf) {
+	fprintf(stderr, "Can't locate / in '%s'\n", argv[0]);
+	return 1;
+    }
+
+    _NSGetExecutablePath(buf, &size);
+    if (size > MAXPATHLEN * MAXPATHLEN) {
+	fprintf(stderr, "_NSGetExecutablePath size %u is too long for a path\n",
+		(unsigned int) size);
+	return 2;
+    }
+
+    buffer = malloc(size);
+    if (!buffer) {
+	perror("malloc");
+	return 3;
+    }
+
+    result = _NSGetExecutablePath(buffer, &size);
+    if (result != 0) {
+	fprintf(stderr, "_NSGetExecutablePath returned %i for a size of %u\n",
+		result, (unsigned int) size);
+	return 4;
+    }
+
+    tidied = realpath(buffer, NULL);
+    if (!tidied) {
+	perror("realpath");
+	return 5;
+    }
+
+    free(buffer);
+
+    if (*tidied != '/') {
+	fprintf(stderr, "Not an absolute path: '%s'\n", tidied);
+	return 6;
+    }
+
+    if (strstr(tidied, "/./")) {
+	fprintf(stderr, "Contains /./: '%s'\n", tidied);
+	return 7;
+    }
+
+    if (strstr(tidied, "/../")) {
+	fprintf(stderr, "Contains /../: '%s'\n", tidied);
+	return 8;
+    }
+
+    tidied_leaf = strrchr(tidied, '/');
+    if (strcmp(tidied_leaf, argv_leaf) != 0) {
+	fprintf(stderr, "Leafnames differ: '%s' vs '%s'\n", argv[0], tidied);
+	return 9;
+    }
+
+    free(tidied);
+
+    return 0;
+}
+EOM
+
+val=$undef
+set try
+if eval $compile_ok; then
+	if $run ./try; then
+		echo "You can use _NSGetExecutablePath to find the executing program." >&4
+		val="$define"
+	else
+		echo "Nope, _NSGetExecutablePath doesn't work here." >&4
+	fi
+else
+	echo "I'm unable to compile the test program." >&4
+	echo "I'll assume no _NSGetExecutablePath here." >&4
+fi
+$rm_try
+set usensgetexecutablepath
+eval $setvar
 
 : Check if site customization support was requested
 case "$usesitecustomize" in
@@ -21653,6 +22093,35 @@ set i_termio; eval $setvar
 val=$val2; set i_sgtty; eval $setvar
 val=$val3; set i_termios; eval $setvar
 
+: see if stdbool is available
+: we want a real compile instead of Inhdr because some Solaris systems
+: have stdbool.h, but it can only be used if the compiler indicates it
+: is sufficiently c99-compliant.
+echo " "
+$cat >try.c <<EOCP
+#include <stdio.h>
+#include <stdbool.h>
+int func(bool x)
+{
+    return x ? 1 : 0;
+}
+int main(int argc, char **argv)
+{
+    return func(0);
+}
+EOCP
+set try
+if eval $compile; then
+	echo "<stdbool.h> found." >&4
+	val="$define"
+else
+	echo "<stdbool.h> NOT found." >&4
+	val="$undef"
+fi
+$rm_try
+set i_stdbool
+eval $setvar
+
 : see if stddef is available
 set stddef.h i_stddef
 eval $inhdr
@@ -21776,6 +22245,7 @@ nonxs_extensions=''
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
+	    CVS) ;;
 	    DynaLoader|dynaload) ;;
 	    *)
 	    this_ext=`echo $xxx | $sed -e s/-/\\\//g`;
@@ -21795,6 +22265,25 @@ find_extensions='
 		    fi;
 		fi;
 	    else
+		echo " $known_extensions $nonxs_extensions" > $$.tmp;
+		if $contains " $this_ext " $$.tmp; then
+		    echo >&4;
+		    echo "Duplicate directories detected for extension $xxx" >&4;
+		    echo "Configure cannot correctly recover from this - shall I abort?" >&4;
+		    case "$knowitall" in
+		    "") dflt=y;;
+		    *) dflt=n;;
+		    esac;
+		    . ../UU/myread;
+		    case "$ans" in
+		    n*|N*) ;;
+		    *) echo >&4;
+		       echo "Ok.  Stopping Configure." >&4;
+		       echo "Please remove the duplicate directory (eg using git clean) and then re-run Configure" >&4;
+			exit 1;;
+		    esac;
+		    echo "Ok.  You will need to correct config.sh before running make." >&4;
+		fi;
 		$ls -1 $xxx > $$.tmp;
 		if   $contains "\.xs$" $$.tmp > /dev/null 2>&1; then
 		    known_extensions="$known_extensions $this_ext";
@@ -21958,13 +22447,6 @@ for xxx in $known_extensions ; do
 		$define) avail_ext="$avail_ext $xxx" ;;
 		esac
 		;;
-	XS/APItest/KeywordRPN|xs/apitest/keywordrpn)
-		# This is just for testing.  Skip it unless we have dynamic loading.
-
-		case "$usedl" in
-		$define) avail_ext="$avail_ext $xxx" ;;
-		esac
-		;;
 	XS/Typemap|xs/typemap)
 		# This is just for testing.  Skip it unless we have dynamic loading.
 		case "$usedl" in
@@ -21983,7 +22465,7 @@ avail_ext="$*"
 case "$onlyextensions" in
 '') ;;
 *)  keepextensions=''
-    echo "You have requested that only certains extensions be included..." >&4
+    echo "You have requested that only certain extensions be included..." >&4
     for i in $onlyextensions; do
         case " $avail_ext " in
         *" $i "*)
@@ -22155,7 +22637,7 @@ esac
 # the appropriate Makefile.PL.
 case " $static_ext " in
 	*" Encode "*) # Add the subextensions of Encode
-	cd "$rsrc/ext"
+	cd "$rsrc/cpan"
 	for xxx in `ls Encode/*/Makefile.PL|awk -F/ '{print $2}'`; do
 		static_ext="$static_ext Encode/$xxx"
 	done
@@ -22555,7 +23037,9 @@ d_inetaton='$d_inetaton'
 d_inetntop='$d_inetntop'
 d_inetpton='$d_inetpton'
 d_int64_t='$d_int64_t'
+d_ipv6_mreq='$d_ipv6_mreq'
 d_isascii='$d_isascii'
+d_isblank='$d_isblank'
 d_isfinite='$d_isfinite'
 d_isinf='$d_isinf'
 d_isnan='$d_isnan'
@@ -22629,6 +23113,8 @@ d_phostname='$d_phostname'
 d_pipe='$d_pipe'
 d_poll='$d_poll'
 d_portable='$d_portable'
+d_prctl='$d_prctl'
+d_prctl_set_name='$d_prctl_set_name'
 d_printf_format_null='$d_printf_format_null'
 d_procselfexe='$d_procselfexe'
 d_pseudofork='$d_pseudofork'
@@ -22714,8 +23200,11 @@ d_sigaction='$d_sigaction'
 d_signbit='$d_signbit'
 d_sigprocmask='$d_sigprocmask'
 d_sigsetjmp='$d_sigsetjmp'
+d_sin6_scope_id='$d_sin6_scope_id'
 d_sitearch='$d_sitearch'
 d_snprintf='$d_snprintf'
+d_sockaddr_in6='$d_sockaddr_in6'
+d_sockaddr_sa_len='$d_sockaddr_sa_len'
 d_sockatmark='$d_sockatmark'
 d_sockatmarkproto='$d_sockatmarkproto'
 d_socket='$d_socket'
@@ -22731,6 +23220,7 @@ d_sresuproto='$d_sresuproto'
 d_statblks='$d_statblks'
 d_statfs_f_flags='$d_statfs_f_flags'
 d_statfs_s='$d_statfs_s'
+d_static_inline='$d_static_inline'
 d_statvfs='$d_statvfs'
 d_stdio_cnt_lval='$d_stdio_cnt_lval'
 d_stdio_ptr_lval='$d_stdio_ptr_lval'
@@ -22944,6 +23434,7 @@ i_sgtty='$i_sgtty'
 i_shadow='$i_shadow'
 i_socks='$i_socks'
 i_stdarg='$i_stdarg'
+i_stdbool='$i_stdbool'
 i_stddef='$i_stddef'
 i_stdlib='$i_stdlib'
 i_string='$i_string'
@@ -23029,6 +23520,7 @@ ivtype='$ivtype'
 known_extensions='$known_extensions'
 ksh='$ksh'
 ld='$ld'
+ld_can_script='$ld_can_script'
 lddlflags='$lddlflags'
 ldflags='$ldflags'
 ldflags_uselargefiles='$ldflags_uselargefiles'
@@ -23127,6 +23619,7 @@ path_sep='$path_sep'
 perl5='$perl5'
 perl='$perl'
 perl_patchlevel='$perl_patchlevel'
+perl_static_inline='$perl_static_inline'
 perladmin='$perladmin'
 perllibs='$perllibs'
 perlpath='$perlpath'
@@ -23239,6 +23732,8 @@ srand48_r_proto='$srand48_r_proto'
 srandom_r_proto='$srandom_r_proto'
 src='$src'
 ssizetype='$ssizetype'
+st_ino_sign='$st_ino_sign'
+st_ino_size='$st_ino_size'
 startperl='$startperl'
 startsh='$startsh'
 static_ext='$static_ext'
@@ -23293,6 +23788,7 @@ usedl='$usedl'
 usedtrace='$usedtrace'
 usefaststdio='$usefaststdio'
 useithreads='$useithreads'
+usekernprocpathname='$usekernprocpathname'
 uselargefiles='$uselargefiles'
 uselongdouble='$uselongdouble'
 usemallocwrap='$usemallocwrap'
@@ -23300,6 +23796,7 @@ usemorebits='$usemorebits'
 usemultiplicity='$usemultiplicity'
 usemymalloc='$usemymalloc'
 usenm='$usenm'
+usensgetexecutablepath='$usensgetexecutablepath'
 useopcode='$useopcode'
 useperlio='$useperlio'
 useposix='$useposix'
@@ -23364,16 +23861,16 @@ if $test -f UU/config.sh; then
 	$sed -n 's/^\([a-zA-Z_0-9]*\)=.*/\1/p' \
 		config.sh config.sh UU/oldconfig.sh |\
 		$sort | $uniq -u >UU/oldsyms
-	set X `cat UU/oldsyms`
+	set X `$cat UU/oldsyms`
 	shift
 	case $# in
 	0) ;;
 	*)
-		cat <<EOM
+		$cat <<EOM
 Hmm...You had some extra variables I don't know about...I'll try to keep 'em...
 EOM
 		echo ": Variables propagated from previous config.sh file." >>config.sh
-		for sym in `cat UU/oldsyms`; do
+		for sym in `$cat UU/oldsyms`; do
 			echo "    Propagating $hint variable "'$'"$sym..."
 			eval 'tmp="$'"${sym}"'"'
 			echo "$tmp" | \

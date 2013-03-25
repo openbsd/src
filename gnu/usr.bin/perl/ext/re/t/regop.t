@@ -41,7 +41,9 @@ foreach my $testout ( @tests ) {
         s/\s+$//;
         ok( $testout=~/\Q$_\E/, "$_: /$pattern/" )
             or do {
-                !$diaged++ and diag("$_: /$pattern/\n$testout");
+                !$diaged++ and diag("PATTERN: /$pattern/\n\n"
+		    . "EXPECTED:\n$_\n\n"
+		    . "WITHIN GOT:\n$testout");
             };
     }
 }
@@ -49,7 +51,7 @@ foreach my $testout ( @tests ) {
 # The format below is simple. Each line is an exact
 # string that must be found in the output.
 # Lines starting the # are comments.
-# Lines starting with --- are seperators indicating
+# Lines starting with --- are separators indicating
 # that the tests for this result set are finished.
 # If you add a test make sure you update $NUM_SECTS
 # the commented output is just for legacy/debugging purposes
@@ -152,16 +154,17 @@ minlen 3
 #       #   8| W   4 @   0 
 #       #   9| W   5 @   0 
 #       #   A| W   6 @   0 
+#     word_info N:(prev,char)= 1:(0,1) 2:(0,1) 3:(0,1) 4:(0,1) 5:(0,1) 6:(0,1)
 # Final program:
-#    1: EXACT <ABC>(3)
-#    3: TRIEC-EXACT<S:4/10 W:6 L:1/1 C:24/7>[A-EGP](20)
+#    1: EXACT <ABC> (3)
+#    3: TRIEC-EXACT<S:4/10 W:6 L:1/1 C:24/7>[A-EGP] (20)
 #       <P> 
 #       <G> 
 #       <E> 
 #       <B> 
 #       <A> 
 #       <D> 
-#   20: END(0)
+#   20: END (0)
 # anchored "ABC" at 0 (checking anchored) minlen 4 
 # Offsets: [20]
 # 	1:4[3] 3:4[15] 19:32[0] 20:34[0] 
@@ -172,10 +175,10 @@ minlen 3
 #    0 <> <ABCD>               |  1:EXACT <ABC>(3)
 #    3 <ABC> <D>               |  3:TRIEC-EXACT<S:4/10 W:6 L:1/1 C:24/7>[A-EGP](20)
 #    3 <ABC> <D>               |    State:    4 Accepted:    0 Charid:  7 CP:  44 After State:    a
-#    4 <ABCD> <>               |    State:    a Accepted:    1 Charid:  6 CP:   0 After State:    0
+#    4 <ABCD> <>               |    State:    a Accepted:    1 Charid:  7 CP:   0 After State:    0
 #                                   got 1 possible matches
-#                                   only one match left: #6 <D>
-#    4 <ABCD> <>               | 20:END(0)
+#                                   TRIE matched word #6, continuing
+#    4 <ABCD> <>               | 20:  END(0)
 # Match successful!
 # %MATCHED%
 # Freeing REx: "(?:ABCP|ABCG|ABCE|ABCB|ABCA|ABCD)"
@@ -183,7 +186,6 @@ minlen 3
 EXACT <ABC>
 TRIEC-EXACT
 [A-EGP]
-only one match left: #6 <D>
 S:4/10
 W:6
 L:1/1

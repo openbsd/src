@@ -26,12 +26,12 @@ $VERSION = $CPANPLUS::Internals::VERSION = $CPANPLUS::Internals::VERSION;
 ### the config options.
 for my $meth ( qw[conf _lib _perl5lib]) {
     no strict 'refs';
-    
+
     *$meth = sub {
         my $self = shift;
         $self->{'_'.$meth} = $_[0] if @_;
         return $self->{'_'.$meth};
-    }     
+    }
 }
 
 
@@ -70,14 +70,18 @@ This method returns a new object. Normal users will never need to
 invoke the C<new> method, but instead retrieve the desired object via
 a method call on a C<CPANPLUS::Backend> object.
 
+=over 4
+
 =item load_configs
 
-Controls whether or not additional user configurations are to be loaded 
+Controls whether or not additional user configurations are to be loaded
 or not. Defaults to C<true>.
+
+=back
 
 =cut
 
-### store teh CPANPLUS::Config object in a closure, so we only
+### store the CPANPLUS::Config object in a closure, so we only
 ### initialize it once.. otherwise, on a 2nd ->new, settings
 ### from configs on top of this one will be reset
 {   my $Config;
@@ -85,7 +89,7 @@ or not. Defaults to C<true>.
     sub new {
         my $class   = shift;
         my %hash    = @_;
-        
+
         ### XXX pass on options to ->init() like rescan?
         my ($load);
         my $tmpl    = {
@@ -95,7 +99,7 @@ or not. Defaults to C<true>.
         check( $tmpl, \%hash ) or (
             warn Params::Check->last_error, return
         );
-        
+
         $Config     ||= CPANPLUS::Config->new;
         my $self    = bless {}, $class;
         $self->conf( $Config );
@@ -104,11 +108,11 @@ or not. Defaults to C<true>.
         ### these can override things in the default config
         $self->init if $load;
 
-        ### after processing the config files, check what 
+        ### after processing the config files, check what
         ### @INC and PERL5LIB are set to.
         $self->_lib( \@INC );
         $self->_perl5lib( $ENV{'PERL5LIB'} );
-    
+
         return $self;
     }
 }
@@ -139,21 +143,21 @@ Returns true on success, false on failure.
         my $self    = shift;
         my $obj     = $self->conf;
         my %hash    = @_;
-        
+
         my ($rescan);
         my $tmpl    = {
             rescan  => { default => 0, store => \$rescan },
         };
-        
+
         check( $tmpl, \%hash ) or (
             warn Params::Check->last_error, return
-        );        
-        
+        );
+
         ### if the base dir is changed, we have to rescan it
         ### for any CPANPLUS::Config::* files as well, so keep
         ### track of it
         my $cur_base = $self->get_conf('base');
-        
+
         ### warn if we find an old style config specified
         ### via environment variables
         {   my $env = ENV_CPANPLUS_CONFIG;
@@ -165,17 +169,17 @@ Returns true on success, false on failure.
                           "in the default shell to use custom config files.",
                           $env, "CPANPLUS::Configure->save", 's save'));
             }
-        }            
-        
+        }
+
         {   ### make sure that the homedir is included now
             local @INC = ( LIB_DIR->($cur_base), @INC );
-        
+
             ### only set it up once
-            if( !$loaded++ or $rescan ) {   
+            if( !$loaded++ or $rescan ) {
                 ### find plugins & extra configs
                 ### check $home/.cpanplus/lib as well
                 require Module::Pluggable;
-                
+
                 Module::Pluggable->import(
                     search_path => ['CPANPLUS::Config'],
                     search_dirs => [ LIB_DIR->($cur_base) ],
@@ -183,54 +187,54 @@ Returns true on success, false on failure.
                     sub_name    => 'configs'
                 );
             }
-            
-            
+
+
             ### do system config, user config, rest.. in that order
             ### apparently, on a 2nd invocation of -->configs, a
             ### ::ISA::CACHE package can appear.. that's bad...
-            my %confs = map  { $_ => $_ } 
+            my %confs = map  { $_ => $_ }
                         grep { $_ !~ /::ISA::/ } __PACKAGE__->configs;
-            my @confs = grep { defined } 
+            my @confs = grep { defined }
                         map  { delete $confs{$_} } CONFIG_SYSTEM, CONFIG_USER;
-            push @confs, sort keys %confs;                    
-        
+            push @confs, sort keys %confs;
+
             for my $plugin ( @confs ) {
                 msg(loc("Found config '%1'", $plugin),0);
-                
-                ### if we already did this the /last/ time around dont 
+
+                ### if we already did this the /last/ time around dont
                 ### run the setup agian.
                 if( my $loc = Module::Loaded::is_loaded( $plugin ) ) {
                     msg(loc("  Already loaded '%1' (%2)", $plugin, $loc), 0);
                     next;
                 } else {
                     msg(loc("  Loading config '%1'", $plugin),0);
-                
+
                     if( eval { load $plugin; 1 } ) {
-                        msg(loc("  Loaded '%1' (%2)", 
+                        msg(loc("  Loaded '%1' (%2)",
                             $plugin, Module::Loaded::is_loaded( $plugin ) ), 0);
                     } else {
                         error(loc("  Error loading '%1': %2", $plugin, $@));
-                    }                        
-                }                   
-                
+                    }
+                }
+
                 if( $@ ) {
                     error(loc("Could not load '%1': %2", $plugin, $@));
                     next;
-                }     
-                
+                }
+
                 my $sub = $plugin->can('setup');
                 $sub->( $self ) if $sub;
             }
         }
-        
+
         ### did one of the plugins change the base dir? then we should
         ### scan the dirs again
         if( $cur_base ne $self->get_conf('base') ) {
             msg(loc("Base dir changed from '%1' to '%2', rescanning",
                     $cur_base, $self->get_conf('base')), 0);
             $self->init( @_, rescan => 1 );
-        }      
-            
+        }
+
         ### clean up the paths once more, just in case
         $obj->_clean_up_paths;
 
@@ -240,10 +244,10 @@ Returns true on success, false on failure.
             my %inc = map { $_ => $_ } @INC;
             for my $l ( @$lib ) {
                 push @INC, $l unless $inc{$l};
-            }                
+            }
             $self->_lib( \@INC );
         }
-    
+
         return 1;
     }
 }
@@ -261,7 +265,7 @@ Returns true if the file can be saved, false otherwise.
 sub can_save {
     my $self = shift;
     my $file = shift || CONFIG_USER_FILE->();
-    
+
     return 1 unless -e $file;
 
     chmod 0644, $file;
@@ -280,7 +284,7 @@ be attempted to be saved in the system wide directory.
 If no argument is provided, it will default to your personal
 config.
 
-Returns the full path to the file if the config was saved, 
+Returns the full path to the file if the config was saved,
 false otherwise.
 
 =cut
@@ -294,12 +298,12 @@ sub _config_pm_to_file {
     ### so figure out where to save them based on their type
     my $file;
     if( $pm eq CONFIG_USER ) {
-        $file = CONFIG_USER_FILE->();   
+        $file = CONFIG_USER_FILE->();
 
     } elsif ( $pm eq CONFIG_SYSTEM ) {
         $file = CONFIG_SYSTEM_FILE->();
-        
-    ### third party file        
+
+    ### third party file
     } else {
         my $cfg_pkg = CONFIG . '::';
         unless( $pm =~ /^$cfg_pkg/ ) {
@@ -307,13 +311,13 @@ sub _config_pm_to_file {
                 "WARNING: Your config package '%1' is not in the '%2' ".
                 "namespace and will not be automatically detected by %3",
                 $pm, $cfg_pkg, 'CPANPLUS'
-            ));        
-        }                        
-    
+            ));
+        }
+
         $file = File::Spec->catfile(
             $dir,
             split( '::', $pm )
-        ) . '.pm';        
+        ) . '.pm';
     }
 
     return $file;
@@ -324,35 +328,35 @@ sub save {
     my $self    = shift;
     my $pm      = shift || CONFIG_USER;
     my $savedir = shift || '';
-    
+
     my $file = $self->_config_pm_to_file( $pm, $savedir ) or return;
     my $dir  = dirname( $file );
-    
+
     unless( -d $dir ) {
         $self->_mkdir( dir => $dir ) or (
             error(loc("Can not create directory '%1' to save config to",$dir)),
             return
         )
-    }       
+    }
     return unless $self->can_save($file);
 
-    ### find only accesors that are not private
+    ### find only accessors that are not private
     my @acc = sort grep { $_ !~ /^_/ } $self->conf->ls_accessors;
 
     ### for dumping the values
     use Data::Dumper;
-    
+
     my @lines;
     for my $acc ( @acc ) {
-        
+
         push @lines, "### $acc section", $/;
-        
+
         for my $key ( $self->conf->$acc->ls_accessors ) {
             my $val = Dumper( $self->conf->$acc->$key );
-        
+
             $val =~ s/\$VAR1\s+=\s+//;
             $val =~ s/;\n//;
-        
+
             push @lines, '$'. "conf->set_${acc}( $key => $val );", $/;
         }
         push @lines, $/,$/;
@@ -364,13 +368,13 @@ sub save {
     ### use a variable to make sure the pod parser doesn't snag it
     my $is      = '=';
     my $time    = gmtime;
-   
-    
+
+
     my $msg     = <<_END_OF_CONFIG_;
 ###############################################
-###                                         
-###  Configuration structure for $pm        
-###                                         
+###
+###  Configuration structure for $pm
+###
 ###############################################
 
 #last changed: $time GMT
@@ -395,11 +399,11 @@ use strict;
 
 sub setup {
     my \$conf = shift;
-    
+
 $str
 
-    return 1;    
-} 
+    return 1;
+}
 
 1;
 
@@ -443,7 +447,7 @@ sub options {
 
     my %seen;
     return sort grep { !$seen{$_}++ }
-                map { $_->$type->ls_accessors if $_->can($type)  } 
+                map { $_->$type->ls_accessors if $_->can($type)  }
                 $self->conf;
     return;
 }
@@ -542,9 +546,9 @@ sub AUTOLOAD {
             ### cpanplus 0.04x; we renamed ->_get_build('base') to
             ### ->get_conf('base')
             } elsif ( $type eq '_build' and $key eq 'base' ) {
-                return $self->get_conf($key);  
-                
-            } else {     
+                return $self->get_conf($key);
+
+            } else {
                 error( loc(q[No such key '%1' in field '%2'], $key, $type) );
                 return;
             }
@@ -560,7 +564,7 @@ sub AUTOLOAD {
 
             if( $conf->can($type) and $conf->$type->can($key) ) {
                 $conf->$type->$key( $val );
-                
+
             } else {
                 error( loc(q[No such key '%1' in field '%2'], $key, $type) );
                 return;
@@ -609,10 +613,10 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =head1 SEE ALSO

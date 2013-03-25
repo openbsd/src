@@ -6,7 +6,7 @@ BEGIN {
     $INC{"feature.pm"} = 1; # so we don't attempt to load feature.pm
 }
 
-print "1..73\n";
+print "1..83\n";
 
 # Can't require test.pl, as we're testing the use/require mechanism here.
 
@@ -22,6 +22,8 @@ sub _ok {
 	$result = $got ne $expected;
     } elsif ($type eq 'like') {
 	$result = $got =~ $expected;
+    } elsif ($type eq 'ok') {
+	$result = not not $got;
     } else {
 	die "Unexpected type '$type'$name";
     }
@@ -46,6 +48,8 @@ sub _ok {
 	    print "# Expected not '$expected'\n";
 	} elsif ($type eq 'like') {
 	    print "# Expected $expected\n";
+	} elsif ($type eq 'ok') {
+	    print "# Expected a true value\n";
 	}
     }
     $test = $test + 1;
@@ -60,6 +64,9 @@ sub is ($$;$) {
 }
 sub isnt ($$;$) {
     _ok ('isnt', @_);
+}
+sub ok($;$) {
+    _ok ('ok', shift, undef, @_);
 }
 
 eval "use 5";           # implicit semicolon
@@ -134,6 +141,29 @@ is ($@, "");
 # and they are properly scoped
 eval '{use 5.11.0;} ${"foo"} = "bar";';
 is ($@, "");
+eval 'no strict; use 5.012; ${"foo"} = "bar"';
+is $@, "", 'explicit "no strict" overrides later ver decl';
+eval 'use strict; use 5.01; ${"foo"} = "bar"';
+like $@, qr/^Can't use string/,
+    'explicit use strict overrides later use 5.01';
+eval 'use strict "subs"; use 5.012; ${"foo"} = "bar"';
+like $@, qr/^Can't use string/,
+    'explicit use strict "subs" does not stop ver decl from enabling refs';
+eval 'use 5.012; use 5.01; ${"foo"} = "bar"';
+is $@, "", 'use 5.01 overrides implicit strict from prev ver decl';
+eval 'no strict "subs"; use 5.012; ${"foo"} = "bar"';
+ok $@, 'no strict subs allows ver decl to enable refs';
+eval 'no strict "subs"; use 5.012; $nonexistent_pack_var';
+ok $@, 'no strict subs allows ver decl to enable vars';
+eval 'no strict "refs"; use 5.012; fancy_bareword';
+ok $@, 'no strict refs allows ver decl to enable subs';
+eval 'no strict "refs"; use 5.012; $nonexistent_pack_var';
+ok $@, 'no strict refs allows ver decl to enable subs';
+eval 'no strict "vars"; use 5.012; ${"foo"} = "bar"';
+ok $@, 'no strict vars allows ver decl to enable refs';
+eval 'no strict "vars"; use 5.012; ursine_word';
+ok $@, 'no strict vars allows ver decl to enable subs';
+
 
 { use test_use }	# check that subparse saves pending tokens
 

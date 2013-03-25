@@ -464,7 +464,7 @@ sub prepare_to_search
 	  ##
 	  if ($underlineOK) {
 	     if ($regex =~ m/[?*+{}()\\.|^\$[]/) {
-		warn "$0: warning, can't underline-safe ``$regex''.\n";
+		warn "$0: warning, can't underline-safe '$regex'.\n";
 	     } else {
 		$regex = join($underline_glue, split(//, $regex));
 	     }

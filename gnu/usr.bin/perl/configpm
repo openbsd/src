@@ -52,9 +52,44 @@ while ($how_many_common--) {
     $Common{$1} = $1;
 }
 
+# Post 37589e1eefb1bd62 DynaLoader defaults to reading these at runtime.
+# Ideally we're redo the data below, but Fotango's build system made it
+# wonderfully easy to instrument, and no longer exists.
+$Common{$_} = $_ foreach qw(dlext so);
+
 # names of things which may need to have slashes changed to double-colons
 my %Extensions = map {($_,$_)}
                  qw(dynamic_ext static_ext extensions known_extensions);
+
+# The plan is that this information is used by ExtUtils::MakeMaker to generate
+# Makefile dependencies, rather than hardcoding a list, which has become out
+# of date. However, currently, MM_Unix.pm and MM_VMS.pm have *different* lists,
+# *and* descrip_mms.template doesn't actually install all the headers.
+# The "Unix" list seems to (attempt to) avoid the generated headers, which I'm
+# not sure is the right thing to do. Also, not certain whether it would be
+# easier to parse MANIFEST to get these (adding config.h, and potentially
+# removing others), but for now, stick to a hard coded list.
+
+# Could use a map to add ".h", but I suspect that it's easier to use literals,
+# so that anyone using grep will find them
+# This is the list from MM_VMS, plus pad.h, parser.h, perlsfio.h utf8.h
+# which it installs. It *doesn't* install perliol.h - FIXME.
+my @header_files = qw(EXTERN.h INTERN.h XSUB.h av.h config.h cop.h cv.h
+		      embed.h embedvar.h form.h gv.h handy.h hv.h intrpvar.h
+		      iperlsys.h keywords.h mg.h nostdio.h op.h opcode.h
+		      pad.h parser.h patchlevel.h perl.h perlio.h perlsdio.h
+		      perlsfio.h perlvars.h perly.h pp.h pp_proto.h proto.h
+		      regcomp.h regexp.h regnodes.h scope.h sv.h thread.h utf8.h
+		      util.h);
+
+# No point in adding fakethr.h, as it no longer works
+push @header_files,
+    $^O eq 'VMS' ? 'vmsish.h' : qw(dosish.h perliol.h time64.h unixish.h);
+
+my $header_files = '    return qw(' . join(' ', sort @header_files) . ');';
+$header_files =~ s/(?=.{64})   # If line is still overlength
+		   (.{1,64})\  # Split at the last convenient space
+		  /$1\n              /gx;
 
 # libpaths that should be truncated after the first path element
 my %Libpathtrunc = map {($_,$_)}
@@ -125,8 +160,25 @@ $heavy_txt .= <<'ENDOFBEG';
 
 package Config;
 use strict;
-# use warnings; Pulls in Carp
-# use vars pulls in Carp
+use warnings;
+use vars '%Config';
+
+sub bincompat_options {
+    return split ' ', (Internals::V())[0];
+}
+
+sub non_bincompat_options {
+    return split ' ', (Internals::V())[1];
+}
+
+sub compile_date {
+    return (Internals::V())[2]
+}
+
+sub local_patches {
+    my (undef, undef, undef, @patches) = Internals::V();
+    return @patches;
+}
 
 sub _V {
     my ($bincompat, $non_bincompat, $date, @patches) = Internals::V();
@@ -156,7 +208,7 @@ sub _V {
     print "  $date\n" if defined $date;
 
     my @env = map { "$_=\"$ENV{$_}\"" } sort grep {/^PERL/} keys %ENV;
-    push @env, "CYGWIN=\"$ENV{CYGWIN}\"" if $^O eq 'cygwin';
+    push @env, "CYGWIN=\"$ENV{CYGWIN}\"" if $^O eq 'cygwin' and $ENV{CYGWIN};
 
     if (@env) {
         print "  \%ENV:\n";
@@ -166,11 +218,21 @@ sub _V {
     print "    $_\n" foreach @INC;
 }
 
+sub header_files {
 ENDOFBEG
 
-my $myver = sprintf "%vd", $^V;
+$heavy_txt .= $header_files . "\n}\n\n";
 
-$config_txt .= sprintf <<'ENDOFBEG', ($myver) x 3;
+my $export_funcs = <<'EOT';
+my %Export_Cache = (myconfig => 1, config_sh => 1, config_vars => 1,
+		    config_re => 1, compile_date => 1, local_patches => 1,
+		    bincompat_options => 1, non_bincompat_options => 1,
+		    header_files => 1);
+EOT
+
+my %export_ok = eval $export_funcs or die;
+
+$config_txt .= sprintf << 'EOT', $export_funcs;
 # This file was created by configpm when Perl was built. Any changes
 # made to this file will be lost the next time perl is built.
 
@@ -180,26 +242,30 @@ $config_txt .= sprintf <<'ENDOFBEG', ($myver) x 3;
 
 package Config;
 use strict;
-# use warnings; Pulls in Carp
-# use vars pulls in Carp
+use warnings;
+use vars '%%Config';
+
+# Skip @Config::EXPORT because it only contains %%Config, which we special
+# case below as it's not a function. @Config::EXPORT won't change in the
+# lifetime of Perl 5.
+%s
 @Config::EXPORT = qw(%%Config);
-@Config::EXPORT_OK = qw(myconfig config_sh config_vars config_re);
+@Config::EXPORT_OK = keys %%Export_Cache;
 
 # Need to stub all the functions to make code such as print Config::config_sh
 # keep working
 
-sub myconfig;
-sub config_sh;
-sub config_vars;
-sub config_re;
+EOT
 
-my %%Export_Cache = map {($_ => 1)} (@Config::EXPORT, @Config::EXPORT_OK);
+$config_txt .= "sub $_;\n" foreach sort keys %export_ok;
 
-our %%Config;
+my $myver = sprintf "%vd", $^V;
+
+$config_txt .= sprintf <<'ENDOFBEG', ($myver) x 3;
 
 # Define our own import method to avoid pulling in the full Exporter:
 sub import {
-    my $pkg = shift;
+    shift;
     @_ = @Config::EXPORT unless @_;
 
     my @funcs = grep $_ ne '%%Config', @_;
@@ -208,8 +274,8 @@ sub import {
     no strict 'refs';
     my $callpkg = caller(0);
     foreach my $func (@funcs) {
-	die sprintf qq{"%%s" is not exported by the %%s module\n},
-	    $func, __PACKAGE__ unless $Export_Cache{$func};
+	die qq{"$func" is not exported by the Config module\n}
+	    unless $Export_Cache{$func};
 	*{$callpkg.'::'.$func} = \&{$func};
     }
 
@@ -217,11 +283,11 @@ sub import {
     return;
 }
 
-die "Perl lib version (%s) doesn't match executable version ($])"
+die "Perl lib version (%s) doesn't match executable '$0' version ($])"
     unless $^V;
 
 $^V eq %s
-    or die "Perl lib version (%s) doesn't match executable version (" .
+    or die "Perl lib version (%s) doesn't match executable '$0' version (" .
 	sprintf("v%%vd",$^V) . ")";
 
 ENDOFBEG
@@ -231,6 +297,7 @@ my @non_v    = ();
 my @v_others = ();
 my $in_v     = 0;
 my %Data     = ();
+my $quote;
 
 
 my %seen_quotes;
@@ -262,11 +329,11 @@ my %seen_quotes;
 	push(@non_v, "#$_"); # not a name='value' line
 	next;
     }
-    my $quote = $2;
     if ($in_v) { 
         $val .= $_;
     }
     else { 
+	$quote = $2;
         ($name,$val) = ($1,$3); 
     }
     $in_v = $val !~ /$quote\n/;
@@ -299,62 +366,40 @@ EOT
 
 if ($seen_quotes{'"'}) {
     # We need the full ' and " code
-    $fetch_string .= <<'EOT';
-    my $quote_type = "'";
-    my $marker = "$key=";
 
-    # Check for the common case, ' delimited
-    my $start = index($Config_SH_expanded, "\n$marker$quote_type");
-    # If that failed, check for " delimited
-    if ($start == -1) {
-        $quote_type = '"';
-        $start = index($Config_SH_expanded, "\n$marker$quote_type");
-    }
-EOT
-} else {
-    $fetch_string .= <<'EOT';
-    # We only have ' delimted.
-    my $start = index($Config_SH_expanded, "\n$key=\'");
-EOT
-}
 $fetch_string .= <<'EOT';
-    # Start can never be -1 now, as we've rigged the long string we're
-    # searching with an initial dummy newline.
-    return undef if $start == -1;
-
-    $start += length($key) + 3;
-
-EOT
-if (!$seen_quotes{'"'}) {
-    # Don't need the full ' and " code, or the eval expansion.
-    $fetch_string .= <<'EOT';
-    my $value = substr($Config_SH_expanded, $start,
-                       index($Config_SH_expanded, "'\n", $start)
-		       - $start);
-EOT
-} else {
-    $fetch_string .= <<'EOT';
-    my $value = substr($Config_SH_expanded, $start,
-                       index($Config_SH_expanded, "$quote_type\n", $start)
-		       - $start);
+    return undef unless my ($quote_type, $value) = $Config_SH_expanded =~ /\n$key=(['"])(.*?)\1\n/s;
 
     # If we had a double-quote, we'd better eval it so escape
     # sequences and such can be interpolated. Since the incoming
     # value is supposed to follow shell rules and not perl rules,
     # we escape any perl variable markers
+
+    # Historically, since " 'support' was added in change 1409, the
+    # interpolation was done before the undef. Stick to this arguably buggy
+    # behaviour as we're refactoring.
     if ($quote_type eq '"') {
 	$value =~ s/\$/\\\$/g;
 	$value =~ s/\@/\\\@/g;
 	eval "\$value = \"$value\"";
     }
-EOT
-}
-$fetch_string .= <<'EOT';
+
     # So we can say "if $Config{'foo'}".
-    $value = undef if $value eq 'undef';
-    $self->{$key} = $value; # cache it
+    $self->{$key} = $value eq 'undef' ? undef : $value; # cache it
 }
 EOT
+
+} else {
+    # We only have ' delimted.
+
+$fetch_string .= <<'EOT';
+    return undef unless $Config_SH_expanded =~ /\n$key=\'(.*?)\'\n/s;
+    # So we can say "if $Config{'foo'}".
+    $self->{$key} = $1 eq 'undef' ? undef : $1;
+}
+EOT
+
+}
 
 eval $fetch_string;
 die if $@;
@@ -375,13 +420,12 @@ my $f = $t eq 'long' ? 'L!' : $s == 8 ? 'Q': 'I';
 
 my $byteorder_code;
 if ($s == 4 || $s == 8) {
-    my $list = join ',', reverse(2..$s);
+    my $list = join ',', reverse(1..$s-1);
     my $format = 'a'x$s;
     $byteorder_code = <<"EOT";
 
-my \$i = 0;
-foreach my \$c ($list) { \$i |= ord(\$c); \$i <<= 8 }
-\$i |= ord(1);
+my \$i = ord($s);
+foreach my \$c ($list) { \$i <<= 8; \$i |= ord(\$c); }
 our \$byteorder = join('', unpack('$format', pack('$f', \$i)));
 EOT
 } else {
@@ -621,10 +665,9 @@ sub FETCH {
     my($self, $key) = @_;
 
     # check for cached value (which may be undef so we use exists not defined)
-    return $self->{$key} if exists $self->{$key};
-
-    return $self->fetch_string($key);
+    return exists $self->{$key} ? $self->{$key} : $self->fetch_string($key);
 }
+
 ENDOFEND
 
 $heavy_txt .= <<'ENDOFEND';
@@ -672,9 +715,7 @@ $heavy_txt .= <<'ENDOFEND';
 }
 
 sub STORE  { die "\%Config::Config is read-only\n" }
-*DELETE = \&STORE;
-*CLEAR  = \&STORE;
-
+*DELETE = *CLEAR = \*STORE; # Typeglob aliasing uses less space
 
 sub config_sh {
     substr $Config_SH_expanded, 1, $config_sh_len;
@@ -838,7 +879,7 @@ http://perl5.git.perl.org/perl.git/blob/HEAD:/Porting/Glossary
 =item myconfig()
 
 Returns a textual summary of the major perl configuration values.
-See also C<-V> in L<perlrun/Switches>.
+See also C<-V> in L<perlrun/Command Switches>.
 
 =item config_sh()
 
@@ -858,7 +899,34 @@ printed on a separate line in the form:
   name='value';
 
 Names which are unknown are output as C<name='UNKNOWN';>.
-See also C<-V:name> in L<perlrun/Switches>.
+See also C<-V:name> in L<perlrun/Command Switches>.
+
+=item bincompat_options()
+
+Returns a list of C pre-processor options used when compiling this F<perl>
+binary, which affect its binary compatibility with extensions.
+C<bincompat_options()> and C<non_bincompat_options()> are shown together in
+the output of C<perl -V> as I<Compile-time options>.
+
+=item non_bincompat_options()
+
+Returns a list of C pre-processor options used when compiling this F<perl>
+binary, which do not affect binary compatibility with extensions.
+
+=item compile_date()
+
+Returns the compile date (as a string), equivalent to what is shown by
+C<perl -V>
+
+=item local_patches()
+
+Returns a list of the names of locally applied patches, equivalent to what
+is shown by C<perl -V>.
+
+=item header_files()
+
+Returns a list of the header files that should be used as dependencies for
+XS code, for this version of Perl on this platform.
 
 =back
 

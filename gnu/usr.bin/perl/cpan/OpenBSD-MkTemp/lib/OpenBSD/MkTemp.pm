@@ -8,20 +8,29 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw( mkstemps mkstemp mkdtemp );
 our @EXPORT = qw( mkstemp mkdtemp );
-our $VERSION = '0.03';
+our $VERSION = '0.02';
 
 require XSLoader;
 XSLoader::load('OpenBSD::MkTemp', $VERSION);
 
 sub mkstemp($)
 {
-	return mkstemps($_[0]);
+	my $template = shift;
+	my $fh = mkstemps_real($template, 0);
+	return $fh && ($fh, $template)
+}
+
+sub mkstemps($$)
+{
+	my($template, $suffix) = @_;
+	$template .= $suffix;
+	my $fh = mkstemps_real($template, length($suffix));
+	return $fh && ($fh, $template)
 }
 
 
 1;
 __END__
-
 =head1 NAME
 
 OpenBSD::MkTemp - Perl access to mkstemps() and mkdtemp()
@@ -40,44 +49,24 @@ OpenBSD::MkTemp - Perl access to mkstemps() and mkdtemp()
 
 =head1 DESCRIPTION
 
-This module provides routines for creating files and directories
-with guaranteed unique names, using the C C<mkstemps()> and
-C<mkdtemp()> routines.
-On the perl-side, they are intended to behave the same as the
-functions provided by L<File::Temp>.
+This module provides routines for creating files and directories with
+guaranteed unique names, using the C mkstemps() and mkdtemp() routines.
 
-For all these functions, the template provided follows the rules
-of the system's C<mkstemps()> and C<mkdtemp()> functions.
-The template may be any file name with some number of Xs appended
-to it, for example C</tmp/temp.XXXXXXXX>.
-The trailing Xs are replaced with a unique digit and letter combination.
+mkstemp() and mkstemps() must be called with a template argument
+that is writable, so that they can update it with the path of the
+generated file.
+They return normal perl IO handles.
 
-C<mkstemp()> takes a template and creates a new, unique file.
-In a list context, it returns a two items: a normal perl IO handle
-open to the new file for both read and write, and the generated
-filename.
-In a scalar context it just returns the IO handle.
-
-C<mkstemps()> takes the template and a suffix to append to the
-filename.  For example, the call C<mkstemps("/tmp/temp.XXXXXXXXXX",
-".c")> might create the file C</tmp/temp.SO4csi32GM.c>.
-It returns the filename and/or filename just like C<mkstemp()>
-
-C<mkdtemp()> simply takes the template and returns the path of the
+mkdtemp() simply takes the template and returns the path of the
 newly created directory.
-
-Note that the files and directories created by these functions are
-I<not> automatically removed.
-
-On failure, all of these functions call die.
 
 =head2 EXPORT
 
-  ($fh, $filename) = mkstemp($template)
+  $fh = mkstemp($template)
 
 =head2 Exportable functions
 
-  ($fh, $filename) = mkstemps($template, $suffix)
+  $fh = mkstemps($template, $suffix_len)
   $dir = mkdtemp($template);
 
 =head1 SEE ALSO
@@ -90,7 +79,7 @@ Philip Guenther, E<lt>guenther@openbsd.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2010,2012 by Philip Guenther
+Copyright (C) 2010 by Philip Guenther
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.12.2 or,

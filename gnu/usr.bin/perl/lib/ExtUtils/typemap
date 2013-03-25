@@ -24,10 +24,16 @@ char **			T_PACKEDARRAY
 void *			T_PTR
 Time_t *		T_PV
 SV *			T_SV
+
+# These are the backwards-compatibility AV*/HV* typemaps that
+# do not decrement refcounts. Locally override with
+# "AV*	T_AVREF_REFCOUNT_FIXED", "HV*	T_HVREF_REFCOUNT_FIXED",
+# "CV*	T_CVREF_REFCOUNT_FIXED", "SVREF	T_SVREF_REFCOUNT_FIXED",
+# to get the fixed versions.
 SVREF			T_SVREF
+CV *			T_CVREF
 AV *			T_AVREF
 HV *			T_HVREF
-CV *			T_CVREF
 
 IV			T_IV
 UV			T_UV
@@ -58,33 +64,109 @@ INPUT
 T_SV
 	$var = $arg
 T_SVREF
-	if (SvROK($arg))
-	    $var = (SV*)SvRV($arg);
-	else
-	    Perl_croak(aTHX_ \"%s: %s is not a reference\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\")
+	STMT_START {
+		SV* const xsub_tmp_sv = $arg;
+		SvGETMAGIC(xsub_tmp_sv);
+		if (SvROK(xsub_tmp_sv)){
+		    $var = SvRV(xsub_tmp_sv);
+		}
+		else{
+		    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+				\"$var\");
+		}
+	} STMT_END
+T_SVREF_REFCOUNT_FIXED
+	STMT_START {
+		SV* const xsub_tmp_sv = $arg;
+		SvGETMAGIC(xsub_tmp_sv);
+		if (SvROK(xsub_tmp_sv)){
+		    $var = SvRV(xsub_tmp_sv);
+		}
+		else{
+		    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+				\"$var\");
+		}
+	} STMT_END
 T_AVREF
-	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVAV)
-	    $var = (AV*)SvRV($arg);
-	else
-	    Perl_croak(aTHX_ \"%s: %s is not an array reference\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\")
+	STMT_START {
+		SV* const xsub_tmp_sv = $arg;
+		SvGETMAGIC(xsub_tmp_sv);
+		if (SvROK(xsub_tmp_sv) && SvTYPE(SvRV(xsub_tmp_sv)) == SVt_PVAV){
+		    $var = (AV*)SvRV(xsub_tmp_sv);
+		}
+		else{
+		    Perl_croak(aTHX_ \"%s: %s is not an ARRAY reference\",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+				\"$var\");
+		}
+	} STMT_END
+T_AVREF_REFCOUNT_FIXED
+	STMT_START {
+		SV* const xsub_tmp_sv = $arg;
+		SvGETMAGIC(xsub_tmp_sv);
+		if (SvROK(xsub_tmp_sv) && SvTYPE(SvRV(xsub_tmp_sv)) == SVt_PVAV){
+		    $var = (AV*)SvRV(xsub_tmp_sv);
+		}
+		else{
+		    Perl_croak(aTHX_ \"%s: %s is not an ARRAY reference\",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+				\"$var\");
+		}
+	} STMT_END
 T_HVREF
-	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVHV)
-	    $var = (HV*)SvRV($arg);
-	else
-	    Perl_croak(aTHX_ \"%s: %s is not a hash reference\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\")
+	STMT_START {
+		SV* const xsub_tmp_sv = $arg;
+		SvGETMAGIC(xsub_tmp_sv);
+		if (SvROK(xsub_tmp_sv) && SvTYPE(SvRV(xsub_tmp_sv)) == SVt_PVHV){
+		    $var = (HV*)SvRV(xsub_tmp_sv);
+		}
+		else{
+		    Perl_croak(aTHX_ \"%s: %s is not a HASH reference\",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+				\"$var\");
+		}
+	} STMT_END
+T_HVREF_REFCOUNT_FIXED
+	STMT_START {
+		SV* const xsub_tmp_sv = $arg;
+		SvGETMAGIC(xsub_tmp_sv);
+		if (SvROK(xsub_tmp_sv) && SvTYPE(SvRV(xsub_tmp_sv)) == SVt_PVHV){
+		    $var = (HV*)SvRV(xsub_tmp_sv);
+		}
+		else{
+		    Perl_croak(aTHX_ \"%s: %s is not a HASH reference\",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+				\"$var\");
+		}
+	} STMT_END
 T_CVREF
-	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVCV)
-	    $var = (CV*)SvRV($arg);
-	else
-	    Perl_croak(aTHX_ \"%s: %s is not a code reference\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\")
+	STMT_START {
+		SV* const xsub_tmp_sv = $arg;
+		SvGETMAGIC(xsub_tmp_sv);
+		if (SvROK(xsub_tmp_sv) && SvTYPE(SvRV(xsub_tmp_sv)) == SVt_PVCV){
+		    $var = (CV*)SvRV(xsub_tmp_sv);
+		}
+		else{
+		    Perl_croak(aTHX_ \"%s: %s is not a CODE reference\",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+				\"$var\");
+		}
+	} STMT_END
+T_CVREF_REFCOUNT_FIXED
+	STMT_START {
+		SV* const xsub_tmp_sv = $arg;
+		SvGETMAGIC(xsub_tmp_sv);
+		if (SvROK(xsub_tmp_sv) && SvTYPE(SvRV(xsub_tmp_sv)) == SVt_PVCV){
+		    $var = (CV*)SvRV(xsub_tmp_sv);
+		}
+		else{
+		    Perl_croak(aTHX_ \"%s: %s is not a CODE reference\",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+				\"$var\");
+		}
+	} STMT_END
 T_SYSRET
 	$var NOT IMPLEMENTED
 T_UV
@@ -193,8 +275,6 @@ T_PACKED
 	$var = XS_unpack_$ntype($arg)
 T_PACKEDARRAY
 	$var = XS_unpack_$ntype($arg)
-T_CALLBACK
-	$var = make_perl_cb_$type($arg)
 T_ARRAY
 	U32 ix_$var = $argoff;
 	$var = $ntype(items -= $argoff);
@@ -218,12 +298,20 @@ T_SV
 	$arg = $var;
 T_SVREF
 	$arg = newRV((SV*)$var);
+T_SVREF_REFCOUNT_FIXED
+	$arg = newRV_noinc((SV*)$var);
 T_AVREF
 	$arg = newRV((SV*)$var);
+T_AVREF_REFCOUNT_FIXED
+	$arg = newRV_noinc((SV*)$var);
 T_HVREF
 	$arg = newRV((SV*)$var);
+T_HVREF_REFCOUNT_FIXED
+	$arg = newRV_noinc((SV*)$var);
 T_CVREF
 	$arg = newRV((SV*)$var);
+T_CVREF_REFCOUNT_FIXED
+	$arg = newRV_noinc((SV*)$var);
 T_IV
 	sv_setiv($arg, (IV)$var);
 T_UV
@@ -287,11 +375,6 @@ T_PACKED
 	XS_pack_$ntype($arg, $var);
 T_PACKEDARRAY
 	XS_pack_$ntype($arg, $var, count_$ntype);
-T_DATAUNIT	
-	sv_setpvn($arg, $var.chp(), $var.size());
-T_CALLBACK
-	sv_setpvn($arg, $var.context.value().chp(),
-		$var.context.value().size());
 T_ARRAY
         {
 	    U32 ix_$var;

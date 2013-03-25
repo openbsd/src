@@ -4,7 +4,7 @@ package Pod::Simple::Search;
 use strict;
 
 use vars qw($VERSION $MAX_VERSION_WITHIN $SLEEPY);
-$VERSION = '3.14';   ## Current version of this package
+$VERSION = '3.20';   ## Current version of this package
 
 BEGIN { *DEBUG = sub () {0} unless defined &DEBUG; }   # set DEBUG level
 use Carp ();
@@ -25,7 +25,7 @@ use Cwd qw( cwd );
 #==========================================================================
 __PACKAGE__->_accessorize(  # Make my dumb accessor methods
  'callback', 'progress', 'dir_prefix', 'inc', 'laborious', 'limit_glob',
- 'limit_re', 'shadows', 'verbose', 'name2path', 'path2name', 
+ 'limit_re', 'shadows', 'verbose', 'name2path', 'path2name', 'recurse',
 );
 #==========================================================================
 
@@ -39,6 +39,7 @@ sub new {
 sub init {
   my $self = shift;
   $self->inc(1);
+  $self->recurse(1);
   $self->verbose(DEBUG);
   return $self;
 }
@@ -127,15 +128,22 @@ sub _make_search_callback {
   my $self = $_[0];
 
   # Put the options in variables, for easy access
-  my(  $laborious, $verbose, $shadows, $limit_re, $callback, $progress,$path2name,$name2path) =
+  my( $laborious, $verbose, $shadows, $limit_re, $callback, $progress,
+      $path2name, $name2path, $recurse) =
     map scalar($self->$_()),
-     qw(laborious   verbose   shadows   limit_re   callback   progress  path2name  name2path);
+     qw(laborious verbose shadows limit_re callback progress
+        path2name name2path recurse);
 
   my($file, $shortname, $isdir, $modname_bits);
   return sub {
     ($file, $shortname, $isdir, $modname_bits) = @_;
 
     if($isdir) { # this never gets called on the startdir itself, just subdirs
+
+      unless( $recurse ) {
+        $verbose and print "Not recursing into '$file' as per requested.\n";
+        return 'PRUNE';
+      }
 
       if( $self->{'_dirs_visited'}{$file} ) {
         $verbose and print "Directory '$file' already seen, skipping.\n";

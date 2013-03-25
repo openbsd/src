@@ -30,19 +30,6 @@
 #  ifndef STANDARD_C
 #    define STANDARD_C
 #  endif
-#  if defined(__BORLANDC__)
-#    pragma warn -ccc
-#    pragma warn -rch
-#    pragma warn -sig
-#    pragma warn -pia
-#    pragma warn -par
-#    pragma warn -aus
-#    pragma warn -use
-#    pragma warn -csu
-#    pragma warn -pro
-#  elif defined(_MSC_VER)
-#  elif defined(__MINGW32__)
-#  endif
 #endif
 
 /* Use all the "standard" definitions? */

@@ -1,6 +1,7 @@
 /*    perly.c
  *
- *    Copyright (c) 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
+ *    Copyright (c) 2004, 2005, 2006, 2007, 2008,
+ *    2009, 2010, 2011 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -33,6 +34,9 @@ typedef signed char yytype_int8;
 typedef unsigned short int yytype_uint16;
 typedef short int yytype_int16;
 typedef signed char yysigned_char;
+
+/* YYINITDEPTH -- initial size of the parser's stacks.  */
+#define YYINITDEPTH 200
 
 #ifdef DEBUGGING
 #  define YYDEBUG 1
@@ -132,11 +136,6 @@ yy_stack_print (pTHX_ const yy_parser *parser)
 	    );
 	    break;
 #ifndef PERL_IN_MADLY_C
-	case toketype_p_tkval:
-	    PerlIO_printf(Perl_debug_log, " %8.8s",
-		  ps->val.pval ? ps->val.pval : "(NULL)");
-	    break;
-
 	case toketype_i_tkval:
 #endif
 	case toketype_ival:
@@ -195,7 +194,7 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
     yy_stack_frame *ps     = parser->ps;
     int i = 0;
 
-    if (!parser->stack || ps == parser->stack)
+    if (!parser->stack)
 	return;
 
     YYDPRINTF ((Perl_debug_log, "clearing the parse stack\n"));
@@ -238,7 +237,7 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
      * that we can safely call op_free() multiple times on each stack op.
      * So, when clearing the stack, we first, for each op that was being
      * reduced, call op_free with op_latefree=1. This ensures that all ops
-     * hanging off these op are freed, but the reducing ops themselces are
+     * hanging off these op are freed, but the reducing ops themselves are
      * just undefed. Then we set op_latefreed=0 on *all* ops on the stack
      * and free them. A little thought should convince you that this
      * two-part approach to the reducing ops should handle the first three
@@ -311,6 +310,8 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 	SvREFCNT_dec(ps->compcv);
 	ps--;
     }
+
+    Safefree(parser->stack);
 }
 
 
@@ -320,9 +321,9 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 
 int
 #ifdef PERL_IN_MADLY_C
-Perl_madparse (pTHX)
+Perl_madparse (pTHX_ int gramtype)
 #else
-Perl_yyparse (pTHX)
+Perl_yyparse (pTHX_ int gramtype)
 #endif
 {
     dVAR;
@@ -346,16 +347,31 @@ Perl_yyparse (pTHX)
 #ifndef PERL_IN_MADLY_C
 #  ifdef PERL_MAD
     if (PL_madskills)
-	return madparse();
+	return madparse(gramtype);
 #  endif
 #endif
 
     YYDPRINTF ((Perl_debug_log, "Starting parse\n"));
 
     parser = PL_parser;
-    ps = parser->ps;
 
-    ENTER;  /* force parser stack cleanup before we return */
+    ENTER;  /* force parser state cleanup/restoration before we return */
+    SAVEPPTR(parser->yylval.pval);
+    SAVEINT(parser->yychar);
+    SAVEINT(parser->yyerrstatus);
+    SAVEINT(parser->stack_size);
+    SAVEINT(parser->yylen);
+    SAVEVPTR(parser->stack);
+    SAVEVPTR(parser->ps);
+
+    /* initialise state for this parse */
+    parser->yychar = gramtype;
+    parser->yyerrstatus = 0;
+    parser->stack_size = YYINITDEPTH;
+    parser->yylen = 0;
+    Newx(parser->stack, YYINITDEPTH, yy_stack_frame);
+    ps = parser->ps = parser->stack;
+    ps->state = 0;
     SAVEDESTRUCTOR_X(S_clear_yystack, parser);
 
 /*------------------------------------------------------------.

@@ -92,9 +92,7 @@ typedef struct {
 
 /* $PutMsg action routine - records error message in dl_last_error */
 static vmssts
-copy_errmsg(msg,unused)
-    struct dsc$descriptor_s *   msg;
-    vmssts  unused;
+copy_errmsg(struct dsc$descriptor_s *msg, vmssts unused)
 {
     dTHX;
     dMY_CXT;
@@ -110,9 +108,7 @@ copy_errmsg(msg,unused)
 
 /* Use $PutMsg to retrieve error message for failure status code */
 static void
-dl_set_error(sts,stv)
-    vmssts  sts;
-    vmssts  stv;
+dl_set_error(vmssts sts, vmssts stv)
 {
     vmssts vec[3];
     dTHX;

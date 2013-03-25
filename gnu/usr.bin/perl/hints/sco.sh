@@ -46,7 +46,7 @@
 # -Even optimized for speed, gcc generated code is smaller (!!!)
 # -gcc is free
 # -I use ld to link which is distributed with the core OS distribution, so you
-#  don't need to buy the developement kit, just find someone kind enough to
+#  don't need to buy the development kit, just find someone kind enough to
 #  give you a binary release of gcc.
 #
 #
@@ -111,7 +111,7 @@ then
     esac
 else
     ###############################################################
-    # Need this in release 5 because of changed fpu exeption rules
+    # Need this in release 5 because of changed fpu exception rules
     ccflags="$ccflags -D HAS_FPSETMASK"
 
     ###############################################################
@@ -162,7 +162,7 @@ else
 
         ###############################################################
         # Force to define those symbols, as they are #defines and not
-        # catched by Configure, and they are useful
+        # caught by Configure, and they are useful
         d_dlopen='define'
         d_dlerror='define'
     fi

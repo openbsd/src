@@ -4,7 +4,7 @@ designed to be readable as is.
 
 =head1 NAME
 
-Install - Build and Installation guide for perl 5.
+INSTALL - Build and Installation guide for perl 5.
 
 =head1 SYNOPSIS
 
@@ -36,18 +36,22 @@ any prefix location by adding "-Dprefix='/some/dir'" to Configure's args.
 To explicitly name the perl binary, use the command
 "make install PERLNAME=myperl".
 
-Building perl from source requires an ANSI compliant C-Compiler.
+Building perl from source requires an ANSI compliant C compiler.
 A minimum of C89 is required. Some features available in C99 will
 be probed for and used when found. The perl build process does not
 rely on anything more than C89.
 
 These options, and many more, are explained in further detail below.
 
+If you're building perl from a git repository, you should also consult
+the documentation in pod/perlgit.pod for information on that special
+circumstance.
+
 If you have problems, corrections, or questions, please see
 L<"Reporting Problems"> below.
 
 For information on what's new in this release, see the
-pod/perl5122delta.pod file.  For more information about how to find more
+pod/perldelta.pod file.  For more information about how to find more
 specific detail about changes, see the Changes file.
 
 =head1 DESCRIPTION
@@ -80,10 +84,10 @@ directory.
 
 =head2 Changes and Incompatibilities
 
-Please see pod/perl5122delta.pod for a description of the changes and
+Please see pod/perldelta.pod for a description of the changes and
 potential incompatibilities introduced with this release.  A few of
 the most important issues are listed below, but you should refer
-to pod/perl5122delta.pod for more detailed information.
+to pod/perldelta.pod for more detailed information.
 
 B<WARNING:> This version is not binary compatible with prior releases of Perl.
 If you have built extensions (i.e. modules that include C code)
@@ -98,7 +102,7 @@ The standard extensions supplied with Perl will be handled automatically.
 
 On a related issue, old modules may possibly be affected by the changes
 in the Perl language in the current release.  Please see
-pod/perl5122delta.pod for a description of what's changed.  See your
+pod/perldelta.pod for a description of what's changed.  See your
 installed copy of the perllocal.pod file for a (possibly incomplete)
 list of locally installed modules.  Also see CPAN::autobundle for one
 way to make a "bundle" of your currently installed modules.
@@ -441,7 +445,7 @@ shared library path might be required.  For example, if you want to run
 something like the following with the newly-built but not-yet-installed
 ./perl:
 
-        cd t; ./perl -MTestInit misc/failing_test.t
+        ./perl -MTestInit t/misc/failing_test.t
 
 or
 
@@ -530,9 +534,9 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.12.2.
+By default, Configure will use the following directories for 5.16.3.
 $version is the full perl version number, including subversion, e.g.
-5.12.2 or 5.9.5, and $archname is a string like sun4-sunos,
+5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
 variables are in the file Porting/Glossary.
 
@@ -629,7 +633,7 @@ This would have the effect of setting the following:
     $vendorman3direxp	/usr/man/man3
 
 Note how in this example, the vendor-supplied directories are in the
-/usr hierarchy, while the directories reserved for the end-user are in
+/usr hierarchy, while the directories reserved for the end user are in
 the /usr/local hierarchy.
 
 The entire installed library hierarchy is installed in locations with
@@ -836,8 +840,15 @@ modules, you can specify to not include the paths found:
 
        sh Configure -Dinc_version_list=none ...
 
+If you do want to use modules from some previous perl versions, the variable
+must contain a space separated list of directories under the site_perl
+directory, and has to include architecture-dependent directories separately,
+eg.
+
+       sh Configure -Dinc_version_list="5.16.3/x86_64-linux 5.14.0" ...
+
 When using the newer perl, you can add these paths again in the
-$PERL5LIB environment variable or with perl's -I runtime option.
+PERL5LIB environment variable or with perl's -I runtime option.
 
 =head2 Building Perl outside of the source directory
 
@@ -915,8 +926,8 @@ Removes -g from optimize, and -DDEBUGGING from ccflags.
 If you are using a shared libperl, see the warnings about multiple
 versions of perl under L<Building a shared Perl library>.
 
-Note that a perl built with -DDEBUGGING will be bigger and will run more
-slowly than a standard perl.
+Note that a perl built with -DDEBUGGING will be much bigger and will run
+much, much more slowly than a standard perl.
 
 =head2 DTrace support
 
@@ -977,7 +988,7 @@ Perl comes with interfaces to number of libraries, including threads,
 dbm, ndbm, gdbm, and Berkeley db.  For the *db* extension, if
 Configure can find the appropriate header files and libraries, it will
 automatically include that extension.  The threading extension needs
-to be specified explicitely (see L<Threads>).
+to be specified explicitly (see L</Threads>).
 
 Those libraries are not distributed with perl. If your header (.h) files
 for those libraries are not in a directory normally searched by your C
@@ -1014,7 +1025,7 @@ you have gdbm installed in any of (/usr/local, /opt/local, /usr/gnu,
 
 =item BerkeleyDB in /usr/local/BerkeleyDB
 
-The version of BerkeleyDB distributed by sleepycat.com installs in a
+The version of BerkeleyDB distributed by Oracle installs in a
 version-specific directory by default, typically something like
 /usr/local/BerkeleyDB.4.7.  To have Configure find that, you need to add
 -I/usr/local/BerkeleyDB.4.7/include to cc flags, as in the previous example,
@@ -1233,7 +1244,7 @@ You will then have to rebuild by running
 
 =item config.over and config.arch
 
-You can also supply a shell script config.over to over-ride
+You can also supply a shell script config.over to override
 Configure's guesses.  It will get loaded up at the very end, just
 before config.sh is created.  You have to be careful with this,
 however, as Configure does no checking that your changes make sense.
@@ -1260,8 +1271,8 @@ If you have any additional changes to make to the C compiler command
 line, they can be made in cflags.SH.  For instance, to turn off the
 optimizer on toke.c, find the line in the switch structure for
 toke.c and put the command optimize='-g' before the ;; .  You
-can also edit cflags directly, but beware that your changes will be
-lost the next time you run Configure.
+should not edit the generated file cflags directly, as your changes will
+be lost the next time you run Configure, or if you edit config.sh.
 
 To explore various ways of changing ccflags from within a hint file,
 see the file hints/README.hints.
@@ -1293,7 +1304,7 @@ various other operating systems.
 
 If you plan to port Perl to a new architecture, study carefully the
 section titled "Philosophical Issues in Patching and Porting Perl"
-in the file Porting/pumpkin.pod and the file pod/perlrepository.pod.
+in the file Porting/pumpkin.pod and the file pod/perlgit.pod.
 Study also how other non-UNIX ports have solved problems.
 
 =back
@@ -1423,7 +1434,7 @@ See also the L<"vsprintf"> item below.
 If you get error messages such as the following (the exact line
 numbers and function name may vary in different versions of perl):
 
-    util.c: In function `Perl_form':
+    util.c: In function 'Perl_form':
     util.c:1107: number of arguments doesn't match prototype
     proto.h:125: prototype declaration
 
@@ -1436,7 +1447,7 @@ If you run into dynamic loading problems, check your setting of
 the LD_LIBRARY_PATH environment variable.  If you're creating a static
 Perl library (libperl.a rather than libperl.so) it should build
 fine with LD_LIBRARY_PATH unset, though that may depend on details
-of your local set-up.
+of your local setup.
 
 =item nm extraction
 
@@ -1494,7 +1505,7 @@ test process to avoid the problem.
 =item .*_r() prototype NOT found
 
 On a related note, if you see a bunch of complaints like the above about
-reentrant functions - specifically networking-related ones - being present
+reentrant functions -- specifically networking-related ones -- being present
 but without prototypes available, check to see if BIND 8.1 (or possibly
 other BIND 8 versions) is (or has been) installed. They install
 header files such as netdb.h into places such as /usr/local/include (or into
@@ -1547,7 +1558,7 @@ Configure.
 If the libs variable looks correct, you might have the
 L<"nm extraction"> problem discussed above.
 
-If you stil have missing routines or undefined symbols, you probably
+If you still have missing routines or undefined symbols, you probably
 need to add some library or other, or you need to undefine some feature
 that Configure thought was there but is defective or incomplete.  If
 you used a hint file, see if it has any relevant advice.  You can also
@@ -1558,7 +1569,7 @@ look through through config.h for likely suspects.
 Some compilers will not compile or optimize the larger files (such as
 toke.c) without some extra switches to use larger jump offsets or
 allocate larger internal tables.  You can customize the switches for
-each file in cflags.  It's okay to insert rules for specific files into
+each file in cflags.SH.  It's okay to insert rules for specific files into
 makefile since a default rule only takes effect in the absence of a
 specific rule.
 
@@ -1678,7 +1689,7 @@ Genix may need to use libc rather than libc_s, or #undef VARARGS.
 
 NCR Tower 32 (OS 2.01.01) may need -W2,-Sl,2000 and #undef MKDIR.
 
-UTS may need one or more of -K or -g, and undef LSTAT.
+UTS may need one or more of -K or -g, and #undef LSTAT.
 
 FreeBSD can fail the ext/IPC/SysV/t/sem.t test if SysV IPC has not been
 configured in the kernel.  Perl tries to detect this, though, and
@@ -1708,7 +1719,7 @@ up and used, and secondly because the primary way of configuring Perl
 (using the rather large Unix-tool-dependent Configure script) is not
 awfully well suited for cross-compilation.  However, starting from
 version 5.8.0, the Configure script also knows one way of supporting
-cross-compilation support, please keep reading.
+cross-compilation support, so please keep reading.
 
 See the following files for more information about compiling Perl for
 the particular platforms:
@@ -1854,7 +1865,7 @@ F</usr/local/arm/2.95.5>:
 
 This will run the regression tests on the perl you just made.  If
 'make test' doesn't say "All tests successful" then something went
-wrong.  See the file t/README in the t subdirectory.
+wrong.
 
 Note that you can't run the tests in background if this disables
 opening of /dev/tty. You can use 'make test-notty' in that case but
@@ -1863,13 +1874,10 @@ a few tty tests will be skipped.
 =head2 What if make test doesn't work?
 
 If make test bombs out, just cd to the t directory and run ./TEST
-by hand to see if it makes any difference.  If individual tests
-bomb, you can run them by hand, e.g.,
+by hand to see if it makes any difference.
 
-	./perl -MTestInit t/op/groups.t
-
-Another way to get more detailed information about failed tests and
-individual subtests is to cd to the t directory and run
+One way to get more detailed information about failed tests and
+individual subtests is to run the harness from the t directory:
 
 	cd t ; ./perl harness <list of tests>
 
@@ -1877,11 +1885,19 @@ individual subtests is to cd to the t directory and run
 complicated constructs). If no list of tests is provided, harness
 will run all tests.
 
+If individual tests fail, you can often run them by hand (from the main
+perl directory), e.g.,
+
+	./perl -MTestInit t/op/groups.t
+
 You should also read the individual tests to see if there are any helpful
 comments that apply to your system.  You may also need to setup your
 shared library path if you get errors like:
 
 	/sbin/loader: Fatal Error: cannot map libperl.so
+
+The file t/README in the t subdirectory contains more information about
+running and modifying tests.
 
 See L</"Building a shared Perl library"> earlier in this document.
 
@@ -1937,7 +1953,7 @@ test 85 will fail if run under either t/TEST or t/harness.
 
 Try stopping other jobs on the system and then running the test by itself:
 
-	cd t; ./perl -MTestInit op/pat.t
+	./perl -MTestInit t/op/pat.t
 
 to see if you have any better luck.  If your perl still fails this
 test, it does not necessarily mean you have a broken perl.  This test
@@ -1968,7 +1984,7 @@ The tests may fail for the following reasons:
 other than the user running the tests, or by root (uid 0).
 
 This failure can happen if the Perl source code distribution is
-unpacked in such a way that the user ids in the distribution package
+unpacked in such a way that the user IDs in the distribution package
 are used as-is.  Some tar programs do this.
 
 (2) If the directory the tests are being run in is writable by group or
@@ -2024,7 +2040,7 @@ pages, however.  You may need to be root to run B<make install>.  If you
 are not root, you must still have permission to install into the directories
 in question and you should ignore any messages about chown not working.
 
-If "make install" just says "`install' is up to date" or something
+If "make install" just says "'install' is up to date" or something
 similar, you may be on a case-insensitive filesystems such as Mac's HFS+,
 and you should say "make install-all".  (This confusion is brought to you
 by the Perl distribution having a file called INSTALL.)
@@ -2071,50 +2087,49 @@ make install will install the following:
 	perl,
 	    perl5.n.n	where 5.n.n is the current release number.  This
 			will be a link to perl.
-	suidperl,
-	    sperl5.n.n	If you requested setuid emulation.
-	a2p          	awk-to-perl translator
+	a2p          	awk-to-perl translator.
 
     scripts
 
 	cppstdin	This is used by the deprecated switch perl -P, if
 			your cc -E can't read from stdin.
 	c2ph, pstruct	Scripts for handling C structures in header files.
-	config_data	Manage Module::Build-like module configuration
+	config_data	Manage Module::Build-like module configuration.
 	corelist	Shows versions of modules that come with different
-			versions of perl
-	cpan		The CPAN shell
-	cpan2dist	The CPANPLUS distribution creator
-	cpanp		The CPANPLUS shell
-	cpanp-run-perl	An helper for cpanp
-	dprofpp		Perl code profiler post-processor
-	enc2xs		Encoding module generator
-	find2perl	find-to-perl translator
-	h2ph		Extract constants and simple macros from C headers
+			versions of perl.
+	cpan		The CPAN shell.
+	cpan2dist	The CPANPLUS distribution creator.
+	cpanp		The CPANPLUS shell.
+	cpanp-run-perl	A helper for cpanp.
+	enc2xs		Encoding module generator.
+	find2perl	find-to-perl translator.
+	h2ph		Extract constants and simple macros from C headers.
 	h2xs		Converts C .h header files to Perl extensions.
 	instmodsh	A shell to examine installed modules.
 	libnetcfg	Configure libnet.
 	perlbug		Tool to report bugs in Perl.
 	perldoc		Tool to read perl's pod documentation.
-	perlivp		Perl Installation Verification Procedure
+	perlivp		Perl Installation Verification Procedure.
 	piconv		A Perl implementation of the encoding conversion
-			utility iconv
-	pl2pm		Convert Perl 4 .pl files to Perl 5 .pm modules
+			utility iconv.
+	pl2pm		Convert Perl 4 .pl files to Perl 5 .pm modules.
 	pod2html,	Converters from perl's pod documentation format
 	pod2latex, 	to other useful formats.
 	pod2man,
 	pod2text,
 	pod2usage
-	podchecker	POD syntax checker
-	podselect	Prints sections of POD documentation
-	prove		A command-line tool for running tests
-	psed		A Perl implementation of sed
-	ptar		A Perl implementation of tar
-	ptardiff	A diff for tar archives
-	s2p		sed-to-perl translator
-	shasum		A tool to print or check SHA checksums
-	splain		Describe Perl warnings and errors
-	xsubpp		Compiler to convert Perl XS code into C code
+	podchecker	POD syntax checker.
+	podselect	Prints sections of POD documentation.
+	prove		A command-line tool for running tests.
+	psed		A Perl implementation of sed.
+	ptar		A Perl implementation of tar.
+	ptardiff	A diff for tar archives.
+	ptargrep	A grep for tar archives.
+	s2p		sed-to-perl translator.
+	shasum		A tool to print or check SHA checksums.
+	splain		Describe Perl warnings and errors.
+	xsubpp		Compiler to convert Perl XS code into C code.
+	zipdetails		display the internal structure of zip files
 
     library files
 
@@ -2164,7 +2179,7 @@ header files in /usr/include into files that can be easily interpreted
 by perl.  These files will be placed in the architecture-dependent
 library ($archlib) directory you specified to Configure.
 
-Note:  Due to differences in the C and perl languages, the conversion
+Note: Due to differences in the C and perl languages, the conversion
 of the header files is not perfect.  You will probably have to
 hand-edit some of the converted files to get them to parse correctly.
 For example, h2ph breaks spectacularly on type casting and certain
@@ -2190,7 +2205,6 @@ perl documentation:
       --htmlroot=/perl/nmanual    \
       --splithead=pod/perlipc     \
       --splititem=pod/perlfunc    \
-      --libpods=perlfunc:perlguts:perlvar:perlrun:perlop \
       --verbose
 
 See the documentation in installhtml for more details.  It can take
@@ -2211,7 +2225,7 @@ available in TeX format.  Type
 
 =head1 Starting all over again
 
-If you wish to re-build perl from the same build directory, you should
+If you wish to rebuild perl from the same build directory, you should
 clean it out with the command
 
 	make distclean
@@ -2225,7 +2239,7 @@ your old config.sh and Policy.sh files.
 
 If you are upgrading from a previous version of perl, or if you
 change systems or compilers or make other significant changes, or if
-you are experiencing difficulties building perl, you should not re-use
+you are experiencing difficulties building perl, you should not reuse
 your old config.sh.
 
 If your reason to reuse your old config.sh is to save your particular
@@ -2259,11 +2273,11 @@ an accurate description of your problem to perlbug@perl.org
 If Configure itself fails, and does not generate a config.sh file
 (needed to run C<./myconfig>), then please mail perlbug@perl.org the
 description of how Configure fails along with details of your system
-- for example the output from running C<uname -a>
+-- for example the output from running C<uname -a>
 
 Please try to make your message brief but clear.  Brief, clear bug
 reports tend to get answered more quickly.  Please don't worry if your
-written English is not great - what matters is how well you describe
+written English is not great -- what matters is how well you describe
 the important technical details of the problem you have encountered,
 not whether your grammar and spelling is flawless.
 
@@ -2272,7 +2286,7 @@ config.sh or a complete Configure or make log) unless absolutely
 necessary.  Do not include a complete transcript of your build
 session.  Just include the failing commands, the relevant error
 messages, and whatever preceding commands are necessary to give the
-appropriate context.  Plain text should usually be sufficient--fancy
+appropriate context.  Plain text should usually be sufficient -- fancy
 attachments or encodings may actually reduce the number of people who
 read your message.  Your message will get relayed to over 400
 subscribers around the world so please try to keep it brief but clear.
@@ -2292,7 +2306,7 @@ http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.12 is not binary compatible with earlier versions of Perl.
+Perl 5.16 is not binary compatible with earlier versions of Perl.
 In other words, you will have to recompile your XS modules.
 
 In general, you can usually safely upgrade from one version of Perl (e.g.
@@ -2366,9 +2380,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.12.2
+	sh Configure -Dprefix=/opt/perl5.16.3
 
-and adding /opt/perl5.12.2/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.16.3/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2381,13 +2395,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.11.0 or earlier
+=head2 Upgrading from 5.15.6 or earlier
 
-B<Perl 5.12.2 is binary incompatible with Perl 5.11.1 and any earlier
+B<Perl 5.16.3 is binary incompatible with Perl 5.15.6 and any earlier
 Perl release.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.12.2.  If you find you do need to rebuild an extension with
-5.12.2, you may safely do so without disturbing the older
+used with 5.16.3.  If you find you do need to rebuild an extension with
+5.16.3, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2420,107 +2434,102 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux is as follows (under $Config{prefix}):
+in Linux with perl-5.16.3 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.9.3/strict.pm
-  ./lib/perl5/5.9.3/warnings.pm
-  ./lib/perl5/5.9.3/i686-linux/File/Glob.pm
-  ./lib/perl5/5.9.3/i686-linux/XSLoader.pm
-  ./lib/perl5/5.9.3/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.16.3/strict.pm
+  ./lib/perl5/5.16.3/warnings.pm
+  ./lib/perl5/5.16.3/i686-linux/File/Glob.pm
+  ./lib/perl5/5.16.3/feature.pm
+  ./lib/perl5/5.16.3/XSLoader.pm
+  ./lib/perl5/5.16.3/i686-linux/auto/File/Glob/Glob.so
 
-Secondly, Debian perl-base package contains the following files,
-size about 1.9MB in its i386 version:
+Secondly, for perl-5.10.1, the Debian perl-base package contains 591 files,
+(of which 510 are for lib/unicore) totaling about 3.5MB in its i386 version.
+Omitting the lib/unicore/* files for brevity, the remaining files are:
 
   /usr/bin/perl
-  /usr/bin/perl5.8.4
-  /usr/lib/perl/5.8
-  /usr/lib/perl/5.8.4/B.pm
-  /usr/lib/perl/5.8.4/B/Deparse.pm
-  /usr/lib/perl/5.8.4/Config.pm
-  /usr/lib/perl/5.8.4/Cwd.pm
-  /usr/lib/perl/5.8.4/Data/Dumper.pm
-  /usr/lib/perl/5.8.4/DynaLoader.pm
-  /usr/lib/perl/5.8.4/Errno.pm
-  /usr/lib/perl/5.8.4/Fcntl.pm
-  /usr/lib/perl/5.8.4/File/Glob.pm
-  /usr/lib/perl/5.8.4/IO.pm
-  /usr/lib/perl/5.8.4/IO/File.pm
-  /usr/lib/perl/5.8.4/IO/Handle.pm
-  /usr/lib/perl/5.8.4/IO/Pipe.pm
-  /usr/lib/perl/5.8.4/IO/Seekable.pm
-  /usr/lib/perl/5.8.4/IO/Select.pm
-  /usr/lib/perl/5.8.4/IO/Socket.pm
-  /usr/lib/perl/5.8.4/POSIX.pm
-  /usr/lib/perl/5.8.4/Socket.pm
-  /usr/lib/perl/5.8.4/XSLoader.pm
-  /usr/lib/perl/5.8.4/auto/Cwd/Cwd.bs
-  /usr/lib/perl/5.8.4/auto/Cwd/Cwd.so
-  /usr/lib/perl/5.8.4/auto/Data/Dumper/Dumper.bs
-  /usr/lib/perl/5.8.4/auto/Data/Dumper/Dumper.so
-  /usr/lib/perl/5.8.4/auto/DynaLoader/DynaLoader.a
-  /usr/lib/perl/5.8.4/auto/DynaLoader/autosplit.ix
-  /usr/lib/perl/5.8.4/auto/DynaLoader/dl_expandspec.al
-  /usr/lib/perl/5.8.4/auto/DynaLoader/dl_find_symbol_anywhere.al
-  /usr/lib/perl/5.8.4/auto/DynaLoader/dl_findfile.al
-  /usr/lib/perl/5.8.4/auto/DynaLoader/extralibs.ld
-  /usr/lib/perl/5.8.4/auto/Fcntl/Fcntl.bs
-  /usr/lib/perl/5.8.4/auto/Fcntl/Fcntl.so
-  /usr/lib/perl/5.8.4/auto/File/Glob/Glob.bs
-  /usr/lib/perl/5.8.4/auto/File/Glob/Glob.so
-  /usr/lib/perl/5.8.4/auto/IO/IO.bs
-  /usr/lib/perl/5.8.4/auto/IO/IO.so
-  /usr/lib/perl/5.8.4/auto/POSIX/POSIX.bs
-  /usr/lib/perl/5.8.4/auto/POSIX/POSIX.so
-  /usr/lib/perl/5.8.4/auto/POSIX/autosplit.ix
-  /usr/lib/perl/5.8.4/auto/POSIX/load_imports.al
-  /usr/lib/perl/5.8.4/auto/Socket/Socket.bs
-  /usr/lib/perl/5.8.4/auto/Socket/Socket.so
-  /usr/lib/perl/5.8.4/lib.pm
-  /usr/lib/perl/5.8.4/re.pm
-  /usr/share/doc/perl-base
+  /usr/bin/perl5.10.1
+  /usr/lib/perl/5.10.1/Config.pm
+  /usr/lib/perl/5.10.1/Config_git.pl
+  /usr/lib/perl/5.10.1/Config_heavy.pl
+  /usr/lib/perl/5.10.1/Cwd.pm
+  /usr/lib/perl/5.10.1/DynaLoader.pm
+  /usr/lib/perl/5.10.1/Errno.pm
+  /usr/lib/perl/5.10.1/Fcntl.pm
+  /usr/lib/perl/5.10.1/File/Glob.pm
+  /usr/lib/perl/5.10.1/Hash/Util.pm
+  /usr/lib/perl/5.10.1/IO.pm
+  /usr/lib/perl/5.10.1/IO/File.pm
+  /usr/lib/perl/5.10.1/IO/Handle.pm
+  /usr/lib/perl/5.10.1/IO/Pipe.pm
+  /usr/lib/perl/5.10.1/IO/Seekable.pm
+  /usr/lib/perl/5.10.1/IO/Select.pm
+  /usr/lib/perl/5.10.1/IO/Socket.pm
+  /usr/lib/perl/5.10.1/IO/Socket/INET.pm
+  /usr/lib/perl/5.10.1/IO/Socket/UNIX.pm
+  /usr/lib/perl/5.10.1/List/Util.pm
+  /usr/lib/perl/5.10.1/POSIX.pm
+  /usr/lib/perl/5.10.1/Scalar/Util.pm
+  /usr/lib/perl/5.10.1/Socket.pm
+  /usr/lib/perl/5.10.1/XSLoader.pm
+  /usr/lib/perl/5.10.1/auto/Cwd/Cwd.so
+  /usr/lib/perl/5.10.1/auto/DynaLoader/autosplit.ix
+  /usr/lib/perl/5.10.1/auto/DynaLoader/dl_expandspec.al
+  /usr/lib/perl/5.10.1/auto/DynaLoader/dl_find_symbol_anywhere.al
+  /usr/lib/perl/5.10.1/auto/DynaLoader/dl_findfile.al
+  /usr/lib/perl/5.10.1/auto/Fcntl/Fcntl.so
+  /usr/lib/perl/5.10.1/auto/File/Glob/Glob.so
+  /usr/lib/perl/5.10.1/auto/Hash/Util/Util.so
+  /usr/lib/perl/5.10.1/auto/IO/IO.so
+  /usr/lib/perl/5.10.1/auto/List/Util/Util.so
+  /usr/lib/perl/5.10.1/auto/POSIX/POSIX.so
+  /usr/lib/perl/5.10.1/auto/POSIX/autosplit.ix
+  /usr/lib/perl/5.10.1/auto/POSIX/load_imports.al
+  /usr/lib/perl/5.10.1/auto/Socket/Socket.so
+  /usr/lib/perl/5.10.1/lib.pm
+  /usr/lib/perl/5.10.1/re.pm
   /usr/share/doc/perl/AUTHORS.gz
   /usr/share/doc/perl/Documentation
-  /usr/share/doc/perl/README.Debian.gz
+  /usr/share/doc/perl/README.Debian
   /usr/share/doc/perl/changelog.Debian.gz
   /usr/share/doc/perl/copyright
+  /usr/share/lintian/overrides/perl-base
   /usr/share/man/man1/perl.1.gz
-  /usr/share/perl/5.8
-  /usr/share/perl/5.8.4/AutoLoader.pm
-  /usr/share/perl/5.8.4/Carp.pm
-  /usr/share/perl/5.8.4/Carp/Heavy.pm
-  /usr/share/perl/5.8.4/Exporter.pm
-  /usr/share/perl/5.8.4/Exporter/Heavy.pm
-  /usr/share/perl/5.8.4/File/Spec.pm
-  /usr/share/perl/5.8.4/File/Spec/Unix.pm
-  /usr/share/perl/5.8.4/FileHandle.pm
-  /usr/share/perl/5.8.4/Getopt/Long.pm
-  /usr/share/perl/5.8.4/IO/Socket/INET.pm
-  /usr/share/perl/5.8.4/IO/Socket/UNIX.pm
-  /usr/share/perl/5.8.4/IPC/Open2.pm
-  /usr/share/perl/5.8.4/IPC/Open3.pm
-  /usr/share/perl/5.8.4/List/Util.pm
-  /usr/share/perl/5.8.4/Scalar/Util.pm
-  /usr/share/perl/5.8.4/SelectSaver.pm
-  /usr/share/perl/5.8.4/Symbol.pm
-  /usr/share/perl/5.8.4/Text/ParseWords.pm
-  /usr/share/perl/5.8.4/Text/Tabs.pm
-  /usr/share/perl/5.8.4/Text/Wrap.pm
-  /usr/share/perl/5.8.4/attributes.pm
-  /usr/share/perl/5.8.4/base.pm
-  /usr/share/perl/5.8.4/bytes.pm
-  /usr/share/perl/5.8.4/bytes_heavy.pl
-  /usr/share/perl/5.8.4/constant.pm
-  /usr/share/perl/5.8.4/fields.pm
-  /usr/share/perl/5.8.4/integer.pm
-  /usr/share/perl/5.8.4/locale.pm
-  /usr/share/perl/5.8.4/overload.pm
-  /usr/share/perl/5.8.4/strict.pm
-  /usr/share/perl/5.8.4/utf8.pm
-  /usr/share/perl/5.8.4/utf8_heavy.pl
-  /usr/share/perl/5.8.4/vars.pm
-  /usr/share/perl/5.8.4/warnings.pm
-  /usr/share/perl/5.8.4/warnings/register.pm
+  /usr/share/man/man1/perl5.10.1.1.gz
+  /usr/share/perl/5.10.1/AutoLoader.pm
+  /usr/share/perl/5.10.1/Carp.pm
+  /usr/share/perl/5.10.1/Carp/Heavy.pm
+  /usr/share/perl/5.10.1/Exporter.pm
+  /usr/share/perl/5.10.1/Exporter/Heavy.pm
+  /usr/share/perl/5.10.1/File/Spec.pm
+  /usr/share/perl/5.10.1/File/Spec/Unix.pm
+  /usr/share/perl/5.10.1/FileHandle.pm
+  /usr/share/perl/5.10.1/Getopt/Long.pm
+  /usr/share/perl/5.10.1/IPC/Open2.pm
+  /usr/share/perl/5.10.1/IPC/Open3.pm
+  /usr/share/perl/5.10.1/SelectSaver.pm
+  /usr/share/perl/5.10.1/Symbol.pm
+  /usr/share/perl/5.10.1/Text/ParseWords.pm
+  /usr/share/perl/5.10.1/Text/Tabs.pm
+  /usr/share/perl/5.10.1/Text/Wrap.pm
+  /usr/share/perl/5.10.1/Tie/Hash.pm
+  /usr/share/perl/5.10.1/attributes.pm
+  /usr/share/perl/5.10.1/base.pm
+  /usr/share/perl/5.10.1/bytes.pm
+  /usr/share/perl/5.10.1/bytes_heavy.pl
+  /usr/share/perl/5.10.1/constant.pm
+  /usr/share/perl/5.10.1/fields.pm
+  /usr/share/perl/5.10.1/integer.pm
+  /usr/share/perl/5.10.1/locale.pm
+  /usr/share/perl/5.10.1/overload.pm
+  /usr/share/perl/5.10.1/strict.pm
+  /usr/share/perl/5.10.1/unicore/*
+  /usr/share/perl/5.10.1/utf8.pm
+  /usr/share/perl/5.10.1/utf8_heavy.pl
+  /usr/share/perl/5.10.1/vars.pm
+  /usr/share/perl/5.10.1/warnings.pm
+  /usr/share/perl/5.10.1/warnings/register.pm
 
 A nice trick to find out the minimal set of Perl library files you will
 need to run a Perl program is

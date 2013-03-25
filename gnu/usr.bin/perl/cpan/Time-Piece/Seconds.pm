@@ -1,25 +1,22 @@
-# $Id: Seconds.pm 44 2002-09-08 20:51:38Z matt $
-
 package Time::Seconds;
 use strict;
 use vars qw/@EXPORT @EXPORT_OK @ISA/;
-# use UNIVERSAL qw(isa); # Commented out for Perl 5.12.0 by JRV to avoid a deprecation warning.
 
 @ISA = 'Exporter';
 
 @EXPORT = qw(
-		ONE_MINUTE 
-		ONE_HOUR 
-		ONE_DAY 
-		ONE_WEEK 
-		ONE_MONTH
-                ONE_REAL_MONTH
-		ONE_YEAR
-                ONE_REAL_YEAR
-		ONE_FINANCIAL_MONTH
-		LEAP_YEAR 
-		NON_LEAP_YEAR
-		);
+    ONE_MINUTE 
+    ONE_HOUR 
+    ONE_DAY 
+    ONE_WEEK 
+    ONE_MONTH
+    ONE_REAL_MONTH
+    ONE_YEAR
+    ONE_REAL_YEAR
+    ONE_FINANCIAL_MONTH
+    LEAP_YEAR 
+    NON_LEAP_YEAR
+);
 
 @EXPORT_OK = qw(cs_sec cs_mon);
 
@@ -41,10 +38,10 @@ use constant cs_mon => 1;
 
 use overload 
                 'fallback' => 'undef',
-		'0+' => \&seconds,
-		'""' => \&seconds,
-		'<=>' => \&compare,
-		'+' => \&add,
+                '0+' => \&seconds,
+                '""' => \&seconds,
+                '<=>' => \&compare,
+                '+' => \&add,
                 '-' => \&subtract,
                 '-=' => \&subtract_from,
                 '+=' => \&add_to,
@@ -150,6 +147,32 @@ sub years {
     $s->days / 365.24225;
 }
 
+sub pretty {
+    my $s = shift;
+    my $str = "";
+    if ($s < 0) {
+        $s = -$s;
+        $str = "minus ";
+    }
+    if ($s >= ONE_MINUTE) {
+        if ($s >= ONE_HOUR) {
+            if ($s >= ONE_DAY) {
+                my $days = sprintf("%d", $s->days); # does a "floor"
+                $str = $days . " days, ";
+                $s -= ($days * ONE_DAY);
+            }
+            my $hours = sprintf("%d", $s->hours);
+            $str .= $hours . " hours, ";
+            $s -= ($hours * ONE_HOUR);
+        }
+        my $mins = sprintf("%d", $s->minutes);
+        $str .= $mins . " minutes, ";
+        $s -= ($mins * ONE_MINUTE);
+    }
+    $str .= $s->seconds . " seconds";
+    return $str;
+}
+
 1;
 __END__
 
@@ -183,9 +206,9 @@ Time::Seconds also exports the following constants:
     ONE_WEEK
     ONE_HOUR
     ONE_MINUTE
-	ONE_MONTH
-	ONE_YEAR
-	ONE_FINANCIAL_MONTH
+    ONE_MONTH
+    ONE_YEAR
+    ONE_FINANCIAL_MONTH
     LEAP_YEAR
     NON_LEAP_YEAR
 
@@ -205,6 +228,9 @@ The following methods are available:
 	$val->months;
 	$val->financial_months; # 30 days
     $val->years;
+    $val->pretty; # gives English representation of the delta
+
+The usual arithmetic (+,-,+=,-=) is also available on the objects.
 
 The methods make the assumption that there are 24 hours in a day, 7 days in
 a week, 365.24225 days in a year and 12 months in a year.

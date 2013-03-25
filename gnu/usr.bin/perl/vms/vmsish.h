@@ -37,14 +37,6 @@
 #  undef _tolower
 #endif
 #define _tolower(c) (((c) < 'A' || (c) > 'Z') ? (c) : (c) | 040)
-/* DECC 1.3 has a funny definition of abs; it's fixed in DECC 4.0, so this
- * can go away once DECC 1.3 isn't in use any more. */
-#if defined(__ALPHA) && (defined(__DECC) || defined(__DECCXX))
-#undef abs
-#define abs(__x)        __ABS(__x)
-#undef labs
-#define labs(__x)        __LABS(__x)
-#endif /* __ALPHA && __DECC */
 
 /* Assorted things to look like Unix */
 #ifdef __GNUC__
@@ -93,18 +85,8 @@
 #define HAS_GETENV_SV
 #define HAS_GETENV_LEN
 
-/* All this stiff is for the x2P programs. Hopefully they'll still work */
-#if defined(PERL_FOR_X2P)
-#ifndef aTHX_
-#define aTHX_
-#endif
-#ifndef pTHX_
-#define pTHX_
-#endif
-#ifndef pTHX
-#define pTHX
-#endif
-#endif
+
+#ifndef PERL_FOR_X2P
 
 #ifndef DONT_MASK_RTL_CALLS
 #  ifdef getenv
@@ -129,163 +111,109 @@
 #define DONT_DECLARE_STD 1
 
 /* Our own contribution to PerlShr's global symbols . . . */
-#define prime_env_iter	Perl_prime_env_iter
-#define vms_image_init	Perl_vms_image_init
-#define my_tmpfile		Perl_my_tmpfile
-#define vmstrnenv           	Perl_vmstrnenv            
-#define my_fgetname(a, b)	Perl_my_fgetname(a, b)
+
 #if !defined(PERL_IMPLICIT_CONTEXT)
-#define my_getenv_len		Perl_my_getenv_len
-#define vmssetenv		Perl_vmssetenv
-#define my_trnlnm		Perl_my_trnlnm
-#define my_setenv		Perl_my_setenv
-#define my_getenv		Perl_my_getenv
-#define tounixspec		Perl_tounixspec
-#define tounixspec_ts		Perl_tounixspec_ts
-#define tounixspec_utf8		Perl_tounixspec_utf8
-#define tounixspec_utf8_ts	Perl_tounixspec_utf8_ts
-#define tovmsspec		Perl_tovmsspec
-#define tovmsspec_ts		Perl_tovmsspec_ts
-#define tovmsspec_utf8		Perl_tovmsspec_utf8
-#define tovmsspec_utf8_ts	Perl_tovmsspec_utf8_ts
-#define tounixpath		Perl_tounixpath
-#define tounixpath_ts		Perl_tounixpath_ts
-#define tounixpath_utf8		Perl_tounixpath_utf8
-#define tounixpath_utf8_ts	Perl_tounixpath_utf8_ts
-#define tovmspath		Perl_tovmspath 
-#define tovmspath_ts		Perl_tovmspath_ts
-#define tovmspath_utf8		Perl_tovmspath_utf8
-#define tovmspath_utf8_ts	Perl_tovmspath_utf8_ts
-#define do_rmdir		Perl_do_rmdir
-#define fileify_dirspec		Perl_fileify_dirspec
-#define fileify_dirspec_ts	Perl_fileify_dirspec_ts
-#define fileify_dirspec_utf8	Perl_fileify_dirspec_utf8
-#define fileify_dirspec_utf8_ts	Perl_fileify_dirspec_utf8_ts
-#define pathify_dirspec		Perl_pathify_dirspec
-#define pathify_dirspec_ts	Perl_pathify_dirspec_ts
-#define pathify_dirspec_utf8	Perl_pathify_dirspec_utf8
-#define pathify_dirspec_utf8_ts	Perl_pathify_dirspec_utf8_ts
-#define trim_unixpath		Perl_trim_unixpath
 #define opendir			Perl_opendir
 #define rename			Perl_rename
-#define rmscopy			Perl_rmscopy
-#define my_mkdir		Perl_my_mkdir
-#define vms_do_aexec		Perl_vms_do_aexec
-#define vms_do_exec		Perl_vms_do_exec
-#define my_waitpid		Perl_my_waitpid
-#define my_crypt		Perl_my_crypt
-#define kill_file		Perl_kill_file
-#define my_utime		Perl_my_utime
-#define my_chdir		Perl_my_chdir
-#define my_chmod		Perl_my_chmod
-#define do_aspawn		Perl_do_aspawn
 #define seekdir			Perl_seekdir
-#define my_gmtime		Perl_my_gmtime
-#define my_localtime		Perl_my_localtime
-#define my_time			Perl_my_time
-#define do_spawn		Perl_do_spawn
-#define flex_fstat		Perl_flex_fstat
-#define flex_stat		Perl_flex_stat
-#define flex_lstat		Perl_flex_lstat
-#define cando_by_name		Perl_cando_by_name
-#define my_getpwnam		Perl_my_getpwnam
-#define my_getpwuid		Perl_my_getpwuid
-#define my_flush		Perl_my_flush
 #define readdir			Perl_readdir
 #define readdir_r		Perl_readdir_r
 #else
-#define my_getenv_len(a,b,c)	Perl_my_getenv_len(aTHX_ a,b,c)
-#define vmssetenv(a,b,c)	Perl_vmssetenv(aTHX_ a,b,c)
-#define my_trnlnm(a,b,c)	Perl_my_trnlnm(aTHX_ a,b,c)
-#define fileify_dirspec(a,b)	Perl_fileify_dirspec(aTHX_ a,b)
-#define fileify_dirspec_ts(a,b)	Perl_fileify_dirspec_ts(aTHX_ a,b)
-#define my_setenv(a,b)		Perl_my_setenv(aTHX_ a,b)
-#define my_getenv(a,b)		Perl_my_getenv(aTHX_ a,b)
-#define tounixspec(a,b)		Perl_tounixspec_utf8(aTHX_ a,b,NULL)
-#define tounixspec_ts(a,b)	Perl_tounixspec_utf8_ts(aTHX_ a,b,NULL)
-#define tounixspec_utf8(a,b,c)	Perl_tounixspec_utf8(aTHX_ a,b,c)
-#define tounixspec_utf8_ts(a,b,c) Perl_tounixspec_utf8_ts(aTHX_ a,b,c)
-#define tovmsspec(a,b)		Perl_tovmsspec_utf8(aTHX_ a,b,NULL)
-#define tovmsspec_ts(a,b)	Perl_tovmsspec_utf8_ts(aTHX_ a,b)
-#define tovmsspec_utf8(a,b,c)	Perl_tovmsspec_utf8(aTHX_ a,b,c)
-#define tovmsspec_utf8_ts(a,b,c) Perl_tovmsspec_utf8_ts(aTHX_ a,b,c)
-#define tounixpath(a,b)		Perl_tounixpath_utf8(aTHX_ a,b,NULL)
-#define tounixpath_ts(a,b)	Perl_tounixpath_utf8_ts(aTHX_ a,b,NULL)
-#define tounixpath_utf8(a,b,c)	Perl_tounixpath_utf8(aTHX_ a,b,c)
-#define tounixpath_utf8_ts(a,b,c) Perl_tounixpath_utf8_ts(aTHX_ a,b,c)
-#define tovmspath(a,b)		Perl_tovmspath_utf8(aTHX_ a,b,NULL)
-#define tovmspath_ts(a,b)	Perl_tovmspath_utf8_ts(aTHX_ a,b,NULL)
-#define tovmspath_utf8(a,b,c)	Perl_tovmspath_utf8(aTHX_ a,b,c)
-#define tovmspath_utf8_ts(a,b,c) Perl_tovmspath_utf8_ts(aTHX_ a,b,c)
-#define do_rmdir(a)		Perl_do_rmdir(aTHX_ a)
-#define fileify_dirspec(a,b)	Perl_fileify_dirspec(aTHX_ a,b)
-#define fileify_dirspec_ts(a,b)	Perl_fileify_dirspec_ts(aTHX_ a,b)
-#define fileify_dirspec_utf8(a,b,c) Perl_fileify_dirspec(aTHX_ a,b,utf8)
-#define fileify_dirspec_utf8_ts(a,b,c) Perl_fileify_dirspec_ts(aTHX_ a,b,utf8)
-#define pathify_dirspec		Perl_pathify_dirspec
-#define pathify_dirspec_ts	Perl_pathify_dirspec_ts
-#define pathify_dirspec_utf8	Perl_pathify_dirspec_utf8
-#define pathify_dirspec_utf8_ts	Perl_pathify_dirspec_utf8_ts
-#define rmsexpand(a,b,c,d)	Perl_rmsexpand_utf8(aTHX_ a,b,c,d,NULL,NULL)
-#define rmsexpand_ts(a,b,c,d)	Perl_rmsexpand_utf8_ts(aTHX_ a,b,c,d,NULL,NULL)
-#define rmsexpand_utf8(a,b,c,d,e,f) Perl_rmsexpand_utf8(aTHX_ a,b,c,d,e,f)
-#define rmsexpand_utf8_ts(a,b,c,d,e,f) Perl_rmsexpand_utf8_ts(aTHX_ a,b,c,d,e,f)
-#define trim_unixpath(a,b,c)	Perl_trim_unixpath(aTHX_ a,b,c)
 #define opendir(a)		Perl_opendir(aTHX_ a)
 #define rename(a,b)		Perl_rename(aTHX_ a,b)
-#define rmscopy(a,b,c)		Perl_rmscopy(aTHX_ a,b,c)
-#define my_mkdir(a,b)		Perl_my_mkdir(aTHX_ a,b)
-#define vms_do_aexec(a,b,c)	Perl_vms_do_aexec(aTHX_ a,b,c)
-#define vms_do_exec(a)		Perl_vms_do_exec(aTHX_ a)
-#define my_waitpid(a,b,c)	Perl_my_waitpid(aTHX_ a,b,c)
-#define my_crypt(a,b)		Perl_my_crypt(aTHX_ a,b)
-#define kill_file(a)		Perl_kill_file(aTHX_ a)
-#define my_utime(a,b)		Perl_my_utime(aTHX_ a,b)
-#define my_chdir(a)		Perl_my_chdir(aTHX_ a)
-#define my_chmod(a,b)		Perl_my_chmod(aTHX_ a,b)
-#define do_aspawn(a,b,c)	Perl_do_aspawn(aTHX_ a,b,c)
 #define seekdir(a,b)		Perl_seekdir(aTHX_ a,b)
-#define my_gmtime(a)		Perl_my_gmtime(aTHX_ a)
-#define my_localtime(a)		Perl_my_localtime(aTHX_ a)
-#define my_time(a)		Perl_my_time(aTHX_ a)
-#define do_spawn(a)		Perl_do_spawn(aTHX_ a)
-#define flex_fstat(a,b)		Perl_flex_fstat(aTHX_ a,b)
-#define cando_by_name(a,b,c)	Perl_cando_by_name(aTHX_ a,b,c)
-#define flex_stat(a,b)		Perl_flex_stat(aTHX_ a,b)
-#define flex_lstat(a,b)		Perl_flex_lstat(aTHX_ a,b)
-#define my_getpwnam(a)		Perl_my_getpwnam(aTHX_ a)
-#define my_getpwuid(a)		Perl_my_getpwuid(aTHX_ a)
-#define my_flush(a)		Perl_my_flush(aTHX_ a)
 #define readdir(a)		Perl_readdir(aTHX_ a)
 #define readdir_r(a,b,c)	Perl_readdir_r(aTHX_ a,b,c)
 #endif
-#define my_gconvert		Perl_my_gconvert
-#define telldir			Perl_telldir
-#define closedir		Perl_closedir
-#define vmsreaddirversions	Perl_vmsreaddirversions
-#define my_sigemptyset        Perl_my_sigemptyset
-#define my_sigfillset         Perl_my_sigfillset
-#define my_sigaddset          Perl_my_sigaddset
-#define my_sigdelset          Perl_my_sigdelset
-#define my_sigismember        Perl_my_sigismember
-#define my_sigprocmask        Perl_my_sigprocmask
-#define my_vfork		Perl_my_vfork
-#define my_fdopen               Perl_my_fdopen
-#define my_fclose               Perl_my_fclose
-#define my_fwrite		Perl_my_fwrite
-#define my_getpwent()		Perl_my_getpwent(aTHX)
-#define my_endpwent()		Perl_my_endpwent(aTHX)
-#define my_getlogin		Perl_my_getlogin
+#define closedir(a)		Perl_closedir(a)
+#define telldir(a)		Perl_telldir(a)
+#define vmsreaddirversions(a,b)	Perl_vmsreaddirversions(a,b)
+
+#define cando_by_name(a,b,c)		Perl_cando_by_name(aTHX_ a,b,c)
+#define do_rmdir(a)			Perl_do_rmdir(aTHX_ a)
+#define fileify_dirspec(a,b)		Perl_fileify_dirspec(aTHX_ a,b)
+#define fileify_dirspec(a,b)		Perl_fileify_dirspec(aTHX_ a,b)
+#define fileify_dirspec_ts(a,b)		Perl_fileify_dirspec_ts(aTHX_ a,b)
+#define fileify_dirspec_ts(a,b)		Perl_fileify_dirspec_ts(aTHX_ a,b)
+#define fileify_dirspec_utf8(a,b,c)	Perl_fileify_dirspec(aTHX_ a,b,utf8)
+#define fileify_dirspec_utf8_ts(a,b,c)	Perl_fileify_dirspec_ts(aTHX_ a,b,utf8)
+#define flex_fstat(a,b)			Perl_flex_fstat(aTHX_ a,b)
+#define flex_lstat(a,b)			Perl_flex_lstat(aTHX_ a,b)
+#define flex_stat(a,b)			Perl_flex_stat(aTHX_ a,b)
+#define init_os_extras			Perl_init_os_extras
+#define kill_file(a)			Perl_kill_file(aTHX_ a)
+#define my_chdir(a)			Perl_my_chdir(aTHX_ a)
+#define my_chmod(a,b)			Perl_my_chmod(aTHX_ a,b)
+#define my_crypt(a,b)			Perl_my_crypt(aTHX_ a,b)
+#define my_endpwent()			Perl_my_endpwent(aTHX)
+#define my_fclose(a)			Perl_my_fclose(a)
+#define my_fdopen(a,b)			Perl_my_fdopen(a,b)
+#define my_flush(a)			Perl_my_flush(aTHX_ a)
+#define my_fwrite(a,b,c,d)		Perl_my_fwrite(a,b,c,d)
+#define my_fgetname(a,b)		Perl_my_fgetname(a,b)
+#define my_gconvert(a,b,c,d)		Perl_my_gconvert(a,b,c,d)
+#define my_getenv(a,b)			Perl_my_getenv(aTHX_ a,b)
+#define my_getenv_len(a,b,c)		Perl_my_getenv_len(aTHX_ a,b,c)
+#define my_getlogin			Perl_my_getlogin
+#define my_getpwent()			Perl_my_getpwent(aTHX)
+#define my_getpwnam(a)			Perl_my_getpwnam(aTHX_ a)
+#define my_getpwuid(a)			Perl_my_getpwuid(aTHX_ a)
+#define my_gmtime(a)			Perl_my_gmtime(aTHX_ a)
+#define my_localtime(a)			Perl_my_localtime(aTHX_ a)
+#define my_mkdir(a,b)			Perl_my_mkdir(aTHX_ a,b)
+#define my_sigemptyset(a)		Perl_my_sigemptyset(a)
+#define my_sigfillset(a)		Perl_my_sigfillset(a)
+#define my_sigaddset(a,b)		Perl_my_sigaddset(a,b)
+#define my_sigdelset(a,b,c)		Perl_my_sigdelset(a,b,c)
+#define my_sigismember(a,b)		Perl_my_sigismember(a,b)
+#define my_sigprocmask(a,b,c)		Perl_my_sigprocmask(a,b,c)
 #ifdef HAS_SYMLINK
-#  define my_symlink(a, b)	Perl_my_symlink(aTHX_ a, b)
+#  define my_symlink(a,b)		Perl_my_symlink(aTHX_ a,b)
 #endif
-#define init_os_extras		Perl_init_os_extras
-#define vms_realpath(a, b, c)	Perl_vms_realpath(aTHX_ a,b,c)
-#define vms_realname(a, b, c)	Perl_vms_realname(aTHX_ a,b,c)
-#define vms_case_tolerant(a)	Perl_vms_case_tolerant(a)
+#define my_time(a)			Perl_my_time(aTHX_ a)
+#define my_tmpfile			Perl_my_tmpfile
+#define my_trnlnm(a,b,c)		Perl_my_trnlnm(aTHX_ a,b,c)
+#define my_utime(a,b)			Perl_my_utime(aTHX_ a,b)
+#define my_vfork			Perl_my_vfork
+#define my_waitpid(a,b,c)		Perl_my_waitpid(aTHX_ a,b,c)
+#define pathify_dirspec(a,b)		Perl_pathify_dirspec(aTHX a,b)
+#define pathify_dirspec_ts(a,b)		Perl_pathify_dirspec_ts(aTHX a,b)
+#define pathify_dirspec_utf8(a,b,c)	Perl_pathify_dirspec_utf8(aTHX a,b,c)
+#define pathify_dirspec_utf8_ts(a,b,c)	Perl_pathify_dirspec_utf8_ts(aTHX a,b,c)
+#define prime_env_iter			Perl_prime_env_iter
+#define rmscopy(a,b,c)			Perl_rmscopy(aTHX_ a,b,c)
+#define rmsexpand(a,b,c,d)		Perl_rmsexpand_utf8(aTHX_ a,b,c,d,NULL,NULL)
+#define rmsexpand_ts(a,b,c,d)		Perl_rmsexpand_utf8_ts(aTHX_ a,b,c,d,NULL,NULL)
+#define rmsexpand_utf8(a,b,c,d,e,f)	Perl_rmsexpand_utf8(aTHX_ a,b,c,d,e,f)
+#define rmsexpand_utf8_ts(a,b,c,d,e,f)	Perl_rmsexpand_utf8_ts(aTHX_ a,b,c,d,e,f)
+#define tounixpath(a,b)			Perl_tounixpath_utf8(aTHX_ a,b,NULL)
+#define tounixpath_ts(a,b)		Perl_tounixpath_utf8_ts(aTHX_ a,b,NULL)
+#define tounixpath_utf8(a,b,c)		Perl_tounixpath_utf8(aTHX_ a,b,c)
+#define tounixpath_utf8_ts(a,b,c)	Perl_tounixpath_utf8_ts(aTHX_ a,b,c)
+#define tounixspec(a,b)			Perl_tounixspec_utf8(aTHX_ a,b,NULL)
+#define tounixspec_ts(a,b)		Perl_tounixspec_utf8_ts(aTHX_ a,b,NULL)
+#define tounixspec_utf8(a,b,c)		Perl_tounixspec_utf8(aTHX_ a,b,c)
+#define tounixspec_utf8_ts(a,b,c)	Perl_tounixspec_utf8_ts(aTHX_ a,b,c)
+#define tovmspath(a,b)			Perl_tovmspath_utf8(aTHX_ a,b,NULL)
+#define tovmspath_ts(a,b)		Perl_tovmspath_utf8_ts(aTHX_ a,b,NULL)
+#define tovmspath_utf8(a,b,c)		Perl_tovmspath_utf8(aTHX_ a,b,c)
+#define tovmspath_utf8_ts(a,b,c)	Perl_tovmspath_utf8_ts(aTHX_ a,b,c)
+#define tovmsspec(a,b)			Perl_tovmsspec_utf8(aTHX_ a,b,NULL)
+#define tovmsspec_ts(a,b)		Perl_tovmsspec_utf8_ts(aTHX_ a,b)
+#define tovmsspec_utf8(a,b,c)		Perl_tovmsspec_utf8(aTHX_ a,b,c)
+#define tovmsspec_utf8_ts(a,b,c)	Perl_tovmsspec_utf8_ts(aTHX_ a,b,c)
+#define trim_unixpath(a,b,c)		Perl_trim_unixpath(aTHX_ a,b,c)
+#define vms_do_aexec(a,b,c)		Perl_vms_do_aexec(aTHX_ a,b,c)
+#define vms_do_exec(a)			Perl_vms_do_exec(aTHX_ a)
+#define vms_case_tolerant(a)		Perl_vms_case_tolerant(a)
+#define vms_image_init(a,b)		Perl_vms_image_init(a,b)
+#define vms_realname(a,b,c)		Perl_vms_realname(aTHX_ a,b,c)
+#define vms_realpath(a,b,c)		Perl_vms_realpath(aTHX_ a,b,c)
+#define vmssetenv(a,b,c)		Perl_vmssetenv(aTHX_ a,b,c)
+#define vmstrnenv(a,b,c,d,e)		Perl_vmstrnenv(a,b,c,d,e)
 
 /* Delete if at all possible, changing protections if necessary. */
-#define unlink kill_file
+#define unlink(a) kill_file(a)
 
 /* 
  * Intercept calls to fork, so we know whether subsequent calls to
@@ -306,6 +234,7 @@
  */
 #ifndef DONT_MASK_RTL_CALLS
 #  define tmpfile Perl_my_tmpfile
+#endif
 #endif
 
 
@@ -332,16 +261,6 @@
  *	shebang sequence that might be legal Perl code.)
  */
 #define ALTERNATE_SHEBANG "$"
-
-/* Lower case entry points for these are missing in some earlier RTLs 
- * so we borrow the defines and declares from errno.h and upcase them.
- */
-#if defined(VMS_WE_ARE_CASE_SENSITIVE) && (__DECC_VER < 50500000)
-#  define errno      (*CMA$TIS_ERRNO_GET_ADDR())
-#  define vaxc$errno (*CMA$TIS_VMSERRNO_GET_ADDR())
-   int *CMA$TIS_ERRNO_GET_ADDR     (void);   /* UNIX style error code        */
-   int *CMA$TIS_VMSERRNO_GET_ADDR  (void);   /* VMS error (errno == EVMSERR) */
-#endif
 
 /* Macros to set errno using the VAX thread-safe calls, if present */
 #if (defined(__DECC) || defined(__DECCXX)) && !defined(__ALPHA)
@@ -402,16 +321,11 @@ struct interp_intern {
   __ckvms_sts,__FILE__,__LINE__); lib$signal(__ckvms_sts); } } STMT_END
 
 #ifdef VMS_DO_SOCKETS
-#include "sockadapt.h"
 #define PERL_SOCK_SYSREAD_IS_RECV
 #define PERL_SOCK_SYSWRITE_IS_SEND
 #endif
 
-#if __CRTL_VER < 70000000
-#define BIT_BUCKET "_NLA0:"
-#else
 #define BIT_BUCKET "/dev/null"
-#endif
 #define PERL_SYS_INIT_BODY(c,v)	MALLOC_CHECK_TAINT2(*c,*v) vms_image_init((c),(v)); PERLIO_INIT; MALLOC_INIT
 #define PERL_SYS_TERM_BODY()		HINTS_REFCNT_TERM; OP_REFCNT_TERM; PERLIO_TERM; MALLOC_TERM
 #define dXSUB_SYS
@@ -442,11 +356,7 @@ struct interp_intern {
  *	This symbol, if defined, indicates that the ioctl() routine is
  *	available to set I/O characteristics
  */
-#if defined(__CRTL_VER) && __CRTL_VER >= 70000000
 #define	HAS_IOCTL		/**/
-#else
-#undef	HAS_IOCTL		/**/
-#endif
  
 /* HAS_UTIME:
  *	This symbol, if defined, indicates that the routine utime() is
@@ -584,46 +494,12 @@ struct utimbuf {
 #define localtime(t) my_localtime(t)
 #define time(t) my_time(t)
 
-/* If we're using an older version of VMS whose Unix signal emulation
- * isn't very POSIXish, then roll our own.
- */
-#if __VMS_VER < 70000000 || __DECC_VER < 50200000
-#  define HOMEGROWN_POSIX_SIGNALS
-#endif
-#ifdef HOMEGROWN_POSIX_SIGNALS
-#  define sigemptyset(t) my_sigemptyset(t)
-#  define sigfillset(t) my_sigfillset(t)
-#  define sigaddset(t, u) my_sigaddset(t, u)
-#  define sigdelset(t, u) my_sigdelset(t, u)
-#  define sigismember(t, u) my_sigismember(t, u)
-#  define sigprocmask(t, u, v) my_sigprocmask(t, u, v)
-#  ifndef _SIGSET_T
-   typedef int sigset_t;
-#  endif
-   /* The tools for sigprocmask() are there, just not the routine itself */
-#  ifndef SIG_UNBLOCK
-#    define SIG_UNBLOCK 1
-#  endif
-#  ifndef SIG_BLOCK
-#    define SIG_BLOCK 2
-#  endif
-#  ifndef SIG_SETMASK
-#    define SIG_SETMASK 3
-#  endif
-#  define sigaction sigvec
-#  define sa_flags sv_onstack
-#  define sa_handler sv_handler
-#  define sa_mask sv_mask
-#  define sigsuspend(set) sigpause(*set)
-#  define sigpending(a) (not_here("sigpending"),0)
-#else
 /*
  * The C RTL's sigaction fails to check for invalid signal numbers so we 
  * help it out a bit.
  */
-#  ifndef DONT_MASK_RTL_CALLS
+#ifndef DONT_MASK_RTL_CALLS
 #    define sigaction(a,b,c) Perl_my_sigaction(aTHX_ a,b,c)
-#  endif
 #endif
 #ifdef KILL_BY_SIGPRC
 #  define kill  Perl_my_kill
@@ -786,24 +662,6 @@ struct mystat
 #  pragma __member_alignment __restore
 #endif
 
-/*
- * DEC C previous to 6.0 corrupts the behavior of the /prefix
- * qualifier with the extern prefix pragma.  This provisional
- * hack circumvents this prefix pragma problem in previous 
- * precompilers.
- */
-#if defined(__VMS_VER) && __VMS_VER >= 70000000
-#  if defined(VMS_WE_ARE_CASE_SENSITIVE) && (__DECC_VER < 60000000)
-#    pragma __extern_prefix save
-#    pragma __extern_prefix ""  /* set to empty to prevent prefixing */
-#    define geteuid decc$__unix_geteuid
-#    define getuid decc$__unix_getuid
-#    define stat(__p1,__p2)   decc$__utc_stat(__p1,__p2)
-#    define fstat(__p1,__p2)  decc$__utc_fstat(__p1,__p2)
-#    pragma __extern_prefix restore
-#  endif
-#endif
-
 #ifndef DONT_MASK_RTL_CALLS  /* defined for vms.c so we can see RTL calls */
 #  ifdef stat
 #    undef stat
@@ -818,83 +676,18 @@ struct mystat
 #define S_IDOTH (S_IWOTH | S_IXOTH)
 
 
+#ifndef PERL_FOR_X2P
 /* Prototypes for functions unique to vms.c.  Don't include replacements
  * for routines in the mainline source files excluded by #ifndef VMS;
  * their prototypes are already in proto.h.
- *
- * In order to keep Gen_ShrFls.Pl happy, functions which are to be made
- * available to images linked to PerlShr.Exe must be declared between the
- * __VMS_PROTOTYPES__ and __VMS_SEPYTOTORP__ lines, and must be in the form
- *    <data type><TAB>name<WHITESPACE>(<prototype args>);
  */
-
-#ifdef NO_PERL_TYPEDEFS
-  /* We don't have Perl typedefs available (e.g. when building a2p), so
-     we fake them here.  N.B.  There is *no* guarantee that the faked
-     prototypes will actually match the real routines.  If you want to
-     call Perl routines, include perl.h to get the real typedefs.  */
-#  ifndef bool
-#    define bool int
-#    define __MY_BOOL_TYPE_FAKE
-#  endif
-#  ifndef I32
-#    define I32  int
-#    define __MY_I32_TYPE_FAKE
-#  endif
-#  ifndef SV
-#    define SV   void   /* Since we only see SV * in prototypes */
-#    define __MY_SV_TYPE_FAKE
-#  endif
-#endif
 
 void	prime_env_iter (void);
 void	init_os_extras (void);
 int	Perl_vms_status_to_unix(int vms_status, int child_flag);
 int	Perl_unix_status_to_vms(int unix_status);
-/* prototype section start marker; `typedef' passes through cpp */
-typedef char  __VMS_PROTOTYPES__;
 int	Perl_vmstrnenv (const char *, char *, unsigned long int, struct dsc$descriptor_s **, unsigned long int);
 char *	Perl_vms_realpath (pTHX_ const char *, char *, int *);
-#if !defined(PERL_IMPLICIT_CONTEXT)
-int	Perl_vms_case_tolerant(void);
-char *	Perl_my_getenv (const char *, bool);
-int	Perl_my_trnlnm (const char *, char *, unsigned long int);
-char *	Perl_tounixspec (const char *, char *);
-char *	Perl_tounixspec_ts (const char *, char *);
-char *	Perl_tounixspec_utf8 (const char *, char *, int *);
-char *	Perl_tounixspec_utf8_ts (const char *, char *, int *);
-char *	Perl_tovmsspec (const char *, char *);
-char *	Perl_tovmsspec_ts (const char *, char *);
-char *	Perl_tovmsspec_utf8 (const char *, char *, int *);
-char *	Perl_tovmsspec_utf8_ts (const char *, char *, int *);
-char *	Perl_tounixpath (const char *, char *);
-char *	Perl_tounixpath_ts (const char *, char *);
-char *	Perl_tounixpath_utf8 (const char *, char *, int *);
-char *	Perl_tounixpath_utf8_ts (const char *, char *, int *);
-char *	Perl_tovmspath (const char *, char *);
-char *	Perl_tovmspath_ts (const char *, char *);
-char *	Perl_tovmspath_utf8 (const char *, char *, int *);
-char *	Perl_tovmspath_utf8_ts (const char *, char *, int *);
-int	Perl_do_rmdir (const char *);
-char *	Perl_fileify_dirspec (const char *, char *);
-char *	Perl_fileify_dirspec_ts (const char *, char *);
-char *	Perl_fileify_dirspec_utf8 (const char *, char *, int *);
-char *	Perl_fileify_dirspec_utf8_ts (const char *, char *, int *);
-char *	Perl_pathify_dirspec (const char *, char *);
-char *	Perl_pathify_dirspec_ts (const char *, char *);
-char *	Perl_pathify_dirspec_utf8 (const char *, char *, int *);
-char *	Perl_pathify_dirspec_utf8_ts (const char *, char *, int *);
-char *	Perl_rmsexpand (const char *, char *, const char *, unsigned);
-char *	Perl_rmsexpand_ts (const char *, char *, const char *, unsigned);
-char *	Perl_rmsexpand_utf8 (const char *, char *, const char *, unsigned, int *, int *);
-char *	Perl_rmsexpand_utf8_ts (const char *, char *, const char *, unsigned, int *, int *);
-int	Perl_trim_unixpath (char *, const char*, int);
-DIR  * Perl_opendir (const char *);
-int 	Perl_rename(const char *, const char *);
-int	Perl_rmscopy (const char *, const char *, int);
-int	Perl_my_mkdir (const char *, Mode_t);
-bool	Perl_vms_do_aexec (SV *, SV **, SV **);
-#else
 char *	Perl_my_getenv (pTHX_ const char *, bool);
 int	Perl_my_trnlnm (pTHX_ const char *, char *, unsigned long int);
 char *	Perl_tounixspec (pTHX_ const char *, char *);
@@ -932,7 +725,6 @@ int	Perl_rename (pTHX_ const char *, const char *);
 int	Perl_rmscopy (pTHX_ const char *, const char *, int);
 int	Perl_my_mkdir (pTHX_ const char *, Mode_t);
 bool	Perl_vms_do_aexec (pTHX_ SV *, SV **, SV **);
-#endif
 int	Perl_vms_case_tolerant(void);
 char *	Perl_my_getenv_len (pTHX_ const char *, unsigned long *, bool);
 int	Perl_vmssetenv (pTHX_ const char *, const char *, struct dsc$descriptor_s **);
@@ -944,9 +736,7 @@ int	Perl_kill_file (pTHX_ const char *);
 int	Perl_my_chdir (pTHX_ const char *);
 int	Perl_my_chmod(pTHX_ const char *, mode_t);
 FILE *	Perl_my_tmpfile (void);
-#ifndef HOMEGROWN_POSIX_SIGNALS
 int	Perl_my_sigaction (pTHX_ int, const struct sigaction*, struct sigaction*);
-#endif
 #ifdef KILL_BY_SIGPRC
 unsigned int	Perl_sig_to_vmscondition (int);
 int	Perl_my_kill (int, int);
@@ -963,14 +753,6 @@ void	vmsreaddirversions (DIR *, int);
 struct tm *	Perl_my_gmtime (pTHX_ const time_t *);
 struct tm *	Perl_my_localtime (pTHX_ const time_t *);
 time_t	Perl_my_time (pTHX_ time_t *);
-#ifdef HOMEGROWN_POSIX_SIGNALS
-int     my_sigemptyset (sigset_t *);
-int     my_sigfillset  (sigset_t *);
-int     my_sigaddset   (sigset_t *, int);
-int     my_sigdelset   (sigset_t *, int);
-int     my_sigismember (sigset_t *, int);
-int     my_sigprocmask (int, sigset_t *, sigset_t *);
-#endif
 I32	Perl_cando_by_name (pTHX_ I32, bool, const char *);
 int	Perl_flex_fstat (pTHX_ int, Stat_t *);
 int	Perl_flex_lstat (pTHX_ const char *, Stat_t *);
@@ -989,22 +771,6 @@ struct passwd *	Perl_my_getpwnam (pTHX_ const char *name);
 struct passwd *	Perl_my_getpwuid (pTHX_ Uid_t uid);
 void	Perl_my_endpwent (pTHX);
 char *	my_getlogin (void);
-typedef char __VMS_SEPYTOTORP__;
-/* prototype section end marker; `typedef' passes through cpp */
-
-#ifdef NO_PERL_TYPEDEFS  /* We'll try not to scramble later files */
-#  ifdef __MY_BOOL_TYPE_FAKE
-#    undef bool
-#    undef __MY_BOOL_TYPE_FAKE
-#  endif
-#  ifdef __MY_I32_TYPE_FAKE
-#    undef I32
-#    undef __MY_I32_TYPE_FAKE
-#  endif
-#  ifdef __MY_SV_TYPE_FAKE
-#    undef SV
-#    undef __MY_SV_TYPE_FAKE
-#  endif
 #endif
 
 #ifndef VMS_DO_SOCKETS

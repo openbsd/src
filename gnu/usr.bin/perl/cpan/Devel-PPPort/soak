@@ -7,13 +7,13 @@
 #
 ################################################################################
 #
-#  $Revision: 19 $
+#  $Revision: 20 $
 #  $Author: mhx $
-#  $Date: 2009/01/18 14:10:50 +0100 $
+#  $Date: 2010/03/07 13:15:42 +0100 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -33,7 +33,7 @@ use File::Find;
 use List::Util qw(max);
 use Config;
 
-my $VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+my $VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.20 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 $| = 1;
 my %OPT = (
@@ -589,7 +589,7 @@ going on, use the I<--verbose> option:
 
 =head1 COPYRIGHT
 
-Version 3.x, Copyright (c) 2004-2009, Marcus Holland-Moritz.
+Version 3.x, Copyright (c) 2004-2010, Marcus Holland-Moritz.
 
 Version 2.x, Copyright (C) 2001, Paul Marquess.
 

@@ -373,15 +373,18 @@ ERR
 
 # rt.cpan.org 53469
 {
-#line 377
+
+    # Accept both old and new-style stringification
+    my $modifiers = (qr/foobar/ =~ /\Q(?^/) ? '^' : '-xism';
+#line 380
     ok !is_deeply( qr/a/, qr/b/, "different regexes" );
     is( $out, "not ok 29 - different regexes\n" );
     is( $err, <<ERR,          '  right diagnostic' );
 #   Failed test 'different regexes'
-#   at $0 line 377.
+#   at $0 line 380.
 #     Structures begin differing at:
-#          \$got = (?-xism:a)
-#     \$expected = (?-xism:b)
+#          \$got = (?$modifiers:a)
+#     \$expected = (?$modifiers:b)
 ERR
 }
 

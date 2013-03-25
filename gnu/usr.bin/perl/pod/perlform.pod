@@ -65,7 +65,7 @@ X<@*> X<^*> X<~> X<~~>
    <    pad character for left justification
    |    pad character for centering
    >    pad character for right justification
-   #    pad character for a right justified numeric field
+   #    pad character for a right-justified numeric field
    0    instead of first #: pad number with leading zeroes
    .    decimal point within a numeric field
    ...  terminate a text field, show "..." as truncation evidence
@@ -122,7 +122,7 @@ filled with "#" as overflow evidence.
         42   3.142     0.000     0   ####
 
 
-=head2 The Field @* for Variable Width Multi-Line Text
+=head2 The Field @* for Variable-Width Multi-Line Text
 X<@*>
 
 The field "@*" can be used for printing multi-line, nontruncated
@@ -130,10 +130,10 @@ values; it should (but need not) appear by itself on a line. A final
 line feed is chomped off, but all other characters are emitted verbatim.
 
 
-=head2 The Field ^* for Variable Width One-line-at-a-time Text
+=head2 The Field ^* for Variable-Width One-line-at-a-time Text
 X<^*>
 
-Like "@*", this is a variable width field. The value supplied must be a 
+Like "@*", this is a variable-width field. The value supplied must be a 
 scalar variable. Perl puts the first line (up to the first "\n") of the 
 text into the field, and then chops off the front of the string so that 
 the next time the variable is referenced, more of the text can be printed. 
@@ -166,9 +166,9 @@ token on the first line.  If an expression evaluates to a number with a
 decimal part, and if the corresponding picture specifies that the decimal
 part should appear in the output (that is, any picture except multiple "#"
 characters B<without> an embedded "."), the character used for the decimal
-point is B<always> determined by the current LC_NUMERIC locale.  This
-means that, if, for example, the run-time environment happens to specify a
-German locale, "," will be used instead of the default ".".  See
+point is determined by the current LC_NUMERIC locale if C<use locale> is in
+effect.  This means that, if, for example, the run-time environment happens
+to specify a German locale, "," will be used instead of the default ".".  See
 L<perllocale> and L<"WARNINGS"> for more information.
 
 
@@ -182,7 +182,7 @@ the field, and then chops off the front of the string so that the next time
 the variable is referenced, more of the text can be printed.  (Yes, this
 means that the variable itself is altered during execution of the write()
 call, and is not restored.)  The next portion of text is determined by
-a crude line breaking algorithm. You may use the carriage return character
+a crude line-breaking algorithm. You may use the carriage return character
 (C<\r>) to force a line break. You can change which characters are legal 
 to break on by changing the variable C<$:> (that's 
 $FORMAT_LINE_BREAK_CHARACTERS if you're using the English module) to a 
@@ -291,7 +291,7 @@ one to affect them:
 Pretty ugly, eh?  It's a common idiom though, so don't be too surprised
 when you see it.  You can at least use a temporary variable to hold
 the previous filehandle: (this is a much better approach in general,
-because not only does legibility improve, you now have intermediary
+because not only does legibility improve, you now have an intermediary
 stage in the expression to single-step the debugger through):
 
     $ofh = select(OUTF);
@@ -393,7 +393,7 @@ by checking $FORMAT_LINES_LEFT before each write() and print the footer
 yourself if necessary.
 
 Here's another strategy: Open a pipe to yourself, using C<open(MYSELF, "|-")>
-(see L<perlfunc/open()>) and always write() to MYSELF instead of STDOUT.
+(see L<perlfunc/open>) and always write() to MYSELF instead of STDOUT.
 Have your child process massage its STDIN to rearrange headers and footers
 however you like.  Not very convenient, but doable.
 
@@ -409,7 +409,7 @@ For example:
     @<<<  @|||  @>>>
     END
 
-    print "Wow, I just stored `$^A' in the accumulator!\n";
+    print "Wow, I just stored '$^A' in the accumulator!\n";
 
 Or to make an swrite() subroutine, which is to write() what sprintf()
 is to printf(), do this:
@@ -442,17 +442,13 @@ Lexical variables (declared with "my") are not visible within a
 format unless the format is declared within the scope of the lexical
 variable.  (They weren't visible at all before version 5.001.)
 
-Formats are the only part of Perl that unconditionally use information
-from a program's locale; if a program's environment specifies an
-LC_NUMERIC locale, it is always used to specify the decimal point
-character in formatted output.  Perl ignores all other aspects of locale
-handling unless the C<use locale> pragma is in effect.  Formatted output
-cannot be controlled by C<use locale> because the pragma is tied to the
-block structure of the program, and, for historical reasons, formats
-exist outside that block structure.  See L<perllocale> for further
-discussion of locale handling.
+If a program's environment specifies an LC_NUMERIC locale and C<use
+locale> is in effect when the format is declared, the locale is used
+to specify the decimal point character in formatted output.  Formatted
+output cannot be controlled by C<use locale> at the time when write()
+is called. See L<perllocale> for further discussion of locale handling.
 
-Within strings that are to be displayed in a fixed length text field,
+Within strings that are to be displayed in a fixed-length text field,
 each control character is substituted by a space. (But remember the
 special meaning of C<\r> when using fill mode.) This is done to avoid
 misalignment when control characters "disappear" on some output media.

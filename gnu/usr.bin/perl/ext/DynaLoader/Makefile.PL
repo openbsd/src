@@ -18,6 +18,15 @@ WriteMakefile(
     clean	=> {FILES => 'DynaLoader.c DynaLoader.xs DynaLoader.pm'},
 );
 
+sub MY::cflags {
+  package MY;
+  my $flags = shift->SUPER::cflags(@_);
+  if ($flags =~ /-DUSEIMPORTLIB/m) {
+    $flags =~ s/-DUSEIMPORTLIB/-UUSEIMPORTLIB/m;
+  }
+  $flags;
+}
+
 sub MY::postamble {
     my $test_xs;
 

@@ -9,7 +9,7 @@ use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 
 =head1 NAME
 
-CPANPLUS::Shell::Default::Plugins::Remote - plugin that allows connections to CPANPLUS::Daemon
+CPANPLUS::Shell::Default::Plugins::Remote - connect to a remote CPANPLUS
 
 =head1 SYNOPSIS
 
@@ -29,17 +29,17 @@ like this:
     CPAN Terminal> /connect --user=my_user --pass=secret localhost 1337
 
     Connection accepted
-    
+
     Successfully connected to 'localhost' on port '11337'
-    
+
     Note that no output will appear until a command has completed
     -- this may take a while
 
 
     CPAN Terminal@localhost> o; i *
-    
+
     [....]
-    
+
     CPAN Terminal@localhost> /disconnect
 
     CPAN Terminal>
@@ -139,7 +139,7 @@ sub disconnect {
 }
 
 sub connect_help {
-    return loc( 
+    return loc(
             "    /connect [HOST PORT]   # Connect to the remote machine,\n" .
             "                           # defaults taken from your config\n" .
             "        --user=USER        # Optional username\n" .
@@ -151,8 +151,8 @@ sub disconnect_help {
             "    /disconnect            # Disconnect from the remote server" );
 }
 
-1; 
-        
+1;
+
 =pod
 
 =head1 BUG REPORTS
@@ -165,10 +165,10 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =head1 SEE ALSO

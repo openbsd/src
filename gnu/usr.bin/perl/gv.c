@@ -16,7 +16,7 @@
  * history of Middle-earth and Over-heaven and of the Sundering Seas,'
  * laughed Pippin.
  *
- *     [p.599 of _The Lord of the Rings_, III/xi: "The Palantír"]
+ *     [p.599 of _The Lord of the Rings_, III/xi: "The PalantÃ­r"]
  */
 
 /*
@@ -36,6 +36,8 @@ Perl stores its global variables.
 #define PERL_IN_GV_C
 #include "perl.h"
 #include "overload.c"
+#include "keywords.h"
+#include "feature.h"
 
 static const char S_autoload[] = "AUTOLOAD";
 static const STRLEN S_autolen = sizeof(S_autoload)-1;
@@ -45,25 +47,27 @@ Perl_gv_add_by_type(pTHX_ GV *gv, svtype type)
 {
     SV **where;
 
-    if (!gv || SvTYPE((const SV *)gv) != SVt_PVGV) {
+    if (
+        !gv
+     || (
+            SvTYPE((const SV *)gv) != SVt_PVGV
+         && SvTYPE((const SV *)gv) != SVt_PVLV
+        )
+    ) {
 	const char *what;
 	if (type == SVt_PVIO) {
 	    /*
 	     * if it walks like a dirhandle, then let's assume that
 	     * this is a dirhandle.
 	     */
-	    what = PL_op->op_type ==  OP_READDIR ||
-		PL_op->op_type ==  OP_TELLDIR ||
-		PL_op->op_type ==  OP_SEEKDIR ||
-		PL_op->op_type ==  OP_REWINDDIR ||
-		PL_op->op_type ==  OP_CLOSEDIR ?
+	    what = OP_IS_DIRHOP(PL_op->op_type) ?
 		"dirhandle" : "filehandle";
-	    /* diag_listed_as: Bad symbol for filehandle */
 	} else if (type == SVt_PVHV) {
 	    what = "hash";
 	} else {
 	    what = type == SVt_PVAV ? "array" : "scalar";
 	}
+	/* diag_listed_as: Bad symbol for filehandle */
 	Perl_croak(aTHX_ "Bad symbol for %s", what);
     }
 
@@ -121,9 +125,9 @@ Perl_gv_fetchfile_flags(pTHX_ const char *const name, const STRLEN namelen,
 #else
 	sv_setpvn(GvSV(gv), name, namelen);
 #endif
-	if (PERLDB_LINE || PERLDB_SAVESRC)
-	    hv_magic(GvHVn(gv_AVadd(gv)), NULL, PERL_MAGIC_dbfile);
     }
+    if ((PERLDB_LINE || PERLDB_SAVESRC) && !GvAV(gv))
+	    hv_magic(GvHVn(gv_AVadd(gv)), NULL, PERL_MAGIC_dbfile);
     if (tmpbuf != smallbuf)
 	Safefree(tmpbuf);
     return gv;
@@ -193,18 +197,135 @@ Perl_newGP(pTHX_ GV *const gv)
     return gp;
 }
 
+/* Assign CvGV(cv) = gv, handling weak references.
+ * See also S_anonymise_cv_maybe */
+
 void
-Perl_gv_init(pTHX_ GV *gv, HV *stash, const char *name, STRLEN len, int multi)
+Perl_cvgv_set(pTHX_ CV* cv, GV* gv)
+{
+    GV * const oldgv = CvGV(cv);
+    PERL_ARGS_ASSERT_CVGV_SET;
+
+    if (oldgv == gv)
+	return;
+
+    if (oldgv) {
+	if (CvCVGV_RC(cv)) {
+	    SvREFCNT_dec(oldgv);
+	    CvCVGV_RC_off(cv);
+	}
+	else {
+	    sv_del_backref(MUTABLE_SV(oldgv), MUTABLE_SV(cv));
+	}
+    }
+
+    SvANY(cv)->xcv_gv = gv;
+    assert(!CvCVGV_RC(cv));
+
+    if (!gv)
+	return;
+
+    if (isGV_with_GP(gv) && GvGP(gv) && (GvCV(gv) == cv || GvFORM(gv) == cv))
+	Perl_sv_add_backref(aTHX_ MUTABLE_SV(gv), MUTABLE_SV(cv));
+    else {
+	CvCVGV_RC_on(cv);
+	SvREFCNT_inc_simple_void_NN(gv);
+    }
+}
+
+/* Assign CvSTASH(cv) = st, handling weak references. */
+
+void
+Perl_cvstash_set(pTHX_ CV *cv, HV *st)
+{
+    HV *oldst = CvSTASH(cv);
+    PERL_ARGS_ASSERT_CVSTASH_SET;
+    if (oldst == st)
+	return;
+    if (oldst)
+	sv_del_backref(MUTABLE_SV(oldst), MUTABLE_SV(cv));
+    SvANY(cv)->xcv_stash = st;
+    if (st)
+	Perl_sv_add_backref(aTHX_ MUTABLE_SV(st), MUTABLE_SV(cv));
+}
+
+/*
+=for apidoc gv_init_pvn
+
+Converts a scalar into a typeglob.  This is an incoercible typeglob;
+assigning a reference to it will assign to one of its slots, instead of
+overwriting it as happens with typeglobs created by SvSetSV.  Converting
+any scalar that is SvOK() may produce unpredictable results and is reserved
+for perl's internal use.
+
+C<gv> is the scalar to be converted.
+
+C<stash> is the parent stash/package, if any.
+
+C<name> and C<len> give the name.  The name must be unqualified;
+that is, it must not include the package name.  If C<gv> is a
+stash element, it is the caller's responsibility to ensure that the name
+passed to this function matches the name of the element.  If it does not
+match, perl's internal bookkeeping will get out of sync.
+
+C<flags> can be set to SVf_UTF8 if C<name> is a UTF8 string, or
+the return value of SvUTF8(sv).  It can also take the
+GV_ADDMULTI flag, which means to pretend that the GV has been
+seen before (i.e., suppress "Used once" warnings).
+
+=for apidoc gv_init
+
+The old form of gv_init_pvn().  It does not work with UTF8 strings, as it
+has no flags parameter.  If the C<multi> parameter is set, the
+GV_ADDMULTI flag will be passed to gv_init_pvn().
+
+=for apidoc gv_init_pv
+
+Same as gv_init_pvn(), but takes a nul-terminated string for the name
+instead of separate char * and length parameters.
+
+=for apidoc gv_init_sv
+
+Same as gv_init_pvn(), but takes an SV * for the name instead of separate
+char * and length parameters.  C<flags> is currently unused.
+
+=cut
+*/
+
+void
+Perl_gv_init_sv(pTHX_ GV *gv, HV *stash, SV* namesv, U32 flags)
+{
+   char *namepv;
+   STRLEN namelen;
+   PERL_ARGS_ASSERT_GV_INIT_SV;
+   namepv = SvPV(namesv, namelen);
+   if (SvUTF8(namesv))
+       flags |= SVf_UTF8;
+   gv_init_pvn(gv, stash, namepv, namelen, flags);
+}
+
+void
+Perl_gv_init_pv(pTHX_ GV *gv, HV *stash, const char *name, U32 flags)
+{
+   PERL_ARGS_ASSERT_GV_INIT_PV;
+   gv_init_pvn(gv, stash, name, strlen(name), flags);
+}
+
+void
+Perl_gv_init_pvn(pTHX_ GV *gv, HV *stash, const char *name, STRLEN len, U32 flags)
 {
     dVAR;
     const U32 old_type = SvTYPE(gv);
     const bool doproto = old_type > SVt_NULL;
-    char * const proto = (doproto && SvPOK(gv)) ? SvPVX(gv) : NULL;
+    char * const proto = (doproto && SvPOK(gv))
+	? ((void)(SvIsCOW(gv) && (sv_force_normal((SV *)gv), 0)), SvPVX(gv))
+	: NULL;
     const STRLEN protolen = proto ? SvCUR(gv) : 0;
+    const U32 proto_utf8  = proto ? SvUTF8(gv) : 0;
     SV *const has_constant = doproto && SvROK(gv) ? SvRV(gv) : NULL;
     const U32 exported_constant = has_constant ? SvPCS_IMPORTED(gv) : 0;
 
-    PERL_ARGS_ASSERT_GV_INIT;
+    PERL_ARGS_ASSERT_GV_INIT_PVN;
     assert (!(proto && has_constant));
 
     if (has_constant) {
@@ -240,18 +361,23 @@ Perl_gv_init(pTHX_ GV *gv, HV *stash, const char *name, STRLEN len, int multi)
     SvIOK_off(gv);
     isGV_with_GP_on(gv);
 
-    GvGP(gv) = Perl_newGP(aTHX_ gv);
+    GvGP_set(gv, Perl_newGP(aTHX_ gv));
     GvSTASH(gv) = stash;
     if (stash)
 	Perl_sv_add_backref(aTHX_ MUTABLE_SV(stash), MUTABLE_SV(gv));
-    gv_name_set(gv, name, len, GV_ADD);
-    if (multi || doproto)              /* doproto means it _was_ mentioned */
-	GvMULTI_on(gv);
+    gv_name_set(gv, name, len, GV_ADD | ( flags & SVf_UTF8 ? SVf_UTF8 : 0 ));
+    if (flags & GV_ADDMULTI || doproto)	/* doproto means it */
+	GvMULTI_on(gv);			/* _was_ mentioned */
     if (doproto) {			/* Replicate part of newSUB here. */
+	CV *cv;
 	ENTER;
 	if (has_constant) {
 	    /* newCONSTSUB takes ownership of the reference from us.  */
-	    GvCV(gv) = newCONSTSUB(stash, name, has_constant);
+	    cv = newCONSTSUB_flags(stash, name, len, flags, has_constant);
+	    /* In case op.c:S_process_special_blocks stole it: */
+	    if (!GvCV(gv))
+		GvCV_set(gv, (CV *)SvREFCNT_inc_simple_NN(cv));
+	    assert(GvCV(gv) == cv); /* newCONSTSUB should have set this */
 	    /* If this reference was a copy of another, then the subroutine
 	       must have been "imported", by a Perl space assignment to a GV
 	       from a reference to CV.  */
@@ -259,25 +385,27 @@ Perl_gv_init(pTHX_ GV *gv, HV *stash, const char *name, STRLEN len, int multi)
 		GvIMPORTED_CV_on(gv);
 	} else {
 	    (void) start_subparse(0,0);	/* Create empty CV in compcv. */
-	    GvCV(gv) = PL_compcv;
+	    cv = PL_compcv;
+	    GvCV_set(gv,cv);
 	}
 	LEAVE;
 
         mro_method_changed_in(GvSTASH(gv)); /* sub Foo::bar($) { (shift) } sub ASDF::baz($); *ASDF::baz = \&Foo::bar */
-	CvGV(GvCV(gv)) = gv;
-	CvFILE_set_from_cop(GvCV(gv), PL_curcop);
-	CvSTASH(GvCV(gv)) = PL_curstash;
+	CvGV_set(cv, gv);
+	CvFILE_set_from_cop(cv, PL_curcop);
+	CvSTASH_set(cv, PL_curstash);
 	if (proto) {
-	    sv_usepvn_flags(MUTABLE_SV(GvCV(gv)), proto, protolen,
+	    sv_usepvn_flags(MUTABLE_SV(cv), proto, protolen,
 			    SV_HAS_TRAILING_NUL);
+            if ( proto_utf8 ) SvUTF8_on(MUTABLE_SV(cv));
 	}
     }
 }
 
 STATIC void
-S_gv_init_sv(pTHX_ GV *gv, const svtype sv_type)
+S_gv_init_svtype(pTHX_ GV *gv, const svtype sv_type)
 {
-    PERL_ARGS_ASSERT_GV_INIT_SV;
+    PERL_ARGS_ASSERT_GV_INIT_SVTYPE;
 
     switch (sv_type) {
     case SVt_PVIO:
@@ -305,8 +433,160 @@ S_gv_init_sv(pTHX_ GV *gv, const svtype sv_type)
     }
 }
 
+static void core_xsub(pTHX_ CV* cv);
+
+static GV *
+S_maybe_add_coresub(pTHX_ HV * const stash, GV *gv,
+                          const char * const name, const STRLEN len)
+{
+    const int code = keyword(name, len, 1);
+    static const char file[] = __FILE__;
+    CV *cv, *oldcompcv = NULL;
+    int opnum = 0;
+    SV *opnumsv;
+    bool ampable = TRUE; /* &{}-able */
+    COP *oldcurcop = NULL;
+    yy_parser *oldparser = NULL;
+    I32 oldsavestack_ix = 0;
+
+    assert(gv || stash);
+    assert(name);
+
+    if (code >= 0) return NULL; /* not overridable */
+    switch (-code) {
+     /* no support for \&CORE::infix;
+        no support for funcs that take labels, as their parsing is
+        weird  */
+    case KEY_and: case KEY_cmp: case KEY_CORE: case KEY_dump:
+    case KEY_eq: case KEY_ge:
+    case KEY_gt: case KEY_le: case KEY_lt: case KEY_ne:
+    case KEY_or: case KEY_x: case KEY_xor:
+	return NULL;
+    case KEY_chdir:
+    case KEY_chomp: case KEY_chop:
+    case KEY_each: case KEY_eof: case KEY_exec:
+    case KEY_keys:
+    case KEY_lstat:
+    case KEY_pop:
+    case KEY_push:
+    case KEY_shift:
+    case KEY_splice:
+    case KEY_stat:
+    case KEY_system:
+    case KEY_truncate: case KEY_unlink:
+    case KEY_unshift:
+    case KEY_values:
+	ampable = FALSE;
+    }
+    if (!gv) {
+	gv = (GV *)newSV(0);
+	gv_init(gv, stash, name, len, TRUE);
+    }
+    GvMULTI_on(gv);
+    if (ampable) {
+	ENTER;
+	oldcurcop = PL_curcop;
+	oldparser = PL_parser;
+	lex_start(NULL, NULL, 0);
+	oldcompcv = PL_compcv;
+	PL_compcv = NULL; /* Prevent start_subparse from setting
+	                     CvOUTSIDE. */
+	oldsavestack_ix = start_subparse(FALSE,0);
+	cv = PL_compcv;
+    }
+    else {
+	/* Avoid calling newXS, as it calls us, and things start to
+	   get hairy. */
+	cv = MUTABLE_CV(newSV_type(SVt_PVCV));
+	GvCV_set(gv,cv);
+	GvCVGEN(gv) = 0;
+	mro_method_changed_in(GvSTASH(gv));
+	CvISXSUB_on(cv);
+	CvXSUB(cv) = core_xsub;
+    }
+    CvGV_set(cv, gv); /* This stops new ATTRSUB from setting CvFILE
+                         from PL_curcop. */
+    (void)gv_fetchfile(file);
+    CvFILE(cv) = (char *)file;
+    /* XXX This is inefficient, as doing things this order causes
+           a prototype check in newATTRSUB.  But we have to do
+           it this order as we need an op number before calling
+           new ATTRSUB. */
+    (void)core_prototype((SV *)cv, name, code, &opnum);
+    if (stash)
+	(void)hv_store(stash,name,len,(SV *)gv,0);
+    if (ampable) {
+	CvLVALUE_on(cv);
+	newATTRSUB_flags(
+		   oldsavestack_ix, (OP *)gv,
+	           NULL,NULL,
+	           coresub_op(
+	             opnum
+	               ? newSVuv((UV)opnum)
+	               : newSVpvn(name,len),
+	             code, opnum
+	           ),
+	           1
+	);
+	assert(GvCV(gv) == cv);
+	if (opnum != OP_VEC && opnum != OP_SUBSTR)
+	    CvLVALUE_off(cv); /* Now *that* was a neat trick. */
+	LEAVE;
+	PL_parser = oldparser;
+	PL_curcop = oldcurcop;
+	PL_compcv = oldcompcv;
+    }
+    opnumsv = opnum ? newSVuv((UV)opnum) : (SV *)NULL;
+    cv_set_call_checker(
+       cv, Perl_ck_entersub_args_core, opnumsv ? opnumsv : (SV *)cv
+    );
+    SvREFCNT_dec(opnumsv);
+    return gv;
+}
+
 /*
 =for apidoc gv_fetchmeth
+
+Like L</gv_fetchmeth_pvn>, but lacks a flags parameter.
+
+=for apidoc gv_fetchmeth_sv
+
+Exactly like L</gv_fetchmeth_pvn>, but takes the name string in the form
+of an SV instead of a string/length pair.
+
+=cut
+*/
+
+GV *
+Perl_gv_fetchmeth_sv(pTHX_ HV *stash, SV *namesv, I32 level, U32 flags)
+{
+   char *namepv;
+   STRLEN namelen;
+   PERL_ARGS_ASSERT_GV_FETCHMETH_SV;
+   namepv = SvPV(namesv, namelen);
+   if (SvUTF8(namesv))
+       flags |= SVf_UTF8;
+   return gv_fetchmeth_pvn(stash, namepv, namelen, level, flags);
+}
+
+/*
+=for apidoc gv_fetchmeth_pv
+
+Exactly like L</gv_fetchmeth_pvn>, but takes a nul-terminated string 
+instead of a string/length pair.
+
+=cut
+*/
+
+GV *
+Perl_gv_fetchmeth_pv(pTHX_ HV *stash, const char *name, I32 level, U32 flags)
+{
+    PERL_ARGS_ASSERT_GV_FETCHMETH_PV;
+    return gv_fetchmeth_pvn(stash, name, strlen(name), level, flags);
+}
+
+/*
+=for apidoc gv_fetchmeth_pvn
 
 Returns the glob with the given C<name> and a defined subroutine or
 C<NULL>.  The glob lives in the given C<stash>, or in the stashes
@@ -316,6 +596,8 @@ The argument C<level> should be either 0 or -1.  If C<level==0>, as a
 side-effect creates a glob with the given C<name> in the given C<stash>
 which in the case of success contains an alias for the subroutine, and sets
 up caching info for this glob.
+
+Currently, the only significant value for C<flags> is SVf_UTF8.
 
 This function grants C<"SUPER"> token as a postfix of the stash name. The
 GV returned from C<gv_fetchmeth> may be a method cache entry, which is not
@@ -329,7 +611,7 @@ obtained from the GV with the C<GvCV> macro.
 /* NOTE: No support for tied ISA */
 
 GV *
-Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
+Perl_gv_fetchmeth_pvn(pTHX_ HV *stash, const char *name, STRLEN len, I32 level, U32 flags)
 {
     dVAR;
     GV** gvp;
@@ -339,15 +621,15 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
     HV* cstash;
     GV* candidate = NULL;
     CV* cand_cv = NULL;
-    CV* old_cv;
     GV* topgv = NULL;
     const char *hvname;
     I32 create = (level >= 0) ? 1 : 0;
     I32 items;
     STRLEN packlen;
     U32 topgen_cmp;
+    U32 is_utf8 = flags & SVf_UTF8;
 
-    PERL_ARGS_ASSERT_GV_FETCHMETH;
+    PERL_ARGS_ASSERT_GV_FETCHMETH_PVN;
 
     /* UNIVERSAL methods should be callable without a stash */
     if (!stash) {
@@ -370,12 +652,13 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
     topgen_cmp = HvMROMETA(stash)->cache_gen + PL_sub_generation;
 
     /* check locally for a real method or a cache entry */
-    gvp = (GV**)hv_fetch(stash, name, len, create);
+    gvp = (GV**)hv_fetch(stash, name, is_utf8 ? -(I32)len : (I32)len, create);
     if(gvp) {
         topgv = *gvp;
+      have_gv:
         assert(topgv);
         if (SvTYPE(topgv) != SVt_PVGV)
-            gv_init(topgv, stash, name, len, TRUE);
+            gv_init_pvn(topgv, stash, name, len, GV_ADDMULTI|is_utf8);
         if ((cand_cv = GvCV(topgv))) {
             /* If genuine method or valid cache entry, use it */
             if (!GvCVGEN(topgv) || GvCVGEN(topgv) == topgen_cmp) {
@@ -384,7 +667,8 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
             else {
                 /* stale cache entry, junk it and move on */
 	        SvREFCNT_dec(cand_cv);
-	        GvCV(topgv) = cand_cv = NULL;
+	        GvCV_set(topgv, NULL);
+		cand_cv = NULL;
 	        GvCVGEN(topgv) = 0;
             }
         }
@@ -392,13 +676,18 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
             /* cache indicates no such method definitively */
             return 0;
         }
+	else if (len > 1 /* shortest is uc */ && HvNAMELEN_get(stash) == 4
+              && strnEQ(hvname, "CORE", 4)
+              && S_maybe_add_coresub(aTHX_ NULL,topgv,name,len))
+	    goto have_gv;
     }
 
     packlen = HvNAMELEN_get(stash);
     if (packlen >= 7 && strEQ(hvname + packlen - 7, "::SUPER")) {
         HV* basestash;
         packlen -= 7;
-        basestash = gv_stashpvn(hvname, packlen, GV_ADD);
+        basestash = gv_stashpvn(hvname, packlen,
+                                GV_ADD | (HvNAMEUTF8(stash) ? SVf_UTF8 : 0));
         linear_av = mro_get_linear_isa(basestash);
     }
     else {
@@ -413,18 +702,32 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
         cstash = gv_stashsv(linear_sv, 0);
 
         if (!cstash) {
-	    Perl_ck_warner(aTHX_ packWARN(WARN_SYNTAX), "Can't locate package %"SVf" for @%s::ISA",
-			   SVfARG(linear_sv), hvname);
+	    Perl_ck_warner(aTHX_ packWARN(WARN_SYNTAX),
+                           "Can't locate package %"SVf" for @%"HEKf"::ISA",
+			   SVfARG(linear_sv),
+                           HEKfARG(HvNAME_HEK(stash)));
             continue;
         }
 
         assert(cstash);
 
-        gvp = (GV**)hv_fetch(cstash, name, len, 0);
-        if (!gvp) continue;
-        candidate = *gvp;
+        gvp = (GV**)hv_fetch(cstash, name, is_utf8 ? -(I32)len : (I32)len, 0);
+        if (!gvp) {
+            if (len > 1 && HvNAMELEN_get(cstash) == 4) {
+                const char *hvname = HvNAME(cstash); assert(hvname);
+                if (strnEQ(hvname, "CORE", 4)
+                 && (candidate =
+                      S_maybe_add_coresub(aTHX_ cstash,NULL,name,len)
+                    ))
+                    goto have_candidate;
+            }
+            continue;
+        }
+        else candidate = *gvp;
+       have_candidate:
         assert(candidate);
-        if (SvTYPE(candidate) != SVt_PVGV) gv_init(candidate, cstash, name, len, TRUE);
+        if (SvTYPE(candidate) != SVt_PVGV)
+            gv_init_pvn(candidate, cstash, name, len, GV_ADDMULTI|is_utf8);
         if (SvTYPE(candidate) == SVt_PVGV && (cand_cv = GvCV(candidate)) && !GvCVGEN(candidate)) {
             /*
              * Found real method, cache method in topgv if:
@@ -432,9 +735,10 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
              *  2. method isn't a stub (else AUTOLOAD fails spectacularly)
              */
             if (topgv && (GvREFCNT(topgv) == 1) && (CvROOT(cand_cv) || CvXSUB(cand_cv))) {
-                  if ((old_cv = GvCV(topgv))) SvREFCNT_dec(old_cv);
+                  CV *old_cv = GvCV(topgv);
+                  SvREFCNT_dec(old_cv);
                   SvREFCNT_inc_simple_void_NN(cand_cv);
-                  GvCV(topgv) = cand_cv;
+                  GvCV_set(topgv, cand_cv);
                   GvCVGEN(topgv) = topgen_cmp;
             }
 	    return candidate;
@@ -443,13 +747,14 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
 
     /* Check UNIVERSAL without caching */
     if(level == 0 || level == -1) {
-        candidate = gv_fetchmeth(NULL, name, len, 1);
+        candidate = gv_fetchmeth_pvn(NULL, name, len, 1, flags);
         if(candidate) {
             cand_cv = GvCV(candidate);
             if (topgv && (GvREFCNT(topgv) == 1) && (CvROOT(cand_cv) || CvXSUB(cand_cv))) {
-                  if ((old_cv = GvCV(topgv))) SvREFCNT_dec(old_cv);
+                  CV *old_cv = GvCV(topgv);
+                  SvREFCNT_dec(old_cv);
                   SvREFCNT_inc_simple_void_NN(cand_cv);
-                  GvCV(topgv) = cand_cv;
+                  GvCV_set(topgv, cand_cv);
                   GvCVGEN(topgv) = topgen_cmp;
             }
             return candidate;
@@ -467,22 +772,66 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
 /*
 =for apidoc gv_fetchmeth_autoload
 
-Same as gv_fetchmeth(), but looks for autoloaded subroutines too.
+This is the old form of L</gv_fetchmeth_pvn_autoload>, which has no flags
+parameter.
+
+=for apidoc gv_fetchmeth_sv_autoload
+
+Exactly like L</gv_fetchmeth_pvn_autoload>, but takes the name string in the form
+of an SV instead of a string/length pair.
+
+=cut
+*/
+
+GV *
+Perl_gv_fetchmeth_sv_autoload(pTHX_ HV *stash, SV *namesv, I32 level, U32 flags)
+{
+   char *namepv;
+   STRLEN namelen;
+   PERL_ARGS_ASSERT_GV_FETCHMETH_SV_AUTOLOAD;
+   namepv = SvPV(namesv, namelen);
+   if (SvUTF8(namesv))
+       flags |= SVf_UTF8;
+   return gv_fetchmeth_pvn_autoload(stash, namepv, namelen, level, flags);
+}
+
+/*
+=for apidoc gv_fetchmeth_pv_autoload
+
+Exactly like L</gv_fetchmeth_pvn_autoload>, but takes a nul-terminated string
+instead of a string/length pair.
+
+=cut
+*/
+
+GV *
+Perl_gv_fetchmeth_pv_autoload(pTHX_ HV *stash, const char *name, I32 level, U32 flags)
+{
+    PERL_ARGS_ASSERT_GV_FETCHMETH_PV_AUTOLOAD;
+    return gv_fetchmeth_pvn_autoload(stash, name, strlen(name), level, flags);
+}
+
+/*
+=for apidoc gv_fetchmeth_pvn_autoload
+
+Same as gv_fetchmeth_pvn(), but looks for autoloaded subroutines too.
 Returns a glob for the subroutine.
 
 For an autoloaded subroutine without a GV, will create a GV even
 if C<level < 0>.  For an autoloaded subroutine without a stub, GvCV()
 of the result may be zero.
 
+Currently, the only significant value for C<flags> is SVf_UTF8.
+
 =cut
 */
 
 GV *
-Perl_gv_fetchmeth_autoload(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
+Perl_gv_fetchmeth_pvn_autoload(pTHX_ HV *stash, const char *name, STRLEN len, I32 level, U32 flags)
 {
-    GV *gv = gv_fetchmeth(stash, name, len, level);
+    GV *gv = gv_fetchmeth_pvn(stash, name, len, level, flags);
 
-    PERL_ARGS_ASSERT_GV_FETCHMETH_AUTOLOAD;
+    PERL_ARGS_ASSERT_GV_FETCHMETH_PVN_AUTOLOAD;
 
     if (!gv) {
 	CV *cv;
@@ -492,15 +841,16 @@ Perl_gv_fetchmeth_autoload(pTHX_ HV *stash, const char *name, STRLEN len, I32 le
 	    return NULL;	/* UNIVERSAL::AUTOLOAD could cause trouble */
 	if (len == S_autolen && memEQ(name, S_autoload, S_autolen))
 	    return NULL;
-	if (!(gv = gv_fetchmeth(stash, S_autoload, S_autolen, FALSE)))
+	if (!(gv = gv_fetchmeth_pvn(stash, S_autoload, S_autolen, FALSE, flags)))
 	    return NULL;
 	cv = GvCV(gv);
 	if (!(CvROOT(cv) || CvXSUB(cv)))
 	    return NULL;
 	/* Have an autoload */
 	if (level < 0)	/* Cannot do without a stub */
-	    gv_fetchmeth(stash, name, len, 0);
-	gvp = (GV**)hv_fetch(stash, name, len, (level >= 0));
+	    gv_fetchmeth_pvn(stash, name, len, 0, flags);
+	gvp = (GV**)hv_fetch(stash, name,
+                        (flags & SVf_UTF8) ? -(I32)len : (I32)len, (level >= 0));
 	if (!gvp)
 	    return NULL;
 	return *gvp;
@@ -537,7 +887,7 @@ C<call_sv> apply equally to these functions.
 */
 
 STATIC HV*
-S_gv_get_super_pkg(pTHX_ const char* name, I32 namelen)
+S_gv_get_super_pkg(pTHX_ const char* name, I32 namelen, U32 flags)
 {
     AV* superisa;
     GV** gvp;
@@ -546,13 +896,13 @@ S_gv_get_super_pkg(pTHX_ const char* name, I32 namelen)
 
     PERL_ARGS_ASSERT_GV_GET_SUPER_PKG;
 
-    stash = gv_stashpvn(name, namelen, 0);
+    stash = gv_stashpvn(name, namelen, flags);
     if(stash) return stash;
 
     /* If we must create it, give it an @ISA array containing
        the real package this SUPER is for, so that it's tied
        into the cache invalidation code correctly */
-    stash = gv_stashpvn(name, namelen, GV_ADD);
+    stash = gv_stashpvn(name, namelen, GV_ADD | flags);
     gvp = (GV**)hv_fetchs(stash, "ISA", TRUE);
     gv = *gvp;
     gv_init(gv, stash, "ISA", 3, TRUE);
@@ -560,7 +910,12 @@ S_gv_get_super_pkg(pTHX_ const char* name, I32 namelen)
     GvMULTI_on(gv);
     sv_magic(MUTABLE_SV(superisa), MUTABLE_SV(gv), PERL_MAGIC_isa, NULL, 0);
 #ifdef USE_ITHREADS
-    av_push(superisa, newSVpv(CopSTASHPV(PL_curcop), 0));
+    av_push(superisa, newSVpvn_flags(CopSTASHPV(PL_curcop),
+                                     CopSTASH_len(PL_curcop) < 0
+					? -CopSTASH_len(PL_curcop)
+					:  CopSTASH_len(PL_curcop),
+                                     SVf_UTF8*(CopSTASH_len(PL_curcop) < 0)
+                                    ));
 #else
     av_push(superisa, newSVhek(CopSTASH(PL_curcop)
 			       ? HvNAME_HEK(CopSTASH(PL_curcop)) : NULL));
@@ -577,10 +932,29 @@ Perl_gv_fetchmethod_autoload(pTHX_ HV *stash, const char *name, I32 autoload)
     return gv_fetchmethod_flags(stash, name, autoload ? GV_AUTOLOAD : 0);
 }
 
+GV *
+Perl_gv_fetchmethod_sv_flags(pTHX_ HV *stash, SV *namesv, U32 flags)
+{
+    char *namepv;
+    STRLEN namelen;
+    PERL_ARGS_ASSERT_GV_FETCHMETHOD_SV_FLAGS;
+    namepv = SvPV(namesv, namelen);
+    if (SvUTF8(namesv))
+       flags |= SVf_UTF8;
+    return gv_fetchmethod_pvn_flags(stash, namepv, namelen, flags);
+}
+
+GV *
+Perl_gv_fetchmethod_pv_flags(pTHX_ HV *stash, const char *name, U32 flags)
+{
+    PERL_ARGS_ASSERT_GV_FETCHMETHOD_PV_FLAGS;
+    return gv_fetchmethod_pvn_flags(stash, name, strlen(name), flags);
+}
+
 /* Don't merge this yet, as it's likely to get a len parameter, and possibly
    even a U32 hash */
 GV *
-Perl_gv_fetchmethod_flags(pTHX_ HV *stash, const char *name, U32 flags)
+Perl_gv_fetchmethod_pvn_flags(pTHX_ HV *stash, const char *name, const STRLEN len, U32 flags)
 {
     dVAR;
     register const char *nend;
@@ -591,8 +965,9 @@ Perl_gv_fetchmethod_flags(pTHX_ HV *stash, const char *name, U32 flags)
     SV *const error_report = MUTABLE_SV(stash);
     const U32 autoload = flags & GV_AUTOLOAD;
     const U32 do_croak = flags & GV_CROAK;
+    const U32 is_utf8  = flags & SVf_UTF8;
 
-    PERL_ARGS_ASSERT_GV_FETCHMETHOD_FLAGS;
+    PERL_ARGS_ASSERT_GV_FETCHMETHOD_PVN_FLAGS;
 
     if (SvTYPE(stash) < SVt_PVHV)
 	stash = NULL;
@@ -602,7 +977,7 @@ Perl_gv_fetchmethod_flags(pTHX_ HV *stash, const char *name, U32 flags)
 	   the error reporting code.  */
     }
 
-    for (nend = name; *nend; nend++) {
+    for (nend = name; *nend || nend != (origname + len); nend++) {
 	if (*nend == '\'') {
 	    nsplit = nend;
 	    name = nend + 1;
@@ -615,56 +990,78 @@ Perl_gv_fetchmethod_flags(pTHX_ HV *stash, const char *name, U32 flags)
     if (nsplit) {
 	if ((nsplit - origname) == 5 && memEQ(origname, "SUPER", 5)) {
 	    /* ->SUPER::method should really be looked up in original stash */
-	    SV * const tmpstr = sv_2mortal(Perl_newSVpvf(aTHX_ "%s::SUPER",
-						  CopSTASHPV(PL_curcop)));
+	    SV * const tmpstr = sv_2mortal(Perl_newSVpvf(aTHX_
+		     "%"HEKf"::SUPER",
+		      HEKfARG(HvNAME_HEK((HV*)CopSTASH(PL_curcop)))
+	    ));
 	    /* __PACKAGE__::SUPER stash should be autovivified */
-	    stash = gv_get_super_pkg(SvPVX_const(tmpstr), SvCUR(tmpstr));
+	    stash = gv_get_super_pkg(SvPVX_const(tmpstr), SvCUR(tmpstr), SvUTF8(tmpstr));
 	    DEBUG_o( Perl_deb(aTHX_ "Treating %s as %s::%s\n",
 			 origname, HvNAME_get(stash), name) );
 	}
 	else {
             /* don't autovifify if ->NoSuchStash::method */
-            stash = gv_stashpvn(origname, nsplit - origname, 0);
+            stash = gv_stashpvn(origname, nsplit - origname, is_utf8);
 
 	    /* however, explicit calls to Pkg::SUPER::method may
 	       happen, and may require autovivification to work */
 	    if (!stash && (nsplit - origname) >= 7 &&
 		strnEQ(nsplit - 7, "::SUPER", 7) &&
-		gv_stashpvn(origname, nsplit - origname - 7, 0))
-	      stash = gv_get_super_pkg(origname, nsplit - origname);
+		gv_stashpvn(origname, nsplit - origname - 7, is_utf8))
+	      stash = gv_get_super_pkg(origname, nsplit - origname, flags);
 	}
 	ostash = stash;
     }
 
-    gv = gv_fetchmeth(stash, name, nend - name, 0);
+    gv = gv_fetchmeth_pvn(stash, name, nend - name, 0, flags);
     if (!gv) {
 	if (strEQ(name,"import") || strEQ(name,"unimport"))
 	    gv = MUTABLE_GV(&PL_sv_yes);
 	else if (autoload)
-	    gv = gv_autoload4(ostash, name, nend - name, TRUE);
+	    gv = gv_autoload_pvn(
+		ostash, name, nend - name, GV_AUTOLOAD_ISMETHOD|flags
+	    );
 	if (!gv && do_croak) {
 	    /* Right now this is exclusively for the benefit of S_method_common
 	       in pp_hot.c  */
 	    if (stash) {
+		/* If we can't find an IO::File method, it might be a call on
+		 * a filehandle. If IO:File has not been loaded, try to
+		 * require it first instead of croaking */
+		const char *stash_name = HvNAME_get(stash);
+		if (stash_name && memEQs(stash_name, HvNAMELEN_get(stash), "IO::File")
+		    && !Perl_hv_common(aTHX_ GvHVn(PL_incgv), NULL,
+				       STR_WITH_LEN("IO/File.pm"), 0,
+				       HV_FETCH_ISEXISTS, NULL, 0)
+		) {
+		    require_pv("IO/File.pm");
+		    gv = gv_fetchmeth_pvn(stash, name, nend - name, 0, flags);
+		    if (gv)
+			return gv;
+		}
 		Perl_croak(aTHX_
-			   "Can't locate object method \"%s\" via package \"%.*s\"",
-			   name, (int)HvNAMELEN_get(stash), HvNAME_get(stash));
+			   "Can't locate object method \"%"SVf
+			   "\" via package \"%"HEKf"\"",
+			            SVfARG(newSVpvn_flags(name, nend - name,
+                                           SVs_TEMP | is_utf8)),
+                                    HEKfARG(HvNAME_HEK(stash)));
 	    }
 	    else {
-		STRLEN packlen;
-		const char *packname;
+                SV* packnamesv;
 
 		if (nsplit) {
-		    packlen = nsplit - origname;
-		    packname = origname;
+		    packnamesv = newSVpvn_flags(origname, nsplit - origname,
+                                                    SVs_TEMP | is_utf8);
 		} else {
-		    packname = SvPV_const(error_report, packlen);
+		    packnamesv = sv_2mortal(newSVsv(error_report));
 		}
 
 		Perl_croak(aTHX_
-			   "Can't locate object method \"%s\" via package \"%.*s\""
-			   " (perhaps you forgot to load \"%.*s\"?)",
-			   name, (int)packlen, packname, (int)packlen, packname);
+			   "Can't locate object method \"%"SVf"\" via package \"%"SVf"\""
+			   " (perhaps you forgot to load \"%"SVf"\"?)",
+			   SVfARG(newSVpvn_flags(name, nend - name,
+                                SVs_TEMP | is_utf8)),
+                           SVfARG(packnamesv), SVfARG(packnamesv));
 	    }
 	}
     }
@@ -681,8 +1078,10 @@ Perl_gv_fetchmethod_flags(pTHX_ HV *stash, const char *name, U32 flags)
 		if (GvCV(stubgv) != cv)		/* orphaned import */
 		    stubgv = gv;
 	    }
-	    autogv = gv_autoload4(GvSTASH(stubgv),
-				  GvNAME(stubgv), GvNAMELEN(stubgv), TRUE);
+            autogv = gv_autoload_pvn(GvSTASH(stubgv),
+                                  GvNAME(stubgv), GvNAMELEN(stubgv),
+                                  GV_AUTOLOAD_ISMETHOD
+                                   | (GvNAMEUTF8(stubgv) ? SVf_UTF8 : 0));
 	    if (autogv)
 		gv = autogv;
 	}
@@ -692,7 +1091,26 @@ Perl_gv_fetchmethod_flags(pTHX_ HV *stash, const char *name, U32 flags)
 }
 
 GV*
-Perl_gv_autoload4(pTHX_ HV *stash, const char *name, STRLEN len, I32 method)
+Perl_gv_autoload_sv(pTHX_ HV *stash, SV* namesv, U32 flags)
+{
+   char *namepv;
+   STRLEN namelen;
+   PERL_ARGS_ASSERT_GV_AUTOLOAD_SV;
+   namepv = SvPV(namesv, namelen);
+   if (SvUTF8(namesv))
+       flags |= SVf_UTF8;
+   return gv_autoload_pvn(stash, namepv, namelen, flags);
+}
+
+GV*
+Perl_gv_autoload_pv(pTHX_ HV *stash, const char *namepv, U32 flags)
+{
+   PERL_ARGS_ASSERT_GV_AUTOLOAD_PV;
+   return gv_autoload_pvn(stash, namepv, strlen(namepv), flags);
+}
+
+GV*
+Perl_gv_autoload_pvn(pTHX_ HV *stash, const char *name, STRLEN len, U32 flags)
 {
     dVAR;
     GV* gv;
@@ -700,24 +1118,25 @@ Perl_gv_autoload4(pTHX_ HV *stash, const char *name, STRLEN len, I32 method)
     HV* varstash;
     GV* vargv;
     SV* varsv;
-    const char *packname = "";
-    STRLEN packname_len = 0;
+    SV *packname = NULL;
+    U32 is_utf8 = flags & SVf_UTF8 ? SVf_UTF8 : 0;
 
-    PERL_ARGS_ASSERT_GV_AUTOLOAD4;
+    PERL_ARGS_ASSERT_GV_AUTOLOAD_PVN;
 
     if (len == S_autolen && memEQ(name, S_autoload, S_autolen))
 	return NULL;
     if (stash) {
 	if (SvTYPE(stash) < SVt_PVHV) {
-	    packname = SvPV_const(MUTABLE_SV(stash), packname_len);
+            STRLEN packname_len = 0;
+            const char * const packname_ptr = SvPV_const(MUTABLE_SV(stash), packname_len);
+            packname = newSVpvn_flags(packname_ptr, packname_len,
+                                      SVs_TEMP | SvUTF8(stash));
 	    stash = NULL;
 	}
-	else {
-	    packname = HvNAME_get(stash);
-	    packname_len = HvNAMELEN_get(stash);
-	}
+	else
+	    packname = sv_2mortal(newSVhek(HvNAME_HEK(stash)));
     }
-    if (!(gv = gv_fetchmeth(stash, S_autoload, S_autolen, FALSE)))
+    if (!(gv = gv_fetchmeth_pvn(stash, S_autoload, S_autolen, FALSE, is_utf8)))
 	return NULL;
     cv = GvCV(gv);
 
@@ -727,22 +1146,66 @@ Perl_gv_autoload4(pTHX_ HV *stash, const char *name, STRLEN len, I32 method)
     /*
      * Inheriting AUTOLOAD for non-methods works ... for now.
      */
-    if (!method && (GvCVGEN(gv) || GvSTASH(gv) != stash)
+    if (
+        !(flags & GV_AUTOLOAD_ISMETHOD)
+     && (GvCVGEN(gv) || GvSTASH(gv) != stash)
     )
 	Perl_ck_warner_d(aTHX_ packWARN(WARN_DEPRECATED),
-			 "Use of inherited AUTOLOAD for non-method %s::%.*s() is deprecated",
-			 packname, (int)len, name);
+			 "Use of inherited AUTOLOAD for non-method %"SVf"::%"SVf"() is deprecated",
+			 SVfARG(packname),
+                         SVfARG(newSVpvn_flags(name, len, SVs_TEMP | is_utf8)));
 
     if (CvISXSUB(cv)) {
-        /* rather than lookup/init $AUTOLOAD here
-         * only to have the XSUB do another lookup for $AUTOLOAD
-         * and split that value on the last '::',
-         * pass along the same data via some unused fields in the CV
+        /* Instead of forcing the XSUB do another lookup for $AUTOLOAD
+         * and split that value on the last '::', pass along the same data
+         * via the SvPVX field in the CV, and the stash in CvSTASH.
+         *
+         * Due to an unfortunate accident of history, the SvPVX field
+         * serves two purposes.  It is also used for the subroutine's pro-
+         * type.  Since SvPVX has been documented as returning the sub name
+         * for a long time, but not as returning the prototype, we have
+         * to preserve the SvPVX AUTOLOAD behaviour and put the prototype
+         * elsewhere.
+         *
+         * We put the prototype in the same allocated buffer, but after
+         * the sub name.  The SvPOK flag indicates the presence of a proto-
+         * type.  The CvAUTOLOAD flag indicates the presence of a sub name.
+         * If both flags are on, then SvLEN is used to indicate the end of
+         * the prototype (artificially lower than what is actually allo-
+         * cated), at the risk of having to reallocate a few bytes unneces-
+         * sarily--but that should happen very rarely, if ever.
+         *
+         * We use SvUTF8 for both prototypes and sub names, so if one is
+         * UTF8, the other must be upgraded.
          */
-        CvSTASH(cv) = stash;
-        SvPV_set(cv, (char *)name); /* cast to lose constness warning */
-        SvCUR_set(cv, len);
-        return gv;
+	CvSTASH_set(cv, stash);
+	if (SvPOK(cv)) { /* Ouch! */
+	    SV *tmpsv = newSVpvn_flags(name, len, is_utf8);
+	    STRLEN ulen;
+	    const char *proto = CvPROTO(cv);
+	    assert(proto);
+	    if (SvUTF8(cv))
+		sv_utf8_upgrade_flags_grow(tmpsv, 0, CvPROTOLEN(cv) + 2);
+	    ulen = SvCUR(tmpsv);
+	    SvCUR(tmpsv)++; /* include null in string */
+	    sv_catpvn_flags(
+		tmpsv, proto, CvPROTOLEN(cv), SV_CATBYTES*!SvUTF8(cv)
+	    );
+	    SvTEMP_on(tmpsv); /* Allow theft */
+	    sv_setsv_nomg((SV *)cv, tmpsv);
+	    SvTEMP_off(tmpsv);
+	    SvREFCNT_dec(tmpsv);
+	    SvLEN(cv) = SvCUR(cv) + 1;
+	    SvCUR(cv) = ulen;
+	}
+	else {
+	  sv_setpvn((SV *)cv, name, len);
+	  SvPOK_off(cv);
+	  if (is_utf8)
+            SvUTF8_on(cv);
+	  else SvUTF8_off(cv);
+	}
+	CvAUTOLOAD_on(cv);
     }
 
     /*
@@ -756,22 +1219,29 @@ Perl_gv_autoload4(pTHX_ HV *stash, const char *name, STRLEN len, I32 method)
     ENTER;
 
     if (!isGV(vargv)) {
-	gv_init(vargv, varstash, S_autoload, S_autolen, FALSE);
+	gv_init_pvn(vargv, varstash, S_autoload, S_autolen, 0);
 #ifdef PERL_DONT_CREATE_GVSV
 	GvSV(vargv) = newSV(0);
 #endif
     }
     LEAVE;
     varsv = GvSVn(vargv);
-    sv_setpvn(varsv, packname, packname_len);
+    sv_setsv(varsv, packname);
     sv_catpvs(varsv, "::");
-    sv_catpvn(varsv, name, len);
+    /* Ensure SvSETMAGIC() is called if necessary. In particular, to clear
+       tainting if $FOO::AUTOLOAD was previously tainted, but is not now.  */
+    sv_catpvn_flags(
+	varsv, name, len,
+	SV_SMAGIC|(is_utf8 ? SV_CATUTF8 : SV_CATBYTES)
+    );
+    if (is_utf8)
+        SvUTF8_on(varsv);
     return gv;
 }
 
 
 /* require_tie_mod() internal routine for requiring a module
- * that implements the logic of automatical ties like %! and %-
+ * that implements the logic of automatic ties like %! and %-
  *
  * The "gv" parameter should be the glob.
  * "varpv" holds the name of the var, used for error messages.
@@ -790,11 +1260,12 @@ S_require_tie_mod(pTHX_ GV *gv, const char *varpv, SV* namesv, const char *methp
 
     PERL_ARGS_ASSERT_REQUIRE_TIE_MOD;
 
-    if (!stash || !(gv_fetchmethod(stash, methpv))) {
+    if (!stash || !(gv_fetchmethod_autoload(stash, methpv, FALSE))) {
 	SV *module = newSVsv(namesv);
 	char varname = *varpv; /* varpv might be clobbered by load_module,
 				  so save it. For the moment it's always
 				  a single char. */
+	const char type = varname == '[' ? '$' : '%';
 	dSP;
 	ENTER;
 	if ( flags & 1 )
@@ -806,11 +1277,11 @@ S_require_tie_mod(pTHX_ GV *gv, const char *varpv, SV* namesv, const char *methp
 	SPAGAIN;
 	stash = gv_stashsv(namesv, 0);
 	if (!stash)
-	    Perl_croak(aTHX_ "panic: Can't use %%%c because %"SVf" is not available",
-		    varname, SVfARG(namesv));
+	    Perl_croak(aTHX_ "panic: Can't use %c%c because %"SVf" is not available",
+		    type, varname, SVfARG(namesv));
 	else if (!gv_fetchmethod(stash, methpv))
-	    Perl_croak(aTHX_ "panic: Can't use %%%c because %"SVf" does not support method %s",
-		    varname, SVfARG(namesv), methpv);
+	    Perl_croak(aTHX_ "panic: Can't use %c%c because %"SVf" does not support method %s",
+		    type, varname, SVfARG(namesv), methpv);
     }
     SvREFCNT_dec(namesv);
     return stash;
@@ -869,11 +1340,18 @@ Perl_gv_stashpvn(pTHX_ const char *name, U32 namelen, I32 flags)
 	Safefree(tmpbuf);
     if (!tmpgv)
 	return NULL;
-    if (!GvHV(tmpgv))
-	GvHV(tmpgv) = newHV();
     stash = GvHV(tmpgv);
-    if (!HvNAME_get(stash))
-	hv_name_set(stash, name, namelen, 0);
+    if (!(flags & ~GV_NOADD_MASK) && !stash) return NULL;
+    assert(stash);
+    if (!HvNAME_get(stash)) {
+	hv_name_set(stash, name, namelen, flags & SVf_UTF8 ? SVf_UTF8 : 0 );
+	
+	/* FIXME: This is a repeat of logic in gv_fetchpvn_flags */
+	/* If the containing stash has multiple effective
+	   names, see that this one gets them, too. */
+	if (HvAUX(GvSTASH(tmpgv))->xhv_name_count)
+	    mro_package_moved(stash, NULL, tmpgv, 1);
+    }
     return stash;
 }
 
@@ -893,7 +1371,7 @@ Perl_gv_stashsv(pTHX_ SV *sv, I32 flags)
 
     PERL_ARGS_ASSERT_GV_STASHSV;
 
-    return gv_stashpvn(ptr, len, flags);
+    return gv_stashpvn(ptr, len, flags | SvUTF8(sv));
 }
 
 
@@ -906,9 +1384,35 @@ Perl_gv_fetchpv(pTHX_ const char *nambeg, I32 add, const svtype sv_type) {
 GV *
 Perl_gv_fetchsv(pTHX_ SV *name, I32 flags, const svtype sv_type) {
     STRLEN len;
-    const char * const nambeg = SvPV_const(name, len);
+    const char * const nambeg =
+       SvPV_flags_const(name, len, flags & GV_NO_SVGMAGIC ? 0 : SV_GMAGIC);
     PERL_ARGS_ASSERT_GV_FETCHSV;
     return gv_fetchpvn_flags(nambeg, len, flags | SvUTF8(name), sv_type);
+}
+
+STATIC void
+S_gv_magicalize_isa(pTHX_ GV *gv)
+{
+    AV* av;
+
+    PERL_ARGS_ASSERT_GV_MAGICALIZE_ISA;
+
+    av = GvAVn(gv);
+    GvMULTI_on(gv);
+    sv_magic(MUTABLE_SV(av), MUTABLE_SV(gv), PERL_MAGIC_isa,
+	     NULL, 0);
+}
+
+STATIC void
+S_gv_magicalize_overload(pTHX_ GV *gv)
+{
+    HV* hv;
+
+    PERL_ARGS_ASSERT_GV_MAGICALIZE_OVERLOAD;
+
+    hv = GvHVn(gv);
+    GvMULTI_on(gv);
+    hv_magic(hv, NULL, PERL_MAGIC_overload);
 }
 
 GV *
@@ -925,6 +1429,8 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
     const I32 no_init = flags & (GV_NOADD_NOINIT | GV_NOINIT);
     const I32 no_expand = flags & GV_NOEXPAND;
     const I32 add = flags & ~GV_NOADD_MASK;
+    const U32 is_utf8 = flags & SVf_UTF8;
+    bool addmg = !!(flags & GV_ADDMG);
     const char *const name_end = nambeg + full_len;
     const char *const name_em1 = name_end - 1;
     U32 faking_it;
@@ -937,15 +1443,16 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 	goto no_stash;
     }
 
-    if (full_len > 2 && *name == '*' && isALPHA(name[1])) {
+    if (full_len > 2 && *name == '*' && isIDFIRST_lazy_if(name + 1, is_utf8)) {
 	/* accidental stringify on a GV? */
 	name++;
     }
 
     for (name_cursor = name; name_cursor < name_end; name_cursor++) {
-	if ((*name_cursor == ':' && name_cursor < name_em1
+	if (name_cursor < name_em1 &&
+	    ((*name_cursor == ':'
 	     && name_cursor[1] == ':')
-	    || (*name_cursor == '\'' && name_cursor[1]))
+	    || *name_cursor == '\''))
 	{
 	    if (!stash)
 		stash = PL_defstash;
@@ -953,41 +1460,56 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 		return NULL;
 
 	    len = name_cursor - name;
-	    if (len > 0) {
-		char smallbuf[128];
-		char *tmpbuf;
-
-		if (len + 2 <= (I32)sizeof (smallbuf))
-		    tmpbuf = smallbuf;
-		else
+	    if (name_cursor > nambeg) { /* Skip for initial :: or ' */
+		const char *key;
+		if (*name_cursor == ':') {
+		    key = name;
+		    len += 2;
+		} else {
+		    char *tmpbuf;
 		    Newx(tmpbuf, len+2, char);
-		Copy(name, tmpbuf, len, char);
-		tmpbuf[len++] = ':';
-		tmpbuf[len++] = ':';
-		gvp = (GV**)hv_fetch(stash,tmpbuf,len,add);
+		    Copy(name, tmpbuf, len, char);
+		    tmpbuf[len++] = ':';
+		    tmpbuf[len++] = ':';
+		    key = tmpbuf;
+		}
+		gvp = (GV**)hv_fetch(stash, key, is_utf8 ? -len : len, add);
 		gv = gvp ? *gvp : NULL;
 		if (gv && gv != (const GV *)&PL_sv_undef) {
 		    if (SvTYPE(gv) != SVt_PVGV)
-			gv_init(gv, stash, tmpbuf, len, (add & GV_ADDMULTI));
+			gv_init_pvn(gv, stash, key, len, (add & GV_ADDMULTI)|is_utf8);
 		    else
 			GvMULTI_on(gv);
 		}
-		if (tmpbuf != smallbuf)
-		    Safefree(tmpbuf);
+		if (key != name)
+		    Safefree(key);
 		if (!gv || gv == (const GV *)&PL_sv_undef)
 		    return NULL;
 
 		if (!(stash = GvHV(gv)))
+		{
 		    stash = GvHV(gv) = newHV();
-
-		if (!HvNAME_get(stash))
-		    hv_name_set(stash, nambeg, name_cursor - nambeg, 0);
+		    if (!HvNAME_get(stash)) {
+			if (GvSTASH(gv) == PL_defstash && len == 6
+			 && strnEQ(name, "CORE", 4))
+			    hv_name_set(stash, "CORE", 4, 0);
+			else
+			    hv_name_set(
+				stash, nambeg, name_cursor-nambeg, is_utf8
+			    );
+			/* If the containing stash has multiple effective
+			   names, see that this one gets them, too. */
+			if (HvAUX(GvSTASH(gv))->xhv_name_count)
+			    mro_package_moved(stash, NULL, gv, 1);
+		    }
+		}
+		else if (!HvNAME_get(stash))
+		    hv_name_set(stash, nambeg, name_cursor - nambeg, is_utf8);
 	    }
 
 	    if (*name_cursor == ':')
 		name_cursor++;
-	    name_cursor++;
-	    name = name_cursor;
+	    name = name_cursor+1;
 	    if (name == name_end)
 		return gv
 		    ? gv : MUTABLE_GV(*hv_fetchs(PL_defstash, "main::", TRUE));
@@ -1049,7 +1571,7 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 		    !(len == 1 && sv_type == SVt_PV &&
 		      (*name == 'a' || *name == 'b')) )
 		{
-		    gvp = (GV**)hv_fetch(stash,name,len,0);
+		    gvp = (GV**)hv_fetch(stash,name,is_utf8 ? -len : len,0);
 		    if (!gvp ||
 			*gvp == (const GV *)&PL_sv_undef ||
 			SvTYPE(*gvp) != SVt_PVGV)
@@ -1060,13 +1582,19 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 			     (sv_type == SVt_PVAV && !GvIMPORTED_AV(*gvp)) ||
 			     (sv_type == SVt_PVHV && !GvIMPORTED_HV(*gvp)) )
 		    {
+                        SV* namesv = newSVpvn_flags(name, len, SVs_TEMP | is_utf8);
 			/* diag_listed_as: Variable "%s" is not imported%s */
-			Perl_warn(aTHX_ "Variable \"%c%s\" is not imported",
+			Perl_ck_warner_d(
+			    aTHX_ packWARN(WARN_MISC),
+			    "Variable \"%c%"SVf"\" is not imported",
 			    sv_type == SVt_PVAV ? '@' :
 			    sv_type == SVt_PVHV ? '%' : '$',
-			    name);
+			    SVfARG(namesv));
 			if (GvCVu(*gvp))
-			    Perl_warn(aTHX_ "\t(Did you mean &%s instead?)\n", name);
+			    Perl_ck_warner_d(
+				aTHX_ packWARN(WARN_MISC),
+				"\t(Did you mean &%"SVf" instead?)\n", SVfARG(namesv)
+			    );
 			stash = NULL;
 		    }
 		}
@@ -1083,11 +1611,11 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
     if (!stash) {
 	if (add) {
 	    SV * const err = Perl_mess(aTHX_
-		 "Global symbol \"%s%s\" requires explicit package name",
+		 "Global symbol \"%s%"SVf"\" requires explicit package name",
 		 (sv_type == SVt_PV ? "$"
 		  : sv_type == SVt_PVAV ? "@"
 		  : sv_type == SVt_PVHV ? "%"
-		  : ""), name);
+		  : ""), SVfARG(newSVpvn_flags(name, len, SVs_TEMP | is_utf8)));
 	    GV *gv;
 	    if (USE_UTF8_IN_NAMES)
 		SvUTF8_on(err);
@@ -1106,25 +1634,46 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
     if (!SvREFCNT(stash))	/* symbol table under destruction */
 	return NULL;
 
-    gvp = (GV**)hv_fetch(stash,name,len,add);
-    if (!gvp || *gvp == (const GV *)&PL_sv_undef)
-	return NULL;
-    gv = *gvp;
+    gvp = (GV**)hv_fetch(stash,name,is_utf8 ? -len : len,add);
+    if (!gvp || *gvp == (const GV *)&PL_sv_undef) {
+	if (addmg) gv = (GV *)newSV(0);
+	else return NULL;
+    }
+    else gv = *gvp, addmg = 0;
+    /* From this point on, addmg means gv has not been inserted in the
+       symtab yet. */
+
     if (SvTYPE(gv) == SVt_PVGV) {
 	if (add) {
 	    GvMULTI_on(gv);
-	    gv_init_sv(gv, sv_type);
-	    if (len == 1 && (sv_type == SVt_PVHV || sv_type == SVt_PVGV)) {
+	    gv_init_svtype(gv, sv_type);
+	    if (len == 1 && stash == PL_defstash) {
+	      if (sv_type == SVt_PVHV || sv_type == SVt_PVGV) {
 	        if (*name == '!')
 		    require_tie_mod(gv, "!", newSVpvs("Errno"), "TIEHASH", 1);
 		else if (*name == '-' || *name == '+')
 		    require_tie_mod(gv, name, newSVpvs("Tie::Hash::NamedCapture"), "TIEHASH", 0);
+	      }
+	      if (sv_type==SVt_PV || sv_type==SVt_PVGV) {
+	       if (*name == '[')
+		require_tie_mod(gv,name,newSVpvs("arybase"),"FETCH",0);
+	       else if (*name == '&' || *name == '`' || *name == '\'') {
+		PL_sawampersand = TRUE;
+		(void)GvSVn(gv);
+	       }
+	      }
 	    }
+	    else if (len == 3 && sv_type == SVt_PVAV
+	          && strnEQ(name, "ISA", 3)
+	          && (!GvAV(gv) || !SvSMAGICAL(GvAV(gv))))
+		gv_magicalize_isa(gv);
 	}
 	return gv;
     } else if (no_init) {
+	assert(!addmg);
 	return gv;
     } else if (no_expand && SvROK(gv)) {
+	assert(!addmg);
 	return gv;
     }
 
@@ -1138,16 +1687,52 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
     faking_it = SvOK(gv);
 
     if (add & GV_ADDWARN)
-	Perl_ck_warner_d(aTHX_ packWARN(WARN_INTERNAL), "Had to create %s unexpectedly", nambeg);
-    gv_init(gv, stash, name, len, add & GV_ADDMULTI);
-    gv_init_sv(gv, faking_it ? SVt_PVCV : sv_type);
+	Perl_ck_warner_d(aTHX_ packWARN(WARN_INTERNAL), "Had to create %"SVf" unexpectedly",
+                SVfARG(newSVpvn_flags(nambeg, name_end-nambeg, SVs_TEMP | is_utf8 )));
+    gv_init_pvn(gv, stash, name, len, (add & GV_ADDMULTI)|is_utf8);
 
-    if (isALPHA(name[0]) && ! (isLEXWARN_on ? ckWARN(WARN_ONCE)
-			                    : (PL_dowarn & G_WARN_ON ) ) )
+    if ( isIDFIRST_lazy_if(name, is_utf8)
+                && ! (isLEXWARN_on ? ckWARN(WARN_ONCE) : (PL_dowarn & G_WARN_ON ) ) )
         GvMULTI_on(gv) ;
 
     /* set up magic where warranted */
-    if (len > 1) {
+    if (stash != PL_defstash) { /* not the main stash */
+	/* We only have to check for four names here: EXPORT, ISA, OVERLOAD
+	   and VERSION. All the others apply only to the main stash or to
+	   CORE (which is checked right after this). */
+	if (len > 2) {
+	    const char * const name2 = name + 1;
+	    switch (*name) {
+	    case 'E':
+		if (strnEQ(name2, "XPORT", 5))
+		    GvMULTI_on(gv);
+		break;
+	    case 'I':
+		if (strEQ(name2, "SA"))
+		    gv_magicalize_isa(gv);
+		break;
+	    case 'O':
+		if (strEQ(name2, "VERLOAD"))
+		    gv_magicalize_overload(gv);
+		break;
+	    case 'V':
+		if (strEQ(name2, "ERSION"))
+		    GvMULTI_on(gv);
+		break;
+	    default:
+		goto try_core;
+	    }
+	    goto add_magical_gv;
+	}
+      try_core:
+	if (len > 1 /* shortest is uc */ && HvNAMELEN_get(stash) == 4) {
+	  /* Avoid null warning: */
+	  const char * const stashname = HvNAME(stash); assert(stashname);
+	  if (strnEQ(stashname, "CORE", 4))
+	    S_maybe_add_coresub(aTHX_ 0, gv, name, len);
+	}
+    }
+    else if (len > 1) {
 #ifndef EBCDIC
 	if (*name > 'V' ) {
 	    NOOP;
@@ -1174,32 +1759,12 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 		break;
 	    case 'I':
 		if (strEQ(name2, "SA")) {
-		    AV* const av = GvAVn(gv);
-		    GvMULTI_on(gv);
-		    sv_magic(MUTABLE_SV(av), MUTABLE_SV(gv), PERL_MAGIC_isa,
-			     NULL, 0);
-		    /* NOTE: No support for tied ISA */
-		    if ((add & GV_ADDMULTI) && strEQ(nambeg,"AnyDBM_File::ISA")
-			&& AvFILLp(av) == -1)
-			{
-			    av_push(av, newSVpvs("NDBM_File"));
-			    gv_stashpvs("NDBM_File", GV_ADD);
-			    av_push(av, newSVpvs("DB_File"));
-			    gv_stashpvs("DB_File", GV_ADD);
-			    av_push(av, newSVpvs("GDBM_File"));
-			    gv_stashpvs("GDBM_File", GV_ADD);
-			    av_push(av, newSVpvs("SDBM_File"));
-			    gv_stashpvs("SDBM_File", GV_ADD);
-			    av_push(av, newSVpvs("ODBM_File"));
-			    gv_stashpvs("ODBM_File", GV_ADD);
-			}
+		    gv_magicalize_isa(gv);
 		}
 		break;
 	    case 'O':
 		if (strEQ(name2, "VERLOAD")) {
-		    HV* const hv = GvHVn(gv);
-		    GvMULTI_on(gv);
-		    hv_magic(hv, NULL, PERL_MAGIC_overload);
+		    gv_magicalize_overload(gv);
 		}
 		break;
 	    case 'S':
@@ -1245,6 +1810,10 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 		if (strEQ(name2, "NCODING"))
 		    goto magicalize;
 		break;
+	    case '\007':	/* $^GLOBAL_PHASE */
+		if (strEQ(name2, "LOBAL_PHASE"))
+		    goto ro_magicalize;
+		break;
             case '\015':        /* $^MATCH */
                 if (strEQ(name2, "ATCH"))
 		    goto magicalize;
@@ -1254,7 +1823,8 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 		break;
 	    case '\020':        /* $^PREMATCH  $^POSTMATCH */
 	        if (strEQ(name2, "REMATCH") || strEQ(name2, "OSTMATCH"))
-		    goto magicalize;  
+		    goto magicalize;
+		break;
 	    case '\024':	/* ${^TAINT} */
 		if (strEQ(name2, "AINT"))
 		    goto ro_magicalize;
@@ -1286,7 +1856,7 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 		/* This snippet is taken from is_gv_magical */
 		const char *end = name + len;
 		while (--end > name) {
-		    if (!isDIGIT(*end))	return gv;
+		    if (!isDIGIT(*end))	goto add_magical_gv;
 		}
 		goto magicalize;
 	    }
@@ -1299,14 +1869,13 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 	case '&':		/* $& */
 	case '`':		/* $` */
 	case '\'':		/* $' */
-	    if (
+	    if (!(
 		sv_type == SVt_PVAV ||
 		sv_type == SVt_PVHV ||
 		sv_type == SVt_PVCV ||
 		sv_type == SVt_PVFM ||
 		sv_type == SVt_PVIO
-		) { break; }
-	    PL_sawampersand = TRUE;
+		)) { PL_sawampersand = TRUE; }
 	    goto magicalize;
 
 	case ':':		/* $: */
@@ -1327,7 +1896,11 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 
             /* magicalization must be done before require_tie_mod is called */
 	    if (sv_type == SVt_PVHV || sv_type == SVt_PVGV)
+	    {
+		if (addmg) (void)hv_store(stash,name,len,(SV *)gv,0);
+		addmg = 0;
 		require_tie_mod(gv, "!", newSVpvs("Errno"), "TIEHASH", 1);
+	    }
 
 	    break;
 	case '-':		/* $- */
@@ -1344,13 +1917,18 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
             SvREADONLY_on(av);
 
             if (sv_type == SVt_PVHV || sv_type == SVt_PVGV)
+	    {
+		if (addmg) (void)hv_store(stash,name,len,(SV *)gv,0);
+		addmg = 0;
                 require_tie_mod(gv, name, newSVpvs("Tie::Hash::NamedCapture"), "TIEHASH", 0);
+	    }
 
             break;
 	}
 	case '*':		/* $* */
 	case '#':		/* $# */
 	    if (sv_type == SVt_PV)
+		/* diag_listed_as: $* is no longer supported */
 		Perl_ck_warner_d(aTHX_ packWARN2(WARN_DEPRECATED, WARN_SYNTAX),
 				 "$%c is no longer supported", *name);
 	    break;
@@ -1364,6 +1942,15 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 		hv_magic(hv, NULL, PERL_MAGIC_hints);
 	    }
 	    goto magicalize;
+	case '[':		/* $[ */
+	    if ((sv_type == SVt_PV || sv_type == SVt_PVGV)
+	     && FEATURE_ARYBASE_IS_ENABLED) {
+		if (addmg) (void)hv_store(stash,name,len,(SV *)gv,0);
+		require_tie_mod(gv,name,newSVpvs("arybase"),"FETCH",0);
+		addmg = 0;
+	    }
+	    else goto magicalize;
+            break;
 	case '\023':	/* $^S */
 	ro_magicalize:
 	    SvREADONLY_on(GvSVn(gv));
@@ -1378,7 +1965,6 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 	case '7':		/* $7 */
 	case '8':		/* $8 */
 	case '9':		/* $9 */
-	case '[':		/* $[ */
 	case '^':		/* $^ */
 	case '~':		/* $~ */
 	case '=':		/* $= */
@@ -1390,6 +1976,7 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 	case '>':		/* $> */
 	case '\\':		/* $\ */
 	case '/':		/* $/ */
+	case '$':		/* $$ */
 	case '\001':	/* $^A */
 	case '\003':	/* $^C */
 	case '\004':	/* $^D */
@@ -1414,7 +2001,7 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 	    break;
 	case ']':		/* $] */
 	{
-	    SV * const sv = GvSVn(gv);
+	    SV * const sv = GvSV(gv);
 	    if (!sv_derived_from(PL_patchlevel, "version"))
 		upg_version(PL_patchlevel, TRUE);
 	    GvSV(gv) = vnumify(PL_patchlevel);
@@ -1424,7 +2011,7 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 	break;
 	case '\026':	/* $^V */
 	{
-	    SV * const sv = GvSVn(gv);
+	    SV * const sv = GvSV(gv);
 	    GvSV(gv) = new_version(PL_patchlevel);
 	    SvREADONLY_on(GvSV(gv));
 	    SvREFCNT_dec(sv);
@@ -1432,6 +2019,15 @@ Perl_gv_fetchpvn_flags(pTHX_ const char *nambeg, STRLEN full_len, I32 flags,
 	break;
 	}
     }
+  add_magical_gv:
+    if (addmg) {
+	if (GvAV(gv) || GvHV(gv) || GvIO(gv) || GvCV(gv) || (
+	     GvSV(gv) && (SvOK(GvSV(gv)) || SvMAGICAL(GvSV(gv)))
+	   ))
+	    (void)hv_store(stash,name,len,(SV *)gv,0);
+	else SvREFCNT_dec(gv), gv = NULL;
+    }
+    if (gv) gv_init_svtype(gv, faking_it ? SVt_PVCV : sv_type);
     return gv;
 }
 
@@ -1439,36 +2035,27 @@ void
 Perl_gv_fullname4(pTHX_ SV *sv, const GV *gv, const char *prefix, bool keepmain)
 {
     const char *name;
-    STRLEN namelen;
     const HV * const hv = GvSTASH(gv);
 
     PERL_ARGS_ASSERT_GV_FULLNAME4;
 
-    if (!hv) {
-	SvOK_off(sv);
-	return;
-    }
     sv_setpv(sv, prefix ? prefix : "");
 
-    name = HvNAME_get(hv);
-    if (name) {
-	namelen = HvNAMELEN_get(hv);
-    } else {
-	name = "__ANON__";
-	namelen = 8;
-    }
-
-    if (keepmain || strNE(name, "main")) {
-	sv_catpvn(sv,name,namelen);
+    if (hv && (name = HvNAME(hv))) {
+      const STRLEN len = HvNAMELEN(hv);
+      if (keepmain || strnNE(name, "main", len)) {
+	sv_catpvn_flags(sv,name,len,HvNAMEUTF8(hv)?SV_CATUTF8:SV_CATBYTES);
 	sv_catpvs(sv,"::");
+      }
     }
-    sv_catpvn(sv,GvNAME(gv),GvNAMELEN(gv));
+    else sv_catpvs(sv,"__ANON__::");
+    sv_catsv(sv,sv_2mortal(newSVhek(GvNAME_HEK(gv))));
 }
 
 void
 Perl_gv_efullname4(pTHX_ SV *sv, const GV *gv, const char *prefix, bool keepmain)
 {
-    const GV * const egv = GvEGV(gv);
+    const GV * const egv = GvEGVx(gv);
 
     PERL_ARGS_ASSERT_GV_EFULLNAME4;
 
@@ -1496,7 +2083,8 @@ Perl_gv_check(pTHX_ const HV *stash)
 		if (hv != PL_defstash && hv != stash)
 		     gv_check(hv);              /* nested package */
 	    }
-	    else if (isALPHA(*HeKEY(entry))) {
+            else if ( *HeKEY(entry) != '_'
+                        && isIDFIRST_lazy_if(HeKEY(entry), HeUTF8(entry)) ) {
                 const char *file;
 		gv = MUTABLE_GV(HeVAL(entry));
 		if (SvTYPE(gv) != SVt_PVGV || GvMULTI(gv))
@@ -1510,22 +2098,26 @@ Perl_gv_check(pTHX_ const HV *stash)
 		    = gv_fetchfile_flags(file, HEK_LEN(GvFILE_HEK(gv)), 0);
 #endif
 		Perl_warner(aTHX_ packWARN(WARN_ONCE),
-			"Name \"%s::%s\" used only once: possible typo",
-			HvNAME_get(stash), GvNAME(gv));
+			"Name \"%"HEKf"::%"HEKf
+			"\" used only once: possible typo",
+                            HEKfARG(HvNAME_HEK(stash)),
+                            HEKfARG(GvNAME_HEK(gv)));
 	    }
 	}
     }
 }
 
 GV *
-Perl_newGVgen(pTHX_ const char *pack)
+Perl_newGVgen_flags(pTHX_ const char *pack, U32 flags)
 {
     dVAR;
+    PERL_ARGS_ASSERT_NEWGVGEN_FLAGS;
 
-    PERL_ARGS_ASSERT_NEWGVGEN;
-
-    return gv_fetchpv(Perl_form(aTHX_ "%s::_GEN_%ld", pack, (long)PL_gensym++),
-		      GV_ADD, SVt_PVGV);
+    return gv_fetchpv(Perl_form(aTHX_ "%"SVf"::_GEN_%ld",
+                                    SVfARG(newSVpvn_flags(pack, strlen(pack),
+                                            SVs_TEMP | flags)),
+                                (long)PL_gensym++),
+                      GV_ADD, SVt_PVGV);
 }
 
 /* hopefully this is only called on local symbol table entries */
@@ -1555,6 +2147,7 @@ Perl_gp_free(pTHX_ GV *gv)
 {
     dVAR;
     GP* gp;
+    int attempts = 100;
 
     if (!gv || !isGV_with_GP(gv) || !(gp = GvGP(gv)))
 	return;
@@ -1567,29 +2160,66 @@ Perl_gp_free(pTHX_ GV *gv)
     if (--gp->gp_refcnt > 0) {
 	if (gp->gp_egv == gv)
 	    gp->gp_egv = 0;
-	GvGP(gv) = 0;
+	GvGP_set(gv, NULL);
         return;
     }
 
-    if (gp->gp_file_hek)
-	unshare_hek(gp->gp_file_hek);
-    SvREFCNT_dec(gp->gp_sv);
-    SvREFCNT_dec(gp->gp_av);
-    /* FIXME - another reference loop GV -> symtab -> GV ?
-       Somehow gp->gp_hv can end up pointing at freed garbage.  */
-    if (gp->gp_hv && SvTYPE(gp->gp_hv) == SVt_PVHV) {
-	const char *hvname = HvNAME_get(gp->gp_hv);
-	if (PL_stashcache && hvname)
-	    (void)hv_delete(PL_stashcache, hvname, HvNAMELEN_get(gp->gp_hv),
-		      G_DISCARD);
-	SvREFCNT_dec(gp->gp_hv);
+    while (1) {
+      /* Copy and null out all the glob slots, so destructors do not see
+         freed SVs. */
+      HEK * const file_hek = gp->gp_file_hek;
+      SV  * const sv       = gp->gp_sv;
+      AV  * const av       = gp->gp_av;
+      HV  * const hv       = gp->gp_hv;
+      IO  * const io       = gp->gp_io;
+      CV  * const cv       = gp->gp_cv;
+      CV  * const form     = gp->gp_form;
+
+      gp->gp_file_hek = NULL;
+      gp->gp_sv       = NULL;
+      gp->gp_av       = NULL;
+      gp->gp_hv       = NULL;
+      gp->gp_io       = NULL;
+      gp->gp_cv       = NULL;
+      gp->gp_form     = NULL;
+
+      if (file_hek)
+	unshare_hek(file_hek);
+
+      SvREFCNT_dec(sv);
+      SvREFCNT_dec(av);
+      /* FIXME - another reference loop GV -> symtab -> GV ?
+         Somehow gp->gp_hv can end up pointing at freed garbage.  */
+      if (hv && SvTYPE(hv) == SVt_PVHV) {
+        const HEK *hvname_hek = HvNAME_HEK(hv);
+        if (PL_stashcache && hvname_hek)
+           (void)hv_delete(PL_stashcache, HEK_KEY(hvname_hek),
+                      (HEK_UTF8(hvname_hek) ? -HEK_LEN(hvname_hek) : HEK_LEN(hvname_hek)),
+                      G_DISCARD);
+	SvREFCNT_dec(hv);
+      }
+      SvREFCNT_dec(io);
+      SvREFCNT_dec(cv);
+      SvREFCNT_dec(form);
+
+      if (!gp->gp_file_hek
+       && !gp->gp_sv
+       && !gp->gp_av
+       && !gp->gp_hv
+       && !gp->gp_io
+       && !gp->gp_cv
+       && !gp->gp_form) break;
+
+      if (--attempts == 0) {
+	Perl_die(aTHX_
+	  "panic: gp_free failed to free glob pointer - "
+	  "something is repeatedly re-creating entries"
+	);
+      }
     }
-    SvREFCNT_dec(gp->gp_io);
-    SvREFCNT_dec(gp->gp_cv);
-    SvREFCNT_dec(gp->gp_form);
 
     Safefree(gp);
-    GvGP(gv) = 0;
+    GvGP_set(gv, NULL);
 }
 
 int
@@ -1656,7 +2286,7 @@ Perl_Gv_AMupdate(pTHX_ HV *stash, bool destructing)
     /* Work with "fallback" key, which we assume to be first in PL_AMG_names */
 
     /* Try to find via inheritance. */
-    GV *gv = gv_fetchmeth(stash, PL_AMG_names[0], 2, -1);
+    GV *gv = gv_fetchmeth_pvn(stash, PL_AMG_names[0], 2, -1, 0);
     SV * const sv = gv ? GvSV(gv) : NULL;
     CV* cv;
 
@@ -1690,14 +2320,15 @@ Perl_Gv_AMupdate(pTHX_ HV *stash, bool destructing)
 	   But if B overloads "bool", we may want to use it for
 	   numifying instead of C's "+0". */
 	if (i >= DESTROY_amg)
-	    gv = Perl_gv_fetchmeth_autoload(aTHX_ stash, cooky, l, 0);
+	    gv = Perl_gv_fetchmeth_pvn_autoload(aTHX_ stash, cooky, l, 0, 0);
 	else				/* Autoload taken care of below */
-	    gv = Perl_gv_fetchmeth(aTHX_ stash, cooky, l, -1);
+	    gv = Perl_gv_fetchmeth_pvn(aTHX_ stash, cooky, l, -1, 0);
         cv = 0;
         if (gv && (cv = GvCV(gv))) {
-	    const char *hvname;
-	    if (GvNAMELEN(CvGV(cv)) == 3 && strEQ(GvNAME(CvGV(cv)), "nil")
-		&& strEQ(hvname = HvNAME_get(GvSTASH(CvGV(cv))), "overload")) {
+	    if(GvNAMELEN(CvGV(cv)) == 3 && strEQ(GvNAME(CvGV(cv)), "nil")){
+	      const char * const hvname = HvNAME_get(GvSTASH(CvGV(cv)));
+	      if (hvname && HEK_LEN(HvNAME_HEK(GvSTASH(CvGV(cv)))) == 8
+	       && strEQ(hvname, "overload")) {
 		/* This is a hack to support autoloading..., while
 		   knowing *which* methods were declared as overloaded. */
 		/* GvSV contains the name of the method. */
@@ -1706,25 +2337,32 @@ Perl_Gv_AMupdate(pTHX_ HV *stash, bool destructing)
 
 		DEBUG_o( Perl_deb(aTHX_ "Resolving method \"%"SVf256\
 			"\" for overloaded \"%s\" in package \"%.256s\"\n",
-			     (void*)GvSV(gv), cp, hvname) );
+			     (void*)GvSV(gv), cp, HvNAME(stash)) );
 		if (!gvsv || !SvPOK(gvsv)
-		    || !(ngv = gv_fetchmethod_autoload(stash, SvPVX_const(gvsv),
-						       FALSE)))
+		    || !(ngv = gv_fetchmethod_sv_flags(stash, gvsv, 0)))
 		{
 		    /* Can be an import stub (created by "can"). */
 		    if (destructing) {
 			return -1;
 		    }
 		    else {
-			const char * const name = (gvsv && SvPOK(gvsv)) ?  SvPVX_const(gvsv) : "???";
-			Perl_croak(aTHX_ "%s method \"%.256s\" overloading \"%s\" "\
-				    "in package \"%.256s\"",
+			const SV * const name = (gvsv && SvPOK(gvsv))
+                                                    ? gvsv
+                                                    : newSVpvs_flags("???", SVs_TEMP);
+			/* diag_listed_as: Can't resolve method "%s" overloading "%s" in package "%s" */
+			Perl_croak(aTHX_ "%s method \"%"SVf256
+				    "\" overloading \"%s\" "\
+				    "in package \"%"HEKf256"\"",
 				   (GvCVGEN(gv) ? "Stub found while resolving"
 				    : "Can't resolve"),
-				   name, cp, hvname);
+				   SVfARG(name), cp,
+                                   HEKfARG(
+					HvNAME_HEK(stash)
+				   ));
 		    }
 		}
 		cv = GvCV(gv = ngv);
+	      }
 	    }
 	    DEBUG_o( Perl_deb(aTHX_ "Overloading \"%s\" in package \"%.256s\" via \"%.256s::%.256s\"\n",
 			 cp, HvNAME_get(stash), HvNAME_get(GvSTASH(CvGV(cv))),
@@ -1776,7 +2414,7 @@ Perl_gv_handler(pTHX_ HV *stash, I32 id)
       do_update:
 	/* If we're looking up a destructor to invoke, we must avoid
 	 * that Gv_AMupdate croaks, because we might be dying already */
-	if (Gv_AMupdate(stash, id == DESTROY_amg) == -1) {
+	if (Gv_AMupdate(stash, cBOOL(id == DESTROY_amg)) == -1) {
 	    /* and if it didn't found a destructor, we fall back
 	     * to a simpler method that will only look for the
 	     * destructor instead of the whole magic */
@@ -1813,6 +2451,156 @@ Perl_gv_handler(pTHX_ HV *stash, I32 id)
 }
 
 
+/* Implement tryAMAGICun_MG macro.
+   Do get magic, then see if the stack arg is overloaded and if so call it.
+   Flags:
+	AMGf_set     return the arg using SETs rather than assigning to
+		     the targ
+	AMGf_numeric apply sv_2num to the stack arg.
+*/
+
+bool
+Perl_try_amagic_un(pTHX_ int method, int flags) {
+    dVAR;
+    dSP;
+    SV* tmpsv;
+    SV* const arg = TOPs;
+
+    SvGETMAGIC(arg);
+
+    if (SvAMAGIC(arg) && (tmpsv = amagic_call(arg, &PL_sv_undef, method,
+					      AMGf_noright | AMGf_unary))) {
+	if (flags & AMGf_set) {
+	    SETs(tmpsv);
+	}
+	else {
+	    dTARGET;
+	    if (SvPADMY(TARG)) {
+		sv_setsv(TARG, tmpsv);
+		SETTARG;
+	    }
+	    else
+		SETs(tmpsv);
+	}
+	PUTBACK;
+	return TRUE;
+    }
+
+    if ((flags & AMGf_numeric) && SvROK(arg))
+	*sp = sv_2num(arg);
+    return FALSE;
+}
+
+
+/* Implement tryAMAGICbin_MG macro.
+   Do get magic, then see if the two stack args are overloaded and if so
+   call it.
+   Flags:
+	AMGf_set     return the arg using SETs rather than assigning to
+		     the targ
+	AMGf_assign  op may be called as mutator (eg +=)
+	AMGf_numeric apply sv_2num to the stack arg.
+*/
+
+bool
+Perl_try_amagic_bin(pTHX_ int method, int flags) {
+    dVAR;
+    dSP;
+    SV* const left = TOPm1s;
+    SV* const right = TOPs;
+
+    SvGETMAGIC(left);
+    if (left != right)
+	SvGETMAGIC(right);
+
+    if (SvAMAGIC(left) || SvAMAGIC(right)) {
+	SV * const tmpsv = amagic_call(left, right, method,
+		    ((flags & AMGf_assign) && opASSIGN ? AMGf_assign: 0));
+	if (tmpsv) {
+	    if (flags & AMGf_set) {
+		(void)POPs;
+		SETs(tmpsv);
+	    }
+	    else {
+		dATARGET;
+		(void)POPs;
+		if (opASSIGN || SvPADMY(TARG)) {
+		    sv_setsv(TARG, tmpsv);
+		    SETTARG;
+		}
+		else
+		    SETs(tmpsv);
+	    }
+	    PUTBACK;
+	    return TRUE;
+	}
+    }
+    if(left==right && SvGMAGICAL(left)) {
+	SV * const left = sv_newmortal();
+	*(sp-1) = left;
+	/* Print the uninitialized warning now, so it includes the vari-
+	   able name. */
+	if (!SvOK(right)) {
+	    if (ckWARN(WARN_UNINITIALIZED)) report_uninit(right);
+	    sv_setsv_flags(left, &PL_sv_no, 0);
+	}
+	else sv_setsv_flags(left, right, 0);
+	SvGETMAGIC(right);
+    }
+    if (flags & AMGf_numeric) {
+	if (SvROK(TOPm1s))
+	    *(sp-1) = sv_2num(TOPm1s);
+	if (SvROK(right))
+	    *sp     = sv_2num(right);
+    }
+    return FALSE;
+}
+
+SV *
+Perl_amagic_deref_call(pTHX_ SV *ref, int method) {
+    SV *tmpsv = NULL;
+
+    PERL_ARGS_ASSERT_AMAGIC_DEREF_CALL;
+
+    while (SvAMAGIC(ref) && 
+	   (tmpsv = amagic_call(ref, &PL_sv_undef, method,
+				AMGf_noright | AMGf_unary))) { 
+	if (!SvROK(tmpsv))
+	    Perl_croak(aTHX_ "Overloaded dereference did not return a reference");
+	if (tmpsv == ref || SvRV(tmpsv) == SvRV(ref)) {
+	    /* Bail out if it returns us the same reference.  */
+	    return tmpsv;
+	}
+	ref = tmpsv;
+    }
+    return tmpsv ? tmpsv : ref;
+}
+
+bool
+Perl_amagic_is_enabled(pTHX_ int method)
+{
+      SV *lex_mask = cop_hints_fetch_pvs(PL_curcop, "overloading", 0);
+
+      assert(PL_curcop->cop_hints & HINT_NO_AMAGIC);
+
+      if ( !lex_mask || !SvOK(lex_mask) )
+	  /* overloading lexically disabled */
+	  return FALSE;
+      else if ( lex_mask && SvPOK(lex_mask) ) {
+	  /* we have an entry in the hints hash, check if method has been
+	   * masked by overloading.pm */
+	  STRLEN len;
+	  const int offset = method / 8;
+	  const int bit    = method % 8;
+	  char *pv = SvPV(lex_mask, len);
+
+	  /* Bit set, so this overloading operator is disabled */
+	  if ( (STRLEN)offset < len && pv[offset] & ( 1 << bit ) )
+	      return FALSE;
+      }
+      return TRUE;
+}
+
 SV*
 Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
 {
@@ -1825,6 +2613,7 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
   int postpr = 0, force_cpy = 0;
   int assign = AMGf_assign & flags;
   const int assignshift = assign ? 1 : 0;
+  int use_default_op = 0;
 #ifdef DEBUGGING
   int fl=0;
 #endif
@@ -1833,24 +2622,7 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
   PERL_ARGS_ASSERT_AMAGIC_CALL;
 
   if ( PL_curcop->cop_hints & HINT_NO_AMAGIC ) {
-      SV *lex_mask = Perl_refcounted_he_fetch(aTHX_ PL_curcop->cop_hints_hash,
-					      0, "overloading", 11, 0, 0);
-
-      if ( !lex_mask || !SvOK(lex_mask) )
-	  /* overloading lexically disabled */
-	  return NULL;
-      else if ( lex_mask && SvPOK(lex_mask) ) {
-	  /* we have an entry in the hints hash, check if method has been
-	   * masked by overloading.pm */
-	  STRLEN len;
-	  const int offset = method / 8;
-	  const int bit    = method % 8;
-	  char *pv = SvPV(lex_mask, len);
-
-	  /* Bit set, so this overloading operator is disabled */
-	  if ( (STRLEN)offset < len && pv[offset] & ( 1 << bit ) )
-	      return NULL;
-      }
+      if (!amagic_is_enabled(method)) return NULL;
   }
 
   if (!(AMGf_noleft & flags) && SvAMAGIC(left)
@@ -1989,9 +2761,8 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
 	       && (cv = cvp[off=method])) { /* Method for right
 					     * argument found */
       lr=1;
-    } else if (((ocvp && oamtp->fallback > AMGfallNEVER
-		 && (cvp=ocvp) && (lr = -1))
-		|| (cvp && amtp->fallback > AMGfallNEVER && (lr=1)))
+    } else if (((cvp && amtp->fallback > AMGfallNEVER)
+                || (ocvp && oamtp->fallback > AMGfallNEVER))
 	       && !(flags & AMGf_unary)) {
 				/* We look for substitution for
 				 * comparison operations and
@@ -2019,7 +2790,17 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
              off = scmp_amg;
              break;
 	 }
-      if ((off != -1) && (cv = cvp[off]))
+      if (off != -1) {
+          if (ocvp && (oamtp->fallback > AMGfallNEVER)) {
+              cv = ocvp[off];
+              lr = -1;
+          }
+          if (!cv && (cvp && amtp->fallback > AMGfallNEVER)) {
+              cv = cvp[off];
+              lr = 1;
+          }
+      }
+      if (cv)
           postpr = 1;
       else
           goto not_found;
@@ -2039,32 +2820,35 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
 	notfound = 1; lr = -1;
       } else if (cvp && (cv=cvp[nomethod_amg])) {
 	notfound = 1; lr = 1;
-      } else if ((amtp && amtp->fallback >= AMGfallYES) && !DEBUG_o_TEST) {
+      } else if ((use_default_op =
+                  (!ocvp || oamtp->fallback >= AMGfallYES)
+                  && (!cvp || amtp->fallback >= AMGfallYES))
+                 && !DEBUG_o_TEST) {
 	/* Skip generating the "no method found" message.  */
 	return NULL;
       } else {
 	SV *msg;
 	if (off==-1) off=method;
 	msg = sv_2mortal(Perl_newSVpvf(aTHX_
-		      "Operation \"%s\": no method found,%sargument %s%s%s%s",
-		      AMG_id2name(method + assignshift),
-		      (flags & AMGf_unary ? " " : "\n\tleft "),
-		      SvAMAGIC(left)?
-		        "in overloaded package ":
-		        "has no overloaded magic",
-		      SvAMAGIC(left)?
-		        HvNAME_get(SvSTASH(SvRV(left))):
-		        "",
-		      SvAMAGIC(right)?
-		        ",\n\tright argument in overloaded package ":
-		        (flags & AMGf_unary
-			 ? ""
-			 : ",\n\tright argument has no overloaded magic"),
-		      SvAMAGIC(right)?
-		        HvNAME_get(SvSTASH(SvRV(right))):
-		        ""));
-	if (amtp && amtp->fallback >= AMGfallYES) {
-	  DEBUG_o( Perl_deb(aTHX_ "%s", SvPVX_const(msg)) );
+		      "Operation \"%s\": no method found,%sargument %s%"SVf"%s%"SVf,
+ 		      AMG_id2name(method + assignshift),
+ 		      (flags & AMGf_unary ? " " : "\n\tleft "),
+ 		      SvAMAGIC(left)?
+ 		        "in overloaded package ":
+ 		        "has no overloaded magic",
+ 		      SvAMAGIC(left)?
+		        SVfARG(sv_2mortal(newSVhek(HvNAME_HEK(SvSTASH(SvRV(left)))))):
+		        SVfARG(&PL_sv_no),
+ 		      SvAMAGIC(right)?
+ 		        ",\n\tright argument in overloaded package ":
+ 		        (flags & AMGf_unary
+ 			 ? ""
+ 			 : ",\n\tright argument has no overloaded magic"),
+ 		      SvAMAGIC(right)?
+		        SVfARG(sv_2mortal(newSVhek(HvNAME_HEK(SvSTASH(SvRV(right)))))):
+		        SVfARG(&PL_sv_no)));
+        if (use_default_op) {
+	  DEBUG_o( Perl_deb(aTHX_ "%"SVf, SVfARG(msg)) );
 	} else {
 	  Perl_croak(aTHX_ "%"SVf, SVfARG(msg));
 	}
@@ -2076,7 +2860,7 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
 #ifdef DEBUGGING
   if (!notfound) {
     DEBUG_o(Perl_deb(aTHX_
-		     "Overloaded operator \"%s\"%s%s%s:\n\tmethod%s found%s in package %s%s\n",
+		     "Overloaded operator \"%s\"%s%s%s:\n\tmethod%s found%s in package %"SVf"%s\n",
 		     AMG_id2name(off),
 		     method+assignshift==off? "" :
 		     " (initially \"",
@@ -2086,7 +2870,7 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
 		     flags & AMGf_unary? "" :
 		     lr==1 ? " for right argument": " for left argument",
 		     flags & AMGf_unary? " for argument" : "",
-		     stash ? HvNAME_get(stash) : "null",
+		     stash ? SVfARG(sv_2mortal(newSVhek(HvNAME_HEK(stash)))) : SVfARG(newSVpvs_flags("null", SVs_TEMP)),
 		     fl? ",\n\tassignment variant used": "") );
   }
 #endif
@@ -2112,10 +2896,21 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
     /*	off is method, method+assignshift, or a result of opcode substitution.
      *	In the latter case assignshift==0, so only notfound case is important.
      */
-  if (( (method + assignshift == off)
+  if ( (lr == -1) && ( ( (method + assignshift == off)
 	&& (assign || (method == inc_amg) || (method == dec_amg)))
-      || force_cpy)
-    RvDEEPCP(left);
+      || force_cpy) )
+  {
+      /* newSVsv does not behave as advertised, so we copy missing
+       * information by hand */
+      SV *tmpRef = SvRV(left);
+      SV *rv_copy;
+      if (SvREFCNT(tmpRef) > 1 && (rv_copy = AMG_CALLunary(left,copy_amg))) {
+	  SvRV_set(left, rv_copy);
+	  SvSETMAGIC(left);
+	  SvREFCNT_dec(tmpRef);  
+      }
+  }
+
   {
     dSP;
     BINOP myop;
@@ -2135,7 +2930,7 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
     if (PERLDB_SUB && PL_curstash != PL_debstash)
 	PL_op->op_private |= OPpENTERSUB_DB;
     PUTBACK;
-    pp_pushmark();
+    Perl_pp_pushmark(aTHX);
 
     EXTEND(SP, notfound + 5);
     PUSHs(lr>0? right: left);
@@ -2199,148 +2994,6 @@ Perl_amagic_call(pTHX_ SV *left, SV *right, int method, int flags)
   }
 }
 
-/*
-=for apidoc is_gv_magical_sv
-
-Returns C<TRUE> if given the name of a magical GV.
-
-Currently only useful internally when determining if a GV should be
-created even in rvalue contexts.
-
-C<flags> is not used at present but available for future extension to
-allow selecting particular classes of magical variable.
-
-Currently assumes that C<name> is NUL terminated (as well as len being valid).
-This assumption is met by all callers within the perl core, which all pass
-pointers returned by SvPV.
-
-=cut
-*/
-
-bool
-Perl_is_gv_magical_sv(pTHX_ SV *const name_sv, U32 flags)
-{
-    STRLEN len;
-    const char *const name = SvPV_const(name_sv, len);
-
-    PERL_UNUSED_ARG(flags);
-    PERL_ARGS_ASSERT_IS_GV_MAGICAL_SV;
-
-    if (len > 1) {
-	const char * const name1 = name + 1;
-	switch (*name) {
-	case 'I':
-	    if (len == 3 && name[1] == 'S' && name[2] == 'A')
-		goto yes;
-	    break;
-	case 'O':
-	    if (len == 8 && strEQ(name1, "VERLOAD"))
-		goto yes;
-	    break;
-	case 'S':
-	    if (len == 3 && name[1] == 'I' && name[2] == 'G')
-		goto yes;
-	    break;
-	    /* Using ${^...} variables is likely to be sufficiently rare that
-	       it seems sensible to avoid the space hit of also checking the
-	       length.  */
-	case '\017':   /* ${^OPEN} */
-	    if (strEQ(name1, "PEN"))
-		goto yes;
-	    break;
-	case '\024':   /* ${^TAINT} */
-	    if (strEQ(name1, "AINT"))
-		goto yes;
-	    break;
-	case '\025':	/* ${^UNICODE} */
-	    if (strEQ(name1, "NICODE"))
-		goto yes;
-	    if (strEQ(name1, "TF8LOCALE"))
-		goto yes;
-	    break;
-	case '\027':   /* ${^WARNING_BITS} */
-	    if (strEQ(name1, "ARNING_BITS"))
-		goto yes;
-	    break;
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-	{
-	    const char *end = name + len;
-	    while (--end > name) {
-		if (!isDIGIT(*end))
-		    return FALSE;
-	    }
-	    goto yes;
-	}
-	}
-    } else {
-	/* Because we're already assuming that name is NUL terminated
-	   below, we can treat an empty name as "\0"  */
-	switch (*name) {
-	case '&':
-	case '`':
-	case '\'':
-	case ':':
-	case '?':
-	case '!':
-	case '-':
-	case '#':
-	case '[':
-	case '^':
-	case '~':
-	case '=':
-	case '%':
-	case '.':
-	case '(':
-	case ')':
-	case '<':
-	case '>':
-	case '\\':
-	case '/':
-	case '|':
-	case '+':
-	case ';':
-	case ']':
-	case '\001':   /* $^A */
-	case '\003':   /* $^C */
-	case '\004':   /* $^D */
-	case '\005':   /* $^E */
-	case '\006':   /* $^F */
-	case '\010':   /* $^H */
-	case '\011':   /* $^I, NOT \t in EBCDIC */
-	case '\014':   /* $^L */
-	case '\016':   /* $^N */
-	case '\017':   /* $^O */
-	case '\020':   /* $^P */
-	case '\023':   /* $^S */
-	case '\024':   /* $^T */
-	case '\026':   /* $^V */
-	case '\027':   /* $^W */
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-	yes:
-	    return TRUE;
-	default:
-	    break;
-	}
-    }
-    return FALSE;
-}
-
 void
 Perl_gv_name_set(pTHX_ GV *gv, const char *name, U32 len, U32 flags)
 {
@@ -2348,7 +3001,6 @@ Perl_gv_name_set(pTHX_ GV *gv, const char *name, U32 len, U32 flags)
     U32 hash;
 
     PERL_ARGS_ASSERT_GV_NAME_SET;
-    PERL_UNUSED_ARG(flags);
 
     if (len > I32_MAX)
 	Perl_croak(aTHX_ "panic: gv name too long (%"UVuf")", (UV) len);
@@ -2358,7 +3010,7 @@ Perl_gv_name_set(pTHX_ GV *gv, const char *name, U32 len, U32 flags)
     }
 
     PERL_HASH(hash, name, len);
-    GvNAME_HEK(gv) = share_hek(name, len, hash);
+    GvNAME_HEK(gv) = share_hek(name, (flags & SVf_UTF8 ? -(I32)len : (I32)len), hash);
 }
 
 /*
@@ -2389,13 +3041,28 @@ Perl_gv_try_downgrade(pTHX_ GV *gv)
     HEK *namehek;
     SV **gvp;
     PERL_ARGS_ASSERT_GV_TRY_DOWNGRADE;
+
+    /* XXX Why and where does this leave dangling pointers during global
+       destruction? */
+    if (PL_phase == PERL_PHASE_DESTRUCT) return;
+
     if (!(SvREFCNT(gv) == 1 && SvTYPE(gv) == SVt_PVGV && !SvFAKE(gv) &&
-	    !SvOBJECT(gv) && !SvMAGICAL(gv) && !SvREADONLY(gv) &&
+	    !SvOBJECT(gv) && !SvREADONLY(gv) &&
 	    isGV_with_GP(gv) && GvGP(gv) &&
 	    !GvINTRO(gv) && GvREFCNT(gv) == 1 &&
 	    !GvSV(gv) && !GvAV(gv) && !GvHV(gv) && !GvIOp(gv) && !GvFORM(gv) &&
-	    GvEGV(gv) == gv && (stash = GvSTASH(gv))))
+	    GvEGVx(gv) == gv && (stash = GvSTASH(gv))))
 	return;
+    if (SvMAGICAL(gv)) {
+        MAGIC *mg;
+	/* only backref magic is allowed */
+	if (SvGMAGICAL(gv) || SvSMAGICAL(gv))
+	    return;
+        for (mg = SvMAGIC(gv); mg; mg = mg->mg_moremagic) {
+            if (mg->mg_type != PERL_MAGIC_backref)
+                return;
+	}
+    }
     cv = GvCV(gv);
     if (!cv) {
 	HEK *gvnhek = GvNAME_HEK(gv);
@@ -2419,6 +3086,16 @@ Perl_gv_try_downgrade(pTHX_ GV *gv)
 				STRUCT_OFFSET(XPVIV, xiv_iv));
 	SvRV_set(gv, value);
     }
+}
+
+#include "XSUB.h"
+
+static void
+core_xsub(pTHX_ CV* cv)
+{
+    Perl_croak(aTHX_
+       "&CORE::%s cannot be called directly", GvNAME(CvGV(cv))
+    );
 }
 
 /*

@@ -176,7 +176,7 @@ i_sysmode='undef'
 
 # There was a bug in memcmp (which was fixed a while ago) which sometimes
 # fails to provide the correct compare status (it is data dependant). I
-# don't wnat to figure out if you are building with the correct version or
+# don't want to figure out if you are building with the correct version or
 # not, so just pretend there is no memcmp (since perl has its own handy
 # substitute).
 #
@@ -200,7 +200,7 @@ dont_use_nlink=define
 
 # Configure comes up with the wrong type for these for some reason.  The
 # pointers shouldn't have const in them. (And it looks like I have to
-# provide netdb_hlen_type as well becuase when I predefine the others it
+# provide netdb_hlen_type as well because when I predefine the others it
 # comes up empty :-).
 #
 netdb_host_type='char *'

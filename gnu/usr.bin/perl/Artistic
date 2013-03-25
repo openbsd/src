@@ -2,9 +2,9 @@
 
 
 
-			 The "Artistic License"
+                         The "Artistic License"
 
-				Preamble
+                                Preamble
 
 The intent of this document is to state the conditions under which a
 Package may be copied, such that the Copyright Holder maintains some
@@ -15,30 +15,30 @@ reasonable modifications.
 
 Definitions:
 
-	"Package" refers to the collection of files distributed by the
-	Copyright Holder, and derivatives of that collection of files
-	created through textual modification.
+        "Package" refers to the collection of files distributed by the
+        Copyright Holder, and derivatives of that collection of files
+        created through textual modification.
 
-	"Standard Version" refers to such a Package if it has not been
-	modified, or has been modified in accordance with the wishes
-	of the Copyright Holder as specified below.
+        "Standard Version" refers to such a Package if it has not been
+        modified, or has been modified in accordance with the wishes
+        of the Copyright Holder as specified below.
 
-	"Copyright Holder" is whoever is named in the copyright or
-	copyrights for the package.
+        "Copyright Holder" is whoever is named in the copyright or
+        copyrights for the package.
 
-	"You" is you, if you're thinking about copying or distributing
-	this Package.
+        "You" is you, if you're thinking about copying or distributing
+        this Package.
 
-	"Reasonable copying fee" is whatever you can justify on the
-	basis of media cost, duplication charges, time of people involved,
-	and so on.  (You will not be required to justify it to the
-	Copyright Holder, but only to the computing community at large
-	as a market that must bear the fee.)
+        "Reasonable copying fee" is whatever you can justify on the
+        basis of media cost, duplication charges, time of people involved,
+        and so on.  (You will not be required to justify it to the
+        Copyright Holder, but only to the computing community at large
+        as a market that must bear the fee.)
 
-	"Freely Available" means that no fee is charged for the item
-	itself, though there may be fees involved in handling the item.
-	It also means that recipients of the item may redistribute it
-	under the same conditions they received it.
+        "Freely Available" means that no fee is charged for the item
+        itself, though there may be fees involved in handling the item.
+        It also means that recipients of the item may redistribute it
+        under the same conditions they received it.
 
 1. You may make and give away verbatim copies of the source form of the
 Standard Version of this Package without restriction, provided that you
@@ -128,4 +128,4 @@ products derived from this software without specific prior written permission.
 IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
-				The End
+                                The End

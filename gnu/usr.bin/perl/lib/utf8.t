@@ -13,6 +13,8 @@ EOF
     }
 }
 
+use strict;
+use warnings;
 no utf8; # Ironic, no?
 
 # NOTE!
@@ -36,8 +38,6 @@ no utf8; # Ironic, no?
 #     is hard -- maybe consider breaking up the complicated test
 #
 #
-
-plan tests => 150;
 
 {
     # bug id 20001009.001
@@ -111,9 +111,6 @@ plan tests => 150;
 }
 
 {
-    use warnings;
-    use strict;
-
     my $show = q(
                  sub show {
                    my $result;
@@ -329,8 +326,9 @@ END
 SKIP: {
     skip("Embedded UTF-8 does not work in EBCDIC", 1) if ord("A") == 193;
     use utf8;
-    eval qq{is(q \xc3\xbc test \xc3\xbc, qq\xc2\xb7 test \xc2\xb7,
-	       "utf8 quote delimiters [perl #16823]");};
+    is eval qq{q \xc3\xbc test \xc3\xbc . qq\xc2\xb7 test \xc2\xb7},
+      ' test  test ',
+      "utf8 quote delimiters [perl #16823]";
 }
 
 # Test the "internals".
@@ -429,6 +427,40 @@ SKIP: {
 }
 
 {
+    # Make sure utf8::decode respects copy-on-write [perl #91834].
+    # Hash keys are the easiest way to test this.
+    my $name = "\x{c3}\x{b3}";
+    my ($k1) = keys %{ { $name=>undef } };
+    my $k2 = $name;
+    utf8::decode($k1);
+    utf8::decode($k2);
+    my $h = { $k1 => 1, $k2 => 2 };
+    is join('', keys $h), $k2, 'utf8::decode respects copy-on-write';
+}
+
+{
+    # Make sure utf8::decode does not modify read-only scalars
+    # [perl #91850].
+    
+    my $name = "\x{c3}\x{b3}";
+    Internals::SvREADONLY($name, 1);
+    eval { utf8::decode($name) };
+    like $@, qr/^Modification of a read-only/,
+	'utf8::decode respects readonliness';
+}
+
+{
+    # utf8::decode should stringify refs [perl #91850].
+
+    package eieifg { use overload '""'      => sub { "\x{c3}\x{b3}" },
+                                   fallback => 1 }
+
+    my $name = bless[], eieifg::;
+    utf8::decode($name);
+    is $name, "\xf3", 'utf8::decode flattens references';
+}
+
+{
     my $a = "456\xb6";
     utf8::upgrade($a);
 
@@ -451,3 +483,87 @@ SKIP: {
     ok(utf8::valid(chr(0x270)), "0x270");
     ok(utf8::valid(chr(0x280)), "0x280");
 }
+
+{
+   use utf8;
+   ok( !utf8::is_utf8( "asd"         ), "Wasteful format - qq{}" );
+   ok( !utf8::is_utf8( 'asd'         ), "Wasteful format - q{}" );
+   ok( !utf8::is_utf8( qw(asd)       ), "Wasteful format - qw{}" );
+   ok( !utf8::is_utf8( (asd => 1)[0] ), "Wasteful format - =>" );
+   ok( !utf8::is_utf8( -asd          ), "Wasteful format - -word" );
+   no warnings 'bareword';
+   ok( !utf8::is_utf8( asd::         ), "Wasteful format - word::" );
+   no warnings 'reserved';
+   no strict 'subs';
+   ok( !utf8::is_utf8( asd           ), "Wasteful format - bareword" );
+}
+
+{
+    my @highest =
+	(undef, 0x7F, 0x7FF, 0xFFFF, 0x1FFFFF, 0x3FFFFFF, 0x7FFFFFFF);
+    my @step =
+	(undef, undef, 0x40, 0x1000, 0x40000, 0x1000000, 0x40000000);
+
+    foreach my $length (6, 5, 4, 3, 2) {
+	my $high = $highest[$length];
+	while ($high > $highest[$length - 1]) {
+	    my $low = $high - $step[$length] + 1;
+	    $low = $highest[$length - 1] + 1 if $low <= $highest[$length - 1];
+	    ok(utf8::valid(do {no warnings 'utf8'; chr $low}),
+	       sprintf "chr %x, length $length is valid", $low);
+	    ok(utf8::valid(do {no warnings 'utf8'; chr $high}),
+	       sprintf "chr %x, length $length is valid", $high);
+	    $high -= $step[$length];
+	}
+    }
+}
+
+# #80190 update pos, and cached length/position-mapping after
+# utf8 upgrade/downgrade, encode/decode
+
+for my $pos (0..5) {
+
+    my $pos1 = ($pos >= 3)  ? 2 : ($pos >= 1) ? 1 : 0;
+    my $pos2 = ($pos1 == 2) ? 3 : $pos1;
+
+    my $p;
+    my $s = "A\xc8\x81\xe8\xab\x86\x{100}";
+    chop($s);
+
+    pos($s) = $pos;
+    # also sets cache
+    is(length($s), 6,		   "(pos $pos) len before    utf8::downgrade");
+    is(pos($s),    $pos,	   "(pos $pos) pos before    utf8::downgrade");
+    utf8::downgrade($s);
+    is(length($s), 6,		   "(pos $pos) len after     utf8::downgrade");
+    is(pos($s),    $pos,	   "(pos $pos) pos after     utf8::downgrade");
+    is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after     utf8::downgrade");
+    utf8::decode($s);
+    is(length($s), 3,		   "(pos $pos) len after  D; utf8::decode");
+    is(pos($s),    $pos1,	   "(pos $pos) pos after  D; utf8::decode");
+    is($s, "A\x{201}\x{8ac6}",	   "(pos $pos) str after  D; utf8::decode");
+    utf8::encode($s);
+    is(length($s), 6,		   "(pos $pos) len after  D; utf8::encode");
+    is(pos($s),    $pos2,	   "(pos $pos) pos after  D; utf8::encode");
+    is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after  D; utf8::encode");
+
+    $s = "A\xc8\x81\xe8\xab\x86";
+
+    pos($s) = $pos;
+    is(length($s), 6,		   "(pos $pos) len before    utf8::upgrade");
+    is(pos($s),    $pos,	   "(pos $pos) pos before    utf8::upgrade");
+    utf8::upgrade($s);
+    is(length($s), 6,		   "(pos $pos) len after     utf8::upgrade");
+    is(pos($s),    $pos,	   "(pos $pos) pos after     utf8::upgrade");
+    is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after     utf8::upgrade");
+    utf8::decode($s);
+    is(length($s), 3,		   "(pos $pos) len after  U; utf8::decode");
+    is(pos($s),    $pos1,	   "(pos $pos) pos after  U; utf8::decode");
+    is($s, "A\x{201}\x{8ac6}",	   "(pos $pos) str after  U; utf8::decode");
+    utf8::encode($s);
+    is(length($s), 6,		   "(pos $pos) len after  U; utf8::encode");
+    is(pos($s),    $pos2,	   "(pos $pos) pos after  U; utf8::encode");
+    is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after  U; utf8::encode");
+}
+
+done_testing();

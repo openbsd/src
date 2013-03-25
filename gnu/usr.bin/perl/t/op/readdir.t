@@ -3,37 +3,39 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
+use strict;
+use warnings;
+use vars qw($fh @fh %fh);
+
 eval 'opendir(NOSUCH, "no/such/directory");';
-if ($@) { print "1..0\n"; exit; }
+skip_all($@) if $@;
 
-print "1..12\n";
-
-for $i (1..2000) {
+for my $i (1..2000) {
     local *OP;
     opendir(OP, "op") or die "can't opendir: $!";
     # should auto-closedir() here
 }
 
-if (opendir(OP, "op")) { print "ok 1\n"; } else { print "not ok 1\n"; }
-@D = grep(/^[^\.].*\.t$/i, readdir(OP));
+is(opendir(OP, "op"), 1);
+my @D = grep(/^[^\.].*\.t$/i, readdir(OP));
 closedir(OP);
 
-open $man, "<../MANIFEST" or die "Can't open ../MANIFEST: $!";
 my $expect;
-while (<$man>) {
-    ++$expect if m!^t/op/[^/]+\t!;
-}
-my ($min, $max) = ($expect - 10, $expect + 10);
-if (@D > $min && @D < $max) { print "ok 2\n"; }
-else {
-    printf "not ok 2 # counting op/*.t, expect $min < %d < $max files\n",
-      scalar @D;
+{
+    open my $man, '<', '../MANIFEST' or die "Can't open ../MANIFEST: $!";
+    while (<$man>) {
+	++$expect if m!^t/op/[^/]+\t!;
+    }
 }
 
-@R = sort @D;
-@G = sort <op/*.t>;
+my ($min, $max) = ($expect - 10, $expect + 10);
+within(scalar @D, $expect, 10, 'counting op/*.t');
+
+my @R = sort @D;
+my @G = sort <op/*.t>;
 if ($G[0] =~ m#.*\](\w+\.t)#i) {
     # grep is to convert filespecs returned from glob under VMS to format
     # identical to that returned by readdir
@@ -43,20 +45,26 @@ while (@R && @G && $G[0] eq 'op/'.$R[0]) {
 	shift(@R);
 	shift(@G);
 }
-if (@R == 0 && @G == 0) { print "ok 3\n"; } else { print "not ok 3\n"; }
+is(scalar @R, 0, 'readdir results all accounted for');
+is(scalar @G, 0, 'glob results all accounted for');
 
-if (opendir($fh, "op")) { print "ok 4\n"; } else { print "not ok 4\n"; }
-if (ref($fh) eq 'GLOB') { print "ok 5\n"; } else { print "not ok 5\n"; }
-if (opendir($fh[0], "op")) { print "ok 6\n"; } else { print "not ok 6\n"; }
-if (ref($fh[0]) eq 'GLOB') { print "ok 7\n"; } else { print "not ok 7\n"; }
-if (opendir($fh{abc}, "op")) { print "ok 8\n"; } else { print "not ok 8\n"; }
-if (ref($fh{abc}) eq 'GLOB') { print "ok 9\n"; } else { print "not ok 9\n"; }
-if ("$fh" ne "$fh[0]") { print "ok 10\n"; } else { print "not ok 10\n"; }
-if ("$fh" ne "$fh{abc}") { print "ok 11\n"; } else { print "not ok 11\n"; }
+is(opendir($fh, "op"), 1);
+is(ref $fh, 'GLOB');
+is(opendir($fh[0], "op"), 1);
+is(ref $fh[0], 'GLOB');
+is(opendir($fh{abc}, "op"), 1);
+is(ref $fh{abc}, 'GLOB');
+isnt("$fh", "$fh[0]");
+isnt("$fh", "$fh{abc}");
+
 # See that perl does not segfault upon readdir($x="."); 
 # http://rt.perl.org/rt3/Ticket/Display.html?id=68182
-eval {
+fresh_perl_like(<<'EOP', qr/^no crash/, {}, 'RT #68182');
+  eval {
     my $x = ".";
     my @files = readdir($x);
-};
-print "ok 12\n";
+  };
+  print "no crash";
+EOP
+
+done_testing();

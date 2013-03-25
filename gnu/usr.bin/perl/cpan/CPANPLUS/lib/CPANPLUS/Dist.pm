@@ -22,7 +22,7 @@ local $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Dist - base class for CPANPLUS::Dist::MM and CPANPLUS::Dist::Build
+CPANPLUS::Dist - base class for plugins
 
 =head1 SYNOPSIS
 
@@ -88,18 +88,18 @@ works. This will be set upon a successful create.
 
 =head2 $dist = CPANPLUS::Dist::YOUR_DIST_TYPE_HERE->new( module => MODOBJ );
 
-Create a new C<CPANPLUS::Dist::YOUR_DIST_TYPE_HERE> object based on the 
+Create a new C<CPANPLUS::Dist::YOUR_DIST_TYPE_HERE> object based on the
 provided C<MODOBJ>.
 
 *** DEPRECATED ***
 The optional argument C<format> is used to indicate what type of dist
-you would like to create (like C<CPANPLUS::Dist::MM> or 
+you would like to create (like C<CPANPLUS::Dist::MM> or
 C<CPANPLUS::Dist::Build> and so on ).
 
-C<< CPANPLUS::Dist->new >> is exlusively meant as a method to be
+C<< CPANPLUS::Dist->new >> is exclusively meant as a method to be
 inherited by C<CPANPLUS::Dist::MM|Build>.
 
-Returns a C<CPANPLUS::Dist::YOUR_DIST_TYPE_HERE> object on success 
+Returns a C<CPANPLUS::Dist::YOUR_DIST_TYPE_HERE> object on success
 and false on failure.
 
 =cut
@@ -114,7 +114,7 @@ sub new {
     my $tmpl = {
         module  => { required => 1, allow => IS_MODOBJ, store => \$mod },
         ### for backwards compatibility
-        format  => { default  => $class, store => \$format, 
+        format  => { default  => $class, store => \$format,
                      allow    => [ __PACKAGE__->dist_types ],
         },
     };
@@ -130,7 +130,7 @@ sub new {
     my $obj = $format->SUPER::new;
 
     $obj->mk_accessors( qw[parent status] );
-    
+
     ### set the parent
     $obj->parent( $mod );
 
@@ -139,7 +139,7 @@ sub new {
         $obj->status($acc);
 
         ### add minimum supported accessors
-        $acc->mk_accessors( qw[prepared created installed uninstalled 
+        $acc->mk_accessors( qw[prepared created installed uninstalled
                                distdir dist] );
     }
 
@@ -178,7 +178,7 @@ Returns a list of the CPANPLUS::Dist::* classes available
 
     ### backdoor method to add more dist types
     sub _add_dist_types     { my $self = shift; push @Dists,  @_ };
-    
+
     ### backdoor method to exclude dist types
     sub _ignore_dist_types  { my $self = shift; push @Ignore, @_ };
     sub _reset_dist_ignore  { @Ignore = () };
@@ -208,8 +208,8 @@ Returns a list of the CPANPLUS::Dist::* classes available
                             require     => 1,
                             except      => [ keys %except ]
                         );
-            my %ignore = map { $_ => $_ } @Ignore;                        
-                        
+            my %ignore = map { $_ => $_ } @Ignore;
+
             push @Dists, grep { not $ignore{$_} and not $except{$_} }
                 __PACKAGE__->_dist_types;
         }
@@ -224,12 +224,12 @@ C<CPANPLUS::Dist::*> classes and want to make them available to the
 current process.
 
 =cut
-    
+
     sub rescan_dist_types {
         my $dist    = shift;
         $Loaded     = 0;    # reset the flag;
         return $dist->dist_types;
-    }        
+    }
 }
 
 =head2 $bool = CPANPLUS::Dist->has_dist_type( $type )
@@ -241,9 +241,9 @@ Returns true if distribution type C<$type> is loaded/supported.
 sub has_dist_type {
     my $dist = shift;
     my $type = shift or return;
-    
+
     return scalar grep { $_ eq $type } CPANPLUS::Dist->dist_types;
-}    
+}
 
 =head2 $bool = $dist->prereq_satisfied( modobj => $modobj, version => $version_spec )
 
@@ -257,26 +257,26 @@ sub prereq_satisfied {
     my $dist = shift;
     my $cb   = $dist->parent->parent;
     my %hash = @_;
-  
+
     my($mod,$ver);
     my $tmpl = {
         version => { required => 1, store => \$ver },
         modobj  => { required => 1, store => \$mod, allow => IS_MODOBJ },
     };
-    
+
     check( $tmpl, \%hash ) or return;
-  
+
     return 1 if $mod->is_uptodate( version => $ver );
-  
+
     if ( $cb->_vcmp( $ver, $mod->version ) > 0 ) {
 
-        error(loc(  
+        error(loc(
                 "This distribution depends on %1, but the latest version".
                 " of %2 on CPAN (%3) doesn't satisfy the specific version".
                 " dependency (%4). You may have to resolve this dependency ".
-                "manually.", 
+                "manually.",
                 $mod->module, $mod->module, $mod->version, $ver ));
-  
+
     }
 
     return;
@@ -284,7 +284,7 @@ sub prereq_satisfied {
 
 =head2 $configure_requires = $dist->find_configure_requires( [file => /path/to/META.yml] )
 
-Reads the configure_requires for this distribution from the META.yml
+Reads the configure_requires for this distribution from the META.yml or META.json
 file in the root directory and returns a hashref with module names
 and versions required.
 
@@ -293,56 +293,112 @@ and versions required.
 sub find_configure_requires {
     my $self = shift;
     my $mod  = $self->parent;
+    my %hash = @_;
+
+    my ($meta);
+    my $href = {};
+
+    my $tmpl = {
+        file => { store => \$meta },
+    };
+
+    check( $tmpl, \%hash ) or return;
+
     my $meth = 'configure_requires';
-    
-    ### the prereqs as we have them now
-    my @args = ( 
+
+    {
+
+      ### the prereqs as we have them now
+      my @args = (
         defaults => $mod->status->$meth || {},
-        keys     => [ $meth ],
-    );
+      );
 
-    ### the default file to use, which may be overriden
-    push @args, ( file => META_YML->( $mod->status->extract ) )
-        if defined $mod->status->extract;
-        
-    my $href = $self->_prereqs_from_meta_file( @args, @_ );        
+      my @possibles = do { defined $mod->status->extract
+                           ? ( META_JSON->( $mod->status->extract ),
+                               META_YML->( $mod->status->extract ) )
+                           : ()
+                      };
 
-    ### and store it in the module
-    $mod->status->$meth( $href );
+      unshift @possibles, $meta if $meta;
 
-    return { %$href };
-}    
+      META: foreach my $mfile ( grep { -e } @possibles ) {
+          push @args, ( file => $mfile );
+          if ( $mfile =~ /\.json/ ) {
+            $href = $self->_prereqs_from_meta_json( @args, keys => [ 'configure' ] );
+          }
+          else {
+            $href = $self->_prereqs_from_meta_file( @args, keys => [ $meth ] );
+          }
+          last META;
+      }
 
-sub find_mymeta_requires {
-    my $self = shift;
-    my $mod  = $self->parent;
-    my $meth = 'prereqs';
-    
-    ### the prereqs as we have them now
-    my @args = ( 
-        defaults => $mod->status->$meth || {},
-        keys     => [qw|requires build_requires|],
-    );
-
-    ### the default file to use, which may be overriden
-    push @args, ( file => MYMETA_YML->( $mod->status->extract ) )
-        if defined $mod->status->extract;
-        
-    my $href = $self->_prereqs_from_meta_file( @args, @_ );        
+    }
 
     ### and store it in the module
     $mod->status->$meth( $href );
 
     return { %$href };
 }
-    
+
+sub find_mymeta_requires {
+    my $self = shift;
+    my $mod  = $self->parent;
+    my %hash = @_;
+
+    my ($meta);
+    my $href = {};
+
+    my $tmpl = {
+        file => { store => \$meta },
+    };
+
+    check( $tmpl, \%hash ) or return;
+
+    my $meth = 'prereqs';
+
+    {
+
+      ### the prereqs as we have them now
+      my @args = (
+        defaults => $mod->status->$meth || {},
+      );
+
+      my @possibles = do { defined $mod->status->extract
+                           ? ( MYMETA_JSON->( $mod->status->extract ),
+                               MYMETA_YML->( $mod->status->extract ) )
+                           : ()
+                      };
+
+      unshift @possibles, $meta if $meta;
+
+      META: foreach my $mfile ( grep { -e } @possibles ) {
+          push @args, ( file => $mfile );
+          if ( $mfile =~ /\.json/ ) {
+            $href = $self->_prereqs_from_meta_json( @args,
+                keys => [ qw|build test runtime| ] );
+          }
+          else {
+            $href = $self->_prereqs_from_meta_file( @args,
+                keys => [ qw|build_requires requires| ] );
+          }
+          last META;
+      }
+
+    }
+
+    ### and store it in the module
+    $mod->status->$meth( $href );
+
+    return { %$href };
+}
+
 sub _prereqs_from_meta_file {
     my $self = shift;
-    my $mod  = $self->parent;    
+    my $mod  = $self->parent;
     my %hash = @_;
 
     my( $meta, $defaults, $keys );
-    my $tmpl = {                ### check if we have an extract path. if not, we 
+    my $tmpl = {                ### check if we have an extract path. if not, we
                                 ### get 'undef value' warnings from file::spec
         file        => { default => do { defined $mod->status->extract
                                         ? META_YML->( $mod->status->extract )
@@ -353,17 +409,20 @@ sub _prereqs_from_meta_file {
                          store => \$defaults },
         keys        => { required => 1, default => [], strict_type => 1,
                          store => \$keys },
-    };                
-    
+    };
+
     check( $tmpl, \%hash ) or return;
-    
+
     ### if there's a meta file, we read it;
     if( -e $meta ) {
 
         ### Parse::CPAN::Meta uses exceptions for errors
         ### hash returned in list context!!!
+
+        local $ENV{PERL_JSON_BACKEND};
+
         my ($doc) = eval { Parse::CPAN::Meta::LoadFile( $meta ) };
-  
+
         unless( $doc ) {
             error(loc( "Could not read %1: '%2'", $meta, $@ ));
             return $defaults;
@@ -378,7 +437,64 @@ sub _prereqs_from_meta_file {
             } if $doc->{ $key };
         }
     }
-    
+
+    ### and return a copy
+    return \%{ $defaults };
+}
+
+sub _prereqs_from_meta_json {
+    my $self = shift;
+    my $mod  = $self->parent;
+    my %hash = @_;
+
+    my( $meta, $defaults, $keys );
+    my $tmpl = {                ### check if we have an extract path. if not, we
+                                ### get 'undef value' warnings from file::spec
+        file        => { default => do { defined $mod->status->extract
+                                        ? META_JSON->( $mod->status->extract )
+                                        : '' },
+                        store   => \$meta,
+                    },
+        defaults    => { required => 1, default => {}, strict_type => 1,
+                         store => \$defaults },
+        keys        => { required => 1, default => [], strict_type => 1,
+                         store => \$keys },
+    };
+
+    check( $tmpl, \%hash ) or return;
+
+    ### if there's a meta file, we read it;
+    if( -e $meta ) {
+
+        ### Parse::CPAN::Meta uses exceptions for errors
+        ### hash returned in list context!!!
+
+        local $ENV{PERL_JSON_BACKEND};
+
+        my ($doc) = eval { Parse::CPAN::Meta->load_file( $meta ) };
+
+        unless( $doc ) {
+            error(loc( "Could not read %1: '%2'", $meta, $@ ));
+            return $defaults;
+        }
+
+        ### read the keys now, make sure not to throw
+        ### away anything that was already added
+        #for my $key ( @$keys ) {
+        #    $defaults = {
+        #        %$defaults,
+        #        %{ $doc->{$key} },
+        #    } if $doc->{ $key };
+        #}
+        my $prereqs = $doc->{prereqs} || {};
+        for my $key ( @$keys ) {
+            $defaults = {
+                %$defaults,
+                %{ $prereqs->{$key}->{requires} },
+            } if $prereqs->{ $key }->{requires};
+        }
+    }
+
     ### and return a copy
     return \%{ $defaults };
 }
@@ -413,7 +529,7 @@ sub _resolve_prereqs {
     my $conf = $cb->configure_object;
     my %hash = @_;
 
-    my ($prereqs, $format, $verbose, $target, $force, $prereq_build);
+    my ($prereqs, $format, $verbose, $target, $force, $prereq_build,$tolerant);
     my $tmpl = {
         ### XXX perhaps this should not be required, since it may not be
         ### packaged, just installed...
@@ -433,6 +549,8 @@ sub _resolve_prereqs {
         target          => { default => '', store => \$target,
                                 allow => ['',qw[create ignore install]] },
         prereq_build    => { default => 0, store => \$prereq_build },
+        tolerant        => { default => $conf->get_conf('allow_unknown_prereqs'),
+                                store => \$tolerant },
     };
 
     check( $tmpl, \%hash ) or return;
@@ -451,7 +569,7 @@ sub _resolve_prereqs {
         PREREQ_IGNORE,  TARGET_IGNORE,
         PREREQ_INSTALL, TARGET_INSTALL,
     }->{ $conf->get_conf('prereqs') } || '';
-    
+
     ### XXX BIG NASTY HACK XXX FIXME at some point.
     ### when installing Bundle::CPANPLUS::Dependencies, we want to
     ### install all packages matching 'cpanplus' to be installed last,
@@ -466,7 +584,7 @@ sub _resolve_prereqs {
     ### we got a transparent implementation.. that would mean we would
     ### just have to remove the 'sort' here, and all will be well
     my @sorted_prereqs;
-    
+
     ### use regex, could either be a module name, or a package name
     if( $self->module =~ /^Bundle(::|-)CPANPLUS(::|-)Dependencies/ ) {
         my (@first, @last);
@@ -483,13 +601,15 @@ sub _resolve_prereqs {
     ### first, transfer this key/value pairing into a
     ### list of module objects + desired versions
     my @install_me;
-    
+
+    my $flag;
+
     for my $mod ( @sorted_prereqs ) {
-        my $version = $prereqs->{$mod};
-        
+        ( my $version = $prereqs->{$mod} ) =~ s#[^0-9\._]+##g;
+
         ### 'perl' is a special case, there's no mod object for it
         if( $mod eq PERL_CORE ) {
-            
+
             ### run a CLI invocation to see if the perl you specified is
             ### uptodate
             my $ok = run( command => "$^X -M$version -e1", verbose => 0 );
@@ -497,14 +617,14 @@ sub _resolve_prereqs {
             unless( $ok ) {
                 error(loc(  "Module '%1' needs perl version '%2', but you ".
                             "only have version '%3' -- can not proceed",
-                            $self->module, $version, 
+                            $self->module, $version,
                             $cb->_perl_version( perl => $^X ) ) );
-                return;                            
+                return;
             }
 
             next;
         }
-        
+
         my $modobj  = $cb->module_tree($mod);
 
         #### XXX we ignore the version, and just assume that the latest
@@ -514,14 +634,15 @@ sub _resolve_prereqs {
             my $sub = CPANPLUS::Module->can(
                         'module_is_supplied_with_perl_core' );
             my $core = $sub->( $mod );
-            unless ( $core ) {
+            unless ( defined $core ) {
                error( loc( "No such module '%1' found on CPAN", $mod ) );
+               $flag++ unless $tolerant;
                next;
             }
             if ( $cb->_vcmp( $version, $core ) > 0 ) {
                error(loc( "Version of core module '%1' ('%2') is too low for ".
-                          "'%3' (needs '%4') -- carrying on but this may be a problem", 
-                          $mod, $core, 
+                          "'%3' (needs '%4') -- carrying on but this may be a problem",
+                          $mod, $core,
                           $self->module, $version ));
             }
             next;
@@ -574,7 +695,6 @@ sub _resolve_prereqs {
         }
     }
 
-    my $flag;
     for my $aref (@install_me) {
         my($modobj,$version) = @$aref;
 
@@ -583,7 +703,7 @@ sub _resolve_prereqs {
         ### see bug [#11840]
         ### if either force or prereq_build are given, the prereq
         ### should be built anyway
-        next if (!$force and !$prereq_build) && 
+        next if (!$force and !$prereq_build) &&
                 $dist->prereq_satisfied(modobj => $modobj, version => $version);
 
         ### either we're told to ignore the prereq,
@@ -611,10 +731,10 @@ sub _resolve_prereqs {
         ### part of core?
         if( $modobj->package_is_perl_core ) {
             error(loc("Prerequisite '%1' is perl-core (%2) -- not ".
-                      "installing that. Aborting install",
+                      "installing that. -- Note that the overall ".
+                      "install may fail due to this.",
                       $modobj->module, $modobj->package ) );
-            $flag++;
-            last;
+            next;
         }
 
         ### circular dependency code ###
@@ -663,7 +783,7 @@ sub _resolve_prereqs {
                                      "-- weird", $modobj->module));
 
             $modobj->add_to_includepath();
-            
+
             next;
         }
     }
@@ -672,7 +792,7 @@ sub _resolve_prereqs {
     keys %$prereqs;
 
     ### chdir back to where we started
-    chdir $original_wd;
+    $cb->_chdir( dir => $original_wd );
 
     return 1 unless $flag;
     return;

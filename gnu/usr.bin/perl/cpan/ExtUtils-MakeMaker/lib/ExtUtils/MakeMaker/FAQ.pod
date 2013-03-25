@@ -1,6 +1,6 @@
 package ExtUtils::MakeMaker::FAQ;
 
-our $VERSION = '1.12';
+our $VERSION = '6.63_02';
 
 1;
 __END__
@@ -241,7 +241,7 @@ do that.  Use at your own risk.  Have fun blowing holes in your foot.
     use File::Spec;
     use File::Find;
     use ExtUtils::Manifest qw(maniread);
-    
+
     my %manifest = map  {( $_ => 1 )}
                    grep { File::Spec->canonpath($_) }
                         keys %{ maniread() };
@@ -250,14 +250,14 @@ do that.  Use at your own risk.  Have fun blowing holes in your foot.
         print "No files found in MANIFEST.  Stopping.\n";
         exit;
     }
-    
+
     find({
           wanted   => sub {
               my $path = File::Spec->canonpath($_);
-    
+
               return unless -f $path;
               return if exists $manifest{ $path };
-    
+
               print "unlink $path\n";
               unlink $path;
           },
@@ -266,6 +266,10 @@ do that.  Use at your own risk.  Have fun blowing holes in your foot.
          "."
     );
 
+
+=item Which tar should I use on Windows?
+
+We recommend ptar from Archive::Tar not older that 1.66 with '-C' option. 
 
 =item Which zip should I use on Windows for '[nd]make zipdist'?
 

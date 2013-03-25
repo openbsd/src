@@ -157,7 +157,7 @@ case `$cc -v 2>&1`"" in
 		done
 	    [ -z "$cc_found" ] && cc_found=`which cc`
 	    what $cc_found >&4
-	    ccversion=`what $cc_found | awk '/Compiler/{print $2}/Itanium/{print $6,$7}/for Integrity/{print $6}'`
+	    ccversion=`what $cc_found | awk '/Compiler/{print $2}/Itanium/{print $6,$7}/for Integrity/{print $6,$7}'`
 	    case "$ccflags" in
                "-Ae "*) ;;
 		*)  ccflags="-Ae $cc_cppflags"
@@ -220,7 +220,7 @@ case "$archname" in
 	;;
     esac
 
-case "$use64bitint" in
+case "$use64bitall" in
     $define|true|[Yy])
 
 	if [ "$xxOsRevMajor" -lt 11 ]; then
@@ -263,6 +263,16 @@ EOM
 
 	case "$ccisgcc" in
 	    $define|true|[Yy])
+		# The fixed socket.h header file is wrong for gcc-4.x
+		# on PA-RISC2.0W, so Sock_type_t is size_t which is
+		# unsigned long which is 64bit which is too long
+		case "$gccversion" in
+		    4*) case "$archname" in
+			    PA-RISC*) socksizetype=int ;;
+			    esac
+			;;
+		    esac
+
 		# For the moment, don't care that it ain't supported (yet)
 		# by gcc (up to and including 2.95.3), cause it'll crash
 		# anyway. Expect auto-detection of 64-bit enabled gcc on
@@ -404,7 +414,7 @@ case "$ccisgcc" in
 	    fi
 	;;
 
-    *)	# HP's compiler cannot combine -g and -O
+    *)
 	case "$optimize" in
 	    "")           optimize="+O2 +Onolimit" ;;
 	    *O[3456789]*) optimize=`echo "$optimize" | sed -e 's/O[3-9]/O2/'` ;;
@@ -426,6 +436,19 @@ case "$ccisgcc" in
 			# maint (5.8.8+) and blead (5.9.3+)
 			# -O1/+O1 passed all tests (m)'05 [ 10 Jan 2005 ]
 			optimize="$opt"			;;
+			B3910B*A.06.15)
+			# > cc --version
+			# cc: HP C/aC++ B3910B A.06.15 [May 16 2007]
+			# Has optimizing problems with +O2 for blead (5.16.3),
+			# see https://rt.perl.org:443/rt3/Ticket/Display.html?id=103668.
+			#
+			# +O2 +Onolimit +Onoprocelim  +Ostore_ordering \
+			# +Onolibcalls=strcmp
+			# passes all tests (with/without -DDEBUGGING) [Nov 17 2011]
+			case "$optimize" in
+				*O2*) optimize="$optimize +Onoprocelim +Ostore_ordering +Onolibcalls=strcmp" ;;
+				esac
+			;;
 		    *)  doop_cflags="optimize=\"$opt\""
 			op_cflags="optimize=\"$opt\""	;;
 		    esac
@@ -508,6 +531,27 @@ EOF
 
     rm -f t001$_o t001$_exe
     fi
+EOCBU
+
+cat >config.arch <<'EOCBU'
+# This script UU/config.arch will get 'called-back' by Configure after
+# all other configurations are done just before config.h is generated
+case "$archname:$optimize" in
+  PA*:*-g*[-+]O*|PA*:*[-+]O*-g*)
+    case "$ccflags" in
+      *DD64*) ;;
+      *) case "$ccversion" in
+	  # Only on PA-RISC. B3910B (aCC) is not faulty
+	  # B.11.* and A.10.* are
+	  [AB].1*)
+	      # cc: error 1414: Can't handle preprocessed file foo.i if -g and -O specified.
+	      echo "HP-UX C-ANSI-C on PA-RISC does not accept both -g and -O on preprocessed files" >&4
+	      echo "when compiling in 32bit mode. The optimizer will be disabled." >&4
+	      optimize=`echo "$optimize" | sed -e 's/[-+]O[0-9]*//' -e 's/+Onolimit//' -e 's/^ *//'`
+	      ;;
+	  esac
+      esac
+  esac
 EOCBU
 
 cat >UU/uselargefiles.cbu <<'EOCBU'
@@ -634,7 +678,7 @@ Either you must upgrade to HP-UX 11 or install a posix thread library:
 
 or
 
-    PTH package from e.g. http://hpux.tn.tudelft.nl/hppd/hpux/alpha.html
+    PTH package from e.g. http://hpux.connect.org.uk/hppd/hpux/Gnu/pth-2.0.7/
 
 Cannot continue, aborting.
 EOM

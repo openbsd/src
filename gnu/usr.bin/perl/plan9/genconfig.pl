@@ -127,6 +127,8 @@ print OUT "d_attribute_unused='undef'\n";
 print OUT "d_attribute_warn_unused_result='undef'\n";
 print OUT "d_socket='define'\n";
 print OUT "d_sockpair='define'\n";
+print OUT "d_static_inline='undef'\n";
+print OUT "perl_static_inline='static'\n";
 print OUT "d_sigsetjmp='define'\n";
 print OUT "sigjmp_buf='sigjmp_buf'\n";
 print OUT "sigsetjmp='sigsetjmp(buf,save_mask)'\n";
@@ -203,7 +205,7 @@ while (<IN>) {  # roll through the comment header in config.h
 
 while (<IN>) {
   chop;
-  while (/\\\s*$/) {  # pick up contination lines
+  while (/\\\s*$/) {  # pick up continuation lines
     my $line = $_;
     $line =~ s/\\\s*$//;
     $_ = <IN>;

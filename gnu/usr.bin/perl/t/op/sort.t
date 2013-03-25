@@ -6,7 +6,7 @@ BEGIN {
     require 'test.pl';
 }
 use warnings;
-plan( tests => 148 );
+plan( tests => 171 );
 
 # these shouldn't hang
 {
@@ -814,3 +814,149 @@ sub cmp_as_string($$) { $_[0] < $_[1] ? "-1" : $_[0] == $_[1] ? "0" : "+1" }
 is("@b", "1 2 3 3 4 5 7", "comparison result as string");
 @b = sort cmp_as_string (1,5,4,7,3,2,3);
 is("@b", "1 2 3 3 4 5 7", "comparison result as string");
+
+# RT #34604: sort didn't honour overloading if the overloaded elements
+# were retrieved via tie
+
+{
+    package RT34604;
+
+    sub TIEHASH { bless {
+			p => bless({ val => 2 }),
+			q => bless({ val => 1 }),
+		    }
+		}
+    sub FETCH { $_[0]{$_[1] } }
+
+    my $cc = 0;
+    sub compare { $cc++; $_[0]{val} cmp $_[1]{val} }
+    my $cs = 0;
+    sub str { $cs++; $_[0]{val} }
+
+    use overload 'cmp' => \&compare, '""' => \&str;
+
+    package main;
+
+    tie my %h, 'RT34604';
+    my @sorted = sort @h{qw(p q)};
+    is($cc, 1, 'overload compare called once');
+    is("@sorted","1 2", 'overload sort result');
+    is($cs, 2, 'overload string called twice');
+}
+
+fresh_perl_is('sub w ($$) {my ($l, my $r) = @_; my $v = \@_; undef @_; $l <=> $r}; print join q{ }, sort w 3, 1, 2, 0',
+             '0 1 2 3',
+             {stderr => 1, switches => ['-w']},
+             'RT #72334');
+
+fresh_perl_is('sub w ($$) {my ($l, my $r) = @_; my $v = \@_; undef @_; @_ = 0..2; $l <=> $r}; print join q{ }, sort w 3, 1, 2, 0',
+             '0 1 2 3',
+             {stderr => 1, switches => ['-w']},
+             'RT #72334');
+
+{
+    my $count = 0;
+    {
+	package Counter;
+
+	sub new {
+	    ++$count;
+	    bless [];
+	}
+
+	sub DESTROY {
+	    --$count;
+	}
+    }
+
+    sub sorter ($$) {
+	my ($l, $r) = @_;
+	my $q = \@_;
+	$l <=> $r;
+    }
+
+    is($count, 0, 'None before we start');
+    my @a = map { Counter->new() } 0..1;
+    is($count, 2, '2 here');
+
+    my @b = sort sorter @a;
+
+    is(scalar @b, 2);
+    cmp_ok($b[0], '<', $b[1], 'sorted!');
+
+    is($count, 2, 'still the same 2 here');
+
+    @a = (); @b = ();
+
+    is($count, 0, 'all gone');
+}
+
+# [perl #77930] The context stack may be reallocated during a sort, as a
+#               result of deeply-nested (or not-so-deeply-nested) calls
+#               from a custom sort subroutine.
+fresh_perl_is
+ '
+   $sub = sub {
+    local $count = $count+1;
+    ()->$sub if $count < 1000;
+    $a cmp $b
+   };
+   () = sort $sub qw<a b c d e f g>;
+   print "ok"
+ ',
+ 'ok',
+  {},
+ '[perl #77930] cx_stack reallocation during sort'
+;
+
+# [perl #76026]
+# Match vars should not leak from one sort sub call to the next
+{
+  my $output = '';
+  sub soarter {
+    $output .= $1;
+    "Leakage" =~ /(.*)/;
+    1
+  }
+  sub soarterdd($$) {
+    $output .= $1;
+    "Leakage" =~ /(.*)/;
+    1
+  }
+
+  "Win" =~ /(.*)/;
+  my @b = sort soarter 0..2;
+
+  like $output, qr/^(?:Win)+\z/,
+   "Match vars do not leak from one plain sort sub to the next";
+
+  $output = '';
+
+  "Win" =~ /(.*)/;
+  @b = sort soarterdd 0..2;
+
+  like $output, qr/^(?:Win)+\z/,
+   'Match vars do not leak from one $$ sort sub to the next';
+}
+
+# [perl #30661] autoloading
+AUTOLOAD { $b <=> $a }
+sub stubbedsub;
+is join("", sort stubbedsub split//, '04381091'), '98431100',
+    'stubborn AUTOLOAD';
+is join("", sort hopefullynonexistent split//, '04381091'), '98431100',
+    'AUTOLOAD without stub';
+my $stubref = \&givemeastub;
+is join("", sort $stubref split//, '04381091'), '98431100',
+    'AUTOLOAD with stubref';
+
+# [perl #90030] sort without arguments
+eval '@x = (sort); 1';
+is $@, '', '(sort) does not die';
+is @x, 0, '(sort) returns empty list';
+eval '@x = sort; 1';
+is $@, '', 'sort; does not die';
+is @x, 0, 'sort; returns empty list';
+eval '{@x = sort} 1';
+is $@, '', '{sort} does not die';
+is @x, 0, '{sort} returns empty list';

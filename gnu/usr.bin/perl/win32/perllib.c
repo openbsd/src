@@ -232,10 +232,10 @@ RunPerl(int argc, char **argv, char **env)
     }
 
 #ifdef PERL_GLOBAL_STRUCT
-#define PERLVAR(var,type) /**/
-#define PERLVARA(var,type) /**/
-#define PERLVARI(var,type,init) PL_Vars.var = init;
-#define PERLVARIC(var,type,init) PL_Vars.var = init;
+#define PERLVAR(prefix,var,type) /**/
+#define PERLVARA(prefix,var,type) /**/
+#define PERLVARI(prefix,var,type,init) PL_Vars.prefix##var = init;
+#define PERLVARIC(prefix,var,type,init) PL_Vars.prefix##var = init;
 #include "perlvars.h"
 #undef PERLVAR
 #undef PERLVARA
@@ -281,7 +281,7 @@ RunPerl(int argc, char **argv, char **env)
     }
 #endif
 
-    /* At least the Borland RTL wants to free argv[] after main() returns. */
+    /* Some RTLs may want to free argv[] after main() returns. */
     argv[0] = arg0;
     if (ansi)
         win32_free(ansi);

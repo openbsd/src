@@ -19,7 +19,7 @@ local $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Backend::RV - return value objects for multi-module calls to CPANPLUS::Backend
+CPANPLUS::Backend::RV - return value objects
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ CPANPLUS::Backend::RV - return value objects for multi-module calls to CPANPLUS:
     $passed_args    = $backend_rv->args;    # args passed to function
     $ok             = $backend_rv->ok;      # boolean indication overall
                                             # result of the call
-    $function       = $backend_rv->fucntion # name of the calling
+    $function       = $backend_rv->function # name of the calling
                                             # function
     $rv             = $backend_rv->rv       # the actual return value
                                             # of the calling function
@@ -117,7 +117,7 @@ sub _ok { return shift->ok }
 ### this allows people to not have to explicitly say
 ### if( $rv->ok ) { foo() }
 ### XXX add an explicit stringify, so it doesn't fall back to "bool"? :(
-use overload bool       => \&_ok, 
+use overload bool       => \&_ok,
 #             '""'       => \&_stringify,
              fallback   => 1;
 
@@ -133,10 +133,10 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =cut

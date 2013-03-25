@@ -5,13 +5,13 @@
 #
 ################################################################################
 #
-#  $Revision: 8 $
+#  $Revision: 10 $
 #  $Author: mhx $
-#  $Date: 2009/01/18 14:10:50 +0100 $
+#  $Date: 2010/03/07 13:15:42 +0100 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -33,7 +33,7 @@ our %opt = (
   verbose => 0,
 );
 
-GetOptions(\%opt, qw( check! verbose )) or die pod2usage();
+GetOptions(\%opt, qw( check! verbose install=s blead=s blead-version=s )) or die pod2usage();
 
 identify();
 
@@ -83,9 +83,15 @@ for my $dir (qw( base todo )) {
   }
 }
 
+my @perlargs;
+push @perlargs, "--install=$opt{install}" if exists $opt{install};
+push @perlargs, "--blead=$opt{blead}" if exists $opt{blead};
+
 my $T0 = time;
 my @args = ddverbose();
 push @args, '--nocheck' unless $opt{check};
+push @args, "--blead-version=$opt{'blead-version'}" if exists $opt{'blead-version'};
+push @args, @perlargs;
 
 print "\nBuilding baseline files...\n\n";
 
@@ -113,7 +119,7 @@ print "\nAdding remaining baseline info...\n\n";
 
 unless (runperl('Makefile.PL') and
         runtool('make') and
-        runperl('devel/scanprov', 'write')) {
+        runperl('devel/scanprov', '--mode=write', @perlargs)) {
   print "\nSomething went wrong while adding the baseline info.\n";
   quit_now();
 }
@@ -148,7 +154,7 @@ regenerate - Automatically regeneate Devel::PPPort's API information
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009, Marcus Holland-Moritz.
+Copyright (c) 2006-2010, Marcus Holland-Moritz.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

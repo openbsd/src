@@ -13,7 +13,7 @@ local $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Module::Author - CPANPLUS module author class
+CPANPLUS::Module::Author - CPAN author object for CPANPLUS
 
 =head1 SYNOPSIS
 
@@ -131,7 +131,7 @@ sub modules {
     my $aref = $cb->_search_module_tree(
                     type    => 'author',
                     ### XXX, depending on backend, this is either an object
-                    ### or the cpanid string. Dont know an elegant way to
+                    ### or the cpanid string. Don't know an elegant way to
                     ### solve this right now, so passing both
                     allow   => [$self, $self->cpanid],
                 );
@@ -195,7 +195,7 @@ sub distributions {
         my $dist = CPANPLUS::Module::Fake->new(
                         module  =>  do { my $m = $mod->package_name( $name );
                                          $m =~ s/-/::/g; $m;
-                                    },      
+                                    },
                         version =>  $mod->package_version(  $name ),
                         package =>  $name,
                         path    =>  $mod->path,     # same author after all

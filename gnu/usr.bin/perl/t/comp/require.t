@@ -22,7 +22,7 @@ krunch.pm krunch.pmc whap.pm whap.pmc);
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 49;
+my $total_tests = 53;
 if ($Is_EBCDIC || $Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
 
@@ -96,6 +96,9 @@ print "ok ",$i++,"\n";
 # "use 5.11.0" (and higher) loads strictures.
 # check that this doesn't happen with require
 eval 'require 5.11.0; ${"foo"} = "bar";';
+print "# $@\nnot " if $@;
+print "ok ",$i++,"\n";
+eval 'BEGIN {require 5.11.0} ${"foo"} = "bar";';
 print "# $@\nnot " if $@;
 print "ok ",$i++,"\n";
 
@@ -254,6 +257,42 @@ EOT
     } else {
 	print "not ok $pmc_dies\n";
     }
+}
+
+# Test "require func()" with abs path when there is no .pmc file.
+++$::i;
+if (defined &DynaLoader::boot_DynaLoader) {
+    require Cwd;
+    require File::Spec::Functions;
+    eval {
+     CORE::require(File::Spec::Functions::catfile(Cwd::getcwd(),"bleah.pm"));
+    };
+    if ($@ =~ /^This is an expected error/) {
+	print "ok $i\n";
+    } else {
+	print "not ok $i\n";
+    }
+} else {
+    print "ok $i # SKIP Cwd may not be available in miniperl\n";
+}
+
+{
+    BEGIN { ${^OPEN} = ":utf8\0"; }
+    %INC = ();
+    write_file('bleah.pm',"package F; \$x = '\xD1\x9E';\n");
+    eval { require "bleah.pm" };
+    $i++;
+    my $not = $F::x eq "\xD1\x9E" ? "" : "not ";
+    print "${not}ok $i - require ignores I/O layers\n";
+}
+
+{
+    BEGIN { ${^OPEN} = ":utf8\0"; }
+    %INC = ();
+    write_file('bleah.pm',"require re; re->import('/x'); 1;\n");
+    my $not = eval 'use bleah; "ab" =~ /a b/' ? "" : "not ";
+    $i++;
+    print "${not}ok $i - require does not localise %^H at run time\n";
 }
 
 ##########################################

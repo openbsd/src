@@ -957,7 +957,7 @@
 
 /* HAS_QUAD:
  *	This symbol, if defined, tells that there's a 64-bit integer type,
- *	Quad_t, and its unsigned counterpar, Uquad_t. QUADKIND will be one
+ *	Quad_t, and its unsigned counterpart, Uquad_t. QUADKIND will be one
  *	of QUAD_IS_INT, QUAD_IS_LONG, QUAD_IS_LONG_LONG, or QUAD_IS_INT64_T.
  */
 #define HAS_QUAD	/**/
@@ -1540,7 +1540,7 @@
 
 /* HAS_GETESPWNAM:
  *	This symbol, if defined, indicates that the getespwnam system call is
- *	available to retrieve enchanced (shadow) password entries by name.
+ *	available to retrieve enhanced (shadow) password entries by name.
  */
 /*#define HAS_GETESPWNAM		/ **/
 
@@ -2039,7 +2039,7 @@
 
 /* HAS_MKSTEMPS:
  *	This symbol, if defined, indicates that the mkstemps routine is
- *	available to excluslvely create and open a uniquely named
+ *	available to exclusively create and open a uniquely named
  *	(with a suffix) temporary file.
  */
 /*#define HAS_MKSTEMPS		/ **/
@@ -2366,6 +2366,27 @@
 #define Sigsetjmp(buf,save_mask) setjmp((buf))
 #define Siglongjmp(buf,retval) longjmp((buf),(retval))
 #endif
+
+/* HAS_STATIC_INLINE:
+ *	This symbol, if defined, indicates that the C compiler supports
+ *	C99-style static inline.  That is, the function can't be called
+ *	from another translation unit.
+ */
+/* PERL_STATIC_INLINE:
+ *	This symbol gives the best-guess incantation to use for static
+ *	inline functions.  If HAS_STATIC_INLINE is defined, this will
+ *	give C99-style inline.  If HAS_STATIC_INLINE is not defined,
+ *	this will give a plain 'static'.  It will always be defined
+ *	to something that gives static linkage.
+ *	Possibilities include
+ *		static inline       (c99)
+ *		static __inline__   (gcc -ansi)
+ *		static __inline     (MSVC)
+ *		static _inline      (older MSVC)
+ *		static              (c89 compilers)
+ */
+/*#define HAS_STATIC_INLINE				/ **/
+#define PERL_STATIC_INLINE static           	/**/
 
 /* HAS_SOCKET:
  *	This symbol, if defined, indicates that the BSD socket interface is
@@ -3364,8 +3385,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/sys/lib/perl/5.12.2"		/**/
-#define PRIVLIB_EXP "/sys/lib/perl/5.12.2"		/**/
+#define PRIVLIB "/sys/lib/perl/5.16.3"		/**/
+#define PRIVLIB_EXP "/sys/lib/perl/5.16.3"		/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -3492,9 +3513,9 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/sys/lib/perl/5.12.2/site_perl"		/**/
-#define SITELIB_EXP "/sys/lib/perl/5.12.2/site_perl"		/**/
-#define SITELIB_STEM "/sys/lib/perl/5.12.2/site_perl"		/**/
+#define SITELIB "/sys/lib/perl/5.16.3/site_perl"		/**/
+#define SITELIB_EXP "/sys/lib/perl/5.16.3/site_perl"		/**/
+#define SITELIB_STEM "/sys/lib/perl/5.16.3/site_perl"		/**/
 
 /* Size_t_size:
  *	This symbol holds the size of a Size_t in bytes.
@@ -3507,7 +3528,7 @@
  *	unsigned long, int, etc.  It may be necessary to include
  *	<sys/types.h> to get any typedef'ed information.
  */
-#define Size_t size_t	 /* length paramater for string functions */
+#define Size_t size_t	 /* length parameter for string functions */
 
 /* Sock_size_t:
  *	This symbol holds the type used for the size argument of
@@ -3719,7 +3740,7 @@
  *	    2 = supports arrays of pointers to functions returning void
  *	    4 = supports comparisons between pointers to void functions and
  *		    addresses of void functions
- *	    8 = suports declaration of generic void pointers
+ *	    8 = supports declaration of generic void pointers
  *
  *	The package designer should define VOIDUSED to indicate the requirements
  *	of the package.  This can be done either by #defining VOIDUSED before

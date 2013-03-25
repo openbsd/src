@@ -14,11 +14,12 @@
  */
 
 /* A jmpenv packages the state required to perform a proper non-local jump.
- * Note that there is a start_env initialized when perl starts, and top_env
- * points to this initially, so top_env should always be non-null.
+ * Note that there is a PL_start_env initialized when perl starts, and
+ * PL_top_env points to this initially, so PL_top_env should always be
+ * non-null.
  *
- * Existence of a non-null top_env->je_prev implies it is valid to call
- * longjmp() at that runlevel (we make sure start_env.je_prev is always
+ * Existence of a non-null PL_top_env->je_prev implies it is valid to call
+ * longjmp() at that runlevel (we make sure PL_start_env.je_prev is always
  * null to ensure this).
  *
  * je_mustcatch, when set at any runlevel to TRUE, means eval ops must
@@ -91,17 +92,20 @@ typedef struct jmpenv JMPENV;
  * 
  * The original patches that introduces flexible exceptions were:
  *
- *   http://public.activestate.com/cgi-bin/perlbrowse?patch=3386
- *   http://public.activestate.com/cgi-bin/perlbrowse?patch=5162
+ * http://perl5.git.perl.org/perl.git/commit/312caa8e97f1c7ee342a9895c2f0e749625b4929
+ * http://perl5.git.perl.org/perl.git/commit/14dd3ad8c9bf82cf09798a22cc89a9862dfd6d1a                                        
+ *  
  */
 
 #define dJMPENV		JMPENV cur_env
 
 #define JMPENV_PUSH(v) \
     STMT_START {							\
-	DEBUG_l(Perl_deb(aTHX_ "Setting up jumplevel %p, was %p at %s:%d\n",	\
-		         (void*)&cur_env, (void*)PL_top_env,			\
-		         __FILE__, __LINE__));					\
+	DEBUG_l({							\
+	    int i = 0; JMPENV *p = PL_top_env;				\
+	    while (p) { i++; p = p->je_prev; }				\
+	    Perl_deb(aTHX_ "JUMPENV_PUSH level=%d at %s:%d\n",		\
+		         i,  __FILE__, __LINE__);})			\
 	cur_env.je_prev = PL_top_env;					\
 	OP_REG_TO_MEM;							\
 	cur_env.je_ret = PerlProc_setjmp(cur_env.je_buf, SCOPE_SAVES_SIGNAL_MASK);		\
@@ -113,27 +117,266 @@ typedef struct jmpenv JMPENV;
 
 #define JMPENV_POP \
     STMT_START {							\
-	DEBUG_l(Perl_deb(aTHX_ "popping jumplevel was %p, now %p at %s:%d\n",	\
-		         (void*)PL_top_env, (void*)cur_env.je_prev,		\
-		         __FILE__, __LINE__));					\
+	DEBUG_l({							\
+	    int i = -1; JMPENV *p = PL_top_env;				\
+	    while (p) { i++; p = p->je_prev; }				\
+	    Perl_deb(aTHX_ "JUMPENV_POP level=%d at %s:%d\n",		\
+		         i, __FILE__, __LINE__);})			\
 	assert(PL_top_env == &cur_env);					\
 	PL_top_env = cur_env.je_prev;					\
     } STMT_END
 
 #define JMPENV_JUMP(v) \
     STMT_START {						\
+	DEBUG_l({						\
+	    int i = -1; JMPENV *p = PL_top_env;			\
+	    while (p) { i++; p = p->je_prev; }			\
+	    Perl_deb(aTHX_ "JUMPENV_JUMP(%d) level=%d at %s:%d\n", \
+		         (int)v, i, __FILE__, __LINE__);})	\
 	OP_REG_TO_MEM;						\
 	if (PL_top_env->je_prev)				\
 	    PerlProc_longjmp(PL_top_env->je_buf, (v));		\
 	if ((v) == 2)						\
 	    PerlProc_exit(STATUS_EXIT);		                \
-	PerlIO_printf(PerlIO_stderr(), "panic: top_env\n");	\
+	PerlIO_printf(PerlIO_stderr(), "panic: top_env, v=%d\n", (int)v); \
 	PerlProc_exit(1);					\
     } STMT_END
 
 #define CATCH_GET		(PL_top_env->je_mustcatch)
-#define CATCH_SET(v)		(PL_top_env->je_mustcatch = (v))
+#define CATCH_SET(v) \
+    STMT_START {							\
+	DEBUG_l(							\
+	    Perl_deb(aTHX_						\
+		"JUMPLEVEL set catch %d => %d (for %p) at %s:%d\n",	\
+		 PL_top_env->je_mustcatch, v, (void*)PL_top_env,	\
+		 __FILE__, __LINE__);)					\
+	PL_top_env->je_mustcatch = (v);					\
+    } STMT_END
 
+/*
+=head1 COP Hint Hashes
+*/
+
+typedef struct refcounted_he COPHH;
+
+#define COPHH_KEY_UTF8 REFCOUNTED_HE_KEY_UTF8
+
+/*
+=for apidoc Amx|SV *|cophh_fetch_pvn|const COPHH *cophh|const char *keypv|STRLEN keylen|U32 hash|U32 flags
+
+Look up the entry in the cop hints hash I<cophh> with the key specified by
+I<keypv> and I<keylen>.  If I<flags> has the C<COPHH_KEY_UTF8> bit set,
+the key octets are interpreted as UTF-8, otherwise they are interpreted
+as Latin-1.  I<hash> is a precomputed hash of the key string, or zero if
+it has not been precomputed.  Returns a mortal scalar copy of the value
+associated with the key, or C<&PL_sv_placeholder> if there is no value
+associated with the key.
+
+=cut
+*/
+
+#define cophh_fetch_pvn(cophh, keypv, keylen, hash, flags) \
+    Perl_refcounted_he_fetch_pvn(aTHX_ cophh, keypv, keylen, hash, flags)
+
+/*
+=for apidoc Amx|SV *|cophh_fetch_pvs|const COPHH *cophh|const char *key|U32 flags
+
+Like L</cophh_fetch_pvn>, but takes a literal string instead of a
+string/length pair, and no precomputed hash.
+
+=cut
+*/
+
+#define cophh_fetch_pvs(cophh, key, flags) \
+    Perl_refcounted_he_fetch_pvn(aTHX_ cophh, STR_WITH_LEN(key), 0, flags)
+
+/*
+=for apidoc Amx|SV *|cophh_fetch_pv|const COPHH *cophh|const char *key|U32 hash|U32 flags
+
+Like L</cophh_fetch_pvn>, but takes a nul-terminated string instead of
+a string/length pair.
+
+=cut
+*/
+
+#define cophh_fetch_pv(cophh, key, hash, flags) \
+    Perl_refcounted_he_fetch_pv(aTHX_ cophh, key, hash, flags)
+
+/*
+=for apidoc Amx|SV *|cophh_fetch_sv|const COPHH *cophh|SV *key|U32 hash|U32 flags
+
+Like L</cophh_fetch_pvn>, but takes a Perl scalar instead of a
+string/length pair.
+
+=cut
+*/
+
+#define cophh_fetch_sv(cophh, key, hash, flags) \
+    Perl_refcounted_he_fetch_sv(aTHX_ cophh, key, hash, flags)
+
+/*
+=for apidoc Amx|HV *|cophh_2hv|const COPHH *cophh|U32 flags
+
+Generates and returns a standard Perl hash representing the full set of
+key/value pairs in the cop hints hash I<cophh>.  I<flags> is currently
+unused and must be zero.
+
+=cut
+*/
+
+#define cophh_2hv(cophh, flags) \
+    Perl_refcounted_he_chain_2hv(aTHX_ cophh, flags)
+
+/*
+=for apidoc Amx|COPHH *|cophh_copy|COPHH *cophh
+
+Make and return a complete copy of the cop hints hash I<cophh>.
+
+=cut
+*/
+
+#define cophh_copy(cophh) Perl_refcounted_he_inc(aTHX_ cophh)
+
+/*
+=for apidoc Amx|void|cophh_free|COPHH *cophh
+
+Discard the cop hints hash I<cophh>, freeing all resources associated
+with it.
+
+=cut
+*/
+
+#define cophh_free(cophh) Perl_refcounted_he_free(aTHX_ cophh)
+
+/*
+=for apidoc Amx|COPHH *|cophh_new_empty
+
+Generate and return a fresh cop hints hash containing no entries.
+
+=cut
+*/
+
+#define cophh_new_empty() ((COPHH *)NULL)
+
+/*
+=for apidoc Amx|COPHH *|cophh_store_pvn|COPHH *cophh|const char *keypv|STRLEN keylen|U32 hash|SV *value|U32 flags
+
+Stores a value, associated with a key, in the cop hints hash I<cophh>,
+and returns the modified hash.  The returned hash pointer is in general
+not the same as the hash pointer that was passed in.  The input hash is
+consumed by the function, and the pointer to it must not be subsequently
+used.  Use L</cophh_copy> if you need both hashes.
+
+The key is specified by I<keypv> and I<keylen>.  If I<flags> has the
+C<COPHH_KEY_UTF8> bit set, the key octets are interpreted as UTF-8,
+otherwise they are interpreted as Latin-1.  I<hash> is a precomputed
+hash of the key string, or zero if it has not been precomputed.
+
+I<value> is the scalar value to store for this key.  I<value> is copied
+by this function, which thus does not take ownership of any reference
+to it, and later changes to the scalar will not be reflected in the
+value visible in the cop hints hash.  Complex types of scalar will not
+be stored with referential integrity, but will be coerced to strings.
+
+=cut
+*/
+
+#define cophh_store_pvn(cophh, keypv, keylen, hash, value, flags) \
+    Perl_refcounted_he_new_pvn(aTHX_ cophh, keypv, keylen, hash, value, flags)
+
+/*
+=for apidoc Amx|COPHH *|cophh_store_pvs|const COPHH *cophh|const char *key|SV *value|U32 flags
+
+Like L</cophh_store_pvn>, but takes a literal string instead of a
+string/length pair, and no precomputed hash.
+
+=cut
+*/
+
+#define cophh_store_pvs(cophh, key, value, flags) \
+    Perl_refcounted_he_new_pvn(aTHX_ cophh, STR_WITH_LEN(key), 0, value, flags)
+
+/*
+=for apidoc Amx|COPHH *|cophh_store_pv|const COPHH *cophh|const char *key|U32 hash|SV *value|U32 flags
+
+Like L</cophh_store_pvn>, but takes a nul-terminated string instead of
+a string/length pair.
+
+=cut
+*/
+
+#define cophh_store_pv(cophh, key, hash, value, flags) \
+    Perl_refcounted_he_new_pv(aTHX_ cophh, key, hash, value, flags)
+
+/*
+=for apidoc Amx|COPHH *|cophh_store_sv|const COPHH *cophh|SV *key|U32 hash|SV *value|U32 flags
+
+Like L</cophh_store_pvn>, but takes a Perl scalar instead of a
+string/length pair.
+
+=cut
+*/
+
+#define cophh_store_sv(cophh, key, hash, value, flags) \
+    Perl_refcounted_he_new_sv(aTHX_ cophh, key, hash, value, flags)
+
+/*
+=for apidoc Amx|COPHH *|cophh_delete_pvn|COPHH *cophh|const char *keypv|STRLEN keylen|U32 hash|U32 flags
+
+Delete a key and its associated value from the cop hints hash I<cophh>,
+and returns the modified hash.  The returned hash pointer is in general
+not the same as the hash pointer that was passed in.  The input hash is
+consumed by the function, and the pointer to it must not be subsequently
+used.  Use L</cophh_copy> if you need both hashes.
+
+The key is specified by I<keypv> and I<keylen>.  If I<flags> has the
+C<COPHH_KEY_UTF8> bit set, the key octets are interpreted as UTF-8,
+otherwise they are interpreted as Latin-1.  I<hash> is a precomputed
+hash of the key string, or zero if it has not been precomputed.
+
+=cut
+*/
+
+#define cophh_delete_pvn(cophh, keypv, keylen, hash, flags) \
+    Perl_refcounted_he_new_pvn(aTHX_ cophh, keypv, keylen, hash, \
+	(SV *)NULL, flags)
+
+/*
+=for apidoc Amx|COPHH *|cophh_delete_pvs|const COPHH *cophh|const char *key|U32 flags
+
+Like L</cophh_delete_pvn>, but takes a literal string instead of a
+string/length pair, and no precomputed hash.
+
+=cut
+*/
+
+#define cophh_delete_pvs(cophh, key, flags) \
+    Perl_refcounted_he_new_pvn(aTHX_ cophh, STR_WITH_LEN(key), 0, \
+	(SV *)NULL, flags)
+
+/*
+=for apidoc Amx|COPHH *|cophh_delete_pv|const COPHH *cophh|const char *key|U32 hash|U32 flags
+
+Like L</cophh_delete_pvn>, but takes a nul-terminated string instead of
+a string/length pair.
+
+=cut
+*/
+
+#define cophh_delete_pv(cophh, key, hash, flags) \
+    Perl_refcounted_he_new_pv(aTHX_ cophh, key, hash, (SV *)NULL, flags)
+
+/*
+=for apidoc Amx|COPHH *|cophh_delete_sv|const COPHH *cophh|SV *key|U32 hash|U32 flags
+
+Like L</cophh_delete_pvn>, but takes a Perl scalar instead of a
+string/length pair.
+
+=cut
+*/
+
+#define cophh_delete_sv(cophh, key, hash, flags) \
+    Perl_refcounted_he_new_sv(aTHX_ cophh, key, hash, (SV *)NULL, flags)
 
 #include "mydtrace.h"
 
@@ -146,6 +389,7 @@ struct cop {
 #ifdef USE_ITHREADS
     char *	cop_stashpv;	/* package line was compiled in */
     char *	cop_file;	/* file name the following line # is from */
+    I32         cop_stashlen;	/* negative for UTF8 */
 #else
     HV *	cop_stash;	/* package line was compiled in */
     GV *	cop_filegv;	/* file the following line # is from */
@@ -156,7 +400,7 @@ struct cop {
     STRLEN *	cop_warnings;	/* lexical warnings bitmask */
     /* compile time state of %^H.  See the comment in op.c for how this is
        used to recreate a hash to return from caller.  */
-    struct refcounted_he * cop_hints_hash;
+    COPHH *	cop_hints_hash;
 };
 
 #ifdef USE_ITHREADS
@@ -185,14 +429,32 @@ struct cop {
 #  define CopSTASHPV(c)		((c)->cop_stashpv)
 
 #  ifdef NETWARE
-#    define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = ((pv) ? savepv(pv) : NULL))
+#    define CopSTASHPV_set(c,pv,n)	((c)->cop_stashpv = \
+					   ((pv) ? savepvn(pv,n) : NULL))
 #  else
-#    define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = savesharedpv(pv))
+#    define CopSTASHPV_set(c,pv,n)	((c)->cop_stashpv = (pv) \
+					    ? savesharedpvn(pv,n) : NULL)
 #  endif
 
-#  define CopSTASH(c)		(CopSTASHPV(c) \
-				 ? gv_stashpv(CopSTASHPV(c),GV_ADD) : NULL)
-#  define CopSTASH_set(c,hv)	CopSTASHPV_set(c, (hv) ? HvNAME_get(hv) : NULL)
+#  define CopSTASH_len_set(c,n)	((c)->cop_stashlen = (n))
+#  define CopSTASH_len(c)	((c)->cop_stashlen)
+
+#  define CopSTASH(c)          (CopSTASHPV(c)                                 \
+                                ? gv_stashpvn(CopSTASHPV(c),		  \
+				    CopSTASH_len(c) < 0			  \
+					? -CopSTASH_len(c)		  \
+					:  CopSTASH_len(c),		  \
+                                    GV_ADD|SVf_UTF8*(CopSTASH_len(c) < 0) \
+                                  )					  \
+                                 : NULL)
+#  define CopSTASH_set(c,hv)   (CopSTASHPV_set(c,			\
+				    (hv) ? HvNAME_get(hv) : NULL,	\
+				    (hv) ? HvNAMELEN(hv)  : 0),		\
+				CopSTASH_len_set(c,			\
+				    (hv) ? HvNAMEUTF8(hv)		\
+					    ? -HvNAMELEN(hv)		\
+					    :  HvNAMELEN(hv)		\
+					 : 0))
 #  define CopSTASH_eq(c,hv)	((hv) && stashpv_hvname_match(c,hv))
 #  ifdef NETWARE
 #    define CopSTASH_free(c) SAVECOPSTASH_FREE(c)
@@ -225,7 +487,83 @@ struct cop {
 #  define CopFILE_free(c)	(SvREFCNT_dec(CopFILEGV(c)),(CopFILEGV(c) = NULL))
 
 #endif /* USE_ITHREADS */
-#define CopLABEL(c)  Perl_fetch_cop_label(aTHX_ (c)->cop_hints_hash, NULL, NULL)
+
+#define CopHINTHASH_get(c)	((COPHH*)((c)->cop_hints_hash))
+#define CopHINTHASH_set(c,h)	((c)->cop_hints_hash = (h))
+
+/*
+=head1 COP Hint Reading
+*/
+
+/*
+=for apidoc Am|SV *|cop_hints_fetch_pvn|const COP *cop|const char *keypv|STRLEN keylen|U32 hash|U32 flags
+
+Look up the hint entry in the cop I<cop> with the key specified by
+I<keypv> and I<keylen>.  If I<flags> has the C<COPHH_KEY_UTF8> bit set,
+the key octets are interpreted as UTF-8, otherwise they are interpreted
+as Latin-1.  I<hash> is a precomputed hash of the key string, or zero if
+it has not been precomputed.  Returns a mortal scalar copy of the value
+associated with the key, or C<&PL_sv_placeholder> if there is no value
+associated with the key.
+
+=cut
+*/
+
+#define cop_hints_fetch_pvn(cop, keypv, keylen, hash, flags) \
+    cophh_fetch_pvn(CopHINTHASH_get(cop), keypv, keylen, hash, flags)
+
+/*
+=for apidoc Am|SV *|cop_hints_fetch_pvs|const COP *cop|const char *key|U32 flags
+
+Like L</cop_hints_fetch_pvn>, but takes a literal string instead of a
+string/length pair, and no precomputed hash.
+
+=cut
+*/
+
+#define cop_hints_fetch_pvs(cop, key, flags) \
+    cophh_fetch_pvs(CopHINTHASH_get(cop), key, flags)
+
+/*
+=for apidoc Am|SV *|cop_hints_fetch_pv|const COP *cop|const char *key|U32 hash|U32 flags
+
+Like L</cop_hints_fetch_pvn>, but takes a nul-terminated string instead
+of a string/length pair.
+
+=cut
+*/
+
+#define cop_hints_fetch_pv(cop, key, hash, flags) \
+    cophh_fetch_pv(CopHINTHASH_get(cop), key, hash, flags)
+
+/*
+=for apidoc Am|SV *|cop_hints_fetch_sv|const COP *cop|SV *key|U32 hash|U32 flags
+
+Like L</cop_hints_fetch_pvn>, but takes a Perl scalar instead of a
+string/length pair.
+
+=cut
+*/
+
+#define cop_hints_fetch_sv(cop, key, hash, flags) \
+    cophh_fetch_sv(CopHINTHASH_get(cop), key, hash, flags)
+
+/*
+=for apidoc Am|HV *|cop_hints_2hv|const COP *cop|U32 flags
+
+Generates and returns a standard Perl hash representing the full set of
+hint entries in the cop I<cop>.  I<flags> is currently unused and must
+be zero.
+
+=cut
+*/
+
+#define cop_hints_2hv(cop, flags) \
+    cophh_2hv(CopHINTHASH_get(cop), flags)
+
+#define CopLABEL(c)  Perl_cop_fetch_label(aTHX_ (c), NULL, NULL)
+#define CopLABEL_len(c,len)  Perl_cop_fetch_label(aTHX_ (c), len, NULL)
+#define CopLABEL_len_flags(c,len,flags)  Perl_cop_fetch_label(aTHX_ (c), len, flags)
 #define CopLABEL_alloc(pv)	((pv)?savepv(pv):NULL)
 
 #define CopSTASH_ne(c,hv)	(!CopSTASH_eq(c,hv))
@@ -236,32 +574,6 @@ struct cop {
 
 /* OutCopFILE() is CopFILE for output (caller, die, warn, etc.) */
 #define OutCopFILE(c) CopFILE(c)
-
-/* If $[ is non-zero, it's stored in cop_hints under the key "$[", and
-   HINT_ARYBASE is set to indicate this.
-   Setting it is ineficient due to the need to create 2 mortal SVs, but as
-   using $[ is highly discouraged, no sane Perl code will be using it.  */
-#define CopARYBASE_get(c)	\
-	((CopHINTS_get(c) & HINT_ARYBASE)				\
-	 ? SvIV(Perl_refcounted_he_fetch(aTHX_ (c)->cop_hints_hash, 0,	\
-					 "$[", 2, 0, 0))		\
-	 : 0)
-#define CopARYBASE_set(c, b) STMT_START { \
-	if (b || ((c)->cop_hints & HINT_ARYBASE)) {			\
-	    (c)->cop_hints |= HINT_ARYBASE;				\
-	    if ((c) == &PL_compiling) {					\
-		SV *val = newSViv(b);					\
-		(void)hv_stores(GvHV(PL_hintgv), "$[", val);		\
-		mg_set(val);						\
-		PL_hints |= HINT_ARYBASE;				\
-	    } else {							\
-		(c)->cop_hints_hash					\
-		   = Perl_refcounted_he_new(aTHX_ (c)->cop_hints_hash,	\
-					newSVpvs_flags("$[", SVs_TEMP),	\
-					sv_2mortal(newSViv(b)));	\
-	    }								\
-	}								\
-    } STMT_END
 
 /* FIXME NATIVE_HINTS if this is changed from op_private (see perl.h)  */
 #define CopHINTS_get(c)		((c)->cop_hints + 0)
@@ -303,7 +615,8 @@ struct block_format {
 #define PUSHSUB_BASE(cx)						\
 	ENTRY_PROBE(GvENAME(CvGV(cv)),		       			\
 		CopFILE((const COP *)CvSTART(cv)),			\
-		CopLINE((const COP *)CvSTART(cv)));			\
+		CopLINE((const COP *)CvSTART(cv)),			\
+		CopSTASHPV((const COP *)CvSTART(cv)));			\
 									\
 	cx->blk_sub.cv = cv;						\
 	cx->blk_sub.olddepth = CvDEPTH(cv);				\
@@ -317,9 +630,18 @@ struct block_format {
 
 
 #define PUSHSUB(cx)							\
+    {									\
+	/* If the context is indeterminate, then only the lvalue */	\
+	/* flags that the caller also has are applicable.        */	\
+	U8 phlags =							\
+	   (PL_op->op_flags & OPf_WANT)					\
+	       ? OPpENTERSUB_LVAL_MASK					\
+	       : !(PL_op->op_private & OPpENTERSUB_LVAL_MASK)		\
+	           ? 0 : Perl_was_lvalue_sub(aTHX);			\
 	PUSHSUB_BASE(cx)						\
 	cx->blk_u16 = PL_op->op_private &				\
-	                      (OPpLVAL_INTRO|OPpENTERSUB_INARGS);
+	                  (phlags|OPpDEREF);				\
+    }
 
 /* variant for use by OP_DBSTATE, where op_private holds hint bits */
 #define PUSHSUB_DB(cx)							\
@@ -353,7 +675,8 @@ struct block_format {
     STMT_START {							\
 	RETURN_PROBE(GvENAME(CvGV((const CV*)cx->blk_sub.cv)),		\
 		CopFILE((COP*)CvSTART((const CV*)cx->blk_sub.cv)),	\
-		CopLINE((COP*)CvSTART((const CV*)cx->blk_sub.cv)));	\
+		CopLINE((COP*)CvSTART((const CV*)cx->blk_sub.cv)),	\
+		CopSTASHPV((COP*)CvSTART((const CV*)cx->blk_sub.cv)));	\
 									\
 	if (CxHASARGS(cx)) {						\
 	    POP_SAVEARRAY();						\
@@ -429,16 +752,11 @@ struct block_eval {
 struct block_loop {
     I32		resetsp;
     LOOP *	my_op;	/* My op, that contains redo, next and last ops.  */
-    /* (except for non_ithreads we need to modify next_op in pp_ctl.c, hence
-	why next_op is conditionally defined below.)  */
-#ifdef USE_ITHREADS
-    PAD		*oldcomppad; /* Also used for the GV, if targoffset is 0 */
-    /* This is also accesible via cx->blk_loop.my_op->op_targ */
-    PADOFFSET	targoffset;
-#else
-    OP *	next_op;
-    SV **	itervar;
-#endif
+    union {	/* different ways of locating the iteration variable */
+	SV      **svp;
+	GV      *gv;
+	PAD     *oldcomppad; /* only used in ITHREADS */
+    } itervar_u;
     union {
 	struct { /* valid if type is LOOP_FOR or LOOP_PLAIN (but {NULL,0})*/
 	    AV * ary; /* use the stack if this is NULL */
@@ -456,49 +774,38 @@ struct block_loop {
 };
 
 #ifdef USE_ITHREADS
-#  define CxITERVAR(c)							\
-	((c)->blk_loop.oldcomppad					\
-	 ? (CxPADLOOP(c) 						\
-	    ? &CX_CURPAD_SV( (c)->blk_loop, (c)->blk_loop.targoffset )	\
-	    : &GvSV((GV*)(c)->blk_loop.oldcomppad))			\
-	 : (SV**)NULL)
-#  define CX_ITERDATA_SET(cx,idata,o)					\
-	if ((cx->blk_loop.targoffset = (o)))				\
-	    CX_CURPAD_SAVE(cx->blk_loop);				\
-	else								\
-	    cx->blk_loop.oldcomppad = (idata);
+#  define CxITERVAR_PADSV(c) \
+	&CX_CURPAD_SV( (c)->blk_loop.itervar_u, (c)->blk_loop.my_op->op_targ)
 #else
-#  define CxITERVAR(c)		((c)->blk_loop.itervar)
-#  define CX_ITERDATA_SET(cx,ivar,o)					\
-	cx->blk_loop.itervar = (SV**)(ivar);
+#  define CxITERVAR_PADSV(c) ((c)->blk_loop.itervar_u.svp)
 #endif
+
+#define CxITERVAR(c)							\
+	((c)->blk_loop.itervar_u.oldcomppad				\
+	 ? (CxPADLOOP(c) 						\
+	    ? CxITERVAR_PADSV(c)					\
+	    : &GvSV((c)->blk_loop.itervar_u.gv))			\
+	 : (SV**)NULL)
+
 #define CxLABEL(c)	(0 + CopLABEL((c)->blk_oldcop))
+#define CxLABEL_len(c,len)	(0 + CopLABEL_len((c)->blk_oldcop, len))
+#define CxLABEL_len_flags(c,len,flags)	(0 + CopLABEL_len_flags((c)->blk_oldcop, len, flags))
 #define CxHASARGS(c)	(((c)->cx_type & CXp_HASARGS) == CXp_HASARGS)
 #define CxLVAL(c)	(0 + (c)->blk_u16)
-
-#ifdef USE_ITHREADS
-#  define PUSHLOOP_OP_NEXT		/* No need to do anything.  */
-#  define CX_LOOP_NEXTOP_GET(cx)	((cx)->blk_loop.my_op->op_nextop + 0)
-#else
-#  define PUSHLOOP_OP_NEXT		cx->blk_loop.next_op = cLOOP->op_nextop
-#  define CX_LOOP_NEXTOP_GET(cx)	((cx)->blk_loop.next_op + 0)
-#endif
 
 #define PUSHLOOP_PLAIN(cx, s)						\
 	cx->blk_loop.resetsp = s - PL_stack_base;			\
 	cx->blk_loop.my_op = cLOOP;					\
-	PUSHLOOP_OP_NEXT;						\
 	cx->blk_loop.state_u.ary.ary = NULL;				\
 	cx->blk_loop.state_u.ary.ix = 0;				\
-	CX_ITERDATA_SET(cx, NULL, 0);
+	cx->blk_loop.itervar_u.svp = NULL;
 
-#define PUSHLOOP_FOR(cx, dat, s, offset)				\
+#define PUSHLOOP_FOR(cx, ivar, s)					\
 	cx->blk_loop.resetsp = s - PL_stack_base;			\
 	cx->blk_loop.my_op = cLOOP;					\
-	PUSHLOOP_OP_NEXT;						\
 	cx->blk_loop.state_u.ary.ary = NULL;				\
 	cx->blk_loop.state_u.ary.ix = 0;				\
-	CX_ITERDATA_SET(cx, dat, offset);
+	cx->blk_loop.itervar_u.svp = (SV**)(ivar);
 
 #define POPLOOP(cx)							\
 	if (CxTYPE(cx) == CXt_LOOP_LAZYSV) {				\
@@ -550,6 +857,16 @@ struct block {
 #define blk_loop	cx_u.cx_blk.blk_u.blku_loop
 #define blk_givwhen	cx_u.cx_blk.blk_u.blku_givwhen
 
+#define DEBUG_CX(action)						\
+    DEBUG_l(								\
+	Perl_deb(aTHX_ "CX %ld %s %s (scope %ld,%ld) at %s:%d\n",	\
+		    (long)cxstack_ix,					\
+		    action,						\
+		    PL_block_type[CxTYPE(&cxstack[cxstack_ix])],	\
+		    (long)PL_scopestack_ix,				\
+		    (long)(cxstack[cxstack_ix].blk_oldscopesp),		\
+		    __FILE__, __LINE__));
+
 /* Enter a block. */
 #define PUSHBLOCK(cx,t,sp) CXINC, cx = &cxstack[cxstack_ix],		\
 	cx->cx_type		= t,					\
@@ -559,28 +876,27 @@ struct block {
 	cx->blk_oldscopesp	= PL_scopestack_ix,			\
 	cx->blk_oldpm		= PL_curpm,				\
 	cx->blk_gimme		= (U8)gimme;				\
-	DEBUG_l( PerlIO_printf(Perl_debug_log, "Entering block %ld, type %s\n",	\
-		    (long)cxstack_ix, PL_block_type[CxTYPE(cx)]); )
+	DEBUG_CX("PUSH");
 
 /* Exit a block (RETURN and LAST). */
-#define POPBLOCK(cx,pm) cx = &cxstack[cxstack_ix--],			\
+#define POPBLOCK(cx,pm)							\
+	DEBUG_CX("POP");						\
+	cx = &cxstack[cxstack_ix--],					\
 	newsp		 = PL_stack_base + cx->blk_oldsp,		\
 	PL_curcop	 = cx->blk_oldcop,				\
 	PL_markstack_ptr = PL_markstack + cx->blk_oldmarksp,		\
 	PL_scopestack_ix = cx->blk_oldscopesp,				\
 	pm		 = cx->blk_oldpm,				\
-	gimme		 = cx->blk_gimme;				\
-	DEBUG_SCOPE("POPBLOCK");					\
-	DEBUG_l( PerlIO_printf(Perl_debug_log, "Leaving block %ld, type %s\n",		\
-		    (long)cxstack_ix+1,PL_block_type[CxTYPE(cx)]); )
+	gimme		 = cx->blk_gimme;
 
 /* Continue a block elsewhere (NEXT and REDO). */
-#define TOPBLOCK(cx) cx  = &cxstack[cxstack_ix],			\
+#define TOPBLOCK(cx)							\
+	DEBUG_CX("TOP");						\
+	cx  = &cxstack[cxstack_ix],					\
 	PL_stack_sp	 = PL_stack_base + cx->blk_oldsp,		\
 	PL_markstack_ptr = PL_markstack + cx->blk_oldmarksp,		\
 	PL_scopestack_ix = cx->blk_oldscopesp,				\
-	PL_curpm         = cx->blk_oldpm;				\
-	DEBUG_SCOPE("TOPBLOCK");
+	PL_curpm         = cx->blk_oldpm;
 
 /* substitution context */
 struct subst {
@@ -603,7 +919,6 @@ struct subst {
 #define sb_maxiters	cx_u.cx_subst.sbu_maxiters
 #define sb_rflags	cx_u.cx_subst.sbu_rflags
 #define sb_oldsave	cx_u.cx_subst.sbu_oldsave
-#define sb_once		cx_u.cx_subst.sbu_once
 #define sb_rxtainted	cx_u.cx_subst.sbu_rxtainted
 #define sb_orig		cx_u.cx_subst.sbu_orig
 #define sb_dstr		cx_u.cx_subst.sbu_dstr
@@ -686,9 +1001,7 @@ struct context {
 
 /* private flags for CXt_LOOP */
 #define CXp_FOR_DEF	0x10	/* foreach using $_ */
-#ifdef USE_ITHREADS
-#  define CxPADLOOP(c)	((c)->blk_loop.targoffset)
-#endif
+#define CxPADLOOP(c)	((c)->blk_loop.my_op->op_targ)
 
 /* private flags for CXt_SUBST */
 #define CXp_ONCE	0x10	/* What was sbu_once in struct subst */
@@ -751,11 +1064,16 @@ L<perlcall>.
 				   hash actions codes defined in hv.h */
 #define G_EVAL		8	/* Assume eval {} around subroutine call. */
 #define G_NOARGS       16	/* Don't construct a @_ array. */
-#define G_KEEPERR      32	/* Append errors to $@, don't overwrite it */
+#define G_KEEPERR      32	/* Warn for errors, don't overwrite $@ */
 #define G_NODEBUG      64	/* Disable debugging at toplevel.  */
 #define G_METHOD      128       /* Calling method. */
 #define G_FAKINGEVAL  256	/* Faking an eval context for call_sv or
 				   fold_constants. */
+#define G_UNDEF_FILL  512	/* Fill the stack with &PL_sv_undef
+				   A special case for UNSHIFT in
+				   Perl_magic_methcall().  */
+#define G_WRITING_TO_STDERR 1024 /* Perl_write_to_stderr() is calling
+				    Perl_magic_methcall().  */
 
 /* flag bits for PL_in_eval */
 #define EVAL_NULL	0	/* not in an eval */
@@ -809,6 +1127,11 @@ typedef struct stackinfo PERL_SI;
 #define PUSHSTACKi(type) \
     STMT_START {							\
 	PERL_SI *next = PL_curstackinfo->si_next;			\
+	DEBUG_l({							\
+	    int i = 0; PERL_SI *p = PL_curstackinfo;			\
+	    while (p) { i++; p = p->si_prev; }				\
+	    Perl_deb(aTHX_ "push STACKINFO %d at %s:%d\n",		\
+		         i, __FILE__, __LINE__);})			\
 	if (!next) {							\
 	    next = new_stackinfo(32, 2048/sizeof(PERL_CONTEXT) - 1);	\
 	    next->si_prev = PL_curstackinfo;				\
@@ -830,6 +1153,11 @@ typedef struct stackinfo PERL_SI;
     STMT_START {							\
 	dSP;								\
 	PERL_SI * const prev = PL_curstackinfo->si_prev;		\
+	DEBUG_l({							\
+	    int i = -1; PERL_SI *p = PL_curstackinfo;			\
+	    while (p) { i++; p = p->si_prev; }				\
+	    Perl_deb(aTHX_ "pop  STACKINFO %d at %s:%d\n",		\
+		         i, __FILE__, __LINE__);})			\
 	if (!prev) {							\
 	    PerlIO_printf(Perl_error_log, "panic: POPSTACK\n");		\
 	    my_exit(1);							\
@@ -854,18 +1182,18 @@ typedef struct stackinfo PERL_SI;
 =head1 Multicall Functions
 
 =for apidoc Ams||dMULTICALL
-Declare local variables for a multicall. See L<perlcall/Lightweight Callbacks>.
+Declare local variables for a multicall. See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
 =for apidoc Ams||PUSH_MULTICALL
 Opening bracket for a lightweight callback.
-See L<perlcall/Lightweight Callbacks>.
+See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
 =for apidoc Ams||MULTICALL
-Make a lightweight callback. See L<perlcall/Lightweight Callbacks>.
+Make a lightweight callback. See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
 =for apidoc Ams||POP_MULTICALL
 Closing bracket for a lightweight callback.
-See L<perlcall/Lightweight Callbacks>.
+See L<perlcall/LIGHTWEIGHT CALLBACKS>.
 
 =cut
 */
@@ -908,8 +1236,8 @@ See L<perlcall/Lightweight Callbacks>.
 
 #define POP_MULTICALL \
     STMT_START {							\
-	LEAVESUB(multicall_cv);						\
-	CvDEPTH(multicall_cv)--;					\
+	if (! --CvDEPTH(multicall_cv))					\
+	    LEAVESUB(multicall_cv);					\
 	POPBLOCK(cx,PL_curpm);						\
 	POPSTACK;							\
 	CATCH_SET(multicall_oldcatch);					\

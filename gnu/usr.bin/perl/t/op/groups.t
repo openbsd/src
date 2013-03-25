@@ -12,21 +12,19 @@ BEGIN {
 
     chdir 't';
     @INC = '../lib';
+    require './test.pl';
+    skip_all_if_miniperl("no dynamic loading on miniperl, no POSIX");
 }
 use 5.010;
 use strict;
 use Config ();
 use POSIX ();
 
-unless (eval { my($foo) = getgrgid(0); 1 }) {
-    quit( "getgrgid() not implemented" );
-}
+skip_all('getgrgid() not implemented')
+    unless eval { my($foo) = getgrgid(0); 1 };
 
-quit("No `id' or `groups'") if
-    $^O eq 'MSWin32'
-    || $^O eq 'NetWare'
-    || $^O eq 'VMS'
-    || $^O =~ /lynxos/i;
+skip_all("No 'id' or 'groups'") if
+    $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS' || $^O =~ /lynxos/i;
 
 Test();
 exit;
@@ -38,9 +36,9 @@ sub Test {
     # Get our supplementary groups from the system by running commands
     # like `id -a'.
     my ( $groups_command, $groups_string ) = system_groups()
-        or quit( "No `id' or `groups'" );
+        or skip_all("No 'id' or 'groups'");
     my @extracted_groups = extract_system_groups( $groups_string )
-        or quit( "Can't parse `${groups_command}'" );
+        or skip_all("Can't parse '${groups_command}'");
 
     my $pwgid = $( + 0;
     my ($pwgnam) = getgrgid($pwgid);
@@ -132,12 +130,6 @@ sub Test {
     }
 
     return;
-}
-
-# Cleanly abort this entire test file
-sub quit {
-    print "1..0 # SKIP: @_\n";
-    exit 0;
 }
 
 # Get the system groups and the command used to fetch them.

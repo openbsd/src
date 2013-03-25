@@ -36,7 +36,7 @@ $ENV{'PERL5_CPANPLUS_IS_VERSION'} = __PACKAGE__->VERSION;
 
 =head1 NAME
 
-CPANPLUS::Backend - programmer's interface to the CPANPLUS module
+CPANPLUS::Backend - programmer's interface to CPANPLUS
 
 =head1 SYNOPSIS
 
@@ -66,7 +66,7 @@ When C<CPANPLUS::Backend> is loaded, which is necessary for just
 about every <CPANPLUS> operation, the environment variable
 C<PERL5_CPANPLUS_IS_RUNNING> is set to the current process id.
 
-Additionally, the environment variable C<PERL5_CPANPLUS_IS_VERSION> 
+Additionally, the environment variable C<PERL5_CPANPLUS_IS_VERSION>
 will be set to the version of C<CPANPLUS::Backend>.
 
 This information might be useful somehow to spawned processes.
@@ -134,13 +134,13 @@ sub module_tree {
         my @rv;
         for my $name ( grep { defined } @_) {
 
-            ### From John Malmberg: This is failing on VMS 
-            ### because ODS-2 does not retain the case of 
+            ### From John Malmberg: This is failing on VMS
+            ### because ODS-2 does not retain the case of
             ### filenames that are created.
-            ### The problem is the filename is being converted 
-            ### to a module name and then looked up in the 
+            ### The problem is the filename is being converted
+            ### to a module name and then looked up in the
             ### %$modtree hash.
-            ### 
+            ###
             ### As a fix, we do a search on VMS instead --
             ### more cpu cycles, but it gets around the case
             ### problem --kane
@@ -152,7 +152,7 @@ sub module_tree {
                       )
                     : $modtree->{$name}
             };
-            
+
             push @rv, $modobj || '';
         }
         return @rv == 1 ? $rv[0] : @rv;
@@ -397,7 +397,7 @@ for my $func (qw[fetch extract install readme files distributions]) {
 
         return CPANPLUS::Backend::RV->new(
                     function    => $func,
-                    ok          => !$flag,
+                    ok          => ( !$flag ? 1 : 0 ),
                     rv          => $href,
                     args        => \%hash,
                 );
@@ -417,6 +417,8 @@ C<parse_module>;
 =item Text::Bastardize
 
 =item Text-Bastardize
+
+=item Text/Bastardize.pm
 
 =item Text-Bastardize-1.06
 
@@ -444,7 +446,7 @@ would give back a C<CPANPLUS::Module> object of that version.
 Even if the version on CPAN is currently higher.
 
 The last three are examples of PATH resolution. In the first, we supply
-an absolute path to the unwrapped distribution. In the second the 
+an absolute path to the unwrapped distribution. In the second the
 distribution is relative to the current working directory.
 In the third, we will use the current working directory.
 
@@ -483,7 +485,7 @@ sub parse_module {
         error(loc("Can not parse module string from reference '%1'", $mod ));
         return;
     }
-    
+
     ### check only for allowed characters in a module name
     unless( $mod =~ /[^\w:]/ ) {
 
@@ -492,7 +494,7 @@ sub parse_module {
         return $maybe if IS_MODOBJ->( module => $maybe );
     }
 
-    ### Special case arbitary file paths such as '.' etc.
+    ### Special case arbitrary file paths such as '.' etc.
     if ( $mod and -d File::Spec->rel2abs($mod) ) {
         my $dir    = File::Spec->rel2abs($mod);
         my $parent = File::Spec->rel2abs( File::Spec->catdir( $dir, '..' ) );
@@ -516,17 +518,17 @@ sub parse_module {
                     );
 
         ### better guess for the version
-        $modobj->version( $modobj->package_version ) 
+        $modobj->version( $modobj->package_version )
             if defined $modobj->package_version;
-        
+
         ### better guess at module name, if possible
         if ( my $pkgname = $modobj->package_name ) {
             $pkgname =~ s/-/::/g;
-        
+
             ### no sense replacing it unless we changed something
-            $modobj->module( $pkgname ) 
+            $modobj->module( $pkgname )
                 if ($pkgname ne $modobj->package_name) || $pkgname !~ /-/;
-        }                
+        }
 
         $modobj->status->fetch( $parent );
         $modobj->status->extract( $dir );
@@ -549,27 +551,37 @@ sub parse_module {
                                         UNKNOWN_DL_LOCATION ),
                         author  => CPANPLUS::Module::Author::Fake->new
                     );
-        
+
         ### set the fetch_from accessor so we know to by pass the
         ### usual mirrors
         $modobj->status->_fetch_from( $mod );
-        
+
         ### better guess for the version
-        $modobj->version( $modobj->package_version ) 
+        $modobj->version( $modobj->package_version )
             if defined $modobj->package_version;
-        
+
         ### better guess at module name, if possible
         if ( my $pkgname = $modobj->package_name ) {
             $pkgname =~ s/-/::/g;
-        
+
             ### no sense replacing it unless we changed something
-            $modobj->module( $pkgname ) 
+            $modobj->module( $pkgname )
                 if ($pkgname ne $modobj->package_name) || $pkgname !~ /-/;
-        }                
-        
-        return $modobj;      
+        }
+
+        return $modobj;
     }
-    
+
+    # Stolen from cpanminus to support 'Module/Install.pm'
+    # type input
+    if ( ( my $tmpmod = $mod ) =~ s/\.pm$//i ) {
+        my ($volume, $dirs, $file) = File::Spec->splitpath( $tmpmod );
+        $tmpmod = join '::', grep { $_ } File::Spec->splitdir( $dirs ), $file;
+        ### perhaps we can find it in the module tree?
+        my $maybe = $self->module_tree( $tmpmod );
+        return $maybe if IS_MODOBJ->( module => $maybe );
+    }
+
     ### perhaps we can find it's a third party module?
     {   my $modobj = CPANPLUS::Module::Fake->new(
                         module  => $mod,
@@ -582,7 +594,7 @@ sub parse_module {
                     );
         if( $modobj->is_third_party ) {
             my $info = $modobj->third_party_information;
-            
+
             $modobj->author->author( $info->{author}     );
             $modobj->author->email(  $info->{author_url} );
             $modobj->description(    $info->{url} );
@@ -595,30 +607,30 @@ sub parse_module {
         error( loc("%1 is not a proper distribution name!", $mod) );
         return;
     }
-    
+
     ### there's wonky uris out there, like this:
     ### E/EY/EYCK/Net/Lite/Net-Lite-FTP-0.091
     ### compensate for that
     my $author;
     ### you probably have an A/AB/ABC/....../Dist.tgz type uri
-    if( (defined $parts[0] and length $parts[0] == 1) and 
+    if( (defined $parts[0] and length $parts[0] == 1) and
         (defined $parts[1] and length $parts[1] == 2) and
         $parts[2] =~ /^$parts[0]/i and $parts[2] =~ /^$parts[1]/i
-    ) {   
+    ) {
         splice @parts, 0, 2;    # remove the first 2 entries from the list
-        $author = shift @parts; # this is the actual author name then    
+        $author = shift @parts; # this is the actual author name then
 
     ### we''ll assume a ABC/..../Dist.tgz
     } else {
         $author = shift @parts || '';
     }
 
-    my($pkg, $version, $ext, $full) = 
+    my($pkg, $version, $ext, $full) =
         $self->_split_package_string( package => $dist );
-    
+
     ### translate a distribution into a module name ###
-    my $guess = $pkg; 
-    $guess =~ s/-/::/g if $guess; 
+    my $guess = $pkg;
+    $guess =~ s/-/::/g if $guess;
 
     my $maybe = $self->module_tree( $guess );
     if( IS_MODOBJ->( module => $maybe ) ) {
@@ -648,18 +660,18 @@ sub parse_module {
             } else {
                 $auth_obj   = $maybe->author;
                 $path       = $maybe->path;
-            }        
-        
+            }
+
             if( $maybe->package_name eq $pkg ) {
-    
+
                 my $modobj = CPANPLUS::Module::Fake->new(
                     module  => $maybe->module,
                     version => $version,
                     ### no extension? use the extension the original package
                     ### had instead
-                    package => do { $ext 
-                                        ? $full 
-                                        : $full .'.'. $maybe->package_extension 
+                    package => do { $ext
+                                        ? $full
+                                        : $full .'.'. $maybe->package_extension
                                 },
                     path    => $path,
                     author  => $auth_obj,
@@ -669,27 +681,27 @@ sub parse_module {
 
             ### you asked for a specific version?
             ### assume our $maybe is the one you wanted,
-            ### and fix up the version.. 
+            ### and fix up the version..
             } else {
-    
+
                 my $modobj = $maybe->clone;
                 $modobj->version( $version );
-                $modobj->package( 
-                        $maybe->package_name .'-'. 
-                        $version .'.'. 
-                        $maybe->package_extension 
+                $modobj->package(
+                        $maybe->package_name .'-'.
+                        $version .'.'.
+                        $maybe->package_extension
                 );
-                
+
                 ### you wanted a specific author, but it's not the one
                 ### from the module tree? we'll fix it up
                 if( $author and $author ne $modobj->author->cpanid ) {
                     $modobj->author( $auth_obj );
                     $modobj->path( $path );
                 }
-                
+
                 return $modobj;
             }
-        
+
         ### you didn't care about a version, so just return the object then
         } elsif ( !$version ) {
             return $maybe;
@@ -734,7 +746,7 @@ sub parse_module {
         # This should catch edge-cases where the package name
         # is unrelated to the modules it contains.
 
-        my ($modobj) = grep { $_->package_name eq $mod } 
+        my ($modobj) = grep { $_->package_name eq $mod }
                         $self->search( type => 'package', allow => [ qr/^\Q$mod\E/ ], );
         return $modobj if IS_MODOBJ->( module => $modobj );
 
@@ -829,7 +841,7 @@ modules they are in our @INC.
 =item * C<load>
 
 This resets the cache of modules we've attempted to load, but failed.
-This enables you to load them again after a failed load, if they 
+This enables you to load them again after a failed load, if they
 somehow have become available.
 
 =item * C<all>
@@ -904,7 +916,7 @@ The location where to create the local mirror.
 =item index_files
 
 Enable/disable fetching of index files. You can disable fetching of the
-index files if you don't plan to use the local mirror as your primary 
+index files if you don't plan to use the local mirror as your primary
 site, or if you'd like up-to-date index files be fetched from elsewhere.
 
 Defaults to true.
@@ -1014,7 +1026,7 @@ different or on a different machine by issuing the following commands:
 
     ### using the default shell:
     CPAN Terminal> i file://path/to/Snapshot_XXYY.pm
-    
+
     ### using the API
     $modobj = $cb->parse_module( module => 'file://path/to/Snapshot_XXYY.pm' );
     $modobj->install;
@@ -1077,7 +1089,7 @@ sub autobundle {
         error( loc( "Could not open '%1' for writing: %2", $file, $! ) );
         return;
     }
-    
+
     ### make sure we load the module tree *before* doing this, as it
     ### starts to chdir all over the place
     $self->module_tree;
@@ -1139,7 +1151,7 @@ EOF
 =head2 $bool = $cb->save_state
 
 Explicit command to save memory state to disk. This can be used to save
-information to disk about where a module was extracted, the result of 
+information to disk about where a module was extracted, the result of
 C<make test>, etc. This will then be re-loaded into memory when a new
 session starts.
 
@@ -1150,7 +1162,7 @@ source engine). The default storage engine supports this option.
 Most users will not need this command, but it can handy for automated
 systems like setting up CPAN smoke testers.
 
-The method will return true if it managed to save the state to disk, 
+The method will return true if it managed to save the state to disk,
 or false if it did not.
 
 =cut
@@ -1162,12 +1174,13 @@ sub save_state {
 
 
 ### XXX these wrappers are not individually tested! only the underlying
-### code through source.t and indirectly trought he CustomSource plugin.
+### code through source.t and indirectly through he CustomSource plugin.
+
 =pod
 
 =head1 CUSTOM MODULE SOURCES
 
-Besides the sources as provided by the general C<CPAN> mirrors, it's 
+Besides the sources as provided by the general C<CPAN> mirrors, it's
 possible to add your own sources list to your C<CPANPLUS> index.
 
 The methodology behind this works much like C<Debian's apt-sources>.
@@ -1194,13 +1207,13 @@ sub list_custom_sources {
 
 =head2 $local_index = $cb->add_custom_source( uri => URI, [verbose => BOOL] );
 
-Adds an C<URI> to your own sources list and mirrors its index. See the 
+Adds an C<URI> to your own sources list and mirrors its index. See the
 documentation on C<< $cb->update_custom_source >> on how this is done.
 
 Returns the full path to the local index on success, or false on failure.
 
 Note that when adding a new C<URI>, the change to the in-memory tree is
-not saved until you rebuild or save the tree to disk again. You can do 
+not saved until you rebuild or save the tree to disk again. You can do
 this using the C<< $cb->reload_indices >> method.
 
 =cut
@@ -1238,7 +1251,7 @@ Here's an example of how custom sources would resolve into index files:
   file:///path/to/sources       =>  file:///path/to/sources/packages.txt
   http://example.com/sources    =>  http://example.com/sources/packages.txt
   ftp://example.com/sources     =>  ftp://example.com/sources/packages.txt
-  
+
 The file C<packages.txt> simply holds a list of packages that can be found
 under the root of the C<URI>. This file can be automatically generated for
 you when the remote source is a C<file:// URI>. For C<http://>, C<ftp://>,
@@ -1249,14 +1262,14 @@ users to index it.
 For details, see the C<< $cb->write_custom_source_index >> method below.
 
 All packages that are added via this mechanism will be attributed to the
-author with C<CPANID> C<LOCAL>. You can use this id to search for all 
+author with C<CPANID> C<LOCAL>. You can use this id to search for all
 added packages.
 
 =cut
 
 sub update_custom_source {
     my $self = shift;
-    
+
     ### if it mentions /remote/, the request is to update a single uri,
     ### not all the ones we have, so dispatch appropriately
     my $rv = grep( /remote/i, @_)
@@ -1264,11 +1277,11 @@ sub update_custom_source {
         : $self->__update_custom_module_sources( @_ );
 
     return $rv;
-}    
+}
 
 =head2 $file = $cb->write_custom_source_index( path => /path/to/package/root, [to => /path/to/index/file, verbose => BOOL] );
 
-Writes the index for a custom repository root. Most users will not have to 
+Writes the index for a custom repository root. Most users will not have to
 worry about this, but administrators of a repository will need to make sure
 their indexes are up to date.
 
@@ -1277,7 +1290,7 @@ root, which you can specify with the C<path> argument. You can override this
 location by specifying the C<to> argument, but in normal operation, that should
 not be required.
 
-Once the index file is written, users can then add the C<URI> pointing to 
+Once the index file is written, users can then add the C<URI> pointing to
 the repository to their custom list of sources and start using it right away. See the C<< $cb->add_custom_source >> method for user details.
 
 =cut
@@ -1300,15 +1313,15 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<CPANPLUS::Configure>, L<CPANPLUS::Module>, L<CPANPLUS::Module::Author>, 
+L<CPANPLUS::Configure>, L<CPANPLUS::Module>, L<CPANPLUS::Module::Author>,
 L<CPANPLUS::Selfupdate>
 
 =cut

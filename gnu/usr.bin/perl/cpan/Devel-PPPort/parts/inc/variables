@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 20 $
+##  $Revision: 22 $
 ##  $Author: mhx $
-##  $Date: 2009/06/12 04:10:50 +0200 $
+##  $Date: 2011/04/13 09:39:16 +0200 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -383,7 +383,13 @@ other_variables()
 		ppp_TESTVAR(PL_debstash);
 		ppp_TESTVAR(PL_defgv);
 		ppp_TESTVAR(PL_diehook);
+#if { VERSION >= 5.13.7 }
+                /* can't get a pointer any longer */
+                mXPUSHi(PL_dirty ? 1 : 1);
+                count++;
+#else
 		ppp_TESTVAR(PL_dirty);
+#endif
 		ppp_TESTVAR(PL_dowarn);
 		ppp_TESTVAR(PL_errgv);
 		ppp_TESTVAR(PL_laststatval);

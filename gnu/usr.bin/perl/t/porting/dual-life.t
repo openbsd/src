@@ -21,6 +21,8 @@ my $not_installed = qr{^(?:
   \.\./cpan/Encode/bin/u(?:cm(?:2table|lint|sort)|nidump)
    |
   \.\./cpan/Module-Build/MB-[\w\d]+/Simple/(?:test_install/)?bin/.*
+   |
+  \.\./cpan/Archive-Tar/bin/ptar.*
 )\z}ix;
 
 my %dist_dir_exe;

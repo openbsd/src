@@ -424,7 +424,13 @@ foreach my $test_ref (@CF) {
         utf8::downgrade($latin1); #No-op, but doesn't hurt
         utf8::upgrade($utf8);
         is(fc($latin1), fc($utf8), "fc() gives the same results for \\x{$_} in Latin-1 and UTF-8 under unicode_strings");
-        {
+        SKIP: {
+            if (
+                !$Config::Config{d_setlocale}
+            || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+            ) {
+                skip "no locale support", 2
+            }
             use locale;
             is(fc($latin1), lc($latin1), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");
             is(fc($utf8), lc($utf8), "use locale; fc(qq{\\x{$_}}), lc(qq{\\x{$_}}) when qq{\\x{$_}} is in latin-1");

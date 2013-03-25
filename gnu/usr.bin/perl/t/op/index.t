@@ -7,7 +7,7 @@ BEGIN {
 }
 
 use strict;
-plan( tests => 111 );
+plan( tests => 114 );
 
 run_tests() unless caller;
 
@@ -92,13 +92,8 @@ is(rindex($a, "foo",    ), 0);
 {
     my $search;
     my $text;
-    if (ord('A') == 193) {
-	$search = "foo \x71 bar";
-	$text = "a\xb1\xb1a $search    $search quux";
-    } else {
-	$search = "foo \xc9 bar";
-	$text = "a\xa3\xa3a $search    $search quux";
-    }
+    $search = latin1_to_native("foo \xc9 bar");
+    $text = latin1_to_native("a\xa3\xa3a $search    $search quux");
 
     my $text_utf8 = $text;
     utf8::upgrade($text_utf8);
@@ -131,19 +126,6 @@ is(rindex($a, "foo",    ), 0);
     is (rindex($text_octets, $search), -1);
     is (index($text, $search_octets), -1);
     is (rindex($text, $search_octets), -1);
-}
-
-foreach my $utf8 ('', ', utf-8') {
-    foreach my $arraybase (0, 1, -1, -2) {
-	my $expect_pos = 2 + $arraybase;
-
-	my $prog = "no warnings 'deprecated';\n";
-	$prog .= "\$[ = $arraybase; \$big = \"N\\xabN\\xab\"; ";
-	$prog .= '$big .= chr 256; chop $big; ' if $utf8;
-	$prog .= 'print rindex $big, "N", 2 + $[';
-
-	fresh_perl_is($prog, $expect_pos, {}, "\$[ = $arraybase$utf8");
-    }
 }
 
 SKIP: {
@@ -197,6 +179,42 @@ SKIP: {
             die $@ if $@;
         }
     }
+}
+
+{
+    # RT#75898
+    is(eval { utf8::upgrade($_ = " "); index $_, " ", 72 }, -1,
+       'UTF-8 cache handles offset beyond the end of the string');
+    $_ = "\x{100}BC";
+    is(index($_, "C", 4), -1,
+       'UTF-8 cache handles offset beyond the end of the string');
+}
+
+# RT #89218
+use constant {PVBM => 'galumphing', PVBM2 => 'bang'};
+
+sub index_it {
+    is(index('galumphing', PVBM), 0,
+       "index isn't confused by format compilation");
+}
+ 
+index_it();
+is($^A, '', '$^A is empty');
+formline PVBM;
+is($^A, 'galumphing', "formline isn't confused by index compilation");
+index_it();
+
+$^A = '';
+# must not do index here before formline.
+is($^A, '', '$^A is empty');
+formline PVBM2;
+is($^A, 'bang', "formline isn't confused by index compilation");
+is(index('bang', PVBM2), 0, "index isn't confused by format compilation");
+
+{
+    use constant perl => "rules";
+    is(index("perl rules", perl), 5, 'first index of a constant works');
+    is(index("rules 1 & 2", perl), 0, 'second index of the same constant works');
 }
 
 }

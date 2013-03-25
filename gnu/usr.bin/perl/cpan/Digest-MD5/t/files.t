@@ -1,3 +1,4 @@
+
 print "1..3\n";
 
 use strict;
@@ -8,26 +9,19 @@ use Digest::MD5 qw(md5 md5_hex md5_base64);
 # (You'll need to have Perl 5.7.3 or later, to have the Encode installed.)
 # (And remember that under the Perl core distribution you should
 #  also have the $ENV{PERL_CORE} set to a true value.)
-# Similarly, to update MacOS section, run with $ENV{MAC_MD5SUM} set.
 
 my $EXPECT;
 if (ord "A" == 193) { # EBCDIC
     $EXPECT = <<EOT;
-11e8028ee426273db6b6db270a8bb38c  README
-6e556382813f67120863f4f91b7fcdc2  MD5.xs
+4f932585bed0cc942186fb51daff4839  README
+b0f7cb93ec1b43f9417f089bb7b87bb0  MD5.xs
 276da0aa4e9a08b7fe09430c9c5690aa  rfc1321.txt
-EOT
-} elsif ("\n" eq "\015") { # MacOS
-    $EXPECT = <<EOT;
-c95549c6c5e1e1c078b27042f1dc850f  README
-7aa380c810bc7c1a0bec22cf32bc50d4  MD5.xs
-754b9db19f79dbc4992f7166eb0f37ce  rfc1321.txt
 EOT
 } else {
     # This is the output of: 'md5sum README MD5.xs rfc1321.txt'
     $EXPECT = <<EOT;
-c95549c6c5e1e1c078b27042f1dc850f  README
-27e1b94aa63b8636cb95660ec3f78112  MD5.xs
+c8d3f8457a2d6983253d771ffddb9f4c  README
+572735e45b7299f68b2e3615be97b267  MD5.xs
 754b9db19f79dbc4992f7166eb0f37ce  rfc1321.txt
 EOT
 }
@@ -64,13 +58,6 @@ for (split /^/, $EXPECT) {
          require Encode;
 	 my $data = cat_file($file);	
 	 Encode::from_to($data, 'latin1', 'cp1047');
-	 print md5_hex($data), "  $base\n";
-	 next;
-     }
-     if ($ENV{MAC_MD5SUM}) {
-         require Encode;
-	 my $data = cat_file($file);	
-	 Encode::from_to($data, 'latin1', 'MacRoman');
 	 print md5_hex($data), "  $base\n";
 	 next;
      }

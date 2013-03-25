@@ -7,21 +7,21 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 use warnings;
 
-require './test.pl';
-plan( tests => 188 );
+plan( tests => 239 );
 
-# type coersion on assignment
+# type coercion on assignment
 $foo = 'foo';
 $bar = *main::foo;
 $bar = $foo;
 is(ref(\$bar), 'SCALAR');
 $foo = *main::bar;
 
-# type coersion (not) on misc ops
+# type coercion (not) on misc ops
 
 ok($foo);
 is(ref(\$foo), 'GLOB');
@@ -32,7 +32,35 @@ is(ref(\$foo), 'GLOB');
 is($foo, '*main::bar');
 is(ref(\$foo), 'GLOB');
 
-# type coersion on substitutions that match
+{
+ no warnings;
+ ${\*$foo} = undef;
+ is(ref(\$foo), 'GLOB', 'no type coercion when assigning to *{} retval');
+ $::{phake} = *bar;
+ is(
+   \$::{phake}, \*{"phake"},
+   'symbolic *{} returns symtab entry when FAKE'
+ );
+ ${\*{"phake"}} = undef;
+ is(
+   ref(\$::{phake}), 'GLOB',
+  'no type coercion when assigning to retval of symbolic *{}'
+ );
+ $::{phaque} = *bar;
+ eval '
+   is(
+     \$::{phaque}, \*phaque,
+     "compile-time *{} returns symtab entry when FAKE"
+   );
+   ${\*phaque} = undef;
+ ';
+ is(
+   ref(\$::{phaque}), 'GLOB',
+  'no type coercion when assigning to retval of compile-time *{}'
+ );
+}
+
+# type coercion on substitutions that match
 $a = *main::foo;
 $b = $a;
 $a =~ s/^X//;
@@ -164,7 +192,10 @@ is (*{*x{GLOB}}, "*main::STDOUT");
     my $a = "SYM000";
     ok(!defined *{$a});
 
-    ok(!defined @{$a});
+    {
+	no warnings 'deprecated';
+	ok(!defined @{$a});
+    }
     ok(!defined *{$a});
 
     {
@@ -191,8 +222,8 @@ is (*{*x{GLOB}}, "*main::STDOUT");
     # although it *should* if you're talking about magicals
 
     my $a = "]";
-    ok(defined ${$a});
     ok(defined *{$a});
+    ok(defined ${$a});
 
     $a = "1";
     "o" =~ /(o)/;
@@ -253,16 +284,18 @@ is($j[0], 1);
     # test the assignment of a GLOB to an LVALUE
     my $e = '';
     local $SIG{__DIE__} = sub { $e = $_[0] };
-    my $v;
+    my %v;
     sub f { $_[0] = 0; $_[0] = "a"; $_[0] = *DATA }
-    f($v);
-    is ($v, '*main::DATA');
-    my $x = <$v>;
+    f($v{v});
+    is ($v{v}, '*main::DATA');
+    is (ref\$v{v}, 'GLOB', 'lvalue assignment preserves globs');
+    my $x = readline $v{v};
     is ($x, "perl\n");
+    is ($e, '', '__DIE__ handler never called');
 }
 
 {
-    $e = '';
+    my $e = '';
     # GLOB assignment to tied element
     local $SIG{__DIE__} = sub { $e = $_[0] };
     sub T::TIEARRAY  { bless [] => "T" }
@@ -272,9 +305,14 @@ is($j[0], 1);
     tie my @ary => "T";
     $ary[0] = *DATA;
     is ($ary[0], '*main::DATA');
-    is ($e, '');
+    is (
+      ref\tied(@ary)->[0], 'GLOB',
+     'tied elem assignment preserves globs'
+    );
+    is ($e, '', '__DIE__ handler not called');
     my $x = readline $ary[0];
     is($x, "rocks\n");
+    is ($e, '', '__DIE__ handler never called');
 }
 
 {
@@ -286,7 +324,7 @@ $| = 1;
 sub DESTROY {eval {die qq{Farewell $_[0]}}; print $@}
 package main;
 
-bless \$A::B, 'M';
+bless \$A::B, q{M};
 *A:: = \*B::;
 EOPROG
     like($output, qr/^Farewell M=SCALAR/, "DESTROY was called");
@@ -333,7 +371,7 @@ is (ref $::{ga_shloip}, 'SCALAR', "Export of proxy constant as is");
 is (ref $::{oonk}, 'SCALAR', "Export doesn't affect original");
 is (eval 'ga_shloip', "Value", "Constant has correct value");
 is (ref $::{ga_shloip}, 'SCALAR',
-    "Inlining of constant doesn't change represenatation");
+    "Inlining of constant doesn't change representation");
 
 delete $::{ga_shloip};
 
@@ -533,7 +571,7 @@ foreach my $value ([1,2,3], {1=>2}, *STDOUT{IO}, \&ok, *STDOUT{FORMAT}) {
     $::{BONK} = \"powie";
     *{"BONK"} = \&{"BONK"};
     eval 'is(BONK(), "powie",
-             "Assigment works when glob created midway (bug 45607)"); 1'
+             "Assignment works when glob created midway (bug 45607)"); 1'
 	or die $@;
 }
 
@@ -560,25 +598,27 @@ foreach my $type (qw(integer number string)) {
 	  "with the correct error message");
 }
 
-# RT #60954 anonymous glob should be defined, and not coredump when
+# RT #65582 anonymous glob should be defined, and not coredump when
 # stringified. The behaviours are:
 #
-#        defined($glob)    "$glob"
-# 5.8.8     false           "" with uninit warning
-# 5.10.0    true            (coredump)
-# 5.12.0    true            ""
+#        defined($glob)    "$glob"                   $glob .= ...
+# 5.8.8     false           "" with uninit warning   "" with uninit warning
+# 5.10.0    true            (coredump)               (coredump)
+# 5.1[24]   true            ""                       "" with uninit warning
+# 5.16      true            "*__ANON__::..."         "*__ANON__::..."
 
 {
     my $io_ref = *STDOUT{IO};
     my $glob = *$io_ref;
-    ok(defined $glob, "RT #60954 anon glob should be defined");
+    ok(defined $glob, "RT #65582 anon glob should be defined");
 
     my $warn = '';
     local $SIG{__WARN__} = sub { $warn = $_[0] };
     use warnings;
     my $str = "$glob";
-    is($warn, '', "RT #60954 anon glob stringification shouln't warn");
-    is($str,  '', "RT #60954 anon glob stringification should be empty");
+    is($warn, '', "RT #65582 anon glob stringification shouldn't warn");
+    is($str,  '*__ANON__::__ANONIO__',
+	"RT #65582/#96326 anon glob stringification");
 }
 
 # [perl #71254] - Assigning a glob to a variable that has a current
@@ -613,6 +653,295 @@ ok(exists($RT72740a::{s3}), "RT72740a::s3 exists");
 ok(exists($RT72740a::{s4}), "RT72740a::s4 exists");
 is(RT72740a::s1(), "RT72740b::s2", "RT72740::s1 parsed correctly");
 is(RT72740a::s3(), "RT72740b::s4", "RT72740::s3 parsed correctly");
+
+# [perl #71686] Globs that are in symbol table can be un-globbed
+$sym = undef;
+$::{fake} = *sym;
+is (eval 'local *::fake = \"chuck"; $fake', 'chuck',
+	"Localized glob didn't coerce into a RV");
+is ($@, '', "Can localize FAKE glob that's present in stash");
+is (scalar $::{fake}, "*main::sym",
+	"Localized FAKE glob's value was correctly restored");
+
+# [perl #1804] *$x assignment when $x is a copy of another glob
+# And [perl #77508] (same thing with list assignment)
+{
+    no warnings 'once';
+    my $x = *_random::glob_that_is_not_used_elsewhere;
+    *$x = sub{};
+    is(
+      "$x", '*_random::glob_that_is_not_used_elsewhere',
+      '[perl #1804] *$x assignment when $x is FAKE',
+    );
+    $x = *_random::glob_that_is_not_used_elsewhere;
+    (my $dummy, *$x) = (undef,[]);
+    is(
+      "$x", '*_random::glob_that_is_not_used_elsewhere',
+      '[perl #77508] *$x list assignment when $x is FAKE',
+    ) or require Devel::Peek, Devel::Peek::Dump($x);
+}
+
+# [perl #76540]
+# this caused panics or 'Attempt to free unreferenced scalar'
+# (its a compile-time issue, so the die lets us skip the prints)
+{
+    my @warnings;
+    local $SIG{__WARN__} = sub { push @warnings, @_ };
+
+    eval <<'EOF';
+BEGIN { $::{FOO} = \'bar' }
+die "made it";
+print FOO, "\n";
+print FOO, "\n";
+EOF
+
+    like($@, qr/made it/, "#76540 - no panic");
+    ok(!@warnings, "#76540 - no 'Attempt to free unreferenced scalar'");
+}
+
+# [perl #77362] various bugs related to globs as PVLVs
+{
+ no warnings qw 'once void';
+ my %h; # We pass a key of this hash to the subroutine to get a PVLV.
+ sub { for(shift) {
+  # Set up our glob-as-PVLV
+  $_ = *hon;
+
+  # Bad symbol for array
+  ok eval{ @$_; 1 }, 'PVLV glob slots can be autovivified' or diag $@;
+
+  # This should call TIEHANDLE, not TIESCALAR
+  *thext::TIEHANDLE = sub{};
+  ok eval{ tie *$_, 'thext'; 1 }, 'PVLV globs can be tied as handles'
+   or diag $@;
+
+  # Assigning undef to the glob should not overwrite it...
+  {
+   my $w;
+   local $SIG{__WARN__} = sub { $w = shift };
+   *$_ = undef;
+   is $_, "*main::hon", 'PVLV: assigning undef to the glob does nothing';
+   like $w, qr\Undefined value assigned to typeglob\,
+    'PVLV: assigning undef to the glob warns';
+  }
+
+  # Neither should reference assignment.
+  *$_ = [];
+  is $_, "*main::hon", "PVLV: arrayref assignment assigns to the AV slot";
+
+  # Concatenation should still work.
+  ok eval { $_ .= 'thlew' }, 'PVLV concatenation does not die' or diag $@;
+  is $_, '*main::honthlew', 'PVLV concatenation works';
+
+  # And we should be able to overwrite it with a string, number, or refer-
+  # ence, too, if we omit the *.
+  $_ = *hon; $_ = 'tzor';
+  is $_, 'tzor', 'PVLV: assigning a string over a glob';
+  $_ = *hon; $_ = 23;
+  is $_, 23, 'PVLV: assigning an integer over a glob';
+  $_ = *hon; $_ = 23.23;
+  is $_, 23.23, 'PVLV: assigning a float over a glob';
+  $_ = *hon; $_ = \my $sthat;
+  is $_, \$sthat, 'PVLV: assigning a reference over a glob';
+
+  # This bug was found by code inspection. Could this ever happen in
+  # real life? :-)
+  # This duplicates a file handle, accessing it through a PVLV glob, the
+  # glob having been removed from the symbol table, so a stringified form
+  # of it does not work. This checks that sv_2io does not stringify a PVLV.
+  $_ = *quin;
+  open *quin, "test.pl"; # test.pl is as good a file as any
+  delete $::{quin};
+  ok eval { open my $zow, "<&", $_ }, 'PVLV: sv_2io stringifieth not'
+   or diag $@;
+
+  # Similar tests to make sure sv_2cv etc. do not stringify.
+  *$_ = sub { 1 };
+  ok eval { &$_ }, "PVLV glob can be called as a sub" or diag $@;
+  *flelp = sub { 2 };
+  $_ = 'flelp';
+  is eval { &$_ }, 2, 'PVLV holding a string can be called as a sub'
+   or diag $@;
+
+  # Coderef-to-glob assignment when the glob is no longer accessible
+  # under its name: These tests are to make sure the OPpASSIGN_CV_TO_GV
+  # optimisation takes PVLVs into account, which is why the RHSs have to be
+  # named subs.
+  use constant gheen => 'quare';
+  $_ = *ming;
+  delete $::{ming};
+  *$_ = \&gheen;
+  is eval { &$_ }, 'quare',
+   'PVLV: constant assignment when the glob is detached from the symtab'
+    or diag $@;
+  $_ = *bength;
+  delete $::{bength};
+  *gheck = sub { 'lon' };
+  *$_ = \&gheck;
+  is eval { &$_ }, 'lon',
+   'PVLV: coderef assignment when the glob is detached from the symtab'
+    or diag $@;
+
+SKIP: {
+    skip_if_miniperl("no dynamic loading on miniperl, so can't load PerlIO::scalar", 1);
+    # open should accept a PVLV as its first argument
+    $_ = *hon;
+    ok eval { open $_,'<', \my $thlext }, 'PVLV can be the first arg to open'
+	or diag $@;
+  }
+
+  # -t should not stringify
+  $_ = *thlit; delete $::{thlit};
+  *$_ = *STDOUT{IO};
+  ok defined -t $_, 'PVLV: -t does not stringify';
+
+  # neither should -T
+  # but some systems don’t support this on file handles
+  my $pass;
+  ok
+    eval {
+     open my $quile, "<", 'test.pl';
+     $_ = *$quile;
+     $pass = -T $_;
+     1
+    } ? $pass : $@ =~ /not implemented on filehandles/,
+   "PVLV: -T does not stringify";
+  
+  # Unopened file handle
+  {
+   my $w;
+   local $SIG{__WARN__} = sub { $w .= shift };
+   $_ = *vor;
+   close $_;
+   like $w, qr\unopened filehandle vor\,
+    'PVLV globs get their names reported in unopened error messages';
+  }
+
+ }}->($h{k});
+}
+
+*aieee = 4;
+pass('Can assign integers to typeglobs');
+*aieee = 3.14;
+pass('Can assign floats to typeglobs');
+*aieee = 'pi';
+pass('Can assign strings to typeglobs');
+
+{
+  package thrext;
+  sub TIESCALAR{bless[]}
+  sub STORE{ die "No!"}
+  sub FETCH{ no warnings 'once'; *thrit }
+  tie my $a, "thrext";
+  () = "$a"; # do a fetch; now $a holds a glob
+  eval { *$a = sub{} };
+  untie $a;
+  eval { $a = "bar" };
+  ::is $a, "bar",
+    "[perl #77812] Globs in tied scalars can be reified if STORE dies"
+}
+
+# These two crashed prior to 5.13.6. In 5.13.6 they were fatal errors. They
+# were fixed in 5.13.7.
+ok eval {
+  my $glob = \*heen::ISA;
+  delete $::{"heen::"};
+  *$glob = *bar; 
+}, "glob-to-*ISA assignment works when *ISA has lost its stash";
+ok eval {
+  my $glob = \*slare::ISA;
+  delete $::{"slare::"};
+  *$glob = []; 
+}, "array-to-*ISA assignment works when *ISA has lost its stash";
+# These two crashed in 5.13.6. They were likewise fixed in 5.13.7.
+ok eval {
+  sub greck;
+  my $glob = do { no warnings "once"; \*phing::foo};
+  delete $::{"phing::"};
+  *$glob = *greck; 
+}, "Assigning a glob-with-sub to a glob that has lost its stash works";
+ok eval {
+  sub pon::foo;
+  my $glob = \*pon::foo;
+  delete $::{"pon::"};
+  *$glob = *foo; 
+}, "Assigning a glob to a glob-with-sub that has lost its stash works";
+
+{
+  package Tie::Alias;
+  sub TIESCALAR{ bless \\pop }
+  sub FETCH { $${$_[0]} }
+  sub STORE { $${$_[0]} = $_[1] }
+  package main;
+  tie my $alias, 'Tie::Alias', my $var;
+  no warnings 'once';
+  $var = *galobbe;
+  {
+    local *$alias = [];
+    $var = 3;
+    is $alias, 3, "[perl #77926] Glob reification during localisation";
+  }
+}
+
+# This code causes gp_free to call a destructor when a glob is being
+# restored on scope exit. The destructor used to see SVs with a refcount of
+# zero inside the glob, which could result in crashes (though not in this
+# test case, which just panics).
+{
+ no warnings 'once';
+ my $survived;
+ *Trit::DESTROY = sub {
+   $thwext = 42;  # panic
+   $survived = 1;
+ };
+ {
+  local *thwext;
+  $thwext = bless[],'Trit';
+  ();
+ }
+ ok $survived,
+  'no error when gp_free calls a destructor that assigns to the gv';
+}
+
+# *{undef}
+eval { *{my $undef} = 3 };
+like $@, qr/^Can't use an undefined value as a symbol reference at /,
+  '*{ $undef } assignment';
+eval { *{;undef} = 3 };
+like $@, qr/^Can't use an undefined value as a symbol reference at /,
+  '*{ ;undef } assignment';
+
+# [perl #99142] defined &{"foo"} when there is a constant stub
+# If I break your module, you get to have it mentioned in Perl's tests. :-)
+package HTTP::MobileAttribute::Plugin::Locator {
+    use constant LOCATOR_GPS => 1;
+    ::ok defined &{__PACKAGE__."::LOCATOR_GPS"},
+        'defined &{"name of constant"}';
+    ::ok Internals::SvREFCNT(${__PACKAGE__."::"}{LOCATOR_GPS}),
+       "stash elem for slot is not freed prematurely";
+}
+
+# Check that constants promoted to CVs point to the right GVs when the name
+# contains a null.
+package lrcg {
+  use constant x => 3;
+  # These two lines abuse the optimisation that copies the scalar ref from
+  # one stash element to another, to get a constant with a null in its name
+  *{"yz\0a"} = \&{"x"};
+  my $ref = \&{"yz\0a"};
+  ::ok !exists $lrcg::{yz},
+    'constants w/nulls in their names point 2 the right GVs when promoted';
+}
+
+# Look away, please.
+# This violates perl's internal structures by fiddling with stashes in a
+# way that should never happen, but perl should not start trying to free
+# unallocated memory as a result.  There is no ok() or is() because the
+# panic that used to occur only occurred during global destruction, and
+# only with PERL_DESTRUCT_LEVEL=2.  (The panic itself was sufficient for
+# the harness to consider this test script to have failed.)
+$::{aoeuaoeuaoeaoeu} = __PACKAGE__; # cow
+() = *{"aoeuaoeuaoeaoeu"};
 
 __END__
 Perl

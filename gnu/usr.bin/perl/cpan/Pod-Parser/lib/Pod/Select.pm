@@ -11,14 +11,14 @@ package Pod::Select;
 use strict;
 
 use vars qw($VERSION @ISA @EXPORT $MAX_HEADING_LEVEL %myData @section_headings @selected_sections);
-$VERSION = '1.36'; ## Current version of this package
+$VERSION = '1.51'; ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################
 
 =head1 NAME
 
-Pod::Select, podselect - extract selected sections of POD from input
+Pod::Select, podselect() - extract selected sections of POD from input
 
 =head1 SYNOPSIS
 
@@ -739,6 +739,8 @@ Brad Appleton E<lt>bradapp@enteract.comE<gt>
 
 Based on code for B<pod2text> written by
 Tom Christiansen E<lt>tchrist@mox.perl.comE<gt>
+
+B<Pod::Select> is part of the L<Pod::Parser> distribution.
 
 =cut
 

@@ -7,7 +7,7 @@ BEGIN {
     require "test.pl";
 }
 
-plan tests => 22;
+plan tests => 60;
 
 if ($Config{ebcdic} eq 'define') {
     $_ = join "", map chr($_), 129..233;
@@ -44,8 +44,99 @@ is("\Q\l\UPe*x*r\El\E*", "pE\\*X\\*Rl*", '\Q\l\UPe*x*r\El\E*');
 is("\U\lPerl\E\E\E\E", "pERL", '\U\lPerl\E\E\E\E');
 is("\l\UPerl\E\E\E\E", "pERL", '\l\UPerl\E\E\E\E');
 
-is(quotemeta("\x{263a}"), "\x{263a}", "quotemeta Unicode");
-is(length(quotemeta("\x{263a}")), 1, "quotemeta Unicode length");
+is(quotemeta("\x{263a}"), "\\\x{263a}", "quotemeta Unicode quoted");
+is(length(quotemeta("\x{263a}")), 2, "quotemeta Unicode quoted length");
+is(quotemeta("\x{100}"), "\x{100}", "quotemeta Unicode nonquoted");
+is(length(quotemeta("\x{100}")), 1, "quotemeta Unicode nonquoted length");
+
+my $char = ":";
+utf8::upgrade($char);
+is(quotemeta($char), "\\$char", "quotemeta '$char' in UTF-8");
+is(length(quotemeta($char)), 2, "quotemeta '$char'  in UTF-8 length");
+
+$char = "M";
+utf8::upgrade($char);
+is(quotemeta($char), "$char", "quotemeta '$char' in UTF-8");
+is(length(quotemeta($char)), 1, "quotemeta '$char'  in UTF-8 length");
+
+my $char = "\N{U+D7}";
+utf8::upgrade($char);
+is(quotemeta($char), "\\$char", "quotemeta '\\N{U+D7}' in UTF-8");
+is(length(quotemeta($char)), 2, "quotemeta '\\N{U+D7}'  in UTF-8 length");
+
+$char = "\N{U+D8}";
+utf8::upgrade($char);
+is(quotemeta($char), "$char", "quotemeta '\\N{U+D8}' in UTF-8");
+is(length(quotemeta($char)), 1, "quotemeta '\\N{U+D8}'  in UTF-8 length");
+
+{
+    no feature 'unicode_strings';
+    is(quotemeta("\x{d7}"), "\\\x{d7}", "quotemeta Latin1 no unicode_strings quoted");
+    is(length(quotemeta("\x{d7}")), 2, "quotemeta Latin1 no unicode_strings quoted length");
+    is(quotemeta("\x{d8}"), "\\\x{d8}", "quotemeta Latin1 no unicode_strings quoted");
+    is(length(quotemeta("\x{d8}")), 2, "quotemeta Latin1 no unicode_strings quoted length");
+
+    use locale;
+
+    my $char = ":";
+    is(quotemeta($char), "\\$char", "quotemeta '$char' locale");
+    is(length(quotemeta($char)), 2, "quotemeta '$char' locale");
+
+    $char = "M";
+    utf8::upgrade($char);
+    is(quotemeta($char), "$char", "quotemeta '$char' locale");
+    is(length(quotemeta($char)), 1, "quotemeta '$char' locale");
+
+    my $char = "\x{D7}";
+    is(quotemeta($char), "\\$char", "quotemeta '\\x{D7}' locale");
+    is(length(quotemeta($char)), 2, "quotemeta '\\x{D7}' locale length");
+
+    $char = "\x{D8}";  # Every non-ASCII Latin1 is quoted in locale.
+    is(quotemeta($char), "\\$char", "quotemeta '\\x{D8}' locale");
+    is(length(quotemeta($char)), 2, "quotemeta '\\x{D8}' locale length");
+}
+{
+    use feature 'unicode_strings';
+    is(quotemeta("\x{d7}"), "\\\x{d7}", "quotemeta Latin1 unicode_strings quoted");
+    is(length(quotemeta("\x{d7}")), 2, "quotemeta Latin1 unicode_strings quoted length");
+    is(quotemeta("\x{d8}"), "\x{d8}", "quotemeta Latin1 unicode_strings nonquoted");
+    is(length(quotemeta("\x{d8}")), 1, "quotemeta Latin1 unicode_strings nonquoted length");
+
+    use locale;
+
+    my $char = ":";
+    utf8::upgrade($char);
+    is(quotemeta($char), "\\$char", "quotemeta '$char' locale in UTF-8");
+    is(length(quotemeta($char)), 2, "quotemeta '$char' locale  in UTF-8 length");
+
+    $char = "M";
+    utf8::upgrade($char);
+    is(quotemeta($char), "$char", "quotemeta '$char' locale in UTF-8");
+    is(length(quotemeta($char)), 1, "quotemeta '$char' locale in UTF-8 length");
+
+    my $char = "\N{U+D7}";
+    utf8::upgrade($char);
+    is(quotemeta($char), "\\$char", "quotemeta '\\N{U+D7}' locale in UTF-8");
+    is(length(quotemeta($char)), 2, "quotemeta '\\N{U+D7}' locale in UTF-8 length");
+
+    SKIP: {
+    if (
+        !$Config::Config{d_setlocale}
+    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+    ) {
+        skip "no locale support", 2
+    }
+        $char = "\N{U+D8}";  # Every non-ASCII Latin1 is quoted in locale.
+        utf8::upgrade($char);
+        is(quotemeta($char), "\\$char", "quotemeta '\\N{U+D8}' locale in UTF-8");
+        is(length(quotemeta($char)), 2, "quotemeta '\\N{U+D8}' locale in UTF-8 length");
+    }
+
+    is(quotemeta("\x{263a}"), "\\\x{263a}", "quotemeta locale Unicode quoted");
+    is(length(quotemeta("\x{263a}")), 2, "quotemeta locale Unicode quoted length");
+    is(quotemeta("\x{100}"), "\x{100}", "quotemeta locale Unicode nonquoted");
+    is(length(quotemeta("\x{100}")), 1, "quotemeta locale Unicode nonquoted length");
+}
 
 $a = "foo|bar";
 is("a\Q\Ec$a", "acfoo|bar", '\Q\E');

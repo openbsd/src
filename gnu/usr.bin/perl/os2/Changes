@@ -94,7 +94,7 @@ after 5.003_27:
 after 5.004_01:
 	flock emulation added (disable by setting env PERL_USE_FLOCK=0),
 		thanks to Rocco Caputo;
-	RSX bug with missing waitpid circomvented;
+	RSX bug with missing waitpid circumvented;
 	-S bug with full path with \ corrected.
 
 before 5.004_02:
@@ -170,7 +170,7 @@ after 5.005_53:
 
 	PrfDB was using a bug in processing XSUBs returning U32.
 
-	Variable $OS2::emx_rev implemented (string and numberic values
+	Variable $OS2::emx_rev implemented (string and numeric values
 		are the same as C variables _emx_rev and _emx_vprt).
 	Variable $OS2::emx_env implemented (same as C variable _emx_env).
 	Variable $OS2::os_ver implemented (_osmajor + 0.001 * _osminor).
@@ -310,7 +310,7 @@ pre 5.6.1:
 		# with default values good for handling exception mask:
 		unsigned set_control87_em(new=MCW_EM,mask=MCW_EM)
 	    Needed to guard against other situations when the FP mask is
-	    stompted upon.  Apparently, IBM used a compiler (for some period
+	    stomped upon.  Apparently, IBM used a compiler (for some period
 	    of time around '95?) which changes FP mask right and left...
 	Resolved: $^X was always uppercased (cosmetic).  Solution:
 	    use argv[0] if it differs from what the OS returns only in case.
@@ -611,7 +611,7 @@ After @19774:
 			HORIZONTAL_FONT_RES VERTICAL_FONT_RES DEVICE_FONT_SIM
 			LINEWIDTH_THICK DEVICE_POLYSET_POINTS
 	New function OS2::SysValues(which = -1, hwndDesktop = HWND_DESKTOP).
-		If which != -1, returns the correspondg SysValue.  Otherwise
+		If which != -1, returns the corresponding SysValue.  Otherwise
 		returns a hash with keys:
 			SWAPBUTTON DBLCLKTIME CXDBLCLK CYDBLCLK
 			CXSIZEBORDER CYSIZEBORDER ALARM 7 8 CURSORRATE
@@ -661,7 +661,7 @@ After @19774:
 	Fix float-to-string conversion in the range .0001..0.1 (would return
 		in exponential notation, per gcvt()).
 	Make fork(): a) preserve i387 flags;
-		     b) preverve the dynamically loaded (system) DLLs;
+		     b) preserve the dynamically loaded (system) DLLs;
 		     c) preserve morphed status;
 	Make sleep() work with time > 0xffffffff/1000.
 	Implement usleep() via _sleep2(); make select() with num_files==0

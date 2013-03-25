@@ -171,7 +171,7 @@ C<do { } while> construct.  See L<perlsyn/"Loop Control">.
 =item *
 
 The switch statement is called C<given/when> and only available in
-perl 5.10 or newer. See L<perlsyn/"Switch statements">.
+perl 5.10 or newer.  See L<perlsyn/"Switch Statements">.
 
 =item *
 
@@ -497,7 +497,7 @@ of a variable, or as a delimiter for any kind of quote construct.
 Double darn.
 
     $a = ("foo bar");
-    $b = q baz;
+    $b = q baz ;
     print "a is $a, b is $b\n";
 
     # perl4 prints: a is foo bar, b is baz
@@ -665,7 +665,7 @@ are to used around the name.
     # perl4 prints: 2
     # perl5 fails with syntax error
 
-    @ = (1..3);
+    @a = (1..3);
     print "$#{a}";
 
     # perl4 prints: {a}
@@ -704,7 +704,7 @@ tries to be more precise.  For example, on a Solaris Sparc:
 
     # Perl5 prints:
     7.373504
-    7.375039999999999614
+    7.373503999999999614
 
 Notice how the first result looks better in Perl 5.
 
@@ -960,14 +960,15 @@ being required.
 =item * Comma operator in scalar context gives scalar context to args
 
 The comma operator in a scalar context is now guaranteed to give a
-scalar context to its arguments.
+scalar context to its last argument. It gives scalar or void context
+to any preceding arguments, depending on circumstances.
 
     @y= ('a','b','c');
     $x = (1, 2, @y);
     print "x = $x\n";
 
-    # Perl4 prints:  x = c   # Thinks list context interpolates list
-    # Perl5 prints:  x = 3   # Knows scalar uses length of list
+    # Perl4 prints:  x = c   # Interpolates array @y into the list
+    # Perl5 prints:  x = 3   # Evaluates array @y in scalar context
 
 =item * C<sprintf()> prototyped as C<($;@)>
 

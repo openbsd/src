@@ -17,7 +17,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Module::Author::Fake - class for creating fake author objects
+CPANPLUS::Module::Author::Fake - dummy author object for CPANPLUS
 
 =head1 SYNOPSIS
 
@@ -63,7 +63,7 @@ sub new {
     unless( $obj->_id ) {
         error(loc("No '%1' specified -- No CPANPLUS object associated!",'_id'));
         return;
-    } 
+    }
 
     ### rebless object ###
     return bless $obj, $class;

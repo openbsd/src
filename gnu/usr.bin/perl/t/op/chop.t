@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 139;
+plan tests => 143;
 
 $_ = 'abc';
 $c = foo();
@@ -183,7 +183,7 @@ ok($@ =~ /Can\'t modify.*chop.*in.*assignment/);
 eval 'chomp($x, $y) = (1, 2);';
 ok($@ =~ /Can\'t modify.*chom?p.*in.*assignment/);
 
-my @chars = ("N", ord('A') == 193 ? "\xee" : "\xd3", substr ("\xd4\x{100}", 0, 1), chr 1296);
+my @chars = ("N", latin1_to_native("\xd3"), substr ("\xd4\x{100}", 0, 1), chr 1296);
 foreach my $start (@chars) {
   foreach my $end (@chars) {
     local $/ = $end;
@@ -242,4 +242,24 @@ foreach my $start (@chars) {
 
     map chomp(+()), ('')x68;
     ok(1, "extend sp in pp_chomp");
+}
+
+{
+    # [perl #73246] chop doesn't support utf8
+    # the problem was UTF8_IS_START() didn't handle perl's extended UTF8
+    my $utf = "\x{80000001}\x{80000000}";
+    my $result = chop($utf);
+    is($utf, "\x{80000001}", "chopping high 'unicode'- remnant");
+    is($result, "\x{80000000}", "chopping high 'unicode' - result");
+
+    SKIP: {
+        no warnings 'overflow'; # avoid compile-time warnings below on 32-bit architectures
+        use Config;
+        $Config{ivsize} >= 8
+	  or skip("this build can't handle very large characters", 2);
+        my $utf = "\x{ffffffffffffffff}\x{fffffffffffffffe}";
+        my $result = chop $utf;
+        is($utf, "\x{ffffffffffffffff}", "chop even higher 'unicode' - remnant");
+        is($result, "\x{fffffffffffffffe}", "chop even higher 'unicode' - result");
+    }
 }

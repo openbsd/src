@@ -26,7 +26,7 @@ local $Data::Dumper::Indent     = 1; # for dumpering from !
 BEGIN {
     use vars        qw[ $VERSION @ISA ];
     @ISA        =   qw[ CPANPLUS::Shell::_Base::ReadLine ];
-    $VERSION = "0.90";
+    $VERSION = "0.9121";
 }
 
 load CPANPLUS::Shell;
@@ -56,6 +56,7 @@ my $map = {
     'u'     => '_uninstall',
     '/'     => '_meta',         # undocumented for now
     'c'     => '_reports',
+    'e'     => '_reload_shell',
 };
 ### free letters: e g j k n y ###
 
@@ -73,7 +74,7 @@ my $Prompt  = $Brand . '> ';
 
 =head1 NAME
 
-CPANPLUS::Shell::Default - default CPANPLUS user interface
+CPANPLUS::Shell::Default - the default CPANPLUS shell
 
 =head1 SYNOPSIS
 
@@ -119,8 +120,8 @@ CPANPLUS::Shell::Default - default CPANPLUS user interface
     cpanp> r Acme::Foo       # view Acme::Foo's README file
     cpanp> o                 # get a list of all installed modules that
                              # are out of date
-    cpanp> o 1..3            # list uptodateness from a previous search 
-                            
+    cpanp> o 1..3            # list uptodateness from a previous search
+
     cpanp> s conf            # show config settings
     cpanp> s conf md5 1      # enable md5 checks
     cpanp> s program         # show program settings
@@ -141,9 +142,10 @@ CPANPLUS::Shell::Default - default CPANPLUS user interface
     cpanp> w                 # show last search results again
 
     cpanp> q                 # quit the shell
+    cpanp> e                 # exit the shell and reload
 
-    cpanp> /plugins          # list avialable plugins
-    cpanp> /? PLUGIN         # list help test of <PLUGIN>                  
+    cpanp> /plugins          # list available plugins
+    cpanp> /? PLUGIN         # list help test of <PLUGIN>
 
     ### common options:
     cpanp> i ... --skiptest # skip tests
@@ -250,11 +252,11 @@ sub _input_loop {
     } continue {
         ### clear the sigint count
         $self->_signals->{INT}{count}--
-            if $self->_signals->{INT}{count};  
-            
+            if $self->_signals->{INT}{count};
+
         ### reset the 'install prereq?' cached answer
-        $self->settings->{'install_all_prereqs'} = undef;                                
-                            
+        $self->settings->{'install_all_prereqs'} = undef;
+
     }
 
     return 1;
@@ -280,7 +282,7 @@ sub dispatch_on_input {
     $self->noninteractive($noninteractive) if defined $noninteractive;
 
     my $rv = 1;
-    
+
     my @cmds = split ';', $string;
     while( my $input = shift @cmds ) {
 
@@ -304,9 +306,9 @@ sub dispatch_on_input {
             if( $input and $input !~ s/^\s+// ) {
                 $self->__print( loc("Could not understand command: %1\n".
                           "Possibly missing command before argument(s)?\n",
-                          $org_input) ); 
+                          $org_input) );
                 return;
-            }     
+            }
 
             ### allow overrides from the config file ###
             if( defined $rc->{$key} ) {
@@ -343,9 +345,9 @@ sub dispatch_on_input {
             if( $key eq 'z' or
                 ($key eq 's' and $input =~ /^\s*edit/)
             ) {
-                $self->__print( "\n", 
+                $self->__print( "\n",
                       loc(  "Command '%1' not supported over remote connection",
-                            join ' ', $key, $input 
+                            join ' ', $key, $input
                       ), "\n\n" );
 
             } else {
@@ -377,7 +379,7 @@ sub dispatch_on_input {
                         unless grep {$key eq $_} qw[! m a v w x p s b / ? h];
 
                 ### keep track of failures
-                $rv *= defined eval { $self->$method(   
+                $rv *= defined eval { $self->$method(
                                         modules => \@mods,
                                         options => $options,
                                         input   => $input,
@@ -502,7 +504,7 @@ sub __display_results {
     } else {
         $self->__print( loc("No results to display"), "\n" );
     }
-    
+
     return 1;
 }
 
@@ -514,7 +516,7 @@ sub _quit {
             if defined $rc->{'logout'};
 
     $self->__print( loc("Exiting CPANPLUS shell"), "\n" );
-    
+
     return 1;
 }
 
@@ -529,21 +531,22 @@ sub _quit {
     sub _help {
         my $self = shift;
         my %hash    = @_;
-    
+
         my $input;
         {   local $Params::Check::ALLOW_UNKNOWN = 1;
-    
+
             my $tmpl = {
                 input   => { required => 0, store => \$input }
             };
-    
+
             my $args = check( $tmpl, \%hash ) or return;
         }
-    
+
         @help = (
 loc('[General]'                                                                     ),
 loc('    h | ?                  # display help'                                     ),
 loc('    q                      # exit'                                             ),
+loc('    e                      # exit and reload'                                  ),
 loc('    v                      # version information'                              ),
 loc('[Search]'                                                                      ),
 loc('    a AUTHOR ...           # search by author(s)'                              ),
@@ -584,7 +587,7 @@ loc('   /plugins                # list available plugins'                   ),
 loc('   /? [PLUGIN NAME]        # show usage for (a particular) plugin(s)'  ),
 
         ) unless @help;
-    
+
         $self->_pager_open if (@help >= $self->_term_rowcount);
         ### XXX: functional placeholder for actual 'detailed' help.
         $self->__print( "Detailed help for the command '$input' is " .
@@ -592,7 +595,7 @@ loc('   /? [PLUGIN NAME]        # show usage for (a particular) plugin(s)'  ),
         $self->__print( map {"$_\n"} @help );
         $self->__print( $/ );
         $self->_pager_close;
-    
+
         return 1;
     }
 }
@@ -760,7 +763,7 @@ sub _fetch {
         $self->__print( "\n" );
     }
     $self->_pager_close;
-    
+
     return 1 if $rv;
     return;
 }
@@ -860,16 +863,16 @@ sub _reload_indices {
     }
 
     my $rv = $cb->reload_indices( %$opts );
-    
+
     ### so the update failed, but you didnt give it any options either
     if( !$rv and !(keys %$opts) ) {
         $self->__print(
                 "\nFailure may be due to corrupt source files\n" .
                 "Try this:\n\tx --update_source\n\n" );
     }
-    
+
     return $rv;
-    
+
 }
 
 sub _install {
@@ -906,20 +909,20 @@ sub _install {
         $self->__print( $prompt, $mod->module, " (".$mod->version.")", "\n" );
 
         my $log_length = length CPANPLUS::Error->stack_as_string;
-    
+
         ### store the status for look up when we're done with all
         ### install calls
         $status->{$mod} = $mod->install( %$opts, target => $target );
-        
+
         ### would you like a log file of what happened?
         if( $conf->get_conf('write_install_logs') ) {
 
             if ( ON_WIN32 and !check_install(
-                              module => 'IPC::Run', version => 0.55 ) 
+                              module => 'IPC::Run', version => 0.55 )
                ) {
-               error(loc("IPC::Run version '%1' is required on MSWin32" 
-                         . " in order to capture buffers." 
-                         . " The logfile generated may not contain" 
+               error(loc("IPC::Run version '%1' is required on MSWin32"
+                         . " in order to capture buffers."
+                         . " The logfile generated may not contain"
                          . " any useful data, until it is installed", 0.55));
             }
 
@@ -930,26 +933,26 @@ sub _install {
             ### create the dir if it doesn't exit yet
             $cb->_mkdir( dir => $dir ) unless -d $dir;
 
-            my $file = File::Spec->catfile( 
+            my $file = File::Spec->catfile(
                             $dir,
-                            INSTALL_LOG_FILE->( $mod ) 
+                            INSTALL_LOG_FILE->( $mod )
                         );
             if ( open my $fh, ">$file" ) {
                 my $stack = CPANPLUS::Error->stack_as_string;
                 ### remove everything in the log that was there *before*
                 ### we started this install
                 substr( $stack, 0, $log_length, '' );
-                
+
                 print $fh $stack;
                 close $fh;
-                
-                $self->__print( 
+
+                $self->__print(
                     loc("*** Install log written to:\n  %1\n\n", $file)
                 );
-            } else {                
+            } else {
                 warn "Could not open '$file': $!\n";
                 next;
-            }                
+            }
         }
     }
 
@@ -961,7 +964,7 @@ sub _install {
             $self->__print(
                 loc("Module '%1' %tense(%2,past) successfully\n",
                 $mod->module, $action)
-            );                
+            );
         } else {
             $flag++;
             $self->__print(
@@ -981,8 +984,8 @@ sub _install {
             loc("Problem %tense(%1,present) one or more modules", $action)
         );
         $self->__print( "\n" );
-        
-        $self->__print( 
+
+        $self->__print(
             loc("*** You can view the complete error buffer by pressing ".
                 "'%1' ***\n", 'p')
         ) unless $conf->get_conf('verbose') || $self->noninteractive;
@@ -1001,13 +1004,13 @@ sub __ask_about_install {
     $Shell->__print( loc("Module '%1' requires '%2' to be installed",
                          $mod->module, $prereq->module ) );
     $Shell->__print( "\n\n" );
-    
+
     ### previously cached answer?
     return $Shell->settings->{'install_all_prereqs'}
         if defined $Shell->settings->{'install_all_prereqs'};
-    
-    
-    $Shell->__print( 
+
+
+    $Shell->__print(
         loc(    "If you don't wish to see this question anymore\n".
                 "you can disable it by entering the following ".
                 "commands on the prompt:\n    '%1'",
@@ -1025,9 +1028,9 @@ sub __ask_about_install {
                     default => $yes,
                 );
 
-    ### if 'all' or 'none', save this, so we can apply it to 
+    ### if 'all' or 'none', save this, so we can apply it to
     ### other prereqs in this chain.
-    $Shell->settings->{'install_all_prereqs'} = 
+    $Shell->settings->{'install_all_prereqs'} =
         $reply eq $all  ? 1 :
         $reply eq $none ? 0 :
         undef;
@@ -1064,7 +1067,7 @@ sub __ask_about_edit_test_report {
     my $term    = $Shell->term;
 
     $Shell->__print( "\n" );
-    $Shell->__print( 
+    $Shell->__print(
         loc("Test report prepared for module '%1'. You can edit this ".
             "report if you would like", $mod->module ) );
     $Shell->__print("\n\n");
@@ -1082,11 +1085,11 @@ sub __ask_about_test_failure {
     my $term        = $Shell->term;
 
     $Shell->__print( "\n" );
-    $Shell->__print( 
+    $Shell->__print(
         loc(    "The tests for '%1' failed. Would you like me to proceed ".
                 "anyway or should we abort?", $mod->module ) );
     $Shell->__print( "\n\n" );
-    
+
     my $bool =  $term->ask_yn(
                     prompt  => loc("Proceed anyway?"),
                     default => 'n',
@@ -1125,7 +1128,7 @@ sub _details {
         my @list = sort { $a->module cmp $b->module } $mod->contains;
 
         unless( $href ) {
-            $self->__print( 
+            $self->__print(
                 loc("No details for %1 - it might be outdated.",
                     $mod->module), "\n" );
             next;
@@ -1135,11 +1138,11 @@ sub _details {
             for my $item ( sort keys %$href ) {
                 $self->__printf( $format, $item, $href->{$item} );
             }
-            
+
             my $showed;
             for my $item ( @list ) {
                 $self->__printf(
-                    $cformat, ($showed ? '' : 'Contains:'), 
+                    $cformat, ($showed ? '' : 'Contains:'),
                              $item->module, $item->version
                 );
                 $showed++;
@@ -1199,7 +1202,7 @@ sub _set_conf {
     ### possible options
     ### XXX hard coded, not optimal :(
     my %types   = (
-        reconfigure => '', 
+        reconfigure => '',
         save        => q([user | system | boxed]),
         edit        => '',
         program     => q([key => val]),
@@ -1222,6 +1225,7 @@ sub _set_conf {
 
     my ($type,$key,$value) = $input =~ m/(\w+)\s*(\w*)\s*(.*?)$/;
     $value =~ s/\s+$//g if $value;
+    $type = '' unless defined $type;
     $type = lc $type;
 
     if( $type eq 'reconfigure' ) {
@@ -1237,8 +1241,8 @@ sub _set_conf {
             user    => CONFIG_USER,
             system  => CONFIG_SYSTEM,
             boxed   => CONFIG_BOXED,
-        }->{ $key } || CONFIG_USER;      
-        
+        }->{ $key } || CONFIG_USER;
+
         ### boxed is special, so let's get its value from %INC
         ### so we can tell it where to save
         ### XXX perhaps this logic should be generic for all
@@ -1247,15 +1251,15 @@ sub _set_conf {
         if( $where eq CONFIG_BOXED ) {
             my $file    = join( '/', split( '::', CONFIG_BOXED ) ) . '.pm';
             my $file_re = quotemeta($file);
-            
+
             my $path    = $INC{$file} || '';
-            $path       =~ s/$file_re$//;        
+            $path       =~ s/$file_re$//;
             $dir        = $path;
-        }     
-        
+        }
+
         my $rv = $cb->configure_object->save( $where => $dir );
 
-        $self->__print( 
+        $self->__print(
             $rv
                 ? loc("Configuration successfully saved to %1\n    (%2)\n",
                        $where, $rv)
@@ -1271,7 +1275,7 @@ sub _set_conf {
         my $where = {
             user    => CONFIG_USER,
             system  => CONFIG_SYSTEM,
-        }->{ $key } || CONFIG_USER;      
+        }->{ $key } || CONFIG_USER;
 
         my $file = $conf->_config_pm_to_file( $where );
         system($editor,$file);
@@ -1289,35 +1293,35 @@ sub _set_conf {
         return 1;
 
     } elsif ( $type eq 'mirrors' ) {
-    
-        $self->__print( 
+
+        $self->__print(
             loc("Readonly list of mirrors (in order of preference):\n\n" ) );
-        
+
         my $i;
         for my $host ( @{$conf->get_conf('hosts')} ) {
             my $uri = $cb->_host_to_uri( %$host );
-            
+
             $i++;
             $self->__print( "\t[$i] $uri\n" );
         }
-        
+
         $self->__print(
             loc("\nTo edit this list, please type: '%1'\n", 's edit') );
 
     } elsif ( $type eq 'selfupdate' ) {
-        my %valid = map { $_ => $_ } 
-                        $cb->selfupdate_object->list_categories;    
+        my %valid = map { $_ => $_ }
+                        $cb->selfupdate_object->list_categories;
 
         unless( $valid{$key} ) {
             $self->__print(
                 loc( "To update your current CPANPLUS installation, ".
                         "choose one of the these options:\n%1",
-                        ( join $/, map { 
+                        ( join $/, map {
                              sprintf "\ts selfupdate %-17s " .
-                                     "[--latest=0] [--dryrun]", $_ 
-                          } sort keys %valid ) 
+                                     "[--latest=0] [--dryrun]", $_
+                          } sort keys %valid )
                     )
-            );          
+            );
         } else {
             my %update_args = (
                 update  => $key,
@@ -1330,35 +1334,35 @@ sub _set_conf {
                             ->list_modules_to_update( %update_args );
 
             $self->__print(loc("The following updates will take place:"),$/.$/);
-            
+
             for my $feature ( sort keys %list ) {
                 my $aref = $list{$feature};
-                
+
                 ### is it a 'feature' or a built in?
                 $self->__print(
-                    $valid{$feature} 
+                    $valid{$feature}
                         ? "  " . ucfirst($feature) . ":\n"
                         : "  Modules for '$feature' support:\n"
                 );
-                    
-                ### show what modules would be installed    
+
+                ### show what modules would be installed
                 $self->__print(
                     scalar @$aref
-                        ? map { sprintf "    %-42s %-6s -> %-6s \n", 
+                        ? map { sprintf "    %-42s %-6s -> %-6s \n",
                                 $_->name, $_->installed_version, $_->version
-                          } @$aref      
+                          } @$aref
                         : "    No upgrades required\n"
-                );                                                  
+                );
                 $self->__print( $/ );
             }
-            
-        
-            unless( $opts->{'dryrun'} ) { 
+
+
+            unless( $opts->{'dryrun'} ) {
                 $self->__print( loc("Updating your CPANPLUS installation\n") );
                 $cb->selfupdate_object->selfupdate( %update_args );
             }
         }
-        
+
     } else {
 
         if ( $type eq 'program' or $type eq 'conf' ) {
@@ -1366,7 +1370,7 @@ sub _set_conf {
             my $format = {
                 conf    => '%-25s %s',
                 program => '%-12s %s',
-            }->{ $type };      
+            }->{ $type };
 
             unless( $key ) {
                 my @list =  grep { $_ ne 'hosts' }
@@ -1385,7 +1389,7 @@ sub _set_conf {
                 }
 
             } elsif ( $key eq 'hosts' or $key eq 'lib' ) {
-                $self->__print( 
+                $self->__print(
                     loc(  "Setting %1 is not trivial.\n" .
                           "It is suggested you use '%2' and edit the " .
                           "configuration file manually", $key, 's edit')
@@ -1401,8 +1405,8 @@ sub _set_conf {
             $self->__print( loc("Unknown type '%1'",$type || 'EMPTY' ) );
             $self->__print( $/ );
             $self->__print( loc("Try one of the following:") );
-            $self->__print( $/, join $/, 
-                      map { sprintf "\t%-11s %s", $_, $types{$_} } 
+            $self->__print( $/, join $/,
+                      map { sprintf "\t%-11s %s", $_, $types{$_} }
                       sort keys %types );
         }
     }
@@ -1490,7 +1494,7 @@ sub _autobundle {
 
     my $where = $cb->autobundle( %$opts );
 
-    $self->__print( 
+    $self->__print(
         $where
             ? loc("Wrote autobundle to '%1'", $where)
             : loc("Could not create autobundle" )
@@ -1549,25 +1553,25 @@ should use the same package manager to uninstall them
     ### then report whether all this went ok or not ###
     for my $mod (@$mods) {
         if( $mod->status->uninstall ) {
-            $self->__print( 
+            $self->__print(
                 loc("Module '%1' %tense(uninstall,past) successfully\n",
                     $mod->module ) );
         } else {
             $flag++;
-            $self->__print( 
+            $self->__print(
                 loc("Error %tense(uninstall,present) '%1'\n", $mod->module) );
         }
     }
 
     if( !$flag ) {
-        $self->__print( 
+        $self->__print(
             loc("All modules %tense(uninstall,past) successfully"), "\n" );
     } else {
-        $self->__print( 
+        $self->__print(
             loc("Problem %tense(uninstall,present) one or more modules" ),
             "\n" );
-            
-        $self->__print( 
+
+        $self->__print(
             loc("*** You can view the complete error buffer by pressing '%1'".
                 "***\n", 'p') ) unless $conf->get_conf('verbose');
     }
@@ -1616,13 +1620,13 @@ sub _reports {
 
         my %seen;
         for my $href (@list ) {
-            $self->__print( 
+            $self->__print(
                 "[" . $mod->author->cpanid .'/'. $href->{'dist'} . "]\n"
             ) unless $seen{ $href->{'dist'} }++;
 
-            $self->__printf( 
-                $format, 
-                $href->{'grade'}, 
+            $self->__printf(
+                $format,
+                $href->{'grade'},
                 $href->{'platform'},
                 ($href->{'details'} ? '(*)' : '')
             );
@@ -1640,62 +1644,62 @@ sub _reports {
 
 ### Load plugins
 {   my @PluginModules;
-    my %Dispatch = ( 
-        showtip => [ __PACKAGE__, '_show_random_tip'], 
-        plugins => [ __PACKAGE__, '_list_plugins'   ], 
+    my %Dispatch = (
+        showtip => [ __PACKAGE__, '_show_random_tip'],
+        plugins => [ __PACKAGE__, '_list_plugins'   ],
         '?'     => [ __PACKAGE__, '_plugins_usage'  ],
-    );        
+    );
 
     sub plugin_modules  { return @PluginModules }
     sub plugin_table    { return %Dispatch }
-    
+
     my $init_done;
     sub _plugins_init {
 
         ### only initialize once
         return if $init_done++;
-        
+
         ### find all plugins first
         if( check_install( module  => 'Module::Pluggable', version => '2.4') ) {
             require Module::Pluggable;
-    
+
             my $only_re = __PACKAGE__ . '::Plugins::\w+$';
-    
+
             Module::Pluggable->import(
                             sub_name    => '_plugins',
                             search_path => __PACKAGE__,
                             only        => qr/$only_re/,
                             #except      => [ INSTALLER_MM, INSTALLER_SAMPLE ]
                         );
-                        
+
             push @PluginModules, __PACKAGE__->_plugins;
         }
-    
+
         ### now try to load them
         for my $p ( __PACKAGE__->plugin_modules ) {
             my %map = eval { load $p; $p->import; $p->plugins };
             error(loc("Could not load plugin '$p': $@")), next if $@;
-        
+
             ### register each plugin
             while( my($name, $func) = each %map ) {
-                
+
                 if( not length $name or not length $func ) {
                     error(loc("Empty plugin name or dispatch function detected"));
                     next;
-                }                
-                
-                if( exists( $Dispatch{$name} ) ) {
-                    error(loc("'%1' is already registered by '%2'", 
-                        $name, $Dispatch{$name}->[0]));
-                    next;                    
                 }
-        
+
+                if( exists( $Dispatch{$name} ) ) {
+                    error(loc("'%1' is already registered by '%2'",
+                        $name, $Dispatch{$name}->[0]));
+                    next;
+                }
+
                 ### register name, package and function
                 $Dispatch{$name} = [ $p, $func ];
             }
         }
     }
-    
+
     ### dispatch a plugin command to its function
     sub _meta {
         my $self = shift;
@@ -1703,69 +1707,69 @@ sub _reports {
         my $cb   = $self->backend;
         my $term = $self->term;
         my $conf = $cb->configure_object;
-    
+
         my $opts; my $input;
         {   local $Params::Check::ALLOW_UNKNOWN = 1;
-    
+
             my $tmpl = {
                 options => { default => { }, store => \$opts },
                 input   => { default => '',  store => \$input },
             };
-    
+
              check( $tmpl, \%hash ) or return;
         }
-    
+
         $input =~ s/\s*(\S+)\s*//;
         my $cmd = $1;
-    
+
         ### look up the command, or go to the default
         my $aref = $Dispatch{ $cmd } || [ __PACKAGE__, '_plugin_default' ];
-        
+
         my($pkg,$func) = @$aref;
-        
+
         my $rv = eval { $pkg->$func( $self, $cb, $cmd, $input, $opts ) };
-        
+
         error( $@ ) if $@;
 
         ### return $rv instead, so input loop can be terminated?
         return 1;
     }
-    
+
     sub _plugin_default { error(loc("No such plugin command")) }
 }
 
-### plugin commands 
-{   my $help_format = "    /%-21s # %s\n"; 
-    
+### plugin commands
+{   my $help_format = "    /%-21s # %s\n";
+
     sub _list_plugins   {
         my $self = shift;
-        
+
         $self->__print( loc("Available plugins:\n") );
         $self->__print( loc("    List usage by using: /? PLUGIN_NAME\n" ) );
         $self->__print( $/ );
-        
+
         my %table = __PACKAGE__->plugin_table;
         for my $name( sort keys %table ) {
             my $pkg     = $table{$name}->[0];
             my $this    = __PACKAGE__;
-            
+
             my $who = $pkg eq $this
                 ? "Standard Plugin"
                 : do {  my $v = $self->_format_version($pkg->VERSION) || '';
                         $pkg =~ s/^$this/../;
-                        sprintf "Provided by: %-30s %-10s", $pkg, $v; 
+                        sprintf "Provided by: %-30s %-10s", $pkg, $v;
                     };
-            
+
             $self->__printf( $help_format, $name, $who );
-        }          
-    
+        }
+
         $self->__print( $/.$/ );
-        
+
         $self->__print(
             "    Write your own plugins? Read the documentation of:\n" .
             "        CPANPLUS::Shell::Default::Plugins::HOWTO\n" );
-                
-        $self->__print( $/ );        
+
+        $self->__print( $/ );
     }
 
     sub _list_plugins_help {
@@ -1775,7 +1779,7 @@ sub _reports {
     ### registered as a plugin too
     sub _show_random_tip_help {
         return sprintf $help_format, 'showtip', loc("show usage tips" );
-    }   
+    }
 
     sub _plugins_usage {
         my $self    = shift;
@@ -1784,9 +1788,9 @@ sub _reports {
         my $cmd     = shift;
         my $input   = shift;
         my %table   = $self->plugin_table;
-        
+
         my @list = length $input ? split /\s+/, $input : sort keys %table;
-        
+
         for my $name( @list ) {
 
             ### no such plugin? skip
@@ -1794,21 +1798,21 @@ sub _reports {
 
             my $pkg     = $table{$name}->[0];
             my $func    = $table{$name}->[1] . '_help';
-            
+
             if ( my $sub = $pkg->can( $func ) ) {
                 eval { $self->__print( $sub->() ) };
                 error( $@ ) if $@;
-            
+
             } else {
                 $self->__print("    No usage for '$name' -- try perldoc $pkg");
             }
-            
+
             $self->__print( $/ );
-        }          
-    
-        $self->__print( $/.$/ );      
+        }
+
+        $self->__print( $/.$/ );
     }
-    
+
     sub _plugins_usage_help {
         return sprintf $help_format, '? [NAME ...]',
                                      loc("show usage for plugins");
@@ -1855,8 +1859,8 @@ sub _read_configuration_from_rc {
 
         eval { $href = Config::Auto::parse( $rc_file, format => 'space' ) };
 
-        $self->__print( 
-            loc( "Unable to read in config file '%1': %2", $rc_file, $@ ) 
+        $self->__print(
+            loc( "Unable to read in config file '%1': %2", $rc_file, $@ )
         ) if $@;
     }
 
@@ -1866,34 +1870,38 @@ sub _read_configuration_from_rc {
 {   my @tips = (
         loc( "You can update CPANPLUS by running: '%1'", 's selfupdate' ),
         loc( "You can install modules by URL using '%1'", 'i URL' ),
-        loc( "You can turn off these tips using '%1'", 
+        loc( "You can turn off these tips using '%1'",
              's conf show_startup_tip 0' ),
         loc( "You can use wildcards like '%1' and '%2' on search results",
              '*', '2..5' ) ,
         loc( "You can use plugins. Type '%1' to list available plugins",
              '/plugins' ),
-        loc( "You can show all your out of date modules using '%1'", 'o' ),  
+        loc( "You can show all your out of date modules using '%1'", 'o' ),
         loc( "Many operations take options, like '%1', '%2' or '%3'",
              '--verbose', '--force', '--skiptest' ),
         loc( "The documentation in %1 and %2 is very useful",
              "CPANPLUS::Module", "CPANPLUS::Backend" ),
         loc( "You can type '%1' for help and '%2' to exit", 'h', 'q' ),
-        loc( "You can run an interactive setup using '%1'", 's reconfigure' ),    
+        loc( "You can run an interactive setup using '%1'", 's reconfigure' ),
         loc( "You can add custom sources to your index. See '%1' for details",
              '/cs --help' ),
         loc( "CPANPLUS now has an experimental SQLite backend. You can enable ".
              "it via: '%1'. Update dependencies via '%2'",
              's conf source_engine CPANPLUS::Internals::Source::SQLite; s save',
-             's selfupdate enabled_features ' ),             
+             's selfupdate enabled_features ' ),
     );
-    
+
     sub _show_random_tip {
         my $self = shift;
-        $self->__print( $/, "Did you know...\n    ", 
+        $self->__print( $/, "Did you know...\n    ",
                         $tips[ int rand scalar @tips ], $/ );
         return 1;
     }
-}    
+}
+
+sub _reload_shell {
+  { exec ($^X, '-MCPANPLUS', '-e', 'shell') }; print STDERR "couldn't exec foo: $!";
+}
 
 1;
 
@@ -1911,10 +1919,10 @@ This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-The CPAN++ interface (of which this module is a part of) is copyright (c) 
+The CPAN++ interface (of which this module is a part of) is copyright (c)
 2001 - 2007, Jos Boumans E<lt>kane@cpan.orgE<gt>. All rights reserved.
 
-This library is free software; you may redistribute and/or modify it 
+This library is free software; you may redistribute and/or modify it
 under the same terms as Perl itself.
 
 =head1 SEE ALSO

@@ -83,7 +83,7 @@ $   Define 'dbg'Perlshr 'PerlShr_filespec'
 $   If F$Mode() .nes. "INTERACTIVE" Then Define/Nolog PERL_SKIP_TTY_TEST 1
 $   If PERL_TEST_DRIVER .eqs. "minitest"
 $   Then
-$       MCR Sys$Disk:[]Perl'exe' TEST. "-minitest" "base/*.t" "comp/*.t" "cmd/*.t" "run/*.t" "io/*.t" "op/*.t" "uni/*.t"
+$       MCR Sys$Disk:[]Perl'exe' TEST. "base/*.t" "comp/*.t" "cmd/*.t" "run/*.t" "io/*.t" "op/*.t" "uni/*.t"
 $   Else
 $       MCR Sys$Disk:[]Perl'exe' "-I[-.lib]" 'PERL_TEST_DRIVER' "''p3'" "''p4'" "''p5'" "''p6'" "''p7'"
 $   EndIf

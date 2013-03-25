@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 perlhist - the Perl history records
@@ -26,11 +28,17 @@ Larry Wall, Andy Dougherty, Tom Christiansen, Charles Bailey, Nick
 Ing-Simmons, Chip Salzenberg, Tim Bunce, Malcolm Beattie, Gurusamy
 Sarathy, Graham Barr, Jarkko Hietaniemi, Hugo van der Sanden,
 Michael Schwern, Rafael Garcia-Suarez, Nicholas Clark, Richard Clamp,
-Leon Brocard, Dave Mitchell, Jesse Vincent, Ricardo Signes, Steve Hay.
+Leon Brocard, Dave Mitchell, Jesse Vincent, Ricardo Signes, Steve Hay,
+Matt S Trout, David Golden, Florian Ragwitz, Tatsuhiko Miyagawa,
+Chris C<BinGOs> Williams, Zefram, Ævar Arnfjörð Bjarmason, Stevan
+Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs and Tony
+Cook.
 
 =head2 PUMPKIN?
 
 [from Porting/pumpkin.pod in the Perl source code distribution]
+
+=for disclaimer orking cows is hazardous, and not legal in all jurisdictions
 
 Chip Salzenberg gets credit for that, with a nod to his cow orker,
 David Croy.  We had passed around various names (baton, token, hot
@@ -40,7 +48,7 @@ potato) but none caught on.  Then, Chip asked:
 
    Who has the patch pumpkin?
 
-To explain:  David Croy once told me once that at a previous job,
+To explain:  David Croy once told me that at a previous job,
 there was one tape drive and multiple systems that used it for backups.
 But instead of some high-tech exclusion software, they used a low-tech
 method to prevent multiple simultaneous backups: a stuffed pumpkin.
@@ -68,7 +76,7 @@ the strings?).
           1.001..10     1988-Jan-30
           1.011..14     1988-Feb-02
  Schwern  1.0.15        2002-Dec-18     Modernization
- Richard  1.0.16        2003-Dec-18
+ Richard  1.0_16        2003-Dec-18
 
  Larry   2.000          1988-Jun-05
 
@@ -324,6 +332,7 @@ the strings?).
  Leon     5.005_04-RC1  2004-Feb-05
           5.005_04-RC2  2004-Feb-18
           5.005_04      2004-Feb-23
+          5.005_05-RC1  2009-Feb-16
 
  Sarathy  5.005_50      1998-Jul-26     The 5.6 development track.
           5.005_51      1998-Aug-10
@@ -405,7 +414,7 @@ the strings?).
 
  Rafael   5.10.0        2007-Dec-18
 
- David    5.10.1-RC1    2009-Aug-06     The 5.10 maintenance track
+ David M  5.10.1-RC1    2009-Aug-06     The 5.10 maintenance track
           5.10.1-RC2    2009-Aug-18
           5.10.1        2009-Aug-22
 
@@ -415,11 +424,80 @@ the strings?).
  Jesse    5.11.3        2009-Dec-20
  Ricardo  5.11.4        2010-Jan-20
  Steve    5.11.5        2010-Feb-20
- Jesse    5.12.0-RC1    2010-Mar-29
+ Jesse    5.12.0-RC0    2010-Mar-21
+          5.12.0-RC1    2010-Mar-29
+          5.12.0-RC2    2010-Apr-01
+          5.12.0-RC3    2010-Apr-02
+          5.12.0-RC4    2010-Apr-06
+          5.12.0-RC5    2010-Apr-09
 
  Jesse    5.12.0        2010-Apr-12
- Jesse    5.12.1        2010-May-16
- Jesse    5.12.2        2010-Sep-06
+
+ Jesse    5.12.1-RC2    2010-May-13     The 5.12 maintenance track
+          5.12.1-RC1    2010-May-09
+          5.12.1        2010-May-16
+          5.12.2-RC2    2010-Aug-31
+          5.12.2        2010-Sep-06
+ Ricardo  5.12.3-RC1    2011-Jan-09
+ Ricardo  5.12.3-RC2    2011-Jan-14
+ Ricardo  5.12.3-RC3    2011-Jan-17
+ Ricardo  5.12.3        2011-Jan-21
+ Leon     5.12.4-RC1    2011-Jun-08
+ Leon     5.12.4        2011-Jun-20
+
+ Leon     5.13.0        2010-Apr-20     The 5.13 development track
+ Ricardo  5.13.1        2010-May-20
+ Matt     5.13.2        2010-Jun-22
+ David G  5.13.3        2010-Jul-20
+ Florian  5.13.4        2010-Aug-20
+ Steve    5.13.5        2010-Sep-19
+ Miyagawa 5.13.6        2010-Oct-20
+ BinGOs   5.13.7        2010-Nov-20
+ Zefram   5.13.8        2010-Dec-20
+ Jesse    5.13.9        2011-Jan-20
+ Ævar     5.13.10       2011-Feb-20
+ Florian  5.13.11       2011-Mar-20
+ Jesse    5.14.0RC1     2011-Apr-20
+ Jesse    5.14.0RC2     2011-May-04
+ Jesse    5.14.0RC3     2011-May-11
+
+ Jesse    5.14.0        2011-May-14     The 5.14 maintenance track
+ Jesse    5.14.1        2011-Jun-16
+ Florian  5.14.2-RC1    2011-Sep-19
+          5.14.2        2011-Sep-26
+
+ David G  5.15.0        2011-Jun-20     The 5.15 development track
+ Zefram   5.15.1        2011-Jul-20
+ Ricardo  5.15.2        2011-Aug-20
+ Stevan   5.15.3        2011-Sep-20
+ Florian  5.15.4        2011-Oct-20
+ Steve    5.15.5        2011-Nov-20
+ Dave R   5.15.6        2011-Dec-20
+ BinGOs   5.15.7        2012-Jan-20
+ Max M    5.15.8        2012-Feb-20
+ Abigail  5.15.9        2012-Mar-20
+ Ricardo  5.16.0-RC0    2012-May-10
+ Ricardo  5.16.0-RC1    2012-May-14
+ Ricardo  5.16.0-RC2    2012-May-15
+
+ Ricardo  5.16.0        2012-May-20     The 5.16 maintenance track
+ Ricardo  5.16.1-RC1    2012-Aug-03
+ Ricardo  5.16.1        2012-Aug-08
+ Ricardo  5.16.2        2012-Nov-01
+ Ricardo  5.16.3-RC1    2013-Mar-06
+ Ricardo  5.16.3        2013-Mar-11
+
+ Zefram   5.17.0        2012-May-26     The 5.17 development track
+ Jesse L  5.17.1        2012-Jun-20
+ TonyC    5.17.2        2012-Jul-20
+ Steve    5.17.3        2012-Aug-20
+ Florian  5.17.4        2012-Sep-20
+ Florian  5.17.5        2012-Oct-20
+ Ricardo  5.17.6        2012-Nov-20
+ Dave R   5.17.7        2012-Dec-18
+ Aaron    5.17.8        2013-Jan-20
+ BinGOs   5.17.9        2013-Feb-20
+
 
 =head2 SELECTED RELEASE SIZES
 
@@ -495,6 +573,8 @@ explained below.
  5.10.1         4858  98   7440 519   6195  921   6147 1751   5151 163
  5.12.0         4999 100   1146 121  15227 2176   6400 1843   5342 168
  5.12.1         5000 100   1146 121  15283 2178   6407 1846   5354 169
+ 5.12.2         5003 100   1146 121  15404 2178   6413 1846   5376 170
+ 5.12.3         5004 100   1146 121  15529 2180   6417 1848   5391 171
 
 The "core"..."doc" mean the following files from the Perl source code
 distribution.  The glob notation ** means recursively, (.) means
@@ -605,7 +685,7 @@ the Perl source distribution for somewhat more selected releases.
  apollo          -    -     -    -     -    -     -    -      0   1
  beos            1    1     1    1     1    1     1    1      1   1
  Configure     256    1   256    1   264    1   264    1    270   1
- cygwin32       24    5    24    5    24    5    24    5     24   5  
+ cygwin32       24    5    24    5    24    5    24    5     24   5
  djgpp          14    5    14    5    14    5    14    5     15   5
  eg             86   65    86   65    86   65    86   65     86  65
  emacs         262    2   262    2   262    2   262    2    274   2
@@ -768,6 +848,35 @@ the Perl source distribution for somewhat more selected releases.
  win32        1482   68  1485   68  1497   70  1841   73  1841   73
  x2p           349   19   349   19   345   19   345   19   345   19
 
+ ======================================================================
+
+                  5.12.2     5.12.3
+
+ apollo          0    3     0    3
+ beos            4    4     4    4
+ Configure     536    1   536    1
+ Cross         118   15   118   15
+ djgpp          17    7    17    7
+ emacs         402    4   402    4
+ epoc           31    8    31    8
+ h2pl           12   15    12   15
+ hints         368   97   368   97
+ mad           174    8   174    8
+ mpeix          45    6    45    6
+ NetWare       466   61   466   61
+ os2           507   70   507   70
+ plan9         316   17   316   17
+ Porting       750   54   750   54
+ qnx             1    4     1    4
+ symbian       288   54   288   54
+ utils         269   27   269   27
+ uts             8    3     8    3
+ vmesa          21    4    21    4
+ vms           646   18   644   18
+ vos            16    8    16    8
+ win32        1841   73  1841   73
+ x2p           345   19   345   19
+
 =head2 SELECTED PATCH SIZES
 
 The "diff lines kB" means that for example the patch 5.003_08, to be
@@ -839,7 +948,7 @@ context diff output format.
 In more modern times, named releases don't come as often, and as progress
 can be followed (nearly) instantly (with rsync, and since late 2008, git)
 patches between versions are no longer provided. However, that doesn't
-keep us from calculating how large a patch could have been. Which is 
+keep us from calculating how large a patch could have been. Which is
 shown in the table below. Unless noted otherwise, the size mentioned is
 the patch to bring version x.y.z to x.y.z+1.
 
@@ -873,8 +982,8 @@ the patch to bring version x.y.z to x.y.z+1.
 Jarkko Hietaniemi <F<jhi@iki.fi>>.
 
 Thanks to the collective memory of the Perlfolk.  In addition to the
-Keepers of the Pumpkin also Alan Champion, Mark Dominus, 
-Andreas König, John Macdonald, Matthias Neeracher, Jeff Okamoto,
+Keepers of the Pumpkin also Alan Champion, Mark Dominus,
+Andreas KE<0xf6>nig, John Macdonald, Matthias Neeracher, Jeff Okamoto,
 Michael Peppler, Randal Schwartz, and Paul D. Smith sent corrections
 and additions. Abigail added file and patch size data for the 5.6.0 - 5.10
 era.

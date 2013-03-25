@@ -1,4 +1,103 @@
-Version 3.51
+Version 3.59 Dec 29th, 2011
+
+ [BUG FIXES]
+ - We no longer read from STDIN when the Content-Length is not set, preventing
+   requests with no Content-Length from freezing in some cases. This is consistent
+   with the CGI RFC 3875, and is also consistent with CGI::Simple. However, the old
+   behavior may have been expected by some command-line uses of CGI.pm.
+   Thanks to Philip Potter and Yanick Champoux. See RT#52469 for details:
+   https://rt.cpan.org/Public/Bug/Display.html?id=52469
+
+ [INTERNALS]
+ - remove tmpdirs more aggressively. Thanks to rjbs (RT#73288)
+ - use Text::ParseWords instead of ancient shellwords.pl. Thanks to AlexBio.
+ - remove use of define(@arr). Thanks to rjbs.
+ - spelling fixes. Thanks to Gregor Herrmann and Alessandro Ghedini.
+ - fix test count and warning in t/fast.t. Thanks to Yanick.
+
+Version 3.58 Nov 11th, 2011
+
+    [DOCUMENTATION]
+    - Clarify that using query_string() only has defined behavior when using the GET method. (RT#60813)
+
+Version 3.57 Nov 9th, 2011
+    [INTERNALS]
+    - test failure in t/fast.t introduced in 3.56 is fixed. (Thanks to zefram and chansen).
+    - Test::More requirement has been bumped to 0.98
+
+Version 3.56 Nov 8th, 2011
+
+    [SECURITY]
+    Use public and documented FCGI.pm API in CGI::Fast
+        CGI::Fast was using an FCGI API that was deprecated and removed from
+        documentation more than ten years ago. Usage of this deprecated API with
+        FCGI >= 0.70 or FCGI <= 0.73 introduces a security issue.
+        <https://rt.cpan.org/Public/Bug/Display.html?id=68380>
+        <http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2011-2766>
+        (Thanks to chansen)
+
+    [INTERNALS]
+    - tmp files are now cleaned up on VMS ( RT#69210, thanks to cberry@cpan.org )
+    - Fixed test failure: done_testing() added to url.t (Thanks to Ryan Jendoubi)
+    - Clarify preferred bug submission location in docs, and note that Mark Stosberg
+      is the current maintainer.
+
+Version 3.55 June 3rd, 2011
+
+    [THINGS THAT MAY BREAK YOUR CODE]
+    url() was fixed to return "PATH_INFO" when it is explicitly requested 
+    with either the path=>1 or path_info=>1 flag. 
+
+    If your code is running under mod_rewrite (or compatible) and you are calling self_url() or
+    you are calling url() and passing path_info=>1, These methods will actually be
+    returning PATH_INFO now, as you have explicitly requested, or has self_url()
+    has requested on your behalf.
+
+    The PATH_INFO has been omitted in such URLs since the issue was introduced
+    in the 3.12 release in December, 2005. 
+
+    This bug is so old your application may have come to depend on it or
+    workaround it. Check for application before upgrading to this release. 
+
+    Examples of affected method calls:
+
+     $q->url(-absolute => 1, -query => 1, -path_info => 1 ) 
+     $q->url(-path=>1)
+     $q->url(-full=>1,-path=>1) 
+     $q->url(-rewrite=>1,-path=>1)
+     $q->self_url();
+
+Version 3.54, Apr 28, 2011
+   No code changes
+
+   [INTERNALS]
+   - Address test failures in t/tmpdir.t, thanks to Niko Tyni.
+     Some tests here are failing on some platforms and have been marked as TODO.
+
+Version 3.53, Apr 25, 2011
+  
+  [NEW FEATURES]
+  - The DELETE HTTP verb is now supported. 
+    (RT#52614, James Robson, Eduardo Ariï¿½o de la Rubia) 
+
+  [INTERNALS]  
+  - Correct t/tmpdir.t MANIFEST entry. (RT#64949)
+  - Update minimum required Perl version to be Perl 5.8.1, which
+    has been out since 2003. This allows us to drop some hacks
+    and exceptions (Mark Stosberg)
+
+Version 3.52, Jan 24, 2011
+  
+  [DOCUMENTATION]
+  - The documentation for multi-line header handling was been updated to reflect
+    the changes in 3.51. (Mark Stosberg, ntyni@iki.fi) 
+
+  [INTERNALS]
+  - Add missing t/tmpfile.t file. (RT#64949)  
+  - Fix warning in t/cookie.t (RT#64570, Chris Williams, Rainer Tammer, Mark Stosberg)     
+  - Fixed logic bug in t/multipart_init.t (RT#64261, Niko Tyni)
+
+Version 3.51, Jan 5, 2011
 
   [NEW FEATURES]  
   - A new option to set $CGI::Carp::TO_BROWSER = 0, allows you to explicitly  
@@ -54,7 +153,7 @@ Version 3.51
   - Re-fixing https test in http.t. (RT#54768, thanks to SPROUT)
   - param_fetch no longer triggers a warning when called with no arguments (ysth, Mark Stosberg)
 
-Version 3.50
+Version 3.50, Nov 8, 2010
   
   [SECURITY]
   1. The MIME boundary in multipart_init is now random. 
@@ -62,17 +161,17 @@ Version 3.50
   2. Further improvements to handling of newlines embedded in header values. 
      An exception is thrown if header values contain invalid newlines. 
      Thanks to Michal Zalewski, Max Kanat-Alexander, Yanick Champoux,
-     Lincoln Stein, Frédéric Buclin and Mark Stosberg
+     Lincoln Stein, Frï¿½dï¿½ric Buclin and Mark Stosberg
 
   [DOCUMENTATION]
   1. Correcting/clarifying documentation for param_fetch(). Thanks to 
-        Renée Bäcker. (RT#59132)
+        Renï¿½e Bï¿½cker. (RT#59132)
 
   [INTERNALS]
   1. Fixing https test in http.t. (RT#54768)
   2. Tests were added for multipart_init(). Thanks to Mark Stosberg and CGI::Simple. 
 
-Version 3.49
+Version 3.49, Feb 5th, 2010
 
   [BUG FIXES]
   1. Fix a regression since 3.44 involving a case when the header includes "Content-Length: 0". 
@@ -93,7 +192,7 @@ Version 3.49
   1. More tests were added for autoescape, thanks to Bob Kuo. (RT#25485)
   2. Attempt to avoid test failures with t/fast, thanks to Steve Hay. (RT#49599)
 
-Version 3.48
+Version 3.48, Sep 25, 2009
 
   [BUG FIXES]
   1. <optgroup> default values are now properly escaped.
@@ -110,14 +209,15 @@ Version 3.48
   [INTERNALS]
   1. More tests were added for autoescape, thanks to Bob Kuo. (RT#25485)
 
-Version 3.47
-  Released September 9th, 2009.
+Version 3.47,  Sep 9, 2009
+
   No code changes. 
 
   [INTERNALS]
     Re-release of 3.46, which did not contain a proper MANIFEST
 
 Version 3.46
+
   [BUG FIXES]
   1. In CGI::Pretty, we no longer add line breaks after tags we claim not to format. Thanks to rrt, Bob Kuo and
      and Mark Stosberg. (RT#42114).
@@ -141,7 +241,7 @@ Version 3.46
   11.Calling CGI->new() no longer clobbers the value of $_ in the current scope.
      Thanks to Alexey Tourbin, Bob Kuo and Mark Stosberg. (RT#25131)
   12.UTF-8 params should not get double-decoded now.
-     Thanks to Yves, Bodo, Burak Gürsoy, and Michael Schout. (RT#19913)
+     Thanks to Yves, Bodo, Burak Gï¿½rsoy, and Michael Schout. (RT#19913)
   13.We now give objects passed to CGI::Carp::die a chance to be stringified.
      Thanks to teek and Yanick Champoux (RT#41530)
   14.Turning off autoEscape() now only affects the behavior of built-in HTML
@@ -170,7 +270,8 @@ Version 3.46
   2. Automated tests for hidden() have been added, thanks to Russel Jenkins and Mark Stosberg (RT#20436)
   3. t/util.t has been updated to use Test::More instead of a home-grown test function. Thanks to Bob Kuo.
 
-Version 3.45
+Version 3.45, Aug 14, 2009
+
   [BUG FIXES]
   1. Prevent warnings about "uninitialized values" for REQUEST_URI, HTTP_USER_AGENT and other environment variables.
      Patches by Callum Gibson, heiko and Mark Stosberg. (RT#24684, RT#29065)
@@ -188,7 +289,7 @@ Version 3.45
   8. Support for <optgroup> with scrolling_list() now works the same way as it does for popup_menu().
      Thanks to Stuart Johnston (RT#30097)
   9. CGI::Pretty now works properly when $" is set to ''. Thanks to Jim Keenan (RT#12401)
- 10. Fix crash when used in combination with PerlEx::DBI. Thanks to Burak Gürsoy (RT#19902)
+ 10. Fix crash when used in combination with PerlEx::DBI. Thanks to Burak Gï¿½rsoy (RT#19902)
 
   [DOCUMENTATION]
   1. Several typos were fixed, Thanks to ambs. (RT#41105)
@@ -209,41 +310,48 @@ Version 3.45
   4. CGI::Switch and CGI::Apache now properly set their VERSION in their own name space.
      Thanks to Alexey Tourbin (RT#11941,RT#11942)
 
-  Version 3.44
+Version 3.44, Jul 30, 2009
+
   1. Patch from Kurt Jaeger to allow HTTP PUT even if the content length is unknown.
   2. Patch from Pavel merdin to fix a problem for one of the FireFox addons.
   3. Fixed issue in mod_perl & fastCGI environment of cookies returned from
      CGI->cookie() leaking from one session to another.
 
-  Version 3.43
+Version 3.43, Apr 06, 2009
+
   1. Documentation patch from MARKSTOS@cpan.org to replace all occurrences of
   "new CGI" with CGI->new()" to reflect best perl practices.
   2. Patch from Stepan Kasal to fix utf-8 related problems in perl 5.10
 
-  Version 3.42
+Version 3.42, Sep 08, 2008
+
   1. Added patch from Renee Baecker that makes it possible to subclass
   CGI::Pretty.
   2. Added patch from Nicholas Clark to allow ~ characters in temporary directories.
   3. Added patch from Renee Baecker that fixes the inappropriate escaping of fields
      in multipart headers.
 
-  Version 3.41
+Version 3.41, Aug 25, 2008
+
   1. Fix url() returning incorrect path when query string contains escaped newline.
   2. Added additional windows temporary directories and environment variables, courtesy patch from Renee Baecker
   3. Added a handle() method to the lightweight upload
   filehandles. This method returns a real IO::Handle object.
   4. Added patch from Tony Vanlingen to fix deep recursion warnings in CGI::Pretty.
 
-  Version 3.40
+Version 3.40, Aug 06, 2008
+
   1. Fixed CGI::Fast docs to eliminate references to a "special"
   version of Perl.
   2. Makefile.PL now depends on FCGI so that CGI::Fast installs properly.
   3. Fix script_name() call from Stephane Chazelas.
 
-  Version 3.39
+Version 3.39, Jun 29, 2008
+
   1. Fixed regression in "exists" function when using tied interface to CGI via $q->Vars.
 
-  Version 3.38
+Version 3.38, Jun 25, 2008
+
   1. Fix annoying warning in http://rt.cpan.org/Ticket/Display.html?id=34551
   2. Added nobr() function http://rt.cpan.org/Ticket/Display.html?id=35377
   3. popup_menu() allows multiple items to be selected by default, satisfying
@@ -254,56 +362,68 @@ Version 3.45
   6. Fixed minor warning described at http://rt.cpan.org/Public/Bug/Display.html?id=36435
   7. Fixed overlap of attribute and parameter space described in http://rt.perl.org/rt3//Ticket/Display.html?id=24294
 
-  Version 3.37
+Version 3.37, Apr 22, 2008
+
   1. Fix pragmas so that they persist over modperl invocations (e.g. RT 34761)
   2. Fixed handling of chunked multipart uploads; thanks to Michael Bernhardt
      who reported and fixed the problem.
 
-  Version 3.36
+Version 3.36
+
   1. Fix CGI::Cookie to support cookies that are separated by "," instead of ";".
 
-  Version 3.35
+Version 3.35, Mar 27, 2008
+
   1. Resync with bleadperl, primarily fixing a bug in parsing semicolons in uploaded filenames.
 
-  Version 3.34
+Version 3.34, Mar 18, 2008
+
   1. Handle Unicode %uXXXX  escapes properly -- patch from DANKOGAI@cpan.org
   2. Fix url() method to not choke on path names that contain regex characters.
 
-  Version 3.33
+Version 3.33, Jan 02, 2008
+
   1. Remove uninit variable warning when calling url(-relative=>1)
   2. Fix uninit variable warnings for two lc calls
   3. Fixed failure of tempfile upload due to sprintf() taint failure in perl 5.10
 
-  Version 3.32
+Version 3.32, Dec 27, 2007
+
   1. Patch from Miguel Santinho to prevent sending premature headers under mod_perl 2.0
 
-  Version 3.31
+Version 3.31, Nov 30, 2007
+
   1. Patch from Xavier Robin so that CGI::Carp issues a 500 Status code rather than a 200 status code.
   2. Patch from Alexander Klink to select correct temporary directory in OSX Leopard so that upload works.
   3. Possibly fixed "wrapped pack" error on 5.10 and higher.
 
-  Version 3.30
+Version 3.30 
+
   1. Patch from Mike Barry to handle POSTDATA in the same way as PUT.
   2. Patch from Rafael Garcia-Suarez to correctly reencode unicode values as byte values.
 
-  Version 3.29
+Version 3.29, Apr 16, 2007
+
   1. The position of file handles is now reset to zero when CGI->new is called.
     (Mark Stosberg)
   2. uploadInfo() now works across multiple object instances. Also, the first
      tests for uploadInfo() were added as part of the fix. (CPAN bug 11895, with
      contributions from drfrench and Mark Stosberg).
 
-  Version 3.28
+Version 3.28, Mar 29, 2007
+
   1. Applied patch from Allen Day that makes Cookie parsing RFC2109 compliant
 	(attribute/values can be separated by commas as well as semicolons).
   2. Applied patch from Stephan Struckmann that allows script_name() to be set correctly.
   3. Fixed problem with url(-full) in which port number appears twice.
 
-  Version 3.27
+Version 3.27, Feb 27, 2007
+
   1. Applied patch from Steve Taylor that allows checkbox_groups to be
   disabled with a new -disabled=> option.
 
-  Version 3.26
+Version 3.26
+
   1. Fixed alternate stylesheet behavior so that it is insensitive to order of declarations.
   2. Patch from John Binns to allow users to provide a callback to CGI::Carp.
   3. Added "~" as an unreserved character in escape().
@@ -311,31 +431,37 @@ Version 3.45
   5. Fixed outdated documentation (and behavior) of -language in start_html -script option.
   6. Fixed bug in seconds calculation in CGI::Util::expire_calc.
 
-  Version 3.25
+Version 3.25, Sep 28, 2006
+
   1. Fixed the link to the Netscape frames page.
   2. Added ability to specify an alternate stylesheet.
   3. Add support for XForms POST submssion both as application/xml or as multipart/related
 
-  Version 3.24
+Version 3.24
+
   1. In startform(), if request_uri() returns undef, then falls back
   to self_url(). This should rarely happen except when run outside of
   the CGI environment.
   2. image button alignment options were mistakenly being capitalized, causing xhtml validation to fail.
 
-  Version 3.23
+Version 3.23, Aug 23, 2006
+
   1. Typo in upload() persisted, now fixed for real. Thanks to
   Emanuele Zeppieri for correct patch and regression test.
 
-  Version 3.22
+Version 3.22, Aug 23, 2006
+
   1. Typo in upload() function broke uploads. Now fixed (CPAN bug 21126).
 
-  Version 3.21
+Version 3.21, Aug 21, 2006
+
   1. Don't try to read data at all when POST > $POST_MAX.
   2. Fixed bug that caused $cgi->param('name',undef,'value') to unset param('name') entirely.
   3. Fixed bug in which upload() sometimes returns empty. (CPAN bug #12694).
   4. Incorporated patch from BURAK@cpan.org to support HTTPcookies (CPAN bug 21019).
 
-  Version 3.20
+Version 3.20
+
   1. Patch from David Wheeler for CGI::Cookie->bake(). Uses mod_perl headers_out->add()
 	rather than headers_out->set().
   2. Fixed problem identified by Andrei Voronkov in which start_form() output was screwed
@@ -343,7 +469,8 @@ Version 3.45
   3. Quashed uninitialized variable warnings coming from script_name(), url() and other
         functions that require access to the PATH_INFO environment variable.
 
-  Version 3.19
+Version 3.19
+
   1. Added patch from Stephen Frost that allows one to suppress use of the temp file that is
 	created during uploads.
   2. Fixed problem noted by Martin Foster in which regular expression meta-character terms
@@ -352,12 +479,14 @@ Version 3.45
   3. More fixes to the url() method.
   4. Removed "hack to fix broken PATH_INFO in MSII".
 
-  Version 3.18
+Version 3.18
+
   1.  Doc typo fixes.
   2.  Patch from Steve Peters to default the document type to match the charset.
   3.  Fixed param() so that param(-name=>'foo',-values=>[]) sets the parameter to empty list.
 
-  Version 3.17 Fri Feb 24 14:01:27 EST 2006
+Version 3.17, Feb 24, 2006
+
    1. Added patch from Mike Hanafey which caused 0 arguments to CGI::Cookie->new() to
 	be treated as empty.
    2. Patch to CGI::Carp from Peter Whaite to fix the unfixable problem of CGI::Carp
@@ -366,7 +495,8 @@ Version 3.45
 	with another's variables.
    4. Fixed upload failure on files that contain semicolons in their names.
 
-  Version 3.16 Wed Feb  8 13:29:11 EST 2006
+Version 3.16, Feb 8, 2006
+
    1. header() -charset option now works even when the MIME type is not "text".
    2. Fixed documentation for cookie() function and fastCGI.
    3. Upload filehandles now only closed automatically on Windows systems.
@@ -377,16 +507,20 @@ Version 3.45
 	but was "Moved".
    7. Fixed charset in start_html() and header() to be in synch.
 
-  Version 3.15 Wed Dec  7 15:13:22 EST 2005
+Version 3.15, Dec 7, 2005
+
    1. Remove extraneous "?" from self_url() when URI contains a ? but no query string.
 
-  Version 3.14 Tue Dec  6 17:12:03 EST 2005
+Version 3.14, Dec 6,  2005
+
    1. Fixed broken scrolling_list() select attribute.
 
-  Version 3.13
+Version 3.13, Dec 4, 2005
+
     1. Removed extraneous empty "?" from end of self_url().
 
-  Version 3.12
+Version 3.12, Dec 4, 2005
+
     1. Fixed virtual_port so that it works properly with https protocol.
     2. Fixed documentation for upload_hook().
     3. Added POSTDATA documentation.
@@ -403,7 +537,8 @@ Version 3.45
     9. Fixed CGI::Carp to work correctly with Mod_perl 1.29 in an Apache 2 environment.
    10. Setting $CGI::TMPDIRECTORY should now be effective.
 
-  Version 3.11
+Version 3.11, Aug 3, 2005
+
     1. Killed warning in CGI::Cookie about MOD_PERL_API_VERSION
     2. Fixed append() so that it works in function mode.
     3. Workaround for a bug that appears in Apache2 versions through 2.0.54
@@ -413,21 +548,25 @@ Version 3.45
        not handle the uncommon case of a ScriptAlias directive that adds additional
        path information to the end of the translated URI.
 
-  Version 3.10
+Version 3.10, May 13, 2005
+
     1. Added Apache2::RequestIO, which is necessary for mp2 interoperability.
 
-  Version 3.09
+Version 3.09, May 5, 2005
+
     1. Fixed tabindex="0" when using CGI to create forms without a prior start_html
     2. Removed warning about non-numeric MOD_PERL_API_VERSION.
 
-  Version 3.08
+Version 3.08, Apr 20, 2005
+
     1. update support for mod_perl 2.0.  versions prior to
        mod_perl 1.999_22 (2.0.0-RC5) are no longer supported.
 
-  Version 3.07
+Version 3.07, Mar 14, 2005
+
     1. Fixed typo in mod_perl detection.
 
-  Version 3.06
+Version 3.06, Mar 09, 2005
 
     1. Fixed bare call to script() in start_html
     2. Moved Fh::DESTROY out of autoloaded functions so as to avoid
@@ -456,7 +595,7 @@ Version 3.45
 	higher perls (fix courtesy Slaven Rezic).
 
 
-  Version 3.05
+Version 3.05, Apr 12, 2004
 
     1. Fixed uninitialized variable warning on start_form() when running
        from command line.
@@ -489,23 +628,23 @@ Version 3.45
    15. Fixed documentation bug in -style argument to start_html()
    16. Added -status argument to redirect().
 
-  Version 3.04
+Version 3.04, Jan 18, 2004
 
     1. Fixed the problem with mod_perl crashing when "defaults" button
        pressed.
 
-  Version 3.03
+Version 3.03, Jan 13, 2004
 
     1. Fix upload hook functionality
     2. Workaround for CGI->unescape_html()
     3. Bumped version numbers in CGI::Fast and CGI::Util for 5.8.3-tobe
 
-  Version 3.02
+Version 3.02
 
     1. Bring in Apache::Response just in case.
     2. File upload on EBCDIC systems now works.
 
-  Version 3.01
+Version 3.01, Dec 10, 2003
 
     1. No fix yet for upload failures when running on EBCDIC server.
     2. Fixed uninitialized glob warnings that appeared when file
@@ -528,7 +667,7 @@ Version 3.45
    12. Added virtual_port() method for finding out what port server is
        listening on in a virtual-host aware fashion.
 
-  Version 3.00
+Version 3.00, Aug 18, 2003
 
     1. Patch from Randal Schwartz to fix bug introduced by cross-site
        scripting vulnerability "fix."
@@ -682,7 +821,7 @@ Version 3.45
   Version 2.83
 
     1. Fixed autoEscape() documentation inconsistencies.
-    2. Patch from Ville Skyttä to fix a number of XHTML inconsistencies.
+    2. Patch from Ville Skyttï¿½ to fix a number of XHTML inconsistencies.
     3. Added Max-Age to list of CGI::Cookie headers.
 
   Version 2.82
@@ -1137,7 +1276,7 @@ Version 3.45
    21. Fixed warning in initialize_globals() under mod_perl.
    22. File uploads from Macintosh versions of MSIE should now work.
    23. Pragmas now preceded by dashes (-nph) rather than colons (:nph).
-       Old style is supported for backward compatability.
+       Old style is supported for backward compatibility.
    24. Can now pass arguments to all functions using {} brackets,
        resolving historical inconsistencies.
    25. Removed autoloader warnings about absent MultipartBuffer::DESTROY.
@@ -1369,7 +1508,7 @@ Version 3.45
 
     1. Added cookie() support routines.
     2. Added -expires parameter to header().
-    3. Added cgi-lib.pl compatability mode.
+    3. Added cgi-lib.pl compatibility mode.
     4. Made the module more configurable for different operating systems.
     5. Fixed a dumb bug in JavaScript button() method.
 
@@ -1499,7 +1638,7 @@ Version 3.45
 
     1. The user_agent() method is now documented;
     2. A potential security hole in import() is now plugged.
-    3. Changed name of import() to import_names() for compatability with
+    3. Changed name of import() to import_names() for compatibility with
        CGI:: modules.
 
   Bug fixes in version 1.53

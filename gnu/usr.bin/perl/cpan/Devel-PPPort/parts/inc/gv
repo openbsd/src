@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 1 $
+##  $Revision: 4 $
 ##  $Author: mhx $
-##  $Date: 2009/06/12 12:29:56 +0200 $
+##  $Date: 2010/03/07 13:15:44 +0100 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -23,6 +23,10 @@ __UNDEFINED__
 
 __UNDEFINED__ GvSVn(gv)        GvSV(gv)
 __UNDEFINED__ isGV_with_GP(gv) isGV(gv)
+__UNDEFINED__ gv_fetchpvn_flags(name, len, flags, svt) gv_fetchpv(name, flags, svt)
+__UNDEFINED__ gv_fetchsv(name, flags, svt) gv_fetchpv(SvPV_nolen_const(name), flags, svt)
+
+__UNDEFINED__ get_cvn_flags(name, namelen, flags) get_cv(name, flags)
 
 =xsubs
 
@@ -58,9 +62,44 @@ isGV_with_GP()
 	OUTPUT:
 		RETVAL
 
+int
+get_cvn_flags()
+	PREINIT:
+		CV* xv;
+	CODE:
+		RETVAL = 0;
+		xv = get_cvn_flags("Devel::PPPort::foobar", sizeof("Devel::PPPort::foobar")-1, 0);
+		if(xv == NULL) RETVAL++;
+		xv = get_cvn_flags("Devel::PPPort::foobar", sizeof("Devel::PPPort::foobar")-1, GV_ADDMULTI);
+		if(xv && SvTYPE(xv) == SVt_PVCV) RETVAL++;
+		xv = get_cvn_flags("Devel::PPPort::get_cvn_flags", sizeof("Devel::PPPort::get_cvn_flags")-1, 0);
+		if(xv && SvTYPE(xv) == SVt_PVCV) RETVAL++;
+	OUTPUT:
+		RETVAL
 
-=tests plan => 2
+SV*
+gv_fetchpvn_flags()
+	CODE:
+		RETVAL = newRV_inc((SV*)gv_fetchpvn_flags("Devel::PPPort::VERSION", sizeof("Devel::PPPort::VERSION")-1, 0, SVt_PV));
+	OUTPUT:
+		RETVAL
+
+SV*
+gv_fetchsv(name)
+	SV *name
+	CODE:
+		RETVAL = newRV_inc((SV*)gv_fetchsv(name, 0, SVt_PV));
+	OUTPUT:
+		RETVAL
+
+=tests plan => 5
 
 ok(Devel::PPPort::GvSVn(), 1);
 
-ok(Devel::PPPort::isGV_with_GP(), 2)
+ok(Devel::PPPort::isGV_with_GP(), 2);
+
+ok(Devel::PPPort::get_cvn_flags(), 3);
+
+ok(Devel::PPPort::gv_fetchpvn_flags(), \*Devel::PPPort::VERSION);
+
+ok(Devel::PPPort::gv_fetchsv("Devel::PPPort::VERSION"), \*Devel::PPPort::VERSION);

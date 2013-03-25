@@ -11,12 +11,12 @@ package Pod::Usage;
 use strict;
 
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '1.36';  ## Current version of this package
+$VERSION = '1.51';  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
 
-Pod::Usage, pod2usage - print a usage message from embedded pod documentation
+Pod::Usage, pod2usage() - print a usage message from embedded pod documentation
 
 =head1 SYNOPSIS
 
@@ -148,6 +148,14 @@ L<perldoc> and uses the simple text formatter (L<Pod::Text>) to
 output the POD.
 
 =back
+
+=head2 Pass-through options
+
+The following options are passed through to the underlying text formatter
+(L<Pod::Text> or L<Pod::PlainText> for Perl versions E<lt> 5.005_58). See 
+the manual pages of these modules for more information.
+
+  alt code indent loose margin quotes sentence stderr utf8 width
 
 =head1 DESCRIPTION
 
@@ -434,6 +442,8 @@ with re-writing this manpage.
 
 =head1 SEE ALSO
 
+B<Pod::Usage> is part of the L<Pod::Parser> distribution.
+
 L<Pod::Parser>, L<Getopt::Long>, L<Pod::Find>
 
 =cut
@@ -564,7 +574,8 @@ sub pod2usage {
          and  $opts{'-output'} == \*STDOUT )
     {
        ## spit out the entire PODs. Might as well invoke perldoc
-       my $progpath = File::Spec->catfile($Config{scriptdir}, 'perldoc');
+       my $progpath = File::Spec->catfile($Config{scriptdirexp} 
+	       || $Config{scriptdir}, 'perldoc');
        print { $opts{'-output'} } ($opts{'-message'}, "\n") if($opts{'-message'});
        if(defined $opts{-input} && $opts{-input} =~ /^\s*(\S.*?)\s*$/) {
          # the perldocs back to 5.005 should all have -F
@@ -600,7 +611,13 @@ sub new {
     if ($self->can('initialize')) {
         $self->initialize();
     } else {
-        $self = $self->SUPER::new();
+        # pass through options to Pod::Text
+        my %opts;
+       	for (qw(alt code indent loose margin quotes sentence stderr utf8 width)) {
+            my $val = $params{USAGE_OPTIONS}{"-$_"};
+            $opts{$_} = $val if defined $val;
+        }
+        $self = $self->SUPER::new(%opts);
         %$self = (%$self, %params);
     }
     return $self;

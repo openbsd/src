@@ -90,17 +90,13 @@ else {
 }
 
 if (exists $opt{cc}) {
-    # cl and bcc32 version detection borrowed from Test::Smoke's configsmoke.pl
+    # cl version detection borrowed from Test::Smoke's configsmoke.pl
     if ($opt{cc} eq 'cl') {
         my $output = `cl --version 2>&1`;
         $opt{ccversion} = $output =~ /^.*Version\s+([\d.]+)/ ? $1 : '?';
     }
-    elsif ($opt{cc} eq 'bcc32') {
-        my $output = `bcc32 --version 2>&1`;
-        $opt{ccversion} = $output =~ /([\d.]+)/ ? $1 : '?';
-    }
-    elsif ($opt{cc} eq 'gcc') {
-        chomp($opt{gccversion} = `gcc -dumpversion`);
+    elsif ($opt{cc} =~ /\bgcc\b/) {
+        chomp($opt{gccversion} = `$opt{cc} -dumpversion`);
     }
 }
 
@@ -120,14 +116,13 @@ unless (defined $ENV{SYSTEMROOT}) { # SystemRoot has been introduced by WinNT
 
 # change the lseeksize and lseektype from their canned default values (which
 # are set-up for a non-uselargefiles build) if we are building with
-# uselargefiles. don't do this for bcc32: the code contains special handling
-# for bcc32 and the lseeksize and lseektype should not be changed.
-if ($opt{uselargefiles} eq 'define' and $opt{cc} ne 'bcc32') {
+# uselargefiles.
+if ($opt{uselargefiles} eq 'define') {
     $opt{lseeksize} = 8;
     if ($opt{cc} eq 'cl') {
 	$opt{lseektype} = '__int64';
     }
-    elsif ($opt{cc} eq 'gcc') {
+    elsif ($opt{cc} =~ /\bgcc\b/) {
 	$opt{lseektype} = 'long long';
     }
 }

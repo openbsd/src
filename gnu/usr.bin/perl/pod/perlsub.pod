@@ -217,8 +217,20 @@ X<recursion>
 Not only does the C<&> form make the argument list optional, it also
 disables any prototype checking on arguments you do provide.  This
 is partly for historical reasons, and partly for having a convenient way
-to cheat if you know what you're doing.  See L<Prototypes> below.
+to cheat if you know what you're doing.  See L</Prototypes> below.
 X<&>
+
+Since Perl 5.16.0, the C<__SUB__> token is available under C<use feature
+'current_sub'> and C<use 5.16.0>.  It will evaluate to a reference to the
+currently-running sub, which allows for recursive calls without knowing
+your subroutine's name.
+
+    use 5.16.0;
+    my $factorial = sub {
+      my ($x) = @_;
+      return 1 if $x == 1;
+      return($x * __SUB__->( $x - 1 ) );
+    };
 
 Subroutines whose names are in all upper case are reserved to the Perl
 core, as are modules whose names are in all lower case.  A subroutine in
@@ -351,7 +363,7 @@ it.  Similarly, in the conditional
 
 the scope of $answer extends from its declaration through the rest
 of that conditional, including any C<elsif> and C<else> clauses, 
-but not beyond it.  See L<perlsyn/"Simple statements"> for information
+but not beyond it.  See L<perlsyn/"Simple Statements"> for information
 on the scope of variables in statements with modifiers.
 
 The C<foreach> loop defaults to scoping its index variable dynamically
@@ -439,10 +451,12 @@ if you want to stay compatible with releases older than 5.10.
 
 =head3 Persistent variables via state()
 
-Beginning with perl 5.9.4, you can declare variables with the C<state>
-keyword in place of C<my>. For that to work, though, you must have
+Beginning with Perl 5.9.4, you can declare variables with the C<state>
+keyword in place of C<my>.  For that to work, though, you must have
 enabled that feature beforehand, either by using the C<feature> pragma, or
-by using C<-E> on one-liners. (see L<feature>)
+by using C<-E> on one-liners (see L<feature>).  Beginning with Perl 5.16,
+the C<CORE::state> form does not require the
+C<feature> pragma.
 
 For example, the following code maintains a private counter, incremented
 each time the gimme_another() function is called:
@@ -554,7 +568,7 @@ values to global (meaning package) variables.  It does I<not> create
 a local variable.  This is known as dynamic scoping.  Lexical scoping
 is done with C<my>, which works more like C's auto declarations.
 
-Some types of lvalues can be localized as well : hash and array elements
+Some types of lvalues can be localized as well: hash and array elements
 and slices, conditionals (provided that their result is always
 localizable), and symbolic references.  As for simple variables, this
 creates new, dynamically scoped values.
@@ -608,16 +622,9 @@ magical and read-only :
 
     local $1 = 2;
 
-Similarly, but in a way more difficult to spot, the following snippet will
-die in perl 5.9.0 :
-
-    sub f { local $_ = "foo"; print }
-    for ($1) {
-	# now $_ is aliased to $1, thus is magic and readonly
-	f();
-    }
-
-See next section for an alternative to this situation.
+One exception is the default scalar variable: starting with perl 5.14
+C<local($_)> will always strip all magic from $_, to make it possible
+to safely reuse $_ in a subroutine.
 
 B<WARNING>: Localization of tied arrays and hashes does not currently
 work as described.
@@ -643,12 +650,6 @@ This implies, among other things, that any magic eventually carried by
 those variables is locally lost.  In other words, saying C<local */>
 will not have any effect on the internal value of the input record
 separator.
-
-Notably, if you want to work with a brand new value of the default scalar
-$_, and avoid the potential problem listed above about $_ previously
-carrying a magic value, you should use C<local *_> instead of C<local $_>.
-As of perl 5.9.1, you can also use the lexical form of C<$_> (declaring it
-with C<my $_>), which avoids completely this problem.
 
 =head3 Localization of elements of composite types
 X<local, composite type element> X<local, array element> X<local, hash element>
@@ -753,8 +754,7 @@ To do this, you have to declare the subroutine to return an lvalue.
 
     my $val;
     sub canmod : lvalue {
-	# return $val; this doesn't work, don't say "return"
-	$val;
+	$val;  # or:  return $val;
     }
     sub nomod {
 	$val;
@@ -783,13 +783,8 @@ all the subroutines are called in a list context.
 
 =item Lvalue subroutines are EXPERIMENTAL
 
-They appear to be convenient, but there are several reasons to be
+They appear to be convenient, but there is at least one reason to be
 circumspect.
-
-You can't use the return keyword, you must pass out the value before
-falling out of subroutine scope. (see comment in example above).  This
-is usually not a problem, but it disallows an explicit return out of a
-deeply nested loop, which is sometimes a nice way out.
 
 They violate encapsulation.  A normal mutator can check the supplied
 argument before setting the attribute it is protecting, an lvalue
@@ -906,7 +901,7 @@ can be used to create what is effectively a local function, or at least,
 a local alias.
 
     {
-        local *grow = \&shrink; # only until this block exists
+        local *grow = \&shrink; # only until this block exits
         grow();                 # really calls shrink()
 	move();			# if move() grow()s, it shrink()s too
     }
@@ -1053,7 +1048,7 @@ X<prototype> X<subroutine, prototype>
 Perl supports a very limited kind of compile-time argument checking
 using function prototyping.  If you declare
 
-    sub mypush (\@@)
+    sub mypush (+@)
 
 then C<mypush()> takes arguments exactly like C<push()> does.  The
 function declaration must be visible at compile time.  The prototype
@@ -1083,9 +1078,9 @@ corresponding built-in.
     sub mysyswrite ($$$;$)   mysyswrite $buf, 0, length($buf) - $off, $off
     sub myreverse (@)	     myreverse $a, $b, $c
     sub myjoin ($@)	     myjoin ":", $a, $b, $c
-    sub mypop (\@)	     mypop @array
-    sub mysplice (\@$$@)     mysplice @array, 0, 2, @pushme
-    sub mykeys (\%)	     mykeys %{$hashref}
+    sub mypop (+)	     mypop @array
+    sub mysplice (+$$@)	     mysplice @array, 0, 2, @pushme
+    sub mykeys (+)	     mykeys %{$hashref}
     sub myopen (*;$)	     myopen HANDLE, $name
     sub mypipe (**)	     mypipe READHANDLE, WRITEHANDLE
     sub mygrep (&@)	     mygrep { /foo/ } $a, $b, $c
@@ -1093,12 +1088,15 @@ corresponding built-in.
     sub mytime ()	     mytime
 
 Any backslashed prototype character represents an actual argument
-that absolutely must start with that character.  The value passed
-as part of C<@_> will be a reference to the actual argument given
-in the subroutine call, obtained by applying C<\> to that argument.
+that must start with that character (optionally preceded by C<my>,
+C<our> or C<local>), with the exception of C<$>, which will
+accept any scalar lvalue expression, such as C<$foo = 7> or
+C<< my_function()->[0] >>. The value passed as part of C<@_> will be a
+reference to the actual argument given in the subroutine call,
+obtained by applying C<\> to that argument.
 
-You can also backslash several argument types simultaneously by using
-the C<\[]> notation:
+You can use the C<\[]> backslash group notation to specify more than one
+allowed argument type. For example:
 
     sub myref (\[$@%&*])
 
@@ -1133,12 +1131,26 @@ follows:
 	...
     }
 
+The C<+> prototype is a special alternative to C<$> that will act like
+C<\[@%]> when given a literal array or hash variable, but will otherwise
+force scalar context on the argument.  This is useful for functions which
+should accept either a literal array or an array reference as the argument:
+
+    sub mypush (+@) {
+        my $aref = shift;
+        die "Not an array or arrayref" unless ref $aref eq 'ARRAY';
+        push @$aref, @_;
+    }
+
+When using the C<+> prototype, your function must check that the argument
+is of an acceptable type.
+
 A semicolon (C<;>) separates mandatory arguments from optional arguments.
 It is redundant before C<@> or C<%>, which gobble up everything else.
 
-As the last character of a prototype, or just before a semicolon, you can
-use C<_> in place of C<$>: if this argument is not provided, C<$_> will be
-used instead.
+As the last character of a prototype, or just before a semicolon, a C<@>
+or a C<%>, you can use C<_> in place of C<$>: if this argument is not
+provided, C<$_> will be used instead.
 
 Note how the last three examples in the table above are treated
 specially by the parser.  C<mygrep()> is parsed as a true list
@@ -1149,7 +1161,11 @@ arguments, just like C<time()>.  That is, if you say
     mytime +2;
 
 you'll get C<mytime() + 2>, not C<mytime(2)>, which is how it would be parsed
-without a prototype.
+without a prototype.  If you want to force a unary function to have the
+same precedence as a list operator, add C<;> to the end of the prototype:
+
+    sub mygetprotobynumber($;);
+    mygetprotobynumber $a > $b; # parsed as mygetprotobynumber($a > $b)
 
 The interesting thing about C<&> is that you can generate new syntax with it,
 provided it's in the initial position:
@@ -1274,9 +1290,10 @@ the constant folding doesn't reduce them to a single constant:
     }
 
 If you redefine a subroutine that was eligible for inlining, you'll get
-a mandatory warning.  (You can use this warning to tell whether or not a
+a warning by default.  (You can use this warning to tell whether or not a
 particular subroutine is considered constant.)  The warning is
-considered severe enough not to be optional because previously compiled
+considered severe enough not to be affected by the B<-w>
+switch (or its absence) because previously compiled
 invocations of the function will still be using the old value of the
 function.  If you need to be able to redefine the subroutine, you need to
 ensure that it isn't inlined, either by dropping the C<()> prototype
@@ -1309,8 +1326,10 @@ built-in name with the special package qualifier C<CORE::>.  For example,
 saying C<CORE::open()> always refers to the built-in C<open()>, even
 if the current package has imported some other subroutine called
 C<&open()> from elsewhere.  Even though it looks like a regular
-function call, it isn't: you can't take a reference to it, such as
-the incorrect C<\&CORE::open> might appear to produce.
+function call, it isn't: the CORE:: prefix in that case is part of Perl's
+syntax, and works for any keyword, regardless of what is in the CORE
+package.  Taking a reference to it, that is, C<\&CORE::open>, only works
+for some keywords.  See L<CORE>.
 
 Library modules should not in general export built-in names like C<open>
 or C<chdir> as part of their default C<@EXPORT> list, because these may
@@ -1425,7 +1444,10 @@ of the original subroutine magically appears in the global $AUTOLOAD
 variable of the same package as the C<AUTOLOAD> routine.  The name
 is not passed as an ordinary argument because, er, well, just
 because, that's why.  (As an exception, a method call to a nonexistent
-C<import> or C<unimport> method is just skipped instead.)
+C<import> or C<unimport> method is just skipped instead.  Also, if
+the AUTOLOAD subroutine is an XSUB, there are other ways to retrieve the
+subroutine name.  See L<perlguts/Autoloading with XSUBs> for details.)
+
 
 Many C<AUTOLOAD> routines load in a definition for the requested
 subroutine using eval(), then execute that subroutine using a special
@@ -1453,7 +1475,7 @@ even need parentheses:
     who "am", "i";
     ls '-l';
 
-A more complete example of this is the standard Shell module, which
+A more complete example of this is the Shell module on CPAN, which
 can treat undefined subroutine calls as calls to external programs.
 
 Mechanisms are available to help modules writers split their modules
@@ -1510,4 +1532,4 @@ See L<perlxs> if you'd like to learn about calling C subroutines from Perl.
 See L<perlembed> if you'd like to learn about calling Perl subroutines from C.  
 See L<perlmod> to learn about bundling up your functions in separate files.
 See L<perlmodlib> to learn what library modules come standard on your system.
-See L<perltoot> to learn how to make object method calls.
+See L<perlootut> to learn how to make object method calls.

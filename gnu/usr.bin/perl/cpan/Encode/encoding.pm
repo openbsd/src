@@ -1,4 +1,4 @@
-# $Id: encoding.pm,v 2.8 2009/02/15 17:44:13 dankogai Exp $
+# $Id: encoding.pm,v 2.9 2011/08/09 07:49:44 dankogai Exp dankogai $
 package encoding;
 our $VERSION = '2.6_01';
 
@@ -6,7 +6,7 @@ use Encode;
 use strict;
 use warnings;
 
-sub DEBUG () { 0 }
+use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 
 BEGIN {
     if ( ord("A") == 193 ) {

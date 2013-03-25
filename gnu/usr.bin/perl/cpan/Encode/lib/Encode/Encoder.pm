@@ -1,17 +1,17 @@
 #
-# $Id: Encoder.pm,v 2.1 2006/05/03 18:24:10 dankogai Exp $
+# $Id: Encoder.pm,v 2.2 2011/08/09 07:49:44 dankogai Exp dankogai $
 #
 package Encode::Encoder;
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 2.1 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.2 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw ( encoder );
 
 our $AUTOLOAD;
-sub DEBUG () { 0 }
+use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 use Encode qw(encode decode find_encoding from_to);
 use Carp;
 

@@ -66,7 +66,7 @@ SKIP:
 	    "normal inplace edit");
     }
     
-    # test * equivalency RT #70802
+    # test * equivalence RT #70802
     {
 	for my $file (@ifiles) {
 	    runperl( prog => 'print qq(bar\n);',

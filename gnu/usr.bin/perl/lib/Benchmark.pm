@@ -245,7 +245,7 @@ B<NOTE>: This result value differs from previous versions, which returned
 the C<timethese()> result structure.  If you want that, just use the two
 statement C<timethese>...C<cmpthese> idiom shown above.
 
-Incidently, note the variance in the result values between the two examples;
+Incidentally, note the variance in the result values between the two examples;
 this is typical of benchmarking.  If this were a real benchmark, you would
 probably want to run a lot more iterations.
 
@@ -318,7 +318,7 @@ calls like these:
     enablecache();
 
 Caching is off by default, as it can (usually slightly) decrease
-accuracy and does not usually noticably affect runtimes.
+accuracy and does not usually noticeably affect runtimes.
 
 =head1 EXAMPLES
 
@@ -385,7 +385,7 @@ code and therefore the difference might end up being E<lt> 0.
 
 =head1 SEE ALSO
 
-L<Devel::DProf> - a Perl code profiler
+L<Devel::NYTProf> - a Perl code profiler
 
 =head1 AUTHORS
 
@@ -440,7 +440,7 @@ our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 	      clearcache clearallcache disablecache enablecache);
 %EXPORT_TAGS=( all => [ @EXPORT, @EXPORT_OK ] ) ;
 
-$VERSION = 1.11;
+$VERSION = 1.13;
 
 # --- ':hireswallclock' special handling
 
@@ -749,7 +749,7 @@ sub countit {
 	# The 5% fudge is to keep us from iterating again all
 	# that often (this speeds overall responsiveness when $tmax is big
 	# and we guess a little low).  This does not noticably affect 
-	# accuracy since we're not couting these times.
+	# accuracy since we're not counting these times.
 	$n = int( $tpra * 1.05 * $n / $tc ); # Linear approximation.
 	my $td = timeit($n, $code);
 	my $new_tc = $td->[1] + $td->[2];

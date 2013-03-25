@@ -1,8 +1,13 @@
 #!./perl
 
-print "1..22\n";
+BEGIN {
+    require "test.pl";
+}
 
-open (tmp,'>Cmd_while.tmp') || die "Can't create Cmd_while.tmp.";
+plan(25);
+
+my $tmpfile = tempfile();
+open (tmp,'>', $tmpfile) || die "Can't create Cmd_while.tmp.";
 print tmp "tvi925\n";
 print tmp "tvi920\n";
 print tmp "vt100\n";
@@ -12,26 +17,26 @@ close tmp or die "Could not close: $!";
 
 # test "last" command
 
-open(fh,'Cmd_while.tmp') || die "Can't open Cmd_while.tmp.";
+open(fh, $tmpfile) || die "Can't open Cmd_while.tmp.";
 while (<fh>) {
     last if /vt100/;
 }
-if (!eof && /vt100/) {print "ok 1\n";} else {print "not ok 1 $_\n";}
+ok(!eof && /vt100/);
 
 # test "next" command
 
 $bad = '';
-open(fh,'Cmd_while.tmp') || die "Can't open Cmd_while.tmp.";
+open(fh, $tmpfile) || die "Can't open Cmd_while.tmp.";
 while (<fh>) {
     next if /vt100/;
     $bad = 1 if /vt100/;
 }
-if (!eof || /vt100/ || $bad) {print "not ok 2\n";} else {print "ok 2\n";}
+ok(eof && !/vt100/ && !$bad);
 
 # test "redo" command
 
 $bad = '';
-open(fh,'Cmd_while.tmp') || die "Can't open Cmd_while.tmp.";
+open(fh,$tmpfile) || die "Can't open Cmd_while.tmp.";
 while (<fh>) {
     if (s/vt100/VT100/g) {
 	s/VT100/Vt100/g;
@@ -40,41 +45,41 @@ while (<fh>) {
     $bad = 1 if /vt100/;
     $bad = 1 if /VT100/;
 }
-if (!eof || $bad) {print "not ok 3\n";} else {print "ok 3\n";}
+ok(eof && !$bad);
 
 # now do the same with a label and a continue block
 
 # test "last" command
 
 $badcont = '';
-open(fh,'Cmd_while.tmp') || die "Can't open Cmd_while.tmp.";
+open(fh,$tmpfile) || die "Can't open Cmd_while.tmp.";
 line: while (<fh>) {
     if (/vt100/) {last line;}
 } continue {
     $badcont = 1 if /vt100/;
 }
-if (!eof && /vt100/) {print "ok 4\n";} else {print "not ok 4\n";}
-if (!$badcont) {print "ok 5\n";} else {print "not ok 5\n";}
+ok(!eof && /vt100/);
+ok(!$badcont);
 
 # test "next" command
 
 $bad = '';
 $badcont = 1;
-open(fh,'Cmd_while.tmp') || die "Can't open Cmd_while.tmp.";
+open(fh,$tmpfile) || die "Can't open Cmd_while.tmp.";
 entry: while (<fh>) {
     next entry if /vt100/;
     $bad = 1 if /vt100/;
 } continue {
     $badcont = '' if /vt100/;
 }
-if (!eof || /vt100/ || $bad) {print "not ok 6\n";} else {print "ok 6\n";}
-if (!$badcont) {print "ok 7\n";} else {print "not ok 7\n";}
+ok(eof && !/vt100/ && !$bad);
+ok(!$badcont);
 
 # test "redo" command
 
 $bad = '';
 $badcont = '';
-open(fh,'Cmd_while.tmp') || die "Can't open Cmd_while.tmp.";
+open(fh,$tmpfile) || die "Can't open Cmd_while.tmp.";
 loop: while (<fh>) {
     if (s/vt100/VT100/g) {
 	s/VT100/Vt100/g;
@@ -85,95 +90,125 @@ loop: while (<fh>) {
 } continue {
     $badcont = 1 if /vt100/;
 }
-if (!eof || $bad) {print "not ok 8\n";} else {print "ok 8\n";}
-if (!$badcont) {print "ok 9\n";} else {print "not ok 9\n";}
+ok(eof && !$bad);
+ok(!$badcont);
 
 close(fh) || die "Can't close Cmd_while.tmp.";
-unlink 'Cmd_while.tmp' || `/bin/rm Cmd_While.tmp`;
-
-#$x = 0;
-#while (1) {
-#    if ($x > 1) {last;}
-#    next;
-#} continue {
-#    if ($x++ > 10) {last;}
-#    next;
-#}
-#
-#if ($x < 10) {print "ok 10\n";} else {print "not ok 10\n";}
 
 $i = 9;
 {
     $i++;
 }
-print "ok $i\n";
+is($i, 10);
 
 # Check curpm is reset when jumping out of a scope
+$i = 0;
 'abc' =~ /b/;
 WHILE:
 while (1) {
   $i++;
-  print "#$`,$&,$',\nnot " unless $` . $& . $' eq "abc";
-  print "ok $i\n";
+  is($` . $& . $', "abc");
   {                             # Localize changes to $` and friends
     'end' =~ /end/;
-    redo WHILE if $i == 11;
-    next WHILE if $i == 12;
-    # 13 do a normal loop
-    last WHILE if $i == 14;
+    redo WHILE if $i == 1;
+    next WHILE if $i == 2;
+    # 3 do a normal loop
+    last WHILE if $i == 4;
   }
 }
-$i++;
-print "not " unless $` . $& . $' eq "abc";
-print "ok $i\n";
+is($` . $& . $', "abc");
 
 # check that scope cleanup happens right when there's a continue block
 {
     my $var = 16;
+    my (@got_var, @got_i);
     while (my $i = ++$var) {
 	next if $i == 17;
 	last if $i > 17;
 	my $i = 0;
     }
     continue {
-        print "ok ", $var-1, "\nok $i\n";
+        ($got_var, $got_i) = ($var, $i);
     }
+    is($got_var, 17);
+    is($got_i, 17);
 }
 
 {
+    my $got_l;
     local $l = 18;
     {
         local $l = 0
     }
     continue {
-        print "ok $l\n"
+        $got_l = $l;
     }
+    is($got_l, 18);
 }
 
 {
+    my $got_l;
     local $l = 19;
     my $x = 0;
     while (!$x++) {
         local $l = 0
     }
     continue {
-        print "ok $l\n"
+        $got_l = $l;
     }
+    is($got_l, $l);
 }
 
-$i = 20;
 {
+    my $ok = 1;
+    $i = 20;
     while (1) {
 	my $x;
-	print $x if defined $x;
-	$x = "not ";
-	print "ok $i\n"; ++$i;
+	$ok = 0 if defined $x;
 	if ($i == 21) {
 	    next;
 	}
 	last;
     }
     continue {
-        print "ok $i\n"; ++$i;
+        ++$i;
     }
+    ok($ok);
+}
+
+sub save_context { $_[0] = wantarray; $_[1] }
+
+{
+    my $context = -1;
+    my $p = sub {
+        my $x = 1;
+        while ($x--) {
+            save_context($context, "foo");
+        }
+    };
+    is(scalar($p->()), 0);
+    is($context, undef, "last statement in while block has 'void' context");
+}
+
+{
+    my $context = -1;
+    my $p = sub {
+        my $x = 1;
+        {
+            save_context($context, "foo");
+        }
+    };
+    is(scalar($p->()), "foo");
+    is($context, "", "last statement in block has 'scalar' context");
+}
+
+{
+    # test scope is cleaned
+    my $i = 0;
+    my @a;
+    while ($i++ < 2) {
+        my $x;
+        push @a, \$x;
+    }
+    ok($a[0] ne $a[1]);
 }

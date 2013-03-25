@@ -238,7 +238,7 @@ region.
 That is, with "=for", you can have only one paragraph's worth
 of text (i.e., the text in "=foo targetname text..."), but with
 "=begin targetname" ... "=end targetname", you can have any amount
-of stuff inbetween.  (Note that there still must be a blank line
+of stuff in between.  (Note that there still must be a blank line
 after the "=begin" command and a blank line before the "=end"
 command.
 
@@ -474,7 +474,7 @@ C<EE<lt>verbarE<gt>> -- a literal | (I<ver>tical I<bar>)
 
 =item *
 
-C<EE<lt>solE<gt>> = a literal / (I<sol>idus)
+C<EE<lt>solE<gt>> -- a literal / (I<sol>idus)
 
 The above four are optional except in other formatting codes,
 notably C<LE<lt>...E<gt>>, and when preceded by a

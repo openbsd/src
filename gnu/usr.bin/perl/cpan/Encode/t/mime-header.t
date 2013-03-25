@@ -1,5 +1,5 @@
 #
-# $Id: mime-header.t,v 2.4 2009/01/21 22:55:07 dankogai Exp $
+# $Id: mime-header.t,v 2.5 2010/09/18 18:39:51 dankogai Exp $
 # This script is written in utf8
 #
 BEGIN {
@@ -74,8 +74,8 @@ EOS
 
 my $bheader =<<'EOS';
 From:=?UTF-8?B?IOWwj+mjvCDlvL4g?=<dankogai@dan.co.jp>
-To: dankogai@dan.co.jp (=?UTF-8?B?5bCP6aO8?==Kogai,=?UTF-8?B?IOW8vg==?==Dan
- )
+To: dankogai@dan.co.jp (=?UTF-8?B?5bCP6aO8?==Kogai,=?UTF-8?B?IOW8vg==?==
+ Dan)
 Subject:
  =?UTF-8?B?IOa8ouWtl+OAgeOCq+OCv+OCq+ODiuOAgeOBsuOCieOBjOOBquOCkuWQq+OCgA==?=
  =?UTF-8?B?44CB6Z2e5bi444Gr6ZW344GE44K/44Kk44OI44Or6KGM44GM5LiA5L2T5YWo?=
@@ -123,6 +123,6 @@ is(Encode::encode('MIME-Q', "\x{fc}"), '=?UTF-8?Q?=C3=BC?=', 'Encode latin1 char
 
 my $rt42627 = Encode::decode_utf8("\x{c2}\x{a3}xxxxxxxxxxxxxxxxxxx0");
 is(Encode::encode('MIME-Q', $rt42627), 
-   '=?UTF-8?Q?=C2=A3xxxxxxxxxxxxxxxxxxx?==?UTF-8?Q?0?=',
+   '=?UTF-8?Q?=C2=A3xxxxxxxxxxxxxxxxxxx?= =?UTF-8?Q?0?=',
    'MIME-Q encoding does not truncate trailing zeros');
 __END__;

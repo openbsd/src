@@ -31,7 +31,7 @@ libc='/svr4/usr/lib/libc.a'
 glibpth="/svr4/usr/lib /svr4/usr/lib/cmplrs/cc /usr/ccs/lib /svr4/lib /svr4/usr/ucblib $glibpth"
 osname='epix2'
 archname='epix2'
-d_suidsafe='define'	# "./Configure -d" can't figure this out easilly
+d_suidsafe='define'	# "./Configure -d" can't figure this out easily
 d_flock='undef'
 
 # Old version had this, but I'm not sure why since the old version

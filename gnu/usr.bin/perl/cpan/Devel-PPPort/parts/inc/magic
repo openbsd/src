@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 17 $
+##  $Revision: 21 $
 ##  $Author: mhx $
-##  $Date: 2009/01/18 14:10:55 +0100 $
+##  $Date: 2010/03/07 13:15:49 +0100 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -358,9 +358,10 @@ ok($h{sv}, 4711);
 &Devel::PPPort::sv_usepvn_mg($h{sv}, 'Perl');
 ok($h{sv}, 'Perl');
 
-my $ver = eval qq[qv("v1.2.0")];
-ok($[ < 5.009 || $@ eq '');
-ok($@ || Devel::PPPort::SvVSTRING_mg($ver));
+# v1 is treated as a bareword in older perls...
+my $ver = do { local $SIG{'__WARN__'} = sub {}; eval qq[v1.2.0] };
+ok($] < 5.009 || $@ eq '');
+ok($] < 5.009 || Devel::PPPort::SvVSTRING_mg($ver));
 ok(!Devel::PPPort::SvVSTRING_mg(4711));
 
 my $foo = 'bar';

@@ -126,8 +126,9 @@ Perl_do_openn(pTHX_ GV *gv, register const char *oname, I32 len, int as_raw,
 	if (result == EOF && fd > PL_maxsysfd) {
 	    /* Why is this not Perl_warn*() call ? */
 	    PerlIO_printf(Perl_error_log,
-			  "Warning: unable to close filehandle %s properly.\n",
-			  GvENAME(gv));
+		"Warning: unable to close filehandle %"HEKf" properly.\n",
+		 HEKfARG(GvENAME_HEK(gv))
+	    );
 	}
 	IoOFP(io) = IoIFP(io) = NULL;
     }
@@ -148,7 +149,8 @@ Perl_do_openn(pTHX_ GV *gv, register const char *oname, I32 len, int as_raw,
 	int ismodifying;
 
 	if (num_svs != 0) {
-	     Perl_croak(aTHX_ "panic: sysopen with multiple args");
+	    Perl_croak(aTHX_ "panic: sysopen with multiple args, num_svs=%ld",
+		       (long) num_svs);
 	}
 	/* It's not always
 
@@ -214,7 +216,8 @@ Perl_do_openn(pTHX_ GV *gv, register const char *oname, I32 len, int as_raw,
 		goto say_false;
 	    }
 #endif /* USE_STDIO */
-	    name = SvOK(*svp) ? savesvpv (*svp) : savepvs ("");
+	    name = (SvOK(*svp) || SvGMAGICAL(*svp)) ?
+			savesvpv (*svp) : savepvs ("");
 	    SAVEFREEPV(name);
 	}
 	else {
@@ -540,14 +543,16 @@ Perl_do_openn(pTHX_ GV *gv, register const char *oname, I32 len, int as_raw,
 	if ((IoTYPE(io) == IoTYPE_RDONLY) &&
 	    (fp == PerlIO_stdout() || fp == PerlIO_stderr())) {
 		Perl_warner(aTHX_ packWARN(WARN_IO),
-			    "Filehandle STD%s reopened as %s only for input",
+			    "Filehandle STD%s reopened as %"HEKf
+			    " only for input",
 			    ((fp == PerlIO_stdout()) ? "OUT" : "ERR"),
-			    GvENAME(gv));
+			    HEKfARG(GvENAME_HEK(gv)));
 	}
 	else if ((IoTYPE(io) == IoTYPE_WRONLY) && fp == PerlIO_stdin()) {
 		Perl_warner(aTHX_ packWARN(WARN_IO),
-			    "Filehandle STDIN reopened as %s only for output",
-			    GvENAME(gv));
+		    "Filehandle STDIN reopened as %"HEKf" only for output",
+		     HEKfARG(GvENAME_HEK(gv))
+		);
 	}
     }
 
@@ -860,10 +865,7 @@ Perl_nextargv(pTHX_ register GV *gv)
 #ifdef HAS_FCHMOD
 		(void)fchmod(PL_lastfd,PL_filemode);
 #else
-#  if !(defined(WIN32) && defined(__BORLANDC__))
-		/* Borland runtime creates a readonly file! */
 		(void)PerlLIO_chmod(PL_oldname,PL_filemode);
-#  endif
 #endif
 		if (fileuid != PL_statbuf.st_uid || filegid != PL_statbuf.st_gid) {
 #ifdef HAS_FCHOWN
@@ -928,8 +930,7 @@ Perl_do_close(pTHX_ GV *gv, bool not_implicit)
     io = GvIO(gv);
     if (!io) {		/* never opened */
 	if (not_implicit) {
-	    if (ckWARN(WARN_UNOPENED)) /* no check for closed here */
-		report_evil_fh(gv, io, PL_op->op_type);
+	    report_evil_fh(gv);
 	    SETERRNO(EBADF,SS_IVCHAN);
 	}
 	return FALSE;
@@ -995,8 +996,8 @@ Perl_do_eof(pTHX_ GV *gv)
 
     if (!io)
 	return TRUE;
-    else if ((IoTYPE(io) == IoTYPE_WRONLY) && ckWARN(WARN_IO))
-	report_evil_fh(gv, io, OP_phoney_OUTPUT_ONLY);
+    else if (IoTYPE(io) == IoTYPE_WRONLY)
+	report_wrongway_fh(gv, '>');
 
     while (IoIFP(io)) {
         if (PerlIO_has_cntptr(IoIFP(io))) {	/* (the code works without this) */
@@ -1034,20 +1035,19 @@ Off_t
 Perl_do_tell(pTHX_ GV *gv)
 {
     dVAR;
-    register IO *io = NULL;
+    IO *const io = GvIO(gv);
     register PerlIO *fp;
 
     PERL_ARGS_ASSERT_DO_TELL;
 
-    if (gv && (io = GvIO(gv)) && (fp = IoIFP(io))) {
+    if (io && (fp = IoIFP(io))) {
 #ifdef ULTRIX_STDIO_BOTCH
 	if (PerlIO_eof(fp))
 	    (void)PerlIO_seek(fp, 0L, 2);	/* ultrix 1.2 workaround */
 #endif
 	return PerlIO_tell(fp);
     }
-    if (ckWARN2(WARN_UNOPENED,WARN_CLOSED))
-	report_evil_fh(gv, io, PL_op->op_type);
+    report_evil_fh(gv);
     SETERRNO(EBADF,RMS_IFI);
     return (Off_t)-1;
 }
@@ -1056,18 +1056,17 @@ bool
 Perl_do_seek(pTHX_ GV *gv, Off_t pos, int whence)
 {
     dVAR;
-    register IO *io = NULL;
+    IO *const io = GvIO(gv);
     register PerlIO *fp;
 
-    if (gv && (io = GvIO(gv)) && (fp = IoIFP(io))) {
+    if (io && (fp = IoIFP(io))) {
 #ifdef ULTRIX_STDIO_BOTCH
 	if (PerlIO_eof(fp))
 	    (void)PerlIO_seek(fp, 0L, 2);	/* ultrix 1.2 workaround */
 #endif
 	return PerlIO_seek(fp, pos, whence) >= 0;
     }
-    if (ckWARN2(WARN_UNOPENED,WARN_CLOSED))
-	report_evil_fh(gv, io, PL_op->op_type);
+    report_evil_fh(gv);
     SETERRNO(EBADF,RMS_IFI);
     return FALSE;
 }
@@ -1076,15 +1075,14 @@ Off_t
 Perl_do_sysseek(pTHX_ GV *gv, Off_t pos, int whence)
 {
     dVAR;
-    register IO *io = NULL;
+    IO *const io = GvIO(gv);
     register PerlIO *fp;
 
     PERL_ARGS_ASSERT_DO_SYSSEEK;
 
-    if (gv && (io = GvIO(gv)) && (fp = IoIFP(io)))
+    if (io && (fp = IoIFP(io)))
 	return PerlLIO_lseek(PerlIO_fileno(fp), pos, whence);
-    if (ckWARN2(WARN_UNOPENED,WARN_CLOSED))
-	report_evil_fh(gv, io, PL_op->op_type);
+    report_evil_fh(gv);
     SETERRNO(EBADF,RMS_IFI);
     return (Off_t)-1;
 }
@@ -1227,6 +1225,9 @@ Perl_do_print(pTHX_ register SV *sv, PerlIO *fp)
 		tmpbuf = bytes_to_utf8((const U8*) tmps, &len);
 		tmps = (char *) tmpbuf;
 	    }
+	    else if (ckWARN4_d(WARN_UTF8, WARN_SURROGATE, WARN_NON_UNICODE, WARN_NONCHAR)) {
+		(void) check_utf8_print((const U8*) tmps, len);
+	    }
 	}
 	else if (DO_UTF8(sv)) {
 	    STRLEN tmplen = len;
@@ -1240,7 +1241,12 @@ Perl_do_print(pTHX_ register SV *sv, PerlIO *fp)
 	    else {
 		assert((char *)result == tmps);
 		Perl_ck_warner_d(aTHX_ packWARN(WARN_UTF8),
-				 "Wide character in print");
+				 "Wide character in %s",
+				   PL_op ? OP_DESC(PL_op) : "print"
+				);
+		    /* Could also check that isn't one of the things to avoid
+		     * in utf8 by using check_utf8_print(), but not doing so,
+		     * since the stream isn't a UTF8 stream */
 	    }
 	}
 	/* To detect whether the process is about to overstep its
@@ -1257,7 +1263,7 @@ Perl_do_print(pTHX_ register SV *sv, PerlIO *fp)
 }
 
 I32
-Perl_my_stat(pTHX)
+Perl_my_stat_flags(pTHX_ const U32 flags)
 {
     dVAR;
     dSP;
@@ -1273,38 +1279,29 @@ Perl_my_stat(pTHX)
 	io = GvIO(gv);
         do_fstat_have_io:
         PL_laststype = OP_STAT;
-        PL_statgv = gv;
+        PL_statgv = gv ? gv : (GV *)io;
         sv_setpvs(PL_statname, "");
         if(io) {
 	    if (IoIFP(io)) {
 	        return (PL_laststatval = PerlLIO_fstat(PerlIO_fileno(IoIFP(io)), &PL_statcache));
             } else if (IoDIRP(io)) {
                 return (PL_laststatval = PerlLIO_fstat(my_dirfd(IoDIRP(io)), &PL_statcache));
-            } else {
-                if (ckWARN2(WARN_UNOPENED,WARN_CLOSED))
-                    report_evil_fh(gv, io, PL_op->op_type);
-                return (PL_laststatval = -1);
             }
-	} else {
-            if (ckWARN2(WARN_UNOPENED,WARN_CLOSED))
-                report_evil_fh(gv, io, PL_op->op_type);
-            return (PL_laststatval = -1);
         }
-    }
-    else if (PL_op->op_private & OPpFT_STACKED) {
-	return PL_laststatval;
+	PL_laststatval = -1;
+	report_evil_fh(gv);
+	return -1;
     }
     else {
-	SV* const sv = POPs;
+      SV* const sv = PL_op->op_private & OPpFT_STACKING ? TOPs : POPs;
+      PUTBACK;
+      if ((PL_op->op_private & (OPpFT_STACKED|OPpFT_AFTER_t))
+	     == OPpFT_STACKED)
+	return PL_laststatval;
+      else {
 	const char *s;
 	STRLEN len;
-	PUTBACK;
-	if (isGV_with_GP(sv)) {
-	    gv = MUTABLE_GV(sv);
-	    goto do_fstat;
-	}
-	else if (SvROK(sv) && isGV_with_GP(SvRV(sv))) {
-	    gv = MUTABLE_GV(SvRV(sv));
+	if ((gv = MAYBE_DEREF_GV_flags(sv,flags))) {
 	    goto do_fstat;
 	}
         else if (SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVIO) {
@@ -1313,7 +1310,7 @@ Perl_my_stat(pTHX)
             goto do_fstat_have_io;
         }
 
-	s = SvPV_const(sv, len);
+	s = SvPV_flags_const(sv, len, flags);
 	PL_statgv = NULL;
 	sv_setpvn(PL_statname, s, len);
 	s = SvPVX_const(PL_statname);		/* s now NUL-terminated */
@@ -1322,12 +1319,13 @@ Perl_my_stat(pTHX)
 	if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && strchr(s, '\n'))
 	    Perl_warner(aTHX_ packWARN(WARN_NEWLINE), PL_warn_nl, "stat");
 	return PL_laststatval;
+      }
     }
 }
 
 
 I32
-Perl_my_lstat(pTHX)
+Perl_my_lstat_flags(pTHX_ const U32 flags)
 {
     dVAR;
     static const char no_prev_lstat[] = "The stat preceding -l _ wasn't an lstat";
@@ -1341,26 +1339,26 @@ Perl_my_lstat(pTHX)
 		Perl_croak(aTHX_ no_prev_lstat);
 	    return PL_laststatval;
 	}
+	PL_laststatval = -1;
 	if (ckWARN(WARN_IO)) {
-	    Perl_warner(aTHX_ packWARN(WARN_IO), "Use of -l on filehandle %s",
-		    GvENAME(cGVOP_gv));
-	    return (PL_laststatval = -1);
+	    Perl_warner(aTHX_ packWARN(WARN_IO),
+		 	     "Use of -l on filehandle %"HEKf,
+			      HEKfARG(GvENAME_HEK(cGVOP_gv)));
 	}
+	return -1;
     }
-    else if (PL_laststype != OP_LSTAT
-	    && (PL_op->op_private & OPpFT_STACKED) && ckWARN(WARN_IO))
+    sv = PL_op->op_private & OPpFT_STACKING ? TOPs : POPs;
+    PUTBACK;
+    if ((PL_op->op_private & (OPpFT_STACKED|OPpFT_AFTER_t))
+	     == OPpFT_STACKED) {
+      if (PL_laststype != OP_LSTAT)
 	Perl_croak(aTHX_ no_prev_lstat);
+      return PL_laststatval;
+    } 
 
     PL_laststype = OP_LSTAT;
     PL_statgv = NULL;
-    sv = POPs;
-    PUTBACK;
-    if (SvROK(sv) && isGV_with_GP(SvRV(sv)) && ckWARN(WARN_IO)) {
-	Perl_warner(aTHX_ packWARN(WARN_IO), "Use of -l on filehandle %s",
-		GvENAME((const GV *)SvRV(sv)));
-	return (PL_laststatval = -1);
-    }
-    file = SvPV_nolen_const(sv);
+    file = SvPV_flags_const_nolen(sv, flags);
     sv_setpv(PL_statname,file);
     PL_laststatval = PerlLIO_lstat(file,&PL_statcache);
     if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && strchr(file, '\n'))
@@ -1575,6 +1573,7 @@ Perl_apply(pTHX_ I32 type, register SV **mark, register SV **sp)
     register I32 tot = 0;
     const char *const what = PL_op_name[type];
     const char *s;
+    STRLEN len;
     SV ** const oldmark = mark;
 
     PERL_ARGS_ASSERT_APPLY;
@@ -1616,9 +1615,7 @@ Perl_apply(pTHX_ I32 type, register SV **mark, register SV **sp)
 	    tot = sp - mark;
 	    while (++mark <= sp) {
                 GV* gv;
-                if (isGV_with_GP(*mark)) {
-                    gv = MUTABLE_GV(*mark);
-		do_fchmod:
+                if ((gv = MAYBE_DEREF_GV(*mark))) {
 		    if (GvIO(gv) && IoIFP(GvIOp(gv))) {
 #ifdef HAS_FCHMOD
 			APPLY_TAINT_PROPER();
@@ -1632,12 +1629,8 @@ Perl_apply(pTHX_ I32 type, register SV **mark, register SV **sp)
 			tot--;
 		    }
 		}
-		else if (SvROK(*mark) && isGV_with_GP(SvRV(*mark))) {
-		    gv = MUTABLE_GV(SvRV(*mark));
-		    goto do_fchmod;
-		}
 		else {
-		    const char *name = SvPV_nolen_const(*mark);
+		    const char *name = SvPV_nomg_const_nolen(*mark);
 		    APPLY_TAINT_PROPER();
 		    if (PerlLIO_chmod(name, val))
 			tot--;
@@ -1656,9 +1649,7 @@ Perl_apply(pTHX_ I32 type, register SV **mark, register SV **sp)
 	    tot = sp - mark;
 	    while (++mark <= sp) {
                 GV* gv;
-                if (isGV_with_GP(*mark)) {
-                    gv = MUTABLE_GV(*mark);
-		do_fchown:
+		if ((gv = MAYBE_DEREF_GV(*mark))) {
 		    if (GvIO(gv) && IoIFP(GvIOp(gv))) {
 #ifdef HAS_FCHOWN
 			APPLY_TAINT_PROPER();
@@ -1672,12 +1663,8 @@ Perl_apply(pTHX_ I32 type, register SV **mark, register SV **sp)
 			tot--;
 		    }
 		}
-		else if (SvROK(*mark) && isGV_with_GP(SvRV(*mark))) {
-		    gv = MUTABLE_GV(SvRV(*mark));
-		    goto do_fchown;
-		}
 		else {
-		    const char *name = SvPV_nolen_const(*mark);
+		    const char *name = SvPV_nomg_const_nolen(*mark);
 		    APPLY_TAINT_PROPER();
 		    if (PerlLIO_chown(name, val, val2))
 			tot--;
@@ -1697,12 +1684,14 @@ nothing in the core.
 	APPLY_TAINT_PROPER();
 	if (mark == sp)
 	    break;
-	s = SvPVx_nolen_const(*++mark);
+	s = SvPVx_const(*++mark, len);
 	if (isALPHA(*s)) {
-	    if (*s == 'S' && s[1] == 'I' && s[2] == 'G')
+	    if (*s == 'S' && s[1] == 'I' && s[2] == 'G') {
 		s += 3;
-	    if ((val = whichsig(s)) < 0)
-		Perl_croak(aTHX_ "Unrecognized signal name \"%s\"",s);
+                len -= 3;
+            }
+           if ((val = whichsig_pvn(s, len)) < 0)
+               Perl_croak(aTHX_ "Unrecognized signal name \"%"SVf"\"", SVfARG(*mark));
 	}
 	else
 	    val = SvIV(*mark);
@@ -1720,9 +1709,10 @@ nothing in the core.
 	    while (++mark <= sp) {
 		I32 proc;
 		register unsigned long int __vmssts;
+		SvGETMAGIC(*mark);
 		if (!(SvIOK(*mark) || SvNOK(*mark) || looks_like_number(*mark)))
 		    Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
-		proc = SvIV(*mark);
+		proc = SvIV_nomg(*mark);
 		APPLY_TAINT_PROPER();
 		if (!((__vmssts = sys$delprc(&proc,0)) & 1)) {
 		    tot--;
@@ -1739,6 +1729,7 @@ nothing in the core.
 		    }
 		}
 	    }
+	    PERL_ASYNC_CHECK();
 	    break;
 	}
 #endif
@@ -1746,9 +1737,10 @@ nothing in the core.
 	    val = -val;
 	    while (++mark <= sp) {
 		I32 proc;
+		SvGETMAGIC(*mark);
 		if (!(SvIOK(*mark) || SvNOK(*mark) || looks_like_number(*mark)))
 		    Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
-		proc = SvIV(*mark);
+		proc = SvIV_nomg(*mark);
 		APPLY_TAINT_PROPER();
 #ifdef HAS_KILLPG
 		if (PerlProc_killpg(proc,val))	/* BSD */
@@ -1761,14 +1753,16 @@ nothing in the core.
 	else {
 	    while (++mark <= sp) {
 		I32 proc;
+		SvGETMAGIC(*mark);
 		if (!(SvIOK(*mark) || SvNOK(*mark) || looks_like_number(*mark)))
 		    Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
-		proc = SvIV(*mark);
+		proc = SvIV_nomg(*mark);
 		APPLY_TAINT_PROPER();
 		if (PerlProc_kill(proc, val))
 		    tot--;
 	    }
 	}
+	PERL_ASYNC_CHECK();
 	break;
 #endif
     case OP_UNLINK:
@@ -1777,7 +1771,7 @@ nothing in the core.
 	while (++mark <= sp) {
 	    s = SvPV_nolen_const(*mark);
 	    APPLY_TAINT_PROPER();
-	    if (PL_euid || PL_unsafe) {
+	    if (PerlProc_geteuid() || PL_unsafe) {
 		if (UNLINK(s))
 		    tot--;
 	    }
@@ -1837,9 +1831,7 @@ nothing in the core.
 	    tot = sp - mark;
 	    while (++mark <= sp) {
                 GV* gv;
-                if (isGV_with_GP(*mark)) {
-                    gv = MUTABLE_GV(*mark);
-		do_futimes:
+                if ((gv = MAYBE_DEREF_GV(*mark))) {
 		    if (GvIO(gv) && IoIFP(GvIOp(gv))) {
 #ifdef HAS_FUTIMES
 			APPLY_TAINT_PROPER();
@@ -1854,12 +1846,8 @@ nothing in the core.
 			tot--;
 		    }
 		}
-		else if (SvROK(*mark) && isGV_with_GP(SvRV(*mark))) {
-		    gv = MUTABLE_GV(SvRV(*mark));
-		    goto do_futimes;
-		}
 		else {
-		    const char * const name = SvPV_nolen_const(*mark);
+		    const char * const name = SvPV_nomg_const_nolen(*mark);
 		    APPLY_TAINT_PROPER();
 #ifdef HAS_FUTIMES
 		    if (utimes(name, (struct timeval *)utbufp))
@@ -1897,7 +1885,7 @@ Perl_cando(pTHX_ Mode_t mode, bool effective, register const Stat_t *statbufp)
     /* [Comments and code from Len Reed]
      * MS-DOS "user" is similar to UNIX's "superuser," but can't write
      * to write-protected files.  The execute permission bit is set
-     * by the Miscrosoft C library stat() function for the following:
+     * by the Microsoft C library stat() function for the following:
      *		.exe files
      *		.com files
      *		.bat files
@@ -1921,7 +1909,7 @@ Perl_cando(pTHX_ Mode_t mode, bool effective, register const Stat_t *statbufp)
 # ifdef __CYGWIN__
     if (ingroup(544,effective)) {     /* member of Administrators */
 # else
-    if ((effective ? PL_euid : PL_uid) == 0) {	/* root is special */
+    if ((effective ? PerlProc_geteuid() : PerlProc_getuid()) == 0) {	/* root is special */
 # endif
 	if (mode == S_IXUSR) {
 	    if (statbufp->st_mode & 0111 || S_ISDIR(statbufp->st_mode))
@@ -1931,7 +1919,7 @@ Perl_cando(pTHX_ Mode_t mode, bool effective, register const Stat_t *statbufp)
 	    return TRUE;		/* root reads and writes anything */
 	return FALSE;
     }
-    if (statbufp->st_uid == (effective ? PL_euid : PL_uid) ) {
+    if (statbufp->st_uid == (effective ? PerlProc_geteuid() : PerlProc_getuid()) ) {
 	if (statbufp->st_mode & mode)
 	    return TRUE;	/* ok as "user" */
     }
@@ -1950,7 +1938,7 @@ static bool
 S_ingroup(pTHX_ Gid_t testgid, bool effective)
 {
     dVAR;
-    if (testgid == (effective ? PL_egid : PL_gid))
+    if (testgid == (effective ? PerlProc_getegid() : PerlProc_getgid()))
 	return TRUE;
 #ifdef HAS_GETGROUPS
     {
@@ -2296,7 +2284,8 @@ Perl_do_shmio(pTHX_ I32 optype, SV **mark, SV **sp)
 	/* suppress warning when reading into undef var (tchrist 3/Mar/00) */
 	if (! SvOK(mstr))
 	    sv_setpvs(mstr, "");
-	SvPV_force_nolen(mstr);
+	SvUPGRADE(mstr, SVt_PV);
+	SvPOK_only(mstr);
 	mbuf = SvGROW(mstr, (STRLEN)msize+1);
 
 	Copy(shm + mpos, mbuf, msize, char);
@@ -2392,6 +2381,16 @@ Perl_vms_start_glob
 #endif
 #endif /* !CSH */
 #endif /* !DOSISH */
+    {
+	GV * const envgv = gv_fetchpvs("ENV", 0, SVt_PVHV);
+	SV ** const home = hv_fetchs(GvHV(envgv), "HOME", 0);
+	SV ** const path = hv_fetchs(GvHV(envgv), "PATH", 0);
+	if (home && *home) SvGETMAGIC(*home);
+	if (path && *path) SvGETMAGIC(*path);
+	save_hash(gv_fetchpvs("ENV", 0, SVt_PVHV));
+	if (home && *home) SvSETMAGIC(*home);
+	if (path && *path) SvSETMAGIC(*path);
+    }
     (void)do_open(PL_last_in_gv, (char*)SvPVX_const(tmpcmd), SvCUR(tmpcmd),
 		  FALSE, O_RDONLY, 0, NULL);
     fp = IoIFP(io);

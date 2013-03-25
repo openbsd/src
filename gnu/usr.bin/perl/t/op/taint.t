@@ -10,14 +10,14 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
+    skip_all_if_miniperl("no dynamic loading on miniperl, no re");
 }
 
 use strict;
 use Config;
-use File::Spec::Functions;
 
-BEGIN { require './test.pl'; }
-plan tests => 306;
+plan tests => 794;
 
 $| = 1;
 
@@ -48,6 +48,7 @@ my $Is_NetWare  = $^O eq 'NetWare';
 my $Is_Dos      = $^O eq 'dos';
 my $Is_Cygwin   = $^O eq 'cygwin';
 my $Is_OpenBSD  = $^O eq 'openbsd';
+my $Is_MirBSD   = $^O eq 'mirbsd';
 my $Invoke_Perl = $Is_VMS      ? 'MCR Sys$Disk:[]Perl.exe' :
                   $Is_MSWin32  ? '.\perl'               :
                   $Is_NetWare  ? 'perl'                 :
@@ -96,50 +97,40 @@ sub taint_these (@) {
 }
 
 # How to identify taint when you see it
-sub any_tainted (@) {
+sub tainted ($) {
+    local $@;   # Don't pollute caller's value.
     not eval { join("",@_), kill 0; 1 };
 }
-sub tainted ($) {
-    any_tainted @_;
+
+sub is_tainted {
+    my $thing = shift;
+    local $::Level = $::Level + 1;
+    ok(tainted($thing), @_);
 }
-sub all_tainted (@) {
-    for (@_) { return 0 unless tainted $_ }
-    1;
+
+sub isnt_tainted {
+    my $thing = shift;
+    local $::Level = $::Level + 1;
+    ok(!tainted($thing), @_);
 }
 
-
-sub test ($;$) {
-    my($ok, $diag) = @_;
-
-    my $curr_test = curr_test();
-
-    if ($ok) {
-	print "ok $curr_test\n";
-    } else {
-	print "not ok $curr_test\n";
-        printf "# Failed test at line %d\n", (caller)[2];
-	for (split m/^/m, $diag) {
-	    print "# $_";
-	}
-	print "\n" unless
-	    $diag eq ''
-	    or substr($diag, -1) eq "\n";
-    }
-
-    next_test();
-
-    return $ok;
+sub violates_taint {
+    my ($code, $what, $desc) = @_;
+    $desc //= $what;
+    local $::Level = $::Level + 1;
+    is(eval { $code->(); }, undef, $desc);
+    like($@, qr/^Insecure dependency in $what while running with -T switch/);
 }
 
 # We need an external program to call.
 my $ECHO = ($Is_MSWin32 ? ".\\echo$$" : ($Is_NetWare ? "echo$$" : "./echo$$"));
 END { unlink $ECHO }
-open PROG, "> $ECHO" or die "Can't create $ECHO: $!";
-print PROG 'print "@ARGV\n"', "\n";
-close PROG;
+open my $fh, '>', $ECHO or die "Can't create $ECHO: $!";
+print $fh 'print "@ARGV\n"', "\n";
+close $fh;
 my $echo = "$Invoke_Perl $ECHO";
 
-my $TEST = catfile(curdir(), 'TEST');
+my $TEST = 'TEST';
 
 # First, let's make sure that Perl is checking the dangerous
 # environment variables. Maybe they aren't set yet, so we'll
@@ -147,27 +138,11 @@ my $TEST = catfile(curdir(), 'TEST');
 {
     $ENV{'DCL$PATH'} = '' if $Is_VMS;
 
-    if ($Is_MSWin32 && $Config{ccname} =~ /bcc32/ && ! -f 'cc3250mt.dll') {
-	my $bcc_dir;
-	foreach my $dir (split /$Config{path_sep}/, $ENV{PATH}) {
-	    if (-f "$dir/cc3250mt.dll") {
-		$bcc_dir = $dir and last;
-	    }
-	}
-	if (defined $bcc_dir) {
-	    require File::Copy;
-	    File::Copy::copy("$bcc_dir/cc3250mt.dll", '.') or
-		die "$0: failed to copy cc3250mt.dll: $!\n";
-	    eval q{
-		END { unlink "cc3250mt.dll" }
-	    };
-	}
-    }
     $ENV{PATH} = ($Is_Cygwin) ? '/usr/bin' : '';
     delete @ENV{@MoreEnv};
     $ENV{TERM} = 'dumb';
 
-    test eval { `$echo 1` } eq "1\n";
+    is(eval { `$echo 1` }, "1\n");
 
     SKIP: {
         skip "Environment tainting tests skipped", 4
@@ -180,15 +155,15 @@ my $TEST = catfile(curdir(), 'TEST');
 	    last unless $@ =~ /^Insecure \$ENV{$v}/;
 	    shift @vars;
 	}
-	test !@vars, "@vars";
+	is("@vars", "");
 
 	# tainted $TERM is unsafe only if it contains metachars
 	local $ENV{TERM};
 	$ENV{TERM} = 'e=mc2';
-	test eval { `$echo 1` } eq "1\n";
+	is(eval { `$echo 1` }, "1\n");
 	$ENV{TERM} = 'e=mc2' . $TAINT;
-	test !eval { `$echo 1` };
-	test $@ =~ /^Insecure \$ENV{TERM}/, $@;
+	is(eval { `$echo 1` }, undef);
+	like($@, qr/^Insecure \$ENV{TERM}/);
     }
 
     my $tmp;
@@ -206,23 +181,23 @@ my $TEST = catfile(curdir(), 'TEST');
         skip "all directories are writeable", 2 unless $tmp;
 
 	local $ENV{PATH} = $tmp;
-	test !eval { `$echo 1` };
-	test $@ =~ /^Insecure directory in \$ENV{PATH}/, $@;
+	is(eval { `$echo 1` }, undef);
+	like($@, qr/^Insecure directory in \$ENV{PATH}/);
     }
 
     SKIP: {
         skip "This is not VMS", 4 unless $Is_VMS;
 
 	$ENV{'DCL$PATH'} = $TAINT;
-	test  eval { `$echo 1` } eq '';
-	test $@ =~ /^Insecure \$ENV{DCL\$PATH}/, $@;
+	is(eval { `$echo 1` }, undef);
+	like($@, qr/^Insecure \$ENV{DCL\$PATH}/);
 	SKIP: {
             skip q[can't find world-writeable directory to test DCL$PATH], 2
               unless $tmp;
 
 	    $ENV{'DCL$PATH'} = $tmp;
-	    test eval { `$echo 1` } eq '';
-	    test $@ =~ /^Insecure directory in \$ENV{DCL\$PATH}/, $@;
+	    is(eval { `$echo 1` }, undef);
+	    like($@, qr/^Insecure directory in \$ENV{DCL\$PATH}/);
 	}
 	$ENV{'DCL$PATH'} = '';
     }
@@ -231,207 +206,930 @@ my $TEST = catfile(curdir(), 'TEST');
 # Let's see that we can taint and untaint as needed.
 {
     my $foo = $TAINT;
-    test tainted $foo;
+    is_tainted($foo);
 
     # That was a sanity check. If it failed, stop the insanity!
     die "Taint checks don't seem to be enabled" unless tainted $foo;
 
     $foo = "foo";
-    test not tainted $foo;
+    isnt_tainted($foo);
 
     taint_these($foo);
-    test tainted $foo;
+    is_tainted($foo);
 
     my @list = 1..10;
-    test not any_tainted @list;
+    isnt_tainted($_) foreach @list;
     taint_these @list[1,3,5,7,9];
-    test any_tainted @list;
-    test all_tainted @list[1,3,5,7,9];
-    test not any_tainted @list[0,2,4,6,8];
+    is_tainted($_) foreach @list[1,3,5,7,9];
+    isnt_tainted($_) foreach @list[0,2,4,6,8];
 
     ($foo) = $foo =~ /(.+)/;
-    test not tainted $foo;
+    isnt_tainted($foo);
 
-    $foo = $1 if ('bar' . $TAINT) =~ /(.+)/;
-    test not tainted $foo;
-    test $foo eq 'bar';
+    my ($desc, $s, $res, $res2, $one);
+
+    $desc = "match with string tainted";
+
+    $s = 'abcd' . $TAINT;
+    $res = $s =~ /(.+)/;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($res, 1,        "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "match /g with string tainted";
+
+    $s = 'abcd' . $TAINT;
+    $res = $s =~ /(.)/g;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($res, 1,        "$desc: res value");
+    is($one, 'a',      "$desc: \$1 value");
+
+    $desc = "match with string tainted, list cxt";
+
+    $s = 'abcd' . $TAINT;
+    ($res) = $s =~ /(.+)/;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($res, 'abcd',   "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "match /g with string tainted, list cxt";
+
+    $s = 'abcd' . $TAINT;
+    ($res, $res2) = $s =~ /(.)/g;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    isnt_tainted($res2,"$desc: res2 not tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($res, 'a',      "$desc: res value");
+    is($res2,'b',      "$desc: res2 value");
+    is($one, 'd',      "$desc: \$1 value");
+
+    $desc = "match with pattern tainted";
+
+    $s = 'abcd';
+    $res = $s =~ /$TAINT(.+)/;
+    $one = $1;
+    isnt_tainted($s,   "$desc: s not tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($res, 1,        "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "match /g with pattern tainted";
+
+    $s = 'abcd';
+    $res = $s =~ /$TAINT(.)/g;
+    $one = $1;
+    isnt_tainted($s,   "$desc: s not tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($res, 1,        "$desc: res value");
+    is($one, 'a',      "$desc: \$1 value");
+
+    SKIP: {
+    if (
+        !$Config::Config{d_setlocale}
+    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+    ) {
+        skip "no locale support", 10
+    }
+    $desc = "match with pattern tainted via locale";
+
+    $s = 'abcd';
+    { use locale; $res = $s =~ /(\w+)/; $one = $1; }
+    isnt_tainted($s,   "$desc: s not tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($res, 1,        "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "match /g with pattern tainted via locale";
+
+    $s = 'abcd';
+    { use locale; $res = $s =~ /(\w)/g; $one = $1; }
+    isnt_tainted($s,   "$desc: s not tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($res, 1,        "$desc: res value");
+    is($one, 'a',      "$desc: \$1 value");
+    }
+
+    $desc = "match with pattern tainted, list cxt";
+
+    $s = 'abcd';
+    ($res) = $s =~ /$TAINT(.+)/;
+    $one = $1;
+    isnt_tainted($s,   "$desc: s not tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($res, 'abcd',   "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "match /g with pattern tainted, list cxt";
+
+    $s = 'abcd';
+    ($res, $res2) = $s =~ /$TAINT(.)/g;
+    $one = $1;
+    isnt_tainted($s,   "$desc: s not tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($res, 'a',      "$desc: res value");
+    is($res2,'b',      "$desc: res2 value");
+    is($one, 'd',      "$desc: \$1 value");
+
+    SKIP: {
+    if (
+        !$Config::Config{d_setlocale}
+    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+    ) {
+        skip "no locale support", 12
+    }
+    $desc = "match with pattern tainted via locale, list cxt";
+
+    $s = 'abcd';
+    { use locale; ($res) = $s =~ /(\w+)/; $one = $1; }
+    isnt_tainted($s,   "$desc: s not tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($res, 'abcd',   "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "match /g with pattern tainted via locale, list cxt";
+
+    $s = 'abcd';
+    { use locale; ($res, $res2) = $s =~ /(\w)/g; $one = $1; }
+    isnt_tainted($s,   "$desc: s not tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($res2,  "$desc: res2 tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($res, 'a',      "$desc: res value");
+    is($res2,'b',      "$desc: res2 value");
+    is($one, 'd',      "$desc: \$1 value");
+    }
+
+    $desc = "substitution with string tainted";
+
+    $s = 'abcd' . $TAINT;
+    $res = $s =~ s/(.+)/xyz/;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($s,   'xyz',    "$desc: s value");
+    is($res, 1,        "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "substitution /g with string tainted";
+
+    $s = 'abcd' . $TAINT;
+    $res = $s =~ s/(.)/x/g;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    is_tainted($res,   "$desc: res tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($s,   'xxxx',   "$desc: s value");
+    is($res, 4,        "$desc: res value");
+    is($one, 'd',      "$desc: \$1 value");
+
+    $desc = "substitution /r with string tainted";
+
+    $s = 'abcd' . $TAINT;
+    $res = $s =~ s/(.+)/xyz/r;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    is_tainted($res,   "$desc: res tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($s,   'abcd',   "$desc: s value");
+    is($res, 'xyz',    "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "substitution /e with string tainted";
+
+    $s = 'abcd' . $TAINT;
+    $one = '';
+    $res = $s =~ s{(.+)}{
+		$one = $one . "x"; # make sure code not tainted
+		isnt_tainted($one, "$desc: code not tainted within /e");
+		$one = $1;
+		isnt_tainted($one, "$desc: \$1 not tainted within /e");
+		"xyz";
+	    }e;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($s,   'xyz',    "$desc: s value");
+    is($res, 1,        "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "substitution with pattern tainted";
+
+    $s = 'abcd';
+    $res = $s =~ s/$TAINT(.+)/xyz/;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($s,  'xyz',     "$desc: s value");
+    is($res, 1,        "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "substitution /g with pattern tainted";
+
+    $s = 'abcd';
+    $res = $s =~ s/$TAINT(.)/x/g;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($s,  'xxxx',    "$desc: s value");
+    is($res, 4,        "$desc: res value");
+    is($one, 'd',      "$desc: \$1 value");
+
+    $desc = "substitution /ge with pattern tainted";
+
+    $s = 'abc';
+    {
+	my $i = 0;
+	my $j;
+	$res = $s =~ s{(.)$TAINT}{
+		    $j = $i; # make sure code not tainted
+		    $one = $1;
+		    isnt_tainted($j, "$desc: code not tainted within /e");
+		    $i++;
+		    if ($i == 1) {
+			isnt_tainted($s,   "$desc: s not tainted loop 1");
+		    }
+		    else {
+			is_tainted($s,     "$desc: s tainted loop $i");
+		    }
+		    is_tainted($one,   "$desc: \$1 tainted loop $i");
+		    $i.$TAINT;
+		}ge;
+	$one = $1;
+    }
+    is_tainted($s,     "$desc: s tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($s,  '123',     "$desc: s value");
+    is($res, 3,        "$desc: res value");
+    is($one, 'c',      "$desc: \$1 value");
+
+    $desc = "substitution /r with pattern tainted";
+
+    $s = 'abcd';
+    $res = $s =~ s/$TAINT(.+)/xyz/r;
+    $one = $1;
+    isnt_tainted($s,   "$desc: s not tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($s,  'abcd',    "$desc: s value");
+    is($res, 'xyz',    "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    SKIP: {
+    if (
+        !$Config::Config{d_setlocale}
+    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+    ) {
+        skip "no locale support", 18
+    }
+    $desc = "substitution with pattern tainted via locale";
+
+    $s = 'abcd';
+    { use locale;  $res = $s =~ s/(\w+)/xyz/; $one = $1; }
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($s,  'xyz',     "$desc: s value");
+    is($res, 1,        "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "substitution /g with pattern tainted via locale";
+
+    $s = 'abcd';
+    { use locale;  $res = $s =~ s/(\w)/x/g; $one = $1; }
+    is_tainted($s,     "$desc: s tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($s,  'xxxx',    "$desc: s value");
+    is($res, 4,        "$desc: res value");
+    is($one, 'd',      "$desc: \$1 value");
+
+    $desc = "substitution /r with pattern tainted via locale";
+
+    $s = 'abcd';
+    { use locale;  $res = $s =~ s/(\w+)/xyz/r; $one = $1; }
+    isnt_tainted($s,   "$desc: s not tainted");
+    is_tainted($res,   "$desc: res tainted");
+    is_tainted($one,   "$desc: \$1 tainted");
+    is($s,  'abcd',    "$desc: s value");
+    is($res, 'xyz',    "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+    }
+
+    $desc = "substitution with replacement tainted";
+
+    $s = 'abcd';
+    $res = $s =~ s/(.+)/xyz$TAINT/;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($s,  'xyz',     "$desc: s value");
+    is($res, 1,        "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
+
+    $desc = "substitution /g with replacement tainted";
+
+    $s = 'abcd';
+    $res = $s =~ s/(.)/x$TAINT/g;
+    $one = $1;
+    is_tainted($s,     "$desc: s tainted");
+    isnt_tainted($res, "$desc: res not tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($s,  'xxxx',    "$desc: s value");
+    is($res, 4,        "$desc: res value");
+    is($one, 'd',      "$desc: \$1 value");
+
+    $desc = "substitution /ge with replacement tainted";
+
+    $s = 'abc';
+    {
+	my $i = 0;
+	my $j;
+	$res = $s =~ s{(.)}{
+		    $j = $i; # make sure code not tainted
+		    $one = $1;
+		    isnt_tainted($j, "$desc: code not tainted within /e");
+		    $i++;
+		    if ($i == 1) {
+			isnt_tainted($s,   "$desc: s not tainted loop 1");
+		    }
+		    else {
+			is_tainted($s,     "$desc: s tainted loop $i");
+		    }
+		    isnt_tainted($one, "$desc: \$1 not tainted within /e");
+		    $i.$TAINT;
+		}ge;
+	$one = $1;
+    }
+    is_tainted($s,     "$desc: s tainted");
+    is_tainted($res,   "$desc: res tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($s,  '123',     "$desc: s value");
+    is($res, 3,        "$desc: res value");
+    is($one, 'c',      "$desc: \$1 value");
+
+    $desc = "substitution /r with replacement tainted";
+
+    $s = 'abcd';
+    $res = $s =~ s/(.+)/xyz$TAINT/r;
+    $one = $1;
+    isnt_tainted($s,   "$desc: s not tainted");
+    is_tainted($res,   "$desc: res tainted");
+    isnt_tainted($one, "$desc: \$1 not tainted");
+    is($s,   'abcd',   "$desc: s value");
+    is($res, 'xyz',    "$desc: res value");
+    is($one, 'abcd',   "$desc: \$1 value");
 
     {
-      use re 'taint';
+	# now do them all again with "use re 'taint"
 
-      ($foo) = ('bar' . $TAINT) =~ /(.+)/;
-      test tainted $foo;
-      test $foo eq 'bar';
+	use re 'taint';
 
-      $foo = $1 if ('bar' . $TAINT) =~ /(.+)/;
-      test tainted $foo;
-      test $foo eq 'bar';
+	$desc = "use re 'taint': match with string tainted";
+
+	$s = 'abcd' . $TAINT;
+	$res = $s =~ /(.+)/;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 1,        "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': match /g with string tainted";
+
+	$s = 'abcd' . $TAINT;
+	$res = $s =~ /(.)/g;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 1,        "$desc: res value");
+	is($one, 'a',      "$desc: \$1 value");
+
+	$desc = "use re 'taint': match with string tainted, list cxt";
+
+	$s = 'abcd' . $TAINT;
+	($res) = $s =~ /(.+)/;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 'abcd',   "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': match /g with string tainted, list cxt";
+
+	$s = 'abcd' . $TAINT;
+	($res, $res2) = $s =~ /(.)/g;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($res2,  "$desc: res2 tainted");
+	is_tainted($one,   "$desc: \$1 not tainted");
+	is($res, 'a',      "$desc: res value");
+	is($res2,'b',      "$desc: res2 value");
+	is($one, 'd',      "$desc: \$1 value");
+
+	$desc = "use re 'taint': match with pattern tainted";
+
+	$s = 'abcd';
+	$res = $s =~ /$TAINT(.+)/;
+	$one = $1;
+	isnt_tainted($s,   "$desc: s not tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 1,        "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': match /g with pattern tainted";
+
+	$s = 'abcd';
+	$res = $s =~ /$TAINT(.)/g;
+	$one = $1;
+	isnt_tainted($s,   "$desc: s not tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 1,        "$desc: res value");
+	is($one, 'a',      "$desc: \$1 value");
+
+    SKIP: {
+    if (
+        !$Config::Config{d_setlocale}
+    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+    ) {
+        skip "no locale support", 10
+    }
+	$desc = "use re 'taint': match with pattern tainted via locale";
+
+	$s = 'abcd';
+	{ use locale; $res = $s =~ /(\w+)/; $one = $1; }
+	isnt_tainted($s,   "$desc: s not tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 1,        "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': match /g with pattern tainted via locale";
+
+	$s = 'abcd';
+	{ use locale; $res = $s =~ /(\w)/g; $one = $1; }
+	isnt_tainted($s,   "$desc: s not tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 1,        "$desc: res value");
+	is($one, 'a',      "$desc: \$1 value");
+    }
+
+	$desc = "use re 'taint': match with pattern tainted, list cxt";
+
+	$s = 'abcd';
+	($res) = $s =~ /$TAINT(.+)/;
+	$one = $1;
+	isnt_tainted($s,   "$desc: s not tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 'abcd',   "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': match /g with pattern tainted, list cxt";
+
+	$s = 'abcd';
+	($res, $res2) = $s =~ /$TAINT(.)/g;
+	$one = $1;
+	isnt_tainted($s,   "$desc: s not tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 'a',      "$desc: res value");
+	is($res2,'b',      "$desc: res2 value");
+	is($one, 'd',      "$desc: \$1 value");
+
+    SKIP: {
+    if (
+        !$Config::Config{d_setlocale}
+    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+    ) {
+        skip "no locale support", 12
+    }
+	$desc = "use re 'taint': match with pattern tainted via locale, list cxt";
+
+	$s = 'abcd';
+	{ use locale; ($res) = $s =~ /(\w+)/; $one = $1; }
+	isnt_tainted($s,   "$desc: s not tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 'abcd',   "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': match /g with pattern tainted via locale, list cxt";
+
+	$s = 'abcd';
+	{ use locale; ($res, $res2) = $s =~ /(\w)/g; $one = $1; }
+	isnt_tainted($s,   "$desc: s not tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($res2,  "$desc: res2 tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($res, 'a',      "$desc: res value");
+	is($res2,'b',      "$desc: res2 value");
+	is($one, 'd',      "$desc: \$1 value");
+    }
+
+	$desc = "use re 'taint': substitution with string tainted";
+
+	$s = 'abcd' . $TAINT;
+	$res = $s =~ s/(.+)/xyz/;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,   'xyz',    "$desc: s value");
+	is($res, 1,        "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /g with string tainted";
+
+	$s = 'abcd' . $TAINT;
+	$res = $s =~ s/(.)/x/g;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,   'xxxx',   "$desc: s value");
+	is($res, 4,        "$desc: res value");
+	is($one, 'd',      "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /r with string tainted";
+
+	$s = 'abcd' . $TAINT;
+	$res = $s =~ s/(.+)/xyz/r;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,   'abcd',   "$desc: s value");
+	is($res, 'xyz',    "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /e with string tainted";
+
+	$s = 'abcd' . $TAINT;
+	$one = '';
+	$res = $s =~ s{(.+)}{
+		    $one = $one . "x"; # make sure code not tainted
+		    isnt_tainted($one, "$desc: code not tainted within /e");
+		    $one = $1;
+		    is_tainted($one, "$desc: $1 tainted within /e");
+		    "xyz";
+		}e;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,   'xyz',    "$desc: s value");
+	is($res, 1,        "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution with pattern tainted";
+
+	$s = 'abcd';
+	$res = $s =~ s/$TAINT(.+)/xyz/;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,  'xyz',     "$desc: s value");
+	is($res, 1,        "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /g with pattern tainted";
+
+	$s = 'abcd';
+	$res = $s =~ s/$TAINT(.)/x/g;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,  'xxxx',    "$desc: s value");
+	is($res, 4,        "$desc: res value");
+	is($one, 'd',      "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /ge with pattern tainted";
+
+	$s = 'abc';
+	{
+	    my $i = 0;
+	    my $j;
+	    $res = $s =~ s{(.)$TAINT}{
+			$j = $i; # make sure code not tainted
+			$one = $1;
+			isnt_tainted($j, "$desc: code not tainted within /e");
+			$i++;
+			if ($i == 1) {
+			    isnt_tainted($s,   "$desc: s not tainted loop 1");
+			}
+			else {
+			    is_tainted($s,     "$desc: s tainted loop $i");
+			}
+			is_tainted($one,   "$desc: \$1 tainted loop $i");
+			$i.$TAINT;
+		    }ge;
+	    $one = $1;
+	}
+	is_tainted($s,     "$desc: s tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,  '123',     "$desc: s value");
+	is($res, 3,        "$desc: res value");
+	is($one, 'c',      "$desc: \$1 value");
+
+
+	$desc = "use re 'taint': substitution /r with pattern tainted";
+
+	$s = 'abcd';
+	$res = $s =~ s/$TAINT(.+)/xyz/r;
+	$one = $1;
+	isnt_tainted($s,   "$desc: s not tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,  'abcd',    "$desc: s value");
+	is($res, 'xyz',    "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+    SKIP: {
+    if (
+        !$Config::Config{d_setlocale}
+    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+    ) {
+        skip "no locale support", 18
+    }
+	$desc = "use re 'taint': substitution with pattern tainted via locale";
+
+	$s = 'abcd';
+	{ use locale;  $res = $s =~ s/(\w+)/xyz/; $one = $1; }
+	is_tainted($s,     "$desc: s tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,  'xyz',     "$desc: s value");
+	is($res, 1,        "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /g with pattern tainted via locale";
+
+	$s = 'abcd';
+	{ use locale;  $res = $s =~ s/(\w)/x/g; $one = $1; }
+	is_tainted($s,     "$desc: s tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,  'xxxx',    "$desc: s value");
+	is($res, 4,        "$desc: res value");
+	is($one, 'd',      "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /r with pattern tainted via locale";
+
+	$s = 'abcd';
+	{ use locale;  $res = $s =~ s/(\w+)/xyz/r; $one = $1; }
+	isnt_tainted($s,   "$desc: s not tainted");
+	is_tainted($res,   "$desc: res tainted");
+	is_tainted($one,   "$desc: \$1 tainted");
+	is($s,  'abcd',    "$desc: s value");
+	is($res, 'xyz',    "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+    }
+
+	$desc = "use re 'taint': substitution with replacement tainted";
+
+	$s = 'abcd';
+	$res = $s =~ s/(.+)/xyz$TAINT/;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	isnt_tainted($one, "$desc: \$1 not tainted");
+	is($s,  'xyz',     "$desc: s value");
+	is($res, 1,        "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /g with replacement tainted";
+
+	$s = 'abcd';
+	$res = $s =~ s/(.)/x$TAINT/g;
+	$one = $1;
+	is_tainted($s,     "$desc: s tainted");
+	isnt_tainted($res, "$desc: res not tainted");
+	isnt_tainted($one, "$desc: \$1 not tainted");
+	is($s,  'xxxx',    "$desc: s value");
+	is($res, 4,        "$desc: res value");
+	is($one, 'd',      "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /ge with replacement tainted";
+
+	$s = 'abc';
+	{
+	    my $i = 0;
+	    my $j;
+	    $res = $s =~ s{(.)}{
+			$j = $i; # make sure code not tainted
+			$one = $1;
+			isnt_tainted($j, "$desc: code not tainted within /e");
+			$i++;
+			if ($i == 1) {
+			    isnt_tainted($s,   "$desc: s not tainted loop 1");
+			}
+			else {
+			    is_tainted($s,     "$desc: s tainted loop $i");
+			}
+			    isnt_tainted($one, "$desc: \$1 not tainted");
+			$i.$TAINT;
+		    }ge;
+	    $one = $1;
+	}
+	is_tainted($s,     "$desc: s tainted");
+	is_tainted($res,   "$desc: res tainted");
+	isnt_tainted($one, "$desc: \$1 not tainted");
+	is($s,  '123',     "$desc: s value");
+	is($res, 3,        "$desc: res value");
+	is($one, 'c',      "$desc: \$1 value");
+
+	$desc = "use re 'taint': substitution /r with replacement tainted";
+
+	$s = 'abcd';
+	$res = $s =~ s/(.+)/xyz$TAINT/r;
+	$one = $1;
+	isnt_tainted($s,   "$desc: s not tainted");
+	is_tainted($res,   "$desc: res tainted");
+	isnt_tainted($one, "$desc: \$1 not tainted");
+	is($s,   'abcd',   "$desc: s value");
+	is($res, 'xyz',    "$desc: res value");
+	is($one, 'abcd',   "$desc: \$1 value");
     }
 
     $foo = $1 if 'bar' =~ /(.+)$TAINT/;
-    test tainted $foo;
-    test $foo eq 'bar';
+    is_tainted($foo);
+    is($foo, 'bar');
 
     my $pi = 4 * atan2(1,1) + $TAINT0;
-    test tainted $pi;
+    is_tainted($pi);
 
     ($pi) = $pi =~ /(\d+\.\d+)/;
-    test not tainted $pi;
-    test sprintf("%.5f", $pi) eq '3.14159';
+    isnt_tainted($pi);
+    is(sprintf("%.5f", $pi), '3.14159');
 }
 
 # How about command-line arguments? The problem is that we don't
 # always get some, so we'll run another process with some.
 SKIP: {
     my $arg = tempfile();
-    open PROG, "> $arg" or die "Can't create $arg: $!";
-    print PROG q{
+    open $fh, '>', $arg or die "Can't create $arg: $!";
+    print $fh q{
 	eval { join('', @ARGV), kill 0 };
 	exit 0 if $@ =~ /^Insecure dependency/;
 	print "# Oops: \$@ was [$@]\n";
 	exit 1;
     };
-    close PROG;
+    close $fh or die "Can't close $arg: $!";
     print `$Invoke_Perl "-T" $arg and some suspect arguments`;
-    test !$?, "Exited with status $?";
+    is($?, 0, "Exited with status $?");
     unlink $arg;
 }
 
 # Reading from a file should be tainted
 {
-    test open(FILE, $TEST), "Couldn't open '$TEST': $!";
+    ok(open my $fh, '<', $TEST) or diag("Couldn't open '$TEST': $!");
 
     my $block;
-    sysread(FILE, $block, 100);
-    my $line = <FILE>;
-    close FILE;
-    test tainted $block;
-    test tainted $line;
-}
-
-# Globs should be forbidden, except under VMS,
-#   which doesn't spawn an external program.
-SKIP: {
-    skip "globs should be forbidden", 2 if 1 or $Is_VMS;
-
-    my @globs = eval { <*> };
-    test @globs == 0 && $@ =~ /^Insecure dependency/;
-
-    @globs = eval { glob '*' };
-    test @globs == 0 && $@ =~ /^Insecure dependency/;
+    sysread($fh, $block, 100);
+    my $line = <$fh>;
+    close $fh;
+    is_tainted($block);
+    is_tainted($line);
 }
 
 # Output of commands should be tainted
 {
     my $foo = `$echo abc`;
-    test tainted $foo;
+    is_tainted($foo);
 }
 
 # Certain system variables should be tainted
 {
-    test all_tainted $^X, $0;
+    is_tainted($^X);
+    is_tainted($0);
 }
 
 # Results of matching should all be untainted
 {
     my $foo = "abcdefghi" . $TAINT;
-    test tainted $foo;
+    is_tainted($foo);
 
     $foo =~ /def/;
-    test not any_tainted $`, $&, $';
+    isnt_tainted($`);
+    isnt_tainted($&);
+    isnt_tainted($');
 
     $foo =~ /(...)(...)(...)/;
-    test not any_tainted $1, $2, $3, $+;
+    isnt_tainted($1);
+    isnt_tainted($2);
+    isnt_tainted($3);
+    isnt_tainted($+);
 
     my @bar = $foo =~ /(...)(...)(...)/;
-    test not any_tainted @bar;
+    isnt_tainted($_) foreach @bar;
 
-    test tainted $foo;	# $foo should still be tainted!
-    test $foo eq "abcdefghi";
+    is_tainted($foo);	# $foo should still be tainted!
+    is($foo, "abcdefghi");
 }
 
 # Operations which affect files can't use tainted data.
 {
-    test !eval { chmod 0, $TAINT }, 'chmod';
-    test $@ =~ /^Insecure dependency/, $@;
+    violates_taint(sub { chmod 0, $TAINT }, 'chmod');
 
-    # There is no feature test in $Config{} for truncate,
-    #   so we allow for the possibility that it's missing.
-    test !eval { truncate 'NoSuChFiLe', $TAINT0 }, 'truncate';
-    test $@ =~ /^(?:Insecure dependency|truncate not implemented)/, $@;
+    SKIP: {
+        skip "truncate() is not available", 2 unless $Config{d_truncate};
 
-    test !eval { rename '', $TAINT }, 'rename';
-    test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { truncate 'NoSuChFiLe', $TAINT0 }, 'truncate');
+    }
 
-    test !eval { unlink $TAINT }, 'unlink';
-    test $@ =~ /^Insecure dependency/, $@;
-
-    test !eval { utime $TAINT }, 'utime';
-    test $@ =~ /^Insecure dependency/, $@;
+    violates_taint(sub { rename '', $TAINT }, 'rename');
+    violates_taint(sub { unlink $TAINT }, 'unlink');
+    violates_taint(sub { utime $TAINT }, 'utime');
 
     SKIP: {
         skip "chown() is not available", 2 unless $Config{d_chown};
 
-	test !eval { chown -1, -1, $TAINT }, 'chown';
-	test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { chown -1, -1, $TAINT }, 'chown');
     }
 
     SKIP: {
         skip "link() is not available", 2 unless $Config{d_link};
 
-	test !eval { link $TAINT, '' }, 'link';
-	test $@ =~ /^Insecure dependency/, $@;
+violates_taint(sub { link $TAINT, '' }, 'link');
     }
 
     SKIP: {
         skip "symlink() is not available", 2 unless $Config{d_symlink};
 
-	test !eval { symlink $TAINT, '' }, 'symlink';
-	test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { symlink $TAINT, '' }, 'symlink');
     }
 }
 
 # Operations which affect directories can't use tainted data.
 {
-    test !eval { mkdir "foo".$TAINT, 0755.$TAINT0 }, 'mkdir';
-    test $@ =~ /^Insecure dependency/, $@;
-
-    test !eval { rmdir $TAINT }, 'rmdir';
-    test $@ =~ /^Insecure dependency/, $@;
-
-    test !eval { chdir "foo".$TAINT }, 'chdir';
-    test $@ =~ /^Insecure dependency/, $@;
+    violates_taint(sub { mkdir "foo".$TAINT, 0755 . $TAINT0 }, 'mkdir');
+    violates_taint(sub { rmdir $TAINT }, 'rmdir');
+    violates_taint(sub { chdir "foo".$TAINT }, 'chdir');
 
     SKIP: {
         skip "chroot() is not available", 2 unless $Config{d_chroot};
 
-	test !eval { chroot $TAINT }, 'chroot';
-	test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { chroot $TAINT }, 'chroot');
     }
 }
 
 # Some operations using files can't use tainted data.
 {
     my $foo = "imaginary library" . $TAINT;
-    test !eval { require $foo }, 'require';
-    test $@ =~ /^Insecure dependency/, $@;
+    violates_taint(sub { require $foo }, 'require');
 
     my $filename = tempfile();	# NB: $filename isn't tainted!
     $foo = $filename . $TAINT;
     unlink $filename;	# in any case
 
-    test !eval { open FOO, $foo }, 'open for read';
-    test $@ eq '', $@;		# NB: This should be allowed
+    is(eval { open FOO, $foo }, undef, 'open for read');
+    is($@, '');                # NB: This should be allowed
+    is(eval { open my $fh, , '<', $foo }, undef, 'open for read');
+    is($@, '');                # NB: This should be allowed
 
     # Try first new style but allow also old style.
     # We do not want the whole taint.t to fail
     # just because Errno possibly failing.
-    test eval('$!{ENOENT}') ||
+    ok(eval('$!{ENOENT}') ||
 	$! == 2 || # File not found
-	($Is_Dos && $! == 22);
+	($Is_Dos && $! == 22));
 
-    test !eval { open FOO, "> $foo" }, 'open for write';
-    test $@ =~ /^Insecure dependency/, $@;
+    violates_taint(sub { open FOO, "> $foo" }, 'open', 'open for write');
+    violates_taint(sub { open my $fh, '>', $foo }, 'open', 'open for write');
 }
 
 # Commands to the system can't use tainted data
@@ -439,53 +1137,45 @@ SKIP: {
     my $foo = $TAINT;
 
     SKIP: {
-        skip "open('|') is not available", 4 if $^O eq 'amigaos';
+        skip "open('|') is not available", 8 if $^O eq 'amigaos';
 
-	test !eval { open FOO, "| x$foo" }, 'popen to';
-	test $@ =~ /^Insecure dependency/, $@;
-
-	test !eval { open FOO, "x$foo |" }, 'popen from';
-	test $@ =~ /^Insecure dependency/, $@;
+        violates_taint(sub { open FOO, "| x$foo" }, 'piped open', 'popen to');
+        violates_taint(sub { open FOO, "x$foo |" }, 'piped open', 'popen from');
+        violates_taint(sub { open my $fh, '|-', "x$foo" }, 'piped open', 'popen to');
+        violates_taint(sub { open my $fh, '-|', "x$foo" }, 'piped open', 'popen from');
     }
 
-    test !eval { exec $TAINT }, 'exec';
-    test $@ =~ /^Insecure dependency/, $@;
-
-    test !eval { system $TAINT }, 'system';
-    test $@ =~ /^Insecure dependency/, $@;
+    violates_taint(sub { exec $TAINT }, 'exec');
+    violates_taint(sub { system $TAINT }, 'system');
 
     $foo = "*";
     taint_these $foo;
 
-    test !eval { `$echo 1$foo` }, 'backticks';
-    test $@ =~ /^Insecure dependency/, $@;
+    violates_taint(sub { `$echo 1$foo` }, '``', 'backticks');
 
     SKIP: {
         # wildcard expansion doesn't invoke shell on VMS, so is safe
         skip "This is not VMS", 2 unless $Is_VMS;
     
-	test join('', eval { glob $foo } ) ne '', 'globbing';
-	test $@ eq '', $@;
+	isnt(join('', eval { glob $foo } ), '', 'globbing');
+	is($@, '');
     }
 }
 
 # Operations which affect processes can't use tainted data.
 {
-    test !eval { kill 0, $TAINT }, 'kill';
-    test $@ =~ /^Insecure dependency/, $@;
+    violates_taint(sub { kill 0, $TAINT }, 'kill');
 
     SKIP: {
         skip "setpgrp() is not available", 2 unless $Config{d_setpgrp};
 
-	test !eval { setpgrp 0, $TAINT0 }, 'setpgrp';
-	test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { setpgrp 0, $TAINT0 }, 'setpgrp');
     }
 
     SKIP: {
         skip "setpriority() is not available", 2 unless $Config{d_setprior};
 
-	test !eval { setpriority 0, $TAINT0, $TAINT0 }, 'setpriority';
-	test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { setpriority 0, $TAINT0, $TAINT0 }, 'setpriority');
     }
 }
 
@@ -494,8 +1184,7 @@ SKIP: {
     SKIP: {
         skip "syscall() is not available", 2 unless $Config{d_syscall};
 
-	test !eval { syscall $TAINT }, 'syscall';
-	test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { syscall $TAINT }, 'syscall');
     }
 
     {
@@ -503,16 +1192,18 @@ SKIP: {
 	taint_these $foo;
 	local *FOO;
 	my $temp = tempfile();
-	test open(FOO, "> $temp"), "Couldn't open $temp for write: $!";
+	ok(open FOO, "> $temp") or diag("Couldn't open $temp for write: $!");
+	violates_taint(sub { ioctl FOO, $TAINT0, $foo }, 'ioctl');
 
-	test !eval { ioctl FOO, $TAINT0, $foo }, 'ioctl';
-	test $@ =~ /^Insecure dependency/, $@;
+	my $temp2 = tempfile();
+	ok(open my $fh, '>', $temp2) or diag("Couldn't open $temp2 for write: $!");
+	violates_taint(sub { ioctl $fh, $TAINT0, $foo }, 'ioctl');
 
         SKIP: {
-            skip "fcntl() is not available", 2 unless $Config{d_fcntl};
+            skip "fcntl() is not available", 4 unless $Config{d_fcntl};
 
-	    test !eval { fcntl FOO, $TAINT0, $foo }, 'fcntl';
-	    test $@ =~ /^Insecure dependency/, $@;
+	    violates_taint(sub { fcntl FOO, $TAINT0, $foo }, 'fcntl');
+	    violates_taint(sub { fcntl $fh, $TAINT0, $foo }, 'fcntl');
 	}
 
 	close FOO;
@@ -523,86 +1214,87 @@ SKIP: {
 {
     my $foo = 'abc' . $TAINT;
     my $fooref = \$foo;
-    test not tainted $fooref;
-    test tainted $$fooref;
-    test tainted $foo;
+    isnt_tainted($fooref);
+    is_tainted($$fooref);
+    is_tainted($foo);
 }
 
 # Some tests involving assignment
 {
     my $foo = $TAINT0;
     my $bar = $foo;
-    test all_tainted $foo, $bar;
-    test tainted($foo = $bar);
-    test tainted($bar = $bar);
-    test tainted($bar += $bar);
-    test tainted($bar -= $bar);
-    test tainted($bar *= $bar);
-    test tainted($bar++);
-    test tainted($bar /= $bar);
-    test tainted($bar += 0);
-    test tainted($bar -= 2);
-    test tainted($bar *= -1);
-    test tainted($bar /= 1);
-    test tainted($bar--);
-    test $bar == 0;
+    is_tainted($foo);
+    is_tainted($bar);
+    is_tainted($foo = $bar);
+    is_tainted($bar = $bar);
+    is_tainted($bar += $bar);
+    is_tainted($bar -= $bar);
+    is_tainted($bar *= $bar);
+    is_tainted($bar++);
+    is_tainted($bar /= $bar);
+    is_tainted($bar += 0);
+    is_tainted($bar -= 2);
+    is_tainted($bar *= -1);
+    is_tainted($bar /= 1);
+    is_tainted($bar--);
+    is($bar, 0);
 }
 
 # Test assignment and return of lists
 {
     my @foo = ("A", "tainted" . $TAINT, "B");
-    test not tainted $foo[0];
-    test     tainted $foo[1];
-    test not tainted $foo[2];
+    isnt_tainted($foo[0]);
+    is_tainted(    $foo[1]);
+    isnt_tainted($foo[2]);
     my @bar = @foo;
-    test not tainted $bar[0];
-    test     tainted $bar[1];
-    test not tainted $bar[2];
+    isnt_tainted($bar[0]);
+    is_tainted(    $bar[1]);
+    isnt_tainted($bar[2]);
     my @baz = eval { "A", "tainted" . $TAINT, "B" };
-    test not tainted $baz[0];
-    test     tainted $baz[1];
-    test not tainted $baz[2];
+    isnt_tainted($baz[0]);
+    is_tainted(    $baz[1]);
+    isnt_tainted($baz[2]);
     my @plugh = eval q[ "A", "tainted" . $TAINT, "B" ];
-    test not tainted $plugh[0];
-    test     tainted $plugh[1];
-    test not tainted $plugh[2];
+    isnt_tainted($plugh[0]);
+    is_tainted(    $plugh[1]);
+    isnt_tainted($plugh[2]);
     my $nautilus = sub { "A", "tainted" . $TAINT, "B" };
-    test not tainted ((&$nautilus)[0]);
-    test     tainted ((&$nautilus)[1]);
-    test not tainted ((&$nautilus)[2]);
+    isnt_tainted(((&$nautilus)[0]));
+    is_tainted(    ((&$nautilus)[1]));
+    isnt_tainted(((&$nautilus)[2]));
     my @xyzzy = &$nautilus;
-    test not tainted $xyzzy[0];
-    test     tainted $xyzzy[1];
-    test not tainted $xyzzy[2];
+    isnt_tainted($xyzzy[0]);
+    is_tainted(    $xyzzy[1]);
+    isnt_tainted($xyzzy[2]);
     my $red_october = sub { return "A", "tainted" . $TAINT, "B" };
-    test not tainted ((&$red_october)[0]);
-    test     tainted ((&$red_october)[1]);
-    test not tainted ((&$red_october)[2]);
+    isnt_tainted(((&$red_october)[0]));
+    is_tainted(    ((&$red_october)[1]));
+    isnt_tainted(((&$red_october)[2]));
     my @corge = &$red_october;
-    test not tainted $corge[0];
-    test     tainted $corge[1];
-    test not tainted $corge[2];
+    isnt_tainted($corge[0]);
+    is_tainted(    $corge[1]);
+    isnt_tainted($corge[2]);
 }
 
 # Test for system/library calls returning string data of dubious origin.
 {
     # No reliable %Config check for getpw*
     SKIP: {
-        skip "getpwent() is not available", 1 unless 
+        skip "getpwent() is not available", 9 unless 
           eval { setpwent(); getpwent() };
 
 	setpwent();
 	my @getpwent = getpwent();
 	die "getpwent: $!\n" unless (@getpwent);
-	test (    not tainted $getpwent[0]
-	          and     tainted $getpwent[1]
-	          and not tainted $getpwent[2]
-	          and not tainted $getpwent[3]
-	          and not tainted $getpwent[4]
-	          and not tainted $getpwent[5]
-	          and     tainted $getpwent[6]		# ge?cos
-	          and not tainted $getpwent[7]
-		  and     tainted $getpwent[8]);	# shell
+	isnt_tainted($getpwent[0]);
+	is_tainted($getpwent[1]);
+	isnt_tainted($getpwent[2]);
+	isnt_tainted($getpwent[3]);
+	isnt_tainted($getpwent[4]);
+	isnt_tainted($getpwent[5]);
+	is_tainted($getpwent[6], 'ge?cos');
+	isnt_tainted($getpwent[7]);
+	is_tainted($getpwent[8], 'shell');
 	endpwent();
     }
 
@@ -610,11 +1302,10 @@ SKIP: {
         # pretty hard to imagine not
         skip "readdir() is not available", 1 unless $Config{d_readdir};
 
-	local(*D);
-	opendir(D, "op") or die "opendir: $!\n";
-	my $readdir = readdir(D);
-	test tainted $readdir;
-	closedir(D);
+	opendir my $dh, "op" or die "opendir: $!\n";
+	my $readdir = readdir $dh;
+	is_tainted($readdir);
+	closedir $dh;
     }
 
     SKIP: {
@@ -627,7 +1318,7 @@ SKIP: {
 	# it has to be a real path on Mac OS
 	symlink($sl, $symlink) or die "symlink: $!\n";
 	my $readlink = readlink($symlink);
-	test tainted $readlink;
+	is_tainted($readlink);
 	unlink($symlink);
     }
 }
@@ -636,24 +1327,24 @@ SKIP: {
 {
     my $why = "y";
     my $j = "x" | $why;
-    test not tainted $j;
+    isnt_tainted($j);
     $why = $TAINT."y";
     $j = "x" | $why;
-    test     tainted $j;
+    is_tainted(    $j);
 }
 
 # test target of substitution (regression bug)
 {
     my $why = $TAINT."y";
     $why =~ s/y/z/;
-    test     tainted $why;
+    is_tainted(    $why);
 
     my $z = "[z]";
     $why =~ s/$z/zee/;
-    test     tainted $why;
+    is_tainted(    $why);
 
     $why =~ s/e/'-'.$$/ge;
-    test     tainted $why;
+    is_tainted(    $why);
 }
 
 
@@ -688,7 +1379,7 @@ SKIP: {
         skip "SysV shared memory operation failed", 1 unless 
           $rcvd eq $sent;
 
-        test tainted $rcvd;
+        is_tainted($rcvd);
     }
 
 
@@ -723,7 +1414,7 @@ SKIP: {
             skip "SysV message queue operation failed", 1
               unless $rcvd eq $sent && $type_sent == $type_rcvd;
 
-	    test tainted $rcvd;
+	    is_tainted($rcvd);
 	}
     }
 }
@@ -731,41 +1422,41 @@ SKIP: {
 {
     # bug id 20001004.006
 
-    open IN, $TEST or warn "$0: cannot read $TEST: $!" ;
+    open my $fh, '<', $TEST or warn "$0: cannot read $TEST: $!" ;
     local $/;
-    my $a = <IN>;
-    my $b = <IN>;
+    my $a = <$fh>;
+    my $b = <$fh>;
 
-    ok tainted($a) && tainted($b) && !defined($b);
-
-    close IN;
+    is_tainted($a);
+    is_tainted($b);
+    is($b, undef);
 }
 
 {
     # bug id 20001004.007
 
-    open IN, $TEST or warn "$0: cannot read $TEST: $!" ;
-    my $a = <IN>;
+    open my $fh, '<', $TEST or warn "$0: cannot read $TEST: $!" ;
+    my $a = <$fh>;
 
     my $c = { a => 42,
 	      b => $a };
 
-    ok !tainted($c->{a}) && tainted($c->{b});
+    isnt_tainted($c->{a});
+    is_tainted($c->{b});
 
 
     my $d = { a => $a,
 	      b => 42 };
-    ok tainted($d->{a}) && !tainted($d->{b});
+    is_tainted($d->{a});
+    isnt_tainted($d->{b});
 
 
     my $e = { a => 42,
 	      b => { c => $a, d => 42 } };
-    ok !tainted($e->{a}) &&
-       !tainted($e->{b}) &&
-	tainted($e->{b}->{c}) &&
-       !tainted($e->{b}->{d});
-
-    close IN;
+    isnt_tainted($e->{a});
+    isnt_tainted($e->{b});
+    is_tainted($e->{b}->{c});
+    isnt_tainted($e->{b}->{d});
 }
 
 {
@@ -782,63 +1473,34 @@ SKIP: {
     SKIP: {
         skip "no Fcntl", 18 unless $has_fcntl;
 
-	my $evil = "foo" . $TAINT;
+	my $foo = tempfile();
+	my $evil = $foo . $TAINT;
 
-	eval { sysopen(my $ro, $evil, &O_RDONLY) };
-	test $@ !~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $wo, $evil, &O_WRONLY) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $rw, $evil, &O_RDWR) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $ap, $evil, &O_APPEND) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $cr, $evil, &O_CREAT) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $tr, $evil, &O_TRUNC) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $ro, "foo", &O_RDONLY | $TAINT0) };
-	test $@ !~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $wo, "foo", &O_WRONLY | $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
+	is(eval { sysopen(my $ro, $evil, &O_RDONLY) }, undef);
+	is($@, '');
 
-	eval { sysopen(my $rw, "foo", &O_RDWR | $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { sysopen(my $wo, $evil, &O_WRONLY) }, 'sysopen');
+	violates_taint(sub { sysopen(my $rw, $evil, &O_RDWR) }, 'sysopen');
+	violates_taint(sub { sysopen(my $ap, $evil, &O_APPEND) }, 'sysopen');
+	violates_taint(sub { sysopen(my $cr, $evil, &O_CREAT) }, 'sysopen');
+	violates_taint(sub { sysopen(my $tr, $evil, &O_TRUNC) }, 'sysopen');
 
-	eval { sysopen(my $ap, "foo", &O_APPEND | $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $cr, "foo", &O_CREAT | $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
+	is(eval { sysopen(my $ro, $foo, &O_RDONLY | $TAINT0) }, undef);
+	is($@, '');
 
-	eval { sysopen(my $tr, "foo", &O_TRUNC | $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
+	violates_taint(sub { sysopen(my $wo, $foo, &O_WRONLY | $TAINT0) }, 'sysopen');
+	violates_taint(sub { sysopen(my $rw, $foo, &O_RDWR | $TAINT0) }, 'sysopen');
+	violates_taint(sub { sysopen(my $ap, $foo, &O_APPEND | $TAINT0) }, 'sysopen');
+	violates_taint(sub { sysopen(my $cr, $foo, &O_CREAT | $TAINT0) }, 'sysopen');
+	violates_taint(sub { sysopen(my $tr, $foo, &O_TRUNC | $TAINT0) }, 'sysopen');
+	is(eval { sysopen(my $ro, $foo, &O_RDONLY, $TAINT0) }, undef);
+	is($@, '');
 
-	eval { sysopen(my $ro, "foo", &O_RDONLY, $TAINT0) };
-	test $@ !~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $wo, "foo", &O_WRONLY, $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $rw, "foo", &O_RDWR, $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $ap, "foo", &O_APPEND, $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	eval { sysopen(my $cr, "foo", &O_CREAT, $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
-
-	eval { sysopen(my $tr, "foo", &O_TRUNC, $TAINT0) };
-	test $@ =~ /^Insecure dependency/, $@;
-	
-	unlink("foo"); # not unlink($evil), because that would fail...
+	violates_taint(sub { sysopen(my $wo, $foo, &O_WRONLY, $TAINT0) }, 'sysopen');
+	violates_taint(sub { sysopen(my $rw, $foo, &O_RDWR, $TAINT0) }, 'sysopen');
+	violates_taint(sub { sysopen(my $ap, $foo, &O_APPEND, $TAINT0) }, 'sysopen');
+	violates_taint(sub { sysopen(my $cr, $foo, &O_CREAT, $TAINT0) }, 'sysopen');
+	violates_taint(sub { sysopen(my $tr, $foo, &O_TRUNC, $TAINT0) }, 'sysopen');
     }
 }
 
@@ -848,7 +1510,7 @@ SKIP: {
     use warnings;
 
     my $saw_warning = 0;
-    local $SIG{__WARN__} = sub { $saw_warning = 1 };
+    local $SIG{__WARN__} = sub { ++$saw_warning };
 
     sub fmi {
 	my $divnum = shift()/1;
@@ -859,7 +1521,7 @@ SKIP: {
     fmi(37);
     fmi(248);
 
-    test !$saw_warning;
+    is($saw_warning, 0);
 }
 
 
@@ -902,28 +1564,28 @@ SKIP: {
 	    push @untainted, "# '$k' = '$v'\n";
 	}
     }
-    test @untainted == 0, "untainted:\n @untainted";
+    is("@untainted", "");
 }
 
 
-ok( ${^TAINT} == 1, '$^TAINT is on' );
+is(${^TAINT}, 1, '$^TAINT is on');
 
 eval { ${^TAINT} = 0 };
-ok( ${^TAINT},  '$^TAINT is not assignable' );
-ok( $@ =~ /^Modification of a read-only value attempted/,
-                                'Assigning to ${^TAINT} fails' );
+is(${^TAINT}, 1, '$^TAINT is not assignable');
+like($@, qr/^Modification of a read-only value attempted/,
+     'Assigning to ${^TAINT} fails');
 
 {
     # bug 20011111.105
     
     my $re1 = qr/x$TAINT/;
-    test tainted $re1;
+    is_tainted($re1);
     
     my $re2 = qr/^$re1\z/;
-    test tainted $re2;
+    is_tainted($re2);
     
     my $re3 = "$re2";
-    test tainted $re3;
+    is_tainted($re3);
 }
 
 SKIP: {
@@ -932,7 +1594,7 @@ SKIP: {
     # bug 20010221.005
     local $ENV{PATH} .= $TAINT;
     eval { system { "echo" } "/arg0", "arg1" };
-    test $@ =~ /^Insecure \$ENV/;
+    like($@, qr/^Insecure \$ENV/);
 }
 
 TODO: {
@@ -940,40 +1602,29 @@ TODO: {
       if $Is_VMS;
 
     # bug 20020208.005 plus some single arg exec/system extras
-    my $err = qr/^Insecure dependency/ ;
-    test !eval { exec $TAINT, $TAINT }, 'exec';
-    test $@ =~ $err, $@;
-    test !eval { exec $TAINT $TAINT }, 'exec';
-    test $@ =~ $err, $@;
-    test !eval { exec $TAINT $TAINT, $TAINT }, 'exec';
-    test $@ =~ $err, $@;
-    test !eval { exec $TAINT 'notaint' }, 'exec';
-    test $@ =~ $err, $@;
-    test !eval { exec {'notaint'} $TAINT }, 'exec';
-    test $@ =~ $err, $@;
+    violates_taint(sub { exec $TAINT, $TAINT }, 'exec');
+    violates_taint(sub { exec $TAINT $TAINT }, 'exec');
+    violates_taint(sub { exec $TAINT $TAINT, $TAINT }, 'exec');
+    violates_taint(sub { exec $TAINT 'notaint' }, 'exec');
+    violates_taint(sub { exec {'notaint'} $TAINT }, 'exec');
 
-    test !eval { system $TAINT, $TAINT }, 'system';
-    test $@ =~ $err, $@;
-    test !eval { system $TAINT $TAINT }, 'system';
-    test $@ =~ $err, $@;
-    test !eval { system $TAINT $TAINT, $TAINT }, 'system';
-    test $@ =~ $err, $@;
-    test !eval { system $TAINT 'notaint' }, 'system';
-    test $@ =~ $err, $@;
-    test !eval { system {'notaint'} $TAINT }, 'system';
-    test $@ =~ $err, $@;
+    violates_taint(sub { system $TAINT, $TAINT }, 'system');
+    violates_taint(sub { system $TAINT $TAINT }, 'system');
+    violates_taint(sub { system $TAINT $TAINT, $TAINT }, 'system');
+    violates_taint(sub { system $TAINT 'notaint' }, 'system');
+    violates_taint(sub { system {'notaint'} $TAINT }, 'system');
 
     eval { 
         no warnings;
         system("lskdfj does not exist","with","args"); 
     };
-    test !$@;
+    is($@, "");
 
     eval {
 	no warnings;
 	exec("lskdfj does not exist","with","args"); 
     };
-    test !$@;
+    is($@, "");
 
     # If you add tests here update also the above skip block for VMS.
 }
@@ -982,7 +1633,7 @@ TODO: {
     # [ID 20020704.001] taint propagation failure
     use re 'taint';
     $TAINT =~ /(.*)/;
-    test tainted(my $foo = $1);
+    is_tainted(my $foo = $1);
 }
 
 {
@@ -990,88 +1641,89 @@ TODO: {
     our %nonmagicalenv = ( PATH => "util" );
     local *ENV = \%nonmagicalenv;
     eval { system("lskdfj"); };
-    test $@ =~ /^%ENV is aliased to another variable while running with -T switch/;
+    like($@, qr/^%ENV is aliased to another variable while running with -T switch/);
     local *ENV = *nonmagicalenv;
     eval { system("lskdfj"); };
-    test $@ =~ /^%ENV is aliased to %nonmagicalenv while running with -T switch/;
+    like($@, qr/^%ENV is aliased to %nonmagicalenv while running with -T switch/);
 }
 {
     # [perl #24248]
     $TAINT =~ /(.*)/;
-    test !tainted($1);
+    isnt_tainted($1);
     my $notaint = $1;
-    test !tainted($notaint);
+    isnt_tainted($notaint);
 
     my $l;
     $notaint =~ /($notaint)/;
     $l = $1;
-    test !tainted($1);
-    test !tainted($l);
+    isnt_tainted($1);
+    isnt_tainted($l);
     $notaint =~ /($TAINT)/;
     $l = $1;
-    test tainted($1);
-    test tainted($l);
+    is_tainted($1);
+    is_tainted($l);
 
     $TAINT =~ /($notaint)/;
     $l = $1;
-    test !tainted($1);
-    test !tainted($l);
+    isnt_tainted($1);
+    isnt_tainted($l);
     $TAINT =~ /($TAINT)/;
     $l = $1;
-    test tainted($1);
-    test tainted($l);
+    is_tainted($1);
+    is_tainted($l);
 
     my $r;
     ($r = $TAINT) =~ /($notaint)/;
-    test !tainted($1);
+    isnt_tainted($1);
     ($r = $TAINT) =~ /($TAINT)/;
-    test tainted($1);
+    is_tainted($1);
 
     #  [perl #24674]
     # accessing $^O  shoudn't taint it as a side-effect;
     # assigning tainted data to it is now an error
 
-    test !tainted($^O);
+    isnt_tainted($^O);
     if (!$^X) { } elsif ($^O eq 'bar') { }
-    test !tainted($^O);
+    isnt_tainted($^O);
+    local $^O;  # We're going to clobber something test infrastructure depends on.
     eval '$^O = $^X';
-    test $@ =~ /Insecure dependency in/;
+    like($@, qr/Insecure dependency in/);
 }
 
 EFFECTIVELY_CONSTANTS: {
     my $tainted_number = 12 + $TAINT0;
-    test tainted( $tainted_number );
+    is_tainted( $tainted_number );
 
     # Even though it's always 0, it's still tainted
     my $tainted_product = $tainted_number * 0;
-    test tainted( $tainted_product );
-    test $tainted_product == 0;
+    is_tainted( $tainted_product );
+    is($tainted_product, 0);
 }
 
 TERNARY_CONDITIONALS: {
     my $tainted_true  = $TAINT . "blah blah blah";
     my $tainted_false = $TAINT0;
-    test tainted( $tainted_true );
-    test tainted( $tainted_false );
+    is_tainted( $tainted_true );
+    is_tainted( $tainted_false );
 
     my $result = $tainted_true ? "True" : "False";
-    test $result eq "True";
-    test !tainted( $result );
+    is($result, "True");
+    isnt_tainted( $result );
 
     $result = $tainted_false ? "True" : "False";
-    test $result eq "False";
-    test !tainted( $result );
+    is($result, "False");
+    isnt_tainted( $result );
 
     my $untainted_whatever = "The Fabulous Johnny Cash";
     my $tainted_whatever = "Soft Cell" . $TAINT;
 
     $result = $tainted_true ? $tainted_whatever : $untainted_whatever;
-    test $result eq "Soft Cell";
-    test tainted( $result );
+    is($result, "Soft Cell");
+    is_tainted( $result );
 
     $result = $tainted_false ? $tainted_whatever : $untainted_whatever;
-    test $result eq "The Fabulous Johnny Cash";
-    test !tainted( $result );
+    is($result, "The Fabulous Johnny Cash");
+    isnt_tainted( $result );
 }
 
 {
@@ -1085,13 +1737,15 @@ TERNARY_CONDITIONALS: {
     if ( $foo eq '' ) {
     }
     elsif ( $foo =~ /([$valid_chars]+)/o ) {
-        test not tainted $1;
+	isnt_tainted($1);
+	isnt($1, undef);
     }
 
     if ( $foo eq '' ) {
     }
     elsif ( my @bar = $foo =~ /([$valid_chars]+)/o ) {
-        test not any_tainted @bar;
+	isnt_tainted($bar[0]);
+	is(scalar @bar, 1);
     }
 }
 
@@ -1100,20 +1754,20 @@ TERNARY_CONDITIONALS: {
 
 {
     our $x99 = $^X;
-    test tainted $x99;
+    is_tainted($x99);
 
     $x99 = '';
-    test not tainted $x99;
+    isnt_tainted($x99);
 
     my $c = do { local $x99; $^X };
-    test not tainted $x99;
+    isnt_tainted($x99);
 }
 {
     our $x99 = $^X;
-    test tainted $x99;
+    is_tainted($x99);
 
     my $c = do { local $x99; '' };
-    test tainted $x99;
+    is_tainted($x99);
 }
 
 # an mg_get of a tainted value during localization shouldn't taint the
@@ -1121,20 +1775,26 @@ TERNARY_CONDITIONALS: {
 
 {
     eval { local $0, eval '1' };
-    test $@ eq '';
+    is($@, '');
 }
 
 # [perl #8262] //g loops infinitely on tainted data
 
 {
     my @a;
-    local $::TODO = 1;
-    $a[0] = $^X;
-    my $i = 0;
-    while($a[0]=~ m/(.)/g ) {
-	last if $i++ > 10000;
-    }
-    cmp_ok $i, '<', 10000, "infinite m//g";
+    $a[0] = $^X . '-';
+    $a[0]=~ m/(.)/g;
+    cmp_ok pos($a[0]), '>', 0, "infinite m//g on arrays (aelemfast)";
+
+    my $i = 1;
+    $a[$i] = $^X . '-';
+    $a[$i]=~ m/(.)/g;
+    cmp_ok pos($a[$i]), '>', 0, "infinite m//g on arrays (aelem)";
+
+    my %h;
+    $h{a} = $^X . '-';
+    $h{a}=~ m/(.)/g;
+    cmp_ok pos($h{a}), '>', 0, "infinite m//g on hashes (helem)";
 }
 
 SKIP:
@@ -1152,8 +1812,8 @@ SKIP:
 {
     SKIP: {
 	skip "fork() is not available", 3 unless $Config{'d_fork'};
-	skip "opening |- is not stable on threaded OpenBSD with taint", 3
-            if $Config{useithreads} && $Is_OpenBSD;
+	skip "opening |- is not stable on threaded Open/MirBSD with taint", 3
+            if $Config{useithreads} and $Is_OpenBSD || $Is_MirBSD;
 
 	$ENV{'PATH'} = $TAINT;
 	local $SIG{'PIPE'} = 'IGNORE';
@@ -1167,13 +1827,13 @@ SKIP:
 	    }
 	    close $pipe;
 	};
-	test $@ !~ /Insecure \$ENV/, 'fork triggers %ENV check';
-	test $@ eq '',               'pipe/fork/open/close failed';
+	unlike($@, qr/Insecure \$ENV/, 'fork triggers %ENV check');
+	is($@, '',               'pipe/fork/open/close failed');
 	eval {
 	    open my $pipe, "|$Invoke_Perl -e 1";
 	    close $pipe;
 	};
-	test $@ =~ /Insecure \$ENV/, 'popen neglects %ENV check';
+	like($@, qr/Insecure \$ENV/, 'popen neglects %ENV check');
     }
 }
 
@@ -1183,28 +1843,38 @@ SKIP:
         our $AUTOLOAD;
         return if $AUTOLOAD =~ /DESTROY/;
         if ($AUTOLOAD =~ /untainted/) {
-            main::ok(!main::tainted($AUTOLOAD), '$AUTOLOAD can be untainted');
+            main::isnt_tainted($AUTOLOAD, '$AUTOLOAD can be untainted');
+            my $copy = $AUTOLOAD;
+            main::isnt_tainted($copy, '$AUTOLOAD can be untainted');
         } else {
-            main::ok(main::tainted($AUTOLOAD), '$AUTOLOAD can be tainted');
+            main::is_tainted($AUTOLOAD, '$AUTOLOAD can be tainted');
+            my $copy = $AUTOLOAD;
+            main::is_tainted($copy, '$AUTOLOAD can be tainted');
         }
     }
 
     package main;
     my $o = bless [], 'AUTOLOAD_TAINT';
+    $o->untainted;
     $o->$TAINT;
     $o->untainted;
 }
 
 {
     # tests for tainted format in s?printf
-    eval { printf($TAINT . "# %s\n", "foo") };
-    like($@, qr/^Insecure dependency in printf/, q/printf doesn't like tainted formats/);
+    my $fmt = $TAINT . "# %s\n";
+    violates_taint(sub { printf($fmt, "foo") }, 'printf',
+		   q/printf doesn't like tainted formats/);
+    violates_taint(sub { printf($TAINT . "# %s\n", "foo") }, 'printf',
+		   q/printf doesn't like tainted format expressions/);
     eval { printf("# %s\n", $TAINT . "foo") };
-    ok(!$@, q/printf accepts other tainted args/);
-    eval { sprintf($TAINT . "# %s\n", "foo") };
-    like($@, qr/^Insecure dependency in sprintf/, q/sprintf doesn't like tainted formats/);
+    is($@, '', q/printf accepts other tainted args/);
+    violates_taint(sub { sprintf($fmt, "foo") }, 'sprintf',
+		   q/sprintf doesn't like tainted formats/);
+    violates_taint(sub { sprintf($TAINT . "# %s\n", "foo") }, 'sprintf',
+		   q/sprintf doesn't like tainted format expressions/);
     eval { sprintf("# %s\n", $TAINT . "foo") };
-    ok(!$@, q/sprintf accepts other tainted args/);
+    is($@, '', q/sprintf accepts other tainted args/);
 }
 
 {
@@ -1227,9 +1897,9 @@ SKIP:
     like ($@, qr/^Insecure dependency in eval/);
 
     # Rather nice code to get a tainted undef by from Rick Delaney
-    open FH, "test.pl" or die $!;
-    seek FH, 0, 2 or die $!;
-    $tainted = <FH>;
+    open my $fh, "test.pl" or die $!;
+    seek $fh, 0, 2 or die $!;
+    $tainted = <$fh>;
 
     eval 'eval $tainted';
     like ($@, qr/^Insecure dependency in eval/);
@@ -1241,7 +1911,7 @@ foreach my $ord (78, 163, 256) {
     chop $line;
     is($line, 'A1');
     $line =~ /(A\S*)/;
-    ok(!tainted($1), "\\S match with chr $ord");
+    isnt_tainted($1, "\\S match with chr $ord");
 }
 
 {
@@ -1251,12 +1921,12 @@ foreach my $ord (78, 163, 256) {
     my ($a, $b);
     $a = cr('hello', 'foo' . $TAINT);
     $b = cr('hello', 'foo');
-    ok(tainted($a),  "tainted crypt");
-    ok(!tainted($b), "untainted crypt");
+    is_tainted($a,  "tainted crypt");
+    isnt_tainted($b, "untainted crypt");
     $a = co('foo' . $TAINT);
     $b = co('foo');
-    ok(tainted($a),  "tainted complement");
-    ok(!tainted($b), "untainted complement");
+    is_tainted($a,  "tainted complement");
+    isnt_tainted($b, "untainted complement");
 }
 
 {
@@ -1264,33 +1934,33 @@ foreach my $ord (78, 163, 256) {
     # Clearly some sort of usenet bang-path
     my $string = $TAINT . join "!", @data;
 
-    ok(tainted($string), "tainted data");
+    is_tainted($string, "tainted data");
 
     my @got = split /!|,/, $string;
 
     # each @got would be useful here, but I want the test for earlier perls
     for my $i (0 .. $#data) {
-	ok(tainted($got[$i]), "tainted result $i");
+	is_tainted($got[$i], "tainted result $i");
 	is($got[$i], $data[$i], "correct content $i");
     }
 
-    ok(tainted($string), "still tainted data");
+    is_tainted($string, "still tainted data");
 
     my @got = split /[!,]/, $string;
 
     # each @got would be useful here, but I want the test for earlier perls
     for my $i (0 .. $#data) {
-	ok(tainted($got[$i]), "tainted result $i");
+	is_tainted($got[$i], "tainted result $i");
 	is($got[$i], $data[$i], "correct content $i");
     }
 
-    ok(tainted($string), "still tainted data");
+    is_tainted($string, "still tainted data");
 
     my @got = split /!/, $string;
 
     # each @got would be useful here, but I want the test for earlier perls
     for my $i (0 .. $#data) {
-	ok(tainted($got[$i]), "tainted result $i");
+	is_tainted($got[$i], "tainted result $i");
 	is($got[$i], $data[$i], "correct content $i");
     }
 }
@@ -1299,13 +1969,13 @@ foreach my $ord (78, 163, 256) {
 {
     my $x = $TAINT. q{print "Hello world\n"};
     my $y = pack "a*", $x;
-    ok(tainted($y), "pack a* preserves tainting");
+    is_tainted($y, "pack a* preserves tainting");
 
     my $z = pack "A*", q{print "Hello world\n"}.$TAINT;
-    ok(tainted($z), "pack A* preserves tainting");
+    is_tainted($z, "pack A* preserves tainting");
 
     my $zz = pack "a*a*", q{print "Hello world\n"}, $TAINT;
-    ok(tainted($zz), "pack a*a* preserves tainting");
+    is_tainted($zz, "pack a*a* preserves tainting");
 }
 
 # Bug RT #61976 tainted $! would show numeric rather than string value
@@ -1319,16 +1989,274 @@ foreach my $ord (78, 163, 256) {
 }
 
 {
+    # #6758: tainted values become untainted in tied hashes
+    #         (also applies to other value magic such as pos)
+
+
+    package P6758;
+
+    sub TIEHASH { bless {} }
+    sub TIEARRAY { bless {} }
+
+    my $i = 0;
+
+    sub STORE {
+	main::is_tainted($_[1], "tied arg1 tainted");
+	main::is_tainted($_[2], "tied arg2 tainted");
+        $i++;
+    }
+
+    package main;
+
+    my ($k,$v) = qw(1111 val);
+    taint_these($k,$v);
+    tie my @array, 'P6758';
+    tie my %hash , 'P6758';
+    $array[$k] = $v;
+    $hash{$k} = $v;
+    ok $i == 2, "tied STORE called correct number of times";
+}
+
+# Bug RT #45167 the return value of sprintf sometimes wasn't tainted
+# when the args were tainted. This only occured on the first use of
+# sprintf; after that, its TARG has taint magic attached, so setmagic
+# at the end works.  That's why there are multiple sprintf's below, rather
+# than just one wrapped in an inner loop. Also, any plaintext between
+# fprmat entires would correctly cause tainting to get set. so test with
+# "%s%s" rather than eg "%s %s".
+
+{
+    for my $var1 ($TAINT, "123") {
+	for my $var2 ($TAINT0, "456") {
+	    is( tainted(sprintf '%s', $var1, $var2), tainted($var1),
+		"sprintf '%s', '$var1', '$var2'" );
+	    is( tainted(sprintf ' %s', $var1, $var2), tainted($var1),
+		"sprintf ' %s', '$var1', '$var2'" );
+	    is( tainted(sprintf '%s%s', $var1, $var2),
+		tainted($var1) || tainted($var2),
+		"sprintf '%s%s', '$var1', '$var2'" );
+	}
+    }
+}
+
+
+# Bug RT #67962: old tainted $1 gets treated as tainted
+# in next untainted # match
+
+{
+    use re 'taint';
+    "abc".$TAINT =~ /(.*)/; # make $1 tainted
+    is_tainted($1, '$1 should be tainted');
+
+    my $untainted = "abcdef";
+    isnt_tainted($untainted, '$untainted should be untainted');
+    $untainted =~ s/(abc)/$1/;
+    isnt_tainted($untainted, '$untainted should still be untainted');
+    $untainted =~ s/(abc)/x$1/;
+    isnt_tainted($untainted, '$untainted should yet still be untainted');
+}
+
+{
+    # On Windows we can't spawn a fresh Perl interpreter unless at
+    # least the Windows system directory (usually C:\Windows\System32)
+    # is still on the PATH.  There is however no way to determine the
+    # actual path on the current system without loading the Win32
+    # module, so we just restore the original $ENV{PATH} here.
+    local $ENV{PATH} = $ENV{PATH};
+    $ENV{PATH} = $old_env_path if $Is_MSWin32;
+
+    fresh_perl_is(<<'end', "ok", { switches => [ '-T' ] },
+    $TAINT = substr($^X, 0, 0);
+    formline('@'.('<'x("2000".$TAINT)).' | @*', 'hallo', 'welt');
+    print "ok";
+end
+    "formline survives a tainted dynamic picture");
+}
+
+{
+    isnt_tainted($^A, "format accumulator not tainted yet");
+    formline('@ | @*', 'hallo' . $TAINT, 'welt');
+    is_tainted($^A, "tainted formline argument makes a tainted accumulator");
+    $^A = "";
+    isnt_tainted($^A, "accumulator can be explicitly untainted");
+    formline('@' .('<'*5) . ' | @*', 'hallo', 'welt');
+    isnt_tainted($^A, "accumulator still untainted");
+    $^A = "" . $TAINT;
+    is_tainted($^A, "accumulator can be explicitly tainted");
+    formline('@' .('<'*5) . ' | @*', 'hallo', 'welt');
+    is_tainted($^A, "accumulator still tainted");
+    $^A = "";
+    isnt_tainted($^A, "accumulator untainted again");
+    formline('@' .('<'*5) . ' | @*', 'hallo', 'welt');
+    isnt_tainted($^A, "accumulator still untainted");
+    formline('@' .('<'*(5+$TAINT0)) . ' | @*', 'hallo', 'welt');
+    TODO: {
+        local $::TODO = "get magic handled too late?";
+        is_tainted($^A, "the accumulator should be tainted already");
+    }
+    is_tainted($^A, "tainted formline picture makes a tainted accumulator");
+}
+
+{   # Bug #80610
+    "Constant(1)" =~ / ^ ([a-z_]\w*) (?: [(] (.*) [)] )? $ /xi;
+    my $a = $1;
+    my $b = $2;
+    isnt_tainted($a, "regex optimization of single char /[]/i doesn't taint");
+    isnt_tainted($b, "regex optimization of single char /[]/i doesn't taint");
+}
+
+{
+    # RT 81230: tainted value during FETCH created extra ref to tied obj
+
+    package P81230;
+    use warnings;
+
+    my %h;
+
+    sub TIEHASH {
+	my $x = $^X; # tainted
+	bless  \$x;
+    }
+    sub FETCH { my $x = $_[0]; $$x . "" }
+
+    tie %h, 'P81230';
+
+    my $w = "";
+    local $SIG{__WARN__} = sub { $w .= "@_" };
+
+    untie %h if $h{"k"};
+
+    ::is($w, "", "RT 81230");
+}
+
+{
+    # Compiling a subroutine inside a tainted expression does not make the
+    # constant folded values tainted.
+    my $x = sub { "x" . "y" };
+    my $y = $ENV{PATH} . $x->(); # Compile $x inside a tainted expression
+    my $z = $x->();
+    isnt_tainted($z, "Constants folded value not tainted");
+}
+
+{
+    # now that regexes are first class SVs, make sure that they themselves
+    # as well as references to them are tainted
+
+    my $rr = qr/(.)$TAINT/;
+    my $r = $$rr; # bare REGEX
+    my $s ="abc";
+    ok($s =~ s/$r/x/, "match bare regex");
+    is_tainted($s, "match bare regex taint");
+    is($s, 'xbc', "match bare regex taint value");
+}
+
+{
+    # [perl #82616] security Issues with user-defined \p{} properties
+    # A using a tainted user-defined property should croak
+
+    sub IsA { sprintf "%02x", ord("A") }
+
+    my $prop = "IsA";
+    ok("A" =~ /\p{$prop}/, "user-defined property: non-tainted case");
+    $prop = "IsA$TAINT";
+    eval { "A" =~ /\p{$prop}/};
+    like($@, qr/Insecure user-defined property \\p{main::IsA}/,
+	    "user-defined property: tainted case");
+}
+
+{
     # [perl #87336] lc/uc(first) failing to taint the returned string
     my $source = "foo$TAINT";
     my $dest = lc $source;
-    ok(tainted($dest), "lc(tainted) taints its return value");
+    is_tainted $dest, "lc(tainted) taints its return value";
     $dest = lcfirst $source;
-    ok(tainted($dest), "lcfirst(tainted) taints its return value");
+    is_tainted $dest, "lcfirst(tainted) taints its return value";
     $dest = uc $source;
-    ok(tainted($dest), "uc(tainted) taints its return value");
+    is_tainted $dest, "uc(tainted) taints its return value";
     $dest = ucfirst $source;
-    ok(tainted($dest), "ucfirst(tainted) taints its return value");
+    is_tainted $dest, "ucfirst(tainted) taints its return value";
+}
+
+{
+    # Taintedness of values returned from given()
+    use feature 'switch';
+
+    my @descriptions = ('when', 'given end', 'default');
+
+    for (qw<x y z>) {
+	my $letter = "$_$TAINT";
+
+	my $desc = "tainted value returned from " . shift(@descriptions);
+
+	my $res = do {
+	    given ($_) {
+		when ('x') { $letter }
+		when ('y') { goto leavegiven }
+		default    { $letter }
+		leavegiven:  $letter
+	    }
+	};
+	is         $res, $letter, "$desc is correct";
+	is_tainted $res,          "$desc stays tainted";
+    }
+}
+
+
+# tainted constants and index()
+#  RT 64804; http://bugs.debian.org/291450
+{
+    ok(tainted $old_env_path, "initial taintedness");
+    BEGIN { no strict 'refs'; my $v = $old_env_path; *{"::C"} = sub () { $v }; }
+    ok(tainted C, "constant is tainted properly");
+    ok(!tainted "", "tainting not broken yet");
+    index(undef, C);
+    ok(!tainted "", "tainting still works after index() of the constant");
+}
+
+# Tainted values with smartmatch
+# [perl #93590] S_do_smartmatch stealing its own string buffers
+ok "M$TAINT" ~~ ['m', 'M'], '$tainted ~~ ["whatever", "match"]';
+ok !("M$TAINT" ~~ ['m', undef]), '$tainted ~~ ["whatever", undef]';
+
+# Tainted values and ref()
+for(1,2) {
+  my $x = bless \"M$TAINT", ref(bless[], "main");
+}
+pass("no death when TARG of ref is tainted");
+
+# $$ should not be tainted by being read in a tainted expression.
+{
+    isnt_tainted $$, "PID not tainted initially";
+    my $x = $ENV{PATH}.$$;
+    isnt_tainted $$, "PID not tainted when read in tainted expression";
+}
+
+SKIP: {
+    if (
+        !$Config::Config{d_setlocale}
+    || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
+    ) {
+        skip "no locale support", 4
+    }
+    use feature 'fc';
+    use locale;
+    my ($latin1, $utf8) = ("\xDF") x 2;
+    utf8::downgrade($latin1);
+    utf8::upgrade($utf8);
+
+    is_tainted fc($latin1), "under locale, lc(latin1) taints the result";
+    is_tainted fc($utf8), "under locale, lc(utf8) taints the result";
+
+    is_tainted "\F$latin1", "under locale, \\Flatin1 taints the result";
+    is_tainted "\F$utf8", "under locale, \\Futf8 taints the result";
+}
+
+{ # 111654
+  eval {
+    eval { die "Test\n".substr($ENV{PATH}, 0, 0); };
+    die;
+  };
+  like($@, qr/^Test\n\t\.\.\.propagated at /, "error should be propagated");
 }
 
 # This may bomb out with the alarm signal so keep it last

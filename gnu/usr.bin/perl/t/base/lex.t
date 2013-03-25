@@ -152,7 +152,7 @@ print $foo;
 #  print "ok 32\n";
 
   # These next two tests are trying to make sure that
-  # $^FOO is always global; it doesn't make sense to `my' it.
+  # $^FOO is always global; it doesn't make sense to 'my' it.
   # 
 
   eval 'my $^X;';

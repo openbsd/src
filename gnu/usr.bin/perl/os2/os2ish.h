@@ -982,7 +982,7 @@ unsigned long   SIS_MMIOAddr;   /* Memory mapped I/O address  */
 unsigned char   SIS_MaxVDMs;      /* Max. no. of Virtual DOS machines */
 unsigned char   SIS_Reserved;
 
-unsigned char   SIS_perf_mec_table[32]; /* varga 6/5/97 Table of Perfomance Major Event Codes (MECS) varga*/
+unsigned char   SIS_perf_mec_table[32]; /* varga 6/5/97 Table of Performance Major Event Codes (MECS) varga*/
 } GINFOSEG, *PGINFOSEG;
 
 #define SIS_LEN         sizeof(struct InfoSegGDT)
@@ -1038,7 +1038,7 @@ unsigned long   LIS_pPIB;       /* Pointer to PIB */
 /*
  *      Process Type codes
  *
- *      These are the definitons for the codes stored
+ *      These are the definitions for the codes stored
  *      in the LIS_ProcType field in the local infoseg.
  */
 

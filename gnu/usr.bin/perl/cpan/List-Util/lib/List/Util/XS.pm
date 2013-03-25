@@ -1,17 +1,9 @@
 package List::Util::XS;
 use strict;
-use vars qw($VERSION);
 use List::Util;
 
-$VERSION = "1.23";           # FIXUP
+our $VERSION = "1.25";       # FIXUP
 $VERSION = eval $VERSION;    # FIXUP
-
-sub _VERSION { # FIXUP
-  require Carp;
-  Carp::croak("You need to install Scalar-List-Utils with a C compiler to ensure the XS is compiled")
-    if defined $_[1];
-  $VERSION;
-}
 
 1;
 __END__
@@ -31,6 +23,10 @@ installed using a C compiler and that the XS version is installed.
 
 During installation C<$List::Util::XS::VERSION> will be set to
 C<undef> if the XS was not compiled.
+
+Starting with release 1.23_03, Scalar-List-Util is B<always> using
+the XS implementation, but for backwards compatibility, we still
+ship the C<List::Util::XS> module which just loads C<List::Util>.
 
 =head1 SEE ALSO
 

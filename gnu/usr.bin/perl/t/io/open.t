@@ -10,7 +10,7 @@ $|  = 1;
 use warnings;
 use Config;
 
-plan tests => 108;
+plan tests => 119;
 
 my $Perl = which_perl();
 
@@ -105,6 +105,15 @@ EOC
 ok( !eval { open my $f, '<&', $afile; 1; },    '<& on a non-filehandle' );
 like( $@, qr/Bad filehandle:\s+$afile/,          '       right error' );
 
+ok( !eval { *some_glob = 1; open my $f, '<&', *some_glob; 1; },    '<& on a non-filehandle glob' );
+like( $@, qr/Bad filehandle:\s+some_glob/,          '       right error' );
+
+{
+    use utf8;
+    use open qw( :utf8 :std );
+    ok( !eval { use utf8; *ǡﬁlḛ = 1; open my $f, '<&', *ǡﬁlḛ; 1; },    '<& on a non-filehandle glob' );
+    like( $@, qr/Bad filehandle:\s+ǡﬁlḛ/u,          '       right error' );
+}
 
 # local $file tests
 {
@@ -228,8 +237,7 @@ like( $@, qr/Bad filehandle:\s+$afile/,          '       right error' );
 
 SKIP: {
     skip "This perl uses perlio", 1 if $Config{useperlio};
-    skip "miniperl cannot be relied on to load %Errno"
-	if $ENV{PERL_CORE_MINITEST};
+    skip_if_miniperl("miniperl can't rely on loading %Errno", 1);
     # Force the reference to %! to be run time by writing ! as {"!"}
     skip "This system doesn't understand EINVAL", 1
 	unless exists ${"!"}{EINVAL};
@@ -310,3 +318,62 @@ fresh_perl_is(
 
 eval { open $99, "foo" };
 like($@, qr/Modification of a read-only value attempted/, "readonly fh");
+# But we do not want that exception applying to close(), since it does not
+# modify the fh.
+eval {
+   no warnings "uninitialized";
+   # make sure $+ is undefined
+   "a" =~ /(b)?/;
+   close $+
+};
+is($@, '', 'no "Modification of a read-only value" when closing');
+
+# [perl#73626] mg_get wasn't run on the pipe arg
+
+{
+    package p73626;
+    sub TIESCALAR { bless {} }
+    sub FETCH { "$Perl -e 1"}
+
+    tie my $p, 'p73626';
+
+    package main;
+
+    ok( open(my $f, '-|', $p),     'open -| magic');
+}
+
+# [perl #77492] Crash when stringifying a glob, a reference to which has
+#               been opened and written to.
+fresh_perl_is(
+    '
+      open my $fh, ">", \*STDOUT;
+      print $fh "hello";
+     "".*STDOUT;
+      print "ok";
+      close $fh;
+      unlink \*STDOUT;
+    ',
+    'ok', { stderr => 1 },
+    '[perl #77492]: open $fh, ">", \*glob causes SEGV');
+
+# [perl #77684] Opening a reference to a glob copy.
+SKIP: {
+    skip_if_miniperl("no dynamic loading on miniperl, so can't load PerlIO::scalar", 1);
+    my $var = *STDOUT;
+    open my $fh, ">", \$var;
+    print $fh "hello";
+    is $var, "hello", '[perl #77684]: open $fh, ">", \$glob_copy'
+        # when this fails, it leaves an extra file:
+        or unlink \*STDOUT;
+}
+
+# check that we can call methods on filehandles auto-magically
+# and have IO::File loaded for us
+SKIP: {
+    skip_if_miniperl("no dynamic loading on miniperl, so can't load IO::File", 3);
+    is( $INC{'IO/File.pm'}, undef, "IO::File not loaded" );
+    my $var = "";
+    open my $fh, ">", \$var;
+    ok( eval { $fh->autoflush(1); 1 }, '$fh->autoflush(1) lives' );
+    ok( $INC{'IO/File.pm'}, "IO::File now loaded" );
+}

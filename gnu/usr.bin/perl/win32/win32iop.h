@@ -124,6 +124,7 @@ DllExport  long		win32_telldir(DIR *dirp);
 DllExport  void		win32_seekdir(DIR *dirp, long loc);
 DllExport  void		win32_rewinddir(DIR *dirp);
 DllExport  int		win32_closedir(DIR *dirp);
+DllExport  DIR*		win32_dirp_dup(DIR *const dirp, CLONE_PARAMS *const param);
 
 DllExport  char*	win32_getenv(const char *name);
 DllExport  int		win32_putenv(const char *name);
@@ -189,15 +190,7 @@ END_EXTERN_C
 #undef uname
 #undef wait
 
-#ifdef __BORLANDC__
-#undef ungetc
-#undef getc
-#undef putc
-#undef getchar
-#undef putchar
-#endif
-
-#if defined(__MINGW32__) || defined(__BORLANDC__)
+#if defined(__MINGW32__)
 #undef fileno
 #endif
 

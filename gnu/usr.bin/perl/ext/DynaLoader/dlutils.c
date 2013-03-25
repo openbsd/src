@@ -8,6 +8,7 @@
  *                      files when the interpreter exits
  */
 
+#define PERL_EUPXS_ALWAYS_EXPORT
 #ifndef START_MY_CXT /* Some IDEs try compiling this standalone. */
 #   include "EXTERN.h"
 #   include "perl.h"

@@ -1,33 +1,7 @@
 #!./perl -w
 
-# use strict;
-
-print "1..54\n";
-
-my $test = 1;
-
-sub ok {
-  my ($pass, $wrong, $err) = @_;
-  if ($pass) {
-    print "ok $test\n";
-    $test = $test + 1; # Would be doubleplusbad to use ++ in the ++ test.
-    return 1;
-  } else {
-    if ($err) {
-      chomp $err;
-      print "not ok $test # $err\n";
-    } else {
-      if (defined $wrong) {
-        $wrong = ", got $wrong";
-      } else {
-        $wrong = '';
-      }
-      printf "not ok $test # line %d$wrong\n", (caller)[2];
-    }
-  }
-  $test = $test + 1;
-  return;
-}
+require './test.pl';
+use strict;
 
 # Verify that addition/subtraction properly upgrade to doubles.
 # These tests are only significant on machines with 32 bit longs,
@@ -35,63 +9,63 @@ sub ok {
 
 my $a = 2147483647;
 my $c=$a++;
-ok ($a == 2147483648, $a);
+cmp_ok($a, '==', 2147483648);
 
 $a = 2147483647;
 $c=++$a;
-ok ($a == 2147483648, $a);
+cmp_ok($a, '==', 2147483648);
 
 $a = 2147483647;
 $a=$a+1;
-ok ($a == 2147483648, $a);
+cmp_ok($a, '==', 2147483648);
 
 $a = -2147483648;
 $c=$a--;
-ok ($a == -2147483649, $a);
+cmp_ok($a, '==', -2147483649);
 
 $a = -2147483648;
 $c=--$a;
-ok ($a == -2147483649, $a);
+cmp_ok($a, '==', -2147483649);
 
 $a = -2147483648;
 $a=$a-1;
-ok ($a == -2147483649, $a);
+cmp_ok($a, '==', -2147483649);
 
 $a = 2147483648;
 $a = -$a;
 $c=$a--;
-ok ($a == -2147483649, $a);
+cmp_ok($a, '==', -2147483649);
 
 $a = 2147483648;
 $a = -$a;
 $c=--$a;
-ok ($a == -2147483649, $a);
+cmp_ok($a, '==', -2147483649);
 
 $a = 2147483648;
 $a = -$a;
 $a=$a-1;
-ok ($a == -2147483649, $a);
+cmp_ok($a, '==', -2147483649);
 
 $a = 2147483648;
 $b = -$a;
 $c=$b--;
-ok ($b == -$a-1, $a);
+cmp_ok($b, '==', -$a-1);
 
 $a = 2147483648;
 $b = -$a;
 $c=--$b;
-ok ($b == -$a-1, $a);
+cmp_ok($b, '==', -$a-1);
 
 $a = 2147483648;
 $b = -$a;
 $b=$b-1;
-ok ($b == -(++$a), $a);
+cmp_ok($b, '==', -(++$a));
 
 $a = undef;
-ok ($a++ eq '0', do { $a=undef; $a++ }, "postinc undef returns '0'");
+is($a++, '0', "postinc undef returns '0'");
 
 $a = undef;
-ok (!defined($a--), do { $a=undef; $a-- }, "postdec undef returns undef");
+is($a--, undef, "postdec undef returns undef");
 
 # Verify that shared hash keys become unshared.
 
@@ -126,7 +100,8 @@ foreach (keys %inc) {
   my $ans = $up{$_};
   my $up;
   eval {$up = ++$_};
-  ok ((defined $up and $up eq $ans), $up, $@);
+  is($up, $ans);
+  is($@, '');
 }
 
 check_same (\%orig, \%inc);
@@ -135,7 +110,8 @@ foreach (keys %dec) {
   my $ans = $down{$_};
   my $down;
   eval {$down = --$_};
-  ok ((defined $down and $down eq $ans), $down, $@);
+  is($down, $ans);
+  is($@, '');
 }
 
 check_same (\%orig, \%dec);
@@ -144,7 +120,8 @@ foreach (keys %postinc) {
   my $ans = $postinc{$_};
   my $up;
   eval {$up = $_++};
-  ok ((defined $up and $up eq $ans), $up, $@);
+  is($up, $ans);
+  is($@, '');
 }
 
 check_same (\%orig, \%postinc);
@@ -153,7 +130,8 @@ foreach (keys %postdec) {
   my $ans = $postdec{$_};
   my $down;
   eval {$down = $_--};
-  ok ((defined $down and $down eq $ans), $down, $@);
+  is($down, $ans);
+  is($@, '');
 }
 
 check_same (\%orig, \%postdec);
@@ -165,73 +143,40 @@ check_same (\%orig, \%postdec);
 	$y ="$x\n";
 	++$x;
     };
-    ok($x == 1, $x);
-    ok($@ eq '', $@);
+    cmp_ok($x, '==', 1);
+    is($@, '');
 
     my ($p, $q);
     eval {
 	$q ="$p\n";
 	--$p;
     };
-    ok($p == -1, $p);
-    ok($@ eq '', $@);
+    cmp_ok($p, '==', -1);
+    is($@, '');
 }
 
 $a = 2147483648;
 $c=--$a;
-ok ($a == 2147483647, $a);
+cmp_ok($a, '==', 2147483647);
 
 
 $a = 2147483648;
 $c=$a--;
-ok ($a == 2147483647, $a);
+cmp_ok($a, '==', 2147483647);
 
 {
     use integer;
     my $x = 0;
     $x++;
-    ok ($x == 1, "(void) i_postinc");
+    cmp_ok($x, '==', 1, "(void) i_postinc");
     $x--;
-    ok ($x == 0, "(void) i_postdec");
+    cmp_ok($x, '==', 0, "(void) i_postdec");
 }
 
 # I'm sure that there's an IBM format with a 48 bit mantissa
 # IEEE doubles have a 53 bit mantissa
 # 80 bit long doubles have a 64 bit mantissa
 # sparcs have a 112 bit mantissa for their long doubles. Just to be awkward :-)
-
-sub check_some_code {
-    my ($start, $warn, $action, $description) = @_;
-    my $warn_line = ($warn ? 'use' : 'no') . " warnings 'imprecision';";
-    my @warnings;
-    local $SIG{__WARN__} = sub {push @warnings, "@_"};
-
-    print "# checking $action under $warn_line\n";
-    my $code = <<"EOC";
-$warn_line
-my \$i = \$start;
-for(0 .. 3) {
-    my \$a = $action;
-}
-1;
-EOC
-    eval $code or die "# $@\n$code";
-
-    if ($warn) {
-	unless (ok (scalar @warnings == 2, scalar @warnings)) {
-	    print STDERR "# $_" foreach @warnings;
-	}
-	foreach (@warnings) {
-	    unless (ok (/Lost precision when incrementing \d+/, $_)) {
-		print STDERR "# $_"
-	    }
-	}
-    } else {
-	unless (ok (scalar @warnings == 0)) {
-	    print STDERR "# @$_" foreach @warnings;
-	}
-    }
-}
 
 my $h_uv_max = 1 + (~0 >> 1);
 my $found;
@@ -257,13 +202,35 @@ for my $n (47..113) {
 	    unless $start_p == $check;
     }
 
-    foreach my $warn (0, 1) {
-	foreach (['++$i', 'pre-inc'], ['$i++', 'post-inc']) {
-	    check_some_code($start_p, $warn, @$_);
-	}
-	foreach (['--$i', 'pre-dec'], ['$i--', 'post-dec']) {
-	    check_some_code($start_n, $warn, @$_);
-	}
+    foreach ([$start_p, '++$i', 'pre-inc', 'inc'],
+	     [$start_p, '$i++', 'post-inc', 'inc'],
+	     [$start_n, '--$i', 'pre-dec', 'dec'],
+	     [$start_n, '$i--', 'post-dec', 'dec']) {
+	my ($start, $action, $description, $act) = @$_;
+	my $code = eval << "EOC" or die $@;
+sub {
+    no warnings 'imprecision';
+    my \$i = \$start;
+    for(0 .. 3) {
+        my \$a = $action;
+    }
+}
+EOC
+
+	warning_is($code, undef, "$description under no warnings 'imprecision'");
+
+	$code = eval << "EOC" or die $@;
+sub {
+    use warnings 'imprecision';
+    my \$i = \$start;
+    for(0 .. 3) {
+        my \$a = $action;
+    }
+}
+EOC
+
+	warnings_like($code, [(qr/Lost precision when ${act}rementing -?\d+/) x 2],
+		      "$description under use warnings 'imprecision'");
     }
 
     $found = 1;
@@ -276,8 +243,26 @@ die "Could not find a value which overflows the mantissa" unless $found;
 sub PVBM () { 'foo' }
 { my $dummy = index 'foo', PVBM }
 
-ok (scalar eval { my $pvbm = PVBM; $pvbm++ });
-ok (scalar eval { my $pvbm = PVBM; $pvbm-- });
-ok (scalar eval { my $pvbm = PVBM; ++$pvbm });
-ok (scalar eval { my $pvbm = PVBM; --$pvbm });
+isnt(scalar eval { my $pvbm = PVBM; $pvbm++ }, undef);
+isnt(scalar eval { my $pvbm = PVBM; $pvbm-- }, undef);
+isnt(scalar eval { my $pvbm = PVBM; ++$pvbm }, undef);
+isnt(scalar eval { my $pvbm = PVBM; --$pvbm }, undef);
 
+# #9466
+
+# don't use pad TARG when the thing you're copying is a ref, or the referent
+# won't get freed.
+{
+    package P9466;
+    my $x;
+    sub DESTROY { $x = 1 }
+    for (0..1) {
+	$x = 0;
+	my $a = bless {};
+	my $b = $_ ? $a++ : $a--;
+	undef $a; undef $b;
+	::is($x, 1, "9466 case $_");
+    }
+}
+
+done_testing();

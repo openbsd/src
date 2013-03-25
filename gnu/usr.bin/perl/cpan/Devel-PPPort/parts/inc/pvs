@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 11 $
+##  $Revision: 14 $
 ##  $Author: mhx $
-##  $Date: 2009/06/12 12:19:15 +0200 $
+##  $Date: 2010/03/07 13:15:45 +0100 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -30,14 +30,20 @@ __UNDEFINED__  STR_WITH_LEN(s)             (s ""), (sizeof(s)-1)
 
 __UNDEFINED__  newSVpvs(str)               newSVpvn(str "", sizeof(str) - 1)
 __UNDEFINED__  newSVpvs_flags(str, flags)  newSVpvn_flags(str "", sizeof(str) - 1, flags)
+__UNDEFINED__  newSVpvs_share(str)         newSVpvn_share(str "", sizeof(str) - 1, 0)
 __UNDEFINED__  sv_catpvs(sv, str)          sv_catpvn(sv, str "", sizeof(str) - 1)
 __UNDEFINED__  sv_setpvs(sv, str)          sv_setpvn(sv, str "", sizeof(str) - 1)
 __UNDEFINED__  hv_fetchs(hv, key, lval)    hv_fetch(hv, key "", sizeof(key) - 1, lval)
 __UNDEFINED__  hv_stores(hv, key, val)     hv_store(hv, key "", sizeof(key) - 1, val, 0)
 
-__UNDEFINED__  gv_fetchpvn_flags(name, len, flags, svt) gv_fetchpv(name, flags, svt)
 __UNDEFINED__  gv_fetchpvs(name, flags, svt)            gv_fetchpvn_flags(name "", sizeof(name) - 1, flags, svt)
 __UNDEFINED__  gv_stashpvs(name, flags)                 gv_stashpvn(name "", sizeof(name) - 1, flags)
+
+__UNDEFINED__  get_cvs(name, flags)                     get_cvn_flags(name "", sizeof(name)-1, flags)
+
+=xsinit
+
+#define NEED_newSVpvn_share
 
 =xsubs
 
@@ -52,6 +58,22 @@ newSVpvs_flags()
 	PPCODE:
 		XPUSHs(newSVpvs_flags("newSVpvs_flags", SVs_TEMP));
 		XSRETURN(1);
+
+int
+newSVpvs_share()
+	PREINIT:
+		SV *sv;
+		U32 hash;
+	CODE:
+		RETVAL = 0;
+		PERL_HASH(hash, "pvs", 3);
+		sv = newSVpvs_share("pvs");
+		RETVAL += strEQ(SvPV_nolen_const(sv), "pvs");
+		RETVAL += SvCUR(sv) == 3;
+		RETVAL += SvSHARED_HASH(sv) == hash;
+		SvREFCNT_dec(sv);
+	OUTPUT:
+		RETVAL
 
 void
 sv_catpvs(sv)
@@ -83,13 +105,6 @@ hv_stores(hv, sv)
 		(void) hv_stores((HV *) SvRV(hv), "hv_stores", SvREFCNT_inc_simple(sv));
 
 SV*
-gv_fetchpvn_flags()
-	CODE:
-		RETVAL = newRV_inc((SV*)gv_fetchpvn_flags("Devel::PPPort::VERSION", sizeof("Devel::PPPort::VERSION")-1, 0, SVt_PV));
-	OUTPUT:
-		RETVAL
-
-SV*
 gv_fetchpvs()
 	CODE:
 		RETVAL = newRV_inc((SV*)gv_fetchpvs("Devel::PPPort::VERSION", 0, SVt_PV));
@@ -103,13 +118,29 @@ gv_stashpvs()
 	OUTPUT:
 		RETVAL
 
+int
+get_cvs()
+	PREINIT:
+		CV* xv;
+	CODE:
+		RETVAL = 0;
+		xv = get_cvs("Devel::PPPort::foobar", 0);
+		if(xv == NULL) RETVAL++;
+		xv = get_cvs("Devel::PPPort::foobar", GV_ADDMULTI);
+		if(xv && SvTYPE(xv) == SVt_PVCV) RETVAL++;
+		xv = get_cvs("Devel::PPPort::get_cvs", 0);
+		if(xv && SvTYPE(xv) == SVt_PVCV) RETVAL++;
+OUTPUT:
+	RETVAL
 
-=tests plan => 11
+
+=tests plan => 12
 
 my $x = 'foo';
 
 ok(Devel::PPPort::newSVpvs(), "newSVpvs");
 ok(Devel::PPPort::newSVpvs_flags(), "newSVpvs_flags");
+ok(Devel::PPPort::newSVpvs_share(), 3);
 
 Devel::PPPort::sv_catpvs($x);
 ok($x, "foosv_catpvs");
@@ -123,6 +154,7 @@ ok(scalar keys %h, 2);
 ok(exists $h{'hv_stores'});
 ok($h{'hv_stores'}, 4711);
 ok(Devel::PPPort::hv_fetchs(\%h), 42);
-ok(Devel::PPPort::gv_fetchpvn_flags(), \*Devel::PPPort::VERSION);
-ok(Devel::PPPort::gv_fetchpvs(),       \*Devel::PPPort::VERSION);
-ok(Devel::PPPort::gv_stashpvs(),       \%Devel::PPPort::);
+ok(Devel::PPPort::gv_fetchpvs(), \*Devel::PPPort::VERSION);
+ok(Devel::PPPort::gv_stashpvs(), \%Devel::PPPort::);
+
+ok(Devel::PPPort::get_cvs(), 3);

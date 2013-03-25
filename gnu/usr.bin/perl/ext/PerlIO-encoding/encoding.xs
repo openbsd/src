@@ -1,7 +1,3 @@
-/*
- * $Id: encoding.xs,v 0.3 2002/04/21 22:14:41 dankogai Exp $
- */
-
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
@@ -58,6 +54,8 @@ PerlIOEncode_getarg(pTHX_ PerlIO * f, CLONE_PARAMS * param, int flags)
 {
     PerlIOEncode *e = PerlIOSelf(f, PerlIOEncode);
     SV *sv = &PL_sv_undef;
+    PERL_UNUSED_ARG(param);
+    PERL_UNUSED_ARG(flags);
     if (e->enc) {
 	dSP;
 	/* Not 100% sure stack swap is right thing to do during dup ... */

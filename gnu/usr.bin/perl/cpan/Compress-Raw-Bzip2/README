@@ -1,11 +1,11 @@
 
                              Compress-Raw-Bzip2
 
-                             Version 2.031
+                             Version 2.048
 
-                               21st September 2010
+                             29th January 2012
 
-       Copyright (c) 2005-2010 Paul Marquess. All rights reserved.
+       Copyright (c) 2005-2012 Paul Marquess. All rights reserved.
           This program is free software; you can redistribute it
            and/or modify it under the same terms as Perl itself.
 
@@ -164,7 +164,7 @@ To help me help you, I need all of the following information:
         If you haven't installed Compress-Raw-Bzip2 then search Compress::Raw::Bzip2.pm
         for a line like this:
 
-          $VERSION = "2.031" ;
+          $VERSION = "2.048" ;
 
      c. The version of bzip2 you have used.
         If you have successfully installed Compress-Raw-Bzip2, this one-liner

@@ -3,24 +3,23 @@
 # Create the export list for perl.
 #
 # Needed by WIN32 and OS/2 for creating perl.dll,
-# and by AIX for creating libperl.a when -Dusershrplib is in effect,
-# and by MacOS Classic.
+# and by AIX for creating libperl.a when -Duseshrplib is in effect,
+# and by VMS for creating perlshr.exe.
 #
 # Reads from information stored in
 #
+#    %Config::Config (ie config.sh)
 #    config.h
-#    config.sh
-#    global.sym
+#    embed.fnc
 #    globvar.sym
 #    intrpvar.h
-#    macperl.sym  (on MacOS)
 #    miniperl.map (on OS/2)
 #    perl5.def    (on OS/2; this is the old version of the file being made)
 #    perlio.sym
 #    perlvars.h
+#    regen/opcodes
 #
-# plus long lists of function names hard-coded directly in this script and
-# in the DATA section.
+# plus long lists of function names hard-coded directly in this script.
 #
 # Writes the result to STDOUT.
 #
@@ -31,63 +30,66 @@
 #    perldll.def Windows
 #    perl.exp    AIX
 #    perl.imp    NetWare
-
+#    makedef.lis VMS
 
 BEGIN { unshift @INC, "lib" }
 use Config;
 use strict;
 
-use vars qw($PLATFORM $CCTYPE $FILETYPE $CONFIG_ARGS $ARCHNAME $PATCHLEVEL);
+my %ARGS = (CCTYPE => 'MSVC', TARG_DIR => '');
 
-my (%define, %ordinal);
+my %define;
+
+my $fold;
+
+sub process_cc_flags {
+    foreach (map {split /\s+/, $_} @_) {
+	$define{$1} = $2 // 1 if /^-D(\w+)(?:=(.+))?/;
+    }
+}
 
 while (@ARGV) {
     my $flag = shift;
-    if ($flag =~ s/^CC_FLAGS=/ /) {
-	for my $fflag ($flag =~ /(?:^|\s)-D(\S+)/g) {
-	    $fflag     .= '=1' unless $fflag =~ /^(\w+)=/;
-	    $define{$1} = $2   if $fflag =~ /^(\w+)=(.+)$/;
-	}
-	next;
-    }
-    $define{$1} = 1 if ($flag =~ /^-D(\w+)$/);
-    $define{$1} = $2 if ($flag =~ /^-D(\w+)=(.+)$/);
-    $CCTYPE   = $1 if ($flag =~ /^CCTYPE=(\w+)$/);
-    $PLATFORM = $1 if ($flag =~ /^PLATFORM=(\w+)$/);
-    if ($PLATFORM eq 'netware') {
-	$FILETYPE = $1 if ($flag =~ /^FILETYPE=(\w+)$/);
+    if ($flag =~ /^(?:CC_FLAGS=)?(-D\w.*)/) {
+	process_cc_flags($1);
+    } elsif ($flag =~ /^(CCTYPE|FILETYPE|PLATFORM|TARG_DIR)=(.+)$/) {
+	$ARGS{$1} = $2;
+    } elsif ($flag eq '--sort-fold') {
+	++$fold;
     }
 }
 
-my @PLATFORM = qw(aix win32 wince os2 MacOS netware);
-my %PLATFORM;
-@PLATFORM{@PLATFORM} = ();
+require "$ARGS{TARG_DIR}regen/embed_lib.pl";
 
-defined $PLATFORM || die "PLATFORM undefined, must be one of: @PLATFORM\n";
-exists $PLATFORM{$PLATFORM} || die "PLATFORM must be one of: @PLATFORM\n";
+{
+    my @PLATFORM = qw(aix win32 wince os2 netware vms test);
+    my %PLATFORM;
+    @PLATFORM{@PLATFORM} = ();
 
-if ($PLATFORM eq 'win32' or $PLATFORM eq 'wince' or $PLATFORM eq "aix") {
-	# Add the compile-time options that miniperl was built with to %define.
-	# On Win32 these are not the same options as perl itself will be built
-	# with since miniperl is built with a canned config (one of the win32/
-	# config_H.*) and none of the BUILDOPT's that are set in the makefiles,
-	# but they do include some #define's that are hard-coded in various
-	# source files and header files and don't include any BUILDOPT's that
-	# the user might have chosen to disable because the canned configs are
-	# minimal configs that don't include any of those options.
-	my $opts = ($PLATFORM eq 'wince' ? '-MCross' : ''); # for wince need Cross.pm to get Config.pm
-
-	$ENV{PERL5LIB} = join $Config{path_sep}, @INC;
-	my $cmd = "$^X $opts -V";
-	my $config = `$cmd`
-	    or die "Couldn't run [$cmd]: $!";
-	my($options) = $config =~ /^  Compile-time options: (.*?)\n^  \S/ms;
-	$options =~ s/\s+/ /g;
-	print STDERR "Options: ($options)\n";
-	foreach (split /\s+/, $options) {
-		$define{$_} = 1;
-	}
+    die "PLATFORM undefined, must be one of: @PLATFORM\n"
+	unless defined $ARGS{PLATFORM};
+    die "PLATFORM must be one of: @PLATFORM\n"
+	unless exists $PLATFORM{$ARGS{PLATFORM}};
 }
+
+# Is the following guard strictly necessary? Added during refactoring
+# to keep the same behaviour when merging other code into here.
+process_cc_flags(@Config{qw(ccflags optimize)})
+    if $ARGS{PLATFORM} ne 'win32' && $ARGS{PLATFORM} ne 'wince'
+    && $ARGS{PLATFORM} ne 'netware';
+
+# Add the compile-time options that miniperl was built with to %define.
+# On Win32 these are not the same options as perl itself will be built
+# with since miniperl is built with a canned config (one of the win32/
+# config_H.*) and none of the BUILDOPT's that are set in the makefiles,
+# but they do include some #define's that are hard-coded in various
+# source files and header files and don't include any BUILDOPT's that
+# the user might have chosen to disable because the canned configs are
+# minimal configs that don't include any of those options.
+
+my @options = sort(Config::bincompat_options(), Config::non_bincompat_options());
+print STDERR "Options: (@options)\n" unless $ARGS{PLATFORM} eq 'test';
+$define{$_} = 1 foreach @options;
 
 my %exportperlmalloc =
     (
@@ -97,68 +99,13 @@ my %exportperlmalloc =
        Perl_calloc		=>	"calloc",
     );
 
-my $exportperlmalloc = $PLATFORM eq 'os2';
+my $exportperlmalloc = $ARGS{PLATFORM} eq 'os2';
 
-my $config_sh   = "config.sh";
-my $config_h    = "config.h";
-my $intrpvar_h  = "intrpvar.h";
-my $perlvars_h  = "perlvars.h";
-my $global_sym  = "global.sym";
-my $pp_sym      = "pp.sym";
-my $globvar_sym = "globvar.sym";
-my $perlio_sym  = "perlio.sym";
-my $static_ext = "";
-
-if ($PLATFORM eq 'aix') {
-    # Nothing for now.
-}
-elsif ($PLATFORM =~ /^win(?:32|ce)$/ || $PLATFORM eq 'netware') {
-    $CCTYPE = "MSVC" unless defined $CCTYPE;
-    foreach ($intrpvar_h, $perlvars_h, $global_sym,
-	     $pp_sym, $globvar_sym, $perlio_sym) {
-	s!^!..\\!;
-    }
-}
-elsif ($PLATFORM eq 'MacOS') {
-    foreach ($intrpvar_h, $perlvars_h, $global_sym,
-	     $pp_sym, $globvar_sym, $perlio_sym) {
-	s!^!::!;
-    }
-}
-
-unless ($PLATFORM eq 'win32' || $PLATFORM eq 'wince' || $PLATFORM eq 'MacOS' || $PLATFORM eq 'netware') {
-    open(CFG,$config_sh) || die "Cannot open $config_sh: $!\n";
-    while (<CFG>) {
-	if (/^(?:ccflags|optimize)='(.+)'$/) {
-	    $_ = $1;
-	    $define{$1} = 1 while /-D(\w+)/g;
-	}
-        if (/^(d_(?:mmap|sigaction))='(.+)'$/) {
-            $define{$1} = $2;
-        }
-	if ($PLATFORM eq 'os2') {
-	    $CONFIG_ARGS = $1 if /^config_args='(.+)'$/;
-	    $ARCHNAME =    $1 if /^archname='(.+)'$/;
-	    $PATCHLEVEL =  $1 if /^perl_patchlevel='(.+)'$/;
-	}
-    }
-    close(CFG);
-}
-if ($PLATFORM eq 'win32' || $PLATFORM eq 'wince') {
-    open(CFG,"<..\\$config_sh") || die "Cannot open ..\\$config_sh: $!\n";
-    if ((join '', <CFG>) =~ /^static_ext='(.*)'$/m) {
-        $static_ext = $1;
-    }
-    close(CFG);
-}
-
-open(CFG,$config_h) || die "Cannot open $config_h: $!\n";
+open(CFG, '<', 'config.h') || die "Cannot open config.h: $!\n";
 while (<CFG>) {
-    $define{$1} = 1 if /^\s*#\s*define\s+(MYMALLOC)\b/;
-    $define{$1} = 1 if /^\s*#\s*define\s+(MULTIPLICITY)\b/;
-    $define{$1} = 1 if /^\s*#\s*define\s+(PERL_\w+)\b/;
-    $define{$1} = 1 if /^\s*#\s*define\s+(USE_\w+)\b/;
-    $define{$1} = 1 if /^\s*#\s*define\s+(HAS_\w+)\b/;
+    $define{$1} = 1 if /^\s*\#\s*define\s+(MYMALLOC|MULTIPLICITY
+                                           |SPRINTF_RETURNS_STRLEN
+                                           |(?:PERL|USE|HAS)_\w+)\b/x;
 }
 close(CFG);
 
@@ -178,34 +125,19 @@ $define{PERL_IMPLICIT_CONTEXT} ||=
     $define{USE_ITHREADS} ||
     $define{MULTIPLICITY} ;
 
-if ($define{USE_ITHREADS} && $PLATFORM ne 'win32' && $^O ne 'darwin') {
+if ($define{USE_ITHREADS} && $ARGS{PLATFORM} ne 'win32' && $^O ne 'darwin') {
     $define{USE_REENTRANT_API} = 1;
 }
 
 # perl.h logic duplication ends
 
+print STDERR "Defines: (" . join(' ', sort keys %define) . ")\n"
+     unless $ARGS{PLATFORM} eq 'test';
+
 my $sym_ord = 0;
+my %ordinal;
 
-print STDERR "Defines: (" . join(' ', sort keys %define) . ")\n";
-
-if ($PLATFORM =~ /^win(?:32|ce)$/) {
-    (my $dll = ($define{PERL_DLL} || "perl512")) =~ s/\.dll$//i;
-    print "LIBRARY $dll\n";
-    # The DESCRIPTION module definition file statement is not supported
-    # by VC7 onwards.
-    if ($CCTYPE !~ /^MSVC7/ && $CCTYPE !~ /^MSVC8/ && $CCTYPE !~ /^MSVC9/) {
-	print "DESCRIPTION 'Perl interpreter'\n";
-    }
-    print "EXPORTS\n";
-    if ($define{PERL_IMPLICIT_SYS}) {
-	output_symbol("perl_get_host_info");
-	output_symbol("perl_alloc_override");
-    }
-    if ($define{USE_ITHREADS} and $define{PERL_IMPLICIT_SYS}) {
-	output_symbol("perl_clone_host");
-    }
-}
-elsif ($PLATFORM eq 'os2') {
+if ($ARGS{PLATFORM} eq 'os2') {
     if (open my $fh, '<', 'perl5.def') {
       while (<$fh>) {
 	last if /^\s*EXPORTS\b/;
@@ -217,442 +149,121 @@ elsif ($PLATFORM eq 'os2') {
       }
       $sym_ord < $_ and $sym_ord = $_ for values %ordinal; # Take the max
     }
-    (my $v = $]) =~ s/(\d\.\d\d\d)(\d\d)$/$1_$2/;
-    $v .= '-thread' if $ARCHNAME =~ /-thread/;
-    (my $dll = $define{PERL_DLL}) =~ s/\.dll$//i;
-    $v .= "\@$PATCHLEVEL" if $PATCHLEVEL;
-    my $d = "DESCRIPTION '\@#perl5-porters\@perl.org:$v#\@ Perl interpreter, configured as $CONFIG_ARGS'";
-    $d = substr($d, 0, 249) . "...'" if length $d > 253;
-    print <<"---EOP---";
-LIBRARY '$dll' INITINSTANCE TERMINSTANCE
-$d
-STACKSIZE 32768
-CODE LOADONCALL
-DATA LOADONCALL NONSHARED MULTIPLE
-EXPORTS
----EOP---
-}
-elsif ($PLATFORM eq 'aix') {
-    my $OSVER = `uname -v`;
-    chop $OSVER;
-    my $OSREL = `uname -r`;
-    chop $OSREL;
-    if ($OSVER > 4 || ($OSVER == 4 && $OSREL >= 3)) {
-	print "#! ..\n";
-    } else {
-	print "#!\n";
-    }
-}
-elsif ($PLATFORM eq 'netware') {
-	if ($FILETYPE eq 'def') {
-	print "LIBRARY perl512\n";
-	print "DESCRIPTION 'Perl interpreter for NetWare'\n";
-	print "EXPORTS\n";
-	}
-	if ($define{PERL_IMPLICIT_SYS}) {
-	    output_symbol("perl_get_host_info");
-	    output_symbol("perl_alloc_override");
-	    output_symbol("perl_clone_host");
-	}
 }
 
 my %skip;
-my %export;
+# All platforms export boot_DynaLoader unconditionally.
+my %export = ( boot_DynaLoader => 1 );
 
-sub skip_symbols {
-    my $list = shift;
-    foreach my $symbol (@$list) {
-	$skip{$symbol} = 1;
+sub try_symbols {
+    foreach my $symbol (@_) {
+	++$export{$symbol} unless exists $skip{$symbol};
     }
 }
 
-sub emit_symbols {
-    my $list = shift;
-    foreach my $symbol (@$list) {
-	my $skipsym = $symbol;
-	# XXX hack
-	if ($define{MULTIPLICITY}) {
-	    $skipsym =~ s/^Perl_[GIT](\w+)_ptr$/PL_$1/;
+sub readvar {
+    # $hash is the hash that we're adding to. For one of our callers, it will
+    # actually be the skip hash but that doesn't affect the intent of what
+    # we're doing, as in that case we skip adding something to the skip hash
+    # for the second time.
+
+    my $file = $ARGS{TARG_DIR} . shift;
+    my $hash = shift;
+    my $proc = shift;
+    open my $vars, '<', $file or die die "Cannot open $file: $!\n";
+
+    while (<$vars>) {
+	# All symbols have a Perl_ prefix because that's what embed.h sticks
+	# in front of them.  The A?I?S?C? is strictly speaking wrong.
+	next unless /\bPERLVAR(A?I?S?C?)\(([IGT]),\s*(\w+)/;
+
+	my $var = "PL_$3";
+	my $symbol = $proc ? &$proc($1,$2,$3) : $var;
+	++$hash->{$symbol} unless exists $skip{$var};
+    }
+}
+
+if ($ARGS{PLATFORM} ne 'os2') {
+    ++$skip{$_} foreach qw(
+		     PL_cryptseen
+		     PL_opsave
+		     Perl_GetVars
+		     Perl_dump_fds
+		     Perl_my_bcopy
+		     Perl_my_bzero
+		     Perl_my_chsize
+		     Perl_my_htonl
+		     Perl_my_memcmp
+		     Perl_my_memset
+		     Perl_my_ntohl
+		     Perl_my_swap
+			 );
+    if ($ARGS{PLATFORM} eq 'vms') {
+	++$skip{PL_statusvalue_posix};
+        # This is a wrapper if we have symlink, not a replacement
+        # if we don't.
+        ++$skip{Perl_my_symlink} unless $Config{d_symlink};
+    } else {
+	++$skip{PL_statusvalue_vms};
+	if ($ARGS{PLATFORM} ne 'aix') {
+	    ++$skip{$_} foreach qw(
+				PL_DBcv
+				PL_generation
+				PL_lastgotoprobe
+				PL_modcount
+				PL_timesbuf
+				main
+				 );
 	}
-	emit_symbol($symbol) unless exists $skip{$skipsym};
     }
 }
 
-if ($PLATFORM eq 'win32') {
-    skip_symbols [qw(
-		     PL_statusvalue_vms
-		     PL_archpat_auto
-		     PL_cryptseen
-		     PL_DBcv
-		     PL_generation
-		     PL_lastgotoprobe
-		     PL_linestart
-		     PL_modcount
-		     PL_pending_ident
-		     PL_sublex_info
-		     PL_timesbuf
-		     main
-		     Perl_ErrorNo
-		     Perl_GetVars
-		     Perl_do_exec3
-		     Perl_do_ipcctl
-		     Perl_do_ipcget
-		     Perl_do_msgrcv
-		     Perl_do_msgsnd
-		     Perl_do_semop
-		     Perl_do_shmio
-		     Perl_dump_fds
-		     Perl_init_thread_intern
-		     Perl_my_bzero
-		     Perl_my_bcopy
-		     Perl_my_htonl
-		     Perl_my_ntohl
-		     Perl_my_swap
-		     Perl_my_chsize
-		     Perl_same_dirent
-		     Perl_setenv_getix
-		     Perl_unlnk
-		     Perl_watch
-		     Perl_safexcalloc
-		     Perl_safexmalloc
-		     Perl_safexfree
-		     Perl_safexrealloc
-		     Perl_my_memcmp
-		     Perl_my_memset
-		     PL_cshlen
-		     PL_cshname
-		     PL_opsave
-		     Perl_do_exec
-		     Perl_getenv_len
-		     Perl_my_pclose
-		     Perl_my_popen
-		     Perl_my_sprintf
-		     )];
+if ($ARGS{PLATFORM} ne 'vms') {
+    # VMS does its own thing for these symbols.
+    ++$skip{$_} foreach qw(
+			PL_sig_handlers_initted
+			PL_sig_ignoring
+			PL_sig_defaulting
+			 );
+    if ($ARGS{PLATFORM} ne 'win32') {
+	++$skip{$_} foreach qw(
+			    Perl_do_spawn
+			    Perl_do_spawn_nowait
+			    Perl_do_aspawn
+			     );
+    }
 }
-else {
-    skip_symbols [qw(
-		     Perl_do_spawn
-		     Perl_do_spawn_nowait
-		     Perl_do_aspawn
-		     )];
-}
-if ($PLATFORM eq 'wince') {
-    skip_symbols [qw(
-		     PL_statusvalue_vms
-		     PL_archpat_auto
-		     PL_cryptseen
-		     PL_DBcv
-		     PL_generation
-		     PL_lastgotoprobe
-		     PL_linestart
-		     PL_modcount
-		     PL_pending_ident
-		     PL_sublex_info
-		     PL_timesbuf
-		     PL_collation_ix
-		     PL_collation_name
-		     PL_collation_standard
-		     PL_collxfrm_base
-		     PL_collxfrm_mult
-		     PL_numeric_compat1
-		     PL_numeric_local
-		     PL_numeric_name
-		     PL_numeric_radix_sv
-		     PL_numeric_standard
-		     PL_vtbl_collxfrm
-		     Perl_sv_collxfrm
-		     setgid
-		     setuid
-		     win32_free_childdir
-		     win32_free_childenv
-		     win32_get_childdir
-		     win32_get_childenv
-		     win32_spawnvp
-		     main
-		     Perl_ErrorNo
-		     Perl_GetVars
-		     Perl_do_exec3
-		     Perl_do_ipcctl
-		     Perl_do_ipcget
-		     Perl_do_msgrcv
-		     Perl_do_msgsnd
-		     Perl_do_semop
-		     Perl_do_shmio
-		     Perl_dump_fds
-		     Perl_init_thread_intern
-		     Perl_my_bzero
-		     Perl_my_bcopy
-		     Perl_my_htonl
-		     Perl_my_ntohl
-		     Perl_my_swap
-		     Perl_my_chsize
-		     Perl_same_dirent
-		     Perl_setenv_getix
-		     Perl_unlnk
-		     Perl_watch
-		     Perl_safexcalloc
-		     Perl_safexmalloc
-		     Perl_safexfree
-		     Perl_safexrealloc
-		     Perl_my_memcmp
-		     Perl_my_memset
-		     PL_cshlen
-		     PL_cshname
-		     PL_opsave
-		     Perl_do_exec
-		     Perl_getenv_len
-		     Perl_my_pclose
-		     Perl_my_popen
-		     Perl_my_sprintf
-		     )];
-}
-elsif ($PLATFORM eq 'aix') {
-    skip_symbols([qw(
-		     Perl_dump_fds
-		     Perl_ErrorNo
-		     Perl_GetVars
-		     Perl_my_bcopy
-		     Perl_my_bzero
-		     Perl_my_chsize
-		     Perl_my_htonl
-		     Perl_my_memcmp
-		     Perl_my_memset
-		     Perl_my_ntohl
-		     Perl_my_swap
-		     Perl_safexcalloc
-		     Perl_safexfree
-		     Perl_safexmalloc
-		     Perl_safexrealloc
-		     Perl_same_dirent
-		     Perl_unlnk
-		     Perl_sys_intern_clear
-		     Perl_sys_intern_dup
-		     Perl_sys_intern_init
-		     Perl_my_sprintf
-		     PL_cryptseen
-		     PL_opsave
-		     PL_statusvalue_vms
-		     PL_sys_intern
-		     )]);
-    skip_symbols([qw(
-		     Perl_signbit
-		     )])
-	if $define{'HAS_SIGNBIT'};
-    emit_symbols([qw(
-		     boot_DynaLoader
-		     )]);
-}
-elsif ($PLATFORM eq 'os2') {
-    emit_symbols([qw(
-		    ctermid
-		    get_sysinfo
-		    Perl_OS2_init
-		    Perl_OS2_init3
-		    Perl_OS2_term
-		    OS2_Perl_data
-		    dlopen
-		    dlsym
-		    dlerror
-		    dlclose
-		    dup2
-		    dup
-		    my_tmpfile
-		    my_tmpnam
-		    my_flock
-		    my_rmdir
-		    my_mkdir
-		    my_getpwuid
-		    my_getpwnam
-		    my_getpwent
-		    my_setpwent
-		    my_endpwent
-		    fork_with_resources
-		    croak_with_os2error
-		    setgrent
-		    endgrent
-		    getgrent
-		    malloc_mutex
-		    threads_mutex
-		    nthreads
-		    nthreads_cond
-		    os2_cond_wait
-		    os2_stat
-		    os2_execname
-		    async_mssleep
-		    msCounter
-		    InfoTable
-		    pthread_join
-		    pthread_create
-		    pthread_detach
-		    XS_Cwd_change_drive
-		    XS_Cwd_current_drive
-		    XS_Cwd_extLibpath
-		    XS_Cwd_extLibpath_set
-		    XS_Cwd_sys_abspath
-		    XS_Cwd_sys_chdir
-		    XS_Cwd_sys_cwd
-		    XS_Cwd_sys_is_absolute
-		    XS_Cwd_sys_is_relative
-		    XS_Cwd_sys_is_rooted
-		    XS_DynaLoader_mod2fname
-		    XS_File__Copy_syscopy
-		    Perl_Register_MQ
-		    Perl_Deregister_MQ
-		    Perl_Serve_Messages
-		    Perl_Process_Messages
-		    init_PMWIN_entries
-		    PMWIN_entries
-		    Perl_hab_GET
-		    loadByOrdinal
-		    pExtFCN
-		    os2error
-		    ResetWinError
-		    CroakWinError
-		    PL_do_undump
-		    )]);
-    emit_symbols([qw(os2_cond_wait
-		     pthread_join
-		     pthread_create
-		     pthread_detach
-		    )])
-      if $define{'USE_5005THREADS'} or $define{'USE_ITHREADS'};
-}
-elsif ($PLATFORM eq 'MacOS') {
-    skip_symbols [qw(
-		    Perl_GetVars
-		    PL_cryptseen
-		    PL_cshlen
-		    PL_cshname
-		    PL_statusvalue_vms
-		    PL_sys_intern
-		    PL_opsave
-		    PL_timesbuf
-		    Perl_dump_fds
-		    Perl_my_bcopy
-		    Perl_my_bzero
-		    Perl_my_chsize
-		    Perl_my_htonl
-		    Perl_my_memcmp
-		    Perl_my_memset
-		    Perl_my_ntohl
-		    Perl_my_swap
-		    Perl_safexcalloc
-		    Perl_safexfree
-		    Perl_safexmalloc
-		    Perl_safexrealloc
-		    Perl_unlnk
-		    Perl_sys_intern_clear
-		    Perl_sys_intern_init
-		    )];
-}
-elsif ($PLATFORM eq 'netware') {
-	skip_symbols [qw(
-			PL_statusvalue_vms
-			PL_archpat_auto
-			PL_cryptseen
-			PL_DBcv
-			PL_generation
-			PL_lastgotoprobe
-			PL_linestart
-			PL_modcount
-			PL_pending_ident
-			PL_sublex_info
-			PL_timesbuf
-			main
-			Perl_ErrorNo
-			Perl_GetVars
-			Perl_do_exec3
-			Perl_do_ipcctl
-			Perl_do_ipcget
-			Perl_do_msgrcv
-			Perl_do_msgsnd
-			Perl_do_semop
-			Perl_do_shmio
-			Perl_dump_fds
-			Perl_init_thread_intern
-			Perl_my_bzero
-			Perl_my_htonl
-			Perl_my_ntohl
-			Perl_my_swap
-			Perl_my_chsize
-			Perl_same_dirent
-			Perl_setenv_getix
-			Perl_unlnk
-			Perl_watch
-			Perl_safexcalloc
-			Perl_safexmalloc
-			Perl_safexfree
-			Perl_safexrealloc
-			Perl_my_memcmp
-			Perl_my_memset
-			PL_cshlen
-			PL_cshname
-			PL_opsave
-			Perl_do_exec
-			Perl_getenv_len
-			Perl_my_pclose
-			Perl_my_popen
-			Perl_sys_intern_init
-			Perl_sys_intern_dup
-			Perl_sys_intern_clear
-			Perl_my_bcopy
-			Perl_PerlIO_write
-			Perl_PerlIO_unread
-			Perl_PerlIO_tell
-			Perl_PerlIO_stdout
-			Perl_PerlIO_stdin
-			Perl_PerlIO_stderr
-			Perl_PerlIO_setlinebuf
-			Perl_PerlIO_set_ptrcnt
-			Perl_PerlIO_set_cnt
-			Perl_PerlIO_seek
-			Perl_PerlIO_read
-			Perl_PerlIO_get_ptr
-			Perl_PerlIO_get_cnt
-			Perl_PerlIO_get_bufsiz
-			Perl_PerlIO_get_base
-			Perl_PerlIO_flush
-			Perl_PerlIO_fill
-			Perl_PerlIO_fileno
-			Perl_PerlIO_error
-			Perl_PerlIO_eof
-			Perl_PerlIO_close
-			Perl_PerlIO_clearerr
-			PerlIO_perlio
-			)];
+
+unless ($define{UNLINK_ALL_VERSIONS}) {
+    ++$skip{Perl_unlnk};
 }
 
 unless ($define{'DEBUGGING'}) {
-    skip_symbols [qw(
-		    Perl_deb_growlevel
+    ++$skip{$_} foreach qw(
 		    Perl_debop
 		    Perl_debprofdump
 		    Perl_debstack
 		    Perl_debstackptrs
 		    Perl_pad_sv
+		    Perl_pad_setsv
 		    Perl_hv_assert
 		    PL_block_type
 		    PL_watchaddr
 		    PL_watchok
 		    PL_watch_pvx
-		    )];
-}
-
-if ($define{'PERL_IMPLICIT_CONTEXT'}) {
-    skip_symbols [qw(
-		    PL_sig_sv
-		    )];
+			 );
 }
 
 if ($define{'PERL_IMPLICIT_SYS'}) {
-    skip_symbols [qw(
-		    Perl_getenv_len
+    ++$skip{$_} foreach qw(
 		    Perl_my_popen
 		    Perl_my_pclose
-		    )];
+			 );
+    ++$export{$_} foreach qw(perl_get_host_info perl_alloc_override);
+    ++$export{perl_clone_host} if $define{USE_ITHREADS};
 }
 else {
-    skip_symbols [qw(
+    ++$skip{$_} foreach qw(
 		    PL_Mem
 		    PL_MemShared
 		    PL_MemParse
@@ -662,67 +273,52 @@ else {
 		    PL_Dir
 		    PL_Sock
 		    PL_Proc
-		    )];
+		    perl_alloc_using
+		    perl_clone_using
+			 );
 }
 
 unless ($define{'PERL_OLD_COPY_ON_WRITE'}) {
-    skip_symbols [qw(
-		    Perl_sv_setsv_cow
-		  )];
+    ++$skip{Perl_sv_setsv_cow};
 }
 
 unless ($define{'USE_REENTRANT_API'}) {
-    skip_symbols [qw(
-		    PL_reentrant_buffer
-		    )];
+    ++$skip{PL_reentrant_buffer};
 }
 
 if ($define{'MYMALLOC'}) {
-    emit_symbols [qw(
+    try_symbols(qw(
 		    Perl_dump_mstats
 		    Perl_get_mstats
 		    Perl_strdup
 		    Perl_putenv
 		    MallocCfg_ptr
 		    MallocCfgP_ptr
-		    )];
-    if ($define{'USE_ITHREADS'}) {
-	emit_symbols [qw(
-			PL_malloc_mutex
-			)];
-    }
-    else {
-	skip_symbols [qw(
-			PL_malloc_mutex
-			)];
+		    ));
+    unless ($define{USE_ITHREADS}) {
+	++$skip{PL_malloc_mutex}
     }
 }
 else {
-    skip_symbols [qw(
+    ++$skip{$_} foreach qw(
 		    PL_malloc_mutex
 		    Perl_dump_mstats
 		    Perl_get_mstats
-		    Perl_malloced_size
-		    Perl_malloc_good_size
 		    MallocCfg_ptr
 		    MallocCfgP_ptr
-		    )];
+			 );
 }
 
 if ($define{'PERL_USE_SAFE_PUTENV'}) {
-    skip_symbols [qw(
-                   PL_use_safe_putenv
-                  )];
+    ++$skip{PL_use_safe_putenv};
 }
 
 unless ($define{'USE_ITHREADS'}) {
-    skip_symbols [qw(
-		    PL_thr_key
-		    )];
+    ++$skip{PL_thr_key};
 }
 
 # USE_5005THREADS symbols. Kept as reference for easier removal
-    skip_symbols [qw(
+++$skip{$_} foreach qw(
 		    PL_sv_mutex
 		    PL_strtab_mutex
 		    PL_svref_mutex
@@ -747,20 +343,20 @@ unless ($define{'USE_ITHREADS'}) {
 		    Perl_unlock_condpair
 		    Perl_magic_mutexfree
 		    Perl_sv_lock
-		    )];
+		     );
 
 unless ($define{'USE_ITHREADS'}) {
-    skip_symbols [qw(
+    ++$skip{$_} foreach qw(
+		    PL_check_mutex
 		    PL_op_mutex
 		    PL_regex_pad
 		    PL_regex_padav
-		    PL_sharedsv_space
-		    PL_sharedsv_space_mutex
 		    PL_dollarzero_mutex
 		    PL_hints_mutex
 		    PL_my_ctx_mutex
 		    PL_perlio_mutex
-		    PL_regdupe
+		    Perl_clone_params_del
+		    Perl_clone_params_new
 		    Perl_parser_dup
 		    Perl_dirp_dup
 		    Perl_cx_dup
@@ -771,29 +367,22 @@ unless ($define{'USE_ITHREADS'}) {
 		    Perl_gp_dup
 		    Perl_he_dup
 		    Perl_mg_dup
-		    Perl_mro_meta_dup
 		    Perl_re_dup_guts
 		    Perl_sv_dup
+		    Perl_sv_dup_inc
 		    Perl_rvpv_dup
 		    Perl_hek_dup
 		    Perl_sys_intern_dup
 		    perl_clone
 		    perl_clone_using
-		    Perl_sharedsv_find
-		    Perl_sharedsv_init
-		    Perl_sharedsv_lock
-		    Perl_sharedsv_new
-		    Perl_sharedsv_thrcnt_dec
-		    Perl_sharedsv_thrcnt_inc
-		    Perl_sharedsv_unlock
 		    Perl_stashpv_hvname_match
 		    Perl_regdupe_internal
 		    Perl_newPADOP
-		    )];
+			 );
 }
 
 unless ($define{'PERL_IMPLICIT_CONTEXT'}) {
-    skip_symbols [qw(
+    ++$skip{$_} foreach qw(
 		    PL_my_cxt_index
 		    PL_my_cxt_list
 		    PL_my_cxt_size
@@ -813,193 +402,144 @@ unless ($define{'PERL_IMPLICIT_CONTEXT'}) {
 		    Perl_sv_setpvf_mg_nocontext
 		    Perl_my_cxt_init
 		    Perl_my_cxt_index
-		    )];
-}
-
-unless ($define{'PERL_IMPLICIT_SYS'}) {
-    skip_symbols [qw(
-		    perl_alloc_using
-		    perl_clone_using
-		    )];
-}
-
-unless ($define{'FAKE_THREADS'}) {
-    skip_symbols [qw(PL_curthr)];
+			 );
 }
 
 unless ($define{'PL_OP_SLAB_ALLOC'}) {
-    skip_symbols [qw(
+    ++$skip{$_} foreach qw(
                      PL_OpPtr
                      PL_OpSlab
                      PL_OpSpace
 		     Perl_Slab_Alloc
 		     Perl_Slab_Free
-                    )];
+			 );
 }
 
 unless ($define{'PERL_DEBUG_READONLY_OPS'}) {
-    skip_symbols [qw(
+    ++$skip{$_} foreach qw(
 		    PL_slab_count
 		    PL_slabs
-                  )];
-}
-
-unless ($define{'THREADS_HAVE_PIDS'}) {
-    skip_symbols [qw(PL_ppid)];
+			 );
 }
 
 unless ($define{'PERL_NEED_APPCTX'}) {
-    skip_symbols [qw(
-		    PL_appctx
-		    )];
+    ++$skip{PL_appctx};
 }
 
 unless ($define{'PERL_NEED_TIMESBASE'}) {
-    skip_symbols [qw(
-		    PL_timesbase
-		    )];
+    ++$skip{PL_timesbase};
 }
 
 unless ($define{'DEBUG_LEAKING_SCALARS'}) {
-    skip_symbols [qw(
-		    PL_sv_serial
-		    )];
+    ++$skip{PL_sv_serial};
 }
 
 unless ($define{'DEBUG_LEAKING_SCALARS_FORK_DUMP'}) {
-    skip_symbols [qw(
-		    PL_dumper_fd
-		    )];
+    ++$skip{PL_dumper_fd};
 }
+
 unless ($define{'PERL_DONT_CREATE_GVSV'}) {
-    skip_symbols [qw(
-		     Perl_gv_SVadd
-		    )];
+    ++$skip{Perl_gv_SVadd};
 }
+
 if ($define{'SPRINTF_RETURNS_STRLEN'}) {
-    skip_symbols [qw(
-		     Perl_my_sprintf
-		    )];
+    ++$skip{Perl_my_sprintf};
 }
+
 unless ($define{'PERL_USES_PL_PIDSTATUS'}) {
-    skip_symbols [qw(
-		     Perl_pidgone
-		     PL_pidstatus
-		    )];
+    ++$skip{PL_pidstatus};
 }
 
 unless ($define{'PERL_TRACK_MEMPOOL'}) {
-    skip_symbols [qw(
-                     PL_memory_debug_header
-                    )];
+    ++$skip{PL_memory_debug_header};
 }
 
-if ($define{'PERL_MAD'}) {
-    skip_symbols [qw(
-		     PL_nextval
-		     PL_nexttype
-		     )];
-} else {
-    skip_symbols [qw(
+unless ($define{PERL_MAD}) {
+    ++$skip{$_} foreach qw(
 		    PL_madskills
 		    PL_xmlfp
-		    PL_lasttoke
-		    PL_realtokenstart
-		    PL_faketokens
-		    PL_thismad
-		    PL_thistoken
-		    PL_thisopen
-		    PL_thisstuff
-		    PL_thisclose
-		    PL_thiswhite
-		    PL_nextwhite
-		    PL_skipwhite
-		    PL_endwhite
-		    PL_curforce
-		    Perl_pad_peg
-		    Perl_xmldump_indent
-		    Perl_xmldump_vindent
-		    Perl_xmldump_all
-		    Perl_xmldump_packsubs
-		    Perl_xmldump_sub
-		    Perl_xmldump_form
-		    Perl_xmldump_eval
-		    Perl_sv_catxmlsv
-		    Perl_sv_catxmlpvn
-		    Perl_sv_xmlpeek
-		    Perl_do_pmop_xmldump
-		    Perl_pmop_xmldump
-		    Perl_do_op_xmldump
-		    Perl_op_xmldump
-		    )];
+			 );
 }
 
 unless ($define{'MULTIPLICITY'}) {
-    skip_symbols [qw(
+    ++$skip{$_} foreach qw(
 		    PL_interp_size
-		    PL_interp_size_5_10_0
-		    )];
+		    PL_interp_size_5_16_0
+			 );
 }
 
 unless ($define{'PERL_GLOBAL_STRUCT'}) {
-    skip_symbols [qw(
-		    PL_global_struct_size
-		    )];
+    ++$skip{PL_global_struct_size};
 }
 
 unless ($define{'PERL_GLOBAL_STRUCT_PRIVATE'}) {
-    skip_symbols [qw(
+    ++$skip{$_} foreach qw(
 		    PL_my_cxt_keys
 		    Perl_my_cxt_index
-		    )];
+			 );
 }
 
-unless ($define{'d_mmap'}) {
-    skip_symbols [qw(
-		    PL_mmap_page_size
-		    )];
+unless ($define{HAS_MMAP}) {
+    ++$skip{PL_mmap_page_size};
 }
 
-if ($define{'d_sigaction'}) {
-    skip_symbols [qw(
-		    PL_sig_trapped
-		    )];
-}
+if ($define{HAS_SIGACTION}) {
+    ++$skip{PL_sig_trapped};
 
-if ($^O ne 'vms') {
-    # VMS does its own thing for these symbols.
-    skip_symbols [qw(PL_sig_handlers_initted
-                     PL_sig_ignoring
-                     PL_sig_defaulting)];
-}  
-
-sub readvar {
-    my $file = shift;
-    my $proc = shift || sub { "PL_$_[2]" };
-    open(VARS,$file) || die "Cannot open $file: $!\n";
-    my @syms;
-    while (<VARS>) {
-	# All symbols have a Perl_ prefix because that's what embed.h
-	# sticks in front of them.  The A?I?S?C? is strictly speaking
-	# wrong.
-	push(@syms, &$proc($1,$2,$3)) if (/\bPERLVAR(A?I?S?C?)\(([IGT])(\w+)/);
+    if ($ARGS{PLATFORM} eq 'vms') {
+        # FAKE_PERSISTENT_SIGNAL_HANDLERS defined as !defined(HAS_SIGACTION)
+        ++$skip{PL_sig_ignoring};
     }
-    close(VARS);
-    return \@syms;
+}
+
+unless ($define{USE_LOCALE_COLLATE}) {
+    ++$skip{$_} foreach qw(
+		    PL_collation_ix
+		    PL_collation_name
+		    PL_collation_standard
+		    PL_collxfrm_base
+		    PL_collxfrm_mult
+		    Perl_sv_collxfrm
+		    Perl_sv_collxfrm_flags
+			 );
+}
+
+unless ($define{USE_LOCALE_NUMERIC}) {
+    ++$skip{$_} foreach qw(
+		    PL_numeric_local
+		    PL_numeric_name
+		    PL_numeric_radix_sv
+		    PL_numeric_standard
+			 );
+}
+
+unless ($define{HAVE_INTERP_INTERN}) {
+    ++$skip{$_} foreach qw(
+		    Perl_sys_intern_clear
+		    Perl_sys_intern_dup
+		    Perl_sys_intern_init
+		    PL_sys_intern
+			 );
+}
+
+if ($define{HAS_SIGNBIT}) {
+    ++$skip{Perl_signbit};
 }
 
 if ($define{'PERL_GLOBAL_STRUCT'}) {
-    my $global = readvar($perlvars_h);
-    skip_symbols $global;
-    emit_symbol('Perl_GetVars');
-    emit_symbols [qw(PL_Vars PL_VarsPtr)] unless $CCTYPE eq 'GCC';
+    readvar('perlvars.h', \%skip);
+    # This seems like the least ugly way to cope with the fact that PL_sh_path
+    # is mentioned in perlvar.h and globvar.sym, and always exported.
+    delete $skip{PL_sh_path};
+    ++$export{Perl_GetVars};
+    try_symbols(qw(PL_Vars PL_VarsPtr)) unless $ARGS{CCTYPE} eq 'GCC';
 } else {
-    skip_symbols [qw(Perl_init_global_struct Perl_free_global_struct)];
+    ++$skip{$_} foreach qw(Perl_init_global_struct Perl_free_global_struct);
 }
 
 # functions from *.sym files
 
-my @syms = ($global_sym, $globvar_sym); # $pp_sym is not part of the API
+my @syms = qw(globvar.sym);
 
 # Symbols that are the public face of the PerlIO layers implementation
 # These are in _addition to_ the public face of the abstraction
@@ -1012,6 +552,7 @@ my @layer_syms = qw(
 		    PerlIOBase_eof
 		    PerlIOBase_error
 		    PerlIOBase_fileno
+		    PerlIOBase_open
 		    PerlIOBase_noop_fail
 		    PerlIOBase_noop_ok
 		    PerlIOBase_popped
@@ -1078,25 +619,25 @@ my @layer_syms = qw(
 		    Perl_PerlIO_unread
 		    Perl_PerlIO_write
 );
-if ($PLATFORM eq 'netware') {
+if ($ARGS{PLATFORM} eq 'netware') {
     push(@layer_syms,'PL_def_layerlist','PL_known_layers','PL_perlio');
 }
 
 if ($define{'USE_PERLIO'}) {
     # Export the symols that make up the PerlIO abstraction, regardless
     # of its implementation - read from a file
-    push @syms, $perlio_sym;
+    push @syms, 'perlio.sym';
 
     # This part is then dependent on how the abstraction is implemented
     if ($define{'USE_SFIO'}) {
 	# Old legacy non-stdio "PerlIO"
-	skip_symbols \@layer_syms;
-	skip_symbols [qw(perlsio_binmode)];
+	++$skip{$_} foreach @layer_syms;
+	++$skip{perlsio_binmode};
 	# SFIO defines most of the PerlIO routines as macros
 	# So undo most of what $perlio_sym has just done - d'oh !
 	# Perhaps it would be better to list the ones which do exist
 	# And emit them
-	skip_symbols [qw(
+	++$skip{$_} foreach qw(
 			 PerlIO_canset_cnt
 			 PerlIO_clearerr
 			 PerlIO_close
@@ -1164,29 +705,18 @@ if ($define{'USE_PERLIO'}) {
                          PL_def_layerlist
                          PL_known_layers
                          PL_perlio
-			 )];
+			     );
     }
     else {
 	# PerlIO with layers - export implementation
-	emit_symbols \@layer_syms;
-	emit_symbols [qw(perlsio_binmode)];
-    }
-    if ($define{'USE_ITHREADS'}) {
-	emit_symbols [qw(
-			PL_perlio_mutex
-			)];
-    }
-    else {
-	skip_symbols [qw(
-			PL_perlio_mutex
-			)];
+	try_symbols(@layer_syms, 'perlsio_binmode');
     }
 } else {
 	# -Uuseperlio
 	# Skip the PerlIO layer symbols - although
 	# nothing should have exported them anyway.
-	skip_symbols \@layer_syms;
-	skip_symbols [qw(
+	++$skip{$_} foreach @layer_syms;
+	++$skip{$_} foreach qw(
 			perlsio_binmode
 			PL_def_layerlist
 			PL_known_layers
@@ -1194,76 +724,98 @@ if ($define{'USE_PERLIO'}) {
 			PL_perlio_debug_fd
 			PL_perlio_fd_refcnt
 			PL_perlio_fd_refcnt_size
-			)];
+			PL_perlio_mutex
+			     );
 
 	# Also do NOT add abstraction symbols from $perlio_sym
 	# abstraction is done as #define to stdio
-	# Remaining remnants that _may_ be functions
-	# are handled in <DATA>
+	# Remaining remnants that _may_ be functions are handled below.
 }
 
-for my $syms (@syms) {
-    open (GLOBAL, "<$syms") || die "failed to open $syms: $!\n";
-    while (<GLOBAL>) {
-	next if (!/^[A-Za-z]/);
-	# Functions have a Perl_ prefix
-	# Variables have a PL_ prefix
-	chomp($_);
-	my $symbol = ($syms =~ /var\.sym$/i ? "PL_" : "");
-	$symbol .= $_;
-	emit_symbol($symbol) unless exists $skip{$symbol};
+###############################################################################
+
+# At this point all skip lists should be completed, as we are about to test
+# many symbols against them.
+
+{
+    my %seen;
+    my ($embed) = setup_embed($ARGS{TARG_DIR});
+
+    foreach (@$embed) {
+	my ($flags, $retval, $func, @args) = @$_;
+	next unless $func;
+	if ($flags =~ /[AX]/ && $flags !~ /[xm]/ || $flags =~ /b/) {
+	    # public API, so export
+
+	    # If a function is defined twice, for example before and after
+	    # an #else, only export its name once. Important to do this test
+	    # within the block, as the *first* definition may have flags which
+	    # mean "don't export"
+	    next if $seen{$func}++;
+	    $func = "Perl_$func" if $flags =~ /[pbX]/;
+	    ++$export{$func} unless exists $skip{$func};
+	}
     }
-    close(GLOBAL);
+}
+
+foreach (@syms) {
+    my $syms = $ARGS{TARG_DIR} . $_;
+    open my $global, '<', $syms or die "failed to open $syms: $!\n";
+    # Functions already have a Perl_ prefix
+    # Variables need a PL_ prefix
+    my $prefix = $syms =~ /var\.sym$/i ? 'PL_' : '';
+    while (<$global>) {
+	next unless /^([A-Za-z].*)/;
+	my $symbol = "$prefix$1";
+	++$export{$symbol} unless exists $skip{$symbol};
+    }
 }
 
 # variables
 
-if ($define{'MULTIPLICITY'}) {
-    for my $f ($perlvars_h, $intrpvar_h) {
-	my $glob = readvar($f, sub { "Perl_" . $_[1] . $_[2] . "_ptr" });
-	emit_symbols $glob;
-    }
-    unless ($define{'USE_ITHREADS'}) {
-	# XXX needed for XS extensions that define PERL_CORE
-	emit_symbol("PL_curinterp");
-    }
+if ($define{'MULTIPLICITY'} && $define{PERL_GLOBAL_STRUCT}) {
+    readvar('perlvars.h', \%export, sub { "Perl_" . $_[1] . $_[2] . "_ptr" });
     # XXX AIX seems to want the perlvars.h symbols, for some reason
-    if ($PLATFORM eq 'aix' or $PLATFORM eq 'os2') {	# OS/2 needs PL_thr_key
-	my $glob = readvar($perlvars_h);
-	emit_symbols $glob;
+    if ($ARGS{PLATFORM} eq 'aix' or $ARGS{PLATFORM} eq 'os2') {	# OS/2 needs PL_thr_key
+	readvar('perlvars.h', \%export);
     }
 }
 else {
     unless ($define{'PERL_GLOBAL_STRUCT'}) {
-	my $glob = readvar($perlvars_h);
-	emit_symbols $glob;
+	readvar('perlvars.h', \%export);
     }
-    unless ($define{'MULTIPLICITY'}) {
-	my $glob = readvar($intrpvar_h);
-	emit_symbols $glob;
+    unless ($define{MULTIPLICITY}) {
+	readvar('intrpvar.h', \%export);
     }
 }
 
-sub try_symbol {
-    my $symbol = shift;
+# Oddities from PerlIO
+# All have alternate implementations in perlio.c, so always exist.
+# Should they be considered to be part of the API?
+try_symbols(qw(
+		    PerlIO_binmode
+		    PerlIO_getpos
+		    PerlIO_init
+		    PerlIO_setpos
+		    PerlIO_sprintf
+		    PerlIO_tmpfile
+		    PerlIO_vsprintf
+	     ));
 
-    return if $symbol !~ /^[A-Za-z_]/;
-    return if $symbol =~ /^\#/;
-    $symbol =~s/\r//g;
-    chomp($symbol);
-    return if exists $skip{$symbol};
-    emit_symbol($symbol);
+if ($ARGS{PLATFORM} eq 'win32') {
+    try_symbols(qw(
+				 setgid
+				 setuid
+				 win32_free_childdir
+				 win32_free_childenv
+				 win32_get_childdir
+				 win32_get_childenv
+				 win32_spawnvp
+		 ));
 }
 
-while (<DATA>) {
-    try_symbol($_);
-}
-
-if ($PLATFORM =~ /^win(?:32|ce)$/) {
-    foreach my $symbol (qw(
-			    setuid
-			    setgid
-			    boot_DynaLoader
+if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
+    try_symbols(qw(
 			    Perl_init_os_extras
 			    Perl_thread_create
 			    Perl_win32_init
@@ -1291,7 +843,6 @@ if ($PLATFORM =~ /^win(?:32|ce)$/) {
 			    win32_isatty
 			    win32_read
 			    win32_write
-			    win32_spawnvp
 			    win32_mkdir
 			    win32_rmdir
 			    win32_chdir
@@ -1377,11 +928,7 @@ if ($PLATFORM =~ /^win(?:32|ce)$/) {
 			    win32_getpid
 			    win32_crypt
 			    win32_dynaload
-			    win32_get_childenv
-			    win32_free_childenv
 			    win32_clearenv
-			    win32_get_childdir
-			    win32_free_childdir
 			    win32_stdin
 			    win32_stdout
 			    win32_stderr
@@ -1422,37 +969,164 @@ if ($PLATFORM =~ /^win(?:32|ce)$/) {
 			    win32_puts
 			    win32_getchar
 			    win32_putchar
-			   ))
-    {
-	try_symbol($symbol);
-    }
-    if ($CCTYPE eq "BORLAND") {
-	try_symbol('_matherr');
-    }
+		 ));
 }
-elsif ($PLATFORM eq 'os2') {
-    my (%mapped, @missing);
-    open MAP, 'miniperl.map' or die 'Cannot read miniperl.map';
-    /^\s*[\da-f:]+\s+(\w+)/i and $mapped{$1}++ foreach <MAP>;
-    close MAP or die 'Cannot close miniperl.map';
-
-    @missing = grep { !exists $mapped{$_} }
-		    keys %export;
-    @missing = grep { !exists $exportperlmalloc{$_} } @missing;
-    delete $export{$_} foreach @missing;
+elsif ($ARGS{PLATFORM} eq 'vms') {
+    try_symbols(qw(
+		      Perl_cando
+		      Perl_cando_by_name
+		      Perl_closedir
+		      Perl_csighandler_init
+		      Perl_do_rmdir
+		      Perl_fileify_dirspec
+		      Perl_fileify_dirspec_ts
+		      Perl_fileify_dirspec_utf8
+		      Perl_fileify_dirspec_utf8_ts
+		      Perl_flex_fstat
+		      Perl_flex_lstat
+		      Perl_flex_stat
+		      Perl_kill_file
+		      Perl_my_chdir
+		      Perl_my_chmod
+		      Perl_my_crypt
+		      Perl_my_endpwent
+		      Perl_my_fclose
+		      Perl_my_fdopen
+		      Perl_my_fgetname
+		      Perl_my_flush
+		      Perl_my_fwrite
+		      Perl_my_gconvert
+		      Perl_my_getenv
+		      Perl_my_getenv_len
+		      Perl_my_getlogin
+		      Perl_my_getpwnam
+		      Perl_my_getpwuid
+		      Perl_my_gmtime
+		      Perl_my_kill
+		      Perl_my_localtime
+		      Perl_my_mkdir
+		      Perl_my_sigaction
+		      Perl_my_symlink
+		      Perl_my_time
+		      Perl_my_tmpfile
+		      Perl_my_trnlnm
+		      Perl_my_utime
+		      Perl_my_waitpid
+		      Perl_opendir
+		      Perl_pathify_dirspec
+		      Perl_pathify_dirspec_ts
+		      Perl_pathify_dirspec_utf8
+		      Perl_pathify_dirspec_utf8_ts
+		      Perl_readdir
+		      Perl_readdir_r
+		      Perl_rename
+		      Perl_rmscopy
+		      Perl_rmsexpand
+		      Perl_rmsexpand_ts
+		      Perl_rmsexpand_utf8
+		      Perl_rmsexpand_utf8_ts
+		      Perl_seekdir
+		      Perl_sig_to_vmscondition
+		      Perl_telldir
+		      Perl_tounixpath
+		      Perl_tounixpath_ts
+		      Perl_tounixpath_utf8
+		      Perl_tounixpath_utf8_ts
+		      Perl_tounixspec
+		      Perl_tounixspec_ts
+		      Perl_tounixspec_utf8
+		      Perl_tounixspec_utf8_ts
+		      Perl_tovmspath
+		      Perl_tovmspath_ts
+		      Perl_tovmspath_utf8
+		      Perl_tovmspath_utf8_ts
+		      Perl_tovmsspec
+		      Perl_tovmsspec_ts
+		      Perl_tovmsspec_utf8
+		      Perl_tovmsspec_utf8_ts
+		      Perl_trim_unixpath
+		      Perl_vms_case_tolerant
+		      Perl_vms_do_aexec
+		      Perl_vms_do_exec
+		      Perl_vms_image_init
+		      Perl_vms_realpath
+		      Perl_vmssetenv
+		      Perl_vmssetuserlnm
+		      Perl_vmstrnenv
+		      PerlIO_openn
+		 ));
 }
-elsif ($PLATFORM eq 'MacOS') {
-    open MACSYMS, 'macperl.sym' or die 'Cannot read macperl.sym';
-
-    while (<MACSYMS>) {
-	try_symbol($_);
-    }
-
-    close MACSYMS;
+elsif ($ARGS{PLATFORM} eq 'os2') {
+    try_symbols(qw(
+		      ctermid
+		      get_sysinfo
+		      Perl_OS2_init
+		      Perl_OS2_init3
+		      Perl_OS2_term
+		      OS2_Perl_data
+		      dlopen
+		      dlsym
+		      dlerror
+		      dlclose
+		      dup2
+		      dup
+		      my_tmpfile
+		      my_tmpnam
+		      my_flock
+		      my_rmdir
+		      my_mkdir
+		      my_getpwuid
+		      my_getpwnam
+		      my_getpwent
+		      my_setpwent
+		      my_endpwent
+		      fork_with_resources
+		      croak_with_os2error
+		      setgrent
+		      endgrent
+		      getgrent
+		      malloc_mutex
+		      threads_mutex
+		      nthreads
+		      nthreads_cond
+		      os2_cond_wait
+		      os2_stat
+		      os2_execname
+		      async_mssleep
+		      msCounter
+		      InfoTable
+		      pthread_join
+		      pthread_create
+		      pthread_detach
+		      XS_Cwd_change_drive
+		      XS_Cwd_current_drive
+		      XS_Cwd_extLibpath
+		      XS_Cwd_extLibpath_set
+		      XS_Cwd_sys_abspath
+		      XS_Cwd_sys_chdir
+		      XS_Cwd_sys_cwd
+		      XS_Cwd_sys_is_absolute
+		      XS_Cwd_sys_is_relative
+		      XS_Cwd_sys_is_rooted
+		      XS_DynaLoader_mod2fname
+		      XS_File__Copy_syscopy
+		      Perl_Register_MQ
+		      Perl_Deregister_MQ
+		      Perl_Serve_Messages
+		      Perl_Process_Messages
+		      init_PMWIN_entries
+		      PMWIN_entries
+		      Perl_hab_GET
+		      loadByOrdinal
+		      pExtFCN
+		      os2error
+		      ResetWinError
+		      CroakWinError
+		      PL_do_undump
+		 ));
 }
-elsif ($PLATFORM eq 'netware') {
-foreach my $symbol (qw(
-			boot_DynaLoader
+elsif ($ARGS{PLATFORM} eq 'netware') {
+    try_symbols(qw(
 			Perl_init_os_extras
 			Perl_thread_create
 			Perl_nw5_init
@@ -1587,32 +1261,118 @@ foreach my $symbol (qw(
 			Perl_sv_2pv
 			nw_freeenviron
 			Remove_Thread_Ctx
-			   ))
-    {
-	try_symbol($symbol);
+		 ));
+}
+
+# When added this code was only run for Win32 and WinCE
+# Currently only Win32 links static extensions into the shared library.
+# The WinCE makefile doesn't appear to support static extensions, so this code
+# can't have any effect there.
+# The NetWare Makefile doesn't support static extensions (and hardcodes the
+# list of dynamic extensions, and the rules to build them)
+# For *nix (and presumably OS/2) with a shared libperl, Makefile.SH compiles
+# static extensions with -fPIC, but links them to perl, not libperl.so
+# The VMS build scripts don't yet implement static extensions at all.
+
+if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
+    # records of type boot_module for statically linked modules (except Dynaloader)
+    my $static_ext = $Config{static_ext} // "";
+    $static_ext =~ s/\//__/g;
+    $static_ext =~ s/\bDynaLoader\b//;
+    try_symbols(map {"boot_$_"} grep {/\S/} split /\s+/, $static_ext);
+    try_symbols("init_Win32CORE") if $static_ext =~ /\bWin32CORE\b/;
+}
+
+if ($ARGS{PLATFORM} eq 'os2') {
+    my (%mapped, @missing);
+    open MAP, 'miniperl.map' or die 'Cannot read miniperl.map';
+    /^\s*[\da-f:]+\s+(\w+)/i and $mapped{$1}++ foreach <MAP>;
+    close MAP or die 'Cannot close miniperl.map';
+
+    @missing = grep { !exists $mapped{$_} }
+		    keys %export;
+    @missing = grep { !exists $exportperlmalloc{$_} } @missing;
+    delete $export{$_} foreach @missing;
+}
+
+###############################################################################
+
+# Now all symbols should be defined because next we are going to output them.
+
+# Start with platform specific headers:
+
+if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
+    my $dll = $define{PERL_DLL} ? $define{PERL_DLL} =~ s/\.dll$//ir
+	: "perl$Config{api_revision}$Config{api_version}";
+    print "LIBRARY $dll\n";
+    # The DESCRIPTION module definition file statement is not supported
+    # by VC7 onwards.
+    if ($ARGS{CCTYPE} =~ /^(?:MSVC60|GCC)$/) {
+	print "DESCRIPTION 'Perl interpreter'\n";
+    }
+    print "EXPORTS\n";
+}
+elsif ($ARGS{PLATFORM} eq 'os2') {
+    (my $v = $]) =~ s/(\d\.\d\d\d)(\d\d)$/$1_$2/;
+    $v .= '-thread' if $Config{archname} =~ /-thread/;
+    (my $dll = $define{PERL_DLL}) =~ s/\.dll$//i;
+    $v .= "\@$Config{perl_patchlevel}" if $Config{perl_patchlevel};
+    my $d = "DESCRIPTION '\@#perl5-porters\@perl.org:$v#\@ Perl interpreter, configured as $Config{config_args}'";
+    $d = substr($d, 0, 249) . "...'" if length $d > 253;
+    print <<"---EOP---";
+LIBRARY '$dll' INITINSTANCE TERMINSTANCE
+$d
+STACKSIZE 32768
+CODE LOADONCALL
+DATA LOADONCALL NONSHARED MULTIPLE
+EXPORTS
+---EOP---
+}
+elsif ($ARGS{PLATFORM} eq 'aix') {
+    my $OSVER = `uname -v`;
+    chop $OSVER;
+    my $OSREL = `uname -r`;
+    chop $OSREL;
+    if ($OSVER > 4 || ($OSVER == 4 && $OSREL >= 3)) {
+	print "#! ..\n";
+    } else {
+	print "#!\n";
+    }
+}
+elsif ($ARGS{PLATFORM} eq 'netware') {
+	if ($ARGS{FILETYPE} eq 'def') {
+	print "LIBRARY perl$Config{api_revision}$Config{api_version}\n";
+	print "DESCRIPTION 'Perl interpreter for NetWare'\n";
+	print "EXPORTS\n";
+	}
+}
+
+# Then the symbols
+
+my @symbols = $fold ? sort {lc $a cmp lc $b} keys %export : sort keys %export;
+foreach my $symbol (@symbols) {
+    if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
+	print "\t$symbol\n";
+    }
+    elsif ($ARGS{PLATFORM} eq 'os2') {
+	printf qq(    %-31s \@%s\n),
+	  qq("$symbol"), $ordinal{$symbol} || ++$sym_ord;
+	printf qq(    %-31s \@%s\n),
+	  qq("$exportperlmalloc{$symbol}" = "$symbol"),
+	  $ordinal{$exportperlmalloc{$symbol}} || ++$sym_ord
+	  if $exportperlmalloc and exists $exportperlmalloc{$symbol};
+    }
+    elsif ($ARGS{PLATFORM} eq 'netware') {
+	print "\t$symbol,\n";
+    } else {
+	print "$symbol\n";
     }
 }
 
-# records of type boot_module for statically linked modules (except Dynaloader)
-$static_ext =~ s/\//__/g;
-$static_ext =~ s/\bDynaLoader\b//;
-my @stat_mods = map {"boot_$_"} grep {/\S/} split /\s+/, $static_ext;
-foreach my $symbol (@stat_mods)
-    {
-	try_symbol($symbol);
-    }
+# Then platform specific footers.
 
-try_symbol("init_Win32CORE") if $static_ext =~ /\bWin32CORE\b/;
-
-# Now all symbols should be defined because
-# next we are going to output them.
-
-foreach my $symbol (sort keys %export) {
-    output_symbol($symbol);
-}
-
-if ($PLATFORM eq 'os2') {
-	print <<EOP;
+if ($ARGS{PLATFORM} eq 'os2') {
+    print <<EOP;
     dll_perlmain=main
     fill_extLibpath
     dir_subst
@@ -1622,63 +1382,4 @@ if ($PLATFORM eq 'os2') {
 EOP
 }
 
-sub emit_symbol {
-    my $symbol = shift;
-    chomp($symbol);
-    $export{$symbol} = 1;
-}
-
-sub output_symbol {
-    my $symbol = shift;
-    if ($PLATFORM =~ /^win(?:32|ce)$/) {
-	$symbol = "_$symbol" if $CCTYPE eq 'BORLAND';
-	print "\t$symbol\n";
-# XXX: binary compatibility between compilers is an exercise
-# in frustration :-(
-#        if ($CCTYPE eq "BORLAND") {
-#	    # workaround Borland quirk by exporting both the straight
-#	    # name and a name with leading underscore.  Note the
-#	    # alias *must* come after the symbol itself, if both
-#	    # are to be exported. (Linker bug?)
-#	    print "\t_$symbol\n";
-#	    print "\t$symbol = _$symbol\n";
-#	}
-#	elsif ($CCTYPE eq 'GCC') {
-#	    # Symbols have leading _ whole process is $%@"% slow
-#	    # so skip aliases for now
-#	    nprint "\t$symbol\n";
-#	}
-#	else {
-#	    # for binary coexistence, export both the symbol and
-#	    # alias with leading underscore
-#	    print "\t$symbol\n";
-#	    print "\t_$symbol = $symbol\n";
-#	}
-    }
-    elsif ($PLATFORM eq 'os2') {
-	printf qq(    %-31s \@%s\n),
-	  qq("$symbol"), $ordinal{$symbol} || ++$sym_ord;
-	printf qq(    %-31s \@%s\n),
-	  qq("$exportperlmalloc{$symbol}" = "$symbol"),
-	  $ordinal{$exportperlmalloc{$symbol}} || ++$sym_ord
-	  if $exportperlmalloc and exists $exportperlmalloc{$symbol};
-    }
-    elsif ($PLATFORM eq 'aix' || $PLATFORM eq 'MacOS') {
-	print "$symbol\n";
-    }
-	elsif ($PLATFORM eq 'netware') {
-	print "\t$symbol,\n";
-	}
-}
-
 1;
-__DATA__
-# Oddities from PerlIO
-PerlIO_binmode
-PerlIO_getpos
-PerlIO_init
-PerlIO_setpos
-PerlIO_sprintf
-PerlIO_sv_dup
-PerlIO_tmpfile
-PerlIO_vsprintf

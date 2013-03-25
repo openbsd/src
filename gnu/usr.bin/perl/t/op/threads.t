@@ -135,7 +135,7 @@ EOI
 #
 # run-time usage of newCONSTSUB (as done by the IO boot code) wasn't
 # thread-safe - got occasional coredumps or malloc corruption
-watchdog(60, "process");
+watchdog(600, "process");
 {
     local $SIG{__WARN__} = sub {};   # Ignore any thread creation failure warnings
     my @t;

@@ -50,8 +50,8 @@ my @test_cookie = (
   is_deeply(\@array, [], " parse('') returns an empty array   in list context   (undocumented)");
   is_deeply($scalar, {}, " parse('') returns an empty hashref in scalar context (undocumented)");
 
-  my @array   = CGI::Cookie->parse(undef);
-  my $scalar  = CGI::Cookie->parse(undef);
+  @array   = CGI::Cookie->parse(undef);
+  $scalar  = CGI::Cookie->parse(undef);
   is_deeply(\@array, [], " parse(undef) returns an empty array   in list context   (undocumented)");
   is_deeply($scalar, {}, " parse(undef) returns an empty hashref in scalar context (undocumented)");
 }
@@ -356,7 +356,7 @@ MAX_AGE: {
     is $cookie->expires, 'Thu, 01-Jan-1970 00:01:40 GMT';
     is $cookie->max_age => undef, 'max-age is undefined when setting expires';
 
-    my $cookie = CGI::Cookie->new( -name=>'a', 'value'=>'b' );
+    $cookie = CGI::Cookie->new( -name=>'a', 'value'=>'b' );
     $cookie->max_age( '+4d' );
 
     is $cookie->expires, undef, 'expires is undef when setting max_age';

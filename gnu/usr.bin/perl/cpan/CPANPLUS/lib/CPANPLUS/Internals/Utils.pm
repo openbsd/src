@@ -5,11 +5,12 @@ use strict;
 use CPANPLUS::Error;
 use CPANPLUS::Internals::Constants;
 
-use Cwd qw[chdir];
+use Cwd                         qw[chdir cwd];
 use File::Copy;
 use Params::Check               qw[check];
 use Module::Load::Conditional   qw[can_load];
 use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
+use version;
 
 local $Params::Check::VERBOSE = 1;
 
@@ -59,7 +60,7 @@ sub _mkdir {
 
     my $args = check( $tmpl, \%hash ) or (
         error(loc( Params::Check->last_error ) ), return
-    );       
+    );
 
     unless( can_load( modules => { 'File::Path' => 0.0 } ) ) {
         error( loc("Could not use File::Path! This module should be core!") );
@@ -162,20 +163,20 @@ sub _perl_version {
     };
 
     check( $tmpl, \%hash ) or return;
-    
+
     my $perl_version;
     ### special perl, or the one we are running under?
     if( $perl eq $^X ) {
-        ### just load the config        
+        ### just load the config
         require Config;
         $perl_version = $Config::Config{version};
-        
+
     } else {
         my $cmd  = $perl .
                 ' -MConfig -eprint+Config::config_vars+version';
         ($perl_version) = (`$cmd` =~ /version='(.*)'/);
     }
-    
+
     return $perl_version if defined $perl_version;
     return;
 }
@@ -199,7 +200,11 @@ sub _version_to_number {
 
     check( $tmpl, \%hash ) or return;
 
-    return $version if $version =~ /^\.?\d/;
+    $version =~ s!_!!g; # *sigh*
+    return $version if $version =~ /^\d*(?:\.\d+)?$/;
+    if ( my ($vers) = $version =~ /^(v?\d+(?:\.\d+(?:\.\d+)?)?)/ ) {
+      return eval { version->parse($vers)->numify };
+    }
     return '0.0';
 }
 
@@ -238,7 +243,9 @@ sub _get_file_contents {
     return $contents;
 }
 
-=pod $cb->_move( from => $file|$dir, to => $target );
+=pod
+
+=head2 $cb->_move( from => $file|$dir, to => $target );
 
 Moves a file or directory to the target.
 
@@ -267,7 +274,9 @@ sub _move {
     }
 }
 
-=pod $cb->_copy( from => $file|$dir, to => $target );
+=pod
+
+=head2 $cb->_copy( from => $file|$dir, to => $target );
 
 Moves a file or directory to the target.
 
@@ -278,7 +287,7 @@ Returns true on success, false on failure.
 sub _copy {
     my $self = shift;
     my %hash = @_;
-    
+
     my($from,$to);
     my $tmpl = {
         file    =>{ required => 1, allow => [IS_FILE,IS_DIR],
@@ -307,28 +316,28 @@ Returns true on success, false on failure.
 sub _mode_plus_w {
     my $self = shift;
     my %hash = @_;
-    
+
     require File::stat;
-    
+
     my $file;
     my $tmpl = {
         file    => { required => 1, allow => IS_FILE, store => \$file },
     };
-    
+
     check( $tmpl, \%hash ) or return;
-    
+
     ### set the mode to +w for a file and +wx for a dir
     my $x       = File::stat::stat( $file );
     my $mask    = -d $file ? 0100 : 0200;
-    
+
     if( $x and chmod( $x->mode|$mask, $file ) ) {
         return 1;
 
-    } else {        
+    } else {
         error(loc("Failed to '%1' '%2': '%3'", 'chmod +w', $file, $!));
         return;
     }
-}    
+}
 
 =head2 $uri = $cb->_host_to_uri( scheme => SCHEME, host => HOST, path => PATH );
 
@@ -341,23 +350,23 @@ Returns the uri on success, and false on failure
 sub _host_to_uri {
     my $self = shift;
     my %hash = @_;
-    
+
     my($scheme, $host, $path);
     my $tmpl = {
         scheme  => { required => 1,             store => \$scheme },
         host    => { default  => 'localhost',   store => \$host },
         path    => { default  => '',            store => \$path },
-    };       
+    };
 
     check( $tmpl, \%hash ) or return;
 
     ### it's an URI, so unixify the path.
     ### VMS has a special method for just that
     $path = ON_VMS
-                ? VMS::Filespec::unixify($path) 
+                ? VMS::Filespec::unixify($path)
                 : File::Spec::Unix->catdir( File::Spec->splitdir( $path ) );
 
-    return "$scheme://" . File::Spec::Unix->catdir( $host, $path ); 
+    return "$scheme://" . File::Spec::Unix->catdir( $host, $path );
 }
 
 =head2 $cb->_vcmp( VERSION, VERSION );
@@ -369,8 +378,9 @@ Normalizes the versions passed and does a '<=>' on them, returning the result.
 sub _vcmp {
     my $self = shift;
     my ($x, $y) = @_;
-    
-    s/_//g foreach $x, $y;
+
+    $x = $self->_version_to_number(version => $x);
+    $y = $self->_version_to_number(version => $y);
 
     return $x <=> $y;
 }
@@ -395,7 +405,7 @@ sub _home_dir {
 
 =head2 $path = $cb->_safe_path( path => $path );
 
-Returns a path that's safe to us on Win32 and VMS. 
+Returns a path that's safe to us on Win32 and VMS.
 
 Only cleans up the path on Win32 if the path exists.
 
@@ -405,36 +415,36 @@ On VMS, it encodes dots to _ using C<VMS::Filespec::vmsify>
 
 sub _safe_path {
     my $self = shift;
-    
+
     my %hash = @_;
-    
+
     my $path;
     my $tmpl = {
         path  => { required => 1,     store => \$path },
-    };       
+    };
 
     check( $tmpl, \%hash ) or return;
-    
+
     if( ON_WIN32 ) {
-        ### only need to fix it up if there's spaces in the path   
+        ### only need to fix it up if there's spaces in the path
         return $path unless $path =~ /\s+/;
-        
+
         ### clean up paths if we are on win32
         return Win32::GetShortPathName( $path ) || $path;
 
     } elsif ( ON_VMS ) {
         ### XXX According to John Malmberg, there's an VMS issue:
         ### catdir on VMS can not currently deal with directory components
-        ### with dots in them.  
-        ### Fixing this is a a three step procedure, which will work for 
-        ### VMS in its traditional ODS-2 mode, and it will also work if 
+        ### with dots in them.
+        ### Fixing this is a a three step procedure, which will work for
+        ### VMS in its traditional ODS-2 mode, and it will also work if
         ### VMS is in the ODS-5 mode that is being implemented.
         ### If the path is already in VMS syntax, assume that we are done.
- 
+
         ### VMS format is a path with a trailing ']' or ':'
         return $path if $path =~ /\:|\]$/;
 
-        ### 1. Make sure that the value to be converted, $path is 
+        ### 1. Make sure that the value to be converted, $path is
         ### in UNIX directory syntax by appending a '/' to it.
         $path .= '/' unless $path =~ m|/$|;
 
@@ -444,17 +454,17 @@ sub _safe_path {
         ### filename translation, as filename translation leaves one dot.
         $path = VMS::Filespec::vmsify( $path );
 
-        ### 3. Use $path = File::Spec->splitdir( VMS::Filespec::vmsify( 
+        ### 3. Use $path = File::Spec->splitdir( VMS::Filespec::vmsify(
         ### $path . '/') to remove the directory delimiters.
 
         ### From John Malmberg:
         ### File::Spec->catdir will put the path back together.
-        ### The '/' trick only works if the string is a directory name 
-        ### with UNIX style directory delimiters or no directory delimiters.  
+        ### The '/' trick only works if the string is a directory name
+        ### with UNIX style directory delimiters or no directory delimiters.
         ### It is to force vmsify to treat the input specification as UNIX.
         ###
         ### There is a VMS::Filespec::unixpath() to do the appending of the '/'
-        ### to the specification, which will do a VMS::Filespec::vmsify() 
+        ### to the specification, which will do a VMS::Filespec::vmsify()
         ### if needed.
         ### However it is not a good idea to call vmsify() on a pathname
         ### returned by unixify(), and it is not a good idea to call unixify()
@@ -465,14 +475,14 @@ sub _safe_path {
         ### trip, but not ones containing filenames.
         $path = File::Spec->catdir( File::Spec->splitdir( $path ) )
     }
-    
+
     return $path;
 }
 
 
 =head2 ($pkg, $version, $ext) = $cb->_split_package_string( package => PACKAGE_STRING );
 
-Splits the name of a CPAN package string up into its package, version 
+Splits the name of a CPAN package string up into its package, version
 and extension parts.
 
 For example, C<Foo-Bar-1.2.tar.gz> would return the following parts:
@@ -484,27 +494,27 @@ For example, C<Foo-Bar-1.2.tar.gz> would return the following parts:
 =cut
 
 {   my $del_re = qr/[-_\+]/i;           # delimiter between elements
-    my $pkg_re = qr/[a-z]               # any letters followed by 
+    my $pkg_re = qr/[a-z]               # any letters followed by
                     [a-z\d]*            # any letters, numbers
                     (?i:\.pm)?          # followed by '.pm'--authors do this :(
                     (?:                 # optionally repeating:
                         $del_re         #   followed by a delimiter
-                        [a-z]           #   any letters followed by 
-                        [a-z\d]*        #   any letters, numbers                        
+                        [a-z]           #   any letters followed by
+                        [a-z\d]*        #   any letters, numbers
                         (?i:\.pm)?      # followed by '.pm'--authors do this :(
                     )*
-                /xi;   
-    
+                /xi;
+
     my $ver_re = qr/[a-z]*\d*?[a-z]*    # contains a digit and possibly letters
                     (?:                 # however, some start with a . only :(
                         [-._]           # followed by a delimiter
                         [a-z\d]+        # and more digits and or letters
                     )*?
                 /xi;
- 
+
     my $ext_re = qr/[a-z]               # a letter, followed by
                     [a-z\d]*            # letters and or digits, optionally
-                    (?:                 
+                    (?:
                         \.              #   followed by a dot and letters
                         [a-z\d]+        #   and or digits (like .tar.bz2)
                     )?                  #   optionally
@@ -517,20 +527,20 @@ For example, C<Foo-Bar-1.2.tar.gz> would return the following parts:
                             ($ext_re)   # extension,
                         )?              # optional, but requires version
                 /xi;
-                
+
     ### composed regex for CPAN packages
     my $full_re = qr/
                     ^
                     (                       # the whole thing
                         ($pkg_re+)          # package
-                        (?: 
+                        (?:
                             $del_re         # delimiter
                             $ver_ext_re     # version + extension
                         )?
                     )
-                    $                    
+                    $
                 /xi;
-                
+
     ### composed regex for perl packages
     my $perl    = PERL_CORE;
     my $perl_re = qr/
@@ -542,97 +552,97 @@ For example, C<Foo-Bar-1.2.tar.gz> would return the following parts:
                         )?
                     )
                     $
-                /xi;       
+                /xi;
 
 
 sub _split_package_string {
         my $self = shift;
         my %hash = @_;
-        
+
         my $str;
         my $tmpl = { package => { required => 1, store => \$str } };
         check( $tmpl, \%hash ) or return;
-        
-        
-        ### 2 different regexes, one for the 'perl' package, 
-        ### one for ordinary CPAN packages.. try them both, 
+
+
+        ### 2 different regexes, one for the 'perl' package,
+        ### one for ordinary CPAN packages.. try them both,
         ### first match wins.
         for my $re ( $full_re, $perl_re ) {
-            
+
             ### try the next if the match fails
             $str =~ $re or next;
 
             my $full    = $1 || '';
-            my $pkg     = $2 || ''; 
+            my $pkg     = $2 || '';
             my $ver     = $3 || '';
             my $ext     = $4 || '';
 
             ### this regex resets the capture markers!
             ### strip the trailing delimiter
             $pkg =~ s/$del_re$//;
-            
+
             ### strip the .pm package suffix some authors insist on adding
             $pkg =~ s/\.pm$//i;
 
             return ($pkg, $ver, $ext, $full );
         }
-        
+
         return;
     }
 }
 
 {   my %escapes = map {
         chr($_) => sprintf("%%%02X", $_)
-    } 0 .. 255;  
-    
+    } 0 .. 255;
+
     sub _uri_encode {
         my $self = shift;
         my %hash = @_;
-        
+
         my $str;
         my $tmpl = {
             uri => { store => \$str, required => 1 }
         };
-        
+
         check( $tmpl, \%hash ) or return;
 
         ### XXX taken straight from URI::Encode
         ### Default unsafe characters.  RFC 2732 ^(uric - reserved)
         $str =~ s|([^A-Za-z0-9\-_.!~*'()])|$escapes{$1}|g;
-    
-        return $str;          
+
+        return $str;
     }
-    
-    
+
+
     sub _uri_decode {
         my $self = shift;
         my %hash = @_;
-        
+
         my $str;
         my $tmpl = {
             uri => { store => \$str, required => 1 }
         };
-        
+
         check( $tmpl, \%hash ) or return;
-    
+
         ### XXX use unencode routine in utils?
-        $str =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg; 
-    
-        return $str;    
+        $str =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+
+        return $str;
     }
 }
 
 sub _update_timestamp {
     my $self = shift;
     my %hash = @_;
-    
+
     my $file;
     my $tmpl = {
         file => { required => 1, store => \$file, allow => FILE_EXISTS }
     };
-    
+
     check( $tmpl, \%hash ) or return;
-   
+
     ### `touch` the file, so windoze knows it's new -jmb
     ### works on *nix too, good fix -Kane
     ### make sure it is writable first, otherwise the `touch` will fail
@@ -642,7 +652,7 @@ sub _update_timestamp {
         error( loc("Couldn't touch %1", $file) );
         return;
     }
-    
+
     return 1;
 }
 

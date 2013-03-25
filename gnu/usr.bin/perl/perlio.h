@@ -25,7 +25,7 @@
                    then there are two modes determined by USE_SFIO:
 
    USE_SFIO    - If set causes PerlIO_xxx() to be #define-d onto sfio functions.
-                 A backward compatability mode for some specialist applications.
+                 A backward compatibility mode for some specialist applications.
 
                  If USE_SFIO is not set then PerlIO_xxx() are real functions
                  defined in perlio.c which implement extra functionality
@@ -187,6 +187,11 @@ PERL_EXPORT_C void PerlIO_clone(pTHX_ PerlInterpreter *proto,
 /* This is to catch case with no stdio */
 #ifndef BUFSIZ
 #define BUFSIZ 1024
+#endif
+
+/* The default buffer size for the perlio buffering layer */
+#ifndef PERLIOBUF_DEFAULT_BUFSIZ
+#define PERLIOBUF_DEFAULT_BUFSIZ (BUFSIZ > 8192 ? BUFSIZ : 8192)
 #endif
 
 #ifndef SEEK_SET

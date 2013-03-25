@@ -250,11 +250,7 @@ Free_t   Perl_mfree proto((Malloc_t where));
 #else
 #   ifndef memcmp
 	/* maybe we should have included the full embedding header... */
-#	ifdef NO_EMBED
-#	    define memcmp my_memcmp
-#	else
-#	    define memcmp Perl_my_memcmp
-#	endif
+#	define memcmp Perl_my_memcmp
 #ifndef __cplusplus
 	extern int memcmp proto((char*, char*, int));
 #endif

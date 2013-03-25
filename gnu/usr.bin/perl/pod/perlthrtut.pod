@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 perlthrtut - Tutorial on threads in Perl
@@ -11,7 +13,7 @@ between threads must be explicit.  The user-level interface for I<ithreads>
 uses the L<threads> class.
 
 B<NOTE>: There was another older Perl threading flavor called the 5.005 model
-that used the L<Threads> class.  This old model was known to have problems, is
+that used the L<threads> class.  This old model was known to have problems, is
 deprecated, and was removed for release 5.10.  You are
 strongly encouraged to migrate any existing 5.005 threads code to the new
 model as soon as possible.
@@ -1041,7 +1043,7 @@ give you the full POSIX API).  For example, there is no way to
 guarantee that a signal sent to a multi-threaded Perl application
 will get intercepted by any particular thread.  (However, a recently
 added feature does provide the capability to send signals between
-threads.  See L<threads/"THREAD SIGNALLING> for more details.)
+threads.  See L<threads/THREAD SIGNALLING> for more details.)
 
 =head1 Thread-Safety of System Libraries
 
@@ -1078,17 +1080,17 @@ on your way to becoming a threaded Perl expert.
 Annotated POD for L<threads>:
 L<http://annocpan.org/?mode=search&field=Module&name=threads>
 
-Lastest version of L<threads> on CPAN:
+Latest version of L<threads> on CPAN:
 L<http://search.cpan.org/search?module=threads>
 
 Annotated POD for L<threads::shared>:
 L<http://annocpan.org/?mode=search&field=Module&name=threads%3A%3Ashared>
 
-Lastest version of L<threads::shared> on CPAN:
+Latest version of L<threads::shared> on CPAN:
 L<http://search.cpan.org/search?module=threads%3A%3Ashared>
 
 Perl threads mailing list:
-L<http://lists.cpan.org/showlist.cgi?name=iThreads>
+L<http://lists.perl.org/list/ithreads.html>
 
 =head1 Bibliography
 

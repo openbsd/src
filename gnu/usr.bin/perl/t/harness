@@ -12,6 +12,7 @@ my $torture; # torture testing?
 
 use TAP::Harness 3.13;
 use strict;
+use Config;
 
 $::do_nothing = $::do_nothing = 1;
 require './TEST';
@@ -109,6 +110,9 @@ if (@ARGV) {
     else {
 	@tests = @ARGV;
     }
+    # This is a hack to force config_heavy.pl to be loaded, before the
+    # prep work for running a test changes directory.
+    1 if $Config{d_fork};
 } else {
     # Ideally we'd get somewhere close to Tux's Oslo rules
     # my $rules = {
@@ -157,7 +161,6 @@ if (@ARGV) {
 	push @seq, $next;
 
 	my @last;
-	use Config;
 	push @last,  sort { lc $a cmp lc $b }
 	    _tests_from_manifest($Config{extensions}, $Config{known_extensions});
 	push @last, <x2p/*.t>;
@@ -177,7 +180,8 @@ if (@ARGV) {
 	    if ($^O eq 'MSWin32') {
 		s,\\,/,g; # canonicalize path
 	    };
-	    m!(.*[/])! or die "'$_'";
+	    # Treat every file matching lib/*.t as a "directory"
+	    m!\A(\.\./lib/[^/]+\.t\z|.*[/])! or die "'$_'";
 	    push @{$dir{$1}}, $_;
 	    $total_time{$1} += $times{$_} || 0;
 	}
@@ -186,7 +190,7 @@ if (@ARGV) {
 
 	# Generate T::H schedule rules that run the contents of each directory
 	# sequentially.
-	push @seq, { par => [ map { { seq => "$_*" } } sort {
+	push @seq, { par => [ map { s!/$!/*!; { seq => $_ } } sort {
 	    # Directories, ordered by total time descending then name ascending
 	    $total_time{$b} <=> $total_time{$a} || $a cmp $b
 	} keys %dir ] };

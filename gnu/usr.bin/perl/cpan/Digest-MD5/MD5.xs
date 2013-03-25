@@ -45,43 +45,76 @@ extern "C" {
 }
 #endif
 
-#ifndef PERL_VERSION
-#    include <patchlevel.h>
-#    if !(defined(PERL_VERSION) || (SUBVERSION > 0 && defined(PATCHLEVEL)))
-#        include <could_not_find_Perl_patchlevel.h>
-#    endif
-#    define PERL_REVISION       5
-#    define PERL_VERSION        PATCHLEVEL
-#    define PERL_SUBVERSION     SUBVERSION
+#ifdef USE_ITHREADS
+STATIC int dup_md5_ctx(pTHX_ MAGIC *mg, CLONE_PARAMS *params)
+{
+    MD5_CTX *new_ctx;
+    PERL_UNUSED_VAR(params);
+    New(55, new_ctx, 1, MD5_CTX);
+    memcpy(new_ctx, mg->mg_ptr, sizeof(MD5_CTX));
+    mg->mg_ptr = (char *)new_ctx;
+    return 0;
+}
 #endif
 
-#if PERL_VERSION <= 4 && !defined(PL_dowarn)
-   #define PL_dowarn dowarn
+STATIC MGVTBL vtbl_md5 = {
+    NULL, /* get */
+    NULL, /* set */
+    NULL, /* len */
+    NULL, /* clear */
+    NULL, /* free */
+#ifdef MGf_COPY
+    NULL, /* copy */
 #endif
-
-#ifdef G_WARN_ON
-   #define DOWARN (PL_dowarn & G_WARN_ON)
-#else
-   #define DOWARN PL_dowarn
+#ifdef MGf_DUP
+# ifdef USE_ITHREADS
+    dup_md5_ctx,
+# else
+    NULL, /* dup */
+# endif
 #endif
-
-#ifndef INT2PTR
-#define INT2PTR(any,d)	(any)(d)
+#ifdef MGf_LOCAL
+    NULL /* local */
 #endif
+};
 
 static MD5_CTX* get_md5_ctx(pTHX_ SV* sv)
 {
-    if (SvROK(sv)) {
-	sv = SvRV(sv);
-	if (SvIOK(sv)) {
-	    MD5_CTX* ctx = INT2PTR(MD5_CTX*, SvIV(sv));
-	    if (ctx) {
-		return ctx;
-            }
-        }
+    MAGIC *mg;
+
+    if (!sv_derived_from(sv, "Digest::MD5"))
+	croak("Not a reference to a Digest::MD5 object");
+
+    for (mg = SvMAGIC(SvRV(sv)); mg; mg = mg->mg_moremagic) {
+	if (mg->mg_type == PERL_MAGIC_ext && mg->mg_virtual == &vtbl_md5) {
+	    return (MD5_CTX *)mg->mg_ptr;
+	}
     }
-    croak("Not a reference to a Digest::MD5 object");
+
+    croak("Failed to get MD5_CTX pointer");
     return (MD5_CTX*)0; /* some compilers insist on a return value */
+}
+
+static SV * new_md5_ctx(pTHX_ MD5_CTX *context, const char *klass)
+{
+    SV *sv = newSV(0);
+    SV *obj = newRV_noinc(sv);
+#ifdef USE_ITHREADS
+    MAGIC *mg;
+#endif
+
+    sv_bless(obj, gv_stashpv(klass, 0));
+
+#ifdef USE_ITHREADS
+    mg =
+#endif
+	sv_magicext(sv, NULL, PERL_MAGIC_ext, &vtbl_md5, (const char *)context, 0);
+
+#ifdef USE_ITHREADS
+    mg->mg_flags |= MGf_DUP;
+#endif
+
+    return obj;
 }
 
 
@@ -173,15 +206,13 @@ new(xclass)
     PPCODE:
 	if (!SvROK(xclass)) {
 	    STRLEN my_na;
-	    char *sclass = SvPV(xclass, my_na);
+	    const char *sclass = SvPV(xclass, my_na);
 	    New(55, context, 1, MD5_CTX);
-	    ST(0) = sv_newmortal();
-	    sv_setref_pv(ST(0), sclass, (void*)context);
-	    SvREADONLY_on(SvRV(ST(0)));
+	    ST(0) = sv_2mortal(new_md5_ctx(aTHX_ context, sclass));
 	} else {
 	    context = get_md5_ctx(aTHX_ xclass);
 	}
-        MD5Init(context);
+	MD5Init(context);
 	XSRETURN(1);
 
 void
@@ -193,9 +224,7 @@ clone(self)
 	MD5_CTX* context;
     PPCODE:
 	New(55, context, 1, MD5_CTX);
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), myname , (void*)context);
-	SvREADONLY_on(SvRV(ST(0)));
+	ST(0) = sv_2mortal(new_md5_ctx(aTHX_ context, myname));
 	memcpy(context,cont,sizeof(MD5_CTX));
 	XSRETURN(1);
 
@@ -215,8 +244,10 @@ add(self, ...)
 	STRLEN len;
     PPCODE:
 	for (i = 1; i < items; i++) {
+            U32 had_utf8 = SvUTF8(ST(i));
 	    data = (unsigned char *)(SvPVbyte(ST(i), len));
 	    MD5Update(context, data, len);
+	    if (had_utf8) sv_utf8_upgrade(ST(i));
 	}
 	XSRETURN(1);  /* self */
 
@@ -297,8 +328,8 @@ md5(...)
     PPCODE:
 	MD5Init(&ctx);
 
-	if (DOWARN) {
-            char *msg = 0;
+	if (PL_dowarn & G_WARN_ON) {
+            const char *msg = 0;
 	    if (items == 1) {
 		if (SvROK(ST(0))) {
                     SV* sv = SvRV(ST(0));
@@ -309,7 +340,7 @@ md5(...)
 		}
 	    }
 	    else if (items > 1) {
-		data = (unsigned char *)SvPVbyte(ST(0), len);
+		data = (unsigned char *)SvPV(ST(0), len);
 		if (len == 11 && memEQ("Digest::MD5", data, 11)) {
 		    msg = "probably called as class method";
 		}
@@ -327,8 +358,10 @@ md5(...)
 	}
 
 	for (i = 0; i < items; i++) {
+            U32 had_utf8 = SvUTF8(ST(i));
 	    data = (unsigned char *)(SvPVbyte(ST(i), len));
 	    MD5Update(&ctx, data, len);
+	    if (had_utf8) sv_utf8_upgrade(ST(i));
 	}
 	MD5Final(digeststr, &ctx);
         ST(0) = make_mortal_sv(aTHX_ digeststr, ix);

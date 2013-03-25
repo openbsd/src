@@ -12,15 +12,15 @@
 STRUCT_MGVTBL_DEFINITION;
 #else
 struct mgvtbl {
-    int		(CPERLscope(*svt_get))	(pTHX_ SV *sv, MAGIC* mg);
-    int		(CPERLscope(*svt_set))	(pTHX_ SV *sv, MAGIC* mg);
-    U32		(CPERLscope(*svt_len))	(pTHX_ SV *sv, MAGIC* mg);
-    int		(CPERLscope(*svt_clear))(pTHX_ SV *sv, MAGIC* mg);
-    int		(CPERLscope(*svt_free))	(pTHX_ SV *sv, MAGIC* mg);
-    int		(CPERLscope(*svt_copy))	(pTHX_ SV *sv, MAGIC* mg,
+    int		(*svt_get)	(pTHX_ SV *sv, MAGIC* mg);
+    int		(*svt_set)	(pTHX_ SV *sv, MAGIC* mg);
+    U32		(*svt_len)	(pTHX_ SV *sv, MAGIC* mg);
+    int		(*svt_clear)(pTHX_ SV *sv, MAGIC* mg);
+    int		(*svt_free)	(pTHX_ SV *sv, MAGIC* mg);
+    int		(*svt_copy)	(pTHX_ SV *sv, MAGIC* mg,
     					SV *nsv, const char *name, I32 namlen);
-    int		(CPERLscope(*svt_dup))	(pTHX_ MAGIC *mg, CLONE_PARAMS *param);
-    int		(CPERLscope(*svt_local))(pTHX_ SV *nsv, MAGIC *mg);
+    int		(*svt_dup)	(pTHX_ MAGIC *mg, CLONE_PARAMS *param);
+    int		(*svt_local)(pTHX_ SV *nsv, MAGIC *mg);
 };
 #endif
 
@@ -38,7 +38,7 @@ struct magic {
 #define MGf_TAINTEDDIR 1        /* PERL_MAGIC_envelem only */
 #define MGf_MINMATCH   1        /* PERL_MAGIC_regex_global only */
 #define MGf_REFCOUNTED 2
-#define MGf_GSKIP      4
+#define MGf_GSKIP      4	/* skip further GETs until after next SET */
 #define MGf_COPY       8	/* has an svt_copy  MGVTBL entry */
 #define MGf_DUP     0x10 	/* has an svt_dup   MGVTBL entry */
 #define MGf_LOCAL   0x20	/* has an svt_local MGVTBL entry */
@@ -60,6 +60,8 @@ struct magic {
 #define SvTIED_mg(sv,how) (SvRMAGICAL(sv) ? mg_find((sv),(how)) : NULL)
 #define SvTIED_obj(sv,mg) \
     ((mg)->mg_obj ? (mg)->mg_obj : sv_2mortal(newRV(sv)))
+
+#define whichsig(pv) whichsig_pv(pv)
 
 /*
  * Local variables:

@@ -1,30 +1,13 @@
 #! perl -w
 #
-# $Id$
-#
 # This script is written intentionally in EUC-JP
 # -- dankogai
 
 BEGIN {
-    require Config; import Config;
-    if ($Config{'extensions'} !~ /\bEncode\b/) {
-      print "1..0 # Skip: Encode was not built\n";
-      exit 0;
-    }
-    if (ord("A") == 193) {
-        print "1..0 # Skip: EBCDIC\n";
-        exit 0;
-    }
-    unless (PerlIO::Layer->find('perlio')){
-        print "1..0 # Skip: PerlIO required\n";
-        exit 0;
-    }
-    if ($ENV{PERL_CORE_MINITEST}) {
-        print "1..0 # Skip: no dynamic loading on miniperl, no Encode\n";
-        exit 0;
-    }
-    $| = 1;
     require './test.pl';
+    skip_all_without_dynamic_extension('Encode');
+    skip_all("EBCDIC") if $::IS_EBCDIC;
+    skip_all_without_perlio();
 }
 
 use strict;

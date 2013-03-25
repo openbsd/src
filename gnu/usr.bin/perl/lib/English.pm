@@ -1,6 +1,6 @@
 package English;
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -139,7 +139,7 @@ sub import {
 
 @COMPLETE_EXPORT = ( @MINIMAL_EXPORT, @MATCH_EXPORT ) ;
 
-# The ground of all being. @ARG is deprecated (5.005 makes @_ lexical)
+# The ground of all being.
 
 	*ARG					= *_	;
 

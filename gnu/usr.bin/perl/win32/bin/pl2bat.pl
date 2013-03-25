@@ -26,7 +26,7 @@ Usage:  $0 [-h]
                             a /^#!.*perl/ line was already present).
         -s stripsuffix  strip this suffix from file before appending ".bat"
                             Not case-sensitive
-                            Can be a regex if it begins with `/'
+                            Can be a regex if it begins with '/'
                             Defaults to "/\.plx?/"
         -h              show this help
 EOT
@@ -335,7 +335,7 @@ variable to determine which operating system it is being run from.
 
 Strip a suffix string from file name before appending a ".bat"
 suffix.  The suffix is not case-sensitive.  It can be a regex if
-it begins with `/' (the trailing '/' is optional and a trailing
+it begins with '/' (the trailing '/' is optional and a trailing
 C<$> is always assumed).  Defaults to C</.plx?/>.
 
 =item B<-w>

@@ -1,3 +1,42 @@
+1.25 -- Sat Mar 24 13:10:13 UTC 2012
+
+  * Restore back-compat. to perl 5.6 (thanks to Zefram)
+
+1.24 -- Thu Mar 22 18:10:10 UTC 2012
+
+  * Update to 1.24 release version (no other changes since 1.23_04).
+
+1.23_04 -- Sat Mar 10 00:16:16 UTC 2012
+
+  * RT#72700 Fix off-by-two on string literal length
+
+1.23_03 -- Tue Sep 14 10:09:59 CDT 2010
+
+  * Min perl version supported for build is not 5.008
+  * Dropped the pure-Perl implementation of both Scalar::- and List::Util.
+  * RT#61118 Fix assumption in sum() that once magic, always magic
+
+1.23_02 -- Tue Mar 30 11:09:15 CDT 2010
+
+  * Fix first() and reduce() to check the callback first; &first(1) is now illigal. [gfx]
+  * Fix reduce() to allow XSUB callbacks [gfx]
+  * Fix first() to allow XSUB callbacks [gfx]
+  * Resolve RT #55763: tainted() doesn't do SvGETMAGIC(sv) [gfx]
+  * define CvISXSUB so older perl versions will still compile
+
+1.23_01 -- Mon Mar 22 08:24:11 CDT 2010
+
+  * Add failing tests; SVt_RV is not directly SvROK [gfx]
+  * Implement openhandle() in XS (with extra tests) [gfx]
+  * Modernize *.pm [gfx]
+  * Modernize ListUtil.xs [gfx]
+  * Add ppport.h [gfx]
+  * Fix an overloading issue on sum(), and add tests for overloading [gfx]
+  * Small tweaks for minstr()/maxstr() [gfx]
+  * Optimize dualvar() [gfx]
+  * Use sv_copypv() instead of SvPV() and sv_setpv() [gfx]
+  * avoid non-portable warnings
+
 1.23 -- Wed Mar 10 20:50:00 CST 2010
 
   * Add a test file to ensure 'GETMAGIC' called once [gfx]

@@ -3,10 +3,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
+    require 'test.pl';
 }
 
-require 'test.pl';
-plan( tests => 16 );
+plan( tests => 17 );
 
 @oops = @ops = <op/*>;
 
@@ -48,17 +48,30 @@ my $i = 0;
 for (1..2) {
     eval "<.>";
     ok(!length($@),"eval'ed a glob $_");
-    undef %File::Glob::;
+    local %File::Glob::;
     ++$i;
 }
 cmp_ok($i,'==',2,'remove File::Glob stash');
 
 # a more sinister version of the same test (crashes from 5.8 to 5.13.1)
 {
-    undef %File::Glob::;
+    local %File::Glob::;
     local %CORE::GLOBAL::;
     eval "<.>";
     ok(!length($@),"remove File::Glob stash *and* CORE::GLOBAL::glob");
+}
+# Also try undeffing the typeglob itself, instead of hiding it
+{
+    local *CORE::GLOBAL::glob;
+    ok eval  { glob("0"); 1 },
+	'undefined *CORE::GLOBAL::glob{CODE} at run time';
+}
+# And hide the typeglob without hiding File::Glob (crashes from 5.8
+# to 5.15.4)
+{
+    local %CORE::GLOBAL::;
+    ok eval q{ glob("0"); 1 },
+	'undefined *CORE::GLOBAL::glob{CODE} at compile time';
 }
 
 # ... while ($var = glob(...)) should test definedness not truth
@@ -82,9 +95,18 @@ SKIP: {
 
 cmp_ok(scalar(@oops),'>',0,'glob globbed something');
 
-*aieee = 4;
-pass('Can assign integers to typeglobs');
-*aieee = 3.14;
-pass('Can assign floats to typeglobs');
-*aieee = 'pi';
-pass('Can assign strings to typeglobs');
+SKIP: {
+    skip "~ globbing returns nothing on VMS", 1 if $^O eq 'VMS';
+    # This test exists mainly for miniperl, to test that external calls to
+    # csh, which clear %ENV first, leave $ENV{HOME}.
+    # On Windows, external glob uses File::DosGlob which returns "~", so
+    # this should pass anyway.
+    ok <~>, '~ works';
+}
+
+{
+    my $called;
+    local *CORE::GLOBAL::glob = sub { ++$called };
+    eval 'CORE::glob("0")';
+    ok !$called, 'CORE::glob bypasses overrides';
+}

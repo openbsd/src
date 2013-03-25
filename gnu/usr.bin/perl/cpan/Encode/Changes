@@ -1,6 +1,74 @@
 # Revision history for Perl extension Encode.
 #
-# $Id: Changes,v 2.39 2009/11/26 09:23:59 dankogai Exp dankogai $
+# $Id: Changes,v 2.44 2011/08/09 07:49:44 dankogai Exp dankogai $
+#
+$Revision: 2.44 $ $Date: 2011/08/09 07:49:44 $
+! Unicode/Unicode.xs
+  Addressed the following:
+    Date: Fri, 22 Jul 2011 13:58:43 +0200
+    From: Robert Zacek <zacek@avast.com>
+    To: perl5-security-report@perl.org
+    Subject: Unicode.xs!decode_xs n-byte heap-overflow
+! Encode.pm encoding.pm
+! lib/Encode/Alias.pm lib/Encode/Encoder.pm lib/Encode/Guess.pm
+  Applied: RT#69735: patch for use constant DEBUG =>
+  https://rt.cpan.org/Ticket/Update.html?id=69735
+
+2.43 2011/05/21 23:14:43
+! lib/Encode/Alias.pm
+  Addressed RT#68361: Encode::Bytes x-mac-... aliases missing
+  https://rt.cpan.org/Ticket/Display.html?id=68361
+! Encode.pm
+  Applied the 0001-Fix-typo-in-pod.patch
+  https://rt.cpan.org/Ticket/Update.html?id=64381
+  Addressed RT#65796 Deep recursion error finding invalid charset
+  https://rt.cpan.org/Ticket/Update.html?id=65796
+  Applied a jumbo doc patch by Tom Christiansen
+  Message-Id: <14795.1304618434@chthon>
+
+2.42 2010/12/31 22:48:48
+! Encode.xs
+! Unicode/Unicode.xs
+  Applied: RT#64371: Update for 5.14 API changes
+  http://rt.cpan.org/Ticket/Display.html?id=64371
+
+2.41 2010/12/23 11:05:58
+! lib/Encode/MIME/Header.pm
+  Applied: RT#63387 encode of MIME-Header inserts too much whitespace
+  http://rt.cpan.org/Ticket/Display.html?id=63387
+! t/Aliases.t lib/Encode/Alias.pm
+  Applied: RT#63286: Various Encode::Alias improvements
+  http://rt.cpan.org/Ticket/Display.html?id=63286
+
+2.40 2010/09/18 18:39:51
+! Encode.pm Encode.xs
++ t/utf8ref.t
+  Addressed: RT#59981: find_encoding("UTF-8")->encode crashes
+    decode_utf8() is now a little faster, too.
+  http://rt.cpan.org/Ticket/Display.html?id=59981
+  http://rt.cpan.org/Ticket/Display.html?id=58541
+! lib/Encode/Unicode/UTF7.pm
+  Addressed: RT#56443 utf-8 flag is not turned off after calling
+    Encode::encode('UTF-7', $string) to encode an ascii string
+  http://rt.cpan.org/Ticket/Display.html?id=56443
+! t/utf8strict.t
+  Addressed: RT#57799
+  http://rt.cpan.org/Ticket/Display.html?id=57799
+! lib/Encode/Guess.pm
+  Addressed: RT#46080: guess_encoding documentation
+  http://rt.cpan.org/Ticket/Display.html?id=46080
+! ucm/nextstep.ucm
+  Addressed: RT#59668: nextstep encoding is broken - missing ASCII characters
+  http://rt.cpan.org/Ticket/Display.html?id=59668
+! lib/Encode/MIME/Header.pm t/mime-header.t
+  Addressed: RT#52103: Encode::MIME::Header encoded words not separated by
+    white space
+  http://rt.cpan.org/Ticket/Display.html?id=52103
+! t/guess.t lib/Encode/Guess.pm
+  Addressed: Encode: silenced a warning by from_to(..., 'Guess', ...)
+  http://coderepos.org/share/changeset/37731
+
+2.39 2009/11/26 09:23:59
 ! Encode.xs t/fallback.t
   $utf8 = decode('utf8', $malformed, sub{ ... }) # now works!
   http://rt.cpan.org/Ticket/Display.html?id=51204
@@ -8,7 +76,7 @@
   $ENV{'PERL_CORE'} tricks removed since they are no longer necessary.
   Message-Id: <20091116161513.GA25556@bestpractical.com>
 
-$Revision: 2.39 $ $Date: 2009/11/26 09:23:59 $
+2.38 2009/11/16 14:08:13
 ! Encode.xs
   Addressed: Encode memory corruption [perl #70528]
   Message-Id: <alpine.LFD.2.00.0911152328070.9483@ein.m-l.org>

@@ -52,7 +52,7 @@ X<scalar>
     $#days		# the last index of array @days
 
 Entire arrays (and slices of arrays and hashes) are denoted by '@',
-which works much like the word "these" or "those" does in English,
+which works much as the word "these" or "those" does in English,
 in that it indicates multiple values are expected.
 X<array>
 
@@ -140,7 +140,7 @@ to determine the context for the right argument.  Assignment to a
 scalar evaluates the right-hand side in scalar context, while
 assignment to an array or hash evaluates the righthand side in list
 context.  Assignment to a list (or slice, which is just a list
-anyway) also evaluates the righthand side in list context.
+anyway) also evaluates the right-hand side in list context.
 
 When you use the C<use warnings> pragma or Perl's B<-w> command-line 
 option, you may see warnings
@@ -179,8 +179,9 @@ are considered pretty much the same thing for nearly all purposes,
 references are strongly-typed, uncastable pointers with builtin
 reference-counting and destructor invocation.
 
-A scalar value is interpreted as TRUE in the Boolean sense if it is not
-the null string or the number 0 (or its string equivalent, "0").  The
+A scalar value is interpreted as FALSE in the Boolean sense
+if it is undefined, the null string or the number 0 (or its
+string equivalent, "0"), and TRUE if it is anything else.  The
 Boolean context is just a special kind of scalar context where no 
 conversion to a string or a number is ever performed.
 X<boolean> X<bool> X<true> X<false> X<truth>
@@ -251,14 +252,6 @@ which return whatever they feel like returning.)  The following is
 always true:
 X<array, length>
 
-    scalar(@whatever) == $#whatever - $[ + 1;
-
-Version 5 of Perl changed the semantics of C<$[>: files that don't set
-the value of C<$[> no longer need to worry about whether another
-file changed its value.  (In other words, use of C<$[> is deprecated.)
-So in general you can assume that
-X<$[>
-
     scalar(@whatever) == $#whatever + 1;
 
 Some programmers choose to use an explicit conversion so as to 
@@ -276,8 +269,8 @@ set.  For example, you stick 10,000 things in a hash, but evaluating
 %HASH in scalar context reveals C<"1/16">, which means only one out
 of sixteen buckets has been touched, and presumably contains all
 10,000 of your items.  This isn't supposed to happen.  If a tied hash
-is evaluated in scalar context, a fatal error will result, since this
-bucket usage information is currently not available for tied hashes.
+is evaluated in scalar context, the C<SCALAR> method is called (with a
+fallback to C<FIRSTKEY>).
 X<hash, scalar context> X<hash, bucket> X<bucket>
 
 You can preallocate space for a hash by assigning to the keys() function.
@@ -302,7 +295,9 @@ integer formats:
     0b011011            # binary
 
 You are allowed to use underscores (underbars) in numeric literals
-between digits for legibility.  You could, for example, group binary
+between digits for legibility (but not multiple underscores in a row:
+C<23__500> is not legal; C<23_500> is).
+You could, for example, group binary
 digits by threes (as for a Unix-style mode argument such as 0b110_100_100)
 or by fours (to represent nibbles, as in 0b1010_0110) or in other groups.
 X<number, literal>
@@ -391,7 +386,7 @@ inet_aton()/inet_ntoa() routines of the Socket package.
 
 Note that since Perl 5.8.1 the single-number v-strings (like C<v65>)
 are not v-strings before the C<< => >> operator (which is usually used
-to separate a hash key from a hash value), instead they are interpreted
+to separate a hash key from a hash value); instead they are interpreted
 as literal strings ('v65').  They were v-strings from Perl 5.6.0 to
 Perl 5.8.0, but that caused more confusion and breakage than good.
 Multi-number v-strings like C<v65.66> and C<65.66.67> continue to
@@ -403,11 +398,16 @@ X<end> X<data> X<^D> X<^Z>
 
 The special literals __FILE__, __LINE__, and __PACKAGE__
 represent the current filename, line number, and package name at that
-point in your program.  They may be used only as separate tokens; they
+point in your program.  __SUB__ gives a reference to the current
+subroutine.  They may be used only as separate tokens; they
 will not be interpolated into strings.  If there is no current package
 (due to an empty C<package;> directive), __PACKAGE__ is the undefined
-value.
-X<__FILE__> X<__LINE__> X<__PACKAGE__> X<line> X<file> X<package>
+value. (But the empty C<package;> is no longer supported, as of version
+5.10.)  Outside of a subroutine, __SUB__ is the undefined value.  __SUB__
+is only available in 5.16 or higher, and only with a C<use v5.16> or
+C<use feature "current_sub"> declaration.
+X<__FILE__> X<__LINE__> X<__PACKAGE__> X<__SUB__>
+X<line> X<file> X<package>
 
 The two control characters ^D and ^Z, and the tokens __END__ and __DATA__
 may be used to indicate the logical end of the script before the actual
@@ -416,12 +416,13 @@ end of file.  Any following text is ignored.
 Text after __DATA__ may be read via the filehandle C<PACKNAME::DATA>,
 where C<PACKNAME> is the package that was current when the __DATA__
 token was encountered.  The filehandle is left open pointing to the
-contents after __DATA__.  It is the program's responsibility to
-C<close DATA> when it is done reading from it.  For compatibility with
-older scripts written before __DATA__ was introduced, __END__ behaves
-like __DATA__ in the top level script (but not in files loaded with
-C<require> or C<do>) and leaves the remaining contents of the
-file accessible via C<main::DATA>.
+line after __DATA__.  The program should C<close DATA> when it is done
+reading from it.  (Leaving it open leaks filehandles if the module is
+reloaded for any reason, so it's a safer practice to close it.)  For
+compatibility with older scripts written before __DATA__ was
+introduced, __END__ behaves like __DATA__ in the top level script (but
+not in files loaded with C<require> or C<do>) and leaves the remaining
+contents of the file accessible via C<main::DATA>.
 
 See L<SelfLoader> for more description of __DATA__, and
 an example of its use.  Note that you cannot read from the DATA
@@ -451,7 +452,7 @@ produces a compile-time error instead.  The restriction lasts to the
 end of the enclosing block.  An inner block may countermand this
 by saying C<no strict 'subs'>.
 
-=head3 Array Joining Delimiter
+=head3 Array Interpolation
 X<array, interpolation> X<interpolation, array> X<$">
 
 Arrays and slices are interpolated into double-quoted strings
@@ -667,7 +668,8 @@ of how to arrange for an output ordering.
 
 =head2 Subscripts
 
-An array is subscripted by specifying a dollar sign (C<$>), then the
+An array can be accessed one scalar at a
+time by specifying a dollar sign (C<$>), then the
 name of the array (without the leading C<@>), then the subscript inside
 square brackets.  For example:
 
@@ -691,15 +693,26 @@ are used. For example:
 
     print "Darwin's First Name is ", $scientists{"Darwin"}, "\n";
 
+You can also subscript a list to get a single element from it:
+
+    $dir = (getpwnam("daemon"))[7];
+
+=head2 Multi-dimensional array emulation
+
+Multidimensional arrays may be emulated by subscripting a hash with a
+list. The elements of the list are joined with the subscript separator
+(see L<perlvar/$;>).
+
+    $foo{$a,$b,$c}
+
+is equivalent to
+
+    $foo{join($;, $a, $b, $c)}
+
+The default subscript separator is "\034", the same as SUBSEP in B<awk>.
+
 =head2 Slices
 X<slice> X<array, slice> X<hash, slice>
-
-A common way to access an array or a hash is one scalar element at a
-time.  You can also subscript a list to get a single element from it.
-
-    $whoami = $ENV{"USER"};             # one element from the hash
-    $parent = $ISA[0];                  # one element from the array
-    $dir    = (getpwnam("daemon"))[7];  # likewise, but with list
 
 A slice accesses several elements of a list, an array, or a hash
 simultaneously using a list of subscripts.  It's more convenient
@@ -760,6 +773,13 @@ As noted earlier in this document, the scalar sense of list assignment
 is the number of elements on the right-hand side of the assignment.
 The null list contains no elements, so when the password file is
 exhausted, the result is 0, not 2.
+
+Slices in scalar context return the last item of the slice.
+
+    @a = qw/first second third/;
+    %h = (first => 'A', second => 'B');
+    $t = @a[0, 1];                  # $t is now 'second'
+    $u = @h{'first', 'second'};     # $u is now 'B'
 
 If you're confused about why you use an '@' there on a hash slice
 instead of a '%', think of it like this.  The type of bracket (square
@@ -856,7 +876,7 @@ C<use strict 'refs'> forbids such practice.
 Another way to create anonymous filehandles is with the Symbol
 module or with the IO::Handle module and its ilk.  These modules
 have the advantage of not hiding different types of the same name
-during the local().  See the bottom of L<perlfunc/open()> for an
+during the local().  See the bottom of L<perlfunc/open> for an
 example.
 
 =head1 SEE ALSO

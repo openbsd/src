@@ -10,7 +10,7 @@ BEGIN {
 
 use warnings;
 use strict;
-plan tests => 67;
+plan tests => 80;
 our $TODO;
 
 my $deprecated = 0;
@@ -205,6 +205,17 @@ sub f1 {
 }
 f1();
 
+# bug #99850, which is similar - freeing the subroutine we are about to
+# go(in)to during a FREETMPS call should not crash perl.
+
+package _99850 {
+    sub reftype{}
+    DESTROY { undef &reftype }
+    eval { sub { my $guard = bless []; goto &reftype }->() };
+}
+like $@, qr/^Goto undefined subroutine &_99850::reftype at /,
+   'goto &foo undefining &foo on sub cleanup';
+
 # bug #22181 - this used to coredump or make $x undefined, due to
 # erroneous popping of the inner BLOCK context
 
@@ -231,7 +242,7 @@ close $f;
 
 $r = runperl(prog => 'use Op_goto01; print qq[DONE\n]');
 is($r, "OK\nDONE\n", "goto within use-d file"); 
-unlink "Op_goto01.pm";
+unlink_all "Op_goto01.pm";
 
 # test for [perl #24108]
 $ok = 1;
@@ -415,7 +426,11 @@ sub recurse2 {
     my $x = shift;
     $_[0] ? +1 + recurse1($_[0] - 1) : 0
 }
+my $w = 0;
+$SIG{__WARN__} = sub { ++$w };
 is(recurse1(500), 500, 'recursive goto &foo');
+is $w, 0, 'no recursion warnings for "no warnings; goto &sub"';
+delete $SIG{__WARN__};
 
 # [perl #32039] Chained goto &sub drops data too early. 
 
@@ -483,3 +498,141 @@ is($deprecated, 0);
     is($x, 10,
        'labels outside evals can be distinguished from the start of the eval');
 }
+
+goto wham_eth;
+die "You can't get here";
+
+wham_eth: 1 if 0;
+ouch_eth: pass('labels persist even if their statement is optimised away');
+
+$foo = "(0)";
+if($foo eq $foo) {
+    goto bungo;
+}
+$foo .= "(9)";
+bungo:
+format CHOLET =
+wellington
+.
+$foo .= "(1)";
+SKIP: {
+    skip_if_miniperl("no dynamic loading on miniperl, so can't load PerlIO::scalar", 1);
+    my $cholet;
+    open(CHOLET, ">", \$cholet);
+    write CHOLET;
+    close CHOLET;
+    $foo .= "(".$cholet.")";
+    is($foo, "(0)(1)(wellington\n)", "label before format decl");
+}
+
+$foo = "(A)";
+if($foo eq $foo) {
+    goto orinoco;
+}
+$foo .= "(X)";
+orinoco:
+sub alderney { return "tobermory"; }
+$foo .= "(B)";
+$foo .= "(".alderney().")";
+is($foo, "(A)(B)(tobermory)", "label before sub decl");
+
+$foo = "[0:".__PACKAGE__."]";
+if($foo eq $foo) {
+    goto bulgaria;
+}
+$foo .= "[9]";
+bulgaria:
+package Tomsk;
+$foo .= "[1:".__PACKAGE__."]";
+$foo .= "[2:".__PACKAGE__."]";
+package main;
+$foo .= "[3:".__PACKAGE__."]";
+is($foo, "[0:main][1:Tomsk][2:Tomsk][3:main]", "label before package decl");
+
+$foo = "[A:".__PACKAGE__."]";
+if($foo eq $foo) {
+    goto adelaide;
+}
+$foo .= "[Z]";
+adelaide:
+package Cairngorm {
+    $foo .= "[B:".__PACKAGE__."]";
+}
+$foo .= "[C:".__PACKAGE__."]";
+is($foo, "[A:main][B:Cairngorm][C:main]", "label before package block");
+
+our $obidos;
+$foo = "{0}";
+if($foo eq $foo) {
+    goto shansi;
+}
+$foo .= "{9}";
+shansi:
+BEGIN { $obidos = "x"; }
+$foo .= "{1$obidos}";
+is($foo, "{0}{1x}", "label before BEGIN block");
+
+$foo = "{A:".(1.5+1.5)."}";
+if($foo eq $foo) {
+    goto stepney;
+}
+$foo .= "{Z}";
+stepney:
+use integer;
+$foo .= "{B:".(1.5+1.5)."}";
+is($foo, "{A:3}{B:2}", "label before use decl");
+
+$foo = "<0>";
+if($foo eq $foo) {
+    goto tom;
+}
+$foo .= "<9>";
+tom: dick: harry:
+$foo .= "<1>";
+$foo .= "<2>";
+is($foo, "<0><1><2>", "first of three stacked labels");
+
+$foo = "<A>";
+if($foo eq $foo) {
+    goto beta;
+}
+$foo .= "<Z>";
+alpha: beta: gamma:
+$foo .= "<B>";
+$foo .= "<C>";
+is($foo, "<A><B><C>", "second of three stacked labels");
+
+$foo = ",0.";
+if($foo eq $foo) {
+    goto gimel;
+}
+$foo .= ",9.";
+alef: bet: gimel:
+$foo .= ",1.";
+$foo .= ",2.";
+is($foo, ",0.,1.,2.", "third of three stacked labels");
+
+# [perl #112316] Wrong behavior regarding labels with same prefix
+sub same_prefix_labels {
+    my $pass;
+    my $first_time = 1;
+    CATCH: {
+        if ( $first_time ) {
+            CATCHLOOP: {
+                if ( !$first_time ) {
+                  return 0;
+                }
+                $first_time--;
+                goto CATCH;
+            }
+        }
+        else {
+            return 1;
+        }
+    }
+}
+
+ok(
+   same_prefix_labels(),
+   "perl 112316: goto and labels with the same prefix doesn't get mixed up"
+);

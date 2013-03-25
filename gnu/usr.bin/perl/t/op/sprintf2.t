@@ -53,7 +53,7 @@ for (int(~0/2+1), ~0, "9999999999999999999") {
     is(eval {sprintf "%${_}d", 0}, undef, "no sprintf result expected %${_}d");
     like($@, qr/^Integer overflow in format string for sprintf /, "overflow in sprintf");
     is(eval {printf "%${_}d\n", 0}, undef, "no printf result expected %${_}d");
-    like($@, qr/^Integer overflow in format string for prtf /, "overflow in printf");
+    like($@, qr/^Integer overflow in format string for printf /, "overflow in printf");
 }
 
 # check %NNN$ for range bounds

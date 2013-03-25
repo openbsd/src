@@ -1,18 +1,17 @@
 package CGI::Util;
-
+require 5.008001;
 use strict;
-use vars qw($VERSION @EXPORT_OK @ISA @A2E @E2A);
 require Exporter;
-@ISA = qw(Exporter);
-@EXPORT_OK = qw(rearrange rearrange_header make_attributes unescape escape 
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(rearrange rearrange_header make_attributes unescape escape 
 		expires ebcdic2ascii ascii2ebcdic);
 
-$VERSION = '3.51';
+our $VERSION = '3.53';
 
 use constant EBCDIC => "\t" ne "\011";
 
 # (ord('^') == 95) for codepage 1047 as on os390, vmesa
-@A2E = (
+our @A2E = (
    0,  1,  2,  3, 55, 45, 46, 47, 22,  5, 21, 11, 12, 13, 14, 15,
   16, 17, 18, 19, 60, 61, 50, 38, 24, 25, 63, 39, 28, 29, 30, 31,
   64, 90,127,123, 91,108, 80,125, 77, 93, 92, 78,107, 96, 75, 97,
@@ -30,7 +29,7 @@ use constant EBCDIC => "\t" ne "\011";
   68, 69, 66, 70, 67, 71,156, 72, 84, 81, 82, 83, 88, 85, 86, 87,
  140, 73,205,206,203,207,204,225,112,221,222,219,220,141,142,223
 	 );
-@E2A = (
+our @E2A = (
    0,  1,  2,  3,156,  9,134,127,151,141,142, 11, 12, 13, 14, 15,
   16, 17, 18, 19,157, 10,  8,135, 24, 25,146,143, 28, 29, 30, 31,
  128,129,130,131,132,133, 23, 27,136,137,138,139,140,  5,  6,  7,
@@ -162,47 +161,10 @@ sub simple_escape {
 }
 
 sub utf8_chr {
-        my $c = shift(@_);
-	if ($] >= 5.006){
-	    require utf8;
-	    my $u = chr($c);
-	    utf8::encode($u); # drop utf8 flag
-	    return $u;
-	}
-        if ($c < 0x80) {
-                return sprintf("%c", $c);
-        } elsif ($c < 0x800) {
-                return sprintf("%c%c", 0xc0 | ($c >> 6), 0x80 | ($c & 0x3f));
-        } elsif ($c < 0x10000) {
-                return sprintf("%c%c%c",
-                                           0xe0 |  ($c >> 12),
-                                           0x80 | (($c >>  6) & 0x3f),
-                                           0x80 | ( $c          & 0x3f));
-        } elsif ($c < 0x200000) {
-                return sprintf("%c%c%c%c",
-                                           0xf0 |  ($c >> 18),
-                                           0x80 | (($c >> 12) & 0x3f),
-                                           0x80 | (($c >>  6) & 0x3f),
-                                           0x80 | ( $c          & 0x3f));
-        } elsif ($c < 0x4000000) {
-                return sprintf("%c%c%c%c%c",
-                                           0xf8 |  ($c >> 24),
-                                           0x80 | (($c >> 18) & 0x3f),
-                                           0x80 | (($c >> 12) & 0x3f),
-                                           0x80 | (($c >>  6) & 0x3f),
-                                           0x80 | ( $c          & 0x3f));
-
-        } elsif ($c < 0x80000000) {
-                return sprintf("%c%c%c%c%c%c",
-                                           0xfc |  ($c >> 30),
-                                           0x80 | (($c >> 24) & 0x3f),
-                                           0x80 | (($c >> 18) & 0x3f),
-                                           0x80 | (($c >> 12) & 0x3f),
-                                           0x80 | (($c >> 6)  & 0x3f),
-                                           0x80 | ( $c          & 0x3f));
-        } else {
-                return utf8_chr(0xfffd);
-        }
+    my $c = shift(@_);
+    my $u = chr($c);
+    utf8::encode($u); # drop utf8 flag
+    return $u;
 }
 
 # unescape URL-encoded data
@@ -236,7 +198,7 @@ sub unescape {
 # We cannot use the %u escapes, they were rejected by W3C, so the official
 # way is %XX-escaped utf-8 encoding.
 # Naturally, Unicode strings have to be converted to their utf-8 byte
-# representation.  (No action is required on 5.6.)
+# representation. 
 # Byte strings were traditionally used directly as a sequence of octets.
 # This worked if they actually represented binary data (i.e. in CGI::Compress).
 # This also worked if these byte strings were actually utf-8 encoded; e.g.,
@@ -245,39 +207,13 @@ sub unescape {
 # was always so and cannot be fixed without breaking the binary data case.
 # -- Stepan Kasal <skasal@redhat.com>
 #
-if ($] == 5.008) {
-   package utf8;
-
-   no warnings 'redefine'; # needed for Perl 5.8.1+
-
-   my $is_utf8_redefinition = <<'EOR';
-      sub is_utf8 {
-         my ($text) = @_;
-
-         my $ctext = pack q{C0a*}, $text;
-
-         return ($text ne $ctext) && ($ctext =~ m/^(
-          [\x09\x0A\x0D\x20-\x7E]
-          | [\xC2-\xDF][\x80-\xBF]
-          | \xE0[\xA0-\xBF][\x80-\xBF]
-          | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}
-          | \xED[\x80-\x9F][\x80-\xBF]
-          | \xF0[\x90-\xBF][\x80-\xBF]{2}
-          | [\xF1-\xF3][\x80-\xBF]{3}
-          | \xF4[\x80-\x8F][\x80-\xBF]{2}
-          )*$/xo);
-      }
-EOR
-
-   eval $is_utf8_redefinition;
-}
 
 sub escape {
   # If we being called in an OO-context, discard the first argument.
   shift() if @_ > 1 and ( ref($_[0]) || (defined $_[1] && $_[0] eq $CGI::DefaultClass));
   my $toencode = shift;
   return undef unless defined($toencode);
-  utf8::encode($toencode) if ($] >= 5.008 && utf8::is_utf8($toencode));
+  utf8::encode($toencode) if utf8::is_utf8($toencode);
     if (EBCDIC) {
       $toencode=~s/([^a-zA-Z0-9_.~-])/uc sprintf("%%%02x",$E2A[ord($1)])/eg;
     } else {

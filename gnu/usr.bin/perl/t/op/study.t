@@ -1,53 +1,18 @@
-#!./perl
+#!./perl -w
 
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-$Ok_Level = 0;
-my $test = 1;
-sub ok ($;$) {
-    my($ok, $name) = @_;
-
-    local $_;
-
-    # You have to do it this way or VMS will get confused.
-    printf "%s $test%s\n", $ok   ? 'ok' : 'not ok',
-                           $name ? " - $name" : '';
-
-    printf "# Failed test at line %d\n", (caller($Ok_Level))[2] unless $ok;
-
-    $test++;
-    return $ok;
-}
-
-sub nok ($;$) {
-    my($nok, $name) = @_;
-    local $Ok_Level = 1;
-    ok( !$nok, $name );
-}
+watchdog(10);
+plan(tests => 43);
+use strict;
+use vars '$x';
 
 use Config;
 my $have_alarm = $Config{d_alarm};
-sub alarm_ok (&) {
-    my $test = shift;
-
-    local $SIG{ALRM} = sub { die "timeout\n" };
-    
-    my $match;
-    eval { 
-        alarm(2) if $have_alarm;
-        $match = $test->();
-        alarm(0) if $have_alarm;
-    };
-
-    local $Ok_Level = 1;
-    ok( !$match && !$@, 'testing studys that used to hang' );
-}
-
-
-print "1..26\n";
 
 $x = "abc\ndef\n";
 study($x);
@@ -62,25 +27,28 @@ $_ = '123';
 study;
 ok(/^([0-9][0-9]*)/);
 
-nok($x =~ /^xxx/);
-nok($x !~ /^abc/);
+ok(!($x =~ /^xxx/));
+ok(!($x !~ /^abc/));
 
 ok($x =~ /def/);
-nok($x !~ /def/);
+ok(!($x !~ /def/));
 
 study($x);
 ok($x !~ /.def/);
-nok($x =~ /.def/);
+ok(!($x =~ /.def/));
 
 ok($x =~ /\ndef/);
-nok($x !~ /\ndef/);
+ok(!($x !~ /\ndef/));
 
 $_ = 'aaabbbccc';
 study;
-ok(/(a*b*)(c*)/ && $1 eq 'aaabbb' && $2 eq 'ccc');
-ok(/(a+b+c+)/ && $1 eq 'aaabbbccc');
+ok(/(a*b*)(c*)/);
+is($1, 'aaabbb');
+is($2,'ccc');
+ok(/(a+b+c+)/);
+is($1, 'aaabbbccc');
 
-nok(/a+b?c+/);
+ok(!/a+b?c+/);
 
 $_ = 'aaabccc';
 study;
@@ -90,7 +58,7 @@ ok(/a*b+c*/);
 $_ = 'aaaccc';
 study;
 ok(/a*b?c*/);
-nok(/a*b+c*/);
+ok(!/a*b+c*/);
 
 $_ = 'abcdef';
 study;
@@ -104,17 +72,90 @@ ok(/^$_$/);
 # used to be a test for $*
 ok("ab\ncd\n" =~ /^cd/m);
 
-if ($^O eq 'os390' or $^O eq 'posix-bc') {
+TODO: {
     # Even with the alarm() OS/390 and BS2000 can't manage these tests
     # (Perl just goes into a busy loop, luckily an interruptable one)
-    for (25..26) { print "not ok $_ # TODO compiler bug?\n" }
-    $test += 2;
-} else {
-    # [ID 20010618.006] tests 25..26 may loop
+    todo_skip('busy loop - compiler bug?', 2)
+	      if $^O eq 'os390' or $^O eq 'posix-bc';
+
+    # [ID ] tests 25..26 may loop
 
     $_ = 'FGF';
     study;
-    alarm_ok { /G.F$/ };
-    alarm_ok { /[F]F$/ };
+    ok(!/G.F$/, 'bug 20010618.006');
+    ok(!/[F]F$/, 'bug 20010618.006');
 }
 
+{
+    my $a = 'QaaQaabQaabbQ';
+    study $a;
+    my @a = split /aab*/, $a;
+    is("@a", 'Q Q Q Q', 'split with studied string passed to the regep engine');
+}
+
+{
+    $_ = "AABBAABB";
+    study;
+    is(s/AB+/1/ge, 2, 'studied scalar passed to pp_substconst');
+    is($_, 'A1A1');
+}
+
+{
+    $_ = "AABBAABB";
+    study;
+    is(s/(A)B+/1/ge, 2,
+       'studied scalar passed to pp_substconst with RX_MATCH_COPIED() true');
+    is($1, 'A');
+    is($2, undef);
+    is($_, 'A1A1');
+}
+
+{
+    my @got;
+    $a = "ydydydyd";
+    $b = "xdx";
+    push @got, $_ foreach $a =~ /[^x]d(?{})[^x]d/g;
+    is("@got", 'ydyd ydyd', '#92696 control');
+
+    @got = ();
+    $a = "ydydydyd";
+    $b = "xdx";
+    study $a;
+    push @got, $_ foreach $a =~ /[^x]d(?{})[^x]d/g;
+    is("@got", 'ydyd ydyd', '#92696 study $a');
+
+    @got = ();
+    $a = "ydydydyd";
+    $b = "xdx";
+    study $b;
+    push @got, $_ foreach $a =~ /[^x]d(?{})[^x]d/g;
+    is("@got", 'ydyd ydyd', '#92696 study $b');
+
+    @got = ();
+    $a = "ydydydyd";
+    $b = "xdx";
+    push @got, $_ foreach $a =~ /[^x]d(?{study $b})[^x]d/g;
+    is("@got", 'ydyd ydyd', '#92696 study $b inside (?{}), nothing studied');
+
+    @got = ();
+    $a = "ydydydyd";
+    $b = "xdx";
+    my $c = 'zz';
+    study $c;
+    push @got, $_ foreach $a =~ /[^x]d(?{study $b})[^x]d/g;
+    is("@got", 'ydyd ydyd', '#92696 study $b inside (?{}), $c studied');
+
+    @got = ();
+    $a = "ydydydyd";
+    $b = "xdx";
+    study $a;
+    push @got, $_ foreach $a =~ /[^x]d(?{study $b})[^x]d/g;
+    is("@got", 'ydyd ydyd', '#92696 study $b inside (?{}), $a studied');
+
+    @got = ();
+    $a = "ydydydyd";
+    $b = "xdx";
+    study $a;
+    push @got, $_ foreach $a =~ /[^x]d(?{$a .= ''})[^x]d/g;
+    is("@got", 'ydyd ydyd', '#92696 $a .= \'\' inside (?{}), $a studied');
+}

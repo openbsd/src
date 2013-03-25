@@ -15,27 +15,8 @@ typedef OP OP_4tree;			/* Will be redefined later. */
 /* Convert branch sequences to more efficient trie ops? */
 #define PERL_ENABLE_TRIE_OPTIMISATION 1
 
-/* Be really agressive about optimising patterns with trie sequences? */
+/* Be really aggressive about optimising patterns with trie sequences? */
 #define PERL_ENABLE_EXTENDED_TRIE_OPTIMISATION 1
-
-/* Use old style unicode mappings for perl and posix character classes
- *
- * NOTE: Enabling this essentially breaks character class matching against unicode 
- * strings, so that POSIX char classes match when they shouldn't, and \d matches 
- * way more than 10 characters, and sometimes a charclass and its complement either
- * both match or neither match.
- * NOTE: Disabling this will cause various backwards compatibility issues to rear 
- * their head, and tests to fail. However it will make the charclass behaviour 
- * consistant regardless of internal string type, and make character class inversions
- * consistant. The tests that fail in the regex engine are basically broken tests.
- *
- * Personally I think 5.12 should disable this for sure. Its a bit more debatable for
- * 5.10, so for now im leaving it enabled.
- * XXX: It is now enabled for 5.11/5.12
- *
- * -demerphq
- */
-#define PERL_LEGACY_UNICODE_CHARCLASS_MAPPINGS 1
 
 /* Should the optimiser take positive assertions into account? */
 #define PERL_ENABLE_POSITIVE_ASSERTION_STUDY 0
@@ -204,15 +185,16 @@ struct regnode_charclass {
     U8	flags;
     U8  type;
     U16 next_off;
-    U32 arg1;
+    U32 arg1;				/* used as ptr in S_regclass */
     char bitmap[ANYOF_BITMAP_SIZE];	/* only compile-time */
 };
 
-struct regnode_charclass_class {	/* has [[:blah:]] classes */
-    U8	flags;				/* should have ANYOF_CLASS here */
+/* has runtime (locale) \d, \w, ..., [:posix:] classes */
+struct regnode_charclass_class {
+    U8	flags;				/* ANYOF_CLASS bit must go here */
     U8  type;
     U16 next_off;
-    U32 arg1;
+    U32 arg1;					/* used as ptr in S_regclass */
     char bitmap[ANYOF_BITMAP_SIZE];		/* both compile-time */
     char classflags[ANYOF_CLASSBITMAP_SIZE];	/* and run-time */
 };
@@ -271,6 +253,9 @@ struct regnode_charclass_class {	/* has [[:blah:]] classes */
 #undef STRING
 
 #define	OP(p)		((p)->type)
+#define FLAGS(p)	((p)->flags)	/* Caution: Doesn't apply to all      \
+					   regnode types.  For some, it's the \
+					   character set of the regnode */
 #define	OPERAND(p)	(((struct regnode_string *)p)->string)
 #define MASK(p)		((char*)OPERAND(p))
 #define	STR_LEN(p)	(((struct regnode_string *)p)->str_len)
@@ -306,27 +291,88 @@ struct regnode_charclass_class {	/* has [[:blah:]] classes */
 
 #define SIZE_ONLY (RExC_emit == &PL_regdummy)
 
-/* Flags for node->flags of ANYOF */
+/* If the bitmap doesn't fully represent what this ANYOF node can match, the
+ * ARG is set to this special value (since 0, 1, ... are legal, but will never
+ * reach this high). */
+#define ANYOF_NONBITMAP_EMPTY	((U32) -1)
 
-#define ANYOF_CLASS		0x08	/* has [[:blah:]] classes */
-#define ANYOF_INVERT		0x04
-#define ANYOF_FOLD		0x02
-#define ANYOF_LOCALE		0x01
+/* The information used to be stored as as combination of the ANYOF_UTF8 and
+ * ANYOF_NONBITMAP_NON_UTF8 bits in the flags field, but was moved out of there
+ * to free up a bit for other uses.  This tries to hide the change from
+ * existing code as much as possible.  Now, the data structure that goes in ARG
+ * is not allocated unless it is needed, and that is what is used to determine
+ * if there is something outside the bitmap.  The code now assumes that if
+ * that structure exists, that any UTF-8 encoded string should be tried against
+ * it, but a non-UTF8-encoded string will be tried only if the
+ * ANYOF_NONBITMAP_NON_UTF8 bit is also set. */
+#define ANYOF_NONBITMAP(node)	(ARG(node) != ANYOF_NONBITMAP_EMPTY)
 
-/* Used for regstclass only */
-#define ANYOF_EOS		0x10		/* Can match an empty string too */
+/* Flags for node->flags of ANYOF.  These are in short supply, so some games
+ * are done to share them, as described below.  If necessary, the ANYOF_LOCALE
+ * and ANYOF_CLASS bits could be shared with a space penalty for locale nodes,
+ * but this isn't quite so easy, as the optimizer also uses ANYOF_CLASS.
+ * Another option would be to push them into new nodes.  E.g. there could be an
+ * ANYOF_LOCALE node that would be in place of the flag of the same name.
+ * Once the planned change to compile all the above-latin1 code points is done,
+ * then the UNICODE_ALL bit can be freed up, with a small performance penalty.
+ * If flags need to be added that are applicable to the synthetic start class
+ * only, with some work, they could be put in the next-node field, or in an
+ * unused bit of the classflags field. */
 
-/* There is a character or a range past 0xff */
-#define ANYOF_UNICODE		0x20
-#define ANYOF_UNICODE_ALL	0x40	/* Can match any char past 0xff */
+#define ANYOF_LOCALE		 0x01	    /* /l modifier */
 
-/* size of node is large (includes class pointer) */
-#define ANYOF_LARGE 		0x80
+/* The fold is calculated and stored in the bitmap where possible at compile
+ * time.  However there are two cases where it isn't possible.  These share
+ * this bit:  1) under locale, where the actual folding varies depending on
+ * what the locale is at the time of execution; and 2) where the folding is
+ * specified in a swash, not the bitmap, such as characters which aren't
+ * specified in the bitmap, or properties that aren't looked at at compile time
+ */
+#define ANYOF_LOC_NONBITMAP_FOLD 0x02
 
-/* Are there any runtime flags on in this node? */
-#define ANYOF_RUNTIME(s)	(ANYOF_FLAGS(s) & 0x0f)
+#define ANYOF_INVERT		 0x04
+
+/* Set if this is a struct regnode_charclass_class vs a regnode_charclass.  This
+ * is used for runtime \d, \w, [:posix:], ..., which are used only in locale
+ * and the optimizer's synthetic start class.  Non-locale \d, etc are resolved
+ * at compile-time */
+#define ANYOF_CLASS	 0x08
+#define ANYOF_LARGE      ANYOF_CLASS    /* Same; name retained for back compat */
+
+/* EOS, meaning that it can match an empty string too, is used for the
+ * synthetic start class only. */
+#define ANYOF_EOS		0x10
+
+/* ? Is this node the synthetic start class (ssc).  This bit is shared with
+ * ANYOF_EOS, as the latter is used only for the ssc, and then not used by
+ * regexec.c.  And, the code is structured so that if it is set, the ssc is
+ * not used, so it is guaranteed to be 0 for the ssc by the time regexec.c
+ * gets executed, and 0 for a non-ssc ANYOF node, as it only ever gets set for
+ * a potential ssc candidate.  Thus setting it to 1 after it has been
+ * determined that the ssc will be used is not ambiguous */
+#define ANYOF_IS_SYNTHETIC	ANYOF_EOS
+
+/* Can match something outside the bitmap that isn't in utf8 */
+#define ANYOF_NONBITMAP_NON_UTF8 0x20
+
+/* Matches every code point 0x100 and above*/
+#define ANYOF_UNICODE_ALL	0x40
+
+/* Match all Latin1 characters that aren't ASCII when the target string is not
+ * in utf8. */
+#define ANYOF_NON_UTF8_LATIN1_ALL 0x80
 
 #define ANYOF_FLAGS_ALL		0xff
+
+/* These are the flags that ANYOF_INVERT being set or not doesn't affect
+ * whether they are operative or not.  e.g., the node still has LOCALE
+ * regardless of being inverted; whereas ANYOF_UNICODE_ALL means something
+ * different if inverted */
+#define INVERSION_UNAFFECTED_FLAGS (ANYOF_LOCALE                        \
+	                           |ANYOF_LOC_NONBITMAP_FOLD            \
+	                           |ANYOF_CLASS                         \
+	                           |ANYOF_EOS                           \
+	                           |ANYOF_NONBITMAP_NON_UTF8)
 
 /* Character classes for node->classflags of ANYOF */
 /* Should be synchronized with a table in regprop() */
@@ -395,6 +441,8 @@ struct regnode_charclass_class {	/* has [[:blah:]] classes */
 #define ANYOF_CLASS_TEST(p, c)	(ANYOF_CLASS_BYTE(p, c) &   ANYOF_BIT(c))
 
 #define ANYOF_CLASS_ZERO(ret)	Zero(((struct regnode_charclass_class*)(ret))->classflags, ANYOF_CLASSBITMAP_SIZE, char)
+#define ANYOF_CLASS_SETALL(ret)		\
+	memset (((struct regnode_charclass_class*)(ret))->classflags, 255, ANYOF_CLASSBITMAP_SIZE)
 #define ANYOF_BITMAP_ZERO(ret)	Zero(((struct regnode_charclass*)(ret))->bitmap, ANYOF_BITMAP_SIZE, char)
 
 #define ANYOF_BITMAP(p)		(((struct regnode_charclass*)(p))->bitmap)
@@ -408,12 +456,20 @@ struct regnode_charclass_class {	/* has [[:blah:]] classes */
 #define ANYOF_BITMAP_CLEARALL(p)	\
 	Zero (ANYOF_BITMAP(p), ANYOF_BITMAP_SIZE)
 /* Check that all 256 bits are all set.  Used in S_cl_is_anything()  */
-#define ANYOF_BITMAP_TESTALLSET(p)	\
+#define ANYOF_BITMAP_TESTALLSET(p)	/* Assumes sizeof(p) == 32 */     \
 	memEQ (ANYOF_BITMAP(p), "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377", ANYOF_BITMAP_SIZE)
 
 #define ANYOF_SKIP		((ANYOF_SIZE - 1)/sizeof(regnode))
 #define ANYOF_CLASS_SKIP	((ANYOF_CLASS_SIZE - 1)/sizeof(regnode))
-#define ANYOF_CLASS_ADD_SKIP	(ANYOF_CLASS_SKIP - ANYOF_SKIP)
+
+#if ANYOF_CLASSBITMAP_SIZE != 4
+#   error ANYOF_CLASSBITMAP_SIZE is expected to be 4
+#endif
+#define ANYOF_CLASS_TEST_ANY_SET(p) ((ANYOF_FLAGS(p) & ANYOF_CLASS)         \
+	&& memNE (((struct regnode_charclass_class*)(p))->classflags,	    \
+		    "\0\0\0\0", ANYOF_CLASSBITMAP_SIZE))
+/*#define ANYOF_CLASS_ADD_SKIP	(ANYOF_CLASS_SKIP - ANYOF_SKIP)
+ * */
 
 
 /*
@@ -438,6 +494,7 @@ struct regnode_charclass_class {	/* has [[:blah:]] classes */
 #define REG_SEEN_VERBARG        0x00000080
 #define REG_SEEN_CUTGROUP       0x00000100
 #define REG_SEEN_RUN_ON_COMMENT 0x00000200
+#define REG_SEEN_EXACTF_SHARP_S 0x00000400
 
 START_EXTERN_C
 
@@ -445,37 +502,6 @@ START_EXTERN_C
 #include "re_nodes.h"
 #else
 #include "regnodes.h"
-#endif
-
-/* The following have no fixed length. U8 so we can do strchr() on it. */
-#ifndef DOINIT
-EXTCONST U8 PL_varies[];
-#else
-EXTCONST U8 PL_varies[] = {
-    BRANCH, BACK, STAR, PLUS, CURLY, CURLYX, REF, REFF, REFFL,
-    WHILEM, CURLYM, CURLYN, BRANCHJ, IFTHEN, SUSPEND, CLUMP,
-    NREF, NREFF, NREFFL,
-    0
-};
-#endif
-
-/* The following always have a length of 1. U8 we can do strchr() on it. */
-/* (Note that length 1 means "one character" under UTF8, not "one octet".) */
-#ifndef DOINIT
-EXTCONST U8 PL_simple[];
-#else
-EXTCONST U8 PL_simple[] = {
-    REG_ANY,	SANY,	CANY,
-    ANYOF,
-    ALNUM,	ALNUML,
-    NALNUM,	NALNUML,
-    SPACE,	SPACEL,
-    NSPACE,	NSPACEL,
-    DIGIT,	NDIGIT,
-    VERTWS,     NVERTWS,
-    HORIZWS,    NHORIZWS,
-    0
-};
 #endif
 
 #ifndef PLUGGABLE_RE_EXTENSION
@@ -507,6 +533,7 @@ END_EXTERN_C
 
 /* .what is a character array with one character for each member of .data
  * The character describes the function of the corresponding .data item:
+ *   a - AV for paren_name_list under DEBUGGING
  *   f - start-class data for regstclass optimization
  *   n - Root of op tree for (?{EVAL}) item
  *   o - Start op for (?{EVAL}) item
@@ -586,6 +613,15 @@ struct _reg_trie_state {
   } trans;
 };
 
+/* info per word; indexed by wordnum */
+typedef struct {
+    U16  prev;	/* previous word in acceptance chain; eg in
+		 * zzz|abc|ab/ after matching the chars abc, the
+		 * accepted word is #2, and the previous accepted
+		 * word is #3 */
+    U32 len;	/* how many chars long is this word? */
+    U32 accept;	/* accept state for this word */
+} reg_trie_wordinfo;
 
 
 typedef struct _reg_trie_state    reg_trie_state;
@@ -603,15 +639,14 @@ struct _reg_trie_data {
     reg_trie_state  *states;         /* state data */
     reg_trie_trans  *trans;          /* array of transition elements */
     char            *bitmap;         /* stclass bitmap */
-    U32             *wordlen;        /* array of lengths of words */
     U16 	    *jump;           /* optional 1 indexed array of offsets before tail 
                                         for the node following a given word. */
-    U16	            *nextword;       /* optional 1 indexed array to support linked list
-                                        of duplicate wordnums */
+    reg_trie_wordinfo *wordinfo;     /* array of info per word */
     U16             uniquecharcount; /* unique chars in trie (width of trans table) */
     U32             startstate;      /* initial state - used for common prefix optimisation */
     STRLEN          minlen;          /* minimum length of words in trie - build/opt only? */
     STRLEN          maxlen;          /* maximum length of words in trie - build/opt only? */
+    U32             prefixlen;       /* #chars in common prefix */
     U32             statecount;      /* Build only - number of states in the states array 
                                         (including the unused zero state) */
     U32             wordcount;       /* Build only */
@@ -643,7 +678,7 @@ struct _reg_ac_data {
 };
 typedef struct _reg_ac_data reg_ac_data;
 
-/* ANY_BIT doesnt use the structure, so we can borrow it here.
+/* ANY_BIT doesn't use the structure, so we can borrow it here.
    This is simpler than refactoring all of it as wed end up with
    three different sets... */
 
@@ -789,9 +824,11 @@ re.pm, especially to the documentation.
     if (re_debug_flags & RE_DEBUG_EXTRA_GPOS) x )
 
 /* initialization */
-/* get_sv() can return NULL during global destruction. */
+/* get_sv() can return NULL during global destruction.  re_debug_flags can get
+ * clobbered by a longjmp, so must be initialized */
 #define GET_RE_DEBUG_FLAGS DEBUG_r({ \
         SV * re_debug_flags_sv = NULL; \
+        re_debug_flags = 0;            \
         re_debug_flags_sv = get_sv(RE_DEBUG_FLAGS, 1); \
         if (re_debug_flags_sv) { \
             if (!SvIOK(re_debug_flags_sv)) \
@@ -802,26 +839,27 @@ re.pm, especially to the documentation.
 
 #ifdef DEBUGGING
 
-#define GET_RE_DEBUG_FLAGS_DECL IV re_debug_flags = 0; GET_RE_DEBUG_FLAGS;
+#define GET_RE_DEBUG_FLAGS_DECL VOL IV re_debug_flags \
+	PERL_UNUSED_DECL = 0; GET_RE_DEBUG_FLAGS;
 
 #define RE_PV_COLOR_DECL(rpv,rlen,isuni,dsv,pv,l,m,c1,c2) \
     const char * const rpv =                          \
         pv_pretty((dsv), (pv), (l), (m), \
             PL_colors[(c1)],PL_colors[(c2)], \
-            PERL_PV_ESCAPE_RE |((isuni) ? PERL_PV_ESCAPE_UNI : 0) );         \
+            PERL_PV_ESCAPE_RE|PERL_PV_ESCAPE_NONASCII |((isuni) ? PERL_PV_ESCAPE_UNI : 0) );         \
     const int rlen = SvCUR(dsv)
 
 #define RE_SV_ESCAPE(rpv,isuni,dsv,sv,m) \
     const char * const rpv =                          \
         pv_pretty((dsv), (SvPV_nolen_const(sv)), (SvCUR(sv)), (m), \
             PL_colors[(c1)],PL_colors[(c2)], \
-            PERL_PV_ESCAPE_RE |((isuni) ? PERL_PV_ESCAPE_UNI : 0) )
+            PERL_PV_ESCAPE_RE|PERL_PV_ESCAPE_NONASCII |((isuni) ? PERL_PV_ESCAPE_UNI : 0) )
 
 #define RE_PV_QUOTED_DECL(rpv,isuni,dsv,pv,l,m)                    \
     const char * const rpv =                                       \
         pv_pretty((dsv), (pv), (l), (m), \
             PL_colors[0], PL_colors[1], \
-            ( PERL_PV_PRETTY_QUOTE | PERL_PV_ESCAPE_RE | PERL_PV_PRETTY_ELLIPSES | \
+            ( PERL_PV_PRETTY_QUOTE | PERL_PV_ESCAPE_RE | PERL_PV_ESCAPE_NONASCII | PERL_PV_PRETTY_ELLIPSES | \
               ((isuni) ? PERL_PV_ESCAPE_UNI : 0))                  \
         )
 

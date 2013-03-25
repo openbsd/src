@@ -48,7 +48,15 @@ Used to access elements on the XSUB's stack.
 
 =for apidoc AmU||XS
 Macro to declare an XSUB and its C parameter list.  This is handled by
-C<xsubpp>.
+C<xsubpp>. It is the same as using the more explicit XS_EXTERNAL macro.
+
+=for apidoc AmU||XS_INTERNAL
+Macro to declare an XSUB and its C parameter list without exporting the symbols.
+This is handled by C<xsubpp> and generally preferable over exporting the XSUB
+symbols unnecessarily.
+
+=for apidoc AmU||XS_EXTERNAL
+Macro to declare an XSUB and its C parameter list explicitly exporting the symbols.
 
 =for apidoc Ams||dAX
 Sets up the C<ax> variable.
@@ -72,8 +80,9 @@ Sets up the C<ix> variable for an XSUB which has aliases.  This is usually
 handled automatically by C<xsubpp>.
 
 =for apidoc Ams||dUNDERBAR
-Sets up the C<padoff_du> variable for an XSUB that wishes to use
-C<UNDERBAR>.
+Sets up any variable needed by the C<UNDERBAR> macro. It used to define
+C<padoff_du>, but it is currently a noop. However, it is strongly advised
+to still use it for ensuring past and future compatibility.
 
 =for apidoc AmU||UNDERBAR
 The SV* corresponding to the $_ variable. Works even if there
@@ -106,26 +115,45 @@ is a lexical $_ in scope.
  * Don't forget to change the __attribute__unused__ version of XS()
  * below too if you change XSPROTO() here.
  */
+
+/* XS_INTERNAL is the explicit static-linkage variant of the default
+ * XS macro.
+ *
+ * XS_EXTERNAL is the same as XS_INTERNAL except it does not include
+ * "STATIC", ie. it exports XSUB symbols. You probably don't want that.
+ */
+
 #define XSPROTO(name) void name(pTHX_ CV* cv)
 
 #undef XS
+#undef XS_EXTERNAL
+#undef XS_INTERNAL
 #if defined(__CYGWIN__) && defined(USE_DYNAMIC_LOADING)
-#  define XS(name) __declspec(dllexport) XSPROTO(name)
+#  define XS_EXTERNAL(name) __declspec(dllexport) XSPROTO(name)
+#  define XS_INTERNAL(name) STATIC XSPROTO(name)
 #endif
 #if defined(__SYMBIAN32__)
-#  define XS(name) EXPORT_C XSPROTO(name)
+#  define XS_EXTERNAL(name) EXPORT_C XSPROTO(name)
+#  define XS_INTERNAL(name) EXPORT_C STATIC XSPROTO(name)
 #endif
-#ifndef XS
+#ifndef XS_EXTERNAL
 #  if defined(HASATTRIBUTE_UNUSED) && !defined(__cplusplus)
-#    define XS(name) void name(pTHX_ CV* cv __attribute__unused__)
+#    define XS_EXTERNAL(name) void name(pTHX_ CV* cv __attribute__unused__)
+#    define XS_INTERNAL(name) STATIC void name(pTHX_ CV* cv __attribute__unused__)
 #  else
 #    ifdef __cplusplus
-#      define XS(name) extern "C" XSPROTO(name)
+#      define XS_EXTERNAL(name) extern "C" XSPROTO(name)
+#      define XS_INTERNAL(name) static XSPROTO(name)
 #    else
-#      define XS(name) XSPROTO(name)
+#      define XS_EXTERNAL(name) XSPROTO(name)
+#      define XS_INTERNAL(name) STATIC XSPROTO(name)
 #    endif
 #  endif
 #endif
+
+/* We do export xsub symbols by default for the public XS macro.
+ * Try explicitly using XS_INTERNAL/XS_EXTERNAL instead, please. */
+#define XS(name) XS_EXTERNAL(name)
 
 #define dAX const I32 ax = (I32)(MARK - PL_stack_base + 1)
 
@@ -166,10 +194,8 @@ is a lexical $_ in scope.
 #define XSINTERFACE_FUNC_SET(cv,f)	\
 		CvXSUBANY(cv).any_dxptr = (void (*) (pTHX_ void*))(f)
 
-#define dUNDERBAR PADOFFSET padoff_du = find_rundefsvoffset()
-#define UNDERBAR ((padoff_du == NOT_IN_PAD \
-	    || PAD_COMPNAME_FLAGS_isOUR(padoff_du)) \
-	? DEFSV : PAD_SVl(padoff_du))
+#define dUNDERBAR dNOOP
+#define UNDERBAR  find_rundefsv()
 
 /* Simple macros to put new mortal values onto the stack.   */
 /* Typically used to return values from XS functions.       */
@@ -244,6 +270,10 @@ Macro to verify that a PM module's $VERSION variable matches the XS
 module's C<XS_VERSION> variable.  This is usually handled automatically by
 C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 
+=for apidoc Ams||XS_APIVERSION_BOOTCHECK
+Macro to verify that the perl api version an XS module has been compiled against
+matches the api version of the perl interpreter it's being loaded into.
+
 =head1 Simple Exception Handling Macros
 
 =for apidoc Ams||dXCPT
@@ -295,46 +325,13 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 
 #ifdef XS_VERSION
 #  define XS_VERSION_BOOTCHECK						\
-    STMT_START {							\
-	SV *_sv;							\
-	const char *vn = NULL, *module = SvPV_nolen_const(ST(0));	\
-	if (items >= 2)	 /* version supplied as bootstrap arg */	\
-	    _sv = ST(1);						\
-	else {								\
-	    /* XXX GV_ADDWARN */					\
-	    _sv = get_sv(Perl_form(aTHX_ "%s::%s", module,		\
-				vn = "XS_VERSION"), FALSE);		\
-	    if (!_sv || !SvOK(_sv))					\
-		_sv = get_sv(Perl_form(aTHX_ "%s::%s", module,		\
-				    vn = "VERSION"), FALSE);		\
-	}								\
-	if (_sv) {							\
-	    SV *xpt = NULL;						\
-	    SV *xssv = Perl_newSVpvn(aTHX_ STR_WITH_LEN(XS_VERSION));	\
-	    SV *pmsv = sv_derived_from(_sv, "version")			\
-		? SvREFCNT_inc_simple_NN(_sv)				\
-		: new_version(_sv);					\
-	    xssv = upg_version(xssv, 0);				\
-	    if ( vcmp(pmsv,xssv) ) {	 				\
-		xpt = Perl_newSVpvf(aTHX_ "%s object version %"SVf	\
-				    " does not match %s%s%s%s %"SVf,	\
-				    module,				\
-				    SVfARG(Perl_sv_2mortal(aTHX_ vstringify(xssv))), \
-				    vn ? "$" : "", vn ? module : "",	\
-				    vn ? "::" : "",			\
-				    vn ? vn : "bootstrap parameter",	\
-				    SVfARG(Perl_sv_2mortal(aTHX_ vstringify(pmsv)))); \
-		Perl_sv_2mortal(aTHX_ xpt);				\
-	    }								\
-	    SvREFCNT_dec(xssv);						\
-	    SvREFCNT_dec(pmsv);						\
-	    if (xpt)							\
-		Perl_croak(aTHX_ "%s", SvPVX(xpt));			\
-	}                                                               \
-    } STMT_END
+    Perl_xs_version_bootcheck(aTHX_ items, ax, STR_WITH_LEN(XS_VERSION))
 #else
 #  define XS_VERSION_BOOTCHECK
 #endif
+
+#define XS_APIVERSION_BOOTCHECK						\
+    Perl_xs_apiversion_bootcheck(aTHX_ ST(0), STR_WITH_LEN("v" PERL_API_VERSION_STRING))
 
 #ifdef NO_XSLOCKS
 #  define dXCPT             dJMPENV; int rEtV = 0
@@ -344,9 +341,9 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 #  define XCPT_RETHROW      JMPENV_JUMP(rEtV)
 #endif
 
-/* 
-   The DBM_setFilter & DBM_ckFilter macros are only used by 
-   the *DB*_File modules 
+/*
+   The DBM_setFilter & DBM_ckFilter macros are only used by
+   the *DB*_File modules
 */
 
 #define DBM_setFilter(db_type,code)				\
@@ -397,7 +394,6 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 #  define VTBL_sv		&PL_vtbl_sv
 #  define VTBL_env		&PL_vtbl_env
 #  define VTBL_envelem		&PL_vtbl_envelem
-#  define VTBL_sig		&PL_vtbl_sig
 #  define VTBL_sigelem		&PL_vtbl_sigelem
 #  define VTBL_pack		&PL_vtbl_pack
 #  define VTBL_packelem		&PL_vtbl_packelem

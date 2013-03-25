@@ -2,7 +2,7 @@
 
 use strict;
 use lib 't/lib';
-use MBTest tests => 51;
+use MBTest tests => 52;
 
 blib_load('Module::Build');
 blib_load('Module::Build::ConfigData');
@@ -65,7 +65,13 @@ my $mb = Module::Build->new_from_context;
   my $mb_config_req = {
     'Module::Build' => int($Module::Build::VERSION * 100)/100
   };
-  my $node = $mb->get_metadata( );
+  my $node;
+  my $output = stdout_stderr_of( sub {
+    $node = $mb->get_metadata( auto => 1 );
+  });
+  like( $output, qr/Module::Build was not found in configure_requires/,
+    "saw warning about M::B not in configure_requires"
+  );
 
   # exists() doesn't seem to work here
   is $node->{name}, $metadata{module_name};
@@ -86,7 +92,7 @@ my $mb = Module::Build->new_from_context;
 {
   my $mb_prereq = { 'Module::Build' => 0 };
   $mb->configure_requires( $mb_prereq );
-  my $node = $mb->get_metadata( );
+  my $node = $mb->get_metadata( auto => 1 );
 
 
   # exists() doesn't seem to work here

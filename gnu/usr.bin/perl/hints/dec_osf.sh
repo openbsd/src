@@ -278,7 +278,7 @@ toke_cflags='optimize=-O2'
 esac
 
 # The patch 23787
-# http://public.activestate.com/cgi-bin/perlbrowse?patch=23787
+# http://perl5.git.perl.org/perl.git/commit/73cb726371990cd489597c4fee405a9815abf4da
 # broke things for gcc (at least gcc 3.3) so that many of the pack()
 # checksum tests for formats L, j, J, especially when combined
 # with the < and > specifiers, started to fail if compiled with plain -O3.

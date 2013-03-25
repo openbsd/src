@@ -5,13 +5,13 @@
 #
 ################################################################################
 #
-#  $Revision: 15 $
+#  $Revision: 18 $
 #  $Author: mhx $
-#  $Date: 2009/01/18 14:10:50 +0100 $
+#  $Date: 2010/03/07 13:15:42 +0100 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -132,6 +132,25 @@ my @patch = (
               [ \&patch_sysv ],
             ],
   },
+  {
+    perl => [
+              qr/^5\.004_05$/,
+              qr/^5\.005(?:_0[1-4])?$/,
+              qr/^5\.6\.[01]$/,
+            ],
+    subs => [
+              [ \&patch_configure ],
+              [ \&patch_makedepend_lc ],
+            ],
+  },
+  {
+    perl => [
+              '5.8.0',
+            ],
+    subs => [
+              [ \&patch_makedepend_lc ],
+            ],
+  },
 );
 
 my(%perl, @perls);
@@ -176,7 +195,7 @@ else {
 }
 
 find(sub {
-  /^(perl-?(5\..*))\.tar\.(gz|bz2)$/ or return;
+  /^(perl-?(5\..*))\.tar\.(gz|bz2|lzma)$/ or return;
   $perl{$1} = { version => $2, source => $File::Find::name, compress => $3 };
 }, $opt{source});
 
@@ -338,10 +357,12 @@ sub build_and_install
   my $perl = shift;
   my $prefix = expand($opt{prefix});
 
+  run_or_die(q{sed -i -e "s:\\*/\\*) finc=\\"-I\\`echo \\$file | sed 's#/\\[^/\\]\\*\\$##\\`\\" ;;:*/*) finc=\\"-I\\`echo \\$file | sed 's#/[^/]\\*\\$##'\\`\\" ;;:" makedepend.SH});
+
   print "building perl $perl->{version} ($current{config})\n";
 
   run_or_die("./Configure $config{$current{config}}{config_args} -Dusedevel -Uinstallusrbinperl -Dprefix=$prefix");
-  run_or_die("sed -i -e '/^.*<built-in>/d' -e '/^.*<command line>/d' makefile x2p/makefile");
+  run_or_die("sed -i -e '/^.*<builtin>/d' -e '/^.*<built-in>/d' -e '/^.*<command line>/d' -e '/^.*<command-line>/d' makefile x2p/makefile");
   run_or_die("make all");
   run("make test") if $opt{test};
   if ($opt{install}) {
@@ -423,6 +444,52 @@ END
  #   include <sys/ipc.h>
 END
   }
+}
+
+sub patch_configure
+{
+  patch(<<'END');
+--- Configure
++++ Configure
+@@ -3380,6 +3380,18 @@
+ test "X$gfpthkeep" != Xy && gfpth=""
+ EOSC
+ 
++# gcc 3.1 complains about adding -Idirectories that it already knows about,
++# so we will take those off from locincpth.
++case "$gccversion" in
++3*)
++    echo "main(){}">try.c
++    for incdir in `$cc -v -c try.c 2>&1 | \
++       sed '1,/^#include <\.\.\.>/d;/^End of search list/,$d;s/^ //'` ; do
++       locincpth=`echo $locincpth | sed s!$incdir!!`
++    done
++    $rm -f try try.*
++esac
++
+ : What should the include directory be ?
+ echo " "
+ $echo $n "Hmm...  $c"
+END
+}
+
+sub patch_makedepend_lc
+{
+  patch(<<'END');
+--- makedepend.SH
++++ makedepend.SH
+@@ -58,6 +58,10 @@ case $PERL_CONFIG_SH in
+       ;;
+ esac
+ 
++# Avoid localized gcc/cc messages
++LC_ALL=C
++export LC_ALL
++
+ # We need .. when we are in the x2p directory if we are using the
+ # cppstdin wrapper script.
+ # Put .. and . first so that we pick up the present cppstdin, not
+END
 }
 
 sub patch
@@ -528,7 +595,7 @@ options, use:
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004-2009, Marcus Holland-Moritz.
+Copyright (c) 2004-2010, Marcus Holland-Moritz.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

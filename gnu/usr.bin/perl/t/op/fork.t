@@ -5,71 +5,20 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require Config; import Config;
-    unless ($Config{'d_fork'} or $Config{'d_pseudofork'}) {
-	print "1..0 # Skip: no fork\n";
-	exit 0;
-    }
-    $ENV{PERL5LIB} = "../lib";
     require './test.pl';
+    require Config;
+    skip_all('no fork')
+	unless ($Config::Config{d_fork} or $Config::Config{d_pseudofork});
 }
 
-if ($^O eq 'mpeix') {
-    print "1..0 # Skip: fork/status problems on MPE/iX\n";
-    exit 0;
-}
+skip_all('fork/status problems on MPE/iX')
+    if $^O eq 'mpeix';
 
 $|=1;
 
-undef $/;
-@prgs = split "\n########\n", <DATA>;
-print "1..", scalar @prgs, "\n";
+run_multiple_progs('', \*DATA);
 
-$tmpfile = tempfile();
-END { close TEST }
-
-$CAT = (($^O eq 'MSWin32') ? '.\perl -e "print <>"' : (($^O eq 'NetWare') ? 'perl -e "print <>"' : 'cat'));
-
-for (@prgs){
-    my $switch;
-    if (s/^\s*(-\w.*)//){
-	$switch = $1;
-    }
-    my($prog,$expected) = split(/\nEXPECT\n/, $_);
-    $expected =~ s/\n+$//;
-    # results can be in any order, so sort 'em
-    my @expected = sort split /\n/, $expected;
-    open TEST, ">$tmpfile" or die "Cannot open $tmpfile: $!";
-    print TEST $prog, "\n";
-    close TEST or die "Cannot close $tmpfile: $!";
-    my $results;
-    if ($^O eq 'MSWin32') {
-      $results = `.\\perl -I../lib $switch $tmpfile 2>&1`;
-    }
-    elsif ($^O eq 'NetWare') {
-      $results = `perl -I../lib $switch $tmpfile 2>&1`;
-    }
-    else {
-      $results = `./perl $switch $tmpfile 2>&1`;
-    }
-    $status = $?;
-    $results =~ s/\n+$//;
-    $results =~ s/at\s+$::tempfile_regexp\s+line/at - line/g;
-    $results =~ s/of\s+$::tempfile_regexp\s+aborted/of - aborted/g;
-# bison says 'parse error' instead of 'syntax error',
-# various yaccs may or may not capitalize 'syntax'.
-    $results =~ s/^(syntax|parse) error/syntax error/mig;
-    $results =~ s/^\n*Process terminated by SIG\w+\n?//mg
-	if $^O eq 'os2';
-    my @results = sort split /\n/, $results;
-    if ( "@results" ne "@expected" ) {
-	print STDERR "PROG: $switch\n$prog\n";
-	print STDERR "EXPECTED:\n$expected\n";
-	print STDERR "GOT:\n$results\n";
-	print "not ";
-    }
-    print "ok ", ++$i, "\n";
-}
+done_testing();
 
 __END__
 $| = 1;
@@ -88,6 +37,7 @@ else {
     sleep 10;
 }
 EXPECT
+OPTION random
 ok 1
 ok 2
 ########
@@ -106,6 +56,7 @@ else {
     die;
 }
 EXPECT
+OPTION random
 ok 1
 ok 2
 ########
@@ -127,6 +78,7 @@ sub forkit {
 }
 while ($i++ < 3) { do { forkit(); }; }
 EXPECT
+OPTION random
 iteration 1 start
 iteration 1 parent
 iteration 1 child
@@ -154,6 +106,7 @@ fork()
  ? (print("parent\n"),sleep(1))
  : (print("child\n"),exit) ;
 EXPECT
+OPTION random
 parent
 child
 ########
@@ -162,6 +115,7 @@ fork()
  ? (print("parent\n"),exit)
  : (print("child\n"),sleep(1)) ;
 EXPECT
+OPTION random
 parent
 child
 ########
@@ -179,6 +133,7 @@ for (@a) {
 }
 print "@a\n";
 EXPECT
+OPTION random
 parent 1
 child 1
 parent 2
@@ -214,6 +169,7 @@ foreach my $c (1,2,3) {
 }
 while (wait() != -1) { print "waited\n" }
 EXPECT
+OPTION random
 child 1
 child 2
 child 3
@@ -231,6 +187,7 @@ fork()
  ? print($Config{osname} eq $^O)
  : print($Config{osname} eq $^O) ;
 EXPECT
+OPTION random
 1
 1
 ########
@@ -240,6 +197,7 @@ fork()
  ? do { require Config; print($Config::Config{osname} eq $^O); }
  : do { require Config; print($Config::Config{osname} eq $^O); }
 EXPECT
+OPTION random
 1
 1
 ########
@@ -266,6 +224,7 @@ else {
     rmdir $dir;
 }
 EXPECT
+OPTION random
 ok 1 parent
 ok 1 child
 ########
@@ -291,6 +250,7 @@ else {
     print "child after: " . `$getenv`;
 }
 EXPECT
+OPTION random
 child before: foo
 child after: baz
 parent before: foo
@@ -306,6 +266,7 @@ else {
     exit(42);
 }
 EXPECT
+OPTION random
 parent got 10752
 ########
 $| = 1;
@@ -319,6 +280,7 @@ else {
     exec("$echo foo");
 }
 EXPECT
+OPTION random
 foo
 parent got 0
 ########
@@ -329,6 +291,7 @@ else {
     die "child died";
 }
 EXPECT
+OPTION random
 parent died at - line 2.
 child died at - line 5.
 ########
@@ -341,6 +304,7 @@ else {
     print $@;
 }
 EXPECT
+OPTION random
 parent died at - line 2.
 child died at - line 6.
 ########
@@ -353,6 +317,7 @@ else {
     print $@;
 }
 EXPECT
+OPTION random
 parent died at (eval 2) line 1.
 child died at (eval 2) line 1.
 ########
@@ -367,6 +332,7 @@ BEGIN {
 # be overcome by treating what's after the BEGIN{} as a brand new parse.
 #print "outer\n"
 EXPECT
+OPTION random
 inner
 ########
 sub pipe_to_fork ($$) {
@@ -413,6 +379,7 @@ else {
     exit;
 }
 EXPECT
+OPTION random
 pipe_from_fork
 pipe_to_fork
 ########
@@ -434,6 +401,7 @@ else {
     exit(0);
 }
 EXPECT
+OPTION random
 forked first kid
 first child
 waitpid() returned ok
@@ -455,11 +423,13 @@ if ($pid == 0) {
     print $string_from_child eq "STRING_FROM_CHILD", "\n";
 }
 EXPECT
+OPTION random
 1
 ########
 # [perl #39145] Perl_dounwind() crashing with Win32's fork() emulation
 sub { @_ = 3; fork ? die "1\n" : die "1\n" }->(2);
 EXPECT
+OPTION random
 1
 1
 ########
@@ -478,5 +448,38 @@ sub f {
 }
 f("foo", "bar");
 EXPECT
+OPTION random
 child: called as [main::f(foo,bar)]
 waitpid() returned ok
+########
+# Windows 2000: https://rt.cpan.org/Ticket/Display.html?id=66016#txn-908976
+system $^X,  "-e", "if (\$pid=fork){sleep 1;kill(9, \$pid)} else {sleep 5}";
+print $?>>8, "\n";
+EXPECT
+0
+########
+# Windows 7: https://rt.cpan.org/Ticket/Display.html?id=66016#txn-908976
+system $^X,  "-e", "if (\$pid=fork){kill(9, \$pid)} else {sleep 5}";
+print $?>>8, "\n";
+EXPECT
+0
+########
+# Windows fork() emulation: can we still waitpid() after signalling SIGTERM?
+$|=1;
+if (my $pid = fork) {
+    sleep 1;
+    print "1\n";
+    kill 'TERM', $pid;
+    waitpid($pid, 0);
+    print "4\n";
+}
+else {
+    $SIG{TERM} = sub { print "2\n" };
+    sleep 3;
+    print "3\n";
+}
+EXPECT
+1
+2
+3
+4

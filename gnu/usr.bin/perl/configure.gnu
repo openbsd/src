@@ -1,7 +1,5 @@
 #! /bin/sh
 #
-# $Id: configure,v 3.0.1.1 1995/07/25 14:16:21 ram Exp $
-#
 # GNU configure-like front end to metaconfig's Configure.
 #
 # Written by Andy Dougherty <doughera@lafayette.edu>

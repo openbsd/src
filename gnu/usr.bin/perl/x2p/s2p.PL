@@ -91,14 +91,14 @@ psed - a stream editor
 A stream editor reads the input stream consisting of the specified files
 (or standard input, if none are given), processes is line by line by
 applying a script consisting of edit commands, and writes resulting lines
-to standard output. The filename `C<->' may be used to read standard input.
+to standard output. The filename 'C<->' may be used to read standard input.
 
 The edit script is composed from arguments of B<-e> options and
 script-files, in the given order. A single script argument may be specified
 as the first parameter.
 
 If this program is invoked with the name F<s2p>, it will act as a
-sed-to-Perl translator. See L<"sed Script Translation">.
+sed-to-Perl translator. See L<"SED SCRIPT TRANSLATION">.
 
 B<sed> returns an exit code of 0 on success or >0 if an error occurred.
 
@@ -155,7 +155,7 @@ pattern space for later use.
 A sed address is either a line number or a pattern, which may be combined
 arbitrarily to construct ranges. Lines are numbered across all input files.
 
-Any address may be followed by an exclamation mark (`C<!>'), selecting
+Any address may be followed by an exclamation mark ('C<!>'), selecting
 all lines not matching that address.
 
 =over 4
@@ -171,10 +171,10 @@ A dollar sign (C<$>) is the line number of the last line of the input stream.
 =item B</>I<regular expression>B</>
 
 A pattern address is a basic regular expression (see 
-L<"Basic Regular Expressions">), between the delimiting character C</>.
+L<"BASIC REGULAR EXPRESSIONS">), between the delimiting character C</>.
 Any other character except C<\> or newline may be used to delimit a
 pattern address when the initial delimiter is prefixed with a
-backslash (`C<\>').
+backslash ('C<\>').
 
 =back
 
@@ -329,9 +329,9 @@ $ComTab{'l'}=[ 2, '',    \&Emit,       '{ _l() }'                        ]; #okU
 
 Print the contents of the pattern space: non-printable characters are
 shown in C-style escaped form; long lines are split and have a trailing
-`C<\>' at the point of the split; the true end of a line is marked with
-a `C<$>'. Escapes are: `\a', `\t', `\n', `\f', `\r', `\e' for
-BEL, HT, LF, FF, CR, ESC, respectively, and `\' followed by a three-digit
+^'C<\>' at the point of the split; the true end of a line is marked with
+a 'C<$>'. Escapes are: '\a', '\t', '\n', '\f', '\r', '\e' for
+BEL, HT, LF, FF, CR, ESC, respectively, and '\' followed by a three-digit
 octal number for all other non-printable characters.
 
 =cut
@@ -427,15 +427,15 @@ the pattern space that matches the I<regular expression>.
 Any character other than backslash or newline can be used instead of a 
 slash to delimit the regular expression and the replacement.
 To use the delimiter as a literal character within the regular expression
-and the replacement, precede the character by a backslash (`C<\>').
+and the replacement, precede the character by a backslash ('C<\>').
 
 Literal newlines may be embedded in the replacement string by
 preceding a newline with a backslash.
 
-Within the replacement, an ampersand (`C<&>') is replaced by the string
-matching the regular expression. The strings `C<\1>' through `C<\9>' are
-replaced by the corresponding subpattern (see L<"Basic Regular Expressions">).
-To get a literal `C<&>' or `C<\>' in the replacement text, precede it
+Within the replacement, an ampersand ('C<&>') is replaced by the string
+matching the regular expression. The strings 'C<\1>' through 'C<\9>' are
+replaced by the corresponding subpattern (see L<"BASIC REGULAR EXPRESSIONS">).
+To get a literal 'C<&>' or 'C<\>' in the replacement text, precede it
 by a backslash.
 
 The following I<flags> modify the behaviour of the B<s> command:
@@ -497,14 +497,15 @@ Swap the contents of the pattern space and the hold space.
 
 #--------------------------------------------------------------------------
 $ComTab{'y'}=[ 2, 'tra', \&Emit,       ''                                ]; #ok
+
 =item [2addr]B<y>B</>I<string1>B</>I<string2>B</>
 
-In the pattern space, replace all characters occuring in I<string1> by the
+In the pattern space, replace all characters occurring in I<string1> by the
 character at the corresponding position in I<string2>. It is possible
 to use any character (other than a backslash or newline) instead of a
 slash to delimit the strings.  Within I<string1> and I<string2>, a
 backslash followed by any character other than a newline is that literal
-character, and a backslash followed by an `n' is replaced by a newline
+character, and a backslash followed by an 'n' is replaced by a newline
 character.
 
 =cut
@@ -520,7 +521,7 @@ Prints the current line number on the standard output.
 
 #--------------------------------------------------------------------------
 $ComTab{':'}=[ 0, 'str', \&Label,      ''                                ]; #ok
- 
+
 =item [0addr]B<:> [I<label>]
 
 The command specifies the position of the I<label>. It has no other effect.
@@ -549,7 +550,7 @@ $ComTab{'#'}=[ 0, 'str', \&Comment,    ''                                ]; #ok
 =item [0addr]B<#> [I<comment>]
 
 The entire line is ignored (treated as a comment). If, however, the first
-two characters in the script are `C<#n>', automatic printing of output is
+two characters in the script are 'C<#n>', automatic printing of output is
 suppressed, as if the B<-n> option were given on the command line.
 
 =back
@@ -689,7 +690,7 @@ sub EndBlock($$$$$$){
     if( defined( $jcom ) ){
 	$rc = Emit( $addr1, $addr2, $negated, $opcode, $arg, $fl );
     } else {
-	Warn( "unexpected `}'", $fl );
+	Warn( "unexpected '}'", $fl );
 	$rc = 1;
     }
     $rc;
@@ -799,7 +800,7 @@ sub makey($$$){
 	my $fc = substr($fr,$i,1);
 	my $tc = substr($to,$i,1);
 	if( exists( $tr{$fc} ) && $tr{$fc} ne $tc ){
-	    Warn( "ambiguous translation for character `$fc' in `y' command",
+	    Warn( "ambiguous translation for character '$fc' in 'y' command",
 		  $fl );
 	    $error++;
 	}
@@ -924,15 +925,15 @@ as defined in ctype(3).
 If the first character after B<[> is B<^>, the sense of matching is
 inverted.
 
-To include a literal `C<^>', place it anywhere else but first. To
+To include a literal 'C<^>', place it anywhere else but first. To
 include a literal 'C<]>' place it first or immediately after an
-initial B<^>. To include a literal `C<->' make it the first (or
+initial B<^>. To include a literal 'C<->' make it the first (or
 second after B<^>) or last character, or the second endpoint of
 a range.
 
 The special bracket expression constructs C<[[:E<lt>:]]> and C<[[:E<gt>:]]> 
 match the null string at the beginning and end of a word respectively.
-(Note that neither is identical to Perl's `\b' atom.)
+(Note that neither is identical to Perl's '\b' atom.)
 
 =head2 Additional Atoms
 
@@ -987,7 +988,7 @@ sub bre2p($$$){
 	    ### backslash escapes
             my $nc = peek($pat,$ic);
             if( $nc eq '' ){
-                Warn( "`\\' cannot be last in pattern", $fl );
+                Warn( "'\\' cannot be last in pattern", $fl );
                 return undef();
             }
 	    $ic++;
@@ -1007,7 +1008,7 @@ sub bre2p($$$){
                 $parlev--;
 		$backref++;
                 if( $parlev < 0 ){
-                    Warn( "unmatched `\\)'", $fl );
+                    Warn( "unmatched '\\)'", $fl );
                     return undef();
                 }
                 $res .= ')';
@@ -1015,7 +1016,7 @@ sub bre2p($$$){
             } elsif( $nc eq '{' ){ ## repetition factor \{<i>[,[<j>]]\}
                 my $endpos = index( $pat, '\\}', $ic );
                 if( $endpos < 0 ){
-                    Warn( "unmatched `\\{'", $fl );
+                    Warn( "unmatched '\\{'", $fl );
                     return undef();
                 }
                 my $rep = substr( $pat, $ic+1, $endpos-($ic+1) );
@@ -1029,7 +1030,7 @@ sub bre2p($$$){
                     my $max = $3;
                     if( length( $max ) ){
                         if( $max < $min ){
-                            Warn( "maximum less than minimum in `\\{$rep\\}'",
+                            Warn( "maximum less than minimum in '\\{$rep\\}'",
 				  $fl );
                             return undef();
                         }
@@ -1047,7 +1048,7 @@ sub bre2p($$$){
 			$res .= "{$min$com$max}";
 		    }
                 } else {
-                    Warn( "invalid repeat clause `\\{$rep\\}'", $fl );
+                    Warn( "invalid repeat clause '\\{$rep\\}'", $fl );
                     return undef();
                 }
 
@@ -1077,7 +1078,7 @@ sub bre2p($$$){
 		## \<closing bracketing-delimiter> - keep '\'
 		$res .= "\\$nc";
 
-            } else { ## \ <char> => <char> ("as if `\' were not present")
+            } else { ## \ <char> => <char> ("as if '\' were not present")
                 $res .= $nc;
             }
 
@@ -1105,7 +1106,7 @@ sub bre2p($$$){
 	    }
 	    # check that [ is not trailing
 	    if( $ic >= length( $pat ) - 1 ){
-		Warn( "unmatched `['", $fl );
+		Warn( "unmatched '['", $fl );
 		return undef();
 	    }
 	    # look for [:...:] and x-y
@@ -1113,7 +1114,7 @@ sub bre2p($$$){
 	    if( $rstr =~ /^((?:\[:\(\w+|[><]\):\]|[^]-](?:-[^]])?)*)/ ){
  	        my $cnt = $1;
 		$ic += length( $cnt );
-		$cnt =~ s/([\\\$])/\\$1/g; # `\', `$' are magic in Perl []
+		$cnt =~ s/([\\\$])/\\$1/g; # '\', '$' are magic in Perl []
 		# try some simplifications
  	        my $red = $cnt;
 		if( $red =~ s/0-9// ){
@@ -1130,7 +1131,7 @@ sub bre2p($$$){
 
 	    }
 
-	    ## may have a trailing `-' before `]'
+	    ## may have a trailing '-' before ']'
 	    if( $ic < length($pat) - 1 &&
                 substr( $pat, $ic+1 ) =~ /^(-?])/ ){
 		$ic += length( $1 );
@@ -1139,7 +1140,7 @@ sub bre2p($$$){
 		$add =~ s/^\[(\^?)(\\[dw])]$/ $1 eq '^' ? uc($2) : $2 /e;
 		$res .= $add;
 	    } else {
-		Warn( "unmatched `['", $fl );
+		Warn( "unmatched '['", $fl );
 		return undef();
 	    }
 
@@ -1164,7 +1165,7 @@ sub bre2p($$$){
     }
 
     if( $parlev ){
-       Warn( "unmatched `\\('", $fl );
+       Warn( "unmatched '\\('", $fl );
        return undef();
     }
 
@@ -1192,7 +1193,7 @@ sub sub2p($$$){
 	    ### backslash escapes
             my $nc = peek($subst,$ic);
             if( $nc eq '' ){
-                Warn( "`\\' cannot be last in substitution", $fl );
+                Warn( "'\\' cannot be last in substitution", $fl );
                 return undef();
             }
 	    $ic++;
@@ -1282,13 +1283,13 @@ sub Parse(){
 		    next;
 		}
             } else {
-		Warn( "invalid address after `,'", $fl );
+		Warn( "invalid address after ','", $fl );
 		$error++;
 		next;
             }
         }
 
-        # address modifier `!'
+        # address modifier '!'
         #
         $negated = $cmd =~ s/^!\s*//;
 	if( defined( $addr1 ) ){
@@ -1307,7 +1308,7 @@ sub Parse(){
 	#
         if( $cmd !~ s/^([:#={}abcdDgGhHilnNpPqrstwxy])\s*// ){
 	    my $h = substr( $cmd, 0, 1 );
- 	    Warn( "unknown command `$h'", $fl );
+ 	    Warn( "unknown command '$h'", $fl );
 	    $error++;
 	    next;
 	}
@@ -1354,7 +1355,7 @@ sub Parse(){
 	} elsif( $tabref->[1] eq 'sub' ){
 	    # s///
 	    if( ! length( $cmd ) ){
-		Warn( "`s' command requires argument", $fl );
+		Warn( "'s' command requires argument", $fl );
 		$error++;
 		next;
 	    }
@@ -1398,7 +1399,7 @@ sub Parse(){
 		$write = $1 if $cmd =~ s/w\s*(.*)$//;
   	        ### $nmatch =~ s/^(\d)\1*$/$1/; ### may be dangerous?
 		if( $global && length( $nmatch ) || length( $nmatch ) > 1 ){
-		    Warn( "conflicting flags `$global$nmatch'", $fl );
+		    Warn( "conflicting flags '$global$nmatch'", $fl );
 		    $error++;
 		    next;
 		}
@@ -1430,30 +1431,30 @@ sub Parse(){
                 $Code .= "# $Commands[$icom]\n" if $doGenerate;
 	    }
 	    if( ! length( $cmd ) ){
-		Warn( "`y' command requires argument", $fl );
+		Warn( "'y' command requires argument", $fl );
 		$error++;
 		next;
 	    }
 	    my $d = substr( $cmd, 0, 1 ); $cmd = substr( $cmd, 1 );
 	    if( $d eq '\\' ){
-		Warn( "`\\' not valid as delimiter in `y' command", $fl );
+		Warn( "'\\' not valid as delimiter in 'y' command", $fl );
 		$error++;
 		next;
 	    }
 	    my $fr = stripTrans( $d, \$cmd );
 	    if( ! defined( $fr ) || ! length( $cmd ) ){
-		Warn( "malformed `y' command argument", $fl );
+		Warn( "malformed 'y' command argument", $fl );
 		$error++;
 		next;
 	    }
 	    my $to = stripTrans( $d, \$cmd );
 	    if( ! defined( $to ) ){
-		Warn( "malformed `y' command argument", $fl );
+		Warn( "malformed 'y' command argument", $fl );
 		$error++;
 		next;
 	    }
 	    if( length($fr) != length($to) ){
-		Warn( "string lengths in `y' command differ", $fl );
+		Warn( "string lengths in 'y' command differ", $fl );
 		$error++;
 		next;
 	    }
@@ -1486,14 +1487,14 @@ sub Parse(){
 
     while( @BlockStack ){
 	my $bl = pop( @BlockStack );
-	Warn( "start of unterminated `{'", $bl );
+	Warn( "start of unterminated '{'", $bl );
         $error++;
     }
 
     for my $lab ( keys( %Label ) ){
 	if( ! exists( $Label{$lab}{defined} ) ){
 	    for my $used ( @{$Label{$lab}{used}} ){
- 	        Warn( "undefined label `$lab'", $used );
+ 	        Warn( "undefined label '$lab'", $used );
 	        $error++;
 	    }
 	}
@@ -1570,7 +1571,7 @@ while( @ARGV && $ARGV[0] =~ /^-(.)(.*)$/ ){
     } elsif( $opt eq 'a' ){
 	$doOpenWrite = 0;
     } else {
-        Warn( "illegal option `$opt'" );
+        Warn( "illegal option '$opt'" );
         usage();
         exit( 1 );
     }
@@ -1873,27 +1874,27 @@ See L<"Additional Atoms">.
 
 =over 4
 
-=item ambiguous translation for character `%s' in `y' command
+=item ambiguous translation for character '%s' in 'y' command
 
 The indicated character appears twice, with different translations.
 
-=item `[' cannot be last in pattern
+=item '[' cannot be last in pattern
 
-A `[' in a BRE indicates the beginning of a I<bracket expression>.
+A '[' in a BRE indicates the beginning of a I<bracket expression>.
 
-=item `\' cannot be last in pattern
+=item '\' cannot be last in pattern
 
-A `\' in a BRE is used to make the subsequent character literal.
+A '\' in a BRE is used to make the subsequent character literal.
 
-=item `\' cannot be last in substitution
+=item '\' cannot be last in substitution
 
-A `\' in a subsitution string is used to make the subsequent character literal.
+A '\' in a substitution string is used to make the subsequent character literal.
 
-=item conflicting flags `%s'
+=item conflicting flags '%s'
 
-In an B<s> command, either the `g' flag and an n-th occurrence flag, or
+In an B<s> command, either the 'g' flag and an n-th occurrence flag, or
 multiple n-th occurrence flags are specified. Note that only the digits
-`1' through `9' are permitted.
+^'1' through '9' are permitted.
 
 =item duplicate label %s (first defined at %s)
 
@@ -1903,20 +1904,20 @@ The command has more than the permitted number of addresses.
 
 =item extra characters after command (%s)
 
-=item illegal option `%s'
+=item illegal option '%s'
 
 =item improper delimiter in s command
 
-The BRE and substitution may not be delimited with `\' or newline.
+The BRE and substitution may not be delimited with '\' or newline.
 
-=item invalid address after `,'
+=item invalid address after ','
 
 =item invalid backreference (%s)
 
 The specified backreference number exceeds the number of backreferences
 in the BRE.
 
-=item invalid repeat clause `\{%s\}'
+=item invalid repeat clause '\{%s\}'
 
 The repeat clause does not contain a valid integer value, or pair of
 values.
@@ -1929,34 +1930,34 @@ values.
 
 =item malformed substitution expression
 
-=item malformed `y' command argument
+=item malformed 'y' command argument
 
 The first or second string of a B<y> command  is syntactically incorrect.
 
-=item maximum less than minimum in `\{%s\}'
+=item maximum less than minimum in '\{%s\}'
 
 =item no script command given
 
 There must be at least one B<-e> or one B<-f> option specifying a
 script or script file.
 
-=item `\' not valid as delimiter in `y' command
+=item '\' not valid as delimiter in 'y' command
 
 =item option -e requires an argument
 
 =item option -f requires an argument
 
-=item `s' command requires argument
+=item 's' command requires argument
 
-=item start of unterminated `{'
+=item start of unterminated '{'
 
-=item string lengths in `y' command differ
+=item string lengths in 'y' command differ
 
 The translation table strings in a B<y> command must have equal lengths.
 
-=item undefined label `%s'
+=item undefined label '%s'
 
-=item unexpected `}'
+=item unexpected '}'
 
 A B<}> command without a preceding B<{> command was encountered.
 
@@ -1965,23 +1966,23 @@ A B<}> command without a preceding B<{> command was encountered.
 The end of the script was reached although a text line after a
 B<a>, B<c> or B<i> command indicated another line.
 
-=item unknown command `%s'
+=item unknown command '%s'
 
-=item unterminated `['
+=item unterminated '['
 
 A BRE contains an unterminated bracket expression.
 
-=item unterminated `\('
+=item unterminated '\('
 
 A BRE contains an unterminated backreference.
 
-=item `\{' without closing `\}'
+=item '\{' without closing '\}'
 
 A BRE contains an unterminated bounds specification.
 
-=item `\)' without preceding `\('
+=item '\)' without preceding '\('
 
-=item `y' command requires argument
+=item 'y' command requires argument
 
 =back
 
@@ -2019,12 +2020,12 @@ perl(1), re_format(7)
 
 =head1 BUGS
 
-The B<l> command will show escape characters (ESC) as `C<\e>', but
+The B<l> command will show escape characters (ESC) as 'C<\e>', but
 a vertical tab (VT) in octal.
 
 Trailing spaces are truncated from labels in B<:>, B<t> and B<b> commands.
 
-The meaning of an empty regular expression (`C<//>'), as defined by B<sed>,
+The meaning of an empty regular expression ('C<//>'), as defined by B<sed>,
 is "the last pattern used, at run time". This deviates from the Perl
 interpretation, which will re-use the "last last successfully executed
 regular expression". Since keeping track of pattern usage would create

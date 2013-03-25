@@ -19,7 +19,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Internals::Fetch - fetch files for CPANPLUS
+CPANPLUS::Internals::Fetch - internals for fetching files
 
 =head1 SYNOPSIS
 
@@ -122,7 +122,7 @@ sub _fetch {
 
     my ($remote_file, $local_file, $local_path);
 
-    ### build the local path to downlaod to ###
+    ### build the local path to download to ###
     {
         $local_path =   $args->{fetchdir} ||
                         File::Spec->catdir(
@@ -148,62 +148,62 @@ sub _fetch {
         ### do we already have the file? if so, can we use the cached version,
         ### or do we need to refetch?
         if( -e $local_file ) {
-        
+
             my $unlink      = 0;
             my $use_cached  = 0;
-            
+
             ### if force is in effect, we have to refetch
             if( $force ) {
                 $unlink++
-            
-            ### if you provided a ttl, and it was exceeded, we'll refetch, 
+
+            ### if you provided a ttl, and it was exceeded, we'll refetch,
             } elsif( $ttl and ([stat $local_file]->[9] + $ttl > time) ) {
                 msg(loc("Using cached file '%1' on disk; ".
                         "ttl (%2s) is not exceeded",
                         $local_file, $ttl), $verbose );
-    
+
                 $use_cached++;
 
             ### if you provided a ttl, and the above conditional didn't match,
             ### we exceeded the ttl, so we refetch
             } elsif ( $ttl ) {
                 $unlink++;
-            
+
             ### otherwise we can use the cached version
             } else {
                 $use_cached++;
-            }                
+            }
 
             if( $unlink ) {
                 ### some fetches will fail if the files exist already, so let's
                 ### delete them first
                 1 while unlink $local_file;
-                
+
                 msg(loc("Could not delete %1, some methods may " .
                         "fail to force a download", $local_file), $verbose)
                     if -e $local_file;
-            
+
             } else {
-    
+
                 ### store where we fetched it ###
                 $modobj->status->fetch( $local_file );
-    
+
                 return $local_file;
             }
         }
     }
 
 
-    ### we got a custom URI 
+    ### we got a custom URI
     if ( $fetch_from ) {
         my $abs = $self->__file_fetch(  from    => $fetch_from,
                                         to      => $local_path,
                                         verbose => $verbose );
-                                        
+
         unless( $abs ) {
             error(loc("Unable to download '%1'", $fetch_from));
             return;
-        }            
+        }
 
         ### store where we fetched it ###
         $modobj->status->fetch( $abs );
@@ -222,18 +222,18 @@ sub _fetch {
                 return;
             }
         }
-    
+
         ### see if we even have a host or a method to use to download with ###
         my $found_host;
         my @maybe_bad_host;
-    
+
         HOST: {
-            ### F*CKING PIECE OF F*CKING p4 SHIT makes 
+            ### F*CKING PIECE OF F*CKING p4 SHIT makes
             ### '$File :: Fetch::SOME_VAR'
             ### into a meta variable and starts substituting the file name...
             ### GRAAAAAAAAAAAAAAAAAAAAAAH!
             ### use ' to combat it!
-    
+
             ### set up some flags for File::Fetch ###
             local $File'Fetch::BLACKLIST    = $conf->_get_fetch('blacklist');
             local $File'Fetch::TIMEOUT      = $conf->get_conf('timeout');
@@ -242,131 +242,131 @@ sub _fetch {
             local $File'Fetch::FROM_EMAIL   = $conf->get_conf('email');
             local $File'Fetch::PREFER_BIN   = $conf->get_conf('prefer_bin');
             local $File'Fetch::WARN         = $verbose;
-    
-    
+
+
             ### loop over all hosts we have ###
             for my $host ( @{$conf->get_conf('hosts')} ) {
                 $found_host++;
-    
+
                 my $where;
 
                 ### file:// uris are special and need parsing
-                if( $host->{'scheme'} eq 'file' ) {    
-    
+                if( $host->{'scheme'} eq 'file' ) {
+
                     ### the full path in the native format of the OS
-                    my $host_spec = 
+                    my $host_spec =
                             File::Spec->file_name_is_absolute( $host->{'path'} )
                                 ? $host->{'path'}
                                 : File::Spec->rel2abs( $host->{'path'} );
-    
+
                     ### there might be volumes involved on vms/win32
                     if( ON_WIN32 or ON_VMS ) {
-                        
-                        ### now extract the volume in order to be Win32 and 
+
+                        ### now extract the volume in order to be Win32 and
                         ### VMS friendly.
                         ### 'no_file' indicates that there's no file part
                         ### of this path, so we only get 2 bits returned.
                         my ($vol, $host_path) = File::Spec->splitpath(
-                                                    $host_spec, 'no_file' 
+                                                    $host_spec, 'no_file'
                                                 );
-                        
+
                         ### and split up the directories
                         my @host_dirs = File::Spec->splitdir( $host_path );
-        
-                        ### if we got a volume we pretend its a directory for 
+
+                        ### if we got a volume we pretend its a directory for
                         ### the sake of the file:// url
                         if( defined $vol and $vol ) {
-    
+
                             ### D:\foo\bar needs to be encoded as D|\foo\bar
                             ### For details, see the following link:
                             ###   http://en.wikipedia.org/wiki/File://
-                            ### The RFC doesnt seem to address Windows volume
+                            ### The RFC doesn't seem to address Windows volume
                             ### descriptors but it does address VMS volume
                             ### descriptors, however wikipedia covers a bit of
                             ### history regarding win32
-                            $vol =~ s/:$/|/ if ON_WIN32; 
-                            
+                            $vol =~ s/:$/|/ if ON_WIN32;
+
                             $vol =~ s/:// if ON_VMS;
-    
+
                             ### XXX i'm not sure what cases this is addressing.
                             ### this comes straight from dmq's file:// patches
                             ### for win32. --kane
                             ### According to dmq, the best summary is:
                             ### "if file:// urls dont look right on VMS reuse
                             ### the win32 logic and see if that fixes things"
-             
+
                             ### first element not empty? Might happen on VMS.
                             ### prepend the volume in that case.
                             if( $host_dirs[0] ) {
                                 unshift @host_dirs, $vol;
-                            
+
                             ### element empty? reuse it to store the volume
                             ### encoded as a directory name. (Win32/VMS)
                             } else {
                                 $host_dirs[0] = $vol;
-                            }                    
+                            }
                         }
-        
+
                         ### now it's in UNIX format, which is the same format
                         ### as used for URIs
-                        $host_spec = File::Spec::Unix->catdir( @host_dirs ); 
+                        $host_spec = File::Spec::Unix->catdir( @host_dirs );
                     }
 
-                    ### now create the file:// uri from the components               
+                    ### now create the file:// uri from the components
                     $where = CREATE_FILE_URI->(
                                     File::Spec::Unix->catfile(
                                         $host->{'host'} || '',
                                         $host_spec,
                                         $remote_file,
-                                    )      
-                                );     
+                                    )
+                                );
 
                 ### its components will be in unix format, for a http://,
                 ### ftp:// or any other style of URI
-                } else {     
+                } else {
                     my $mirror_path = File::Spec::Unix->catfile(
                                             $host->{'path'}, $remote_file
                                         );
-    
+
                     my %args = ( scheme => $host->{scheme},
                                  host   => $host->{host},
                                  path   => $mirror_path,
                                 );
-                    
+
                     $where = $self->_host_to_uri( %args );
                 }
-    
-                my $abs = $self->__file_fetch(  from    => $where, 
+
+                my $abs = $self->__file_fetch(  from    => $where,
                                                 to      => $local_path,
-                                                verbose => $verbose );    
-                
+                                                verbose => $verbose );
+
                 ### we got a path back?
                 if( $abs ) {
                     ### store where we fetched it ###
                     $modobj->status->fetch( $abs );
-        
+
                     ### this host is good, the previous ones are apparently
                     ### not, so mark them as such.
                     $self->_add_fail_host( host => $_ ) for @maybe_bad_host;
-                        
+
                     return $abs;
                 }
-                
+
                 ### so we tried to get the file but didn't actually fetch it --
-                ### there's a chance this host is bad. mark it as such and 
-                ### actually flag it back if we manage to get the file 
+                ### there's a chance this host is bad. mark it as such and
+                ### actually flag it back if we manage to get the file
                 ### somewhere else
                 push @maybe_bad_host, $host;
             }
         }
-    
+
         $found_host
             ? error(loc("Fetch failed: host list exhausted " .
                         "-- are you connected today?"))
             : error(loc("No hosts found to download from " .
                         "-- check your config"));
     }
-    
+
     return;
 }
 
@@ -382,7 +382,7 @@ sub __file_fetch {
         verbose => { default    => $conf->get_conf('verbose'),
                      store      => \$verbose },
     };
-    
+
     check( $tmpl, \%hash ) or return;
 
     msg(loc("Trying to get '%1'", $where ), $verbose );
@@ -400,10 +400,10 @@ sub __file_fetch {
 
         } else {
             my $abs = File::Spec->rel2abs( $file );
-            
+
             ### so TTLs will work
             $self->_update_timestamp( file => $abs );
-            
+
             return $abs;
         }
 

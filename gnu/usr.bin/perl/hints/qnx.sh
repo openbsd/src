@@ -12,7 +12,7 @@
 # perl-5.10.0-tobe compiles with Watcom C 10.6
 #                and QNX 4.25 patch G w/TCPSDK installed
 #  Some tests still fail, mostly to do with dynamic/static
-#  or unsuported features in QNX.
+#  or unsupported features in QNX.
 # 
 ## As with many unix ports, this one depends on a few "standard"
 # unix utilities which are not necessarily standard for QNX4.
@@ -55,7 +55,7 @@
 #   they both point to the correct library, that is,
 #   /usr/tcptk/current/usr/lib/socket3r.lib.
 # 
-#   cpan/Cwd/Cwd.t will complain if `pwd` and cwd don't give
+#   dist/Cwd/Cwd.t will complain if `pwd` and cwd don't give
 #   the same results. cwd calls `fullpath -t`, so if you
 #   cd `fullpath -t` before running the test, it will
 #   pass.

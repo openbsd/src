@@ -15,7 +15,8 @@ use ExtUtils::MakeMaker qw($Verbose neatvalue);
 
 # If we make $VERSION an our variable parse_version() breaks
 use vars qw($VERSION);
-$VERSION = '6.56';
+$VERSION = '6.63_02';
+$VERSION = eval $VERSION;
 
 require ExtUtils::MM_Any;
 our @ISA = qw(ExtUtils::MM_Any);
@@ -289,7 +290,7 @@ sub const_cccmd {
     return '' unless $self->needs_linking();
     return $self->{CONST_CCCMD} =
 	q{CCCMD = $(CC) -c $(PASTHRU_INC) $(INC) \\
-	$(CCFLAGS) $(OPTIMIZE) $(COPTS) \\
+	$(CCFLAGS) $(OPTIMIZE) \\
 	$(PERLTYPE) $(MPOLLUTE) $(DEFINE_VERSION) \\
 	$(XS_DEFINE_VERSION)};
 }
@@ -1079,7 +1080,6 @@ Inserts the sharpbang or equivalent magic number to a set of @files.
 sub fixin {    # stolen from the pink Camel book, more or less
     my ( $self, @files ) = @_;
 
-    my ($does_shbang) = $Config{'sharpbang'} =~ /^\s*\#\!/;
     for my $file (@files) {
         my $file_new = "$file.new";
         my $file_bak = "$file.bak";
@@ -1088,58 +1088,9 @@ sub fixin {    # stolen from the pink Camel book, more or less
         local $/ = "\n";
         chomp( my $line = <$fixin> );
         next unless $line =~ s/^\s*\#!\s*//;    # Not a shbang file.
-        # Now figure out the interpreter name.
-        my ( $cmd, $arg ) = split ' ', $line, 2;
-        $cmd =~ s!^.*/!!;
 
-        # Now look (in reverse) for interpreter in absolute PATH (unless perl).
-        my $interpreter;
-        if ( $cmd =~ m{^perl(?:\z|[^a-z])} ) {
-            if ( $Config{startperl} =~ m,^\#!.*/perl, ) {
-                $interpreter = $Config{startperl};
-                $interpreter =~ s,^\#!,,;
-            }
-            else {
-                $interpreter = $Config{perlpath};
-            }
-        }
-        else {
-            my (@absdirs)
-                = reverse grep { $self->file_name_is_absolute($_) } $self->path;
-            $interpreter = '';
-
-            foreach my $dir (@absdirs) {
-                if ( $self->maybe_command($cmd) ) {
-                    warn "Ignoring $interpreter in $file\n"
-                        if $Verbose && $interpreter;
-                    $interpreter = $self->catfile( $dir, $cmd );
-                }
-            }
-        }
-
-        # Figure out how to invoke interpreter on this machine.
-
-        my ($shb) = "";
-        if ($interpreter) {
-            print STDOUT "Changing sharpbang in $file to $interpreter"
-                if $Verbose;
-
-            # this is probably value-free on DOSISH platforms
-            if ($does_shbang) {
-                $shb .= "$Config{'sharpbang'}$interpreter";
-                $shb .= ' ' . $arg if defined $arg;
-                $shb .= "\n";
-            }
-            $shb .= qq{
-eval 'exec $interpreter $arg -S \$0 \${1+"\$\@"}'
-    if 0; # not running under some shell
-} unless $Is{Win32};    # this won't work on win32, so don't
-        }
-        else {
-            warn "Can't find $cmd in PATH, $file unchanged"
-                if $Verbose;
-            next;
-        }
+        my $shb = $self->_fixin_replace_shebang( $file, $line );
+        next unless defined $shb;
 
         open( my $fixout, ">", "$file_new" ) or do {
             warn "Can't create new $file: $!\n";
@@ -1189,6 +1140,63 @@ sub _rename {
     return rename($old, $new);
 }
 
+sub _fixin_replace_shebang {
+    my ( $self, $file, $line ) = @_;
+
+    # Now figure out the interpreter name.
+    my ( $cmd, $arg ) = split ' ', $line, 2;
+    $cmd =~ s!^.*/!!;
+
+    # Now look (in reverse) for interpreter in absolute PATH (unless perl).
+    my $interpreter;
+    if ( $cmd =~ m{^perl(?:\z|[^a-z])} ) {
+        if ( $Config{startperl} =~ m,^\#!.*/perl, ) {
+            $interpreter = $Config{startperl};
+            $interpreter =~ s,^\#!,,;
+        }
+        else {
+            $interpreter = $Config{perlpath};
+        }
+    }
+    else {
+        my (@absdirs)
+            = reverse grep { $self->file_name_is_absolute($_) } $self->path;
+        $interpreter = '';
+     
+         foreach my $dir (@absdirs) {
+            if ( $self->maybe_command($cmd) ) {
+                warn "Ignoring $interpreter in $file\n"
+                    if $Verbose && $interpreter;
+                $interpreter = $self->catfile( $dir, $cmd );
+            }
+        }
+    }
+
+    # Figure out how to invoke interpreter on this machine.
+ 
+    my ($does_shbang) = $Config{'sharpbang'} =~ /^\s*\#\!/;
+    my ($shb) = "";
+    if ($interpreter) {
+        print STDOUT "Changing sharpbang in $file to $interpreter"
+            if $Verbose;
+         # this is probably value-free on DOSISH platforms
+        if ($does_shbang) {
+            $shb .= "$Config{'sharpbang'}$interpreter";
+            $shb .= ' ' . $arg if defined $arg;
+            $shb .= "\n";
+        }
+        $shb .= qq{
+eval 'exec $interpreter $arg -S \$0 \${1+"\$\@"}'
+    if 0; # not running under some shell
+} unless $Is{Win32};    # this won't work on win32, so don't
+    }
+    else {
+        warn "Can't find $cmd in PATH, $file unchanged"
+            if $Verbose;
+        return undef;
+    }
+    return $shb
+}
 
 =item force (o)
 
@@ -1731,17 +1739,14 @@ EOP
                $self->{NAME} eq "ExtUtils::MakeMaker";
 }
 
-=item init_others
+=item init_tools
 
-Initializes EXTRALIBS, BSLOADLIBS, LDLOADLIBS, LIBS, LD_RUN_PATH, LD,
-OBJECT, BOOTDEP, PERLMAINCC, LDFROM, LINKTYPE, SHELL, NOOP,
-FIRST_MAKEFILE, MAKEFILE_OLD, NOECHO, RM_F, RM_RF, TEST_F,
-TOUCH, CP, MV, CHMOD, UMASK_NULL, ECHO, ECHO_N
+Initializes tools to use their common (and faster) Unix commands.
 
 =cut
 
-sub init_others {	# --- Initialize Other Attributes
-    my($self) = shift;
+sub init_tools {
+    my $self = shift;
 
     $self->{ECHO}       ||= 'echo';
     $self->{ECHO_N}     ||= 'echo -n';
@@ -1757,13 +1762,13 @@ sub init_others {	# --- Initialize Other Attributes
 
     $self->{LD}         ||= 'ld';
 
-    $self->SUPER::init_others(@_);
+    return $self->SUPER::init_tools(@_);
 
-    # After SUPER::init_others so $Config{shell} has a
+    # After SUPER::init_tools so $Config{shell} has a
     # chance to get set.
     $self->{SHELL}      ||= '/bin/sh';
 
-    return 1;
+    return;
 }
 
 
@@ -2593,7 +2598,7 @@ sub parse_abstract {
         $inpod = /^=(?!cut)/ ? 1 : /^=cut/ ? 0 : $inpod;
         next if !$inpod;
         chop;
-        next unless /^($package\s-\s)(.*)/;
+        next unless /^($package(?:\.pm)? \s+ -+ \s+)(.*)/x;
         $result = $2;
         last;
     }
@@ -2634,7 +2639,7 @@ sub parse_version {
         $inpod = /^=(?!cut)/ ? 1 : /^=cut/ ? 0 : $inpod;
         next if $inpod || /^\s*#/;
         chop;
-        next if /^\s*(if|unless)/;
+        next if /^\s*(if|unless|elsif)/;
         if ( m{^ \s* package \s+ \w[\w\:\']* \s+ (v?[0-9._]+) \s* ;  }x ) {
             local $^W = 0;
             $result = $1;
@@ -2754,7 +2759,6 @@ PERL_HDRS = \
 	$(PERL_INC)/INTERN.h		\
 	$(PERL_INC)/XSUB.h		\
 	$(PERL_INC)/av.h		\
-	$(PERL_INC)/cc_runtime.h	\
 	$(PERL_INC)/config.h		\
 	$(PERL_INC)/cop.h		\
 	$(PERL_INC)/cv.h		\
@@ -2884,12 +2888,17 @@ sub ppd {
     $abstract =~ s/</&lt;/g;
     $abstract =~ s/>/&gt;/g;
 
-    my $author = $self->{AUTHOR} || '';
+    my $author = join(', ',@{$self->{AUTHOR} || []});
     $author =~ s/</&lt;/g;
     $author =~ s/>/&gt;/g;
 
-    my $ppd_xml = sprintf <<'PPD_HTML', $self->{VERSION}, $abstract, $author;
-<SOFTPKG NAME="$(DISTNAME)" VERSION="%s">
+    my $ppd_file = '$(DISTNAME).ppd';
+
+    my @ppd_cmds = $self->echo(<<'PPD_HTML', $ppd_file, { append => 0, allow_variables => 1 });
+<SOFTPKG NAME="$(DISTNAME)" VERSION="$(VERSION)">
+PPD_HTML
+
+    my $ppd_xml = sprintf <<'PPD_HTML', $abstract, $author;
     <ABSTRACT>%s</ABSTRACT>
     <AUTHOR>%s</AUTHOR>
 PPD_HTML
@@ -2951,7 +2960,7 @@ PPD_OUT
 </SOFTPKG>
 PPD_XML
 
-    my @ppd_cmds = $self->echo($ppd_xml, '$(DISTNAME).ppd');
+    push @ppd_cmds, $self->echo($ppd_xml, $ppd_file, { append => 1 });
 
     return sprintf <<'PPD_OUT', join "\n\t", @ppd_cmds;
 # Creates a PPD (Perl Package Description) for a binary distribution.
@@ -3142,11 +3151,14 @@ sub oneliner {
 =cut
 
 sub quote_literal {
-    my($self, $text) = @_;
+    my($self, $text, $opts) = @_;
+    $opts->{allow_variables} = 1 unless defined $opts->{allow_variables};
 
-    # I think all we have to quote is single quotes and I think
-    # this is a safe way to do it.
+    # Quote single quotes
     $text =~ s{'}{'\\''}g;
+
+    $text = $opts->{allow_variables}
+      ? $self->escape_dollarsigns($text) : $self->escape_all_dollarsigns($text);
 
     return "'$text'";
 }
