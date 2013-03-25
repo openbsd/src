@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.64 2013/03/25 10:11:45 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.65 2013/03/25 11:38:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -520,6 +520,7 @@ client_dispatch_wait(void *data)
 
 			event_del(&client_stdin);
 			client_attached = 1;
+			client_write_server(MSG_RESIZE, NULL, 0);
 			break;
 		case MSG_STDIN:
 			if (datalen != 0)
