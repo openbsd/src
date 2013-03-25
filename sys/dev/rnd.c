@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.141 2012/06/24 18:25:12 matthew Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.142 2013/03/25 14:58:28 markus Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -390,7 +390,7 @@ enqueue_randomness(int state, int val)
 	rndstats.rnd_sb[state] += nbits;
 
 	if (rnd_qlen() > QEVSLOW/2 && timeout_initialized(&rnd_timeout) &&
-	    timeout_pending(&rnd_timeout))
+	    !timeout_pending(&rnd_timeout))
 		timeout_add(&rnd_timeout, 1);
 done:
 	mtx_leave(&entropylock);
@@ -681,6 +681,12 @@ random_init(void)
 void
 random_start(void)
 {
+	/*
+	 * On a cold start the message buffer does not contain any
+	 * unique information yet, just the copyright message and the
+	 * kernel version string.  Unique information like MAC adresses
+	 * will be added during autoconf.
+	 */
 	if (msgbufp && msgbufp->msg_magic == MSG_MAGIC)
 		add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
 		    msgbufp->msg_bufs / sizeof(u_int32_t));
@@ -690,6 +696,16 @@ random_start(void)
 	timeout_set(&arc4_timeout, arc4_reinit, NULL);
 	arc4_reinit(NULL);
 	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
+}
+
+void
+random_hostseed(void)
+{
+	if (msgbufp == NULL || msgbufp->msg_magic != MSG_MAGIC)
+		return;
+	add_entropy_words((u_int32_t *)msgbufp->msg_bufc,
+	    msgbufp->msg_bufs / sizeof(u_int32_t));
+	arc4_init(NULL, NULL);
 }
 
 int
