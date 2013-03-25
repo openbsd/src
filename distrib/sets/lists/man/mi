@@ -2868,8 +2868,6 @@
 ./usr/share/man/man8/ospfctl.8
 ./usr/share/man/man8/ospfd.8
 ./usr/share/man/man8/pac.8
-./usr/share/man/man8/palm
-./usr/share/man/man8/palm/MAKEDEV.8
 ./usr/share/man/man8/pcidump.8
 ./usr/share/man/man8/pfctl.8
 ./usr/share/man/man8/pflogd.8
