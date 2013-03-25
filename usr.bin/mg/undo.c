@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.52 2013/03/25 11:38:22 florian Exp $ */
+/* $OpenBSD: undo.c,v 1.53 2013/03/25 11:39:38 florian Exp $ */
 /*
  * This file is in the public domain
  */
@@ -424,6 +424,12 @@ undo_dump(int f, int n)
 			return (FALSE);
 		}
 		addlinef(bp, "%s", buf);
+	}
+	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
+		if (wp->w_bufp == bp) {
+			wp->w_dotline = num+1;
+			wp->w_rflag |= WFFULL;
+		}
 	}
 	return (TRUE);
 }
