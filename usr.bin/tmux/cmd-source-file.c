@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.15 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.16 2013/03/25 10:05:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -98,10 +98,11 @@ cmd_source_file_done(struct cmd_q *cmdq1)
 	cmdq_free(cmdq1);
 
 	cfg_references--;
-	if (cmdq_free(cmdq) || cfg_references != 0)
+
+	if (cmdq_free(cmdq))
 		return;
 
-	cmd_source_file_show(cmdq);
-
+	if (cfg_references == 0)
+		cmd_source_file_show(cmdq);
 	cmdq_continue(cmdq);
 }
