@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.22 2013/03/25 10:11:45 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.23 2013/03/25 11:40:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -280,7 +280,7 @@ format_session(struct format_tree *ft, struct session *s)
 	format_add(ft, "session_windows", "%u", winlink_count(&s->windows));
 	format_add(ft, "session_width", "%u", s->sx);
 	format_add(ft, "session_height", "%u", s->sy);
-	format_add(ft, "session_id", "%u", s->id);
+	format_add(ft, "session_id", "$%u", s->id);
 
 	sg = session_group_find(s);
 	format_add(ft, "session_grouped", "%d", sg != NULL);
