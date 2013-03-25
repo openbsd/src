@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.4 2013/03/25 11:35:55 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.5 2013/03/25 11:36:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -163,7 +163,7 @@ cmdq_guard(struct cmd_q *cmdq, const char *guard)
 		return;
 
 	evbuffer_add_printf(c->stdout_data, "%%%s %ld %u\n", guard,
-	    cmdq->time, cmdq->number);
+	    (long) cmdq->time, cmdq->number);
 	server_push_stdout(c);
 }
 
