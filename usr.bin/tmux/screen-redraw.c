@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.22 2012/05/23 19:19:40 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.23 2013/03/25 10:12:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -272,6 +272,9 @@ void
 screen_redraw_pane(struct client *c, struct window_pane *wp)
 {
 	u_int	i, yoff;
+
+	if (!window_pane_visible(wp))
+		return;
 
 	yoff = wp->yoff;
 	if (status_at_line(c) == 0)
