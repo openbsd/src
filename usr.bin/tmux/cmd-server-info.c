@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.32 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.33 2013/03/25 10:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -102,7 +102,7 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_q *cmdq)
 		*strchr(tim, '\n') = '\0';
 
 		cmdq_print(cmdq, "%2u: %s: %u windows (created %s) [%ux%u] "
-		    "[flags=0x%x]", s->idx, s->name,
+		    "[flags=0x%x]", s->id, s->name,
 		    winlink_count(&s->windows), tim, s->sx, s->sy, s->flags);
 		RB_FOREACH(wl, winlinks, &s->windows) {
 			w = wl->window;

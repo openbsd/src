@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.45 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.46 2013/03/25 10:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -859,7 +859,7 @@ window_choose_add_session(struct window_pane *wp, struct client *c,
 	struct window_choose_data	*wcd;
 
 	wcd = window_choose_data_create(TREE_SESSION, c, c->session);
-	wcd->idx = s->idx;
+	wcd->idx = s->id;
 
 	wcd->tree_session = s;
 	wcd->tree_session->references++;

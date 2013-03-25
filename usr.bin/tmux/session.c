@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.37 2013/03/22 16:00:26 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.38 2013/03/25 10:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -30,7 +30,7 @@
 /* Global session list. */
 struct sessions	sessions;
 struct sessions dead_sessions;
-u_int		next_session;
+u_int		next_session_id;
 struct session_groups session_groups;
 
 struct winlink *session_next_alert(struct winlink *);
@@ -70,14 +70,14 @@ session_find(const char *name)
 	return (RB_FIND(sessions, &sessions, &s));
 }
 
-/* Find session by index. */
+/* Find session by id. */
 struct session *
-session_find_by_index(u_int idx)
+session_find_by_id(u_int id)
 {
 	struct session	*s;
 
 	RB_FOREACH(s, sessions, &sessions) {
-		if (s->idx == idx)
+		if (s->id == id)
 			return (s);
 	}
 	return (NULL);
@@ -121,13 +121,13 @@ session_create(const char *name, const char *cmd, const char *cwd,
 
 	if (name != NULL) {
 		s->name = xstrdup(name);
-		s->idx = next_session++;
+		s->id = next_session_id++;
 	} else {
 		s->name = NULL;
 		do {
-			s->idx = next_session++;
+			s->id = next_session_id++;
 			free (s->name);
-			xasprintf(&s->name, "%u", s->idx);
+			xasprintf(&s->name, "%u", s->id);
 		} while (RB_FIND(sessions, &sessions, s) != NULL);
 	}
 	RB_INSERT(sessions, &sessions, s);

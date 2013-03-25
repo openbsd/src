@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.63 2013/03/25 10:03:24 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.64 2013/03/25 10:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -266,7 +266,7 @@ client_main(int argc, char **argv, int flags)
 	if (msg == MSG_COMMAND) {
 		/* Fill in command line arguments. */
 		cmddata.pid = environ_pid;
-		cmddata.idx = environ_idx;
+		cmddata.session_id = environ_session_id;
 
 		/* Prepare command for server. */
 		cmddata.argc = argc;

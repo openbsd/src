@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.115 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.116 2013/03/25 10:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,7 @@ char		 socket_path[MAXPATHLEN];
 int		 login_shell;
 char		*environ_path;
 pid_t		 environ_pid = -1;
-int		 environ_idx = -1;
+int		 environ_session_id = -1;
 
 __dead void	 usage(void);
 void	 	 parseenvironment(void);
@@ -144,16 +144,16 @@ parseenvironment(void)
 {
 	char	*env, path[256];
 	long	 pid;
-	int	 idx;
+	int	 id;
 
 	if ((env = getenv("TMUX")) == NULL)
 		return;
 
-	if (sscanf(env, "%255[^,],%ld,%d", path, &pid, &idx) != 3)
+	if (sscanf(env, "%255[^,],%ld,%d", path, &pid, &id) != 3)
 		return;
 	environ_path = xstrdup(path);
 	environ_pid = pid;
-	environ_idx = idx;
+	environ_session_id = id;
 }
 
 char *

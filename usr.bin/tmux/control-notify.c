@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.3 2013/03/25 10:04:23 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.4 2013/03/25 10:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -154,7 +154,7 @@ control_notify_attached_session_changed(struct client *c)
 		return;
 	s = c->session;
 
-	control_write(c, "%%session-changed %d %s", s->idx, s->name);
+	control_write(c, "%%session-changed %d %s", s->id, s->name);
 }
 
 void
