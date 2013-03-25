@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2013/03/23 16:12:23 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.4 2013/03/25 17:46:24 deraadt Exp $	*/
 
 /*
  * Written by Paul Irofti <pirofti@openbsd.org>. Public Domain.
@@ -12,9 +12,5 @@
 #define	_MACHINE_ARCH	ia64
 #define	MACHINE_ARCH	"ia64"
 #define	MID_MACHINE	MID_IA64
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #endif /* _MACHINE_PARAM_H_ */

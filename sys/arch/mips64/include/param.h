@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.31 2013/03/23 16:12:25 deraadt Exp $ */
+/*      $OpenBSD: param.h,v 1.32 2013/03/25 17:46:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,10 +40,6 @@
 #ifdef _KERNEL
 #include <machine/cpu.h>
 #endif
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)

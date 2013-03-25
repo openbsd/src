@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.43 2013/03/23 16:12:22 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.44 2013/03/25 17:46:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988-1994, The University of Utah and
@@ -34,10 +34,6 @@
 #define	_MACHINE_ARCH	hppa
 #define	MACHINE_ARCH	"hppa"
 #define	MID_MACHINE	MID_HPUX800
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)

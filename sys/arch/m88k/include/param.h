@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.16 2013/03/23 16:12:24 deraadt Exp $ */
+/*	$OpenBSD: param.h,v 1.17 2013/03/25 17:46:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -47,10 +47,6 @@
 #define	_MACHINE_ARCH  m88k
 #define	MACHINE_ARCH   "m88k"
 #define	MID_MACHINE    MID_M88K
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)

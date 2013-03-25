@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2013/03/23 16:12:27 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 2013/03/25 17:46:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,10 +52,6 @@
 #define	_MACHINE_ARCH	sparc
 #define	MACHINE_ARCH	"sparc"
 #define	MID_MACHINE	MID_SPARC
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define SUN4_PGSHIFT	13			/* for a sun4 machine */
 #define	SUN4CM_PGSHIFT	12			/* for a sun4c or sun4m machine */

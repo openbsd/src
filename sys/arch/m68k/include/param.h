@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.28 2013/03/23 16:12:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.29 2013/03/25 17:46:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,10 +40,6 @@
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define	MID_MACHINE	MID_M68K
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)

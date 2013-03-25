@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.102 2013/03/23 16:12:30 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.103 2013/03/25 17:46:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -137,6 +137,10 @@
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)
 #endif /* _KERNEL */
+
+#define	ALIGNBYTES		_ALIGNBYTES
+#define	ALIGN(p)		_ALIGN(p)
+#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 /*
  * File system parameters and macros.

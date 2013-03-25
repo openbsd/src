@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.20 2013/03/23 16:12:20 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.21 2013/03/25 17:46:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,10 +48,6 @@
 #define	_MACHINE_ARCH	amd64
 #define	MACHINE_ARCH	"amd64"
 #define	MID_MACHINE	MID_AMD64
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.9 2013/03/23 16:12:27 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.10 2013/03/25 17:46:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -46,10 +46,6 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 #include <sh/cpu.h>
 #endif
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 /*
  * We use 4K pages on the sh3/sh4.  Override the PAGE_* definitions

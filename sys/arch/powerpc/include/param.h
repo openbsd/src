@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.33 2013/03/23 16:12:26 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.34 2013/03/25 17:46:24 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,10 +43,6 @@
 #define	MACHINE_ARCH	"powerpc"
 #define	_MACHINE_ARCH	powerpc
 #define	MID_MACHINE	MID_POWERPC
-
-#define	ALIGNBYTES		_ALIGNBYTES
-#define	ALIGN(p)		_ALIGN(p)
-#define	ALIGNED_POINTER(p,t)	_ALIGNED_POINTER(p,t)
 
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
