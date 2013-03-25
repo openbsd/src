@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.86 2013/02/10 15:38:18 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.87 2013/03/25 11:38:22 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -553,6 +553,8 @@ filewrite(int f, int n)
 		(void)fupdstat(curbp);
 		curbp->b_flag &= ~(BFBAK | BFCHG);
 		upmodes(curbp);
+		undo_add_boundary(FFRAND, 1);
+		undo_add_modified();
 	}
 	return (s);
 }
@@ -623,6 +625,8 @@ buffsave(struct buffer *bp)
 		(void)fupdstat(bp);
 		bp->b_flag &= ~(BFCHG | BFBAK);
 		upmodes(bp);
+		undo_add_boundary(FFRAND, 1);
+		undo_add_modified();
 	}
 	return (s);
 }
