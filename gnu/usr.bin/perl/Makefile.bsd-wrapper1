@@ -8,12 +8,12 @@ TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 POD2MAN=	/usr/bin/pod2man
 .else
 POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
-		${.OBJDIR}/pod/pod2man
+		${.OBJDIR}/cpan/podlators/pod2man
 .endif
 
 MANLOCALBUILD=	yes
 
-MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 perl5121delta.1 perldelta.1 \
+MLINKS=		c2ph.1 pstruct.1 psed.1 s2p.1 perl5161delta.1 perldelta.1 \
 		Carp.3p carp.3p Carp.3p cluck.3p Carp.3p croak.3p \
 		Carp.3p confess.3p Carp.3p shortmess.3p Carp.3p longmess.3p \
 		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
@@ -24,7 +24,7 @@ MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 perl5121delta.1 perldelta.1 \
 		Socket.3p sockaddr_in.3p Socket.3p sockaddr_un.3p \
 		Socket.3p inet_aton.3p Socket.3p inet_ntoa.3p \
 		Tie::Hash.3p Tie::StdHash.3p Tie::Hash.3p Tie::ExtraHash.3p \
-		Tie::Scalar.3p Tie::StdScalar.3p diagnostics.3p splain.3p \
+		Tie::Scalar.3p Tie::StdScalar.3p splain.1 diagnostics.1 \
 		Pod::Checker.3p podchecker.3p Pod::Select.3p podselect.3p \
 		Pod::Usage.3p pod2usage.3p
 
@@ -34,28 +34,23 @@ _quick3p=
 
 .for page sect file in \
     a2p 1 			x2p/a2p.pod \
-    c2ph 1			utils/c2ph \
-    config_data 1		cpan/Module-Build/scripts/config_data \
+    c2ph 1			utils/pstruct \
+    config_data 1		utils/config_data \
     corelist 1			utils/corelist \
-    cpan 1			cpan/CPAN/scripts/cpan \
+    cpan 1			utils/cpan \
     cpan2dist 1			utils/cpan2dist \
     cpanp 1			utils/cpanp \
-    dprofpp 1 			utils/dprofpp \
-    enc2xs 1			cpan/Encode/bin/enc2xs \
+    enc2xs 1			utils/enc2xs \
     find2perl 1			x2p/find2perl \
     h2ph 1			utils/h2ph \
     h2xs 1			utils/h2xs \
-    instmodsh 1			cpan/ExtUtils-MakeMaker/bin/instmodsh \
-    libnetcfg 1			utils/libnetcfg.PL \
+    instmodsh 1			utils/instmodsh \
+    libnetcfg 1			utils/libnetcfg \
     perl 1			pod/perl.pod \
     perl5004delta 1		pod/perl5004delta.pod \
     perl5005delta 1		pod/perl5005delta.pod \
     perl561delta 1		pod/perl561delta.pod \
     perl56delta 1		pod/perl56delta.pod \
-    perl570delta 1		pod/perl570delta.pod \
-    perl571delta 1		pod/perl571delta.pod \
-    perl572delta 1		pod/perl572delta.pod \
-    perl573delta 1		pod/perl573delta.pod \
     perl58delta 1		pod/perl58delta.pod \
     perl581delta 1		pod/perl581delta.pod \
     perl582delta 1		pod/perl582delta.pod \
@@ -66,22 +61,20 @@ _quick3p=
     perl587delta 1		pod/perl587delta.pod \
     perl588delta 1		pod/perl588delta.pod \
     perl589delta 1		pod/perl589delta.pod \
-    perl590delta 1		pod/perl590delta.pod \
-    perl591delta 1		pod/perl591delta.pod \
-    perl592delta 1		pod/perl592delta.pod \
-    perl593delta 1		pod/perl593delta.pod \
-    perl594delta 1		pod/perl594delta.pod \
-    perl595delta 1		pod/perl595delta.pod \
     perl5100delta 1		pod/perl5100delta.pod \
     perl5101delta 1		pod/perl5101delta.pod \
-    perl5110delta 1		pod/perl5110delta.pod \
-    perl5111delta 1		pod/perl5111delta.pod \
-    perl5112delta 1		pod/perl5112delta.pod \
-    perl5113delta 1		pod/perl5113delta.pod \
-    perl5114delta 1		pod/perl5114delta.pod \
-    perl5115delta 1		pod/perl5115delta.pod \
     perl5120delta 1		pod/perl5120delta.pod \
     perl5121delta 1		pod/perl5121delta.pod \
+    perl5122delta 1		pod/perl5122delta.pod \
+    perl5123delta 1		pod/perl5123delta.pod \
+    perl5124delta 1		pod/perl5124delta.pod \
+    perl5140delta 1		pod/perl5140delta.pod \
+    perl5141delta 1		pod/perl5141delta.pod \
+    perl5142delta 1		pod/perl5142delta.pod \
+    perl5143delta 1		pod/perl5143delta.pod \
+    perl5160delta 1		pod/perl5160delta.pod \
+    perl5161delta 1		pod/perl5161delta.pod \
+    perl5dbpl 1			lib/perl5db.pl \
     perlapi 1			pod/perlapi.pod \
     perlapio 1			pod/perlapio.pod \
     perlartistic 1		pod/perlartistic.pod \
@@ -92,44 +85,47 @@ _quick3p=
     perlcall 1			pod/perlcall.pod \
     perlcheat 1			pod/perlcheat.pod \
     perlclib 1			pod/perlclib.pod \
-    perlcn 1			README.cn \
+    perlcn 1			pod/perlcn.pod \
     perlcommunity 1		pod/perlcommunity.pod \
-    perlcompile 1		pod/perlcompile.pod \
     perldata 1			pod/perldata.pod \
     perldbmfilter 1		pod/perldbmfilter.pod \
     perldebguts 1		pod/perldebguts.pod \
     perldebtut 1		pod/perldebtut.pod \
     perldebug 1			pod/perldebug.pod \
     perldiag 1			pod/perldiag.pod \
-    perldoc 1			pod/perldoc.pod \
+    perldoc 1			lib/perldoc.pod \
     perldsc 1			pod/perldsc.pod \
     perlembed 1			pod/perlembed.pod \
-    perlfaq 1			pod/perlfaq.pod \
-    perlfaq1 1			pod/perlfaq1.pod \
-    perlfaq2 1			pod/perlfaq2.pod \
-    perlfaq3 1			pod/perlfaq3.pod \
-    perlfaq4 1			pod/perlfaq4.pod \
-    perlfaq5 1			pod/perlfaq5.pod \
-    perlfaq6 1			pod/perlfaq6.pod \
-    perlfaq7 1			pod/perlfaq7.pod \
-    perlfaq8 1			pod/perlfaq8.pod \
-    perlfaq9 1			pod/perlfaq9.pod \
+    perlexperiment 1		pod/perlexperiment.pod \
+    perlfaq 1			lib/perlfaq.pod \
+    perlfaq1 1			lib/perlfaq1.pod \
+    perlfaq2 1			lib/perlfaq2.pod \
+    perlfaq3 1			lib/perlfaq3.pod \
+    perlfaq4 1			lib/perlfaq4.pod \
+    perlfaq5 1			lib/perlfaq5.pod \
+    perlfaq6 1			lib/perlfaq6.pod \
+    perlfaq7 1			lib/perlfaq7.pod \
+    perlfaq8 1			lib/perlfaq8.pod \
+    perlfaq9 1			lib/perlfaq9.pod \
     perlfilter 1		pod/perlfilter.pod \
     perlfork 1			pod/perlfork.pod \
     perlform 1			pod/perlform.pod \
     perlfunc 1			pod/perlfunc.pod \
-    perlglossary 1		pod/perlglossary.pod \
+    perlgit 1			pod/perlgit.pod \
+    perlglossary 1		lib/perlglossary.pod \
     perlgpl 1			pod/perlgpl.pod \
     perlguts 1			pod/perlguts.pod \
     perlhack 1			pod/perlhack.pod \
+    perlhacktips 1		pod/perlhacktips.pod \
+    perlhacktut 1		pod/perlhacktut.pod \
     perlhist 1			pod/perlhist.pod \
     perlintern 1		pod/perlintern.pod \
     perlintro 1			pod/perlintro.pod \
     perliol 1			pod/perliol.pod \
     perlipc 1			pod/perlipc.pod \
-    perlivp 1			utils/perlivp.PL \
-    perljp 1			README.jp \
-    perlko 1			README.ko \
+    perlivp 1			utils/perlivp \
+    perljp 1			pod/perljp.pod \
+    perlko 1			pod/perlko.pod \
     perllexwarn 1		pod/perllexwarn.pod \
     perllocale 1		pod/perllocale.pod \
     perllol 1			pod/perllol.pod \
@@ -141,12 +137,16 @@ _quick3p=
     perlnewmod 1		pod/perlnewmod.pod \
     perlnumber 1		pod/perlnumber.pod \
     perlobj 1			pod/perlobj.pod \
+    perlootut 1			pod/perlootut.pod \
     perlop 1			pod/perlop.pod \
+    perlopenbsd 1		pod/perlopenbsd.pod \
     perlopentut 1		pod/perlopentut.pod \
     perlpacktut 1		pod/perlpacktut.pod \
     perlperf 1			pod/perlperf.pod \
     perlpod 1			pod/perlpod.pod \
     perlpodspec 1		pod/perlpodspec.pod \
+    perlpodspeccopy 1		ext/Pod-Html/testdir/perlpodspec-copy.pod \
+    perlpodstyle 1		pod/perlpodstyle.pod \
     perlpolicy 1		pod/perlpolicy.pod \
     perlport 1			pod/perlport.pod \
     perlpragma 1		pod/perlpragma.pod \
@@ -154,48 +154,50 @@ _quick3p=
     perlreapi 1			pod/perlreapi.pod \
     perlrebackslash 1		pod/perlrebackslash.pod \
     perlrecharclass 1		pod/perlrecharclass.pod \
-    perlreguts 1		pod/perlreguts.pod \
     perlref 1			pod/perlref.pod \
     perlreftut 1		pod/perlreftut.pod \
+    perlreguts 1		pod/perlreguts.pod \
     perlrequick	1		pod/perlrequick.pod \
-    perlrepository 1		pod/perlrepository.pod \
     perlreref 1			pod/perlreref.pod \
     perlretut 1			pod/perlretut.pod \
     perlrun 1			pod/perlrun.pod \
     perlsec 1			pod/perlsec.pod \
+    perlsource 1		pod/perlsource.pod \
     perlstyle 1			pod/perlstyle.pod \
     perlsub 1			pod/perlsub.pod \
     perlsyn 1			pod/perlsyn.pod \
     perlthrtut 1		pod/perlthrtut.pod \
-    perltie 1			pod/perltie.pod \
     perltoc 1			pod/perltoc.pod \
     perltodo 1			pod/perltodo.pod \
     perltooc 1			pod/perltooc.pod \
     perltoot 1			pod/perltoot.pod \
     perltrap 1			pod/perltrap.pod \
-    perltw 1			README.tw \
+    perltw 1			pod/perltw.pod \
     perlunicode 1		pod/perlunicode.pod \
     perlunifaq 1		pod/perlunifaq.pod \
     perluniintro 1		pod/perluniintro.pod \
     perluniprops 1		pod/perluniprops.pod \
     perlunitut 1		pod/perlunitut.pod \
     perlutil 1			pod/perlutil.pod \
+    perluts 1			pod/perluts.pod \
     perlvar 1			pod/perlvar.pod \
-    perlxs 1			pod/perlxs.pod \
-    perlxstut 1			pod/perlxstut.pod \
-    piconv 1			cpan/Encode/bin/piconv \
+    perlvarcopy 1		ext/Pod-Html/testdir/perlvar-copy.pod \
+    perlxs 1			lib/perlxs.pod \
+    perlxstut 1			lib/perlxstut.pod \
+    perlxstypemap 1		lib/perlxstypemap.pod \
+    piconv 1			utils/piconv \
     pl2pm 1			utils/pl2pm \
-    pod2html 1			pod/pod2html \
-    pod2latex 1			pod/pod2latex.PL \
-    pod2man 1			pod/pod2man \
-    pod2text 1			pod/pod2text \
-    pod2usage 1			pod/pod2usage \
-    podchecker 1		pod/podchecker \
-    podselect 1			pod/podselect \
-    prove 1			cpan/Test-Harness/bin/prove \
-    s2p	1			x2p/s2p \
+    pod2html 1			utils/pod2html \
+    pod2latex 1			cpan/Pod-LaTeX/blib/script/pod2latex \
+    pod2man 1			cpan/podlators/blib/script/pod2man \
+    pod2text 1			cpan/podlators/blib/script/pod2text \
+    pod2usage 1			cpan/Pod-Parser/blib/script/pod2usage \
+    podchecker 1		cpan/Pod-Parser/blib/script/podchecker \
+    podselect 1			cpan/Pod-Parser/blib/script/podselect \
+    prove 1			utils/prove \
+    psed 1			x2p/psed \
     splain 1			utils/splain \
-    xsubpp 1			lib/ExtUtils/xsubpp \
+    xsubpp 1			utils/xsubpp \
     AnyDBM_File	3p		lib/AnyDBM_File.pm \
     App::Cpan 3p		lib/App/Cpan.pm \
     App::Prove 3p		lib/App/Prove.pm \
@@ -218,6 +220,7 @@ _quick3p=
     B::Terse 3p			lib/B/Terse.pm \
     B::Xref 3p			lib/B/Xref.pm \
     Benchmark 3p		lib/Benchmark.pm \
+    Bster 3p			cpan/Pod-Perldoc/corpus/utf8.pod \
     CGI 3p			lib/CGI.pm \
     CGI::Apache 3p		lib/CGI/Apache.pm \
     CGI::Carp 3p		lib/CGI/Carp.pm \
@@ -233,6 +236,16 @@ _quick3p=
     CPAN::Distroprefs 3p	lib/CPAN/Distroprefs.pm \
     CPAN::FirstTime 3p		lib/CPAN/FirstTime.pm \
     CPAN::Kwalify 3p		lib/CPAN/Kwalify.pm \
+    CPAN::Meta 3p		lib/CPAN/Meta.pm \
+    CPAN::Meta::Converter 3p	lib/CPAN/Meta/Converter.pm \
+    CPAN::Meta::Feature 3p	lib/CPAN/Meta/Feature.pm \
+    CPAN::Meta::History 3p	lib/CPAN/Meta/History.pm \
+    CPAN::Meta::Prereqs 3p	lib/CPAN/Meta/Prereqs.pm \
+    CPAN::Meta::Requirements 3p	lib/CPAN/Meta/Requirements.pm \
+    CPAN::Meta::Spec 3p		lib/CPAN/Meta/Spec.pm \
+    CPAN::Meta::Validator 3p	lib/CPAN/Meta/Validator.pm \
+    CPAN::Meta::YAML 3p		lib/CPAN/Meta/YAML.pm \
+    CPAN::Mirrors 3p		lib/CPAN/Mirrors.pm \
     CPAN::Nox 3p		lib/CPAN/Nox.pm \
     CPAN::Version 3p		lib/CPAN/Version.pm \
     CPANPLUS 3p			lib/CPANPLUS.pm \
@@ -272,8 +285,9 @@ _quick3p=
     CPANPLUS::Shell::Default::Plugins::HOWTO 3p	lib/CPANPLUS/Shell/Default/Plugins/HOWTO.pod \
     CPANPLUS::Shell::Default::Plugins::Remote 3p	lib/CPANPLUS/Shell/Default/Plugins/Remote.pm \
     CPANPLUS::Shell::Default::Plugins::Source 3p	lib/CPANPLUS/Shell/Default/Plugins/Source.pm \
+    CPerlBase 3p		symbian/PerlBase.pod \
     Carp 3p			lib/Carp.pm \
-    Class::ISA 3p		lib/Class/ISA.pm \
+    CharClass::Matcher 3p	regen/regcharclass.pl \
     Class::Struct 3p		lib/Class/Struct.pm \
     Compress::Raw::Zlib 3p	lib/Compress/Raw/Zlib.pm \
     Compress::Raw::Bzip2 3p	lib/Compress/Raw/Bzip2.pm \
@@ -290,7 +304,6 @@ _quick3p=
     DBM_Filter::utf8 3p		lib/DBM_Filter/utf8.pm \
     DB_File 3p			lib/DB_File.pm \
     Data::Dumper 3p		lib/Data/Dumper.pm \
-    Devel::DProf 3p		lib/Devel/DProf.pm \
     Devel::InnerPackage 3p	lib/Devel/InnerPackage.pm \
     Devel::PPPort 3p		lib/Devel/PPPort.pm \
     Devel::Peek 3p		lib/Devel/Peek.pm \
@@ -302,7 +315,7 @@ _quick3p=
     Digest::file 3p		lib/Digest/file.pm \
     DirHandle 3p		lib/DirHandle.pm \
     Dumpvalue 3p		lib/Dumpvalue.pm \
-    DynaLoader 3p		dist/XSLoader/XSLoader_pm.PL \
+    DynaLoader 3p		lib/DynaLoader.pm \
     Encode 3p			lib/Encode.pm \
     Encode::Alias 3p		lib/Encode/Alias.pm \
     Encode::Byte 3p		lib/Encode/Byte.pm \
@@ -328,9 +341,10 @@ _quick3p=
     Encode::TW 3p		lib/Encode/TW.pm \
     Encode::Unicode 3p		lib/Encode/Unicode.pm \
     Encode::Unicode::UTF7 3p	lib/Encode/Unicode/UTF7.pm \
+    Encode::_Name_ 3p		lib/Encode/_PM.e2x \
     English 3p			lib/English.pm \
     Env 3p			lib/Env.pm \
-    Errno 3p			ext/Errno/Errno_pm.PL \
+    Errno 3p			lib/Errno.pm \
     Exporter 3p			lib/Exporter.pm \
     Exporter::Heavy 3p		lib/Exporter/Heavy.pm \
     ExtUtils::CBuilder 3p	lib/ExtUtils/CBuilder.pm \
@@ -372,7 +386,14 @@ _quick3p=
     ExtUtils::Mkbootstrap 3p	lib/ExtUtils/Mkbootstrap.pm \
     ExtUtils::Mksymlists 3p	lib/ExtUtils/Mksymlists.pm \
     ExtUtils::Packlist 3p	lib/ExtUtils/Packlist.pm \
-    ExtUtils::ParseXS 3p	lib/ExtUtils/ParseXS.pm \
+    ExtUtils::ParseXS 3p	lib/ExtUtils/ParseXS.pod \
+    ExtUtils::ParseXS::Constants 3p	lib/ExtUtils/ParseXS/Constants.pm \
+    ExtUtils::ParseXS::Utilities 3p	lib/ExtUtils/ParseXS/Utilities.pm \
+    ExtUtils::Typemaps 3p	lib/ExtUtils/Typemaps.pm \
+    ExtUtils::Typemaps::Cmd 3p	lib/ExtUtils/Typemaps/Cmd.pm \
+    ExtUtils::Typemaps::InputMap 3p	lib/ExtUtils/Typemaps/InputMap.pm \
+    ExtUtils::Typemaps::OutputMap 3p	lib/ExtUtils/Typemaps/OutputMap.pm \
+    ExtUtils::Typemaps::Type 3p	lib/ExtUtils/Typemaps/Type.pm \
     ExtUtils::testlib 3p	lib/ExtUtils/testlib.pm \
     ExtUtils::XSSymSet 3p	lib/ExtUtils/XSSymSet.pm \
     Fatal 3p			lib/Fatal.pm \
@@ -403,10 +424,13 @@ _quick3p=
     Filter::Simple 3p		lib/Filter/Simple.pm \
     Filter::Util::Call 3p	lib/Filter/Util/Call.pm \
     FindBin 3p			lib/FindBin.pm \
+    GDBM_File 3p		ext/GDBM_File/GDBM_File.pm \
     Getopt::Long 3p		lib/Getopt/Long.pm \
     Getopt::Std 3p		lib/Getopt/Std.pm \
     Hash::Util 3p		lib/Hash/Util.pm \
     Hash::Util::FieldHash 3p	lib/Hash/Util/FieldHash.pm \
+    HTTP::Tiny 3p		lib/HTTP/Tiny.pm \
+    Haiku 3p			haiku/Haiku/Haiku.pm \
     I18N::Collate 3p		lib/I18N/Collate.pm \
     I18N::LangTags 3p		lib/I18N/LangTags.pm \
     I18N::LangTags::Detect 3p	lib/I18N/LangTags/Detect.pm \
@@ -416,6 +440,7 @@ _quick3p=
     IO::Compress::Base 3p	lib/IO/Compress/Base.pm \
     IO::Compress::Bzip2 3p	lib/IO/Compress/Bzip2.pm \
     IO::Compress::Deflate 3p	lib/IO/Compress/Deflate.pm \
+    IO::Compress::FAQ 3p	lib/IO/Compress/FAQ.pod \
     IO::Compress::Gzip 3p	lib/IO/Compress/Gzip.pm \
     IO::Compress::RawDeflate 3p	lib/IO/Compress/RawDeflate.pm \
     IO::Compress::Zip 3p	lib/IO/Compress/Zip.pm \
@@ -445,13 +470,42 @@ _quick3p=
     IPC::Semaphore 3p		lib/IPC/Semaphore.pm \
     IPC::SharedMem 3p		lib/IPC/SharedMem.pm \
     IPC::SysV 3p		lib/IPC/SysV.pm \
+    JSON::PP 3p			lib/JSON/PP.pm \
+    JSON::PP::Boolean 3p	lib/JSON/PP/Boolean.pm \
     List::Util 3p		lib/List/Util.pm \
     List::Util::XS 3p		lib/List/Util/XS.pm \
-    Locale::Constants 3p	lib/Locale/Constants.pod \
+    Locale::Codes 3p		lib/Locale/Codes.pod \
+    Locale::Codes::API 3p	lib/Locale/Codes/API.pod \
+    Locale::Codes::Changes 3p	lib/Locale/Codes/Changes.pod \
+    Locale::Codes::Constants 3p lib/Locale/Codes/Constants.pod \
+    Locale::Codes::Country 3p	lib/Locale/Codes/Country.pod \
+    Locale::Codes::Country_Codes 3p lib/Locale/Codes/Country_Codes.pm \
+    Locale::Codes::Country_Retired 3p lib/Locale/Codes/Country_Retired.pm \
+    Locale::Codes::Currency 3p	lib/Locale/Codes/Currency.pod \
+    Locale::Codes::Currency_Codes 3p lib/Locale/Codes/Currency_Codes.pm \
+    Locale::Codes::Currency_Retired 3p lib/Locale/Codes/Currency_Retired.pm \
+    Locale::Codes::LangExt 3p	lib/Locale/Codes/LangExt.pod \
+    Locale::Codes::LangExt_Codes 3p lib/Locale/Codes/LangExt_Codes.pm \
+    Locale::Codes::LangExt_Retired 3p lib/Locale/Codes/LangExt_Retired.pm \
+    Locale::Codes::LangFam 3p	lib/Locale/Codes/LangFam.pod \
+    Locale::Codes::LangFam_Codes 3p lib/Locale/Codes/LangFam_Codes.pm \
+    Locale::Codes::LangFam_Retired 3p lib/Locale/Codes/LangFam_Retired.pm \
+    Locale::Codes::LangVar 3p	lib/Locale/Codes/LangVar.pod \
+    Locale::Codes::LangVar_Codes 3p lib/Locale/Codes/LangVar_Codes.pm \
+    Locale::Codes::LangVar_Retired 3p lib/Locale/Codes/LangVar_Retired.pm \
+    Locale::Codes::Language 3p	lib/Locale/Codes/Language.pod \
+    Locale::Codes::Language_Codes 3p lib/Locale/Codes/Language_Codes.pm \
+    Locale::Codes::Language_Retired 3p lib/Locale/Codes/Language_Retired.pm \
+    Locale::Codes::Script 3p	lib/Locale/Codes/Script.pod \
+    Locale::Codes::Script_Codes 3p lib/Locale/Codes/Script_Codes.pm \
+    Locale::Codes::Script_Retired 3p lib/Locale/Codes/Script_Retired.pm \
     Locale::Country 3p		lib/Locale/Country.pod \
     Locale::Currency 3p		lib/Locale/Currency.pod \
     Locale::Language 3p		lib/Locale/Language.pod \
     Locale::Maketext 3p		lib/Locale/Maketext.pod \
+    Locale::Maketext::Cookbook 3p lib/Locale/Maketext/Cookbook.pod \
+    Locale::Maketext::Guts 3p	lib/Locale/Maketext/Guts.pm \
+    Locale::Maketext::GutsLoader 3p lib/Locale/Maketext/GutsLoader.pm \
     Locale::Maketext::Simple 3p	lib/Locale/Maketext/Simple.pm \
     Locale::Maketext::TPJ13 3p	lib/Locale/Maketext/TPJ13.pod \
     Locale::Script 3p		lib/Locale/Script.pod \
@@ -491,10 +545,13 @@ _quick3p=
     Module::Build::PPMMaker 3p	lib/Module/Build/PPMMaker.pm \
     Module::Build::Platform::Default 3p	lib/Module/Build/Platform/Default.pm \
     Module::Build::Platform::Unix 3p	lib/Module/Build/Platform/Unix.pm \
-    Module::CoreList 3p		lib/Module/CoreList.pm \
+    Module::Build::Version 3p	lib/Module/Build/Version.pm \
+    Module::Build::YAML 3p	lib/Module/Build/YAML.pm \
+    Module::CoreList 3p		lib/Module/CoreList.pod \
     Module::Load 3p		lib/Module/Load.pm \
     Module::Load::Conditional 3p	lib/Module/Load/Conditional.pm \
     Module::Loaded 3p		lib/Module/Loaded.pm \
+    Module::Metadata 3p		lib/Module/Metadata.pm \
     Module::Pluggable 3p	lib/Module/Pluggable.pm \
     Module::Pluggable::Object 3p	lib/Module/Pluggable/Object.pm \
     NDBM_File 3p		lib/NDBM_File.pm \
@@ -518,19 +575,22 @@ _quick3p=
     ODBM_File 3p		lib/ODBM_File.pm \
     Object::Accessor 3p		lib/Object/Accessor.pm \
     Opcode 3p			lib/Opcode.pm \
-    OpenBSD::MkTemp 3p		cpan/OpenBSD-MkTemp/lib/OpenBSD/MkTemp.pm \
+    OpenBSD::MkTemp 3p		lib/OpenBSD/MkTemp.pm \
     POSIX 3p			lib/POSIX.pod \
     Package::Constants 3p	lib/Package/Constants.pm \
     Params::Check 3p		lib/Params/Check.pm \
     Parse::CPAN::Meta 3p	lib/Parse/CPAN/Meta.pm \
+    Perl::OSType 3p		lib/Perl/OSType.pm \
     PerlIO 3p			lib/PerlIO.pm \
     PerlIO::encoding 3p		lib/PerlIO/encoding.pm \
+    PerlIO::mmap 3p		lib/PerlIO/mmap.pm \
     PerlIO::scalar 3p		lib/PerlIO/scalar.pm \
     PerlIO::via 3p		lib/PerlIO/via.pm \
     PerlIO::via::QuotedPrint 3p	lib/PerlIO/via/QuotedPrint.pm \
     Pod::Checker 3p		lib/Pod/Checker.pm \
     Pod::Escapes 3p		lib/Pod/Escapes.pm \
     Pod::Find 3p		lib/Pod/Find.pm \
+    Pod::Functions 3p		lib/Pod/Functions.pm \
     Pod::Html 3p		lib/Pod/Html.pm \
     Pod::InputObjects 3p	lib/Pod/InputObjects.pm \
     Pod::LaTeX 3p		lib/Pod/LaTeX.pm \
@@ -541,16 +601,17 @@ _quick3p=
     Pod::Perldoc 3p		lib/Pod/Perldoc.pm \
     Pod::Perldoc::BaseTo 3p	lib/Pod/Perldoc/BaseTo.pm \
     Pod::Perldoc::GetOptsOO 3p	lib/Pod/Perldoc/GetOptsOO.pm \
+    Pod::Perldoc::ToANSI 3p	lib/Pod/Perldoc/ToANSI.pm \
     Pod::Perldoc::ToChecker 3p	lib/Pod/Perldoc/ToChecker.pm \
     Pod::Perldoc::ToMan 3p	lib/Pod/Perldoc/ToMan.pm \
     Pod::Perldoc::ToNroff 3p	lib/Pod/Perldoc/ToNroff.pm \
     Pod::Perldoc::ToPod 3p	lib/Pod/Perldoc/ToPod.pm \
     Pod::Perldoc::ToRtf 3p	lib/Pod/Perldoc/ToRtf.pm \
+    Pod::Perldoc::ToTerm 3p	lib/Pod/Perldoc/ToTerm.pm \
     Pod::Perldoc::ToText 3p	lib/Pod/Perldoc/ToText.pm \
     Pod::Perldoc::ToTk 3p	lib/Pod/Perldoc/ToTk.pm \
     Pod::Perldoc::ToXml 3p	lib/Pod/Perldoc/ToXml.pm \
     Pod::PlainText 3p		lib/Pod/PlainText.pm \
-    Pod::Plainer 3p		lib/Pod/Plainer.pm \
     Pod::Select 3p		lib/Pod/Select.pm \
     Pod::Simple 3p		lib/Pod/Simple.pod \
     Pod::Simple::Checker 3p	lib/Pod/Simple/Checker.pm \
@@ -576,7 +637,6 @@ _quick3p=
     Pod::Simple::XMLOutStream 3p	lib/Pod/Simple/XMLOutStream.pm \
     Pod::Text 3p		lib/Pod/Text.pm \
     Pod::Text::Color 3p		lib/Pod/Text/Color.pm \
-    Pod::Text::Overstrike 3p	lib/Pod/Text/Overstrike.pm \
     Pod::Text::Termcap 3p	lib/Pod/Text/Termcap.pm \
     Pod::Usage 3p		lib/Pod/Usage.pm \
     SDBM_File 3p		lib/SDBM_File.pm \
@@ -585,10 +645,8 @@ _quick3p=
     Search::Dict 3p		lib/Search/Dict.pm \
     SelectSaver 3p		lib/SelectSaver.pm \
     SelfLoader 3p		lib/SelfLoader.pm \
-    Shell 3p			lib/Shell.pm \
     Socket 3p			lib/Socket.pm \
     Storable 3p			lib/Storable.pm \
-    Switch 3p			lib/Switch.pm \
     Symbol 3p			lib/Symbol.pm \
     Sys::Hostname 3p		lib/Sys/Hostname.pm \
     Sys::Syslog 3p		lib/Sys/Syslog.pm \
@@ -626,7 +684,12 @@ _quick3p=
     TAP::Parser::Scheduler::Job 3p lib/TAP/Parser/Scheduler/Job.pm \
     TAP::Parser::Scheduler::Spinner 3p lib/TAP/Parser/Scheduler/Spinner.pm \
     TAP::Parser::Source 3p	lib/TAP/Parser/Source.pm \
-    TAP::Parser::Source::Perl 3p lib/TAP/Parser/Source/Perl.pm \
+    TAP::Parser::SourceHandler 3p lib/TAP/Parser/SourceHandler.pm \
+    TAP::Parser::SourceHandler::Executable 3p lib/TAP/Parser/SourceHandler/Executable.pm \
+    TAP::Parser::SourceHandler::File 3p lib/TAP/Parser/SourceHandler/File.pm \
+    TAP::Parser::SourceHandler::Handle 3p lib/TAP/Parser/SourceHandler/Handle.pm \
+    TAP::Parser::SourceHandler::Perl 3p lib/TAP/Parser/SourceHandler/Perl.pm \
+    TAP::Parser::SourceHandler::RawTAP 3p lib/TAP/Parser/SourceHandler/RawTAP.pm \
     TAP::Parser::Utils 3p	lib/TAP/Parser/Utils.pm \
     TAP::Parser::YAMLish::Reader 3p lib/TAP/Parser/YAMLish/Reader.pm \
     TAP::Parser::YAMLish::Writer 3p lib/TAP/Parser/YAMLish/Writer.pm \
@@ -673,14 +736,22 @@ _quick3p=
     Time::tm 3p			lib/Time/tm.pm \
     UNIVERSAL 3p		lib/UNIVERSAL.pm \
     Unicode::Collate 3p		lib/Unicode/Collate.pm \
+    Unicode::Collate::CJK::Big5 3p lib/Unicode/Collate/CJK/Big5.pm \
+    Unicode::Collate::CJK::GB2312 3p lib/Unicode/Collate/CJK/GB2312.pm \
+    Unicode::Collate::CJK::JISX0208 3p lib/Unicode/Collate/CJK/JISX0208.pm \
+    Unicode::Collate::CJK::Korean 3p lib/Unicode/Collate/CJK/Korean.pm \
+    Unicode::Collate::CJK::Pinyin 3p lib/Unicode/Collate/CJK/Pinyin.pm \
+    Unicode::Collate::CJK::Stroke 3p lib/Unicode/Collate/CJK/Stroke.pm \
+    Unicode::Collate::Locale 3p lib/Unicode/Collate/Locale.pm \
     Unicode::Normalize 3p	lib/Unicode/Normalize.pm \
     Unicode::UCD 3p		lib/Unicode/UCD.pm \
     User::grent 3p		lib/User/grent.pm \
     User::pwent 3p		lib/User/pwent.pm \
+    Version::Requirements 3p	lib/Version/Requirements.pm \
     XS::APItest 3p		ext/XS-APItest/APItest.pm \
-    XS::APItest::KeywordRPN 3p	ext/XS-APItest-KeywordRPN/KeywordRPN.pm \
     XS::Typemap 3p		ext/XS-Typemap/Typemap.pm \
     XSLoader 3p			lib/XSLoader.pm \
+    arybase 3p			lib/arybase.pm \
     attributes 3p		lib/attributes.pm \
     autodie 3p			lib/autodie.pm \
     autodie::exception 3p	lib/autodie/exception.pm \
@@ -696,10 +767,9 @@ _quick3p=
     charnames 3p		lib/charnames.pm \
     constant 3p			lib/constant.pm \
     deprecate 3p		lib/deprecate.pm \
-    diagnostics 3p		lib/diagnostics.pm \
     encoding 3p			lib/encoding.pm \
     encoding::warnings 3p	lib/encoding/warnings.pm \
-    feature 3p			lib/feature.pm \
+    feature 3p			regen/feature.pl \
     fields 3p			lib/fields.pm \
     filetest 3p			lib/filetest.pm \
     if 3p			lib/if.pm \
@@ -726,7 +796,7 @@ _quick3p=
     version 3p			lib/version.pod \
     version::Internals 3p	lib/version/Internals.pod \
     vmsish 3p			lib/vmsish.pm \
-    warnings 3p			lib/warnings.pm \
+    warnings 3p			regen/warnings.pl \
     warnings::register 3p	lib/warnings/register.pm
 .  ifndef NOMAN
 MAN+= ${page}.${sect}
