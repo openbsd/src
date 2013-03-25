@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.22 2013/03/25 11:43:01 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.23 2013/03/25 16:04:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -77,6 +77,7 @@ cmd_run_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct args			*args = self->args;
 	struct cmd_run_shell_data	*cdata;
 	char				*shellcmd;
+	struct client			*c;
 	struct session			*s = NULL;
 	struct winlink			*wl = NULL;
 	struct window_pane		*wp = NULL;
@@ -84,6 +85,14 @@ cmd_run_shell_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	if (args_has(args, 't'))
 		wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp);
+	else {
+		c = cmd_find_client(cmdq, NULL, 1);
+		if (c != NULL && c->session != NULL) {
+			s = c->session;
+			wl = s->curw;
+			wp = wl->window->active;
+		}
+	}
 
 	ft = format_create();
 	if (s != NULL)
