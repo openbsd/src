@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.134 2012/12/27 18:51:52 florian Exp $	*/
+/*	$OpenBSD: def.h,v 1.135 2013/03/25 11:41:44 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -505,7 +505,7 @@ int		 setlineno(int);
 
 /* random.c X */
 int		 showcpos(int, int);
-int		 getcolpos(void);
+int		 getcolpos(struct mgwin *);
 int		 twiddle(int, int);
 int		 openline(int, int);
 int		 newline(int, int);
