@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.58 2013/03/25 11:44:16 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.59 2013/03/26 14:14:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -448,7 +448,7 @@ tty_keys_next(struct tty *tty)
 	const char	*buf;
 	size_t		 len, size;
 	cc_t		 bspace;
-	int		 key, delay;
+	int		 key, delay, expired = 0;
 
 	/* Get key buffer. */
 	buf = EVBUFFER_DATA(tty->event->input);
@@ -508,7 +508,7 @@ first_key:
 		}
 
 		tk = tty_keys_find(tty, buf + 1, len - 1, &size);
-		if (tk != NULL) {
+		if (tk != NULL && (!expired || tk->next == NULL)) {
 			size++;	/* include escape */
 			if (tk->next != NULL)
 				goto partial_key;
@@ -540,8 +540,10 @@ partial_key:
 	/* If timer is going, check for expiration. */
 	if (tty->flags & TTY_TIMER) {
 		if (evtimer_initialized(&tty->key_timer) &&
-		    !evtimer_pending(&tty->key_timer, NULL))
+		    !evtimer_pending(&tty->key_timer, NULL)) {
+			expired = 1;
 			goto first_key;
+		}
 		return (0);
 	}
 
