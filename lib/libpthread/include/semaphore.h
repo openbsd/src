@@ -1,4 +1,4 @@
-/*	$OpenBSD: semaphore.h,v 1.8 2013/03/24 19:55:45 guenther Exp $	*/
+/*	$OpenBSD: semaphore.h,v 1.9 2013/03/26 14:38:08 deraadt Exp $	*/
 
 /* semaphore.h: POSIX 1003.1b semaphores */
 
@@ -32,12 +32,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $FreeBSD: semaphore.h,v 1.6 2000/01/20 07:55:42 jasone Exp $
  */
 
 #ifndef _SEMAPHORE_H_
 #define _SEMAPHORE_H_
+
+#include <sys/cdefs.h>
 
 /* Opaque type definition. */
 struct __sem;
