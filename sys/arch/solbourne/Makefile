@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.6 2010/11/12 17:11:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/03/26 19:43:01 jasper Exp $
 
 S=	${.CURDIR}/../..
 KFILE=	GENERIC
 .if exists(conf/GENERIC.MP)
 KFILE=	GENERIC.MP
 .endif
-TDIRS=	${_arch} include pci isa eisa
+TDIRS=	${_arch} include
 TAGS=	${.CURDIR}/tags
 
 NOPROG=
