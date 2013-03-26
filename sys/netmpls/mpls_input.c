@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.32 2011/07/06 02:42:28 henning Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.33 2013/03/26 13:19:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -47,7 +47,6 @@
 #include <netmpls/mpls.h>
 
 struct ifqueue	mplsintrq;
-int		mplsqmaxlen = IFQ_MAXLEN;
 extern int	mpls_inkloop;
 
 #ifdef MPLS_DEBUG
@@ -65,7 +64,7 @@ struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
 void
 mpls_init(void)
 {
-	IFQ_SET_MAXLEN(&mplsintrq, mplsqmaxlen);
+	IFQ_SET_MAXLEN(&mplsintrq, IFQ_MAXLEN);
 }
 
 void

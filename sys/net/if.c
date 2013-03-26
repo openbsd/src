@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.252 2013/03/20 10:34:12 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.253 2013/03/26 13:19:25 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -136,8 +136,6 @@
 void	if_attachsetup(struct ifnet *);
 void	if_attachdomain1(struct ifnet *);
 void	if_attach_common(struct ifnet *);
-
-int	ifqmaxlen = IFQ_MAXLEN;
 
 void	if_detach_queues(struct ifnet *, struct ifqueue *);
 void	if_detached_start(struct ifnet *);
@@ -280,7 +278,7 @@ if_attachsetup(struct ifnet *ifp)
 	ifindex2ifnet[if_index] = ifp;
 
 	if (ifp->if_snd.ifq_maxlen == 0)
-		IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
+		IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 #ifdef ALTQ
 	ifp->if_snd.altq_type = 0;
 	ifp->if_snd.altq_disc = NULL;

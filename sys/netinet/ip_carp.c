@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.200 2013/03/25 14:40:56 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.201 2013/03/26 13:19:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -894,7 +894,7 @@ carp_clone_create(ifc, unit)
 	ifp->if_addrlen = ETHER_ADDR_LEN;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_mtu = ETHERMTU;
-	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 

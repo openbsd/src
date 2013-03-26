@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.206 2013/03/15 20:45:34 tedu Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.207 2013/03/26 13:19:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -219,7 +219,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = bridge_start;
 	ifp->if_type = IFT_BRIDGE;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
-	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);

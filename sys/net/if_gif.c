@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.59 2013/01/17 00:48:04 henning Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.60 2013/03/26 13:19:25 mpi Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	sc->gif_if.if_start  = gif_start;
 	sc->gif_if.if_output = gif_output;
 	sc->gif_if.if_type   = IFT_GIF;
-	IFQ_SET_MAXLEN(&sc->gif_if.if_snd, ifqmaxlen);
+	IFQ_SET_MAXLEN(&sc->gif_if.if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&sc->gif_if.if_snd);
 	sc->gif_if.if_softc = sc;
 	if_attach(&sc->gif_if);
