@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.7 2013/03/25 19:50:56 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.8 2013/03/26 21:01:02 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -699,6 +699,10 @@ inteldrm_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct inteldrm_softc *dev_priv = v;
+	struct rasops_info *ri = &dev_priv->ro;
+
+	if (cookie == ri->ri_active)
+		return (0);
 
 	dev_priv->switchcb = cb;
 	dev_priv->switchcbarg = cbarg;
