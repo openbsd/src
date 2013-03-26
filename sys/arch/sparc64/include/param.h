@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.38 2013/03/25 17:46:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.39 2013/03/26 05:04:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,8 +73,6 @@
 #define	PAGE_SHIFT	13
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
-#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 /*
  * Here are all the magic kernel virtual addresses and how they're allocated.
@@ -130,6 +128,8 @@
 #define	CPUINFO_VA	(    EINTSTACK)
 
 #define	NBPG		PAGE_SIZE		/* bytes/page */
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */

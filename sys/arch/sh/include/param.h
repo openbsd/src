@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 2013/03/25 17:46:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.11 2013/03/26 05:04:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -54,12 +54,12 @@
 #define	PAGE_SHIFT		12
 #define	PAGE_SIZE		(1 << PAGE_SHIFT)
 #define	PAGE_MASK		(PAGE_SIZE - 1)
-#define	PGSHIFT			PAGE_SHIFT
-#define	PGOFSET			PAGE_MASK
 
 #ifdef _KERNEL
 
 #define	NBPG			PAGE_SIZE
+#define	PGSHIFT			PAGE_SHIFT
+#define	PGOFSET			PAGE_MASK
 
 #endif
 

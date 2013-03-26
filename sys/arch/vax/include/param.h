@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.39 2013/03/25 17:46:24 deraadt Exp $ */
+/*	$OpenBSD: param.h,v 1.40 2013/03/26 05:04:10 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,8 +44,6 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
-#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 #define	VAX_PGSHIFT	9
 #define	VAX_NBPG	(1 << VAX_PGSHIFT)
@@ -57,6 +55,8 @@
 #ifdef _KERNEL
 
 #define	NBPG		PAGE_SIZE		/* bytes/page */
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * PAGE_SIZE)

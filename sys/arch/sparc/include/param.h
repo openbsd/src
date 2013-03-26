@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.48 2013/03/25 17:46:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.49 2013/03/26 05:04:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,8 +85,6 @@
 # define PAGE_SIZE	uvmexp.pagesize
 # define PAGE_MASK	uvmexp.pagemask
 #endif
-#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
-#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 #define	KERNBASE	0xf8000000
 
@@ -95,6 +93,8 @@
 #define	KERNTEXTOFF	0xf8004000		/* start of kernel text */
 
 #define	NBPG		PAGE_SIZE		/* bytes/page */
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 /*#define UPAGES	depends on machine model */
 #define	USPACE		8192			/* total size of u-area */

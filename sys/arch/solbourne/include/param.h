@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.12 2013/03/25 17:46:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.13 2013/03/26 05:04:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,8 +58,6 @@
 #define	PAGE_SHIFT	SUN4_PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
-#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 #define	KERNBASE	0xfd080000
 
@@ -69,6 +67,8 @@
 #define	MSGBUF_PA	PTW1_TO_PHYS(KERNBASE)	/* msgbuf physical address */
 
 #define	NBPG		PAGE_SIZE		/* bytes/page */
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_MASK		/* byte offset into page */
 
 #define UPAGES		1
 #define	USPACE		8192		/* total size of u-area */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.30 2013/03/25 18:17:22 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.31 2013/03/26 05:04:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,8 +43,6 @@
 
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-#define	PGSHIFT		PAGE_SHIFT
-#define	PGOFSET		PAGE_MASK
 
 #ifdef _KERNEL
 
@@ -53,6 +51,8 @@
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PAGE_SHIFT)
 
 #define	NBPG		PAGE_SIZE
+#define	PGSHIFT		PAGE_SHIFT
+#define	PGOFSET		PAGE_MASK
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */

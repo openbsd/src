@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2013/03/25 17:46:24 deraadt Exp $ */
+/*	$OpenBSD: param.h,v 1.18 2013/03/26 05:04:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -51,14 +51,14 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
-#define	PGOFSET		PAGE_SIZE		/* byte offset into page */
 
 #define	NPTEPG		(PAGE_SIZE / (sizeof(pt_entry_t)))
 
 #ifdef _KERNEL
 
 #define	NBPG		PAGE_SIZE
+#define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
+#define	PGOFSET		PAGE_SIZE		/* byte offset into page */
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */

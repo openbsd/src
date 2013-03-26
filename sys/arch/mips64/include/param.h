@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.32 2013/03/25 17:46:24 deraadt Exp $ */
+/*      $OpenBSD: param.h,v 1.33 2013/03/26 05:04:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,14 +43,14 @@
 
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-#define	PGSHIFT		PAGE_SHIFT
-#define	PGOFSET		PAGE_MASK
 
 #define	KERNBASE	0xffffffff80000000L	/* start of kernel virtual */
 
 #ifdef _KERNEL
 
 #define	NBPG		PAGE_SIZE
+#define	PGSHIFT		PAGE_SHIFT
+#define	PGOFSET		PAGE_MASK
 
 #define	USPACE		16384
 #define	UPAGES		(USPACE >> PAGE_SHIFT)

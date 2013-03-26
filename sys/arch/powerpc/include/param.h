@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.34 2013/03/25 17:46:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.35 2013/03/26 05:04:10 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,12 +47,12 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-#define	PGSHIFT		PAGE_SHIFT
-#define	PGOFSET		PAGE_MASK
 
 #ifdef _KERNEL
 
 #define	NBPG		PAGE_SIZE
+#define	PGSHIFT		PAGE_SHIFT
+#define	PGOFSET		PAGE_MASK
 
 #define	UPAGES		4			/* pages of u-area */
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
