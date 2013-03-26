@@ -1,4 +1,4 @@
-/*	$Id: arch.in,v 1.7 2012/02/26 20:42:29 schwarze Exp $ */
+/*	$Id: arch.in,v 1.8 2013/03/26 19:16:19 jmc Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -81,6 +81,7 @@ LINE("netwinder",	"NetWinder")
 LINE("news68k",		"NeWS68k")
 LINE("newsmips",	"NeWSMIPS")
 LINE("next68k",		"NeXT68k")
+LINE("octeon",		"OCTEON")
 LINE("ofppc",		"OFPPC")
 LINE("palm",		"Palm")
 LINE("pc532",		"PC532")
