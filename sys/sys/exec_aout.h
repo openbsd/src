@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.22 2006/10/06 20:58:17 miod Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.23 2013/03/26 16:39:08 tedu Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -191,11 +191,6 @@ int	exec_aout_makecmds(struct proc *, struct exec_package *);
 int	exec_aout_prep_zmagic(struct proc *, struct exec_package *);
 int	exec_aout_prep_nmagic(struct proc *, struct exec_package *);
 int	exec_aout_prep_omagic(struct proc *, struct exec_package *);
-
-/* For compatibility modules */
-int	exec_aout_prep_oldzmagic(struct proc *, struct exec_package *);
-int	exec_aout_prep_oldnmagic(struct proc *, struct exec_package *);
-int	exec_aout_prep_oldomagic(struct proc *, struct exec_package *);
 
 /*
  * MD portion
