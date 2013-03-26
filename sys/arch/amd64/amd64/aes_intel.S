@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.8 2012/12/09 23:14:28 mikeb Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.9 2013/03/26 15:47:01 jsing Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -47,8 +47,10 @@
  * - assembler macros were converted to the actual instructions;
  * - aesni_ctr_enc was changed to be RFC 3686 compliant;
  * - aes-gcm mode added;
+ * - aes-xts implementation added;
  *
  * Copyright (c) 2010,2011 Mike Belopuhov
+ * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -284,7 +286,7 @@ ENTRY(aesni_enc)
  *	KLEN:		round count
  *	STATE:		initial state (input)
  * output:
- *	STATE:		finial state (output)
+ *	STATE:		final state (output)
  * changed:
  *	KEY
  *	TKEYP (T1)
@@ -343,7 +345,7 @@ _aesni_enc1:
  *	STATE3
  *	STATE4
  * output:
- *	STATE1:		finial state (output)
+ *	STATE1:		final state (output)
  *	STATE2
  *	STATE3
  *	STATE4
@@ -458,7 +460,7 @@ ENTRY(aesni_dec)
  *	KLEN:		key length
  *	STATE:		initial state (input)
  * output:
- *	STATE:		finial state (output)
+ *	STATE:		final state (output)
  * changed:
  *	KEY
  *	TKEYP (T1)
@@ -517,7 +519,7 @@ _aesni_dec1:
  *	STATE3
  *	STATE4
  * output:
- *	STATE1:		finial state (output)
+ *	STATE1:		final state (output)
  *	STATE2
  *	STATE3
  *	STATE4
@@ -1001,4 +1003,102 @@ ENTRY(aesni_gmac_final)
 	movdqu	(HSTATE),IN
 	pxor	IN,STATE
 	movdqu	STATE,(OUTP)		# output
+	ret
+
+/*
+ * void aesni_xts_enc(struct aesni_xts_ctx *xts, uint8_t *dst, uint8_t *src,
+ *    size_t len, uint8_t *iv)
+ */
+ENTRY(aesni_xts_enc)
+	cmp	$16,%rcx
+	jb	2f
+
+	call	_aesni_xts_tweak
+	
+	movl	480(KEYP),KLEN		# key length
+1:
+	movups	(%rdx),%xmm0		# src
+	pxor	%xmm3,%xmm0		# xor block with tweak
+	call	_aesni_enc1
+	pxor	%xmm3,%xmm0		# xor block with tweak
+	movups	%xmm0,(%rsi)		# dst
+
+	call	_aesni_xts_tweak_exp
+
+	add	$16,%rsi
+	add	$16,%rdx
+	sub	$16,%rcx
+	cmp	$16,%rcx
+	jge	1b
+2:
+	ret
+
+/*
+ * void aesni_xts_dec(struct aesni_xts_ctx *xts, uint8_t *dst, uint8_t *src,
+ *    size_t len, uint8_t *iv)
+ */
+ENTRY(aesni_xts_dec)
+	cmp	$16,%rcx
+	jb	2f
+
+	call	_aesni_xts_tweak
+
+	movl	480(KEYP),KLEN		# key length
+	add	$240,KEYP		# decryption key
+1:
+	movups	(%rdx),%xmm0		# src
+	pxor	%xmm3,%xmm0		# xor block with tweak
+	call	_aesni_dec1
+	pxor	%xmm3,%xmm0		# xor block with tweak
+	movups	%xmm0,(%rsi)		# dst
+
+	call	_aesni_xts_tweak_exp
+	
+	add	$16,%rsi
+	add	$16,%rdx
+	sub	$16,%rcx
+	cmp	$16,%rcx
+	jge	1b
+2:
+	ret
+
+/*
+ * Prepare tweak as E_k2(IV). IV is specified as LE representation of a
+ * 64-bit block number which we allow to be passed in directly. Since
+ * we're on a 64-bit LE host the representation is already correct.
+ *
+ * xts is in %rdi, iv is in %r8 and we return the tweak in %xmm3.
+ */
+_aesni_xts_tweak:
+	mov	(%r8),%r10
+	movd	%r10,%xmm0		# Last 64-bits of IV are always zero.
+	mov	KEYP,%r11
+	lea	496(%rdi),KEYP
+	movl	480(KEYP),KLEN
+	call	_aesni_enc1
+	movdqa	%xmm0,%xmm3
+	mov	%r11,KEYP
+	ret
+
+/*
+ * Exponentiate AES XTS tweak (in %xmm3).
+ */
+_aesni_xts_tweak_exp:
+	pextrw	$7,%xmm3,%r10
+	pextrw	$3,%xmm3,%r11
+	psllq	$1,%xmm3		# Left shift.
+
+	and	$0x8000,%r11		# Carry between quads.
+	jz	1f
+	mov	$1,%r11
+	pxor	%xmm0,%xmm0
+	pinsrw	$4,%r11,%xmm0
+	por	%xmm0,%xmm3
+1:
+	and	$0x8000,%r10
+	jz	2f
+	pextrw	$0,%xmm3,%r11
+	xor	$0x87,%r11		# AES XTS alpha - GF(2^128).
+	pinsrw	$0,%r11,%xmm3
+2:
 	ret

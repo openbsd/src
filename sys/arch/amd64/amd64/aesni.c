@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.24 2012/12/10 15:06:45 mikeb Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.25 2013/03/26 15:47:01 jsing Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -42,6 +42,21 @@
 #define AESCTR_IVSIZE		8
 #define AESCTR_BLOCKSIZE	16
 
+#define AES_XTS_BLOCKSIZE	16
+#define AES_XTS_IVSIZE		8
+#define AES_XTS_ALPHA		0x87	/* GF(2^128) generator polynomial */
+
+struct aesni_aes_ctx {
+	uint32_t		 aes_ekey[4 * (AES_MAXROUNDS + 1)];
+	uint32_t		 aes_dkey[4 * (AES_MAXROUNDS + 1)];
+	uint32_t		 aes_klen;
+	uint32_t		 aes_pad[3];
+};
+
+struct aesni_xts_ctx {
+	struct aesni_aes_ctx	 xts_keys[2];
+};
+
 struct aesni_session {
 	uint32_t		 ses_ekey[4 * (AES_MAXROUNDS + 1)];
 	uint32_t		 ses_dkey[4 * (AES_MAXROUNDS + 1)];
@@ -49,6 +64,7 @@ struct aesni_session {
 	uint8_t			 ses_nonce[AESCTR_NONCESIZE];
 	int			 ses_sid;
 	GHASH_CTX		*ses_ghash;
+	struct aesni_xts_ctx	*ses_xts;
 	struct swcr_data	*ses_swd;
 	LIST_ENTRY(aesni_session)
 				 ses_entries;
@@ -84,6 +100,12 @@ extern void aesni_cbc_dec(struct aesni_session *ses, uint8_t *dst,
 extern void aesni_ctr_enc(struct aesni_session *ses, uint8_t *dst,
 	    uint8_t *src, size_t len, uint8_t *icb);
 
+/* assembler-assisted XTS mode */
+extern void aesni_xts_enc(struct aesni_xts_ctx *xts, uint8_t *dst,
+	    uint8_t *src, size_t len, uint8_t *tweak);
+extern void aesni_xts_dec(struct aesni_xts_ctx *xts, uint8_t *dst,
+	    uint8_t *src, size_t len, uint8_t *tweak);
+
 /* assembler-assisted GMAC */
 extern void aesni_gmac_update(GHASH_CTX *ghash, uint8_t *src, size_t len);
 extern void aesni_gmac_final(struct aesni_session *ses, uint8_t *tag,
@@ -114,15 +136,20 @@ aesni_setup(void)
 		aesni_sc->sc_buflen = PAGE_SIZE;
 
 	bzero(algs, sizeof(algs));
+
+	/* Encryption algorithms. */
 	algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_CTR] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_GCM_16] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_AES_XTS] = CRYPTO_ALG_FLAG_SUPPORTED;
+
+	/* Authentication algorithms. */
 	algs[CRYPTO_AES_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_128_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_192_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_256_GMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 
-	/* needed for ipsec, uses software crypto */
+	/* HMACs needed for IPsec, uses software crypto. */
 	algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_RIPEMD160_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
@@ -150,6 +177,7 @@ int
 aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct aesni_session *ses = NULL;
+	struct aesni_aes_ctx *aes1, *aes2;
 	struct cryptoini *c;
 	struct auth_hash *axf;
 	struct swcr_data *swd;
@@ -181,6 +209,28 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    AESCTR_NONCESIZE);
 			fpu_kernel_enter();
 			aesni_set_key(ses, c->cri_key, ses->ses_klen);
+			fpu_kernel_exit();
+			break;
+
+		case CRYPTO_AES_XTS:
+			ses->ses_xts = malloc(sizeof(struct aesni_xts_ctx),
+			    M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
+			if (ses->ses_xts == NULL) {
+				aesni_freesession(ses->ses_sid);
+				return (ENOMEM);
+			}
+
+			ses->ses_klen = c->cri_klen / 16;
+			aes1 = &ses->ses_xts->xts_keys[0];
+			aes1->aes_klen = ses->ses_klen;
+			aes2 = &ses->ses_xts->xts_keys[1];
+			aes2->aes_klen = ses->ses_klen;
+
+			fpu_kernel_enter();
+			aesni_set_key((struct aesni_session *)aes1,
+			    c->cri_key, aes1->aes_klen);
+			aesni_set_key((struct aesni_session *)aes2,
+			    c->cri_key + ses->ses_klen, aes2->aes_klen);
 			fpu_kernel_exit();
 			break;
 
@@ -300,8 +350,13 @@ aesni_freesession(u_int64_t tid)
 	LIST_REMOVE(ses, ses_entries);
 
 	if (ses->ses_ghash) {
-		bzero(ses->ses_ghash, sizeof(GHASH_CTX));
+		explicit_bzero(ses->ses_ghash, sizeof(GHASH_CTX));
 		free(ses->ses_ghash, M_CRYPTO_DATA);
+	}
+
+	if (ses->ses_xts) {
+		explicit_bzero(ses->ses_xts, sizeof(struct aesni_xts_ctx));
+		free(ses->ses_xts, M_CRYPTO_DATA);
 	}
 
 	if (ses->ses_swd) {
@@ -343,12 +398,12 @@ int
 aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
     struct cryptodesc *crda, struct aesni_session *ses)
 {
+	int aadlen, err, ivlen, iskip, oskip, rlen;
 	uint8_t iv[EALG_MAX_BLOCK_LEN];
 	uint8_t icb[AESCTR_BLOCKSIZE];
 	uint8_t tag[GMAC_DIGEST_LEN];
 	uint8_t *buf = aesni_sc->sc_buf;
 	uint32_t *dw;
-	int aadlen, err, ivlen, iskip, oskip, rlen;
 
 	aadlen = rlen = err = iskip = oskip = 0;
 
@@ -367,7 +422,7 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		aesni_sc->sc_buflen = rlen;
 	}
 
-	/* CBC uses 16, CTR only 8 */
+	/* CBC uses 16, CTR/XTS only 8. */
 	ivlen = (crd->crd_alg == CRYPTO_AES_CBC) ? 16 : 8;
 
 	/* Initialize the IV */
@@ -492,6 +547,12 @@ aesni_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		/* finalization */
 		aesni_gmac_final(ses, tag, icb, ses->ses_ghash->S);
 		break;
+	case CRYPTO_AES_XTS:
+		if (crd->crd_flags & CRD_F_ENCRYPT)
+			aesni_xts_enc(ses->ses_xts, buf, buf, crd->crd_len, iv);
+		else
+			aesni_xts_dec(ses->ses_xts, buf, buf, crd->crd_len, iv);
+		break;
 	}
 	fpu_kernel_exit();
 
@@ -555,6 +616,7 @@ aesni_process(struct cryptop *crp)
 		switch (crd->crd_alg) {
 		case CRYPTO_AES_CBC:
 		case CRYPTO_AES_CTR:
+		case CRYPTO_AES_XTS:
 			err = aesni_encdec(crp, crd, NULL, ses);
 			if (err != 0)
 				goto out;
