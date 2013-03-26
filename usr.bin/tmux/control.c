@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.9 2013/03/25 11:35:55 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.10 2013/03/26 10:54:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -22,6 +22,7 @@
 #include <event.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "tmux.h"
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.6 2013/03/25 11:41:16 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.7 2013/03/26 10:54:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,6 +20,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "tmux.h"
 
