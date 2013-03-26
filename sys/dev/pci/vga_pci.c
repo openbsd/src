@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.71 2013/03/18 10:12:40 kettenis Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.72 2013/03/26 18:45:02 kettenis Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -170,18 +170,6 @@ static const struct vga_device_description vga_devs[] = {
 	},
 	{	/* All machines with Intel US15L (until more evidence) */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15L_IGD,
-	    	0x0000, 0x0000 },
-	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
-	},
-
-	{	/*  Anything with on-die intel graphics, for now */
-	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARRANDALE_IGD,	
-	    	0x0000, 0x0000 },
-	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
-	},
-
-	{	/*  Anything with on-die intel graphics, for now */
-	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CLARKDALE_IGD,
 	    	0x0000, 0x0000 },
 	    {	0xffff, 0xffff, 0x0000, 0x0000 }, 1, 0
 	},
