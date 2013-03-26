@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.12 2013/02/03 22:35:52 bcallah Exp $
+#	$OpenBSD: files.octeon,v 1.13 2013/03/26 18:46:55 jasper Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -66,6 +66,8 @@ file	arch/octeon/dev/cn30xxsmi.c			iobus
 
 # On-board CF
 device	octcf: disk
+attach	octcf at iobus
+file	arch/octeon/dev/octcf.c				octcf
 
 device	cn30xxgmx {}
 attach	cn30xxgmx at iobus
@@ -74,9 +76,6 @@ file	arch/octeon/dev/cn30xxgmx.c			cn30xxgmx
 device	cnmac: ether, ifnet, mii, ifmedia
 attach	cnmac at cn30xxgmx
 file	arch/octeon/dev/if_cnmac.c			cnmac
-
-attach	octcf at iobus
-file	arch/octeon/dev/octcf.c				octcf
 
 define	uartbus {[base = -1]}
 device	uartbus
