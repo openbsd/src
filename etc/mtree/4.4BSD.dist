@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.228 2013/03/25 17:22:11 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.229 2013/03/26 20:03:38 jasper Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1233,6 +1233,8 @@ mvme68k
 ..
 mvme88k
 ..
+octeon
+..
 sgi
 ..
 socppc
@@ -1314,6 +1316,8 @@ macppc
 mvme68k
 ..
 mvme88k
+..
+octeon
 ..
 sgi
 ..
