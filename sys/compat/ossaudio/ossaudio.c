@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.14 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.15 2013/03/26 16:40:34 tedu Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.23 1997/10/19 07:41:52 augustss Exp $	*/
 
 /*
@@ -494,14 +494,14 @@ oss_ioctl_audio(p, uap, retval)
 	return (error);
 }
 
-/* If the NetBSD mixer device should have more than 32 devices
+/* If the mixer device should have more than 32 devices
  * some will not be available to Linux */
-#define NETBSD_MAXDEVS 64
+#define MAX_MIXER_DEVS 64
 struct audiodevinfo {
 	int done;
 	dev_t dev;
 	int16_t devmap[OSS_SOUND_MIXER_NRDEVICES], 
-	        rdevmap[NETBSD_MAXDEVS];
+	        rdevmap[MAX_MIXER_DEVS];
         u_long devmask, recmask, stereomask;
 	u_long caps, source;
 };
@@ -532,16 +532,10 @@ getdevinfo(fp, p)
 		{ AudioNtreble,		OSS_SOUND_MIXER_TREBLE },
 		{ AudioNbass,		OSS_SOUND_MIXER_BASS },
 		{ AudioNspeaker,	OSS_SOUND_MIXER_SPEAKER },
-/*		{ AudioNheadphone,	?? },*/
 		{ AudioNoutput,		OSS_SOUND_MIXER_OGAIN },
 		{ AudioNinput,		OSS_SOUND_MIXER_IGAIN },
-/*		{ AudioNmaster,		OSS_SOUND_MIXER_SPEAKER },*/
-/*		{ AudioNstereo,		?? },*/
-/*		{ AudioNmono,		?? },*/
 		{ AudioNfmsynth,	OSS_SOUND_MIXER_SYNTH },
-/*		{ AudioNwave,		OSS_SOUND_MIXER_PCM },*/
 		{ AudioNmidi,		OSS_SOUND_MIXER_SYNTH },
-/*		{ AudioNmixerout,	?? },*/
 		{ 0, -1 }
 	};
 	register const struct oss_devs *dp;
@@ -572,9 +566,9 @@ getdevinfo(fp, p)
 	di->caps = 0;
 	for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++)
 		di->devmap[i] = -1;
-	for(i = 0; i < NETBSD_MAXDEVS; i++)
+	for(i = 0; i < MAX_MIXER_DEVS; i++)
 		di->rdevmap[i] = -1;
-	for(i = 0; i < NETBSD_MAXDEVS; i++) {
+	for(i = 0; i < MAX_MIXER_DEVS; i++) {
 		mi.index = i;
 		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, (caddr_t)&mi, p) < 0)
 			break;
@@ -822,11 +816,6 @@ oss_ioctl_sequencer(p, uap, retval)
 {	       
 	struct file *fp;
 	struct filedesc *fdp;
-#if 0
-	u_long com;
-	int idat;
-	int error;
-#endif
 
 	fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
@@ -835,9 +824,6 @@ oss_ioctl_sequencer(p, uap, retval)
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
 		return (EBADF);
 
-#if 0
-	com = SCARG(uap, com);
-#endif
 	retval[0] = 0;
 
 	return EINVAL;
