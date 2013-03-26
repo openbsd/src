@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.17 2008/04/13 00:28:35 djm Exp $ */
+/* $OpenBSD: res_random.c,v 1.18 2013/03/26 17:29:04 eric Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -67,6 +67,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "thread_private.h"
 
 #define RU_OUT  	180	/* Time after wich will be reseeded */
 #define RU_MAX		30000	/* Uniq cycle, avoid blackjack prediction */
@@ -225,8 +227,13 @@ u_int
 res_randomid(void)
 {
 	struct timeval tv;
+	u_int r;
+	_THREAD_PRIVATE_MUTEX(random);
 
 	gettimeofday(&tv, NULL);
+
+	_THREAD_PRIVATE_MUTEX_LOCK(random);
+
 	if (ru_counter >= RU_MAX || tv.tv_sec > ru_reseed)
 		res_initid();
 
@@ -234,7 +241,11 @@ res_randomid(void)
 	ru_x = (ru_a * ru_x + ru_b) % RU_M;
 	ru_counter++;
 
-	return permute15(ru_seed ^ pmod(ru_g, ru_seed2 + ru_x, RU_N)) | ru_msb;
+	r = permute15(ru_seed ^ pmod(ru_g, ru_seed2 + ru_x, RU_N)) | ru_msb;
+
+	_THREAD_PRIVATE_MUTEX_UNLOCK(random);
+
+	return (r);
 }
 
 #if 0
