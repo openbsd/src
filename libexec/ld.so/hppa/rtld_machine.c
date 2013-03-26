@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.25 2012/12/05 23:20:06 deraadt Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.26 2013/03/26 18:50:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -367,13 +367,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		__asm __volatile("fdc 0(%0)" :: "r" (&got[-7]));
 		__asm __volatile("fdc 0(%0)" :: "r" (&got[-6]));
 		__asm __volatile("sync");
-#if 0
 		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-7]));
 		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-6]));
-#else
-		__asm __volatile("fic 0(%0)" :: "r" (&got[-7]));
-		__asm __volatile("fic 0(%0)" :: "r" (&got[-6]));
-#endif
 		__asm __volatile("sync");
 
 		/*
@@ -393,8 +388,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		__asm __volatile("fdc 0(%0)" :: "r" (&got[-2]));
 		__asm __volatile("fdc 0(%0)" :: "r" (&got[-1]));
 		__asm __volatile("sync");
-		__asm __volatile("fic 0(%0)" :: "r" (&got[-2]));
-		__asm __volatile("fic 0(%0)" :: "r" (&got[-1]));
+		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-2]));
+		__asm __volatile("fic 0(%%sr0,%0)" :: "r" (&got[-1]));
 		__asm __volatile("sync");
 		for (i = 0; i < numrela; i++, rela++) {
 			Elf_Addr *r_addr = (Elf_Addr *)(ooff + rela->r_offset);
