@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.329 2013/03/25 17:22:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.330 2013/03/26 18:06:00 jasper Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -348,8 +348,8 @@ moduli.8192:
 	
 
 SUBDIR+= etc.alpha etc.amd64 etc.armish etc.aviion etc.beagle etc.hp300
-SUBDIR+= etc.hppa etc.hppa64 etc.i386 etc.landisk etc.loongson etc.luna88k 
-SUBDIR+= etc.macppc etc.mvme68k etc.mvme88k
+SUBDIR+= etc.hppa etc.hppa64 etc.i386 etc.landisk etc.loongson etc.luna88k
+SUBDIR+= etc.macppc etc.mvme68k etc.mvme88k etc.octeon
 SUBDIR+= etc.sgi etc.socppc etc.sparc etc.sparc64 etc.vax etc.zaurus
 
 .include <bsd.subdir.mk>
