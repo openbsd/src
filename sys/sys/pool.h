@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.42 2012/12/24 19:43:11 guenther Exp $	*/
+/*	$OpenBSD: pool.h,v 1.43 2013/03/26 16:37:45 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ LIST_HEAD(pool_pagelist,pool_item_header);
 
 struct pool {
 	struct mutex	pr_mtx;
-	TAILQ_ENTRY(pool)
+	SIMPLEQ_ENTRY(pool)
 			pr_poollist;
 	struct pool_pagelist
 			pr_emptypages;	/* Empty pages */
@@ -87,7 +87,6 @@ struct pool {
 					   items */
 	unsigned int	pr_serial;	/* unique serial number of the pool */
 	struct pool_allocator *pr_alloc;/* backend allocator */
-	TAILQ_ENTRY(pool) pr_alloc_list;/* list of pools using this allocator */
 	const char	*pr_wchan;	/* tsleep(9) identifier */
 	unsigned int	pr_flags;	/* r/w flags */
 	unsigned int	pr_roflags;	/* r/o flags */
