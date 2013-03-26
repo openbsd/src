@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.14 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.15 2013/03/26 13:30:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <inttypes.h>
 #include <resolv.h>
 #include <signal.h>
 #include <stdio.h>
