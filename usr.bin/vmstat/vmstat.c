@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.119 2012/04/12 12:33:04 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.120 2013/03/26 21:13:55 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -1030,14 +1030,14 @@ dopool_sysctl(void)
 void
 dopool_kvm(void)
 {
-	TAILQ_HEAD(,pool) pool_head;
+	SIMPLEQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
 	long total = 0, inuse = 0;
 	u_long addr;
 	int kmfp;
 
 	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
-	addr = (u_long)TAILQ_FIRST(&pool_head);
+	addr = (u_long)SIMPLEQ_FIRST(&pool_head);
 
 	while (addr != 0) {
 		char name[32];
@@ -1062,7 +1062,7 @@ dopool_kvm(void)
 		inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
 		total += pp->pr_npages * getpagesize();	/* XXX */
 
-		addr = (u_long)TAILQ_NEXT(pp, pr_poollist);
+		addr = (u_long)SIMPLEQ_NEXT(pp, pr_poollist);
 	}
 
 	inuse /= 1024;
