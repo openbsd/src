@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.59 2013/03/25 14:40:57 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.60 2013/03/26 00:14:18 bluhm Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -653,11 +653,9 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 void
 in6_ifdetach(struct ifnet *ifp)
 {
-	struct in6_ifaddr *ia;
 	struct ifaddr *ifa, *next;
 	struct rtentry *rt;
 	struct sockaddr_in6 sin6;
-	struct in6_multi_mship *imm;
 
 #ifdef MROUTING
 	/* remove ip6_mrouter stuff */
@@ -672,54 +670,6 @@ in6_ifdetach(struct ifnet *ifp)
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		in6_purgeaddr(ifa);
-	}
-
-	/* undo everything done by in6_ifattach(), just in case */
-	TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, next) {
-		if (ifa->ifa_addr->sa_family != AF_INET6
-		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {
-			continue;
-		}
-
-		ia = ifatoia6(ifa);
-
-		/*
-		 * leave from multicast groups we have joined for the interface
-		 */
-		while (!LIST_EMPTY(&ia->ia6_memberships)) {
-			imm = LIST_FIRST(&ia->ia6_memberships);
-			LIST_REMOVE(imm, i6mm_chain);
-			in6_leavegroup(imm);
-		}
-
-		/* remove from the routing table */
-		if ((ia->ia_flags & IFA_ROUTE) &&
-		    (rt = rtalloc1((struct sockaddr *)&ia->ia_addr, 0,
-		    ifp->if_rdomain))) {
-			struct rt_addrinfo info;
-			u_int8_t prio;
-
-			bzero(&info, sizeof(info));
-			info.rti_flags = rt->rt_flags;
-			prio = rt->rt_priority;
-			info.rti_info[RTAX_DST] =
-			    (struct sockaddr *)&ia->ia_addr;
-			info.rti_info[RTAX_GATEWAY] =
-			    (struct sockaddr *)&ia->ia_addr;
-			info.rti_info[RTAX_NETMASK] =
-			    (struct sockaddr *)&ia->ia_prefixmask;
-			rtfree(rt);
-			rtrequest1(RTM_DELETE, &info, prio, NULL,
-			    ifp->if_rdomain);
-		}
-
-		/* remove from the linked list */
-		ifa_del(ifp, &ia->ia_ifa);
-		ifafree(&ia->ia_ifa);
-
-		/* also remove from the IPv6 address list */
-		TAILQ_REMOVE(&in6_ifaddr, ia, ia_list);
-		ifafree(&ia->ia_ifa);
 	}
 
 	/* cleanup multicast address kludge table, if there is any */
