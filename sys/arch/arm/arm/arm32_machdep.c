@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.39 2011/09/20 22:02:10 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.40 2013/03/27 00:18:19 patrick Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ void
 arm32_vector_init(vaddr_t va, int which)
 {
 	extern unsigned int page0[], page0_data[];
-	unsigned int *vectors = (int *) va;
+	unsigned int *vectors = (unsigned int *) va;
 	unsigned int *vectors_data = vectors + (page0_data - page0);
 	int vec;
 
@@ -238,7 +238,7 @@ cpu_startup()
 	cpu_setup();
 
 	/* Lock down zero page */
-	vector_page_setprot(VM_PROT_READ);
+	vector_page_setprot(VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/*
 	 * Give pmap a chance to set up a few more things now the vm
