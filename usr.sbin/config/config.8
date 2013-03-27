@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.56 2011/06/26 23:48:37 tedu Exp $
+.\"	$OpenBSD: config.8,v 1.57 2013/03/27 16:39:30 jmc Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: June 26 2011 $
+.Dd $Mdocdate: March 27 2013 $
 .Dt CONFIG 8
 .Os
 .Sh NAME
@@ -132,10 +132,7 @@ If they seem to be the same, apply all configuration changes performed at
 boot.
 .El
 .Sh KERNEL BUILDING
-The old
-.Fl g
-flag is deprecated and no longer supported.
-Instead, add
+Add
 .Dq makeoptions DEBUG="-g"
 to the kernel configuration file, along with (typically)
 .Dq option KGDB .
@@ -239,8 +236,8 @@ a new kernel binary so changes are preserved during subsequent system restarts.
 When invoked, the kernel identification is first shown.
 .Bd -literal -offset indent
 # config -e -o bsd.new /bsd
-OpenBSD 2.6-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
-    root@winona:/usr/src/sys/arch/pmax/compile/GENERIC.rz0
+OpenBSD 5.3-current (GENERIC.MP) #91: Mon Mar 25 16:43:17 MDT 2013
+    deraadt@i386.openbsd.org:/usr/src/sys/arch/i386/compile/GENERIC.MP
 Enter 'help' for information
 ukc\*(Gt
 .Ed
@@ -258,16 +255,6 @@ nor
 .Fl o
 option has been specified.
 Changes will be ignored.
-.Bd -literal -offset indent
-WARNING this kernel doesn't contain all information needed!
-WARNING the commands add and change might not work.
-.Ed
-.Pp
-The kernel is too old (pre
-.Ox 2.6 )
-and cannot support all of the functionality needed by the
-.Fl e
-option.
 .Bd -literal -offset indent
 WARNING kernel mismatch. -u ignored.
 WARNING the running kernel version:
@@ -512,8 +499,8 @@ The SYNOPSIS portion of each device in section 4 of the manual.
 .Sh HISTORY
 The
 .Nm
-program appeared in 4.1BSD.
-It was completely revised in 4.4BSD.
+program appeared in 4.1BSD and
+was completely revised in 4.4BSD.
 The
 .Fl e
 option appeared in
