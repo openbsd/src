@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.2 2013/03/20 12:37:41 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.3 2013/03/27 09:26:45 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -105,6 +105,9 @@ i915_getparam(struct inteldrm_softc *dev_priv, void *data)
 #else
 		return EINVAL;
 #endif
+		break;
+	case I915_PARAM_HAS_COHERENT_RINGS:
+		value = 1;
 		break;
 	case I915_PARAM_HAS_EXEC_CONSTANTS:
 		value = INTEL_INFO(dev)->gen >= 4;
