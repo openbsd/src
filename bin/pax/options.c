@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.76 2012/12/04 02:24:45 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.77 2013/03/27 17:14:10 zhuk Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ FSUB fsub[] = {
 /* 5: POSIX USTAR */
 	{"ustar", 10240, BLKMULT, 0, 1, BLKMULT, 0, ustar_id, ustar_strd,
 	ustar_rd, tar_endrd, ustar_stwr, ustar_wr, tar_endwr, tar_trail,
-	rd_wrfile, wr_rdfile, bad_opt},
+	rd_wrfile, wr_rdfile, tar_opt},
 };
 #define	F_OCPIO	0	/* format when called as cpio -6 */
 #define	F_ACPIO	1	/* format when called as cpio -c */
