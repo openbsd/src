@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2012/12/10 10:23:27 jasper Exp $
+#	$OpenBSD: Makefile,v 1.37 2013/03/27 09:46:55 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -59,7 +59,9 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		exact-version-1 \
 		exact-version-2 \
 		max-version-1 \
-		max-version-2
+		max-version-2 \
+		find-config-1 \
+		find-config-2
 
 PKG_CONFIG?=	pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -429,6 +431,21 @@ max-version-1:
 max-version-2:
 	# Test --max-version (doesn't match)
 	@if ${PCONFIG} --max-version=0.0.9 vers1 ; then false; fi
+
+find-config-1:
+	# Test a regular module name being resolved
+	@echo "1.0.0" > ${WANT}
+	@${VPCONFIG} --modversion public-dep
+	@diff -u ${WANT} ${GOT}
+
+# Need to use ${PKG_CONFIG} instead of ${VPCONFIG} as the latter sets PKG_CONFIG_PATH,
+# which is exactly what we don't want for this test.
+find-config-2:
+	# Test a full path to a .pc file
+	@echo "1.0.0" > ${WANT}
+	@${PKG_CONFIG} --errors-to-stdout --print-errors --modversion \
+		${.CURDIR}/pcdir/public-dep.pc > ${GOT}
+	@diff -u ${WANT} ${GOT}
 
 clean:
 	rm -f *.want *.got
