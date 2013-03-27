@@ -3079,8 +3079,11 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
   bfd_boolean add_needed;
   struct elf_link_hash_table *htab;
   bfd_size_type amt;
+#if 0
   void *alloc_mark = NULL;
+#endif
   void *old_tab = NULL;
+#if 0
   void *old_hash;
   void *old_ent;
   struct bfd_link_hash_entry *old_undefs = NULL;
@@ -3088,6 +3091,7 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
   long old_dynsymcount = 0;
   size_t tabsize = 0;
   size_t hashsize = 0;
+#endif
 
   htab = elf_hash_table (info);
   bed = get_elf_backend_data (abfd);
@@ -3462,6 +3466,7 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 	}
     }
 
+#if 0
   /* If we are loading an as-needed shared lib, save the symbol table
      state before we start adding symbols.  If the lib turns out
      to be unneeded, restore the state.  */
@@ -3524,6 +3529,7 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 	    }
 	}
     }
+#endif
 
   weaks = NULL;
   ever = extversym != NULL ? extversym + extsymoff : NULL;
@@ -4133,6 +4139,7 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
       isymbuf = NULL;
     }
 
+#if 0
   if ((elf_dyn_lib_class (abfd) & DYN_AS_NEEDED) != 0)
     {
       unsigned int i;
@@ -4176,6 +4183,7 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 	free (nondeflt_vers);
       return TRUE;
     }
+#endif
 
   if (old_tab != NULL)
     {
