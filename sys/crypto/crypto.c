@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.59 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.60 2013/03/27 16:42:05 tedu Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -245,8 +245,7 @@ crypto_get_driverid(u_int8_t flags)
 
 	/* Out of entries, allocate some more. */
 	if (i == crypto_drivers_num) {
-		/* Be careful about wrap-around. */
-		if (2 * crypto_drivers_num <= crypto_drivers_num) {
+		if (crypto_drivers_num >= CRYPTO_DRIVERS_MAX) {
 			splx(s);
 			return -1;
 		}

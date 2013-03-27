@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.56 2012/06/29 14:48:04 mikeb Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.57 2013/03/27 16:42:05 tedu Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -57,6 +57,7 @@
 
 /* Some initial values */
 #define CRYPTO_DRIVERS_INITIAL	4
+#define CRYPTO_DRIVERS_MAX	128
 #define CRYPTO_SW_SESSIONS	32
 
 /* HMAC values */
