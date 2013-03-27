@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstream.c,v 1.2 2013/03/27 15:06:25 mpi Exp $	*/
+/*	$OpenBSD: open_wmemstream.c,v 1.1 2013/03/27 15:06:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -24,23 +24,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 #include "local.h"
 
 struct state {
-	char		 *string;	/* actual stream */
-	char		**pbuf;		/* point to the stream */
+	wchar_t		 *string;	/* actual stream */
+	wchar_t		**pbuf;		/* point to the stream */
 	size_t		 *psize;	/* point to min(pos, len) */
 	size_t		  pos;		/* current position */
-	size_t		  size;		/* number of allocated char */
+	size_t		  size;		/* number of allocated wchar_t */
 	size_t		  len;		/* length of the data */
+	mbstate_t	  mbs;		/* conversion state of the stream */
 };
 
 static int
-memstream_write(void *v, const char *b, int l)
+wmemstream_write(void *v, const char *b, int l)
 {
 	struct state	*st = v;
-	char		*p;
-	size_t		 i, end;
+	wchar_t		*p;
+	size_t		 nmc, len, end;
 
 	end = (st->pos + l);
 
@@ -50,30 +52,32 @@ memstream_write(void *v, const char *b, int l)
 
 		if (sz < end + 1)
 			sz = end + 1;
-		p = realloc(st->string, sz);
+		p = realloc(st->string, sz * sizeof(wchar_t));
 		if (!p)
 			return (-1);
-		bzero(p + st->size, sz - st->size);
+		bzero(p + st->size, (sz - st->size) * sizeof(wchar_t));
 		*st->pbuf = st->string = p;
 		st->size = sz;
 	}
 
-	for (i = 0; i < l; i++)
-		st->string[st->pos + i] = b[i];
-	st->pos += l;
+	nmc = (st->size - st->pos) * sizeof(wchar_t);
+	len = mbsnrtowcs(st->string + st->pos, &b, nmc, l, &st->mbs);
+	if (len < 0)
+		return (len);
+	st->pos += len;
 
 	if (st->pos > st->len) {
 		st->len = st->pos;
-		st->string[st->len] = '\0';
+		st->string[st->len] = L'\0';
 	}
 
 	*st->psize = st->pos;
 
-	return (i);
+	return (len);
 }
 
 static fpos_t
-memstream_seek(void *v, fpos_t off, int whence)
+wmemstream_seek(void *v, fpos_t off, int whence)
 {
 	struct state	*st = v;
 	ssize_t		 base = 0;
@@ -89,10 +93,16 @@ memstream_seek(void *v, fpos_t off, int whence)
 		break;
 	}
 
-	if (off > SIZE_MAX - base || off < -base) {
+	if (off > (SIZE_MAX / sizeof(wchar_t)) - base || off < -base) {
 		errno = EOVERFLOW;
 		return (-1);
 	}
+
+	/*
+	 * XXX Clearing mbs here invalidates shift state for state-
+	 * dependent encodings, but they are not (yet) supported.
+	 */
+	bzero(&st->mbs, sizeof(st->mbs));
 
 	st->pos = base + off;
 	*st->psize = MIN(st->pos, st->len);
@@ -101,7 +111,7 @@ memstream_seek(void *v, fpos_t off, int whence)
 }
 
 static int
-memstream_close(void *v)
+wmemstream_close(void *v)
 {
 	struct state	*st = v;
 
@@ -111,7 +121,7 @@ memstream_close(void *v)
 }
 
 FILE *
-open_memstream(char **pbuf, size_t *psize)
+open_wmemstream(wchar_t **pbuf, size_t *psize)
 {
 	struct state	*st;
 	FILE		*fp;
@@ -129,18 +139,19 @@ open_memstream(char **pbuf, size_t *psize)
 		return (NULL);
 	}
 
-	st->size = BUFSIZ;
+	st->size = BUFSIZ * sizeof(wchar_t);
 	if ((st->string = calloc(1, st->size)) == NULL) {
 		free(st);
 		fp->_flags = 0;
 		return (NULL);
 	}
 
-	*st->string = '\0';
+	*st->string = L'\0';
 	st->pos = 0;
 	st->len = 0;
 	st->pbuf = pbuf;
 	st->psize = psize;
+	bzero(&st->mbs, sizeof(st->mbs));
 
 	*pbuf = st->string;
 	*psize = st->len;
@@ -149,9 +160,9 @@ open_memstream(char **pbuf, size_t *psize)
 	fp->_file = -1;
 	fp->_cookie = st;
 	fp->_read = NULL;
-	fp->_write = memstream_write;
-	fp->_seek = memstream_seek;
-	fp->_close = memstream_close;
+	fp->_write = wmemstream_write;
+	fp->_seek = wmemstream_seek;
+	fp->_close = wmemstream_close;
 
 	return (fp);
 }

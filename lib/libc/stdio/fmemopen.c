@@ -1,4 +1,5 @@
-/*	$OpenBSD: fmemopen.c,v 1.1 2013/01/01 17:41:13 mpi Exp $	*/
+/*	$OpenBSD: fmemopen.c,v 1.2 2013/03/27 15:06:25 mpi Exp $	*/
+
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2009 Ted Unangst
@@ -20,6 +21,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "local.h"
 
 struct state {
@@ -27,6 +29,7 @@ struct state {
 	size_t		 pos;		/* current position */
 	size_t		 size;		/* allocated size */
 	size_t		 len;		/* length of the data */
+	int		 update;	/* open for update */
 };
 
 static int
@@ -55,44 +58,40 @@ fmemopen_write(void *v, const char *b, int l)
 	if (st->pos >= st->len) {
 		st->len = st->pos;
 
-		if (st->len == st->size)
-			st->string[st->len - 1] = '\0';
-		else
+		if (st->len < st->size)
 			st->string[st->len] = '\0';
+		else if (!st->update)
+			st->string[st->size - 1] = '\0';
 	}
 
 	return (i);
 }
 
 static fpos_t
-fmemopen_seek(void *v, fpos_t pos, int whence)
+fmemopen_seek(void *v, fpos_t off, int whence)
 {
 	struct state	*st = v;
+	ssize_t		 base = 0;
 
 	switch (whence) {
 	case SEEK_SET:
 		break;
 	case SEEK_CUR:
-		pos += st->pos;
+		base = st->pos;
 		break;
 	case SEEK_END:
-		/*
-		 * XXX The standard is not clear about where to seek
-		 * from the end of the data or the end of the buffer.
-		 */
-		pos += st->len;
+		base = st->len;
 		break;
-	default:
-		errno = EINVAL;
+	}
+
+	if (off > st->size - base || off < -base) {
+		errno = EOVERFLOW;
 		return (-1);
 	}
 
-	if (pos < 0 || pos > st->size)
-		return (-1);
+	st->pos = base + off;
 
-	st->pos = pos;
-
-	return (pos);
+	return (st->pos);
 }
 
 static int
@@ -145,8 +144,9 @@ fmemopen(void *buf, size_t size, const char *mode)
 	}
 
 	st->pos = 0;
-	st->len = 0;
+	st->len = (oflags & O_WRONLY) ? 0 : size;
 	st->size = size;
+	st->update = oflags & O_RDWR;
 
 	if (buf == NULL) {
 		if ((st->string = malloc(size)) == NULL) {
@@ -157,9 +157,6 @@ fmemopen(void *buf, size_t size, const char *mode)
 		*st->string = '\0';
 	} else {
 		st->string = (char *)buf;
-
-		if ((oflags & O_WRONLY) == 0)
-			st->len = size;
 
 		if (oflags & O_TRUNC)
 			*st->string = '\0';
