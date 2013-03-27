@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.1 2013/01/17 20:52:39 bmercer Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.2 2013/03/27 08:52:49 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -972,6 +972,8 @@ pmap_l2ptp_ctor(void *arg, void *v, int flags)
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	pte = *ptep;
 
+	/* XXX redundant with PTE_SYNC_RANGE() ? */
+	cpu_idcache_wbinv_range(va, PAGE_SIZE);
 	if ((pte & L2_S_CACHE_MASK) != pte_l2_s_cache_mode_pt) {
 		*ptep = (pte & ~L2_S_CACHE_MASK) | pte_l2_s_cache_mode_pt;
 		PTE_SYNC(ptep);
@@ -1018,6 +1020,7 @@ pmap_uncache_page(paddr_t va, vaddr_t pa)
 
 	pte = vtopte(va);
 	*pte &= ~L2_S_CACHE_MASK;
+	*pte |= L1_S_B; /* device memory */
 	PTE_SYNC(pte);
 	cpu_tlb_flushD_SE(va);
 	cpu_cpwait();
@@ -1235,37 +1238,40 @@ pmap_page_remove(struct vm_page *pg)
 		KDASSERT(l2b != NULL);
 
 		ptep = &l2b->l2b_kva[l2pte_index(pv->pv_va)];
-		pte = *ptep;
+		if (l2pte_valid(*ptep)) {
+			pte = *ptep;
 
-		/* inline pmap_is_current(pm) */
-		if (pm == curpm || pm == pmap_kernel()) {
-			if (PV_BEEN_EXECD(pv->pv_flags))
-				cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
-			if (flush == FALSE)
-				cpu_dcache_wb_range(pv->pv_va, PAGE_SIZE);
-			flush = TRUE;
+			/* inline pmap_is_current(pm) */
+			if (pm == curpm || pm == pmap_kernel()) {
+				if (PV_BEEN_EXECD(pv->pv_flags))
+					cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
+				if (flush == FALSE)
+					cpu_dcache_wb_range(pv->pv_va,
+					    PAGE_SIZE);
+				flush = TRUE;
+			}
+
+			/*
+			 * Update statistics
+			 */
+			--pm->pm_stats.resident_count;
+
+			/* Wired bit */
+			if (pv->pv_flags & PVF_WIRED)
+				--pm->pm_stats.wired_count;
+
+			flags |= pv->pv_flags;
+
+			/*
+			 * Invalidate the PTEs.
+			 */
+			*ptep = L2_TYPE_INV;
+			PTE_SYNC(ptep);
+			if (flush)
+				cpu_tlb_flushID_SE(pv->pv_va);
+
+			pmap_free_l2_bucket(pm, l2b, 1);
 		}
-
-		/*
-		 * Update statistics
-		 */
-		--pm->pm_stats.resident_count;
-
-		/* Wired bit */
-		if (pv->pv_flags & PVF_WIRED)
-			--pm->pm_stats.wired_count;
-
-		flags |= pv->pv_flags;
-
-		/*
-		 * Invalidate the PTEs.
-		 */
-		*ptep = L2_TYPE_INV;
-		PTE_SYNC(ptep);
-		if (flush)
-			cpu_tlb_flushID_SE(pv->pv_va);
-
-		pmap_free_l2_bucket(pm, l2b, 1);
 
 		npv = pv->pv_next;
 		pool_put(&pmap_pv_pool, pv);
@@ -1325,6 +1331,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pt_entry_t *ptep, npte, opte;
 	u_int nflags;
 	u_int oflags;
+	int mapped = 1;
 
 	NPDEBUG(PDB_ENTER, printf("pmap_enter: pm %p va 0x%lx pa 0x%lx prot %x flag %x\n", pm, va, pa, prot, flags));
 
@@ -1417,6 +1424,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			npte &= ~L2_TYPE_MASK;
 			npte |= L2_TYPE_INV;
 			prot &= ~VM_PROT_WRITE;
+			mapped = 0;
 		}
 
 		npte |= pte_l2_s_cache_mode;
@@ -1542,15 +1550,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Make sure executable pages do not have stale data in I$,
 	 * which is VIPT.
 	 */
-	/*
-	 * Somehow this makes us _write_ to the va.
-	 * If it's write-protected, this will break.
-	 * Massively.
-	 */
-	/*
-	if ((prot & VM_PROT_EXECUTE) != 0 && pmap_is_current(pm))
+	if (mapped && (prot & VM_PROT_EXECUTE) != 0 && pmap_is_current(pm))
 		cpu_icache_sync_range(va, PAGE_SIZE);
-	*/
 
 	pmap_release_pmap_lock(pm);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -1575,7 +1576,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 	NPDEBUG(PDB_REMOVE, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
 	    pm, sva, eva));
-	
+
 	/*
 	 * we lock in the pmap => pv_head direction
 	 */
@@ -1775,8 +1776,6 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	l1idx = L1_IDX(va);
 	pl1pd = &pm->pm_l1->l1_kva[l1idx];
 	l1pd = *pl1pd;
-if (hostid != 0)
-printf("pmap_extract: va %08x l1idx %08x\n", va, l1idx);
 
 	if (l1pte_section_p(l1pd)) {
 		/*
@@ -1792,23 +1791,15 @@ printf("pmap_extract: va %08x l1idx %08x\n", va, l1idx);
 		 * We have to look it up in the L2 dtable.
 		 */
 		l2 = pm->pm_l2[L2_IDX(l1idx)];
-if (hostid != 0)
-printf("pmap_extract: l2 %p l2idx %08x\n", l2, L2_IDX(l1idx));
 
 		if (l2 == NULL ||
 		    (ptep = l2->l2_bucket[L2_BUCKET(l1idx)].l2b_kva) == NULL) {
-if (hostid != 0)
-printf("pmap_extract: l2 %p ptep %p bucket %08x\n", l2, ptep, L2_BUCKET(l1idx));
 			pmap_release_pmap_lock(pm);
 			return (FALSE);
 		}
 
-if (hostid != 0)
-printf("pmap_extract: l2pte_index %08x ptep %p -> %p\n", l2pte_index(va), ptep, &ptep[l2pte_index(va)]);
 		ptep = &ptep[l2pte_index(va)];
 		pte = *ptep;
-if (hostid != 0)
-printf("pmap_extract: pte %08x\n", pte);
 		pmap_release_pmap_lock(pm);
 
 		if (pte == 0)	/* !!! not l2pte_valid */
@@ -2029,9 +2020,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	u_int l1idx;
 	int rv = 0;
 
-#ifdef PMAP_DEBUG
-printf("%s: va %08x ftype %x %c\n", __func__, va, ftype, user ? 'u' : 's');
-#endif
 	PMAP_MAP_TO_HEAD_LOCK();
 	pmap_acquire_pmap_lock(pm);
 
@@ -2341,37 +2329,6 @@ pmap_destroy(pmap_t pm)
 	/*
 	 * reference count is zero, free pmap resources and then free pmap.
 	 */
-
-	if (vector_page < KERNEL_BASE) {
-		struct pcb *pcb = &proc0.p_addr->u_pcb;
-
-		if (pmap_is_current(pm)) {
-			/*
-			 * Frob the L1 entry corresponding to the vector
-			 * page so that it contains the kernel pmap's domain
-			 * number. This will ensure pmap_remove() does not
-			 * pull the current vector page out from under us.
-			 */
-			disable_interrupts(I32_bit | F32_bit);
-			*pcb->pcb_pl1vec = pcb->pcb_l1vec;
-			cpu_domains(pcb->pcb_dacr);
-			cpu_setttb(pcb->pcb_pagedir);
-			enable_interrupts(I32_bit | F32_bit);
-		}
-
-		/* Remove the vector page mapping */
-		pmap_remove(pm, vector_page, vector_page + PAGE_SIZE);
-		pmap_update(pm);
-
-		/*
-		 * Make sure cpu_switchto(), et al, DTRT. This is safe to do
-		 * since this process has no remaining mappings of its own.
-		 */
-		curpcb->pcb_pl1vec = pcb->pcb_pl1vec;
-		curpcb->pcb_l1vec = pcb->pcb_l1vec;
-		curpcb->pcb_dacr = pcb->pcb_dacr;
-		curpcb->pcb_pagedir = pcb->pcb_pagedir;
-	}
 
 	pmap_free_l1(pm);
 
@@ -2757,9 +2714,6 @@ pmap_init_l1(struct l1_ttable *l1, pd_entry_t *l1pt)
 	if (pmap_extract(pmap_kernel(), (vaddr_t)l1pt,
 	    &l1->l1_physaddr) == FALSE)
 		panic("pmap_init_l1: can't get PA of L1 at %p", l1pt);
-#ifdef PMAP_DEBUG
-printf("l1 va %08x pa %08x\n", (vaddr_t)l1pt, l1->l1_physaddr);
-#endif
 
 	TAILQ_INSERT_TAIL(&l1_list, l1, l1_link);
 }
@@ -2870,7 +2824,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 		 * Make sure the descriptor itself has the correct cache mode.
 		 * If not, fix it, but whine about the problem. Port-meisters
 		 * should consider this a clue to fix up their initarm()
-		 * function. 
+		 * function. :)
 		 */
 		if (pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)ptep)) {
 			printf("pmap_bootstrap: WARNING! wrong cache mode for "
