@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.6 2012/09/06 08:38:15 eric Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.7 2013/03/27 07:40:41 eric Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 6 2012 $
+.Dd $Mdocdate: March 27 2013 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -127,8 +127,7 @@ Once called, that context is invalidated and cannot be used to create new
 queries.
 Internally, the context is refcounted, so that existing queries made against
 it will be able to complete safely.
-All relevant resources are effectively
-freed when all such queries are cleared.
+All relevant resources are effectively freed when all such queries are cleared.
 .Pp
 The
 .Fn async_run
@@ -345,6 +344,20 @@ This list must be freed with
 The
 .Fa ar_count
 contains the number of elements in the list.
+.Sh WORKING WITH THREADS
+This implementation of the asynchronous resolver interface is thread-safe
+and lock-free internally, but the following restriction applies:
+Two different threads must not create queries on the same context or
+run queries originating from the same context at the same time.
+If they want to do that, all calls must be protected by a mutex around
+that context.
+.Pp
+It is generally not a problem since the main point of the asynchronous
+resolver is to multiplex queries within a single thread of control,
+so sharing a resolver among threads is not useful.
+.Pp
+Note that this restriction only applies to resolver contexts explicitely
+created by the caller, as a thread-local context is used by default.
 .Sh SEE ALSO
 .Xr getaddrinfo 3 ,
 .Xr gethostbyname 3 ,

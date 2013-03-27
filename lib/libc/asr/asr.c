@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.14 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.15 2013/03/27 07:40:41 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -301,8 +301,6 @@ async_free(struct async *as)
 			async_free(as->as.hostnamadr.subq);
 		if (as->as.hostnamadr.name)
 			free(as->as.hostnamadr.name);
-		if (as->as.hostnamadr.dname)
-			free(as->as.hostnamadr.dname);
 		break;
 
 	case ASR_GETNETBYNAME:

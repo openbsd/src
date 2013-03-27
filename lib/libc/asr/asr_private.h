@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.10 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.11 2013/03/27 07:40:41 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -233,10 +233,10 @@ struct async {
 		struct {
 			char		*name;
 			int		 family;
-			char		*dname;
 			struct async	*subq;
 			char		 addr[16];
 			int		 addrlen;
+			int		 h_errno;
 		} hostnamadr;
 
 		struct {

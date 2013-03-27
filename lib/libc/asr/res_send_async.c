@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.6 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.7 2013/03/27 07:40:41 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -150,7 +150,7 @@ res_query_async_ctx(const char *name, int class, int type, unsigned char *ans,
 	as->as.dns.ibuflen = 0;
 
 	/* This adds a "." to name if it doesn't already has one.
-	 * That's how res_query() behaves (trough res_mkquery").
+	 * That's how res_query() behaves (through res_mkquery").
 	 */
 	if (setup_query(as, name, NULL, class, type) == -1)
 		goto err; /* errno set */

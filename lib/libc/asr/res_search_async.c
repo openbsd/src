@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.3 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.4 2013/03/27 07:40:41 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -177,7 +177,7 @@ res_search_async_run(struct async *as, struct async_res *ar)
 			free(ar->ar_data);
 
 		/*
-		 * The original resolver does something like this, to 
+		 * The original resolver does something like this.
 		 */
 		if (as->as_dom_flags & (ASYNC_DOM_NDOTS | ASYNC_DOM_ASIS))
 			as->as.search.saved_h_errno = ar->ar_h_errno;
