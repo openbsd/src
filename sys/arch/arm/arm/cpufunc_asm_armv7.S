@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.4 2013/01/25 20:23:48 bmercer Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.5 2013/03/27 00:20:00 patrick Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -29,7 +29,6 @@ ENTRY(armv7_cpu_sleep)
 ENTRY(armv7_drain_writebuf)
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
 /*
@@ -40,7 +39,6 @@ ENTRY(armv7_setttb)
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
@@ -58,7 +56,6 @@ ENTRY(armv7_tlb_flushID_SE)
 	mcr	p15, 0, r0, c7, c5, 7	/* flush va from BP */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushI_SE)
@@ -66,7 +63,6 @@ ENTRY(armv7_tlb_flushI_SE)
 	mcr	p15, 0, r0, c7, c5, 7	/* flush va from BP */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
 /*
@@ -77,7 +73,6 @@ ENTRY(armv7_tlb_flushID)
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushI)
@@ -85,21 +80,18 @@ ENTRY(armv7_tlb_flushI)
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushD)
 	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(armv7_tlb_flushD_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
 
@@ -130,7 +122,6 @@ ENTRY(armv7_icache_sync_range)
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	mov	pc, lr
 
 ENTRY(armv7_icache_sync_all)
@@ -165,7 +156,6 @@ ENTRY(armv7_dcache_wb_range)
 	bhi	1b
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	mov	pc, lr
 
 ENTRY(armv7_idcache_wbinv_range)
@@ -188,7 +178,6 @@ ENTRY(armv7_idcache_wbinv_range)
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	mov	pc, lr
 
 ENTRY(armv7_dcache_wbinv_range)
@@ -210,7 +199,6 @@ ENTRY(armv7_dcache_wbinv_range)
 	bhi	1b
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	mov	pc, lr
 
 ENTRY(armv7_dcache_inv_range)
@@ -232,7 +220,6 @@ ENTRY(armv7_dcache_inv_range)
 	bhi	1b
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	mov	pc, lr
 
 
@@ -254,7 +241,6 @@ ENTRY(armv7_context_switch)
 	mcr	p15, 0, r0, c7, c5, 6	/* Flush BP cache */
 	DSB
 	ISB
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 
 	mcr	p15, 0, r0, c2, c0, 0	/* set the new TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* and flush the I+D tlbs */
