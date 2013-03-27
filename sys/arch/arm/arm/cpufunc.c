@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.19 2013/03/22 21:24:11 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.20 2013/03/27 00:06:09 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -135,6 +135,11 @@ struct cpu_functions arm8_cpufuncs = {
 	arm8_cache_purgeID,		/* idcache_wbinv_all	*/
 	(void *)arm8_cache_purgeID,	/* idcache_wbinv_range	*/
 
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
+
 	/* Other functions */
 
 	cpufunc_nullop,			/* flush_prefetchbuf	*/
@@ -187,6 +192,11 @@ struct cpu_functions arm9_cpufuncs = {
 
 	arm9_idcache_wbinv_all,		/* idcache_wbinv_all	*/
 	arm9_idcache_wbinv_range,	/* idcache_wbinv_range	*/
+
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
 
 	/* Other functions */
 
@@ -241,6 +251,11 @@ struct cpu_functions armv5_ec_cpufuncs = {
 	armv5_ec_idcache_wbinv_all,	/* idcache_wbinv_all	*/
 	armv5_ec_idcache_wbinv_range,	/* idcache_wbinv_range	*/
 
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
+
 	/* Other functions */
 
 	cpufunc_nullop,			/* flush_prefetchbuf	*/
@@ -294,6 +309,11 @@ struct cpu_functions arm10_cpufuncs = {
 	armv5_idcache_wbinv_all,	/* idcache_wbinv_all	*/
 	armv5_idcache_wbinv_range,	/* idcache_wbinv_range	*/
 
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
+
 	/* Other functions */
 
 	cpufunc_nullop,			/* flush_prefetchbuf	*/
@@ -346,6 +366,11 @@ struct cpu_functions arm11_cpufuncs = {
 	armv5_idcache_wbinv_all,	/* idcache_wbinv_all	*/
 	armv5_idcache_wbinv_range,	/* idcache_wbinv_range	*/
 
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
+
 	/* Other functions */
 
 	cpufunc_nullop,			/* flush_prefetchbuf	*/
@@ -397,6 +422,11 @@ struct cpu_functions armv7_cpufuncs = {
 
 	armv7_idcache_wbinv_all,	/* idcache_wbinv_all	*/
 	armv7_idcache_wbinv_range,	/* idcache_wbinv_range	*/
+
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
 
 	/* Other functions */
 
@@ -451,6 +481,11 @@ struct cpu_functions sa11x0_cpufuncs = {
 	sa1_cache_purgeID,		/* idcache_wbinv_all	*/
 	sa1_cache_purgeID_rng,		/* idcache_wbinv_range	*/
 
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
+
 	/* Other functions */
 
 	sa11x0_drain_readbuf,		/* flush_prefetchbuf	*/
@@ -502,6 +537,11 @@ struct cpu_functions ixp12x0_cpufuncs = {
 
 	sa1_cache_purgeID,		/* idcache_wbinv_all	*/
 	sa1_cache_purgeID_rng,		/* idcache_wbinv_range	*/
+
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
 
 	/* Other functions */
 
@@ -555,6 +595,11 @@ struct cpu_functions xscale_cpufuncs = {
 
 	xscale_cache_purgeID,		/* idcache_wbinv_all	*/
 	xscale_cache_purgeID_rng,	/* idcache_wbinv_range	*/
+
+	cpufunc_nullop,			/* sdcache_wbinv_all	*/
+	(void *)cpufunc_nullop,		/* sdcache_wbinv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_inv_range	*/
+	(void *)cpufunc_nullop,		/* sdcache_wb_range	*/
 
 	/* Other functions */
 

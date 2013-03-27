@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.11 2013/03/22 21:24:11 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.12 2013/03/27 00:06:09 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -135,6 +135,11 @@ struct cpu_functions {
 	void	(*cf_idcache_wbinv_all)	(void);
 	void	(*cf_idcache_wbinv_range) (vaddr_t, vsize_t);
 
+	void	(*cf_sdcache_wbinv_all)	(void);
+	void	(*cf_sdcache_wbinv_range) (vaddr_t, paddr_t, vsize_t);
+	void	(*cf_sdcache_inv_range)	(vaddr_t, paddr_t, vsize_t);
+	void	(*cf_sdcache_wb_range)	(vaddr_t, paddr_t, vsize_t);
+
 	/* Other functions */
 
 	void	(*cf_flush_prefetchbuf)	(void);
@@ -178,6 +183,12 @@ extern u_int cputype;
 
 #define	cpu_idcache_wbinv_all()	cpufuncs.cf_idcache_wbinv_all()
 #define	cpu_idcache_wbinv_range(a, s) cpufuncs.cf_idcache_wbinv_range((a), (s))
+
+#define	cpu_sdcache_enabled()	(cpufuncs.cf_sdcache_wbinv_all != cpufunc_nullop)
+#define	cpu_sdcache_wbinv_all()	cpufuncs.cf_sdcache_wbinv_all()
+#define	cpu_sdcache_wbinv_range(va, pa, s) cpufuncs.cf_sdcache_wbinv_range((va), (pa), (s))
+#define	cpu_sdcache_inv_range(va, pa, s) cpufuncs.cf_sdcache_inv_range((va), (pa), (s))
+#define	cpu_sdcache_wb_range(va, pa, s) cpufuncs.cf_sdcache_wb_range((va), (pa), (s))
 
 #define	cpu_flush_prefetchbuf()	cpufuncs.cf_flush_prefetchbuf()
 #define	cpu_drain_writebuf()	cpufuncs.cf_drain_writebuf()
