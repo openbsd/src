@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.21 2011/11/08 17:07:42 deraadt Exp $
+#	$OpenBSD: files.arm,v 1.22 2013/03/27 17:33:13 patrick Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -83,6 +83,11 @@ file	arch/arm/arm/setstack.S
 file	arch/arm/arm/stubs.c
 file	arch/arm/arm/sys_machdep.c
 file	arch/arm/arm/vm_machdep.c
+
+file	arch/arm/armv7/armv7_space.c		cpu_armv7
+file	arch/arm/armv7/armv7_a4x_space.c	cpu_armv7
+file	arch/arm/armv7/armv7_a4x_io.S		cpu_armv7
+file	arch/arm/armv7/armv7_mutex.c		cpu_armv7
 
 # arm library functions
 file	arch/arm/arm/bcopy_page.S
