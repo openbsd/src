@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.115 2013/03/19 20:07:14 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.116 2013/03/27 15:41:04 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -56,8 +56,8 @@ void	sbsync(struct sockbuf *, struct mbuf *);
 
 int	sosplice(struct socket *, int, off_t, struct timeval *);
 void	sounsplice(struct socket *, struct socket *, int);
-int	somove(struct socket *, int);
 void	soidle(void *);
+int	somove(struct socket *, int);
 
 void	filt_sordetach(struct knote *kn);
 int	filt_soread(struct knote *kn, long hint);
@@ -1147,6 +1147,20 @@ sounsplice(struct socket *so, struct socket *sosp, int wakeup)
 		sorwakeup(so);
 }
 
+void
+soidle(void *arg)
+{
+	struct socket *so = arg;
+	int s;
+
+	s = splsoftnet();
+	if (so->so_splice) {
+		so->so_error = ETIMEDOUT;
+		sounsplice(so, so->so_splice, 1);
+	}
+	splx(s);
+}
+
 /*
  * Move data from receive buffer of spliced source socket to send
  * buffer of drain socket.  Try to move as much as possible in one
@@ -1434,22 +1448,6 @@ sowwakeup(struct socket *so)
 #endif
 	sowakeup(so, &so->so_snd);
 }
-
-#ifdef SOCKET_SPLICE
-void
-soidle(void *arg)
-{
-	struct socket *so = arg;
-	int s;
-
-	s = splsoftnet();
-	if (so->so_splice) {
-		so->so_error = ETIMEDOUT;
-		sounsplice(so, so->so_splice, 1);
-	}
-	splx(s);
-}
-#endif /* SOCKET_SPLICE */
 
 int
 sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
