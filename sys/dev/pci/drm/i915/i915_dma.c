@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.4 2013/03/27 12:14:29 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.5 2013/03/27 12:37:49 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -94,10 +94,10 @@ i915_getparam(struct inteldrm_softc *dev_priv, void *data)
 		value = 1;
 		break;
 	case I915_PARAM_HAS_BSD:
-		value = HAS_BSD(dev);
+		value = intel_ring_initialized(&dev_priv->rings[VCS]);
 		break;
 	case I915_PARAM_HAS_BLT:
-		value = HAS_BLT(dev);
+		value = intel_ring_initialized(&dev_priv->rings[BCS]);
 		break;
 	case I915_PARAM_HAS_RELAXED_FENCING:
 #ifdef notyet
