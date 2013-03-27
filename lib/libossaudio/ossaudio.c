@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.16 2008/06/26 05:42:05 ray Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.17 2013/03/27 20:28:22 tedu Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -456,17 +456,17 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 }
 
 
-/* If the NetBSD mixer device should have more than NETBSD_MAXDEVS devices
+/* If the mixer device should have more than MAX_MIXER_DEVS devices
  * some will not be available to Linux */
-#define NETBSD_MAXDEVS 64
+#define MAX_MIXER_DEVS 64
 struct audiodevinfo {
 	int done;
 	dev_t dev;
 	ino_t ino;
 	int16_t devmap[SOUND_MIXER_NRDEVICES],
-	        rdevmap[NETBSD_MAXDEVS];
-	char names[NETBSD_MAXDEVS][MAX_AUDIO_DEV_LEN];
-	int enum2opaque[NETBSD_MAXDEVS];
+	        rdevmap[MAX_MIXER_DEVS];
+	char names[MAX_MIXER_DEVS][MAX_AUDIO_DEV_LEN];
+	int enum2opaque[MAX_MIXER_DEVS];
         u_long devmask, recmask, stereomask;
 	u_long caps, recsource;
 };
@@ -476,7 +476,7 @@ opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq)
 {
 	int i, o;
 
-	for (i = 0; i < NETBSD_MAXDEVS; i++) {
+	for (i = 0; i < MAX_MIXER_DEVS; i++) {
 		o = di->enum2opaque[i];
 		if (o == opq)
 			break;
@@ -486,7 +486,7 @@ opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq)
 			break;
 		}
 	}
-	if (i >= NETBSD_MAXDEVS)
+	if (i >= MAX_MIXER_DEVS)
 		i = -1;
 	/*printf("opq_to_enum %s %d -> %d\n", label->name, opq, i);*/
 	return (i);
@@ -495,7 +495,7 @@ opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq)
 static int
 enum_to_ord(struct audiodevinfo *di, int enm)
 {
-	if (enm >= NETBSD_MAXDEVS)
+	if (enm >= MAX_MIXER_DEVS)
 		return (-1);
 
 	/*printf("enum_to_ord %d -> %d\n", enm, di->enum2opaque[enm]);*/
@@ -506,7 +506,7 @@ static int
 enum_to_mask(struct audiodevinfo *di, int enm)
 {
 	int m;
-	if (enm >= NETBSD_MAXDEVS)
+	if (enm >= MAX_MIXER_DEVS)
 		return (0);
 
 	m = di->enum2opaque[enm];
@@ -541,16 +541,10 @@ getdevinfo(int fd)
 		{ AudioNtreble,		SOUND_MIXER_TREBLE },
 		{ AudioNbass,		SOUND_MIXER_BASS },
 		{ AudioNspeaker,	SOUND_MIXER_SPEAKER },
-/*		{ AudioNheadphone,	?? },*/
 		{ AudioNoutput,		SOUND_MIXER_OGAIN },
 		{ AudioNinput,		SOUND_MIXER_IGAIN },
-/*		{ AudioNmaster,		SOUND_MIXER_SPEAKER },*/
-/*		{ AudioNstereo,		?? },*/
-/*		{ AudioNmono,		?? },*/
 		{ AudioNfmsynth,	SOUND_MIXER_SYNTH },
-/*		{ AudioNwave,		SOUND_MIXER_PCM },*/
 		{ AudioNmidi,		SOUND_MIXER_SYNTH },
-/*		{ AudioNmixerout,	?? },*/
 		{ 0, -1 }
 	};
 	static struct audiodevinfo devcache = { 0 };
@@ -575,12 +569,12 @@ getdevinfo(int fd)
 	di->caps = 0;
 	for(i = 0; i < SOUND_MIXER_NRDEVICES; i++)
 		di->devmap[i] = -1;
-	for(i = 0; i < NETBSD_MAXDEVS; i++) {
+	for(i = 0; i < MAX_MIXER_DEVS; i++) {
 		di->rdevmap[i] = -1;
 		di->names[i][0] = '\0';
 		di->enum2opaque[i] = -1;
 	}
-	for(i = 0; i < NETBSD_MAXDEVS; i++) {
+	for(i = 0; i < MAX_MIXER_DEVS; i++) {
 		mi.index = i;
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) < 0)
 			break;
@@ -601,7 +595,7 @@ getdevinfo(int fd)
 			break;
 		}
 	}
-	for(i = 0; i < NETBSD_MAXDEVS; i++) {
+	for(i = 0; i < MAX_MIXER_DEVS; i++) {
 		mi.index = i;
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) < 0)
 			break;
