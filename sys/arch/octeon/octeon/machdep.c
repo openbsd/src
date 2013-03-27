@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 2013/03/19 09:19:10 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.30 2013/03/27 18:32:05 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -84,7 +84,7 @@
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* Machine "architecture" */
-char	cpu_model[30];
+char	cpu_model[64];
 
 struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
@@ -372,6 +372,11 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 	bcopy(&boot_info, &octeon_boot_info, sizeof(octeon_boot_info));
 	bcopy(&boot_desc, &octeon_boot_desc, sizeof(octeon_boot_desc));
 
+	snprintf(cpu_model, sizeof(cpu_model), "Cavium OCTEON (rev %d.%d) @ %d MHz",
+		 (bootcpu_hwinfo.c0prid >> 4) & 0x0f,
+		 bootcpu_hwinfo.c0prid & 0x0f,
+		 bootcpu_hwinfo.clock / 1000000);
+
 	cpu_cpuspeed = octeon_cpuspeed;
 
 	/*
@@ -500,7 +505,7 @@ consinit()
 }
 
 /*
- * cpu_startup: allocate memory for variable-sized tables, initialize CPU, and 
+ * cpu_startup: allocate memory for variable-sized tables, initialize CPU, and
  * do auto-configuration.
  */
 void
