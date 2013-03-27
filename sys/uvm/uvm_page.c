@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.122 2013/03/12 21:10:11 deraadt Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.123 2013/03/27 02:02:23 tedu Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1053,6 +1053,7 @@ void
 uvm_pagefree(struct vm_page *pg)
 {
 	int saved_loan_count = pg->loan_count;
+	u_int flags_to_clear = 0;
 
 #ifdef DEBUG
 	if (pg->uobject == (void *)0xdeadbeef &&
@@ -1115,7 +1116,7 @@ uvm_pagefree(struct vm_page *pg)
 
 	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
+		flags_to_clear |= PQ_ACTIVE;
 		uvmexp.active--;
 	}
 	if (pg->pg_flags & PQ_INACTIVE) {
@@ -1123,7 +1124,7 @@ uvm_pagefree(struct vm_page *pg)
 			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
 		else
 			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
-		atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
+		flags_to_clear |= PQ_INACTIVE;
 		uvmexp.inactive--;
 	}
 
@@ -1138,15 +1139,16 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->uanon) {
 		pg->uanon->an_page = NULL;
 		pg->uanon = NULL;
-		atomic_clearbits_int(&pg->pg_flags, PQ_ANON);
+		flags_to_clear |= PQ_ANON;
 	}
 
 	/*
 	 * Clean page state bits.
 	 */
-	atomic_clearbits_int(&pg->pg_flags, PQ_AOBJ); /* XXX: find culprit */
-	atomic_clearbits_int(&pg->pg_flags, PQ_ENCRYPT|
-	    PG_ZERO|PG_FAKE|PG_BUSY|PG_RELEASED|PG_CLEAN|PG_CLEANCHK);
+	flags_to_clear |= PQ_AOBJ; /* XXX: find culprit */
+	flags_to_clear |= PQ_ENCRYPT|PG_ZERO|PG_FAKE|PG_BUSY|PG_RELEASED|
+	    PG_CLEAN|PG_CLEANCHK;
+	atomic_clearbits_int(&pg->pg_flags, flags_to_clear);
 
 	/*
 	 * and put on free queue
