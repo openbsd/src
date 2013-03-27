@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.98 2013/03/25 11:53:54 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.99 2013/03/27 11:17:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -981,8 +981,6 @@ server_client_msg_identify(
 		c->tty.flags |= TTY_UTF8;
 	if (data->flags & IDENTIFY_256COLOURS)
 		c->tty.term_flags |= TERM_256COLOURS;
-	else if (data->flags & IDENTIFY_88COLOURS)
-		c->tty.term_flags |= TERM_88COLOURS;
 
 	tty_resize(&c->tty);
 

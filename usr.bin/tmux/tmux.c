@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.116 2013/03/25 10:11:45 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.117 2013/03/27 11:17:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -244,15 +244,10 @@ main(int argc, char **argv)
 	quiet = flags = 0;
 	label = path = NULL;
 	login_shell = (**argv == '-');
-	while ((opt = getopt(argc, argv, "28c:Cdf:lL:qS:uUv")) != -1) {
+	while ((opt = getopt(argc, argv, "2c:Cdf:lL:qS:uUv")) != -1) {
 		switch (opt) {
 		case '2':
 			flags |= IDENTIFY_256COLOURS;
-			flags &= ~IDENTIFY_88COLOURS;
-			break;
-		case '8':
-			flags |= IDENTIFY_88COLOURS;
-			flags &= ~IDENTIFY_256COLOURS;
 			break;
 		case 'c':
 			free(shell_cmd);
