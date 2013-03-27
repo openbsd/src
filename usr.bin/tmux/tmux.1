@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.354 2013/03/27 11:17:12 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.355 2013/03/27 11:24:18 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -141,11 +141,12 @@ session created, and continues to process the rest of the configuration file.
 .It Fl L Ar socket-name
 .Nm
 stores the server socket in a directory under
-.Pa /tmp
-(or
+.Ev TMUX_TMPDIR ,
 .Ev TMPDIR
-if set);
-the default socket is named
+if it is unset, or
+.Pa /tmp
+if both are unset.
+The default socket is named
 .Em default .
 This option allows a different socket name to be specified, allowing several
 independent
