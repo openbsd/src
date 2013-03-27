@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.42 2013/03/25 16:01:49 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.43 2013/03/27 14:30:11 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -470,7 +470,7 @@ sr_raid1_intr(struct buf *bp)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
-	int			s, pend;
+	int			s;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
 	    DEVNAME(sc), bp, xs);
@@ -483,84 +483,67 @@ sr_raid1_intr(struct buf *bp)
 	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
 	    wu->swu_ios_failed);
 
-	if (wu->swu_ios_complete >= wu->swu_io_count) {
-		/* if all ios failed, retry reads and give up on writes */
-		if (wu->swu_ios_failed == wu->swu_ios_complete) {
-			if (xs->flags & SCSI_DATA_IN) {
-				printf("%s: retrying read on block %lld\n",
-				    DEVNAME(sc), ccb->ccb_buf.b_blkno);
-				sr_ccb_put(ccb);
-				if (wu->swu_cb_active == 1)
-					panic("%s: sr_raid1_intr_cb",
-					    DEVNAME(sd->sd_sc));
-				TAILQ_INIT(&wu->swu_ccb);
-				wu->swu_state = SR_WU_RESTART;
-				if (sd->sd_scsi_rw(wu))
-					goto bad;
-				else
-					goto retry;
-			} else {
-				printf("%s: permanently fail write on block "
-				    "%lld\n", DEVNAME(sc),
-				    ccb->ccb_buf.b_blkno);
-				xs->error = XS_DRIVER_STUFFUP;
-				goto bad;
-			}
-		}
+	if (wu->swu_ios_complete < wu->swu_io_count)
+		goto done;
 
-		xs->error = XS_NOERROR;
+	xs->error = XS_NOERROR;
 
-		pend = 0;
-		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
-			if (wu == wup) {
-				/* wu on pendq, remove */
-				TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
-				pend = 1;
-
-				if (wu->swu_collider) {
-					if (wu->swu_ios_failed)
-						/* toss all ccbs and recreate */
-						sr_raid_recreate_wu(wu->swu_collider);
-
-					/* restart deferred wu */
-					wu->swu_collider->swu_state =
-					    SR_WU_INPROGRESS;
-					TAILQ_REMOVE(&sd->sd_wu_defq,
-					    wu->swu_collider, swu_link);
-					sr_raid_startwu(wu->swu_collider);
-				}
-				break;
-			}
-		}
-
-		if (!pend)
-			printf("%s: wu: %p not on pending queue\n",
-			    DEVNAME(sc), wu);
-
-		if (wu->swu_flags & SR_WUF_REBUILD) {
-			if (wu->swu_xs->flags & SCSI_DATA_OUT) {
-				wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
-				wakeup(wu);
-			}
+	/* if all ios failed, retry reads and give up on writes */
+	if (wu->swu_ios_failed == wu->swu_ios_complete) {
+		if (xs->flags & SCSI_DATA_IN) {
+			printf("%s: retrying read on block %lld\n",
+			    DEVNAME(sc), ccb->ccb_buf.b_blkno);
+			sr_ccb_put(ccb);
+			if (wu->swu_cb_active == 1)
+				panic("%s: sr_raid1_intr_cb",
+				    DEVNAME(sd->sd_sc));
+			TAILQ_INIT(&wu->swu_ccb);
+			wu->swu_state = SR_WU_RESTART;
+			if (sd->sd_scsi_rw(wu) == 0)
+				goto done;
+			xs->error = XS_DRIVER_STUFFUP;
 		} else {
-			sr_scsi_done(sd, xs);
+			printf("%s: permanently failing write on block %lld\n",
+			    DEVNAME(sc), ccb->ccb_buf.b_blkno);
+			xs->error = XS_DRIVER_STUFFUP;
 		}
-
-		if (sd->sd_sync && sd->sd_wu_pending == 0)
-			wakeup(sd);
 	}
 
-retry:
-	splx(s);
-	return;
-bad:
-	xs->error = XS_DRIVER_STUFFUP;
+	TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
+		if (wu == wup)
+			break;
+
+	if (wup == NULL)
+		panic("%s: wu %p not on pending queue",
+		    DEVNAME(sd->sd_sc), wu);
+
+	/* wu on pendq, remove */
+	TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
+
+	if (wu->swu_collider) {
+		if (wu->swu_ios_failed)
+			sr_raid_recreate_wu(wu->swu_collider);
+
+		/* XXX Should the collider be failed if this xs failed? */
+		/* restart deferred wu */
+		wu->swu_collider->swu_state = SR_WU_INPROGRESS;
+		TAILQ_REMOVE(&sd->sd_wu_defq, wu->swu_collider, swu_link);
+		sr_raid_startwu(wu->swu_collider);
+	}
+
 	if (wu->swu_flags & SR_WUF_REBUILD) {
-		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
-		wakeup(wu);
+		/* XXX - decouple from SCSI_DATA_OUT. */
+		if (wu->swu_xs->flags & SCSI_DATA_OUT) {
+			wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
+			wakeup(wu);
+		}
 	} else {
 		sr_scsi_done(sd, xs);
 	}
 
+	if (sd->sd_sync && sd->sd_wu_pending == 0)
+		wakeup(sd);
+
+done:
 	splx(s);
 }
