@@ -1974,6 +1974,7 @@
 ./usr/share/man/man4/nviic.4
 ./usr/share/man/man4/nvt.4
 ./usr/share/man/man4/oce.4
+./usr/share/man/man4/octeon
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4
@@ -2933,6 +2934,8 @@
 ./usr/share/man/man8/nsupdate.8
 ./usr/share/man/man8/ntalkd.8
 ./usr/share/man/man8/ntpd.8
+./usr/share/man/man8/octeon
+./usr/share/man/man8/octeon/MAKEDEV.8
 ./usr/share/man/man8/ospf6ctl.8
 ./usr/share/man/man8/ospf6d.8
 ./usr/share/man/man8/ospfctl.8
