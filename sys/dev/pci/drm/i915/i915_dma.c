@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.3 2013/03/27 09:26:45 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.4 2013/03/27 12:14:29 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -120,6 +120,12 @@ i915_getparam(struct inteldrm_softc *dev_priv, void *data)
 		break;
 	case I915_PARAM_HAS_SEMAPHORES:
 		value = i915_semaphore_is_enabled(dev);
+		break;
+	case I915_PARAM_HAS_SECURE_BATCHES:
+		value = DRM_SUSER(curproc);
+		break;
+	case I915_PARAM_HAS_PINNED_BATCHES:
+		value = 1;
 		break;
 	default:
 		DRM_DEBUG("Unknown parameter %d\n", param->param);
