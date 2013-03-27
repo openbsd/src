@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.34 2012/01/04 18:11:51 beck Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.35 2013/03/27 01:56:50 tedu Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 /*
  * For simplicity (and economy of storage), names longer than
- * a maximum length of NCHNAMLEN are not cached; they occur
+ * a maximum length of NAMECACHE_MAXLEN are not cached; they occur
  * infrequently in any case, and are almost never of interest.
  *
  * Upon reaching the last segment of a path, if the reference
@@ -148,7 +148,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		cnp->cn_flags &= ~MAKEENTRY;
 		return (-1);
 	}
-	if (cnp->cn_namelen > NCHNAMLEN) {
+	if (cnp->cn_namelen > NAMECACHE_MAXLEN) {
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
 		return (-1);
@@ -342,7 +342,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 {
 	struct namecache *ncp, *lncp;
 
-	if (!doingcache || cnp->cn_namelen > NCHNAMLEN)
+	if (!doingcache || cnp->cn_namelen > NAMECACHE_MAXLEN)
 		return;
 
 	/*

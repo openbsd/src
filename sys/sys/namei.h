@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.27 2011/09/30 03:43:27 guenther Exp $	*/
+/*	$OpenBSD: namei.h,v 1.28 2013/03/27 01:56:50 tedu Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ struct nameidata {
  * names looked up by namei.
  */
 
-#define	NCHNAMLEN	31	/* maximum name segment length we bother with */
+#define	NAMECACHE_MAXLEN 31 /* maximum name segment length we bother with */
 
 struct	namecache {
 	TAILQ_ENTRY(namecache) nc_lru;	/* Regular Entry LRU chain */
@@ -177,7 +177,7 @@ struct	namecache {
 	struct	vnode *nc_vp;		/* vnode the name refers to */
 	u_long	nc_vpid;		/* capability number of nc_vp */
 	char	nc_nlen;		/* length of name */
-	char	nc_name[NCHNAMLEN];	/* segment name */
+	char	nc_name[NAMECACHE_MAXLEN];	/* segment name */
 };
 
 #ifdef _KERNEL
