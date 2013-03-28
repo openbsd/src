@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.10 2013/03/28 11:51:05 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.11 2013/03/28 19:36:14 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -109,6 +109,13 @@ int i915_panel_use_ssc = -1;
  * (-2=ignore, -1=auto [default], index in VBT BIOS table)
  */
 int i915_vbt_sdvo_panel_type = -1;
+
+/*
+ * Periodically check GPU activity for detecting hangs.
+ * WARNING: Disabling this can cause system wide hangs.
+ * (default: true)
+ */
+bool i915_enable_hangcheck = true;
 
 const struct intel_device_info *
 	i915_get_device_id(int);
