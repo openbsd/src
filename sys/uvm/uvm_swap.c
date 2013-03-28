@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.110 2012/09/20 20:20:11 miod Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.111 2013/03/28 03:39:22 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -688,8 +688,9 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 
 				/* now copy out the path if necessary */
 				if (error == 0)
-					error = copyout(sdp->swd_path,
-					    &sep->se_path, sdp->swd_pathlen);
+					error = copyoutstr(sdp->swd_path,
+					    sep->se_path, sizeof(sep->se_path),
+					    NULL);
 
 				if (error)
 					goto out;
