@@ -1,4 +1,5 @@
-/*	$OpenBSD: open_memstreamtest.c,v 1.2 2013/03/25 03:33:28 guenther Exp $ */
+/*	$OpenBSD: open_memstreamtest.c,v 1.3 2013/03/28 09:35:58 mpi Exp $ */
+
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
  *
@@ -134,6 +135,27 @@ main(void)
 	if (size != OFFSET + sizeof(hello)-1) {
 		warnx("failed, size %zu should be %u. (18)",
 		    size, OFFSET + sizeof(hello)-1);
+		failures++;
+	}
+
+	if (fseek(fp, 8, SEEK_SET) != 0) {
+		warnx("failed to fseek. (19)");
+		failures++;
+	}
+
+	if (ftell(fp) != 8) {
+		warnx("failed seek test. (20)");
+		failures++;
+	}
+
+	/* Try to seek backward */
+	if (fseek(fp, -1, SEEK_CUR) != 0) {
+		warnx("failed to fseek. (21)");
+		failures++;
+	}
+
+	if (ftell(fp) != 7) {
+		warnx("failed seeking backward. (22)");
 		failures++;
 	}
 
