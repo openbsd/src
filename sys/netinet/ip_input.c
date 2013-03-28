@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.203 2013/03/28 00:32:11 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.204 2013/03/28 12:06:55 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -688,8 +688,7 @@ in_ouraddr(struct in_addr ina, struct mbuf *m)
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
-	ia = (struct in_ifaddr *)ifa_ifwithaddr(sintosa(&sin),
-	    m->m_pkthdr.rdomain);
+	ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), m->m_pkthdr.rdomain));
 
 	if (ia == NULL) {
 		/*
@@ -745,7 +744,7 @@ in_iawithaddr(struct in_addr ina, u_int rdomain)
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr = ina;
-	ia = (struct in_ifaddr *)ifa_ifwithaddr(sintosa(&sin), rdomain);
+	ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rdomain));
 	if (ia == NULL || ina.s_addr == ia->ia_addr.sin_addr.s_addr)
 		return (ia);
 
@@ -1256,7 +1255,7 @@ ip_rtaddr(struct in_addr dst, u_int rtableid)
 		    rtableid);
 	}
 	if (ipforward_rt.ro_rt == 0)
-		return ((struct in_ifaddr *)0);
+		return (NULL);
 	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
 }
 

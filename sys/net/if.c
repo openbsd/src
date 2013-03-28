@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.253 2013/03/26 13:19:25 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.254 2013/03/28 12:06:55 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -607,8 +607,7 @@ do { \
 		ifa_del(ifp, ifa);
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
-			TAILQ_REMOVE(&in_ifaddr, (struct in_ifaddr *)ifa,
-			    ia_list);
+			TAILQ_REMOVE(&in_ifaddr, ifatoia(ifa), ia_list);
 #endif
 		/* XXX if_free_sadl needs this */
 		if (ifa == ifnet_addrs[ifp->if_index])
@@ -1508,8 +1507,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 				if (ifa->ifa_addr->sa_family != AF_INET)
 					continue;
 
-				TAILQ_REMOVE(&in_ifaddr,
-				    (struct in_ifaddr *)ifa, ia_list);
+				TAILQ_REMOVE(&in_ifaddr, ifatoia(ifa), ia_list);
 				ifa_del(ifp, ifa);
 				ifa->ifa_ifp = NULL;
 				ifafree(ifa);

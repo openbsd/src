@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.132 2013/03/28 00:32:11 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.133 2013/03/28 12:06:55 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -789,9 +789,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
     struct ip_moptions *mopts, int *errorp, u_int rtableid)
 {
 	struct sockaddr_in *sin2;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = NULL;
 
-	ia = (struct in_ifaddr *)0;
 	/*
 	 * If the destination address is multicast and an outgoing
 	 * interface has been set as a multicast option, use the
