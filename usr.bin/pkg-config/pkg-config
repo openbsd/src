@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.77 2012/12/10 10:12:12 jasper Exp $
+# $OpenBSD: pkg-config,v 1.78 2013/03/28 22:00:02 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -390,7 +390,9 @@ sub setup_self
 sub find_config
 {
 	my ($p) = @_;
-	my $f = pathresolve($p);
+
+	# Differentiate between getting a full path and just the module name.
+	my $f = ($p =~ m/\.pc$/ ? $p : pathresolve($p));
 
 	return get_config($f) if defined($f);
 
