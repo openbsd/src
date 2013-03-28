@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.25 2012/02/05 18:12:10 blambert Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.26 2013/03/28 16:58:45 deraadt Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -35,7 +35,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
