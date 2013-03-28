@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.26 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.27 2013/03/28 23:10:05 tedu Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -25,6 +25,7 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/timeout.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>

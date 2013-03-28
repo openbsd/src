@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.209 2013/03/28 16:55:27 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.210 2013/03/28 23:10:05 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/timeout.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>

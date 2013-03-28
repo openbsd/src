@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.64 2012/07/16 18:05:36 markus Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.65 2013/03/28 23:10:06 tedu Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -28,6 +28,7 @@
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/pool.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/route.h>

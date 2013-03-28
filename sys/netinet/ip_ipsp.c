@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.185 2012/09/20 10:25:03 blambert Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.186 2013/03/28 23:10:05 tedu Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/route.h>
