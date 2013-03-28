@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.3 2013/03/21 08:27:32 jsg Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.4 2013/03/28 20:37:50 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -416,17 +416,11 @@ notify_ring(struct drm_device *dev,
 //	trace_i915_gem_request_complete(ring, ring->get_seqno(ring, false));
 
 	wakeup(ring);
-	dev_priv->hangcheck_count = 0;
-	timeout_add_msec(&dev_priv->hangcheck_timer, DRM_I915_HANGCHECK_PERIOD);
-
-#ifdef notyet
-	wakeup(&ring->irq_queue);
 	if (i915_enable_hangcheck) {
 		dev_priv->hangcheck_count = 0;
-		mod_timer(&dev_priv->hangcheck_timer,
-			  round_jiffies_up(jiffies + DRM_I915_HANGCHECK_JIFFIES));
+		timeout_add_msec(&dev_priv->hangcheck_timer,
+				 DRM_I915_HANGCHECK_PERIOD);
 	}
-#endif
 }
 
 void
@@ -1849,10 +1843,8 @@ i915_hangcheck_elapsed(void *arg)
 	bool err = false, idle;
 	int i;
 
-#ifdef notyet
 	if (!i915_enable_hangcheck)
 		return;
-#endif
 
 	memset(acthd, 0, sizeof(acthd));
 	idle = true;
