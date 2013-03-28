@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.11 2013/03/27 07:40:41 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.12 2013/03/28 11:47:23 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -61,7 +61,7 @@ static const struct match matches[] = {
 };
 
 #define MATCH_FAMILY(a, b) ((a) == matches[(b)].family || (a) == PF_UNSPEC)
-#define MATCH_PROTO(a, b) ((a) == matches[(b)].protocol || (a) == 0)
+#define MATCH_PROTO(a, b) ((a) == matches[(b)].protocol || (a) == 0 || matches[(b)].protocol == 0)
 /* Do not match SOCK_RAW unless explicitely specified */
 #define MATCH_SOCKTYPE(a, b) ((a) == matches[(b)].socktype || ((a) == 0 && \
 				matches[(b)].socktype != SOCK_RAW))
@@ -165,14 +165,6 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 		    ai->ai_socktype != SOCK_STREAM &&
 		    ai->ai_socktype != SOCK_RAW) {
 			ar->ar_gai_errno = EAI_SOCKTYPE;
-			async_set_state(as, ASR_STATE_HALT);
-			break;
-		}
-
-		if (ai->ai_protocol &&
-		    ai->ai_protocol != IPPROTO_UDP  &&
-		    ai->ai_protocol != IPPROTO_TCP) {
-			ar->ar_gai_errno = EAI_PROTOCOL;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
@@ -497,7 +489,7 @@ static int
 addrinfo_add(struct async *as, const struct sockaddr *sa, const char *cname)
 {
 	struct addrinfo		*ai;
-	int			 i, port;
+	int			 i, port, proto;
 
 	for (i = 0; matches[i].family != -1; i++) {
 		if (matches[i].family != sa->sa_family ||
@@ -505,9 +497,13 @@ addrinfo_add(struct async *as, const struct sockaddr *sa, const char *cname)
 		    !MATCH_PROTO(as->as.ai.hints.ai_protocol, i))
 			continue;
 
-		if (matches[i].protocol == IPPROTO_TCP)
+		proto = as->as.ai.hints.ai_protocol;
+		if (!proto)
+			proto = matches[i].protocol;
+
+		if (proto == IPPROTO_TCP)
 			port = as->as.ai.port_tcp;
-		else if (matches[i].protocol == IPPROTO_UDP)
+		else if (proto == IPPROTO_UDP)
 			port = as->as.ai.port_udp;
 		else
 			port = 0;
@@ -521,7 +517,7 @@ addrinfo_add(struct async *as, const struct sockaddr *sa, const char *cname)
 			return (EAI_MEMORY);
 		ai->ai_family = sa->sa_family;
 		ai->ai_socktype = matches[i].socktype;
-		ai->ai_protocol = matches[i].protocol;
+		ai->ai_protocol = proto;
 		ai->ai_addrlen = sa->sa_len;
 		ai->ai_addr = (void*)(ai + 1);
 		if (cname &&
