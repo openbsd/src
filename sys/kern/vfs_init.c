@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.30 2012/08/23 06:12:49 deraadt Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.31 2013/03/28 03:27:46 tedu Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
 #include <sys/pool.h>

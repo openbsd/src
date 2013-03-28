@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.113 2012/10/08 15:43:08 jsing Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.114 2013/03/28 03:27:46 tedu Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
-#include <sys/namei.h>
 #include <sys/selinfo.h>
 #include <sys/tree.h>
 
