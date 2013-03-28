@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.7 2013/03/28 05:13:07 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.8 2013/03/28 11:51:05 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -863,6 +863,8 @@ struct drm_i915_gem_object {
 	/** This object's place on the active/flushing/inactive lists */
 	struct list_head			 ring_list;
 	struct list_head			 mm_list;
+	/** This object's place in the batchbuffer or on the eviction list */
+	struct list_head			 exec_list;
 	/* GTT binding. */
 	bus_dmamap_t				 dmamap;
 	bus_dma_segment_t			*dma_segs;
@@ -936,6 +938,12 @@ struct drm_i915_gem_object {
 	unsigned int fenced_gpu_access:1;
 
 	unsigned int cache_level:2;
+
+	/**
+	 * Used for performing relocations during execbuffer insertion.
+	 */
+	unsigned long exec_handle;
+	struct drm_i915_gem_exec_object2 *exec_entry;
 
 	/** for phy allocated objects */
 	struct drm_i915_gem_phys_object *phys_obj;
@@ -1080,7 +1088,10 @@ void	i915_dispatch_gem_execbuffer(struct intel_ring_buffer *,
 	    struct drm_i915_gem_execbuffer2 *, uint64_t);
 int	i915_gem_object_pin_and_relocate(struct drm_obj *,
 	    struct drm_file *, struct drm_i915_gem_exec_object2 *,
-	    struct drm_i915_gem_relocation_entry *);
+	    struct drm_i915_gem_relocation_entry *, struct intel_ring_buffer *);
+int	i915_gem_execbuffer_reserve_object(struct drm_i915_gem_object *,
+	    struct intel_ring_buffer *);
+void	i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *);
 
 struct drm_obj	*i915_gem_find_inactive_object(struct inteldrm_softc *,
 		     size_t);

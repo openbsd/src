@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.9 2013/03/28 05:13:07 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.10 2013/03/28 11:51:05 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1547,39 +1547,20 @@ inteldrm_wipe_mappings(struct drm_obj *obj)
 int
 i915_gem_object_pin_and_relocate(struct drm_obj *obj,
     struct drm_file *file_priv, struct drm_i915_gem_exec_object2 *entry,
-    struct drm_i915_gem_relocation_entry *relocs)
+    struct drm_i915_gem_relocation_entry *relocs, struct intel_ring_buffer *ring)
 {
 	struct drm_device	*dev = obj->dev;
 	struct inteldrm_softc	*dev_priv = dev->dev_private;
 	struct drm_obj		*target_obj;
 	struct drm_i915_gem_object *obj_priv = to_intel_bo(obj);
 	bus_space_handle_t	 bsh;
-	int			 i, ret, needs_fence;
+	int			 i, ret;
 
 	DRM_ASSERT_HELD(obj);
-	needs_fence = ((entry->flags & EXEC_OBJECT_NEEDS_FENCE) &&
-	    obj_priv->tiling_mode != I915_TILING_NONE);
-	if (needs_fence)
-		atomic_setbits_int(&obj->do_flags, I915_EXEC_NEEDS_FENCE);
 
-	/* Choose the GTT offset for our buffer and put it there. */
-	ret = i915_gem_object_pin(obj_priv, (u_int32_t)entry->alignment,
-	    needs_fence);
+	ret = i915_gem_execbuffer_reserve_object(obj_priv, ring);
 	if (ret)
-		return ret;
-
-	if (needs_fence) {
-		ret = i915_gem_object_get_fence(obj_priv);
-		if (ret)
-			return ret;
-
-		if (i915_gem_object_pin_fence(obj_priv))
-			obj->do_flags |= __EXEC_OBJECT_HAS_FENCE;
-
-		obj_priv->pending_fenced_gpu_access = true;
-	}
-
-	entry->offset = obj_priv->gtt_offset;
+		return (ret);
 
 	/* Apply the relocations, using the GTT aperture to avoid cache
 	 * flushing requirements.

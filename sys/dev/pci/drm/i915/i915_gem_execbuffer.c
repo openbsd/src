@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.2 2013/03/28 11:51:05 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -62,6 +62,9 @@ void	i915_gem_execbuffer_move_to_active(struct drm_obj **, int,
 	    struct intel_ring_buffer *);
 void	i915_gem_execbuffer_retire_commands(struct drm_device *,
 	    struct drm_file *, struct intel_ring_buffer *);
+int	need_reloc_mappable(struct drm_i915_gem_object *);
+int	i915_gem_execbuffer_reserve(struct intel_ring_buffer *,
+	    struct drm_file *, struct list_head *);
 
 // struct eb_objects {
 // eb_create
@@ -69,13 +72,197 @@ void	i915_gem_execbuffer_retire_commands(struct drm_device *,
 // eb_add_object
 // eb_get_object
 // eb_destroy
+
+static inline int use_cpu_reloc(struct drm_i915_gem_object *obj)
+{
+	return (obj->base.write_domain == I915_GEM_DOMAIN_CPU ||
+		!obj->map_and_fenceable ||
+		obj->cache_level != I915_CACHE_NONE);
+}
+
 // i915_gem_execbuffer_relocate_entry
 // i915_gem_execbuffer_relocate_object
 // i915_gem_execbuffer_relocate_object_slow
 // i915_gem_execbuffer_relocate
-// pin_and_fence_object
-// i915_gem_execbuffer_reserve
-// i915_gem_execbuffer_relocate_slow
+
+#define  __EXEC_OBJECT_HAS_PIN (1<<31)
+#define  __EXEC_OBJECT_HAS_FENCE (1<<30)
+
+int
+need_reloc_mappable(struct drm_i915_gem_object *obj)
+{
+	struct drm_i915_gem_exec_object2 *entry = obj->exec_entry;
+	return entry->relocation_count && !use_cpu_reloc(obj);
+}
+
+int
+i915_gem_execbuffer_reserve_object(struct drm_i915_gem_object *obj,
+				   struct intel_ring_buffer *ring)
+{
+#ifdef notyet
+	struct drm_i915_private *dev_priv = obj->base.dev->dev_private;
+#endif
+	struct drm_i915_gem_exec_object2 *entry = obj->exec_entry;
+	bool has_fenced_gpu_access = INTEL_INFO(ring->dev)->gen < 4;
+	bool need_fence, need_mappable;
+	int ret;
+
+	need_fence =
+		has_fenced_gpu_access &&
+		entry->flags & EXEC_OBJECT_NEEDS_FENCE &&
+		obj->tiling_mode != I915_TILING_NONE;
+	need_mappable = need_fence || need_reloc_mappable(obj);
+
+	ret = i915_gem_object_pin(obj, entry->alignment, need_mappable);
+	if (ret)
+		return ret;
+
+	entry->flags |= __EXEC_OBJECT_HAS_PIN;
+
+	if (has_fenced_gpu_access) {
+		if (entry->flags & EXEC_OBJECT_NEEDS_FENCE) {
+			ret = i915_gem_object_get_fence(obj);
+			if (ret)
+				return ret;
+
+			if (i915_gem_object_pin_fence(obj))
+				entry->flags |= __EXEC_OBJECT_HAS_FENCE;
+
+			obj->pending_fenced_gpu_access = true;
+		}
+	}
+
+#ifdef notyet
+	/* Ensure ppgtt mapping exists if needed */
+	if (dev_priv->mm.aliasing_ppgtt && !obj->has_aliasing_ppgtt_mapping) {
+		i915_ppgtt_bind_object(dev_priv->mm.aliasing_ppgtt,
+				       obj, obj->cache_level);
+
+		obj->has_aliasing_ppgtt_mapping = 1;
+	}
+#endif
+
+	entry->offset = obj->gtt_offset;
+	return 0;
+}
+
+void
+i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *obj)
+{
+	struct drm_i915_gem_exec_object2 *entry;
+
+	if (obj->dmamap == NULL)
+		return;
+
+	entry = obj->exec_entry;
+
+	if (entry->flags & __EXEC_OBJECT_HAS_FENCE)
+		i915_gem_object_unpin_fence(obj);
+
+	if (entry->flags & __EXEC_OBJECT_HAS_PIN)
+		i915_gem_object_unpin(obj);
+
+	entry->flags &= ~(__EXEC_OBJECT_HAS_FENCE | __EXEC_OBJECT_HAS_PIN);
+}
+
+int
+i915_gem_execbuffer_reserve(struct intel_ring_buffer *ring,
+			    struct drm_file *file,
+			    struct list_head *objects)
+{
+	struct drm_i915_gem_object *obj;
+	struct list_head ordered_objects;
+	bool has_fenced_gpu_access = INTEL_INFO(ring->dev)->gen < 4;
+	int retry;
+
+	INIT_LIST_HEAD(&ordered_objects);
+	while (!list_empty(objects)) {
+		struct drm_i915_gem_exec_object2 *entry;
+		bool need_fence, need_mappable;
+
+		obj = list_first_entry(objects,
+				       struct drm_i915_gem_object,
+				       exec_list);
+		entry = obj->exec_entry;
+
+		need_fence =
+			has_fenced_gpu_access &&
+			entry->flags & EXEC_OBJECT_NEEDS_FENCE &&
+			obj->tiling_mode != I915_TILING_NONE;
+		need_mappable = need_fence || need_reloc_mappable(obj);
+
+		if (need_mappable)
+			list_move(&obj->exec_list, &ordered_objects);
+		else
+			list_move_tail(&obj->exec_list, &ordered_objects);
+
+		obj->base.pending_read_domains = 0;
+		obj->base.pending_write_domain = 0;
+		obj->pending_fenced_gpu_access = false;
+	}
+	list_splice(&ordered_objects, objects);
+
+	/* Attempt to pin all of the buffers into the GTT.
+	 * This is done in 3 phases:
+	 *
+	 * 1a. Unbind all objects that do not match the GTT constraints for
+	 *     the execbuffer (fenceable, mappable, alignment etc).
+	 * 1b. Increment pin count for already bound objects.
+	 * 2.  Bind new objects.
+	 * 3.  Decrement pin count.
+	 *
+	 * This avoid unnecessary unbinding of later objects in order to make
+	 * room for the earlier objects *unless* we need to defragment.
+	 */
+	retry = 0;
+	do {
+		int ret = 0;
+
+		/* Unbind any ill-fitting objects or pin. */
+		list_for_each_entry(obj, objects, exec_list) {
+			struct drm_i915_gem_exec_object2 *entry = obj->exec_entry;
+			bool need_fence, need_mappable;
+
+			if (obj->dmamap == NULL)
+				continue;
+
+			need_fence =
+				has_fenced_gpu_access &&
+				entry->flags & EXEC_OBJECT_NEEDS_FENCE &&
+				obj->tiling_mode != I915_TILING_NONE;
+			need_mappable = need_fence || need_reloc_mappable(obj);
+
+			if ((entry->alignment && obj->gtt_offset & (entry->alignment - 1)) ||
+			    (need_mappable && !obj->map_and_fenceable))
+				ret = i915_gem_object_unbind(obj);
+			else
+				ret = i915_gem_execbuffer_reserve_object(obj, ring);
+			if (ret)
+				goto err;
+		}
+
+		/* Bind fresh objects */
+		list_for_each_entry(obj, objects, exec_list) {
+			if (obj->dmamap != NULL)
+				continue;
+
+			ret = i915_gem_execbuffer_reserve_object(obj, ring);
+			if (ret)
+				goto err;
+		}
+
+err:		/* Decrement pin count for bound objects */
+		list_for_each_entry(obj, objects, exec_list)
+			i915_gem_execbuffer_unreserve_object(obj);
+
+		if (ret != -ENOSPC || retry++)
+			return ret;
+
+		ret = i915_gem_evict_everything(ring->dev->dev_private);
+		if (ret)
+			return ret;
+	} while (1);
+}
 
 int
 i915_gem_execbuffer_wait_for_flips(struct intel_ring_buffer *ring, u32 flips)
@@ -385,8 +572,9 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 			object_list[i]->pending_write_domain = 0;
 			to_intel_bo(object_list[i])->pending_fenced_gpu_access = false;
 			drm_hold_object(object_list[i]);
+			to_intel_bo(object_list[i])->exec_entry = &exec_list[i];
 			ret = i915_gem_object_pin_and_relocate(object_list[i],
-			    file_priv, &exec_list[i], &relocs[reloc_index]);
+			    file_priv, &exec_list[i], &relocs[reloc_index], ring);
 			if (ret) {
 				drm_unhold_object(object_list[i]);
 				break;
