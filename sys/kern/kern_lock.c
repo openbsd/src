@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.38 2011/08/28 02:35:34 guenther Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.39 2013/03/28 16:55:25 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -41,7 +41,6 @@
 #include <sys/systm.h>
 #include <sys/sched.h>
 
-#include <machine/cpu.h>
 
 /*
  * Locking primitives implementation.

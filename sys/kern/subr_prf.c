@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.76 2011/04/03 16:46:19 drahn Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.77 2013/03/28 16:55:25 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -64,7 +64,6 @@
 
 #ifdef KGDB
 #include <sys/kgdb.h>
-#include <machine/cpu.h>
 #endif
 #ifdef DDB
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */

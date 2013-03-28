@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.148 2013/02/08 04:30:37 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.149 2013/03/28 16:55:25 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -66,7 +66,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
 

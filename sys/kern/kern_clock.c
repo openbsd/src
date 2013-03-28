@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.79 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.80 2013/03/28 16:55:25 deraadt Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@
 #include <sys/sched.h>
 #include <sys/timetc.h>
 
-#include <machine/cpu.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>

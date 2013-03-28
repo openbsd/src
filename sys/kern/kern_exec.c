@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.132 2012/08/02 03:18:48 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.133 2013/03/28 16:55:25 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/reg.h>
 
 #ifdef __HAVE_MD_TCB

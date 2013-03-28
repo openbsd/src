@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.151 2013/03/04 00:41:54 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.152 2013/03/28 16:55:27 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include <sys/timeout.h>
 #include <sys/workq.h>
 #include <sys/mutex.h>
-#include <machine/cpu.h>
 #include <scsi/scsi_debug.h>
 
 static __inline void _lto2b(u_int32_t val, u_int8_t *bytes);

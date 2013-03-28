@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.170 2013/02/17 17:39:29 miod Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.171 2013/03/28 16:55:25 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -87,7 +87,6 @@
 #include <sys/socketvar.h>
 #include <net/if.h>
 
-#include <machine/cpu.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>

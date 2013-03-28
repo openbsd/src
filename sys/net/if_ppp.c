@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.68 2013/03/26 13:19:26 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.69 2013/03/28 16:55:27 deraadt Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -150,7 +150,6 @@
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
 #include <net/if_pppvar.h>
-#include <machine/cpu.h>
 
 #ifdef PPP_COMPRESS
 #define PACKETPTR	struct mbuf *

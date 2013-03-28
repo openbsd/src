@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.76 2012/11/05 19:39:35 miod Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.77 2013/03/28 16:55:25 deraadt Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <machine/cpu.h>
 
 struct timeval adjtimedelta;		/* unapplied time correction */
 

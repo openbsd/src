@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.208 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.209 2013/03/28 16:55:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -44,7 +44,6 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

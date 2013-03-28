@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.32 2010/08/24 14:43:56 blambert Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.33 2013/03/28 16:55:27 deraadt Exp $       */
 
 /*
  *
@@ -87,7 +87,6 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/netisr.h>

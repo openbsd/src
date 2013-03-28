@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.24 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.25 2013/03/28 16:55:25 deraadt Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
-#include <machine/cpu.h>
 
 #ifdef GPROF
 #include <sys/malloc.h>

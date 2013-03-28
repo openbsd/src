@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.100 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.101 2013/03/28 16:55:27 deraadt Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -67,7 +67,6 @@
 #include <machine/random.h>
 #endif
 #if defined (__NetBSD__) || defined (__OpenBSD__)
-#include <machine/cpu.h> /* XXX for softnet */
 #endif
 #include <sys/stdarg.h>
 
