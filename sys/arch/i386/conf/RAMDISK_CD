@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.194 2012/11/16 02:15:38 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.195 2013/03/28 16:57:27 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -184,8 +184,8 @@ com*	at isapnp?
 #lpt2	at isa? port 0x3bc
 
 bha0	at isa? port 0x330	# BusLogic [57]4X SCSI controllers
-bha1	at isa? disable port 0x334 # BusLogic [57]4X SCSI controllers
-bha2	at isa? disable
+#bha1	at isa? port 0x334	# BusLogic [57]4X SCSI controllers
+#bha2	at isa? 
 bha*	at pci?
 #bha*	at eisa?		# XXX eisa still runs in isa-compat
 aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
@@ -223,12 +223,12 @@ siop*	at pci?			# NCR 538XX SCSI controllers(new)
 adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
 adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
 pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
-sea0	at isa? disable iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
+#sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 trm*	at pci?			# Tekram DC-3x5U SCSI Controllers
 uha0	at isa? port 0x330	# UltraStor [13]4f SCSI controllers
-uha1	at isa? disable port 0x334 # UltraStor [13]4f SCSI controllers
+#uha1	at isa? port 0x334	# UltraStor [13]4f SCSI controllers
 uha*	at eisa?		# UltraStor 24f SCSI controllers
-wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+#wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 softraid0	at root		# Software RAID
 
@@ -272,8 +272,8 @@ ne0	at isa? port 0x240 irq 9	# NE[12]000 ethernet
 ne1	at isa? port 0x300 irq 10	# NE[12]000 ethernet
 ne2	at isa? port 0x280 irq 9	# NE[12]000 ethernet
 ne*	at isapnp?			# NE[12]000 PnP ethernet
-eg0	at isa? disable port 0x310 irq 5 # 3C505/Etherlink+ ethernet
-el0	at isa? disable port 0x300 irq 9 # 3C501 ethernet
+#eg0	at isa? port 0x310 irq 5	# 3C505/Etherlink+ ethernet
+#el0	at isa? port 0x300 irq 9	# 3C501 ethernet
 ep0	at isa?				# 3C509 ethernet
 ep*	at isa?				# 3C509 ethernet
 ep*	at isapnp?			# 3C509 PnP ethernet
