@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.131 2013/02/05 19:09:52 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.132 2013/03/28 00:32:11 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -810,7 +810,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 				*errorp = EADDRNOTAVAIL;
 				return NULL;
 			}
-			return satosin(&ia->ia_addr);
+			return (&ia->ia_addr);
 		}
 	}
 	/*
@@ -863,7 +863,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro, int soopts,
 			return NULL;
 		}
 	}
-	return satosin(&ia->ia_addr);
+	return (&ia->ia_addr);
 }
 
 void

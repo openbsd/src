@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.202 2013/03/26 13:19:26 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.203 2013/03/28 00:32:11 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1297,7 +1297,7 @@ ip_weadvertise(u_int32_t addr, u_int rtableid)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
 	sin.sin_other = SIN_PROXY;
-	rt = rtalloc1(sintosa(&sin), 0, rtableid);
+	rt = rtalloc1((struct sockaddr *)&sin, 0, rtableid);
 	if (rt == 0)
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.819 2013/03/11 19:48:40 sthen Exp $ */
+/*	$OpenBSD: pf.c,v 1.820 2013/03/28 00:32:11 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5730,7 +5730,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		dst = satosin(&ro.ro_dst);
+		dst = (struct sockaddr_in *)&ro.ro_dst;
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
@@ -5746,7 +5746,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 		 */
 		if (IN6_IS_SCOPE_EMBED(&addr->v6))
 			goto out;
-		dst6 = (struct sockaddr_in6 *)&ro.ro_dst;
+		dst6 = &ro.ro_dst;
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
@@ -5811,7 +5811,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		dst = satosin(&ro.ro_dst);
+		dst = (struct sockaddr_in *)(&ro.ro_dst);
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
@@ -5819,7 +5819,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		dst6 = (struct sockaddr_in6 *)&ro.ro_dst;
+		dst6 = &ro.ro_dst;
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.135 2013/03/20 10:34:12 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.136 2013/03/28 00:32:11 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2116,7 +2116,6 @@ ip6_initpktopts(struct ip6_pktopts *opt)
 	opt->ip6po_minmtu = IP6PO_MINMTU_MCASTONLY;
 }
 
-#define sin6tosa(sin6)	((struct sockaddr *)(sin6)) /* XXX */
 int
 ip6_pcbopt(int optname, u_char *buf, int len, struct ip6_pktopts **pktopt,
     int priv, int uproto)

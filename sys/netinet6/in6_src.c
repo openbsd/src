@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.29 2013/03/20 10:34:12 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.30 2013/03/28 00:32:11 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			*errorp = EADDRNOTAVAIL;
 			return (0);
 		}
-		return (&satosin6(&ia6->ia_addr)->sin6_addr);
+		return (&ia6->ia_addr.sin6_addr);
 	}
 
 	/*
@@ -194,7 +194,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			*errorp = EADDRNOTAVAIL;
 			return (0);
 		}
-		return (&satosin6(&ia6->ia_addr)->sin6_addr);
+		return (&ia6->ia_addr.sin6_addr);
 	}
 
 	/*
@@ -216,7 +216,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				*errorp = EADDRNOTAVAIL;
 				return (0);
 			}
-			return (&satosin6(&ia6->ia_addr)->sin6_addr);
+			return (&ia6->ia_addr.sin6_addr);
 		}
 	}
 
@@ -242,7 +242,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				*errorp = EADDRNOTAVAIL;
 				return (0);
 			}
-			return (&satosin6(&ia6->ia_addr)->sin6_addr);
+			return (&ia6->ia_addr.sin6_addr);
 		}
 	}
 
@@ -252,7 +252,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 */
 	if (ro) {
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr, dst))) {
+		    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst))) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}
@@ -303,14 +303,14 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				ia6 = ifatoia6(ifa_ifwithnet(sin6tosa(&sin6)));
 			if (ia6 == 0)
 				return (0);
-			return (&satosin6(&ia6->ia_addr)->sin6_addr);
+			return (&ia6->ia_addr.sin6_addr);
 		}
 #endif /* 0 */
 		if (ia6 == 0) {
 			*errorp = EHOSTUNREACH;	/* no route */
 			return (0);
 		}
-		return (&satosin6(&ia6->ia_addr)->sin6_addr);
+		return (&ia6->ia_addr.sin6_addr);
 	}
 
 	*errorp = EADDRNOTAVAIL;
@@ -392,13 +392,13 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		if ((ron->ro_rt &&
 		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
 		    RTF_UP) ||
-		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ron->ro_dst)->sin6_addr,
+		    !IN6_ARE_ADDR_EQUAL(&ron->ro_dst.sin6_addr,
 		    &sin6_next->sin6_addr)) {
 			if (ron->ro_rt) {
 				RTFREE(ron->ro_rt);
 				ron->ro_rt = NULL;
 			}
-			*satosin6(&ron->ro_dst) = *sin6_next;
+			ron->ro_dst = *sin6_next;
 			ron->ro_tableid = rtableid;
 		}
 		if (ron->ro_rt == NULL) {
@@ -439,8 +439,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		if (ro->ro_rt &&
 		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
 		     ((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
-		     !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr,
-		     dst))) {
+		     !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst))) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)NULL;
 		}
