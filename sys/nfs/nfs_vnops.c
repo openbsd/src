@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.142 2013/03/28 02:17:16 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.143 2013/03/28 02:27:27 tedu Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2939,6 +2939,8 @@ loop:
 
 /*
  * Return POSIX pathconf information applicable to nfs.
+ * Fake it. For v3 we could ask the server, but such code
+ * hasn't been written yet.
  */
 /* ARGSUSED */
 int
