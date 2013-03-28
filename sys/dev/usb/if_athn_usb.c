@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.13 2013/03/28 04:12:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -31,7 +31,6 @@
 #include <sys/timeout.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/stdint.h>	/* uintptr_t */
 
 #include <machine/bus.h>
 #include <machine/endian.h>

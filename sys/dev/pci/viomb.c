@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.2 2013/02/24 12:43:13 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.3 2013/03/28 04:12:12 deraadt Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 /*
  * Copyright (c) 2012 Talypov Dinar <dinar@i-nk.ru>
@@ -31,7 +31,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/workq.h>
-#include <sys/stdint.h>
 #include <sys/pool.h>
 #include <uvm/uvm.h>
 #include <dev/pci/pcidevs.h>
