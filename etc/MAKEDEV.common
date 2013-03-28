@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.62 2013/03/15 09:10:52 ratchov Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.63 2013/03/28 21:20:46 jmc Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -513,7 +513,7 @@ _mkdev(spif, spif*, {-case $U in
 	M bpp${nam}0 c major_bppsp_c Add($offset, 0) 600-})dnl
 __devitem(bpp, bpp*, Parallel port)dnl
 _mkdev(bpp, {-bpp*-}, {-M bpp$U c major_bpp_c $U 600-}, 600)dnl
-__devitem(vscsi, vscsi*, Virtual SCSI controller, vscsi 8)dnl
+__devitem(vscsi, vscsi*, Virtual SCSI controller, vscsi 4)dnl
 _mcdev(vscsi, vscsi*, vscsi, {-major_vscsi_c-}, 600)dnl
 __devitem(rmidi, rmidi*, Raw MIDI devices,midi)dnl
 _mcdev(rmidi, rmidi*, rmidi, {-major_rmidi_c-}, 666)dnl
