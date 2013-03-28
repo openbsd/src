@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.190 2013/01/30 18:21:08 matthew Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.191 2013/03/28 02:39:17 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -324,42 +324,44 @@ update:
 /*
  * Scan all active processes to see if any of them have a current
  * or root directory onto which the new filesystem has just been
- * mounted. If so, replace them with the new mount point.
+ * mounted. If so, replace them with the new mount point, keeping
+ * track of how many were replaced.  That's the number of references
+ * the old vnode had that we've replaced, so finish by vrele()'ing
+ * it that many times.  This puts off any possible sleeping until
+ * we've finished walking the allprocs list.
  */
 void
 checkdirs(struct vnode *olddp)
 {
 	struct filedesc *fdp;
-	struct vnode *newdp, *vp;
+	struct vnode *newdp;
 	struct proc *p;
+	u_int  free_count = 0;
 
 	if (olddp->v_usecount == 1)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-again:
 	LIST_FOREACH(p, &allproc, p_list) {
 		fdp = p->p_fd;
 		if (fdp->fd_cdir == olddp) {
-			vp = fdp->fd_cdir;
+			free_count++;
 			vref(newdp);
 			fdp->fd_cdir = newdp;
-			if (vrele(vp))
-				goto again;
 		}
 		if (fdp->fd_rdir == olddp) {
-			vp = fdp->fd_rdir;
+			free_count++;
 			vref(newdp);
 			fdp->fd_rdir = newdp;
-			if (vrele(vp))
-				goto again;
 		}
 	}
 	if (rootvnode == olddp) {
-		vrele(rootvnode);
+		free_count++;
 		vref(newdp);
 		rootvnode = newdp;
 	}
+	while (free_count-- > 0)
+		vrele(olddp);
 	vput(newdp);
 }
 
@@ -697,7 +699,7 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
-	struct vnode *vp, *tdp;
+	struct vnode *vp, *tdp, *old_cdir;
 	struct mount *mp;
 	struct file *fp;
 	int error;
@@ -726,8 +728,9 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 		return (error);
 	}
 	VOP_UNLOCK(vp, 0, p);
-	vrele(fdp->fd_cdir);
+	old_cdir = fdp->fd_cdir;
 	fdp->fd_cdir = vp;
+	vrele(old_cdir);
 	return (0);
 }
 
@@ -742,6 +745,7 @@ sys_chdir(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
+	struct vnode *old_cdir;
 	int error;
 	struct nameidata nd;
 
@@ -749,8 +753,9 @@ sys_chdir(struct proc *p, void *v, register_t *retval)
 	    SCARG(uap, path), p);
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
-	vrele(fdp->fd_cdir);
+	old_cdir = fdp->fd_cdir;
 	fdp->fd_cdir = nd.ni_vp;
+	vrele(old_cdir);
 	return (0);
 }
 
@@ -765,6 +770,7 @@ sys_chroot(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
+	struct vnode *old_cdir, *old_rdir;
 	int error;
 	struct nameidata nd;
 
@@ -779,12 +785,14 @@ sys_chroot(struct proc *p, void *v, register_t *retval)
 		 * A chroot() done inside a changed root environment does
 		 * an automatic chdir to avoid the out-of-tree experience.
 		 */
-		vrele(fdp->fd_rdir);
-		vrele(fdp->fd_cdir);
 		vref(nd.ni_vp);
-		fdp->fd_cdir = nd.ni_vp;
-	}
-	fdp->fd_rdir = nd.ni_vp;
+		old_rdir = fdp->fd_rdir;
+		old_cdir = fdp->fd_cdir;
+		fdp->fd_rdir = fdp->fd_cdir = nd.ni_vp;
+		vrele(old_rdir);
+		vrele(old_cdir);
+	} else
+		fdp->fd_rdir = nd.ni_vp;
 	return (0);
 }
 
