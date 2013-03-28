@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.17 2006/06/21 18:28:24 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.18 2013/03/28 08:40:31 nicm Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <locale.h>
 #include <ctype.h>
 #include <regex.h>
@@ -329,9 +330,13 @@ eval4(void)
 				errx(2, "division by zero");
 			}
 			if (op == DIV) {
-				l->u.i /= r->u.i;
+				if (l->u.i != INT_MIN || r->u.i != -1)
+					l->u.i /= r->u.i;
 			} else {
-				l->u.i %= r->u.i;
+				if (l->u.i != INT_MIN || r->u.i != -1)
+					l->u.i %= r->u.i;
+				else
+					l->u.i = 0;
 			}
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.9 2010/07/20 02:13:10 deraadt Exp $	*/
+/*	$OpenBSD: exp.c,v 1.10 2013/03/28 08:39:54 nicm Exp $	*/
 /*	$NetBSD: exp.c,v 1.6 1995/03/21 09:02:51 cgd Exp $	*/
 
 /*-
@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
 #ifndef SHORT_STRINGS
@@ -346,7 +347,7 @@ static Char *
 exp5(Char ***vp, bool ignore)
 {
     Char *p1, *p2;
-    int i = 0;
+    int i = 0, l;
 
     p1 = exp6(vp, ignore);
 #ifdef EDEBUG
@@ -370,14 +371,22 @@ exp5(Char ***vp, bool ignore)
 		i = egetn(p2);
 		if (i == 0)
 		    stderror(ERR_DIV0);
-		i = egetn(p1) / i;
+		l = egetn(p1);
+		if (l == INT_MIN && i == -1)
+			i = INT_MIN;
+		else
+			i = l / i;
 		break;
 
 	    case '%':
 		i = egetn(p2);
 		if (i == 0)
 		    stderror(ERR_MOD0);
-		i = egetn(p1) % i;
+		l = egetn(p1);
+		if (l == INT_MIN && i == -1)
+			i = 0;
+		else
+			i = l % i;
 		break;
 	    }
 	xfree((ptr_t) p1);
