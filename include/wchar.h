@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.23 2012/06/06 16:58:02 matthew Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.24 2013/03/28 16:37:14 eric Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -155,6 +155,8 @@ unsigned long int wcstoul(const wchar_t * __restrict, wchar_t ** __restrict,
 		int base);
 
 #if __POSIX_VISIBLE >= 200809
+FILE *open_wmemstream(wchar_t **, size_t *);
+
 wchar_t	*wcsdup(const wchar_t *);
 int wcscasecmp(const wchar_t *, const wchar_t *);
 int wcsncasecmp(const wchar_t *, const wchar_t *, size_t);

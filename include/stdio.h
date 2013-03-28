@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.43 2013/01/30 00:08:13 brad Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.44 2013/03/28 16:37:14 eric Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -334,6 +334,11 @@ int	 getchar_unlocked(void);
 int	 putc_unlocked(int, FILE *);
 int	 putchar_unlocked(int);
 #endif /* __POSIX_VISIBLE >= 199506 */
+
+#if __POSIX_VISIBLE >= 200809
+FILE	*fmemopen(void *, size_t, const char *);
+FILE	*open_memstream(char **, size_t *);
+#endif /* __POSIX_VISIBLE >= 200809 */
 
 #if __XPG_VISIBLE
 char	*tempnam(const char *, const char *);
