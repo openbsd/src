@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.168 2013/03/28 03:31:56 tedu Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.169 2013/03/28 03:58:03 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/stat.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.56 2012/12/31 04:25:46 miod Exp $ */
+/*	$OpenBSD: ucom.c,v 1.57 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>

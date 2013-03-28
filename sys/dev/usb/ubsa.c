@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.55 2013/03/28 03:31:55 tedu Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.56 2013/03/28 03:58:03 tedu Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -65,7 +65,6 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>

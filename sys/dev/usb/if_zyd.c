@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.88 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.89 2013/03/28 03:58:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -25,7 +25,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

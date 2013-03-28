@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.40 2013/03/28 03:58:03 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -21,7 +21,6 @@
 
 #include <sys/param.h>
 #include <sys/sockio.h>
-#include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>

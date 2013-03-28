@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.26 2010/12/17 23:14:00 jakemsr Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.27 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -36,7 +36,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 
 #include <dev/usb/usb.h>

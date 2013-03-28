@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.18 2012/12/05 23:20:21 deraadt Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.19 2013/03/28 03:58:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -78,7 +78,6 @@
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/socket.h>
 
 #include <sys/device.h>

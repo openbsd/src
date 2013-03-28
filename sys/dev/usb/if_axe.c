@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.116 2013/03/04 13:08:06 sthen Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.117 2013/03/28 03:58:03 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -95,7 +95,6 @@
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/socket.h>
 
 #include <sys/device.h>

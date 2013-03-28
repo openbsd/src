@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.57 2013/03/28 03:31:55 tedu Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.58 2013/03/28 03:58:03 tedu Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 

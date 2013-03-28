@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.92 2012/08/17 17:29:00 krw Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.93 2013/03/28 03:58:03 tedu Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -48,7 +48,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/queue.h>
 
 #include <machine/bus.h>

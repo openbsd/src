@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.55 2013/03/28 03:31:55 tedu Exp $ */
+/*	$OpenBSD: udcf.c,v 1.56 2013/03/28 03:58:03 tedu Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -22,11 +22,11 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/select.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/time.h>
 #include <sys/sensors.h>
+#include <sys/timeout.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

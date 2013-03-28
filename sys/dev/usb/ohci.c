@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.107 2013/03/02 22:57:30 miod Exp $ */
+/*	$OpenBSD: ohci.c,v 1.108 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -45,7 +45,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/queue.h>
 
 #include <machine/bus.h>

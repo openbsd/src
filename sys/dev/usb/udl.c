@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.71 2012/09/18 17:24:51 jasper Exp $ */
+/*	$OpenBSD: udl.c,v 1.72 2013/03/28 03:58:03 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -32,7 +32,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <uvm/uvm.h>
 
 #include <machine/bus.h>

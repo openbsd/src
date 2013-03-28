@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.46 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.47 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
 #include <sys/conf.h>

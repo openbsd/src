@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.23 2011/04/05 19:54:35 jasper Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.24 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -46,10 +46,6 @@
 #include <sys/timeout.h>
 #include <sys/device.h>		/* for usbdivar.h */
 #include <machine/bus.h>
-
-#ifdef DIAGNOSTIC
-#include <sys/proc.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

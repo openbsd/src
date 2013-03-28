@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.85 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.86 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -85,7 +85,6 @@
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/socket.h>
 
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.59 2011/09/29 11:18:01 stsp Exp $ */
+/*	$OpenBSD: uhub.c,v 1.60 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -41,7 +41,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 

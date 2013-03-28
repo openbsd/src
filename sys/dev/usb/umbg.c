@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.18 2013/03/28 03:31:55 tedu Exp $ */
+/*	$OpenBSD: umbg.c,v 1.19 2013/03/28 03:58:03 tedu Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -22,11 +22,11 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/select.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/time.h>
 #include <sys/sensors.h>
+#include <sys/timeout.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

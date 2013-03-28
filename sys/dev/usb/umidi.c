@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.34 2013/03/28 03:31:55 tedu Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.35 2013/03/28 03:58:03 tedu Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.60 2013/01/29 02:06:55 brad Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.61 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -50,7 +50,6 @@
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/socket.h>
 
 #include <sys/device.h>

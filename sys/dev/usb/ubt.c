@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.21 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.22 2013/03/28 03:58:03 tedu Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <dev/usb/usb.h>

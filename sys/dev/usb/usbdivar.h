@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.45 2013/03/16 11:11:22 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.46 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -31,6 +31,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/timeout.h>
 
 /* From usb_mem.h */
 struct usb_dma_block;

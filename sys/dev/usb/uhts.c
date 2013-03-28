@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhts.c,v 1.5 2013/03/28 03:31:55 tedu Exp $ */
+/*	$OpenBSD: uhts.c,v 1.6 2013/03/28 03:58:03 tedu Exp $ */
 /*
  * Copyright (c) 2009 Matthieu Herrb <matthieu@herrb.eu>
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -53,7 +53,6 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>

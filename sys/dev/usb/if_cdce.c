@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.51 2011/11/09 21:45:50 sthen Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.52 2013/03/28 03:58:03 tedu Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -49,7 +49,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.8 2011/07/03 15:47:17 matthew Exp $   */
+/*	$OpenBSD: utrh.c,v 1.9 2013/03/28 03:58:03 tedu Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -19,7 +19,6 @@
 /* Driver for Strawberry linux USBRH Temerature/Humidity sensor */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>

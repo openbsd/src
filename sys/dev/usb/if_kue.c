@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.64 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.65 2013/03/28 03:58:03 tedu Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -80,7 +80,6 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

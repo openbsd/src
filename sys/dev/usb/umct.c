@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.34 2013/03/28 03:31:55 tedu Exp $	*/
+/*	$OpenBSD: umct.c,v 1.35 2013/03/28 03:58:03 tedu Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 
