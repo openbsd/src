@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.95 2012/10/21 13:06:03 benno Exp $	*/
+/*	$OpenBSD: in.h,v 1.96 2013/03/28 15:05:32 bluhm Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -844,8 +844,33 @@ void	   in_proto_cksum_out(struct mbuf *, struct ifnet *);
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
 
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
-#define	sintosa(sin)	((struct sockaddr *)(sin))
-#define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
+struct sockaddr;
+struct sockaddr_in;
+struct ifaddr;
+struct in_ifaddr;
+
+/*
+ * Convert between address family specific and general structs.
+ * Inline functions check the source type and are stricter than
+ * casts or defines.
+ */
+
+static __inline struct sockaddr_in *
+satosin(struct sockaddr *sa)
+{
+	return ((struct sockaddr_in *)(sa));
+}
+
+static __inline struct sockaddr *
+sintosa(struct sockaddr_in *sin)
+{
+	return ((struct sockaddr *)(sin));
+}
+
+static __inline struct in_ifaddr *
+ifatoia(struct ifaddr *ifa)
+{
+	return ((struct in_ifaddr *)(ifa));
+}
 #endif /* _KERNEL */
 #endif /* _NETINET_IN_H_ */

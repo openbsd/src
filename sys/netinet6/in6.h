@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.63 2013/03/14 14:28:38 mpi Exp $	*/
+/*	$OpenBSD: in6.h,v 1.64 2013/03/28 15:05:32 bluhm Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -764,9 +764,34 @@ extern void in6_if_up(struct ifnet *);
 void 	in6_get_rand_ifid(struct ifnet *, struct in6_addr *);
 int	in6_mask2len(struct in6_addr *, u_char *);
 
-#define	satosin6(sa)	((struct sockaddr_in6 *)(sa))
-#define	sin6tosa(sin6)	((struct sockaddr *)(sin6))
-#define	ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
+struct sockaddr;
+struct sockaddr_in6;
+struct ifaddr;
+struct in6_ifaddr;
+
+/*
+ * Convert between address family specific and general structs.
+ * Inline functions check the source type and are stricter than
+ * casts or defines.
+ */
+
+static __inline struct sockaddr_in6 *
+satosin6(struct sockaddr *sa)
+{
+	return ((struct sockaddr_in6 *)(sa));
+}
+
+static __inline struct sockaddr *
+sin6tosa(struct sockaddr_in6 *sin6)
+{
+	return ((struct sockaddr *)(sin6));
+}
+
+static __inline struct in6_ifaddr *
+ifatoia6(struct ifaddr *ifa)
+{
+	return ((struct in6_ifaddr *)(ifa));
+}
 #endif /* _KERNEL */
 
 #if __BSD_VISIBLE
