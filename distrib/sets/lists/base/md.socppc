@@ -84,7 +84,7 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd5.3/4.2.1/collect2
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd5.3/4.2.1/specs
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.66.2
+./usr/lib/libc.so.67.0
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.22.0
 ./usr/lib/libcurses.so.12.1
@@ -98,7 +98,7 @@
 ./usr/lib/libkafs.so.18.0
 ./usr/lib/libkrb5.so.18.0
 ./usr/lib/libkvm.so.13.1
-./usr/lib/libm.so.7.1
+./usr/lib/libm.so.8.0
 ./usr/lib/libmenu.so.5.0
 ./usr/lib/libmenuw.so.5.0
 ./usr/lib/libmilter.so.2.1
