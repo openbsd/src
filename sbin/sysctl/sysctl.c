@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.184 2012/09/20 20:11:58 yuo Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.185 2013/03/28 16:39:14 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/gmon.h>
 #include <sys/mount.h>
-#include <sys/stat.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/sysctl.h>
@@ -44,7 +43,6 @@
 #include <sys/tty.h>
 #include <sys/namei.h>
 #include <sys/sensors.h>
-#include <machine/cpu.h>
 #include <net/route.h>
 #include <net/if.h>
 
@@ -88,10 +86,8 @@
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
-#include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
-#include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
