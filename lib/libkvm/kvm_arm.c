@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_arm.c,v 1.7 2013/03/20 14:46:45 deraadt Exp $	*/
+/*	$OpenBSD: kvm_arm.c,v 1.8 2013/03/28 16:27:31 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -106,7 +106,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 	    va < cpup->kernelbase + cpup->kerneloffs + cpup->staticsize) {
 		*pa = (va - cpup->kernelbase) +
 		    (paddr_t)cpup->ram_segs[0].start;
-		return (int)(PAGE_SIZE - (va & PAGE_MASK));
+		return (int)(kd->nbpg - (va & (kd->nbpg - 1)));
 	}
 
 	_kvm_err(kd, 0, "kvm_vatop: va %x unreachable", va);

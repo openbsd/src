@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_hppa.c,v 1.7 2009/07/28 12:56:25 deraadt Exp $	*/
+/*	$OpenBSD: kvm_hppa.c,v 1.8 2013/03/28 16:27:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -63,7 +63,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 
 	/* XXX this only really works for the kernel image only */
 	*pa = va;
-	return (PAGE_SIZE - (va & PAGE_MASK));
+	return (kd->nbpg - (va & (kd->nbpg - 1)));
 }
 
 /*

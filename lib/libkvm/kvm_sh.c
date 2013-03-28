@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sh.c,v 1.5 2013/03/20 14:46:45 deraadt Exp $	*/
+/*	$OpenBSD: kvm_sh.c,v 1.6 2013/03/28 16:27:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -56,9 +56,9 @@ _kvm_initvtop(kvm_t *kd)
 #define	__PMAP_PTP_N		512	/* # of page table page maps 2GB. */
 /* Stolen from sys/arch/sh/sh/pmap.c */
 #define	__PMAP_PTP_SHIFT	22
-#define	__PMAP_PTP_PG_N		(PAGE_SIZE / sizeof(pt_entry_t))
+#define	__PMAP_PTP_PG_N		(kd->nbpg / sizeof(pt_entry_t))
 #define	__PMAP_PTP_INDEX(va)	(((va) >> __PMAP_PTP_SHIFT) & (__PMAP_PTP_N - 1))
-#define	__PMAP_PTP_OFSET(va)	((va >> PAGE_SHIFT) & (__PMAP_PTP_PG_N - 1))
+#define	__PMAP_PTP_OFSET(va)	((va / kd->nbpg) & (__PMAP_PTP_PG_N - 1))
 
 int
 _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
@@ -128,8 +128,8 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 			goto bad;
 		}
 
-		*pa = (l2pte & PG_PPN) | (va & PAGE_MASK);
-		return (PAGE_SIZE - (va & PAGE_MASK));
+		*pa = (l2pte & PG_PPN) | (va & (kd->nbpg - 1));
+		return (kd->nbpg - (va & (kd->nbpg - 1)));
 	}
 
 	/*

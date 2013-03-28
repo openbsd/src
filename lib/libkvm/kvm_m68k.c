@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.20 2012/07/09 08:43:10 deraadt Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.21 2013/03/28 16:27:31 deraadt Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -67,8 +67,8 @@
 #include <machine/kcore.h>
 
 #ifndef btop
-#define	btop(x)		(((unsigned)(x)) >> PAGE_SHIFT)	/* XXX */
-#define	ptob(x)		((caddr_t)((x) << PAGE_SHIFT))	/* XXX */
+#define	btop(x)		(((unsigned)(x)) / kd->nbpg)	/* XXX */
+#define	ptob(x)		((caddr_t)((x) * kd->nbpg))	/* XXX */
 #endif
 
 void
@@ -97,7 +97,7 @@ _kvm_vatop(kvm_t *kd, st_entry_t *sta, u_long va, u_long *pa)
 		_kvm_err(kd, 0, "vatop called in live kernel!");
 		return (0);
 	}
-	offset = va & PAGE_MASK;
+	offset = va & (kd->nbpg - 1);
 	cpu_kh = kd->cpu_data;
 	/*
 	 * If we are initializing (kernel segment table pointer not yet set)
@@ -105,7 +105,7 @@ _kvm_vatop(kvm_t *kd, st_entry_t *sta, u_long va, u_long *pa)
 	 */
 	if (cpu_kh->sysseg_pa == 0) {
 		*pa = va + cpu_kh->kernel_pa;
-		return (PAGE_SIZE - offset);
+		return (kd->nbpg - offset);
 	}
 	if (cpu_kh->mmutype == MMU_68040 || cpu_kh->mmutype == MMU_68060) {
 		st_entry_t *sta2;
@@ -174,7 +174,7 @@ _kvm_vatop(kvm_t *kd, st_entry_t *sta, u_long va, u_long *pa)
 	}
 	*pa = addr + offset;
 
-	return (PAGE_SIZE - offset);
+	return (kd->nbpg - offset);
 invalid:
 	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
