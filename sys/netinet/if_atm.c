@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.17 2011/07/05 21:40:38 dhill Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.18 2013/03/28 16:45:16 tedu Exp $       */
 
 /*
  *
@@ -48,7 +48,6 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

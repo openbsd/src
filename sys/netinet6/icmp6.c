@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.122 2013/03/25 14:40:56 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.123 2013/03/28 16:45:16 tedu Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2809,7 +2809,6 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 }
 
 #include <uvm/uvm_extern.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 int *icmpv6ctl_vars[ICMPV6CTL_MAXID] = ICMPV6CTL_VARS;

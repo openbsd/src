@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.136 2013/03/28 00:32:11 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.137 2013/03/28 16:45:16 tedu Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -71,7 +71,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_enc.h>

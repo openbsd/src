@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.93 2012/09/30 12:11:50 claudio Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.94 2013/03/28 16:45:16 tedu Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -57,7 +57,6 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

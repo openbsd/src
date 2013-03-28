@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.196 2013/03/26 13:19:26 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.197 2013/03/28 16:45:16 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -43,7 +43,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/malloc.h>

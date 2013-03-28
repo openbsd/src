@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.204 2013/03/28 12:06:55 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.205 2013/03/28 16:45:16 tedu Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/syslog.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
 

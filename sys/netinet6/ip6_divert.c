@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.8 2012/11/06 12:32:42 henning Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.9 2013/03/28 16:45:16 tedu Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>

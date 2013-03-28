@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.24 2012/12/29 14:59:52 markus Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.25 2013/03/28 16:45:16 tedu Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -49,7 +49,6 @@
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/pool.h>
-#include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/syslog.h>
 #include <sys/stdint.h>
