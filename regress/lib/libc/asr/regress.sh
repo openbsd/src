@@ -1,4 +1,4 @@
-#	$OpenBSD: regress.sh,v 1.4 2012/12/17 21:15:33 eric Exp $
+#	$OpenBSD: regress.sh,v 1.5 2013/03/28 09:36:03 eric Exp $
 
 . regress.subr
 
@@ -67,6 +67,13 @@ test_getaddrinfo()
 	done
 }
 
+test_getaddrinfo2()
+{
+	for i in $@; do
+		regress getaddrinfo -f inet6 -t raw -p icmpv6 $i
+	done
+}
+
 test_getnameinfo()
 {
 	for i in $@; do
@@ -98,6 +105,7 @@ for e in file bind local; do
 	test_gethostbyname $WEIRD $BASIC $EXTRA
 	test_gethostbyaddr $ADDRS
 	test_getaddrinfo NULL $WEIRD $BASIC $EXTRA
+	test_getaddrinfo2 undeadly.org www.kame.net
 	test_getnameinfo $ADDRS
  	test_gethostbyname $ADDRS
 done

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.1.1.1 2012/07/13 17:49:54 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.2 2013/03/28 09:36:03 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -81,6 +81,10 @@ main(int argc, char *argv[])
 				hints.ai_protocol = IPPROTO_UDP;
 			else if (!strcmp(optarg, "tcp"))
 				hints.ai_protocol = IPPROTO_TCP;
+			else if (!strcmp(optarg, "icmp"))
+				hints.ai_protocol = IPPROTO_ICMP;
+			else if (!strcmp(optarg, "icmpv6"))
+				hints.ai_protocol = IPPROTO_ICMPV6;
 			else
 				usage();
 			break;

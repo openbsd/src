@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.1.1.1 2012/07/13 17:49:53 eric Exp $	*/
+/*	$OpenBSD: common.c,v 1.2 2013/03/28 09:36:03 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -69,18 +69,21 @@ struct kv kv_socktype[] = {
 struct kv kv_protocol[] = {
 	{ IPPROTO_UDP, "udp" },
 	{ IPPROTO_TCP, "tcp" },
+	{ IPPROTO_ICMP, "icmp" },
+	{ IPPROTO_ICMPV6, "icmpv6" },
 	{ 0,	NULL, }
 };
 
 static const char *
-kv_lookup_name(struct kv *kv, int code)
+kv_lookup_name(struct kv *kv, int code, char *buf, size_t sz)
 {
 	while (kv->name) {
 		if (kv->code == code)
 			return (kv->name);
 		kv++;
 	}
-	return "???";
+	snprintf(buf, sz, "%i", code);
+	return (buf);
 }
 
 struct keyval {
@@ -243,12 +246,12 @@ print_netent(struct netent *e)
 void
 print_addrinfo(struct addrinfo *ai)
 {
-	char	buf[256];
+	char	buf[256], bf[64], bt[64], bp[64];
 
 	printf("family=%s socktype=%s protocol=%s addr=%s canonname=%s\n",
-		kv_lookup_name(kv_family, ai->ai_family),
-		kv_lookup_name(kv_socktype, ai->ai_socktype),
-		kv_lookup_name(kv_protocol, ai->ai_protocol),
+		kv_lookup_name(kv_family, ai->ai_family, bf, sizeof bf),
+		kv_lookup_name(kv_socktype, ai->ai_socktype, bt, sizeof bt),
+		kv_lookup_name(kv_protocol, ai->ai_protocol, bp, sizeof bp),
 		print_addr(ai->ai_addr, buf, sizeof buf),
 		ai->ai_canonname);
 }

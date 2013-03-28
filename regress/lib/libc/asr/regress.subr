@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: regress.subr,v 1.1.1.1 2012/07/13 17:49:53 eric Exp $
+#	$OpenBSD: regress.subr,v 1.2 2013/03/28 09:36:03 eric Exp $
 
 TOTAL=0
 FAIL=0
@@ -109,6 +109,7 @@ test "$_RUNDIR" == / && fail RUNDIR is root dir: $RUNDIR
 
 OUT=$_RUNDIR/output.log
 REG=$_RUNDIR/regress.log
+ETC=$_RUNDIR/etc
 
 echo -n > $REG
 echo -n > $OUT
