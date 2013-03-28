@@ -3828,6 +3828,7 @@
 ./usr/share/man/man3/fmax.3
 ./usr/share/man/man3/fmaxf.3
 ./usr/share/man/man3/fmaxl.3
+./usr/share/man/man3/fmemopen.3
 ./usr/share/man/man3/fmin.3
 ./usr/share/man/man3/fminf.3
 ./usr/share/man/man3/fminl.3
@@ -5237,6 +5238,8 @@
 ./usr/share/man/man3/ohash_qlookup.3
 ./usr/share/man/man3/ohash_qlookupi.3
 ./usr/share/man/man3/ohash_remove.3
+./usr/share/man/man3/open_memstream.3
+./usr/share/man/man3/open_wmemstream.3
 ./usr/share/man/man3/opendev.3
 ./usr/share/man/man3/opendir.3
 ./usr/share/man/man3/opendisk.3
