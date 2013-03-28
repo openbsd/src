@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.16 2013/03/24 09:57:59 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.17 2013/03/28 15:08:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -75,8 +75,12 @@ cmd_swap_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 			src_wp = TAILQ_PREV(dst_wp, window_panes, entry);
 			if (src_wp == NULL)
 				src_wp = TAILQ_LAST(&dst_w->panes, window_panes);
-		} else
-			return (CMD_RETURN_NORMAL);
+		} else {
+			src_wl = cmd_find_pane(cmdq, NULL, NULL, &src_wp);
+			if (src_wl == NULL)
+				return (CMD_RETURN_ERROR);
+			src_w = src_wl->window;
+		}
 	} else {
 		src_wl = cmd_find_pane(cmdq, args_get(args, 's'), NULL, &src_wp);
 		if (src_wl == NULL)
