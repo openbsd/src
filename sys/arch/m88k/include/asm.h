@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.12 2013/01/11 21:19:45 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.13 2013/03/28 17:41:04 martynas Exp $	*/
 
 /*
  * Mach Operating System
@@ -75,19 +75,19 @@
 	.comm	_ASM_LABEL(name), size
 
 #ifdef	__ELF__
+#define	STRONG_ALIAS(alias,sym)						\
+	.global alias;							\
+	alias = sym
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
 #else
-#ifdef	__STDC__
+#define	STRONG_ALIAS(alias,sym)						\
+	.global _##alias;						\
+	_##alias = _##sym
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak _##alias;							\
 	_##alias = _##sym
-#else
-#define	WEAK_ALIAS(alias,sym)						\
-	.weak _/**/alias;						\
-	_/**/alias = _/**/sym
-#endif
 #endif
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 2013/03/28 17:41:04 martynas Exp $	*/
 /*	$NetBSD: asm.h,v 1.25 2006/01/20 22:02:40 christos Exp $	*/
 
 /*-
@@ -206,12 +206,11 @@
 #define	ASMSTR		.asciz
 
 #ifdef __ELF__
+#define	STRONG_ALIAS(alias,sym)						\
+	.global _C_LABEL(alias);					\
+	_C_LABEL(alias) = _C_LABEL(sym)
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak _C_LABEL(alias);						\
-	_C_LABEL(alias) = _C_LABEL(sym)
-
-#define	STRONG_ALIAS(alias,sym)						\
-	.globl _C_LABEL(alias);						\
 	_C_LABEL(alias) = _C_LABEL(sym)
 #endif
 

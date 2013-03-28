@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 2013/03/28 17:41:03 martynas Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -100,6 +100,9 @@
 
 #define RCSID(x)	.text; .asciz x
 
+#define	STRONG_ALIAS(alias,sym)						\
+	.global alias;							\
+	alias = sym
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym

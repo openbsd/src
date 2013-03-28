@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.18 2012/09/29 21:37:03 miod Exp $ */
+/*	$OpenBSD: asm.h,v 1.19 2013/03/28 17:41:04 martynas Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -288,8 +288,11 @@ x: ;				\
 	.end x
 
 /*
- * WEAK ALIAS: create a weak alias
+ * STRONG_ALIAS, WEAK_ALIAS
+ *	Create a strong or weak alias.
  */
+#define STRONG_ALIAS(alias,sym) \
+	.global alias; alias = sym
 #define WEAK_ALIAS(alias,sym) \
 	.weak alias; alias = sym
 

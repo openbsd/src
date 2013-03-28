@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 2013/03/28 17:41:04 martynas Exp $	*/
 /*	$NetBSD: asm.h,v 1.5 1997/07/16 15:16:43 christos Exp $ */
 
 /*
@@ -53,9 +53,13 @@
 #define	_ASM_LABEL(name)	name
 
 /*
- * WEAK_ALIAS: create a weak alias (ELF only)
+ * STRONG_ALIAS, WEAK_ALIAS
+ *	Create a strong or weak alias.
  */
 #ifdef __ELF__
+#define STRONG_ALIAS(alias,sym)		\
+	.global alias;			\
+	alias = sym
 #define WEAK_ALIAS(alias,sym)		\
 	.weak alias;			\
 	alias = sym

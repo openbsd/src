@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 2012/08/25 22:10:59 kettenis Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 2013/03/28 17:41:04 martynas Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -108,6 +108,9 @@
 #endif
 
 #ifdef __ELF__
+#define	STRONG_ALIAS(alias,sym)						\
+	.global alias;							\
+	alias = sym
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym

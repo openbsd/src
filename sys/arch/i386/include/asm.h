@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.12 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: asm.h,v 1.13 2013/03/28 17:41:04 martynas Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -72,8 +72,12 @@
 #endif
 
 /*
- * WEAK ALIAS: create a weak alias
+ * STRONG_ALIAS, WEAK_ALIAS
+ *	Create a strong or weak alias.
  */
+#define STRONG_ALIAS(alias,sym) \
+	.global alias; \
+	alias = sym
 #define WEAK_ALIAS(alias,sym) \
 	.weak alias; \
 	alias = sym
