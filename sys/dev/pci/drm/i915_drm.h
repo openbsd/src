@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.17 2013/03/22 10:36:01 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.18 2013/03/28 05:13:07 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -187,8 +187,8 @@ typedef struct drm_i915_sarea {
 #define DRM_I915_GEM_WAIT	0x2c
 #define DRM_I915_GEM_CONTEXT_CREATE	0x2d
 #define DRM_I915_GEM_CONTEXT_DESTROY	0x2e
-#define DRM_I915_GEM_SET_CACHEING	0x2f
-#define DRM_I915_GEM_GET_CACHEING	0x30
+#define DRM_I915_GEM_SET_CACHING	0x2f
+#define DRM_I915_GEM_GET_CACHING	0x30
 #define DRM_I915_REG_READ		0x31
 
 #define DRM_IOCTL_I915_INIT		DRM_IOW( DRM_COMMAND_BASE + DRM_I915_INIT, drm_i915_init_t)
@@ -214,6 +214,8 @@ typedef struct drm_i915_sarea {
 #define DRM_IOCTL_I915_GEM_PIN		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_PIN, struct drm_i915_gem_pin)
 #define DRM_IOCTL_I915_GEM_UNPIN	DRM_IOW(DRM_COMMAND_BASE + DRM_I915_GEM_UNPIN, struct drm_i915_gem_unpin)
 #define DRM_IOCTL_I915_GEM_BUSY		DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_BUSY, struct drm_i915_gem_busy)
+#define DRM_IOCTL_I915_GEM_SET_CACHING	DRM_IOW(DRM_COMMAND_BASE + DRM_I915_GEM_SET_CACHING, struct drm_i915_gem_caching)
+#define DRM_IOCTL_I915_GEM_GET_CACHING	DRM_IOWR(DRM_COMMAND_BASE + DRM_I915_GEM_GET_CACHING, struct drm_i915_gem_caching)
 #define DRM_IOCTL_I915_GEM_THROTTLE	DRM_IO ( DRM_COMMAND_BASE + DRM_I915_GEM_THROTTLE)
 #define DRM_IOCTL_I915_GEM_ENTERVT	DRM_IO(DRM_COMMAND_BASE + DRM_I915_GEM_ENTERVT)
 #define DRM_IOCTL_I915_GEM_LEAVEVT	DRM_IO(DRM_COMMAND_BASE + DRM_I915_GEM_LEAVEVT)
@@ -659,6 +661,23 @@ struct drm_i915_gem_busy {
 
 	/** Return busy status (1 if busy, 0 if idle) */
 	uint32_t busy;
+};
+
+#define I915_CACHING_NONE		0
+#define I915_CACHING_CACHED		1
+
+struct drm_i915_gem_caching {
+	/**
+	 * Handle of the buffer to set/get the caching level of. */
+	uint32_t handle;
+
+	/**
+	 * Cacheing level to apply or return value
+	 *
+	 * bits0-15 are for generic caching control (i.e. the above defined
+	 * values). bits16-31 are reserved for platform-specific variations
+	 * (e.g. l3$ caching on gen7). */
+	uint32_t caching;
 };
 
 #define I915_TILING_NONE	0

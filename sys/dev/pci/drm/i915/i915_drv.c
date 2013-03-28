@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.8 2013/03/26 21:01:02 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.9 2013/03/28 05:13:07 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1333,6 +1333,12 @@ inteldrm_doioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			return (i915_gem_madvise_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_I915_GEM_SW_FINISH:
 			return (i915_gem_sw_finish_ioctl(dev, data, file_priv));
+		case DRM_IOCTL_I915_GEM_SET_CACHING:
+			return (i915_gem_set_caching_ioctl(dev, data,
+			    file_priv));
+		case DRM_IOCTL_I915_GEM_GET_CACHING:
+			return (i915_gem_get_caching_ioctl(dev, data,
+			    file_priv));
 		default:
 			break;
 		}
