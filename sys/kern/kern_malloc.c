@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.97 2013/03/26 16:36:01 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.98 2013/03/28 16:41:39 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -132,48 +132,14 @@ const long addrmask[] = { 0,
 };
 
 /*
- * The WEIRD_ADDR is used as known text to copy into free objects so
+ * The FREELIST_MARKER is used as known text to copy into free objects so
  * that modifications after frees can be detected.
  */
 #ifdef DEADBEEF0
-#define WEIRD_ADDR	((unsigned) DEADBEEF0)
+#define FREELIST_MARKER	((unsigned) DEADBEEF0)
 #else
-#define WEIRD_ADDR	((unsigned) 0xdeadbeef)
+#define FREELIST_MARKER	((unsigned) 0xdeadbeef)
 #endif
-#define POISON_SIZE	32
-
-static void
-poison(void *v, size_t len)
-{
-	uint32_t *ip = v;
-	size_t i;
-
-	if (len > POISON_SIZE)
-		len = POISON_SIZE;
-	len = len / sizeof(*ip);
-	for (i = 0; i < len; i++) {
-		ip[i] = WEIRD_ADDR;
-	}
-}
-
-static size_t
-poison_check(void *v, size_t len)
-{
-
-	uint32_t *ip = v;
-	size_t i;
-
-	if (len > POISON_SIZE)
-		len = POISON_SIZE;
-	len = len / sizeof(*ip);
-	for (i = 0; i < len; i++) {
-		if (ip[i] != WEIRD_ADDR) {
-			return i;
-		}
-	}
-	return -1;
-}
-
 
 #endif /* DIAGNOSTIC */
 
@@ -195,7 +161,6 @@ malloc(unsigned long size, int type, int flags)
 	int s;
 	caddr_t va, cp;
 #ifdef DIAGNOSTIC
-	size_t pidx;
 	int freshalloc;
 	char *savedtype;
 #endif
@@ -300,7 +265,7 @@ malloc(unsigned long size, int type, int flags)
 			 * Copy in known text to detect modification
 			 * after freeing.
 			 */
-			poison(cp, allocsize);
+			poison_mem(cp, allocsize);
 			freep->kf_type = M_FREE;
 #endif /* DIAGNOSTIC */
 			SIMPLEQ_INSERT_HEAD(&kbp->kb_freelist, freep, kf_flist);
@@ -337,18 +302,19 @@ malloc(unsigned long size, int type, int flags)
 		}
 	}
 
-	/* Fill the fields that we've used with WEIRD_ADDR */
-	poison(freep, sizeof(*freep));
+	/* Fill the fields that we've used with poison */
+	poison_mem(freep, sizeof(*freep));
 
 	/* and check that the data hasn't been modified. */
 	if (freshalloc == 0) {
-		if ((pidx = poison_check(va, allocsize)) != -1) {
-			printf("%s %zd of object %p size 0x%lx %s %s"
+		size_t pidx;
+		int pval;
+		if (poison_check(va, allocsize, &pidx, &pval)) {
+			panic("%s %zd of object %p size 0x%lx %s %s"
 			    " (0x%x != 0x%x)\n",
 			    "Data modified on freelist: word",
 			    pidx, va, size, "previous type",
-			    savedtype, ((int32_t*)va)[pidx], WEIRD_ADDR);
-			panic("boom");
+			    savedtype, ((int32_t*)va)[pidx], pval);
 		}
 	}
 
@@ -447,7 +413,7 @@ free(void *addr, int type)
 	 * Check for multiple frees. Use a quick check to see if
 	 * it looks free before laboriously searching the freelist.
 	 */
-	if (freep->kf_spare0 == WEIRD_ADDR) {
+	if (freep->kf_spare0 == FREELIST_MARKER) {
 		struct kmem_freelist *fp;
 		SIMPLEQ_FOREACH(fp, &kbp->kb_freelist, kf_flist) {
 			if (addr != fp)
@@ -462,7 +428,8 @@ free(void *addr, int type)
 	 * so we can list likely culprit if modification is detected
 	 * when the object is reallocated.
 	 */
-	poison(addr, size);
+	poison_mem(addr, size);
+	freep->kf_spare0 = FREELIST_MARKER;
 
 	freep->kf_type = type;
 #endif /* DIAGNOSTIC */
