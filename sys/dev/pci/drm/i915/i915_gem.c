@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.5 2013/03/28 05:13:07 jsg Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.6 2013/03/28 19:38:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1354,12 +1354,15 @@ i915_add_request(struct intel_ring_buffer *ring,
 
 	ring->outstanding_lazy_request = 0;
 
-	if (dev_priv->mm.suspended == 0) {
-		if (was_empty)
+	if (!dev_priv->mm.suspended) {
+		if (i915_enable_hangcheck) {
+			timeout_add_msec(&dev_priv->hangcheck_timer,
+			    DRM_I915_HANGCHECK_PERIOD);
+		}
+		if (was_empty) {
 			timeout_add_sec(&dev_priv->mm.retire_timer, 1);
-		/* XXX was_empty? */
-		timeout_add_msec(&dev_priv->hangcheck_timer,
-		    DRM_I915_HANGCHECK_PERIOD);
+			intel_mark_busy(ring->dev);
+		}
 	}
 
 	if (out_seqno)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.2 2013/03/28 11:51:05 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.3 2013/03/28 19:38:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -363,7 +363,8 @@ i915_gem_execbuffer_move_to_active(struct drm_obj **object_list,
 		if (obj->base.write_domain) {
 			obj->dirty = 1;
 			obj->last_write_seqno = intel_ring_get_seqno(ring);
-			intel_mark_busy(ring->dev);
+			if (obj->pin_count) /* check for potential scanout */
+				intel_mark_fb_busy(obj);
 		}
 
 //		trace_i915_gem_object_change_domain(obj, old_read, old_write);
