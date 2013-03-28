@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.21 2009/06/01 19:00:57 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.22 2013/03/28 08:39:28 nicm Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -341,11 +341,17 @@ evalexpr(Expr_state *es, enum prec prec)
 			break;
 		case O_DIV:
 		case O_DIVASN:
-			res = vl->val.i / vr->val.i;
+			if (vl->val.i == LONG_MIN && vr->val.i == -1)
+				res = LONG_MIN;
+			else
+				res = vl->val.i / vr->val.i;
 			break;
 		case O_MOD:
 		case O_MODASN:
-			res = vl->val.i % vr->val.i;
+			if (vl->val.i == LONG_MIN && vr->val.i == -1)
+				res = 0;
+			else
+				res = vl->val.i % vr->val.i;
 			break;
 		case O_PLUS:
 		case O_PLUSASN:
