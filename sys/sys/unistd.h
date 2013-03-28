@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.26 2013/03/14 21:38:22 tedu Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.27 2013/03/28 02:08:39 guenther Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -38,6 +38,9 @@
 #include <sys/cdefs.h>
 
 #define	_POSIX_VDISABLE		(0377)
+#define	_POSIX_ASYNC_IO		(-1)
+#define	_POSIX_PRIO_IO		(-1)
+#define	_POSIX_SYNC_IO		(-1)
 
 /* Define the POSIX.1 version we target for compliance. */
 #define	_POSIX_VERSION		199009L

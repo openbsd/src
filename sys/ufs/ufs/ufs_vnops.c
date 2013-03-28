@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.104 2012/06/20 17:30:22 matthew Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.105 2013/03/28 02:08:39 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1725,23 +1725,11 @@ ufs_pathconf(void *v)
 	case _PC_NAME_MAX:
 		*ap->a_retval = NAME_MAX;
 		break;
-	case _PC_PATH_MAX:
-		*ap->a_retval = PATH_MAX;
-		break;
-	case _PC_PIPE_BUF:
-		*ap->a_retval = PIPE_BUF;
-		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
 		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 1;
-		break;
-	case _PC_PRIO_IO:
-		*ap->a_retval = 0;
-		break;
-	case _PC_SYNC_IO:
-		*ap->a_retval = 0;
 		break;
 	case _PC_ALLOC_SIZE_MIN:
 		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_bsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.55 2012/06/20 17:30:22 matthew Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.56 2013/03/28 02:08:39 guenther Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -320,20 +320,8 @@ procfs_pathconf(void *v)
 	case _PC_LINK_MAX:
 		*ap->a_retval = LINK_MAX;
 		break;
-	case _PC_MAX_CANON:
-		*ap->a_retval = MAX_CANON;
-		break;
-	case _PC_MAX_INPUT:
-		*ap->a_retval = MAX_INPUT;
-		break;
-	case _PC_PIPE_BUF:
-		*ap->a_retval = PIPE_BUF;
-		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		break;
-	case _PC_VDISABLE:
-		*ap->a_retval = _POSIX_VDISABLE;
 		break;
 	default:
 		error = EINVAL;

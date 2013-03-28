@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.45 2012/06/20 17:30:22 matthew Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.46 2013/03/28 02:08:39 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -400,9 +400,6 @@ udf_pathconf(struct vop_pathconf_args *a)
 		break;
 	case _PC_NAME_MAX:
 		*ap->a_retval = NAME_MAX;
-		break;
-	case _PC_PATH_MAX:
-		*ap->a_retval = PATH_MAX;
 		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 1;

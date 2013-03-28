@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.69 2012/06/20 17:30:22 matthew Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.70 2013/03/28 02:08:39 guenther Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -616,9 +616,6 @@ spec_pathconf(void *v)
 		break;
 	case _PC_MAX_INPUT:
 		*ap->a_retval = MAX_INPUT;
-		break;
-	case _PC_PIPE_BUF:
-		*ap->a_retval = PIPE_BUF;
 		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
