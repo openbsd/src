@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.100 2013/01/13 05:45:10 brad Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -914,7 +914,7 @@ bnx_attachhook(void *xsc)
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(&sc->bnx_dev, &sc->bnx_mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, mii_flags);
+	    sc->bnx_phy_addr, MII_OFFSET_ANY, mii_flags);
 
 	if (LIST_FIRST(&sc->bnx_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->bnx_dev.dv_xname);
@@ -1100,13 +1100,6 @@ bnx_miibus_read_reg(struct device *dev, int phy, int reg)
 	u_int32_t		val;
 	int			i;
 
-	/* Make sure we are accessing the correct PHY address. */
-	if (phy != sc->bnx_phy_addr) {
-		DBPRINT(sc, BNX_VERBOSE,
-		    "Invalid PHY address %d for PHY read!\n", phy);
-		return(0);
-	}
-
 	/*
 	 * The BCM5709S PHY is an IEEE Clause 45 PHY
 	 * with special mappings to work with IEEE
@@ -1184,13 +1177,6 @@ bnx_miibus_write_reg(struct device *dev, int phy, int reg, int val)
 	struct bnx_softc	*sc = (struct bnx_softc *)dev;
 	u_int32_t		val1;
 	int			i;
-
-	/* Make sure we are accessing the correct PHY address. */
-	if (phy != sc->bnx_phy_addr) {
-		DBPRINT(sc, BNX_VERBOSE, "Invalid PHY address %d for PHY write!\n",
-		    phy);
-		return;
-	}
 
 	DBPRINT(sc, BNX_EXCESSIVE, "%s(): phy = %d, reg = 0x%04X, "
 	    "val = 0x%04X\n", __FUNCTION__,
