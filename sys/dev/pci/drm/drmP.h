@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.135 2013/03/21 19:39:30 deraadt Exp $ */
+/* $OpenBSD: drmP.h,v 1.136 2013/03/28 23:47:37 jsg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -272,7 +272,15 @@ do {									\
 #define DRM_DEBUG_KMS(fmt, arg...) do { } while(/* CONSTCOND */ 0)
 #endif
 
-#define DRM_LOG_KMS DRM_DEBUG_KMS
+#ifdef DRMDEBUG
+#undef DRM_LOG_KMS
+#define DRM_LOG_KMS(fmt, arg...) do {					\
+	if (drm_debug_flag)						\
+		printf(fmt, ## arg);					\
+} while (0)
+#else
+#define DRM_LOG_KMS(fmt, arg...) do { } while(/* CONSTCOND */ 0)
+#endif
 
 #ifdef DRMDEBUG
 #undef DRM_DEBUG_DRIVER
