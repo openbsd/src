@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.11 2013/03/28 19:36:14 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.12 2013/03/28 23:19:26 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1649,12 +1649,6 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 				  "obj %p target %d offset %d.\n",
 				  obj, reloc->target_handle,
 				  (int) reloc->offset);
-			ret = EINVAL;
-			goto err;
-		}
-
-		if (reloc->delta > target_obj->size) {
-			DRM_ERROR("reloc larger than target\n");
 			ret = EINVAL;
 			goto err;
 		}

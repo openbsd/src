@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.5 2013/03/27 12:37:49 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.6 2013/03/28 23:19:26 jsg Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -111,6 +111,9 @@ i915_getparam(struct inteldrm_softc *dev_priv, void *data)
 		break;
 	case I915_PARAM_HAS_EXEC_CONSTANTS:
 		value = INTEL_INFO(dev)->gen >= 4;
+		break;
+	case I915_PARAM_HAS_RELAXED_DELTA:
+		value = 1;
 		break;
 	case I915_PARAM_HAS_GEN7_SOL_RESET:
 		value = 1;
