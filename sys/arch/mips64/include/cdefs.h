@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.5 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.6 2013/03/28 17:30:45 martynas Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -26,15 +26,12 @@
  *
  */
 
-
 #ifndef _MIPS64_CDEFS_H_
 #define	_MIPS64_CDEFS_H_
 
-#if defined(lint)
-#define __indr_reference(sym,alias)	__lint_equal__(sym,alias)
-#define __warn_references(sym,msg)
-#define __weak_alias(alias,sym)		__lint_equal__(sym,alias)
-#elif defined(__GNUC__) && defined(__STDC__)
+#define __strong_alias(alias,sym)			\
+	__asm__(".global " __STRING(alias) " ; "	\
+	    __STRING(alias) " = " __STRING(sym))
 #define __weak_alias(alias,sym)				\
 	__asm__(".weak " __STRING(alias) " ; "		\
 	    __STRING(alias) " = " __STRING(sym))
@@ -42,6 +39,5 @@
 	__asm__(".section .gnu.warning." __STRING(sym)	\
 	    " ; .ascii \"" msg "\" ; .text")
 #define	__indr_references(sym,msg)	/* nothing */
-#endif
 
 #endif /* !_MIPS64_CDEFS_H_ */
