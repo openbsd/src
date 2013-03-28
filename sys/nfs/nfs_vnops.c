@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.141 2013/03/27 01:56:50 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.142 2013/03/28 02:17:16 tedu Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/hash.h>
 #include <sys/queue.h>
 #include <sys/specdev.h>
+#include <sys/unistd.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -2938,19 +2939,58 @@ loop:
 
 /*
  * Return POSIX pathconf information applicable to nfs.
- *
- * The NFS V2 protocol doesn't support this, so just return EINVAL
- * for V2.
  */
 /* ARGSUSED */
 int
 nfs_pathconf(void *v)
 {
-#if 0
 	struct vop_pathconf_args *ap = v;
-#endif
+	struct nfsmount *nmp = VFSTONFS(ap->a_vp->v_mount);
+	int error = 0;
 
-	return (EINVAL);
+	switch (ap->a_name) {
+	case _PC_LINK_MAX:
+		*ap->a_retval = LINK_MAX;
+		break;
+	case _PC_NAME_MAX:
+		*ap->a_retval = NAME_MAX;
+		break;
+	case _PC_CHOWN_RESTRICTED:
+		*ap->a_retval = 1;
+		break;
+	case _PC_NO_TRUNC:
+		*ap->a_retval = 1;
+		break;
+	case _PC_ALLOC_SIZE_MIN:
+		*ap->a_retval = NFS_FABLKSIZE;
+		break;
+	case _PC_FILESIZEBITS:
+		*ap->a_retval = 64;
+		break;
+	case _PC_REC_INCR_XFER_SIZE:
+		*ap->a_retval = min(nmp->nm_rsize, nmp->nm_wsize);
+		break;
+	case _PC_REC_MAX_XFER_SIZE:
+		*ap->a_retval = -1; /* means ``unlimited'' */
+		break;
+	case _PC_REC_MIN_XFER_SIZE:
+		*ap->a_retval = min(nmp->nm_rsize, nmp->nm_wsize);
+		break;
+	case _PC_REC_XFER_ALIGN:
+		*ap->a_retval = PAGE_SIZE;
+		break;
+	case _PC_SYMLINK_MAX:
+		*ap->a_retval = MAXPATHLEN;
+		break;
+	case _PC_2_SYMLINKS:
+		*ap->a_retval = 1;
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return (error);
 }
 
 /*
