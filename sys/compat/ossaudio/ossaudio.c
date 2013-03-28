@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.15 2013/03/26 16:40:34 tedu Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.16 2013/03/28 03:45:32 tedu Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.23 1997/10/19 07:41:52 augustss Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ oss_ioctl_audio(p, uap, retval)
 	return (error);
 }
 
-/* If the mixer device should have more than 32 devices
+/* If the mixer device should have more than MAX_MIXER_DEVS devices
  * some will not be available to Linux */
 #define MAX_MIXER_DEVS 64
 struct audiodevinfo {
