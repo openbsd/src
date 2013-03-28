@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi_quirks.c,v 1.10 2012/02/28 23:53:02 jsg Exp $	*/
+/*	$OpenBSD: umidi_quirks.c,v 1.11 2013/03/28 03:31:55 tedu Exp $	*/
 /*	$NetBSD: umidi_quirks.c,v 1.4 2002/06/19 13:55:30 tshiozak Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/file.h>
 #include <sys/selinfo.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.82 2013/03/16 09:58:40 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.83 2013/03/28 03:31:56 tedu Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/fcntl.h>
 #include <sys/poll.h>
 #include <sys/selinfo.h>
-#include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/time.h>
 

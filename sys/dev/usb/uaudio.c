@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.96 2012/03/01 08:49:22 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.97 2013/03/28 03:31:55 tedu Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -45,10 +45,8 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/reboot.h>			/* for bootverbose */
 #include <sys/selinfo.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 
@@ -1426,7 +1424,7 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 		}
 		it->output->terminals[0] = outtype;
 		it->output->size = 1;
-		it->direct = FALSE;
+		it->direct = 0;
 	}
 
 	switch (it->d.desc->bDescriptorSubtype) {
@@ -1467,7 +1465,7 @@ uaudio_io_terminaltype(int outtype, struct io_terminal *iot, int id)
 		src_id = it->d.ot->bSourceId;
 		it->inputs[0] = uaudio_io_terminaltype(outtype, iot, src_id);
 		it->inputs_size = 1;
-		iot[src_id].direct = TRUE;
+		iot[src_id].direct = 1;
 		return NULL;
 	case UDESCSUB_AC_MIXER:
 		it->inputs_size = 0;
@@ -1704,18 +1702,18 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	type = UE_GET_ISO_TYPE(ed->bmAttributes);
 
 	/* Check for sync endpoint. */
-	sync = FALSE;
+	sync = 0;
 	sync_addr = 0;
 	if (id->bNumEndpoints > 1 &&
 	    ((dir == UE_DIR_IN && type == UE_ISO_ADAPT) ||
 	    (dir != UE_DIR_IN && type == UE_ISO_ASYNC)))
-		sync = TRUE;
+		sync = 1;
 
 	/* Check whether sync endpoint address is given. */
 	if (ed->bLength >= USB_ENDPOINT_DESCRIPTOR_AUDIO_SIZE) {
 		/* bSynchAdress set to 0 indicates sync is not used. */
 		if (ed->bSynchAddress == 0)
-			sync = FALSE;
+			sync = 0;
 		else
 			sync_addr = ed->bSynchAddress;
 	}
@@ -1730,7 +1728,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 		return (USBD_INVAL);
 
 	sync_ed = NULL;
-	if (sync == TRUE) {
+	if (sync == 1) {
 		sync_ed = (const void*)(buf + offs);
 		if (sync_ed->bDescriptorType != UDESC_ENDPOINT) {
 			printf("%s: sync ep descriptor wrong type\n",

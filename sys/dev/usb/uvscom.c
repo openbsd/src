@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.24 2011/07/03 15:47:18 matthew Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.25 2013/03/28 03:31:56 tedu Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -46,7 +46,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.167 2012/06/18 15:43:30 mpi Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.168 2013/03/28 03:31:56 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -25,18 +25,16 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/reboot.h>
 #include <sys/selinfo.h>
 #include <sys/proc.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/stat.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/timeout.h>
 #include <sys/kthread.h>
-#include <uvm/uvm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
@@ -132,6 +130,9 @@ usbd_status	uvideo_usb_control(struct uvideo_softc *sc, uint8_t rt, uint8_t r,
 		    uint16_t value, uint8_t *data, size_t length);
 
 #ifdef UVIDEO_DEBUG
+#include <sys/namei.h>
+#include <sys/vnode.h>
+
 void		uvideo_dump_desc_all(struct uvideo_softc *);
 void		uvideo_dump_desc_vc_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.54 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: udcf.c,v 1.55 2013/03/28 03:31:55 tedu Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/time.h>
