@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.27 2013/03/28 02:08:39 guenther Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.28 2013/03/28 03:29:44 guenther Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -80,25 +80,26 @@ struct __tfork51 {
 /* the pathconf(2) variable values are part of the ABI */
 
 /* configurable pathname variables */
-#define	_PC_LINK_MAX		 1
-#define	_PC_MAX_CANON		 2
-#define	_PC_MAX_INPUT		 3
-#define	_PC_NAME_MAX		 4
-#define	_PC_PATH_MAX		 5
-#define	_PC_PIPE_BUF		 6
-#define	_PC_CHOWN_RESTRICTED	 7
-#define	_PC_NO_TRUNC		 8
-#define	_PC_VDISABLE		 9
-#define	_PC_2_SYMLINKS		10
-#define	_PC_ALLOC_SIZE_MIN	11
-#define	_PC_ASYNC_IO		12
-#define	_PC_FILESIZEBITS	13
-#define	_PC_PRIO_IO		14
-#define	_PC_REC_INCR_XFER_SIZE	15
-#define	_PC_REC_MAX_XFER_SIZE	16
-#define	_PC_REC_MIN_XFER_SIZE	17
-#define	_PC_REC_XFER_ALIGN	18
-#define	_PC_SYMLINK_MAX		19
-#define	_PC_SYNC_IO		20
+#define	_PC_LINK_MAX			 1
+#define	_PC_MAX_CANON			 2
+#define	_PC_MAX_INPUT			 3
+#define	_PC_NAME_MAX			 4
+#define	_PC_PATH_MAX			 5
+#define	_PC_PIPE_BUF			 6
+#define	_PC_CHOWN_RESTRICTED		 7
+#define	_PC_NO_TRUNC			 8
+#define	_PC_VDISABLE			 9
+#define	_PC_2_SYMLINKS			10
+#define	_PC_ALLOC_SIZE_MIN		11
+#define	_PC_ASYNC_IO			12
+#define	_PC_FILESIZEBITS		13
+#define	_PC_PRIO_IO			14
+#define	_PC_REC_INCR_XFER_SIZE		15
+#define	_PC_REC_MAX_XFER_SIZE		16
+#define	_PC_REC_MIN_XFER_SIZE		17
+#define	_PC_REC_XFER_ALIGN		18
+#define	_PC_SYMLINK_MAX			19
+#define	_PC_SYNC_IO			20
+#define	_PC_TIMESTAMP_RESOLUTION	21
 
 #endif /* !_SYS_UNISTD_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.105 2013/03/28 02:08:39 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.106 2013/03/28 03:29:44 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1753,6 +1753,9 @@ ufs_pathconf(void *v)
 		*ap->a_retval = MAXPATHLEN;
 		break;
 	case _PC_2_SYMLINKS:
+		*ap->a_retval = 1;
+		break;
+	case _PC_TIMESTAMP_RESOLUTION:
 		*ap->a_retval = 1;
 		break;
 	default:

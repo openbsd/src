@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.61 2011/07/04 20:35:35 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.62 2013/03/28 03:29:44 guenther Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1121,6 +1121,26 @@ ext2fs_readlink(void *v)
 }
 
 /*
+ * Return POSIX pathconf information applicable to ext2 filesystems.
+ */
+int
+ext2fs_pathconf(void *v)
+{
+	struct vop_pathconf_args *ap = v;
+	int error = 0;
+
+	switch (ap->a_name) {
+	case _PC_TIMESTAMP_RESOLUTION:
+		*ap->a_retval = 1000000000;	/* 1 billion nanoseconds */
+		break;
+	default:
+		return (ufs_pathconf(v));
+	}
+
+	return (error);
+}
+
+/*
  * Advisory record locking support
  */
 int
@@ -1286,7 +1306,7 @@ struct vops ext2fs_vops = {
         .vop_strategy   = ufs_strategy,
         .vop_print      = ufs_print,
         .vop_islocked   = ufs_islocked,
-        .vop_pathconf   = ufs_pathconf,
+        .vop_pathconf   = ext2fs_pathconf,
         .vop_advlock    = ext2fs_advlock,
         .vop_bwrite     = vop_generic_bwrite
 };

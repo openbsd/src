@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.70 2013/03/28 02:08:39 guenther Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.71 2013/03/28 03:29:44 guenther Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -622,6 +622,9 @@ spec_pathconf(void *v)
 		break;
 	case _PC_VDISABLE:
 		*ap->a_retval = _POSIX_VDISABLE;
+		break;
+	case _PC_TIMESTAMP_RESOLUTION:
+		*ap->a_retval = 1;
 		break;
 	default:
 		error = EINVAL;

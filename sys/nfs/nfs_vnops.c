@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.143 2013/03/28 02:27:27 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.144 2013/03/28 03:29:44 guenther Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2986,6 +2986,9 @@ nfs_pathconf(void *v)
 		break;
 	case _PC_2_SYMLINKS:
 		*ap->a_retval = 1;
+		break;
+	case _PC_TIMESTAMP_RESOLUTION:
+		*ap->a_retval = NFS_ISV3(ap->a_vp) ? 1 : 1000;
 		break;
 	default:
 		error = EINVAL;

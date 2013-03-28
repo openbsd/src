@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.84 2013/03/28 02:08:39 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.85 2013/03/28 03:29:44 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1887,6 +1887,9 @@ msdosfs_pathconf(void *v)
 		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 0;
+		break;
+	case _PC_TIMESTAMP_RESOLUTION:
+		*ap->a_retval = 2000000000;	/* 2 billion nanoseconds */
 		break;
 	default:
 		error = EINVAL;
