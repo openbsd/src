@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.6 2013/03/28 19:38:53 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.7 2013/03/28 22:41:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1525,12 +1525,25 @@ i915_gem_retire_requests(struct inteldrm_softc *dev_priv)
 void
 i915_gem_retire_work_handler(void *arg1, void *unused)
 {
-	struct inteldrm_softc	*dev_priv = arg1;
+	struct inteldrm_softc *dev_priv = arg1;
+	struct drm_device *dev;
 	struct intel_ring_buffer *ring;
-	bool			 idle;
-	int			 i;
+	bool idle;
+	int i;
+
+	dev = (struct drm_device *)dev_priv->drmdev;
+
+	/* Come back later if the device is busy... */
+	if (rw_enter(&dev->dev_lock, RW_NOSLEEP | RW_WRITE)) {
+		timeout_add_sec(&dev_priv->mm.retire_timer, 1);
+		return;
+	}
 
 	i915_gem_retire_requests(dev_priv);
+
+        /* Send a periodic flush down the ring so we don't hold onto GEM
+	 * objects indefinitely.
+	 */
 	idle = true;
 	for_each_ring(ring, dev_priv, i) {
 		if (ring->gpu_caches_dirty)
@@ -1540,6 +1553,10 @@ i915_gem_retire_work_handler(void *arg1, void *unused)
 	}
 	if (!dev_priv->mm.suspended && !idle)
 		timeout_add_sec(&dev_priv->mm.retire_timer, 1);
+	if (idle)
+		intel_mark_idle(dev);
+
+	DRM_UNLOCK();
 }
 
 /**
