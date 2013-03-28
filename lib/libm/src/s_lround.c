@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lround.c,v 1.5 2013/01/13 03:45:00 martynas Exp $	*/
+/*	$OpenBSD: s_lround.c,v 1.6 2013/03/28 18:09:38 martynas Exp $	*/
 /* $NetBSD: lround.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -89,5 +89,5 @@ LROUNDNAME(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(lroundl, lround);
+__strong_alias(lroundl, lround);
 #endif	/* LDBL_MANT_DIG == 53 */

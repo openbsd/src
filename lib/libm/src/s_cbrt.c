@@ -79,5 +79,5 @@ cbrt(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(cbrtl, cbrt);
+__strong_alias(cbrtl, cbrt);
 #endif	/* LDBL_MANT_DIG == 53 */

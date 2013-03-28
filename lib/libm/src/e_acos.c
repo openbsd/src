@@ -101,5 +101,5 @@ acos(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(acosl, acos);
+__strong_alias(acosl, acos);
 #endif	/* LDBL_MANT_DIG == 53 */

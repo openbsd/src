@@ -60,5 +60,5 @@ trunc(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(truncl, trunc);
+__strong_alias(truncl, trunc);
 #endif	/* LDBL_MANT_DIG == 53 */

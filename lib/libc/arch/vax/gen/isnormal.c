@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnormal.c,v 1.5 2012/12/05 23:19:59 deraadt Exp $	*/
+/*	$OpenBSD: isnormal.c,v 1.6 2013/03/28 18:09:38 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* LINTLIBRARY */
 
 #include <sys/types.h>
 #include <machine/vaxfp.h>
@@ -37,9 +35,4 @@ __isnormalf(float f)
 	return (p->fflt_exp != 0);
 }
 
-#ifdef	lint
-/* PROTOLIB1 */
-int __isnormall(long double);
-#else	/* lint */
-__weak_alias(__isnormall, __isnormal);
-#endif	/* lint */
+__strong_alias(__isnormall, __isnormal);

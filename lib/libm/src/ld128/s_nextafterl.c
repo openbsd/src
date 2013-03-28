@@ -69,4 +69,4 @@ nextafterl(long double x, long double y)
 	return x;
 }
 
-__weak_alias(nexttowardl, nextafterl);
+__strong_alias(nexttowardl, nextafterl);

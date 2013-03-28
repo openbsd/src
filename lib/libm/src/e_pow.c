@@ -299,5 +299,5 @@ pow(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(powl, pow);
+__strong_alias(powl, pow);
 #endif	/* LDBL_MANT_DIG == 53 */

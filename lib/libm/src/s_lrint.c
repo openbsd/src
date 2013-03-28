@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_lrint.c,v 1.8 2013/01/13 03:45:00 martynas Exp $	*/
+/*	$OpenBSD: s_lrint.c,v 1.9 2013/03/28 18:09:38 martynas Exp $	*/
 /* $NetBSD: lrint.c,v 1.3 2004/10/13 15:18:32 drochner Exp $ */
 
 /*-
@@ -99,5 +99,5 @@ LRINTNAME(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(lrintl, lrint);
+__strong_alias(lrintl, lrint);
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -132,5 +132,5 @@ log(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(logl, log);
+__strong_alias(logl, log);
 #endif	/* LDBL_MANT_DIG == 53 */

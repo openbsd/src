@@ -1,4 +1,4 @@
-major=66
-minor=2
+major=67
+minor=0
 # note: If changes were made to include/thread_private.h or if system
 # calls were added/changed then librthread/shlib_version also be updated.

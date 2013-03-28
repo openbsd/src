@@ -76,5 +76,5 @@ sin(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(sinl, sin);
+__strong_alias(sinl, sin);
 #endif	/* LDBL_MANT_DIG == 53 */

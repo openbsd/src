@@ -73,7 +73,7 @@ nextafter(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(nextafterl, nextafter);
-__weak_alias(nexttoward, nextafter);
-__weak_alias(nexttowardl, nextafter);
+__strong_alias(nextafterl, nextafter);
+__strong_alias(nexttoward, nextafter);
+__strong_alias(nexttowardl, nextafter);
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -157,5 +157,5 @@ exp(double x)	/* default IEEE double exp */
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(expl, exp);
+__strong_alias(expl, exp);
 #endif	/* LDBL_MANT_DIG == 53 */

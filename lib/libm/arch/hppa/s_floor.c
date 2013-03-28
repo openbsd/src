@@ -21,4 +21,4 @@ floor(double x)
 	return (x);
 }
 
-__weak_alias(floorl, floor);
+__strong_alias(floorl, floor);

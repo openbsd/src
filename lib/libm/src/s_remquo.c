@@ -151,5 +151,5 @@ fixup:
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(remquol, remquo);
+__strong_alias(remquol, remquo);
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_fmin.c,v 1.6 2013/01/13 03:44:59 martynas Exp $	*/
+/*	$OpenBSD: n_fmin.c,v 1.7 2013/03/28 18:09:38 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -46,4 +46,4 @@ fmin(double x, double y)
 	return (x < y ? x : y);
 }
 
-__weak_alias(fminl, fmin);
+__strong_alias(fminl, fmin);

@@ -109,5 +109,5 @@ asin(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(asinl, asin);
+__strong_alias(asinl, asin);
 #endif	/* LDBL_MANT_DIG == 53 */

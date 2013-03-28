@@ -13,4 +13,4 @@ rint(double x)
 	return (x);
 }
 
-__weak_alias(rintl, rint);
+__strong_alias(rintl, rint);

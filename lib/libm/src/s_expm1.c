@@ -218,5 +218,5 @@ expm1(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(expm1l, expm1);
+__strong_alias(expm1l, expm1);
 #endif	/* LDBL_MANT_DIG == 53 */

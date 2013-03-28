@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fma.c,v 1.3 2013/01/13 03:45:00 martynas Exp $	*/
+/*	$OpenBSD: s_fma.c,v 1.4 2013/03/28 18:09:38 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
@@ -202,5 +202,5 @@ fma(double x, double y, double z)
 #endif	/* LDBL_MANT_DIG != 113 */
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(fmal, fma);
+__strong_alias(fmal, fma);
 #endif	/* LDBL_MANT_DIG == 53 */

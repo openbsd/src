@@ -12,4 +12,4 @@ sqrt(double x)
 	return (x);
 }
 
-__weak_alias(sqrtl, sqrt);
+__strong_alias(sqrtl, sqrt);

@@ -22,4 +22,4 @@ ceil(double x)
 	return (x);
 }
 
-__weak_alias(ceill, ceil);
+__strong_alias(ceill, ceil);

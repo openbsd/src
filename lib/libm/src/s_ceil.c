@@ -70,5 +70,5 @@ ceil(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(ceill, ceil);
+__strong_alias(ceill, ceil);
 #endif	/* LDBL_MANT_DIG == 53 */

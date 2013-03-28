@@ -22,4 +22,4 @@ round(double x)
 	return (x);
 }
 
-__weak_alias(roundl, round);
+__strong_alias(roundl, round);

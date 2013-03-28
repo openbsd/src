@@ -30,5 +30,5 @@ lgamma(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(lgammal, lgamma);
+__strong_alias(lgammal, lgamma);
 #endif	/* LDBL_MANT_DIG == 53 */

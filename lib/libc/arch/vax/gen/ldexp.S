@@ -1,4 +1,4 @@
-/* $OpenBSD: ldexp.S,v 1.8 2008/12/10 08:26:21 deraadt Exp $ */
+/* $OpenBSD: ldexp.S,v 1.9 2013/03/28 18:09:38 martynas Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 
 	.globl	_C_LABEL(errno)
 
-WEAK_ALIAS(ldexpl,ldexp)
+STRONG_ALIAS(ldexpl,ldexp)
 ENTRY(ldexp, R2)
 	movd	4(ap),r0	/* fetch "value" */
 	extzv	$7,$8,r0,r2	/* r2 := biased exponent */

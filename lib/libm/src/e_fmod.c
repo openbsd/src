@@ -130,5 +130,5 @@ fmod(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(fmodl, fmod);
+__strong_alias(fmodl, fmod);
 #endif	/* LDBL_MANT_DIG == 53 */

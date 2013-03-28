@@ -122,5 +122,5 @@ hypot(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(hypotl, hypot);
+__strong_alias(hypotl, hypot);
 #endif	/* LDBL_MANT_DIG == 53 */

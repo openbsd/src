@@ -27,5 +27,5 @@ scalbn (double x, int n)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(scalbnl, scalbn);
+__strong_alias(scalbnl, scalbn);
 #endif	/* LDBL_MANT_DIG == 53 */

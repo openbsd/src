@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cacosh.c,v 1.4 2013/01/13 03:45:00 martynas Exp $	*/
+/*	$OpenBSD: s_cacosh.c,v 1.5 2013/03/28 18:09:38 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -56,5 +56,5 @@ cacosh(double complex z)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(cacoshl, cacosh);
+__strong_alias(cacoshl, cacosh);
 #endif	/* LDBL_MANT_DIG == 53 */

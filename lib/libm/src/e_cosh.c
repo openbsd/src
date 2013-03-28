@@ -83,5 +83,5 @@ cosh(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(coshl, cosh);
+__strong_alias(coshl, cosh);
 #endif	/* LDBL_MANT_DIG == 53 */

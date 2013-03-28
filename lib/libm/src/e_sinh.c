@@ -76,5 +76,5 @@ sinh(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(sinhl, sinh);
+__strong_alias(sinhl, sinh);
 #endif	/* LDBL_MANT_DIG == 53 */

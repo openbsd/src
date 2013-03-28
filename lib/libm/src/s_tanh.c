@@ -78,5 +78,5 @@ tanh(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(tanhl, tanh);
+__strong_alias(tanhl, tanh);
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtoull.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: strtoull.c,v 1.6 2013/03/28 18:09:38 martynas Exp $ */
 /*-
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
@@ -103,13 +103,4 @@ strtoull(const char *nptr, char **endptr, int base)
 	return (acc);
 }
 
-#ifdef __weak_alias
-__weak_alias(strtouq, strtoull);
-#else
-u_quad_t
-strtouq(const char *nptr, char **endptr, int base)
-{
-
-	return ((u_quad_t)strtoull(nptr, endptr, base));
-}
-#endif
+__strong_alias(strtouq, strtoull);

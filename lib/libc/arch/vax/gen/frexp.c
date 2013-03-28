@@ -1,4 +1,4 @@
-/*	$OpenBSD: frexp.c,v 1.11 2012/12/05 23:19:59 deraadt Exp $ */
+/*	$OpenBSD: frexp.c,v 1.12 2013/03/28 18:09:38 martynas Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,8 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* LINTLIBRARY */
 
 #include <sys/types.h>
 #include <math.h>
@@ -60,9 +58,4 @@ frexp(value, eptr)
 	}
 }
 
-#ifdef	lint
-/* PROTOLIB1 */
-long double frexpl(long double, int *);
-#else	/* lint */
-__weak_alias(frexpl, frexp);
-#endif	/* lint */
+__strong_alias(frexpl, frexp);

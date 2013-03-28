@@ -1,4 +1,4 @@
-/*	$OpenBSD: isfinite.c,v 1.5 2012/12/05 23:19:59 deraadt Exp $	*/
+/*	$OpenBSD: isfinite.c,v 1.6 2013/03/28 18:09:38 martynas Exp $	*/
 /*
  * Copyright (c) Martynas Venckus <martynas@openbsd.org>
  *
@@ -15,33 +15,24 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* LINTLIBRARY */
-
 #include <math.h>
 
-/* ARGSUSED */
 int
 __isfinite(double d)
 {
 	return(1);
 }
 
-/* ARGSUSED */
 int
 __isfinitef(float f)
 {
 	return(1);
 }
 
-#ifdef	lint
-/* PROTOLIB1 */
-int __isfinitel(long double);
-#else	/* lint */
-__weak_alias(__isfinitel, __isfinite);
-#endif	/* lint */
+__strong_alias(__isfinitel, __isfinite);
 
 /*
  * 3BSD compatibility aliases.
  */
-__weak_alias(finite, __isfinite);
-__weak_alias(finitef, __isfinitef);
+__strong_alias(finite, __isfinite);
+__strong_alias(finitef, __isfinitef);

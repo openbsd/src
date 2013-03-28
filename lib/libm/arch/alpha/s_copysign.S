@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_copysign.S,v 1.4 2008/12/09 20:21:07 martynas Exp $	*/
+/*	$OpenBSD: s_copysign.S,v 1.5 2013/03/28 18:09:38 martynas Exp $	*/
 /*	$NetBSD: s_copysign.S,v 1.4 1999/07/02 15:37:34 simonb Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-WEAK_ALIAS(copysignl, copysign)
+STRONG_ALIAS(copysignl, copysign)
 LEAF(copysign, 2)
 	cpys	fa1, fa0, fv0
 	RET

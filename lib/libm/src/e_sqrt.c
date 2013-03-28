@@ -442,5 +442,5 @@ B.  sqrt(x) by Reciproot Iteration
  */
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(sqrtl, sqrt);
+__strong_alias(sqrtl, sqrt);
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -45,5 +45,5 @@ ilogb(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(ilogbl, ilogb);
+__strong_alias(ilogbl, ilogb);
 #endif	/* LDBL_MANT_DIG == 53 */

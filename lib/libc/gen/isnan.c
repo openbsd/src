@@ -1,4 +1,4 @@
-/*	$OpenBSD: isnan.c,v 1.6 2012/12/05 23:19:59 deraadt Exp $	*/
+/*	$OpenBSD: isnan.c,v 1.7 2013/03/28 18:09:38 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* LINTLIBRARY */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
@@ -39,16 +37,11 @@ __isnanf(float f)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-int __isnanl(long double);
-#else	/* lint */
-__weak_alias(__isnanl, __isnan);
-#endif	/* lint */
+__strong_alias(__isnanl, __isnan);
 #endif	/* LDBL_MANT_DIG == 53 */
 
 /*
  * 3BSD compatibility aliases.
  */
-__weak_alias(isnan, __isnan);
-__weak_alias(isnanf, __isnanf);
+__strong_alias(isnan, __isnan);
+__strong_alias(isnanf, __isnanf);

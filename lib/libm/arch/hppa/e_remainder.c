@@ -12,4 +12,4 @@ remainder(double x, double p)
 	return (x);
 }
 
-__weak_alias(remainderl, remainder);
+__strong_alias(remainderl, remainder);

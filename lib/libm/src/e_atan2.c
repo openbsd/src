@@ -120,5 +120,5 @@ atan2(double y, double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(atan2l, atan2);
+__strong_alias(atan2l, atan2);
 #endif	/* LDBL_MANT_DIG == 53 */

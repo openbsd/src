@@ -71,5 +71,5 @@ floor(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(floorl, floor);
+__strong_alias(floorl, floor);
 #endif	/* LDBL_MANT_DIG == 53 */

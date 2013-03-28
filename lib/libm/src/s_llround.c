@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_llround.c,v 1.3 2013/01/13 03:45:00 martynas Exp $	*/
+/*	$OpenBSD: s_llround.c,v 1.4 2013/03/28 18:09:38 martynas Exp $	*/
 /* $NetBSD: llround.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
 
 /*
@@ -14,5 +14,5 @@
 #include "s_lround.c"
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(llroundl, llround);
+__strong_alias(llroundl, llround);
 #endif	/* LDBL_MANT_DIG == 53 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fmin.c,v 1.7 2013/01/13 03:45:00 martynas Exp $	*/
+/*	$OpenBSD: s_fmin.c,v 1.8 2013/03/28 18:09:38 martynas Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -48,5 +48,5 @@ fmin(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(fminl, fmin);
+__strong_alias(fminl, fmin);
 #endif	/* LDBL_MANT_DIG == 53 */

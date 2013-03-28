@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_tan.c,v 1.12 2013/01/13 03:44:59 martynas Exp $	*/
+/*	$OpenBSD: n_tan.c,v 1.13 2013/03/28 18:09:38 martynas Exp $	*/
 /*	$NetBSD: n_tan.c,v 1.1 1995/10/10 23:37:07 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
@@ -65,4 +65,4 @@ tan(double x)
 		return c/(x+x*ss);		/* ... cos/sin */
 }
 
-__weak_alias(tanl, tan);
+__strong_alias(tanl, tan);

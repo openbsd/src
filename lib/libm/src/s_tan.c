@@ -70,5 +70,5 @@ tan(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(tanl, tan);
+__strong_alias(tanl, tan);
 #endif	/* LDBL_MANT_DIG == 53 */

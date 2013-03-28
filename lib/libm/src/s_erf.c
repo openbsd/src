@@ -298,6 +298,6 @@ erfc(double x)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(erfl, erf);
-__weak_alias(erfcl, erf);
+__strong_alias(erfl, erf);
+__strong_alias(erfcl, erf);
 #endif	/* LDBL_MANT_DIG == 53 */

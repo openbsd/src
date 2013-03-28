@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_cacos.c,v 1.4 2013/01/13 03:45:00 martynas Exp $	*/
+/*	$OpenBSD: s_cacos.c,v 1.5 2013/03/28 18:09:38 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Stephen L. Moshier <steve@moshier.net>
  *
@@ -61,5 +61,5 @@ cacos(double complex z)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(cacosl, cacos);
+__strong_alias(cacosl, cacos);
 #endif	/* LDBL_MANT_DIG == 53 */

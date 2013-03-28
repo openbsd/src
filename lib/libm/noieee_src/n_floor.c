@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_floor.c,v 1.16 2013/01/13 03:44:59 martynas Exp $	*/
+/*	$OpenBSD: n_floor.c,v 1.17 2013/03/28 18:09:38 martynas Exp $	*/
 /*	$NetBSD: n_floor.c,v 1.1 1995/10/10 23:36:48 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -113,4 +113,4 @@ rint(double x)
 	return (t - s);
 }
 
-__weak_alias(rintl, rint);
+__strong_alias(rintl, rint);

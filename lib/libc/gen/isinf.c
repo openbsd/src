@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.7 2012/12/05 23:19:59 deraadt Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.8 2013/03/28 18:09:38 martynas Exp $	*/
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* LINTLIBRARY */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
@@ -39,16 +37,11 @@ __isinff(float f)
 }
 
 #if	LDBL_MANT_DIG == 53
-#ifdef	lint
-/* PROTOLIB1 */
-int __isinfl(long double);
-#else	/* lint */
-__weak_alias(__isinfl, __isinf);
-#endif	/* lint */
+__strong_alias(__isinfl, __isinf);
 #endif	/* LDBL_MANT_DIG == 53 */
 
 /*
  * 3BSD compatibility aliases.
  */
-__weak_alias(isinf, __isinf);
-__weak_alias(isinff, __isinff);
+__strong_alias(isinf, __isinf);
+__strong_alias(isinff, __isinff);

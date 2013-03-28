@@ -32,5 +32,5 @@ copysign(double x, double y)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(copysignl, copysign);
+__strong_alias(copysignl, copysign);
 #endif	/* LDBL_MANT_DIG == 53 */

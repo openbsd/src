@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_asincos.c,v 1.13 2013/01/13 03:44:59 martynas Exp $	*/
+/*	$OpenBSD: n_asincos.c,v 1.14 2013/03/28 18:09:38 martynas Exp $	*/
 /*	$NetBSD: n_asincos.c,v 1.1 1995/10/10 23:36:34 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -101,7 +101,7 @@ asin(double x)
 
 }
 
-__weak_alias(asinl, asin);
+__strong_alias(asinl, asin);
 
 /* ACOS(X)
  * RETURNS ARC COS OF X
@@ -170,4 +170,4 @@ acos(double x)
 	return(t+t);
 }
 
-__weak_alias(acosl, acos);
+__strong_alias(acosl, acos);

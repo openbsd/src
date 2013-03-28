@@ -70,5 +70,5 @@ remainder(double x, double p)
 }
 
 #if	LDBL_MANT_DIG == 53
-__weak_alias(remainderl, remainder);
+__strong_alias(remainderl, remainder);
 #endif	/* LDBL_MANT_DIG == 53 */

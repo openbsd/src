@@ -22,4 +22,4 @@ trunc(double x)
 	return (x);
 }
 
-__weak_alias(truncl, trunc);
+__strong_alias(truncl, trunc);

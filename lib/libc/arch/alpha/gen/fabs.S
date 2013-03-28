@@ -1,4 +1,4 @@
-/*	$OpenBSD: fabs.S,v 1.7 2011/07/08 22:28:32 martynas Exp $	*/
+/*	$OpenBSD: fabs.S,v 1.8 2013/03/28 18:09:38 martynas Exp $	*/
 /*	$NetBSD: fabs.S,v 1.2 1996/10/17 03:08:05 cgd Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-WEAK_ALIAS(fabsl, fabs)
+STRONG_ALIAS(fabsl, fabs)
 LEAF(fabs, 1)
 	cpys	fzero, fa0, fv0
 	RET
