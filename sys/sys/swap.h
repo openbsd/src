@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.h,v 1.5 2013/01/16 04:05:22 deraadt Exp $	*/
+/*	$OpenBSD: swap.h,v 1.6 2013/03/28 03:37:10 tedu Exp $	*/
 /*	$NetBSD: swap.h,v 1.2 1998/09/13 14:46:24 christos Exp $	*/
 
 /*
@@ -26,15 +26,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/* NOTE: This is the current swap.h from NetBSD.  Since we are "upgrading"
- * to the new vm_swap code now, we will not keep compatibility with the
- * old vm_swap code that was in NetBSD.  This means that we do not have
- * an oswapent structure, but instead use a "new" swapent structure, with
- * no overlay.
- *
- * --Toby.
  */
 
 #ifndef _SYS_SWAP_H_
