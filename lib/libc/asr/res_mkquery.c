@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.3 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.4 2013/03/29 22:51:35 guenther Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -89,9 +89,9 @@ res_querydomain(const char *name,
 
 	/* we really want domain to end with a dot for now */
 	if (domain && ((n = strlen(domain)) == 0 || domain[n - 1 ] != '.')) {
-		domain = ndom;
 		strlcpy(ndom, domain, sizeof ndom);
 		strlcat(ndom, ".", sizeof ndom);
+		domain = ndom;
 	}
 
 	if (asr_make_fqdn(name, domain, fqdn, sizeof fqdn) == 0) {
