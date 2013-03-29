@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.23 2012/09/17 15:14:14 yasuoka Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.24 2013/03/29 07:43:52 brad Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2790,7 +2790,6 @@ urtwn_set_chan(struct urtwn_softc *sc, struct ieee80211_channel *c,
     struct ieee80211_channel *extc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	uint32_t reg;
 	u_int chan;
 	int i;
 
@@ -2805,6 +2804,8 @@ urtwn_set_chan(struct urtwn_softc *sc, struct ieee80211_channel *c,
 	}
 #ifndef IEEE80211_NO_HT
 	if (extc != NULL) {
+		uint32_t reg;
+
 		/* Is secondary channel below or above primary? */
 		int prichlo = c->ic_freq < extc->ic_freq;
 
