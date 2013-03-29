@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.90 2013/03/29 20:08:29 miod Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.91 2013/03/29 20:59:04 miod Exp $
 #
 # Build wrapper for Perl 5.16.2
 #
@@ -52,7 +52,7 @@ CPPFLAGS+= -DPERL_CORE -DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE -DPERL_RANDOM_DEV
 STRIPFLAGS='-s'
 .endif
 
-GEN_AFTER= 	bitcount.h config.h uudmap.h cflags makedepend \
+GEN_AFTER= 	bitcount.h config.h mg_data.h uudmap.h cflags makedepend \
 		myconfig Makefile Policy.sh pod/Makefile \
 		x2p/Makefile x2p/cflags
 
@@ -67,7 +67,7 @@ all:	perl.build man.build
 man.build: perl.build
 	cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 mansrc.build
 
-beforedepend: config.sh config.h bitcount.h uudmap.h Makefile makedepend x2p/Makefile
+beforedepend: config.sh config.h bitcount.h mg_data.h uudmap.h Makefile makedepend x2p/Makefile
 	cd ${.OBJDIR} && exec ${MAKE} depend
 
 perl.build:	perl.lib
