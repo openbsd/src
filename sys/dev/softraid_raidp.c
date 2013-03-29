@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.35 2013/03/29 12:00:59 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.36 2013/03/29 13:05:47 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -548,42 +548,23 @@ sr_raidp_intr(struct buf *bp)
 	struct sr_softc		*sc = sd->sd_sc;
 	int			s;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %p xs %p\n",
+	DNPRINTF(SR_D_INTR, "%s: sr_raidp_intr bp %p xs %p\n",
 	    DEVNAME(sc), bp, xs);
-
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
-	    " b_flags: 0x%0x block: %lld target: %d\n", DEVNAME(sc),
-	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
-	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
 
 	s = splbio();
 
-	if (ccb->ccb_buf.b_flags & B_ERROR) {
-		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target: %d\n",
-		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
-		printf("io error: disk %x\n", ccb->ccb_target);
-		wu->swu_ios_failed++;
-		ccb->ccb_state = SR_CCB_FAILED;
-		if (ccb->ccb_target != -1)
-			sd->sd_set_chunk_state(sd, ccb->ccb_target,
-			    BIOC_SDOFFLINE);
-		else
-			panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
-	} else {
-		ccb->ccb_state = SR_CCB_OK;
-		wu->swu_ios_succeeded++;
-		/* XOR data to result */
-		if (ccb->ccb_opaque)
-			sr_raidp_xor(ccb->ccb_opaque, ccb->ccb_buf.b_data,
-			    ccb->ccb_buf.b_bcount);
-	}
+	sr_ccb_done(ccb);
 
-	/* free allocated data buffer */
+	/* XOR data to result. */
+	if (ccb->ccb_state == SR_CCB_OK && ccb->ccb_opaque)
+		sr_raidp_xor(ccb->ccb_opaque, ccb->ccb_buf.b_data,
+		    ccb->ccb_buf.b_bcount);
+
+	/* Free allocated data buffer. */
 	if (ccb->ccb_flag & SR_CCBF_FREEBUF) {
 		sr_put_block(sd, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
 		ccb->ccb_buf.b_data = NULL;
 	}
-	wu->swu_ios_complete++;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d failed: %d\n",
 	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,

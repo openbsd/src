@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.38 2013/03/29 12:00:59 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.39 2013/03/29 13:05:47 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -721,52 +721,32 @@ sr_raid6_intr(struct buf *bp)
 	struct sr_raid6_opaque  *pq = ccb->ccb_opaque;
 	int			s;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %p xs %p\n",
+	DNPRINTF(SR_D_INTR, "%s: sr_raid6_intr bp %p xs %p\n",
 	    DEVNAME(sc), bp, xs);
-
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
-	    " b_flags: 0x%0x block: %lld target: %d\n", DEVNAME(sc),
-	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
-	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
 
 	s = splbio();
 
-	if (ccb->ccb_buf.b_flags & B_ERROR) {
-		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target: %d\n",
-		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
-		printf("io error: disk %x\n", ccb->ccb_target);
-		wu->swu_ios_failed++;
-		ccb->ccb_state = SR_CCB_FAILED;
-		if (ccb->ccb_target != -1)
-			sd->sd_set_chunk_state(sd, ccb->ccb_target,
-			    BIOC_SDOFFLINE);
-		else
-			panic("%s: invalid target on wu: %p", DEVNAME(sc), wu);
-	} else {
-		ccb->ccb_state = SR_CCB_OK;
-		wu->swu_ios_succeeded++;
+	sr_ccb_done(ccb);
 
-		/* XOR data to result */
-		if (pq) {
-			if (pq->pbuf)
-				/* Calculate xor-parity */
-				sr_raid6_xorp(pq->pbuf, ccb->ccb_buf.b_data,
-				    ccb->ccb_buf.b_bcount);
-			if (pq->qbuf)
-				/* Calculate q-parity */
-				sr_raid6_xorq(pq->qbuf, ccb->ccb_buf.b_data,
-				    ccb->ccb_buf.b_bcount, pq->gn);
-			free(pq, M_DEVBUF);
-			ccb->ccb_opaque = NULL;
-		}
+	/* XOR data to result. */
+	if (ccb->ccb_state == SR_CCB_OK && pq) {
+		if (pq->pbuf)
+			/* Calculate xor-parity */
+			sr_raid6_xorp(pq->pbuf, ccb->ccb_buf.b_data,
+			    ccb->ccb_buf.b_bcount);
+		if (pq->qbuf)
+			/* Calculate q-parity */
+			sr_raid6_xorq(pq->qbuf, ccb->ccb_buf.b_data,
+			    ccb->ccb_buf.b_bcount, pq->gn);
+		free(pq, M_DEVBUF);
+		ccb->ccb_opaque = NULL;
 	}
 
-	/* free allocated data buffer */
+	/* Free allocated data buffer. */
 	if (ccb->ccb_flag & SR_CCBF_FREEBUF) {
 		sr_put_block(sd, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
 		ccb->ccb_buf.b_data = NULL;
 	}
-	wu->swu_ios_complete++;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d failed: %d\n",
 	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
