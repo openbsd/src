@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.185 2013/03/28 16:39:14 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.186 2013/03/29 01:29:16 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -100,6 +100,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+#include <machine/cpu.h>
 
 #ifdef CPU_BIOS
 #include <machine/biosvar.h>
