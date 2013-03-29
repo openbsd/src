@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.36 2013/03/29 13:05:47 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.37 2013/03/29 15:26:45 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -582,8 +582,7 @@ sr_raidp_intr(struct buf *bp)
 		if (xs->flags & SCSI_DATA_IN) {
 			printf("%s: retrying read on block %lld\n",
 			    DEVNAME(sc), ccb->ccb_buf.b_blkno);
-			sr_ccb_put(ccb);
-			TAILQ_INIT(&wu->swu_ccb);
+			sr_wu_release_ccbs(wu);
 			wu->swu_state = SR_WU_RESTART;
 			if (sd->sd_scsi_rw(wu) == 0)
 				goto done;
