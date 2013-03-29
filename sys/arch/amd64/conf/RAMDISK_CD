@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.123 2012/11/16 02:15:38 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.124 2013/03/29 04:31:37 tedu Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -125,6 +125,7 @@ run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211/ZD1211B
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 urtw*	at uhub?		# RealTek 8187
+urtwn*	at uhub?		# RealTek RTL8188CU/RTL8192CU
 
 pckbc0	at isa?			# PC keyboard controller
 pckbd*	at pckbc?		# PC keyboard
