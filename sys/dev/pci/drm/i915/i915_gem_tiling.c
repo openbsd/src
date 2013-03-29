@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.2 2013/03/29 05:15:42 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -328,27 +328,26 @@ i915_gem_object_fence_ok(struct drm_i915_gem_object *obj, int tiling_mode)
  */
 int
 i915_gem_set_tiling(struct drm_device *dev, void *data,
-		   struct drm_file *file_priv)
+		   struct drm_file *file)
 {
 	struct drm_i915_gem_set_tiling	*args = data;
-	struct inteldrm_softc		*dev_priv = dev->dev_private;
-	struct drm_obj			*obj;
-	struct drm_i915_gem_object	*obj_priv;
-	int				 ret = 0;
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_gem_object *obj;
+	int ret = 0;
 
-	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
-	if (obj == NULL)
-		return (EBADF);
-	obj_priv = to_intel_bo(obj);
-	drm_hold_object(obj);
+	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
+	if (&obj->base == NULL)
+		return ENOENT;
+	drm_hold_object(&obj->base);
 
-	if (obj_priv->pin_count != 0) {
-		ret = EBUSY;
+	if (!i915_tiling_ok(dev,
+			    args->stride, obj->base.size, args->tiling_mode)) {
+		ret = EINVAL;
 		goto out;
 	}
-	if (i915_tiling_ok(dev, args->stride, obj->size,
-	    args->tiling_mode) == 0) {
-		ret = EINVAL;
+
+	if (obj->pin_count) {
+		ret = EBUSY;
 		goto out;
 	}
 
@@ -368,54 +367,58 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 		}
 	}
 
-	if (args->tiling_mode != obj_priv->tiling_mode ||
-	    args->stride != obj_priv->stride) {
-		/*
-		 * We need to rebind the object if its current allocation no
-		 * longer meets the alignment restrictions for its new tiling
-		 * mode. Otherwise we can leave it alone, but must clear any
-		 * fence register.
-		 */
-		/* fence may no longer be correct, wipe it */
+	if (args->tiling_mode != obj->tiling_mode ||
+	    args->stride != obj->stride) {
+		/* We need to rebind the object if its current allocation
+		* no longer meets the alignment restrictions for its new
+		* tiling mode. Otherwise we can just leave it alone, but
+		* need to ensure that any fence register is updated before
+		* the next fenced (either through the GTT or by the BLT unit
+		* on older GPUs) access.
+		*
+		* After updating the tiling parameters, we then flag whether
+		* we need to update an associated fence register. Note this
+		* has to also include the unfenced register the GPU uses
+		* whilst executing a fenced command for an untiled object.
+		*/
 
-		obj_priv->map_and_fenceable = 
-		    obj_priv->dmamap == NULL ||
+		obj->map_and_fenceable = 
+		    obj->dmamap == NULL ||
 #ifdef notyet
-		    (obj_priv->gtt_offset + obj->size <=
+		    (obj->gtt_offset + obj->base.size <=
 		    dev_priv->mm.gtt_mappable_end &&
 #else
 		    (
 #endif
-		    i915_gem_object_fence_ok(obj_priv, args->tiling_mode));
+		    i915_gem_object_fence_ok(obj, args->tiling_mode));
 
 		/* Rebind if we need a change of alignment */
-		if (!obj_priv->map_and_fenceable) {
+		if (!obj->map_and_fenceable) {
 			u32 unfenced_alignment =
 			    i915_gem_get_unfenced_gtt_alignment(dev,
-								obj_priv->base.size,
+								obj->base.size,
 								args->tiling_mode);
-			if (obj_priv->gtt_offset & (unfenced_alignment - 1))
-				ret = i915_gem_object_unbind(obj_priv);
+			if (obj->gtt_offset & (unfenced_alignment - 1))
+				ret = i915_gem_object_unbind(obj);
 		}
 
 		if (ret == 0) {
-			obj_priv->fence_dirty =
-				obj_priv->fenced_gpu_access ||
-				obj_priv->fence_reg != I915_FENCE_REG_NONE;
+			obj->fence_dirty =
+				obj->fenced_gpu_access ||
+				obj->fence_reg != I915_FENCE_REG_NONE;
 
-			obj_priv->tiling_mode = args->tiling_mode;
-			obj_priv->stride = args->stride;
+			obj->tiling_mode = args->tiling_mode;
+			obj->stride = args->stride;
 			
 			/* Force the fence to be reacquired for GTT access */
-			i915_gem_release_mmap(obj_priv);
+			i915_gem_release_mmap(obj);
 		}
-
 	}
 	/* we have to maintain this existing ABI... */
-	args->stride = obj_priv->stride;
-	args->tiling_mode = obj_priv->tiling_mode;
+	args->stride = obj->stride;
+	args->tiling_mode = obj->tiling_mode;
 out:
-	drm_unhold_and_unref(obj);
+	drm_unhold_and_unref(&obj->base);
 
 	return (ret);
 }
@@ -425,21 +428,19 @@ out:
  */
 int
 i915_gem_get_tiling(struct drm_device *dev, void *data,
-		   struct drm_file *file_priv)
+		   struct drm_file *file)
 {
 	struct drm_i915_gem_get_tiling	*args = data;
-	struct inteldrm_softc		*dev_priv = dev->dev_private;
-	struct drm_obj			*obj;
-	struct drm_i915_gem_object	*obj_priv;
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_gem_object *obj;
 
-	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
-	if (obj == NULL)
-		return (EBADF);
-	drm_hold_object(obj);
-	obj_priv = to_intel_bo(obj);
+	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
+	if (&obj->base == NULL)
+		return (ENOENT);
+	drm_hold_object(&obj->base);
 
-	args->tiling_mode = obj_priv->tiling_mode;
-	switch (obj_priv->tiling_mode) {
+	args->tiling_mode = obj->tiling_mode;
+	switch (obj->tiling_mode) {
 	case I915_TILING_X:
 		args->swizzle_mode = dev_priv->mm.bit_6_swizzle_x;
 		break;
@@ -453,7 +454,7 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
 		DRM_ERROR("unknown tiling mode\n");
 	}
 
-	drm_unhold_and_unref(obj);
+	drm_unhold_and_unref(&obj->base);
 
 	return 0;
 }
