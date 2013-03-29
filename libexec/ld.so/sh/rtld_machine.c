@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.16 2013/03/26 18:53:47 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.17 2013/03/29 22:57:07 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -772,9 +772,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	const Elf_Sym *this;
 	int i, num;
 	Elf_RelA *rel;
-
-	/* XXX - lazy binding not supported yet */
-	lazy = 0;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return (0);
