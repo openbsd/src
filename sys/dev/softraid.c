@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.292 2013/03/29 11:46:43 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.293 2013/03/29 12:00:59 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4570,7 +4570,7 @@ sr_rebuild_thread(void *arg)
 		cw->opcode = WRITE_16;
 		_lto4b(sz, cw->length);
 		_lto8b(lba, cw->addr);
-		wu_w->swu_flags |= SR_WUF_REBUILD;
+		wu_w->swu_flags |= SR_WUF_REBUILD | SR_WUF_WAKEUP;
 		wu_w->swu_xs = &xs_w;
 		if (sd->sd_scsi_rw(wu_w)) {
 			printf("%s: could not create write io\n",

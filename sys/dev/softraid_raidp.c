@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.34 2013/03/29 11:46:45 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.35 2013/03/29 12:00:59 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -635,13 +635,11 @@ sr_raidp_intr(struct buf *bp)
 		sr_raid_startwu(wu->swu_collider);
 	}
 
-	if (wu->swu_flags & SR_WUF_REBUILD) {
-		/* XXX - decouple from SCSI_DATA_OUT. */
-		if (wu->swu_xs->flags & SCSI_DATA_OUT) {
-			wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
-			wakeup(wu);
-		}
-	} else {
+	if (wu->swu_flags & SR_WUF_REBUILD)
+		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
+	if (wu->swu_flags & SR_WUF_WAKEUP)
+		wakeup(wu);
+	if (!(wu->swu_flags & SR_WUF_REBUILD)) {
 		if (xs == NULL) {
 			scsi_io_put(&sd->sd_iopool, wu);
 			if (sd->sd_sync && sd->sd_wu_pending == 0)
@@ -795,6 +793,7 @@ sr_raidp_scrub(struct sr_discipline *sd)
 
 		/* Collide wu_w with wu_r */
 		wu_w->swu_state = SR_WU_DEFERRED;
+		wu_w->swu_flags |= SR_WUF_REBUILD | SR_WUF_WAKEUP;
 		wu_r->swu_collider = wu_w;
 
 		s = splbio();

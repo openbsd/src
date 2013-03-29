@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.129 2013/03/25 16:01:49 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.130 2013/03/29 12:00:59 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -382,9 +382,10 @@ struct sr_workunit {
 
 	int			swu_flags;	/* additional hints */
 #define SR_WUF_REBUILD		(1<<0)		/* rebuild io */
-#define SR_WUF_REBUILDIOCOMP	(1<<1)		/* rbuild io complete */
+#define SR_WUF_REBUILDIOCOMP	(1<<1)		/* rebuild io complete */
 #define SR_WUF_FAIL		(1<<2)		/* RAID6: failure */
 #define SR_WUF_FAILIOCOMP	(1<<3)
+#define SR_WUF_WAKEUP		(1<<4)		/* Wakeup on I/O completion. */
 
 	int			swu_fake;	/* faked wu */
 	/* workunit io range */

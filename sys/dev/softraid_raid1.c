@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.44 2013/03/29 11:46:45 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.45 2013/03/29 12:00:59 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -531,15 +531,12 @@ sr_raid1_intr(struct buf *bp)
 		sr_raid_startwu(wu->swu_collider);
 	}
 
-	if (wu->swu_flags & SR_WUF_REBUILD) {
-		/* XXX - decouple from SCSI_DATA_OUT. */
-		if (wu->swu_xs->flags & SCSI_DATA_OUT) {
-			wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
-			wakeup(wu);
-		}
-	} else {
+	if (wu->swu_flags & SR_WUF_REBUILD)
+		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
+	if (wu->swu_flags & SR_WUF_WAKEUP)
+		wakeup(wu);
+	if (!(wu->swu_flags & SR_WUF_REBUILD))
 		sr_scsi_done(sd, xs);
-	}
 
 done:
 	splx(s);
