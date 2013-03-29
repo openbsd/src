@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.33 2013/03/27 14:30:11 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.34 2013/03/29 11:46:45 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -642,14 +642,14 @@ sr_raidp_intr(struct buf *bp)
 			wakeup(wu);
 		}
 	} else {
-		if (xs != NULL)
-			sr_scsi_done(sd, xs);
-		else
+		if (xs == NULL) {
 			scsi_io_put(&sd->sd_iopool, wu);
+			if (sd->sd_sync && sd->sd_wu_pending == 0)
+				wakeup(sd);
+		} else {
+			sr_scsi_done(sd, xs);
+		}
 	}
-
-	if (sd->sd_sync && sd->sd_wu_pending == 0)
-		wakeup(sd);
 
 done:
 	splx(s);

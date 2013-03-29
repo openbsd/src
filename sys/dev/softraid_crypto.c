@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.87 2013/03/02 12:50:01 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.88 2013/03/29 11:46:45 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1334,9 +1334,6 @@ sr_crypto_finish_io(struct sr_workunit *wu)
 	}
 
 	sr_scsi_done(sd, xs);
-
-	if (sd->sd_sync && sd->sd_wu_pending == 0)
-		wakeup(sd);
 }
 
 int

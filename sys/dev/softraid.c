@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.291 2013/03/25 16:01:48 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.292 2013/03/29 11:46:43 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2278,15 +2278,10 @@ sr_wu_done_callback(void *arg1, void *arg2)
 	 * If a discipline provides its own sd_scsi_done function, then it
 	 * is responsible for calling sr_scsi_done() once I/O is complete.
 	 */
-	if (sd->sd_scsi_done) {
+	if (sd->sd_scsi_done)
 		sd->sd_scsi_done(wu);
-	} else {
+	else
 		sr_scsi_done(sd, xs);
-
-		/* XXX - move to sr_scsi_done? */
-		if (sd->sd_sync && sd->sd_wu_pending == 0)
-			wakeup(sd);
-	}
 
 	splx(s);
 }
@@ -2300,6 +2295,9 @@ sr_scsi_done(struct sr_discipline *sd, struct scsi_xfer *xs)
 		xs->resid = 0;
 
 	scsi_done(xs);
+
+	if (sd->sd_sync && sd->sd_wu_pending == 0)
+		wakeup(sd);
 }
 
 void
@@ -4068,15 +4066,14 @@ sr_raid_sync(struct sr_workunit *wu)
 
 	s = splbio();
 	sd->sd_sync = 1;
-
-	while (sd->sd_wu_pending > ios)
+	while (sd->sd_wu_pending > ios) {
 		if (tsleep(sd, PRIBIO, "sr_sync", 15 * hz) == EWOULDBLOCK) {
 			DNPRINTF(SR_D_DIS, "%s: sr_raid_sync timeout\n",
 			    DEVNAME(sd->sd_sc));
 			rv = 1;
 			break;
 		}
-
+	}
 	sd->sd_sync = 0;
 	splx(s);
 
@@ -4610,6 +4607,9 @@ queued:
 
 		scsi_io_put(&sd->sd_iopool, wu_r);
 		scsi_io_put(&sd->sd_iopool, wu_w);
+
+		if (sd->sd_sync && sd->sd_wu_pending == 0)
+			wakeup(sd);
 
 		sd->sd_meta->ssd_rebuild = lba;
 
