@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.256 2013/03/28 23:10:05 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.257 2013/03/29 12:20:34 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ if_attachdomain()
 	int s;
 
 	s = splnet();
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
+	TAILQ_FOREACH(ifp, &ifnet, if_list)
 		if_attachdomain1(ifp);
 	splx(s);
 }
@@ -617,8 +617,7 @@ do { \
 		ifafree(ifa);
 	}
 
-	for (ifg = TAILQ_FIRST(&ifp->if_groups); ifg;
-	    ifg = TAILQ_FIRST(&ifp->if_groups))
+	while ((ifg = TAILQ_FIRST(&ifp->if_groups)) != NULL)
 		if_delgroup(ifp, ifg->ifgl_group->ifg_group);
 
 	if_free_sadl(ifp);
@@ -822,13 +821,16 @@ if_clone_list(struct if_clonereq *ifcr)
 	count = (if_cloners_count < ifcr->ifcr_count) ?
 	    if_cloners_count : ifcr->ifcr_count;
 
-	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
-	    ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
+	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
+		if (count == 0)
+			break;
 		bzero(outbuf, sizeof outbuf);
 		strlcpy(outbuf, ifc->ifc_name, IFNAMSIZ);
 		error = copyout(outbuf, dst, IFNAMSIZ);
 		if (error)
 			break;
+		count--;
+		dst += IFNAMSIZ;
 	}
 
 	return (error);
@@ -1033,7 +1035,7 @@ if_downall(void)
 	int s;
 
 	s = splnet();
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list)) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if ((ifp->if_flags & IFF_UP) == 0)
 			continue;
 		if_down(ifp);
@@ -1499,10 +1501,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			ifp->if_xflags |= IFXF_NOINET6;
 #endif
 #ifdef INET
-			for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-			    ifa = nifa) {
-				nifa = TAILQ_NEXT(ifa, ifa_list);
-
+			TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list,
+			    nifa) {
 				/* only remove AF_INET */
 				if (ifa->ifa_addr->sa_family != AF_INET)
 					continue;
@@ -1700,8 +1700,9 @@ ifconf(u_long cmd, caddr_t data)
 	}
 
 	ifrp = ifc->ifc_req;
-	for (ifp = TAILQ_FIRST(&ifnet); space >= sizeof(ifr) &&
-	    ifp != NULL; ifp = TAILQ_NEXT(ifp, if_list)) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (space < sizeof(ifr))
+			break;
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
@@ -1711,11 +1712,11 @@ ifconf(u_long cmd, caddr_t data)
 				break;
 			space -= sizeof (ifr), ifrp++;
 		} else
-			for (ifa = TAILQ_FIRST(&ifp->if_addrlist);
-			    space >= sizeof (ifr) &&
-			    ifa != NULL;
-			    ifa = TAILQ_NEXT(ifa, ifa_list)) {
+			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				struct sockaddr *sa = ifa->ifa_addr;
+
+				if (space < sizeof(ifr))
+					break;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX)
 				if (cmd == OSIOCGIFCONF) {
 					struct osockaddr *osa =
@@ -2062,10 +2063,8 @@ if_group_egress_build(void)
 			break;
 
 	if (ifg != NULL)
-		for (ifgm = TAILQ_FIRST(&ifg->ifg_members); ifgm; ifgm = next) {
-			next = TAILQ_NEXT(ifgm, ifgm_next);
+		TAILQ_FOREACH_SAFE(ifgm, &ifg->ifg_members, ifgm_next, next)
 			if_delgroup(ifgm->ifgm_ifp, IFG_EGRESS);
-		}
 
 	bzero(&sa_in, sizeof(sa_in));
 	sa_in.sin_len = sizeof(sa_in);
