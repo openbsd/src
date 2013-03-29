@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.21 2012/09/18 10:03:45 reyk Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.22 2013/03/29 12:53:41 gerhard Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2012 $
+.Dd $Mdocdate: March 29 2013 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -89,8 +89,11 @@ Specify the name of the read-only community.
 The default value is
 .Ar public .
 .Pp
-.It Ic read-write community Ar string
-Specify the name of the read-write community.
+.It Xo
+.Ic read-write
+.Pq Ic community Ar string Ic \*(Ba\ disabled
+.Xc
+Specify the name of the read-write community, or disallow writes completely.
 The default value is
 .Ar private .
 .Pp

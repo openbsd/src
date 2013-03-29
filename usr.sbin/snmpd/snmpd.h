@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.42 2013/03/06 21:42:40 sthen Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.43 2013/03/29 12:53:41 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -421,6 +421,7 @@ struct snmpd {
 	int			 sc_rtfilter;
 
 	int			 sc_min_seclevel;
+	int			 sc_readonly;
 };
 
 /* control.c */
