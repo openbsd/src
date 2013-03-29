@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.5 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.6 2013/03/29 21:20:50 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -245,9 +246,11 @@ _servname(struct async *as)
 static int
 _numerichost(struct async *as)
 {
-	void	*addr;
-	char	*buf = as->as.ni.hostname;
-	size_t	 buflen = as->as.ni.hostnamelen;
+	unsigned int	ifidx;
+	char		scope[IF_NAMESIZE + 1], *ifname;
+	void		*addr;
+	char		*buf = as->as.ni.hostname;
+	size_t		 buflen = as->as.ni.hostnamelen;
 
 	if (as->as.ni.sa.sa.sa_family == AF_INET)
 		addr = &as->as.ni.sa.sain.sin_addr;
@@ -256,6 +259,26 @@ _numerichost(struct async *as)
 
 	if (inet_ntop(as->as.ni.sa.sa.sa_family, addr, buf, buflen) == NULL)
 		return (-1); /* errno set */
+
+	if (as->as.ni.sa.sa.sa_family == AF_INET6 &&
+	    as->as.ni.sa.sain6.sin6_scope_id) {
+
+		scope[0] = SCOPE_DELIMITER;
+		scope[1] = '\0';
+
+		ifidx = as->as.ni.sa.sain6.sin6_scope_id;
+		ifname = NULL;
+
+		if (IN6_IS_ADDR_LINKLOCAL(&as->as.ni.sa.sain6.sin6_addr) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&as->as.ni.sa.sain6.sin6_addr) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(&as->as.ni.sa.sain6.sin6_addr))
+			ifname = if_indextoname(ifidx, scope + 1);
+
+		if (ifname == NULL)
+			snprintf(scope + 1, sizeof(scope) - 1, "%u", ifidx);
+
+		strlcat(buf, scope, buflen);
+	}
 
 	return (0);
 }
