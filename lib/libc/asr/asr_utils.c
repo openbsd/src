@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.3 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.4 2013/03/29 23:01:24 eric Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -17,13 +17,16 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -421,6 +424,8 @@ sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 	struct in6_addr		 in6a;
 	struct sockaddr_in	*sin;
 	struct sockaddr_in6	*sin6;
+	char 			*cp, *str2;
+	const char		*errstr;
 
 	switch (family) {
 	case PF_UNSPEC:
@@ -440,7 +445,19 @@ sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 		return (0);
 
 	case PF_INET6:
-		if (inet_pton(PF_INET6, str, &in6a) != 1)
+		cp = strchr(str, SCOPE_DELIMITER);
+		if (cp) {
+			str2 = strdup(str);
+			if (str2 == NULL)
+				return (-1);
+			str2[cp - str] = '\0';
+			if (inet_pton(PF_INET6, str2, &in6a) != 1) {
+				free(str2);
+				return (-1);
+			}
+			cp++;
+			free(str2);
+		} else if (inet_pton(PF_INET6, str, &in6a) != 1)
 			return (-1);
 
 		sin6 = (struct sockaddr_in6 *)sa;
@@ -448,6 +465,19 @@ sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
 		sin6->sin6_family = PF_INET6;
 		sin6->sin6_addr = in6a;
+
+		if (cp == NULL)
+			return (0);
+
+		if (IN6_IS_ADDR_LINKLOCAL(&in6a) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&in6a) ||
+		    IN6_IS_ADDR_MC_INTFACELOCAL(&in6a))
+			if ((sin6->sin6_scope_id = if_nametoindex(cp)))
+				return (0);
+
+		sin6->sin6_scope_id = strtonum(cp, 0, UINT32_MAX, &errstr);
+		if (errstr)
+			return (-1);
 		return (0);
 
 	default:
