@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.154 2013/03/14 11:18:37 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.155 2013/03/29 13:16:14 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ udp_input(struct mbuf *m, ...)
 	 */
 #if 0
 	if (m->m_pkthdr.pf.statekey)
-		inp = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp;
+		inp = m->m_pkthdr.pf.statekey->inp;
 #endif
 	if (inp == NULL) {
 #ifdef INET6
@@ -562,8 +562,7 @@ udp_input(struct mbuf *m, ...)
 		    ip->ip_dst, uh->uh_dport, m->m_pkthdr.rdomain);
 #if NPF > 0
 		if (m->m_pkthdr.pf.statekey && inp) {
-			((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp =
-			    inp;
+			m->m_pkthdr.pf.statekey->inp = inp;
 			inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
 		}
 #endif

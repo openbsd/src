@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.820 2013/03/28 00:32:11 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.821 2013/03/29 13:16:14 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1018,8 +1018,8 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 	}
 
 	if (dir == PF_OUT && m->m_pkthdr.pf.statekey &&
-	    ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse)
-		sk = ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse;
+	    m->m_pkthdr.pf.statekey->reverse)
+		sk = m->m_pkthdr.pf.statekey->reverse;
 	else {
 		if ((sk = RB_FIND(pf_state_tree, &pf_statetbl,
 		    (struct pf_state_key *)key)) == NULL)
@@ -1027,8 +1027,7 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 		if (dir == PF_OUT && m->m_pkthdr.pf.statekey &&
 		    pf_compare_state_keys(m->m_pkthdr.pf.statekey, sk,
 		    kif, dir) == 0) {
-			((struct pf_state_key *)
-			    m->m_pkthdr.pf.statekey)->reverse = sk;
+			m->m_pkthdr.pf.statekey->reverse = sk;
 			sk->reverse = m->m_pkthdr.pf.statekey;
 		}
 	}
