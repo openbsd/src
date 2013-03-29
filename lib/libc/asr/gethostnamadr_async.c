@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.13 2013/03/27 07:40:41 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.14 2013/03/29 20:04:17 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -500,7 +500,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 			if (family != AF_INET)
 				break;
 			if (hostent_set_cname(h, rr.rr_dname, 1) == -1)
-				goto fail;
+				;
 			if (hostent_add_addr(h, &rr.rr.in_a.addr, 4) == -1)
 				goto fail;
 			break;
@@ -511,7 +511,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 			if (family != AF_INET6)
 				break;
 			if (hostent_set_cname(h, rr.rr_dname, 1) == -1)
-				goto fail;
+				;
 			if (hostent_add_addr(h, &rr.rr.in_aaaa.addr6, 16) == -1)
 				goto fail;
 			break;
