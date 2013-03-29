@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.186 2013/03/29 01:29:16 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.187 2013/03/29 01:35:37 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -867,33 +867,27 @@ parse(char *string, int flags)
 
 		if (!nflag)
 			(void)printf("%s%s", string, equ);
-		(void)printf(
-		"%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
-		    (unsigned long long)rndstats->rnd_total,
-		    (unsigned long long)rndstats->rnd_used,
-		    (unsigned long long)rndstats->rnd_reads,
-		    (unsigned long long)rndstats->arc4_reads,
-		    (unsigned long long)rndstats->arc4_nstirs,
-		    (unsigned long long)rndstats->arc4_stirs,
-		    (unsigned long long)rndstats->rnd_pad[0],
-		    (unsigned long long)rndstats->rnd_pad[1],
-		    (unsigned long long)rndstats->rnd_pad[2],
-		    (unsigned long long)rndstats->rnd_pad[3],
-		    (unsigned long long)rndstats->rnd_pad[4],
-		    (unsigned long long)rndstats->rnd_waits,
-		    (unsigned long long)rndstats->rnd_enqs,
-		    (unsigned long long)rndstats->rnd_deqs,
-		    (unsigned long long)rndstats->rnd_drops,
-		    (unsigned long long)rndstats->rnd_drople);
-		for (i = 0; i < sizeof(rndstats->rnd_ed)/sizeof(rndstats->rnd_ed[0]);
+		printf("tot: %llu used: %llu read: %llu stirs: %llu"
+		    " enqs: %llu deqs: %llu drops: %llu ledrops: %llu",
+		    rndstats->rnd_total, rndstats->rnd_used,
+		    rndstats->arc4_reads, rndstats->arc4_nstirs,
+		    rndstats->rnd_enqs, rndstats->rnd_deqs,
+		    rndstats->rnd_drops, rndstats->rnd_drople);
+		printf(" ed:");
+		for (i = 0;
+		    i < sizeof(rndstats->rnd_ed)/sizeof(rndstats->rnd_ed[0]);
 		    i++)
-			(void)printf(" %llu", (unsigned long long)rndstats->rnd_ed[i]);
-		for (i = 0; i < sizeof(rndstats->rnd_sc)/sizeof(rndstats->rnd_sc[0]);
+			printf(" %llu", (unsigned long long)rndstats->rnd_ed[i]);
+		printf(" sc:");
+		for (i = 0;
+		    i < sizeof(rndstats->rnd_sc)/sizeof(rndstats->rnd_sc[0]);
 		    i++)
-			(void)printf(" %llu", (unsigned long long)rndstats->rnd_sc[i]);
-		for (i = 0; i < sizeof(rndstats->rnd_sb)/sizeof(rndstats->rnd_sb[0]);
+			printf(" %llu", (unsigned long long)rndstats->rnd_sc[i]);
+		printf(" sb:");
+		for (i = 0;
+		    i < sizeof(rndstats->rnd_sb)/sizeof(rndstats->rnd_sb[0]);
 		    i++)
-			(void)printf(" %llu", (unsigned long long)rndstats->rnd_sb[i]);
+			printf(" %llu", (unsigned long long)rndstats->rnd_sb[i]);
 		printf("\n");
 		return;
 	}
