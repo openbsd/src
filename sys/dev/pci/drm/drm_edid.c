@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.2 2013/03/29 02:47:02 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -333,26 +333,25 @@ drm_do_probe_ddc_edid(struct i2c_controller *adapter, unsigned char *buf,
 	uint8_t cmd = 0;
 	unsigned char start = block * EDID_LENGTH;
 	unsigned char segment = block >> 1;
-	int ret;
+	int ret = 0;
 
 	iic_acquire_bus(adapter, 0);
 	if (segment) {
 		ret = iic_exec(adapter, I2C_OP_WRITE_WITH_STOP,
 		    DDC_SEGMENT_ADDR, &cmd, 1, &segment, 1, 0);
 		if (ret)
-			return ret;
+			goto i2c_err;
 	}
 	ret = iic_exec(adapter, I2C_OP_WRITE_WITH_STOP, DDC_ADDR, &cmd, 1,
 	    &start, 1, 0);
 	if (ret)
-		return (ret);
+		goto i2c_err;
 	ret = iic_exec(adapter, I2C_OP_READ_WITH_STOP, DDC_ADDR, &cmd, 1,
 	    buf, len, 0);
-	if (ret)
-		return (ret);
+i2c_err:
 	iic_release_bus(adapter, 0);
 
-	return 0;
+	return (ret);
 }
 
 bool
