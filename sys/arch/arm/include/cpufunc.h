@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.12 2013/03/27 00:06:09 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.13 2013/03/30 00:57:47 patrick Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -372,7 +372,6 @@ void	armv7_tlb_flushID_SE	(u_int);
 void	armv7_tlb_flushI_SE	(u_int);
 
 void	armv7_context_switch	(u_int);
-void	armv7_context_switch	(u_int);
 
 void	armv7_setup		(void);
 void	armv7_tlb_flushID	(void);
@@ -382,8 +381,6 @@ void	armv7_tlb_flushD_SE	(u_int va);
 
 void	armv7_drain_writebuf	(void);
 void	armv7_cpu_sleep		(int mode);
-
-void	armv7_setttb			(u_int);
 
 void	armv7_icache_sync_all		(void);
 void	armv7_icache_sync_range		(vaddr_t, vsize_t);
