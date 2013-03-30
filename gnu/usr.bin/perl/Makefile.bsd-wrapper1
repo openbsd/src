@@ -803,13 +803,13 @@ MANSRC_COOKIE=
 .  endif
 
 ${page}.${sect}: ${file}
-	${POD2MAN} --section=${sect} --official ${.ALLSRC} $@
+	${POD2MAN} --stderr --section=${sect} --official ${.ALLSRC} $@
 .endfor
 
 mansrc.build:
 .for sect in 1 3p
 .  if !empty(_quick${sect})
-	cd ${.OBJDIR} && ${POD2MAN} --section=${sect} --official ${_quick${sect}}
+	cd ${.OBJDIR} && ${POD2MAN} --stderr --section=${sect} --official ${_quick${sect}}
 .  endif
 .endfor
 
