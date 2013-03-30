@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.62 2012/10/21 13:06:03 benno Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.63 2013/03/30 12:15:29 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -417,6 +417,10 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			panic("rip_attach");
 		if ((so->so_state & SS_PRIV) == 0) {
 			error = EACCES;
+			break;
+		}
+		if ((long)nam < 0 || (long)nam >= IPPROTO_MAX) {
+			error = EPROTONOSUPPORT;
 			break;
 		}
 		if ((error = soreserve(so, rip_sendspace, rip_recvspace)) ||
