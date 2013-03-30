@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.7 2013/03/28 22:41:48 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.8 2013/03/30 11:08:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1339,8 +1339,6 @@ i915_add_request(struct intel_ring_buffer *ring,
 	request->emitted_ticks = ticks;
 	was_empty = list_empty(&ring->request_list);
 	list_add_tail(&request->list, &ring->request_list);
-
-	DRM_DEBUG("%d\n", request->seqno);
 
 	if (file) {
 		struct drm_i915_file_private *file_priv = file->driver_priv;
