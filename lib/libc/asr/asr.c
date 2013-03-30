@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.16 2013/03/30 08:06:42 otto Exp $	*/
+/*	$OpenBSD: asr.c,v 1.17 2013/03/30 20:00:08 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -57,7 +57,7 @@
 
 #define DEFAULT_CONFFILE	"/etc/resolv.conf"
 #define DEFAULT_HOSTFILE	"/etc/hosts"
-#define DEFAULT_CONF		"lookup bind file\nnameserver 127.0.0.1\n"
+#define DEFAULT_CONF		"lookup file\n"
 #define DEFAULT_LOOKUP		"lookup bind file"
 
 #define RELOAD_DELAY		15 /* seconds */

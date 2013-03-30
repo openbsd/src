@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.8 2013/03/27 16:21:22 jmc Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.9 2013/03/30 20:00:08 eric Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2013 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -106,11 +106,10 @@ file is used.
 The context tracks file changes to automatically update its configuration
 if needed, replacing the current setup if a valid one can be reloaded from
 the file.
-If a configuration file cannot be loaded at context creation time, it falls
-back to the equivalent of:
+If the configuration file cannot be loaded at context creation time, it falls
+back to:
 .Bd -literal -offset indent
-lookup bind file
-nameserver 127.0.0.1
+lookup file
 .Ed
 .Pp
 If the first character of the
