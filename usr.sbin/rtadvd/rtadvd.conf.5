@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.31 2012/09/26 16:19:45 jmc Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.32 2013/03/30 02:49:38 lteo Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -204,14 +204,14 @@ will send RA packets with no prefix information.
 .Pq unit: seconds .
 The default value is 2592000 (30 days).
 .It Cm \&vltimedecr
-(bool) This item means the advertised valid lifetime will decrements
+(bool) This item means the advertised valid lifetime will decrement
 in real time, which is disabled by default.
 .It Cm \&pltime
 (num) Preferred lifetime field
 .Pq unit: seconds .
 The default value is 604800 (7 days).
 .It Cm \&pltimedecr
-(bool) This item means the advertised preferred lifetime will decrements
+(bool) This item means the advertised preferred lifetime will decrement
 in real time, which is disabled by default.
 .El
 .Pp
