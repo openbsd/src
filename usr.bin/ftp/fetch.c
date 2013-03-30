@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.107 2012/08/18 06:46:46 haesbaert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.108 2013/03/30 10:11:35 tobias Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -877,6 +877,7 @@ again:
 			free(redirurl);
 			goto cleanup_url_get;
 		}
+		free(buf);
 	}
 
 	/* Open the output file.  */
