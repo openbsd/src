@@ -85,7 +85,6 @@ _quick3p=
     perlcall 1			pod/perlcall.pod \
     perlcheat 1			pod/perlcheat.pod \
     perlclib 1			pod/perlclib.pod \
-    perlcn 1			pod/perlcn.pod \
     perlcommunity 1		pod/perlcommunity.pod \
     perldata 1			pod/perldata.pod \
     perldbmfilter 1		pod/perldbmfilter.pod \
@@ -124,8 +123,6 @@ _quick3p=
     perliol 1			pod/perliol.pod \
     perlipc 1			pod/perlipc.pod \
     perlivp 1			utils/perlivp \
-    perljp 1			pod/perljp.pod \
-    perlko 1			pod/perlko.pod \
     perllexwarn 1		pod/perllexwarn.pod \
     perllocale 1		pod/perllocale.pod \
     perllol 1			pod/perllol.pod \
@@ -172,7 +169,6 @@ _quick3p=
     perltooc 1			pod/perltooc.pod \
     perltoot 1			pod/perltoot.pod \
     perltrap 1			pod/perltrap.pod \
-    perltw 1			pod/perltw.pod \
     perlunicode 1		pod/perlunicode.pod \
     perlunifaq 1		pod/perlunifaq.pod \
     perluniintro 1		pod/perluniintro.pod \
