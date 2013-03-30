@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlockall.2,v 1.6 2013/03/30 06:44:44 guenther Exp $
+.\"	$OpenBSD: mlockall.2,v 1.7 2013/03/30 09:00:06 jmc Exp $
 .\"	$NetBSD: mlockall.2,v 1.6 2000/06/26 17:00:02 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ The
 .Ar flags
 argument is zero or includes unimplemented flags.
 .It Bq Er ENOMEM
-Locking the all of the pages currently mapped would exceed either
+Locking all of the pages currently mapped would exceed either
 the system or per-process
 limit for locked memory.
 .It Bq Er EAGAIN
