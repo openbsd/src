@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ivch.c,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: dvo_ivch.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -183,21 +183,20 @@ ivch_read(struct intel_dvo_device *dvo, int addr, uint16_t *data)
 	u8 out_buf[1];
 	u8 in_buf[2];
 	int ret;
-	uint8_t cmd = 0;
 
 	out_buf[0] = addr;
 
 	iic_acquire_bus(adapter, 0);
-	ret = iic_exec(adapter, I2C_OP_READ_WITH_STOP, dvo->slave_addr,
-	    &cmd, 1, NULL, 0, 0);
+	ret = iic_exec(adapter, I2C_OP_READ, dvo->slave_addr,
+	    NULL, 0, NULL, 0, 0);
 	if (ret)
 		goto read_err;
 	ret = iic_exec(adapter, I2C_OP_WRITE, 0,
-	    &cmd, 1, out_buf, 1, 0);
+	    NULL, 0, out_buf, 1, 0);
 	if (ret)
 		goto read_err;
-	ret = iic_exec(adapter, I2C_OP_READ, dvo->slave_addr,
-	    &cmd, 1, in_buf, 2, 0);
+	ret = iic_exec(adapter, I2C_OP_READ_WITH_STOP, dvo->slave_addr,
+	    NULL, 0, in_buf, 2, 0);
 	if (ret)
 		goto read_err;
 	iic_release_bus(adapter, 0);
@@ -223,7 +222,6 @@ ivch_write(struct intel_dvo_device *dvo, int addr, uint16_t data)
 	struct i2c_controller *adapter = dvo->i2c_bus;
 	u8 out_buf[3];
 	int ret;
-	uint8_t cmd = 0;
 
 	out_buf[0] = addr;
 	out_buf[1] = data & 0xff;
@@ -231,7 +229,7 @@ ivch_write(struct intel_dvo_device *dvo, int addr, uint16_t data)
 
 	iic_acquire_bus(adapter, 0);
 	ret = iic_exec(adapter, I2C_OP_WRITE_WITH_STOP, dvo->slave_addr,
-	    &cmd, 1, out_buf, 3, 0);
+	    NULL, 0, out_buf, 3, 0);
 	iic_release_bus(adapter, 0);
 	if (ret)
 		goto write_err;

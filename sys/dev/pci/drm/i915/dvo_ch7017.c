@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ch7017.c,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: dvo_ch7017.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
 /*
  * Copyright © 2006 Intel Corporation
  *
@@ -181,17 +181,10 @@ ch7017_read(struct intel_dvo_device *dvo, u8 addr, u8 *val)
 {
 	struct i2c_controller *adapter = dvo->i2c_bus;
 	int ret;
-	uint8_t cmd = 0;
 
 	iic_acquire_bus(adapter, 0);
-	ret = iic_exec(adapter, I2C_OP_WRITE_WITH_STOP, dvo->slave_addr,
-	    &cmd, 1, &addr, 1, 0);
-	if (ret) {
-		iic_release_bus(adapter, 0);
-		return false;
-	}
 	ret = iic_exec(adapter, I2C_OP_READ_WITH_STOP, dvo->slave_addr,
-	    &cmd, 1, val, 1, 0);
+	    &addr, 1, val, 1, 0);
 	iic_release_bus(adapter, 0);
 	if (ret)
 		return false;
@@ -205,11 +198,10 @@ ch7017_write(struct intel_dvo_device *dvo, u8 addr, u8 val)
 	struct i2c_controller *adapter = dvo->i2c_bus;
 	uint8_t buf[2] = { addr, val };
 	int ret;
-	uint8_t cmd = 0;
 
 	iic_acquire_bus(adapter, 0);
 	ret = iic_exec(adapter, I2C_OP_WRITE_WITH_STOP, dvo->slave_addr,
-	    &cmd, 1, buf, 2, 0);
+	    NULL, 0, buf, 2, 0);
 	iic_release_bus(adapter, 0);
 	if (ret)
 		return false;

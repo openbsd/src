@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_i2c.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_i2c.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -81,16 +81,15 @@ gmbus_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		reg |= GMBUS_CYCLE_WAIT;
 	if (I2C_OP_STOP_P(op))
 		reg |= GMBUS_CYCLE_STOP;
-	if (I2C_OP_READ_P(op)) {
+	if (I2C_OP_READ_P(op))
 		reg |= GMBUS_SLAVE_READ;
-		if (cmdlen > 0)
-			reg |= GMBUS_CYCLE_INDEX;
-		b = (void *)cmdbuf;
-		if (cmdlen > 0)
-			reg |= (b[0] << GMBUS_SLAVE_INDEX_SHIFT);
-	}
-	if (I2C_OP_WRITE_P(op))
+	else
 		reg |= GMBUS_SLAVE_WRITE;
+	if (cmdlen > 0) {
+		reg |= GMBUS_CYCLE_INDEX;
+		b = (void *)cmdbuf;
+		reg |= (b[0] << GMBUS_SLAVE_INDEX_SHIFT);
+	}
 	reg |= (addr << GMBUS_SLAVE_ADDR_SHIFT);
 	reg |= (len << GMBUS_BYTE_COUNT_SHIFT);
 	I915_WRITE(GMBUS1 + reg_offset, reg | GMBUS_SW_RDY);
@@ -121,6 +120,19 @@ gmbus_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	if (I2C_OP_WRITE_P(op)) {
 		while (rem > 0) {
+			for (retries = 50; retries > 0; retries--) {
+				st = I915_READ(GMBUS2 + reg_offset);
+				if (st & (GMBUS_SATOER | GMBUS_HW_RDY))
+					break;
+				DELAY(1000);
+			}
+			if (st & GMBUS_SATOER) {
+				bus_err = 1;
+				goto out;
+			}
+			if ((st & GMBUS_HW_RDY) == 0)
+				return (ETIMEDOUT);
+
 			val = 0;
 			for (i = 0; i < 4 && rem > 0; i++, rem--) {
 				val |= *b++ << (8 * i);
@@ -130,14 +142,29 @@ gmbus_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 
 out:
-	for (retries = 10; retries > 0; retries--) {
-		st = I915_READ(GMBUS2 + reg_offset);
-		if ((st & GMBUS_ACTIVE) == 0)
-			break;
-		DELAY(1000);
+	if (I2C_OP_STOP_P(op)) {
+		for (retries = 10; retries > 0; retries--) {
+			st = I915_READ(GMBUS2 + reg_offset);
+			if (st & GMBUS_SATOER)
+				bus_err = 1;
+			if ((st & GMBUS_ACTIVE) == 0)
+				break;
+			DELAY(1000);
+		}
+		if (st & GMBUS_ACTIVE)
+			return (ETIMEDOUT);
+	} else {
+		for (retries = 10; retries > 0; retries--) {
+			st = I915_READ(GMBUS2 + reg_offset);
+			if (st & GMBUS_SATOER)
+				bus_err = 1;
+			if (st & GMBUS_HW_WAIT_PHASE)
+				break;
+			DELAY(1000);
+		}
+		if ((st & GMBUS_HW_WAIT_PHASE) == 0)
+			return (ETIMEDOUT);
 	}
-	if (st & GMBUS_ACTIVE)
-		return (ETIMEDOUT);
 
 	/* after the bus is idle clear the bus error */
 	if (bus_err) {

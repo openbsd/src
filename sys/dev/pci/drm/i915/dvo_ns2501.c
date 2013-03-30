@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo_ns2501.c,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: dvo_ns2501.c,v 1.2 2013/03/30 12:36:50 kettenis Exp $	*/
 /*
  *
  * Copyright (c) 2012 Gilles Dartiguelongue, Thomas Richter
@@ -162,18 +162,13 @@ ns2501_readb(struct intel_dvo_device *dvo, int addr, uint8_t * ch)
 	u8 out_buf[2];
 	u8 in_buf[2];
 	int ret;
-	uint8_t cmd = 0;
 
 	out_buf[0] = addr;
 	out_buf[1] = 0;
 
 	iic_acquire_bus(adapter, 0);
-	ret = iic_exec(adapter, I2C_OP_WRITE_WITH_STOP, dvo->slave_addr,
-	    &cmd, 1, out_buf, 1, 0);
-	if (ret)
-		goto read_err;
 	ret = iic_exec(adapter, I2C_OP_READ_WITH_STOP, dvo->slave_addr,
-	    &cmd, 1, in_buf, 1, 0);
+	    &out_buf, 1, in_buf, 1, 0);
 	if (ret)
 		goto read_err;
 	iic_release_bus(adapter, 0);
@@ -205,14 +200,13 @@ ns2501_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 	struct i2c_controller *adapter = dvo->i2c_bus;
 	uint8_t out_buf[2];
 	int ret;
-	uint8_t cmd = 0;
 
 	out_buf[0] = addr;
 	out_buf[1] = ch;
 
 	iic_acquire_bus(adapter, 0);
 	ret = iic_exec(adapter, I2C_OP_WRITE_WITH_STOP, dvo->slave_addr,
-	    &cmd, 1, out_buf, 2, 0);
+	    NULL, 0, out_buf, 2, 0);
 	iic_release_bus(adapter, 0);
 	if (ret)
 		goto write_err;
