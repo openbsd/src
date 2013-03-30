@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlock.2,v 1.16 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: mlock.2,v 1.17 2013/03/30 06:44:44 guenther Exp $
 .\"	$NetBSD: mlock.2,v 1.3 1995/06/24 10:42:03 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mlock.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt MLOCK 2
 .Os
 .Sh NAME
@@ -38,12 +38,11 @@
 .Nm munlock
 .Nd lock (unlock) physical pages in memory
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/mman.h>
 .Ft int
-.Fn mlock "void *addr" "size_t len"
+.Fn mlock "const void *addr" "size_t len"
 .Ft int
-.Fn munlock "void *addr" "size_t len"
+.Fn munlock "const void *addr" "size_t len"
 .Sh DESCRIPTION
 The
 .Nm mlock

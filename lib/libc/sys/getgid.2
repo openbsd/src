@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgid.2,v 1.16 2008/08/04 07:08:23 jmc Exp $
+.\"	$OpenBSD: getgid.2,v 1.17 2013/03/30 06:44:44 guenther Exp $
 .\"	$NetBSD: getgid.2,v 1.5 1995/02/27 12:32:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getgid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 4 2008 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt GETGID 2
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Nm getegid
 .Nd get group process identification
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <unistd.h>
 .Ft gid_t
 .Fn getgid void
@@ -79,4 +78,4 @@ The
 and
 .Fn getegid
 functions conform to
-.St -p1003.1-88 .
+.St -p1003.1-2008 .

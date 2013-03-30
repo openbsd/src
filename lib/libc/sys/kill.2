@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.2,v 1.17 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: kill.2,v 1.18 2013/03/30 06:44:44 guenther Exp $
 .\"	$NetBSD: kill.2,v 1.7 1995/02/27 12:33:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)kill.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt KILL 2
 .Os
 .Sh NAME
@@ -126,9 +126,6 @@ is not a valid signal number.
 .It Bq Er ESRCH
 No process can be found corresponding to that specified by
 .Fa pid .
-.It Bq Er ESRCH
-The process ID was given as 0
-but the sending process does not have a process group.
 .It Bq Er EPERM
 The sending process is not the superuser and its effective
 user ID does not match the effective user ID of the receiving process.
@@ -145,4 +142,13 @@ of the group could not be signaled.
 The
 .Fn kill
 function is expected to conform to
-.St -p1003.1-88 .
+.St -p1003.1-2008 .
+.Sh BUGS
+.St -p1003.1-2008
+specifies that
+.Fn kill 0 sig
+should send signal
+.Fa sig
+to the calling process, but
+.Ox
+doesn't do so for historical reasons.

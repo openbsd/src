@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.19 2011/11/06 12:07:42 deraadt Exp $
+.\"	$OpenBSD: getlogin.2,v 1.20 2013/03/30 06:44:44 guenther Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,11 +30,12 @@
 .\"
 .\"	@(#)getlogin.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: November 6 2011 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt GETLOGIN 2
 .Os
 .Sh NAME
 .Nm getlogin ,
+.Nm getlogin_r ,
 .Nm setlogin
 .Nd get/set login name
 .Sh SYNOPSIS
@@ -148,32 +149,51 @@ fails, a value of \-1 is returned and an error code is
 placed in the global location
 .Va errno .
 .Sh ERRORS
-The following errors may be returned by these calls:
+.Fn getlogin_r
+and
+.Fn setlogin
+will succeed unless:
 .Bl -tag -width Er
 .It Bq Er EFAULT
 The
 .Fa name
-parameter gave an
+parameter points to an
 invalid address.
+.El
+.Pp
+In addition,
+.Fn getlogin_r
+may return the following error:
+.Bl -tag -width Er
+.It Bq Er ERANGE
+The value of
+.Fa namelen
+is not large enough to store the user's login name and a trailing NUL.
+.El
+.Pp
+.Fn setlogin
+may return the following errors:
+.Bl -tag -width Er
 .It Bq Er EINVAL
 The
 .Fa name
 parameter
 pointed to a string that was too long.
 Login names are limited to
-.Dv MAXLOGNAME-1
-(from
-.Ao Pa sys/param.h Ac )
+.Dv LOGIN_NAME_MAX-1
 characters, currently 31.
 .It Bq Er EPERM
 The caller tried to set the login name and was not the superuser.
-.It Bq Er ERANGE
-The buffer passed to
-.Fn getlogin_r
-is not large enough to store the user's login name.
 .El
 .Sh SEE ALSO
 .Xr setsid 2
+.Sh STANDARDS
+The
+.Fn getlogin
+and
+.Fn getlogin_r
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn getlogin

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgroups.2,v 1.11 2008/08/04 07:08:23 jmc Exp $
+.\"	$OpenBSD: getgroups.2,v 1.12 2013/03/30 06:44:44 guenther Exp $
 .\"	$NetBSD: getgroups.2,v 1.8 1995/02/27 12:32:57 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,13 @@
 .\"
 .\"     @(#)getgroups.2	8.2 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: August 4 2008 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt GETGROUPS 2
 .Os
 .Sh NAME
 .Nm getgroups
 .Nd get group access list
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <unistd.h>
 .Ft int
 .Fn getgroups "int gidsetlen" "gid_t *gidset"
@@ -88,6 +87,11 @@ specifies an invalid address.
 .Xr setgid 2 ,
 .Xr setgroups 2 ,
 .Xr initgroups 3
+.Sh STANDARDS
+The
+.Fn getgroups
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn getgroups

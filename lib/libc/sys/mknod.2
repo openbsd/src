@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknod.2,v 1.14 2011/07/19 07:06:22 jmc Exp $
+.\"	$OpenBSD: mknod.2,v 1.15 2013/03/30 06:44:44 guenther Exp $
 .\"	$NetBSD: mknod.2,v 1.6 1995/02/27 12:34:33 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mknod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 19 2011 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt MKNOD 2
 .Os
 .Sh NAME
@@ -39,9 +39,9 @@
 .Nd make a special file node
 .Sh SYNOPSIS
 .Fd #include <sys/stat.h>
-.Fd #include <fcntl.h>
 .Ft int
 .Fn mknod "const char *path" "mode_t mode" "dev_t dev"
+.Fd #include <fcntl.h>
 .Ft int
 .Fn mknodat "int fd" "const char *path" "mode_t mode" "dev_t dev"
 .Sh DESCRIPTION
@@ -150,6 +150,7 @@ The process is running within an alternate root directory, as
 created by
 .Xr chroot 2 .
 .El
+.Pp
 Additionally,
 .Fn mknodat
 will fail if:
@@ -168,6 +169,13 @@ nor a valid file descriptor open for reading.
 .Xr chroot 2 ,
 .Xr stat 2 ,
 .Xr umask 2
+.Sh STANDARDS
+The
+.Fn mknod
+and
+.Fn mknodat
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 A
 .Fn mknod

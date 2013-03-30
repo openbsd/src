@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.2,v 1.32 2012/07/17 07:48:47 matthew Exp $
+.\"	$OpenBSD: stat.2,v 1.33 2013/03/30 06:44:44 guenther Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)stat.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 17 2012 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt STAT 2
 .Os
 .Sh NAME
@@ -306,7 +306,11 @@ characters, or an entire path name exceeded
 .Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
-The named file does not exist.
+A component of
+.Em name
+does not exist or 
+.Em name
+is the empty path.
 .It Bq Er EACCES
 Search permission is denied for a component of the path prefix.
 .It Bq Er ELOOP
@@ -324,14 +328,32 @@ Additionally,
 .Fn fstatat
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EINVAL
+The value of the
+.Fa flag
+argument was neither zero nor
+.Dv AT_SYMLINK_NOFOLLOW .
 .It Bq Er EBADF
 The
 .Fa path
-argument does not specify an absolute path and the
+argument specifies a relative path and the
 .Fa fd
 argument is neither
 .Dv AT_FDCWD
-nor a valid file descriptor open for reading.
+nor a valid file descriptor.
+.It Bq Er ENOTDIR
+The
+.Fa path
+argument specifies a relative path and the
+.Fa fd
+argument is a valid file descriptor but it does not reference a directory.
+.It Bq Er EACCES
+The
+.Fa path
+argument specifies a relative path but search permission is denied
+for the directory which the
+.Fa fd
+file descriptor references.
 .El
 .Pp
 .Fn fstat
@@ -344,7 +366,7 @@ is not a valid open file descriptor.
 .Fa sb
 points to an invalid address.
 .It Bq Er EIO
-An I/O error occurred while reading from or writing to the file system.
+An I/O error occurred while reading from the file system.
 .El
 .Sh SEE ALSO
 .Xr chmod 2 ,
@@ -364,13 +386,13 @@ and
 fields.
 .Pp
 The
-.Fn stat ,
-.Fn lstat ,
+.Fn fstat ,
 .Fn fstatat ,
+.Fn lstat ,
 and
-.Fn fstat
-function calls are expected to conform to
-.St -p1003.1-88 .
+.Fn stat
+functions are intended to conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn stat
@@ -409,7 +431,9 @@ broke them irrevocably.
 .Sh BUGS
 Applying
 .Fn fstat
-to a socket (and thus to a pipe)
-returns a zeroed buffer,
-except for the blocksize field,
-and a unique device and inode number.
+to a pipe or socket
+fails to fill in a unique device and inode number pair.
+Applying
+.Fn fstat
+to a socket
+also fails to fill in the time fields.

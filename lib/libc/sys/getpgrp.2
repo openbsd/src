@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpgrp.2,v 1.15 2012/06/26 21:27:44 tedu Exp $
+.\"	$OpenBSD: getpgrp.2,v 1.16 2013/03/30 06:44:44 guenther Exp $
 .\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getpgrp.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 26 2012 $
+.Dd $Mdocdate: March 30 2013 $
 .Dt GETPGRP 2
 .Os
 .Sh NAME
@@ -93,37 +93,23 @@ There is no process with a process ID equal to
 .Sh STANDARDS
 The
 .Fn getpgrp
-function conforms to
-.St -p1003.1-88 ,
-but differs from past Berkeley versions by not taking a
+and
+.Fn getpgid
+functions conform to
+.St -p1003.1-2008 .
+.Sh HISTORY
+A
+.Fn getpgrp
+function call that took a
 .Fa "pid_t pid"
-argument.
-.Pp
-From the
-.St -p1003.1-88
-Rationale:
-.Pp
-.Bx 4.3
-provides a
-.Fn getpgrp
-function that returns the process group ID for a specified process.
-Although this function is used to support job control, all known
-job-control shells always specify the calling process with this
-function.
-Thus, the simpler System V
-.Fn getpgrp
-suffices, and the added complexity of the
-.Bx 4.3
-.Fn getpgrp
-has been omitted from POSIX.1.
+argument appeared in
+.Bx 4.0 .
+This version without an argument is derived from its usage in
+System V Release 4, and first appeared in
+.Nx 0.9 .
 .Pp
 The
 .Fn getpgid
 function call is derived from its usage in System V Release 4, and
 first appeared in
 .Nx 1.2a .
-.Sh HISTORY
-The
-.Fn getpgrp
-function call appeared in
-.Bx 4.0 .
