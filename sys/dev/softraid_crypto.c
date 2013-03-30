@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.88 2013/03/29 11:46:45 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.89 2013/03/30 02:02:14 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -95,7 +95,6 @@ int		sr_crypto_meta_opt_handler(struct sr_discipline *,
 int		sr_crypto_write(struct cryptop *);
 int		sr_crypto_rw(struct sr_workunit *);
 int		sr_crypto_rw2(struct sr_workunit *, struct sr_crypto_wu *);
-void		sr_crypto_intr(struct buf *);
 void		sr_crypto_done(struct sr_workunit *);
 int		sr_crypto_read(struct cryptop *);
 void		sr_crypto_finish_io(struct sr_workunit *);
@@ -130,7 +129,6 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 	sd->sd_ioctl_handler = sr_crypto_ioctl;
 	sd->sd_meta_opt_handler = sr_crypto_meta_opt_handler;
 	sd->sd_scsi_rw = sr_crypto_rw;
-	sd->sd_scsi_intr = sr_crypto_intr;
 	sd->sd_scsi_done = sr_crypto_done;
 }
 
@@ -1257,25 +1255,6 @@ bad:
 	if (crwu)
 		crwu->cr_crp->crp_etype = EINVAL;
 	return (1);
-}
-
-void
-sr_crypto_intr(struct buf *bp)
-{
-	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu;
-#ifdef SR_DEBUG
-	struct sr_discipline	*sd = wu->swu_dis;
-#endif
-	int			s;
-
-	DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr bp %x xs %x\n",
-	    DEVNAME(sd->sd_sc), bp, wu->swu_xs);
-
-	s = splbio();
-	sr_ccb_done(ccb);
-	sr_wu_done(wu);
-	splx(s);
 }
 
 void

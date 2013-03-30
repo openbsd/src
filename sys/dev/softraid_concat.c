@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.11 2013/03/02 12:50:01 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.12 2013/03/30 02:02:14 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -39,7 +39,6 @@ int	sr_concat_assemble(struct sr_discipline *, struct bioc_createraid *,
 int	sr_concat_alloc_resources(struct sr_discipline *);
 int	sr_concat_free_resources(struct sr_discipline *);
 int	sr_concat_rw(struct sr_workunit *);
-void	sr_concat_intr(struct buf *);
 
 /* Discipline initialisation. */
 void
@@ -58,7 +57,6 @@ sr_concat_discipline_init(struct sr_discipline *sd)
 	sd->sd_create = sr_concat_create;
 	sd->sd_free_resources = sr_concat_free_resources;
 	sd->sd_scsi_rw = sr_concat_rw;
-	sd->sd_scsi_intr = sr_concat_intr;
 }
 
 int
@@ -206,24 +204,4 @@ sr_concat_rw(struct sr_workunit *wu)
 bad:
 	/* wu is unwound by sr_wu_put */
 	return (1);
-}
-
-void
-sr_concat_intr(struct buf *bp)
-{
-	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu;
-#ifdef SR_DEBUG
-	struct sr_discipline	*sd = wu->swu_dis;
-	struct scsi_xfer	*xs = wu->swu_xs;
-#endif
-	int			s;
-
-	DNPRINTF(SR_D_INTR, "%s: %s %s intr bp %x xs %x\n",
-	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name, bp, xs);
-
-	s = splbio();
-	sr_ccb_done(ccb);
-	sr_wu_done(wu);
-	splx(s);
 }

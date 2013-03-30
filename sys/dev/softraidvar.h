@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.130 2013/03/29 12:00:59 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.131 2013/03/30 02:02:14 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -697,6 +697,7 @@ int			sr_raid_tur(struct sr_workunit *);
 int			sr_raid_request_sense( struct sr_workunit *);
 int			sr_raid_start_stop(struct sr_workunit *);
 int			sr_raid_sync(struct sr_workunit *);
+void			sr_raid_intr(struct buf *);
 void			sr_raid_startwu(struct sr_workunit *);
 void			sr_raid_recreate_wu(struct sr_workunit *);
 

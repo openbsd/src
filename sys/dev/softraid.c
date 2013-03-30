@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.293 2013/03/29 12:00:59 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.294 2013/03/30 02:02:13 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3874,7 +3874,7 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	sd->sd_scsi_start_stop = sr_raid_start_stop;
 	sd->sd_scsi_sync = sr_raid_sync;
 	sd->sd_scsi_rw = NULL;
-	sd->sd_scsi_intr = NULL;
+	sd->sd_scsi_intr = sr_raid_intr;
 	sd->sd_scsi_done = NULL;
 	sd->sd_set_chunk_state = sr_set_chunk_state;
 	sd->sd_set_vol_state = sr_set_vol_state;
@@ -4080,6 +4080,26 @@ sr_raid_sync(struct sr_workunit *wu)
 	wakeup(&sd->sd_sync);
 
 	return (rv);
+}
+
+void
+sr_raid_intr(struct buf *bp)
+{
+	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
+	struct sr_workunit	*wu = ccb->ccb_wu;
+#ifdef SR_DEBUG
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct scsi_xfer	*xs = wu->swu_xs;
+#endif
+	int			s;
+
+	DNPRINTF(SR_D_INTR, "%s: %s %s intr bp %p xs %p\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name, bp, xs);
+
+	s = splbio();
+	sr_ccb_done(ccb);
+	sr_wu_done(wu);
+	splx(s);
 }
 
 void

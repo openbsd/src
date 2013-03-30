@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.35 2013/03/02 12:50:01 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.36 2013/03/30 02:02:14 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -51,7 +51,6 @@ int	sr_raid0_assemble(struct sr_discipline *, struct bioc_createraid *,
 int	sr_raid0_alloc_resources(struct sr_discipline *);
 int	sr_raid0_free_resources(struct sr_discipline *);
 int	sr_raid0_rw(struct sr_workunit *);
-void	sr_raid0_intr(struct buf *);
 
 /* Discipline initialisation. */
 void
@@ -70,7 +69,6 @@ sr_raid0_discipline_init(struct sr_discipline *sd)
 	sd->sd_create = sr_raid0_create;
 	sd->sd_free_resources = sr_raid0_free_resources;
 	sd->sd_scsi_rw = sr_raid0_rw;
-	sd->sd_scsi_intr = sr_raid0_intr;
 }
 
 int
@@ -234,24 +232,4 @@ queued:
 bad:
 	/* wu is unwound by sr_wu_put */
 	return (1);
-}
-
-void
-sr_raid0_intr(struct buf *bp)
-{
-	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu;
-#ifdef SR_DEBUG
-	struct scsi_xfer	*xs = wu->swu_xs;
-	struct sr_discipline	*sd = wu->swu_dis;
-#endif
-	int			s;
-
-	DNPRINTF(SR_D_INTR, "%s: %s %s intr bp %x xs %x\n",
-	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, sd->sd_name, bp, xs);
-
-	s = splbio();
-	sr_ccb_done(ccb);
-	sr_wu_done(wu);
-	splx(s);
 }
