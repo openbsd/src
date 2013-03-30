@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.37 2013/03/29 15:26:45 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.38 2013/03/30 14:41:37 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -382,7 +382,7 @@ sr_raidp_rw(struct sr_workunit *wu)
 
 	if (xs->flags & SCSI_DATA_OUT)
 		/* create write workunit */
-		if ((wu_r = scsi_io_get(&sd->sd_iopool, SCSI_NOSLEEP)) == NULL){
+		if ((wu_r = sr_scsi_wu_get(sd, SCSI_NOSLEEP)) == NULL){
 			printf("%s: can't get wu_r", DEVNAME(sd->sd_sc));
 			goto bad;
 		}
@@ -534,7 +534,7 @@ queued:
 bad:
 	/* wu is unwound by sr_wu_put */
 	if (wu_r)
-		scsi_io_put(&sd->sd_iopool, wu_r);
+		sr_scsi_wu_put(sd, wu_r);
 	return (1);
 }
 
@@ -621,9 +621,7 @@ sr_raidp_intr(struct buf *bp)
 		wakeup(wu);
 	if (!(wu->swu_flags & SR_WUF_REBUILD)) {
 		if (xs == NULL) {
-			scsi_io_put(&sd->sd_iopool, wu);
-			if (sd->sd_sync && sd->sd_wu_pending == 0)
-				wakeup(sd);
+			sr_scsi_wu_put(sd, wu);
 		} else {
 			sr_scsi_done(sd, xs);
 		}
@@ -742,10 +740,8 @@ sr_raidp_scrub(struct sr_discipline *sd)
 	int s, slept;
 	void *xorbuf;
 
-	if ((wu_w = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
-		goto done;
-	if ((wu_r = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
-		goto done;
+	wu_w = sr_scsi_wu_get(sd, 0);
+	wu_r = sr_scsi_wu_get(sd, 0);
 
 	no_chunk = sd->sd_meta->ssdi.ssd_chunk_no - 1;
 	strip_size = sd->sd_meta->ssdi.ssd_strip_size;

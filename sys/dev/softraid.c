@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.294 2013/03/30 02:02:13 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.295 2013/03/30 14:41:36 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2286,6 +2286,21 @@ sr_wu_done_callback(void *arg1, void *arg2)
 	splx(s);
 }
 
+struct sr_workunit *
+sr_scsi_wu_get(struct sr_discipline *sd, int flags)
+{
+	return scsi_io_get(&sd->sd_iopool, flags);
+}
+
+void
+sr_scsi_wu_put(struct sr_discipline *sd, struct sr_workunit *wu)
+{
+	scsi_io_put(&sd->sd_iopool, wu);
+
+	if (sd->sd_sync && sd->sd_wu_pending == 0)
+		wakeup(sd);
+}
+
 void
 sr_scsi_done(struct sr_discipline *sd, struct scsi_xfer *xs)
 {
@@ -4553,10 +4568,8 @@ sr_rebuild_thread(void *arg)
 		}
 
 		/* get some wu */
-		if ((wu_r = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
-			panic("%s: rebuild exhausted wu_r", DEVNAME(sc));
-		if ((wu_w = scsi_io_get(&sd->sd_iopool, 0)) == NULL)
-			panic("%s: rebuild exhausted wu_w", DEVNAME(sc));
+		wu_r = sr_scsi_wu_get(sd, 0);
+		wu_w = sr_scsi_wu_get(sd, 0);
 
 		/* setup read io */
 		bzero(&xs_r, sizeof xs_r);
@@ -4625,14 +4638,12 @@ queued:
 		if (slept == 0)
 			tsleep(sc, PWAIT, "sr_yield", 1);
 
-		scsi_io_put(&sd->sd_iopool, wu_r);
-		scsi_io_put(&sd->sd_iopool, wu_w);
-
-		if (sd->sd_sync && sd->sd_wu_pending == 0)
-			wakeup(sd);
+		sr_scsi_wu_put(sd, wu_r);
+		sr_scsi_wu_put(sd, wu_w);
 
 		sd->sd_meta->ssd_rebuild = lba;
 
+		/* XXX - this should be based on size, not percentage. */
 		/* save metadata every percent */
 		psz = sd->sd_meta->ssdi.ssd_size;
 		rb = sd->sd_meta->ssd_rebuild;
