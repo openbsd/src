@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.12 2013/03/28 11:47:23 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.13 2013/03/30 20:11:19 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -170,7 +170,7 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 		}
 
 		if (ai->ai_socktype == SOCK_RAW &&
-		    as->as.ai.servname != NULL) {
+		    get_port(as->as.ai.servname, NULL, 1) != 0) {
 			ar->ar_gai_errno = EAI_SERVICE;
 			async_set_state(as, ASR_STATE_HALT);
 			break;
