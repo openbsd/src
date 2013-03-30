@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.69 2012/10/12 20:45:49 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.70 2013/03/30 06:32:25 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -365,11 +365,13 @@ unp_attach(struct socket *so)
 void
 unp_detach(struct unpcb *unp)
 {
+	struct vnode *vp;
 	
 	if (unp->unp_vnode) {
 		unp->unp_vnode->v_socket = NULL;
-		vrele(unp->unp_vnode);
+		vp = unp->unp_vnode;
 		unp->unp_vnode = NULL;
+		vrele(vp);
 	}
 	if (unp->unp_conn)
 		unp_disconnect(unp);
