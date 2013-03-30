@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.58 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.59 2013/03/30 10:41:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -22,6 +22,8 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/param.h>
+#include <sys/mount.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -76,6 +78,10 @@ struct tree	evpcount;
 
 #define PATH_EVPTMP		PATH_INCOMING "/envelope.tmp"
 
+/* percentage of remaining space / inodes required to accept new messages */
+#define	MINSPACE		99
+#define	MININODES		10
+
 struct queue_backend	queue_backend_fs = {
 	fsqueue_init,
 	fsqueue_message,
@@ -83,6 +89,43 @@ struct queue_backend	queue_backend_fs = {
 };
 
 static struct timespec	startup;
+
+static int
+fsqueue_check_space(void)
+{
+	struct statfs	buf;
+	uint64_t	used;
+	uint64_t	total;
+
+	if (statfs(PATH_QUEUE, &buf) < 0) {
+		log_warn("warn: fsqueue_check_space: statfs");
+		return 0;
+	}
+
+	used = buf.f_blocks - buf.f_bfree;
+	total = buf.f_bavail + used;
+	if (total != 0)
+		used = (float)used / (float)total * 100;
+	else
+		used = 100;
+	if (100 - used < MINSPACE) {
+		log_warnx("warn: not enough disk space: %lu%% left", 100 - used);
+		return 0;
+	}
+
+	used = buf.f_files - buf.f_ffree;
+	total = buf.f_favail + used;
+	if (total != 0)
+		used = (float)used / (float)total * 100;
+	else
+		used = 100;
+	if (100 - used < MININODES) {
+		log_warnx("warn: not enough inodes: %lu%% left", 100 - used);
+		return 0;
+	}
+
+	return 1;
+}
 
 static void
 fsqueue_message_path(uint32_t msgid, char *buf, size_t len)
@@ -330,6 +373,9 @@ fsqueue_message_create(uint32_t *msgid)
 {
 	char rootdir[MAXPATHLEN];
 	struct stat sb;
+
+	if (! fsqueue_check_space())
+		return 0;
 
 again:
 	*msgid = queue_generate_msgid();
