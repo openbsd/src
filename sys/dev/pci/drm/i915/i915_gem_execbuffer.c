@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.3 2013/03/28 19:38:53 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.4 2013/03/30 04:57:53 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -575,7 +575,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 			drm_hold_object(object_list[i]);
 			to_intel_bo(object_list[i])->exec_entry = &exec_list[i];
 			ret = i915_gem_object_pin_and_relocate(object_list[i],
-			    file_priv, &exec_list[i], &relocs[reloc_index], ring);
+			    file_priv, &exec_list[i], &relocs[reloc_index]);
 			if (ret) {
 				drm_unhold_object(object_list[i]);
 				break;

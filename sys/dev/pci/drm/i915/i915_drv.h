@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.9 2013/03/28 19:36:14 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.10 2013/03/30 04:57:53 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1088,7 +1088,7 @@ void	i915_dispatch_gem_execbuffer(struct intel_ring_buffer *,
 	    struct drm_i915_gem_execbuffer2 *, uint64_t);
 int	i915_gem_object_pin_and_relocate(struct drm_obj *,
 	    struct drm_file *, struct drm_i915_gem_exec_object2 *,
-	    struct drm_i915_gem_relocation_entry *, struct intel_ring_buffer *);
+	    struct drm_i915_gem_relocation_entry *);
 int	i915_gem_execbuffer_reserve_object(struct drm_i915_gem_object *,
 	    struct intel_ring_buffer *);
 void	i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *);
