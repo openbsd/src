@@ -93,6 +93,7 @@
 ./usr/lib/libutil.so.11.4
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
+./usr/libdata/perl5/sh-openbsd
 ./usr/libdata/perl5/sh-openbsd/5.16.3
 ./usr/libdata/perl5/sh-openbsd/5.16.3/.packlist
 ./usr/libdata/perl5/sh-openbsd/5.16.3/B
@@ -548,7 +549,6 @@
 ./usr/libdata/perl5/sh-openbsd/5.16.3/threads
 ./usr/libdata/perl5/sh-openbsd/5.16.3/threads.pm
 ./usr/libdata/perl5/sh-openbsd/5.16.3/threads/shared.pm
-./usr/libdata/perl5/sh-openbsd
 ./usr/libdata/perl5/site_perl/sh-openbsd
 ./usr/libdata/perl5/site_perl/sh-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/a.out.ph

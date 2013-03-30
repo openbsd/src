@@ -81,6 +81,7 @@
 ./usr/lib/libutil.so.11.4
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
+./usr/libdata/perl5/m88k-openbsd
 ./usr/libdata/perl5/m88k-openbsd/5.16.3
 ./usr/libdata/perl5/m88k-openbsd/5.16.3/.packlist
 ./usr/libdata/perl5/m88k-openbsd/5.16.3/B
@@ -536,7 +537,6 @@
 ./usr/libdata/perl5/m88k-openbsd/5.16.3/threads
 ./usr/libdata/perl5/m88k-openbsd/5.16.3/threads.pm
 ./usr/libdata/perl5/m88k-openbsd/5.16.3/threads/shared.pm
-./usr/libdata/perl5/m88k-openbsd
 ./usr/libdata/perl5/site_perl/m88k-openbsd
 ./usr/libdata/perl5/site_perl/m88k-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/a.out.ph

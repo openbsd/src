@@ -130,6 +130,7 @@
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
 ./usr/lib/scrt0.o
+./usr/libdata/perl5/mips64-openbsd
 ./usr/libdata/perl5/mips64-openbsd/5.16.3
 ./usr/libdata/perl5/mips64-openbsd/5.16.3/.packlist
 ./usr/libdata/perl5/mips64-openbsd/5.16.3/B
@@ -585,7 +586,6 @@
 ./usr/libdata/perl5/mips64-openbsd/5.16.3/threads
 ./usr/libdata/perl5/mips64-openbsd/5.16.3/threads.pm
 ./usr/libdata/perl5/mips64-openbsd/5.16.3/threads/shared.pm
-./usr/libdata/perl5/mips64-openbsd
 ./usr/libdata/perl5/site_perl/mips64-openbsd
 ./usr/libdata/perl5/site_perl/mips64-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/a.out.ph
