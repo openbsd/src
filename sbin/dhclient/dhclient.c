@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.241 2013/03/22 23:58:51 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.242 2013/03/30 16:10:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -796,8 +796,9 @@ bind_lease(void)
 	struct option_data *options;
 	struct client_lease *lease;
 
+	/* Deleting the addresses also clears out arp entries. */
 	delete_addresses(ifi->name, ifi->rdomain);
-	flush_routes_and_arp_cache(ifi->name, ifi->rdomain);
+	flush_routes(ifi->name, ifi->rdomain);
 
 	lease = apply_defaults(client->new);
 	options = lease->options;

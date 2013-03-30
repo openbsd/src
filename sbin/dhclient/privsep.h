@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.17 2013/03/11 16:01:01 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.18 2013/03/30 16:10:01 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -75,7 +75,7 @@ struct imsg_write_file {
 void	dispatch_imsg(struct imsgbuf *);
 void	priv_delete_address(struct imsg_delete_address *);
 void	priv_add_address(struct imsg_add_address *);
-void	priv_flush_routes_and_arp_cache(struct imsg_flush_routes *);
+void	priv_flush_routes(struct imsg_flush_routes *);
 void	priv_add_default_route(struct imsg_add_default_route *);
 void	priv_cleanup(struct imsg_hup *);
 void	priv_write_file(struct imsg_write_file *);
