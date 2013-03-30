@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.20 2011/09/28 19:58:14 uwe Exp $	*/
+/*	$OpenBSD: elf.c,v 1.21 2013/03/30 21:26:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -341,8 +341,9 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 #if 0
 	{
 		extern char *stab;
-		printf("%d:%s %d %s\n", sym->st_shndx, sn? sn : "",
-		    ELF_ST_TYPE(sym->st_info), stab + sym->st_name);
+		printf("%d:%s %d %d %s\n", sym->st_shndx, sn? sn : "",
+		    ELF_ST_TYPE(sym->st_info), ELF_ST_BIND(sym->st_info),
+		    stab + sym->st_name);
 	}
 #endif
 
@@ -364,6 +365,8 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 			} else
 				np->n_type = type;
 		}
+		if (ELF_ST_BIND(sym->st_info) == STB_WEAK)
+			np->n_other = 'W';
 		break;
 
 	case STT_FUNC:
