@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.3 2013/03/30 12:36:50 kettenis Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.4 2013/03/30 15:00:22 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -583,7 +583,7 @@ intel_sdvo_write_cmd(struct intel_sdvo *intel_sdvo, u8 cmd,
 	if (!buf)
 		return false;
 
-	msgs = malloc(args_len + 3 * sizeof(*msgs), M_DRM,
+	msgs = malloc((args_len + 3) * sizeof(*msgs), M_DRM,
 	    M_WAITOK | M_ZERO);
 	if (!msgs) {
 	        free(buf, M_DRM);
@@ -626,9 +626,12 @@ intel_sdvo_write_cmd(struct intel_sdvo *intel_sdvo, u8 cmd,
 		if (ret) {
 			DRM_DEBUG_KMS("sdvo i2c transfer failed\n");
 			ret = false;
-			break;
+			goto out;
 		}
 	}
+	ret = true;
+
+out:
 	iic_release_bus(intel_sdvo->i2c, 0);
 
 	free(msgs, M_DRM);
