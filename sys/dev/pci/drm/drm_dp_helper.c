@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_dp_helper.c,v 1.2 2013/03/20 05:14:34 jsg Exp $	*/
+/*	$OpenBSD: drm_dp_helper.c,v 1.3 2013/03/30 18:33:56 kettenis Exp $	*/
 /*
  * Copyright © 2009 Keith Packard
  *
@@ -148,34 +148,45 @@ i2c_algo_dp_aux_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 {
 	struct i2c_algo_dp_aux_data *algo_data = cookie;
 	struct i2c_controller *adapter = algo_data->adapter;
-	int ret = 0;
-	bool reading = false;
-	int b;
-	uint8_t *buf = buffer;
+	uint8_t *buf;
+	int i, ret;
 
-	reading = I2C_OP_READ_P(op);
-	ret = i2c_algo_dp_aux_address(adapter, addr, reading);
+	buf = (void *)cmdbuf;
+	if (cmdlen > 0) {
+		ret = i2c_algo_dp_aux_address(adapter, addr, false);
+		if (ret < 0)
+			goto out;
+		for (i = 0; i < cmdlen; i++) {
+			ret = i2c_algo_dp_aux_put_byte(adapter, buf[i]);
+			if (ret < 0)
+				goto out;
+		}
+	}
+
+	buf = buffer;
+	ret = i2c_algo_dp_aux_address(adapter, addr, I2C_OP_READ_P(op));
 	if (ret < 0)
 		goto out;
-	if (reading) {
-		for (b = 0; b < len; b++) {
-			ret = i2c_algo_dp_aux_get_byte(adapter, &buf[b]);
+	if (I2C_OP_READ_P(op)) {
+		for (i = 0; i < len; i++) {
+			ret = i2c_algo_dp_aux_get_byte(adapter, &buf[i]);
 			if (ret < 0)
 				break;
 		}
-	} else if (I2C_OP_WRITE_P(op)) {
-		for (b = 0; b < len; b++) {
-			ret = i2c_algo_dp_aux_put_byte(adapter, buf[b]);
+	} else {
+		for (i = 0; i < len; i++) {
+			ret = i2c_algo_dp_aux_put_byte(adapter, buf[i]);
 			if (ret < 0)
 				break;
 		}
 	}
 
 out:
-	if (ret > 0)
-		ret = 0;
+	if (I2C_OP_STOP_P(op))
+		i2c_algo_dp_aux_stop(adapter, I2C_OP_READ_P(op));
 
-	i2c_algo_dp_aux_stop(adapter, reading);
+	if (ret >= 0)
+		ret = 0;
 	DRM_DEBUG_KMS("dp_aux_exec return %d\n", ret);
 	return ret;
 }
