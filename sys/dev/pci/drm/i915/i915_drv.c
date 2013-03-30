@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.13 2013/03/30 04:57:53 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.14 2013/03/30 13:14:33 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -646,6 +646,9 @@ struct wsdisplay_accessops inteldrm_accessops = {
 	inteldrm_show_screen
 };
 
+extern int (*ws_get_param)(struct wsdisplay_param *);
+extern int (*ws_set_param)(struct wsdisplay_param *);
+
 int
 inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
@@ -656,6 +659,9 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETPARAM:
+		if (ws_get_param && ws_get_param(dp) == 0)
+			return 0;
+
 		switch (dp->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			dp->min = 0;
@@ -665,6 +671,9 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		break;
 	case WSDISPLAYIO_SETPARAM:
+		if (ws_set_param && ws_set_param(dp) == 0)
+			return 0;
+
 		switch (dp->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			intel_panel_set_backlight(dev, dp->curval);
