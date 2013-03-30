@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.15 2013/03/27 07:40:41 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.16 2013/03/30 08:06:42 otto Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -414,7 +414,7 @@ asr_check_reload(struct asr *asr)
 	if (clock_gettime(CLOCK_MONOTONIC, &tp) == -1)
 		return;
 
-	if ((tp.tv_sec - asr->a_rtime) < RELOAD_DELAY)
+	if ((tp.tv_sec - asr->a_rtime) < RELOAD_DELAY && asr->a_rtime != 0)
 		return;
 	asr->a_rtime = tp.tv_sec;
 
