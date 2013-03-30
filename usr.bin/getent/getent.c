@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.5 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: getent.c,v 1.6 2013/03/30 14:03:08 florian Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -220,6 +220,46 @@ hostsprint(const struct hostent *he)
 		strlcpy(buf, "# unknown", sizeof(buf));
 	printfmtstrings(he->h_aliases, "  ", " ", "%-16s  %s", buf, he->h_name);
 }
+static int
+hostsaddrinfo(char* name)
+{
+	struct addrinfo	 hints, *res, *res0;
+	void		*src;
+	int		 rv;
+	char		 buf[INET6_ADDRSTRLEN];
+
+	rv = RV_NOTFOUND;
+	memset(buf, 0, sizeof(buf));
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+
+	if (getaddrinfo(name, NULL, &hints, &res0) == 0) {
+		for (res = res0; res; res = res->ai_next) {
+			switch (res->ai_family) {
+			case AF_INET:
+				src = &((struct sockaddr_in*)
+				    res->ai_addr)->sin_addr;
+				break;
+			case AF_INET6:
+				src = &((struct sockaddr_in6*)
+				    res->ai_addr)->sin6_addr;
+				break;
+			default: /* not reached */
+				src = NULL;
+			}
+			if (src==NULL || inet_ntop(res->ai_family, src, buf,
+			    sizeof(buf)) == NULL)
+				strlcpy(buf, "# unknown", sizeof(buf));
+			else
+				rv = RV_OK;
+			printf("%-39s %s\n", buf, name);
+		}
+		freeaddrinfo(res0);
+	}
+
+	return (rv);
+}
 
 static int
 hosts(int argc, char *argv[])
@@ -234,18 +274,15 @@ hosts(int argc, char *argv[])
 			hostsprint(he);
 	} else {
 		for (i = 2; i < argc; i++) {
+			he = NULL;
 			if (inet_pton(AF_INET6, argv[i], (void *)addr) > 0)
 				he = gethostbyaddr(addr, IN6ADDRSZ, AF_INET6);
 			else if (inet_pton(AF_INET, argv[i], (void *)addr) > 0)
 				he = gethostbyaddr(addr, INADDRSZ, AF_INET);
-			else
-				he = gethostbyname(argv[i]);
 			if (he != NULL)
 				hostsprint(he);
-			else {
-				rv = RV_NOTFOUND;
+			else if ((rv = hostsaddrinfo(argv[i])) == RV_NOTFOUND)
 				break;
-			}
 		}
 	}
 	endhostent();
