@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.45 2011/07/22 00:22:57 matthew Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.46 2013/03/30 04:53:09 guenther Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -174,14 +174,14 @@ namei(struct nameidata *ndp)
 		vref(dp);
 	} else {
 		struct file *fp = fd_getfile(fdp, ndp->ni_dirfd);
-		if (fp == NULL || fp->f_type != DTYPE_VNODE) {
+		if (fp == NULL) {
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (EBADF);
 		}
 		dp = (struct vnode *)fp->f_data;
-		if (dp->v_type != VDIR) {
+		if (fp->f_type != DTYPE_VNODE || dp->v_type != VDIR) {
 			pool_put(&namei_pool, cnp->cn_pnbuf);
-			return (EBADF);
+			return (ENOTDIR);
 		}
 		vref(dp);
 	}
