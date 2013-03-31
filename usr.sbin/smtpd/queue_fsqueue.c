@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.59 2013/03/30 10:41:03 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.60 2013/03/31 14:42:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -79,7 +79,7 @@ struct tree	evpcount;
 #define PATH_EVPTMP		PATH_INCOMING "/envelope.tmp"
 
 /* percentage of remaining space / inodes required to accept new messages */
-#define	MINSPACE		99
+#define	MINSPACE		10
 #define	MININODES		10
 
 struct queue_backend	queue_backend_fs = {
