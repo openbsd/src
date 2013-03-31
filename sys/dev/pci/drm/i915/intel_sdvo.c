@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.5 2013/03/31 08:32:43 kettenis Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.6 2013/03/31 14:18:38 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -2318,21 +2318,17 @@ intel_sdvo_select_i2c_bus(struct inteldrm_softc *dev_priv,
 
 	sdvo->i2c = intel_gmbus_get_adapter(dev_priv, pin);
 
-#ifdef notyet
 	/* With gmbus we should be able to drive sdvo i2c at 2MHz, but somehow
 	 * our code totally fails once we start using gmbus. Hence fall back to
 	 * bit banging for now. */
 	intel_gmbus_force_bit(sdvo->i2c, true);
-#endif
 }
 
 /* undo any changes intel_sdvo_select_i2c_bus() did to sdvo->i2c */
 void
 intel_sdvo_unselect_i2c_bus(struct intel_sdvo *sdvo)
 {
-#ifdef notyet
 	intel_gmbus_force_bit(sdvo->i2c, false);
-#endif
 }
 
 bool
