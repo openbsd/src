@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.36 2013/03/05 07:38:56 jmc Exp $
+.\"	$OpenBSD: restore.8,v 1.37 2013/03/31 09:51:04 jmc Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)restore.8	8.3 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 5 2013 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt RESTORE 8
 .Os
 .Sh NAME
@@ -425,7 +425,7 @@ dumps that were made on active file systems.
 A level 0 dump must be done after a full restore.
 Because
 .Nm
-runs in user code,
+runs in user mode,
 it has no control over inode allocation;
 thus a full dump must be done to get a new set of directories
 reflecting the new inode numbering,
