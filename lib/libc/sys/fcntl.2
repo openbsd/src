@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.29 2013/01/19 21:57:57 millert Exp $
+.\"	$OpenBSD: fcntl.2,v 1.30 2013/03/31 08:35:46 guenther Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: January 19 2013 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -388,8 +388,10 @@ error.
 Upon successful completion, the value returned depends on
 .Fa cmd
 as follows:
-.Bl -tag -width F_GETOWNX -offset indent
+.Bl -tag -width F_DUPFD_CLOEXEC -offset indent
 .It Dv F_DUPFD
+A new file descriptor.
+.It Dv F_DUPFD_CLOEXEC
 A new file descriptor.
 .It Dv F_GETFD
 Value of flag (only the low-order bit is defined).
@@ -464,6 +466,10 @@ and a deadlock condition was detected.
 .It Bq Er EINTR
 The argument
 .Fa cmd
+is invalid.
+.Pp
+The argument
+.Fa cmd
 is
 .Dv F_SETLKW ,
 and the function was interrupted by a signal.
@@ -523,6 +529,11 @@ is not in use.
 .Xr open 2 ,
 .Xr sigaction 2 ,
 .Xr getdtablesize 3
+.Sh STANDARDS
+The
+.Fn fcntl
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn fcntl
