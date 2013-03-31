@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.10 2013/03/30 04:57:53 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.11 2013/03/31 11:43:23 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -248,11 +248,6 @@ struct sdvo_device_mapping {
 	u8 ddc_pin;
 };
 
-struct gmbus_port {
-	struct inteldrm_softc *dev_priv;
-	int port;
-};
-
 enum intel_pch {
 	PCH_NONE = 0,	/* No PCH present */
 	PCH_IBX,	/* Ibexpeak PCH */
@@ -272,8 +267,13 @@ enum intel_sbi_destination {
 struct intel_fbdev;
 
 struct intel_gmbus {
-	struct i2c_controller	 controller;
-	struct gmbus_port	 gp;
+	struct i2c_controller controller;
+	u32 port;
+	u32 speed;
+	u32 force_bit;
+	u32 reg0;
+	u32 gpio_reg;
+	struct inteldrm_softc *dev_priv;
 };
 
 struct i915_suspend_saved_registers {
@@ -1205,10 +1205,16 @@ extern int i915_restore_state(struct drm_device *);
 
 /* intel_i2c.c */
 extern int intel_setup_gmbus(struct inteldrm_softc *);
-struct i2c_controller *intel_gmbus_get_adapter(drm_i915_private_t *, unsigned);
 static inline bool intel_gmbus_is_port_valid(unsigned port)
 {
 	return (port >= GMBUS_PORT_SSC && port <= GMBUS_PORT_DPD);
+}
+
+struct i2c_controller *intel_gmbus_get_adapter(drm_i915_private_t *, unsigned);
+extern void intel_gmbus_force_bit(struct i2c_controller *, bool);
+static inline bool intel_gmbus_is_forced_bit(struct i2c_controller *i2c)
+{
+	return container_of(i2c, struct intel_gmbus, controller)->force_bit;
 }
 
 /* i915_gem.c */
