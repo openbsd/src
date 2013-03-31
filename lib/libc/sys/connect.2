@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.22 2009/12/29 10:25:43 sobrado Exp $
+.\"	$OpenBSD: connect.2,v 1.23 2013/03/31 08:34:27 guenther Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,14 +30,13 @@
 .\"
 .\"     @(#)connect.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 29 2009 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt CONNECT 2
 .Os
 .Sh NAME
 .Nm connect
 .Nd initiate a connection on a socket
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn connect "int s" "const struct sockaddr *name" "socklen_t namelen"
@@ -82,11 +81,11 @@ The
 call fails if:
 .Bl -tag -width Er
 .It Bq Er EBADF
-.Fa S
+.Fa s
 is not a valid descriptor.
 .It Bq Er ENOTSOCK
-.Fa S
-is a descriptor for a file, not a socket.
+.Fa s
+is not a socket.
 .It Bq Er EADDRNOTAVAIL
 The specified address is not available on this machine.
 .It Bq Er EAFNOSUPPORT
@@ -176,6 +175,11 @@ may refer to a socket of type
 .Xr poll 2 ,
 .Xr select 2 ,
 .Xr socket 2
+.Sh STANDARDS
+The
+.Fn connect
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn connect

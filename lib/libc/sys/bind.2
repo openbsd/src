@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.16 2009/12/29 10:25:43 sobrado Exp $
+.\"	$OpenBSD: bind.2,v 1.17 2013/03/31 08:34:27 guenther Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,14 +30,13 @@
 .\"
 .\"     @(#)bind.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 29 2009 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt BIND 2
 .Os
 .Sh NAME
 .Nm bind
 .Nd bind a name to a socket
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn bind "int s" "const struct sockaddr *name" "socklen_t namelen"
@@ -85,11 +84,15 @@ The specified address is not available from the local machine.
 .It Bq Er EADDRINUSE
 The specified address is already in use.
 .It Bq Er EINVAL
-The socket is already bound to an address.
-.It Bq Er EINVAL
+The socket is already bound to an address, or
+.Fa namelen
+is not a valid length for the supplied address.
+.It Bq Er EAFNOSUPPORT
 The family of the socket and that requested in
 .Va name->sa_family
 are not equivalent.
+.It Bq Er ENOBUFS
+Insufficient buffer space is available.
 .It Bq Er EACCES
 The requested address is protected, and the current user
 has inadequate permission to access it.
@@ -126,6 +129,11 @@ An empty pathname was specified.
 .Xr getsockname 2 ,
 .Xr listen 2 ,
 .Xr socket 2
+.Sh STANDARDS
+The
+.Fn bind
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn bind
