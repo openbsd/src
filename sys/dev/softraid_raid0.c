@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.36 2013/03/30 02:02:14 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.37 2013/03/31 10:41:16 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -48,6 +48,7 @@ int	sr_raid0_create(struct sr_discipline *, struct bioc_createraid *,
 	    int, int64_t);
 int	sr_raid0_assemble(struct sr_discipline *, struct bioc_createraid *,
 	    int, void *);
+int	sr_raid0_init(struct sr_discipline *);
 int	sr_raid0_alloc_resources(struct sr_discipline *);
 int	sr_raid0_free_resources(struct sr_discipline *);
 int	sr_raid0_rw(struct sr_workunit *);
@@ -88,18 +89,26 @@ sr_raid0_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	sd->sd_meta->ssdi.ssd_size = (coerced_size &
 	    ~((sd->sd_meta->ssdi.ssd_strip_size >> DEV_BSHIFT) - 1)) * no_chunk;
 
-	sd->sd_max_ccb_per_wu =
-	    (MAXPHYS / sd->sd_meta->ssdi.ssd_strip_size + 1) *
-	    SR_RAID0_NOWU * no_chunk;
-
-	return 0;
+	return sr_raid0_init(sd);
 }
 
 int
 sr_raid0_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunks, void *data)
 {
+	return sr_raid0_init(sd);
+}
 
+int
+sr_raid0_init(struct sr_discipline *sd)
+{
+	/* Initialise runtime values. */
+	sd->mds.mdd_raid0.sr0_strip_bits =
+	    sr_validate_stripsize(sd->sd_meta->ssdi.ssd_strip_size);
+	if (sd->mds.mdd_raid0.sr0_strip_bits == -1) {
+		sr_error(sd->sd_sc, "invalid strip size", sd->sd_name);
+		return EINVAL;
+	}
 	sd->sd_max_ccb_per_wu =
 	    (MAXPHYS / sd->sd_meta->ssdi.ssd_strip_size + 1) *
 	    SR_RAID0_NOWU * sd->sd_meta->ssdi.ssd_chunk_no;
@@ -118,12 +127,6 @@ sr_raid0_alloc_resources(struct sr_discipline *sd)
 	if (sr_wu_alloc(sd))
 		goto bad;
 	if (sr_ccb_alloc(sd))
-		goto bad;
-
-	/* setup runtime values */
-	sd->mds.mdd_raid0.sr0_strip_bits =
-	    sr_validate_stripsize(sd->sd_meta->ssdi.ssd_strip_size);
-	if (sd->mds.mdd_raid0.sr0_strip_bits == -1)
 		goto bad;
 
 	rv = 0;

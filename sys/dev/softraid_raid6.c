@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.41 2013/03/30 14:41:37 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.42 2013/03/31 10:41:16 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -53,6 +53,7 @@ int	sr_raid6_create(struct sr_discipline *, struct bioc_createraid *,
 	    int, int64_t);
 int	sr_raid6_assemble(struct sr_discipline *, struct bioc_createraid *,
 	    int, void *);
+int	sr_raid6_init(struct sr_discipline *);
 int	sr_raid6_alloc_resources(struct sr_discipline *);
 int	sr_raid6_free_resources(struct sr_discipline *);
 int	sr_raid6_rw(struct sr_workunit *);
@@ -127,21 +128,31 @@ sr_raid6_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	 * XXX add variable strip size later even though MAXPHYS is really
 	 * the clever value, users like * to tinker with that type of stuff.
 	 */
-        sd->sd_meta->ssdi.ssd_strip_size = MAXPHYS;
-        sd->sd_meta->ssdi.ssd_size = (coerced_size &
+	sd->sd_meta->ssdi.ssd_strip_size = MAXPHYS;
+	sd->sd_meta->ssdi.ssd_size = (coerced_size &
 	    ~((sd->sd_meta->ssdi.ssd_strip_size >> DEV_BSHIFT) - 1)) *
 	    (no_chunk - 2);
 
-	/* only if stripsize <= MAXPHYS */
-	sd->sd_max_ccb_per_wu = max(6, 2 * no_chunk);
-
-	return 0;
+	return sr_raid6_init(sd);
 }
 
 int
 sr_raid6_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, void *data)
 {
+	return sr_raid6_init(sd);
+}
+
+int
+sr_raid6_init(struct sr_discipline *sd)
+{
+	/* Initialise runtime values. */
+	sd->mds.mdd_raid6.sr6_strip_bits =
+	    sr_validate_stripsize(sd->sd_meta->ssdi.ssd_strip_size);
+	if (sd->mds.mdd_raid6.sr6_strip_bits == -1) {
+		sr_error(sd->sd_sc, "invalid strip size");
+		return EINVAL;
+	}
 
 	/* only if stripsize <= MAXPHYS */
 	sd->sd_max_ccb_per_wu = max(6, 2 * sd->sd_meta->ssdi.ssd_chunk_no);
@@ -166,12 +177,6 @@ sr_raid6_alloc_resources(struct sr_discipline *sd)
 	if (sr_wu_alloc(sd))
 		goto bad;
 	if (sr_ccb_alloc(sd))
-		goto bad;
-
-	/* setup runtime values */
-	sd->mds.mdd_raid6.sr6_strip_bits =
-	    sr_validate_stripsize(sd->sd_meta->ssdi.ssd_strip_size);
-	if (sd->mds.mdd_raid6.sr6_strip_bits == -1)
 		goto bad;
 
 	rv = 0;
@@ -395,7 +400,7 @@ die:
 
 /*  modes:
  *   readq: sr_raid6_addio(i, lba, length, NULL, SCSI_DATA_IN,
- *	        SR_CCBF_FREEBUF, qbuf, NULL, 0);
+ *		SR_CCBF_FREEBUF, qbuf, NULL, 0);
  *   readp: sr_raid6_addio(i, lba, length, NULL, SCSI_DATA_IN,
  *		SR_CCBF_FREEBUF, pbuf, NULL, 0);
  *   readx: sr_raid6_addio(i, lba, length, NULL, SCSI_DATA_IN,
@@ -413,7 +418,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 	daddr64_t		blk, lbaoffs, strip_no, chunk, qchunk, pchunk, fchunk;
 	daddr64_t		strip_size, no_chunk, lba, chunk_offs, phys_offs;
 	daddr64_t		strip_bits, length, strip_offs, datalen, row_size;
-	void		        *pbuf, *data, *qbuf;
+	void			*pbuf, *data, *qbuf;
 
 	/* blk and scsi error will be handled by sr_validate_io */
 	if (sr_validate_io(wu, &blk, "sr_raid6_rw"))

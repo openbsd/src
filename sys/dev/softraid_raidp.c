@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.38 2013/03/30 14:41:37 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.39 2013/03/31 10:41:16 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -49,6 +49,7 @@ int	sr_raidp_create(struct sr_discipline *, struct bioc_createraid *,
 	    int, int64_t);
 int	sr_raidp_assemble(struct sr_discipline *, struct bioc_createraid *,
 	    int, void *);
+int	sr_raidp_init(struct sr_discipline *);
 int	sr_raidp_alloc_resources(struct sr_discipline *);
 int	sr_raidp_free_resources(struct sr_discipline *);
 int	sr_raidp_rw(struct sr_workunit *);
@@ -110,13 +111,26 @@ sr_raidp_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	    ~((sd->sd_meta->ssdi.ssd_strip_size >> DEV_BSHIFT) - 1)) *
 	    (no_chunk - 1);
 
-	return 0;
+	return sr_raidp_init(sd);
 }
 
 int
 sr_raidp_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, void *data)
 {
+	return sr_raidp_init(sd);
+}
+
+int
+sr_raidp_init(struct sr_discipline *sd)
+{
+	/* Initialise runtime values. */
+	sd->mds.mdd_raidp.srp_strip_bits =
+	    sr_validate_stripsize(sd->sd_meta->ssdi.ssd_strip_size);
+	if (sd->mds.mdd_raidp.srp_strip_bits == -1) {
+		sr_error(sd->sd_sc, "invalid strip size");
+		return EINVAL;
+	}
 
 	return 0;
 }
@@ -138,12 +152,6 @@ sr_raidp_alloc_resources(struct sr_discipline *sd)
 	if (sr_wu_alloc(sd))
 		goto bad;
 	if (sr_ccb_alloc(sd))
-		goto bad;
-
-	/* setup runtime values */
-	sd->mds.mdd_raidp.srp_strip_bits =
-	    sr_validate_stripsize(sd->sd_meta->ssdi.ssd_strip_size);
-	if (sd->mds.mdd_raidp.srp_strip_bits == -1)
 		goto bad;
 
 	rv = 0;
