@@ -767,7 +767,7 @@ _quick3p=
     deprecate 3p		lib/deprecate.pm \
     encoding 3p			lib/encoding.pm \
     encoding::warnings 3p	lib/encoding/warnings.pm \
-    feature 3p			regen/feature.pl \
+    feature 3p			lib/feature.pm \
     fields 3p			lib/fields.pm \
     filetest 3p			lib/filetest.pm \
     if 3p			lib/if.pm \
