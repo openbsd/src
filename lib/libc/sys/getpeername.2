@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeername.2,v 1.24 2010/07/01 20:48:37 jmc Exp $
+.\"	$OpenBSD: getpeername.2,v 1.25 2013/03/31 22:11:26 guenther Exp $
 .\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,13 @@
 .\"
 .\"     @(#)getpeername.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 1 2010 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt GETPEERNAME 2
 .Os
 .Sh NAME
 .Nm getpeername
 .Nd get name of connected peer
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn getpeername "int s" "struct sockaddr *name" "socklen_t *namelen"
@@ -132,6 +131,11 @@ process address space.
 .Xr getsockname 2 ,
 .Xr socket 2 ,
 .Xr getpeereid 3
+.Sh STANDARDS
+The
+.Fn getpeername
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn getpeername

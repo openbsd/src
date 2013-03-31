@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsync.2,v 1.9 2011/04/29 07:12:44 jmc Exp $
+.\"	$OpenBSD: fsync.2,v 1.10 2013/03/31 22:11:26 guenther Exp $
 .\"	$NetBSD: fsync.2,v 1.4 1995/02/27 12:32:38 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 29 2011 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt FSYNC 2
 .Os
 .Sh NAME
@@ -64,13 +64,18 @@ fails if:
 is not a valid descriptor.
 .It Bq Er EINVAL
 .Fa fd
-refers to a socket, not to a file.
+does not refer to a file which can be synchronized.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
 .Xr sync 2 ,
 .Xr sync 8
+.Sh STANDARDS
+The
+.Fn fsync
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn fsync

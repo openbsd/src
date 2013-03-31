@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.21 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: getitimer.2,v 1.22 2013/03/31 22:11:26 guenther Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -187,19 +187,33 @@ The
 .Fa value
 parameter specified a bad address.
 .It Bq Er EINVAL
-A
-.Fa value
-parameter specified a time that was too large to be handled.
-.It Bq Er EINVAL
 An unrecognized value for
 .Fa which
 was specified.
+.El
+.Pp
+In addition,
+.Fn setitimer
+may return the following error:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa value
+or
+.Fa ovalue
+specified a time that was too large to be handled.
 .El
 .Sh SEE ALSO
 .Xr gettimeofday 2 ,
 .Xr poll 2 ,
 .Xr select 2 ,
 .Xr sigaction 2
+.Sh STANDARDS
+The
+.Fn getitimer
+and
+.Fn setitimer
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn getitimer
