@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.13 2013/03/31 11:12:06 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.14 2013/03/31 13:31:44 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -36,6 +36,7 @@ int	sr_concat_create(struct sr_discipline *, struct bioc_createraid *,
 	    int, int64_t);
 int	sr_concat_assemble(struct sr_discipline *, struct bioc_createraid *,
 	    int, void *);
+int	sr_concat_init(struct sr_discipline *);
 int	sr_concat_rw(struct sr_workunit *);
 
 /* Discipline initialisation. */
@@ -70,16 +71,21 @@ sr_concat_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	for (i = 0; i < no_chunk; i++)
 		sd->sd_meta->ssdi.ssd_size +=
 		    sd->sd_vol.sv_chunks[i]->src_size;
-	sd->sd_max_ccb_per_wu = SR_CONCAT_NOWU * no_chunk;
 
-	return 0;
+	return sr_concat_init(sd);
 }
 
 int
 sr_concat_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, void *data)
 {
-	sd->sd_max_ccb_per_wu = SR_CONCAT_NOWU * no_chunk;
+	return sr_concat_init(sd);
+}
+
+int
+sr_concat_init(struct sr_discipline *sd)
+{
+	sd->sd_max_ccb_per_wu = SR_CONCAT_NOWU * sd->sd_meta->ssdi.ssd_chunk_no;
 
 	return 0;
 }
