@@ -11133,3 +11133,11 @@ _bfd_mips_elf_ignore_undef_symbol (struct elf_link_hash_entry *h)
 {
   return ELF_MIPS_IS_OPTIONAL (h->other) ? TRUE : FALSE;
 }
+
+bfd_boolean
+_bfd_mips_elf_common_definition (Elf_Internal_Sym *sym)
+{
+  return (sym->st_shndx == SHN_COMMON
+	  || sym->st_shndx == SHN_MIPS_ACOMMON
+	  || sym->st_shndx == SHN_MIPS_SCOMMON);
+}
