@@ -13,7 +13,7 @@ POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
 
 MANLOCALBUILD=	yes
 
-MLINKS=		c2ph.1 pstruct.1 psed.1 s2p.1 perl5161delta.1 perldelta.1 \
+MLINKS=		c2ph.1 pstruct.1 psed.1 s2p.1 \
 		Carp.3p carp.3p Carp.3p cluck.3p Carp.3p croak.3p \
 		Carp.3p confess.3p Carp.3p shortmess.3p Carp.3p longmess.3p \
 		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
@@ -74,6 +74,7 @@ _quick3p=
     perl5143delta 1		pod/perl5143delta.pod \
     perl5160delta 1		pod/perl5160delta.pod \
     perl5161delta 1		pod/perl5161delta.pod \
+    perl5162delta 1		pod/perl5162delta.pod \
     perl5dbpl 1			lib/perl5db.pl \
     perlapi 1			pod/perlapi.pod \
     perlapio 1			pod/perlapio.pod \
@@ -91,6 +92,7 @@ _quick3p=
     perldebguts 1		pod/perldebguts.pod \
     perldebtut 1		pod/perldebtut.pod \
     perldebug 1			pod/perldebug.pod \
+    perldelta 1			pod/perldelta.pod \
     perldiag 1			pod/perldiag.pod \
     perldoc 1			lib/perldoc.pod \
     perldsc 1			pod/perldsc.pod \
