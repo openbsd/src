@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_sdvo.c,v 1.4 2013/03/30 15:00:22 kettenis Exp $	*/
+/*	$OpenBSD: intel_sdvo.c,v 1.5 2013/03/31 08:32:43 kettenis Exp $	*/
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
  * Copyright © 2006-2007 Intel Corporation
@@ -2879,7 +2879,7 @@ intel_sdvo_ddc_proxy_acquire_bus(void *cookie, int flags)
 	struct intel_sdvo *sdvo = cookie;
 	struct i2c_controller *i2c = sdvo->i2c;
 
-	return ((i2c->ic_acquire_bus)(i2c->ic_cookie, flags));
+	return iic_acquire_bus(i2c, flags);
 }
 
 void
@@ -2888,7 +2888,7 @@ intel_sdvo_ddc_proxy_release_bus(void *cookie, int flags)
 	struct intel_sdvo *sdvo = cookie;
 	struct i2c_controller *i2c = sdvo->i2c;
 
-	(i2c->ic_release_bus)(i2c->ic_cookie, flags);
+	iic_release_bus(i2c, flags);
 }
 
 int
@@ -2899,10 +2899,9 @@ intel_sdvo_ddc_proxy_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	struct i2c_controller *i2c = sdvo->i2c;
 
 	if (!intel_sdvo_set_control_bus_switch(sdvo, sdvo->ddc_bus))
-		return -EIO;
+		return EIO;
 
-	return ((i2c->ic_exec)(i2c->ic_cookie,
-	    op, addr, cmdbuf, cmdlen, buffer, len, flags));
+	return iic_exec(i2c, op, addr, cmdbuf, cmdlen, buffer, len, flags);
 }
 
 bool
