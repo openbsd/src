@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.90 2013/03/31 11:37:40 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.91 2013/03/31 15:44:52 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -140,7 +140,8 @@ sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	int			rv = EINVAL;
 
 	if (no_chunk != 1) {
-		sr_error(sd->sd_sc, "CRYPTO requires exactly one chunk");
+		sr_error(sd->sd_sc, "%s requires exactly one chunk",
+		    sd->sd_name);
 		goto done;
         }
 

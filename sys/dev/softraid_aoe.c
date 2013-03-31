@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.31 2013/03/31 11:37:40 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.32 2013/03/31 15:44:52 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -130,9 +130,11 @@ int
 sr_aoe_create(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, int64_t coerced_size)
 {
-
-	if (no_chunk != 1)
+	if (no_chunk != 1) {
+		sr_error(sd->sd_sc, "%s requires exactly one chunk",
+		    sd->sd_name);
 		return EINVAL;
+	}
 
 	sd->sd_max_ccb_per_wu = no_chunk;
 
@@ -562,9 +564,11 @@ int
 sr_aoe_server_create(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, int64_t coerced_size)
 {
-
-	if (no_chunk != 1)
+	if (no_chunk != 1) {
+		sr_error(sd->sd_sc, "%s requires exactly one chunk",
+		    sd->sd_name);
 		return EINVAL;
+	}
 
 	sd->sd_meta->ssdi.ssd_size = coerced_size;
 
