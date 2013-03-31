@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.24 2013/03/18 12:36:51 jsg Exp $
+# $OpenBSD: files.drm,v 1.25 2013/03/31 13:30:25 kettenis Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -21,7 +21,7 @@ file   dev/pci/drm/drm_edid.c		drm
 file   dev/pci/drm/drm_dp_helper.c	drm
 file   dev/pci/drm/drm_fb_helper.c	drm
 
-device	inteldrm: drmbase, wsemuldisplaydev, rasops32
+device	inteldrm: drmbase, wsemuldisplaydev, rasops32, i2cbus, i2c_bitbang
 attach	inteldrm at drmdev
 file	dev/pci/drm/i915/i915_dma.c		inteldrm
 file	dev/pci/drm/i915/i915_drv.c		inteldrm

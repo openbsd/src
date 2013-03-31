@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.544 2013/03/28 16:41:39 tedu Exp $
+#	$OpenBSD: files,v 1.545 2013/03/31 13:30:23 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -54,6 +54,12 @@ define	rasops24
 define	rasops32
 define	rasops_bswap
 define	rasops_rotation
+
+# I2C bus bit-banging
+define	i2c_bitbang
+
+# 1-Wire bus bit-banging
+define	onewire_bitbang
 
 # net device attributes - we have generic code for ether(net),
 # and fddi.
@@ -125,9 +131,6 @@ define	atapi {[channel = -1]}
 # Common code for ESDI/IDE/etc. controllers
 device	wdc: ata, atapi, wdc_base
 file	dev/ic/wdc.c			wdc_base
-
-# 1-Wire bus bit-banging
-define	onewire_bitbang
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
