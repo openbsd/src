@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/03/30 22:03:51 kurt Exp $
+# $OpenBSD: Makefile,v 1.2 2013/03/31 23:29:46 miod Exp $
 
 .include <bsd.obj.mk>
 
@@ -23,7 +23,7 @@ REGRESS_TARGETS = test
 test: $(PROG)
 	mkdir -p "OpenBSD/`uname -r`/`uname -m`"
 	cp $(AA_OBJDIR)/libaa.so* "OpenBSD/`uname -r`/`uname -m`/"
-	$(PROG)
+	./$(PROG)
 
 clean:
 	rm -f a.out [Ee]rrs mklog core *.core y.tab.h \
