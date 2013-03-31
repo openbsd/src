@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.296 2013/03/31 11:12:06 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.297 2013/03/31 11:30:59 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3540,8 +3540,8 @@ sr_ioctl_deleteraid(struct sr_softc *sc, struct bioc_deleteraid *bd)
 	struct sr_discipline	*sd;
 	int			rv = 1;
 
-	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_deleteraid %s\n", DEVNAME(sc),
-	    dr->bd_dev);
+	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_deleteraid %s\n",
+	    DEVNAME(sc), bd->bd_dev);
 
 	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
 		if (!strncmp(sd->sd_meta->ssd_devname, bd->bd_dev,
