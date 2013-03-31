@@ -539,7 +539,6 @@
 ./usr/share/man/man1/perlcall.1
 ./usr/share/man/man1/perlcheat.1
 ./usr/share/man/man1/perlclib.1
-./usr/share/man/man1/perlcn.1
 ./usr/share/man/man1/perlcommunity.1
 ./usr/share/man/man1/perldata.1
 ./usr/share/man/man1/perldbmfilter.1
@@ -579,8 +578,6 @@
 ./usr/share/man/man1/perliol.1
 ./usr/share/man/man1/perlipc.1
 ./usr/share/man/man1/perlivp.1
-./usr/share/man/man1/perljp.1
-./usr/share/man/man1/perlko.1
 ./usr/share/man/man1/perllexwarn.1
 ./usr/share/man/man1/perllocale.1
 ./usr/share/man/man1/perllol.1
@@ -627,7 +624,6 @@
 ./usr/share/man/man1/perltooc.1
 ./usr/share/man/man1/perltoot.1
 ./usr/share/man/man1/perltrap.1
-./usr/share/man/man1/perltw.1
 ./usr/share/man/man1/perlunicode.1
 ./usr/share/man/man1/perlunifaq.1
 ./usr/share/man/man1/perluniintro.1
