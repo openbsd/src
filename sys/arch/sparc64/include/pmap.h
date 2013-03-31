@@ -36,7 +36,9 @@
 
 #ifndef _LOCORE
 #include <machine/pte.h>
+#ifdef	_KERNEL
 #include <sys/queue.h>
+#endif
 #endif
 
 /*
@@ -86,6 +88,12 @@
 
 #ifndef _LOCORE
 
+#define va_to_seg(v)	(int)((((paddr_t)(v))>>STSHIFT)&STMASK)
+#define va_to_dir(v)	(int)((((paddr_t)(v))>>PDSHIFT)&PDMASK)
+#define va_to_pte(v)	(int)((((paddr_t)(v))>>PTSHIFT)&PTMASK)
+
+#ifdef	_KERNEL
+
 /*
  * Support for big page sizes.  This maps the page size to the
  * page bits.
@@ -98,16 +106,6 @@ struct page_size_map {
 #endif
 };
 extern struct page_size_map page_size_map[];
-
-/*
- * Pmap stuff
- */
-
-#define va_to_seg(v)	(int)((((paddr_t)(v))>>STSHIFT)&STMASK)
-#define va_to_dir(v)	(int)((((paddr_t)(v))>>PDSHIFT)&PDMASK)
-#define va_to_pte(v)	(int)((((paddr_t)(v))>>PTSHIFT)&PTMASK)
-
-#ifdef	_KERNEL
 
 struct pmap {
 	int pm_ctx;		/* Current context */

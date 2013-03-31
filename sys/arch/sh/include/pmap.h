@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.11 2013/03/25 20:15:34 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.12 2013/03/31 17:07:03 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -39,10 +39,11 @@
 
 #ifndef _SH_PMAP_H_
 #define	_SH_PMAP_H_
-#include <sys/queue.h>
+
 #include <sh/pte.h>
 
 #ifdef _KERNEL
+#include <sys/queue.h>
 
 #define	PMAP_STEAL_MEMORY
 #define	PMAP_GROWKERNEL

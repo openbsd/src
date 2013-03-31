@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.14 2008/11/26 14:10:23 claudio Exp $	*/
+/*	$OpenBSD: pte.h,v 1.15 2013/03/31 17:07:03 deraadt Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -23,6 +23,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef	_MACHINE_PTE_H_
+#define	_MACHINE_PTE_H_
 
 /*
  * Address translation works as follows:
@@ -247,3 +250,6 @@ void smp_tlb_flush_ctx(int);
 #define IOPTE_RSVD      0x000000f1
 #define IOPTE_WRITE     0x00000004
 #define IOPTE_VALID     0x00000002
+
+#endif /* _MACHINE_PTE_H_ */
+

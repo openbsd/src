@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.61 2013/03/25 19:32:52 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.62 2013/03/31 17:07:03 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -40,9 +40,11 @@
 #ifndef	_MACHINE_PMAP_H_
 #define	_MACHINE_PMAP_H_
 
+#ifdef _KERNEL
 #include <machine/cpufunc.h>
-#include <machine/pte.h>
 #include <machine/segments.h>
+#endif
+#include <machine/pte.h>
 #include <uvm/uvm_object.h>
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.27 2013/03/25 20:03:02 deraadt Exp $ */
+/* $OpenBSD: pmap.h,v 1.28 2013/03/31 17:07:03 deraadt Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -70,12 +70,12 @@
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
-#include <sys/lock.h>
-#include <sys/queue.h>
-
 #include <machine/pte.h>
 
 #ifdef _KERNEL
+
+#include <sys/lock.h>
+#include <sys/queue.h>
 
 /*
  * Machine-dependent virtual memory state.
