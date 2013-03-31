@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.297 2013/03/31 11:30:59 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.298 2013/03/31 11:37:40 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -118,7 +118,7 @@ void			sr_discipline_free(struct sr_discipline *);
 void			sr_discipline_shutdown(struct sr_discipline *, int);
 int			sr_discipline_init(struct sr_discipline *, int);
 int			sr_alloc_resources(struct sr_discipline *);
-int			sr_free_resources(struct sr_discipline *);
+void			sr_free_resources(struct sr_discipline *);
 void			sr_set_chunk_state(struct sr_discipline *, int, int);
 void			sr_set_vol_state(struct sr_discipline *);
 
@@ -4198,13 +4198,11 @@ sr_alloc_resources(struct sr_discipline *sd)
 	return (0);
 }
 
-int
+void
 sr_free_resources(struct sr_discipline *sd)
 {
 	sr_wu_free(sd);
 	sr_ccb_free(sd);
-
-	return (0);
 }
 
 void

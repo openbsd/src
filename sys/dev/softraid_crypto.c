@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.89 2013/03/30 02:02:14 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.90 2013/03/31 11:37:40 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -87,7 +87,7 @@ int		sr_crypto_create(struct sr_discipline *,
 int		sr_crypto_assemble(struct sr_discipline *,
 		    struct bioc_createraid *, int, void *);
 int		sr_crypto_alloc_resources(struct sr_discipline *);
-int		sr_crypto_free_resources(struct sr_discipline *);
+void		sr_crypto_free_resources(struct sr_discipline *);
 int		sr_crypto_ioctl(struct sr_discipline *,
 		    struct bioc_discipline *);
 int		sr_crypto_meta_opt_handler(struct sr_discipline *,
@@ -1042,10 +1042,9 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	return (0);
 }
 
-int
+void
 sr_crypto_free_resources(struct sr_discipline *sd)
 {
-	int			rv = EINVAL;
 	struct sr_crypto_wu	*crwu;
 	u_int			i;
 
@@ -1082,9 +1081,6 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 
 	sr_wu_free(sd);
 	sr_ccb_free(sd);
-
-	rv = 0;
-	return (rv);
 }
 
 int
