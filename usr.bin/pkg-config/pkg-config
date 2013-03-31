@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.78 2013/03/28 22:00:02 jasper Exp $
+# $OpenBSD: pkg-config,v 1.79 2013/03/31 13:58:01 brad Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -113,7 +113,7 @@ GetOptions(	'debug' 		=> \$mode{debug},
 # may not have been passed explicitly, but we don't want to re-order
 # and simplify the libs like we do for shared architectures.
 {
-	my @static_archs = qw(m88k vax);
+	my @static_archs = qw(vax);
 	my $machine_arch = $Config{'ARCH'};
 	if (grep { $_ eq $machine_arch } @static_archs){
 		$mode{static} = 1;
