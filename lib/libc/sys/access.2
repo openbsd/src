@@ -1,4 +1,4 @@
-.\"	$OpenBSD: access.2,v 1.20 2013/03/30 06:44:44 guenther Exp $
+.\"	$OpenBSD: access.2,v 1.21 2013/03/31 05:07:55 guenther Exp $
 .\"	$NetBSD: access.2,v 1.7 1995/02/27 12:31:44 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)access.2	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: March 30 2013 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt ACCESS 2
 .Os
 .Sh NAME
@@ -180,6 +180,11 @@ Additionally,
 .Fn faccessat
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EINVAL
+The value of the
+.Fa flag
+argument was neither zero nor
+.Dv AT_EACCESS .
 .It Bq Er EBADF
 The
 .Fa path

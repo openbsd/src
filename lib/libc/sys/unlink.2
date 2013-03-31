@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unlink.2,v 1.20 2011/11/06 17:22:20 schwarze Exp $
+.\"	$OpenBSD: unlink.2,v 1.21 2013/03/31 05:07:55 guenther Exp $
 .\"	$NetBSD: unlink.2,v 1.7 1995/02/27 12:39:13 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)unlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 6 2011 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt UNLINK 2
 .Os
 .Sh NAME
@@ -165,14 +165,6 @@ Additionally,
 .Fn unlinkat
 will fail if:
 .Bl -tag -width Er
-.It Bq Er EBADF
-The
-.Fa path
-argument does not specify an absolute path and the
-.Fa fd
-argument is neither
-.Dv AT_FDCWD
-nor a valid file descriptor open for reading.
 .It Bq Er ENOTDIR
 The
 .Dv AT_REMOVEDIR
@@ -187,6 +179,32 @@ flag bit is set and the named directory contains files other than
 and
 .Ql \&..
 in it.
+.It Bq Er EINVAL
+The value of the
+.Fa flag
+argument was neither zero nor
+.Dv AT_REMOVEDIR .
+.It Bq Er EBADF
+The
+.Fa path
+argument specifies a relative path and the
+.Fa fd
+argument is neither
+.Dv AT_FDCWD
+nor a valid file descriptor.
+.It Bq Er ENOTDIR
+The
+.Fa path
+argument specifies a relative path and the
+.Fa fd
+argument is a valid file descriptor but it does not reference a directory.
+.It Bq Er EACCES
+The
+.Fa path
+argument specifies a relative path but search permission is denied
+for the directory which the
+.Fa fd
+file descriptor references.
 .El
 .Sh SEE ALSO
 .Xr rm 1 ,

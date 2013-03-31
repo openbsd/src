@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkfifo.2,v 1.9 2011/07/18 23:04:40 matthew Exp $
+.\"	$OpenBSD: mkfifo.2,v 1.10 2013/03/31 05:07:55 guenther Exp $
 .\"	$NetBSD: mkfifo.2,v 1.8 1995/02/27 12:34:27 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mkfifo.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 18 2011 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt MKFIFO 2
 .Os
 .Sh NAME
@@ -148,11 +148,24 @@ will fail if:
 .It Bq Er EBADF
 The
 .Fa path
-argument does not specify an absolute path and the
+argument specifies a relative path and the
 .Fa fd
 argument is neither
 .Dv AT_FDCWD
-nor a valid file descriptor open for reading.
+nor a valid file descriptor.
+.It Bq Er ENOTDIR
+The
+.Fa path
+argument specifies a relative path and the
+.Fa fd
+argument is a valid file descriptor but it does not reference a directory.
+.It Bq Er EACCES
+The
+.Fa path
+argument specifies a relative path but search permission is denied
+for the directory which the
+.Fa fd
+file descriptor references.
 .El
 .Sh SEE ALSO
 .Xr chmod 2 ,

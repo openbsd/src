@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rename.2,v 1.16 2011/07/19 07:06:22 jmc Exp $
+.\"	$OpenBSD: rename.2,v 1.17 2013/03/31 05:07:55 guenther Exp $
 .\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 19 2011 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt RENAME 2
 .Os
 .Sh NAME
@@ -220,13 +220,35 @@ The
 .Fa from
 or
 .Fa to
-argument does not specify an absolute path and
+argument specifies a relative path and the
 .Fa fromfd
 or
-.Fa tofd ,
-respectively, is neither
+.Fa tofd
+argument, respectively, is neither
 .Dv AT_FDCWD
-nor a valid file descriptor open for reading.
+nor a valid file descriptor.
+.It Bq Er ENOTDIR
+The
+.Fa from
+or
+.Fa to
+argument specifies a relative path and the
+.Fa fromfd
+or
+.Fa tofd
+argument, respectively,
+is a valid file descriptor but it does not reference a directory.
+.It Bq Er EACCES
+The
+.Fa from
+or
+.Fa to
+argument specifies a relative path but search permission is denied
+for the directory which the
+.Fa fromfd
+or
+.Fa tofd
+file descriptor, respectively, references.
 .El
 .Sh SEE ALSO
 .Xr mv 1 ,

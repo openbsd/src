@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.2,v 1.11 2011/11/17 14:26:14 schwarze Exp $
+.\"	$OpenBSD: mkdir.2,v 1.12 2013/03/31 05:07:55 guenther Exp $
 .\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 17 2011 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt MKDIR 2
 .Os
 .Sh NAME
@@ -138,11 +138,24 @@ will fail if:
 .It Bq Er EBADF
 The
 .Fa path
-argument does not specify an absolute path and the
+argument specifies a relative path and the
 .Fa fd
 argument is neither
 .Dv AT_FDCWD
-nor a valid file descriptor open for reading.
+nor a valid file descriptor.
+.It Bq Er ENOTDIR
+The
+.Fa path
+argument specifies a relative path and the
+.Fa fd
+argument is a valid file descriptor but it does not reference a directory.
+.It Bq Er EACCES
+The
+.Fa path
+argument specifies a relative path but search permission is denied
+for the directory which the
+.Fa fd
+file descriptor references.
 .El
 .Sh SEE ALSO
 .Xr chmod 2 ,

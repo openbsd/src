@@ -1,4 +1,4 @@
-.\"	$OpenBSD: link.2,v 1.22 2011/11/17 14:26:14 schwarze Exp $
+.\"	$OpenBSD: link.2,v 1.23 2013/03/31 05:07:55 guenther Exp $
 .\"	$NetBSD: link.2,v 1.7 1995/02/27 12:34:01 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)link.2	8.3 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: November 17 2011 $
+.Dd $Mdocdate: March 31 2013 $
 .Dt LINK 2
 .Os
 .Sh NAME
@@ -214,18 +214,45 @@ Additionally,
 .Fn linkat
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EINVAL
+The value of the
+.Fa flag
+argument was neither zero nor
+.Dv AT_SYMLINK_FOLLOW .
 .It Bq Er EBADF
 The
 .Fa name1
 or
 .Fa name2
-argument does not specify an absolute path and
+argument specifies a relative path and the
 .Fa fd1
 or
-.Fa fd2 ,
-respectively, is neither
+.Fa fd2
+argument, respectively, is neither
 .Dv AT_FDCWD
-nor a valid file descriptor open for reading.
+nor a valid file descriptor.
+.It Bq Er ENOTDIR
+The
+.Fa name1
+or
+.Fa name2
+argument specifies a relative path and the
+.Fa fd1
+or
+.Fa fd2
+argument, respectively,
+is a valid file descriptor but it does not reference a directory.
+.It Bq Er EACCES
+The
+.Fa name1
+or
+.Fa name2
+argument specifies a relative path but search permission is denied
+for the directory which the
+.Fa fd1
+or
+.Fa fd2
+file descriptor, respectively, references.
 .El
 .Sh SEE ALSO
 .Xr ln 1 ,
