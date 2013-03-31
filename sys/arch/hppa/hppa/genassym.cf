@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.44 2011/11/08 15:39:50 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.45 2013/03/31 17:04:28 deraadt Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -52,8 +52,6 @@ include <machine/pte.h>
 include <machine/reg.h>
 
 # general constants
-export	NBPG
-export	PGSHIFT
 export	USRSTACK
 export	HPPA_PID_KERNEL
 export	HPPA_SID_KERNEL
