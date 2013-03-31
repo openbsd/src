@@ -1,4 +1,4 @@
-/*	$OpenBSD: resource.h,v 1.10 2012/09/05 17:13:36 deraadt Exp $	*/
+/*	$OpenBSD: resource.h,v 1.11 2013/03/31 21:49:06 guenther Exp $	*/
 /*	$NetBSD: resource.h,v 1.14 1996/02/09 18:25:27 christos Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 /*
  * Process priority specifications to get/setpriority.
  */
-#define	PRIO_MIN	-20
+#define	PRIO_MIN	(-20)
 #define	PRIO_MAX	20
 
 #define	PRIO_PROCESS	0
@@ -52,7 +52,7 @@
  */
 
 #define	RUSAGE_SELF	0
-#define	RUSAGE_CHILDREN	-1
+#define	RUSAGE_CHILDREN	(-1)
 #define	RUSAGE_THREAD	1
 
 struct	rusage {
@@ -100,11 +100,13 @@ struct rlimit {
 	rlim_t	rlim_max;		/* maximum value for rlim_cur */
 };
 
+#if __BSD_VISIBLE
 /* Load average structure. */
 struct loadavg {
 	fixpt_t	ldavg[3];
 	long	fscale;
 };
+#endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
 extern struct loadavg averunnable;
@@ -113,8 +115,6 @@ int	dosetrlimit(struct proc *, u_int, struct rlimit *);
 int	donice(struct proc *, struct process *, int);
 
 #else
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
 int	getpriority(int, id_t);
 int	getrlimit(int, struct rlimit *);
