@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.295 2013/03/30 14:41:36 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.296 2013/03/31 11:12:06 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -117,6 +117,8 @@ void			sr_chunks_unwind(struct sr_softc *,
 void			sr_discipline_free(struct sr_discipline *);
 void			sr_discipline_shutdown(struct sr_discipline *, int);
 int			sr_discipline_init(struct sr_discipline *, int);
+int			sr_alloc_resources(struct sr_discipline *);
+int			sr_free_resources(struct sr_discipline *);
 void			sr_set_chunk_state(struct sr_discipline *, int, int);
 void			sr_set_vol_state(struct sr_discipline *);
 
@@ -3875,10 +3877,10 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	int			rv = 1;
 
 	/* Initialise discipline function pointers with defaults. */
-	sd->sd_alloc_resources = NULL;
+	sd->sd_alloc_resources = sr_alloc_resources;
 	sd->sd_assemble = NULL;
 	sd->sd_create = NULL;
-	sd->sd_free_resources = NULL;
+	sd->sd_free_resources = sr_free_resources;
 	sd->sd_ioctl_handler = NULL;
 	sd->sd_openings = NULL;
 	sd->sd_meta_opt_handler = NULL;
@@ -4179,6 +4181,30 @@ sr_raid_recreate_wu(struct sr_workunit *wu)
 
 		wup = wup->swu_collider;
 	} while (wup);
+}
+
+int
+sr_alloc_resources(struct sr_discipline *sd)
+{
+	if (sr_wu_alloc(sd)) {
+		sr_error(sd->sd_sc, "unable to allocate work units");
+		return (ENOMEM);
+	}
+	if (sr_ccb_alloc(sd)) {
+		sr_error(sd->sd_sc, "unable to allocate ccbs");
+		return (ENOMEM);
+	}
+
+	return (0);
+}
+
+int
+sr_free_resources(struct sr_discipline *sd)
+{
+	sr_wu_free(sd);
+	sr_ccb_free(sd);
+
+	return (0);
 }
 
 void

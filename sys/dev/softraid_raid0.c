@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.37 2013/03/31 10:41:16 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.38 2013/03/31 11:12:06 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -49,8 +49,6 @@ int	sr_raid0_create(struct sr_discipline *, struct bioc_createraid *,
 int	sr_raid0_assemble(struct sr_discipline *, struct bioc_createraid *,
 	    int, void *);
 int	sr_raid0_init(struct sr_discipline *);
-int	sr_raid0_alloc_resources(struct sr_discipline *);
-int	sr_raid0_free_resources(struct sr_discipline *);
 int	sr_raid0_rw(struct sr_workunit *);
 
 /* Discipline initialisation. */
@@ -65,10 +63,8 @@ sr_raid0_discipline_init(struct sr_discipline *sd)
 	sd->sd_max_wu = SR_RAID0_NOWU;
 
 	/* Setup discipline specific function pointers. */
-	sd->sd_alloc_resources = sr_raid0_alloc_resources;
 	sd->sd_assemble = sr_raid0_assemble;
 	sd->sd_create = sr_raid0_create;
-	sd->sd_free_resources = sr_raid0_free_resources;
 	sd->sd_scsi_rw = sr_raid0_rw;
 }
 
@@ -114,39 +110,6 @@ sr_raid0_init(struct sr_discipline *sd)
 	    SR_RAID0_NOWU * sd->sd_meta->ssdi.ssd_chunk_no;
 
 	return 0;
-}
-
-int
-sr_raid0_alloc_resources(struct sr_discipline *sd)
-{
-	int			rv = EINVAL;
-
-	DNPRINTF(SR_D_DIS, "%s: sr_raid0_alloc_resources\n",
-	    DEVNAME(sd->sd_sc));
-
-	if (sr_wu_alloc(sd))
-		goto bad;
-	if (sr_ccb_alloc(sd))
-		goto bad;
-
-	rv = 0;
-bad:
-	return (rv);
-}
-
-int
-sr_raid0_free_resources(struct sr_discipline *sd)
-{
-	int			rv = EINVAL;
-
-	DNPRINTF(SR_D_DIS, "%s: sr_raid0_free_resources\n",
-	    DEVNAME(sd->sd_sc));
-
-	sr_wu_free(sd);
-	sr_ccb_free(sd);
-
-	rv = 0;
-	return (rv);
 }
 
 int

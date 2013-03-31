@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.39 2013/03/31 10:41:16 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.40 2013/03/31 11:12:06 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -50,8 +50,6 @@ int	sr_raidp_create(struct sr_discipline *, struct bioc_createraid *,
 int	sr_raidp_assemble(struct sr_discipline *, struct bioc_createraid *,
 	    int, void *);
 int	sr_raidp_init(struct sr_discipline *);
-int	sr_raidp_alloc_resources(struct sr_discipline *);
-int	sr_raidp_free_resources(struct sr_discipline *);
 int	sr_raidp_rw(struct sr_workunit *);
 int	sr_raidp_openings(struct sr_discipline *);
 void	sr_raidp_intr(struct buf *);
@@ -83,10 +81,8 @@ sr_raidp_discipline_init(struct sr_discipline *sd, u_int8_t type)
 	sd->sd_max_wu = SR_RAIDP_NOWU;
 
 	/* Setup discipline specific function pointers. */
-	sd->sd_alloc_resources = sr_raidp_alloc_resources;
 	sd->sd_assemble = sr_raidp_assemble;
 	sd->sd_create = sr_raidp_create;
-	sd->sd_free_resources = sr_raidp_free_resources;
 	sd->sd_openings = sr_raidp_openings;
 	sd->sd_scsi_rw = sr_raidp_rw;
 	sd->sd_scsi_intr = sr_raidp_intr;
@@ -139,39 +135,6 @@ int
 sr_raidp_openings(struct sr_discipline *sd)
 {
 	return (sd->sd_max_wu >> 1); /* 2 wu's per IO */
-}
-
-int
-sr_raidp_alloc_resources(struct sr_discipline *sd)
-{
-	int			rv = EINVAL;
-
-	DNPRINTF(SR_D_DIS, "%s: sr_raidp_alloc_resources\n",
-	    DEVNAME(sd->sd_sc));
-
-	if (sr_wu_alloc(sd))
-		goto bad;
-	if (sr_ccb_alloc(sd))
-		goto bad;
-
-	rv = 0;
-bad:
-	return (rv);
-}
-
-int
-sr_raidp_free_resources(struct sr_discipline *sd)
-{
-	int			rv = EINVAL;
-
-	DNPRINTF(SR_D_DIS, "%s: sr_raidp_free_resources\n",
-	    DEVNAME(sd->sd_sc));
-
-	sr_wu_free(sd);
-	sr_ccb_free(sd);
-
-	rv = 0;
-	return (rv);
 }
 
 void
