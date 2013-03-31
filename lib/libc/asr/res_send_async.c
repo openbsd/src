@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.7 2013/03/27 07:40:41 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.8 2013/03/31 19:42:10 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -449,8 +449,6 @@ udp_send(struct async *as)
 	if (as->as_fd == -1)
 		return (-1); /* errno set */
 
-	as->as_timeout = as->as_ctx->ac_nstimeout;
-
 	n = send(as->as_fd, as->as.dns.obuf, as->as.dns.obuflen, 0);
 	if (n == -1) {
 		save_errno = errno;
@@ -528,7 +526,6 @@ tcp_write(struct async *as)
 		as->as_fd = sockaddr_connect(AS_NS_SA(as), SOCK_STREAM);
 		if (as->as_fd == -1)
 			return (-1); /* errno set */
-		as->as_timeout = as->as_ctx->ac_nstimeout;
 		return (1);
 	}
 
@@ -584,7 +581,6 @@ tcp_write(struct async *as)
 	}
 
 	/* More data to write */
-	as->as_timeout = as->as_ctx->ac_nstimeout;
 	return (1);
 
 close:

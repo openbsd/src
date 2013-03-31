@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.17 2013/03/30 20:00:08 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.18 2013/03/31 19:42:10 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -531,8 +531,8 @@ asr_ctx_create(void)
 	ac->ac_hostfile = DEFAULT_HOSTFILE;
 
 	ac->ac_nscount = 0;
-	ac->ac_nstimeout = 1000;
-	ac->ac_nsretries = 3;
+	ac->ac_nstimeout = 5;
+	ac->ac_nsretries = 4;
 
 	return (ac);
 }
@@ -938,6 +938,12 @@ asr_iter_ns(struct async *as)
 		as->as_ns_cycles++;
 		DPRINT("asr: asr_iter_ns(): cycle %i\n", as->as_ns_cycles);
 	}
+
+	as->as_timeout = 1000 * (as->as_ctx->ac_nstimeout << as->as_ns_cycles);
+	if (as->as_ns_cycles > 0)
+		as->as_timeout /= as->as_ctx->ac_nscount;
+	if (as->as_timeout < 1000)
+		as->as_timeout = 1000;
 
 	return (0);
 }
