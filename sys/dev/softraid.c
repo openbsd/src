@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.298 2013/03/31 11:37:40 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.299 2013/03/31 15:46:11 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3495,7 +3495,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 		    sizeof(sd->sd_meta->ssd_devname));
 
 		sr_info(sc, "%s volume attached as %s",
-		    sd->sd_meta->ssdi.ssd_product, sd->sd_meta->ssd_devname); 
+		    sd->sd_name, sd->sd_meta->ssd_devname); 
 
 		/* Update device name on any roaming chunks. */
 		sr_roam_chunks(sd);
