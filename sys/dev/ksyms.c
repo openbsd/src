@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.21 2011/06/23 16:02:33 tedu Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.22 2013/03/31 17:03:25 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -39,8 +39,6 @@
 #ifdef _NLIST_DO_ELF
 #include <sys/exec_elf.h>
 #endif
-
-#include <machine/cpu.h>
 
 extern char *esym;				/* end of symbol table */
 #if defined(__sparc64__) || defined(__mips__)
