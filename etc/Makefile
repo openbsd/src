@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.330 2013/03/26 18:06:00 jasper Exp $
+#	$OpenBSD: Makefile,v 1.331 2013/03/31 21:46:53 espie Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -144,6 +144,8 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/root/.profile; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.Xdefaults \
 		    ${DESTDIR}/root/.Xdefaults; \
+		${INSTALL} -c -o root -g wheel -m 644 dot.cvsrc \
+		    ${DESTDIR}/root/.cvsrc; \
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/.cshrc; \
@@ -160,6 +162,8 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/skel/.profile; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.Xdefaults \
 		    ${DESTDIR}/etc/skel/.Xdefaults; \
+		${INSTALL} -c -o root -g wheel -m 644 dot.cvsrc \
+		    ${DESTDIR}/etc/skel/.cvsrc; \
 		${INSTALL} -c -o root -g wheel -m 600 /dev/null \
 		    ${DESTDIR}/etc/skel/.ssh/authorized_keys
 	cd kerberosV; \
