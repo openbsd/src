@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.50 2013/03/30 12:15:29 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.51 2013/03/31 11:18:35 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -593,8 +593,8 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct proc *p)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
-	int s;
 	int error = 0;
+	int s;
 	int priv;
 
 	priv = 0;
@@ -618,12 +618,8 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			break;
 		}
 		s = splsoftnet();
-		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) != 0) {
-			splx(s);
-			break;
-		}
-		if ((error = in_pcballoc(so, &rawin6pcbtable)) != 0)
-		{
+		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
+		    (error = in_pcballoc(so, &rawin6pcbtable))) {
 			splx(s);
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.156 2013/03/31 00:59:52 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.157 2013/03/31 11:18:35 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1153,13 +1153,12 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			break;
 		}
 		s = splsoftnet();
-		error = in_pcballoc(so, &udbtable);
+		if ((error = soreserve(so, udp_sendspace, udp_recvspace)) ||
+		    (error = in_pcballoc(so, &udbtable))) {
+			splx(s);
+			break;
+		}
 		splx(s);
-		if (error)
-			break;
-		error = soreserve(so, udp_sendspace, udp_recvspace);
-		if (error)
-			break;
 #ifdef INET6
 		if (((struct inpcb *)so->so_pcb)->inp_flags & INP_IPV6)
 			((struct inpcb *) so->so_pcb)->inp_ipv6.ip6_hlim =
