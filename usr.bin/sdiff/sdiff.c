@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.28 2009/06/07 13:29:50 ray Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.29 2013/04/01 16:08:00 tobias Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -740,11 +740,14 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 	default:
 		errx(2, "invalid diff command: %c: %s", cmd, line);
 	}
+	free(line);
 
 	/* Skip to next ed line. */
-	while (n--)
-		if (!xfgets(diffpipe))
+	while (n--) {
+		if (!(line = xfgets(diffpipe)))
 			errx(2, "diff ended early");
+		free(line);
+	}
 
 	return (0);
 }
