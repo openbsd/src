@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.10 2012/12/02 07:03:31 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.11 2013/04/01 17:18:20 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.4 1996/02/01 22:32:35 mycroft Exp $ */
 
 /*
@@ -78,7 +78,7 @@ struct sigcontext {
 #define	SC_O0_OFFSET	28
 #endif /* _LOCORE */
 
-#if defined(_LOCORE) || __BSD_VISIBLE
+#if defined(_LOCORE) || defined(_KERNEL)
 /*
  * `Code' arguments to signal handlers.  The names, and the funny numbering.
  * are defined so as to match up with what SunOS uses; I have no idea why

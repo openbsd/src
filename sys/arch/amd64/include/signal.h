@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.7 2012/12/02 07:03:31 guenther Exp $	*/
+/*	$OpenBSD: signal.h,v 1.8 2013/04/01 17:18:19 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 
 typedef int sig_atomic_t;
 
-#if __BSD_VISIBLE
+#ifdef _KERNEL
 #include <machine/trap.h>
 #endif
 
