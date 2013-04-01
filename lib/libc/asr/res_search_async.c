@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.4 2013/03/27 07:40:41 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.5 2013/04/01 15:49:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -25,7 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 
-/* 
+/*
  * TODO:
  *
  * - make it possible to reuse ibuf if it was NULL when first called,
@@ -200,7 +200,7 @@ res_search_async_run(struct async *as, struct async_res *ar)
 			ar->ar_h_errno = NO_DATA;
 		else if (as->as.search.flags & ASYNC_AGAIN)
 			ar->ar_h_errno = TRY_AGAIN;
-		/* 
+		/*
 		 * Else, we got the ar_h_errno value set by res_query_async()
 		 * for the last domain.
 		 */

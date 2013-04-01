@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.15 2013/04/01 08:54:07 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.16 2013/04/01 15:49:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -538,7 +538,7 @@ hostent_alloc(int family)
 	h->h.h_length = (family == AF_INET) ? 4 : 16;
 	h->h.h_aliases = h->aliases;
 	h->h.h_addr_list = h->addrs;
-	h->pos = (char*)(h) + sizeof(*h);
+	h->pos = (char *)(h) + sizeof(*h);
 	h->end = h->pos + 1024;
 
 	return (h);

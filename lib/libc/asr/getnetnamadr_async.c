@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.7 2012/11/24 18:58:49 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.8 2013/04/01 15:49:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -154,7 +154,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 				name = dname;
 
 				in = htonl(as->as.netnamadr.addr);
-				addr_as_fqdn((char*)&in,
+				addr_as_fqdn((char *)&in,
 				    as->as.netnamadr.family,
 				    dname, sizeof(dname));
 				as->as.netnamadr.subq = res_query_async_ctx(
@@ -177,7 +177,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 			if (as->as_type == ASR_GETNETBYNAME)
 				data = as->as.netnamadr.name;
 			else
-				data = (void*)&as->as.netnamadr.addr;
+				data = (void *)&as->as.netnamadr.addr;
 
 			n = netent_file_match(f, as->as_type, data);
 			saved_errno = errno;
@@ -384,7 +384,7 @@ netent_alloc(int family)
 
 	n->n.n_addrtype = family;
 	n->n.n_aliases = n->aliases;
-	n->pos = (char*)(n) + sizeof(*n);
+	n->pos = (char *)(n) + sizeof(*n);
 	n->end = n->pos + 1024;
 
 	return (n);

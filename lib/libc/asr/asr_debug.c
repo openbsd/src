@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.10 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.11 2013/04/01 15:49:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -26,11 +26,11 @@
 #include "asr.h"
 #include "asr_private.h"
 
-static const char* rcodetostr(uint16_t);
-static const char* print_dname(const char *, char *, size_t);
-static const char* print_header(const struct header *, char *, size_t);
-static const char* print_query(const struct query *, char *, size_t);
-static const char* print_rr(const struct rr*, char *, size_t);
+static const char *rcodetostr(uint16_t);
+static const char *print_dname(const char *, char *, size_t);
+static const char *print_header(const struct header *, char *, size_t);
+static const char *print_query(const struct query *, char *, size_t);
+static const char *print_rr(const struct rr *, char *, size_t);
 
 FILE *asr_debug = NULL;
 
@@ -51,13 +51,13 @@ rcodetostr(uint16_t v)
 	}
 }
 
-static const char*
+static const char *
 print_dname(const char *_dname, char *buf, size_t max)
 {
 	return (asr_strdname(_dname, buf, max));
 }
 
-static const char*
+static const char *
 print_rr(const struct rr *rr, char *buf, size_t max)
 {
 	char	*res;
@@ -129,7 +129,7 @@ print_rr(const struct rr *rr, char *buf, size_t max)
 	return (res);
 }
 
-static const char*
+static const char *
 print_query(const struct query *q, char *buf, size_t max)
 {
 	char b[256];
@@ -141,7 +141,7 @@ print_query(const struct query *q, char *buf, size_t max)
 	return (buf);
 }
 
-static const char*
+static const char *
 print_header(const struct header *h, char *buf, size_t max)
 {
 	snprintf(buf, max,

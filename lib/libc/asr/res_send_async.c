@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.9 2013/04/01 07:52:06 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.10 2013/04/01 15:49:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -78,7 +78,7 @@ res_send_async(const unsigned char *buf, int buflen, unsigned char *ans,
 	}
 
 	as->as.dns.flags |= ASYNC_EXTOBUF;
-	as->as.dns.obuf = (unsigned char*)buf;
+	as->as.dns.obuf = (unsigned char *)buf;
 	as->as.dns.obuflen = buflen;
 	as->as.dns.obufsize = buflen;
 

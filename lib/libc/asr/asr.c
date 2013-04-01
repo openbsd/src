@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.18 2013/03/31 19:42:10 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.19 2013/04/01 15:49:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -443,7 +443,7 @@ asr_check_reload(struct asr *asr)
 	asr->a_ctx = ac;
 }
 
-/* 
+/*
  * Construct a fully-qualified domain name for the given name and domain.
  * If "name" ends with a '.' it is considered as a FQDN by itself.
  * Otherwise, the domain, which must be a FQDN, is appended to "name" (it
@@ -510,7 +510,7 @@ asr_ndots(const char *s)
 	return (n);
 }
 
-/* 
+/*
  * Allocate a new empty context.
  */
 static struct asr_ctx *
@@ -590,7 +590,7 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 			return;
 		if (n != 2)
 			return;
-		if (asr_parse_nameserver((struct sockaddr*)&ss, tok[1]))
+		if (asr_parse_nameserver((struct sockaddr *)&ss, tok[1]))
 			return;
 		if ((ac->ac_ns[ac->ac_nscount] = calloc(1, ss.ss_len)) == NULL)
 			return;
@@ -799,7 +799,7 @@ asr_ctx_envopts(struct asr_ctx *ac)
 
 /*
  * Parse a resolv.conf(5) nameserver string into a sockaddr.
- */ 
+ */
 static int
 asr_parse_nameserver(struct sockaddr *sa, const char *s)
 {
@@ -842,7 +842,7 @@ asr_parse_nameserver(struct sockaddr *sa, const char *s)
  * where labels are separated by dots. The result is put into the "buf" buffer,
  * truncated if it exceeds "max" chars. The function returns "buf".
  */
-char*
+char *
 asr_strdname(const char *_dname, char *buf, size_t max)
 {
 	const unsigned char *dname = _dname;

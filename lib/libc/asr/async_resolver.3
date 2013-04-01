@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.9 2013/03/30 20:00:08 eric Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.10 2013/04/01 15:49:54 deraadt Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2013 $
+.Dd $Mdocdate: April 1 2013 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd asynchronous resolver functions
 .Sh SYNOPSIS
 .Fd #include <asr.h>
-.Ft struct asr*
+.Ft struct asr *
 .Fn async_resolver "const char *conf"
 .Ft void
 .Fn async_resolver_done "struct asr *asr"
@@ -48,25 +48,25 @@
 .Fn async_run_sync "struct async *as" "struct async_res *ar"
 .Ft void
 .Fn async_abort "struct async *as"
-.Ft struct async*
+.Ft struct async *
 .Fn res_send_async "const unsigned char *pkt" "int pktlen" "unsigned char *ans" "int anslen" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn res_query_async "const char *name" "int class" "int type" "unsigned char *ans" "int anslen" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn getrrsetbyname_async "const char *hostname" "unsigned int rdclass" "unsigned int rdtype" "unsigned int flags" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn gethostbyname_async "const char *name" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn gethostbyname2_async "const char *name" "int af" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn gethostbyaddr_async "const void *addr" "socklen_t len" "int af" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn getnetbyname_async "const char *name" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn getnetbyaddr_async "in_addr_t net" "int type" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn getaddrinfo_async "const char *hostname" "const char *servname" "const struct addrinfo *hints" "struct asr *asr"
-.Ft struct async*
+.Ft struct async *
 .Fn getnameinfo_async "const struct sockaddr *sa" "socklen_t salen" "char *host" "size_t hostlen" "char *serv" "size_t servlen" "int flags" "struct asr *asr"
 .Sh DESCRIPTION
 The

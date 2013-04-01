@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.13 2013/03/30 20:11:19 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.14 2013/04/01 15:49:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -433,7 +433,7 @@ get_port(const char *servname, const char *proto, int numonly)
 	struct servent		se;
 	struct servent_data	sed;
 	int			port, r;
-	const char*		e;
+	const char		*e;
 
 	if (servname == NULL)
 		return (0);
@@ -519,7 +519,7 @@ addrinfo_add(struct async *as, const struct sockaddr *sa, const char *cname)
 		ai->ai_socktype = matches[i].socktype;
 		ai->ai_protocol = proto;
 		ai->ai_addrlen = sa->sa_len;
-		ai->ai_addr = (void*)(ai + 1);
+		ai->ai_addr = (void *)(ai + 1);
 		if (cname &&
 		    as->as.ai.hints.ai_flags & (AI_CANONNAME | AI_FQDN)) {
 			if ((ai->ai_canonname = strdup(cname)) == NULL) {
