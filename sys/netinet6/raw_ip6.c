@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.51 2013/03/31 11:18:35 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.52 2013/04/01 22:51:39 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -88,9 +88,6 @@
 #include <netinet/in_pcb.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
-#ifdef ENABLE_DEFAULT_SCOPE
-#include <netinet6/scope6_var.h>
-#endif
 #include <netinet6/raw_ip6.h>
 
 #include <sys/stdarg.h>
@@ -678,11 +675,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EADDRNOTAVAIL;
 			break;
 		}
-#ifdef ENABLE_DEFAULT_SCOPE
-		if (addr->sin6_scope_id == 0)	/* not change if specified  */
-			addr->sin6_scope_id =
-			    scope6_addr2default(&addr->sin6_addr);
-#endif
 		/*
 		 * we don't support mapped address here, it would confuse
 		 * users so reject it
@@ -718,9 +710,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	{
 		struct sockaddr_in6 *addr = mtod(nam, struct sockaddr_in6 *);
 		struct in6_addr *in6a = NULL;
-#ifdef ENABLE_DEFAULT_SCOPE
-		struct sockaddr_in6 sin6;
-#endif
 
 		if (nam->m_len != sizeof(*addr)) {
 			error = EINVAL;
@@ -734,16 +723,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EAFNOSUPPORT;
 			break;
 		}
-
-#ifdef ENABLE_DEFAULT_SCOPE
-		if (addr->sin6_scope_id == 0) {
-			/* protect *addr */
-			sin6 = *addr;
-			addr = &sin6;
-			addr->sin6_scope_id =
-			    scope6_addr2default(&addr->sin6_addr);
-		}
-#endif
 
 		/* Source address selection. XXX: need pcblookup? */
 		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
@@ -810,12 +789,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				break;
 			}
 		}
-#ifdef ENABLE_DEFAULT_SCOPE
-		if (dst->sin6_scope_id == 0) {
-			dst->sin6_scope_id =
-			    scope6_addr2default(&dst->sin6_addr);
-		}
-#endif
 		error = rip6_output(m, so, dst, control);
 		m = NULL;
 		break;
