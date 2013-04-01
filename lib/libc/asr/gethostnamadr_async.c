@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.14 2013/03/29 20:04:17 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.15 2013/04/01 08:54:07 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -312,7 +312,7 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 		/* If we got a packet but no anwser, use the next DB. */
 		if (ar->ar_count == 0) {
 			free(ar->ar_data);
-			as->as.hostnamadr.h_errno = ar->ar_h_errno;
+			as->as.hostnamadr.subq_h_errno = ar->ar_h_errno;
 			async_set_state(as, ASR_STATE_NEXT_DB);
 			break;
 		}
@@ -358,8 +358,8 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 
 	case ASR_STATE_NOT_FOUND:
 		ar->ar_errno = 0;
-		if (as->as.hostnamadr.h_errno)
-			ar->ar_h_errno = as->as.hostnamadr.h_errno;
+		if (as->as.hostnamadr.subq_h_errno)
+			ar->ar_h_errno = as->as.hostnamadr.subq_h_errno;
 		else
 			ar->ar_h_errno = HOST_NOT_FOUND;
 		async_set_state(as, ASR_STATE_HALT);

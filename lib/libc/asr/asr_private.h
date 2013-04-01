@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.12 2013/04/01 07:52:06 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.13 2013/04/01 08:54:06 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -235,7 +235,7 @@ struct async {
 			struct async	*subq;
 			char		 addr[16];
 			int		 addrlen;
-			int		 h_errno;
+			int		 subq_h_errno;
 		} hostnamadr;
 
 		struct {
