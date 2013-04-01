@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.91 2013/03/31 15:44:52 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.92 2013/04/01 07:58:43 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -255,10 +255,10 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 	struct sr_crypto_wu	*crwu;
 	struct cryptodesc	*crd;
 	int			flags, i, n;
-	daddr64_t		blk = 0;
+	daddr64_t		blk;
 	u_int			keyndx;
 
-	DNPRINTF(SR_D_DIS, "%s: sr_crypto_wu_get wu: %p encrypt: %d\n",
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_wu_get wu %p encrypt %d\n",
 	    DEVNAME(sd->sd_sc), wu, encrypt);
 
 	mtx_enter(&sd->mds.mdd_crypto.scr_mutex);
@@ -266,7 +266,7 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 		TAILQ_REMOVE(&sd->mds.mdd_crypto.scr_wus, crwu, cr_link);
 	mtx_leave(&sd->mds.mdd_crypto.scr_mutex);
 	if (crwu == NULL)
-		panic("sr_crypto_wu_get: out of wus");
+		panic("sr_crypto_wu_get: out of work units");
 
 	crwu->cr_uio.uio_iovcnt = 1;
 	crwu->cr_uio.uio_iov->iov_len = xs->datalen;
@@ -276,13 +276,7 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 	} else
 		crwu->cr_uio.uio_iov->iov_base = xs->data;
 
-	if (xs->cmdlen == 10)
-		blk = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
-	else if (xs->cmdlen == 16)
-		blk = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
-	else if (xs->cmdlen == 6)
-		blk = _3btol(((struct scsi_rw *)xs->cmd)->addr);
-
+	blk = wu->swu_blk_start;
 	n = xs->datalen >> DEV_BSHIFT;
 
 	/*
@@ -1165,10 +1159,14 @@ int
 sr_crypto_rw(struct sr_workunit *wu)
 {
 	struct sr_crypto_wu	*crwu;
+	daddr64_t		blk;
 	int			s, rv = 0;
 
-	DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw wu: %p\n",
+	DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw wu %p\n",
 	    DEVNAME(wu->swu_dis->sd_sc), wu);
+
+	if (sr_validate_io(wu, &blk, "sr_crypto_rw"))
+		return (1);
 
 	if (wu->swu_xs->flags & SCSI_DATA_OUT) {
 		crwu = sr_crypto_wu_get(wu, 1);
@@ -1215,12 +1213,10 @@ sr_crypto_rw2(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct uio		*uio;
-	int			s;
 	daddr64_t		blk;
+	int			s;
 
-	if (sr_validate_io(wu, &blk, "sr_crypto_rw2"))
-		goto bad;
-
+	blk = wu->swu_blk_start;
 	blk += sd->sd_meta->ssd_data_offset;
 
 	ccb = sr_ccb_rw(sd, 0, blk, xs->datalen, xs->data, xs->flags, 0);
