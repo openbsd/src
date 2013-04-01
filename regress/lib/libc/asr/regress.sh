@@ -1,4 +1,4 @@
-#	$OpenBSD: regress.sh,v 1.5 2013/03/28 09:36:03 eric Exp $
+#	$OpenBSD: regress.sh,v 1.6 2013/04/01 10:17:45 eric Exp $
 
 . regress.subr
 
@@ -92,7 +92,7 @@ test_getnameinfo()
 
 WEIRD="EMPTY . .. ..."
 BASIC="localhost $(hostname -s) $(hostname)"
-EXTRA="undeadly.org www.openbsd.org cvs.openbsd.org"
+EXTRA="undeadly.org www.openbsd.org cvs.openbsd.org www.google.com www.bing.com"
 
 ADDRS="0.0.0.0 :: 127.0.0.1 ::1 212.227.193.194"
 
