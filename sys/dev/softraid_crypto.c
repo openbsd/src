@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.92 2013/04/01 07:58:43 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.93 2013/04/01 15:17:32 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -94,7 +94,7 @@ int		sr_crypto_meta_opt_handler(struct sr_discipline *,
 		    struct sr_meta_opt_hdr *);
 int		sr_crypto_write(struct cryptop *);
 int		sr_crypto_rw(struct sr_workunit *);
-int		sr_crypto_rw2(struct sr_workunit *, struct sr_crypto_wu *);
+int		sr_crypto_dev_rw(struct sr_workunit *, struct sr_crypto_wu *);
 void		sr_crypto_done(struct sr_workunit *);
 int		sr_crypto_read(struct cryptop *);
 void		sr_crypto_finish_io(struct sr_workunit *);
@@ -1180,7 +1180,7 @@ sr_crypto_rw(struct sr_workunit *wu)
 			rv = crwu->cr_crp->crp_etype;
 		splx(s);
 	} else
-		rv = sr_crypto_rw2(wu, NULL);
+		rv = sr_crypto_dev_rw(wu, NULL);
 
 	return (rv);
 }
@@ -1203,11 +1203,11 @@ sr_crypto_write(struct cryptop *crp)
 		splx(s);
 	}
 
-	return (sr_crypto_rw2(wu, crwu));
+	return (sr_crypto_dev_rw(wu, crwu));
 }
 
 int
-sr_crypto_rw2(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
+sr_crypto_dev_rw(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
