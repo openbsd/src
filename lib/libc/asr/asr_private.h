@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.11 2013/03/27 07:40:41 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.12 2013/04/01 07:52:06 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -206,7 +206,6 @@ struct async {
 			unsigned char	*ibuf;
 			size_t		 ibuflen;
 			size_t		 ibufsize;
-			size_t		 bufpos;
 			size_t		 datalen; /* for tcp io */
 		} dns;
 

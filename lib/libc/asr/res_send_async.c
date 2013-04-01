@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.8 2013/03/31 19:42:10 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.9 2013/04/01 07:52:06 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -513,8 +513,8 @@ tcp_write(struct async *as)
 	struct iovec	iov[2];
 	uint16_t	len;
 	ssize_t		n;
-	int		i, se;
-	socklen_t	sl;
+	size_t		offset;
+	int		i;
 #ifdef DEBUG
 	char		buf[256];
 #endif
@@ -526,55 +526,33 @@ tcp_write(struct async *as)
 		as->as_fd = sockaddr_connect(AS_NS_SA(as), SOCK_STREAM);
 		if (as->as_fd == -1)
 			return (-1); /* errno set */
+		as->as.dns.datalen = 0; /* bytes sent */
 		return (1);
 	}
 
 	i = 0;
 
-	/* Check if the connection succeeded. */
-	if (as->as.dns.datalen == 0) {
-		sl = sizeof(se);
-		if (getsockopt(as->as_fd, SOL_SOCKET, SO_ERROR, &se, &sl) == -1)
-			goto close; /* errno set */
-		if (se) {
-			errno = se;
-			goto close;
-		}
-
-		as->as.dns.bufpos = 0;
-
-		/* Send the packet length first */
+	/* Prepend de packet length if not sent already. */
+	if (as->as.dns.datalen < sizeof(len)) {
+		offset = 0;
 		len = htons(as->as.dns.obuflen);
-		iov[i].iov_base = &len;
-		iov[i].iov_len = sizeof(len);
+		iov[i].iov_base = (char*)(&len) + as->as.dns.datalen;
+		iov[i].iov_len = sizeof(len) - as->as.dns.datalen;
 		i++;
-	}
+	} else
+		offset = as->as.dns.datalen - sizeof(len);
 
-	iov[i].iov_base = as->as.dns.obuf + as->as.dns.bufpos;
-	iov[i].iov_len = as->as.dns.obuflen - as->as.dns.bufpos;
+	iov[i].iov_base = as->as.dns.obuf + offset;
+	iov[i].iov_len = as->as.dns.obuflen - offset;
 	i++;
 
 	n = writev(as->as_fd, iov, i);
 	if (n == -1)
 		goto close; /* errno set */
 
-	/*
-	 * We want at least the packet length to be written out the first time.
-	 * Technically we could recover but that makes little sense to support
-	 * that.
-	 */
-	if (as->as.dns.datalen == 0 && n < 2) {
-		errno = EIO;
-		goto close;
-	}
+	as->as.dns.datalen += n;
 
-	if (as->as.dns.datalen == 0) {
-		as->as.dns.datalen = len;
-		n -= 2;
-	}
-
-	as->as.dns.bufpos += n;
-	if (as->as.dns.bufpos == as->as.dns.obuflen) {
+	if (as->as.dns.datalen == as->as.dns.obuflen + sizeof(len)) {
 		/* All sent. Prepare for TCP read */
 		as->as.dns.datalen = 0;
 		return (0);
@@ -618,7 +596,6 @@ tcp_read(struct async *as)
 		}
 
 		as->as.dns.datalen = ntohs(len);
-		as->as.dns.bufpos = 0;
 		as->as.dns.ibuflen = 0;
 
 		if (ensure_ibuf(as, as->as.dns.datalen) == -1)
