@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2013/03/04 11:54:13 otto Exp $	*/
+/*	$OpenBSD: config.c,v 1.17 2013/04/01 17:51:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -60,6 +60,8 @@ struct mblock **mblocks;
 struct ldc_endpoint **ldc_endpoints;
 
 uint64_t max_cpus;
+bool have_cwqs;
+bool have_rngs;
 
 uint64_t max_guests;
 uint64_t max_hv_ldcs;
@@ -765,6 +767,9 @@ hvmd_init(struct md *md)
 			hvmd_init_cpu(md, prop->d.arc.node);
 	}
 
+	have_cwqs = (md_find_node(md, "cwqs") != NULL);
+	have_rngs = (md_find_node(md, "rngs") != NULL);
+
 	node = md_find_node(md, "devices");
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
 		if (prop->tag == MD_PROP_ARC &&
@@ -852,14 +857,30 @@ hvmd_finalize_maus(struct md *md)
 {
 	struct md_node *parent;
 	struct md_node *node;
+	struct md_node *child;
+	int i;
 
 	parent = md_find_node(md, "root");
 	assert(parent);
 
 	node = md_add_node(md, "maus");
 	md_link_node(md, parent, node);
-	node = md_add_node(md, "cwqs");
-	md_link_node(md, parent, node);
+	
+	if (have_cwqs) {
+		node = md_add_node(md, "cwqs");
+		md_link_node(md, parent, node);
+	}
+
+	if (have_rngs) {
+		node = md_add_node(md, "rngs");
+		md_link_node(md, parent, node);
+		child = md_add_node(md, "rng");
+		md_link_node(md, node, child);
+		for (i = 0; i < max_cpus; i++) {
+			if (cpus[i])
+				md_link_node(md, cpus[i]->hv_node, child);
+		}
+	}
 }
 
 void
