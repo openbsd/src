@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.1 2013/04/01 13:02:48 jasper Exp $
+dnl	$OpenBSD: install,v 1.2 2013/04/01 14:04:06 jasper Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -91,8 +91,6 @@ OpenBSDCommonInstall
 
 OpenBSDInstallWrapup
 
-CAM-0100 systems final steps:
-
-	XXX
+dnl CAM-0100 systems final steps:
 
 OpenBSDCongratulations
