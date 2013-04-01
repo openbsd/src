@@ -1,0 +1,15 @@
+dnl	$OpenBSD: hardware,v 1.1 2013/04/01 13:02:48 jasper Exp $
+The following machines are targeted by OpenBSD/MACHINE:
+
+	Portwell CAM-0100
+	  onboard serial port, CompactFlash and Ethernet are supported;
+	  it's possible to install OpenBSD/MACHINE on this machine with
+	  some effort.
+
+	Ubiquiti Networks EdgeRouter Lite
+	  at the moment little hardware is supported is supported by
+	  OpenBSD/MACHINE on this machine. There is no USB support yet,
+	  which means that there is no storage (no CompactFlash onboard),
+	  and Ethernet isn't supported either.
+
+Currently no USB devices are supported on OpenBSD/MACHINE.

@@ -1,0 +1,98 @@
+dnl	$OpenBSD: install,v 1.1 2013/04/01 13:02:48 jasper Exp $
+OpenBSDInstallPrelude
+
+Booting the installation media:
+
+At the moment the only way to boot an OpenBSD/MACHINE (including the ramdisk)
+kernel is over TFTP. First you need to setup an TFTP server as described in
+diskless(8). Assuming tftpd(8) chroots into /tftpboot, copy bsd.rd into that
+directory.
+
+Power on your OpenBSD/MACHINE device and from the U-Boot prompt set up
+networking. In this example it is assumed you have a DHCP server in your
+network:
+
+	# dhcp
+
+If you don't have a DHCP server, you need to set the ipaddr U-Boot environment
+variable:
+
+	# setenv ipaddr <static ip address>
+
+Now set the IP address of your TFTP server:
+
+	# setenv serverip <server ip>
+
+The ramdisk kernel needs to be loaded into memory. If you use "0" as the
+address, the default address location will be used by U-Boot:
+
+	# tftpboot 0 bsd.rd
+	Using octeth0 device
+	TFTP from server 192.168.178.30; our IP address is 192.168.178.89
+	Filename 'bsd.rd'.
+	Load address: 0x9f00000
+	Loading: #########################
+	done
+	Bytes transferred = 3486088 (353188 hex), 407 Kbytes/sec
+
+Now the kernel can be booted from the default memory location, with no
+arguments provided:
+
+	# bootoctlinux
+
+Due to the lack of a bootloader for OpenBSD/MACHINE, this same approach
+needs to be taken to boot a regular kernel after installation. Replacing
+bsd.rd with bsd.
+
+No miniroot is provided at this moment either.
+
+OpenBSDInstallPart2
+
+OpenBSDInstallPart3(,"octcf0 for internal CompactFlash storage.")
+dnl sd0 for USB storage, or wd0 for internal hard disk storage attached to the SATA port
+
+OpenBSDInstallPart4
+
+OpenBSDInstallMBRPart1
+
+dnl OpenBSDInstallMBRPart2
+	The fdisk(8) utility will be invoked to let you edit your MBR
+	partitioning.  The current MBR partitions defined will be
+	displayed and you will be allowed to modify them, and add new
+	partitions.
+
+dnl	The setup will need two partitions, one 'OpenBSD' for the
+dnl	OpenBSD/MACHINE installation, and one 'U-Boot files' for the
+dnl	U-Boot scripts/bootloader.
+dnl	
+dnl	If you use the whole disk option, the install script
+dnl	will create a small 'U-Boot files' partition and use the rest of
+dnl	the disk for the OpenBSD installation.
+dnl
+dnl	After your OpenBSD MBR partition has been setup, the real
+dnl	partition setup can follow.
+
+OpenBSDInstallPart5({:-
+	U-Boot partitions defined on the disk will usually show up as
+	partition 'i', 'j' and so on.-:})
+
+dnl OpenBSDInstallPart6({:-CD-ROM, -:})
+OpenBSDInstallPart6
+
+OpenBSDURLInstall
+
+dnl OpenBSDCDROMInstall
+
+OpenBSDNFSInstall
+
+OpenBSDDISKInstall({:-"octcfN" or -:},,{:-, Linux (ext2) or MS-DOS-:})
+
+OpenBSDCommonInstall
+
+OpenBSDInstallWrapup
+
+CAM-0100 systems final steps:
+
+	XXX
+
+OpenBSDCongratulations
