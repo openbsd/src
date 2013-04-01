@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2012/08/07 21:00:31 eric Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/04/01 10:18:28 eric Exp $
 
 #
 # Note on building and running the regress tests:
@@ -7,25 +7,25 @@
 # against the current libc, and one linked against a libc with the resolver
 # replaced. The idea is to compare the output of all programs in both cases.
 #
-# So before building the regression test programs, you need to have the two
-# libc.a ready.  By default, it is assumed that the asr-enabled libc was just
-# built from src but not installed, so the current libc.a is expected to be
-# found in /usr/lib, and the new one in /usr/obj/lib/libc. If your setting
-# is different, just set LIBCDIRSTD and LIBCDIRASR accordingly.
+# So before building the regression test programs, you need to have two
+# static libc: the system libc.a in /usr/lib/ which is assumed to be built
+# with asr, and a pre-asr libc.a in the "./lib/" directory (you can build
+# one by commenting out the ".include "${LIBCSRCDIR}/asr/Makefile.inc"
+# line from the /usr/src/lib/libc/Makefile.in and rebuild the libc).
 # 
 # When done, run "make && make install". This builds and installs the two sets
 # of programs in REGRESSDIR. They will run chrooted there to allow testing with
 # various /etc environment without messing up the local machine config files.
 #
 # When you are sure everything is in place, run "make regress". This will
-# create two files: $REGRESSDIR/output.log with the output of all run tests,
+# create two files: $REGRESSDIR/output.log with the output of all tests,
 # and $REGRESSDIR/regress.log with the diffs for those that "failed".
 #
-# Note that "install" and "regress" targets need to be run as root.
+# Note that the "install" and "regress" targets need to be run as root.
 #
 
-LIBCDIRSTD?=	/usr/lib
-LIBCDIRASR?=	/usr/obj/lib/libc
+LIBCDIRSTD?=	${.CURDIR}/lib
+LIBCDIRASR?=	/usr/lib
 
 REGRESSDIR?=	/tmp/regress
 REGRESS?=	regress.sh
