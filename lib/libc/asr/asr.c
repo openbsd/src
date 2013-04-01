@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.20 2013/04/01 20:22:27 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.21 2013/04/01 20:41:12 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -609,28 +609,19 @@ pass0(char **tok, int n, struct asr_ctx *ac)
 		ac->ac_domain = strdup(tok[1]);
 
 	} else if (!strcmp(tok[0], "lookup")) {
-		/* ignore the line if we already set lookup */
-		if (ac->ac_dbcount != 0)
-			return;
-		if (n - 1 > ASR_MAXDB)
-			return;
 		/* ensure that each lookup is only given once */
 		for (i = 1; i < n; i++)
 			for (j = i + 1; j < n; j++)
 				if (!strcmp(tok[i], tok[j]))
 					return;
-		for (i = 1; i < n; i++, ac->ac_dbcount++) {
-			if (!strcmp(tok[i], "yp")) {
-				ac->ac_db[i-1] = ASR_DB_YP;
-			} else if (!strcmp(tok[i], "bind")) {
-				ac->ac_db[i-1] = ASR_DB_DNS;
-			} else if (!strcmp(tok[i], "file")) {
-				ac->ac_db[i-1] = ASR_DB_FILE;
-			} else {
-				/* ignore the line */
-				ac->ac_dbcount = 0;
-				return;
-			}
+		ac->ac_dbcount = 0;
+		for (i = 1; i < n && ac->ac_dbcount < ASR_MAXDB; i++) {
+			if (!strcmp(tok[i], "yp"))
+				ac->ac_db[ac->ac_dbcount++] = ASR_DB_YP;
+			else if (!strcmp(tok[i], "bind"))
+				ac->ac_db[ac->ac_dbcount++] = ASR_DB_DNS;
+			else if (!strcmp(tok[i], "file"))
+				ac->ac_db[ac->ac_dbcount++] = ASR_DB_FILE;
 		}
 	} else if (!strcmp(tok[0], "search")) {
 		/* resolv.conf says the last line wins */
