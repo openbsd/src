@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.2,v 1.12 2013/03/31 05:07:55 guenther Exp $
+.\"	$OpenBSD: mkdir.2,v 1.13 2013/04/01 20:16:31 guenther Exp $
 .\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: April 1 2013 $
 .Dt MKDIR 2
 .Os
 .Sh NAME
@@ -38,11 +38,11 @@
 .Nm mkdirat
 .Nd make a directory file
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/stat.h>
-.Fd #include <fcntl.h>
 .Ft int
 .Fn mkdir "const char *path" "mode_t mode"
+.Fd #include <sys/stat.h>
+.Fd #include <fcntl.h>
 .Ft int
 .Fn mkdirat "int fd" "const char *path" "mode_t mode"
 .Sh DESCRIPTION

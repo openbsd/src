@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rename.2,v 1.17 2013/03/31 05:07:55 guenther Exp $
+.\"	$OpenBSD: rename.2,v 1.18 2013/04/01 20:16:31 guenther Exp $
 .\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: April 1 2013 $
 .Dt RENAME 2
 .Os
 .Sh NAME
@@ -38,10 +38,11 @@
 .Nm renameat
 .Nd change the name of a file
 .Sh SYNOPSIS
-.Fd #include <fcntl.h>
 .Fd #include <stdio.h>
 .Ft int
 .Fn rename "const char *from" "const char *to"
+.Fd #include <fcntl.h>
+.Fd #include <stdio.h>
 .Ft int
 .Fn renameat "int fromfd" "const char *from" "int tofd" "const char *to"
 .Sh DESCRIPTION

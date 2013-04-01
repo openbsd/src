@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.2,v 1.34 2013/03/30 09:00:06 jmc Exp $
+.\"	$OpenBSD: stat.2,v 1.35 2013/04/01 20:16:31 guenther Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)stat.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 30 2013 $
+.Dd $Mdocdate: April 1 2013 $
 .Dt STAT 2
 .Os
 .Sh NAME
@@ -39,17 +39,17 @@
 .Nm fstat
 .Nd get file status
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/stat.h>
-.Fd #include <fcntl.h>
 .Ft int
 .Fn stat "const char *path" "struct stat *sb"
 .Ft int
 .Fn lstat "const char *path" "struct stat *sb"
 .Ft int
-.Fn fstatat "int fd" "const char *path" "struct stat *sb" "int flag"
-.Ft int
 .Fn fstat "int fd" "struct stat *sb"
+.Fd #include <sys/stat.h>
+.Fd #include <fcntl.h>
+.Ft int
+.Fn fstatat "int fd" "const char *path" "struct stat *sb" "int flag"
 .Sh DESCRIPTION
 The
 .Fn stat

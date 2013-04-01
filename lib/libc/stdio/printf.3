@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.61 2013/03/04 01:50:01 brad Exp $
+.\"	$OpenBSD: printf.3,v 1.62 2013/04/01 20:16:31 guenther Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 4 2013 $
+.Dd $Mdocdate: April 1 2013 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -65,6 +65,7 @@
 .Ft int
 .Fn dprintf "int fd" "const char * restrict format" ...
 .Fd #include <stdarg.h>
+.Fd #include <stdio.h>
 .Ft int
 .Fn vprintf "const char *format" "va_list ap"
 .Ft int

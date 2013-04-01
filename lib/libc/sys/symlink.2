@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.2,v 1.14 2013/03/31 05:07:55 guenther Exp $
+.\"	$OpenBSD: symlink.2,v 1.15 2013/04/01 20:16:31 guenther Exp $
 .\"	$NetBSD: symlink.2,v 1.7 1995/02/27 12:38:34 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,17 +30,18 @@
 .\"
 .\"     @(#)symlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: April 1 2013 $
 .Dt SYMLINK 2
 .Os
 .Sh NAME
 .Nm symlink
 .Nd make symbolic link to a file
 .Sh SYNOPSIS
-.Fd #include <fcntl.h>
 .Fd #include <unistd.h>
 .Ft int
 .Fn symlink "const char *name1" "const char *name2"
+.Fd #include <fcntl.h>
+.Fd #include <unistd.h>
 .Ft int
 .Fn symlinkat "const char *name1" "int fd" "const char *name2"
 .Sh DESCRIPTION
