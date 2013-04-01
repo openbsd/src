@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.4 2013/03/29 22:51:35 guenther Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.5 2013/04/01 20:22:27 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -43,8 +43,8 @@ res_mkquery(int op, const char *dname, int class, int type,
 		return (-1);
 
 	if (dname[0] == '\0' || dname[strlen(dname) - 1] != '.') {
-		strlcpy(fqdn, dname, sizeof fqdn);
-		if (strlcat(fqdn, ".", sizeof fqdn) >= sizeof fqdn)
+		if (strlcpy(fqdn, dname, sizeof(fqdn)) >= sizeof(fqdn) ||
+		    strlcat(fqdn, ".", sizeof(fqdn)) >= sizeof(fqdn))
 			return (-1);
 		dname = fqdn;
 	}
@@ -89,13 +89,17 @@ res_querydomain(const char *name,
 
 	/* we really want domain to end with a dot for now */
 	if (domain && ((n = strlen(domain)) == 0 || domain[n - 1 ] != '.')) {
-		strlcpy(ndom, domain, sizeof ndom);
-		strlcat(ndom, ".", sizeof ndom);
+		if (strlcpy(ndom, domain, sizeof(ndom)) >= sizeof(ndom) ||
+		    strlcat(ndom, ".", sizeof(ndom)) >= sizeof(ndom)) {
+			h_errno = NETDB_INTERNAL;
+			errno = EINVAL;
+			return (-1);
+		}
 		domain = ndom;
 	}
 
 	if (asr_make_fqdn(name, domain, fqdn, sizeof fqdn) == 0) {
-		h_errno = NO_RECOVERY;
+		h_errno = NETDB_INTERNAL;
 		errno = EINVAL;
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.19 2013/04/01 15:49:54 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.20 2013/04/01 20:22:27 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -465,15 +465,18 @@ asr_make_fqdn(const char *name, const char *domain, char *buf, size_t buflen)
 
 	len = strlen(name);
 	if (len == 0) {
-		strlcpy(buf, domain, buflen);
+		if (strlcpy(buf, domain, buflen) >= buflen)
+			return (0);
 	} else if (name[len - 1] !=  '.') {
 		if (domain[0] == '.')
 			domain += 1;
-		strlcpy(buf, name, buflen);
-		strlcat(buf, ".", buflen);
-		strlcat(buf, domain, buflen);
+		if (strlcpy(buf, name, buflen) >= buflen ||
+		    strlcat(buf, ".", buflen) >= buflen ||
+		    strlcat(buf, domain, buflen) >= buflen)
+			return (0);
 	} else {
-		strlcpy(buf, name, buflen);
+		if (strlcpy(buf, name, buflen) >= buflen)
+			return (0);
 	}
 
 	return (strlen(buf));
@@ -481,6 +484,7 @@ asr_make_fqdn(const char *name, const char *domain, char *buf, size_t buflen)
 
 /*
  * Concatenate a name and a domain name. The result has no trailing dot.
+ * Return the resulting string length, or 0 in case of error.
  */
 size_t
 asr_domcat(const char *name, const char *domain, char *buf, size_t buflen)
@@ -963,8 +967,8 @@ enum {
  * multiple times (with the same name) to generate the next possible domain
  * name, if any.
  *
- * It returns 0 if it could generate a new domain name, or -1 when all
- * possibilites have been exhausted.
+ * It returns -1 if all possibilities have been exhausted, 0 if there was an
+ * error generating the next name, or the resulting name length.
  */
 int
 asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
@@ -1018,8 +1022,9 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 		if ((asr_ndots(name)) >= as->as_ctx->ac_ndots) {
 			DPRINT("asr: asr_iter_domain(\"%s\") ndots\n", name);
 			as->as_dom_flags |= ASYNC_DOM_NDOTS;
-			strlcpy(buf, name, len);
-			return (0);
+			if (strlcpy(buf, name, len) >= len)
+				return (0);
+			return (strlen(buf));
 		}
 		/* Otherwise, starts using the search domains */
 		/* FALLTHROUGH */
@@ -1044,8 +1049,9 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 		if (!(as->as_dom_flags & ASYNC_DOM_NDOTS)) {
 			DPRINT("asr: asr_iter_domain(\"%s\") as is\n", name);
 			as->as_dom_flags |= ASYNC_DOM_ASIS;
-			strlcpy(buf, name, len);
-			return (0);
+			if (strlcpy(buf, name, len) >= len)
+				return (0);
+			return (strlen(buf));
 		}
 		/* Otherwise, we are done. */
 
