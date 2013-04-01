@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.8 2013/01/07 20:02:11 miod Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.9 2013/04/01 12:55:27 miod Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.3 1997/05/12 07:54:45 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #define NITE		4
 
 /* from cpu.h */
-#undef	IIOV
+#define	INTIOBASE	(0x00400000)
 #define IIOV(x)		(x)
 
 #define MHZ_8		1
