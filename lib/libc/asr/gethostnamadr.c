@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.2 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr.c,v 1.3 2013/04/01 07:47:26 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -20,10 +20,15 @@
 
 #include <errno.h>
 #include <resolv.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "asr.h"
+
+#define PALIGN(p, l) \
+	((char*)(p) + (((uintptr_t)(p) % (l)) ? \
+                (l) - (uintptr_t)(p) % (l) : 0))
 
 static struct hostent *_gethostbyname(const char *, int);
 static void _fillhostent(const struct hostent *, struct hostent *, char *buf,
@@ -41,27 +46,31 @@ _fillhostent(const struct hostent *h, struct hostent *r, char *buf, size_t len)
 	size_t	n, i;
 	int	naliases, naddrs;
 
+	bzero(buf, len);
+	bzero(r, sizeof(*r));
+	r->h_aliases = _empty;
+	r->h_addr_list = _empty;
+
 	end = buf + len;
-	ptr = (char**)buf; /* XXX align */
+	ptr = (char**)PALIGN(buf, sizeof(char*));
+
+	if ((char*)ptr >= end)
+		return;
 
 	for (naliases = 0; h->h_aliases[naliases]; naliases++)
 		;
 	for (naddrs = 0; h->h_addr_list[naddrs]; naddrs++)
 		;
 
+	pos = (char*)(ptr + (naliases + 1) + (naddrs + 1));
+	if (pos >= end)
+		return;
+
 	r->h_name = NULL;
 	r->h_addrtype = h->h_addrtype;
 	r->h_length = h->h_length;
 	r->h_aliases = ptr;
 	r->h_addr_list = ptr + naliases + 1;
-
-	pos = (char*)(ptr + (naliases + 1) + (naddrs + 1));
-	if (pos > end) {
-		r->h_aliases = _empty;
-		r->h_addr_list = _empty;
-		return;
-	}
-	bzero(ptr, pos - (char*)ptr);
 
 	n = strlcpy(pos, h->h_name, end - pos);
 	if (n >= end - pos)
@@ -76,6 +85,10 @@ _fillhostent(const struct hostent *h, struct hostent *r, char *buf, size_t len)
 		r->h_aliases[i] = pos;
 		pos += n + 1;
 	}
+
+	pos = PALIGN(pos, r->h_length);
+	if (pos >= end)
+		return;
 
 	for (i = 0; i < naddrs; i++) {
 		if (r->h_length > end - pos)
