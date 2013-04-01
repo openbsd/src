@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.10 2013/04/01 15:49:54 deraadt Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.11 2013/04/01 16:04:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -536,7 +536,7 @@ tcp_write(struct async *as)
 	if (as->as.dns.datalen < sizeof(len)) {
 		offset = 0;
 		len = htons(as->as.dns.obuflen);
-		iov[i].iov_base = (char*)(&len) + as->as.dns.datalen;
+		iov[i].iov_base = (char *)(&len) + as->as.dns.datalen;
 		iov[i].iov_len = sizeof(len) - as->as.dns.datalen;
 		i++;
 	} else

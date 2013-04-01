@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.14 2013/04/01 15:49:54 deraadt Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.15 2013/04/01 16:04:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -310,7 +310,7 @@ int	pack_query(struct pack *, uint16_t, uint16_t, const char *);
 
 void	unpack_init(struct unpack *, const char *, size_t);
 int	unpack_header(struct unpack *, struct header *);
-int	unpack_query(struct unpack *, struct query*);
+int	unpack_query(struct unpack *, struct query *);
 int	unpack_rr(struct unpack *, struct rr *);
 int	sockaddr_from_str(struct sockaddr *, int, const char *);
 ssize_t dname_from_fqdn(const char *, char *, size_t);
