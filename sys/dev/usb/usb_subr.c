@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.84 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.85 2013/04/01 19:49:53 mglocker Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1397,6 +1397,40 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	bzero(di->udi_serial, sizeof(di->udi_serial));
 	usbd_get_string(dev, dev->ddesc.iSerialNumber, di->udi_serial,
 	    sizeof(di->udi_serial));
+}
+
+/* Retrieve a complete descriptor for a certain device and index. */
+usb_config_descriptor_t *
+usbd_get_cdesc(usbd_device_handle dev, int index, int *lenp)
+{
+	usb_config_descriptor_t *cdesc, *tdesc, cdescr;
+	int len;
+	usbd_status err;
+
+	if (index == USB_CURRENT_CONFIG_INDEX) {
+		tdesc = usbd_get_config_descriptor(dev);
+		len = UGETW(tdesc->wTotalLength);
+		if (lenp)
+			*lenp = len;
+		cdesc = malloc(len, M_TEMP, M_WAITOK);
+		memcpy(cdesc, tdesc, len);
+		DPRINTFN(5,("usbd_get_cdesc: current, len=%d\n", len));
+	} else {
+		err = usbd_get_config_desc(dev, index, &cdescr);
+		if (err)
+			return (0);
+		len = UGETW(cdescr.wTotalLength);
+		DPRINTFN(5,("usbd_get_cdesc: index=%d, len=%d\n", index, len));
+		if (lenp)
+			*lenp = len;
+		cdesc = malloc(len, M_TEMP, M_WAITOK);
+		err = usbd_get_config_desc_full(dev, index, cdesc, len);
+		if (err) {
+			free(cdesc, M_TEMP);
+			return (0);
+		}
+	}
+	return (cdesc);
 }
 
 void

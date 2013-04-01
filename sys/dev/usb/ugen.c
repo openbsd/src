@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.69 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: ugen.c,v 1.70 2013/04/01 19:49:53 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -114,8 +114,6 @@ int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_ioctl(struct ugen_softc *, int, u_long,
 			 caddr_t, int, struct proc *);
 int ugen_set_config(struct ugen_softc *sc, int configno);
-usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *sc,
-					       int index, int *lenp);
 usbd_status ugen_set_interface(struct ugen_softc *, int, int);
 int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 
@@ -945,41 +943,6 @@ out:
 	return (err);
 }
 
-/* Retrieve a complete descriptor for a certain device and index. */
-usb_config_descriptor_t *
-ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
-{
-	usb_config_descriptor_t *cdesc, *tdesc, cdescr;
-	int len;
-	usbd_status err;
-
-	if (index == USB_CURRENT_CONFIG_INDEX) {
-		tdesc = usbd_get_config_descriptor(sc->sc_udev);
-		len = UGETW(tdesc->wTotalLength);
-		if (lenp)
-			*lenp = len;
-		cdesc = malloc(len, M_TEMP, M_WAITOK);
-		memcpy(cdesc, tdesc, len);
-		DPRINTFN(5,("ugen_get_cdesc: current, len=%d\n", len));
-	} else {
-		err = usbd_get_config_desc(sc->sc_udev, index, &cdescr);
-		if (err)
-			return (0);
-		len = UGETW(cdescr.wTotalLength);
-		DPRINTFN(5,("ugen_get_cdesc: index=%d, len=%d\n", index, len));
-		if (lenp)
-			*lenp = len;
-		cdesc = malloc(len, M_TEMP, M_WAITOK);
-		err = usbd_get_config_desc_full(sc->sc_udev, index, cdesc,
-						len);
-		if (err) {
-			free(cdesc, M_TEMP);
-			return (0);
-		}
-	}
-	return (cdesc);
-}
-
 int
 ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 {
@@ -1097,7 +1060,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		break;
 	case USB_GET_NO_ALT:
 		ai = (struct usb_alt_interface *)addr;
-		cdesc = ugen_get_cdesc(sc, ai->uai_config_index, 0);
+		cdesc = usbd_get_cdesc(sc->sc_udev, ai->uai_config_index, 0);
 		if (cdesc == NULL)
 			return (EINVAL);
 		idesc = usbd_find_idesc(cdesc, ai->uai_interface_index, 0);
@@ -1115,7 +1078,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		break;
 	case USB_GET_CONFIG_DESC:
 		cd = (struct usb_config_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, cd->ucd_config_index, 0);
+		cdesc = usbd_get_cdesc(sc->sc_udev, cd->ucd_config_index, 0);
 		if (cdesc == NULL)
 			return (EINVAL);
 		cd->ucd_desc = *cdesc;
@@ -1123,7 +1086,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		break;
 	case USB_GET_INTERFACE_DESC:
 		id = (struct usb_interface_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, id->uid_config_index, 0);
+		cdesc = usbd_get_cdesc(sc->sc_udev, id->uid_config_index, 0);
 		if (cdesc == NULL)
 			return (EINVAL);
 		if (id->uid_config_index == USB_CURRENT_CONFIG_INDEX &&
@@ -1141,7 +1104,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		break;
 	case USB_GET_ENDPOINT_DESC:
 		ed = (struct usb_endpoint_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, ed->ued_config_index, 0);
+		cdesc = usbd_get_cdesc(sc->sc_udev, ed->ued_config_index, 0);
 		if (cdesc == NULL)
 			return (EINVAL);
 		if (ed->ued_config_index == USB_CURRENT_CONFIG_INDEX &&
@@ -1166,7 +1129,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		struct usb_full_desc *fd = (struct usb_full_desc *)addr;
 		int error;
 
-		cdesc = ugen_get_cdesc(sc, fd->ufd_config_index, &len);
+		cdesc = usbd_get_cdesc(sc->sc_udev, fd->ufd_config_index, &len);
 		if (cdesc == NULL)
 			return (EINVAL);
 		if (len > fd->ufd_size)
