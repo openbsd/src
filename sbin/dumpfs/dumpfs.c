@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.28 2011/02/28 00:12:19 halex Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.29 2013/04/02 03:05:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -344,7 +344,7 @@ dumpcg(const char *name, int fd, int c)
 		printf("magic\t%x\ttell\t%jx\ttime\t%s",
 		    afs.fs_postblformat == FS_42POSTBLFMT ?
 		    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
-		    (intmax_t)cur, ctime(&acg.cg_time));
+		    (intmax_t)cur, ctime(&cgtime));
 		printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
 		    acg.cg_cgx, acg.cg_ncyl, acg.cg_niblk, acg.cg_ndblk);
 		break;
