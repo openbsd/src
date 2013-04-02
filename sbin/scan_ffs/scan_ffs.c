@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.14 2007/06/22 19:04:13 otto Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.15 2013/04/02 05:22:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -82,12 +82,15 @@ ufsscan(int fd, daddr64_t beg, daddr64_t end, int flags)
 						    sb->fs_fsize, sb->fs_bsize,
 						    sb->fs_cpg, lastmount);
 					} else {
+						/* XXX 2038 */
+						time_t t = sb->fs_ffs1_time;
+
 						printf("ffs at %lld size %lld "
 						    "mount %s time %s",
 						    blk+(n/512)-(2*SBSIZE/512),
 						    (long long)(off_t)sb->fs_ffs1_size *
 						    sb->fs_fsize,
-						    lastmount, ctime(&sb->fs_ffs1_time));
+						    lastmount, ctime(&t));
 					}
 
 					if (flags & FLAG_SMART) {
