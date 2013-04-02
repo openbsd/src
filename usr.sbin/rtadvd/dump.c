@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.11 2012/07/08 10:46:00 phessler Exp $	*/
+/*	$OpenBSD: dump.c,v 1.12 2013/04/02 03:21:20 deraadt Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -121,17 +121,15 @@ rtadvd_dump()
 
 		/* control information */
 		if (rai->lastsent.tv_sec) {
+			time_t t = rai->lastsent.tv_sec;
 			/* note that ctime() appends CR by itself */
-			log_info("  Last RA sent: %s",
-			    ctime((time_t *)&rai->lastsent.tv_sec));
+			log_info("  Last RA sent: %s", ctime(&t));
 
 		}
 		if (rai->timer) {
-			log_info("  Next RA will be sent: %s",
-			    ctime((time_t *)&rai->timer->tm.tv_sec));
-
-		}
-		else
+			time_t t = rai->timer->tm.tv_sec;
+			log_info("  Next RA will be sent: %s", ctime(&t));
+		} else
 			log_info("  RA timer is stopped");
 		log_info("  waits: %d, initcount: %d",
 
