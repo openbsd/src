@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.23 2011/04/10 03:20:59 guenther Exp $	 */
+/* $OpenBSD: utils.c,v 1.24 2013/04/02 06:04:50 guenther Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -285,8 +285,8 @@ format_time(time_t seconds)
 	} else {
 		/* standard method produces MMM:SS */
 		/* we avoid printf as must as possible to make this quick */
-		snprintf(result, sizeof(result), "%3d:%02d", seconds / 60,
-		    seconds % 60);
+		snprintf(result, sizeof(result), "%3d:%02d", (int)seconds / 60,
+		    (int)seconds % 60);
 	}
 	return (result);
 }

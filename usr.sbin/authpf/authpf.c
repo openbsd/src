@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.118 2013/01/19 16:58:16 miod Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.119 2013/04/02 06:04:50 guenther Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -826,8 +826,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		remove_stale_rulesets();
 
 		gettimeofday(&Tend, NULL);
-		syslog(LOG_INFO, "removed %s, user %s - duration %ld seconds",
-		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
+		syslog(LOG_INFO, "removed %s, user %s - duration %d seconds",
+		    ipsrc, luser, (int)(Tend.tv_sec - Tstart.tv_sec));
 	}
 	return (0);
 no_mem:
