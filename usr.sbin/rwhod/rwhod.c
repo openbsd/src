@@ -219,6 +219,7 @@ handleread(int s)
 	char path[64];
 	struct whod wd;
 	int cc, whod;
+	time_t t;
 	socklen_t len = sizeof(from);
 
 	cc = recvfrom(s, (char *)&wd, sizeof(struct whod), 0,
@@ -280,7 +281,8 @@ handleread(int s)
 		}
 	}
 #endif
-	(void) time((time_t *)&wd.wd_recvtime);
+	(void) time(&t);
+	wd.wd_recvtime = t;	/* XXX protocol breaks in 2038 */
 	(void) write(whod, (char *)&wd, cc);
 	if (fstat(whod, &st) < 0 || st.st_size > cc)
 		ftruncate(whod, (off_t)cc);
