@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.23 2012/10/01 00:21:20 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.24 2013/04/02 05:16:14 guenther Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #define	_TIME_H_
 
 #include <sys/cdefs.h>
-#include <machine/_types.h>
+#include <sys/_types.h>
 
 #ifndef	NULL
 #ifdef 	__GNUG__
