@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.82 2012/09/15 00:47:08 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.83 2013/04/02 03:38:24 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ struct	splice {
  * addresses.
  */
 struct sockaddr {
-	u_int8_t    sa_len;		/* total length */
+	__uint8_t    sa_len;		/* total length */
 	sa_family_t sa_family;		/* address family */
 	char	    sa_data[14];	/* actually longer; address value */
 };
@@ -204,10 +204,10 @@ struct sockaddr {
  * occurrences (including header file) to __ss_len.
  */
 struct sockaddr_storage {
-	u_int8_t	ss_len;		/* total length */
+	__uint8_t	ss_len;		/* total length */
 	sa_family_t	ss_family;	/* address family */
 	unsigned char	__ss_pad1[6];	/* align to quad */
-	u_int64_t	__ss_pad2;	/* force alignment for stupid compilers */
+	__uint64_t	__ss_pad2;	/* force alignment for stupid compilers */
 	unsigned char	__ss_pad3[240];	/* pad to a total of 256 bytes */
 };
 
@@ -441,7 +441,7 @@ struct cmsghdr {
 
 /* given pointer to struct cmsghdr, return pointer to data */
 #define	CMSG_DATA(cmsg) \
-	((u_char *)(cmsg) + _ALIGN(sizeof(struct cmsghdr)))
+	((unsigned char *)(cmsg) + _ALIGN(sizeof(struct cmsghdr)))
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
