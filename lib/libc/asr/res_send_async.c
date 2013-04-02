@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.12 2013/04/02 16:38:37 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.13 2013/04/02 21:57:33 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -338,6 +338,11 @@ sockaddr_connect(const struct sockaddr *sa, int socktype)
 		goto fail;
 
 	if (connect(sock, sa, sa->sa_len) == -1) {
+		/*
+		 * In the TCP case, the caller will be asked to poll for
+		 * POLLOUT so that we start writing the packet in tcp_write()
+		 * when the connection is established, or fail there on error.
+		 */
 		if (errno == EINPROGRESS)
 			return (sock);
 		goto fail;
