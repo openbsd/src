@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.141 2013/03/26 13:19:25 mpi Exp $	*/
+/*	$OpenBSD: if.h,v 1.142 2013/04/02 08:54:37 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -307,6 +307,7 @@ struct ifnet {				/* and the entries */
 					/* timer routine */
 	void	(*if_watchdog)(struct ifnet *);
 	int	(*if_wol)(struct ifnet *, int);
+	struct	ifaddr *if_lladdr;	/* pointer to link-level address */
 	struct	ifaltq if_snd;		/* output queue (includes altq) */
 	struct sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 

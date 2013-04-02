@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.80 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.81 2013/04/02 08:54:37 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -59,8 +59,6 @@
 
 
 SLIST_HEAD(__trhead, trunk_softc) trunk_list;	/* list of trunks */
-
-extern struct ifaddr **ifnet_addrs;
 
 void	 trunkattach(int);
 int	 trunk_clone_create(struct if_clone *, int);
@@ -251,7 +249,7 @@ trunk_lladdr(struct arpcom *ac, u_int8_t *lladdr)
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 
-	ifa = ifnet_addrs[ifp->if_index];
+	ifa = ifp->if_lladdr;
 	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 	sdl->sdl_type = IFT_ETHER;
 	sdl->sdl_alen = ETHER_ADDR_LEN;

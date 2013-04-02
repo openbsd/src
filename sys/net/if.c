@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.257 2013/03/29 12:20:34 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.258 2013/04/02 08:54:37 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -190,7 +190,6 @@ ifinit()
 
 static unsigned int if_index = 0;
 static unsigned int if_indexlim = 0;
-struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
 struct ifnet_head iftxlist = TAILQ_HEAD_INITIALIZER(iftxlist);
@@ -237,10 +236,9 @@ if_attachsetup(struct ifnet *ifp)
 	/*
 	 * We have some arrays that should be indexed by if_index.
 	 * since if_index will grow dynamically, they should grow too.
-	 *	struct ifaddr **ifnet_addrs
 	 *	struct ifnet **ifindex2ifnet
 	 */
-	if (ifnet_addrs == 0 || ifindex2ifnet == 0 || if_index >= if_indexlim) {
+	if (ifindex2ifnet == NULL || if_index >= if_indexlim) {
 		size_t m, n, oldlim;
 		caddr_t q;
 
@@ -249,16 +247,6 @@ if_attachsetup(struct ifnet *ifp)
 			if_indexlim = 8;
 		while (if_index >= if_indexlim)
 			if_indexlim <<= 1;
-
-		/* grow ifnet_addrs */
-		m = oldlim * sizeof(struct ifaddr *);
-		n = if_indexlim * sizeof(struct ifaddr *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
-		if (ifnet_addrs) {
-			bcopy((caddr_t)ifnet_addrs, q, m);
-			free((caddr_t)ifnet_addrs, M_IFADDR);
-		}
-		ifnet_addrs = (struct ifaddr **)q;
 
 		/* grow ifindex2ifnet */
 		m = oldlim * sizeof(struct ifnet *);
@@ -336,7 +324,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	sdl->sdl_alen = ifp->if_addrlen;
 	sdl->sdl_index = ifp->if_index;
 	sdl->sdl_type = ifp->if_type;
-	ifnet_addrs[ifp->if_index] = ifa;
+	ifp->if_lladdr = ifa;
 	ifa->ifa_ifp = ifp;
 	ifa->ifa_rtrequest = link_rtrequest;
 	ifa->ifa_addr = (struct sockaddr *)sdl;
@@ -360,7 +348,7 @@ if_free_sadl(struct ifnet *ifp)
 	struct ifaddr *ifa;
 	int s;
 
-	ifa = ifnet_addrs[ifp->if_index];
+	ifa = ifp->if_lladdr;
 	if (ifa == NULL)
 		return;
 
@@ -368,7 +356,7 @@ if_free_sadl(struct ifnet *ifp)
 	rtinit(ifa, RTM_DELETE, 0);
 #if 0
 	ifa_del(ifp, ifa);
-	ifnet_addrs[ifp->if_index] = NULL;
+	ifp->if_lladdr = NULL;
 #endif
 	ifp->if_sadl = NULL;
 
@@ -610,7 +598,7 @@ do { \
 			TAILQ_REMOVE(&in_ifaddr, ifatoia(ifa), ia_list);
 #endif
 		/* XXX if_free_sadl needs this */
-		if (ifa == ifnet_addrs[ifp->if_index])
+		if (ifa == ifp->if_lladdr)
 			continue;
 
 		ifa->ifa_ifp = NULL;
@@ -622,9 +610,9 @@ do { \
 
 	if_free_sadl(ifp);
 
-	ifnet_addrs[ifp->if_index]->ifa_ifp = NULL;
-	ifafree(ifnet_addrs[ifp->if_index]);
-	ifnet_addrs[ifp->if_index] = NULL;
+	ifp->if_lladdr->ifa_ifp = NULL;
+	ifafree(ifp->if_lladdr);
+	ifp->if_lladdr = NULL;
 
 	free(ifp->if_addrhooks, M_TEMP);
 	free(ifp->if_linkstatehooks, M_TEMP);
@@ -931,8 +919,8 @@ ifa_ifwithnet(struct sockaddr *addr, u_int rdomain)
 	rdomain = rtable_l2(rdomain);
 	if (af == AF_LINK) {
 		struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
-		if (sdl->sdl_index && if_get(sdl->sdl_index))
-			return (ifnet_addrs[sdl->sdl_index]);
+		if (sdl->sdl_index && (ifp = if_get(sdl->sdl_index)) != NULL)
+			return (ifp->if_lladdr);
 	}
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
@@ -1551,7 +1539,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFLLADDR:
 		if ((error = suser(p, 0)))
 			return (error);
-		ifa = ifnet_addrs[ifp->if_index];
+		ifa = ifp->if_lladdr;
 		if (ifa == NULL)
 			return (EINVAL);
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
