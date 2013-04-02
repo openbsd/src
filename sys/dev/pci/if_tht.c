@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.125 2013/01/14 23:19:39 deraadt Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.126 2013/04/02 13:43:40 brad Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -888,7 +888,7 @@ tht_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
-				tht_iff(sc);
+				error = ENETRESET;
 			else
 				tht_up(sc);
 		} else {
@@ -973,6 +973,7 @@ tht_up(struct tht_softc *sc)
 	/* populate rxf fifo */
 	tht_rxf_fill(sc, 1);
 
+	/* program promiscuous mode and multicast filters */
 	tht_iff(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -1019,9 +1020,10 @@ tht_iff(struct tht_softc *sc)
 	}
 	memset(imf, 0x00, sizeof(imf));
 
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		rxf |= THT_REG_RX_FLT_PRM_ALL;
-	else if (sc->sc_ac.ac_multirangecnt > 0) {
+	} else if (sc->sc_ac.ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		memset(imf, 0xff, sizeof(imf));
 	} else {
