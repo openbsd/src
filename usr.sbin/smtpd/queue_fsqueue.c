@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.60 2013/03/31 14:42:21 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.61 2013/04/02 09:17:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -109,7 +109,7 @@ fsqueue_check_space(void)
 	else
 		used = 100;
 	if (100 - used < MINSPACE) {
-		log_warnx("warn: not enough disk space: %lu%% left", 100 - used);
+		log_warnx("warn: not enough disk space: %llu%% left", 100 - used);
 		return 0;
 	}
 
@@ -120,7 +120,7 @@ fsqueue_check_space(void)
 	else
 		used = 100;
 	if (100 - used < MININODES) {
-		log_warnx("warn: not enough inodes: %lu%% left", 100 - used);
+		log_warnx("warn: not enough inodes: %llu%% left", 100 - used);
 		return 0;
 	}
 
