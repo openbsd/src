@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.8 2013/04/02 04:58:54 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.9 2013/04/02 05:01:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@ settime(int afd)
 	if (lseek(afd, size, SEEK_SET) == (off_t)-1)
 		error(archive);
 	(void)snprintf(buf, sizeof buf,
-	    "%-12lld", (long long)time((time_t *)NULL) + RANLIBSKEW);
+	    "%-12lld", (long long)time(NULL) + RANLIBSKEW);
 	if (write(afd, buf, sizeof(hdr->ar_date)) != sizeof(hdr->ar_date))
 		error(archive);
 }
