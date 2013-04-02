@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.4 2008/07/04 22:04:37 kettenis Exp $	*/
+/*	$OpenBSD: trap.h,v 1.5 2013/04/02 13:24:57 kettenis Exp $	*/
 /*	$NetBSD: trap.h,v 1.4 1999/06/07 05:28:04 eeh Exp $ */
 
 /*
@@ -146,7 +146,6 @@
 
 /* flags to system call (flags in %g1 along with syscall number) */
 #define	SYSCALL_G2RFLAG	0x400	/* on success, return to %g2 rather than npc */
-#define	SYSCALL_G7RFLAG	0x800	/* use %g7 as above (deprecated) */
 
 /*
  * `software trap' macros to keep people happy (sparc v8 manual says not
