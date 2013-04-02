@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.135 2013/03/31 11:18:35 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.136 2013/04/02 18:27:46 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -657,7 +657,7 @@ struct inpcb *
 in_pcblookup(struct inpcbtable *table, void *faddrp, u_int fport_arg,
     void *laddrp, u_int lport_arg, int flags, u_int rdomain)
 {
-	struct inpcb *inp, *match = 0;
+	struct inpcb *inp, *match = NULL;
 	int matchwild = 3, wildcard;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 	struct in_addr faddr = *(struct in_addr *)faddrp;

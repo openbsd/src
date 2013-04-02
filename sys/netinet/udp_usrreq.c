@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.157 2013/03/31 11:18:35 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.158 2013/04/02 18:27:47 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1160,12 +1160,11 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		}
 		splx(s);
 #ifdef INET6
-		if (((struct inpcb *)so->so_pcb)->inp_flags & INP_IPV6)
-			((struct inpcb *) so->so_pcb)->inp_ipv6.ip6_hlim =
-			    ip6_defhlim;
+		if (sotoinpcb(so)->inp_flags & INP_IPV6)
+			sotoinpcb(so)->inp_ipv6.ip6_hlim = ip6_defhlim;
 		else
 #endif /* INET6 */
-			((struct inpcb *) so->so_pcb)->inp_ip.ip_ttl = ip_defttl;
+			sotoinpcb(so)->inp_ip.ip_ttl = ip_defttl;
 		break;
 
 	case PRU_DETACH:

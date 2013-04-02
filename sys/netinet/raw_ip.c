@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.64 2013/03/31 11:18:35 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.65 2013/04/02 18:27:47 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			break;
 		}
 		splx(s);
-		inp = (struct inpcb *)so->so_pcb;
+		inp = sotoinpcb(so);
 		inp->inp_ip.ip_p = (long)nam;
 		break;
 
