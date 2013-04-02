@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.162 2013/03/29 13:16:14 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.163 2013/04/02 03:34:31 lteo Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -188,10 +188,10 @@ struct mbuf {
 #define	M_UDP_CSUM_OUT		0x0004	/* UDP checksum needed */
 #define	M_IPV4_CSUM_IN_OK	0x0008	/* IPv4 checksum verified */
 #define	M_IPV4_CSUM_IN_BAD	0x0010	/* IPv4 checksum bad */
-#define	M_TCP_CSUM_IN_OK	0x0020	/* TCP/IPv4 checksum verified */
-#define	M_TCP_CSUM_IN_BAD	0x0040	/* TCP/IPv4 checksum bad */
-#define	M_UDP_CSUM_IN_OK	0x0080	/* UDP/IPv4 checksum verified */
-#define	M_UDP_CSUM_IN_BAD	0x0100	/* UDP/IPv4 checksum bad */
+#define	M_TCP_CSUM_IN_OK	0x0020	/* TCP checksum verified */
+#define	M_TCP_CSUM_IN_BAD	0x0040	/* TCP checksum bad */
+#define	M_UDP_CSUM_IN_OK	0x0080	/* UDP checksum verified */
+#define	M_UDP_CSUM_IN_BAD	0x0100	/* UDP checksum bad */
 #define	M_ICMP_CSUM_OUT		0x0200	/* ICMP checksum needed */
 #define	M_ICMP_CSUM_IN_OK	0x0400	/* ICMP checksum verified */
 #define	M_ICMP_CSUM_IN_BAD	0x0800	/* ICMP checksum bad */
