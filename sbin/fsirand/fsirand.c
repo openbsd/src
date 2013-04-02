@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.26 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.27 2013/04/02 04:16:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -216,9 +216,11 @@ fsirand(char *device)
 	}
 
 	if (printonly && (sblock->fs_id[0] || sblock->fs_id[1])) {
-		if (sblock->fs_inodefmt >= FS_44INODEFMT && sblock->fs_id[0])
+		if (sblock->fs_inodefmt >= FS_44INODEFMT && sblock->fs_id[0]) {
+			time_t t = sblock->fs_id[0];	/* XXX 2038 */
 			(void)printf("%s was randomized on %s", devpath,
-			    ctime((const time_t *)&(sblock->fs_id[0])));
+			    ctime(&t));
+		}
 		(void)printf("fsid: %x %x\n", sblock->fs_id[0],
 		    sblock->fs_id[1]);
 	}
