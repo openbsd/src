@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.21 2012/11/08 21:32:55 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.22 2013/04/02 02:37:41 guenther Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -185,6 +185,7 @@ void
 parse_lease_time(FILE *cfile, time_t *timep)
 {
 	char *val;
+	uint32_t value;
 	int token;
 
 	token = next_token(&val, cfile);
@@ -193,9 +194,9 @@ parse_lease_time(FILE *cfile, time_t *timep)
 		skip_to_semi(cfile);
 		return;
 	}
-	convert_num((unsigned char *)timep, val, 10, 32);
+	convert_num((unsigned char *)&value, val, 10, 32);
 	/* Unswap the number - convert_num returns stuff in NBO. */
-	*timep = ntohl(*timep);	/* XXX */
+	*timep = ntohl(value);
 
 	parse_semi(cfile);
 }
