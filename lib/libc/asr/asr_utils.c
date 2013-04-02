@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.5 2013/04/01 15:49:54 deraadt Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.6 2013/04/02 21:23:17 eric Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -133,7 +133,7 @@ dname_expand(const unsigned char *data, size_t len, size_t offset,
 				return (-1);
 			if (end < offset + 2)
 				end = offset + 2;
-			offset = ptr;
+			offset = start = ptr;
 			continue;
 		}
 		if (offset + n + 1 > len)
