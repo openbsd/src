@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.24 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.25 2013/04/02 20:26:17 naddy Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 {
 	struct stat sb;
 	char *slash;
-	int done, exists;
+	int done;
 
 	slash = path;
 
@@ -137,19 +137,15 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		/* skip existing path components */
-		exists = !stat(path, &sb);
-		if (!done && exists && S_ISDIR(sb.st_mode)) {
-			*slash = '/';
-			continue;
-		}
-
 		if (mkdir(path, done ? mode : dir_mode) == 0) {
 			if (mode > 0777 && chmod(path, mode) < 0)
 				return (-1);
 		} else {
-			if (!exists) {
-				/* Not there */
+			int mkdir_errno = errno;
+
+			if (stat(path, &sb)) {
+				/* Not there; use mkdir()s errno */
+				errno = mkdir_errno;
 				return (-1);
 			}
 			if (!S_ISDIR(sb.st_mode)) {
