@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.10 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.11 2013/04/03 03:20:39 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ DispPkt(RMPCONN *rconn, int direct)
 	struct rmp_packet *rmp;
 	int i, omask;
 	u_int32_t t;
+	time_t tim;
 
 	/*
 	 *  Since we will be working with RmpConns as well as DbgFp, we
@@ -93,7 +94,9 @@ DispPkt(RMPCONN *rconn, int direct)
 	fputs((direct==DIR_RCVD)?"<<< ":(direct==DIR_SENT)?">>> ":"", DbgFp);
 
 	/* display packet timestamp */
-	tmp = localtime((time_t *)&rconn->tstamp.tv_sec);
+	
+	tim = rconn->tstamp.tv_sec;
+	tmp = localtime(&tim);
 	fprintf(DbgFp, "%02d:%02d:%02d.%06ld   ", tmp->tm_hour, tmp->tm_min,
 	    tmp->tm_sec, rconn->tstamp.tv_usec);
 
