@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2013/03/27 18:32:05 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.31 2013/04/03 12:03:06 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -175,15 +175,11 @@ octeon_memory_init(struct boot_info *boot_info)
 	 * Octeon Memory looks as follows:
          *   PA
 	 * First 256 MB DR0
-	 * 0000 0000 0000 0000     to  0000 0000 0000 0000
-	 * 0000 0000 0FFF FFFF     to  0000 0000 0FFF FFFF
+	 * 0000 0000 0000 0000     to  0000 0000 0FFF FFFF
 	 * Second 256 MB DR1 
-	 * 0000 0004 1000 0000     to  0000 0004 1000 0000
-	 * 0000 0004 1FFF FFFF     to  0000 0004 1FFF FFFF
+	 * 0000 0004 1000 0000     to  0000 0004 1FFF FFFF
 	 * Over 512MB Memory DR2  15.5GB
-	 * 0000 0000 2000 0000     to  0000 0000 2000 0000
-	 * 0000 0003 FFFF FFFF     to  0000 0003 FFFF FFFF
-	 *
+	 * 0000 0000 2000 0000     to  0000 0003 FFFF FFFF
 	 */
 	physmem = atop(phys_avail[1] - phys_avail[0]);
 
