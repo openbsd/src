@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.16 2013/04/01 15:49:54 deraadt Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.17 2013/04/03 21:13:50 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -344,8 +344,10 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 		 * No address found in the dns packet. The blocking version
 		 * reports this as an error.
 		 */
-		if (as->as_type == ASR_GETHOSTBYNAME &&
-		    h->h.h_addr_list[0] == NULL) {
+		if ((as->as_type == ASR_GETHOSTBYNAME &&
+		     h->h.h_addr_list[0] == NULL) ||
+		    (as->as_type == ASR_GETHOSTBYADDR &&
+		     h->h.h_name == NULL)) {
 			free(h);
 			async_set_state(as, ASR_STATE_NEXT_DB);
 			break;
@@ -462,6 +464,7 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 	struct header	 hdr;
 	struct query	 q;
 	struct rr	 rr;
+	char		 dname[MAXDNAME];
 
 	if ((h = hostent_alloc(family)) == NULL)
 		return (NULL);
@@ -470,6 +473,8 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 	unpack_header(&p, &hdr);
 	for (; hdr.qdcount; hdr.qdcount--)
 		unpack_query(&p, &q);
+	strlcpy(dname, q.q_dname, sizeof(dname));
+
 	for (; hdr.ancount; hdr.ancount--) {
 		unpack_rr(&p, &rr);
 		if (rr.rr_class != C_IN)
@@ -481,14 +486,17 @@ hostent_from_packet(int reqtype, int family, char *pkt, size_t pktlen)
 				if (hostent_add_alias(h, rr.rr_dname, 1) == -1)
 					goto fail;
 			} else {
-				if (hostent_set_cname(h, rr.rr_dname, 1) == -1)
-					goto fail;
+				if (strcasecmp(rr.rr_dname, dname) == 0)
+					strlcpy(dname, rr.rr.cname.cname,
+					    sizeof(dname));
 			}
 			break;
 
 		case T_PTR:
 			if (reqtype != ASR_GETHOSTBYADDR)
 				break;
+			if (strcasecmp(rr.rr_dname, dname) != 0)
+				continue;
 			if (hostent_set_cname(h, rr.rr.ptr.ptrname, 1) == -1)
 				goto fail;
 			/* XXX See if we need MULTI_PTRS_ARE_ALIASES */
