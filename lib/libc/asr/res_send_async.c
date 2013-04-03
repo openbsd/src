@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.13 2013/04/02 21:57:33 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.14 2013/04/03 19:38:20 matthew Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -516,6 +516,7 @@ udp_recv(struct async *as)
 static int
 tcp_write(struct async *as)
 {
+	struct msghdr	msg;
 	struct iovec	iov[2];
 	uint16_t	len;
 	ssize_t		n;
@@ -552,7 +553,11 @@ tcp_write(struct async *as)
 	iov[i].iov_len = as->as.dns.obuflen - offset;
 	i++;
 
-	n = writev(as->as_fd, iov, i);
+	memset(&msg, 0, sizeof msg);
+	msg.msg_iov = iov;
+	msg.msg_iovlen = i;
+
+	n = sendmsg(as->as_fd, &msg, MSG_NOSIGNAL);
 	if (n == -1)
 		goto close; /* errno set */
 
