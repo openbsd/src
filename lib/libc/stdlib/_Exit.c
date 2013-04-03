@@ -1,4 +1,4 @@
-/*	$OpenBSD: _Exit.c,v 1.2 2005/08/08 08:05:36 espie Exp $	*/
+/*	$OpenBSD: _Exit.c,v 1.3 2013/04/03 03:39:29 guenther Exp $	*/
 
 /*
  * Placed in the public domain by Todd C. Miller on January 21, 2004.
@@ -11,9 +11,9 @@
  * _Exit() is the ISO/ANSI C99 equivalent of the POSIX _exit() function.
  * No atexit() handlers are called and no signal handlers are run.
  * Whether or not stdio buffers are flushed or temporary files are removed
- * is implementation-dependent.  As such it is safest to *not* flush
- * stdio buffers or remove temporary files.  This is also consistent
- * with most other implementations.
+ * is implementation-dependent in C99.  Indeed, POSIX specifies that
+ * _Exit() must *not* flush stdio buffers or remove temporary files, but
+ * rather must behave exactly like _exit()
  */
 void
 _Exit(int status)
