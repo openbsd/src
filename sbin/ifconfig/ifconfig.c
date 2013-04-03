@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.260 2012/12/04 14:54:32 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.261 2013/04/03 16:28:10 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3097,6 +3097,7 @@ in6_alias(struct in6_ifreq *creq)
 
 	if (Lflag) {
 		struct in6_addrlifetime *lifetime;
+
 		(void) memset(&ifr6, 0, sizeof(ifr6));
 		(void) strlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		ifr6.ifr_addr = creq->ifr_addr;
@@ -3106,11 +3107,12 @@ in6_alias(struct in6_ifreq *creq)
 				warn("SIOCGIFALIFETIME_IN6");
 		} else if (lifetime->ia6t_preferred || lifetime->ia6t_expire) {
 			time_t t = time(NULL);
+
 			printf(" pltime ");
 			if (lifetime->ia6t_preferred) {
 				printf("%s", lifetime->ia6t_preferred < t
 				    ? "0" :
-				    sec2str( lifetime->ia6t_preferred - t));
+				    sec2str(lifetime->ia6t_preferred - t));
 			} else
 				printf("infty");
 
@@ -4729,43 +4731,10 @@ char *
 sec2str(time_t total)
 {
 	static char result[256];
-	int days, hours, mins, secs;
-	int first = 1;
 	char *p = result;
 	char *end = &result[sizeof(result)];
-	int n;
 
-	if (0) {	/*XXX*/
-		days = total / 3600 / 24;
-		hours = (total / 3600) % 24;
-		mins = (total / 60) % 60;
-		secs = total % 60;
-
-		if (days) {
-			first = 0;
-			n = snprintf(p, end - p, "%dd", days);
-			if (n < 0 || n >= end - p)
-				return (result);
-			p += n;
-		}
-		if (!first || hours) {
-			first = 0;
-			n = snprintf(p, end - p, "%dh", hours);
-			if (n < 0 || n >= end - p)
-				return (result);
-			p += n;
-		}
-		if (!first || mins) {
-			first = 0;
-			n = snprintf(p, end - p, "%dm", mins);
-			if (n < 0 || n >= end - p)
-				return (result);
-			p += n;
-		}
-		snprintf(p, end - p, "%ds", secs);
-	} else
-		snprintf(p, end - p, "%lu", (u_long)total);
-
+	snprintf(p, end - p, "%lld", (long long)total);
 	return (result);
 }
 #endif /* INET6 */
