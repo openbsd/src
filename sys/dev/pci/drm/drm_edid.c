@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_edid.c,v 1.4 2013/04/03 05:57:00 jsg Exp $	*/
+/*	$OpenBSD: drm_edid.c,v 1.5 2013/04/03 06:03:58 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -1036,6 +1036,7 @@ set_size:
 	}
 
 	mode->type = DRM_MODE_TYPE_DRIVER;
+	mode->vrefresh = drm_mode_vrefresh(mode);
 	drm_mode_set_name(mode);
 
 	return mode;
