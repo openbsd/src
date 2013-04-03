@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.41 2011/09/18 23:24:14 matthew Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.42 2013/04/03 03:36:25 guenther Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -42,7 +42,6 @@
 #define SYSVSEM
 #define SYSVMSG
 #define SYSVSHM
-#define LFS
 #include <kern/syscalls.c>
 
 #include <compat/linux/linux_syscalls.c>
@@ -53,7 +52,6 @@
 #undef SYSVSEM
 #undef SYSVMSG
 #undef SYSVSHM
-#undef LFS
 
 #include <sys/ioctl.h>
 #include <sys/tree.h>
