@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.325 2013/03/20 02:46:33 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.326 2013/04/03 18:07:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -510,7 +510,7 @@ bge_ape_lock_init(struct bge_softc *sc)
 			bit = BGE_APE_LOCK_GRANT_DRIVER0;
 			break;
 		default:
-			if (pa->pa_function != 0)
+			if (pa->pa_function == 0)
 				bit = BGE_APE_LOCK_GRANT_DRIVER0;
 			else
 				bit = (1 << pa->pa_function);
