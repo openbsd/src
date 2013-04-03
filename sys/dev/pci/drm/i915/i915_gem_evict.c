@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_evict.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_evict.c,v 1.2 2013/04/03 07:36:57 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -51,6 +51,49 @@
 
 #include <sys/queue.h>
 #include <sys/workq.h>
+
+struct drm_obj *i915_gem_find_inactive_object(struct inteldrm_softc *, size_t);
+
+struct drm_obj *
+i915_gem_find_inactive_object(struct inteldrm_softc *dev_priv,
+    size_t min_size)
+{
+	struct drm_obj		*obj, *best = NULL, *first = NULL;
+	struct drm_i915_gem_object *obj_priv;
+
+	/*
+	 * We don't need references to the object as long as we hold the list
+	 * lock, they won't disappear until we release the lock.
+	 */
+	list_for_each_entry(obj_priv, &dev_priv->mm.inactive_list, mm_list) {
+		obj = &obj_priv->base;
+		if (obj->size >= min_size) {
+			if ((!obj_priv->dirty ||
+			    i915_gem_object_is_purgeable(obj_priv)) &&
+			    (best == NULL || obj->size < best->size)) {
+				best = obj;
+				if (best->size == min_size)
+					break;
+			}
+		}
+		if (first == NULL)
+			first = obj;
+	}
+	if (best == NULL)
+		best = first;
+	if (best) {
+		drm_ref(&best->uobj);
+		/*
+		 * if we couldn't grab it, we may as well fail and go
+		 * onto the next step for the sake of simplicity.
+		 */
+		if (drm_try_hold_object(best) == 0) {
+			drm_unref(&best->uobj);
+			best = NULL;
+		}
+	}
+	return (best);
+}
 
 int
 i915_gem_evict_something(struct inteldrm_softc *dev_priv, size_t min_size)

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.11 2013/03/31 11:43:23 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.12 2013/04/03 07:36:57 jsg Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1093,9 +1093,6 @@ int	i915_gem_execbuffer_reserve_object(struct drm_i915_gem_object *,
 	    struct intel_ring_buffer *);
 void	i915_gem_execbuffer_unreserve_object(struct drm_i915_gem_object *);
 
-struct drm_obj	*i915_gem_find_inactive_object(struct inteldrm_softc *,
-		     size_t);
-
 extern int i915_gem_get_seqno(struct drm_device *, u32 *);
 
 int	i915_gem_object_set_to_gtt_domain(struct drm_i915_gem_object *,
@@ -1140,8 +1137,6 @@ void inteldrm_verify_inactive(struct inteldrm_softc *, char *, int);
 #endif
 
 void i915_gem_retire_requests(struct inteldrm_softc *);
-struct drm_obj  *i915_gem_find_inactive_object(struct inteldrm_softc *,
-	size_t);
 int i915_gem_object_unbind(struct drm_i915_gem_object *);
 int i915_wait_seqno(struct intel_ring_buffer *, uint32_t);
 #define I915_GEM_GPU_DOMAINS	(~(I915_GEM_DOMAIN_CPU | I915_GEM_DOMAIN_GTT))
