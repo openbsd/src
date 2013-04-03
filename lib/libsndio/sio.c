@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.12 2013/02/01 09:02:16 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.13 2013/04/03 03:13:32 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -26,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "debug.h"
@@ -111,7 +111,7 @@ sio_start(struct sio_hdl *hdl)
 	if (!sio_getpar(hdl, &hdl->par))
 		return 0;
 	hdl->pollcnt = hdl->wcnt = hdl->rcnt = hdl->realpos = 0;
-	gettimeofday(&hdl->tv, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &hdl->ts);
 #endif
 	if (!hdl->ops->start(hdl))
 		return 0;
@@ -281,11 +281,11 @@ sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 	const unsigned char *data = buf;
 	size_t todo = len;
 #ifdef DEBUG
-	struct timeval tv0, tv1, dtv;
+	struct timespec ts0, ts1, dts;
 	unsigned int us;
 
 	if (sndio_debug >= 2)
-		gettimeofday(&tv0, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
 
 	if (hdl->eof) {
@@ -318,12 +318,12 @@ sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 	}
 #ifdef DEBUG
 	if (sndio_debug >= 2) {
-		gettimeofday(&tv1, NULL);
-		timersub(&tv0, &hdl->tv, &dtv);
-		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
+		clock_gettime(CLOCK_MONOTONIC, &ts1);
+		timespecsub(&ts0, &hdl->ts, &dts);
+		DPRINTF("%lld.%09ld: ", (long long)dts.tv_sec, dts.tv_nsec);
 
-		timersub(&tv1, &tv0, &dtv);
-		us = dtv.tv_sec * 1000000 + dtv.tv_usec;
+		timespecsub(&ts1, &ts0, &dts);
+		us = dts.tv_sec * 1000000 + dts.tv_nsec/1000;
 		DPRINTF(
 		    "sio_write: wrote %d bytes of %d in %uus\n",
 		    (int)(len - todo), (int)len, us);
@@ -353,11 +353,11 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 {
 	int revents;
 #ifdef DEBUG
-	struct timeval tv0, tv1, dtv;
+	struct timespec ts0, ts1, dts;
 	unsigned int us;
 
 	if (sndio_debug >= 2)
-		gettimeofday(&tv0, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &ts0);
 #endif
 	if (hdl->eof)
 		return POLLHUP;
@@ -369,12 +369,12 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 		return revents & POLLHUP;
 #ifdef DEBUG
 	if (sndio_debug >= 2) {
-		gettimeofday(&tv1, NULL);
-		timersub(&tv0, &hdl->tv, &dtv);
-		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
+		clock_gettime(CLOCK_MONOTONIC, &ts1);
+		timespecsub(&ts0, &hdl->ts, &dts);
+		DPRINTF("%lld.%09ld: ", (long long)dts.tv_sec, dts.tv_nsec);
 
-		timersub(&tv1, &tv0, &dtv);
-		us = dtv.tv_sec * 1000000 + dtv.tv_usec;
+		timespecsub(&ts1, &ts0, &dts);
+		us = dts.tv_sec * 1000000 + dts.tv_nsec/1000;
 		DPRINTF("sio_revents: revents = 0x%x, complete in %uus\n",
 		    revents, us);
 	}
@@ -404,13 +404,13 @@ void
 sio_onmove_cb(struct sio_hdl *hdl, int delta)
 {
 #ifdef DEBUG
-	struct timeval tv0, dtv;
+	struct timespec ts0, dts;
 	long long playpos;
 
 	if (sndio_debug >= 3 && (hdl->mode & SIO_PLAY)) {
-		gettimeofday(&tv0, NULL);
-		timersub(&tv0, &hdl->tv, &dtv);
-		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
+		clock_gettime(CLOCK_MONOTONIC, &ts0);
+		timespecsub(&ts0, &hdl->ts, &dts);
+		DPRINTF("%lld.%09ld: ", (long long)dts.tv_sec, dts.tv_nsec);
 		hdl->realpos += delta;
 		playpos = hdl->wcnt / (hdl->par.bps * hdl->par.pchan);
 		DPRINTF("sio_onmove_cb: delta = %+7d, "
