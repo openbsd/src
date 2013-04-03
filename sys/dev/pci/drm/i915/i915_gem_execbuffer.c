@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.4 2013/03/30 04:57:53 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.5 2013/04/03 19:57:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -551,13 +551,13 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		if (obj == NULL) {
 			DRM_ERROR("Invalid object handle %d at index %d\n",
 				   exec_list[i].handle, i);
-			ret = EBADF;
+			ret = ENOENT;
 			goto err;
 		}
 		if (obj->do_flags & I915_IN_EXEC) {
 			DRM_ERROR("Object %p appears more than once in object_list\n",
 			    object_list[i]);
-			ret = EBADF;
+			ret = EINVAL;
 			goto err;
 		}
 		atomic_setbits_int(&obj->do_flags, I915_IN_EXEC);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.8 2013/03/30 11:08:07 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.9 2013/04/03 19:57:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -330,7 +330,7 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (obj == NULL)
-		return (EBADF);
+		return ENOENT;
 	DRM_READLOCK();
 	drm_hold_object(&obj->base);
 
@@ -397,7 +397,7 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (obj == NULL)
-		return (EBADF);
+		return ENOENT;
 	DRM_READLOCK();
 	drm_hold_object(&obj->base);
 
@@ -623,7 +623,7 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (&obj->base == NULL) {
-		ret = EBADF;
+		ret = ENOENT;
 		goto unlock;
 	}
 
@@ -996,7 +996,7 @@ i915_gem_mmap_gtt(struct drm_file *file, struct drm_device *dev,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, handle));
 	if (obj == NULL)
-		return (EBADF);
+		return ENOENT;
 
 	/* Since we are doing purely uvm-related operations here we do
 	 * not need to hold the object, a reference alone is sufficient
@@ -2709,7 +2709,7 @@ i915_gem_pin_ioctl(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (&obj->base == NULL) {
-		ret = EBADF;
+		ret = ENOENT;
 		goto unlock;
 	}
 
@@ -2756,7 +2756,7 @@ i915_gem_unpin_ioctl(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (&obj->base == NULL) {
-		ret = EBADF;
+		ret = ENOENT;
 		goto unlock;
 	}
 
@@ -2794,7 +2794,7 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
 	if (&obj->base == NULL) {
-		ret = EBADF;
+		ret = ENOENT;
 		goto unlock;
 	}
 
@@ -2831,7 +2831,7 @@ i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file_priv, args->handle));
 	if (&obj->base == NULL) {
-		ret = EBADF;
+		ret = ENOENT;
 		goto unlock;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.15 2013/04/03 07:36:57 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.16 2013/04/03 19:57:17 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1569,7 +1569,7 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 		/* object must have come before us in the list */
 		if (target_obj == NULL) {
 			i915_gem_object_unpin(obj_priv);
-			return (EBADF);
+			return (ENOENT);
 		}
 		if ((target_obj->do_flags & I915_IN_EXEC) == 0) {
 			printf("%s: object not already in execbuffer\n",

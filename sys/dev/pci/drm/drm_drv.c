@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.101 2013/03/22 07:52:36 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.102 2013/04/03 19:57:17 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1555,7 +1555,7 @@ drm_gem_flink_ioctl(struct drm_device *dev, void *data,
 
 	obj = drm_gem_object_lookup(dev, file_priv, args->handle);
 	if (obj == NULL)
-		return (EBADF);
+		return (ENOENT);
 
 	mtx_enter(&dev->obj_name_lock);
 	if (!obj->name) {
