@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.46 2013/03/10 23:32:53 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.47 2013/04/03 03:10:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -312,7 +312,7 @@ monitor(struct imsg *imsg)
 	imn = monitor_lookup(imsg->hdr.type);
 	printf("%s: imsg type %u len %u peerid %u pid %d\n", imn->name,
 	    imsg->hdr.type, imsg->hdr.len, imsg->hdr.peerid, imsg->hdr.pid);
-	printf("\ttimestamp: %u, %s", now, ctime(&now));
+	printf("\ttimestamp: %lld, %s", (long long)now, ctime(&now));
 	if (imn->type == -1)
 		done = 1;
 	if (imn->func != NULL)
