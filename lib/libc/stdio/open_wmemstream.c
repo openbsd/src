@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_wmemstream.c,v 1.1 2013/03/27 15:06:25 mpi Exp $	*/
+/*	$OpenBSD: open_wmemstream.c,v 1.2 2013/04/03 03:11:53 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -163,6 +163,7 @@ open_wmemstream(wchar_t **pbuf, size_t *psize)
 	fp->_write = wmemstream_write;
 	fp->_seek = wmemstream_seek;
 	fp->_close = wmemstream_close;
+	_SET_ORIENTATION(fp, 1);
 
 	return (fp);
 }

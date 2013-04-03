@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstream.c,v 1.2 2013/03/27 15:06:25 mpi Exp $	*/
+/*	$OpenBSD: open_memstream.c,v 1.3 2013/04/03 03:11:53 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -152,6 +152,7 @@ open_memstream(char **pbuf, size_t *psize)
 	fp->_write = memstream_write;
 	fp->_seek = memstream_seek;
 	fp->_close = memstream_close;
+	_SET_ORIENTATION(fp, -1);
 
 	return (fp);
 }

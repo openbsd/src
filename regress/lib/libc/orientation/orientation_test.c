@@ -1,4 +1,4 @@
-/*	$OpenBSD: orientation_test.c,v 1.3 2011/10/16 14:39:01 stsp Exp $ */
+/*	$OpenBSD: orientation_test.c,v 1.4 2013/04/03 03:11:53 guenther Exp $ */
 
 /*
  * Copyright (c) 2009 Philip Guenther
@@ -111,6 +111,8 @@ main(int argc, char *argv[])
 {
 	char	buffer[BUFSIZ];
 	wchar_t	wbuffer[BUFSIZ];
+	char	*buf;
+	wchar_t	*wbuf;
 	FILE	*f;
 	off_t	off;
 	fpos_t	pos;
@@ -241,6 +243,18 @@ main(int argc, char *argv[])
 	TEST_WIDE_STD(stdout, wprintf(L"foo"));
 
 
+	/* memory streams */
+	f = open_memstream(&buf, &size);
+	if (!((r = fwide(f, 0)) < 0))
+		fail(__LINE__, r, "<", "open_memstream()");
+	fclose(f);
+	f = open_wmemstream(&wbuf, &size);
+	if (!((r = fwide(f, 0)) > 0))
+		fail(__LINE__, r, ">", "open_wmemstream()");
+	fclose(f);
+
+
+	/* random stuff? */
 	TEST_UNCHANGED_STD(stderr, perror("foo"));
 
 	remove(filename);
