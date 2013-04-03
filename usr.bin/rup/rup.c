@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.24 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.25 2013/04/03 04:12:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -180,13 +180,15 @@ print_rup_data(char *host, statstime *host_stat)
 	unsigned int ups = 0, upm = 0, uph = 0, upd = 0;
 	struct tm *tmp_time, host_time;
 	char days_buf[16], hours_buf[16];
+	time_t tim;
 
 	if (printtime)
 		printf("%-*.*s", HOST_WIDTH-8, HOST_WIDTH-8, host);
 	else
 		printf("%-*.*s", HOST_WIDTH, HOST_WIDTH, host);
 
-	tmp_time = localtime((time_t *)&host_stat->curtime.tv_sec);
+	tim = host_stat->curtime.tv_sec;
+	tmp_time = localtime(&tim);
 	host_time = *tmp_time;
 
 	host_stat->curtime.tv_sec -= host_stat->boottime.tv_sec;

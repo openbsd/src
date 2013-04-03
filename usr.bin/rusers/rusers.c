@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.30 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.31 2013/04/03 04:12:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -647,8 +647,9 @@ print_entry(struct host_info *entry, int longfmt)
 
 	for (i = 0, ut = entry->users; i < entry->count; i++, ut++) {
 		if (longfmt) {
+			time_t tim = ut->ut_time;
 			strftime(date, sizeof(date), "%h %d %R",
-			    localtime((time_t *)&ut->ut_time));
+			    localtime(&tim));
 			date[sizeof(date) - 1] = '\0';
 			fmt_idle(ut->ut_idle, idle_time, sizeof(idle_time));
 			len = termwidth -
