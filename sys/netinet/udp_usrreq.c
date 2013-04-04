@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.158 2013/04/02 18:27:47 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.159 2013/04/04 19:23:39 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -259,12 +259,6 @@ udp_input(struct mbuf *m, ...)
 	if (ip)
 		save_ip = *ip;
 
-	/*
-	 * Checksum extended UDP header and data.
-	 * from W.R.Stevens: check incoming udp cksums even if
-	 *	udpcksum is not set.
-	 */
-	savesum = uh->uh_sum;
 #ifdef INET6
 	if (ip6) {
 		/* Be proactive about malicious use of IPv4 mapped address */
@@ -273,53 +267,49 @@ udp_input(struct mbuf *m, ...)
 			/* XXX stat */
 			goto bad;
 		}
+	}
+#endif /* INET6 */
 
+	/*
+	 * Checksum extended UDP header and data.
+	 * from W.R.Stevens: check incoming udp cksums even if
+	 *	udpcksum is not set.
+	 */
+	savesum = uh->uh_sum;
+	if (uh->uh_sum == 0) {
+		udpstat.udps_nosum++;
+#ifdef INET6
 		/*
 		 * In IPv6, the UDP checksum is ALWAYS used.
 		 */
-		if (uh->uh_sum == 0) {
-			udpstat.udps_nosum++;
+		if (ip6)
 			goto bad;
-		}
-		if ((m->m_pkthdr.csum_flags & M_UDP_CSUM_IN_OK) == 0) {
-			if (m->m_pkthdr.csum_flags & M_UDP_CSUM_IN_BAD) {
-				udpstat.udps_badsum++;
-				udpstat.udps_inhwcsum++;
-				goto bad;
-			}
-
-			if ((uh->uh_sum = in6_cksum(m, IPPROTO_UDP,
-			    iphlen, len))) {
-				udpstat.udps_badsum++;
-				goto bad;
-			}
-		} else {
-			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_IN_OK;
-			udpstat.udps_inhwcsum++;
-		}
-	} else
 #endif /* INET6 */
-	if (uh->uh_sum) {
+	} else {
 		if ((m->m_pkthdr.csum_flags & M_UDP_CSUM_IN_OK) == 0) {
 			if (m->m_pkthdr.csum_flags & M_UDP_CSUM_IN_BAD) {
 				udpstat.udps_badsum++;
 				udpstat.udps_inhwcsum++;
-				m_freem(m);
-				return;
+				goto bad;
 			}
 
-			if ((uh->uh_sum = in4_cksum(m, IPPROTO_UDP,
-			    iphlen, len))) {
+			if (ip)
+				uh->uh_sum = in4_cksum(m, IPPROTO_UDP,
+				    iphlen, len);
+#ifdef INET6
+			else if (ip6)
+				uh->uh_sum = in6_cksum(m, IPPROTO_UDP,
+				    iphlen, len);
+#endif /* INET6 */
+			if (uh->uh_sum != 0) {
 				udpstat.udps_badsum++;
-				m_freem(m);
-				return;
+				goto bad;
 			}
 		} else {
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_IN_OK;
 			udpstat.udps_inhwcsum++;
 		}
-	} else
-		udpstat.udps_nosum++;
+	}
 
 #ifdef IPSEC
 	if (udpencap_enable && udpencap_port &&
