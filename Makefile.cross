@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.63 2013/03/25 17:33:02 deraadt Exp $
+# $OpenBSD: Makefile.cross,v 1.64 2013/04/04 10:45:33 jasper Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -50,11 +50,6 @@ MACHINE_IS_LP64 =
 CROSSCFLAGS?=	${CROSSCPPFLAGS} -O2 ${PIPE} ${DEBUG}
 CROSSCXXFLAGS?=	${CROSSCPPFLAGS}
 #LDSTATIC?=	-static
-
-# XXX
-BINMODE?=555
-BINOWN?=root
-BINGRP?=bin
 
 CROSSDIR=	${DESTDIR}/usr/cross/${TARGET}
 CROSSENV=	AR=${CROSSDIR}/usr/${TARGET_CANON}/bin/ar \
