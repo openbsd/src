@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.2 2013/04/01 14:04:06 jasper Exp $
+dnl	$OpenBSD: install,v 1.3 2013/04/04 19:15:36 jasper Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -40,9 +40,33 @@ arguments provided:
 
 	# bootoctlinux
 
-Due to the lack of a bootloader for OpenBSD/MACHINE, this same approach
-needs to be taken to boot a regular kernel after installation. Replacing
-bsd.rd with bsd.
+OpenBSD/MACHINE currently lacks a real bootloader. It is possible however to
+boot into bsd upon powering on the machine.
+
+From the U-Boot command line make a copy of the current ${bootcmd} into memory:
+
+# setenv old_bootcmd ${bootcmd}
+
+${bootcmd} is run by U-Boot when ${autoload} is enabled. Now create a new
+${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
+partition on the first CF card, and save the environment to persistent storage:
+
+# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux ${loadaddr}' 
+# setenv bootdelay 5
+# saveenv
+Saving Environment to Flash...
+Un-Protected 1 sectors
+Erasing Flash...
+. done
+Erased 1 sectors
+Writing to Flash... .done
+Protected 1 sectors
+#
+
+Depending on your hardware you may need to replace 'ide' with 'usb'.
+
+You will be asked to enter the root device as the kernel is currently unable
+to figure this out. Support for this in progress.
 
 No miniroot is provided at this moment either.
 
