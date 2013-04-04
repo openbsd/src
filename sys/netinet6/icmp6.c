@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.123 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.124 2013/04/04 17:58:42 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1819,11 +1819,15 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6, struct icmp6_nodeinfo *nni6,
 			if (ifa6->ia6_lifetime.ia6t_expire == 0)
 				ltime = ND6_INFINITE_LIFETIME;
 			else {
-				if (ifa6->ia6_lifetime.ia6t_expire >
-				    time_second)
-					ltime = htonl(ifa6->ia6_lifetime.ia6t_expire - time_second);
-				else
+				time_t diff = ifa6->ia6_lifetime.ia6t_expire -
+				    time_second;
+
+				if (diff <= 0)
 					ltime = 0;
+				else if (diff >= ND6_INFINITE_LIFETIME)
+					ltime = ND6_INFINITE_LIFETIME;
+				else
+					ltime = htonl((u_int32_t)diff);
 			}
 
 			bcopy(&ltime, cp, sizeof(u_int32_t));
