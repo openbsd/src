@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.68 2012/11/19 07:10:59 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.69 2013/04/04 06:50:44 zhuk Exp $
 #
 # Copyright (c) 2010, 2011 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,8 +24,18 @@ rc_err() {
 	exit 1
 }
 
+rc_is_supported() {
+	local _enotsup
+	eval _enotsup=\${rc_$1}
+	[ X"${_enotsup}" != X"NO" ]
+}
+
 rc_usage() {
-	rc_err "usage: $0 [-df] {start|check|reload|restart|stop}"
+	local _a _allsup
+	for _a in start stop restart reload check; do
+		rc_is_supported ${_a} && _allsup="${_allsup:+$_allsup|}${_a}"
+	done
+	rc_err "usage: $0 [-df] (${_allsup})"
 }
 
 rc_write_runfile() {
@@ -95,14 +105,17 @@ rc_wait() {
 }
 
 rc_cmd() {
-	local _bg _enotsup _n
+	local _bg _n
 
 	[ "$(id -u)" -eq 0 ] || \
 		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
 		rc_err "$0: need root privileges"
 
-	eval _enotsup=\${rc_${1}}
-	if [ X"${_enotsup}" = X"NO" ]; then
+	if ! (rc_is_supported start && rc_is_supported stop); then
+		rc_restart=NO
+	fi
+
+	if ! rc_is_supported $1; then
 		[ -n "${INRC}" ] && exit 1
 		rc_err "$0: $1 is not supported"
 	fi
