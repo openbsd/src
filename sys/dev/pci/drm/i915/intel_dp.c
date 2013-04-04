@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_dp.c,v 1.2 2013/04/03 05:29:06 jsg Exp $	*/
+/*	$OpenBSD: intel_dp.c,v 1.3 2013/04/04 21:26:19 kettenis Exp $	*/
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -753,14 +753,14 @@ intel_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			break;
 		case AUX_NATIVE_REPLY_NACK:
 			DRM_DEBUG_KMS("aux_ch native nack\n");
-			return EIO;
+			return -EIO;
 		case AUX_NATIVE_REPLY_DEFER:
 			DELAY(100);
 			continue;
 		default:
 			DRM_ERROR("aux_ch invalid native reply 0x%02x\n",
 				  reply[0]);
-			return EIO;
+			return -EIO;
 		}
 
 		switch (reply[0] & AUX_I2C_REPLY_MASK) {
@@ -771,19 +771,19 @@ intel_dp_i2c_aux_ch(struct i2c_controller *adapter, int mode,
 			return reply_bytes - 1;
 		case AUX_I2C_REPLY_NACK:
 			DRM_DEBUG_KMS("aux_i2c nack\n");
-			return EIO;
+			return -EIO;
 		case AUX_I2C_REPLY_DEFER:
 			DRM_DEBUG_KMS("aux_i2c defer\n");
 			DELAY(100);
 			break;
 		default:
 			DRM_ERROR("aux_i2c invalid reply 0x%02x\n", reply[0]);
-			return EIO;
+			return -EIO;
 		}
 	}
 
 	DRM_ERROR("too many retries, giving up\n");
-	return EIO;
+	return -EIO;
 }
 
 int
