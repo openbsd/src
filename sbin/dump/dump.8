@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.44 2008/01/26 23:07:55 jmc Exp $
+.\"	$OpenBSD: dump.8,v 1.45 2013/04/04 10:47:21 zhuk Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)dump.8	8.1 (Berkeley) 6/16/93
 .\"
-.Dd $Mdocdate: January 26 2008 $
+.Dd $Mdocdate: April 4 2013 $
 .Dt DUMP 8
 .Os
 .Sh NAME
@@ -85,6 +85,10 @@ flag using
 .Xr chflags 1 ,
 settable only by the file's owner or the superuser.
 Files with this flag set will only be dumped during full backups.
+When set on a directory,
+.Dq nodump
+effectively deselects the whole subtree from being dumped,
+though it will still be scanned.
 See also the
 .Fl h
 option, below.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.24 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.25 2013/04/04 10:47:21 zhuk Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -60,9 +60,9 @@ union dinode {
 #define	HASDUMPEDFILE	0x1
 #define	HASSUBDIRS	0x2
 
-static	int dirindir(ino_t ino, daddr64_t blkno, int level, off_t *size);
-static	void dmpindir(ino_t ino, daddr64_t blk, int level, off_t *size);
-static	int searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize);
+static	int dirindir(ino_t, daddr64_t, int, off_t *, off_t *, int);
+static	void dmpindir(ino_t, daddr64_t, int, off_t *);
+static	int searchdir(ino_t, daddr64_t, long, off_t, off_t *, int);
 
 /*
  * This is an estimation of the number of TP_BSIZE blocks in the file.
@@ -103,18 +103,9 @@ blockest(union dinode *dp)
 	return (blkest + 1);
 }
 
-/* Auxiliary macro to pick up files changed since previous dump. */
-#define	CHANGEDSINCE(dp, t) \
-	(DIP(dp, di_mtime) >= (t) || DIP(dp, di_ctime) >= (t))
-
-/* The WANTTODUMP macro decides whether a file should be dumped. */
-#ifdef UF_NODUMP
-#define	WANTTODUMP(dp) \
-	(CHANGEDSINCE(dp, spcl.c_ddate) && \
-	 (nonodump || (DIP(dp, di_flags) & UF_NODUMP) != UF_NODUMP))
-#else
-#define	WANTTODUMP(dp) CHANGEDSINCE(dp, spcl.c_ddate)
-#endif
+/* true if "nodump" flag has no effect here, i.e. dumping allowed */
+#define CHECKNODUMP(dp) \
+	(nonodump || (DIP((dp), di_flags) & UF_NODUMP) != UF_NODUMP)
 
 /*
  * Determine if given inode should be dumped
@@ -131,7 +122,9 @@ mapfileino(ino_t ino, off_t *tapesize, int *dirskipped)
 	SETINO(ino, usedinomap);
 	if (mode == IFDIR)
 		SETINO(ino, dumpdirmap);
-	if (WANTTODUMP(dp)) {
+	if (CHECKNODUMP(dp) &&
+	    (DIP(dp, di_mtime) >= spcl.c_ddate ||
+	     DIP(dp, di_ctime) >= spcl.c_ddate)) {
 		SETINO(ino, dumpinomap);
 		if (mode != IFREG && mode != IFDIR && mode != IFLNK)
 			*tapesize += 1;
@@ -139,8 +132,11 @@ mapfileino(ino_t ino, off_t *tapesize, int *dirskipped)
 			*tapesize += blockest(dp);
 		return;
 	}
-	if (mode == IFDIR)
+	if (mode == IFDIR) {
+		if (!CHECKNODUMP(dp))
+			CLRINO(ino, usedinomap);
 		*dirskipped = 1;
+	}
 }
 
 void
@@ -307,7 +303,7 @@ int
 mapdirs(ino_t maxino, off_t *tapesize)
 {
 	union dinode *dp;
-	int i, isdir;
+	int i, isdir, nodump;
 	char *map;
 	ino_t ino;
 	union dinode di;
@@ -320,7 +316,15 @@ mapdirs(ino_t maxino, off_t *tapesize)
 			isdir = *map++;
 		else
 			isdir >>= 1;
-		if ((isdir & 1) == 0 || TSTINO(ino, dumpinomap))
+                /*
+		 * If a directory has been removed from usedinomap, it
+		 * either has the nodump flag set, or has inherited
+		 * it.  Although a directory can't be in dumpinomap if
+		 * it isn't in usedinomap, we have to go through it to
+		 * propagate the nodump flag.
+		 */
+		nodump = !nonodump && !TSTINO(ino, usedinomap);
+		if ((isdir & 1) == 0 || (TSTINO(ino, dumpinomap) && !nodump))
 			continue;
 		dp = getino(ino, &i);
 		/*
@@ -335,7 +339,7 @@ mapdirs(ino_t maxino, off_t *tapesize)
 			if (DIP(&di, di_db[i]) != 0)
 				ret |= searchdir(ino, DIP(&di, di_db[i]),
 				    sblksize(sblock, DIP(dp, di_size), i),
-				    filesize);
+				    filesize, tapesize, nodump);
 			if (ret & HASDUMPEDFILE)
 				filesize = 0;
 			else
@@ -344,7 +348,8 @@ mapdirs(ino_t maxino, off_t *tapesize)
 		for (i = 0; filesize > 0 && i < NIADDR; i++) {
 			if (DIP(&di, di_ib[i]) == 0)
 				continue;
-			ret |= dirindir(ino, DIP(&di, di_ib[i]), i, &filesize);
+			ret |= dirindir(ino, DIP(&di, di_ib[i]), i, &filesize,
+			    tapesize, nodump);
 		}
 		if (ret & HASDUMPEDFILE) {
 			SETINO(ino, dumpinomap);
@@ -352,7 +357,11 @@ mapdirs(ino_t maxino, off_t *tapesize)
 			change = 1;
 			continue;
 		}
-		if ((ret & HASSUBDIRS) == 0) {
+                if (nodump) {
+                        if (ret & HASSUBDIRS)
+                                change = 1;     /* subdirs inherit nodump */
+                        CLRINO(ino, dumpdirmap);
+                } else if ((ret & HASSUBDIRS) == 0) {
 			if (!TSTINO(ino, dumpinomap)) {
 				CLRINO(ino, dumpdirmap);
 				change = 1;
@@ -368,7 +377,8 @@ mapdirs(ino_t maxino, off_t *tapesize)
  * require the directory to be dumped.
  */
 static int
-dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t *filesize)
+dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t *filesize,
+    off_t *tapesize, int nodump)
 {
 	int ret = 0;
 	int i;
@@ -383,7 +393,7 @@ dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t *filesize)
 				blkno = ((int64_t *)idblk)[i];
 			if (blkno != 0)
 				ret |= searchdir(ino, blkno, sblock->fs_bsize,
-					*filesize);
+					*filesize, tapesize, nodump);
 			if (ret & HASDUMPEDFILE)
 				*filesize = 0;
 			else
@@ -398,7 +408,8 @@ dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t *filesize)
 		else
 			blkno = ((int64_t *)idblk)[i];
 		if (blkno != 0)
-			ret |= dirindir(ino, blkno, ind_level, filesize);
+			ret |= dirindir(ino, blkno, ind_level, filesize,
+			    tapesize, nodump);
 	}
 	return (ret);
 }
@@ -409,12 +420,14 @@ dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t *filesize)
  * contains any subdirectories.
  */
 static int
-searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize)
+searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize,
+    off_t *tapesize, int nodump)
 {
 	struct direct *dp;
+	union dinode *ip;
 	long loc;
 	static caddr_t dblk;
-	int ret = 0;
+	int mode, ret = 0;
 
 	if (dblk == NULL && (dblk = malloc(sblock->fs_bsize)) == NULL)
 		quit("searchdir: cannot allocate indirect memory.\n");
@@ -436,15 +449,32 @@ searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize)
 			if (dp->d_name[1] == '.' && dp->d_name[2] == '\0')
 				continue;
 		}
-		if (TSTINO(dp->d_ino, dumpinomap)) {
-			ret |= HASDUMPEDFILE;
-			if (ret & HASSUBDIRS)
-				break;
-		}
-		if (TSTINO(dp->d_ino, dumpdirmap)) {
-			ret |= HASSUBDIRS;
-			if (ret & HASDUMPEDFILE)
-				break;
+		if (nodump) {
+                        ip = getino(dp->d_ino, &mode);
+                        if (TSTINO(dp->d_ino, dumpinomap)) {
+                                CLRINO(dp->d_ino, dumpinomap);
+                                *tapesize -= blockest(ip);
+                        }
+                        /*
+                         * Add back to dumpdirmap and remove from usedinomap
+                         * to propagate nodump.
+                         */
+                        if (mode == IFDIR) {
+                                SETINO(dp->d_ino, dumpdirmap);
+                                CLRINO(dp->d_ino, usedinomap);
+                                ret |= HASSUBDIRS;
+                        }
+		} else {
+			if (TSTINO(dp->d_ino, dumpinomap)) {
+				ret |= HASDUMPEDFILE;
+				if (ret & HASSUBDIRS)
+					break;
+			}
+			if (TSTINO(dp->d_ino, dumpdirmap)) {
+				ret |= HASSUBDIRS;
+				if (ret & HASDUMPEDFILE)
+					break;
+			}
 		}
 	}
 	return (ret);
