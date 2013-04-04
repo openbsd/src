@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.3 2013/04/01 15:49:54 deraadt Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.4 2013/04/04 17:50:19 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -40,8 +40,15 @@ _fillnetent(const struct netent *e, struct netent *r, char *buf, size_t len)
 	size_t	n, i;
 	int	naliases;
 
+	bzero(buf, len);
+	bzero(r, sizeof(*r));
+	r->n_aliases = _empty;
+
 	end = buf + len;
-	ptr = (char **)buf; /* XXX align */
+	ptr = (char **)ALIGN(buf);
+
+	if ((char *)ptr >= end)
+		return;
 
 	for (naliases = 0; e->n_aliases[naliases]; naliases++)
 		;
@@ -52,11 +59,8 @@ _fillnetent(const struct netent *e, struct netent *r, char *buf, size_t len)
 	r->n_aliases = ptr;
 
 	pos = (char *)(ptr + (naliases + 1));
-	if (pos > end) {
+	if (pos > end)
 		r->n_aliases = _empty;
-		return;
-	}
-	bzero(ptr, pos - (char *)ptr);
 
 	n = strlcpy(pos, e->n_name, end - pos);
 	if (n >= end - pos)
