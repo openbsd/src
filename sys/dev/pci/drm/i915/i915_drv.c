@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.16 2013/04/03 19:57:17 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.17 2013/04/05 02:54:51 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1684,11 +1684,17 @@ i915_gem_get_relocs_from_user(struct drm_i915_gem_exec_object2 *exec_list,
     u_int32_t buffer_count, struct drm_i915_gem_relocation_entry **relocs)
 {
 	u_int32_t	reloc_count = 0, reloc_index = 0, i;
-	int		ret;
+	int		ret, relocs_max;
+
+	relocs_max = INT_MAX / sizeof(struct drm_i915_gem_relocation_entry);
 
 	*relocs = NULL;
 	for (i = 0; i < buffer_count; i++) {
-		if (reloc_count + exec_list[i].relocation_count < reloc_count)
+		/* First check for malicious input causing overflow in
+		 * the worst case where we need to allocate the entire
+		 * relocation tree as a single array.
+		 */
+		if (exec_list[i].relocation_count > relocs_max - reloc_count)
 			return (EINVAL);
 		reloc_count += exec_list[i].relocation_count;
 	}
