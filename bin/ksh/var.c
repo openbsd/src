@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.34 2007/10/15 02:16:35 deraadt Exp $	*/
+/*	$OpenBSD: var.c,v 1.35 2013/04/05 01:31:30 tedu Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -921,7 +921,7 @@ getspec(struct tbl *vp)
 		 * (see initcoms[] in main.c).
 		 */
 		if (vp->flag & ISSET)
-			setint(vp, (long) (time((time_t *)0) - seconds));
+			setint(vp, (long)(time(NULL) - seconds)); /* XXX 2038 */
 		vp->flag |= SPECIAL;
 		break;
 	case V_RANDOM:
@@ -1035,7 +1035,7 @@ setspec(struct tbl *vp)
 		break;
 	case V_SECONDS:
 		vp->flag &= ~SPECIAL;
-		seconds = time((time_t*) 0) - intval(vp);
+		seconds = time(NULL) - intval(vp); /* XXX 2038 */
 		vp->flag |= SPECIAL;
 		break;
 	case V_TMOUT:
