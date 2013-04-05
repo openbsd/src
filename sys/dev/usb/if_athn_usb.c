@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.13 2013/03/28 04:12:12 deraadt Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.14 2013/04/05 05:39:46 brad Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1079,6 +1079,7 @@ void
 athn_usb_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
     int isnew)
 {
+#ifndef IEEE80211_STA_ONLY
 	struct athn_usb_softc *usc = ic->ic_softc;
 
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP || !isnew)
@@ -1101,6 +1102,7 @@ athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
 		(void)athn_usb_create_node(usc, ni);
 	ieee80211_release_node(ic, ni);
 	splx(s);
+#endif
 }
 
 void
