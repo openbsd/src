@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 2013/04/05 01:28:27 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ extern int     wordcount, wordnumber;
 extern int     stop_cypher;	/* continue parsing the current line? */
 
  /* state of the game */
-extern time_t  ourtime;
+extern int     ourtime;
 extern int     position;
 extern int     direction;
 extern int     left, right, ahead, back;
