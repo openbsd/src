@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.4 2013/04/05 04:57:46 bcallah Exp $
+dnl	$OpenBSD: install,v 1.5 2013/04/05 23:02:27 jasper Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -45,28 +45,29 @@ boot into bsd upon powering on the machine.
 
 From the U-Boot command line make a copy of the current ${bootcmd} into memory:
 
-# setenv old_bootcmd ${bootcmd}
+	# setenv old_bootcmd ${bootcmd}
 
 ${bootcmd} is run by U-Boot when ${autoload} is enabled. Now create a new
 ${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
 partition on the first CF card, and save the environment to persistent storage:
 
-# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux ${loadaddr}' 
-# setenv bootdelay 5
-# saveenv
-Saving Environment to Flash...
-Un-Protected 1 sectors
-Erasing Flash...
-. done
-Erased 1 sectors
-Writing to Flash... .done
-Protected 1 sectors
-#
+	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux ${loadaddr}' 
+	# setenv bootdelay 5
+	# saveenv
+	Saving Environment to Flash...
+	Un-Protected 1 sectors
+	Erasing Flash...
+	. done
+	Erased 1 sectors
+	Writing to Flash... .done
+	Protected 1 sectors
+	#
 
 Depending on your hardware you may need to replace 'ide' with 'usb'.
 
 You will be asked to enter the root device as the kernel is currently unable
-to figure this out. Support for this in progress.
+to figure this out. Support for this in progress, as is support for the above
+in the installer.
 
 No miniroot is provided at this moment either.
 
