@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.124 2013/03/29 04:31:37 tedu Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.125 2013/04/05 05:45:09 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -105,6 +105,7 @@ umass*	at uhub?		# USB Mass Storage devices
 #ums*	at uhidev?
 #wsmouse* at ums? mux 0
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
@@ -126,6 +127,10 @@ zyd*	at uhub?		# Zydas ZD1211/ZD1211B
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 urtw*	at uhub?		# RealTek 8187
 urtwn*	at uhub?		# RealTek RTL8188CU/RTL8192CU
+rsu*	at uhub?		# RealTek RTL8188SU/RTL8191SU/RTL8192SU
+uath*	at uhub?		# Atheros AR5005UG/AR5005UX
+otus*	at uhub?		# Atheros AR9001U
+athn*	at uhub?		# Atheros AR9002U
 
 pckbc0	at isa?			# PC keyboard controller
 pckbd*	at pckbc?		# PC keyboard
