@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.9 2013/02/03 21:04:19 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.10 2013/04/05 19:31:36 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -235,7 +235,8 @@ send_packet(struct interface_info *interface, struct dhcp_packet *raw,
 {
 	unsigned char buf[256];
 	struct iovec iov[2];
-	int result, bufp = 0;
+	ssize_t result;
+	int bufp = 0;
 
 	/* Assemble the headers... */
 	assemble_hw_header(interface, buf, &bufp, hto);

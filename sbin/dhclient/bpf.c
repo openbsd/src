@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.26 2013/02/14 20:39:46 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.27 2013/04/05 19:31:36 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -266,7 +266,8 @@ send_packet(struct in_addr from, struct sockaddr_in *to,
 	unsigned char buf[256];
 	struct iovec iov[IOVCNT];
 	struct msghdr msg;
-	int result, bufp = 0;
+	ssize_t result;
+	int bufp = 0;
 
 	if (to->sin_addr.s_addr == INADDR_BROADCAST) {
 		assemble_hw_header(buf, &bufp, hto);

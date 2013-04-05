@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.35 2013/03/22 23:45:52 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.36 2013/04/05 19:31:36 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -557,7 +557,8 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 {
 	struct sockaddr_in to;
 	struct in_addr from;
-	int result, i;
+	ssize_t result;
+	int i;
 	struct dhcp_packet raw;
 	unsigned char nak = DHCPNAK;
 	struct packet outgoing;
