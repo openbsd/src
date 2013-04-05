@@ -203,6 +203,8 @@ struct octeon_fau_map {
 #define	BOARD_TYPE_UBIQUITI_E100	20002
 
 #ifdef _KERNEL
+#define OCTEON_ARGV_MAX 64
+
 struct boot_desc {
 	uint32_t desc_ver;
 	uint32_t desc_size;
@@ -215,7 +217,7 @@ struct boot_desc {
 	uint32_t __unused15;
 	uint32_t __unused14;
 	uint32_t argc;
-	uint32_t argv[64];
+	uint32_t argv[OCTEON_ARGV_MAX];
 	uint32_t flags;
 	uint32_t core_mask;
 	uint32_t dram_size;
