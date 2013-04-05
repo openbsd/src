@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.90 2012/01/15 13:02:12 phessler Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.91 2013/04/05 01:29:07 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -294,7 +294,7 @@ void
 do_entry(struct conf_entry *ent)
 {
 	struct stat sb;
-	int modtime;
+	int modhours;
 	off_t size;
 
 	if (lstat(ent->log, &sb) != 0)
@@ -319,7 +319,7 @@ do_entry(struct conf_entry *ent)
 	    (ent->flags & CE_FOLLOW) ? "F" : "",
 	    (ent->flags & CE_MONITOR) && monitormode ? "M" : ""));
 	size = sizefile(&sb);
-	modtime = age_old_log(ent);
+	modhours = age_old_log(ent);
 	if (ent->flags & CE_TRIMAT && !force) {
 		if (timenow < ent->trim_at ||
 		    difftime(timenow, ent->trim_at) >= 60 * 60) {
@@ -334,13 +334,13 @@ do_entry(struct conf_entry *ent)
 		DPRINTF(("size (KB): %.2f [%d] ", size / 1024.0,
 		    (int)(ent->size / 1024)));
 	if (ent->hours > 0)
-		DPRINTF(("age (hr): %d [%d] ", modtime, ent->hours));
+		DPRINTF(("age (hr): %d [%d] ", modhours, ent->hours));
 	if (monitormode && (ent->flags & CE_MONITOR) && domonitor(ent))
 		DPRINTF(("--> monitored\n"));
 	else if (!monitormode &&
 	    (force || (ent->size > 0 && size >= ent->size) ||
 	    (ent->hours <= 0 && (ent->flags & CE_TRIMAT)) ||
-	    (ent->hours > 0 && (modtime >= ent->hours || modtime < 0)
+	    (ent->hours > 0 && (modhours >= ent->hours || modhours < 0)
 	    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {
 		DPRINTF(("--> trimming log....\n"));
 		if (noaction && !verbose)
