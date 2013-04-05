@@ -1,10 +1,10 @@
-dnl	$OpenBSD: install,v 1.3 2013/04/04 19:15:36 jasper Exp $
+dnl	$OpenBSD: install,v 1.4 2013/04/05 04:57:46 bcallah Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
 
 At the moment the only way to boot an OpenBSD/MACHINE (including the ramdisk)
-kernel is over TFTP. First you need to setup an TFTP server as described in
+kernel is over TFTP. First you need to setup a TFTP server as described in
 diskless(8). Assuming tftpd(8) chroots into /tftpboot, copy bsd.rd into that
 directory.
 

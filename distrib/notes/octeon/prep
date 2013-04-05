@@ -1,5 +1,5 @@
-dnl	$OpenBSD: prep,v 1.1 2013/04/01 13:02:48 jasper Exp $
-By default MACHINE systems are shipped with a Linux installed on the
+dnl	$OpenBSD: prep,v 1.2 2013/04/05 04:57:46 bcallah Exp $
+By default MACHINE systems are shipped with a Linux installation on the
 CompactFlash card or USB drive. At the moment the only way to install OpenBSD
 is by using TFTP to load bsd.rd.
 
