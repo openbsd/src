@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.340 2013/03/30 08:56:54 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.341 2013/04/05 02:56:17 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -315,8 +315,8 @@ pcppi0		at isa?
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
-#com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
+com2	at isa? port 0x3e8 irq 5
+com3	at isa? disable port 0x2e8 irq 9 # (conflicts with some video cards)
 
 com*	at pcmcia?			# PCMCIA modems/serial ports
 com*	at puc?
