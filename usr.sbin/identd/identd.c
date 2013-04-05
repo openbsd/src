@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.8 2013/03/20 03:58:09 deraadt Exp $ */
+/*	$OpenBSD: identd.c,v 1.9 2013/04/05 23:16:41 florian Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -163,7 +163,6 @@ const struct loggers *logger = &conslogger;
 #define linfo(_f...) logger->info(_f)
 #define ldebug(_f...) logger->debug(_f)
 
-const char *gethost(struct sockaddr_storage *);
 #define sa(_ss) ((struct sockaddr *)(_ss))
 
 __dead void
