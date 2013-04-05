@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.24 2012/10/24 03:26:56 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.25 2013/04/05 12:58:03 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -308,6 +308,7 @@ _dl_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 
 	return 0;
 }
+
 static inline int
 _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
     size_t newlen)
@@ -333,6 +334,7 @@ _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
 	    : "memory", "0", "3", "4", "5", "6", "7", "8");
 	return status;
 }
+
 static inline int
 _dl_gettimeofday(struct timeval *tp, struct timezone *tzp)
 {
@@ -353,6 +355,66 @@ _dl_gettimeofday(struct timeval *tp, struct timezone *tzp)
 	return status;
 }
 
+static inline int
+_dl_readlink(const char *path, char *buf, size_t bufsiz)
+{
+	register int status;
+
+	__asm__ volatile ("li    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "mr    5,%4\n\t"
+	    "sc\n\t"
+	    "cmpwi   0, 0\n\t"
+	    "beq   1f\n\t"
+	    "li    3,-1\n\t"
+	    "1:"
+	    "mr   %0,3\n\t"
+	    : "=r" (status)
+	    : "I" (SYS_readlink), "r" (path), "r" (buf), "r" (bufsiz)
+	    : "memory", "0", "3", "4", "5");
+	return status;
+}
+
+static inline int
+_dl_lstat(const char *path, struct stat *sb)
+{
+	register int status;
+
+	__asm__ volatile ("li    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "sc\n\t"
+	    "cmpwi   0, 0\n\t"
+	    "beq   1f\n\t"
+	    "li    3,-1\n\t"
+	    "1:"
+	    "mr   %0,3\n\t"
+	    : "=r" (status)
+	    : "I" (SYS_lstat), "r" (path), "r" (sb)
+	    : "memory", "0", "3", "4" );
+	return status;
+}
+
+static inline int
+_dl_getcwd(char *buf, size_t size)
+{
+	register int status;
+
+	__asm__ volatile ("li    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "sc\n\t"
+	    "cmpwi   0, 0\n\t"
+	    "beq   1f\n\t"
+	    "li    3,-1\n\t"
+	    "1:"
+	    "mr   %0,3\n\t"
+	    : "=r" (status)
+	    : "I" (SYS___getcwd), "r" (buf), "r" (size)
+	    : "0", "3", "4");
+	return status;
+}
 
 #endif /*__DL_SYSCALL_H__*/
 

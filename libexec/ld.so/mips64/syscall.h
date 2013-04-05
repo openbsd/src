@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.8 2012/10/24 03:26:56 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.9 2013/04/05 12:58:03 kurt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -295,6 +295,7 @@ _dl_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 
 	return 0;
 }
+
 static inline int
 _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
     size_t newlen)
@@ -320,6 +321,7 @@ _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
+
 extern inline int
 _dl_gettimeofday(struct timeval* tp, struct timezone *tzp)
 {
@@ -335,6 +337,67 @@ _dl_gettimeofday(struct timeval* tp, struct timezone *tzp)
 	    "1:"
 	    : "=r" (status)
 	    : "I" (SYS_gettimeofday), "r" (tp), "r" (tzp)
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+	return status;
+}
+
+extern inline int
+_dl_readlink(const char *path, char *buf, size_t bufsiz)
+{
+	register int status __asm__ ("$2");
+
+	__asm__ volatile (
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+	    "move  $6,%4\n\t"
+	    "li    $2,%1\n\t"
+	    "syscall\n\t"
+	    "beq   $7,$0,1f\n\t"
+	    "li    $2,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "I" (SYS_readlink), "r" (path), "r" (buf), "r" (bufsiz)
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+	return status;
+}
+
+extern inline int
+_dl_lstat(const char *path, struct stat *sb)
+{
+	register int status __asm__ ("$2");
+
+	__asm__ volatile (
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+	    "li    $2,%1\n\t"
+	    "syscall\n\t"
+	    "beq   $7,$0,1f\n\t"
+	    "li    $2,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "I" (SYS_lstat), "r" (path), "r" (sb)
+	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    "$10","$11","$12","$13","$14","$15","$24","$25");
+	return status;
+}
+
+static inline int
+_dl_getcwd(char *buf, size_t size)
+{
+	register int status __asm__ ("$2");
+
+	__asm__ volatile (
+	    "move  $4,%2\n\t"
+	    "move  $5,%3\n\t"
+	    "li    $2,%1\n\t"
+	    "syscall\n\t"
+	    "beq   $7,$0,1f\n\t"
+	    "li    $2,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "I" (SYS___getcwd), "r" (buf), "r" (size)
 	    : "memory", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;

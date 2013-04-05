@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.60 2013/03/20 21:49:59 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.61 2013/04/05 12:58:03 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 
+#include <limits.h>
 #include <nlist.h>
 #include <link.h>
 #include "syscall.h"
@@ -37,6 +38,11 @@
 #include "path.h"
 #include "resolve.h"
 #include "dl_prebind.h"
+
+/* substitution types */
+typedef enum {
+        SUBST_UNKNOWN, SUBST_ORIGIN, SUBST_OSNAME, SUBST_OSREL, SUBST_PLATFORM
+} SUBST_TYPES;
 
 elf_object_t *_dl_objects;
 elf_object_t *_dl_last_object;
@@ -71,6 +77,159 @@ _dl_add_object(elf_object_t *object)
 		_dl_last_object->next = object;
 		object->prev = _dl_last_object;
 		_dl_last_object = object;
+	}
+}
+
+/*
+ * Identify substitution sequence name.
+ */
+static int
+_dl_subst_name(const char *name, size_t siz) {
+	switch (siz) {
+	case 5:
+		if (_dl_strncmp(name, "OSREL", 5) == 0)
+			return SUBST_OSREL;
+		break;
+	case 6:
+		if (_dl_strncmp(name, "ORIGIN", 6) == 0)
+			return SUBST_ORIGIN;
+		if (_dl_strncmp(name, "OSNAME", 6) == 0)
+			return SUBST_OSNAME;
+		break;
+	case 8:
+		if (_dl_strncmp(name, "PLATFORM", 8) == 0)
+			return SUBST_PLATFORM;
+		break;
+	}
+
+	return (SUBST_UNKNOWN);
+}
+
+/*
+ * Perform $ORIGIN substitutions on path
+ */
+static void
+_dl_origin_subst_path(elf_object_t *object, const char *origin_path,
+    char **path)
+{
+	char tmp_path[PATH_MAX];
+	char *new_path, *tp;
+	const char *pp, *name, *value;
+	static struct utsname uts;
+	size_t value_len;
+	int skip_brace;
+
+	if (uts.sysname[0] == '\0') {
+		if (_dl_uname(&uts) != 0)
+			return;
+	}
+
+	tp = tmp_path;
+	pp = *path;
+
+	while (*pp != '\0' && (tp - tmp_path) < sizeof(tmp_path)) {
+
+		/* copy over chars up to but not including $ */
+		while (*pp != '\0' && *pp != '$' &&
+		    (tp - tmp_path) < sizeof(tmp_path))
+			*tp++ = *pp++;
+
+		/* substitution sequence detected */
+		if (*pp == '$' && (tp - tmp_path) < sizeof(tmp_path)) {
+			pp++;
+
+			if ((skip_brace = (*pp == '{')))
+				pp++;
+
+			/* skip over name */
+			name = pp;
+			while (_dl_isalnum(*pp) || *pp == '_')
+				pp++;
+
+			switch (_dl_subst_name(name, pp - name)) {
+			case SUBST_ORIGIN:
+				value = origin_path;
+				break;
+			case SUBST_OSNAME:
+				value = uts.sysname;
+				break;
+			case SUBST_OSREL:
+				value = uts.release;
+				break;
+			case SUBST_PLATFORM:
+				value = uts.machine;
+				break;
+			default:
+				value = "";
+			}
+
+			value_len = _dl_strlen(value);
+			if (value_len >= sizeof(tmp_path) - (tp - tmp_path))
+				return;
+
+			_dl_bcopy(value, tp, value_len);
+			tp += value_len;
+
+			if (skip_brace && *pp == '}')
+				pp++;
+		}
+	}
+
+	/* no substitution made if result exceeds sizeof(tmp_path) */
+	if (tp - tmp_path >= sizeof(tmp_path))
+		return;
+
+	/* NULL terminate tmp_path */
+        *tp = '\0';
+
+	if (_dl_strcmp(tmp_path, *path) == 0)
+		return;
+
+	new_path = _dl_strdup(tmp_path);
+	if (new_path == NULL)
+		return;
+
+	DL_DEB(("orig_path %s\n", *path));
+	DL_DEB(("new_path  %s\n", new_path));
+
+	_dl_free(*path);
+	*path = new_path;
+}
+
+/*
+ * Determine origin_path from object load_name. The origin_path argument
+ * must refer to a buffer capable of storing at least PATH_MAX characters.
+ * Returns 0 on success.
+ */
+static int
+_dl_origin_path(elf_object_t *object, char *origin_path)
+{
+	const char *dirname_path = _dl_dirname(object->load_name);
+
+	if (dirname_path == NULL)
+		return -1;
+
+	if (_dl_realpath(dirname_path, origin_path) == NULL)
+		return -1;
+
+	return 0;
+}
+
+/*
+ * Perform $ORIGIN substitutions on rpath
+ */
+static void
+_dl_origin_subst(elf_object_t *object)
+{
+	char origin_path[PATH_MAX];
+	char **pp;
+
+	if (_dl_origin_path(object, origin_path) != 0)
+		return;
+
+	/* perform path substitutions on each segment of rpath */
+	for (pp = object->rpath; *pp != NULL; pp++) {
+		_dl_origin_subst_path(object, origin_path, pp);
 	}
 }
 
@@ -183,10 +342,13 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	TAILQ_INIT(&object->grpsym_list);
 	TAILQ_INIT(&object->grpref_list);
 
-	if (object->dyn.rpath)
+	if (object->dyn.rpath) {
 		object->rpath = _dl_split_path(object->dyn.rpath);
+		if ((object->obj_flags & DF_1_ORIGIN) && _dl_trust)
+			_dl_origin_subst(object);
+	}
 
-	return(object);
+	return (object);
 }
 
 void

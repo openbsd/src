@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.131 2013/03/20 21:49:59 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.132 2013/04/05 12:58:03 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -75,6 +75,8 @@ char *_dl_norandom;
 char *_dl_noprebind;
 char *_dl_prebind_validate;
 char *_dl_tracefmt1, *_dl_tracefmt2, *_dl_traceprog;
+
+int _dl_trust;
 
 struct r_debug *_dl_debug_map;
 
@@ -230,7 +232,8 @@ _dl_setup_env(char **envp)
 	 * Don't allow someone to change the search paths if he runs
 	 * a suid program without credentials high enough.
 	 */
-	if (_dl_issetugid()) {	/* Zap paths if s[ug]id... */
+	_dl_trust = !_dl_issetugid();
+	if (!_dl_trust) {	/* Zap paths if s[ug]id... */
 		if (_dl_libpath) {
 			_dl_free_path(_dl_libpath);
 			_dl_libpath = NULL;

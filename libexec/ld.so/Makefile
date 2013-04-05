@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2013/03/20 21:49:59 kurt Exp $
+#	$OpenBSD: Makefile,v 1.43 2013/04/05 12:58:03 kurt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -16,6 +16,7 @@ VPATH=${.CURDIR}/../../lib/libc/string
 
 SRCS=	ldasm.S loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c path.c
 SRCS+=	util.c sod.c strsep.c strtol.c dir.c library_subr.c dl_prebind.c
+SRCS+=	dl_realpath.c dl_uname.c dl_dirname.c strlcat.c strlen.c
 .if (${MACHINE_ARCH} == "i386")
 SRCS+=	library_mquery.c
 .else
@@ -29,7 +30,7 @@ SRCS+=	library.c
 DEBUG?=	-g
 CFLAGS += -Wall -Werror
 CFLAGS += -I${.CURDIR} -I${.CURDIR}/${MACHINE_CPU} \
-	-Dstrsep=_dl_strsep
+	-Dstrsep=_dl_strsep -Dstrlcat=_dl_strlcat -Dstrlen=_dl_strlen
 CDIAGFLAGS=
 INSTALL_STRIP=
 

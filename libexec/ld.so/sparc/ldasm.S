@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.18 2012/10/24 03:26:56 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.19 2013/04/05 12:58:03 kurt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -317,6 +317,43 @@ _dl_gettimeofday:
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
+
+
+	.section ".text"
+	.align 4
+	.global _dl_readlink
+	.type _dl_readlink,@function
+_dl_readlink:
+	mov SYS_readlink | SYSCALL_G2RFLAG, %g1	! calling sys_readlink
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0			! error: result = -errno
+
+
+	.section ".text"
+	.align 4
+	.global _dl_lstat
+	.type _dl_lstat,@function
+_dl_lstat:
+	mov SYS_lstat | SYSCALL_G2RFLAG, %g1	! calling sys_lstat
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0			! error: result = -errno
+
+
+	.section ".text"
+	.align 4
+	.global _dl_getcwd
+	.type _dl_getcwd,@function
+_dl_getcwd:
+	mov SYS___getcwd | SYSCALL_G2RFLAG, %g1	! calling sys_getcwd
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0			! error: result = -errno
+
 
 /*
  * V8 sparc .{,u}{mul,div,rem} replacements.

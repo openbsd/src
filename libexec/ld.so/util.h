@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.22 2012/08/07 17:47:06 matthew Exp $	*/
+/*	$OpenBSD: util.h,v 1.23 2013/04/05 12:58:03 kurt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,11 +31,14 @@
 #ifndef __DL_UTIL_H__
 #define __DL_UTIL_H__
 
+#include <sys/utsname.h>
 #include <stdarg.h>
 
 void *_dl_malloc(const size_t size);
 void _dl_free(void *);
 char *_dl_strdup(const char *);
+size_t _dl_strlen(const char *);
+size_t _dl_strlcat(char *dst, const char *src, size_t siz);
 void _dl_printf(const char *fmt, ...);
 void _dl_vprintf(const char *fmt, va_list ap);
 void _dl_fdprintf(int, const char *fmt, ...);
@@ -43,6 +46,9 @@ void _dl_show_objects(void);
 void _dl_randombuf(void *, size_t);
 unsigned int _dl_random(void);
 ssize_t _dl_write(int fd, const char* buf, size_t len);
+char * _dl_dirname(const char *path);
+char *_dl_realpath(const char *path, char *resolved);
+int _dl_uname(struct utsname *name);
 
 long _dl_strtol(const char *nptr, char **endptr, int base);
 
@@ -85,16 +91,6 @@ _dl_bcopy(const void *src, void *dest, int size)
 
 	for (i = 0; i < size; i++)
 		pdest[i] = psrc[i];
-}
-
-static inline int
-_dl_strlen(const char *str)
-{
-	const char *s;
-
-	for (s = str; *s; ++s)
-		;
-	return (s - str);
 }
 
 static inline size_t
@@ -187,6 +183,12 @@ _dl_strstr(const char *s, const char *find)
 		s--;
 	}
 	return ((char *)s);
+}
+
+static inline int
+_dl_isalnum(const char c)
+{
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
 }
 
 #endif /*__DL_UTIL_H__*/
