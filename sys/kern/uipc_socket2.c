@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.55 2013/01/15 11:12:57 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.56 2013/04/05 08:25:30 tedu Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -152,12 +152,12 @@ sonewconn(struct socket *head, int connstatus)
 	splsoftassert(IPL_SOFTNET);
 
 	if (mclpools[0].pr_nout > mclpools[0].pr_hardlimit * 95 / 100)
-		return ((struct socket *)0);
+		return (NULL);
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
-		return ((struct socket *)0);
+		return (NULL);
 	so = pool_get(&socket_pool, PR_NOWAIT|PR_ZERO);
 	if (so == NULL)
-		return ((struct socket *)0);
+		return (NULL);
 	so->so_type = head->so_type;
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
@@ -178,7 +178,7 @@ sonewconn(struct socket *head, int connstatus)
 	 */
 	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat)) {
 		pool_put(&socket_pool, so);
-		return ((struct socket *)0);
+		return (NULL);
 	}
 	so->so_snd.sb_wat = head->so_snd.sb_wat;
 	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
@@ -192,7 +192,7 @@ sonewconn(struct socket *head, int connstatus)
 	    curproc)) {
 		(void) soqremque(so, soqueue);
 		pool_put(&socket_pool, so);
-		return ((struct socket *)0);
+		return (NULL);
 	}
 	if (connstatus) {
 		sorwakeup(head);
@@ -931,7 +931,7 @@ sbcreatecontrol(caddr_t p, int size, int type, int level)
 	}
 
 	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
-		return ((struct mbuf *) NULL);
+		return (NULL);
 	if (CMSG_SPACE(size) > MLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {

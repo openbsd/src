@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.70 2013/03/30 06:32:25 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.71 2013/04/05 08:25:30 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -893,7 +893,7 @@ unp_gc(void)
 			fp->f_iflags |= FIF_MARK;
 
 			if (fp->f_type != DTYPE_SOCKET ||
-			    (so = (struct socket *)fp->f_data) == NULL)
+			    (so = fp->f_data) == NULL)
 				continue;
 			if (so->so_proto->pr_domain != &unixdomain ||
 			    (so->so_proto->pr_flags&PR_RIGHTS) == 0)
@@ -972,10 +972,10 @@ unp_gc(void)
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
 	        if ((*fpp)->f_type == DTYPE_SOCKET && (*fpp)->f_data != NULL)
-		        sorflush((struct socket *)(*fpp)->f_data);
+		        sorflush((*fpp)->f_data);
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
 		(void) closef(*fpp, NULL);
-	free((caddr_t)extra_ref, M_FILE);
+	free(extra_ref, M_FILE);
 	unp_gcing = 0;
 }
 

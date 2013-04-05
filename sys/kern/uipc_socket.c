@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.117 2013/04/04 18:13:43 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.118 2013/04/05 08:25:30 tedu Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -851,9 +851,7 @@ dontblock:
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			resid = uio->uio_resid;
 			splx(s);
-			uio_error =
-				uiomove(mtod(m, caddr_t) + moff, (int)len,
-					uio);
+			uio_error = uiomove(mtod(m, caddr_t) + moff, len, uio);
 			s = splsoftnet();
 			if (uio_error)
 				uio->uio_resid = resid - len;
@@ -1329,7 +1327,7 @@ somove(struct socket *so, int wait)
 	/* Send window update to source peer as receive buffer has changed. */
 	if (so->so_proto->pr_flags & PR_WANTRCVD && so->so_pcb)
 		(so->so_proto->pr_usrreq)(so, PRU_RCVD, NULL,
-		    (struct mbuf *)0L, NULL, NULL);
+		    NULL, NULL, NULL);
 
 	/* Receive buffer did shrink by len bytes, adjust oob. */
 	state = so->so_state;
@@ -1741,9 +1739,8 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 
 				if (unp->unp_flags & UNP_FEIDS) {
 					m->m_len = sizeof(unp->unp_connid);
-					bcopy((caddr_t)(&(unp->unp_connid)),
-					    mtod(m, caddr_t),
-					    m->m_len);
+					bcopy(&(unp->unp_connid),
+					    mtod(m, caddr_t), m->m_len);
 					break;
 				}
 				(void)m_free(m);
@@ -1772,7 +1769,7 @@ sohasoutofband(struct socket *so)
 int
 soo_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	struct socket *so = kn->kn_fp->f_data;
 	struct sockbuf *sb;
 	int s;
 
@@ -1802,7 +1799,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 void
 filt_sordetach(struct knote *kn)
 {
-	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	struct socket *so = kn->kn_fp->f_data;
 	int s = splnet();
 
 	SLIST_REMOVE(&so->so_rcv.sb_sel.si_note, kn, knote, kn_selnext);
@@ -1815,7 +1812,7 @@ filt_sordetach(struct knote *kn)
 int
 filt_soread(struct knote *kn, long hint)
 {
-	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	struct socket *so = kn->kn_fp->f_data;
 
 	kn->kn_data = so->so_rcv.sb_cc;
 #ifdef SOCKET_SPLICE
@@ -1837,7 +1834,7 @@ filt_soread(struct knote *kn, long hint)
 void
 filt_sowdetach(struct knote *kn)
 {
-	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	struct socket *so = kn->kn_fp->f_data;
 	int s = splnet();
 
 	SLIST_REMOVE(&so->so_snd.sb_sel.si_note, kn, knote, kn_selnext);
@@ -1850,7 +1847,7 @@ filt_sowdetach(struct knote *kn)
 int
 filt_sowrite(struct knote *kn, long hint)
 {
-	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	struct socket *so = kn->kn_fp->f_data;
 
 	kn->kn_data = sbspace(&so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
@@ -1872,7 +1869,7 @@ filt_sowrite(struct knote *kn, long hint)
 int
 filt_solisten(struct knote *kn, long hint)
 {
-	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	struct socket *so = kn->kn_fp->f_data;
 
 	kn->kn_data = so->so_qlen;
 	return (so->so_qlen != 0);

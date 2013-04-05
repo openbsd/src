@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.87 2012/10/17 05:07:55 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.88 2013/04/05 08:25:30 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-			 MT_SONAME);
+	    MT_SONAME);
 	if (error == 0) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
@@ -290,7 +290,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 		return (EALREADY);
 	}
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-			 MT_SONAME);
+	    MT_SONAME);
 	if (error)
 		goto bad;
 #ifdef KTRACE
@@ -307,8 +307,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	}
 	s = splsoftnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		error = tsleep(&so->so_timeo, PSOCK | PCATCH,
-		    "netcon2", 0);
+		error = tsleep(&so->so_timeo, PSOCK | PCATCH, "netcon2", 0);
 		if (error)
 			break;
 	}
@@ -342,11 +341,11 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	int fd, error, sv[2];
 
 	error = socreate(SCARG(uap, domain), &so1, SCARG(uap, type),
-			 SCARG(uap, protocol));
+	    SCARG(uap, protocol));
 	if (error)
 		return (error);
 	error = socreate(SCARG(uap, domain), &so2, SCARG(uap, type),
-			 SCARG(uap, protocol));
+	    SCARG(uap, protocol));
 	if (error)
 		goto free1;
 
@@ -495,7 +494,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	}
 	if (mp->msg_name) {
 		error = sockargs(&to, mp->msg_name, mp->msg_namelen,
-				 MT_SONAME);
+		    MT_SONAME);
 		if (error)
 			goto bad;
 #ifdef KTRACE
@@ -509,7 +508,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 			goto bad;
 		}
 		error = sockargs(&control, mp->msg_control,
-				 mp->msg_controllen, MT_CONTROL);
+		    mp->msg_controllen, MT_CONTROL);
 		if (error)
 			goto bad;
 	} else
@@ -608,7 +607,7 @@ sys_recvmsg(struct proc *p, void *v, register_t *retval)
 	msg.msg_flags = SCARG(uap, flags);
 	if (msg.msg_iovlen > 0) {
 		error = copyin(msg.msg_iov, iov,
-		    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
+		    msg.msg_iovlen * sizeof(struct iovec));
 		if (error)
 			goto done;
 	}
@@ -678,8 +677,8 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p, s, UIO_READ,
-				ktriov, len - auio.uio_resid, error);
+			ktrgenio(p, s, UIO_READ, ktriov,
+			    len - auio.uio_resid, error);
 		free(ktriov, M_TEMP);
 	}
 #endif
@@ -722,8 +721,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 					mp->msg_flags |= MSG_CTRUNC;
 					i = len;
 				}
-				error = copyout(mtod(m, caddr_t), p,
-				    (unsigned)i);
+				error = copyout(mtod(m, caddr_t), p, i);
 				if (m->m_next)
 					i = ALIGN(i);
 				p += i;
@@ -807,8 +805,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
-	error = sosetopt(fp->f_data, SCARG(uap, level),
-			 SCARG(uap, name), m);
+	error = sosetopt(fp->f_data, SCARG(uap, level), SCARG(uap, name), m);
 	m = NULL;
 bad:
 	if (m)
