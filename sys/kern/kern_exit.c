@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.121 2013/03/30 06:32:25 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.122 2013/04/06 03:44:34 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -95,9 +95,6 @@ sys___threxit(struct proc *p, void *v, register_t *retval)
 	struct sys___threxit_args /* {
 		syscallarg(pid_t *) notdead;
 	} */ *uap = v;
-
-	if (!rthreads_enabled)
-		return (EINVAL);
 
 	if (SCARG(uap, notdead) != NULL) {
 		pid_t zero = 0;

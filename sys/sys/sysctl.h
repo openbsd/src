@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.131 2013/03/24 00:09:31 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.132 2013/04/06 03:44:34 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ struct ctlname {
 #define	KERN_CPTIME2		71	/* array: cp_time2 */
 #define	KERN_CACHEPCT		72	/* buffer cache % of physmem */
 #define	KERN_FILE2		73	/* struct: file entries */
-#define	KERN_RTHREADS		74	/* kernel rthreads support enabled */
+/* was define KERN_RTHREADS	74	*/
 #define	KERN_CONSDEV		75	/* dev_t: console terminal device */
 #define	KERN_NETLIVELOCKS	76	/* int: number of network livelocks */
 #define	KERN_POOL_DEBUG		77	/* int: enable pool_debug */
@@ -256,7 +256,7 @@ struct ctlname {
  	{ "cp_time2", CTLTYPE_STRUCT }, \
 	{ "bufcachepercent", CTLTYPE_INT }, \
 	{ "file2", CTLTYPE_STRUCT }, \
-	{ "rthreads", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "netlivelocks", CTLTYPE_INT }, \
 	{ "pool_debug", CTLTYPE_INT }, \

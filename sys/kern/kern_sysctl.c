@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.233 2013/03/23 21:22:20 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.234 2013/04/06 03:44:34 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -128,8 +128,6 @@ void fill_kproc(struct proc *, struct kinfo_proc *, int, int);
 int (*cpu_cpuspeed)(int *);
 void (*cpu_setperf)(int);
 int perflevel = 100;
-
-int rthreads_enabled = 1;
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -565,9 +563,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_CPTIME2:
 		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
 		    newp, newlen));
-	case KERN_RTHREADS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &rthreads_enabled));
 	case KERN_CACHEPCT: {
 		u_int64_t dmapages;
 		int opct, pgs;
