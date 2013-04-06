@@ -1,10 +1,6 @@
-dnl	$OpenBSD: whatis,v 1.1 2013/04/01 13:02:48 jasper Exp $
+dnl	$OpenBSD: whatis,v 1.2 2013/04/06 07:40:19 jasper Exp $
 
 OpenBSD/MACHINE is a port intended to run on systems based upon the
 Cavium Octeon and Octeon PLUS MIPS64 CPUs. OpenBSD/MACHINE initially
 aims to provide support for the Portwell CAM-0100 and Ubiquiti Networks
 EdgeRouter LITE.
-
-At this moment no installation sets or bootloader is available, thus the
-kernel and ramdisk need to be cross-compiled (or compiled on OpenBSD/sgi).
-For the installation sets the sets from OpenBSD/sgi can be used.
