@@ -16,7 +16,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/systm.h>
+#include <sys/malloc.h>
 
 /*
  * The POISON is used as known text to copy into free objects so
@@ -27,33 +27,44 @@
 #else
 #define POISON	((unsigned) 0xdeadbeef)
 #endif
-#define POISON_SIZE	32
+#define POISON_SIZE	64
+
+int32_t
+poison_value(void *v)
+{
+	return POISON;
+}
 
 void
 poison_mem(void *v, size_t len)
 {
 	uint32_t *ip = v;
 	size_t i;
+	int32_t poison;
+
+	poison = poison_value(v);
 
 	if (len > POISON_SIZE)
 		len = POISON_SIZE;
 	len = len / sizeof(*ip);
 	for (i = 0; i < len; i++)
-		ip[i] = POISON;
+		ip[i] = poison;
 }
 
 int
 poison_check(void *v, size_t len, size_t *pidx, int *pval)
 {
-
 	uint32_t *ip = v;
 	size_t i;
+	int32_t poison;
+
+	poison = poison_value(v);
 
 	if (len > POISON_SIZE)
 		len = POISON_SIZE;
 	len = len / sizeof(*ip);
 	for (i = 0; i < len; i++) {
-		if (ip[i] != POISON) {
+		if (ip[i] != poison) {
 			*pidx = i;
 			*pval = ip[i];
 			return 1;
