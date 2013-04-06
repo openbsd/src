@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.38 2013/03/23 11:09:43 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.39 2013/04/06 06:00:22 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -96,9 +96,24 @@ if [ ! -x /$SSHD ]; then
 	SSHD=`which sshd`
 fi
 
+# Logfiles.
+# SSH_LOGFILE should be the debug output of ssh(1) only
+# SSHD_LOGFILE should be the debug output of sshd(8) only
+# REGRESS_LOGFILE is the output of the test itself stdout and stderr
 if [ "x$TEST_SSH_LOGFILE" = "x" ]; then
-	TEST_SSH_LOGFILE=/dev/null
+	TEST_SSH_LOGFILE=$OBJ/ssh.log
 fi
+if [ "x$TEST_SSHD_LOGFILE" = "x" ]; then
+	TEST_SSHD_LOGFILE=$OBJ/sshd.log
+fi
+if [ "x$TEST_REGRESS_LOGFILE" = "x" ]; then
+	TEST_REGRESS_LOGFILE=$OBJ/regress.log
+fi
+
+# truncate logfiles
+>$TEST_SSH_LOGFILE
+>$TEST_SSHD_LOGFILE
+>$TEST_REGRESS_LOGFILE
 
 # these should be used in tests
 export SSH SSHD SSHAGENT SSHADD SSHKEYGEN SSHKEYSCAN SFTP SFTPSERVER SCP
@@ -131,7 +146,7 @@ cleanup ()
 
 trace ()
 {
-	echo "trace: $@" >>$TEST_SSH_LOGFILE
+	echo "trace: $@" >>$TEST_REGRESS_LOGFILE
 	if [ "X$TEST_SSH_TRACE" = "Xyes" ]; then
 		echo "$@"
 	fi
@@ -139,7 +154,7 @@ trace ()
 
 verbose ()
 {
-	echo "verbose: $@" >>$TEST_SSH_LOGFILE
+	echo "verbose: $@" >>$TEST_REGRESS_LOGFILE
 	if [ "X$TEST_SSH_QUIET" != "Xyes" ]; then
 		echo "$@"
 	fi
@@ -148,14 +163,14 @@ verbose ()
 
 fail ()
 {
-	echo "FAIL: $@" >>$TEST_SSH_LOGFILE
+	echo "FAIL: $@" >>$TEST_REGRESS_LOGFILE
 	RESULT=1
 	echo "$@"
 }
 
 fatal ()
 {
-	echo "FATAL: $@" >>$TEST_SSH_LOGFILE
+	echo "FATAL: $@" >>$TEST_REGRESS_LOGFILE
 	echo -n "FATAL: "
 	fail "$@"
 	cleanup
@@ -286,7 +301,7 @@ if test "$REGRESS_INTEROP_PUTTY" = "yes" ; then
 	echo "Hostname=127.0.0.1" >> ${OBJ}/.putty/sessions/localhost_proxy
 	echo "PortNumber=$PORT" >> ${OBJ}/.putty/sessions/localhost_proxy
 	echo "ProxyMethod=5" >> ${OBJ}/.putty/sessions/localhost_proxy
-	echo "ProxyTelnetCommand=sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSH_LOGFILE} -i -f $OBJ/sshd_proxy" >> ${OBJ}/.putty/sessions/localhost_proxy 
+	echo "ProxyTelnetCommand=sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSHD_LOGFILE} -i -f $OBJ/sshd_proxy" >> ${OBJ}/.putty/sessions/localhost_proxy
 
 	REGRESS_INTEROP_PUTTY=yes
 fi
@@ -294,7 +309,7 @@ fi
 # create a proxy version of the client config
 (
 	cat $OBJ/ssh_config
-	echo proxycommand sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSH_LOGFILE} -i -f $OBJ/sshd_proxy
+	echo proxycommand sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSHD_LOGFILE} -i -f $OBJ/sshd_proxy
 ) > $OBJ/ssh_proxy
 
 # check proxy config
@@ -304,7 +319,7 @@ start_sshd ()
 {
 	# start sshd
 	$SUDO ${SSHD} -f $OBJ/sshd_config "$@" -t || fatal "sshd_config broken"
-	$SUDO ${SSHD} -f $OBJ/sshd_config -e "$@" >>$TEST_SSH_LOGFILE 2>&1
+	$SUDO ${SSHD} -f $OBJ/sshd_config -e "$@" >>$TEST_SSHD_LOGFILE 2>&1
 
 	trace "wait for sshd"
 	i=0;

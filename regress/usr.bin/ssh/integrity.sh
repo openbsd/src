@@ -1,4 +1,4 @@
-#	$OpenBSD: integrity.sh,v 1.7 2013/02/20 08:27:50 djm Exp $
+#	$OpenBSD: integrity.sh,v 1.8 2013/04/06 06:00:22 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="integrity"
@@ -19,7 +19,7 @@ macs="hmac-sha1 hmac-md5 umac-64@openssh.com umac-128@openssh.com
 macs="$macs aes128-gcm@openssh.com aes256-gcm@openssh.com"
 
 # sshd-command for proxy (see test-exec.sh)
-cmd="sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSH_LOGFILE} -i -f $OBJ/sshd_proxy"
+cmd="sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSHD_LOGFILE} -i -f $OBJ/sshd_proxy"
 
 for m in $macs; do
 	trace "test $tid: mac $m"
