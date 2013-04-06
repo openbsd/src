@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.68 2013/02/15 22:01:24 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.69 2013/04/06 04:25:01 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -317,10 +317,13 @@ pthread_exit(void *retval)
 #else
 	thread->arg = __get_tcb();
 #endif
-	if (thread->flags & THREAD_DETACHED)
+	_spinlock(&thread->flags_lock);
+	if (thread->flags & THREAD_DETACHED) {
+		_spinunlock(&thread->flags_lock);
 		_rthread_free(thread);
-	else {
-		_rthread_setflag(thread, THREAD_DONE);
+	} else {
+		thread->flags |= THREAD_DONE;
+		_spinunlock(&thread->flags_lock);
 		_sem_post(&thread->donesem);
 	}
 
