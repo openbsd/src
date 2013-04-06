@@ -1,4 +1,4 @@
-.\" $OpenBSD: __tfork_thread.3,v 1.5 2012/06/21 01:28:27 guenther Exp $
+.\" $OpenBSD: __tfork_thread.3,v 1.6 2013/04/06 07:20:46 tedu Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 21 2012 $
+.Dd $Mdocdate: April 6 2013 $
 .Dt __TFORK_THREAD 3
 .Os
 .Sh NAME
@@ -125,8 +125,6 @@ as
 .Dv CHILD_MAX ,
 which is currently defined as 80 in
 .Aq Pa sys/syslimits.h .
-.It Bq Er ENOTSUP
-The kern.rthreads sysctl was not enabled.
 .El
 .Sh STANDARDS
 The
