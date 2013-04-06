@@ -1049,7 +1049,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/isa/isavar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/isa/itvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/isa/madreg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/isa/opti.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/isa/pasreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/isa/pcdisplayvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/isa/pcppireg.ph

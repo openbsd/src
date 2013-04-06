@@ -542,7 +542,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/isavar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/itvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/madreg.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/opti.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/pasreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/pcdisplayvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/isa/pcppireg.ph
