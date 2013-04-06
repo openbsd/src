@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.98 2013/03/28 16:41:39 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.99 2013/04/06 03:53:25 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -120,6 +120,21 @@ char *memall = NULL;
 struct rwlock sysctl_kmemlock = RWLOCK_INITIALIZER("sysctlklk");
 #endif
 
+/*
+ * Normally the freelist structure is used only to hold the list pointer
+ * for free objects.  However, when running with diagnostics, the first
+ * 8 bytes of the structure is unused except for diagnostic information,
+ * and the free list pointer is at offset 8 in the structure.  Since the
+ * first 8 bytes is the portion of the structure most often modified, this
+ * helps to detect memory reuse problems and avoid free list corruption.
+ */
+struct kmem_freelist {
+	int32_t	kf_spare0;
+	int16_t	kf_type;
+	int16_t	kf_spare1;
+	SIMPLEQ_ENTRY(kmem_freelist) kf_flist;
+};
+
 #ifdef DIAGNOSTIC
 /*
  * This structure provides a set of masks to catch unaligned frees.
@@ -130,16 +145,6 @@ const long addrmask[] = { 0,
 	0x000001ff, 0x000003ff, 0x000007ff, 0x00000fff,
 	0x00001fff, 0x00003fff, 0x00007fff, 0x0000ffff,
 };
-
-/*
- * The FREELIST_MARKER is used as known text to copy into free objects so
- * that modifications after frees can be detected.
- */
-#ifdef DEADBEEF0
-#define FREELIST_MARKER	((unsigned) DEADBEEF0)
-#else
-#define FREELIST_MARKER	((unsigned) 0xdeadbeef)
-#endif
 
 #endif /* DIAGNOSTIC */
 
@@ -413,7 +418,7 @@ free(void *addr, int type)
 	 * Check for multiple frees. Use a quick check to see if
 	 * it looks free before laboriously searching the freelist.
 	 */
-	if (freep->kf_spare0 == FREELIST_MARKER) {
+	if (freep->kf_spare0 == poison_value(freep)) {
 		struct kmem_freelist *fp;
 		SIMPLEQ_FOREACH(fp, &kbp->kb_freelist, kf_flist) {
 			if (addr != fp)
@@ -429,7 +434,7 @@ free(void *addr, int type)
 	 * when the object is reallocated.
 	 */
 	poison_mem(addr, size);
-	freep->kf_spare0 = FREELIST_MARKER;
+	freep->kf_spare0 = poison_value(freep);
 
 	freep->kf_type = type;
 #endif /* DIAGNOSTIC */

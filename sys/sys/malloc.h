@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.103 2013/03/26 16:36:01 tedu Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.104 2013/04/06 03:53:25 tedu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -341,20 +341,7 @@ struct kmemusage {
 #define	ku_freecnt ku_un.freecnt
 #define	ku_pagecnt ku_un.pagecnt
 
-/*
- * Normally the freelist structure is used only to hold the list pointer
- * for free objects.  However, when running with diagnostics, the first
- * 8 bytes of the structure is unused except for diagnostic information,
- * and the free list pointer is at offset 8 in the structure.  Since the
- * first 8 bytes is the portion of the structure most often modified, this
- * helps to detect memory reuse problems and avoid free list corruption.
- */
-struct kmem_freelist {
-	int32_t	kf_spare0;
-	int16_t	kf_type;
-	int16_t	kf_spare1;
-	SIMPLEQ_ENTRY(kmem_freelist) kf_flist;
-};
+struct kmem_freelist;
 
 /*
  * Set of buckets for each size of memory block that is retained
@@ -410,6 +397,10 @@ extern int sysctl_malloc(int *, u_int, void *, size_t *, void *, size_t,
 
 size_t malloc_roundup(size_t);
 void	malloc_printit(int (*)(const char *, ...));
+
+void	poison_mem(void *, size_t);
+int	poison_check(void *, size_t, size_t *, int *);
+int32_t poison_value(void *);
 
 #ifdef MALLOC_DEBUG
 int	debug_malloc(unsigned long, int, int, void **);
