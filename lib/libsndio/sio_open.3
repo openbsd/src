@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.33 2012/05/23 19:25:11 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.34 2013/04/06 11:38:41 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2012 $
+.Dd $Mdocdate: April 6 2013 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -94,14 +94,6 @@ function to obtain a handle representing the newly created stream;
 later it will be passed as the
 .Ar hdl
 argument of most other functions.
-The
-.Fn sio_open
-function first tries to connect to the
-.Xr sndiod 1
-audio server.
-If that fails, it then tries to use the
-.Xr audio 4
-hardware device.
 The
 .Ar name
 parameter gives the device string discussed in

@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.12 2012/12/22 10:10:04 jmc Exp $
+.\" $OpenBSD: sndio.7,v 1.13 2013/04/06 11:38:41 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2012 $
+.Dd $Mdocdate: April 6 2013 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@ MIDI thru box created with
 MIDI port exposed by
 .Xr sndiod 1 .
 .It Pa default
-Any audio device or MIDI port.
+Default audio device or MIDI port (see below).
 .El
 .It Pa hostname
 The hostname or address where the remote
@@ -146,6 +146,40 @@ Sub-device registered with
 First MIDI thru box created with
 .Xr sndiod 1 .
 .El
+.Sh DEFAULTS
+If
+.Pa default
+is used as the audio device, the program will use the
+one specified in the
+.Ev AUDIODEVICE
+environment variable.
+If it is not set, the program first tries to connect to
+.Pa snd/0 .
+If that fails, it then tries to use
+.Pa rsnd/0 .
+This allows the
+.Xr sndiod 1
+audio server to be used by default and the bare hardware as fallback;
+programs don't have to be reconfigured when
+.Xr sndiod 1
+is started or stopped.
+.Pp
+If
+.Pa default
+is used as the MIDI port, the program will use the
+one specified in the
+.Ev MIDIDEVICE
+environment variable.
+If it is not set, the program first tries to connect to
+.Pa midithru/0 .
+If that fails, it then tries to use
+.Pa rmidi/0 .
+As long as
+.Xr sndiod 1
+is running, this allows programs to exchange MIDI data on
+machines with no MIDI hardware by default, e.g. a MIDI player
+could use a software synthesizer with no manual configuration
+required.
 .Sh AUTHENTICATION
 If a shared
 .Xr sndiod 1
