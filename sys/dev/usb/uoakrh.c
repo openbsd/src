@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakrh.c,v 1.3 2013/03/28 03:58:03 tedu Exp $   */
+/*	$OpenBSD: uoakrh.c,v 1.4 2013/04/06 13:03:09 sf Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -187,7 +187,7 @@ uoakrh_attach(struct device *parent, struct device *self, void *aux)
 	(void)snprintf(sc->sc_sensor.temp.desc, sizeof(sc->sc_sensor.temp.desc),
 	    "Temp.(#%s)", scc->sc_udi.udi_serial);
 	(void)snprintf(sc->sc_sensor.humi.desc, sizeof(sc->sc_sensor.humi.desc),
-	    "\%RH(#%s)", scc->sc_udi.udi_serial);
+	    "%%RH(#%s)", scc->sc_udi.udi_serial);
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor.temp);
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor.humi);
 
