@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.117 2013/04/06 03:53:25 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.118 2013/04/06 13:41:11 deraadt Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -454,8 +454,10 @@ pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
 	else
 		ph = pool_get(&phpool, (flags & ~(PR_WAITOK | PR_ZERO)) |
 		    PR_NOWAIT);
+#ifdef DIAGNOSTIC
 	if (pool_debug && ph != NULL)
 		ph->ph_magic = poison_value(ph);
+#endif
 	return (ph);
 }
 
