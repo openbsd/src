@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2013/04/03 12:03:06 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.32 2013/04/06 07:53:57 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -721,7 +721,7 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
 	vaddr_t kstack;
 
 	kstack = alloc_contiguous_pages(USPACE);
-	if (kstack == NULL)
+	if (kstack == 0)
 		panic("unable to allocate idle stack\n");
 	ci->ci_curprocpaddr = (void *)kstack;
 	cpu_spinup_a0 = (uint64_t)ci;
