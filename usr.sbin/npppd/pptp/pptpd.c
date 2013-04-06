@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.15 2013/03/14 10:21:07 mpi Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.16 2013/04/06 17:03:51 giovanni Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.15 2013/03/14 10:21:07 mpi Exp $ */
+/* $Id: pptpd.c,v 1.16 2013/04/06 17:03:51 giovanni Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.15 2013/03/14 10:21:07 mpi Exp $
+ * $Id: pptpd.c,v 1.16 2013/04/06 17:03:51 giovanni Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,8 +108,7 @@ pptpd_init(pptpd *_this)
 
 	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &value, &size, NULL, 0) == 0) {
 		if(value == 0) {
-			pptpd_log(_this, LOG_ERR, "GRE protocol not allowed");
-			return 1;
+			pptpd_log(_this, LOG_WARNING, "GRE protocol not allowed");
 		}
 	}
 
