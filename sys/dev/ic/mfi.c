@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.138 2012/09/12 06:53:05 haesbaert Exp $ */
+/* $OpenBSD: mfi.c,v 1.139 2013/04/07 02:32:03 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -289,11 +289,8 @@ mfi_init_ccb(struct mfi_softc *sc)
 	return (0);
 destroy:
 	/* free dma maps and ccb memory */
-	while (i) {
-		ccb = &sc->sc_ccb[i];
+	while ((ccb = mfi_get_ccb(sc)) != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
-		i--;
-	}
 
 	free(sc->sc_ccb, M_DEVBUF);
 
