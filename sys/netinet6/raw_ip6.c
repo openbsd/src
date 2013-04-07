@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.52 2013/04/01 22:51:39 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.53 2013/04/07 20:58:25 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -691,6 +691,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * this in a more natural way.
 		 */
 		if (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
+		    !(so->so_options & SO_BINDANY) &&
 		    (ia = ifa_ifwithaddr((struct sockaddr *)addr,
 		    in6p->inp_rtableid)) == 0) {
 			error = EADDRNOTAVAIL;
