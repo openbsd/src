@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrlimit.2,v 1.19 2011/11/06 12:07:42 deraadt Exp $
+.\"	$OpenBSD: getrlimit.2,v 1.20 2013/04/08 03:08:38 guenther Exp $
 .\"	$NetBSD: getrlimit.2,v 1.8 1995/10/12 15:40:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getrlimit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 6 2011 $
+.Dd $Mdocdate: April 8 2013 $
 .Dt GETRLIMIT 2
 .Os
 .Sh NAME
@@ -38,8 +38,6 @@
 .Nm setrlimit
 .Nd control maximum system resource consumption
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/time.h>
 .Fd #include <sys/resource.h>
 .Ft int
 .Fn getrlimit "int resource" "struct rlimit *rlp"
@@ -87,9 +85,10 @@ This imposes a limit on the amount of physical memory to be given to
 a process; if memory is tight, the system will prefer to take memory
 from processes that are exceeding their declared resident set size.
 .It Li RLIMIT_STACK
-The maximum size (in bytes) of the stack segment for a process;
-this defines how far a program's stack segment may be extended.
-Stack extension is performed automatically by the system.
+The maximum size (in bytes) of the stack segment for a process,
+which defines how far a process's stack segment may be extended.
+Stack extension is performed automatically by the system,
+and is only used by the main thread of a process.
 .El
 .Pp
 A resource limit is specified as a soft limit and a hard limit.
@@ -189,10 +188,26 @@ will fail if:
 The address specified for
 .Fa rlp
 is invalid.
-.It Bq Er EPERM
-The limit specified to
+.It Bq Er EINVAL
+An unrecognized value for
+.Fa resource
+was specified.
+.El
+.Pp
+In addition,
 .Fn setrlimit
-would have raised the maximum limit value, and the caller is not the superuser.
+may return the following errors:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The new 
+.Fa rlim_cur
+is greater than the new
+.Fa rlim_max .
+.It Bq Er EPERM
+The new
+.Fa rlim_max
+is greater than the current maximum limit value,
+and the caller is not the superuser.
 .El
 .Sh SEE ALSO
 .Xr csh 1 ,
@@ -206,10 +221,21 @@ The
 .Fn getrlimit
 and
 .Fn setrlimit
-function calls are expected to conform to
-.St -p1003.1-2004 .
+functions conform to
+.St -p1003.1-2008 .
+.Pp
+The
+.Dv RLIMIT_MEMLOCK ,
+.Dv RLIMIT_NPROC ,
+and
+.Dv RLIMIT_RSS
+resources are non-standard extensions.
 .Sh HISTORY
 The
 .Fn getrlimit
 function call appeared in
 .Bx 4.2 .
+.Sh BUGS
+The
+.Dv RLIMIT_AS
+resource is missing.
