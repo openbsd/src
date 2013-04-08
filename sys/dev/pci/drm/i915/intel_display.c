@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.3 2013/04/08 05:43:33 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -8025,8 +8025,8 @@ intel_crtc_page_flip(struct drm_crtc *crtc,
 {
 	struct drm_device *dev = crtc->dev;
 	struct inteldrm_softc *dev_priv = dev->dev_private;
-	struct intel_framebuffer *intel_fb;
-	struct drm_i915_gem_object *obj;
+	struct drm_framebuffer *old_fb = crtc->fb;
+	struct drm_i915_gem_object *obj = to_intel_framebuffer(fb)->obj;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_unpin_work *work;
 	int ret;
@@ -8050,8 +8050,7 @@ intel_crtc_page_flip(struct drm_crtc *crtc,
 
 	work->event = event;
 	work->crtc = crtc;
-	intel_fb = to_intel_framebuffer(crtc->fb);
-	work->old_fb_obj = intel_fb->obj;
+	work->old_fb_obj = to_intel_framebuffer(old_fb)->obj;
 
 	ret = drm_vblank_get(dev, intel_crtc->pipe);
 	if (ret)
@@ -8069,9 +8068,6 @@ intel_crtc_page_flip(struct drm_crtc *crtc,
 	}
 	intel_crtc->unpin_work = work;
 	mtx_leave(&dev->event_lock);
-
-	intel_fb = to_intel_framebuffer(fb);
-	obj = intel_fb->obj;
 
 #ifdef notyet
 	if (atomic_read(&intel_crtc->unpin_work_count) >= 2)
@@ -8112,6 +8108,7 @@ intel_crtc_page_flip(struct drm_crtc *crtc,
 
 cleanup_pending:
 	atomic_dec(&intel_crtc->unpin_work_count);
+	crtc->fb = old_fb;
 	atomic_sub(1 << intel_crtc->plane, &work->old_fb_obj->pending_flip);
 	drm_gem_object_unreference(&work->old_fb_obj->base);
 	drm_gem_object_unreference(&obj->base);
