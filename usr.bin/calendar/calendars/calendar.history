@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.74 2012/11/11 14:28:40 jmc Exp $
+ * $OpenBSD: calendar.history,v 1.75 2013/04/08 14:15:26 jmc Exp $
  */
 
 #ifndef _calendar_history_
@@ -130,7 +130,6 @@
 04/04	NATO established, 1949
 04/05	Pocahontas marries English colonist John Rolfe in Virginia, 1614
 04/06	Joseph Smith founds Mormon Church, 1830
-04/07	Albert Hofmann synthesizes LSD in Switzerland, 1943
 04/07	Alewives run, Cape Cod
 04/08	The Venus de Milo is found on the island of Melos, 1820
 04/09	The first public exhibition of art opens in Paris, 1667
@@ -443,6 +442,7 @@
 11/14	Czechoslovakie becomes a republic, 1918
 11/15	First assembly of the League of Nations is held in Geneva, 1920
 11/16	Opening of the Suez Canal, 1869
+11/16	Albert Hofmann synthesizes LSD in Switzerland, 1938
 11/17	Elizabeth I of England succeeds Queen Mary I of England, 1558
 11/18	First hydrogen bomb blasts Enewetok, 1952
 11/19	Samuel Goldwyn and Edgar Selwyn establish Goldwyn Company, 1916
