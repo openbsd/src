@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2013/03/27 19:46:35 jasper Exp $
+#	$OpenBSD: install.md,v 1.3 2013/04/08 09:45:57 jasper Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,17 @@
 MDDKDEVS='/^[sw]d[0-9] /s/ .*//p;/^octcf[0-9] /s/ .*//p'
 
 md_installboot() {
+	local _disk=$1
+
+	if mount -t msdos /dev/${_disk}i /mnt2 && \
+	   cp /mnt/bsd /mnt2/bsd && cp /mnt/bsd.rd /mnt2/bsd.rd; then
+		umount /mnt2
+		return
+	fi
+
+	echo "Failed to install bootblocks."
+	echo "You will not be able to boot OpenBSD from $_disk."
+	exit
 }
 
 md_prep_fdisk() {
@@ -54,14 +65,26 @@ md_prep_fdisk() {
 		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
 		w*|W*)
-			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
+			echo -n "Creating a FAT partition and an OpenBSD partition for rest of $_disk..."
 			fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
-update
+e 0
+C
+n
+64
+32768
+f 0
+e 3
+A6
+n
+32832
+
 write
 quit
 __EOT
 			echo "done."
+			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
+			newfs -t msdos ${_disk}i
 			return ;;
 		e*|E*)
 			# Manually configure the MBR.
@@ -120,6 +143,10 @@ __EOT
 }
 
 md_congrats() {
+	cat <<__EOT
+
+	INSTALL.$ARCH describes how to configure U-Boot to boot OpenBSD.
+__EOT
 }
 
 md_consoleinfo() {
