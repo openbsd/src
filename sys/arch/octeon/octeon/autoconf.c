@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2012/06/17 11:02:32 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2013/04/08 09:42:26 jasper Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -24,11 +24,13 @@
 #include <machine/autoconf.h>
 
 extern void dumpconf(void);
+void parse_uboot_root(void);
 
 int	cold = 1;
 struct device *bootdv = NULL;
 char    bootdev[16];
 enum devclass bootdev_class = DV_DULL;
+extern char uboot_rootdev[];
 
 void
 cpu_configure(void)
@@ -40,6 +42,29 @@ cpu_configure(void)
 
 	splinit();
 	cold = 0;
+}
+
+void
+parse_uboot_root(void)
+{
+	char *p;
+	size_t len;
+
+        /*
+         * Turn the U-Boot root device (root=/dev/octcf0) into a boot device.
+         */
+        p = strrchr(uboot_rootdev, '/');
+        if (p == NULL)
+                return;
+	p++;
+
+	len = strlen(p);
+	if (len <= 2 || len >= sizeof bootdev - 1)
+		return;
+
+	memcpy(bootdev, p, len);
+	bootdev[len] = '\0';
+	bootdev_class = DV_DISK;
 }
 
 void
@@ -62,7 +87,7 @@ device_register(struct device *dev, void *aux)
 	const char *name = dev->dv_xname;
 
 	if (dev->dv_class != bootdev_class)
-		return;	
+		return;
 
 	switch (bootdev_class) {
 	case DV_DISK:

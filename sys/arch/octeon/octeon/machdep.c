@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2013/04/06 07:53:57 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.33 2013/04/08 09:42:26 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -95,6 +95,8 @@ vm_map_t phys_map;
 struct boot_desc *octeon_boot_desc;
 struct boot_info *octeon_boot_info;
 
+char uboot_rootdev[OCTEON_ARGV_MAX];
+
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -122,6 +124,9 @@ vaddr_t	mips_init(__register_t, __register_t, __register_t, __register_t);
 boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	octeon_memory_init(struct boot_info *);
 int	octeon_cpuspeed(int *);
+static void	process_bootargs(void);
+
+extern void parse_uboot_root(void);
 
 cons_decl(cn30xxuart);
 struct consdev uartcons = cons_init(cn30xxuart);
@@ -375,6 +380,8 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 
 	cpu_cpuspeed = octeon_cpuspeed;
 
+	process_bootargs();
+
 	/*
 	 * Get a console, very early but after initial mapping setup.
 	 */
@@ -553,6 +560,45 @@ octeon_cpuspeed(int *freq)
 	extern struct boot_info *octeon_boot_info;
 	*freq = octeon_boot_info->eclock / 1000000;
 	return (0);
+}
+
+
+static void
+process_bootargs(void)
+{
+	int i;
+	extern struct boot_desc *octeon_boot_desc;
+
+	/*
+	 * The kernel is booted via a bootoctlinux command. Thus we need to skip
+	 * argv[0] when we start to decode the boot arguments (${bootargs}).
+	 * Note that U-Boot doesn't pass us anything by default, we need
+	 * explicitly pass the rootdevice.
+	 */
+	for (i = 1; i < octeon_boot_desc->argc; i++ ) {
+		const char *arg =
+		    (const char*)PHYS_TO_CKSEG0(octeon_boot_desc->argv[i]);
+
+		if (arg == NULL)
+			continue;
+
+#ifdef DEBUG
+		printf("boot_desc->argv[%d] = %s\n",
+		       i, PHYS_TO_CKSEG0(octeon_boot_desc->argv[i]));
+#endif
+
+		/*
+		 * XXX: We currently only expect one other argument,
+		 * argv[1], root=ROOTDEV.
+		 */
+		if (strncmp(arg, "root=", 5) == 0) {
+			if (*uboot_rootdev == '\0') {
+				strlcpy(uboot_rootdev, arg,
+					sizeof(uboot_rootdev));
+				parse_uboot_root();
+                        }
+		}
+	}
 }
 
 /*
