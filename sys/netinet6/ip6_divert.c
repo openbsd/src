@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.10 2013/04/02 18:27:47 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.11 2013/04/08 15:32:23 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -37,8 +37,10 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/in6_var.h>
 #include <netinet6/ip6_divert.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/icmp6.h>
 
 struct	inpcbtable	divb6table;
 struct	div6stat	div6stat;
@@ -87,8 +89,11 @@ divert6_output(struct mbuf *m, ...)
 	struct sockaddr_in6 *sin6;
 	struct socket *so;
 	struct ifaddr *ifa;
-	int s, error = 0;
+	int s, error = 0, p_hdrlen = 0, nxt = 0, off;
 	va_list ap;
+	struct ip6_hdr *ip6;
+	u_int16_t csum = 0;
+	size_t p_off = 0;
 
 	va_start(ap, m);
 	inp = va_arg(ap, struct inpcb *);
@@ -106,15 +111,65 @@ divert6_output(struct mbuf *m, ...)
 	sin6 = mtod(nam, struct sockaddr_in6 *);
 	so = inp->inp_socket;
 
+	/* Do basic sanity checks. */
+	if (m->m_pkthdr.len < sizeof(struct ip6_hdr))
+		goto fail;
+	if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
+		/* m_pullup() has freed the mbuf, so just return. */
+		div6stat.divs_errors++;
+		return (ENOBUFS);
+	}
+	ip6 = mtod(m, struct ip6_hdr *);
+	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)
+		goto fail;
+	if (m->m_pkthdr.len < sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen))
+		goto fail;
+
+	/*
+	 * Recalculate the protocol checksum since the userspace application
+	 * may have modified the packet prior to reinjection.
+	 */
+	off = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxt);
+	if (off < sizeof(struct ip6_hdr))
+		goto fail;
+	switch (nxt) {
+	case IPPROTO_TCP:
+		p_hdrlen = sizeof(struct tcphdr);
+		p_off = offsetof(struct tcphdr, th_sum);
+		break;
+	case IPPROTO_UDP:
+		p_hdrlen = sizeof(struct udphdr);
+		p_off = offsetof(struct udphdr, uh_sum);
+		break;
+	case IPPROTO_ICMPV6:
+		p_hdrlen = sizeof(struct icmp6_hdr);
+		p_off = offsetof(struct icmp6_hdr, icmp6_cksum);
+		break;
+	default:
+		/* nothing */
+		break;
+	}
+	if (p_hdrlen) {
+		if (m->m_pkthdr.len < off + p_hdrlen)
+			goto fail;
+
+		if ((error = m_copyback(m, off + p_off, sizeof(csum), &csum, M_NOWAIT)))
+			goto fail;
+		csum = in6_cksum(m, nxt, off, m->m_pkthdr.len - off);
+		if (nxt == IPPROTO_UDP && csum == 0)
+			csum = 0xffff;
+		if ((error = m_copyback(m, off + p_off, sizeof(csum), &csum, M_NOWAIT)))
+			goto fail;
+	}
+
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
 
 	if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 		ip6addr.sin6_addr = sin6->sin6_addr;
 		ifa = ifa_ifwithaddr(sin6tosa(&ip6addr), m->m_pkthdr.rdomain);
 		if (ifa == NULL) {
-			div6stat.divs_errors++;
-			m_freem(m);
-			return (EADDRNOTAVAIL);
+			error = EADDRNOTAVAIL;
+			goto fail;
 		}
 		m->m_pkthdr.rcvif = ifa->ifa_ifp;
 
@@ -132,6 +187,11 @@ divert6_output(struct mbuf *m, ...)
 
 	div6stat.divs_opackets++;
 	return (error);
+
+fail:
+	div6stat.divs_errors++;
+	m_freem(m);
+	return (error ? error : EINVAL);
 }
 
 int

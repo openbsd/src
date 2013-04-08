@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.12 2013/04/02 18:27:47 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.13 2013/04/08 15:32:23 lteo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -36,6 +36,9 @@
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_divert.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/ip_icmp.h>
 
 struct	inpcbtable	divbtable;
 struct	divstat		divstat;
@@ -82,8 +85,12 @@ divert_output(struct mbuf *m, ...)
 	struct sockaddr_in *sin;
 	struct socket *so;
 	struct ifaddr *ifa;
-	int s, error = 0;
+	int s, error = 0, p_hdrlen = 0;
 	va_list ap;
+	struct ip *ip;
+	u_int16_t off, csum = 0;
+	u_int8_t nxt;
+	size_t p_off = 0;
 
 	va_start(ap, m);
 	inp = va_arg(ap, struct inpcb *);
@@ -101,15 +108,68 @@ divert_output(struct mbuf *m, ...)
 	sin = mtod(nam, struct sockaddr_in *);
 	so = inp->inp_socket;
 
+	/* Do basic sanity checks. */
+	if (m->m_pkthdr.len < sizeof(struct ip))
+		goto fail;
+	if ((m = m_pullup(m, sizeof(struct ip))) == NULL) {
+		/* m_pullup() has freed the mbuf, so just return. */
+		divstat.divs_errors++;
+		return (ENOBUFS);
+	}
+	ip = mtod(m, struct ip *);
+	if (ip->ip_v != IPVERSION)
+		goto fail;
+	off = ip->ip_hl << 2;
+	if (off < sizeof(struct ip) || ntohs(ip->ip_len) < off ||
+	    m->m_pkthdr.len < ntohs(ip->ip_len))
+		goto fail;
+
+	/*
+	 * Recalculate IP and protocol checksums since the userspace application
+	 * may have modified the packet prior to reinjection.
+	 */
+	ip->ip_sum = 0;
+	ip->ip_sum = in_cksum(m, off);
+	nxt = ip->ip_p;
+	switch (ip->ip_p) {
+	case IPPROTO_TCP:
+		p_hdrlen = sizeof(struct tcphdr);
+		p_off = offsetof(struct tcphdr, th_sum);
+		break;
+	case IPPROTO_UDP:
+		p_hdrlen = sizeof(struct udphdr);
+		p_off = offsetof(struct udphdr, uh_sum);
+		break;
+	case IPPROTO_ICMP:
+		p_hdrlen = sizeof(struct icmp);
+		p_off = offsetof(struct icmp, icmp_cksum);
+		nxt = 0;
+		break;
+	default:
+		/* nothing */
+		break;
+	}
+	if (p_hdrlen) {
+		if (m->m_pkthdr.len < off + p_hdrlen)
+			goto fail;
+
+		if ((error = m_copyback(m, off + p_off, sizeof(csum), &csum, M_NOWAIT)))
+			goto fail;
+		csum = in4_cksum(m, nxt, off, m->m_pkthdr.len - off);
+		if (ip->ip_p == IPPROTO_UDP && csum == 0)
+			csum = 0xffff;
+		if ((error = m_copyback(m, off + p_off, sizeof(csum), &csum, M_NOWAIT)))
+			goto fail;
+	}
+
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
 
 	if (sin->sin_addr.s_addr != INADDR_ANY) {
 		ipaddr.sin_addr = sin->sin_addr;
 		ifa = ifa_ifwithaddr(sintosa(&ipaddr), m->m_pkthdr.rdomain);
 		if (ifa == NULL) {
-			divstat.divs_errors++;
-			m_freem(m);
-			return (EADDRNOTAVAIL);
+			error = EADDRNOTAVAIL;
+			goto fail;
 		}
 		m->m_pkthdr.rcvif = ifa->ifa_ifp;
 
@@ -130,6 +190,11 @@ divert_output(struct mbuf *m, ...)
 
 	divstat.divs_opackets++;
 	return (error);
+
+fail:
+	m_freem(m);
+	divstat.divs_errors++;
+	return (error ? error : EINVAL);
 }
 
 int
