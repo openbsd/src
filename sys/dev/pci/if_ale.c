@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.25 2012/11/29 21:10:32 brad Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.26 2013/04/08 06:16:18 brad Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1930,7 +1930,7 @@ ale_stop_mac(struct ale_softc *sc)
 
 	reg = CSR_READ_4(sc, ALE_MAC_CFG);
 	if ((reg & (MAC_CFG_TX_ENB | MAC_CFG_RX_ENB)) != 0) {
-		reg &= ~MAC_CFG_TX_ENB | MAC_CFG_RX_ENB;
+		reg &= ~(MAC_CFG_TX_ENB | MAC_CFG_RX_ENB);
 		CSR_WRITE_4(sc, ALE_MAC_CFG, reg);
 	}
 
