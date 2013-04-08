@@ -1,9 +1,9 @@
-dnl	$OpenBSD: install,v 1.6 2013/04/08 09:46:53 jasper Exp $
+dnl	$OpenBSD: install,v 1.7 2013/04/08 13:17:03 bcallah Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
 
-There are two ways in order to load an OpenBSD/MACHINE kernel (or ramdisk),
+There are two ways to load an OpenBSD/MACHINE kernel (or ramdisk),
 over TFTP or from the internal CompactFlash storage.
 
 For TFTP you will first need to setup a TFTP server as described in
@@ -45,7 +45,7 @@ arguments provided:
 OpenBSD/MACHINE currently lacks a real bootloader. It is possible however to
 boot into bsd upon powering on the machine.
 
-From the U-Boot commandline make a copy of the current ${bootcmd}, so you can
+From the U-Boot commandline, make a copy of the current ${bootcmd} so you can
 restore it later if needed:
 
 	# setenv old_bootcmd ${bootcmd}
@@ -69,7 +69,7 @@ environment to persistent storage:
 
 Depending on your hardware you may need to replace 'ide' with 'usb'.
 
-No miniroot is provided at this moment.
+No miniroot is provided at this time.
 
 OpenBSDInstallPart2
 
