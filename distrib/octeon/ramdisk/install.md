@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2013/04/08 09:45:57 jasper Exp $
+#	$OpenBSD: install.md,v 1.4 2013/04/08 09:51:38 jasper Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,10 +90,13 @@ __EOT
 			# Manually configure the MBR.
 			cat <<__EOT
 
-You will now create a single MBR partition to contain your OpenBSD data. This
-partition must have an id of 'A6'; must *NOT* overlap other partitions; and
-must be marked as the only active partition.  Inside the fdisk command, the
-'manual' command describes all the fdisk commands in detail.
+You will now create one MBR partition to contain your OpenBSD data
+and one MBR partition on which kernels are located which are loaded
+by U-Boot. Neither partition will overlap any other partition.
+
+The OpenBSD MBR partition will have an id of 'A6' and the boot MBR
+partition will have an id of 'C' (MSDOS). The boot partition will be
+at least 16MB and be the first 'MSDOS' partition on the disk.
 
 $(fdisk ${_disk})
 __EOT
