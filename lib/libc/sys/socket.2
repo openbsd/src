@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.33 2013/03/12 00:19:02 dlg Exp $
+.\"	$OpenBSD: socket.2,v 1.34 2013/04/08 19:49:55 guenther Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,13 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 12 2013 $
+.Dd $Mdocdate: April 8 2013 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
 .Nm socket
 .Nd create an endpoint for communication
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn socket "int domain" "int type" "int protocol"
@@ -210,19 +209,23 @@ The
 .Fn socket
 call fails if:
 .Bl -tag -width Er
+.It Bq Er EAFNOSUPPORT
+The specified address family is not supported on this machine.
 .It Bq Er EPROTONOSUPPORT
 The protocol type or the specified protocol is not supported
 within this domain.
+.It Bq Er EPROTOTYPE
+The combination of the specified protocol and type is not supported.
 .It Bq Er EMFILE
 The per-process descriptor table is full.
 .It Bq Er ENFILE
 The system file table is full.
+.It Bq Er ENOBUFS
+Insufficient resources were available in the system
+to perform the operation.
 .It Bq Er EACCES
 Permission to create a socket of the specified type and/or protocol
 is denied.
-.It Bq Er ENOBUFS
-Insufficient buffer space is available.
-The socket cannot be created until sufficient resources are freed.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
@@ -254,6 +257,11 @@ The socket cannot be created until sufficient resources are freed.
 .%T "BSD Interprocess Communication Tutorial"
 .%O "reprinted in UNIX Programmer's Supplementary Documents Volume 1"
 .Re
+.Sh STANDARDS
+The
+.Fn socket
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn socket

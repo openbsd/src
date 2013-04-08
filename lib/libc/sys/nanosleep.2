@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.11 2008/10/24 14:34:39 jmc Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.12 2013/04/08 19:49:55 guenther Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 24 2008 $
+.Dd $Mdocdate: April 8 2013 $
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -70,12 +70,6 @@ function shall return \-1 and set
 .Va errno
 to the corresponding value.
 .Bl -tag -width Er
-.It Bq Er EFAULT
-Either
-.Fa rqtp
-or
-.Fa rmtp
-points to memory that is not a valid part of the process address space.
 .It Bq Er EINTR
 .Nm
 was interrupted by the delivery of a signal.
@@ -83,9 +77,12 @@ was interrupted by the delivery of a signal.
 .Fa rqtp
 specified a nanosecond value less than zero or greater than 1000 million,
 or a second value less than zero or greater than 100 million.
-.It Bq Er ENOSYS
-.Nm
-is not supported by this implementation.
+.It Bq Er EFAULT
+Either
+.Fa rqtp
+or
+.Fa rmtp
+points to memory that is not a valid part of the process address space.
 .El
 .Sh SEE ALSO
 .Xr sleep 1 ,
@@ -94,4 +91,4 @@ is not supported by this implementation.
 The
 .Fn nanosleep
 function conforms to
-.St -p1003.1b-93 .
+.St -p1003.1-2008 .

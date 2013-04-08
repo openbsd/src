@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.14 2011/11/06 12:07:42 deraadt Exp $
+.\"	$OpenBSD: socketpair.2,v 1.15 2013/04/08 19:49:55 guenther Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,17 +30,16 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 6 2011 $
+.Dd $Mdocdate: April 8 2013 $
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
 .Nm socketpair
 .Nd create a pair of connected sockets
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn socketpair "int d" "int type" "int protocol" "int *sv"
+.Fn socketpair "int d" "int type" "int protocol" "int sv[2]"
 .Sh DESCRIPTION
 The
 .Fn socketpair
@@ -62,31 +61,37 @@ A 0 is returned if the call succeeds, \-1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
 .Bl -tag -width Er
-.It Bq Er EMFILE
-Too many descriptors are in use by this process.
 .It Bq Er EAFNOSUPPORT
 The specified address family is not supported on this machine.
 .It Bq Er EPROTONOSUPPORT
 The specified protocol is not supported on this machine.
 .It Bq Er EOPNOTSUPP
 The specified protocol does not support creation of socket pairs.
+.It Bq Er EPROTOTYPE
+The combination of the specified protocol and type is not supported.
+.It Bq Er EMFILE
+The per-process descriptor table is full.
+.It Bq Er ENFILE
+The system file table is full.
+.It Bq Er ENOBUFS
+Insufficient resources were available in the system
+to perform the operation.
 .It Bq Er EFAULT
 The address
 .Fa sv
 does not specify a valid part of the
 process address space.
-.It Bq Er ENFILE
-The system file table is full.
 .El
 .Sh SEE ALSO
 .Xr pipe 2 ,
 .Xr read 2 ,
+.Xr socket 2 ,
 .Xr write 2
 .Sh STANDARDS
 The
 .Fn socketpair
 function conforms to
-.St -xpg4.2 .
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn socketpair
