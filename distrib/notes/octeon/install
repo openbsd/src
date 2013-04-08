@@ -1,10 +1,12 @@
-dnl	$OpenBSD: install,v 1.5 2013/04/05 23:02:27 jasper Exp $
+dnl	$OpenBSD: install,v 1.6 2013/04/08 09:46:53 jasper Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
 
-At the moment the only way to boot an OpenBSD/MACHINE (including the ramdisk)
-kernel is over TFTP. First you need to setup a TFTP server as described in
+There are two ways in order to load an OpenBSD/MACHINE kernel (or ramdisk),
+over TFTP or from the internal CompactFlash storage.
+
+For TFTP you will first need to setup a TFTP server as described in
 diskless(8). Assuming tftpd(8) chroots into /tftpboot, copy bsd.rd into that
 directory.
 
@@ -33,7 +35,7 @@ address, the default address location will be used by U-Boot:
 	Load address: 0x9f00000
 	Loading: #########################
 	done
-	Bytes transferred = 3486088 (353188 hex), 407 Kbytes/sec
+	Bytes transferred = 7191474 (6dbbb2 hex), 8617 Kbytes/sec
 
 Now the kernel can be booted from the default memory location, with no
 arguments provided:
@@ -43,15 +45,17 @@ arguments provided:
 OpenBSD/MACHINE currently lacks a real bootloader. It is possible however to
 boot into bsd upon powering on the machine.
 
-From the U-Boot command line make a copy of the current ${bootcmd} into memory:
+From the U-Boot commandline make a copy of the current ${bootcmd}, so you can
+restore it later if needed:
 
 	# setenv old_bootcmd ${bootcmd}
 
 ${bootcmd} is run by U-Boot when ${autoload} is enabled. Now create a new
 ${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
-partition on the first CF card, and save the environment to persistent storage:
+partition on the first CF card (created by the installer) and save the
+environment to persistent storage:
 
-	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux ${loadaddr}' 
+	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux root=/dev/octcf0' 
 	# setenv bootdelay 5
 	# saveenv
 	Saving Environment to Flash...
@@ -65,11 +69,7 @@ partition on the first CF card, and save the environment to persistent storage:
 
 Depending on your hardware you may need to replace 'ide' with 'usb'.
 
-You will be asked to enter the root device as the kernel is currently unable
-to figure this out. Support for this in progress, as is support for the above
-in the installer.
-
-No miniroot is provided at this moment either.
+No miniroot is provided at this moment.
 
 OpenBSDInstallPart2
 
