@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.9 2013/04/03 19:57:17 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.10 2013/04/08 21:32:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -107,7 +107,7 @@ i915_gem_wait_for_error(struct drm_device *dev)
 	int ret;
 
 	if (!atomic_read(&dev_priv->mm.wedged))
-		return (0);
+		return 0;
 
 	/*
 	 * Only wait 10 seconds for the gpu reset to complete to avoid hanging
@@ -130,7 +130,7 @@ i915_gem_wait_for_error(struct drm_device *dev)
 		dev_priv->error_completion++;
 		mtx_leave(&dev_priv->error_completion_lock);
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -164,7 +164,7 @@ i915_gem_init_ioctl(struct drm_device *dev, void *data,
 	struct drm_i915_gem_init	*args = data;
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
-		return (ENODEV);
+		return ENODEV;
 
 	DRM_LOCK();
 
@@ -201,9 +201,9 @@ i915_gem_init_ioctl(struct drm_device *dev, void *data,
 
 int
 i915_gem_get_aperture_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
+			    struct drm_file *file)
 {
-	struct drm_i915_gem_get_aperture	*args = data;
+	struct drm_i915_gem_get_aperture *args = data;
 
 	/* we need a write lock here to make sure we get the right value */
 	DRM_LOCK();
@@ -212,7 +212,7 @@ i915_gem_get_aperture_ioctl(struct drm_device *dev, void *data,
 	    atomic_read(&dev->pin_memory));
 	DRM_UNLOCK();
 
-	return (0);
+	return 0;
 }
 
 int
@@ -225,11 +225,11 @@ i915_gem_create(struct drm_file *file, struct drm_device *dev, uint64_t size,
 
 	size = round_page(size);
 	if (size == 0)
-		return (-EINVAL);
+		return -EINVAL;
 
 	obj = i915_gem_alloc_object(dev, size);
 	if (obj == NULL)
-		return (-ENOMEM);
+		return -ENOMEM;
 
 	handle = 0;
 	ret = drm_handle_create(file, &obj->base, &handle);
@@ -239,18 +239,20 @@ i915_gem_create(struct drm_file *file, struct drm_device *dev, uint64_t size,
 	}
 
 	*handle_p = handle;
-	return (0);
+	return 0;
 }
 
 int
-i915_gem_dumb_create(struct drm_file *file, struct drm_device *dev,
-    struct drm_mode_create_dumb *args)
+i915_gem_dumb_create(struct drm_file *file,
+		     struct drm_device *dev,
+		     struct drm_mode_create_dumb *args)
 {
 
 	/* have to work out size/pitch and return them */
 	args->pitch = roundup2(args->width * ((args->bpp + 7) / 8), 64);
 	args->size = args->pitch * args->height;
-	return (i915_gem_create(file, dev, args->size, &args->handle));
+	return i915_gem_create(file, dev,
+			       args->size, &args->handle);
 }
 
 int
@@ -455,7 +457,7 @@ int
 i915_gem_check_wedge(struct inteldrm_softc *dev_priv,
 		     bool interruptible)
 {
-	if (atomic_read(&dev_priv->mm.wedged) != 0) {
+	if (atomic_read(&dev_priv->mm.wedged)) {
 		bool recovery_complete;
 
 		/* Give the error handler a chance to run. */
@@ -551,7 +553,7 @@ i915_wait_seqno(struct intel_ring_buffer *ring, uint32_t seqno)
 
 	ret = i915_gem_check_wedge(dev_priv, interruptible);
 	if (ret)
-		return (ret);
+		return ret;
 
 	ret = i915_gem_check_olr(ring, seqno);
 	if (ret)
@@ -1675,10 +1677,8 @@ i915_gem_object_unbind(struct drm_i915_gem_object *obj)
 	if (obj->dmamap == NULL || dev_priv->agpdmat == NULL)
 		return 0;
 
-	if (obj->pin_count != 0) {
-		DRM_ERROR("Attempting to unbind pinned buffer\n");
-		return (EINVAL);
-	}
+	if (obj->pin_count)
+		return EBUSY;
 
 	ret = i915_gem_object_finish_gpu(obj);
 	if (ret == ERESTART || ret == EINTR)
@@ -2471,7 +2471,7 @@ i915_gem_object_pin_to_display_plane(struct drm_i915_gem_object *obj,
 	if (pipelined != obj->ring) {
 		ret = i915_gem_object_sync(obj, pipelined);
 		if (ret)
-			return (ret);
+			return ret;
 	}
 
 	/* The display engine is not coherent with the LLC cache on gen6.  As
@@ -2669,7 +2669,7 @@ i915_gem_object_pin(struct drm_i915_gem_object *obj,
 	}
 	inteldrm_verify_inactive(dev_priv, __FILE__, __LINE__);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -2811,7 +2811,7 @@ unlock:
 
 int
 i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
+		       struct drm_file *file_priv)
 {
 	struct drm_i915_gem_madvise *args = data;
 	struct drm_i915_gem_object *obj;
@@ -2820,9 +2820,9 @@ i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
 	switch (args->madv) {
 	case I915_MADV_DONTNEED:
 	case I915_MADV_WILLNEED:
-		break;
+	    break;
 	default:
-		return (EINVAL);
+	    return EINVAL;
 	}
 
 	ret = i915_mutex_lock_interruptible(dev);
@@ -2964,7 +2964,7 @@ i915_gem_idle(struct inteldrm_softc *dev_priv)
 	ret = i915_gpu_idle(dev);
 	if (ret) {
 		DRM_UNLOCK();
-		return (ret);
+		return ret;
 	}
 	i915_gem_retire_requests(dev_priv);
 
@@ -2976,6 +2976,7 @@ i915_gem_idle(struct inteldrm_softc *dev_priv)
 
 	/* Hack!  Don't let anybody do execbuf while we don't control the chip.
 	 * We need to replace this with a semaphore, or something.
+	 * And not confound mm.suspended!
 	 */
 	dev_priv->mm.suspended = 1;
 	/* if we hung then the timer alredy fired. */
@@ -3303,7 +3304,7 @@ i915_gem_attach_phys_object(struct drm_device *dev,
 		if (ret) {
 			DRM_ERROR("failed to init phys object %d size: %zu\n",
 				  id, obj->base.size);
-			return (ret);
+			return ret;
 		}
 	}
 
