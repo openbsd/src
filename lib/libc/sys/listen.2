@@ -1,4 +1,4 @@
-.\"	$OpenBSD: listen.2,v 1.11 2010/04/14 22:43:34 millert Exp $
+.\"	$OpenBSD: listen.2,v 1.12 2013/04/08 06:26:12 guenther Exp $
 .\"	$NetBSD: listen.2,v 1.7 1996/02/16 20:38:45 phil Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,13 @@
 .\"
 .\"     @(#)listen.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: April 14 2010 $
+.Dd $Mdocdate: April 8 2013 $
 .Dt LISTEN 2
 .Os
 .Sh NAME
 .Nm listen
 .Nd listen for connections on a socket
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn listen "int s" "int backlog"
@@ -85,12 +84,19 @@ is not a socket.
 .It Bq Er EOPNOTSUPP
 The socket is not of a type that supports the operation
 .Fn listen .
+.It Bq Er EINVAL
+The socket is already connected.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
 .Xr connect 2 ,
 .Xr socket 2 ,
 .Xr sysctl 8
+.Sh STANDARDS
+The
+.Fn listen
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn listen

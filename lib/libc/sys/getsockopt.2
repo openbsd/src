@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.38 2013/01/18 09:41:51 bluhm Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.39 2013/04/08 06:26:12 guenther Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 18 2013 $
+.Dd $Mdocdate: April 8 2013 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@
 .Nm setsockopt
 .Nd get and set options on sockets
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn getsockopt "int s" "int level" "int optname" "void *optval" "socklen_t *optlen"
@@ -485,6 +484,13 @@ is not in a valid part of the process address space.
 .Xr pf.conf 5 ,
 .Xr protocols 5 ,
 .Xr sosplice 9
+.Sh STANDARDS
+The
+.Fn getsockopt
+and
+.Fn setsockopt
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn getsockopt
