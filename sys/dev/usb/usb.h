@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.42 2013/03/16 09:58:40 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.43 2013/04/08 10:34:20 mglocker Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -560,6 +560,13 @@ struct usb_config_desc {
 	usb_config_descriptor_t ucd_desc;
 };
 
+struct usb_device_cdesc {
+	u_int8_t		udc_bus;
+	u_int8_t		udc_addr;	/* device address */
+	int			udc_config_index;
+	usb_config_descriptor_t udc_desc;
+};
+
 struct usb_interface_desc {
 	int	uid_config_index;
 	int	uid_interface_index;
@@ -579,6 +586,14 @@ struct usb_full_desc {
 	int	ufd_config_index;
 	u_int	ufd_size;
 	u_char	*ufd_data;
+};
+
+struct usb_device_fdesc {
+	u_int8_t	 udf_bus;
+	u_int8_t	 udf_addr;	/* device address */
+	int		 udf_config_index;
+	u_int		 udf_size;
+	u_char		*udf_data;
 };
 
 struct usb_string_desc {
@@ -637,6 +652,8 @@ struct usb_device_stats {
 #define USB_DISCOVER		_IO  ('U', 3)
 #define USB_DEVICEINFO		_IOWR('U', 4, struct usb_device_info)
 #define USB_DEVICESTATS		_IOR ('U', 5, struct usb_device_stats)
+#define USB_DEVICE_GET_CDESC	_IOWR('U', 6, struct usb_device_cdesc)
+#define USB_DEVICE_GET_FDESC	_IOWR('U', 7, struct usb_device_fdesc)
 
 /* Generic HID device */
 #define USB_GET_REPORT_DESC	_IOR ('U', 21, struct usb_ctl_report_desc)
