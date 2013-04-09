@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.186 2013/03/28 23:10:05 tedu Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.187 2013/04/09 08:35:38 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -96,11 +96,6 @@ void		tdb_firstuse(void *v);
 void		tdb_soft_timeout(void *v);
 void		tdb_soft_firstuse(void *v);
 int		tdb_hash(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
-
-extern int	ipsec_auth_default_level;
-extern int	ipsec_esp_trans_default_level;
-extern int	ipsec_esp_network_default_level;
-extern int	ipsec_ipcomp_default_level;
 
 extern int encdebug;
 int ipsec_in_use = 0;
@@ -943,11 +938,15 @@ get_sa_require(struct inpcb *inp)
 		sareq |= inp->inp_seclevel[SL_ESP_NETWORK] >= IPSEC_LEVEL_USE ?
 		    NOTIFY_SATYPE_TUNNEL : 0;
 	} else {
-		sareq |= ipsec_auth_default_level >= IPSEC_LEVEL_USE ?
+		/*
+		 * Code left for documentation purposes, these
+		 * conditions are always evaluated to false.
+		 */
+		sareq |= IPSEC_AUTH_LEVEL_DEFAULT >= IPSEC_LEVEL_USE ?
 		    NOTIFY_SATYPE_AUTH : 0;
-		sareq |= ipsec_esp_trans_default_level >= IPSEC_LEVEL_USE ?
+		sareq |= IPSEC_ESP_TRANS_LEVEL_DEFAULT >= IPSEC_LEVEL_USE ?
 		    NOTIFY_SATYPE_CONF : 0;
-		sareq |= ipsec_esp_network_default_level >= IPSEC_LEVEL_USE ?
+		sareq |= IPSEC_ESP_NETWORK_LEVEL_DEFAULT >= IPSEC_LEVEL_USE ?
 		    NOTIFY_SATYPE_TUNNEL : 0;
 	}
 

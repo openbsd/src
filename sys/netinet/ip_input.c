@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.206 2013/03/29 13:16:14 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.207 2013/04/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -111,11 +111,6 @@ int	ipprintfs = 0;
 #endif
 
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
-
-int	ipsec_auth_default_level = IPSEC_AUTH_LEVEL_DEFAULT;
-int	ipsec_esp_trans_default_level = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
-int	ipsec_esp_network_default_level = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
-int	ipsec_ipcomp_default_level = IPSEC_IPCOMP_LEVEL_DEFAULT;
 
 /* Keep track of memory used for reassembly */
 int	ip_maxqueue = 300;

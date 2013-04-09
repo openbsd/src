@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.136 2013/04/02 18:27:46 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.137 2013/04/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -104,11 +104,6 @@
 
 struct	in_addr zeroin_addr;
 
-extern int ipsec_auth_default_level;
-extern int ipsec_esp_trans_default_level;
-extern int ipsec_esp_network_default_level;
-extern int ipsec_ipcomp_default_level;
-
 /*
  * These configure the range of local port addresses assigned to
  * "unspecified" outgoing connections/packets/whatever.
@@ -189,10 +184,10 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 		return (ENOBUFS);
 	inp->inp_table = table;
 	inp->inp_socket = so;
-	inp->inp_seclevel[SL_AUTH] = ipsec_auth_default_level;
-	inp->inp_seclevel[SL_ESP_TRANS] = ipsec_esp_trans_default_level;
-	inp->inp_seclevel[SL_ESP_NETWORK] = ipsec_esp_network_default_level;
-	inp->inp_seclevel[SL_IPCOMP] = ipsec_ipcomp_default_level;
+	inp->inp_seclevel[SL_AUTH] = IPSEC_AUTH_LEVEL_DEFAULT;
+	inp->inp_seclevel[SL_ESP_TRANS] = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
+	inp->inp_seclevel[SL_ESP_NETWORK] = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
+	inp->inp_seclevel[SL_IPCOMP] = IPSEC_IPCOMP_LEVEL_DEFAULT;
 	inp->inp_rtableid = curproc->p_p->ps_rtableid;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.137 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.138 2013/04/09 08:35:38 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -103,11 +103,6 @@
 #include <net/pfkeyv2.h>
 
 extern u_int8_t get_sa_require(struct inpcb *);
-
-extern int ipsec_auth_default_level;
-extern int ipsec_esp_trans_default_level;
-extern int ipsec_esp_network_default_level;
-extern int ipsec_ipcomp_default_level;
 #endif /* IPSEC */
 
 struct ip6_exthdrs {
@@ -1679,7 +1674,7 @@ do { \
 
 				switch (optname) {
 				case IPV6_AUTH_LEVEL:
-				        if (optval < ipsec_auth_default_level &&
+				        if (optval < IPSEC_AUTH_LEVEL_DEFAULT &&
 					    suser(p, 0)) {
 						error = EACCES;
 						break;
@@ -1688,7 +1683,7 @@ do { \
 					break;
 
 				case IPV6_ESP_TRANS_LEVEL:
-				        if (optval < ipsec_esp_trans_default_level &&
+				        if (optval < IPSEC_ESP_TRANS_LEVEL_DEFAULT &&
 					    suser(p, 0)) {
 						error = EACCES;
 						break;
@@ -1697,7 +1692,7 @@ do { \
 					break;
 
 				case IPV6_ESP_NETWORK_LEVEL:
-				        if (optval < ipsec_esp_network_default_level &&
+				        if (optval < IPSEC_ESP_NETWORK_LEVEL_DEFAULT &&
 					    suser(p, 0)) {
 						error = EACCES;
 						break;
@@ -1706,7 +1701,7 @@ do { \
 					break;
 
 				case IPV6_IPCOMP_LEVEL:
-				        if (optval < ipsec_ipcomp_default_level &&
+				        if (optval < IPSEC_IPCOMP_LEVEL_DEFAULT &&
 					    suser(p, 0)) {
 						error = EACCES;
 						break;

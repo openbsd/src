@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.235 2012/11/06 12:32:42 henning Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.236 2013/04/09 08:35:38 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -73,10 +73,6 @@
 
 extern u_int8_t get_sa_require(struct inpcb *);
 
-extern int ipsec_auth_default_level;
-extern int ipsec_esp_trans_default_level;
-extern int ipsec_esp_network_default_level;
-extern int ipsec_ipcomp_default_level;
 extern int ipforwarding;
 #endif /* IPSEC */
 
@@ -1199,7 +1195,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			switch (optname) {
 			case IP_AUTH_LEVEL:
-				if (optval < ipsec_auth_default_level &&
+				if (optval < IPSEC_AUTH_LEVEL_DEFAULT &&
 				    suser(p, 0)) {
 					error = EACCES;
 					break;
@@ -1208,7 +1204,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 
 			case IP_ESP_TRANS_LEVEL:
-				if (optval < ipsec_esp_trans_default_level &&
+				if (optval < IPSEC_ESP_TRANS_LEVEL_DEFAULT &&
 				    suser(p, 0)) {
 					error = EACCES;
 					break;
@@ -1217,7 +1213,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 
 			case IP_ESP_NETWORK_LEVEL:
-				if (optval < ipsec_esp_network_default_level &&
+				if (optval < IPSEC_ESP_NETWORK_LEVEL_DEFAULT &&
 				    suser(p, 0)) {
 					error = EACCES;
 					break;
@@ -1225,7 +1221,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				inp->inp_seclevel[SL_ESP_NETWORK] = optval;
 				break;
 			case IP_IPCOMP_LEVEL:
-				if (optval < ipsec_ipcomp_default_level &&
+				if (optval < IPSEC_IPCOMP_LEVEL_DEFAULT &&
 				    suser(p, 0)) {
 					error = EACCES;
 					break;
