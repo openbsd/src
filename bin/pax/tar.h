@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.h,v 1.7 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: tar.h,v 1.8 2013/04/09 18:30:34 fgsch Exp $	*/
 /*	$NetBSD: tar.h,v 1.3 1995/03/21 09:07:51 cgd Exp $	*/
 
 /*-
@@ -60,6 +60,12 @@
 #define	DIRTYPE		'5'		/* Directory */
 #define	FIFOTYPE	'6'		/* FIFO */
 #define	CONTTYPE	'7'		/* high perf file */
+
+/*
+ * Extended header - POSIX.1-2001
+ */
+#define	XHDRTYPE	'x'		/* Extended header */
+#define	GHDRTYPE	'g'		/* Global header*/
 
 /*
  * GNU tar compatibility;
