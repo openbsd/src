@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.45 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.46 2013/04/09 08:47:56 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -953,17 +953,9 @@ usbd_do_request(usbd_device_handle dev, usb_device_request_t *req, void *data)
 
 usbd_status
 usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req,
-    void *data, u_int16_t flags, int *actlen, u_int32_t timo)
+    void *data, uint16_t flags, int *actlen, uint32_t timeout)
 {
-	return (usbd_do_request_flags_pipe(dev, dev->default_pipe, req, data,
-	    flags, actlen, timo));
-}
-
-usbd_status
-usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
-    usb_device_request_t *req, void *data, u_int16_t flags, int *actlen,
-    u_int32_t timeout)
-{
+	usbd_pipe_handle pipe = dev->default_pipe;
 	usbd_xfer_handle xfer;
 	usbd_status err;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.44 2013/04/08 10:34:20 mglocker Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.45 2013/04/09 08:47:56 mpi Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -128,9 +128,6 @@ usbd_status usbd_do_request_async(usbd_device_handle pipe,
     usb_device_request_t *req, void *data);
 usbd_status usbd_do_request_flags(usbd_device_handle pipe,
     usb_device_request_t *req, void *data, u_int16_t flags, int*, u_int32_t);
-usbd_status usbd_do_request_flags_pipe( usbd_device_handle dev,
-    usbd_pipe_handle pipe, usb_device_request_t *req, void *data,
-    u_int16_t flags, int *actlen, u_int32_t);
 usb_interface_descriptor_t *usbd_get_interface_descriptor(
     usbd_interface_handle iface);
 usb_config_descriptor_t *usbd_get_config_descriptor(usbd_device_handle dev);
