@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.107 2012/12/31 06:44:11 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.108 2013/04/09 01:50:02 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@ extern struct emul emul_linux_aout, emul_linux_elf;
 #define KVM86MODE (kvm86_incall)
 #endif
 
+#include "isa.h"
 #include "npx.h"
 
 void trap(struct trapframe *);
