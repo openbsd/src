@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.45 2013/03/21 19:43:14 kurt Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.46 2013/04/09 01:47:04 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -497,8 +497,10 @@ identifycpu(struct cpu_info *ci)
 		if (cpu_ecxfeature & CPUIDECX_EST)
 			setperf_setup = est_init;
 
+#ifdef CRYPTO
 		if (cpu_ecxfeature & CPUIDECX_AES)
 			amd64_has_aesni = 1;
+#endif
 
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
