@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.53 2013/03/28 16:58:45 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.54 2013/04/09 18:58:03 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -657,8 +657,12 @@ get_hibernate_info(union hibernate_info *hiber_info, int suspend)
 	hiber_info->secsize = dl.d_secsize;
 
 	/* Make sure the signature can fit in one block */
-	KASSERT(sizeof(union hibernate_info) <= hiber_info->secsize);
+	if(sizeof(union hibernate_info) > hiber_info->secsize)
+		return (1);
 
+	/* Magic number */
+	hiber_info->magic = HIBERNATE_MAGIC;
+	
 	/* Calculate swap offset from start of disk */
 	hiber_info->swap_offset = dl.d_partitions[1].p_offset;
 
@@ -975,16 +979,21 @@ hibernate_clear_signature(void)
 	union hibernate_info hiber_info;
 
 	/* Zero out a blank hiber_info */
-	bzero(&blank_hiber_info, sizeof(hiber_info));
+	bzero(&blank_hiber_info, sizeof(union hibernate_info));
 
+	/* Get the signature block location */
 	if (get_hibernate_info(&hiber_info, 0))
 		return (1);
 
 	/* Write (zeroed) hibernate info to disk */
+#ifdef HIBERNATE_DEBUG
+	printf("clearing hibernate signature block location: %lld\n",
+		hiber_info.sig_offset - hiber_info.swap_offset);
+#endif /* HIBERNATE_DEBUG */
 	if (hibernate_block_io(&hiber_info,
 	    hiber_info.sig_offset - hiber_info.swap_offset,
 	    hiber_info.secsize, (vaddr_t)&blank_hiber_info, 1))
-		panic("error hibernate write 6");
+		printf("Warning: could not clear hibernate signature\n");
 
 	return (0);
 }
@@ -1030,16 +1039,30 @@ hibernate_compare_signature(union hibernate_info *mine,
 {
 	u_int i;
 
-	if (mine->nranges != disk->nranges)
+	if (mine->nranges != disk->nranges) {
+#ifdef HIBERNATE_DEBUG
+		printf("hibernate memory range count mismatch\n");
+#endif
 		return (1);
+	}
 
-	if (strcmp(mine->kernel_version, disk->kernel_version) != 0)
+	if (strcmp(mine->kernel_version, disk->kernel_version) != 0) {
+#ifdef HIBERNATE_DEBUG
+		printf("hibernate kernel version mismatch\n");
+#endif
 		return (1);
+	}
 
 	for (i = 0; i < mine->nranges; i++) {
 		if ((mine->ranges[i].base != disk->ranges[i].base) ||
-		    (mine->ranges[i].end != disk->ranges[i].end) )
+		    (mine->ranges[i].end != disk->ranges[i].end) ) {
+#ifdef HIBERNATE_DEBUG
+			printf("hib range %d mismatch [%p-%p != %p-%p]\n",
+				i, mine->ranges[i].base, mine->ranges[i].end,
+				disk->ranges[i].base, disk->ranges[i].end);
+#endif
 			return (1);
+		}
 	}
 
 	return (0);
@@ -1128,10 +1151,30 @@ hibernate_resume(void)
 	/* Read hibernate info from disk */
 	s = splbio();
 
+#ifdef HIBERNATE_DEBUG
+	printf("reading hibernate signature block location: %lld\n",
+		hiber_info.sig_offset - hiber_info.swap_offset);
+#endif /* HIBERNATE_DEBUG */
+
 	if (hibernate_block_io(&hiber_info,
 	    hiber_info.sig_offset - hiber_info.swap_offset,
 	    hiber_info.secsize, (vaddr_t)&disk_hiber_info, 0))
 		panic("error in hibernate read");
+
+	/* Check magic number */
+	if (disk_hiber_info.magic != HIBERNATE_MAGIC) {
+		splx(s);
+		return;
+	}
+
+	/*
+	 * We (possibly) found a hibernate signature. Clear signature first,
+	 * to prevent accidental resume or endless resume cycles later.
+	 */
+	if (hibernate_clear_signature()) {
+		splx(s);
+		return;
+	}
 
 	/*
 	 * If on-disk and in-memory hibernate signatures match,
@@ -1596,8 +1639,7 @@ hibernate_read_image(union hibernate_info *hiber_info)
 	/* Prepare the resume time pmap/page table */
 	hibernate_populate_resume_pt(hiber_info, image_start, image_end);
 
-	/* Read complete, clear the signature and return */
-	return hibernate_clear_signature();
+	return (0);
 }
 
 /*

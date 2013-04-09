@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.23 2013/01/17 02:36:45 deraadt Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.24 2013/04/09 18:58:03 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -24,9 +24,16 @@
 #include <lib/libz/zlib.h>
 #include <machine/vmparam.h>
 
+#if 0
+#define HIBERNATE_DEBUG
+#endif
+
 #define HIBERNATE_CHUNK_USED 1
 #define HIBERNATE_CHUNK_CONFLICT 2
 #define HIBERNATE_CHUNK_PLACED 4
+
+/* Magic number used to indicate hibernate signature block */
+#define HIBERNATE_MAGIC 0x0B5D0B5D
 
 struct hiballoc_entry;
 
@@ -78,6 +85,7 @@ typedef	int (*hibio_fn)(dev_t, daddr_t, vaddr_t, size_t, int, void *);
  */
 union hibernate_info {
 	struct {
+		u_int32_t			magic;	
 		size_t				nranges;
 		struct hibernate_memory_range	ranges[VM_PHYSSEG_MAX];
 		size_t				image_size;
