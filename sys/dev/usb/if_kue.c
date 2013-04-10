@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.65 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.66 2013/04/10 07:46:24 mpi Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -232,7 +232,7 @@ kue_ctl(struct kue_softc *sc, int rw, u_int8_t breq, u_int16_t val,
 int
 kue_load_fw(struct kue_softc *sc)
 {
-	usb_device_descriptor_t dd;
+	usb_device_descriptor_t *dd;
 	usbd_status		err;
 	struct kue_firmware	*fw;
 	u_char			*buf;
@@ -254,9 +254,9 @@ kue_load_fw(struct kue_softc *sc)
 	 * it's probed while the firmware is still loaded and
 	 * running.
 	 */
-	if (usbd_get_device_desc(sc->kue_udev, &dd))
+	if ((dd = usbd_get_device_descriptor(sc->kue_udev)) == NULL)
 		return (EIO);
-	if (UGETW(dd.bcdDevice) >= KUE_WARM_REV) {
+	if (UGETW(dd->bcdDevice) >= KUE_WARM_REV) {
 		printf("%s: warm boot, no firmware download\n",
 		       sc->kue_dev.dv_xname);
 		return (0);
