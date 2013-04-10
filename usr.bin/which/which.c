@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.17 2011/03/11 04:30:21 guenther Exp $	*/
+/*	$OpenBSD: which.c,v 1.18 2013/04/10 02:57:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,6 +23,7 @@
 #include <err.h>
 #include <errno.h>
 #include <locale.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,24 +70,9 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	/*
-	 * which(1) uses user's $PATH.
-	 * whereis(1) uses user.cs_path from sysctl(3).
-	 */
 	if (strcmp(__progname, "whereis") == 0) {
-		int mib[2];
-
 		progmode = PROG_WHEREIS;
-		mib[0] = CTL_USER;
-		mib[1] = USER_CS_PATH;
-		if (sysctl(mib, 2, NULL, &n, NULL, 0) == -1)
-			err(1, "unable to get length of user.cs_path");
-		if (n == 0)
-			errx(1, "user.cs_path was zero length!");
-		if ((path = (char *)malloc(n)) == NULL)
-			errx(1, "can't allocate memory.");
-		if (sysctl(mib, 2, path, &n, NULL, 0) == -1)
-			err(1, "unable to get user.cs_path");
+		path = _PATH_STDPATH;
 	} else {
 		if ((path = getenv("PATH")) == NULL)
 			err(1, "can't get $PATH from environment");
