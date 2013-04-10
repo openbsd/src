@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.126 2012/12/31 06:46:13 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.127 2013/04/10 20:55:34 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -393,6 +393,7 @@ trap(int type, struct trapframe *frame)
 		/* these should never got here */
 	case T_HIGHERPL | T_USER:
 	case T_LOWERPL | T_USER:
+	case T_DATAPID | T_USER:
 		sv.sival_int = va;
 		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
@@ -550,6 +551,19 @@ datacc:
 		}
 		break;
 
+	case T_DATAPID:
+		/* This should never happen, unless within spcopy() */
+		if (p && p->p_addr->u_pcb.pcb_onfault) {
+			frame->tf_iioq_tail = 4 +
+			    (frame->tf_iioq_head =
+				p->p_addr->u_pcb.pcb_onfault);
+#ifdef DDB
+			frame->tf_iir = 0;
+#endif
+		} else
+			goto dead_end;
+		break;
+
 	case T_DATALIGN | T_USER:
 datalign_user:
 		sv.sival_int = va;
@@ -606,8 +620,6 @@ datalign_user:
 	case T_POWERFAIL:
 	case T_LPMC:
 	case T_PAGEREF:
-	case T_DATAPID:
-	case T_DATAPID | T_USER:
 		/* FALLTHROUGH to unimplemented */
 	default:
 #ifdef TRAPDEBUG
