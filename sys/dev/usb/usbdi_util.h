@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.18 2013/04/09 08:42:48 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.h,v 1.19 2013/04/10 07:37:32 mpi Exp $ */
 /*	$NetBSD: usbdi_util.h,v 1.28 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -81,5 +81,3 @@ usbd_status	usbd_intr_transfer(usbd_xfer_handle xfer,
 
 void usb_detach_wait(struct device *);
 void usb_detach_wakeup(struct device *);
-
-usb_descriptor_t *usb_find_desc(usbd_device_handle dev, int type);

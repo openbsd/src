@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.28 2013/04/09 08:42:48 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.29 2013/04/10 07:37:32 mpi Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -502,22 +502,4 @@ usb_detach_wakeup(struct device *dv)
 {
 	DPRINTF(("usb_detach_wakeup: for %s\n", dv->dv_xname));
 	wakeup(dv);
-}
-
-usb_descriptor_t *
-usb_find_desc(usbd_device_handle dev, int type)
-{
-	usb_descriptor_t *desc;
-	usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
-        uByte *p = (uByte *)cd;
-        uByte *end = p + UGETW(cd->wTotalLength);
-
-	while (p < end) {
-		desc = (usb_descriptor_t *)p;
-		if (desc->bDescriptorType == type)
-			return (desc);
-		p += desc->bLength;
-	}
-
-	return (NULL);
 }
