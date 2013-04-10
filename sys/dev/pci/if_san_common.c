@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.14 2012/09/19 22:37:23 jsg Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.15 2013/04/10 01:35:55 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -95,7 +95,7 @@ static int wan_ioctl_hwprobe(struct ifnet *, void *);
 
 /* private data */
 extern char	*san_drvname;
-LIST_HEAD(, sdla) wan_cardlist = LIST_HEAD_INITIALIZER(&wan_cardlist);
+LIST_HEAD(, sdla) wan_cardlist = LIST_HEAD_INITIALIZER(wan_cardlist);
 
 #if 0
 static san_detach(void)

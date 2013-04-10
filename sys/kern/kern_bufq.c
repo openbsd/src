@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_bufq.c,v 1.24 2013/03/18 22:13:04 tedu Exp $	*/
+/*	$OpenBSD: kern_bufq.c,v 1.25 2013/04/10 01:35:55 guenther Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -28,7 +28,7 @@
 
 #include <sys/disklabel.h>
 
-SLIST_HEAD(, bufq)	bufqs = SLIST_HEAD_INITIALIZER(&bufq);
+SLIST_HEAD(, bufq)	bufqs = SLIST_HEAD_INITIALIZER(bufqs);
 struct mutex		bufqs_mtx = MUTEX_INITIALIZER(IPL_NONE);
 int			bufqs_stop;
 

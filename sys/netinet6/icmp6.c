@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.124 2013/04/04 17:58:42 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.125 2013/04/10 01:35:55 guenther Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ struct icmp6_mtudisc_callback {
 };
 
 LIST_HEAD(, icmp6_mtudisc_callback) icmp6_mtudisc_callbacks =
-    LIST_HEAD_INITIALIZER(&icmp6_mtudisc_callbacks);
+    LIST_HEAD_INITIALIZER(icmp6_mtudisc_callbacks);
 
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;

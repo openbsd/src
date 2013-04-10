@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.43 2013/03/21 18:20:00 brynet Exp $	*/
+/*	$OpenBSD: it.c,v 1.44 2013/04/10 01:35:55 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -124,7 +124,7 @@ int it_fan_ext_regs[] = {
 	IT_EC_FAN_TAC4_MSB, IT_EC_FAN_TAC5_MSB
 };
 
-LIST_HEAD(, it_softc) it_softc_list = LIST_HEAD_INITIALIZER(&it_softc_list);
+LIST_HEAD(, it_softc) it_softc_list = LIST_HEAD_INITIALIZER(it_softc_list);
 
 
 int

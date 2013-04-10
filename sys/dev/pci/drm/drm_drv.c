@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.102 2013/04/03 19:57:17 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.103 2013/04/10 01:35:55 guenther Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1699,7 +1699,7 @@ drm_gem_load_uao(bus_dma_tag_t dmat, bus_dmamap_t map, struct uvm_object *uao,
 			break;
 	}
 	/* this should be impossible */
-	if (pg != TAILQ_END(&pageq)) {
+	if (pg != TAILQ_END(&plist)) {
 		ret = EINVAL;
 		goto unwire;
 	}

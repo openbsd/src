@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.199 2013/02/09 20:56:35 miod Exp $ */
+/* $OpenBSD: dsdt.c,v 1.200 2013/04/10 01:35:55 guenther Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -380,7 +380,7 @@ struct aml_notify_data {
 
 SLIST_HEAD(aml_notify_head, aml_notify_data);
 struct aml_notify_head aml_notify_list =
-    LIST_HEAD_INITIALIZER(&aml_notify_list);
+    SLIST_HEAD_INITIALIZER(aml_notify_list);
 
 /*
  *  @@@: Memory management functions

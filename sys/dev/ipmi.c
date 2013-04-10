@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.67 2012/12/21 17:30:39 gsoares Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.68 2013/04/10 01:35:55 guenther Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -139,7 +139,7 @@ long signextend(unsigned long, int);
 
 SLIST_HEAD(ipmi_sensors_head, ipmi_sensor);
 struct ipmi_sensors_head ipmi_sensor_list =
-    SLIST_HEAD_INITIALIZER(&ipmi_sensor_list);
+    SLIST_HEAD_INITIALIZER(ipmi_sensor_list);
 
 struct timeout ipmi_timeout;
 
