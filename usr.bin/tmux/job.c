@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.29 2013/03/25 11:43:01 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.30 2013/04/10 12:20:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -109,7 +109,7 @@ job_run(const char *cmd, struct session *s,
 
 	job->event = bufferevent_new(job->fd, NULL, job_write_callback,
 	    job_callback, job);
-	bufferevent_enable(job->event, EV_READ);
+	bufferevent_enable(job->event, EV_READ|EV_WRITE);
 
 	log_debug("run job %p: %s, pid %ld", job, job->cmd, (long) job->pid);
 	return (job);
