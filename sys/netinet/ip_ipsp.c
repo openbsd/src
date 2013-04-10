@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.187 2013/04/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.188 2013/04/10 08:50:59 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -64,6 +64,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
 #endif /* INET */
 
 #ifdef INET6
@@ -97,7 +98,6 @@ void		tdb_soft_timeout(void *v);
 void		tdb_soft_firstuse(void *v);
 int		tdb_hash(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
 
-extern int encdebug;
 int ipsec_in_use = 0;
 u_int64_t ipsec_last_added = 0;
 

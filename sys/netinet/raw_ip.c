@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.65 2013/04/02 18:27:47 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.66 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -399,9 +399,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
 	int s;
-#ifdef MROUTING
-	extern struct socket *ip_mrouter;
-#endif
+
 	if (req == PRU_CONTROL)
 		return (in_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control));

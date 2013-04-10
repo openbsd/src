@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.46 2012/06/29 14:48:04 mikeb Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.47 2013/04/10 08:50:59 mpi Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -76,14 +76,13 @@
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/ip_var.h>
 #include <net/pfkeyv2.h>
 
 #if NPF > 0
 #include <net/if.h>
 #include <net/pfvar.h>
 #endif
-
-extern int encdebug;
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x

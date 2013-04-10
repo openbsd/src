@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.259 2013/04/02 18:27:47 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.260 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -120,8 +120,6 @@ struct  tcpipv6hdr tcp_saveti6;
 
 int	tcprexmtthresh = 3;
 int	tcptv_keep_init = TCPTV_KEEP_INIT;
-
-extern u_long sb_max;
 
 int tcp_rst_ppslim = 100;		/* 100pps */
 int tcp_rst_ppslim_count = 0;

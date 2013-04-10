@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.111 2013/03/31 00:59:52 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.112 2013/04/10 08:50:59 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -952,7 +952,6 @@ void *
 ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
     void *v, int proto)
 {
-	extern u_int ip_mtudisc_timeout;
 	struct ip *ip = v;
 	int s;
 

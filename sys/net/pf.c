@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.821 2013/03/29 13:16:14 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.822 2013/04/10 08:50:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -89,7 +89,7 @@
 
 #ifdef INET6
 #include <netinet/ip6.h>
-#include <netinet/in_pcb.h>
+#include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6_divert.h>
@@ -5712,9 +5712,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	struct sockaddr_in	*dst;
 	int			 ret = 1;
 	int			 check_mpath;
-	extern int		 ipmultipath;
 #ifdef INET6
-	extern int		 ip6_multipath;
 	struct sockaddr_in6	*dst6;
 	struct route_in6	 ro;
 #else

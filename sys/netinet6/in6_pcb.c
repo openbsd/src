@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.53 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.54 2013/04/10 08:50:59 mpi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -117,6 +117,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
 
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
@@ -133,11 +134,6 @@
  */
 
 struct in6_addr zeroin6_addr;
-
-extern int ipport_firstauto;
-extern int ipport_lastauto;
-extern int ipport_hifirstauto;
-extern int ipport_hilastauto;
 
 /*
  * Keep separate inet6ctlerrmap, because I may remap some of these.

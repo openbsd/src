@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.236 2013/04/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.237 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -519,8 +519,6 @@ reroute:
 			 * above, will be forwarded by the ip_input() routine,
 			 * if necessary.
 			 */
-			extern struct socket *ip_mrouter;
-
 			if (ipmforwarding && ip_mrouter &&
 			    (flags & IP_FORWARDING) == 0) {
 				if (ip_mforward(m, ifp) != 0) {

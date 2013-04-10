@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.207 2013/04/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.208 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -117,12 +117,7 @@ int	ip_maxqueue = 300;
 int	ip_frags = 0;
 
 /* from in_pcb.c */
-extern int ipport_firstauto;
-extern int ipport_lastauto;
-extern int ipport_hifirstauto;
-extern int ipport_hilastauto;
 extern struct baddynamicports baddynamicports;
-extern int la_hold_total;
 
 int *ipctl_vars[IPCTL_MAXID] = IPCTL_VARS;
 
@@ -386,8 +381,6 @@ ipv4_input(struct mbuf *m)
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
 #ifdef MROUTING
-		extern struct socket *ip_mrouter;
-
 		if (ipmforwarding && ip_mrouter) {
 			if (m->m_flags & M_EXT) {
 				if ((m = m_pullup(m, hlen)) == NULL) {

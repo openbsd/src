@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.27 2013/03/28 23:10:05 tedu Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.28 2013/04/10 08:50:59 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -105,10 +105,6 @@ int	copy_flow6_to_m(struct pflow_flow6 *flow, struct pflow_softc *sc);
 struct if_clone	pflow_cloner =
     IF_CLONE_INITIALIZER("pflow", pflow_clone_create,
     pflow_clone_destroy);
-
-/* from in_pcb.c */
-extern int ipport_hifirstauto;
-extern int ipport_hilastauto;
 
 /* from udp_usrreq.c */
 extern int udpcksum;

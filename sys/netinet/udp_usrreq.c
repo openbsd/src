@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.159 2013/04/04 19:23:39 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.160 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -99,9 +99,8 @@
 #ifndef INET
 #include <netinet/in.h>
 #endif
+#include <netinet6/ip6_var.h>
 #include <netinet6/ip6protosw.h>
-
-extern int ip6_defhlim;
 #endif /* INET6 */
 
 #include "pf.h"
@@ -905,7 +904,6 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	struct udphdr *uhp;
 	struct in_addr faddr;
 	struct inpcb *inp;
-	extern int inetctlerrmap[];
 	void (*notify)(struct inpcb *, int) = udp_notify;
 	int errno;
 

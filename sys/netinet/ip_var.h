@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.44 2012/07/16 18:05:36 markus Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.45 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -148,9 +148,25 @@ struct	ipstat {
 extern struct ipstat ipstat;
 extern LIST_HEAD(ipqhead, ipq)	ipq;	/* ip reass. queue */
 extern int ip_defttl;			/* default IP ttl */
+#ifdef MROUTING
+extern struct socket *ip_mrouter;	/* multicast routing daemon */
+#endif
 
 extern int ip_mtudisc;			/* mtu discovery */
 extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
+
+extern int ipport_firstauto;		/* min port for port allocation */
+extern int ipport_lastauto;		/* max port for port allocation */
+extern int ipport_hifirstauto;		/* min dynamic/private port number */
+extern int ipport_hilastauto;		/* max dynamic/private port number */
+extern int encdebug;			/* enable message reporting */
+extern int ipforwarding;		/* enable IP forwarding */
+#ifdef MROUTING
+extern int ipmforwarding;		/* enable multicast forwarding */
+#endif
+extern int ipmultipath;			/* enable multipath routing */
+extern int la_hold_total;
+
 extern struct rttimer_queue *ip_mtudisc_timeout_q;
 extern struct pool ipqent_pool;
 struct inpcb;

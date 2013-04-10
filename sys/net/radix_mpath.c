@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.18 2010/05/07 13:33:16 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.19 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -47,9 +47,12 @@
 #include <dev/rndvar.h>
 
 #include <netinet/in.h>
+#include <netinet/ip_var.h>
 
-extern int ipmultipath;
-extern int ip6_multipath;
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 
 u_int32_t rn_mpath_hash(struct route *, u_int32_t *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.96 2012/09/18 12:35:51 blambert Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.97 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -124,6 +124,9 @@ int *icmpctl_vars[ICMPCTL_MAXID] = ICMPCTL_VARS;
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
 void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
+
+/* from ip_input.c */
+extern	u_char ip_protox[];
 
 extern	struct protosw inetsw[];
 
@@ -312,8 +315,6 @@ icmp_input(struct mbuf *m, ...)
 	struct in_ifaddr *ia;
 	void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
 	int code;
-	extern u_char ip_protox[];
-	extern int ipforwarding;
 	int hlen;
 	va_list ap;
 	struct rtentry *rt;
@@ -1007,7 +1008,6 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
-		extern u_char ip_protox[];
 		struct sockaddr_in sa;
 		struct rt_addrinfo info;
 

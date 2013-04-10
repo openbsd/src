@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.97 2013/03/25 14:40:57 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.98 2013/04/10 08:50:59 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ void nd6_llinfo_timer(void *);
 
 struct timeout nd6_slowtimo_ch;
 struct timeout nd6_timer_ch;
-extern struct timeout in6_tmpaddrtimer_ch;
 
 int fill_drlist(void *, size_t *, size_t);
 int fill_prlist(void *, size_t *, size_t);
