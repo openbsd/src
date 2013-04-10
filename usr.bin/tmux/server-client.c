@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.99 2013/03/27 11:17:12 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.100 2013/04/10 11:51:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -534,18 +534,8 @@ server_client_check_resize(struct window_pane *wp)
 	ws.ws_col = wp->sx;
 	ws.ws_row = wp->sy;
 
-	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1) {
-#ifdef __sun
-		/*
-		 * Some versions of Solaris apparently can return an error when
-		 * resizing; don't know why this happens, can't reproduce on
-		 * other platforms and ignoring it doesn't seem to cause any
-		 * issues.
-		 */
-		if (errno != EINVAL)
-#endif
+	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
 		fatal("ioctl failed");
-	}
 
 	wp->flags &= ~PANE_RESIZE;
 }
