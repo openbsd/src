@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.86 2013/04/09 08:42:48 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.87 2013/04/10 07:39:43 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -312,22 +312,6 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 	usbd_printBCD(cp, base + len - cp, bcdDevice);
 	cp += strlen(cp);
 	snprintf(cp, base + len - cp, " addr %d", dev->address);
-}
-
-char *
-usbd_devinfo_alloc(usbd_device_handle dev, int showclass)
-{
-	char *devinfop;
-
-	devinfop = malloc(DEVINFOSIZE, M_TEMP, M_WAITOK);
-	usbd_devinfo(dev, showclass, devinfop, DEVINFOSIZE);
-	return devinfop;
-}
-
-void
-usbd_devinfo_free(char *devinfop)
-{
-	free(devinfop, M_TEMP);
 }
 
 /* Delay for a certain number of ms */
@@ -1261,12 +1245,13 @@ usbd_print(void *aux, const char *pnp)
 	struct usb_attach_arg *uaa = aux;
 	char *devinfop;
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = malloc(DEVINFOSIZE, M_TEMP, M_WAITOK);
+	usbd_devinfo(uaa->device, 0, devinfop, DEVINFOSIZE);
 
 	DPRINTFN(15, ("usbd_print dev=%p\n", uaa->device));
 	if (pnp) {
 		if (!uaa->usegeneric) {
-			usbd_devinfo_free(devinfop);
+			free(devinfop, M_TEMP);
 			return (QUIET);
 		}
 		printf("%s at %s", devinfop, pnp);
@@ -1280,7 +1265,7 @@ usbd_print(void *aux, const char *pnp)
 
 	if (!pnp)
 		printf(" %s\n", devinfop);
-	usbd_devinfo_free(devinfop);
+	free(devinfop, M_TEMP);
 	return (UNCONF);
 }
 

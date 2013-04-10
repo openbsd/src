@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.45 2013/04/09 08:47:56 mpi Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.46 2013/04/10 07:39:43 mpi Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -151,9 +151,6 @@ void usbd_dopoll(usbd_interface_handle);
 void usbd_set_polling(usbd_device_handle iface, int on);
 
 const char *usbd_errstr(usbd_status err);
-
-char *usbd_devinfo_alloc(usbd_device_handle dev, int showclass);
-void usbd_devinfo_free(char *devinfop);
 
 const struct usbd_quirks *usbd_get_quirks(usbd_device_handle);
 usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor(
