@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.29 2013/04/10 07:37:32 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.30 2013/04/10 07:48:36 mpi Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -87,14 +87,6 @@ usbd_get_config_desc(usbd_device_handle dev, int confidx,
 		return (USBD_INVAL);
 	}
 	return (USBD_NORMAL_COMPLETION);
-}
-
-usbd_status
-usbd_get_device_desc(usbd_device_handle dev, usb_device_descriptor_t *d)
-{
-	DPRINTFN(3,("usbd_get_device_desc:\n"));
-	return (usbd_get_desc(dev, UDESC_DEVICE, 0, USB_DEVICE_DESCRIPTOR_SIZE,
-	    d));
 }
 
 usbd_status

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.87 2013/04/10 07:39:43 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.88 2013/04/10 07:48:36 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1229,7 +1229,8 @@ usbd_reload_device_desc(usbd_device_handle dev)
 	usbd_status err;
 
 	/* Get the full device descriptor. */
-	err = usbd_get_device_desc(dev, &dev->ddesc);
+	err = usbd_get_desc(dev, UDESC_DEVICE, 0,
+		USB_DEVICE_DESCRIPTOR_SIZE, &dev->ddesc);
 	if (err)
 		return (err);
 
