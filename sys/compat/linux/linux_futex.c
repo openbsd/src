@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_futex.c,v 1.13 2013/04/10 13:11:24 pirofti Exp $ */
+/* $OpenBSD: linux_futex.c,v 1.14 2013/04/10 13:17:41 pirofti Exp $ */
 /*	$NetBSD: linux_futex.c,v 1.26 2010/07/07 01:30:35 chs Exp $ */
 
 /*-
@@ -69,6 +69,7 @@
 
 struct pool futex_pool;
 struct pool futex_wp_pool;
+int futex_pool_initialized;
 
 struct futex;
 
@@ -411,10 +412,14 @@ void
 futex_pool_init(void)
 {
 	DPRINTF(("Inside futex_pool_init()\n"));
-	pool_init(&futex_pool, sizeof(struct futex), 0, 0, PR_DEBUGCHK,
-	    "futexpl", &pool_allocator_nointr);
-	pool_init(&futex_wp_pool, sizeof(struct waiting_proc), 0, 0,
-	    PR_DEBUGCHK, "futexwppl", &pool_allocator_nointr);
+
+	if (!futex_pool_initialized) {
+		pool_init(&futex_pool, sizeof(struct futex), 0, 0, PR_DEBUGCHK,
+		    "futexpl", &pool_allocator_nointr);
+		pool_init(&futex_wp_pool, sizeof(struct waiting_proc), 0, 0,
+		    PR_DEBUGCHK, "futexwppl", &pool_allocator_nointr);
+		futex_pool_initialized = 1;
+	}
 }
 
 /*
