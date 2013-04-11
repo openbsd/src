@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.132 2013/04/06 03:44:34 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.133 2013/04/11 04:30:59 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -557,6 +557,9 @@ do {									\
 		(kp)->p_usrpri = (p)->p_usrpri;				\
 		if ((p)->p_wmesg)					\
 			copy_str((kp)->p_wmesg, (p)->p_wmesg,		\
+			    sizeof((kp)->p_wmesg));			\
+		else							\
+			copy_str((kp)->p_wmesg, "",			\
 			    sizeof((kp)->p_wmesg));			\
 		if (show_addresses)					\
 			(kp)->p_wchan = PTRTOINT64((p)->p_wchan);	\
