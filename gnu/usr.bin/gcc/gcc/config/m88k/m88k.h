@@ -238,12 +238,8 @@ extern int target_flags;			/* -m compiler switches */
 /* Boundary (in *bits*) on which stack pointer should be aligned.  */
 #define STACK_BOUNDARY 128
 
-/* Allocation boundary (in *bits*) for the code of a function.  On the
-   m88100, it is desirable to align to a cache line.  However, SVR3 targets
-   only provided 8 byte alignment.  The m88110 cache is small, so align
-   to an 8 byte boundary.  Pack code tightly when compiling crtstuff.c.  */
-#define FUNCTION_BOUNDARY (flag_inhibit_size_directive ? 32 : \
-			   (TARGET_88100 ? 128 : 64))
+/* Allocation boundary (in *bits*) for the code of a function.  */
+#define FUNCTION_BOUNDARY 32
 
 /* No data type wants to be aligned rounder than this.  */
 #define BIGGEST_ALIGNMENT 64
@@ -1761,12 +1757,6 @@ do {									 \
 #define ASM_OUTPUT_ALIGN(FILE,LOG)	\
   if ((LOG) != 0)			\
     fprintf (FILE, "%s%d\n", ALIGN_ASM_OP, 1<<(LOG))
-
-/* On the m88100, align the text address to half a cache boundary when it
-   can only be reached by jumping.  Pack code tightly when compiling
-   crtstuff.c.  */
-#define LABEL_ALIGN_AFTER_BARRIER(LABEL) \
-  (TARGET_88100 && !flag_inhibit_size_directive ? 3 : 2)
 
 /* Override elfos.h.  */
 #undef	ASM_OUTPUT_EXTERNAL_LIBCALL

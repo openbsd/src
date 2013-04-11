@@ -3191,4 +3191,9 @@ m88k_override_options ()
 
   if (TARGET_OMIT_LEAF_FRAME_POINTER)	/* keep nonleaf frame pointers */
     flag_omit_frame_pointer = 1;
+
+  /* On the m88100, it is desirable to align functions to a cache line.
+     The m88110 cache is small, so align to an 8 byte boundary.  */
+  if (align_functions == 0)
+    align_functions = TARGET_88100 ? 16 : 8;
 }
