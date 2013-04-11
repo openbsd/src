@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.46 2013/04/09 08:47:56 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.47 2013/04/11 07:50:56 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -56,7 +56,6 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-usbd_status usbd_ar_pipe(usbd_pipe_handle pipe);
 void usbd_do_request_async_cb(usbd_xfer_handle, usbd_private_handle,
     usbd_status);
 void usbd_start_next(usbd_pipe_handle pipe);
@@ -561,7 +560,7 @@ usbd_interface2endpoint_descriptor(usbd_interface_handle iface, u_int8_t index)
 usbd_status
 usbd_abort_pipe(usbd_pipe_handle pipe)
 {
-	usbd_status err;
+	usbd_xfer_handle xfer;
 	int s;
 
 #ifdef DIAGNOSTIC
@@ -571,9 +570,24 @@ usbd_abort_pipe(usbd_pipe_handle pipe)
 	}
 #endif
 	s = splusb();
-	err = usbd_ar_pipe(pipe);
+	DPRINTFN(2,("%s: pipe=%p\n", __func__, pipe));
+#ifdef USB_DEBUG
+	if (usbdebug > 5)
+		usbd_dump_queue(pipe);
+#endif
+	pipe->repeat = 0;
+	pipe->aborting = 1;
+	while ((xfer = SIMPLEQ_FIRST(&pipe->queue)) != NULL) {
+		DPRINTFN(2,("%s: pipe=%p xfer=%p (methods=%p)\n", __func__,
+		    pipe, xfer, pipe->methods));
+		/* Make the HC abort it (and invoke the callback). */
+		pipe->methods->abort(xfer);
+		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
+	}
+	pipe->aborting = 0;
 	splx(s);
-	return (err);
+
+	return (USBD_NORMAL_COMPLETION);
 }
 
 usbd_status
@@ -751,32 +765,6 @@ usbd_get_interface(usbd_interface_handle iface, u_int8_t *aiface)
 }
 
 /*** Internal routines ***/
-
-/* Dequeue all pipe operations, called at splusb(). */
-usbd_status
-usbd_ar_pipe(usbd_pipe_handle pipe)
-{
-	usbd_xfer_handle xfer;
-
-	SPLUSBCHECK;
-
-	DPRINTFN(2,("usbd_ar_pipe: pipe=%p\n", pipe));
-#ifdef USB_DEBUG
-	if (usbdebug > 5)
-		usbd_dump_queue(pipe);
-#endif
-	pipe->repeat = 0;
-	pipe->aborting = 1;
-	while ((xfer = SIMPLEQ_FIRST(&pipe->queue)) != NULL) {
-		DPRINTFN(2,("usbd_ar_pipe: pipe=%p xfer=%p (methods=%p)\n",
-		    pipe, xfer, pipe->methods));
-		/* Make the HC abort it (and invoke the callback). */
-		pipe->methods->abort(xfer);
-		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
-	}
-	pipe->aborting = 0;
-	return (USBD_NORMAL_COMPLETION);
-}
 
 /* Called at splusb() */
 void
