@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.21 2013/04/01 20:41:12 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.22 2013/04/11 20:19:16 otto Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -161,7 +161,7 @@ async_resolver_done(struct asr *asr)
 	struct asr **priv;
 
 	if (asr == NULL) {
-		priv = _THREAD_PRIVATE(_asr, asr, &_asr);
+		priv = _THREAD_PRIVATE(_asr, _asr, &_asr);
 		if (*priv == NULL)
 			return;
 		asr = *priv;
@@ -346,7 +346,7 @@ asr_use_resolver(struct asr *asr)
 
 	if (asr == NULL) {
 		DPRINT("using thread-local resolver\n");
-		priv = _THREAD_PRIVATE(_asr, asr, &_asr);
+		priv = _THREAD_PRIVATE(_asr, _asr, &_asr);
 		if (*priv == NULL) {
 			DPRINT("setting up thread-local resolver\n");
 			*priv = async_resolver(NULL);
