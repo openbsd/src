@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.75 2013/03/01 21:19:41 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.76 2013/04/11 03:09:16 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -430,7 +430,7 @@ int	 usleep(useconds_t);
 pid_t	 vfork(void);
 #endif
 
-#if __XPG_VISIBLE >= 420
+#if __POSIX_VISIBLE >= 200809 || __XPG_VISIBLE >= 420
 pid_t	 getpgid(pid_t);
 pid_t	 getsid(pid_t);
 #endif
