@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.188 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.189 2013/04/11 12:06:25 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -90,7 +90,6 @@ void tdb_hashstats(void);
 #define	DPRINTF(x)
 #endif
 
-u_int8_t	get_sa_require(struct inpcb *);
 void		tdb_rehash(void);
 void		tdb_timeout(void *v);
 void		tdb_firstuse(void *v);
@@ -135,8 +134,6 @@ struct xformsw xformsw[] = {
 };
 
 struct xformsw *xformswNXFORMSW = &xformsw[nitems(xformsw)];
-
-unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */
 
 #define	TDB_HASHSIZE_INIT	32
 

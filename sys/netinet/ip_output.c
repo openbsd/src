@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.237 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.238 2013/04/11 12:06:25 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -70,15 +70,7 @@
 #else
 #define DPRINTF(x)
 #endif
-
-extern u_int8_t get_sa_require(struct inpcb *);
-
-extern int ipforwarding;
 #endif /* IPSEC */
-
-#ifdef MROUTING
-extern int ipmforwarding;
-#endif
 
 struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);

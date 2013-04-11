@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.121 2013/02/14 16:22:34 mikeb Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.122 2013/04/11 12:06:25 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -75,6 +75,9 @@
 #include <crypto/xform.h>
 
 #include "bpfilter.h"
+
+int esp_output_cb(void *);
+int esp_input_cb(void *);
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x

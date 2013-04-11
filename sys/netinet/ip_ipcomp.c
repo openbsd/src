@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.30 2013/02/14 16:22:34 mikeb Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.31 2013/04/11 12:06:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -63,6 +63,9 @@
 #include <lib/libz/zlib.h>
 
 #include "bpfilter.h"
+
+int ipcomp_output_cb(void *);
+int ipcomp_input_cb(void *);
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)      if (encdebug) printf x

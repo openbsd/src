@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.138 2013/04/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.139 2013/04/11 12:06:25 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -101,8 +101,6 @@
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <net/pfkeyv2.h>
-
-extern u_int8_t get_sa_require(struct inpcb *);
 #endif /* IPSEC */
 
 struct ip6_exthdrs {
