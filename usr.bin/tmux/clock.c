@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.6 2009/12/03 22:50:09 nicm Exp $ */
+/* $OpenBSD: clock.c,v 1.7 2013/04/11 21:52:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -103,13 +103,20 @@ clock_draw(struct screen_write_ctx *ctx, int colour, int style)
 	struct grid_cell	 gc;
 	char			 tim[64], *ptr;
 	time_t			 t;
+	struct tm		*tm;
 	u_int			 i, j, x, y, idx;
 
 	t = time(NULL);
-	if (style == 0)
-		strftime(tim, sizeof tim, "%l:%M %p", localtime(&t));
-	else
-		strftime(tim, sizeof tim, "%H:%M", localtime(&t));
+	tm = localtime(&t);
+	if (style == 0) {
+		strftime(tim, sizeof tim, "%l:%M ", localtime(&t));
+		if (tm->tm_hour >= 12)
+			strlcat(tim, "PM", sizeof tim);
+		else
+			strlcat(tim, "AM", sizeof tim);
+	} else
+		strftime(tim, sizeof tim, "%H:%M", tm);
+
 
 	screen_write_clearscreen(ctx);
 

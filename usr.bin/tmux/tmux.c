@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.118 2013/03/27 11:24:18 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.119 2013/04/11 21:52:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdlib.h>
@@ -242,6 +243,8 @@ main(int argc, char **argv)
 #ifdef DEBUG
 	malloc_options = (char *) "AFGJPX";
 #endif
+
+	setlocale(LC_TIME, "");
 
 	quiet = flags = 0;
 	label = path = NULL;
