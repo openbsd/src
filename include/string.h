@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.24 2012/03/25 20:04:18 guenther Exp $	*/
+/*	$OpenBSD: string.h,v 1.25 2013/04/11 03:08:47 guenther Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -55,9 +55,8 @@ typedef	__size_t	size_t;
 
 __BEGIN_DECLS
 void	*memchr(const void *, int, size_t);
-void	*memrchr(const void *, int, size_t);
 int	 memcmp(const void *, const void *, size_t);
-void	*memcpy(void *, const void *, size_t)
+void	*memcpy(void *__restrict, const void *__restrict, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,3)))
 		__attribute__ ((__bounded__(__buffer__,2,3)));
 void	*memmove(void *, const void *, size_t)
@@ -65,34 +64,34 @@ void	*memmove(void *, const void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,2,3)));
 void	*memset(void *, int, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,3)));
-char	*strcat(char *, const char *);
+char	*strcat(char *__restrict, const char *__restrict);
 char	*strchr(const char *, int);
 int	 strcmp(const char *, const char *);
 int	 strcoll(const char *, const char *);
-char	*strcpy(char *, const char *);
+char	*strcpy(char *__restrict, const char *__restrict);
 size_t	 strcspn(const char *, const char *);
 char	*strerror(int);
 size_t	 strlen(const char *);
-char	*strncat(char *, const char *, size_t)
+char	*strncat(char *__restrict, const char *__restrict, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 int	 strncmp(const char *, const char *, size_t);
-char	*strncpy(char *, const char *, size_t)
+char	*strncpy(char *__restrict, const char *__restrict, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 char	*strpbrk(const char *, const char *);
 char	*strrchr(const char *, int);
 size_t	 strspn(const char *, const char *);
 char	*strstr(const char *, const char *);
-char	*strtok(char *, const char *);
-char	*strtok_r(char *, const char *, char **);
-size_t	 strxfrm(char *, const char *, size_t)
+char	*strtok(char *__restrict, const char *__restrict);
+char	*strtok_r(char *__restrict, const char *__restrict, char **__restrict);
+size_t	 strxfrm(char *__restrict, const char *__restrict, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 
-#if __BSD_VISIBLE || __XPG_VISIBLE
-void	*memccpy(void *, const void *, int, size_t)
+#if __XPG_VISIBLE
+void	*memccpy(void *__restrict, const void *__restrict, int, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,4)));
 #endif
 
-#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
+#if __XPG_VISIBLE >= 420
 int	 bcmp(const void *, const void *, size_t);
 void	 bcopy(const void *, void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,3)))
@@ -104,26 +103,30 @@ char	*index(const char *, int);
 char	*rindex(const char *, int);
 int	 strcasecmp(const char *, const char *);
 int	 strncasecmp(const char *, const char *, size_t);
-char	*strdup(const char *);
 #endif
 
-#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112
+#if __POSIX_VISIBLE >= 200112
 int	 strerror_r(int, char *, size_t)
 	    __attribute__ ((__bounded__(__string__,2,3)));
 #endif
 
+#if __XPG_VISIBLE >= 420 || __POSIX_VISIBLE >= 200809
+char	*strdup(const char *);
+#endif
+
 #if __POSIX_VISIBLE >= 200809
-char	*stpcpy(char *, const char *);
-char	*stpncpy(char *, const char *, size_t);
+char	*stpcpy(char *__restrict, const char *__restrict);
+char	*stpncpy(char *__restrict, const char *__restrict, size_t);
 char	*strndup(const char *, size_t);
 size_t	 strnlen(const char *, size_t);
 #endif
 
-#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200809
+#if __POSIX_VISIBLE >= 200809
 char	*strsignal(int);
 #endif
 
 #if __BSD_VISIBLE
+void	*memrchr(const void *, int, size_t);
 char	*strcasestr(const char *, const char *);
 size_t	 strlcat(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
