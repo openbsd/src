@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.84 2013/01/07 22:47:18 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.85 2013/04/12 04:48:52 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -81,7 +81,7 @@
 void printtrap(int, struct trapframe *);
 __dead void panictrap(int, struct trapframe *);
 __dead void error_fatal(struct trapframe *);
-int double_reg_fixup(struct trapframe *);
+int double_reg_fixup(struct trapframe *, int);
 int ss_put_value(struct proc *, vaddr_t, u_int);
 
 extern void regdump(struct trapframe *f);
@@ -479,7 +479,7 @@ user_fault:
 		break;
 	case T_MISALGNFLT+T_USER:
 		/* Fix any misaligned ld.d or st.d instructions */
-		sig = double_reg_fixup(frame);
+		sig = double_reg_fixup(frame, T_MISALGNFLT);
 		fault_type = BUS_ADRALN;
 		break;
 	case T_PRIVINFLT+T_USER:
@@ -990,8 +990,18 @@ m88110_user_fault:
 		break;
 	case T_MISALGNFLT+T_USER:
 		/* Fix any misaligned ld.d or st.d instructions */
-		sig = double_reg_fixup(frame);
+		sig = double_reg_fixup(frame, T_MISALGNFLT);
 		fault_type = BUS_ADRALN;
+		if (sig == 0) {
+			/* skip recovered instruction */
+			m88110_skip_insn(frame);
+			goto userexit;
+		}
+		break;
+	case T_ILLFLT+T_USER:
+		/* Fix any ld.d or st.d instruction with an odd register */
+		sig = double_reg_fixup(frame, T_ILLFLT);
+		fault_type = ILL_PRVREG;
 		if (sig == 0) {
 			/* skip recovered instruction */
 			m88110_skip_insn(frame);
@@ -1001,7 +1011,6 @@ m88110_user_fault:
 	case T_PRIVINFLT+T_USER:
 		fault_type = ILL_PRVREG;
 		/* FALLTHROUGH */
-	case T_ILLFLT+T_USER:
 #ifndef DDB
 	case T_KDB_BREAK:
 	case T_KDB_ENTRY:
@@ -1634,7 +1643,7 @@ splassert_check(int wantipl, const char *func)
  * instruction exception from userland.
  */
 int
-double_reg_fixup(struct trapframe *frame)
+double_reg_fixup(struct trapframe *frame, int fault)
 {
 	u_int32_t pc, instr, value;
 	int regno, store;
@@ -1677,11 +1686,23 @@ double_reg_fixup(struct trapframe *frame)
 		break;
 	}
 
-	/* We only handle long but not long long aligned access here */
-	if ((addr & 0x07) != 4)
-		return SIGBUS;
-
 	regno = (instr >> 21) & 0x1f;
+
+	switch (fault) {
+	case T_MISALGNFLT:
+		/* We only handle long but not long long aligned access here */
+		if ((addr & 0x07) != 4)
+			return SIGBUS;
+		break;
+	case T_ILLFLT:
+		/* We only handle odd register pair number here */
+		if ((regno & 0x01) == 0)
+			return SIGILL;
+		/* We only handle long aligned access here */
+		if ((addr & 0x03) != 0)
+			return SIGBUS;
+		break;
+	}
 
 	if (store) {
 		/*
