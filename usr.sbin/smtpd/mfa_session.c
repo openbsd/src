@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa_session.c,v 1.15 2013/03/26 13:30:29 millert Exp $	*/
+/*	$OpenBSD: mfa_session.c,v 1.16 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -90,7 +90,7 @@ struct mfa_query {
 			struct sockaddr_storage	 remote;
 			char			 hostname[MAXHOSTNAMELEN];
 		} connect;
-		char			line[MAX_LINE_SIZE];
+		char			line[SMTPD_MAXLINESIZE];
 		struct mailaddr		maddr;
 	} u;
 

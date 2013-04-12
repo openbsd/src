@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.62 2013/04/01 16:11:32 tobias Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.63 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -78,7 +78,7 @@ aliases_get(struct expand *expand, const char *username)
 int
 aliases_virtual_check(struct table *table, const struct mailaddr *maddr)
 {
-	char			buf[MAX_LINE_SIZE];
+	char			buf[SMTPD_MAXLINESIZE];
 	char		       *pbuf;
 	int			ret;
 
@@ -124,7 +124,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 {
 	struct expandnode      *xn;
 	struct expand	       *xp;
-	char			buf[MAX_LINE_SIZE];
+	char			buf[SMTPD_MAXLINESIZE];
 	char		       *pbuf;
 	int			nbaliases;
 	int			ret;

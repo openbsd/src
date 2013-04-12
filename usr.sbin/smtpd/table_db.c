@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.3 2013/02/13 14:34:43 gilles Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.4 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -263,7 +263,7 @@ table_db_get_entry(void *hdl, const char *key, size_t *len)
 	int ret;
 	DBT dbk;
 	DBT dbv;
-	char pkey[MAX_LINE_SIZE];
+	char pkey[SMTPD_MAXLINESIZE];
 
 	/* workaround the stupidity of the DB interface */
 	if (strlcpy(pkey, key, sizeof pkey) >= sizeof pkey)
@@ -290,7 +290,7 @@ table_db_credentials(const char *key, char *line, size_t len, void **retp)
 		return -1;
 
 	/* too big to fit in a smtp session line */
-	if (len >= MAX_LINE_SIZE)
+	if (len >= SMTPD_MAXLINESIZE)
 		return -1;
 
 	p = strchr(line, ':');

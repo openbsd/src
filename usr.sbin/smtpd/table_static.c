@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.3 2013/02/13 14:34:43 gilles Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.4 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -249,7 +249,7 @@ table_static_credentials(const char *key, char *line, size_t len, void **retp)
 		return -1;
 
 	/* too big to fit in a smtp session line */
-	if (len >= MAX_LINE_SIZE)
+	if (len >= SMTPD_MAXLINESIZE)
 		return -1;
 
 	p = strchr(line, ':');

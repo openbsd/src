@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.150 2013/02/14 12:30:49 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.151 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -84,7 +84,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	struct addrname		 addrname;
 	struct envelope		 evp;
 	struct msg		 m;
-	char			 buf[MAX_LINE_SIZE];
+	char			 buf[SMTPD_MAXLINESIZE];
 	const char		*tablename, *username, *password, *label;
 	uint64_t		 reqid;
 	size_t			 i, len;

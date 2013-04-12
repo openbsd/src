@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.188 2013/02/14 13:11:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.189 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1527,7 +1527,7 @@ int
 parent_auth_user(const char *username, const char *password)
 {
 	char	user[MAXLOGNAME];
-	char	pass[MAX_LINE_SIZE + 1];
+	char	pass[SMTPD_MAXLINESIZE];
 	int	ret;
 
 	strlcpy(user, username, sizeof(user));

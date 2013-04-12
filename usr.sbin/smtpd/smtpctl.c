@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.101 2013/02/14 12:30:49 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.102 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Gilles Chehade <gilles@poolp.org>
@@ -178,7 +178,7 @@ main(int argc, char *argv[])
 	struct imsg		imsg;
 	struct smtpd		smtpd;
 	uint64_t		ulval;
-	char			name[MAX_LINE_SIZE];
+	char			name[SMTPD_MAXLINESIZE];
 	int			done = 0;
 	int			verb = 0;
 	int			profile = 0;

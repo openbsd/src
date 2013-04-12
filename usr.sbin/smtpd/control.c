@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.83 2013/03/11 17:40:11 deraadt Exp $	*/
+/*	$OpenBSD: control.c,v 1.84 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -674,7 +674,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 
 		/* table name too long */
 		len = strlen(imsg->data);
-		if (len >= MAX_LINE_SIZE)
+		if (len >= SMTPD_MAXLINESIZE)
 			goto invalid;
 
 		m_forward(p_lka, imsg);

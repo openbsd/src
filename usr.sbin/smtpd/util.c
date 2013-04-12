@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.92 2013/02/05 11:45:18 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.93 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -699,7 +699,7 @@ parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 {
 	size_t	 i;
 
-	if (len >= SMTP_LINE_MAX)
+	if (len >= SMTPD_MAXLINESIZE)
 		return "line too long";
 
 	if (len > 3) {

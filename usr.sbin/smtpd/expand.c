@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.21 2013/02/14 12:30:49 gilles Exp $	*/
+/*	$OpenBSD: expand.c,v 1.22 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -129,7 +129,7 @@ expand_cmp(struct expandnode *e1, struct expandnode *e2)
 static int
 expand_line_split(char **line, char **ret)
 {
-	static char	buffer[MAX_LINE_SIZE];
+	static char	buffer[SMTPD_MAXLINESIZE];
 	int		esc, i, dq, sq;
 	char	       *s;
 
@@ -172,7 +172,7 @@ int
 expand_line(struct expand *expand, const char *s, int do_includes)
 {
 	struct expandnode	xn;
-	char			buffer[MAX_LINE_SIZE];
+	char			buffer[SMTPD_MAXLINESIZE];
 	char		       *p, *subrcpt;
 	int			ret;
 

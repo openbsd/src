@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.146 2013/01/31 18:24:47 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.147 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -637,7 +637,7 @@ queue_loop(uint64_t evpid)
 static void
 queue_log(const struct envelope *e, const char *prefix, const char *status)
 {
-       char rcpt[MAX_LINE_SIZE];
+       char rcpt[SMTPD_MAXLINESIZE];
 
        rcpt[0] = '\0';
        if (strcmp(e->rcpt.user, e->dest.user) ||

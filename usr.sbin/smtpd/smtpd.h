@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.408 2013/03/06 21:42:40 sthen Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.409 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -80,9 +80,6 @@
 /* how many responses per state are undelayed */
 #define FAST_RESPONSES		2
 
-/* max len of any smtp line */
-#define	SMTP_LINE_MAX		MAX_LINE_SIZE
-
 #define F_STARTTLS		0x01
 #define F_SMTPS			0x02
 #define	F_TLS_OPTIONAL		0x04
@@ -137,8 +134,8 @@ struct relayhost {
 };
 
 struct credentials {
-	char username[MAX_LINE_SIZE];
-	char password[MAX_LINE_SIZE];
+	char username[SMTPD_MAXLINESIZE];
+	char password[SMTPD_MAXLINESIZE];
 };
 
 struct destination {
@@ -299,7 +296,7 @@ enum table_service {
 };
 
 struct table {
-	char				 t_name[MAX_LINE_SIZE];
+	char				 t_name[SMTPD_MAXLINESIZE];
 	objid_t				 t_id;
 	enum table_type			 t_type;
 	char				 t_src[MAX_TABLE_BACKEND_SIZE];
@@ -457,7 +454,7 @@ struct envelope {
 
 	char				helo[MAXHOSTNAMELEN];
 	char				hostname[MAXHOSTNAMELEN];
-	char				errorline[MAX_LINE_SIZE + 1];
+	char				errorline[SMTPD_MAXLINESIZE];
 	struct sockaddr_storage		ss;
 
 	struct mailaddr			sender;
@@ -522,7 +519,7 @@ struct listener {
 	struct ssl		*ssl;
 	void			*ssl_ctx;
 	char			 tag[MAX_TAG_SIZE];
-	char			 authtable[MAX_LINE_SIZE];
+	char			 authtable[SMTPD_MAXLINESIZE];
 	char			 helo[MAXHOSTNAMELEN];
 	TAILQ_ENTRY(listener)	 entry;
 };

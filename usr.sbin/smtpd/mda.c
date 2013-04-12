@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.89 2013/02/05 11:45:18 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.90 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -119,7 +119,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*username, *usertable;
 	uint64_t		 reqid;
 	size_t			 sz;
-	char			 out[256], buf[MAX_LINE_SIZE];
+	char			 out[256], buf[SMTPD_MAXLINESIZE];
 	int			 n, v;
 	enum lka_resp_status	status;
 
@@ -674,7 +674,7 @@ static int
 mda_getlastline(int fd, char *dst, size_t dstsz)
 {
 	FILE	*fp;
-	char	*ln, buf[MAX_LINE_SIZE];
+	char	*ln, buf[SMTPD_MAXLINESIZE];
 	size_t	 len;
 
 	bzero(buf, sizeof buf);
@@ -852,7 +852,7 @@ mda_done(struct mda_session *s)
 static void
 mda_log(const struct mda_envelope *evp, const char *prefix, const char *status)
 {
-	char rcpt[MAX_LINE_SIZE];
+	char rcpt[SMTPD_MAXLINESIZE];
 	const char *method;
 
 	rcpt[0] = '\0';

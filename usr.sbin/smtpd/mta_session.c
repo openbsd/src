@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.34 2013/02/21 16:25:21 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.35 2013/04/12 18:22:49 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -682,7 +682,7 @@ static void
 mta_response(struct mta_session *s, char *line)
 {
 	struct mta_envelope	*e;
-	char			 buf[MAX_LINE_SIZE];
+	char			 buf[SMTPD_MAXLINESIZE];
 	int			 delivery;
 
 	switch (s->state) {
@@ -906,7 +906,7 @@ mta_io(struct io *io, int evt)
 	    nextline:
 		line = iobuf_getline(&s->iobuf, &len);
 		if (line == NULL) {
-			if (iobuf_len(&s->iobuf) >= SMTP_LINE_MAX) {
+			if (iobuf_len(&s->iobuf) >= SMTPD_MAXLINESIZE) {
 				mta_error(s, "Input too long");
 				mta_free(s);
 				return;
@@ -1065,7 +1065,7 @@ static void
 mta_flush_task(struct mta_session *s, int delivery, const char *error, size_t count)
 {
 	struct mta_envelope	*e;
-	char			 relay[MAX_LINE_SIZE];
+	char			 relay[SMTPD_MAXLINESIZE];
 	size_t			 n;
 
 	snprintf(relay, sizeof relay, "%s", mta_host_to_text(s->route->dst));
