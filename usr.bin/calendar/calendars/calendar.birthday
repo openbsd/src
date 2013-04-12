@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.53 2013/01/04 19:27:46 jmc Exp $
+ * $OpenBSD: calendar.birthday,v 1.54 2013/04/12 17:25:58 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -144,7 +144,7 @@
 04/12	Feodor Ivanovich Chaliapin died in Paris, 1938
 04/13	Samuel Beckett born in Foxrock, County Dublin, 1906
 04/13	Thomas Jefferson born, 1743
-04/14	Christian Huygen born, 1629, physicist & astronomer;
+04/14	Christiaan Huygens born, 1629, physicist & astronomer;
 		discovered Saturn's rings
 04/15	Leonardo da Vinci born, 1452
 04/15	Leonhard Euler born in Basel, 1707
