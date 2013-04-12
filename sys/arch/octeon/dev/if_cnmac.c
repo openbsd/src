@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.9 2013/03/21 09:29:12 jasper Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.10 2013/04/12 15:22:26 bcallah Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -555,7 +555,7 @@ octeon_eth_mii_readreg(struct device *self, int phy_no, int reg)
 	if (sc->sc_port >= (int)nitems(octeon_eth_phy_table) ||
 	    phy_no != sc->sc_port) {
 		log(LOG_ERR,
-		    "mii read address is mismatch, phy number %d.\n", phy_no);
+		    "mii read address mismatch, phy number %d.\n", phy_no);
 		return -1;
 	}
 	return cn30xxsmi_read(sc->sc_smi, phy_addr, reg);
@@ -570,7 +570,7 @@ octeon_eth_mii_writereg(struct device *self, int phy_no, int reg, int value)
 	if (sc->sc_port >= (int)nitems(octeon_eth_phy_table) ||
 	    phy_no != sc->sc_port) {
 		log(LOG_ERR,
-		    "mii write address is mismatch, phy number %d.\n", phy_no);
+		    "mii write address mismatch, phy number %d.\n", phy_no);
 		return;
 	}
 	cn30xxsmi_write(sc->sc_smi, phy_addr, reg, value);
@@ -1025,8 +1025,8 @@ octeon_eth_send_makecmd(struct octeon_eth_softc *sc, struct mbuf *m,
 	int result = 0;
 
 	if (octeon_eth_send_makecmd_gbuf(sc, m, gbuf, &segs)) {
-		log(LOG_WARNING, "%s: there are a lot of number of segments"
-		    " of transmission data", sc->sc_dev.dv_xname);
+		log(LOG_WARNING, "%s: large number of transmission"
+		    " data segments", sc->sc_dev.dv_xname);
 		result = 1;
 		goto done;
 	}
@@ -1076,7 +1076,7 @@ octeon_eth_send_cmd(struct octeon_eth_softc *sc, uint64_t pko_cmd_w0,
 		buf = cn30xxfpa_buf_get_paddr(octeon_eth_fb_cmd);
 		if (buf == 0) {
 			log(LOG_WARNING,
-			    "%s: can not allocate command buffer from free pool allocator\n",
+			    "%s: cannot allocate command buffer from free pool allocator\n",
 			    sc->sc_dev.dv_xname);
 			result = 1;
 			goto done;
@@ -1133,7 +1133,7 @@ octeon_eth_send(struct octeon_eth_softc *sc, struct mbuf *m)
 	gaddr = cn30xxfpa_buf_get_paddr(octeon_eth_fb_sg);
 	if (gaddr == 0) {
 		log(LOG_WARNING,
-		    "%s: can not allocate gather buffer from free pool allocator\n",
+		    "%s: cannot allocate gather buffer from free pool allocator\n",
 		    sc->sc_dev.dv_xname);
 		OCTEON_EVCNT_INC(sc, txerrgbuf);
 		result = 1;
@@ -1223,7 +1223,7 @@ octeon_eth_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			m_freem(m);
 			log(LOG_WARNING,
-		  	  "%s: failed in the transmission of the packet\n",
+		  	  "%s: failed to transmit packet\n",
 		    	  sc->sc_dev.dv_xname);
 			OCTEON_EVCNT_INC(sc, txerr);
 		} else {
@@ -1495,7 +1495,7 @@ octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 		return 1;
 	}
 
-#if 0 /* XXX Performance tunig (Jumbo-frame is not supported yet!) */
+#if 0 /* XXX Performance tuning (Jumbo-frame is not supported yet!) */
 	if (__predict_false(octeon_eth_recv_check_jumbo(sc, word2)) != 0) {
 		/* XXX jumbo frame */
 		if (ratecheck(&sc->sc_rate_recv_check_jumbo_last,
@@ -1513,13 +1513,13 @@ octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 			/* XXX inclement special error count */
 		} else if ((word2 & PIP_WQE_WORD2_NOIP_OPECODE) == 
 				PIP_WQE_WORD2_RE_OPCODE_PARTIAL) {
-			/* not an erorr. it's because of overload */
+			/* not an error. it's because of overload */
 		}
 		else {
 			if (ratecheck(&sc->sc_rate_recv_check_code_last,
 			    &sc->sc_rate_recv_check_code_cap)) 
 				log(LOG_WARNING,
-				    "%s: the reception error had occured, "
+				    "%s: a reception error occured, "
 				    "the packet was dropped (error code = %lld)\n",
 				    sc->sc_dev.dv_xname, word2 & PIP_WQE_WORD2_NOIP_OPECODE);
 		}
@@ -1707,7 +1707,7 @@ octeon_eth_tick_misc(void *arg)
 		if (OCTEON_ETH_FIXUP_ODD_NIBBLE_MODEL_P(sc) &&
 		    OCTEON_ETH_FIXUP_ODD_NIBBLE_DYNAMIC_SPEED_P(sc->sc_gmx_port, ifp)) {
 			log(LOG_NOTICE, 
-			    "%s: the preamble processing is switched to hardware\n", 
+			    "%s: the preamble processing switched to hardware\n", 
 			    sc->sc_dev.dv_xname);
 		}
 		sc->sc_gmx_port->sc_proc_nibble_by_soft = 0;
