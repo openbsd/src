@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.6 2011/01/03 23:35:22 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.7 2013/04/12 12:50:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -171,7 +171,6 @@ struct utf8_width_entry utf8_width_table[] = {
 	{ 0x30000, 0x3fffd, 2, NULL, NULL },
 	{ 0x00711, 0x00711, 0, NULL, NULL },
 	{ 0x0fe00, 0x0fe0f, 0, NULL, NULL },
-	{ 0x01160, 0x011ff, 0, NULL, NULL },
 	{ 0x0180b, 0x0180d, 0, NULL, NULL },
 	{ 0x10a3f, 0x10a3f, 0, NULL, NULL },
 	{ 0x00981, 0x00981, 0, NULL, NULL },
