@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.10 2010/12/23 17:38:04 claudio Exp $	*/
+/*	$OpenBSD: sync.c,v 1.11 2013/04/12 00:27:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -426,7 +426,7 @@ sync_lease(struct lease *lease)
 	hdr.sh_version = DHCP_SYNC_VERSION;
 	hdr.sh_af = AF_INET;
 	hdr.sh_counter = sync_counter++;
-	hdr.sh_length = htons(sizeof(hdr) + sizeof(ld) + sizeof(end));
+	hdr.sh_length = htons(sizeof(hdr) + sizeof(ld) + padlen + sizeof(end));
 	iov[i].iov_base = &hdr;
 	iov[i].iov_len = sizeof(hdr);
 	HMAC_Update(&ctx, iov[i].iov_base, iov[i].iov_len);
