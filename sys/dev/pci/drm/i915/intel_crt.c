@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_crt.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_crt.c,v 1.2 2013/04/12 08:32:53 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -457,14 +457,12 @@ intel_crt_get_edid(struct drm_connector *connector,
 
 	edid = drm_get_edid(connector, i2c);
 
-#ifdef notyet
 	if (!edid && !intel_gmbus_is_forced_bit(i2c)) {
 		DRM_DEBUG_KMS("CRT GMBUS EDID read failed, retry using GPIO bit-banging\n");
 		intel_gmbus_force_bit(i2c, true);
 		edid = drm_get_edid(connector, i2c);
 		intel_gmbus_force_bit(i2c, false);
 	}
-#endif
 
 	return edid;
 }
