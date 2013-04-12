@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.47 2013/04/11 07:50:56 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.48 2013/04/12 12:58:39 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -377,14 +377,6 @@ usbd_transfer(usbd_xfer_handle xfer)
 	}
 	splx(s);
 	return (xfer->status);
-}
-
-/* Like usbd_transfer(), but waits for completion. */
-usbd_status
-usbd_sync_transfer(usbd_xfer_handle xfer)
-{
-	xfer->flags |= USBD_SYNCHRONOUS;
-	return (usbd_transfer(xfer));
 }
 
 void *
@@ -962,9 +954,9 @@ usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req,
 	if (xfer == NULL)
 		return (USBD_NOMEM);
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req, data,
-	    UGETW(req->wLength), flags, 0);
+	    UGETW(req->wLength), flags | USBD_SYNCHRONOUS, 0);
 	xfer->pipe = pipe;
-	err = usbd_sync_transfer(xfer);
+	err = usbd_transfer(xfer);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (xfer->actlen > xfer->length)
 		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
@@ -993,8 +985,8 @@ usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req,
 		USETW(treq.wIndex, 0);
 		USETW(treq.wLength, sizeof(usb_status_t));
 		usbd_setup_default_xfer(xfer, dev, 0, USBD_DEFAULT_TIMEOUT,
-		    &treq, &status,sizeof(usb_status_t), 0, 0);
-		nerr = usbd_sync_transfer(xfer);
+		    &treq, &status, sizeof(usb_status_t), USBD_SYNCHRONOUS, 0);
+		nerr = usbd_transfer(xfer);
 		if (nerr)
 			goto bad;
 		s = UGETW(status.wStatus);
@@ -1007,8 +999,8 @@ usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req,
 		USETW(treq.wIndex, 0);
 		USETW(treq.wLength, 0);
 		usbd_setup_default_xfer(xfer, dev, 0, USBD_DEFAULT_TIMEOUT,
-		    &treq, &status, 0, 0, 0);
-		nerr = usbd_sync_transfer(xfer);
+		    &treq, &status, 0, USBD_SYNCHRONOUS, 0);
+		nerr = usbd_transfer(xfer);
 		if (nerr)
 			goto bad;
 	}

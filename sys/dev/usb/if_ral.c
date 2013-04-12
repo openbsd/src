@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.121 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.122 2013/04/12 12:58:39 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1018,9 +1018,9 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	}
 
 	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, &cmd, sizeof cmd,
-	    USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT, NULL);
+	    USBD_FORCE_SHORT_XFER | USBD_SYNCHRONOUS, RAL_TX_TIMEOUT, NULL);
 
-	error = usbd_sync_transfer(xfer);
+	error = usbd_transfer(xfer);
 	if (error != 0) {
 		usbd_free_xfer(xfer);
 		return error;
@@ -1036,9 +1036,10 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    m0->m_pkthdr.len, rate, xferlen));
 
 	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RAL_TX_TIMEOUT, NULL);
+	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY | USBD_SYNCHRONOUS,
+	    RAL_TX_TIMEOUT, NULL);
 
-	error = usbd_sync_transfer(xfer);
+	error = usbd_transfer(xfer);
 	usbd_free_xfer(xfer);
 
 	return error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.14 2013/04/05 05:39:46 brad Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.15 2013/04/12 12:58:39 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -730,8 +730,9 @@ athn_usb_htc_msg(struct athn_usb_softc *usc, uint16_t msg_id, void *buf,
 
 	usbd_setup_xfer(data->xfer, usc->tx_intr_pipe, NULL, data->buf,
 	    sizeof(*htc) + sizeof(*msg) + len,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, ATHN_USB_CMD_TIMEOUT, NULL);
-	return (usbd_sync_transfer(data->xfer));
+	    USBD_SHORT_XFER_OK | USBD_NO_COPY | USBD_SYNCHRONOUS,
+	    ATHN_USB_CMD_TIMEOUT, NULL);
+	return (usbd_transfer(data->xfer));
 }
 
 int

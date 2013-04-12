@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.19 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: umbg.c,v 1.20 2013/04/12 12:58:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -402,10 +402,10 @@ umbg_read(struct umbg_softc *sc, u_int8_t cmd, char *buf, size_t len,
 	}
 
 	usbd_setup_xfer(xfer, sc->sc_bulkout_pipe, NULL, &cmd, sizeof(cmd),
-	    USBD_SHORT_XFER_OK, USBD_DEFAULT_TIMEOUT, NULL);
+	    USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS, USBD_DEFAULT_TIMEOUT, NULL);
 	if (tstamp)
 		nanotime(tstamp);
-	err = usbd_sync_transfer(xfer);
+	err = usbd_transfer(xfer);
 	if (err) {
 		DPRINTF(("%s: sending of command failed: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err)));
@@ -414,9 +414,9 @@ umbg_read(struct umbg_softc *sc, u_int8_t cmd, char *buf, size_t len,
 	}
 
 	usbd_setup_xfer(xfer, sc->sc_bulkin_pipe, NULL, buf, len,
-	    USBD_SHORT_XFER_OK, USBD_DEFAULT_TIMEOUT, NULL);
+	    USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS, USBD_DEFAULT_TIMEOUT, NULL);
 
-	err = usbd_sync_transfer(xfer);
+	err = usbd_transfer(xfer);
 	usbd_free_xfer(xfer);
 	if (err) {
 		DPRINTF(("%s: reading data failed: %s\n",

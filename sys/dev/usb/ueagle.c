@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.36 2011/11/27 09:20:57 claudio Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.37 2013/04/12 12:58:39 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -356,18 +356,18 @@ ueagle_loadpage(void *xsc)
 		USETW(bi.wLast, (i == blockcount - 1) ? 1 : 0);
 
 		/* send block info through the IDMA pipe */
-		usbd_setup_xfer(xfer, sc->pipeh_idma, sc, &bi, sizeof bi, 0,
-		    UEAGLE_IDMA_TIMEOUT, NULL);
-		if (usbd_sync_transfer(xfer) != 0) {
+		usbd_setup_xfer(xfer, sc->pipeh_idma, sc, &bi, sizeof bi,
+		    USBD_SYNCHRONOUS, UEAGLE_IDMA_TIMEOUT, NULL);
+		if (usbd_transfer(xfer) != 0) {
 			printf("%s: could not transfer block info\n",
 			    sc->sc_dev.dv_xname);
 			break;
 		}
 
 		/* send block data through the IDMA pipe */
-		usbd_setup_xfer(xfer, sc->pipeh_idma, sc, p, blocksize, 0,
-		    UEAGLE_IDMA_TIMEOUT, NULL);
-		if (usbd_sync_transfer(xfer) != 0) {
+		usbd_setup_xfer(xfer, sc->pipeh_idma, sc, p, blocksize,
+		    USBD_SYNCHRONOUS, UEAGLE_IDMA_TIMEOUT, NULL);
+		if (usbd_transfer(xfer) != 0) {
 			printf("%s: could not transfer block data\n",
 			    sc->sc_dev.dv_xname);
 			break;

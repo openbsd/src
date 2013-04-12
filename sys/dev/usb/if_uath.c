@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.52 2012/10/03 08:05:26 sthen Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.53 2013/04/12 12:58:39 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1319,8 +1319,8 @@ uath_tx_null(struct uath_softc *sc)
 
 	usbd_setup_xfer(data->xfer, sc->data_tx_pipe, data, data->buf,
 	    sizeof (uint32_t) + sizeof (struct uath_tx_desc), USBD_NO_COPY |
-	    USBD_FORCE_SHORT_XFER, UATH_DATA_TIMEOUT, NULL);
-	if (usbd_sync_transfer(data->xfer) != 0)
+	    USBD_FORCE_SHORT_XFER | USBD_SYNCHRONOUS, UATH_DATA_TIMEOUT, NULL);
+	if (usbd_transfer(data->xfer) != 0)
 		return EIO;
 
 	sc->data_idx = (sc->data_idx + 1) % UATH_TX_DATA_LIST_COUNT;
@@ -2081,9 +2081,10 @@ uath_loadfirmware(struct uath_softc *sc, const u_char *fw, int len)
 
 		/* send firmware block meta-data */
 		usbd_setup_xfer(ctlxfer, sc->cmd_tx_pipe, sc, txblock,
-		    sizeof (struct uath_fwblock), USBD_NO_COPY,
+		    sizeof (struct uath_fwblock),
+		    USBD_NO_COPY | USBD_SYNCHRONOUS,
 		    UATH_CMD_TIMEOUT, NULL);
-		if ((error = usbd_sync_transfer(ctlxfer)) != 0) {
+		if ((error = usbd_transfer(ctlxfer)) != 0) {
 			printf("%s: could not send firmware block info\n",
 			    sc->sc_dev.dv_xname);
 			break;
@@ -2092,8 +2093,8 @@ uath_loadfirmware(struct uath_softc *sc, const u_char *fw, int len)
 		/* send firmware block data */
 		bcopy(fw, txdata, mlen);
 		usbd_setup_xfer(txxfer, sc->data_tx_pipe, sc, txdata, mlen,
-		    USBD_NO_COPY, UATH_DATA_TIMEOUT, NULL);
-		if ((error = usbd_sync_transfer(txxfer)) != 0) {
+		    USBD_NO_COPY | USBD_SYNCHRONOUS, UATH_DATA_TIMEOUT, NULL);
+		if ((error = usbd_transfer(txxfer)) != 0) {
 			printf("%s: could not send firmware block data\n",
 			    sc->sc_dev.dv_xname);
 			break;
@@ -2102,8 +2103,8 @@ uath_loadfirmware(struct uath_softc *sc, const u_char *fw, int len)
 		/* wait for ack from firmware */
 		usbd_setup_xfer(rxxfer, sc->cmd_rx_pipe, sc, rxblock,
 		    sizeof (struct uath_fwblock), USBD_SHORT_XFER_OK |
-		    USBD_NO_COPY, UATH_CMD_TIMEOUT, NULL);
-		if ((error = usbd_sync_transfer(rxxfer)) != 0) {
+		    USBD_NO_COPY | USBD_SYNCHRONOUS, UATH_CMD_TIMEOUT, NULL);
+		if ((error = usbd_transfer(rxxfer)) != 0) {
 			printf("%s: could not read firmware answer\n",
 			    sc->sc_dev.dv_xname);
 			break;

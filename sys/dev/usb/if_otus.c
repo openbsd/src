@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.32 2012/10/12 19:53:24 haesbaert Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.33 2013/04/12 12:58:39 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -867,8 +867,9 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	cmd->done = 0;
 
 	usbd_setup_xfer(cmd->xfer, sc->cmd_tx_pipe, cmd, cmd->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, OTUS_CMD_TIMEOUT, NULL);
-	error = usbd_sync_transfer(cmd->xfer);
+	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY | USBD_SYNCHRONOUS,
+	    OTUS_CMD_TIMEOUT, NULL);
+	error = usbd_transfer(cmd->xfer);
 	if (error != 0) {
 		splx(s);
 		printf("%s: could not send command 0x%x (error=%s)\n",

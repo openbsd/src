@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.46 2013/04/10 07:39:43 mpi Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.47 2013/04/12 12:58:39 mpi Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -118,7 +118,6 @@ usbd_device_handle usbd_pipe2device_handle(usbd_pipe_handle);
 void *usbd_alloc_buffer(usbd_xfer_handle xfer, u_int32_t size);
 void usbd_free_buffer(usbd_xfer_handle xfer);
 void *usbd_get_buffer(usbd_xfer_handle xfer);
-usbd_status usbd_sync_transfer(usbd_xfer_handle req);
 usbd_status usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
     u_int8_t flags, usbd_pipe_handle *pipe, usbd_private_handle priv,
     void *buffer, u_int32_t length, usbd_callback, int);

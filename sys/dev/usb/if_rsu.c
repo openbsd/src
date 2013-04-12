@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.15 2013/02/04 23:13:41 kettenis Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.16 2013/04/12 12:58:39 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -776,8 +776,9 @@ rsu_fw_cmd(struct rsu_softc *sc, uint8_t code, void *buf, int len)
 	DPRINTFN(2, ("Tx cmd code=%d len=%d\n", code, cmdsz));
 	pipe = sc->pipe[sc->qid2idx[RSU_QID_H2C]];
 	usbd_setup_xfer(data->xfer, pipe, NULL, data->buf, xferlen,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, RSU_CMD_TIMEOUT, NULL);
-	return (usbd_sync_transfer(data->xfer));
+	    USBD_SHORT_XFER_OK | USBD_NO_COPY | USBD_SYNCHRONOUS,
+	    RSU_CMD_TIMEOUT, NULL);
+	return (usbd_transfer(data->xfer));
 }
 
 int
@@ -2013,9 +2014,10 @@ rsu_fw_loadsection(struct rsu_softc *sc, uint8_t *buf, int len)
 		memcpy(&txd[1], buf, mlen);
 
 		usbd_setup_xfer(data->xfer, pipe, NULL, data->buf,
-		    sizeof(*txd) + mlen, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    sizeof(*txd) + mlen,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY | USBD_SYNCHRONOUS,
 		    RSU_TX_TIMEOUT, NULL);
-		error = usbd_sync_transfer(data->xfer);
+		error = usbd_transfer(data->xfer);
 		if (error != 0)
 			return (error);
 		buf += mlen;

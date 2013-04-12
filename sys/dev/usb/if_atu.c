@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.101 2012/02/24 06:19:00 guenther Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.102 2013/04/12 12:58:39 mpi Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -330,9 +330,9 @@ atu_usb_request(struct atu_softc *sc, u_int8_t type,
 
 	xfer = usbd_alloc_xfer(sc->atu_udev);
 	usbd_setup_default_xfer(xfer, sc->atu_udev, 0, 500000, &req, data,
-	    length, USBD_SHORT_XFER_OK, 0);
+	    length, USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS, 0);
 
-	err = usbd_sync_transfer(xfer);
+	err = usbd_transfer(xfer);
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
