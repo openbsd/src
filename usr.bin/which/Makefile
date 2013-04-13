@@ -1,26 +1,18 @@
-#	$OpenBSD: Makefile,v 1.6 2013/04/10 02:57:20 guenther Exp $
-
-whereis_MAN = ${.OBJDIR}/whereis.1
-man_depends = ${.OBJDIR}/whereis.d
+#	$OpenBSD: Makefile,v 1.7 2013/04/13 19:31:58 guenther Exp $
 
 PROG=	which
-MAN=	which.1 ${whereis_MAN}
+MAN=	which.1 whereis.1
 LINKS=	${BINDIR}/which ${BINDIR}/whereis
 
-${whereis_MAN}: ${.CURDIR}/whereis.1 /usr/include/paths.h
+check_path_in_man:
 	stdpath=`printf '#include <paths.h>\n_PATH_STDPATH\n' | \
-		${CPP} ${CPPFLAGS} -MD -MT '$${.OBJDIR}/whereis.1' \
-		-MF ${man_depends} - | \
-		sed -n 's/^[ 	]*"\(.*\)".*/\1/p'` ; \
-	sed "s!_PATH_STDPATH!$${stdpath}!" < ${.CURDIR}/whereis.1 >$@
+	${CPP} ${CPPFLAGS} - | \
+	sed -n 's/^[    ]*"\(.*\)".*/.Pa \1 ./p'` ; \
+	fgrep -xq "$$stdpath" ${.CURDIR}/whereis.1 && { touch $@; exit 0; }; \
+	echo "Update the expansion of _PATH_STDPATH in ${.CURDIR}/whereis.1"; \
+	exit 1
 
-CLEANFILES = ${whereis_MAN}
-cleandir: cleanlocaldepend
-cleanlocaldepend:
-	rm -f ${man_depends}
-
-.if exists(${man_depends})
-. include "${man_depends}"
-.endif
+all: check_path_in_man
+CLEANFILES = check_path_in_man
 
 .include <bsd.prog.mk>

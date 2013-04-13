@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whereis.1,v 1.16 2013/04/10 02:57:20 guenther Exp $
+.\"	$OpenBSD: whereis.1,v 1.17 2013/04/13 19:31:58 guenther Exp $
 .\"	$NetBSD: whereis.1,v 1.4 1995/08/31 21:54:51 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)whereis.1	8.3 (Berkeley) 4/27/95
 .\"
-.Dd $Mdocdate: April 10 2013 $
+.Dd $Mdocdate: April 13 2013 $
 .Dt WHEREIS 1
 .Os
 .Sh NAME
@@ -49,7 +49,8 @@ printing out the paths of any it finds that are executable by the
 user.
 .Pp
 The path searched is
-.Pa _PATH_STDPATH .
+.\" The path below should be the expansion of _PATH_STDPATH from <paths.h>
+.Pa /usr/bin:/bin:/usr/sbin:/sbin:/usr/X11R6/bin:/usr/local/bin .
 .Pp
 If the
 .Fl a
