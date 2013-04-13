@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.52 2011/10/14 17:08:09 stsp Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.53 2013/04/13 08:57:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,7 @@ HAL_BOOL	 ar5k_ar5212_nic_wakeup(struct ath_hal *, u_int16_t);
 u_int16_t	 ar5k_ar5212_radio_revision(struct ath_hal *, HAL_CHIP);
 void		 ar5k_ar5212_fill(struct ath_hal *);
 HAL_BOOL	 ar5k_ar5212_txpower(struct ath_hal *, HAL_CHANNEL *, u_int);
+HAL_BOOL	 ar5k_ar5212_warm_reset(struct ath_hal *);
 
 /*
  * Initial register setting for the AR5212
@@ -2420,6 +2421,35 @@ ar5k_ar5212_softcrypto(struct ath_hal *hal, HAL_BOOL enable)
 }
 
 /*
+ * warm reset MAC and PHY
+ */
+
+HAL_BOOL
+ar5k_ar5212_warm_reset(struct ath_hal *hal)
+{
+	u_int32_t flags;
+
+	flags = AR5K_AR5212_RC_PCU | AR5K_AR5212_RC_BB;
+	if (hal->ah_pci_express == AH_FALSE)
+		flags |= AR5K_AR5212_RC_PCI;
+
+	/* reset chipset and PCI device */
+	if (ar5k_ar5212_nic_reset(hal, flags) == AH_FALSE)
+		return (AH_FALSE);
+
+	/* wakeup */
+	if (ar5k_ar5212_set_power(hal,
+	    HAL_PM_AWAKE, AH_TRUE, 0) == AH_FALSE)
+		return (AH_FALSE);
+
+	/* reset chipset */
+	if (ar5k_ar5212_nic_reset(hal, 0) == AH_FALSE)
+		return (AH_FALSE);
+
+	return (AH_TRUE);
+}
+
+/*
  * Power management functions
  */
 
@@ -2445,10 +2475,9 @@ ar5k_ar5212_set_power(struct ath_hal *hal, HAL_POWER_MODE mode,
 		break;
 
 	case HAL_PM_FULL_SLEEP:
-		if (set_chip == AH_TRUE) {
-			AR5K_REG_WRITE(AR5K_AR5212_SCR,
-			    AR5K_AR5212_SCR_SLE_SLP);
-		}
+		if (set_chip == AH_TRUE)
+			if (ar5k_ar5212_warm_reset(hal) == AH_FALSE)
+				return (AH_FALSE);
 		staid |= AR5K_AR5212_STA_ID1_PWR_SV;
 		break;
 
