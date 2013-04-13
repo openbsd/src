@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.h,v 1.3 2008/05/08 14:15:40 deraadt Exp $	*/
+/*	$OpenBSD: sync.h,v 1.4 2013/04/13 18:08:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2008, Bob Beck <beck@openbsd.org>
@@ -57,11 +57,11 @@ struct dhcp_synctlv_hdr {
 } __packed;
 
 struct dhcp_synctlv_lease {
-	u_int16_t	type;
-	u_int16_t	length;
-	u_int32_t	starts, ends, timestamp;
-	struct iaddr	ip_addr;
-	struct hardware	hardware_addr;
+	u_int16_t	lv_type;
+	u_int16_t	lv_length;
+	u_int32_t	lv_starts, lv_ends, lv_timestamp;
+	struct iaddr	lv_ip_addr;
+	struct hardware	lv_hardware_addr;
 } __packed;
 
 #define DHCP_SYNC_END		0x0000

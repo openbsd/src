@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.11 2013/04/12 00:27:32 krw Exp $	*/
+/*	$OpenBSD: sync.c,v 1.12 2013/04/13 18:08:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -300,11 +300,12 @@ sync_recv(void)
 			if (sizeof(*lv) > ntohs(tlv->st_length))
 				goto trunc;
 			if ((lease = find_lease_by_hw_addr(
-				    lv->hardware_addr.haddr,
-				    lv->hardware_addr.hlen)) == NULL) {
+				    lv->lv_hardware_addr.haddr,
+				    lv->lv_hardware_addr.hlen)) == NULL) {
 				if ((lease = find_lease_by_hw_addr(
-					    lv->hardware_addr.haddr,
-					    lv->hardware_addr.hlen)) == NULL) {
+					    lv->lv_hardware_addr.haddr,
+					    lv->lv_hardware_addr.hlen)) == NULL)
+				    {
 					lp = &l;
 					memset(lp, 0, sizeof(*lp));
 				} else
@@ -314,12 +315,12 @@ sync_recv(void)
 
 			lp = &l;
 			memset(lp, 0, sizeof(*lp));
-			lp->timestamp = ntohl(lv->timestamp);
-			lp->starts = ntohl(lv->starts);
-			lp->ends = ntohl(lv->ends);
-			memcpy(&lp->ip_addr, &lv->ip_addr,
+			lp->timestamp = ntohl(lv->lv_timestamp);
+			lp->starts = ntohl(lv->lv_starts);
+			lp->ends = ntohl(lv->lv_ends);
+			memcpy(&lp->ip_addr, &lv->lv_ip_addr,
 			    sizeof(lp->ip_addr));
-			memcpy(&lp->hardware_addr, &lv->hardware_addr,
+			memcpy(&lp->hardware_addr, &lv->lv_hardware_addr,
 			    sizeof(lp->hardware_addr));
 			note("DHCP_SYNC_LEASE from %s for hw %s -> ip %s, "
 			    "start %d, end %d",
@@ -401,7 +402,7 @@ sync_lease(struct lease *lease)
 {
 	struct iovec iov[4];
 	struct dhcp_synchdr hdr;
-	struct dhcp_synctlv_lease ld;
+	struct dhcp_synctlv_lease lv;
 	struct dhcp_synctlv_hdr end;
 	char pad[DHCP_ALIGNBYTES];
 	u_int16_t leaselen, padlen;
@@ -413,40 +414,40 @@ sync_lease(struct lease *lease)
 		return;
 
 	bzero(&hdr, sizeof(hdr));
-	bzero(&ld, sizeof(ld));
+	bzero(&lv, sizeof(lv));
 	bzero(&pad, sizeof(pad));
 
 	HMAC_CTX_init(&ctx);
 	HMAC_Init(&ctx, sync_key, strlen(sync_key), EVP_sha1());
 
-	leaselen = sizeof(ld);
+	leaselen = sizeof(lv);
 	padlen = DHCP_ALIGN(leaselen) - leaselen;
 
 	/* Add DHCP sync packet header */
 	hdr.sh_version = DHCP_SYNC_VERSION;
 	hdr.sh_af = AF_INET;
 	hdr.sh_counter = sync_counter++;
-	hdr.sh_length = htons(sizeof(hdr) + sizeof(ld) + padlen + sizeof(end));
+	hdr.sh_length = htons(sizeof(hdr) + sizeof(lv) + padlen + sizeof(end));
 	iov[i].iov_base = &hdr;
 	iov[i].iov_len = sizeof(hdr);
 	HMAC_Update(&ctx, iov[i].iov_base, iov[i].iov_len);
 	i++;
 
 	/* Add single DHCP sync address entry */
-	ld.type = htons(DHCP_SYNC_LEASE);
-	ld.length = htons(leaselen + padlen);
-	ld.timestamp = htonl(lease->timestamp);
-	ld.starts = htonl(lease->starts);
-	ld.ends =  htonl(lease->ends);
-	memcpy(&ld.ip_addr, &lease->ip_addr, sizeof(ld.ip_addr));
-	memcpy(&ld.hardware_addr, &lease->hardware_addr,
-	    sizeof(ld.hardware_addr));
+	lv.lv_type = htons(DHCP_SYNC_LEASE);
+	lv.lv_length = htons(leaselen + padlen);
+	lv.lv_timestamp = htonl(lease->timestamp);
+	lv.lv_starts = htonl(lease->starts);
+	lv.lv_ends =  htonl(lease->ends);
+	memcpy(&lv.lv_ip_addr, &lease->ip_addr, sizeof(lv.lv_ip_addr));
+	memcpy(&lv.lv_hardware_addr, &lease->hardware_addr,
+	    sizeof(lv.lv_hardware_addr));
 	note("sending DHCP_SYNC_LEASE for hw %s -> ip %s, start %d, end %d",
-	    print_hw_addr(ld.hardware_addr.htype, ld.hardware_addr.hlen,
-	    ld.hardware_addr.haddr), piaddr(lease->ip_addr), ntohl(ld.starts),
-	    ntohl(ld.ends));
-	iov[i].iov_base = &ld;
-	iov[i].iov_len = sizeof(ld);
+	    print_hw_addr(lv.lv_hardware_addr.htype, lv.lv_hardware_addr.hlen,
+	    lv.lv_hardware_addr.haddr), piaddr(lease->ip_addr),
+	    ntohl(lv.lv_starts), ntohl(lv.lv_ends));
+	iov[i].iov_base = &lv;
+	iov[i].iov_len = sizeof(lv);
 	HMAC_Update(&ctx, iov[i].iov_base, iov[i].iov_len);
 	i++;
 
