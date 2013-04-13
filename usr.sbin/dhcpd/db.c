@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.10 2004/09/16 18:35:42 deraadt Exp $	*/
+/*	$OpenBSD: db.c,v 1.11 2013/04/13 16:40:36 krw Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -63,9 +63,7 @@ write_lease(struct lease *lease)
 
 	if (counting)
 		++count;
-	errno = 0;
-	fprintf(db_file, "lease %s {\n", piaddr(lease->ip_addr));
-	if (errno)
+	if (fprintf(db_file, "lease %s {\n", piaddr(lease->ip_addr)) == -1)
 		++errors;
 
 	t = gmtime(&lease->starts);
@@ -73,9 +71,7 @@ write_lease(struct lease *lease)
 	    t->tm_wday, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
 	    t->tm_hour, t->tm_min, t->tm_sec);
 
-	errno = 0;
-	fprintf(db_file, "\tstarts %s\n", tbuf);
-	if (errno)
+	if (fprintf(db_file, "\tstarts %s\n", tbuf) == -1)
 		++errors;
 
 	t = gmtime(&lease->ends);
@@ -83,50 +79,39 @@ write_lease(struct lease *lease)
 	    t->tm_wday, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
 	    t->tm_hour, t->tm_min, t->tm_sec);
 
-	errno = 0;
-	fprintf(db_file, "\tends %s", tbuf);
-	if (errno)
+	if (fprintf(db_file, "\tends %s", tbuf) == -1)
 		++errors;
 
 	if (lease->hardware_addr.hlen) {
-		errno = 0;
-		fprintf(db_file, "\n\thardware %s %s;",
+		if (fprintf(db_file, "\n\thardware %s %s;",
 		    hardware_types[lease->hardware_addr.htype],
 		    print_hw_addr(lease->hardware_addr.htype,
 		    lease->hardware_addr.hlen,
-		    lease->hardware_addr.haddr));
-		if (errno)
+		    lease->hardware_addr.haddr)) == -1)
 			++errors;
 	}
 
 	if (lease->uid_len) {
 		int j;
 
-		errno = 0;
-		fprintf(db_file, "\n\tuid %2.2x", lease->uid[0]);
-		if (errno)
+		if (fprintf(db_file, "\n\tuid %2.2x", lease->uid[0]) == -1)
 			++errors;
 
 		for (j = 1; j < lease->uid_len; j++) {
-			errno = 0;
-			fprintf(db_file, ":%2.2x", lease->uid[j]);
-			if (errno)
+			if (fprintf(db_file, ":%2.2x", lease->uid[j]) == -1)
 				++errors;
 		}
-		putc(';', db_file);
+		if (fputc(';', db_file) == EOF)
+			++errors;
 	}
 
 	if (lease->flags & BOOTP_LEASE) {
-		errno = 0;
-		fprintf(db_file, "\n\tdynamic-bootp;");
-		if (errno)
+		if (fprintf(db_file, "\n\tdynamic-bootp;") == -1)
 			++errors;
 	}
 
 	if (lease->flags & ABANDONED_LEASE) {
-		errno = 0;
-		fprintf(db_file, "\n\tabandoned;");
-		if (errno)
+		if (fprintf(db_file, "\n\tabandoned;") == -1)
 			++errors;
 	}
 
@@ -135,10 +120,8 @@ write_lease(struct lease *lease)
 			if (lease->client_hostname[i] < 33 ||
 			    lease->client_hostname[i] > 126)
 				goto bad_client_hostname;
-		errno = 0;
-		fprintf(db_file, "\n\tclient-hostname \"%s\";",
-		    lease->client_hostname);
-		if (errno)
+		if (fprintf(db_file, "\n\tclient-hostname \"%s\";",
+		    lease->client_hostname) == -1)
 			++errors;
 	}
 
@@ -148,17 +131,13 @@ bad_client_hostname:
 			if (lease->hostname[i] < 33 ||
 			    lease->hostname[i] > 126)
 				goto bad_hostname;
-		errno = 0;
-		fprintf(db_file, "\n\thostname \"%s\";",
-		    lease->hostname);
-		if (errno)
+		if (fprintf(db_file, "\n\thostname \"%s\";",
+		    lease->hostname) == -1)
 			++errors;
 	}
 
 bad_hostname:
-	errno = 0;
-	fputs("\n}\n", db_file);
-	if (errno)
+	if (fputs("\n}\n", db_file) == EOF)
 		++errors;
 
 	if (errors)
