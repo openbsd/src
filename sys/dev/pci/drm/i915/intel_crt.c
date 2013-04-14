@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_crt.c,v 1.2 2013/04/12 08:32:53 jsg Exp $	*/
+/*	$OpenBSD: intel_crt.c,v 1.3 2013/04/14 05:38:36 jsg Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -43,6 +43,9 @@
 
 struct intel_crt {
 	struct intel_encoder base;
+	/* DPMS state is stored in the connector, which we need in the
+	 * encoder's enable/disable callbacks */
+	struct intel_connector *connector;
 	bool force_hotplug_required;
 	u32 adpa_reg;
 };
@@ -113,31 +116,6 @@ intel_crt_get_hw_state(struct intel_encoder *encoder,
 	return true;
 }
 
-void
-intel_disable_crt(struct intel_encoder *encoder)
-{
-	struct inteldrm_softc *dev_priv = encoder->base.dev->dev_private;
-	struct intel_crt *crt = intel_encoder_to_crt(encoder);
-	u32 temp;
-
-	temp = I915_READ(crt->adpa_reg);
-	temp |= ADPA_HSYNC_CNTL_DISABLE | ADPA_VSYNC_CNTL_DISABLE;
-	temp &= ~ADPA_DAC_ENABLE;
-	I915_WRITE(crt->adpa_reg, temp);
-}
-
-void
-intel_enable_crt(struct intel_encoder *encoder)
-{
-	struct inteldrm_softc *dev_priv = encoder->base.dev->dev_private;
-	struct intel_crt *crt = intel_encoder_to_crt(encoder);
-	u32 temp;
-
-	temp = I915_READ(crt->adpa_reg);
-	temp |= ADPA_DAC_ENABLE;
-	I915_WRITE(crt->adpa_reg, temp);
-}
-
 /* Note: The caller is required to filter out dpms modes not supported by the
  * platform. */
 void
@@ -168,6 +146,20 @@ intel_crt_set_dpms(struct intel_encoder *encoder, int mode)
 	}
 
 	I915_WRITE(crt->adpa_reg, temp);
+}
+
+void
+intel_disable_crt(struct intel_encoder *encoder)
+{
+	intel_crt_set_dpms(encoder, DRM_MODE_DPMS_OFF);
+}
+
+void
+intel_enable_crt(struct intel_encoder *encoder)
+{
+	struct intel_crt *crt = intel_encoder_to_crt(encoder);
+	
+	intel_crt_set_dpms(encoder, crt->connector->base.dpms);
 }
 
 void
@@ -816,6 +808,7 @@ intel_crt_init(struct drm_device *dev)
 	}
 
 	connector = &intel_connector->base;
+	crt->connector = intel_connector;
 	drm_connector_init(dev, &intel_connector->base,
 			   &intel_crt_connector_funcs, DRM_MODE_CONNECTOR_VGA);
 
