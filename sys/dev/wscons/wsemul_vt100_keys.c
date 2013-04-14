@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_keys.c,v 1.5 2009/09/05 14:49:20 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_keys.c,v 1.6 2013/04/14 19:40:12 miod Exp $ */
 /* $NetBSD: wsemul_vt100_keys.c,v 1.3 1999/04/22 20:06:02 mycroft Exp $ */
 
 /*
@@ -58,6 +58,10 @@ static const char *vt100_fkeys[] = {
 	"\033[32~",
 	"\033[33~",
 	"\033[34~",	/* F20 */
+	"\033[35~",
+	"\033[36~",
+	"\033[37~",
+	"\033[38~"
 };
 
 static const char *vt100_pfkeys[] = {
@@ -86,11 +90,11 @@ wsemul_vt100_translate(void *cookie, keysym_t in, const char **out)
 	struct wsemul_vt100_emuldata *edp = cookie;
 	static char c;
 
-	if (in >= KS_f1 && in <= KS_f20) {
+	if (in >= KS_f1 && in <= KS_f24) {
 		*out = vt100_fkeys[in - KS_f1];
 		return (5);
 	}
-	if (in >= KS_F1 && in <= KS_F20) {
+	if (in >= KS_F1 && in <= KS_F24) {
 		*out = vt100_fkeys[in - KS_F1];
 		return (5);
 	}
