@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_getconcurrency.3,v 1.2 2007/05/31 19:19:36 jmc Exp $
+.\" $OpenBSD: pthread_getconcurrency.3,v 1.3 2013/04/14 21:31:01 sthen Exp $
 .\"
 .\" Copyright (c) 2003 Sergey Osokin <osa@FreeBSD.org.ru>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/pthread_getconcurrency.3,v 1.2 2003/05/24 19:50:43 ru Exp $
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 14 2013 $
 .Dt PTHREAD_GETCONCURRENCY 3
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Fn pthread_setconcurrency "int new_level"
 .Sh DESCRIPTION
 The
-.Fn pthread_getconcurrency
+.Fn pthread_setconcurrency
 function allows an application to inform the threads implementation
 of its desired concurrency level,
 .Fa new_level .
