@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.5 2013/04/04 17:49:33 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr.c,v 1.6 2013/04/14 22:23:08 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -82,7 +82,7 @@ _fillhostent(const struct hostent *h, struct hostent *r, char *buf, size_t len)
 		pos += n + 1;
 	}
 
-	pos = (char*)ALIGN(pos);
+	pos = (char *)ALIGN(pos);
 	if (pos >= end)
 		return;
 

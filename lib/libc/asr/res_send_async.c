@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.15 2013/04/05 07:12:24 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.16 2013/04/14 22:23:08 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -600,7 +600,7 @@ tcp_read(struct async *as)
 	/* We must read the packet len first */
 	if (as->as.dns.datalen < sizeof(as->as.dns.pktlen)) {
 
-		pos = (char*)(&as->as.dns.pktlen) + as->as.dns.datalen;
+		pos = (char *)(&as->as.dns.pktlen) + as->as.dns.datalen;
 		len = sizeof(as->as.dns.pktlen) - as->as.dns.datalen;
 
 		n = read(as->as_fd, pos, len);

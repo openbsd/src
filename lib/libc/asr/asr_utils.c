@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.6 2013/04/02 21:23:17 eric Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.7 2013/04/14 22:23:08 deraadt Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -424,7 +424,7 @@ sockaddr_from_str(struct sockaddr *sa, int family, const char *str)
 	struct in6_addr		 in6a;
 	struct sockaddr_in	*sin;
 	struct sockaddr_in6	*sin6;
-	char 			*cp, *str2;
+	char			*cp, *str2;
 	const char		*errstr;
 
 	switch (family) {

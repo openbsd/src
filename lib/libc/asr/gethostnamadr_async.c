@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.17 2013/04/03 21:13:50 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.18 2013/04/14 22:23:08 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -535,7 +535,7 @@ fail:
 static struct hostent_ext *
 hostent_alloc(int family)
 {
-	struct hostent_ext     *h;
+	struct hostent_ext	*h;
 	size_t			alloc;
 
 	alloc = sizeof(*h) + 1024;
