@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.17 2013/04/05 02:54:51 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.18 2013/04/14 19:04:37 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -751,204 +751,53 @@ inteldrm_doswitch(void *v, void *cookie)
  * Accelerated routines.
  */
 
-int inteldrm_copycols(void *, int, int, int, int);
-int inteldrm_erasecols(void *, int, int, int, long);
 int inteldrm_copyrows(void *, int, int, int);
-int inteldrm_eraserows(void *cookie, int, int, long);
-void inteldrm_copyrect(struct inteldrm_softc *, int, int, int, int, int, int);
-void inteldrm_fillrect(struct inteldrm_softc *, int, int, int, int, int);
-
-int
-inteldrm_copycols(void *cookie, int row, int src, int dst, int num)
-{
-	struct rasops_info *ri = cookie;
-	struct inteldrm_softc *sc = ri->ri_hw;
-	struct drm_device *dev = (struct drm_device *)sc->drmdev;
-
-	if (dev->open_count > 0 || sc->noaccel)
-		return sc->noaccel_copycols(cookie, row, src, dst, num);
-
-	num *= ri->ri_font->fontwidth;
-	src *= ri->ri_font->fontwidth;
-	dst *= ri->ri_font->fontwidth;
-	row *= ri->ri_font->fontheight;
-
-	inteldrm_copyrect(sc, ri->ri_xorigin + src, ri->ri_yorigin + row,
-	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
-	    num, ri->ri_font->fontheight);
-
-	return 0;
-}
-
-int
-inteldrm_erasecols(void *cookie, int row, int col, int num, long attr)
-{
-	struct rasops_info *ri = cookie;
-	struct inteldrm_softc *sc = ri->ri_hw;
-	struct drm_device *dev = (struct drm_device *)sc->drmdev;
-	int bg, fg;
-
-	if (dev->open_count > 0 || sc->noaccel)
-		return sc->noaccel_erasecols(cookie, row, col, num, attr);
-
-	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
-
-	row *= ri->ri_font->fontheight;
-	col *= ri->ri_font->fontwidth;
-	num *= ri->ri_font->fontwidth;
-
-	inteldrm_fillrect(sc, ri->ri_xorigin + col, ri->ri_yorigin + row,
-	    num, ri->ri_font->fontheight, ri->ri_devcmap[bg]);
-
-	return 0;
-}
 
 int
 inteldrm_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
 	struct inteldrm_softc *sc = ri->ri_hw;
-	struct drm_device *dev = (struct drm_device *)sc->drmdev;
 
-	if (dev->open_count > 0 || sc->noaccel)
-		return sc->noaccel_copyrows(cookie, src, dst, num);
+	if (dst == 0 && (src + num) == ri->ri_rows) {
+		struct inteldrm_softc *dev_priv = sc;
+		struct drm_fb_helper *helper = &dev_priv->fbdev->helper;
+		size_t size = dev_priv->fbdev->ifb.obj->base.size / 2;
+		int delta = src * ri->ri_font->fontheight * ri->ri_stride;
+		int i;
 
-	num *= ri->ri_font->fontheight;
-	src *= ri->ri_font->fontheight;
-	dst *= ri->ri_font->fontheight;
+		bzero(ri->ri_bits, delta);
 
-	inteldrm_copyrect(sc, ri->ri_xorigin, ri->ri_yorigin + src,
-	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+		sc->sc_offset += delta;
+		ri->ri_bits += delta;
+		ri->ri_origbits += delta;
+		if (sc->sc_offset > size) {
+			sc->sc_offset -= size;
+			ri->ri_bits -= size;
+			ri->ri_origbits -= size;
+		}
 
-	return 0;
-}
+		for (i = 0; i < helper->crtc_count; i++) {
+			struct drm_mode_set *mode_set =
+			    &helper->crtc_info[i].mode_set;
+			struct drm_crtc *crtc = mode_set->crtc;
+			struct drm_framebuffer *fb = helper->fb;
 
-int
-inteldrm_eraserows(void *cookie, int row, int num, long attr)
-{
-	struct rasops_info *ri = cookie;
-	struct inteldrm_softc *sc = ri->ri_hw;
-	struct drm_device *dev = (struct drm_device *)sc->drmdev;
-	int bg, fg;
-	int x, y, w;
+			if (!crtc->enabled)
+				continue;
 
-	if (dev->open_count > 0 || sc->noaccel)
-		return sc->noaccel_eraserows(cookie, row, num, attr);
+			mode_set->x = (sc->sc_offset % ri->ri_stride) /
+			    (ri->ri_depth / 8);
+			mode_set->y = sc->sc_offset / ri->ri_stride;
+			if (fb == crtc->fb)
+				dev_priv->display.update_plane(crtc, fb,
+				    mode_set->x, mode_set->y);
+		}
 
-	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
-
-	if ((num == ri->ri_rows) && ISSET(ri->ri_flg, RI_FULLCLEAR)) {
-		num = ri->ri_height;
-		x = y = 0;
-		w = ri->ri_width;
-	} else {
-		num *= ri->ri_font->fontheight;
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + row * ri->ri_font->fontheight;
-		w = ri->ri_emuwidth;
-	}
-	inteldrm_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
-
-	return 0;
-}
-
-void
-inteldrm_copyrect(struct inteldrm_softc *dev_priv, int sx, int sy,
-    int dx, int dy, int w, int h)
-{
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
-	bus_addr_t base = dev_priv->fbdev->ifb.obj->gtt_offset;
-	uint32_t pitch = dev_priv->fbdev->ifb.base.pitches[0];
-	struct intel_ring_buffer *ring;
-	uint32_t seqno;
-	int ret, i;
-
-	if (HAS_BLT(dev))
-		ring = &dev_priv->rings[BCS];
-	else
-		ring = &dev_priv->rings[RCS];
-
-	ret = intel_ring_begin(ring, 8);
-	if (ret)
-		return;
-
-	intel_ring_emit(ring, XY_SRC_COPY_BLT_CMD |
-	    XY_SRC_COPY_BLT_WRITE_ALPHA | XY_SRC_COPY_BLT_WRITE_RGB);
-	intel_ring_emit(ring, BLT_DEPTH_32 | BLT_ROP_GXCOPY | pitch);
-	intel_ring_emit(ring, (dx << 0) | (dy << 16));
-	intel_ring_emit(ring, ((dx + w) << 0) | ((dy + h) << 16));
-	intel_ring_emit(ring, base);
-	intel_ring_emit(ring, (sx << 0) | (sy << 16));
-	intel_ring_emit(ring, pitch);
-	intel_ring_emit(ring, base);
-	intel_ring_advance(ring);
-
-	ret = ring->flush(ring, 0, I915_GEM_GPU_DOMAINS);
-	if (ret)
-		return;
-
-	ret = i915_add_request(ring, NULL, &seqno);
-	if (ret)
-		return;
-
-	for (i = 1000000; i != 0; i--) {
-		if (i915_seqno_passed(ring->get_seqno(ring, true), seqno))
-			break;
-		DELAY(1);
+		return 0;
 	}
 
-	i915_gem_retire_requests_ring(ring);
-}
-
-void
-inteldrm_fillrect(struct inteldrm_softc *dev_priv, int x, int y,
-    int w, int h, int color)
-{
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
-	bus_addr_t base = dev_priv->fbdev->ifb.obj->gtt_offset;
-	uint32_t pitch = dev_priv->fbdev->ifb.base.pitches[0];
-	struct intel_ring_buffer *ring;
-	uint32_t seqno;
-	int ret, i;
-
-	if (HAS_BLT(dev))
-		ring = &dev_priv->rings[BCS];
-	else
-		ring = &dev_priv->rings[RCS];
-
-	ret = intel_ring_begin(ring, 6);
-	if (ret)
-		return;
-
-#define XY_COLOR_BLT_CMD		((2<<29)|(0x50<<22)|4)
-#define XY_COLOR_BLT_WRITE_ALPHA	(1<<21)
-#define XY_COLOR_BLT_WRITE_RGB		(1<<20)
-#define   BLT_ROP_PATCOPY		(0xf0<<16)
-
-	intel_ring_emit(ring, XY_COLOR_BLT_CMD |
-	    XY_COLOR_BLT_WRITE_ALPHA | XY_COLOR_BLT_WRITE_RGB);
-	intel_ring_emit(ring, BLT_DEPTH_32 | BLT_ROP_PATCOPY | pitch);
-	intel_ring_emit(ring, (x << 0) | (y << 16));
-	intel_ring_emit(ring, ((x + w) << 0) | ((y + h) << 16));
-	intel_ring_emit(ring, base);
-	intel_ring_emit(ring, color);
-	intel_ring_advance(ring);
-
-	ret = ring->flush(ring, 0, I915_GEM_GPU_DOMAINS);
-	if (ret)
-		return;
-
-	ret = i915_add_request(ring, NULL, &seqno);
-	if (ret)
-		return;
-
-	for (i = 1000000; i != 0; i--) {
-		if (i915_seqno_passed(ring->get_seqno(ring, true), seqno))
-			break;
-		DELAY(1);
-	}
-
-	i915_gem_retire_requests_ring(ring);
+	return sc->sc_copyrows(cookie, src, dst, num);
 }
 
 void
@@ -1171,14 +1020,8 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	rasops_init(ri, 96, 132);
 
 	ri->ri_hw = dev_priv;
-	dev_priv->noaccel_copyrows = ri->ri_copyrows;
-	dev_priv->noaccel_copycols = ri->ri_copycols;
-	dev_priv->noaccel_eraserows = ri->ri_eraserows;
-	dev_priv->noaccel_erasecols = ri->ri_erasecols;
+	dev_priv->sc_copyrows = ri->ri_copyrows;
 	ri->ri_copyrows = inteldrm_copyrows;
-	ri->ri_copycols = inteldrm_copycols;
-	ri->ri_eraserows = inteldrm_eraserows;
-	ri->ri_erasecols = inteldrm_erasecols;
 
 	inteldrm_stdscreen.capabilities = ri->ri_caps;
 	inteldrm_stdscreen.nrows = ri->ri_rows;
@@ -1201,6 +1044,8 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		    0, 0, defattr);
 		aa.console = 1;
 	}
+
+	printf("%s: %dx%d\n", dev_priv->dev.dv_xname, ri->ri_width, ri->ri_height);
 
 	vga_sc->sc_type = -1;
 	config_found(parent, &aa, wsemuldisplaydevprint);
@@ -1257,7 +1102,6 @@ inteldrm_activate(struct device *arg, int act)
 	switch (act) {
 	case DVACT_QUIESCE:
 //		inteldrm_quiesce(dev_priv);
-		dev_priv->noaccel = 1;
 		i915_drm_freeze(dev);
 		break;
 	case DVACT_SUSPEND:
@@ -1270,7 +1114,6 @@ inteldrm_activate(struct device *arg, int act)
 //		wakeup(&dev_priv->flags);
 		i915_drm_thaw(dev);
 		intel_fb_restore_mode(dev);
-		dev_priv->noaccel = 0;
 		break;
 	}
 

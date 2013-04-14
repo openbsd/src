@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.103 2013/04/10 01:35:55 guenther Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.104 2013/04/14 19:04:37 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1706,6 +1706,22 @@ drm_gem_load_uao(bus_dma_tag_t dmat, bus_dmamap_t map, struct uvm_object *uao,
 
 	if ((ret = bus_dmamap_load_raw(dmat, map, segs, i, size, flags)) != 0)
 		goto unwire;
+
+	/*
+	 * Create a mapping that wraps around once; the second half
+	 * maps to the same set of physical pages as the first half.
+	 * Used to implement fast vertical scrolling in inteldrm(4).
+	 *
+	 * XXX This is an ugly hack that wastes pages and abuses the
+	 * internals of the scatter gather DMA code.
+	 */
+	if (flags & BUS_DMA_GTT_WRAPAROUND) {
+		struct sg_page_map *spm = map->_dm_cookie;
+
+		for (i = spm->spm_pagecnt / 2; i < spm->spm_pagecnt; i++)
+			spm->spm_map[i].spe_pa = spm->spm_map[i - spm->spm_pagecnt / 2].spe_pa;
+		agp_bus_dma_rebind(dmat, map, flags);
+	}
 
 	*segp = segs;
 

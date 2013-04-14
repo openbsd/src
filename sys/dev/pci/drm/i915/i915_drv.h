@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.12 2013/04/03 07:36:57 jsg Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.13 2013/04/14 19:04:37 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -512,11 +512,8 @@ struct inteldrm_softc {
 	struct workq_task	 switchwqt;
 	struct rasops_info	 ro;
 
-	int	noaccel;
-	int	(*noaccel_copycols)(void *, int, int, int, int);
-	int	(*noaccel_erasecols)(void *, int, int, int, long);
-	int	(*noaccel_copyrows)(void *, int, int, int);
-	int	(*noaccel_eraserows)(void *, int, int, long);
+	int	sc_offset;
+	int	(*sc_copyrows)(void *, int, int, int);
 
 	uint32_t		 gpio_mmio_base;
 

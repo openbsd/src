@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_fb.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
+/*	$OpenBSD: intel_fb.c,v 1.3 2013/04/14 19:04:37 kettenis Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -66,13 +66,14 @@ intelfb_create(struct intel_fbdev *ifbdev,
 							  sizes->surface_depth);
 
 	size = mode_cmd.pitches[0] * mode_cmd.height;
-	size = roundup2(size, PAGE_SIZE);
+	size = roundup2(size, PAGE_SIZE) * 2;
 	obj = i915_gem_alloc_object(dev, size);
 	if (!obj) {
 		DRM_ERROR("failed to allocate framebuffer\n");
 		ret = -ENOMEM;
 		goto out;
 	}
+	obj->dma_flags |= BUS_DMA_GTT_WRAPAROUND;
 
 	DRM_LOCK();
 
