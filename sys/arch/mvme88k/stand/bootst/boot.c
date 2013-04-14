@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.5 2013/01/05 11:20:56 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.6 2013/04/14 19:05:19 miod Exp $ */
 /*-
  * Changes Copyright (c) 1998 steve Murphree, Jr.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -43,7 +43,6 @@ extern int errno;
 
 int main()
 {
-	static char dnm[32] = "2";
 	char line[80];
 	char *filename;
 	int bflag = 0;
@@ -51,16 +50,16 @@ int main()
 
 	*bugargs.arg_end = 0; /* ensure */
 	parse_args(&filename, &bflag);
-	filename = dnm;	/* override */
+	filename = "2";	/* override */
 
 	if (bflag & RB_ASKNAME) {
-		printf("tapeboot: segment? [%s] ", dnm);
+		printf("tapeboot: segment? [%s] ", filename);
 		gets(line);
 		if (line[0])
 			filename = line;
 	}
 
-	exec_mvme(filename, bflag);
+	exec_mvme(filename, bflag | RB_NOSYM);
 
 	printf("tapeboot: %s: %s\n", filename, strerror(errno));
 	return(0);

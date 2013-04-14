@@ -1,5 +1,4 @@
-/*	$OpenBSD: rawfs.c,v 1.6 2012/12/31 21:35:32 miod Exp $	*/
-/*	$NetBSD: rawfs.c,v 1.1 1995/10/17 22:58:27 gwr Exp $	*/
+/*	$OpenBSD: rawfs.c,v 1.7 2013/04/14 19:05:19 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -43,24 +42,28 @@
 #include <stand.h>
 #include <rawfs.h>
 
-#define	RAWFS_BSIZE	512
+/*
+ * Must be a multiple of MVMEPROM_BLOCK_SIZE, and at least as large as
+ * Z_BUFSIZE from libsa cread.c to be able to correctly emulate forward
+ * seek.
+ */
+#define	RAWFS_BSIZE	4096
 
 /*
  * In-core open file.
  */
 struct cfile {
-	daddr32_t	fs_nextblk;	/* block number to read next */
+	off_t		fs_bufpos;	/* file position of fs_buf */
 	int		fs_len;		/* amount left in f_buf */
 	char *		fs_ptr;		/* read pointer into f_buf */
 	char		fs_buf[RAWFS_BSIZE];
 };
 
-static int
-rawfs_get_block(struct open_file *);
+static int rawfs_get_block(struct open_file *);
+static off_t rawfs_get_pos(struct cfile *);
 
-int	rawfs_open(path, f)
-	char *path;
-	struct open_file *f;
+int
+rawfs_open(char *path, struct open_file *f)
 {
 	struct cfile *fs;
 
@@ -69,33 +72,30 @@ int	rawfs_open(path, f)
 	 * Just allocate the I/O buffer, etc.
 	 */
 	fs = alloc(sizeof(struct cfile));
-	fs->fs_nextblk = 0;
-	fs->fs_len = 0;
-	fs->fs_ptr = fs->fs_buf;
+	fs->fs_bufpos = 0;
+	fs->fs_len = 0;	
+	fs->fs_ptr = NULL;	/* nothing read yet */
 
 	f->f_fsdata = fs;
 	return (0);
 }
 
-int	rawfs_close(f)
-	struct open_file *f;
+int
+rawfs_close(struct open_file *f)
 {
 	struct cfile *fs;
 
 	fs = (struct cfile *) f->f_fsdata;
-	f->f_fsdata = (void *)0;
+	f->f_fsdata = NULL;
 
-	if (fs != (struct cfile *)0)
+	if (fs != NULL)
 		free(fs, sizeof(*fs));
 
 	return (0);
 }
 
-int	rawfs_read(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;
+int
+rawfs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	struct cfile *fs = (struct cfile *)f->f_fsdata;
 	char *addr = start;
@@ -103,7 +103,6 @@ int	rawfs_read(f, start, size, resid)
 	size_t csize;
 
 	while (size != 0) {
-
 		if (fs->fs_len == 0)
 			if ((error = rawfs_get_block(f)) != 0)
 				break;
@@ -126,55 +125,106 @@ int	rawfs_read(f, start, size, resid)
 	return (error);
 }
 
-int	rawfs_write(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;	/* out */
+int
+rawfs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	return (EROFS);
 }
 
-off_t	rawfs_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+off_t
+rawfs_seek(struct open_file *f, off_t offset, int where)
+{
+	struct cfile *fs = (struct cfile *)f->f_fsdata;
+	off_t oldpos, basepos;
+	int error;
+
+	oldpos = rawfs_get_pos(fs);
+	switch (where) {
+	case SEEK_SET:
+		break;
+	case SEEK_CUR:
+		offset += oldpos;
+		break;
+	default:
+	case SEEK_END:
+		return -1;
+	}
+
+	basepos = (offset / RAWFS_BSIZE) * RAWFS_BSIZE;
+	offset %= RAWFS_BSIZE;
+
+	/* backward seek are not possible */
+	if (basepos < fs->fs_bufpos) {
+		errno = EIO;
+		return -1;
+	}
+
+	if (basepos == fs->fs_bufpos) {
+		/* if we seek before the first read... */
+		if (fs->fs_ptr == NULL) {
+			if ((error = rawfs_get_block(f)) != 0) {
+				errno = error;
+				return -1;
+			}
+		}
+		/* rewind to start of the buffer */
+		fs->fs_len += (fs->fs_ptr - fs->fs_buf);
+		fs->fs_ptr = fs->fs_buf;
+	} else {
+		while (basepos != fs->fs_bufpos)
+			if ((error = rawfs_get_block(f)) != 0) {
+				errno = error;
+				return -1;
+			}
+	}
+	/* now move forward within the buffer */
+	if (offset > fs->fs_len)
+		offset = fs->fs_len;	/* EOF */
+	fs->fs_len -= offset;
+	fs->fs_ptr += offset;
+
+	return rawfs_get_pos(fs);
+}
+
+int
+rawfs_stat(struct open_file *f, struct stat *sb)
 {
 	return (EFTYPE);
 }
-
-int	rawfs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
-{
-	return (EFTYPE);
-}
-
 
 /*
  * Read a block from the underlying stream device
  * (In our case, a tape drive.)
  */
 static int
-rawfs_get_block(f)
-	struct open_file *f;
+rawfs_get_block(struct open_file *f)
 {
 	struct cfile *fs;
 	int error;
 	size_t len;
+	off_t readpos;
 
 	fs = (struct cfile *)f->f_fsdata;
-	fs->fs_ptr = fs->fs_buf;
 
 	twiddle();
+	if (fs->fs_ptr != NULL)
+		readpos = fs->fs_bufpos + RAWFS_BSIZE;
+	else
+		readpos = fs->fs_bufpos;	/* first read */
 	error = f->f_dev->dv_strategy(f->f_devdata, F_READ,
-		fs->fs_nextblk, RAWFS_BSIZE, fs->fs_buf, &len);
+		readpos / DEV_BSIZE, RAWFS_BSIZE, fs->fs_buf, &len);
 
-	if (!error) {
+	if (error == 0) {
+		fs->fs_ptr = fs->fs_buf;
 		fs->fs_len = len;
-		fs->fs_nextblk += (RAWFS_BSIZE / DEV_BSIZE);
+		fs->fs_bufpos = readpos;
 	}
 
 	return (error);
 }
 
+static off_t
+rawfs_get_pos(struct cfile *fs)
+{
+	return fs->fs_bufpos + (fs->fs_ptr - fs->fs_buf);
+}

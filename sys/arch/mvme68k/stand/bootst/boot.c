@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 2012/12/31 21:35:32 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.5 2013/04/14 19:05:19 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/10/17 22:58:14 gwr Exp $ */
 
 /*-
@@ -46,7 +46,6 @@ extern int errno;
 int
 main()
 {
-	static char dnm[32] = "2";
 	char line[80];
 	char *filename;
 	int bflag = 0;
@@ -54,16 +53,16 @@ main()
 	printf(">> OpenBSD MVME%x tapeboot [%s]\n", bugargs.cputyp, version);
 
 	parse_args(&filename, &bflag);
-	filename = dnm;	/* override */
+	filename = "2";	/* override */
 
 	if (bflag & RB_ASKNAME) {
-		printf("tapeboot: segment? [%s] ", dnm);
+		printf("tapeboot: segment? [%s] ", filename);
 		gets(line);
 		if (line[0])
 			filename = line;
 	}
 
-	exec_mvme(filename, bflag);
+	exec_mvme(filename, bflag | RB_NOSYM);
 
 	printf("tapeboot: %s: %s\n", filename, strerror(errno));
 	return(0);
