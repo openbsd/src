@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsync.2,v 1.10 2013/03/31 22:11:26 guenther Exp $
+.\"	$OpenBSD: fsync.2,v 1.11 2013/04/15 16:38:21 matthew Exp $
 .\"	$NetBSD: fsync.2,v 1.4 1995/02/27 12:32:38 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,34 +30,50 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: April 15 2013 $
 .Dt FSYNC 2
 .Os
 .Sh NAME
-.Nm fsync
+.Nm fsync ,
+.Nm fdatasync
 .Nd "synchronize a file's in-core state with that on disk"
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
 .Fn fsync "int fd"
+.Ft int
+.Fn fdatasync "int fd"
 .Sh DESCRIPTION
+The
 .Fn fsync
-causes all modified data and attributes of
+function causes all modified data and attributes of
 .Fa fd
 to be moved to a permanent storage device.
 This normally results in all in-core modified copies
 of buffers for the associated file to be written to a disk.
 .Pp
+The
+.Fn fdatasync
+function is similar to
 .Fn fsync
+except that it only guarantees modified data
+.Pq and metadata necessary to read that data
+is committed to storage.
+Other file modifications may be left unsynchronized.
+.Pp
+.Fn fsync
+and
+.Fn fdatasync
 should be used by programs that require a file to be in a known state,
 for example, in building a simple transaction facility.
 .Sh RETURN VALUES
-A 0 value is returned on success.
-A \-1 value indicates an error.
+.Rv -std fsync fdatasync
 .Sh ERRORS
 The
 .Fn fsync
-fails if:
+and
+.Fn fdatasync
+functions fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa fd
@@ -74,10 +90,22 @@ An I/O error occurred while reading from or writing to the file system.
 .Sh STANDARDS
 The
 .Fn fsync
-function conforms to
+and
+.Fn fdatasync
+functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn fsync
-function call appeared in
+function appeared in
 .Bx 4.2 .
+The
+.Fn fdatasync
+function appeared in
+.Ox 5.4 .
+.Sh BUGS
+The
+.Fn fdatasync
+function is currently a wrapper around
+.Fn fsync ,
+so it synchronizes more state than necessary.

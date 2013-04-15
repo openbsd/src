@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.76 2013/04/11 03:09:16 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.77 2013/04/15 16:38:21 matthew Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -402,6 +402,9 @@ int	 fsync(int);
 int	 ftruncate(int, off_t);
 int	 getlogin_r(char *, size_t)
 		__attribute__((__bounded__(__string__,1,2)));
+#endif
+#if __POSIX_VISIBLE >= 199506
+int	 fdatasync(int);
 #endif
 
 #if __XPG_VISIBLE || __BSD_VISIBLE

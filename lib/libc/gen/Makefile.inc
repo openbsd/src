@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.58 2012/09/15 20:59:38 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.59 2013/04/15 16:38:21 matthew Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -6,7 +6,8 @@
 SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         basename.c clock.c closedir.c confstr.c ctermid.c ctype_.c \
         daemon.c devname.c dirfd.c dirname.c disklabel.c elf_hash.c err.c \
-        errx.c errlist.c errno.c exec.c fnmatch.c fpclassify.c frexp.c \
+        errx.c errlist.c errno.c exec.c \
+        fdatasync.c fnmatch.c fpclassify.c frexp.c \
         fstab.c ftok.c fts.c ftw.c getbsize.c getcap.c getcwd.c \
         getdomainname.c getgrent.c getgrouplist.c gethostname.c \
         getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
