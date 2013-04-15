@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.55 2013/03/30 02:42:24 lteo Exp $	*/
+/*	$OpenBSD: md5.c,v 1.56 2013/04/15 15:54:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -73,7 +73,7 @@ union ANY_CTX {
 int style_hash = STYLE_NORMAL;
 int style_cksum = STYLE_REVERSE;
 
-#define NHASHES	10
+#define NHASHES	11
 struct hash_function {
 	const char *name;
 	size_t digestlen;
@@ -156,6 +156,16 @@ struct hash_function {
 		(void (*)(void *, const unsigned char *, unsigned int))SHA1Update,
 		(void (*)(unsigned char *, void *))SHA1Final,
 		(char *(*)(void *, char *))SHA1End
+	}, {
+		"SHA224",
+		SHA224_DIGEST_LENGTH,
+		&style_hash,
+		0,
+		NULL,
+		(void (*)(void *))SHA224Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA224Update,
+		(void (*)(unsigned char *, void *))SHA224Final,
+		(char *(*)(void *, char *))SHA224End
 	}, {
 		"SHA256",
 		SHA256_DIGEST_LENGTH,

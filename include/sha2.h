@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.8 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.9 2013/04/15 15:54:17 millert Exp $	*/
 
 /*
  * FILE:	sha2.h
@@ -39,6 +39,9 @@
 
 
 /*** SHA-256/384/512 Various Length Definitions ***********************/
+#define SHA224_BLOCK_LENGTH		64
+#define SHA224_DIGEST_LENGTH		28
+#define SHA224_DIGEST_STRING_LENGTH	(SHA224_DIGEST_LENGTH * 2 + 1)
 #define SHA256_BLOCK_LENGTH		64
 #define SHA256_DIGEST_LENGTH		32
 #define SHA256_DIGEST_STRING_LENGTH	(SHA256_DIGEST_LENGTH * 2 + 1)
@@ -50,7 +53,7 @@
 #define SHA512_DIGEST_STRING_LENGTH	(SHA512_DIGEST_LENGTH * 2 + 1)
 
 
-/*** SHA-256/384/512 Context Structure *******************************/
+/*** SHA-224/256/384/512 Context Structure *******************************/
 typedef struct _SHA2_CTX {
 	union {
 		u_int32_t	st32[8];
@@ -61,6 +64,23 @@ typedef struct _SHA2_CTX {
 } SHA2_CTX;
 
 __BEGIN_DECLS
+void SHA224Init(SHA2_CTX *);
+void SHA224Transform(u_int32_t state[8], const u_int8_t [SHA224_BLOCK_LENGTH]);
+void SHA224Update(SHA2_CTX *, const u_int8_t *, size_t)
+	__attribute__((__bounded__(__string__,2,3)));
+void SHA224Pad(SHA2_CTX *);
+void SHA224Final(u_int8_t [SHA224_DIGEST_LENGTH], SHA2_CTX *)
+	__attribute__((__bounded__(__minbytes__,1,SHA224_DIGEST_LENGTH)));
+char *SHA224End(SHA2_CTX *, char *)
+	__attribute__((__bounded__(__minbytes__,2,SHA224_DIGEST_STRING_LENGTH)));
+char *SHA224File(const char *, char *)
+	__attribute__((__bounded__(__minbytes__,2,SHA224_DIGEST_STRING_LENGTH)));
+char *SHA224FileChunk(const char *, char *, off_t, off_t)
+	__attribute__((__bounded__(__minbytes__,2,SHA224_DIGEST_STRING_LENGTH)));
+char *SHA224Data(const u_int8_t *, size_t, char *)
+	__attribute__((__bounded__(__string__,1,2)))
+	__attribute__((__bounded__(__minbytes__,3,SHA224_DIGEST_STRING_LENGTH)));
+
 void SHA256Init(SHA2_CTX *);
 void SHA256Transform(u_int32_t state[8], const u_int8_t [SHA256_BLOCK_LENGTH]);
 void SHA256Update(SHA2_CTX *, const u_int8_t *, size_t)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.13 2009/04/15 00:55:52 djm Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.14 2013/04/15 15:54:17 millert Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -53,7 +53,7 @@
  *
  */
 
-/*** SHA-256/384/512 Machine Architecture Definitions *****************/
+/*** SHA-224/256/384/512 Machine Architecture Definitions *****************/
 /*
  * BYTE_ORDER NOTE:
  *
@@ -86,8 +86,9 @@
 #endif
 
 
-/*** SHA-256/384/512 Various Length Definitions ***********************/
+/*** SHA-224/256/384/512 Various Length Definitions ***********************/
 /* NOTE: Most of these are in sha2.h */
+#define SHA224_SHORT_BLOCK_LENGTH	(SHA224_BLOCK_LENGTH - 8)
 #define SHA256_SHORT_BLOCK_LENGTH	(SHA256_BLOCK_LENGTH - 8)
 #define SHA384_SHORT_BLOCK_LENGTH	(SHA384_BLOCK_LENGTH - 16)
 #define SHA512_SHORT_BLOCK_LENGTH	(SHA512_BLOCK_LENGTH - 16)
@@ -140,22 +141,22 @@
  * Bit shifting and rotation (used by the six SHA-XYZ logical functions:
  *
  *   NOTE:  The naming of R and S appears backwards here (R is a SHIFT and
- *   S is a ROTATION) because the SHA-256/384/512 description document
+ *   S is a ROTATION) because the SHA-224/256/384/512 description document
  *   (see http://csrc.nist.gov/cryptval/shs/sha256-384-512.pdf) uses this
  *   same "backwards" definition.
  */
-/* Shift-right (used in SHA-256, SHA-384, and SHA-512): */
+/* Shift-right (used in SHA-224, SHA-256, SHA-384, and SHA-512): */
 #define R(b,x) 		((x) >> (b))
-/* 32-bit Rotate-right (used in SHA-256): */
+/* 32-bit Rotate-right (used in SHA-224 and SHA-256): */
 #define S32(b,x)	(((x) >> (b)) | ((x) << (32 - (b))))
 /* 64-bit Rotate-right (used in SHA-384 and SHA-512): */
 #define S64(b,x)	(((x) >> (b)) | ((x) << (64 - (b))))
 
-/* Two of six logical functions used in SHA-256, SHA-384, and SHA-512: */
+/* Two of six logical functions used in SHA-224, SHA-256, SHA-384, and SHA-512: */
 #define Ch(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
-/* Four of six logical functions used in SHA-256: */
+/* Four of six logical functions used in SHA-224 and SHA-256: */
 #define Sigma0_256(x)	(S32(2,  (x)) ^ S32(13, (x)) ^ S32(22, (x)))
 #define Sigma1_256(x)	(S32(6,  (x)) ^ S32(11, (x)) ^ S32(25, (x)))
 #define sigma0_256(x)	(S32(7,  (x)) ^ S32(18, (x)) ^ R(3 ,   (x)))
@@ -169,7 +170,7 @@
 
 
 /*** SHA-XYZ INITIAL HASH VALUES AND CONSTANTS ************************/
-/* Hash constant words K for SHA-256: */
+/* Hash constant words K for SHA-224 and SHA-256: */
 const static u_int32_t K256[64] = {
 	0x428a2f98UL, 0x71374491UL, 0xb5c0fbcfUL, 0xe9b5dba5UL,
 	0x3956c25bUL, 0x59f111f1UL, 0x923f82a4UL, 0xab1c5ed5UL,
@@ -187,6 +188,18 @@ const static u_int32_t K256[64] = {
 	0x391c0cb3UL, 0x4ed8aa4aUL, 0x5b9cca4fUL, 0x682e6ff3UL,
 	0x748f82eeUL, 0x78a5636fUL, 0x84c87814UL, 0x8cc70208UL,
 	0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL
+};
+
+/* Initial hash value H for SHA-224: */
+const static u_int32_t sha224_initial_hash_value[8] = {
+	0xc1059ed8UL,
+	0x367cd507UL,
+	0x3070dd17UL,
+	0xf70e5939UL,
+	0xffc00b31UL,
+	0x68581511UL,
+	0x64f98fa7UL,
+	0xbefa4fa4UL
 };
 
 /* Initial hash value H for SHA-256: */
@@ -269,6 +282,42 @@ const static u_int64_t sha512_initial_hash_value[8] = {
 	0x1f83d9abfb41bd6bULL,
 	0x5be0cd19137e2179ULL
 };
+
+/*** SHA-224: *********************************************************/
+void
+SHA224Init(SHA2_CTX *context)
+{
+	if (context == NULL)
+		return;
+	memcpy(context->state.st32, sha224_initial_hash_value,
+	    sizeof(sha224_initial_hash_value));
+	memset(context->buffer, 0, sizeof(context->buffer));
+	context->bitcount[0] = 0;
+}
+
+__weak_alias(SHA224Transform, SHA256Transform);
+__weak_alias(SHA224Update, SHA256Update);
+__weak_alias(SHA224Pad, SHA256Pad);
+
+void
+SHA224Final(u_int8_t digest[SHA224_DIGEST_LENGTH], SHA2_CTX *context)
+{
+	SHA224Pad(context);
+
+	/* If no digest buffer is passed, we don't bother doing this: */
+	if (digest != NULL) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		int	i;
+
+		/* Convert TO host byte order */
+		for (i = 0; i < 7; i++)
+			BE_32_TO_8(digest + i * 4, context->state.st32[i]);
+#else
+		memcpy(digest, context->state.st32, SHA224_DIGEST_LENGTH);
+#endif
+		memset(context, 0, sizeof(*context));
+	}
+}
 #endif /* SHA256_ONLY */
 
 /*** SHA-256: *********************************************************/

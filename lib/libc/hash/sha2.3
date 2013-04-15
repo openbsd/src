@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.17 2012/09/07 23:11:51 tedu Exp $
+.\"	$OpenBSD: sha2.3,v 1.18 2013/04/15 15:54:17 millert Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -20,7 +20,7 @@
 .\"
 .\" See http://www.nist.gov/sha/ for the detailed standard
 .\"
-.Dd $Mdocdate: September 7 2012 $
+.Dd $Mdocdate: April 15 2013 $
 .Dt SHA2 3
 .Os
 .Sh NAME
@@ -37,6 +37,24 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sha2.h>
+.Ft void
+.Fn SHA224Init "SHA2_CTX *context"
+.Ft void
+.Fn SHA224Update "SHA2_CTX *context" "const u_int8_t *data" "size_t len"
+.Ft void
+.Fn SHA224Pad "SHA2_CTX *context"
+.Ft void
+.Fn SHA224Final "u_int8_t digest[SHA224_DIGEST_LENGTH]" "SHA2_CTX *context"
+.Ft void
+.Fn SHA224Transform "u_int32_t state[8]" "const u_int8_t buffer[SHA224_BLOCK_LENGTH]"
+.Ft "char *"
+.Fn SHA224End "SHA2_CTX *context" "char *buf"
+.Ft "char *"
+.Fn SHA224File "const char *filename" "char *buf"
+.Ft "char *"
+.Fn SHA224FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
+.Ft "char *"
+.Fn SHA224Data "const u_int8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA256Init "SHA2_CTX *context"
 .Ft void
@@ -98,7 +116,7 @@ The SHA2 functions are used to generate a condensed representation of a
 message called a message digest, suitable for use as a digital signature.
 There are three families of functions, with names corresponding to
 the number of bits in the resulting message digest.
-The SHA-256 functions are limited to processing a message of less
+The SHA-224 and SHA-256 functions are limited to processing a message of less
 than 2^64 bits as input.
 The SHA-384 and SHA-512 functions can process a message of at most 2^128 - 1
 bits as input.
@@ -106,7 +124,7 @@ bits as input.
 The SHA2 functions are considered to be more secure than the
 .Xr sha1 3
 functions with which they share a similar interface.
-The 256, 384, and 512-bit versions of SHA2 share the same interface.
+The 224, 256, 384, and 512-bit versions of SHA2 share the same interface.
 For brevity, only the 256-bit variants are described below.
 .Pp
 The
@@ -204,6 +222,7 @@ functions the
 .Ar buf
 parameter should either be a string large enough to hold the resulting digest
 (e.g.\&
+.Ev SHA224_DIGEST_STRING_LENGTH ,
 .Ev SHA256_DIGEST_STRING_LENGTH ,
 .Ev SHA384_DIGEST_STRING_LENGTH ,
 or

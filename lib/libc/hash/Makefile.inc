@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2008/09/06 12:00:19 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2013/04/15 15:54:17 millert Exp $
 
 # hash functions
 .PATH: ${LIBCSRCDIR}/hash
 
-HELPER=	md4hl.c md5hl.c rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c
+HELPER=	md4hl.c md5hl.c rmd160hl.c sha1hl.c sha224hl.c sha256hl.c sha384hl.c sha512hl.c
 SRCS+=	md4.c md5.c rmd160.c sha1.c sha2.c ${HELPER}
 MAN+=	md4.3 md5.3 rmd160.3 sha1.3 sha2.3
 
@@ -19,6 +19,9 @@ MLINKS+=rmd160.3 RMD160FileChunk.3 rmd160.3 RMD160Pad.3  rmd160.3 RMD160Data.3
 MLINKS+=sha1.3 SHA1Transform.3 sha1.3 SHA1Init.3 sha1.3 SHA1Final.3
 MLINKS+=sha1.3 SHA1Update.3    sha1.3 SHA1End.3  sha1.3 SHA1File.3
 MLINKS+=sha1.3 SHA1FileChunk.3 sha1.3 SHA1Pad.3  sha1.3 SHA1Data.3
+MLINKS+=sha2.3 SHA224Init.3  sha2.3 SHA224Update.3    sha2.3 SHA224Pad.3
+MLINKS+=sha2.3 SHA224Final.3 sha2.3 SHA224Transform.3 sha2.3 SHA224End.3
+MLINKS+=sha2.3 SHA224File.3  sha2.3 SHA224FileChunk.3 sha2.3 SHA224Data.3
 MLINKS+=sha2.3 SHA256Init.3  sha2.3 SHA256Update.3    sha2.3 SHA256Pad.3
 MLINKS+=sha2.3 SHA256Final.3 sha2.3 SHA256Transform.3 sha2.3 SHA256End.3
 MLINKS+=sha2.3 SHA256File.3  sha2.3 SHA256FileChunk.3 sha2.3 SHA256Data.3
@@ -51,6 +54,11 @@ rmd160hl.c:	helper.c
 
 sha1hl.c:	helper.c
 	sed -e 's/hashinc/sha1.h/g' -e 's/HASH/SHA1/g' $> > $@
+
+sha224hl.c:	helper.c
+	sed -e 's/hashinc/sha2.h/g' \
+	    -e 's/HASH/SHA224/g' \
+	    -e 's/SHA[0-9][0-9][0-9]_CTX/SHA2_CTX/g' $> > $@
 
 sha256hl.c:	helper.c
 	sed -e 's/hashinc/sha2.h/g' \
