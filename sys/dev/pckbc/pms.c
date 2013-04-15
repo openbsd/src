@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.38 2013/04/15 09:09:50 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.39 2013/04/15 09:12:42 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -314,15 +314,6 @@ const struct pms_protocol pms_protocols[] = {
 		pms_proc_mouse,
 		NULL
 	},
-	/* Microsoft IntelliMouse */
-	{
-		PMS_INTELLI, 4,
-		pms_enable_intelli,
-		pms_ioctl_mouse,
-		pms_sync_mouse,
-		pms_proc_mouse,
-		NULL
-	},
 	/* Synaptics touchpad */
 	{
 		PMS_SYNAPTICS, 6,
@@ -366,6 +357,15 @@ const struct pms_protocol pms_protocols[] = {
 		pms_ioctl_elantech,
 		pms_sync_elantech_v3,
 		pms_proc_elantech_v3,
+		NULL
+	},
+	/* Microsoft IntelliMouse */
+	{
+		PMS_INTELLI, 4,
+		pms_enable_intelli,
+		pms_ioctl_mouse,
+		pms_sync_mouse,
+		pms_proc_mouse,
 		NULL
 	},
 };
