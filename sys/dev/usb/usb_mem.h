@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.h,v 1.13 2010/09/29 20:06:38 kettenis Exp $ */
+/*	$OpenBSD: usb_mem.h,v 1.14 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: usb_mem.h,v 1.20 2003/05/03 18:11:42 wiz Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -32,7 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-typedef struct usb_dma_block {
+struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
         caddr_t kaddr;
@@ -42,12 +42,12 @@ typedef struct usb_dma_block {
         size_t align;
 	int fullblock;
 	LIST_ENTRY(usb_dma_block) next;
-} usb_dma_block_t;
+};
 
 #define DMAADDR(dma, o) ((dma)->block->map->dm_segs[0].ds_addr + (dma)->offs + (o))
 #define KERNADDR(dma, o) \
 	((void *)((char *)((dma)->block->kaddr + (dma)->offs) + (o)))
 
-usbd_status	usb_allocmem(usbd_bus_handle,size_t,size_t, usb_dma_t *);
-void		usb_freemem(usbd_bus_handle, usb_dma_t *);
-void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int);
+usbd_status	usb_allocmem(struct usbd_bus *,size_t,size_t, struct usb_dma *);
+void		usb_freemem(struct usbd_bus *, struct usb_dma *);
+void		usb_syncmem(struct usb_dma *, bus_addr_t, bus_size_t, int);

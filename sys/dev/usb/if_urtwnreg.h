@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
+/*	$OpenBSD: if_urtwnreg.h,v 1.4 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1045,14 +1045,14 @@ struct urtwn_softc;
 
 struct urtwn_rx_data {
 	struct urtwn_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
 struct urtwn_tx_data {
 	struct urtwn_softc		*sc;
-	usbd_pipe_handle		pipe;
-	usbd_xfer_handle		xfer;
+	struct usbd_pipe		*pipe;
+	struct usbd_xfer		*xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(urtwn_tx_data)	next;
 };
@@ -1084,13 +1084,13 @@ struct urtwn_softc {
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device		*sc_udev;
+	struct usbd_interface		*sc_iface;
 	struct usb_task			sc_task;
 	struct timeout			scan_to;
 	struct timeout			calib_to;
-	usbd_pipe_handle		rx_pipe;
-	usbd_pipe_handle		tx_pipe[R92C_MAX_EPOUT];
+	struct usbd_pipe		*rx_pipe;
+	struct usbd_pipe		*tx_pipe[R92C_MAX_EPOUT];
 	int				ac2idx[EDCA_NUM_AC];
 	u_int				sc_flags;
 #define URTWN_FLAG_CCK_HIPWR	0x01

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.h,v 1.3 2007/06/19 11:52:07 mbalmer Exp $	*/
+/*	$OpenBSD: usbf.h,v 1.4 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -23,15 +23,14 @@
 #ifndef _USBF_H_
 #define _USBF_H_
 
-typedef struct usbf_function	*usbf_function_handle;
-typedef struct usbf_bus		*usbf_bus_handle;
-typedef struct usbf_device	*usbf_device_handle;
-typedef struct usbf_config	*usbf_config_handle;
-typedef struct usbf_interface	*usbf_interface_handle;
-typedef struct usbf_endpoint	*usbf_endpoint_handle;
-typedef struct usbf_pipe	*usbf_pipe_handle;
-typedef struct usbf_xfer	*usbf_xfer_handle;
-typedef void			*usbf_private_handle;
+struct usbf_function;
+struct usbf_bus;
+struct usbf_device;
+struct usbf_config;
+struct usbf_interface;
+struct usbf_endpoint;
+struct usbf_pipe;
+struct usbf_xfer;
 
 /*
  * Return codes for many of the function driver interface routines
@@ -65,19 +64,18 @@ typedef enum { /* keep in sync with USBF_ERROR_STRS */
 	"STALLED",			/* 10 */			\
 };
 
-typedef void (*usbf_callback)(usbf_xfer_handle, usbf_private_handle,
-    usbf_status);
+typedef void (*usbf_callback)(struct usbf_xfer *, void *, usbf_status);
 
 /*
  * Attach USB function at the logical device.
  */
 struct usbf_attach_arg {
-	usbf_device_handle device;
+	struct usbf_device *device;
 };
 
 struct usbf_function_methods {
-	usbf_status (*set_config)(usbf_function_handle, usbf_config_handle);
-	usbf_status (*do_request)(usbf_function_handle,
+	usbf_status (*set_config)(struct usbf_function *, struct usbf_config *);
+	usbf_status (*do_request)(struct usbf_function *,
 	    usb_device_request_t *req, void **data);
 };
 
@@ -99,59 +97,59 @@ struct usbf_function {
 const char	*usbf_errstr(usbf_status);
 
 /* device */
-void		 usbf_devinfo_setup(usbf_device_handle, u_int8_t, u_int8_t,
+void		 usbf_devinfo_setup(struct usbf_device *, u_int8_t, u_int8_t,
 		     u_int8_t, u_int16_t, u_int16_t, u_int16_t, const char *,
 		     const char *, const char *);
-char		*usbf_devinfo_alloc(usbf_device_handle);
+char		*usbf_devinfo_alloc(struct usbf_device *);
 void		 usbf_devinfo_free(char *);
-usb_device_descriptor_t *usbf_device_descriptor(usbf_device_handle);
-usb_string_descriptor_t *usbf_string_descriptor(usbf_device_handle, u_int8_t);
-usb_config_descriptor_t *usbf_config_descriptor(usbf_device_handle, u_int8_t);
+usb_device_descriptor_t *usbf_device_descriptor(struct usbf_device *);
+usb_string_descriptor_t *usbf_string_descriptor(struct usbf_device *, u_int8_t);
+usb_config_descriptor_t *usbf_config_descriptor(struct usbf_device *, u_int8_t);
 
 /* configuration */
-u_int8_t	 usbf_add_string(usbf_device_handle, const char *);
-usbf_status	 usbf_add_config(usbf_device_handle, usbf_config_handle *);
-usbf_status	 usbf_add_config_desc(usbf_config_handle, usb_descriptor_t *,
+u_int8_t	 usbf_add_string(struct usbf_device *, const char *);
+usbf_status	 usbf_add_config(struct usbf_device *, struct usbf_config **);
+usbf_status	 usbf_add_config_desc(struct usbf_config *, usb_descriptor_t *,
 		     usb_descriptor_t **);
-usbf_status	 usbf_add_interface(usbf_config_handle, u_int8_t, u_int8_t,
-		     u_int8_t, const char *, usbf_interface_handle *);
-usbf_status	 usbf_add_endpoint(usbf_interface_handle, u_int8_t,
-		     u_int8_t, u_int16_t, u_int8_t, usbf_endpoint_handle *);
-usbf_status	 usbf_end_config(usbf_config_handle);
-usbf_endpoint_handle usbf_config_endpoint(usbf_config_handle, u_int8_t);
+usbf_status	 usbf_add_interface(struct usbf_config *, u_int8_t, u_int8_t,
+		     u_int8_t, const char *, struct usbf_interface **);
+usbf_status	 usbf_add_endpoint(struct usbf_interface *, u_int8_t,
+		     u_int8_t, u_int16_t, u_int8_t, struct usbf_endpoint **);
+usbf_status	 usbf_end_config(struct usbf_config *);
+struct usbf_endpoint *usbf_config_endpoint(struct usbf_config *, u_int8_t);
 
 /* interface */
-int		 usbf_interface_number(usbf_interface_handle);
-usbf_endpoint_handle usbf_iface_endpoint(usbf_interface_handle, u_int8_t);
+int		 usbf_interface_number(struct usbf_interface *);
+struct usbf_endpoint *usbf_iface_endpoint(struct usbf_interface *, u_int8_t);
 
 /* endpoint */
-u_int8_t	 usbf_endpoint_address(usbf_endpoint_handle);
-u_int8_t	 usbf_endpoint_attributes(usbf_endpoint_handle);
+u_int8_t	 usbf_endpoint_address(struct usbf_endpoint *);
+u_int8_t	 usbf_endpoint_attributes(struct usbf_endpoint *);
 #define usbf_endpoint_index(e)	UE_GET_ADDR(usbf_endpoint_address((e)))
 #define usbf_endpoint_dir(e)	UE_GET_DIR(usbf_endpoint_address((e)))
 #define usbf_endpoint_type(e)	UE_GET_XFERTYPE(usbf_endpoint_attributes((e)))
 
 /* pipe */
-usbf_status	 usbf_open_pipe(usbf_interface_handle, u_int8_t,
-		     usbf_pipe_handle *);
-void		 usbf_abort_pipe(usbf_pipe_handle);
-void		 usbf_close_pipe(usbf_pipe_handle);
-void		 usbf_stall_pipe(usbf_pipe_handle);
+usbf_status	 usbf_open_pipe(struct usbf_interface *, u_int8_t,
+		     struct usbf_pipe **);
+void		 usbf_abort_pipe(struct usbf_pipe *);
+void		 usbf_close_pipe(struct usbf_pipe *);
+void		 usbf_stall_pipe(struct usbf_pipe *);
 
 /* transfer */
-usbf_xfer_handle usbf_alloc_xfer(usbf_device_handle);
-void		 usbf_free_xfer(usbf_xfer_handle);
-void		*usbf_alloc_buffer(usbf_xfer_handle, u_int32_t);
-void		 usbf_free_buffer(usbf_xfer_handle);
-void		 usbf_setup_xfer(usbf_xfer_handle, usbf_pipe_handle,
-		     usbf_private_handle, void *, u_int32_t, u_int16_t,
+struct usbf_xfer *usbf_alloc_xfer(struct usbf_device *);
+void		 usbf_free_xfer(struct usbf_xfer *);
+void		*usbf_alloc_buffer(struct usbf_xfer *, u_int32_t);
+void		 usbf_free_buffer(struct usbf_xfer *);
+void		 usbf_setup_xfer(struct usbf_xfer *, struct usbf_pipe *,
+		     void *, void *, u_int32_t, u_int16_t,
 		     u_int32_t, usbf_callback);
-void		 usbf_setup_default_xfer(usbf_xfer_handle, usbf_pipe_handle,
-		     usbf_private_handle, usb_device_request_t *, u_int16_t,
+void		 usbf_setup_default_xfer(struct usbf_xfer *, struct usbf_pipe *,
+		     void *, usb_device_request_t *, u_int16_t,
 		     u_int32_t, usbf_callback);
-void		 usbf_get_xfer_status(usbf_xfer_handle, usbf_private_handle *,
+void		 usbf_get_xfer_status(struct usbf_xfer *, void **,
 		     void **, u_int32_t *, usbf_status *);
-usbf_status	 usbf_transfer(usbf_xfer_handle);
+usbf_status	 usbf_transfer(struct usbf_xfer *);
 
 /*
  * The usbf_task structure describes a task to be perfomed in process
@@ -165,8 +163,8 @@ struct usbf_task {
 	char onqueue;
 };
 
-void usbf_add_task(usbf_device_handle, struct usbf_task *);
-void usbf_rem_task(usbf_device_handle, struct usbf_task *);
+void usbf_add_task(struct usbf_device *, struct usbf_task *);
+void usbf_rem_task(struct usbf_device *, struct usbf_task *);
 #define usbf_init_task(t, f, a) ((t)->fun=(f), (t)->arg=(a), (t)->onqueue=0)
 
 #endif

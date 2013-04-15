@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.17 2011/11/02 19:19:47 eric Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.18 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ typedef u_int32_t ehci_isoc_bufr_ptr_t;
 /* Isochronous Transfer Descriptor */
 #define EHCI_ITD_NTRANS		8
 #define EHCI_ITD_NBUFFERS	7
-typedef struct {
+struct ehci_itd {
 	volatile ehci_link_t            itd_next;
 	volatile ehci_isoc_trans_t      itd_ctl[8];
 #define EHCI_ITD_GET_STATUS(x)	(((x) >> 28) & 0xf)
@@ -225,12 +225,12 @@ typedef struct {
 #define EHCI_ITD_GET_MULTI(x)	((x) & 0x3)
 #define EHCI_ITD_SET_MULTI(x)	((x) & 0x3)
 	volatile ehci_isoc_bufr_ptr_t	itd_bufr_hi[7];
-} ehci_itd_t;
+};
 #define EHCI_ITD_ALIGN		32
 
 /* Split Transaction Isochronous Transfer Descriptor */
 #define EHCI_SITD_NBUFFERS	2
-typedef struct {
+struct ehci_sitd {
 	ehci_link_t	sitd_next;
 	u_int32_t	sitd_endp;
 #define EHCI_SITD_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
@@ -278,12 +278,12 @@ typedef struct {
 #define  EHCI_SITD_TP_END	0x3
 	ehci_link_t	sitd_back;
 	ehci_physaddr_t sitd_buffer_hi[EHCI_SITD_NBUFFERS]; /* 64bit */
-} ehci_sitd_t;
+};
 #define EHCI_SITD_ALIGN		32
 
 /* Queue Element Transfer Descriptor */
 #define EHCI_QTD_NBUFFERS	5
-typedef struct {
+struct ehci_qtd {
 	ehci_link_t	qtd_next;
 	ehci_link_t	qtd_altnext;
 	u_int32_t	qtd_status;
@@ -316,11 +316,11 @@ typedef struct {
 #define EHCI_QTD_TOGGLE_MASK	0x80000000
 	ehci_physaddr_t	qtd_buffer[EHCI_QTD_NBUFFERS];
 	ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
-} ehci_qtd_t;
+};
 #define EHCI_QTD_ALIGN		32
 
 /* Queue Head */
-typedef struct {
+struct ehci_qh {
 	ehci_link_t	qh_link;
 	u_int32_t	qh_endp;
 #define EHCI_QH_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
@@ -358,15 +358,15 @@ typedef struct {
 #define EHCI_QH_GET_MULT(x)	(((x) >> 30) & 0x03) /* pipe multiplier */
 #define EHCI_QH_SET_MULT(x)	((x) << 30)
 	ehci_link_t	qh_curqtd;
-	ehci_qtd_t	qh_qtd;
-} ehci_qh_t;
+	struct ehci_qtd	qh_qtd;
+};
 #define EHCI_QH_ALIGN		32
 
 /* Periodic Frame Span Traversal Node */
-typedef struct {
+struct ehci_fstn {
 	ehci_link_t	fstn_link;
 	ehci_link_t	fstn_back;
-} ehci_fstn_t;
+};
 #define EHCI_FSTN_ALIGN		32
 
 #endif /* _DEV_PCI_EHCIREG_H_ */

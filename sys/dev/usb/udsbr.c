@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.23 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.24 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ struct radio_hw_if udsbr_hw_if = {
 
 struct udsbr_softc {
  	struct device		 sc_dev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device	*sc_udev;
 
 	char			 sc_mute;
 	char			 sc_vol;
@@ -131,7 +131,7 @@ udsbr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct udsbr_softc	*sc = (struct udsbr_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device	*dev = uaa->device;
 	usbd_status		err;
 
 	DPRINTFN(10,("udsbr_attach: sc=%p\n", sc));

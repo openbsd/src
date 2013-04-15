@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.18 2013/03/28 03:58:03 tedu Exp $   */
+/*	$OpenBSD: uthum.c,v 1.19 2013/04/15 09:23:02 mglocker Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -115,7 +115,7 @@ struct uthum_sensor {
 
 struct uthum_softc {
 	struct uhidev		 sc_hdev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device	*sc_udev;
 	u_char			 sc_dying;
 	uint16_t		 sc_flag;
 	int			 sc_device_type;
@@ -203,7 +203,7 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 	struct uthum_softc *sc = (struct uthum_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
-	usbd_device_handle dev = uha->parent->sc_udev;
+	struct usbd_device *dev = uha->parent->sc_udev;
 	int i, size, repid;
 	void *desc;
 

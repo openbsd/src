@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.117 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.118 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -200,8 +200,8 @@ int axe_tx_list_init(struct axe_softc *);
 int axe_rx_list_init(struct axe_softc *);
 struct mbuf *axe_newbuf(void);
 int axe_encap(struct axe_softc *, struct mbuf *, int);
-void axe_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void axe_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void axe_rxeof(struct usbd_xfer *, void *, usbd_status);
+void axe_txeof(struct usbd_xfer *, void *, usbd_status);
 void axe_tick(void *);
 void axe_tick_task(void *);
 void axe_start(struct ifnet *);
@@ -665,7 +665,7 @@ axe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct axe_softc *sc = (struct axe_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -986,7 +986,7 @@ axe_tx_list_init(struct axe_softc *sc)
  * the higher level protocols.
  */
 void
-axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axe_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct axe_chain	*c = (struct axe_chain *)priv;
 	struct axe_softc	*sc = c->axe_sc;
@@ -1104,7 +1104,7 @@ done:
  */
 
 void
-axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axe_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct axe_softc	*sc;
 	struct axe_chain	*c;

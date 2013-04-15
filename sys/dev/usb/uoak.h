@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak.h,v 1.2 2012/10/19 14:52:38 deraadt Exp $   */
+/*	$OpenBSD: uoak.h,v 1.3 2013/04/15 09:23:02 mglocker Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -115,7 +115,7 @@ struct uoak_softc {
 	struct uhidev		*sc_hdev;
 	void			*sc_parent;
 	struct ksensordev	*sc_sensordev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device	*sc_udev;
 	uint16_t		 sc_flag;
 	struct usb_device_info	 sc_udi;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.12 2011/03/31 17:06:25 mk Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.13 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -140,7 +140,7 @@
 
 struct udav_chain {
 	struct udav_softc	*udav_sc;
-	usbd_xfer_handle	udav_xfer;
+	struct usbd_xfer	*udav_xfer;
 	char			*udav_buf;
 	struct mbuf		*udav_mbuf;
 	int			udav_idx;
@@ -161,17 +161,17 @@ struct udav_cdata {
 
 struct udav_softc {
 	struct device		sc_dev;	/* base device */
-	usbd_device_handle	sc_udev;
+	struct usbd_device	*sc_udev;
 
 	/* USB */
-	usbd_interface_handle	sc_ctl_iface;
+	struct usbd_interface	*sc_ctl_iface;
 	/* int			sc_ctl_iface_no; */
 	int			sc_bulkin_no; /* bulk in endpoint */
 	int			sc_bulkout_no; /* bulk out endpoint */
 	int			sc_intrin_no; /* intr in endpoint */
-	usbd_pipe_handle	sc_pipe_rx;
-	usbd_pipe_handle	sc_pipe_tx;
-	usbd_pipe_handle	sc_pipe_intr;
+	struct usbd_pipe	*sc_pipe_rx;
+	struct usbd_pipe	*sc_pipe_tx;
+	struct usbd_pipe	*sc_pipe_intr;
 	struct timeout		sc_stat_ch;
 	u_int			sc_rx_errs;
 	/* u_int		sc_intr_errs; */

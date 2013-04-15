@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.40 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.41 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -483,13 +483,13 @@ int		urtw_alloc_rx_data_list(struct urtw_softc *);
 void		urtw_free_rx_data_list(struct urtw_softc *);
 int		urtw_alloc_tx_data_list(struct urtw_softc *);
 void		urtw_free_tx_data_list(struct urtw_softc *);
-void		urtw_rxeof(usbd_xfer_handle, usbd_private_handle,
+void		urtw_rxeof(struct usbd_xfer *, void *,
 		    usbd_status);
 int		urtw_tx_start(struct urtw_softc *,
 		    struct ieee80211_node *, struct mbuf *, int);
-void		urtw_txeof_low(usbd_xfer_handle, usbd_private_handle,
+void		urtw_txeof_low(struct usbd_xfer *, void *,
 		    usbd_status);
-void		urtw_txeof_normal(usbd_xfer_handle, usbd_private_handle,
+void		urtw_txeof_normal(struct usbd_xfer *, void *,
 		    usbd_status);
 void		urtw_next_scan(void *);
 void		urtw_task(void *);
@@ -2566,7 +2566,7 @@ urtw_watchdog(struct ifnet *ifp)
 }
 
 void
-urtw_txeof_low(usbd_xfer_handle xfer, usbd_private_handle priv,
+urtw_txeof_low(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct urtw_tx_data *data = priv;
@@ -2605,7 +2605,7 @@ urtw_txeof_low(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-urtw_txeof_normal(usbd_xfer_handle xfer, usbd_private_handle priv,
+urtw_txeof_normal(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct urtw_tx_data *data = priv;
@@ -3114,7 +3114,7 @@ urtw_isbmode(uint16_t rate)
 }
 
 void
-urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+urtw_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct urtw_rx_data *data = priv;
 	struct urtw_softc *sc = data->sc;

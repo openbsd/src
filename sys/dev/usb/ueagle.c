@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.37 2013/04/12 12:58:39 mpi Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.38 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2003-2006
@@ -104,14 +104,11 @@ void		ueagle_stat_thread(void *);
 int		ueagle_boot(struct ueagle_softc *);
 void		ueagle_swap_intr(struct ueagle_softc *, struct ueagle_swap *);
 void		ueagle_cmv_intr(struct ueagle_softc *, struct ueagle_cmv *);
-void		ueagle_intr(usbd_xfer_handle, usbd_private_handle,
-		    usbd_status);
+void		ueagle_intr(struct usbd_xfer *, void *, usbd_status);
 uint32_t	ueagle_crc_update(uint32_t, uint8_t *, int);
 void		ueagle_push_cell(struct ueagle_softc *, uint8_t *);
-void		ueagle_rxeof(usbd_xfer_handle, usbd_private_handle,
-		    usbd_status);
-void		ueagle_txeof(usbd_xfer_handle, usbd_private_handle,
-		    usbd_status);
+void		ueagle_rxeof(struct usbd_xfer *, void *, usbd_status);
+void		ueagle_txeof(struct usbd_xfer *, void *, usbd_status);
 int		ueagle_encap(struct ueagle_softc *, struct mbuf *);
 void		ueagle_start(struct ifnet *);
 int		ueagle_open_vcc(struct ueagle_softc *,
@@ -304,7 +301,7 @@ void
 ueagle_loadpage(void *xsc)
 {
 	struct ueagle_softc *sc = xsc;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	struct ueagle_block_info bi;
 	uint16_t pageno = sc->pageno;
 	uint16_t ovl = sc->ovl;
@@ -688,7 +685,7 @@ ueagle_cmv_intr(struct ueagle_softc *sc, struct ueagle_cmv *cmv)
 }
 
 void
-ueagle_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+ueagle_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct ueagle_softc *sc = priv;
 	struct ueagle_intr *intr;
@@ -899,8 +896,7 @@ fail:	m_freem(vcc->m);
 }
 
 void
-ueagle_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status)
+ueagle_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct ueagle_isoreq *req = priv;
 	struct ueagle_softc *sc = req->sc;
@@ -935,8 +931,7 @@ ueagle_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-ueagle_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status)
+ueagle_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct ueagle_txreq *req = priv;
 	struct ueagle_softc *sc = req->sc;
@@ -1196,7 +1191,7 @@ int
 ueagle_open_pipes(struct ueagle_softc *sc)
 {
 	usb_endpoint_descriptor_t *edesc;
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	struct ueagle_txreq *txreq;
 	struct ueagle_isoreq *isoreq;
 	usbd_status error;
@@ -1354,7 +1349,7 @@ int
 ueagle_init(struct ifnet *ifp)
 {
 	struct ueagle_softc *sc = ifp->if_softc;
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usbd_status error;
 	size_t len;
 

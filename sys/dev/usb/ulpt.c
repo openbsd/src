@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.42 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.43 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -81,17 +81,17 @@ int	ulptdebug = 0;
 
 struct ulpt_softc {
 	struct device sc_dev;
-	usbd_device_handle sc_udev;	/* device */
-	usbd_interface_handle sc_iface;	/* interface */
+	struct usbd_device *sc_udev;	/* device */
+	struct usbd_interface *sc_iface;/* interface */
 	int sc_ifaceno;
 
 	int sc_out;
-	usbd_pipe_handle sc_out_pipe;	/* bulk out pipe */
+	struct usbd_pipe *sc_out_pipe;	/* bulk out pipe */
 
 	int sc_in;
-	usbd_pipe_handle sc_in_pipe;	/* bulk in pipe */
-	usbd_xfer_handle sc_in_xfer1;
-	usbd_xfer_handle sc_in_xfer2;
+	struct usbd_pipe *sc_in_pipe;	/* bulk in pipe */
+	struct usbd_xfer *sc_in_xfer1;
+	struct usbd_xfer *sc_in_xfer2;
 	u_char sc_junk[64];	/* somewhere to dump input */
 
 	u_char sc_state;
@@ -212,8 +212,8 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ulpt_softc *sc = (struct ulpt_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface = uaa->iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface = uaa->iface;
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
 	usb_interface_descriptor_t *id, *iend;
 	usb_config_descriptor_t *cdesc;
@@ -451,7 +451,7 @@ ulpt_reset(struct ulpt_softc *sc)
 }
 
 static void
-ulpt_input(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+ulpt_input(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct ulpt_softc *sc = priv;
 
@@ -618,7 +618,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 	u_int32_t n;
 	int error = 0;
 	void *bufp;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err;
 
 	DPRINTF(("ulptwrite\n"));
@@ -677,7 +677,7 @@ ulpt_ucode_loader_hp(struct ulpt_softc *sc)
 	size_t ucode_size;
 	const char *ucode_name = sc->sc_fwdev->ucode_name;
 	int offset = 0, remain;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	void *bufp;
 
 	/* open microcode file */

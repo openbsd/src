@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.91 2012/10/12 19:53:24 haesbaert Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.92 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -358,8 +358,8 @@ void		run_calibrate_cb(struct run_softc *, void *);
 void		run_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
 void		run_rx_frame(struct run_softc *, uint8_t *, int);
-void		run_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void		run_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		run_rxeof(struct usbd_xfer *, void *, usbd_status);
+void		run_txeof(struct usbd_xfer *, void *, usbd_status);
 int		run_tx(struct run_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 void		run_start(struct ifnet *);
@@ -2051,7 +2051,7 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 }
 
 void
-run_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct run_rx_data *data = priv;
 	struct run_softc *sc = data->sc;
@@ -2101,7 +2101,7 @@ skip:	/* setup a new transfer */
 }
 
 void
-run_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+run_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct run_tx_data *data = priv;
 	struct run_softc *sc = data->sc;

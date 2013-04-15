@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.122 2013/04/12 12:58:39 mpi Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.123 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -116,8 +116,8 @@ void		ural_next_scan(void *);
 void		ural_task(void *);
 int		ural_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
-void		ural_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void		ural_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		ural_txeof(struct usbd_xfer *, void *, usbd_status);
+void		ural_rxeof(struct usbd_xfer *, void *, usbd_status);
 #if NBPFILTER > 0
 uint8_t		ural_rxrate(const struct ural_rx_desc *);
 #endif
@@ -163,7 +163,7 @@ void		ural_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
 void		ural_amrr_start(struct ural_softc *, struct ieee80211_node *);
 void		ural_amrr_timeout(void *);
-void		ural_amrr_update(usbd_xfer_handle, usbd_private_handle,
+void		ural_amrr_update(struct usbd_xfer *, void *,
 		    usbd_status status);
 
 static const struct {
@@ -675,7 +675,7 @@ ural_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #define RAL_RXTX_TURNAROUND	5	/* us */
 
 void
-ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+ural_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct ural_tx_data *data = priv;
 	struct ural_softc *sc = data->sc;
@@ -715,7 +715,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 void
-ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+ural_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct ural_rx_data *data = priv;
 	struct ural_softc *sc = data->sc;
@@ -998,7 +998,7 @@ int
 ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ural_tx_desc *desc;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status error;
 	uint8_t cmd = 0;
 	uint8_t *buf;
@@ -2197,7 +2197,7 @@ ural_amrr_timeout(void *arg)
 }
 
 void
-ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
+ural_amrr_update(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct ural_softc *sc = (struct ural_softc *)priv;

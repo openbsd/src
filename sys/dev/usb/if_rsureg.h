@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsureg.h,v 1.2 2010/12/12 14:03:41 damien Exp $	*/
+/*	$OpenBSD: if_rsureg.h,v 1.3 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -679,15 +679,15 @@ struct rsu_softc;
 
 struct rsu_rx_data {
 	struct rsu_softc	*sc;
-	usbd_pipe_handle	pipe;
-	usbd_xfer_handle	xfer;
+	struct usbd_pipe	*pipe;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
 struct rsu_tx_data {
 	struct rsu_softc		*sc;
-	usbd_pipe_handle		pipe;
-	usbd_xfer_handle		xfer;
+	struct usbd_pipe		*pipe;
+	struct usbd_xfer		*xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(rsu_tx_data)	next;
 };
@@ -718,11 +718,11 @@ struct rsu_softc {
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device		*sc_udev;
+	struct usbd_interface		*sc_iface;
 	struct usb_task			sc_task;
 	struct timeout			calib_to;
-	usbd_pipe_handle		pipe[R92S_MAX_EP];
+	struct usbd_pipe		*pipe[R92S_MAX_EP];
 	int				npipes;
 	const uint8_t			*qid2idx;
 

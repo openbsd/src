@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.56 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: udcf.c,v 1.57 2013/04/15 09:23:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -65,8 +65,8 @@ static const char	*clockname[2] = {
 
 struct udcf_softc {
 	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* data interface */
+	struct usbd_device	*sc_udev;	/* USB device */
+	struct usbd_interface	*sc_iface;	/* data interface */
 
 	struct timeout		sc_to;
 	struct usb_task		sc_task;
@@ -178,8 +178,8 @@ udcf_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct udcf_softc		*sc = (struct udcf_softc *)self;
 	struct usb_attach_arg		*uaa = aux;
-	usbd_device_handle		 dev = uaa->device;
-	usbd_interface_handle		 iface;
+	struct usbd_device		*dev = uaa->device;
+	struct usbd_interface		*iface;
 	struct timeval			 t;
 	usbd_status			 err;
 

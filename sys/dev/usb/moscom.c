@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.16 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.17 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -134,8 +134,8 @@
 
 struct moscom_softc {
 	struct device		 sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 	struct device		*sc_subdev;
 
 	u_char			 sc_msr;

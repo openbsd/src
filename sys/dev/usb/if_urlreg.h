@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urlreg.h,v 1.13 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_urlreg.h,v 1.14 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_urlreg.h,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -130,7 +130,7 @@ typedef	uWord url_rxhdr_t;	/* Recive Header */
 
 struct url_chain {
 	struct url_softc	*url_sc;
-	usbd_xfer_handle	url_xfer;
+	struct usbd_xfer	*url_xfer;
 	char			*url_buf;
 	struct mbuf		*url_mbuf;
 	int			url_idx;
@@ -151,17 +151,17 @@ struct url_cdata {
 
 struct url_softc {
 	struct device		sc_dev;	/* base device */
-	usbd_device_handle	sc_udev;
+	struct usbd_device	*sc_udev;
 
 	/* USB */
-	usbd_interface_handle	sc_ctl_iface;
+	struct usbd_interface	*sc_ctl_iface;
 	/* int			sc_ctl_iface_no; */
 	int			sc_bulkin_no; /* bulk in endpoint */
 	int			sc_bulkout_no; /* bulk out endpoint */
 	int			sc_intrin_no; /* intr in endpoint */
-	usbd_pipe_handle	sc_pipe_rx;
-	usbd_pipe_handle	sc_pipe_tx;
-	usbd_pipe_handle	sc_pipe_intr;
+	struct usbd_pipe	*sc_pipe_rx;
+	struct usbd_pipe	*sc_pipe_tx;
+	struct usbd_pipe	*sc_pipe_intr;
 	struct timeout		sc_stat_ch;
 	u_int			sc_rx_errs;
 	/* u_int		sc_intr_errs; */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.47 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.48 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -184,21 +184,21 @@ static const struct uscan_info uscanner_devs[] = {
 
 struct uscanner_softc {
 	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	u_int			sc_dev_flags;
 
-	usbd_pipe_handle	sc_bulkin_pipe;
+	struct usbd_pipe	*sc_bulkin_pipe;
 	int			sc_bulkin;
-	usbd_xfer_handle	sc_bulkin_xfer;
+	struct usbd_xfer	*sc_bulkin_xfer;
 	void 			*sc_bulkin_buffer;
 	int			sc_bulkin_bufferlen;
 	int			sc_bulkin_datalen;
 
-	usbd_pipe_handle	sc_bulkout_pipe;
+	struct usbd_pipe	*sc_bulkout_pipe;
 	int			sc_bulkout;
-	usbd_xfer_handle	sc_bulkout_xfer;
+	struct usbd_xfer	*sc_bulkout_xfer;
 	void 			*sc_bulkout_buffer;
 	int			sc_bulkout_bufferlen;
 	int			sc_bulkout_datalen;

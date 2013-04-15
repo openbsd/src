@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.54 2011/04/11 02:04:48 jakemsr Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.55 2013/04/15 09:23:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -415,22 +415,22 @@ struct uvideo_format_desc {
 #define UVIDEO_NFRAMES_MAX	40
 struct uvideo_isoc_xfer {
 	struct uvideo_softc	*sc;
-	usbd_xfer_handle	 xfer;
+	struct usbd_xfer	*xfer;
 	void			*buf;
 	uint16_t		 size[UVIDEO_NFRAMES_MAX];
 };
 
 struct uvideo_bulk_xfer {
 	struct uvideo_softc	*sc;
-	usbd_xfer_handle	 xfer;
+	struct usbd_xfer	*xfer;
 	void			*buf;
 	uint16_t		 size;
 };
 
 #define UVIDEO_IXFERS		3
 struct uvideo_vs_iface {
-	usbd_interface_handle  	 ifaceh;
-	usbd_pipe_handle	 pipeh;
+	struct usbd_interface	*ifaceh;
+	struct usbd_pipe	*pipeh;
 	int			 iface;
 	int			 numalts;
 	int			 curalt;
@@ -661,9 +661,9 @@ struct uvideo_controls {
 
 struct uvideo_softc {
 	struct device				 sc_dev;
-	usbd_device_handle			 sc_udev;
+	struct usbd_device			*sc_udev;
 	int					 sc_nifaces;
-	usbd_interface_handle			*sc_ifaces;
+	struct usbd_interface			**sc_ifaces;
 
 	struct device				*sc_videodev;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbfvar.h,v 1.7 2009/11/04 19:14:10 kettenis Exp $	*/
+/*	$OpenBSD: usbfvar.h,v 1.8 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -58,7 +58,7 @@ struct usbf_device {
 	struct usbf_xfer	*default_xfer;	/* device request xfer */
 	struct usbf_xfer	*data_xfer;	/* request response xfer */
 	int			 address;	/* assigned by host (or 0) */
-	usbf_config_handle	 config;	/* set by host (or NULL) */
+	struct usbf_config	*config;	/* set by host (or NULL) */
 	usb_status_t		 status;	/* device status */
 	usb_device_request_t	 def_req;	/* device request buffer */
 	struct usbf_endpoint	 def_ep;	/* for pipe 0 */
@@ -73,18 +73,19 @@ struct usbf_device {
 /*** software control structures ***/
 
 struct usbf_pipe_methods {
-	usbf_status	(*transfer)(usbf_xfer_handle);
-	usbf_status	(*start)(usbf_xfer_handle);
-	void		(*abort)(usbf_xfer_handle);
-	void		(*done)(usbf_xfer_handle);
-	void		(*close)(usbf_pipe_handle);
+	usbf_status	(*transfer)(struct usbf_xfer *);
+	usbf_status	(*start)(struct usbf_xfer *);
+	void		(*abort)(struct usbf_xfer *);
+	void		(*done)(struct usbf_xfer *);
+	void		(*close)(struct usbf_pipe *);
 };
 
 struct usbf_bus_methods {
 	usbf_status	  (*open_pipe)(struct usbf_pipe *);
 	void		  (*soft_intr)(void *);
-	usbf_status	  (*allocm)(struct usbf_bus *, usb_dma_t *, u_int32_t);
-	void		  (*freem)(struct usbf_bus *, usb_dma_t *);
+	usbf_status	  (*allocm)(struct usbf_bus *, struct usb_dma *,
+			      u_int32_t);
+	void		  (*freem)(struct usbf_bus *, struct usb_dma *);
 	struct usbf_xfer *(*allocx)(struct usbf_bus *);
 	void		  (*freex)(struct usbf_bus *, struct usbf_xfer *);
 };
@@ -130,7 +131,7 @@ struct usbf_pipe {
 
 struct usbf_xfer {
 	struct usbf_pipe	*pipe;
-	usbf_private_handle	 priv;
+	void	 		*priv;
 	void			*buffer;
 	u_int32_t		 length;
 	u_int32_t		 actlen;
@@ -143,27 +144,26 @@ struct usbf_xfer {
 	/* for memory management */
 	struct usbf_device	*device;
 	int			 rqflags;
-	usb_dma_t		 dmabuf;
+	struct usb_dma		 dmabuf;
 
 	struct timeout		 timeout_handle;
 };
 
 
 /* usbf.c */
-void	    usbf_host_reset(usbf_bus_handle);
-void	    usbf_do_request(usbf_xfer_handle, usbf_private_handle,
-			    usbf_status);
+void	    usbf_host_reset(struct usbf_bus *);
+void	    usbf_do_request(struct usbf_xfer *, void *, usbf_status);
 
 /* usbf_subr.c */
-usbf_status usbf_new_device(struct device *, usbf_bus_handle, int, int, int,
+usbf_status usbf_new_device(struct device *, struct usbf_bus *, int, int, int,
 				     struct usbf_port *);
-usbf_status usbf_set_endpoint_feature(usbf_config_handle, u_int8_t,
+usbf_status usbf_set_endpoint_feature(struct usbf_config *, u_int8_t,
 				      u_int16_t);
-usbf_status usbf_clear_endpoint_feature(usbf_config_handle, u_int8_t,
+usbf_status usbf_clear_endpoint_feature(struct usbf_config *, u_int8_t,
 					u_int16_t);
-usbf_status usbf_insert_transfer(usbf_xfer_handle xfer);
-void	    usbf_transfer_complete(usbf_xfer_handle xfer);
-usbf_status usbf_allocmem(usbf_bus_handle, size_t, size_t, usb_dma_t *);
-void	    usbf_freemem(usbf_bus_handle, usb_dma_t *);
+usbf_status usbf_insert_transfer(struct usbf_xfer *xfer);
+void	    usbf_transfer_complete(struct usbf_xfer *xfer);
+usbf_status usbf_allocmem(struct usbf_bus *, size_t, size_t, struct usb_dma *);
+void	    usbf_freemem(struct usbf_bus *, struct usb_dma *);
 usbf_status usbf_softintr_establish(struct usbf_bus *);
 void	    usbf_schedsoftintr(struct usbf_bus *);

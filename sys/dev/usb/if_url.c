@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.65 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: if_url.c,v 1.66 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -106,8 +106,8 @@ int url_tx_list_init(struct url_softc *);
 int url_newbuf(struct url_softc *, struct url_chain *, struct mbuf *);
 void url_start(struct ifnet *);
 int url_send(struct url_softc *, struct mbuf *, int);
-void url_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void url_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void url_txeof(struct usbd_xfer *, void *, usbd_status);
+void url_rxeof(struct usbd_xfer *, void *, usbd_status);
 void url_tick(void *);
 void url_tick_task(void *);
 int url_ioctl(struct ifnet *, u_long, caddr_t);
@@ -189,8 +189,8 @@ url_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct url_softc *sc = (struct url_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -889,7 +889,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 }
 
 void
-url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+url_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct url_chain *c = priv;
 	struct url_softc *sc = c->url_sc;
@@ -936,7 +936,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 void
-url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct url_chain *c = priv;
 	struct url_softc *sc = c->url_sc;

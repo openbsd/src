@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.63 2012/09/11 16:04:44 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.64 2013/04/15 09:23:02 mglocker Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ int uftdidebug = 0;
 
 struct uftdi_softc {
 	struct device		 sc_dev;		/* base device */
-	usbd_device_handle	 sc_udev;	/* device */
-	usbd_interface_handle	 sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* device */
+	struct usbd_interface	*sc_iface;	/* interface */
 
 	enum uftdi_type		 sc_type;
 	u_int			 sc_hdrlen;
@@ -788,8 +788,8 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devname = sc->sc_dev.dv_xname;

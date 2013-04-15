@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uathvar.h,v 1.6 2007/09/11 19:53:58 damien Exp $	*/
+/*	$OpenBSD: if_uathvar.h,v 1.7 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -53,28 +53,28 @@ struct uath_tx_radiotap_header {
 
 struct uath_tx_data {
 	struct uath_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct ieee80211_node	*ni;
 };
 
 struct uath_rx_data {
 	struct uath_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 };
 
 struct uath_tx_cmd {
 	struct uath_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	void			*odata;
 };
 
 struct uath_rx_cmd {
 	struct uath_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
@@ -114,16 +114,16 @@ struct uath_softc {
 	int				cmd_idx;
 	int				tx_queued;
 
-	usbd_device_handle		sc_udev;
-	usbd_device_handle		sc_uhub;
+	struct usbd_device		*sc_udev;
+	struct usbd_device		*sc_uhub;
 	int				sc_port;
 
-	usbd_interface_handle		sc_iface;
+	struct usbd_interface		*sc_iface;
 
-	usbd_pipe_handle		data_tx_pipe;
-	usbd_pipe_handle		data_rx_pipe;
-	usbd_pipe_handle		cmd_tx_pipe;
-	usbd_pipe_handle		cmd_rx_pipe;
+	struct usbd_pipe		*data_tx_pipe;
+	struct usbd_pipe		*data_rx_pipe;
+	struct usbd_pipe		*cmd_tx_pipe;
+	struct usbd_pipe		*cmd_rx_pipe;
 
 	enum ieee80211_state		sc_state;
 	int				sc_arg;

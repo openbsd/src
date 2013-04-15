@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.16 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.17 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -42,15 +42,15 @@ extern int usbfdebug;
 #endif
 
 void	    *usbf_realloc(void **, size_t *, size_t);
-size_t	     usbf_get_string(usbf_device_handle, u_int8_t, char *, size_t);
-usbf_status  usbf_open_pipe_ival(usbf_interface_handle, u_int8_t,
-				 usbf_pipe_handle *, int);
-usbf_status  usbf_setup_pipe(usbf_device_handle, usbf_interface_handle,
+size_t	     usbf_get_string(struct usbf_device *, u_int8_t, char *, size_t);
+usbf_status  usbf_open_pipe_ival(struct usbf_interface *, u_int8_t,
+				 struct usbf_pipe **, int);
+usbf_status  usbf_setup_pipe(struct usbf_device *, struct usbf_interface *,
 			     struct usbf_endpoint *, int,
-			     usbf_pipe_handle *);
-void	     usbf_start_next(usbf_pipe_handle);
-void	     usbf_set_endpoint_halt(usbf_endpoint_handle);
-void	     usbf_clear_endpoint_halt(usbf_endpoint_handle);
+			     struct usbf_pipe **);
+void	     usbf_start_next(struct usbf_pipe *);
+void	     usbf_set_endpoint_halt(struct usbf_endpoint *);
+void	     usbf_clear_endpoint_halt(struct usbf_endpoint *);
 
 static const char * const usbf_error_strs[] = USBF_ERROR_STRS;
 
@@ -101,7 +101,7 @@ usbf_realloc(void **pp, size_t *sizep, size_t newsize)
  * Attach a function driver.
  */
 static usbf_status
-usbf_probe_and_attach(struct device *parent, usbf_device_handle dev, int port)
+usbf_probe_and_attach(struct device *parent, struct usbf_device *dev, int port)
 {
 	struct usbf_attach_arg uaa;
 	struct device *dv;
@@ -132,7 +132,7 @@ usbf_probe_and_attach(struct device *parent, usbf_device_handle dev, int port)
 }
 
 static void
-usbf_remove_device(usbf_device_handle dev, struct usbf_port *up)
+usbf_remove_device(struct usbf_device *dev, struct usbf_port *up)
 {
 	KASSERT(dev != NULL && dev == up->device);
 
@@ -145,7 +145,7 @@ usbf_remove_device(usbf_device_handle dev, struct usbf_port *up)
 }
 
 usbf_status
-usbf_new_device(struct device *parent, usbf_bus_handle bus, int depth,
+usbf_new_device(struct device *parent, struct usbf_bus *bus, int depth,
     int speed, int port, struct usbf_port *up)
 {
 	struct usbf_device *dev;
@@ -237,7 +237,7 @@ usbf_new_device(struct device *parent, usbf_bus_handle bus, int depth,
  * the default device identification according to the particular function.
  */
 void
-usbf_devinfo_setup(usbf_device_handle dev, u_int8_t devclass,
+usbf_devinfo_setup(struct usbf_device *dev, u_int8_t devclass,
     u_int8_t subclass, u_int8_t proto, u_int16_t vendor, u_int16_t product,
     u_int16_t device, const char *manf, const char *prod, const char *ser)
 {
@@ -262,7 +262,7 @@ usbf_devinfo_setup(usbf_device_handle dev, u_int8_t devclass,
 }
 
 char *
-usbf_devinfo_alloc(usbf_device_handle dev)
+usbf_devinfo_alloc(struct usbf_device *dev)
 {
 	char manf[40];
 	char prod[40];
@@ -300,7 +300,7 @@ usbf_devinfo_free(char *devinfo)
  * instead of failing.
  */
 u_int8_t
-usbf_add_string(usbf_device_handle dev, const char *string)
+usbf_add_string(struct usbf_device *dev, const char *string)
 {
 	usb_string_descriptor_t *sd;
 	size_t oldsize;
@@ -334,7 +334,7 @@ usbf_add_string(usbf_device_handle dev, const char *string)
 }
 
 usb_string_descriptor_t *
-usbf_string_descriptor(usbf_device_handle dev, u_int8_t id)
+usbf_string_descriptor(struct usbf_device *dev, u_int8_t id)
 {
 	static usb_string_descriptor_t sd0;
 	static usb_string_descriptor_t sd1;
@@ -367,7 +367,7 @@ usbf_string_descriptor(usbf_device_handle dev, u_int8_t id)
 }
 
 size_t
-usbf_get_string(usbf_device_handle dev, u_int8_t id, char *s, size_t size)
+usbf_get_string(struct usbf_device *dev, u_int8_t id, char *s, size_t size)
 {
 	usb_string_descriptor_t *sd = NULL;
 	size_t i, len;
@@ -396,7 +396,7 @@ usbf_get_string(usbf_device_handle dev, u_int8_t id, char *s, size_t size)
  * The new configuration initially has zero interfaces.
  */
 usbf_status
-usbf_add_config(usbf_device_handle dev, usbf_config_handle *ucp)
+usbf_add_config(struct usbf_device *dev, struct usbf_config **ucp)
 {
 	struct usbf_config *uc;
 	usb_config_descriptor_t *cd;
@@ -442,7 +442,7 @@ usbf_add_config(usbf_device_handle dev, usbf_config_handle *ucp)
  * device configuration descriptor.
  */
 usbf_status
-usbf_add_config_desc(usbf_config_handle uc, usb_descriptor_t *d,
+usbf_add_config_desc(struct usbf_config *uc, usb_descriptor_t *d,
     usb_descriptor_t **dp)
 {
     	usb_config_descriptor_t *cd;
@@ -467,9 +467,9 @@ usbf_add_config_desc(usbf_config_handle uc, usb_descriptor_t *d,
 }
 
 usbf_status
-usbf_add_interface(usbf_config_handle uc, u_int8_t bInterfaceClass,
+usbf_add_interface(struct usbf_config *uc, u_int8_t bInterfaceClass,
     u_int8_t bInterfaceSubClass, u_int8_t bInterfaceProtocol,
-    const char *string, usbf_interface_handle *uip)
+    const char *string, struct usbf_interface **uip)
 {
 	struct usbf_interface *ui;
 	usb_interface_descriptor_t *id;
@@ -508,9 +508,9 @@ usbf_add_interface(usbf_config_handle uc, u_int8_t bInterfaceClass,
 }
 
 usbf_status
-usbf_add_endpoint(usbf_interface_handle ui, u_int8_t bEndpointAddress,
+usbf_add_endpoint(struct usbf_interface *ui, u_int8_t bEndpointAddress,
     u_int8_t bmAttributes, u_int16_t wMaxPacketSize, u_int8_t bInterval,
-    usbf_endpoint_handle *uep)
+    struct usbf_endpoint **uep)
 {
 	struct usbf_endpoint *ue;
 	usb_endpoint_descriptor_t *ed;
@@ -550,7 +550,7 @@ usbf_add_endpoint(usbf_interface_handle ui, u_int8_t bEndpointAddress,
  * the real USB configuration descriptor that can be sent to the USB host.
  */
 usbf_status
-usbf_end_config(usbf_config_handle uc)
+usbf_end_config(struct usbf_config *uc)
 {
 	struct usbf_interface *ui;
 	struct usbf_endpoint *ue;
@@ -585,13 +585,13 @@ usbf_end_config(usbf_config_handle uc)
 }
 
 usb_device_descriptor_t *
-usbf_device_descriptor(usbf_device_handle dev)
+usbf_device_descriptor(struct usbf_device *dev)
 {
 	return &dev->ddesc;
 }
 
 usb_config_descriptor_t *
-usbf_config_descriptor(usbf_device_handle dev, u_int8_t index)
+usbf_config_descriptor(struct usbf_device *dev, u_int8_t index)
 {
 	struct usbf_config *uc;
 
@@ -603,36 +603,36 @@ usbf_config_descriptor(usbf_device_handle dev, u_int8_t index)
 }
 
 int
-usbf_interface_number(usbf_interface_handle iface)
+usbf_interface_number(struct usbf_interface *iface)
 {
 	return iface->idesc->bInterfaceNumber;
 }
 
 u_int8_t
-usbf_endpoint_address(usbf_endpoint_handle endpoint)
+usbf_endpoint_address(struct usbf_endpoint *endpoint)
 {
 	return endpoint->edesc->bEndpointAddress;
 }
 
 u_int8_t
-usbf_endpoint_attributes(usbf_endpoint_handle endpoint)
+usbf_endpoint_attributes(struct usbf_endpoint *endpoint)
 {
 	return endpoint->edesc->bmAttributes;
 }
 
 usbf_status
-usbf_open_pipe(usbf_interface_handle iface, u_int8_t address,
-    usbf_pipe_handle *pipe)
+usbf_open_pipe(struct usbf_interface *iface, u_int8_t address,
+    struct usbf_pipe **pipe)
 {
 	return usbf_open_pipe_ival(iface, address, pipe, 0);
 }
 
 usbf_status
-usbf_open_pipe_ival(usbf_interface_handle iface, u_int8_t address,
-    usbf_pipe_handle *pipe, int ival)
+usbf_open_pipe_ival(struct usbf_interface *iface, u_int8_t address,
+    struct usbf_pipe **pipe, int ival)
 {
 	struct usbf_endpoint *ep;
-	usbf_pipe_handle p;
+	struct usbf_pipe *p;
 	usbf_status err;
 
 	ep = usbf_iface_endpoint(iface, address);
@@ -649,8 +649,8 @@ usbf_open_pipe_ival(usbf_interface_handle iface, u_int8_t address,
 }
 
 usbf_status
-usbf_setup_pipe(usbf_device_handle dev, usbf_interface_handle iface,
-    struct usbf_endpoint *ep, int ival, usbf_pipe_handle *pipe)
+usbf_setup_pipe(struct usbf_device *dev, struct usbf_interface *iface,
+    struct usbf_endpoint *ep, int ival, struct usbf_pipe **pipe)
 {
 	struct usbf_pipe *p;
 	usbf_status err;
@@ -680,9 +680,9 @@ usbf_setup_pipe(usbf_device_handle dev, usbf_interface_handle iface,
 
 /* Dequeue all pipe operations. */
 void
-usbf_abort_pipe(usbf_pipe_handle pipe)
+usbf_abort_pipe(struct usbf_pipe *pipe)
 {
-	usbf_xfer_handle xfer;
+	struct usbf_xfer *xfer;
 	int s;
 
 	s = splusb();
@@ -702,7 +702,7 @@ usbf_abort_pipe(usbf_pipe_handle pipe)
 
 /* Abort all pipe operations and close the pipe. */
 void
-usbf_close_pipe(usbf_pipe_handle pipe)
+usbf_close_pipe(struct usbf_pipe *pipe)
 {
 	usbf_abort_pipe(pipe);
 	pipe->methods->close(pipe);
@@ -711,15 +711,15 @@ usbf_close_pipe(usbf_pipe_handle pipe)
 }
 
 void
-usbf_stall_pipe(usbf_pipe_handle pipe)
+usbf_stall_pipe(struct usbf_pipe *pipe)
 {
 	DPRINTF(0,("usbf_stall_pipe not implemented\n"));
 }
 
-usbf_endpoint_handle
-usbf_iface_endpoint(usbf_interface_handle iface, u_int8_t address)
+struct usbf_endpoint *
+usbf_iface_endpoint(struct usbf_interface *iface, u_int8_t address)
 {
-	usbf_endpoint_handle ep;
+	struct usbf_endpoint *ep;
 
 	SIMPLEQ_FOREACH(ep, &iface->endpoint_head, next) {
 		if (ep->edesc->bEndpointAddress == address)
@@ -728,11 +728,11 @@ usbf_iface_endpoint(usbf_interface_handle iface, u_int8_t address)
 	return NULL;
 }
 
-usbf_endpoint_handle
-usbf_config_endpoint(usbf_config_handle cfg, u_int8_t address)
+struct usbf_endpoint *
+usbf_config_endpoint(struct usbf_config *cfg, u_int8_t address)
 {
-	usbf_interface_handle iface;
-	usbf_endpoint_handle ep;
+	struct usbf_interface *iface;
+	struct usbf_endpoint *ep;
 
 	SIMPLEQ_FOREACH(iface, &cfg->iface_head, next) {
 		SIMPLEQ_FOREACH(ep, &iface->endpoint_head, next) {
@@ -744,20 +744,20 @@ usbf_config_endpoint(usbf_config_handle cfg, u_int8_t address)
 }
 
 void
-usbf_set_endpoint_halt(usbf_endpoint_handle endpoint)
+usbf_set_endpoint_halt(struct usbf_endpoint *endpoint)
 {
 }
 
 void
-usbf_clear_endpoint_halt(usbf_endpoint_handle endpoint)
+usbf_clear_endpoint_halt(struct usbf_endpoint *endpoint)
 {
 }
 
 usbf_status
-usbf_set_endpoint_feature(usbf_config_handle cfg, u_int8_t address,
+usbf_set_endpoint_feature(struct usbf_config *cfg, u_int8_t address,
     u_int16_t value)
 {
-	usbf_endpoint_handle ep;
+	struct usbf_endpoint *ep;
 
 	DPRINTF(0,("usbf_set_endpoint_feature: cfg=%p address=%#x"
 	    " value=%#x\n", cfg, address, value));
@@ -777,10 +777,10 @@ usbf_set_endpoint_feature(usbf_config_handle cfg, u_int8_t address,
 }
 
 usbf_status
-usbf_clear_endpoint_feature(usbf_config_handle cfg, u_int8_t address,
+usbf_clear_endpoint_feature(struct usbf_config *cfg, u_int8_t address,
     u_int16_t value)
 {
-	usbf_endpoint_handle ep;
+	struct usbf_endpoint *ep;
 
 	DPRINTF(0,("usbf_clear_endpoint_feature: cfg=%p address=%#x"
 	    " value=%#x\n", cfg, address, value));
@@ -799,8 +799,8 @@ usbf_clear_endpoint_feature(usbf_config_handle cfg, u_int8_t address,
 	}
 }
 
-usbf_xfer_handle
-usbf_alloc_xfer(usbf_device_handle dev)
+struct usbf_xfer *
+usbf_alloc_xfer(struct usbf_device *dev)
 {
 	struct usbf_xfer *xfer;
 
@@ -815,7 +815,7 @@ usbf_alloc_xfer(usbf_device_handle dev)
 }
 
 void
-usbf_free_xfer(usbf_xfer_handle xfer)
+usbf_free_xfer(struct usbf_xfer *xfer)
 {
 	DPRINTF(1,("usbf_free_xfer: %p\n", xfer));
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
@@ -824,7 +824,7 @@ usbf_free_xfer(usbf_xfer_handle xfer)
 }
 
 usbf_status
-usbf_allocmem(usbf_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
+usbf_allocmem(struct usbf_bus *bus, size_t size, size_t align, struct usb_dma *p)
 {
 	struct usbd_bus dbus;
 	usbd_status err;
@@ -836,13 +836,13 @@ usbf_allocmem(usbf_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 }
 
 void
-usbf_freemem(usbf_bus_handle bus, usb_dma_t *p)
+usbf_freemem(struct usbf_bus *bus, struct usb_dma *p)
 {
-	usb_freemem((usbd_bus_handle)NULL, p);
+	usb_freemem((struct usbd_bus *)NULL, p);
 }
 
 void *
-usbf_alloc_buffer(usbf_xfer_handle xfer, u_int32_t size)
+usbf_alloc_buffer(struct usbf_xfer *xfer, u_int32_t size)
 {
 	struct usbf_bus *bus = xfer->device->bus;
 	usbf_status err;
@@ -861,7 +861,7 @@ usbf_alloc_buffer(usbf_xfer_handle xfer, u_int32_t size)
 }
 
 void
-usbf_free_buffer(usbf_xfer_handle xfer)
+usbf_free_buffer(struct usbf_xfer *xfer)
 {
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_DEV_DMABUF)) {
@@ -879,10 +879,10 @@ usbf_free_buffer(usbf_xfer_handle xfer)
  * easily compare traces.
  */
 static void
-usbf_dump_buffer(usbf_xfer_handle xfer)
+usbf_dump_buffer(struct usbf_xfer *xfer)
 {
 	struct device *dev = (struct device *)xfer->pipe->device->bus->usbfctl;
-	usbf_endpoint_handle ep = xfer->pipe->endpoint;
+	struct usbf_endpoint *ep = xfer->pipe->endpoint;
 	int index = usbf_endpoint_index(ep);
 	int dir = usbf_endpoint_dir(ep);
 	u_char *p = xfer->buffer;
@@ -905,8 +905,8 @@ usbf_dump_buffer(usbf_xfer_handle xfer)
 #endif
 
 void
-usbf_setup_xfer(usbf_xfer_handle xfer, usbf_pipe_handle pipe,
-    usbf_private_handle priv, void *buffer, u_int32_t length,
+usbf_setup_xfer(struct usbf_xfer *xfer, struct usbf_pipe *pipe,
+    void *priv, void *buffer, u_int32_t length,
     u_int16_t flags, u_int32_t timeout, usbf_callback callback)
 {
 	xfer->pipe = pipe;
@@ -922,8 +922,8 @@ usbf_setup_xfer(usbf_xfer_handle xfer, usbf_pipe_handle pipe,
 }
 
 void
-usbf_setup_default_xfer(usbf_xfer_handle xfer, usbf_pipe_handle pipe,
-    usbf_private_handle priv, usb_device_request_t *req, u_int16_t flags,
+usbf_setup_default_xfer(struct usbf_xfer *xfer, struct usbf_pipe *pipe,
+    void *priv, usb_device_request_t *req, u_int16_t flags,
     u_int32_t timeout, usbf_callback callback)
 {
 	xfer->pipe = pipe;
@@ -939,7 +939,7 @@ usbf_setup_default_xfer(usbf_xfer_handle xfer, usbf_pipe_handle pipe,
 }
 
 void
-usbf_get_xfer_status(usbf_xfer_handle xfer, usbf_private_handle *priv,
+usbf_get_xfer_status(struct usbf_xfer *xfer, void **priv,
     void **buffer, u_int32_t *actlen, usbf_status *status)
 {
 	if (priv != NULL)
@@ -953,9 +953,9 @@ usbf_get_xfer_status(usbf_xfer_handle xfer, usbf_private_handle *priv,
 }
 
 usbf_status
-usbf_transfer(usbf_xfer_handle xfer)
+usbf_transfer(struct usbf_xfer *xfer)
 {
-	usbf_pipe_handle pipe = xfer->pipe;
+	struct usbf_pipe *pipe = xfer->pipe;
 	usbf_status err;
 
 	err = pipe->methods->transfer(xfer);
@@ -969,9 +969,9 @@ usbf_transfer(usbf_xfer_handle xfer)
 }
 
 usbf_status
-usbf_insert_transfer(usbf_xfer_handle xfer)
+usbf_insert_transfer(struct usbf_xfer *xfer)
 {
-	usbf_pipe_handle pipe = xfer->pipe;
+	struct usbf_pipe *pipe = xfer->pipe;
 	usbf_status err;
 	int s;
 
@@ -991,9 +991,9 @@ usbf_insert_transfer(usbf_xfer_handle xfer)
 }
 
 void
-usbf_start_next(usbf_pipe_handle pipe)
+usbf_start_next(struct usbf_pipe *pipe)
 {
-	usbf_xfer_handle xfer;
+	struct usbf_xfer *xfer;
 	usbf_status err;
 
 	SPLUSBCHECK;
@@ -1014,9 +1014,9 @@ usbf_start_next(usbf_pipe_handle pipe)
 
 /* Called at splusb() */
 void
-usbf_transfer_complete(usbf_xfer_handle xfer)
+usbf_transfer_complete(struct usbf_xfer *xfer)
 {
-	usbf_pipe_handle pipe = xfer->pipe;
+	struct usbf_pipe *pipe = xfer->pipe;
 	int repeat = pipe->repeat;
 
 	SPLUSBCHECK;

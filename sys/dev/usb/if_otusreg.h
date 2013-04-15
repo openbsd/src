@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.7 2009/05/11 18:06:25 damien Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.8 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -690,7 +690,7 @@ static const uint32_t ar5416_banks_vals_2ghz[] = {
 #define AR5416_EEPROM_MODAL_SPURS	5
 #define AR5416_MAX_CHAINS		2
 
-typedef struct BaseEepHeader {
+struct BaseEepHeader {
 	uint16_t	length;
 	uint16_t	checksum;
 	uint16_t	version;
@@ -706,15 +706,15 @@ typedef struct BaseEepHeader {
 	uint32_t	binBuildNumber;
 	uint8_t		deviceType;
 	uint8_t		futureBase[33];
-} __packed BASE_EEP_HEADER;
+} __packed;
 
-typedef struct spurChanStruct {
+struct spurChanStruct {
 	uint16_t	spurChan;
 	uint8_t		spurRangeLow;
 	uint8_t		spurRangeHigh;
-} __packed SPUR_CHAN;
+} __packed;
 
-typedef struct ModalEepHeader {
+struct ModalEepHeader {
 	uint32_t	antCtrlChain[AR5416_MAX_CHAINS];
 	uint32_t	antCtrlCommon;
 	int8_t		antennaGainCh[AR5416_MAX_CHAINS];
@@ -746,54 +746,54 @@ typedef struct ModalEepHeader {
 	uint8_t		bswMargin[AR5416_MAX_CHAINS];
 	uint8_t		swSettleHt40;
 	uint8_t		futureModal[22];
-	SPUR_CHAN	spurChans[AR5416_EEPROM_MODAL_SPURS];
-} __packed MODAL_EEP_HEADER;
+	struct spurChanStruct spurChans[AR5416_EEPROM_MODAL_SPURS];
+} __packed;
 
-typedef struct calDataPerFreq {
+struct calDataPerFreq {
 	uint8_t		pwrPdg[AR5416_NUM_PD_GAINS][AR5416_PD_GAIN_ICEPTS];
 	uint8_t		vpdPdg[AR5416_NUM_PD_GAINS][AR5416_PD_GAIN_ICEPTS];
-} __packed CAL_DATA_PER_FREQ;
+} __packed;
 
-typedef struct CalTargetPowerLegacy {
+struct CalTargetPowerLegacy {
 	uint8_t		bChannel;
 	uint8_t		tPow2x[4];
-} __packed CAL_TARGET_POWER_LEG;
+} __packed;
 
-typedef struct CalTargetPowerHt {
+struct CalTargetPowerHt {
 	uint8_t		bChannel;
 	uint8_t		tPow2x[8];
-} __packed CAL_TARGET_POWER_HT;
+} __packed;
 
-typedef struct CalCtlEdges {
+struct CalCtlEdges {
 	uint8_t		bChannel;
 	uint8_t		tPowerFlag;
-} __packed CAL_CTL_EDGES;
+} __packed;
 
-typedef struct CalCtlData {
-	CAL_CTL_EDGES	ctlEdges[AR5416_MAX_CHAINS][AR5416_NUM_BAND_EDGES];
-} __packed CAL_CTL_DATA;
+struct CalCtlData {
+	struct CalCtlEdges ctlEdges[AR5416_MAX_CHAINS][AR5416_NUM_BAND_EDGES];
+} __packed;
 
-typedef struct ar5416eeprom {
-	BASE_EEP_HEADER		baseEepHeader;
+struct ar5416eeprom {
+	struct BaseEepHeader	baseEepHeader;
 	uint8_t			custData[64];
-	MODAL_EEP_HEADER	modalHeader[2];
+	struct ModalEepHeader	modalHeader[2];
 	uint8_t			calFreqPier5G[AR5416_NUM_5G_CAL_PIERS];
 	uint8_t			calFreqPier2G[AR5416_NUM_2G_CAL_PIERS];
-	CAL_DATA_PER_FREQ	calPierData5G[AR5416_MAX_CHAINS]
+	struct calDataPerFreq	calPierData5G[AR5416_MAX_CHAINS]
 					     [AR5416_NUM_5G_CAL_PIERS];
-	CAL_DATA_PER_FREQ	calPierData2G[AR5416_MAX_CHAINS]
+	struct calDataPerFreq	calPierData2G[AR5416_MAX_CHAINS]
 					     [AR5416_NUM_2G_CAL_PIERS];
-	CAL_TARGET_POWER_LEG	calTPow5G[AR5416_NUM_5G_20_TARGET_POWERS];
-	CAL_TARGET_POWER_HT	calTPow5GHT20[AR5416_NUM_5G_20_TARGET_POWERS];
-	CAL_TARGET_POWER_HT	calTPow5GHT40[AR5416_NUM_5G_40_TARGET_POWERS];
-	CAL_TARGET_POWER_LEG	calTPowCck[AR5416_NUM_2G_CCK_TARGET_POWERS];
-	CAL_TARGET_POWER_LEG	calTPow2G[AR5416_NUM_2G_20_TARGET_POWERS];
-	CAL_TARGET_POWER_HT	calTPow2GHT20[AR5416_NUM_2G_20_TARGET_POWERS];
-	CAL_TARGET_POWER_HT	calTPow2GHT40[AR5416_NUM_2G_40_TARGET_POWERS];
+	struct CalTargetPowerLegacy calTPow5G[AR5416_NUM_5G_20_TARGET_POWERS];
+	struct CalTargetPowerHt calTPow5GHT20[AR5416_NUM_5G_20_TARGET_POWERS];
+	struct CalTargetPowerHt calTPow5GHT40[AR5416_NUM_5G_40_TARGET_POWERS];
+	struct CalTargetPowerLegacy calTPowCck[AR5416_NUM_2G_CCK_TARGET_POWERS];
+	struct CalTargetPowerLegacy calTPow2G[AR5416_NUM_2G_20_TARGET_POWERS];
+	struct CalTargetPowerHt calTPow2GHT20[AR5416_NUM_2G_20_TARGET_POWERS];
+	struct CalTargetPowerHt calTPow2GHT40[AR5416_NUM_2G_40_TARGET_POWERS];
 	uint8_t			ctlIndex[AR5416_NUM_CTLS];
-	CAL_CTL_DATA		ctlData[AR5416_NUM_CTLS];
+	struct CalCtlData	ctlData[AR5416_NUM_CTLS];
 	uint8_t			padding;
-} __packed AR5416_EEPROM;
+} __packed;
 
 
 #define OTUS_TX_DATA_LIST_COUNT	8
@@ -869,7 +869,7 @@ struct otus_tx_radiotap_header {
 struct otus_softc;
 
 struct otus_tx_cmd {
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	void			*odata;
 	uint16_t		token;
@@ -878,13 +878,13 @@ struct otus_tx_cmd {
 
 struct otus_rx_data {
 	struct otus_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
 struct otus_tx_data {
 	struct otus_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
@@ -924,18 +924,18 @@ struct otus_softc {
 					    enum ieee80211_state, int);
 	void				(*sc_led_newstate)(struct otus_softc *);
 
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device		*sc_udev;
+	struct usbd_interface		*sc_iface;
 
 	struct ar5416eeprom		eeprom;
 	uint8_t				capflags;
 	uint8_t				rxmask;
 	uint8_t				txmask;
 
-	usbd_pipe_handle		data_tx_pipe;
-	usbd_pipe_handle		data_rx_pipe;
-	usbd_pipe_handle		cmd_tx_pipe;
-	usbd_pipe_handle		cmd_rx_pipe;
+	struct usbd_pipe		*data_tx_pipe;
+	struct usbd_pipe		*data_rx_pipe;
+	struct usbd_pipe		*cmd_tx_pipe;
+	struct usbd_pipe		*cmd_rx_pipe;
 	uint8_t 			*ibuf;
 
 	int				sc_if_flags;

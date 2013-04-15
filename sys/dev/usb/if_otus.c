@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.33 2013/04/12 12:58:39 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.34 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -133,11 +133,11 @@ int		otus_media_change(struct ifnet *);
 int		otus_read_eeprom(struct otus_softc *);
 void		otus_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
-void		otus_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		otus_intr(struct usbd_xfer *, void *, usbd_status);
 void		otus_cmd_rxeof(struct otus_softc *, uint8_t *, int);
 void		otus_sub_rxeof(struct otus_softc *, uint8_t *, int);
-void		otus_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void		otus_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		otus_rxeof(struct usbd_xfer *, void *, usbd_status);
+void		otus_txeof(struct usbd_xfer *, void *, usbd_status);
 int		otus_tx(struct otus_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 void		otus_start(struct ifnet *);
@@ -995,7 +995,7 @@ otus_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 
 /* ARGSUSED */
 void
-otus_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 #if 0
 	struct otus_softc *sc = priv;
@@ -1228,7 +1228,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 }
 
 void
-otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct otus_rx_data *data = priv;
 	struct otus_softc *sc = data->sc;
@@ -1274,7 +1274,7 @@ otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 void
-otus_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct otus_tx_data *data = priv;
 	struct otus_softc *sc = data->sc;

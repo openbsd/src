@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.32 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.33 2013/04/15 09:23:01 mglocker Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -107,7 +107,7 @@ struct atu_softc;
 
 struct atu_chain {
 	struct atu_softc	*atu_sc;
-	usbd_xfer_handle	atu_xfer;
+	struct usbd_xfer	*atu_xfer;
 	char			*atu_buf;
 	struct mbuf		*atu_mbuf;
 	u_int8_t		atu_idx;
@@ -179,11 +179,11 @@ struct atu_softc {
 #define ATU_C_JOIN		2
 	struct usb_task		sc_task;
 
-	usbd_device_handle	atu_udev;
-	usbd_interface_handle	atu_iface;
+	struct usbd_device	*atu_udev;
+	struct usbd_interface	*atu_iface;
 	struct ifmedia		atu_media;
 	int			atu_ed[ATU_ENDPT_MAX];
-	usbd_pipe_handle	atu_ep[ATU_ENDPT_MAX];
+	struct usbd_pipe	*atu_ep[ATU_ENDPT_MAX];
 	int			atu_unit;
 	int			atu_if_flags;
 

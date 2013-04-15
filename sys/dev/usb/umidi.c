@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.35 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.36 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,8 +113,8 @@ static usbd_status start_input_transfer(struct umidi_endpoint *);
 static usbd_status start_output_transfer(struct umidi_endpoint *);
 static int out_jack_output(struct umidi_jack *, int);
 static void out_jack_flush(struct umidi_jack *);
-static void in_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void out_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void in_intr(struct usbd_xfer *, void *, usbd_status);
+static void out_intr(struct usbd_xfer *, void *, usbd_status);
 static int out_build_packet(int, struct umidi_packet *, uByte, u_char *);
 
 
@@ -1109,7 +1109,7 @@ start_input_transfer(struct umidi_endpoint *ep)
 {
 	usbd_status err;
 	usbd_setup_xfer(ep->xfer, ep->pipe,
-			(usbd_private_handle)ep,
+			(void *)ep,
 			ep->buffer, ep->packetsize,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, in_intr);
 	err = usbd_transfer(ep->xfer);
@@ -1126,7 +1126,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 {
 	usbd_status err;
 	usbd_setup_xfer(ep->xfer, ep->pipe,
-			(usbd_private_handle)ep,
+			(void *)ep,
 			ep->buffer, ep->used,
 			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	err = usbd_transfer(ep->xfer);
@@ -1207,7 +1207,7 @@ out_jack_flush(struct umidi_jack *j)
 
 
 static void
-in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+in_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	int cn, evlen, remain, i;
 	unsigned char *buf;
@@ -1238,7 +1238,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 static void
-out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+out_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_softc *sc = ep->sc;

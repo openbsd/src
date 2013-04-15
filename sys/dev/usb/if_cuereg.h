@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cuereg.h,v 1.11 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_cuereg.h,v 1.12 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_cuereg.h,v 1.14 2001/01/21 22:09:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -149,7 +149,7 @@ struct cue_softc;
 
 struct cue_chain {
 	struct cue_softc	*cue_sc;
-	usbd_xfer_handle	cue_xfer;
+	struct usbd_xfer	*cue_xfer;
 	char			*cue_buf;
 	struct mbuf		*cue_mbuf;
 	int			cue_idx;
@@ -172,12 +172,12 @@ struct cue_softc {
 
 	struct timeout		cue_stat_ch;
 
-	usbd_device_handle	cue_udev;
-	usbd_interface_handle	cue_iface;
+	struct usbd_device	*cue_udev;
+	struct usbd_interface	*cue_iface;
 	u_int16_t		cue_vendor;
 	u_int16_t		cue_product;
 	int			cue_ed[CUE_ENDPT_MAX];
-	usbd_pipe_handle	cue_ep[CUE_ENDPT_MAX];
+	struct usbd_pipe	*cue_ep[CUE_ENDPT_MAX];
 	u_int8_t		cue_mctab[CUE_MCAST_TABLE_LEN];
 	int			cue_if_flags;
 	u_int16_t		cue_rxfilt;

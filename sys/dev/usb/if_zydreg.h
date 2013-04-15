@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.25 2010/11/19 21:12:14 miod Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.26 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1116,14 +1116,14 @@ struct zyd_mac_pair {
 
 struct zyd_tx_data {
 	struct zyd_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct ieee80211_node	*ni;
 };
 
 struct zyd_rx_data {
 	struct zyd_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	const uint8_t		*buf;
 };
 
@@ -1181,8 +1181,8 @@ struct zyd_softc {
 	struct zyd_rf			sc_rf;
 
 	struct usb_task			sc_task;
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device		*sc_udev;
+	struct usbd_interface		*sc_iface;
 
 	enum ieee80211_state		sc_state;
 	int				sc_arg;
@@ -1216,7 +1216,7 @@ struct zyd_softc {
 #define ZYD_ENDPT_IIN	2
 #define ZYD_ENDPT_IOUT	3
 #define ZYD_ENDPT_CNT	4
-	usbd_pipe_handle		zyd_ep[ZYD_ENDPT_CNT];
+	struct usbd_pipe		*zyd_ep[ZYD_ENDPT_CNT];
 	uint8_t 			*ibuf;
 
 	struct zyd_rx_data		rx_data[ZYD_RX_LIST_CNT];

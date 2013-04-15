@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.66 2013/04/10 07:46:24 mpi Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.67 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -174,8 +174,8 @@ int kue_rx_list_init(struct kue_softc *);
 int kue_newbuf(struct kue_softc *, struct kue_chain *,struct mbuf *);
 int kue_send(struct kue_softc *, struct mbuf *, int);
 int kue_open_pipes(struct kue_softc *);
-void kue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void kue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void kue_rxeof(struct usbd_xfer *, void *, usbd_status);
+void kue_txeof(struct usbd_xfer *, void *, usbd_status);
 void kue_start(struct ifnet *);
 int kue_ioctl(struct ifnet *, u_long, caddr_t);
 void kue_init(void *);
@@ -416,8 +416,8 @@ kue_attachhook(void *xsc)
 	struct kue_softc *sc = xsc;
 	int			s;
 	struct ifnet		*ifp;
-	usbd_device_handle	dev = sc->kue_udev;
-	usbd_interface_handle	iface;
+	struct usbd_device	*dev = sc->kue_udev;
+	struct usbd_interface	*iface;
 	usbd_status		err;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -522,7 +522,7 @@ kue_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct kue_softc	*sc = (struct kue_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device	*dev = uaa->device;
 	usbd_status		err;
 
 	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
@@ -698,7 +698,7 @@ kue_tx_list_init(struct kue_softc *sc)
  * the higher level protocols.
  */
 void
-kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct kue_chain	*c = priv;
 	struct kue_softc	*sc = c->kue_sc;
@@ -801,7 +801,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 void
-kue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+kue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct kue_chain	*c = priv;
 	struct kue_softc	*sc = c->kue_sc;

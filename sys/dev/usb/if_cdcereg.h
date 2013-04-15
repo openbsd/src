@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcereg.h,v 1.3 2007/07/23 16:41:15 mbalmer Exp $ */
+/*	$OpenBSD: if_cdcereg.h,v 1.4 2013/04/15 09:23:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -49,7 +49,7 @@ struct cdce_softc;
 
 struct cdce_chain {
 	struct cdce_softc	*cdce_sc;
-	usbd_xfer_handle	 cdce_xfer;
+	struct usbd_xfer	*cdce_xfer;
 	char			*cdce_buf;
 	struct mbuf		*cdce_mbuf;
 	int			 cdce_accum;
@@ -69,17 +69,17 @@ struct cdce_softc {
 	struct device		 cdce_dev;
 	struct arpcom		 cdce_arpcom;
 #define GET_IFP(sc) (&(sc)->cdce_arpcom.ac_if)
-	usbd_device_handle	 cdce_udev;
-	usbd_interface_handle	 cdce_ctl_iface;
+	struct usbd_device	*cdce_udev;
+	struct usbd_interface	*cdce_ctl_iface;
 	int			 cdce_intr_no;
-	usbd_pipe_handle	 cdce_intr_pipe;
-	usb_cdc_notification_t	 cdce_intr_buf;
+	struct usbd_pipe	*cdce_intr_pipe;
+	struct usb_cdc_notification cdce_intr_buf;
 	int			 cdce_intr_size;
-	usbd_interface_handle	 cdce_data_iface;
+	struct usbd_interface	*cdce_data_iface;
 	int			 cdce_bulkin_no;
-	usbd_pipe_handle	 cdce_bulkin_pipe;
+	struct usbd_pipe	*cdce_bulkin_pipe;
 	int			 cdce_bulkout_no;
-	usbd_pipe_handle	 cdce_bulkout_pipe;
+	struct usbd_pipe	*cdce_bulkout_pipe;
 	char			 cdce_dying;
 	int			 cdce_unit;
 	struct cdce_cdata	 cdce_cdata;

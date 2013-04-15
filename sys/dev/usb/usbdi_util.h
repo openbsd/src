@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.20 2013/04/10 07:48:36 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.h,v 1.21 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: usbdi_util.h,v 1.28 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -32,49 +32,49 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-usbd_status	usbd_get_desc(usbd_device_handle dev, int type,
+usbd_status	usbd_get_desc(struct usbd_device *dev, int type,
 		    int index, int len, void *desc);
-usbd_status	usbd_get_config_desc(usbd_device_handle, int,
+usbd_status	usbd_get_config_desc(struct usbd_device *, int,
 		    usb_config_descriptor_t *);
-usbd_status	usbd_set_address(usbd_device_handle dev, int addr);
-usbd_status	usbd_get_port_status(usbd_device_handle,
+usbd_status	usbd_set_address(struct usbd_device *dev, int addr);
+usbd_status	usbd_get_port_status(struct usbd_device *,
 		    int, usb_port_status_t *);
-usbd_status	usbd_set_hub_feature(usbd_device_handle dev, int);
-usbd_status	usbd_clear_hub_feature(usbd_device_handle, int);
-usbd_status	usbd_set_port_feature(usbd_device_handle dev, int, int);
-usbd_status	usbd_clear_port_feature(usbd_device_handle, int, int);
-usbd_status	usbd_get_device_status(usbd_device_handle, usb_status_t *);
-usbd_status	usbd_get_hub_status(usbd_device_handle, usb_hub_status_t *);
-usbd_status	usbd_get_protocol(usbd_interface_handle dev, u_int8_t *report);
-usbd_status	usbd_set_protocol(usbd_interface_handle dev, int report);
-usbd_status	usbd_get_report_descriptor(usbd_device_handle dev, int ifcno,
+usbd_status	usbd_set_hub_feature(struct usbd_device *dev, int);
+usbd_status	usbd_clear_hub_feature(struct usbd_device *, int);
+usbd_status	usbd_set_port_feature(struct usbd_device *dev, int, int);
+usbd_status	usbd_clear_port_feature(struct usbd_device *, int, int);
+usbd_status	usbd_get_device_status(struct usbd_device *, usb_status_t *);
+usbd_status	usbd_get_hub_status(struct usbd_device *, usb_hub_status_t *);
+usbd_status	usbd_get_protocol(struct usbd_interface *dev, u_int8_t *report);
+usbd_status	usbd_set_protocol(struct usbd_interface *dev, int report);
+usbd_status	usbd_get_report_descriptor(struct usbd_device *dev, int ifcno,
 		    int size, void *d);
-struct usb_hid_descriptor *usbd_get_hid_descriptor(usbd_interface_handle ifc);
-usbd_status	usbd_set_report(usbd_interface_handle iface, int type, int id,
+struct usb_hid_descriptor *usbd_get_hid_descriptor(struct usbd_interface *ifc);
+usbd_status	usbd_set_report(struct usbd_interface *iface, int type, int id,
 		    void *data,int len);
-usbd_status	usbd_set_report_async(usbd_interface_handle iface, int type,
+usbd_status	usbd_set_report_async(struct usbd_interface *iface, int type,
 		    int id, void *data, int len);
-usbd_status	usbd_get_report(usbd_interface_handle iface, int type, int id,
+usbd_status	usbd_get_report(struct usbd_interface *iface, int type, int id,
 		    void *data, int len);
-usbd_status	usbd_set_idle(usbd_interface_handle iface, int duration,int id);
-usbd_status	usbd_read_report_desc(usbd_interface_handle ifc, void **descp,
+usbd_status	usbd_set_idle(struct usbd_interface *iface, int duration,int id);
+usbd_status	usbd_read_report_desc(struct usbd_interface *ifc, void **descp,
 		    int *sizep, int mem);
-usbd_status	usbd_get_config(usbd_device_handle dev, u_int8_t *conf);
-usbd_status	usbd_get_string_desc(usbd_device_handle dev, int sindex,
+usbd_status	usbd_get_config(struct usbd_device *dev, u_int8_t *conf);
+usbd_status	usbd_get_string_desc(struct usbd_device *dev, int sindex,
 		    int langid,usb_string_descriptor_t *sdesc, int *sizep);
-void		usbd_delay_ms(usbd_device_handle, u_int);
+void		usbd_delay_ms(struct usbd_device *, u_int);
 
 
-usbd_status	usbd_set_config_no(usbd_device_handle dev, int no, int msg);
-usbd_status	usbd_set_config_index(usbd_device_handle dev, int index,
+usbd_status	usbd_set_config_no(struct usbd_device *dev, int no, int msg);
+usbd_status	usbd_set_config_index(struct usbd_device *dev, int index,
 		    int msg);
 
-usbd_status	usbd_bulk_transfer(usbd_xfer_handle xfer,
-		    usbd_pipe_handle pipe, u_int16_t flags, u_int32_t timeout,
+usbd_status	usbd_bulk_transfer(struct usbd_xfer *xfer,
+		    struct usbd_pipe *pipe, u_int16_t flags, u_int32_t timeout,
 		    void *buf, u_int32_t *size, char *lbl);
 
-usbd_status	usbd_intr_transfer(usbd_xfer_handle xfer,
-		    usbd_pipe_handle pipe, u_int16_t flags, u_int32_t timeout,
+usbd_status	usbd_intr_transfer(struct usbd_xfer *xfer,
+		    struct usbd_pipe *pipe, u_int16_t flags, u_int32_t timeout,
 		    void *buf, u_int32_t *size, char *lbl);
 
 void usb_detach_wait(struct device *);

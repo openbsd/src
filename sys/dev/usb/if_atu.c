@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.102 2013/04/12 12:58:39 mpi Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.103 2013/04/15 09:23:01 mglocker Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -251,8 +251,8 @@ struct atu_radfirm {
 };
 
 int	atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
-void	atu_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void	atu_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	atu_rxeof(struct usbd_xfer *, void *, usbd_status);
+void	atu_txeof(struct usbd_xfer *, void *, usbd_status);
 void	atu_start(struct ifnet *);
 int	atu_ioctl(struct ifnet *, u_long, caddr_t);
 int	atu_init(struct ifnet *);
@@ -302,7 +302,7 @@ atu_usb_request(struct atu_softc *sc, u_int8_t type,
     u_int8_t *data)
 {
 	usb_device_request_t	req;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	usbd_status		err;
 	int			total_len = 0, s;
 
@@ -1258,7 +1258,7 @@ atu_attach(struct device *parent, struct device *self, void *aux)
 	struct atu_softc		*sc = (struct atu_softc *)self;
 	struct usb_attach_arg		*uaa = aux;
 	usbd_status			err;
-	usbd_device_handle		dev = uaa->device;
+	struct usbd_device		*dev = uaa->device;
 	u_int8_t			mode, channel;
 	int i;
 
@@ -1648,7 +1648,7 @@ atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
  * the higher level protocols.
  */
 void
-atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
 	struct atu_softc	*sc = c->atu_sc;
@@ -1786,7 +1786,7 @@ done:
  * the list buffers.
  */
 void
-atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+atu_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
 	struct atu_softc	*sc = c->atu_sc;

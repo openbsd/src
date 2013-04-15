@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidivar.h,v 1.14 2012/09/02 20:51:36 ratchov Exp $ */
+/*	$OpenBSD: umidivar.h,v 1.15 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: umidivar.h,v 1.5 2002/09/12 21:00:42 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,8 +85,8 @@ struct umidi_endpoint {
 	struct umidi_softc	*sc;
 	/* */
 	int			addr;
-	usbd_pipe_handle	pipe;
-	usbd_xfer_handle	xfer;
+	struct usbd_pipe	*pipe;
+	struct usbd_xfer	*xfer;
 	unsigned char		*buffer;
 	unsigned		packetsize;
 	int			num_open;
@@ -101,8 +101,8 @@ struct umidi_endpoint {
 /* software context */
 struct umidi_softc {
 	struct device		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 	struct umidi_quirk	*sc_quirk;
 
 	int			sc_dying;

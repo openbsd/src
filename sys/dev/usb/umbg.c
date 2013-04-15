@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.20 2013/04/12 12:58:39 mpi Exp $ */
+/*	$OpenBSD: umbg.c,v 1.21 2013/04/15 09:23:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -49,13 +49,13 @@ int umbgdebug = 0;
 
 struct umbg_softc {
 	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* data interface */
+	struct usbd_device	*sc_udev;	/* USB device */
+	struct usbd_interface	*sc_iface;	/* data interface */
 
 	int			sc_bulkin_no;
-	usbd_pipe_handle	sc_bulkin_pipe;
+	struct usbd_pipe	*sc_bulkin_pipe;
 	int			sc_bulkout_no;
-	usbd_pipe_handle	sc_bulkout_pipe;
+	struct usbd_pipe	*sc_bulkout_pipe;
 
 	struct timeout		sc_to;		/* get time from device */
 	struct usb_task		sc_task;
@@ -172,8 +172,8 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct umbg_softc *sc = (struct umbg_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface = uaa->iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface = uaa->iface;
 	struct mbg_time tframe;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
@@ -393,7 +393,7 @@ umbg_read(struct umbg_softc *sc, u_int8_t cmd, char *buf, size_t len,
     struct timespec *tstamp)
 {
 	usbd_status err;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 
 	xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (xfer == NULL) {

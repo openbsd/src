@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.20 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.21 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,8 +75,8 @@ int uipaqdebug = 0;
 
 struct uipaq_softc {
 	struct device		 sc_dev;	/* base device */
-	usbd_device_handle	 sc_udev;	/* device */
-	usbd_interface_handle	 sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* device */
+	struct usbd_interface	*sc_iface;	/* interface */
 
 	struct device		*sc_subdev;	/* ucom uses that */
 	u_int16_t		 sc_lcr;	/* state for DTR/RTS */
@@ -162,8 +162,8 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uipaq_softc *sc = (struct uipaq_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devname = sc->sc_dev.dv_xname;

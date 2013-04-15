@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.14 2011/12/04 15:09:35 mpi Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.15 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -48,7 +48,7 @@
 #define UR_GET_PROTOCOL		0x03
 #define UR_SET_PROTOCOL		0x0b
 
-typedef struct usb_hid_descriptor {
+struct usb_hid_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uWord		bcdHID;
@@ -58,7 +58,7 @@ typedef struct usb_hid_descriptor {
 		uByte		bDescriptorType;
 		uWord		wDescriptorLength;
 	} descrs[1];
-} __packed usb_hid_descriptor_t;
+} __packed;
 #define USB_HID_DESCRIPTOR_SIZE(n) (9+(n)*3)
 
 /* Usage pages */

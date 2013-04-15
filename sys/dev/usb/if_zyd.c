@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.89 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.90 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -231,10 +231,10 @@ int		zyd_set_rxfilter(struct zyd_softc *);
 void		zyd_set_chan(struct zyd_softc *, struct ieee80211_channel *);
 int		zyd_set_beacon_interval(struct zyd_softc *, int);
 uint8_t		zyd_plcp_signal(int);
-void		zyd_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		zyd_intr(struct usbd_xfer *, void *, usbd_status);
 void		zyd_rx_data(struct zyd_softc *, const uint8_t *, uint16_t);
-void		zyd_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void		zyd_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		zyd_rxeof(struct usbd_xfer *, void *, usbd_status);
+void		zyd_txeof(struct usbd_xfer *, void *, usbd_status);
 int		zyd_tx(struct zyd_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 void		zyd_start(struct ifnet *);
@@ -767,7 +767,7 @@ int
 zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
     void *odata, int olen, u_int flags)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	struct zyd_cmd cmd;
 	uint16_t xferflags;
 	usbd_status error;
@@ -1821,7 +1821,7 @@ zyd_plcp_signal(int rate)
 }
 
 void
-zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+zyd_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct zyd_softc *sc = (struct zyd_softc *)priv;
 	const struct zyd_cmd *cmd;
@@ -1984,7 +1984,7 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 }
 
 void
-zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+zyd_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct zyd_rx_data *data = priv;
 	struct zyd_softc *sc = data->sc;
@@ -2043,7 +2043,7 @@ skip:	/* setup a new transfer */
 }
 
 void
-zyd_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+zyd_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct zyd_tx_data *data = priv;
 	struct zyd_softc *sc = data->sc;

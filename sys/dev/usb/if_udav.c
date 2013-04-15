@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.61 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.62 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -106,8 +106,8 @@ int udav_tx_list_init(struct udav_softc *);
 int udav_newbuf(struct udav_softc *, struct udav_chain *, struct mbuf *);
 void udav_start(struct ifnet *);
 int udav_send(struct udav_softc *, struct mbuf *, int);
-void udav_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void udav_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void udav_txeof(struct usbd_xfer *, void *, usbd_status);
+void udav_rxeof(struct usbd_xfer *, void *, usbd_status);
 void udav_tick(void *);
 void udav_tick_task(void *);
 int udav_ioctl(struct ifnet *, u_long, caddr_t);
@@ -189,8 +189,8 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct udav_softc *sc = (struct udav_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -1021,7 +1021,7 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 }
 
 void
-udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+udav_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct udav_chain *c = priv;
 	struct udav_softc *sc = c->udav_sc;
@@ -1068,7 +1068,7 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 void
-udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct udav_chain *c = priv;
 	struct udav_softc *sc = c->udav_sc;

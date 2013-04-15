@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.25 2012/10/20 19:13:25 deraadt Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.26 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ extern int ehcidebug;
 #endif
 
 struct ehci_pci_softc {
-	ehci_softc_t		sc;
+	struct ehci_softc	sc;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */

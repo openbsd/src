@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.22 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.23 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -142,7 +142,7 @@ int	ubt_debug = UBT_DEBUG;
 
 struct ubt_isoc_xfer {
 	struct ubt_softc	*softc;
-	usbd_xfer_handle	 xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	uint16_t		 size[UBT_NFRAMES];
 	int			 busy;
@@ -150,55 +150,55 @@ struct ubt_isoc_xfer {
 
 struct ubt_softc {
 	struct device		 sc_dev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device	*sc_udev;
 	int			 sc_refcnt;
 	int			 sc_dying;
 	int			 sc_enabled;
 
 	/* Control Interface */
-	usbd_interface_handle	 sc_iface0;
+	struct usbd_interface	*sc_iface0;
 
 	/* Commands (control) */
-	usbd_xfer_handle	 sc_cmd_xfer;
+	struct usbd_xfer	*sc_cmd_xfer;
 	uint8_t			*sc_cmd_buf;
 	int			 sc_cmd_busy;	/* write active */
 	struct ifqueue		 sc_cmd_queue;	/* output queue */
 
 	/* Events (interrupt) */
 	int			 sc_evt_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_evt_pipe;
+	struct usbd_pipe	*sc_evt_pipe;
 	uint8_t			*sc_evt_buf;
 
 	/* ACL data (in) */
 	int			 sc_aclrd_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_aclrd_pipe;	/* read pipe */
-	usbd_xfer_handle	 sc_aclrd_xfer;	/* read xfer */
+	struct usbd_pipe	*sc_aclrd_pipe;	/* read pipe */
+	struct usbd_xfer	*sc_aclrd_xfer;	/* read xfer */
 	uint8_t			*sc_aclrd_buf;	/* read buffer */
 	int			 sc_aclrd_busy;	/* reading */
 
 	/* ACL data (out) */
 	int			 sc_aclwr_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_aclwr_pipe;	/* write pipe */
-	usbd_xfer_handle	 sc_aclwr_xfer;	/* write xfer */
+	struct usbd_pipe	*sc_aclwr_pipe;	/* write pipe */
+	struct usbd_xfer	*sc_aclwr_xfer;	/* write xfer */
 	uint8_t			*sc_aclwr_buf;	/* write buffer */
 	int			 sc_aclwr_busy;	/* write active */
 	struct ifqueue		 sc_aclwr_queue;/* output queue */
 
 	/* ISOC interface */
-	usbd_interface_handle	 sc_iface1;	/* ISOC interface */
+	struct usbd_interface	*sc_iface1;	/* ISOC interface */
 	int			 sc_config;	/* current config no */
 	int			 sc_alt_config;	/* no of alternates */
 
 	/* SCO data (in) */
 	int			 sc_scord_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_scord_pipe;	/* read pipe */
+	struct usbd_pipe	*sc_scord_pipe;	/* read pipe */
 	int			 sc_scord_size;	/* frame length */
 	struct ubt_isoc_xfer	 sc_scord[UBT_NXFERS];
 	struct mbuf		*sc_scord_mbuf;	/* current packet */
 
 	/* SCO data (out) */
 	int			 sc_scowr_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_scowr_pipe;	/* write pipe */
+	struct usbd_pipe	*sc_scowr_pipe;	/* write pipe */
 	int			 sc_scowr_size;	/* frame length */
 	struct ubt_isoc_xfer	 sc_scowr[UBT_NXFERS];
 	struct mbuf		*sc_scowr_mbuf;	/* current packet */
@@ -221,30 +221,24 @@ void ubt_disable(struct device *);
 
 void ubt_xmit_cmd(struct device *, struct mbuf *);
 void ubt_xmit_cmd_start(struct ubt_softc *);
-void ubt_xmit_cmd_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+void ubt_xmit_cmd_complete(struct usbd_xfer *, void *, usbd_status);
 
 void ubt_xmit_acl(struct device *, struct mbuf *);
 void ubt_xmit_acl_start(struct ubt_softc *);
-void ubt_xmit_acl_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+void ubt_xmit_acl_complete(struct usbd_xfer *, void *, usbd_status);
 
 void ubt_xmit_sco(struct device *, struct mbuf *);
 void ubt_xmit_sco_start(struct ubt_softc *);
 void ubt_xmit_sco_start1(struct ubt_softc *, struct ubt_isoc_xfer *);
-void ubt_xmit_sco_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+void ubt_xmit_sco_complete(struct usbd_xfer *, void *, usbd_status);
 
-void ubt_recv_event(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+void ubt_recv_event(struct usbd_xfer *, void *, usbd_status);
 
 void ubt_recv_acl_start(struct ubt_softc *);
-void ubt_recv_acl_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+void ubt_recv_acl_complete(struct usbd_xfer *, void *, usbd_status);
 
 void ubt_recv_sco_start1(struct ubt_softc *, struct ubt_isoc_xfer *);
-void ubt_recv_sco_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+void ubt_recv_sco_complete(struct usbd_xfer *, void *, usbd_status);
 
 void ubt_stats(struct device *, struct bt_stats *, int);
 
@@ -941,8 +935,7 @@ ubt_xmit_cmd_start(struct ubt_softc *sc)
 }
 
 void
-ubt_xmit_cmd_complete(usbd_xfer_handle xfer,
-			usbd_private_handle h, usbd_status status)
+ubt_xmit_cmd_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 {
 	struct ubt_softc *sc = h;
 	uint32_t count;
@@ -1054,8 +1047,7 @@ ubt_xmit_acl_start(struct ubt_softc *sc)
 }
 
 void
-ubt_xmit_acl_complete(usbd_xfer_handle xfer,
-		usbd_private_handle h, usbd_status status)
+ubt_xmit_acl_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 {
 	struct ubt_softc *sc = h;
 
@@ -1204,8 +1196,7 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 }
 
 void
-ubt_xmit_sco_complete(usbd_xfer_handle xfer,
-		usbd_private_handle h, usbd_status status)
+ubt_xmit_sco_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 {
 	struct ubt_isoc_xfer *isoc = h;
 	struct ubt_softc *sc;
@@ -1280,7 +1271,7 @@ ubt_mbufload(uint8_t *buf, int count, uint8_t type)
 }
 
 void
-ubt_recv_event(usbd_xfer_handle xfer, usbd_private_handle h, usbd_status status)
+ubt_recv_event(struct usbd_xfer *xfer, void *h, usbd_status status)
 {
 	struct ubt_softc *sc = h;
 	struct mbuf *m;
@@ -1350,8 +1341,7 @@ ubt_recv_acl_start(struct ubt_softc *sc)
 }
 
 void
-ubt_recv_acl_complete(usbd_xfer_handle xfer,
-		usbd_private_handle h, usbd_status status)
+ubt_recv_acl_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 {
 	struct ubt_softc *sc = h;
 	struct mbuf *m;
@@ -1438,8 +1428,7 @@ ubt_recv_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 }
 
 void
-ubt_recv_sco_complete(usbd_xfer_handle xfer,
-		usbd_private_handle h, usbd_status status)
+ubt_recv_sco_complete(struct usbd_xfer *xfer, void *h, usbd_status status)
 {
 	struct ubt_isoc_xfer *isoc = h;
 	struct ubt_softc *sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.19 2013/04/12 12:58:39 mpi Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.20 2013/04/15 09:23:02 mglocker Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -120,14 +120,14 @@ struct uticom_buf {
 
 struct	uticom_softc {
 	struct device		 sc_dev;	/* base device */
-	usbd_device_handle	 sc_udev;	/* device */
-	usbd_interface_handle	 sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* device */
+	struct usbd_interface	*sc_iface;	/* interface */
 
 	int			sc_iface_number; /* interface number */
 
-	usbd_interface_handle	sc_intr_iface;	/* interrupt interface */
+	struct usbd_interface	*sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe	*sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			sc_isize;
 
@@ -144,7 +144,7 @@ struct	uticom_softc {
 
 static	usbd_status uticom_reset(struct uticom_softc *);
 static	usbd_status uticom_set_crtscts(struct uticom_softc *);
-static	void uticom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static	void uticom_intr(struct usbd_xfer *, void *, usbd_status);
 
 static	void uticom_set(void *, int, int, int);
 static	void uticom_dtr(struct uticom_softc *, int);
@@ -161,7 +161,7 @@ static	void uticom_close(void *, int);
 void uticom_attach_hook(void *arg);
 
 static int uticom_download_fw(struct uticom_softc *sc, int pipeno,
-	    usbd_device_handle dev);
+    struct usbd_device *dev);
 
 struct ucom_methods uticom_methods = {
 	uticom_get_status,
@@ -216,7 +216,7 @@ uticom_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uticom_softc	*sc = (struct uticom_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
-	usbd_device_handle	 dev = uaa->device;
+	struct usbd_device	*dev = uaa->device;
 
 	sc->sc_udev = dev;
 	sc->sc_iface = uaa->iface;
@@ -800,7 +800,7 @@ uticom_close(void *addr, int portno)
 }
 
 static void
-uticom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uticom_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct uticom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
@@ -906,7 +906,7 @@ uticom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 
 static int
 uticom_download_fw(struct uticom_softc *sc, int pipeno,
-    usbd_device_handle dev)
+    struct usbd_device *dev)
 {
 	u_char *obuf, *firmware;
 	size_t firmware_size;
@@ -914,9 +914,9 @@ uticom_download_fw(struct uticom_softc *sc, int pipeno,
 	uint8_t cs = 0, *buffer;
 	usbd_status err;
 	struct uticom_fw_header *header;
-	usbd_xfer_handle oxfer = 0;
+	struct usbd_xfer *oxfer = 0;
 	usbd_status error = 0;
-	usbd_pipe_handle pipe;
+	struct usbd_pipe *pipe;
 
 	error = loadfirmware("tusb3410", &firmware, &firmware_size);
 	if (error)
@@ -969,7 +969,7 @@ uticom_download_fw(struct uticom_softc *sc, int pipeno,
 
 	memcpy(obuf, buffer, buffer_size);
 
-	usbd_setup_xfer(oxfer, pipe, (usbd_private_handle)sc, obuf, buffer_size,
+	usbd_setup_xfer(oxfer, pipe, (void *)sc, obuf, buffer_size,
 	    USBD_NO_COPY | USBD_SYNCHRONOUS, USBD_NO_TIMEOUT, 0);
 	err = usbd_transfer(oxfer);
 

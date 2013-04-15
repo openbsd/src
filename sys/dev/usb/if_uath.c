@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.53 2013/04/12 12:58:39 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.54 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -159,9 +159,9 @@ int	uath_write_reg(struct uath_softc *, uint32_t, uint32_t);
 int	uath_write_multi(struct uath_softc *, uint32_t, const void *, int);
 int	uath_read_reg(struct uath_softc *, uint32_t, uint32_t *);
 int	uath_read_eeprom(struct uath_softc *, uint32_t, void *);
-void	uath_cmd_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void	uath_data_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void	uath_data_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	uath_cmd_rxeof(struct usbd_xfer *, void *, usbd_status);
+void	uath_data_rxeof(struct usbd_xfer *, void *, usbd_status);
+void	uath_data_txeof(struct usbd_xfer *, void *, usbd_status);
 int	uath_tx_null(struct uath_softc *);
 int	uath_tx_data(struct uath_softc *, struct mbuf *,
 	    struct ieee80211_node *);
@@ -1108,7 +1108,7 @@ uath_read_eeprom(struct uath_softc *sc, uint32_t reg, void *odata)
 }
 
 void
-uath_cmd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+uath_cmd_rxeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct uath_rx_cmd *cmd = priv;
@@ -1170,7 +1170,7 @@ uath_cmd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-uath_data_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+uath_data_rxeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct uath_rx_data *data = priv;
@@ -1329,7 +1329,7 @@ uath_tx_null(struct uath_softc *sc)
 }
 
 void
-uath_data_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+uath_data_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct uath_tx_data *data = priv;
@@ -2019,7 +2019,7 @@ uath_stop(struct ifnet *ifp, int disable)
 int
 uath_loadfirmware(struct uath_softc *sc, const u_char *fw, int len)
 {
-	usbd_xfer_handle ctlxfer, txxfer, rxxfer;
+	struct usbd_xfer *ctlxfer, *txxfer, *rxxfer;
 	struct uath_fwblock *txblock, *rxblock;
 	uint8_t *txdata;
 	int error = 0;

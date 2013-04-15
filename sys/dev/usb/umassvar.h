@@ -1,4 +1,4 @@
-/*	$OpenBSD: umassvar.h,v 1.12 2007/06/13 06:25:03 mbalmer Exp $ */
+/*	$OpenBSD: umassvar.h,v 1.13 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: umassvar.h,v 1.20 2003/09/08 19:31:01 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -72,7 +72,7 @@ extern int umassdebug;
 #define	UR_BBB_GET_MAX_LUN	0xfe
 
 /* Command Block Wrapper */
-typedef struct {
+struct umass_bbb_cbw {
 	uDWord		dCBWSignature;
 #define CBWSIGNATURE	0x43425355
 	uDWord		dCBWTag;
@@ -84,11 +84,11 @@ typedef struct {
 	uByte		bCDBLength;
 #define CBWCDBLENGTH	16
 	uByte		CBWCDB[CBWCDBLENGTH];
-} umass_bbb_cbw_t;
+};
 #define UMASS_BBB_CBW_SIZE	31
 
 /* Command Status Wrapper */
-typedef struct {
+struct umass_bbb_csw {
 	uDWord		dCSWSignature;
 #define CSWSIGNATURE		0x53425355
 #define CSWSIGNATURE_OLYMPUS_C1	0x55425355
@@ -98,7 +98,7 @@ typedef struct {
 #define CSWSTATUS_GOOD	0x0
 #define CSWSTATUS_FAILED 0x1
 #define CSWSTATUS_PHASE	0x2
-} umass_bbb_csw_t;
+};
 #define UMASS_BBB_CSW_SIZE	13
 
 /* CBI features */
@@ -136,8 +136,7 @@ typedef void (*umass_callback)(struct umass_softc *, void *, int, int);
 typedef void (*umass_wire_xfer)(struct umass_softc *, int, void *, int, void *,
 				int, int, u_int, umass_callback, void *);
 typedef void (*umass_wire_reset)(struct umass_softc *, int);
-typedef void (*umass_wire_state)(usbd_xfer_handle, usbd_private_handle,
-				 usbd_status);
+typedef void (*umass_wire_state)(struct usbd_xfer *, void *, usbd_status);
 
 struct umass_wire_methods {
 	umass_wire_xfer		wire_xfer;
@@ -152,12 +151,12 @@ struct umassbus_softc {
 /* the per device structure */
 struct umass_softc {
 	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* device */
+	struct usbd_interface	*sc_iface;	/* interface */
 	int			sc_ifaceno;	/* interface number */
 
 	u_int8_t		sc_epaddr[UMASS_NEP];
-	usbd_pipe_handle	sc_pipe[UMASS_NEP];
+	struct usbd_pipe	*sc_pipe[UMASS_NEP];
 	usb_device_request_t	sc_req;
 
 	const struct umass_wire_methods *sc_methods;
@@ -183,8 +182,8 @@ struct umass_softc {
 	u_int32_t		sc_busquirks;
 
 	/* Bulk specific variables for transfers in progress */
-	umass_bbb_cbw_t		cbw;	/* command block wrapper */
-	umass_bbb_csw_t		csw;	/* command status wrapper*/
+	struct umass_bbb_cbw	cbw;	/* command block wrapper */
+	struct umass_bbb_csw	csw;	/* command status wrapper*/
 	/* CBI specific variables for transfers in progress */
 	umass_cbi_cbl_t		cbl;	/* command block */
 	umass_cbi_sbl_t		sbl;	/* status block */
@@ -216,7 +215,7 @@ struct umass_softc {
 
 #define XFER_NR			9	/* maximum number */
 
-	usbd_xfer_handle	transfer_xfer[XFER_NR]; /* for ctrl xfers */
+	struct usbd_xfer	*transfer_xfer[XFER_NR]; /* for ctrl xfers */
 
 	void			*data_buffer;
 
@@ -268,7 +267,7 @@ struct umass_softc {
 	/* For polled transfers */
 	int			polling_depth;
 	usbd_status		polled_xfer_status;
-	usbd_xfer_handle	next_polled_xfer;
+	struct usbd_xfer	*next_polled_xfer;
 };
 
 #define UMASS_MAX_TRANSFER_SIZE	MAXBSIZE

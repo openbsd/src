@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.50 2013/02/07 13:35:18 mpi Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.51 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ struct upl_softc;
 
 struct upl_chain {
 	struct upl_softc	*upl_sc;
-	usbd_xfer_handle	upl_xfer;
+	struct usbd_xfer	*upl_xfer;
 	char			*upl_buf;
 	struct mbuf		*upl_mbuf;
 	int			upl_idx;
@@ -129,12 +129,12 @@ struct upl_softc {
 	struct ifnet		sc_if;
 	struct timeout		sc_stat_ch;
 
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 	u_int16_t		sc_vendor;
 	u_int16_t		sc_product;
 	int			sc_ed[UPL_ENDPT_MAX];
-	usbd_pipe_handle	sc_ep[UPL_ENDPT_MAX];
+	struct usbd_pipe	*sc_ep[UPL_ENDPT_MAX];
 	struct upl_cdata	sc_cdata;
 
 	uByte			sc_ibuf;
@@ -185,9 +185,9 @@ int upl_tx_list_init(struct upl_softc *);
 int upl_rx_list_init(struct upl_softc *);
 int upl_newbuf(struct upl_softc *, struct upl_chain *, struct mbuf *);
 int upl_send(struct upl_softc *, struct mbuf *, int);
-void upl_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void upl_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void upl_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void upl_intr(struct usbd_xfer *, void *, usbd_status);
+void upl_rxeof(struct usbd_xfer *, void *, usbd_status);
+void upl_txeof(struct usbd_xfer *, void *, usbd_status);
 void upl_start(struct ifnet *);
 int upl_ioctl(struct ifnet *, u_long, caddr_t);
 void upl_init(void *);
@@ -218,8 +218,8 @@ upl_attach(struct device *parent, struct device *self, void *aux)
 	struct upl_softc	*sc = (struct upl_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
 	int			s;
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device	*dev = uaa->device;
+	struct usbd_interface	*iface;
 	usbd_status		err;
 	struct ifnet		*ifp;
 	usb_interface_descriptor_t	*id;
@@ -455,7 +455,7 @@ upl_tx_list_init(struct upl_softc *sc)
  * the higher level protocols.
  */
 void
-upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct upl_chain	*c = priv;
 	struct upl_softc	*sc = c->upl_sc;
@@ -544,7 +544,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  * the list buffers.
  */
 void
-upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+upl_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct upl_chain	*c = priv;
 	struct upl_softc	*sc = c->upl_sc;
@@ -761,7 +761,7 @@ upl_openpipes(struct upl_softc *sc)
 }
 
 void
-upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+upl_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct upl_softc	*sc = priv;
 	struct ifnet		*ifp = &sc->sc_if;

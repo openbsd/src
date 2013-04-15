@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rumvar.h,v 1.8 2007/06/06 19:25:49 mk Exp $	*/
+/*	$OpenBSD: if_rumvar.h,v 1.9 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -56,14 +56,14 @@ struct rum_softc;
 
 struct rum_tx_data {
 	struct rum_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct ieee80211_node	*ni;
 };
 
 struct rum_rx_data {
 	struct rum_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 };
@@ -74,8 +74,8 @@ struct rum_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device		*sc_udev;
+	struct usbd_interface		*sc_iface;
 
 	struct ieee80211_channel	*sc_curchan;
 
@@ -86,10 +86,10 @@ struct rum_softc {
 	uint8_t				rf_rev;
 	uint8_t				rffreq;
 
-	usbd_xfer_handle		amrr_xfer;
+	struct usbd_xfer		*amrr_xfer;
 
-	usbd_pipe_handle		sc_rx_pipeh;
-	usbd_pipe_handle		sc_tx_pipeh;
+	struct usbd_pipe		*sc_rx_pipeh;
+	struct usbd_pipe		*sc_tx_pipeh;
 
 	enum ieee80211_state		sc_state;
 	int				sc_arg;

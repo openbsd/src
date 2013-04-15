@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.60 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.61 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -130,8 +130,8 @@ int cue_tx_list_init(struct cue_softc *);
 int cue_rx_list_init(struct cue_softc *);
 int cue_newbuf(struct cue_softc *, struct cue_chain *, struct mbuf *);
 int cue_send(struct cue_softc *, struct mbuf *, int);
-void cue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void cue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void cue_rxeof(struct usbd_xfer *, void *, usbd_status);
+void cue_txeof(struct usbd_xfer *, void *, usbd_status);
 void cue_tick(void *);
 void cue_tick_task(void *);
 void cue_start(struct ifnet *);
@@ -448,8 +448,8 @@ cue_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg	*uaa = aux;
 	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device	*dev = uaa->device;
+	struct usbd_interface	*iface;
 	usbd_status		err;
 	struct ifnet		*ifp;
 	usb_interface_descriptor_t	*id;
@@ -699,7 +699,7 @@ cue_tx_list_init(struct cue_softc *sc)
  * the higher level protocols.
  */
 void
-cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct cue_chain	*c = priv;
 	struct cue_softc	*sc = c->cue_sc;
@@ -795,7 +795,7 @@ done:
  * the list buffers.
  */
 void
-cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct cue_chain	*c = priv;
 	struct cue_softc	*sc = c->cue_sc;

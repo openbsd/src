@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.3 2012/11/10 14:35:06 mikeb Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.4 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -376,13 +376,13 @@ struct athn_usb_rx_stream {
 
 struct athn_usb_rx_data {
 	struct athn_usb_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
 struct athn_usb_tx_data {
 	struct athn_usb_softc		*sc;
-	usbd_xfer_handle		xfer;
+	struct usbd_xfer		*xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(athn_usb_tx_data)	next;
 };
@@ -420,8 +420,8 @@ struct athn_usb_softc {
 	int				sc_athn_attached;
 
 	/* USB specific goo. */
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device		*sc_udev;
+	struct usbd_interface		*sc_iface;
 	struct usb_task			sc_task;
 
 	u_int				flags;
@@ -429,10 +429,10 @@ struct athn_usb_softc {
 
 	struct athn_usb_rx_stream	rx_stream;
 
-	usbd_pipe_handle		tx_data_pipe;
-	usbd_pipe_handle		rx_data_pipe;
-	usbd_pipe_handle		rx_intr_pipe;
-	usbd_pipe_handle		tx_intr_pipe;
+	struct usbd_pipe		*tx_data_pipe;
+	struct usbd_pipe		*rx_data_pipe;
+	struct usbd_pipe		*rx_intr_pipe;
+	struct usbd_pipe		*tx_intr_pipe;
 	uint8_t 			*ibuf;
 
 	struct ar_wmi_cmd_reg_write	wbuf[AR_MAX_WRITE_COUNT];

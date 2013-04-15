@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.16 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.17 2013/04/15 09:23:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -76,7 +76,7 @@ struct upgt_tx_radiotap_header {
  */
 struct upgt_data {
 	struct upgt_softc		*sc;
-	usbd_xfer_handle		 xfer;
+	struct usbd_xfer		*xfer;
 	void				*buf;
 	struct ieee80211_node		*ni;
 	struct mbuf			*m;
@@ -395,14 +395,14 @@ struct upgt_memory {
 struct upgt_softc {
 	struct device		 sc_dev;
 
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 	int			 sc_rx_no;
 	int			 sc_tx_no;
 	struct usb_task		 sc_task_newstate;
 	struct usb_task		 sc_task_tx;
-	usbd_pipe_handle	 sc_rx_pipeh;
-	usbd_pipe_handle	 sc_tx_pipeh;
+	struct usbd_pipe	*sc_rx_pipeh;
+	struct usbd_pipe	*sc_tx_pipeh;
 
 	struct upgt_data	 tx_data[UPGT_TX_COUNT];
 	struct upgt_data	 rx_data;

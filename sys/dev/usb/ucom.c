@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.57 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: ucom.c,v 1.58 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -80,28 +80,28 @@ int ucomdebug = 0;
 struct ucom_softc {
 	struct device		sc_dev;		/* base device */
 
-	usbd_device_handle	sc_udev;	/* USB device */
+	struct usbd_device	*sc_udev;	/* USB device */
 	struct uhidev_softc	*sc_uhidev;	/* hid device (if deeper) */
 
-	usbd_interface_handle	sc_iface;	/* data interface */
+	struct usbd_interface	*sc_iface;	/* data interface */
 
 	int			sc_bulkin_no;	/* bulk in endpoint address */
-	usbd_pipe_handle	sc_bulkin_pipe;	/* bulk in pipe */
-	usbd_xfer_handle	sc_ixfer;	/* read request */
+	struct usbd_pipe	*sc_bulkin_pipe;/* bulk in pipe */
+	struct usbd_xfer	*sc_ixfer;	/* read request */
 	u_char			*sc_ibuf;	/* read buffer */
 	u_int			sc_ibufsize;	/* read buffer size */
 	u_int			sc_ibufsizepad;	/* read buffer size padded */
 
 	int			sc_bulkout_no;	/* bulk out endpoint address */
-	usbd_pipe_handle	sc_bulkout_pipe;/* bulk out pipe */
-	usbd_xfer_handle	sc_oxfer;	/* write request */
+	struct usbd_pipe	*sc_bulkout_pipe;/* bulk out pipe */
+	struct usbd_xfer	*sc_oxfer;	/* write request */
 	u_char			*sc_obuf;	/* write buffer */
 	u_int			sc_obufsize;	/* write buffer size */
 	u_int			sc_opkthdrlen;	/* header length of
 						 * output packet */
 
-	usbd_pipe_handle	sc_ipipe;	/* hid interrupt input pipe */
-	usbd_pipe_handle	sc_opipe;	/* hid interrupt pipe */
+	struct usbd_pipe	*sc_ipipe;	/* hid interrupt input pipe */
+	struct usbd_pipe	*sc_opipe;	/* hid interrupt pipe */
 
 	struct ucom_methods     *sc_methods;
 	void                    *sc_parent;
@@ -133,8 +133,8 @@ void	ucom_dtr(struct ucom_softc *, int);
 void	ucom_rts(struct ucom_softc *, int);
 void	ucom_break(struct ucom_softc *, int);
 usbd_status ucomstartread(struct ucom_softc *);
-void	ucomreadcb(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void	ucomwritecb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	ucomreadcb(struct usbd_xfer *, void *, usbd_status);
+void	ucomwritecb(struct usbd_xfer *, void *, usbd_status);
 void	tiocm_to_ucom(struct ucom_softc *, u_long, int);
 int	ucom_to_tiocm(struct ucom_softc *);
 void	ucom_lock(struct ucom_softc *);
@@ -959,11 +959,11 @@ ucomstart(struct tty *tp)
 #endif
 	if (sc->sc_bulkout_pipe != NULL) {
 		usbd_setup_xfer(sc->sc_oxfer, sc->sc_bulkout_pipe,
-		    (usbd_private_handle)sc, sc->sc_obuf, cnt,
+		    (void *)sc, sc->sc_obuf, cnt,
 		    USBD_NO_COPY, USBD_NO_TIMEOUT, ucomwritecb);
 	} else {
 		usbd_setup_xfer(sc->sc_oxfer, sc->sc_opipe,
-		    (usbd_private_handle)sc, sc->sc_obuf, cnt,
+		    (void *)sc, sc->sc_obuf, cnt,
 		    USBD_NO_COPY, USBD_NO_TIMEOUT, ucomwritecb);
 	}
 	/* What can we do on error? */
@@ -998,7 +998,7 @@ ucomstop(struct tty *tp, int flag)
 }
 
 void
-ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
+ucomwritecb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	struct tty *tp = sc->sc_tty;
@@ -1057,7 +1057,7 @@ ucomstartread(struct ucom_softc *sc)
 
 	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_setup_xfer(sc->sc_ixfer, sc->sc_bulkin_pipe,
-			(usbd_private_handle)sc,
+			(void *)sc,
 			sc->sc_ibuf, sc->sc_ibufsize,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
 			USBD_NO_TIMEOUT, ucomreadcb);
@@ -1072,7 +1072,7 @@ ucomstartread(struct ucom_softc *sc)
 }
 
 void
-ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
+ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	struct tty *tp = sc->sc_tty;

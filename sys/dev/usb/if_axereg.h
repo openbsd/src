@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.22 2012/11/10 18:46:21 brad Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.23 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -190,7 +190,7 @@ struct axe_softc;
 
 struct axe_chain {
 	struct axe_softc	*axe_sc;
-	usbd_xfer_handle	axe_xfer;
+	struct usbd_xfer	*axe_xfer;
 	char			*axe_buf;
 	struct mbuf		*axe_mbuf;
 	int			axe_accum;
@@ -217,8 +217,8 @@ struct axe_softc {
 	struct arpcom		arpcom;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 	struct mii_data		axe_mii;
-	usbd_device_handle	axe_udev;
-	usbd_interface_handle	axe_iface;
+	struct usbd_device	*axe_udev;
+	struct usbd_interface	*axe_iface;
 
 	u_int16_t		axe_vendor;
 	u_int16_t		axe_product;
@@ -226,7 +226,7 @@ struct axe_softc {
 	u_int16_t		axe_flags;
 
 	int			axe_ed[AXE_ENDPT_MAX];
-	usbd_pipe_handle	axe_ep[AXE_ENDPT_MAX];
+	struct usbd_pipe	*axe_ep[AXE_ENDPT_MAX];
 	int			axe_unit;
 	struct axe_cdata	axe_cdata;
 	struct timeout		axe_stat_ch;

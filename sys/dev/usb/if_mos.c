@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.19 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.20 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -152,8 +152,8 @@ int mos_tx_list_init(struct mos_softc *);
 int mos_rx_list_init(struct mos_softc *);
 struct mbuf *mos_newbuf(void);
 int mos_encap(struct mos_softc *, struct mbuf *, int);
-void mos_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void mos_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void mos_rxeof(struct usbd_xfer *, void *, usbd_status);
+void mos_txeof(struct usbd_xfer *, void *, usbd_status);
 void mos_tick(void *);
 void mos_tick_task(void *);
 void mos_start(struct ifnet *);
@@ -628,7 +628,7 @@ mos_attach(struct device *parent, struct device *self, void *aux)
 	struct mos_softc	*sc = (struct mos_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
 	struct ifnet		*ifp;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device	*dev = uaa->device;
 	usbd_status		err;
 	usb_interface_descriptor_t 	*id;
 	usb_endpoint_descriptor_t 	*ed;
@@ -912,7 +912,7 @@ mos_tx_list_init(struct mos_softc *sc)
  * the higher level protocols.
  */
 void
-mos_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+mos_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct mos_chain	*c = (struct mos_chain *)priv;
 	struct mos_softc	*sc = c->mos_sc;
@@ -1017,7 +1017,7 @@ done:
  */
 
 void
-mos_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+mos_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct mos_softc	*sc;
 	struct mos_chain	*c;

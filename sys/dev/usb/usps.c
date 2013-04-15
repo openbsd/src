@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.2 2013/03/28 03:58:03 tedu Exp $   */
+/*	$OpenBSD: usps.c,v 1.3 2013/04/15 09:23:02 mglocker Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -72,11 +72,11 @@ struct usps_port_sensor {
 
 struct usps_softc {
 	struct device		 sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
-	usbd_pipe_handle	 sc_ipipe; 
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
+	struct usbd_pipe	*sc_ipipe; 
 	int			 sc_isize;
-	usbd_xfer_handle	 sc_xfer;
+	struct usbd_xfer	*sc_xfer;
 	uint8_t			 sc_buf[16];
 	uint8_t			 *sc_intrbuf;
 
@@ -116,7 +116,7 @@ int  usps_match(struct device *, void *, void *);
 void usps_attach(struct device *, struct device *, void *);
 int  usps_detach(struct device *, int);
 int  usps_activate(struct device *, int);
-void usps_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void usps_intr(struct usbd_xfer *, void *, usbd_status);
 
 usbd_status usps_cmd(struct usps_softc *, uint8_t, uint16_t, uint16_t);
 usbd_status usps_set_measurement_mode(struct usps_softc *, int);
@@ -414,7 +414,7 @@ usps_set_measurement_mode(struct usps_softc *sc, int mode)
 }
 
 void
-usps_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+usps_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct usps_softc *sc = priv;
 	struct usps_port_pkt *pkt;

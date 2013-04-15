@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcireg.h,v 1.13 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ohcireg.h,v 1.14 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: ohcireg.h,v 1.19 2002/07/11 21:14:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -142,7 +142,7 @@ struct ohci_hcca {
 #define OHCI_PAGE(x) ((x) &~ 0xfff)
 #define OHCI_PAGE_OFFSET(x) ((x) & 0xfff)
 
-typedef struct {
+struct ohci_ed {
 	u_int32_t	ed_flags;
 #define OHCI_ED_GET_FA(s)	((s) & 0x7f)
 #define OHCI_ED_ADDRMASK	0x0000007f
@@ -166,11 +166,11 @@ typedef struct {
 #define OHCI_TOGGLECARRY	0x00000002
 #define OHCI_HEADMASK		0xfffffffc
 	ohci_physaddr_t	ed_nexted;
-} ohci_ed_t;
+};
 /* #define OHCI_ED_SIZE 16 */
 #define OHCI_ED_ALIGN 16
 
-typedef struct {
+struct ohci_td {
 	u_int32_t	td_flags;
 #define OHCI_TD_R		0x00040000		/* Buffer Rounding  */
 #define OHCI_TD_DP_MASK		0x00180000		/* Direction / PID */
@@ -191,12 +191,12 @@ typedef struct {
 	ohci_physaddr_t	td_cbp;		/* Current Buffer Pointer */
 	ohci_physaddr_t td_nexttd;	/* Next TD */
 	ohci_physaddr_t td_be;		/* Buffer End */
-} ohci_td_t;
+};
 /* #define OHCI_TD_SIZE 16 */
 #define OHCI_TD_ALIGN 16
 
 #define OHCI_ITD_NOFFSET 8
-typedef struct {
+struct ohci_itd {
 	u_int32_t	itd_flags;
 #define OHCI_ITD_GET_SF(x)	((x) & 0x0000ffff)
 #define OHCI_ITD_SET_SF(x)	((x) & 0xffff)
@@ -216,7 +216,7 @@ typedef struct {
 #define OHCI_ITD_MK_OFFS(len)	(0xe000 | ((len) & 0x1fff))
 #define OHCI_ITD_PSW_LENGTH(x)	((x) & 0xfff)		/* Transfer length */
 #define OHCI_ITD_PSW_GET_CC(x)	((x) >> 12)		/* Condition Code */
-} ohci_itd_t;
+};
 /* #define OHCI_ITD_SIZE 32 */
 #define OHCI_ITD_ALIGN 32
 

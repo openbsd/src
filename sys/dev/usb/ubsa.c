@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.56 2013/03/28 03:58:03 tedu Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.57 2013/04/15 09:23:02 mglocker Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -146,13 +146,13 @@ int	ubsadebug = 0;
 
 struct	ubsa_softc {
 	struct device		 sc_dev;	/* base device */
-	usbd_device_handle	 sc_udev;	/* USB device */
-	usbd_interface_handle	 sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* USB device */
+	struct usbd_interface	*sc_iface;	/* interface */
 
 	int			 sc_iface_number;	/* interface number */
 
 	int			 sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	 sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe	*sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			 sc_isize;
 
@@ -168,7 +168,7 @@ struct	ubsa_softc {
 
 };
 
-void ubsa_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void ubsa_intr(struct usbd_xfer *, void *, usbd_status);
 
 void ubsa_get_status(void *, int, u_char *, u_char *);
 void ubsa_set(void *, int, int, int);
@@ -250,7 +250,7 @@ ubsa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ubsa_softc *sc = (struct ubsa_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -666,14 +666,14 @@ ubsa_close(void *addr, int portno)
 }
 
 void
-ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+ubsa_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct ubsa_softc *sc = priv;
 	u_char *buf;
-	usb_cdc_notification_t *cdcbuf;
+	struct usb_cdc_notification *cdcbuf;
 
 	buf = sc->sc_intr_buf;
-	cdcbuf = (usb_cdc_notification_t *)sc->sc_intr_buf;
+	cdcbuf = (struct usb_cdc_notification *)sc->sc_intr_buf;
 	if (sc->sc_dying)
 		return;
 

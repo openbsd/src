@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.70 2013/04/01 19:49:53 mglocker Exp $ */
+/*	$OpenBSD: ugen.c,v 1.71 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -71,11 +71,11 @@ int	ugendebug = 0;
 struct ugen_endpoint {
 	struct ugen_softc *sc;
 	usb_endpoint_descriptor_t *edesc;
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	int state;
 #define	UGEN_ASLP	0x02	/* waiting for data */
 #define UGEN_SHORT_OK	0x04	/* short xfers are OK */
-	usbd_pipe_handle pipeh;
+	struct usbd_pipe *pipeh;
 	struct clist q;
 	struct selinfo rsel;
 	u_char *ibuf;		/* start of buffer (circular for isoc) */
@@ -85,7 +85,7 @@ struct ugen_endpoint {
 	u_int32_t timeout;
 	struct isoreq {
 		struct ugen_endpoint *sce;
-		usbd_xfer_handle xfer;
+		struct usbd_xfer *xfer;
 		void *dmabuf;
 		u_int16_t sizes[UGEN_NISORFRMS];
 	} isoreqs[UGEN_NISOREQS];
@@ -93,7 +93,7 @@ struct ugen_endpoint {
 
 struct ugen_softc {
 	struct device sc_dev;		/* base device */
-	usbd_device_handle sc_udev;
+	struct usbd_device *sc_udev;
 
 	char sc_is_open[USB_MAX_ENDPOINTS];
 	struct ugen_endpoint sc_endpoints[USB_MAX_ENDPOINTS][2];
@@ -105,10 +105,8 @@ struct ugen_softc {
 	u_char sc_secondary;
 };
 
-void ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr,
-		     usbd_status status);
-void ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
-			    usbd_status status);
+void ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status);
+void ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr, usbd_status status);
 int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_ioctl(struct ugen_softc *, int, u_long,
@@ -158,7 +156,7 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ugen_softc *sc = (struct ugen_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle udev;
+	struct usbd_device *udev;
 	usbd_status err;
 	int conf;
 
@@ -192,9 +190,9 @@ ugen_attach(struct device *parent, struct device *self, void *aux)
 int
 ugen_set_config(struct ugen_softc *sc, int configno)
 {
-	usbd_device_handle dev = sc->sc_udev;
+	struct usbd_device *dev = sc->sc_udev;
 	usb_config_descriptor_t *cdesc;
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	struct ugen_endpoint *sce;
 	u_int8_t niface, nendpt;
@@ -275,7 +273,7 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct ugen_endpoint *sce;
 	int dir, isize;
 	usbd_status err;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	void *buf;
 	int i, j;
 
@@ -477,7 +475,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][IN];
 	u_int32_t n, tn;
 	char buf[UGEN_BBSIZE];
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err;
 	int s;
 	int error = 0;
@@ -644,7 +642,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	u_int32_t n;
 	int error = 0;
 	char buf[UGEN_BBSIZE];
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err;
 
 	DPRINTFN(5, ("%s: ugenwrite: %d\n", sc->sc_dev.dv_xname, endpt));
@@ -792,7 +790,7 @@ ugen_detach(struct device *self, int flags)
 }
 
 void
-ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct ugen_endpoint *sce = addr;
 	/*struct ugen_softc *sc = sce->sc;*/
@@ -828,8 +826,7 @@ ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 }
 
 void
-ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
-		usbd_status status)
+ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct isoreq *req = addr;
 	struct ugen_endpoint *sce = req->sce;
@@ -889,7 +886,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 usbd_status
 ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 {
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
 	struct ugen_endpoint *sce;
@@ -946,7 +943,7 @@ out:
 int
 ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 {
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usbd_status err;
 
 	err = usbd_device2interface_handle(sc->sc_udev, ifaceidx, &iface);
@@ -961,7 +958,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 {
 	struct ugen_endpoint *sce;
 	usbd_status err;
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	struct usb_config_desc *cd;
 	usb_config_descriptor_t *cdesc;
 	struct usb_interface_desc *id;

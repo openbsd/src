@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mosreg.h,v 1.6 2012/10/22 03:23:19 brad Exp $	*/
+/*	$OpenBSD: if_mosreg.h,v 1.7 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -149,7 +149,7 @@ struct mos_softc;
 
 struct mos_chain {
 	struct mos_softc	*mos_sc;
-	usbd_xfer_handle	mos_xfer;
+	struct usbd_xfer	*mos_xfer;
 	char			*mos_buf;
 	struct mbuf		*mos_mbuf;
 	int			mos_accum;
@@ -171,13 +171,13 @@ struct mos_softc {
 	struct arpcom		arpcom;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 	struct mii_data		mos_mii;
-	usbd_device_handle	mos_udev;
-	usbd_interface_handle	mos_iface;
+	struct usbd_device	*mos_udev;
+	struct usbd_interface	*mos_iface;
 
 	u_int16_t		mos_flags;
 
 	int			mos_ed[MOS_ENDPT_MAX];
-	usbd_pipe_handle	mos_ep[MOS_ENDPT_MAX];
+	struct usbd_pipe	*mos_ep[MOS_ENDPT_MAX];
 	int			mos_unit;
 	struct mos_cdata	mos_cdata;
 	struct timeout		mos_stat_ch;

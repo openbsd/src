@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.169 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.170 2013/04/15 09:23:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -94,8 +94,8 @@ usbd_status	uvideo_vs_parse_desc_frame(struct uvideo_softc *);
 usbd_status	uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_alt(struct uvideo_softc *, int, int, int);
-usbd_status	uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
-		    int);
+usbd_status	uvideo_vs_set_alt(struct uvideo_softc *,
+		    struct usbd_interface *, int);
 int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
 void		uvideo_find_res(struct uvideo_softc *, int, int, int,
 		    struct uvideo_res *);
@@ -117,7 +117,7 @@ void		uvideo_vs_start_bulk_thread(void *);
 void		uvideo_vs_start_isoc(struct uvideo_softc *);
 void		uvideo_vs_start_isoc_ixfer(struct uvideo_softc *,
 		    struct uvideo_isoc_xfer *);
-void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
+void		uvideo_vs_cb(struct usbd_xfer *, void *,
 		    usbd_status);
 usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
@@ -578,7 +578,7 @@ uvideo_activate(struct device *self, int act)
 usbd_status
 uvideo_vc_parse_desc(struct uvideo_softc *sc)
 {
-	usbd_desc_iter_t iter;
+	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 	int vc_header_found;
 	usbd_status error;
@@ -772,7 +772,7 @@ uvideo_has_ctrl(struct usb_video_vc_processing_desc *desc, int ctrl_bit)
 usbd_status
 uvideo_vs_parse_desc(struct uvideo_softc *sc, usb_config_descriptor_t *cdesc)
 {
-	usbd_desc_iter_t iter;
+	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	int i, iface, numalts;
@@ -868,7 +868,7 @@ uvideo_vs_parse_desc_input_header(struct uvideo_softc *sc,
 usbd_status
 uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 {
-	usbd_desc_iter_t iter;
+	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
@@ -1006,7 +1006,7 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 usbd_status
 uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 {
-	usbd_desc_iter_t iter;
+	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 	usbd_status error;
 
@@ -1091,7 +1091,7 @@ usbd_status
 uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numalts)
 {
 	struct uvideo_vs_iface *vs;
-	usbd_desc_iter_t iter;
+	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -1158,10 +1158,10 @@ next:
 }
 
 usbd_status
-uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
+uvideo_vs_set_alt(struct uvideo_softc *sc, struct usbd_interface *ifaceh,
     int max_packet_size)
 {
-	usbd_desc_iter_t iter;
+	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -1950,7 +1950,7 @@ uvideo_vs_start_isoc_ixfer(struct uvideo_softc *sc,
 }
 
 void
-uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+uvideo_vs_cb(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct uvideo_isoc_xfer *ixfer = priv;
@@ -2206,7 +2206,7 @@ uvideo_read(struct uvideo_softc *sc, uint8_t *buf, int len)
 void
 uvideo_dump_desc_all(struct uvideo_softc *sc)
 {
-	usbd_desc_iter_t iter;
+	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 
 	usb_desc_iter_init(sc->sc_udev, &iter);

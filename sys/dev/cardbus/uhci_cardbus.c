@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.11 2010/03/27 21:40:13 jsg Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.12 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ void	uhci_cardbus_attach(struct device *, struct device *, void *);
 int	uhci_cardbus_detach(struct device *, int);
 
 struct uhci_cardbus_softc {
-	uhci_softc_t		sc;
+	struct uhci_softc	sc;
 	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;

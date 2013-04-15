@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.98 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.99 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -108,10 +108,10 @@ struct as_info {
 	u_int8_t	attributes; /* Copy of bmAttributes of
 				     * usb_audio_streaming_endpoint_descriptor
 				     */
-	usbd_interface_handle	ifaceh;
+	struct usbd_interface *ifaceh;
 	const usb_interface_descriptor_t *idesc;
-	const usb_endpoint_descriptor_audio_t *edesc;
-	const usb_endpoint_descriptor_audio_t *edesc1;
+	const struct usb_endpoint_descriptor_audio *edesc;
+	const struct usb_endpoint_descriptor_audio *edesc1;
 	const struct usb_audio_streaming_type1_descriptor *asf1desc;
 	int		sc_busy;	/* currently used */
 };
@@ -119,8 +119,8 @@ struct as_info {
 struct chan {
 	void	(*intr)(void *);	/* DMA completion intr handler */
 	void	*arg;		/* arg for intr() */
-	usbd_pipe_handle pipe;
-	usbd_pipe_handle sync_pipe;
+	struct usbd_pipe *pipe;
+	struct usbd_pipe *sync_pipe;
 
 	u_int	sample_size;
 	u_int	sample_rate;
@@ -149,7 +149,7 @@ struct chan {
 
 	struct chanbuf {
 		struct chan	*chan;
-		usbd_xfer_handle xfer;
+		struct usbd_xfer *xfer;
 		u_char		*buffer;
 		u_int16_t	sizes[UAUDIO_MAX_FRAMES];
 		u_int16_t	offsets[UAUDIO_MAX_FRAMES];
@@ -158,7 +158,7 @@ struct chan {
 
 	struct syncbuf {
 		struct chan	*chan;
-		usbd_xfer_handle xfer;
+		struct usbd_xfer *xfer;
 		u_char		*buffer;
 		u_int16_t	sizes[UAUDIO_MAX_FRAMES];
 		u_int16_t	offsets[UAUDIO_MAX_FRAMES];
@@ -229,7 +229,7 @@ struct uaudio_devs {
 
 struct uaudio_softc {
 	struct device	 sc_dev;	/* base device */
-	usbd_device_handle sc_udev;	/* USB device */
+	struct usbd_device *sc_udev;	/* USB device */
 	int		 sc_ac_iface;	/* Audio Control interface */
 	struct chan	 sc_playchan;	/* play channel */
 	struct chan	 sc_recchan;	/* record channel */
@@ -365,14 +365,14 @@ void	uaudio_chan_init
 void	uaudio_chan_set_param(struct chan *, u_char *, u_char *, int);
 void	uaudio_chan_ptransfer(struct chan *);
 void	uaudio_chan_pintr
-	(usbd_xfer_handle, usbd_private_handle, usbd_status);
+	(struct usbd_xfer *, void *, usbd_status);
 void	uaudio_chan_psync_transfer(struct chan *);
 void	uaudio_chan_psync_intr
-	(usbd_xfer_handle, usbd_private_handle, usbd_status);
+	(struct usbd_xfer *, void *, usbd_status);
 
 void	uaudio_chan_rtransfer(struct chan *);
 void	uaudio_chan_rintr
-	(usbd_xfer_handle, usbd_private_handle, usbd_status);
+	(struct usbd_xfer *, void *, usbd_status);
 
 int	uaudio_open(void *, int);
 void	uaudio_close(void *);
@@ -1650,8 +1650,8 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 {
 	const struct usb_audio_streaming_interface_descriptor *asid;
 	const struct usb_audio_streaming_type1_descriptor *asf1d;
-	const usb_endpoint_descriptor_audio_t *ed;
-	const usb_endpoint_descriptor_audio_t *sync_ed;
+	const struct usb_endpoint_descriptor_audio *ed;
+	const struct usb_endpoint_descriptor_audio *sync_ed;
 	const struct usb_audio_streaming_endpoint_descriptor *sed;
 	int format, chan, prec, enc, bps;
 	int dir, type, sync, sync_addr;
@@ -2822,7 +2822,7 @@ usbd_status
 uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as = &sc->sc_alts[ch->altidx];
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	void *buf;
 	int i, size;
 
@@ -2972,7 +2972,7 @@ uaudio_chan_ptransfer(struct chan *ch)
 }
 
 void
-uaudio_chan_pintr(usbd_xfer_handle xfer, usbd_private_handle priv,
+uaudio_chan_pintr(struct usbd_xfer *xfer, void *priv,
 		  usbd_status status)
 {
 	struct chanbuf *cb = priv;
@@ -3029,7 +3029,7 @@ uaudio_chan_psync_transfer(struct chan *ch)
 }
 
 void
-uaudio_chan_psync_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+uaudio_chan_psync_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct syncbuf *sb = priv;
@@ -3129,7 +3129,7 @@ uaudio_chan_rtransfer(struct chan *ch)
 }
 
 void
-uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
+uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 		  usbd_status status)
 {
 	struct chanbuf *cb = priv;

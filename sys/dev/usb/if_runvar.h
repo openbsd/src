@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.9 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -77,20 +77,20 @@ struct run_softc;
 
 struct run_tx_data {
 	struct run_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	uint8_t			qid;
 };
 
 struct run_rx_data {
 	struct run_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
 struct run_tx_ring {
 	struct run_tx_data	data[RUN_TX_RING_COUNT];
-	usbd_pipe_handle	pipeh;
+	struct usbd_pipe	*pipeh;
 	int			cur;
 	int			queued;
 	uint8_t			pipe_no;
@@ -98,7 +98,7 @@ struct run_tx_ring {
 
 struct run_rx_ring {
 	struct run_rx_data	data[RUN_RX_RING_COUNT];
-	usbd_pipe_handle	pipeh;
+	struct usbd_pipe	*pipeh;
 	uint8_t			pipe_no;
 };
 
@@ -139,8 +139,8 @@ struct run_softc {
 	int				(*sc_srom_read)(struct run_softc *,
 					    uint16_t, uint16_t *);
 
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device		*sc_udev;
+	struct usbd_interface		*sc_iface;
 
 	uint16_t			mac_ver;
 	uint16_t			mac_rev;

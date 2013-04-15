@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.40 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: urio.c,v 1.41 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -71,13 +71,13 @@ int	uriodebug = 0;
 
 struct urio_softc {
  	struct device		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	int			sc_in_addr;
-	usbd_pipe_handle	sc_in_pipe;
+	struct usbd_pipe	*sc_in_pipe;
 	int			sc_out_addr;
-	usbd_pipe_handle	sc_out_pipe;
+	struct usbd_pipe	*sc_out_pipe;
 
 	int			sc_refcnt;
 	char			sc_dying;
@@ -130,8 +130,8 @@ urio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct urio_softc	*sc = (struct urio_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device	*dev = uaa->device;
+	struct usbd_interface	*iface;
 	usbd_status		err;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t		epcount;
@@ -301,7 +301,7 @@ int
 urioread(dev_t dev, struct uio *uio, int flag)
 {
 	struct urio_softc *sc;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err;
 	void *bufp;
 	u_int32_t n, tn;
@@ -358,7 +358,7 @@ int
 uriowrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct urio_softc *sc;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	usbd_status err;
 	void *bufp;
 	u_int32_t n;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.32 2013/04/12 12:58:39 mpi Exp $	*/
+/*	$OpenBSD: uow.c,v 1.33 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -43,13 +43,13 @@ struct uow_softc {
 	struct onewire_bus	 sc_ow_bus;
 	struct device		*sc_ow_dev;
 
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
-	usbd_pipe_handle	 sc_ph_ibulk;
-	usbd_pipe_handle	 sc_ph_obulk;
-	usbd_pipe_handle	 sc_ph_intr;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
+	struct usbd_pipe	*sc_ph_ibulk;
+	struct usbd_pipe	*sc_ph_obulk;
+	struct usbd_pipe	*sc_ph_intr;
 	u_int8_t		 sc_regs[DS2490_NREGS];
-	usbd_xfer_handle	 sc_xfer;
+	struct usbd_xfer	*sc_xfer;
 	u_int8_t		 sc_fifo[DS2490_DATAFIFOSIZE];
 };
 
@@ -89,7 +89,7 @@ int	uow_cmd(struct uow_softc *, int, int, int);
 #define uow_commcmd(s, c, p)	uow_cmd((s), DS2490_COMM_CMD, (c), (p))
 #define uow_modecmd(s, c, p)	uow_cmd((s), DS2490_MODE_CMD, (c), (p))
 
-void	uow_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	uow_intr(struct usbd_xfer *, void *, usbd_status);
 int	uow_read(struct uow_softc *, void *, int);
 int	uow_write(struct uow_softc *, const void *, int);
 int	uow_reset(struct uow_softc *);
@@ -429,7 +429,7 @@ again:
 }
 
 void
-uow_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uow_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct uow_softc *sc = priv;
 

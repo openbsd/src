@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyap.c,v 1.19 2011/07/03 15:47:18 matthew Exp $ */
+/*	$OpenBSD: uyap.c,v 1.20 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 struct uyap_softc {
 	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;
+	struct usbd_device	*sc_udev;
 };
 
 int uyap_match(struct device *, void *, void *); 
@@ -105,7 +105,7 @@ uyap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uyap_softc *sc = (struct uyap_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 
 	printf("%s: downloading firmware\n", sc->sc_dev.dv_xname);
 

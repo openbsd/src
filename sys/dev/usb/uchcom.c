@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.15 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.16 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -109,14 +109,14 @@ int	uchcomdebug = 0;
 struct uchcom_softc
 {
 	struct device		 sc_dev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device	*sc_udev;
 	struct device		*sc_subdev;
-	usbd_interface_handle	 sc_iface;
+	struct usbd_interface	*sc_iface;
 	int			 sc_dying;
 	/* */
 	int			 sc_intr_endpoint;
 	int			 sc_intr_size;
-	usbd_pipe_handle	 sc_intr_pipe;
+	struct usbd_pipe	*sc_intr_pipe;
 	u_char			*sc_intr_buf;
 	/* */
 	uint8_t			 sc_version;
@@ -166,12 +166,11 @@ void		uchcom_set(void *, int, int, int);
 int		uchcom_param(void *, int, struct termios *);
 int		uchcom_open(void *, int);
 void		uchcom_close(void *, int);
-void		uchcom_intr(usbd_xfer_handle, usbd_private_handle,
-		    usbd_status);
+void		uchcom_intr(struct usbd_xfer *, void *, usbd_status);
 
 int		uchcom_set_config(struct uchcom_softc *);
 int		uchcom_find_ifaces(struct uchcom_softc *,
-		    usbd_interface_handle *);
+		    struct usbd_interface **);
 int		uchcom_find_endpoints(struct uchcom_softc *,
 		    struct uchcom_endpoints *);
 void		uchcom_close_intr_pipe(struct uchcom_softc *);
@@ -259,7 +258,7 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 	struct uchcom_softc *sc = (struct uchcom_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct ucom_attach_args uca;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	struct uchcom_endpoints endpoints;
 
         sc->sc_udev = dev;
@@ -363,7 +362,7 @@ uchcom_set_config(struct uchcom_softc *sc)
 }
 
 int
-uchcom_find_ifaces(struct uchcom_softc *sc, usbd_interface_handle *riface)
+uchcom_find_ifaces(struct uchcom_softc *sc, struct usbd_interface **riface)
 {
 	usbd_status err;
 
@@ -1009,8 +1008,7 @@ uchcom_close(void *arg, int portno)
  * callback when the modem status is changed.
  */
 void
-uchcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status)
+uchcom_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct uchcom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;

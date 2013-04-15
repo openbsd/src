@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.15 2012/06/20 10:51:27 fgsch Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.16 2013/04/15 09:23:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -25,7 +25,7 @@
 
 struct urndis_chain {
 	struct urndis_softc	*sc_softc;
-	usbd_xfer_handle	 sc_xfer;
+	struct usbd_xfer	*sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
 	int			 sc_idx;
@@ -50,15 +50,15 @@ struct urndis_softc {
 	u_int32_t			sc_filter;
 
 	/* USB goo */
-	usbd_device_handle		sc_udev;
+	struct usbd_device		*sc_udev;
 	int				sc_ifaceno_ctl;
-	usbd_interface_handle		sc_iface_data;
+	struct usbd_interface		*sc_iface_data;
 
 	struct timeval			sc_rx_notice;
 	int				sc_bulkin_no;
-	usbd_pipe_handle		sc_bulkin_pipe;
+	struct usbd_pipe		*sc_bulkin_pipe;
 	int				sc_bulkout_no;
-	usbd_pipe_handle		sc_bulkout_pipe;
+	struct usbd_pipe		*sc_bulkout_pipe;
 
 	struct urndis_cdata		sc_data;
 };

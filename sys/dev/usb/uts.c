@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.30 2011/07/03 15:47:17 matthew Exp $ */
+/*	$OpenBSD: uts.c,v 1.31 2013/04/15 09:23:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -62,14 +62,14 @@ struct tsscale {
 
 struct uts_softc {
 	struct device		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 	int			sc_iface_number;
 	int			sc_product;
 	int			sc_vendor;
 
 	int			sc_intr_number;
-	usbd_pipe_handle	sc_intr_pipe;
+	struct usbd_pipe	*sc_intr_pipe;
 	u_char			*sc_ibuf;
 	int			sc_isize;
 	u_int8_t		sc_pkts;
@@ -100,8 +100,8 @@ const struct usb_devno uts_devs[] = {
 	{ USB_VENDOR_GUNZE,		USB_PRODUCT_GUNZE_TOUCHPANEL }
 };
 
-void uts_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void uts_get_pos(usbd_private_handle addr, struct uts_pos *tp);
+void uts_intr(struct usbd_xfer *, void *, usbd_status);
+void uts_get_pos(void *addr, struct uts_pos *tp);
 
 int	uts_enable(void *);
 void	uts_disable(void *);
@@ -374,7 +374,7 @@ uts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *l)
 }
 
 void
-uts_get_pos(usbd_private_handle addr, struct uts_pos *tp)
+uts_get_pos(void *addr, struct uts_pos *tp)
 {
 	struct uts_softc *sc = addr;
 	u_char *p = sc->sc_ibuf;
@@ -449,7 +449,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos *tp)
 }
 
 void
-uts_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+uts_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uts_softc *sc = addr;
 	u_int32_t len;

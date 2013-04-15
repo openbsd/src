@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakrh.c,v 1.4 2013/04/06 13:03:09 sf Exp $   */
+/*	$OpenBSD: uoakrh.c,v 1.5 2013/04/15 09:23:02 mglocker Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -131,7 +131,7 @@ uoakrh_attach(struct device *parent, struct device *self, void *aux)
 	struct uoakrh_softc *sc = (struct uoakrh_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
-	usbd_device_handle dev = uha->parent->sc_udev;
+	struct usbd_device *dev = uha->parent->sc_udev;
 
 	struct uoak_softc *scc = &sc->sc_uoak_softc;
 	int err, size, repid;

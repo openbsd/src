@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.27 2012/09/29 12:06:27 jsg Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.28 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -88,8 +88,8 @@ int	uslcomdebug = 0;
 
 struct uslcom_softc {
 	struct device		 sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 	struct device		*sc_subdev;
 
 	u_char			 sc_msr;

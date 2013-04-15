@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_auereg.h,v 1.15 2010/12/06 04:41:39 jakemsr Exp $ */
+/*	$OpenBSD: if_auereg.h,v 1.16 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: if_auereg.h,v 1.16 2001/10/10 02:14:17 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -208,7 +208,7 @@ struct aue_softc;
 
 struct aue_chain {
 	struct aue_softc	*aue_sc;
-	usbd_xfer_handle	aue_xfer;
+	struct usbd_xfer	*aue_xfer;
 	char			*aue_buf;
 	struct mbuf		*aue_mbuf;
 	int			aue_idx;
@@ -234,12 +234,12 @@ struct aue_softc {
 
 	struct timeout		aue_stat_ch;
 
-	usbd_device_handle	aue_udev;
-	usbd_interface_handle	aue_iface;
+	struct usbd_device	*aue_udev;
+	struct usbd_interface	*aue_iface;
 	u_int16_t		aue_vendor;
 	u_int16_t		aue_product;
 	int			aue_ed[AUE_ENDPT_MAX];
-	usbd_pipe_handle	aue_ep[AUE_ENDPT_MAX];
+	struct usbd_pipe	*aue_ep[AUE_ENDPT_MAX];
 	u_int8_t		aue_link;
 	int			aue_if_flags;
 	struct aue_cdata	aue_cdata;

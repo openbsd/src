@@ -1,4 +1,4 @@
-/*	$OpenBSD: ezload.c,v 1.11 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ezload.c,v 1.12 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: ezload.c,v 1.5 2002/07/11 21:14:25 augustss Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ int ezloaddebug = 0;
 #endif
 
 usbd_status
-ezload_reset(usbd_device_handle dev, int reset)
+ezload_reset(struct usbd_device *dev, int reset)
 {
 	usb_device_request_t req;
 	uByte rst;
@@ -100,7 +100,7 @@ ezload_reset(usbd_device_handle dev, int reset)
 }
 
 usbd_status
-ezload_download(usbd_device_handle dev, const char *name, const u_char *buf,
+ezload_download(struct usbd_device *dev, const char *name, const u_char *buf,
     size_t buflen)
 {
 	usb_device_request_t req;
@@ -145,7 +145,7 @@ ezload_download(usbd_device_handle dev, const char *name, const u_char *buf,
 }
 
 usbd_status
-ezload_downloads_and_reset(usbd_device_handle dev, char **names)
+ezload_downloads_and_reset(struct usbd_device *dev, char **names)
 {
 	usbd_status err;
 	size_t buflen;

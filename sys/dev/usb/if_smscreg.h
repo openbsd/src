@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smscreg.h,v 1.3 2012/11/10 18:48:22 brad Exp $	*/
+/*	$OpenBSD: if_smscreg.h,v 1.4 2013/04/15 09:23:01 mglocker Exp $	*/
 /*-
  * Copyright (c) 2012
  *	Ben Gray <bgray@freebsd.org>.
@@ -251,7 +251,7 @@
 
 struct smsc_chain {
 	struct smsc_softc	*sc_sc;
-	usbd_xfer_handle	 sc_xfer;
+	struct usbd_xfer	*sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
 	int			 sc_accum;
@@ -269,11 +269,11 @@ struct smsc_cdata {
 
 struct smsc_softc {
 	struct device		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device	*sc_udev;
 	struct arpcom		sc_ac;
 	struct mii_data		sc_mii;
 	int			sc_phyno;
-	usbd_interface_handle	sc_iface;
+	struct usbd_interface	*sc_iface;
 
 	/*
 	 * The following stores the settings in the mac control (MAC_CSR)
@@ -288,7 +288,7 @@ struct smsc_softc {
 	struct usb_task		sc_stop_task;
 
 	int			sc_ed[SMSC_ENDPT_MAX];
-	usbd_pipe_handle	sc_ep[SMSC_ENDPT_MAX];
+	struct usbd_pipe	*sc_ep[SMSC_ENDPT_MAX];
 
 	struct rwlock		sc_mii_lock;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.21 2013/03/28 03:31:55 tedu Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.22 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ int	ucycomdebug = 200;
 
 struct ucycom_softc {
 	struct uhidev		 sc_hdev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device	*sc_udev;
 
 	/* uhidev parameters */
 	size_t			 sc_flen;	/* feature report length */
@@ -188,7 +188,7 @@ ucycom_attach(struct device *parent, struct device *self, void *aux)
 	struct ucycom_softc *sc = (struct ucycom_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
-	usbd_device_handle dev = uha->parent->sc_udev;
+	struct usbd_device *dev = uha->parent->sc_udev;
 	struct ucom_attach_args uca;
 	int size, repid, err;
 	void *desc;
@@ -473,7 +473,7 @@ ucycom_param(void *addr, int portno, struct termios *t)
 void
 ucycom_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
-	extern void ucomreadcb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+	extern void ucomreadcb(struct usbd_xfer *, void *, usbd_status);
 	struct ucycom_softc *sc = (struct ucycom_softc *)addr;
 	uint8_t *cp = ibuf;
 	int n, st, s;

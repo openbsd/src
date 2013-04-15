@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidireg.h,v 1.7 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: umidireg.h,v 1.8 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: umidireg.h,v 1.3 2003/12/04 13:57:31 keihan Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,36 +38,36 @@
 #define UMIDI_EMBEDDED	0x01
 #define UMIDI_EXTERNAL	0x02
 
-typedef struct {
+struct umidi_cs_interface_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 	uWord		bcdMSC;
 	uWord		wTotalLength;
-} __packed umidi_cs_interface_descriptor_t;
+} __packed;
 #define UMIDI_CS_INTERFACE_DESCRIPTOR_SIZE 7
 
-typedef struct {
+struct umidi_cs_endpoint_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubType;
 	uByte		bNumEmbMIDIJack;
-} __packed umidi_cs_endpoint_descriptor_t;
+} __packed;
 #define UMIDI_CS_ENDPOINT_DESCRIPTOR_SIZE 4
 
-typedef struct {
+struct umidi_jack_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 	uByte		bJackType;
 	uByte		bJackID;
-} __packed umidi_jack_descriptor_t;
+} __packed;
 #define	UMIDI_JACK_DESCRIPTOR_SIZE	5
 
 
 #define TO_D(p) ((usb_descriptor_t *)(p))
 #define NEXT_D(desc) TO_D((caddr_t)(desc)+(desc)->bLength)
 #define TO_IFD(desc) ((usb_interface_descriptor_t *)(desc))
-#define TO_CSIFD(desc) ((umidi_cs_interface_descriptor_t *)(desc))
+#define TO_CSIFD(desc) ((struct umidi_cs_interface_descriptor *)(desc))
 #define TO_EPD(desc) ((usb_endpoint_descriptor_t *)(desc))
-#define TO_CSEPD(desc) ((umidi_cs_endpoint_descriptor_t *)(desc))
+#define TO_CSEPD(desc) ((struct umidi_cs_endpoint_descriptor *)(desc))

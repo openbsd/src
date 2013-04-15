@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.45 2012/02/24 06:19:00 guenther Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.46 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -127,8 +127,8 @@ struct uvisor_palm_connection_info {
 
 struct uvisor_softc {
 	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* device */
+	struct usbd_interface	*sc_iface;	/* interface */
 /* 
  * added sc_vendor for later interrogation in failed initialisations
  */
@@ -232,8 +232,8 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uvisor_softc *sc = (struct uvisor_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->device;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	struct uvisor_connection_info coninfo;
 	struct uvisor_palm_connection_info palmconinfo;

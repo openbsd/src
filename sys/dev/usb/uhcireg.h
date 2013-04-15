@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcireg.h,v 1.14 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: uhcireg.h,v 1.15 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: uhcireg.h,v 1.16 2002/07/11 21:14:29 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
@@ -134,7 +134,7 @@ typedef u_int32_t uhci_physaddr_t;
  * the controller "owns" the qh_elink field.
  */
 
-typedef struct {
+struct uhci_td {
 	uhci_physaddr_t td_link;
 	u_int32_t td_status;
 #define UHCI_TD_GET_ACTLEN(s)	(((s) + 1) & 0x3ff)
@@ -167,7 +167,7 @@ typedef struct {
 #define UHCI_TD_GET_MAXLEN(s)	((((s) >> 21) + 1) & 0x7ff)
 #define UHCI_TD_MAXLEN_MASK	0xffe00000
 	u_int32_t td_buffer;
-} uhci_td_t;
+};
 
 #define UHCI_TD_ERROR (UHCI_TD_BITSTUFF|UHCI_TD_CRCTO|UHCI_TD_BABBLE|UHCI_TD_DBUFFER|UHCI_TD_STALLED)
 
@@ -180,9 +180,9 @@ typedef struct {
      UHCI_TD_SET_ENDPT(endp) | UHCI_TD_SET_DEVADDR(dev) | UHCI_TD_PID_IN | \
      UHCI_TD_SET_DT(dt))
 
-typedef struct {
+struct uhci_qh {
 	uhci_physaddr_t qh_hlink;
 	uhci_physaddr_t qh_elink;
-} uhci_qh_t;
+};
 
 #endif /* _DEV_PCI_UHCIREG_H_ */

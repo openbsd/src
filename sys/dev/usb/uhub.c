@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.60 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: uhub.c,v 1.61 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -62,8 +62,8 @@ int	uhubdebug = 0;
 
 struct uhub_softc {
 	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_hub;		/* USB device */
-	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
+	struct usbd_device	*sc_hub;	/* USB device */
+	struct usbd_pipe	*sc_ipipe;	/* interrupt pipe */
 	u_int8_t		*sc_statusbuf;	/* per port status buffer */
 	size_t			sc_statuslen;	/* status bufferlen */
 	u_char			sc_running;
@@ -72,8 +72,8 @@ struct uhub_softc {
 #define UHUB_IS_HIGH_SPEED(sc) (UHUB_PROTO(sc) != UDPROTO_FSHUB)
 #define UHUB_IS_SINGLE_TT(sc) (UHUB_PROTO(sc) == UDPROTO_HSHUBSTT)
 
-usbd_status uhub_explore(usbd_device_handle hub);
-void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
+usbd_status uhub_explore(struct usbd_device *hub);
+void uhub_intr(struct usbd_xfer *, void *, usbd_status);
 
 /*
  * We need two attachment points:
@@ -124,13 +124,13 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usbd_status err;
 	struct usbd_hub *hub = NULL;
 	usb_device_request_t req;
 	usb_hub_descriptor_t hubdesc;
 	int p, port, nports, nremov, pwrdly;
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
 
@@ -339,7 +339,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 }
 
 usbd_status
-uhub_explore(usbd_device_handle dev)
+uhub_explore(struct usbd_device *dev)
 {
 	usb_hub_descriptor_t *hd = &dev->hub->hubdesc;
 	struct uhub_softc *sc = dev->hub->hubsoftc;
@@ -519,7 +519,7 @@ uhub_activate(struct device *self, int act)
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usbd_hub *hub = sc->sc_hub->hub;
-	usbd_device_handle dev;
+	struct usbd_device *dev;
 	int nports, port, i;
 
 	switch (act) {
@@ -585,7 +585,7 @@ uhub_detach(struct device *self, int flags)
  * to be explored again.
  */
 void
-uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhub_softc *sc = addr;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbcdc.h,v 1.8 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usbcdc.h,v 1.9 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: usbcdc.h,v 1.8 2001/02/16 20:15:57 kenh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbcdc.h,v 1.7 1999/11/17 22:33:48 n_hibma Exp $	*/
 
@@ -53,14 +53,14 @@
 #define UDESCSUB_CDC_ENF	15 /* Ethernet Networking */
 #define UDESCSUB_CDC_ANF	16 /* ATM Networking */
 
-typedef struct {
+struct usb_cdc_header_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 	uWord		bcdCDC;
-} __packed usb_cdc_header_descriptor_t;
+} __packed;
 
-typedef struct {
+struct usb_cdc_cm_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -68,9 +68,9 @@ typedef struct {
 #define USB_CDC_CM_DOES_CM		0x01
 #define USB_CDC_CM_OVER_DATA		0x02
 	uByte		bDataInterface;
-} __packed usb_cdc_cm_descriptor_t;
+} __packed;
 
-typedef struct {
+struct usb_cdc_acm_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -79,17 +79,17 @@ typedef struct {
 #define USB_CDC_ACM_HAS_LINE		0x02
 #define USB_CDC_ACM_HAS_BREAK		0x04
 #define USB_CDC_ACM_HAS_NETWORK_CONN	0x08
-} __packed usb_cdc_acm_descriptor_t;
+} __packed;
 
-typedef struct {
+struct usb_cdc_union_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 	uByte		bMasterInterface;
 	uByte		bSlaveInterface[1];
-} __packed usb_cdc_union_descriptor_t;
+} __packed;
 
-typedef struct {
+struct usb_cdc_ethernet_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -98,7 +98,7 @@ typedef struct {
 	uWord		wMaxSegmentSize;
 	uWord		wNumberMCFilters;
 	uByte		bNumberPowerFilters;
-} __packed usb_cdc_ethernet_descriptor_t;
+} __packed;
 
 #define UCDC_SEND_ENCAPSULATED_COMMAND	0x00
 #define UCDC_GET_ENCAPSULATED_RESPONSE	0x01
@@ -116,14 +116,14 @@ typedef struct {
 #define  UCDC_BREAK_ON			0xffff
 #define  UCDC_BREAK_OFF			0x0000
 
-typedef struct {
+struct usb_cdc_abstract_state {
 	uWord	wState;
 #define UCDC_IDLE_SETTING		0x0001
 #define UCDC_DATA_MULTIPLEXED		0x0002
-} __packed usb_cdc_abstract_state_t;
+} __packed;
 #define UCDC_ABSTRACT_STATE_LENGTH 2
 
-typedef struct {
+struct usb_cdc_line_state {
 	uDWord	dwDTERate;
 	uByte	bCharFormat;
 #define UCDC_STOP_BIT_1			0
@@ -136,10 +136,10 @@ typedef struct {
 #define UCDC_PARITY_MARK		3
 #define UCDC_PARITY_SPACE		4
 	uByte	bDataBits;
-} __packed usb_cdc_line_state_t;
+} __packed;
 #define UCDC_LINE_STATE_LENGTH 7
 
-typedef struct {
+struct usb_cdc_notification {
 	uByte	bmRequestType;
 #define UCDC_NOTIFICATION		0xa1
 	uByte	bNotification;
@@ -155,13 +155,13 @@ typedef struct {
 	uWord	wIndex;
 	uWord	wLength;
 	uByte	data[16];
-} __packed usb_cdc_notification_t;
+} __packed;
 #define UCDC_NOTIFICATION_LENGTH 8
 
-typedef struct {
+struct usb_cdc_connection_speed {
 	uDWord	dwUSBitRate;
 	uDWord	dwDSBitRate;
-} __packed usb_cdc_connection_speed_t;
+} __packed;
 #define UCDC_CONNECTION_SPEED_LENGTH 8
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udfu.c,v 1.4 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: udfu.c,v 1.5 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2009 Federico G. Schwindt <fgsch@openbsd.org>
@@ -47,7 +47,7 @@
 #define DFU_GETSTATE		UT_READ_CLASS_INTERFACE,  5
 #define  DFU_STATE_appIDLE		0
 
-typedef struct {
+struct dfu_functional_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bmAttributes;
@@ -55,13 +55,13 @@ typedef struct {
 	uWord		wDetachTimeOut;
 	uWord		wTransferSize;
 	uWord		bcdDFUVersion;
-} __packed dfu_functional_descriptor_t;
+} __packed;
 
 #define UDFU_DETACH_TIMEOUT	1000	/* in milliseconds */
 
 struct udfu_softc {
 	struct device		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device	*sc_udev;
 
 	int			sc_iface_index;
 
@@ -181,9 +181,9 @@ udfu_activate(struct device *self, int act)
 void
 udfu_parse_desc(struct udfu_softc *sc)
 {
-	dfu_functional_descriptor_t *dd;
+	struct dfu_functional_descriptor *dd;
 	const usb_descriptor_t *desc;
-	usbd_desc_iter_t iter;
+	struct usbd_desc_iter iter;
 
 	usb_desc_iter_init(sc->sc_udev, &iter);
 	while ((desc = usb_desc_iter_next(&iter))) {
@@ -194,7 +194,7 @@ udfu_parse_desc(struct udfu_softc *sc)
 	if (!desc)
 		return;
 
-	dd = (dfu_functional_descriptor_t *)desc;
+	dd = (struct dfu_functional_descriptor *)desc;
 
 	DPRINTF(("%s: %s: bLength=%d bDescriptorType=%d bmAttributes=%d "
 	    "wDetachTimeOut=%d wTransferSize=%d bcdDFUVersion=%d\n",

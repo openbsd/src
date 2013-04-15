@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.31 2010/12/14 16:13:16 jakemsr Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.32 2013/04/15 09:23:01 mglocker Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ int	uhci_pci_detach(struct device *, int);
 int	uhci_pci_activate(struct device *, int);
 
 struct uhci_pci_softc {
-	uhci_softc_t		sc;
+	struct uhci_softc	sc;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */

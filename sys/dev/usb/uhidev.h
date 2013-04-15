@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.11 2010/08/02 23:17:34 miod Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.12 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -39,18 +39,18 @@
 
 struct uhidev_softc {
 	struct device sc_dev;		/* base device */
-	usbd_device_handle sc_udev;
-	usbd_interface_handle sc_iface;	/* interface */
-	usbd_pipe_handle sc_ipipe;	/* input interrupt pipe */
-	usbd_xfer_handle sc_ixfer;	/* read request */
+	struct usbd_device *sc_udev;
+	struct usbd_interface *sc_iface;/* interface */
+	struct usbd_pipe *sc_ipipe;	/* input interrupt pipe */
+	struct usbd_xfer *sc_ixfer;	/* read request */
 	int sc_iep_addr;
 
 	u_char *sc_ibuf;
 	u_int sc_isize;
 
-	usbd_pipe_handle sc_opipe;	/* output interrupt pipe */
-	usbd_xfer_handle sc_oxfer;	/* write request */
-	usbd_xfer_handle sc_owxfer;	/* internal write request */
+	struct usbd_pipe *sc_opipe;	/* output interrupt pipe */
+	struct usbd_xfer *sc_oxfer;	/* write request */
+	struct usbd_xfer *sc_owxfer;	/* internal write request */
 	int sc_oep_addr;
 
 	void *sc_repdesc;

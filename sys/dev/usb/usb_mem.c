@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.24 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.25 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdivar.h>	/* just for usb_dma_t */
+#include <dev/usb/usbdivar.h>	/* just for struct usb_dma */
 #include <dev/usb/usb_mem.h>
 
 #ifdef USB_DEBUG
@@ -67,14 +67,14 @@ extern int usbdebug;
 
 /* This struct is overlayed on free fragments. */
 struct usb_frag_dma {
-	usb_dma_block_t *block;
+	struct usb_dma_block *block;
 	u_int offs;
 	LIST_ENTRY(usb_frag_dma) next;
 };
 
 usbd_status	usb_block_allocmem(bus_dma_tag_t, size_t, size_t,
-					   usb_dma_block_t **);
-void		usb_block_freemem(usb_dma_block_t *);
+		    struct usb_dma_block **);
+void		usb_block_freemem(struct usb_dma_block *);
 
 LIST_HEAD(, usb_dma_block) usb_blk_freelist =
 	LIST_HEAD_INITIALIZER(usb_blk_freelist);
@@ -85,10 +85,10 @@ LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 
 usbd_status
 usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
-		   usb_dma_block_t **dmap)
+    struct usb_dma_block **dmap)
 {
 	int error;
-        usb_dma_block_t *p;
+        struct usb_dma_block *p;
 	int s;
 
 	DPRINTFN(5, ("usb_block_allocmem: size=%lu align=%lu\n",
@@ -168,7 +168,7 @@ free0:
 
 #if 0
 void
-usb_block_real_freemem(usb_dma_block_t *p)
+usb_block_real_freemem(struct usb_dma_block *p)
 {
 #ifdef DIAGNOSTIC
 	if (!curproc) {
@@ -190,7 +190,7 @@ usb_block_real_freemem(usb_dma_block_t *p)
  * XXX when should we really free?
  */
 void
-usb_block_freemem(usb_dma_block_t *p)
+usb_block_freemem(struct usb_dma_block *p)
 {
 	int s;
 
@@ -202,12 +202,12 @@ usb_block_freemem(usb_dma_block_t *p)
 }
 
 usbd_status
-usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
+usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, struct usb_dma *p)
 {
 	bus_dma_tag_t tag = bus->dmatag;
 	usbd_status err;
 	struct usb_frag_dma *f;
-	usb_dma_block_t *b;
+	struct usb_dma_block *b;
 	int i;
 	int s;
 
@@ -253,7 +253,7 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 }
 
 void
-usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
+usb_freemem(struct usbd_bus *bus, struct usb_dma *p)
 {
 	struct usb_frag_dma *f;
 	int s;
@@ -273,7 +273,7 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 }
 
 void
-usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
+usb_syncmem(struct usb_dma *p, bus_addr_t offset, bus_size_t len, int ops)
 {
 	bus_dmamap_sync(p->block->tag, p->block->map, p->offs + offset,
 	    len, ops);

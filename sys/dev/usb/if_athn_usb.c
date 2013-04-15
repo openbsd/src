@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.15 2013/04/12 12:58:39 mpi Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.16 2013/04/15 09:23:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -119,7 +119,7 @@ int		athn_usb_htc_msg(struct athn_usb_softc *, uint16_t, void *,
 int		athn_usb_htc_setup(struct athn_usb_softc *);
 int		athn_usb_htc_connect_svc(struct athn_usb_softc *, uint16_t,
 		    uint8_t, uint8_t, uint8_t *);
-void		athn_usb_wmieof(usbd_xfer_handle, usbd_private_handle,
+void		athn_usb_wmieof(struct usbd_xfer *, void *,
 		    usbd_status);
 int		athn_usb_wmi_xcmd(struct athn_usb_softc *, uint16_t, void *,
 		    int, void *);
@@ -160,18 +160,18 @@ void		athn_usb_set_key_cb(struct athn_usb_softc *, void *);
 void		athn_usb_delete_key(struct ieee80211com *,
 		    struct ieee80211_node *, struct ieee80211_key *);
 void		athn_usb_delete_key_cb(struct athn_usb_softc *, void *);
-void		athn_usb_bcneof(usbd_xfer_handle, usbd_private_handle,
+void		athn_usb_bcneof(struct usbd_xfer *, void *,
 		    usbd_status);
 void		athn_usb_swba(struct athn_usb_softc *);
 void		athn_usb_rx_wmi_ctrl(struct athn_usb_softc *, uint8_t *, int);
-void		athn_usb_intr(usbd_xfer_handle, usbd_private_handle,
+void		athn_usb_intr(struct usbd_xfer *, void *,
 		    usbd_status);
 void		athn_usb_rx_radiotap(struct athn_softc *, struct mbuf *,
 		    struct ar_rx_status *);
 void		athn_usb_rx_frame(struct athn_usb_softc *, struct mbuf *);
-void		athn_usb_rxeof(usbd_xfer_handle, usbd_private_handle,
+void		athn_usb_rxeof(struct usbd_xfer *, void *,
 		    usbd_status);
-void		athn_usb_txeof(usbd_xfer_handle, usbd_private_handle,
+void		athn_usb_txeof(struct usbd_xfer *, void *,
 		    usbd_status);
 int		athn_usb_tx(struct athn_softc *, struct mbuf *,
 		    struct ieee80211_node *);
@@ -847,7 +847,7 @@ athn_usb_htc_connect_svc(struct athn_usb_softc *usc, uint16_t svc_id,
 }
 
 void
-athn_usb_wmieof(usbd_xfer_handle xfer, usbd_private_handle priv,
+athn_usb_wmieof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct athn_usb_softc *usc = priv;
@@ -1401,7 +1401,7 @@ athn_usb_delete_key_cb(struct athn_usb_softc *usc, void *arg)
 
 #ifndef IEEE80211_STA_ONLY
 void
-athn_usb_bcneof(usbd_xfer_handle xfer, usbd_private_handle priv,
+athn_usb_bcneof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct athn_usb_tx_data *data = priv;
@@ -1520,7 +1520,7 @@ athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, int len)
 }
 
 void
-athn_usb_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+athn_usb_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct athn_usb_softc *usc = priv;
@@ -1734,7 +1734,7 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m)
 }
 
 void
-athn_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+athn_usb_rxeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct athn_usb_rx_data *data = priv;
@@ -1842,7 +1842,7 @@ athn_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-athn_usb_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+athn_usb_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct athn_usb_tx_data *data = priv;

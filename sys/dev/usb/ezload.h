@@ -1,4 +1,4 @@
-/*	$OpenBSD: ezload.h,v 1.4 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ezload.h,v 1.5 2013/04/15 09:23:01 mglocker Exp $ */
 /*	$NetBSD: ezload.h,v 1.2 2001/01/18 20:28:23 jdolecek Exp $	*/
 
 /*
@@ -37,8 +37,8 @@ struct ezdata {
 };
 
 #ifdef _KERNEL
-usbd_status ezload_reset(usbd_device_handle, int);
-usbd_status ezload_download(usbd_device_handle, const char *name,
+usbd_status ezload_reset(struct usbd_device *, int);
+usbd_status ezload_download(struct usbd_device *, const char *name,
 	const u_char *buf, size_t buflen);
-usbd_status ezload_downloads_and_reset(usbd_device_handle, char **);
+usbd_status ezload_downloads_and_reset(struct usbd_device *, char **);
 #endif

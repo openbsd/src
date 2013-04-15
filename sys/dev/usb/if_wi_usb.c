@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.56 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.57 2013/04/15 09:23:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -80,13 +80,13 @@
 
 int wi_usb_do_transmit_sync(struct wi_usb_softc *wsc, struct wi_usb_chain *c, 
     void *ident);
-void wi_usb_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+void wi_usb_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status);
-void wi_usb_txeof_frm(usbd_xfer_handle xfer, usbd_private_handle priv,
+void wi_usb_txeof_frm(struct usbd_xfer *xfer, void *priv,
     usbd_status status);
-void wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+void wi_usb_rxeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status);
-void wi_usb_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+void wi_usb_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status);
 void wi_usb_stop(struct wi_usb_softc *usc);
 int wi_usb_tx_list_init(struct wi_usb_softc *usc);
@@ -139,12 +139,12 @@ struct wi_usb_softc {
 
 	struct timeout		wi_usb_stat_ch;
 
-	usbd_device_handle	wi_usb_udev;
-	usbd_interface_handle	wi_usb_iface;
+	struct usbd_device	*wi_usb_udev;
+	struct usbd_interface	*wi_usb_iface;
 	u_int16_t		wi_usb_vendor;
 	u_int16_t		wi_usb_product;
 	int			wi_usb_ed[WI_USB_ENDPT_MAX];
-	usbd_pipe_handle	wi_usb_ep[WI_USB_ENDPT_MAX];
+	struct usbd_pipe	*wi_usb_ep[WI_USB_ENDPT_MAX];
 
 	struct wi_usb_chain	wi_usb_tx_chain[WI_USB_TX_LIST_CNT];
 	struct wi_usb_chain	wi_usb_rx_chain[WI_USB_RX_LIST_CNT];
@@ -302,8 +302,8 @@ wi_usb_attach(struct device *parent, struct device *self, void *aux)
 	struct wi_usb_softc	*sc = (struct wi_usb_softc *)self;
 	struct usb_attach_arg	*uaa = aux;
 /*	int			s; */
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device	*dev = uaa->device;
+	struct usbd_interface	*iface;
 	usbd_status		err;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -1089,7 +1089,7 @@ done:
  */
 
 void
-wi_usb_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+wi_usb_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct wi_usb_chain	*c = priv;
@@ -1132,7 +1132,7 @@ wi_usb_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
  */
 
 void
-wi_usb_txeof_frm(usbd_xfer_handle xfer, usbd_private_handle priv,
+wi_usb_txeof_frm(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct wi_usb_chain	*c = priv;
@@ -1367,7 +1367,7 @@ wi_dump_data(void *buffer, int len)
  * A frame has been received.
  */
 void
-wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+wi_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct wi_usb_chain	*c = priv;
 	struct wi_usb_softc	*sc = c->wi_usb_sc;
@@ -1490,7 +1490,7 @@ wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 }
 
 void
-wi_usb_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+wi_usb_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct wi_usb_softc	*sc = priv;
 

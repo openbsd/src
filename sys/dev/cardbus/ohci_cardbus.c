@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.17 2010/09/07 16:21:41 deraadt Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.18 2013/04/15 09:23:00 mglocker Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ void	ohci_cardbus_attach(struct device *, struct device *, void *);
 int	ohci_cardbus_detach(struct device *, int);
 
 struct ohci_cardbus_softc {
-	ohci_softc_t		sc;
+	struct ohci_softc	sc;
 	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;

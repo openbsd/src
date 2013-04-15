@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.26 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.27 2013/04/15 09:23:02 mglocker Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -130,13 +130,13 @@ static int	uvscomdebug = 1;
 
 struct	uvscom_softc {
 	struct device		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* USB device */
+	struct usbd_interface	*sc_iface;	/* interface */
 	int			sc_iface_number;/* interface number */
 
-	usbd_interface_handle	sc_intr_iface;	/* interrupt interface */
+	struct usbd_interface	*sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe	*sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			sc_isize;
 
@@ -173,7 +173,7 @@ void uvscom_rts(struct uvscom_softc *, int);
 void uvscom_break(struct uvscom_softc *, int);
 
 void uvscom_set(void *, int, int, int);
-void uvscom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void uvscom_intr(struct usbd_xfer *, void *, usbd_status);
 int  uvscom_param(void *, int, struct termios *);
 int  uvscom_open(void *, int);
 void uvscom_close(void *, int);
@@ -238,7 +238,7 @@ uvscom_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uvscom_softc *sc = (struct uvscom_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -793,7 +793,7 @@ uvscom_close(void *addr, int portno)
 }
 
 void
-uvscom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uvscom_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct uvscom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;

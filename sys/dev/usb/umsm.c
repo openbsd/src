@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.89 2013/01/04 02:49:44 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.90 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -61,14 +61,14 @@ int umsm_activate(struct device *, int);
 
 int umsm_open(void *, int);
 void umsm_close(void *, int);
-void umsm_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void umsm_intr(struct usbd_xfer *, void *, usbd_status);
 void umsm_get_status(void *, int, u_char *, u_char *);
 void umsm_set(void *, int, int, int);
 
 struct umsm_softc {
 	struct device		 sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 	int			 sc_iface_no;
 	struct device		*sc_subdev;
 	u_char			 sc_dying;
@@ -76,7 +76,7 @@ struct umsm_softc {
 
 	/* interrupt ep */
 	int			 sc_intr_number;
-	usbd_pipe_handle	 sc_intr_pipe;
+	struct usbd_pipe	*sc_intr_pipe;
 	u_char			*sc_intr_buf;
 	int			 sc_isize;
 
@@ -86,8 +86,8 @@ struct umsm_softc {
 	u_char			 sc_rts;	/* current RTS state */
 };
 
-usbd_status umsm_huawei_changemode(usbd_device_handle);
-usbd_status umsm_truinstall_changemode(usbd_device_handle);
+usbd_status umsm_huawei_changemode(struct usbd_device *);
+usbd_status umsm_truinstall_changemode(struct usbd_device *);
 usbd_status umsm_umass_changemode(struct umsm_softc *);
 
 struct ucom_methods umsm_methods = {
@@ -505,14 +505,14 @@ umsm_close(void *addr, int portno)
 }
 
 void
-umsm_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+umsm_intr(struct usbd_xfer *xfer, void *priv,
 	usbd_status status)
 {
 	struct umsm_softc *sc = priv;
-	usb_cdc_notification_t *buf;
+	struct usb_cdc_notification *buf;
 	u_char mstatus;
 
-	buf = (usb_cdc_notification_t *)sc->sc_intr_buf;
+	buf = (struct usb_cdc_notification *)sc->sc_intr_buf;
 	if (sc->sc_dying)
 		return;
 
@@ -612,7 +612,7 @@ umsm_set(void *addr, int portno, int reg, int onoff)
 }
 
 usbd_status
-umsm_huawei_changemode(usbd_device_handle dev)
+umsm_huawei_changemode(struct usbd_device *dev)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -631,7 +631,7 @@ umsm_huawei_changemode(usbd_device_handle dev)
 }
 
 usbd_status
-umsm_truinstall_changemode(usbd_device_handle dev)
+umsm_truinstall_changemode(struct usbd_device *dev)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -657,14 +657,14 @@ umsm_umass_changemode(struct umsm_softc *sc)
 #define UMASS_SERVICE_ACTION_OUT	0x9f
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	usbd_xfer_handle xfer;
-	usbd_pipe_handle cmdpipe;
+	struct usbd_xfer *xfer;
+	struct usbd_pipe *cmdpipe;
 	usbd_status err;
 	u_int32_t n;
 	void *bufp;
 	int target_ep, i;
 
-	umass_bbb_cbw_t	cbw;
+	struct umass_bbb_cbw cbw;
 	static int dCBWTag = 0x12345678;
 
 	USETDW(cbw.dCBWSignature, CBWSIGNATURE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.52 2013/03/28 03:58:03 tedu Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.53 2013/04/15 09:23:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -84,14 +84,14 @@ int	 cdce_rx_list_init(struct cdce_softc *);
 int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
 		    struct mbuf *);
 int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
-void	 cdce_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void	 cdce_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	 cdce_rxeof(struct usbd_xfer *, void *, usbd_status);
+void	 cdce_txeof(struct usbd_xfer *, void *, usbd_status);
 void	 cdce_start(struct ifnet *);
 int	 cdce_ioctl(struct ifnet *, u_long, caddr_t);
 void	 cdce_init(void *);
 void	 cdce_watchdog(struct ifnet *);
 void	 cdce_stop(struct cdce_softc *);
-void	 cdce_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	 cdce_intr(struct usbd_xfer *, void *, usbd_status);
 static uint32_t	 cdce_crc32(const void *, size_t);
 
 const struct cdce_type cdce_devs[] = {
@@ -161,15 +161,15 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg		*uaa = aux;
 	int				 s;
 	struct ifnet			*ifp;
-	usbd_device_handle		 dev = uaa->device;
+	struct usbd_device		*dev = uaa->device;
 	const struct cdce_type		*t;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
-	usb_cdc_union_descriptor_t	*ud;
-	usb_cdc_ethernet_descriptor_t	*ethd;
+	struct usb_cdc_union_descriptor	*ud;
+	struct usb_cdc_ethernet_descriptor *ethd;
 	usb_config_descriptor_t		*cd;
 	const usb_descriptor_t		*desc;
-	usbd_desc_iter_t		 iter;
+	struct usbd_desc_iter		 iter;
 	usb_string_descriptor_t		 eaddr_str;
 	struct timeval			 now;
 	u_int32_t			 macaddr_lo;
@@ -198,7 +198,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 		}
 		switch(desc->bDescriptorSubtype) {
 		case UDESCSUB_CDC_UNION:
-			ud = (usb_cdc_union_descriptor_t *)desc; 
+			ud = (struct usb_cdc_union_descriptor *)desc; 
 			if ((sc->cdce_flags & CDCE_SWAPUNION) == 0 &&
 			    ud->bMasterInterface == ctl_ifcno)
 				data_ifcno = ud->bSlaveInterface[0];
@@ -212,7 +212,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 				printf("extra ethernet descriptor\n");
 				return;
 			}
-			ethd = (usb_cdc_ethernet_descriptor_t *)desc;
+			ethd = (struct usb_cdc_ethernet_descriptor *)desc;
 			break;
 		}
 		desc = usb_desc_iter_next(&iter);
@@ -742,7 +742,7 @@ cdce_tx_list_init(struct cdce_softc *sc)
 }
 
 void
-cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cdce_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct cdce_chain	*c = priv;
 	struct cdce_softc	*sc = c->cdce_sc;
@@ -819,7 +819,7 @@ done:
 }
 
 void
-cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cdce_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct cdce_chain	*c = priv;
 	struct cdce_softc	*sc = c->cdce_sc;
@@ -881,11 +881,11 @@ cdce_activate(struct device *self, int act)
 }
 
 void
-cdce_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+cdce_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct cdce_softc	*sc = addr;
-	usb_cdc_notification_t	*buf = &sc->cdce_intr_buf;
-	usb_cdc_connection_speed_t	*speed;
+	struct usb_cdc_notification *buf = &sc->cdce_intr_buf;
+	struct usb_cdc_connection_speed	*speed;
 	u_int32_t		 count;
 
 	if (status == USBD_CANCELLED)
@@ -907,7 +907,7 @@ cdce_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 			    UGETW(buf->wValue) ? "connected" : "disconnected"));
 			break;
 		case UCDC_N_CONNECTION_SPEED_CHANGE:
-			speed = (usb_cdc_connection_speed_t *)&buf->data;
+			speed = (struct usb_cdc_connection_speed *)&buf->data;
 			DPRINTFN(1, ("cdce_intr: up=%d, down=%d\n",
 			    UGETDW(speed->dwUSBitRate),
 			    UGETDW(speed->dwDSBitRate)));

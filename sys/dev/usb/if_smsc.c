@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.6 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.7 2013/04/15 09:23:01 mglocker Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -173,8 +173,8 @@ void		 smsc_unlock_mii(struct smsc_softc *sc);
 int		 smsc_tx_list_init(struct smsc_softc *);
 int		 smsc_rx_list_init(struct smsc_softc *);
 int		 smsc_encap(struct smsc_softc *, struct mbuf *, int);
-void		 smsc_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void		 smsc_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void		 smsc_rxeof(struct usbd_xfer *, void *, usbd_status);
+void		 smsc_txeof(struct usbd_xfer *, void *, usbd_status);
 
 int		 smsc_read_reg(struct smsc_softc *, uint32_t, uint32_t *);
 int		 smsc_write_reg(struct smsc_softc *, uint32_t, uint32_t);
@@ -950,7 +950,7 @@ smsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct smsc_softc *sc = (struct smsc_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct mii_data *mii;
@@ -1182,7 +1182,7 @@ smsc_unlock_mii(struct smsc_softc *sc)
 }
 
 void
-smsc_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct smsc_chain	*c = (struct smsc_chain *)priv;
 	struct smsc_softc	*sc = c->sc_sc;
@@ -1291,7 +1291,7 @@ done:
 }
 
 void
-smsc_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+smsc_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct smsc_softc	*sc;
 	struct smsc_chain	*c;

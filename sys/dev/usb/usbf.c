@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf.c,v 1.14 2011/09/27 19:58:38 miod Exp $	*/
+/*	$OpenBSD: usbf.c,v 1.15 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -74,7 +74,7 @@ int usbfdebug = 0;
 
 struct usbf_softc {
 	struct device	 	 sc_dev;	/* base device */
-	usbf_bus_handle	 	 sc_bus;	/* USB device controller */
+	struct usbf_bus	 	*sc_bus;	/* USB device controller */
 	struct usbf_port 	 sc_port;	/* dummy port for function */
 	struct proc		*sc_proc;	/* task thread */
 	TAILQ_HEAD(,usbf_task)	 sc_tskq;	/* task queue head */
@@ -90,13 +90,13 @@ void	    	usbf_attach(struct device *, struct device *, void *);
 void	    	usbf_create_thread(void *);
 void	    	usbf_task_thread(void *);
 
-usbf_status	usbf_get_descriptor(usbf_device_handle, usb_device_request_t *,
+usbf_status	usbf_get_descriptor(struct usbf_device *, usb_device_request_t *,
 		    void **);
-void		usbf_set_address(usbf_device_handle, u_int8_t);
-usbf_status	usbf_set_config(usbf_device_handle, u_int8_t);
+void		usbf_set_address(struct usbf_device *, u_int8_t);
+usbf_status	usbf_set_config(struct usbf_device *, u_int8_t);
 
 #ifdef USBF_DEBUG
-void		usbf_dump_request(usbf_device_handle, usb_device_request_t *);
+void		usbf_dump_request(struct usbf_device *, usb_device_request_t *);
 #endif
 
 struct cfattach usbf_ca = {
@@ -178,7 +178,7 @@ usbf_attach(struct device *parent, struct device *self, void *aux)
  * process context ASAP.
  */
 void
-usbf_add_task(usbf_device_handle dev, struct usbf_task *task)
+usbf_add_task(struct usbf_device *dev, struct usbf_task *task)
 {
 	struct usbf_softc *sc = dev->bus->usbfctl;
 	int s;
@@ -200,7 +200,7 @@ usbf_add_task(usbf_device_handle dev, struct usbf_task *task)
 }
 
 void
-usbf_rem_task(usbf_device_handle dev, struct usbf_task *task)
+usbf_rem_task(struct usbf_device *dev, struct usbf_task *task)
 {
 	struct usbf_softc *sc = dev->bus->usbfctl;
 	int s;
@@ -273,9 +273,9 @@ usbf_task_thread(void *arg)
  */
 
 void
-usbf_host_reset(usbf_bus_handle bus)
+usbf_host_reset(struct usbf_bus *bus)
 {
-	usbf_device_handle dev = bus->usbfctl->sc_port.device;
+	struct usbf_device *dev = bus->usbfctl->sc_port.device;
 
 	DPRINTF(0,("usbf_host_reset\n"));
 
@@ -289,7 +289,7 @@ usbf_host_reset(usbf_bus_handle bus)
  */
 
 usbf_status
-usbf_get_descriptor(usbf_device_handle dev, usb_device_request_t *req,
+usbf_get_descriptor(struct usbf_device *dev, usb_device_request_t *req,
     void **data)
 {
 	u_int8_t type = UGETW(req->wValue) >> 8;
@@ -374,7 +374,7 @@ usbf_get_descriptor(usbf_device_handle dev, usb_device_request_t *req,
  * if the device is not currently in the Default state.
  */
 void
-usbf_set_address(usbf_device_handle dev, u_int8_t address)
+usbf_set_address(struct usbf_device *dev, u_int8_t address)
 {
 	DPRINTF(0,("usbf_set_address: dev=%p, %u -> %u\n", dev,
 	    dev->address, address));
@@ -386,10 +386,10 @@ usbf_set_address(usbf_device_handle dev, u_int8_t address)
  * will be in the Configured state upon successful return from this routine.
  */
 usbf_status
-usbf_set_config(usbf_device_handle dev, u_int8_t new)
+usbf_set_config(struct usbf_device *dev, u_int8_t new)
 {
-	usbf_config_handle cfg = dev->config;
-	usbf_function_handle fun = dev->function;
+	struct usbf_config *cfg = dev->config;
+	struct usbf_function *fun = dev->function;
 	usbf_status err = USBF_NORMAL_COMPLETION;
 	u_int8_t old = cfg ? cfg->uc_cdesc->bConfigurationValue :
 	    USB_UNCONFIG_NO;
@@ -433,12 +433,12 @@ usbf_set_config(usbf_device_handle dev, u_int8_t new)
  * Handle device requests coming in via endpoint 0 pipe.
  */
 void
-usbf_do_request(usbf_xfer_handle xfer, usbf_private_handle priv,
+usbf_do_request(struct usbf_xfer *xfer, void *priv,
     usbf_status err)
 {
-	usbf_device_handle dev = xfer->pipe->device;
+	struct usbf_device *dev = xfer->pipe->device;
 	usb_device_request_t *req = xfer->buffer;
-	usbf_config_handle cfg;
+	struct usbf_config *cfg;
 	void *data = NULL;
 	u_int16_t value;
 	u_int16_t index;
@@ -531,7 +531,7 @@ usbf_do_request(usbf_xfer_handle xfer, usbf_private_handle priv,
 	}
 
 	default: {
-		usbf_function_handle fun = dev->function;
+		struct usbf_function *fun = dev->function;
 		
 		if (fun == NULL)
 			err = USBF_STALLED;
@@ -687,7 +687,7 @@ usbf_request_desc_string(usb_device_request_t *req)
 }
 
 void
-usbf_dump_request(usbf_device_handle dev, usb_device_request_t *req)
+usbf_dump_request(struct usbf_device *dev, usb_device_request_t *req)
 {
 	struct usbf_softc *sc = dev->bus->usbfctl;
 

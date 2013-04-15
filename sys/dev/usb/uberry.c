@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.20 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.21 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -38,8 +38,8 @@
 
 struct uberry_softc {
 	struct device			sc_dev;
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device		*sc_udev;
+	struct usbd_interface		*sc_iface;
 };
 
 #define UBERRY_INTERFACE_NO		0

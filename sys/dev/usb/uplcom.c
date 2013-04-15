@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.58 2013/03/28 03:58:03 tedu Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.59 2013/04/15 09:23:02 mglocker Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,17 +81,17 @@ int	uplcomdebug = 0;
 
 struct	uplcom_softc {
 	struct device		 sc_dev;	/* base device */
-	usbd_device_handle	 sc_udev;	/* USB device */
-	usbd_interface_handle	 sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* USB device */
+	struct usbd_interface	*sc_iface;	/* interface */
 	int			 sc_iface_number;	/* interface number */
 
-	usbd_interface_handle	 sc_intr_iface;	/* interrupt interface */
+	struct usbd_interface	*sc_intr_iface;	/* interrupt interface */
 	int			 sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	 sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe	*sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			 sc_isize;
 
-	usb_cdc_line_state_t	 sc_line_state;	/* current line state */
+	struct usb_cdc_line_state sc_line_state;/* current line state */
 	int			 sc_dtr;	/* current DTR state */
 	int			 sc_rts;	/* current RTS state */
 
@@ -113,9 +113,9 @@ struct	uplcom_softc {
 
 usbd_status uplcom_reset(struct uplcom_softc *);
 usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
-					   usb_cdc_line_state_t *state);
+    struct usb_cdc_line_state *state);
 usbd_status uplcom_set_crtscts(struct uplcom_softc *);
-void uplcom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void uplcom_intr(struct usbd_xfer *, void *, usbd_status);
 
 void uplcom_set(void *, int, int, int);
 void uplcom_dtr(struct uplcom_softc *, int);
@@ -219,7 +219,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uplcom_softc *sc = (struct uplcom_softc *)self;
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_device_descriptor_t *ddesc;
 	usb_interface_descriptor_t *id;
@@ -585,7 +585,8 @@ uplcom_set_crtscts(struct uplcom_softc *sc)
 }
 
 usbd_status
-uplcom_set_line_coding(struct uplcom_softc *sc, usb_cdc_line_state_t *state)
+uplcom_set_line_coding(struct uplcom_softc *sc,
+    struct usb_cdc_line_state *state)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -622,7 +623,7 @@ uplcom_param(void *addr, int portno, struct termios *t)
 {
 	struct uplcom_softc *sc = addr;
 	usbd_status err;
-	usb_cdc_line_state_t ls;
+	struct usb_cdc_line_state ls;
 
 	DPRINTF(("uplcom_param: sc=%p\n", sc));
 
@@ -765,7 +766,7 @@ uplcom_close(void *addr, int portno)
 }
 
 void
-uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uplcom_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct uplcom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;

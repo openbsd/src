@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueaglevar.h,v 1.3 2010/12/06 04:41:40 jakemsr Exp $	*/
+/*	$OpenBSD: ueaglevar.h,v 1.4 2013/04/15 09:23:02 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -108,14 +108,14 @@ struct ueagle_softc;
 
 struct ueagle_isoreq {
 	struct ueagle_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint16_t		frlengths[UEAGLE_NISOFRMS];
 	uint8_t			*offsets[UEAGLE_NISOFRMS];
 };
 
 struct ueagle_txreq {
 	struct ueagle_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 };
 
@@ -159,7 +159,7 @@ struct ueagle_softc {
 	struct device		sc_dev;
 	struct ifnet		sc_if;
 
-	usbd_device_handle	sc_udev;
+	struct usbd_device	*sc_udev;
 
 	struct proc		*stat_thread;
 	struct usb_task		sc_swap_task;
@@ -171,10 +171,10 @@ struct ueagle_softc {
 
 	struct usb_task		sc_init_task;
 
-	usbd_pipe_handle	pipeh_tx;
-	usbd_pipe_handle	pipeh_rx;
-	usbd_pipe_handle	pipeh_idma;
-	usbd_pipe_handle	pipeh_intr;
+	struct usbd_pipe	*pipeh_tx;
+	struct usbd_pipe	*pipeh_rx;
+	struct usbd_pipe	*pipeh_idma;
+	struct usbd_pipe	*pipeh_intr;
 
 	struct ueagle_isoreq	isoreqs[UEAGLE_NISOREQS];
 	struct ueagle_txreq	txreqs[UEAGLE_TX_LIST_CNT];
