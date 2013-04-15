@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.167 2013/04/06 03:47:07 tedu Exp $
+.\"	$OpenBSD: sysctl.8,v 1.168 2013/04/15 16:47:14 guenther Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: April 6 2013 $
+.Dd $Mdocdate: April 15 2013 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -360,26 +360,6 @@ and a few require a kernel compiled with non-standard
 .It machdep.led_blink Ta integer Ta yes
 .It machdep.ceccerrs Ta integer Ta no
 .It machdep.cecclast Ta quad Ta no
-.It user.cs_path Ta string Ta no
-.It user.bc_base_max Ta integer Ta no
-.It user.bc_dim_max Ta integer Ta no
-.It user.bc_scale_max Ta integer Ta no
-.It user.bc_string_max Ta integer Ta no
-.It user.coll_weights_max Ta integer Ta no
-.It user.expr_nest_max Ta integer Ta no
-.It user.line_max Ta integer Ta no
-.It user.re_dup_max Ta integer Ta no
-.It user.posix2_version Ta integer Ta no
-.It user.posix2_c_bind Ta integer Ta no
-.It user.posix2_c_dev Ta integer Ta no
-.It user.posix2_char_term Ta integer Ta no
-.It user.posix2_fort_dev Ta integer Ta no
-.It user.posix2_fort_run Ta integer Ta no
-.It user.posix2_localedef Ta integer Ta no
-.It user.posix2_sw_dev Ta integer Ta no
-.It user.posix2_upe Ta integer Ta no
-.It user.stream_max Ta integer Ta no
-.It user.tzname_max Ta integer Ta no
 .It ddb.radix Ta integer Ta yes
 .It ddb.max_width Ta integer Ta yes
 .It ddb.max_line Ta integer Ta yes
@@ -426,8 +406,8 @@ flag lists all the filesystems compiled into the running kernel.
 .Sh FILES
 .Bl -tag -width <uvm/uvm_swap_encrypt.h> -compact
 .It Aq Pa sys/sysctl.h
-definitions for top level identifiers, second level kernel and hardware
-identifiers, and user level identifiers
+definitions for top level identifiers and second level kernel and hardware
+identifiers
 .It Aq Pa dev/rndvar.h
 definitions for
 .Xr random 4

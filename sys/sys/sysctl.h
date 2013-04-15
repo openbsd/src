@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.133 2013/04/11 04:30:59 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.134 2013/04/15 16:47:14 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct ctlname {
 #define	CTL_DEBUG	5		/* debugging parameters */
 #define	CTL_HW		6		/* generic cpu/io */
 #define	CTL_MACHDEP	7		/* machine dependent */
-#define	CTL_USER	8		/* user-level */
+/*define gap		8		   was CTL_USER: removed 2013-04 */
 #define	CTL_DDB		9		/* DDB user interface, see db_var.h */
 #define	CTL_VFS		10		/* VFS sysctl's */
 #define	CTL_MAXID	11		/* number of valid top-level ids */
@@ -93,7 +93,7 @@ struct ctlname {
 	{ "debug", CTLTYPE_NODE }, \
 	{ "hw", CTLTYPE_NODE }, \
 	{ "machdep", CTLTYPE_NODE }, \
-	{ "user", CTLTYPE_NODE }, \
+	{ "gap", 0 }, \
 	{ "ddb", CTLTYPE_NODE }, \
 	{ "vfs", CTLTYPE_NODE }, \
 }
@@ -818,55 +818,6 @@ struct kinfo_file2 {
 	{ "usermem", CTLTYPE_QUAD }, \
 	{ "ncpufound", CTLTYPE_INT }, \
 	{ "allowpowerdown", CTLTYPE_INT }, \
-}
-
-/*
- * CTL_USER definitions
- */
-#define	USER_CS_PATH		 1	/* string: _CS_PATH */
-#define	USER_BC_BASE_MAX	 2	/* int: BC_BASE_MAX */
-#define	USER_BC_DIM_MAX		 3	/* int: BC_DIM_MAX */
-#define	USER_BC_SCALE_MAX	 4	/* int: BC_SCALE_MAX */
-#define	USER_BC_STRING_MAX	 5	/* int: BC_STRING_MAX */
-#define	USER_COLL_WEIGHTS_MAX	 6	/* int: COLL_WEIGHTS_MAX */
-#define	USER_EXPR_NEST_MAX	 7	/* int: EXPR_NEST_MAX */
-#define	USER_LINE_MAX		 8	/* int: LINE_MAX */
-#define	USER_RE_DUP_MAX		 9	/* int: RE_DUP_MAX */
-#define	USER_POSIX2_VERSION	10	/* int: POSIX2_VERSION */
-#define	USER_POSIX2_C_BIND	11	/* int: POSIX2_C_BIND */
-#define	USER_POSIX2_C_DEV	12	/* int: POSIX2_C_DEV */
-#define	USER_POSIX2_CHAR_TERM	13	/* int: POSIX2_CHAR_TERM */
-#define	USER_POSIX2_FORT_DEV	14	/* int: POSIX2_FORT_DEV */
-#define	USER_POSIX2_FORT_RUN	15	/* int: POSIX2_FORT_RUN */
-#define	USER_POSIX2_LOCALEDEF	16	/* int: POSIX2_LOCALEDEF */
-#define	USER_POSIX2_SW_DEV	17	/* int: POSIX2_SW_DEV */
-#define	USER_POSIX2_UPE		18	/* int: POSIX2_UPE */
-#define	USER_STREAM_MAX		19	/* int: POSIX2_STREAM_MAX */
-#define	USER_TZNAME_MAX		20	/* int: POSIX2_TZNAME_MAX */
-#define	USER_MAXID		21	/* number of valid user ids */
-
-#define	CTL_USER_NAMES { \
-	{ 0, 0 }, \
-	{ "cs_path", CTLTYPE_STRING }, \
-	{ "bc_base_max", CTLTYPE_INT }, \
-	{ "bc_dim_max", CTLTYPE_INT }, \
-	{ "bc_scale_max", CTLTYPE_INT }, \
-	{ "bc_string_max", CTLTYPE_INT }, \
-	{ "coll_weights_max", CTLTYPE_INT }, \
-	{ "expr_nest_max", CTLTYPE_INT }, \
-	{ "line_max", CTLTYPE_INT }, \
-	{ "re_dup_max", CTLTYPE_INT }, \
-	{ "posix2_version", CTLTYPE_INT }, \
-	{ "posix2_c_bind", CTLTYPE_INT }, \
-	{ "posix2_c_dev", CTLTYPE_INT }, \
-	{ "posix2_char_term", CTLTYPE_INT }, \
-	{ "posix2_fort_dev", CTLTYPE_INT }, \
-	{ "posix2_fort_run", CTLTYPE_INT }, \
-	{ "posix2_localedef", CTLTYPE_INT }, \
-	{ "posix2_sw_dev", CTLTYPE_INT }, \
-	{ "posix2_upe", CTLTYPE_INT }, \
-	{ "stream_max", CTLTYPE_INT }, \
-	{ "tzname_max", CTLTYPE_INT }, \
 }
 
 /*

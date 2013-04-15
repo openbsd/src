@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.187 2013/03/29 01:35:37 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.188 2013/04/15 16:47:14 guenther Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ struct ctlname vmname[] = CTL_VM_NAMES;
 struct ctlname fsname[] = CTL_FS_NAMES;
 struct ctlname netname[] = CTL_NET_NAMES;
 struct ctlname hwname[] = CTL_HW_NAMES;
-struct ctlname username[] = CTL_USER_NAMES;
 struct ctlname debugname[CTL_DEBUG_MAXID];
 struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
 struct ctlname forkstatname[] = CTL_KERN_FORKSTAT_NAMES;
@@ -152,7 +151,7 @@ struct list secondlevel[] = {
 #else
 	{ 0, 0 },			/* CTL_MACHDEP */
 #endif
-	{ username, USER_MAXID },	/* CTL_USER_NAMES */
+	{ 0, 0 },			/* was CTL_USER */
 	{ ddbname, DBCTL_MAXID },	/* CTL_DDB_NAMES */
 	{ 0, 0 },			/* CTL_VFS */
 };
@@ -678,7 +677,6 @@ parse(char *string, int flags)
 		}
 		return;
 
-	case CTL_USER:
 	case CTL_DDB:
 		break;
 

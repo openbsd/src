@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.218 2013/04/06 03:46:51 tedu Exp $
+.\"	$OpenBSD: sysctl.3,v 1.219 2013/04/15 16:47:14 guenther Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 6 2013 $
+.Dd $Mdocdate: April 15 2013 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -128,7 +128,6 @@ listed here, and described in separate sections below.
 .It Dv CTL_KERN Ta "sys/sysctl.h" Ta "High kernel limits"
 .It Dv CTL_MACHDEP Ta "sys/sysctl.h" Ta "Machine dependent"
 .It Dv CTL_NET Ta "sys/socket.h" Ta "Networking"
-.It Dv CTL_USER Ta "sys/sysctl.h" Ta "User-level"
 .It Dv CTL_VFS Ta "ufs/ffs/ffs_extern.h" Ta "Virtual file system"
 .It Dv CTL_VM Ta "uvm/uvm_param.h" Ta "Virtual memory"
 .El
@@ -143,22 +142,6 @@ mib[0] = CTL_KERN;
 mib[1] = KERN_MAXPROC;
 len = sizeof(maxproc);
 if (sysctl(mib, 2, &maxproc, &len, NULL, 0) == -1)
-	err(1, "sysctl");
-.Ed
-.Pp
-To retrieve the standard search path for the system utilities:
-.Bd -literal -offset indent
-int mib[2];
-size_t len;
-char *p;
-
-mib[0] = CTL_USER;
-mib[1] = USER_CS_PATH;
-if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1)
-	err(1, "sysctl");
-if ((p = malloc(len)) == NULL)
-	err(1, NULL);
-if (sysctl(mib, 2, p, &len, NULL, 0) == -1)
 	err(1, "sysctl");
 .Ed
 .Ss CTL_DDB
@@ -1928,104 +1911,6 @@ The currently defined variable names are:
 If set to 1, enable PIPEX processing.
 The default is 0.
 .El
-.El
-.Ss CTL_USER
-The string and integer information available for the
-.Dv CTL_USER
-level is detailed below.
-The changeable column shows whether a process with appropriate
-privileges may change the value.
-.Bl -column "USER_POSIX2_CHAR_TERM" "integer" "Changeable" -offset indent
-.It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
-.It Dv USER_BC_BASE_MAX Ta "integer" Ta "no"
-.It Dv USER_BC_DIM_MAX Ta "integer" Ta "no"
-.It Dv USER_BC_SCALE_MAX Ta "integer" Ta "no"
-.It Dv USER_BC_STRING_MAX Ta "integer" Ta "no"
-.It Dv USER_COLL_WEIGHTS_MAX Ta "integer" Ta "no"
-.It Dv USER_CS_PATH Ta "string" Ta "no"
-.It Dv USER_EXPR_NEST_MAX Ta "integer" Ta "no"
-.It Dv USER_LINE_MAX Ta "integer" Ta "no"
-.It Dv USER_POSIX2_C_BIND Ta "integer" Ta "no"
-.It Dv USER_POSIX2_C_DEV Ta "integer" Ta "no"
-.It Dv USER_POSIX2_CHAR_TERM Ta "integer" Ta "no"
-.It Dv USER_POSIX2_FORT_DEV Ta "integer" Ta "no"
-.It Dv USER_POSIX2_FORT_RUN Ta "integer" Ta "no"
-.It Dv USER_POSIX2_LOCALEDEF Ta "integer" Ta "no"
-.It Dv USER_POSIX2_SW_DEV Ta "integer" Ta "no"
-.It Dv USER_POSIX2_UPE Ta "integer" Ta "no"
-.It Dv USER_POSIX2_VERSION Ta "integer" Ta "no"
-.It Dv USER_RE_DUP_MAX Ta "integer" Ta "no"
-.It Dv USER_STREAM_MAX Ta "integer" Ta "no"
-.It Dv USER_TZNAME_MAX Ta "integer" Ta "no"
-.El
-.Bl -tag -width "123456"
-.It Dv USER_BC_BASE_MAX
-The maximum ibase/obase values in the
-.Xr bc 1
-utility.
-.It Dv USER_BC_DIM_MAX
-The maximum array size in the
-.Xr bc 1
-utility.
-.It Dv USER_BC_SCALE_MAX
-The maximum scale value in the
-.Xr bc 1
-utility.
-.It Dv USER_BC_STRING_MAX
-The maximum string length in the
-.Xr bc 1
-utility.
-.It Dv USER_COLL_WEIGHTS_MAX
-The maximum number of weights that can be assigned to any entry of
-the
-.Dv LC_COLLATE
-order keyword in the locale definition file.
-.It Dv USER_CS_PATH
-Return a value for the
-.Ev PATH
-environment variable that finds all the standard utilities.
-.It Dv USER_EXPR_NEST_MAX
-The maximum number of expressions that can be nested within
-parentheses by the
-.Xr expr 1
-utility.
-.It Dv USER_LINE_MAX
-The maximum length in bytes of a text-processing utility's input
-line.
-.It Dv USER_POSIX2_C_BIND
-Return 1 if the system's C-language development facilities support the
-C-Language Bindings Option, otherwise 0.
-.It Dv USER_POSIX2_C_DEV
-Return 1 if the system supports the C-Language Development Utilities Option,
-otherwise 0.
-.It Dv USER_POSIX2_CHAR_TERM
-Return 1 if the system supports at least one terminal type capable of
-all operations described in POSIX 1003.2, otherwise 0.
-.It Dv USER_POSIX2_FORT_DEV
-Return 1 if the system supports the FORTRAN Development Utilities Option,
-otherwise 0.
-.It Dv USER_POSIX2_FORT_RUN
-Return 1 if the system supports the FORTRAN Runtime Utilities Option,
-otherwise 0.
-.It Dv USER_POSIX2_LOCALEDEF
-Return 1 if the system supports the creation of locales, otherwise 0.
-.It Dv USER_POSIX2_SW_DEV
-Return 1 if the system supports the Software Development Utilities Option,
-otherwise 0.
-.It Dv USER_POSIX2_UPE
-Return 1 if the system supports the User Portability Utilities Option,
-otherwise 0.
-.It Dv USER_POSIX2_VERSION
-The version of POSIX 1003.2 with which the system attempts to comply.
-.It Dv USER_RE_DUP_MAX
-The maximum number of repeated occurrences of a regular expression
-permitted when using interval notation.
-.It Dv USER_STREAM_MAX
-The maximum number of streams that a process may have open
-at any one time.
-.It Dv USER_TZNAME_MAX
-The minimum maximum number of types supported for the name of a
-time zone.
 .El
 .Ss CTL_VFS
 The string and integer information available for the
