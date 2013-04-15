@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.95 2013/01/16 04:05:22 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.96 2013/04/15 15:32:19 jsing Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -670,8 +670,9 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam,
 	nmp->nm_acdirmax = NFS_MAXATTRTIMO;
 	bcopy((caddr_t)argp->fh, (caddr_t)nmp->nm_fh, argp->fhsize);
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
-	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
+	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
+	bcopy(hst, mp->mnt_stat.f_mntfromspec, MNAMELEN);
 	bcopy(argp, &mp->mnt_stat.mount_info.nfs_args, sizeof(*argp));
 	nmp->nm_nam = nam;
 	nfs_decode_args(nmp, argp, &mp->mnt_stat.mount_info.nfs_args);

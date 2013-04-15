@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.28 2012/09/10 11:10:59 jsing Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.29 2013/04/15 15:32:19 jsing Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -104,6 +104,8 @@ procfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *n
 	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("procfs", mp->mnt_stat.f_mntfromname, sizeof("procfs"));
+	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	bcopy("procfs", mp->mnt_stat.f_mntfromspec, sizeof("procfs"));
 	bcopy(&args, &mp->mnt_stat.mount_info.procfs_args, sizeof(args));
 
 #ifdef notyet
@@ -181,6 +183,7 @@ procfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		bcopy(mp->mnt_stat.f_mntfromspec, sbp->f_mntfromspec, MNAMELEN);
 		bcopy(&mp->mnt_stat.mount_info.procfs_args,
 		    &sbp->mount_info.procfs_args, sizeof(struct procfs_args));
 	}

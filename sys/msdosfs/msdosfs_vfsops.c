@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.62 2012/09/10 11:10:59 jsing Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.63 2013/04/15 15:32:19 jsing Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	struct msdosfs_args args; /* will hold data from mount request */
 	/* msdosfs specific mount control block */
 	struct msdosfsmount *pmp = NULL;
+	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error, flags;
 	mode_t accessmode;
@@ -169,9 +170,11 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		goto error;
-	disk_map(fspec, fspec, MNAMELEN, DM_OPENBLCK);
 
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fspec, p);
+	if (disk_map(fspec, fname, sizeof(fname), DM_OPENBLCK) == -1)
+		bcopy(fspec, fname, sizeof(fname));
+
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fname, p);
 	if ((error = namei(ndp)) != 0)
 		goto error;
 
@@ -244,7 +247,9 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
-	strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
+	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
 	bcopy(&args, &mp->mnt_stat.mount_info.msdosfs_args, sizeof(args));
 
 #ifdef MSDOSFS_DEBUG

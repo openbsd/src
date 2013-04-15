@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.128 2013/03/14 21:38:22 tedu Exp $
+;	$OpenBSD: syscalls.master,v 1.129 2013/04/15 15:32:19 jsing Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -145,10 +145,13 @@
 			    char * const *argp, char * const *envp); }
 60	STD		{ mode_t sys_umask(mode_t newmask); }
 61	STD		{ int sys_chroot(const char *path); }
-62	OBSOL		fstat43
-63	OBSOL		ogetkerninfo
-64	OBSOL		ogetpagesize
-65	OBSOL		omsync25
+62	STD		{ int sys_getfsstat(struct statfs *buf, size_t bufsize, \
+			    int flags); }
+63	STD		{ int sys_statfs(const char *path, \
+			    struct statfs *buf); }
+64	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
+65	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs *buf); }
 66	STD		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
@@ -523,13 +526,13 @@
 304	STD		{ int sys___getcwd(char *buf, size_t len); }
 305	STD		{ int sys_adjfreq(const int64_t *freq, \
 			    int64_t *oldfreq); }
-306	STD		{ int sys_getfsstat(struct statfs *buf, size_t bufsize, \
-			    int flags); }
-307	STD		{ int sys_statfs(const char *path, \
-			    struct statfs *buf); }
-308	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
-309	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
-			    struct statfs *buf); }
+306	COMPAT_O53	{ int sys_getfsstat(struct statfs53 *buf, \
+			    size_t bufsize, int flags); }
+307	COMPAT_O53	{ int sys_statfs(const char *path, \
+			    struct statfs53 *buf); }
+308	COMPAT_O53	{ int sys_fstatfs(int fd, struct statfs53 *buf); }
+309	COMPAT_O53	{ int sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs53 *buf); }
 310	STD		{ int sys_setrtable(int rtableid); }
 311	STD		{ int sys_getrtable(void); }
 312	STD		{ int sys_getdirentries(int fd, char *buf, \

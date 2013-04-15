@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.135 2012/09/10 11:11:00 jsing Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.136 2013/04/15 15:32:19 jsing Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -170,13 +170,13 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;
+	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error = 0, flags;
 	int ronly;
 	mode_t accessmode;
-	size_t size;
 
-	error = copyin(data, &args, sizeof (struct ufs_args));
+	error = copyin(data, &args, sizeof(struct ufs_args));
 	if (error)
 		return (error);
 
@@ -336,10 +336,12 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 */
 	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
 	if (error)
-		goto error_1; 
-	disk_map(fspec, fspec, MNAMELEN, DM_OPENBLCK);
+		goto error_1;
 
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fspec, p);
+	if (disk_map(fspec, fname, MNAMELEN, DM_OPENBLCK) == -1)
+		bcopy(fspec, fname, sizeof(fname));
+
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fname, p);
 	if ((error = namei(ndp)) != 0)
 		goto error_1;
 
@@ -392,10 +394,10 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			/*
 			 * Save "mounted from" info for mount point (NULL pad)
 			 */
-			size = strlcpy(mp->mnt_stat.f_mntfromname, fspec,
-			    MNAMELEN - 1);
-			bzero(mp->mnt_stat.f_mntfromname + size,
-			      MNAMELEN - size);
+			bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+			strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
+			bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+			strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
 		}
 	} else {
 		/*
@@ -407,7 +409,9 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
 		strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
 		bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
-		strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
+		strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
+		bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+		strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
 
 		error = ffs_mountfs(devvp, mp, p);
 	}

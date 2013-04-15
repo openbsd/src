@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.61 2012/09/10 11:10:59 jsing Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.62 2013/04/15 15:32:19 jsing Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -210,6 +210,8 @@ cd9660_mount(mp, path, data, ndp, p)
 	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
+	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
 	bcopy(&args, &mp->mnt_stat.mount_info.iso_args, sizeof(args));
 
 	cd9660_statfs(mp, &mp->mnt_stat, p);
@@ -665,8 +667,6 @@ cd9660_statfs(mp, sbp, p)
 		bcopy(&mp->mnt_stat.mount_info.iso_args,
 		    &sbp->mount_info.iso_args, sizeof(struct iso_args));
 	}
-	/* Use the first spare for flags: */
-	sbp->f_spare[0] = isomp->im_flags;
 	return (0);
 }
 

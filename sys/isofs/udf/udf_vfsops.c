@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.39 2012/09/10 11:10:59 jsing Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.40 2013/04/15 15:32:19 jsing Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -188,6 +188,8 @@ udf_mount(struct mount *mp, const char *path, void *data,
 	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
+	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
 
 	return (0);
 };
