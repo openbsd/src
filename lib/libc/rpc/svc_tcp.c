@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.31 2013/03/11 17:40:09 deraadt Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.32 2013/04/15 13:08:39 millert Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -345,14 +345,7 @@ readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 	int delta, nready;
 	struct timeval start;
 	struct timeval tmp1, tmp2;
-	struct pollfd *pfd = NULL;
-
-	pfd = (struct pollfd *)calloc(sizeof(*pfd), (svc_max_pollfd + 1));
-	if (pfd == NULL)
-		goto fatal_err;
-	pfd[0].fd = sock;
-	pfd[0].events = POLLIN;
-	memcpy(&pfd[1], svc_pollfd, (sizeof(*pfd) * svc_max_pollfd));
+	struct pollfd pfd[1];
 
 	/*
 	 * All read operations timeout after 35 seconds.
@@ -360,8 +353,10 @@ readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 	 */
 	delta = wait_per_try.tv_sec * 1000;
 	gettimeofday(&start, NULL);
+	pfd[0].fd = sock;
+	pfd[0].events = POLLIN;
 	do {
-		nready = poll(pfd, svc_max_pollfd + 1, delta);
+		nready = poll(pfd, 1, delta);
 		switch (nready) {
 		case -1:
 			if (errno != EINTR)
@@ -375,28 +370,12 @@ readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 			continue;
 		case 0:
 			goto fatal_err;
-		default:
-			if (pfd[0].revents == 0) {
-				svc_getreq_poll(&pfd[1], nready);
-				gettimeofday(&tmp1, NULL);
-				timersub(&tmp1, &start, &tmp2);
-				timersub(&wait_per_try, &tmp2, &tmp1);
-				if (tmp1.tv_sec < 0 || !timerisset(&tmp1))
-					goto fatal_err;
-				delta = tmp1.tv_sec * 1000 + tmp1.tv_usec / 1000;
-				continue;
-			}
 		}
 	} while (pfd[0].revents == 0);
-	if ((len = read(sock, buf, len)) > 0) {
-		if (pfd)
-			free(pfd);
+	if ((len = read(sock, buf, len)) > 0)
 		return (len);
-	}
 fatal_err:
 	((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
-	if (pfd)
-		free(pfd);
 	return (-1);
 }
 
