@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.27 2013/02/13 22:10:38 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.28 2013/04/16 07:42:27 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.27 2013/02/13 22:10:38 yasuoka Exp $
+ * $Id: npppd.c,v 1.28 2013/04/16 07:42:27 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -784,7 +784,7 @@ npppd_check_user_max_session(npppd *_this, npppd_ppp *ppp)
 	slist *uppp;
 
 	/* user_max_session == 0 means unlimit */
-	if (_this->user_max_session == 0)
+	if (_this->conf.user_max_session == 0)
 		return 1;
 
 	count = 0;
@@ -797,7 +797,7 @@ npppd_check_user_max_session(npppd *_this, npppd_ppp *ppp)
 		}
 	}
 
-	return (count < _this->user_max_session)? 1 : 0;
+	return (count < _this->conf.user_max_session)? 1 : 0;
 }
 
 /***********************************************************************
@@ -2108,10 +2108,11 @@ npppd_ppp_bind_iface(npppd *_this, npppd_ppp *ppp)
 	if (ifidx < 0)
 		return 1;
 
-	if (_this->max_session > 0 && _this->nsession++ >= _this->max_session) {
+	if (_this->conf.max_session > 0 &&
+	    _this->nsession++ >= _this->conf.max_session) {
 		ppp_log(ppp, LOG_WARNING,
 		    "Number of sessions reaches out of the limit=%d",
-		    _this->max_session);
+		    _this->conf.max_session);
 		return 1;
 	}
 	ppp->ifidx = ifidx;

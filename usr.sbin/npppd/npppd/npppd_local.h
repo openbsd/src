@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_local.h,v 1.11 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd_local.h,v 1.12 2013/04/16 07:42:27 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -170,8 +170,6 @@ struct _npppd {
 	int16_t		reloading_count;
 
 	int		nsession;
-	int		user_max_session;
-	int		max_session;
 
 	u_int /** whether finalizing or not */
 	    finalizing:1,
