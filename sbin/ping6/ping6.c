@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.82 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.83 2013/04/16 22:10:48 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -390,7 +390,7 @@ main(int argc, char *argv[])
 				errx(1, "%s: only root may use interval < 1s",
 				    strerror(EPERM));
 			}
-			interval.tv_sec = (long)intval;
+			interval.tv_sec = (time_t)intval;
 			interval.tv_usec =
 			    (long)((intval - interval.tv_sec) * 1000000);
 			if (interval.tv_sec < 0)
@@ -1131,7 +1131,7 @@ pinger(void)
 			struct tv32 tv32;
 
 			(void)gettimeofday(&tv, NULL);
-			tv32.tv32_sec = htonl(tv.tv_sec);
+			tv32.tv32_sec = htonl(tv.tv_sec);	/* XXX 2038 */
 			tv32.tv32_usec = htonl(tv.tv_usec);
 			bcopy(&tv32, &outpack[ICMP6ECHOLEN], sizeof(tv32));
 		}
