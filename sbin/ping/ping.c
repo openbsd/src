@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.93 2012/12/04 02:24:47 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.94 2013/04/16 22:10:34 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -73,9 +73,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct tvi {
-	u_int	tv_sec;
-	u_int	tv_usec;
+struct tv32 {
+	u_int	tv32_sec;
+	u_int	tv32_usec;
 };
 
 #define	DEFDATALEN	(64 - 8)		/* default data length */
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 		err(1, "setresuid");
 
 	preload = 0;
-	datap = &outpack[8 + sizeof(struct tvi)];
+	datap = &outpack[8 + sizeof(struct tv32)];
 	while ((ch = getopt(argc, argv,
 	    "DEI:LRS:c:defi:l:np:qrs:T:t:V:vw:")) != -1)
 		switch(ch) {
@@ -375,13 +375,13 @@ main(int argc, char *argv[])
 	if ((options & F_FLOOD) && (options & (F_AUD_RECV | F_AUD_MISS)))
 		warnx("No audible output for flood pings");
 
-	if (datalen >= sizeof(struct tvi))	/* can we time transfer */
+	if (datalen >= sizeof(struct tv32))	/* can we time transfer */
 		timing = 1;
 	packlen = datalen + MAXIPLEN + MAXICMPLEN;
 	if (!(packet = malloc((size_t)packlen)))
 		err(1, "malloc");
 	if (!(options & F_PINGFILLED))
-		for (i = sizeof(struct tvi); i < datalen; ++i)
+		for (i = sizeof(struct tv32); i < datalen; ++i)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
@@ -634,12 +634,12 @@ pinger(void)
 
 	if (timing) {
 		struct timeval tv;
-		struct tvi tvi;
+		struct tv32 tv32;
 
 		(void)gettimeofday(&tv, (struct timezone *)NULL);
-		tvi.tv_sec = htonl(tv.tv_sec);
-		tvi.tv_usec = htonl(tv.tv_usec);
-		memcpy(&outpack[8], &tvi, sizeof tvi);
+		tv32.tv32_sec = htonl(tv.tv_sec);	/* XXX 2038 */
+		tv32.tv32_usec = htonl(tv.tv_usec);
+		memcpy(&outpack[8], &tv32, sizeof tv32);
 	}
 
 	cc = datalen + 8;			/* skips ICMP portion */
@@ -714,16 +714,16 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			return;			/* 'Twas not our ECHO */
 		++nreceived;
 		if (timing) {
-			struct tvi tvi;
+			struct tv32 tv32;
 
 #ifndef icmp_data
 			pkttime = (char *)&icp->icmp_ip;
 #else
 			pkttime = (char *)icp->icmp_data;
 #endif
-			memcpy(&tvi, pkttime, sizeof tvi);
-			tp.tv_sec = ntohl(tvi.tv_sec);
-			tp.tv_usec = ntohl(tvi.tv_usec);
+			memcpy(&tv32, pkttime, sizeof tv32);
+			tp.tv_sec = ntohl(tv32.tv32_sec);
+			tp.tv_usec = ntohl(tv32.tv32_usec);
 
 			timersub(&tv, &tp, &tv);
 			triptime = (tv.tv_sec * 1000000) + tv.tv_usec;
@@ -763,9 +763,9 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			/* check the data */
 			if (cc - 8 < datalen)
 				(void)printf(" (TRUNC!)");
-			cp = (u_char *)&icp->icmp_data[sizeof(struct tvi)];
-			dp = &outpack[8 + sizeof(struct tvi)];
-			for (i = 8 + sizeof(struct tvi); i < cc && i < datalen;
+			cp = (u_char *)&icp->icmp_data[sizeof(struct tv32)];
+			dp = &outpack[8 + sizeof(struct tv32)];
+			for (i = 8 + sizeof(struct tv32); i < cc && i < datalen;
 			    ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 					(void)printf("\nwrong data byte #%d "
@@ -1323,7 +1323,7 @@ fill(char *bp, char *patp)
 
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXPAYLOAD - (8 + sizeof(struct tvi) + ii);
+		    kk <= MAXPAYLOAD - (8 + sizeof(struct tv32) + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
