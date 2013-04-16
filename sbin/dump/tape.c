@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.32 2012/08/22 05:20:51 halex Exp $	*/
+/*	$OpenBSD: tape.c,v 1.33 2013/04/16 18:17:39 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -256,7 +256,7 @@ statussig(int signo)
 
 	if (blockswritten < 500)
 		return;
-	(void) time((time_t *) &tnow);
+	(void) time(&tnow);
 	deltat = tstart_writing - tnow + (1.0 * (tnow - tstart_writing))
 		/ blockswritten * tapesize;
 	(void)snprintf(msgbuf, sizeof(msgbuf),

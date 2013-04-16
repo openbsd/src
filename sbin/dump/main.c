@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2011/04/25 15:24:16 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2013/04/16 18:17:39 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -481,7 +481,7 @@ main(int argc, char *argv[])
 		quit("can't allocate tape buffers - try a smaller blocking factor.\n");
 
 	startnewtape(1);
-	(void)time((time_t *)&(tstart_writing));
+	(void)time(&tstart_writing);
 	xferrate = 0;
 	dumpmap(usedinomap, TS_CLRI, maxino - 1);
 
