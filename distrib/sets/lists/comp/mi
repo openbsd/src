@@ -1858,6 +1858,7 @@
 ./usr/share/man/man2/fchown.2
 ./usr/share/man/man2/fchownat.2
 ./usr/share/man/man2/fcntl.2
+./usr/share/man/man2/fdatasync.2
 ./usr/share/man/man2/fhopen.2
 ./usr/share/man/man2/fhstat.2
 ./usr/share/man/man2/fhstatfs.2
@@ -2777,6 +2778,15 @@
 ./usr/share/man/man3/SHA1_Final.3
 ./usr/share/man/man3/SHA1_Init.3
 ./usr/share/man/man3/SHA1_Update.3
+./usr/share/man/man3/SHA224Data.3
+./usr/share/man/man3/SHA224End.3
+./usr/share/man/man3/SHA224File.3
+./usr/share/man/man3/SHA224FileChunk.3
+./usr/share/man/man3/SHA224Final.3
+./usr/share/man/man3/SHA224Init.3
+./usr/share/man/man3/SHA224Pad.3
+./usr/share/man/man3/SHA224Transform.3
+./usr/share/man/man3/SHA224Update.3
 ./usr/share/man/man3/SHA256Data.3
 ./usr/share/man/man3/SHA256End.3
 ./usr/share/man/man3/SHA256File.3
