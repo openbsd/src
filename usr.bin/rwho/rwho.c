@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.16 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.17 2013/04/16 18:57:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -157,14 +157,16 @@ main(int argc, char **argv)
 	mp = myutmp;
 	for (i = 0; i < nusers; i++) {
 		char buf[BUFSIZ], vis_user[4 * sizeof(mp->myutmp.out_name) + 1];
+		time_t t;
 
 		(void)snprintf(buf, sizeof(buf), "%s:%s", mp->myhost,
 		    mp->myutmp.out_line);
 		strnvis(vis_user, mp->myutmp.out_name, sizeof vis_user,
 		    VIS_CSTYLE);
+		t = mp->myutmp.out_time;		/* XXX 2038 */
 		printf("%-*.*s %-*s %.12s",
 		   UT_NAMESIZE, UT_NAMESIZE, vis_user, width, buf,
-		   ctime((time_t *)&mp->myutmp.out_time)+4);
+		   ctime(&t)+4);
 		mp->myidle /= 60;
 		if (mp->myidle) {
 			if (aflg) {
