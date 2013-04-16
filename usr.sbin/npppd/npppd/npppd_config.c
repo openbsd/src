@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_config.c,v 1.9 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: npppd_config.c,v 1.10 2013/04/16 07:31:20 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_config.c,v 1.9 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: npppd_config.c,v 1.10 2013/04/16 07:31:20 yasuoka Exp $ */
 /*@file
  * This file provides functions which operates configuration and so on.
  */
@@ -267,8 +267,8 @@ npppd_auth_realm_reload(npppd *_this)
 				    "failed in %s(): %m", __func__);
 				goto fail;
 			}
-			slist_add(&nrealms, auth_base);
 		}
+		slist_add(&nrealms, auth_base);
 	}
 	if (slist_set_size(&_this->realms, slist_length(&nrealms)) != 0) {
 		log_printf(LOG_WARNING, "slist_set_size() failed in %s(): %m",
