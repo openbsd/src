@@ -2588,6 +2588,8 @@
 ./usr/share/man/man5/services.5
 ./usr/share/man/man5/shells.5
 ./usr/share/man/man5/skey.5
+./usr/share/man/man5/slip.hosts.5
+./usr/share/man/man5/slip.login.5
 ./usr/share/man/man5/smtpd.conf.5
 ./usr/share/man/man5/snmpd.conf.5
 ./usr/share/man/man5/socppc
