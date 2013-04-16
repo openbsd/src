@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.12 2013/04/16 07:27:36 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.11 2012/09/18 13:14:08 yasuoka Exp $
+ * $Id: pppoed.c,v 1.12 2013/04/16 07:27:36 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -470,8 +470,9 @@ pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 	struct ifaddrs    *ifa0;
 	slist              rmlist, newlist;
 	struct {
-		char       ifname[IF_NAMESIZE];
-		char       name[PPPOED_PHY_LABEL_SIZE];
+		char			 ifname[IF_NAMESIZE];
+		char			 name[PPPOED_PHY_LABEL_SIZE];
+		struct pppoe_conf	*conf;
 	} listeners[PPPOE_NLISTENER];
 	pppoed_listener   *l;
 	pppoe_session     *session;
@@ -493,6 +494,7 @@ pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 		    sizeof(listeners[count].ifname));
 		strlcpy(listeners[count].name, conf->name,
 		    sizeof(listeners[count].name));
+		listeners[count].conf = conf;
 		count++;
 	}
 
@@ -520,6 +522,7 @@ pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 		strlcpy(l->tun_name, listeners[i].name, sizeof(l->tun_name));
 		strlcpy(l->listen_ifname, listeners[i].ifname,
 		    sizeof(l->listen_ifname));
+		l->conf = listeners[i].conf;
 		if (slist_add(&newlist, l) == NULL) {
 			pppoed_log(_this, LOG_ERR,
 			    "slist_add() failed in %s(): %m", __func__);
