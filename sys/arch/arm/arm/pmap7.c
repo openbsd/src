@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.2 2013/03/27 08:52:49 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.3 2013/04/16 14:44:13 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -974,6 +974,7 @@ pmap_l2ptp_ctor(void *arg, void *v, int flags)
 
 	/* XXX redundant with PTE_SYNC_RANGE() ? */
 	cpu_idcache_wbinv_range(va, PAGE_SIZE);
+	cpu_sdcache_wbinv_range(va, pte & L2_S_FRAME, PAGE_SIZE);
 	if ((pte & L2_S_CACHE_MASK) != pte_l2_s_cache_mode_pt) {
 		*ptep = (pte & ~L2_S_CACHE_MASK) | pte_l2_s_cache_mode_pt;
 		PTE_SYNC(ptep);
@@ -1174,7 +1175,11 @@ pmap_clean_page(struct vm_page *pg, int isync)
 			 * now while we still have a valid mapping for it.
 			 */
 			if (!wb) {
+				paddr_t pa;
 				cpu_dcache_wb_range(pv->pv_va, PAGE_SIZE);
+				if (pmap_extract(pm, (vaddr_t)pv->pv_va, &pa))
+					cpu_sdcache_wb_range(pv->pv_va, pa,
+					    PAGE_SIZE);
 				wb = TRUE;
 			}
 		}
@@ -1191,7 +1196,10 @@ pmap_clean_page(struct vm_page *pg, int isync)
 		PTE_SYNC(cwb_pte);
 		cpu_tlb_flushD_SE(cwbp);
 		cpu_cpwait();
+		paddr_t pa;
 		cpu_dcache_wb_range(cwbp, PAGE_SIZE);
+		if (pmap_extract(pmap_kernel(), (vaddr_t)cwbp, &pa))
+			cpu_sdcache_wb_range(cwbp, pa, PAGE_SIZE);
 	}
 }
 
@@ -1245,9 +1253,15 @@ pmap_page_remove(struct vm_page *pg)
 			if (pm == curpm || pm == pmap_kernel()) {
 				if (PV_BEEN_EXECD(pv->pv_flags))
 					cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);
-				if (flush == FALSE)
+				if (flush == FALSE) {
+					paddr_t pa;
 					cpu_dcache_wb_range(pv->pv_va,
 					    PAGE_SIZE);
+					if (pmap_extract(pm, (vaddr_t)pv->pv_va,
+					    &pa))
+						cpu_sdcache_wb_range(pv->pv_va,
+						    pa, PAGE_SIZE);
+				}
 				flush = TRUE;
 			}
 
@@ -1443,8 +1457,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 */
 			if ((oflags & PVF_NC) == 0 &&
 			    l2pte_is_writeable(opte, pm) &&
-			    (prot & VM_PROT_WRITE) == 0)
+			    (prot & VM_PROT_WRITE) == 0) {
 				cpu_dcache_wb_range(va, PAGE_SIZE);
+				cpu_sdcache_wb_range(va, opte & L2_S_FRAME,
+				    PAGE_SIZE);
+			}
 		} else {
 			/*
 			 * New mapping, or changing the backing page
@@ -1694,9 +1711,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	ptep = &l2b->l2b_kva[l2pte_index(va)];
 	opte = *ptep;
 
-	if (l2pte_valid(opte))
+	if (l2pte_valid(opte)) {
 		cpu_dcache_wb_range(va, PAGE_SIZE);
-	else
+		cpu_sdcache_wb_range(va, opte & L2_S_FRAME, PAGE_SIZE);
+	} else
 	if (opte == 0)
 		l2b->l2b_occupancy++;
 
@@ -1744,8 +1762,11 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 		while (va < next_bucket) {
 			opte = *ptep;
-			if (l2pte_valid(opte))
+			if (l2pte_valid(opte)) {
 				cpu_dcache_wb_range(va, PAGE_SIZE);
+				cpu_sdcache_wb_range(va, opte & L2_S_FRAME,
+				    PAGE_SIZE);
+			}
 			if (opte != 0) {	/* !! not l2pte_valid */
 				*ptep = L2_TYPE_INV;
 				PTE_SYNC(ptep);
@@ -2597,6 +2618,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 * rarely
 	 */
 	cpu_dcache_wbinv_all();
+	cpu_sdcache_wbinv_all();
 	cpu_tlb_flushD();
 	cpu_cpwait();
 
@@ -2844,6 +2866,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	}
 
 	cpu_idcache_wbinv_all();
+	cpu_sdcache_wbinv_all();
 	cpu_tlb_flushID();
 	cpu_cpwait();
 
@@ -2917,6 +2940,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pool_set_ctordtor(&pmap_l2ptp_pool, pmap_l2ptp_ctor, NULL, NULL);
 
 	cpu_dcache_wbinv_all();
+	cpu_sdcache_wbinv_all();
 }
 
 int
