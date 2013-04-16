@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.12 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.13 2013/04/16 22:13:30 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -228,7 +228,8 @@ pdeltat(struct timeval *t1, struct timeval *t0)
     struct timeval td;
 
     timersub(t1, t0, &td);
-    (void) fprintf(cshout, "%ld.%01ld", td.tv_sec, td.tv_usec / 100000);
+    (void) fprintf(cshout, "%lld.%01ld", (long long)td.tv_sec,
+	td.tv_usec / 100000);
 }
 
 #define  P2DIG(i) (void) fprintf(cshout, "%d%d", (i) / 10, (i) % 10)
