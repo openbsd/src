@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.16 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.17 2013/04/16 22:13:43 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -86,8 +86,8 @@ summary(void)
 		iov[i++].iov_len = strlen(buf[2]);
 	}
 	(void)snprintf(buf[3], sizeof(buf[3]),
-	    "%qd bytes transferred in %ld.%03ld secs (%0.0f bytes/sec)\n",
-	    (long long)st.bytes, nowtv.tv_sec, nowtv.tv_usec / 1000,
+	    "%qd bytes transferred in %lld.%03ld secs (%0.0f bytes/sec)\n",
+	    (long long)st.bytes, (long long)nowtv.tv_sec, nowtv.tv_usec / 1000,
 	    ((double)st.bytes * 1000000) / microsecs);
 
 	iov[i].iov_base = buf[3];
