@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.48 2010/09/07 16:21:44 deraadt Exp $ */
+/* $OpenBSD: if_em.h,v 1.49 2013/04/16 22:21:32 deraadt Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -92,7 +92,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *   Increasing this value allows the driver to queue more transmits. Each
  *   descriptor is 16 bytes.
  *   Since TDLEN should be multiple of 128bytes, the number of transmit
- *   desscriptors should meet the following condition.
+ *   descriptors should meet the following condition.
  *      (num_tx_desc * sizeof(struct em_tx_desc)) % 128 == 0
  */
 #define EM_MAX_TXD_82543		256
@@ -108,7 +108,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *   Each descriptor is 16 bytes.  A receive buffer is also allocated for each
  *   descriptor. The maximum MTU size is 16110.
  *   Since TDLEN should be multiple of 128bytes, the number of transmit
- *   desscriptors should meet the following condition.
+ *   descriptors should meet the following condition.
  *      (num_tx_desc * sizeof(struct em_tx_desc)) % 128 == 0
  */
 #define EM_MAX_RXD_82543		256
