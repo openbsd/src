@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.14 2012/11/13 06:34:13 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.15 2013/04/16 07:45:19 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.14 2012/11/13 06:34:13 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.15 2013/04/16 07:45:19 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -1477,7 +1477,7 @@ l2tp_ctrl_send_SCCRP(l2tp_ctrl *_this)
 {
 	int len;
 	struct l2tp_avp *avp;
-	char buf[L2TP_AVP_MAXSIZ];
+	char buf[L2TP_AVP_MAXSIZ], hbuf[MAXHOSTNAMELEN];
 	const char *val;
 	bytebuffer *bytebuf;
 
@@ -1514,8 +1514,10 @@ l2tp_ctrl_send_SCCRP(l2tp_ctrl *_this)
 	memset(avp, 0, sizeof(*avp));
 	avp->is_mandatory = 1;
 	avp->attr_type = L2TP_AVP_TYPE_HOST_NAME;
-	if ((val = L2TP_CTRL_CONF(_this)->hostname) == NULL)
-		val = "";
+	if ((val = L2TP_CTRL_CONF(_this)->hostname) == NULL) {
+		gethostname(hbuf, sizeof(hbuf));
+		val = hbuf;
+	}
 	len = strlen(val);
 	memcpy(avp->attr_value, val, len);
 	bytebuf_add_avp(bytebuf, avp, len);
@@ -1539,23 +1541,22 @@ l2tp_ctrl_send_SCCRP(l2tp_ctrl *_this)
 
 	/* Firmware Revision */
 	memset(avp, 0, sizeof(*avp));
-	avp->is_mandatory = 1;
+	avp->is_mandatory = 0;
 	avp->attr_type = L2TP_AVP_TYPE_FIRMWARE_REVISION;
 	avp->attr_value[0] = MAJOR_VERSION;
 	avp->attr_value[1] = MINOR_VERSION;
 	bytebuf_add_avp(bytebuf, avp, 2);
 
-	/* Host Name */
-	memset(avp, 0, sizeof(*avp));
-	avp->is_mandatory = 1;
-	avp->attr_type = L2TP_AVP_TYPE_VENDOR_NAME;
+	/* Vendor Name */
+	if ((val = L2TP_CTRL_CONF(_this)->vendor_name) != NULL) {
+		memset(avp, 0, sizeof(*avp));
+		avp->is_mandatory = 0;
+		avp->attr_type = L2TP_AVP_TYPE_VENDOR_NAME;
 
-	if ((val = L2TP_CTRL_CONF(_this)->vendor_name) == NULL)
-		val =  L2TPD_VENDOR_NAME;
-
-	len = strlen(val);
-	memcpy(avp->attr_value, val, len);
-	bytebuf_add_avp(bytebuf, avp, len);
+		len = strlen(val);
+		memcpy(avp->attr_value, val, len);
+		bytebuf_add_avp(bytebuf, avp, len);
+	}
 
 	/* Window Size */
 	memset(avp, 0, sizeof(*avp));
