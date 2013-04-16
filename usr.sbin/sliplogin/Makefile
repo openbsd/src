@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.6 2004/01/24 18:43:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/04/16 06:16:26 jmc Exp $
 
 PROG=	sliplogin
 MAN=	sliplogin.8
+MLINKS=	sliplogin.8 slip.hosts.5 \
+	sliplogin.8 slip.login.5
 FILES=	slip.hosts slip.login
 BINOWN=	root
 BINGRP=	network
