@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.10 2010/10/27 19:04:26 deraadt Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.11 2013/04/16 23:16:19 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -449,7 +449,11 @@ _dl_prebind_post_resolve()
 		}
 		buf[6] = '\0';
 
-		_dl_printf("relocation took %d.%s\n", diff_tp.tv_sec, buf);
+		/*
+		 * _dl_printf lacks %lld support; therefore assume
+		 * relocation takes less than 2^31 seconds
+		 */
+		_dl_printf("relocation took %d.%s\n", (int)diff_tp.tv_sec, buf);
 	}
 
 	for (object = _dl_objects; object != NULL; object = object->next)
