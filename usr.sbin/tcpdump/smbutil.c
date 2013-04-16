@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbutil.c,v 1.7 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: smbutil.c,v 1.8 2013/04/16 18:10:24 deraadt Exp $	*/
 
 /*
    Copyright (C) Andrew Tridgell 1995-1999
@@ -60,6 +60,7 @@ static time_t make_unix_date(const void *date_ptr)
 
   if (dos_date == 0) return(0);
 
+  memset(&t, 0, sizeof t);
   interpret_dos_date(dos_date,&t.tm_year,&t.tm_mon,
 		     &t.tm_mday,&t.tm_hour,&t.tm_min,&t.tm_sec);
   t.tm_wday = 1;
@@ -323,7 +324,6 @@ static const uchar *fdata1(const uchar *buf, const char *fmt, const uchar *maxbu
       {
 	char bitfmt[128];
 	char *p = strchr(++fmt,'}');
-	int l = PTR_DIFF(p,fmt);
 	strlcpy(bitfmt,fmt,sizeof(bitfmt));
 	fmt = p+1;
 	write_bits(CVAL(buf,0),bitfmt);
