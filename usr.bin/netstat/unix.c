@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.16 2013/03/20 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: unix.c,v 1.17 2013/04/16 22:19:14 deraadt Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -147,24 +147,24 @@ unpcb_dump(u_long off)
 		return;
 	kread(off, &unp, sizeof(unp));
 
-#define	p(fmt, v, sep) printf(#v " " fmt sep, unp.v);
+#define	p(fmt, cast, v, sep) printf(#v " " fmt sep, cast unp.v);
 #define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : unp.v);
 	printf("unpcb %#lx\n ", hideroot ? 0 : off);
 	pp("%p", unp_socket, "\n ");
 	pp("%p", unp_vnode, ", ");
-	p("%u", unp_ino, "\n ");
+	p("%u", , unp_ino, "\n ");
 	pp("%p", unp_conn, ", ");
 	pp("%p", unp_refs, ", ");
 	pp("%p", unp_nextref, "\n ");
 	pp("%p", unp_addr, "\n ");
-	p("%#0.8x", unp_flags, "\n ");
-	p("%u", unp_connid.uid, ", ");
-	p("%u", unp_connid.gid, ", ");
-	p("%d", unp_connid.pid, "\n ");
-	p("%d", unp_cc, ", ");
-	p("%d", unp_mbcnt, "\n ");
-	p("%d", unp_ctime.tv_sec, ", ");
-	p("%ld", unp_ctime.tv_nsec, "\n");
+	p("%#0.8x", , unp_flags, "\n ");
+	p("%u", , unp_connid.uid, ", ");
+	p("%u", , unp_connid.gid, ", ");
+	p("%d", , unp_connid.pid, "\n ");
+	p("%d", , unp_cc, ", ");
+	p("%d", , unp_mbcnt, "\n ");
+	p("%lld", (long long), unp_ctime.tv_sec, ", ");
+	p("%ld", , unp_ctime.tv_nsec, "\n");
 #undef p
 #undef pp
 }
