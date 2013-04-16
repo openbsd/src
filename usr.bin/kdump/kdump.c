@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.78 2013/04/15 16:47:14 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.79 2013/04/16 22:11:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -385,7 +385,8 @@ dumpheader(struct ktr_header *kth)
 			prevtime = kth->ktr_time;
 		} else
 			temp = kth->ktr_time;
-		(void)printf("%ld.%06ld ", temp.tv_sec, temp.tv_nsec / 1000);
+		printf("%lld.%06ld ", (long long)temp.tv_sec,
+		    temp.tv_nsec / 1000);
 	}
 	(void)printf("%s  ", type);
 }
