@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.24 2013/04/02 04:40:21 deraadt Exp $	*/
+/*	$OpenBSD: day.c,v 1.25 2013/04/16 18:28:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -191,6 +191,7 @@ Mktime(char *date)
 	len = strlen(date);
 	if (len < 2)
 		return((time_t)-1);
+	bzero(&tm, sizeof tm);
 	tm.tm_sec = 0;
 	tm.tm_min = 0;
 	/* Avoid getting caught by a timezone shift; set time to noon */
