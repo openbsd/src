@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.78 2010/12/06 22:50:34 chl Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.79 2013/04/16 20:24:45 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -314,7 +314,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 	}
 
 	b1 = rcs_kwexp_buf(b1, file, rev);
-	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
+	tv[0].tv_sec = rcs_rev_getdate(file, rev);
 	tv[1].tv_sec = tv[0].tv_sec;
 
 	if ((b2 = buf_load(filename)) == NULL) {
@@ -394,7 +394,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 	}
 
 	b1 = rcs_kwexp_buf(b1, file, rev1);
-	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev1);
+	tv[0].tv_sec = rcs_rev_getdate(file, rev1);
 	tv[1].tv_sec = tv[0].tv_sec;
 
 	rcsnum_tostr(rev2, rbuf2, sizeof(rbuf2));
@@ -407,7 +407,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 	}
 
 	b2 = rcs_kwexp_buf(b2, file, rev2);
-	tv2[0].tv_sec = (long)rcs_rev_getdate(file, rev2);
+	tv2[0].tv_sec = rcs_rev_getdate(file, rev2);
 	tv2[1].tv_sec = tv2[0].tv_sec;
 
 	if (!quiet)

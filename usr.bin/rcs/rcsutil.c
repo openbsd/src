@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.38 2010/12/06 22:52:55 chl Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.39 2013/04/16 20:24:45 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -59,7 +59,7 @@ rcs_get_mtime(RCSFILE *file)
 		return (-1);
 	}
 
-	mtime = (time_t)st.st_mtimespec.tv_sec;
+	mtime = st.st_mtimespec.tv_sec;
 
 	return (mtime);
 }
