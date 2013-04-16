@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.23 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.24 2013/04/16 19:25:49 deraadt Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -836,6 +836,7 @@ badformat:
 
 	p = name;
 #define VAL() ((*p++) - '0')
+	bzero(&t, sizeof t);
 	t.tm_year = VAL();
 	t.tm_year = VAL() + t.tm_year * 10;
 	t.tm_year = VAL() + t.tm_year * 10;
