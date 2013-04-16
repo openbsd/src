@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.28 2011/04/07 15:30:15 miod Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.29 2013/04/16 14:55:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
@@ -54,10 +54,10 @@ struct pxaudc_pipe {
 
 void		 pxaudc_enable(struct pxaudc_softc *);
 void		 pxaudc_disable(struct pxaudc_softc *);
-void		 pxaudc_read_ep0(struct pxaudc_softc *, usbf_xfer_handle);
+void		 pxaudc_read_ep0(struct pxaudc_softc *, struct usbf_xfer *);
 void		 pxaudc_read_epN(struct pxaudc_softc *sc, int ep);
-void		 pxaudc_write_ep0(struct pxaudc_softc *, usbf_xfer_handle);
-void		 pxaudc_write(struct pxaudc_softc *, usbf_xfer_handle);
+void		 pxaudc_write_ep0(struct pxaudc_softc *, struct usbf_xfer *);
+void		 pxaudc_write(struct pxaudc_softc *, struct usbf_xfer *);
 void		 pxaudc_write_epN(struct pxaudc_softc *sc, int ep);
 
 int		 pxaudc_connect_intr(void *);
@@ -68,22 +68,22 @@ void		 pxaudc_epN_intr(struct pxaudc_softc *sc, int ep, int isr);
 
 usbf_status	 pxaudc_open(struct usbf_pipe *);
 void		 pxaudc_softintr(void *);
-usbf_status	 pxaudc_allocm(struct usbf_bus *, usb_dma_t *, u_int32_t);
-void		 pxaudc_freem(struct usbf_bus *, usb_dma_t *);
-usbf_xfer_handle pxaudc_allocx(struct usbf_bus *);
-void		 pxaudc_freex(struct usbf_bus *, usbf_xfer_handle);
+usbf_status	 pxaudc_allocm(struct usbf_bus *, struct usb_dma *, u_int32_t);
+void		 pxaudc_freem(struct usbf_bus *, struct usb_dma *);
+struct usbf_xfer *pxaudc_allocx(struct usbf_bus *);
+void		 pxaudc_freex(struct usbf_bus *, struct usbf_xfer *);
 
-usbf_status	 pxaudc_ctrl_transfer(usbf_xfer_handle);
-usbf_status	 pxaudc_ctrl_start(usbf_xfer_handle);
-void		 pxaudc_ctrl_abort(usbf_xfer_handle);
-void		 pxaudc_ctrl_done(usbf_xfer_handle);
-void		 pxaudc_ctrl_close(usbf_pipe_handle);
+usbf_status	 pxaudc_ctrl_transfer(struct usbf_xfer *);
+usbf_status	 pxaudc_ctrl_start(struct usbf_xfer *);
+void		 pxaudc_ctrl_abort(struct usbf_xfer *);
+void		 pxaudc_ctrl_done(struct usbf_xfer *);
+void		 pxaudc_ctrl_close(struct usbf_pipe *);
 
-usbf_status	 pxaudc_bulk_transfer(usbf_xfer_handle);
-usbf_status	 pxaudc_bulk_start(usbf_xfer_handle);
-void		 pxaudc_bulk_abort(usbf_xfer_handle);
-void		 pxaudc_bulk_done(usbf_xfer_handle);
-void		 pxaudc_bulk_close(usbf_pipe_handle);
+usbf_status	 pxaudc_bulk_transfer(struct usbf_xfer *);
+usbf_status	 pxaudc_bulk_start(struct usbf_xfer *);
+void		 pxaudc_bulk_abort(struct usbf_xfer *);
+void		 pxaudc_bulk_done(struct usbf_xfer *);
+void		 pxaudc_bulk_close(struct usbf_pipe *);
 
 struct cfdriver pxaudc_cd = {
 	NULL, "pxaudc", DV_DULL
@@ -387,7 +387,7 @@ pxaudc_disable(struct pxaudc_softc *sc)
  */
 
 void
-pxaudc_read_ep0(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
+pxaudc_read_ep0(struct pxaudc_softc *sc, struct usbf_xfer *xfer)
 {
 	size_t len;
 	u_int8_t *p;
@@ -425,8 +425,8 @@ pxaudc_read_epN(struct pxaudc_softc *sc, int ep)
 	size_t len, tlen;
 	u_int8_t *p;
 	struct pxaudc_pipe *ppipe;
-	usbf_pipe_handle pipe = NULL;
-	usbf_xfer_handle xfer = NULL;
+	struct usbf_pipe *pipe = NULL;
+	struct usbf_xfer *xfer = NULL;
 	int count;
 	u_int32_t csr;
 
@@ -505,7 +505,7 @@ again:
 }
 
 void
-pxaudc_write_ep0(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
+pxaudc_write_ep0(struct pxaudc_softc *sc, struct usbf_xfer *xfer)
 {
 	struct pxaudc_xfer *lxfer = (struct pxaudc_xfer *)xfer;
 	u_int32_t len;
@@ -561,7 +561,7 @@ pxaudc_write_ep0(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
 }
 
 void
-pxaudc_write(struct pxaudc_softc *sc, usbf_xfer_handle xfer)
+pxaudc_write(struct pxaudc_softc *sc, struct usbf_xfer *xfer)
 {
 	u_int8_t *p;
 	int ep = sc->sc_ep_map[usbf_endpoint_index(xfer->pipe->endpoint)];
@@ -814,7 +814,7 @@ void
 pxaudc_epN_intr(struct pxaudc_softc *sc, int ep, int isr)
 {
 	struct pxaudc_pipe *ppipe;
-	usbf_pipe_handle pipe;
+	struct usbf_pipe *pipe;
 	int dir;
 
 	/* should not occur before device is configured */
@@ -843,8 +843,8 @@ void
 pxaudc_write_epN(struct pxaudc_softc *sc, int ep)
 {
 	struct pxaudc_pipe *ppipe;
-	usbf_pipe_handle pipe = NULL;
-	usbf_xfer_handle xfer = NULL;
+	struct usbf_pipe *pipe = NULL;
+	struct usbf_xfer *xfer = NULL;
 
 	ppipe = sc->sc_pipe[ep];
 
@@ -860,8 +860,8 @@ void
 pxaudc_ep0_intr(struct pxaudc_softc *sc)
 {
 	struct pxaudc_pipe *ppipe;
-	usbf_pipe_handle pipe = NULL;
-	usbf_xfer_handle xfer = NULL;
+	struct usbf_pipe *pipe = NULL;
+	struct usbf_xfer *xfer = NULL;
 	u_int32_t csr0;
 
 	csr0 = CSR_READ_4(sc, USBDC_UDCCSR0);
@@ -951,22 +951,22 @@ pxaudc_softintr(void *v)
 }
 
 usbf_status
-pxaudc_allocm(struct usbf_bus *bus, usb_dma_t *dmap, u_int32_t size)
+pxaudc_allocm(struct usbf_bus *bus, struct usb_dma *dmap, u_int32_t size)
 {
 	return usbf_allocmem(bus, size, 0, dmap);
 }
 
 void
-pxaudc_freem(struct usbf_bus *bus, usb_dma_t *dmap)
+pxaudc_freem(struct usbf_bus *bus, struct usb_dma *dmap)
 {
 	usbf_freemem(bus, dmap);
 }
 
-usbf_xfer_handle
+struct usbf_xfer *
 pxaudc_allocx(struct usbf_bus *bus)
 {
 	struct pxaudc_softc *sc = (struct pxaudc_softc *)bus;
-	usbf_xfer_handle xfer;
+	struct usbf_xfer *xfer;
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL)
@@ -979,7 +979,7 @@ pxaudc_allocx(struct usbf_bus *bus)
 }
 
 void
-pxaudc_freex(struct usbf_bus *bus, usbf_xfer_handle xfer)
+pxaudc_freex(struct usbf_bus *bus, struct usbf_xfer *xfer)
 {
 	struct pxaudc_softc *sc = (struct pxaudc_softc *)bus;
 
@@ -991,7 +991,7 @@ pxaudc_freex(struct usbf_bus *bus, usbf_xfer_handle xfer)
  */
 
 usbf_status
-pxaudc_ctrl_transfer(usbf_xfer_handle xfer)
+pxaudc_ctrl_transfer(struct usbf_xfer *xfer)
 {
 	usbf_status err;
 
@@ -1008,7 +1008,7 @@ pxaudc_ctrl_transfer(usbf_xfer_handle xfer)
 }
 
 usbf_status
-pxaudc_ctrl_start(usbf_xfer_handle xfer)
+pxaudc_ctrl_start(struct usbf_xfer *xfer)
 {
 	struct usbf_pipe *pipe = xfer->pipe;
 	struct pxaudc_softc *sc = (struct pxaudc_softc *)pipe->device->bus;
@@ -1034,7 +1034,7 @@ pxaudc_ctrl_start(usbf_xfer_handle xfer)
 
 /* (also used by bulk pipes) */
 void
-pxaudc_ctrl_abort(usbf_xfer_handle xfer)
+pxaudc_ctrl_abort(struct usbf_xfer *xfer)
 {
 	int s;
 #ifdef PXAUDC_DEBUG
@@ -1081,12 +1081,12 @@ pxaudc_ctrl_abort(usbf_xfer_handle xfer)
 }
 
 void
-pxaudc_ctrl_done(usbf_xfer_handle xfer)
+pxaudc_ctrl_done(struct usbf_xfer *xfer)
 {
 }
 
 void
-pxaudc_ctrl_close(usbf_pipe_handle pipe)
+pxaudc_ctrl_close(struct usbf_pipe *pipe)
 {
 	/* XXX */
 }
@@ -1096,7 +1096,7 @@ pxaudc_ctrl_close(usbf_pipe_handle pipe)
  */
 
 usbf_status
-pxaudc_bulk_transfer(usbf_xfer_handle xfer)
+pxaudc_bulk_transfer(struct usbf_xfer *xfer)
 {
 	usbf_status err;
 
@@ -1113,7 +1113,7 @@ pxaudc_bulk_transfer(usbf_xfer_handle xfer)
 }
 
 usbf_status
-pxaudc_bulk_start(usbf_xfer_handle xfer)
+pxaudc_bulk_start(struct usbf_xfer *xfer)
 {
 	struct usbf_pipe *pipe = xfer->pipe;
 	struct pxaudc_softc *sc = (struct pxaudc_softc *)pipe->device->bus;
@@ -1136,13 +1136,13 @@ pxaudc_bulk_start(usbf_xfer_handle xfer)
 }
 
 void
-pxaudc_bulk_abort(usbf_xfer_handle xfer)
+pxaudc_bulk_abort(struct usbf_xfer *xfer)
 {
 	pxaudc_ctrl_abort(xfer);
 }
 
 void
-pxaudc_bulk_done(usbf_xfer_handle xfer)
+pxaudc_bulk_done(struct usbf_xfer *xfer)
 {
 #if 0
 	int ep = usbf_endpoint_address(xfer->pipe->endpoint);
@@ -1153,7 +1153,7 @@ pxaudc_bulk_done(usbf_xfer_handle xfer)
 }
 
 void
-pxaudc_bulk_close(usbf_pipe_handle pipe)
+pxaudc_bulk_close(struct usbf_pipe *pipe)
 {
 	/* XXX */
 }

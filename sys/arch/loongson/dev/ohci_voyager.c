@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_voyager.c,v 1.4 2010/12/14 18:44:23 miod Exp $	*/
+/*	$OpenBSD: ohci_voyager.c,v 1.5 2013/04/16 14:55:22 deraadt Exp $	*/
 /*	OpenBSD: ohci_pci.c,v 1.33 2008/06/26 05:42:17 ray Exp 	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
@@ -68,8 +68,8 @@ void	ohci_voyager_attach(struct device *, struct device *, void *);
 void	ohci_voyager_attach_deferred(struct device *);
 
 struct ohci_voyager_softc {
-	ohci_softc_t	 sc;
-	void 		*sc_ih;
+	struct ohci_softc	sc;
+	void 			*sc_ih;
 };
 
 struct cfattach ohci_voyager_ca = {
