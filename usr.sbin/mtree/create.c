@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.27 2012/07/08 21:19:42 naddy Exp $	*/
+/*	$OpenBSD: create.c,v 1.28 2013/04/16 23:42:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -187,8 +187,8 @@ statf(int indent, FTSENT *p)
 	if (keys & F_SIZE && S_ISREG(p->fts_statp->st_mode))
 		output(indent, &offset, "size=%qd", p->fts_statp->st_size);
 	if (keys & F_TIME)
-		output(indent, &offset, "time=%ld.%ld",
-		    p->fts_statp->st_mtimespec.tv_sec,
+		output(indent, &offset, "time=%lld.%ld",
+		    (long long)p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
 		if ((fd = open(p->fts_accpath, MTREE_O_FLAGS, 0)) < 0 ||

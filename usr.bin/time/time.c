@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.18 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.19 2013/04/16 23:43:00 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -104,20 +104,20 @@ main(int argc, char *argv[])
 	timersub(&after, &before, &after);
 
 	if (portableflag) {
-		fprintf(stderr, "real %9ld.%02ld\n",
-			after.tv_sec, after.tv_usec/10000);
-		fprintf(stderr, "user %9ld.%02ld\n",
-			ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
-		fprintf(stderr, "sys  %9ld.%02ld\n",
-			ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+		fprintf(stderr, "real %9lld.%02ld\n",
+			(long long)after.tv_sec, after.tv_usec/10000);
+		fprintf(stderr, "user %9lld.%02ld\n",
+			(long long)ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
+		fprintf(stderr, "sys  %9lld.%02ld\n",
+			(long long)ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
 	} else {
 
-		fprintf(stderr, "%9ld.%02ld real ",
-			after.tv_sec, after.tv_usec/10000);
-		fprintf(stderr, "%9ld.%02ld user ",
-			ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
-		fprintf(stderr, "%9ld.%02ld sys\n",
-			ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+		fprintf(stderr, "%9lld.%02ld real ",
+			(long long)after.tv_sec, after.tv_usec/10000);
+		fprintf(stderr, "%9lld.%02ld user ",
+			(long long)ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
+		fprintf(stderr, "%9lld.%02ld sys\n",
+			(long long)ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
 	}
 
 	if (lflag) {
