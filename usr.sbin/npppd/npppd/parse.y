@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2013/02/08 11:06:26 yasuoka Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2013/04/16 07:29:08 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -611,10 +611,10 @@ authopt	: USERNAME_SUFFIX STRING {
 			curr_authconf->eap_capable = $2;
 		}
 		| STRIP_NT_DOMAIN yesno {
-			curr_authconf->eap_capable = $2;
+			curr_authconf->strip_nt_domain = $2;
 		}
 		| STRIP_ATMARK_REALM yesno {
-			curr_authconf->eap_capable = $2;
+			curr_authconf->strip_atmark_realm = $2;
 		}
 		| USERS_FILE STRING {
 			strlcpy(curr_authconf->users_file_path, $2,
