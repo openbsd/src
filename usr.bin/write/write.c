@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.26 2009/10/27 23:59:50 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.27 2013/04/16 19:24:55 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	/* print greeting */
 	if (gethostname(host, sizeof(host)) < 0)
 		(void)strlcpy(host, "???", sizeof host);
-	now = time((time_t *)NULL);
+	now = time(NULL);
 	nows = ctime(&now);
 	nows[16] = '\0';
 	(void)printf("\r\n\007\007\007Message from %s@%s on %s at %s ...\r\n",

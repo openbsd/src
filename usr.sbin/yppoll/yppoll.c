@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.13 2013/04/02 02:50:49 deraadt Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.14 2013/04/16 19:24:55 deraadt Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 
 	torder = order;
 	printf("Map %s has order number %lld. %s", inmap,
-	    (long long)order, ctime((time_t *)&torder));
+	    (long long)order, ctime(&torder));
 	printf("The master server is %s.\n", master);
 	exit(0);
 }
