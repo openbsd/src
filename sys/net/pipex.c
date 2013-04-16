@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.40 2013/03/28 23:10:05 tedu Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.41 2013/04/16 07:36:55 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -520,7 +520,7 @@ pipex_close_session(struct pipex_session_close_req *req)
 
 	/* remove from close_wait list */
 	if (session->state == PIPEX_STATE_CLOSE_WAIT)
-		LIST_REMOVE((struct pipex_session *)session, state_list);
+		LIST_REMOVE(session, state_list);
 
 	/* get statistics before destroy the session */
 	req->pcr_stat = session->stat;
@@ -579,9 +579,10 @@ pipex_get_closed(struct pipex_session_list_req *req)
 	while (!LIST_EMPTY(&pipex_close_wait_list)) {
 		session = LIST_FIRST(&pipex_close_wait_list);
 		req->plr_ppp_id[req->plr_ppp_id_count++] = session->ppp_id;
-		LIST_REMOVE((struct pipex_session *)session, state_list);
+		LIST_REMOVE(session, state_list);
+		session->state = PIPEX_STATE_CLOSE_WAIT2;
 		if (req->plr_ppp_id_count >= PIPEX_MAX_LISTREQ) {
-			if (LIST_NEXT(session, state_list))
+			if (!LIST_EMPTY(&pipex_close_wait_list))
 				req->plr_flags |= PIPEX_LISTREQ_MORE;
 			break;
 		}
@@ -607,18 +608,16 @@ pipex_destroy_session(struct pipex_session *session)
 		KASSERT(rn != NULL);
 	}
 
-	LIST_REMOVE((struct pipex_session *)session, id_chain);
-	LIST_REMOVE((struct pipex_session *)session, session_list);
+	LIST_REMOVE(session, id_chain);
+	LIST_REMOVE(session, session_list);
 #ifdef PIPEX_PPTP
 	if (session->protocol == PIPEX_PROTO_PPTP) {
-		LIST_REMOVE((struct pipex_session *)session,
-		    peer_addr_chain);
+		LIST_REMOVE(session, peer_addr_chain);
 	}
 #endif
 #ifdef PIPEX_L2TP
 	if (session->protocol == PIPEX_PROTO_L2TP) {
-		LIST_REMOVE((struct pipex_session *)session,
-		    peer_addr_chain);
+		LIST_REMOVE(session, peer_addr_chain);
 	}
 #endif
 	/* if final session is destroyed, stop timer */
@@ -850,6 +849,7 @@ pipex_timer(void *ignored_arg)
 			break;
 
 		case PIPEX_STATE_CLOSE_WAIT:
+		case PIPEX_STATE_CLOSE_WAIT2:
 			session->stat.idle_time++;
 			if (session->stat.idle_time < PIPEX_CLOSE_TIMEOUT)
 				continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.17 2012/09/19 17:50:17 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.18 2013/04/16 07:36:55 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -162,7 +162,8 @@ struct pipex_session {
 #define PIPEX_STATE_INITIAL		0x0000
 #define PIPEX_STATE_OPENED		0x0001
 #define PIPEX_STATE_CLOSE_WAIT		0x0002
-#define PIPEX_STATE_CLOSED		0x0003
+#define PIPEX_STATE_CLOSE_WAIT2		0x0003
+#define PIPEX_STATE_CLOSED		0x0004
 
 	uint16_t	ip_forward:1,		/* {en|dis}ableIP forwarding */
 			ip6_forward:1,		/* {en|dis}able IPv6 forwarding */
