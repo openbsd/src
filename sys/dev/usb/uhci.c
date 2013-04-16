@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.94 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.95 2013/04/16 12:22:49 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -629,31 +629,6 @@ usbd_status
 uhci_allocm(struct usbd_bus *bus, struct usb_dma *dma, u_int32_t size)
 {
 	struct uhci_softc *sc = (struct uhci_softc *)bus;
-	u_int32_t n;
-
-	/*
-	 * XXX
-	 * Since we are allocating a buffer we can assume that we will
-	 * need TDs for it.  Since we don't want to allocate those from
-	 * an interrupt context, we allocate them here and free them again.
-	 * This is no guarantee that we'll get the TDs next time...
-	 */
-	n = size / 8;
-	if (n > 16) {
-		u_int32_t i;
-		struct uhci_soft_td **stds;
-		DPRINTF(("uhci_allocm: get %d TDs\n", n));
-		stds = malloc(sizeof(struct uhci_soft_td *) * n, M_TEMP,
-			      M_NOWAIT | M_ZERO);
-		if (stds == NULL)
-			panic("uhci_allocm");
-		for(i=0; i < n; i++)
-			stds[i] = uhci_alloc_std(sc);
-		for(i=0; i < n; i++)
-			if (stds[i] != NULL)
-				uhci_free_std(sc, stds[i]);
-		free(stds, M_TEMP);
-	}
 
 	return (usb_allocmem(&sc->sc_bus, size, 0, dma));
 }
@@ -1585,6 +1560,7 @@ uhci_alloc_std(struct uhci_softc *sc)
 	usbd_status err;
 	int i, offs;
 	struct usb_dma dma;
+	int s;
 
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2,("uhci_alloc_std: allocating chunk\n"));
@@ -1592,6 +1568,7 @@ uhci_alloc_std(struct uhci_softc *sc)
 			  UHCI_TD_ALIGN, &dma);
 		if (err)
 			return (0);
+		s = splusb();
 		for(i = 0; i < UHCI_STD_CHUNK; i++) {
 			offs = i * UHCI_STD_SIZE;
 			std = KERNADDR(&dma, offs);
@@ -1599,16 +1576,23 @@ uhci_alloc_std(struct uhci_softc *sc)
 			std->link.std = sc->sc_freetds;
 			sc->sc_freetds = std;
 		}
+		splx(s);
 	}
+
+	s = splusb();
 	std = sc->sc_freetds;
 	sc->sc_freetds = std->link.std;
 	memset(&std->td, 0, sizeof(struct uhci_td));
-	return std;
+	splx(s);
+
+	return (std);
 }
 
 void
 uhci_free_std(struct uhci_softc *sc, struct uhci_soft_td *std)
 {
+	int s;
+
 #ifdef DIAGNOSTIC
 #define TD_IS_FREE 0x12345678
 	if (letoh32(std->td.td_token) == TD_IS_FREE) {
@@ -1617,8 +1601,11 @@ uhci_free_std(struct uhci_softc *sc, struct uhci_soft_td *std)
 	}
 	std->td.td_token = htole32(TD_IS_FREE);
 #endif
+
+	s = splusb();
 	std->link.std = sc->sc_freetds;
 	sc->sc_freetds = std;
+	splx(s);
 }
 
 struct uhci_soft_qh *
