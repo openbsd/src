@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.32 2009/12/22 12:08:30 jasper Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.33 2013/04/16 18:06:35 millert Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -654,37 +654,33 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
  *	request access and/or modification time preservation (this is also
  *	used by -t to reset access times).
  *	When ign is zero, only those times the user has asked for are set, the
- *	other ones are left alone. We do not assume the un-documented feature
- *	of many utimes() implementations that consider a 0 time value as a do
- *	not set request.
+ *	other ones are left alone.
  */
 
 void
 set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 {
-	static struct timeval tv[2] = {{0L, 0L}, {0L, 0L}};
-	struct stat sb;
+	struct timespec tv[2];
 
-	tv[0].tv_sec = (long)atime;
-	tv[1].tv_sec = (long)mtime;
+	tv[0].tv_sec = atime;
+	tv[0].tv_nsec = 0L;
+	tv[1].tv_sec = mtime;
+	tv[1].tv_nsec = 0L;
 	if (!frc && (!patime || !pmtime)) {
 		/*
 		 * if we are not forcing, only set those times the user wants
-		 * set. We get the current values of the times if we need them.
+		 * set.
 		 */
-		if (lstat(fnm, &sb) == 0) {
-			if (!patime)
-				tv[0].tv_sec = (long)sb.st_atime;
-			if (!pmtime)
-				tv[1].tv_sec = (long)sb.st_mtime;
-		} else
-			syswarn(0,errno,"Unable to obtain file stats %s", fnm);
+		if (!patime)
+			tv[0].tv_nsec = UTIME_OMIT;
+		if (!pmtime)
+			tv[1].tv_nsec = UTIME_OMIT;
 	}
 
 	/*
 	 * set the times
 	 */
-	if (utimes(fnm, tv) < 0)
+	if (utimensat(AT_FDCWD, fnm, tv, 0) < 0)
 		syswarn(1, errno, "Access/modification time set failed on: %s",
 		    fnm);
 	return;
@@ -693,28 +689,26 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 void
 fset_ftime(char *fnm, int fd, time_t mtime, time_t atime, int frc)
 {
-	static struct timeval tv[2] = {{0L, 0L}, {0L, 0L}};
-	struct stat sb;
+	struct timespec tv[2];
 
-	tv[0].tv_sec = (long)atime;
-	tv[1].tv_sec = (long)mtime;
+	tv[0].tv_sec = atime;
+	tv[0].tv_nsec = 0L;
+	tv[1].tv_sec = mtime;
+	tv[1].tv_nsec = 0L;
 	if (!frc && (!patime || !pmtime)) {
 		/*
 		 * if we are not forcing, only set those times the user wants
-		 * set. We get the current values of the times if we need them.
+		 * set.
 		 */
-		if (fstat(fd, &sb) == 0) {
-			if (!patime)
-				tv[0].tv_sec = (long)sb.st_atime;
-			if (!pmtime)
-				tv[1].tv_sec = (long)sb.st_mtime;
-		} else
-			syswarn(0,errno,"Unable to obtain file stats %s", fnm);
+		if (!patime)
+			tv[0].tv_nsec = UTIME_OMIT;
+		if (!pmtime)
+			tv[1].tv_nsec = UTIME_OMIT;
 	}
 	/*
 	 * set the times
 	 */
-	if (futimes(fd, tv) < 0)
+	if (futimens(fd, tv) < 0)
 		syswarn(1, errno, "Access/modification time set failed on: %s",
 		    fnm);
 	return;
