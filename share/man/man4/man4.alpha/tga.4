@@ -1,4 +1,4 @@
-.\" $OpenBSD: tga.4,v 1.12 2011/09/03 22:59:07 jmc Exp $
+.\" $OpenBSD: tga.4,v 1.13 2013/04/17 02:28:40 jsg Exp $
 .\"
 .\" Copyright (c) 2001 Nathan L. Binkert <binkertn@umich.edu>
 .\"
@@ -14,17 +14,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: April 17 2013 $
 .Dt TGA 4 alpha
 .Os
 .Sh NAME
 .Nm tga
-.Nd TGA graphics driver
+.Nd DECchip 21030 (TGA) graphics driver
 .Sh SYNOPSIS
 .Cd "tga* at pci?"
 .Cd "wsdisplay* at tga?"
 .Sh DESCRIPTION
-This driver handles TGA graphics hardware within the
+This driver handles DECchip 21030 (TGA) graphics hardware within the
 .Xr wscons 4
 console framework.
 .Pp
@@ -65,6 +65,10 @@ If you have extra cards, they should have the jumper off.
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
 .Xr wsconscfg 8
+.Rs
+.%T DECchip 21030 PCI Graphics Accelerator Reference Manual
+.%N EC-N0683-72
+.Re
 .Sh BUGS
 There are some problems with the background randomly switching between
 black and blue.
