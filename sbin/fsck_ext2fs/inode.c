@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.17 2011/03/12 17:50:47 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.18 2013/04/17 03:33:06 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -573,7 +573,7 @@ pinode(ino_t ino)
 	if (preen)
 		printf("%s: ", cdevname());
 	printf("SIZE=%llu ", (long long)inosize(dp));
-	t = fs2h32(dp->e2di_mtime);
+	t = (time_t)fs2h32(dp->e2di_mtime);
 	p = ctime(&t);
 	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
 }
@@ -645,7 +645,7 @@ allocino(ino_t request, int type)
 	}
 	dp->e2di_mode = h2fs16(type);
 	(void)time(&t);
-	dp->e2di_atime = h2fs32(t);
+	dp->e2di_atime = (u_int32_t)h2fs32(t);
 	dp->e2di_mtime = dp->e2di_ctime = dp->e2di_atime;
 	dp->e2di_dtime = 0;
 	inossize(dp, sblock.e2fs_bsize);

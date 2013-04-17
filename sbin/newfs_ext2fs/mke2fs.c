@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.4 2012/12/04 02:27:00 deraadt Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.5 2013/04/17 03:33:13 deraadt Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -347,7 +347,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs.e2fs_ipg = inodes_per_cg;
 
 	sblock.e2fs.e2fs_mtime = 0;
-	sblock.e2fs.e2fs_wtime = tv.tv_sec;
+	sblock.e2fs.e2fs_wtime = (u_int32_t)tv.tv_sec;
 	sblock.e2fs.e2fs_mnt_count = 0;
 	/* XXX: should add some entropy to avoid checking all fs at once? */
 	sblock.e2fs.e2fs_max_mnt_count = EXT2_DEF_MAX_MNT_COUNT;
@@ -356,7 +356,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs.e2fs_state = E2FS_ISCLEAN;
 	sblock.e2fs.e2fs_beh = E2FS_BEH_DEFAULT;
 	sblock.e2fs.e2fs_minrev = 0;
-	sblock.e2fs.e2fs_lastfsck = tv.tv_sec;
+	sblock.e2fs.e2fs_lastfsck = (u_int32_t)tv.tv_sec;
 	sblock.e2fs.e2fs_fsckintv = EXT2_DEF_FSCKINTV;
 
 	/*
@@ -925,9 +925,9 @@ fsinit(const struct timeval *tv)
 	node.e2di_mode = EXT2_IFDIR | EXT2_LOSTFOUNDUMASK;
 	node.e2di_uid_low = geteuid();
 	node.e2di_size = sblock.e2fs_bsize * nblks_lostfound;
-	node.e2di_atime = tv->tv_sec;
-	node.e2di_ctime = tv->tv_sec;
-	node.e2di_mtime = tv->tv_sec;
+	node.e2di_atime = (u_int32_t)tv->tv_sec;
+	node.e2di_ctime = (u_int32_t)tv->tv_sec;
+	node.e2di_mtime = (u_int32_t)tv->tv_sec;
 	node.e2di_gid_low = getegid();
 	node.e2di_nlink = PREDEFDIR;
 	/* e2di_nblock is a number of disk blocks, not ext2fs blocks */
@@ -971,9 +971,9 @@ fsinit(const struct timeval *tv)
 	node.e2di_mode = EXT2_IFDIR | EXT2_UMASK;
 	node.e2di_uid_low = geteuid();
 	node.e2di_size = makedir(root_dir, nitems(root_dir));
-	node.e2di_atime = tv->tv_sec;
-	node.e2di_ctime = tv->tv_sec;
-	node.e2di_mtime = tv->tv_sec;
+	node.e2di_atime = (u_int32_t)tv->tv_sec;
+	node.e2di_ctime = (u_int32_t)tv->tv_sec;
+	node.e2di_mtime = (u_int32_t)tv->tv_sec;
 	node.e2di_gid_low = getegid();
 	node.e2di_nlink = PREDEFROOTDIR;
 	/* e2di_nblock is a number of disk block, not ext2fs block */
@@ -1064,9 +1064,9 @@ init_resizeino(const struct timeval *tv)
 	 */
 	node.e2di_mode = EXT2_IFREG | EXT2_RESIZEINOUMASK;
 	node.e2di_uid_low = geteuid();
-	node.e2di_atime = tv->tv_sec;
-	node.e2di_ctime = tv->tv_sec;
-	node.e2di_mtime = tv->tv_sec;
+	node.e2di_atime = (u_int32_t)tv->tv_sec;
+	node.e2di_ctime = (u_int32_t)tv->tv_sec;
+	node.e2di_mtime = (u_int32_t)tv->tv_sec;
 	node.e2di_gid_low = getegid();
 	node.e2di_nlink = 1;
 
