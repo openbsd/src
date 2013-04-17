@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.40 2012/07/08 10:46:00 phessler Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.41 2013/04/17 00:14:37 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -283,10 +283,10 @@ main(argc, argv)
 		timeout = rtadvd_check_timer();
 
 		if (timeout != NULL)
-			log_debug("set timer to %ld:%ld. waiting for "
+			log_debug("set timer to %lld.%ld. waiting for "
 			    "inputs or timeout",
-			    (long int)timeout->tv_sec,
-			    (long int)timeout->tv_usec);
+			    (long long)timeout->tv_sec,
+			    timeout->tv_usec);
 		else
 			log_debug("there's no timer. waiting for inputs");
 
