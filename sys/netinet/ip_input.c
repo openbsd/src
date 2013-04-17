@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.208 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.209 2013/04/17 14:19:32 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1090,12 +1090,10 @@ ip_dooptions(struct mbuf *m)
 			bcopy((caddr_t)(cp + off), (caddr_t)&ipaddr.sin_addr,
 			    sizeof(ipaddr.sin_addr));
 			if (opt == IPOPT_SSRR) {
-#define	INA	struct in_ifaddr *
-#define	SA	struct sockaddr *
-			    if ((ia = (INA)ifa_ifwithdstaddr((SA)&ipaddr,
-				m->m_pkthdr.rdomain)) == 0)
-				ia = (INA)ifa_ifwithnet((SA)&ipaddr,
-				    m->m_pkthdr.rdomain);
+			    if ((ia = ifatoia(ifa_ifwithdstaddr(sintosa(&ipaddr),
+				m->m_pkthdr.rdomain))) == NULL)
+				ia = ifatoia(ifa_ifwithnet(sintosa(&ipaddr),
+				    m->m_pkthdr.rdomain));
 			} else
 				/* keep packet in the virtual instance */
 				ia = ip_rtaddr(ipaddr.sin_addr,
@@ -1138,8 +1136,8 @@ ip_dooptions(struct mbuf *m)
 			 * use the incoming interface (should be same).
 			 * Again keep the packet inside the virtual instance.
 			 */
-			if ((ia = (INA)ifa_ifwithaddr((SA)&ipaddr,
-			    m->m_pkthdr.rdomain)) == 0 &&
+			if ((ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr),
+			    m->m_pkthdr.rdomain))) == 0 &&
 			    (ia = ip_rtaddr(ipaddr.sin_addr,
 			    m->m_pkthdr.rdomain)) == 0) {
 				type = ICMP_UNREACH;
@@ -1174,8 +1172,8 @@ ip_dooptions(struct mbuf *m)
 				    sizeof(struct in_addr) > ipt.ipt_len)
 					goto bad;
 				ipaddr.sin_addr = dst;
-				ia = (INA)ifaof_ifpforaddr((SA)&ipaddr,
-							    m->m_pkthdr.rcvif);
+				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
+				    m->m_pkthdr.rcvif));
 				if (ia == 0)
 					continue;
 				bcopy((caddr_t)&ia->ia_addr.sin_addr,
@@ -1189,7 +1187,7 @@ ip_dooptions(struct mbuf *m)
 					goto bad;
 				bcopy((caddr_t)&sin, (caddr_t)&ipaddr.sin_addr,
 				    sizeof(struct in_addr));
-				if (ifa_ifwithaddr((SA)&ipaddr,
+				if (ifa_ifwithaddr(sintosa(&ipaddr),
 				    m->m_pkthdr.rdomain) == 0)
 					continue;
 				ipt.ipt_ptr += sizeof(struct in_addr);
