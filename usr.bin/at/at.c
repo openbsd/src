@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.60 2011/08/30 19:56:08 guenther Exp $	*/
+/*	$OpenBSD: at.c,v 1.61 2013/04/17 15:58:42 deraadt Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -67,6 +67,7 @@ static __dead void panic(const char *);
 static void perr(const char *);
 static void perr2(const char *, const char *);
 static __dead void usage(void);
+static int rmok(long long);
 time_t parsetime(int, char **);
 
 /*
@@ -161,8 +162,8 @@ newjob(time_t runtimer, int queue)
 	 * queues instead...
 	 */
 	for (i = 0; i < 120; i++) {
-		snprintf(atfile, sizeof(atfile), "%s/%ld.%c", AT_DIR,
-		    (long)runtimer, queue);
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
+		    (long long)runtimer, queue);
 		fd = open(atfile, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR);
 		if (fd >= 0)
 			return (fd);
@@ -440,7 +441,7 @@ print_job(struct atjob *job, int n, int shortformat)
 	runtime = *localtime(&job->runtimer);
 	if (shortformat) {
 		strftime(timestr, TIMESIZE, "%a %b %e %T %Y", &runtime);
-		(void)printf("%ld.%c\t%s\n", (long)job->runtimer,
+		(void)printf("%lld.%c\t%s\n", (long long)job->runtimer,
 		    job->queue, timestr);
 	} else {
 		pw = getpwuid(job->uid);
@@ -450,9 +451,9 @@ print_job(struct atjob *job, int n, int shortformat)
 		else
 			printf("%3d%-5s", n, ranks[n % 10]);
 		strftime(timestr, TIMESIZE, "%b %e, %Y %R", &runtime);
-		(void)printf("%-21.18s%-11.8s%10ld.%c   %c%s\n",
+		(void)printf("%-21.18s%-11.8s%10lld.%c   %c%s\n",
 		    timestr, pw ? pw->pw_name : "???",
-		    (long)job->runtimer, job->queue, job->queue,
+		    (long long)job->runtimer, job->queue, job->queue,
 		    (S_IXUSR & job->mode) ? "" : " (done)");
 	}
 }
@@ -473,7 +474,6 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	struct stat stbuf;
 	time_t runtimer;
 	uid_t *uids;
-	long l;
 	char queue, *ep;
 	DIR *spool;
 	int i, shortformat;
@@ -537,11 +537,10 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 		    || !(S_IXUSR & stbuf.st_mode || vflag))
 			continue;
 
-		l = strtol(dirent->d_name, &ep, 10);
-		if (*ep != '.' || !isalpha(*(ep + 1)) || *(ep + 2) != '\0' ||
-		    l < 0 || l >= INT_MAX)
+		if (strtot(dirent->d_name, &ep, &runtimer) == -1)
 			continue;
-		runtimer = (time_t)l;
+		if (*ep != '.' || !isalpha(*(ep + 1)) || *(ep + 2) != '\0')
+			continue;
 		queue = *(ep + 1);
 
 		if (atqueue && (queue != atqueue))
@@ -608,11 +607,11 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 }
 
 static int
-rmok(int job)
+rmok(long long job)
 {
 	int ch, junk;
 
-	printf("%d: remove it? ", job);
+	printf("%lld: remove it? ", job);
 	ch = getchar();
 	while ((junk = getchar()) != EOF && junk != '\n')
 		;
@@ -689,11 +688,10 @@ process_jobs(int argc, char **argv, int what)
 		if (stbuf.st_uid != real_uid && real_uid != 0)
 			continue;
 
-		l = strtol(dirent->d_name, &ep, 10);
-		if (*ep != '.' || !isalpha(*(ep + 1)) || *(ep + 2) != '\0' ||
-		    l < 0 || l >= INT_MAX)
+		if (strtot(dirent->d_name, &ep, &runtimer) == -1)
 			continue;
-		runtimer = (time_t)l;
+		if (*ep != '.' || !isalpha(*(ep + 1)) || *(ep + 2) != '\0')
+			continue;
 
 		/* Check runtimer against argv; argc==0 means do all. */
 		job_matches = (argc == 0) ? 1 : 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.10 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.11 2013/04/17 15:58:45 deraadt Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -68,7 +68,6 @@
 #define DIR_T	struct dirent
 #define WAIT_T	int
 #define SIG_T	sig_t
-#define TIME_T	time_t
 #define PID_T	pid_t
 
 #ifndef TZNAME_ALREADY_DEFINED

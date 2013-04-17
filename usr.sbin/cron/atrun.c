@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.18 2011/08/22 19:32:42 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.19 2013/04/17 15:58:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -42,8 +42,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 {
 	DIR *atdir = NULL;
 	int cwd, queue, pending;
-	long l;
-	TIME_T run_time;
+	time_t run_time;
 	char *ep;
 	at_db new_db;
 	atjob *job, *tjob;
@@ -93,11 +92,10 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 		 * RUNTIME is the time to run in seconds since the epoch
 		 * QUEUE is a letter that designates the job's queue
 		 */
-		l = strtol(file->d_name, &ep, 10);
-		if (ep[0] != '.' || !isalpha((unsigned char)ep[1]) || l < 0 ||
-		    l >= INT_MAX)
+		if (strtot(file->d_name, &ep, &run_time) == -1)
 			continue;
-		run_time = (TIME_T)l;
+		if (ep[0] != '.' || !isalpha((unsigned char)ep[1]))
+			continue;
 		queue = ep[1];
 		if (!isalpha(queue))
 			continue;
@@ -133,7 +131,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 	/* Free up old at db */
 	Debug(DLOAD, ("unlinking old at database:\n"))
 	for (job = old_db->head; job != NULL; ) {
-		Debug(DLOAD, ("\t%ld.%c\n", (long)job->run_time, job->queue))
+		Debug(DLOAD, ("\t%lld.%c\n", (long long)job->run_time, job->queue))
 		tjob = job;
 		job = job->next;
 		free(tjob);
@@ -154,7 +152,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
  * Loop through the at job database and run jobs whose time have come.
  */
 void
-atrun(at_db *db, double batch_maxload, TIME_T now)
+atrun(at_db *db, double batch_maxload, time_t now)
 {
 	char atfile[MAX_FNAME];
 	struct stat statbuf;
@@ -168,8 +166,8 @@ atrun(at_db *db, double batch_maxload, TIME_T now)
 		if (job->run_time > now)
 			continue;
 
-		snprintf(atfile, sizeof(atfile), "%s/%ld.%c", AT_DIR,
-		    (long)job->run_time, job->queue);
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
+		    (long long)job->run_time, job->queue);
 
 		if (stat(atfile, &statbuf) != 0)
 			unlink_job(db, job);	/* disapeared */
@@ -202,8 +200,8 @@ atrun(at_db *db, double batch_maxload, TIME_T now)
 	    ((getloadavg(&la, 1) == 1) && la <= batch_maxload))
 #endif
 	    ) {
-		snprintf(atfile, sizeof(atfile), "%s/%ld.%c", AT_DIR,
-		    (long)batch->run_time, batch->queue);
+		snprintf(atfile, sizeof(atfile), "%s/%lld.%c", AT_DIR,
+		    (long long)batch->run_time, batch->queue);
 		run_job(batch, atfile);
 		unlink_job(db, batch);
 	}

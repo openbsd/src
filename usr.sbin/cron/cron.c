@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.43 2011/08/22 19:32:42 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.44 2013/04/17 15:58:45 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -29,9 +29,9 @@ enum timejump { negative, small, medium, large };
 
 static	void	usage(void),
 		run_reboot_jobs(cron_db *),
-		find_jobs(int, cron_db *, int, int),
+		find_jobs(time_t, cron_db *, int, int),
 		set_time(int),
-		cron_sleep(int),
+		cron_sleep(time_t),
 		sigchld_handler(int),
 		sighup_handler(int),
 		sigchld_reaper(void),
@@ -39,7 +39,8 @@ static	void	usage(void),
 		parse_args(int c, char *v[]);
 
 static	volatile sig_atomic_t	got_sighup, got_sigchld;
-static	int			timeRunning, virtualTime, clockTime, cronSock;
+static	time_t			timeRunning, virtualTime, clockTime;
+static	int			cronSock;
 static	long			GMToff;
 static	cron_db			database;
 static	at_db			at_database;
@@ -298,7 +299,7 @@ run_reboot_jobs(cron_db *db) {
 }
 
 static void
-find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
+find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 	time_t virtualSecond  = vtime * SECONDS_PER_MINUTE;
 	struct tm *tm = gmtime(&virtualSecond);
 	int minute, hour, dom, month, dow;
@@ -372,7 +373,7 @@ set_time(int initialize) {
  * Try to just hit the next minute.
  */
 static void
-cron_sleep(int target) {
+cron_sleep(time_t target) {
 	int fd, nfds;
 	unsigned char poke;
 	struct timeval t1, t2, tv;
@@ -391,8 +392,9 @@ cron_sleep(int target) {
 	}
 
 	while (timerisset(&tv) && tv.tv_sec < 65) {
-		Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%ld\n",
-		    (long)getpid(), (long)target*SECONDS_PER_MINUTE, tv.tv_sec))
+		Debug(DSCH, ("[%ld] Target time=%lld, sec-to-wait=%lld\n",
+		    (long)getpid(), (long long)target*SECONDS_PER_MINUTE,
+		    (long long)tv.tv_sec))
 
 		poke = RELOAD_CRON | RELOAD_AT;
 		if (fdsr)
