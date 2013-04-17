@@ -1,4 +1,4 @@
-.\" $OpenBSD: strtonum.3,v 1.14 2007/05/31 19:19:31 jmc Exp $
+.\" $OpenBSD: strtonum.3,v 1.15 2013/04/17 18:53:27 tedu Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 17 2013 $
 .Dt STRTONUM 3
 .Os
 .Sh NAME
@@ -119,11 +119,11 @@ If an error occurs,
 will be set to one of the following strings:
 .Pp
 .Bl -tag -width "too largeXX" -compact
-.It too large
+.It Qq too large
 The result was larger than the provided maximum value.
-.It too small
+.It Qq too small
 The result was smaller than the provided minimum value.
-.It invalid
+.It Qq invalid
 The string did not consist solely of digit characters.
 .El
 .Sh SEE ALSO
