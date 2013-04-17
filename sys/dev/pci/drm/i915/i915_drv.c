@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.19 2013/04/17 20:04:04 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.20 2013/04/17 21:34:58 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -759,22 +759,38 @@ inteldrm_copyrows(void *cookie, int src, int dst, int num)
 	struct rasops_info *ri = cookie;
 	struct inteldrm_softc *sc = ri->ri_hw;
 
-	if (dst == 0 && (src + num) == ri->ri_rows) {
+	if ((dst == 0 && (src + num) == ri->ri_rows) ||
+	    (src == 0 && (dst + num) == ri->ri_rows)) {
 		struct inteldrm_softc *dev_priv = sc;
 		struct drm_fb_helper *helper = &dev_priv->fbdev->helper;
 		size_t size = dev_priv->fbdev->ifb.obj->base.size / 2;
-		int delta = src * ri->ri_font->fontheight * ri->ri_stride;
 		int i;
 
-		bzero(ri->ri_bits, delta);
+		if (dst == 0) {
+			int delta = src * ri->ri_font->fontheight * ri->ri_stride;
+			bzero(ri->ri_bits, delta);
 
-		sc->sc_offset += delta;
-		ri->ri_bits += delta;
-		ri->ri_origbits += delta;
-		if (sc->sc_offset > size) {
-			sc->sc_offset -= size;
-			ri->ri_bits -= size;
-			ri->ri_origbits -= size;
+			sc->sc_offset += delta;
+			ri->ri_bits += delta;
+			ri->ri_origbits += delta;
+			if (sc->sc_offset > size) {
+				sc->sc_offset -= size;
+				ri->ri_bits -= size;
+				ri->ri_origbits -= size;
+			}
+		} else {
+			int delta = dst * ri->ri_font->fontheight * ri->ri_stride;
+
+			sc->sc_offset -= delta;
+			ri->ri_bits -= delta;
+			ri->ri_origbits -= delta;
+			if (sc->sc_offset < 0) {
+				sc->sc_offset += size;
+				ri->ri_bits += size;
+				ri->ri_origbits += size;
+			}
+
+			bzero(ri->ri_bits, delta);
 		}
 
 		for (i = 0; i < helper->crtc_count; i++) {
