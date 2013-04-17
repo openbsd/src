@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.22 2013/04/11 20:19:16 otto Exp $	*/
+/*	$OpenBSD: asr.c,v 1.23 2013/04/17 02:09:18 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -404,19 +404,19 @@ asr_check_reload(struct asr *asr)
 	struct asr_ctx	*ac;
 #if ASR_OPT_RELOADCONF
 	struct stat	 st;
-	struct timespec	 tp;
+	struct timespec	 ts;
 #endif
 
 	if (asr->a_path == NULL)
 		return;
 
 #if ASR_OPT_RELOADCONF
-	if (clock_gettime(CLOCK_MONOTONIC, &tp) == -1)
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		return;
 
-	if ((tp.tv_sec - asr->a_rtime) < RELOAD_DELAY && asr->a_rtime != 0)
+	if ((ts.tv_sec - asr->a_rtime) < RELOAD_DELAY && asr->a_rtime != 0)
 		return;
-	asr->a_rtime = tp.tv_sec;
+	asr->a_rtime = ts.tv_sec;
 
 	DPRINT("asr: checking for update of \"%s\"\n", asr->a_path);
 	if (stat(asr->a_path, &st) == -1 ||
