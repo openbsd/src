@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.74 2013/03/22 01:41:12 tedu Exp $	*/
+/*	$OpenBSD: in.c,v 1.75 2013/04/17 08:25:37 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	struct in_ifaddr *ia = NULL;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
-	int error, hostIsNew, maskIsNew;
+	int error;
 	int newifaddr;
 	int s;
 
@@ -357,30 +357,30 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		    ifra->ifra_addr.sin_addr.s_addr;
 		break;
 
-	case SIOCAIFADDR:
-		maskIsNew = 0;
-		hostIsNew = 1;
+	case SIOCAIFADDR: {
+		int needinit = 0;
+
 		error = 0;
+
 		s = splsoftnet();
 		if (ia->ia_addr.sin_family == AF_INET) {
-			if (ifra->ifra_addr.sin_len == 0) {
+			if (ifra->ifra_addr.sin_len == 0)
 				ifra->ifra_addr = ia->ia_addr;
-				hostIsNew = 0;
-			} else if (ifra->ifra_addr.sin_addr.s_addr ==
-			    ia->ia_addr.sin_addr.s_addr && !newifaddr)
-				hostIsNew = 0;
+			else if (ifra->ifra_addr.sin_addr.s_addr !=
+			    ia->ia_addr.sin_addr.s_addr || newifaddr)
+				needinit = 1;
 		}
 		if (ifra->ifra_mask.sin_len) {
 			in_ifscrub(ifp, ia);
 			ia->ia_sockmask = ifra->ifra_mask;
 			ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr;
-			maskIsNew = 1;
+			needinit = 1;
 		}
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
 		    (ifra->ifra_dstaddr.sin_family == AF_INET)) {
 			in_ifscrub(ifp, ia);
 			ia->ia_dstaddr = ifra->ifra_dstaddr;
-			maskIsNew  = 1; /* We lie; but the effect's the same */
+			needinit  = 1;
 		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET)) {
@@ -390,8 +390,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 				ifa_update_broadaddr(ifp, &ia->ia_ifa,
 				    sintosa(&ifra->ifra_broadaddr));
 		}
-		if (ifra->ifra_addr.sin_family == AF_INET &&
-		    (hostIsNew || maskIsNew)) {
+		if (ifra->ifra_addr.sin_family == AF_INET && needinit) {
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0,
 			    newifaddr);
 		}
@@ -403,7 +402,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		}
 		splx(s);
 		return (error);
-
+		}
 	case SIOCDIFADDR: {
 
 		error = 0;
