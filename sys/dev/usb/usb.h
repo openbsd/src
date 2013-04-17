@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.43 2013/04/08 10:34:20 mglocker Exp $ */
+/*	$OpenBSD: usb.h,v 1.44 2013/04/17 11:53:10 mglocker Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -596,6 +596,12 @@ struct usb_device_fdesc {
 	u_char		*udf_data;
 };
 
+struct usb_device_ddesc {
+	u_int8_t	udd_bus;
+	u_int8_t	udd_addr;	/* device address */
+	usb_device_descriptor_t udd_desc;
+};
+
 struct usb_string_desc {
 	int	usd_string_index;
 	int	usd_language_id;
@@ -654,6 +660,7 @@ struct usb_device_stats {
 #define USB_DEVICESTATS		_IOR ('U', 5, struct usb_device_stats)
 #define USB_DEVICE_GET_CDESC	_IOWR('U', 6, struct usb_device_cdesc)
 #define USB_DEVICE_GET_FDESC	_IOWR('U', 7, struct usb_device_fdesc)
+#define USB_DEVICE_GET_DDESC	_IOWR('U', 8, struct usb_device_ddesc)
 
 /* Generic HID device */
 #define USB_GET_REPORT_DESC	_IOR ('U', 21, struct usb_ctl_report_desc)

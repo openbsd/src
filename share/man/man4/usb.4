@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.137 2013/04/08 10:34:20 mglocker Exp $
+.\"	$OpenBSD: usb.4,v 1.138 2013/04/17 11:53:10 mglocker Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 8 2013 $
+.Dd $Mdocdate: April 17 2013 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -508,6 +508,27 @@ field is indexed by the transfer kind, i.e.\&
 .Dv UE_* ,
 and indicates how many transfers of each kind have been completed
 by the controller.
+.It Dv USB_DEVICE_GET_DDESC (struct usb_device_ddesc)
+This command can be used to retrieve the device descriptor
+of a device on the bus.
+The
+.Va udd_addr
+field needs to be filled with the bus device address:
+.Bd -literal
+struct usb_device_ddesc {
+	u_int8_t	udd_bus;
+	u_int8_t	udd_addr;	/* device address */
+	usb_device_descriptor_t udd_desc;
+};
+.Ed
+.Pp
+The
+.Va udc_bus
+field contains the device unit number.
+.Pp
+The
+.Va udd_desc
+field contains the device descriptor structure.
 .It Dv USB_DEVICE_GET_CDESC (struct usb_device_cdesc)
 This command can be used to retrieve the configuration descriptor for the
 given configuration of a device on the bus.
