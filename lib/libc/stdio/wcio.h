@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcio.h,v 1.1 2005/06/17 20:40:32 espie Exp $	*/
+/*	$OpenBSD: wcio.h,v 1.2 2013/04/17 17:40:35 tedu Exp $	*/
 /* $NetBSD: wcio.h,v 1.3 2003/01/18 11:30:00 thorpej Exp $ */
 
 /*-
@@ -76,6 +76,6 @@ do {\
 } while (0)
 
 #define WCIO_INIT(fp) \
-	memset(WCIO_GET(fp), 0, sizeof(struct wchar_io_data))
+	memset(&(_EXT(fp)->_wcio), 0, sizeof(struct wchar_io_data))
 
 #endif /*_WCIO_H_*/

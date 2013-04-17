@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.37 2011/04/25 20:10:10 sthen Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.38 2013/04/17 17:40:35 tedu Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -392,7 +392,7 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 				goto found_it;
 			default:
 				bp = strsep(&bp, ":\n") + 1;
-				if (search && name && strcmp(bp, name) ||
+				if ((search && name && strcmp(bp, name)) ||
 				    __ypexclude_is(&__ypexhead, bp))
 					continue;
 				r = yp_match(__ypdomain, "group.byname",

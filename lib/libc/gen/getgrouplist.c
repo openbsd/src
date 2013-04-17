@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.21 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.22 2013/04/17 17:40:35 tedu Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -202,7 +202,7 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 
 		/* Construct the netid key to look up. */
 		if (getpwnam_r(uname, &pwstore, buf, sizeof buf, NULL) ||
-		    !__ypdomain && yp_get_default_domain(&__ypdomain))
+		    (!__ypdomain && yp_get_default_domain(&__ypdomain)))
 			goto out;
 		asprintf(&key, "unix.%u@%s", pwstore.pw_uid, __ypdomain);
 		if (key == NULL)

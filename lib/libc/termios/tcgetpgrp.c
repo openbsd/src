@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcgetpgrp.c,v 1.5 2005/08/05 13:03:00 espie Exp $ */
+/*	$OpenBSD: tcgetpgrp.c,v 1.6 2013/04/17 17:40:35 tedu Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <unistd.h>
 
 pid_t
 tcgetpgrp(int fd)

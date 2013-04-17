@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtol.c,v 1.8 2012/11/18 04:13:39 jsing Exp $ */
+/*	$OpenBSD: strtol.c,v 1.9 2013/04/17 17:40:35 tedu Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -54,7 +54,7 @@ strtol(const char *nptr, char **endptr, int base)
 	 */
 	if (base != 0 && (base < 2 || base > 36)) {
 		if (endptr != 0)
-			*endptr = nptr;
+			*endptr = (char *)nptr;
 		errno = EINVAL;
 		return 0;
 	}
@@ -124,7 +124,7 @@ strtol(const char *nptr, char **endptr, int base)
 		if (any < 0)
 			continue;
 		if (neg) {
-			if (acc < cutoff || acc == cutoff && c > cutlim) {
+			if (acc < cutoff || (acc == cutoff && c > cutlim)) {
 				any = -1;
 				acc = LONG_MIN;
 				errno = ERANGE;
@@ -134,7 +134,7 @@ strtol(const char *nptr, char **endptr, int base)
 				acc -= c;
 			}
 		} else {
-			if (acc > cutoff || acc == cutoff && c > cutlim) {
+			if (acc > cutoff || (acc == cutoff && c > cutlim)) {
 				any = -1;
 				acc = LONG_MAX;
 				errno = ERANGE;

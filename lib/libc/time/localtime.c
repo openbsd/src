@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.37 2011/04/25 13:27:27 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.38 2013/04/17 17:40:35 tedu Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -268,7 +268,7 @@ settzname(void)
 #endif /* defined ALTZONE */
 #ifdef ALL_STATE
 	if (sp == NULL) {
-		tzname[0] = tzname[1] = gmt;
+		tzname[0] = tzname[1] = (char *)gmt;
 		return;
 	}
 #endif /* defined ALL_STATE */
@@ -321,7 +321,7 @@ const time_t	t0;
 	if (TYPE_INTEGRAL(time_t) &&
 		TYPE_BIT(time_t) - TYPE_SIGNED(time_t) < SECSPERREPEAT_BITS)
 			return 0;
-	return t1 - t0 == SECSPERREPEAT;
+	return (int64_t)t1 - t0 == SECSPERREPEAT;
 }
 
 static int
@@ -1414,7 +1414,7 @@ struct tm * const	tmp;
 	else {
 #ifdef ALL_STATE
 		if (gmtptr == NULL)
-			tmp->TM_ZONE = gmt;
+			tmp->TM_ZONE = (char *)gmt;
 		else	tmp->TM_ZONE = gmtptr->chars;
 #endif /* defined ALL_STATE */
 #ifndef ALL_STATE

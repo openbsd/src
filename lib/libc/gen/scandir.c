@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.15 2012/11/29 02:15:44 guenther Exp $ */
+/*	$OpenBSD: scandir.c,v 1.16 2013/04/17 17:40:35 tedu Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -125,7 +125,8 @@ scandir(const char *dirname, struct dirent ***namelist,
 	}
 	closedir(dirp);
 	if (nitems && dcomp != NULL)
-		qsort(names, nitems, sizeof(struct dirent *), dcomp);
+		qsort(names, nitems, sizeof(struct dirent *),
+		    (int(*)(const void *, const void *))dcomp);
 	*namelist = names;
 	return (nitems);
 

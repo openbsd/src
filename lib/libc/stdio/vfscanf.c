@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.29 2012/01/18 14:01:38 stsp Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.30 2013/04/17 17:40:35 tedu Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
  */
 
 #include <ctype.h>
+#include <wctype.h>
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stddef.h>

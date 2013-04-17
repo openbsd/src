@@ -1,4 +1,4 @@
-/*	$OpenBSD: isatty.c,v 1.7 2007/05/23 18:30:07 kurt Exp $ */
+/*	$OpenBSD: isatty.c,v 1.8 2013/04/17 17:40:35 tedu Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,6 +29,7 @@
  */
 
 #include <termios.h>
+#include <unistd.h>
 
 int
 isatty(int fd)

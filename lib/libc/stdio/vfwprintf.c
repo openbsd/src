@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.5 2012/06/26 14:53:23 matthew Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.6 2013/04/17 17:40:35 tedu Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -53,6 +53,8 @@
 
 #include "local.h"
 #include "fvwrite.h"
+
+wint_t __fputwc_unlock(wchar_t wc, FILE *fp);
 
 union arg {
 	int			intarg;
