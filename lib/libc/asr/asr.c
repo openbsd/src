@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.23 2013/04/17 02:09:18 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.24 2013/04/17 19:13:23 otto Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -124,6 +124,8 @@ async_resolver(const char *conf)
 	} else {
 		/* Use the given config file */
 		asr->a_path = strdup(conf);
+		if (asr->a_path == NULL)
+			goto fail;
 		asr_check_reload(asr);
 		if (asr->a_ctx == NULL) {
 			if ((asr->a_ctx = asr_ctx_create()) == NULL)
@@ -145,6 +147,7 @@ async_resolver(const char *conf)
 	if (asr) {
 		if (asr->a_ctx)
 			asr_ctx_free(asr->a_ctx);
+		free(asr->a_path);
 		free(asr);
 	}
 
@@ -169,8 +172,7 @@ async_resolver_done(struct asr *asr)
 	}
 
 	asr_ctx_unref(asr->a_ctx);
-	if (asr->a_path)
-		free(asr->a_path);
+	free(asr->a_path);
 	free(asr);
 }
 
@@ -249,8 +251,8 @@ async_new(struct asr_ctx *ac, int type)
 	struct async	*as;
 
 	DPRINT("asr: async_new(ctx=%p) type=%i refcount=%i\n", ac, type,
-	    ac->ac_refcount);
-	if ((as = calloc(1, sizeof(*as))) == NULL)
+	    ac ? ac->ac_refcount : 0);
+	if (ac == NULL || (as = calloc(1, sizeof(*as))) == NULL)
 		return (NULL);
 
 	ac->ac_refcount += 1;
@@ -353,10 +355,12 @@ asr_use_resolver(struct asr *asr)
 		}
 		asr = *priv;
 	}
-
-	asr_check_reload(asr);
-	asr_ctx_ref(asr->a_ctx);
-	return (asr->a_ctx);
+	if (asr != NULL) {
+		asr_check_reload(asr);
+		asr_ctx_ref(asr->a_ctx);
+		return (asr->a_ctx);
+	}
+	return (NULL);
 }
 
 static void
@@ -373,7 +377,10 @@ asr_ctx_ref(struct asr_ctx *ac)
 void
 asr_ctx_unref(struct asr_ctx *ac)
 {
-	DPRINT("asr: asr_ctx_unref(ctx=%p) refcount=%i\n", ac, ac->ac_refcount);
+	DPRINT("asr: asr_ctx_unref(ctx=%p) refcount=%i\n", ac,
+	    ac ? ac->ac_refcount : 0);
+	if (ac == NULL)
+		return;
 	if (--ac->ac_refcount)
 		return;
 
