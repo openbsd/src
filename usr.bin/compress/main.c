@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.79 2012/09/30 14:50:38 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.80 2013/04/17 17:43:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -843,7 +843,9 @@ list_stats(const char *name, const struct compressor *method,
 
 	if (name != NULL) {
 		if (verbose > 0) {
-			timestr = ctime(&info->mtime) + 4;
+			time_t t = info->mtime;		/* XXX 32 bit mtime */
+
+			timestr = ctime(&t) + 4;
 			timestr[12] = '\0';
 			if (timestr[4] == ' ')
 				timestr[4] = '0';
