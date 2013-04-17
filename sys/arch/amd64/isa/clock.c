@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.19 2011/07/05 17:11:07 oga Exp $	*/
+/*	$OpenBSD: clock.c,v 1.20 2013/04/17 18:35:47 gerhard Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -603,10 +603,14 @@ resettodr(void)
 void
 setstatclockrate(int arg)
 {
-	if (arg == stathz)
-		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);
-	else
-		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
+	if (initclock_func == i8254_initclocks) {
+		if (arg == stathz)
+			mc146818_write(NULL, MC_REGA,
+			    MC_BASE_32_KHz | MC_RATE_128_Hz);
+		else
+			mc146818_write(NULL, MC_REGA,
+			    MC_BASE_32_KHz | MC_RATE_1024_Hz);
+	}
 }
 
 void
