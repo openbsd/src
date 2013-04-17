@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.21 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.22 2013/04/17 17:40:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -91,9 +91,7 @@ announce(CTL_MSG *request, char *remote_machine)
 static void
 print_mesg(FILE *tf, CTL_MSG *request, char *remote_machine)
 {
-	struct timeval clock;
 	time_t clocktime;
-	struct timezone zone;
 	struct tm *localclock;
 	char line_buf[N_LINES][N_CHARS];
 	int sizes[N_LINES];
@@ -103,8 +101,7 @@ print_mesg(FILE *tf, CTL_MSG *request, char *remote_machine)
 
 	i = 0;
 	max_size = 0;
-	gettimeofday(&clock, &zone);
-	clocktime = clock.tv_sec;
+	time(&clocktime);
 	localclock = localtime(&clocktime);
 	(void)snprintf(line_buf[i], N_CHARS, " ");
 	sizes[i] = strlen(line_buf[i]);
