@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.15 2004/10/21 20:57:08 millert Exp $
+ *	$Id: nfs_start.c,v 1.16 2013/04/17 15:55:44 deraadt Exp $
  */
 
 #include "am.h"
@@ -264,7 +264,7 @@ run_rpc(void)
 
 #ifdef DEBUG
 		if (tvv.tv_sec)
-			dlog("Select waits for %ds", tvv.tv_sec);
+			dlog("Select waits for %llds", (long long)tvv.tv_sec);
 		else
 			dlog("Select waits for Godot");
 #endif /* DEBUG */
