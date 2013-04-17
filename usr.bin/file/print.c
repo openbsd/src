@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.16 2009/10/27 23:59:37 deraadt Exp $ */
+/*	$OpenBSD: print.c,v 1.17 2013/04/17 15:01:26 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -146,13 +146,13 @@ file_mdump(struct magic *m)
 		case FILE_LEQDATE:
 		case FILE_BEQDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime((uint32_t)m->value.q, 1));
+			    file_fmttime(m->value.q, 1));
 			break;
 		case FILE_QLDATE:
 		case FILE_LEQLDATE:
 		case FILE_BEQLDATE:
 			(void)fprintf(stderr, "%s,",
-			    file_fmttime((uint32_t)m->value.q, 0));
+			    file_fmttime(m->value.q, 0));
 			break;
 		case FILE_FLOAT:
 		case FILE_BEFLOAT:
@@ -196,7 +196,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 }
 
 protected const char *
-file_fmttime(uint32_t v, int local)
+file_fmttime(uint64_t v, int local)
 {
 	char *pp;
 	time_t t = (time_t)v;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: softmagic.c,v 1.16 2010/01/17 20:36:21 chl Exp $ */
+/*	$OpenBSD: softmagic.c,v 1.17 2013/04/17 15:01:26 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -425,7 +425,7 @@ mprint(struct magic_set *ms, struct magic *m)
 	case FILE_MEDATE:
 		if (file_printf(ms, MAGIC_DESC, file_fmttime(p->l, 1)) == -1)
 			return -1;
-		t = ms->offset + sizeof(time_t);
+		t = ms->offset + sizeof(int32_t);
 		break;
 
 	case FILE_LDATE:
@@ -434,13 +434,13 @@ mprint(struct magic_set *ms, struct magic *m)
 	case FILE_MELDATE:
 		if (file_printf(ms, MAGIC_DESC, file_fmttime(p->l, 0)) == -1)
 			return -1;
-		t = ms->offset + sizeof(time_t);
+		t = ms->offset + sizeof(int32_t);
 		break;
 
 	case FILE_QDATE:
 	case FILE_BEQDATE:
 	case FILE_LEQDATE:
-		if (file_printf(ms, MAGIC_DESC, file_fmttime((uint32_t)p->q, 1))
+		if (file_printf(ms, MAGIC_DESC, file_fmttime(p->q, 1))
 		    == -1)
 			return -1;
 		t = ms->offset + sizeof(uint64_t);
@@ -449,7 +449,7 @@ mprint(struct magic_set *ms, struct magic *m)
 	case FILE_QLDATE:
 	case FILE_BEQLDATE:
 	case FILE_LEQLDATE:
-		if (file_printf(ms, MAGIC_DESC, file_fmttime((uint32_t)p->q, 0))
+		if (file_printf(ms, MAGIC_DESC, file_fmttime(p->q, 0))
 		    == -1)
 			return -1;
 		t = ms->offset + sizeof(uint64_t);

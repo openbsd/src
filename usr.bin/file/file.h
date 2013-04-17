@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.22 2009/10/27 23:59:37 deraadt Exp $ */
+/*	$OpenBSD: file.h,v 1.23 2013/04/17 15:01:26 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -28,7 +28,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.22 2009/10/27 23:59:37 deraadt Exp $
+ * @(#)$Id: file.h,v 1.23 2013/04/17 15:01:26 deraadt Exp $
  */
 
 #ifndef __file_h__
@@ -319,7 +319,7 @@ struct magic_set {
 typedef unsigned long unichar;
 
 struct stat;
-protected const char *file_fmttime(uint32_t, int);
+protected const char *file_fmttime(uint64_t, int);
 protected int file_buffer(struct magic_set *, int, const char *, const void *,
     size_t);
 protected int file_fsmagic(struct magic_set *, const char *, struct stat *);
