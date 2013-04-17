@@ -1,4 +1,4 @@
-/*	$OpenBSD: archive.c,v 1.12 2009/12/13 18:13:28 sobrado Exp $	*/
+/*	$OpenBSD: archive.c,v 1.13 2013/04/17 20:17:32 deraadt Exp $	*/
 /*	$NetBSD: archive.c,v 1.7 1995/03/26 03:27:46 glass Exp $	*/
 
 /*-
@@ -142,6 +142,7 @@ get_arobj(int fd)
 #define	DECIMAL	10
 #define	OCTAL	 8
 
+	/* XXX ar_date 2038 */
 	AR_ATOI(hdr->ar_date, chdr.date, sizeof(hdr->ar_date), DECIMAL);
 	AR_ATOI(hdr->ar_uid, chdr.uid, sizeof(hdr->ar_uid), DECIMAL);
 	AR_ATOI(hdr->ar_gid, chdr.gid, sizeof(hdr->ar_gid), DECIMAL);
@@ -230,18 +231,18 @@ put_arobj(CF *cfp, struct stat *sb)
 				(void)fflush(stderr);
 			}
 			(void)snprintf(hb, sizeof hb,
-			    HDR3, name, (long int)sb->st_mtimespec.tv_sec,
+			    HDR3, name, (long long)sb->st_mtimespec.tv_sec,
 			    uid, gid, sb->st_mode, sb->st_size, ARFMAG);
 			lname = 0;
 		} else if (lname > sizeof(hdr->ar_name) || strchr(name, ' '))
 			(void)snprintf(hb, sizeof hb,
 			    HDR1, AR_EFMT1, lname,
-			    (long int)sb->st_mtimespec.tv_sec,
+			    (long long)sb->st_mtimespec.tv_sec,
 			    uid, gid, sb->st_mode, sb->st_size + lname, ARFMAG);
 		else {
 			lname = 0;
 			(void)snprintf(hb, sizeof hb,
-			    HDR2, name, (long int)sb->st_mtimespec.tv_sec,
+			    HDR2, name, (long long)sb->st_mtimespec.tv_sec,
 			    uid, gid, sb->st_mode, sb->st_size, ARFMAG);
 		}
 		size = sb->st_size;

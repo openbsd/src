@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.13 2009/10/27 23:59:42 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.14 2013/04/17 20:17:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -272,7 +272,7 @@ symobj(int mid)
 
 	/* Put out the ranlib archive file header. */
 #define	DEFMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
-	(void)snprintf(hb, sizeof hb, HDR2, RANLIBMAG, 0L, uid, gid,
+	(void)snprintf(hb, sizeof hb, HDR2, RANLIBMAG, (long long)0, uid, gid,
 	    DEFMODE & ~umask(0), (off_t)ransize, ARFMAG);
 	if (!fwrite(hb, sizeof(struct ar_hdr), 1, fp))
 		error(tname);
