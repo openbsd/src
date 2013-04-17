@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.13 2013/04/14 19:04:37 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.14 2013/04/17 20:04:04 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -527,7 +527,7 @@ struct inteldrm_softc {
 	struct mutex gt_lock;
 
 	drm_i915_sarea_t *sarea_priv;
-	struct intel_ring_buffer rings[I915_NUM_RINGS];
+	struct intel_ring_buffer ring[I915_NUM_RINGS];
 	uint32_t next_seqno;
 
 	struct drm_dmamem *status_page_dmah;
@@ -796,7 +796,7 @@ typedef struct inteldrm_softc drm_i915_private_t;
 /* Iterate over initialised rings */
 #define for_each_ring(ring__, dev_priv__, i__) \
 	for ((i__) = 0; (i__) < I915_NUM_RINGS; (i__)++) \
-		if (((ring__) = &(dev_priv__)->rings[(i__)]), intel_ring_initialized((ring__)))
+		if (((ring__) = &(dev_priv__)->ring[(i__)]), intel_ring_initialized((ring__)))
 
 enum hdmi_force_audio {
 	HDMI_AUDIO_OFF_DVI = -2,	/* no aux data for HDMI-DVI converter */
@@ -1059,14 +1059,13 @@ int	i915_gem_init_object(struct drm_obj *);
 void	i915_gem_free_object(struct drm_obj *);
 int	i915_gem_object_pin(struct drm_i915_gem_object *, uint32_t, bool);
 void	i915_gem_object_unpin(struct drm_i915_gem_object *);
-void	i915_gem_retire_request(struct inteldrm_softc *,
-	    struct drm_i915_gem_request *);
+void	i915_gem_retire_requests(struct drm_device *);
 void	i915_gem_retire_requests_ring(struct intel_ring_buffer *);
 int	i915_gem_check_wedge(struct inteldrm_softc *,
 			     bool interruptible);
 
 void	i915_gem_retire_work_handler(void *, void*);
-int	i915_gem_idle(struct inteldrm_softc *);
+int	i915_gem_idle(struct drm_device *);
 void	i915_gem_object_move_to_active(struct drm_i915_gem_object *,
 	    struct intel_ring_buffer *);
 void	i915_gem_object_move_to_inactive(struct drm_i915_gem_object *);
@@ -1133,7 +1132,6 @@ void inteldrm_verify_inactive(struct inteldrm_softc *, char *, int);
 #define inteldrm_verify_inactive(dev,file,line)
 #endif
 
-void i915_gem_retire_requests(struct inteldrm_softc *);
 int i915_gem_object_unbind(struct drm_i915_gem_object *);
 int i915_wait_seqno(struct intel_ring_buffer *, uint32_t);
 #define I915_GEM_GPU_DOMAINS	(~(I915_GEM_DOMAIN_CPU | I915_GEM_DOMAIN_GTT))
@@ -1173,7 +1171,7 @@ void	inteldrm_timeout(void *);
 bool	i915_semaphore_is_enabled(struct drm_device *);
 
 /* i915_gem_evict.c */
-int i915_gem_evict_everything(struct inteldrm_softc *);
+int i915_gem_evict_everything(struct drm_device *);
 int i915_gem_evict_something(struct inteldrm_softc *, size_t);
 int i915_gem_evict_inactive(struct inteldrm_softc *);
 
@@ -1361,7 +1359,7 @@ read64(struct inteldrm_softc *dev_priv, bus_size_t off)
 #define	INTELDRM_VPRINTF(fmt, args...)
 #endif
 
-#define LP_RING(d) (&((struct inteldrm_softc *)(d))->rings[RCS])
+#define LP_RING(d) (&((struct inteldrm_softc *)(d))->ring[RCS])
 
 #define BEGIN_LP_RING(n) \
 	intel_ring_begin(LP_RING(dev_priv), (n))

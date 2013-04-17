@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_evict.c,v 1.2 2013/04/03 07:36:57 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_evict.c,v 1.3 2013/04/17 20:04:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -98,6 +98,7 @@ i915_gem_find_inactive_object(struct inteldrm_softc *dev_priv,
 int
 i915_gem_evict_something(struct inteldrm_softc *dev_priv, size_t min_size)
 {
+	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
 	struct drm_obj		*obj;
 	struct drm_i915_gem_request *request;
 	struct drm_i915_gem_object *obj_priv;
@@ -107,7 +108,7 @@ i915_gem_evict_something(struct inteldrm_softc *dev_priv, size_t min_size)
 	int			 found;
 
 	for (;;) {
-		i915_gem_retire_requests(dev_priv);
+		i915_gem_retire_requests(dev);
 
 		/* If there's an inactive buffer available now, grab it
 		 * and be done.
@@ -159,16 +160,16 @@ i915_gem_evict_something(struct inteldrm_softc *dev_priv, size_t min_size)
 		if (!list_empty(&dev_priv->mm.inactive_list))
 			return (i915_gem_evict_inactive(dev_priv));
 		else
-			return (i915_gem_evict_everything(dev_priv));
+			return (i915_gem_evict_everything(dev));
 	}
 	/* NOTREACHED */
 }
 
 int
-i915_gem_evict_everything(struct inteldrm_softc *dev_priv)
+i915_gem_evict_everything(struct drm_device *dev)
 {
-	struct drm_device *dev = (struct drm_device *)dev_priv->drmdev;
-	int		ret;
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	int ret;
 
 	if (list_empty(&dev_priv->mm.inactive_list) &&
 	    list_empty(&dev_priv->mm.active_list))
@@ -182,7 +183,7 @@ i915_gem_evict_everything(struct inteldrm_softc *dev_priv)
 	if (ret)
 		return ret;
 
-	i915_gem_retire_requests(dev_priv);
+	i915_gem_retire_requests(dev);
 
 	i915_gem_evict_inactive(dev_priv);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_dma.c,v 1.6 2013/03/28 23:19:26 jsg Exp $	*/
+/*	$OpenBSD: i915_dma.c,v 1.7 2013/04/17 20:04:04 kettenis Exp $	*/
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
 /*
@@ -94,10 +94,10 @@ i915_getparam(struct inteldrm_softc *dev_priv, void *data)
 		value = 1;
 		break;
 	case I915_PARAM_HAS_BSD:
-		value = intel_ring_initialized(&dev_priv->rings[VCS]);
+		value = intel_ring_initialized(&dev_priv->ring[VCS]);
 		break;
 	case I915_PARAM_HAS_BLT:
-		value = intel_ring_initialized(&dev_priv->rings[BCS]);
+		value = intel_ring_initialized(&dev_priv->ring[BCS]);
 		break;
 	case I915_PARAM_HAS_RELAXED_FENCING:
 #ifdef notyet
@@ -366,7 +366,7 @@ i915_driver_lastclose(struct drm_device *dev)
 		return;
 	}
 
-	ret = i915_gem_idle(dev_priv);
+	ret = i915_gem_idle(dev);
 	if (ret)
 		DRM_ERROR("failed to idle hardware: %d\n", ret);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_irq.c,v 1.4 2013/03/28 20:37:50 kettenis Exp $	*/
+/*	$OpenBSD: i915_irq.c,v 1.5 2013/04/17 20:04:04 kettenis Exp $	*/
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*
@@ -554,11 +554,11 @@ snb_gt_irq_handler(struct drm_device *dev,
 
 	if (gt_iir & (GEN6_RENDER_USER_INTERRUPT |
 		      GEN6_RENDER_PIPE_CONTROL_NOTIFY_INTERRUPT))
-		notify_ring(dev, &dev_priv->rings[RCS]);
+		notify_ring(dev, &dev_priv->ring[RCS]);
 	if (gt_iir & GEN6_BSD_USER_INTERRUPT)
-		notify_ring(dev, &dev_priv->rings[VCS]);
+		notify_ring(dev, &dev_priv->ring[VCS]);
 	if (gt_iir & GEN6_BLITTER_USER_INTERRUPT)
-		notify_ring(dev, &dev_priv->rings[BCS]);
+		notify_ring(dev, &dev_priv->ring[BCS]);
 
 	if (gt_iir & (GT_GEN6_BLT_CS_ERROR_INTERRUPT |
 		      GT_GEN6_BSD_CS_ERROR_INTERRUPT |
@@ -825,9 +825,9 @@ ilk_gt_irq_handler(struct drm_device *dev,
 			       u32 gt_iir)
 {
 	if (gt_iir & (GT_USER_INTERRUPT | GT_PIPE_NOTIFY))
-		notify_ring(dev, &dev_priv->rings[RCS]);
+		notify_ring(dev, &dev_priv->ring[RCS]);
 	if (gt_iir & GT_BSD_USER_INTERRUPT)
-		notify_ring(dev, &dev_priv->rings[VCS]);
+		notify_ring(dev, &dev_priv->ring[VCS]);
 }
 
 int
@@ -2310,7 +2310,7 @@ i8xx_intr(void *arg)
 //		i915_update_dri1_breadcrumb(dev);
 
 		if (iir & I915_USER_INTERRUPT)
-			notify_ring(dev, &dev_priv->rings[RCS]);
+			notify_ring(dev, &dev_priv->ring[RCS]);
 
 		if (pipe_stats[0] & PIPE_VBLANK_INTERRUPT_STATUS &&
 		    drm_handle_vblank(dev, 0)) {
@@ -2507,7 +2507,7 @@ i915_intr(void *arg)
 		new_iir = I915_READ(IIR); /* Flush posted writes */
 
 		if (iir & I915_USER_INTERRUPT)
-			notify_ring(dev, &dev_priv->rings[RCS]);
+			notify_ring(dev, &dev_priv->ring[RCS]);
 
 		for_each_pipe(pipe) {
 			int plane = pipe;
@@ -2748,9 +2748,9 @@ i965_intr(void *arg)
 		new_iir = I915_READ(IIR); /* Flush posted writes */
 
 		if (iir & I915_USER_INTERRUPT)
-			notify_ring(dev, &dev_priv->rings[RCS]);
+			notify_ring(dev, &dev_priv->ring[RCS]);
 		if (iir & I915_BSD_USER_INTERRUPT)
-			notify_ring(dev, &dev_priv->rings[VCS]);
+			notify_ring(dev, &dev_priv->ring[VCS]);
 
 		if (iir & I915_DISPLAY_PLANE_A_FLIP_PENDING_INTERRUPT)
 			intel_prepare_page_flip(dev, 0);

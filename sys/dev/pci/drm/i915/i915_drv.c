@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.18 2013/04/14 19:04:37 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.19 2013/04/17 20:04:04 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -524,10 +524,10 @@ i915_drm_freeze(struct drm_device *dev)
 
 	/* If KMS is active, we do the leavevt stuff here */
 	if (drm_core_check_feature(dev, DRIVER_MODESET)) {
-		int error = i915_gem_idle(dev_priv);
+		int error = i915_gem_idle(dev);
 		if (error) {
 			printf("GEM idle failed, resume might fail\n");
-			return (error);
+			return error;
 		}
 
 		timeout_del(&dev_priv->rps.delayed_resume_to);
@@ -883,7 +883,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	INIT_LIST_HEAD(&dev_priv->mm.bound_list);
 	INIT_LIST_HEAD(&dev_priv->mm.fence_list);
 	for (i = 0; i < I915_NUM_RINGS; i++)
-		init_ring_lists(&dev_priv->rings[i]);
+		init_ring_lists(&dev_priv->ring[i]);
 	timeout_set(&dev_priv->mm.retire_timer, inteldrm_timeout, dev_priv);
 	timeout_set(&dev_priv->hangcheck_timer, i915_hangcheck_elapsed, dev_priv);
 	dev_priv->next_seqno = 1;
@@ -1595,7 +1595,7 @@ inteldrm_quiesce(struct inteldrm_softc *dev_priv)
 	 * sure that everything is unbound.
 	 */
 	KASSERT(dev_priv->mm.suspended);
-	KASSERT(dev_priv->rings[RCS].obj == NULL);
+	KASSERT(dev_priv->ring[RCS].obj == NULL);
 	atomic_setbits_int(&dev_priv->sc_flags, INTELDRM_QUIET);
 	while (dev_priv->entries)
 		tsleep(&dev_priv->entries, 0, "intelquiet", 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_display.c,v 1.4 2013/04/14 04:49:22 jsg Exp $	*/
+/*	$OpenBSD: intel_display.c,v 1.5 2013/04/17 20:04:04 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *
@@ -7778,7 +7778,7 @@ intel_gen2_queue_flip(struct drm_device *dev,
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	u32 flip_mask;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	int ret;
 
 	ret = intel_pin_and_fence_fb_obj(dev, obj, ring);
@@ -7823,7 +7823,7 @@ intel_gen3_queue_flip(struct drm_device *dev,
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	u32 flip_mask;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	int ret;
 
 	ret = intel_pin_and_fence_fb_obj(dev, obj, ring);
@@ -7865,7 +7865,7 @@ intel_gen4_queue_flip(struct drm_device *dev,
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	uint32_t pf, pipesrc;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	int ret;
 
 	ret = intel_pin_and_fence_fb_obj(dev, obj, ring);
@@ -7913,7 +7913,7 @@ intel_gen6_queue_flip(struct drm_device *dev,
 {
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	uint32_t pf, pipesrc;
 	int ret;
 
@@ -7964,7 +7964,7 @@ intel_gen7_queue_flip(struct drm_device *dev,
 {
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
-	struct intel_ring_buffer *ring = &dev_priv->rings[BCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[BCS];
 	uint32_t plane_bit = 0;
 	int ret;
 

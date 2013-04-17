@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_overlay.c,v 1.2 2013/03/25 06:22:28 jsg Exp $	*/
+/*	$OpenBSD: intel_overlay.c,v 1.3 2013/04/17 20:04:04 kettenis Exp $	*/
 /*
  * Copyright © 2009
  *
@@ -285,7 +285,7 @@ intel_overlay_do_wait_request(struct intel_overlay *overlay,
 {
 	struct drm_device *dev = overlay->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	int ret;
 
 	BUG_ON(overlay->last_flip_req);
@@ -297,7 +297,7 @@ intel_overlay_do_wait_request(struct intel_overlay *overlay,
 	ret = i915_wait_seqno(ring, overlay->last_flip_req);
 	if (ret)
 		return ret;
-	i915_gem_retire_requests(dev_priv);
+	i915_gem_retire_requests(dev);
 
 	overlay->last_flip_req = 0;
 	return 0;
@@ -309,7 +309,7 @@ intel_overlay_on(struct intel_overlay *overlay)
 {
 	struct drm_device *dev = overlay->dev;
 	struct inteldrm_softc *dev_priv = dev->dev_private;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	int ret;
 
 	BUG_ON(overlay->active);
@@ -337,7 +337,7 @@ intel_overlay_continue(struct intel_overlay *overlay,
 {
 	struct drm_device *dev = overlay->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	u32 flip_addr = overlay->flip_addr;
 	u32 tmp;
 	int ret;
@@ -397,7 +397,7 @@ intel_overlay_off(struct intel_overlay *overlay)
 {
 	struct drm_device *dev = overlay->dev;
 	struct inteldrm_softc *dev_priv = dev->dev_private;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	u32 flip_addr = overlay->flip_addr;
 	int ret;
 
@@ -441,7 +441,7 @@ intel_overlay_recover_from_interrupt(struct intel_overlay *overlay)
 {
 	struct drm_device *dev = overlay->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	int ret;
 
 	if (overlay->last_flip_req == 0)
@@ -450,7 +450,7 @@ intel_overlay_recover_from_interrupt(struct intel_overlay *overlay)
 	ret = i915_wait_seqno(ring, overlay->last_flip_req);
 	if (ret)
 		return ret;
-	i915_gem_retire_requests(dev_priv);
+	i915_gem_retire_requests(dev);
 
 	if (overlay->flip_tail)
 		overlay->flip_tail(overlay);
@@ -468,7 +468,7 @@ intel_overlay_release_old_vid(struct intel_overlay *overlay)
 {
 	struct drm_device *dev = overlay->dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	struct intel_ring_buffer *ring = &dev_priv->rings[RCS];
+	struct intel_ring_buffer *ring = &dev_priv->ring[RCS];
 	int ret;
 
 	/* Only wait if there is actually an old frame to release to

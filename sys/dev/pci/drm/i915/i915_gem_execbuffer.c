@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_execbuffer.c,v 1.5 2013/04/03 19:57:17 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_execbuffer.c,v 1.6 2013/04/17 20:04:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -258,7 +258,7 @@ err:		/* Decrement pin count for bound objects */
 		if (ret != -ENOSPC || retry++)
 			return ret;
 
-		ret = i915_gem_evict_everything(ring->dev->dev_private);
+		ret = i915_gem_evict_everything(ring->dev);
 		if (ret)
 			return ret;
 	} while (1);
@@ -392,7 +392,7 @@ i915_reset_gen7_sol_offsets(struct drm_device *dev,
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int ret, i;
 
-	if (!IS_GEN7(dev) || ring != &dev_priv->rings[RCS])
+	if (!IS_GEN7(dev) || ring != &dev_priv->ring[RCS])
 		return 0;
 
 	ret = intel_ring_begin(ring, 4 * 3);
@@ -463,13 +463,13 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	switch (args->flags & I915_EXEC_RING_MASK) {
 	case I915_EXEC_DEFAULT:
 	case I915_EXEC_RENDER:
-		ring = &dev_priv->rings[RCS];
+		ring = &dev_priv->ring[RCS];
 		break;
 	case I915_EXEC_BSD:
-		ring = &dev_priv->rings[VCS];
+		ring = &dev_priv->ring[VCS];
 		break;
 	case I915_EXEC_BLT:
-		ring = &dev_priv->rings[BCS];
+		ring = &dev_priv->ring[BCS];
 		break;
 	default:
 		printf("unknown ring %d\n",
@@ -488,7 +488,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	case I915_EXEC_CONSTANTS_REL_GENERAL:
 	case I915_EXEC_CONSTANTS_ABSOLUTE:
 	case I915_EXEC_CONSTANTS_REL_SURFACE:
-		if (ring == &dev_priv->rings[RCS] &&
+		if (ring == &dev_priv->ring[RCS] &&
 		    mode != dev_priv->relative_constants_mode) {
 			if (INTEL_INFO(dev)->gen < 4)
 				return EINVAL;
@@ -605,7 +605,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 		}
 		pinned = 0;
 		/* evict everyone we can from the aperture */
-		ret = i915_gem_evict_everything(dev_priv);
+		ret = i915_gem_evict_everything(dev);
 		if (ret)
 			goto err;
 	}
@@ -630,7 +630,7 @@ i915_gem_execbuffer2(struct drm_device *dev, void *data,
 	if (ret)
 		goto err;
 
-	if (ring == &dev_priv->rings[RCS] &&
+	if (ring == &dev_priv->ring[RCS] &&
 	    mode != dev_priv->relative_constants_mode) {
 		ret = intel_ring_begin(ring, 4);
 		if (ret)
