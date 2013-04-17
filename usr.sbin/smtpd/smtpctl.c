@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.102 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.103 2013/04/17 15:02:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Gilles Chehade <gilles@poolp.org>
@@ -583,7 +583,7 @@ show_stats_output(void)
 
 		if (strcmp(kvp->key, "uptime") == 0) {
 			duration = time(NULL) - kvp->val.u.counter;
-			printf("uptime=%zd\n", (size_t)duration);
+			printf("uptime=%lld\n", (long long)duration);
 			printf("uptime.human=%s\n",
 			    duration_to_text(duration));
 		}
@@ -598,8 +598,8 @@ show_stats_output(void)
 				    kvp->key, (int64_t)kvp->val.u.timestamp);
 				break;
 			case STAT_TIMEVAL:
-				printf("%s=%zd.%zd\n",
-				    kvp->key, kvp->val.u.tv.tv_sec,
+				printf("%s=%lld.%ld\n",
+				    kvp->key, (long long)kvp->val.u.tv.tv_sec,
 				    kvp->val.u.tv.tv_usec);
 				break;
 			case STAT_TIMESPEC:
