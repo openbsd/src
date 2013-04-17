@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.118 2013/04/06 13:41:11 deraadt Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.119 2013/04/17 17:44:03 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -244,6 +244,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc)
 {
 	int off, slack;
+#ifdef DIAGNOSTIC
+	struct pool *iter;
+
+	SIMPLEQ_FOREACH(iter, &pool_head, pr_poollist) {
+		if (iter == pp)
+			panic("init pool already on list");
+	}
+#endif
 
 #ifdef MALLOC_DEBUG
 	if ((flags & PR_DEBUG) && (ioff != 0 || align != 0))
@@ -417,6 +425,24 @@ pool_destroy(struct pool *pp)
 	struct pool_item_header *ph;
 	struct pool *prev, *iter;
 
+	/* Remove from global pool list */
+	if (pp == SIMPLEQ_FIRST(&pool_head))
+		SIMPLEQ_REMOVE_HEAD(&pool_head, pr_poollist);
+	else {
+		prev = SIMPLEQ_FIRST(&pool_head);
+		SIMPLEQ_FOREACH(iter, &pool_head, pr_poollist) {
+			if (iter == pp) {
+				SIMPLEQ_REMOVE_AFTER(&pool_head, prev,
+				    pr_poollist);
+				goto removed;
+			}
+			prev = iter;
+		}
+#ifdef DIAGNOSTIC
+		panic("destroyed pool not on list");
+#endif
+	}
+removed:
 #ifdef DIAGNOSTIC
 	if (pp->pr_nout != 0)
 		panic("pool_destroy: pool busy: still out: %u", pp->pr_nout);
@@ -428,20 +454,6 @@ pool_destroy(struct pool *pp)
 	KASSERT(LIST_EMPTY(&pp->pr_fullpages));
 	KASSERT(LIST_EMPTY(&pp->pr_partpages));
 
-	/* Remove from global pool list */
-	if (pp == SIMPLEQ_FIRST(&pool_head))
-		SIMPLEQ_REMOVE_HEAD(&pool_head, pr_poollist);
-	else {
-		prev = SIMPLEQ_FIRST(&pool_head);
-		SIMPLEQ_FOREACH(iter, &pool_head, pr_poollist) {
-			if (iter == pp) {
-				SIMPLEQ_REMOVE_AFTER(&pool_head, prev,
-				    pr_poollist);
-				break;
-			}
-			prev = iter;
-		}
-	}
 }
 
 struct pool_item_header *
