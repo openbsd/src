@@ -1,4 +1,4 @@
-/*	$OpenBSD: event_tagging.c,v 1.3 2010/04/21 20:02:40 nicm Exp $	*/
+/*	$OpenBSD: event_tagging.c,v 1.4 2013/04/17 15:33:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
@@ -218,7 +218,7 @@ evtag_marshal_timeval(struct evbuffer *evbuf, ev_uint32_t tag, struct timeval *t
 {
 	evbuffer_drain(_buf, EVBUFFER_LENGTH(_buf));
 
-	encode_int(_buf, tv->tv_sec);
+	encode_int(_buf, tv->tv_sec);		/* XXX 2038 */
 	encode_int(_buf, tv->tv_usec);
 
 	evtag_marshal(evbuf, tag, EVBUFFER_DATA(_buf),
