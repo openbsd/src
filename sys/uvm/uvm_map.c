@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.159 2013/02/10 19:19:30 beck Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.160 2013/04/17 17:46:53 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3641,6 +3641,7 @@ vaddr_t
 uvm_map_hint(struct vmspace *vm, vm_prot_t prot)
 {
 	vaddr_t addr;
+	vaddr_t spacing;
 
 #ifdef __i386__
 	/*
@@ -3654,10 +3655,18 @@ uvm_map_hint(struct vmspace *vm, vm_prot_t prot)
 		return (round_page(addr));
 	}
 #endif
-	/* start malloc/mmap after the brk */
-	addr = (vaddr_t)vm->vm_daddr + BRKSIZ;
+
+	spacing = (MIN((256 * 1024 * 1024), BRKSIZ) - 1);
+
+	/*
+	 * Start malloc/mmap after the brk.
+	 * If the random spacing area has been used up,
+	 * the brk area becomes fair game for mmap as well.
+	 */
+	if (vm->vm_dused < spacing >> PAGE_SHIFT)
+		addr = (vaddr_t)vm->vm_daddr + BRKSIZ;
 #if !defined(__vax__)
-	addr += arc4random() & (MIN((256 * 1024 * 1024), BRKSIZ) - 1);
+	addr += arc4random() & spacing;
 #endif
 	return (round_page(addr));
 }
