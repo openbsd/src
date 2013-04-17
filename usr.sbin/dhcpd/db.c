@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.11 2013/04/13 16:40:36 krw Exp $	*/
+/*	$OpenBSD: db.c,v 1.12 2013/04/17 19:26:10 krw Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -56,8 +56,8 @@ time_t write_time;
 int
 write_lease(struct lease *lease)
 {
-	struct tm *t;
-	char tbuf[64];
+	char tbuf[26];	/* "w yyyy/mm/dd hh:mm:ss UTC" */
+	size_t rsltsz;
 	int errors = 0;
 	int i;
 
@@ -66,21 +66,15 @@ write_lease(struct lease *lease)
 	if (fprintf(db_file, "lease %s {\n", piaddr(lease->ip_addr)) == -1)
 		++errors;
 
-	t = gmtime(&lease->starts);
-	snprintf(tbuf, sizeof(tbuf), "%d %d/%02d/%02d %02d:%02d:%02d;",
-	    t->tm_wday, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-	    t->tm_hour, t->tm_min, t->tm_sec);
+	rsltsz = strftime(tbuf, sizeof(tbuf), DB_TIMEFMT,
+	    gmtime(&lease->starts));
+	if (rsltsz == 0 || fprintf(db_file, "\tstarts %s;\n", tbuf) == -1)
+		errors++;
 
-	if (fprintf(db_file, "\tstarts %s\n", tbuf) == -1)
-		++errors;
-
-	t = gmtime(&lease->ends);
-	snprintf(tbuf, sizeof(tbuf), "%d %d/%02d/%02d %02d:%02d:%02d;",
-	    t->tm_wday, t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-	    t->tm_hour, t->tm_min, t->tm_sec);
-
-	if (fprintf(db_file, "\tends %s", tbuf) == -1)
-		++errors;
+	rsltsz = strftime(tbuf, sizeof(tbuf), DB_TIMEFMT,
+	    gmtime(&lease->ends));
+	if (rsltsz == 0 || fprintf(db_file, "\tends %s;\n", tbuf) == -1)
+		errors++;
 
 	if (lease->hardware_addr.hlen) {
 		if (fprintf(db_file, "\n\thardware %s %s;",
@@ -205,14 +199,6 @@ new_lease_file(void)
 {
 	fflush(db_file);
 	rewind(db_file);
-
-	/*
-	 * Write an introduction so people don't complain about time being off.
-	 */
-	fprintf(db_file, "# All times in this file are in UTC (GMT), "
-	    "not your local timezone.\n");
-	fprintf(db_file, "# The format of this file is documented in "
-	    "the dhcpd.leases(5) manual page.\n\n");
 
 	/* Write out all the leases that we know of... */
 	counting = 0;

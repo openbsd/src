@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.46 2013/02/03 21:04:19 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.47 2013/04/17 19:26:10 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -73,6 +73,9 @@
 
 #include "dhcp.h"
 #include "tree.h"
+
+#define DB_TIMEFMT	"%w %Y/%m/%d %T UTC"
+#define OLD_DB_TIMEFMT	"%w %Y/%m/%d %T"
 
 #define SERVER_PORT	67
 #define CLIENT_PORT	68
