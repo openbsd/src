@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.96 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.97 2013/04/17 16:22:24 florian Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -235,6 +235,8 @@ nfsmout:
 	return (error);
 }
 
+struct nfs_diskless nfs_diskless;
+
 /*
  * Mount a remote root fs via. NFS.  It goes like this:
  * - Call nfs_boot_init() to fill in the nfs_diskless struct
@@ -246,7 +248,6 @@ nfsmout:
 int
 nfs_mountroot(void)
 {
-	struct nfs_diskless nd;
 	struct vattr attr;
 	struct mount *mp;
 	struct vnode *vp;
@@ -260,17 +261,16 @@ nfs_mountroot(void)
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
 	 * Side effect:	 Finds and configures a network interface.
 	 */
-	bzero((caddr_t) &nd, sizeof(nd));
-	nfs_boot_init(&nd, procp);
+	nfs_boot_init(&nfs_diskless, procp);
 
 	/*
 	 * Create the root mount point.
 	 */
-	if (nfs_boot_getfh(&nd.nd_boot, "root", &nd.nd_root, -1))
+	if (nfs_boot_getfh(&nfs_diskless.nd_boot, "root", &nfs_diskless.nd_root, -1))
 		panic("nfs_mountroot: root");
-	mp = nfs_mount_diskless(&nd.nd_root, "/", 0);
+	mp = nfs_mount_diskless(&nfs_diskless.nd_root, "/", 0);
 	nfs_root(mp, &rootvp);
-	printf("root on %s\n", nd.nd_root.ndm_host);
+	printf("root on %s\n", nfs_diskless.nd_root.ndm_host);
 
 	/*
 	 * Link it into the mount list.
@@ -289,13 +289,13 @@ nfs_mountroot(void)
 
 #ifdef notyet
 	/* Set up swap credentials. */
-	proc0.p_ucred->cr_uid = ntohl(nd.swap_ucred.cr_uid);
-	proc0.p_ucred->cr_gid = ntohl(nd.swap_ucred.cr_gid);
-	if ((proc0.p_ucred->cr_ngroups = ntohs(nd.swap_ucred.cr_ngroups)) >
+	proc0.p_ucred->cr_uid = ntohl(nfs_diskless.swap_ucred.cr_uid);
+	proc0.p_ucred->cr_gid = ntohl(nfs_diskless.swap_ucred.cr_gid);
+	if ((proc0.p_ucred->cr_ngroups = ntohs(nfs_diskless.swap_ucred.cr_ngroups)) >
 		NGROUPS)
 		proc0.p_ucred->cr_ngroups = NGROUPS;
 	for (i = 0; i < proc0.p_ucred->cr_ngroups; i++)
-	    proc0.p_ucred->cr_groups[i] = ntohl(nd.swap_ucred.cr_groups[i]);
+	    proc0.p_ucred->cr_groups[i] = ntohl(nfs_diskless.swap_ucred.cr_groups[i]);
 #endif
 
 	/*
@@ -304,9 +304,9 @@ nfs_mountroot(void)
 	 * On a "dataless" configuration (swap on disk) we will have:
 	 *	(swdevt[0].sw_dev != NODEV) identifying the swap device.
 	 */
-	if (bdevvp(swapdev, &swapdev_vp))
-		panic("nfs_mountroot: can't setup swap vp");
 	if (swdevt[0].sw_dev != NODEV) {
+		if (bdevvp(swapdev, &swapdev_vp))
+			panic("nfs_mountroot: can't setup swap vp");
 		printf("swap on device 0x%x\n", swdevt[0].sw_dev);
 		return (0);
 	}
@@ -318,9 +318,9 @@ nfs_mountroot(void)
 	 *
 	 * Wait 5 retries, finally no swap is cool. -mickey
 	 */
-	error = nfs_boot_getfh(&nd.nd_boot, "swap", &nd.nd_swap, 5);
+	error = nfs_boot_getfh(&nfs_diskless.nd_boot, "swap", &nfs_diskless.nd_swap, 5);
 	if (!error) {
-		mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0);
+		mp = nfs_mount_diskless(&nfs_diskless.nd_swap, "/swap", 0);
 		nfs_root(mp, &vp);
 		vfs_unbusy(mp);
 
@@ -334,11 +334,10 @@ nfs_mountroot(void)
 		/*
 		 * Next line is a hack to make swapmount() work on NFS
 		 * swap files.
-		 * XXX-smurph
 		 */
 		swdevt[0].sw_dev = NETDEV;
 		/* end hack */
-		swdevt[0].sw_vp = vp;
+		nfs_diskless.sw_vp = vp;
 
 		/*
 		 * Find out how large the swap file is.
@@ -348,7 +347,7 @@ nfs_mountroot(void)
 			printf("nfs_mountroot: getattr for swap\n");
 		n = (long) (attr.va_size >> DEV_BSHIFT);
 
-		printf("swap on %s\n", nd.nd_swap.ndm_host);
+		printf("swap on %s\n", nfs_diskless.nd_swap.ndm_host);
 #ifdef	DEBUG
 		printf("swap size: 0x%lx (blocks)\n", n);
 #endif
@@ -357,8 +356,6 @@ nfs_mountroot(void)
 
 	printf("WARNING: no swap\n");
 	swdevt[0].sw_dev = NODEV;
-	swdevt[0].sw_vp = NULL;
-
 	return (0);
 }
 

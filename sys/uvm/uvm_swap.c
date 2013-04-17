@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.111 2013/03/28 03:39:22 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.112 2013/04/17 16:22:24 florian Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -50,6 +50,13 @@
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
 #include <sys/disk.h>
+#if defined(NFSCLIENT)
+#include <sys/socket.h>
+#include <sys/domain.h>
+#include <netinet/in.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfsdiskless.h>
+#endif
 
 #include <uvm/uvm.h>
 #ifdef UVM_SWAP_ENCRYPT
@@ -1990,38 +1997,46 @@ swapmount(void)
 	 * once before any other process has forked.
 	 */
 
-	if (swap_dev == NODEV) {
-		printf("swapmount: no device\n");
+	if (swap_dev == NODEV)
 		return;
-	}
-
-	if (bdevvp(swap_dev, &vp)) {
-		printf("swapmount: no device 2\n");
-		return;
-	}
 
 	sdp = malloc(sizeof(*sdp), M_VMSWAP, M_WAITOK|M_ZERO);
 	spp = malloc(sizeof(*spp), M_VMSWAP, M_WAITOK);
 
 	sdp->swd_flags = SWF_FAKE;
 	sdp->swd_dev = swap_dev;
-	sdp->swd_vp = vp;
 
 	/* Construct a potential path to swap */
 	sdp->swd_pathlen = MNAMELEN + 1;
-	sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
+	sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK | M_ZERO);
 #if defined(NFSCLIENT)
-	if (swap_dev == NETDEV)
-		snprintf(sdp->swd_path, sdp->swd_pathlen, "/swap");
-	else
+	if (swap_dev == NETDEV) {
+		extern struct nfs_diskless nfs_diskless;
+
+		snprintf(sdp->swd_path, sdp->swd_pathlen, "%s",
+		    nfs_diskless.nd_swap.ndm_host);
+		vp = nfs_diskless.sw_vp;
+		goto gotit;
+	} else
 #endif
+	if (bdevvp(swap_dev, &vp)) {
+		free(sdp->swd_path, M_VMSWAP);
+		free(sdp, M_VMSWAP);
+		return;
+	}
+
 	if ((nam = findblkname(major(swap_dev))))
 		snprintf(sdp->swd_path, sdp->swd_pathlen, "/dev/%s%d%c", nam,
 		    DISKUNIT(swap_dev), 'a' + DISKPART(swap_dev));
 	else
 		snprintf(sdp->swd_path, sdp->swd_pathlen, "blkdev0x%x",
 		    swap_dev);
+
+#if defined(NFSCLIENT)
+gotit:
+#endif
 	sdp->swd_pathlen = strlen(sdp->swd_path) + 1;
+	sdp->swd_vp = vp;
 
 	swaplist_insert(sdp, spp, 0);
 
@@ -2033,8 +2048,6 @@ swapmount(void)
 		free(sdp, M_VMSWAP);
 		return;
 	}
-
-	VOP_UNLOCK(vp, 0, curproc);
 }
 
 #ifdef HIBERNATE

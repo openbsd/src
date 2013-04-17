@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsdiskless.h,v 1.8 2003/06/02 23:28:20 millert Exp $	*/
+/*	$OpenBSD: nfsdiskless.h,v 1.9 2013/04/17 16:22:24 florian Exp $	*/
 /*	$NetBSD: nfsdiskless.h,v 1.9 1996/02/18 11:54:00 fvdl Exp $	*/
 
 /*
@@ -58,6 +58,7 @@ struct nfs_diskless {
 	struct sockaddr_in nd_boot;	/* Address of boot server */
 	struct nfs_dlmount nd_root; 	/* Mount info for root */
 	struct nfs_dlmount nd_swap; 	/* Mount info for swap */
+	struct vnode	   *sw_vp;
 };
 
 int nfs_boot_init(struct nfs_diskless *nd, struct proc *procp);
