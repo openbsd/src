@@ -1260,7 +1260,9 @@ elf_m88k_size_dynamic_sections (output_bfd, info)
 	  if (!add_dynamic_entry (DT_PLTGOT, 0)
 	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
 	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0))
+	      || !add_dynamic_entry (DT_JMPREL, 0)
+	      || !add_dynamic_entry (DT_88K_PLTSTART, 0)
+	      || !add_dynamic_entry (DT_88K_PLTEND, 0))
 	    return FALSE;
 	}
 
@@ -2020,6 +2022,16 @@ elf_m88k_finish_dynamic_sections (output_bfd, info)
 		  else
 		    dyn.d_un.d_val -= s->_raw_size;
 		}
+	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
+	      break;
+
+	    case DT_88K_PLTSTART:
+	      name = ".plt";
+	      goto get_vma;
+	    case DT_88K_PLTEND:
+	      s = bfd_get_section_by_name (output_bfd, ".plt");
+	      BFD_ASSERT (s != NULL);
+	      dyn.d_un.d_ptr = s->vma + s->_raw_size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 	    }

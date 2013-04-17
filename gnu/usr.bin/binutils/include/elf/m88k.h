@@ -96,4 +96,11 @@ END_RELOC_NUMBERS (R_88K_UNIMPLEMENTED)
 #define	EF_NABI     0x80000000	/* not ABI compliant */
 #define EF_M88110   0x00000004	/* used 88110-specific features */
 
+/* Processor specific dynamic tag values.  */
+
+#define	DT_88K_ADDRBASE	0x70000001
+#define	DT_88K_PLTSTART	0x70000002
+#define	DT_88K_PLTEND	0x70000003
+#define	DT_88K_TDESC	0x70000004
+
 #endif
