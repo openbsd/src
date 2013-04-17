@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.21 2011/11/07 09:58:27 otto Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.22 2013/04/17 17:39:29 tedu Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -171,8 +171,7 @@ regcomp(regex_t *preg, const char *pattern, int cflags)
 		len = strlen((char *)pattern);
 
 	/* do the mallocs early so failure handling is easy */
-	g = (struct re_guts *)malloc(sizeof(struct re_guts) +
-							(NC-1)*sizeof(cat_t));
+	g = (struct re_guts *)malloc(sizeof(struct re_guts));
 	if (g == NULL)
 		return(REG_ESPACE);
 	p->ssize = len/(size_t)2*(size_t)3 + (size_t)1;	/* ugh */
@@ -206,7 +205,7 @@ regcomp(regex_t *preg, const char *pattern, int cflags)
 	g->nsub = 0;
 	g->ncategories = 1;	/* category 0 is "everything else" */
 	g->categories = &g->catspace[-(CHAR_MIN)];
-	(void) memset((char *)g->catspace, 0, NC*sizeof(cat_t));
+	memset(g->catspace, 0, sizeof(g->catspace));
 	g->backrefs = 0;
 
 	/* do it */

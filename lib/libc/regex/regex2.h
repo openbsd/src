@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex2.h,v 1.7 2004/11/30 17:04:23 otto Exp $	*/
+/*	$OpenBSD: regex2.h,v 1.8 2013/04/17 17:39:29 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -149,7 +149,7 @@ struct re_guts {
 	int backrefs;		/* does it use back references? */
 	sopno nplus;		/* how deep does it nest +s? */
 	/* catspace must be last */
-	cat_t catspace[1];	/* actually [NC] */
+	cat_t catspace[NC];	/* actually [NC] */
 };
 
 /* misc utilities */
