@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.122 2013/03/20 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.123 2013/04/18 15:43:22 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1175,6 +1175,7 @@ socket_dump(u_long off)
 	kread(off, &so, sizeof(so));
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, so.v);
+#define	pll(fmt, v, sep) printf(#v " " fmt sep, (long long) so.v);
 #define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : so.v);
 	printf("socket %#lx\n ", hideroot ? 0 : off);
 	p("%#0.4x", so_type, "\n ");
@@ -1197,7 +1198,7 @@ socket_dump(u_long off)
 	pp("%p", so_spliceback, "\n ");
 	p("%lld", so_splicelen, ", ");
 	p("%lld", so_splicemax, ", ");
-	p("%ld", so_idletv.tv_sec, ", ");
+	pll("%lld", so_idletv.tv_sec, ", ");
 	p("%ld", so_idletv.tv_usec, "\n ");
 	sockbuf_dump(&so.so_rcv, "so_rcv");
 	sockbuf_dump(&so.so_snd, "so_snd");
