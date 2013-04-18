@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.20 2013/04/17 21:34:58 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.21 2013/04/18 20:19:32 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1033,7 +1033,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	intel_fb_restore_mode(dev);
 
 	ri->ri_flg = RI_CENTER | RI_VCONS;
-	rasops_init(ri, 96, 132);
+	rasops_init(ri, 160, 160);
 
 	ri->ri_hw = dev_priv;
 	dev_priv->sc_copyrows = ri->ri_copyrows;
