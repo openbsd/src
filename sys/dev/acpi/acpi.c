@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.242 2012/12/24 19:41:14 guenther Exp $ */
+/* $OpenBSD: acpi.c,v 1.243 2013/04/18 18:30:41 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2150,6 +2150,9 @@ acpi_thread(void *arg)
 	struct acpi_softc  *sc = thread->sc;
 	extern int aml_busy;
 	int s;
+
+	/* AML/SMI cannot be trusted -- only run on the BSP */
+	sched_peg_curproc(&cpu_info_primary);
 
 	rw_enter_write(&sc->sc_lck);
 
