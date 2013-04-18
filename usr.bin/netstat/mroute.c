@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.19 2009/07/13 19:13:41 michele Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.20 2013/04/18 15:44:01 deraadt Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -246,8 +246,8 @@ print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 		snprintf(s2, sizeof s2, "%llu", bw_meter->bm_measured.b_bytes);
 	else
 		snprintf(s2, sizeof s2, "?");
-	snprintf(s0, sizeof s0, "%lu.%lu|%s|%s",
-		 bw_meter->bm_start_time.tv_sec,
+	snprintf(s0, sizeof s0, "%lld.%ld|%s|%s",
+		 (long long)bw_meter->bm_start_time.tv_sec,
 		 bw_meter->bm_start_time.tv_usec,
 		 s1, s2);
 	printf("  %-30s", s0);
@@ -271,8 +271,8 @@ print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 			 bw_meter->bm_threshold.b_bytes);
 	else
 		snprintf(s2, sizeof s2, "?");
-	snprintf(s0, sizeof s0, "%lu.%lu|%s|%s",
-		 bw_meter->bm_threshold.b_time.tv_sec,
+	snprintf(s0, sizeof s0, "%lld.%ld|%s|%s",
+		 (long long)bw_meter->bm_threshold.b_time.tv_sec,
 		 bw_meter->bm_threshold.b_time.tv_usec,
 		 s1, s2);
 	printf("  %-30s", s0);
@@ -282,13 +282,13 @@ print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 		 &bw_meter->bm_threshold.b_time, &end);
 	if (timercmp(&now, &end, <=)) {
 		timersub(&end, &now, &delta);
-		snprintf(s3, sizeof s3, "%lu.%lu",
-			 delta.tv_sec, delta.tv_usec);
+		snprintf(s3, sizeof s3, "%lld.%ld",
+			 (long long)delta.tv_sec, delta.tv_usec);
 	} else {
 		/* Negative time */
 		timersub(&now, &end, &delta);
-		snprintf(s3, sizeof s3, "-%lu.%lu",
-			 delta.tv_sec, delta.tv_usec);
+		snprintf(s3, sizeof s3, "-%lld.%ld",
+			 (long long)delta.tv_sec, delta.tv_usec);
 	}
 	printf(" %s", s3);
 
