@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.87 2013/04/17 11:53:10 mglocker Exp $	*/
+/*	$OpenBSD: usb.c,v 1.88 2013/04/18 08:44:39 mglocker Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -103,20 +103,23 @@ TAILQ_HEAD(, usb_task) usb_generic_tasks;
 
 int usb_run_tasks, usb_run_abort_tasks;
 int explore_pending;
-
-void	usb_explore(void *);
-void	usb_create_task_threads(void *);
-void	usb_task_thread(void *);
-struct proc *usb_task_thread_proc = NULL;
-void	usb_abort_task_thread(void *);
-struct proc *usb_abort_task_thread_proc = NULL;
-
 const char *usbrev_str[] = USBREV_STR;
 
-int usb_match(struct device *, void *, void *); 
-void usb_attach(struct device *, struct device *, void *); 
-int usb_detach(struct device *, int); 
-int usb_activate(struct device *, int); 
+void		 usb_explore(void *);
+void		 usb_create_task_threads(void *);
+void		 usb_task_thread(void *);
+struct proc	*usb_task_thread_proc = NULL;
+void		 usb_abort_task_thread(void *);
+struct proc	*usb_abort_task_thread_proc = NULL;
+
+void		 usbd_fill_di_task(void *);
+void		 usbd_fill_udc_task(void *);
+void		 usbd_fill_udf_task(void *);
+
+int		 usb_match(struct device *, void *, void *); 
+void		 usb_attach(struct device *, struct device *, void *); 
+int		 usb_detach(struct device *, int); 
+int		 usb_activate(struct device *, int); 
 
 struct cfdriver usb_cd = { 
 	NULL, "usb", DV_DULL 
