@@ -867,7 +867,7 @@ rtl_prologue (insn)
 		
   start_sequence ();
 
-  _guard = gen_rtx_MEM (GUARD_m, gen_rtx_SYMBOL_REF (Pmode, "__guard"));
+  _guard = gen_rtx_MEM (GUARD_m, gen_rtx_SYMBOL_REF (Pmode, "__guard_local"));
   emit_move_insn ( guard_area, _guard);
 
   _val = get_insns ();
