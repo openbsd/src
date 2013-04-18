@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.30 2010/08/25 18:20:11 chl Exp $	*/
+/*	$OpenBSD: pr.c,v 1.31 2013/04/18 02:28:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -1436,7 +1436,6 @@ nxtfile(int argc, char *argv[], char **fname, char *buf, int dt)
 {
     FILE *inf = NULL;
     struct timeval tv;
-    struct timezone tz;
     struct tm *timeptr = NULL;
     struct stat statbuf;
     time_t curtime;
@@ -1457,7 +1456,7 @@ nxtfile(int argc, char *argv[], char **fname, char *buf, int dt)
 	    *fname = FNAME;
 	if (nohead)
 	    return(inf);
-	if (gettimeofday(&tv, &tz) < 0) {
+	if (gettimeofday(&tv, NULL) < 0) {
 	    ++errcnt;
 	    ferrout("pr: cannot get time of day, %s\n",
 		strerror(errno));
@@ -1481,7 +1480,7 @@ nxtfile(int argc, char *argv[], char **fname, char *buf, int dt)
 	    ++eoptind;
 	    if (nohead || (dt && twice))
 		return(inf);
-	    if (gettimeofday(&tv, &tz) < 0) {
+	    if (gettimeofday(&tv, NULL) < 0) {
 		++errcnt;
 		ferrout("pr: cannot get time of day, %s\n",
 		    strerror(errno));
@@ -1512,7 +1511,7 @@ nxtfile(int argc, char *argv[], char **fname, char *buf, int dt)
 		return(inf);
 
 	    if (dt) {
-		if (gettimeofday(&tv, &tz) < 0) {
+		if (gettimeofday(&tv, NULL) < 0) {
 		    ++errcnt;
 		    ferrout("pr: cannot get time of day, %s\n",
 			 strerror(errno));

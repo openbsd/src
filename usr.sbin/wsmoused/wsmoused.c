@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.27 2011/10/18 20:07:46 djm Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.28 2013/04/18 02:29:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -266,10 +266,9 @@ mouse_click(struct wscons_event *event)
 	struct timeval max_date;
 	struct timeval now;
 	struct timeval delay;
-	struct timezone tz;
 	int i = event->value; /* button number */
 
-	gettimeofday(&now, &tz);
+	gettimeofday(&now, NULL);
 	delay.tv_sec = mouse.clickthreshold / 1000;
 	delay.tv_usec = (mouse.clickthreshold % 1000) * 1000;
 	timersub(&now, &delay, &max_date);
