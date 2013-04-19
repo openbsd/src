@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.15 2006/04/02 00:48:33 deraadt Exp $	*/
+/*	$OpenBSD: shf.c,v 1.16 2013/04/19 17:36:09 millert Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -724,7 +724,8 @@ shf_smprintf(const char *fmt, ...)
  *  ints before pushing them.
  */
 #define POP_INT(f, s, a) \
-	(((f) & FL_LONG) ? va_arg((a), unsigned long) :			\
+	(((f) & FL_LLONG) ? va_arg((a), unsigned long long) :		\
+	    ((f) & FL_LONG) ? va_arg((a), unsigned long) :		\
 	    (sizeof(int) < sizeof(long) ? ((s) ?			\
 	    (long) va_arg((a), int) : va_arg((a), unsigned)) :		\
 	    va_arg((a), unsigned)))
@@ -738,10 +739,11 @@ shf_smprintf(const char *fmt, ...)
 #define FL_BLANK	0x008	/* ` ' seen */
 #define FL_SHORT	0x010	/* `h' seen */
 #define FL_LONG		0x020	/* `l' seen */
-#define FL_ZERO		0x040	/* `0' seen */
-#define FL_DOT		0x080	/* '.' seen */
-#define FL_UPPER	0x100	/* format character was uppercase */
-#define FL_NUMBER	0x200	/* a number was formated %[douxefg] */
+#define FL_LLONG	0x040	/* `ll' seen */
+#define FL_ZERO		0x080	/* `0' seen */
+#define FL_DOT		0x100	/* '.' seen */
+#define FL_UPPER	0x200	/* format character was uppercase */
+#define FL_NUMBER	0x400	/* a number was formated %[douxefg] */
 
 
 #ifdef FP
@@ -764,9 +766,9 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 	int		field, precision;
 	int		len;
 	int		flags;
-	unsigned long	lnum;
+	unsigned long long	llnum;
 					/* %#o produces the longest output */
-	char		numbuf[(BITS(long) + 2) / 3 + 1];
+	char		numbuf[(BITS(long long) + 2) / 3 + 1];
 	/* this stuff for dealing with the buffer */
 	int		nwritten = 0;
 #ifdef FP
@@ -837,7 +839,11 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 				continue;
 
 			case 'l':
-				flags |= FL_LONG;
+				if (*fmt == 'l') {
+					fmt++;
+					flags |= FL_LLONG;
+				} else
+					flags |= FL_LONG;
 				continue;
 
 			case 'h':
@@ -873,7 +879,7 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 
 		switch (c) {
 		case 'p': /* pointer */
-			flags &= ~(FL_LONG | FL_SHORT);
+			flags &= ~(FL_LLONG | FL_LONG | FL_SHORT);
 			if (sizeof(char *) > sizeof(int))
 				flags |= FL_LONG; /* hope it fits.. */
 			/* aaahhh... */
@@ -884,21 +890,21 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 		case 'x':
 			flags |= FL_NUMBER;
 			s = &numbuf[sizeof(numbuf)];
-			lnum = POP_INT(flags, c == 'd', args);
+			llnum = POP_INT(flags, c == 'd', args);
 			switch (c) {
 			case 'd':
 			case 'i':
-				if (0 > (long) lnum)
-					lnum = - (long) lnum, tmp = 1;
+				if (0 > (long long) llnum)
+					llnum = - (long long) llnum, tmp = 1;
 				else
 					tmp = 0;
 				/* aaahhhh..... */
 
 			case 'u':
 				do {
-					*--s = lnum % 10 + '0';
-					lnum /= 10;
-				} while (lnum);
+					*--s = llnum % 10 + '0';
+					llnum /= 10;
+				} while (llnum);
 
 				if (c != 'u') {
 					if (tmp)
@@ -912,9 +918,9 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 
 			case 'o':
 				do {
-					*--s = (lnum & 0x7) + '0';
-					lnum >>= 3;
-				} while (lnum);
+					*--s = (llnum & 0x7) + '0';
+					llnum >>= 3;
+				} while (llnum);
 
 				if ((flags & FL_HASH) && *s != '0')
 					*--s = '0';
@@ -927,9 +933,9 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 				    "0123456789ABCDEF" :
 				    "0123456789abcdef";
 				do {
-					*--s = digits[lnum & 0xf];
-					lnum >>= 4;
-				} while (lnum);
+					*--s = digits[llnum & 0xf];
+					llnum >>= 4;
+				} while (llnum);
 
 				if (flags & FL_HASH) {
 					*--s = (flags & FL_UPPER) ? 'X' : 'x';
@@ -966,7 +972,7 @@ shf_vfprintf(struct shf *shf, const char *fmt, va_list args)
 			/*
 			 *	Assumes doubles are pushed on
 			 *  the stack.  If this is not so, then
-			 *  FL_LONG/FL_SHORT should be checked.
+			 *  FL_LLONG/FL_LONG/FL_SHORT should be checked.
 			 */
 			fpnum = va_arg(args, double);
 			s = fpbuf;
