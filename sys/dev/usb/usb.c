@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.88 2013/04/18 08:44:39 mglocker Exp $	*/
+/*	$OpenBSD: usb.c,v 1.89 2013/04/19 19:07:45 mglocker Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -112,9 +112,9 @@ struct proc	*usb_task_thread_proc = NULL;
 void		 usb_abort_task_thread(void *);
 struct proc	*usb_abort_task_thread_proc = NULL;
 
-void		 usbd_fill_di_task(void *);
-void		 usbd_fill_udc_task(void *);
-void		 usbd_fill_udf_task(void *);
+void		 usb_fill_di_task(void *);
+void		 usb_fill_udc_task(void *);
+void		 usb_fill_udf_task(void *);
 
 int		 usb_match(struct device *, void *, void *); 
 void		 usb_attach(struct device *, struct device *, void *); 
@@ -483,7 +483,7 @@ usbclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 void
-usbd_fill_di_task(void *arg)
+usb_fill_di_task(void *arg)
 {
 	struct usb_device_info *di = (struct usb_device_info *)arg;
 	struct usb_softc *sc;
@@ -503,7 +503,7 @@ usbd_fill_di_task(void *arg)
 }
 
 void
-usbd_fill_udc_task(void *arg)
+usb_fill_udc_task(void *arg)
 {
 	struct usb_device_cdesc *udc = (struct usb_device_cdesc *)arg;
 	struct usb_softc *sc;
@@ -530,7 +530,7 @@ usbd_fill_udc_task(void *arg)
 }
 
 void
-usbd_fill_udf_task(void *arg)
+usb_fill_udf_task(void *arg)
 {
 	struct usb_device_fdesc *udf = (struct usb_device_fdesc *)arg;
 	struct usb_softc *sc;
@@ -667,7 +667,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 */
 		di->udi_devnames[0][0] = '\0';
 
-		usb_init_task(&di_task, usbd_fill_di_task, di,
+		usb_init_task(&di_task, usb_fill_di_task, di,
 		    USB_TASK_TYPE_GENERIC);
 		usb_add_task(sc->sc_bus->root_hub, &di_task);
 		usb_wait_task(sc->sc_bus->root_hub, &di_task);
@@ -715,7 +715,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		udc->udc_bus = unit;
 
 		udc->udc_desc.bLength = 0;
-		usb_init_task(&udc_task, usbd_fill_udc_task, udc,
+		usb_init_task(&udc_task, usb_fill_udc_task, udc,
 		    USB_TASK_TYPE_GENERIC);
 		usb_add_task(sc->sc_bus->root_hub, &udc_task);
 		usb_wait_task(sc->sc_bus->root_hub, &udc_task);
@@ -743,7 +743,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		udf->udf_bus = unit;
 
 		save_udf = *udf;
-		usb_init_task(&udf_task, usbd_fill_udf_task, udf,
+		usb_init_task(&udf_task, usb_fill_udf_task, udf,
 		    USB_TASK_TYPE_GENERIC);
 		usb_add_task(sc->sc_bus->root_hub, &udf_task);
 		usb_wait_task(sc->sc_bus->root_hub, &udf_task);
