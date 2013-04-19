@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.50 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.51 2013/04/19 08:54:49 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -407,14 +407,6 @@ usbd_free_buffer(struct usbd_xfer *xfer)
 #endif
 	xfer->rqflags &= ~(URQ_DEV_DMABUF | URQ_AUTO_DMABUF);
 	xfer->device->bus->methods->freem(xfer->device->bus, &xfer->dmabuf);
-}
-
-void *
-usbd_get_buffer(struct usbd_xfer *xfer)
-{
-	if (!(xfer->rqflags & URQ_DEV_DMABUF))
-		return (0);
-	return (KERNADDR(&xfer->dmabuf, 0));
 }
 
 struct usbd_xfer *
