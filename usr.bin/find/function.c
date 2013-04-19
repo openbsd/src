@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.38 2012/01/05 10:21:33 sthen Exp $	*/
+/*	$OpenBSD: function.c,v 1.39 2013/04/19 15:51:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -71,7 +71,7 @@
 }
 
 static PLAN *palloc(enum ntype, int (*)(PLAN *, FTSENT *));
-static long find_parsenum(PLAN *plan, char *option, char *vp, char *endch);
+static long long find_parsenum(PLAN *plan, char *option, char *vp, char *endch);
 static void run_f_exec(PLAN *plan);
 static PLAN *palloc(enum ntype t, int (*f)(PLAN *, FTSENT *));
 
@@ -121,10 +121,10 @@ extern FTS *tree;
  * find_parsenum --
  *	Parse a string of the form [+-]# and return the value.
  */
-static long
+static long long
 find_parsenum(PLAN *plan, char *option, char *vp, char *endch)
 {
-	long value;
+	long long value;
 	char *endchar, *str;	/* Pointer to character ending conversion. */
     
 	/* Determine comparison from leading + or -. */
@@ -148,7 +148,7 @@ find_parsenum(PLAN *plan, char *option, char *vp, char *endch)
 	 * and endchar points to the beginning of the string we know we have
 	 * a syntax error.
 	 */
-	value = strtol(str, &endchar, 10);
+	value = strtoll(str, &endchar, 10);
 	if (value == 0 && endchar == str)
 		errx(1, "%s: %s: illegal numeric value", option, vp);
 	if (endchar[0] && (endch == NULL || endchar[0] != *endch))
@@ -911,12 +911,16 @@ f_inum(PLAN *plan, FTSENT *entry)
 PLAN *
 c_inum(char *arg, char ***ignored, int unused)
 {
+	long long inum;
 	PLAN *new;
     
 	ftsoptions &= ~FTS_NOSTAT;
     
 	new = palloc(N_INUM, f_inum);
-	new->i_data = find_parsenum(new, "-inum", arg, NULL);
+	inum = find_parsenum(new, "-inum", arg, NULL);
+	if (inum != (ino_t)inum)
+		errx(1, "-inum: %s: number too great", arg);
+	new->i_data = inum;
 	return (new);
 }
  
@@ -935,11 +939,15 @@ PLAN *
 c_links(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
+	long long nlink;
     
 	ftsoptions &= ~FTS_NOSTAT;
     
 	new = palloc(N_LINKS, f_links);
-	new->l_data = (nlink_t)find_parsenum(new, "-links", arg, NULL);
+	nlink = find_parsenum(new, "-links", arg, NULL);
+	if (nlink != (nlink_t)nlink)
+		errx(1, "-links: %s: number too great", arg);
+	new->l_data = nlink;
 	return (new);
 }
  
