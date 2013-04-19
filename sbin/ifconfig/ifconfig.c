@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.261 2013/04/03 16:28:10 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.262 2013/04/19 18:11:13 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3945,14 +3945,8 @@ pppoe_status(void)
 {
 	struct pppoediscparms parms;
 	struct pppoeconnectionstate state;
-	struct timeval temp_time;
-	long diff_time;
-	unsigned long day, hour, min, sec;
-
-	day = hour = min = sec = 0; /* XXX make gcc happy */
 
 	memset(&state, 0, sizeof(state));
-	timerclear(&temp_time);
 
 	strlcpy(parms.ifname, name, sizeof(parms.ifname));
 	if (ioctl(s, PPPOEGETPARMS, &parms))
@@ -3987,6 +3981,10 @@ pppoe_status(void)
 	printf(" PADR retries: %d", state.padr_retry_no);
 
 	if (state.state == PPPOE_STATE_SESSION) {
+		struct timeval temp_time;
+		time_t diff_time, day = 0;
+		unsigned int hour = 0, min = 0, sec = 0;
+
 		if (state.session_time.tv_sec != 0) {
 			gettimeofday(&temp_time, NULL);
 			diff_time = temp_time.tv_sec -
@@ -4005,8 +4003,8 @@ pppoe_status(void)
 		}
 		printf(" time: ");
 		if (day != 0)
-			printf("%ldd ", day);
-		printf("%02ld:%02ld:%02ld", hour, min, sec);
+			printf("%lldd ", (long long)day);
+		printf("%02u:%02u:%02u", hour, min, sec);
 	}
 	putchar('\n');
 }
