@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.25 2013/04/19 16:38:47 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.26 2013/04/19 19:14:46 millert Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int             pr = 0, silent = 0, ntp = 0, verbose = 0;
+	int             pr = 0, silent = 0, ntp = 1, verbose = 0;
 	int		slidetime = 0, corrleaps = 0;
 	char           *hname;
 	extern int      optind;
@@ -112,6 +112,10 @@ main(int argc, char **argv)
 
 		case 'n':
 			ntp++;
+			break;
+
+		case 'o':
+			ntp = 0;
 			break;
 
 		case 'c':
