@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.3 2005/12/27 18:31:11 miod Exp $ */
+/*	$OpenBSD: swapgeneric.c,v 1.4 2013/04/19 15:02:41 florian Exp $ */
 /*	$NetBSD: swapgeneric.c,v 1.12 1996/05/03 19:42:28 christos Exp $	*/
 
 /*-
@@ -48,6 +48,6 @@ dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
 
 struct	swdevt swdevt[] = {
-	{ NODEV, 0, NULL },	/* to be filled in */
-	{ NODEV, 0, NULL }
+	{ NODEV, 0 },	/* to be filled in */
+	{ NODEV, 0 }
 };
