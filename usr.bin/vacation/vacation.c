@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.32 2009/10/27 23:59:46 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.33 2013/04/19 14:35:40 okan Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 				if (interval < 0)
 					usage();
 			} else
-				interval = (time_t)LONG_MAX;	/* XXX */
+				interval = 0;	/* one time only */
 			break;
 		default:
 			usage();
@@ -401,7 +401,7 @@ recent(void)
 	key.size = strlen(from);
 	if (!(db->get)(db, &key, &data, 0)) {
 		bcopy(data.data, &then, sizeof(then));
-		if (next == (time_t)LONG_MAX ||			/* XXX */
+		if (next == 0 ||
 		    then + next > time(NULL))
 			return(1);
 	}
