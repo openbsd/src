@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.269 2012/07/13 16:06:42 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.270 2013/04/19 14:10:20 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -903,6 +903,8 @@ editor_add(struct disklabel *lp, char *p)
 			fragsize *= 2;
 		if (new_size > 512ULL * 1024 * 1024 * 1024)
 			fragsize *= 2;
+		if (fragsize > MAXBSIZE / 8)
+			fragsize = MAXBSIZE / 8;
 #if defined (__sparc__) && !defined(__sparc64__)
 		/* can't boot from > 8k boot blocks */
 		pp->p_fragblock =
