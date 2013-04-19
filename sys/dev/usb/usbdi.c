@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.51 2013/04/19 08:54:49 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.52 2013/04/19 08:58:53 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -340,7 +340,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 		if (xfer->rqflags & URQ_AUTO_DMABUF)
 			printf("usbd_transfer: has old buffer!\n");
 #endif
-		err = bus->methods->allocm(bus, dmap, size);
+		err = usb_allocmem(bus, size, 0, dmap);
 		if (err)
 			return (err);
 		xfer->rqflags |= URQ_AUTO_DMABUF;
@@ -358,7 +358,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 		if (xfer->rqflags & URQ_AUTO_DMABUF) {
 			struct usbd_bus *bus = pipe->device->bus;
 
-			bus->methods->freem(bus, &xfer->dmabuf);
+			usb_freemem(bus, &xfer->dmabuf);
 			xfer->rqflags &= ~URQ_AUTO_DMABUF;
 		}
 	}
@@ -389,7 +389,7 @@ usbd_alloc_buffer(struct usbd_xfer *xfer, u_int32_t size)
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		printf("usbd_alloc_buffer: xfer already has a buffer\n");
 #endif
-	err = bus->methods->allocm(bus, &xfer->dmabuf, size);
+	err = usb_allocmem(bus, size, 0, &xfer->dmabuf);
 	if (err)
 		return (NULL);
 	xfer->rqflags |= URQ_DEV_DMABUF;
@@ -406,7 +406,7 @@ usbd_free_buffer(struct usbd_xfer *xfer)
 	}
 #endif
 	xfer->rqflags &= ~(URQ_DEV_DMABUF | URQ_AUTO_DMABUF);
-	xfer->device->bus->methods->freem(xfer->device->bus, &xfer->dmabuf);
+	usb_freemem(xfer->device->bus, &xfer->dmabuf);
 }
 
 struct usbd_xfer *
@@ -798,7 +798,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	if (xfer->rqflags & URQ_AUTO_DMABUF) {
 		if (!repeat) {
 			struct usbd_bus *bus = pipe->device->bus;
-			bus->methods->freem(bus, dmap);
+			usb_freemem(bus, dmap);
 			xfer->rqflags &= ~URQ_AUTO_DMABUF;
 		}
 	}

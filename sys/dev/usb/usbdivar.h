@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.47 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.48 2013/04/19 08:58:53 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -54,9 +54,6 @@ struct usbd_bus_methods {
 	usbd_status	      (*open_pipe)(struct usbd_pipe *pipe);
 	void		      (*soft_intr)(void *);
 	void		      (*do_poll)(struct usbd_bus *);
-	usbd_status	      (*allocm)(struct usbd_bus *, struct usb_dma *,
-					u_int32_t bufsize);
-	void		      (*freem)(struct usbd_bus *, struct usb_dma *);
 	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
 	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
 };

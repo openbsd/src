@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.130 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.131 2013/04/19 08:58:53 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -135,9 +135,6 @@ void		ehci_timeout(void *);
 void		ehci_timeout_task(void *);
 void		ehci_intrlist_timeout(void *);
 
-usbd_status	ehci_allocm(struct usbd_bus *, struct usb_dma *, u_int32_t);
-void		ehci_freem(struct usbd_bus *, struct usb_dma *);
-
 struct usbd_xfer *ehci_allocx(struct usbd_bus *);
 void		ehci_freex(struct usbd_bus *, struct usbd_xfer *);
 
@@ -250,8 +247,6 @@ struct usbd_bus_methods ehci_bus_methods = {
 	ehci_open,
 	ehci_softintr,
 	ehci_poll,
-	ehci_allocm,
-	ehci_freem,
 	ehci_allocx,
 	ehci_freex,
 };
@@ -1173,28 +1168,6 @@ ehci_shutdown(void *v)
 	DPRINTF(("ehci_shutdown: stopping the HC\n"));
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
-}
-
-usbd_status
-ehci_allocm(struct usbd_bus *bus, struct usb_dma *dma, u_int32_t size)
-{
-	struct ehci_softc *sc = (struct ehci_softc *)bus;
-	usbd_status err;
-
-	err = usb_allocmem(&sc->sc_bus, size, 0, dma);
-#ifdef EHCI_DEBUG
-	if (err)
-		printf("ehci_allocm: usb_allocmem()=%d\n", err);
-#endif
-	return (err);
-}
-
-void
-ehci_freem(struct usbd_bus *bus, struct usb_dma *dma)
-{
-	struct ehci_softc *sc = (struct ehci_softc *)bus;
-
-	usb_freemem(&sc->sc_bus, dma);
 }
 
 struct usbd_xfer *
