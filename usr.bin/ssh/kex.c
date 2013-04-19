@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.c,v 1.89 2013/04/19 01:06:50 djm Exp $ */
+/* $OpenBSD: kex.c,v 1.90 2013/04/19 12:07:08 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -62,7 +62,6 @@ static const struct kexalg kexalgs[] = {
 	{ KEX_DH14, KEX_DH_GRP14_SHA1, 0, EVP_sha1 },
 	{ KEX_DHGEX_SHA1, KEX_DH_GEX_SHA1, 0, EVP_sha1 },
 	{ KEX_DHGEX_SHA256, KEX_DH_GEX_SHA256, 0, EVP_sha256 },
-	{ KEX_DH1, KEX_DH_GRP1_SHA1, 0, EVP_sha1 },
 	{ KEX_ECDH_SHA2_NISTP256, KEX_ECDH_SHA2, NID_X9_62_prime256v1, EVP_sha256 },
 	{ KEX_ECDH_SHA2_NISTP384, KEX_ECDH_SHA2, NID_secp384r1, EVP_sha384 },
 	{ KEX_ECDH_SHA2_NISTP521, KEX_ECDH_SHA2, NID_secp521r1, EVP_sha512 },
