@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.263 2013/04/17 09:04:09 dtucker Exp $ */
+/* $OpenBSD: session.c,v 1.264 2013/04/19 01:03:01 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -1209,6 +1209,9 @@ do_setusercontext(struct passwd *pw)
 			safely_chroot(chroot_path, pw->pw_uid);
 			free(tmp);
 			free(chroot_path);
+			/* Make sure we don't attempt to chroot again */
+			free(options.chroot_directory);
+			options.chroot_directory = NULL;
 		}
 
 		/* Set UID */
@@ -1216,7 +1219,11 @@ do_setusercontext(struct passwd *pw)
 			perror("unable to set user context (setuser)");
 			exit(1);
 		}
+	} else if (options.chroot_directory != NULL &&
+	    strcasecmp(options.chroot_directory, "none") != 0) {
+		fatal("server lacks privileges to chroot to ChrootDirectory");
 	}
+
 	if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
 		fatal("Failed to set uids to %u.", (u_int) pw->pw_uid);
 }
