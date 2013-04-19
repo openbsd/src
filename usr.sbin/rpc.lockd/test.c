@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.5 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: test.c,v 1.6 2013/04/19 05:06:21 deraadt Exp $	*/
 
 #include <rpc/rpc.h>
 #include <rpcsvc/nlm_prot.h>
@@ -291,13 +291,14 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	clnt_control(cli, CLGET_TIMEOUT, &tim);
-	printf("Default timeout was %d.%d\n", tim.tv_sec, tim.tv_usec);
+	printf("Default timeout was %lld.%ld\n", (long long)tim.tv_sec,
+	    tim.tv_usec);
 	tim.tv_usec = -1;
 	tim.tv_sec = -1;
 	clnt_control(cli, CLSET_TIMEOUT, &tim);
 	clnt_control(cli, CLGET_TIMEOUT, &tim);
-	printf("timeout now %d.%d\n", tim.tv_sec, tim.tv_usec);
-
+	printf("timeout now %lld.%ld\n", (long long)tim.tv_sec,
+	    tim.tv_usec);
 
 	arg.cookie.n_len = 4;
 	arg.cookie.n_bytes = "hello";

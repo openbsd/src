@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.47 2011/03/23 00:59:49 bluhm Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.48 2013/04/19 05:06:52 deraadt Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -554,8 +554,8 @@ rtsol_check_timer(void)
 		timersub(&rtsol_timer, &now, &returnval);
 
 	if (dflag > 1)
-		warnmsg(LOG_DEBUG, __func__, "New timer is %ld:%08ld",
-		    (long)returnval.tv_sec, (long)returnval.tv_usec);
+		warnmsg(LOG_DEBUG, __func__, "New timer is %lld:%08ld",
+		    (long long)returnval.tv_sec, returnval.tv_usec);
 
 	return(&returnval);
 }
@@ -624,9 +624,9 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 
 		if (dflag > 1)
 			warnmsg(LOG_DEBUG, __func__,
-			    "set timer for %s to %d:%d", ifinfo->ifname,
-			    (int)ifinfo->timer.tv_sec,
-			    (int)ifinfo->timer.tv_usec);
+			    "set timer for %s to %lld:%ld", ifinfo->ifname,
+			    (long long)ifinfo->timer.tv_sec,
+			    ifinfo->timer.tv_usec);
 	}
 
 #undef MILLION
