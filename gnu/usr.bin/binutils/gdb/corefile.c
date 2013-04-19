@@ -151,7 +151,7 @@ reopen_exec_file (void)
   char *filename;
   int res;
   struct stat st;
-  long mtime;
+  time_t mtime;
 
   /* Don't do anything if the current target isn't exec. */
   if (exec_bfd == NULL || strcmp (target_shortname, "exec") != 0)

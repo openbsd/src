@@ -370,7 +370,7 @@ FUNCTION
 	bfd_get_mtime
 
 SYNOPSIS
-	long bfd_get_mtime (bfd *abfd);
+	time_t bfd_get_mtime (bfd *abfd);
 
 DESCRIPTION
 	Return the file modification time (as read from the file system, or
@@ -378,7 +378,7 @@ DESCRIPTION
 
 */
 
-long
+time_t
 bfd_get_mtime (bfd *abfd)
 {
   struct stat buf;

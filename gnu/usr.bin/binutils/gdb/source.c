@@ -979,7 +979,7 @@ find_source_lines (struct symtab *s, int desc)
   int nlines = 0;
   int lines_allocated = 1000;
   int *line_charpos;
-  long mtime = 0;
+  time_t mtime = 0;
   int size;
 
   line_charpos = (int *) xmalloc (lines_allocated * sizeof (int));

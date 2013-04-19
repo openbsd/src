@@ -1802,7 +1802,7 @@ void
 reread_symbols (void)
 {
   struct objfile *objfile;
-  long new_modtime;
+  time_t new_modtime;
   int reread_one = 0;
   struct stat new_statbuf;
   int res;
