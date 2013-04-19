@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.24 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.25 2013/04/19 16:38:47 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 /*
  * rdate.c: Set the date from the specified host
  *
- *	Uses the rfc868 time protocol at socket 37.
  *	Time is returned as the number of seconds since
  *	midnight January 1st 1900.
  */
