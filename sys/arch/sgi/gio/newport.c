@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.5 2012/10/03 22:46:09 miod Exp $	*/
+/*	$OpenBSD: newport.c,v 1.6 2013/04/20 20:26:26 miod Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -144,8 +144,7 @@ static __inline__
 void	 rex3_write_go(struct newport_devconfig *, bus_size_t, uint32_t);
 static __inline__
 uint32_t rex3_read(struct newport_devconfig *, bus_size_t);
-static __inline__
-void	 rex3_wait_gfifo(struct newport_devconfig *);
+int	 rex3_wait_gfifo(struct newport_devconfig *, const char *);
 
 void	 vc2_write_ireg(struct newport_devconfig *, uint8_t, uint16_t);
 uint16_t vc2_read_ireg(struct newport_devconfig *, uint8_t);
@@ -157,14 +156,14 @@ void	 xmap9_write_mode(struct newport_devconfig *, uint8_t, uint32_t);
 
 void	newport_attach_common(struct newport_devconfig *,
 	    struct gio_attach_args *);
-void	newport_bitblt(struct newport_devconfig *, int, int, int, int, int, int,
+int	newport_bitblt(struct newport_devconfig *, int, int, int, int, int, int,
 	    int);
 void	newport_cmap_setrgb(struct newport_devconfig *, int, uint8_t, uint8_t,
 	    uint8_t);
-void	newport_fill_rectangle(struct newport_devconfig *, int, int, int, int,
+int	newport_fill_rectangle(struct newport_devconfig *, int, int, int, int,
 	    int);
 void	newport_get_resolution(struct newport_devconfig *);
-void	newport_init_screen(struct newport_devconfig *);
+int	newport_init_screen(struct newport_devconfig *);
 void	newport_setup_hw(struct newport_devconfig *);
 
 static struct newport_devconfig newport_console_dc;
@@ -190,11 +189,23 @@ rex3_read(struct newport_devconfig *dc, bus_size_t rexreg)
 	    rexreg);
 }
 
-static __inline__ void
-rex3_wait_gfifo(struct newport_devconfig *dc)
+int
+rex3_wait_gfifo(struct newport_devconfig *dc, const char *from)
 {
-	while (rex3_read(dc, REX3_REG_STATUS) & REX3_STATUS_GFXBUSY)
-		;
+	unsigned int iter;
+	uint32_t rxstatus;
+
+	for (iter = 100000; iter != 0; iter--) {
+		rxstatus = rex3_read(dc, REX3_REG_STATUS);
+		if ((rxstatus &
+		    (REX3_STATUS_GFXBUSY | REX3_STATUS_FIFOLEVEL_MASK)) == 0)
+			return 0;
+	}
+
+#ifdef DEBUG
+	printf("%s: failed to idle, %05x\n", from, rxstatus);
+#endif
+	return EAGAIN;
 }
 
 void
@@ -296,13 +307,14 @@ xmap9_write_mode(struct newport_devconfig *dc, uint8_t index, uint32_t mode)
 }
 
 /**** Helper functions ****/
-void
+int
 newport_fill_rectangle(struct newport_devconfig *dc, int x1, int y1, int x2,
     int y2, int bg)
 {
 	struct rasops_info *ri = &dc->dc_ri;
 
-	rex3_wait_gfifo(dc);
+	if (rex3_wait_gfifo(dc, __func__) != 0)
+		return EAGAIN;
 
 	rex3_write(dc, REX3_REG_DRAWMODE0, REX3_DRAWMODE0_OPCODE_DRAW |
 	    REX3_DRAWMODE0_ADRMODE_BLOCK | REX3_DRAWMODE0_DOSETUP |
@@ -317,16 +329,20 @@ newport_fill_rectangle(struct newport_devconfig *dc, int x1, int y1, int x2,
 	rex3_write(dc, REX3_REG_XYSTARTI, (x1 << REX3_XYSTARTI_XSHIFT) | y1);
 
 	rex3_write_go(dc, REX3_REG_XYENDI, (x2 << REX3_XYENDI_XSHIFT) | y2);
+
+	return 0;
 }
 
-void
+int
 newport_bitblt(struct newport_devconfig *dc, int xs, int ys, int xd,
     int yd, int wi, int he, int rop)
 {
 	int xe, ye;
 	uint32_t tmp;
 
-	rex3_wait_gfifo(dc);
+	if (rex3_wait_gfifo(dc, __func__) != 0)
+		return EAGAIN;
+
 	if (yd > ys) {
 		/* need to copy bottom up */
 		ye = ys;
@@ -358,6 +374,8 @@ newport_bitblt(struct newport_devconfig *dc, int xs, int ys, int xd,
 	tmp |= (xd - xs) << REX3_XYMOVE_XSHIFT;
 
 	rex3_write_go(dc, REX3_REG_XYMOVE, tmp);
+
+	return 0;
 }
 
 void
@@ -505,6 +523,7 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args waa;
 	const char *descr;
 	extern struct consdev wsdisplay_cons;
+	int fail = 0;
 
 	if (cn_tab == &wsdisplay_cons &&
 	    ga->ga_addr == newport_console_dc.dc_addr) {
@@ -516,7 +535,8 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 		dc = malloc(sizeof(struct newport_devconfig),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
 		newport_attach_common(dc, ga);
-		newport_init_screen(dc);
+		if (newport_init_screen(dc) != 0)
+			fail = 1;
 	}
 	sc->sc_dc = dc;
 	dc->dc_sc = sc;
@@ -528,6 +548,16 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 	    descr, dc->dc_boardrev, dc->dc_xmaprev, dc->dc_vc2rev);
 	printf("%s: %dx%d %d-bit frame buffer\n",
 	    self->dv_xname, dc->dc_xres, dc->dc_yres, dc->dc_depth);
+#ifdef DEBUG
+	printf("%s: REX3 config = %06x\n",
+	    self->dv_xname, rex3_read(dc, REX3_REG_CONFIG));
+#endif
+
+	if (fail) {
+		printf("%s: failed to initialize screen\n", self->dv_xname);
+		free(dc, M_DEVBUF);
+		return;
+	}
 
 	sc->sc_scrlist[0] = &dc->dc_wsd;
 	sc->sc_wsl.nscreens = 1;
@@ -552,9 +582,12 @@ newport_cnattach(struct gio_attach_args *ga)
 {
 	struct rasops_info *ri = &newport_console_dc.dc_ri;
 	long defattr;
+	int rc;
 
 	newport_attach_common(&newport_console_dc, ga);
-	newport_init_screen(&newport_console_dc);
+	rc = newport_init_screen(&newport_console_dc);
+	if (rc != 0)
+		return rc;
 
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&newport_console_dc.dc_wsd, ri, 0, 0, defattr);
@@ -573,10 +606,11 @@ newport_attach_common(struct newport_devconfig *dc, struct gio_attach_args *ga)
 	newport_get_resolution(dc);
 }
 
-void
+int
 newport_init_screen(struct newport_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_ri;
+	int rc;
 
 	memset(ri, 0, sizeof(struct rasops_info));
 	ri->ri_hw = dc;
@@ -604,12 +638,14 @@ newport_init_screen(struct newport_devconfig *dc)
 	dc->dc_wsd.fontheight = ri->ri_font->fontheight;
 	dc->dc_wsd.capabilities = ri->ri_caps;
 
-	newport_fill_rectangle(dc, 0, 0, ri->ri_width - 1, ri->ri_height - 1,
-	    WSCOL_BLACK);
+	rc = newport_fill_rectangle(dc, 0, 0, ri->ri_width - 1,
+	    ri->ri_height - 1, WSCOL_BLACK);
 
 #ifdef notyet
 	dc->dc_mode = WSDISPLAYIO_MODE_EMUL;
 #endif
+
+	return rc;
 }
 
 /**** wsdisplay textops ****/
@@ -625,9 +661,8 @@ newport_do_cursor(struct rasops_info *ri)
 	x = ri->ri_ccol * w + ri->ri_xorigin;
 	y = ri->ri_crow * h + ri->ri_yorigin;
 
-	newport_bitblt(dc, x, y, x, y, w, h, OPENGL_LOGIC_OP_COPY_INVERTED);
-
-	return 0;
+	return newport_bitblt(dc, x, y, x, y, w, h,
+	    OPENGL_LOGIC_OP_COPY_INVERTED);
 }
 
 int
@@ -646,12 +681,12 @@ newport_putchar(void *c, int row, int col, u_int ch, long attr)
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, &ul);
 
 	if ((ch == ' ' || ch == 0) && ul == 0) {
-		newport_fill_rectangle(dc, x, y, x + font->fontwidth - 1,
+		return newport_fill_rectangle(dc, x, y, x + font->fontwidth - 1,
 		    y + font->fontheight - 1, bg);
-		return 0;
 	}
 
-	rex3_wait_gfifo(dc);
+	if (rex3_wait_gfifo(dc, __func__) != 0)
+		return EAGAIN;
 
 	rex3_write(dc, REX3_REG_DRAWMODE0, REX3_DRAWMODE0_OPCODE_DRAW |
 	    REX3_DRAWMODE0_ADRMODE_BLOCK | REX3_DRAWMODE0_STOPONX |
@@ -710,9 +745,8 @@ newport_copycols(void *c, int row, int srccol, int dstcol, int ncols)
 	y = ri->ri_yorigin + font->fontheight * row;
 	width = font->fontwidth * ncols;
 	height = font->fontheight;
-	newport_bitblt(dc, xs, y, xd, y, width, height, OPENGL_LOGIC_OP_COPY);
-
-	return 0;
+	return newport_bitblt(dc, xs, y, xd, y, width, height,
+	    OPENGL_LOGIC_OP_COPY);
 }
 
 int
@@ -731,9 +765,7 @@ newport_erasecols(void *c, int row, int startcol, int ncols, long attr)
 	dx = sx + ncols * font->fontwidth - 1;
 	dy = sy + font->fontheight - 1;
 
-	newport_fill_rectangle(dc, sx, sy, dx, dy, bg);
-
-	return 0;
+	return newport_fill_rectangle(dc, sx, sy, dx, dy, bg);
 }
 
 int
@@ -750,9 +782,8 @@ newport_copyrows(void *c, int srcrow, int dstrow, int nrows)
 	width = ri->ri_emuwidth;
 	height = font->fontheight * nrows;
 
-	newport_bitblt(dc, x, ys, x, yd, width, height, OPENGL_LOGIC_OP_COPY);
-
-	return 0;
+	return newport_bitblt(dc, x, ys, x, yd, width, height,
+	    OPENGL_LOGIC_OP_COPY);
 }
 
 int
@@ -766,17 +797,14 @@ newport_eraserows(void *c, int startrow, int nrows, long attr)
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, NULL);
 
 	if (nrows == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
-		newport_fill_rectangle(dc, 0, 0, ri->ri_width - 1,
+		return newport_fill_rectangle(dc, 0, 0, ri->ri_width - 1,
 		    ri->ri_height - 1, bg);
-		return 0;
 	}
 
-	newport_fill_rectangle(dc, ri->ri_xorigin,
+	return newport_fill_rectangle(dc, ri->ri_xorigin,
 	    ri->ri_yorigin + startrow * font->fontheight,
 	    ri->ri_xorigin + ri->ri_emuwidth - 1,
 	    ri->ri_yorigin + (startrow + nrows) * font->fontheight - 1, bg);
-
-	return 0;
 }
 
 /**** wsdisplay accessops ****/
@@ -842,11 +870,13 @@ newport_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_SMODE:
 		nmode = *(int *)data;
 		if (nmode != dc->dc_mode) {
-			dc->dc_mode = nmode;
 			if (nmode == WSDISPLAYIO_MODE_EMUL) {
-				rex3_wait_gfifo(dc);
+				if (rex3_wait_gfifo(dc, __func__) != 0)
+					return EAGAIN;
+				dc->dc_mode = nmode;
 				newport_setup_hw(dc);
-			}
+			} else
+				dc->dc_mode = nmode;
 		}
 		break;
 #endif

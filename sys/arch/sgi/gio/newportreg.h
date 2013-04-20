@@ -1,4 +1,4 @@
-/*	$OpenBSD: newportreg.h,v 1.1 2012/04/16 22:31:36 miod Exp $	*/
+/*	$OpenBSD: newportreg.h,v 1.2 2013/04/20 20:26:26 miod Exp $	*/
 /*	$NetBSD: newportreg.h,v 1.5 2011/02/20 07:59:50 matt Exp $	*/
 
 /*
@@ -174,8 +174,12 @@
 #define REX3_REG_TOPSCAN		0x1320
 #define REX3_REG_XYWIN			0x1324
 
+#define REX3_REG_CONFIG			0x1330
+
 #define REX3_REG_STATUS			0x1338
 #define  REX3_STATUS_GFXBUSY		0x00000008
+#define  REX3_STATUS_FIFOLEVEL_MASK	0x00001F80
+#define  REX3_STATUS_FIFOLEVEL_SHIFT	7
 
 /* VC2 */
 
