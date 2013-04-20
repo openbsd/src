@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.40 2013/04/15 09:14:41 mpi Exp $ */
+/* $OpenBSD: pms.c,v 1.41 2013/04/20 08:01:37 tobias Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -134,6 +134,7 @@ struct pms_softc {		/* driver status information */
 	struct device sc_dev;
 
 	pckbc_tag_t sc_kbctag;
+	int sc_slot;
 
 	int sc_state;
 #define PMS_STATE_DISABLED	0
@@ -373,10 +374,10 @@ int
 pms_cmd(struct pms_softc *sc, u_char *cmd, int len, u_char *resp, int resplen)
 {
 	if (sc->poll) {
-		return pckbc_poll_cmd(sc->sc_kbctag, PCKBC_AUX_SLOT,
+		return pckbc_poll_cmd(sc->sc_kbctag, sc->sc_slot,
 		    cmd, len, resplen, resp, 1);
 	} else {
-		return pckbc_enqueue_cmd(sc->sc_kbctag, PCKBC_AUX_SLOT,
+		return pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_slot,
 		    cmd, len, resplen, 1, resp);
 	}
 }
@@ -602,7 +603,7 @@ pmsprobe(struct device *parent, void *match, void *aux)
 	u_char cmd[1], resp[2];
 	int res;
 
-	if (pa->pa_slot != PCKBC_AUX_SLOT)
+	if (pa->pa_slot < PCKBC_AUX_SLOT)
 		return (0);
 
 	/* Flush any garbage. */
@@ -630,10 +631,11 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	struct wsmousedev_attach_args a;
 
 	sc->sc_kbctag = pa->pa_tag;
+	sc->sc_slot = pa->pa_slot;
 
 	printf("\n");
 
-	pckbc_set_inputhandler(sc->sc_kbctag, PCKBC_AUX_SLOT,
+	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_slot,
 	    pmsinput, sc, DEVNAME(sc));
 
 	a.accessops = &pms_accessops;
@@ -706,10 +708,10 @@ pms_change_state(struct pms_softc *sc, int newstate, int dev)
 	case PMS_STATE_ENABLED:
 		sc->inputstate = 0;
 
-		pckbc_slot_enable(sc->sc_kbctag, PCKBC_AUX_SLOT, 1);
+		pckbc_slot_enable(sc->sc_kbctag, sc->sc_slot, 1);
 
 		if (sc->poll)
-			pckbc_flush(sc->sc_kbctag, PCKBC_AUX_SLOT);
+			pckbc_flush(sc->sc_kbctag, sc->sc_slot);
 
 		pms_reset(sc);
 		if (sc->protocol->type == PMS_STANDARD ||
@@ -725,7 +727,7 @@ pms_change_state(struct pms_softc *sc, int newstate, int dev)
 		if (sc->protocol->disable)
 			sc->protocol->disable(sc);
 
-		pckbc_slot_enable(sc->sc_kbctag, PCKBC_AUX_SLOT, 0);
+		pckbc_slot_enable(sc->sc_kbctag, sc->sc_slot, 0);
 		break;
 	}
 

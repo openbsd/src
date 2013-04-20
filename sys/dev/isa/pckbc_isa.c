@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_isa.c,v 1.11 2012/02/02 21:40:19 deraadt Exp $	*/
+/*	$OpenBSD: pckbc_isa.c,v 1.12 2013/04/20 08:01:37 tobias Exp $	*/
 /*	$NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
@@ -80,12 +80,12 @@ pckbc_isa_match(struct device *parent, void *match, void *aux)
 			goto fail;
 
 		/* flush KBC */
-		(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+		(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, NULL);
 
 		/* KBC selftest */
 		if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0)
 			goto fail2;
-		res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+		res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, NULL);
 		if (res != 0x55) {
 			printf("kbc selftest: %x\n", res);
 			goto fail2;
@@ -139,6 +139,9 @@ pckbc_isa_attach(struct device *parent, struct device *self, void *aux)
 	struct pckbc_internal *t;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh_d, ioh_c;
+#ifdef PCKBC_APM
+	uint slot;
+#endif
 
 	isc->sc_ic = ia->ia_ic;
 	iot = ia->ia_iot;
@@ -147,7 +150,12 @@ pckbc_isa_attach(struct device *parent, struct device *self, void *aux)
 	 * Set up IRQs for "normal" ISA.
 	 */
 	isc->sc_irq[PCKBC_KBD_SLOT] = 1;
+#ifdef PCKBC_APM
+	for (slot = PCKBC_AUX_SLOT; slot < PCKBC_NSLOTS; slot++)
+		isc->sc_irq[slot] = 12;
+#else
 	isc->sc_irq[PCKBC_AUX_SLOT] = 12;
+#endif
 
 	sc->intr_establish = pckbc_isa_intr_establish;
 
@@ -189,7 +197,7 @@ pckbc_isa_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 		printf("%s: unable to establish interrupt for %s slot\n",
 		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
 	} else {
-		printf("%s: using irq %d for %s slot\n", sc->sc_dv.dv_xname,
+		printf("%s: using irq %d for %s\n", sc->sc_dv.dv_xname,
 		    isc->sc_irq[slot], pckbc_slot_names[slot]);
 	}
 }

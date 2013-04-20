@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.33 2013/02/15 08:49:51 mpi Exp $ */
+/* $OpenBSD: pckbc.c,v 1.34 2013/04/20 08:01:37 tobias Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -105,8 +105,20 @@ void pckbc_poll(void *);
 int pckbc_cmdresponse(struct pckbc_internal *, pckbc_slot_t, u_char);
 void pckbc_start(struct pckbc_internal *, pckbc_slot_t);
 int pckbcintr_internal(struct pckbc_internal *, struct pckbc_softc *);
+int pckbc_enable_apm(struct pckbc_internal *);
+int pckbc_disable_apm(struct pckbc_internal *);
 
-const char *pckbc_slot_names[] = { "kbd", "aux" };
+const char *pckbc_slot_names[] = {
+	"kbd slot",
+#ifdef PCKBC_APM
+	"aux slot #0",
+	"aux slot #1",
+	"aux slot #2",
+	"aux slot #3",
+#else
+	"aux slot"
+#endif
+};
 
 #define KBC_DEVCMD_ACK		0xfa
 #define KBC_DEVCMD_RESEND	0xfe
@@ -137,31 +149,58 @@ pckbc_send_cmd(bus_space_tag_t iot, bus_space_handle_t ioh_c, u_char val)
 	return (1);
 }
 
+/*
+ * NOTE: Active PS/2 Multiplexing behaviour is only checked if t != NULL.
+ * This behaviour is intentional.
+ */
 int
 pckbc_poll_data1(bus_space_tag_t iot, bus_space_handle_t ioh_d,
-    bus_space_handle_t ioh_c, pckbc_slot_t slot, int checkaux)
+    bus_space_handle_t ioh_c, pckbc_slot_t slot, struct pckbc_internal *t)
 {
 	int i;
+	int active;
 	u_char stat;
 
 	/* polls for ~100ms */
 	for (i = 100; i; i--, delay(1000)) {
 		stat = bus_space_read_1(iot, ioh_c, 0);
+		/* XXX no error bit handling */
 		if (stat & KBS_DIB) {
 			register u_char c;
 
 			KBD_DELAY;
 			c = bus_space_read_1(iot, ioh_d, 0);
-			if (checkaux && (stat & 0x20)) { /* aux data */
-				if (slot != PCKBC_AUX_SLOT) {
-					DPRINTF("lost aux 0x%x\n", c);
+
+#ifdef PCKBC_APM
+			if (t && t->t_apmver >= 0) {
+				if (stat & 0x20)
+					active = PCKBC_AUX_SLOT + (stat >> 6);
+				else
+					active = PCKBC_KBD_SLOT;
+			} else
+#endif
+				active = stat & 0x20 ?
+				    PCKBC_AUX_SLOT : PCKBC_KBD_SLOT;
+
+#ifdef PCKBC_APM
+			if (active != PCKBC_KBD_SLOT &&
+			    t && t->t_apmver >= 0 && (stat & KBS_WARM)) {
+				if (c >= 0xfd) {
+					/* genuine error */
+					/* XXX handle hot removal? */
 					continue;
 				}
-			} else {
-				if (slot == PCKBC_AUX_SLOT) {
-					DPRINTF("lost kbd 0x%x\n", c);
-					continue;
-				}
+				DPRINTF("pckbc apm mode reverted?\n");
+				/* XXX schedule a switch as soon as possible */
+			}
+#endif
+			if (slot != active) {
+				if ((t && t->t_haveaux) ||
+				    slot != PCKBC_KBD_SLOT ||
+				    active == PCKBC_KBD_SLOT)
+					DPRINTF("lost data on slot%d 0x%x\n",
+					    active, c);
+				continue;
 			}
 			return (c);
 		}
@@ -182,8 +221,7 @@ pckbc_get8042cmd(struct pckbc_internal *t)
 
 	if (!pckbc_send_cmd(iot, ioh_c, K_RDCMDBYTE))
 		return (0);
-	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT,
-				t->t_haveaux);
+	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, t);
 	if (data == -1)
 		return (0);
 	t->t_cmdbyte = data;
@@ -215,7 +253,15 @@ pckbc_send_devcmd(struct pckbc_internal *t, pckbc_slot_t slot, u_char val)
 	bus_space_handle_t ioh_d = t->t_ioh_d;
 	bus_space_handle_t ioh_c = t->t_ioh_c;
 
-	if (slot == PCKBC_AUX_SLOT) {
+	if (slot >= PCKBC_AUX_SLOT) {
+#ifdef PCKBC_APM
+		/* send specific routing prefix if multiplexing */
+		if (t->t_apmver >= 0) {
+			if (pckbc_send_cmd(iot, ioh_c,
+			    KBC_APM_PREFIX(slot - PCKBC_AUX_SLOT)) == 0)
+				return (0);
+		} else
+#endif
 		if (!pckbc_send_cmd(iot, ioh_c, KBC_AUXWRITE))
 			return (0);
 	}
@@ -299,7 +345,7 @@ pckbc_attach(struct pckbc_softc *sc, int flags)
 	}
 
 	/* flush */
-	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, NULL);
 
 	/* set initial cmd byte */
 	if (!pckbc_put8042cmd(t)) {
@@ -317,7 +363,7 @@ pckbc_attach(struct pckbc_softc *sc, int flags)
 	 */
 	if (!pckbc_send_cmd(iot, ioh_c, KBC_KBDTEST))
 		return;
-	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, NULL);
 
 	/*
 	 * Normally, we should get a "0" here.
@@ -357,7 +403,7 @@ pckbc_attach(struct pckbc_softc *sc, int flags)
 		goto nomouse;
 	}
 	bus_space_write_1(iot, ioh_d, 0, 0x5a);	/* a random value */
-	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, 1);
+	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, NULL);
 
 	if (ISSET(t->t_flags, PCKBC_NEED_AUXWRITE)) {
 		/*
@@ -373,7 +419,7 @@ pckbc_attach(struct pckbc_softc *sc, int flags)
 				goto nomouse;
 			bus_space_write_1(iot, ioh_d, 0, 0x5a);
 			res = pckbc_poll_data1(iot, ioh_d, ioh_c,
-			    PCKBC_AUX_SLOT, 1);
+			    PCKBC_AUX_SLOT, NULL);
 			DPRINTF("kbc: aux echo: %x\n", res);
 		}
 	}
@@ -388,8 +434,21 @@ pckbc_attach(struct pckbc_softc *sc, int flags)
 		 */
 		DPRINTF("kbc: aux echo: %x\n", res);
 		t->t_haveaux = 1;
-		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT, 0))
+
+#ifdef PCKBC_APM
+		t->t_apmver = -1;
+		t->t_apmver = pckbc_enable_apm(t);
+		if (t->t_apmver >= 0) {
+			printf("%s: Active PS/2 Multiplexing, version %d.%d\n",
+			    sc->sc_dv.dv_xname, t->t_apmver >> 4,
+			    t->t_apmver & 0x0f);
 			cmdbits |= KC8_MENABLE;
+			for (res = PCKBC_AUX_SLOT; res < PCKBC_NSLOTS; res++)
+				pckbc_attach_slot(sc, res, 0);
+		} else
+#endif
+			if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT, 0))
+				cmdbits |= KC8_MENABLE;
 	}
 #ifdef PCKBCDEBUG
 	else
@@ -437,7 +496,7 @@ pckbcprint(void *aux, const char *pnp)
 	struct pckbc_attach_args *pa = aux;
 
 	if (!pnp)
-		printf(" (%s slot)", pckbc_slot_names[pa->pa_slot]);
+		printf(" (%s)", pckbc_slot_names[pa->pa_slot]);
 	return (QUIET);
 }
 
@@ -459,8 +518,7 @@ pckbc_flush(pckbc_tag_t self, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = self;
 
-	(void) pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_c,
-	    slot, t->t_haveaux);
+	(void) pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_c, slot, t);
 }
 
 int
@@ -470,8 +528,7 @@ pckbc_poll_data(pckbc_tag_t self, pckbc_slot_t slot)
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	int c;
 
-	c = pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_c,
-			     slot, t->t_haveaux);
+	c = pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_c, slot, t);
 	if (c != -1 && q && CMD_IN_QUEUE(q)) {
 		/* we jumped into a running command - try to
 		 deliver the response */
@@ -520,13 +577,28 @@ void
 pckbc_slot_enable(pckbc_tag_t self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
-	struct pckbc_portcmd *cmd;
+	const struct pckbc_portcmd *cmd;
+	int rc;
 
+#ifdef PCKBC_APM
+	cmd = &pckbc_portcmd[slot >= PCKBC_AUX_SLOT ? PCKBC_AUX_SLOT : slot];
+#else
 	cmd = &pckbc_portcmd[slot];
+#endif
 
-	if (!pckbc_send_cmd(t->t_iot, t->t_ioh_c,
-			    on ? cmd->cmd_en : cmd->cmd_dis))
-		printf("pckbc_slot_enable(%d) failed\n", on);
+#ifdef PCKBC_APM
+	/* send specific routing prefix if multiplexing */
+	if (t->t_apmver >= 0 && slot >= PCKBC_AUX_SLOT) {
+		rc = pckbc_send_cmd(t->t_iot, t->t_ioh_c,
+		    KBC_APM_PREFIX(slot - PCKBC_AUX_SLOT));
+	} else
+#endif
+		rc = 1;
+	if (rc != 0)
+	rc = pckbc_send_cmd(t->t_iot, t->t_ioh_c,
+	    on ? cmd->cmd_en : cmd->cmd_dis);
+	if (rc == 0)
+		printf("pckbc_slot_enable(%d,%d) failed\n", slot, on);
 
 	if (slot == PCKBC_KBD_SLOT) {
 		if (on)
@@ -580,8 +652,7 @@ pckbc_poll_cmd1(struct pckbc_internal *t, pckbc_slot_t slot,
 			return;
 		}
 		for (i = 10; i; i--) { /* 1s ??? */
-			c = pckbc_poll_data1(iot, ioh_d, ioh_c, slot,
-					     t->t_haveaux);
+			c = pckbc_poll_data1(iot, ioh_d, ioh_c, slot, t);
 			if (c != -1)
 				break;
 		}
@@ -620,8 +691,7 @@ pckbc_poll_cmd1(struct pckbc_internal *t, pckbc_slot_t slot,
 		else
 			i = 10; /* 1s ??? */
 		while (i--) {
-			c = pckbc_poll_data1(iot, ioh_d, ioh_c, slot,
-					     t->t_haveaux);
+			c = pckbc_poll_data1(iot, ioh_d, ioh_c, slot, t);
 			if (c != -1)
 				break;
 		}
@@ -684,10 +754,11 @@ pckbc_cleanqueue(struct pckbc_slotdata *q)
 void
 pckbc_cleanqueues(struct pckbc_internal *t)
 {
-	if (t->t_slotdata[PCKBC_KBD_SLOT])
-		pckbc_cleanqueue(t->t_slotdata[PCKBC_KBD_SLOT]);
-	if (t->t_slotdata[PCKBC_AUX_SLOT])
-		pckbc_cleanqueue(t->t_slotdata[PCKBC_AUX_SLOT]);
+	uint slot;
+
+	for (slot = 0; slot < PCKBC_NSLOTS; slot++)
+		if (t->t_slotdata[slot])
+			pckbc_cleanqueue(t->t_slotdata[slot]);
 }
 
 /*
@@ -740,11 +811,13 @@ pckbc_reset(struct pckbc_softc *sc)
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh_d = t->t_ioh_d, ioh_c = t->t_ioh_c;
 
-	pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, NULL);
 	/* KBC selftest */
 	if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0)
 		return;
-	pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, NULL);
+	if (t->t_apmver >= 0)
+		pckbc_enable_apm(t);
 	(void)pckbc_put8042cmd(t);
 	pckbcintr_internal(t->t_sc->id, t->t_sc);
 }
@@ -972,8 +1045,16 @@ pckbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 
 		served = 1;
 
-		slot = (t->t_haveaux && (stat & 0x20)) ?
-		    PCKBC_AUX_SLOT : PCKBC_KBD_SLOT;
+#ifdef PCKBC_APM
+		if (t->t_apmver >= 0) { /* implies t->t_haveaux != 0 */
+			if (stat & 0x20)
+				slot = PCKBC_AUX_SLOT + (stat >> 6);
+			else
+				slot = PCKBC_KBD_SLOT;
+		} else
+#endif
+			slot = (t->t_haveaux && (stat & 0x20)) ?
+			    PCKBC_AUX_SLOT : PCKBC_KBD_SLOT;
 		q = t->t_slotdata[slot];
 
 		if (!q) {
@@ -1008,6 +1089,89 @@ pckbcintr_internal(struct pckbc_internal *t, struct pckbc_softc *sc)
 	return (served);
 }
 
+#ifdef PCKBC_APM
+
+/*
+ * Disable Active PS/2 Multiplexing.
+ * Returns nonzero if error.
+ */
+int
+pckbc_disable_apm(struct pckbc_internal *t)
+{
+	bus_space_tag_t iot = t->t_iot;
+	bus_space_handle_t ioh_d = t->t_ioh_d, ioh_c = t->t_ioh_c;
+	int data;
+
+	/*
+	 * Send the three bytes of the disable sequence
+	 */
+
+	if (pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO) == 0 ||
+	    pckbc_wait_output(iot, ioh_c) == 0)
+		return -1;
+	bus_space_write_1(iot, ioh_d, 0, KBC_APM_DIS1);
+	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, NULL);
+	if (data < 0 || data != KBC_APM_DIS1)
+		return -1;
+
+	if (pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO) == 0 ||
+	    pckbc_wait_output(iot, ioh_c) == 0)
+		return -1;
+	bus_space_write_1(iot, ioh_d, 0, KBC_APM_DIS2);
+	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, NULL);
+	if (data < 0 || data != KBC_APM_DIS2)
+		return -1;
+
+	if (pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO) == 0 ||
+	    pckbc_wait_output(iot, ioh_c) == 0)
+		return -1;
+	bus_space_write_1(iot, ioh_d, 0, KBC_APM_DIS3);
+	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, NULL);
+	if (data < 0 || data != t->t_apmver)
+		return -1;
+
+	return 0;
+}
+
+/*
+ * Enable Active PS/2 Multiplexing.
+ * Returns -1 if unavailable or version supported by the controller.
+ */
+int
+pckbc_enable_apm(struct pckbc_internal *t)
+{
+	bus_space_tag_t iot = t->t_iot;
+	bus_space_handle_t ioh_d = t->t_ioh_d, ioh_c = t->t_ioh_c;
+	int data;
+
+	if (pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO) == 0 ||
+	    pckbc_wait_output(iot, ioh_c) == 0)
+		return -1;
+	bus_space_write_1(iot, ioh_d, 0, KBC_APM_ENB1);
+	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, NULL);
+	if (data < 0 || data != KBC_APM_ENB1)
+		return -1;
+
+	if (pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO) == 0 ||
+	    pckbc_wait_output(iot, ioh_c) == 0)
+		return -1;
+	bus_space_write_1(iot, ioh_d, 0, KBC_APM_ENB2);
+	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, NULL);
+	if (data < 0 || data != KBC_APM_ENB2)
+		return -1;
+
+	if (pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO) == 0 ||
+	    pckbc_wait_output(iot, ioh_c) == 0)
+		return -1;
+	bus_space_write_1(iot, ioh_d, 0, KBC_APM_ENB3);
+	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, NULL);
+	if (data < 0 || data == KBC_APM_ENB3)
+		return -1;
+
+	return data;
+}
+#endif
+
 int
 pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr, bus_size_t cmd_offset,
     int flags)
@@ -1031,7 +1195,7 @@ pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr, bus_size_t cmd_offset,
 	timeout_set(&pckbc_consdata.t_poll, pckbc_poll, &pckbc_consdata);
 
 	/* flush */
-	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, NULL);
 
 	/* selftest? */
 
