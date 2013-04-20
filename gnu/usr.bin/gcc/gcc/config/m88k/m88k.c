@@ -2741,10 +2741,6 @@ print_operand (file, x, code)
 
   switch (code)
     {
-    case '*': /* addressing base register for PIC */
-      asm_fprintf (file, "%R%s", reg_names[PIC_OFFSET_TABLE_REGNUM]);
-      return;
-
     case '#': /* register prefix character (may be empty) */
       fputs (m88k_register_prefix, file);
       return;
