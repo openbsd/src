@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.11 2013/03/10 23:32:53 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.12 2013/04/20 17:41:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -932,8 +932,8 @@ relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf, size_t len)
 		}
 	}
 	if (strstr(val, "$TIMEOUT") != NULL) {
-		snprintf(ibuf, sizeof(ibuf), "%lu",
-		    rlay->rl_conf.timeout.tv_sec);
+		snprintf(ibuf, sizeof(ibuf), "%lld",
+		    (long long)rlay->rl_conf.timeout.tv_sec);
 		if (expand_string(buf, len, "$TIMEOUT", ibuf) != 0)
 			return (NULL);
 	}
