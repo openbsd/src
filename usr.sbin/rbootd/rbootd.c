@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.23 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.24 2013/04/20 20:11:41 deraadt Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <unistd.h>
 #include <util.h>
 #include <pwd.h>
+#include <poll.h>
 
 #include "defs.h"
 
@@ -85,7 +86,7 @@ main(int argc, char *argv[])
 	int c, fd, maxfds;
 	sigset_t hmask, omask;
 	struct passwd *pw;
-	fd_set rset;
+	struct pollfd pfd[1];
 
 	closefrom(STDERR_FILENO + 1);
 
@@ -204,12 +205,10 @@ main(int argc, char *argv[])
 	 *  Main loop: receive a packet, determine where it came from,
 	 *  and if we service this host, call routine to handle request.
 	 */
-	maxfds = fd + 1;
-	FD_ZERO(&rset);
-	FD_SET(fd, &rset);
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
 	for (;;) {
 		struct timeval timeout;
-		fd_set r;
 		int nsel;
 
 		/*
@@ -228,27 +227,19 @@ main(int argc, char *argv[])
 			doreconfig = 0;
 		}
 
-		r = rset;
-
-		if (RmpConns == NULL) {		/* timeout isnt necessary */
-			nsel = select(maxfds, &r, NULL, NULL, NULL);
-		} else {
-			timeout.tv_sec = RMP_TIMEOUT;
-			timeout.tv_usec = 0;
-			nsel = select(maxfds, &r, NULL, NULL, &timeout);
-		}
+		nsel = poll(pfd, 1, RmpConns ? RMP_TIMEOUT * 100 : -1);
 
 		if (nsel < 0) {
 			if (errno == EINTR)
 				continue;
-			syslog(LOG_ERR, "select: %m");
+			syslog(LOG_ERR, "poll: %m");
 			DoExit();
 		} else if (nsel == 0) {		/* timeout */
 			DoTimeout();		/* clear stale conns */
 			continue;
 		}
 
-		if (FD_ISSET(fd, &r)) {
+		if (pfd[0].revents & POLLIN) {
 			RMPCONN rconn;
 			CLIENT *client;
 			int doread = 1;
