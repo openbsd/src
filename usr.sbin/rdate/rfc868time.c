@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.7 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.8 2013/04/20 17:55:46 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -73,8 +73,6 @@ rfc868time_client (const char *hostname, int family, struct timeval *new,
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
-	/* XXX what about rfc868 UDP
-	 * probably not due to the Y2038 issue  -mirabile */
 	error = getaddrinfo(hostname, "time", &hints, &res0);
 	if (error) {
 		errx(1, "%s: %s", hostname, gai_strerror(error));
