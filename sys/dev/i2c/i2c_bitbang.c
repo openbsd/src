@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_bitbang.c,v 1.3 2006/01/13 23:56:46 grange Exp $	*/
+/*	$OpenBSD: i2c_bitbang.c,v 1.4 2013/04/20 14:27:09 kettenis Exp $	*/
 /*	$NetBSD: i2c_bitbang.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,27 @@
 #define	OUTPUT		ops->ibo_bits[I2C_BIT_OUTPUT]	/* SDA is output */
 #define	INPUT		ops->ibo_bits[I2C_BIT_INPUT]	/* SDA is input */
 
+#define SCL_BAIL_COUNT	1000
+
+int i2c_wait_for_scl(void *, i2c_bitbang_ops_t);
+
+int
+i2c_wait_for_scl(void *v, i2c_bitbang_ops_t ops)
+{
+	int bail = 0;
+
+	while(((BB_READ & SCL) == 0) && bail < SCL_BAIL_COUNT) {
+		delay(1);
+		bail++;
+	}
+	if (bail == SCL_BAIL_COUNT) {
+		i2c_bitbang_send_stop(v, 0, ops);
+		return (EIO);
+	}
+
+	return (0);
+}
+
 /*ARGSUSED*/
 int
 i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
@@ -64,6 +85,8 @@ i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
 	BB_SET(SDA | SCL);
 	delay(5);		/* bus free time (4.7 uS) */
 	BB_SET(      SCL);
+	if (i2c_wait_for_scl(v, ops) != 0)
+		return (EIO);
 	delay(4);		/* start hold time (4.0 uS) */
 	BB_SET(        0);
 	delay(5);		/* clock low time (4.7 uS) */
@@ -115,6 +138,8 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags,
 	for (i = 0; i < 8; i++) {
 		val <<= 1;
 		BB_SET(SDA | SCL);
+		if (i2c_wait_for_scl(v, ops) != 0)
+			return (EIO);
 		delay(4);	/* clock high time (4.0 uS) */
 		if (BB_READ & SDA)
 			val |= 1;
@@ -127,6 +152,8 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags,
 	BB_SET(bit      );
 	delay(1);	/* data setup time (250 nS) */
 	BB_SET(bit | SCL);
+	if (i2c_wait_for_scl(v, ops) != 0)
+		return (EIO);
 	delay(4);	/* clock high time (4.0 uS) */
 	BB_SET(bit      );
 	delay(5);	/* clock low time (4.7 uS) */
@@ -157,6 +184,8 @@ i2c_bitbang_write_byte(void *v, uint8_t val, int flags,
 		BB_SET(bit      );
 		delay(1);	/* data setup time (250 nS) */
 		BB_SET(bit | SCL);
+		if (i2c_wait_for_scl(v, ops) != 0)
+			return (EIO);
 		delay(4);	/* clock high time (4.0 uS) */
 		BB_SET(bit      );
 		delay(5);	/* clock low time (4.7 uS) */
@@ -167,6 +196,8 @@ i2c_bitbang_write_byte(void *v, uint8_t val, int flags,
 	BB_SET(SDA      );
 	delay(5);
 	BB_SET(SDA | SCL);
+	if (i2c_wait_for_scl(v, ops) != 0)
+		return (EIO);
 	delay(4);
 	error = (BB_READ & SDA) ? EIO : 0;
 	BB_SET(SDA      );
