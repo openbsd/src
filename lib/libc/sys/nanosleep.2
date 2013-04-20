@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.12 2013/04/08 19:49:55 guenther Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.13 2013/04/20 23:47:58 tedu Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 8 2013 $
+.Dd $Mdocdate: April 20 2013 $
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -39,10 +39,11 @@
 .Sh SYNOPSIS
 .Fd #include <time.h>
 .Ft int
-.Fn nanosleep "const struct timespec *rqtp" "struct timespec *rmtp"
+.Fn nanosleep "const struct timespec *timeout" "struct timespec *remainder"
 .Sh DESCRIPTION
 .Fn nanosleep
-suspends execution of the calling process for the time specified.
+suspends execution of the calling process for the duration specified by
+.Fa timeout .
 An unmasked signal will cause it to terminate the sleep early,
 regardless of the
 .Dv SA_RESTART
@@ -50,7 +51,7 @@ value on the interrupting signal.
 .Sh RETURN VALUES
 If the
 .Fn nanosleep
-function returns because the requested time has elapsed, the value
+function returns because the requested duration has elapsed, the value
 returned will be zero.
 .Pp
 If the
@@ -60,9 +61,9 @@ will be \-1, and the global variable
 .Va errno
 will be set to indicate the interruption.
 If
-.Fa rmtp
+.Fa remainder
 is non-null, the timespec structure it references is updated to contain the
-unslept amount (the request time minus the time actually slept).
+unslept amount (the requested duration minus the duration actually slept).
 .Sh ERRORS
 If any of the following conditions occur, the
 .Fn nanosleep
@@ -74,14 +75,14 @@ to the corresponding value.
 .Nm
 was interrupted by the delivery of a signal.
 .It Bq Er EINVAL
-.Fa rqtp
+.Fa timeout
 specified a nanosecond value less than zero or greater than 1000 million,
 or a second value less than zero or greater than 100 million.
 .It Bq Er EFAULT
 Either
-.Fa rqtp
+.Fa timeout
 or
-.Fa rmtp
+.Fa remainder
 points to memory that is not a valid part of the process address space.
 .El
 .Sh SEE ALSO
