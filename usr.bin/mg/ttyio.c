@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.33 2013/01/19 21:22:28 florian Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.34 2013/04/20 17:39:50 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <termios.h>
 #include <term.h>
 
@@ -218,16 +219,12 @@ panic(char *s)
 int
 ttwait(int msec)
 {
-	fd_set		readfds;
-	struct timeval	tmout;
+	struct pollfd	pfd[1];
 
-	FD_ZERO(&readfds);
-	FD_SET(0, &readfds);
+	pfd[0].fd = 0;
+	pfd[0].events = POLLIN;
 
-	tmout.tv_sec = msec/1000;
-	tmout.tv_usec = msec - tmout.tv_sec * 1000;
-
-	if ((select(1, &readfds, NULL, NULL, &tmout)) == 0)
+	if ((poll(pfd, 1, msec)) == 0)
 		return (TRUE);
 	return (FALSE);
 }
