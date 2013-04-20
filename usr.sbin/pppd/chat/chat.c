@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.28 2010/08/12 02:00:28 kevlo Exp $	*/
+/*	$OpenBSD: chat.c,v 1.29 2013/04/20 20:32:37 deraadt Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -1341,7 +1341,7 @@ register char *string;
 		if ((report_string[n] != (char*) NULL) &&
 		    s - temp >= (report_len = strlen(report_string[n])) &&
 		    strncmp(s - report_len, report_string[n], report_len) == 0) {
-		    time_t time_now   = time ((time_t*) NULL);
+		    time_t time_now   = time (NULL);
 		    struct tm* tm_now = localtime (&time_now);
 
 		    strftime (report_buffer, 20, "%b %d %H:%M:%S ", tm_now);
