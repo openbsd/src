@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.3 2013/02/09 19:21:29 miod Exp $ */
+/*	$OpenBSD: exec.h,v 1.4 2013/04/20 18:40:42 miod Exp $ */
 #ifndef _M88K_EXEC_H_
 #define _M88K_EXEC_H_
 
@@ -15,5 +15,13 @@
 
 #define _KERN_DO_AOUT
 #define _KERN_DO_ELF
+
+/* Processor specific dynamic tag values.  */
+#define	DT_88K_ADDRBASE	0x70000001
+#define	DT_88K_PLTSTART	0x70000002
+#define	DT_88K_PLTEND	0x70000003
+#define	DT_88K_TDESC	0x70000004
+
+#define	DT_PROCNUM	(DT_88K_TDESC + 1 - DT_LOPROC)
 
 #endif /* _M88K_EXEC_H_ */
