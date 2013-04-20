@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.28 2013/04/16 07:42:27 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.29 2013/04/20 07:00:19 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.28 2013/04/16 07:42:27 yasuoka Exp $
+ * $Id: npppd.c,v 1.29 2013/04/20 07:00:19 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -286,6 +286,18 @@ npppd_init(npppd *_this, const char *config_file)
 
 	_this->boot_id = (uint32_t)random();
 
+#ifdef	USE_NPPPD_L2TP
+	if (l2tpd_init(&_this->l2tpd) != 0)
+		return (-1);
+#endif
+#ifdef	USE_NPPPD_PPTP
+	if (pptpd_init(&_this->pptpd) != 0)
+		return (-1);
+#endif
+#ifdef	USE_NPPPD_PPPOE
+	if (pppoed_init(&_this->pppoed) != 0)
+		return (-1);
+#endif
 	/* load configuration */
 	if ((status = npppd_reload_config(_this)) != 0)
 		return status;
