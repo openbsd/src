@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.15 2011/01/10 20:59:42 deraadt Exp $ */
+/*	$OpenBSD: compress.c,v 1.16 2013/04/20 19:02:57 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -42,6 +42,7 @@
 #endif
 #include <string.h>
 #include <errno.h>
+#include <poll.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #ifdef HAVE_SYS_WAIT_H
@@ -179,22 +180,21 @@ sread(int fd, void *buf, size_t n, int canbepipe)
 	if ((canbepipe && (ioctl(fd, FIONREAD, &t) == -1)) || (t == 0)) {
 #ifdef FD_ZERO
 		for (cnt = 0;; cnt++) {
-			fd_set check;
-			struct timeval tout = {0, 100 * 1000};
-			int selrv;
+			struct pollfd pfd[1];
+			int rv;
 
-			FD_ZERO(&check);
-			FD_SET(fd, &check);
+			pfd[0].fd = fd;
+			pfd[0].events = POLLIN;
 
 			/*
 			 * Avoid soft deadlock: do not read if there
 			 * is nothing to read from sockets and pipes.
 			 */
-			selrv = select(fd + 1, &check, NULL, NULL, &tout);
-			if (selrv == -1) {
+			rv = poll(pfd, 1, 100);
+			if (rv == -1) {
 				if (errno == EINTR || errno == EAGAIN)
 					continue;
-			} else if (selrv == 0 && cnt >= 5) {
+			} else if (rv == 0 && cnt >= 5) {
 				return 0;
 			} else
 				break;
