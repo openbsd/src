@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.164 2013/03/10 23:32:53 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.165 2013/04/20 17:45:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1822,7 +1822,8 @@ relay_ssl_ctx_create(struct relay *rlay)
 		goto err;
 
 	/* Modify session timeout and cache size*/
-	SSL_CTX_set_timeout(ctx, rlay->rl_conf.timeout.tv_sec);
+	SSL_CTX_set_timeout(ctx,
+	    (long)MIN(rlay->rl_conf.timeout.tv_sec, LONG_MAX));
 	if (proto->cache < -1) {
 		SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
 	} else if (proto->cache >= -1) {
