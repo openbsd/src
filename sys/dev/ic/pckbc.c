@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.34 2013/04/20 08:01:37 tobias Exp $ */
+/* $OpenBSD: pckbc.c,v 1.35 2013/04/20 18:19:59 deraadt Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -816,8 +816,10 @@ pckbc_reset(struct pckbc_softc *sc)
 	if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0)
 		return;
 	pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, NULL);
+#ifdef PCKBC_APM
 	if (t->t_apmver >= 0)
 		pckbc_enable_apm(t);
+#endif
 	(void)pckbc_put8042cmd(t);
 	pckbcintr_internal(t->t_sc->id, t->t_sc);
 }
