@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.39 2013/04/19 15:51:27 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.40 2013/04/20 04:52:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -144,9 +144,9 @@ find_parsenum(PLAN *plan, char *option, char *vp, char *endch)
 	}
     
 	/*
-	 * Convert the string with strtol().  Note, if strtol() returns zero
-	 * and endchar points to the beginning of the string we know we have
-	 * a syntax error.
+	 * Convert the string with strtoll().  Note, if strtoll() returns
+	 * zero and endchar points to the beginning of the string we know
+	 * we have a syntax error.
 	 */
 	value = strtoll(str, &endchar, 10);
 	if (value == 0 && endchar == str)
