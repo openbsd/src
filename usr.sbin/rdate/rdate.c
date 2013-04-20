@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.27 2013/04/20 00:13:01 millert Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.28 2013/04/20 20:39:14 millert Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/time.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <err.h>
 #include <string.h>
@@ -61,19 +62,11 @@ void ntp_client (const char *, int, struct timeval *, struct timeval *, int);
 
 extern char    *__progname;
 
-void
+__dead void
 usage(void)
 {
 	(void) fprintf(stderr, "usage: %s [-46acnopsv] host\n", __progname);
-	(void) fprintf(stderr,
-	    "  -4: use IPv4 only\n"
-	    "  -6: use IPv6 only\n"
-	    "  -a: use adjtime instead of instant change\n"
-	    "  -c: correct leap second count\n"
-	    "  -o: use RFC868 time protocol instead of SNTP\n"
-	    "  -p: just print, don't set\n"
-	    "  -s: just set, don't print\n"
-	    "  -v: verbose output\n");
+	exit(1);
 }
 
 int
@@ -88,7 +81,7 @@ main(int argc, char **argv)
 
 	struct timeval new, adjust;
 
-	while ((c = getopt(argc, argv, "46psanocv")) != -1)
+	while ((c = getopt(argc, argv, "46psanocv")) != -1) {
 		switch (c) {
 		case '4':
 			family = PF_INET;
@@ -128,13 +121,10 @@ main(int argc, char **argv)
 
 		default:
 			usage();
-			return 1;
 		}
-
-	if (argc - 1 != optind) {
-		usage();
-		return 1;
 	}
+	if (argc - 1 != optind)
+		usage();
 	hname = argv[optind];
 
 	if (ntp)
