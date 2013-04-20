@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.17 2009/10/27 23:59:54 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.18 2013/04/20 20:12:10 miod Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -172,17 +173,17 @@ BpfOpen(void)
 	 *  it down BPF's throat (i.e. set up the packet filter).
 	 */
 	{
-#define	RMP	((struct rmp_packet *)0)
+#define	RMP(field)	offsetof(struct rmp_packet, field)
 		static struct bpf_insn bpf_insn[] = {
 		    /* make sure it is a 802.3 packet */
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_hdr.len },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, RMP(hp_hdr.len) },
 		    { BPF_JMP|BPF_JGE|BPF_K, 7, 0, 0x600 },
 
-		    { BPF_LD|BPF_B|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.dsap },
+		    { BPF_LD|BPF_B|BPF_ABS,  0, 0, RMP(hp_llc.dsap) },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 5, IEEE_DSAP_HP },
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.cntrl },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, RMP(hp_llc.cntrl) },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 3, IEEE_CNTL_HP },
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.dxsap },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, RMP(hp_llc.dxsap) },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 1, HPEXT_DXSAP },
 		    { BPF_RET|BPF_K,         0, 0, RMP_MAX_PACKET },
 		    { BPF_RET|BPF_K,         0, 0, 0x0 }
@@ -190,23 +191,23 @@ BpfOpen(void)
 
 		static struct bpf_insn bpf_wf_insn[] = {
 		    /* make sure it is a 802.3 packet */
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_hdr.len },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, RMP(hp_hdr.len) },
 		    { BPF_JMP|BPF_JGE|BPF_K, 12, 0, 0x600 },
 
 		    /* check the SNAP header */
-		    { BPF_LD|BPF_B|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.dsap },
+		    { BPF_LD|BPF_B|BPF_ABS,  0, 0, RMP(hp_llc.dsap) },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 10, IEEE_DSAP_HP },
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.cntrl },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, RMP(hp_llc.cntrl) },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 8, IEEE_CNTL_HP },
 
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.sxsap },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, RMP(hp_llc.sxsap) },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 6, HPEXT_DXSAP },
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.dxsap },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, RMP(hp_llc.dxsap) },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 4, HPEXT_SXSAP },
 
 		    /* check return type code */
 		    { BPF_LD|BPF_B|BPF_ABS,  0, 0,
-		        (u_int32_t)&RMP->rmp_proto.rmp_raw.rmp_type },
+		        RMP(rmp_proto.rmp_raw.rmp_type) },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 1, 0, RMP_BOOT_REPL },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 1, RMP_READ_REPL },
 
