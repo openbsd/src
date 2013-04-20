@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.12 2013/04/17 19:26:10 krw Exp $	*/
+/*	$OpenBSD: db.c,v 1.13 2013/04/20 01:18:55 krw Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -77,7 +77,7 @@ write_lease(struct lease *lease)
 		errors++;
 
 	if (lease->hardware_addr.hlen) {
-		if (fprintf(db_file, "\n\thardware %s %s;",
+		if (fprintf(db_file, "\thardware %s %s;",
 		    hardware_types[lease->hardware_addr.htype],
 		    print_hw_addr(lease->hardware_addr.htype,
 		    lease->hardware_addr.hlen,
