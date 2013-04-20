@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.29 2011/09/21 21:05:40 jsg Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.30 2013/04/20 19:21:46 deraadt Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -1573,11 +1573,12 @@ or multicast at ttl %d doesn't reach its last-hop router for that source\n",
     new = &incr[numstats&1];
 
     while (numstats--) {
-	if (waittime < 1) printf("\n");
+	if (waittime < 1)
+		printf("\n");
 	else {
-	    printf("Waiting to accumulate statistics... ");
-	    fflush(stdout);
-	    sleep((unsigned)waittime);
+		printf("Waiting to accumulate statistics... ");
+		fflush(stdout);
+		sleep((unsigned int)waittime);
 	}
 	rno = base.len;
 	recvlen = send_recv(tdst, IGMP_MTRACE_QUERY, rno, nqueries, new);
