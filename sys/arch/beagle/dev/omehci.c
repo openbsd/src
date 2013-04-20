@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.11 2012/11/03 19:16:57 bmercer Exp $ */
+/*	$OpenBSD: omehci.c,v 1.12 2013/04/20 17:43:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -44,8 +44,8 @@ int	omehci_detach(struct device *, int);
 int	omehci_activate(struct device *, int);
 
 struct omehci_softc {
-	ehci_softc_t	sc;
-	void		*sc_ih;
+	struct ehci_softc	sc;
+	void			*sc_ih;
 };
 
 void	omehci_enable(struct omehci_softc *);
