@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.26 2013/04/19 19:14:46 millert Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.27 2013/04/20 00:13:01 millert Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -64,13 +64,13 @@ extern char    *__progname;
 void
 usage(void)
 {
-	(void) fprintf(stderr, "usage: %s [-46acnpsv] host\n", __progname);
+	(void) fprintf(stderr, "usage: %s [-46acnopsv] host\n", __progname);
 	(void) fprintf(stderr,
 	    "  -4: use IPv4 only\n"
 	    "  -6: use IPv6 only\n"
 	    "  -a: use adjtime instead of instant change\n"
 	    "  -c: correct leap second count\n"
-	    "  -n: use SNTP instead of RFC868 time protocol\n"
+	    "  -o: use RFC868 time protocol instead of SNTP\n"
 	    "  -p: just print, don't set\n"
 	    "  -s: just set, don't print\n"
 	    "  -v: verbose output\n");
@@ -88,7 +88,7 @@ main(int argc, char **argv)
 
 	struct timeval new, adjust;
 
-	while ((c = getopt(argc, argv, "46psancv")) != -1)
+	while ((c = getopt(argc, argv, "46psanocv")) != -1)
 		switch (c) {
 		case '4':
 			family = PF_INET;
