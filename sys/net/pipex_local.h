@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.18 2013/04/16 07:36:55 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.19 2013/04/20 07:54:28 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -347,7 +347,6 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 #define SEQ16_GE(a,b)	((int)((a) - (b)) >= 0)
 #define SEQ16_SUB(a,b)	((int16_t)((a) - (b)))
 
-#define RUPDIV(n,d)     (((n) + (d) - ((n) % (d))) / (d))
 #define	pipex_session_is_acfc_accepted(s)				\
     (((s)->ppp_flags & PIPEX_PPP_ACFC_ACCEPTED)? 1 : 0)
 #define	pipex_session_is_pfc_accepted(s)				\
