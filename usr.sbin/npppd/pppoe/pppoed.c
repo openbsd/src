@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.12 2013/04/16 07:27:36 yasuoka Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.13 2013/04/20 23:32:32 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.12 2013/04/16 07:27:36 yasuoka Exp $
+ * $Id: pppoed.c,v 1.13 2013/04/20 23:32:32 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,12 +140,12 @@ pppoed_init(pppoed *_this)
 		    "ac-cookie hash create failed.", __func__);
 		_this->acookie_hash = NULL;
 	}
-	_this->acookie_next = random();
+	_this->acookie_next = arc4random();
 
 #if PPPOE_NSESSION > 0xffff
 #error PPPOE_NSESSION must be less than 65536
 #endif
-	off = random() % 0xffff;
+	off = arc4random() % 0xffff;
 	for (i = 0; i < PPPOE_NSESSION; i++) {
 		id = (i + off) % 0xffff;
 		if (id == 0)

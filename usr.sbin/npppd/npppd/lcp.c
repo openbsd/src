@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: lcp.c,v 1.9 2013/04/20 23:32:32 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.9 2013/04/20 23:32:32 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -127,7 +127,7 @@ lcp_init(lcp *_this, npppd_ppp *ppp)
 
 	_this->recv_ress = 0;
 	_this->recv_reqs = 0;
-	_this->magic_number = ((0xffff & random()) << 16) | (0xffff & random());
+	_this->magic_number = arc4random();
 
 	conf = ppp_get_tunnconf(ppp);
 	PPP_FSM_CONFIG(&_this->fsm, timeouttime, conf->lcp_timeout);

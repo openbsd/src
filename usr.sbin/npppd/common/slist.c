@@ -427,7 +427,6 @@ slist_remove(slist *list, int idx)
 
 /**
  * Shuffle items.
- * slist_shuffle() uses random(3). Call srandom(3) before use it.
  */
 void
 slist_shuffle(slist *list)
@@ -436,7 +435,7 @@ slist_shuffle(slist *list)
 
 	len = slist_length(list);
 	for (i = len; i > 1; i--)
-		slist_swap0(list, i - 1, (int)(random() % i));
+		slist_swap0(list, i - 1, (int)(arc4random() % i));
 }
 
 /** Init an iterator. Only one iterator exists.  */

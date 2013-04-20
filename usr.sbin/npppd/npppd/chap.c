@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.9 2013/04/20 23:32:32 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.8 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: chap.c,v 1.9 2013/04/20 23:32:32 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -465,36 +465,11 @@ chap_response(chap *_this, int authok, u_char *pktp, int lpktp)
 static void
 chap_create_challenge(chap *_this)
 {
-	int i, lchal;
-
-#if 0
-	lchal = (unsigned)(random() *
-	    (MAX_CHALLENGE_LENGTH - MIN_CHALLENGE_LENGTH))
-	    + MIN_CHALLENGE_LENGTH;
-#endif
 	CHAP_ASSERT(_this->ppp->peer_auth == PPP_AUTH_CHAP_MS_V2 ||
 	    _this->ppp->peer_auth == PPP_AUTH_CHAP_MD5);
 
-	lchal = 16;
-
-#ifdef HAVE_ARC4RANDOM
-    {
-	uint32_t r;
-
-	r = 0;	/* avoid gcc 3.3.3's -Wuninitialized warning */
-	for (i = 0; i < lchal; i++) {
-		if (i % 4 == 0)
-			r = arc4random();
-		_this->chall[i] = r & 0xff;
-		r >>= 8;
-	}
-    }
-#else
-	for (i = 0; i < lchal; i++)
-		_this->chall[i] = random() & 0xff;
-#endif
-
-	_this->lchall = lchal;
+	_this->lchall = 16;
+	arc4random_buf(_this->chall, _this->lchall);
 }
 
 /***********************************************************************

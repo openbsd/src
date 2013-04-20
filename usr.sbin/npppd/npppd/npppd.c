@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.29 2013/04/20 07:00:19 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.30 2013/04/20 23:32:32 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.29 2013/04/20 07:00:19 yasuoka Exp $
+ * $Id: npppd.c,v 1.30 2013/04/20 23:32:32 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -111,7 +111,6 @@ static void            npppd_timer(int, short, void *);
 static void            npppd_auth_finalizer_periodic(npppd *);
 static int  rd2slist_walk (struct radish *, void *);
 static int  rd2slist (struct radish_head *, slist *);
-static inline void     seed_random(long *);
 
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
 static struct in_addr loop;	/* initialize at npppd_init() */
@@ -280,11 +279,7 @@ npppd_init(npppd *_this, const char *config_file)
 	/* we assume 4.4 compatible realpath().  See realpath(3) on BSD. */
 	NPPPD_ASSERT(_this->config_file[0] == '/');
 
-	/* initialize random seeds */
-	seed_random(&seed);
-	srandom(seed);
-
-	_this->boot_id = (uint32_t)random();
+	_this->boot_id = arc4random();
 
 #ifdef	USE_NPPPD_L2TP
 	if (l2tpd_init(&_this->l2tpd) != 0)
@@ -2259,25 +2254,6 @@ npppd_ppp_get_username_for_auth(npppd *_this, npppd_ppp *ppp,
 
 	return npppd_auth_username_for_auth(ppp->realm, username,
 	    username_buffer);
-}
-
-static inline void
-seed_random(long *seed)
-{
-	struct timeval t;
-#ifdef KERN_URND
-	size_t seedsiz;
-	int mib[] = { CTL_KERN, KERN_URND };
-
-	seedsiz = sizeof(*seed);
-	if (sysctl(mib, countof(mib), seed, &seedsiz, NULL, 0) == 0) {
-		NPPPD_ASSERT(seedsiz == sizeof(long));
-		return;
-	}
-	log_printf(LOG_WARNING, "Could not set random seed from the system: %m");
-#endif
-	gettimeofday(&t, NULL);
-	*seed = gethostid() ^ t.tv_sec ^ t.tv_usec ^ getpid();
 }
 
 const char *
