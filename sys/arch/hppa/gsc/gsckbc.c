@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.15 2013/04/20 08:01:37 tobias Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.16 2013/04/20 23:40:26 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -465,11 +465,11 @@ pckbc_send_cmd(iot, ioh, val)
 
 /* XXX logic */
 int
-pckbc_poll_data1(iot, ioh, ioh_c, slot, checkaux)
+pckbc_poll_data1(iot, ioh, ioh_c, slot, t)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh, ioh_c;
 	pckbc_slot_t slot;
-	struct pckbc_internal *t;	/* ignored on hppa */
+	struct pckbc_internal *t;
 {
 	int i;
 	u_char stat;
