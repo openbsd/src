@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.85 2012/12/05 23:20:16 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.86 2013/04/20 20:23:09 miod Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.85 2012/12/05 23:20:16 deraadt Exp $
+ * $Id: aic7xxx.c,v 1.86 2013/04/20 20:23:09 miod Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -4098,11 +4098,11 @@ ahc_reset(struct ahc_softc *ahc, int reinit)
 	case 0:
 		/* Single Narrow Channel */
 		break;
-	case 2:
+	case SELWIDE:
 		/* Wide Channel */
 		ahc->features |= AHC_WIDE;
 		break;
-	case 8:
+	case SELBUSB:
 		/* Twin Channel */
 		ahc->features |= AHC_TWIN;
 		break;
