@@ -450,10 +450,8 @@ extern int target_flags;			/* -m compiler switches */
       }							\
     if (flag_pic)					\
       {							\
-	/* Current hack to deal with -fpic -O2 problems.  */ \
 	fixed_regs[PIC_OFFSET_TABLE_REGNUM] = 1;	\
 	call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;	\
-	global_regs[PIC_OFFSET_TABLE_REGNUM] = 1;	\
       }							\
   }
 
@@ -524,7 +522,7 @@ extern int target_flags;			/* -m compiler switches */
 
 /* Register to hold the addressing base for position independent
    code access to data items.  */
-#define PIC_OFFSET_TABLE_REGNUM 25
+#define PIC_OFFSET_TABLE_REGNUM (flag_pic ? 25 : INVALID_REGNUM)
 
 /* Order in which registers are preferred (most to least).  Use temp
    registers, then param registers top down.  Preserve registers are
