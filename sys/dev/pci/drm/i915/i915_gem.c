@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.11 2013/04/17 20:04:04 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.12 2013/04/21 14:41:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -3207,7 +3207,61 @@ init_ring_lists(struct intel_ring_buffer *ring)
 	INIT_LIST_HEAD(&ring->request_list);
 }
 
-// i915_gem_load
+void
+i915_gem_load(struct drm_device *dev)
+{
+	int i;
+	drm_i915_private_t *dev_priv = dev->dev_private;
+
+	INIT_LIST_HEAD(&dev_priv->mm.active_list);
+	INIT_LIST_HEAD(&dev_priv->mm.inactive_list);
+	INIT_LIST_HEAD(&dev_priv->mm.unbound_list);
+	INIT_LIST_HEAD(&dev_priv->mm.bound_list);
+	INIT_LIST_HEAD(&dev_priv->mm.fence_list);
+	for (i = 0; i < I915_NUM_RINGS; i++)
+		init_ring_lists(&dev_priv->ring[i]);
+	for (i = 0; i < I915_MAX_NUM_FENCES; i++)
+		INIT_LIST_HEAD(&dev_priv->fence_regs[i].lru_list);
+	timeout_set(&dev_priv->mm.retire_timer, inteldrm_timeout, dev_priv);
+#if 0
+	init_completion(&dev_priv->error_completion);
+#else
+	dev_priv->error_completion = 0;
+#endif
+
+	/* On GEN3 we really need to make sure the ARB C3 LP bit is set */
+	if (IS_GEN3(dev)) {
+		I915_WRITE(MI_ARB_STATE,
+			   _MASKED_BIT_ENABLE(MI_ARB_C3_LP_WRITE_ENABLE));
+	}
+
+	dev_priv->relative_constants_mode = I915_EXEC_CONSTANTS_REL_GENERAL;
+
+	/* Old X drivers will take 0-2 for front, back, depth buffers */
+	if (!drm_core_check_feature(dev, DRIVER_MODESET))
+		dev_priv->fence_reg_start = 3;
+
+	if (INTEL_INFO(dev)->gen >= 4 || IS_I945G(dev) || IS_I945GM(dev) || IS_G33(dev))
+		dev_priv->num_fence_regs = 16;
+	else
+		dev_priv->num_fence_regs = 8;
+
+	/* Initialize fence registers to zero */
+	i915_gem_reset_fences(dev);
+
+	i915_gem_detect_bit_6_swizzle(dev);
+#if 0
+	init_waitqueue_head(&dev_priv->pending_flip_queue);
+#endif
+
+	dev_priv->mm.interruptible = true;
+
+#if 0
+	dev_priv->mm.inactive_shrinker.shrink = i915_gem_inactive_shrink;
+	dev_priv->mm.inactive_shrinker.seeks = DEFAULT_SEEKS;
+	register_shrinker(&dev_priv->mm.inactive_shrinker);
+#endif
+}
 
 /*
  * Create a physically contiguous memory object for this object

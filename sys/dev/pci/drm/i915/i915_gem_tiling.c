@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.2 2013/03/29 05:15:42 jsg Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.3 2013/04/21 14:41:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -105,13 +105,11 @@
  * access through main memory.
  */
 void
-i915_gem_detect_bit_6_swizzle(struct inteldrm_softc *dev_priv,
-    struct pci_attach_args *bpa)
+i915_gem_detect_bit_6_swizzle(struct drm_device *dev)
 {
-	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
-	uint32_t		 swizzle_x = I915_BIT_6_SWIZZLE_UNKNOWN;
-	uint32_t		 swizzle_y = I915_BIT_6_SWIZZLE_UNKNOWN;
-	int			 need_disable;
+	drm_i915_private_t *dev_priv = dev->dev_private;
+	uint32_t swizzle_x = I915_BIT_6_SWIZZLE_UNKNOWN;
+	uint32_t swizzle_y = I915_BIT_6_SWIZZLE_UNKNOWN;
 
 	if (IS_VALLEYVIEW(dev)) {
 		swizzle_x = I915_BIT_6_SWIZZLE_NONE;
@@ -149,9 +147,6 @@ i915_gem_detect_bit_6_swizzle(struct inteldrm_softc *dev_priv,
 		swizzle_y = I915_BIT_6_SWIZZLE_NONE;
 	} else if (IS_MOBILE(dev) || (IS_GEN3(dev) && !IS_G33(dev))) {
 		uint32_t dcc;
-
-		/* try to enable MCHBAR, a lot of biosen disable it */
-		need_disable = intel_setup_mchbar(dev_priv, bpa);
 
 		/* On 915-945 and GM965, channel interleave by the CPU is
 		 * determined by DCC.  The CPU will alternate based on bit 6
@@ -191,8 +186,6 @@ i915_gem_detect_bit_6_swizzle(struct inteldrm_softc *dev_priv,
 			swizzle_x = I915_BIT_6_SWIZZLE_UNKNOWN;
 			swizzle_y = I915_BIT_6_SWIZZLE_UNKNOWN;
 		}
-
-		intel_teardown_mchbar(dev_priv, bpa, need_disable);
 	} else {
 		/* The 965, G33, and newer, have a very flexible memory
 		 * configuration. It will enable dual-channel mode

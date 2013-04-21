@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.21 2013/04/18 20:19:32 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.22 2013/04/21 14:41:26 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -894,45 +894,10 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* GEM init */
-	INIT_LIST_HEAD(&dev_priv->mm.active_list);
-	INIT_LIST_HEAD(&dev_priv->mm.inactive_list);
-	INIT_LIST_HEAD(&dev_priv->mm.bound_list);
-	INIT_LIST_HEAD(&dev_priv->mm.fence_list);
-	for (i = 0; i < I915_NUM_RINGS; i++)
-		init_ring_lists(&dev_priv->ring[i]);
-	timeout_set(&dev_priv->mm.retire_timer, inteldrm_timeout, dev_priv);
 	timeout_set(&dev_priv->hangcheck_timer, i915_hangcheck_elapsed, dev_priv);
 	dev_priv->next_seqno = 1;
 	dev_priv->mm.suspended = 1;
 	dev_priv->error_completion = 0;
-
-	/* On GEN3 we really need to make sure the ARB C3 LP bit is set */
-	if (IS_GEN3(dev)) {
-		u_int32_t tmp = I915_READ(MI_ARB_STATE);
-		if (!(tmp & MI_ARB_C3_LP_WRITE_ENABLE)) {
-			/*
-			 * arb state is a masked write, so set bit + bit
-			 * in mask
-			 */
-			I915_WRITE(MI_ARB_STATE,
-			           _MASKED_BIT_ENABLE(MI_ARB_C3_LP_WRITE_ENABLE));
-		}
-	}
-
-	dev_priv->relative_constants_mode = I915_EXEC_CONSTANTS_REL_GENERAL;
-
-	/* Old X drivers will take 0-2 for front, back, depth buffers */
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		dev_priv->fence_reg_start = 3;
-
-	if (INTEL_INFO(dev)->gen >= 4 || IS_I945G(dev) ||
-	    IS_I945GM(dev) || IS_G33(dev))
-		dev_priv->num_fence_regs = 16;
-	else
-		dev_priv->num_fence_regs = 8;
-
-	/* Initialise fences to zero, else on some macs we'll get corruption */
-	i915_gem_reset_fences(dev);
 
 	if (pci_find_device(&bpa, inteldrm_gmch_match) == 0) {
 		printf(": can't find GMCH\n");
@@ -963,12 +928,10 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	i915_gem_detect_bit_6_swizzle(dev_priv, &bpa);
+        /* Try to make sure MCHBAR is enabled before poking at it */
+        intel_setup_mchbar(dev_priv, &bpa);
 
-	dev_priv->mm.interruptible = true;
-
-	printf("%s: %s\n", dev_priv->dev.dv_xname,
-	    pci_intr_string(pa->pa_pc, dev_priv->ih));
+	i915_gem_load(dev);
 
 	mtx_init(&dev_priv->irq_lock, IPL_TTY);
 	mtx_init(&dev_priv->rps.lock, IPL_NONE);

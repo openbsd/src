@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.14 2013/04/17 20:04:04 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.15 2013/04/21 14:41:26 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -643,6 +643,12 @@ struct inteldrm_softc {
 		/** List of all objects in gtt_space. Used to restore gtt
 		 * mappings on resume */
 		struct list_head bound_list;
+		/**
+		 * List of objects which are not bound to the GTT (thus
+		 * are idle and not used by the GPU) but still have
+		 * (presumably uncached) pages still attached.
+		 */
+		struct list_head unbound_list;
 
 		/**
 		 * List of objects currently involved in rendering from the
@@ -1176,8 +1182,7 @@ int i915_gem_evict_something(struct inteldrm_softc *, size_t);
 int i915_gem_evict_inactive(struct inteldrm_softc *);
 
 /* i915_gem_tiling.c */
-void	i915_gem_detect_bit_6_swizzle(struct inteldrm_softc *, 
-	    struct pci_attach_args *);
+void	i915_gem_detect_bit_6_swizzle(struct drm_device *);
 void	i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *);
 void	i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *);
 int	i915_gem_swizzle_page(struct vm_page *page);
@@ -1226,6 +1231,7 @@ void i915_gem_reset(struct drm_device *);
 void i915_gem_clflush_object(struct drm_i915_gem_object *);
 void i915_gem_release(struct drm_device *, struct drm_file *);
 void i915_gem_release_mmap(struct drm_i915_gem_object *);
+void i915_gem_load(struct drm_device *dev);
 
 uint32_t
 i915_gem_get_unfenced_gtt_alignment(struct drm_device *dev,
