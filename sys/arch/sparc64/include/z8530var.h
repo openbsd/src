@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.7 2005/12/28 22:39:52 miod Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.8 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.4 2000/11/08 23:41:42 eeh Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <machine/bus.h>
-#include <sparc64/dev/z8530sc.h>
+#include <dev/ic/z8530sc.h>
 
 struct zsc_softc {
 	struct device		zsc_dev;	/* base device */

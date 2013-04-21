@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.23 2009/09/10 21:30:00 kettenis Exp $	*/
+/*	$OpenBSD: zs.c,v 1.24 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
-#include <sparc64/dev/z8530reg.h>
+#include <dev/ic/z8530reg.h>
 #include <sparc64/dev/fhcvar.h>
 #include <ddb/db_output.h>
 

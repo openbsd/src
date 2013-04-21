@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.15 2011/03/18 21:01:17 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.16 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -117,7 +117,7 @@
 #include <dev/sun/sunkbdreg.h>
 #include <dev/sun/sunkbdvar.h>
 
-#include <sparc/dev/z8530reg.h>
+#include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
@@ -304,7 +304,7 @@ zskbd_attach(parent, self, aux)
 
 	tty_unit = ss->sc_dev.dv_unit;
 	channel = args->channel;
-	cs = &zsc->zsc_cs[channel];
+	cs = zsc->zsc_cs[channel];
 	cs->cs_private = zst;
 	cs->cs_ops = &zsops_kbd;
 

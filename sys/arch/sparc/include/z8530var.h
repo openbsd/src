@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.4 2009/04/10 20:53:54 miod Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.5 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.1 1997/10/18 00:01:30 gwr Exp $	*/
 
 /*
@@ -41,12 +41,21 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <sparc/dev/z8530sc.h>
+#include <dev/ic/z8530sc.h>
+
+/*
+ * sparc64 and sgi use the same structure, but with more members
+ * use it here too, just for more consistency.
+ */
+struct zs_channel {
+	struct zs_chanstate	cs_zscs;	/* Required: soft state */
+};
 
 struct zsc_softc {
-	struct	device zsc_dev;		/* required first: base device */
-	void	*zsc_softih;		/* softintr cookie */
-	struct	zs_chanstate zsc_cs[2];	/* channel A and B soft state */
+	struct	device 		zsc_dev;	/* required first: base device */
+	void			*zsc_softih;	/* softintr cookie */
+	struct	zs_chanstate 	*zsc_cs[2];	/* channel A and B soft state */
+	struct  zs_channel	zsc_cs_store[2];
 };
 
 /*

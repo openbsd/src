@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.20 2010/11/22 21:09:32 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.21 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -85,6 +85,7 @@
  * Some warts needed by z8530tty.c -
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
+int zs_major = 7;
 
 /*
  * abort detection on console will now timeout after iterating on a loop

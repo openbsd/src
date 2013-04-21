@@ -1,4 +1,4 @@
-/*	$OpenBSD: zsclock.c,v 1.2 2005/04/20 01:43:51 miod Exp $	*/
+/*	$OpenBSD: zsclock.c,v 1.3 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: clock.c,v 1.11 1995/05/16 07:30:46 phil Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 
-#include <sparc/dev/z8530reg.h>
+#include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
 
 #include <machine/autoconf.h>

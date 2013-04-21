@@ -1,4 +1,4 @@
-# $OpenBSD: files.hpc,v 1.3 2012/05/02 18:43:44 miod Exp $
+# $OpenBSD: files.hpc,v 1.4 2013/04/21 14:44:16 sebastia Exp $
 # $NetBSD: files.hpc,v 1.14 2009/05/14 01:10:19 macallan Exp $
 
 # IP20 RTC
@@ -29,11 +29,11 @@ file	arch/sgi/hpc/haltwo.c			haltwo
 device	zs {[channel = -1]}
 attach	zs at hpc with zs_hpc
 file 	arch/sgi/hpc/zs.c			zs needs-flag
-file 	arch/sgi/hpc/z8530sc.c			zs
+file 	dev/ic/z8530sc.c			zs
 
 device	zstty: tty
 attach	zstty at zs
-file 	arch/sgi/hpc/z8530tty.c			zstty needs-flag
+file 	dev/ic/z8530tty.c			zstty needs-flag
 
 device	zskbd: wskbddev
 attach	zskbd at zs

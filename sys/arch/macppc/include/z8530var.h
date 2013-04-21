@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.8 2009/10/01 20:19:18 kettenis Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.9 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.5 2002/03/17 19:40:45 atatat Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <macppc/dev/z8530sc.h>
+#include <dev/ic/z8530sc.h>
 #include <macppc/dev/dbdma.h>
 
 /*

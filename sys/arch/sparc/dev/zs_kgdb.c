@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs_kgdb.c,v 1.4 2010/07/10 19:32:24 miod Exp $	*/
+/*	$OpenBSD: zs_kgdb.c,v 1.5 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: zs_kgdb.c,v 1.1 1997/10/18 00:00:51 gwr Exp $	*/
 
 /*-
@@ -36,7 +36,8 @@
  * To use this, build a kernel with: option KGDB, and
  * boot that kernel with "-d".  (The kernel will call
  * zs_kgdb_init, kgdb_connect.)  When the console prints
- * "kgdb waiting..." you run "gdb -k kernel" and do:
+ * "kgdb waiting..." you run "gdb /path/to/bsd.gdb" on
+ * the remote machine and do:
  *   (gdb) set remotebaud 19200
  *   (gdb) target remote /dev/ttyb
  */
@@ -51,7 +52,7 @@
 #include <sys/syslog.h>
 #include <sys/kgdb.h>
 
-#include <sparc/dev/z8530reg.h>
+#include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
 #include <sparc/dev/cons.h>
 

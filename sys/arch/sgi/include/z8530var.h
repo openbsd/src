@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.3 2012/05/12 16:47:44 miod Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.4 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.10 2011/07/01 21:00:21 dyoung Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
  */
 
 #include <machine/bus.h>
-#include <sgi/hpc/z8530sc.h>
+#include <dev/ic/z8530sc.h>
 
 struct zs_channel {
 	struct zs_chanstate	cs_zscs; 	/* Required: soft state */

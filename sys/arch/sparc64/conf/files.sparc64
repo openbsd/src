@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.139 2012/12/08 20:38:10 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.140 2013/04/21 14:44:16 sebastia Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -278,12 +278,12 @@ file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
 attach	zs at sbus with zs_sbus
 attach	zs at fhc with zs_fhc
 file	arch/sparc64/dev/zs.c			zs needs-flag
-file	arch/sparc64/dev/z8530sc.c		zs
+file	dev/ic/z8530sc.c			zs
 
 define	zstty {}
 device	zstty: tty
 attach	zstty at zs
-file	arch/sparc64/dev/z8530tty.c		zstty needs-flag
+file	dev/ic/z8530tty.c			zstty needs-flag
 
 device	zskbd: wskbddev, sunkbd
 attach	zskbd at zs

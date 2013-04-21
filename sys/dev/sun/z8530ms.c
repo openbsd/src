@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530ms.c,v 1.1 2009/05/20 18:22:33 miod Exp $	*/
+/*	$OpenBSD: z8530ms.c,v 1.2 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: ms.c,v 1.12 1997/07/17 01:17:47 jtk Exp $	*/
 
 /*
@@ -85,11 +85,7 @@
 #include <sys/proc.h>
 #include <sys/syslog.h>
 
-#ifndef __sparc64__	/* until zs driver is unified... */
-#include <sparc/dev/z8530reg.h>
-#else
-#include <sparc64/dev/z8530reg.h>
-#endif
+#include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
 
 #include <dev/wscons/wsmousevar.h>
@@ -206,11 +202,7 @@ zsms_attach(struct device *parent, struct device *self, void *aux)
 	int s;
 
 	channel = args->channel;
-#ifndef __sparc64__	/* until driver is unified... */
-	cs = &zsc->zsc_cs[channel];
-#else
 	cs = zsc->zsc_cs[channel];
-#endif
 	cs->cs_private = sc;
 	cs->cs_ops = &zsops_ms;
 	sc->sc_cs = cs;

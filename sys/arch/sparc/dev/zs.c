@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.49 2012/05/25 17:11:40 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.50 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
-#include <sparc/dev/z8530reg.h>
+#include <dev/ic/z8530reg.h>
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxioreg.h>
@@ -285,18 +285,17 @@ zs_attach(parent, self, aux)
 
 		zsc_args.channel = channel;
 		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
-		cs = &zsc->zsc_cs[channel];
+		cs = zsc->zsc_cs[channel] = 
+			(struct zs_chanstate *)&zsc->zsc_cs_store[channel];
 
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
 		cs->cs_brg_clk = PCLK / 16;
-
 		zc = zs_get_chan_addr(zs_unit, channel);
 
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
-
 		bcopy(zs_init_reg, cs->cs_creg, 16);
 		bcopy(zs_init_reg, cs->cs_preg, 16);
 
@@ -355,7 +354,7 @@ zs_attach(parent, self, aux)
 	 * Set the master interrupt enable and interrupt vector.
 	 * (common to both channels, do it on A)
 	 */
-	cs = &zsc->zsc_cs[0];
+	cs = zsc->zsc_cs[0];
 	s = splhigh();
 	/* interrupt vector */
 	zs_write_reg(cs, 2, zs_init_reg[2]);
@@ -368,7 +367,7 @@ zs_attach(parent, self, aux)
 	if (CPU_ISSUN4M) {
 		if (getpropint(ra->ra_node, "pwr-on-auxio2", 0))
 			for (channel = 0; channel < 2; channel++) {
-				cs = &zsc->zsc_cs[channel];
+				cs = zsc->zsc_cs[channel];
 				cs->disable = zs_disable;
 				cs->enable = zs_enable;
 				cs->enabled = 0;
@@ -427,7 +426,7 @@ zshard(arg)
 		if (rr3) {
 			rval |= rr3;
 		}
-		if (zsc->zsc_cs[0].cs_softreq || zsc->zsc_cs[1].cs_softreq)
+		if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq)
 			softintr_schedule(zsc->zsc_softih);
 	}
 
@@ -1156,7 +1155,11 @@ setup_console:
 		return;
 	}
 	zs_conschan = zc;
-	zs_hwflags[zs_unit][channel] = ZS_HWFLAG_CONSOLE;
+	/* hardcoded: console is only on unit 0, 
+	 * unit 1 is keyboard/mouse, see zs_attach
+	 */
+	if (zs_unit == 0)
+	    zs_hwflags[zs_unit][channel] = ZS_HWFLAG_CONSOLE;
 	/* switch to selected console */
 	cn_tab = console;
 	(*cn_tab->cn_probe)(cn_tab);

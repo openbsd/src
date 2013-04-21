@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.16 2011/07/04 22:53:53 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.17 2013/04/21 14:44:16 sebastia Exp $	*/
 /*	OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp 	*/
 
 /*
@@ -91,7 +91,7 @@
 #include <machine/signal.h>
 #include <machine/trap.h>
 
-#include <sparc/dev/z8530reg.h>
+#include <dev/ic/z8530reg.h>
 
 /*
  * GNU assembler does not understand `.empty' directive; Sun assembler

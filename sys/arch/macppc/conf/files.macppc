@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.68 2012/12/04 10:42:04 mpi Exp $
+#	$OpenBSD: files.macppc,v 1.69 2013/04/21 14:44:16 sebastia Exp $
 
 #
 # macppc-specific configuration info
@@ -145,11 +145,11 @@ file	arch/macppc/dev/openpic.c			openpic
 device	zsc {[channel = -1]}
 attach	zsc at macobio
 file	arch/macppc/dev/zs.c				zsc needs-flag
-file	arch/macppc/dev/z8530sc.c			zsc
+file	dev/ic/z8530sc.c				zsc
 
 device	zstty: tty
 attach	zstty at zsc
-file	arch/macppc/dev/z8530tty.c			zstty needs-flag
+file	dev/ic/z8530tty.c				zstty needs-flag
 
 device	adb {}
 attach	adb at macobio
