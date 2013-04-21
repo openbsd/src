@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.100 2013/04/10 11:51:16 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.101 2013/04/21 21:32:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -514,8 +514,10 @@ server_client_loop(void)
 
 		w->flags &= ~WINDOW_REDRAW;
 		TAILQ_FOREACH(wp, &w->panes, entry) {
-			server_client_check_focus(wp);
-			server_client_check_resize(wp);
+			if (wp->fd != -1) {
+				server_client_check_focus(wp);
+				server_client_check_resize(wp);
+			}
 			wp->flags &= ~PANE_REDRAW;
 		}
 	}
@@ -527,7 +529,7 @@ server_client_check_resize(struct window_pane *wp)
 {
 	struct winsize	ws;
 
-	if (wp->fd == -1 || !(wp->flags & PANE_RESIZE))
+	if (!(wp->flags & PANE_RESIZE))
 		return;
 
 	memset(&ws, 0, sizeof ws);
