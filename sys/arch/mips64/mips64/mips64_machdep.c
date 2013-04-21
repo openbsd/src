@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.11 2013/01/16 20:23:54 miod Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.12 2013/04/21 15:43:34 miod Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -417,8 +417,6 @@ inittodr(time_t base)
 
 	/* now have days since Jan 1, 1970; the rest is easy... */
 	ts.tv_sec = days * SECDAY + c.hour * 3600 + c.min * 60 + c.sec;
-	tc_setclock(&ts);
-	cd->tod_valid = 1;
 
 	/*
 	 * See if we gained/lost time.
@@ -429,6 +427,8 @@ inittodr(time_t base)
 		printf("WARNING: clock time much less than file system time\n");
 		printf("WARNING: using file system time\n");
 	} else {
+		tc_setclock(&ts);
+		cd->tod_valid = 1;
 		return;
 	}
 
