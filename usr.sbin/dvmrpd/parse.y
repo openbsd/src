@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2013/03/06 21:42:40 sthen Exp $ */
+/*	$OpenBSD: parse.y,v 1.24 2013/04/21 04:33:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -745,9 +745,8 @@ parse_config(char *filename, int opts)
 	}
 	topfile = file;
 
-	/* Generation ID must be non decreasing */
 	gettimeofday(&now, NULL);
-	conf->gen_id = now.tv_sec;
+	conf->gen_id = (u_int32_t)now.tv_sec;	/* for a while after 2038 */
 	conf->opts = opts;
 
 	yyparse();
