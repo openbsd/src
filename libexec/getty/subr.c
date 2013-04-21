@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.19 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.20 2013/04/21 04:25:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * Melbourne getty.
  */
 #define COMPAT_43
+#include <sys/ioctl.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <poll.h>
 #include <termios.h>
-#include <sys/ioctl.h>
 
 #include "gettytab.h"
 #include "pathnames.h"
@@ -679,23 +680,21 @@ portselector(void)
 char *
 autobaud(void)
 {
-	fd_set rfds;
-	struct timeval timeout;
+	struct pollfd pfd[1];
+	struct timespec ts;
 	char c, *type = "9600-baud";
 
 	(void)tcflush(0, TCIOFLUSH);
-	FD_ZERO(&rfds);
-	FD_SET(0, &rfds);
-	timeout.tv_sec = 5;
-	timeout.tv_usec = 0;
-	if (select(1, &rfds, (fd_set *)NULL, (fd_set *)NULL, &timeout) <= 0)
+	pfd[0].fd = 0;
+	pfd[0].events = POLLIN;
+	if (poll(pfd, 1, 5 * 1000) <= 0)
 		return (type);
 	if (read(STDIN_FILENO, &c, sizeof(char)) != sizeof(char))
 		return (type);
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 20;
-	(void) select(0, (fd_set *)NULL, (fd_set *)NULL,
-	    (fd_set *)NULL, &timeout);
+	
+	ts.tv_sec = 0;
+	ts.tv_nsec = 20 * 1000;
+	nanosleep(&ts, NULL);
 	(void)tcflush(0, TCIOFLUSH);
 	switch (c & 0377) {
 
