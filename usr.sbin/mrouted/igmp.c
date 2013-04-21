@@ -121,7 +121,7 @@ packet_kind(u_int type, u_int code)
 void
 accept_igmp(int recvlen)
 {
-    register u_int32_t src, dst, group;
+    u_int32_t src, dst, group;
     struct ip *ip;
     struct igmp *igmp;
     int ipdatalen, iphdrlen, igmpdatalen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsrr.c,v 1.11 2013/04/21 00:24:42 deraadt Exp $	*/
+/*	$OpenBSD: rsrr.c,v 1.12 2013/04/21 06:42:43 tedu Exp $	*/
 /*	$NetBSD: rsrr.c,v 1.3 1995/12/10 10:07:14 mycroft Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  * checks for scoped multicast addresses
  */
 #define GET_SCOPE(gt) { \
-	register int _i; \
+	int _i; \
 	if (((gt)->gt_mcastgrp & 0xff000000) == 0xef000000) \
 	    for (_i = 0; _i < numvifs; _i++) \
 		if (scoped_addr(_i, (gt)->gt_mcastgrp)) \

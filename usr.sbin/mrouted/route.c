@@ -70,8 +70,8 @@ init_routes()
 static int
 init_children_and_leaves(struct rtentry *r, vifi_t parent)
 {
-    register vifi_t vifi;
-    register struct uvif *v;
+    vifi_t vifi;
+    struct uvif *v;
     vifbitmap_t old_children, old_leaves;
 
     VIFM_COPY(r->rt_children, old_children);
@@ -113,8 +113,8 @@ init_children_and_leaves(struct rtentry *r, vifi_t parent)
 void
 add_vif_to_routes(vifi_t vifi)
 {
-    register struct rtentry *r;
-    register struct uvif *v;
+    struct rtentry *r;
+    struct uvif *v;
 
     v = &uvifs[vifi];
     for (r = routing_table; r != NULL; r = r->rt_next) {
@@ -146,7 +146,7 @@ add_vif_to_routes(vifi_t vifi)
 void
 delete_vif_from_routes(vifi_t vifi)
 {
-    register struct rtentry *r;
+    struct rtentry *r;
 
     for (r = routing_table; r != NULL; r = r->rt_next) {
 	if (r->rt_metric != UNREACHABLE) {
@@ -180,8 +180,8 @@ delete_vif_from_routes(vifi_t vifi)
 void
 delete_neighbor_from_routes(u_int32_t addr, vifi_t vifi)
 {
-    register struct rtentry *r;
-    register struct uvif *v;
+    struct rtentry *r;
+    struct uvif *v;
 
     v = &uvifs[vifi];
     for (r = routing_table; r != NULL; r = r->rt_next) {
@@ -250,7 +250,7 @@ start_route_updates(void)
 static int
 find_route(u_int32_t origin, u_int32_t mask)
 {
-    register struct rtentry *r;
+    struct rtentry *r;
 
     r = rtp->rt_next;
     while (r != NULL) {
@@ -281,7 +281,7 @@ find_route(u_int32_t origin, u_int32_t mask)
 static void
 create_route(u_int32_t origin, u_int32_t mask)
 {
-    register struct rtentry *r;
+    struct rtentry *r;
 
     if ((r = (struct rtentry *) malloc(sizeof(struct rtentry) +
 				       (2 * numvifs * sizeof(u_int32_t)) +
@@ -318,7 +318,7 @@ create_route(u_int32_t origin, u_int32_t mask)
 static void
 discard_route(struct rtentry *prev_r)
 {
-    register struct rtentry *r;
+    struct rtentry *r;
 
     r = prev_r->rt_next;
     prev_r->rt_next = r->rt_next;
@@ -341,7 +341,7 @@ void
 update_route(u_int32_t origin, u_int32_t mask, u_int metric, u_int32_t src,
     vifi_t vifi)
 {
-    register struct rtentry *r;
+    struct rtentry *r;
     u_int adj_metric;
 
     /*
@@ -569,9 +569,9 @@ update_route(u_int32_t origin, u_int32_t mask, u_int metric, u_int32_t src,
 void
 age_routes(void)
 {
-    register struct rtentry *r;
-    register struct rtentry *prev_r;
-    register vifi_t vifi;
+    struct rtentry *r;
+    struct rtentry *prev_r;
+    vifi_t vifi;
 
     for (prev_r = RT_ADDR, r = routing_table;
 	 r != NULL;
@@ -651,7 +651,7 @@ age_routes(void)
 void
 expire_all_routes(void)
 {
-    register struct rtentry *r;
+    struct rtentry *r;
 
     for (r = routing_table; r != NULL; r = r->rt_next) {
 	r->rt_metric   = UNREACHABLE;
@@ -667,7 +667,7 @@ expire_all_routes(void)
 void
 free_all_routes(void)
 {
-    register struct rtentry *r;
+    struct rtentry *r;
 
     r = RT_ADDR;
 
@@ -704,11 +704,11 @@ struct newrt {
 static int
 compare_rts(const void *rt1, const void *rt2)
 {
-    register struct newrt *r1 = (struct newrt *)rt1;
-    register struct newrt *r2 = (struct newrt *)rt2;
-    register u_int32_t m1 = ntohl(r1->mask);
-    register u_int32_t m2 = ntohl(r2->mask);
-    register u_int32_t o1, o2;
+    struct newrt *r1 = (struct newrt *)rt1;
+    struct newrt *r2 = (struct newrt *)rt2;
+    u_int32_t m1 = ntohl(r1->mask);
+    u_int32_t m2 = ntohl(r2->mask);
+    u_int32_t o1, o2;
 
     if (m1 > m2)
 	return (-1);
@@ -733,7 +733,7 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
     u_int32_t level)
 {
     vifi_t vifi;
-    register int width, i, nrt = 0;
+    int width, i, nrt = 0;
     int metric;
     u_int32_t mask;
     u_int32_t origin;
@@ -827,9 +827,9 @@ accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
 void
 report(int which_routes, vifi_t vifi, u_int32_t dst)
 {
-    register struct rtentry *r;
-    register char *p;
-    register int i;
+    struct rtentry *r;
+    char *p;
+    int i;
     int datalen = 0;
     int width = 0;
     u_int32_t mask = 0;
@@ -913,9 +913,9 @@ report(int which_routes, vifi_t vifi, u_int32_t dst)
 void
 report_to_all_neighbors(int which_routes)
 {
-    register vifi_t vifi;
-    register struct uvif *v;
-    register struct rtentry *r;
+    vifi_t vifi;
+    struct uvif *v;
+    struct rtentry *r;
     int routes_changed_before;
 
     /*
@@ -961,10 +961,10 @@ report_to_all_neighbors(int which_routes)
 static int
 report_chunk(struct rtentry *start_rt, vifi_t vifi, u_int32_t dst)
 {
-    register struct rtentry *r;
-    register char *p;
-    register int i;
-    register int nrt = 0;
+    struct rtentry *r;
+    char *p;
+    int i;
+    int nrt = 0;
     int datalen = 0;
     int width = 0;
     u_int32_t mask = 0;
@@ -1032,10 +1032,10 @@ report_chunk(struct rtentry *start_rt, vifi_t vifi, u_int32_t dst)
 int
 report_next_chunk(void)
 {
-    register vifi_t vifi;
-    register struct uvif *v;
-    register struct rtentry *sr;
-    register int i, n = 0, min = 20000;
+    vifi_t vifi;
+    struct uvif *v;
+    struct rtentry *sr;
+    int i, n = 0, min = 20000;
     static int start_rt;
 
     if (nroutes <= 0)
@@ -1085,8 +1085,8 @@ report_next_chunk(void)
 void
 dump_routes(FILE *fp)
 {
-    register struct rtentry *r;
-    register vifi_t i;
+    struct rtentry *r;
+    vifi_t i;
 
 
     fprintf(fp,

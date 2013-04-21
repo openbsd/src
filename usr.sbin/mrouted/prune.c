@@ -83,7 +83,7 @@ prun_add_ttls(struct gtable *gt)
  * checks for scoped multicast addresses
  */
 #define GET_SCOPE(gt) { \
-	register vifi_t _i; \
+	vifi_t _i; \
 	if ((ntohl((gt)->gt_mcastgrp) & 0xff000000) == 0xef000000) \
 	    for (_i = 0; _i < numvifs; _i++) \
 		if (scoped_addr(_i, (gt)->gt_mcastgrp)) \
@@ -108,8 +108,8 @@ scoped_addr(vifi_t vifi, u_int32_t addr)
 int
 grplst_mem(vifi_t vifi, u_int32_t mcastgrp)
 {
-    register struct listaddr *g;
-    register struct uvif *v;
+    struct listaddr *g;
+    struct uvif *v;
 
     v = &uvifs[vifi];
 
@@ -298,8 +298,8 @@ send_prune(struct gtable *gt)
 static void
 send_graft(struct gtable *gt)
 {
-    register char *p;
-    register int i;
+    char *p;
+    int i;
     int datalen;
     u_int32_t src;
     u_int32_t dst;
@@ -336,8 +336,8 @@ send_graft(struct gtable *gt)
 static void
 send_graft_ack(u_int32_t src, u_int32_t dst, u_int32_t origin, u_int32_t grp)
 {
-    register char *p;
-    register int i;
+    char *p;
+    int i;
     int datalen;
 
     p = send_buf + MIN_IP_HEADER_LEN + IGMP_MINLEN;
@@ -1286,10 +1286,10 @@ accept_g_ack(u_int32_t src, u_int32_t dst, char *p, int datalen)
 void
 free_all_prunes(void)
 {
-    register struct rtentry *r;
-    register struct gtable *g, *prev_g;
-    register struct stable *s, *prev_s;
-    register struct ptable *p, *prev_p;
+    struct rtentry *r;
+    struct gtable *g, *prev_g;
+    struct stable *s, *prev_s;
+    struct ptable *p, *prev_p;
 
     for (r = routing_table; r; r = r->rt_next) {
 	g = r->rt_groups;
@@ -1340,9 +1340,9 @@ free_all_prunes(void)
 void
 steal_sources(struct rtentry *rt)
 {
-    register struct rtentry *rp;
-    register struct gtable *gt, **gtnp;
-    register struct stable *st, **stnp;
+    struct rtentry *rp;
+    struct gtable *gt, **gtnp;
+    struct stable *st, **stnp;
 
     for (rp = rt->rt_next; rp; rp = rp->rt_next) {
 	if ((rt->rt_origin & rp->rt_originmask) == rp->rt_origin) {
@@ -1438,7 +1438,7 @@ age_table_entry(void)
 
 	/* retransmit graft if graft sent flag is still set */
 	if (gt->gt_grftsnt) {
-	    register int y;
+	    int y;
 	    CHK_GS(gt->gt_grftsnt++, y);
 	    if (y)
 		send_graft(gt);
@@ -1671,11 +1671,11 @@ scaletime(u_long t)
 void
 dump_cache(FILE *fp2)
 {
-    register struct rtentry *r;
-    register struct gtable *gt;
-    register struct stable *st;
-    register vifi_t i;
-    register time_t thyme = time(0);
+    struct rtentry *r;
+    struct gtable *gt;
+    struct stable *st;
+    vifi_t i;
+    time_t thyme = time(0);
 
     fprintf(fp2,
 	    "Multicast Routing Cache Table (%d entries)\n%s", kroutes,

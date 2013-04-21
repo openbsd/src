@@ -31,7 +31,7 @@ char s4[SNAMLEN];
 int
 inet_valid_host(u_int32_t naddr)
 {
-    register u_int32_t addr;
+    u_int32_t addr;
 
     addr = ntohl(naddr);
 
@@ -68,7 +68,7 @@ inet_valid_mask(u_int32_t mask)
 int
 inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask)
 {
-    register u_int32_t subnet, mask;
+    u_int32_t subnet, mask;
 
     subnet = ntohl(nsubnet);
     mask   = ntohl(nmask);
@@ -106,7 +106,7 @@ inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask)
 char *
 inet_fmt(u_int32_t addr, char *s)
 {
-    register u_char *a;
+    u_char *a;
 
     a = (u_char *)&addr;
     snprintf(s, SNAMLEN, "%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
@@ -121,7 +121,7 @@ inet_fmt(u_int32_t addr, char *s)
 char *
 inet_fmts(u_int32_t addr, u_int32_t mask, char *s)
 {
-    register u_char *a, *m;
+    u_char *a, *m;
     int bits;
 
     if ((addr == 0) && (mask == 0)) {
@@ -191,10 +191,10 @@ inet_parse(char *s)
 int
 inet_cksum(u_int16_t *addr, u_int len)
 {
-	register int nleft = (int)len;
-	register u_int16_t *w = addr;
+	int nleft = (int)len;
+	u_int16_t *w = addr;
 	u_int16_t answer = 0;
-	register int32_t sum = 0;
+	int32_t sum = 0;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
