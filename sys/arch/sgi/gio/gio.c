@@ -1,4 +1,4 @@
-/*	$OpenBSD: gio.c,v 1.14 2012/10/26 16:26:13 miod Exp $	*/
+/*	$OpenBSD: gio.c,v 1.15 2013/04/21 17:13:36 miod Exp $	*/
 /*	$NetBSD: gio.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -371,8 +371,8 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 	}
 
 	/*
-	 * GIO32 devices with a 32-bit ID register will not answer to
-	 * addresses not aligned on 32 bit boundaries.
+	 * GIO32 devices with a 32-bit ID register will not necesserily
+	 * answer to addresses not aligned on 32 bit boundaries.
 	 */
 
 	if (guarded_read_2(va | 2, &id16) != 0 ||
@@ -388,9 +388,12 @@ gio_id(vaddr_t va, paddr_t pa, int maybe_gfx)
 	 * other bytes in the first 32-bit word for other purposes.
 	 */
 
-	if ((id32 & 0xffff) == id16 && (id32 & 0xff) == id8 &&
-	    !GIO_PRODUCT_32BIT_ID(id8) && id8 != 0x00)
-		return /*GIO_PRODUCT_PRODUCTID*/(id8);
+	if ((id32 & 0xffff) == id16 && (id32 & 0xff) == id8) {
+		if (GIO_PRODUCT_32BIT_ID(id32))
+			return id32;
+		else if (!GIO_PRODUCT_32BIT_ID(id8) && id8 != 0x00)
+			return /*GIO_PRODUCT_PRODUCTID*/(id8);
+	}
 
 	/*
 	 * If there is a frame buffer device, then either we have hit a
