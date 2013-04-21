@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.13 2013/04/17 00:13:40 deraadt Exp $	*/
+/*	$OpenBSD: dump.c,v 1.14 2013/04/21 19:42:32 florian Exp $	*/
 /*	$KAME: dump.c,v 1.10 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -83,8 +83,7 @@ dump_interface_status(void)
 		    ifinfo->mediareqok ? "available" : "unavailable");
 		fprintf(fp, "  probes: %d, dadcount = %d\n",
 		    ifinfo->probes, ifinfo->dadcount);
-		if (ifinfo->timer.tv_sec == tm_max.tv_sec &&
-		    ifinfo->timer.tv_usec == tm_max.tv_usec)
+		if (ifinfo->stoptimer)
 			fprintf(fp, "  no timer\n");
 		else {
 			fprintf(fp, "  timer: interval=%lld:%ld, expire=%s\n",

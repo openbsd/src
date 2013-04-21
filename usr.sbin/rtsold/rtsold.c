@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.48 2013/04/19 05:06:52 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.49 2013/04/21 19:42:32 florian Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include "rtsold.h"
 
 struct ifinfo *iflist;
-struct timeval tm_max =	{0x7fffffff, 0x7fffffff};
 static int log_upto = 999;
 static int fflag = 0;
 static int Fflag = 0;	/* force setting sysctl parameters */
@@ -457,14 +456,14 @@ rtsol_check_timer(void)
 	static struct timeval returnval;
 	struct timeval now, rtsol_timer;
 	struct ifinfo *ifinfo;
-	int flags;
+	int flags, timers;
 
 	gettimeofday(&now, NULL);
 
-	rtsol_timer = tm_max;
+	timers = 0;
 
 	for (ifinfo = iflist; ifinfo; ifinfo = ifinfo->next) {
-		if (timercmp(&ifinfo->expire, &now, <=)) {
+		if (!ifinfo->stoptimer && timercmp(&ifinfo->expire, &now, <=)) {
 			if (dflag > 1)
 				warnmsg(LOG_DEBUG, __func__,
 				    "timer expiration on %s, "
@@ -539,12 +538,16 @@ rtsol_check_timer(void)
 			}
 			rtsol_timer_update(ifinfo);
 		}
-
-		if (timercmp(&ifinfo->expire, &rtsol_timer, <))
-			rtsol_timer = ifinfo->expire;
+		if (!ifinfo->stoptimer) {
+			if (timers == 0)
+				rtsol_timer = ifinfo->expire;
+			else if (timercmp(&ifinfo->expire, &rtsol_timer, <))
+				rtsol_timer = ifinfo->expire;
+			timers++;
+		}
 	}
 
-	if (timercmp(&rtsol_timer, &tm_max, ==)) {
+	if (timers == 0) {
 		warnmsg(LOG_DEBUG, __func__, "there is no timer");
 		return(NULL);
 	} else if (timercmp(&rtsol_timer, &now, <))
@@ -569,6 +572,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 	struct timeval now;
 
 	bzero(&ifinfo->timer, sizeof(ifinfo->timer));
+	ifinfo->stoptimer = 0;
 
 	switch (ifinfo->state) {
 	case IFS_DOWN:
@@ -584,7 +588,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			/* XXX should be configurable */
 			ifinfo->timer.tv_sec = 3;
 		} else
-			ifinfo->timer = tm_max;	/* stop timer(valid?) */
+			ifinfo->stoptimer = 1;
 		break;
 	case IFS_DELAY:
 		interval = arc4random_uniform(MAX_RTR_SOLICITATION_DELAY *
@@ -614,8 +618,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 	}
 
 	/* reset the timer */
-	if (timercmp(&ifinfo->timer, &tm_max, ==)) {
-		ifinfo->expire = tm_max;
+	if (ifinfo->stoptimer) {
 		warnmsg(LOG_DEBUG, __func__,
 		    "stop timer for %s", ifinfo->ifname);
 	} else {

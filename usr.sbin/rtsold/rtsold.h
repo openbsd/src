@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.h,v 1.14 2011/03/23 00:59:49 bluhm Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.15 2013/04/21 19:42:32 florian Exp $	*/
 /*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -47,6 +47,7 @@ struct ifinfo {
 	int dadcount;
 	struct timeval timer;
 	struct timeval expire;
+	int stoptimer;
 	int errors;		/* # of errors we've got - detect wedge */
 
 	int racnt;		/* total # of valid RAs it have got */
@@ -63,7 +64,6 @@ struct ifinfo {
 #define IFS_TENTATIVE	4
 
 /* rtsold.c */
-extern struct timeval tm_max;
 extern int dflag;
 extern char *otherconf_script;
 struct ifinfo *find_ifinfo(int ifindex);
