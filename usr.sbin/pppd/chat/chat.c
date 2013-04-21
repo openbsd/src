@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.29 2013/04/20 20:32:37 deraadt Exp $	*/
+/*	$OpenBSD: chat.c,v 1.30 2013/04/21 17:50:29 tedu Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -1425,43 +1425,6 @@ register char *string;
     alarmed   = 0;
     return (0);
 }
-
-/*
- * Gross kludge to handle Solaris versions >= 2.6 having usleep.
- */
-#ifdef SOL2
-#include <sys/param.h>
-#if MAXUID > 65536		/* then this is Solaris 2.6 or later */
-#undef NO_USLEEP
-#endif
-#endif /* SOL2 */
-
-#ifdef NO_USLEEP
-#include <sys/types.h>
-#include <sys/time.h>
-
-/*
-  usleep -- support routine for 4.2BSD system call emulations
-  last edit:  29-Oct-1984     D A Gwyn
-  */
-
-extern int	  select();
-
-int
-usleep( usec )				  /* returns 0 if ok, else -1 */
-    long		usec;		/* delay in microseconds */
-{
-    static struct {		/* `timeval' */
-	long	tv_sec;		/* seconds */
-	long	tv_usec;	/* microsecs */
-    } delay;	    		/* _select() timeout */
-
-    delay.tv_sec  = usec / 1000000L;
-    delay.tv_usec = usec % 1000000L;
-
-    return select(0, (long *)0, (long *)0, (long *)0, &delay);
-}
-#endif
 
 void
 pack_array (array, end)
