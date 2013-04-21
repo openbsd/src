@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5crypt.c,v 1.15 2009/10/31 13:29:07 sobrado Exp $	*/
+/*	$OpenBSD: md5crypt.c,v 1.16 2013/04/21 18:31:56 tedu Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -44,8 +44,8 @@ char *
 md5crypt(const char *pw, const char *salt)
 {
 	/*
-	 * This string is magic for this algorithm.  Having
-	 * it this way, we can get get better later on
+	 * This string is the magic for this algorithm.
+	 * Having it this way, we can get better later on.
 	 */
 	static unsigned char	*magic = (unsigned char *)"$1$";
 
@@ -56,7 +56,7 @@ md5crypt(const char *pw, const char *salt)
 	MD5_CTX	ctx,ctx1;
 	u_int32_t l;
 
-	/* Refine the Salt first */
+	/* Refine the salt first */
 	sp = (const unsigned char *)salt;
 
 	/* If it starts with the magic string, then skip that */
@@ -107,9 +107,11 @@ md5crypt(const char *pw, const char *salt)
 	MD5Final(final,&ctx);
 
 	/*
-	 * and now, just to make sure things don't run too fast
+	 * And now, just to make sure things don't run too fast
 	 * On a 60 MHz Pentium this takes 34 msec, so you would
 	 * need 30 seconds to build a 1000 entry dictionary...
+	 * On a modern machine, with possible GPU optimization,
+	 * this will run a lot faster than that.
 	 */
 	for(i=0;i<1000;i++) {
 		MD5Init(&ctx1);
