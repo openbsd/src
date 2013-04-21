@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.14 2013/04/21 19:42:32 florian Exp $	*/
+/*	$OpenBSD: dump.c,v 1.15 2013/04/21 19:46:31 deraadt Exp $	*/
 /*	$KAME: dump.c,v 1.10 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -112,7 +112,8 @@ static char *
 sec2str(time_t total)
 {
 	static char result[256];
-	int days, hours, mins, secs;
+	time_t days;
+	int hours, mins, secs;
 	int first = 1;
 	char *p = result;
 	char *ep = &result[sizeof(result)];
@@ -125,7 +126,7 @@ sec2str(time_t total)
 
 	if (days) {
 		first = 0;
-		n = snprintf(p, ep - p, "%dd", days);
+		n = snprintf(p, ep - p, "%lldd", (long long)days);
 		if (n < 0 || n >= ep - p)
 			return "?";
 		p += n;
