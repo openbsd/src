@@ -38,23 +38,24 @@
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <ufs/ufs/quota.h>
+
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fstab.h>
-#include <pwd.h>
 #include <grp.h>
-#include <ctype.h>
+#include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "pathnames.h"
 
 char *qfname = QUOTAFILENAME;
 char *qfextension[] = INITQFNAMES;
 char *quotagroup = QUOTAGROUP;
-char tmpfil[] = _PATH_TMPFILE;
+char tmpfil[] = "/tmp/edquota.XXXXXXXXXX";
 
 struct quotause {
 	struct	quotause *next;
