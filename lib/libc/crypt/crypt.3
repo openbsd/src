@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.30 2013/04/20 19:02:52 tedu Exp $
+.\" $OpenBSD: crypt.3,v 1.31 2013/04/21 18:07:32 tedu Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: April 20 2013 $
+.Dd $Mdocdate: April 21 2013 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nm bcrypt_gensalt ,
 .Nm bcrypt ,
 .Nm md5crypt
-.Nd DES encryption
+.Nd password hashing
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Ft int
@@ -67,7 +67,7 @@
 .Sh DESCRIPTION
 The
 .Fn crypt
-function performs password encryption based on the
+function performs password hashing based on the
 .Tn NBS
 Data Encryption Standard (DES).
 Additional code has been added to deter key search attempts and to use
@@ -302,22 +302,9 @@ The current style
 .Fn crypt
 first appeared in
 .At v7 .
-.Pp
-This library (FreeSec 1.0) was developed outside the United States of America
-as an unencumbered replacement for the U.S.-only libcrypt encryption
-library.
-Programs linked against the
-.Fn crypt
-interface may be exported from the U.S.A. only if they use
-.Fn crypt
-solely for authentication purposes and avoid use of
-the other programmer interfaces listed above.
-Special care has been taken
-in the library so that programs which only use the
-.Fn crypt
-interface do not pull in the other components.
 .Sh AUTHORS
 .An David Burren Aq davidb@werj.com.au
+wrote the original DES functions.
 .Sh BUGS
 The
 .Fn crypt
