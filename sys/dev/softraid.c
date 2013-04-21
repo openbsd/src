@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.299 2013/03/31 15:46:11 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.300 2013/04/21 13:00:21 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2255,36 +2255,49 @@ sr_wu_done_callback(void *arg1, void *arg2)
 
 	s = splbio();
 
-	TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
-		if (wup == wu)
-			break;
-
-	if (wup == NULL)
-		panic("%s: wu %p not on pending queue",
-		    DEVNAME(sd->sd_sc), wu);
-
-	TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
-
-	if (wu->swu_collider) {
-		wu->swu_collider->swu_state = SR_WU_INPROGRESS;
-		TAILQ_REMOVE(&sd->sd_wu_defq, wu->swu_collider, swu_link);
-		sr_raid_startwu(wu->swu_collider);
-	}
-
 	if (wu->swu_ios_failed)
 		xs->error = XS_DRIVER_STUFFUP;
 	else
 		xs->error = XS_NOERROR;
 
+	if (sd->sd_scsi_wu_done) {
+		if (sd->sd_scsi_wu_done(wu) == SR_WU_RESTART)
+			goto done;
+	}
+
+	/* Remove work unit from pending queue. */
+	TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
+		if (wup == wu)
+			break;
+	if (wup == NULL)
+		panic("%s: wu %p not on pending queue",
+		    DEVNAME(sd->sd_sc), wu);
+	TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
+
+	if (wu->swu_collider) {
+		if (wu->swu_ios_failed)
+			sr_raid_recreate_wu(wu->swu_collider);
+
+		/* XXX Should the collider be failed if this xs failed? */
+		wu->swu_collider->swu_state = SR_WU_INPROGRESS;
+		TAILQ_REMOVE(&sd->sd_wu_defq, wu->swu_collider, swu_link);
+		sr_raid_startwu(wu->swu_collider);
+	}
+
 	/*
 	 * If a discipline provides its own sd_scsi_done function, then it
 	 * is responsible for calling sr_scsi_done() once I/O is complete.
 	 */
+	if (wu->swu_flags & SR_WUF_REBUILD)
+		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
+	if (wu->swu_flags & SR_WUF_WAKEUP)
+		wakeup(wu);
 	if (sd->sd_scsi_done)
 		sd->sd_scsi_done(wu);
-	else
+	else if (!(wu->swu_flags & SR_WUF_REBUILD))
 		sr_scsi_done(sd, xs);
 
+done:
 	splx(s);
 }
 
@@ -3892,6 +3905,7 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 	sd->sd_scsi_sync = sr_raid_sync;
 	sd->sd_scsi_rw = NULL;
 	sd->sd_scsi_intr = sr_raid_intr;
+	sd->sd_scsi_wu_done = NULL;
 	sd->sd_scsi_done = NULL;
 	sd->sd_set_chunk_state = sr_set_chunk_state;
 	sd->sd_set_vol_state = sr_set_vol_state;

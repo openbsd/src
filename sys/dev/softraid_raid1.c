@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.49 2013/03/31 15:44:52 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.50 2013/04/21 13:00:21 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -50,7 +50,7 @@ int	sr_raid1_assemble(struct sr_discipline *, struct bioc_createraid *,
 	    int, void *);
 int	sr_raid1_init(struct sr_discipline *sd);
 int	sr_raid1_rw(struct sr_workunit *);
-void	sr_raid1_intr(struct buf *);
+int	sr_raid1_wu_done(struct sr_workunit *);
 void	sr_raid1_set_chunk_state(struct sr_discipline *, int, int);
 void	sr_raid1_set_vol_state(struct sr_discipline *);
 
@@ -69,7 +69,7 @@ sr_raid1_discipline_init(struct sr_discipline *sd)
 	sd->sd_assemble = sr_raid1_assemble;
 	sd->sd_create = sr_raid1_create;
 	sd->sd_scsi_rw = sr_raid1_rw;
-	sd->sd_scsi_intr = sr_raid1_intr;
+	sd->sd_scsi_wu_done = sr_raid1_wu_done;
 	sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
 	sd->sd_set_vol_state = sr_raid1_set_vol_state;
 }
@@ -429,81 +429,36 @@ bad:
 	return (1);
 }
 
-void
-sr_raid1_intr(struct buf *bp)
+int
+sr_raid1_wu_done(struct sr_workunit *wu)
 {
-	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu, *wup;
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
-	struct sr_softc		*sc = sd->sd_sc;
-	int			s;
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
-	    DEVNAME(sc), bp, xs);
-
-	s = splbio();
-
-	sr_ccb_done(ccb);
-
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d failed: %d\n",
-	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
-	    wu->swu_ios_failed);
-
-	if (wu->swu_ios_complete < wu->swu_io_count)
-		goto done;
-
-	xs->error = XS_NOERROR;
-
-	/* if all ios failed, retry reads and give up on writes */
-	if (wu->swu_ios_failed == wu->swu_ios_complete) {
-		if (xs->flags & SCSI_DATA_IN) {
-			printf("%s: retrying read on block %lld\n",
-			    DEVNAME(sc), ccb->ccb_buf.b_blkno);
-			if (wu->swu_cb_active == 1)
-				panic("%s: sr_raid1_intr_cb",
-				    DEVNAME(sd->sd_sc));
-			sr_wu_release_ccbs(wu);
-			wu->swu_state = SR_WU_RESTART;
-			if (sd->sd_scsi_rw(wu) == 0)
-				goto done;
-			xs->error = XS_DRIVER_STUFFUP;
-		} else {
-			printf("%s: permanently failing write on block %lld\n",
-			    DEVNAME(sc), ccb->ccb_buf.b_blkno);
-			xs->error = XS_DRIVER_STUFFUP;
-		}
+	/* If at least one I/O succeeded, we are okay. */
+	if (wu->swu_ios_succeeded > 0) {
+		xs->error = XS_NOERROR;
+		return SR_WU_OK;
 	}
 
-	TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
-		if (wu == wup)
-			break;
-
-	if (wup == NULL)
-		panic("%s: wu %p not on pending queue",
-		    DEVNAME(sd->sd_sc), wu);
-
-	/* wu on pendq, remove */
-	TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
-
-	if (wu->swu_collider) {
-		if (wu->swu_ios_failed)
-			sr_raid_recreate_wu(wu->swu_collider);
-
-		/* XXX Should the collider be failed if this xs failed? */
-		/* restart deferred wu */
-		wu->swu_collider->swu_state = SR_WU_INPROGRESS;
-		TAILQ_REMOVE(&sd->sd_wu_defq, wu->swu_collider, swu_link);
-		sr_raid_startwu(wu->swu_collider);
+	/* If all I/O failed, retry reads and give up on writes. */
+	if (xs->flags & SCSI_DATA_IN) {
+		printf("%s: retrying read on block %lld\n",
+		    sd->sd_meta->ssd_devname, wu->swu_blk_start);
+		if (wu->swu_cb_active == 1)
+			panic("%s: sr_raid1_intr_cb",
+			    DEVNAME(sd->sd_sc));
+		sr_wu_release_ccbs(wu);
+		wu->swu_state = SR_WU_RESTART;
+		if (sd->sd_scsi_rw(wu) == 0)
+			return SR_WU_RESTART;
+	} else {
+		printf("%s: permanently failing write on block %lld\n",
+		    sd->sd_meta->ssd_devname, wu->swu_blk_start);
 	}
 
-	if (wu->swu_flags & SR_WUF_REBUILD)
-		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
-	if (wu->swu_flags & SR_WUF_WAKEUP)
-		wakeup(wu);
-	if (!(wu->swu_flags & SR_WUF_REBUILD))
-		sr_scsi_done(sd, xs);
+	wu->swu_state = SR_WU_FAILED;
+	xs->error = XS_DRIVER_STUFFUP;
 
-done:
-	splx(s);
+	return SR_WU_FAILED;
 }
