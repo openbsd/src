@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.10 2007/10/17 20:10:44 chl Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.11 2013/04/21 09:51:24 millert Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -847,33 +847,23 @@ printsub(direction, pointer, length)
 
 /* EmptyTerminal - called to make sure that the terminal buffer is empty.
  *			Note that we consider the buffer to run all the
- *			way to the kernel (thus the select).
+ *			way to the kernel (thus the poll).
  */
 
     void
 EmptyTerminal()
 {
-#if	defined(unix)
-    fd_set	outs;
+    struct pollfd pfd[1];
 
-    FD_ZERO(&outs);
-#endif	/* defined(unix) */
+    pfd[0].fd = tout;
+    pfd[0].events = POLLOUT;
 
     if (TTYBYTES() == 0) {
-#if	defined(unix)
-	FD_SET(tout, &outs);
-	(void) select(tout+1, (fd_set *) 0, &outs, (fd_set *) 0,
-			(struct timeval *) 0);	/* wait for TTLOWAT */
-#endif	/* defined(unix) */
+	(void) poll(pfd, 1, -1); /* wait for TTLOWAT */
     } else {
 	while (TTYBYTES()) {
 	    (void) ttyflush(0);
-#if	defined(unix)
-	    ttyflush(0);
-	    FD_SET(tout, &outs);
-	    (void) select(tout+1, (fd_set *) 0, &outs, (fd_set *) 0,
-				(struct timeval *) 0);	/* wait for TTLOWAT */
-#endif	/* defined(unix) */
+	    (void) poll(pfd, 1, -1); /* wait for TTLOWAT */
 	}
     }
 }

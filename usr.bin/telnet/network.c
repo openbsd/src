@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.8 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: network.c,v 1.9 2013/04/21 09:51:24 millert Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -61,34 +61,24 @@ init_network()
     int
 stilloob()
 {
-    static struct timeval timeout = { 0 };
-    fd_set *fdsp;
-    int fdsn;
+    struct pollfd pfd[1];
     int value;
 
-    fdsn = howmany(net+1, NFDBITS) * sizeof(fd_mask);
-    if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
-	err(1, "malloc");
-
     do {
-	memset(fdsp, 0, fdsn);
-	FD_SET(net, fdsp);
-	value = select(net+1, (fd_set *)0, (fd_set *)0, fdsp, &timeout);
+	pfd[0].fd = net;
+	pfd[0].events = POLLRDBAND;
+	value = poll(pfd, 1, 0);
     } while ((value == -1) && (errno == EINTR));
 
     if (value < 0) {
-	perror("select");
-	free(fdsp);
+	perror("poll");
 	(void) quit();
 	/* NOTREACHED */
     }
-    if (FD_ISSET(net, fdsp)) {
-	free(fdsp);
+    if (pfd[0].revents & POLLRDBAND)
 	return 1;
-    } else {
-   	free(fdsp);
+    else
 	return 0;
-    }
 }
 
 

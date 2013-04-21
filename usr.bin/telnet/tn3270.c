@@ -1,4 +1,4 @@
-/*	$OpenBSD: tn3270.c,v 1.6 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: tn3270.c,v 1.7 2013/04/21 09:51:24 millert Exp $	*/
 /*	$NetBSD: tn3270.c,v 1.5 1996/02/28 21:04:18 thorpej Exp $	*/
 
 /*
@@ -107,14 +107,13 @@ DataToNetwork(buffer, count, done)
     while (count) {
 	/* If not enough room for EORs, IACs, etc., wait */
 	if (NETROOM() < 6) {
-	    fd_set o;
+	    struct pollfd pfd[1];
 
-	    FD_ZERO(&o);
 	    netflush();
 	    while (NETROOM() < 6) {
-		FD_SET(net, &o);
-		(void) select(net+1, (fd_set *) 0, &o, (fd_set *) 0,
-						(struct timeval *) 0);
+		pfd[0].fd = net;
+		pfd[0].events = POLLOUT;
+		(void) poll(pfd, 1, -1);
 		netflush();
 	    }
 	}
@@ -175,7 +174,7 @@ outputPurge()
  * DataToTerminal - queue up some data to go to terminal.
  *
  * Note: there are people who call us and depend on our processing
- * *all* the data at one time (thus the select).
+ * *all* the data at one time (thus the poll).
  */
 
     int
@@ -190,18 +189,13 @@ DataToTerminal(buffer, count)
 
     while (count) {
 	if (TTYROOM() == 0) {
-#if	defined(unix)
-	    fd_set o;
+	    struct pollfd pfd[1];
 
-	    FD_ZERO(&o);
-#endif	/* defined(unix) */
 	    (void) ttyflush(0);
 	    while (TTYROOM() == 0) {
-#if	defined(unix)
-		FD_SET(tout, &o);
-		(void) select(tout+1, (fd_set *) 0, &o, (fd_set *) 0,
-						(struct timeval *) 0);
-#endif	/* defined(unix) */
+		pfd[0].fd = tout;
+		pfd[0].events = POLLOUT;
+		(void) poll(pfd, 1, -1);
 		(void) ttyflush(0);
 	    }
 	}

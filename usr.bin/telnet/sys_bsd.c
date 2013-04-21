@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.14 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.15 2013/04/21 09:51:24 millert Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,11 @@ int
 	tin,			/* Input file descriptor */
 	net;
 
+#define TELNET_FD_TOUT	0
+#define TELNET_FD_TIN	1
+#define TELNET_FD_NET	2
+#define TELNET_FD_NUM	3
+
 #ifndef	USE_TERMIO
 struct	tchars otc = { 0 }, ntc = { 0 };
 struct	ltchars oltc = { 0 }, nltc = { 0 };
@@ -84,9 +89,6 @@ extern struct termios new_tc;
 # define TIOCFLUSH TC_PX_DRAIN
 # endif
 #endif	/* USE_TERMIO */
-
-fd_set *ibitsp, *obitsp, *xbitsp;
-int fdsn;
 
     void
 init_sys()
@@ -961,8 +963,8 @@ sys_telnet_init()
  */
 
     int
-process_rings(netin, netout, netex, ttyin, ttyout, poll)
-    int poll;		/* If 0, then block until something to do */
+process_rings(netin, netout, netex, ttyin, ttyout, dopoll)
+    int dopoll;		/* If 0, then block until something to do */
 {
     int c;
 		/* One wants to be a bit careful about setting returnValue
@@ -971,49 +973,34 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 		 * time (TN3270 mode only).
 		 */
     int returnValue = 0;
-    static struct timeval TimeValue = { 0 };
-    int maxfd = -1;
-    int tmp;
+    struct pollfd pfd[TELNET_FD_NUM];
 
-    if ((netout || netin || netex) && net > maxfd)
-	maxfd = net;
-    if (ttyout && tout > maxfd)
-	maxfd = tout;
-    if (ttyin && tin > maxfd)
-	maxfd = tin;
-    tmp = howmany(maxfd+1, NFDBITS) * sizeof(fd_mask);
-    if (tmp > fdsn) {
-	if (ibitsp)
-	    free(ibitsp);
-	if (obitsp)
-	    free(obitsp);
-	if (xbitsp)
-	    free(xbitsp);
-	fdsn = tmp;
-	if ((ibitsp = (fd_set *)malloc(fdsn)) == NULL)
-	    err(1, "malloc");
-	if ((obitsp = (fd_set *)malloc(fdsn)) == NULL)
-	    err(1, "malloc");
-	if ((xbitsp = (fd_set *)malloc(fdsn)) == NULL)
-	    err(1, "malloc");
-	memset(ibitsp, 0, fdsn);
-	memset(obitsp, 0, fdsn);
-	memset(xbitsp, 0, fdsn);
+    if (ttyout) {
+	pfd[TELNET_FD_TOUT].fd = tout;
+	pfd[TELNET_FD_TOUT].events = POLLOUT;
+    } else {
+	pfd[TELNET_FD_TOUT].fd = -1;
+    }
+    if (ttyin) {
+	pfd[TELNET_FD_TIN].fd = tin;
+	pfd[TELNET_FD_TIN].events = POLLIN;
+    } else {
+	pfd[TELNET_FD_TIN].fd = -1;
+    }
+    if (netout || netin || netex) {
+	pfd[TELNET_FD_NET].fd = net;
+	pfd[TELNET_FD_NET].events = 0;
+	if (netout)
+	    pfd[TELNET_FD_NET].events |= POLLOUT;
+	if (netin)
+	    pfd[TELNET_FD_NET].events |= POLLIN;
+	if (netex)
+	    pfd[TELNET_FD_NET].events |= POLLRDBAND;
+    } else {
+	pfd[TELNET_FD_NET].fd = -1;
     }
 
-    if (netout)
-	FD_SET(net, obitsp);
-    if (ttyout)
-	FD_SET(tout, obitsp);
-    if (ttyin)
-	FD_SET(tin, ibitsp);
-    if (netin)
-	FD_SET(net, ibitsp);
-    if (netex)
-	FD_SET(net, xbitsp);
-
-    if ((c = select(maxfd+1, ibitsp, obitsp, xbitsp,
-      (poll == 0)? (struct timeval *)0 : &TimeValue)) < 0) {
+    if ((c = poll(pfd, TELNET_FD_NUM, dopoll ? 0 : -1)) < 0) {
 	if (c == -1) {
 		    /*
 		     * we can get EINTR if we are in line mode,
@@ -1029,19 +1016,11 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 		     * mode, and the transcom process died.
 		    */
 	    if (errno == EBADF) {
-			/*
-			 * zero the bits (even though kernel does it)
-			 * to make sure we are selecting on the right
-			 * ones.
-			*/
-		memset(ibitsp, 0, fdsn);
-		memset(obitsp, 0, fdsn);
-		memset(xbitsp, 0, fdsn);
 		return 0;
 	    }
 #	    endif /* defined(TN3270) */
 		    /* I don't like this, does it ever happen? */
-	    printf("sleep(5) from telnet, after select\r\n");
+	    printf("sleep(5) from telnet, after poll\r\n");
 	    sleep(5);
 	}
 	return 0;
@@ -1050,8 +1029,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Any urgent data?
      */
-    if (FD_ISSET(net, xbitsp)) {
-	FD_CLR(net, xbitsp);
+    if (pfd[TELNET_FD_NET].revents & POLLRDBAND) {
 	SYNCHing = 1;
 	(void) ttyflush(1);	/* flush already enqueued data */
     }
@@ -1059,10 +1037,9 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Something to read from the network...
      */
-    if (FD_ISSET(net, ibitsp)) {
+    if (pfd[TELNET_FD_NET].revents & (POLLIN|POLLHUP)) {
 	int canread;
 
-	FD_CLR(net, ibitsp);
 	canread = ring_empty_consecutive(&netiring);
 #if	!defined(SO_OOBINLINE)
 	    /*
@@ -1172,8 +1149,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Something to read from the tty...
      */
-    if (FD_ISSET(tin, ibitsp)) {
-	FD_CLR(tin, ibitsp);
+    if (pfd[TELNET_FD_TIN].revents & (POLLIN|POLLHUP)) {
 	c = TerminalRead(ttyiring.supply, ring_empty_consecutive(&ttyiring));
 	if (c < 0 && errno == EIO)
 	    c = 0;
@@ -1197,12 +1173,10 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 	returnValue = 1;		/* did something useful */
     }
 
-    if (FD_ISSET(net, obitsp)) {
-	FD_CLR(net, obitsp);
+    if (pfd[TELNET_FD_NET].revents & POLLOUT) {
 	returnValue |= netflush();
     }
-    if (FD_ISSET(tout, obitsp)) {
-	FD_CLR(tout, obitsp);
+    if (pfd[TELNET_FD_TOUT].revents & POLLOUT) {
 	returnValue |= (ttyflush(SYNCHing|flushout) > 0);
     }
 

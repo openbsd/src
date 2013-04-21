@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet_locl.h,v 1.3 2003/05/14 01:46:51 hin Exp $	*/
+/*	$OpenBSD: telnet_locl.h,v 1.4 2013/04/21 09:51:24 millert Exp $	*/
 /* $KTH: telnet_locl.h,v 1.13 1997/11/03 21:37:55 assar Exp $ */
 
 /*
@@ -56,7 +56,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <sys/select.h>
+#include <poll.h>
 #include <sys/time.h>
 #include <time.h>
 #include <sys/param.h>
