@@ -78,7 +78,7 @@ main(int argc, char *argv[])
     register int recvlen;
     int dummy;
     FILE *fp;
-    struct timeval tv;
+    struct timeval now;
     u_int32_t prev_genid;
     struct pollfd *pfd;
     int vers, n, i, ch;
@@ -174,8 +174,8 @@ usage:	fprintf(stderr,
     /*
      * Get generation id
      */
-    gettimeofday(&tv, 0);
-    dvmrp_genid = tv.tv_sec;
+    gettimeofday(&now, NULL);
+    dvmrp_genid = (u_int32_t)now.tv_sec;	/* for a while after 2038 */
 
     fp = fopen(genidfilename, "r");
     if (fp != NULL) {
