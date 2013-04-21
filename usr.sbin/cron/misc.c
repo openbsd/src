@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.45 2013/04/17 15:58:45 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.46 2013/04/21 00:14:51 tedu Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -788,11 +788,11 @@ poke_daemon(const char *spool_dir, unsigned char cookie) {
 int
 strtot(const char *nptr, char **endptr, time_t *tp)
 {
-	unsigned long long ull;
+	long long ll;
 
-	ull = strtoull(nptr, endptr, 10);
-	if ((time_t)ull < 0 || (time_t)ull != ull)
+	ll = strtoll(nptr, endptr, 10);
+	if (ll < 0 || (time_t)ll != ll)
 		return (-1);
-	*tp = (time_t)ull;
+	*tp = (time_t)ll;
 	return (0);
 }
