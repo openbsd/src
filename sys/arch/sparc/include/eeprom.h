@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.h,v 1.12 2010/06/07 19:43:49 miod Exp $	*/
+/*	$OpenBSD: eeprom.h,v 1.13 2013/04/21 23:14:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -71,7 +71,7 @@ struct eeprom {
 
 		u_char	eed_chksum[3];	/* 0x00c: diag area checksum (3 copies) */
 		char	eed_nu2;
-		time_t	eed_hwupdate;	/* 0x010: date of last hardware update */
+		int32_t	eed_hwupdate;	/* 0x010: date of last hardware update */
 
 		char	eed_memsize;	/* 0x014: MB's of memory in system */
 		char	eed_memtest;	/* 0x015: MB's of memory to test */
