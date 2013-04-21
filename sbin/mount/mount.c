@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.53 2012/05/29 20:01:32 landry Exp $	*/
+/*	$OpenBSD: mount.c,v 1.54 2013/04/21 11:05:14 jsing Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -367,11 +367,16 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		/* XXX can't check f_mntfromname, thanks to mfs, etc. */
 		if (strncmp(name, sf.f_mntonname, MNAMELEN) == 0 &&
 		    strncmp(vfstype, sf.f_fstypename, MFSNAMELEN) == 0) {
-			if (verbose)
-				(void)printf("%s on %s type %.*s: %s\n",
-				    sf.f_mntfromname, sf.f_mntonname,
+			if (verbose) {
+				printf("%s", sf.f_mntfromname);
+				if (strncmp(sf.f_mntfromname,
+				    sf.f_mntfromspec, MNAMELEN) != 0)
+					printf(" (%s)", sf.f_mntfromspec);
+				printf(" on %s type %.*s: %s\n",
+				    sf.f_mntonname,
 				    MFSNAMELEN, sf.f_fstypename,
 				    "already mounted");
+			}
 			return (0);
 		}
 	}
@@ -455,7 +460,11 @@ prmount(struct statfs *sf)
 	struct opt *o;
 	int f = 0;
 
-	(void)printf("%s on %s type %.*s", sf->f_mntfromname, sf->f_mntonname,
+	printf("%s", sf->f_mntfromname);
+	if (verbose &&
+	    strncmp(sf->f_mntfromname, sf->f_mntfromspec, MNAMELEN) != 0)
+		printf(" (%s)", sf->f_mntfromspec);
+	printf(" on %s type %.*s", sf->f_mntonname,
 	    MFSNAMELEN, sf->f_fstypename);
 
 	flags = sf->f_flags & MNT_VISFLAGMASK;
