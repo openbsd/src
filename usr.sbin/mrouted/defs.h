@@ -37,7 +37,7 @@
 #endif /* RSRR */
 
 typedef void (*cfunc_t)(void *);
-typedef void (*ihfunc_t)(int, fd_set *);
+typedef void (*ihfunc_t)(int);
 
 #include "dvmrp.h"
 #include "vif.h"
@@ -280,7 +280,7 @@ extern int		find_src_grp(u_int32_t src, u_int32_t mask,
 
 /* rsrr.c */
 extern void		rsrr_init(void);
-extern void		rsrr_read(int f, fd_set *rfd);
+extern void		rsrr_read(int f);
 extern void		rsrr_clean(void);
 extern void		rsrr_cache_send(struct gtable *gt, int notify);
 extern void		rsrr_cache_clean(struct gtable *gt);

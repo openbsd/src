@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsrr.c,v 1.10 2004/08/01 18:32:19 deraadt Exp $	*/
+/*	$OpenBSD: rsrr.c,v 1.11 2013/04/21 00:24:42 deraadt Exp $	*/
 /*	$NetBSD: rsrr.c,v 1.3 1995/12/10 10:07:14 mycroft Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ rsrr_init(void)
 
 /* Read a message from the RSRR socket */
 void
-rsrr_read(int f, fd_set *rfd)
+rsrr_read(int f)
 {
     int rsrr_recvlen;
     sigset_t mask, omask;

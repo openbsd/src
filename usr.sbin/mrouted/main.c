@@ -22,6 +22,7 @@
 #include "defs.h"
 #include <stdarg.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <util.h>
 #include <err.h>
 
@@ -41,8 +42,8 @@ u_char pruning = 1;	/* Enable pruning by default */
 #define NHANDLERS	2
 
 static struct ihandler {
-    int fd;			/* File descriptor		 */
-    ihfunc_t func;		/* Function to call with &fd_set */
+    int fd;			/* File descriptor		*/
+    ihfunc_t func;		/* Function to call		*/
 } ihandlers[NHANDLERS];
 static int nhandlers = 0;
 
@@ -79,9 +80,8 @@ main(int argc, char *argv[])
     FILE *fp;
     struct timeval tv;
     u_int32_t prev_genid;
-    int vers;
-    fd_set rfds, readers;
-    int nfds, n, i, ch;
+    struct pollfd *pfd;
+    int vers, n, i, ch;
     sigset_t mask, omask;
     const char *errstr;
 
@@ -237,17 +237,12 @@ usage:	fprintf(stderr,
     if (debug != 0)
 	(void)signal(SIGQUIT, dump);
 
-    FD_ZERO(&readers);
-    if (igmp_socket >= FD_SETSIZE)
-	logit(LOG_ERR, 0, "descriptor too big");
-    FD_SET(igmp_socket, &readers);
-    nfds = igmp_socket + 1;
+    pfd = calloc(sizeof(struct pollfd), 1 + nhandlers);
+    pfd[0].fd = igmp_socket;
+    pfd[0].events = POLLIN;
     for (i = 0; i < nhandlers; i++) {
-	if (ihandlers[i].fd >= FD_SETSIZE)
-	    logit(LOG_ERR, 0, "descriptor too big");
-	FD_SET(ihandlers[i].fd, &readers);
-	if (ihandlers[i].fd >= nfds)
-	    nfds = ihandlers[i].fd + 1;
+	pfd[i + 1].fd = ihandlers[i].fd;
+	pfd[i + 1].events = POLLIN;
     }
 
     /*
@@ -268,14 +263,13 @@ usage:	fprintf(stderr,
      */
     dummy = 0;
     for(;;) {
-	bcopy((char *)&readers, (char *)&rfds, sizeof(rfds));
-	if ((n = select(nfds, &rfds, NULL, NULL, NULL)) < 0) {
+	if ((n = poll(pfd, nhandlers + 1, -1)) < 0) {
             if (errno != EINTR) /* SIGALRM is expected */
-                logit(LOG_WARNING, errno, "select failed");
+                logit(LOG_WARNING, errno, "poll failed");
             continue;
         }
 
-	if (FD_ISSET(igmp_socket, &rfds)) {
+	if (pfd[0].revents & POLLIN) {
 	    recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
 			       0, NULL, &dummy);
 	    if (recvlen < 0) {
@@ -291,8 +285,8 @@ usage:	fprintf(stderr,
         }
 
 	for (i = 0; i < nhandlers; i++) {
-	    if (FD_ISSET(ihandlers[i].fd, &rfds)) {
-		(*ihandlers[i].func)(ihandlers[i].fd, &rfds);
+	    if (pfd[i + 1].revents & POLLIN) {
+		(*ihandlers[i].func)(ihandlers[i].fd);
 	    }
 	}
     }
