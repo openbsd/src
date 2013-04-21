@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.24 2013/03/31 08:34:27 guenther Exp $
+.\"	$OpenBSD: accept.2,v 1.25 2013/04/21 07:44:59 jmc Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: April 21 2013 $
 .Dt ACCEPT 2
 .Os
 .Sh NAME
@@ -150,7 +150,6 @@ if (retcode == -1)
 	err(1, "accept");
 .Ed
 .Sh ERRORS
-The
 .Fn accept
 will fail if:
 .Bl -tag -width Er
