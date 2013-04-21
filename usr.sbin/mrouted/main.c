@@ -165,12 +165,6 @@ usage:	fprintf(stderr,
 
     logit(LOG_NOTICE, 0, "%s", versionstring);
 
-#ifdef SYSV
-    srand48(time(NULL));
-#else
-    srandom(gethostid());
-#endif
-
     /*
      * Get generation id
      */
@@ -300,6 +294,7 @@ usage:	fprintf(stderr,
  * seconds.  Also, every TIMER_INTERVAL seconds it calls timer() to
  * do all the other time-based processing.
  */
+/* XXX signal race */
 static void
 fasttimer(int i)
 {
@@ -411,6 +406,7 @@ timer(void)
 /*
  * On termination, let everyone know we're going away.
  */
+/* XXX signal race */
 static void
 done(int i)
 {
@@ -419,6 +415,7 @@ done(int i)
     _exit(1);
 }
 
+/* XXX signal race, atexit race */
 static void
 cleanup(void)
 {
@@ -439,6 +436,7 @@ cleanup(void)
 /*
  * Dump internal data structures to stderr.
  */
+/* XXX signal race */
 static void
 dump(int i)
 {
@@ -467,6 +465,7 @@ fdump(int i)
 /*
  * Dump local cache contents to a file.
  */
+/* XXX signal race */
 static void
 cdump(int i)
 {
@@ -483,6 +482,7 @@ cdump(int i)
 /*
  * Restart mrouted
  */
+/* XXX signal race */
 static void
 restart(int i)
 {

@@ -21,11 +21,7 @@ extern int phys_vif;
 /*
  * dither cache lifetime to obtain a value between x and 2*x
  */
-#ifdef SYSV
-#define CACHE_LIFETIME(x) ((x) + (lrand48() % (x)))
-#else
-#define CACHE_LIFETIME(x) ((x) + (random() % (x)))
-#endif
+#define CACHE_LIFETIME(x) ((x) + (arc4random_uniform(x)))
 
 #define CHK_GS(x, y) {	\
 		switch(x) { \
@@ -60,7 +56,7 @@ static void		send_graft(struct gtable *gt);
 static void		send_graft_ack(u_int32_t src, u_int32_t dst,
 			    u_int32_t origin, u_int32_t grp);
 static void		update_kernel(struct gtable *g);
-static char *		scaletime(u_long t);
+static char *		scaletime(time_t t);
 
 /*
  * Updates the ttl values for each vif.
@@ -1628,7 +1624,7 @@ expire_prune(vifi_t vifi, struct gtable *gt)
 
 
 static char *
-scaletime(u_long t)
+scaletime(time_t t)
 {
     static char buf1[5];
     static char buf2[5];
@@ -1675,7 +1671,7 @@ dump_cache(FILE *fp2)
     struct gtable *gt;
     struct stable *st;
     vifi_t i;
-    time_t thyme = time(0);
+    time_t thyme = time(NULL);
 
     fprintf(fp2,
 	    "Multicast Routing Cache Table (%d entries)\n%s", kroutes,
