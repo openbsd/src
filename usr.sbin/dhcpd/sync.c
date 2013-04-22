@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.12 2013/04/13 18:08:47 krw Exp $	*/
+/*	$OpenBSD: sync.c,v 1.13 2013/04/22 15:02:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -299,19 +299,11 @@ sync_recv(void)
 			lv = (struct dhcp_synctlv_lease *)tlv;
 			if (sizeof(*lv) > ntohs(tlv->st_length))
 				goto trunc;
-			if ((lease = find_lease_by_hw_addr(
-				    lv->lv_hardware_addr.haddr,
-				    lv->lv_hardware_addr.hlen)) == NULL) {
-				if ((lease = find_lease_by_hw_addr(
-					    lv->lv_hardware_addr.haddr,
-					    lv->lv_hardware_addr.hlen)) == NULL)
-				    {
-					lp = &l;
-					memset(lp, 0, sizeof(*lp));
-				} else
-					lp = lease;
-			} else
-				lp = lease;
+			lease = find_lease_by_hw_addr(
+			    lv->lv_hardware_addr.haddr,
+			    lv->lv_hardware_addr.hlen);
+			if (lease == NULL)
+				lease = find_lease_by_ip_addr(lv->lv_ip_addr);
 
 			lp = &l;
 			memset(lp, 0, sizeof(*lp));
