@@ -1,4 +1,4 @@
-/*	$OpenBSD: timestamp_t.h,v 1.3 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: timestamp_t.h,v 1.4 2013/04/22 07:21:52 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -25,12 +25,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef USE_TIMESPEC
 #include <sys/time.h>
 typedef struct timespec TIMESTAMP;
-#else
-#include <time.h>
-typedef time_t TIMESTAMP;
-#endif
 
 #define TIMESTAMP_TYPE

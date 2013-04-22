@@ -1,4 +1,4 @@
-/*	$OpenBSD: timestamp.c,v 1.7 2011/12/10 04:12:36 guenther Exp $ */
+/*	$OpenBSD: timestamp.c,v 1.8 2013/04/22 07:21:52 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -28,25 +28,13 @@
 #include "defines.h"
 #include "timestamp.h"
 
-#ifndef USE_TIMESPEC
-#include <sys/types.h>
-#include <utime.h>
-#endif
 
 TIMESTAMP now;		/* The time at the start of this whole process */
 
 int
 set_times(const char *f)
 {
-#ifdef USE_TIMESPEC
     return utimes(f, NULL);
-#else
-    struct utimbuf times;
-
-    time(&times.actime);
-    times.modtime = times.actime;
-    return utime(f, &times);
-#endif
 }
 
 char *

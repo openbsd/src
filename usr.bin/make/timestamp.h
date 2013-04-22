@@ -1,7 +1,7 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-/*	$OpenBSD: timestamp.h,v 1.7 2011/12/10 04:12:36 guenther Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.8 2013/04/22 07:21:52 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -51,7 +51,6 @@
 #ifndef TIMESTAMP_TYPE
 #include "timestamp_t.h"
 #endif
-#ifdef USE_TIMESPEC
 #define ts_set_out_of_date(t)	(t).tv_sec = INT_MIN, (t).tv_nsec = 0
 #define is_out_of_date(t)	((t).tv_sec == INT_MIN && (t).tv_nsec == 0)
 #define ts_set_from_stat(s, t) \
@@ -71,25 +70,6 @@ do { \
 } while (0)
 #define ts_set_from_now(n)	clock_gettime(CLOCK_REALTIME, &(n))
 #define timestamp2time_t(t)	((t).tv_sec)
-#else
-#define is_out_of_date(t)	((t) == INT_MIN)
-#define ts_set_out_of_date(t)	(t) = INT_MIN
-#define ts_set_from_stat(s, t) \
-do { \
-	(t) = (s).st_mtime; \
-	if (is_out_of_date(t)) \
-		(t)++; \
-} while (0)
-#define is_strictly_before(t1, t2)	((t1) < (t2))
-#define ts_set_from_time_t(d, t) \
-do { \
-	(t) = d; \
-	if (is_out_of_date(t)) \
-		(t)++; \
-} while (0)
-#define ts_set_from_now(n) time(&(n))
-#define timestamp2time_t(t)	(t)
-#endif
 
 extern int set_times(const char *);
 
