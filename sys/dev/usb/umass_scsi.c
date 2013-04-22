@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.38 2011/07/17 22:46:48 matthew Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.39 2013/04/22 01:19:09 deraadt Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -206,9 +206,9 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 
 	DIF(UDMASS_UPPER, sc_link->flags |= SCSIDEBUG_LEVEL);
 
-	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd: at %lu.%06lu: %d:%d "
+	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd: at %lld.%06ld: %d:%d "
 		"xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
-		sc->sc_dev.dv_xname, sc->tv.tv_sec, sc->tv.tv_usec,
+		sc->sc_dev.dv_xname, (long long)sc->tv.tv_sec, sc->tv.tv_usec,
 		sc_link->target, sc_link->lun, xs, xs->cmd->opcode,
 		xs->datalen, sc_link->quirks, xs->flags & SCSI_POLL));
 
@@ -303,8 +303,8 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 #endif
 
 	DPRINTF(UDMASS_CMD,
-		("umass_scsi_cb: at %lu.%06lu, delta=%u: xs=%p residue=%d"
-		 " status=%d\n", tv.tv_sec, tv.tv_usec, delta, xs, residue,
+		("umass_scsi_cb: at %lld.%06ld, delta=%u: xs=%p residue=%d"
+		 " status=%d\n", (long long)tv.tv_sec, tv.tv_usec, delta, xs, residue,
 		 status));
 
 	xs->resid = residue;
@@ -379,9 +379,9 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		      sc->sc_dev.dv_xname, status);
 	}
 
-	DPRINTF(UDMASS_CMD,("umass_scsi_cb: at %lu.%06lu: return error=%d, "
+	DPRINTF(UDMASS_CMD,("umass_scsi_cb: at %lld.%06ld: return error=%d, "
 			    "status=0x%x resid=%d\n",
-			    tv.tv_sec, tv.tv_usec,
+			    (long long)tv.tv_sec, tv.tv_usec,
 			    xs->error, xs->status, xs->resid));
 
 	if ((xs->flags & SCSI_POLL) && (xs->error == XS_NOERROR)) {
