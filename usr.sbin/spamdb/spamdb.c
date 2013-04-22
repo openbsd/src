@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.25 2012/10/02 15:26:17 okan Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.26 2013/04/22 19:49:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -200,14 +200,16 @@ dblist(DB *db)
 			/* this is a non-greylist entry */
 			switch (gd.pcount) {
 			case -1: /* spamtrap hit, with expiry time */
-				printf("TRAPPED|%s|%d\n", a, gd.expire);
+				printf("TRAPPED|%s|%lld\n", a,
+				    (long long)gd.expire);
 				break;
 			case -2: /* spamtrap address */
 				printf("SPAMTRAP|%s\n", a);
 				break;
 			default: /* whitelist */
-				printf("WHITE|%s|||%d|%d|%d|%d|%d\n", a,
-				    gd.first, gd.pass, gd.expire, gd.bcount,
+				printf("WHITE|%s|||%lld|%lld|%lld|%d|%d\n", a,
+				    (long long)gd.first, (long long)gd.pass,
+				    (long long)gd.expire, gd.bcount,
 				    gd.pcount);
 				break;
 			}
@@ -231,16 +233,18 @@ dblist(DB *db)
 				 * with an empty HELO field instead 
 				 * of erroring out.
 				 */			  
-				printf("GREY|%s|%s|%s|%s|%d|%d|%d|%d|%d\n",
-				    a, "", helo, from, gd.first, gd.pass,
-				    gd.expire, gd.bcount, gd.pcount);
+				printf("GREY|%s|%s|%s|%s|%lld|%lld|%lld|%d|%d\n",
+				    a, "", helo, from, (long long)gd.first,
+				    (long long)gd.pass, (long long)gd.expire,
+				    gd.bcount, gd.pcount);
 			
 			} else {
 				*to = '\0';
 				to++;
-				printf("GREY|%s|%s|%s|%s|%d|%d|%d|%d|%d\n",
-				    a, helo, from, to, gd.first, gd.pass,
-				    gd.expire, gd.bcount, gd.pcount);
+				printf("GREY|%s|%s|%s|%s|%lld|%lld|%lld|%d|%d\n",
+				    a, helo, from, to, (long long)gd.first,
+				    (long long)gd.pass, (long long)gd.expire,
+				    gd.bcount, gd.pcount);
 			}
 		}
 		free(a);
