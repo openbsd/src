@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_irq.c,v 1.44 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_irq.c,v 1.45 2013/04/22 15:10:55 deraadt Exp $	*/
 /**
  * \file drm_irq.c
  * IRQ support
@@ -745,10 +745,10 @@ drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
 	 */
 	*vblank_time = ns_to_timeval(timeval_to_ns(&etime) - delta_ns);
 
-	DPRINTF("crtc %d : v %d p(%d,%d)@ %ld.%ld -> %ld.%ld [e %d us, %d rep]\n",
+	DPRINTF("crtc %d : v %d p(%d,%d)@ %lld.%ld -> %lld.%ld [e %d us, %d rep]\n",
 		  crtc, (int)vbl_status, hpos, vpos,
-		  (long)etime.tv_sec, (long)etime.tv_usec,
-		  (long)vblank_time->tv_sec, (long)vblank_time->tv_usec,
+		  (long long)etime.tv_sec, (long)etime.tv_usec,
+		  (long long)vblank_time->tv_sec, (long)vblank_time->tv_usec,
 		  (int)duration_ns/1000, i);
 
 	vbl_status = DRM_VBLANKTIME_SCANOUTPOS_METHOD;

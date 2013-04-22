@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.53 2013/03/14 08:14:47 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.54 2013/04/22 15:10:55 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1918,13 +1918,13 @@ envy_pintr(struct envy_softc *sc)
 	int i;
 
 	if (sc->spurious > 0 || envydebug >= 2) {
-		printf("%s: spurious = %u, start = %u.%ld\n", 
+		printf("%s: spurious = %u, start = %lld.%ld\n", 
 			DEVNAME(sc), sc->spurious,
-			sc->start_ts.tv_sec, sc->start_ts.tv_nsec);
+			(long long)sc->start_ts.tv_sec, sc->start_ts.tv_nsec);
 		for (i = 0; i < sc->nintr; i++) {
-			printf("%u.%09ld: "
+			printf("%lld.%09ld: "
 			    "active=%d/%d pos=%d/%d st=%x/%x, ctl=%x\n",
-			    sc->intrs[i].ts.tv_sec,
+			    (long long)sc->intrs[i].ts.tv_sec,
 			    sc->intrs[i].ts.tv_nsec,
 			    sc->intrs[i].iactive,
 			    sc->intrs[i].oactive,

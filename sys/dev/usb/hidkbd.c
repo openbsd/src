@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.7 2012/07/13 12:33:08 shadchin Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.8 2013/04/22 15:10:56 deraadt Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -134,9 +134,9 @@ hidkbdtracedump(void)
 	for (i = 0; i < HIDKBDTRACESIZE; i++) {
 		struct hidkbdtraceinfo *p =
 		    &hidkbdtracedata[(i+hidkbdtraceindex)%HIDKBDTRACESIZE];
-		printf("%lu.%06lu: mod=0x%02x key0=0x%02x key1=0x%02x "
+		printf("%lld.%06ld: mod=0x%02x key0=0x%02x key1=0x%02x "
 		       "key2=0x%02x key3=0x%02x\n",
-		       p->tv.tv_sec, p->tv.tv_usec,
+		       (long long)p->tv.tv_sec, p->tv.tv_usec,
 		       p->ud.modifiers, p->ud.keycode[0], p->ud.keycode[1],
 		       p->ud.keycode[2], p->ud.keycode[3]);
 	}
@@ -337,9 +337,9 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 	if (hidkbddebug > 5) {
 		struct timeval tv;
 		microtime(&tv);
-		DPRINTF((" at %lu.%06lu  mod=0x%02x key0=0x%02x key1=0x%02x "
+		DPRINTF((" at %lld.%06ld  mod=0x%02x key0=0x%02x key1=0x%02x "
 			 "key2=0x%02x key3=0x%02x\n",
-			 tv.tv_sec, tv.tv_usec,
+			 (long long)tv.tv_sec, tv.tv_usec,
 			 ud->modifiers, ud->keycode[0], ud->keycode[1],
 			 ud->keycode[2], ud->keycode[3]));
 	}
