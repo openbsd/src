@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.21 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.22 2013/04/22 16:34:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -89,10 +89,7 @@ cmd_choose_tree_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_ERROR);
 	}
 
-	if ((s = c->session) == NULL)
-		return (CMD_RETURN_ERROR);
-
-	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), NULL)) == NULL)
+	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), &s)) == NULL)
 		return (CMD_RETURN_ERROR);
 
 	if (window_pane_set_mode(wl->window->active, &window_choose_mode) != 0)
