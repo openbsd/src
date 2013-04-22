@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.49 2013/02/18 23:29:21 jsg Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.50 2013/04/22 03:31:39 deraadt Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -372,7 +372,8 @@ struct timeval rtv, tv1, tv2, *ttp, *ltp;
 	microtime(ttp);				\
 	timersub(ttp, ltp, &rtv);		\
 	tmp = ttp; ttp = ltp; ltp = tmp;	\
-	printf("%ld:%ld %ld:%06ld: ", ttp->tv_sec, ttp->tv_usec, rtv.tv_sec, rtv.tv_usec);	\
+	printf("%lld:%ld %lld:%06ld: ", (long long)ttp->tv_sec, \
+	    ttp->tv_usec, (long long)rtv.tv_sec, rtv.tv_usec);	\
 	printf x ;				\
 	} } while (0)
 #define	RAY_DPRINTF_XMIT(x)	do { if (ray_debug_xmit_sum) {	\
@@ -380,7 +381,8 @@ struct timeval rtv, tv1, tv2, *ttp, *ltp;
 	microtime(ttp);				\
 	timersub(ttp, ltp, &rtv);		\
 	tmp = ttp; ttp = ltp; ltp = tmp;	\
-	printf("%ld:%ld %ld:%06ld: ", ttp->tv_sec, ttp->tv_usec, rtv.tv_sec, rtv.tv_usec);	\
+	printf("%lld:%ld %lld:%06ld: ", (long long)ttp->tv_sec, \
+	    ttp->tv_usec, (long long)rtv.tv_sec, rtv.tv_usec);	\
 	printf x ;				\
 	} } while (0)
 
