@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.9 2013/04/05 23:16:41 florian Exp $ */
+/*	$OpenBSD: identd.c,v 1.10 2013/04/22 05:08:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -108,6 +108,8 @@ void	child_wr(int, short, void *);
 void	identd_listen(const char *, const char *, int);
 void	identd_paused(int, short, void *);
 void	identd_accept(int, short, void *);
+int	identd_error(struct ident_client *, const char *);
+void	identd_close(struct ident_client *);
 void	identd_timeout(int, short, void *);
 void	identd_request(int, short, void *);
 enum ident_client_state
@@ -481,26 +483,30 @@ child_rd(int fd, short events, void *arg)
 	return;
 
 fail:
-	evtimer_del(&c->tmo);
-	event_del(&c->ev);
-	close(fd);
-	free(c);
+	identd_close(c);
 }
 
 void
 child_wr(int fd, short events, void *arg)
 {
 	struct ident_client *c = SIMPLEQ_FIRST(&sc.child.pushing);
+	const char *errstr = NULL;
 	ssize_t n;
 
 	n = write(fd, &c->uid, sizeof(c->uid));
 	switch (n) {
 	case -1:
-		if (errno == EAGAIN) {
+		switch (errno) {
+		case EAGAIN:
 			event_add(&proc_wr, NULL);
 			return;
+		case ENOBUFS: /* parent has a backlog of requests */
+			errstr = "UNKNOWN-ERROR";
+			break;
+		default:
+			lerr(1, "child write");
 		}
-		lerr(1, "child write");
+		break;
 	case sizeof(c->uid):
 		break;
 	default:
@@ -508,7 +514,10 @@ child_wr(int fd, short events, void *arg)
 	}
 
 	SIMPLEQ_REMOVE_HEAD(&sc.child.pushing, entry);
-	SIMPLEQ_INSERT_TAIL(&sc.child.popping, c, entry);
+	if (errstr == NULL)
+		SIMPLEQ_INSERT_TAIL(&sc.child.popping, c, entry);
+	else if (identd_error(c, errstr) == -1)
+		identd_close(c);
 
 	if (!SIMPLEQ_EMPTY(&sc.child.pushing))
 		event_add(&proc_wr, NULL);
@@ -640,8 +649,7 @@ identd_timeout(int fd, short events, void *arg)
 
 	event_del(&c->ev);
 	close(fd);
-	if (c->buf != NULL)
-		free(c->buf);
+	free(c->buf);
 
 	if (c->state == S_QUEUED) /* it is queued for resolving */
 		c->state = S_DEAD;
@@ -708,10 +716,25 @@ identd_request(int fd, short events, void *arg)
 	return;
 
 error:
+	if (identd_error(c, errstr) == -1)
+		goto fail;
+
+	return;
+
+fail:
+	identd_close(c);
+}
+
+int
+identd_error(struct ident_client *c, const char *errstr)
+{
+	int fd = EVENT_FD(&c->ev);
+	ssize_t n;
+
 	n = asprintf(&c->buf, "%u , %u : ERROR : %s\r\n",
 	    c->server.port, c->client.port, errstr);
 	if (n == -1)
-		goto fail;
+		return (-1);
 
 	c->buflen = n;
 
@@ -719,12 +742,19 @@ error:
 	event_set(&c->ev, fd, EV_READ | EV_WRITE | EV_PERSIST,
 	    identd_response, c);
 	event_add(&c->ev, NULL);
-	return;
 
-fail:
+	return (0);
+}
+
+void
+identd_close(struct ident_client *c)
+{
+	int fd = EVENT_FD(&c->ev);
+
 	evtimer_del(&c->tmo);
 	event_del(&c->ev);
 	close(fd);
+	free(c->buf);
 	free(c);
 }
 
@@ -906,11 +936,7 @@ identd_response(int fd, short events, void *arg)
 		return; /* try again later */
 
 done:
-	evtimer_del(&c->tmo);
-	event_del(&c->ev);
-	close(fd);
-	free(c->buf);
-	free(c);
+	identd_close(c);
 }
 
 void
