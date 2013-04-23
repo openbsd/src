@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.11 2013/04/23 01:46:39 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.12 2013/04/23 01:55:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -104,6 +104,8 @@ struct identd_listener {
 
 void	parent_rd(int, short, void *);
 void	parent_wr(int, short, void *);
+int	parent_username(struct ident_resolver *, struct passwd *);
+int	parent_uid(struct ident_resolver *, struct passwd *);
 void	parent_noident(struct ident_resolver *, struct passwd *);
 
 void	child_rd(int, short, void *);
@@ -185,6 +187,9 @@ int debug = 0;
 int noident = 0;
 int on = 1;
 
+int (*parent_uprintf)(struct ident_resolver *, struct passwd *) =
+    parent_username;
+
 struct event proc_rd, proc_wr;
 union {
 	struct {
@@ -212,7 +217,7 @@ main(int argc, char *argv[])
 	pid_t parent;
 	int sibling;
 
-	while ((c = getopt(argc, argv, "46dl:Np:t:")) != -1) {
+	while ((c = getopt(argc, argv, "46dl:Nnp:t:")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
@@ -228,6 +233,9 @@ main(int argc, char *argv[])
 			break;
 		case 'N':
 			noident = 1;
+			break;
+		case 'n':
+			parent_uprintf = parent_uid;
 			break;
 		case 'p':
 			port = optarg;
@@ -372,7 +380,7 @@ parent_rd(int fd, short events, void *arg)
 			goto done;
 	}
 
-	n = asprintf(&r->buf, "%s", pw->pw_name);
+	n = (*parent_uprintf)(r, pw);
 	if (n == -1) {
 		r->error = E_UNKNOWN;
 		goto done;
@@ -383,6 +391,18 @@ parent_rd(int fd, short events, void *arg)
 done:
 	SIMPLEQ_INSERT_TAIL(&sc.parent.replies, r, entry);
 	event_add(&proc_wr, NULL);
+}
+
+int
+parent_username(struct ident_resolver *r, struct passwd *pw)
+{
+	return (asprintf(&r->buf, "%s", pw->pw_name));
+}
+
+int
+parent_uid(struct ident_resolver *r, struct passwd *pw)
+{
+	return (asprintf(&r->buf, "%u", (u_int)pw->pw_uid));
 }
 
 void

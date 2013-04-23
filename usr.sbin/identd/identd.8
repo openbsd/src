@@ -1,4 +1,4 @@
-.\"   $OpenBSD: identd.8,v 1.4 2013/04/23 01:46:39 dlg Exp $
+.\"   $OpenBSD: identd.8,v 1.5 2013/04/23 01:55:45 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -64,6 +64,8 @@ in the user's home directory.
 If this file is accessible, return
 .Dq HIDDEN-USER
 instead of the normal USERID response.
+.It Fl n
+Always return UID numbers instead of usernames.
 .It Fl p Ar port
 Listen on the specified port.
 By default
