@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.36 2013/03/10 11:26:34 mpi Exp $	*/
+/*	$OpenBSD: adb.c,v 1.37 2013/04/23 07:38:05 mpi Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -1358,6 +1358,7 @@ adb_read_date_time(time_t *time)
 	int result;
 	int retcode;
 	volatile int flag = 0;
+	u_int32_t t;
 
 	switch (adbHardware) {
 	case ADB_HW_PMU:
@@ -1380,7 +1381,8 @@ adb_read_date_time(time_t *time)
 			;
 
 		delay(20); /* completion occurs too soon? */
-		memcpy(time, output + 1, 4);
+		memcpy(&t, output + 1, sizeof(t));
+		*time = (time_t)t;
 		retcode = 0;
 		break;
 
@@ -1407,18 +1409,21 @@ adb_set_date_time(time_t time)
 	u_char output[ADB_MAX_MSG_LENGTH];
 	int result;
 	volatile int flag = 0;
+	u_int32_t t;
 
 	time += DIFF19041970;
 	switch (adbHardware) {
 
 	case ADB_HW_CUDA:
+		t = time;		/* XXX eventually truncates */
+
 		output[0] = 0x06;	/* 6 byte message */
 		output[1] = 0x01;	/* to pram/rtc device */
 		output[2] = 0x09;	/* set date/time */
-		output[3] = (u_char)(time >> 24);
-		output[4] = (u_char)(time >> 16);
-		output[5] = (u_char)(time >> 8);
-		output[6] = (u_char)(time);
+		output[3] = (u_char)(t >> 24);
+		output[4] = (u_char)(t >> 16);
+		output[5] = (u_char)(t >> 8);
+		output[6] = (u_char)(t);
 		result = send_adb_cuda((u_char *)output, (u_char *)0,
 		    (void *)adb_op_comprout, (void *)&flag, (int)0);
 		if (result != 0)	/* exit if not sent */

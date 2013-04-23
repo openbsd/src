@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.32 2011/08/29 20:21:44 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.33 2013/04/23 07:38:05 mpi Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ inittodr(time_t base)
         }
 
 	if (time_read != NULL) {
-		u_int32_t cursec;
+		time_t cursec;
 		(*time_read)(&cursec);
 		tv.tv_sec = cursec;
 		tv.tv_usec = 0;

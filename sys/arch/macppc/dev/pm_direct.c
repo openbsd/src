@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.24 2012/12/05 23:20:13 deraadt Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.25 2013/04/23 07:38:05 mpi Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -694,6 +694,7 @@ void
 pm_read_date_time(time_t *time)
 {
 	PMData p;
+	u_int32_t t;
 
 	p.command = PMU_READ_RTC;
 	p.num_data = 0;
@@ -701,18 +702,20 @@ pm_read_date_time(time_t *time)
 	p.r_buf = p.data;
 	pmgrop(&p);
 
-	bcopy(p.data, time, 4);
+	bcopy(p.data, &t, sizeof(t));
+	*time = (time_t)t;
 }
 
 void
 pm_set_date_time(time_t time)
 {
 	PMData p;
+	u_int32_t t = time;		/* XXX eventually truncates */
 
 	p.command = PMU_SET_RTC;
-	p.num_data = 4;
+	p.num_data = sizeof(t);
 	p.s_buf = p.r_buf = p.data;
-	bcopy(&time, p.data, 4);
+	bcopy(&t, p.data, sizeof(t));
 	pmgrop(&p);
 }
 
