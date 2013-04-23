@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.24 2013/04/16 19:25:49 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.25 2013/04/23 07:11:27 otto Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@ static int scannames(struct inodesc *);
 static int dolookup(char *);
 static int chinumfunc(struct inodesc *);
 static int chnamefunc(struct inodesc *);
-static int dotime(char *, int32_t *, int32_t *);
+static int dotime(char *, time_t *, int32_t *);
 
 int returntosingle = 0;
 union dinode *curinode;
@@ -806,11 +806,11 @@ CMDFUNCSTART(chgroup)
 }
 
 static int
-dotime(char *name, int32_t *rsec, int32_t *rnsec)
+dotime(char *name, time_t *rsec, int32_t *rnsec)
 {
 	char *p, *val;
 	struct tm t;
-	int32_t sec;
+	time_t sec;
 	int32_t nsec;
 
 	p = strchr(name, '.');
@@ -865,7 +865,8 @@ badformat:
 
 CMDFUNCSTART(chmtime)
 {
-	int32_t rsec, nsec;
+	time_t rsec;
+	int32_t nsec;
 
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
@@ -878,7 +879,8 @@ CMDFUNCSTART(chmtime)
 
 CMDFUNCSTART(chatime)
 {
-	int32_t rsec, nsec;
+	time_t rsec;
+	int32_t nsec;
 
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
@@ -891,7 +893,8 @@ CMDFUNCSTART(chatime)
 
 CMDFUNCSTART(chctime)
 {
-	int32_t rsec, nsec;
+	time_t rsec;
+	int32_t nsec;
 
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
