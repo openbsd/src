@@ -1,4 +1,4 @@
-/* $OpenBSD: dump.c,v 1.3 2012/10/09 19:45:34 espie Exp $ */
+/* $OpenBSD: dump.c,v 1.4 2013/04/23 14:32:53 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -23,13 +23,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <stdint.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <limits.h>
-#include "ohash.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ohash.h>
 #include "defines.h"
 #include "gnode.h"
 #include "dump.h"

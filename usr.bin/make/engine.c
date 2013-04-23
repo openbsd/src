@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.40 2012/12/07 15:08:03 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.41 2013/04/23 14:32:53 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -63,15 +63,16 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <assert.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
+#include <limits.h>
 #include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "config.h"
 #include "defines.h"
 #include "dir.h"

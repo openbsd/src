@@ -1,7 +1,7 @@
 #ifndef DIR_H
 #define DIR_H
 
-/*	$OpenBSD: dir.h,v 1.28 2012/12/07 07:15:31 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.29 2013/04/23 14:32:53 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -40,9 +40,7 @@
  *	from: @(#)dir.h 8.1 (Berkeley) 6/6/93
  */
 
-#ifndef TIMESTAMP_TYPE
-#include "timestamp_t.h"
-#endif
+#include <sys/time.h>
 
 /* dir --
  *	Directory searching using wildcards and/or normal names...
@@ -115,7 +113,7 @@ extern char *Dir_FindFileComplexi(const char *, const char *, Lst, bool);
  *	Return specific value if file can't be found, to be tested by
  *	is_out_of_date().
  */
-extern TIMESTAMP Dir_MTime(GNode *);
+extern struct timespec Dir_MTime(GNode *);
 
 
 

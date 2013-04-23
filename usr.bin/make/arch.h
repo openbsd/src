@@ -1,6 +1,6 @@
 #ifndef ARCH_H
 #define ARCH_H
-/*	$OpenBSD: arch.h,v 1.7 2012/10/02 10:29:30 espie Exp $ */
+/*	$OpenBSD: arch.h,v 1.8 2013/04/23 14:32:53 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -32,9 +32,7 @@
  *	Functions to manipulate libraries, archives and their members.
  */
 
-#ifndef TIMESTAMP_TYPE
-#include "timestamp_t.h"
-#endif
+#include <sys/time.h>
 
 /* Initialization and cleanup */
 extern void Arch_Init(void);
@@ -53,10 +51,10 @@ extern void Arch_Touch(GNode *);
  *	Find the modification time of a member of an archive *in the
  *	archive*, and returns it.
  *	The time is also stored in the member's GNode.  */
-extern TIMESTAMP Arch_MTime(GNode *);
+extern struct timespec Arch_MTime(GNode *);
 /* stamp = Arch_MemMTime(node);
  *	Find the modification time of a member of an archive and returns it.
  *	To use when the member only exists within the archive.  */
-extern TIMESTAMP Arch_MemMTime(GNode *);
+extern struct timespec Arch_MemMTime(GNode *);
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-/*	$OpenBSD: timestamp.h,v 1.8 2013/04/22 07:21:52 espie Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.9 2013/04/23 14:32:53 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -31,7 +31,6 @@
 /* This module handles time stamps on files in a relatively high-level way.
  * Most of the interface is achieved through inlineable code.
  *
- * TIMESTAMP: 			opaque data type to store a date.
  * ts_set_out_of_date(t):	set up t so that it is out-of-date.
  * b = is_out_of_date(t):	check whether t is out-of-date.
  * ts_set_from_stat(s, t):	grab date out of stat(2) buffer.
@@ -48,11 +47,10 @@
 
 #define Init_Timestamp()	ts_set_from_now(now)
 
-#ifndef TIMESTAMP_TYPE
-#include "timestamp_t.h"
-#endif
-#define ts_set_out_of_date(t)	(t).tv_sec = INT_MIN, (t).tv_nsec = 0
-#define is_out_of_date(t)	((t).tv_sec == INT_MIN && (t).tv_nsec == 0)
+#define TMIN (sizeof(time_t) == sizeof(int32_t) ? INT32_MIN : INT64_MIN)
+#define ts_set_out_of_date(t)	(t).tv_sec = TMIN, (t).tv_nsec = 0
+#define is_out_of_date(t)	((t).tv_sec == TMIN && (t).tv_nsec == 0)
+
 #define ts_set_from_stat(s, t) \
 do { \
 	(t).tv_sec = (s).st_mtime; \
@@ -73,9 +71,9 @@ do { \
 
 extern int set_times(const char *);
 
-extern TIMESTAMP now;		/* The time at the start of this whole
+extern struct timespec now;	/* The time at the start of this whole
 				 * process */
-extern char *time_to_string(TIMESTAMP t);
+extern char *time_to_string(struct timespec t);
 
 
 #endif

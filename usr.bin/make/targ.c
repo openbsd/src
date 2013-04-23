@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.69 2012/10/09 19:45:34 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.70 2013/04/23 14:32:53 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -97,13 +97,13 @@
 
 #include <limits.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ohash.h>
 #include "config.h"
 #include "defines.h"
-#include "ohash.h"
 #include "stats.h"
 #include "suff.h"
 #include "var.h"

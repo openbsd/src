@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.78 2012/11/24 11:03:45 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.79 2013/04/23 14:32:53 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 
 #include <limits.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.65 2012/12/08 12:54:17 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.66 2013/04/23 14:32:53 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -57,9 +57,10 @@
  */
 
 #include <limits.h>
-#include <stdio.h>
 #include <signal.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ohash.h>

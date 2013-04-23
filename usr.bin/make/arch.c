@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.80 2012/10/02 10:29:30 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.81 2013/04/23 14:32:53 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -77,12 +77,12 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "ohash.h"
+#include <ohash.h>
 #include "config.h"
 #include "defines.h"
 #include "buf.h"
@@ -133,7 +133,7 @@ static struct ar_hdr *dummy;
 /* Each archive member is tied to an arch_member structure,
  * suitable for hashing.  */
 struct arch_member {
-	TIMESTAMP mtime;		/* Member modification date.  */
+	struct timespec mtime;		/* Member modification date.  */
 	char date[AR_DATE_SIZE+1];	/* Same, before conversion to numeric
 					 * value.  */
 	char name[1];			/* Member name.  */
@@ -151,11 +151,11 @@ static struct ohash_info arch_info = {
 
 
 static struct arch_member *new_arch_member(struct ar_hdr *, const char *);
-static TIMESTAMP mtime_of_member(struct arch_member *);
+static struct timespec mtime_of_member(struct arch_member *);
 static long field2long(const char *, size_t);
 static Arch *read_archive(const char *, const char *);
 
-static TIMESTAMP ArchMTimeMember(const char *, const char *, bool);
+static struct timespec ArchMTimeMember(const char *, const char *, bool);
 static FILE *ArchFindMember(const char *, const char *, struct ar_hdr *, const char *);
 static void ArchTouch(const char *, const char *);
 #if defined(__svr4__) || defined(__SVR4) || \
@@ -191,11 +191,11 @@ new_arch_member(struct ar_hdr *hdr, const char *name)
 	return n;
 }
 
-static TIMESTAMP
+static struct timespec
 mtime_of_member(struct arch_member *m)
 {
 	if (is_out_of_date(m->mtime))
-		ts_set_from_time_t((time_t) strtol(m->date, NULL, 10),
+		ts_set_from_time_t((time_t) strtoll(m->date, NULL, 10),
 		    m->mtime);
 	return m->mtime;
 }
@@ -520,7 +520,7 @@ read_archive(const char *archive, const char *earchive)
  *	Cache the whole archive contents if hash is true.
  *-----------------------------------------------------------------------
  */
-static TIMESTAMP
+static struct timespec
 ArchMTimeMember(
     const char *archive,	/* Path to the archive */
     const char *member, 	/* Name of member. If it is a path, only the
@@ -533,7 +533,7 @@ ArchMTimeMember(
 	unsigned int slot;	/* Place of archive in the archives hash */
 	const char *end = NULL;
 	const char *cp;
-	TIMESTAMP result;
+	struct timespec result;
 
 	ts_set_out_of_date(result);
 	/* Because of space constraints and similar things, files are archived
@@ -865,7 +865,7 @@ Arch_Touch(GNode *gn)
 	ArchTouch(Var(ARCHIVE_INDEX, gn), Var(MEMBER_INDEX, gn));
 }
 
-TIMESTAMP
+struct timespec
 Arch_MTime(GNode *gn)
 {
 	gn->mtime = ArchMTimeMember(Var(ARCHIVE_INDEX, gn),
@@ -874,7 +874,7 @@ Arch_MTime(GNode *gn)
 	return gn->mtime;
 }
 
-TIMESTAMP
+struct timespec
 Arch_MemMTime(GNode *gn)
 {
 	LstNode ln;

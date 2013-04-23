@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.93 2013/02/15 18:34:25 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.94 2013/04/23 14:32:53 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -63,16 +63,16 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ohash.h>
 
 #include "config.h"
 #include "defines.h"
 #include "buf.h"
 #include "stats.h"
-#include "ohash.h"
 #include "pathnames.h"
 #include "varmodifiers.h"
 #include "var.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timestamp.c,v 1.8 2013/04/22 07:21:52 espie Exp $ */
+/*	$OpenBSD: timestamp.c,v 1.9 2013/04/23 14:32:53 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -24,12 +24,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/time.h>
 #include "config.h"
 #include "defines.h"
 #include "timestamp.h"
 
 
-TIMESTAMP now;		/* The time at the start of this whole process */
+struct timespec now;	/* The time at the start of this whole process */
 
 int
 set_times(const char *f)
@@ -38,7 +39,7 @@ set_times(const char *f)
 }
 
 char *
-time_to_string(TIMESTAMP time)
+time_to_string(struct timespec time)
 {
 	struct tm *parts;
 	static char buf[128];

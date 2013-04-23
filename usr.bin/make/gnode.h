@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.23 2012/10/09 19:45:34 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.24 2013/04/23 14:32:53 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -27,9 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TIMESTAMP_TYPE
-#include "timestamp_t.h"
-#endif
+#include <sys/time.h>
 #ifndef LIST_TYPE
 #include "lst_t.h"
 #endif
@@ -144,9 +142,9 @@ struct GNode_ {
 
     int unmade;		/* The number of unmade children */
 
-    TIMESTAMP mtime;	/* Its modification time */
-    TIMESTAMP cmtime;	/* The modification time of its youngest
-			 * child */
+    struct timespec mtime;	/* Its modification time */
+    struct timespec cmtime;	/* The modification time of its youngest
+			 	 * child */
 
     GNode *impliedsrc;
     LIST cohorts;	/* Other nodes for the :: operator */

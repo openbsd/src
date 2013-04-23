@@ -1,6 +1,6 @@
 #ifndef TARG_H
 #define TARG_H
-/*	$OpenBSD: targ.h,v 1.12 2012/12/06 14:33:37 espie Exp $ */
+/*	$OpenBSD: targ.h,v 1.13 2013/04/23 14:32:53 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -27,9 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TIMESTAMP_TYPE
-#include "timestamp_t.h"
-#endif
+#include <sys/time.h>
 /*
  * The TARG_ constants are used when calling the Targ_FindNode functions.
  * They simply tell the function what to do if the desired node is not found.

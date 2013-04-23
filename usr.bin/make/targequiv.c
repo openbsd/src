@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.3 2012/10/02 10:29:31 espie Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.4 2013/04/23 14:32:53 espie Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -30,16 +30,16 @@
  * make.
  */
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <stdio.h>
 #include <sys/param.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <ohash.h>
 #include "config.h"
 #include "defines.h"
 #include "memory.h"
-#include "ohash.h"
 #include "gnode.h"
 #include "lst.h"
 #include "suff.h"

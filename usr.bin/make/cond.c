@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.48 2012/11/24 11:04:55 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.49 2013/04/23 14:32:53 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -37,10 +37,11 @@
 
 #include <ctype.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ohash.h>
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
@@ -57,7 +58,6 @@
 #include "main.h"
 #include "gnode.h"
 #include "lst.h"
-#include "ohash.h"
 
 
 /* The parsing of conditional expressions is based on this grammar:

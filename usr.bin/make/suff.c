@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.84 2012/12/22 19:02:05 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.85 2013/04/23 14:32:53 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -60,12 +60,12 @@
  */
 
 #include <ctype.h>
+#include <signal.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stddef.h>
 #include <string.h>
-#include <signal.h>
 #include <ohash.h>
 #include "config.h"
 #include "defines.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.14 2012/10/09 19:45:34 espie Exp $ */
+/*	$OpenBSD: generate.c,v 1.15 2013/04/23 14:32:53 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -26,12 +26,12 @@
  */
 
 #include <stddef.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <ohash.h>
 
 #include "stats.h"
-#include "ohash.h"
 #include "cond_int.h"
 #include "var_int.h"
 #include "node_int.h"

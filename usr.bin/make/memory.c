@@ -1,4 +1,4 @@
-/* $OpenBSD: memory.c,v 1.8 2010/07/19 19:46:44 espie Exp $ */
+/* $OpenBSD: memory.c,v 1.9 2013/04/23 14:32:53 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,12 +37,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <ohash.h>
 #include "defines.h"
 #include "memory.h"
