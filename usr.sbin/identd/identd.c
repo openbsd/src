@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.15 2013/04/23 06:17:07 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.16 2013/04/23 10:33:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -1106,8 +1106,8 @@ fetchuid(struct ident_client *c)
 	size_t len;
 
 	memset(&tir, 0, sizeof(tir));
-	memcpy(&tir.faddr, &c->client.ss, sizeof(&tir.faddr));
-	memcpy(&tir.laddr, &c->server.ss, sizeof(&tir.laddr));
+	memcpy(&tir.faddr, &c->client.ss, sizeof(tir.faddr));
+	memcpy(&tir.laddr, &c->server.ss, sizeof(tir.laddr));
 
 	switch (c->server.ss.ss_family) {
 	case AF_INET:
