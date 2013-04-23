@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.14 2013/04/23 05:39:32 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.15 2013/04/23 06:17:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 
@@ -405,7 +406,7 @@ void
 parent_noident(struct ident_resolver *r, struct passwd *pw)
 {
 	char path[MAXPATHLEN];
-	int fd;
+	struct stat st;
 	int rv;
 
 	rv = snprintf(path, sizeof(path), "%s/%s", pw->pw_dir, DOTNOIDENT);
@@ -414,19 +415,8 @@ parent_noident(struct ident_resolver *r, struct passwd *pw)
 		return;
 	}
 
-	fd = open(path, O_RDONLY, 0);
-	if (fd == -1) {
-		switch (errno) {
-		case ENOENT:
-		case EACCES:
-			return; /* not an error */
-		default:
-			r->error = E_UNKNOWN;
-			return;
-		}
-	}
-
-	close(fd);
+	if (stat(path, &st) == -1)
+		return;
 
 	r->error = E_HIDDEN;
 }
