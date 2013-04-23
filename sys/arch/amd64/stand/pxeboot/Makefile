@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2013/01/18 21:09:04 espie Exp $
+#	$OpenBSD: Makefile,v 1.17 2013/04/23 16:41:13 jsing Exp $
 
 MAN=	pxeboot.8
 
@@ -39,7 +39,7 @@ SRCS+=	bootp.c bootparam.c
 SRCS+=	ufs.c nfs.c tftp.c
 
 .PATH:	${S}/lib/libkern/arch/amd64 ${S}/lib/libkern
-SRCS+=	divdi3.c moddi3.c qdivrem.c
+SRCS+=	divdi3.c moddi3.c qdivrem.c udivdi3.c umoddi3.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c

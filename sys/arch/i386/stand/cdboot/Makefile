@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2013/01/18 21:09:04 espie Exp $
+#	$OpenBSD: Makefile,v 1.18 2013/04/23 16:41:13 jsing Exp $
 
 MAN=	cdboot.8
 
@@ -35,7 +35,7 @@ SRCS+=	cd9660.c ufs.c
 SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 
 .PATH:	${S}/lib/libkern/arch/i386
-SRCS+=	moddi3.c divdi3.c qdivrem.c
+SRCS+=	divdi3.c moddi3.c qdivrem.c udivdi3.c umoddi3.c
 
 .PATH:	${S}/lib/libkern
 SRCS+=	strlcpy.c
