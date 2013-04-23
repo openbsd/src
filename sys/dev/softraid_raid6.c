@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.45 2013/04/23 12:49:52 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.46 2013/04/23 13:13:11 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -83,7 +83,7 @@ uint8_t gf_mul(uint8_t, uint8_t);
 #define SR_FAILQ		(1L << 3)
 
 struct sr_raid6_opaque {
-	int      gn;
+	int	gn;
 	void	*pbuf;
 	void	*qbuf;
 };
@@ -365,11 +365,11 @@ die:
 
 /*  modes:
  *   readq: sr_raid6_addio(i, lba, length, NULL, SCSI_DATA_IN,
- *		SR_CCBF_FREEBUF, qbuf, NULL, 0);
+ *		0, qbuf, NULL, 0);
  *   readp: sr_raid6_addio(i, lba, length, NULL, SCSI_DATA_IN,
- *		SR_CCBF_FREEBUF, pbuf, NULL, 0);
+ *		0, pbuf, NULL, 0);
  *   readx: sr_raid6_addio(i, lba, length, NULL, SCSI_DATA_IN,
- *		SR_CCBF_FREEBUF, pbuf, qbuf, gf_pow[i]);
+ *		0, pbuf, qbuf, gf_pow[i]);
  */
 
 int
@@ -475,9 +475,8 @@ sr_raid6_rw(struct sr_workunit *wu)
 
 				/* Calculate: Dx = (Q^Dz*gz)*inv(gx) */
 				memset(data, 0, length);
-				if (sr_raid6_addio(wu, qchunk, lba, length, NULL,
-				    SCSI_DATA_IN, SR_CCBF_FREEBUF, NULL, data,
-				    gxinv))
+				if (sr_raid6_addio(wu, qchunk, lba, length,
+				    NULL, SCSI_DATA_IN, 0, NULL, data, gxinv))
 					goto bad;
 
 				/* Read Dz * gz * inv(gx) */
@@ -485,10 +484,9 @@ sr_raid6_rw(struct sr_workunit *wu)
 					if  (i == qchunk || i == pchunk || i == chunk)
 						continue;
 
-					if (sr_raid6_addio(wu, i, lba,
-					   length, NULL, SCSI_DATA_IN,
-					   SR_CCBF_FREEBUF, NULL,
-					   data, gf_mul(gf_pow[i], gxinv)))
+					if (sr_raid6_addio(wu, i, lba, length,
+					    NULL, SCSI_DATA_IN, 0, NULL, data,
+					    gf_mul(gf_pow[i], gxinv)))
 						goto bad;
 				}
 
@@ -503,17 +501,13 @@ sr_raid6_rw(struct sr_workunit *wu)
 
 				/* read Q * inv(gx + gy) */
 				memset(data, 0, length);
-				if (sr_raid6_addio(wu, qchunk, lba,
-				    length,  NULL, SCSI_DATA_IN,
-				    SR_CCBF_FREEBUF, NULL,
-				    data, gxinv))
+				if (sr_raid6_addio(wu, qchunk, lba, length,
+				    NULL, SCSI_DATA_IN, 0, NULL, data, gxinv))
 					goto bad;
 
 				/* read P * gy * inv(gx + gy) */
-				if (sr_raid6_addio(wu, pchunk, lba,
-				    length,  NULL, SCSI_DATA_IN,
-				    SR_CCBF_FREEBUF, NULL,
-				    data, pxinv))
+				if (sr_raid6_addio(wu, pchunk, lba, length,
+				    NULL, SCSI_DATA_IN, 0, NULL, data, pxinv))
 					goto bad;
 
 				/* Calculate: Dx*gx^Dy*gy = Q^(Dz*gz) ; Dx^Dy = P^Dz
@@ -528,9 +522,8 @@ sr_raid6_rw(struct sr_workunit *wu)
 						continue;
 
 					/* read Dz * (gz + gy) * inv(gx + gy) */
-					if (sr_raid6_addio(wu, i, lba,
-					    length, NULL, SCSI_DATA_IN,
-					    SR_CCBF_FREEBUF, NULL, data,
+					if (sr_raid6_addio(wu, i, lba, length,
+					    NULL, SCSI_DATA_IN, 0, NULL, data,
 					    pxinv ^ gf_mul(gf_pow[i], gxinv)))
 						goto bad;
 				}
@@ -552,8 +545,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 						/* Read Dz */
 						if (sr_raid6_addio(wu, i, lba,
 						    length, NULL, SCSI_DATA_IN,
-						    SR_CCBF_FREEBUF, data,
-						    NULL, 0))
+						    0, data, NULL, 0))
 							goto bad;
 					}
 				}
@@ -587,18 +579,17 @@ sr_raid6_rw(struct sr_workunit *wu)
 
 			/* Read old data: P ^= Dn' ; Q ^= (gn * Dn') */
 			if (sr_raid6_addio(wu_r, chunk, lba, length, NULL,
-				SCSI_DATA_IN, SR_CCBF_FREEBUF, pbuf, qbuf,
-				gf_pow[chunk]))
+				SCSI_DATA_IN, 0, pbuf, qbuf, gf_pow[chunk]))
 				goto bad;
 
 			/* Read old xor-parity: P ^= P' */
 			if (sr_raid6_addio(wu_r, pchunk, lba, length, NULL,
-				SCSI_DATA_IN, SR_CCBF_FREEBUF, pbuf, NULL, 0))
+				SCSI_DATA_IN, 0, pbuf, NULL, 0))
 				goto bad;
 
 			/* Read old q-parity: Q ^= Q' */
 			if (sr_raid6_addio(wu_r, qchunk, lba, length, NULL,
-				SCSI_DATA_IN, SR_CCBF_FREEBUF, qbuf, NULL, 0))
+				SCSI_DATA_IN, 0, qbuf, NULL, 0))
 				goto bad;
 
 			/* write new data */
@@ -657,6 +648,7 @@ queued:
 	splx(s);
 	return (0);
 bad:
+	/* XXX - can leak pbuf/qbuf on error. */
 	/* wu is unwound by sr_wu_put */
 	if (wu_r)
 		sr_scsi_wu_put(sd, wu_r);
@@ -801,6 +793,7 @@ sr_raid6_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 		data = sr_get_block(sd, len);
 		if (data == NULL)
 			return (-1);
+		ccbflags |= SR_CCBF_FREEBUF;
 	}
 
 	DNPRINTF(0, "%sio: %d.%llx %llx %p:%p\n",

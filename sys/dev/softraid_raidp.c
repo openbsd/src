@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.42 2013/04/23 12:49:52 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.43 2013/04/23 13:13:11 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -338,7 +338,7 @@ sr_raidp_rw(struct sr_workunit *wu)
 	daddr64_t		blk, lbaoffs, strip_no, chunk, row_size;
 	daddr64_t		strip_size, no_chunk, lba, chunk_offs, phys_offs;
 	daddr64_t		strip_bits, length, parity, strip_offs, datalen;
-	void		       *xorbuf, *data;
+	void			*xorbuf, *data;
 
 	/* blk and scsi error will be handled by sr_validate_io */
 	if (sr_validate_io(wu, &blk, "sr_raidp_rw"))
@@ -418,7 +418,7 @@ sr_raidp_rw(struct sr_workunit *wu)
 					if (i != chunk) {
 						if (sr_raidp_addio(wu, i, lba,
 						    length, NULL, SCSI_DATA_IN,
-						    SR_CCBF_FREEBUF, data))
+						    0, data))
 							goto bad;
 					}
 				}
@@ -446,12 +446,12 @@ sr_raidp_rw(struct sr_workunit *wu)
 
 			/* xor old data */
 			if (sr_raidp_addio(wu_r, chunk, lba, length, NULL,
-			    SCSI_DATA_IN, SR_CCBF_FREEBUF, xorbuf))
+			    SCSI_DATA_IN, 0, xorbuf))
 				goto bad;
 
 			/* xor old parity */
 			if (sr_raidp_addio(wu_r, parity, lba, length, NULL,
-			    SCSI_DATA_IN, SR_CCBF_FREEBUF, xorbuf))
+			    SCSI_DATA_IN, 0, xorbuf))
 				goto bad;
 
 			/* write new data */
@@ -505,6 +505,7 @@ queued:
 	splx(s);
 	return (0);
 bad:
+	/* XXX - can leak xorbuf on error. */
 	/* wu is unwound by sr_wu_put */
 	if (wu_r)
 		sr_scsi_wu_put(sd, wu_r);
@@ -620,6 +621,7 @@ sr_raidp_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 		data = sr_get_block(sd, len);
 		if (data == NULL)
 			return (-1);
+		ccbflags |= SR_CCBF_FREEBUF;
 	}
 
 	DNPRINTF(0, "%sio: %d.%llx %llx %s\n",
@@ -732,8 +734,7 @@ sr_raidp_scrub(struct sr_discipline *sd)
 		for (i = 0; i <= no_chunk; i++) {
 			if (i != parity)
 				sr_raidp_addio(wu_r, i, 0xBADCAFE, strip_size,
-				    NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF,
-				    xorbuf);
+				    NULL, SCSI_DATA_IN, 0, xorbuf);
 		}
 		sr_raidp_addio(wu_w, parity, 0xBADCAFE, strip_size, xorbuf,
 		    SCSI_DATA_OUT, SR_CCBF_FREEBUF, NULL);
