@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.27 2012/09/05 19:49:08 naddy Exp $	*/
+/*	$OpenBSD: rm.c,v 1.28 2013/04/23 18:41:08 deraadt Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -289,8 +289,8 @@ rm_overwrite(char *file, struct stat *sbp)
 	if (!S_ISREG(sbp->st_mode))
 		return (1);
 	if (sbp->st_nlink > 1) {
-		warnx("%s (inode %u): not overwritten due to multiple links",
-		    file, sbp->st_ino);
+		warnx("%s (inode %llu): not overwritten due to multiple links",
+		    file, (unsigned long long)sbp->st_ino);
 		return (0);
 	}
 	if ((fd = open(file, O_WRONLY|O_NONBLOCK|O_NOFOLLOW, 0)) == -1)
