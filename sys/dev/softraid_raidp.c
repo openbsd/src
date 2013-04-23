@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.41 2013/03/31 15:44:52 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.42 2013/04/23 12:49:52 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -534,7 +534,7 @@ sr_raidp_intr(struct buf *bp)
 		    ccb->ccb_buf.b_bcount);
 
 	/* Free allocated data buffer. */
-	if (ccb->ccb_flag & SR_CCBF_FREEBUF) {
+	if (ccb->ccb_flags & SR_CCBF_FREEBUF) {
 		sr_put_block(sd, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
 		ccb->ccb_buf.b_data = NULL;
 	}
@@ -606,7 +606,7 @@ done:
 
 int
 sr_raidp_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
-    void *data, int flag, int ccbflag, void *xorbuf)
+    void *data, int flag, int ccbflags, void *xorbuf)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct sr_ccb		*ccb;
@@ -627,7 +627,7 @@ sr_raidp_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 	    dsk, blk, len,
 	    xorbuf ? "X0R" : "-");
 
-	ccb->ccb_flag = ccbflag;
+	ccb->ccb_flags = ccbflags;
 	if (flag & SCSI_POLL) {
 		ccb->ccb_buf.b_flags = 0;
 		ccb->ccb_buf.b_iodone = NULL;

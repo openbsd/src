@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.300 2013/04/21 13:00:21 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.301 2013/04/23 12:49:52 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2010,7 +2010,7 @@ sr_ccb_put(struct sr_ccb *ccb)
 
 struct sr_ccb *
 sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr64_t blkno,
-    daddr64_t len, u_int8_t *data, int xsflags, int ccbflag)
+    daddr64_t len, u_int8_t *data, int xsflags, int ccbflags)
 {
 	struct sr_chunk		*sc = sd->sd_vol.sv_chunks[chunk];
 	struct sr_ccb		*ccb = NULL;
@@ -2019,7 +2019,7 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr64_t blkno,
 	if (ccb == NULL)
 		goto out;
 
-	ccb->ccb_flag = ccbflag;
+	ccb->ccb_flags = ccbflags;
 	ccb->ccb_target = chunk;
 
 	ccb->ccb_buf.b_flags = B_PHYS | B_CALL;
