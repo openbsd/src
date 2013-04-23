@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.25 2013/04/04 10:47:21 zhuk Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.26 2013/04/23 21:39:59 deraadt Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -437,7 +437,8 @@ searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize,
 	for (loc = 0; loc < size; ) {
 		dp = (struct direct *)(dblk + loc);
 		if (dp->d_reclen == 0) {
-			msg("corrupted directory, inumber %d\n", ino);
+			msg("corrupted directory, inumber %llu\n",
+			    (unsigned long long)ino);
 			break;
 		}
 		loc += dp->d_reclen;
