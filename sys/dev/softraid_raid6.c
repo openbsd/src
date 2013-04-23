@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.46 2013/04/23 13:13:11 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.47 2013/04/23 13:36:19 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -777,18 +777,19 @@ done:
 }
 
 int
-sr_raid6_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
-    void *data, int flag, int ccbflags, void *pbuf, void *qbuf, int gn)
+sr_raid6_addio(struct sr_workunit *wu, int chunk, daddr64_t blkno,
+    daddr64_t len, void *data, int xsflags, int ccbflags, void *pbuf,
+    void *qbuf, int gn)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct sr_ccb		*ccb;
 	struct sr_raid6_opaque  *pqbuf;
 
-	ccb = sr_ccb_get(sd);
-	if (!ccb)
-		return (-1);
+	DNPRINTF(SR_D_DIS, "sr_raid6_addio: %s %d.%llx %llx %p:%p\n",
+	    (xsflags & SCSI_DATA_IN) ? "read" : "write", chunk, blkno, len,
+	    pbuf, qbuf);
 
-	/* allocate temporary buffer */
+	/* Allocate temporary buffer. */
 	if (data == NULL) {
 		data = sr_get_block(sd, len);
 		if (data == NULL)
@@ -796,45 +797,20 @@ sr_raid6_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 		ccbflags |= SR_CCBF_FREEBUF;
 	}
 
-	DNPRINTF(0, "%sio: %d.%llx %llx %p:%p\n",
-	    flag & SCSI_DATA_IN ? "read" : "write",
-	    dsk, blk, len, pbuf, qbuf);
-
-	ccb->ccb_flags = ccbflags;
-	if (flag & SCSI_POLL) {
-		ccb->ccb_buf.b_flags = 0;
-		ccb->ccb_buf.b_iodone = NULL;
-	} else {
-		ccb->ccb_buf.b_flags = B_CALL;
-		ccb->ccb_buf.b_iodone = sr_raid6_intr;
+	ccb = sr_ccb_rw(sd, chunk, blkno, len, data, xsflags, ccbflags);
+	if (ccb == NULL) {
+		if (ccbflags & SR_CCBF_FREEBUF)
+			sr_put_block(sd, data, len);
+		return (-1);
 	}
-	if (flag & SCSI_DATA_IN)
-		ccb->ccb_buf.b_flags |= B_READ;
-	else
-		ccb->ccb_buf.b_flags |= B_WRITE;
-
-	/* add offset for metadata */
-	ccb->ccb_buf.b_flags |= B_PHYS;
-	ccb->ccb_buf.b_blkno = blk;
-	ccb->ccb_buf.b_bcount = len;
-	ccb->ccb_buf.b_bufsize = len;
-	ccb->ccb_buf.b_resid = len;
-	ccb->ccb_buf.b_data = data;
-	ccb->ccb_buf.b_error = 0;
-	ccb->ccb_buf.b_proc = curproc;
-	ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[dsk]->src_dev_mm;
-	ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[dsk]->src_vn;
-	ccb->ccb_buf.b_bq = NULL;
-	if ((ccb->ccb_buf.b_flags & B_READ) == 0)
-		ccb->ccb_buf.b_vp->v_numoutput++;
-
-	ccb->ccb_wu = wu;
-	ccb->ccb_target = dsk;
 	if (pbuf || qbuf) {
+		/* XXX - can leak data and ccb on failure. */
 		if (qbuf && gf_premul(gn))
 			return (-1);
 
-		pqbuf = malloc(sizeof(struct sr_raid6_opaque), M_DEVBUF, M_ZERO | M_NOWAIT);
+		/* XXX - should be preallocated? */
+		pqbuf = malloc(sizeof(struct sr_raid6_opaque),
+		    M_DEVBUF, M_ZERO | M_NOWAIT);
 		if (pqbuf == NULL) {
 			sr_ccb_put(ccb);
 			return (-1);
@@ -844,17 +820,7 @@ sr_raid6_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 		pqbuf->gn = gn;
 		ccb->ccb_opaque = pqbuf;
 	}
-
-	LIST_INIT(&ccb->ccb_buf.b_dep);
-	TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
-
-	DNPRINTF(SR_D_DIS, "%s: %s: sr_raid6: b_bcount: %d "
-	    "b_blkno: %x b_flags 0x%0x b_data %p\n",
-	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
-	    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
-
-	wu->swu_io_count++;
+	sr_wu_enqueue_ccb(wu, ccb);
 
 	return (0);
 }
