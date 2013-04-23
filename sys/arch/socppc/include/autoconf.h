@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.4 2009/09/02 20:29:39 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.5 2013/04/23 19:35:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -41,11 +41,5 @@ struct obio_attach_args {
 #define cf_offset	cf_loc[0]
 #define cf_ivec		cf_loc[1]
 #define cf_phy		cf_loc[2]
-
-typedef int (time_read_t)(time_t *sec);
-typedef int (time_write_t)(time_t sec);
-
-extern time_read_t *time_read;
-extern time_write_t *time_write;
 
 #endif /* _MACHINE_AUTOCONF_H_ */
