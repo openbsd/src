@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.35 2008/11/06 18:01:45 deraadt Exp $	*/
+/*	$OpenBSD: fs.h,v 1.36 2013/04/23 20:42:38 tedu Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -464,6 +464,8 @@ struct ocg {
  * They calc file system addresses of cylinder group data structures.
  */
 #define	cgbase(fs, c)	((daddr64_t)(fs)->fs_fpg * (c))
+#define	cgdata(fs, c)	(cgdmin(fs, c) + (fs)->fs_minfree)	/* data zone */
+#define	cgmeta(fs, c)	(cgdmin(fs, c))				/* meta data */
 #define	cgdmin(fs, c)	(cgstart(fs, c) + (fs)->fs_dblkno)	/* 1st data */
 #define	cgimin(fs, c)	(cgstart(fs, c) + (fs)->fs_iblkno)	/* inode blk */
 #define	cgsblock(fs, c)	(cgstart(fs, c) + (fs)->fs_sblkno)	/* super blk */
