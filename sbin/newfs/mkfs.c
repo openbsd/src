@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.76 2011/06/05 15:20:37 chl Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.77 2013/04/23 21:27:38 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -985,7 +985,8 @@ iput(union dinode *ip, ino_t ino)
 	sblock.fs_cstotal.cs_nifree--;
 	fscs[0].cs_nifree--;
 	if (ino >= sblock.fs_ipg * sblock.fs_ncg)
-		errx(32, "fsinit: inode value %d out of range", ino);
+		errx(32, "fsinit: inode value %llu out of range",
+		    (unsigned long long)ino);
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
 	rdfs(d, sblock.fs_bsize, iobuf);
 

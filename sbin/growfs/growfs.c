@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.29 2010/05/18 04:41:14 dlg Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.30 2013/04/23 21:27:15 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -1825,7 +1825,8 @@ ginode(ino_t inumber, int fsi, int cg)
 		return NULL;
 	}
 	if (inumber > maxino)
-		errx(8, "bad inode number %d to ginode", inumber);
+		errx(8, "bad inode number %llu to ginode",
+		    (unsigned long long)inumber);
 	if (startinum == 0 ||
 	    inumber < startinum || inumber >= startinum + INOPB(&sblock)) {
 		inoblk = fsbtodb(&sblock, ino_to_fsba(&sblock, inumber));
@@ -2315,7 +2316,8 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 		DBG_LEAVE;
 		return;	/* skip empty swiss cheesy file or old fastlink */
 	}
-	DBG_PRINT2("scg checking inode (%d in %d)\n", in, cg);
+	DBG_PRINT2("scg checking inode (%llu in %d)\n",
+	    (unsigned long long)in, cg);
 
 	/*
 	 * Check all the blocks.
