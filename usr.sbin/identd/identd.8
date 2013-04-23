@@ -1,4 +1,4 @@
-.\"   $OpenBSD: identd.8,v 1.5 2013/04/23 01:55:45 dlg Exp $
+.\"   $OpenBSD: identd.8,v 1.6 2013/04/23 05:37:35 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -24,7 +24,6 @@
 .Nm
 .Op Fl 46d
 .Op Fl l Ar address
-.Op Fl p Ar port
 .Op Fl t Ar timeout
 .Ar directory
 .Sh DESCRIPTION
@@ -66,14 +65,6 @@ If this file is accessible, return
 instead of the normal USERID response.
 .It Fl n
 Always return UID numbers instead of usernames.
-.It Fl p Ar port
-Listen on the specified port.
-By default
-.Nm
-listens on the port indicated in the
-.Ql auth
-service description; see
-.Xr services 5 .
 .It Fl t Ar timeout
 Specifies the idle timeout for client connections,
 in seconds.

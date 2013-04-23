@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.12 2013/04/23 01:55:45 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.13 2013/04/23 05:37:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -210,7 +210,6 @@ main(int argc, char *argv[])
 	struct passwd	*pw;
 
 	char *addr = NULL;
-	char *port = "auth";
 	int family = AF_UNSPEC;
 
 	int pair[2];
@@ -236,9 +235,6 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			parent_uprintf = parent_uid;
-			break;
-		case 'p':
-			port = optarg;
 			break;
 		case 't':
 			timeout.tv_sec = strtonum(optarg,
@@ -313,7 +309,7 @@ main(int argc, char *argv[])
 		SIMPLEQ_INIT(&sc.child.pushing);
 		SIMPLEQ_INIT(&sc.child.popping);
 
-		identd_listen(addr, port, family);
+		identd_listen(addr, "auth", family);
 
 		if (chroot(pw->pw_dir) == -1)
 			lerr(1, "chroot(%s)", pw->pw_dir);
