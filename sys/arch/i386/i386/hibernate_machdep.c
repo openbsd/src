@@ -77,7 +77,6 @@ get_hibernate_io_function(void)
 	if (blkname == NULL)
 		return NULL;
 #if NWD > 0
-	/* XXX - Only support wd hibernate presently */
 	if (strcmp(blkname, "wd") == 0)
 		return wd_hibernate_io;
 #endif
