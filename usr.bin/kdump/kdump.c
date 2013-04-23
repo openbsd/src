@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.79 2013/04/16 22:11:10 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.80 2013/04/23 20:03:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1378,8 +1378,9 @@ ktrstat(const struct stat *statp)
 	 */
 	printf("struct stat { ");
 	strmode(statp->st_mode, mode);
-	printf("dev=%d, ino=%u, mode=%s, nlink=%u, ",
-	    statp->st_dev, statp->st_ino, mode, statp->st_nlink);
+	printf("dev=%d, ino=%llu, mode=%s, nlink=%u, ",
+	    statp->st_dev, (unsigned long long)statp->st_ino,
+	    mode, statp->st_nlink);
 	if (resolv == 0 || (pwd = getpwuid(statp->st_uid)) == NULL)
 		printf("uid=%u, ", statp->st_uid);
 	else
