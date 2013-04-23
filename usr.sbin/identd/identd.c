@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.16 2013/04/23 10:33:06 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.17 2013/04/23 21:18:57 sthen Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -178,7 +178,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-46dNn] [-l address] [-t timeout]\n",
+	fprintf(stderr, "usage: %s [-46deNn] [-l address] [-t timeout]\n",
 	    __progname);
 	exit(1);
 }
@@ -187,6 +187,7 @@ struct timeval timeout = { TIMEOUT_DEFAULT, 0 };
 int debug = 0;
 int noident = 0;
 int on = 1;
+int unknown_err = 0;
 
 int (*parent_uprintf)(struct ident_resolver *, struct passwd *) =
     parent_username;
@@ -217,7 +218,7 @@ main(int argc, char *argv[])
 	pid_t parent;
 	int sibling;
 
-	while ((c = getopt(argc, argv, "46dl:Nnp:t:")) != -1) {
+	while ((c = getopt(argc, argv, "46del:Nnp:t:")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
@@ -227,6 +228,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug = 1;
+			break;
+		case 'e':
+			unknown_err = 1;
 			break;
 		case 'l':
 			addr = optarg;
@@ -508,8 +512,9 @@ child_rd(int fd, short events, void *arg)
 		    c->server.port, c->client.port, reply.buf);
 		break;
 	case E_NOUSER:
-		n = asprintf(&c->buf, "%u , %u : ERROR : NO-USER\r\n",
-		    c->server.port, c->client.port);
+		n = asprintf(&c->buf, "%u , %u : ERROR : %s\r\n",
+		    c->server.port, c->client.port,
+		    unknown_err ? "UNKNOWN-ERROR" : "NO-USER");
 		break;
 	case E_UNKNOWN:
 		n = asprintf(&c->buf, "%u , %u : ERROR : UNKNOWN-ERROR\r\n",
@@ -715,7 +720,7 @@ identd_request(int fd, short events, void *arg)
 	struct ident_client *c = arg;
 	char buf[64];
 	ssize_t n, i;
-	char *errstr = "INVALID-PORT";
+	char *errstr = unknown_err ? "UNKNOWN-ERROR" : "INVALID-PORT";
 
 	n = read(fd, buf, sizeof(buf));
 	switch (n) {
@@ -753,7 +758,7 @@ identd_request(int fd, short events, void *arg)
 		goto error;
 
 	if (fetchuid(c) == -1) {
-		errstr = "NO-USER";
+		errstr = unknown_err ? "UNKNOWN-ERROR" : "NO-USER";
 		goto error;
 	}
 
