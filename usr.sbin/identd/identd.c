@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.10 2013/04/22 05:08:46 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.11 2013/04/23 01:46:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +44,8 @@
 #include <unistd.h>
 
 #define IDENTD_USER "_identd"
+
+#define DOTNOIDENT ".noident"
 
 #define TIMEOUT_MIN 4
 #define TIMEOUT_MAX 240
@@ -101,6 +104,7 @@ struct identd_listener {
 
 void	parent_rd(int, short, void *);
 void	parent_wr(int, short, void *);
+void	parent_noident(struct ident_resolver *, struct passwd *);
 
 void	child_rd(int, short, void *);
 void	child_wr(int, short, void *);
@@ -178,6 +182,7 @@ usage(void)
 
 struct timeval timeout = { TIMEOUT_DEFAULT, 0 };
 int debug = 0;
+int noident = 0;
 int on = 1;
 
 struct event proc_rd, proc_wr;
@@ -207,7 +212,7 @@ main(int argc, char *argv[])
 	pid_t parent;
 	int sibling;
 
-	while ((c = getopt(argc, argv, "46dl:p:t:")) != -1) {
+	while ((c = getopt(argc, argv, "46dl:Np:t:")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
@@ -220,6 +225,9 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			addr = optarg;
+			break;
+		case 'N':
+			noident = 1;
 			break;
 		case 'p':
 			port = optarg;
@@ -355,18 +363,56 @@ parent_rd(int fd, short events, void *arg)
 	pw = getpwuid(uid);
 	if (pw == NULL) {
 		r->error = E_NOUSER;
-	} else {
-		n = asprintf(&r->buf, "%s", pw->pw_name);
-		if (n == -1)
+		goto done;
+	}
+
+	if (noident) {
+		parent_noident(r, pw);
+		if (r->error != E_NONE)
+			goto done;
+	}
+
+	n = asprintf(&r->buf, "%s", pw->pw_name);
+	if (n == -1) {
+		r->error = E_UNKNOWN;
+		goto done;
+	}
+
+	r->buflen = n;
+
+done:
+	SIMPLEQ_INSERT_TAIL(&sc.parent.replies, r, entry);
+	event_add(&proc_wr, NULL);
+}
+
+void
+parent_noident(struct ident_resolver *r, struct passwd *pw)
+{
+	char path[MAXPATHLEN];
+	int fd;
+	int rv;
+
+	rv = snprintf(path, sizeof(path), "%s/%s", pw->pw_dir, DOTNOIDENT);
+	if (rv == -1 || rv >= sizeof(path)) {
+		r->error = E_UNKNOWN;
+		return;
+	}
+
+	fd = open(path, O_RDONLY, 0);
+	if (fd == -1) {
+		switch (errno) {
+		case ENOENT:
+		case EACCES:
+			return; /* not an error */
+		default:
 			r->error = E_UNKNOWN;
-		else {
-			r->error = E_NONE;
-			r->buflen = n;
+			return;
 		}
 	}
 
-	SIMPLEQ_INSERT_TAIL(&sc.parent.replies, r, entry);
-	event_add(&proc_wr, NULL);
+	close(fd);
+
+	r->error = E_HIDDEN;
 }
 
 void
