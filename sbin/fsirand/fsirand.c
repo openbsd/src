@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.27 2013/04/02 04:16:39 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.28 2013/04/23 17:29:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -279,7 +279,8 @@ fsirand(char *device)
 				dp2 = &((struct ufs2_dinode *)inodebuf)[n];
 			if (inumber >= ROOTINO) {
 				if (printonly)
-					(void)printf("ino %d gen %x\n", inumber,
+					(void)printf("ino %llu gen %x\n",
+					    (unsigned long long)inumber,
 					    sblock->fs_magic == FS_UFS1_MAGIC ?
 					    dp1->di_gen : dp2->di_gen);
 				else if (sblock->fs_magic == FS_UFS1_MAGIC)

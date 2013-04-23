@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.12 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: clri.c,v 1.13 2013/04/23 17:29:26 deraadt Exp $	*/
 /*	$NetBSD: clri.c,v 1.19 2005/01/20 15:50:47 xtraeme Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	while (*++argv) {
 		/* get the inode number. */
 		inonum = atoi(*argv);
-		(void)printf("clearing %d\n", inonum);
+		(void)printf("clearing %llu\n", (unsigned long long)inonum);
 
 		/* read in the appropriate block. */
 		offset = ino_to_fsba(sbp, inonum);	/* inode to fs blk */
