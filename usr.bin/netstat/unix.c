@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.18 2013/04/18 15:43:22 deraadt Exp $	*/
+/*	$OpenBSD: unix.c,v 1.19 2013/04/23 23:32:46 deraadt Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -149,11 +149,12 @@ unpcb_dump(u_long off)
 
 #define	p(fmt, v, sep) printf(#v " " fmt sep, unp.v);
 #define	pll(fmt, v, sep) printf(#v " " fmt sep, (long long) unp.v);
+#define	pull(fmt, v, sep) printf(#v " " fmt sep, (unsigned long long) unp.v);
 #define	pp(fmt, v, sep) printf(#v " " fmt sep, hideroot ? 0 : unp.v);
 	printf("unpcb %#lx\n ", hideroot ? 0 : off);
 	pp("%p", unp_socket, "\n ");
 	pp("%p", unp_vnode, ", ");
-	p("%u", unp_ino, "\n ");
+	pull("%llu", unp_ino, "\n ");
 	pp("%p", unp_conn, ", ");
 	pp("%p", unp_refs, ", ");
 	pp("%p", unp_nextref, "\n ");
