@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd_lock.c,v 1.7 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: lockd_lock.c,v 1.8 2013/04/23 18:17:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -532,10 +532,10 @@ do_lock(struct file_lock *fl, int block)
 		    fl->client_name);
 	}
 	syslog(LOG_DEBUG, "lock from %s.%" PRIu32 " for file%s%s: "
-	    "dev %u ino %d (uid %d), flags %d",
+	    "dev %u ino %llu (uid %d), flags %d",
 	    fl->client_name, fl->client.svid,
 	    fl->client.exclusive ? " (exclusive)":"", block ? " (block)":"",
-	    st.st_dev, st.st_ino, st.st_uid, fl->flags);
+	    st.st_dev, (unsigned long long)st.st_ino, st.st_uid, fl->flags);
 	lflags = LOCK_NB;
 	if (fl->client.exclusive == 0)
 		lflags |= LOCK_SH;
