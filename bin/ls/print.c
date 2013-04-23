@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.28 2012/07/12 09:41:09 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.29 2013/04/23 18:08:40 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -90,7 +90,8 @@ printlong(DISPLAY *dp)
 			continue;
 		sp = p->fts_statp;
 		if (f_inode)
-			(void)printf("%*u ", dp->s_inode, sp->st_ino);
+			(void)printf("%*llu ", dp->s_inode,
+			    (unsigned long long)sp->st_ino);
 		if (f_size)
 			(void)printf("%*qd ",
 			    dp->s_block, howmany(sp->st_blocks, blocksize));
@@ -220,7 +221,8 @@ printaname(FTSENT *p, u_long inodefield, u_long sizefield)
 	sp = p->fts_statp;
 	chcnt = 0;
 	if (f_inode)
-		chcnt += printf("%*u ", (int)inodefield, sp->st_ino);
+		chcnt += printf("%*llu ", (int)inodefield,
+		    (unsigned long long)sp->st_ino);
 	if (f_size)
 		chcnt += printf("%*qd ",
 		    (int)sizefield, howmany(sp->st_blocks, blocksize));

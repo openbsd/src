@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.13 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.14 2013/04/23 18:08:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,8 @@ printlong(char *name, char *accpath, struct stat *sb)
 {
 	char modep[15];
 
-	(void)printf("%6u %4lld ", sb->st_ino, (long long)sb->st_blocks);
+	(void)printf("%6llu %4lld ", (unsigned long long)sb->st_ino,
+	    (long long)sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
 	(void)printf("%s %3u %-*.*s %-*.*s ", modep, sb->st_nlink, 
 	    NAME_WIDTH, UT_NAMESIZE, user_from_uid(sb->st_uid, 0), 
