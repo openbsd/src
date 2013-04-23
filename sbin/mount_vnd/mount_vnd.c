@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.12 2012/09/06 19:41:59 tedu Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.13 2013/04/23 19:57:02 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -276,8 +276,9 @@ query:
 	if (!vnu.vnu_ino)
 		fprintf(stdout, "not in use\n");
 	else
-		fprintf(stdout, "covering %s on %s, inode %d\n", vnu.vnu_file,
-		    devname(vnu.vnu_dev, S_IFBLK), vnu.vnu_ino);
+		fprintf(stdout, "covering %s on %s, inode %llu\n",
+		    vnu.vnu_file, devname(vnu.vnu_dev, S_IFBLK),
+		    (unsigned long long)vnu.vnu_ino);
 
 	if (print_all) {
 		vnu.vnu_unit++;
