@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.7 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: tee.c,v 1.8 2013/04/23 17:48:17 tedu Exp $	*/
 /*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
 
 /*
@@ -42,30 +42,41 @@
 #include <locale.h>
 #include <err.h>
 
-typedef struct _list {
-	struct _list *next;
+struct list {
+	struct list *next;
 	int fd;
 	char *name;
-} LIST;
-LIST *head;
+};
+struct list *head;
 
-void add(int, char *);
+static void
+add(int fd, char *name)
+{
+	struct list *p;
+
+	if ((p = malloc(sizeof(*p))) == NULL)
+		err(1, NULL);
+	p->fd = fd;
+	p->name = name;
+	p->next = head;
+	head = p;
+}
 
 int
 main(int argc, char *argv[])
 {
-	LIST *p;
-	int n, fd, rval, wval;
+	struct list *p;
+	int fd;
+	ssize_t n, rval, wval;
 	char *bp;
 	int append, ch, exitval;
-	char *buf;
-#define	BSIZE (8 * 1024)
+	char buf[8192];
 
 	setlocale(LC_ALL, "");
 
 	append = 0;
-	while ((ch = getopt(argc, argv, "ai")) != -1)
-		switch((char)ch) {
+	while ((ch = getopt(argc, argv, "ai")) != -1) {
+		switch(ch) {
 		case 'a':
 			append = 1;
 			break;
@@ -77,23 +88,24 @@ main(int argc, char *argv[])
 			(void)fprintf(stderr, "usage: tee [-ai] [file ...]\n");
 			exit(1);
 		}
+	}
 	argv += optind;
 	argc -= optind;
 
-	if ((buf = malloc((size_t)BSIZE)) == NULL)
-		err(1, NULL);
-
 	add(STDOUT_FILENO, "stdout");
 
-	for (exitval = 0; *argv; ++argv)
-		if ((fd = open(*argv, append ? O_WRONLY|O_CREAT|O_APPEND :
-		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) < 0) {
+	exitval = 0;
+	while (*argv) {
+		if ((fd = open(*argv, O_WRONLY | O_CREAT |
+		    (append ? O_APPEND : O_TRUNC), DEFFILEMODE)) == -1) {
 			warn("%s", *argv);
 			exitval = 1;
 		} else
 			add(fd, *argv);
+		argv++;
+	}
 
-	while ((rval = read(STDIN_FILENO, buf, BSIZE)) > 0)
+	while ((rval = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
 		for (p = head; p; p = p->next) {
 			n = rval;
 			bp = buf;
@@ -106,7 +118,8 @@ main(int argc, char *argv[])
 				bp += wval;
 			} while (n -= wval);
 		}
-	if (rval < 0) {
+	}
+	if (rval == -1) {
 		warn("read");
 		exitval = 1;
 	}
@@ -119,17 +132,4 @@ main(int argc, char *argv[])
 	}
 
 	exit(exitval);
-}
-
-void
-add(int fd, char *name)
-{
-	LIST *p;
-
-	if ((p = malloc((size_t)sizeof(LIST))) == NULL)
-		err(1, NULL);
-	p->fd = fd;
-	p->name = name;
-	p->next = head;
-	head = p;
 }
