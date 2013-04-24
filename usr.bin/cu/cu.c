@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.13 2013/01/17 21:10:24 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.14 2013/04/24 16:01:10 tedu Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -295,10 +295,11 @@ line_error(struct bufferevent *bufev, short what, void *data)
 char *
 tilde_expand(const char *filename1)
 {
-	const char	*filename, *path;
-	char		 user[128], ret[MAXPATHLEN], *out;
+	const char	*filename, *path, *sep;
+	char		 user[128], *out;
 	struct passwd	*pw;
 	u_int		 len, slash;
+	int		 rv;
 
 	if (*filename1 != '~')
 		goto no_change;
@@ -316,24 +317,24 @@ tilde_expand(const char *filename1)
 	} else if ((pw = getpwuid(getuid())) == NULL)	/* ~/path */
 		goto no_change;
 
-	if (strlcpy(ret, pw->pw_dir, sizeof(ret)) >= sizeof(ret))
-		goto no_change;
-
 	/* Make sure directory has a trailing '/' */
 	len = strlen(pw->pw_dir);
-	if ((len == 0 || pw->pw_dir[len - 1] != '/') &&
-	    strlcat(ret, "/", sizeof(ret)) >= sizeof(ret))
-		goto no_change;
+	if (len == 0 || pw->pw_dir[len - 1] != '/')
+		sep = "/";
+	else
+		sep = "";
 
 	/* Skip leading '/' from specified path */
 	if (path != NULL)
 		filename = path + 1;
-	if (strlcat(ret, filename, sizeof(ret)) >= sizeof(ret))
-		goto no_change;
 
-	out = strdup(ret);
-	if (out == NULL)
-		cu_err(1, "strdup");
+	if ((rv = asprintf(&out, "%s%s%s", pw->pw_dir, sep, filename)) == -1)
+		cu_err(1, "asprintf");
+	if (rv >= MAXPATHLEN) {
+		free(out);
+		goto no_change;
+	}
+
 	return (out);
 
 no_change:
