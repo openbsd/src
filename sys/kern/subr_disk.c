@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.147 2013/02/17 17:39:29 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.148 2013/04/24 08:31:06 blambert Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -886,8 +886,10 @@ disk_attach_callback(void *arg1, void *arg2)
 		goto done;
 
 	/* Read disklabel. */
-	if (disk_readlabel(&dl, dev, errbuf, sizeof(errbuf)) == NULL)
+	if (disk_readlabel(&dl, dev, errbuf, sizeof(errbuf)) == NULL) {
+		add_timer_randomness(dl.d_checksum);
 		dk->dk_flags |= DKF_LABELVALID;
+	}
 
 done:
 	dk->dk_flags |= DKF_OPENED;
