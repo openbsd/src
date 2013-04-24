@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.96 2013/01/17 21:24:58 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.97 2013/04/24 09:52:54 nicm Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -71,6 +71,7 @@ void ttyunblock(struct tty *);
 static void ttyecho(int, struct tty *);
 static void ttyrubo(struct tty *, int);
 static int proc_compare(struct proc *, struct proc *);
+void	ttkqflush(struct klist *klist);
 int	filt_ttyread(struct knote *kn, long hint);
 void 	filt_ttyrdetach(struct knote *kn);
 int	filt_ttywrite(struct knote *kn, long hint);
@@ -1113,12 +1114,30 @@ ttkqfilter(dev_t dev, struct knote *kn)
 }
 
 void
+ttkqflush(struct klist *klist)
+{
+	struct knote *kn, *kn1;
+
+	SLIST_FOREACH_SAFE(kn, klist, kn_selnext, kn1) {
+		SLIST_REMOVE(klist, kn, knote, kn_selnext);
+		kn->kn_hook = (caddr_t)((u_long)NODEV);
+		kn->kn_flags |= EV_EOF;
+		knote_activate(kn);
+	}
+}
+
+void
 filt_ttyrdetach(struct knote *kn)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
-	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
-	int s = spltty();
+	struct tty *tp;
+	int s;
 
+	if (dev == NODEV)
+		return;
+	tp = (*cdevsw[major(dev)].d_tty)(dev);
+
+	s = spltty();
 	SLIST_REMOVE(&tp->t_rsel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
@@ -1127,8 +1146,14 @@ int
 filt_ttyread(struct knote *kn, long hint)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
-	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
+	struct tty *tp;
 	int s;
+
+	if (dev == NODEV) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	tp = (*cdevsw[major(dev)].d_tty)(dev);
 
 	s = spltty();
 	kn->kn_data = ttnread(tp);
@@ -1144,9 +1169,14 @@ void
 filt_ttywdetach(struct knote *kn)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
-	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
-	int s = spltty();
+	struct tty *tp;
+	int s;
 
+	if (dev == NODEV)
+		return;
+	tp = (*cdevsw[major(dev)].d_tty)(dev);
+
+	s = spltty();
 	SLIST_REMOVE(&tp->t_wsel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
@@ -1155,8 +1185,14 @@ int
 filt_ttywrite(struct knote *kn, long hint)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
-	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
+	struct tty *tp;
 	int canwrite, s;
+
+	if (dev == NODEV) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	tp = (*cdevsw[major(dev)].d_tty)(dev);
 
 	s = spltty();
 	kn->kn_data = tp->t_outq.c_cn - tp->t_outq.c_cc;
@@ -2308,6 +2344,9 @@ ttyfree(struct tty *tp)
 		panic("ttyfree: tty_count < 0");
 #endif
 	TAILQ_REMOVE(&ttylist, tp, tty_link);
+
+	ttkqflush(&tp->t_rsel.si_note);
+	ttkqflush(&tp->t_wsel.si_note);
 
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);

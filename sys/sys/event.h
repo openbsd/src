@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.17 2012/06/08 05:22:49 guenther Exp $	*/
+/*	$OpenBSD: event.h,v 1.18 2013/04/24 09:52:54 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -167,6 +167,7 @@ struct knote {
 struct proc;
 
 extern void	knote(struct klist *list, long hint);
+extern void	knote_activate(struct knote *);
 extern void	knote_remove(struct proc *p, struct klist *list);
 extern void	knote_fdclose(struct proc *p, int fd);
 extern void	knote_processexit(struct process *);
