@@ -6,7 +6,7 @@ divert(-1)
 # Note that lines beginning with "dnl" below are comments.
 
 divert(0)dnl
-VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.12 $')dnl
+VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.13 $')dnl
 OSTYPE(openbsd)dnl
 dnl
 dnl If you have a non-static IP address you may wish to forward outgoing mail
@@ -102,6 +102,9 @@ dnl Use either IPv4 or IPv6 for outgoing connections.
 dnl
 CLIENT_OPTIONS(`Family=inet, Address=0.0.0.0')dnl
 CLIENT_OPTIONS(`Family=inet6, Address=::')dnl
+dnl
+dnl Disable ident queries
+define(`confTO_IDENT', `0')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure)
 dnl on T_AAAA (IPv6) lookups.
