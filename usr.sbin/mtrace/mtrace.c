@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.30 2013/04/20 19:21:46 deraadt Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.31 2013/04/24 06:00:35 deraadt Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -419,11 +419,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 	 * Change the qid for each request sent to avoid being confused
 	 * by duplicate responses
 	 */
-#ifdef SYSV    
-	query->tr_qid  = ((u_int32_t)lrand48() >> 8);
-#else
-	query->tr_qid  = ((u_int32_t)random() >> 8);
-#endif
+	query->tr_qid  = arc4random();
 
 	/*
 	 * Set timer to calculate delays, then send query
@@ -1119,7 +1115,6 @@ main(int argc, char *argv[])
     u_int32_t lastout = 0;
     int numstats = 1;
     int waittime;
-    int seed;
     uid_t uid;
 
     init_igmp();
@@ -1329,17 +1324,6 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
     dst_netmask = get_netmask(udp, qdst);
     close(udp);
     if (lcl_addr == 0) lcl_addr = addr.sin_addr.s_addr;
-
-    /*
-     * Initialize the seed for random query identifiers.
-     */
-    gettimeofday(&tv, 0);
-    seed = tv.tv_usec ^ lcl_addr;
-#ifdef SYSV    
-    srand48(seed);
-#else
-    srandom(seed);
-#endif
 
     /*
      * Protect against unicast queries to mrouted versions that might crash.
