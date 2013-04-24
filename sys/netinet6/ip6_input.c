@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.111 2013/03/28 23:10:06 tedu Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.112 2013/04/24 10:17:08 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -117,10 +117,6 @@
 #include <netinet/ip_carp.h>
 #endif
 
-extern struct domain inet6domain;
-extern struct ip6protosw inet6sw[];
-
-u_char ip6_protox[IPPROTO_MAX];
 struct in6_ifaddrhead in6_ifaddr;
 struct ifqueue ip6intrq;
 

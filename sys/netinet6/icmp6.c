@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.125 2013/04/10 01:35:55 guenther Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.126 2013/04/24 10:17:08 mpi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -128,10 +128,6 @@
  * others...
  */
 #define in6p_ip6_nxt	inp_ipv6.ip6_nxt
-
-extern struct domain inet6domain;
-extern struct ip6protosw inet6sw[];
-extern u_char ip6_protox[];
 
 struct icmp6stat icmp6stat;
 

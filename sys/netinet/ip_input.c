@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.209 2013/04/17 14:19:32 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.210 2013/04/24 10:17:08 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -121,9 +121,6 @@ extern struct baddynamicports baddynamicports;
 
 int *ipctl_vars[IPCTL_MAXID] = IPCTL_VARS;
 
-extern	struct domain inetdomain;
-extern	struct protosw inetsw[];
-u_char	ip_protox[IPPROTO_MAX];
 struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
 

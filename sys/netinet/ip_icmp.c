@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.97 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.98 2013/04/24 10:17:08 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -124,11 +124,6 @@ int *icmpctl_vars[ICMPCTL_MAXID] = ICMPCTL_VARS;
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
 void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
-
-/* from ip_input.c */
-extern	u_char ip_protox[];
-
-extern	struct protosw inetsw[];
 
 void
 icmp_init(void)

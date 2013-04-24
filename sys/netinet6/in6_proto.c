@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.66 2013/04/01 22:58:29 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.67 2013/04/24 10:17:08 mpi Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -122,8 +122,7 @@
 /*
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.
  */
-
-extern	struct domain inet6domain;
+u_char ip6_protox[IPPROTO_MAX];
 
 struct ip6protosw inet6sw[] = {
 { 0,		&inet6domain,	IPPROTO_IPV6,	0,

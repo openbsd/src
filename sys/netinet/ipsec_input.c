@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.113 2013/04/11 12:06:25 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.114 2013/04/24 10:17:08 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -109,11 +109,6 @@ int ipcomp_enable = 0;
 int *espctl_vars[ESPCTL_MAXID] = ESPCTL_VARS;
 int *ahctl_vars[AHCTL_MAXID] = AHCTL_VARS;
 int *ipcompctl_vars[IPCOMPCTL_MAXID] = IPCOMPCTL_VARS;
-
-#ifdef INET6
-extern struct ip6protosw inet6sw[];
-extern u_char ip6_protox[];
-#endif
 
 /*
  * ipsec_common_input() gets called when we receive an IPsec-protected packet
