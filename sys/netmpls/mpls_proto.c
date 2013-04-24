@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_proto.c,v 1.6 2011/03/31 10:36:42 jasper Exp $	*/
+/*	$OpenBSD: mpls_proto.c,v 1.7 2013/04/24 10:20:15 mpi Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -44,9 +44,6 @@
 /*
  * MPLS protocol family:
  */
-
-extern	struct domain mplsdomain;
-
 struct protosw mplssw[] = {
 { 0,			&mplsdomain,		0,	0,
   0,			0,			0,	0,

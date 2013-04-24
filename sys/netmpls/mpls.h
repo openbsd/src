@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.27 2013/03/27 02:00:08 tedu Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.28 2013/04/24 10:20:15 mpi Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -144,6 +144,8 @@ struct rt_mpls {
 
 #ifdef _KERNEL
 
+extern	struct domain mplsdomain;
+
 struct mpe_softc {
 	struct ifnet		sc_if;		/* the interface */
 	int			sc_unit;
@@ -168,6 +170,7 @@ extern struct ifqueue	mplsintrq;	/* MPLS input queue */
 extern int		mpls_defttl;
 extern int		mpls_mapttl_ip;
 extern int		mpls_mapttl_ip6;
+extern int		mpls_inkloop;
 
 
 void	mpls_init(void);

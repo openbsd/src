@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.33 2013/03/26 13:19:26 mpi Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.34 2013/04/24 10:20:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -47,7 +47,6 @@
 #include <netmpls/mpls.h>
 
 struct ifqueue	mplsintrq;
-extern int	mpls_inkloop;
 
 #ifdef MPLS_DEBUG
 #define MPLS_LABEL_GET(l)	((ntohl((l) & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET)
