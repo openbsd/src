@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.14 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.15 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -126,7 +126,8 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 		break;
 	}
 
-	printf("I=%u MODE=%o SIZE=%llu", inum, DIP(dp, di_mode), DIP(dp, di_size));
+	printf("I=%llu MODE=%o SIZE=%llu", (unsigned long long)inum,
+	    DIP(dp, di_mode), DIP(dp, di_size));
 	t = DIP(dp, di_mtime);
 	p = ctime(&t);
 	printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
@@ -171,7 +172,8 @@ checkactivedir(void)
 		return 0;
 	}
 	if ((DIP(curinode, di_mode) & IFMT) != IFDIR) {
-		warnx("inode %d not a directory", curinum);
+		warnx("inode %llu not a directory",
+		    (unsigned long long)curinum);
 		return 0;
 	}
 	return 1;
@@ -193,11 +195,12 @@ printactive(void)
 		printstat("current inode", curinum, curinode);
 		break;
 	case 0:
-		printf("current inode %d: unallocated inode\n", curinum);
+		printf("current inode %llu: unallocated inode\n",
+		    (unsigned long long)curinum);
 		break;
 	default:
-		printf("current inode %d: screwy itype 0%o (mode 0%o)?\n",
-		    curinum, DIP(curinode, di_mode) & IFMT,
+		printf("current inode %llu: screwy itype 0%o (mode 0%o)?\n",
+		    (unsigned long long)curinum, DIP(curinode, di_mode) & IFMT,
 		    DIP(curinode, di_mode));
 		break;
 	}

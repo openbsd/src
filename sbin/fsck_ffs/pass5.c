@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.41 2011/04/24 07:07:03 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.42 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -248,8 +248,8 @@ pass5(void)
 			default:
 				if (j < ROOTINO)
 					break;
-				errexit("BAD STATE %d FOR INODE I=%ld\n",
-				    GET_ISTATE(j), j);
+				errexit("BAD STATE %d FOR INODE I=%llu\n",
+				    GET_ISTATE(j), (unsigned long long)j);
 			}
 		}
 		if (c == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.33 2011/06/27 23:40:57 tedu Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.34 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -493,8 +493,8 @@ rst_readdir(RST_DIR *dirp)
 		if (dp->d_ino == 0 && strcmp(dp->d_name, "/") == 0)
 			return (NULL);
 		if (dp->d_ino >= maxino) {
-			Dprintf(stderr, "corrupted directory: bad inum %d\n",
-				dp->d_ino);
+			Dprintf(stderr, "corrupted directory: bad inum %llu\n",
+			    (unsigned long long)dp->d_ino);
 			continue;
 		}
 		return (dp);
@@ -606,7 +606,8 @@ setdirmodes(int flags)
 				continue;
 		}
 		if (ep == NULL) {
-			panic("cannot find directory inode %d\n", node.ino);
+			panic("cannot find directory inode %llu\n",
+			    (unsigned long long)node.ino);
 		} else {
 			if (!Nflag) {
 				cp = myname(ep);
@@ -636,7 +637,8 @@ genliteraldir(char *name, ino_t ino)
 
 	itp = inotablookup(ino);
 	if (itp == NULL)
-		panic("Cannot find directory inode %d named %s\n", ino, name);
+		panic("Cannot find directory inode %llu named %s\n",
+		    (unsigned long long)ino, name);
 	if ((ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
 		warn("%s: cannot create file", name);
 		return (FAIL);
@@ -646,14 +648,14 @@ genliteraldir(char *name, ino_t ino)
 	for (i = itp->t_size; i > 0; i -= BUFSIZ) {
 		size = i < BUFSIZ ? i : BUFSIZ;
 		if (read(dp, buf, (int) size) == -1) {
-			warnx("write error extracting inode %d, name %s",
-			    curfile.ino, curfile.name);
+			warnx("write error extracting inode %llu, name %s",
+			    (unsigned long long)curfile.ino, curfile.name);
 			err(1, "read");
 		}
 		if (!Nflag && write(ofile, buf, (int) size) == -1) {
 			fprintf(stderr,
-				"write error extracting inode %d, name %s\n",
-				curfile.ino, curfile.name);
+			    "write error extracting inode %llu, name %s\n",
+			    (unsigned long long)curfile.ino, curfile.name);
 			err(1, "write");
 		}
 	}

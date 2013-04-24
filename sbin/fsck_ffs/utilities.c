@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.39 2011/04/24 07:07:03 otto Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.40 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -126,7 +126,8 @@ inoinfo(ino_t inum)
 	int iloff;
 
 	if (inum > maxino)
-		errexit("inoinfo: inumber %d out of range", inum);
+		errexit("inoinfo: inumber %llu out of range",
+		    (unsigned long long)inum);
 	ilp = &inostathead[inum / sblock.fs_ipg];
 	iloff = inum % sblock.fs_ipg;
 	if (iloff >= ilp->il_numalloced)

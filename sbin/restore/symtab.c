@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.19 2011/06/27 23:40:57 tedu Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.20 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -94,7 +94,8 @@ addino(ino_t inum, struct entry *np)
 	struct entry **epp;
 
 	if (inum < ROOTINO || inum >= maxino)
-		panic("addino: out of range %d\n", inum);
+		panic("addino: out of range %llu\n",
+		    (unsigned long long)inum);
 	epp = &entry[inum % entrytblsize];
 	np->e_ino = inum;
 	np->e_next = *epp;
@@ -115,7 +116,8 @@ deleteino(ino_t inum)
 	struct entry **prev;
 
 	if (inum < ROOTINO || inum >= maxino)
-		panic("deleteino: out of range %d\n", inum);
+		panic("deleteino: out of range %llu\n",
+		    (unsigned long long)inum);
 	prev = &entry[inum % entrytblsize];
 	for (next = *prev; next != NULL; next = next->e_next) {
 		if (next->e_ino == inum) {
@@ -125,7 +127,7 @@ deleteino(ino_t inum)
 		}
 		prev = &next->e_next;
 	}
-	panic("deleteino: %d not found\n", inum);
+	panic("deleteino: %llu not found\n", (unsigned long long)inum);
 }
 
 /*

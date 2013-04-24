@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.32 2011/05/08 14:38:40 otto Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.33 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -452,8 +452,9 @@ again:
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d\n",
-			    GET_ISTATE(dirp->d_ino), dirp->d_ino);
+			errexit("BAD STATE %d FOR INODE I=%llu\n",
+			    GET_ISTATE(dirp->d_ino),
+			    (unsigned long long)dirp->d_ino);
 		}
 	}
 	if (n == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.36 2011/05/08 14:38:40 otto Exp $	*/
+/*	$OpenBSD: inode.c,v 1.37 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -175,8 +175,8 @@ iblock(struct inodesc *idesc, long ilevel, off_t isize)
 			if (IBLK(bp, i) == 0)
 				continue;
 			(void)snprintf(buf, sizeof buf,
-			    "PARTIALLY TRUNCATED INODE I=%u",
-			    idesc->id_number);
+			    "PARTIALLY TRUNCATED INODE I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (preen)
 				pfatal("%s", buf);
 			else if (dofix(idesc, buf)) {
@@ -277,7 +277,8 @@ ginode(ino_t inumber)
 	daddr64_t iblk;
 
 	if (inumber < ROOTINO || inumber > maxino)
-		errexit("bad inode number %d to ginode\n", inumber);
+		errexit("bad inode number %llu to ginode\n",
+		    (unsigned long long)inumber);
 	if (startinum == 0 ||
 	    inumber < startinum || inumber >= startinum + INOPB(&sblock)) {
 		iblk = ino_to_fsba(&sblock, inumber);
@@ -309,7 +310,9 @@ getnextinode(ino_t inumber)
 	static caddr_t nextinop;
 
 	if (inumber != nextino++ || inumber > maxino)
-		errexit("bad inode number %d to nextinode %d\n", inumber, nextino);
+		errexit("bad inode number %llu to nextinode %llu\n",
+		    (unsigned long long)inumber,
+		    (unsigned long long)nextino);
 	if (inumber >= lastinum) {
 		readcnt++;
 		dblk = fsbtodb(&sblock, ino_to_fsba(&sblock, lastinum));
@@ -436,7 +439,7 @@ getinoinfo(ino_t inumber)
 			continue;
 		return (inp);
 	}
-	errexit("cannot find inode %d\n", inumber);
+	errexit("cannot find inode %llu\n", (unsigned long long)inumber);
 	return (NULL);
 }
 
@@ -519,7 +522,7 @@ pinode(ino_t ino)
 	struct passwd *pw;
 	time_t t;
 
-	printf(" I=%u ", ino);
+	printf(" I=%llu ", (unsigned long long)ino);
 	if (ino < ROOTINO || ino > maxino)
 		return;
 	dp = ginode(ino);
@@ -543,7 +546,7 @@ void
 blkerror(ino_t ino, char *type, daddr64_t blk)
 {
 
-	pfatal("%lld %s I=%u", blk, type, ino);
+	pfatal("%lld %s I=%llu", blk, type, (unsigned long long)ino);
 	printf("\n");
 	switch (GET_ISTATE(ino)) {
 

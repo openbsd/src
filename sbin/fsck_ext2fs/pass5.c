@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.15 2011/04/18 03:58:21 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.16 2013/04/24 13:46:27 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $ */
 
 /*
@@ -131,8 +131,8 @@ pass5(void)
 				break;
 
 			default:
-				errexit("BAD STATE %d FOR INODE I=%ld\n",
-				    statemap[j], j);
+				errexit("BAD STATE %d FOR INODE I=%llu\n",
+				    statemap[j], (unsigned long long)j);
 			}
 		}
 

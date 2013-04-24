@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.11 2005/04/30 13:56:16 niallo Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.12 2013/04/24 13:46:27 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -416,8 +416,9 @@ again:
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d\n",
-			    statemap[fs2h32(dirp->e2d_ino)], fs2h32(dirp->e2d_ino));
+			errexit("BAD STATE %d FOR INODE I=%llu\n",
+			    statemap[fs2h32(dirp->e2d_ino)],
+			    (unsigned long long)fs2h32(dirp->e2d_ino));
 		}
 	}
 	if (n == 0)

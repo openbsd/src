@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.36 2011/05/02 22:23:59 chl Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.37 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -54,8 +54,9 @@ static ino_t info_inumber;
 static int
 pass1_info(char *buf, size_t buflen)
 {
-	return (snprintf(buf, buflen, "phase 1, inode %d/%d",
-	    info_inumber, sblock.fs_ipg * sblock.fs_ncg) > 0);
+	return (snprintf(buf, buflen, "phase 1, inode %llu/%llu",
+	    (unsigned long long)info_inumber,
+	    (unsigned long long)sblock.fs_ipg * sblock.fs_ncg) > 0);
 }
 
 void
@@ -219,7 +220,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		      memcmp(dp->dp2.di_ib, ufs2_zino.di_ib,
 			NIADDR * sizeof(daddr64_t)) ||
 		      dp->dp2.di_mode || dp->dp2.di_size))) {
-			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
+			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
+			    (unsigned long long)inumber);
 			if (reply("CLEAR") == 1) {
 				dp = ginode(inumber);
 				clearinode(dp);
@@ -325,8 +327,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	(void)ckinode(dp, idesc);
 	idesc->id_entryno *= btodb(sblock.fs_fsize);
 	if (DIP(dp, di_blocks) != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%u (%ld should be %d)",
-		    inumber, (long)DIP(dp, di_blocks), idesc->id_entryno);
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%ld should be %d)",
+		    (unsigned long long)inumber, (long)DIP(dp, di_blocks),
+		    idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
@@ -337,7 +340,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	return;
 unknown:
-	pfatal("UNKNOWN FILE TYPE I=%u", inumber);
+	pfatal("UNKNOWN FILE TYPE I=%llu", (unsigned long long)inumber);
 	SET_ISTATE(inumber, FCLEAR);
 	if (reply("CLEAR") == 1) {
 		SET_ISTATE(inumber, USTATE);
@@ -359,8 +362,8 @@ pass1check(struct inodesc *idesc)
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
-			pwarn("EXCESSIVE BAD BLKS I=%u",
-				idesc->id_number);
+			pwarn("EXCESSIVE BAD BLKS I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0) {
@@ -379,8 +382,8 @@ pass1check(struct inodesc *idesc)
 		} else {
 			blkerror(idesc->id_number, "DUP", blkno);
 			if (dupblk++ >= MAXDUP) {
-				pwarn("EXCESSIVE DUP BLKS I=%u",
-					idesc->id_number);
+				pwarn("EXCESSIVE DUP BLKS I=%llu",
+				    (unsigned long long)idesc->id_number);
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.16 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.17 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -107,7 +107,8 @@ gentempname(struct entry *ep)
 		i++;
 	if (np == NULL)
 		badentry(ep, "not on ino list");
-	(void)snprintf(name, sizeof(name), "%s%ld%d", TMPHDR, i, ep->e_ino);
+	(void)snprintf(name, sizeof(name), "%s%ld%llu", TMPHDR, i,
+	    (unsigned long long)ep->e_ino);
 	return (name);
 }
 
@@ -270,7 +271,8 @@ badentry(struct entry *ep, char *msg)
 		    "next hashchain name: %s\n", myname(ep->e_next));
 	fprintf(stderr, "entry type: %s\n",
 		ep->e_type == NODE ? "NODE" : "LEAF");
-	fprintf(stderr, "inode number: %d\n", ep->e_ino);
+	fprintf(stderr, "inode number: %llu\n",
+	    (unsigned long long)ep->e_ino);
 	panic("flags: %s\n", flagvalues(ep));
 }
 

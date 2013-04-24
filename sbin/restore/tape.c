@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.40 2012/07/14 08:58:18 halex Exp $	*/
+/*	$OpenBSD: tape.c,v 1.41 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ setup(void)
 	if (spcl.c_type != TS_CLRI)
 		errx(1, "Cannot find file removal list");
 	maxino = (spcl.c_count * TP_BSIZE * NBBY) + 1;
-	Dprintf(stdout, "maxino = %d\n", maxino);
+	Dprintf(stdout, "maxino = %llu\n", (unsigned long long)maxino);
 	map = calloc(1, howmany(maxino, NBBY));
 	if (map == NULL)
 		panic("no memory for active inode map\n");
@@ -732,8 +732,8 @@ xtrfile(char *buf, size_t size)
 	if (Nflag)
 		return;
 	if (write(ofile, buf, size) == -1)
-		err(1, "write error extracting inode %d, name %s\nwrite",
-		    curfile.ino, curfile.name);
+		err(1, "write error extracting inode %llu, name %s\nwrite",
+		    (unsigned long long)curfile.ino, curfile.name);
 }
 
 /*
@@ -745,8 +745,8 @@ xtrskip(char *buf, size_t size)
 {
 
 	if (lseek(ofile, (off_t)size, SEEK_CUR) == -1)
-		err(1, "seek error extracting inode %d, name %s\nlseek",
-		    curfile.ino, curfile.name);
+		err(1, "seek error extracting inode %llu, name %s\nlseek",
+		    (unsigned long long)curfile.ino, curfile.name);
 }
 
 /*
@@ -884,8 +884,8 @@ getmore:
 			fprintf(stderr, "restoring %s\n", curfile.name);
 			break;
 		case SKIP:
-			fprintf(stderr, "skipping over inode %d\n",
-				curfile.ino);
+			fprintf(stderr, "skipping over inode %llu\n",
+			    (unsigned long long)curfile.ino);
 			break;
 		}
 		if (!yflag && !reply("continue"))
@@ -1091,7 +1091,7 @@ good:
 static void
 accthdr(struct s_spcl *header)
 {
-	static ino_t previno = 0x7fffffff;
+	static ino_t previno = (ino_t)-1;
 	static int prevtype;
 	static long predict;
 	long blks, i;
@@ -1103,10 +1103,10 @@ accthdr(struct s_spcl *header)
  			fprintf(stderr, "begins with record %lld",
  				(long long)header->c_firstrec);
  		fprintf(stderr, "\n");
-		previno = 0x7fffffff;
+		previno = (ino_t)-1;
 		return;
 	}
-	if (previno == 0x7fffffff)
+	if (previno == (ino_t)-1)
 		goto newcalc;
 	switch (prevtype) {
 	case TS_BITS:
@@ -1116,10 +1116,12 @@ accthdr(struct s_spcl *header)
 		fprintf(stderr, "Used inodes map header");
 		break;
 	case TS_INODE:
-		fprintf(stderr, "File header, ino %d", previno);
+		fprintf(stderr, "File header, ino %llu",
+		    (unsigned long long)previno);
 		break;
 	case TS_ADDR:
-		fprintf(stderr, "File continuation header, ino %d", previno);
+		fprintf(stderr, "File continuation header, ino %llu",
+		    (unsigned long long)previno);
 		break;
 	case TS_END:
 		fprintf(stderr, "End of tape header");
@@ -1249,8 +1251,8 @@ checksum(int *buf)
 	}
 
 	if (i != CHECKSUM) {
-		fprintf(stderr, "Checksum error %o, inode %d file %s\n", i,
-			curfile.ino, curfile.name);
+		fprintf(stderr, "Checksum error %o, inode %llu file %s\n", i,
+		    (unsigned long long)curfile.ino, curfile.name);
 		return(FAIL);
 	}
 	return(GOOD);

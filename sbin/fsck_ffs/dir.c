@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.27 2011/05/08 14:38:40 otto Exp $	*/
+/*	$OpenBSD: dir.c,v 1.28 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -414,9 +414,11 @@ linkup(ino_t orphan, ino_t parentdir)
 		DIP_SET(dp, di_nlink, DIP(dp, di_nlink) + 1);
 		inodirty();
 		ILNCOUNT(lfdir)++;
-		pwarn("DIR I=%u CONNECTED. ", orphan);
+		pwarn("DIR I=%llu CONNECTED. ",
+		    (unsigned long long)orphan);
 		if (parentdir != (ino_t)-1) {
-			printf("PARENT WAS I=%u\n", parentdir);
+			printf("PARENT WAS I=%llu\n",
+			    (unsigned long long)parentdir);
 			/*
 			 * The parent directory, because of the ordering
 			 * guarantees, has had the link count incremented

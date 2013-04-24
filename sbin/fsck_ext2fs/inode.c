@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.18 2013/04/17 03:33:06 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.19 2013/04/24 13:46:27 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -230,7 +230,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 			if (*ap == 0)
 				continue;
 			(void)snprintf(buf, sizeof(buf),
-			    "PARTIALLY TRUNCATED INODE I=%u", idesc->id_number);
+			    "PARTIALLY TRUNCATED INODE I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (dofix(idesc, buf)) {
 				*ap = 0;
 				dirty(bp);
@@ -330,7 +331,8 @@ ginode(ino_t inumber)
 
 	if ((inumber < EXT2_FIRSTINO && inumber != EXT2_ROOTINO)
 		|| inumber > maxino)
-		errexit("bad inode number %d to ginode\n", inumber);
+		errexit("bad inode number %llu to ginode\n",
+		    (unsigned long long)inumber);
 	if (startinum == 0 ||
 	    inumber < startinum || inumber >= startinum + sblock.e2fs_ipb) {
 		iblk = fsck_ino_to_fsba(&sblock, inumber);
@@ -358,7 +360,8 @@ getnextinode(ino_t inumber)
 	static struct ext2fs_dinode *dp;
 
 	if (inumber != nextino++ || inumber > maxino)
-		errexit("bad inode number %d to nextinode\n", inumber);
+		errexit("bad inode number %llu to nextinode\n",
+		    (unsigned long long)inumber);
 	if (inumber >= lastinum) {
 		readcnt++;
 		dblk = fsbtodb(&sblock, fsck_ino_to_fsba(&sblock, lastinum));
@@ -468,7 +471,7 @@ getinoinfo(ino_t inumber)
 			continue;
 		return (inp);
 	}
-	errexit("cannot find inode %d\n", inumber);
+	errexit("cannot find inode %llu\n", (unsigned long long)inumber);
 	return (NULL);
 }
 
@@ -557,7 +560,7 @@ pinode(ino_t ino)
 	time_t t;
 	u_int32_t uid;
 
-	printf(" I=%u ", ino);
+	printf(" I=%llu ", (unsigned long long)ino);
 	if ((ino < EXT2_FIRSTINO && ino != EXT2_ROOTINO) || ino > maxino)
 		return;
 	dp = ginode(ino);
@@ -582,7 +585,7 @@ void
 blkerror(ino_t ino, char *type, daddr32_t blk)
 {
 
-	pfatal("%d %s I=%u", blk, type, ino);
+	pfatal("%d %s I=%llu", blk, type, (unsigned long long)ino);
 	printf("\n");
 	switch (statemap[ino]) {
 

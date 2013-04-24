@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.15 2011/03/12 17:50:46 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.16 2013/04/24 13:46:27 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -443,9 +443,10 @@ linkup(ino_t orphan, ino_t parentdir)
 		dp->e2di_nlink = h2fs16(fs2h16(dp->e2di_nlink) +1);
 		inodirty();
 		lncntp[lfdir]++;
-		pwarn("DIR I=%u CONNECTED. ", orphan);
+		pwarn("DIR I=%llu CONNECTED. ", (unsigned long long)orphan);
 		if (parentdir != (ino_t)-1)
-			printf("PARENT WAS I=%u\n", parentdir);
+			printf("PARENT WAS I=%llu\n",
+			    (unsigned long long)parentdir);
 		if (preen == 0)
 			printf("\n");
 	}

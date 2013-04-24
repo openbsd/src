@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.c,v 1.16 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: restore.c,v 1.17 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ listfile(char *name, ino_t ino, int type)
 	if (TSTINO(ino, dumpmap) == 0)
 		return (descend);
 	Vprintf(stdout, "%s", type == LEAF ? "leaf" : "dir ");
-	fprintf(stdout, "%10d\t%s\n", ino, name);
+	fprintf(stdout, "%10llu\t%s\n", (unsigned long long)ino, name);
 	return (descend);
 }
 
@@ -75,7 +75,8 @@ addfile(char *name, ino_t ino, int type)
 		return (descend);
 	}
 	if (!mflag) {
-		(void)snprintf(buf, sizeof(buf), "./%u", ino);
+		(void)snprintf(buf, sizeof(buf), "./%llu",
+		    (unsigned long long)ino);
 		name = buf;
 		if (type == NODE) {
 			(void)genliteraldir(name, ino);
@@ -433,8 +434,8 @@ nodeupdates(char *name, ino_t ino, int type)
 	 * next incremental tape.
 	 */
 	case 0:
-		fprintf(stderr, "%s: (inode %d) not found on tape\n",
-			name, ino);
+		fprintf(stderr, "%s: (inode %llu) not found on tape\n",
+			name, (unsigned long long)ino);
 		break;
 
 	/*
@@ -588,7 +589,8 @@ createleaves(char *symtabfile)
 		while (first < curfile.ino) {
 			ep = lookupino(first);
 			if (ep == NULL)
-				panic("%d: bad first\n", first);
+				panic("%llu: bad first\n",
+			    (unsigned long long)first);
 			fprintf(stderr, "%s: not found on tape\n", myname(ep));
 			ep->e_flags &= ~(NEW|EXTRACT);
 			first = lowerbnd(first);
@@ -601,8 +603,9 @@ createleaves(char *symtabfile)
 		 * on the next incremental tape.
 		 */
 		if (first != curfile.ino) {
-			fprintf(stderr, "expected next file %d, got %d\n",
-				first, curfile.ino);
+			fprintf(stderr, "expected next file %llu, got %llu\n",
+			    (unsigned long long)first,
+			    (unsigned long long)curfile.ino);
 			skipfile();
 			goto next;
 		}
@@ -799,7 +802,7 @@ verifyfile(char *name, ino_t ino, int type)
 		if (np == ep)
 			break;
 	if (np == NULL)
-		panic("missing inumber %d\n", ino);
+		panic("missing inumber %llu\n", (unsigned long long)ino);
 	if (ep->e_type == LEAF && type != LEAF)
 		badentry(ep, "type should be LEAF");
 	return (descend);

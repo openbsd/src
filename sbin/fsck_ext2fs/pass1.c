@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.12 2011/03/12 17:50:47 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.13 2013/04/24 13:46:27 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $	*/
 
 /*
@@ -136,7 +136,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			memcmp(dp->e2di_blocks, zino.e2di_blocks,
 			(NDADDR + NIADDR) * sizeof(u_int32_t)) ||
 		    dp->e2di_mode || inosize(dp))) {
-			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
+			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
+			    (unsigned long long)inumber);
 			if (reply("CLEAR") == 1) {
 				dp = ginode(inumber);
 				clearinode(dp);
@@ -145,7 +146,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		}
 #ifdef notyet /* it seems that dtime == 0 is valid for a unallocated inode */
 		if (dp->e2di_dtime == 0) {
-			pwarn("DELETED INODE I=%u HAS A NULL DTIME", inumber);
+			pwarn("DELETED INODE I=%llu HAS A NULL DTIME",
+			    (unsigned long long)inumber);
 			if (preen) {
 				printf(" (CORRECTED)\n");
 			}
@@ -165,7 +167,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	if (dp->e2di_dtime != 0) {
 		time_t t = fs2h32(dp->e2di_dtime);
 		char *p = ctime(&t);
-		pwarn("INODE I=%u HAS DTIME=%12.12s %4.4s", inumber, &p[4], &p[20]);
+		pwarn("INODE I=%llu HAS DTIME=%12.12s %4.4s",
+		    (unsigned long long)inumber, &p[4], &p[20]);
 		if (preen) {
 			printf(" (CORRECTED)\n");
 		}
@@ -262,8 +265,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	(void)ckinode(dp, idesc);
 	idesc->id_entryno *= btodb(sblock.e2fs_bsize);
 	if (fs2h32(dp->e2di_nblock) != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
-		    inumber, fs2h32(dp->e2di_nblock), idesc->id_entryno);
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%d should be %d)",
+		    (unsigned long long)inumber,
+		    fs2h32(dp->e2di_nblock), idesc->id_entryno);
 		if (preen)
 			printf(" (CORRECTED)\n");
 		else if (reply("CORRECT") == 0)
@@ -274,7 +278,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	return;
 unknown:
-	pfatal("UNKNOWN FILE TYPE I=%u", inumber);
+	pfatal("UNKNOWN FILE TYPE I=%llu", (unsigned long long)inumber);
 	statemap[inumber] = FCLEAR;
 	if (reply("CLEAR") == 1) {
 		statemap[inumber] = USTATE;
@@ -296,8 +300,8 @@ pass1check(struct inodesc *idesc)
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
-			pwarn("EXCESSIVE BAD BLKS I=%u",
-				idesc->id_number);
+			pwarn("EXCESSIVE BAD BLKS I=%llu",
+			    (unsigned long long)idesc->id_number);
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)
@@ -314,8 +318,8 @@ pass1check(struct inodesc *idesc)
 		} else {
 			blkerror(idesc->id_number, "DUP", blkno);
 			if (dupblk++ >= MAXDUP) {
-				pwarn("EXCESSIVE DUP BLKS I=%u",
-					idesc->id_number);
+				pwarn("EXCESSIVE DUP BLKS I=%lluu",
+				    (unsigned long long)idesc->id_number);
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0)

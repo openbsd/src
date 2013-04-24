@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.20 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.21 2013/04/24 13:46:29 deraadt Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -47,8 +47,9 @@ static ino_t info_inumber;
 static int
 pass4_info(char *buf, size_t buflen)
 {
-	return (snprintf(buf, buflen, "phase 4, inode %d/%d",
-	    info_inumber, lastino) > 0);
+	return (snprintf(buf, buflen, "phase 4, inode %llu/%llu",
+	    (unsigned long long)info_inumber,
+	    (unsigned long long)lastino) > 0);
 }
 
 void
@@ -109,8 +110,9 @@ pass4(void)
 				break;
 
 			default:
-				errexit("BAD STATE %d FOR INODE I=%d\n",
-			    	GET_ISTATE(inumber), inumber);
+				errexit("BAD STATE %d FOR INODE I=%llu\n",
+				    GET_ISTATE(inumber),
+				    (unsigned long long)inumber);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.8 2011/03/12 17:50:47 deraadt Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.9 2013/04/24 13:46:27 deraadt Exp $	*/
 /*	$NetBSD: pass4.c,v 1.2 1997/09/14 14:27:29 lukem Exp $	*/
 
 /*
@@ -97,8 +97,8 @@ pass4(void)
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d\n",
-			    statemap[inumber], inumber);
+			errexit("BAD STATE %d FOR INODE I=%llu\n",
+			    statemap[inumber], (unsigned long long)inumber);
 		}
 	}
 }

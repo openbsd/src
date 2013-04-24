@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.35 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.36 2013/04/24 13:46:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -420,7 +420,8 @@ searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize,
 	for (loc = 0; loc < size; ) {
 		dp = (struct direct *)(dblk + loc);
 		if (dp->d_reclen == 0) {
-			warnx("corrupted directory, inode %u", ino);
+			warnx("corrupted directory, inode %llu",
+			    (unsigned long long)ino);
 			break;
 		}
 		loc += dp->d_reclen;
@@ -441,7 +442,8 @@ searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize,
 					printf("mode %-6o uid %-5u gid %-5u ino ",
 					    DIP(di, di_mode), DIP(di, di_uid),
 					    DIP(di, di_gid));
-				printf("%-7u %s/%s%s\n", dp->d_ino, path,
+				printf("%-7llu %s/%s%s\n",
+				    (unsigned long long)dp->d_ino, path,
 				    dp->d_name, mode == IFDIR ? "/." : "");
 			}
 		}
@@ -491,7 +493,7 @@ main(int argc, char *argv[])
 {
 	struct stat stblock;
 	struct fstab *fsp;
-	unsigned long ulval;
+	unsigned long long ullval;
 	ssize_t n;
 	char *ep, *odisk;
 	int c, i;
@@ -505,24 +507,24 @@ main(int argc, char *argv[])
 			iflag++;
 
 			errno = 0;
-			ulval = strtoul(optarg, &ep, 10);
+			ullval = strtoull(optarg, &ep, 10);
 			if (optarg[0] == '\0' || *ep != '\0')
 				errx(1, "%s is not a number",
 				    optarg);
-			if (errno == ERANGE && ulval == ULONG_MAX)
+			if (errno == ERANGE && ullval == ULLONG_MAX)
 				errx(1, "%s is out or range",
 				    optarg);
-			addinode((ino_t)ulval);
+			addinode((ino_t)ullval);
 
 			while (optind < argc) {
 				errno = 0;
-				ulval = strtoul(argv[optind], &ep, 10);
+				ullval = strtoull(argv[optind], &ep, 10);
 				if (argv[optind][0] == '\0' || *ep != '\0')
 					break;
-				if (errno == ERANGE && ulval == ULONG_MAX)
+				if (errno == ERANGE && ullval == ULLONG_MAX)
 					errx(1, "%s is out or range",
 					    argv[optind]);
-				addinode((ino_t)ulval);
+				addinode((ino_t)ullval);
 				optind++;
 			}
 			break;
@@ -614,8 +616,8 @@ format_entry(const char *path, struct direct *dp)
 		if (src[0] =='\\') {
 			switch (src[1]) {
 			case 'I':
-				len = snprintf(dst, size - (dst - buf), "%u",
-				    dp->d_ino);
+				len = snprintf(dst, size - (dst - buf), "%llu",
+				    (unsigned long long)dp->d_ino);
 				if (len == -1 || len >= size - (dst - buf))
 					goto expand_buf;
 				dst += len;
