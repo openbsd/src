@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.356 2013/04/10 12:07:18 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.357 2013/04/24 10:15:47 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 10 2013 $
+.Dd $Mdocdate: April 24 2013 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3536,7 +3536,7 @@ Lock each client individually by running the command specified by the
 .Ic lock-command
 option.
 .It Xo Ic run-shell
-.Fl b
+.Op Fl b
 .Op Fl t Ar target-pane
 .Ar shell-command
 .Xc
