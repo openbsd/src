@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.16 2013/02/03 21:04:19 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.17 2013/04/24 01:26:30 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -118,7 +118,7 @@ assemble_udp_ip_header(unsigned char *buf, int *bufix, u_int32_t from,
 	ip.ip_len = htons(sizeof(ip) + sizeof(udp) + len);
 	ip.ip_id = 0;
 	ip.ip_off = 0;
-	ip.ip_ttl = 16;
+	ip.ip_ttl = 128;
 	ip.ip_p = IPPROTO_UDP;
 	ip.ip_sum = 0;
 	ip.ip_src.s_addr = from;
