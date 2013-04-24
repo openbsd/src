@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.119 2013/04/11 21:52:18 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.120 2013/04/24 10:01:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -357,7 +357,7 @@ main(int argc, char **argv)
 			if (pw != NULL)
 				home = pw->pw_dir;
 		}
-		xasprintf(&cfg_file, "%s/%s", home, DEFAULT_CFG);
+		xasprintf(&cfg_file, "%s/.tmux.conf", home);
 		if (access(cfg_file, R_OK) != 0 && errno == ENOENT) {
 			free(cfg_file);
 			cfg_file = NULL;
