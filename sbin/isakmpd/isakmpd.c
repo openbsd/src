@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.99 2013/03/21 04:30:14 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.100 2013/04/24 13:46:09 deraadt Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -123,13 +123,10 @@ static void
 parse_args(int argc, char *argv[])
 {
 	int             ch;
-#if defined(INSECURE_RAND)
-	char           *ep;
-#endif
 	int             cls, level;
 	int             do_packetlog = 0;
 
-	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:Ll:r:R:STv")) != -1) {
+	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:Ll:R:STv")) != -1) {
 		switch (ch) {
 		case '4':
 			bind_family |= BIND_FAMILY_INET4;
@@ -196,17 +193,6 @@ parse_args(int argc, char *argv[])
 			do_packetlog++;
 			break;
 
-		case 'r':
-#if defined(INSECURE_RAND)
-			seed = strtoul(optarg, &ep, 0);
-			srandom(seed);
-			if (*ep != '\0')
-				log_fatal("parse_args: invalid numeric arg "
-				    "to -r (%s)", optarg);
-			regrand = 1;
-#else
-			usage();
-#endif
 			break;
 		case 'R':
 			report_file = optarg;

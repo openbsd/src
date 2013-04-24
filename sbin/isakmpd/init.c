@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.40 2010/06/29 19:50:16 reyk Exp $	 */
+/* $OpenBSD: init.c,v 1.41 2013/04/24 13:46:09 deraadt Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -111,12 +111,6 @@ reinit(void)
 	 *     next connection-check.
 	 * XXX This means we discard exchange->last_msg, is this really ok?
          */
-
-#if defined(INSECURE_RAND)
-	/* Reinitialize PRNG if we are in deterministic mode.  */
-	if (regrand)
-		srandom(seed);
-#endif
 
 	/* Reread config file.  */
 	conf_reinit();

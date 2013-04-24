@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.65 2009/06/25 15:40:55 claudio Exp $	 */
+/* $OpenBSD: util.c,v 1.66 2013/04/24 13:46:09 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -58,14 +58,6 @@
  */
 int	allow_name_lookups = 0;
 
-#if defined(INSECURE_RAND)
-/*
- * This is set to true in case of regression-test mode, when it will
- * cause predictable random numbers be generated.
- */
-int	regrand = 0;
-#endif
-
 /*
  * XXX These might be turned into inlines or macros, maybe even
  * machine-dependent ones, for performance reasons.
@@ -109,20 +101,12 @@ zero_test(const u_int8_t *p, size_t sz)
 }
 
 /*
- * Generate 32 bits of random data.  If compiled with INSECURE_RAND
- * and -r option is specified, then return deterministic data.
+ * Generate 32 bits of random data.
  */
 u_int32_t
 rand_32(void)
 {
-#if !defined(INSECURE_RAND)
 	return arc4random();
-#else
-	if (regrand)
-		return random();
-	else
-		return arc4random();
-#endif
 }
 
 /*
