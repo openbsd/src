@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.80 2013/03/28 16:55:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.81 2013/04/24 17:29:02 matthew Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -327,6 +327,24 @@ tvtohz(const struct timeval *tv)
 	if (ticks > INT_MAX)
 		ticks = INT_MAX;
 	return ((int)ticks);
+}
+
+int
+tstohz(const struct timespec *ts)
+{
+	struct timeval tv;
+	TIMESPEC_TO_TIMEVAL(&tv, ts);
+
+	/* Round up. */
+	if ((ts->tv_nsec % 1000) != 0) {
+		tv.tv_usec += 1;
+		if (tv.tv_usec >= 1000000) {
+			tv.tv_usec -= 1000000;
+			tv.tv_sec += 1;
+		}
+	}
+
+	return (tvtohz(&tv));
 }
 
 /*
