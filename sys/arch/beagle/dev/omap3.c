@@ -1,4 +1,4 @@
-/* $OpenBSD: omap3.c,v 1.4 2011/11/10 23:43:01 uwe Exp $ */
+/* $OpenBSD: omap3.c,v 1.5 2013/04/25 23:07:17 patrick Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -17,6 +17,8 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
+
 #include <machine/bus.h>
 
 #include <beagle/dev/omapvar.h>
@@ -179,6 +181,11 @@ struct omap_dev omap3_devs[] = {
 	{ .name = "omusbtll",
 	  .unit = 0,
 	  .mem = { { USBTLL_ADDR, USBTLL_SIZE } },
+	},
+
+	/* Terminator */
+	{ .name = NULL,
+	  .unit = 0,
 	}
 };
 

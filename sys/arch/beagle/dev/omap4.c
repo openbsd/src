@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.5 2011/11/15 23:01:11 drahn Exp $ */
+/* $OpenBSD: omap4.c,v 1.6 2013/04/25 23:07:17 patrick Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -155,8 +155,12 @@ struct omap_dev omap4_devs[] = {
 	  .unit = 0,
 	  .mem = { { HSMMC1_ADDR, HSMMCx_SIZE } },
 	  .irq = { HSMMC1_IRQ }
-	}
+	},
 
+	/* Terminator */
+	{ .name = NULL,
+	  .unit = 0,
+	}
 };
 
 void

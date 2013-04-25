@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.3 2011/11/15 23:01:11 drahn Exp $ */
+/* $OpenBSD: omap.c,v 1.4 2013/04/25 23:07:17 patrick Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -155,9 +155,11 @@ omap_attach(struct device *parent, struct device *self, void *aux)
 		struct omap_dev *od = omap_find_dev(bd->name, bd->unit);
 		struct omap_attach_args oa;
 
-		if (od == NULL)
+		if (od == NULL) {
 			printf("%s: device %s unit %d not found\n",
 			    self->dv_xname, bd->name, bd->unit);
+			continue;
+		}
 
 		memset(&oa, 0, sizeof(oa));
 		oa.oa_dev = od;
