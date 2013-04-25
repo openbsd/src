@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.8 2011/11/10 19:37:01 uwe Exp $ */
+/* $OpenBSD: omgpio.c,v 1.9 2013/04/25 23:12:34 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -30,36 +30,72 @@
 #include <beagle/dev/omapvar.h>
 #include <beagle/dev/omgpiovar.h>
 
+/* OMAP3 registers */
+#define	GPIO3_REVISION		0x00
+#define	GPIO3_SYSCONFIG		0x10
+#define	GPIO3_SYSSTATUS		0x14
+#define	GPIO3_IRQSTATUS1	0x18
+#define	GPIO3_IRQENABLE1	0x1C
+#define	GPIO3_WAKEUPENABLE	0x20
+#define	GPIO3_IRQSTATUS2	0x28
+#define	GPIO3_IRQENABLE2	0x2C
+#define	GPIO3_CTRL		0x30
+#define	GPIO3_OE		0x34
+#define	GPIO3_DATAIN		0x38
+#define	GPIO3_DATAOUT		0x3C
+#define	GPIO3_LEVELDETECT0	0x40
+#define	GPIO3_LEVELDETECT1	0x44
+#define	GPIO3_RISINGDETECT	0x48
+#define	GPIO3_FALLINGDETECT	0x4C
+#define	GPIO3_DEBOUNCENABLE	0x50
+#define	GPIO3_DEBOUNCINGTIME	0x54
+#define	GPIO3_CLEARIRQENABLE1	0x60
+#define	GPIO3_SETIRQENABLE1	0x64
+#define	GPIO3_CLEARIRQENABLE2	0x70
+#define	GPIO3_SETIRQENABLE2	0x74
+#define	GPIO3_CLEARWKUENA	0x80
+#define	GPIO3_SETWKUENA		0x84
+#define	GPIO3_CLEARDATAOUT	0x90
+#define	GPIO3_SETDATAOUT	0x94
+#define	GPIO3_SIZE		0x100
 
-/* registers */
-#define	GPIO_REVISION		0x00
-#define	GPIO_SYSCONFIG		0x10
-#define	GPIO_SYSSTATUS		0x14
-#define	GPIO_IRQSTATUS1		0x18
-#define	GPIO_IRQENABLE1		0x1C
-#define	GPIO_WAKEUPENABLE	0x20
-#define	GPIO_IRQSTATUS2		0x28
-#define	GPIO_IRQENABLE2		0x2C
-#define	GPIO_CTRL		0x30
-#define	GPIO_OE			0x34
-#define	GPIO_DATAIN		0x38
-#define	GPIO_DATAOUT		0x3C
-#define	GPIO_LEVELDETECT0	0x40
-#define	GPIO_LEVELDETECT1	0x44
-#define	GPIO_RISINGDETECT	0x48
-#define	GPIO_FALLINGDETECT	0x4C
-#define	GPIO_DEBOUNCENABLE	0x50
-#define	GPIO_DEBOUNCINGTIME	0x54
-#define	GPIO_CLEARIRQENABLE1	0x60
-#define	GPIO_SETIRQENABLE1	0x64
-#define	GPIO_CLEARIRQENABLE2	0x70
-#define	GPIO_SETIRQENABLE2	0x74
-#define	GPIO_CLEARWKUENA	0x80
-#define	GPIO_SETWKUENA		0x84
-#define	GPIO_CLEARDATAOUT	0x90
-#define	GPIO_SETDATAOUT		0x94
-#define	GPIO_SIZE		0x100
-
+/* OMAP4 registers */
+#define GPIO4_REVISION		0x00
+#define GPIO4_SYSCONFIG		0x10
+#define GPIO4_IRQSTATUS_RAW_0	0x24
+#define GPIO4_IRQSTATUS_RAW_1	0x28
+#define GPIO4_IRQSTATUS_0	0x2C
+#define GPIO4_IRQSTATUS_1	0x30
+#define GPIO4_IRQSTATUS_SET_0	0x34
+#define GPIO4_IRQSTATUS_SET_1	0x38
+#define GPIO4_IRQSTATUS_CLR_0	0x3C
+#define GPIO4_IRQSTATUS_CLR_1	0x40
+#define GPIO4_IRQWAKEN_0	0x44
+#define GPIO4_IRQWAKEN_1	0x48
+#define GPIO4_SYSSTATUS		0x114
+#define GPIO4_IRQSTATUS1	0x118
+#define GPIO4_IRQENABLE1	0x11C
+#define GPIO4_WAKEUPENABLE	0x120
+#define GPIO4_IRQSTATUS2	0x128
+#define GPIO4_IRQENABLE2	0x12C
+#define GPIO4_CTRL		0x130
+#define GPIO4_OE		0x134
+#define GPIO4_DATAIN		0x138
+#define GPIO4_DATAOUT		0x13C
+#define GPIO4_LEVELDETECT0	0x140
+#define GPIO4_LEVELDETECT1	0x144
+#define GPIO4_RISINGDETECT 	0x148
+#define GPIO4_FALLINGDETECT	0x14C
+#define GPIO4_DEBOUNCENABLE	0x150
+#define GPIO4_DEBOUNCINGTIME	0x154
+#define GPIO4_CLEARIRQENABLE1	0x160
+#define GPIO4_SETIRQENABLE1	0x164
+#define GPIO4_CLEARIRQENABLE2	0x170
+#define GPIO4_SETIRQENABLE2	0x174
+#define GPIO4_CLEARWKUPENA	0x180
+#define GPIO4_SETWKUENA		0x184
+#define GPIO4_CLEARDATAOUT	0x190
+#define GPIO4_SETDATAOUT	0x194
 
 #define GPIO_NUM_PINS		32
 
@@ -83,6 +119,15 @@ struct omgpio_softc {
 	int 			sc_min_il;
 	int			sc_irq;
 	struct intrhand		*sc_handlers[GPIO_NUM_PINS];
+	int			sc_omap_ver;
+	unsigned int (*sc_get_bit)(struct omgpio_softc *sc,
+	    unsigned int gpio);
+	void (*sc_set_bit)(struct omgpio_softc *sc,
+	    unsigned int gpio);
+	void (*sc_clear_bit)(struct omgpio_softc *sc,
+	    unsigned int gpio);
+	void (*sc_set_dir)(struct omgpio_softc *sc,
+	    unsigned int gpio, unsigned int dir);
 };
 
 #define GPIO_PIN_TO_INST(x)	((x) >> 5)
@@ -93,6 +138,17 @@ void omgpio_attach(struct device *parent, struct device *self, void *args);
 void omgpio_recalc_interrupts(struct omgpio_softc *sc);
 int omgpio_irq(void *);
 int omgpio_irq_dummy(void *);
+
+unsigned int omgpio_v3_get_bit(struct omgpio_softc *, unsigned int);
+void omgpio_v3_set_bit(struct omgpio_softc *, unsigned int);
+void omgpio_v3_clear_bit(struct omgpio_softc *, unsigned int);
+void omgpio_v3_set_dir(struct omgpio_softc *, unsigned int , unsigned int);
+unsigned int omgpio_v4_get_bit(struct omgpio_softc *, unsigned int);
+void omgpio_v4_set_bit(struct omgpio_softc *, unsigned int);
+void omgpio_v4_clear_bit(struct omgpio_softc *, unsigned int);
+void omgpio_v4_set_dir(struct omgpio_softc *, unsigned int, unsigned int);
+unsigned int omgpio_v4_get_dir(struct omgpio_softc *, unsigned int);
+
 
 struct cfattach	omgpio_ca = {
 	sizeof (struct omgpio_softc), omgpio_match, omgpio_attach
@@ -110,7 +166,7 @@ omgpio_match(struct device *parent, void *v, void *aux)
 	case BOARD_ID_OMAP3_OVERO:
 		break; /* continue trying */
 	case BOARD_ID_OMAP4_PANDA:
-		return 0; /* not ported yet ??? - different */
+		break; /* continue trying */
 	default:
 		return 0; /* unknown */
 	}
@@ -129,13 +185,40 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("omgpio_attach: bus_space_map failed!");
 
-	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_REVISION);
 
-	printf(" rev %d.%d\n", rev >> 4 & 0xf, rev & 0xf);
+	switch (board_id) {
+
+		case BOARD_ID_OMAP3_BEAGLE:
+		case BOARD_ID_OMAP3_OVERO:
+			sc->sc_omap_ver  = 3;
+			sc->sc_get_bit  = omgpio_v3_get_bit;
+			sc->sc_set_bit = omgpio_v3_set_bit;
+			sc->sc_clear_bit = omgpio_v3_clear_bit;
+			sc->sc_set_dir = omgpio_v3_set_dir;
+			break;
+		case BOARD_ID_OMAP4_PANDA:
+			sc->sc_omap_ver  = 4;
+			sc->sc_get_bit  = omgpio_v4_get_bit;
+			sc->sc_set_bit = omgpio_v4_set_bit;
+			sc->sc_clear_bit = omgpio_v4_clear_bit;
+			sc->sc_set_dir = omgpio_v4_set_dir;
+			break;
+	
+	}
+
+	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_REVISION);
+
+	printf(" omap%d rev %d.%d\n", sc->sc_omap_ver, rev >> 4 & 0xf,
+	    rev & 0xf);
 
 	sc->sc_irq = oa->oa_dev->irq[0];
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_CLEARIRQENABLE1, ~0);
+	if (sc->sc_omap_ver  == 3) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    GPIO3_CLEARIRQENABLE1, ~0);
+	} else if (sc->sc_omap_ver == 4) {
+		/* XXX - nothing? */
+	}
 
 	/* XXX - SYSCONFIG */
 	/* XXX - CTRL */
@@ -166,78 +249,167 @@ unsigned int
 omgpio_get_bit(unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-	u_int32_t reg;
+
+	return sc->sc_get_bit(sc, gpio);
 	
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_DATAIN);
-	return (reg >> GPIO_PIN_TO_OFFSET(gpio)) & 0x1;
 }
 
 void
 omgpio_set_bit(unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-	
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_SETDATAOUT,
-	    1 << GPIO_PIN_TO_OFFSET(gpio));
+
+	sc->sc_set_bit(sc, gpio);
 }
 
 void
 omgpio_clear_bit(unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-	
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_CLEARDATAOUT,
-	    1 << GPIO_PIN_TO_OFFSET(gpio));
-}
 
+	sc->sc_clear_bit(sc, gpio);
+}
 void
 omgpio_set_dir(unsigned int gpio, unsigned int dir)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
+
+	sc->sc_set_dir(sc, gpio, dir);
+}
+
+unsigned int
+omgpio_v3_get_bit(struct omgpio_softc *sc, unsigned int gpio)
+{
+	u_int32_t reg;
+	
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_DATAIN);
+	return (reg >> GPIO_PIN_TO_OFFSET(gpio)) & 0x1;
+}
+
+void
+omgpio_v3_set_bit(struct omgpio_softc *sc, unsigned int gpio)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_SETDATAOUT,
+	    1 << GPIO_PIN_TO_OFFSET(gpio));
+}
+
+void
+omgpio_v3_clear_bit(struct omgpio_softc *sc, unsigned int gpio)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_CLEARDATAOUT,
+	    1 << GPIO_PIN_TO_OFFSET(gpio));
+}
+
+void
+omgpio_v3_set_dir(struct omgpio_softc *sc, unsigned int gpio, unsigned int dir)
+{
 	int s;
 	u_int32_t reg;
 
 	s = splhigh();
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_DATAIN);
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_DATAIN);
 	if (dir == OMGPIO_DIR_IN)
 		reg |= 1 << GPIO_PIN_TO_OFFSET(gpio);
 	else
 		reg &= ~(1 << GPIO_PIN_TO_OFFSET(gpio));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_OE, reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_OE, reg);
 
 	splx(s);
 }
 
+unsigned int
+omgpio_v4_get_bit(struct omgpio_softc *sc, unsigned int gpio)
+{
+	u_int32_t reg;
+
+	if(omgpio_v4_get_dir(sc, gpio) == OMGPIO_DIR_IN)
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO4_DATAIN);
+	else
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO4_DATAOUT);
+	return (reg >> GPIO_PIN_TO_OFFSET(gpio)) & 0x1;
+}
+
 void
-omgpio_clear_intr(unsigned int gpio)
+omgpio_v4_set_bit(struct omgpio_softc *sc, unsigned int gpio)
+{
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO4_SETDATAOUT,
+		1 << GPIO_PIN_TO_OFFSET(gpio));
+}
+
+void
+omgpio_v4_clear_bit(struct omgpio_softc *sc, unsigned int gpio)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO4_CLEARDATAOUT,
+		1 << GPIO_PIN_TO_OFFSET(gpio));
+}
+
+void
+omgpio_v4_set_dir(struct omgpio_softc *sc, unsigned int gpio, unsigned int dir)
+{
+	int s;
+	u_int32_t reg;
+
+	s = splhigh();
+
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO4_OE);
+	if (dir == OMGPIO_DIR_IN)
+		reg |= 1 << GPIO_PIN_TO_OFFSET(gpio);
+	else
+		reg &= ~(1 << GPIO_PIN_TO_OFFSET(gpio));
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO4_OE, reg);
+
+	splx(s);
+}
+
+unsigned int
+omgpio_v4_get_dir(struct omgpio_softc *sc, unsigned int gpio)
+{
+	int s;
+	u_int32_t reg;
+
+	s = splhigh();
+
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO4_OE);
+	if (reg & (1 << GPIO_PIN_TO_OFFSET(gpio)))
+		return OMGPIO_DIR_IN;
+	else
+		return OMGPIO_DIR_OUT;
+
+	splx(s);
+}
+
+#if 0
+void
+omgpio_clear_intr(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 	
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_IRQSTATUS1,
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_IRQSTATUS1,
 	    1 << GPIO_PIN_TO_OFFSET(gpio));
 }
 
 void
-omgpio_intr_mask(unsigned int gpio)
+omgpio_intr_mask(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 	
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_CLEARIRQENABLE1,
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_CLEARIRQENABLE1,
 	    1 << GPIO_PIN_TO_OFFSET(gpio));
 }
 
 void
-omgpio_intr_unmask(unsigned int gpio)
+omgpio_intr_unmask(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 	
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_SETIRQENABLE1,
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_SETIRQENABLE1,
 	    1 << GPIO_PIN_TO_OFFSET(gpio));
 }
 
 void
-omgpio_intr_level(unsigned int gpio, unsigned int level)
+omgpio_intr_level(struct omgpio_softc *sc, unsigned int gpio, unsigned int level)
 {
 	u_int32_t fe, re, l0, l1, bit;
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
@@ -245,10 +417,10 @@ omgpio_intr_level(unsigned int gpio, unsigned int level)
 
 	s = splhigh();
 
-	fe = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_FALLINGDETECT);
-	re = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_RISINGDETECT);
-	l0 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_LEVELDETECT0);
-	l1 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_LEVELDETECT1);
+	fe = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_FALLINGDETECT);
+	re = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_RISINGDETECT);
+	l0 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT0);
+	l1 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT1);
 	
 	bit = 1 << GPIO_PIN_TO_OFFSET(gpio);
 
@@ -297,16 +469,16 @@ omgpio_intr_level(unsigned int gpio, unsigned int level)
                 break;
         }
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_FALLINGDETECT, fe);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_RISINGDETECT, re);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_LEVELDETECT0, l0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO_LEVELDETECT1, l1);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_FALLINGDETECT, fe);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_RISINGDETECT, re);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT0, l0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT1, l1);
 
 	splx(s);
 }
 
 void *
-omgpio_intr_establish(unsigned int gpio, int level, int spl,
+omgpio_intr_establish(struct omgpio_softc *sc, unsigned int gpio, int level, int spl,
     int (*func)(void *), void *arg, char *name)
 {
 	int psw;
@@ -358,7 +530,7 @@ omgpio_intr_establish(unsigned int gpio, int level, int spl,
 }
 
 void
-omgpio_intr_disestablish(void *cookie)
+omgpio_intr_disestablish(struct omgpio_softc *sc, void *cookie)
 {
 	int psw;
 	struct intrhand *ih = cookie;
@@ -390,7 +562,7 @@ omgpio_irq(void *v)
 	struct intrhand *ih;
 	int bit;
 
-	pending = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_IRQSTATUS1);
+	pending = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_IRQSTATUS1);
 
 	while (pending != 0) {
 		bit = ffs(pending) - 1;
@@ -403,7 +575,7 @@ omgpio_irq(void *v)
 		} else {
 			panic("omgpio: irq fired no handler, gpio %x %x %x",
 				sc->sc_dev.dv_unit * 32 + bit, pending,
-	bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO_IRQENABLE1)
+	bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_IRQENABLE1)
 
 				);
 		}
@@ -468,3 +640,4 @@ omgpio_recalc_interrupts(struct omgpio_softc *sc)
 	}
 	sc->sc_min_il = min;
 }
+#endif
