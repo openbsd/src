@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.9 2011/11/15 23:17:01 drahn Exp $ */
+/* $OpenBSD: ampintc.c,v 1.10 2013/04/25 22:14:17 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -227,7 +227,7 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	}
 	for (i = 2; i < nintr/16; i++) {
 		/* irq 32 - N */
-		bus_space_write_4(iot, d_ioh, ICD_ICRn(i*4), 0);
+		bus_space_write_4(iot, d_ioh, ICD_ICRn(i*16), 0);
 	}
 
 	/* software reset of the part? */
@@ -251,6 +251,9 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 	    ampintc_setipl, ampintc_intr_establish_ext,
 	    ampintc_intr_disestablish, ampintc_intr_string, ampintc_irq_handler);
 
+	/* enable interrupts */
+	bus_space_write_4(iot, d_ioh, ICD_DCR, 3);
+	bus_space_write_4(iot, p_ioh, ICPICR, 1);
 	enable_interrupts(I32_bit);
 }
 
