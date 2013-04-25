@@ -1,4 +1,4 @@
-/* 	$OpenBSD: vmparam.h,v 1.4 2011/05/30 22:25:20 oga Exp $	*/
+/* 	$OpenBSD: vmparam.h,v 1.5 2013/04/25 23:16:02 patrick Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.23 2003/05/22 05:47:07 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 #define	ARM_KERNEL_BASE		0xc0000000
 
-/* Allow armish to have bigger DSIZ than generic arm, allow user to override */
+/* Allow beagle to have bigger DSIZ than generic arm, allow user to override */
 #ifndef	MAXDSIZ
 #define	MAXDSIZ		(1024*1024*1024)		/* max data size */
 #endif
