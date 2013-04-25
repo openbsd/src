@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.34 2013/04/23 21:39:59 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.35 2013/04/25 06:43:20 otto Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -231,8 +231,9 @@ do_stats(void)
 	blocks = spcl.c_tapea - tapea_volume;
 	msg("Volume %d completed at: %s", tapeno, ctime(&tnow));
 	if (ttaken > 0) {
-		msg("Volume %d took %d:%02d:%02d\n", tapeno,
-		    ttaken / 3600, (ttaken % 3600) / 60, ttaken % 60);
+		msg("Volume %d took %lld:%02lld:%02lld\n", tapeno,
+		    (long long)ttaken / 3600, ((long long)ttaken % 3600) / 60,
+		    (long long)ttaken % 60);
 		blocks /= ttaken;
 		msg("Volume %d transfer rate: %lld KB/s\n", tapeno, blocks);
 		xferrate += blocks;

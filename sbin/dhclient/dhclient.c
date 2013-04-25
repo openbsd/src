@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.242 2013/03/30 16:10:01 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.243 2013/04/25 06:43:20 otto Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1132,9 +1132,10 @@ send_discover(void)
 		client->bootrequest_packet.secs = htons(65535);
 	client->secs = client->bootrequest_packet.secs;
 
-	note("DHCPDISCOVER on %s to %s port %d interval %d",
+	note("DHCPDISCOVER on %s to %s port %d interval %lld",
 	    ifi->name, inet_ntoa(sockaddr_broadcast.sin_addr),
-	    ntohs(sockaddr_broadcast.sin_port), client->interval);
+	    ntohs(sockaddr_broadcast.sin_port),
+	    (long long)client->interval);
 
 	send_packet(inaddr_any, &sockaddr_broadcast, NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.34 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.35 2013/04/25 06:43:20 otto Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -140,8 +140,8 @@ extractdirs(int genmode)
 	int fd;
 
 	Vprintf(stdout, "Extract directories from tape\n");
-	(void)snprintf(dirfile, sizeof(dirfile), "%s/rstdir%d", tmpdir,
-	    dumpdate);
+	(void)snprintf(dirfile, sizeof(dirfile), "%s/rstdir%lld", tmpdir,
+	    (long long)dumpdate);
 	if (command != 'r' && command != 'R') {
 		strlcat(dirfile, "-XXXXXXXXXX", sizeof(dirfile));
 		fd = mkstemp(dirfile);
@@ -153,8 +153,8 @@ extractdirs(int genmode)
 		err(1, "cannot create directory temporary %s", dirfile);
 	}
 	if (genmode != 0) {
-		(void)snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
-		    tmpdir, dumpdate);
+		(void)snprintf(modefile, sizeof(modefile), "%s/rstmode%lld",
+		    tmpdir, (long long)dumpdate);
 		if (command != 'r' && command != 'R') {
 			strlcat(modefile, "-XXXXXXXXXX", sizeof(modefile));
 			fd = mkstemp(modefile);
@@ -574,8 +574,8 @@ setdirmodes(int flags)
 
 	Vprintf(stdout, "Set directory mode, owner, and times.\n");
 	if (command == 'r' || command == 'R')
-		(void)snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
-		    tmpdir, dumpdate);
+		(void)snprintf(modefile, sizeof(modefile), "%s/rstmode%lld",
+		    tmpdir, (long long)dumpdate);
 	if (modefile[0] == '#') {
 		panic("modefile not defined\n");
 		fputs("directory mode, owner, and times not set\n", stderr);

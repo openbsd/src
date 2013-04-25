@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.27 2011/06/27 23:40:57 tedu Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.28 2013/04/25 06:43:20 otto Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -677,7 +677,8 @@ formatf(struct afile *list, int nentry)
 		for (j = 0; j < columns; j++) {
 			fp = &list[j * lines + i];
 			if (vflag) {
-				fprintf(stderr, "%*d ", precision, fp->fnum);
+				fprintf(stderr, "%*llu ", precision,
+				(unsigned long long)fp->fnum);
 				fp->len += precision + 1;
 			}
 			if (haveprefix) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.26 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.27 2013/04/25 06:43:20 otto Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -284,10 +284,11 @@ cmdloop(void)
 
 static ino_t ocurrent;
 
-#define GETINUM(ac,inum)    inum = strtoul(argv[ac], &cp, 0); \
+#define GETINUM(ac,inum)    inum = strtoull(argv[ac], &cp, 0); \
 	if (inum < ROOTINO || inum > maxino || cp == argv[ac] || *cp != '\0' ) { \
-		printf("inode %llu out of range; range is [%d,%d]\n", \
-		    (unsigned long long)inum, ROOTINO, maxino); \
+		printf("inode %llu out of range; range is [%llu,%llu]\n", \
+		    (unsigned long long)inum, (unsigned long long)ROOTINO, \
+		    (unsigned long long)maxino); \
 		return 1; \
 	}
 
