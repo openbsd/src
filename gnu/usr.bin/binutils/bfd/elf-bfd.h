@@ -1055,8 +1055,8 @@ struct bfd_elf_section_data
 #define elf_discarded_section(sec)				\
   (!bfd_is_abs_section (sec)					\
    && bfd_is_abs_section ((sec)->output_section)		\
-   && sec->sec_info_type != ELF_INFO_TYPE_MERGE			\
-   && sec->sec_info_type != ELF_INFO_TYPE_JUST_SYMS)
+   && (sec)->sec_info_type != ELF_INFO_TYPE_MERGE			\
+   && (sec)->sec_info_type != ELF_INFO_TYPE_JUST_SYMS)
 
 #define get_elf_backend_data(abfd) \
   ((const struct elf_backend_data *) (abfd)->xvec->backend_data)
