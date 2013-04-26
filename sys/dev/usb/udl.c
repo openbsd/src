@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.74 2013/04/17 17:49:58 tedu Exp $ */
+/*	$OpenBSD: udl.c,v 1.75 2013/04/26 14:28:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1780,9 +1780,9 @@ udl_cmd_send(struct udl_softc *sc)
 	bcopy(cb->buf, cx->buf, cb->off);
 
 	len = cb->off;
-	error = usbd_bulk_transfer(cx->xfer, sc->sc_tx_pipeh,
-	    USBD_NO_COPY | USBD_SHORT_XFER_OK, 1000, cx->buf, &len,
-	    "udl_bulk_xmit");
+	usbd_setup_xfer(cx->xfer, sc->sc_tx_pipeh, 0, cx->buf, len,
+	    USBD_NO_COPY | USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS, 1000, NULL);
+	error = usbd_transfer(cx->xfer);
 	if (error != USBD_NORMAL_COMPLETION) {
 		printf("%s: %s: %s!\n", DN(sc), FUNC, usbd_errstr(error));
 		/* we clear our buffer now to avoid growing out of bounds */
