@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.51 2013/04/26 13:46:40 mglocker Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.52 2013/04/26 14:11:18 mpi Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -38,7 +38,7 @@ struct usbd_interface;
 struct usbd_pipe;
 struct usbd_xfer;
 
-typedef enum {		/* keep in sync with usbd_status_msgs */
+typedef enum {
 	USBD_NORMAL_COMPLETION = 0, /* must be 0 */
 	USBD_IN_PROGRESS,	/* 1 */
 	/* errors */
@@ -213,8 +213,6 @@ const struct usb_devno *usbd_match_device(const struct usb_devno *tbl,
 #define usb_lookup(tbl, vendor, product) \
 	usbd_match_device((const struct usb_devno *)(tbl), sizeof (tbl) / sizeof ((tbl)[0]), sizeof ((tbl)[0]), (vendor), (product))
 #define	USB_PRODUCT_ANY		0xffff
-
-/* NetBSD attachment information */
 
 /* Attach data */
 struct usb_attach_arg {
