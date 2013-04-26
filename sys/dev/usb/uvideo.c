@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.170 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.171 2013/04/26 13:46:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -587,11 +587,11 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 
 	vc_header_found = 0;
 
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
-			desc = usb_desc_iter_next(&iter);
+			desc = usbd_desc_iter_next(&iter);
 			continue;
 		}
 
@@ -620,7 +620,7 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 		/* TODO: which VC descriptors do we need else? */
 		}
 
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}
 
 	if (vc_header_found == 0) {
@@ -783,11 +783,11 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, usb_config_descriptor_t *cdesc)
 	DPRINTF(1, "%s: number of VS interfaces=%d\n",
 	    DEVNAME(sc), sc->sc_desc_vc_header.fix->bInCollection);
 
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
-			desc = usb_desc_iter_next(&iter);
+			desc = usbd_desc_iter_next(&iter);
 			continue;
 		}
 
@@ -803,7 +803,7 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, usb_config_descriptor_t *cdesc)
 		/* TODO: which VS descriptors do we need else? */
 		}
 
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}
 
 	/* parse video stream format descriptors */
@@ -873,11 +873,11 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
-			desc = usb_desc_iter_next(&iter);
+			desc = usbd_desc_iter_next(&iter);
 			continue;
 		}
 
@@ -896,7 +896,7 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 			break;
 		}
 
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}
 
 	sc->sc_fmtgrp_idx = 0;
@@ -1012,8 +1012,8 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 
 	DPRINTF(1, "%s: %s\n", DEVNAME(sc), __func__);
 
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		if (desc->bDescriptorType == UDESC_CS_INTERFACE &&
 		    desc->bLength > sizeof(struct usb_video_frame_desc) &&
@@ -1023,7 +1023,7 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 			if (error != USBD_NORMAL_COMPLETION)
 				return (error);
 		}
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}
 
 	return (USBD_NORMAL_COMPLETION);
@@ -1099,8 +1099,8 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 
 	vs = &sc->sc_vs_coll[vs_nr];
 
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		/* find video stream interface */
 		if (desc->bDescriptorType != UDESC_INTERFACE)
@@ -1116,7 +1116,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 		}
 
 		/* jump to corresponding endpoint descriptor */
-		while ((desc = usb_desc_iter_next(&iter))) {
+		while ((desc = usbd_desc_iter_next(&iter))) {
 			if (desc->bDescriptorType == UDESC_ENDPOINT)
 				break;
 		}
@@ -1144,7 +1144,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numa
 			vs->iface = iface;
 		}
 next:
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}
 
 	/* check if we have found a valid alternate interface */
@@ -1170,8 +1170,8 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, struct usbd_interface *ifaceh,
 	uint32_t psize;
 
 	i = 0;
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		/* find video stream interface */
 		if (desc->bDescriptorType != UDESC_INTERFACE)
@@ -1183,7 +1183,7 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, struct usbd_interface *ifaceh,
 			goto next;
 
 		/* jump to corresponding endpoint descriptor */
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 		if (desc->bDescriptorType != UDESC_ENDPOINT)
 			goto next;
 		ed = (usb_endpoint_descriptor_t *)(uint8_t *)desc;
@@ -1205,7 +1205,7 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, struct usbd_interface *ifaceh,
 				break;
 		}
 next:
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}
 
 	DPRINTF(1, "%s: set alternate iface to ", DEVNAME(sc));
@@ -2209,8 +2209,8 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 	struct usbd_desc_iter iter;
 	const usb_descriptor_t *desc;
 
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		printf("bLength=%d\n", desc->bLength);
 		printf("bDescriptorType=0x%02x", desc->bDescriptorType);
@@ -2357,7 +2357,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 
 		printf("\n");
 
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}	
 
 }

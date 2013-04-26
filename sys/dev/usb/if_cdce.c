@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.53 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.54 2013/04/26 13:46:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -189,11 +189,11 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get the data interface no. and capabilities */
 	ethd = NULL;
-	usb_desc_iter_init(dev, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(dev, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
-			desc = usb_desc_iter_next(&iter);
+			desc = usbd_desc_iter_next(&iter);
 			continue;
 		}
 		switch(desc->bDescriptorSubtype) {
@@ -215,7 +215,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 			ethd = (struct usb_cdc_ethernet_descriptor *)desc;
 			break;
 		}
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}
 
 	if (data_ifcno == -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.48 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: umodem.c,v 1.49 2013/04/26 13:46:40 mglocker Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -173,8 +173,8 @@ umodem_get_caps(struct usb_attach_arg *uaa, int ctl_iface_no,
 
 	*data_iface_no = -1;
 	*cm_cap = *acm_cap = 0;
-	usb_desc_iter_init(uaa->device, &iter);
-	desc = usb_desc_iter_next(&iter);
+	usbd_desc_iter_init(uaa->device, &iter);
+	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		if (desc->bDescriptorType == UDESC_INTERFACE) {
 			id = (usb_interface_descriptor_t *)desc;
@@ -204,7 +204,7 @@ umodem_get_caps(struct usb_attach_arg *uaa, int ctl_iface_no,
 				break;
 			}
 		}
-		desc = usb_desc_iter_next(&iter);
+		desc = usbd_desc_iter_next(&iter);
 	}
 }
 

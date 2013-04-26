@@ -1,4 +1,4 @@
-/*	$OpenBSD: udfu.c,v 1.5 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: udfu.c,v 1.6 2013/04/26 13:46:40 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2009 Federico G. Schwindt <fgsch@openbsd.org>
@@ -185,8 +185,8 @@ udfu_parse_desc(struct udfu_softc *sc)
 	const usb_descriptor_t *desc;
 	struct usbd_desc_iter iter;
 
-	usb_desc_iter_init(sc->sc_udev, &iter);
-	while ((desc = usb_desc_iter_next(&iter))) {
+	usbd_desc_iter_init(sc->sc_udev, &iter);
+	while ((desc = usbd_desc_iter_next(&iter))) {
 		if (desc->bDescriptorType == UDESC_CS_DEVICE)
 			break;
 	}

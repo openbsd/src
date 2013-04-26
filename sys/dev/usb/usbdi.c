@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.52 2013/04/19 08:58:53 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.53 2013/04/26 13:46:40 mglocker Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -1108,7 +1108,7 @@ usbd_ratecheck(struct timeval *last)
  * given as an argument.
  */
 const struct usb_devno *
-usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
+usbd_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
     u_int16_t vendor, u_int16_t product)
 {
 	while (nentries-- > 0) {
@@ -1122,7 +1122,7 @@ usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
 }
 
 void
-usb_desc_iter_init(struct usbd_device *dev, struct usbd_desc_iter *iter)
+usbd_desc_iter_init(struct usbd_device *dev, struct usbd_desc_iter *iter)
 {
 	const usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
 
@@ -1131,23 +1131,23 @@ usb_desc_iter_init(struct usbd_device *dev, struct usbd_desc_iter *iter)
 }
 
 const usb_descriptor_t *
-usb_desc_iter_next(struct usbd_desc_iter *iter)
+usbd_desc_iter_next(struct usbd_desc_iter *iter)
 {
 	const usb_descriptor_t *desc;
 
 	if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
 		if (iter->cur != iter->end)
-			printf("usb_desc_iter_next: bad descriptor\n");
+			printf("usbd_desc_iter_next: bad descriptor\n");
 		return NULL;
 	}
 	desc = (const usb_descriptor_t *)iter->cur;
 	if (desc->bLength == 0) {
-		printf("usb_desc_iter_next: descriptor length = 0\n");
+		printf("usbd_desc_iter_next: descriptor length = 0\n");
 		return NULL;
 	}
 	iter->cur += desc->bLength;
 	if (iter->cur > iter->end) {
-		printf("usb_desc_iter_next: descriptor length too large\n");
+		printf("usbd_desc_iter_next: descriptor length too large\n");
 		return NULL;
 	}
 	return desc;
