@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 2011/11/07 15:31:13 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 2013/04/26 05:05:34 patrick Exp $	*/
 /*	$NetBSD: pte.h,v 1.6 2003/04/18 11:08:28 scw Exp $	*/
 
 /*
@@ -133,8 +133,8 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 
 #define	L1_TYPE_INV	0x00		/* Invalid (fault) */
 #define	L1_TYPE_C	0x01		/* Coarse L2 */
-#define	L1_TYPE_S	0x02		/* Section */
-#define	L1_TYPE_F	0x03		/* Fine L2 */
+#define	L1_TYPE_S	0x02		/* Section or Supersection */
+#define	L1_TYPE_F	0x03		/* Fine L2 (pre-V7) */
 #define	L1_TYPE_MASK	0x03		/* mask of type bits */
 
 /* L1 Section Descriptor */
@@ -149,13 +149,15 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_XSCALE_P	0x00000200	/* ECC enable for this section */
 #define	L1_S_XSCALE_TEX(x) ((x) << 12)	/* Type Extension */
 
-#define	L1_S_V7_TEX(x)	((x) << 12)	/* Type Extension */
-#define	L1_S_V7_NS(x)	((x) << 12)	/* */
-#define	L1_S_V7_nG(x)	((x) << 12)	/* */
-#define	L1_S_V7_S(x)	((x) << 12)	/* */
-#define	L1_S_V7_S(x)	((x) << 12)	/* */
+#define	L1_S_V7_TEX(x)	(((x) & 0x7) << 12)	/* Type Extension */
+#define	L1_S_V7_TEX_MASK	(0x7 << 12)	/* Type Extension */
+#define	L1_S_V7_NS	0x00080000	/* Non-secure */
+#define	L1_S_V7_SS	0x00040000	/* Supersection */
+#define	L1_S_V7_nG	0x00020000	/* not Global */
+#define	L1_S_V7_S	0x00010000	/* Shareable */
 #define	L1_S_V7_AP(x)	((((x) & 0x4) << 13) | (((x) & 3) << 10))	/* AP */
-#define	L1_S_V7_XN(x)	((x) << 4)	/* */
+#define	L1_S_V7_IMP	0x00000200	/* implementation defined */
+#define	L1_S_V7_XN	0x00000010	/* eXecute Never */
 
 /* L1 Coarse Descriptor */
 #define	L1_C_IMP0	0x00000004	/* implementation defined */
@@ -166,6 +168,9 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_C_ADDR_MASK	0xfffffc00	/* phys address of L2 Table */
 
 #define	L1_C_XSCALE_P	0x00000200	/* ECC enable for this section */
+
+#define	L1_C_V7_NS	0x00000008	/* Non-secure */
+#define	L1_C_V7_IMP	0x00000200	/* implementation defined */
 
 /* L1 Fine Descriptor */
 #define	L1_F_IMP0	0x00000004	/* implementation defined */
@@ -184,7 +189,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_TYPE_INV	0x00		/* Invalid (fault) */
 #define	L2_TYPE_L	0x01		/* Large Page */
 #define	L2_TYPE_S	0x02		/* Small Page */
-#define	L2_TYPE_T	0x03		/* Tiny Page */
+#define	L2_TYPE_T	0x03		/* Tiny Page (pre-V7) */
 #define	L2_TYPE_MASK	0x03		/* mask of type bits */
 
 	/*
@@ -206,17 +211,19 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_XSCALE_L_TEX(x) ((x) << 12)	/* Type Extension */
 #define	L2_XSCALE_T_TEX(x) ((x) << 6)	/* Type Extension */
 
-#define	L2_V7_L_TEX(x) ((x) << 12)	/* Type Extension */
-#define	L2_V7_L_XN(x)	((x) << 15)	/* eXecute Never */
-#define	L2_V7_T_TEX(x) ((x) << 6)	/* Type Extension */
-#define	L2_V7_T_XN(x)	((x) << 0)	/* eXecute Never */
+#define	L2_V7_L_TEX(x)	(((x) & 0x7) << 12)	/* Type Extension */
+#define	L2_V7_L_TEX_MASK	(0x7 << 12)	/* Type Extension */
+#define	L2_V7_L_XN	0x00008000	/* eXecute Never */
+#define	L2_V7_S_TEX(x)	(((x) & 0x7) << 6)	/* Type Extension */
+#define	L2_V7_S_TEX_MASK	(0x7 << 6)	/* Type Extension */
+#define	L2_V7_S_XN	0x00000001	/* eXecute Never */
 
-#define	L2_V7_AP(x)	((((x)& 4) << 7) | (((x) & 3) << 4))	/* AP */
-#define	L2_V7_S(x)	((x) << 10)	/* Shared */
-#define	L2_V7_nG(x)	((x) << 10)	/* not Global */
+#define	L2_V7_AP(x)	((((x) & 0x04) << 7) | (((x) & 0x03) << 4))	/* AP */
+#define	L2_V7_S		0x00000400	/* Shared */
+#define	L2_V7_nG	0x00000200	/* not Global */
 
 /*
- * Access Permissions for L1 and L2 Descriptors.
+ * Access Permissions for L1 and L2 Descriptors. (except for V7)
  */
 #define	AP_W		0x01		/* writable */
 #define	AP_U		0x02		/* user */
@@ -228,6 +235,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * the R (ROM) bit is clear in CP15 register 1.
  */
 #define	AP_KR		0x00		/* kernel read */
+#define	AP_V7_KR	0x05
 #define	AP_KRW		0x01		/* kernel read/write */
 #define	AP_KRWUR	0x02		/* kernel read/write usr read */
 #define	AP_KRWURW	0x03		/* kernel read/write usr read/write */
