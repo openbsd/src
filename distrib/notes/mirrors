@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.113 2013/01/31 09:59:09 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.114 2013/04/26 13:01:55 sthen Exp $
 This is a list of currently known FTP and HTTP servers at the time
 of the OSREV release.  For a more recent list, please refer to
 
@@ -37,6 +37,8 @@ Bulgaria:
 Canada:
     http://ftp.OpenBSD.org/pub/OpenBSD (Alberta)
     ftp://ftp.OpenBSD.org/pub/OpenBSD (Alberta)
+    http://athena.caslab.queensu.ca/pub/OpenBSD (Kingston, ON)
+    ftp://athena.caslab.queensu.ca/pub/OpenBSD (Kingston, ON)
 
 Costa Rica:
     http://mirrors.ucr.ac.cr/OpenBSD
@@ -57,6 +59,9 @@ France:
     ftp://ftp.fr.openbsd.org/pub/OpenBSD (Paris)
     http://ftp2.fr.openbsd.org/pub/OpenBSD (Paris)
     ftp://ftp2.fr.openbsd.org/pub/OpenBSD (Paris)
+    http://mirrors.ircam.fr/pub/OpenBSD (Paris)
+    ftp://mirrors.ircam.fr/pub/OpenBSD (Paris)
+    ftp://ftp.irisa.fr/pub/OpenBSD (Rennes)
 
 Germany:
     http://openbsd.cs.fau.de/pub/OpenBSD (Erlangen)
@@ -93,10 +98,6 @@ The Netherlands:
     ftp://ftp.nluug.nl/pub/OpenBSD (Utrecht)
     http://ftp.bit.nl/pub/OpenBSD (Ede)
     ftp://ftp.bit.nl/pub/OpenBSD (Ede)
-
-Norway:
-    http://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
-    ftp://baksmell.netrunner.nu/pub/OpenBSD (Trondheim)
 
 Pakistan:
     http://stingray.cyber.net.pk/pub/OpenBSD (Karachi)
@@ -166,7 +167,6 @@ USA:
     http://openbsd.mirrors.pair.com (Pittsburgh, PA)
     ftp://openbsd.mirrors.pair.com (Pittsburgh, PA)
     http://mirrors.gigenet.com/pub/OpenBSD (Arlington Heights, IL)
-    ftp://mirrors.gigenet.com/pub/OpenBSD (Arlington Heights, IL)
     http://mirror.esc7.net/pub/OpenBSD (Dallas, TX)
     ftp://mirror.esc7.net/pub/OpenBSD (Dallas, TX)
     http://openbsd.mirrorcatalogs.com/pub/OpenBSD (Denver, CO)
