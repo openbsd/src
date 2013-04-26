@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.7 2011/11/16 14:06:32 drahn Exp $ */
+/* $OpenBSD: amptimer.c,v 1.8 2013/04/26 00:09:14 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -29,32 +29,33 @@
 #include <machine/intr.h>
 #include <beagle/dev/omapvar.h>
 
+/* registers */
 #define GTIMER_CNT_LOW		0x200
 #define GTIMER_CNT_HIGH		0x204
 #define GTIMER_CTRL		0x208
-#define 	GTIMER_CTRL_AA		(1 << 3)
-#define 	GTIMER_CTRL_IRQ		(1 << 2)
-#define 	GTIMER_CTRL_COMP	(1 << 1)
-#define 	GTIMER_CTRL_TIMER	(1 << 0)
+#define GTIMER_CTRL_AA		(1 << 3)
+#define GTIMER_CTRL_IRQ		(1 << 2)
+#define GTIMER_CTRL_COMP	(1 << 1)
+#define GTIMER_CTRL_TIMER	(1 << 0)
 #define GTIMER_STATUS		0x20c
-#define 	GTIMER_STATUS_EVENT		(1 << 0)
+#define GTIMER_STATUS_EVENT	(1 << 0)
 #define GTIMER_CMP_LOW		0x210
 #define GTIMER_CMP_HIGH		0x214
 #define GTIMER_AUTOINC		0x218
 
-/* XXX - PERIPHCLK */
-#define TIMER_FREQUENCY                 500 * 1000 * 1000 /* XXX - PERIPHCLK? */
+#define TIMER_FREQUENCY		500 * 1000 * 1000 /* ARM core clock */
+int32_t amptimer_frequency = TIMER_FREQUENCY;
 
 u_int amptimer_get_timecount(struct timecounter *);
 
 static struct timecounter amptimer_timecounter = {
-        amptimer_get_timecount, NULL, 0x7fffffff, 0, "amptimer", 0, NULL
+	amptimer_get_timecount, NULL, 0x7fffffff, 0, "amptimer", 0, NULL
 };
 
 struct amptimer_softc {
 	struct device		sc_dev;
-        bus_space_tag_t		sc_iot;
-        bus_space_handle_t	sc_ioh;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 	volatile u_int64_t	sc_nexttickevent;
 	volatile u_int64_t	sc_nextstatevent;
 	u_int32_t		sc_ticks_per_second;
@@ -70,12 +71,14 @@ struct amptimer_softc {
 #endif
 };
 
+int		amptimer_match(struct device *, void *, void *);
 void		amptimer_attach(struct device *, struct device *, void *);
 uint64_t	amptimer_readcnt64(struct amptimer_softc *sc);
 int		amptimer_intr(void *);
 void		amptimer_cpu_initclocks(void);
 void		amptimer_delay(u_int);
 void		amptimer_setstatclockrate(int stathz);
+void		amptimer_set_clockrate(int32_t new_frequency);
 
 /* hack - XXXX
  * gptimer connects directly to ampintc, not thru the generic
@@ -87,7 +90,7 @@ void	*ampintc_intr_establish(int, int, int (*)(void *), void *, char *);
 
 
 struct cfattach amptimer_ca = {
-	sizeof (struct amptimer_softc), NULL, amptimer_attach
+	sizeof (struct amptimer_softc), amptimer_match, amptimer_attach
 };
 
 struct cfdriver amptimer_cd = {
@@ -98,8 +101,8 @@ uint64_t
 amptimer_readcnt64(struct amptimer_softc *sc)
 {
 	uint32_t high0, high1, low;
-        bus_space_tag_t iot = sc->sc_iot;
-        bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	do {
 		high0 = bus_space_read_4(iot, ioh, GTIMER_CNT_HIGH);
@@ -110,6 +113,11 @@ amptimer_readcnt64(struct amptimer_softc *sc)
 	return ((((uint64_t)high1) << 32) | low);
 }
 
+int
+amptimer_match(struct device *parent, void *cfdata, void *aux)
+{
+	return (1);
+}
 
 void
 amptimer_attach(struct device *parent, struct device *self, void *args)
@@ -124,8 +132,8 @@ amptimer_attach(struct device *parent, struct device *self, void *args)
 	    oa->oa_dev->mem[0].size, 0, &ioh))
 		panic("amptimer_attach: bus_space_map failed!");
 
-	sc->sc_ticks_per_second = TIMER_FREQUENCY;
-	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1024);
+	sc->sc_ticks_per_second = amptimer_frequency;
+	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1000);
 
 	sc->sc_ioh = ioh;
 
@@ -165,7 +173,7 @@ u_int
 amptimer_get_timecount(struct timecounter *tc)
 {
 	struct amptimer_softc *sc = amptimer_timecounter.tc_priv;
-        return bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIMER_CNT_LOW);
+	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIMER_CNT_LOW);
 }
 
 
@@ -238,7 +246,7 @@ again:
 	    nextevent >> 32);
 	reg |= GTIMER_CTRL_COMP;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIMER_CTRL, reg);
-		
+
 	now = amptimer_readcnt64(sc);
 	if (now >= nextevent) {
 		nextevent = now + skip;
@@ -247,6 +255,22 @@ again:
 	}
 
 	return (rc);
+}
+
+void
+amptimer_set_clockrate(int32_t new_frequency)
+{
+	struct amptimer_softc	*sc = amptimer_cd.cd_devs[0];
+
+	amptimer_frequency = new_frequency;
+
+	if (sc == NULL)
+		return;
+
+	sc->sc_ticks_per_second = amptimer_frequency;
+	amptimer_timecounter.tc_frequency = sc->sc_ticks_per_second;
+	printf("amptimer0: adjusting clock: new tick rate %d KHz\n",
+	    sc->sc_ticks_per_second /1000);
 }
 
 void
@@ -259,7 +283,9 @@ amptimer_cpu_initclocks()
 	stathz = hz;
 	profhz = hz * 10;
 
-	sc->sc_ticks_per_second = TIMER_FREQUENCY;
+	if (sc->sc_ticks_per_second != amptimer_frequency) {
+		amptimer_set_clockrate(amptimer_frequency);
+	}
 
 	amptimer_setstatclockrate(stathz);
 
@@ -285,8 +311,8 @@ amptimer_cpu_initclocks()
 	    next >> 32);
 	reg |= GTIMER_CTRL_COMP | GTIMER_CTRL_IRQ;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIMER_CTRL, reg);
-	
 }
+
 void
 amptimer_delay(u_int usecs)
 {
@@ -318,7 +344,6 @@ amptimer_delay(u_int usecs)
 		if (delta > delaycnt)
 			break;
 	}
-	
 }
 
 void
@@ -327,7 +352,7 @@ amptimer_setstatclockrate(int newhz)
 	struct amptimer_softc	*sc = amptimer_cd.cd_devs[0];
 	int			 minint, statint;
 	int			 s;
-	
+
 	s = splclock();
 
 	statint = sc->sc_ticks_per_second / newhz;
@@ -338,7 +363,7 @@ amptimer_setstatclockrate(int newhz)
 		sc->sc_statvar >>= 1;
 
 	sc->sc_statmin = statint - (sc->sc_statvar >> 1);
-	
+
 	splx(s);
 
 	/*

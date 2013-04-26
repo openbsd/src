@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.10 2013/04/25 22:14:17 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.11 2013/04/26 00:09:14 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -153,6 +153,7 @@ struct intrq {
 };
 
 
+int		 ampintc_match(struct device *, void *, void *);
 void		 ampintc_attach(struct device *, struct device *, void *);
 int		 ampintc_spllower(int);
 void		 ampintc_splx(int);
@@ -174,12 +175,18 @@ void		 ampintc_intr_disable(int);
 void		 ampintc_route(int, int , int);
 
 struct cfattach	ampintc_ca = {
-	sizeof (struct ampintc_softc), NULL, ampintc_attach
+	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
 };
 
 struct cfdriver ampintc_cd = {
 	NULL, "ampintc", DV_DULL
 };
+
+int
+ampintc_match(struct device *parent, void *cfdata, void *aux)
+{
+	return (1);
+}
 
 void
 ampintc_attach(struct device *parent, struct device *self, void *args)
@@ -260,7 +267,7 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 void
 ampintc_set_priority(int irq, int pri)
 {
-        struct ampintc_softc	*sc = ampintc;
+	struct ampintc_softc	*sc = ampintc;
 	uint32_t		 prival;
 
 	/*
@@ -293,7 +300,7 @@ ampintc_setipl(int new)
 void
 ampintc_intr_enable(int irq)
 {
-        struct ampintc_softc	*sc = ampintc;
+	struct ampintc_softc	*sc = ampintc;
 
 #ifdef DEBUG
 	printf("enable irq %d register %x bitmask %08x\n",
@@ -307,7 +314,7 @@ ampintc_intr_enable(int irq)
 void
 ampintc_intr_disable(int irq)
 {
-        struct ampintc_softc	*sc = ampintc;
+	struct ampintc_softc	*sc = ampintc;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICERn(irq),
 	    1 << IRQ_TO_REG32BIT(irq));
@@ -369,7 +376,7 @@ ampintc_splx(int new)
 {
 	struct cpu_info *ci = curcpu();
 
-        if (ci->ci_ipending & arm_smask[new])
+	if (ci->ci_ipending & arm_smask[new])
 		arm_do_pending_intr(new);
 
 	ampintc_setipl(new);
@@ -402,7 +409,7 @@ ampintc_splraise(int new)
 		new = old;
 
 	ampintc_setipl(new);
-  
+
 	return (old);
 }
 
