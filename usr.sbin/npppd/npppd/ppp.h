@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.15 2013/02/13 22:10:38 yasuoka Exp $ */
+/*	$OpenBSD: ppp.h,v 1.16 2013/04/26 02:20:04 gsoares Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -723,7 +723,7 @@ typedef struct _dialin_proxy_info {
  *	Comparing the MRU indicated by Windows and TCP MSS indicated by the
  *	same Windows, Windows uses MRU minus 40 octets as a TCP MSS value
  *	simply.  So a TCP/IP packet that has max segment size with MPPE
- *	requires MRU + 4 octets.  If the packet witout MPPE requires just MRU
+ *	requires MRU + 4 octets.  If the packet without MPPE requires just MRU
  *	octets.
  *
  * If MRU doesn't cover MPPE/CCP header, we need to avoid sending MRU + 4
