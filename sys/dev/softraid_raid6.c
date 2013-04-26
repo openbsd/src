@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.47 2013/04/23 13:36:19 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.48 2013/04/26 15:45:35 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -398,12 +398,13 @@ sr_raid6_rw(struct sr_workunit *wu)
 	datalen = xs->datalen;
 	lbaoffs	= blk << DEV_BSHIFT;
 
-	if (xs->flags & SCSI_DATA_OUT)
-		/* create write workunit */
+	if (xs->flags & SCSI_DATA_OUT) {
 		if ((wu_r = sr_scsi_wu_get(sd, SCSI_NOSLEEP)) == NULL){
 			printf("%s: can't get wu_r", DEVNAME(sd->sd_sc));
 			goto bad;
 		}
+		wu_r->swu_flags |= SR_WUF_DISCIPLINE;
+	}
 
 	wu->swu_blk_start = 0;
 	while (datalen != 0) {
@@ -764,13 +765,10 @@ sr_raid6_intr(struct buf *bp)
 		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
 	if (wu->swu_flags & SR_WUF_WAKEUP)
 		wakeup(wu);
-	if (!(wu->swu_flags & SR_WUF_REBUILD)) {
-		if (xs == NULL) {
-			sr_scsi_wu_put(sd, wu);
-		} else {
-			sr_scsi_done(sd, xs);
-		}
-	}
+	if (wu->swu_flags & SR_WUF_DISCIPLINE)
+		sr_scsi_wu_put(sd, wu);
+	else if (!(wu->swu_flags & SR_WUF_REBUILD))
+		sr_scsi_done(sd, xs);
 
 done:
 	splx(s);

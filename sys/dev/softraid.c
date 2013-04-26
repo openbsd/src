@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.301 2013/04/23 12:49:52 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.302 2013/04/26 15:45:35 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2253,12 +2253,21 @@ sr_wu_done_callback(void *arg1, void *arg2)
 	struct sr_workunit	*wup;
 	int			s;
 
+	/*
+	 * The SR_WUF_DISCIPLINE or SR_WUF_REBUILD flag must be set if
+	 * the work unit is not associated with a scsi_xfer.
+	 */
+	KASSERT(xs != NULL ||
+	    (wu->swu_flags & (SR_WUF_DISCIPLINE|SR_WUF_REBUILD)));
+
 	s = splbio();
 
-	if (wu->swu_ios_failed)
-		xs->error = XS_DRIVER_STUFFUP;
-	else
-		xs->error = XS_NOERROR;
+	if (xs != NULL) {
+		if (wu->swu_ios_failed)
+			xs->error = XS_DRIVER_STUFFUP;
+		else
+			xs->error = XS_NOERROR;
+	}
 
 	if (sd->sd_scsi_wu_done) {
 		if (sd->sd_scsi_wu_done(wu) == SR_WU_RESTART)
@@ -2294,6 +2303,8 @@ sr_wu_done_callback(void *arg1, void *arg2)
 		wakeup(wu);
 	if (sd->sd_scsi_done)
 		sd->sd_scsi_done(wu);
+	else if (wu->swu_flags & SR_WUF_DISCIPLINE)
+		sr_scsi_wu_put(sd, wu);
 	else if (!(wu->swu_flags & SR_WUF_REBUILD))
 		sr_scsi_done(sd, xs);
 
