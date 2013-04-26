@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.89 2013/04/19 19:07:45 mglocker Exp $	*/
+/*	$OpenBSD: usb.c,v 1.90 2013/04/26 14:05:24 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/selinfo.h>
 #include <sys/signalvar.h>
 #include <sys/time.h>
+#include <sys/rwlock.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -97,11 +98,14 @@ struct usb_softc {
 	struct timeval	 sc_ptime;
 };
 
+struct rwlock usbpalock;
+
 TAILQ_HEAD(, usb_task) usb_abort_tasks;
 TAILQ_HEAD(, usb_task) usb_explore_tasks;
 TAILQ_HEAD(, usb_task) usb_generic_tasks;
 
-int usb_run_tasks, usb_run_abort_tasks;
+static int usb_nbuses = 0;
+static int usb_run_tasks, usb_run_abort_tasks;
 int explore_pending;
 const char *usbrev_str[] = USBREV_STR;
 
@@ -151,7 +155,16 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 
 	DPRINTF(("usbd_attach\n"));
 
-	usbd_init();
+	if (usb_nbuses == 0) {
+		rw_init(&usbpalock, "usbpalock");
+		TAILQ_INIT(&usb_abort_tasks);
+		TAILQ_INIT(&usb_explore_tasks);
+		TAILQ_INIT(&usb_generic_tasks);
+		usb_run_tasks = usb_run_abort_tasks = 1;
+		kthread_create_deferred(usb_create_task_threads, NULL);
+	}
+	usb_nbuses++;
+
 	sc->sc_bus = aux;
 	sc->sc_bus->usbctl = self;
 	sc->sc_port.power = USB_MAX_POWER;
@@ -228,30 +241,6 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 		config_pending_incr();
 		usb_needs_explore(sc->sc_bus->root_hub, 1);
 	}
-}
-
-/*
- * Called by usbd_init when first usb is attached.
- */
-void
-usb_begin_tasks(void)
-{
-	TAILQ_INIT(&usb_abort_tasks);
-	TAILQ_INIT(&usb_explore_tasks);
-	TAILQ_INIT(&usb_generic_tasks);
-	usb_run_tasks = usb_run_abort_tasks = 1;
-	kthread_create_deferred(usb_create_task_threads, NULL);
-}
-
-/*
- * Called by usbd_finish when last usb is detached.
- */
-void
-usb_end_tasks(void)
-{
-	usb_run_tasks = usb_run_abort_tasks = 0;
-	wakeup(&usb_run_abort_tasks);
-	wakeup(&usb_run_tasks);
 }
 
 void
@@ -912,7 +901,11 @@ usb_detach(struct device *self, int flags)
 
 		usb_rem_wait_task(sc->sc_bus->root_hub, &sc->sc_explore_task);
 
-		usbd_finish();
+		if (--usb_nbuses == 0) {
+			usb_run_tasks = usb_run_abort_tasks = 0;
+			wakeup(&usb_run_abort_tasks);
+			wakeup(&usb_run_tasks);
+		}
 	}
 
 	if (sc->sc_bus->soft != NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.53 2013/04/26 13:46:40 mglocker Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.54 2013/04/26 14:05:24 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -37,7 +37,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -61,27 +60,6 @@ void usbd_do_request_async_cb(struct usbd_xfer *, void *,
 void usbd_start_next(struct usbd_pipe *pipe);
 usbd_status usbd_open_pipe_ival(struct usbd_interface *, u_int8_t, u_int8_t,
     struct usbd_pipe **, int);
-
-int usbd_nbuses = 0;
-
-struct rwlock usbpalock;
-
-void
-usbd_init(void)
-{
-	if (usbd_nbuses == 0) {
-		rw_init(&usbpalock, "usbpalock");
-		usb_begin_tasks();
-	}
-	usbd_nbuses++;
-}
-
-void
-usbd_finish(void)
-{
-	if (--usbd_nbuses == 0)
-		usb_end_tasks();
-}
 
 int
 usbd_is_dying(struct usbd_device *dev)
