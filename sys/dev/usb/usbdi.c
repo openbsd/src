@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.54 2013/04/26 14:05:24 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.55 2013/04/26 14:19:25 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -711,19 +711,6 @@ int
 usbd_get_interface_altindex(struct usbd_interface *iface)
 {
 	return (iface->altindex);
-}
-
-usbd_status
-usbd_get_interface(struct usbd_interface *iface, u_int8_t *aiface)
-{
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_READ_INTERFACE;
-	req.bRequest = UR_GET_INTERFACE;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, iface->idesc->bInterfaceNumber);
-	USETW(req.wLength, 1);
-	return (usbd_do_request(iface->device, &req, aiface));
 }
 
 /*** Internal routines ***/
