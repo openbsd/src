@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.171 2013/04/26 13:46:40 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.172 2013/04/26 14:53:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1885,14 +1885,16 @@ uvideo_vs_start_bulk_thread(void *arg)
 	while (sc->sc_vs_cur->bulk_running) {
 		size = UGETDW(sc->sc_desc_probe.dwMaxPayloadTransferSize);
 
-		error = usbd_bulk_transfer(
+		usbd_setup_xfer(
 		    sc->sc_vs_cur->bxfer.xfer,
 		    sc->sc_vs_cur->pipeh,
-		    USBD_NO_COPY | USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT,
+		    0,
 		    sc->sc_vs_cur->bxfer.buf,
-		    &size,
-		    "vid_bulk");
+		    size,
+		    USBD_NO_COPY | USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS,
+		    0,
+		    NULL);
+		error = usbd_transfer(sc->sc_vs_cur->bxfer.xfer);
 		if (error != USBD_NORMAL_COMPLETION) {
 			DPRINTF(1, "%s: error in bulk xfer: %s!\n",
 			    DEVNAME(sc), usbd_errstr(error));
