@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.21 2011/11/05 18:11:26 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.22 2013/04/26 11:51:22 patrick Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -443,6 +443,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
  */
 #define	PMAP_DOMAINS		15	/* 15 'user' domains (0-14) */
 #define	PMAP_DOMAIN_KERNEL	15	/* The kernel uses domain #15 */
+#define	PMAP_DOMAIN_USER_V7	0	/* V7 Userland uses a single domain */
 
 /*
  * These macros define the various bit masks in the PTE.
