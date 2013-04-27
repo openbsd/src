@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.47 2013/04/03 03:10:42 guenther Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.48 2013/04/27 16:39:29 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -554,8 +554,8 @@ print_statistics(struct ctl_stats stats[RELAY_MAXPROC + 1])
 	if (crs.cnt == 0)
 		return;
 	printf("\t%8s\ttotal: %llu sessions\n"
-	    "\t%8s\tlast: %u/%us %u/h %u/d sessions\n"
-	    "\t%8s\taverage: %u/%us %u/h %u/d sessions\n",
+	    "\t%8s\tlast: %u/%llus %u/h %u/d sessions\n"
+	    "\t%8s\taverage: %u/%llus %u/h %u/d sessions\n",
 	    "", crs.cnt,
 	    "", crs.last, crs.interval,
 	    crs.last_hour, crs.last_day,

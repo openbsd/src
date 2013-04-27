@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.167 2013/03/10 23:32:53 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.168 2013/04/27 16:39:30 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -230,7 +230,7 @@ struct ctl_stats {
 	objid_t			 id;
 	int			 proc;
 
-	u_int			 interval;
+	u_int64_t		 interval;
 	u_int64_t		 cnt;
 	u_int32_t		 tick;
 	u_int32_t		 avg;
