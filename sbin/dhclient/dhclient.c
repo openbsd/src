@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.243 2013/04/25 06:43:20 otto Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.244 2013/04/27 17:54:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1675,18 +1675,20 @@ lease_as_string(char *type, struct client_lease *lease)
 		sz -= rslt;
 	}
 
-#define TIMEFMT "%u %Y/%m/%d %T;\n"
-	rsltsz = strftime(p, sz, "  renew " TIMEFMT, gmtime(&lease->renewal));
+	rsltsz = strftime(p, sz, "  renew " DB_TIMEFMT ";\n",
+	    gmtime(&lease->renewal));
 	if (rsltsz == 0)
 		return (NULL);
 	p += rsltsz;
 	sz -= rsltsz;
-	rsltsz = strftime(p, sz, "  rebind " TIMEFMT, gmtime(&lease->rebind));
+	rsltsz = strftime(p, sz, "  rebind " DB_TIMEFMT ";\n",
+	    gmtime(&lease->rebind));
 	if (rsltsz == 0)
 		return (NULL);
 	p += rsltsz;
 	sz -= rsltsz;
-	rsltsz = strftime(p, sz, "  expire " TIMEFMT, gmtime(&lease->expiry));
+	rsltsz = strftime(p, sz, "  expire " DB_TIMEFMT ";\n",
+	    gmtime(&lease->expiry));
 	if (rsltsz == 0)
 		return (NULL);
 	p += rsltsz;
