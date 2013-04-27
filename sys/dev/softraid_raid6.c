@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.48 2013/04/26 15:45:35 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.49 2013/04/27 14:06:09 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -57,6 +57,7 @@ int	sr_raid6_init(struct sr_discipline *);
 int	sr_raid6_rw(struct sr_workunit *);
 int	sr_raid6_openings(struct sr_discipline *);
 void	sr_raid6_intr(struct buf *);
+int	sr_raid6_wu_done(struct sr_workunit *);
 void	sr_raid6_set_chunk_state(struct sr_discipline *, int, int);
 void	sr_raid6_set_vol_state(struct sr_discipline *);
 
@@ -108,6 +109,7 @@ sr_raid6_discipline_init(struct sr_discipline *sd)
 	sd->sd_openings = sr_raid6_openings;
 	sd->sd_scsi_rw = sr_raid6_rw;
 	sd->sd_scsi_intr = sr_raid6_intr;
+	sd->sd_scsi_wu_done = sr_raid6_wu_done;
 	sd->sd_set_chunk_state = sr_raid6_set_chunk_state;
 	sd->sd_set_vol_state = sr_raid6_set_vol_state;
 }
@@ -677,18 +679,15 @@ void
 sr_raid6_intr(struct buf *bp)
 {
 	struct sr_ccb		*ccb = (struct sr_ccb *)bp;
-	struct sr_workunit	*wu = ccb->ccb_wu, *wup;
+	struct sr_workunit	*wu = ccb->ccb_wu;
 	struct sr_discipline	*sd = wu->swu_dis;
-	struct scsi_xfer	*xs = wu->swu_xs;
-	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_raid6_opaque  *pq = ccb->ccb_opaque;
 	int			s;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_raid6_intr bp %p xs %p\n",
-	    DEVNAME(sc), bp, xs);
+	    DEVNAME(sd->sd_sc), bp, wu->swu_xs);
 
 	s = splbio();
-
 	sr_ccb_done(ccb);
 
 	/* XOR data to result. */
@@ -711,67 +710,42 @@ sr_raid6_intr(struct buf *bp)
 		ccb->ccb_buf.b_data = NULL;
 	}
 
-	DNPRINTF(SR_D_INTR, "%s: sr_intr: comp: %d count: %d failed: %d\n",
-	    DEVNAME(sc), wu->swu_ios_complete, wu->swu_io_count,
-	    wu->swu_ios_failed);
-
-	if (wu->swu_ios_complete < wu->swu_io_count)
-		goto done;
-
-	if (xs != NULL)
-		xs->error = XS_NOERROR;
-
-	/* if all ios failed, retry reads and give up on writes */
-	if (wu->swu_ios_failed == wu->swu_ios_complete) {
-		/* XXX xs could be NULL. */
-		if (xs->flags & SCSI_DATA_IN) {
-			printf("%s: retrying read on block %lld\n",
-			    DEVNAME(sc), ccb->ccb_buf.b_blkno);
-			sr_wu_release_ccbs(wu);
-			wu->swu_state = SR_WU_RESTART;
-			if (sd->sd_scsi_rw(wu) == 0)
-				goto done;
-			xs->error = XS_DRIVER_STUFFUP;
-		} else {
-			printf("%s: permanently fail write on block %lld\n",
-			    DEVNAME(sc), ccb->ccb_buf.b_blkno);
-			xs->error = XS_DRIVER_STUFFUP;
-		}
-	}
-
-	TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link)
-		if (wu == wup)
-			break;
-
-	if (wup == NULL)
-		panic("%s: wu %p not on pending queue",
-		    DEVNAME(sd->sd_sc), wu);
-
-	TAILQ_REMOVE(&sd->sd_wu_pendq, wu, swu_link);
-
-	if (wu->swu_collider) {
-		if (wu->swu_ios_failed)
-			sr_raid_recreate_wu(wu->swu_collider);
-
-		/* XXX Should the collider be failed if this xs failed? */
-		/* restart deferred wu */
-		wu->swu_collider->swu_state = SR_WU_INPROGRESS;
-		TAILQ_REMOVE(&sd->sd_wu_defq, wu->swu_collider, swu_link);
-		if (sr_failio(wu->swu_collider) == 0)
-			sr_raid_startwu(wu->swu_collider);
-	}
-
-	if (wu->swu_flags & SR_WUF_REBUILD)
-		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
-	if (wu->swu_flags & SR_WUF_WAKEUP)
-		wakeup(wu);
-	if (wu->swu_flags & SR_WUF_DISCIPLINE)
-		sr_scsi_wu_put(sd, wu);
-	else if (!(wu->swu_flags & SR_WUF_REBUILD))
-		sr_scsi_done(sd, xs);
-
-done:
+	sr_wu_done(wu);
 	splx(s);
+}
+
+int
+sr_raid6_wu_done(struct sr_workunit *wu)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct scsi_xfer	*xs = wu->swu_xs;
+
+	/* XXX - we have no way of propagating errors... */
+	if (wu->swu_flags & SR_WUF_DISCIPLINE)
+		return SR_WU_OK;
+
+	/* XXX - This is insufficient for RAID 6. */
+	if (wu->swu_ios_succeeded > 0) {
+		xs->error = XS_NOERROR;
+		return SR_WU_OK;
+	}
+
+	if (xs->flags & SCSI_DATA_IN) {
+		printf("%s: retrying read on block %lld\n",
+		    sd->sd_meta->ssd_devname, wu->swu_blk_start);
+		sr_wu_release_ccbs(wu);
+		wu->swu_state = SR_WU_RESTART;
+		if (sd->sd_scsi_rw(wu) == 0)
+			return SR_WU_RESTART;
+	} else {
+		printf("%s: permanently fail write on block %lld\n",
+		    sd->sd_meta->ssd_devname, wu->swu_blk_start);
+	}
+
+	wu->swu_state = SR_WU_FAILED;
+	xs->error = XS_DRIVER_STUFFUP;
+
+	return SR_WU_FAILED;
 }
 
 int
