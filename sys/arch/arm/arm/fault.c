@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.12 2013/01/23 19:57:47 patrick Exp $	*/
+/*	$OpenBSD: fault.c,v 1.13 2013/04/28 13:27:13 patrick Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ static int dab_buserr(trapframe_t *, u_int, u_int, struct proc *,
     struct sigdata *sd);
 
 static const struct data_abort data_aborts[] = {
+#ifndef CPU_ARMv7
 	{dab_fatal,	"Vector Exception"},
 	{dab_align,	"Alignment Fault 1"},
 	{dab_fatal,	"Terminal Exception"},
@@ -149,14 +150,48 @@ static const struct data_abort data_aborts[] = {
 	{NULL,		"Permission Fault (S)"},
 	{dab_buserr,	"External Translation Abort (L2)"},
 	{NULL,		"Permission Fault (P)"}
+#else
+	{dab_fatal,	"V7 fault 00000"},
+	{dab_align,	"Alignment Fault 1"},
+	{dab_fatal,	"Debug Event"},
+	{dab_fatal,	"Access Flag Fault (S)"},
+	{dab_buserr,	"External Linefetch Abort (S)"},
+	{NULL,		"Translation Fault (S)"},
+	{dab_fatal,	"Access Flag Fault (P)"},
+	{NULL,		"Translation Fault (P)"},
+	{dab_buserr,	"External Non-Linefetch Abort (S)"},
+	{NULL,		"Domain Fault (S)"},
+	{dab_fatal,	"V7 fault 01010"},
+	{NULL,		"Domain Fault (P)"},
+	{dab_buserr,	"External Translation Abort (L1)"},
+	{NULL,		"Permission Fault (S)"},
+	{dab_buserr,	"External Translation Abort (L2)"},
+	{NULL,		"Permission Fault (P)"},
+	{dab_fatal,	"V7 fault 10000"},
+	{dab_fatal,	"V7 fault 10001"},
+	{dab_fatal,	"V7 fault 10010"},
+	{dab_fatal,	"V7 fault 10011"},
+	{dab_fatal,	"Lockdown"},
+	{dab_fatal,	"V7 fault 10101"},
+	{dab_fatal,	"Asynchronous External Abort"},
+	{dab_fatal,	"V7 fault 10111"},
+	{dab_fatal,	"Memory Asynchronous Parity Error"},
+	{dab_fatal,	"Memory Synchronous Parity Error"},
+	{dab_fatal,	"Coprocessor Abort"},
+	{dab_fatal,	"V7 fault 11011"},
+	{dab_buserr,	"External Translation Abort (L1)"},
+	{dab_fatal,	"V7 fault 11101"},
+	{dab_buserr,	"External Translation Abort (L2)"},
+	{NULL,		"V7 fault 11111"},
+#endif
 };
 
 /* Determine if a fault came from user mode */
 #define	TRAP_USERMODE(tf)	((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 
-/* Determine if 'x' is a permission fault */
-#define	IS_PERMISSION_FAULT(x)					\
-	(((1 << ((x) & FAULT_TYPE_MASK)) &			\
+/* Determine if 'ftyp' is a permission fault */
+#define	IS_PERMISSION_FAULT(ftyp)				\
+	(((1 << (ftyp)) &					\
 	  ((1 << FAULT_PERM_P) | (1 << FAULT_PERM_S))) != 0)
 
 void
@@ -165,7 +200,7 @@ data_abort_handler(trapframe_t *tf)
 	struct vm_map *map;
 	struct pcb *pcb;
 	struct proc *p;
-	u_int user, far, fsr;
+	u_int user, far, fsr, ftyp;
 	vm_prot_t ftype;
 	void *onfault;
 	vaddr_t va;
@@ -176,6 +211,11 @@ data_abort_handler(trapframe_t *tf)
 	/* Grab FAR/FSR before enabling interrupts */
 	far = cpu_dfar();
 	fsr = cpu_dfsr();
+#ifndef CPU_ARMv7
+	ftyp = FAULT_TYPE(fsr);
+#else
+	ftyp = FAULT_TYPE_V7(fsr);
+#endif
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
@@ -194,9 +234,8 @@ data_abort_handler(trapframe_t *tf)
 	pcb = &p->p_addr->u_pcb;
 
 	/* Invoke the appropriate handler, if necessary */
-	if (__predict_false(data_aborts[fsr & FAULT_TYPE_MASK].func != NULL)) {
-		if ((data_aborts[fsr & FAULT_TYPE_MASK].func)(tf, fsr, far, p,
-		    &sd)) {
+	if (__predict_false(data_aborts[ftyp].func != NULL)) {
+		if ((data_aborts[ftyp].func)(tf, fsr, far, p, &sd)) {
 			goto do_trapsignal;
 		}
 		goto out;
@@ -288,6 +327,7 @@ data_abort_handler(trapframe_t *tf)
 #endif
 	}
 
+#ifndef CPU_ARMv7
 	/*
 	 * We need to know whether the page should be mapped
 	 * as R or R/W. The MMU does not give us the info as
@@ -315,6 +355,9 @@ data_abort_handler(trapframe_t *tf)
 		else
 			ftype = VM_PROT_READ; 
 	}
+#else
+	ftype = fsr & FAULT_WNR ? VM_PROT_WRITE : VM_PROT_READ;
+#endif
 
 	/*
 	 * See if the fault is as a result of ref/mod emulation,
@@ -403,29 +446,36 @@ out:
  * This function is also called by the other handlers if they
  * detect a fatal problem.
  *
- * Note: If 'l' is NULL, we assume we're dealing with a prefetch abort.
+ * Note: If 'p' is NULL, we assume we're dealing with a prefetch abort.
  */
 static int
 dab_fatal(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
     struct sigdata *sd)
 {
 	const char *mode;
+	uint ftyp;
 
 	mode = TRAP_USERMODE(tf) ? "user" : "kernel";
 
 	if (p != NULL) {
+#ifndef CPU_ARMv7
+		ftyp = FAULT_TYPE(fsr);
+#else
+		ftyp = FAULT_TYPE_V7(fsr);
+#endif
 		printf("Fatal %s mode data abort: '%s'\n", mode,
-		    data_aborts[fsr & FAULT_TYPE_MASK].desc);
-		printf("trapframe: %p\nFSR=%08x, FAR=", tf, fsr);
-		if ((fsr & FAULT_IMPRECISE) == 0)
-			printf("%08x, ", far);
-		else
-			printf("Invalid,  ");
-		printf("spsr=%08x\n", tf->tf_spsr);
+		    data_aborts[ftyp].desc);
+		printf("trapframe: %p\nDFSR=%08x, DFAR=%08x", tf, fsr, far);
+#ifndef CPU_ARMv7
+		if ((fsr & FAULT_IMPRECISE) != 0)
+			printf(" (imprecise)");
+#endif
+		printf(", spsr=%08x\n", tf->tf_spsr);
 	} else {
 		printf("Fatal %s mode prefetch abort at 0x%08x\n",
 		    mode, tf->tf_pc);
-		printf("trapframe: %p, spsr=%08x\n", tf, tf->tf_spsr);
+		printf("trapframe: %p\nIFSR=%08x, IFAR=%08x, spsr=%08x\n",
+		    tf, fsr, far, tf->tf_spsr);
 	}
 
 	printf("r0 =%08x, r1 =%08x, r2 =%08x, r3 =%08x\n",
@@ -580,7 +630,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
  * If the address is invalid and we were in SVC mode then panic as
  * the kernel should never prefetch abort.
  * If the address is invalid and the page is mapped then the user process
- * does no have read permission so send it a signal.
+ * does no have read or execute permission so send it a signal.
  * Otherwise fault the page in and try again.
  */
 void
@@ -588,12 +638,26 @@ prefetch_abort_handler(trapframe_t *tf)
 {
 	struct proc *p;
 	struct vm_map *map;
-	vaddr_t fault_pc, va;
+	vaddr_t va;
 	int error;
 	union sigval sv;
+	uint fsr, far;
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
+
+	/* Grab FAR/FSR before enabling interrupts */
+#ifndef CPU_ARMv7
+	far = tf->tf_pc;
+	fsr = 0;
+#else
+	far = cpu_ifar();
+	fsr = cpu_ifsr();
+#endif
+
+	/* Prefetch aborts cannot happen in kernel mode */
+	if (__predict_false(!TRAP_USERMODE(tf)))
+		dab_fatal(tf, fsr, far, NULL, NULL);
 
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes
@@ -603,25 +667,20 @@ prefetch_abort_handler(trapframe_t *tf)
 	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
 		enable_interrupts(I32_bit);
 
-	/* Prefetch aborts cannot happen in kernel mode */
-	if (__predict_false(!TRAP_USERMODE(tf)))
-		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
-
 	/* Get fault address */
-	fault_pc = tf->tf_pc;
 	p = curproc;
 	p->p_addr->u_pcb.pcb_tf = tf;
 
 	/* Ok validate the address, can only execute in USER space */
-	if (__predict_false(fault_pc >= VM_MAXUSER_ADDRESS ||
-	    (fault_pc < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW))) {
-		sv.sival_ptr = (u_int32_t *)fault_pc;
+	if (__predict_false(far >= VM_MAXUSER_ADDRESS ||
+	    (far < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW))) {
+		sv.sival_ptr = (u_int32_t *)far;
 		trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
 		goto out;
 	}
 
 	map = &p->p_vmspace->vm_map;
-	va = trunc_page(fault_pc);
+	va = trunc_page(far);
 
 	/*
 	 * See if the pmap can handle this fault on its own...
@@ -629,21 +688,21 @@ prefetch_abort_handler(trapframe_t *tf)
 #ifdef DEBUG
 	last_fault_code = -1;
 #endif
-	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ, 1))
+	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ|VM_PROT_EXECUTE, 1))
 		goto out;
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(current_intr_depth > 0)) {
 		printf("\nNon-emulated prefetch abort with intr_depth > 0\n");
-		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
+		dab_fatal(tf, fsr, far, NULL, NULL);
 	}
 #endif
 
-	error = uvm_fault(map, va, 0, VM_PROT_READ);
+	error = uvm_fault(map, va, 0, VM_PROT_READ|VM_PROT_EXECUTE);
 	if (__predict_true(error == 0))
 		goto out;
 
-	sv.sival_ptr = (u_int32_t *) fault_pc;
+	sv.sival_ptr = (u_int32_t *)far;
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", p->p_pid, p->p_comm,

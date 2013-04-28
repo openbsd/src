@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.11 2013/01/18 00:20:20 patrick Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.12 2013/04/28 13:27:13 patrick Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -330,8 +330,7 @@
 
 /* Fault status register definitions */
 
-#define FAULT_TYPE_MASK 0x0f
-#define FAULT_USER      0x10
+#define FAULT_USER      0x20
 
 #define FAULT_WRTBUF_0  0x00 /* Vector Exception */
 #define FAULT_WRTBUF_1  0x02 /* Terminal Exception */
@@ -351,6 +350,12 @@
 #define FAULT_PERM_P    0x0f /* Permission -- Page */
 
 #define FAULT_IMPRECISE	0x400	/* Imprecise exception (XSCALE) */
+
+#define	FAULT_EXT	0x00001000	/* external abort */
+#define	FAULT_WNR	0x00000800	/* write fault */
+
+#define	FAULT_TYPE(fsr)		((fsr) & 0x0f)
+#define	FAULT_TYPE_V7(fsr)	(((fsr) & 0x0f) | (((fsr) & 0x00000400) >> 6))
 
 /*
  * Address of the vector page, low and high versions.
