@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.3 2013/04/16 14:44:13 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.4 2013/04/28 14:39:15 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -192,9 +192,7 @@
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 #include <machine/param.h>
-#include <arm/cpufuncv7.h>
-#include <arm/pmapv7.h>
-#include <arm/ptev7.h>
+#include <arm/cpufunc.h>
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
