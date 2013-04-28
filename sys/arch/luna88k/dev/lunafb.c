@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.12 2012/01/08 00:31:35 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.13 2013/04/28 23:33:12 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -52,18 +52,18 @@
 #include <machine/autoconf.h>
 
 struct bt454 {
-	u_int8_t bt_addr;		/* map address register */
-	u_int8_t bt_cmap;		/* colormap data register */
+	volatile u_int8_t bt_addr;	/* map address register */
+	volatile u_int8_t bt_cmap;	/* colormap data register */
 };
 
 struct bt458 {
-	u_int8_t bt_addr;		/* map address register */
+	volatile u_int8_t bt_addr;	/* map address register */
 		unsigned :24;
-	u_int8_t bt_cmap;		/* colormap data register */
+	volatile u_int8_t bt_cmap;	/* colormap data register */
 		unsigned :24;
-	u_int8_t bt_ctrl;		/* control register */
+	volatile u_int8_t bt_ctrl;	/* control register */
 		unsigned :24;
-	u_int8_t bt_omap;		/* overlay (cursor) map register */
+	volatile u_int8_t bt_omap;	/* overlay (cursor) map register */
 		unsigned :24;
 };
 
@@ -73,7 +73,7 @@ struct bt458 {
 #define	OMFB_FB_RADDR	0xB10C0008	/* plane #0 */
 #define	OMFB_ROPFUNC	0xB12C0000	/* ROP function code */
 #define	OMFB_RAMDAC	0xC1100000	/* Bt454/Bt458 RAMDAC */
-#define	OMFB_SIZE	(0xB1300000 - 0xB1080000 + NBPG)
+#define	OMFB_SIZE	(0xB1300000 - 0xB1080000 + PAGE_SIZE)
 
 struct om_hwdevconfig {
 	int	dc_wid;			/* width of frame buffer */
@@ -191,8 +191,7 @@ omfbattach(parent, self, args)
 	if (omfb_console) {
 		sc->sc_dc = &omfb_console_dc;
 		sc->nscreens = 1;
-	}
-	else {
+	} else {
 		sc->sc_dc = (struct om_hwdevconfig *)
 		    malloc(sizeof(struct om_hwdevconfig), M_DEVBUF,
 			M_WAITOK | M_ZERO);
@@ -201,11 +200,10 @@ omfbattach(parent, self, args)
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
-#if 0	/* WHITE on BLACK */
-	cm = &sc->sc_cmap;
-	memset(cm, 255, sizeof(struct hwcmap));
-	cm->r[0] = cm->g[0] = cm->b[0] = 0;
-#endif
+	/* WHITE on BLACK */
+	memset(&sc->sc_cmap, 255, sizeof(struct hwcmap));
+	sc->sc_cmap.r[0] = sc->sc_cmap.g[0] = sc->sc_cmap.b[0] = 0;
+
 	waa.console = omfb_console;
 	waa.scrdata = &omfb_screenlist;
 	waa.accessops = &omfb_accessops;
@@ -251,7 +249,11 @@ omfbioctl(v, cmd, data, flag, p)
 		wsd_fbip->width = dc->dc_wid;
 		wsd_fbip->depth = dc->dc_depth;
 		wsd_fbip->cmsize = dc->dc_cmsize;
-#undef fbt
+#undef wsd_fbip
+		break;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = dc->dc_rowbytes;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
@@ -259,6 +261,10 @@ omfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_PUTCMAP:
 		return omsetcmap(sc, (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
+		*(u_int *)data = WSDISPLAYIO_DEPTH_1;
+		break;
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
@@ -288,13 +294,20 @@ omfbmmap(v, offset, prot)
 	int prot;
 {
 	struct omfb_softc *sc = v;
+	struct om_hwdevconfig *dc = sc->sc_dc;
+	paddr_t cookie = -1;
 
-	if (offset & PGOFSET)
-		return (-1);
-	if (offset >= OMFB_SIZE || offset < 0)
+	if ((offset & PAGE_MASK) != 0)
 		return (-1);
 
-	return (trunc_page(sc->sc_dc->dc_videobase) + offset);
+#if 0	/* Workaround for making Xorg 1bpp server work */
+	if (offset >= 0 && offset < OMFB_SIZE)
+		cookie = (paddr_t)(trunc_page(dc->dc_videobase) + offset);
+#else
+	if (offset >= 0 && offset < dc->dc_rowbytes * dc->dc_ht)
+		cookie = (paddr_t)(trunc_page(OMFB_FB_RADDR) + offset);
+#endif
+	return cookie;
 }
 
 int
@@ -348,8 +361,8 @@ omsetcmap(sc, p)
 
 	if (hwplanebits == 4) {
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
-		odac->bt_addr = index;
-		for (i = index; i < count; i++) {
+		odac->bt_addr = (u_int8_t)index;
+		for (i = index; i < index + count; i++) {
 			odac->bt_cmap = sc->sc_cmap.r[i];
 			odac->bt_cmap = sc->sc_cmap.g[i];
 			odac->bt_cmap = sc->sc_cmap.b[i];
@@ -357,8 +370,8 @@ omsetcmap(sc, p)
 	}
 	else if (hwplanebits == 8) {
 		struct bt458 *ndac = (struct bt458 *)OMFB_RAMDAC;
-		ndac->bt_addr = index;
-		for (i = index; i < count; i++) {
+		ndac->bt_addr = (u_int8_t)index;
+		for (i = index; i < index + count; i++) {
 			ndac->bt_cmap = sc->sc_cmap.r[i];
 			ndac->bt_cmap = sc->sc_cmap.g[i];
 			ndac->bt_cmap = sc->sc_cmap.b[i];
@@ -379,6 +392,7 @@ omfb_getdevconfig(paddr, dc)
 		u_int32_t u;
 	} rfcnt;
 
+#if 0	/* Workaround for making Xorg 1bpp server work */
 	switch (hwplanebits) {
 	case 8:
 		bpp = 8;	/* XXX check monochrome bit in DIPSW */
@@ -391,6 +405,9 @@ omfb_getdevconfig(paddr, dc)
 		bpp = 1;
 		break;
 	}
+#else
+	bpp = 1;
+#endif
 	dc->dc_wid = 1280;
 	dc->dc_ht = 1024;
 	dc->dc_depth = bpp;
@@ -398,9 +415,9 @@ omfb_getdevconfig(paddr, dc)
 	dc->dc_cmsize = (bpp == 1) ? 0 : 1 << bpp;
 	dc->dc_videobase = paddr;
 
-#if 0 /* WHITE on BLACK XXX experiment resulted in WHITE on SKYBLUE... */
+	/* WHITE on BLACK */
 	if (hwplanebits == 4) {
-		/* XXX Need Bt454 initialization */
+		/* XXX Need Bt454 more initialization */
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
 		odac->bt_addr = 0;
 		odac->bt_cmap = 0;
@@ -411,15 +428,16 @@ omfb_getdevconfig(paddr, dc)
 			odac->bt_cmap = 255;
 			odac->bt_cmap = 255;
 		}
-	}
-	else if (hwplanebits == 8) {
+	} else if (hwplanebits == 8) {
 		struct bt458 *ndac = (struct bt458 *)OMFB_RAMDAC;
 
+#if 0		/* This doesn't work.  Don't touch ROM setting for now. */
 		ndac->bt_addr = 0x04;
 		ndac->bt_ctrl = 0xff; /* all planes will be read */
 		ndac->bt_ctrl = 0x00; /* all planes have non-blink */
 		ndac->bt_ctrl = 0x43; /* pallete enabled, ovly plane */
 		ndac->bt_ctrl = 0x00; /* no test mode */
+#endif
 		ndac->bt_addr = 0;
 		ndac->bt_cmap = 0;
 		ndac->bt_cmap = 0;
@@ -430,19 +448,19 @@ omfb_getdevconfig(paddr, dc)
 			ndac->bt_cmap = 255;
 		}
 	}
-#endif
 
 	/* adjust h/v origin on screen */
 	rfcnt.p.h = 7;
 	rfcnt.p.v = -27;
-	*(u_int32_t *)OMFB_RFCNT = rfcnt.u; /* single write of 0x007ffe6 */
+	/* single write of 0x007ffe6 */
+	*(volatile u_int32_t *)OMFB_RFCNT = rfcnt.u;
 
 	/* clear the screen */
-	*(u_int32_t *)OMFB_PLANEMASK = 0xff;
-	((u_int32_t *)OMFB_ROPFUNC)[5] = ~0;	/* ROP copy */
+	*(volatile u_int32_t *)OMFB_PLANEMASK = 0xff;
+	((volatile u_int32_t *)OMFB_ROPFUNC)[5] = ~0;	/* ROP copy */
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes / sizeof(u_int32_t); i++)
-		*((u_int32_t *)dc->dc_videobase + i) = 0;
-	*(u_int32_t *)OMFB_PLANEMASK = 0x01;
+		*((volatile u_int32_t *)dc->dc_videobase + i) = 0;
+	*(volatile u_int32_t *)OMFB_PLANEMASK = 0x01;
 
 	/* initialize the raster */
 	ri = &dc->dc_ri;

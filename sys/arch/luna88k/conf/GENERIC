@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2011/06/29 20:52:09 matthew Exp $
+#	$OpenBSD: GENERIC,v 1.16 2013/04/28 23:33:12 aoyama Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,6 +22,8 @@ option		MAX_CPUS=4	# may have up to 4 processors
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR
 
+# Options for luna88k hardware
+option		WSDISPLAY_COMPAT_RAWKBD	# Provide raw scancodes; needed for X11
 
 config		bsd		swap generic
 
@@ -42,8 +44,8 @@ spc1		at mainbus0
 
 # Workstation Console attachments
 wsdisplay*	at fb?
-wskbd*		at ws?
-wsmouse*	at ws?
+wskbd*		at ws? mux 1
+wsmouse*	at ws? mux 0
 
 # SCSI bus support
 
@@ -56,3 +58,6 @@ ch*		at scsibus?
 safte*		at scsibus?
 ses*		at scsibus?
 uk*		at scsibus?
+
+# Pseudo-device
+pseudo-device	wsmux 2

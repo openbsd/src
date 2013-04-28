@@ -1,4 +1,4 @@
-/*	$OpenBSD: lunaws.c,v 1.7 2008/09/11 11:30:14 jsg Exp $	*/
+/*	$OpenBSD: lunaws.c,v 1.8 2013/04/28 23:33:12 aoyama Exp $	*/
 /* $NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $ */
 
 /*-
@@ -41,6 +41,9 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <dev/wscons/wskbdraw.h>
+#endif
 #include <dev/wscons/wsmousevar.h>
 
 #include <luna88k/dev/sioreg.h>
@@ -64,6 +67,10 @@ struct ws_softc {
 	struct device	*sc_wsmousedev;
 	int		sc_msreport;
 	int		buttons, dx, dy;
+#endif
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int		sc_rawkbd;
 #endif
 };
 
@@ -278,6 +285,8 @@ wsintr(chan)
 	/* not capable of transmit, yet */
 }
 
+static const u_int8_t omkbd_raw[];
+
 void
 omkbd_input(v, data)
 	void *v;
@@ -288,8 +297,30 @@ omkbd_input(v, data)
 	int key;
 
 	omkbd_decode(v, data, &type, &key);
-	if (sc->sc_wskbddev != NULL)
-		wskbd_input(sc->sc_wskbddev, type, key);	
+
+#if WSDISPLAY_COMPAT_RAWKBD
+	if (sc->sc_rawkbd) {
+		u_char cbuf[2];
+		int c, j = 0;
+
+		c = omkbd_raw[key];
+		if (c != RAWKEY_Null) {
+			/* fake extended scancode if necessary */
+			if (c & 0x80)
+				cbuf[j++] = 0xe0;
+			cbuf[j] = c & 0x7f;
+			if (type == WSCONS_EVENT_KEY_UP)
+				cbuf[j] |= 0x80;
+			j++;
+
+			wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		}
+	} else
+#endif
+	{
+		if (sc->sc_wskbddev != NULL)
+			wskbd_input(sc->sc_wskbddev, type, key);	
+	}
 }
 
 void
@@ -302,6 +333,143 @@ omkbd_decode(v, datain, type, dataout)
 	*type = (datain & 0x80) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*dataout = datain & 0x7f;
 }
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+/*
+ * Translate LUNA keycodes to US keyboard XT scancodes, for proper
+ * X11-over-wsmux operation.
+ */
+static const u_int8_t omkbd_raw[0x80] = {
+	RAWKEY_Null,		/* 0x00 */
+	RAWKEY_Null,		/* 0x01 */
+	RAWKEY_Null,		/* 0x02 */
+	RAWKEY_Null,		/* 0x03 */
+	RAWKEY_Null,		/* 0x04 */
+	RAWKEY_Null,		/* 0x05 */
+	RAWKEY_Null,		/* 0x06 */
+	RAWKEY_Null,		/* 0x07 */
+	RAWKEY_Null,		/* 0x08 */
+	RAWKEY_Tab,		/* 0x09 */
+	RAWKEY_Control_L,	/* 0x0a */
+	RAWKEY_Null,		/* 0x0b: Kana */
+	RAWKEY_Shift_R,		/* 0x0c */
+	RAWKEY_Shift_L,		/* 0x0d */
+	RAWKEY_Caps_Lock,	/* 0x0e */
+	RAWKEY_Meta_L,		/* 0x0f: Zenmen */
+	RAWKEY_Escape,		/* 0x10 */
+	RAWKEY_BackSpace,	/* 0x11 */
+	RAWKEY_Return,		/* 0x12 */
+	RAWKEY_Null,		/* 0x13 */
+	RAWKEY_space,		/* 0x14 */
+	RAWKEY_Delete,		/* 0x15 */
+	RAWKEY_Alt_L,		/* 0x16: Henkan */
+	RAWKEY_Alt_R,		/* 0x17: Kakutei */
+	RAWKEY_f11,		/* 0x18: Shokyo */
+	RAWKEY_f12,		/* 0x19: Yobidashi */
+	RAWKEY_Null,		/* 0x1a: Bunsetsu L / f13 */
+	RAWKEY_Null,		/* 0x1b: Bunsetsu R / f14 */
+	RAWKEY_KP_Up,		/* 0x1c */
+	RAWKEY_KP_Left,		/* 0x1d */
+	RAWKEY_KP_Right,	/* 0x1e */
+	RAWKEY_KP_Down,		/* 0x1f */
+	RAWKEY_f11,		/* 0x20 */
+	RAWKEY_f12,		/* 0x21 */
+	RAWKEY_1,		/* 0x22: exclam */
+	RAWKEY_2,		/* 0x23: quotedbl */
+	RAWKEY_3,		/* 0x24: numbersign */
+	RAWKEY_4,		/* 0x25: dollar */
+	RAWKEY_5,		/* 0x26: percent */
+	RAWKEY_6,		/* 0x27: ampersand */
+	RAWKEY_7,		/* 0x28: apostrophe */
+	RAWKEY_8,		/* 0x29: parenleft */
+	RAWKEY_9,		/* 0x2a: parenright  */
+	RAWKEY_0,		/* 0x2b */
+	RAWKEY_minus,		/* 0x2c: equal */
+	RAWKEY_equal,		/* 0x2d: asciitilde */
+	RAWKEY_backslash,	/* 0x2e: bar */
+	RAWKEY_Null, 		/* 0x2f */
+	RAWKEY_Null, 		/* 0x30: f13 */
+	RAWKEY_Null, 		/* 0x31: f14 */
+	RAWKEY_q,		/* 0x32 */
+	RAWKEY_w,		/* 0x33 */
+	RAWKEY_e,		/* 0x34 */
+	RAWKEY_r,		/* 0x35 */
+	RAWKEY_t,		/* 0x36 */
+	RAWKEY_y,		/* 0x37 */
+	RAWKEY_u,		/* 0x38 */
+	RAWKEY_i,		/* 0x39 */
+	RAWKEY_o,		/* 0x3a */
+	RAWKEY_p,		/* 0x3b */
+	RAWKEY_bracketleft,	/* 0x3c: grave */
+	RAWKEY_bracketright,	/* 0x3d: braceleft */
+	RAWKEY_Null,		/* 0x3e */
+	RAWKEY_Null,		/* 0x3f */
+	RAWKEY_Null,		/* 0x40 */
+	RAWKEY_Null,		/* 0x41 */
+	RAWKEY_a,		/* 0x42 */
+	RAWKEY_s,		/* 0x43 */
+	RAWKEY_d,		/* 0x44 */
+	RAWKEY_f,		/* 0x45 */
+	RAWKEY_g,		/* 0x46 */
+	RAWKEY_h,		/* 0x47 */
+	RAWKEY_j,		/* 0x48 */
+	RAWKEY_k,		/* 0x49 */
+	RAWKEY_l,		/* 0x4a */
+	RAWKEY_semicolon,	/* 0x4b: plus */
+	RAWKEY_apostrophe,	/* 0x4c: asterisk */
+	RAWKEY_Null,		/* 0x4d: braceright */
+	RAWKEY_Null,		/* 0x4e */
+	RAWKEY_Null,		/* 0x4f */
+	RAWKEY_Null,		/* 0x50 */
+	RAWKEY_Null,		/* 0x51 */
+	RAWKEY_z,		/* 0x52 */
+	RAWKEY_x,		/* 0x53 */
+	RAWKEY_c,		/* 0x54 */
+	RAWKEY_v,		/* 0x55 */
+	RAWKEY_b,		/* 0x56 */
+	RAWKEY_n,		/* 0x57 */
+	RAWKEY_m,		/* 0x58 */
+	RAWKEY_comma,		/* 0x59: less */
+	RAWKEY_period,		/* 0x5a: greater */
+	RAWKEY_slash,		/* 0x5b: question */
+	RAWKEY_Null,		/* 0x5c: underscore */
+	RAWKEY_Null,		/* 0x5d */
+	RAWKEY_Null,		/* 0x5e */
+	RAWKEY_Null,		/* 0x5f */
+	RAWKEY_KP_Delete,	/* 0x60 */
+	RAWKEY_KP_Add,		/* 0x61 */
+	RAWKEY_KP_Subtract,	/* 0x62 */
+	RAWKEY_KP_Home,		/* 0x63: KP 7 */
+	RAWKEY_KP_Up,		/* 0x64: KP 8 */
+	RAWKEY_KP_Prior,	/* 0x65: KP 9 */
+	RAWKEY_KP_Left,		/* 0x66: KP 4 */
+	RAWKEY_KP_Begin,	/* 0x67: KP 5 */
+	RAWKEY_KP_Right,	/* 0x68: KP 6 */
+	RAWKEY_KP_End,		/* 0x69: KP 1 */
+	RAWKEY_KP_Down,		/* 0x6a: KP 2 */
+	RAWKEY_KP_Next,		/* 0x6b: KP 3 */
+	RAWKEY_KP_Insert,	/* 0x6c: KP 0 */
+	RAWKEY_KP_Delete,	/* 0x6d: KP Decimal */
+	RAWKEY_KP_Enter,	/* 0x6e */
+	RAWKEY_Null,		/* 0x6f */
+	RAWKEY_Null,		/* 0x70 */
+	RAWKEY_Null,		/* 0x71 */
+	RAWKEY_f1,		/* 0x72 */
+	RAWKEY_f2,		/* 0x73 */
+	RAWKEY_f3,		/* 0x74 */
+	RAWKEY_f4,		/* 0x75 */
+	RAWKEY_f5,		/* 0x76 */
+	RAWKEY_f6,		/* 0x77 */
+	RAWKEY_f7,		/* 0x78 */
+	RAWKEY_f8,		/* 0x79 */
+	RAWKEY_f9,		/* 0x7a */
+	RAWKEY_f10,		/* 0x7b */
+	RAWKEY_KP_Multiply,	/* 0x7c */
+	RAWKEY_KP_Divide,	/* 0x7d */
+	RAWKEY_KP_Equal,	/* 0x7E */
+	RAWKEY_Null,		/* 0x7f: KP Separator */
+};
+#endif
 
 #define KC(n) KS_KEYCODE(n)
 
@@ -477,7 +645,7 @@ omkbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-#if 0
+#if WSDISPLAY_COMPAT_RAWKBD
 	struct ws_softc *sc = v;
 #endif
 
@@ -489,6 +657,14 @@ omkbd_ioctl(v, cmd, data, flag, p)
 	case WSKBDIO_GETLEDS:
 	case WSKBDIO_COMPLEXBELL:	/* XXX capable of complex bell */
 		return -1;
+#if WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		return 0;
+	case WSKBDIO_GETMODE:
+		*(int *)data = sc->sc_rawkbd;
+		return 0;
+#endif
 	}
 	return -1;
 }
