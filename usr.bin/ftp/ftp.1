@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.87 2013/02/19 03:02:34 lteo Exp $
+.\" 	$OpenBSD: ftp.1,v 1.88 2013/04/28 18:03:40 lteo Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: February 19 2013 $
+.Dd $Mdocdate: April 28 2013 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1730,17 +1730,6 @@ command appeared in
 .Sh BUGS
 Correct execution of many commands depends upon proper behavior
 by the remote server.
-.Pp
-An error in the treatment of carriage returns
-in the
-.Bx 4.2
-ASCII-mode transfer code
-has been corrected.
-This correction may result in incorrect transfers of binary files
-to and from
-.Bx 4.2
-servers using the ASCII type.
-Avoid this problem by using the binary image type.
 .Pp
 In the recursive mode of
 .Ic mget ,
