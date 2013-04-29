@@ -6887,6 +6887,7 @@
 ./usr/share/man/man9/timeout_triggered.9
 ./usr/share/man/man9/timingsafe_bcmp.9
 ./usr/share/man/man9/tsleep.9
+./usr/share/man/man9/tstohz.9
 ./usr/share/man/man9/ttyprintf.9
 ./usr/share/man/man9/tvtohz.9
 ./usr/share/man/man9/uao_create.9
