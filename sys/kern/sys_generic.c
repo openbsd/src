@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.78 2012/07/09 17:51:08 claudio Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.79 2013/04/29 17:06:20 matthew Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -65,6 +65,10 @@
 int selscan(struct proc *, fd_set *, fd_set *, int, int, register_t *);
 void pollscan(struct proc *, struct pollfd *, u_int, register_t *);
 int pollout(struct pollfd *, struct pollfd *, u_int);
+int dopselect(struct proc *, u_int, fd_set *, fd_set *, fd_set *,
+    const struct timespec *, const sigset_t *, register_t *);
+int doppoll(struct proc *, struct pollfd *, u_int, const struct timespec *,
+    const sigset_t *, register_t *);
 
 /*
  * Read system call.
@@ -534,13 +538,75 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		syscallarg(fd_set *) ex;
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
+
+	struct timespec ts, *tsp = NULL;
+	int error;
+
+	if (SCARG(uap, tv) != NULL) {
+		struct timeval tv;
+		if ((error = copyin(SCARG(uap, tv), &tv, sizeof tv)) != 0)
+			return (error);
+		if ((error = itimerfix(&tv)) != 0)
+			return (error);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimeval(p, &tv);
+#endif
+		TIMEVAL_TO_TIMESPEC(&tv, &ts);
+		tsp = &ts;
+	}
+
+	return (dopselect(p, SCARG(uap, nd), SCARG(uap, in), SCARG(uap, ou),
+	    SCARG(uap, ex), tsp, NULL, retval));
+}
+
+int
+sys_pselect(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_pselect_args /* {
+		syscallarg(int) nd;
+		syscallarg(fd_set *) in;
+		syscallarg(fd_set *) ou;
+		syscallarg(fd_set *) ex;
+		syscallarg(const struct timespec *) ts;
+		syscallarg(const sigset_t *) mask;
+	} */ *uap = v;
+
+	struct timespec ts, *tsp = NULL;
+	sigset_t ss, *ssp = NULL;
+	int error;
+
+	if (SCARG(uap, ts) != NULL) {
+		if ((error = copyin(SCARG(uap, ts), &ts, sizeof ts)) != 0)
+			return (error);
+		if ((error = timespecfix(&ts)) != 0)
+			return (error);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimespec(p, &ts);
+#endif
+		tsp = &ts;
+	}
+	if (SCARG(uap, mask) != NULL) {
+		if ((error = copyin(SCARG(uap, mask), &ss, sizeof ss)) != 0)
+			return (error);
+		ssp = &ss;
+	}
+
+	return (dopselect(p, SCARG(uap, nd), SCARG(uap, in), SCARG(uap, ou),
+	    SCARG(uap, ex), tsp, ssp, retval));
+}
+
+int
+dopselect(struct proc *p, u_int nd, fd_set *in, fd_set *ou, fd_set *ex,
+    const struct timespec *tsp, const sigset_t *sigmask, register_t *retval)
+{
 	fd_mask bits[6];
 	fd_set *pibits[3], *pobits[3];
-	struct timeval atv, rtv, ttv;
+	struct timespec ats, rts, tts;
 	int s, ncoll, error = 0, timo;
-	u_int nd, ni;
+	u_int ni;
 
-	nd = SCARG(uap, nd);
 	if (nd > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
 		nd = p->p_fd->fd_nfiles;
@@ -567,8 +633,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 	}
 
 #define	getbits(name, x) \
-	if (SCARG(uap, name) && (error = copyin(SCARG(uap, name), \
-	    pibits[x], ni))) \
+	if (name && (error = copyin(name, pibits[x], ni))) \
 		goto done;
 	getbits(in, 0);
 	getbits(ou, 1);
@@ -576,31 +641,26 @@ sys_select(struct proc *p, void *v, register_t *retval)
 #undef	getbits
 #ifdef KTRACE
 	if (ni > 0 && KTRPOINT(p, KTR_STRUCT)) {
-		if (SCARG(uap, in)) ktrfdset(p, pibits[0], ni);
-		if (SCARG(uap, ou)) ktrfdset(p, pibits[1], ni);
-		if (SCARG(uap, ex)) ktrfdset(p, pibits[2], ni);
+		if (in) ktrfdset(p, pibits[0], ni);
+		if (ou) ktrfdset(p, pibits[1], ni);
+		if (ex) ktrfdset(p, pibits[2], ni);
 	}
 #endif
 
-	if (SCARG(uap, tv)) {
-		error = copyin(SCARG(uap, tv), &atv, sizeof (atv));
-		if (error)
-			goto done;
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_STRUCT))
-			ktrreltimeval(p, &atv);
-#endif
-		if (itimerfix(&atv)) {
-			error = EINVAL;
-			goto done;
-		}
-		getmicrouptime(&rtv);
-		timeradd(&atv, &rtv, &atv);
+	if (tsp) {
+		getnanouptime(&rts);
+		timespecadd(tsp, &rts, &ats);
 	} else {
-		atv.tv_sec = 0;
-		atv.tv_usec = 0;
+		ats.tv_sec = 0;
+		ats.tv_nsec = 0;
 	}
 	timo = 0;
+
+	if (sigmask) {
+		p->p_oldmask = p->p_sigmask;
+		atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
+		p->p_sigmask = *sigmask &~ sigcantmask;
+	}
 
 retry:
 	ncoll = nselcoll;
@@ -608,14 +668,13 @@ retry:
 	error = selscan(p, pibits[0], pobits[0], nd, ni, retval);
 	if (error || *retval)
 		goto done;
-	if (SCARG(uap, tv)) {
-		getmicrouptime(&rtv);
-		if (timercmp(&rtv, &atv, >=))
+	if (tsp) {
+		getnanouptime(&rts);
+		if (timespeccmp(&rts, &ats, >=))
 			goto done;
-		ttv = atv;
-		timersub(&ttv, &rtv, &ttv);
-		timo = ttv.tv_sec > 24 * 60 * 60 ?
-			24 * 60 * 60 * hz : tvtohz(&ttv);
+		timespecsub(&ats, &rts, &tts);
+		timo = tts.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tstohz(&tts);
 	}
 	s = splhigh();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
@@ -635,8 +694,7 @@ done:
 	if (error == EWOULDBLOCK)
 		error = 0;
 #define	putbits(name, x) \
-	if (SCARG(uap, name) && (error2 = copyout(pobits[x], \
-	    SCARG(uap, name), ni))) \
+	if (name && (error2 = copyout(pobits[x], name, ni))) \
 		error = error2;
 	if (error == 0) {
 		int error2;
@@ -647,9 +705,9 @@ done:
 #undef putbits
 #ifdef KTRACE
 		if (ni > 0 && KTRPOINT(p, KTR_STRUCT)) {
-			if (SCARG(uap, in)) ktrfdset(p, pobits[0], ni);
-			if (SCARG(uap, ou)) ktrfdset(p, pobits[1], ni);
-			if (SCARG(uap, ex)) ktrfdset(p, pobits[2], ni);
+			if (in) ktrfdset(p, pobits[0], ni);
+			if (ou) ktrfdset(p, pobits[1], ni);
+			if (ex) ktrfdset(p, pobits[2], ni);
 		}
 #endif
 	}
@@ -819,13 +877,67 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 		syscallarg(u_int) nfds;
 		syscallarg(int) timeout;
 	} */ *uap = v;
+
+	struct timespec ts, *tsp = NULL;
+	int msec = SCARG(uap, timeout);
+
+	if (msec != INFTIM) {
+		if (msec < 0)
+			return (EINVAL);
+		ts.tv_sec = msec / 1000;
+		ts.tv_nsec = (msec - (ts.tv_sec * 1000)) * 1000000;
+		tsp = &ts;
+	}
+
+	return (doppoll(p, SCARG(uap, fds), SCARG(uap, nfds), tsp, NULL,
+	    retval));
+}
+
+int
+sys_ppoll(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_ppoll_args /* {
+		syscallarg(struct pollfd *) fds;
+		syscallarg(u_int) nfds;
+		syscallarg(const struct timespec *) ts;
+		syscallarg(const sigset_t *) mask;
+	} */ *uap = v;
+
+	int error;
+	struct timespec ts, *tsp = NULL;
+	sigset_t ss, *ssp = NULL;
+
+	if (SCARG(uap, ts) != NULL) {
+		if ((error = copyin(SCARG(uap, ts), &ts, sizeof ts)) != 0)
+			return (error);
+		if ((error = timespecfix(&ts)) != 0)
+			return (error);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimespec(p, &ts);
+#endif
+		tsp = &ts;
+	}
+
+	if (SCARG(uap, mask) != NULL) {
+		if ((error = copyin(SCARG(uap, mask), &ss, sizeof ss)) != 0)
+			return (error);
+		ssp = &ss;
+	}
+
+	return (doppoll(p, SCARG(uap, fds), SCARG(uap, nfds), tsp, ssp,
+	    retval));
+}
+
+int
+doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
+    const struct timespec *tsp, const sigset_t *sigmask, register_t *retval)
+{
 	size_t sz;
 	struct pollfd pfds[4], *pl = pfds;
-	int msec = SCARG(uap, timeout);
-	struct timeval atv, rtv, ttv;
+	struct timespec ats, rts, tts;
 	int timo, ncoll, i, s, error;
 	extern int nselcoll, selwait;
-	u_int nfds = SCARG(uap, nfds);
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
 	if (nfds > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles))
@@ -837,27 +949,26 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 	if (sz > sizeof(pfds))
 		pl = (struct pollfd *) malloc(sz, M_TEMP, M_WAITOK);
 
-	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
+	if ((error = copyin(fds, pl, sz)) != 0)
 		goto bad;
 
 	for (i = 0; i < nfds; i++)
 		pl[i].revents = 0;
 
-	if (msec != INFTIM) {
-		atv.tv_sec = msec / 1000;
-		atv.tv_usec = (msec - (atv.tv_sec * 1000)) * 1000;
-
-		if (itimerfix(&atv)) {
-			error = EINVAL;
-			goto done;
-		}
-		getmicrouptime(&rtv);
-		timeradd(&atv, &rtv, &atv);
+	if (tsp != NULL) {
+		getnanouptime(&rts);
+		timespecadd(tsp, &rts, &ats);
 	} else {
-		atv.tv_sec = 0;
-		atv.tv_usec = 0;
+		ats.tv_sec = 0;
+		ats.tv_nsec = 0;
 	}
 	timo = 0;
+
+	if (sigmask) {
+		p->p_oldmask = p->p_sigmask;
+		atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
+		p->p_sigmask = *sigmask &~ sigcantmask;
+	}
 
 retry:
 	ncoll = nselcoll;
@@ -865,14 +976,13 @@ retry:
 	pollscan(p, pl, nfds, retval);
 	if (*retval)
 		goto done;
-	if (msec != INFTIM) {
-		getmicrouptime(&rtv);
-		if (timercmp(&rtv, &atv, >=))
+	if (tsp != NULL) {
+		getnanouptime(&rts);
+		if (timespeccmp(&rts, &ats, >=))
 			goto done;
-		ttv = atv;
-		timersub(&ttv, &rtv, &ttv);
-		timo = ttv.tv_sec > 24 * 60 * 60 ?
-			24 * 60 * 60 * hz : tvtohz(&ttv);
+		timespecsub(&ats, &rts, &tts);
+		timo = tts.tv_sec > 24 * 60 * 60 ?
+			24 * 60 * 60 * hz : tstohz(&tts);
 	}
 	s = splhigh();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
@@ -893,13 +1003,13 @@ done:
 	 */
 	switch (error) {
 	case ERESTART:
-		error = pollout(pl, SCARG(uap, fds), nfds);
+		error = pollout(pl, fds, nfds);
 		if (error == 0)
 			error = EINTR;
 		break;
 	case EWOULDBLOCK:
 	case 0:
-		error = pollout(pl, SCARG(uap, fds), nfds);
+		error = pollout(pl, fds, nfds);
 		break;
 	}
 bad:

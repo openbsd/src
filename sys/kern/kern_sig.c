@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.150 2013/04/06 06:08:20 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.151 2013/04/29 17:06:20 matthew Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1743,6 +1743,20 @@ userret(struct proc *p)
 
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
+
+	/*
+	 * If P_SIGSUSPEND is still set here, then we still need to restore
+	 * the original sigmask before returning to userspace.  Also, this
+	 * might unmask some pending signals, so we need to check a second
+	 * time for signals to post.
+	 */
+	if (p->p_flag & P_SIGSUSPEND) {
+		atomic_clearbits_int(&p->p_flag, P_SIGSUSPEND);
+		p->p_sigmask = p->p_oldmask;
+
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+	}
 
 	if (p->p_flag & P_SUSPSINGLE) {
 		KERNEL_LOCK();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.25 2013/03/24 17:46:25 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.26 2013/04/29 17:06:20 matthew Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -99,7 +99,10 @@
 #define	SIG_ERR		(void (*)(int))-1
 
 #if __POSIX_VISIBLE || __XPG_VISIBLE
+#ifndef _SIGSET_T_DEFINED_
+#define _SIGSET_T_DEFINED_
 typedef unsigned int sigset_t;
+#endif
 
 #include <sys/siginfo.h>
 

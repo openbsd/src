@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_cancel.c,v 1.6 2012/04/17 15:10:11 miod Exp $ */
+/* $OpenBSD: rthread_cancel.c,v 1.7 2013/04/29 17:06:20 matthew Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -40,8 +40,12 @@ int	_thread_sys_nanosleep(const struct timespec *, struct timespec *);
 int	_thread_sys_open(const char *, int, ...);
 int	_thread_sys_openat(int, const char *, int, ...);
 int	_thread_sys_poll(struct pollfd *, nfds_t, int);
+int	_thread_sys_ppoll(struct pollfd *, nfds_t, const struct timespec *,
+	    const sigset_t *);
 ssize_t	_thread_sys_pread(int, void *, size_t, off_t);
 ssize_t	_thread_sys_preadv(int, const struct iovec *, int, off_t);
+int	_thread_sys_pselect(int, fd_set *, fd_set *, fd_set *,
+	    const struct timespec *, const sigset_t *);
 ssize_t	_thread_sys_pwrite(int, const void *, size_t, off_t);
 ssize_t	_thread_sys_pwritev(int, const struct iovec *, int, off_t);
 ssize_t	_thread_sys_read(int, void *, size_t);
@@ -203,7 +207,7 @@ fcntl(int fd, int cmd, ...)
 }
 
 #if 0
-fdatasync()			/* don't have yet */
+fdatasync()			/* built on fsync() */
 #endif
 
 int
@@ -333,6 +337,26 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 	return (rv);
 }
 
+int
+ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout,
+    const sigset_t *sigmask)
+{
+	pthread_t self = pthread_self();
+	sigset_t set;
+	int rv;
+
+	if (sigmask != NULL && sigismember(sigmask, SIGTHR)) {
+		set = *sigmask;
+		sigdelset(&set, SIGTHR);
+		sigmask = &set;
+	}
+
+	_enter_cancel(self);
+	rv = _thread_sys_ppoll(fds, nfds, timeout, sigmask);
+	_leave_cancel(self);
+	return (rv);
+}
+
 ssize_t
 pread(int fd, void *buf, size_t nbytes, off_t offset)
 {
@@ -357,8 +381,28 @@ preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 	return (rv);
 }
 
+int
+pselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+    const struct timespec *timeout, const sigset_t *sigmask)
+{
+	pthread_t self = pthread_self();
+	sigset_t set;
+	int rv;
+
+	if (sigmask != NULL && sigismember(sigmask, SIGTHR)) {
+		set = *sigmask;
+		sigdelset(&set, SIGTHR);
+		sigmask = &set;
+	}
+
+	_enter_cancel(self);
+	rv = _thread_sys_pselect(nfds, readfds, writefds, exceptfds, timeout,
+	    sigmask);
+	_leave_cancel(self);
+	return (rv);
+}
+
 #if 0
-pselect()			/* don't have yet */
 putmsg()			/* don't have: dumb STREAMS stuff */
 putpmsg()			/* don't have: dumb STREAMS stuff */
 #endif

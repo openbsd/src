@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.21 2007/07/11 08:12:15 jmc Exp $
+.\"	$OpenBSD: poll.2,v 1.22 2013/04/29 17:06:20 matthew Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,16 +28,19 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: July 11 2007 $
+.Dd $Mdocdate: April 29 2013 $
 .Dt POLL 2
 .Os
 .Sh NAME
-.Nm poll
+.Nm poll ,
+.Nm ppoll
 .Nd synchronous I/O multiplexing
 .Sh SYNOPSIS
 .Fd #include <poll.h>
 .Ft int
 .Fn poll "struct pollfd *fds" "nfds_t nfds" "int timeout"
+.Ft int
+.Fn ppoll "struct pollfd *fds" "nfds_t nfds" "const struct timespec *timeout" "const sigset_t *mask"
 .Sh DESCRIPTION
 .Fn poll
 provides a mechanism for multiplexing I/O across a set of file
@@ -176,18 +179,39 @@ In addition to I/O multiplexing,
 can be used to generate simple timeouts.
 This functionality may be achieved by passing a null pointer for
 .Fa fds .
+.Pp
+The
+.Fn ppoll
+function is similar to
+.Fn poll
+except that it specifies the timeout using a timespec structure,
+and a null pointer is used to specify an indefinite timeout
+instead of
+.Dv INFTIM .
+Also, if
+.Fa mask
+is a non-null pointer,
+.Fn ppoll
+atomically sets the calling thread's signal mask to the signal set
+pointed to by
+.Fa mask
+for the duration of the function call.
+In this case, the original signal mask will be restored before
+.Fn ppoll
+returns.
 .Sh RETURN VALUES
 Upon error,
 .Fn poll
-returns \-1 and sets the global variable
+and
+.Fn ppoll
+return \-1 and set the global variable
 .Va errno
 to indicate the error.
 If the timeout interval was reached before any events occurred,
-.Fn poll
-returns 0.
-Otherwise,
-.Fn poll
-returns the number of file descriptors for which
+they return 0.
+Otherwise, they return the number of
+.Fa pollfd
+structures for which
 .Fa revents
 is non-zero.
 .Sh EXAMPLES
@@ -215,22 +239,22 @@ if (read(STDIN_FILENO, buf, sizeof(buf)) == -1)
 .Ed
 .Sh ERRORS
 .Fn poll
+and
+.Fn ppoll
 will fail if:
-.Bl -tag -width "EINVAL   "
+.Bl -tag -width Er
 .It Bq Er EFAULT
 .Fa fds
 points outside the process's allocated address space.
 .It Bq Er EINTR
-.Fn poll
-caught a signal during the polling process.
+A signal was caught before any polled events occurred
+and before the timeout elapsed.
 .It Bq Er EINVAL
 .Fa nfds
 was greater than the number of available
 file descriptors.
 .It Bq Er EINVAL
-The timeout passed to
-.Fn poll
-was too large.
+The timeout passed was invalid.
 .El
 .Sh SEE ALSO
 .Xr getrlimit 2 ,
@@ -243,11 +267,18 @@ The
 function is compliant with the
 .St -xpg4.3
 specification.
+The
+.Fn ppoll
+function is a Linux extension.
 .Sh HISTORY
 A
 .Fn poll
 system call appeared in
 .At V.3 .
+The
+.Fn ppoll
+function appeared in
+.Ox 5.4 .
 .Sh BUGS
 The
 .Dv POLLERR
@@ -273,4 +304,6 @@ flags are equivalent.
 .Pp
 Internally to the kernel,
 .Fn poll
-works poorly if multiple processes wait on the same file descriptor.
+and
+.Fn ppoll
+work poorly if multiple processes wait on the same file descriptor.

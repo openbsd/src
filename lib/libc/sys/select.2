@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.28 2007/05/31 19:19:33 jmc Exp $
+.\"	$OpenBSD: select.2,v 1.29 2013/04/29 17:06:20 matthew Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,11 +30,12 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 29 2013 $
 .Dt SELECT 2
 .Os
 .Sh NAME
-.Nm select
+.Nm select ,
+.Nm pselect
 .Nd synchronous I/O multiplexing
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -43,6 +44,8 @@
 .Fd #include <unistd.h>
 .Ft int
 .Fn select "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "struct timeval *timeout"
+.Ft int
+.Fn pselect "int nfds" "fd_set *readfds" "fd_set *writefds" "fd_set *exceptfds" "const struct timespec *timeout" "const sigset_t *mask"
 .Fn FD_SET fd &fdset
 .Fn FD_CLR fd &fdset
 .Fn FD_ISSET fd &fdset
@@ -122,20 +125,47 @@ Any of
 and
 .Fa exceptfds
 may be given as null pointers if no descriptors are of interest.
+.Pp
+The
+.Fn pselect
+function is similar to
+.Fn select
+except that it specifies the timeout using a timespec structure.
+Also, if
+.Fa mask
+is a non-null pointer,
+.Fn pselect
+atomically sets the calling thread's signal mask to the signal set
+pointed to by
+.Fa mask
+for the duration of the function call.
+In this case, the original signal mask will be restored before
+.Fn pselect
+returns.
 .Sh RETURN VALUES
+If successful,
 .Fn select
-returns the number of ready descriptors that are contained in
-the descriptor sets, or \-1 if an error occurred.
-If the time limit expires,
+and
+.Fn pselect
+return the number of ready descriptors that are contained in
+the descriptor sets.
+If a descriptor is included in multiple descriptor sets,
+each inclusion is counted separately.
+If the time limit expires before any descriptors become ready,
+they return 0.
+.Pp
+Otherwise, if
 .Fn select
-returns 0.
-If
-.Fn select
-returns with an error, including one due to an interrupted call,
-the descriptor sets will be unmodified.
+or
+.Fn pselect
+return with an error, including one due to an interrupted call,
+they return \-1,
+and the descriptor sets will be unmodified.
 .Sh ERRORS
 An error return from
 .Fn select
+or
+.Fn pselect
 indicates:
 .Bl -tag -width Er
 .It Bq Er EFAULT
@@ -149,7 +179,7 @@ points outside the process's allocated address space.
 One of the descriptor sets specified an invalid descriptor.
 .It Bq Er EINTR
 A signal was delivered before the time limit expired and
-before any of the selected events occurred.
+before any of the selected descriptors became ready.
 .It Bq Er EINVAL
 The specified time limit is invalid.
 One of its components is negative or too large.
@@ -167,8 +197,12 @@ One of its components is negative or too large.
 .Sh HISTORY
 The
 .Fn select
-function call appeared in
+function appeared in
 .Bx 4.2 .
+The
+.Fn pselect
+function appeared in
+.Ox 5.4 .
 .Sh BUGS
 Although the provision of
 .Xr getdtablesize 3
@@ -250,7 +284,9 @@ and using
 .Pp
 Internally to the kernel,
 .Fn select
-works poorly if multiple processes wait on the same file descriptor.
+and
+.Fn pselect
+work poorly if multiple processes wait on the same file descriptor.
 Given that, it is rather surprising to see that many daemons are
 written that way (i.e.,
 .Xr httpd 8 ) .

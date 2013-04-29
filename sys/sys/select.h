@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.10 2012/12/05 23:20:24 deraadt Exp $	*/
+/*	$OpenBSD: select.h,v 1.11 2013/04/29 17:06:20 matthew Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,6 +35,17 @@
 #define	_SYS_SELECT_H_
 
 #include <sys/time.h>		/* for types and struct timeval */
+
+/*
+ * Currently, <sys/time.h> includes <sys/types.h> before defining timeval and
+ * timespec, and <sys/types.h> in turn includes <sys/select.h>.  So even though
+ * we include <sys/time.h> above, the compiler might not see the timeval and
+ * timespec definitions until after this header's contents have been processed.
+ *
+ * As a workaround, we forward declare timeval and timespec as structs here.
+ */
+struct timeval;
+struct timespec;
 
 /*
  * Select uses bit masks of file descriptors in longs.  These macros
@@ -83,11 +94,19 @@ typedef	struct fd_set {
 #endif /* __BSD_VISIBLE */
 
 #ifndef _KERNEL
+#ifndef _SIGSET_T_DEFINED_
+#define _SIGSET_T_DEFINED_
+typedef unsigned int sigset_t;
+#endif
+
 #ifndef _SELECT_DEFINED_
 #define _SELECT_DEFINED_
 __BEGIN_DECLS
-struct timeval;
-int	select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+int	select(int, fd_set * __restrict, fd_set * __restrict,
+	    fd_set * __restrict, struct timeval * __restrict);
+int	pselect(int, fd_set * __restrict, fd_set * __restrict,
+	    fd_set * __restrict, const struct timespec * __restrict,
+	    const sigset_t * __restrict);
 __END_DECLS
 #endif
 #endif /* !_KERNEL */

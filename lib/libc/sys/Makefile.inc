@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.110 2013/04/15 16:38:21 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.111 2013/04/29 17:06:20 matthew Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -45,7 +45,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	mknod.o mknodat.o mlock.o mlockall.o mount.o mprotect.o \
 	msgctl.o msgget.o msgrcv.o msgsnd.o msync.o munlock.o \
 	munlockall.o munmap.o nanosleep.o nfssvc.o \
-	open.o openat.o pathconf.o pipe.o poll.o profil.o \
+	open.o openat.o pathconf.o pipe.o poll.o ppoll.o profil.o pselect.o \
 	quotactl.o read.o readlink.o readlinkat.o readv.o reboot.o \
 	recvfrom.o recvmsg.o rename.o renameat.o revoke.o rmdir.o \
 	sched_yield.o select.o semget.o semop.o sendmsg.o sendto.o \
@@ -239,10 +239,12 @@ MLINKS+=mlockall.2 munlockall.2
 MLINKS+=mount.2 unmount.2
 MLINKS+=open.2 openat.2
 MLINKS+=pathconf.2 fpathconf.2
+MLINKS+=poll.2 ppoll.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=readlink.2 readlinkat.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
 MLINKS+=rename.2 renameat.2
+MLINKS+=select.2 pselect.2
 MLINKS+=select.2 FD_ISSET.3 select.2 FD_ZERO.3
 MLINKS+=select.2 FD_SET.3 select.2 FD_CLR.3
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2

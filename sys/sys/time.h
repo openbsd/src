@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.29 2012/12/05 23:20:24 deraadt Exp $	*/
+/*	$OpenBSD: time.h,v 1.30 2013/04/29 17:06:20 matthew Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -36,10 +36,6 @@
 #define _SYS_TIME_H_
 
 #include <sys/types.h>
-
-#if __XPG_VISIBLE >= 420 && __XPG_VISIBLE < 600
-#include <sys/select.h>
-#endif
 
 /*
  * Structure returned by gettimeofday(2) system call,
@@ -328,6 +324,10 @@ void clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 
 #else /* !_KERNEL */
 #include <time.h>
+
+#if __XPG_VISIBLE >= 420 && __XPG_VISIBLE < 600
+#include <sys/select.h>	/* must be after type declarations */
+#endif
 
 #if __BSD_VISIBLE || __XPG_VISIBLE
 __BEGIN_DECLS

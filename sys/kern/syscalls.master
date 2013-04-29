@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.129 2013/04/15 15:32:19 jsing Exp $
+;	$OpenBSD: syscalls.master,v 1.130 2013/04/29 17:06:20 matthew Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -207,8 +207,12 @@
 106	STD		{ int sys_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	OBSOL		osigvec
-109	OBSOL		osigblock
-110	OBSOL		osigsetmask
+109	STD		{ int sys_ppoll(struct pollfd *fds, \
+			    u_int nfds, const struct timespec *ts, \
+			    const sigset_t *mask); }
+110	STD		{ int sys_pselect(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, const struct timespec *ts, \
+			    const sigset_t *mask); }
 111	STD		{ int sys_sigsuspend(int mask); }
 112	OBSOL		osigstack
 113	OBSOL		orecvmsg
