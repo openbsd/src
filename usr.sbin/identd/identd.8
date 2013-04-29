@@ -1,4 +1,4 @@
-.\"   $OpenBSD: identd.8,v 1.9 2013/04/23 21:18:56 sthen Exp $
+.\"   $OpenBSD: identd.8,v 1.10 2013/04/29 04:17:58 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2013 $
+.Dd $Mdocdate: April 29 2013 $
 .Dt IDENTD 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd Identification Protocol daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46deNn
+.Op Fl 46dehNn
 .Op Fl l Ar address
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
@@ -57,6 +57,11 @@ instead of the
 or
 .Dq INVALID-PORT
 errors.
+.It Fl h
+Hide the actual information about the user by providing an opaque
+token instead.
+This token is entered into the local system logs
+so that the administrator can later discover who the real user was.
 .It Fl l Ar address
 Listen on the specified address.
 By default

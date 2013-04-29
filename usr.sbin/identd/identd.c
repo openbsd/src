@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.17 2013/04/23 21:18:57 sthen Exp $ */
+/*	$OpenBSD: identd.c,v 1.18 2013/04/29 04:17:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -107,6 +107,7 @@ void	parent_rd(int, short, void *);
 void	parent_wr(int, short, void *);
 int	parent_username(struct ident_resolver *, struct passwd *);
 int	parent_uid(struct ident_resolver *, struct passwd *);
+int	parent_token(struct ident_resolver *, struct passwd *);
 void	parent_noident(struct ident_resolver *, struct passwd *);
 
 void	child_rd(int, short, void *);
@@ -127,13 +128,14 @@ int	fetchuid(struct ident_client *);
 
 const char *gethost(struct sockaddr_storage *);
 const char *getport(struct sockaddr_storage *);
+const char *gentoken(void);
 
 struct loggers {
 	void (*err)(int, const char *, ...);
 	void (*errx)(int, const char *, ...);
 	void (*warn)(const char *, ...);
 	void (*warnx)(const char *, ...);
-	void (*info)(const char *, ...);
+	void (*notice)(const char *, ...);
 	void (*debug)(const char *, ...);
 };
 
@@ -142,7 +144,7 @@ const struct loggers conslogger = {
 	errx,
 	warn,
 	warnx,
-	warnx, /* info */
+	warnx, /* notice */
 	warnx /* debug */
 };
 
@@ -150,7 +152,7 @@ void	syslog_err(int, const char *, ...);
 void	syslog_errx(int, const char *, ...);
 void	syslog_warn(const char *, ...);
 void	syslog_warnx(const char *, ...);
-void	syslog_info(const char *, ...);
+void	syslog_notice(const char *, ...);
 void	syslog_debug(const char *, ...);
 void	syslog_vstrerror(int, int, const char *, va_list);
 
@@ -159,7 +161,7 @@ const struct loggers syslogger = {
 	syslog_errx,
 	syslog_warn,
 	syslog_warnx,
-	syslog_info,
+	syslog_notice,
 	syslog_debug
 };
 
@@ -169,7 +171,7 @@ const struct loggers *logger = &conslogger;
 #define lerrx(_e, _f...) logger->errx((_e), _f)
 #define lwarn(_f...) logger->warn(_f)
 #define lwarnx(_f...) logger->warnx(_f)
-#define linfo(_f...) logger->info(_f)
+#define lnotice(_f...) logger->notice(_f)
 #define ldebug(_f...) logger->debug(_f)
 
 #define sa(_ss) ((struct sockaddr *)(_ss))
@@ -218,7 +220,7 @@ main(int argc, char *argv[])
 	pid_t parent;
 	int sibling;
 
-	while ((c = getopt(argc, argv, "46del:Nnp:t:")) != -1) {
+	while ((c = getopt(argc, argv, "46dehl:Nnp:t:")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
@@ -231,6 +233,9 @@ main(int argc, char *argv[])
 			break;
 		case 'e':
 			unknown_err = 1;
+			break;
+		case 'h':
+			parent_uprintf = parent_token;
 			break;
 		case 'l':
 			addr = optarg;
@@ -404,6 +409,22 @@ int
 parent_uid(struct ident_resolver *r, struct passwd *pw)
 {
 	return (asprintf(&r->buf, "%u", (u_int)pw->pw_uid));
+}
+
+int
+parent_token(struct ident_resolver *r, struct passwd *pw)
+{
+	const char *token;
+	int rv;
+
+	token = gentoken();
+	rv = asprintf(&r->buf, "%s", token);
+	if (rv != -1) {
+		lnotice("token %s == uid %u (%s)", token,
+		    (u_int)pw->pw_uid, pw->pw_name);
+	}
+
+	return (rv);
 }
 
 void
@@ -1052,12 +1073,12 @@ syslog_warnx(const char *fmt, ...)
 }
 
 void
-syslog_info(const char *fmt, ...)
+syslog_notice(const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsyslog(LOG_INFO, fmt, ap);
+	vsyslog(LOG_NOTICE, fmt, ap);
 	va_end(ap);
 }
 
@@ -1096,6 +1117,23 @@ getport(struct sockaddr_storage *ss)
 	if (getnameinfo(sa, sa->sa_len, NULL, 0, buf, sizeof(buf),
 	    NI_NUMERICSERV) != 0)
 		return ("(unknown)");
+
+	return (buf);
+}
+
+const char *
+gentoken(void)
+{
+	static char buf[21];
+	u_int32_t r;
+	int i;
+
+	buf[0] = 'a' + arc4random_uniform(26);
+	for (i = 1; i < sizeof(buf) - 1; i++) {
+		r = arc4random_uniform(36);
+		buf[i] = (r < 26 ? 'a' : '0' - 26) + r;
+	}
+	buf[i] = '\0';
 
 	return (buf);
 }
