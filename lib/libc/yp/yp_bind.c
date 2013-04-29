@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.17 2009/06/05 17:19:00 schwarze Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.18 2013/04/29 00:28:23 okan Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -242,7 +242,7 @@ gotdata:
 		ysd->dom_vers = -1;
 		goto again;
 	}
-	if (fcntl(ysd->dom_socket, F_SETFD, 1) == -1)
+	if (fcntl(ysd->dom_socket, F_SETFD, FD_CLOEXEC) == -1)
 		perror("fcntl: F_SETFD");
 
 	if (new) {

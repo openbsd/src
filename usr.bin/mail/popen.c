@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.35 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.36 2013/04/29 00:28:23 okan Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ Fopen(char *file, char *mode)
 
 	if ((fp = fopen(file, mode)) != NULL) {
 		register_file(fp, 0, 0);
-		(void)fcntl(fileno(fp), F_SETFD, 1);
+		(void)fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
 	}
 	return(fp);
 }
@@ -81,7 +81,7 @@ Fdopen(int fd, char *mode)
 
 	if ((fp = fdopen(fd, mode)) != NULL) {
 		register_file(fp, 0, 0);
-		(void)fcntl(fileno(fp), F_SETFD, 1);
+		(void)fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
 	}
 	return(fp);
 }
@@ -105,8 +105,8 @@ Popen(char *cmd, char *mode)
 
 	if (pipe(p) < 0)
 		return(NULL);
-	(void)fcntl(p[READ], F_SETFD, 1);
-	(void)fcntl(p[WRITE], F_SETFD, 1);
+	(void)fcntl(p[READ], F_SETFD, FD_CLOEXEC);
+	(void)fcntl(p[WRITE], F_SETFD, FD_CLOEXEC);
 	if (*mode == 'r') {
 		myside = p[READ];
 		hisside = fd0 = fd1 = p[WRITE];

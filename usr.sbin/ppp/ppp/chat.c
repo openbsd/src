@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: chat.c,v 1.21 2005/07/06 13:56:00 brad Exp $
+ *	$OpenBSD: chat.c,v 1.22 2013/04/29 00:28:23 okan Exp $
  */
 
 #include <sys/param.h>
@@ -739,7 +739,7 @@ ExecStr(struct physical *physical, char *command, char *out, int olen)
     if (open(_PATH_TTY, O_RDWR) != 3)
       open(_PATH_DEVNULL, O_RDWR);	/* Leave it closed if it fails... */
     for (i = getdtablesize(); i > 3; i--)
-      fcntl(i, F_SETFD, 1);
+      fcntl(i, F_SETFD, FD_CLOEXEC);
 #ifndef NOSUID
     setuid(ID0realuid());
 #endif

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: exec.c,v 1.18 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: exec.c,v 1.19 2013/04/29 00:28:23 okan Exp $
  */
 
 #include <sys/param.h>
@@ -178,7 +178,7 @@ exec_Create(struct physical *p)
           dup2(fids[1], STDOUT_FILENO);
           dup2(fids[1], STDERR_FILENO);
           for (i = getdtablesize(); i > STDERR_FILENO; i--)
-            fcntl(i, F_SETFD, 1);
+            fcntl(i, F_SETFD, FD_CLOEXEC);
 
           execvp(*argv, argv);
           child_status = errno;		/* Only works for vfork() */

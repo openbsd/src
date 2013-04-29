@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.41 2005/07/09 01:45:08 brad Exp $
+ * $OpenBSD: chap.c,v 1.42 2013/04/29 00:28:23 okan Exp $
  */
 
 #include <sys/param.h>
@@ -312,7 +312,7 @@ chap_StartChild(struct chap *chap, char *prog, const char *name)
       }
       /* XXX using an fwalk()-like thing would be safer */
       for (fd = getdtablesize(); fd > STDERR_FILENO; fd--)
-        fcntl(fd, F_SETFD, 1);
+        fcntl(fd, F_SETFD, FD_CLOEXEC);
 #ifndef NOSUID
       setuid(ID0realuid());
 #endif

@@ -1128,7 +1128,7 @@ open_sudoers(sudoers, doedit, keepopen)
 
     if (fp != NULL) {
 	rewind(fp);
-	(void) fcntl(fileno(fp), F_SETFD, 1);
+	(void) fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
     }
 
     set_perms(PERM_ROOT);		/* change back to root */

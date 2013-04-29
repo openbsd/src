@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.19 2008/05/11 22:21:25 millert Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.20 2013/04/29 00:28:23 okan Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -858,7 +858,7 @@ open_temp(HTAB *hashp)
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((hashp->fp = mkstemp(path)) != -1) {
 		(void)unlink(path);
-		(void)fcntl(hashp->fp, F_SETFD, 1);
+		(void)fcntl(hashp->fp, F_SETFD, FD_CLOEXEC);
 	}
 	(void)sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
 	return (hashp->fp != -1 ? 0 : -1);

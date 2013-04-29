@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.34 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: lex.c,v 1.35 2013/04/29 00:28:23 okan Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -129,10 +129,10 @@ setfile(char *name)
 	if ((fd = mkstemp(tempname)) == -1 ||
 	    (otf = fdopen(fd, "w")) == NULL)
 		err(1, "%s", tempname);
-	(void)fcntl(fileno(otf), F_SETFD, 1);
+	(void)fcntl(fileno(otf), F_SETFD, FD_CLOEXEC);
 	if ((itf = fopen(tempname, "r")) == NULL)
 		err(1, "%s", tempname);
-	(void)fcntl(fileno(itf), F_SETFD, 1);
+	(void)fcntl(fileno(itf), F_SETFD, FD_CLOEXEC);
 	(void)rm(tempname);
 	setptr(ibuf, (off_t)0);
 	setmsize(msgCount);

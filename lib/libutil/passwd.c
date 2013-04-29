@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.49 2006/12/20 23:07:36 ray Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.50 2013/04/29 00:28:23 okan Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -107,7 +107,7 @@ pw_lock(int retries)
 		fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL, 0600);
 	}
 	save_errno = errno;
-	if (fd != -1 && fcntl(fd, F_SETFD, 1) == -1) {
+	if (fd != -1 && fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
 		close(fd);
 		fd = -1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.23 2010/07/02 16:46:28 guenther Exp $	*/
+/*	$OpenBSD: hash.c,v 1.24 2013/04/29 00:28:23 okan Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -117,7 +117,7 @@ __hash_open(const char *file, int flags, int mode,
 	if (file) {
 		if ((hashp->fp = open(file, flags, mode)) == -1)
 			RETURN_ERROR(errno, error0);
-		(void)fcntl(hashp->fp, F_SETFD, 1);
+		(void)fcntl(hashp->fp, F_SETFD, FD_CLOEXEC);
 		new_table = fstat(hashp->fp, &statbuf) == 0 &&
 		    statbuf.st_size == 0 && (flags & O_ACCMODE) != O_RDONLY;
 	} else

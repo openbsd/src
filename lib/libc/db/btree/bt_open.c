@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.14 2007/09/17 07:07:23 moritz Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.15 2013/04/29 00:28:23 okan Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -204,7 +204,7 @@ __bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
 		F_SET(t, B_INMEM);
 	}
 
-	if (fcntl(t->bt_fd, F_SETFD, 1) == -1)
+	if (fcntl(t->bt_fd, F_SETFD, FD_CLOEXEC) == -1)
 		goto err;
 
 	if (fstat(t->bt_fd, &sb))
