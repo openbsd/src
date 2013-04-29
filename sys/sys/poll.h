@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.h,v 1.12 2013/04/29 17:06:20 matthew Exp $ */
+/*	$OpenBSD: poll.h,v 1.13 2013/04/29 18:35:07 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt
@@ -53,7 +53,7 @@ typedef unsigned int	nfds_t;
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 
-#ifdef __BSD_VISIBLE
+#if __BSD_VISIBLE
 #include <sys/_types.h>
 
 #ifndef _SIGSET_T_DEFINED_
@@ -77,7 +77,7 @@ struct timespec {
 
 __BEGIN_DECLS
 int   poll(struct pollfd[], nfds_t, int);
-#ifdef __BSD_VISIBLE
+#if __BSD_VISIBLE
 int   ppoll(struct pollfd[], nfds_t, const struct timespec *, const sigset_t *);
 #endif /* __BSD_VISIBLE */
 __END_DECLS
