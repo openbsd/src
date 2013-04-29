@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.18 2013/04/29 04:17:58 dlg Exp $ */
+/*	$OpenBSD: identd.c,v 1.19 2013/04/29 06:32:11 jmc Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -180,7 +180,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-46deNn] [-l address] [-t timeout]\n",
+	fprintf(stderr, "usage: %s [-46dehNn] [-l address] [-t timeout]\n",
 	    __progname);
 	exit(1);
 }
