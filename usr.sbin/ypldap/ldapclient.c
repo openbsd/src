@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.26 2012/04/30 21:40:03 jmatthew Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.27 2013/04/30 05:14:59 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -400,6 +400,7 @@ ldapclient(int pipe_main2client[2])
 #endif
 
 	event_init();
+	signal(SIGPIPE, SIG_IGN);
 	signal_set(&ev_sigint, SIGINT, client_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, client_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
