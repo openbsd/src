@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.beagle,v 1.41 2013/03/30 07:25:20 tedu Exp $
+#	$OpenBSD: Makefile.beagle,v 1.42 2013/04/30 13:57:02 patrick Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -147,7 +147,7 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
 ${_mach}_start.o: ${_machdir}/${_mach}/${_mach}_start.S
 locore.o: ${_archdir}/${_arch}/locore.S assym.h
 in_cksum_arm.o fiq_subr.o bcopyinout.o copystr.o sigcode.o: assym.h
-vectors.o cpuswitch.o exception.o bcopy_page.o irq_dispatch.o: assym.h
+vectors.o cpuswitch7.o exception.o bcopy_page.o irq_dispatch.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
