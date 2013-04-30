@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.35 2013/04/30 07:17:36 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.36 2013/04/30 07:18:34 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -223,27 +223,27 @@ typedef enum {
 } mfi_evt_locale_t;
 
 typedef enum {
-        MR_EVT_ARGS_NONE =			0x00,
-        MR_EVT_ARGS_CDB_SENSE,
-        MR_EVT_ARGS_LD,
-        MR_EVT_ARGS_LD_COUNT,
-        MR_EVT_ARGS_LD_LBA,
-        MR_EVT_ARGS_LD_OWNER,
-        MR_EVT_ARGS_LD_LBA_PD_LBA,
-        MR_EVT_ARGS_LD_PROG,
-        MR_EVT_ARGS_LD_STATE,
-        MR_EVT_ARGS_LD_STRIP,
-        MR_EVT_ARGS_PD,
-        MR_EVT_ARGS_PD_ERR,
-        MR_EVT_ARGS_PD_LBA,
-        MR_EVT_ARGS_PD_LBA_LD,
-        MR_EVT_ARGS_PD_PROG,
-        MR_EVT_ARGS_PD_STATE,
-        MR_EVT_ARGS_PCI,
-        MR_EVT_ARGS_RATE,
-        MR_EVT_ARGS_STR,
-        MR_EVT_ARGS_TIME,
-        MR_EVT_ARGS_ECC
+	MR_EVT_ARGS_NONE =			0x00,
+	MR_EVT_ARGS_CDB_SENSE,
+	MR_EVT_ARGS_LD,
+	MR_EVT_ARGS_LD_COUNT,
+	MR_EVT_ARGS_LD_LBA,
+	MR_EVT_ARGS_LD_OWNER,
+	MR_EVT_ARGS_LD_LBA_PD_LBA,
+	MR_EVT_ARGS_LD_PROG,
+	MR_EVT_ARGS_LD_STATE,
+	MR_EVT_ARGS_LD_STRIP,
+	MR_EVT_ARGS_PD,
+	MR_EVT_ARGS_PD_ERR,
+	MR_EVT_ARGS_PD_LBA,
+	MR_EVT_ARGS_PD_LBA_LD,
+	MR_EVT_ARGS_PD_PROG,
+	MR_EVT_ARGS_PD_STATE,
+	MR_EVT_ARGS_PCI,
+	MR_EVT_ARGS_RATE,
+	MR_EVT_ARGS_STR,
+	MR_EVT_ARGS_TIME,
+	MR_EVT_ARGS_ECC
 } mfi_evt_args;
 
 /* driver definitions */
@@ -582,7 +582,7 @@ struct mfi_info_host {
 	uint64_t		mih_port_addr[8];
 } __packed;
 
-/* device  interface info */
+/* device interface info */
 struct mfi_info_device {
 	uint8_t			mid_type;
 #define MFI_INFO_DEV_SPI	0x01
