@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2012/02/26 15:28:27 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2013/04/30 13:04:25 patrick Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -146,6 +146,7 @@ member	tf_pc
 define	TRAPFRAMESIZE		sizeof(struct trapframe)
 
 struct	cpu_functions
+member	cf_icache_sync_all
 member	cf_idcache_wbinv_all
 member	cf_dcache_wb_range
 member	cf_tlb_flushID_SE
