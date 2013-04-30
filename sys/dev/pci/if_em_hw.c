@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.71 2012/12/05 23:20:20 deraadt Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.72 2013/04/30 07:07:50 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1446,7 +1446,7 @@ em_adjust_serdes_amplitude(struct em_hw *hw)
 	DEBUGFUNC("em_adjust_serdes_amplitude");
 
 	if (hw->media_type != em_media_type_internal_serdes ||
-	    hw->mac_type == em_82575)
+	    hw->mac_type >= em_82575)
 		return E1000_SUCCESS;
 
 	switch (hw->mac_type) {
@@ -1700,10 +1700,10 @@ em_setup_fiber_serdes_link(struct em_hw *hw)
 	 * initialization.
 	 */
 	if (hw->mac_type == em_82571 || hw->mac_type == em_82572 ||
-	    hw->mac_type == em_82575)
+	    hw->mac_type >= em_82575)
 		E1000_WRITE_REG(hw, SCTL, E1000_DISABLE_SERDES_LOOPBACK);
 
-	if (hw->mac_type == em_82575)
+	if (hw->mac_type >= em_82575)
 		em_power_up_serdes_link_82575(hw);
 		
 	/*
@@ -1724,7 +1724,7 @@ em_setup_fiber_serdes_link(struct em_hw *hw)
 	/* Take the link out of reset */
 	ctrl &= ~(E1000_CTRL_LRST);
 
-	if (hw->mac_type == em_82575) {
+	if (hw->mac_type >= em_82575) {
 		/* set both sw defined pins on 82575/82576*/
 		ctrl |= E1000_CTRL_SWDPIN0 | E1000_CTRL_SWDPIN1;
 
@@ -3611,7 +3611,7 @@ em_check_for_link(struct em_hw *hw)
 	DEBUGFUNC("em_check_for_link");
 	uint16_t speed, duplex;
 
-	if (hw->mac_type == em_82575 &&
+	if (hw->mac_type >= em_82575 &&
 	    hw->media_type != em_media_type_copper) {
 		ret_val = em_get_pcs_speed_and_duplex_82575(hw, &speed,
 		    &duplex);
@@ -3951,7 +3951,7 @@ em_get_speed_and_duplex(struct em_hw *hw, uint16_t *speed, uint16_t *duplex)
 	uint16_t phy_data;
 	DEBUGFUNC("em_get_speed_and_duplex");
 
-	if (hw->mac_type == em_82575 && hw->media_type != em_media_type_copper)
+	if (hw->mac_type >= em_82575 && hw->media_type != em_media_type_copper)
 		return em_get_pcs_speed_and_duplex_82575(hw, speed, duplex);
 
 	if (hw->mac_type >= em_82543) {
@@ -5284,7 +5284,7 @@ em_detect_gig_phy(struct em_hw *hw)
 
 	if ((hw->media_type == em_media_type_internal_serdes ||
 	    hw->media_type == em_media_type_fiber) &&
-	    hw->mac_type == em_82575) {
+	    hw->mac_type >= em_82575) {
 		hw->phy_type = em_phy_undefined;
 		return E1000_SUCCESS;
 	}
