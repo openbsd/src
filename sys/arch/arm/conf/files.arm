@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.22 2013/03/27 17:33:13 patrick Exp $
+#	$OpenBSD: files.arm,v 1.23 2013/04/30 13:10:45 patrick Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -74,11 +74,13 @@ file	arch/arm/arm/vectors.S
 file	arch/arm/arm/arm32_machdep.c
 file	arch/arm/arm/bus_dma.c
 file	arch/arm/arm/cpu.c
-file	arch/arm/arm/cpuswitch.S
+file	arch/arm/arm/cpuswitch.S		!cpu_armv7
+file	arch/arm/arm/cpuswitch7.S		cpu_armv7
 file	arch/arm/arm/exception.S
 file	arch/arm/arm/fault.c
 file	arch/arm/arm/mem.c
-file	arch/arm/arm/pmap.c
+file	arch/arm/arm/pmap.c			!cpu_armv7
+file	arch/arm/arm/pmap7.c			cpu_armv7
 file	arch/arm/arm/setstack.S
 file	arch/arm/arm/stubs.c
 file	arch/arm/arm/sys_machdep.c
