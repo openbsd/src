@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.11 2013/04/30 12:02:39 eric Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.12 2013/04/30 13:05:44 jmc Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -245,7 +245,7 @@ to initiate the query.
 All other errors (especially invalid parameters)
 are reported when calling
 .Fn async_run .
-They usually have the same interface as an exisiting resolver function, with
+They usually have the same interface as an existing resolver function, with
 an additional
 .Ar asr
 contex argument, which specifies the context to use for this request.
@@ -258,7 +258,8 @@ and
 .Fn res_search_async
 functions are asynchronous versions of the standard libc resolver routines.
 Their interface is very similar, except that the response buffer is always
-allocated internally.  The return value is found upon completion in the
+allocated internally.
+The return value is found upon completion in the
 .Fa ar_datalen
 member of the response structure.
 In addition, the
@@ -268,7 +269,7 @@ union contains the address of the DNS server that sent the response,
 contains the code returned by the server in the DNS response packet, and
 .Fa ar_count
 contains the number of answers in the packet.
-If a response is received it placed in a newly allocated buffer
+If a response is received it is placed in a newly allocated buffer
 and returned as
 .Fa ar_data
 member.
