@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.15 2013/04/08 08:24:56 chrisz Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.16 2013/04/30 06:53:07 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -518,6 +518,7 @@ addrinfo_add(struct async *as, const struct sockaddr *sa, const char *cname)
 		ai->ai_family = sa->sa_family;
 		ai->ai_socktype = matches[i].socktype;
 		ai->ai_protocol = proto;
+		ai->ai_flags = as->as.ai.hints.ai_flags;
 		ai->ai_addrlen = sa->sa_len;
 		ai->ai_addr = (void *)(ai + 1);
 		if (cname &&
