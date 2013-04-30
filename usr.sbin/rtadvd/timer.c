@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.10 2011/03/22 10:16:23 okan Exp $	*/
+/*	$OpenBSD: timer.c,v 1.11 2013/04/30 12:30:40 florian Exp $	*/
 /*	$KAME: timer.c,v 1.7 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -30,31 +30,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/queue.h>
 #include <sys/time.h>
 
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <search.h>
 #include "timer.h"
 #include "log.h"
 
-static struct rtadvd_timer timer_head;
-
-#define MILLION 1000000
-#define TIMEVAL_EQUAL(t1,t2) ((t1)->tv_sec == (t2)->tv_sec &&\
- (t1)->tv_usec == (t2)->tv_usec)
-
-static struct timeval tm_max = {0x7fffffff, 0x7fffffff};
-
-void
-rtadvd_timer_init()
-{
-	memset(&timer_head, 0, sizeof(timer_head));
-
-	timer_head.next = timer_head.prev = &timer_head;
-	timer_head.tm = tm_max;
-}
+SLIST_HEAD(, rtadvd_timer) timer_head = SLIST_HEAD_INITIALIZER(timer_head);
 
 struct rtadvd_timer *
 rtadvd_add_timer(void (*timeout)(void *),
@@ -76,10 +61,9 @@ rtadvd_add_timer(void (*timeout)(void *),
 	newtimer->update = update;
 	newtimer->expire_data = timeodata;
 	newtimer->update_data = updatedata;
-	newtimer->tm = tm_max;
 
 	/* link into chain */
-	insque(newtimer, &timer_head);
+	SLIST_INSERT_HEAD(&timer_head, newtimer, entries);
 
 	return(newtimer);
 }
@@ -87,7 +71,7 @@ rtadvd_add_timer(void (*timeout)(void *),
 void
 rtadvd_remove_timer(struct rtadvd_timer **timer)
 {
-	remque(*timer);
+	SLIST_REMOVE(&timer_head, *timer, rtadvd_timer, entries);
 	free(*timer);
 	*timer = NULL;
 }
@@ -100,13 +84,7 @@ rtadvd_set_timer(struct timeval *tm, struct rtadvd_timer *timer)
 	/* reset the timer */
 	gettimeofday(&now, NULL);
 
-	TIMEVAL_ADD(&now, tm, &timer->tm);
-
-	/* update the next expiration time */
-	if (TIMEVAL_LT(timer->tm, timer_head.tm))
-		timer_head.tm = timer->tm;
-
-	return;
+	timeradd(&now, tm, &timer->tm);
 }
 
 /*
@@ -119,33 +97,31 @@ rtadvd_check_timer()
 {
 	static struct timeval returnval;
 	struct timeval now;
-	struct rtadvd_timer *tm = timer_head.next;
+	struct rtadvd_timer *tm;
+	int timers;
 
+	timers = 0;
 	gettimeofday(&now, NULL);
 
-	timer_head.tm = tm_max;
-
-	while (tm != &timer_head) {
-		if (TIMEVAL_LEQ(tm->tm, now)) {
+	SLIST_FOREACH(tm, &timer_head, entries) {
+		if (timercmp(&tm->tm, &now, <=)) {
 			(*tm->expire)(tm->expire_data);
 			(*tm->update)(tm->update_data, &tm->tm);
-			TIMEVAL_ADD(&tm->tm, &now, &tm->tm);
+			timeradd(&tm->tm, &now, &tm->tm);
 		}
-
-		if (TIMEVAL_LT(tm->tm, timer_head.tm))
-			timer_head.tm = tm->tm;
-
-		tm = tm->next;
+		if (timers == 0 || timercmp(&tm->tm, &returnval, <))
+			returnval = tm->tm;
+		timers ++;
 	}
 
-	if (TIMEVAL_EQUAL(&tm_max, &timer_head.tm)) {
+	if (timers == 0) {
 		/* no need to timeout */
 		return(NULL);
-	} else if (TIMEVAL_LT(timer_head.tm, now)) {
+	} else if (timercmp(&returnval, &now, <)) {
 		/* this may occur when the interval is too small */
 		timerclear(&returnval);
 	} else
-		TIMEVAL_SUB(&timer_head.tm, &now, &returnval);
+		timersub(&returnval, &now, &returnval);
 	return(&returnval);
 }
 
@@ -155,47 +131,12 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 	static struct timeval returnval, now;
 
 	gettimeofday(&now, NULL);
-	if (TIMEVAL_LEQ(timer->tm, now)) {
+	if (timercmp(&timer->tm, &now, <=)) {
 		log_debug("a timer must be expired, but not yet");
 		timerclear(&returnval);
 	}
 	else
-		TIMEVAL_SUB(&timer->tm, &now, &returnval);
+		timersub(&timer->tm, &now, &returnval);
 
 	return(&returnval);
-}
-
-/* result = a + b */
-void
-TIMEVAL_ADD(struct timeval *a, struct timeval *b, struct timeval *result)
-{
-	long l;
-
-	if ((l = a->tv_usec + b->tv_usec) < MILLION) {
-		result->tv_usec = l;
-		result->tv_sec = a->tv_sec + b->tv_sec;
-	}
-	else {
-		result->tv_usec = l - MILLION;
-		result->tv_sec = a->tv_sec + b->tv_sec + 1;
-	}
-}
-
-/*
- * result = a - b
- * XXX: this function assumes that a >= b.
- */
-void
-TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
-{
-	long l;
-
-	if ((l = a->tv_usec - b->tv_usec) >= 0) {
-		result->tv_usec = l;
-		result->tv_sec = a->tv_sec - b->tv_sec;
-	}
-	else {
-		result->tv_usec = MILLION + l;
-		result->tv_sec = a->tv_sec - b->tv_sec - 1;
-	}
 }

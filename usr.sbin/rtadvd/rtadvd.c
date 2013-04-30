@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.43 2013/04/30 12:29:04 florian Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.44 2013/04/30 12:30:40 florian Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -202,9 +202,6 @@ main(argc, argv)
 	}
 
 	SLIST_INIT(&ralist);
-
-	/* timer initialization */
-	rtadvd_timer_init();
 
 	/* get iflist block from kernel */
 	init_iflist();
@@ -760,7 +757,7 @@ rs_input(int len, struct nd_router_solicit *rs,
 		interval.tv_sec = 0;
 		interval.tv_usec = delay;
 		rest = rtadvd_timer_rest(ra->timer);
-		if (TIMEVAL_LT(*rest, interval)) {
+		if (timercmp(rest, &interval, <)) {
 			log_debug("random delay is larger than "
 			    "the rest of normal timer");
 			interval = *rest;
@@ -774,12 +771,12 @@ rs_input(int len, struct nd_router_solicit *rs,
 		 * previous advertisement was sent.
 		 */
 		gettimeofday(&now, NULL);
-		TIMEVAL_SUB(&now, &ra->lastsent, &tm_tmp);
+		timersub(&now, &ra->lastsent, &tm_tmp);
 		min_delay.tv_sec = MIN_DELAY_BETWEEN_RAS;
 		min_delay.tv_usec = 0;
-		if (TIMEVAL_LT(tm_tmp, min_delay)) {
-			TIMEVAL_SUB(&min_delay, &tm_tmp, &min_delay);
-			TIMEVAL_ADD(&min_delay, &interval, &interval);
+		if (timercmp(&tm_tmp, &min_delay, <)) {
+			timersub(&min_delay, &tm_tmp, &min_delay);
+			timeradd(&min_delay, &interval, &interval);
 		}
 		rtadvd_set_timer(&interval, ra->timer);
 		goto done;
