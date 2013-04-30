@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.22 2013/04/21 14:41:26 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.23 2013/04/30 19:56:46 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -764,10 +764,11 @@ inteldrm_copyrows(void *cookie, int src, int dst, int num)
 		struct inteldrm_softc *dev_priv = sc;
 		struct drm_fb_helper *helper = &dev_priv->fbdev->helper;
 		size_t size = dev_priv->fbdev->ifb.obj->base.size / 2;
+		int stride = ri->ri_font->fontheight * ri->ri_stride;
 		int i;
 
 		if (dst == 0) {
-			int delta = src * ri->ri_font->fontheight * ri->ri_stride;
+			int delta = src * stride;
 			bzero(ri->ri_bits, delta);
 
 			sc->sc_offset += delta;
@@ -779,7 +780,8 @@ inteldrm_copyrows(void *cookie, int src, int dst, int num)
 				ri->ri_origbits -= size;
 			}
 		} else {
-			int delta = dst * ri->ri_font->fontheight * ri->ri_stride;
+			int delta = dst * stride;
+			bzero(ri->ri_bits + num * stride, delta);
 
 			sc->sc_offset -= delta;
 			ri->ri_bits -= delta;
@@ -789,8 +791,6 @@ inteldrm_copyrows(void *cookie, int src, int dst, int num)
 				ri->ri_bits += size;
 				ri->ri_origbits += size;
 			}
-
-			bzero(ri->ri_bits, delta);
 		}
 
 		for (i = 0; i < helper->crtc_count; i++) {
