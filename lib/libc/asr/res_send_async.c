@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.16 2013/04/14 22:23:08 deraadt Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.17 2013/04/30 12:02:39 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -49,8 +49,7 @@ static int ensure_ibuf(struct async *, size_t);
 
 
 struct async *
-res_send_async(const unsigned char *buf, int buflen, unsigned char *ans,
-	int anslen, struct asr *asr)
+res_send_async(const unsigned char *buf, int buflen, struct asr *asr)
 {
 	struct asr_ctx  *ac;
 	struct async	*as;
@@ -66,17 +65,6 @@ res_send_async(const unsigned char *buf, int buflen, unsigned char *ans,
 		return (NULL); /* errno set */
 	}
 	as->as_run = res_send_async_run;
-
-	if (ans) {
-		as->as.dns.flags |= ASYNC_EXTIBUF;
-		as->as.dns.ibuf = ans;
-		as->as.dns.ibufsize = anslen;
-		as->as.dns.ibuflen = 0;
-	} else {
-		as->as.dns.ibuf = NULL;
-		as->as.dns.ibufsize = 0;
-		as->as.dns.ibuflen = 0;
-	}
 
 	as->as.dns.flags |= ASYNC_EXTOBUF;
 	as->as.dns.obuf = (unsigned char *)buf;
@@ -113,8 +101,7 @@ res_send_async(const unsigned char *buf, int buflen, unsigned char *ans,
  * (ans == NULL).
  */
 struct async *
-res_query_async(const char *name, int class, int type, unsigned char *ans,
-	int anslen, struct asr *asr)
+res_query_async(const char *name, int class, int type, struct asr *asr)
 {
 	struct asr_ctx	*ac;
 	struct async	*as;
@@ -122,15 +109,14 @@ res_query_async(const char *name, int class, int type, unsigned char *ans,
 	DPRINT("asr: res_query_async(\"%s\", %i, %i)\n", name, class, type);
 
 	ac = asr_use_resolver(asr);
-	as = res_query_async_ctx(name, class, type, ans, anslen, ac);
+	as = res_query_async_ctx(name, class, type, ac);
 	asr_ctx_unref(ac);
 
 	return (as);
 }
 
 struct async *
-res_query_async_ctx(const char *name, int class, int type, unsigned char *ans,
-	int anslen, struct asr_ctx *a_ctx)
+res_query_async_ctx(const char *name, int class, int type, struct asr_ctx *a_ctx)
 {
 	struct async	*as;
 
@@ -139,16 +125,6 @@ res_query_async_ctx(const char *name, int class, int type, unsigned char *ans,
 	if ((as = async_new(a_ctx, ASR_SEND)) == NULL)
 		return (NULL); /* errno set */
 	as->as_run = res_send_async_run;
-
-	if (ans) {
-		as->as.dns.flags |= ASYNC_EXTIBUF;
-		as->as.dns.ibuf = ans;
-		as->as.dns.ibufsize = anslen;
-	} else {
-		as->as.dns.ibuf = NULL;
-		as->as.dns.ibufsize = 0;
-	}
-	as->as.dns.ibuflen = 0;
 
 	/* This adds a "." to name if it doesn't already has one.
 	 * That's how res_query() behaves (through res_mkquery").
@@ -478,15 +454,12 @@ udp_recv(struct async *as)
 	ssize_t		 n;
 	int		 save_errno;
 
-	/* Allocate input buf if needed */
-	if (as->as.dns.ibuf == NULL) {
-		if (ensure_ibuf(as, PACKETSZ) == -1) {
-			save_errno = errno;
-			close(as->as_fd);
-			errno = save_errno;
-			as->as_fd = -1;
-			return (-1);
-		}
+	if (ensure_ibuf(as, PACKETSZ) == -1) {
+		save_errno = errno;
+		close(as->as_fd);
+		errno = save_errno;
+		as->as_fd = -1;
+		return (-1);
 	}
 
 	n = recv(as->as_fd, as->as.dns.ibuf, as->as.dns.ibufsize, 0);
@@ -664,21 +637,13 @@ close:
 }
 
 /*
- * Make sure the input buffer is at least "n" bytes long.
- * If not (or not allocated) allocated enough space, unless the
- * buffer is external (owned by the caller), in which case it fails.
+ * Make sure the input buffer is at least "n" bytes long, and allocate or
+ * extend it if necessary. Return 0 on success, or set errno and return -1.
  */
 static int
 ensure_ibuf(struct async *as, size_t n)
 {
 	char	*t;
-
-	if (as->as.dns.flags & ASYNC_EXTIBUF) {
-		if (n <= as->as.dns.ibufsize)
-			return (0);
-		errno = EINVAL;
-		return (-1);
-	}
 
 	if (as->as.dns.ibuf == NULL) {
 		as->as.dns.ibuf = malloc(n);

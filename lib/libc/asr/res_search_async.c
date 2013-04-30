@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.6 2013/04/01 20:22:27 eric Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.7 2013/04/30 12:02:39 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -25,13 +25,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/*
- * TODO:
- *
- * - make it possible to reuse ibuf if it was NULL when first called,
- *   to avoid reallocating buffers everytime.
- */
-
 #include "asr.h"
 #include "asr_private.h"
 
@@ -42,8 +35,7 @@ static int res_search_async_run(struct async *, struct async_res *);
  * h_errno is NETDB_SUCCESS.
  */
 struct async *
-res_search_async(const char *name, int class, int type, unsigned char *ans,
-	int anslen, struct asr *asr)
+res_search_async(const char *name, int class, int type, struct asr *asr)
 {
 	struct asr_ctx	*ac;
 	struct async	*as;
@@ -51,15 +43,14 @@ res_search_async(const char *name, int class, int type, unsigned char *ans,
 	DPRINT("asr: res_search_async(\"%s\", %i, %i)\n", name, class, type);
 
 	ac = asr_use_resolver(asr);
-	as = res_search_async_ctx(name, class, type, ans, anslen, ac);
+	as = res_search_async_ctx(name, class, type, ac);
 	asr_ctx_unref(ac);
 
 	return (as);
 }
 
 struct async *
-res_search_async_ctx(const char *name, int class, int type, unsigned char *ans,
-	int anslen, struct asr_ctx *ac)
+res_search_async_ctx(const char *name, int class, int type, struct asr_ctx *ac)
 {
 	struct async	*as;
 
@@ -71,16 +62,6 @@ res_search_async_ctx(const char *name, int class, int type, unsigned char *ans,
 	as->as_run  = res_search_async_run;
 	if ((as->as.search.name = strdup(name)) == NULL)
 		goto err; /* errno set */
-
-	if (ans) {
-		as->as.search.flags |= ASYNC_EXTIBUF;
-		as->as.search.ibuf = ans;
-		as->as.search.ibufsize = anslen;
-	} else {
-		as->as.search.ibuf = NULL;
-		as->as.search.ibufsize = 0;
-	}
-	as->as.search.ibuflen = 0;
 
 	as->as.search.class = class;
 	as->as.search.type = type;
@@ -130,8 +111,7 @@ res_search_async_run(struct async *as, struct async_res *ar)
 			break;
 		}
 		as->as.search.subq = res_query_async_ctx(fqdn,
-		    as->as.search.class, as->as.search.type,
-		    as->as.search.ibuf, as->as.search.ibufsize, as->as_ctx);
+		    as->as.search.class, as->as.search.type, as->as_ctx);
 		if (as->as.search.subq == NULL) {
 			ar->ar_errno = errno;
 			if (errno == EINVAL)
@@ -169,12 +149,7 @@ res_search_async_run(struct async *as, struct async_res *ar)
 			break;
 		}
 
-		/*
-		 * If we don't use an external buffer, the packet was allocated
-		 * by the subquery and it must be freed now.
-		 */
-		if ((as->as.search.flags & ASYNC_EXTIBUF) == 0)
-			free(ar->ar_data);
+		free(ar->ar_data);
 
 		/*
 		 * The original resolver does something like this.

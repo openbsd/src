@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.3 2012/11/24 15:12:48 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.4 2013/04/30 12:02:39 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -97,7 +97,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 		    as->as.rrset.name,
 		    as->as.rrset.class,
 		    as->as.rrset.type,
-		    NULL, 0, as->as_ctx);
+		    as->as_ctx);
 		if (as->as.rrset.subq == NULL) {
 			ar->ar_rrset_errno = ERRSET_FAIL;
 			async_set_state(as, ASR_STATE_HALT);
@@ -169,7 +169,7 @@ getrrsetbyname_async_run(struct async *as, struct async_res *ar)
 
 /* The rest of this file is taken from the orignal implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.3 2012/11/24 15:12:48 eric Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.4 2013/04/30 12:02:39 eric Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.

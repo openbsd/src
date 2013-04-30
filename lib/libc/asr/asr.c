@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.24 2013/04/17 19:13:23 otto Exp $	*/
+/*	$OpenBSD: asr.c,v 1.25 2013/04/30 12:02:39 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -277,7 +277,7 @@ async_free(struct async *as)
 			close(as->as_fd);
 		if (as->as.dns.obuf && !(as->as.dns.flags & ASYNC_EXTOBUF))
 			free(as->as.dns.obuf);
-		if (as->as.dns.ibuf && !(as->as.dns.flags & ASYNC_EXTIBUF))
+		if (as->as.dns.ibuf)
 			free(as->as.dns.ibuf);
 		if (as->as.dns.dname)
 			free(as->as.dns.dname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.8 2013/04/01 15:49:54 deraadt Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.9 2013/04/30 12:02:39 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -148,7 +148,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 				type = T_PTR;
 				name = as->as.netnamadr.name;
 				as->as.netnamadr.subq = res_search_async_ctx(
-				    name, C_IN, type, NULL, 0, as->as_ctx);
+				    name, C_IN, type, as->as_ctx);
 			} else {
 				type = T_PTR;
 				name = dname;
@@ -158,7 +158,7 @@ getnetnamadr_async_run(struct async *as, struct async_res *ar)
 				    as->as.netnamadr.family,
 				    dname, sizeof(dname));
 				as->as.netnamadr.subq = res_query_async_ctx(
-				    name, C_IN, type, NULL, 0, as->as_ctx);
+				    name, C_IN, type, as->as_ctx);
 			}
 
 			if (as->as.netnamadr.subq == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.h,v 1.5 2013/04/01 15:49:54 deraadt Exp $	*/
+/*	$OpenBSD: asr.h,v 1.6 2013/04/30 12:02:39 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -80,12 +80,9 @@ void	    async_resolver_done(struct asr *);
 
 /* Async version of the resolver API */
 
-struct async *res_send_async(const unsigned char *, int, unsigned char *, int,
-    struct asr *);
-struct async *res_query_async(const char *, int, int, unsigned char *, int,
-    struct asr *);
-struct async *res_search_async(const char *, int, int, unsigned char *, int,
-    struct asr *);
+struct async *res_send_async(const unsigned char *, int, struct asr *);
+struct async *res_query_async(const char *, int, int, struct asr *);
+struct async *res_search_async(const char *, int, int, struct asr *);
 
 struct async *getrrsetbyname_async(const char *, unsigned int, unsigned int,
     unsigned int, struct asr *);

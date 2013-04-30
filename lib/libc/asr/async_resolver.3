@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.10 2013/04/01 15:49:54 deraadt Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.11 2013/04/30 12:02:39 eric Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2013 $
+.Dd $Mdocdate: April 30 2013 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -49,9 +49,11 @@
 .Ft void
 .Fn async_abort "struct async *as"
 .Ft struct async *
-.Fn res_send_async "const unsigned char *pkt" "int pktlen" "unsigned char *ans" "int anslen" "struct asr *asr"
+.Fn res_send_async "const unsigned char *pkt" "int pktlen" "struct asr *asr"
 .Ft struct async *
-.Fn res_query_async "const char *name" "int class" "int type" "unsigned char *ans" "int anslen" "struct asr *asr"
+.Fn res_query_async "const char *name" "int class" "int type" "struct asr *asr"
+.Ft struct async *
+.Fn res_search_async "const char *name" "int class" "int type" "struct asr *asr"
 .Ft struct async *
 .Fn getrrsetbyname_async "const char *hostname" "unsigned int rdclass" "unsigned int rdtype" "unsigned int flags" "struct asr *asr"
 .Ft struct async *
@@ -255,8 +257,8 @@ The
 and
 .Fn res_search_async
 functions are asynchronous versions of the standard libc resolver routines.
-Their interface is very similar, except that they take a resolver context as
-last argument, and the return value is found upon completion in the
+Their interface is very similar, except that the response buffer is always
+allocated internally.  The return value is found upon completion in the
 .Fa ar_datalen
 member of the response structure.
 In addition, the
@@ -266,8 +268,8 @@ union contains the address of the DNS server that sent the response,
 contains the code returned by the server in the DNS response packet, and
 .Fa ar_count
 contains the number of answers in the packet.
-If no answer buffer is provided, a new one is allocated to fit the response
-and returned as the
+If a response is received it placed in a newly allocated buffer
+and returned as
 .Fa ar_data
 member.
 This buffer must be freed by the caller.

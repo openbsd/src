@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.16 2013/04/30 06:53:07 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.17 2013/04/30 12:02:39 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -296,13 +296,13 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 			if (as->as.ai.fqdn) {
 				as->as.ai.subq = res_query_async_ctx(
 				    as->as.ai.fqdn, C_IN,
-				    (family == AF_INET6) ? T_AAAA : T_A, NULL, 0,
+				    (family == AF_INET6) ? T_AAAA : T_A,
 				    as->as_ctx);
 			}
 			else {
 				as->as.ai.subq = res_search_async_ctx(
 				    as->as.ai.hostname, C_IN,
-				    (family == AF_INET6) ? T_AAAA : T_A, NULL, 0,
+				    (family == AF_INET6) ? T_AAAA : T_A,
 				    as->as_ctx);
 			}
 			if (as->as.ai.subq == NULL) {

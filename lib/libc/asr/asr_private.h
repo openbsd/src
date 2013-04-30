@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.16 2013/04/02 16:38:37 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.17 2013/04/30 12:02:39 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -164,7 +164,6 @@ struct asr {
 #define	ASYNC_NODATA		0x00000100
 #define	ASYNC_AGAIN		0x00000200
 
-#define	ASYNC_EXTIBUF		0x00001000
 #define	ASYNC_EXTOBUF		0x00002000
 
 
@@ -217,9 +216,6 @@ struct async {
 			char		*name;
 			struct async	*subq;
 			int		 saved_h_errno;
-			unsigned char	*ibuf;
-			size_t		 ibuflen;
-			size_t		 ibufsize;
 		} search;
 
 		struct {
@@ -330,10 +326,8 @@ int asr_iter_domain(struct async *, const char *, char *, size_t);
 int asr_parse_namedb_line(FILE *, char **, int);
 
 /* <*>_async.h */
-struct async *res_query_async_ctx(const char *, int, int, unsigned char *, int,
-    struct asr_ctx *);
-struct async *res_search_async_ctx(const char *, int, int, unsigned char *, int,
-    struct asr_ctx *);
+struct async *res_query_async_ctx(const char *, int, int, struct asr_ctx *);
+struct async *res_search_async_ctx(const char *, int, int, struct asr_ctx *);
 struct async *gethostbyaddr_async_ctx(const void *, socklen_t, int,
     struct asr_ctx *);
 
