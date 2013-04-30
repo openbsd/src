@@ -1954,9 +1954,11 @@
 ./usr/share/man/man2/pipe.2
 ./usr/share/man/man2/poll.2
 ./usr/share/man/man2/posix_madvise.2
+./usr/share/man/man2/ppoll.2
 ./usr/share/man/man2/pread.2
 ./usr/share/man/man2/preadv.2
 ./usr/share/man/man2/profil.2
+./usr/share/man/man2/pselect.2
 ./usr/share/man/man2/ptrace.2
 ./usr/share/man/man2/pwrite.2
 ./usr/share/man/man2/pwritev.2
