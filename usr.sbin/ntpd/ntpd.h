@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.106 2012/09/20 12:43:16 patrick Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.107 2013/04/30 11:42:56 mglocker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -226,7 +226,7 @@ struct ntp_conf_sensor	*new_sensor(char *);
 
 /* ntp_msg.c */
 int	ntp_getmsg(struct sockaddr *, char *, ssize_t, struct ntp_msg *);
-int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
+int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *);
 
 /* server.c */
 int	setup_listeners(struct servent *, struct ntpd_conf *, u_int *);

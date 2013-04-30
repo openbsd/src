@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.36 2011/09/21 15:41:30 phessler Exp $ */
+/*	$OpenBSD: server.c,v 1.37 2013/04/30 11:42:56 mglocker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -210,6 +210,6 @@ server_dispatch(int fd, struct ntpd_conf *lconf)
 	reply.rootdelay = d_to_sfp(lconf->status.rootdelay);
 	reply.refid = lconf->status.refid;
 
-	ntp_sendmsg(fd, (struct sockaddr *)&fsa, &reply, size, 0);
+	ntp_sendmsg(fd, (struct sockaddr *)&fsa, &reply);
 	return (0);
 }

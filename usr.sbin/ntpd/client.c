@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.89 2011/09/21 15:41:30 phessler Exp $ */
+/*	$OpenBSD: client.c,v 1.90 2013/04/30 11:42:56 mglocker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -186,8 +186,7 @@ client_query(struct ntp_peer *p)
 	p->query->msg.xmttime.fractionl = arc4random();
 	p->query->xmttime = gettime_corrected();
 
-	if (ntp_sendmsg(p->query->fd, NULL, &p->query->msg,
-	    NTP_MSGSIZE_NOAUTH, 0) == -1) {
+	if (ntp_sendmsg(p->query->fd, NULL, &p->query->msg) == -1) {
 		p->senderrors++;
 		set_next(p, INTERVAL_QUERY_PATHETIC);
 		p->trustlevel = TRUSTLEVEL_PATHETIC;
