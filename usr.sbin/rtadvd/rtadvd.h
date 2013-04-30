@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.13 2012/07/11 10:40:47 phessler Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.14 2013/04/30 12:29:04 florian Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -72,9 +72,9 @@ struct prefix {
 	TAILQ_ENTRY(prefix) entry;
 
 	u_int32_t validlifetime; /* AdvValidLifetime */
-	long	vltimeexpire;	/* expiration of vltime; decrement case only */
+	time_t	vltimeexpire;	/* expiration of vltime; decrement case only */
 	u_int32_t preflifetime;	/* AdvPreferredLifetime */
-	long	pltimeexpire;	/* expiration of pltime; decrement case only */
+	time_t	pltimeexpire;	/* expiration of pltime; decrement case only */
 	u_int onlinkflg;	/* bool: AdvOnLinkFlag */
 	u_int autoconfflg;	/* bool: AdvAutonomousFlag */
 	int prefixlen;

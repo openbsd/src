@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.42 2013/04/19 05:06:35 deraadt Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.43 2013/04/30 12:29:04 florian Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -928,7 +928,7 @@ static int
 prefix_check(struct nd_opt_prefix_info *pinfo,
 	     struct rainfo *rai, struct sockaddr_in6 *from)
 {
-	u_int32_t preferred_time, valid_time;
+	time_t preferred_time, valid_time;
 	struct prefix *pp;
 	int inconsistent = 0;
 	u_char ntopbuf[INET6_ADDRSTRLEN], prefixbuf[INET6_ADDRSTRLEN];
@@ -980,24 +980,24 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		    abs(preferred_time - pp->pltimeexpire) > rai->clockskew) {
 			log_info("prefeerred lifetime for %s/%d"
 			    " (decr. in real time) inconsistent on %s:"
-			    " %d from %s, %ld from us",
+			    " %lld from %s, %lld from us",
 			    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
 				prefixbuf, INET6_ADDRSTRLEN),
 			    pinfo->nd_opt_pi_prefix_len,
-			    rai->ifname, preferred_time,
+			    rai->ifname, (long long)preferred_time,
 			    inet_ntop(AF_INET6, &from->sin6_addr,
 				ntopbuf, INET6_ADDRSTRLEN),
-			    pp->pltimeexpire);
+			    (long long)pp->pltimeexpire);
 			inconsistent++;
 		}
 	} else if (preferred_time != pp->preflifetime)
 		log_info("prefeerred lifetime for %s/%d"
 		    " inconsistent on %s:"
-		    " %d from %s, %d from us",
+		    " %lld from %s, %d from us",
 		    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
 			prefixbuf, INET6_ADDRSTRLEN),
 		    pinfo->nd_opt_pi_prefix_len,
-		    rai->ifname, preferred_time,
+		    rai->ifname, (long long)preferred_time,
 		    inet_ntop(AF_INET6, &from->sin6_addr,
 			ntopbuf, INET6_ADDRSTRLEN),
 		    pp->preflifetime);
@@ -1011,24 +1011,24 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		    abs(valid_time - pp->vltimeexpire) > rai->clockskew) {
 			log_info("valid lifetime for %s/%d"
 			    " (decr. in real time) inconsistent on %s:"
-			    " %d from %s, %ld from us",
+			    " %lld from %s, %lld from us",
 			    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
 				prefixbuf, INET6_ADDRSTRLEN),
 			    pinfo->nd_opt_pi_prefix_len,
-			    rai->ifname, preferred_time,
+			    rai->ifname, (long long)preferred_time,
 			    inet_ntop(AF_INET6, &from->sin6_addr,
 				ntopbuf, INET6_ADDRSTRLEN),
-			    pp->vltimeexpire);
+			    (long long)pp->vltimeexpire);
 			inconsistent++;
 		}
 	} else if (valid_time != pp->validlifetime) {
 		log_info("valid lifetime for %s/%d"
 		    " inconsistent on %s:"
-		    " %d from %s, %d from us",
+		    " %lld from %s, %d from us",
 		    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
 			prefixbuf, INET6_ADDRSTRLEN),
 		    pinfo->nd_opt_pi_prefix_len,
-		    rai->ifname, valid_time,
+		    rai->ifname, (long long)valid_time,
 		    inet_ntop(AF_INET6, &from->sin6_addr,
 			ntopbuf, INET6_ADDRSTRLEN),
 		    pp->validlifetime);

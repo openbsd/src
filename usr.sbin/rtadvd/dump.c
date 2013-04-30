@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.12 2013/04/02 03:21:20 deraadt Exp $	*/
+/*	$OpenBSD: dump.c,v 1.13 2013/04/30 12:29:04 florian Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -182,13 +182,15 @@ rtadvd_dump()
 				origin = "";
 			}
 			if (pfx->vltimeexpire != 0)
-				asprintf(&vltimexpire, "(decr,expire %ld)", (long)
-				    pfx->vltimeexpire > now.tv_sec ?
-				    pfx->vltimeexpire - now.tv_sec : 0);
+				/* truncate to onwire value */
+				asprintf(&vltimexpire, "(decr,expire %u)",
+				    (u_int32_t)(pfx->vltimeexpire > now.tv_sec ?
+				    pfx->vltimeexpire - now.tv_sec : 0));
 			if (pfx->pltimeexpire != 0)
-				asprintf(&pltimexpire, "(decr,expire %ld)", (long)
-				    pfx->pltimeexpire > now.tv_sec ?
-				    pfx->pltimeexpire - now.tv_sec : 0);
+				/* truncate to onwire value */
+				asprintf(&pltimexpire, "(decr,expire %u)",
+				    (u_int32_t)(pfx->pltimeexpire > now.tv_sec ?
+				    pfx->pltimeexpire - now.tv_sec : 0));
 
 			vltime = lifetime(pfx->validlifetime);
 			pltime = lifetime(pfx->preflifetime);
