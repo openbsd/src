@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.139 2013/04/07 02:32:03 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.140 2013/04/30 07:17:36 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1468,7 +1468,7 @@ mfi_bio_getitall(struct mfi_softc *sc)
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (cfg == NULL)
 		goto done;
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg,
+	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg,
 	    NULL))
 		goto done;
 
@@ -1479,7 +1479,7 @@ mfi_bio_getitall(struct mfi_softc *sc)
 	cfg = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (cfg == NULL)
 		goto done;
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
+	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
 		goto done;
 
 	/* replace current pointer with enw one */
@@ -1912,7 +1912,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	}
 
 
-	if (mfi_mgmt(sc, MD_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL, mbox))
+	if (mfi_mgmt(sc, MR_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL, mbox))
 		goto done;
 
 	rv = 0;
@@ -1944,7 +1944,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 
 	/* send single element command to retrieve size for full structure */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
+	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg, NULL))
 		goto freeme;
 
 	size = cfg->mfc_size;
@@ -1952,7 +1952,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	if (mfi_mgmt(sc, MD_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
+	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
 		goto freeme;
 
 	/* calculate offset to hs structure */

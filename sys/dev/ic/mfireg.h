@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.34 2013/04/30 07:14:13 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.35 2013/04/30 07:17:36 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -110,15 +110,15 @@
 #define MR_DCMD_CTRL_EVENT_WAIT			0x01040500
 #define MR_DCMD_PD_GET_LIST			0x02010000
 #define MR_DCMD_PD_GET_INFO			0x02020000
-#define MD_DCMD_PD_SET_STATE			0x02030100
-#define MD_DCMD_PD_REBUILD			0x02040100
+#define MR_DCMD_PD_SET_STATE			0x02030100
+#define MR_DCMD_PD_REBUILD			0x02040100
 #define MR_DCMD_PD_BLINK			0x02070100
 #define MR_DCMD_PD_UNBLINK			0x02070200
 #define MR_DCMD_PD_GET_ALLOWED_OPS_LIST		0x020a0100
 #define MR_DCMD_LD_GET_LIST			0x03010000
 #define MR_DCMD_LD_GET_INFO			0x03020000
 #define MR_DCMD_LD_GET_PROPERTIES		0x03030000
-#define MD_DCMD_CONF_GET			0x04010000
+#define MR_DCMD_CONF_GET			0x04010000
 #define MR_DCMD_BBU_GET_STATUS			0x05010000
 #define MR_DCMD_BBU_GET_CAPACITY_INFO		0x05020000
 #define MR_DCMD_BBU_GET_DESIGN_INFO		0x05030000
@@ -921,7 +921,7 @@ struct mfi_pd_allowedops_list {
 	uint32_t		mpo_allowedops_list[MFI_MAX_PD];
 } __packed;
 
-/* array configuration from MD_DCMD_CONF_GET */
+/* array configuration from MR_DCMD_CONF_GET */
 struct mfi_array {
 	u_quad_t		mar_smallest_pd;
 	uint8_t			mar_no_disk;
