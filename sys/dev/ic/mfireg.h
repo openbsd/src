@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.33 2012/08/17 11:31:34 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.34 2013/04/30 07:14:13 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -119,6 +119,12 @@
 #define MR_DCMD_LD_GET_INFO			0x03020000
 #define MR_DCMD_LD_GET_PROPERTIES		0x03030000
 #define MD_DCMD_CONF_GET			0x04010000
+#define MR_DCMD_BBU_GET_STATUS			0x05010000
+#define MR_DCMD_BBU_GET_CAPACITY_INFO		0x05020000
+#define MR_DCMD_BBU_GET_DESIGN_INFO		0x05030000
+#define MR_DCMD_BBU_START_LEARN			0x05040000
+#define MR_DCMD_BBU_GET_PROP			0x05050100
+#define MR_DCMD_BBU_SET_PROP			0x05050200
 #define MR_DCMD_CLUSTER				0x08000000
 #define MR_DCMD_CLUSTER_RESET_ALL		0x08010100
 #define MR_DCMD_CLUSTER_RESET_LD		0x08010200
@@ -971,3 +977,92 @@ struct mfi_conf {
 	struct mfi_ld_cfg	mfc_ld[1];
 	struct mfi_hotspare	mfc_hs[1];
 } __packed;
+
+struct mfi_bbu_capacity_info {
+	uint16_t		relative_charge;
+	uint16_t		absolute_charge;
+	uint16_t		remaining_capacity;
+	uint16_t		full_charge_capacity;
+	uint16_t		run_time_to_empty;
+	uint16_t		average_time_to_empty;
+	uint16_t		average_time_to_full;
+	uint16_t		cycle_count;
+	uint16_t		max_error;
+	uint16_t		remaining_capacity_alarm;
+	uint16_t		remaining_time_alarm;
+	uint8_t			reserved[26];
+} __packed;
+
+struct mfi_bbu_design_info {
+	uint32_t		mfg_date;
+	uint16_t		design_capacity;
+	uint16_t		design_voltage;
+	uint16_t		spec_info;
+	uint16_t		serial_number;
+	uint16_t		pack_stat_config;
+	uint8_t			mfg_name[12];
+	uint8_t			device_name[8];
+	uint8_t			device_chemistry[8];
+	uint8_t			mfg_data[8];
+	uint8_t			reserved[17];
+} __packed;
+
+struct mfi_ibbu_state {
+	uint16_t		gas_guage_status;
+	uint16_t		relative_charge;
+	uint16_t		charger_system_state;
+	uint16_t		charger_system_ctrl;
+	uint16_t		charging_current;
+	uint16_t		absolute_charge;
+	uint16_t		max_error;
+	uint8_t			reserved[18];
+} __packed;
+
+struct mfi_bbu_state {
+	uint16_t		gas_guage_status;
+	uint16_t		relative_charge;
+	uint16_t		charger_status;
+	uint16_t		remaining_capacity;
+	uint16_t		full_charge_capacity;
+	uint8_t			is_SOH_good;
+	uint8_t			reserved[21];
+} __packed;
+
+struct mfi_bbu_properties {
+	uint32_t		auto_learn_period;
+	uint32_t		next_learn_time;
+	uint8_t			learn_delay_interval;
+	uint8_t			auto_learn_mode;
+	uint8_t			bbu_mode;
+	uint8_t			reserved[21];
+} __packed;
+
+union mfi_bbu_status_detail {
+	struct mfi_ibbu_state	ibbu;
+	struct mfi_bbu_state	bbu;
+};
+
+struct mfi_bbu_status {
+	uint8_t			battery_type;
+#define MFI_BBU_TYPE_NONE		0
+#define MFI_BBU_TYPE_IBBU		1
+#define MFI_BBU_TYPE_BBU		2
+	uint8_t			reserved;
+	uint16_t		voltage;
+	int16_t			current;
+	uint16_t		temperature;
+	uint32_t		fw_status;
+#define MFI_BBU_STATE_PACK_MISSING	(1 << 0)
+#define MFI_BBU_STATE_VOLTAGE_LOW	(1 << 1)
+#define MFI_BBU_STATE_TEMPERATURE_HIGH	(1 << 2)
+#define MFI_BBU_STATE_CHARGE_ACTIVE	(1 << 3)
+#define MFI_BBU_STATE_DISCHARGE_ACTIVE	(1 << 4)
+#define MFI_BBU_STATE_LEARN_CYC_REQ	(1 << 5)
+#define MFI_BBU_STATE_LEARN_CYC_ACTIVE	(1 << 6)
+#define MFI_BBU_STATE_LEARN_CYC_FAIL	(1 << 7)
+#define MFI_BBU_STATE_LEARN_CYC_TIMEOUT	(1 << 8)
+#define MFI_BBU_STATE_I2C_ERR_DETECT	(1 << 9)
+	uint8_t			pad[20];
+	union mfi_bbu_status_detail detail;
+} __packed;
+
