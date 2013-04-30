@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.50 2012/08/17 11:31:34 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.51 2013/04/30 07:19:23 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -16,7 +16,7 @@
  */
 
 struct mfi_softc;
-#define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
+#define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
 /* #define MFI_DEBUG */
 #ifdef MFI_DEBUG
