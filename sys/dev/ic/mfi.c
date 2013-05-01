@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.141 2013/05/01 00:47:31 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.142 2013/05/01 03:44:21 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -120,6 +120,7 @@ int		mfi_bio_hs(struct mfi_softc *, int, int, void *);
 #ifndef SMALL_KERNEL
 int		mfi_create_sensors(struct mfi_softc *);
 void		mfi_refresh_sensors(void *);
+int		mfi_bbu(struct mfi_softc *);
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
 
@@ -2020,6 +2021,44 @@ freeme:
 }
 
 #ifndef SMALL_KERNEL
+
+int
+mfi_bbu(struct mfi_softc *sc)
+{
+	struct mfi_bbu_status bbu;
+	u_int32_t status;
+	u_int32_t mask;
+
+	if (mfi_mgmt(sc, MR_DCMD_BBU_GET_STATUS, MFI_DATA_IN,
+	    sizeof(bbu), &bbu, NULL) != 0) {
+		sc->sc_bbu->value = 0;
+		sc->sc_bbu->status = SENSOR_S_UNKNOWN;
+		return (-1);
+	}
+
+	switch (bbu.battery_type) {
+	case MFI_BBU_TYPE_IBBU:
+		mask = MFI_BBU_STATE_BAD_IBBU;
+		break;
+	case MFI_BBU_TYPE_BBU:
+		mask = MFI_BBU_STATE_BAD_BBU;
+		break;
+
+	case MFI_BBU_TYPE_NONE:
+	default:
+		sc->sc_bbu->value = 0;
+		sc->sc_bbu->status = SENSOR_S_CRIT;
+		return (0);
+	}
+
+	status = letoh32(bbu.fw_status);
+
+	sc->sc_bbu->value = (status & MFI_BBU_STATE_PACK_MISSING) ? 0 : 1;
+	sc->sc_bbu->status = (status & mask) ?  SENSOR_S_CRIT : SENSOR_S_OK;
+
+	return (0);
+}
+
 int
 mfi_create_sensors(struct mfi_softc *sc)
 {
@@ -2027,13 +2066,26 @@ mfi_create_sensors(struct mfi_softc *sc)
 	struct scsi_link	*link;
 	int			i;
 
+	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
+	    sizeof(sc->sc_sensordev.xname));
+
+	if (ISSET(letoh32(sc->sc_info.mci_hw_present), MFI_INFO_HW_BBU) &&
+	    ISSET(letoh32(sc->sc_info.mci_adapter_ops ), MFI_INFO_AOPS_BBU)) {
+		sc->sc_bbu = malloc(sizeof(*sc->sc_bbu), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+
+		sc->sc_bbu->type = SENSOR_INDICATOR;
+		sc->sc_bbu->status = SENSOR_S_UNKNOWN;
+		strlcpy(sc->sc_bbu->desc, "Battery Presence",
+		    sizeof(sc->sc_bbu->desc));
+
+		sensor_attach(&sc->sc_sensordev, sc->sc_bbu);
+	}
+
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_ld_cnt,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
-
-	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
-	    sizeof(sc->sc_sensordev.xname));
 
 	for (i = 0; i < sc->sc_ld_cnt; i++) {
 		link = scsi_get_link(sc->sc_scsibus, i, 0);
@@ -2071,6 +2123,8 @@ mfi_refresh_sensors(void *arg)
 	int			i;
 	struct bioc_vol		bv;
 
+	if (sc->sc_bbu != NULL && mfi_bbu(sc) != 0)
+		return;
 
 	for (i = 0; i < sc->sc_ld_cnt; i++) {
 		bzero(&bv, sizeof(bv));
@@ -2100,8 +2154,8 @@ mfi_refresh_sensors(void *arg)
 		default:
 			sc->sc_sensors[i].value = 0; /* unknown */
 			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+			break;
 		}
-
 	}
 }
 #endif /* SMALL_KERNEL */

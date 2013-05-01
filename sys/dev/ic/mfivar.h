@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.51 2013/04/30 07:19:23 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.52 2013/05/01 03:44:22 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -186,8 +186,9 @@ struct mfi_softc {
 	struct rwlock		sc_lock;
 
 	/* sensors */
-	struct ksensor		*sc_sensors;
 	struct ksensordev	sc_sensordev;
+	struct ksensor		*sc_bbu;
+	struct ksensor		*sc_sensors;
 };
 
 int	mfi_attach(struct mfi_softc *sc, enum mfi_iop);

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.38 2013/05/01 01:56:29 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.39 2013/05/01 03:44:22 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1091,6 +1091,18 @@ struct mfi_bbu_status {
 				    "\013REPLACE_PACK" \
 				    "\014CAPACITY_LOW" \
 				    "\015LEARN_REQUIRED"
+#define MFI_BBU_STATE_BAD_IBBU	( \
+				    MFI_BBU_STATE_PACK_MISSING | \
+				    MFI_BBU_STATE_VOLTAGE_LOW | \
+				    MFI_BBU_STATE_DISCHARGE_ACTIVE | \
+				    MFI_BBU_STATE_LEARN_CYC_REQ | \
+				    MFI_BBU_STATE_LEARN_CYC_ACTIVE | \
+				    MFI_BBU_STATE_REPLACE_PACK | \
+				    MFI_BBU_STATE_CAPACITY_LOW)
+#define MFI_BBU_STATE_BAD_BBU	( \
+				    MFI_BBU_STATE_PACK_MISSING | \
+				    MFI_BBU_STATE_REPLACE_PACK | \
+				    MFI_BBU_STATE_CAPACITY_LOW)
 
 	uint8_t			pad[20];
 	union mfi_bbu_status_detail detail;
