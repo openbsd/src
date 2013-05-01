@@ -1,0 +1,14 @@
+#	$OpenBSD: files.cortex,v 1.1 2013/05/01 00:16:26 patrick Exp $
+
+# ARM core
+device	cortex {}
+attach	cortex at mainbus
+file	arch/arm/cortex/cortex.c		cortex
+
+device	ampintc
+attach	ampintc at cortex
+file	arch/arm/cortex/ampintc.c		ampintc
+
+device	amptimer
+attach	amptimer at cortex
+file	arch/arm/cortex/amptimer.c		amptimer

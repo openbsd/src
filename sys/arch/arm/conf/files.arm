@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.23 2013/04/30 13:10:45 patrick Exp $
+#	$OpenBSD: files.arm,v 1.24 2013/05/01 00:16:26 patrick Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -19,6 +19,8 @@ file	arch/arm/arm/fiq_subr.S			fiq
 device	mainbus {}
 attach	mainbus at root
 file	arch/arm/mainbus/mainbus.c		mainbus
+
+include "arch/arm/cortex/files.cortex"
 
 device	cpu {}
 attach	cpu at mainbus with cpu_mainbus

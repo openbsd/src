@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.12 2013/03/27 17:33:13 patrick Exp $
+#	$OpenBSD: files.beagle,v 1.13 2013/05/01 00:16:26 patrick Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -31,15 +31,6 @@ attach omap at mainbus
 file	arch/beagle/dev/omap.c			omap
 file	arch/beagle/dev/omap3.c			omap
 file	arch/beagle/dev/omap4.c			omap
-
-# cortex based peripherals
-device ampintc
-attach ampintc at soc
-file	arch/beagle/dev/ampintc.c		ampintc
-
-device amptimer
-attach amptimer at soc
-file	arch/beagle/dev/amptimer.c		amptimer
 
 include "dev/sdmmc/files.sdmmc"
 

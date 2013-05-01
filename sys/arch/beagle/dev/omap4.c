@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.6 2013/04/25 23:07:17 patrick Exp $ */
+/* $OpenBSD: omap4.c,v 1.7 2013/05/01 00:16:26 patrick Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -23,14 +23,6 @@
 #include <arch/arm/armv7/armv7var.h>
 
 #include <beagle/dev/omapvar.h>
-
-#define ICP_ADDR	0x48240100
-#define ICP_SIZE	0x100
-#define ICD_ADDR	0x48241000
-#define ICD_SIZE	0x1000
-
-#define GTIMER_ADDR	0x48240000
-#define GTIMER_SIZE	0x300
 
 #define WD_ADDR		0x4a314000
 #define WD_SIZE		0x80
@@ -66,27 +58,6 @@
 #define HSMMC1_IRQ	83
 
 struct omap_dev omap4_devs[] = {
-
-	/*
-	 * Cortex-A9 Interrupt Controller
-	 */
-
-	{ .name = "ampintc",
-	  .unit = 0,
-	  .mem = {
-	    { ICP_ADDR, ICD_SIZE },
-	    { ICD_ADDR, ICD_SIZE },
-	  },
-	},
-
-	/*
-	 * Cortex-A9 Global Timer
-	 */
-
-	{ .name = "amptimer",
-	  .unit = 0,
-	  .mem = { { GTIMER_ADDR, GTIMER_SIZE } },
-	},
 
 	/*
 	 * GPIO

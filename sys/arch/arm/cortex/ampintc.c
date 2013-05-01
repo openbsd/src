@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.11 2013/04/26 00:09:14 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.1 2013/05/01 00:16:26 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -28,7 +28,13 @@
 #include <sys/evcount.h>
 #include <arm/cpufunc.h>
 #include <machine/bus.h>
-#include <beagle/dev/omapvar.h>
+#include <arm/cortex/cortex.h>
+
+/* offset from periphbase */
+#define ICP_ADDR	0x100
+#define ICP_SIZE	0x100
+#define ICD_ADDR	0x1000
+#define ICD_SIZE	0x1000
 
 /* registers */
 #define	ICD_DCR			0x000
@@ -192,7 +198,7 @@ void
 ampintc_attach(struct device *parent, struct device *self, void *args)
 {
 	struct ampintc_softc *sc = (struct ampintc_softc *)self;
-	struct omap_attach_args *oa = args;
+	struct cortex_attach_args *ia = args;
 	int i, nintr;
 	bus_space_tag_t		iot;
 	bus_space_handle_t	d_ioh, p_ioh;
@@ -201,14 +207,14 @@ ampintc_attach(struct device *parent, struct device *self, void *args)
 
 	arm_init_smask();
 
-	iot = oa->oa_iot;
+	iot = ia->ca_iot;
 
-	if (bus_space_map(iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &p_ioh))
+	if (bus_space_map(iot, ia->ca_periphbase + ICP_ADDR,
+	    ICP_SIZE, 0, &p_ioh))
 		panic("ampintc_attach: ICP bus_space_map failed!");
 
-	if (bus_space_map(iot, oa->oa_dev->mem[1].addr,
-	    oa->oa_dev->mem[1].size, 0, &d_ioh))
+	if (bus_space_map(iot, ia->ca_periphbase + ICD_ADDR,
+	    ICD_SIZE, 0, &d_ioh))
 		panic("ampintc_attach: ICD bus_space_map failed!");
 
 	sc->sc_iot = iot;

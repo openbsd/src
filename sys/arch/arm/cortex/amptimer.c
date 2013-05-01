@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.8 2013/04/26 00:09:14 patrick Exp $ */
+/* $OpenBSD: amptimer.c,v 1.1 2013/05/01 00:16:26 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,21 +27,25 @@
 #include <arm/cpufunc.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <beagle/dev/omapvar.h>
+#include <arm/cortex/cortex.h>
+
+/* offset from periphbase */
+#define GTIMER_ADDR	0x200
+#define GTIMER_SIZE	0x100
 
 /* registers */
-#define GTIMER_CNT_LOW		0x200
-#define GTIMER_CNT_HIGH		0x204
-#define GTIMER_CTRL		0x208
+#define GTIMER_CNT_LOW		0x00
+#define GTIMER_CNT_HIGH		0x04
+#define GTIMER_CTRL		0x08
 #define GTIMER_CTRL_AA		(1 << 3)
 #define GTIMER_CTRL_IRQ		(1 << 2)
 #define GTIMER_CTRL_COMP	(1 << 1)
 #define GTIMER_CTRL_TIMER	(1 << 0)
-#define GTIMER_STATUS		0x20c
+#define GTIMER_STATUS		0x0c
 #define GTIMER_STATUS_EVENT	(1 << 0)
-#define GTIMER_CMP_LOW		0x210
-#define GTIMER_CMP_HIGH		0x214
-#define GTIMER_AUTOINC		0x218
+#define GTIMER_CMP_LOW		0x10
+#define GTIMER_CMP_HIGH		0x14
+#define GTIMER_AUTOINC		0x18
 
 #define TIMER_FREQUENCY		500 * 1000 * 1000 /* ARM core clock */
 int32_t amptimer_frequency = TIMER_FREQUENCY;
@@ -123,13 +127,13 @@ void
 amptimer_attach(struct device *parent, struct device *self, void *args)
 {
 	struct amptimer_softc *sc = (struct amptimer_softc *)self;
-	struct omap_attach_args *oa = args;
+	struct cortex_attach_args *ia = args;
 	bus_space_handle_t ioh;
 
-	sc->sc_iot = oa->oa_iot;
+	sc->sc_iot = ia->ca_iot;
 
-	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &ioh))
+	if (bus_space_map(sc->sc_iot, ia->ca_periphbase + GTIMER_ADDR,
+	    GTIMER_SIZE, 0, &ioh))
 		panic("amptimer_attach: bus_space_map failed!");
 
 	sc->sc_ticks_per_second = amptimer_frequency;
