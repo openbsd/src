@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.37 2013/05/01 01:15:45 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.38 2013/05/01 01:56:29 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1074,6 +1074,24 @@ struct mfi_bbu_status {
 #define MFI_BBU_STATE_LEARN_CYC_FAIL	(1 << 7)
 #define MFI_BBU_STATE_LEARN_CYC_TIMEOUT	(1 << 8)
 #define MFI_BBU_STATE_I2C_ERR_DETECT	(1 << 9)
+#define MFI_BBU_STATE_REPLACE_PACK	(1 << 10)
+#define MFI_BBU_STATE_CAPACITY_LOW	(1 << 11)
+#define MFI_BBU_STATE_LEARN_REQUIRED	(1 << 12)
+#define MFI_BBU_STATE_FMT	"\020" \
+				    "\001PACK_MISSING" \
+				    "\002VOLTAGE_LOW" \
+				    "\003TEMP_HIGH" \
+				    "\004CHARGE_ACTIVE" \
+				    "\005DISCHARGE_ACTIVE" \
+				    "\006LEARN_CYC_REQ" \
+				    "\007LEARN_CYC_ACTIVE" \
+				    "\010LEARN_CYC_FAIL" \
+				    "\011LEARN_CYC_TIMEOUT" \
+				    "\012I2C_ERR_DETECT" \
+				    "\013REPLACE_PACK" \
+				    "\014CAPACITY_LOW" \
+				    "\015LEARN_REQUIRED"
+
 	uint8_t			pad[20];
 	union mfi_bbu_status_detail detail;
 } __packed;
