@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.140 2013/04/30 07:17:36 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.141 2013/05/01 00:47:31 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -2024,22 +2024,8 @@ int
 mfi_create_sensors(struct mfi_softc *sc)
 {
 	struct device		*dev;
-	struct scsibus_softc	*ssc = NULL;
 	struct scsi_link	*link;
 	int			i;
-
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (dev->dv_parent != &sc->sc_dev)
-			continue;
-
-		/* check if this is the scsibus for the logical disks */
-		ssc = (struct scsibus_softc *)dev;
-		if (ssc->adapter_link == &sc->sc_link)
-			break;
-	}
-
-	if (ssc == NULL)
-		return (1);
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_ld_cnt,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -2050,7 +2036,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 	    sizeof(sc->sc_sensordev.xname));
 
 	for (i = 0; i < sc->sc_ld_cnt; i++) {
-		link = scsi_get_link(ssc, i, 0);
+		link = scsi_get_link(sc->sc_scsibus, i, 0);
 		if (link == NULL)
 			goto bad;
 
