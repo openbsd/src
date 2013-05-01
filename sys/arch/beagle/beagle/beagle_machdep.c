@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.15 2012/08/30 15:51:13 deraadt Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.16 2013/05/01 13:49:18 patrick Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -451,6 +451,7 @@ initarm(void *arg0, void *arg1, void *arg2)
 	pv_addr_t kernel_l1pt;
 	paddr_t memstart;
 	psize_t memsize;
+	extern void omap4_smc_call(uint32_t, uint32_t);
 
 #if 0
 	int led_data = 0;
@@ -467,6 +468,13 @@ initarm(void *arg0, void *arg1, void *arg2)
 	 */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
+
+	switch (board_id) {
+	case BOARD_ID_OMAP4_PANDA:
+		/* disable external L2 cache */
+		omap4_smc_call(0x102, 0);
+		break;
+	}
 
 #if 0
 	/* Calibrate the delay loop. */
