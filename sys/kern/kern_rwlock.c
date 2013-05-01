@@ -1,28 +1,20 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.17 2011/07/05 03:58:22 weingart Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.18 2013/05/01 17:13:05 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
- * All rights reserved. 
+ * Copyright (c) 2011 Thordur Bjornsson <thib@secnorth.net>
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/param.h>
@@ -68,6 +60,9 @@ static const struct rwlock_op {
 		RWLOCK_WAIT,
 		0,
 		PLOCK
+	},
+	{	/* Sparse Entry. */
+		0,
 	},
 	{	/* RW_DOWNGRADE */
 		RWLOCK_READ_INCR - RWLOCK_WRLOCK,
@@ -191,7 +186,7 @@ rw_enter(struct rwlock *rwl, int flags)
 	unsigned long inc, o;
 	int error;
 
-	op = &rw_ops[flags & RW_OPMASK];
+	op = &rw_ops[(flags & RW_OPMASK) - 1];
 
 	inc = op->inc + RW_PROC(curproc) * op->proc_mult;
 retry:
@@ -258,6 +253,13 @@ rw_exit(struct rwlock *rwl)
 		wakeup(rwl);
 }
 
+int
+rw_status(struct rwlock *rwl)
+{
+
+	return (rwl->rwl_owner != 0L);
+}
+
 #ifdef DIAGNOSTIC
 void
 rw_assert_wrlock(struct rwlock *rwl)
@@ -283,3 +285,55 @@ rw_assert_unlocked(struct rwlock *rwl)
 		panic("%s: lock held", rwl->rwl_name);
 }
 #endif
+
+/* recursive rwlocks; */
+void
+rrw_init(struct rrwlock *rrwl, char *name)
+{
+	bzero(rrwl, sizeof(struct rrwlock));
+	rw_init(&rrwl->rrwl_lock, name);
+}
+
+int
+rrw_enter(struct rrwlock *rrwl, int flags)
+{
+	int	rv;
+
+	if (RWLOCK_OWNER(&rrwl->rrwl_lock) ==
+	    (struct proc *)RW_PROC(curproc)) {
+		if (flags & RW_RECURSEFAIL)
+			return (EDEADLK);
+		else {
+			rrwl->rrwl_wcnt++;
+			return (0);
+		}
+	}
+
+	rv = rw_enter(&rrwl->rrwl_lock, flags);
+	if (rv == 0)
+		rrwl->rrwl_wcnt = 1;
+
+	return (rv);
+}
+
+void
+rrw_exit(struct rrwlock *rrwl)
+{
+
+	if (RWLOCK_OWNER(&rrwl->rrwl_lock) ==
+	    (struct proc *)RW_PROC(curproc)) {
+		KASSERT(rrwl->rrwl_wcnt > 0);
+		rrwl->rrwl_wcnt--;
+		if (rrwl->rrwl_wcnt != 0)
+			return;
+	}
+
+	rw_exit(&rrwl->rrwl_lock);
+}
+
+int
+rrw_status(struct rrwlock *rrwl)
+{
+
+	return (rw_status(&rrwl->rrwl_lock));
+}

@@ -1,27 +1,18 @@
-/*	$OpenBSD: rwlock.h,v 1.13 2010/09/24 13:21:30 matthew Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.14 2013/05/01 17:13:05 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
- * All rights reserved. 
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -43,7 +34,7 @@
  * optimized by machine dependent code when __HAVE_MD_RWLOCK is defined.
  *
  * MD code that defines __HAVE_MD_RWLOCK and implement four functions:
- *  
+ *
  * void rw_enter_read(struct rwlock *)
  *  atomically test for RWLOCK_WRLOCK and if not set, increment the lock
  *  by RWLOCK_READ_INCR. While RWLOCK_WRLOCK is set, loop into rw_enter_wait.
@@ -67,7 +58,6 @@
 
 #ifndef SYS_RWLOCK_H
 #define SYS_RWLOCK_H
-
 
 struct proc;
 
@@ -107,17 +97,31 @@ void rw_assert_unlocked(struct rwlock *);
 
 int rw_enter(struct rwlock *, int);
 void rw_exit(struct rwlock *);
-#define RW_WRITE	0x00UL		/* exclusive lock */	
-#define RW_READ		0x01UL		/* shared lock */
-#define RW_DOWNGRADE	0x02UL		/* downgrade exclusive to shared */
-#define RW_OPMASK	0x03UL
+int rw_status(struct rwlock *);
 
-#define RW_INTR		0x10UL		/* interruptible sleep */
-#define RW_SLEEPFAIL	0x20UL		/* fail if we slept for the lock */
-#define RW_NOSLEEP	0x40UL		/* don't wait for the lock */
+#define RW_WRITE	0x0001UL	/* exclusive lock */
+#define RW_READ		0x0002UL	/* shared lock */
+#define RW_DOWNGRADE	0x0004UL	/* downgrade exclusive to shared */
+#define RW_OPMASK	0x0007UL
+
+#define RW_INTR		0x0010UL	/* interruptible sleep */
+#define RW_SLEEPFAIL	0x0020UL	/* fail if we slept for the lock */
+#define RW_NOSLEEP	0x0040UL	/* don't wait for the lock */
+#define RW_RECURSEFAIL	0x0080UL	/* Fail on recursion for RRW locks. */
 
 #ifndef rw_cas
 int rw_cas(volatile unsigned long *, unsigned long, unsigned long);
 #endif
+
+/* recursive rwlocks; */
+struct rrwlock {
+	struct rwlock	rrwl_lock;
+	uint32_t	rrwl_wcnt;	/* # writers. */
+};
+
+void	rrw_init(struct rrwlock *, char *);
+int	rrw_enter(struct rrwlock *, int);
+void	rrw_exit(struct rrwlock *);
+int	rrw_status(struct rrwlock *);
 
 #endif
