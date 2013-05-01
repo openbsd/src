@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2012/12/05 23:20:11 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 2013/05/01 11:54:59 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2603,12 +2603,6 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	PMAP_MAP_TO_HEAD_LOCK();
 	pmap_acquire_pmap_lock(pm);
 
-	/*
-	 * OK, at this point, we know we're doing write-protect operation.
-	 * If the pmap is active, write-back the range.
-	 */
-	pmap_dcache_wb_range(pm, sva, eva - sva, FALSE, FALSE);
-
 	flush = ((eva - sva) >= (PAGE_SIZE * 4)) ? 0 : -1;
 	flags = 0;
 
@@ -2629,6 +2623,14 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			if ((pte = *ptep) != 0 && (pte & L2_S_PROT_W) != 0) {
 				struct vm_page *pg;
 				u_int f;
+
+				/*
+				 * OK, at this point, we know we're doing
+				 * write-protect operation.  If the pmap is
+				 * active, write-back the page.
+				 */
+				pmap_dcache_wb_range(pm, sva, PAGE_SIZE,
+				    FALSE, FALSE);
 
 				pg = PHYS_TO_VM_PAGE(l2pte_pa(pte));
 				pte &= ~L2_S_PROT_W;
