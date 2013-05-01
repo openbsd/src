@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.36 2013/04/30 07:18:34 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.37 2013/05/01 01:15:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -624,10 +624,13 @@ struct mfi_ctrl_info {
 	char			mci_product_name[80];
 	char			mci_serial_number[32];
 	uint32_t		mci_hw_present;
-#define MFI_INFO_HW_BBU		0x01
-#define MFI_INFO_HW_ALARM	0x02
-#define MFI_INFO_HW_NVRAM	0x04
-#define MFI_INFO_HW_UART	0x08
+#define MFI_INFO_HW_BBU			0x01
+#define MFI_INFO_HW_ALARM		0x02
+#define MFI_INFO_HW_NVRAM		0x04
+#define MFI_INFO_HW_UART		0x08
+#define MFI_INFO_HW_FMT		"\020" "\001BBU" "\002ALARM" "\003NVRAM" \
+				    "\004UART"
+
 	uint32_t		mci_current_fw_time;
 	uint16_t		mci_max_cmds;
 	uint16_t		mci_max_sg_elements;
@@ -671,6 +674,15 @@ struct mfi_ctrl_info {
 #define MFI_INFO_AOPS_SELF_DIAGNOSTIC	0x1000
 #define MFI_INFO_AOPS_MIXED_ARRAY	0x2000
 #define MFI_INFO_AOPS_GLOBAL_SPARES	0x4000
+#define MFI_INFO_AOPS_FMT	"\020" "\001RBLD_RATE" "\002CC_RATE" \
+				    "\003BGI_RATE" "\004RECON_RATE" \
+				    "\005PATROL_RATE" "\006ALARM_CONTROL" \
+				    "\007CLUSTER_SUPPORT" "\010BBU" \
+				    "\011SPANNING_ALLOWED" \
+				    "\012DEDICATED_SPARES" \
+				    "\013REVERTIBLE_SPARES" \
+				    "\014FOREIGN_IMPORT" "\015SELF_DIAGNOSTIC" \
+				    "\016MIXED_ARRAY" "\017GLOBAL_SPARES"
 
 	uint32_t		mci_ld_ops;
 #define MFI_INFO_LDOPS_READ_POLICY	0x01
