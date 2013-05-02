@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.142 2013/05/01 03:44:21 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.143 2013/05/02 04:35:44 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -2069,8 +2069,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
 
-	if (ISSET(letoh32(sc->sc_info.mci_hw_present), MFI_INFO_HW_BBU) &&
-	    ISSET(letoh32(sc->sc_info.mci_adapter_ops ), MFI_INFO_AOPS_BBU)) {
+	if (ISSET(letoh32(sc->sc_info.mci_adapter_ops ), MFI_INFO_AOPS_BBU)) {
 		sc->sc_bbu = malloc(sizeof(*sc->sc_bbu), M_DEVBUF,
 		    M_WAITOK | M_ZERO);
 
