@@ -1,4 +1,4 @@
-/* $OpenBSD: arml2cc.c,v 1.1 2013/05/02 19:15:53 patrick Exp $ */
+/* $OpenBSD: arml2cc.c,v 1.2 2013/05/02 20:57:37 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -234,7 +234,6 @@ arml2cc_cache_range_op(paddr_t pa, psize_t len, bus_size_t cache_op)
 		arml2cc_cache_op(sc, cache_op, pa);
 		pa += line_size;
 	}
-#endif
 }
 
 void
