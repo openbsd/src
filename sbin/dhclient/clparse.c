@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.55 2013/03/22 23:58:51 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.56 2013/05/02 14:48:35 krw Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -461,17 +461,11 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * looking for a lease with the same address, and if we find it,
 	 * toss it.
 	 */
-	pl = NULL;
-	for (lp = client->leases; lp; lp = lp->next) {
+	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
 		if (lp->address.s_addr == lease->address.s_addr) {
-			if (pl)
-				pl->next = lp->next;
-			else
-				client->leases = lp->next;
+			TAILQ_REMOVE(&client->leases, lp, next);
 			free_client_lease(lp);
-			break;
-		} else
-			pl = lp;
+		}
 	}
 
 	/*
@@ -479,8 +473,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 * recorded leases - don't make it the active lease.
 	 */
 	if (is_static) {
-		lease->next = client->leases;
-		client->leases = lease;
+		TAILQ_INSERT_HEAD(&client->leases, lease, next);
 		return;
 	}
 
@@ -505,8 +498,8 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		    lease->address.s_addr)
 			free_client_lease(client->active);
 		else {
-			client->active->next = client->leases;
-			client->leases = client->active;
+			TAILQ_INSERT_HEAD(&client->leases, client->active,
+			    next);
 		}
 	}
 	client->active = lease;

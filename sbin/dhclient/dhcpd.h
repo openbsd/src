@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.114 2013/04/27 17:54:24 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.115 2013/05/02 14:48:35 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -99,7 +99,7 @@ struct hardware {
 };
 
 struct client_lease {
-	struct client_lease	*next;
+	TAILQ_ENTRY(client_lease) next;
 	time_t			 expiry, renewal, rebind;
 	struct in_addr		 address;
 	char			*server_name;
@@ -153,8 +153,8 @@ struct client_config {
 struct client_state {
 	struct client_lease	*active;
 	struct client_lease	*new;
-	struct client_lease	*offered_leases;
-	struct client_lease	*leases;
+	TAILQ_HEAD(, client_lease) offered_leases;
+	TAILQ_HEAD(, client_lease) leases;
 	enum dhcp_state		 state;
 	struct in_addr		 destination;
 	u_int32_t		 xid;

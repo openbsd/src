@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.244 2013/04/27 17:54:24 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.245 2013/05/02 14:48:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -395,6 +395,8 @@ main(int argc, char *argv[])
 	client = calloc(1, sizeof(*client));
 	if (client == NULL)
 		error("client calloc");
+	TAILQ_INIT(&client->leases);
+	TAILQ_INIT(&client->offered_leases);
 	config = calloc(1, sizeof(*config));
 	if (config == NULL)
 		error("config calloc");
@@ -644,28 +646,25 @@ state_init(void)
 void
 state_selecting(void)
 {
-	struct client_lease *lp, *next, *picked;
+	struct client_lease *lp, *picked;
 	time_t cur_time;
 
 	/* Cancel state_selecting and send_discover timeouts, since either
 	   one could have got us here. */
 	cancel_timeout();
 
-	/* We have received one or more DHCPOFFER packets.   Currently,
-	   the only criterion by which we judge leases is whether or
-	   not we get a response when we arp for them. */
-	picked = NULL;
-	for (lp = client->offered_leases; lp; lp = next) {
-		next = lp->next;
-		if (!picked) {
-			picked = lp;
-		} else {
-			make_decline(lp);
-			send_decline();
-			free_client_lease(lp);
-		}
+	/* Take the first DHCPOFFER, discard the rest. */
+	picked = TAILQ_FIRST(&client->offered_leases);
+	if (picked)
+		TAILQ_REMOVE(&client->offered_leases, picked, next);
+
+	while (!TAILQ_EMPTY(&client->offered_leases)) {
+		lp = TAILQ_FIRST(&client->offered_leases);
+		TAILQ_REMOVE(&client->leases, lp, next);
+		make_decline(lp);
+		send_decline();
+		free_client_lease(lp);
 	}
-	client->offered_leases = NULL;
 
 	/*
 	 * If we just tossed all the leases we were offered, go back
@@ -675,8 +674,6 @@ state_selecting(void)
 		state_panic();
 		return;
 	}
-
-	picked->next = NULL;
 
 	time(&cur_time);
 
@@ -885,7 +882,7 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
 	}
 
 	/* If we've already seen this lease, don't record it again. */
-	for (lp = client->offered_leases; lp; lp = lp->next) {
+	TAILQ_FOREACH(lp, &client->offered_leases, next) {
 		if (!memcmp(&lp->address.s_addr, &client->packet.yiaddr,
 		    sizeof(in_addr_t))) {
 #ifdef DEBUG
@@ -916,22 +913,14 @@ dhcpoffer(struct in_addr client_addr, struct option_data *options, char *info)
 	/* Figure out when we're supposed to stop selecting. */
 	stop_selecting = client->first_sending + config->select_interval;
 
-	/* If this is the lease we asked for, put it at the head of the
-	   list, and don't mess with the arp request timeout. */
-	if (lease->address.s_addr == client->requested_address.s_addr) {
-		lease->next = client->offered_leases;
-		client->offered_leases = lease;
+	if (TAILQ_EMPTY(&client->offered_leases)) {
+		TAILQ_INSERT_HEAD(&client->offered_leases, lease, next);
+	} else if (lease->address.s_addr == client->requested_address.s_addr) {
+		/* The lease we expected - put it at the head of the list. */
+		TAILQ_INSERT_HEAD(&client->offered_leases, lease, next);
 	} else {
-		/* Put the lease at the end of the list. */
-		lease->next = NULL;
-		if (!client->offered_leases)
-			client->offered_leases = lease;
-		else {
-			for (lp = client->offered_leases; lp->next;
-			    lp = lp->next)
-				;	/* nothing */
-			lp->next = lease;
-		}
+		/* Not the lease we expected - put it at the end of the list. */
+		TAILQ_INSERT_TAIL(&client->offered_leases, lease, next);
 	}
 
 	note("%s", info);
@@ -1151,7 +1140,6 @@ void
 state_panic(void)
 {
 	struct client_lease *loop = client->active;
-	struct client_lease *lp;
 	time_t cur_time;
 
 	time(&cur_time);
@@ -1159,7 +1147,7 @@ state_panic(void)
 
 	/* We may not have an active lease, but we may have some
 	   predefined leases that we can try. */
-	if (!client->active && client->leases)
+	if (!client->active && !TAILQ_EMPTY(&client->leases))
 		goto activate_next;
 
 	/* Run through the list of leases and see if one can be used. */
@@ -1190,8 +1178,9 @@ state_panic(void)
 		}
 
 		/* If there are no other leases, give up. */
-		if (!client->leases) {
-			client->leases = client->active;
+		if (TAILQ_EMPTY(&client->leases)) {
+			TAILQ_INSERT_HEAD(&client->leases, client->active,
+			    next);
 			client->active = NULL;
 			break;
 		}
@@ -1199,13 +1188,11 @@ state_panic(void)
 activate_next:
 		/* Otherwise, put the active lease at the end of the
 		   lease list, and try another lease.. */
-		for (lp = client->leases; lp->next; lp = lp->next)
-			;
-		lp->next = client->active;
-		if (lp->next)
-			lp->next->next = NULL;
-		client->active = client->leases;
-		client->leases = client->leases->next;
+		if (client->active)
+			TAILQ_INSERT_TAIL(&client->leases, client->active,
+			    next);
+		client->active = TAILQ_FIRST(&client->leases);
+		TAILQ_REMOVE(&client->leases, client->active, next);
 
 		/* If we already tried this lease, we've exhausted the
 		   set of leases, so we might as well give up for
@@ -1559,7 +1546,7 @@ rewrite_client_leases(void)
 	fflush(leaseFile);
 	rewind(leaseFile);
 
-	for (lp = client->leases; lp; lp = lp->next) {
+	TAILQ_FOREACH(lp, &client->leases, next) {
 		/* Skip any leases that duplicate the active lease address. */
 		if (client->active && lp->address.s_addr ==
 		    client->active->address.s_addr)
