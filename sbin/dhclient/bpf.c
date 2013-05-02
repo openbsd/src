@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.27 2013/04/05 19:31:36 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.28 2013/05/02 16:35:27 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -111,28 +111,28 @@ if_register_send(void)
 }
 
 /*
- * Packet filter program...
+ * Packet filter program.
  *
  * XXX: Changes to the filter program may require changes to the
  * constant offsets used in if_register_send to patch the BPF program!
  */
 struct bpf_insn dhcp_bpf_filter[] = {
-	/* Make sure this is an IP packet... */
+	/* Make sure this is an IP packet. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 8),
 
-	/* Make sure it's a UDP packet... */
+	/* Make sure it's a UDP packet. */
 	BPF_STMT(BPF_LD + BPF_B + BPF_ABS, 23),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
 
-	/* Make sure this isn't a fragment... */
+	/* Make sure this isn't a fragment. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
 	BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
 
-	/* Get the IP header length... */
+	/* Get the IP header length. */
 	BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, 14),
 
-	/* Make sure it's to the right port... */
+	/* Make sure it's to the right port. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 16),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 67, 0, 1),		/* patch */
 
@@ -153,26 +153,26 @@ struct bpf_insn dhcp_bpf_wfilter[] = {
 	BPF_STMT(BPF_LD + BPF_B + BPF_IND, 14),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, (IPVERSION << 4) + 5, 0, 12),
 
-	/* Make sure this is an IP packet... */
+	/* Make sure this is an IP packet. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 10),
 
-	/* Make sure it's a UDP packet... */
+	/* Make sure it's a UDP packet. */
 	BPF_STMT(BPF_LD + BPF_B + BPF_ABS, 23),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 8),
 
-	/* Make sure this isn't a fragment... */
+	/* Make sure this isn't a fragment. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20),
 	BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 6, 0),	/* patched */
 
-	/* Get the IP header length... */
+	/* Get the IP header length. */
 	BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, 14),
 
-	/* Make sure it's from the right port... */
+	/* Make sure it's from the right port. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 14),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 68, 0, 3),
 
-	/* Make sure it is to the right ports ... */
+	/* Make sure it is to the right ports. */
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 16),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 67, 0, 1),
 
@@ -192,11 +192,11 @@ if_register_receive(void)
 	struct bpf_program p;
 	int flag = 1, sz;
 
-	/* Open a BPF device and hang it on this interface... */
+	/* Open a BPF device and hang it on this interface. */
 	ifi->rfdesc = if_register_bpf();
 	fcntl(ifi->rfdesc, F_SETFD, FD_CLOEXEC);
 
-	/* Make sure the BPF version is in range... */
+	/* Make sure the BPF version is in range. */
 	if (ioctl(ifi->rfdesc, BIOCVERSION, &v) < 0)
 		error("Can't get BPF version: %s", strerror(errno));
 
@@ -232,7 +232,7 @@ if_register_receive(void)
 	p.bf_len = dhcp_bpf_filter_len;
 	p.bf_insns = dhcp_bpf_filter;
 
-	/* Patch the server port into the BPF program...
+	/* Patch the server port into the BPF program.
 	 *
 	 * XXX: changes to filter program may require changes to the
 	 * insn number(s) used below!
@@ -313,7 +313,7 @@ receive_packet(struct sockaddr_in *from, struct hardware *hfrom)
 	 */
 
 	/* Process packets until we get one we can return or until we've
-	 * done a read and gotten nothing we can return...
+	 * done a read and gotten nothing we can return.
 	 */
 	do {
 		/* If the buffer is empty, fill it. */
@@ -328,19 +328,19 @@ receive_packet(struct sockaddr_in *from, struct hardware *hfrom)
 		/*
 		 * If there isn't room for a whole bpf header, something
 		 * went wrong, but we'll ignore it and hope it goes
-		 * away... XXX
+		 * away. XXX
 		 */
 		if (ifi->rbuf_len - ifi->rbuf_offset < sizeof(hdr)) {
 			ifi->rbuf_offset = ifi->rbuf_len;
 			continue;
 		}
 
-		/* Copy out a bpf header... */
+		/* Copy out a bpf header. */
 		memcpy(&hdr, &ifi->rbuf[ifi->rbuf_offset], sizeof(hdr));
 
 		/*
 		 * If the bpf header plus data doesn't fit in what's
-		 * left of the buffer, stick head in sand yet again...
+		 * left of the buffer, stick head in sand yet again.
 		 */
 		if (ifi->rbuf_offset + hdr.bh_hdrlen + hdr.bh_caplen >
 		    ifi->rbuf_len) {
@@ -360,10 +360,10 @@ receive_packet(struct sockaddr_in *from, struct hardware *hfrom)
 			continue;
 		}
 
-		/* Skip over the BPF header... */
+		/* Skip over the BPF header. */
 		ifi->rbuf_offset += hdr.bh_hdrlen;
 
-		/* Decode the physical header... */
+		/* Decode the physical header. */
 		offset = decode_hw_header(ifi->rbuf, ifi->rbuf_offset, hfrom);
 
 		/*
@@ -379,11 +379,11 @@ receive_packet(struct sockaddr_in *from, struct hardware *hfrom)
 		ifi->rbuf_offset += offset;
 		hdr.bh_caplen -= offset;
 
-		/* Decode the IP and UDP headers... */
+		/* Decode the IP and UDP headers. */
 		offset = decode_udp_ip_header(ifi->rbuf,
 		    ifi->rbuf_offset, from, hdr.bh_caplen);
 
-		/* If the IP or UDP checksum was bad, skip the packet... */
+		/* If the IP or UDP checksum was bad, skip the packet. */
 		if (offset < 0) {
 			ifi->rbuf_offset = BPF_WORDALIGN(
 			    ifi->rbuf_offset + hdr.bh_caplen);
@@ -403,7 +403,7 @@ receive_packet(struct sockaddr_in *from, struct hardware *hfrom)
 			continue;
 		}
 
-		/* Copy out the data in the packet... */
+		/* Copy out the data in the packet. */
 		memset(&client->packet, DHO_END, sizeof(client->packet));
 		memcpy(&client->packet, ifi->rbuf + ifi->rbuf_offset,
 		    hdr.bh_caplen);

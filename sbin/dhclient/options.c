@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.52 2013/04/05 19:19:05 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.53 2013/05/02 16:35:27 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -119,7 +119,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			/*
 			 * If it's a repeat, concatenate it to whatever
 			 * we last saw.   This is really only required
-			 * for clients, but what the heck...
+			 * for clients, but what the heck.
 			 */
 			t = calloc(1, len + options[code].len + 1);
 			if (!t)
@@ -290,13 +290,13 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		}
 	}
 
-	/* Check for too few bytes... */
+	/* Check for too few bytes. */
 	if (hunksize > len) {
 		warning("%s: expecting at least %d bytes; got %d",
 		    dhcp_options[code].name, hunksize, len);
 		goto done;
 	}
-	/* Check for too many bytes... */
+	/* Check for too many bytes. */
 	if (numhunk == -1 && hunksize < len) {
 		warning("%s: expecting only %d bytes: got %d",
 		    dhcp_options[code].name, hunksize, len);

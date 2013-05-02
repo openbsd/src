@@ -1,6 +1,6 @@
-/*	$OpenBSD: conflex.c,v 1.18 2012/11/15 14:54:18 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.19 2013/05/02 16:35:27 krw Exp $	*/
 
-/* Lexical scanner for dhclient config file... */
+/* Lexical scanner for dhclient config file. */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -253,7 +253,7 @@ read_string(FILE *cfile)
 	}
 	/*
 	 * Normally, I'd feel guilty about this, but we're talking about
-	 * strings that'll fit in a DHCP packet here...
+	 * strings that'll fit in a DHCP packet here.
 	 */
 	if (i == sizeof(tokbuf)) {
 		parse_warn("string constant larger than internal buffer");

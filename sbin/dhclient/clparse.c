@@ -1,6 +1,6 @@
-/*	$OpenBSD: clparse.c,v 1.56 2013/05/02 14:48:35 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.57 2013/05/02 16:35:27 krw Exp $	*/
 
-/* Parser for dhclient config and lease files... */
+/* Parser for dhclient config and lease files. */
 
 /*
  * Copyright (c) 1997 The Internet Software Consortium.
@@ -57,7 +57,7 @@ read_client_conf(void)
 
 	new_parse(path_dhclient_conf);
 
-	/* Set some defaults... */
+	/* Set some defaults. */
 	config->link_timeout = 10;
 	config->timeout = 60;
 	config->select_interval = 0;
@@ -613,7 +613,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 		return (-1);
 	}
 
-	/* Parse the option data... */
+	/* Parse the option data. */
 	do {
 		for (fmt = dhcp_options[code].format; *fmt; fmt++) {
 			if (*fmt == 'A')
@@ -624,7 +624,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				    sizeof(hunkbuf) - hunkix);
 				hunkix += len;
 				break;
-			case 't': /* Text string... */
+			case 't': /* Text string. */
 				token = next_token(&val, cfile);
 				if (token != TOK_STRING) {
 					parse_warn("expecting string.");
@@ -657,8 +657,8 @@ alloc:
 				memcpy(&hunkbuf[hunkix], dp, len);
 				hunkix += len;
 				break;
-			case 'L':	/* Unsigned 32-bit integer... */
-			case 'l':	/* Signed 32-bit integer... */
+			case 'L':	/* Unsigned 32-bit integer. */
+			case 'l':	/* Signed 32-bit integer. */
 				token = next_token(&val, cfile);
 				if (token != TOK_NUMBER) {
 need_number:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.115 2013/05/02 14:48:35 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.116 2013/05/02 16:35:27 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -198,7 +198,7 @@ struct dhcp_timeout {
 #define	_PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
 #define	DHCPD_LOG_FACILITY	LOG_DAEMON
 
-/* External definitions... */
+/* External definitions. */
 
 extern struct interface_info *ifi;
 extern struct client_state *client;

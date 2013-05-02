@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.77 2013/04/05 19:19:05 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.78 2013/05/02 16:35:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -183,10 +183,10 @@ another:
 		if (unpriv_ibuf->w.queued)
 			fds[2].events |= POLLOUT;
 
-		/* Wait for a packet or a timeout or unpriv_ibuf->fd ... XXX */
+		/* Wait for a packet or a timeout or unpriv_ibuf->fd. XXX */
 		count = poll(fds, 3, to_msec);
 
-		/* Not likely to be transitory... */
+		/* Not likely to be transitory. */
 		if (count == -1) {
 			if (errno == EAGAIN || errno == EINTR) {
 				continue;
@@ -306,7 +306,7 @@ interface_status(char *ifname)
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		error("Can't create socket");
 
-	/* get interface flags */
+	/* Get interface flags. */
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1) {
@@ -314,22 +314,18 @@ interface_status(char *ifname)
 		    strerror(errno));
 	}
 
-	/*
-	 * if one of UP and RUNNING flags is dropped,
-	 * the interface is not active.
-	 */
 	if ((ifr.ifr_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		goto inactive;
 
-	/* Next, check carrier on the interface, if possible */
+	/* Next, check carrier on the interface if possible. */
 	if (ifi->noifmedia)
 		goto active;
 	memset(&ifmr, 0, sizeof(ifmr));
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
 		/*
-		 * EINVAL or ENOTTY simply means that the interface
-		 * does not support the SIOCGIFMEDIA ioctl. We regard it alive.
+		 * EINVAL or ENOTTY simply means that the interface does not
+		 * support the SIOCGIFMEDIA ioctl. We regard it alive.
 		 */
 #ifdef DEBUG
 		if (errno != EINVAL && errno != ENOTTY)
