@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: subr_poison.c,v 1.3 2013/05/02 18:55:24 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
