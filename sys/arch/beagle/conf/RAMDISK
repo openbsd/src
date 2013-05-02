@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.17 2013/05/01 00:16:26 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.18 2013/05/02 19:15:53 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -65,6 +65,7 @@ omap0		at mainbus?
 cortex0		at mainbus?
 ampintc*	at cortex?
 amptimer*	at cortex?
+#armliicc*	at cortex?		# L2 cache controller
 
 # OMAP3 only
 intc*		at soc?			# interrupt controller
