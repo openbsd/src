@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.60 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.61 2013/05/02 11:54:10 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -130,12 +130,6 @@ u_int		mrtdebug = 0;	  /* debug level 	*/
 
 #define		VIFI_INVALID	((vifi_t) -1)
 
-#ifdef RSVP_ISI
-u_int		rsvpdebug = 0;	  /* rsvp debug level   */
-extern struct socket *ip_rsvpd;
-extern int rsvp_on;
-#endif /* RSVP_ISI */
-
 #define		EXPIRE_TIMEOUT	250		/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
 struct timeout	expire_upcalls_ch;
@@ -162,11 +156,7 @@ static int get_api_config(struct mbuf *);
 static int socket_send(struct socket *, struct mbuf *,
 			    struct sockaddr_in *);
 static void expire_upcalls(void *);
-#ifdef RSVP_ISI
-static int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *, vifi_t);
-#else
 static int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *);
-#endif
 static void phyint_send(struct ip *, struct vif *, struct mbuf *);
 static void encap_send(struct ip *, struct vif *, struct mbuf *);
 static void send_packet(struct vif *, struct mbuf *);
@@ -879,11 +869,6 @@ add_vif(struct mbuf *m)
 
 	timeout_del(&vifp->v_repq_ch);
 
-#ifdef RSVP_ISI
-	vifp->v_rsvp_on = 0;
-	vifp->v_rsvpd = NULL;
-#endif /* RSVP_ISI */
-
 	splx(s);
 
 	/* Adjust numvifs up if the vifi is higher than numvifs. */
@@ -1138,11 +1123,7 @@ add_mfc(struct mbuf *m)
 			for (; rte != NULL; rte = nrte) {
 				nrte = rte->next;
 				if (rte->ifp) {
-#ifdef RSVP_ISI
-					ip_mdq(rte->m, rte->ifp, rt, -1);
-#else
 					ip_mdq(rte->m, rte->ifp, rt);
-#endif /* RSVP_ISI */
 				}
 				m_freem(rte->m);
 #ifdef UPCALL_TIMING
@@ -1305,11 +1286,7 @@ socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in *src)
 #define TUNNEL_LEN  12  /* # bytes of IP option for tunnel encapsulation  */
 
 int
-#ifdef RSVP_ISI
-ip_mforward(struct mbuf *m, struct ifnet *ifp, struct ip_moptions *imo)
-#else
 ip_mforward(struct mbuf *m, struct ifnet *ifp)
-#endif /* RSVP_ISI */
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct mfc *rt;
@@ -1340,28 +1317,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		return (1);
 	}
 
-#ifdef RSVP_ISI
-	if (imo && ((vifi = imo->imo_multicast_vif) < numvifs)) {
-		if (ip->ip_ttl < MAXTTL) {
-			/* compensate for -1 in *_send routines */
-			ip->ip_ttl++;
-		}
-		if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
-			struct vif *vifp = viftable + vifi;
-			printf("Sending IPPROTO_RSVP from %x to %x on "
-			    "vif %d (%s%s)\n",
-			    ntohl(ip->ip_src), ntohl(ip->ip_dst), vifi,
-			    (vifp->v_flags & VIFF_TUNNEL) ? "tunnel on " : "",
-			    vifp->v_ifp->if_xname);
-		}
-		return (ip_mdq(m, ifp, (struct mfc *)NULL, vifi));
-	}
-	if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
-		printf("Warning: IPPROTO_RSVP from %x to %x without "
-		    "vif option\n", ntohl(ip->ip_src), ntohl(ip->ip_dst));
-	}
-#endif /* RSVP_ISI */
-
 	/*
 	 * Don't forward a packet with time-to-live of zero or one,
 	 * or a packet destined to a local-only group.
@@ -1379,11 +1334,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	/* Entry exists, so forward if necessary */
 	if (rt != NULL) {
 		splx(s);
-#ifdef RSVP_ISI
-		return (ip_mdq(m, ifp, rt, -1));
-#else
 		return (ip_mdq(m, ifp, rt));
-#endif /* RSVP_ISI */
 	} else {
 		/*
 		 * If we don't have a route for packet's origin,
@@ -1603,11 +1554,7 @@ expire_upcalls(void *v)
  * Packet forwarding routine once entry in the cache is made
  */
 static int
-#ifdef RSVP_ISI
-ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt, vifi_t xmt_vif)
-#else
 ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
-#endif /* RSVP_ISI */
 {
 	struct ip  *ip = mtod(m, struct ip *);
 	vifi_t vifi;
@@ -1615,9 +1562,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
 /*
- * Macro to send packet on vif.  Since RSVP packets don't get counted on
- * input, they shouldn't get counted on output, so statistics keeping is
- * separate.
+ * Macro to send packet on vif.
  */
 #define MC_SEND(ip, vifp, m) do {					\
 	if ((vifp)->v_flags & VIFF_TUNNEL)				\
@@ -1625,23 +1570,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	else								\
 		phyint_send((ip), (vifp), (m));				\
 } while (/*CONSTCOND*/ 0)
-
-#ifdef RSVP_ISI
-	/*
-	 * If xmt_vif is not -1, send on only the requested vif.
-	 *
-	 * (since vifi_t is u_short, -1 becomes MAXUSHORT, which > numvifs.
-	 */
-	if (xmt_vif < numvifs) {
-#ifdef PIM
-		if (viftable[xmt_vif].v_flags & VIFF_REGISTER)
-			pim_register_send(ip, viftable + xmt_vif, m, rt);
-		else
-#endif
-		MC_SEND(ip, viftable + xmt_vif, m);
-		return (1);
-	}
-#endif /* RSVP_ISI */
 
 	/*
 	 * Don't forward if it didn't arrive from the parent vif for its origin.
@@ -1767,20 +1695,6 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	return (0);
 }
 
-#ifdef RSVP_ISI
-/*
- * check if a vif number is legal/ok. This is used by ip_output.
- */
-int
-legal_vif_num(int vif)
-{
-	if (vif >= 0 && vif < numvifs)
-		return (1);
-	else
-		return (0);
-}
-#endif /* RSVP_ISI */
-
 static void
 phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 {
@@ -1876,9 +1790,6 @@ send_packet(struct vif *vifp, struct mbuf *m)
 		imo.imo_multicast_ifp = vifp->v_ifp;
 		imo.imo_multicast_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
 		imo.imo_multicast_loop = 1;
-#ifdef RSVP_ISI
-		imo.imo_multicast_vif = -1;
-#endif
 
 		error = ip_output(m, (struct mbuf *)NULL, (struct route *)NULL,
 		    IP_FORWARDING|IP_MULTICASTOPTS, &imo,
@@ -1890,223 +1801,6 @@ send_packet(struct vif *vifp, struct mbuf *m)
 	}
 	splx(s);
 }
-
-#ifdef RSVP_ISI
-int
-ip_rsvp_vif_init(struct socket *so, struct mbuf *m)
-{
-	int vifi, s;
-
-	if (rsvpdebug)
-		printf("ip_rsvp_vif_init: so_type = %d, pr_protocol = %d\n",
-		    so->so_type, so->so_proto->pr_protocol);
-
-	if (so->so_type != SOCK_RAW ||
-	    so->so_proto->pr_protocol != IPPROTO_RSVP)
-		return (EOPNOTSUPP);
-
-	/* Check mbuf. */
-	if (m == NULL || m->m_len != sizeof(int)) {
-		return (EINVAL);
-	}
-	vifi = *(mtod(m, int *));
-
-	if (rsvpdebug)
-		printf("ip_rsvp_vif_init: vif = %d rsvp_on = %d\n",
-		    vifi, rsvp_on);
-
-	s = splsoftnet();
-
-	/* Check vif. */
-	if (!legal_vif_num(vifi)) {
-		splx(s);
-		return (EADDRNOTAVAIL);
-	}
-
-	/* Check if socket is available. */
-	if (viftable[vifi].v_rsvpd != NULL) {
-		splx(s);
-		return (EADDRINUSE);
-	}
-
-	viftable[vifi].v_rsvpd = so;
-	/* This may seem silly, but we need to be sure we don't over-increment
-	 * the RSVP counter, in case something slips up.
-	 */
-	if (!viftable[vifi].v_rsvp_on) {
-		viftable[vifi].v_rsvp_on = 1;
-		rsvp_on++;
-	}
-
-	splx(s);
-	return (0);
-}
-
-int
-ip_rsvp_vif_done(struct socket *so, struct mbuf *m)
-{
-	int vifi, s;
-
-	if (rsvpdebug)
-		printf("ip_rsvp_vif_done: so_type = %d, pr_protocol = %d\n",
-		    so->so_type, so->so_proto->pr_protocol);
-
-	if (so->so_type != SOCK_RAW ||
-	    so->so_proto->pr_protocol != IPPROTO_RSVP)
-		return (EOPNOTSUPP);
-
-	/* Check mbuf. */
-	if (m == NULL || m->m_len != sizeof(int)) {
-		return (EINVAL);
-	}
-	vifi = *(mtod(m, int *));
-
-	s = splsoftnet();
-
-	/* Check vif. */
-	if (!legal_vif_num(vifi)) {
-		splx(s);
-		return (EADDRNOTAVAIL);
-	}
-
-	if (rsvpdebug)
-		printf("ip_rsvp_vif_done: v_rsvpd = %x so = %x\n",
-		    viftable[vifi].v_rsvpd, so);
-
-	viftable[vifi].v_rsvpd = NULL;
-	/*
-	 * This may seem silly, but we need to be sure we don't over-decrement
-	 * the RSVP counter, in case something slips up.
-	 */
-	if (viftable[vifi].v_rsvp_on) {
-		viftable[vifi].v_rsvp_on = 0;
-		rsvp_on--;
-	}
-
-	splx(s);
-	return (0);
-}
-
-void
-ip_rsvp_force_done(struct socket *so)
-{
-	int vifi, s;
-
-	/* Don't bother if it is not the right type of socket. */
-	if (so->so_type != SOCK_RAW ||
-	    so->so_proto->pr_protocol != IPPROTO_RSVP)
-		return;
-
-	s = splsoftnet();
-
-	/*
-	 * The socket may be attached to more than one vif...this
-	 * is perfectly legal.
-	 */
-	for (vifi = 0; vifi < numvifs; vifi++) {
-		if (viftable[vifi].v_rsvpd == so) {
-			viftable[vifi].v_rsvpd = NULL;
-			/*
-			 * This may seem silly, but we need to be sure we don't
-			 * over-decrement the RSVP counter, in case something
-			 * slips up.
-			 */
-			if (viftable[vifi].v_rsvp_on) {
-				viftable[vifi].v_rsvp_on = 0;
-				rsvp_on--;
-			}
-		}
-	}
-
-	splx(s);
-	return;
-}
-
-void
-rsvp_input(struct mbuf *m, struct ifnet *ifp)
-{
-	int vifi, s;
-	struct ip *ip = mtod(m, struct ip *);
-	static struct sockaddr_in rsvp_src = { sizeof(sin), AF_INET };
-
-	if (rsvpdebug)
-		printf("rsvp_input: rsvp_on %d\n", rsvp_on);
-
-	/*
-	 * Can still get packets with rsvp_on = 0 if there is a local member
-	 * of the group to which the RSVP packet is addressed.  But in this
-	 * case we want to throw the packet away.
-	 */
-	if (!rsvp_on) {
-		m_freem(m);
-		return;
-	}
-
-	/*
-	 * If the old-style non-vif-associated socket is set, then use
-	 * it and ignore the new ones.
-	 */
-	if (ip_rsvpd != NULL) {
-		if (rsvpdebug)
-			printf("rsvp_input: "
-			    "Sending packet up old-style socket\n");
-		rip_input(m, 0);	/*XXX*/
-		return;
-	}
-
-	s = splsoftnet();
-
-	if (rsvpdebug)
-		printf("rsvp_input: check vifs\n");
-
-	/* Find which vif the packet arrived on. */
-	for (vifi = 0; vifi < numvifs; vifi++) {
-		if (viftable[vifi].v_ifp == ifp)
-			break;
-	}
-
-	if (vifi == numvifs) {
-		/* Can't find vif packet arrived on. Drop packet. */
-		if (rsvpdebug)
-			printf("rsvp_input: "
-			    "Can't find vif for packet...dropping it.\n");
-		m_freem(m);
-		splx(s);
-		return;
-	}
-
-	if (rsvpdebug)
-		printf("rsvp_input: check socket\n");
-
-	if (viftable[vifi].v_rsvpd == NULL) {
-		/*
-	 	 * drop packet, since there is no specific socket for this
-		 * interface
-		 */
-		if (rsvpdebug)
-			printf("rsvp_input: No socket defined for vif %d\n",
-			    vifi);
-		m_freem(m);
-		splx(s);
-		return;
-	}
-
-	rsvp_src.sin_addr = ip->ip_src;
-
-	if (rsvpdebug && m)
-		printf("rsvp_input: m->m_len = %d, sbspace() = %d\n",
-		    m->m_len, sbspace(&viftable[vifi].v_rsvpd->so_rcv));
-
-	if (socket_send(viftable[vifi].v_rsvpd, m, &rsvp_src) < 0)
-		if (rsvpdebug)
-			printf("rsvp_input: Failed to append to socket\n");
-	else
-		if (rsvpdebug)
-			printf("rsvp_input: send packet up\n");
-
-	splx(s);
-}
-#endif /* RSVP_ISI */
 
 /*
  * Code for bandwidth monitors

@@ -1297,11 +1297,8 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 	int plen = m->m_pkthdr.len;
 
 /*
- * Macro to send packet on mif.  Since RSVP packets don't get counted on
- * input, they shouldn't get counted on output, so statistics keeping is
- * separate.
+ * Macro to send packet on mif.
  */
-
 #define MC6_SEND(ip6, mifp, m) do {				\
 		if ((mifp)->m6_flags & MIFF_REGISTER)		\
 		    register_send((ip6), (mifp), (m));		\

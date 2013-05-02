@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.32 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.33 2013/05/02 11:54:10 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -600,9 +600,7 @@ igmp_sendpkt(struct in_multi *inm, int type, in_addr_t addr)
 
 	imo.imo_multicast_ifp = inm->inm_ia->ia_ifp;
 	imo.imo_multicast_ttl = 1;
-#ifdef RSVP_ISI
-	imo.imo_multicast_vif = -1;
-#endif
+
 	/*
 	 * Request loopback of the report if we are acting as a multicast
 	 * router, so that the process-level routing daemon can hear it.

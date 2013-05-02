@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.53 2013/04/07 20:58:25 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.54 2013/05/02 11:54:10 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -654,7 +654,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		if (so == ip6_mrouter)
 			ip6_mrouter_done();
 #endif
-		/* xxx: RSVP */
 		if (in6p->in6p_icmp6filt) {
 			free(in6p->in6p_icmp6filt, M_PCB);
 			in6p->in6p_icmp6filt = NULL;
