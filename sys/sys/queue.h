@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.36 2012/04/11 13:29:14 naddy Exp $	*/
+/*	$OpenBSD: queue.h,v 1.37 2013/05/03 18:24:01 tedu Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -316,6 +316,86 @@ struct {								\
 		(head)->sqh_last = &(elm)->field.sqe_next;		\
 } while (0)
 
+/*
+ * XOR Simple queue definitions.
+ */
+#define XSIMPLEQ_HEAD(name, type)					\
+struct name {								\
+	struct type *sqx_first;	/* first element */			\
+	struct type **sqx_last;	/* addr of last next element */		\
+	unsigned long sqx_cookie;					\
+}
+
+#define XSIMPLEQ_ENTRY(type)						\
+struct {								\
+	struct type *sqx_next;	/* next element */			\
+}
+
+/*
+ * XOR Simple queue access methods.
+ */
+#define XSIMPLEQ_XOR(head, ptr)	    ((__typeof(ptr))((head)->sqx_cookie ^ \
+					(unsigned long)(ptr)))
+#define	XSIMPLEQ_FIRST(head)	    XSIMPLEQ_XOR(head, ((head)->sqx_first))
+#define	XSIMPLEQ_END(head)	    NULL
+#define	XSIMPLEQ_EMPTY(head)	    (XSIMPLEQ_FIRST(head) == XSIMPLEQ_END(head))
+#define	XSIMPLEQ_NEXT(head, elm, field)    XSIMPLEQ_XOR(head, ((elm)->field.sqx_next))
+
+
+#define XSIMPLEQ_FOREACH(var, head, field)				\
+	for ((var) = XSIMPLEQ_FIRST(head);				\
+	    (var) != XSIMPLEQ_END(head);				\
+	    (var) = XSIMPLEQ_NEXT(head, var, field))
+
+#define	XSIMPLEQ_FOREACH_SAFE(var, head, field, tvar)			\
+	for ((var) = XSIMPLEQ_FIRST(head);				\
+	    (var) && ((tvar) = XSIMPLEQ_NEXT(head, var, field), 1);	\
+	    (var) = (tvar))
+
+/*
+ * XOR Simple queue functions.
+ */
+#define	XSIMPLEQ_INIT(head) do {					\
+	arc4random_buf(&(head)->sqx_cookie, sizeof((head)->sqx_cookie)); \
+	(head)->sqx_first = XSIMPLEQ_XOR(head, NULL);			\
+	(head)->sqx_last = XSIMPLEQ_XOR(head, &(head)->sqx_first);	\
+} while (0)
+
+#define XSIMPLEQ_INSERT_HEAD(head, elm, field) do {			\
+	if (((elm)->field.sqx_next = (head)->sqx_first) ==		\
+	    XSIMPLEQ_XOR(head, NULL))					\
+		(head)->sqx_last = XSIMPLEQ_XOR(head, &(elm)->field.sqx_next); \
+	(head)->sqx_first = XSIMPLEQ_XOR(head, (elm));			\
+} while (0)
+
+#define XSIMPLEQ_INSERT_TAIL(head, elm, field) do {			\
+	(elm)->field.sqx_next = XSIMPLEQ_XOR(head, NULL);		\
+	*(XSIMPLEQ_XOR(head, (head)->sqx_last)) = XSIMPLEQ_XOR(head, (elm)); \
+	(head)->sqx_last = XSIMPLEQ_XOR(head, &(elm)->field.sqx_next);	\
+} while (0)
+
+#define XSIMPLEQ_INSERT_AFTER(head, listelm, elm, field) do {		\
+	if (((elm)->field.sqx_next = (listelm)->field.sqx_next) ==	\
+	    XSIMPLEQ_XOR(head, NULL))					\
+		(head)->sqx_last = XSIMPLEQ_XOR(head, &(elm)->field.sqx_next); \
+	(listelm)->field.sqx_next = XSIMPLEQ_XOR(head, (elm));		\
+} while (0)
+
+#define XSIMPLEQ_REMOVE_HEAD(head, field) do {				\
+	if (((head)->sqx_first = XSIMPLEQ_XOR(head,			\
+	    (head)->sqx_first)->field.sqx_next) == XSIMPLEQ_XOR(head, NULL)) \
+		(head)->sqx_last = XSIMPLEQ_XOR(head, &(head)->sqx_first); \
+} while (0)
+
+#define XSIMPLEQ_REMOVE_AFTER(head, elm, field) do {			\
+	if (((elm)->field.sqx_next = XSIMPLEQ_XOR(head,			\
+	    (elm)->field.sqx_next)->field.sqx_next)			\
+	    == XSIMPLEQ_XOR(head, NULL))				\
+		(head)->sqx_last = 					\
+		    XSIMPLEQ_XOR(head, &(elm)->field.sqx_next);		\
+} while (0)
+
+		    
 /*
  * Tail queue definitions.
  */
