@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_extern.h,v 1.9 2009/06/10 14:03:18 millert Exp $	*/
+/*	$OpenBSD: ex_extern.h,v 1.10 2013/05/03 20:43:25 kili Exp $	*/
 
 int ex(SCR **);
 int ex_cmd(SCR *);
@@ -83,6 +83,7 @@ int proc_wait(SCR *, pid_t, const char *, int, int);
 int ex_shiftl(SCR *, EXCMD *);
 int ex_shiftr(SCR *, EXCMD *);
 int ex_source(SCR *, EXCMD *);
+int ex_sourcefd(SCR *, EXCMD *, int);
 int ex_stop(SCR *, EXCMD *);
 int ex_s(SCR *, EXCMD *);
 int ex_subagain(SCR *, EXCMD *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.9 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.10 2013/05/03 20:43:25 kili Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 
 #include <bitstring.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
@@ -29,9 +30,9 @@
 #include "pathnames.h"
 
 enum rc { NOEXIST, NOPERM, RCOK };
-static enum rc	exrc_isok(SCR *, struct stat *, char *, int, int);
+static enum rc	exrc_isok(SCR *, struct stat *, int *, char *, int, int);
 
-static int ex_run_file(SCR *, char *);
+static int ex_run_file(SCR *, int, char *);
 
 /*
  * ex_screen_copy --
@@ -143,6 +144,7 @@ ex_exrc(sp)
 {
 	struct stat hsb, lsb;
 	char *p, path[MAXPATHLEN];
+	int fd;
 
 	/*
 	 * Source the system, environment, $HOME and local .exrc values.
@@ -168,12 +170,12 @@ ex_exrc(sp)
 	 * it's going to make some commands behave oddly, and I can't imagine
 	 * anyone depending on it.
 	 */
-	switch (exrc_isok(sp, &hsb, _PATH_SYSEXRC, 1, 0)) {
+	switch (exrc_isok(sp, &hsb, &fd, _PATH_SYSEXRC, 1, 0)) {
 	case NOEXIST:
 	case NOPERM:
 		break;
 	case RCOK:
-		if (ex_run_file(sp, _PATH_SYSEXRC))
+		if (ex_run_file(sp, fd, _PATH_SYSEXRC))
 			return (1);
 		break;
 	}
@@ -192,18 +194,18 @@ ex_exrc(sp)
 			return (1);
 	} else if ((p = getenv("HOME")) != NULL && *p) {
 		(void)snprintf(path, sizeof(path), "%s/%s", p, _PATH_NEXRC);
-		switch (exrc_isok(sp, &hsb, path, 0, 1)) {
+		switch (exrc_isok(sp, &hsb, &fd, path, 0, 1)) {
 		case NOEXIST:
 			(void)snprintf(path,
 			    sizeof(path), "%s/%s", p, _PATH_EXRC);
-			if (exrc_isok(sp,
-			    &hsb, path, 0, 1) == RCOK && ex_run_file(sp, path))
+			if (exrc_isok(sp, &hsb, &fd, path, 0, 1) == RCOK &&
+			    ex_run_file(sp, fd, path))
 				return (1);
 			break;
 		case NOPERM:
 			break;
 		case RCOK:
-			if (ex_run_file(sp, path))
+			if (ex_run_file(sp, fd, path))
 				return (1);
 			break;
 		}
@@ -217,21 +219,27 @@ ex_exrc(sp)
 
 	/* Previous commands may have set the exrc option. */
 	if (O_ISSET(sp, O_EXRC)) {
-		switch (exrc_isok(sp, &lsb, _PATH_NEXRC, 0, 0)) {
+		switch (exrc_isok(sp, &lsb, &fd, _PATH_NEXRC, 0, 0)) {
 		case NOEXIST:
-			if (exrc_isok(sp, &lsb, _PATH_EXRC, 0, 0) == RCOK &&
-			    (lsb.st_dev != hsb.st_dev ||
-			    lsb.st_ino != hsb.st_ino) &&
-			    ex_run_file(sp, _PATH_EXRC))
-				return (1);
+			if (exrc_isok(sp, &lsb, &fd, _PATH_EXRC, 0, 0)
+			    == RCOK) {
+				if (lsb.st_dev != hsb.st_dev ||
+				    lsb.st_ino != hsb.st_ino) {
+					if (ex_run_file(sp, fd, _PATH_EXRC))
+						return (1);
+				} else
+					close(fd);
+			}
 			break;
 		case NOPERM:
 			break;
 		case RCOK:
-			if ((lsb.st_dev != hsb.st_dev ||
-			    lsb.st_ino != hsb.st_ino) &&
-			    ex_run_file(sp, _PATH_NEXRC))
-				return (1);
+			if (lsb.st_dev != hsb.st_dev ||
+			    lsb.st_ino != hsb.st_ino) {
+				if (ex_run_file(sp, fd, _PATH_NEXRC))
+					return (1);
+			} else
+				close(fd);
 			break;
 		}
 		/* Run the commands. */
@@ -249,8 +257,9 @@ ex_exrc(sp)
  *	Set up a file of ex commands to run.
  */
 static int
-ex_run_file(sp, name)
+ex_run_file(sp, fd, name)
 	SCR *sp;
+	int fd;
 	char *name;
 {
 	ARGS *ap[2], a;
@@ -258,7 +267,7 @@ ex_run_file(sp, name)
 
 	ex_cinit(&cmd, C_SOURCE, 0, OOBLNO, OOBLNO, 0, ap);
 	ex_cadd(&cmd, &a, name, strlen(name));
-	return (ex_source(sp, &cmd));
+	return (ex_sourcefd(sp, &cmd, fd));
 }
 
 /*
@@ -308,7 +317,7 @@ ex_run_str(sp, name, str, len, ex_flags, nocopy)
 
 /*
  * exrc_isok --
- *	Check a .exrc file for source-ability.
+ *	Open and check a .exrc file for source-ability.
  *
  * !!!
  * Historically, vi read the $HOME and local .exrc files if they were owned
@@ -343,9 +352,10 @@ ex_run_str(sp, name, str, len, ex_flags, nocopy)
  * files.
  */
 static enum rc
-exrc_isok(sp, sbp, path, rootown, rootid)
+exrc_isok(sp, sbp, fdp, path, rootown, rootid)
 	SCR *sp;
 	struct stat *sbp;
+	int *fdp;
 	char *path;
 	int rootown, rootid;
 {
@@ -354,9 +364,23 @@ exrc_isok(sp, sbp, path, rootown, rootid)
 	int nf1, nf2;
 	char *a, *b, buf[MAXPATHLEN];
 
-	/* Check for the file's existence. */
-	if (stat(path, sbp))
-		return (NOEXIST);
+	if ((*fdp = open(path, O_RDONLY, 0)) < 0) {
+		if (errno == ENOENT)
+                        /* This is the only case where ex_exrc()
+                         * should silently try the next file, for
+                         * example .exrc after .nexrc.
+			 */
+			return (NOEXIST);
+
+		msgq_str(sp, M_SYSERR, path, "%s");
+		return (NOPERM);
+	}
+
+	if (fstat(*fdp, sbp)) {
+		msgq_str(sp, M_SYSERR, path, "%s");
+		close(*fdp);
+		return (NOPERM);
+	}
 
 	/* Check ownership permissions. */
 	euid = geteuid();
@@ -411,5 +435,6 @@ denied:	a = msg_print(sp, path, &nf1);
 
 	if (nf1)
 		FREE_SPACE(sp, a, 0);
+	close(*fdp);
 	return (NOPERM);
 }

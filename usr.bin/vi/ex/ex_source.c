@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_source.c,v 1.7 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_source.c,v 1.8 2013/05/03 20:43:25 kili Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -27,22 +27,23 @@
 #include "../common/common.h"
 
 /*
- * ex_source -- :source file
- *	Execute ex commands from a file.
+ * ex_sourcefd -- :source already opened file
+ *	Execute ex commands from the given file descriptor
  *
- * PUBLIC: int ex_source(SCR *, EXCMD *);
+ * PUBLIC: int ex_sourcefd(SCR *, EXCMD *, int);
  */
 int
-ex_source(sp, cmdp)
+ex_sourcefd(sp, cmdp, fd)
 	SCR *sp;
 	EXCMD *cmdp;
+	int fd;
 {
 	struct stat sb;
-	int fd, len;
+	int len;
 	char *bp, *name;
 
 	name = cmdp->argv[0]->bp;
-	if ((fd = open(name, O_RDONLY, 0)) < 0 || fstat(fd, &sb))
+	if (fstat(fd, &sb))
 		goto err;
 
 	/*
@@ -80,4 +81,26 @@ err:		msgq_str(sp, M_SYSERR, name, "%s");
 
 	/* Put it on the ex queue. */
 	return (ex_run_str(sp, name, bp, (size_t)sb.st_size, 1, 1));
+}
+
+/*
+ * ex_source -- :source file
+ *	Execute ex commands from a file.
+ *
+ * PUBLIC: int ex_source(SCR *, EXCMD *);
+ */
+int
+ex_source(sp, cmdp)
+	SCR *sp;
+	EXCMD *cmdp;
+{
+	char *name;
+	int fd;
+
+	name = cmdp->argv[0]->bp;
+	if ((fd = open(name, O_RDONLY, 0)) >= 0)
+		return (ex_sourcefd(sp, cmdp, fd));
+
+	msgq_str(sp, M_SYSERR, name, "%s");
+	return (1);
 }
