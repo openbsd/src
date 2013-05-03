@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.143 2013/05/02 04:35:44 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.144 2013/05/03 02:46:28 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -2022,17 +2022,42 @@ freeme:
 
 #ifndef SMALL_KERNEL
 
+static const char *mfi_bbu_indicators[] = {
+	"pack missing",
+	"voltage low",
+	"temp high",
+	"charge active",
+	"discharge active",
+	"learn cycle req'd",
+	"learn cycle active",
+	"learn cycle failed",
+	"learn cycle timeout",
+	"I2C errors",
+	"replace pack",
+	"low capacity",
+	"periodic learn req'd"
+};
+
+#define MFI_BBU_SENSORS 4
+
 int
 mfi_bbu(struct mfi_softc *sc)
 {
 	struct mfi_bbu_status bbu;
 	u_int32_t status;
 	u_int32_t mask;
+	int i;
 
 	if (mfi_mgmt(sc, MR_DCMD_BBU_GET_STATUS, MFI_DATA_IN,
 	    sizeof(bbu), &bbu, NULL) != 0) {
-		sc->sc_bbu->value = 0;
-		sc->sc_bbu->status = SENSOR_S_UNKNOWN;
+		for (i = 0; i < MFI_BBU_SENSORS; i++) {
+			sc->sc_bbu[i].value = 0;
+			sc->sc_bbu[i].status = SENSOR_S_UNKNOWN;
+		}
+		for (i = 0; i < nitems(mfi_bbu_indicators); i++) {
+			sc->sc_bbu_status[i].value = 0;
+			sc->sc_bbu_status[i].status = SENSOR_S_UNKNOWN;
+		}
 		return (-1);
 	}
 
@@ -2046,15 +2071,34 @@ mfi_bbu(struct mfi_softc *sc)
 
 	case MFI_BBU_TYPE_NONE:
 	default:
-		sc->sc_bbu->value = 0;
-		sc->sc_bbu->status = SENSOR_S_CRIT;
+		sc->sc_bbu[0].value = 0;
+		sc->sc_bbu[0].status = SENSOR_S_CRIT;
+		for (i = 1; i < MFI_BBU_SENSORS; i++) {
+			sc->sc_bbu[i].value = 0;
+			sc->sc_bbu[i].status = SENSOR_S_UNKNOWN;
+		}
+		for (i = 0; i < nitems(mfi_bbu_indicators); i++) {
+			sc->sc_bbu_status[i].value = 0;
+			sc->sc_bbu_status[i].status = SENSOR_S_UNKNOWN;
+		}
 		return (0);
 	}
 
 	status = letoh32(bbu.fw_status);
 
-	sc->sc_bbu->value = (status & MFI_BBU_STATE_PACK_MISSING) ? 0 : 1;
-	sc->sc_bbu->status = (status & mask) ?  SENSOR_S_CRIT : SENSOR_S_OK;
+	sc->sc_bbu[0].value = (status & mask) ? 0 : 1;
+	sc->sc_bbu[0].status = (status & mask) ? SENSOR_S_CRIT : SENSOR_S_OK;
+
+	sc->sc_bbu[1].value = letoh16(bbu.voltage) * 1000;
+	sc->sc_bbu[2].value = (int16_t)letoh16(bbu.current) * 1000;
+	sc->sc_bbu[3].value = letoh16(bbu.temperature) * 1000000 + 273150000;
+	for (i = 1; i < MFI_BBU_SENSORS; i++)
+		sc->sc_bbu[i].status = SENSOR_S_UNSPEC;
+
+	for (i = 0; i < nitems(mfi_bbu_indicators); i++) {
+		sc->sc_bbu_status[i].value = (status & (1 << i)) ? 1 : 0;
+		sc->sc_bbu_status[i].status = SENSOR_S_UNSPEC;
+	}
 
 	return (0);
 }
@@ -2070,15 +2114,39 @@ mfi_create_sensors(struct mfi_softc *sc)
 	    sizeof(sc->sc_sensordev.xname));
 
 	if (ISSET(letoh32(sc->sc_info.mci_adapter_ops ), MFI_INFO_AOPS_BBU)) {
-		sc->sc_bbu = malloc(sizeof(*sc->sc_bbu), M_DEVBUF,
-		    M_WAITOK | M_ZERO);
+		sc->sc_bbu = malloc(sizeof(*sc->sc_bbu) * 4,
+		    M_DEVBUF, M_WAITOK | M_ZERO);
 
-		sc->sc_bbu->type = SENSOR_INDICATOR;
-		sc->sc_bbu->status = SENSOR_S_UNKNOWN;
-		strlcpy(sc->sc_bbu->desc, "Battery Presence",
-		    sizeof(sc->sc_bbu->desc));
+		sc->sc_bbu[0].type = SENSOR_INDICATOR;
+		sc->sc_bbu[0].status = SENSOR_S_UNKNOWN;
+		strlcpy(sc->sc_bbu[0].desc, "bbu ok",
+		    sizeof(sc->sc_bbu[0].desc));
+		sensor_attach(&sc->sc_sensordev, &sc->sc_bbu[0]);
 
-		sensor_attach(&sc->sc_sensordev, sc->sc_bbu);
+		sc->sc_bbu[1].type = SENSOR_VOLTS_DC;
+		sc->sc_bbu[1].status = SENSOR_S_UNSPEC;
+		sc->sc_bbu[2].type = SENSOR_AMPS;
+		sc->sc_bbu[2].status = SENSOR_S_UNSPEC;
+		sc->sc_bbu[3].type = SENSOR_TEMP;
+		sc->sc_bbu[3].status = SENSOR_S_UNSPEC;
+		for (i = 1; i < MFI_BBU_SENSORS; i++) {
+			strlcpy(sc->sc_bbu[i].desc, "bbu",
+			    sizeof(sc->sc_bbu[i].desc));
+			sensor_attach(&sc->sc_sensordev, &sc->sc_bbu[i]);
+		}
+
+		sc->sc_bbu_status = malloc(sizeof(*sc->sc_bbu_status) *
+		    sizeof(mfi_bbu_indicators), M_DEVBUF, M_WAITOK | M_ZERO);
+
+		for (i = 0; i < nitems(mfi_bbu_indicators); i++) {
+			sc->sc_bbu_status[i].type = SENSOR_INDICATOR;
+			sc->sc_bbu_status[i].status = SENSOR_S_UNSPEC;
+			strlcpy(sc->sc_bbu_status[i].desc,
+			    mfi_bbu_indicators[i],
+			    sizeof(sc->sc_bbu_status[i].desc));
+
+			sensor_attach(&sc->sc_sensordev, &sc->sc_bbu_status[i]);
+		}
 	}
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_ld_cnt,

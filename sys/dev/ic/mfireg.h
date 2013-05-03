@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.39 2013/05/01 03:44:22 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.40 2013/05/03 02:46:28 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1060,9 +1060,9 @@ struct mfi_bbu_status {
 #define MFI_BBU_TYPE_IBBU		1
 #define MFI_BBU_TYPE_BBU		2
 	uint8_t			reserved;
-	uint16_t		voltage;
-	int16_t			current;
-	uint16_t		temperature;
+	uint16_t		voltage; /* mV */
+	int16_t			current; /* mA */
+	uint16_t		temperature; /* degC */
 	uint32_t		fw_status;
 #define MFI_BBU_STATE_PACK_MISSING	(1 << 0)
 #define MFI_BBU_STATE_VOLTAGE_LOW	(1 << 1)

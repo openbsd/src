@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.52 2013/05/01 03:44:22 dlg Exp $ */
+/* $OpenBSD: mfivar.h,v 1.53 2013/05/03 02:46:28 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -188,6 +188,7 @@ struct mfi_softc {
 	/* sensors */
 	struct ksensordev	sc_sensordev;
 	struct ksensor		*sc_bbu;
+	struct ksensor		*sc_bbu_status;
 	struct ksensor		*sc_sensors;
 };
 
