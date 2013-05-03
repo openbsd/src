@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.104 2013/04/06 03:53:25 tedu Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.105 2013/05/03 18:26:07 tedu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ struct kmem_freelist;
  * Set of buckets for each size of memory block that is retained
  */
 struct kmembuckets {
-	SIMPLEQ_HEAD(, kmem_freelist) kb_freelist; /* list of free blocks */
+	XSIMPLEQ_HEAD(, kmem_freelist) kb_freelist; /* list of free blocks */
 	u_int64_t kb_calls;	/* total calls to allocate this size */
 	u_int64_t kb_total;	/* total number of blocks allocated */
 	u_int64_t kb_totalfree;	/* # of free elements in this bucket */

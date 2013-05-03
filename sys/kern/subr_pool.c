@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.119 2013/04/17 17:44:03 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.120 2013/05/03 18:26:07 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ struct pool_item_header {
 	/* Page headers */
 	LIST_ENTRY(pool_item_header)
 				ph_pagelist;	/* pool page list */
-	SIMPLEQ_HEAD(,pool_item) ph_itemlist;	/* chunk list for this page */
+	XSIMPLEQ_HEAD(,pool_item) ph_itemlist;	/* chunk list for this page */
 	RB_ENTRY(pool_item_header)
 				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
@@ -80,7 +80,7 @@ struct pool_item_header {
 struct pool_item {
 	u_int32_t pi_magic;
 	/* Other entries use only this list entry */
-	SIMPLEQ_ENTRY(pool_item)	pi_list;
+	XSIMPLEQ_ENTRY(pool_item)	pi_list;
 };
 
 #ifdef POOL_DEBUG
@@ -632,7 +632,7 @@ startover:
 		/* Start the allocation process over. */
 		goto startover;
 	}
-	if ((v = pi = SIMPLEQ_FIRST(&ph->ph_itemlist)) == NULL) {
+	if ((v = pi = XSIMPLEQ_FIRST(&ph->ph_itemlist)) == NULL) {
 		panic("pool_do_get: %s: page empty", pp->pr_wchan);
 	}
 #ifdef DIAGNOSTIC
@@ -665,7 +665,7 @@ startover:
 	/*
 	 * Remove from item list.
 	 */
-	SIMPLEQ_REMOVE_HEAD(&ph->ph_itemlist, pi_list);
+	XSIMPLEQ_REMOVE_HEAD(&ph->ph_itemlist, pi_list);
 	pp->pr_nitems--;
 	pp->pr_nout++;
 	if (ph->ph_nmissing == 0) {
@@ -683,7 +683,7 @@ startover:
 		LIST_INSERT_HEAD(&pp->pr_partpages, ph, ph_pagelist);
 	}
 	ph->ph_nmissing++;
-	if (SIMPLEQ_EMPTY(&ph->ph_itemlist)) {
+	if (XSIMPLEQ_EMPTY(&ph->ph_itemlist)) {
 #ifdef DIAGNOSTIC
 		if (ph->ph_nmissing != pp->pr_itemsperpage) {
 			panic("pool_do_get: %s: nmissing inconsistent",
@@ -783,7 +783,7 @@ pool_do_put(struct pool *pp, void *v)
 	}
 #endif /* DIAGNOSTIC */
 
-	SIMPLEQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
+	XSIMPLEQ_INSERT_HEAD(&ph->ph_itemlist, pi, pi_list);
 	ph->ph_nmissing--;
 	pp->pr_nitems++;
 	pp->pr_nout--;
@@ -886,7 +886,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	 * Insert page header.
 	 */
 	LIST_INSERT_HEAD(&pp->pr_emptypages, ph, ph_pagelist);
-	SIMPLEQ_INIT(&ph->ph_itemlist);
+	XSIMPLEQ_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
 	ph->ph_pagesize = pp->pr_alloc->pa_pagesz;
 	ph->ph_nmissing = 0;
@@ -921,7 +921,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 		KASSERT(((((vaddr_t)pi) + ioff) & (align - 1)) == 0);
 
 		/* Insert on page list */
-		SIMPLEQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
+		XSIMPLEQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
 
 #ifdef DIAGNOSTIC
 		pi->pi_magic = poison_value(pi);
@@ -1142,7 +1142,7 @@ pool_print_pagelist(struct pool_pagelist *pl,
 		(*pr)("\t\tpage %p, nmissing %d\n",
 		    ph->ph_page, ph->ph_nmissing);
 #ifdef DIAGNOSTIC
-		SIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
+		XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 			if (pi->pi_magic != poison_value(pi)) {
 				(*pr)("\t\t\titem %p, magic 0x%x\n",
 				    pi, pi->pi_magic);
@@ -1293,9 +1293,9 @@ pool_chk_page(struct pool *pp, struct pool_item_header *ph, int expected)
 		return 1;
 	}
 
-	for (pi = SIMPLEQ_FIRST(&ph->ph_itemlist), n = 0;
+	for (pi = XSIMPLEQ_FIRST(&ph->ph_itemlist), n = 0;
 	     pi != NULL;
-	     pi = SIMPLEQ_NEXT(pi,pi_list), n++) {
+	     pi = XSIMPLEQ_NEXT(&ph->ph_itemlist, pi, pi_list), n++) {
 
 #ifdef DIAGNOSTIC
 		if (pi->pi_magic != poison_value(pi)) {
@@ -1391,7 +1391,7 @@ pool_walk(struct pool *pp, int full,
 		n = ph->ph_nmissing;
 
 		do {
-			SIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
+			XSIMPLEQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 				if (cp == (caddr_t)pi)
 					break;
 			}

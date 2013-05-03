@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.99 2013/04/06 03:53:25 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.100 2013/05/03 18:26:07 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/rwlock.h>
+
+#include <dev/rndvar.h>
 
 #include <uvm/uvm.h>
 
@@ -132,7 +134,7 @@ struct kmem_freelist {
 	int32_t	kf_spare0;
 	int16_t	kf_type;
 	int16_t	kf_spare1;
-	SIMPLEQ_ENTRY(kmem_freelist) kf_flist;
+	XSIMPLEQ_ENTRY(kmem_freelist) kf_flist;
 };
 
 #ifdef DIAGNOSTIC
@@ -221,7 +223,7 @@ malloc(unsigned long size, int type, int flags)
 		allocsize = round_page(size);
 	else
 		allocsize = 1 << indx;
-	if (SIMPLEQ_FIRST(&kbp->kb_freelist) == NULL) {
+	if (XSIMPLEQ_FIRST(&kbp->kb_freelist) == NULL) {
 		npg = atop(round_page(allocsize));
 		va = (caddr_t)uvm_km_kmemalloc_pla(kmem_map, NULL,
 		    (vsize_t)ptoa(npg), 0,
@@ -273,7 +275,7 @@ malloc(unsigned long size, int type, int flags)
 			poison_mem(cp, allocsize);
 			freep->kf_type = M_FREE;
 #endif /* DIAGNOSTIC */
-			SIMPLEQ_INSERT_HEAD(&kbp->kb_freelist, freep, kf_flist);
+			XSIMPLEQ_INSERT_HEAD(&kbp->kb_freelist, freep, kf_flist);
 			if (cp <= va)
 				break;
 			cp -= allocsize;
@@ -283,15 +285,15 @@ malloc(unsigned long size, int type, int flags)
 		freshalloc = 0;
 #endif
 	}
-	freep = SIMPLEQ_FIRST(&kbp->kb_freelist);
-	SIMPLEQ_REMOVE_HEAD(&kbp->kb_freelist, kf_flist);
+	freep = XSIMPLEQ_FIRST(&kbp->kb_freelist);
+	XSIMPLEQ_REMOVE_HEAD(&kbp->kb_freelist, kf_flist);
 	va = (caddr_t)freep;
 #ifdef DIAGNOSTIC
 	savedtype = (unsigned)freep->kf_type < M_LAST ?
 		memname[freep->kf_type] : "???";
-	if (freshalloc == 0 && SIMPLEQ_FIRST(&kbp->kb_freelist)) {
+	if (freshalloc == 0 && XSIMPLEQ_FIRST(&kbp->kb_freelist)) {
 		int rv;
-		vaddr_t addr = (vaddr_t)SIMPLEQ_FIRST(&kbp->kb_freelist);
+		vaddr_t addr = (vaddr_t)XSIMPLEQ_FIRST(&kbp->kb_freelist);
 
 		vm_map_lock(kmem_map);
 		rv = uvm_map_checkprot(kmem_map, addr,
@@ -420,7 +422,7 @@ free(void *addr, int type)
 	 */
 	if (freep->kf_spare0 == poison_value(freep)) {
 		struct kmem_freelist *fp;
-		SIMPLEQ_FOREACH(fp, &kbp->kb_freelist, kf_flist) {
+		XSIMPLEQ_FOREACH(fp, &kbp->kb_freelist, kf_flist) {
 			if (addr != fp)
 				continue;
 			printf("multiply freed item %p\n", addr);
@@ -453,7 +455,7 @@ free(void *addr, int type)
 		wakeup(ksp);
 	ksp->ks_inuse--;
 #endif
-	SIMPLEQ_INSERT_TAIL(&kbp->kb_freelist, freep, kf_flist);
+	XSIMPLEQ_INSERT_TAIL(&kbp->kb_freelist, freep, kf_flist);
 	splx(s);
 }
 
@@ -538,7 +540,7 @@ kmeminit(void)
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 		(vsize_t)(nkmempages * sizeof(struct kmemusage)));
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
-		SIMPLEQ_INIT(&bucket[indx].kb_freelist);
+		XSIMPLEQ_INIT(&bucket[indx].kb_freelist);
 	}
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
