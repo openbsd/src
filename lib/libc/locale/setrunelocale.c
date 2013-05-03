@@ -1,4 +1,4 @@
-/*	$OpenBSD: setrunelocale.c,v 1.7 2012/12/05 23:20:00 deraadt Exp $ */
+/*	$OpenBSD: setrunelocale.c,v 1.8 2013/05/03 13:53:49 stsp Exp $ */
 /*	$NetBSD: setrunelocale.c,v 1.14 2003/08/07 16:43:07 agc Exp $	*/
 
 /*-
@@ -195,6 +195,7 @@ _xpg4_setrunelocale(const char *encoding)
 
 found:
 	_CurrentRuneLocale = rl;
+	__mb_cur_max = rl->rl_citrus_ctype->cc_mb_cur_max;
 
 	return 0;
 }

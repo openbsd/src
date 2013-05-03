@@ -1,4 +1,4 @@
-/*      $OpenBSD: citrus_ctype_local.h,v 1.3 2012/06/06 16:58:02 matthew Exp $       */
+/*      $OpenBSD: citrus_ctype_local.h,v 1.4 2013/05/03 13:53:49 stsp Exp $       */
 /*      $NetBSD: citrus_ctype_local.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $  */
 
 /*-
@@ -81,6 +81,7 @@ struct _citrus_ctype_ops_rec {
 
 struct _citrus_ctype_rec {
 	struct _citrus_ctype_ops_rec	*cc_ops;
+	size_t				cc_mb_cur_max;
 };
 
 #endif

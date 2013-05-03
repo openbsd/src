@@ -1,4 +1,4 @@
-/*	$OpenBSD: citrus_ctype.c,v 1.3 2012/12/05 23:19:59 deraadt Exp $ */
+/*	$OpenBSD: citrus_ctype.c,v 1.4 2013/05/03 13:53:49 stsp Exp $ */
 /*	$NetBSD: citrus_ctype.c,v 1.5 2008/06/14 16:01:07 tnozaki Exp $	*/
 
 /*-
@@ -38,10 +38,12 @@
 
 struct _citrus_ctype_rec _citrus_ctype_none = {
 	&_citrus_none_ctype_ops,	/* cc_ops */
+	1				/* cc_mb_cur_max */
 };
 
 struct _citrus_ctype_rec _citrus_ctype_utf8 = {
 	&_citrus_utf8_ctype_ops,	/* cc_ops */
+	_CITRUS_UTF8_MB_CUR_MAX		/* cc_mb_cur_max */
 };
 
 int
@@ -49,11 +51,9 @@ _citrus_ctype_open(struct _citrus_ctype_rec **rcc, char const *encname)
 {
 	if (!strcmp(encname, "NONE")) {
 		*rcc = &_citrus_ctype_none;
-		__mb_cur_max = 1;
 		return (0);
 	} else if (!strcmp(encname, "UTF8")) {
 		*rcc = &_citrus_ctype_utf8;
-		__mb_cur_max = _CITRUS_UTF8_MB_CUR_MAX;
 		return (0);
 	}
 
