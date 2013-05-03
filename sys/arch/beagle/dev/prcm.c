@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.9 2011/11/10 19:37:01 uwe Exp $ */
+/* $OpenBSD: prcm.c,v 1.10 2013/05/03 17:58:15 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -253,7 +253,7 @@ prcm_setclock(int clock, int speed)
 		int shift =  (clock-2);
 		oreg = bus_space_read_4(prcm_iot, prcm_ioh, CM_CLKSEL_PER);
 
-		mask = 1 << (mask);
+		mask = 1 << (shift);
 		reg =  (oreg & ~mask) | ( (speed << shift) & mask);
 		printf(" prcm_setclock old %08x new %08x",  oreg, reg);
 
