@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.98 2013/04/24 10:17:08 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.99 2013/05/03 09:35:20 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -105,17 +105,21 @@
  * host table maintenance routines.
  */
 
+#ifdef ICMPPRINTFS
+int	icmpprintfs = 0;	/* Settable from ddb */
+#endif
+
+/* values controllable via sysctl */
 int	icmpmaskrepl = 0;
 int	icmpbmcastecho = 0;
 int	icmptstamprepl = 1;
-#ifdef ICMPPRINTFS
-int	icmpprintfs = 0;
-#endif
 int	icmperrppslim = 100;
-int	icmperrpps_count = 0;
-struct timeval icmperrppslim_last;
 int	icmp_rediraccept = 0;
 int	icmp_redirtimeout = 10 * 60;
+
+static int icmperrpps_count = 0;
+static struct timeval icmperrppslim_last;
+
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 struct	icmpstat icmpstat;
 
