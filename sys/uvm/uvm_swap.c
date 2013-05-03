@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.112 2013/04/17 16:22:24 florian Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.113 2013/05/03 13:57:46 florian Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -2022,6 +2022,7 @@ swapmount(void)
 	if (bdevvp(swap_dev, &vp)) {
 		free(sdp->swd_path, M_VMSWAP);
 		free(sdp, M_VMSWAP);
+		free(spp, M_VMSWAP);
 		return;
 	}
 
