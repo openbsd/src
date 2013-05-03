@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.822 2013/04/10 08:50:59 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.823 2013/05/03 15:33:47 florian Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7037,6 +7037,12 @@ done:
 			action = pf_refragment6(m0, mtag, fwdir);
 	}
 #endif
+	if (s && action != PF_DROP) {
+		if (!s->if_index_in && dir == PF_IN)
+			s->if_index_in = ifp->if_index;
+		else if (!s->if_index_out && dir == PF_OUT)
+			s->if_index_out = ifp->if_index;
+	}
 
 	return (action);
 }

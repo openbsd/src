@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.7 2013/02/05 11:58:39 florian Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.8 2013/05/03 15:33:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -40,8 +40,10 @@
 #define PFIX_IE_ipClassOfService		  5
 #define PFIX_IE_sourceTransportPort		  7
 #define PFIX_IE_sourceIPv4Address		  8
+#define PFIX_IE_ingressInterface		 10
 #define PFIX_IE_destinationTransportPort	 11
 #define PFIX_IE_destinationIPv4Address		 12
+#define PFIX_IE_egressInterface			 14
 #define PFIX_IE_flowEndSysUpTime		 21
 #define PFIX_IE_flowStartSysUpTime		 22
 #define PFIX_IE_sourceIPv6Address		 27
@@ -91,11 +93,13 @@ struct pflow_tmpl_fspec {
 	u_int16_t	len;
 } __packed;
 
-/* update pflow_clone_create() when changing pflow_v10_tmpl_v4 */
+/* update pflow_clone_create() when changing pflow_tmpl_ipv4 */
 struct pflow_tmpl_ipv4 {
 	struct pflow_tmpl_hdr	h;
 	struct pflow_tmpl_fspec	src_ip;
 	struct pflow_tmpl_fspec	dest_ip;
+	struct pflow_tmpl_fspec	if_index_in;
+	struct pflow_tmpl_fspec	if_index_out;
 	struct pflow_tmpl_fspec	packets;
 	struct pflow_tmpl_fspec	octets;
 	struct pflow_tmpl_fspec	start;
@@ -104,15 +108,17 @@ struct pflow_tmpl_ipv4 {
 	struct pflow_tmpl_fspec	dest_port;
 	struct pflow_tmpl_fspec	tos;
 	struct pflow_tmpl_fspec	protocol;
-#define PFLOW_TMPL_IPV4_FIELD_COUNT 10
+#define PFLOW_TMPL_IPV4_FIELD_COUNT 12
 #define PFLOW_TMPL_IPV4_ID 256
 } __packed;
 
-/* update pflow_clone_create() when changing pflow_v10_tmpl_v6 */
+/* update pflow_clone_create() when changing pflow_tmpl_v6 */
 struct pflow_tmpl_ipv6 {
 	struct pflow_tmpl_hdr 	h;
 	struct pflow_tmpl_fspec	src_ip;
 	struct pflow_tmpl_fspec	dest_ip;
+	struct pflow_tmpl_fspec	if_index_in;
+	struct pflow_tmpl_fspec	if_index_out;
 	struct pflow_tmpl_fspec	packets;
 	struct pflow_tmpl_fspec	octets;
 	struct pflow_tmpl_fspec	start;
@@ -121,7 +127,7 @@ struct pflow_tmpl_ipv6 {
 	struct pflow_tmpl_fspec	dest_port;
 	struct pflow_tmpl_fspec	tos;
 	struct pflow_tmpl_fspec	protocol;
-#define PFLOW_TMPL_IPV6_FIELD_COUNT 10
+#define PFLOW_TMPL_IPV6_FIELD_COUNT 12
 #define PFLOW_TMPL_IPV6_ID 257
 } __packed;
 
@@ -134,6 +140,8 @@ struct pflow_tmpl {
 struct pflow_flow4 {
 	u_int32_t	src_ip;		/* sourceIPv4Address*/
 	u_int32_t	dest_ip;	/* destinationIPv4Address */
+	u_int32_t	if_index_in;	/* ingressInterface */
+	u_int32_t	if_index_out;	/* egressInterface */
 	u_int64_t	flow_packets;	/* packetDeltaCount */
 	u_int64_t	flow_octets;	/* octetDeltaCount */
 	u_int32_t	flow_start;	/* flowStartSysUpTime */
@@ -148,6 +156,8 @@ struct pflow_flow4 {
 struct pflow_flow6 {
 	struct in6_addr src_ip;		/* sourceIPv6Address */
 	struct in6_addr dest_ip;	/* destinationIPv6Address */
+	u_int32_t	if_index_in;	/* ingressInterface */
+	u_int32_t	if_index_out;	/* egressInterface */
 	u_int64_t	flow_packets;	/* packetDeltaCount */
 	u_int64_t	flow_octets;	/* octetDeltaCount */
 	u_int32_t	flow_start;	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.28 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.29 2013/05/03 15:33:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -152,6 +152,12 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	pflowif->sc_tmpl.ipv4_tmpl.dest_ip.field_id =
 	    htons(PFIX_IE_destinationIPv4Address);
 	pflowif->sc_tmpl.ipv4_tmpl.dest_ip.len = htons(4);
+	pflowif->sc_tmpl.ipv4_tmpl.if_index_in.field_id =
+	    htons(PFIX_IE_ingressInterface);
+	pflowif->sc_tmpl.ipv4_tmpl.if_index_in.len = htons(4);
+	pflowif->sc_tmpl.ipv4_tmpl.if_index_out.field_id =
+	    htons(PFIX_IE_egressInterface);
+	pflowif->sc_tmpl.ipv4_tmpl.if_index_out.len = htons(4);
 	pflowif->sc_tmpl.ipv4_tmpl.packets.field_id =
 	    htons(PFIX_IE_packetDeltaCount);
 	pflowif->sc_tmpl.ipv4_tmpl.packets.len = htons(8);
@@ -191,6 +197,12 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	pflowif->sc_tmpl.ipv6_tmpl.dest_ip.field_id =
 	    htons(PFIX_IE_destinationIPv6Address);
 	pflowif->sc_tmpl.ipv6_tmpl.dest_ip.len = htons(16);
+	pflowif->sc_tmpl.ipv6_tmpl.if_index_in.field_id =
+	    htons(PFIX_IE_ingressInterface);
+	pflowif->sc_tmpl.ipv6_tmpl.if_index_in.len = htons(4);
+	pflowif->sc_tmpl.ipv6_tmpl.if_index_out.field_id =
+	    htons(PFIX_IE_egressInterface);
+	pflowif->sc_tmpl.ipv6_tmpl.if_index_out.len = htons(4);
 	pflowif->sc_tmpl.ipv6_tmpl.packets.field_id =
 	    htons(PFIX_IE_packetDeltaCount);
 	pflowif->sc_tmpl.ipv6_tmpl.packets.len = htons(8);
@@ -563,8 +575,10 @@ copy_flow_data(struct pflow_flow *flow1, struct pflow_flow *flow2,
 
 	flow1->dest_as = flow2->src_as =
 	    flow1->src_as = flow2->dest_as = 0;
-	flow1->if_index_out = flow2->if_index_in =
-	    flow1->if_index_in = flow2->if_index_out = 0;
+	flow1->if_index_in = htons(st->if_index_in);
+	flow1->if_index_out = htons(st->if_index_out);
+	flow2->if_index_in = htons(st->if_index_out);
+	flow2->if_index_out = htons(st->if_index_in);
 	flow1->dest_mask = flow2->src_mask =
 	    flow1->src_mask = flow2->dest_mask = 0;
 
@@ -597,6 +611,11 @@ copy_flow4_data(struct pflow_flow4 *flow1, struct pflow_flow4 *flow2,
 	flow1->src_port = flow2->dest_port = sk->port[src];
 	flow1->dest_ip = flow2->src_ip = sk->addr[dst].v4.s_addr;
 	flow1->dest_port = flow2->src_port = sk->port[dst];
+
+	flow1->if_index_in = htonl(st->if_index_in);
+	flow1->if_index_out = htonl(st->if_index_out);
+	flow2->if_index_in = htonl(st->if_index_out);
+	flow2->if_index_out = htonl(st->if_index_in);
 
 	flow1->flow_packets = htobe64(st->packets[0]);
 	flow2->flow_packets = htobe64(st->packets[1]);
@@ -642,6 +661,11 @@ copy_flow6_data(struct pflow_flow6 *flow1, struct pflow_flow6 *flow2,
 	bcopy(&sk->addr[dst].v6, &flow1->dest_ip, sizeof(flow1->dest_ip));
 	bcopy(&sk->addr[dst].v6, &flow2->src_ip, sizeof(flow2->src_ip));
 	flow1->dest_port = flow2->src_port = sk->port[dst];
+
+	flow1->if_index_in = htonl(st->if_index_in);
+	flow1->if_index_out = htonl(st->if_index_out);
+	flow2->if_index_in = htonl(st->if_index_out);
+	flow2->if_index_out = htonl(st->if_index_in);
 
 	flow1->flow_packets = htobe64(st->packets[0]);
 	flow2->flow_packets = htobe64(st->packets[1]);
