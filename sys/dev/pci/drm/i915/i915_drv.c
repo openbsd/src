@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.23 2013/04/30 19:56:46 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.24 2013/05/04 13:18:29 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1226,9 +1226,11 @@ i915_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
 		    &dev_priv->ifp.i9xx.bsh) != 0)
 			goto nope;
 		return;
-	} else if (bpa->pa_memex == NULL || extent_alloc(bpa->pa_memex,
-	    PAGE_SIZE, PAGE_SIZE, 0, 0, 0, &addr) || bus_space_map(bpa->pa_memt,
-	    addr, PAGE_SIZE, 0, &dev_priv->ifp.i9xx.bsh))
+	} else if (bpa->pa_memex == NULL ||
+	    extent_alloc_subregion(bpa->pa_memex, 0x100000, 0xffffffff,
+	    PAGE_SIZE, PAGE_SIZE, 0, 0, 0, &addr) ||
+	    bus_space_map(bpa->pa_memt, addr, PAGE_SIZE, 0,
+	    &dev_priv->ifp.i9xx.bsh))
 		goto nope;
 
 	pci_conf_write(bpa->pa_pc, bpa->pa_tag, I915_IFPADDR, addr | 0x1);
@@ -1258,9 +1260,11 @@ i965_alloc_ifp(struct inteldrm_softc *dev_priv, struct pci_attach_args *bpa)
 		    &dev_priv->ifp.i9xx.bsh) != 0)
 			goto nope;
 		return;
-	} else if (bpa->pa_memex == NULL || extent_alloc(bpa->pa_memex,
-	    PAGE_SIZE, PAGE_SIZE, 0, 0, 0, &addr) || bus_space_map(bpa->pa_memt,
-	    addr, PAGE_SIZE, 0, &dev_priv->ifp.i9xx.bsh))
+	} else if (bpa->pa_memex == NULL ||
+	    extent_alloc_subregion(bpa->pa_memex, 0x100000, 0xffffffff,
+	    PAGE_SIZE, PAGE_SIZE, 0, 0, 0, &addr) ||
+	    bus_space_map(bpa->pa_memt, addr, PAGE_SIZE, 0,
+	    &dev_priv->ifp.i9xx.bsh))
 		goto nope;
 
 	pci_conf_write(bpa->pa_pc, bpa->pa_tag, I965_IFPADDR + 4,
