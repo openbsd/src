@@ -270,8 +270,8 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
     fd = mkstemp(file);
     if(fd < 0) {
 	free(f);
-	free(file);
 	krb5_set_error_string(context, "mkstemp %s", file);
+	free(file);
 	return errno;
     }
     close(fd);

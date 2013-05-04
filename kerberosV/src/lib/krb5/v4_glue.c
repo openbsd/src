@@ -155,19 +155,19 @@ write_v4_cc(krb5_context context, const char *tkfile,
 
     fd = open(path, O_WRONLY|O_CREAT, 0600);
     if (fd < 0) {
-	free(path);
 	krb5_set_error_string(context, 
 			      "krb5_krb_tf_setup: error opening file %s", 
 			      path);
+	free(path);
 	return errno;
     }
 
     if (fstat(fd, &sb) != 0 || !S_ISREG(sb.st_mode)) {
-	free(path);
 	close(fd);
 	krb5_set_error_string(context, 
 			      "krb5_krb_tf_setup: tktfile %s is not a file",
 			      path);
+	free(path);
 	return KRB5_FCC_PERM;
     }
 
@@ -178,11 +178,11 @@ write_v4_cc(krb5_context context, const char *tkfile,
 	    break;
     }
     if (i == KRB5_TF_LCK_RETRY_COUNT) {
-	free(path);
 	close(fd);
 	krb5_set_error_string(context,
 			      "krb5_krb_tf_setup: failed to lock %s",
 			      path);
+	free(path);
 	return KRB5_FCC_PERM;
     }
 
@@ -190,11 +190,11 @@ write_v4_cc(krb5_context context, const char *tkfile,
 	ret = ftruncate(fd, 0);
 	if (ret < 0) {
 	    flock(fd, LOCK_UN);
-	    free(path);
 	    close(fd);
 	    krb5_set_error_string(context,
 				  "krb5_krb_tf_setup: failed to truncate %s",
 				  path);
+	    free(path);
 	    return KRB5_FCC_PERM;
 	}
     }
