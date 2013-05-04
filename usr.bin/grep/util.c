@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.45 2012/12/29 01:32:44 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.46 2013/05/04 00:26:20 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -348,15 +348,8 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	/* Look for ways to cheat...er...avoid the full regex engine. */
 	for (i = 0; i < fg->patternLen; i++)
 	{
-		/* Can still cheat? */
-		if ((isalnum(fg->pattern[i])) || isspace(fg->pattern[i]) ||
-		    (fg->pattern[i] == '_') || (fg->pattern[i] == ',') ||
-		    (fg->pattern[i] == '=') || (fg->pattern[i] == '-') ||
-		    (fg->pattern[i] == ':') || (fg->pattern[i] == '/')) {
-			/* As long as it is good, upper case it for later. */
-			if (iflag)
-				fg->pattern[i] = toupper(fg->pattern[i]);
-		} else if (fg->pattern[i] == '.') {
+		switch (fg->pattern[i]) {
+		case '.':
 			hasDot = i;
 			if (i < fg->patternLen / 2) {
 				if (firstHalfDot < 0)
@@ -368,11 +361,28 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 				if (firstLastHalfDot < 0)
 					firstLastHalfDot = i;
 			}
-		} else {
+			break;
+		case '(': case ')':
+		case '{': case '}':
+			/* Special in BRE if preceded by '\\' */
+		case '?':
+		case '+':
+		case '|':
+			/* Not special in BRE. */
+			if (!Eflag)
+				goto nonspecial;
+		case '\\':
+		case '*':
+		case '[': case ']':
 			/* Free memory and let others know this is empty. */
 			free(fg->pattern);
 			fg->pattern = NULL;
 			return (-1);
+		default:
+nonspecial:
+			if (iflag)
+				fg->pattern[i] = toupper(fg->pattern[i]);
+			break;
 		}
 	}
 
