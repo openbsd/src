@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind_delete.c,v 1.11 2012/03/21 04:28:45 matthew Exp $ */
+/* $OpenBSD: prebind_delete.c,v 1.12 2013/05/04 09:23:33 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
@@ -285,8 +285,8 @@ prebind_newfile(int infd, char *name, struct stat *st, off_t orig_size)
 	return (outfd);
 
 fail:
-	free(newname);
 	unlink(newname);
+	free(newname);
 	close(outfd);
 	return (-1);
 }

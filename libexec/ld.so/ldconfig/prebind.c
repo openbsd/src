@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.19 2013/03/20 21:49:59 kurt Exp $ */
+/* $OpenBSD: prebind.c,v 1.20 2013/05/04 09:23:33 jsg Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2002,8 +2002,8 @@ prebind_writenewfile(int infd, char *name, struct stat *st, off_t orig_size,
 	return (0);
 
 fail:
-	free(newname);
 	unlink(newname);
+	free(newname);
 	close(outfd);
 	return (-1);
 }
