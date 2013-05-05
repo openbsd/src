@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.5 2012/12/06 08:13:04 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.6 2013/05/05 20:42:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -670,13 +670,13 @@ sock_setpar(struct sock *f)
 		if (log_level >= 3) {
 			sock_log(f);
 			log_puts(": recording channels ");
-			log_putu(s->sub.slot_cmin);
-			log_puts(":");
-			log_putu(s->sub.slot_cmax);
-			log_puts(" -> ");
 			log_putu(s->sub.dev_cmin);
 			log_puts(":");
 			log_putu(s->sub.dev_cmax);
+			log_puts(" -> ");
+			log_putu(s->sub.slot_cmin);
+			log_puts(":");
+			log_putu(s->sub.slot_cmax);
 			log_puts("\n");
 		}
 #endif
@@ -907,14 +907,13 @@ sock_hello(struct sock *f)
 	if (s == NULL)
 		return 0;
 	f->midi = NULL;
-	aparams_init(&s->par);
 	if (s->mode & MODE_PLAY) {
-		s->mix.slot_cmin = f->opt->pmin;
-		s->mix.slot_cmax = f->opt->pmax;
+		s->mix.slot_cmin = s->mix.dev_cmin = f->opt->pmin;
+		s->mix.slot_cmax = s->mix.dev_cmax = f->opt->pmax;
 	}
 	if (s->mode & MODE_RECMASK) {
-		s->sub.slot_cmin = f->opt->rmin;
-		s->sub.slot_cmax = f->opt->rmax;
+		s->sub.slot_cmin = s->sub.dev_cmin = f->opt->rmin;
+		s->sub.slot_cmax = s->sub.dev_cmax = f->opt->rmax;
 	}
 	if (f->opt->mmc) {
 		s->xrun = XRUN_SYNC;

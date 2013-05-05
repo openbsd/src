@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.5 2013/05/05 09:50:21 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.6 2013/05/05 20:42:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1559,21 +1559,22 @@ found:
 		return 0;
 	}
 	s->mode = mode;
-	s->par = d->par;
+	aparams_init(&s->par);
 	if (s->mode & MODE_PLAY) {
-		s->mix.slot_cmin = 0;
-		s->mix.slot_cmax = d->pchan - 1;
+		s->mix.slot_cmin = s->mix.dev_cmin = 0;
+		s->mix.slot_cmax = s->mix.dev_cmax = d->pchan - 1;
 	}
 	if (s->mode & MODE_RECMASK) {
-		s->sub.slot_cmin = 0;
-		s->sub.slot_cmax = ((s->mode & MODE_MON) ?
-		    d->pchan : d->rchan) - 1;
+		s->sub.slot_cmin = s->sub.dev_cmin = 0;
+		s->sub.slot_cmax = s->sub.dev_cmax =
+		    ((s->mode & MODE_MON) ? d->pchan : d->rchan) - 1;
 	}
 	s->xrun = XRUN_IGNORE;
 	s->dup = 0;
 	s->appbufsz = d->bufsz;
 	s->round = d->round;
 	s->rate = d->rate;
+	s->mix.maxweight = ADATA_UNIT;
 	dev_midi_slotdesc(d, s);
 	dev_midi_vol(d, s);
 	return s;
