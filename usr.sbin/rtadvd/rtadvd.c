@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.44 2013/04/30 12:30:40 florian Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.45 2013/05/05 14:25:52 dtucker Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -975,7 +975,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 
 		if (rai->clockskew &&
 		    abs(preferred_time - pp->pltimeexpire) > rai->clockskew) {
-			log_info("prefeerred lifetime for %s/%d"
+			log_info("preferred lifetime for %s/%d"
 			    " (decr. in real time) inconsistent on %s:"
 			    " %lld from %s, %lld from us",
 			    inet_ntop(AF_INET6, &pinfo->nd_opt_pi_prefix,
