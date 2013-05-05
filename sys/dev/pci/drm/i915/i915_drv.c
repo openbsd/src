@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.26 2013/05/05 13:02:45 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.27 2013/05/05 13:55:36 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1342,7 +1342,7 @@ i915_gem_object_pin_and_relocate(struct drm_obj *obj,
 
 	/* Choose the GTT offset for our buffer and put it there. */
 	ret = i915_gem_object_pin(obj_priv, (u_int32_t)entry->alignment,
-	    needs_fence);
+	    needs_fence, false);
 	if (ret)
 		return ret;
 

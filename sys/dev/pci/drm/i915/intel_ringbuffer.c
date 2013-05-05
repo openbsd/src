@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ringbuffer.c,v 1.2 2013/04/17 20:04:05 kettenis Exp $	*/
+/*	$OpenBSD: intel_ringbuffer.c,v 1.3 2013/05/05 13:55:36 kettenis Exp $	*/
 /*
  * Copyright © 2008-2010 Intel Corporation
  *
@@ -529,7 +529,7 @@ init_pipe_control(struct intel_ring_buffer *ring)
 	 */
         obj->dma_flags = BUS_DMA_COHERENT | BUS_DMA_READ;
 
-	ret = i915_gem_object_pin(obj, 4096, true);
+	ret = i915_gem_object_pin(obj, 4096, true, false);
 	if (ret)
 		goto err_unref;
 
@@ -1173,7 +1173,7 @@ init_status_page(struct intel_ring_buffer *ring)
 	 */
 	obj->dma_flags = BUS_DMA_COHERENT | BUS_DMA_READ;
 
-	ret = i915_gem_object_pin(obj, 4096, true);
+	ret = i915_gem_object_pin(obj, 4096, true, false);
 	if (ret != 0) {
 		goto err_unref;
 	}
@@ -1294,7 +1294,7 @@ intel_init_ring_buffer(struct drm_device *dev,
 
 	ring->obj = obj;
 
-	ret = i915_gem_object_pin(obj, PAGE_SIZE, true);
+	ret = i915_gem_object_pin(obj, PAGE_SIZE, true, false);
 	if (ret)
 		goto err_unref;
 
@@ -1800,7 +1800,7 @@ intel_init_render_ring_buffer(struct drm_device *dev)
 			return -ENOMEM;
 		}
 
-		ret = i915_gem_object_pin(obj, 0, true);
+		ret = i915_gem_object_pin(obj, 0, true, false);
 		if (ret != 0) {
 			drm_gem_object_unreference(&obj->base);
 			DRM_ERROR("Failed to ping batch bo\n");

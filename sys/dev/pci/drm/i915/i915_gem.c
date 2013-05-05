@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.14 2013/05/05 13:19:00 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.15 2013/05/05 13:55:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -78,7 +78,8 @@ int i915_gem_object_flush_active(struct drm_i915_gem_object *);
 int i915_gem_check_olr(struct intel_ring_buffer *, u32);
 void i915_gem_object_truncate(struct drm_i915_gem_object *obj);
 int i915_gem_object_bind_to_gtt(struct drm_i915_gem_object *obj,
-				unsigned alignment, bool map_and_fenceable);
+				unsigned alignment, bool map_and_fenceable,
+				bool nonblocking);
 int i915_gem_wait_for_error(struct drm_device *);
 int __wait_seqno(struct intel_ring_buffer *, uint32_t, bool, struct timespec *);
 
@@ -347,10 +348,10 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 		goto out;
 	}
 
-	ret = i915_gem_object_pin(obj, 0, 1);
-	if (ret) {
+	ret = i915_gem_object_pin(obj, 0, true, true);
+	if (ret)
 		goto out;
-	}
+
 	ret = i915_gem_object_set_to_gtt_domain(obj, false);
 	if (ret)
 		goto unpin;
@@ -417,10 +418,10 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 		goto out;
 	}
 
-	ret = i915_gem_object_pin(obj, 0, 1);
-	if (ret) {
+	ret = i915_gem_object_pin(obj, 0, true, true);
+	if (ret)
 		goto out;
-	}
+
 	ret = i915_gem_object_set_to_gtt_domain(obj, true);
 	if (ret)
 		goto unpin;
@@ -778,7 +779,7 @@ i915_gem_fault(struct drm_obj *gem_obj, struct uvm_faultinfo *ufi,
 	}
 
 	if (obj->dmamap == NULL) {
-		ret = i915_gem_object_bind_to_gtt(obj, 0, true);
+		ret = i915_gem_object_bind_to_gtt(obj, 0, true, false);
 		if (ret)
 			goto error;
 
@@ -990,7 +991,7 @@ i915_gem_mmap_gtt(struct drm_file *file, struct drm_device *dev,
 		goto done;
 	}
 
-	ret = i915_gem_object_bind_to_gtt(obj, 0, true);
+	ret = i915_gem_object_bind_to_gtt(obj, 0, true, false);
 	if (ret) {
 		printf("%s: failed to bind\n", __func__);
 		goto done;
@@ -2030,7 +2031,8 @@ i915_gem_object_get_fence(struct drm_i915_gem_object *obj)
 int
 i915_gem_object_bind_to_gtt(struct drm_i915_gem_object *obj,
 			    unsigned alignment,
-			    bool map_and_fenceable)
+			    bool map_and_fenceable,
+			    bool nonblocking)
 {
 	struct drm_device *dev = obj->base.dev;
 	drm_i915_private_t *dev_priv = dev->dev_private;
@@ -2464,7 +2466,7 @@ i915_gem_object_pin_to_display_plane(struct drm_i915_gem_object *obj,
 	 * (e.g. libkms for the bootup splash), we have to ensure that we
 	 * always use map_and_fenceable for all scanout buffers.
 	 */
-	ret = i915_gem_object_pin(obj, alignment, true);
+	ret = i915_gem_object_pin(obj, alignment, true, false);
 	if (ret)
 		return ret;
 
@@ -2603,7 +2605,8 @@ i915_gem_ring_throttle(struct drm_device *dev, struct drm_file *file)
 int
 i915_gem_object_pin(struct drm_i915_gem_object *obj,
 		    uint32_t alignment,
-		    bool map_and_fenceable)
+		    bool map_and_fenceable,
+		    bool nonblocking)
 {
 	struct drm_device	*dev = obj->base.dev;
 	int ret;
@@ -2629,7 +2632,8 @@ i915_gem_object_pin(struct drm_i915_gem_object *obj,
 
 	if (obj->dmamap == NULL) {
 		ret = i915_gem_object_bind_to_gtt(obj, alignment,
-						  map_and_fenceable);
+						  map_and_fenceable,
+						  nonblocking);
 		if (ret)
 			return ret;
 	}
@@ -2695,7 +2699,7 @@ i915_gem_pin_ioctl(struct drm_device *dev, void *data,
 	}
 
 	if (obj->user_pin_count == 0) {
-		ret = i915_gem_object_pin(obj, args->alignment, 1);
+		ret = i915_gem_object_pin(obj, args->alignment, true, false);
 		if (ret)
 			goto out;
 		inteldrm_set_max_obj_size(dev_priv);

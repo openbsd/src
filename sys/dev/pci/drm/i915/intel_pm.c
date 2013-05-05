@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.4 2013/04/17 20:04:05 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.5 2013/05/05 13:55:36 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -2443,7 +2443,7 @@ intel_alloc_context_page(struct drm_device *dev)
 		return NULL;
 	}
 
-	ret = i915_gem_object_pin(ctx, 4096, true /*, false */);
+	ret = i915_gem_object_pin(ctx, 4096, true, false);
 	if (ret) {
 		DRM_ERROR("failed to pin power context: %d\n", ret);
 		goto err_unref;
