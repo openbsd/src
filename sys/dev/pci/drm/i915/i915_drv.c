@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.24 2013/05/04 13:18:29 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.25 2013/05/05 12:30:41 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1043,16 +1043,6 @@ inteldrm_detach(struct device *self, int flags)
 		config_detach(dev_priv->drmdev, flags);
 		dev_priv->drmdev = NULL;
 	}
-
-#if 0
-	if (!I915_NEED_GFX_HWS(dev) && dev_priv->hws_dmamem) {
-		drm_dmamem_free(dev_priv->dmat, dev_priv->hws_dmamem);
-		dev_priv->hws_dmamem = NULL;
-		/* Need to rewrite hardware status page */
-		I915_WRITE(HWS_PGA, 0x1ffff000);
-//		dev_priv->hw_status_page = NULL;
-	}
-#endif
 
 	if (IS_I9XX(dev) && dev_priv->ifp.i9xx.bsh != 0) {
 		bus_space_unmap(dev_priv->ifp.i9xx.bst, dev_priv->ifp.i9xx.bsh,
