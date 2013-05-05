@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.15 2013/04/21 14:41:26 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.16 2013/05/05 13:02:46 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -618,10 +618,6 @@ struct inteldrm_softc {
 	int			 fence_reg_start; /* 4 by default */
 	int			 num_fence_regs; /* 8 pre-965, 16 post */
 
-#define	INTELDRM_QUIET		0x01 /* suspend close, get off the hardware */
-#define	INTELDRM_WEDGED		0x02 /* chipset hung pending reset */
-#define	INTELDRM_SUSPENDED	0x04 /* in vt switch, no commands */
-	int			 sc_flags; /* quiet, suspended, hung */
 	/* number of ioctls + faults in flight */
 	int			 entries;
 

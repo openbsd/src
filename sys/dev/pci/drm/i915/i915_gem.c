@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.12 2013/04/21 14:41:26 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.13 2013/05/05 13:02:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -749,29 +749,7 @@ i915_gem_fault(struct drm_obj *gem_obj, struct uvm_faultinfo *ufi,
 	vm_prot_t mapprot;
 	boolean_t locked = TRUE;
 
-	/* Are we about to suspend?, if so wait until we're done */
-	if (dev_priv->sc_flags & INTELDRM_QUIET) {
-		/* we're about to sleep, unlock the map etc */
-		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
-		while (dev_priv->sc_flags & INTELDRM_QUIET)
-			tsleep(&dev_priv->flags, 0, "intelflt", 0);
-		dev_priv->entries++;
-		/*
-		 * relock so we're in the same state we would be in if we
-		 * were not quiesced before
-		 */
-		locked = uvmfault_relock(ufi);
-		if (locked) {
-			drm_lock_obj(&obj->base);
-		} else {
-			dev_priv->entries--;
-			if (dev_priv->sc_flags & INTELDRM_QUIET)
-				wakeup(&dev_priv->entries);
-			return (VM_PAGER_REFAULT);
-		}
-	} else {
-		dev_priv->entries++;
-	}
+	dev_priv->entries++;
 
 	if (rw_enter(&dev->dev_lock, RW_NOSLEEP | RW_READ) != 0) {
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
@@ -784,8 +762,6 @@ i915_gem_fault(struct drm_obj *gem_obj, struct uvm_faultinfo *ufi,
 		drm_hold_object_locked(&obj->base);
 	else { /* obj already unlocked */
 		dev_priv->entries--;
-		if (dev_priv->sc_flags & INTELDRM_QUIET)
-			wakeup(&dev_priv->entries);
 		return (VM_PAGER_REFAULT);
 	}
 
@@ -847,8 +823,6 @@ i915_gem_fault(struct drm_obj *gem_obj, struct uvm_faultinfo *ufi,
 			    NULL, NULL);
 			DRM_READUNLOCK();
 			dev_priv->entries--;
-			if (dev_priv->sc_flags & INTELDRM_QUIET)
-				wakeup(&dev_priv->entries);
 			uvm_wait("intelflt");
 			return (VM_PAGER_REFAULT);
 		}
@@ -858,8 +832,6 @@ error:
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL, NULL);
 	DRM_READUNLOCK();
 	dev_priv->entries--;
-	if (dev_priv->sc_flags & INTELDRM_QUIET)
-		wakeup(&dev_priv->entries);
 	pmap_update(ufi->orig_map->pmap);
 	if (ret == EIO) {
 		/*

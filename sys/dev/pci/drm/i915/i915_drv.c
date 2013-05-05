@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.25 2013/05/05 12:30:41 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.26 2013/05/05 13:02:45 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -128,7 +128,6 @@ int	inteldrm_doioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 int	inteldrm_gmch_match(struct pci_attach_args *);
 void	inteldrm_timeout(void *);
-void	inteldrm_quiesce(struct inteldrm_softc *);
 
 /* For reset and suspend */
 int	i8xx_do_reset(struct drm_device *);
@@ -1070,17 +1069,11 @@ inteldrm_activate(struct device *arg, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
-//		inteldrm_quiesce(dev_priv);
 		i915_drm_freeze(dev);
 		break;
 	case DVACT_SUSPEND:
-//		i915_save_state(dev);
 		break;
 	case DVACT_RESUME:
-//		i915_restore_state(dev);
-//		/* entrypoints can stop sleeping now */
-//		atomic_clearbits_int(&dev_priv->sc_flags, INTELDRM_QUIET);
-//		wakeup(&dev_priv->flags);
 		i915_drm_thaw(dev);
 		intel_fb_restore_mode(dev);
 		break;
@@ -1105,17 +1098,11 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 	struct inteldrm_softc	*dev_priv = dev->dev_private;
 	int			 error = 0;
 
-	while ((dev_priv->sc_flags & INTELDRM_QUIET) && error == 0)
-		error = tsleep(&dev_priv->flags, PCATCH, "intelioc", 0);
-	if (error)
-		return (error);
 	dev_priv->entries++;
 
 	error = inteldrm_doioctl(dev, cmd, data, file_priv);
 
 	dev_priv->entries--;
-	if (dev_priv->sc_flags & INTELDRM_QUIET)
-		wakeup(&dev_priv->entries);
 	return (error);
 }
 
@@ -1556,33 +1543,6 @@ i915_gem_put_relocs_to_user(struct drm_i915_gem_exec_object2 *exec_list,
 	drm_free(relocs);
 
 	return (ret);
-}
-
-void
-inteldrm_quiesce(struct inteldrm_softc *dev_priv)
-{
-	/*
-	 * Right now we depend on X vt switching, so we should be
-	 * already suspended, but fallbacks may fault, etc.
-	 * Since we can't readback the gtt to reset what we have, make
-	 * sure that everything is unbound.
-	 */
-	KASSERT(dev_priv->mm.suspended);
-	KASSERT(dev_priv->ring[RCS].obj == NULL);
-	atomic_setbits_int(&dev_priv->sc_flags, INTELDRM_QUIET);
-	while (dev_priv->entries)
-		tsleep(&dev_priv->entries, 0, "intelquiet", 0);
-	/*
-	 * nothing should be dirty WRT the chip, only stuff that's bound
-	 * for gtt mapping. Nothing should be pinned over vt switch, if it
-	 * is then rendering corruption will occur due to api misuse, shame.
-	 */
-	KASSERT(list_empty(&dev_priv->mm.active_list));
-	/* Disabled because root could panic the kernel if this was enabled */
-	/* KASSERT(dev->pin_count == 0); */
-
-	/* can't fail since uninterruptible */
-	(void)i915_gem_evict_inactive(dev_priv);
 }
 
 void
