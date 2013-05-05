@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysarch.h,v 1.12 2012/12/05 23:20:10 deraadt Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.13 2013/05/05 19:25:57 tedu Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 
 #ifndef _MACHINE_SYSARCH_H_
@@ -19,14 +19,6 @@
 
 struct amd64_iopl_args {
 	int iopl;
-};
-
-struct amd64_get_ioperm_args {
-	u_long *iomap;
-};
-
-struct amd64_set_ioperm_args {
-	u_long *iomap;
 };
 
 struct amd64_pmc_info_args {
@@ -73,8 +65,6 @@ int amd64_get_fsbase(struct proc *, void *);
 
 __BEGIN_DECLS
 int amd64_iopl(int);
-int amd64_get_ioperm(u_long *);
-int amd64_set_ioperm(u_long *);
 int amd64_pmc_info(struct amd64_pmc_info_args *);
 int amd64_pmc_startstop(struct amd64_pmc_startstop_args *);
 int amd64_pmc_read(struct amd64_pmc_read_args *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.12 2011/04/13 02:49:12 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.13 2013/05/05 19:25:57 tedu Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -60,10 +60,6 @@
 
 extern struct vm_map *kernel_map;
 
-#if 0
-int amd64_get_ioperm(struct proc *, void *, register_t *);
-int amd64_set_ioperm(struct proc *, void *, register_t *);
-#endif
 int amd64_iopl(struct proc *, void *, register_t *);
 
 #ifdef APERTURE
@@ -98,42 +94,6 @@ amd64_iopl(struct proc *p, void *args, register_t *retval)
 
 	return 0;
 }
-
-#if 0
-
-int
-amd64_get_ioperm(struct proc *p, void *args, register_t *retval)
-{
-	int error;
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct amd64_get_ioperm_args ua;
-
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
-	return copyout(pcb->pcb_iomap, ua.iomap, sizeof(pcb->pcb_iomap));
-}
-
-int
-amd64_set_ioperm(struct proc *p, void *args, register_t *retval)
-{
-	int error;
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct amd64_set_ioperm_args ua;
-
-	if (securelevel > 1)
-		return EPERM;
-
-	if ((error = suser(p, 0)) != 0)
-		return error;
-
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
-	return copyin(ua.iomap, pcb->pcb_iomap, sizeof(pcb->pcb_iomap));
-}
-
-#endif
 
 int
 amd64_get_fsbase(struct proc *p, void *args)
@@ -171,16 +131,6 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	case AMD64_IOPL: 
 		error = amd64_iopl(p, SCARG(uap, parms), retval);
 		break;
-
-#if 0
-	case AMD64_GET_IOPERM: 
-		error = amd64_get_ioperm(p, SCARG(uap, parms), retval);
-		break;
-
-	case AMD64_SET_IOPERM: 
-		error = amd64_set_ioperm(p, SCARG(uap, parms), retval);
-		break;
-#endif
 
 #if defined(PERFCTRS) && 0
 	case AMD64_PMC_INFO:
