@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.29 2013/04/29 17:06:20 matthew Exp $
+.\"	$OpenBSD: select.2,v 1.30 2013/05/05 01:07:46 tedu Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: April 29 2013 $
+.Dd $Mdocdate: May 5 2013 $
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -238,8 +238,7 @@ userland libraries:
 fd_set *fdsr;
 int max = fd;
 
-fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
-    sizeof(fd_mask));
+fdsr = calloc(howmany(max+1, NFDBITS), sizeof(fd_mask));
 if (fdsr == NULL) {
 	...
 	return (-1);
