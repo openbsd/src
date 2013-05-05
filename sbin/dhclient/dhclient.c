@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.246 2013/05/02 16:35:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.247 2013/05/05 16:45:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -227,9 +227,13 @@ routehandler(void)
 				    inet_ntoa(client->active->address),
 				    (long long)(client->active->renewal -
 				    time(NULL)));
+				client->flags |= IS_RESPONSIBLE;
 				go_daemon();
 				break;
 			}
+			if ((client->flags & IS_RESPONSIBLE) == 0)
+				/* We're not responsible yet! */
+				break;
 			if (adding.s_addr != INADDR_ANY)
 				rslt = asprintf(&errmsg, "%s, not %s, added "
 				    "to %s", inet_ntoa(a), inet_ntoa(adding),
@@ -242,6 +246,9 @@ routehandler(void)
 				deleting.s_addr = INADDR_ANY;
 				break;
 			}
+			if ((client->flags & IS_RESPONSIBLE) == 0)
+				/* We're not responsible yet! */
+				break;
 			if (adding.s_addr == INADDR_ANY && client->active &&
 			    a.s_addr == client->active->address.s_addr) {
 				/* Tell the priv process active_addr is gone. */

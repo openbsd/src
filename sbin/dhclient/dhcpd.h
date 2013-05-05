@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.116 2013/05/02 16:35:27 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.117 2013/05/05 16:45:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -157,6 +157,8 @@ struct client_state {
 	TAILQ_HEAD(, client_lease) leases;
 	enum dhcp_state		 state;
 	struct in_addr		 destination;
+	int			 flags;
+#define IS_RESPONSIBLE	0x1
 	u_int32_t		 xid;
 	u_int16_t		 secs;
 	time_t			 first_sending;
