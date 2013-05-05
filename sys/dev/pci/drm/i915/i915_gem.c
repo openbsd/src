@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.13 2013/05/05 13:02:46 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.14 2013/05/05 13:19:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2923,10 +2923,6 @@ i915_gem_idle(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	int ret;
-
-	/* If drm attach failed */
-	if (dev == NULL)
-		return (0);
 
 	DRM_LOCK();
 
