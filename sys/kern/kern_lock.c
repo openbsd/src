@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.41 2013/05/01 17:18:55 tedu Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.42 2013/05/06 16:37:55 tedu Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -61,7 +61,15 @@ lockinit(struct lock *lkp, int prio, char *wmesg, int timo, int flags)
 int
 lockstatus(struct lock *lkp)
 {
-	return (rrw_status(&lkp->lk_lck));
+	switch (rrw_status(&lkp->lk_lck)) {
+	case RW_WRITE:
+		return (LK_EXCLUSIVE);
+	case RW_READ:
+		return (LK_SHARED);
+	case 0:
+	default:
+		return (0);
+	}
 }
 
 int

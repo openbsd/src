@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.19 2013/05/01 17:18:55 tedu Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.20 2013/05/06 16:37:55 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -256,7 +256,11 @@ rw_exit(struct rwlock *rwl)
 int
 rw_status(struct rwlock *rwl)
 {
-	return (rwl->rwl_owner != 0L);
+	if (rwl->rwl_owner & RWLOCK_WRLOCK)
+		return RW_WRITE;
+	if (rwl->rwl_owner)
+		return RW_READ;
+	return (0);
 }
 
 #ifdef DIAGNOSTIC
