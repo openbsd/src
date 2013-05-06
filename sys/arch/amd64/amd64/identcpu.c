@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.46 2013/04/09 01:47:04 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.47 2013/05/06 04:32:12 dlg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -45,6 +45,8 @@
 #include <machine/cpufunc.h>
 
 void	replacesmap(void);
+u_int64_t cpu_tsc_freq(struct cpu_info *);
+u_int64_t cpu_tsc_freq_ctr(struct cpu_info *);
 
 /* sysctl wants this. */
 char cpu_model[48];
@@ -321,10 +323,62 @@ via_update_sensor(void *args)
 }
 #endif
 
+u_int64_t
+cpu_tsc_freq_ctr(struct cpu_info *ci)
+{
+	u_int64_t count, last_count, msr;
+
+	if ((ci->ci_flags & CPUF_CONST_TSC) == 0 ||
+	    (cpu_perf_eax & CPUIDEAX_VERID) <= 1 ||
+	    CPUIDEDX_NUM_FC(cpu_perf_edx) <= 1)
+		return (0);
+
+	msr = rdmsr(MSR_PERF_FIXED_CTR_CTRL);
+	if (msr & MSR_PERF_FIXED_CTR_FC(1, MSR_PERF_FIXED_CTR_FC_MASK)) {
+		/* some hypervisor is dicking us around */
+		return (0);
+	}
+
+	msr |= MSR_PERF_FIXED_CTR_FC(1, MSR_PERF_FIXED_CTR_FC_1);
+	wrmsr(MSR_PERF_FIXED_CTR_CTRL, msr);
+
+	msr = rdmsr(MSR_PERF_GLOBAL_CTRL) | MSR_PERF_GLOBAL_CTR1_EN;
+	wrmsr(MSR_PERF_GLOBAL_CTRL, msr);
+
+	last_count = rdmsr(MSR_PERF_FIXED_CTR1);
+	delay(100000);
+	count = rdmsr(MSR_PERF_FIXED_CTR1);
+
+	msr = rdmsr(MSR_PERF_FIXED_CTR_CTRL);
+	msr &= MSR_PERF_FIXED_CTR_FC(1, MSR_PERF_FIXED_CTR_FC_MASK);
+	wrmsr(MSR_PERF_FIXED_CTR_CTRL, msr);
+
+	msr = rdmsr(MSR_PERF_GLOBAL_CTRL);
+	msr &= ~MSR_PERF_GLOBAL_CTR1_EN;
+	wrmsr(MSR_PERF_GLOBAL_CTRL, msr);
+
+	return ((count - last_count) * 10);
+}
+
+u_int64_t
+cpu_tsc_freq(struct cpu_info *ci)
+{
+	u_int64_t last_count, count;
+
+	count = cpu_tsc_freq_ctr(ci);
+	if (count != 0)
+		return (count);
+
+	last_count = rdtsc();
+	delay(100000);
+	count = rdtsc();
+
+	return ((count - last_count) * 10);
+}
+
 void
 identifycpu(struct cpu_info *ci)
 {
-	u_int64_t last_count, count, msr;
 	u_int32_t dummy, val, pnfeatset;
 	u_int32_t brand[12];
 	char mycpu_model[48];
@@ -401,30 +455,7 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 
-	if ((ci->ci_flags & CPUF_CONST_TSC) &&
-	    (cpu_perf_eax & CPUIDEAX_VERID) > 1 &&
-	    CPUIDEDX_NUM_FC(cpu_perf_edx) > 1) {
-		msr = rdmsr(MSR_PERF_FIXED_CTR_CTRL) | MSR_PERF_FIXED_CTR1_EN;
-		wrmsr(MSR_PERF_FIXED_CTR_CTRL, msr);
-		msr = rdmsr(MSR_PERF_GLOBAL_CTRL) | MSR_PERF_GLOBAL_CTR1_EN;
-		wrmsr(MSR_PERF_GLOBAL_CTRL, msr);
-
-		last_count = rdmsr(MSR_PERF_FIXED_CTR1);
-		delay(100000);
-		count = rdmsr(MSR_PERF_FIXED_CTR1);
-
-		msr = rdmsr(MSR_PERF_FIXED_CTR_CTRL);
-		msr &= ~MSR_PERF_FIXED_CTR1_EN;
-		wrmsr(MSR_PERF_FIXED_CTR_CTRL, msr);
-		msr = rdmsr(MSR_PERF_GLOBAL_CTRL);
-		msr &= ~MSR_PERF_GLOBAL_CTR1_EN;
-		wrmsr(MSR_PERF_GLOBAL_CTRL, msr);
-	} else {
-		last_count = rdtsc();
-		delay(100000);
-		count = rdtsc();
-	}
-	ci->ci_tsc_freq = (count - last_count) * 10;
+	ci->ci_tsc_freq = cpu_tsc_freq(ci);
 
 	amd_cpu_cacheinfo(ci);
 
