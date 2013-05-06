@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1674 2013/05/06 07:53:10 bcallah Exp $
+$OpenBSD: pcidevs,v 1.1675 2013/05/06 08:47:04 bcallah Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ vendor	LINKSYS		0x1737	Linksys
 vendor	NETOCTAVE	0x170b	Netoctave
 vendor	ALTIMA		0x173b	Altima
 vendor	ANTARES		0x1754	Antares Microsystems
-vendor	CAVIUM		0x177d	Cavium Networks
+vendor	CAVIUM		0x177d	Cavium
 vendor	BELKIN2		0x1799	Belkin
 vendor	HAWKING		0x17b3	Hawking Technology
 vendor	NETCHIP		0x17cc	NetChip Technology
@@ -1781,7 +1781,7 @@ product C4T GPPCI		0x6773	GPPCI
 product CAVIUM NITROX		0x0001	NITROX XL
 product CAVIUM NITROX_LITE	0x0003	NITROX Lite
 product CAVIUM NITROX_PX	0x0010	NITROX PX
-product CAVIUM OCTEON_CN50XX	0x0070	OCTEON Plus CN50XX Network Processor
+product CAVIUM OCTEON_CN50XX	0x0070	OCTEON Plus CN50XX
 
 /* CCUBE products */
 product CCUBE CINEMASTER	0x8888	Cinemaster
