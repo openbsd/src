@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.102 2013/02/19 02:00:57 william Exp $
+.\"	$OpenBSD: make.1,v 1.103 2013/05/06 20:57:26 naddy Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: February 19 2013 $
+.Dd $Mdocdate: May 6 2013 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -913,8 +913,8 @@ The
 modifier is just like the
 .Cm :S
 modifier except that the old and new strings, instead of being
-simple strings, are a regular expression (see
-.Xr regex 3 )
+simple strings, are an extended regular expression (see
+.Xr re_format 7 )
 and an
 .Xr ed 1 Ns \-style
 replacement string.
@@ -1511,8 +1511,8 @@ utility exits with a value of 0 on success, and \*(Gt0 if an error occurred.
 .Xr mkdep 1 ,
 .Xr sh 1 ,
 .Xr getcwd 3 ,
-.Xr regex 3 ,
-.Xr uname 3
+.Xr uname 3 ,
+.Xr re_format 7
 .Sh STANDARDS
 The
 .Nm
