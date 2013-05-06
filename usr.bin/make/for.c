@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.42 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.43 2013/05/06 11:29:18 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -184,7 +184,13 @@ For_Eval(const char *line)
 	n = build_words_list(&arg->lst, sub);
 	free(sub);
 	if (arg->nvars != 1 && n % arg->nvars != 0) {
+		LstNode ln;
 		Parse_Error(PARSE_FATAL, "Wrong number of items in for loop");
+		(void)fprintf(stderr, "%lu items for %d variables:", 
+		    n, arg->nvars);
+		for (ln = Lst_First(&arg->lst); ln != NULL; ln = Lst_Adv(ln))
+			(void)fprintf(stderr, " %s", Lst_Datum(ln));
+		(void)fprintf(stderr, "\n");
 		return 0;
 	}
 	arg->lineno = Parse_Getlineno();
