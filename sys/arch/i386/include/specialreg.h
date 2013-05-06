@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.44 2012/11/10 09:45:05 mglocker Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.45 2013/05/06 00:15:11 dlg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -340,8 +340,14 @@
 #define MSR_PERF_FIXED_CTR1	0x30a	/* CPU_CLK_Unhalted.Core */
 #define MSR_PERF_FIXED_CTR2	0x30b	/* CPU_CLK.Unhalted.Ref */
 #define MSR_PERF_FIXED_CTR_CTRL	0x38d
-#define MSR_PERF_FIXED_CTR1_EN	(1 << 4)
-#define MSR_PERF_FIXED_CTR2_EN	(1 << 8)
+#define  MSR_PERF_FIXED_CTR_FC_DIS	0x0 /* disable counter */
+#define  MSR_PERF_FIXED_CTR_FC_1	0x1 /* count ring 1 */
+#define  MSR_PERF_FIXED_CTR_FC_123	0x2 /* count rings 1,2,3 */
+#define  MSR_PERF_FIXED_CTR_FC_ANY	0x3 /* count everything */
+#define  MSR_PERF_FIXED_CTR_FC_MASK	0x3
+#define  MSR_PERF_FIXED_CTR_FC(_i, _v)	((_v) << (4 * (_i)))
+#define  MSR_PERF_FIXED_CTR_ANYTHR(_i)	(0x4 << (4 * (_i)))
+#define  MSR_PERF_FIXED_CTR_INT(_i)	(0x8 << (4 * (_i)))
 #define MSR_PERF_GLOBAL_CTRL	0x38f
 #define MSR_PERF_GLOBAL_CTR1_EN	(1ULL << 33)
 #define MSR_PERF_GLOBAL_CTR2_EN	(1ULL << 34)
