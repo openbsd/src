@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1674 2013/05/06 07:53:10 bcallah Exp 
+ *	OpenBSD: pcidevs,v 1.1675 2013/05/06 08:47:04 bcallah Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -295,7 +295,7 @@
 #define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
-#define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium Networks */
+#define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_BELKIN2	0x1799		/* Belkin */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_NETCHIP	0x17cc		/* NetChip Technology */
@@ -1786,7 +1786,7 @@
 #define	PCI_PRODUCT_CAVIUM_NITROX	0x0001		/* NITROX XL */
 #define	PCI_PRODUCT_CAVIUM_NITROX_LITE	0x0003		/* NITROX Lite */
 #define	PCI_PRODUCT_CAVIUM_NITROX_PX	0x0010		/* NITROX PX */
-#define	PCI_PRODUCT_CAVIUM_OCTEON_CN50XX	0x0070		/* OCTEON Plus CN50XX Network Processor */
+#define	PCI_PRODUCT_CAVIUM_OCTEON_CN50XX	0x0070		/* OCTEON Plus CN50XX */
 
 /* CCUBE products */
 #define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster */
