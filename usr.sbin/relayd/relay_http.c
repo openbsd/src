@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.12 2013/04/20 17:41:33 deraadt Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.13 2013/05/07 16:19:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -443,7 +443,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	struct rsession		*con = cre->con;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	char			*line;
-	long			 lval;
+	long long		 llval;
 	size_t			 size;
 
 	getmonotime(&con->se_tv_last);
@@ -485,8 +485,11 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 			goto next;
 		}
 
-		/* Read prepended chunk size in hex, ingore the trailer */
-		if (sscanf(line, "%lx", &lval) != 1) {
+		/*
+		 * Read prepended chunk size in hex, ignore the trailer.
+		 * The returned signed value must not be negative.
+		 */
+		if (sscanf(line, "%llx", &llval) != 1 || llval < 0) {
 			free(line);
 			relay_close(con, "invalid chunk size");
 			return;
@@ -500,7 +503,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		free(line);
 
 		/* Last chunk is 0 bytes followed by optional trailer */
-		if ((cre->toread = lval) == 0) {
+		if ((cre->toread = llval) == 0) {
 			DPRINTF("%s: last chunk", __func__);
 			cre->toread = TOREAD_HTTP_CHUNK_TRAILER;
 		}
