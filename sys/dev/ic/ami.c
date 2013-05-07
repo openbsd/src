@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.223 2012/01/09 18:50:44 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.224 2013/05/07 01:54:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -496,12 +496,12 @@ ami_attach(struct ami_softc *sc)
 		sc->sc_link.openings = sc->sc_maxcmds;
 	}
 
-	ami_freemem(sc, am);
-
 	if (ami_alloc_ccbs(sc, AMI_MAXCMDS + 1) != 0) {
 		/* error already printed */
 		goto free_mbox;
 	}
+
+	ami_freemem(sc, am);
 
 	/* hack for hp netraid version encoding */
 	if ('A' <= sc->sc_fwver[2] && sc->sc_fwver[2] <= 'Z' &&
