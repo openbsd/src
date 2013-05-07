@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.122 2013/04/06 03:44:34 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.123 2013/05/07 19:26:25 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -328,13 +328,13 @@ exit1(struct proc *p, int rv, int flags)
 		    SAS_NOCLDWAIT)) {
 			struct process *ppr = pr->ps_pptr;
 			proc_reparent(pr, initproc->p_p);
+
 			/*
-			 * If this was the last child of our parent, notify
-			 * parent, so in case he was wait(2)ing, he will
+			 * Notify parent, so in case he was wait(2)ing or
+			 * executing waitpid(2) with our pid, he will
 			 * continue.
 			 */
-			if (LIST_EMPTY(&ppr->ps_children))
-				wakeup(ppr);
+			wakeup(ppr);
 		}
 	}
 
