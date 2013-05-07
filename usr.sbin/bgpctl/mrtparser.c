@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.3 2012/03/26 20:40:32 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.4 2013/05/07 01:32:12 jsg Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -218,7 +218,7 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 struct mrt_peer *
 mrt_parse_v2_peer(struct mrt_hdr *hdr, void *msg)
 {
-	struct mrt_peer_entry	*peers;
+	struct mrt_peer_entry	*peers = NULL;
 	struct mrt_peer	*p;
 	u_int8_t	*b = msg;
 	u_int32_t	bid, as4;
@@ -313,13 +313,14 @@ mrt_parse_v2_peer(struct mrt_hdr *hdr, void *msg)
 	return (p);
 fail:
 	mrt_free_peers(p);
+	free(peers);
 	return (NULL);
 }
 
 struct mrt_rib *
 mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg)
 {
-	struct mrt_rib_entry *entries;
+	struct mrt_rib_entry *entries = NULL;
 	struct mrt_rib	*r;
 	u_int8_t	*b = msg;
 	u_int		len = ntohl(hdr->length);
@@ -421,6 +422,7 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg)
 	return (r);
 fail:
 	mrt_free_rib(r);
+	free(entries);
 	return (NULL);
 }
 
