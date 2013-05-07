@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.12 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.13 2013/05/07 08:44:38 mpi Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -60,7 +60,6 @@ struct uhidev_softc {
 	struct uhidev **sc_subdevs;
 
 	int sc_refcnt;
-	u_char sc_dying;
 };
 
 struct uhidev {

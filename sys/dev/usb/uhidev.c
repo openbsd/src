@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.43 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.44 2013/05/07 08:44:38 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -145,7 +145,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		if (ed == NULL) {
 			printf("%s: could not read endpoint descriptor\n",
 			    sc->sc_dev.dv_xname);
-			sc->sc_dying = 1;
 			return;
 		}
 
@@ -166,7 +165,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_oep_addr = ed->bEndpointAddress;
 		} else {
 			printf("%s: unexpected endpoint\n", sc->sc_dev.dv_xname);
-			sc->sc_dying = 1;
 			return;
 		}
 	}
@@ -177,7 +175,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (sc->sc_iep_addr == -1) {
 		printf("%s: no input interrupt endpoint\n", sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
 		return;
 	}
 
@@ -219,7 +216,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (err) {
 		printf("%s: no report descriptor\n", sc->sc_dev.dv_xname);
-		sc->sc_dying = 1;
 		return;
 	}
 
@@ -341,10 +337,9 @@ uhidev_activate(struct device *self, int act)
 			if (sc->sc_subdevs[i] != NULL) {
 				r = config_deactivate(
 				    &sc->sc_subdevs[i]->sc_dev);
-				if (r)
+				if (r && r != EOPNOTSUPP)
 					rv = r;
 			}
-		sc->sc_dying = 1;
 		break;
 	}
 	return (rv);
