@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.13 2013/03/17 09:48:36 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.14 2013/05/07 00:26:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -326,7 +326,7 @@ main(int argc, char *argv[])
 
 	pw = getpwnam("_tftpd");
 	if (pw == NULL)
-		err(1, "no _tftpd user");
+		errx(1, "no _tftpd user");
 
 	if (!debug) {
 		openlog(__progname, LOG_PID|LOG_NDELAY, LOG_DAEMON);
