@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_tape.c,v 1.14 2012/12/05 23:20:15 deraadt Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.15 2013/05/07 01:28:53 jsg Exp $ */
 /*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -432,9 +432,7 @@ mtioctl(dev, cmd, data, flag, p)
 	struct mt_softc *mt = mt_cd.cd_devs[unit];
 	struct	mtop *mtop;
 	struct	mtget *mtget;
-	int error = 0, count;
-
-	count = mtop->mt_count;
+	int error = 0;
 
 	switch (cmd) {
 
