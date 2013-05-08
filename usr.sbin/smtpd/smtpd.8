@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.20 2013/05/08 10:00:14 giovanni Exp $
+.\"	$OpenBSD: smtpd.8,v 1.21 2013/05/08 14:22:38 jmc Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2008, Gilles Chehade <gilles@poolp.org>
@@ -110,8 +110,8 @@ makemap		/usr/libexec/smtpd/makemap
 newaliases	/usr/libexec/smtpd/makemap
 .Ed
 .Pp
-Disable sendmail clientmqueue entry in crontab(1)
-.Ed
+Disable the sendmail clientmqueue entry in
+.Xr crontab 1 .
 .Pp
 Rebuild the aliases database,
 and enable the daemon:
