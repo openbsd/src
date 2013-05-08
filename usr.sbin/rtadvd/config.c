@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.35 2013/05/08 06:26:05 brad Exp $	*/
+/*	$OpenBSD: config.c,v 1.36 2013/05/08 06:28:09 brad Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -784,8 +784,6 @@ make_packet(struct rainfo *rainfo)
 		buf += sizeof(struct nd_opt_mtu);
 	}
 
-	
-	
 	TAILQ_FOREACH(pfx, &rainfo->prefixes, entry) {
 		u_int32_t vltime, pltime;
 		struct timeval now;
@@ -831,6 +829,10 @@ make_packet(struct rainfo *rainfo)
 	TAILQ_FOREACH(rds, &rainfo->rdnsss, entry) {
 		ndopt_rdnss = (struct nd_opt_rdnss *)buf;
 		ndopt_rdnss->nd_opt_rdnss_type = ND_OPT_RDNSS;
+		/*
+		 * An IPv6 address is 16 bytes, so multiply the number of
+		 * addresses by two to get a size in units of 8 bytes.
+		 */
 		ndopt_rdnss->nd_opt_rdnss_len = 1 + rds->servercnt * 2;
 		ndopt_rdnss->nd_opt_rdnss_reserved = 0;
 		ndopt_rdnss->nd_opt_rdnss_lifetime = htonl(rds->lifetime);
@@ -843,8 +845,6 @@ make_packet(struct rainfo *rainfo)
 
 	TAILQ_FOREACH(dsl, &rainfo->dnssls, entry) {
 		u_int32_t size;
-		char *curlabel_begin;
-		char *curlabel_end;
 
 		ndopt_dnssl = (struct nd_opt_dnssl *)buf;
 		ndopt_dnssl->nd_opt_dnssl_type = ND_OPT_DNSSL;
@@ -861,15 +861,17 @@ make_packet(struct rainfo *rainfo)
 		buf += sizeof(struct nd_opt_dnssl);
 
 		TAILQ_FOREACH(dnsd, &dsl->dnssldoms, entry) {
+			char *curlabel_begin;
+			char *curlabel_end;
+
 			curlabel_begin = dnsd->domain;
-			while ((curlabel_end = strchr(curlabel_begin, '.')) &&
-			    (curlabel_end - curlabel_begin) > 0)
+			while ((curlabel_end = strchr(curlabel_begin, '.'))
+			    != NULL && curlabel_end > curlabel_begin)
 			{
 				size_t curlabel_size;
 
 				curlabel_size = curlabel_end - curlabel_begin;
-				*buf = curlabel_size;
-				++buf;
+				*buf++ = curlabel_size;
 				strncpy(buf, curlabel_begin, curlabel_size);
 				buf += curlabel_size;
 				curlabel_begin = curlabel_end + 1;
