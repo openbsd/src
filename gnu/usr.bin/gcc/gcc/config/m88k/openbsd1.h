@@ -18,9 +18,8 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#define OBSD_NO_DYNAMIC_LIBRARIES
-
 #ifndef OBJECT_FORMAT_ELF
+#define OBSD_NO_DYNAMIC_LIBRARIES
 #define OBSD_HAS_CORRECT_ASM_OPS
 #define OBSD_OLD_GAS
 #endif
