@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.36 2013/05/08 06:28:09 brad Exp $	*/
+/*	$OpenBSD: config.c,v 1.37 2013/05/08 06:32:07 brad Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -872,7 +872,7 @@ make_packet(struct rainfo *rainfo)
 
 				curlabel_size = curlabel_end - curlabel_begin;
 				*buf++ = curlabel_size;
-				strncpy(buf, curlabel_begin, curlabel_size);
+				memcpy(buf, curlabel_begin, curlabel_size);
 				buf += curlabel_size;
 				curlabel_begin = curlabel_end + 1;
 			}
