@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.10 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.11 2013/05/08 16:06:45 miod Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -69,7 +69,7 @@ __asm__ (
 /* cleanup is %r5, zeroed in setregs() at the moment */
 );
 
-static void
+void
 ___start(int argc, char **argv, char **envp, void (*cleanup)(void))
 {
 	char *s;
