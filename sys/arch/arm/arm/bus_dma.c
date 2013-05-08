@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.21 2011/06/23 20:44:39 ariane Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.22 2013/05/08 21:10:33 patrick Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -57,6 +57,27 @@ int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
 	    int, bus_addr_t);
+
+
+/*
+ * Check to see if the specified busaddr is in an allowed DMA range.
+ */
+static inline paddr_t
+_bus_dma_busaddr_to_paddr(bus_dma_tag_t t, bus_addr_t curaddr)
+{
+	struct arm32_dma_range *dr;
+	u_int i;
+
+	if (t->_nranges == 0)
+		return curaddr;
+
+	for (i = 0, dr = t->_ranges; i < t->_nranges; i++, dr++) {
+		if (dr->dr_busbase <= curaddr
+		    && round_page(curaddr) <= dr->dr_busbase + dr->dr_len)
+			return curaddr - dr->dr_busbase + dr->dr_sysbase;
+	}
+	panic("%s: curaddr %#lx not in range", __func__, curaddr);
+}
 
 /*
  * Check to see if the specified page is in an allowed DMA range.
@@ -357,33 +378,83 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_proc = NULL;
 }
 
+static void
+_bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops)
+{
+	KASSERT((va & PAGE_MASK) == (pa & PAGE_MASK));
+
+#ifdef DEBUG_DMA
+	printf("sync_segment: va=%#lx pa=%#lx len=%#lx ops=%#x\n",
+	    va, pa, len, ops);
+#endif
+
+	switch (ops) {
+	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+		cpu_dcache_wbinv_range(va, len);
+		cpu_sdcache_wbinv_range(va, pa, len);
+		break;
+		/* FALLTHROUGH */
+
+	case BUS_DMASYNC_PREREAD: {
+		const size_t line_size = arm_dcache_align;
+		const size_t line_mask = arm_dcache_align_mask;
+		vsize_t misalignment = va & line_mask;
+		if (misalignment) {
+			va -= misalignment;
+			pa -= misalignment;
+			len += misalignment;
+			cpu_dcache_wbinv_range(va, line_size);
+			cpu_sdcache_wbinv_range(va, pa, line_size);
+			if (len <= line_size)
+				break;
+			va += line_size;
+			pa += line_size;
+			len -= line_size;
+		}
+		misalignment = len & line_mask;
+		len -= misalignment;
+		if (len > 0) {
+			cpu_dcache_inv_range(va, len);
+			cpu_sdcache_inv_range(va, pa, len);
+		}
+		if (misalignment) {
+			va += len;
+			pa += len;
+			cpu_dcache_wbinv_range(va, line_size);
+			cpu_sdcache_wbinv_range(va, pa, line_size);
+		}
+		break;
+	}
+
+	case BUS_DMASYNC_PREWRITE:
+		cpu_dcache_wb_range(va, len);
+		cpu_sdcache_wb_range(va, pa, len);
+		break;
+	}
+}
+
 static __inline void
 _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-	vaddr_t addr = (vaddr_t) map->_dm_origbuf;
+	bus_dma_segment_t *ds = map->dm_segs;
+	vaddr_t va = (vaddr_t) map->_dm_origbuf;
 
-	addr += offset;
+	while (len > 0) {
+		while (offset >= ds->ds_len) {
+			offset -= ds->ds_len;
+			va += ds->ds_len;
+			ds++;
+		}
 
-	switch (ops) {
-	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-		cpu_dcache_wbinv_range(addr, len);
-		break;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
+		size_t seglen = min(len, ds->ds_len - offset);
 
-	case BUS_DMASYNC_PREREAD:
-		if (((addr | len) & arm_dcache_align_mask) == 0)
-			cpu_dcache_inv_range(addr, len);
-		else
-			cpu_dcache_wbinv_range(addr, len);
-		break;
+		if ((map->_dm_flags & ARM32_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va + offset, pa, seglen, ops);
 
-	case BUS_DMASYNC_PREWRITE:
-		cpu_dcache_wb_range(addr, len);
-		break;
-
-	case BUS_DMASYNC_POSTREAD:
-		cpu_dcache_inv_range(addr, len);
-		break;
+		offset += seglen;
+		len -= seglen;
 	}
 }
 
@@ -391,28 +462,30 @@ static __inline void
 _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-	struct mbuf *m, *m0 = map->_dm_origbuf;
-	bus_size_t minlen, moff;
-	vaddr_t maddr;
+	bus_dma_segment_t *ds = map->dm_segs;
+	struct mbuf *m = map->_dm_origbuf;
+	bus_size_t voff = offset;
+	bus_size_t ds_off = offset;
 
-	for (moff = offset, m = m0; m != NULL && len != 0;
-	     m = m->m_next) {
-		/* Find the beginning mbuf. */
-		if (moff >= m->m_len) {
-			moff -= m->m_len;
-			continue;
+	while (len > 0) {
+		/* Find the current dma segment */
+		while (ds_off >= ds->ds_len) {
+			ds_off -= ds->ds_len;
+			ds++;
+		}
+		/* Find the current mbuf. */
+		while (voff >= m->m_len) {
+			voff -= m->m_len;
+			m = m->m_next;
 		}
 
 		/*
 		 * Now at the first mbuf to sync; nail each one until
 		 * we have exhausted the length.
 		 */
-		minlen = m->m_len - moff;
-		if (len < minlen)
-			minlen = len;
-
-		maddr = mtod(m, vaddr_t);
-		maddr += moff;
+		vsize_t seglen = min(len, min(m->m_len - voff, ds->ds_len - ds_off));
+		vaddr_t va = mtod(m, vaddr_t) + voff;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
 		/*
 		 * We can save a lot of work here if we know the mapping
@@ -430,28 +503,12 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * this ever becomes non-true (e.g. Physically Indexed
 		 * cache), this will have to be revisited.
 		 */
-		switch (ops) {
-		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			/* if (! M_ROMAP(m)) */{
-				cpu_dcache_wbinv_range(maddr, minlen);
-				break;
-			}
-			/* else FALLTHROUGH */
 
-		case BUS_DMASYNC_PREREAD:
-			if (((maddr | minlen) & arm_dcache_align_mask) == 0)
-				cpu_dcache_inv_range(maddr, minlen);
-			else
-				cpu_dcache_wbinv_range(maddr, minlen);
-			break;
-
-		case BUS_DMASYNC_PREWRITE:
-			/* if (! M_ROMAP(m)) */
-				cpu_dcache_wb_range(maddr, minlen);
-			break;
-		}
-		moff = 0;
-		len -= minlen;
+		if ((map->_dm_flags & ARM32_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va, pa, seglen, ops);
+		voff += seglen;
+		ds_off += seglen;
+		len -= seglen;
 	}
 }
 
@@ -459,47 +516,39 @@ static __inline void
 _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
+	bus_dma_segment_t *ds = map->dm_segs;
 	struct uio *uio = map->_dm_origbuf;
-	struct iovec *iov;
-	bus_size_t minlen, ioff;
-	vaddr_t addr;
+	struct iovec *iov = uio->uio_iov;
+	bus_size_t voff = offset;
+	bus_size_t ds_off = offset;
 
-	for (iov = uio->uio_iov, ioff = offset; len != 0; iov++) {
-		/* Find the beginning iovec. */
-		if (ioff >= iov->iov_len) {
-			ioff -= iov->iov_len;
-			continue;
+	while (len > 0) {
+		/* Find the current dma segment */
+		while (ds_off >= ds->ds_len) {
+			ds_off -= ds->ds_len;
+			ds++;
+		}
+
+		/* Find the current iovec. */
+		while (voff >= iov->iov_len) {
+			voff -= iov->iov_len;
+			iov++;
 		}
 
 		/*
 		 * Now at the first iovec to sync; nail each one until
 		 * we have exhausted the length.
 		 */
-		minlen = iov->iov_len - ioff;
-		if (len < minlen)
-			minlen = len;
+		vsize_t seglen = min(len, min(iov->iov_len - voff, ds->ds_len - ds_off));
+		vaddr_t va = (vaddr_t) iov->iov_base + voff;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
-		addr = (vaddr_t) iov->iov_base;
-		addr += ioff;
+		if ((map->_dm_flags & ARM32_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va, pa, seglen, ops);
 
-		switch (ops) {
-		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			cpu_dcache_wbinv_range(addr, minlen);
-			break;
-
-		case BUS_DMASYNC_PREREAD:
-			if (((addr | minlen) & arm_dcache_align_mask) == 0)
-				cpu_dcache_inv_range(addr, minlen);
-			else
-				cpu_dcache_wbinv_range(addr, minlen);
-			break;
-
-		case BUS_DMASYNC_PREWRITE:
-			cpu_dcache_wb_range(addr, minlen);
-			break;
-		}
-		ioff = 0;
-		len -= minlen;
+		voff += seglen;
+		ds_off += seglen;
+		len -= seglen;
 	}
 }
 
