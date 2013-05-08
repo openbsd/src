@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.15 2013/05/05 13:55:36 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.16 2013/05/08 23:01:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1167,15 +1167,12 @@ i915_gem_object_move_to_active(struct drm_i915_gem_object *obj,
 	}
 }
 
-/* called locked */
 void
-i915_gem_object_move_to_inactive_locked(struct drm_i915_gem_object *obj)
+i915_gem_object_move_to_inactive(struct drm_i915_gem_object *obj)
 {
 	struct drm_device	*dev = obj->base.dev;
 	struct inteldrm_softc	*dev_priv = dev->dev_private;
 
-	DRM_OBJ_ASSERT_LOCKED(&obj->base);
-	inteldrm_verify_inactive(dev_priv, __FILE__, __LINE__);
 	BUG_ON(obj->base.write_domain & ~I915_GEM_GPU_DOMAINS);
 	BUG_ON(!obj->active);
 
@@ -1197,18 +1194,7 @@ i915_gem_object_move_to_inactive_locked(struct drm_i915_gem_object *obj)
 	obj->active = 0;
 	drm_gem_object_unreference(&obj->base);
 
-	inteldrm_verify_inactive(dev_priv, __FILE__, __LINE__);
-}
-
-/* If you call this on an object that you have held, you must have your own
- * reference, not just the reference from the active list.
- */
-void
-i915_gem_object_move_to_inactive(struct drm_i915_gem_object *obj)
-{
-	drm_lock_obj(&obj->base);
-	/* unlocks object lock */
-	i915_gem_object_move_to_inactive_locked(obj);
+	WARN_ON(i915_verify_lists(dev));
 }
 
 int

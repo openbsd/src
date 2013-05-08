@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.17 2013/05/05 13:55:36 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.18 2013/05/08 23:01:36 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1071,7 +1071,6 @@ int	i915_gem_idle(struct drm_device *);
 void	i915_gem_object_move_to_active(struct drm_i915_gem_object *,
 	    struct intel_ring_buffer *);
 void	i915_gem_object_move_to_inactive(struct drm_i915_gem_object *);
-void	i915_gem_object_move_to_inactive_locked(struct drm_i915_gem_object *);
 int	i915_add_request(struct intel_ring_buffer *, struct drm_file *, u32 *);
 int	init_pipe_control(struct intel_ring_buffer *);
 void	cleanup_status_page(struct intel_ring_buffer *);
