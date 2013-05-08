@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.18 2013/05/08 15:36:30 tedu Exp $	*/
+/*	$OpenBSD: npx.h,v 1.19 2013/05/08 15:48:05 tedu Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -126,7 +126,6 @@ union savefpu {
 	struct savexmm sv_xmm;
 };
 
-/* Intel prefers long real (53 bit) precision */
 #define	__INITIAL_NPXCW__	0x037f
 
 /*
