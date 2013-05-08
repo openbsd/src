@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.21 2013/05/04 21:55:56 sthen Exp $   */
+/*	$OpenBSD: uthum.c,v 1.22 2013/05/08 01:06:34 sthen Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -113,7 +113,6 @@ struct uthum_sensor {
 struct uthum_softc {
 	struct uhidev		 sc_hdev;
 	struct usbd_device	*sc_udev;
-	u_char			 sc_dying;
 	int			 sc_device_type;
 	int			 sc_num_sensors;
 
@@ -137,7 +136,6 @@ const struct usb_devno uthum_devs[] = {
 int  uthum_match(struct device *, void *, void *);
 void uthum_attach(struct device *, struct device *, void *);
 int  uthum_detach(struct device *, int);
-int  uthum_activate(struct device *, int);
 
 int  uthum_issue_cmd(struct uthum_softc *, uint8_t, int);
 int  uthum_read_data(struct uthum_softc *, uint8_t, uint8_t *, size_t, int);
@@ -166,8 +164,7 @@ const struct cfattach uthum_ca = {
 	sizeof(struct uthum_softc),
 	uthum_match,
 	uthum_attach,
-	uthum_detach,
-	uthum_activate
+	uthum_detach
 };
 
 int
@@ -276,19 +273,6 @@ uthum_detach(struct device *self, int flags)
 	}
 
 	return (rv);
-}
-
-int
-uthum_activate(struct device *self, int act)
-{
-	struct uthum_softc *sc = (struct uthum_softc *)self;
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		break;
-	}
-	return (0);
 }
 
 void
