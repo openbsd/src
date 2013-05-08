@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.17 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: npx.h,v 1.18 2013/05/08 15:36:30 tedu Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -126,16 +126,8 @@ union savefpu {
 	struct savexmm sv_xmm;
 };
 
-/* Cyrix EMC memory - mapped coprocessor context switch information */
-struct	emcsts {
-	long	em_msw;		/* memory mapped status register when swtched */
-	long	em_tar;		/* memory mapped temp A register when swtched */
-	long	em_dl;		/* memory mapped D low register when swtched */
-};
-
 /* Intel prefers long real (53 bit) precision */
-#define __BDE_NPXCW__		0x1272		/* FreeBSD */
-#define	__OpenBSD_NPXCW__	0x37f
+#define	__INITIAL_NPXCW__	0x037f
 
 /*
  * The default MXCSR value at reset is 0x1f80, IA-32 Instruction
@@ -150,8 +142,6 @@ struct	emcsts {
  *	64-bit precision
  *	all exceptions masked.
  */
-
-#define	__INITIAL_NPXCW__	__OpenBSD_NPXCW__
 
 void    process_xmm_to_s87(const struct savexmm *, struct save87 *);
 void    process_s87_to_xmm(const struct save87 *, struct savexmm *);

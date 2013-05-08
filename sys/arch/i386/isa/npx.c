@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.57 2011/07/11 15:40:47 guenther Exp $	*/
+/*	$OpenBSD: npx.c,v 1.58 2013/05/08 15:36:30 tedu Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -676,7 +676,7 @@ npxdna_xmm(struct cpu_info *ci)
 
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
 		bzero(&sfp->sv_xmm, sizeof(sfp->sv_xmm));
-		sfp->sv_xmm.sv_env.en_cw = __OpenBSD_NPXCW__;
+		sfp->sv_xmm.sv_env.en_cw = __INITIAL_NPXCW__;
 		sfp->sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 		fxrstor(&sfp->sv_xmm);
 		p->p_md.md_flags |= MDP_USEDFPU;
@@ -757,7 +757,7 @@ npxdna_s87(struct cpu_info *ci)
 
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
 		bzero(&sfp->sv_87, sizeof(sfp->sv_87));
-		sfp->sv_87.sv_env.en_cw = __OpenBSD_NPXCW__;
+		sfp->sv_87.sv_env.en_cw = __INITIAL_NPXCW__;
 		sfp->sv_87.sv_env.en_tw = 0xffff;
 		frstor(&sfp->sv_87);
 		p->p_md.md_flags |= MDP_USEDFPU;

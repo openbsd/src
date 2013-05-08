@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.16 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.17 2013/05/08 15:36:30 tedu Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -63,7 +63,6 @@ struct pcb {
 	int	pcb_ldt_len;		/*      number of LDT entries */
 	union	savefpu pcb_savefpu;	/* floating point state for FPU */
 	int	pcb_cr0;		/* saved image of CR0 */
-	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */
 	struct	segment_descriptor pcb_threadsegs[2];
 					/* per-thread descriptors */
 /*
