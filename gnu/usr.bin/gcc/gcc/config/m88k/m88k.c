@@ -738,7 +738,6 @@ block_move_sequence (dest, dest_mem, src, src_mem, size, align, offset)
 
   do
     {
-      rtx srcp, dstp;
       next = phase;
       phase = !phase;
 
@@ -752,11 +751,8 @@ block_move_sequence (dest, dest_mem, src, src_mem, size, align, offset)
 	      temp[next] = gen_reg_rtx (mode[next]);
 	    }
 	  size -= amount[next];
-	  srcp = gen_rtx_MEM (MEM_IN_STRUCT_P (src_mem) ? mode[next] : BLKmode,
-			      plus_constant (src, offset_ld));
-
-	  MEM_COPY_ATTRIBUTES (srcp, src_mem);
-	  emit_insn (gen_rtx_SET (VOIDmode, temp[next], srcp));
+	  emit_move_insn (temp[next],
+			  adjust_address (src_mem, mode[next], offset_ld));
 	  offset_ld += amount[next];
 	  active[next] = TRUE;
 	}
@@ -764,12 +760,8 @@ block_move_sequence (dest, dest_mem, src, src_mem, size, align, offset)
       if (active[phase])
 	{
 	  active[phase] = FALSE;
-	  dstp
-	    = gen_rtx_MEM (MEM_IN_STRUCT_P (dest_mem) ? mode[phase] : BLKmode,
-			   plus_constant (dest, offset_st));
-
-	  MEM_COPY_ATTRIBUTES (dstp, dest_mem);
-	  emit_insn (gen_rtx_SET (VOIDmode, dstp, temp[phase]));
+	  emit_move_insn (adjust_address (dest_mem, mode[phase], offset_st),
+			  temp[phase]);
 	  offset_st += amount[phase];
 	}
     }
