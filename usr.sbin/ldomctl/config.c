@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.18 2013/04/03 15:38:48 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.19 2013/05/08 00:15:03 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -717,6 +717,10 @@ hvmd_init_guest(struct md *md, struct md_node *node)
 
 	xasprintf(&path, "%s.md", guest->name);
 	guest->md = md_read(path);
+
+	if (guest->md == NULL)
+		err(1, "unable to get guest MD");
+
 	free(path);
 }
 
