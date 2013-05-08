@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.5 2013/04/20 18:40:42 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.6 2013/05/08 20:55:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -100,6 +100,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		const Elf32_Sym *sym, *this;
 		const char *symn;
 		int type;
+		Elf32_Addr prev_value = 0, prev_ooff = 0;
+		const Elf32_Sym *prev_sym = NULL;
 
 		type = ELF32_R_TYPE(relas->r_info);
 
@@ -144,11 +146,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			continue;
 		}
 
-		ooff = 0;
-		this = NULL;
 		if (ELF32_R_SYM(relas->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
+		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
+		    sym != prev_sym) {
+			this = NULL;
 			ooff = _dl_find_symbol_bysym(object,
 			    ELF32_R_SYM(relas->r_info), &this,
 			    SYM_SEARCH_ALL | SYM_WARNNOTFOUND |
@@ -160,12 +162,15 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 					fails++;
 				continue;
 			}
+			prev_sym = sym;
+			prev_value = this->st_value;
+			prev_ooff = ooff;
 		}
 
 		if (type == RELOC_GOTP_ENT) {
 			_dl_md_reloc_gotp_ent((Elf_Addr)r_addr,
 			    relas->r_addend + loff,
-			    ooff + this->st_value);
+			    prev_ooff + prev_value);
 			continue;
 		}
 
@@ -174,11 +179,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE))
 			addend = relas->r_addend;
 		else
-			addend = this->st_value + relas->r_addend;
+			addend = prev_value + relas->r_addend;
 
 		switch (type) {
 		case RELOC_32:
-			newval = ooff + addend;
+			newval = prev_ooff + addend;
 			*r_addr = newval;
 			break;
 		case RELOC_BBASED_32:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.47 2012/12/05 23:20:06 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.48 2013/05/08 20:55:14 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -47,17 +47,26 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 {
 	long	i;
 	long	numrela;
+	long	relrel;
 	int	fails = 0;
 	Elf64_Addr loff;
+	Elf64_Addr prev_value = 0;
+	const Elf_Sym *prev_sym = NULL;
 	Elf64_Rela  *relas;
 	struct load_list *llist;
 
 	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
+	relrel = rel == DT_RELA ? object->relacount : 0;
 	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
 
 	if (relas == NULL)
 		return(0);
+
+	if (relrel > numrela) {
+		_dl_printf("relacount > numrel: %ld > %ld\n", relrel, numrela);
+		_dl_exit(20);
+	}
 
 	/*
 	 * unprotect some segments if we need it.
@@ -73,7 +82,29 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		}
 	}
 
-	for (i = 0; i < numrela; i++, relas++) {
+	/* tight loop for leading RELATIVE relocs */
+	for (i = 0; i < relrel; i++, relas++) {
+		Elf_Addr *r_addr;
+
+#ifdef DEBUG
+		if (ELF64_R_TYPE(relas->r_info) != R_TYPE(RELATIVE)) {
+			_dl_printf("RELACOUNT wrong\n");
+			_dl_exit(20);
+		}
+#endif
+
+		r_addr = (Elf64_Addr *)(relas->r_offset + loff);
+
+		/* Handle unaligned RELATIVE relocs */
+		if ((((Elf_Addr)r_addr) & 0x7) != 0) {
+			Elf_Addr tmp;
+			_dl_bcopy(r_addr, &tmp, sizeof(Elf_Addr));
+			tmp += loff;
+			_dl_bcopy(&tmp, r_addr, sizeof(Elf_Addr));
+		} else
+			*r_addr += loff;
+	}
+	for (; i < numrela; i++, relas++) {
 		Elf64_Addr *r_addr;
 		Elf64_Addr ooff;
 		const Elf64_Sym *sym, *this;
@@ -126,13 +157,19 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 			*r_addr = ooff + this->st_value + relas->r_addend;
 			break;
 		case R_TYPE(GLOB_DAT):
+			if (sym == prev_sym) {
+				*r_addr = prev_value + relas->r_addend;
+				break;
+			}
 			ooff =  _dl_find_symbol_bysym(object,
 			    ELF64_R_SYM(relas->r_info), &this,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
 			    sym, NULL);
 			if (this == NULL)
 				goto resolve_failed;
-			*r_addr = ooff + this->st_value + relas->r_addend;
+			prev_sym = sym;
+			prev_value = ooff + this->st_value;
+			*r_addr = prev_value + relas->r_addend;
 			break;
 		case R_TYPE(NONE):
 			break;

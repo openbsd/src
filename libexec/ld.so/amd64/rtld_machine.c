@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.18 2013/03/18 04:22:31 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.19 2013/05/08 20:55:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -172,16 +172,25 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 {
 	long	i;
 	long	numrel;
+	long	relrel;
 	int	fails = 0;
 	Elf_Addr loff;
+	Elf_Addr prev_value = 0;
+	const Elf_Sym *prev_sym = NULL;
 	Elf_RelA *rels;
 	struct load_list *llist;
 
 	loff = object->obj_base;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf_RelA);
+	relrel = rel == DT_RELA ? object->relacount : 0;
 	rels = (Elf_RelA *)(object->Dyn.info[rel]);
 	if (rels == NULL)
 		return(0);
+
+	if (relrel > numrel) {
+		_dl_printf("relacount > numrel: %ld > %ld\n", relrel, numrel);
+		_dl_exit(20);
+	}
 
 	/*
 	 * unprotect some segments if we need it.
@@ -194,7 +203,20 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		}
 	}
 
-	for (i = 0; i < numrel; i++, rels++) {
+	/* tight loop for leading RELATIVE relocs */
+	for (i = 0; i < relrel; i++, rels++) {
+		Elf_Addr *where;
+
+#ifdef DEBUG
+		if (ELF_R_TYPE(rels->r_info) != R_TYPE(RELATIVE)) {
+			_dl_printf("RELACOUNT wrong\n");
+			_dl_exit(20);
+		}
+#endif
+		where = (Elf_Addr *)(rels->r_offset + loff);
+		*where = rels->r_addend + loff;
+	}
+	for (; i < numrel; i++, rels++) {
 		Elf_Addr *where, value, ooff, mask;
 		Elf_Word type;
 		const Elf_Sym *sym, *this;
@@ -230,6 +252,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			if (sym->st_shndx != SHN_UNDEF &&
 			    ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
 				value += loff;
+			} else if (sym == prev_sym) {
+				value += prev_value;
 			} else {
 				this = NULL;
 				ooff = _dl_find_symbol_bysym(object,
@@ -245,7 +269,9 @@ resolve_failed:
 						fails++;
 					continue;
 				}
-				value += (Elf_Addr)(ooff + this->st_value);
+				prev_sym = sym;
+				prev_value = (Elf_Addr)(ooff + this->st_value);
+				value += prev_value;
 			}
 		}
 

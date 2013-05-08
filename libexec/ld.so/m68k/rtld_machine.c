@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1 2013/01/23 19:15:58 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.2 2013/05/08 20:55:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -61,6 +61,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 {
 	int	i;
 	int	numrela;
+	int	relrel;
 	int	fails = 0;
 	struct load_list *llist;
 	Elf32_Addr loff;
@@ -68,6 +69,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	loff = object->obj_base;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf32_Rela);
+	relrel = rel == DT_RELA ? object->relacount : 0;
 	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
 
 #ifdef DL_PRINTF_DEBUG
@@ -77,6 +79,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (relas == NULL)
 		return(0);
+
+	if (relrel > numrela) {
+		_dl_printf("relacount > numrela: %ld > %ld\n", relrel, numrela);
+		_dl_exit(20);
+	}
 
 	/*
 	 * Change protection of all write protected segments in the object
@@ -93,12 +100,27 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		}
 	}
 
-	for (i = 0; i < numrela; i++, relas++) {
+	/* tight loop for leading RELATIVE relocs */
+	for (i = 0; i < relrel; i++, relas++) {
+		Elf32_Addr *r_addr;
+
+#ifdef DEBUG
+		if (ELF_R_TYPE(relas->r_info) != R_68K_RELATIVE) {
+			_dl_printf("RELACOUNT wrong\n");
+			_dl_exit(20);
+		}
+#endif
+		r_addr = (Elf32_Addr *)(relas->r_offset + loff);
+		*r_addr = relas->r_addend + loff;
+	}
+	for (; i < numrela; i++, relas++) {
 		Elf32_Addr *r_addr = (Elf32_Addr *)(relas->r_offset + loff);
 		Elf32_Addr ooff, addend, newval;
 		const Elf32_Sym *sym, *this;
 		const char *symn;
 		int type;
+		Elf32_Addr prev_value = 0, prev_ooff = 0;
+		const Elf32_Sym *prev_sym = NULL;
 
 		type = ELF32_R_TYPE(relas->r_info);
 
@@ -143,11 +165,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			continue;
 		}
 
-		ooff = 0;
-		this = NULL;
 		if (ELF32_R_SYM(relas->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
+		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
+		    sym != prev_sym) {
+			this = NULL;
 			ooff = _dl_find_symbol_bysym(object,
 			    ELF32_R_SYM(relas->r_info), &this,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|
@@ -159,6 +181,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 					fails++;
 				continue;
 			}
+			prev_sym = sym;
+			prev_value = this->st_value;
+			prev_ooff = ooff;
 		}
 
 		if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
@@ -166,18 +191,18 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE))
 			addend = relas->r_addend;
 		else
-			addend = this->st_value + relas->r_addend;
+			addend = prev_value + relas->r_addend;
 
 		switch (type) {
 		case R_68K_PC32:
-			newval = ooff + addend;
+			newval = prev_ooff + addend;
 			newval -= (Elf_Addr)r_addr;
 			*r_addr = newval;
 			break;
 		case R_68K_32:
 		case R_68K_GLOB_DAT:
 		case R_68K_JMP_SLOT:
-			newval = ooff + addend;
+			newval = prev_ooff + addend;
 			*r_addr = newval;
 			break;
 		case R_68K_RELATIVE:

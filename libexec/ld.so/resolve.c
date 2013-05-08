@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.61 2013/04/05 12:58:03 kurt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.62 2013/05/08 20:55:14 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -264,6 +264,10 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 			object->obj_flags |= DF_1_NOW;
 		if (dynp->d_tag == DT_FLAGS_1)
 			object->obj_flags |= dynp->d_un.d_val;
+		if (dynp->d_tag == DT_RELACOUNT)
+			object->relacount = dynp->d_un.d_val;
+		if (dynp->d_tag == DT_RELCOUNT)
+			object->relcount = dynp->d_un.d_val;
 		dynp++;
 	}
 	DL_DEB((" flags %s = 0x%x\n", objname, object->obj_flags ));
