@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.144 2013/05/03 02:46:28 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.145 2013/05/08 03:00:32 jsg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1470,8 +1470,10 @@ mfi_bio_getitall(struct mfi_softc *sc)
 	if (cfg == NULL)
 		goto done;
 	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, sizeof *cfg, cfg,
-	    NULL))
+	    NULL)) {
+		free(cfg, M_DEVBUF);
 		goto done;
+	}
 
 	size = cfg->mfc_size;
 	free(cfg, M_DEVBUF);
@@ -1480,8 +1482,10 @@ mfi_bio_getitall(struct mfi_softc *sc)
 	cfg = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (cfg == NULL)
 		goto done;
-	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL))
+	if (mfi_mgmt(sc, MR_DCMD_CONF_GET, MFI_DATA_IN, size, cfg, NULL)) {
+		free(cfg, M_DEVBUF);
 		goto done;
+	}
 
 	/* replace current pointer with enw one */
 	if (sc->sc_cfg)
