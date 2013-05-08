@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rename.2,v 1.18 2013/04/01 20:16:31 guenther Exp $
+.\"	$OpenBSD: rename.2,v 1.19 2013/05/08 16:13:12 tedu Exp $
 .\"	$NetBSD: rename.2,v 1.7 1995/02/27 12:36:15 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)rename.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 1 2013 $
+.Dd $Mdocdate: May 8 2013 $
 .Dt RENAME 2
 .Os
 .Sh NAME
@@ -136,8 +136,12 @@ does not exist.
 .It Bq Er EACCES
 A component of either path prefix denies search permission.
 .It Bq Er EACCES
-The requested link requires writing in a directory with a mode
-that denies write permission.
+The requested change requires writing in a directory that denies write
+permission.
+.It Bq Er EACCES
+The
+.Fa from
+argument is a directory and denies write permission.
 .It Bq Er EPERM
 The directory containing
 .Fa from
