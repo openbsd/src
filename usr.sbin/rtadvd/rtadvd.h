@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.14 2013/04/30 12:29:04 florian Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.15 2013/05/08 06:30:25 brad Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -82,19 +82,27 @@ struct prefix {
 	struct in6_addr prefix;
 };
 
+/*
+ * `struct rdnss` may contain an arbitrary number of `servers` and `struct
+ * dnssldom` will contain a variable-sized `domain`. Space required for these
+ * elements will be dynamically allocated. We do not use flexible array members
+ * here because this breaks compile on some architectures using gcc2. Instead,
+ * we just have an array with a single (unused) element.
+ */
+
 struct rdnss {
 	TAILQ_ENTRY(rdnss) entry;
 
 	u_int32_t lifetime;
 	int servercnt;
-	struct in6_addr servers[100];
+	struct in6_addr servers[1];
 };
 
 struct dnssldom {
 	TAILQ_ENTRY(dnssldom) entry;
 
 	u_int32_t length;
-	char domain[100];
+	char domain[1];
 };
 
 struct dnssl {
