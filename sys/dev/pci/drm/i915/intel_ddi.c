@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_ddi.c,v 1.1 2013/03/18 12:36:52 jsg Exp $	*/
+/*	$OpenBSD: intel_ddi.c,v 1.2 2013/05/08 04:00:51 jsg Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -1412,8 +1412,8 @@ intel_ddi_prepare_link_retrain(struct drm_encoder *encoder)
 	struct intel_dp *intel_dp = &intel_dig_port->dp;
 	struct inteldrm_softc *dev_priv = encoder->dev->dev_private;
 	enum port port = intel_dig_port->port;
-	bool wait;
 	uint32_t val;
+	bool wait = false;
 
 	if (I915_READ(DP_TP_CTL(port)) & DP_TP_CTL_ENABLE) {
 		val = I915_READ(DDI_BUF_CTL(port));
