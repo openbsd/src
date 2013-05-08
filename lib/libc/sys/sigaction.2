@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.49 2012/04/03 23:06:11 matthew Exp $
+.\"	$OpenBSD: sigaction.2,v 1.50 2013/05/08 05:39:49 guenther Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: April 3 2012 $
+.Dd $Mdocdate: May 8 2013 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -494,6 +494,7 @@ Base Interfaces:
 .Fn fchown ,
 .Fn fchownat ,
 .Fn fcntl ,
+.Fn fdatasync ,
 .Fn fork ,
 .Fn fpathconf ,
 .Fn fstat ,
@@ -531,6 +532,7 @@ Base Interfaces:
 .Fn pause ,
 .Fn pipe ,
 .Fn poll ,
+.Fn pselect ,
 .Fn read ,
 .Fn readlink ,
 .Fn readlinkat ,
@@ -591,7 +593,6 @@ Base Interfaces:
 .Pp
 .\" unimplemented functions that should be async-sig-safe, if we had them
 .\" SUSv[56] additions
-.\" .Fn pselect ,
 .\" .Fn sockatmark .
 .\"
 .\" SUSv7 additions
@@ -603,7 +604,6 @@ Base Interfaces:
 .\" .Fn aio_error ,
 .\" .Fn aio_return ,
 .\" .Fn aio_suspend ,
-.\" .Fn fdatasync ,
 .\" .Fn sem_post ,
 .\" .Fn sigqueue ,
 .\" .Fn timer_getoverrun ,
@@ -627,6 +627,7 @@ Extension Interfaces:
 .Fn getresuid ,
 .Fn setresgid ,
 .Fn setresuid ,
+.Fn ppoll ,
 .Fn strlcat ,
 .Fn strlcpy ,
 .Fn wait3 ,
