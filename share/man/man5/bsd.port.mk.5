@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.374 2013/05/06 21:17:37 zhuk Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.375 2013/05/08 08:51:55 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 6 2013 $
+.Dd $Mdocdate: May 8 2013 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -301,6 +301,7 @@ and
 .Ev PATCHFILES
 lists is retrieved, if necessary, from the list of sites in
 .Ev MASTER_SITES .
+.Pp
 If a filename ends with a
 .Sq :0
 to
@@ -310,6 +311,17 @@ extension, it will be retrieved from
 to
 .Ev MASTER_SITES9
 instead.
+After stripping that extension if necessary,
+if the entry parses as
+.Sq Ar filename Ns { Ns Ar url Ns }
+it will be fetched as
+.Ar url
+instead, yet still stored as
+.Ar filename .
+.Pp
+Transfers in progress will be stored as
+.Ar filename.part .
+.Pp
 The ports framework uses
 .Pa ${DISTDIR}/${DIST_SUBDIR}
 (aliased to
@@ -320,6 +332,7 @@ which will also retrieve
 .Ev SUPDISTFILES ,
 to fill with supplementary distribution files which are not needed for
 every configuration.
+.Pp
 Use of
 .Ar {pre,do,post}-fetch
 hooks is forbidden, as this would make mirroring of distfiles very complicated.
@@ -340,6 +353,11 @@ See
 .Ev PATCHFILES ,
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
+.It Ar fetch-all
+also fetches
+.Ev SUPDISTFILES ,
+for use with e.g.,
+.Ar makesum .
 .It Ar index
 Top-level target, see
 .Xr ports 7 .
@@ -1393,6 +1411,13 @@ to
 .Sq :9
 appended to select a different
 .Ev MASTER_SITES .
+Each entry may optionally be of the form
+.Sq Ar filename Ns { Ns Ar url Ns }
+to deal with sites that only offer archives as weird urls, doing the transfer
+of
+.Ar url
+into result file
+.Ar filename .
 If ${DISTFILES} varies depending on FLAVORS or architecture,
 use
 .Ev SUPDISTFILES
@@ -1532,6 +1557,12 @@ Command used to fetch distribution files for this port.
 Defaults to
 .Xr ftp 1 .
 Can be used to go through excessively paranoid firewalls.
+Note that
+.Ev FETCH_CMD
+should support
+.Fl C
+and
+.Fl o Ar dest .
 .It Ev FETCH_MANUALLY
 Some ports' distfiles cannot be fetched automatically for licensing reasons.
 In this case, set
@@ -2060,7 +2091,7 @@ shell fragment:
 .Bd -literal
 set -e
 cd ${FULLDISTDIR}
-for patchfile in ${_PATCHFILES}
+for patchfile in ${_LIST_PATCHFILES}
 do
     case $$patchfile in
 	*.bz2)
@@ -3625,7 +3656,7 @@ There is no port that requires special treatment during packaging,
 as
 .Ar {pre,do,post}-install
 should take care of every necessity.
-.It Ar fetch-all , Ar fetch-list , Ar mirror-distfiles , Ar fetch-makefile
+.It Ar fetch-list , Ar mirror-distfiles , Ar fetch-makefile
 See
 .Xr mirroring-ports 7
 for more efficient and flexible ways to build mirrors.
