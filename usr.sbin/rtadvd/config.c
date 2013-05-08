@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.33 2013/04/30 12:30:40 florian Exp $	*/
+/*	$OpenBSD: config.c,v 1.34 2013/05/08 06:24:44 brad Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -723,8 +723,12 @@ make_packet(struct rainfo *rainfo)
 
 		packlen += sizeof(struct nd_opt_dnssl);
 
+		/*
+		 * Each domain in the packet ends with a null byte. Account for
+		 * that here.
+		 */
 		TAILQ_FOREACH(dnsd, &dsl->dnssldoms, entry)
-			domains_size += dnsd->length;
+			domains_size += dnsd->length + 1;
 
 		domains_size = (domains_size + 7) & ~7;
 
@@ -849,7 +853,7 @@ make_packet(struct rainfo *rainfo)
 
 		size = 0;
 		TAILQ_FOREACH(dnsd, &dsl->dnssldoms, entry)
-			size += dnsd->length;
+			size += dnsd->length + 1;
 		/* align size on the next 8 byte boundary */
 		size = (size + 7) & ~7;
 		ndopt_dnssl->nd_opt_dnssl_len = 1 + size / 8;
