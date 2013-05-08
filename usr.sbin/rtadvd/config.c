@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.34 2013/05/08 06:24:44 brad Exp $	*/
+/*	$OpenBSD: config.c,v 1.35 2013/05/08 06:26:05 brad Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -863,7 +863,7 @@ make_packet(struct rainfo *rainfo)
 		TAILQ_FOREACH(dnsd, &dsl->dnssldoms, entry) {
 			curlabel_begin = dnsd->domain;
 			while ((curlabel_end = strchr(curlabel_begin, '.')) &&
-			    (curlabel_end - curlabel_begin) > 1)
+			    (curlabel_end - curlabel_begin) > 0)
 			{
 				size_t curlabel_size;
 
