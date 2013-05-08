@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.22 2013/05/08 01:06:34 sthen Exp $   */
+/*	$OpenBSD: uthum.c,v 1.23 2013/05/08 08:26:25 mglocker Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -140,6 +140,7 @@ int  uthum_detach(struct device *, int);
 int  uthum_issue_cmd(struct uthum_softc *, uint8_t, int);
 int  uthum_read_data(struct uthum_softc *, uint8_t, uint8_t *, size_t, int);
 int  uthum_check_device_info(struct uthum_softc *);
+void uthum_reset_device(struct uthum_softc *);
 void uthum_setup_sensors(struct uthum_softc *);
 
 void uthum_intr(struct uhidev *, void *, u_int);
@@ -272,6 +273,8 @@ uthum_detach(struct device *self, int flags)
 			sensor_task_unregister(sc->sc_sensortask);
 	}
 
+	uthum_reset_device(sc);
+
 	return (rv);
 }
 
@@ -403,6 +406,20 @@ uthum_check_device_info(struct uthum_softc *sc)
 
 	/* device specific init process */
 	switch (dev_type) {
+	case UTHUM_TYPE_TEMPERHUM:
+		sc->sc_sensor[UTHUM_TEMPER_NTC].cur_state = 0;
+		break;
+	};
+
+	uthum_reset_device(sc);
+
+	return 0;
+};
+
+void
+uthum_reset_device(struct uthum_softc *sc)
+{
+	switch (sc->sc_device_type) {
 	case UTHUM_TYPE_TEMPER1:
 	case UTHUM_TYPE_TEMPERNTC:
 		uthum_issue_cmd(sc, CMD_RESET0, 200);
@@ -411,13 +428,8 @@ uthum_check_device_info(struct uthum_softc *sc)
 		uthum_issue_cmd(sc, CMD_RESET0, 200);
 		uthum_issue_cmd(sc, CMD_RESET1, 200);
 		break;
-	case UTHUM_TYPE_TEMPERHUM:
-		sc->sc_sensor[UTHUM_TEMPER_NTC].cur_state = 0;
-		break;
-	};
-
-	return 0;
-};
+	}
+}
 
 void
 uthum_setup_sensors(struct uthum_softc *sc)
