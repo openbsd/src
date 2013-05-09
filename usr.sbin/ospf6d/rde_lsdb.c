@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.36 2013/03/25 14:29:35 markus Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.37 2013/05/09 12:57:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -710,12 +710,10 @@ lsa_snap(struct rde_nbr *nbr, u_int32_t peerid)
 		}
 		if (tree == &asext_tree)
 			break;
-		if (tree == &nbr->area->lsa_tree) {
+		if (tree == &nbr->area->lsa_tree)
 			tree = &nbr->iface->lsa_tree;
-			continue;
-		} else
+		else
 			tree = &asext_tree;
-
 	} while (1);
 }
 
