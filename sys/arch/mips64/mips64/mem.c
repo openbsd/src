@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.17 2011/05/01 07:01:37 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.18 2013/05/09 19:45:19 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -97,7 +97,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	struct iovec *iov;
 	boolean_t allowed;
-	int error = 0, c;
+	int error = 0;
+	size_t c;
 	vaddr_t v;
 
 	while (uio->uio_resid > 0 && error == 0) {
@@ -115,7 +116,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case 0:
 			v = uio->uio_offset;
 			c = iov->iov_len;
-			if (v + c > ptoa((psize_t)physmem))
+			if (v + c < v || v + c > ptoa((psize_t)physmem))
 				return (EFAULT);
 			v = (vaddr_t)PHYS_TO_XKPHYS(v, CCA_NONCOHERENT);
 			error = uiomove((caddr_t)v, c, uio);
@@ -124,7 +125,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 /* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
+			c = ulmin(iov->iov_len, MAXPHYS);
 
 			/* Allow access to RAM through XKPHYS... */
 			if (IS_XKPHYS(v))
@@ -167,7 +168,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (zeropage == NULL)
 				zeropage = malloc(PAGE_SIZE, M_TEMP,
 				    M_WAITOK | M_ZERO);
-			c = min(iov->iov_len, PAGE_SIZE);
+			c = ulmin(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			continue;
 

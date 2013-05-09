@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.49 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.50 2013/05/09 19:45:19 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -86,11 +86,13 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 #ifdef MULTIPROCESSOR
 		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
 		cpuset_add(&cpus_running, ci);
-		cpu_info_secondaries = (struct cpu_info *)
-		    alloc_contiguous_pages(sizeof(struct cpu_info) *
-		      (ncpusfound - 1));
-		if (cpu_info_secondaries == NULL)
-			panic("unable to allocate cpu_info");
+		if (ncpusfound > 1) {
+			cpu_info_secondaries = (struct cpu_info *)
+			    alloc_contiguous_pages(sizeof(struct cpu_info) *
+			      (ncpusfound - 1));
+			if (cpu_info_secondaries == NULL)
+				panic("unable to allocate cpu_info");
+		}
 #endif
 	}
 #ifdef MULTIPROCESSOR
