@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.18 2013/05/08 23:01:36 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.19 2013/05/09 15:00:41 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -793,7 +793,8 @@ struct inteldrm_softc {
 
 	struct i915_suspend_saved_registers regfile;
 };
-typedef struct inteldrm_softc drm_i915_private_t;
+#define drm_i915_private inteldrm_softc
+typedef struct drm_i915_private drm_i915_private_t;
 
 /* Iterate over initialised rings */
 #define for_each_ring(ring__, dev_priv__, i__) \

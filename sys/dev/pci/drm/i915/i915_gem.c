@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.16 2013/05/08 23:01:36 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.17 2013/05/09 15:00:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -104,7 +104,7 @@ i915_gem_object_fence_lost(struct drm_i915_gem_object *obj)
 int
 i915_gem_wait_for_error(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv= dev->dev_private;
+	struct drm_i915_private *dev_priv= dev->dev_private;
 	int ret;
 
 	if (!atomic_read(&dev_priv->mm.wedged))
@@ -2557,7 +2557,7 @@ i915_gem_object_set_to_cpu_domain(struct drm_i915_gem_object *obj, bool write)
 int
 i915_gem_ring_throttle(struct drm_device *dev, struct drm_file *file)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_i915_file_private *file_priv = file->driver_priv;
 	unsigned long recent_enough = ticks - msecs_to_jiffies(20);
 	struct drm_i915_gem_request *request;
