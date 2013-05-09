@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_space.c,v 1.3 2013/05/09 20:41:47 patrick Exp $ */
+/*	$OpenBSD: armv7_space.c,v 1.4 2013/05/09 23:46:05 patrick Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -211,10 +211,16 @@ armv7_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 void
 armv7_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
+	vaddr_t	va, endva;
 
 	if (bsh > (u_long)KERNEL_BASE)
 		return;
 
+	va = trunc_page((vaddr_t)bsh);
+	endva = round_page((vaddr_t)bsh + size);
+
+	pmap_kremove(va, endva - va);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, bsh, size);
 }
 
