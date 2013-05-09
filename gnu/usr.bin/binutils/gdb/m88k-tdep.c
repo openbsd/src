@@ -879,6 +879,10 @@ m88k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_write_pc (gdbarch, m88k_write_pc);
 
   frame_base_set_default (gdbarch, &m88k_frame_base);
+
+  /* Hook in ABI-specific overrides, if they have been registered.  */
+  gdbarch_init_osabi (info, gdbarch);
+
   frame_unwind_append_sniffer (gdbarch, m88k_frame_sniffer);
 
   return gdbarch;

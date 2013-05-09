@@ -1388,7 +1388,7 @@ ALLDEPFILES = \
 	m32r-linux-nat.c m32r-linux-tdep.c \
 	m68k-tdep.c \
 	m68kbsd-nat.c m68kbsd-tdep.c \
-	m88k-tdep.c m88kbsd-nat.c \
+	m88k-tdep.c m88kbsd-nat.c m88kbsd-tdep.c \
 	mcore-tdep.c \
 	mips-linux-nat.c mips-linux-tdep.c \
 	mips-irix-tdep.c \
@@ -2198,6 +2198,9 @@ m88k-tdep.o: m88k-tdep.c $(defs_h) $(arch_utils_h) $(dis_asm_h) $(frame_h) \
 	$(frame_base_h) $(frame_unwind_h) $(gdbcore_h) $(gdbtypes_h) \
 	$(regcache_h) $(regset_h) $(symtab_h) $(trad_frame_h) $(value_h) \
 	$(gdb_assert_h) $(gdb_string_h) $(m88k_tdep_h)
+m88kbsd-tdep.o: m88kbsd-tdep.c $(defs_h) $(arch_utils_h) $(osabi_h) \
+	$(regcache_h) $(regset_h) $(gdb_assert_h) $(gdb_string_h) \
+	$(m88k_tdep_h) $(solib_svr4_h)
 macrocmd.o: macrocmd.c $(defs_h) $(macrotab_h) $(macroexp_h) $(macroscope_h) \
 	$(command_h) $(gdbcmd_h)
 macroexp.o: macroexp.c $(defs_h) $(gdb_obstack_h) $(bcache_h) $(macrotab_h) \
