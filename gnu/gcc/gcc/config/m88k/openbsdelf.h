@@ -85,6 +85,9 @@ Boston, MA 02110-1301, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
+#undef WINT_TYPE
+#define WINT_TYPE "int"
+
 /* Due to the split instruction and data caches, trampolines must cause the
    data cache to be synced before attempting to execute the trampoline code.
    Under OpenBSD, this is done by invoking trap #451 with r2 and r3 set to
