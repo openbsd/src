@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.16 2013/05/02 19:15:53 patrick Exp $
+# $OpenBSD: GENERIC,v 1.17 2013/05/09 15:16:53 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -55,6 +55,7 @@ cpu0		at mainbus?
 
 # OMAP3xxx/OMAP4xxx SoC
 omap0		at mainbus?
+omapid*		at soc?
 
 # Cortex-A9 (OMAP4)
 cortex0		at mainbus?
