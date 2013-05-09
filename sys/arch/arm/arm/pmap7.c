@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.4 2013/04/28 14:39:15 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.5 2013/05/09 20:07:25 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3453,6 +3453,10 @@ pt_entry_t	pte_l2_s_cache_mode;
 pt_entry_t	pte_l2_s_cache_mode_pt;
 pt_entry_t	pte_l2_s_cache_mask;
 
+pt_entry_t	pte_l1_s_coherent;
+pt_entry_t	pte_l2_l_coherent;
+pt_entry_t	pte_l2_s_coherent;
+
 pt_entry_t	pte_l2_s_prot_ur;
 pt_entry_t	pte_l2_s_prot_uw;
 pt_entry_t	pte_l2_s_prot_kr;
@@ -3494,6 +3498,10 @@ pmap_pte_init_generic(void)
 		pte_l2_s_cache_mode_pt = L2_C;
 	}
 
+	pte_l1_s_coherent = L1_S_COHERENT_generic;
+	pte_l2_l_coherent = L2_L_COHERENT_generic;
+	pte_l2_s_coherent = L2_S_COHERENT_generic;
+
 	pte_l2_s_prot_ur = L2_S_PROT_UR_generic;
 	pte_l2_s_prot_uw = L2_S_PROT_UW_generic;
 	pte_l2_s_prot_kr = L2_S_PROT_KR_generic;
@@ -3519,6 +3527,10 @@ pmap_pte_init_armv7(void)
 	 * settings eventually
 	 */
 	pmap_pte_init_generic();
+
+	pte_l1_s_coherent = L1_S_COHERENT_v7;
+	pte_l2_l_coherent = L2_L_COHERENT_v7;
+	pte_l2_s_coherent = L2_S_COHERENT_v7;
 
 	pte_l2_s_prot_ur = L2_S_PROT_UR_v7;
 	pte_l2_s_prot_uw = L2_S_PROT_UW_v7;

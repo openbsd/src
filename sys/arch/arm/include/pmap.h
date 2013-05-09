@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.22 2013/04/26 11:51:22 patrick Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.23 2013/05/09 20:07:26 patrick Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -423,6 +423,10 @@ extern pt_entry_t		pte_l1_s_cache_mode_pt;
 extern pt_entry_t		pte_l2_l_cache_mode_pt;
 extern pt_entry_t		pte_l2_s_cache_mode_pt;
 
+extern pt_entry_t		pte_l1_s_coherent;
+extern pt_entry_t		pte_l2_l_coherent;
+extern pt_entry_t		pte_l2_s_coherent;
+
 extern pt_entry_t		pte_l2_s_prot_u;
 extern pt_entry_t		pte_l2_s_prot_w;
 extern pt_entry_t		pte_l2_s_prot_mask;
@@ -459,6 +463,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
 #define	L1_S_CACHE_MASK_v7	(L1_S_B|L1_S_C|L1_S_V7_TEX(TEX_V7_X))
 
+#define	L1_S_COHERENT_generic	(L1_S_B|L1_S_C)
+#define	L1_S_COHERENT_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
+#define	L1_S_COHERENT_v7	(L1_S_C|L1_S_V7_TEX(TEX_V7_X))
+
 #define	L2_L_PROT_U		(L2_AP(AP_U))
 #define	L2_L_PROT_W		(L2_AP(AP_W))
 #define	L2_L_PROT_MASK		(L2_L_PROT_U|L2_L_PROT_W)
@@ -466,6 +474,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
 #define	L2_L_CACHE_MASK_v7	(L2_B|L2_C|L2_V7_L_TEX(TEX_V7_X))
+
+#define	L2_L_COHERENT_generic	(L2_B|L2_C)
+#define	L2_L_COHERENT_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
+#define	L2_L_COHERENT_v7	(L2_C|L2_V7_L_TEX(TEX_V7_X))
 
 #define	L2_S_PROT_U_generic	(L2_AP(AP_U))
 #define	L2_S_PROT_W_generic	(L2_AP(AP_W))
@@ -482,6 +494,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L2_S_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_S_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X))
 #define	L2_S_CACHE_MASK_v7	(L2_B|L2_C)
+
+#define	L2_S_COHERENT_generic	(L2_B|L2_C)
+#define	L2_S_COHERENT_xscale	(L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X))
+#define	L2_S_COHERENT_v7	(L2_C)
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
 #define	L1_S_PROTO_xscale	(L1_TYPE_S)
@@ -511,6 +527,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L2_L_CACHE_MASK		pte_l2_l_cache_mask
 #define	L2_S_CACHE_MASK		pte_l2_s_cache_mask
 
+#define	L1_S_COHERENT		pte_l1_s_coherent
+#define	L2_L_COHERENT		pte_l2_l_coherent
+#define	L2_S_COHERENT		pte_l2_s_coherent
+
 #define	L1_S_PROTO		pte_l1_s_proto
 #define	L1_C_PROTO		pte_l1_c_proto
 #define	L2_S_PROTO		pte_l2_s_proto
@@ -525,6 +545,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_generic
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_generic
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_generic
+
+#define	L1_S_COHERENT		L1_S_COHERENT_generic
+#define	L2_L_COHERENT		L2_L_COHERENT_generic
+#define	L2_S_COHERENT		L2_S_COHERENT_generic
 
 #define	L1_S_PROTO		L1_S_PROTO_generic
 #define	L1_C_PROTO		L1_C_PROTO_generic
@@ -541,6 +565,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_xscale
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_xscale
 
+#define	L1_S_COHERENT		L1_S_COHERENT_xscale
+#define	L2_L_COHERENT		L2_L_COHERENT_xscale
+#define	L2_S_COHERENT		L2_S_COHERENT_xscale
+
 #define	L1_S_PROTO		L1_S_PROTO_xscale
 #define	L1_C_PROTO		L1_C_PROTO_xscale
 #define	L2_S_PROTO		L2_S_PROTO_xscale
@@ -555,6 +583,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_v7
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_v7
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_v7
+
+#define	L1_S_COHERENT		L1_S_COHERENT_v7
+#define	L2_L_COHERENT		L2_L_COHERENT_v7
+#define	L2_S_COHERENT		L2_S_COHERENT_v7
 
 #define	L1_S_PROTO		L1_S_PROTO_v7
 #define	L1_C_PROTO		L1_C_PROTO_v7
