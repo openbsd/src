@@ -193,6 +193,9 @@ extern enum processor_type m88k_cpu;
    && TYPE_MODE (TREE_TYPE (TYPE)) == QImode				\
    && (ALIGN) < FASTEST_ALIGNMENT ? FASTEST_ALIGNMENT : (ALIGN))
 
+/* Make local arrays of chars 4/8 byte aligned for the same reasons.  */
+#define LOCAL_ALIGNMENT(TYPE, ALIGN) DATA_ALIGNMENT (TYPE, ALIGN)
+
 /* Alignment of field after `int : 0' in a structure.
    Ignored with PCC_BITFIELD_TYPE_MATTERS.  */
 /* #define EMPTY_FIELD_BOUNDARY 8 */
