@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.4 2011/11/06 01:34:53 drahn Exp $ */
+/* $OpenBSD: intr.c,v 1.5 2013/05/09 13:35:44 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -294,20 +294,23 @@ void arm_dflt_delay(u_int usecs);
 struct {
 	void (*delay)(u_int);
 	void	(*initclocks)(void);
-	void    (*setstatclockrate)(int);
+	void	(*setstatclockrate)(int);
+	void	(*mpstartclock)(void);
 } arm_clock_func = {
 	arm_dflt_delay,
+	NULL,
 	NULL,
 	NULL
 };
 
 void
 arm_clock_register(void (*initclock)(void), void (*delay)(u_int),
-    void (*statclock)(int))
+    void (*statclock)(int), void(*mpstartclock)(void))
 {
 	arm_clock_func.initclocks = initclock;
 	arm_clock_func.delay = delay;
 	arm_clock_func.setstatclockrate = statclock;
+	arm_clock_func.mpstartclock = mpstartclock;
 }
 
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.1 2013/05/01 00:16:26 patrick Exp $ */
+/* $OpenBSD: amptimer.c,v 1.2 2013/05/09 13:35:43 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -47,7 +47,21 @@
 #define GTIMER_CMP_HIGH		0x14
 #define GTIMER_AUTOINC		0x18
 
-#define TIMER_FREQUENCY		500 * 1000 * 1000 /* ARM core clock */
+/* offset from periphbase */
+#define PTIMER_ADDR		0x600
+#define PTIMER_SIZE		0x100
+
+/* registers */
+#define PTIMER_LOAD		0x0
+#define PTIMER_CNT		0x4
+#define PTIMER_CTRL		0x8
+#define PTIMER_CTRL_ENABLE	(1<<0)
+#define PTIMER_CTRL_AUTORELOAD	(1<<1)
+#define PTIMER_CTRL_IRQEN	(1<<2)
+#define PTIMER_STATUS		0xC
+#define PTIMER_STATUS_EVENT	(1<<0)
+
+#define TIMER_FREQUENCY		396 * 1000 * 1000 /* ARM core clock */
 int32_t amptimer_frequency = TIMER_FREQUENCY;
 
 u_int amptimer_get_timecount(struct timecounter *);
@@ -56,16 +70,25 @@ static struct timecounter amptimer_timecounter = {
 	amptimer_get_timecount, NULL, 0x7fffffff, 0, "amptimer", 0, NULL
 };
 
+#define MAX_ARM_CPUS	8
+
+struct amptimer_pcpu_softc {
+	uint64_t 		pc_nexttickevent;
+	uint64_t 		pc_nextstatevent;
+	u_int32_t		pc_ticks_err_sum;
+};
+
 struct amptimer_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	volatile u_int64_t	sc_nexttickevent;
-	volatile u_int64_t	sc_nextstatevent;
+	bus_space_handle_t	sc_pioh;
+
+	struct amptimer_pcpu_softc sc_pstat[MAX_ARM_CPUS];
+
+	u_int32_t		sc_ticks_err_cnt;
 	u_int32_t		sc_ticks_per_second;
 	u_int32_t		sc_ticks_per_intr;
-	u_int32_t		sc_ticks_err_cnt;
-	u_int32_t		sc_ticks_err_sum;
 	u_int32_t		sc_statvar;
 	u_int32_t		sc_statmin;
 
@@ -83,6 +106,7 @@ void		amptimer_cpu_initclocks(void);
 void		amptimer_delay(u_int);
 void		amptimer_setstatclockrate(int stathz);
 void		amptimer_set_clockrate(int32_t new_frequency);
+void		amptimer_startclock(void);
 
 /* hack - XXXX
  * gptimer connects directly to ampintc, not thru the generic
@@ -128,18 +152,23 @@ amptimer_attach(struct device *parent, struct device *self, void *args)
 {
 	struct amptimer_softc *sc = (struct amptimer_softc *)self;
 	struct cortex_attach_args *ia = args;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh, pioh;
 
 	sc->sc_iot = ia->ca_iot;
 
 	if (bus_space_map(sc->sc_iot, ia->ca_periphbase + GTIMER_ADDR,
 	    GTIMER_SIZE, 0, &ioh))
-		panic("amptimer_attach: bus_space_map failed!");
+		panic("amptimer_attach: bus_space_map global timer failed!");
+
+	if (bus_space_map(sc->sc_iot, ia->ca_periphbase + PTIMER_ADDR,
+	    PTIMER_SIZE, 0, &pioh))
+		panic("amptimer_attach: bus_space_map priv timer failed!");
 
 	sc->sc_ticks_per_second = amptimer_frequency;
 	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1000);
 
 	sc->sc_ioh = ioh;
+	sc->sc_pioh = pioh;
 
 	/* disable global timer */
 	bus_space_write_4(sc->sc_iot, ioh, GTIMER_CTRL, 0);
@@ -151,8 +180,16 @@ amptimer_attach(struct device *parent, struct device *self, void *args)
 	/* enable global timer */
 	bus_space_write_4(sc->sc_iot, ioh, GTIMER_CTRL, GTIMER_CTRL_TIMER);
 
+#if defined(USE_GTIMER_CMP)
+
 	/* clear event */
-	bus_space_write_4(sc->sc_iot, ioh, GTIMER_STATUS, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIMER_STATUS, 1);
+#else
+	bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_CTRL, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_STATUS,
+	    PTIMER_STATUS_EVENT);
+#endif
+
 
 #ifdef AMPTIMER_DEBUG
 	evcount_attach(&sc->sc_clk_count, "clock", NULL);
@@ -160,12 +197,12 @@ amptimer_attach(struct device *parent, struct device *self, void *args)
 #endif
 
 	/*
-	 * comparator registers and interrupts not enabled until
+	 * private timer and interrupts not enabled until
 	 * timer configures
 	 */
 
 	arm_clock_register(amptimer_cpu_initclocks, amptimer_delay,
-	    amptimer_setstatclockrate);
+	    amptimer_setstatclockrate, amptimer_startclock);
 
 	amptimer_timecounter.tc_frequency = sc->sc_ticks_per_second;
 	amptimer_timecounter.tc_priv = sc;
@@ -180,39 +217,43 @@ amptimer_get_timecount(struct timecounter *tc)
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIMER_CNT_LOW);
 }
 
-
 int
 amptimer_intr(void *frame)
 {
 	struct amptimer_softc	*sc = amptimer_cd.cd_devs[0];
+	struct amptimer_pcpu_softc *pc = &sc->sc_pstat[CPU_INFO_UNIT(curcpu())];
 	uint64_t		 now;
 	uint64_t		 nextevent;
 	uint32_t		 r, reg;
+#if defined(USE_GTIMER_CMP)
 	int			 skip = 1;
+#else
+	int64_t			 delay;
+#endif
 	int			 rc = 0;
 
 	/*
 	 * DSR - I know that the tick timer is 64 bits, but the following
 	 * code deals with rollover, so there is no point in dealing
-	 * with the 64 bit math, just let the 32 bit rollover 
+	 * with the 64 bit math, just let the 32 bit rollover
 	 * do the right thing
 	 */
 
 	now = amptimer_readcnt64(sc);
 
-	while (sc->sc_nexttickevent <= now) {
-		sc->sc_nexttickevent += sc->sc_ticks_per_intr;
-		sc->sc_ticks_err_sum += sc->sc_ticks_err_cnt;
+	while (pc->pc_nexttickevent <= now) {
+		pc->pc_nexttickevent += sc->sc_ticks_per_intr;
+		pc->pc_ticks_err_sum += sc->sc_ticks_err_cnt;
 		/* looping a few times is faster than divide */
-		while (sc->sc_ticks_err_sum > hz) {
-			sc->sc_nexttickevent += 1;
-			sc->sc_ticks_err_sum -= hz;
+		while (pc->pc_ticks_err_sum > hz) {
+			pc->pc_nexttickevent += 1;
+			pc->pc_ticks_err_sum -= hz;
 		}
 
 		/* looping a few times is faster than divide */
-		while (sc->sc_ticks_err_sum  > hz) {
-			sc->sc_nexttickevent += 1;
-			sc->sc_ticks_err_sum -= hz;
+		while (pc->pc_ticks_err_sum  > hz) {
+			pc->pc_nexttickevent += 1;
+			pc->pc_ticks_err_sum -= hz;
 		}
 
 #ifdef AMPTIMER_DEBUG
@@ -221,11 +262,11 @@ amptimer_intr(void *frame)
 		rc = 1;
 		hardclock(frame);
 	}
-	while (sc->sc_nextstatevent <= now) {
+	while (pc->pc_nextstatevent <= now) {
 		do {
 			r = random() & (sc->sc_statvar -1);
 		} while (r == 0); /* random == 0 not allowed */
-		sc->sc_nextstatevent += sc->sc_statmin + r;
+		pc->pc_nextstatevent += sc->sc_statmin + r;
 
 		/* XXX - correct nextstatevent? */
 #ifdef AMPTIMER_DEBUG
@@ -235,11 +276,12 @@ amptimer_intr(void *frame)
 		statclock(frame);
 	}
 
-	if (sc->sc_nexttickevent < sc->sc_nextstatevent)
-		nextevent = sc->sc_nexttickevent;
+	if (pc->pc_nexttickevent < pc->pc_nextstatevent)
+		nextevent = pc->pc_nexttickevent;
 	else
-		nextevent = sc->sc_nextstatevent;
+		nextevent = pc->pc_nextstatevent;
 
+#if defined(USE_GTIMER_CMP)
 again:
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIMER_CTRL);
 	reg &= ~GTIMER_CTRL_COMP;
@@ -257,6 +299,23 @@ again:
 		skip += 1;
 		goto again;
 	}
+#else
+	/* clear old status */
+	bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_STATUS,
+	    PTIMER_STATUS_EVENT);
+
+	delay = nextevent - now;
+	if (delay < 0)
+		delay = 1;
+
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_pioh, PTIMER_CTRL);
+	if ((reg & (PTIMER_CTRL_ENABLE | PTIMER_CTRL_IRQEN)) !=
+	    (PTIMER_CTRL_ENABLE | PTIMER_CTRL_IRQEN))
+		bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_CTRL,
+		    (PTIMER_CTRL_ENABLE | PTIMER_CTRL_IRQEN));
+
+	bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_LOAD, delay);
+#endif
 
 	return (rc);
 }
@@ -281,8 +340,11 @@ void
 amptimer_cpu_initclocks()
 {
 	struct amptimer_softc	*sc = amptimer_cd.cd_devs[0];
+	struct amptimer_pcpu_softc *pc = &sc->sc_pstat[CPU_INFO_UNIT(curcpu())];
 	uint64_t		 next;
+#if defined(USE_GTIMER_CMP)
 	uint32_t		 reg;
+#endif
 
 	stathz = hz;
 	profhz = hz * 10;
@@ -295,17 +357,22 @@ amptimer_cpu_initclocks()
 
 	sc->sc_ticks_per_intr = sc->sc_ticks_per_second / hz;
 	sc->sc_ticks_err_cnt = sc->sc_ticks_per_second % hz;
-	sc->sc_ticks_err_sum = 0;; 
+	pc->pc_ticks_err_sum = 0;
 
 	/* establish interrupts */
 	/* XXX - irq */
+#if defined(USE_GTIMER_CMP)
 	ampintc_intr_establish(27, IPL_CLOCK, amptimer_intr,
 	    NULL, "tick");
+#else
+	ampintc_intr_establish(29, IPL_CLOCK, amptimer_intr,
+	    NULL, "tick");
+#endif
 
-	/* setup timer 0 (hardware timer 2) */
 	next = amptimer_readcnt64(sc) + sc->sc_ticks_per_intr;
-	sc->sc_nexttickevent = sc->sc_nextstatevent = next;
+	pc->pc_nexttickevent = pc->pc_nextstatevent = next;
 
+#if defined(USE_GTIMER_CMP)
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIMER_CTRL);
 	reg &= ~GTIMER_CTRL_COMP;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIMER_CTRL, reg);
@@ -315,6 +382,12 @@ amptimer_cpu_initclocks()
 	    next >> 32);
 	reg |= GTIMER_CTRL_COMP | GTIMER_CTRL_IRQ;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIMER_CTRL, reg);
+#else
+	bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_CTRL,
+	    (PTIMER_CTRL_ENABLE | PTIMER_CTRL_IRQEN));
+	bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_LOAD,
+	    sc->sc_ticks_per_intr);
+#endif
 }
 
 void
@@ -374,4 +447,18 @@ amptimer_setstatclockrate(int newhz)
 	 * XXX this allows the next stat timer to occur then it switches
 	 * to the new frequency. Rather than switching instantly.
 	 */
+}
+
+void
+amptimer_startclock(void)
+{
+	struct amptimer_softc	*sc = amptimer_cd.cd_devs[0];
+	struct amptimer_pcpu_softc *pc = &sc->sc_pstat[CPU_INFO_UNIT(curcpu())];
+	uint64_t nextevent;
+
+	nextevent = amptimer_readcnt64(sc) + sc->sc_ticks_per_intr;
+	pc->pc_nexttickevent = pc->pc_nextstatevent = nextevent;
+	
+	bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_LOAD,
+		sc->sc_ticks_per_intr);
 }
