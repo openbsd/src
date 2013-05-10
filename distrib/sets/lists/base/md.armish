@@ -608,6 +608,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pci_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pmap.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/arm/pmap7.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/proc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/profile.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/pte.ph

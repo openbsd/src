@@ -35,6 +35,7 @@
 ./usr/include/arm/pci_machdep.h
 ./usr/include/arm/pio.h
 ./usr/include/arm/pmap.h
+./usr/include/arm/pmap7.h
 ./usr/include/arm/proc.h
 ./usr/include/arm/profile.h
 ./usr/include/arm/pte.h
