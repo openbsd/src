@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.2,v 1.12 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: shutdown.2,v 1.13 2013/05/10 06:12:42 guenther Exp $
 .\"	$NetBSD: shutdown.2,v 1.5 1995/02/27 12:37:11 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,14 +30,13 @@
 .\"
 .\"     @(#)shutdown.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 10 2013 $
 .Dt SHUTDOWN 2
 .Os
 .Sh NAME
 .Nm shutdown
 .Nd disable sends or receives on a socket
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn shutdown "int s" "int how"
@@ -127,6 +126,11 @@ does not support this operation.
 .Xr socket 2 ,
 .Xr inet 4 ,
 .Xr inet6 4
+.Sh STANDARDS
+The
+.Fn shutdown
+function conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn shutdown
