@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.197 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.198 2013/05/10 11:36:24 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -612,7 +612,7 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	if (!ISSET(flags, PFSYNC_SI_IOCTL))
 		SET(st->state_flags, PFSTATE_NOSYNC);
 
-	if (pf_state_insert(kif, skw, sks, st) != 0) {
+	if (pf_state_insert(kif, &skw, &sks, st) != 0) {
 		/* XXX when we have anchors, use STATE_DEC_COUNTERS */
 		r->states_cur--;
 		error = EEXIST;
