@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.26 2011/07/17 22:46:48 matthew Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.27 2013/05/10 18:33:55 mikeb Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -296,6 +296,9 @@ vscsiioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	int				read = 0;
 	int				err = 0;
 
+	if (sc == NULL)
+		return (ENXIO);
+
 	rw_enter_write(&sc->sc_ioc_lock);
 
 	switch (cmd) {
@@ -476,6 +479,9 @@ vscsipoll(dev_t dev, int events, struct proc *p)
 	struct vscsi_softc		*sc = DEV2SC(dev);
 	int				revents = 0;
 
+	if (sc == NULL)
+		return (ENXIO);
+
 	if (events & (POLLIN | POLLRDNORM)) {
 		mtx_enter(&sc->sc_state_mtx);
 		if (!TAILQ_EMPTY(&sc->sc_ccb_i2t))
@@ -494,9 +500,14 @@ vscsipoll(dev_t dev, int events, struct proc *p)
 
 int
 vscsikqfilter(dev_t dev, struct knote *kn)
-{ 
+{
 	struct vscsi_softc *sc = DEV2SC(dev);
-	struct klist *klist = &sc->sc_sel.si_note;
+	struct klist *klist;
+
+	if (sc == NULL)
+		return (ENXIO);
+
+	klist = &sc->sc_sel.si_note;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -547,6 +558,9 @@ vscsiclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct vscsi_softc		*sc = DEV2SC(dev);
 	struct vscsi_ccb		*ccb;
+
+	if (sc == NULL)
+		return (ENXIO);
 
 	mtx_enter(&sc->sc_state_mtx);
 	KASSERT(sc->sc_state == VSCSI_S_RUNNING);
