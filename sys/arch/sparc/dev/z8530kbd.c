@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.16 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.17 2013/05/10 16:00:08 mikeb Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -213,8 +213,6 @@ static void zs_modem(struct zskbd_softc *, int);
 static void zs_hwiflow(struct zskbd_softc *);
 static void zs_maskintr(struct zskbd_softc *);
 
-struct zskbd_softc *zskbd_device_lookup(struct cfdriver *, int);
-
 /* Low-level routines. */
 static void zskbd_rxint(struct zs_chanstate *);
 static void zskbd_stint(struct zs_chanstate *, int);
@@ -239,14 +237,6 @@ struct wskbd_consops zskbd_consops = {
 };
 
 #define	ZSKBDUNIT(x)	(minor(x) & 0x7ffff)
-
-struct zskbd_softc *
-zskbd_device_lookup(cf, unit)
-	struct cfdriver *cf;
-	int unit;
-{
-	return (struct zskbd_softc *)device_lookup(cf, unit);
-}
 
 /*
  * zskbd_match: how is this zs channel configured?
