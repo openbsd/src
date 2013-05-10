@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.27 2012/04/22 05:43:14 guenther Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.28 2013/05/10 10:31:16 pirofti Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ static int linux_to_bsd_ioflags(int);
 static int bsd_to_linux_ioflags(int);
 static void bsd_to_linux_flock(struct flock *, struct linux_flock *);
 static void linux_to_bsd_flock(struct linux_flock *, struct flock *);
-static void bsd_to_linux_stat(struct stat *, struct linux_stat *);
+static int bsd_to_linux_stat(struct stat *, struct linux_stat *);
 static int linux_stat1(struct proc *, void *, register_t *, int);
 
 
@@ -467,14 +467,16 @@ linux_sys_fcntl(p, v, retval)
  * (XXX horrible, but what can you do against code that compares
  * things against constant major device numbers? sigh)
  */
-static void
+static int
 bsd_to_linux_stat(bsp, lsp)
 	struct stat *bsp;
 	struct linux_stat *lsp;
 {
+	if (bsp->st_ino > LINUX_INO_MAX)
+		return EOVERFLOW;
 
 	lsp->lst_dev     = bsp->st_dev;
-	lsp->lst_ino     = bsp->st_ino;
+	lsp->lst_ino     = (linux_ino_t)bsp->st_ino;
 	lsp->lst_mode    = bsp->st_mode;
 	lsp->lst_nlink   = bsp->st_nlink;
 	lsp->lst_uid     = bsp->st_uid;
@@ -486,6 +488,8 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
+
+	return 0;
 }
 
 /*
@@ -521,7 +525,8 @@ linux_sys_fstat(p, v, retval)
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
 		return error;
 
-	bsd_to_linux_stat(&tmpst, &tmplst);
+	if ((error = bsd_to_linux_stat(&tmpst, &tmplst)))
+		return error;
 
 	if ((error = copyout(&tmplst, SCARG(uap, sp), sizeof tmplst)))
 		return error;
@@ -558,7 +563,8 @@ linux_stat1(p, v, retval, dolstat)
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
 		return error;
 
-	bsd_to_linux_stat(&tmpst, &tmplst);
+	if ((error = bsd_to_linux_stat(&tmpst, &tmplst)))
+		return error;
 
 	if ((error = copyout(&tmplst, SCARG(uap, sp), sizeof tmplst)))
 		return error;

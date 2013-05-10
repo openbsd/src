@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_time.h,v 1.2 2011/07/05 18:56:40 pirofti Exp $	*/
+/*	$OpenBSD: linux_time.h,v 1.3 2013/05/10 10:31:16 pirofti Exp $	*/
 /*
  * Copyright (c) 2011 Paul Irofti <pirofti@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #ifndef _LINUX_TIME_H_
 #define _LINUX_TIME_H_
 
-void native_to_linux_timespec(struct l_timespec *, struct timespec *);
+int native_to_linux_timespec(struct l_timespec *, struct timespec *);
 void linux_to_native_timespec(struct timespec *, struct l_timespec *);
 int linux_to_native_clockid(clockid_t *, clockid_t);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ipc.c,v 1.15 2011/10/27 07:56:28 robert Exp $	*/
+/*	$OpenBSD: linux_ipc.c,v 1.16 2013/05/10 10:31:16 pirofti Exp $	*/
 /*	$NetBSD: linux_ipc.c,v 1.10 1996/04/05 00:01:44 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 int linux_semop(struct proc *, void *, register_t *);
 int linux_semget(struct proc *, void *, register_t *);
 int linux_semctl(struct proc *, void *, register_t *);
-void bsd_to_linux_semid_ds(struct semid_ds *, struct linux_semid_ds *);
+int bsd_to_linux_semid_ds(struct semid_ds *, struct linux_semid_ds *);
 void linux_to_bsd_semid_ds(struct linux_semid_ds *, struct semid_ds *);
 #endif
 
@@ -83,7 +83,7 @@ int linux_msgrcv(struct proc *, void *, register_t *);
 int linux_msgget(struct proc *, void *, register_t *);
 int linux_msgctl(struct proc *, void *, register_t *);
 void linux_to_bsd_msqid_ds(struct linux_msqid_ds *, struct msqid_ds *);
-void bsd_to_linux_msqid_ds(struct msqid_ds *, struct linux_msqid_ds *);
+int bsd_to_linux_msqid_ds(struct msqid_ds *, struct linux_msqid_ds *);
 #endif
 
 #ifdef SYSVSHM
@@ -92,7 +92,7 @@ int linux_shmdt(struct proc *, void *, register_t *);
 int linux_shmget(struct proc *, void *, register_t *);
 int linux_shmctl(struct proc *, void *, register_t *);
 void linux_to_bsd_shmid_ds(struct linux_shmid_ds *, struct shmid_ds *);
-void bsd_to_linux_shmid_ds(struct shmid_ds *, struct linux_shmid_ds *);
+int bsd_to_linux_shmid_ds(struct shmid_ds *, struct linux_shmid_ds *);
 #endif
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
@@ -193,17 +193,23 @@ bsd_to_linux_ipc_perm(bpp, lpp)
 /*
  * Convert between Linux and OpenBSD semid_ds structures.
  */
-void
+int
 bsd_to_linux_semid_ds(bs, ls)
 	struct semid_ds *bs;
 	struct linux_semid_ds *ls;
 {
 
 	bsd_to_linux_ipc_perm(&bs->sem_perm, &ls->l_sem_perm);
-	ls->l_sem_otime = bs->sem_otime;
-	ls->l_sem_ctime = bs->sem_ctime;
+	if (bs->sem_otime > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	ls->l_sem_otime = (linux_time_t)bs->sem_otime;
+	if (bs->sem_ctime > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	ls->l_sem_ctime = (linux_time_t)bs->sem_ctime;
 	ls->l_sem_nsems = bs->sem_nsems;
 	ls->l_sem_base = bs->sem_base;
+
+	return 0;
 }
 
 void
@@ -337,7 +343,8 @@ linux_semctl(p, v, retval)
 			return error;
 		if ((error = copyin(dsp, (caddr_t)&bm, sizeof bm)))
 			return error;
-		bsd_to_linux_semid_ds(&bm, &lm);
+		if ((error = bsd_to_linux_semid_ds(&bm, &lm)))
+			return error;
 		if ((error = copyin(SCARG(uap, ptr), &ldsp, sizeof ldsp)))
 			return error;
 		return copyout((caddr_t)&lm, ldsp, sizeof lm);
@@ -371,7 +378,7 @@ linux_to_bsd_msqid_ds(lmp, bmp)
 	bmp->msg_ctime = lmp->l_msg_ctime;
 }
 
-void
+int
 bsd_to_linux_msqid_ds(bmp, lmp)
 	struct msqid_ds *bmp;
 	struct linux_msqid_ds *lmp;
@@ -385,9 +392,18 @@ bsd_to_linux_msqid_ds(bmp, lmp)
 	lmp->l_msg_qbytes = bmp->msg_qbytes;
 	lmp->l_msg_lspid = bmp->msg_lspid;
 	lmp->l_msg_lrpid = bmp->msg_lrpid;
-	lmp->l_msg_stime = bmp->msg_stime;
-	lmp->l_msg_rtime = bmp->msg_rtime;
-	lmp->l_msg_ctime = bmp->msg_ctime;
+
+	if (bmp->msg_stime > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	lmp->l_msg_stime = (linux_time_t)bmp->msg_stime;
+	if (bmp->msg_rtime > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	lmp->l_msg_rtime = (linux_time_t)bmp->msg_rtime;
+	if (bmp->msg_ctime > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	lmp->l_msg_ctime = (linux_time_t)bmp->msg_ctime;
+
+	return 0;
 }
 
 int
@@ -505,7 +521,8 @@ linux_msgctl(p, v, retval)
 			return error;
 		if ((error = copyin(umsgptr, (caddr_t)&bm, sizeof bm)))
 			return error;
-		bsd_to_linux_msqid_ds(&bm, &lm);
+		if ((error = bsd_to_linux_msqid_ds(&bm, &lm)))
+			return error;
 		return copyout((caddr_t)&lm, SCARG(uap, ptr), sizeof lm);
 	}
 	return EINVAL;
@@ -623,7 +640,7 @@ linux_to_bsd_shmid_ds(lsp, bsp)
 	bsp->shm_internal = lsp->l_private2;	/* XXX Oh well. */
 }
 
-void
+int
 bsd_to_linux_shmid_ds(bsp, lsp)
 	struct shmid_ds *bsp;
 	struct linux_shmid_ds *lsp;
@@ -634,10 +651,18 @@ bsd_to_linux_shmid_ds(bsp, lsp)
 	lsp->l_shm_lpid = bsp->shm_lpid;
 	lsp->l_shm_cpid = bsp->shm_cpid;
 	lsp->l_shm_nattch = bsp->shm_nattch;
-	lsp->l_shm_atime = bsp->shm_atime;
-	lsp->l_shm_dtime = bsp->shm_dtime;
-	lsp->l_shm_ctime = bsp->shm_ctime;
+	if (bsp->shm_atime > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	lsp->l_shm_atime = (linux_time_t)bsp->shm_atime;
+	if (bsp->shm_dtime > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	lsp->l_shm_dtime = (linux_time_t)bsp->shm_dtime;
+	if (bsp->shm_ctime > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	lsp->l_shm_ctime = (linux_time_t)bsp->shm_ctime;
 	lsp->l_private2 = bsp->shm_internal;	/* XXX */
+
+	return 0;
 }
 
 /*
@@ -677,7 +702,8 @@ linux_shmctl(p, v, retval)
 			return error;
 		if ((error = copyin((caddr_t) bsp, (caddr_t) &bs, sizeof bs)))
 			return error;
-		bsd_to_linux_shmid_ds(&bs, &lseg);
+		if ((error = bsd_to_linux_shmid_ds(&bs, &lseg)))
+			return error;
 		return copyout((caddr_t) &lseg, SCARG(uap, ptr), sizeof lseg);
 	case LINUX_IPC_SET:
 		if ((error = copyin(SCARG(uap, ptr), (caddr_t) &lseg,

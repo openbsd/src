@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.79 2012/06/08 14:28:23 pirofti Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.80 2013/05/10 10:31:16 pirofti Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -349,7 +349,9 @@ linux_sys_time(p, v, retval)
 
 	microtime(&atv);
 
-	tt = atv.tv_sec;
+	if (atv.tv_sec > LINUX_TIME_MAX)
+		return (EOVERFLOW);
+	tt = (linux_time_t)atv.tv_sec;
 	if (SCARG(uap, t) && (error = copyout(&tt, SCARG(uap, t), sizeof tt)))
 		return error;
 
@@ -855,14 +857,30 @@ linux_sys_times(p, v, retval)
 	} */ *uap = v;
 	struct timeval t, ut, st;
 	struct linux_tms ltms;
+	time_t ticks;
 	int error;
 
 	calcru(&p->p_p->ps_tu, &ut, &st, NULL);
-	ltms.ltms_utime = CONVTCK(ut);
-	ltms.ltms_stime = CONVTCK(st);
 
-	ltms.ltms_cutime = CONVTCK(p->p_p->ps_cru.ru_utime);
-	ltms.ltms_cstime = CONVTCK(p->p_p->ps_cru.ru_stime);
+	ticks = CONVTCK(ut);
+	if (ticks > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	ltms.ltms_utime = (linux_clock_t)ticks;
+
+	ticks = CONVTCK(st);
+	if (ticks > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	ltms.ltms_stime = (linux_clock_t)ticks;
+
+	ticks = CONVTCK(p->p_p->ps_cru.ru_utime);
+	if (ticks > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	ltms.ltms_cutime = (linux_clock_t)ticks;
+
+	ticks = CONVTCK(p->p_p->ps_cru.ru_stime);
+	if (ticks > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	ltms.ltms_cstime = (linux_clock_t)ticks;
 
 	if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
 		return error;
@@ -891,6 +909,7 @@ linux_sys_alarm(p, v, retval)
 	struct timeval tv;
 	int s;
 	int timo;
+	linux_time_t seconds_due = 0;
 
 	pr = p->p_p;
 	itp = &pr->ps_timer[ITIMER_REAL];
@@ -907,9 +926,15 @@ linux_sys_alarm(p, v, retval)
 	/*
 	 * Return how many seconds were left (rounded up)
 	 */
-	retval[0] = itp->it_value.tv_sec;
-	if (itp->it_value.tv_usec)
-		retval[0]++;
+	if (itp->it_value.tv_sec > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	seconds_due = (linux_time_t)itp->it_value.tv_sec;
+	if (itp->it_value.tv_usec) {
+		if (seconds_due == LINUX_TIME_MAX)
+			return EOVERFLOW;
+		seconds_due++;
+	}
+	retval[0] = seconds_due;
 
 	/*
 	 * alarm(0) just resets the timer.
@@ -1063,6 +1088,8 @@ linux_readdir_callback(arg, bdp, cookie)
 		strlcpy(idb64.d_name, bdp->d_name, sizeof(idb64.d_name));
 		error = copyout((caddr_t)&idb64, cb->outp, linux_reclen);
 	} else {
+		if (bdp->d_fileno > LINUX_INO_MAX)
+			return EOVERFLOW;
 		idb.d_ino = (linux_ino_t)bdp->d_fileno;
 		if (cb->oldcall) {
 			/*
@@ -1542,7 +1569,9 @@ linux_sys_sysinfo(p, v, retval)
 	struct timeval tv;
 
 	getmicrouptime(&tv);
-	si.uptime = tv.tv_sec;
+	if (tv.tv_sec > LINUX_TIME_MAX)
+		return EOVERFLOW;
+	si.uptime = (linux_time_t)tv.tv_sec;
 	la = &averunnable;
 	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;

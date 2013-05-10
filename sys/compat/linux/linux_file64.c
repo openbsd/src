@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file64.c,v 1.7 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: linux_file64.c,v 1.8 2013/05/10 10:31:16 pirofti Exp $	*/
 /*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
 
 void bsd_to_linux_flock64(struct flock *, struct linux_flock64 *);
 void linux_to_bsd_flock64(struct linux_flock64 *, struct flock *);
-static void bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
+static int bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
 static int linux_do_stat64(struct proc *, void *, register_t *, int);
 
 /*
@@ -73,13 +73,13 @@ static int linux_do_stat64(struct proc *, void *, register_t *, int);
  * (XXX horrible, but what can you do against code that compares
  * things against constant major device numbers? sigh)
  */
-static void
+static int
 bsd_to_linux_stat(bsp, lsp)
 	struct stat *bsp;
 	struct linux_stat64 *lsp;
 {
 	lsp->lst_dev     = bsp->st_dev;
-	lsp->lst_ino     = bsp->st_ino;
+	lsp->lst_ino     = (linux_ino64_t)bsp->st_ino;
 	lsp->lst_mode    = (linux_mode_t)bsp->st_mode;
 	if (bsp->st_nlink >= (1 << 15))
 		lsp->lst_nlink = (1 << 15) - 1;
@@ -95,8 +95,12 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
 #if LINUX_STAT64_HAS_BROKEN_ST_INO
+	if (bsp->st_ino > LINUX_INO_MAX)
+		return EOVERFLOW;
 	lsp->__lst_ino   = (linux_ino_t)bsp->st_ino;
 #endif
+
+	return 0;
 }
 
 /*
@@ -132,7 +136,8 @@ linux_sys_fstat64(p, v, retval)
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
 		return error;
 
-	bsd_to_linux_stat(&tmpst, &tmplst);
+	if ((error = bsd_to_linux_stat(&tmpst, &tmplst)))
+		return error;
 
 	if ((error = copyout(&tmplst, SCARG(uap, sp), sizeof tmplst)))
 		return error;
@@ -168,7 +173,8 @@ linux_do_stat64(p, v, retval, dolstat)
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
 		return error;
 
-	bsd_to_linux_stat(&tmpst, &tmplst);
+	if ((error = bsd_to_linux_stat(&tmpst, &tmplst)))
+		return error;
 
 	if ((error = copyout(&tmplst, SCARG(uap, sp), sizeof tmplst)))
 		return error;

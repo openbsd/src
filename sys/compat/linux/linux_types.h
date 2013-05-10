@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_types.h,v 1.11 2012/05/23 11:08:57 pirofti Exp $	*/
+/*	$OpenBSD: linux_types.h,v 1.12 2013/05/10 10:31:16 pirofti Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
@@ -52,6 +52,10 @@ typedef long long linux_off64_t;
 typedef long linux_off_t;
 typedef u_int64_t linux_loff_t;
 typedef int linux_pid_t;
+
+#define LINUX_TIME_MAX	LONG_MAX
+#define LINUX_INO_MAX	ULONG_MAX
+#define LINUX_INO64_MAX	ULLONG_MAX
 
 #define LINUX_FSTYPE_FFS	0x11954
 #define LINUX_FSTYPE_NFS	0x6969
@@ -194,7 +198,7 @@ struct linux_stat64 {
 	unsigned int	__pad1;
 
 #define LINUX_STAT64_HAS_BROKEN_ST_INO	1
-	unsigned int	__lst_ino;
+	linux_ino_t	__lst_ino;
 	unsigned int	lst_mode;
 	unsigned int	lst_nlink;
 
@@ -218,7 +222,7 @@ struct linux_stat64 {
 	unsigned int	lst_ctime;
 	unsigned int	__unused3;	/* will be high 32 bits of ctime someday */
 
-	unsigned long long lst_ino;
+	linux_ino64_t	lst_ino;
 };
 
 struct l_timespec {

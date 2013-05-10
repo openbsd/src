@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_time.c,v 1.3 2011/07/05 18:56:40 pirofti Exp $	*/
+/*	$OpenBSD: linux_time.c,v 1.4 2013/05/10 10:31:16 pirofti Exp $	*/
 /*
  * Copyright (c) 2010, 2011 Paul Irofti <pirofti@openbsd.org>
  *
@@ -46,11 +46,14 @@
 #define LINUX_CLOCK_REALTIME_HR         4
 #define LINUX_CLOCK_MONOTONIC_HR        5
 
-void
+int
 native_to_linux_timespec(struct l_timespec *ltp, struct timespec *ntp)
 {
+	if (ntp->tv_sec > LINUX_TIME_MAX)
+		return EOVERFLOW;
 	ltp->tv_sec = ntp->tv_sec;
 	ltp->tv_nsec = ntp->tv_nsec;
+	return 0;
 }
 
 void
@@ -122,7 +125,9 @@ linux_sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 	if (error != 0)
 		return error;
 
-	native_to_linux_timespec(&ltp, &tp);
+	error = native_to_linux_timespec(&ltp, &tp);
+	if (error != 0)
+		return error;
 
 	return (copyout(&ltp, SCARG(uap, tp), sizeof ltp));
 }
