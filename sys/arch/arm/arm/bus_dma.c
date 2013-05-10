@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.23 2013/05/09 20:07:25 patrick Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.24 2013/05/10 20:25:28 patrick Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -734,7 +734,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	vaddr_t va, sva;
 	size_t ssize;
 	bus_addr_t addr;
-	int curseg, error;
+	int curseg;
 #ifdef DEBUG_DMA
 	pt_entry_t *ptep;
 #endif
@@ -763,28 +763,10 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			error = pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ |
-			    VM_PROT_WRITE | PMAP_WIRED | PMAP_CANFAIL);
-			if (error) {
-				pmap_update(pmap_kernel());
-				uvm_km_free(kernel_map, sva, ssize);
-				return (error);
-			}
-			/*
-			 * If the memory must remain coherent with the
-			 * cache then we must make the memory uncacheable
-			 * in order to maintain virtual cache coherency.
-			 * We must also guarantee the cache does not already
-			 * contain the virtual addresses we are making
-			 * uncacheable.
-			 */
-			if (flags & BUS_DMA_COHERENT) {
-				cpu_dcache_wbinv_range(va, PAGE_SIZE);
-				cpu_drain_writebuf();
-				pmap_uncache_page(va, addr);
-				tlb_flush();
-			}
+			pmap_kenter_cache(va, addr,
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    !(flags & BUS_DMA_COHERENT));
+
 #ifdef DEBUG_DMA
 			ptep = vtopte(va);
 			printf(" pte=v%p *pte=%x\n", ptep, *ptep);
