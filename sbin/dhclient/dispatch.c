@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.78 2013/05/02 16:35:27 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.79 2013/05/10 18:59:22 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -417,7 +417,7 @@ subnet_exists(struct client_lease *l)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 
-		hisrdomain = get_rdomain(ifi->name);
+		hisrdomain = get_rdomain(ifa->ifa_name);
 		if (hisrdomain != myrdomain)
 			continue;
 
