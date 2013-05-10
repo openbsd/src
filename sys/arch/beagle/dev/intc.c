@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.10 2011/11/10 19:37:01 uwe Exp $ */
+/* $OpenBSD: intc.c,v 1.11 2013/05/10 00:18:42 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -238,7 +238,7 @@ intc_splx(int new)
 	struct cpu_info *ci = curcpu();
 	intc_setipl(new);
 
-        if (ci->ci_ipending & arm_smask[ci->ci_cpl])
+	if (ci->ci_ipending & arm_smask[ci->ci_cpl])
 		arm_do_pending_intr(ci->ci_cpl);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.10 2013/05/03 17:54:27 patrick Exp $ */
+/* $OpenBSD: omgpio.c,v 1.11 2013/05/10 00:18:42 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -150,7 +150,7 @@ void omgpio_v4_set_dir(struct omgpio_softc *, unsigned int, unsigned int);
 unsigned int omgpio_v4_get_dir(struct omgpio_softc *, unsigned int);
 
 
-struct cfattach	omgpio_ca = {
+struct cfattach omgpio_ca = {
 	sizeof (struct omgpio_softc), omgpio_match, omgpio_attach
 };
 
@@ -187,23 +187,21 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 
 
 	switch (board_id) {
-
-		case BOARD_ID_OMAP3_BEAGLE:
-		case BOARD_ID_OMAP3_OVERO:
-			sc->sc_omap_ver  = 3;
-			sc->sc_get_bit  = omgpio_v3_get_bit;
-			sc->sc_set_bit = omgpio_v3_set_bit;
-			sc->sc_clear_bit = omgpio_v3_clear_bit;
-			sc->sc_set_dir = omgpio_v3_set_dir;
-			break;
-		case BOARD_ID_OMAP4_PANDA:
-			sc->sc_omap_ver  = 4;
-			sc->sc_get_bit  = omgpio_v4_get_bit;
-			sc->sc_set_bit = omgpio_v4_set_bit;
-			sc->sc_clear_bit = omgpio_v4_clear_bit;
-			sc->sc_set_dir = omgpio_v4_set_dir;
-			break;
-	
+	case BOARD_ID_OMAP3_BEAGLE:
+	case BOARD_ID_OMAP3_OVERO:
+		sc->sc_omap_ver  = 3;
+		sc->sc_get_bit  = omgpio_v3_get_bit;
+		sc->sc_set_bit = omgpio_v3_set_bit;
+		sc->sc_clear_bit = omgpio_v3_clear_bit;
+		sc->sc_set_dir = omgpio_v3_set_dir;
+		break;
+	case BOARD_ID_OMAP4_PANDA:
+		sc->sc_omap_ver  = 4;
+		sc->sc_get_bit  = omgpio_v4_get_bit;
+		sc->sc_set_bit = omgpio_v4_set_bit;
+		sc->sc_clear_bit = omgpio_v4_clear_bit;
+		sc->sc_set_dir = omgpio_v4_set_dir;
+		break;
 	}
 
 	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_REVISION);
@@ -213,7 +211,7 @@ omgpio_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_irq = oa->oa_dev->irq[0];
 
-	if (sc->sc_omap_ver  == 3) {
+	if (sc->sc_omap_ver == 3) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    GPIO3_CLEARIRQENABLE1, ~0);
 	} else if (sc->sc_omap_ver == 4) {
@@ -251,7 +249,6 @@ omgpio_get_bit(unsigned int gpio)
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 
 	return sc->sc_get_bit(sc, gpio);
-	
 }
 
 void
@@ -281,7 +278,7 @@ unsigned int
 omgpio_v3_get_bit(struct omgpio_softc *sc, unsigned int gpio)
 {
 	u_int32_t reg;
-	
+
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_DATAIN);
 	return (reg >> GPIO_PIN_TO_OFFSET(gpio)) & 0x1;
 }
@@ -387,7 +384,7 @@ void
 omgpio_clear_intr(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-	
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_IRQSTATUS1,
 	    1 << GPIO_PIN_TO_OFFSET(gpio));
 }
@@ -396,7 +393,7 @@ void
 omgpio_intr_mask(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-	
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_CLEARIRQENABLE1,
 	    1 << GPIO_PIN_TO_OFFSET(gpio));
 }
@@ -405,7 +402,7 @@ void
 omgpio_intr_unmask(struct omgpio_softc *sc, unsigned int gpio)
 {
 	struct omgpio_softc *sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
-	
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_SETIRQENABLE1,
 	    1 << GPIO_PIN_TO_OFFSET(gpio));
 }
@@ -423,23 +420,23 @@ omgpio_intr_level(struct omgpio_softc *sc, unsigned int gpio, unsigned int level
 	re = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_RISINGDETECT);
 	l0 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT0);
 	l1 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GPIO3_LEVELDETECT1);
-	
+
 	bit = 1 << GPIO_PIN_TO_OFFSET(gpio);
 
-        switch (level) {
-        case IST_NONE:
+	switch (level) {
+	case IST_NONE:
 		fe &= ~bit;
 		re &= ~bit;
 		l0 &= ~bit;
 		l1 &= ~bit;
 		break;
-        case IST_EDGE_FALLING:
+	case IST_EDGE_FALLING:
 		fe |= bit;
 		re &= ~bit;
 		l0 &= ~bit;
 		l1 &= ~bit;
 		break;
-        case IST_EDGE_RISING:
+	case IST_EDGE_RISING:
 		fe &= ~bit;
 		re |= bit;
 		l0 &= ~bit;
@@ -447,29 +444,28 @@ omgpio_intr_level(struct omgpio_softc *sc, unsigned int gpio, unsigned int level
 		break;
 	case IST_PULSE: /* XXX */
 		/* FALLTHRU */
-        case IST_EDGE_BOTH:
+	case IST_EDGE_BOTH:
 		fe |= bit;
 		re |= bit;
 		l0 &= ~bit;
 		l1 &= ~bit;
-                break;
+		break;
 	case IST_LEVEL_LOW:
 		fe &= ~bit;
 		re &= ~bit;
 		l0 |= bit;
 		l1 &= ~bit;
-                break;
+		break;
 	case IST_LEVEL_HIGH:
 		fe &= ~bit;
 		re &= ~bit;
 		l0 &= ~bit;
 		l1 |= bit;
-                break;
 		break;
-        default:
-                panic("omgpio_intr_level: bad level: %d", level);
-                break;
-        }
+	default:
+		panic("omgpio_intr_level: bad level: %d", level);
+		break;
+	}
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_FALLINGDETECT, fe);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GPIO3_RISINGDETECT, re);
@@ -494,7 +490,7 @@ omgpio_intr_establish(struct omgpio_softc *sc, unsigned int gpio, int level, int
 
 	if (GPIO_PIN_TO_INST(gpio) > omgpio_cd.cd_ndevs)
 		panic("omgpio_intr_establish: bogus irqnumber %d: %s",
-		     gpio, name);
+		    gpio, name);
 
 	sc = omgpio_cd.cd_devs[GPIO_PIN_TO_INST(gpio)];
 

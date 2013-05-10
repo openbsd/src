@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.5 2013/05/09 13:35:44 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.6 2013/05/10 00:18:42 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -147,18 +147,18 @@ arm_dflt_intr_string(void *cookie)
 void
 arm_setsoftintr(int si)
 {
-        struct cpu_info *ci = curcpu();
-        int oldirqstate;
+	struct cpu_info *ci = curcpu();
+	int oldirqstate;
 
-        /* XXX atomic? */
-        oldirqstate = disable_interrupts(I32_bit);
-        ci->ci_ipending |= SI_TO_IRQBIT(si);
+	/* XXX atomic? */
+	oldirqstate = disable_interrupts(I32_bit);
+	ci->ci_ipending |= SI_TO_IRQBIT(si);
 
-        restore_interrupts(oldirqstate);
+	restore_interrupts(oldirqstate);
 
-        /* Process unmasked pending soft interrupts. */
-        if (ci->ci_ipending & arm_smask[ci->ci_cpl])
-                arm_do_pending_intr(ci->ci_cpl);
+	/* Process unmasked pending soft interrupts. */
+	if (ci->ci_ipending & arm_smask[ci->ci_cpl])
+		arm_do_pending_intr(ci->ci_cpl);
 }
 
 void
@@ -193,7 +193,7 @@ arm_do_pending_intr(int pcpl)
 		DO_SOFTINT(SI_SOFTCLOCK, IPL_SOFTCLOCK);
 		DO_SOFTINT(SI_SOFT, IPL_SOFT);
 	} while (ci->ci_ipending & arm_smask[pcpl]);
-		
+
 	/* Don't use splx... we are here already! */
 	arm_intr_func.setipl(pcpl);
 	processing = 0;
@@ -222,23 +222,23 @@ void
 arm_init_smask(void)
 {
 	static int inited = 0;
-        int i;
+	int i;
 
 	if (inited)
 		return;
 	inited = 1;
 
-        for (i = IPL_NONE; i <= IPL_HIGH; i++)  {
-                arm_smask[i] = 0;
-                if (i < IPL_SOFT)
-                        arm_smask[i] |= SI_TO_IRQBIT(SI_SOFT);
-                if (i < IPL_SOFTCLOCK)
-                        arm_smask[i] |= SI_TO_IRQBIT(SI_SOFTCLOCK);
-                if (i < IPL_SOFTNET)
-                        arm_smask[i] |= SI_TO_IRQBIT(SI_SOFTNET);
-                if (i < IPL_SOFTTTY)
-                        arm_smask[i] |= SI_TO_IRQBIT(SI_SOFTTTY);
-        }
+	for (i = IPL_NONE; i <= IPL_HIGH; i++)  {
+		arm_smask[i] = 0;
+		if (i < IPL_SOFT)
+			arm_smask[i] |= SI_TO_IRQBIT(SI_SOFT);
+		if (i < IPL_SOFTCLOCK)
+			arm_smask[i] |= SI_TO_IRQBIT(SI_SOFTCLOCK);
+		if (i < IPL_SOFTNET)
+			arm_smask[i] |= SI_TO_IRQBIT(SI_SOFTNET);
+		if (i < IPL_SOFTTTY)
+			arm_smask[i] |= SI_TO_IRQBIT(SI_SOFTTTY);
+	}
 }
 
 /* provide functions for asm */
@@ -276,23 +276,23 @@ void
 arm_splassert_check(int wantipl, const char *func)
 {
 	struct cpu_info *ci = curcpu();
-        int oldipl = ci->ci_cpl;
+	int oldipl = ci->ci_cpl;
 
-        if (oldipl < wantipl) {
-                splassert_fail(wantipl, oldipl, func);
-                /*
-                 * If the splassert_ctl is set to not panic, raise the ipl
-                 * in a feeble attempt to reduce damage.
-                 */
-                arm_intr_func.setipl(wantipl);
-        }
+	if (oldipl < wantipl) {
+		splassert_fail(wantipl, oldipl, func);
+		/*
+		 * If the splassert_ctl is set to not panic, raise the ipl
+		 * in a feeble attempt to reduce damage.
+		 */
+		arm_intr_func.setipl(wantipl);
+	}
 }
 #endif
 
 void arm_dflt_delay(u_int usecs);
 
 struct {
-	void (*delay)(u_int);
+	void	(*delay)(u_int);
 	void	(*initclocks)(void);
 	void	(*setstatclockrate)(int);
 	void	(*mpstartclock)(void);
@@ -418,7 +418,7 @@ resettodr(void)
 
 	if (rtctime.tv_sec == 0)
 		return;
-			
+
 	microtime(&rtctime);
 
 	if (todr_handle != NULL &&
@@ -430,7 +430,7 @@ void
 setstatclockrate(int new)
 {
 	if (arm_clock_func.setstatclockrate == NULL) {
-		panic("arm_clock_func.setstatclockrate  not intialized");
+		panic("arm_clock_func.setstatclockrate not intialized");
 	}
 	arm_clock_func.setstatclockrate(new);
 }
