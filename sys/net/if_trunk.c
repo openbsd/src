@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.81 2013/04/02 08:54:37 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.82 2013/05/11 11:18:27 sthen Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -313,6 +313,19 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	if (ifp->if_type != IFT_ETHER)
 		return (EPROTONOSUPPORT);
 
+	/* Take MTU from the first member port */
+	if (SLIST_EMPTY(&tr->tr_ports)) {
+		if (tr->tr_ifflags & IFF_DEBUG)
+			printf("%s: first port, setting trunk mtu %u\n",
+			    tr->tr_ifname, ifp->if_mtu);
+		tr->tr_ac.ac_if.if_mtu = ifp->if_mtu;
+		tr->tr_ac.ac_if.if_hardmtu = ifp->if_mtu;
+	} else if (tr->tr_ac.ac_if.if_mtu != ifp->if_mtu) {
+		printf("%s: adding %s failed, MTU %u != %u\n", tr->tr_ifname,
+		    ifp->if_xname, ifp->if_mtu, tr->tr_ac.ac_if.if_mtu);
+		return (EINVAL);
+	}
+
 	if ((error = ifpromisc(ifp, 1)) != 0)
 		return (error);
 
@@ -508,6 +521,10 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		trunk_port2req(tp, rp);
+		break;
+	case SIOCSIFMTU:
+		/* Do not allow the MTU to be changed once joined */
+		error = EINVAL;
 		break;
 	default:
 		error = ENOTTY;
