@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.265 2012/11/13 09:47:20 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.266 2013/05/11 14:42:28 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -114,7 +114,7 @@ struct filter_match_l {
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
-int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *,
+int		 add_mrtconfig(enum mrt_type, char *, int, struct peer *,
 		    char *);
 int		 add_rib(char *, u_int, u_int16_t);
 struct rde_rib	*find_rib(char *);
@@ -439,7 +439,7 @@ conf_main	: AS as4number		{
 		| DUMP STRING STRING optnumber		{
 			int action;
 
-			if ($4 < 0 || $4 > UINT_MAX) {
+			if ($4 < 0 || $4 > INT_MAX) {
 				yyerror("bad timeout");
 				free($2);
 				free($3);
@@ -467,7 +467,7 @@ conf_main	: AS as4number		{
 		| DUMP RIB STRING STRING STRING optnumber		{
 			int action;
 
-			if ($6 < 0 || $6 > UINT_MAX) {
+			if ($6 < 0 || $6 > INT_MAX) {
 				yyerror("bad timeout");
 				free($3);
 				free($4);
@@ -575,7 +575,7 @@ conf_main	: AS as4number		{
 mrtdump		: DUMP STRING inout STRING optnumber	{
 			int action;
 
-			if ($5 < 0 || $5 > UINT_MAX) {
+			if ($5 < 0 || $5 > INT_MAX) {
 				yyerror("bad timeout");
 				free($2);
 				free($4);
@@ -3081,7 +3081,7 @@ new_group(void)
 }
 
 int
-add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p,
+add_mrtconfig(enum mrt_type type, char *name, int timeout, struct peer *p,
     char *rib)
 {
 	struct mrt	*m, *n;
