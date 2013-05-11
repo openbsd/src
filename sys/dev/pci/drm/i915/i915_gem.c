@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.18 2013/05/09 16:06:40 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.19 2013/05/11 15:57:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -104,7 +104,7 @@ i915_gem_object_fence_lost(struct drm_i915_gem_object *obj)
 int
 i915_gem_wait_for_error(struct drm_device *dev)
 {
-	struct drm_i915_private *dev_priv= dev->dev_private;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret;
 
 	if (!atomic_read(&dev_priv->mm.wedged))
