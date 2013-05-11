@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.19 2013/05/11 15:57:24 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.20 2013/05/11 19:03:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1280,11 +1280,10 @@ i915_add_request(struct intel_ring_buffer *ring,
 	if (ret)
 		return ret;
 
-	request = drm_calloc(1, sizeof(*request));
-	if (request == NULL) {
-		printf("%s: failed to allocate request\n", __func__);
+	request = drm_alloc(sizeof(*request));
+	if (request == NULL)
 		return -ENOMEM;
-	}
+
 
 	/* Record the position of the start of the request so that
 	 * should we detect the updated seqno part-way through the
@@ -1305,6 +1304,7 @@ i915_add_request(struct intel_ring_buffer *ring,
 	request->emitted_ticks = ticks;
 	was_empty = list_empty(&ring->request_list);
 	list_add_tail(&request->list, &ring->request_list);
+	request->file_priv = NULL;
 
 	if (file) {
 		struct drm_i915_file_private *file_priv = file->driver_priv;
