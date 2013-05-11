@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.19 2013/05/09 15:00:41 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.20 2013/05/11 15:56:28 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1572,20 +1572,6 @@ i915_gem_object_unpin_fence(struct drm_i915_gem_object *obj)
 		dev_priv->fence_regs[obj->fence_reg].pin_count--;
 	}
 }
-
-#if 0
-static __inline int
-i915_obj_purgeable(struct drm_i915_gem_object *obj_priv)
-{
-	return (obj_priv->base.do_flags & I915_DONTNEED);
-}
-
-static __inline int
-i915_obj_purged(struct drm_i915_gem_object *obj_priv)
-{
-	return (obj_priv->base.do_flags & I915_PURGED);
-}
-#endif
 
 static inline int
 i915_gem_object_is_purgeable(struct drm_i915_gem_object *obj)
