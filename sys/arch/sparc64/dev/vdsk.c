@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.32 2012/11/21 23:02:37 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.33 2013/05/12 19:33:01 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -922,6 +922,8 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
+	struct scsi_rw_12 *rw12;
+	struct scsi_rw_16 *rw16;
 	u_int64_t lba;
 	u_int32_t sector_count;
 	uint8_t operation;
@@ -929,10 +931,14 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
 	case READ_COMMAND:
+	case READ_12:
+	case READ_16:
 		operation = VD_OP_BREAD;
 		break;
 	case WRITE_BIG:
 	case WRITE_COMMAND:
+	case WRITE_12:
+	case WRITE_16:
 		operation = VD_OP_BWRITE;
 		break;
 
@@ -966,14 +972,26 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	/*
+	 * READ/WRITE/SYNCHRONIZE commands. SYNCHRONIZE CACHE has same
+	 * layout as 10-byte READ/WRITE commands.
+	 */
 	if (xs->cmdlen == 6) {
 		rw = (struct scsi_rw *)xs->cmd;
 		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		sector_count = rw->length ? rw->length : 0x100;
-	} else {
+	} else if (xs->cmdlen == 10) {
 		rwb = (struct scsi_rw_big *)xs->cmd;
 		lba = _4btol(rwb->addr);
 		sector_count = _2btol(rwb->length);
+	} else if (xs->cmdlen == 12) {
+		rw12 = (struct scsi_rw_12 *)xs->cmd;
+		lba = _4btol(rw12->addr);
+		sector_count = _4btol(rw12->length);
+	} else if (xs->cmdlen == 16) {
+		rw16 = (struct scsi_rw_16 *)xs->cmd;
+		lba = _8btol(rw16->addr);
+		sector_count = _4btol(rw16->length);
 	}
 
 {

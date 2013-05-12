@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.3 2012/12/05 23:20:21 deraadt Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.4 2013/05/12 19:33:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -316,6 +316,8 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
+	struct scsi_rw_12 *rw12;
+	struct scsi_rw_16 *rw16;
 	u_int64_t lba = 0;
 	u_int32_t sector_count;
 	uint8_t operation;
@@ -324,11 +326,15 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
 	case READ_COMMAND:
+	case READ_12:
+	case READ_16:
 		operation = VIRTIO_BLK_T_IN;
 		isread = 1;
 		break;
 	case WRITE_BIG:
 	case WRITE_COMMAND:
+	case WRITE_12:
+	case WRITE_16:
 		operation = VIRTIO_BLK_T_OUT;
 		isread = 0;
 		break;
@@ -362,14 +368,26 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	/*
+	 * READ/WRITE/SYNCHRONIZE commands. SYNCHRONIZE CACHE has same
+	 * layout as 10-byte READ/WRITE commands.
+	 */
 	if (xs->cmdlen == 6) {
 		rw = (struct scsi_rw *)xs->cmd;
 		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		sector_count = rw->length ? rw->length : 0x100;
-	} else {
+	} else if (xs->cmdlen == 10) {
 		rwb = (struct scsi_rw_big *)xs->cmd;
 		lba = _4btol(rwb->addr);
 		sector_count = _2btol(rwb->length);
+	} else if (xs->cmdlen == 12) {
+		rw12 = (struct scsi_rw_12 *)xs->cmd;
+		lba = _4btol(rw12->addr);
+		sector_count = _4btol(rw12->length);
+	} else if (xs->cmdlen == 16) {
+		rw16 = (struct scsi_rw_16 *)xs->cmd;
+		lba = _8btol(rw16->addr);
+		sector_count = _4btol(rw16->length);
 	}
 
 {
