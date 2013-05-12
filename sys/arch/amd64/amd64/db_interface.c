@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.16 2010/04/01 19:47:59 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.17 2013/05/12 20:47:44 kettenis Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -62,6 +62,11 @@
 #include <dev/acpi/acpidebug.h>
 #endif /* NACPI > 0 */
 
+#include "wsdisplay.h"
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsdisplayvar.h>
+#endif
+
 extern label_t *db_recover;
 extern char *trap_type[];
 extern int trap_types;
@@ -106,6 +111,10 @@ int
 kdb_trap(int type, int code, db_regs_t *regs)
 {
 	int s;
+
+#if NWSDISPLAY > 0
+	wsdisplay_switchtoconsole();
+#endif
 
 	switch (type) {
 	case T_BPTFLT:	/* breakpoint */
