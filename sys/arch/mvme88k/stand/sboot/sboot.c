@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.c,v 1.6 2013/05/12 10:43:45 miod Exp $	*/
+/*	$OpenBSD: sboot.c,v 1.7 2013/05/12 21:00:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -86,6 +86,7 @@ main()
 	display_ethernet();
 
 	howto = 0;
+	bugargs.ctrl_lun = -1;
 
 	for (;;) {
 		printf("boot: ");

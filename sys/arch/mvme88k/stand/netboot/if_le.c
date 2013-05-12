@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 2013/05/12 10:43:45 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.9 2013/05/12 21:00:56 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -139,7 +139,8 @@ le_match(struct netif *nif, void *machdep_hint)
 	const char *name = machdep_hint;
 
 	if (name == NULL) {
-		if (le_config[nif->nif_unit].clun == bugargs.ctrl_lun)
+		if (le_config[nif->nif_unit].clun == bugargs.ctrl_lun ||
+		    (int)bugargs.ctrl_lun < 0)
 			return 1;
 	} else {
 		if (bcmp(le_driver.netif_bname, name, 2) == 0) {
