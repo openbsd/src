@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.169 2013/02/05 09:33:29 mpi Exp $	*/
+/*	$OpenBSD: locore.s,v 1.170 2013/05/12 18:48:53 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4430,11 +4430,6 @@ sparc_intr_retry:
 	bne,pn	%icc, 1b
 	 nop
 
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(sparc64_intlock)
-	 add	%sp, CC64FSZ+BIAS, %o0	! tf = %sp + CC64FSZ + BIAS
-#endif
-
 2:
 	ldx	[%l2 + IH_PEND], %l7	! Load next pending
 	add	%l2, IH_PEND, %l3
@@ -4442,17 +4437,15 @@ sparc_intr_retry:
 	casxa	[%l3] ASI_N, %l7, %l4	! Unlink from list
 	cmp	%l7, %l4
 	bne,pn	%xcc, 2b		! Retry?
-	 add	%sp, CC64FSZ+BIAS, %o2	! tf = %sp + CC64FSZ + BIAS
+	 add	%sp, CC64FSZ+BIAS, %o0	! tf = %sp + CC64FSZ + BIAS
 
-	ldx	[%l2 + IH_FUN], %o4	! ih->ih_fun
-	ldx	[%l2 + IH_ARG], %o0	! ih->ih_arg
 	ldx	[%l2 + IH_ACK], %l1	! ih->ih_ack
 
 	! At this point, the current ih could already be added
 	! back to the pending table.
 
-	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
-	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
+	call	_C_LABEL(intr_handler)
+	 mov	%l2, %o1
 
 	brz,pn	%l1, 0f
 	 add	%l5, %o0, %l5		! Add handler return value
@@ -4465,11 +4458,6 @@ sparc_intr_retry:
 0:
 	brnz,pn	%l7, 2b			! 'Nother?
 	 mov	%l7, %l2
-
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(sparc64_intunlock)
-	 add	%sp, CC64FSZ+BIAS, %o0	! tf = %sp + CC64FSZ + BIAS
-#endif
 
 intrcmplt:
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.43 2011/06/27 17:07:19 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.44 2013/05/12 18:48:53 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -67,6 +67,7 @@ struct intrhand *intrlev[MAXINTNUM];
 
 void	strayintr(const struct trapframe64 *, int);
 int	softintr(void *);
+int	intr_handler(struct trapframe64 *, struct intrhand *);
 int	intr_list_handler(void *);
 void	intr_ack(struct intrhand *);
 
@@ -113,6 +114,26 @@ strayintr(fp, vectored)
 #ifdef DDB
 	Debugger();
 #endif
+}
+
+int
+intr_handler(struct trapframe64 *tf, struct intrhand *ih)
+{
+	int rc;
+#ifdef MULTIPROCESSOR
+	int need_lock;
+
+	need_lock = tf->tf_pil < PIL_SCHED && tf->tf_pil != PIL_CLOCK;
+
+	if (need_lock)
+		__mp_lock(&kernel_lock);
+#endif
+	rc = (*ih->ih_fun)(ih->ih_arg ? ih->ih_arg : tf);
+#ifdef MULTIPROCESSOR
+	if (need_lock)
+		__mp_unlock(&kernel_lock);
+#endif
+	return rc;
 }
 
 /*
@@ -349,25 +370,4 @@ splassert_check(int wantipl, const char *func)
 		splassert_fail(wantipl, ci->ci_handled_intr_level, func);
 	}
 }
-#endif
-
-#ifdef MULTIPROCESSOR
-
-void sparc64_intlock(struct trapframe64 *);
-void sparc64_intunlock(struct trapframe64 *);
-
-void
-sparc64_intlock(struct trapframe64 *tf)
-{
-	if (tf->tf_pil < PIL_SCHED && tf->tf_pil != PIL_CLOCK)
-		__mp_lock(&kernel_lock);
-}
-
-void
-sparc64_intunlock(struct trapframe64 *tf)
-{
-	if (tf->tf_pil < PIL_SCHED && tf->tf_pil != PIL_CLOCK)
-		__mp_unlock(&kernel_lock);
-}
-
 #endif
