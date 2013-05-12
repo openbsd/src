@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.107 2013/03/10 13:40:28 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.108 2013/05/12 20:41:45 kettenis Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2183,7 +2183,7 @@ wsdisplay_switchtoconsole(void)
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 
-	if (wsdisplay_console_device != NULL) {
+	if (wsdisplay_console_device != NULL && cn_tab == &wsdisplay_cons) {
 		sc = wsdisplay_console_device;
 		if ((scr = sc->sc_scr[0]) == NULL)
 			return;
