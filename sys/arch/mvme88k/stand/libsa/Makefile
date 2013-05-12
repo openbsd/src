@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2012/08/21 14:46:19 pascal Exp $
+#	$OpenBSD: Makefile,v 1.15 2013/05/12 10:43:45 miod Exp $
 
 LIB=sa
 
@@ -9,16 +9,16 @@ NOPIE=
 # Logically src/sys
 S=${.CURDIR}/../../../..
 
-SRCS=	board.c bugdev.c clock.c parse_args.c exec_mvme.c
+SRCS=	board.c bugdev.c clock.c exec_mvme.c fault.c parse_args.c setjmp.S
 
 .PATH:	${S}/lib/libsa
 SRCS+=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
 	printf.c strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
-	strlcpy.c strlcat.c snprintf.c \
+	strlcpy.c strlcat.c snprintf.c strchr.c \
 	close.c closeall.c dev.c dkcksum.c \
 	lseek.c open.c nullfs.c read.c fstat.c \
 	ufs.c cread.c
-SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
+SRCS+=	arp.c ether.c in_cksum.c net.c rpc.c nfs.c \
 	rarp.c bootparam.c
 SRCS+=	loadfile.c
 

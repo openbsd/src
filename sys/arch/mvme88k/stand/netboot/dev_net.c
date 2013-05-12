@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.5 2013/01/16 20:45:09 miod Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.6 2013/05/12 10:43:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -179,25 +179,4 @@ net_mountroot(f, devname)
 	error = nfs_mount(netdev_sock, rootip, rootpath);
 
 	return (error);
-}
-
-/*
- * machdep_common_ether: get ethernet address
- */
-void
-machdep_common_ether(ether)
-	u_char *ether;
-{
-	u_char *ea;
-
-	ea = (u_char *) ETHER_ADDR_16X;
-
-	if (ea[0] + ea[1] + ea[2] + ea[3] + ea[4] + ea[5] == 0)
-		panic("ERROR: ethernet address not set!");
-	ether[0] = ea[0];
-	ether[1] = ea[1];
-	ether[2] = ea[2];
-	ether[3] = ea[3];
-	ether[4] = ea[4];
-	ether[5] = ea[5];
 }

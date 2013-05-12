@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.S,v 1.2 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: crt0.S,v 1.3 2013/05/12 10:43:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -23,7 +23,7 @@
 	.text
 
 ASGLOBAL(__start)
-#ifdef	STAGE1
+#ifdef	LOAD_FROM_VID
 	/*
 	 * Binaries loaded *from disk* by the BUG start with two special words.
 	 *
@@ -41,9 +41,9 @@ ASGLOBAL(__start)
 	.long	_ASM_LABEL(__start)
 	.long	_ASM_LABEL(real_start) - _ASM_LABEL(__start)
 
-#endif	/* STAGE1 */
+#endif	/* LOAD_FROM_VID */
 
-#ifdef	STAGE2
+#ifdef	LOAD_FROM_BOOTXX
 	/*
 	 * bootxx runs the second-stage binary at its entry + 8, in case
 	 * it contains the special two words.
@@ -52,9 +52,18 @@ ASGLOBAL(__start)
 	NOP
 #endif
 
+#ifdef SREC
+	/*
+	 * Get the address of real_start in %r6, as if we had been loaded
+	 * as a regular boot block.
+	 */
+	bsr.n	_ASM_LABEL(real_start)
+	 or	%r6, %r0, %r1
+#endif
+
 ASLOCAL(real_start)
 	/*
-	 * Registers on entry:
+	 * Registers on entry, unless loaded from S-Records:
 	 * r2	boot device lun
 	 * r3	boot controller lun
 	 * r4	cold/warm boot mode (`IPL\01')
@@ -70,7 +79,7 @@ ASLOCAL(real_start)
 	 * r31	stack, as setup above
 	 */
 
-#if defined(STAGE2) || defined(NETBOOT)
+#if defined(LOAD_FROM_BOOTXX) || defined(NETBOOT) || defined(SREC)
 
 	/*
 	 * We first relocate ourselves to our preferred address.
@@ -124,7 +133,7 @@ reloc_done:
 
 ASLOCAL(__start_relocated)
 
-#endif	/* STAGE2 || NETBOOT */
+#endif	/* LOAD_FROM_BOOTXX || NETBOOT || SREC */
 
 	/*
 	 * Clear BSS.
@@ -144,6 +153,8 @@ ASLOCAL(__start_relocated)
 	 * bytes.
 	 */
 	clr	%r31, %r6,  4<0>
+
+#ifndef SREC
 
 	/*
 	 * Save our arguments so that all registers are available to
@@ -174,6 +185,8 @@ ASLOCAL(__start_relocated)
 #else
 	st.b	%r0,  %r9,  %r0
 #endif
+
+#endif	/* !SREC */
 
 	/*
 	 * PSR when booted from the BUG has SFU1..SFU7 disabled.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.c,v 1.5 2012/12/05 23:20:14 deraadt Exp $	*/
+/*	$OpenBSD: sboot.c,v 1.6 2013/05/12 10:43:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -54,116 +54,57 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include "sboot.h"
+#include <sys/param.h>
+#include <machine/prom.h>
 
-void
+#include "stand.h"
+#include "libsa.h"
+
+#include "config.h"
+
+extern const char *version;
+char line[128];
+
+int
 main()
 {
-	char    buf[128];
+	int howto, ret;
+	char *cp, *file;
 
-	buf[0] = '0';
-	printf("\nsboot: MVME147 bootstrap program\n");
-	while (1) {
-		printf(">>> ");
-		gets(buf);
-		do_cmd(buf);
+	board_setup();
+
+	printf("\n>> OpenBSD/mvme88k sboot [%s]\n", version);
+
+	if (probe_ethernet() == 0) {
+		printf("Sorry, no supported Ethernet device found\n");
+		return 1;
 	}
-	/* not reached */
-}
 
-/*
- * exit to rom
- */
-void
-callrom()
-{
-	asm("trap #15; .word 0x0063");
-}
+	/*
+	 * Display Ethernet devices.
+	 */
+	display_ethernet();
 
-/*
- * do_cmd: do a command
- */
-void
-do_cmd(buf)
-	char   *buf;
-{
-	switch (*buf) {
-	case '\0':
-		break;
-	case 'a':
-		if (rev_arp()) {
-			printf("My ip address is: %d.%d.%d.%d\n", myip[0],
-			    myip[1], myip[2], myip[3]);
-			printf("Server ip address is: %d.%d.%d.%d\n", servip[0],
-			    servip[1], servip[2], servip[3]);
-		} else {
-			printf("Failed.\n");
+	howto = 0;
+
+	for (;;) {
+		printf("boot: ");
+		gets(line);
+		if (line[0]) {
+			bugargs.arg_start = line;
+			cp = line;
+			while (cp < (line + sizeof(line) - 1) && *cp)
+				cp++;
+			bugargs.arg_end = cp;
+			ret = parse_args(&file, &howto);
+
+			if (ret) {
+				printf("returning to BUG\n");
+				break;
+			}
+			exec_mvme(file, howto);
+			printf("boot: %s: %s\n", file, strerror(errno));
 		}
-		break;
-	case 'q':
-		printf("exiting to ROM\n");
-		callrom();
-		break;
-	case 'f':
-		if (do_get_file() == 1) {
-			printf("Download Failed\n");
-		} else {
-			printf("Download was a success!\n");
-		}
-		break;
-	case 'b':
-		le_init();
-		if (rev_arp()) {
-			printf("client IP address %d.%d.%d.%d\n", myip[0],
-			    myip[1], myip[2], myip[3]);
-			printf("server IP address %d.%d.%d.%d\n", servip[0],
-			    servip[1], servip[2], servip[3]);
-		} else {
-			printf("REVARP: Failed.\n");
-			return;
-		}
-		if (do_get_file() == 1) {
-			printf("Download Failed\n");
-			return;
-		} else {
-			printf("received secondary boot program.\n");
-		}
-		if (*++buf == '\0')
-			buf = "bsd";
-		go(buf);
-		break;
-	case 'h':
-	case '?':
-		printf("valid commands\n");
-		printf("a - send a RARP\n");
-		printf("b - boot the system\n");
-		printf("q - exit to ROM\n");
-		printf("f - ftp the boot file\n");
-		printf("g - execute the boot file\n");
-		printf("h - help\n");
-		printf("i - init LANCE enet chip\n");
-		break;
-	case 'i':
-		le_init();
-		break;
-	case 'g':
-		go(buf);
-		break;
-	default:
-		printf("sboot: %s: Unknown command\n", buf);
 	}
-}
-
-go(buf)
-	char *buf;
-{
-	void (*entry)() = (void (*))LOAD_ADDR;
-
-	printf("jumping to boot program at 0x%x.\n", entry);
-
-	asm("clrl d0; clrl d1");	/* XXX network device */
-	asm("movl %0, a3" : : "a" (buf) : "a3");
-	asm("movl %0, a4" : : "a" (buf + strlen(buf)) : "a4");
-	asm("jmp %0@" : : "a" (entry));
+	return 0;
 }

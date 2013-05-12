@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2013/01/16 20:45:09 miod Exp $
+#	$OpenBSD: Makefile,v 1.20 2013/05/12 10:43:45 miod Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -16,9 +16,10 @@ CLEANFILES+=netboot netboot.bin
 .include "${S}/arch/mvme88k/stand/libsa/Makefile.inc"
 .include "${S}/arch/mvme88k/stand/libz/Makefile.inc"
 
-SRCS=   boot.c conf.c version.c devopen.c dev_net.c
+SRCS=	boot.c devices.c version.c
+SRCS+=	conf.c dev_net.c devopen.c netif.c
 SRCS+=	if_ie.c
-#SRCS+=  if_le.c
+SRCS+=	if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
 LIBS= ${LIBSA} ${LIBBUG} ${LIBZ}
 LDFLAGS=-N -T ${S}/arch/mvme88k/stand/ld.script -Ttext ${STAGE2_RELOC}

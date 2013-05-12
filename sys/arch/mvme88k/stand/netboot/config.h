@@ -1,64 +1,46 @@
-/*	$OpenBSD: config.h,v 1.3 2003/06/04 04:11:37 deraadt Exp $ */
+/*	$OpenBSD: config.h,v 1.4 2013/05/12 10:43:45 miod Exp $	*/
 
 /*
- * Copyright (c) 1995 Theo de Raadt
- * All rights reserved.
+ * Copyright (c) 2013 Miodrag Vallat.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* configuration information for base-line code */
+/* MVME187/MVME197 on-board */
 
-#define ETHER_ADDR_147		(0xfffe0778)
-#define ETHER_ADDR_16X		(0xfffc0000+7980)
-#define ERAM_ADDR		(0xfffe0774)
-#define LANCE_REG_ADDR		(0xfffe1800)
-#define INTEL_REG_ADDR		(0xfff46000)
-
-#define CPU_147			0x147
-#define CPU_162			0x162
-#define CPU_167			0x167
-#define CPU_172			0x172
-#define CPU_177			0x177
-#define CPU_187			0x187
-#define CPU_188			0x188
-#define CPU_197			0x197
-
-struct brdid {
-	u_long  eye_catcher;
-	u_char  rev;
-	u_char  month;
-	u_char  day;
-	u_char  year;
-	u_short size;
-	u_short rsv1;
-	u_short model;
-	u_short suffix;
-	u_short options;
-	u_char  family;
-	u_char  cpu;
-	u_short ctrlun;
-	u_short devlun;
-	u_short devtype;
-	u_short devnum;
-	u_long  bug;
+struct ie_configuration {
+	int	clun;
+	u_int   phys_addr;
+	u_char	eaddr[6];
 };
+
+extern struct ie_configuration ie_config[];
+extern int nie_config;
+
+#define	INTEL_REG_ADDR	0xfff46000
+
+/* MVME376 */
+
+struct le_configuration {
+	int	clun;
+	u_int	phys_addr;	/* registers */
+	u_int	buf_addr;	/* buffers if off-memory */
+	u_int	buf_size;	/* buffer memory size */
+	u_char	eaddr[6];
+};
+
+extern struct le_configuration le_config[];
+extern int nle_config;
+
+extern int probe_ethernet(void);
+extern void display_ethernet(void);

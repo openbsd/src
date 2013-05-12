@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.10 2013/01/05 11:20:56 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.11 2013/05/12 10:43:45 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -56,14 +56,15 @@
  */
 
 #include <sys/param.h>
-#include <sys/reboot.h>
 #include <machine/prom.h>
 
 #include "stand.h"
 #include "libsa.h"
 
+#include "config.h"
+
 extern	const char *version;
-char	line[80];
+char line[128];
 
 int
 main()
@@ -74,6 +75,14 @@ main()
 	board_setup();
 
 	printf("\n>> OpenBSD/mvme88k netboot [%s]\n", version);
+
+	if (probe_ethernet() == 0) {
+		printf("Sorry, this Ethernet device is supported by the BUG"
+		    " but not by the OpenBSD\n"
+		    "boot blocks yet. Consider trying to netboot `tftpboot'"
+		    " instead.\n");
+		return 1;
+	}
 
 	ret = parse_args(&file, &howto);
 
@@ -87,17 +96,17 @@ main()
 				while (cp < (line + sizeof(line) - 1) && *cp)
 					cp++;
 				bugargs.arg_end = cp;
-				ret =parse_args(&file, &howto);
+				ret = parse_args(&file, &howto);
+
+				if (ret) {
+					printf("returning to BUG\n");
+					break;
+				}
 			}
-		}
-		if (ret) {
-			printf("boot: -q returning to MVME-Bug\n");
-			break;
 		}
 		exec_mvme(file, howto);
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
 	}
-	_rtt();
-	return (0);
+	return 0;
 }

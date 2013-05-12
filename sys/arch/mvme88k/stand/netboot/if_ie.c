@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.9 2009/01/18 21:49:11 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.10 2013/05/12 10:43:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -48,13 +48,11 @@
 #include "net.h"
 
 #include "i82586.h"
-#include "if_iereg.h"
 
 int     ie_debug = 0;
 
 void ie_stop(struct netif *);
 void ie_end(struct netif *);
-void ie_error(struct netif *, char *, volatile struct iereg *);
 int ie_get(struct iodesc *, void *, size_t, time_t);
 void ie_init(struct iodesc *, void *);
 int ie_match(struct netif *, void *);
@@ -62,17 +60,6 @@ int ie_poll(struct iodesc *, void *, int);
 int ie_probe(struct netif *, void *);
 int ie_put(struct iodesc *, void *, size_t);
 void ie_reset(struct netif *, u_char *);
-extern void machdep_common_ether(u_char *);
-
-struct netif_stats ie_stats;
-
-struct netif_dif ie0_dif = {
-	0,			/* unit */
-	1,			/* nsel */
-	&ie_stats,
-	0,
-	0,
-};
 
 struct netif_driver ie_driver = {
 	"ie",			/* netif_bname */
@@ -82,74 +69,41 @@ struct netif_driver ie_driver = {
 	ie_get,			/* get */
 	ie_put,			/* put */
 	ie_end,			/* end */
-	&ie0_dif,		/* netif_ifs */
-	1,			/* netif_nifs */
+	NULL,			/* netif_ifs - will be filled later */
+	0,			/* netif_nifs - will be filled later */
 };
-
-struct ie_configuration {
-	u_int   phys_addr;
-	int     used;
-} ie_config[] = {
-	{ INTEL_REG_ADDR, 0 }
-};
-
-int     nie_config = sizeof(ie_config) / (sizeof(ie_config[0]));
 
 struct {
 	struct iereg *sc_reg;	/* IE registers */
 	struct iemem *sc_mem;	/* RAM */
-}       ie_softc;
+} ie_softc;
 
 int
-ie_match(nif, machdep_hint)
-	struct netif *nif;
-	void   *machdep_hint;
+ie_match(struct netif *nif, void *machdep_hint)
 {
-	char   *name;
-	int     i, val = 0;
+	const char *name = machdep_hint;
 
-	name = machdep_hint;
-	if (name && !bcmp(ie_driver.netif_bname, name, 2))
-		val += 10;
-	for (i = 0; i < nie_config; i++) {
-		if (ie_config[i].used)
-			continue;
-		if (ie_debug)
-			printf("ie%d: ie_match --> %d\n", i, val + 1);
-		ie_config[i].used++;
-		return (val + 1);
+	if (name == NULL) {
+		if (ie_config[nif->nif_unit].clun == bugargs.ctrl_lun)
+			return 1;
+	} else {
+		if (bcmp(ie_driver.netif_bname, name, 2) == 0) {
+			if (nif->nif_unit == name[2] - '0')
+				return 1;
+		}
 	}
-	if (ie_debug)
-		printf("ie%d: ie_match --> 0\n", i);
-	return (0);
+
+	return 0;
 }
 
 int
-ie_probe(nif, machdep_hint)
-	struct netif *nif;
-	void   *machdep_hint;
+ie_probe(struct netif *nif, void *machdep_hint)
 {
-
-	/* the set unit is the current unit */
-	if (ie_debug)
-		printf("ie%d: ie_probe called\n", nif->nif_unit);
-	return (0);
-/*	return (1);*/
+	return 0;
 }
 
 void
-ie_error(nif, str, ier)
-	struct netif *nif;
-	char   *str;
-	volatile struct iereg *ier;
-{
-	panic("ie%d: unknown error", nif->nif_unit);
-}
-
-void
-ieack(ier, iem)
-	volatile struct iereg *ier;
-	struct iemem *iem;
+ieack(volatile struct iereg *ier, struct iemem *iem)
 {
 	/* ack the `interrupt' */
 	iem->im_scb.ie_command = iem->im_scb.ie_status & IE_ST_WHENCE;
@@ -159,9 +113,7 @@ ieack(ier, iem)
 }
 
 void
-ie_reset(nif, myea)
-	struct netif *nif;
-	u_char *myea;
+ie_reset(struct netif *nif, u_char *myea)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
@@ -286,10 +238,7 @@ ie_reset(nif, myea)
 }
 
 int
-ie_poll(desc, pkt, len)
-	struct iodesc *desc;
-	void   *pkt;
-	int     len;
+ie_poll(struct iodesc *desc, void *pkt, int len)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
@@ -302,7 +251,8 @@ ie_poll(desc, pkt, len)
 		return (0);
 
 	/* printf("slot %d: %x\n", slot, status); */
-	if ((status & (IE_FD_COMPLETE | IE_FD_OK)) == (IE_FD_COMPLETE | IE_FD_OK)) {
+	if ((status & (IE_FD_COMPLETE | IE_FD_OK)) ==
+	    (IE_FD_COMPLETE | IE_FD_OK)) {
 		if (status & IE_FD_OK) {
 			length = iem->im_rbd[slot].ie_rbd_actual & 0x3fff;
 			if (length > len)
@@ -351,10 +301,7 @@ ie_poll(desc, pkt, len)
 }
 
 int
-ie_put(desc, pkt, len)
-	struct	iodesc *desc;
-	void	*pkt;
-	size_t	len;
+ie_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
@@ -406,11 +353,7 @@ ie_put(desc, pkt, len)
 }
 
 int
-ie_get(desc, pkt, len, timeout)
-	struct	iodesc *desc;
-	void	*pkt;
-	size_t	len;
-	time_t	timeout;
+ie_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 {
 	time_t  t;
 	int     cc;
@@ -426,28 +369,29 @@ ie_get(desc, pkt, len, timeout)
  * init ie device.   return 0 on failure, 1 if ok.
  */
 void
-ie_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void   *machdep_hint;
+ie_init(struct iodesc *desc, void *machdep_hint)
 {
 	struct netif *nif = desc->io_netif;
 
 	if (ie_debug)
-		printf("ie%d: ie_init called\n", desc->io_netif->nif_unit);
-	machdep_common_ether(desc->myea);
+		printf("ie%d: ie_init called\n", nif->nif_unit);
+	bcopy(ie_config[nif->nif_unit].eaddr, desc->myea, 6);
 	bzero(&ie_softc, sizeof(ie_softc));
-	ie_softc.sc_reg =
-	    (struct iereg *) ie_config[desc->io_netif->nif_unit].phys_addr;
+	ie_softc.sc_reg = (struct iereg *) ie_config[nif->nif_unit].phys_addr;
 	/* use 64KB below HEAP as buffers */
 	ie_softc.sc_mem = (struct iemem *)(HEAP_START - 0x10000);
-	ie_reset(desc->io_netif, desc->myea);
+	ie_reset(nif, desc->myea);
+#if 0
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));
+#endif
+	bugargs.ctrl_lun = ie_config[nif->nif_unit].clun;
+	bugargs.dev_lun = 0;
+	bugargs.ctrl_addr = ie_config[nif->nif_unit].phys_addr;
 }
 
 void
-ie_stop(nif)
-	struct netif *nif;
+ie_stop(struct netif *nif)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
@@ -479,13 +423,10 @@ ie_stop(nif)
 }
 
 void
-ie_end(nif)
-	struct netif *nif;
+ie_end(struct netif *nif)
 {
 	if (ie_debug)
 		printf("ie%d: ie_end called\n", nif->nif_unit);
 
 	ie_stop(nif);
-
-	/* *(u_char *) 0xfff42002 = 0; */
 }

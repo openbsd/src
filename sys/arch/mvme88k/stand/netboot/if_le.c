@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.7 2009/01/18 21:49:11 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.8 2013/05/12 10:43:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -53,6 +53,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/*-
+ * Copyright (c) 1982, 1992, 1993
+ *      The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *      @(#)if_le.c     8.2 (Berkeley) 10/30/93
+ */
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -71,8 +101,10 @@
 
 int     le_debug = 0;
 
+void le_wrcsr(u_int16_t, u_int16_t);
+u_int16_t le_rdcsr(u_int16_t);
 void le_end(struct netif *);
-void le_error(struct netif *, char *, volatile struct lereg1 *);
+void le_error(struct netif *, const char *, u_int16_t);
 int le_get(struct iodesc *, void *, size_t, time_t);
 void le_init(struct iodesc *, void *);
 int le_match(struct netif *, void *);
@@ -80,16 +112,6 @@ int le_poll(struct iodesc *, void *, int);
 int le_probe(struct netif *, void *);
 int le_put(struct iodesc *, void *, size_t);
 void le_reset(struct netif *, u_char *);
-
-struct netif_stats le_stats;
-
-struct netif_dif le0_dif = {
-	0,			/* unit */
-	1,			/* nsel */
-	&le_stats,
-	0,
-	0,
-};
 
 struct netif_driver le_driver = {
 	"le",			/* netif_bname */
@@ -99,100 +121,106 @@ struct netif_driver le_driver = {
 	le_get,			/* get */
 	le_put,			/* put */
 	le_end,			/* end */
-	&le0_dif,		/* netif_ifs */
-	1,			/* netif_nifs */
+	NULL,			/* netif_ifs - will be filled later */
+	0,			/* netif_nifs - will be filled later */
 };
-
-struct le_configuration {
-	unsigned int phys_addr;
-	int     used;
-} le_config[] = {
-	{ LANCE_REG_ADDR, 0 }
-};
-
-int     nle_config = sizeof(le_config) / (sizeof(le_config[0]));
 
 struct {
 	struct lereg1 *sc_r1;	/* LANCE registers */
+	struct vlereg1 *sc_vr1;	/* MVME376 registers */
 	struct lereg2 *sc_r2;	/* RAM */
 	int     next_rmd;
 	int     next_tmd;
-}       le_softc;
+} le_softc;
 
 int
-le_match(nif, machdep_hint)
-	struct netif *nif;
-	void   *machdep_hint;
+le_match(struct netif *nif, void *machdep_hint)
 {
-	char   *name;
-	int     i, val = 0;
+	const char *name = machdep_hint;
 
-	name = machdep_hint;
-	if (name && !bcmp(le_driver.netif_bname, name, 2))
-		val += 10;
-	for (i = 0; i < nle_config; i++) {
-		if (le_config[i].used)
-			continue;
-		if (le_debug)
-			printf("le%d: le_match --> %d\n", i, val + 1);
-		le_config[i].used++;
-		return val + 1;
+	if (name == NULL) {
+		if (le_config[nif->nif_unit].clun == bugargs.ctrl_lun)
+			return 1;
+	} else {
+		if (bcmp(le_driver.netif_bname, name, 2) == 0) {
+			if (nif->nif_unit == name[2] - '0')
+				return 1;
+		}
 	}
-	if (le_debug)
-		printf("le%d: le_match --> 0\n", i);
+
 	return 0;
 }
 
 int
-le_probe(nif, machdep_hint)
-	struct netif *nif;
-	void   *machdep_hint;
+le_probe(struct netif *nif, void *machdep_hint)
 {
-
-	/* the set unit is the current unit */
-	if (le_debug)
-		printf("le%d: le_probe called\n", nif->nif_unit);
-
-	return 1;
+	return 0;
 }
 
 void
-le_error(nif, str, ler1)
-	struct netif *nif;
-	char   *str;
-	volatile struct lereg1 *ler1;
+le_wrcsr(u_int16_t port, u_int16_t val)
 {
-	/* ler1->ler1_rap = LE_CSRO done in caller */
-	if (ler1->ler1_rdp & LE_C0_BABL)
+	if (le_softc.sc_r1 != NULL) {
+		le_softc.sc_r1->ler1_rap = port;
+		le_softc.sc_r1->ler1_rdp = val;
+	} else {
+		le_softc.sc_vr1->ler1_rap = port;
+		le_softc.sc_vr1->ler1_rdp = val;
+	}
+}
+
+u_int16_t
+le_rdcsr(u_int16_t port)
+{
+	u_int16_t val;
+
+	if (le_softc.sc_r1 != NULL) {
+		le_softc.sc_r1->ler1_rap = port;
+		val = le_softc.sc_r1->ler1_rdp;
+	} else {
+		le_softc.sc_vr1->ler1_rap = port;
+		val = le_softc.sc_vr1->ler1_rdp;
+	}
+	return (val);
+}
+
+void
+le_error(struct netif *nif, const char *str, u_int16_t stat)
+{
+	struct netif_driver *drv = nif->nif_driver;
+
+	if (stat & LE_C0_BABL)
 		panic("le%d: been babbling, found by '%s'", nif->nif_unit, str);
-	if (ler1->ler1_rdp & LE_C0_CERR) {
-		le_stats.collision_error++;
-		ler1->ler1_rdp = LE_C0_CERR;
+	if (stat & LE_C0_CERR) {
+		drv->netif_ifs[nif->nif_unit].dif_stats->collision_error++;
+		le_wrcsr(LE_CSR0, LE_C0_CERR);
 	}
-	if (ler1->ler1_rdp & LE_C0_MISS) {
-		le_stats.missed++;
-		ler1->ler1_rdp = LE_C0_MISS;
+	if (stat & LE_C0_MISS) {
+		drv->netif_ifs[nif->nif_unit].dif_stats->missed++;
+		le_wrcsr(LE_CSR0, LE_C0_MISS);
 	}
-	if (ler1->ler1_rdp & LE_C0_MERR) {
-		printf("le%d: memory error in '%s'\n", nif->nif_unit, str);
-		panic("memory error");
+	if (stat & LE_C0_MERR) {
+		panic("le%d: memory error in '%s'", nif->nif_unit, str);
 	}
 }
 
 void
-le_reset(nif, myea)
-	struct netif *nif;
-	u_char *myea;
+le_reset(struct netif *nif, u_char *myea)
 {
-	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
 	unsigned int a;
-	int     timo = 100000, stat, i;
+	int     timo = 100000, i;
+	u_int16_t stat;
 
 	if (le_debug)
 		printf("le%d: le_reset called\n", nif->nif_unit);
-	ler1->ler1_rap = LE_CSR0;
-	ler1->ler1_rdp = LE_C0_STOP;	/* do nothing until we are finished */
+	
+	if (le_softc.sc_vr1 != NULL) {
+		le_softc.sc_vr1->ler1_csr = 0;
+		CDELAY;
+		le_softc.sc_vr1->ler1_csr = HW_RS | 0x0f;
+	}
+	le_wrcsr(LE_CSR0, LE_C0_STOP);
 
 	bzero(ler2, sizeof(*ler2));
 
@@ -204,97 +232,89 @@ le_reset(nif, myea)
 	ler2->ler2_padr[4] = myea[5];
 	ler2->ler2_padr[5] = myea[4];
 
-
 	ler2->ler2_ladrf0 = 0;
 	ler2->ler2_ladrf1 = 0;
 
-	a = (u_int) ler2->ler2_rmd;
-	ler2->ler2_rlen = LE_RLEN | (a >> 16);
-	ler2->ler2_rdra = a & LE_ADDR_LOW_MASK;
+	a = (u_int)ler2->ler2_rmd;
+	ler2->ler2_rlen = LE_RLEN | LE_ADDR_HIGH(a);
+	ler2->ler2_rdra = LE_ADDR_LOW(a);
 
-	a = (u_int) ler2->ler2_tmd;
-	ler2->ler2_tlen = LE_TLEN | (a >> 16);
-	ler2->ler2_tdra = a & LE_ADDR_LOW_MASK;
+	a = (u_int)ler2->ler2_tmd;
+	ler2->ler2_tlen = LE_TLEN | LE_ADDR_HIGH(a);
+	ler2->ler2_tdra = LE_ADDR_LOW(a);
 
-	ler1->ler1_rap = LE_CSR1;
-	a = (u_int) ler2;
-	ler1->ler1_rdp = a & LE_ADDR_LOW_MASK;
-	ler1->ler1_rap = LE_CSR2;
-	ler1->ler1_rdp = a >> 16;
+	a = (u_int)ler2;
+	le_wrcsr(LE_CSR1, LE_ADDR_LOW(a));
+	le_wrcsr(LE_CSR2, LE_ADDR_HIGH(a));
 
 	for (i = 0; i < LERBUF; i++) {
-		a = (u_int) & ler2->ler2_rbuf[i];
-		ler2->ler2_rmd[i].rmd0 = a & LE_ADDR_LOW_MASK;
+		a = (u_int)&ler2->ler2_rbuf[i];
+		ler2->ler2_rmd[i].rmd0 = LE_ADDR_LOW(a);
 		ler2->ler2_rmd[i].rmd1_bits = LE_R1_OWN;
-		ler2->ler2_rmd[i].rmd1_hadr = a >> 16;
+		ler2->ler2_rmd[i].rmd1_hadr = LE_ADDR_HIGH(a);
 		ler2->ler2_rmd[i].rmd2 = -LEMTU;
 		ler2->ler2_rmd[i].rmd3 = 0;
 	}
 	for (i = 0; i < LETBUF; i++) {
-		a = (u_int) & ler2->ler2_tbuf[i];
-		ler2->ler2_tmd[i].tmd0 = a & LE_ADDR_LOW_MASK;
+		a = (u_int)&ler2->ler2_tbuf[i];
+		ler2->ler2_tmd[i].tmd0 = LE_ADDR_LOW(a);
 		ler2->ler2_tmd[i].tmd1_bits = 0;
-		ler2->ler2_tmd[i].tmd1_hadr = a >> 16;
+		ler2->ler2_tmd[i].tmd1_hadr = LE_ADDR_HIGH(a);
 		ler2->ler2_tmd[i].tmd2 = 0;
 		ler2->ler2_tmd[i].tmd3 = 0;
 	}
 
-	ler1->ler1_rap = LE_CSR3;
-	ler1->ler1_rdp = LE_C3_BSWP;
+	le_wrcsr(LE_CSR3, LE_C3_BSWP);
 
-	ler1->ler1_rap = LE_CSR0;
-	ler1->ler1_rdp = LE_C0_INIT;
+	le_wrcsr(LE_CSR0, LE_C0_INIT);
 	do {
+		stat = le_rdcsr(LE_CSR0);
 		if (--timo == 0) {
 			printf("le%d: init timeout, stat = 0x%x\n",
 			    nif->nif_unit, stat);
 			break;
 		}
-		stat = ler1->ler1_rdp;
 	} while ((stat & LE_C0_IDON) == 0);
 
-	ler1->ler1_rdp = LE_C0_IDON;
+	le_wrcsr(LE_CSR0, LE_C0_IDON);
 	le_softc.next_rmd = 0;
 	le_softc.next_tmd = 0;
-	ler1->ler1_rap = LE_CSR0;
-	ler1->ler1_rdp = LE_C0_STRT;
+	le_wrcsr(LE_CSR0, LE_C0_STRT);
 }
 
 int
-le_poll(desc, pkt, len)
-	struct iodesc *desc;
-	void   *pkt;
-	int     len;
+le_poll(struct iodesc *desc, void *pkt, int len)
 {
-	struct lereg1 *ler1 = le_softc.sc_r1;
+	struct netif *nif = desc->io_netif;
 	struct lereg2 *ler2 = le_softc.sc_r2;
 	unsigned int a;
 	int     length;
 	struct lermd *rmd;
+	u_int16_t stat;
 
-
-	ler1->ler1_rap = LE_CSR0;
-	if ((ler1->ler1_rdp & LE_C0_RINT) != 0)
-		ler1->ler1_rdp = LE_C0_RINT;
+	stat = le_rdcsr(LE_CSR0);
+	if ((stat & LE_C0_RINT) != 0)
+		le_wrcsr(LE_CSR0, LE_C0_RINT);
 	rmd = &ler2->ler2_rmd[le_softc.next_rmd];
 	if (rmd->rmd1_bits & LE_R1_OWN) {
 		return (0);
 	}
-	if (ler1->ler1_rdp & LE_C0_ERR)
-		le_error(desc->io_netif, "le_poll", ler1);
+	if (stat & LE_C0_ERR)
+		le_error(nif, "le_poll", stat);
 	if (rmd->rmd1_bits & LE_R1_ERR) {
-		printf("le%d_poll: rmd status 0x%x\n", desc->io_netif->nif_unit,
-		    rmd->rmd1_bits);
+		printf("le%d_poll: rmd status 0x%x\n",
+		    nif->nif_unit, rmd->rmd1_bits);
 		length = 0;
 		goto cleanup;
 	}
-	if ((rmd->rmd1_bits & (LE_R1_STP | LE_R1_ENP)) != (LE_R1_STP | LE_R1_ENP))
+	if ((rmd->rmd1_bits & (LE_R1_STP | LE_R1_ENP)) !=
+	    (LE_R1_STP | LE_R1_ENP))
 		panic("le_poll: chained packet");
 
 	length = rmd->rmd3;
 	if (length >= LEMTU) {
 		length = 0;
-		panic("csr0 when bad things happen: %x", ler1->ler1_rdp);
+		panic("csr0 when bad things happen: %x", stat);
 		goto cleanup;
 	}
 	if (!length)
@@ -312,9 +332,9 @@ le_poll(desc, pkt, len)
 		bcopy((void *)&ler2->ler2_rbuf[le_softc.next_rmd], pkt, length);
 	}
 cleanup:
-	a = (u_int) & ler2->ler2_rbuf[le_softc.next_rmd];
-	rmd->rmd0 = a & LE_ADDR_LOW_MASK;
-	rmd->rmd1_hadr = a >> 16;
+	a = (u_int)&ler2->ler2_rbuf[le_softc.next_rmd];
+	rmd->rmd0 = LE_ADDR_LOW(a);
+	rmd->rmd1_hadr = LE_ADDR_HIGH(a);
 	rmd->rmd2 = -LEMTU;
 	le_softc.next_rmd =
 	    (le_softc.next_rmd == (LERBUF - 1)) ? 0 : (le_softc.next_rmd + 1);
@@ -323,23 +343,22 @@ cleanup:
 }
 
 int
-le_put(desc, pkt, len)
-	struct	iodesc *desc;
-	void	*pkt;
-	size_t	len;
+le_put(struct iodesc *desc, void *pkt, size_t len)
 {
-	volatile struct lereg1 *ler1 = le_softc.sc_r1;
+	struct netif *nif = desc->io_netif;
+	struct netif_driver *drv = nif->nif_driver;
 	volatile struct lereg2 *ler2 = le_softc.sc_r2;
 	volatile struct letmd *tmd;
-	int     timo = 100000, stat, i;
+	int     timo = 100000;
 	unsigned int a;
+	u_int16_t stat;
 
-	ler1->ler1_rap = LE_CSR0;
-	if (ler1->ler1_rdp & LE_C0_ERR)
-		le_error(desc->io_netif, "le_put(way before xmit)", ler1);
+	stat = le_rdcsr(LE_CSR0);
+	if (stat & LE_C0_ERR)
+		le_error(nif, "le_put(way before xmit)", stat);
 	tmd = &ler2->ler2_tmd[le_softc.next_tmd];
 	while (tmd->tmd1_bits & LE_T1_OWN) {
-		printf("le%d: output buffer busy\n", desc->io_netif->nif_unit);
+		printf("le%d: output buffer busy\n", nif->nif_unit);
 	}
 	bcopy(pkt, (void *)ler2->ler2_tbuf[le_softc.next_tmd], len);
 	if (len < 64)
@@ -347,51 +366,55 @@ le_put(desc, pkt, len)
 	else
 		tmd->tmd2 = -len;
 	tmd->tmd3 = 0;
-	if (ler1->ler1_rdp & LE_C0_ERR)
-		le_error(desc->io_netif, "le_put(before xmit)", ler1);
+	stat = le_rdcsr(LE_CSR0);
+	if (stat & LE_C0_ERR)
+		le_error(nif, "le_put(before xmit)", stat);
 	tmd->tmd1_bits = LE_T1_STP | LE_T1_ENP | LE_T1_OWN;
-	a = (u_int) & ler2->ler2_tbuf[le_softc.next_tmd];
-	tmd->tmd0 = a & LE_ADDR_LOW_MASK;
-	tmd->tmd1_hadr = a >> 16;
-	ler1->ler1_rdp = LE_C0_TDMD;
-	if (ler1->ler1_rdp & LE_C0_ERR)
-		le_error(desc->io_netif, "le_put(after xmit)", ler1);
+	a = (u_int)&ler2->ler2_tbuf[le_softc.next_tmd];
+	tmd->tmd0 = LE_ADDR_LOW(a);
+	tmd->tmd1_hadr = LE_ADDR_HIGH(a);
+	le_wrcsr(LE_CSR0, LE_C0_TDMD);
+	stat = le_rdcsr(LE_CSR0);
+	if (stat & LE_C0_ERR)
+		le_error(nif, "le_put(after xmit)", stat);
 	do {
+		stat = le_rdcsr(LE_CSR0);
 		if (--timo == 0) {
 			printf("le%d: transmit timeout, stat = 0x%x\n",
-			    desc->io_netif->nif_unit, stat);
-			if (ler1->ler1_rdp & LE_C0_ERR)
-				le_error(desc->io_netif, "le_put(timeout)", ler1);
+			    nif->nif_unit, stat);
+			if (stat & LE_C0_ERR)
+				le_error(nif, "le_put(timeout)", stat);
 			break;
 		}
-		stat = ler1->ler1_rdp;
 	} while ((stat & LE_C0_TINT) == 0);
-	ler1->ler1_rdp = LE_C0_TINT;
-	if (ler1->ler1_rdp & LE_C0_ERR) {
-		if ((ler1->ler1_rdp & (LE_C0_BABL | LE_C0_CERR | LE_C0_MISS |
-		    LE_C0_MERR)) !=
+	le_wrcsr(LE_CSR0, LE_C0_TINT);
+	stat = le_rdcsr(LE_CSR0);
+	if (stat & LE_C0_ERR) {
+		if ((stat &
+		     (LE_C0_BABL | LE_C0_CERR | LE_C0_MISS | LE_C0_MERR)) !=
 		    LE_C0_CERR)
-			printf("le_put: xmit error, buf %d\n", le_softc.next_tmd);
-		le_error(desc->io_netif, "le_put(xmit error)", ler1);
+			printf("le_put: xmit error, buf %d\n",
+			    le_softc.next_tmd);
+		le_error(nif, "le_put(xmit error)", stat);
 	}
 	le_softc.next_tmd = 0;
 /*	(le_softc.next_tmd == (LETBUF - 1)) ? 0 : le_softc.next_tmd + 1;*/
 	if (tmd->tmd1_bits & LE_T1_DEF)
-		le_stats.deferred++;
+		drv->netif_ifs[nif->nif_unit].dif_stats->deferred++;
 	if (tmd->tmd1_bits & LE_T1_ONE)
-		le_stats.collisions++;
+		drv->netif_ifs[nif->nif_unit].dif_stats->collisions++;
 	if (tmd->tmd1_bits & LE_T1_MORE)
-		le_stats.collisions += 2;
+		drv->netif_ifs[nif->nif_unit].dif_stats->collisions += 2;
 	if (tmd->tmd1_bits & LE_T1_ERR) {
-		printf("le%d: transmit error, error = 0x%x\n", desc->io_netif->nif_unit,
-		    tmd->tmd3);
+		printf("le%d: transmit error, error = 0x%x\n",
+		    nif->nif_unit, tmd->tmd3);
 		return -1;
 	}
 	if (le_debug) {
 		printf("le%d: le_put() successful: sent %d\n",
-		    desc->io_netif->nif_unit, len);
+		    nif->nif_unit, len);
 		printf("le%d: le_put(): tmd1_bits: %x tmd3: %x\n",
-		    desc->io_netif->nif_unit,
+		    nif->nif_unit,
 		    (unsigned int) tmd->tmd1_bits,
 		    (unsigned int) tmd->tmd3);
 	}
@@ -399,11 +422,7 @@ le_put(desc, pkt, len)
 }
 
 int
-le_get(desc, pkt, len, timeout)
-	struct	iodesc *desc;
-	void	*pkt;
-	size_t	len;
-	time_t	timeout;
+le_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 {
 	time_t  t;
 	int     cc;
@@ -419,32 +438,95 @@ le_get(desc, pkt, len, timeout)
  * init le device.   return 0 on failure, 1 if ok.
  */
 void
-le_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void   *machdep_hint;
+le_init(struct iodesc *desc, void *machdep_hint)
 {
 	struct netif *nif = desc->io_netif;
 
 	if (le_debug)
-		printf("le%d: le_init called\n", desc->io_netif->nif_unit);
-	machdep_common_ether(desc->myea);
+		printf("le%d: le_init called\n", nif->nif_unit);
+	bcopy(le_config[nif->nif_unit].eaddr, desc->myea, 6);
 	bzero(&le_softc, sizeof(le_softc));
-	le_softc.sc_r1 =
-	    (struct lereg1 *) le_config[desc->io_netif->nif_unit].phys_addr;
-	le_softc.sc_r2 = (struct lereg2 *)(HEAP_START - LEMEMSIZE);
-	le_reset(desc->io_netif, desc->myea);
+	/* no on-board le on mvme88k */
+	le_softc.sc_r1 = NULL;
+	le_softc.sc_vr1 = (struct vlereg1 *)le_config[nif->nif_unit].phys_addr;
+	if (le_config[nif->nif_unit].buf_size != 0) {
+		le_softc.sc_r2 =
+		    (struct lereg2 *)le_config[nif->nif_unit].buf_addr;
+	} else {
+		le_softc.sc_r2 = (struct lereg2 *)(HEAP_START - LEMEMSIZE);
+	}
+	le_reset(nif, desc->myea);
+#if 0
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));
+#endif
+	bugargs.ctrl_lun = le_config[nif->nif_unit].clun;
+	bugargs.dev_lun = 0;
+	bugargs.ctrl_addr = le_config[nif->nif_unit].phys_addr;
 }
 
 void
-le_end(nif)
-	struct netif *nif;
+le_end(struct netif *nif)
 {
-	struct lereg1 *ler1 = le_softc.sc_r1;
-
 	if (le_debug)
 		printf("le%d: le_end called\n", nif->nif_unit);
-	ler1->ler1_rap = LE_CSR0;
-	ler1->ler1_rdp = LE_C0_STOP;
+	le_wrcsr(LE_CSR0, LE_C0_STOP);
+}
+
+void nvram_cmd(struct vlereg1 *, u_char, u_short);
+u_int16_t nvram_read(struct vlereg1 *, u_char);
+
+/* send command to the nvram controller */
+void
+nvram_cmd(struct vlereg1 *reg1, u_char cmd, u_short addr)
+{
+	int i;
+
+	for (i = 0; i < 8; i++) {
+		reg1->ler1_ear = ((cmd | (addr << 1)) >> i); 
+		CDELAY; 
+	} 
+}
+
+/* read nvram one bit at a time */
+u_int16_t
+nvram_read(struct vlereg1 *reg1, u_char nvram_addr)
+{
+	u_short val = 0, mask = 0x04000;
+	u_int16_t wbit;
+
+	ENABLE_NVRAM(reg1->ler1_csr);
+	nvram_cmd(reg1, NVRAM_RCL, 0);
+	DISABLE_NVRAM(reg1->ler1_csr);
+	CDELAY;
+	ENABLE_NVRAM(reg1->ler1_csr);
+	nvram_cmd(reg1, NVRAM_READ, nvram_addr);
+	for (wbit = 0; wbit < 15; wbit++) {
+		if (reg1->ler1_ear & 0x01)
+			val |= mask;
+		else
+			val &= ~mask;
+		mask = mask >> 1;
+		CDELAY;
+	}
+	if (reg1->ler1_ear & 0x01)
+		val |= 0x8000;
+	else
+		val &= 0x7fff;
+	CDELAY;
+	DISABLE_NVRAM(reg1->ler1_csr);
+	return (val);
+}
+
+void
+le_read_etheraddr(u_int phys_addr, u_char *enaddr)
+{
+	struct vlereg1 *reg1 = (struct vlereg1 *)phys_addr;
+	u_int16_t ival[3];
+	int i;
+
+	for (i = 0; i < 3; i++) {
+		ival[i] = nvram_read(reg1, i);
+	}
+	memcpy(enaddr, &ival[0], 6);
 }
