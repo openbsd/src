@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.26 2012/07/09 16:09:47 deraadt Exp $ */
+/* $OpenBSD: apicvec.s,v 1.27 2013/05/12 14:15:31 ratchov Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -279,17 +279,12 @@ _C_LABEL(Xintr_##name##num):						\
 	testl	%ebx,%ebx						;\
 	jz      _C_LABEL(Xstray_##name##num)				;\
 	APIC_STRAY_INIT			/* nobody claimed it yet */	;\
-7:									 \
-	incl	CPUVAR(IDEPTH)						;\
-	LOCK_KERNEL(IF_PPL(%esp))					;\
-	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
-	testl	%eax,%eax						;\
-	jnz	6f							;\
-	movl	%esp,%eax		/* 0 means frame pointer */	;\
-6:									 \
-	pushl	%eax							;\
-	call	*IH_FUN(%ebx)		/* call it */			;\
-	addl	$4,%esp			/* toss the arg */		;\
+7:	incl	CPUVAR(IDEPTH)						;\
+	movl	%esp, %eax		/* save frame pointer in eax */	;\
+	pushl	%ebx			/* arg 2: ih structure */	;\
+	pushl	%eax			/* arg 1: frame pointer */	;\
+	call	_C_LABEL(intr_handler)	/* call it */			;\
+	addl	$8, %esp		/* toss args */			;\
 	APIC_STRAY_INTEGRATE		/* maybe he claimed it */	;\
 	orl	%eax,%eax		/* should it be counted? */	;\
 	jz	4f							;\
@@ -299,11 +294,9 @@ _C_LABEL(Xintr_##name##num):						\
 	jne	4f			/* if no shared edges ... */	;\
 	orl	%eax,%eax		/* ... 1 means stop trying */	;\
 	js	4f							;\
-1:	UNLOCK_KERNEL(IF_PPL(%esp))					;\
-	decl	CPUVAR(IDEPTH)						;\
+1:	decl	CPUVAR(IDEPTH)						;\
 	jmp	8f							;\
-4:	UNLOCK_KERNEL(IF_PPL(%esp))					;\
-	decl	CPUVAR(IDEPTH)						;\
+4:	decl	CPUVAR(IDEPTH)						;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\

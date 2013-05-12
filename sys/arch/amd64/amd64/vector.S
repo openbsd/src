@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.32 2012/07/09 16:01:16 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.33 2013/05/12 14:15:31 ratchov Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -423,13 +423,6 @@ IDTVEC(resume_lapic_ltimer)
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
-#ifdef MULTIPROCESSOR
-#define LOCK_KERNEL	movq %rsp, %rdi; call _C_LABEL(x86_intlock)
-#define UNLOCK_KERNEL	movq %rsp, %rdi; call _C_LABEL(x86_intunlock)
-#else
-#define LOCK_KERNEL
-#define UNLOCK_KERNEL
-#endif
 
 #define voidop(num)
 
@@ -471,17 +464,14 @@ IDTVEC(intr_##name##num)						;\
 	sti								;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
-	LOCK_KERNEL							;\
 6:									\
 	movl	IH_LEVEL(%rbx),%r12d					;\
 	cmpl	%r13d,%r12d						;\
 	jle	7f							;\
-	movq	IH_ARG(%rbx),%rdi					;\
-	testq	%rdi, %rdi						;\
-	jnz	8f							;\
+	movl	%r12d,CPUVAR(ILEVEL)					;\
+	movq	%rbx, %rsi						;\
 	movq	%rsp, %rdi						;\
-8:	movl	%r12d,CPUVAR(ILEVEL)					;\
-	call	*IH_FUN(%rbx)		/* call it */			;\
+	call	_C_LABEL(intr_handler)	/* call it */			;\
 	orl	%eax,%eax		/* should it be counted? */	;\
 	jz	4f			/* no, skip it */		;\
 	incq	IH_COUNT(%rbx)		/* count the intrs */		;\
@@ -493,14 +483,12 @@ IDTVEC(intr_##name##num)						;\
 	testq	%rbx,%rbx						;\
 	jnz	6b							;\
 5:									\
-	UNLOCK_KERNEL							;\
 	cli								;\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
 	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 7:									\
-	UNLOCK_KERNEL							;\
 	cli								;\
 	movq	$(1 << num),%rax					;\
 	orq     %rax,CPUVAR(IPENDING)					;\

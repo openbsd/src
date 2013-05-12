@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.32 2012/12/05 23:20:10 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.33 2013/05/12 14:15:31 ratchov Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -523,6 +523,26 @@ intr_disestablish(struct intrhand *ih)
 	simple_unlock(&ci->ci_slock);
 }
 
+int
+intr_handler(struct intrframe *frame, struct intrhand *ih)
+{
+	int rc;
+#ifdef MULTIPROCESSOR
+	int need_lock;
+
+	need_lock = frame->if_ppl < IPL_SCHED;
+
+	if (need_lock)
+		__mp_lock(&kernel_lock);
+#endif
+	rc = (*ih->ih_fun)(ih->ih_arg ? ih->ih_arg : frame);
+#ifdef MULTIPROCESSOR
+	if (need_lock)
+		__mp_unlock(&kernel_lock);
+#endif
+	return rc;
+}
+
 #define CONCAT(x,y)	__CONCAT(x,y)
 
 /*
@@ -607,20 +627,6 @@ cpu_intr_init(struct cpu_info *ci)
 }
 
 #ifdef MULTIPROCESSOR
-void
-x86_intlock(struct intrframe iframe)
-{
-	if (iframe.if_ppl < IPL_SCHED)
-		__mp_lock(&kernel_lock);
-}
-
-void
-x86_intunlock(struct intrframe iframe)
-{
-	if (iframe.if_ppl < IPL_SCHED)
-		__mp_unlock(&kernel_lock);
-}
-
 void
 x86_softintlock(void)
 {

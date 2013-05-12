@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.23 2011/04/16 00:40:58 deraadt Exp $	*/
+/*	$OpenBSD: intr.h,v 1.24 2013/05/12 14:15:31 ratchov Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -204,6 +204,7 @@ int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *),
 	    void *, const char *);
 void intr_disestablish(struct intrhand *);
+int intr_handler(struct intrframe *, struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int bus, int pin, int *handle);
 void intr_printconfig(void);
@@ -213,8 +214,6 @@ int x86_send_ipi(struct cpu_info *, int);
 int x86_fast_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
-void x86_intlock(struct intrframe);
-void x86_intunlock(struct intrframe);
 void x86_softintlock(void);
 void x86_softintunlock(void);
 void x86_setperf_ipi(struct cpu_info *);

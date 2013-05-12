@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.16 2011/09/22 12:17:04 deraadt Exp $	*/
+/*	$OpenBSD: vector.s,v 1.17 2013/05/12 14:15:31 ratchov Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -57,14 +57,6 @@
 
 	.globl	_C_LABEL(isa_strayintr)
 
-#ifdef MULTIPROCESSOR
-#define LOCK_KERNEL(ipl)	pushl ipl; call _C_LABEL(i386_intlock);	addl $4,%esp
-#define UNLOCK_KERNEL(ipl)	pushl ipl; call _C_LABEL(i386_intunlock); addl $4,%esp
-#else
-#define LOCK_KERNEL(ipl)
-#define UNLOCK_KERNEL(ipl)
-#endif
-
 #define voidop(num)
 
 /*
@@ -122,14 +114,11 @@ _C_LABEL(Xintr_##name##num):						;\
 	jz	_C_LABEL(Xstray_##name##num)	/* no handlers; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
 	incl	CPUVAR(IDEPTH)						;\
-	LOCK_KERNEL(IF_PPL(%esp))					;\
-7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
-	testl	%eax,%eax						;\
-	jnz	4f							;\
-	movl	%esp,%eax		/* 0 means frame pointer */	;\
-4:	pushl	%eax							;\
-	call	*IH_FUN(%ebx)		/* call it */			;\
-	addl	$4,%esp			/* toss the arg */		;\
+7:	movl	%esp, %eax		/* save frame pointer in eax */	;\
+	pushl	%ebx			/* arg 2: ih structure */	;\
+	pushl	%eax			/* arg 1: frame pointer */	;\
+	call	_C_LABEL(intr_handler)	/* call it */			;\
+	addl	$8, %esp		/* toss args */			;\
 	STRAY_INTEGRATE			/* maybe he claimed it */	;\
 	orl	%eax,%eax		/* should it be counted? */	;\
 	jz	5f			/* no, skip it */		;\
@@ -142,8 +131,7 @@ _C_LABEL(Xintr_##name##num):						;\
 5:	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
-8:	UNLOCK_KERNEL(IF_PPL(%esp))					;\
-	decl	CPUVAR(IDEPTH)						;\
+8:	decl	CPUVAR(IDEPTH)						;\
 	STRAY_TEST(name,num)		/* see if it's a stray */	;\
 6:	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
