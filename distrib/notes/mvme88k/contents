@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.25 2013/02/25 20:07:38 miod Exp $
+dnl	$OpenBSD: contents,v 1.26 2013/05/12 12:15:59 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -16,6 +16,8 @@ OpenBSDrd
 	bootst		The OpenBSD/MACHINE tape boot loader.
 	netboot		The OpenBSD/MACHINE Sun-compatible network boot
 			loader.
+	sboot		The OpenBSD/MACHINE Sun-compatible network boot
+			loader, in S-records format.
 	stboot		A VID tape block.
 	tftpboot	The OpenBSD/MACHINE tftp-compatible network boot
 			loader.

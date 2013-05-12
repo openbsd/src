@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.29 2013/02/09 19:48:37 miod Exp $
+dnl	$OpenBSD: install,v 1.30 2013/05/12 12:15:59 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -90,8 +90,12 @@ are provided: one for Sun-compatible diskless setup (bootparams and NFS
 root), and a simpler version limited to TFTP support.
 
 The Sun-compatible network bootloader currently only supports the MVME187
-and MVME197 on-board interface, and will not be able to boot from any other
-Ethernet controller. The tftp bootloader does not have this limitation and
+and MVME197 on-board interface, as well as MVME376 boards. It will not be
+able to boot from any other Ethernet controller (such as MVME374). On
+systems lacking network support in the BUG, the Sun-compatible network
+bootloader may be loaded as S-Records.
+
+The tftp bootloader can only be used with a network boot capable BUG, and
 will boot from any BUG-supported Ethernet controller.
 
 If you plan to use the Sun-compatible bootloader, "netboot", it will be
@@ -138,7 +142,8 @@ example, on an MVME187 system with no external network card:
        0     0  VME187    $FFF46000
 
 If the BUG does not support the NIOT command (MVME187 BUG prior to version
-1.3 doesn't), then it has no support for netbooting.
+1.3 doesn't), then it has no support for netbooting, and you'll have to
+use the S-Records bootloader, described later in this document.
 
 If you know the IP address for the MACHINE and the TFTP server,
 you can directly provide the boot loader's filename and the kernel name
@@ -209,6 +214,64 @@ Once the NIOT parameters are set, it should be possible to boot the machine
 from the server with a shortened NBO command:
 
     187-Bug> NBO 00 00
+
+Booting from S-Records:
+
+If you plan to use the S-Records bootloader, "sboot", it will be
+necessary to set up a complete diskless client configuration on a server.
+Refer to the short description above for details.
+
+Using a terminal emulator able to read files from the local machine and
+send their contents over the serial link, such as cu(1) and tip(1) - both
+being available on OpenBSD - the MACHINE workstation should be put in
+S-Records receive mode, with the LO command followed by the serial port
+where S-Records are to be received (usually 0 for the console port) at the
+BUG prompt:
+
+    188-Bug> LO 0
+
+Then, then contents of the ``sboot'' file should be sent from the terminal
+emulator (using tip(1) or cu(1), this is done by entering ``~$'', and then,
+at the ``Local command?'' prompt, ``cat sboot''). This operation will take
+a significant time: at the default 9600 bps speed, sending the S-Records
+take almost three minutes.
+
+If a prompt does not come back after a few minutes, it is likely that the
+S-Records download is hosed. In this case, the MACHINE board should be reset
+before a further attempt to download the S-Records is made.
+
+Once the transfer is finished, entering `GO' at the BUG prompt will start
+the S-Records boot loader. It will list the available network interfaces
+and will prompt for a filename to boot:
+
+    188-Bug>GO
+    Effective address: 00680000
+
+    >> OpenBSD/mvme88k sboot [1.1]
+    Network Controllers/Nodes Supported
+    Driver CLUN  DLUN  Name      Address    Ethernet Address
+    le0       2     0  VME376    $ffff1200  00:00:77:83:ac:56
+    le1       3     0  VME376    $ffff1400  00:00:77:83:83:ce
+    boot:
+
+By default, the first interface listed will be used. To boot off a different
+interface, simply prefix the filename with the interface driver name (first
+column in the interface display), followed by a colon. For example, to boot
+`bsd.rd' from the second interface, one should enter:
+
+    boot: le1:bsd.rd
+
+This will cause the usual Sun-compatible netboot processing to use the `le1'
+interface:
+
+    boot: client IP address: 10.0.1.138
+    boot: client name: bourbouillou
+    root addr=10.0.1.1 path=/netboot/bourbouillou/root
+    3262752+389824 [52+70512+58011]=0x39b394
+    Start @ 0x10000
+    Controller Address 0xffff1400
+    ...
+
 
 
 Installing using the tape or netboot procedure:

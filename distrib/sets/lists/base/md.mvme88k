@@ -2250,5 +2250,6 @@
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
 ./usr/mdec/netboot
+./usr/mdec/sboot
 ./usr/mdec/stboot
 ./usr/mdec/tftpboot
