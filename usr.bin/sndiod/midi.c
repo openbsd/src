@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.7 2012/12/20 16:15:55 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.8 2013/05/12 05:00:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -511,7 +511,7 @@ port_unref(struct port *c)
 #endif
 	for (rxmask = 0, i = 0; i < MIDI_NEP; i++)
 		rxmask |= midi_ep[i].txmask;
-	if ((rxmask & c->midi->self) == 0 && c->state == PORT_INIT && !c->hold)
+	if ((rxmask & ~c->midi->self) == 0 && c->state == PORT_INIT && !c->hold)
 		port_drain(c);
 }
 
