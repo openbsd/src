@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.63 2011/07/06 23:42:38 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.64 2013/05/13 17:46:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -802,6 +802,9 @@ schizo_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	    intrclrptr, what);
 	if (ih == NULL)
 		return (NULL);
+
+	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
+		ih->ih_mpsafe = 1;
 
 	intr_establish(ih->ih_pil, ih);
 

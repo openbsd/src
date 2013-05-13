@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.28 2013/01/22 23:56:31 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.29 2013/05/13 17:46:42 kettenis Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -349,9 +349,9 @@ bus_space_barrier(t, h, o, s, f)
 #define BUS_SPACE_MAP_BUS4	0x0800
 
 
-/* flags for intr_establish() */
-#define BUS_INTR_ESTABLISH_FASTTRAP	1
-#define BUS_INTR_ESTABLISH_SOFTINTR	2
+/* flags for bus_intr_establish() */
+#define BUS_INTR_ESTABLISH_MPSAFE	0x0001
+#define BUS_INTR_ESTABLISH_SOFTINTR	0x0002
 
 /*
  * Flags used in various bus DMA methods.

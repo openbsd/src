@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.44 2013/05/12 18:48:53 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.45 2013/05/13 17:46:42 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -123,7 +123,10 @@ intr_handler(struct trapframe64 *tf, struct intrhand *ih)
 #ifdef MULTIPROCESSOR
 	int need_lock;
 
-	need_lock = tf->tf_pil < PIL_SCHED && tf->tf_pil != PIL_CLOCK;
+	if (ih->ih_mpsafe)
+		need_lock = 0;
+	else
+		need_lock = tf->tf_pil < PIL_SCHED && tf->tf_pil != PIL_CLOCK;
 
 	if (need_lock)
 		__mp_lock(&kernel_lock);
