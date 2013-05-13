@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.29 2012/08/02 13:38:38 okan Exp $
+#	$OpenBSD: Makefile.inc,v 1.30 2013/05/13 10:37:02 ajacoutot Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
 
-SRCS+=	bm.c memccpy.c memrchr.c stpcpy.c stpncpy.c \
+SRCS+=	bm.c memccpy.c memmem.c memrchr.c stpcpy.c stpncpy.c \
 	strcasecmp.c strcasestr.c strcoll.c strdup.c \
 	strerror.c strerror_r.c strlcat.c strmode.c strndup.c strnlen.c \
 	strsignal.c strtok.c strxfrm.c \
@@ -121,8 +121,8 @@ strrchr.so: rindex.c
 .endif
 
 MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
-	memcmp.3 memcpy.3 memmove.3 memset.3 stpcpy.3 strcasecmp.3 strcat.3 \
-	strchr.3 strcmp.3 strcoll.3 strcpy.3 strcspn.3 strerror.3 \
+	memcmp.3 memcpy.3 memmem.3 memmove.3 memset.3 stpcpy.3 strcasecmp.3 \
+	strcat.3 strchr.3 strcmp.3 strcoll.3 strcpy.3 strcspn.3 strerror.3 \
 	string.3 strlen.3 strmode.3 strdup.3 strpbrk.3 strrchr.3 strsep.3 \
 	strsignal.3 strspn.3 strstr.3 strtok.3 strxfrm.3 swab.3 strlcpy.3 \
 	wcscasecmp.3 wcscat.3 wcschr.3 wcscmp.3 wcscpy.3 wcscspn.3 wcsdup.3 \
