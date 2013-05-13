@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.75 2013/04/17 08:25:37 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.76 2013/05/13 10:17:13 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -234,8 +234,6 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
-	case SIOCSIFNETMASK:
-	case SIOCSIFDSTADDR:
 		if ((so->so_state & SS_PRIV) == 0)
 			return (EPERM);
 
@@ -264,6 +262,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 			newifaddr = 0;
 		break;
 
+	case SIOCSIFNETMASK:
+	case SIOCSIFDSTADDR:
 	case SIOCSIFBRDADDR:
 		if ((so->so_state & SS_PRIV) == 0)
 			return (EPERM);
