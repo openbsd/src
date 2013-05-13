@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.96 2013/03/14 16:24:08 giovanni Exp $
+#	$OpenBSD: special,v 1.97 2013/05/13 09:46:19 ajacoutot Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -68,6 +68,10 @@ special		type=file mode=0600 uname=root gname=wheel
 ..	#mtree
 moduli		type=file mode=0644 uname=root gname=wheel
 netstart	type=file mode=0644 uname=root gname=wheel
+npppd		type=dir mode=0755 uname=root gname=wheel
+npppd.conf	type=file mode=0640 uname=root gname=wheel
+npppd-users	type=file mode=0600 uname=root gname=wheel
+..	#npppd
 nsd.conf	type=file mode=0640 uname=root gname=_nsd
 ntpd.conf	type=file mode=0644 uname=root gname=wheel
 ospfd.conf	type=file mode=0600 uname=root gname=wheel
@@ -88,10 +92,6 @@ ripd.conf	type=file mode=0600 uname=root gname=wheel
 sasyncd.conf	type=file mode=0600 uname=root gname=wheel
 sensorsd.conf	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
-npppd		type=dir mode=0755 uname=root gname=wheel
-npppd.conf	type=file mode=0640 uname=root gname=wheel
-npppd-users	type=file mode=0600 uname=root gname=wheel
-..	#npppd
 skey		type=dir mode=01730 uname=root gname=auth optional
 ..	#skey
 snmpd.conf	type=file mode=0600 uname=root gname=wheel
