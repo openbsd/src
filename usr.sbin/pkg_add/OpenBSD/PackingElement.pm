@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.211 2013/02/18 20:24:11 okan Exp $
+# $OpenBSD: PackingElement.pm,v 1.212 2013/05/13 18:30:51 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -474,9 +474,14 @@ our @ISA=qw(OpenBSD::PackingElement::FileObject);
 sub keyword() { "sample" }
 sub absolute_okay() { 1 }
 __PACKAGE__->register_with_factory;
+
 sub destate
 {
 	my ($self, $state) = @_;
+	if ($state->{lastfile}->isa("OpenBSD::PackingElement::SpecialFile")) {
+		die "Can't \@sample a specialfile: ". 
+		    $state->{lastfile}->stringize. "\n";
+	}
 	$self->{copyfrom} = $state->{lastfile};
 	$self->compute_fullname($state);
 	$self->compute_modes($state);
