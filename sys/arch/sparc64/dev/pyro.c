@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.24 2012/08/20 15:23:25 kettenis Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.25 2013/05/13 19:27:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -109,7 +109,7 @@ pci_chipset_tag_t pyro_alloc_chipset(struct pyro_pbm *, int,
 bus_space_tag_t pyro_alloc_mem_tag(struct pyro_pbm *);
 bus_space_tag_t pyro_alloc_io_tag(struct pyro_pbm *);
 bus_space_tag_t pyro_alloc_config_tag(struct pyro_pbm *);
-bus_space_tag_t _pyro_alloc_bus_tag(struct pyro_pbm *, const char *,
+bus_space_tag_t pyro_alloc_bus_tag(struct pyro_pbm *, const char *,
     int, int, int);
 bus_dma_tag_t pyro_alloc_dma_tag(struct pyro_pbm *);
 
@@ -118,11 +118,11 @@ pcireg_t pyro_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void pyro_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 int pyro_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-int _pyro_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
+int pyro_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
-paddr_t _pyro_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
+paddr_t pyro_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
     int, int);
-void *_pyro_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
+void *pyro_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *, const char *);
 void pyro_msi_ack(struct intrhand *);
 
@@ -335,7 +335,7 @@ pyro_init_msi(struct pyro_softc *sc, struct pyro_pbm *pbm)
 	    msi_eq_devino, sizeof(msi_eq_devino));
 
 	ihandle = msi_eq_devino[2] | sc->sc_ign;
-	if (_pyro_intr_establish(pbm->pp_memt, sc->sc_bust, ihandle,
+	if (pyro_intr_establish(pbm->pp_memt, sc->sc_bust, ihandle,
 	    IPL_HIGH, 0, pyro_msi_eq_intr, pbm, sc->sc_dv.dv_xname) == NULL)
 		goto free_table;
 
@@ -433,7 +433,7 @@ pyro_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 bus_space_tag_t
 pyro_alloc_mem_tag(struct pyro_pbm *pp)
 {
-	return (_pyro_alloc_bus_tag(pp, "mem",
+	return (pyro_alloc_bus_tag(pp, "mem",
 	    0x02,       /* 32-bit mem space (where's the #define???) */
 	    ASI_PRIMARY, ASI_PRIMARY_LITTLE));
 }
@@ -441,7 +441,7 @@ pyro_alloc_mem_tag(struct pyro_pbm *pp)
 bus_space_tag_t
 pyro_alloc_io_tag(struct pyro_pbm *pp)
 {
-	return (_pyro_alloc_bus_tag(pp, "io",
+	return (pyro_alloc_bus_tag(pp, "io",
 	    0x01,       /* IO space (where's the #define???) */
 	    ASI_PHYS_NON_CACHED_LITTLE, ASI_PHYS_NON_CACHED));
 }
@@ -449,13 +449,13 @@ pyro_alloc_io_tag(struct pyro_pbm *pp)
 bus_space_tag_t
 pyro_alloc_config_tag(struct pyro_pbm *pp)
 {
-	return (_pyro_alloc_bus_tag(pp, "cfg",
+	return (pyro_alloc_bus_tag(pp, "cfg",
 	    0x00,       /* Config space (where's the #define???) */
 	    ASI_PHYS_NON_CACHED_LITTLE, ASI_PHYS_NON_CACHED));
 }
 
 bus_space_tag_t
-_pyro_alloc_bus_tag(struct pyro_pbm *pbm, const char *name, int ss,
+pyro_alloc_bus_tag(struct pyro_pbm *pbm, const char *name, int ss,
     int asi, int sasi)
 {
 	struct pyro_softc *sc = pbm->pp_sc;
@@ -473,9 +473,9 @@ _pyro_alloc_bus_tag(struct pyro_pbm *pbm, const char *name, int ss,
 	bt->default_type = ss;
 	bt->asi = asi;
 	bt->sasi = sasi;
-	bt->sparc_bus_map = _pyro_bus_map;
-	bt->sparc_bus_mmap = _pyro_bus_mmap;
-	bt->sparc_intr_establish = _pyro_intr_establish;
+	bt->sparc_bus_map = pyro_bus_map;
+	bt->sparc_bus_mmap = pyro_bus_mmap;
+	bt->sparc_intr_establish = pyro_intr_establish;
 	return (bt);
 }
 
@@ -528,13 +528,13 @@ pyro_dmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, bus_size_t size,
 }
 
 int
-_pyro_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
+pyro_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
     bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct pyro_pbm *pbm = t->cookie;
 	int i, ss;
 
-	DPRINTF(PDB_BUSMAP, ("_pyro_bus_map: type %d off %qx sz %qx flags %d",
+	DPRINTF(PDB_BUSMAP, ("pyro_bus_map: type %d off %qx sz %qx flags %d",
 	    t->default_type,
 	    (unsigned long long)offset,
 	    (unsigned long long)size,
@@ -544,7 +544,7 @@ _pyro_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
 
 	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
-		printf("\n_pyro_bus_map: invalid parent");
+		printf("\npyro_bus_map: invalid parent");
 		return (EINVAL);
 	}
 
@@ -569,7 +569,7 @@ _pyro_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 }
 
 paddr_t
-_pyro_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
+pyro_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
     off_t off, int prot, int flags)
 {
 	bus_addr_t offset = paddr;
@@ -578,11 +578,11 @@ _pyro_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 
 	ss = t->default_type;
 
-	DPRINTF(PDB_BUSMAP, ("_pyro_bus_mmap: prot %d flags %d pa %qx\n",
+	DPRINTF(PDB_BUSMAP, ("pyro_bus_mmap: prot %d flags %d pa %qx\n",
 	    prot, flags, (unsigned long long)paddr));
 
 	if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
-		printf("\n_pyro_bus_mmap: invalid parent");
+		printf("\npyro_bus_mmap: invalid parent");
 		return (-1);
 	}
 
@@ -602,7 +602,7 @@ _pyro_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 }
 
 void *
-_pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
+pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
 	struct pyro_pbm *pbm = t->cookie;
