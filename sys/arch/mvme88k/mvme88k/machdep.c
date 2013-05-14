@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.248 2012/12/26 22:32:13 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.249 2013/05/14 20:30:47 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1099,10 +1099,7 @@ bootcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	if (c == '\n')
-		bugpcrlf();
-	else
-		bugoutchr(c);
+	bugoutchr(c);
 }
 
 int

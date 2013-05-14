@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.20 2013/01/05 11:20:56 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.21 2013/05/14 20:30:47 miod Exp $ */
 /*
  * Copyright (c) 2006, 2010, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -65,21 +65,6 @@ __cpu_simple_lock_t bug_lock = __SIMPLELOCK_UNLOCKED;
 	__asm__ __volatile__ ("stcr %0, %%cr20" :: "r"(ossr3));		\
 	set_psr(psr);							\
 	BUG_UNLOCK();							\
-}
-
-void
-bugpcrlf(void)
-{
-	u_int psr;
-
-#ifdef DIAGNOSTIC
-	if (!cold)
-		panic("%s: BUG calls are forbidden at this point", __func__);
-#endif
-
-	BUGCTXT();
-	MVMEPROM_CALL(MVMEPROM_OUTCRLF);
-	OSCTXT();
 }
 
 void

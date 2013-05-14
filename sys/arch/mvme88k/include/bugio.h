@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.h,v 1.17 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: bugio.h,v 1.18 2013/05/14 20:30:47 miod Exp $ */
 
 #ifndef _MACHINE_BUGIO_H_
 #define _MACHINE_BUGIO_H_
@@ -7,7 +7,6 @@
 
 void	buginit(void);
 char	buginchr(void);
-void	bugpcrlf(void);
 void	bugoutchr(int);
 void	bugreturn(void);
 void	bugbrdid(struct mvmeprom_brdid *);

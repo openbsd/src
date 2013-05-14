@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.20 2012/11/25 14:10:47 miod Exp $ */
+/*	$OpenBSD: prom.h,v 1.21 2013/05/14 20:30:47 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -52,7 +52,7 @@
 #define MVMEPROM_OUTSTRCRLF	0x22
 #define MVMEPROM_WRITE		0x23
 #define MVMEPROM_WRITELN	0x24
-#define	MVMEPROM_OUTCRLF	0x26
+#define	MVMEPROM_OUTCRLF	0x26	/* not implemented on MVME181? */
 #define MVMEPROM_DELAY		0x43
 #define MVMEPROM_RTC_RD		0x53
 #define MVMEPROM_EXIT		0x63
