@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.41 2013/04/23 14:32:53 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.42 2013/05/14 18:47:40 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -286,8 +286,10 @@ Job_Touch(GNode *gn)
 void
 Make_TimeStamp(GNode *parent, GNode *child)
 {
-	if (is_strictly_before(parent->cmtime, child->mtime))
+	if (is_strictly_before(parent->cmtime, child->mtime)) {
 		parent->cmtime = child->mtime;
+		parent->youngest = child;
+	}
 }
 
 void
@@ -500,7 +502,8 @@ Make_OODate(GNode *gn)
 		 */
 		if (DEBUG(MAKE)) {
 			if (is_strictly_before(gn->mtime, gn->cmtime))
-				printf("modified before source...");
+				printf("modified before source(%s)...",
+				    gn->youngest->name);
 			else if (is_out_of_date(gn->mtime))
 				printf("non-existent and no sources...");
 			else
