@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.9 2006/07/17 16:12:36 espie Exp $
+# $Id: Makefile.in,v 1.10 2013/05/14 15:18:34 espie Exp $
 # Makefile.am for texinfo/info.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -572,8 +572,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 
 # We need a linear ordering to prevent race condition in parallel make.
 # See the node ``(automake)Multiple Outputs'' for an explanation.
-doc.c: key.c
-key.c: funs.h
+key.c: doc.c
+doc.c: funs.h
 
 # The $(EXEEXT) should be added by Automake, but isn't. Fine.
 $(generated_sources): makedoc$(EXEEXT) $(cmd_sources)
