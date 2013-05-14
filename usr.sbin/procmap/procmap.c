@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.48 2013/04/24 14:29:00 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.49 2013/05/14 20:18:52 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -399,7 +399,9 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		printf(" vm_refcnt = %d,", D(vmspace, vmspace)->vm_refcnt);
 		printf(" vm_shm = %p,\n", D(vmspace, vmspace)->vm_shm);
 		printf("    vm_rssize = %d,", D(vmspace, vmspace)->vm_rssize);
+#if 0
 		printf(" vm_swrss = %d,", D(vmspace, vmspace)->vm_swrss);
+#endif
 		printf(" vm_tsize = %d,", D(vmspace, vmspace)->vm_tsize);
 		printf(" vm_dsize = %d,\n", D(vmspace, vmspace)->vm_dsize);
 		printf("    vm_ssize = %d,", D(vmspace, vmspace)->vm_ssize);
