@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.22 2009/10/27 23:59:48 deraadt Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.23 2013/05/14 11:51:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1120,12 +1120,12 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 		 */
 		if (LF_ISSET(TXT_TTYWERASE))
 			while (tp->cno > max) {
+				if (isblank(tp->lb[tp->cno - 1]))
+					break;
 				--tp->cno;
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (isblank(tp->lb[tp->cno - 1]))
-					break;
 			}
 		else {
 			if (LF_ISSET(TXT_ALTWERASE)) {
@@ -1133,19 +1133,17 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (isblank(tp->lb[tp->cno - 1]))
-					break;
 			}
 			if (tp->cno > max)
 				tmp = inword(tp->lb[tp->cno - 1]);
 			while (tp->cno > max) {
+				if (tmp != inword(tp->lb[tp->cno - 1])
+				    || isblank(tp->lb[tp->cno - 1]))
+					break;
 				--tp->cno;
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (tmp != inword(tp->lb[tp->cno - 1])
-				    || isblank(tp->lb[tp->cno - 1]))
-					break;
 			}
 		}
 
