@@ -1,4 +1,4 @@
-/* $OpenBSD: omusbtll.c,v 1.4 2011/11/10 19:37:01 uwe Exp $ */
+/* $OpenBSD: omusbtll.c,v 1.5 2013/05/14 12:01:17 rapha Exp $ */
 /*
  * Copyright (c) 2010 Dale Rahn <drahn@openbsd.org>
  *
@@ -112,15 +112,15 @@ omusbtll_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_iot = oa->oa_iot;
 	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
 	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh)) {
-		printf("omgpio_attach: bus_space_map failed!\n");
+		printf("%s: bus_space_map failed!\n", __func__);
 		return;
 	}
 
 #if 0
-	prcm_enableclock(PRCM_CLK_EN_USBHOST1);
-	prcm_enableclock(PRCM_CLK_EN_USBHOST2);
+	prcm_enablemodule(PRCM_USBHOST1);
+	prcm_enablemodule(PRCM_USBHOST2);
 #endif
-	prcm_enableclock(CM_CORE_EN_USBTLL);
+	prcm_enablemodule(PRCM_USBTLL);
 
 	delay(10000);
 

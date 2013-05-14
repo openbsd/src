@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.12 2013/04/20 17:43:53 deraadt Exp $ */
+/*	$OpenBSD: omehci.c,v 1.13 2013/05/14 12:01:17 rapha Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -79,7 +79,7 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 
-	prcm_enableclock(PRCM_CLK_EN_USB);
+	prcm_enablemodule(PRCM_USB);
 
 #if 0
 	omehci_enable(sc);
@@ -165,13 +165,13 @@ omehci_activate(struct device *self, int act)
 		sc->sc.sc_bus.use_polling++;
 #if 0
 		ohci_activate(&sc->sc, act);
-		prcm_disableclock(PRCM_CLK_EN_USB);
+		prcm_disablemodule(PRCM_USB);
 #endif
 		sc->sc.sc_bus.use_polling--;
 		break;
 	case DVACT_RESUME:
 		sc->sc.sc_bus.use_polling++;
-		prcm_enableclock(PRCM_CLK_EN_USB);
+		prcm_enablemodule(PRCM_USB);
 #if 0
 		omehci_enable(sc);
 		ohci_activate(&sc->sc, act);

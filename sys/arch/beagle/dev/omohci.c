@@ -1,4 +1,4 @@
-/*	$OpenBSD: omohci.c,v 1.7 2013/04/20 17:43:53 deraadt Exp $ */
+/*	$OpenBSD: omohci.c,v 1.8 2013/05/14 12:01:17 rapha Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -193,7 +193,7 @@ omohci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	prcm_enableclock(PRCM_CLK_EN_USB);
+	prcm_enablemodule(PRCM_USB);
 
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OTG_SYSCON_2,
 	    OTG_SYSCON2_UHOST_EN | OTG_SYSCON2_MODE_HOST);

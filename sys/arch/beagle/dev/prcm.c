@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.10 2013/05/03 17:58:15 patrick Exp $ */
+/* $OpenBSD: prcm.c,v 1.11 2013/05/14 12:01:17 rapha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -32,123 +32,12 @@
 #include <beagle/dev/omapvar.h>
 #include <beagle/dev/prcmvar.h>
 
-#define CM_FCLKEN_IVA2		0x0000
-#define CM_CLKEN_PLL_IVA2	0x0004
-#define CM_IDLEST_IVA2		0x0020
-#define CM_IDLEST_PLL_IVA2	0x0024
-#define CM_AUTOIDLE_PLL_IVA2	0x0034
-#define CM_CLKSEL1_PLL_IVA2	0x0040
-#define CM_CLKSEL2_PLL_IVA2	0x0044
-#define CM_CLKSTCTRL_IVA2	0x0048
-#define CM_CLKSTST_IVA2		0x004c
+#include <beagle/dev/am335x_prcmreg.h>
+#include <beagle/dev/omap3_prcmreg.h>
 
 #define PRCM_REVISION		0x0800
 #define PRCM_SYSCONFIG		0x0810
 
-#define	CM_CLKSEL_MPU		0x0940
-#define CM_CLKSTCTRL_MPU	0x0948
-#define RM_RSTST_MPU		0x0958
-#define PM_WKDEP_MPU		0x09C8
-#define PM_EVGENCTRL_MPU	0x09D4
-#define PM_EVEGENONTIM_MPU	0x09D8
-#define PM_EVEGENOFFTIM_MPU	0x09DC
-#define PM_PWSTCTRL_MPU		0x09E0
-#define PM_PWSTST_MPU		0x09E4
-
-#define  CM_ICLKEN1_CORE	0x0a10
-#define  CM_ICLKEN1_CORE_MSK	0x7ffffed2
-#define  CM_ICLKEN2_CORE	0x0a14
-#define  CM_ICLKEN2_CORE_MSK	0x0000001f
-#define  CM_ICLKEN3_CORE	0x0a18
-#define  CM_ICLKEN3_CORE_MSK	0x00000004
-#define  CM_ICLKEN4_CORE	0x0a1C
-#define  CM_IDLEST1_CORE	0x0a20
-#define  CM_IDLEST2_CORE	0x0a24
-#define  CM_IDLEST4_CORE	0x0a2C
-#define  CM_AUTOIDLE1_CORE	0x0a30
-#define  CM_AUTOIDLE2_CORE	0x0a34
-#define  CM_AUTOIDLE3_CORE	0x0a38
-#define  CM_AUTOIDLE4_CORE	0x0a3C
-#define  CM_CLKSEL1_CORE	0x0a40
-#define  CM_CLKSEL2_CORE	0x0a44
-#define  CM_CLKSTCTRL_CORE	0x0a48
-#define  PM_WKEN1_CORE		0x0aA0
-#define  PM_WKEN2_CORE		0x0aA4
-#define  PM_WKST1_CORE		0x0aB0
-#define  PM_WKST2_CORE		0x0aB4
-#define  PM_WKDEP_CORE		0x0aC8
-#define  PM_PWSTCTRL_CORE	0x0aE0
-#define  PM_PWSTST_CORE		0x0aE4
-#define  CM_FCLKEN_GFX		0x0b00
-#define  CM_ICLKEN_GFX		0x0b10
-
-#define CM_IDLEST_GFX		0x0b20
-#define CM_CLKSEL_GFX		0x0b40
-#define CM_CLKSTCTRL_GFX	0x0b48
-#define RM_RSTCTRL_GFX		0x0b50
-#define RM_RSTST_GFX		0x0b58
-#define PM_WKDEP_GFX		0x0bC8
-#define PM_PWSTCTRL_GFX		0x0bE0
-#define PM_PWSTST_GFX		0x0bE4
-#define CM_FCLKEN_WKUP		0x0c00
-#define		CM_FCLKEN_WKUP_GPT1	1
-#define		CM_FCLKEN_WKUP_GPIOS	4
-#define		CM_FCLKEN_WKUP_MPU_WDT	8
-#define CM_ICLKEN_WKUP		0xc10
-#define		CM_ICLKEN_WKUP_GPT1	0x01
-#define		CM_ICLKEN_WKUP_32KSYNC	0x02
-#define		CM_ICLKEN_WKUP_GPIOS	0x04
-#define		CM_ICLKEN_WKUP_MPU_WDT	0x08
-#define		CM_ICLKEN_WKUP_WDT1	0x10
-#define		CM_ICLKEN_WKUP_OMAPCTRL	0x20
-#define	CM_IDLEST_WKUP		0x0c20
-#define CM_AUTOIDLE_WKUP	0x0c30
-#define CM_CLKSEL_WKUP		0x0c40
-#define RM_RSTCTRL_WKUP		0x0c50
-#define RM_RSTTIME_WKUP		0x0c54
-#define RM_RSTST_WKUP		0x0c58
-#define PM_WKEN_WKUP		0x0cA0
-#define PM_WKST_WKUP		0x0cB0
-#define CM_CLKEN_PLL		0x0d00
-#define CM_CLKEN2_PLL		0x0d04
-#define CM_IDLEST_CKGEN		0x0d20
-#define CM_AUTOIDLE_PLL		0x0d30
-#define CM_AUTOIDLE2_PLL	0x0d34
-#define CM_CLKSEL1_PLL		0x0d40
-#define CM_CLKSEL2_PLL		0x0d44
-#define CM_CLKSEL3_PLL		0x0d48
-#define CM_CLKSEL4_PLL		0x0d4C
-#define CM_CLKSEL5_PLL		0x0d50
-#define CM_FCLKEN_PER		0x1000
-#define CM_ICLKEN_PER		0x1010
-#define CM_IDLEST_PER		0x1020
-#define CM_AUTOIDLE_PER		0x1030
-#define CM_CLKSEL_PER		0x1040
-#define CM_SLEEPDEP_PER		0x1044
-#define CM_CLKSTCTRL_PER	0x1048
-#define CM_CLKSTST_PER		0x104C
-
-#define CM_CLKSEL1_EMU		0x5140
-#define CM_CLKSTCTRL_EMU	0x5148
-#define CM_CLKSTST_EMU		0x514C
-#define CM_CLKSEL2_EMU		0x5150
-#define CM_CLKSEL3_EMU		0x5154
-
-#define CM_POLCTRL		0x529C
-
-#define CM_IDLEST_NEON		0x5320
-#define CM_CLKSTCTRL_NEON	0x5348
-
-#define CM_FCLKEN_USBHOST	0x5400
-#define CM_ICLKEN_USBHOST	0x5410
-#define CM_IDLEST_USBHOST	0x5420
-#define CM_AUTOIDLE_USBHOST	0x5430
-#define CM_SLEEPDEP_USBHOST	0x5444
-#define CM_CLKSTCTRL_USBHOST	0x5448
-#define CM_CLKSTST_USBHOST	0x544C
-
-uint32_t prcm_imask_cur[PRCM_REG_MAX];
-uint32_t prcm_fmask_cur[PRCM_REG_MAX];
 uint32_t prcm_imask_mask[PRCM_REG_MAX];
 uint32_t prcm_fmask_mask[PRCM_REG_MAX];
 uint32_t prcm_imask_addr[PRCM_REG_MAX];
@@ -156,15 +45,30 @@ uint32_t prcm_fmask_addr[PRCM_REG_MAX];
 
 #define SYS_CLK		13 /* SYS_CLK speed in MHz */
 
-bus_space_tag_t		prcm_iot;
-bus_space_handle_t	prcm_ioh;
+struct prcm_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	void (*sc_enablemodule)(struct prcm_softc *sc, int mod);
+	void (*sc_setclock)(struct prcm_softc *sc,
+	    int clock, int speed);
+};
 
-int     prcm_match(struct device *, void *, void *);
-void    prcm_attach(struct device *, struct device *, void *);
-int	prcm_setup_dpll5(void);
+int	prcm_match(struct device *, void *, void *);
+void	prcm_attach(struct device *, struct device *, void *);
+int	prcm_setup_dpll5(struct prcm_softc *);
+uint32_t prcm_v3_bit(int mod);
+uint32_t prcm_am335x_clkctrl(int mod);
+
+void prcm_am335x_enablemodule(struct prcm_softc *, int);
+void prcm_am335x_setclock(struct prcm_softc *, int, int);
+
+void prcm_v3_setup(struct prcm_softc *);
+void prcm_v3_enablemodule(struct prcm_softc *, int);
+void prcm_v3_setclock(struct prcm_softc *, int, int);
 
 struct cfattach	prcm_ca = {
-	sizeof (struct device), NULL, prcm_attach
+	sizeof (struct prcm_softc), NULL, prcm_attach
 };
 
 struct cfdriver prcm_cd = {
@@ -175,47 +79,42 @@ void
 prcm_attach(struct device *parent, struct device *self, void *args)
 {
 	struct omap_attach_args *oa = args;
+	struct prcm_softc *sc = (struct prcm_softc *) self;
 	u_int32_t reg;
 
-	prcm_iot = oa->oa_iot;
+	sc->sc_iot = oa->oa_iot;
 
-	if (bus_space_map(prcm_iot, oa->oa_dev->mem[0].addr,
-	    oa->oa_dev->mem[0].size, 0, &prcm_ioh))
+	if (bus_space_map(sc->sc_iot, oa->oa_dev->mem[0].addr,
+	    oa->oa_dev->mem[0].size, 0, &sc->sc_ioh))
 		panic("prcm_attach: bus_space_map failed!");
 
-	reg = bus_space_read_4(prcm_iot, prcm_ioh, PRCM_REVISION);
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, PRCM_REVISION);
 	printf(" rev %d.%d\n", reg >> 4 & 0xf, reg & 0xf);
-	
+
+	switch (board_id) {
+	case BOARD_ID_AM335X_BEAGLEBONE:
+		sc->sc_enablemodule = prcm_am335x_enablemodule;
+		sc->sc_setclock = prcm_am335x_setclock;
+		break;
+	case BOARD_ID_OMAP3_BEAGLE:
+	case BOARD_ID_OMAP3_OVERO:
+		sc->sc_enablemodule = prcm_v3_enablemodule;
+		sc->sc_setclock = prcm_v3_setclock;
+		prcm_v3_setup(sc);
+		break;
+	case BOARD_ID_OMAP4_PANDA:
+		sc->sc_enablemodule = NULL;
+		sc->sc_setclock = NULL;
+		break;
+	}
+}
+
+void
+prcm_v3_setup(struct prcm_softc *sc)
+{
 	/* Setup the 120MHZ DPLL5 clock, to be used by USB. */
-	prcm_setup_dpll5();
+	prcm_setup_dpll5(sc);
 
-	/* XXX */
-#if 1
-	printf("CM_FCLKEN1_CORE %x\n", bus_space_read_4(prcm_iot, prcm_ioh, CM_FCLKEN1_CORE));
-	printf("CM_ICLKEN1_CORE %x\n", bus_space_read_4(prcm_iot, prcm_ioh, CM_ICLKEN1_CORE));
-	printf("CM_AUTOIDLE1_CORE %x\n", bus_space_read_4(prcm_iot, prcm_ioh, CM_AUTOIDLE1_CORE));
-
-	printf("CM_FCLKEN_WKUP %x\n", bus_space_read_4(prcm_iot, prcm_ioh, CM_FCLKEN_WKUP));
-	printf(" CM_IDLEST_WKUP %x\n", bus_space_read_4(prcm_iot, prcm_ioh,  CM_IDLEST_WKUP));
-//	bus_space_write_4(prcm_iot, prcm_ioh, 
-#endif
-
-#if 0
-	reg = bus_space_read_4(prcm_iot, prcm_ioh, CM_FCLKEN1_CORE);
-	reg |= CM_FCLKEN1_CORE_GP3|CM_FCLKEN1_CORE_GP2;
-	bus_space_write_4(prcm_iot, prcm_ioh, CM_FCLKEN1_CORE, reg);
-	reg = bus_space_read_4(prcm_iot, prcm_ioh, CM_ICLKEN1_CORE);
-	reg |= CM_ICLKEN1_CORE_GP3|CM_ICLKEN1_CORE_GP2;
-	bus_space_write_4(prcm_iot, prcm_ioh, CM_ICLKEN1_CORE, reg);
-
-	reg = bus_space_read_4(prcm_iot, prcm_ioh, CM_FCLKEN_WKUP);
-	reg |= CM_FCLKEN_WKUP_MPU_WDT | CM_FCLKEN_WKUP_GPT1;
-	bus_space_write_4(prcm_iot, prcm_ioh, CM_FCLKEN_WKUP, reg);
-
-	reg = bus_space_read_4(prcm_iot, prcm_ioh, CM_ICLKEN_WKUP);
-	reg |= CM_ICLKEN_WKUP_MPU_WDT | CM_ICLKEN_WKUP_GPT1;
-	bus_space_write_4(prcm_iot, prcm_ioh, CM_ICLKEN_WKUP, reg);
-#endif
 	prcm_fmask_mask[PRCM_REG_CORE_CLK1] = PRCM_REG_CORE_CLK1_FMASK;
 	prcm_imask_mask[PRCM_REG_CORE_CLK1] = PRCM_REG_CORE_CLK1_IMASK;
 	prcm_fmask_addr[PRCM_REG_CORE_CLK1] = PRCM_REG_CORE_CLK1_FADDR;
@@ -235,41 +134,133 @@ prcm_attach(struct device *parent, struct device *self, void *args)
 	prcm_imask_mask[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_IMASK;
 	prcm_fmask_addr[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_FADDR;
 	prcm_imask_addr[PRCM_REG_USBHOST] = PRCM_REG_USBHOST_IADDR;
-
 }
 
 void
 prcm_setclock(int clock, int speed)
 {
-#if 1
-	u_int32_t oreg, reg, mask;
-	if (clock == 1) {
-		oreg = bus_space_read_4(prcm_iot, prcm_ioh, CM_CLKSEL_WKUP);
-		mask = 1;
-		reg = (oreg &~mask) | (speed & mask);
-		printf(" prcm_setclock old %08x new %08x",  oreg, reg );
-		bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKSEL_WKUP, reg);
-	} else if (clock >= 2 && clock <= 9) {
-		int shift =  (clock-2);
-		oreg = bus_space_read_4(prcm_iot, prcm_ioh, CM_CLKSEL_PER);
+	struct prcm_softc *sc = prcm_cd.cd_devs[0];
 
-		mask = 1 << (shift);
-		reg =  (oreg & ~mask) | ( (speed << shift) & mask);
-		printf(" prcm_setclock old %08x new %08x",  oreg, reg);
+	if (!sc->sc_setclock)
+		panic("%s: not initialised!", __func__);
 
-		bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKSEL_PER, reg);
-	} else
-		panic("prcm_setclock invalid clock %d", clock);
-#endif
+	sc->sc_setclock(sc, clock, speed);
 }
 
 void
-prcm_enableclock(int bit)
+prcm_am335x_setclock(struct prcm_softc *sc, int clock, int speed)
 {
-	u_int32_t fclk, iclk, fmask, imask, mbit;
-	int freg, ireg, reg;
-	printf("prcm_enableclock %d:", bit);
+	u_int32_t oreg, reg, mask;
 
+	/* set CLKSEL register */
+	if (clock == 1) {
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    PRCM_AM335X_CLKSEL_TIMER2_CLK);
+		mask = 3;
+		reg = oreg & ~mask;
+		reg |=0x02;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    PRCM_AM335X_CLKSEL_TIMER2_CLK, reg);
+	} else if (clock == 2) {
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    PRCM_AM335X_CLKSEL_TIMER3_CLK);
+		mask = 3;
+		reg = oreg & ~mask;
+		reg |=0x02;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    PRCM_AM335X_CLKSEL_TIMER3_CLK, reg);
+	}
+}
+
+void
+prcm_v3_setclock(struct prcm_softc *sc, int clock, int speed)
+{
+	u_int32_t oreg, reg, mask;
+
+	if (clock == 1) {
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL_WKUP);
+		mask = 1;
+		reg = (oreg &~mask) | (speed & mask);
+		printf("%s: old %08x new %08x", __func__, oreg, reg);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL_WKUP, reg);
+	} else if (clock >= 2 && clock <= 9) {
+		int shift =  (clock-2);
+		oreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL_PER);
+		mask = 1 << (shift);
+		reg =  (oreg & ~mask) | ( (speed << shift) & mask);
+		printf("%s: old %08x new %08x", __func__, oreg, reg);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL_PER, reg);
+	} else
+		panic("%s: invalid clock %d", __func__, clock);
+}
+
+uint32_t
+prcm_v3_bit(int mod)
+{
+	switch(mod) {
+	case PRCM_MMC:
+		return PRCM_CLK_EN_MMC1;
+	case PRCM_USB:
+		return PRCM_CLK_EN_USB;
+	default:
+		panic("%s: module not found\n", __func__);
+	}
+}
+
+uint32_t
+prcm_am335x_clkctrl(int mod)
+{
+	switch(mod) {
+	case PRCM_TIMER2:
+		return PRCM_AM335X_TIMER2_CLKCTRL;
+	case PRCM_TIMER3:
+		return PRCM_AM335X_TIMER3_CLKCTRL;
+	case PRCM_MMC:
+		return PRCM_AM335X_MMC0_CLKCTRL;
+	case PRCM_USB:
+		return PRCM_AM335X_USB0_CLKCTRL;
+	default:
+		panic("%s: module not found\n", __func__);
+	}
+}
+
+void
+prcm_enablemodule(int mod)
+{
+	struct prcm_softc *sc = prcm_cd.cd_devs[0];
+
+	if (!sc->sc_enablemodule)
+		panic("%s: not initialised!", __func__);
+
+	sc->sc_enablemodule(sc, mod);
+}
+
+void
+prcm_am335x_enablemodule(struct prcm_softc *sc, int mod)
+{
+	uint32_t clkctrl;
+	int reg;
+
+	/*set enable bits in CLKCTRL register */
+	reg = prcm_am335x_clkctrl(mod);
+	clkctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
+	clkctrl &=~AM335X_CLKCTRL_MODULEMODE_MASK;
+	clkctrl |= AM335X_CLKCTRL_MODULEMODE_ENABLE;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, clkctrl);
+
+	/* wait until module is enabled */
+	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg) & 0x30000)
+		;
+}
+
+void
+prcm_v3_enablemodule(struct prcm_softc *sc, int mod)
+{
+	uint32_t bit;
+	uint32_t fclk, iclk, fmask, imask, mbit;
+	int freg, ireg, reg;
+
+	bit = prcm_v3_bit(mod);
 	reg = bit >> 5;
 
 	freg = prcm_fmask_addr[reg];
@@ -277,25 +268,16 @@ prcm_enableclock(int bit)
 	fmask = prcm_fmask_mask[reg];
 	imask = prcm_imask_mask[reg];
 
-	mbit =  1 << (bit & 0x1f);
-#if 0
-	printf("reg %d faddr 0x%08x iaddr 0x%08x, fmask 0x%08x "
-	    "imask 0x%08x mbit %x", reg, freg, ireg, fmask, imask, mbit);
-#endif
+	mbit = 1 << (bit & 0x1f);
 	if (fmask & mbit) { /* dont access the register if bit isn't present */
-		fclk = bus_space_read_4(prcm_iot, prcm_ioh, freg);
-		prcm_fmask_cur[reg] = fclk | mbit;
-		bus_space_write_4(prcm_iot, prcm_ioh, freg, fclk | mbit);
-		printf(" fclk %08x %08x",  fclk, fclk | mbit);
+		fclk = bus_space_read_4(sc->sc_iot, sc->sc_ioh, freg);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, freg, fclk | mbit);
 	}
-
 	if (imask & mbit) { /* dont access the register if bit isn't present */
-		iclk = bus_space_read_4(prcm_iot, prcm_ioh, ireg);
-		prcm_imask_cur[reg] = iclk | mbit;
-		bus_space_write_4(prcm_iot, prcm_ioh, ireg, iclk | mbit);
-		printf(" iclk %08x %08x",  iclk, iclk | mbit);
+		iclk = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ireg);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, ireg, iclk | mbit);
 	}
-	printf ("\n");
+	printf("\n");
 }
 
 /*
@@ -307,7 +289,7 @@ prcm_enableclock(int bit)
  * SYS_CLK, running at 13MHz.
  */
 int
-prcm_setup_dpll5(void)
+prcm_setup_dpll5(struct prcm_softc *sc)
 {
 	uint32_t val;
 
@@ -317,10 +299,10 @@ prcm_setup_dpll5(void)
 	 * with 120 (sprugn4h.pdf, 13.4.11.4.1 SSC Configuration)
 	 */
 	val = ((120 & 0x7ff) << 8) | ((SYS_CLK - 1) & 0x7f);
-	bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKSEL4_PLL, val);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL4_PLL, val);
 
 	/* Clock divider from the PLL to the 120MHz clock. */
-	bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKSEL5_PLL, val);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL5_PLL, val);
 
 	/*
 	 * spruf98o.pdf, page 2319:
@@ -328,13 +310,13 @@ prcm_setup_dpll5(void)
 	 * EN_PERIPH2_DPLL is 0x7
 	 */
 	val = (7 << 4) | (7 << 0);
-	bus_space_write_4(prcm_iot, prcm_ioh, CM_CLKEN2_PLL, val);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CM_CLKEN2_PLL, val);
 
 	/* Disable the interconnect clock auto-idle. */
-	bus_space_write_4(prcm_iot, prcm_ioh, CM_AUTOIDLE2_PLL, 0x0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CM_AUTOIDLE2_PLL, 0x0);
 
 	/* Wait until DPLL5 is locked and there's clock activity. */
-	while ((val = bus_space_read_4(prcm_iot, prcm_ioh,
+	while ((val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    CM_IDLEST_CKGEN) & 0x01) == 0x00) {
 #ifdef DIAGNOSTIC
 		printf("CM_IDLEST_PLL = 0x%08x\n", val);
