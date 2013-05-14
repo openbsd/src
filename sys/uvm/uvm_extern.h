@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.105 2013/05/14 20:15:25 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.106 2013/05/14 20:33:01 miod Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -333,6 +333,8 @@ struct uvmexp {
 	int syscalls;		/* system calls */
 	int pageins;		/* pagein operation count */
 				/* pageouts are in pdpageouts below */
+	int obsolete_swapins;	/* swapins */
+	int obsolete_swapouts;	/* swapouts */
 	int pgswapin;		/* pages swapped in */
 	int pgswapout;		/* pages swapped out */
 	int forks;  		/* forks */
