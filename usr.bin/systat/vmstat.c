@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.73 2010/11/19 18:35:16 mikeb Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.74 2013/05/14 20:39:25 miod Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -417,8 +417,6 @@ showkre(void)
 
 	PUTRATE(uvmexp.pageins, PAGEROW + 2, PAGECOL + 5, 5);
 	PUTRATE(uvmexp.pdpageouts, PAGEROW + 2, PAGECOL + 10, 5);
-	PUTRATE(uvmexp.swapins, PAGEROW + 2, PAGECOL + 15, 5);
-	PUTRATE(uvmexp.swapouts, PAGEROW + 2, PAGECOL + 20, 5);
 	PUTRATE(uvmexp.pgswapin, PAGEROW + 3, PAGECOL + 5, 5);
 	PUTRATE(uvmexp.pgswapout, PAGEROW + 3, PAGECOL + 10, 5);
 

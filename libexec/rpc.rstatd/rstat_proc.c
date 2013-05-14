@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.28 2010/09/01 14:43:34 millert Exp $	*/
+*	$OpenBSD: rstat_proc.c,v 1.29 2013/05/14 20:39:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -232,8 +232,8 @@ updatestat(void)
 	}
 	stats_all.s1.v_pgpgin = uvmexp.fltanget;
 	stats_all.s1.v_pgpgout = uvmexp.pdpageouts;
-	stats_all.s1.v_pswpin = uvmexp.swapins;
-	stats_all.s1.v_pswpout = uvmexp.swapouts;
+	stats_all.s1.v_pswpin = 0;
+	stats_all.s1.v_pswpout = 0;
 	stats_all.s1.v_intr = uvmexp.intrs;
 	stats_all.s2.v_swtch = uvmexp.swtch;
 	gettimeofday(&tm, (struct timezone *) 0);

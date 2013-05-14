@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.120 2013/03/26 21:13:55 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.121 2013/05/14 20:39:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -539,8 +539,6 @@ dosum(void)
 	(void)printf("%11u software interrupts\n", uvmexp.softs);
 	(void)printf("%11u syscalls\n", uvmexp.syscalls);
 	(void)printf("%11u pagein operations\n", uvmexp.pageins);
-	(void)printf("%11u swap ins\n", uvmexp.swapins);
-	(void)printf("%11u swap outs\n", uvmexp.swapouts);
 	(void)printf("%11u forks\n", uvmexp.forks);
 	(void)printf("%11u forks where vmspace is shared\n",
 		     uvmexp.forks_sharevm);
