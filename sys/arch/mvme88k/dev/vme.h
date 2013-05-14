@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.17 2005/11/25 22:14:32 miod Exp $ */
+/*	$OpenBSD: vme.h,v 1.18 2013/05/14 21:01:21 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -25,8 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MVEME88K_DEV_VME_H__
-#define	__MVEME88K_DEV_VME_H__
+#ifndef __MVME88K_DEV_VME_H__
+#define	__MVME88K_DEV_VME_H__
 
 struct vmesoftc {
 	struct device		sc_dev;
@@ -286,4 +286,4 @@ int vmeintr_establish(int, struct intrhand *, const char *);
 int vme_findvec(int);
 int vmescan(struct device *, void *, void *, int);
 
-#endif /* __MVEME88K_DEV_VME_H__ */
+#endif /* __MVME88K_DEV_VME_H__ */
