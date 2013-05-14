@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.52 2013/02/19 21:02:06 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.53 2013/05/14 21:58:09 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -147,9 +147,12 @@ const struct cmmu_p cmmu8820x = {
  * the gory details.
  */
 
-struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS];
-u_int max_cmmus;
-u_int cmmu_shift;
+struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS]
+    __attribute__ ((__section__(".rodata")));
+u_int max_cmmus
+    __attribute__ ((__section__(".rodata")));
+u_int cmmu_shift
+    __attribute__ ((__section__(".rodata")));
 
 /* local prototypes */
 void	m8820x_cmmu_set_reg(int, u_int, int, int, int);
