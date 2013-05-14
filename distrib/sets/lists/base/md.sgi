@@ -87,7 +87,7 @@
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.3
 ./usr/lib/libasn1.so.18.0
-./usr/lib/libc.so.68.1
+./usr/lib/libc.so.68.2
 ./usr/lib/libcom_err.so.18.0
 ./usr/lib/libcrypto.so.22.0
 ./usr/lib/libcurses.so.12.1
