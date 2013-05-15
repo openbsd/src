@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.84 2013/03/25 11:53:54 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.85 2013/05/15 15:34:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -295,8 +295,8 @@ cmd_print(struct cmd *cmd, char *buf, size_t len)
 	size_t	off, used;
 
 	off = xsnprintf(buf, len, "%s ", cmd->entry->name);
-	if (off < len) {
-		used = args_print(cmd->args, buf + off, len - off);
+	if (off + 1 < len) {
+		used = args_print(cmd->args, buf + off, len - off - 1);
 		if (used == 0)
 			off--;
 		else
