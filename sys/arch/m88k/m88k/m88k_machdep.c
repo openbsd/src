@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.55 2013/02/17 18:07:36 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.56 2013/05/15 20:18:04 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -95,7 +95,11 @@ cpuid_t	master_cpu;
 __cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
-struct cpu_info m88k_cpus[MAX_CPUS];
+struct cpu_info m88k_cpus[MAX_CPUS] = {
+#ifndef MULTIPROCESSOR
+	{ .ci_flags = CIF_ALIVE | CIF_PRIMARY }
+#endif
+};
 const struct cmmu_p *cmmu;
 
 /*

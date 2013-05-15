@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.249 2013/05/14 20:30:47 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.250 2013/05/15 20:18:04 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -119,6 +119,9 @@ extern int kernelstart;
 register_t kernel_vbr;
 intrhand_t intr_handlers[NVMEINTR];
 
+static u_int dummy_getipl(void) { return 0; }
+static u_int dummy_setipl(u_int whatever) { return 0; }
+
 /* board dependent pointers */
 void (*md_interrupt_func_ptr)(struct trapframe *);
 #ifdef M88110
@@ -126,9 +129,9 @@ int (*md_nmi_func_ptr)(struct trapframe *);
 void (*md_nmi_wrapup_func_ptr)(struct trapframe *);
 #endif
 void (*md_init_clocks)(void);
-u_int (*md_getipl)(void);
-u_int (*md_setipl)(u_int);
-u_int (*md_raiseipl)(u_int);
+u_int (*md_getipl)(void) = dummy_getipl;
+u_int (*md_setipl)(u_int) = dummy_setipl;
+u_int (*md_raiseipl)(u_int) = dummy_setipl;
 #ifdef MULTIPROCESSOR
 void (*md_send_ipi)(int, cpuid_t);
 #endif
