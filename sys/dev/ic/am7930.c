@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930.c,v 1.3 2011/09/04 20:08:37 miod Exp $	*/
+/*	$OpenBSD: am7930.c,v 1.4 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $	*/
 
 /*
@@ -354,7 +354,8 @@ am7930_commit_settings(void *addr)
 		gr = gx_coeff[level];
 	}
 
-	s = splaudio();
+	/* XXX: this is called before DMA is setup, useful ? */
+	mtx_enter(&audio_lock);
 
 	mmr2 = AM7930_IREAD(sc, AM7930_IREG_MAP_MMR2);
 	if (sc->sc_out_port == AUDIOAMD_SPEAKER_VOL)
@@ -379,7 +380,7 @@ am7930_commit_settings(void *addr)
 	AM7930_IWRITE16(sc, AM7930_IREG_MAP_GR, gr);
 	AM7930_IWRITE16(sc, AM7930_IREG_MAP_GER, ger);
 
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	return 0;
 }

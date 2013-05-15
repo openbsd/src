@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.28 2010/07/26 23:17:19 jakemsr Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.29 2013/05/15 08:29:23 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -644,7 +644,7 @@ ce4231_commit_settings(addr)
 	void *addr;
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
-	int s, tries;
+	int tries;
 	u_int8_t r, fs;
 
 	if (sc->sc_need_commit == 0)
@@ -659,7 +659,8 @@ ce4231_commit_settings(addr)
 		return (0);
 	}
 
-	s = splaudio();
+	/* XXX: this code is called before DMA (this intrs) is stopped */
+	mtx_enter(&audio_lock);
 
 	r = ce4231_read(sc, SP_INTERFACE_CONFIG) | AUTO_CAL_ENABLE;
 	CS_WRITE(sc, AD1848_IADDR, MODE_CHANGE_ENABLE);
@@ -702,7 +703,7 @@ ce4231_commit_settings(addr)
 		printf("%s: timeout waiting for autocalibration\n",
 		    sc->sc_dev.dv_xname);
 
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	sc->sc_need_commit = 0;
 	return (0);
@@ -1242,6 +1243,7 @@ ce4231_pintr(v)
 	struct cs_chdma *chdma = &sc->sc_pchdma;
 	int r = 0;
 
+	mtx_enter(&audio_lock);
 	csr = P_READ(sc, EBDMA_DCSR);
 
 	reg = ce4231_read(sc, CS_IRQ_STATUS);
@@ -1279,7 +1281,7 @@ ce4231_pintr(v)
 			(*sc->sc_pintr)(sc->sc_parg);
 		r = 1;
 	}
-
+	mtx_leave(&audio_lock);
 	return (r);
 }
 
@@ -1294,6 +1296,7 @@ ce4231_cintr(v)
 	struct cs_chdma *chdma = &sc->sc_rchdma;
 	int r = 0;
 
+	mtx_enter(&audio_lock);
 	csr = C_READ(sc, EBDMA_DCSR);
 
 	reg = ce4231_read(sc, CS_IRQ_STATUS);
@@ -1331,7 +1334,7 @@ ce4231_cintr(v)
 			(*sc->sc_rintr)(sc->sc_rarg);
 		r = 1;
 	}
-
+	mtx_leave(&audio_lock);
 	return (r);
 }
 

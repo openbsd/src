@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.33 2011/07/03 15:47:17 matthew Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.34 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -561,11 +561,14 @@ cmpci_intr(void *handle)
 	uint32_t intrstat;
 	uint16_t hwpos;
 
+	mtx_enter(&audio_lock);
 	intrstat = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    CMPCI_REG_INTR_STATUS);
 
-	if (!(intrstat & CMPCI_REG_ANY_INTR))
+	if (!(intrstat & CMPCI_REG_ANY_INTR)) {
+		mtx_leave(&audio_lock);
 		return 0;
+	}
 
 	delay(10);
 
@@ -629,6 +632,7 @@ cmpci_intr(void *handle)
 		mpu_intr(sc->sc_mpudev);
 #endif
 
+	mtx_leave(&audio_lock);
 	return 1;
 }
 
@@ -994,9 +998,8 @@ cmpci_halt_output(void *handle)
 {
 	struct cmpci_softc *sc = handle;
 	uint32_t reg_intr, reg_enable, reg_reset;
-	int s;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	if (sc->sc_play_channel == 1) {
 		sc->sc_ch1.intr = NULL;
 		reg_intr = CMPCI_REG_CH1_INTR_ENABLE;
@@ -1014,8 +1017,7 @@ cmpci_halt_output(void *handle)
 	cmpci_reg_set_4(sc, CMPCI_REG_FUNC_0, reg_reset);
 	delay(10);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, reg_reset);
-	splx(s);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1023,9 +1025,8 @@ int
 cmpci_halt_input(void *handle)
 {
 	struct cmpci_softc *sc = handle;
-	int s;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	sc->sc_ch1.intr = NULL;
 	cmpci_reg_clear_4(sc, CMPCI_REG_INTR_CTRL, CMPCI_REG_CH1_INTR_ENABLE);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_ENABLE);
@@ -1033,8 +1034,7 @@ cmpci_halt_input(void *handle)
 	cmpci_reg_set_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_RESET);
 	delay(10);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_RESET);
-	splx(s);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -2046,10 +2046,11 @@ cmpci_trigger_output(void *handle, void *start, void *end, int blksize,
 	delay(10);
 
 	/* start DMA */
+	mtx_enter(&audio_lock);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, reg_dir); /* PLAY */
 	cmpci_reg_set_4(sc, CMPCI_REG_INTR_CTRL, reg_intr_enable);
 	cmpci_reg_set_4(sc, CMPCI_REG_FUNC_0, reg_enable);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -2090,10 +2091,11 @@ cmpci_trigger_input(void *handle, void *start, void *end, int blksize,
 	delay(10);
 
 	/* start DMA */
+	mtx_enter(&audio_lock);
 	cmpci_reg_set_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_DIR); /* REC */
 	cmpci_reg_set_4(sc, CMPCI_REG_INTR_CTRL, CMPCI_REG_CH1_INTR_ENABLE);
 	cmpci_reg_set_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_ENABLE);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 

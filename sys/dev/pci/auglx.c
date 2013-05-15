@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.8 2011/07/03 15:47:16 matthew Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.9 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -1056,9 +1056,12 @@ auglx_intr(void *v)
 	u_int16_t irq_sts;
 	u_int8_t bm_sts;
 
+	mtx_enter(&audio_lock);
 	irq_sts = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ACC_IRQ_STATUS);
-	if (irq_sts == 0)
+	if (irq_sts == 0) {
+		mtx_leave(&audio_lock);
 		return 0;
+	}
 
 	if (irq_sts & BM0_IRQ_STS) {
 		bm_sts = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
@@ -1079,8 +1082,10 @@ auglx_intr(void *v)
 	} else {
 		DPRINTF(AUGLX_DBG_IRQ, ("%s: stray intr, status = 0x%04x\n",
 		    sc->sc_dev.dv_xname, irq_sts));
+		mtx_leave(&audio_lock);
 		return -1;
 	}
+	mtx_leave(&audio_lock);
 	return 1;
 }
 
@@ -1134,12 +1139,14 @@ auglx_trigger_output(void *v, void *start, void *end, int blksize,
 	sc->bm0.intr = intr;
 	sc->bm0.arg = arg;
 
+	mtx_enter(&audio_lock);
 	/* Program the BM0 PRD register */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ACC_BM0_PRD,
 	    sc->bm0.sc_prd->dm_segs[0].ds_addr);
 	/* Start Audio Bus Master 0 */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ACC_BM0_CMD,
 	    BMx_CMD_BM_CTL_EN);
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1193,12 +1200,14 @@ auglx_trigger_input(void *v, void *start, void *end, int blksize,
 	sc->bm1.intr = intr;
 	sc->bm1.arg = arg;
 
-	/* Program the BM1 PRD register */
+	mtx_enter(&audio_lock);
+	/* Program the BM1 PRD register */	
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ACC_BM1_PRD,
 	    sc->bm1.sc_prd->dm_segs[0].ds_addr);
 	/* Start Audio Bus Master 0 */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ACC_BM1_CMD,
 	    BMx_CMD_RW | BMx_CMD_BM_CTL_EN);
+	mtx_leave(&audio_lock);
 	return 0;
 }
 

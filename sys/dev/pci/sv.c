@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.27 2010/07/15 03:43:11 jakemsr Exp $ */
+/*      $OpenBSD: sv.c,v 1.28 2013/05/15 08:29:24 ratchov Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -431,10 +431,13 @@ sv_intr(p)
   struct sv_softc *sc = p;
   u_int8_t intr;
 
+  mtx_enter(&audio_lock);
   intr = sv_read(sc, SV_CODEC_STATUS);
 
-  if (!(intr & (SV_INTSTATUS_DMAA | SV_INTSTATUS_DMAC))) 
+  if (!(intr & (SV_INTSTATUS_DMAA | SV_INTSTATUS_DMAC))) {
+    mtx_leave(&audio_lock);
     return (0);
+  }
 
   if (intr & SV_INTSTATUS_DMAA) {
     if (sc->sc_pintr)
@@ -445,7 +448,7 @@ sv_intr(p)
     if (sc->sc_rintr)
       sc->sc_rintr(sc->sc_rarg);
   }
-
+  mtx_leave(&audio_lock);
   return (1);
 }
 
@@ -849,7 +852,7 @@ sv_dma_init_output(addr, buf, cc)
 	struct sv_dma *p;
 	int dma_count;
 
-	DPRINTF(("eap: dma start loop output buf=%p cc=%d\n", buf, cc));
+	DPRINTF(("sv: dma start loop output buf=%p cc=%d\n", buf, cc));
         for (p = sc->sc_dmas; p && KERNADDR(p) != buf; p = p->next)
 		;
 	if (!p) {
@@ -883,7 +886,6 @@ sv_dma_output(addr, p, cc, intr, arg)
 	DPRINTFN(1, 
                  ("sv_dma_output: sc=%p buf=%p cc=%d intr=%p(%p)\n", 
                   addr, p, cc, intr, arg));
-
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 	if (!(sc->sc_enable & SV_PLAY_ENABLE)) {
@@ -936,12 +938,13 @@ sv_halt_out_dma(addr)
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
 	
-        DPRINTF(("eap: sv_halt_out_dma\n"));
+        DPRINTF(("sv: sv_halt_out_dma\n"));
+	mtx_enter(&audio_lock);
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
 	mode &= ~SV_PLAY_ENABLE;
 	sc->sc_enable &= ~SV_PLAY_ENABLE;
 	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode);
-
+	mtx_leave(&audio_lock);
         return (0);
 }
 
@@ -952,12 +955,13 @@ sv_halt_in_dma(addr)
 	struct sv_softc *sc = addr;
 	u_int8_t mode;
     
-        DPRINTF(("eap: sv_halt_in_dma\n"));
+        DPRINTF(("sv: sv_halt_in_dma\n"));
+	mtx_enter(&audio_lock);
 	mode = sv_read_indirect(sc, SV_PLAY_RECORD_ENABLE);
 	mode &= ~SV_RECORD_ENABLE;
 	sc->sc_enable &= ~SV_RECORD_ENABLE;
 	sv_write_indirect(sc, SV_PLAY_RECORD_ENABLE, mode);
-
+	mtx_leave(&audio_lock);
         return (0);
 }
 

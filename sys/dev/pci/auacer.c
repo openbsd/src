@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.12 2011/07/03 15:47:16 matthew Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.13 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -704,7 +704,9 @@ auacer_halt_output(void *v)
 	struct auacer_softc *sc = v;
 
 	DPRINTF(ALI_DEBUG_DMA, ("auacer_halt_output\n"));
+	mtx_enter(&audio_lock);
 	auacer_halt(sc, &sc->sc_pcmo);
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -895,6 +897,7 @@ auacer_intr(void *v)
 	struct auacer_softc *sc = v;
 	int ret, intrs;
 
+	mtx_enter(&audio_lock);
 	intrs = READ4(sc, ALI_INTERRUPTSR);
 	DPRINTF(ALI_DEBUG_INTR, ("auacer_intr: intrs=0x%x\n", intrs));
 
@@ -903,7 +906,7 @@ auacer_intr(void *v)
 		auacer_upd_chan(sc, &sc->sc_pcmo);
 		ret++;
 	}
-
+	mtx_leave(&audio_lock);
 	return ret != 0;
 }
 
@@ -962,9 +965,10 @@ auacer_trigger_output(void *v, void *start, void *end, int blksize,
 	}
 
 	size = (char *)end - (char *)start;
+	mtx_enter(&audio_lock);
 	auacer_setup_chan(sc, &sc->sc_pcmo, DMAADDR(p), size, blksize,
 			  intr, arg);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 

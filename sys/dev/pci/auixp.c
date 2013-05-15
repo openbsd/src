@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.29 2011/07/03 15:47:16 matthew Exp $ */
+/* $OpenBSD: auixp.c,v 1.30 2013/05/15 08:29:24 ratchov Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -957,10 +957,12 @@ auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 	auixp_program_dma_chain(sc, chain_dma);
 
 	/* mark we are now able to run now */
+	mtx_enter(&audio_lock);
 	chain_dma->running = 1;
 
 	/* update bus-flags; XXX programs more flags XXX */
 	auixp_update_busbusy(sc);
+	mtx_leave(&audio_lock);
 
 	/* callbacks happen in interrupt routine */
 	return 0;
@@ -975,6 +977,7 @@ auixp_halt_output(void *hdl)
 	struct auixp_softc *sc;
 	struct auixp_dma   *dma;
 
+	mtx_enter(&audio_lock);
 	co  = (struct auixp_codec *) hdl;
 	sc  = co->sc;
 	dma = sc->sc_output_dma;
@@ -982,7 +985,7 @@ auixp_halt_output(void *hdl)
 
 	dma->running = 0;
 	auixp_update_busbusy(sc);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1032,10 +1035,12 @@ auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 	auixp_program_dma_chain(sc, chain_dma);
 
 	/* mark we are now able to run now */
+	mtx_enter(&audio_lock);
 	chain_dma->running = 1;
 
 	/* update bus-flags; XXX programs more flags XXX */
 	auixp_update_busbusy(sc);
+	mtx_leave(&audio_lock);
 
 	/* callbacks happen in interrupt routine */
 	return 0;
@@ -1050,6 +1055,7 @@ auixp_halt_input(void *hdl)
 	struct auixp_softc *sc;
 	struct auixp_dma   *dma;
 
+	mtx_enter(&audio_lock);
 	co = (struct auixp_codec *) hdl;
 	sc = co->sc;
 	dma = sc->sc_input_dma;
@@ -1058,6 +1064,7 @@ auixp_halt_input(void *hdl)
 	dma->running = 0;
 	auixp_update_busbusy(sc);
 
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1079,6 +1086,7 @@ auixp_intr(void *softc)
 	u_int32_t status, enable, detected_codecs;
 	int ret;
 
+	mtx_enter(&audio_lock);
 	sc = softc;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1086,8 +1094,10 @@ auixp_intr(void *softc)
 	/* get status from the interrupt status register */
 	status = bus_space_read_4(iot, ioh, ATI_REG_ISR);
 
-	if (status == 0)
+	if (status == 0) {
+		mtx_leave(&audio_lock);
 		return 0;
+	}
 
 	DPRINTF(("%s: (status = %x)\n", sc->sc_dev.dv_xname, status));
 
@@ -1127,7 +1137,7 @@ auixp_intr(void *softc)
 
 	/* acknowledge interrupt sources */
 	bus_space_write_4(iot, ioh, ATI_REG_ISR, status);
-
+	mtx_leave(&audio_lock);
 	return ret;
 }
 

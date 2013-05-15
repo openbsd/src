@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.27 2011/04/03 15:36:02 jasper Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.28 2013/05/15 08:29:24 ratchov Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -376,9 +376,11 @@ cs4281_intr(p)
 	u_int32_t intr, val;
 	char *empty_dma;
 	
+	mtx_enter(&audio_lock);
 	intr = BA0READ4(sc, CS4281_HISR);
 	if (!(intr & (HISR_DMA0 | HISR_DMA1 | HISR_MIDI))) {
 		BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
+		mtx_leave(&audio_lock);
 		return (0);
 	}
 	DPRINTF(("cs4281_intr:"));
@@ -429,6 +431,7 @@ cs4281_intr(p)
 		}
 	}
 	DPRINTF(("\n"));
+	mtx_leave(&audio_lock);
 	return (1);
 }
 
@@ -638,6 +641,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 		;
 	if (p == NULL) {
 		printf("cs4281_trigger_output: bad addr %p\n", start);
+		mtx_leave(&audio_lock);
 		return (EINVAL);
 	}
 
@@ -686,6 +690,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	cs4281_set_dac_rate(sc, param->sample_rate);
 
 	/* start DMA */
+	mtx_enter(&audio_lock);
 	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) & ~DCRn_MSK);
 	/* Enable interrupts */
 	BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
@@ -703,7 +708,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	DPRINTF(("SRCSA=0x%08x(expected 0x0b0a0100)\n", BA0READ4(sc, CS4281_SRCSA)));
 	DPRINTF(("SSPM&SSPM_PSRCEN =0x%08x(expected 0x00000010)\n",
 		 BA0READ4(sc, CS4281_SSPM) & SSPM_PSRCEN));
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -779,6 +784,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	cs4281_set_adc_rate(sc, param->sample_rate);
 
 	/* Start DMA */
+	mtx_enter(&audio_lock);
 	BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) & ~DCRn_MSK);
 	/* Enable interrupts */
 	BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
@@ -787,7 +793,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	DPRINTF(("HIMR=0x%08x\n", BA0READ4(sc, CS4281_HIMR)));
 	DPRINTF(("DMR1=0x%08x\n", BA0READ4(sc, CS4281_DMR1)));
 	DPRINTF(("DCR1=0x%08x\n", BA0READ4(sc, CS4281_DCR1)));
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 

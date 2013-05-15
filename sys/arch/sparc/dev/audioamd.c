@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioamd.c,v 1.1 2011/09/03 20:04:02 miod Exp $	*/
+/*	$OpenBSD: audioamd.c,v 1.2 2013/05/15 08:29:23 ratchov Exp $	*/
 /*	$NetBSD: audioamd.c,v 1.26 2011/06/04 01:27:57 tsutsui Exp $	*/
 
 /*
@@ -249,6 +249,9 @@ audioamd_onclose(struct am7930_softc *sc)
 	am7930_halt_output(sc);
 }
 
+/*
+ * called in interrupt code-path, don't lock
+ */
 int
 audioamd_start_output(void *addr, void *p, int cc,
     void (*intr)(void *), void *arg)
@@ -270,6 +273,9 @@ audioamd_start_output(void *addr, void *p, int cc,
 	return 0;
 }
 
+/*
+ * called in interrupt code-path, don't lock
+ */
 int
 audioamd_start_input(void *addr, void *p, int cc,
     void (*intr)(void *), void *arg)
@@ -347,12 +353,12 @@ am7930swintr(void *v)
 
 	au = &sc->sc_au;
 	dor = dow = 0;
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	if (au->au_rdata > au->au_rend && sc->sc_rintr != NULL)
 		dor = 1;
 	if (au->au_pdata > au->au_pend && sc->sc_pintr != NULL)
 		dow = 1;
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	if (dor != 0)
 		(*sc->sc_rintr)(sc->sc_rarg);

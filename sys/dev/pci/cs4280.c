@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.41 2012/01/11 16:22:33 dhill Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.42 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -680,6 +680,7 @@ cs4280_intr(void *p)
 	char * empty_dma;
 	int handled = 0;
 
+	mtx_enter(&audio_lock);
 	/* grab interrupt register then clear it */
 	intr = BA0READ4(sc, CS4280_HISR);
 	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
@@ -812,7 +813,7 @@ cs4280_intr(void *p)
 		DPRINTF(("\n"));
 	}
 #endif
-
+	mtx_leave(&audio_lock);
 	return handled;
 }
 
@@ -1007,6 +1008,7 @@ cs4280_close(void *addr)
 {
 	struct cs4280_softc *sc = addr;
 	
+	/* XXX: already called in audio_close() */
 	cs4280_halt_output(sc);
 	cs4280_halt_input(sc);
 	
@@ -1257,11 +1259,13 @@ cs4280_halt_output(void *addr)
 	struct cs4280_softc *sc = addr;
 	u_int32_t mem;
 	
+	mtx_enter(&audio_lock);
 	mem = BA1READ4(sc, CS4280_PCTL);
 	BA1WRITE4(sc, CS4280_PCTL, mem & ~PCTL_MASK);
 #ifdef DIAGNOSTIC
 	sc->sc_prun = 0;
 #endif
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1271,11 +1275,13 @@ cs4280_halt_input(void *addr)
 	struct cs4280_softc *sc = addr;
 	u_int32_t mem;
 
+	mtx_enter(&audio_lock);
 	mem = BA1READ4(sc, CS4280_CCTL);
 	BA1WRITE4(sc, CS4280_CCTL, mem & ~CCTL_MASK);
 #ifdef DIAGNOSTIC
 	sc->sc_rrun = 0;
 #endif
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1425,7 +1431,6 @@ cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 		printf("cs4280_trigger_output: already running\n");
 	sc->sc_prun = 1;
 #endif
-
 	DPRINTF(("cs4280_trigger_output: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
 	sc->sc_pintr = intr;
@@ -1473,6 +1478,7 @@ cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 	}
 
 	/* initiate playback dma */
+	mtx_enter(&audio_lock);
 	BA1WRITE4(sc, CS4280_PBA, DMAADDR(p));
 
 	/* set PFIE */
@@ -1497,6 +1503,7 @@ cs4280_trigger_output(void *addr, void *start, void *end, int blksize,
 	pctl = BA1READ4(sc, CS4280_PCTL) & ~PCTL_MASK;
 	pctl |= sc->pctl;
 	BA1WRITE4(sc, CS4280_PCTL, pctl);
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1554,6 +1561,7 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 	sc->sc_rbuf = KERNADDR(p);
 	
 	/* initiate capture dma */
+	mtx_enter(&audio_lock);
 	BA1WRITE4(sc, CS4280_CBA, DMAADDR(p));
 
 	/* set CIE */
@@ -1565,6 +1573,7 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 	cctl = BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK;
 	cctl |= sc->cctl;
 	BA1WRITE4(sc, CS4280_CCTL, cctl);
+	mtx_leave(&audio_lock);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.32 2012/03/30 08:18:19 ratchov Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.33 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -412,14 +412,13 @@ sbdsp_mix_write(sc, mixerport, val)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int s;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	bus_space_write_1(iot, ioh, SBP_MIXER_ADDR, mixerport);
 	delay(20);
 	bus_space_write_1(iot, ioh, SBP_MIXER_DATA, val);
 	delay(30);
-	splx(s);
+	mtx_leave(&audio_lock);
 }
 
 int
@@ -430,14 +429,13 @@ sbdsp_mix_read(sc, mixerport)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int val;
-	int s;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	bus_space_write_1(iot, ioh, SBP_MIXER_ADDR, mixerport);
 	delay(20);
 	val = bus_space_read_1(iot, ioh, SBP_MIXER_DATA);
 	delay(30);
-	splx(s);
+	mtx_leave(&audio_lock);
 	return val;
 }
 
@@ -1191,7 +1189,9 @@ sbdsp_haltdma(addr)
 
 	DPRINTF(("sbdsp_haltdma: sc=%p\n", sc));
 
+	mtx_enter(&audio_lock);
 	sbdsp_reset(sc);
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1236,6 +1236,7 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int stereo = param->channels == 2;
 	int width = param->precision * param->factor;
 	int filter;
+	int rc;
 
 #ifdef DIAGNOSTIC
 	if (stereo && (blksize & 1)) {
@@ -1251,7 +1252,7 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 #ifdef DIAGNOSTIC
 		if (sc->sc_i.dmachan != sc->sc_drq8) {
 			printf("sbdsp_trigger_input: width=%d bad chan %d\n",
-			    width, sc->sc_i.dmachan);
+			    width, sc->sc_i.dmachan);			
 			return (EIO);
 		}
 #endif
@@ -1299,10 +1300,12 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	DPRINTF(("sbdsp: dma start loop input start=%p end=%p chan=%d\n",
 	    start, end, sc->sc_i.dmachan));
+	mtx_enter(&audio_lock);
 	isa_dmastart(sc->sc_isa, sc->sc_i.dmachan, start, (char *)end -
 	    (char *)start, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
-
-	return sbdsp_block_input(addr);
+	rc = sbdsp_block_input(addr);
+	mtx_leave(&audio_lock);
+	return rc;
 }
 
 int
@@ -1370,6 +1373,7 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int stereo = param->channels == 2;
 	int width = param->precision * param->factor;
 	int cmd;
+	int rc;
 
 #ifdef DIAGNOSTIC
 	if (stereo && (blksize & 1)) {
@@ -1434,10 +1438,12 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	DPRINTF(("sbdsp: dma start loop output start=%p end=%p chan=%d\n",
 	    start, end, sc->sc_o.dmachan));
+	mtx_enter(&audio_lock);
 	isa_dmastart(sc->sc_isa, sc->sc_o.dmachan, start, (char *)end -
 	    (char *)start, NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
-
-	return sbdsp_block_output(addr);
+	rc = sbdsp_block_output(addr);
+	mtx_leave(&audio_lock);
+	return rc;
 }
 
 int
@@ -1509,12 +1515,19 @@ sbdsp_intr(arg)
 	struct sbdsp_softc *sc = arg;
 	u_char irq;
 
+	mtx_enter(&audio_lock);
 	DPRINTFN(2, ("sbdsp_intr: intr8=%p, intr16=%p\n",
 		   sc->sc_intr8, sc->sc_intr16));
-	if (ISSB16CLASS(sc)) {
-		irq = sbdsp_mix_read(sc, SBP_IRQ_STATUS);
+	if (ISSB16CLASS(sc)) {		
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    SBP_MIXER_ADDR, SBP_IRQ_STATUS);
+		delay(20);
+		irq = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    SBP_MIXER_DATA);
+		delay(30);
 		if ((irq & (SBP_IRQ_DMA8 | SBP_IRQ_DMA16 | SBP_IRQ_MPU401)) == 0) {
 			DPRINTF(("sbdsp_intr: Spurious interrupt 0x%x\n", irq));
+			mtx_leave(&audio_lock);
 			return 0;
 		}
 	} else {
@@ -1541,6 +1554,7 @@ sbdsp_intr(arg)
 		mpu_intr(&sc->sc_mpu_sc);
 	}
 #endif
+	mtx_leave(&audio_lock);
 	return 1;
 }
 

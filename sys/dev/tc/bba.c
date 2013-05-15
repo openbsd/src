@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.2 2011/09/05 16:54:41 miod Exp $	*/
+/*	$OpenBSD: bba.c,v 1.3 2013/05/15 08:29:26 ratchov Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -377,6 +377,7 @@ bba_halt_output(void *v)
 	struct bba_dma_state *d;
 	uint32_t ssr;
 
+	mtx_enter(&audio_lock);
 	d = &sc->sc_tx_dma_state;
 	/* disable any DMA */
 	ssr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
@@ -384,6 +385,7 @@ bba_halt_output(void *v)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_X_DMAPTR, 0);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_X_NEXTPTR, 0);
+	mtx_leave(&audio_lock);
 
 	if (d->active) {
 		bus_dmamap_sync(sc->sc_dmat, d->dmam, 0, d->size,
@@ -403,6 +405,7 @@ bba_halt_input(void *v)
 	struct bba_dma_state *d;
 	uint32_t ssr;
 
+	mtx_enter(&audio_lock);
 	d = &sc->sc_rx_dma_state;
 	/* disable any DMA */
 	ssr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
@@ -410,6 +413,7 @@ bba_halt_input(void *v)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_R_DMAPTR, 0);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_R_NEXTPTR, 0);
+	mtx_leave(&audio_lock);
 
 	if (d->active) {
 		bus_dmamap_sync(sc->sc_dmat, d->dmam, 0, d->size,
@@ -481,11 +485,12 @@ bba_trigger_output(void *v, void *start, void *end, int blksize,
 	    IOASIC_DMA_ADDR(nphys));
 
 	/* kick off DMA */
+	mtx_enter(&audio_lock);
 	ssr |= IOASIC_CSR_DMAEN_ISDN_T;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
 	d->active = 1;
-
+	mtx_leave(&audio_lock);
 	return 0;
 
 bad:
@@ -548,11 +553,12 @@ bba_trigger_input(void *v, void *start, void *end, int blksize,
 	    IOASIC_DMA_ADDR(nphys));
 
 	/* kick off DMA */
+	mtx_enter(&audio_lock);
 	ssr |= IOASIC_CSR_DMAEN_ISDN_R;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
 	d->active = 1;
-
+	mtx_leave(&audio_lock);
 	return 0;
 
 bad:
@@ -569,9 +575,9 @@ bba_intr(void *v)
 	struct bba_softc *sc = v;
 	struct bba_dma_state *d;
 	tc_addr_t nphys;
-	int s, mask;
+	int mask;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 
 	mask = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
@@ -594,7 +600,7 @@ bba_intr(void *v)
 			(*d->intr)(d->intr_arg);
 	}
 
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.41 2012/03/03 20:21:39 miod Exp $	*/
+/*	$OpenBSD: yds.c,v 1.42 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -908,6 +908,7 @@ yds_intr(void *p)
 	struct yds_softc *sc = p;
 	u_int status;
 
+	mtx_enter(&audio_lock);
 	status = YREAD4(sc, YDS_STATUS);
 	DPRINTFN(1, ("yds_intr: status=%08x\n", status));
 	if ((status & (YDS_STAT_INT|YDS_STAT_TINT)) == 0) {
@@ -915,6 +916,7 @@ yds_intr(void *p)
 		if (sc->sc_mpu)
 			return mpu_intr(sc->sc_mpu);
 #endif
+		mtx_leave(&audio_lock);
 		return 0;
 	}
 
@@ -1013,7 +1015,7 @@ yds_intr(void *p)
 			}
 		}
 	}
-
+	mtx_leave(&audio_lock);
 	return 1;
 }
 
@@ -1317,11 +1319,11 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 	int i;
 	int p44, channels;
 
+	mtx_enter(&audio_lock);
 #ifdef DIAGNOSTIC
 	if (sc->sc_play.intr)
 		panic("yds_trigger_output: already running");
 #endif
-
 	sc->sc_play.intr = intr;
 	sc->sc_play.intr_arg = arg;
 	sc->sc_play.offset = 0;
@@ -1333,6 +1335,7 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 	p = yds_find_dma(sc, start);
 	if (!p) {
 		printf("yds_trigger_output: bad addr %p\n", start);
+		mtx_leave(&audio_lock);
 		return (EINVAL);
 	}
 	sc->sc_play.dma = p;
@@ -1434,7 +1437,7 @@ yds_trigger_output(void *addr, void *start, void *end, int blksize,
 	/* HERE WE GO!! */
 	YWRITE4(sc, YDS_MODE,
 		YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV | YDS_MODE_ACTV2);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 #undef P44
@@ -1450,6 +1453,7 @@ yds_trigger_input(void *addr, void *start, void *end, int blksize,
 	bus_addr_t s;
 	size_t l;
 
+	mtx_enter(&audio_lock);
 #ifdef DIAGNOSTIC
 	if (sc->sc_rec.intr)
 		panic("yds_trigger_input: already running");
@@ -1468,6 +1472,7 @@ yds_trigger_input(void *addr, void *start, void *end, int blksize,
 	p = yds_find_dma(sc, start);
 	if (!p) {
 		printf("yds_trigger_input: bad addr %p\n", start);
+		mtx_leave(&audio_lock);
 		return (EINVAL);
 	}
 	sc->sc_rec.dma = p;
@@ -1522,7 +1527,7 @@ yds_trigger_input(void *addr, void *start, void *end, int blksize,
 	/* HERE WE GO!! */
 	YWRITE4(sc, YDS_MODE,
 		YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV | YDS_MODE_ACTV2);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1552,6 +1557,7 @@ yds_halt_output(void *addr)
 	struct yds_softc *sc = addr;
 
 	DPRINTF(("yds: yds_halt_output\n"));
+	mtx_enter(&audio_lock);
 	if (sc->sc_play.intr) {
 		sc->sc_play.intr = 0;
 		/* Sync play slot control data */
@@ -1569,7 +1575,7 @@ yds_halt_output(void *addr)
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_play.dma->map,
 				0, sc->sc_play.length, BUS_DMASYNC_POSTWRITE);
 	}
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1579,6 +1585,7 @@ yds_halt_input(void *addr)
 	struct yds_softc *sc = addr;
 
 	DPRINTF(("yds: yds_halt_input\n"));
+	mtx_enter(&audio_lock);
 	if (sc->sc_rec.intr) {
 		/* Stop the rec slot operation */
 		YWRITE4(sc, YDS_MAPOF_REC, 0);
@@ -1594,7 +1601,7 @@ yds_halt_input(void *addr)
 				0, sc->sc_rec.length, BUS_DMASYNC_POSTREAD);
 	}
 	sc->sc_rec.intr = NULL;
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.114 2011/07/03 15:47:16 matthew Exp $	*/
+/*	$OpenBSD: audio.c,v 1.115 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -32,33 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
- * This is a (partially) SunOS-compatible /dev/audio driver for NetBSD.
- *
- * This code tries to do something half-way sensible with
- * half-duplex hardware, such as with the SoundBlaster hardware.  With
- * half-duplex hardware allowing O_RDWR access doesn't really make
- * sense.  However, closing and opening the device to "turn around the
- * line" is relatively expensive and costs a card reset (which can
- * take some time, at least for the SoundBlaster hardware).  Instead
- * we allow O_RDWR access, and provide an ioctl to set the "mode",
- * i.e. playing or recording.
- *
- * If you write to a half-duplex device in record mode, the data is
- * tossed.  If you read from the device in play mode, you get silence
- * filled buffers at the rate at which samples are naturally
- * generated.
- *
- * If you try to set both play and record mode on a half-duplex
- * device, playing takes precedence.
- */
-
-/*
- * Todo:
- * - Add softaudio() isr processing for wakeup, poll, signals,
- *   and silence fill.
  */
 
 #include <sys/param.h>
@@ -247,6 +220,22 @@ struct filterops audioread_filtops =
 int wskbd_set_mixervolume(long, int);
 #endif
 
+/*
+ * This mutex protects data structures (including registers on the
+ * sound-card) that are manipulated by both the interrupt handler and
+ * syscall code-paths.
+ *
+ * Note that driver methods may sleep (e.g. in malloc); consequently the
+ * audio layer calls them with the mutex unlocked. Driver methods are
+ * responsible for locking the mutex when they manipulate data used by
+ * the interrupt handler and interrupts may occur.
+ *
+ * Similarly, the driver is responsible for locking the mutex in its
+ * interrupt handler and to call the audio layer call-backs (i.e.
+ * audio_{p,r}int()) with the mutex locked.
+ */
+struct mutex audio_lock = MUTEX_INITIALIZER(IPL_AUDIO);
+
 int
 audioprobe(struct device *parent, void *match, void *aux)
 {
@@ -392,7 +381,6 @@ audiodetach(struct device *self, int flags)
 {
 	struct audio_softc *sc = (struct audio_softc *)self;
 	int maj, mn;
-	int s;
 
 	DPRINTF(("audio_detach: sc=%p flags=%d\n", sc, flags));
 
@@ -402,13 +390,13 @@ audiodetach(struct device *self, int flags)
 	wakeup(&sc->sc_quiesce);
 	wakeup(&sc->sc_wchan);
 	wakeup(&sc->sc_rchan);
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	if (--sc->sc_refcnt >= 0) {
-		if (tsleep(&sc->sc_refcnt, PZERO, "auddet", hz * 120))
+		if (msleep(&sc->sc_refcnt, &audio_lock, PZERO, "auddet", hz * 120))
 			printf("audiodetach: %s didn't detach\n",
 			    sc->dev.dv_xname);
 	}
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	/* free resources */
 	audio_free_ring(sc, &sc->sc_pr);
@@ -942,7 +930,7 @@ audio_sleep_timo(int *chan, char *label, int timo)
 	DPRINTFN(3, ("audio_sleep_timo: chan=%p, label=%s, timo=%d\n",
 	    chan, label, timo));
 	*chan = 1;
-	st = tsleep(chan, PWAIT | PCATCH, label, timo);
+	st = msleep(chan, &audio_lock, PWAIT | PCATCH, label, timo);
 	*chan = 0;
 #ifdef AUDIO_DEBUG
 	if (st != 0)
@@ -957,7 +945,7 @@ audio_sleep(int *chan, char *label)
 	return audio_sleep_timo(chan, label, 0);
 }
 
-/* call at splaudio() */
+/* call with audio_lock */
 static __inline void
 audio_wakeup(int *chan)
 {
@@ -1083,12 +1071,10 @@ bad:
 void
 audio_init_record(struct audio_softc *sc)
 {
-	int s = splaudio();
-
+	MUTEX_ASSERT_UNLOCKED(&audio_lock);
 	if (sc->hw_if->speaker_ctl &&
 	    (!sc->sc_full_duplex || (sc->sc_mode & AUMODE_PLAY) == 0))
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_OFF);
-	splx(s);
 }
 
 /*
@@ -1097,12 +1083,10 @@ audio_init_record(struct audio_softc *sc)
 void
 audio_init_play(struct audio_softc *sc)
 {
-	int s = splaudio();
-
+	MUTEX_ASSERT_UNLOCKED(&audio_lock);
 	sc->sc_wstamp = sc->sc_pr.stamp;
 	if (sc->hw_if->speaker_ctl)
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_ON);
-	splx(s);
 }
 
 int
@@ -1110,8 +1094,8 @@ audio_drain(struct audio_softc *sc)
 {
 	int error, drops;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
-	int s;
 
+	MUTEX_ASSERT_UNLOCKED(&audio_lock);
 	DPRINTF(("audio_drain: enter busy=%d used=%d\n",
 	    sc->sc_pbus, sc->sc_pr.used));
 	if (sc->sc_pr.mmapped || sc->sc_pr.used <= 0)
@@ -1133,11 +1117,9 @@ audio_drain(struct audio_softc *sc)
 		inp += cc;
 		if (inp >= cb->end)
 			inp = cb->start;
-		s = splaudio();
 		cb->used += cc;
 		cb->inp = inp;
 		error = audiostartp(sc);
-		splx(s);
 		if (error)
 			return error;
 	}
@@ -1147,20 +1129,20 @@ audio_drain(struct audio_softc *sc)
 	 * XXX This should be done some other way to avoid
 	 * playing silence.
 	 */
+	mtx_enter(&audio_lock);
 	drops = cb->drops;
 	error = 0;
-	s = splaudio();
 	while (cb->drops == drops && !error) {
 		DPRINTF(("audio_drain: used=%d, drops=%ld\n", sc->sc_pr.used, cb->drops));
 		/*
 		 * When the process is exiting, it ignores all signals and
 		 * we can't interrupt this sleep, so we set a timeout just in case.
 		 */
-		error = audio_sleep_timo(&sc->sc_wchan, "aud_dr", 30*hz);
+		error = audio_sleep_timo(&sc->sc_wchan, "aud_dr", 30 * hz);
 		if (sc->sc_dying)
 			error = EIO;
 	}
-	splx(s);
+	mtx_leave(&audio_lock);
 	return error;
 }
 
@@ -1169,10 +1151,12 @@ audio_quiesce(struct audio_softc *sc)
 {
 	sc->sc_quiesce = AUDIO_QUIESCE_START;
 
+	mtx_enter(&audio_lock);
 	while (sc->sc_pbus && !sc->sc_pqui)
 		audio_sleep(&sc->sc_wchan, "audpqui");
 	while (sc->sc_rbus && !sc->sc_rqui)
 		audio_sleep(&sc->sc_rchan, "audrqui");
+	mtx_leave(&audio_lock);
 
 	sc->sc_quiesce = AUDIO_QUIESCE_SILENT;
 
@@ -1255,11 +1239,10 @@ audio_close(dev_t dev, int flags, int ifmt, struct proc *p)
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct audio_hw_if *hw = sc->hw_if;
-	int s;
 
 	DPRINTF(("audio_close: unit=%d flags=0x%x\n", unit, flags));
 
-	s = splaudio();
+	
 	/* Stop recording. */
 	if ((flags & FREAD) && sc->sc_rbus) {
 		/*
@@ -1267,21 +1250,30 @@ audio_close(dev_t dev, int flags, int ifmt, struct proc *p)
 		 * to halt input and output so don't halt input if
 		 * in full duplex mode.  These drivers should be fixed.
 		 */
-		if (!sc->sc_full_duplex || sc->hw_if->halt_input != sc->hw_if->halt_output)
+		if (!sc->sc_full_duplex ||
+		    sc->hw_if->halt_input != sc->hw_if->halt_output) {
 			sc->hw_if->halt_input(sc->hw_hdl);
+		}
 		sc->sc_rbus = 0;
 	}
-	/*
-	 * Block until output drains, but allow ^C interrupt.
-	 */
-	sc->sc_pr.usedlow = sc->sc_pr.blksize;	/* avoid excessive wakeups */
+
 	/*
 	 * If there is pending output, let it drain (unless
 	 * the output is paused).
 	 */
 	if ((flags & FWRITE) && sc->sc_pbus) {
-		if (!sc->sc_pr.pause && !audio_drain(sc) && hw->drain)
-			(void)hw->drain(sc->hw_hdl);
+		/*
+		 * Block until output drains, but allow ^C interrupt.
+		 * XXX: drain is never used, remove it!
+		 */
+		mtx_enter(&audio_lock);
+		/* avoid excessive wakeups */
+		sc->sc_pr.usedlow = sc->sc_pr.blksize;
+		mtx_leave(&audio_lock);
+		if (!sc->sc_pr.pause) {
+			if (!audio_drain(sc) && hw->drain)
+				(void)hw->drain(sc->hw_hdl);
+		}
 		sc->hw_if->halt_output(sc->hw_hdl);
 		sc->sc_pbus = 0;
 	}
@@ -1304,9 +1296,7 @@ audio_close(dev_t dev, int flags, int ifmt, struct proc *p)
 
 	sc->sc_async_audio = 0;
 	sc->sc_full_duplex = 0;
-	splx(s);
 	DPRINTF(("audio_close: done\n"));
-
 	return (0);
 }
 
@@ -1317,7 +1307,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct audio_ringbuffer *cb = &sc->sc_rr;
 	u_char *outp;
-	int error, s, cc, n, resid;
+	int error, cc, n, resid;
 
 	if (cb->mmapped)
 		return EINVAL;
@@ -1341,7 +1331,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 	if (!sc->sc_full_duplex &&
 	    (sc->sc_mode & AUMODE_PLAY)) {
 		while (uio->uio_resid > 0 && !error) {
-			s = splaudio();
+			mtx_enter(&audio_lock);
 			for(;;) {
 				cc = sc->sc_pr.stamp - sc->sc_wstamp;
 				if (cc > 0)
@@ -1349,18 +1339,18 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 				DPRINTF(("audio_read: stamp=%lu, wstamp=%lu\n",
 					 sc->sc_pr.stamp, sc->sc_wstamp));
 				if (ioflag & IO_NDELAY) {
-					splx(s);
+					mtx_leave(&audio_lock);
 					return EWOULDBLOCK;
 				}
 				error = audio_sleep(&sc->sc_rchan, "aud_hr");
 				if (sc->sc_dying)
 					error = EIO;
 				if (error) {
-					splx(s);
+					mtx_leave(&audio_lock);
 					return error;
 				}
 			}
-			splx(s);
+			mtx_leave(&audio_lock);
 
 			if (uio->uio_resid < cc / sc->sc_rparams.factor)
 				cc = uio->uio_resid * sc->sc_rparams.factor;
@@ -1372,17 +1362,18 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 		return (error);
 	}
 	while (uio->uio_resid > 0) {
-		s = splaudio();
+		mtx_enter(&audio_lock);
 		while (cb->used <= 0) {
 			if (!sc->sc_rbus && !sc->sc_rr.pause) {
+				mtx_leave(&audio_lock);
 				error = audiostartr(sc);
-				if (error) {
-					splx(s);
+				if (error)
 					return error;
-				}
+				mtx_enter(&audio_lock);
+				continue;
 			}
 			if (ioflag & IO_NDELAY) {
-				splx(s);
+				mtx_leave(&audio_lock);
 				return (EWOULDBLOCK);
 			}
 			DPRINTFN(2, ("audio_read: sleep used=%d\n", cb->used));
@@ -1390,7 +1381,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 			if (sc->sc_dying)
 				error = EIO;
 			if (error) {
-				splx(s);
+				mtx_leave(&audio_lock);
 				return error;
 			}
 		}
@@ -1407,7 +1398,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 		cb->outp += cc;
 		if (cb->outp >= cb->end)
 			cb->outp = cb->start;
-		splx(s);
+		mtx_leave(&audio_lock);
 		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
 		if (sc->sc_rparams.sw_code)
 			sc->sc_rparams.sw_code(sc->hw_hdl, outp, cc);
@@ -1421,8 +1412,7 @@ audio_read(dev_t dev, struct uio *uio, int ioflag)
 void
 audio_clear(struct audio_softc *sc)
 {
-	int s = splaudio();
-
+	MUTEX_ASSERT_UNLOCKED(&audio_lock);
 	if (sc->sc_rbus) {
 		audio_wakeup(&sc->sc_rchan);
 		sc->hw_if->halt_input(sc->hw_hdl);
@@ -1433,7 +1423,6 @@ audio_clear(struct audio_softc *sc)
 		sc->hw_if->halt_output(sc->hw_hdl);
 		sc->sc_pbus = 0;
 	}
-	splx(s);
 }
 
 void
@@ -1565,7 +1554,7 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp;
-	int error, s, n, cc, resid, avail;
+	int error, n, cc, resid, avail;
 
 	DPRINTFN(2, ("audio_write: sc=%p(unit=%d) count=%d used=%d(hi=%d)\n", sc, unit,
 		 uio->uio_resid, sc->sc_pr.used, sc->sc_pr.usedhigh));
@@ -1613,19 +1602,19 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 	    sc->sc_pparams.sw_code, sc->sc_pparams.factor));
 
 	while (uio->uio_resid > 0) {
-		s = splaudio();
+		mtx_enter(&audio_lock);
 		while (cb->used >= cb->usedhigh) {
 			DPRINTFN(2, ("audio_write: sleep used=%d lowat=%d hiwat=%d\n",
 				 cb->used, cb->usedlow, cb->usedhigh));
 			if (ioflag & IO_NDELAY) {
-				splx(s);
+				mtx_leave(&audio_lock);
 				return (EWOULDBLOCK);
 			}
 			error = audio_sleep(&sc->sc_wchan, "aud_wr");
 			if (sc->sc_dying)
 				error = EIO;
 			if (error) {
-				splx(s);
+				mtx_leave(&audio_lock);
 				return error;
 			}
 		}
@@ -1647,13 +1636,12 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 		 */
 		sc->sc_sil_count = 0;
 		if (!sc->sc_pbus && !cb->pause && cb->used >= cb->blksize) {
+			mtx_leave(&audio_lock);
 			error = audiostartp(sc);
-			if (error) {
-				splx(s);
+			if (error)
 				return error;
-			}
-		}
-		splx(s);
+		} else
+			mtx_leave(&audio_lock);
 		cc /= sc->sc_pparams.factor;
 		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%d\n",
 		    cc, inp, uio->uio_resid));
@@ -1676,7 +1664,7 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_offset *ao;
 	struct audio_info ai;
-	int error = 0, s, offs, fd;
+	int error = 0, offs, fd;
 	int rbus, pbus;
 
 	/*
@@ -1710,10 +1698,8 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		rbus = sc->sc_rbus;
 		pbus = sc->sc_pbus;
 		audio_clear(sc);
-		s = splaudio();
 		error = audio_initbufs(sc);
 		if (error) {
-			splx(s);
 			return error;
 		}
 		sc->sc_rr.pause = 0;
@@ -1723,7 +1709,6 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if (!error &&
 		    (sc->sc_mode & AUMODE_RECORD) && !sc->sc_rbus && rbus)
 			error = audiostartr(sc);
-		splx(s);
 		break;
 
 	/*
@@ -1757,18 +1742,18 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	 * Offsets into buffer.
 	 */
 	case AUDIO_GETIOFFS:
-		s = splaudio();
+		mtx_enter(&audio_lock);
 		/* figure out where next DMA will start */
 		ao = (struct audio_offset *)addr;
 		ao->samples = sc->sc_rr.stamp / sc->sc_rparams.factor;
 		ao->deltablks = (sc->sc_rr.stamp - sc->sc_rr.stamp_last) / sc->sc_rr.blksize;
 		sc->sc_rr.stamp_last = sc->sc_rr.stamp;
 		ao->offset = (sc->sc_rr.inp - sc->sc_rr.start) / sc->sc_rparams.factor;
-		splx(s);
+		mtx_leave(&audio_lock);
 		break;
 
 	case AUDIO_GETOOFFS:
-		s = splaudio();
+		mtx_enter(&audio_lock);
 		/* figure out where next DMA will start */
 		ao = (struct audio_offset *)addr;
 		offs = sc->sc_pr.outp - sc->sc_pr.start + sc->sc_pr.blksize;
@@ -1778,7 +1763,7 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		ao->deltablks = (sc->sc_pr.stamp - sc->sc_pr.stamp_last) / sc->sc_pr.blksize;
 		sc->sc_pr.stamp_last = sc->sc_pr.stamp;
 		ao->offset = offs / sc->sc_pparams.factor;
-		splx(s);
+		mtx_leave(&audio_lock);
 		break;
 
 	/*
@@ -1902,7 +1887,9 @@ audio_poll(dev_t dev, int events, struct proc *p)
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
-	int revents = 0, s = splaudio();
+	int revents = 0;
+
+	mtx_enter(&audio_lock);
 
 	DPRINTF(("audio_poll: events=0x%x mode=%d\n", events, sc->sc_mode));
 
@@ -1920,14 +1907,13 @@ audio_poll(dev_t dev, int events, struct proc *p)
 		if (events & (POLLOUT | POLLWRNORM))
 			selrecord(p, &sc->sc_wsel);
 	}
-	splx(s);
+	mtx_leave(&audio_lock);
 	return (revents);
 }
 
 paddr_t
 audio_mmap(dev_t dev, off_t off, int prot)
 {
-	int s;
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct audio_hw_if *hw = sc->hw_if;
@@ -1967,15 +1953,11 @@ audio_mmap(dev_t dev, off_t off, int prot)
 		cb->mmapped = 1;
 		if (cb == &sc->sc_pr) {
 			audio_fill_silence(&sc->sc_pparams, cb->start, cb->start, cb->bufsize);
-			s = splaudio();
 			if (!sc->sc_pbus && !sc->sc_pr.pause)
 				(void)audiostartp(sc);
-			splx(s);
 		} else {
-			s = splaudio();
 			if (!sc->sc_rbus && !sc->sc_rr.pause)
 				(void)audiostartr(sc);
-			splx(s);
 		}
 	}
 
@@ -1987,6 +1969,7 @@ audiostartr(struct audio_softc *sc)
 {
 	int error;
 
+	MUTEX_ASSERT_UNLOCKED(&audio_lock);
 	DPRINTF(("audiostartr: start=%p used=%d(hi=%d) mmapped=%d\n",
 		 sc->sc_rr.start, sc->sc_rr.used, sc->sc_rr.usedhigh,
 		 sc->sc_rr.mmapped));
@@ -2011,6 +1994,7 @@ audiostartp(struct audio_softc *sc)
 {
 	int error;
 
+	MUTEX_ASSERT_UNLOCKED(&audio_lock);
 	DPRINTF(("audiostartp: start=%p used=%d(hi=%d) mmapped=%d\n",
 		 sc->sc_pr.start, sc->sc_pr.used, sc->sc_pr.usedhigh,
 		 sc->sc_pr.mmapped));
@@ -2045,7 +2029,7 @@ audiostartp(struct audio_softc *sc)
  */
 /* XXX
  * Putting silence into the output buffer should not really be done
- * at splaudio, but there is no softaudio level to do it at yet.
+ * with audio_lock, but there is no softaudio level to do it at yet.
  */
 static __inline void
 audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
@@ -2112,6 +2096,7 @@ audio_pint(void *v)
 	int blksize;
 	int error;
 
+	MUTEX_ASSERT_LOCKED(&audio_lock);
 	if (!sc->sc_open)
 		return;		/* ignore interrupt if not open */
 
@@ -2191,7 +2176,6 @@ audio_pint(void *v)
 		if (error) {
 			/* XXX does this really help? */
 			DPRINTF(("audio_pint restart failed: %d\n", error));
-			audio_clear(sc);
 		}
 	}
 
@@ -2231,6 +2215,7 @@ audio_rint(void *v)
 	int blksize;
 	int error;
 
+	MUTEX_ASSERT_LOCKED(&audio_lock);
 	if (!sc->sc_open)
 		return;		/* ignore interrupt if not open */
 
@@ -2306,7 +2291,6 @@ audio_rint(void *v)
 		if (error) {
 			/* XXX does this really help? */
 			DPRINTF(("audio_rint: restart failed: %d\n", error));
-			audio_clear(sc);
 		}
 	}
 
@@ -2704,7 +2688,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
 	int cleared;
-	int s, setmode, modechange = 0;
+	int setmode, modechange = 0;
 	int error;
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_params pp, rp;
@@ -2986,9 +2970,9 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 
 	if (cleared) {
-		s = splaudio();
 		error = audio_initbufs(sc);
-		if (error) goto err;
+		if (error)
+			goto err;
 		if (sc->sc_pr.blksize != oldpblksize ||
 		    sc->sc_rr.blksize != oldrblksize)
 			audio_calcwater(sc);
@@ -3000,7 +2984,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		    rbus && !sc->sc_rbus && !sc->sc_rr.pause)
 			error = audiostartr(sc);
 	err:
-		splx(s);
 		if (error)
 			return error;
 	}
@@ -3028,9 +3011,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	if (p->pause != (u_char)~0) {
 		sc->sc_pr.pause = p->pause;
 		if (!p->pause && !sc->sc_pbus && (sc->sc_mode & AUMODE_PLAY)) {
-			s = splaudio();
 			error = audiostartp(sc);
-			splx(s);
 			if (error)
 				return error;
 		}
@@ -3038,9 +3019,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	if (r->pause != (u_char)~0) {
 		sc->sc_rr.pause = r->pause;
 		if (!r->pause && !sc->sc_rbus && (sc->sc_mode & AUMODE_RECORD)) {
-			s = splaudio();
 			error = audiostartr(sc);
-			splx(s);
 			if (error)
 				return error;
 		}
@@ -3295,7 +3274,6 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct klist *klist;
-	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -3311,9 +3289,9 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	}
 	kn->kn_hook = (void *)sc;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	return (0);
 }
@@ -3322,10 +3300,10 @@ void
 filt_audiordetach(struct knote *kn)
 {
 	struct audio_softc *sc = (struct audio_softc *)kn->kn_hook;
-	int s = splaudio();
 
+	mtx_enter(&audio_lock);
 	SLIST_REMOVE(&sc->sc_rsel.si_note, kn, knote, kn_selnext);
-	splx(s);
+	mtx_leave(&audio_lock);
 }
 
 int
@@ -3340,10 +3318,10 @@ void
 filt_audiowdetach(struct knote *kn)
 {
 	struct audio_softc *sc = (struct audio_softc *)kn->kn_hook;
-	int s = splaudio();
 
+	mtx_enter(&audio_lock);
 	SLIST_REMOVE(&sc->sc_wsel.si_note, kn, knote, kn_selnext);
-	splx(s);
+	mtx_leave(&audio_lock);
 }
 
 int

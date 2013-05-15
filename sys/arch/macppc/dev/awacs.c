@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.27 2011/09/04 18:48:10 miod Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.28 2013/05/15 08:29:23 ratchov Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -387,8 +387,9 @@ awacs_intr(void *v)
 {
 	int reason;
 	struct awacs_softc *sc = v;
-	reason = awacs_read_reg(sc, AWACS_SOUND_CTRL);
 
+	mtx_enter(&audio_lock);
+	reason = awacs_read_reg(sc, AWACS_SOUND_CTRL);
 	if (reason & AWACS_CTL_CNTRLERR) {
 		/* change outputs ?? */
 	}
@@ -413,6 +414,7 @@ awacs_intr(void *v)
 	}
 
 	awacs_write_reg(sc, AWACS_SOUND_CTRL, reason); /* clear interrupt */
+	mtx_leave(&audio_lock);
 	return 1;
 }
 
@@ -425,8 +427,8 @@ awacs_tx_intr(void *v)
 
 	/* if not set we are not running */
 	if (!cmd)
-		return (0);
-
+		return (0);	
+	mtx_enter(&audio_lock);
 	c = in16rb(&cmd->d_command);
 	status = in16rb(&cmd->d_status);
 
@@ -441,7 +443,7 @@ awacs_tx_intr(void *v)
 			if (sc->sc_ointr)
 				(*sc->sc_ointr)(sc->sc_oarg);
 	}
-
+	mtx_leave(&audio_lock);
 	return (1);
 }
 int
@@ -455,6 +457,7 @@ awacs_rx_intr(void *v)
 	if (!cmd)
 		return (0);
 
+	mtx_enter(&audio_lock);
 	c = in16rb(&cmd->d_command);
 	status = in16rb(&cmd->d_status);
 
@@ -469,7 +472,7 @@ awacs_rx_intr(void *v)
 			if (sc->sc_iintr)
 				(*sc->sc_iintr)(sc->sc_iarg);
 	}
-
+	mtx_leave(&audio_lock);
 	return (1);
 }
 
@@ -487,6 +490,7 @@ awacs_close(void *h)
 {
 	struct awacs_softc *sc = h;
 
+	/* XXX: halt_xxx() already called by upper layer */
 	awacs_halt_output(sc);
 	awacs_halt_input(sc);
 
@@ -679,10 +683,12 @@ awacs_halt_output(void *h)
 {
 	struct awacs_softc *sc = h;
 
+	mtx_enter(&audio_lock);
 	dbdma_stop(sc->sc_odma);
 	dbdma_reset(sc->sc_odma);
 	dbdma_stop(sc->sc_odma);
 	sc->sc_odmap = NULL;
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -691,8 +697,10 @@ awacs_halt_input(void *h)
 {
 	struct awacs_softc *sc = h;
 
+	mtx_enter(&audio_lock);
 	dbdma_stop(sc->sc_idma);
 	dbdma_reset(sc->sc_idma);
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1041,6 +1049,7 @@ awacs_trigger_output(void *h, void *start, void *end, int bsize,
 	sc->sc_oarg = arg;
 	sc->sc_odmap = sc->sc_odmacmd;
 
+	mtx_enter(&audio_lock);
 	spa = p->segs[0].ds_addr;
 	c = DBDMA_CMD_OUT_MORE;
 	for (pa = spa, epa = spa + (end - start);
@@ -1059,6 +1068,7 @@ awacs_trigger_output(void *h, void *start, void *end, int bsize,
 
 	dbdma_start(sc->sc_odma, sc->sc_odbdma);
 
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1082,6 +1092,7 @@ awacs_trigger_input(void *h, void *start, void *end, int bsize,
 	sc->sc_iarg = arg;
 	sc->sc_idmap = sc->sc_idmacmd;
 
+	mtx_enter(&audio_lock);
 	spa = p->segs[0].ds_addr;
 	c = DBDMA_CMD_IN_MORE;
 	for (pa = spa, epa = spa + (end - start);
@@ -1100,6 +1111,7 @@ awacs_trigger_input(void *h, void *start, void *end, int bsize,
 
 	dbdma_start(sc->sc_idma, sc->sc_idbdma);
 
+	mtx_leave(&audio_lock);
 	return 0;
 }
 

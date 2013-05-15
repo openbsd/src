@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.31 2012/03/30 08:18:19 ratchov Exp $	*/
+/*	$OpenBSD: autri.c,v 1.32 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -803,9 +803,12 @@ autri_intr(p)
 	u_int32_t cso,eso;
 */
 
+	mtx_enter(&audio_lock);
 	intsrc = TREAD4(sc,AUTRI_MISCINT);
-	if ((intsrc & (ADDRESS_IRQ|MPU401_IRQ)) == 0)
+	if ((intsrc & (ADDRESS_IRQ|MPU401_IRQ)) == 0) {
+		mtx_leave(&audio_lock);
 		return 0;
+	}
 
 	if (intsrc & ADDRESS_IRQ) {
 
@@ -861,7 +864,7 @@ autri_intr(p)
 
 	autri_reg_set_4(sc,AUTRI_MISCINT,
 		ST_TARGET_REACHED | MIXER_OVERFLOW | MIXER_UNDERFLOW);
-
+	mtx_leave(&audio_lock);
 	return 1;
 }
 
@@ -1077,11 +1080,11 @@ autri_halt_output(addr)
 	struct autri_softc *sc = addr;
 
 	DPRINTF(("autri_halt_output()\n"));
-
+	mtx_enter(&audio_lock);
 	sc->sc_play.intr = NULL;
 	autri_stopch(sc, sc->sc_play.ch, sc->sc_play.ch_intr);
 	autri_disable_interrupt(sc, sc->sc_play.ch_intr);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1092,11 +1095,11 @@ autri_halt_input(addr)
 	struct autri_softc *sc = addr;
 
 	DPRINTF(("autri_halt_input()\n"));
-
+	mtx_enter(&audio_lock);
 	sc->sc_rec.intr = NULL;
 	autri_stopch(sc, sc->sc_rec.ch, sc->sc_rec.ch_intr);
 	autri_disable_interrupt(sc, sc->sc_rec.ch_intr);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1431,6 +1434,7 @@ autri_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_play.dma = p;
 
 	/* */
+	mtx_enter(&audio_lock);
 	autri_setup_channel(sc, AUMODE_PLAY, param);
 
 	/* volume set to no attenuation */
@@ -1441,7 +1445,7 @@ autri_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	/* start channel */
 	autri_startch(sc, sc->sc_play.ch, sc->sc_play.ch_intr);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1474,6 +1478,7 @@ autri_trigger_input(addr, start, end, blksize, intr, arg, param)
 	}
 
 	sc->sc_rec.dma = p;
+	mtx_enter(&audio_lock);
 
 	/* */
 	if (sc->sc_devid == AUTRI_DEVICE_ID_4DWAVE_NX) {
@@ -1495,7 +1500,7 @@ autri_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	/* start channel */
 	autri_startch(sc, sc->sc_rec.ch, sc->sc_rec.ch_intr);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 

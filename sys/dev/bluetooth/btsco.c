@@ -1,4 +1,4 @@
-/*	$OpenBSD: btsco.c,v 1.5 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: btsco.c,v 1.6 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: btsco.c,v 1.22 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
@@ -461,7 +461,6 @@ static void
 btsco_sco_disconnected(void *arg, int err)
 {
 	struct btsco_softc *sc = arg;
-	int s;
 
 	DPRINTF("%s sc_state %d\n", sc->sc_name, sc->sc_state);
 
@@ -484,7 +483,7 @@ btsco_sco_disconnected(void *arg, int err)
 		 * has completed so that when it tries to send more, we
 		 * can indicate an error.
 		 */
-		s = splaudio();
+		mtx_enter(&audio_lock);
 		if (sc->sc_tx_pending > 0) {
 			sc->sc_tx_pending = 0;
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
@@ -493,7 +492,7 @@ btsco_sco_disconnected(void *arg, int err)
 			sc->sc_rx_want = 0;
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 		}
-		splx(s);
+		mtx_leave(&audio_lock);
 		break;
 
 	default:
@@ -524,17 +523,16 @@ static void
 btsco_sco_complete(void *arg, int count)
 {
 	struct btsco_softc *sc = arg;
-	int s;
 
 	DPRINTFN(10, "%s count %d\n", sc->sc_name, count);
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	if (sc->sc_tx_pending > 0) {
 		sc->sc_tx_pending -= count;
 		if (sc->sc_tx_pending == 0)
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
 	}
-	splx(s);
+	mtx_leave(&audio_lock);
 }
 
 static void
@@ -549,11 +547,11 @@ static void
 btsco_sco_input(void *arg, struct mbuf *m)
 {
 	struct btsco_softc *sc = arg;
-	int len, s;
+	int len;
 
 	DPRINTFN(10, "%s len=%d\n", sc->sc_name, m->m_pkthdr.len);
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	if (sc->sc_rx_want == 0) {
 		m_freem(m);
 	} else {
@@ -579,7 +577,7 @@ btsco_sco_input(void *arg, struct mbuf *m)
 		if (sc->sc_rx_want == 0)
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 	}
-	splx(s);
+	mtx_leave(&audio_lock);
 }
 
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ics2101.c,v 1.7 2008/06/26 05:42:16 ray Exp $ */
+/* $OpenBSD: ics2101.c,v 1.8 2013/05/15 08:29:24 ratchov Exp $ */
 /* $NetBSD: ics2101.c,v 1.6 1997/10/09 07:57:23 jtc Exp $ */
 
 /*-
@@ -78,7 +78,6 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 	register unsigned char ctrl_addr;
 	register unsigned char attn_addr;
 	register unsigned char normal;
-	int s;
 
 	if (chan < ICSMIX_CHAN_0 || chan > ICSMIX_CHAN_5)
 		return;
@@ -119,7 +118,7 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 			normal = 0x02;
 	}
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 
 	bus_space_write_1(iot, sc->sc_selio_ioh, sc->sc_selio, ctrl_addr);
 	bus_space_write_1(iot, sc->sc_dataio_ioh, sc->sc_dataio, normal);
@@ -127,7 +126,7 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 	bus_space_write_1(iot, sc->sc_selio_ioh, sc->sc_selio, attn_addr);
 	bus_space_write_1(iot, sc->sc_dataio_ioh, sc->sc_dataio, (unsigned char) value);
 
-	splx(s);
+	mtx_leave(&audio_lock);
 }
 
 void

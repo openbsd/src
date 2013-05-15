@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.31 2011/04/05 19:54:35 jasper Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.32 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -659,7 +659,7 @@ int
 cs4231_commit_settings(void *vsc)
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
-	int s, tries;
+	int tries;
 	u_int8_t r, fs;
 
 	if (sc->sc_need_commit == 0)
@@ -669,7 +669,8 @@ cs4231_commit_settings(void *vsc)
 	if (sc->sc_channels == 2)
 		fs |= FMT_STEREO;
 
-	s = splaudio();
+	/* XXX: this is called before DMA is setup, useful ? */
+	mtx_enter(&audio_lock);
 
 	r = cs4231_read(sc, SP_INTERFACE_CONFIG) | AUTO_CAL_ENABLE;
 	CS_WRITE(sc, AD1848_IADDR, MODE_CHANGE_ENABLE);
@@ -712,7 +713,7 @@ cs4231_commit_settings(void *vsc)
 		printf("%s: timeout waiting for autocalibration\n",
 		    sc->sc_dev.dv_xname);
 
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	sc->sc_need_commit = 0;
 	return (0);
@@ -724,12 +725,14 @@ cs4231_halt_output(void *vsc)
 	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 
 	/* XXX Kills some capture bits */
+	mtx_enter(&audio_lock);
 	APC_WRITE(sc, APC_CSR, APC_READ(sc, APC_CSR) &
 	    ~(APC_CSR_EI | APC_CSR_GIE | APC_CSR_PIE |
 	      APC_CSR_EIE | APC_CSR_PDMA_GO | APC_CSR_PMIE));
 	cs4231_write(sc, SP_INTERFACE_CONFIG,
 	    cs4231_read(sc, SP_INTERFACE_CONFIG) & (~PLAYBACK_ENABLE));
 	sc->sc_playback.cs_locked = 0;
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -739,10 +742,12 @@ cs4231_halt_input(void *vsc)
 	struct cs4231_softc *sc = (struct cs4231_softc *)vsc;
 
 	/* XXX Kills some playback bits */
+	mtx_enter(&audio_lock);
 	APC_WRITE(sc, APC_CSR, APC_CSR_CAPTURE_PAUSE);
 	cs4231_write(sc, SP_INTERFACE_CONFIG,
 	    cs4231_read(sc, SP_INTERFACE_CONFIG) & (~CAPTURE_ENABLE));
 	sc->sc_capture.cs_locked = 0;
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1326,6 +1331,7 @@ cs4231_intr(void *vsc)
 	struct cs_dma *p;
 	int r = 0;
 
+	mtx_enter(&audio_lock);
 	csr = APC_READ(sc, APC_CSR);
 	APC_WRITE(sc, APC_CSR, csr);
 
@@ -1418,6 +1424,7 @@ cs4231_intr(void *vsc)
 		r = 1;
 	}
 
+	mtx_leave(&audio_lock);
 	return (r);
 }
 
@@ -1530,6 +1537,7 @@ cs4231_trigger_output(void *vsc, void *start, void *end, int blksize,
 
 	chan->cs_cnt = n;
 
+	mtx_enter(&audio_lock);
 	csr = APC_READ(sc, APC_CSR);
 
 	APC_WRITE(sc, APC_PNVA, (u_long)p->dmamap->dm_segs[0].ds_addr);
@@ -1546,6 +1554,7 @@ cs4231_trigger_output(void *vsc, void *start, void *end, int blksize,
 		cs4231_write(sc, SP_INTERFACE_CONFIG,
 		    cs4231_read(sc, SP_INTERFACE_CONFIG) | PLAYBACK_ENABLE);
 	}
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1590,6 +1599,7 @@ cs4231_trigger_input(void *vsc, void *start, void *end, int blksize,
 		n = chan->cs_blksz;
 	chan->cs_cnt = n;
 
+	mtx_enter(&audio_lock);
 	APC_WRITE(sc, APC_CNVA, p->dmamap->dm_segs[0].ds_addr);
 	APC_WRITE(sc, APC_CNC, (u_long)n);
 
@@ -1624,5 +1634,6 @@ cs4231_trigger_input(void *vsc, void *start, void *end, int blksize,
 		APC_WRITE(sc, APC_CNC, togo);
 	}
 
+	mtx_leave(&audio_lock);
 	return (0);
 }

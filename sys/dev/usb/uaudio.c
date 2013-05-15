@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.99 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.100 2013/05/15 08:29:26 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2897,7 +2897,6 @@ uaudio_chan_ptransfer(struct chan *ch)
 	struct chanbuf *cb;
 	u_char *pos;
 	int i, n, size, residue, total;
-	int s;
 
 	if (ch->sc->sc_dying)
 		return;
@@ -2945,9 +2944,9 @@ uaudio_chan_ptransfer(struct chan *ch)
 		if (ch->transferred >= ch->blksize) {
 			DPRINTFN(5,("uaudio_chan_ptransfer: call %p(%p)\n",
 				    ch->intr, ch->arg));
-			s = splaudio();
+			mtx_enter(&audio_lock);
 			ch->intr(ch->arg);
-			splx(s);
+			mtx_leave(&audio_lock);
 			ch->transferred -= ch->blksize;
 		}
 	}
@@ -3136,7 +3135,7 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 	struct chan *ch = cb->chan;
 	u_int16_t pos;
 	u_int32_t count;
-	int s, i, n, frsize;
+	int i, n, frsize;
 
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
@@ -3176,9 +3175,9 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 			if (ch->transferred >= ch->blksize) {
 				DPRINTFN(5,("uaudio_chan_rintr: call %p(%p)\n",
 					    ch->intr, ch->arg));
-				s = splaudio();
+				mtx_enter(&audio_lock);
 				ch->intr(ch->arg);
-				splx(s);
+				mtx_leave(&audio_lock);
 				ch->transferred -= ch->blksize;
 			}
 			if (count < n)

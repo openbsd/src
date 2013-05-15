@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.25 2012/10/11 15:45:00 deraadt Exp $	*/
+/*	$OpenBSD: esa.c,v 1.26 2013/05/15 08:29:24 ratchov Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -433,6 +433,7 @@ esa_halt_output(void *hdl)
 	if (vc->play.active == 0)
 		return (0);
 
+	mtx_enter(&audio_lock);
 	vc->play.active = 0;
 
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
@@ -456,7 +457,7 @@ esa_halt_output(void *hdl)
 	esa_remove_list(vc, &sc->mixer_list, vc->index);
 	esa_remove_list(vc, &sc->dma_list, vc->index);
 	esa_remove_list(vc, &sc->msrc_list, vc->index);
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -472,6 +473,7 @@ esa_halt_input(void *hdl)
 	if (vc->rec.active == 0)
 		return (0);
 
+	mtx_enter(&audio_lock);
 	vc->rec.active = 0;
 
 	sc->sc_ntimers--;
@@ -494,7 +496,7 @@ esa_halt_input(void *hdl)
 	esa_remove_list(vc, &sc->adc1_list, vc->index + ESA_NUM_VOICES);
 	esa_remove_list(vc, &sc->dma_list, vc->index + ESA_NUM_VOICES);
 	esa_remove_list(vc, &sc->msrc_list, vc->index + ESA_NUM_VOICES);
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -644,6 +646,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 #define LO(x) ((x) & 0x0000ffff)
 #define HI(x) ((x) >> 16)
 
+	mtx_enter(&audio_lock);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_HOST_SRC_ADDRL, LO(bufaddr));
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
@@ -725,7 +728,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
 	    ESA_KDATA_MIXER_TASK_NUMBER,
 	    sc->mixer_list.indexmap[vc->index]);
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -782,7 +785,7 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 
 #define LO(x) ((x) & 0x0000ffff)
 #define HI(x) ((x) >> 16)
-
+	mtx_enter(&audio_lock);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
 	    ESA_CDATA_HOST_SRC_ADDRL, LO(bufaddr));
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
@@ -856,7 +859,7 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 	    ESA_CDATA_INSTANCE_READY, 1);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_REQUEST,
 	    1);
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -876,9 +879,12 @@ esa_intr(void *hdl)
 	u_int32_t rec_blksize, rec_bufsize;
 	int i, claimed = 0;
 
+	mtx_enter(&audio_lock);
 	status = bus_space_read_1(iot, ioh, ESA_HOST_INT_STATUS);
-	if (status == 0xff)
+	if (status == 0xff) {
+		mtx_leave(&audio_lock);
 		return (0);
+	}
 
 	/* ack the interrupt */
 	bus_space_write_1(iot, ioh, ESA_HOST_INT_STATUS, status);
@@ -948,7 +954,7 @@ esa_intr(void *hdl)
 		}
 		claimed = 1;
 	}
-
+	mtx_leave(&audio_lock);
 	return (claimed);
 }
 

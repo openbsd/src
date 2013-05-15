@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.27 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.28 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -37,6 +37,8 @@
 
 #ifndef _SYS_DEV_AUDIO_IF_H_
 #define _SYS_DEV_AUDIO_IF_H_
+
+#include <sys/mutex.h>
 
 #define AUDIO_BPS(bits)		(bits) <= 8 ? 1 : ((bits) <= 16 ? 2 : 4)
 
@@ -168,6 +170,8 @@ int	       audioprint(void *, const char *);
  *	L R C LFE Ls Rs Lc Rc S Sl Sr T
  */
 #define AUDIO_MAX_CHANNELS	12
+
+extern struct mutex audio_lock;
 
 #endif /* _SYS_DEV_AUDIO_IF_H_ */
 

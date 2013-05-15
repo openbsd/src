@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.26 2010/09/07 16:21:45 deraadt Exp $       */
+/*      $OpenBSD: neo.c,v 1.27 2013/05/15 08:29:24 ratchov Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -441,6 +441,7 @@ neo_intr(void *p)
 	int status, x;
 	int rv = 0;
 
+	mtx_enter(&audio_lock);
 	status = nm_rd(sc, NM_INT_REG, sc->irsz);
 
 	if (status & sc->playint) {
@@ -492,7 +493,7 @@ neo_intr(void *p)
 		printf("%s: unknown int\n", sc->dev.dv_xname);
 		rv = 1;
 	}
-
+	mtx_leave(&audio_lock);
 	return (rv);
 }
 
@@ -946,6 +947,7 @@ neo_trigger_output(addr, start, end, blksize, intr, arg, param)
 	struct neo_softc *sc = addr;
 	int ssz;
 
+	mtx_enter(&audio_lock);
 	sc->pintr = intr;
 	sc->parg = arg;
 
@@ -956,7 +958,6 @@ neo_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->pbufsize = ((char *)end - (char *)start);
 	sc->pblksize = blksize;
 	sc->pwmark = blksize;
-
 	nm_wr(sc, NM_PBUFFER_START, sc->pbuf, 4);
 	nm_wr(sc, NM_PBUFFER_END, sc->pbuf + sc->pbufsize - ssz, 4);
 	nm_wr(sc, NM_PBUFFER_CURRP, sc->pbuf, 4);
@@ -964,7 +965,7 @@ neo_trigger_output(addr, start, end, blksize, intr, arg, param)
 	nm_wr(sc, NM_PLAYBACK_ENABLE_REG, NM_PLAYBACK_FREERUN |
 	    NM_PLAYBACK_ENABLE_FLAG, 1);
 	nm_wr(sc, NM_AUDIO_MUTE_REG, 0, 2);
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -982,6 +983,7 @@ neo_trigger_input(addr, start, end, blksize, intr, arg, param)
 	struct neo_softc *sc = addr;
 	int ssz;
 
+	mtx_enter(&audio_lock);
 	sc->rintr = intr;
 	sc->rarg = arg;
 
@@ -992,14 +994,13 @@ neo_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->rbufsize = ((char *)end - (char *)start);
 	sc->rblksize = blksize;
 	sc->rwmark = blksize;
-
 	nm_wr(sc, NM_RBUFFER_START, sc->rbuf, 4);
 	nm_wr(sc, NM_RBUFFER_END, sc->rbuf + sc->rbufsize, 4);
 	nm_wr(sc, NM_RBUFFER_CURRP, sc->rbuf, 4);
 	nm_wr(sc, NM_RBUFFER_WMARK, sc->rbuf + sc->rwmark, 4);
 	nm_wr(sc, NM_RECORD_ENABLE_REG, NM_RECORD_FREERUN |
 	    NM_RECORD_ENABLE_FLAG, 1);
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1009,11 +1010,12 @@ neo_halt_output(addr)
 {
 	struct neo_softc *sc = (struct neo_softc *)addr;
 
+	mtx_enter(&audio_lock);
 	nm_wr(sc, NM_PLAYBACK_ENABLE_REG, 0, 1);
 	nm_wr(sc, NM_AUDIO_MUTE_REG, NM_AUDIO_MUTE_BOTH, 2);
 
 	sc->pintr = 0;
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1023,10 +1025,11 @@ neo_halt_input(addr)
 {
 	struct neo_softc *sc = (struct neo_softc *)addr;
 
+	mtx_enter(&audio_lock);
 	nm_wr(sc, NM_RECORD_ENABLE_REG, 0, 1);
 
 	sc->rintr = 0;
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 

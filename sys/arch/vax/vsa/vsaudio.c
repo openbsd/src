@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsaudio.c,v 1.2 2011/09/11 19:29:01 miod Exp $	*/
+/*	$OpenBSD: vsaudio.c,v 1.3 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -283,6 +283,9 @@ vsaudio_onclose(struct am7930_softc *sc)
 	am7930_halt_output(sc);
 }
 
+/*
+ * this is called by interrupt code-path, don't lock
+ */
 int
 vsaudio_start_output(void *addr, void *p, int cc,
     void (*intr)(void *), void *arg)
@@ -304,6 +307,9 @@ vsaudio_start_output(void *addr, void *p, int cc,
 	return 0;
 }
 
+/*
+ * this is called by interrupt code-path, don't lock
+ */
 int
 vsaudio_start_input(void *addr, void *p, int cc,
     void (*intr)(void *), void *arg)
@@ -336,12 +342,15 @@ vsaudio_hwintr(void *v)
 	uint8_t *d, *e;
 	int k;
 
+	mtx_enter(&audio_lock);
 	/* clear interrupt */
 	k = vsaudio_codec_dread(sc, AM7930_DREG_IR);
 #if 0	/* interrupt is not shared, this shouldn't happen */
 	if ((k & (AM7930_IR_DTTHRSH | AM7930_IR_DRTHRSH | AM7930_IR_DSRI |
-	    AM7930_IR_DERI | AM7930_IR_BBUFF)) == 0)
+	    AM7930_IR_DERI | AM7930_IR_BBUFF)) == 0) {
+		mtx_leave(&audio_lock);
 		return 0;
+	}
 #endif
 
 	/* receive incoming data */
@@ -367,6 +376,7 @@ vsaudio_hwintr(void *v)
 			softintr_schedule(sc->sc_swintr);
 		}
 	}
+	mtx_leave(&audio_lock);
 }
 
 void
@@ -378,12 +388,12 @@ vsaudio_swintr(void *v)
 	DPRINTFN(1, ("audiointr: sc=%p\n", sc));
 
 	dor = dow = 0;
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	if (sc->sc_rdata > sc->sc_rend && sc->sc_rintr != NULL)
 		dor = 1;
 	if (sc->sc_pdata > sc->sc_pend && sc->sc_pintr != NULL)
 		dow = 1;
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	if (dor != 0)
 		(*sc->sc_rintr)(sc->sc_rarg);

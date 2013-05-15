@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.36 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.37 2013/05/15 08:29:26 ratchov Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <dev/usb/umidivar.h>
 #include <dev/usb/umidi_quirks.h>
 
+#include <dev/audio_if.h>
 #include <dev/midi_if.h>
 
 #ifdef UMIDI_DEBUG
@@ -791,7 +792,7 @@ free_all_jacks(struct umidi_softc *sc)
 {
 	int s;
 
-	s = splaudio();
+	s = splusb();
 	if (sc->sc_out_jacks) {
 		free(sc->sc_jacks, M_USBDEV);
 		sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
@@ -1228,8 +1229,10 @@ in_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (cn < ep->num_jacks && (jack = ep->jacks[cn]) &&
 		    jack->binded && jack->opened &&  jack->u.in.intr) {
 		    	evlen = packet_length[GET_CIN(buf[0])];
+			mtx_enter(&audio_lock);
 			for (i=0; i<evlen; i++)
 				(*jack->u.in.intr)(jack->arg, buf[i+1]);
+			mtx_leave(&audio_lock);
 		}
 		buf += UMIDI_PACKET_SIZE;
 		remain -= UMIDI_PACKET_SIZE;
@@ -1261,8 +1264,10 @@ out_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		SIMPLEQ_REMOVE_HEAD(&ep->intrq, intrq_entry);
 		ep->pending--;
 		j->intr = 0;
+		mtx_enter(&audio_lock);
 		if (j->opened && j->u.out.intr)
 			(*j->u.out.intr)(j->arg);
+		mtx_leave(&audio_lock);
 	}
 }
 

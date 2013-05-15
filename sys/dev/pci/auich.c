@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.96 2012/01/11 16:22:33 dhill Exp $	*/
+/*	$OpenBSD: auich.c,v 1.97 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -1234,10 +1234,11 @@ auich_halt_output(void *v)
 
 	DPRINTF(AUICH_DEBUG_DMA, ("%s: halt_output\n", sc->sc_dev.dv_xname));
 
+	mtx_enter(&audio_lock);
 	auich_halt_pipe(sc, AUICH_PCMO, &sc->pcmo);
 
 	sc->pcmo.intr = NULL;
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1250,12 +1251,12 @@ auich_halt_input(void *v)
 	    ("%s: halt_input\n", sc->sc_dev.dv_xname));
 
 	/* XXX halt both unless known otherwise */
-
+	mtx_enter(&audio_lock);
 	auich_halt_pipe(sc, AUICH_PCMI, &sc->pcmi);
 	auich_halt_pipe(sc, AUICH_MICI, &sc->mici);
 
 	sc->pcmi.intr = NULL;
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1385,6 +1386,7 @@ auich_intr(void *v)
 	struct auich_softc *sc = v;
 	int ret = 0, sts, gsts;
 
+	mtx_enter(&audio_lock);
 	gsts = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GSTS);
 	DPRINTF(AUICH_DEBUG_INTR, ("auich_intr: gsts=%b\n", gsts, AUICH_GSTS_BITS));
 
@@ -1479,7 +1481,7 @@ auich_intr(void *v)
 		bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_MINT);
 		ret++;
 	}
-
+	mtx_leave(&audio_lock);
 	return ret;
 }
 
@@ -1604,10 +1606,11 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	sc->pcmo.end = sc->pcmo.start + size;
 	sc->pcmo.blksize = blksize;
 
+	mtx_enter(&audio_lock);
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_BDBAR,
 	    sc->sc_cddma + AUICH_PCMO_OFF(0));
 	auich_trigger_pipe(sc, AUICH_PCMO, &sc->pcmo);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1651,11 +1654,11 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	sc->pcmi.p = sc->pcmi.start;
 	sc->pcmi.end = sc->pcmi.start + size;
 	sc->pcmi.blksize = blksize;
-
+	mtx_enter(&audio_lock);
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_BDBAR,
 	    sc->sc_cddma + AUICH_PCMI_OFF(0));
 	auich_trigger_pipe(sc, AUICH_PCMI, &sc->pcmi);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 

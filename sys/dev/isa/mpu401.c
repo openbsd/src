@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu401.c,v 1.12 2012/03/30 08:18:19 ratchov Exp $	*/
+/*	$OpenBSD: mpu401.c,v 1.13 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: mpu401.c,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -43,16 +43,13 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
+#include <dev/audio_if.h>
 #include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
 #include <dev/ic/mpuvar.h>
-
-#ifndef splaudio
-#define splaudio() splbio()	/* XXX found in audio_if.h normally */
-#endif
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (mpu401debug) printf x
@@ -121,22 +118,21 @@ mpu_reset(sc)
 	bus_space_tag_t iot = sc->iot;
 	bus_space_handle_t ioh = sc->ioh;
 	int i;
-	int s;
 
 	if (mpu_waitready(sc)) {
 		DPRINTF(("mpu_reset: not ready\n"));
 		return EIO;
 	}
-	s = splaudio();		/* Don't let the interrupt get our ACK. */
+	mtx_enter(&audio_lock);	/* Don't let the interrupt get our ACK. */
 	bus_space_write_1(iot, ioh, MPU_COMMAND, MPU_RESET);
 	for(i = 0; i < 2*MPU_MAXWAIT; i++) {
 		if (!(MPU_GETSTATUS(iot, ioh) & MPU_INPUT_EMPTY) &&
 		    bus_space_read_1(iot, ioh, MPU_DATA) == MPU_ACK) {
-			splx(s);
+			mtx_leave(&audio_lock);
 			return 0;
 		}
 	}
-	splx(s);
+	mtx_leave(&audio_lock);
 	DPRINTF(("mpu_reset: No ACK\n"));
 	return EIO;
 }
@@ -194,19 +190,19 @@ mpu_readinput(sc)
 	}
 }
 
+/*
+ * called with audio_lock
+ */
 int
 mpu_output(v, d)
 	void *v;
 	int d;
 {
 	struct mpu_softc *sc = v;
-	int s;
 
 	DPRINTFN(3, ("mpu_output: sc=%p 0x%02x\n", sc, d));
 	if (!(MPU_GETSTATUS(sc->iot, sc->ioh) & MPU_INPUT_EMPTY)) {
-		s = splaudio();
 		mpu_readinput(sc);
-		splx(s);
 	}
 	if (MPU_GETSTATUS(sc->iot, sc->ioh) & MPU_OUTPUT_BUSY)
 		delay(10);
@@ -231,10 +227,13 @@ mpu_intr(v)
 {
 	struct mpu_softc *sc = v;
 
+	mtx_enter(&audio_lock);
 	if (MPU_GETSTATUS(sc->iot, sc->ioh) & MPU_INPUT_EMPTY) {
+		mtx_leave(&audio_lock);
 		DPRINTF(("mpu_intr: no data\n"));
 		return 0;
 	}
 	mpu_readinput(sc);
+	mtx_leave(&audio_lock);
 	return 1;
 }

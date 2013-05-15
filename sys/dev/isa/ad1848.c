@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.38 2010/07/31 08:08:18 ratchov Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.39 2013/05/15 08:29:24 ratchov Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -159,12 +159,10 @@ static void wait_for_calibration(struct ad1848_softc *);
 static int
 ad_read(struct ad1848_softc *sc, int reg)
 {
-	int x, s;
+	int x;
 
-	s = splaudio();
 	ADWRITE(sc, AD1848_IADDR, (reg & 0xff) | sc->MCE_bit);
 	x = ADREAD(sc, AD1848_IDATA);
-	splx(s);
 	/*  printf("(%02x<-%02x) ", reg|sc->MCE_bit, x); */
 
 	return x;
@@ -173,10 +171,8 @@ ad_read(struct ad1848_softc *sc, int reg)
 static void
 ad_write(struct ad1848_softc *sc, int reg, int data)
 {
-	int s = splaudio();
 	ADWRITE(sc, AD1848_IADDR, (reg & 0xff) | sc->MCE_bit);
 	ADWRITE(sc, AD1848_IDATA, data & 0xff);
-	splx(s);
 	/* printf("(%02x->%02x) ", reg|sc->MCE_bit, data); */
 }
 
@@ -791,7 +787,7 @@ ad1848_mixer_get_port(struct ad1848_softc *ac, struct ad1848_devmap *map,
 		return (ENXIO);
 
 	dev = entry->dev;
-
+	mtx_enter(&audio_lock);
 	switch (entry->kind) {
 	case AD1848_KIND_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
@@ -841,7 +837,7 @@ ad1848_mixer_get_port(struct ad1848_softc *ac, struct ad1848_devmap *map,
 		printf("Invalid kind\n");
 		break;
 	}
-
+	mtx_leave(&audio_lock);
 	return error;
 }
 
@@ -858,7 +854,7 @@ ad1848_mixer_set_port(struct ad1848_softc *ac, struct ad1848_devmap *map,
 		return (ENXIO);
 
   	dev = entry->dev;
-
+	mtx_enter(&audio_lock);
 	switch (entry->kind) {
 	case AD1848_KIND_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
@@ -905,7 +901,7 @@ ad1848_mixer_set_port(struct ad1848_softc *ac, struct ad1848_devmap *map,
 		printf("Invalid kind\n");
 		break;
 	}
-
+	mtx_leave(&audio_lock);
 	return (error);
 }
 
@@ -1193,12 +1189,11 @@ ad1848_commit_settings(void *addr)
 	struct ad1848_softc *sc = addr;
 	int timeout;
 	u_char fs;
-	int s;
 
 	if (!sc->need_commit)
 		return 0;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 
 	ad1848_mute_monitor(sc, 1);
 
@@ -1259,7 +1254,7 @@ ad1848_commit_settings(void *addr)
 
 	ad1848_mute_monitor(sc, 0);
 
-	splx(s);
+	mtx_leave(&audio_lock);
 	
 	sc->need_commit = 0;
 
@@ -1370,7 +1365,7 @@ ad1848_halt_output(void *addr)
 	u_char reg;
 
 	DPRINTF(("ad1848: ad1848_halt_output\n"));
-
+	mtx_enter(&audio_lock);
 	reg = ad_read(sc, SP_INTERFACE_CONFIG);
 	ad_write(sc, SP_INTERFACE_CONFIG, (reg & ~PLAYBACK_ENABLE));
 
@@ -1378,7 +1373,7 @@ ad1848_halt_output(void *addr)
 		isa_dmaabort(sc->sc_isa, sc->sc_drq);
 		sc->sc_playrun = 0;
 	}
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1389,7 +1384,7 @@ ad1848_halt_input(void *addr)
 	u_char reg;
 
 	DPRINTF(("ad1848: ad1848_halt_input\n"));
-
+	mtx_enter(&audio_lock);
 	reg = ad_read(sc, SP_INTERFACE_CONFIG);
 	ad_write(sc, SP_INTERFACE_CONFIG, (reg & ~CAPTURE_ENABLE));
 
@@ -1397,7 +1392,7 @@ ad1848_halt_input(void *addr)
 		isa_dmaabort(sc->sc_isa, sc->sc_recdrq);
 		sc->sc_recrun = 0;
 	}
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1412,7 +1407,7 @@ ad1848_trigger_input(void *addr, void *start, void *end, int blksize,
 		DPRINTF(("ad1848_trigger_input: invalid recording drq\n"));
 		return ENXIO;
 	}
-
+	mtx_enter(&audio_lock);
 	isa_dmastart(sc->sc_isa, sc->sc_recdrq, start,
 	    (char *)end - (char *)start, NULL, DMAMODE_READ | DMAMODE_LOOP,
 	    BUS_DMA_NOWAIT);
@@ -1438,7 +1433,7 @@ ad1848_trigger_input(void *addr, void *start, void *end, int blksize,
 	if (ad1848debug > 1)
 		printf("ad1848_trigger_input: started capture\n");
 #endif
-	
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1449,6 +1444,7 @@ ad1848_trigger_output(void *addr, void *start, void *end, int blksize,
 	struct ad1848_softc *sc = addr;
 	u_char reg;
 
+	mtx_enter(&audio_lock);
 	isa_dmastart(sc->sc_isa, sc->sc_drq, start,
 	    (char *)end - (char *)start, NULL,
 	    DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
@@ -1469,7 +1465,7 @@ ad1848_trigger_output(void *addr, void *start, void *end, int blksize,
 	if (ad1848debug > 1)
 		printf("ad1848_trigger_output: started playback\n");
 #endif
-	
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1480,6 +1476,7 @@ ad1848_intr(void *arg)
 	int retval = 0;
 	u_char status;
 
+	mtx_enter(&audio_lock);
 	/* Get intr status */
 	status = ADREAD(sc, AD1848_STATUS);
 	
@@ -1518,7 +1515,7 @@ ad1848_intr(void *arg)
 		/* clear interrupt */
 		ADWRITE(sc, AD1848_STATUS, 0);
 	}
-
+	mtx_leave(&audio_lock);
 	return(retval);
 }
 

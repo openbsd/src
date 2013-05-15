@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.49 2011/07/03 15:47:16 matthew Exp $ */
+/*	$OpenBSD: auvia.c,v 1.50 2013/05/15 08:29:24 ratchov Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -511,6 +511,7 @@ auvia_close(void *addr)
 	struct auvia_softc *sc = addr;
 	sc->codec_if->vtbl->unlock(sc->codec_if);
 
+	/* XXX: already called by audio_close() */
 	auvia_halt_output(sc);
 	auvia_halt_input(sc);
 
@@ -1061,7 +1062,7 @@ auvia_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	CH_WRITE4(sc, ch, AUVIA_RP_DMAOPS_BASE,
 	    ch->sc_dma_ops_dma->map->dm_segs[0].ds_addr);
-
+	mtx_enter(&audio_lock);
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 		if (ch->sc_base != VIA8233_MP_BASE) {
 			CH_WRITE1(sc, ch, VIA8233_RP_DXS_LVOL, 0);
@@ -1074,7 +1075,7 @@ auvia_trigger_output(void *addr, void *start, void *end, int blksize,
 		CH_WRITE1(sc, ch, AUVIA_RP_MODE, ch->sc_reg);
 		CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_START);
 	}
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1103,6 +1104,7 @@ auvia_trigger_input(void *addr, void *start, void *end, int blksize,
 	CH_WRITE4(sc, ch, AUVIA_RP_DMAOPS_BASE,
 		  ch->sc_dma_ops_dma->map->dm_segs[0].ds_addr);
 
+	mtx_enter(&audio_lock);
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 		if (ch->sc_base != VIA8233_MP_BASE) {
 			CH_WRITE1(sc, ch, VIA8233_RP_DXS_LVOL, 0);
@@ -1115,6 +1117,7 @@ auvia_trigger_input(void *addr, void *start, void *end, int blksize,
 		CH_WRITE1(sc, ch, AUVIA_RP_MODE, ch->sc_reg);
 		CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_START);
 	}
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1127,7 +1130,7 @@ auvia_intr(void *arg)
 	u_int8_t r;
 	int i = 0;
 
-
+	mtx_enter(&audio_lock);
 	ch = &sc->sc_record;
 	r = CH_READ1(sc, ch, AUVIA_RP_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
@@ -1150,7 +1153,7 @@ auvia_intr(void *arg)
 
 		i++;
 	}
-
+	mtx_leave(&audio_lock);
 	return (i? 1 : 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.27 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.28 2013/05/15 08:29:23 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -308,6 +308,7 @@ harmony_intr(vsc)
 	u_int32_t dstatus;
 	int r = 0;
 
+	mtx_enter(&audio_lock);
 	ADD_CLKALLICA(sc);
 
 	harmony_intr_disable(sc);
@@ -360,7 +361,7 @@ harmony_intr(vsc)
 		sc->sc_ov = 0;
 
 	harmony_intr_enable(sc);
-
+	mtx_leave(&audio_lock);
 	return (r);
 }
 
@@ -394,6 +395,7 @@ harmony_close(void *vsc)
 {
 	struct harmony_softc *sc = vsc;
 
+	/* XXX: not useful, halt_*() already called */
 	harmony_halt_input(sc);
 	harmony_halt_output(sc);
 	harmony_intr_disable(sc);
@@ -655,6 +657,7 @@ harmony_halt_output(void *vsc)
 {
 	struct harmony_softc *sc = vsc;
 
+	/* XXX: disable interrupts */
 	sc->sc_playing = 0;
 	return (0);
 }
@@ -664,6 +667,7 @@ harmony_halt_input(void *vsc)
 {
 	struct harmony_softc *sc = vsc;
 
+	/* XXX: disable interrupts */
 	sc->sc_capturing = 0;
 	return (0);
 }
@@ -1071,6 +1075,7 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 	    nextaddr - d->d_map->dm_segs[0].ds_addr,
 	    c->c_blksz, BUS_DMASYNC_PREWRITE);
 
+	mtx_enter(&audio_lock);
 	WRITE_REG(sc, HARMONY_PNXTADD, nextaddr);
 	c->c_theaddr = nextaddr;
 	SYNC_REG(sc, HARMONY_PNXTADD, BUS_SPACE_BARRIER_WRITE);
@@ -1078,7 +1083,7 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 
 	harmony_start_cp(sc);
 	harmony_intr_enable(sc);
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1143,10 +1148,11 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 	c->c_segsz = (caddr_t)end - (caddr_t)start;
 	c->c_cnt = 0;
 	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr;
-
+	mtx_enter(&audio_lock);
 	sc->sc_capturing = 1;
 	harmony_start_cp(sc);
 	harmony_intr_enable(sc);
+	mtx_leave(&audio_lock);
 	return (0);
 }
 

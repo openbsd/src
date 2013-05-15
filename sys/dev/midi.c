@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.29 2013/03/15 09:10:52 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.30 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -51,6 +51,7 @@ int	midiprint(void *, const char *);
 
 void	midi_iintr(void *, int);
 void 	midi_ointr(void *);
+void	midi_timeout(void *);
 void	midi_out_start(struct midi_softc *);
 void	midi_out_stop(struct midi_softc *);
 void	midi_out_do(struct midi_softc *);
@@ -80,7 +81,6 @@ struct filterops midiread_filtops = {
 	1, NULL, filt_midirdetach, filt_midiread
 };
 
-
 void
 midi_iintr(void *addr, int data)
 {
@@ -105,34 +105,33 @@ midi_iintr(void *addr, int data)
 	}
 }
 
-
 int
 midiread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct midi_softc  *sc = MIDI_DEV2SC(dev);
 	struct midi_buffer *mb = &sc->inbuf;
-	unsigned 	    count;
-	int		    s, error;
+	unsigned int count;
+	int error;
 
 	if (!(sc->flags & FREAD))
 		return ENXIO;
 
 	/* if there is no data then sleep (unless IO_NDELAY flag is set) */
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	while (MIDIBUF_ISEMPTY(mb)) {
 		if (sc->isdying) {
-			splx(s);
+			mtx_leave(&audio_lock);
 			return EIO;
 		}
 		if (ioflag & IO_NDELAY) {
-			splx(s);
+			mtx_leave(&audio_lock);
 			return EWOULDBLOCK;
 		}
 		sc->rchan = 1;
-		error = tsleep(&sc->rchan, PWAIT|PCATCH, "mid_rd", 0);
+		error = msleep(&sc->rchan, &audio_lock, PWAIT | PCATCH, "mid_rd", 0);
 		if (error) {
-			splx(s);
+			mtx_leave(&audio_lock);
 			return error;
 		}
 	}
@@ -147,26 +146,24 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			count = uio->uio_resid;
 		error = uiomove(mb->data + mb->start, count, uio);
 		if (error) {
-			splx(s);
+			mtx_leave(&audio_lock);
 			return error;
 		}
 		MIDIBUF_REMOVE(mb, count);
 	}
-	splx(s);
+	mtx_leave(&audio_lock);
 	return 0;
 }
-
 
 void
 midi_ointr(void *addr)
 {
 	struct midi_softc  *sc = (struct midi_softc *)addr;
 	struct midi_buffer *mb;
-	int 		    s;
 
+	MUTEX_ASSERT_LOCKED(&audio_lock);
 	if (sc->isopen && !sc->isdying) {
 		mb = &sc->outbuf;
-		s = splaudio();
 		if (mb->used > 0) {
 #ifdef MIDI_DEBUG
 			if (!sc->isbusy) {
@@ -176,10 +173,16 @@ midi_ointr(void *addr)
 			midi_out_do(sc);
 		} else if (sc->isbusy)
 			midi_out_stop(sc);
-		splx(s);
 	}
 }
 
+void
+midi_timeout(void *addr)
+{
+	mtx_enter(&audio_lock);
+	midi_ointr(addr);
+	mtx_leave(&audio_lock);
+}
 
 void
 midi_out_start(struct midi_softc *sc)
@@ -189,7 +192,6 @@ midi_out_start(struct midi_softc *sc)
 		midi_out_do(sc);
 	}
 }
-
 
 void
 midi_out_stop(struct midi_softc *sc)
@@ -203,7 +205,6 @@ midi_out_stop(struct midi_softc *sc)
 	if (sc->async)
 		psignal(sc->async, SIGIO);
 }
-
 
 void
 midi_out_do(struct midi_softc *sc)
@@ -230,14 +231,13 @@ midi_out_do(struct midi_softc *sc)
 	}
 }
 
-
 int
 midiwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct midi_softc  *sc = MIDI_DEV2SC(dev);
 	struct midi_buffer *mb = &sc->outbuf;
-	unsigned 	    count;
-	int		    s, error;
+	unsigned int count;
+	int error;
 
 	if (!(sc->flags & FWRITE))
 		return ENXIO;
@@ -254,24 +254,25 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 		return EWOULDBLOCK;
 
 	while (uio->uio_resid > 0) {
-		s = splaudio();
+		mtx_enter(&audio_lock);
 		while (MIDIBUF_ISFULL(mb)) {
 			if (ioflag & IO_NDELAY) {
 				/*
 				 * At this stage at least one byte is already
 				 * moved so we do not return EWOULDBLOCK
 				 */
-				splx(s);
+				mtx_leave(&audio_lock);
 				return 0;
 			}
 			sc->wchan = 1;
-			error = tsleep(&sc->wchan, PWAIT|PCATCH, "mid_wr", 0);
+			error = msleep(&sc->wchan, &audio_lock,
+			    PWAIT | PCATCH, "mid_wr", 0);
 			if (error) {
-				splx(s);
+				mtx_leave(&audio_lock);
 				return error;
 			}
 			if (sc->isdying) {
-				splx(s);
+				mtx_leave(&audio_lock);
 				return EIO;
 			}
 		}
@@ -283,28 +284,27 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 			count = uio->uio_resid;
 		error = uiomove(mb->data + MIDIBUF_END(mb), count, uio);
 		if (error) {
-			splx(s);
+			mtx_leave(&audio_lock);
 			return error;
 		}
 		mb->used += count;
 		midi_out_start(sc);
-		splx(s);
+		mtx_leave(&audio_lock);
 	}
 	return 0;
 }
-
 
 int
 midipoll(dev_t dev, int events, struct proc *p)
 {
 	struct midi_softc *sc = MIDI_DEV2SC(dev);
-	int		   s, revents;
+	int revents;
 
 	if (sc->isdying)
 		return POLLERR;
 
 	revents = 0;
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (!MIDIBUF_ISEMPTY(&sc->inbuf))
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -319,17 +319,15 @@ midipoll(dev_t dev, int events, struct proc *p)
 		if (events & (POLLOUT | POLLWRNORM))
 			selrecord(p, &sc->wsel);
 	}
-	splx(s);
+	mtx_leave(&audio_lock);
 	return (revents);
 }
-
 
 int
 midikqfilter(dev_t dev, struct knote *kn)
 {
 	struct midi_softc *sc = MIDI_DEV2SC(dev);
 	struct klist 	  *klist;
-	int		   s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -345,65 +343,58 @@ midikqfilter(dev_t dev, struct knote *kn)
 	}
 	kn->kn_hook = (void *)sc;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	return (0);
 }
-
 
 void
 filt_midirdetach(struct knote *kn)
 {
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
-	int		   s;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	SLIST_REMOVE(&sc->rsel.si_note, kn, knote, kn_selnext);
-	splx(s);
+	mtx_leave(&audio_lock);
 }
-
 
 int
 filt_midiread(struct knote *kn, long hint)
 {
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
-	int		   s, retval;
+	int retval;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	retval = !MIDIBUF_ISEMPTY(&sc->inbuf);
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	return (retval);
 }
-
 
 void
 filt_midiwdetach(struct knote *kn)
 {
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
-	int 		   s;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	SLIST_REMOVE(&sc->wsel.si_note, kn, knote, kn_selnext);
-	splx(s);
+	mtx_leave(&audio_lock);
 }
-
 
 int
 filt_midiwrite(struct knote *kn, long hint)
 {
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
-	int		   s, retval;
+	int		   retval;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	retval = !MIDIBUF_ISFULL(&sc->outbuf);
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	return (retval);
 }
-
 
 int
 midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
@@ -431,12 +422,11 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	return 0;
 }
 
-
 int
 midiopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct midi_softc *sc;
-	int		   err;
+	int err;
 
 	if (MIDI_UNIT(dev) >= midi_cd.cd_ndevs)
 		return ENXIO;
@@ -462,28 +452,27 @@ midiopen(dev_t dev, int flags, int mode, struct proc *p)
 	return 0;
 }
 
-
 int
 midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 {
 	struct midi_softc  *sc = MIDI_DEV2SC(dev);
 	struct midi_buffer *mb;
-	int 		    error;
-	int		    s;
+	int error;
 
 	mb = &sc->outbuf;
 	if (!sc->isdying) {
 		/* start draining output buffer */
-		s = splaudio();
+		mtx_enter(&audio_lock);
 		if (!MIDIBUF_ISEMPTY(mb))
 			midi_out_start(sc);
 		while (sc->isbusy) {
 			sc->wchan = 1;
-			error = tsleep(&sc->wchan, PWAIT, "mid_dr", 5 * hz);
+			error = msleep(&sc->wchan, &audio_lock,
+			    PWAIT, "mid_dr", 5 * hz);
 			if (error || sc->isdying)
 				break;
 		}
-		splx(s);
+		mtx_leave(&audio_lock);
 	}
 
 	/*
@@ -499,7 +488,6 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	return 0;
 }
 
-
 int
 midiprobe(struct device *parent, void *match, void *aux)
 {
@@ -508,20 +496,18 @@ midiprobe(struct device *parent, void *match, void *aux)
 	return (sa != NULL && (sa->type == AUDIODEV_TYPE_MIDI) ? 1 : 0);
 }
 
-
 void
 midi_attach(struct midi_softc *sc, struct device *parent)
 {
-	struct midi_info 	  mi;
+	struct midi_info mi;
 
 	sc->isdying = 0;
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
 	sc->props = mi.props;
 	sc->isopen = 0;
-	timeout_set(&sc->timeo, midi_ointr, sc);
+	timeout_set(&sc->timeo, midi_timeout, sc);
 	printf(": <%s>\n", mi.name);
 }
-
 
 void
 midiattach(struct device *parent, struct device *self, void *aux)
@@ -546,12 +532,11 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	midi_attach(sc, parent);
 }
 
-
 int
 mididetach(struct device *self, int flags)
 {
 	struct midi_softc *sc = (struct midi_softc *)self;
-	int    maj, mn;
+	int maj, mn;
 
 	sc->isdying = 1;
 	if (sc->wchan) {
@@ -574,7 +559,6 @@ mididetach(struct device *self, int flags)
 	return 0;
 }
 
-
 int
 midiprint(void *aux, const char *pnp)
 {
@@ -582,7 +566,6 @@ midiprint(void *aux, const char *pnp)
 		printf("midi at %s", pnp);
 	return (UNCONF);
 }
-
 
 void
 midi_getinfo(dev_t dev, struct midi_info *mi)
@@ -596,7 +579,6 @@ midi_getinfo(dev_t dev, struct midi_info *mi)
 	}
 	sc->hw_if->getinfo(sc->hw_hdl, mi);
 }
-
 
 struct device *
 midi_attach_mi(struct midi_hw_if *hwif, void *hdl, struct device *dev)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.5 2012/01/02 17:10:56 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.6 2013/05/15 08:29:24 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -301,16 +301,15 @@ int
 arcofi_drain(void *v)
 {
 	struct arcofi_softc *sc = (struct arcofi_softc *)v;
-	int s;
 
-	s = splaudio();		/* not invoked at splaudio if from ioctl() */
+	mtx_enter(&audio_lock);
 	if ((arcofi_read(sc, ARCOFI_FIFO_SR) & FIFO_SR_OUT_EMPTY) == 0) {
 		/* enable output FIFO empty interrupt... */
 		arcofi_write(sc, ARCOFI_FIFO_IR,
 		    arcofi_read(sc, ARCOFI_FIFO_IR) |
 		    FIFO_IR_ENABLE(FIFO_IR_OUT_EMPTY));
 		/* ...and wait for it to fire */
-		if (tsleep(&sc->sc_xmit, 0, "arcofidr",
+		if (msleep(&sc->sc_xmit, &audio_lock, 0, "arcofidr",
 		    1 + (ARCOFI_FIFO_SIZE * hz) / 8000) != 0) {
 			printf("%s: drain did not complete\n",
 			    sc->sc_dev.dv_xname);
@@ -319,8 +318,7 @@ arcofi_drain(void *v)
 			    ~FIFO_IR_ENABLE(FIFO_IR_OUT_EMPTY));
 		}
 	}
-	splx(s);
-
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -527,7 +525,6 @@ int
 arcofi_commit_settings(void *v)
 {
 	struct arcofi_softc *sc = (struct arcofi_softc *)v;
-	int s;
 	int rc;
 	uint8_t cmd[2], csr, ocsr;
 
@@ -542,7 +539,7 @@ arcofi_commit_settings(void *v)
 	if (bcmp(&sc->sc_active, &sc->sc_shadow, sizeof(sc->sc_active)) == 0)
 		return 0;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 
 	if (sc->sc_active.gr_idx != sc->sc_shadow.gr_idx) {
 		cmd[0] = arcofi_gains[sc->sc_shadow.gr_idx] >> 8;
@@ -591,7 +588,7 @@ arcofi_commit_settings(void *v)
 
 	rc = 0;
 error:
-	splx(s);
+	mtx_leave(&audio_lock);
 	return rc;
 }
 
@@ -658,7 +655,7 @@ arcofi_halt_input(void *v)
 {
 	struct arcofi_softc *sc = (struct arcofi_softc *)v;
 
-	splassert(IPL_AUDIO);
+	mtx_enter(&audio_lock);
 
 	/* disable input FIFO interrupts */
 	arcofi_write(sc, ARCOFI_FIFO_IR, arcofi_read(sc, ARCOFI_FIFO_IR) &
@@ -669,6 +666,7 @@ arcofi_halt_input(void *v)
 		arcofi_write(sc, ARCOFI_CSR,
 		    arcofi_read(sc, ARCOFI_CSR) & ~CSR_DATA_FIFO_ENABLE);
 
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -677,7 +675,7 @@ arcofi_halt_output(void *v)
 {
 	struct arcofi_softc *sc = (struct arcofi_softc *)v;
 
-	splassert(IPL_AUDIO);
+	mtx_enter(&audio_lock);
 
 	/* disable output FIFO interrupts */
 	arcofi_write(sc, ARCOFI_FIFO_IR, arcofi_read(sc, ARCOFI_FIFO_IR) &
@@ -688,6 +686,7 @@ arcofi_halt_output(void *v)
 		arcofi_write(sc, ARCOFI_CSR,
 		    arcofi_read(sc, ARCOFI_CSR) & ~CSR_DATA_FIFO_ENABLE);
 
+	mtx_leave(&audio_lock);
 	return 0;
 }
 
@@ -1143,15 +1142,15 @@ void
 arcofi_swintr(void *v)
 {
 	struct arcofi_softc *sc = (struct arcofi_softc *)v;
-	int s, action;
+	int action;
 
 	action = 0;
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	if (sc->sc_recv.buf != NULL && sc->sc_recv.buf == sc->sc_recv.past)
 		action |= AUMODE_RECORD;
 	if (sc->sc_xmit.buf != NULL && sc->sc_xmit.buf == sc->sc_xmit.past)
 		action |= AUMODE_PLAY;
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	if (action & AUMODE_RECORD) {
 		if (sc->sc_recv.cb)
@@ -1194,7 +1193,7 @@ arcofi_cmd(struct arcofi_softc *sc, uint8_t cmd, const uint8_t *data)
 		return EINVAL;
 	len = cmdlen[cmd];
 
-	splassert(IPL_AUDIO);
+	mtx_enter(&audio_lock);
 
 	/*
 	 * Disable all FIFO processing.
@@ -1221,13 +1220,16 @@ arcofi_cmd(struct arcofi_softc *sc, uint8_t cmd, const uint8_t *data)
 	 */
 	cnt = 100;
 	while ((arcofi_read(sc, ARCOFI_FIFO_SR) & FIFO_SR_CTRL_EMPTY) == 0) {
-		if (cnt-- == 0)
+		if (cnt-- == 0) {
+			mtx_leave(&audio_lock);
 			return EBUSY;
+		}
 		delay(10);
 	}
 
 	arcofi_write(sc, ARCOFI_CSR, csr);
 
+	mtx_leave(&audio_lock);
 	return 0;
 }
 

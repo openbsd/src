@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.14 2012/10/03 22:46:09 miod Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.15 2013/05/15 08:29:23 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -598,8 +598,9 @@ mavb_halt_output(void *hdl)
 	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 
 	DPRINTF(1, ("%s: mavb_halt_output called\n", sc->sc_dev.dv_xname));
-
+	mtx_enter(&audio_lock);
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_CONTROL, 0);
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -609,8 +610,9 @@ mavb_halt_input(void *hdl)
 	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 
 	DPRINTF(1, ("%s: mavb_halt_input called\n", sc->sc_dev.dv_xname));
-
+	mtx_enter(&audio_lock);
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL1_CONTROL, 0);
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1129,6 +1131,7 @@ mavb_trigger_output(void *hdl, void *start, void *end, int blksize,
 	    "blksize=%d intr=%p(%p)\n", sc->sc_dev.dv_xname,
 	    start, end, blksize, intr, intrarg));
 
+	mtx_enter(&audio_lock);
 	sc->play.blksize = blksize;
 	sc->play.intr = intr;
 	sc->play.intrarg = intrarg;
@@ -1155,6 +1158,7 @@ mavb_trigger_output(void *hdl, void *start, void *end, int blksize,
 	 */
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_CONTROL,
 	    MAVB_CHANNEL_DMA_ENABLE | MAVB_CHANNEL_INT_25);
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1168,6 +1172,7 @@ mavb_trigger_input(void *hdl, void *start, void *end, int blksize,
 	    "blksize=%d intr=%p(%p)\n", sc->sc_dev.dv_xname,
 	    start, end, blksize, intr, intrarg));
 
+	mtx_enter(&audio_lock);
 	sc->rec.blksize = blksize;
 	sc->rec.intr = intr;
 	sc->rec.intrarg = intrarg;
@@ -1182,6 +1187,7 @@ mavb_trigger_input(void *hdl, void *start, void *end, int blksize,
 
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL1_CONTROL,
 	    MAVB_CHANNEL_DMA_ENABLE | MAVB_CHANNEL_INT_50);
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1240,6 +1246,7 @@ mavb_intr(void *arg)
 	struct mavb_softc *sc = arg;
 	u_int64_t intstat, intmask;
 
+	mtx_enter(&audio_lock);
 	intstat = bus_space_read_8(sc->sc_st, sc->sc_isash, MACE_ISA_INT_STAT);
 	DPRINTF(MAVB_DEBUG_INTR, ("%s: mavb_intr: intstat = 0x%lx\n",
             sc->sc_dev.dv_xname, intstat));
@@ -1260,7 +1267,7 @@ mavb_intr(void *arg)
 
 	if (intstat & MACE_ISA_INT_AUDIO_DMA2)
 		mavb_dma_output(sc);
-
+	mtx_leave(&audio_lock);
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.29 2010/07/15 03:43:11 jakemsr Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.30 2013/05/15 08:29:23 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -285,6 +285,7 @@ cs4231_intr(v)
 	u_int8_t reg, status;
 	int r = 0;
 
+	mtx_enter(&audio_lock);
 	csr = regs->dma_csr;
 	regs->dma_csr = csr;
 
@@ -372,7 +373,7 @@ cs4231_intr(v)
 		/* capture empty */
 		r = 1;
 	}
-
+	mtx_leave(&audio_lock);
 	return (r);
 }
 
@@ -573,6 +574,7 @@ cs4231_close(addr)
 	struct cs4231_softc *sc = addr;
 	struct cs4231_regs *regs = sc->sc_regs;
 
+	/* XXX: already called by upper layer */
 	cs4231_halt_input(sc);
 	cs4231_halt_output(sc);
 	regs->iar = SP_PIN_CONTROL;
@@ -825,7 +827,7 @@ cs4231_halt_output(addr)
 	struct cs4231_regs *regs = sc->sc_regs;
 	u_int8_t r;
 
-	/* XXX Kills some capture bits */
+	mtx_enter(&audio_lock);
 	regs->dma_csr &= ~(APC_CSR_EI | APC_CSR_GIE | APC_CSR_PIE |
 	    APC_CSR_EIE | APC_CSR_PDMA_GO | APC_CSR_PMIE);
 	regs->iar = SP_INTERFACE_CONFIG;
@@ -833,6 +835,7 @@ cs4231_halt_output(addr)
 	regs->iar = SP_INTERFACE_CONFIG;
 	regs->idr = r;
 	sc->sc_playback.cs_locked = 0;
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -843,11 +846,12 @@ cs4231_halt_input(addr)
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
 	struct cs4231_regs *regs = sc->sc_regs;
 
-	/* XXX Kills some playback bits */
+	mtx_enter(&audio_lock);
 	regs->dma_csr = APC_CSR_CAPTURE_PAUSE;
 	regs->iar = SP_INTERFACE_CONFIG;
 	regs->idr &= ~CAPTURE_ENABLE;
 	sc->sc_capture.cs_locked = 0;
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1513,8 +1517,10 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	u_int8_t reg;
 	u_int32_t n, csr;
 
+	mtx_enter(&audio_lock);
 	if (chan->cs_locked != 0) {
 		printf("cs4231_trigger_output: already running\n");
+		mtx_leave(&audio_lock);
 		return (EINVAL);
 	}
 
@@ -1527,6 +1533,7 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 		p = p->next;
 	if (p == NULL) {
 		printf("cs4231_trigger_output: bad addr: %p\n", start);
+		mtx_leave(&audio_lock);
 		return (EINVAL);
 	}
 
@@ -1563,6 +1570,7 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 		regs->iar = SP_INTERFACE_CONFIG;
 		regs->idr = reg;
 	}
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1580,9 +1588,11 @@ cs4231_trigger_input(addr, start, end, blksize, intr, arg, param)
 	u_int32_t csr;
 	u_long n;
 
+	mtx_enter(&audio_lock);
 	if (chan->cs_locked != 0) {
 		printf("%s: trigger_input: already running\n",
 		    sc->sc_dev.dv_xname);
+		mtx_leave(&audio_lock);
 		return (EINVAL);
 	}
 	chan->cs_locked = 1;
@@ -1594,6 +1604,7 @@ cs4231_trigger_input(addr, start, end, blksize, intr, arg, param)
 	if (p == NULL) {
 		printf("%s: trigger_input: bad addr: %p\n",
 		    sc->sc_dev.dv_xname, start);
+		mtx_leave(&audio_lock);
 		return (EINVAL);
 	}
 
@@ -1644,6 +1655,6 @@ cs4231_trigger_input(addr, start, end, blksize, intr, arg, param)
 		sc->sc_regs->dma_cnva = nextaddr;
 		sc->sc_regs->dma_cnc = togo;
 	}
-
+	mtx_leave(&audio_lock);
 	return (0);
 }

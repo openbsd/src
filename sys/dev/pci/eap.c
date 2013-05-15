@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.44 2012/03/30 08:18:19 ratchov Exp $ */
+/*      $OpenBSD: eap.c,v 1.45 2013/05/15 08:29:24 ratchov Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -340,7 +340,7 @@ eap1370_write_codec(struct eap_softc *sc, int a, int d)
 static __inline void
 eap1371_ready_codec(struct eap_softc *sc, u_int8_t a, u_int32_t wd)
 {
-	int to, s;
+	int to;
 	u_int32_t src, t;
 
 	for (to = 0; to < EAP_WRITE_TIMEOUT; to++) {
@@ -352,7 +352,7 @@ eap1371_ready_codec(struct eap_softc *sc, u_int8_t a, u_int32_t wd)
 		printf("%s: eap1371_ready_codec timeout 1\n",
 		    sc->sc_dev.dv_xname);
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	src = eap1371_src_wait(sc) & E1371_SRC_CTLMASK;
 	EWRITE4(sc, E1371_SRC, src | E1371_SRC_STATE_OK);
 
@@ -381,7 +381,7 @@ eap1371_ready_codec(struct eap_softc *sc, u_int8_t a, u_int32_t wd)
 	eap1371_src_wait(sc);
 	EWRITE4(sc, E1371_SRC, src);
 
-	splx(s);
+	mtx_leave(&audio_lock);
 }
 
 int
@@ -717,15 +717,14 @@ eap1371_reset_codec(void *sc_)
 {
 	struct eap_softc *sc = sc_;
 	u_int32_t icsc;
-	int s;
 
-	s = splaudio();
+	mtx_enter(&audio_lock);
 	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc | E1371_SYNC_RES);
 	delay(20);
 	EWRITE4(sc, EAP_ICSC, icsc & ~E1371_SYNC_RES);
 	delay(1);
-	splx(s);
+	mtx_leave(&audio_lock);
 
 	return;
 }
@@ -736,9 +735,12 @@ eap_intr(void *p)
 	struct eap_softc *sc = p;
 	u_int32_t intr, sic;
 
+	mtx_enter(&audio_lock);
 	intr = EREAD4(sc, EAP_ICSS);
-	if (!(intr & EAP_INTR))
+	if (!(intr & EAP_INTR)) {
+		mtx_leave(&audio_lock);
 		return (0);
+	}
 	sic = EREAD4(sc, EAP_SIC);
 	DPRINTFN(5, ("eap_intr: ICSS=0x%08x, SIC=0x%08x\n", intr, sic));
 	if (intr & EAP_I_ADC) {
@@ -795,6 +797,7 @@ eap_intr(void *p)
 		}
 	}
 #endif
+	mtx_leave(&audio_lock);
 	return (1);
 }
 
@@ -1078,7 +1081,7 @@ eap_trigger_output(
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
-
+	mtx_enter(&audio_lock);
 	sic = EREAD4(sc, EAP_SIC);
 	sic &= ~(EAP_P2_S_EB | EAP_P2_S_MB | EAP_INC_BITS);
 	sic |= EAP_SET_P2_ST_INC(0) | EAP_SET_P2_END_INC(param->precision * param->factor / 8);
@@ -1118,7 +1121,7 @@ eap_trigger_output(
 	EWRITE4(sc, EAP_ICSC, icsc | EAP_DAC2_EN);
 
 	DPRINTFN(1, ("eap_trigger_output: set ICSC = 0x%08x\n", icsc));
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1147,7 +1150,7 @@ eap_trigger_input(
 	    addr, start, end, blksize, intr, arg));
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
-
+	mtx_enter(&audio_lock);
 	sic = EREAD4(sc, EAP_SIC);
 	sic &= ~(EAP_R1_S_EB | EAP_R1_S_MB);
 	sampshift = 0;
@@ -1186,7 +1189,7 @@ eap_trigger_input(
 	EWRITE4(sc, EAP_ICSC, icsc | EAP_ADC_EN);
 
 	DPRINTFN(1, ("eap_trigger_input: set ICSC = 0x%08x\n", icsc));
-
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1197,11 +1200,13 @@ eap_halt_output(void *addr)
 	u_int32_t icsc;
 	
 	DPRINTF(("eap: eap_halt_output\n"));
+	mtx_enter(&audio_lock);
 	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_DAC2_EN);
 #ifdef DIAGNOSTIC
 	sc->sc_prun = 0;
 #endif
+	mtx_leave(&audio_lock);
 	return (0);
 }
 
@@ -1212,11 +1217,13 @@ eap_halt_input(void *addr)
 	u_int32_t icsc;
     
 	DPRINTF(("eap: eap_halt_input\n"));
+	mtx_enter(&audio_lock);
 	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_ADC_EN);
 #ifdef DIAGNOSTIC
 	sc->sc_rrun = 0;
 #endif
+	mtx_leave(&audio_lock);
 	return (0);
 }
 

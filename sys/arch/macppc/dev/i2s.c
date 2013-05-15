@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.22 2011/06/07 16:29:51 mpi Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.23 2013/05/15 08:29:23 ratchov Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -132,9 +132,13 @@ i2s_intr(v)
 	struct dbdma_command *cmd = sc->sc_odmap;
 	u_int16_t c, status;
 
+	mtx_enter(&audio_lock);
+
 	/* if not set we are not running */
-	if (!cmd)
+	if (!cmd) {
+		mtx_leave(&audio_lock);
 		return (0);
+	}
 	DPRINTF(("i2s_intr: cmd %x\n", cmd));
 
 	c = in16rb(&cmd->d_command);
@@ -151,7 +155,7 @@ i2s_intr(v)
 			if (sc->sc_ointr)
 				(*sc->sc_ointr)(sc->sc_oarg);
 	}
-
+	mtx_leave(&audio_lock);
 	return 1;
 }
 
@@ -163,9 +167,13 @@ i2s_iintr(v)
 	struct dbdma_command *cmd = sc->sc_idmap;
 	u_int16_t c, status;
 
+	mtx_enter(&audio_lock);
+
 	/* if not set we are not running */
-	if (!cmd)
+	if (!cmd) {	
+		mtx_leave(&audio_lock);
 		return (0);
+	}
 	DPRINTF(("i2s_intr: cmd %x\n", cmd));
 
 	c = in16rb(&cmd->d_command);
@@ -182,7 +190,7 @@ i2s_iintr(v)
 			if (sc->sc_iintr)
 				(*sc->sc_iintr)(sc->sc_iarg);
 	}
-
+	mtx_leave(&audio_lock);
 	return 1;
 }
 
