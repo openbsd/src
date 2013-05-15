@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.66 2013/03/27 11:19:19 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.67 2013/05/15 15:32:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,7 +56,7 @@ screen_write_reset(struct screen_write_ctx *ctx)
 	screen_reset_tabs(s);
 	screen_write_scrollregion(ctx, 0, screen_size_y(s) - 1);
 
-	s->mode &= ~(MODE_INSERT|MODE_KCURSOR|MODE_KKEYPAD);
+	s->mode &= ~(MODE_INSERT|MODE_KCURSOR|MODE_KKEYPAD|MODE_FOCUSON);
 	s->mode &= ~(ALL_MOUSE_MODES|MODE_MOUSE_UTF8|MODE_MOUSE_SGR);
 
 	screen_write_clearscreen(ctx);
