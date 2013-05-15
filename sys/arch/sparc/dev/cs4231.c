@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.30 2013/05/15 08:29:23 ratchov Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.31 2013/05/15 21:19:45 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -764,7 +764,7 @@ cs4231_commit_settings(addr)
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
 	struct cs4231_regs *regs = sc->sc_regs;
-	int s, tries;
+	int tries;
 	u_int8_t r, fs;
 
 	if (sc->sc_need_commit == 0)
@@ -773,8 +773,6 @@ cs4231_commit_settings(addr)
 	fs = sc->sc_speed_bits | (sc->sc_format_bits << 5);
 	if (sc->sc_channels == 2)
 		fs |= FMT_STEREO;
-
-	s = splaudio();
 
 	r = cs4231_read(sc, SP_INTERFACE_CONFIG) | AUTO_CAL_ENABLE;
 	regs->iar = MODE_CHANGE_ENABLE;
@@ -812,8 +810,6 @@ cs4231_commit_settings(addr)
 	if (tries == 0)
 		printf("%s: timeout waiting for autocalibration\n",
 		    sc->sc_dev.dv_xname);
-
-	splx(s);
 
 	sc->sc_need_commit = 0;
 	return (0);
