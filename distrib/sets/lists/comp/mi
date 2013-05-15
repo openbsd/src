@@ -5027,6 +5027,7 @@
 ./usr/share/man/man3/memcmp.3
 ./usr/share/man/man3/memcpy.3
 ./usr/share/man/man3/memmove.3
+./usr/share/man/man3/memmem.3
 ./usr/share/man/man3/memrchr.3
 ./usr/share/man/man3/memset.3
 ./usr/share/man/man3/menu.3
