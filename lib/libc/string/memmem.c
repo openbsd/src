@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmem.c,v 1.1 2013/05/13 10:37:02 ajacoutot Exp $ */
+/*	$OpenBSD: memmem.c,v 1.2 2013/05/15 12:45:59 ajacoutot Exp $ */
 /*-
  * Copyright (c) 2005 Pascal Gloor <pascal.gloor@spale.com>
  *
@@ -42,7 +42,7 @@ memmem(const void *l, size_t l_len, const void *s, size_t s_len)
 	const char *cs = s;
 
 	/* a zero length needle should just return the haystack */
-	if (l_len == 0)
+	if (s_len == 0)
 		return (void *)cl;
 
 	/* "s" must be smaller or equal to "l" */
