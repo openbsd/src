@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioamd.c,v 1.2 2013/05/15 08:29:23 ratchov Exp $	*/
+/*	$OpenBSD: audioamd.c,v 1.3 2013/05/15 21:19:16 ratchov Exp $	*/
 /*	$NetBSD: audioamd.c,v 1.26 2011/06/04 01:27:57 tsutsui Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ am7930swintr(void *v)
 {
 	struct audioamd_softc *sc = v;
 	struct auio *au;
-	int s, dor, dow;
+	int dor, dow;
 
 	DPRINTFN(1, ("audiointr: sc=%p\n", sc););
 

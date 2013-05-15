@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsaudio.c,v 1.3 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: vsaudio.c,v 1.4 2013/05/15 21:21:11 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -383,7 +383,7 @@ void
 vsaudio_swintr(void *v)
 {
 	struct vsaudio_softc *sc = v;
-	int s, dor, dow;
+	int dor, dow;
 
 	DPRINTFN(1, ("audiointr: sc=%p\n", sc));
 
