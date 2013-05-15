@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.76 2013/05/15 08:16:09 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.77 2013/05/15 10:24:36 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -149,6 +149,7 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82845G_IGD:
 		return (CHIP_I830);
 		break;
+	case PCI_PRODUCT_INTEL_82854_IGD:
 	case PCI_PRODUCT_INTEL_82855GM_IGD:
 	case PCI_PRODUCT_INTEL_82865G_IGD:
 		return (CHIP_I855);
@@ -186,9 +187,12 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 		return (CHIP_G33);
 		break;
 	case PCI_PRODUCT_INTEL_82GM45_IGD_1:
+	case PCI_PRODUCT_INTEL_4SERIES_IGD:
 	case PCI_PRODUCT_INTEL_82Q45_IGD_1:
 	case PCI_PRODUCT_INTEL_82G45_IGD_1:
 	case PCI_PRODUCT_INTEL_82G41_IGD_1:
+	case PCI_PRODUCT_INTEL_82B43_IGD_1:
+	case PCI_PRODUCT_INTEL_82B43_IGD_2:
 		return (CHIP_G4X);
 		break;
 	case PCI_PRODUCT_INTEL_PINEVIEW_IGC_1:
@@ -201,6 +205,7 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 		break;
 	case PCI_PRODUCT_INTEL_CORE2G_GT1:
 	case PCI_PRODUCT_INTEL_CORE2G_M_GT1:
+	case PCI_PRODUCT_INTEL_CORE2G_S_GT:
 	case PCI_PRODUCT_INTEL_CORE2G_GT2:
 	case PCI_PRODUCT_INTEL_CORE2G_M_GT2:
 	case PCI_PRODUCT_INTEL_CORE2G_GT2_PLUS:
