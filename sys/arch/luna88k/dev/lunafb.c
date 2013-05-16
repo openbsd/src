@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.13 2013/04/28 23:33:12 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.14 2013/05/16 13:59:10 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -300,7 +300,7 @@ omfbmmap(v, offset, prot)
 	if ((offset & PAGE_MASK) != 0)
 		return (-1);
 
-#if 0	/* Workaround for making Xorg 1bpp server work */
+#if 0	/* Workaround for making Xorg mono server work */
 	if (offset >= 0 && offset < OMFB_SIZE)
 		cookie = (paddr_t)(trunc_page(dc->dc_videobase) + offset);
 #else
@@ -320,6 +320,11 @@ omgetcmap(sc, p)
 	int error;
 
 	cmsize = sc->sc_dc->dc_cmsize;
+
+	/* Don't touch colormap when we use 1bpp */
+	if (cmsize == 0)
+		return (0);
+
 	if (index >= cmsize || count > cmsize - index)
 		return (EINVAL);
 
@@ -346,6 +351,11 @@ omsetcmap(sc, p)
 	int error;
 
 	cmsize = sc->sc_dc->dc_cmsize;
+
+	/* Don't touch colormap when we use 1bpp */
+	if (cmsize == 0)
+		return (0);
+
 	if (index >= cmsize || count > cmsize - index)
 		return (EINVAL);
 
@@ -392,7 +402,7 @@ omfb_getdevconfig(paddr, dc)
 		u_int32_t u;
 	} rfcnt;
 
-#if 0	/* Workaround for making Xorg 1bpp server work */
+#if 0	/* Workaround for making Xorg mono server work */
 	switch (hwplanebits) {
 	case 8:
 		bpp = 8;	/* XXX check monochrome bit in DIPSW */
