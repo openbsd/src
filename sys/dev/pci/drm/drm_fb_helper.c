@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.c,v 1.2 2013/03/19 03:58:10 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.c,v 1.3 2013/05/16 21:14:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -372,11 +372,9 @@ static struct sysrq_key_op sysrq_drm_fb_helper_restore_op = { };
 #endif
 #endif
 
-#if 0
 void
-drm_fb_helper_dpms(struct fb_info *info, int dpms_mode)
+drm_fb_helper_dpms(struct drm_fb_helper *fb_helper, int dpms_mode)
 {
-	struct drm_fb_helper *fb_helper = info->par;
 	struct drm_device *dev = fb_helper->dev;
 	struct drm_crtc *crtc;
 	struct drm_connector *connector;
@@ -385,7 +383,7 @@ drm_fb_helper_dpms(struct fb_info *info, int dpms_mode)
 	/*
 	 * For each CRTC in this fb, turn the connectors on/off.
 	 */
-	mutex_lock(&dev->mode_config.mutex);
+	rw_enter_write(&dev->mode_config.rwl);
 	for (i = 0; i < fb_helper->crtc_count; i++) {
 		crtc = fb_helper->crtc_info[i].mode_set.crtc;
 
@@ -400,9 +398,8 @@ drm_fb_helper_dpms(struct fb_info *info, int dpms_mode)
 				dev->mode_config.dpms_property, dpms_mode);
 		}
 	}
-	mutex_unlock(&dev->mode_config.mutex);
+	rw_exit_write(&dev->mode_config.rwl);
 }
-#endif
 
 #if 0
 int

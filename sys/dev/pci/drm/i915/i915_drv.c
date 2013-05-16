@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.28 2013/05/15 10:24:36 jsg Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.29 2013/05/16 21:14:11 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -631,6 +631,7 @@ void inteldrm_free_screen(void *, void *);
 int inteldrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
 void inteldrm_doswitch(void *, void *);
+void inteldrm_burner(void *, u_int, u_int);
 
 struct wsscreen_descr inteldrm_stdscreen = {
 	"std",
@@ -654,7 +655,11 @@ struct wsdisplay_accessops inteldrm_accessops = {
 	inteldrm_wsmmap,
 	inteldrm_alloc_screen,
 	inteldrm_free_screen,
-	inteldrm_show_screen
+	inteldrm_show_screen,
+	NULL,
+	NULL,
+	NULL,
+	inteldrm_burner
 };
 
 extern int (*ws_get_param)(struct wsdisplay_param *);
@@ -756,6 +761,25 @@ inteldrm_doswitch(void *v, void *cookie)
 
 	if (dev_priv->switchcb)
 		(*dev_priv->switchcb)(dev_priv->switchcbarg, 0, 0);
+}
+
+void
+inteldrm_burner(void *v, u_int on, u_int flags)
+{
+	struct inteldrm_softc *dev_priv = v;
+	struct drm_fb_helper *helper = &dev_priv->fbdev->helper;
+	int dpms_mode;
+
+	if (on)
+		dpms_mode = DRM_MODE_DPMS_ON;
+	else {
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			dpms_mode = DRM_MODE_DPMS_OFF;
+		else
+			dpms_mode = DRM_MODE_DPMS_STANDBY;
+	}
+
+	drm_fb_helper_dpms(helper, dpms_mode);
 }
 
 /*

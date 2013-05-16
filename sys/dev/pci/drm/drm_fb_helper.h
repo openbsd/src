@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_fb_helper.h,v 1.1 2013/03/18 12:36:51 jsg Exp $	*/
+/*	$OpenBSD: drm_fb_helper.h,v 1.2 2013/05/16 21:14:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
  * Copyright (c) 2006-2008 Intel Corporation
@@ -118,5 +118,7 @@ bool drm_fb_helper_initial_config(struct drm_fb_helper *fb_helper, int bpp_sel);
 int drm_fb_helper_single_add_all_connectors(struct drm_fb_helper *fb_helper);
 int drm_fb_helper_debug_enter(struct fb_info *info);
 int drm_fb_helper_debug_leave(struct fb_info *info);
+
+void drm_fb_helper_dpms(struct drm_fb_helper *fb_helper, int dpms_mode);
 
 #endif
