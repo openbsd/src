@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.29 2013/05/15 08:29:23 ratchov Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.30 2013/05/16 06:31:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -240,13 +240,15 @@ ce4231_attach(parent, self, aux)
 	}
 
 	sc->sc_cih = bus_intr_establish(sc->sc_bustag, ea->ea_intrs[0],
-	    IPL_AUDIO, 0, ce4231_cintr, sc, self->dv_xname);
+	    IPL_AUDIO, BUS_INTR_ESTABLISH_MPSAFE, ce4231_cintr,
+	    sc, self->dv_xname);
 	if (sc->sc_cih == NULL) {
 		printf(": couldn't establish capture interrupt\n");
 		return;
 	}
 	sc->sc_pih = bus_intr_establish(sc->sc_bustag, ea->ea_intrs[1],
-	    IPL_AUDIO, 0, ce4231_pintr, sc, self->dv_xname);
+	    IPL_AUDIO, BUS_INTR_ESTABLISH_MPSAFE, ce4231_pintr,
+	    sc, self->dv_xname);
 	if (sc->sc_pih == NULL) {
 		printf(": couldn't establish play interrupt1\n");
 		return;
