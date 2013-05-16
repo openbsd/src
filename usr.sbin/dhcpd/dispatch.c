@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.30 2013/04/19 21:25:39 sthen Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.31 2013/05/16 19:24:12 gerhard Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -360,6 +360,7 @@ another:
 		case 0:
 			continue;	/* no packets */
 		}
+		time(&cur_time);
 
 		for (i = 0, l = protocols; l; l = l->next) {
 			struct interface_info *ip = l->local;
