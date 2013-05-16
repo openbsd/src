@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.521 2013/05/12 14:15:31 ratchov Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.522 2013/05/16 19:26:04 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3942,7 +3942,10 @@ intr_handler(struct intrframe *frame, struct intrhand *ih)
 #ifdef MULTIPROCESSOR
 	int need_lock;
 
-	need_lock = frame->if_ppl < IPL_SCHED;
+	if (ih->ih_flags & IPL_MPSAFE)
+		need_lock = 0;
+	else
+		need_lock = frame->if_ppl < IPL_SCHED;
 
 	if (need_lock)
 		__mp_lock(&kernel_lock);

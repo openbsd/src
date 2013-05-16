@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.73 2012/09/25 10:32:54 sthen Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.74 2013/05/16 19:26:04 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -782,6 +782,10 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 		struct intrhand *ih;
 		pcireg_t reg, addr;
 		int off, vec;
+		int flags;
+
+		flags = level & IPL_MPSAFE;
+		level &= ~IPL_MPSAFE;
 
 		if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
 			panic("%s: no msi capability", __func__);
@@ -798,6 +802,7 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 		ih->ih_arg = arg;
 		ih->ih_next = NULL;
 		ih->ih_level = level;
+		ih->ih_flags = flags;
 		ih->ih_irq = irq;
 		ih->ih_pin = tag.mode1;
 		ih->ih_vec = vec;

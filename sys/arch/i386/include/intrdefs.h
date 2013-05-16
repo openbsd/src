@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.13 2011/07/05 17:11:07 oga Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.14 2013/05/16 19:26:04 kettenis Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _I386_INTRDEFS_H
@@ -69,6 +69,8 @@
 #define	IPL_SCHED	IPL_CLOCK
 #define	IPL_HIGH	MAKEIPL(10)	/* everything */
 #define	IPL_IPI		MAKEIPL(11)	/* interprocessor interrupt */
+
+#define	IPL_MPSAFE	0x100
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */

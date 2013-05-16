@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.72 2011/04/16 00:40:58 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.73 2013/05/16 19:26:04 kettenis Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 /*-
@@ -460,6 +460,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
+	int flags;
 
 #if NIOAPIC > 0
 	struct mp_intr_map *mip;
@@ -496,6 +497,10 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 		    ih_arg, ih_what));
  	}
 #endif
+
+	flags = level & IPL_MPSAFE;
+	level &= ~IPL_MPSAFE;
+
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL) {
@@ -555,6 +560,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	ih->ih_arg = ih_arg;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
+	ih->ih_flags = flags;
 	ih->ih_irq = irq;
 	evcount_attach(&ih->ih_count, ih_what, &ih->ih_irq);
 	*p = ih;
