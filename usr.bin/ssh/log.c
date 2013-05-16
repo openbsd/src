@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.44 2013/04/07 02:10:33 dtucker Exp $ */
+/* $OpenBSD: log.c,v 1.45 2013/05/16 09:08:41 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -408,7 +408,7 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		log_handler = tmp_handler;
 	} else if (log_on_stderr) {
 		snprintf(msgbuf, sizeof msgbuf, "%s\r\n", fmtbuf);
-		write(log_stderr_fd, msgbuf, strlen(msgbuf));
+		(void)write(log_stderr_fd, msgbuf, strlen(msgbuf));
 	} else {
 		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
 		syslog_r(pri, &sdata, "%.500s", fmtbuf);
