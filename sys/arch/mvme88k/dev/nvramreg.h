@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvramreg.h,v 1.8 2007/04/10 17:47:54 miod Exp $ */
+/*	$OpenBSD: nvramreg.h,v 1.9 2013/05/17 22:38:25 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  * Motorola chose the year `1900' as their base count. It has already
  * wrapped by now...
  */
-#define	YEAR0	00
+#define	YEAR0	1900
 
 #define SBC_NVRAM_TOD_OFF	0x1ff8 /* offset of tod in NVRAM space */
 #define M188_NVRAM_TOD_OFF	0x1fe0 /* offset of tod in NVRAM space */

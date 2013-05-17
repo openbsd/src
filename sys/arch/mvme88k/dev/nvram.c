@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.33 2010/12/26 15:40:59 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.34 2013/05/17 22:38:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -32,22 +32,20 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <sys/uio.h>
-#include <sys/timetc.h>
 
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
-#include <machine/psl.h>
-#include <machine/vmparam.h>
 
 #include <uvm/uvm_param.h>
 
+#include <mvme88k/mvme88k/clockvar.h>
 #include <mvme88k/dev/memdevs.h>
 #include <mvme88k/dev/nvramreg.h>
-#include <mvme88k/dev/pcctworeg.h>
 
 struct nvramsoftc {
 	struct device           sc_dev;
@@ -73,7 +71,11 @@ struct cfdriver nvram_cd = {
 	NULL, "nvram", DV_DULL
 };
 
-u_long	chiptotime(int, int, int, int, int, int);
+time_t	chiptotime(struct clock_ymdhms *);
+void	timetochip(struct clock_ymdhms *);
+time_t	nvram_inittodr(void);
+void	nvram_resettodr(void);
+
 int	nvram188read(struct nvramsoftc *, struct uio *, int);
 int	nvram188write(struct nvramsoftc *, struct uio *, int);
 
@@ -129,7 +131,7 @@ nvramattach(parent, self, args)
 
 	sc->sc_ioh = ioh;
 
-	printf(": MK48T0%d\n", sc->sc_len / 1024);
+	printf(": MK48T0%lu\n", sc->sc_len / 1024);
 }
 
 /*
@@ -316,33 +318,7 @@ inittodr(time_t base)
 		      sc->sc_regs + CLK_CSR) & ~CLK_READ);
 	}
 
-	if ((ts.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
-		printf("WARNING: bad date in nvram");
-#ifdef DEBUG
-		printf("\nday = %d, mon = %d, year = %d, hour = %d, min = %d, sec = %d",
-		       FROMBCD(day), FROMBCD(mon), FROMBCD(year) + YEAR0,
-		       FROMBCD(hour), FROMBCD(min), FROMBCD(sec));
-#endif
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		ts.tv_sec = base;
-		if (!badbase)
-			resettodr();
-	} else {
-		int deltat = ts.tv_sec - base;
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
-			goto done;
-		printf("WARNING: clock %s %d days",
-		       ts.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
-done:
-	tc_setclock(&ts);
+	return chiptotime(&c);
 }
 
 /*
@@ -352,61 +328,64 @@ done:
  * when crashing during autoconfig.
  */
 void
-resettodr()
+nvram_resettodr()
 {
-	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
-	struct chiptime c;
+	struct nvramsoftc *sc = nvram_cd.cd_devs[0];
+	struct clock_ymdhms c;
 
-	if (time_second == 0 || sc == NULL)
-		return;
 	timetochip(&c);
 
-	if (brdtyp == BRD_188) {
+	switch (brdtyp) {
+#ifdef MVME188
+	case BRD_188:
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_regs + (CLK_CSR << 2), CLK_WRITE |
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		      sc->sc_regs + (CLK_CSR << 2)));
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + (CLK_SEC << 2), c.sec);
+		    sc->sc_regs + (CLK_SEC << 2), c.dt_sec);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + (CLK_MIN << 2), c.min);
+		    sc->sc_regs + (CLK_MIN << 2), c.dt_min);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + (CLK_HOUR << 2), c.hour);
+		    sc->sc_regs + (CLK_HOUR << 2), c.dt_hour);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + (CLK_WDAY << 2), c.wday);
+		    sc->sc_regs + (CLK_WDAY << 2), c.dt_wday);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + (CLK_DAY << 2), c.day);
+		    sc->sc_regs + (CLK_DAY << 2), c.dt_day);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + (CLK_MONTH << 2), c.mon);
+		    sc->sc_regs + (CLK_MONTH << 2), c.dt_mon);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + (CLK_YEAR << 2), c.year);
+		    sc->sc_regs + (CLK_YEAR << 2), c.dt_year);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_regs + (CLK_CSR << 2),
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		      sc->sc_regs + (CLK_CSR << 2)) & ~CLK_WRITE);
-	} else {
+		break;
+#endif
+	default:
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_regs + CLK_CSR, CLK_WRITE |
 		    bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		      sc->sc_regs + CLK_CSR));
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + CLK_SEC, c.sec);
+		    sc->sc_regs + CLK_SEC, c.dt_sec);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + CLK_MIN, c.min);
+		    sc->sc_regs + CLK_MIN, c.dt_min);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + CLK_HOUR, c.hour);
+		    sc->sc_regs + CLK_HOUR, c.dt_hour);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + CLK_WDAY, c.wday);
+		    sc->sc_regs + CLK_WDAY, c.dt_wday);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + CLK_DAY, c.day);
+		    sc->sc_regs + CLK_DAY, c.dt_day);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + CLK_MONTH, c.mon);
+		    sc->sc_regs + CLK_MONTH, c.dt_mon);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    sc->sc_regs + CLK_YEAR, c.year);
+		    sc->sc_regs + CLK_YEAR, c.dt_year);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_regs + CLK_CSR,
 		    bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		      sc->sc_regs + CLK_CSR) & ~CLK_WRITE);
+		break;
 	}
 }
 
@@ -527,7 +506,7 @@ int	read_nvram(struct nvramsoftc *);
 int
 read_nvram(struct nvramsoftc *sc)
 {
-	u_int cnt;
+	size_t cnt;
 	u_int8_t *dest;
 	u_int32_t *src;
 
@@ -572,7 +551,7 @@ nvram188read(struct nvramsoftc *sc, struct uio *uio, int flags)
 int
 nvram188write(struct nvramsoftc *sc, struct uio *uio, int flags)
 {
-	u_int cnt;
+	size_t cnt;
 	u_int8_t *src;
 	u_int32_t *dest;
 	int rc;

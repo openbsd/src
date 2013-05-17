@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.250 2013/05/15 20:18:04 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.251 2013/05/17 22:38:25 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -168,6 +168,7 @@ int bootdev;					/* set in locore.S */
 int cputyp;					/* set in locore.S */
 int brdtyp;					/* set in locore.S */
 int cpuspeed = 25;				/* safe guess */
+u_int dumb_delay_const = 25;
 
 vaddr_t first_addr;
 vaddr_t last_addr;
@@ -1157,10 +1158,4 @@ void
 delay(int us)
 {
 	(*md_delay)(us);
-}
-
-/* delay() routine used until a proper routine is set up */
-void
-dumb_delay(int us)
-{
 }

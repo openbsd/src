@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.70 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.71 2013/05/17 22:38:25 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -325,22 +325,17 @@ GLOBAL(doboot)
 	 or	%r31, %r31, %lo16(_ASM_LABEL(initstack_end))
 	/*NOTREACHED*/
 
-/*
- * MVME188 specific support routines
- */
-
-#ifdef MVME188
 /* 
- * void m188_delay(int us)
+ * void dumb_delay(int us)
  *
  * The processor loops (busy waits) for the given number of microseconds:
  * Thus, delay(1000000) will delay for one second.
  * (originally from Mach 2.5) 
  */
-GLOBAL(m188_delay)
+GLOBAL(dumb_delay)
 	bcnd	eq0, %r2, 2f
-	or.u	%r3, %r0, %hi16(_C_LABEL(m188_delay_const))
-	ld	%r3, %r3, %lo16(_C_LABEL(m188_delay_const))
+	or.u	%r3, %r0, %hi16(_C_LABEL(dumb_delay_const))
+	ld	%r3, %r3, %lo16(_C_LABEL(dumb_delay_const))
 	mul	%r4, %r2, %r3
 	subu	%r4, %r4, 4	/* overhead of these instructions */
 
@@ -350,7 +345,6 @@ GLOBAL(m188_delay)
 	 subu	%r4, %r4, 2	/* two cycles per iteration */
 2:
 	jmp	%r1
-#endif
 
 /*****************************************************************************/
 
