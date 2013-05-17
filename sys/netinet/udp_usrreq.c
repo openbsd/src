@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.160 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.161 2013/05/17 09:04:30 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -135,9 +135,6 @@ void udp_notify(struct inpcb *, int);
 #define	UDBHASHSIZE	128
 #endif
 int	udbhashsize = UDBHASHSIZE;
-
-/* from in_pcb.c */
-extern	struct baddynamicports baddynamicports;
 
 void
 udp_init()

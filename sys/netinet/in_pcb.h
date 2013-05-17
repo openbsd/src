@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.77 2013/03/29 13:16:14 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.78 2013/05/17 09:04:30 mpi Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -247,6 +247,8 @@ struct baddynamicports {
 };
 
 #ifdef _KERNEL
+
+extern struct baddynamicports baddynamicports;
 
 #define sotopf(so)  (so->so_proto->pr_domain->dom_family)
 

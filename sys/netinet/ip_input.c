@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.210 2013/04/24 10:17:08 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.211 2013/05/17 09:04:30 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -115,9 +115,6 @@ struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 /* Keep track of memory used for reassembly */
 int	ip_maxqueue = 300;
 int	ip_frags = 0;
-
-/* from in_pcb.c */
-extern struct baddynamicports baddynamicports;
 
 int *ipctl_vars[IPCTL_MAXID] = IPCTL_VARS;
 
