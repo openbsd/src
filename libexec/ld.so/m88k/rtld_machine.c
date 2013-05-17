@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2013/05/08 20:55:14 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.7 2013/05/17 23:27:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -81,7 +81,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	/*
 	 * Change protection of all write protected segments in the object
-	 * so we can do relocations such as PC32. After relocation,
+	 * so we can do relocations such as DISP26. After relocation,
 	 * restore protection.
 	 */
 	if (object->dyn.textrel == 1 && (rel == DT_REL || rel == DT_RELA)) {
@@ -150,21 +150,29 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE) &&
 		    sym != prev_sym) {
-			this = NULL;
-			ooff = _dl_find_symbol_bysym(object,
-			    ELF32_R_SYM(relas->r_info), &this,
-			    SYM_SEARCH_ALL | SYM_WARNNOTFOUND |
-			    ((type == RELOC_GOTP_ENT) ? SYM_PLT : SYM_NOTPLT),
-			    sym, NULL);
+			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
+			    ELF32_ST_TYPE(sym->st_info) == STT_SECTION) {
+				prev_sym = sym;
+				prev_value = 0;
+				prev_ooff = object->obj_base;
+			} else {
+				this = NULL;
+				ooff = _dl_find_symbol_bysym(object,
+				    ELF32_R_SYM(relas->r_info), &this,
+				    SYM_SEARCH_ALL | SYM_WARNNOTFOUND |
+				    ((type == RELOC_GOTP_ENT) ?
+				    SYM_PLT : SYM_NOTPLT), sym, NULL);
 
-			if (this == NULL) {
-				if (ELF_ST_BIND(sym->st_info) != STB_WEAK)
-					fails++;
-				continue;
+				if (this == NULL) {
+					if (ELF_ST_BIND(sym->st_info) !=
+					    STB_WEAK)
+						fails++;
+					continue;
+				}
+				prev_sym = sym;
+				prev_value = this->st_value;
+				prev_ooff = ooff;
 			}
-			prev_sym = sym;
-			prev_value = this->st_value;
-			prev_ooff = ooff;
 		}
 
 		if (type == RELOC_GOTP_ENT) {
@@ -182,6 +190,30 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			addend = prev_value + relas->r_addend;
 
 		switch (type) {
+		case RELOC_16L:
+			newval = prev_ooff + addend;
+			*(unsigned short *)r_addr = newval & 0xffff;
+			_dl_cacheflush((unsigned long)r_addr, 2);
+			break;
+		case RELOC_16H:
+			newval = prev_ooff + addend;
+			*(unsigned short *)r_addr = newval >> 16;
+			_dl_cacheflush((unsigned long)r_addr, 2);
+			break;
+		case RELOC_DISP26:
+			newval = prev_ooff + addend;
+			newval -= (Elf_Addr)r_addr;
+			if ((newval >> 28) != 0 && (newval >> 28) != 0x0f) {
+				_dl_printf("%s: %s: out of range DISP26"
+				    " relocation to '%s' at %x\n",
+				    _dl_progname, object->load_name, symn,
+				    r_addr);
+				_dl_exit(1);
+			}
+			*r_addr = (*r_addr & 0xfc000000) |
+			    (((int32_t)newval >> 2) & 0x03ffffff);
+			_dl_cacheflush((unsigned long)r_addr, 4);
+			break;
 		case RELOC_32:
 			newval = prev_ooff + addend;
 			*r_addr = newval;
