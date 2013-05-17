@@ -1,4 +1,4 @@
-#	$OpenBSD: cipher-speed.sh,v 1.7 2013/01/12 11:23:53 djm Exp $
+#	$OpenBSD: cipher-speed.sh,v 1.8 2013/05/17 00:37:40 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="cipher speed"
@@ -23,7 +23,7 @@ macs="hmac-sha1 hmac-md5 umac-64@openssh.com umac-128@openssh.com
 for c in $ciphers; do n=0; for m in $macs; do
 	trace "proto 2 cipher $c mac $m"
 	for x in $tries; do
-		echo -n "$c/$m:\t"
+		printf "$c/$m:\t"
 		( ${SSH} -o 'compression no' \
 			-F $OBJ/ssh_proxy -2 -m $m -c $c somehost \
 			exec sh -c \'"dd of=/dev/null obs=32k"\' \
@@ -44,7 +44,7 @@ ciphers="3des blowfish"
 for c in $ciphers; do
 	trace "proto 1 cipher $c"
 	for x in $tries; do
-		echo -n "$c:\t"
+		printf "$c:\t"
 		( ${SSH} -o 'compression no' \
 			-F $OBJ/ssh_proxy -1 -c $c somehost \
 			exec sh -c \'"dd of=/dev/null obs=32k"\' \
