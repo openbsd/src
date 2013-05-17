@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.41 2013/04/15 09:23:02 mglocker Exp $	*/
+/*	$OpenBSD: urio.c,v 1.42 2013/05/17 09:14:08 mpi Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -427,7 +427,6 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct uio uio;
 	usb_device_request_t req;
 	usbd_status err;
-	int req_flags = 0;
 	u_int32_t req_actlen = 0;
 	void *ptr = NULL;
 	int error = 0;
@@ -492,7 +491,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	sc->sc_refcnt++;
 
-	err = usbd_do_request_flags(sc->sc_udev, &req, ptr, req_flags,
+	err = usbd_do_request_flags(sc->sc_udev, &req, ptr, 0,
 		  &req_actlen, USBD_DEFAULT_TIMEOUT);
 
 	if (--sc->sc_refcnt < 0)
@@ -501,8 +500,8 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	if (err) {
 		error = EIO;
 	} else {
-		if (len != 0 && uio.uio_rw == UIO_READ)
-			error = uiomove(ptr, len, &uio);
+		if (req_actlen != 0 && uio.uio_rw == UIO_READ)
+			error = uiomove(ptr, req_actlen, &uio);
 	}
 
 ret:
