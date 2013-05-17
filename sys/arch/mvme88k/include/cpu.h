@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.45 2011/03/23 16:54:36 pirofti Exp $ */
+/* $OpenBSD: cpu.h,v 1.46 2013/05/17 22:40:01 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 
 #ifdef _KERNEL
 
-#include <sys/evcount.h>
+extern int cpuspeed;
 
 /* board dependent pointers */
 extern void	(*md_interrupt_func_ptr)(struct trapframe *);
@@ -60,39 +60,7 @@ extern void	(*md_init_clocks)(void);
 extern void	(*md_send_ipi)(int, cpuid_t);
 extern void	(*md_delay)(int);
 extern void	(*md_smp_setup)(struct cpu_info *);
-
-struct intrhand {
-	SLIST_ENTRY(intrhand) ih_link;
-	int	(*ih_fn)(void *);
-	void	*ih_arg;
-	int	ih_ipl;
-	int	ih_wantframe;
-	struct evcount ih_count;
-};
-
-int	intr_establish(int, struct intrhand *, const char *);
-int	intr_findvec(int, int, int);
-
-/*
- * There are 256 possible vectors on a mvme88k platform (including
- * onboard and VME vectors. Use intr_establish() to register a
- * handler for the given vector. vector number is used to index
- * into the intr_handlers[] table.
- */
-#define	NVMEINTR	256
-typedef SLIST_HEAD(, intrhand) intrhand_t;
-extern intrhand_t intr_handlers[NVMEINTR];
-
-#ifdef MVME188
-/*
- * Currently registered VME interrupt vectors for a given IPL, if they
- * are unique. Used to help the MVME188 interrupt handler when it's getting
- * behind.
- */
-extern u_int vmevec_hints[8];
-#endif
-
-void	doboot(void);
+__dead void doboot(void);
 void	nmihand(void *);
 
 #endif /* _KERNEL */
