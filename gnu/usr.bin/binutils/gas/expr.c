@@ -1021,8 +1021,9 @@ operand (expressionS *expressionP)
       break;
 
     case '+':
-      /* Do not accept ++e as +(+e) */
-      if (*input_line_pointer == '+')
+      /* Do not accept ++e as +(+e).
+	 Disabled, since the preprocessor removes whitespace.  */
+      if (0 && *input_line_pointer == '+')
 	goto target_op;
       (void) operand (expressionP);
       break;
@@ -1041,8 +1042,9 @@ operand (expressionS *expressionP)
     case '!':
     case '-':
       {
-        /* Do not accept --e as -(-e) */
-	if (c == '-' && *input_line_pointer == '-')
+        /* Do not accept --e as -(-e)
+	   Disabled, since the preprocessor removes whitespace.  */
+	if (0 && c == '-' && *input_line_pointer == '-')
 	  goto target_op;
 	
 	operand (expressionP);
@@ -1580,8 +1582,9 @@ operator (int *num_chars)
 
     case '+':
     case '-':
-      /* Do not allow a++b and a--b to be a + (+b) and a - (-b) */
-      if (input_line_pointer[1] != c)
+      /* Do not allow a++b and a--b to be a + (+b) and a - (-b)
+	 Disabled, since the preprocessor removes whitespace.  */
+      if (1 || input_line_pointer[1] != c)
 	return op_encoding[c];
       return O_illegal;
 
