@@ -1,4 +1,4 @@
-/* $OpenBSD: omrasops.c,v 1.8 2013/05/02 19:12:04 miod Exp $ */
+/* $OpenBSD: omrasops.c,v 1.9 2013/05/17 23:25:16 aoyama Exp $ */
 /* $NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -85,7 +85,7 @@ om_putchar(cookie, row, startcol, uc, attr)
 	y = ri->ri_font->fontheight * row;
 	startx = ri->ri_font->fontwidth * startcol;
 	height = ri->ri_font->fontheight;
-	fb = ri->ri_font->data +
+	fb = (u_int8_t *)ri->ri_font->data +
 	    (uc - ri->ri_font->firstchar) * ri->ri_fontscale;
 	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	inverse = (bg != 0) ? ALL1BITS : ALL0BITS;
@@ -139,7 +139,7 @@ om_erasecols(cookie, row, startcol, ncols, attr)
 {
         struct rasops_info *ri = cookie;
         u_int8_t *p;
-        int scanspan, startx, height, width, align, w, y;
+        int scanspan, startx, height, width, align, w, y, fg, bg;
         u_int32_t lmask, rmask, fill;
 
         scanspan = ri->ri_stride;
@@ -147,7 +147,8 @@ om_erasecols(cookie, row, startcol, ncols, attr)
         startx = ri->ri_font->fontwidth * startcol;
         height = ri->ri_font->fontheight;
         w = ri->ri_font->fontwidth * ncols;
-	fill = (attr != 0) ? ALL1BITS : ALL0BITS;
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+	fill = (bg != 0) ? ALL1BITS : ALL0BITS;
 
 	p = (u_int8_t *)ri->ri_bits + y * scanspan + ((startx / 32) * 4);
 	align = startx & ALIGNMASK;
@@ -193,14 +194,15 @@ om_eraserows(cookie, startrow, nrows, attr)
 {
 	struct rasops_info *ri = cookie;
 	u_int8_t *p, *q;
-	int scanspan, starty, height, width, w;
+	int scanspan, starty, height, width, w, fg, bg;
 	u_int32_t rmask, fill;
 
 	scanspan = ri->ri_stride;
 	starty = ri->ri_font->fontheight * startrow;
 	height = ri->ri_font->fontheight * nrows;
 	w = ri->ri_emuwidth;
-	fill = (attr == 1) ? ALL1BITS : ALL0BITS;
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+	fill = (bg != 0) ? ALL1BITS : ALL0BITS;
 
 	p = (u_int8_t *)ri->ri_bits + starty * scanspan;
 	width = w;
