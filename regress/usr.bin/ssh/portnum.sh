@@ -1,4 +1,4 @@
-#	$OpenBSD: portnum.sh,v 1.1 2009/08/13 00:57:17 djm Exp $
+#	$OpenBSD: portnum.sh,v 1.2 2013/05/17 10:34:30 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="port number parsing"
@@ -13,7 +13,9 @@ badport() {
 goodport() {
 	port=$1
 	verbose "$tid: valid port $port"
-	if ! ${SSH} -F $OBJ/ssh_proxy -p $port somehost true 2>/dev/null ; then
+	if ${SSH} -F $OBJ/ssh_proxy -p $port somehost true 2>/dev/null ; then
+		:
+	else
 		fail "$tid rejected valid port $port"
 	fi
 }
