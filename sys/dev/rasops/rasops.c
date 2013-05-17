@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.23 2013/03/25 19:49:08 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.24 2013/05/17 12:03:11 kettenis Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1367,13 +1367,14 @@ rasops_alloc_screen(void *v, void **cookiep,
 	struct rasops_info *ri = v;
 	struct rasops_screen *scr;
 	size_t size;
+	int i;
 
 	scr = malloc(sizeof(struct rasops_screen), M_DEVBUF, M_NOWAIT);
 	if (scr == NULL)
 		return (ENOMEM);
 
-	size = ri->ri_cols * ri->ri_rows * sizeof(struct wsdisplay_charcell);
-	scr->rs_bs = malloc(size, M_DEVBUF, M_NOWAIT | M_ZERO);
+	size = ri->ri_rows * ri->ri_cols * sizeof(struct wsdisplay_charcell);
+	scr->rs_bs = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (scr->rs_bs == NULL) {
 		free(scr, M_DEVBUF);
 		return (ENOMEM);
@@ -1388,6 +1389,11 @@ rasops_alloc_screen(void *v, void **cookiep,
 	scr->rs_visible = (ri->ri_nscreens == 0);
 	scr->rs_crow = -1;
 	scr->rs_ccol = -1;
+
+	for (i = 0; i < ri->ri_rows * ri->ri_cols; i++) {
+		scr->rs_bs[i].uc = ' ';
+		scr->rs_bs[i].attr = *attrp;
+	}
 
 	LIST_INSERT_HEAD(&ri->ri_screens, scr, rs_next);
 	ri->ri_nscreens++;
@@ -1444,8 +1450,6 @@ rasops_doswitch(void *v, void *cookie)
 		for (col = 0; col < ri->ri_cols; col++) {
 			int off = row * scr->rs_ri->ri_cols + col;
 
-			if (scr->rs_bs[off].uc == 0)
-				continue;
 			ri->ri_putchar(ri, row, col, scr->rs_bs[off].uc,
 			    scr->rs_bs[off].attr);
 		}
@@ -1455,6 +1459,19 @@ rasops_doswitch(void *v, void *cookie)
 
 	if (ri->ri_switchcb)
 		(*ri->ri_switchcb)(ri->ri_switchcbarg, 0, 0);
+}
+
+int
+rasops_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
+{
+	struct rasops_info *ri = v;
+	struct rasops_screen *scr = ri->ri_active;
+
+	if (scr == NULL || scr->rs_bs == NULL)
+		return (1);
+
+	*cell = scr->rs_bs[row * ri->ri_cols + col];
+	return (0);
 }
 
 int
@@ -1517,7 +1534,7 @@ rasops_vcons_erasecols(void *cookie, int row, int col, int num, long attr)
 	int i;
 
 	for (i = 0; i < num; i++) {
-		scr->rs_bs[row * cols + col + i].uc = 0;
+		scr->rs_bs[row * cols + col + i].uc = ' ';
 		scr->rs_bs[row * cols + col + i].attr = attr;
 	}
 
@@ -1550,7 +1567,7 @@ rasops_vcons_eraserows(void *cookie, int row, int num, long attr)
 	int i;
 
 	for (i = 0; i < num * cols; i++) {
-		scr->rs_bs[row * cols + i].uc = 0;
+		scr->rs_bs[row * cols + i].uc = ' ';
 		scr->rs_bs[row * cols + i].attr = attr;
 	}
 
