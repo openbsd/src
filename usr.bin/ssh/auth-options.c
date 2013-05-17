@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-options.c,v 1.57 2012/12/02 20:46:11 djm Exp $ */
+/* $OpenBSD: auth-options.c,v 1.58 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -70,15 +70,15 @@ auth_clear_options(void)
 	while (custom_environment) {
 		struct envstring *ce = custom_environment;
 		custom_environment = ce->next;
-		xfree(ce->s);
-		xfree(ce);
+		free(ce->s);
+		free(ce);
 	}
 	if (forced_command) {
-		xfree(forced_command);
+		free(forced_command);
 		forced_command = NULL;
 	}
 	if (authorized_principals) {
-		xfree(authorized_principals);
+		free(authorized_principals);
 		authorized_principals = NULL;
 	}
 	forced_tun_device = -1;
@@ -147,7 +147,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
 			opts += strlen(cp);
 			if (forced_command != NULL)
-				xfree(forced_command);
+				free(forced_command);
 			forced_command = xmalloc(strlen(opts) + 1);
 			i = 0;
 			while (*opts) {
@@ -165,7 +165,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				auth_debug_add("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				xfree(forced_command);
+				free(forced_command);
 				forced_command = NULL;
 				goto bad_option;
 			}
@@ -178,7 +178,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
 			opts += strlen(cp);
 			if (authorized_principals != NULL)
-				xfree(authorized_principals);
+				free(authorized_principals);
 			authorized_principals = xmalloc(strlen(opts) + 1);
 			i = 0;
 			while (*opts) {
@@ -196,7 +196,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				auth_debug_add("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				xfree(authorized_principals);
+				free(authorized_principals);
 				authorized_principals = NULL;
 				goto bad_option;
 			}
@@ -230,7 +230,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				auth_debug_add("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				xfree(s);
+				free(s);
 				goto bad_option;
 			}
 			s[i] = '\0';
@@ -267,7 +267,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				auth_debug_add("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				xfree(patterns);
+				free(patterns);
 				goto bad_option;
 			}
 			patterns[i] = '\0';
@@ -275,7 +275,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			switch (match_host_and_ip(remote_host, remote_ip,
 			    patterns)) {
 			case 1:
-				xfree(patterns);
+				free(patterns);
 				/* Host name matches. */
 				goto next_option;
 			case -1:
@@ -285,7 +285,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    "invalid criteria", file, linenum);
 				/* FALLTHROUGH */
 			case 0:
-				xfree(patterns);
+				free(patterns);
 				logit("Authentication tried for %.100s with "
 				    "correct key but not from a permitted "
 				    "host (host=%.200s, ip=%.200s).",
@@ -321,7 +321,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				auth_debug_add("%.100s, line %lu: missing "
 				    "end quote", file, linenum);
-				xfree(patterns);
+				free(patterns);
 				goto bad_option;
 			}
 			patterns[i] = '\0';
@@ -335,7 +335,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				auth_debug_add("%.100s, line %lu: "
 				    "Bad permitopen specification", file,
 				    linenum);
-				xfree(patterns);
+				free(patterns);
 				goto bad_option;
 			}
 			host = cleanhostname(host);
@@ -344,12 +344,12 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    "<%.100s>", file, linenum, p ? p : "");
 				auth_debug_add("%.100s, line %lu: "
 				    "Bad permitopen port", file, linenum);
-				xfree(patterns);
+				free(patterns);
 				goto bad_option;
 			}
 			if ((options.allow_tcp_forwarding & FORWARD_LOCAL) != 0)
 				channel_add_permitted_opens(host, port);
-			xfree(patterns);
+			free(patterns);
 			goto next_option;
 		}
 		cp = "tunnel=\"";
@@ -368,13 +368,13 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				auth_debug_add("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				xfree(tun);
+				free(tun);
 				forced_tun_device = -1;
 				goto bad_option;
 			}
 			tun[i] = '\0';
 			forced_tun_device = a2tun(tun, NULL);
-			xfree(tun);
+			free(tun);
 			if (forced_tun_device == SSH_TUNID_ERR) {
 				debug("%.100s, line %lu: invalid tun device",
 				    file, linenum);
@@ -482,7 +482,7 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 				if (*cert_forced_command != NULL) {
 					error("Certificate has multiple "
 					    "force-command options");
-					xfree(command);
+					free(command);
 					goto out;
 				}
 				*cert_forced_command = command;
@@ -498,7 +498,7 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 				if ((*cert_source_address_done)++) {
 					error("Certificate has multiple "
 					    "source-address options");
-					xfree(allowed);
+					free(allowed);
 					goto out;
 				}
 				remote_ip = get_remote_ipaddr();
@@ -506,7 +506,7 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 				    allowed)) {
 				case 1:
 					/* accepted */
-					xfree(allowed);
+					free(allowed);
 					break;
 				case 0:
 					/* no match */
@@ -519,12 +519,12 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 					    "is not permitted to use this "
 					    "certificate for login.",
 					    remote_ip);
-					xfree(allowed);
+					free(allowed);
 					goto out;
 				case -1:
 					error("Certificate source-address "
 					    "contents invalid");
-					xfree(allowed);
+					free(allowed);
 					goto out;
 				}
 				found = 1;
@@ -546,8 +546,8 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 			goto out;
 		}
 		buffer_clear(&data);
-		xfree(name);
-		xfree(data_blob);
+		free(name);
+		free(data_blob);
 		name = data_blob = NULL;
 	}
 	/* successfully parsed all options */
@@ -557,13 +557,13 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 	if (ret != 0 &&
 	    cert_forced_command != NULL &&
 	    *cert_forced_command != NULL) {
-		xfree(*cert_forced_command);
+		free(*cert_forced_command);
 		*cert_forced_command = NULL;
 	}
 	if (name != NULL)
-		xfree(name);
+		free(name);
 	if (data_blob != NULL)
-		xfree(data_blob);
+		free(data_blob);
 	buffer_free(&data);
 	buffer_free(&c);
 	return ret;
@@ -625,7 +625,7 @@ auth_cert_options(Key *k, struct passwd *pw)
 	/* CA-specified forced command supersedes key option */
 	if (cert_forced_command != NULL) {
 		if (forced_command != NULL)
-			xfree(forced_command);
+			free(forced_command);
 		forced_command = cert_forced_command;
 	}
 	return 0;

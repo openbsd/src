@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.185 2013/05/16 04:09:13 dtucker Exp $ */
+/* $OpenBSD: packet.c,v 1.186 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -755,13 +755,13 @@ set_newkeys(int mode)
 		memset(enc->iv,  0, enc->iv_len);
 		memset(enc->key, 0, enc->key_len);
 		memset(mac->key, 0, mac->key_len);
-		xfree(enc->name);
-		xfree(enc->iv);
-		xfree(enc->key);
-		xfree(mac->name);
-		xfree(mac->key);
-		xfree(comp->name);
-		xfree(active_state->newkeys[mode]);
+		free(enc->name);
+		free(enc->iv);
+		free(enc->key);
+		free(mac->name);
+		free(mac->key);
+		free(comp->name);
+		free(active_state->newkeys[mode]);
 	}
 	active_state->newkeys[mode] = kex_get_newkeys(mode);
 	if (active_state->newkeys[mode] == NULL)
@@ -1012,7 +1012,7 @@ packet_send2(void)
 			memcpy(&active_state->outgoing_packet, &p->payload,
 			    sizeof(Buffer));
 			TAILQ_REMOVE(&active_state->outgoing, p, next);
-			xfree(p);
+			free(p);
 			packet_send2_wrapped();
 		}
 	}
@@ -1062,7 +1062,7 @@ packet_read_seqnr(u_int32_t *seqnr_p)
 			packet_check_eom();
 		/* If we got a packet, return it. */
 		if (type != SSH_MSG_NONE) {
-			xfree(setp);
+			free(setp);
 			return type;
 		}
 		/*
@@ -1448,9 +1448,9 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 				packet_get_char();
 				msg = packet_get_string(NULL);
 				debug("Remote: %.900s", msg);
-				xfree(msg);
+				free(msg);
 				msg = packet_get_string(NULL);
-				xfree(msg);
+				free(msg);
 				break;
 			case SSH2_MSG_DISCONNECT:
 				reason = packet_get_int();
@@ -1461,7 +1461,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 				    SYSLOG_LEVEL_INFO : SYSLOG_LEVEL_ERROR,
 				    "Received disconnect from %s: %u: %.400s",
 				    get_remote_ipaddr(), reason, msg);
-				xfree(msg);
+				free(msg);
 				cleanup_exit(255);
 				break;
 			case SSH2_MSG_UNIMPLEMENTED:
@@ -1480,7 +1480,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 			case SSH_MSG_DEBUG:
 				msg = packet_get_string(NULL);
 				debug("Remote: %.900s", msg);
-				xfree(msg);
+				free(msg);
 				break;
 			case SSH_MSG_DISCONNECT:
 				msg = packet_get_string(NULL);
@@ -1764,7 +1764,7 @@ packet_write_wait(void)
 		}
 		packet_write_poll();
 	}
-	xfree(setp);
+	free(setp);
 }
 
 /* Returns true if there is buffered data to write to the connection. */

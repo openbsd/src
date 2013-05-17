@@ -1,4 +1,4 @@
-/* $OpenBSD: serverloop.c,v 1.166 2013/05/16 09:08:41 dtucker Exp $ */
+/* $OpenBSD: serverloop.c,v 1.167 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -662,7 +662,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 				/* Display list of open channels. */
 				cp = channel_open_message();
 				buffer_append(&stderr_buffer, cp, strlen(cp));
-				xfree(cp);
+				free(cp);
 			}
 		}
 		max_fd = MAX(connection_in, connection_out);
@@ -690,10 +690,8 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 		/* Process output to the client and to program stdin. */
 		process_output(writeset);
 	}
-	if (readset)
-		xfree(readset);
-	if (writeset)
-		xfree(writeset);
+	free(readset);
+	free(writeset);
 
 	/* Cleanup and termination code. */
 
@@ -853,10 +851,8 @@ server_loop2(Authctxt *authctxt)
 	}
 	collect_children();
 
-	if (readset)
-		xfree(readset);
-	if (writeset)
-		xfree(writeset);
+	free(readset);
+	free(writeset);
 
 	/* free all channels, no more reads and writes */
 	channel_free_all();
@@ -891,7 +887,7 @@ server_input_stdin_data(int type, u_int32_t seq, void *ctxt)
 	packet_check_eom();
 	buffer_append(&stdin_buffer, data, data_len);
 	memset(data, 0, data_len);
-	xfree(data);
+	free(data);
 }
 
 static void
@@ -948,8 +944,8 @@ server_request_direct_tcpip(void)
 		    originator, originator_port, target, target_port);
 	}
 
-	xfree(originator);
-	xfree(target);
+	free(originator);
+	free(target);
 
 	return c;
 }
@@ -1073,7 +1069,7 @@ server_input_channel_open(int type, u_int32_t seq, void *ctxt)
 		}
 		packet_send();
 	}
-	xfree(ctype);
+	free(ctype);
 }
 
 static void
@@ -1115,7 +1111,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 			    listen_address, listen_port,
 			    &allocated_listen_port, options.gateway_ports);
 		}
-		xfree(listen_address);
+		free(listen_address);
 	} else if (strcmp(rtype, "cancel-tcpip-forward") == 0) {
 		char *cancel_address;
 		u_short cancel_port;
@@ -1127,7 +1123,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 
 		success = channel_cancel_rport_listener(cancel_address,
 		    cancel_port);
-		xfree(cancel_address);
+		free(cancel_address);
 	} else if (strcmp(rtype, "no-more-sessions@openssh.com") == 0) {
 		no_more_sessions = 1;
 		success = 1;
@@ -1140,7 +1136,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 		packet_send();
 		packet_write_wait();
 	}
-	xfree(rtype);
+	free(rtype);
 }
 
 static void
@@ -1172,7 +1168,7 @@ server_input_channel_req(int type, u_int32_t seq, void *ctxt)
 		packet_put_int(c->remote_id);
 		packet_send();
 	}
-	xfree(rtype);
+	free(rtype);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrmatch.c,v 1.6 2012/06/21 00:16:07 dtucker Exp $ */
+/*	$OpenBSD: addrmatch.c,v 1.7 2013/05/17 00:13:13 djm Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -416,7 +416,7 @@ addr_match_list(const char *addr, const char *_list)
 				goto foundit;
 		}
 	}
-	xfree(o);
+	free(o);
 
 	return ret;
 }
@@ -490,7 +490,7 @@ addr_match_cidr_list(const char *addr, const char *_list)
 			continue;
 		}
 	}
-	xfree(o);
+	free(o);
 
 	return ret;
 }

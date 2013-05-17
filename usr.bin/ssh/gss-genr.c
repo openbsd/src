@@ -1,4 +1,4 @@
-/* $OpenBSD: gss-genr.c,v 1.20 2009/06/22 05:39:28 dtucker Exp $ */
+/* $OpenBSD: gss-genr.c,v 1.21 2013/05/17 00:13:13 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2007 Simon Wilkinson. All rights reserved.
@@ -55,8 +55,8 @@ void
 ssh_gssapi_set_oid_data(Gssctxt *ctx, void *data, size_t len)
 {
 	if (ctx->oid != GSS_C_NO_OID) {
-		xfree(ctx->oid->elements);
-		xfree(ctx->oid);
+		free(ctx->oid->elements);
+		free(ctx->oid);
 	}
 	ctx->oid = xmalloc(sizeof(gss_OID_desc));
 	ctx->oid->length = len;
@@ -79,7 +79,7 @@ ssh_gssapi_error(Gssctxt *ctxt)
 
 	s = ssh_gssapi_last_error(ctxt, NULL, NULL);
 	debug("%s", s);
-	xfree(s);
+	free(s);
 }
 
 char *
@@ -160,8 +160,8 @@ ssh_gssapi_delete_ctx(Gssctxt **ctx)
 	if ((*ctx)->name != GSS_C_NO_NAME)
 		gss_release_name(&ms, &(*ctx)->name);
 	if ((*ctx)->oid != GSS_C_NO_OID) {
-		xfree((*ctx)->oid->elements);
-		xfree((*ctx)->oid);
+		free((*ctx)->oid->elements);
+		free((*ctx)->oid);
 		(*ctx)->oid = GSS_C_NO_OID;
 	}
 	if ((*ctx)->creds != GSS_C_NO_CREDENTIAL)
@@ -171,7 +171,7 @@ ssh_gssapi_delete_ctx(Gssctxt **ctx)
 	if ((*ctx)->client_creds != GSS_C_NO_CREDENTIAL)
 		gss_release_cred(&ms, &(*ctx)->client_creds);
 
-	xfree(*ctx);
+	free(*ctx);
 	*ctx = NULL;
 }
 
@@ -218,7 +218,7 @@ ssh_gssapi_import_name(Gssctxt *ctx, const char *host)
 	    &gssbuf, GSS_C_NT_HOSTBASED_SERVICE, &ctx->name)))
 		ssh_gssapi_error(ctx);
 
-	xfree(gssbuf.value);
+	free(gssbuf.value);
 	return (ctx->major);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: auth1.c,v 1.77 2012/12/02 20:34:09 djm Exp $ */
+/* $OpenBSD: auth1.c,v 1.78 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -123,7 +123,7 @@ auth1_process_password(Authctxt *authctxt, char *info, size_t infolen)
 	authenticated = PRIVSEP(auth_password(authctxt, password));
 
 	memset(password, 0, dlen);
-	xfree(password);
+	free(password);
 
 	return (authenticated);
 }
@@ -182,7 +182,7 @@ auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
 	key_free(client_host_key);
 
 	snprintf(info, infolen, " ruser %.100s", client_user);
-	xfree(client_user);
+	free(client_user);
 
 	return (authenticated);
 }
@@ -199,7 +199,7 @@ auth1_process_tis_challenge(Authctxt *authctxt, char *info, size_t infolen)
 	debug("sending challenge '%s'", challenge);
 	packet_start(SSH_SMSG_AUTH_TIS_CHALLENGE);
 	packet_put_cstring(challenge);
-	xfree(challenge);
+	free(challenge);
 	packet_send();
 	packet_write_wait();
 
@@ -218,7 +218,7 @@ auth1_process_tis_response(Authctxt *authctxt, char *info, size_t infolen)
 	packet_check_eom();
 	authenticated = verify_response(authctxt, response);
 	memset(response, 'r', dlen);
-	xfree(response);
+	free(response);
 
 	return (authenticated);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: mux.c,v 1.40 2013/04/22 01:17:18 dtucker Exp $ */
+/* $OpenBSD: mux.c,v 1.41 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -274,13 +274,12 @@ process_mux_master_hello(u_int rid, Channel *c, Buffer *m, Buffer *r)
 		char *value = buffer_get_string_ret(m, NULL);
 
 		if (name == NULL || value == NULL) {
-			if (name != NULL)
-				xfree(name);
+			free(name);
 			goto malf;
 		}
 		debug2("Unrecognised slave extension \"%s\"", name);
-		xfree(name);
-		xfree(value);
+		free(name);
+		free(value);
 	}
 	state->hello_rcvd = 1;
 	return 0;
@@ -311,21 +310,17 @@ process_mux_new_session(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	    (cctx->term = buffer_get_string_ret(m, &len)) == NULL ||
 	    (cmd = buffer_get_string_ret(m, &len)) == NULL) {
  malf:
-		if (cmd != NULL)
-			xfree(cmd);
-		if (reserved != NULL)
-			xfree(reserved);
+		free(cmd);
+		free(reserved);
 		for (j = 0; j < env_len; j++)
-			xfree(cctx->env[j]);
-		if (env_len > 0)
-			xfree(cctx->env);
-		if (cctx->term != NULL)
-			xfree(cctx->term);
-		xfree(cctx);
+			free(cctx->env[j]);
+		free(cctx->env);
+		free(cctx->term);
+		free(cctx);
 		error("%s: malformed message", __func__);
 		return -1;
 	}
-	xfree(reserved);
+	free(reserved);
 	reserved = NULL;
 
 	while (buffer_len(m) > 0) {
@@ -333,7 +328,7 @@ process_mux_new_session(u_int rid, Channel *c, Buffer *m, Buffer *r)
 		if ((cp = buffer_get_string_ret(m, &len)) == NULL)
 			goto malf;
 		if (!env_permitted(cp)) {
-			xfree(cp);
+			free(cp);
 			continue;
 		}
 		cctx->env = xrealloc(cctx->env, env_len + 2,
@@ -354,7 +349,7 @@ process_mux_new_session(u_int rid, Channel *c, Buffer *m, Buffer *r)
 
 	buffer_init(&cctx->cmd);
 	buffer_append(&cctx->cmd, cmd, strlen(cmd));
-	xfree(cmd);
+	free(cmd);
 	cmd = NULL;
 
 	/* Gather fds from client */
@@ -365,12 +360,11 @@ process_mux_new_session(u_int rid, Channel *c, Buffer *m, Buffer *r)
 			for (j = 0; j < i; j++)
 				close(new_fd[j]);
 			for (j = 0; j < env_len; j++)
-				xfree(cctx->env[j]);
-			if (env_len > 0)
-				xfree(cctx->env);
-			xfree(cctx->term);
+				free(cctx->env[j]);
+			free(cctx->env);
+			free(cctx->term);
 			buffer_free(&cctx->cmd);
-			xfree(cctx);
+			free(cctx);
 
 			/* prepare reply */
 			buffer_put_int(r, MUX_S_FAILURE);
@@ -395,14 +389,14 @@ process_mux_new_session(u_int rid, Channel *c, Buffer *m, Buffer *r)
 		close(new_fd[0]);
 		close(new_fd[1]);
 		close(new_fd[2]);
-		xfree(cctx->term);
+		free(cctx->term);
 		if (env_len != 0) {
 			for (i = 0; i < env_len; i++)
-				xfree(cctx->env[i]);
-			xfree(cctx->env);
+				free(cctx->env[i]);
+			free(cctx->env);
 		}
 		buffer_free(&cctx->cmd);
-		xfree(cctx);
+		free(cctx);
 		return 0;
 	}
 
@@ -607,7 +601,7 @@ mux_confirm_remote_forward(int type, u_int32_t seq, void *ctxt)
 	buffer_put_int(&out, MUX_S_FAILURE);
 	buffer_put_int(&out, fctx->rid);
 	buffer_put_cstring(&out, failmsg);
-	xfree(failmsg);
+	free(failmsg);
  out:
 	buffer_put_string(&c->output, buffer_ptr(&out), buffer_len(&out));
 	buffer_free(&out);
@@ -636,11 +630,11 @@ process_mux_open_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	}
 
 	if (*fwd.listen_host == '\0') {
-		xfree(fwd.listen_host);
+		free(fwd.listen_host);
 		fwd.listen_host = NULL;
 	}
 	if (*fwd.connect_host == '\0') {
-		xfree(fwd.connect_host);
+		free(fwd.connect_host);
 		fwd.connect_host = NULL;
 	}
 
@@ -651,10 +645,8 @@ process_mux_open_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	    ftype != MUX_FWD_DYNAMIC) {
 		logit("%s: invalid forwarding type %u", __func__, ftype);
  invalid:
-		if (fwd.listen_host)
-			xfree(fwd.listen_host);
-		if (fwd.connect_host)
-			xfree(fwd.connect_host);
+		free(fwd.listen_host);
+		free(fwd.connect_host);
 		buffer_put_int(r, MUX_S_FAILURE);
 		buffer_put_int(r, rid);
 		buffer_put_cstring(r, "Invalid forwarding request");
@@ -756,13 +748,10 @@ process_mux_open_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	buffer_put_int(r, MUX_S_OK);
 	buffer_put_int(r, rid);
  out:
-	if (fwd_desc != NULL)
-		xfree(fwd_desc);
+	free(fwd_desc);
 	if (freefwd) {
-		if (fwd.listen_host != NULL)
-			xfree(fwd.listen_host);
-		if (fwd.connect_host != NULL)
-			xfree(fwd.connect_host);
+		free(fwd.listen_host);
+		free(fwd.connect_host);
 	}
 	return ret;
 }
@@ -788,11 +777,11 @@ process_mux_close_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	}
 
 	if (*fwd.listen_host == '\0') {
-		xfree(fwd.listen_host);
+		free(fwd.listen_host);
 		fwd.listen_host = NULL;
 	}
 	if (*fwd.connect_host == '\0') {
-		xfree(fwd.connect_host);
+		free(fwd.connect_host);
 		fwd.connect_host = NULL;
 	}
 
@@ -849,10 +838,8 @@ process_mux_close_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 		buffer_put_int(r, MUX_S_OK);
 		buffer_put_int(r, rid);
 
-		if (found_fwd->listen_host != NULL)
-			xfree(found_fwd->listen_host);
-		if (found_fwd->connect_host != NULL)
-			xfree(found_fwd->connect_host);
+		free(found_fwd->listen_host);
+		free(found_fwd->connect_host);
 		found_fwd->listen_host = found_fwd->connect_host = NULL;
 		found_fwd->listen_port = found_fwd->connect_port = 0;
 	} else {
@@ -861,12 +848,9 @@ process_mux_close_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 		buffer_put_cstring(r, error_reason);
 	}
  out:
-	if (fwd_desc != NULL)
-		xfree(fwd_desc);
-	if (fwd.listen_host != NULL)
-		xfree(fwd.listen_host);
-	if (fwd.connect_host != NULL)
-		xfree(fwd.connect_host);
+	free(fwd_desc);
+	free(fwd.listen_host);
+	free(fwd.connect_host);
 
 	return ret;
 }
@@ -883,14 +867,12 @@ process_mux_stdio_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	if ((reserved = buffer_get_string_ret(m, NULL)) == NULL ||
 	   (chost = buffer_get_string_ret(m, NULL)) == NULL ||
 	    buffer_get_int_ret(&cport, m) != 0) {
-		if (reserved != NULL)
-			xfree(reserved);
-		if (chost != NULL)
-			xfree(chost);
+		free(reserved);
+		free(chost);
 		error("%s: malformed message", __func__);
 		return -1;
 	}
-	xfree(reserved);
+	free(reserved);
 
 	debug2("%s: channel %d: request stdio fwd to %s:%u",
 	    __func__, c->self, chost, cport);
@@ -902,7 +884,7 @@ process_mux_stdio_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
 			    __func__, i);
 			for (j = 0; j < i; j++)
 				close(new_fd[j]);
-			xfree(chost);
+			free(chost);
 
 			/* prepare reply */
 			buffer_put_int(r, MUX_S_FAILURE);
@@ -926,7 +908,7 @@ process_mux_stdio_fwd(u_int rid, Channel *c, Buffer *m, Buffer *r)
  cleanup:
 		close(new_fd[0]);
 		close(new_fd[1]);
-		xfree(chost);
+		free(chost);
 		return 0;
 	}
 
@@ -988,7 +970,7 @@ process_mux_stop_listening(u_int rid, Channel *c, Buffer *m, Buffer *r)
 	if (mux_listener_channel != NULL) {
 		channel_free(mux_listener_channel);
 		client_stop_mux();
-		xfree(options.control_path);
+		free(options.control_path);
 		options.control_path = NULL;
 		mux_listener_channel = NULL;
 		muxserver_sock = -1;
@@ -1184,8 +1166,8 @@ muxserver_listen(void)
 				close(muxserver_sock);
 				muxserver_sock = -1;
 			}
-			xfree(orig_control_path);
-			xfree(options.control_path);
+			free(orig_control_path);
+			free(options.control_path);
 			options.control_path = NULL;
 			options.control_master = SSHCTL_MASTER_NO;
 			return;
@@ -1210,7 +1192,7 @@ muxserver_listen(void)
 		goto disable_mux_master;
 	}
 	unlink(options.control_path);
-	xfree(options.control_path);
+	free(options.control_path);
 	options.control_path = orig_control_path;
 
 	set_nonblock(muxserver_sock);
@@ -1295,13 +1277,13 @@ mux_session_confirm(int id, int success, void *arg)
 	cc->mux_pause = 0; /* start processing messages again */
 	c->open_confirm_ctx = NULL;
 	buffer_free(&cctx->cmd);
-	xfree(cctx->term);
+	free(cctx->term);
 	if (cctx->env != NULL) {
 		for (i = 0; cctx->env[i] != NULL; i++)
-			xfree(cctx->env[i]);
-		xfree(cctx->env);
+			free(cctx->env[i]);
+		free(cctx->env);
 	}
-	xfree(cctx);
+	free(cctx);
 }
 
 /* ** Multiplexing client support */
@@ -1479,8 +1461,8 @@ mux_client_hello_exchange(int fd)
 		char *value = buffer_get_string(&m, NULL);
 
 		debug2("Unrecognised master extension \"%s\"", name);
-		xfree(name);
-		xfree(value);
+		free(name);
+		free(value);
 	}
 	buffer_free(&m);
 	return 0;
@@ -1589,7 +1571,7 @@ mux_client_forward(int fd, int cancel_flag, u_int ftype, Forward *fwd)
 	fwd_desc = format_forward(ftype, fwd);
 	debug("Requesting %s %s",
 	    cancel_flag ? "cancellation of" : "forwarding of", fwd_desc);
-	xfree(fwd_desc);
+	free(fwd_desc);
 
 	buffer_init(&m);
 	buffer_put_int(&m, cancel_flag ? MUX_C_CLOSE_FWD : MUX_C_OPEN_FWD);
