@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.10 2009/02/14 18:03:12 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.11 2013/05/17 23:08:37 miod Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: February 14 2009 $
+.Dd $Mdocdate: May 17 2013 $
 .Dt INTRO 4 mvme88k
 .Os
 .Sh NAME
@@ -96,7 +96,9 @@ Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -compact -width "pcctwo(4)" -offset 3n
+.Bl -tag -compact -width 12n -offset 3n
+.It Xr angelfire 4
+MVME181 system controller
 .It Xr bussw 4
 BusSwitch local peripheral bus interface
 .It Xr cl 4

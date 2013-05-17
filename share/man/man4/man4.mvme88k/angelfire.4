@@ -1,0 +1,45 @@
+.\"	$OpenBSD#
+.\"
+.\" Copyright (c) 2013 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 17 2013 $
+.Dt ANGELFIRE 4 mvme88k
+.Os
+.Sh NAME
+.Nm angelfire
+.Nd MVME181 system controller
+.Sh SYNOPSIS
+.Cd "angelfire0 at mainbus0 addr 0xff800000"
+.Cd "dart0      at angelfire0 offset 0x640000"
+.Cd "vme0       at angelfire0 offset 0x680000"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides an interface to the interrupt controller and VME bus controller
+found on MVME180 and MVME181 systems.
+.Pp
+The devices connected to
+.Nm
+are:
+.Pp
+.Bl -tag -compact -width 8n -offset indent
+.It Xr dart 4
+MC68681 dual UART
+.It Xr vme 4
+VMEbus interface
+.El
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr config 8
