@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.43 2013/05/17 10:23:52 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.44 2013/05/17 10:30:07 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -92,9 +92,10 @@ if [ "x$TEST_SSH_CONCH" != "x" ]; then
 fi
 
 # Path to sshd must be absolute for rexec
-if [ ! -x /$SSHD ]; then
-	SSHD=`which sshd`
-fi
+case "$SSHD" in
+/*) ;;
+*) SSHD=`which sshd` ;;
+esac
 
 # Logfiles.
 # SSH_LOGFILE should be the debug output of ssh(1) only
@@ -360,7 +361,7 @@ start_sshd ()
 
 	trace "wait for sshd"
 	i=0;
-	while [ ! -f $PIDFILE -a $i -lt 5 ]; do
+	while [ ! -f $PIDFILE -a $i -lt 10 ]; do
 		i=`expr $i + 1`
 		sleep $i
 	done
