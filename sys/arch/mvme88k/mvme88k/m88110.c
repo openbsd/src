@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.78 2013/02/19 21:02:06 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.79 2013/05/17 22:33:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, Miodrag Vallat.
@@ -100,8 +100,9 @@ void	m88110_cpu_configuration_print(int);
 void	m88410_cpu_configuration_print(int);
 void	m88110_shutdown(void);
 cpuid_t	m88110_cpu_number(void);
-apr_t	m88110_kapr_cmode(void);
-apr_t	m88410_kapr_cmode(void);
+apr_t	m88110_apr_cmode(void);
+apr_t	m88410_apr_cmode(void);
+apr_t	m88110_pte_cmode(void);
 void	m88110_set_sapr(apr_t);
 void	m88110_set_uapr(apr_t);
 void	m88110_tlbis(cpuid_t, vaddr_t, pt_entry_t);
@@ -130,7 +131,8 @@ const struct cmmu_p cmmu88110 = {
 	m88110_cpu_configuration_print,
 	m88110_shutdown,
 	m88110_cpu_number,
-	m88110_kapr_cmode,
+	m88110_apr_cmode,
+	m88110_pte_cmode,
 	m88110_set_sapr,
 	m88110_set_uapr,
 	m88110_tlbis,
@@ -156,7 +158,8 @@ const struct cmmu_p cmmu88410 = {
 	m88410_cpu_configuration_print,
 	m88110_shutdown,
 	m88110_cpu_number,
-	m88410_kapr_cmode,
+	m88410_apr_cmode,
+	m88110_pte_cmode,
 	m88110_set_sapr,
 	m88110_set_uapr,
 	m88110_tlbis,
@@ -445,13 +448,19 @@ m88110_shutdown(void)
 }
 
 apr_t
-m88110_kapr_cmode(void)
+m88110_apr_cmode(void)
 {
 	return CACHE_DFL;
 }
 
 apr_t
-m88410_kapr_cmode(void)
+m88410_apr_cmode(void)
+{
+	return CACHE_WT;
+}
+
+apr_t
+m88110_pte_cmode(void)
 {
 	return CACHE_WT;
 }
@@ -1083,7 +1092,7 @@ m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	m88410_dma_cachectl_local(_pa, _size, op);
 #ifdef MULTIPROCESSOR
 	/*
-	 * Since snooping is enabled, all we need is to propagate invalidate 
+	 * Since snooping is enabled, all we need is to propagate invalidate
 	 * requests if necessary.
 	 *
 	 * Note that we round the range to integral cache lines, in order

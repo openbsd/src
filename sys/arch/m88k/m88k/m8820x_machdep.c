@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.53 2013/05/14 21:58:09 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.54 2013/05/17 22:33:25 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, Miodrag Vallat.
  *
@@ -91,6 +91,7 @@ cpuid_t	m8820x_init(void);
 void	m8820x_cpu_configuration_print(int);
 void	m8820x_shutdown(void);
 apr_t	m8820x_apr_cmode(void);
+apr_t	m8820x_pte_cmode(void);
 void	m8820x_set_sapr(apr_t);
 void	m8820x_set_uapr(apr_t);
 void	m8820x_tlbis(cpuid_t, vaddr_t, pt_entry_t);
@@ -110,6 +111,7 @@ const struct cmmu_p cmmu8820x = {
 	m8820x_shutdown,
 	m8820x_cpu_number,
 	m8820x_apr_cmode,
+	m8820x_pte_cmode,
 	m8820x_set_sapr,
 	m8820x_set_uapr,
 	m8820x_tlbis,
@@ -304,15 +306,14 @@ m8820x_cpu_configuration_print(int main)
 		cmmu = m8820x_cmmu + mmu;
 		reported = 0;
 		for (cnt = 1 << cmmu_shift; cnt != 0; cnt--, mmu++, cmmu++) {
-			int idr, mmuid;
+			int mmuid;
 
 #ifdef M88200_HAS_ASYMMETRICAL_ASSOCIATION
 			if (cmmu->cmmu_regs == NULL)
 				continue;
 #endif
 
-			idr = cmmu->cmmu_regs[CMMU_IDR];
-			mmuid = CMMU_TYPE(idr);
+			mmuid = CMMU_TYPE(cmmu->cmmu_idr);
 
 			if (reported++ % 2 == 0)
 				printf("\ncpu%d: ", cpu);
@@ -330,7 +331,7 @@ m8820x_cpu_configuration_print(int main)
 				printf("unknown CMMU id 0x%x", mmuid);
 				break;
 			}
-			printf(" rev 0x%x,", CMMU_VERSION(idr));
+			printf(" rev 0x%x,", CMMU_VERSION(cmmu->cmmu_idr));
 #ifdef M88200_HAS_SPLIT_ADDRESS
 			/*
 			 * Print address lines
@@ -432,7 +433,8 @@ m8820x_initialize_cpu(cpuid_t cpu)
 		if (cmmu->cmmu_regs == NULL)
 			continue;
 #endif
-		type = CMMU_TYPE(cmmu->cmmu_regs[CMMU_IDR]);
+		cmmu->cmmu_idr = cmmu->cmmu_regs[CMMU_IDR];
+		type = CMMU_TYPE(cmmu->cmmu_idr);
 
 		/*
 		 * Reset cache
@@ -531,11 +533,72 @@ m8820x_shutdown()
 	CMMU_UNLOCK;
 }
 
-/* not used */
+/*
+ * Older systems do not xmem correctly on writeback cache lines, causing
+ * the remainder of the cache line to be corrupted.
+ * This behaviour has been observed on a system with 88100 rev 8 and
+ * 88200 rev 5; it is unknown whether the culprit is the 88100 or the 88200;
+ * however we can rely upon 88100 rev 10 onwards and 88200 rev 7 onwards
+ * (as well as all 88204 revs) to be safe.
+ */
 apr_t
 m8820x_apr_cmode()
 {
+	u_int cmmu_num;
+	struct m8820x_cmmu *cmmu;
+
+	cmmu = m8820x_cmmu;
+	for (cmmu_num = max_cmmus; cmmu_num != 0; cmmu_num--, cmmu++) {
+#ifdef M88200_HAS_ASYMMETRICAL_ASSOCIATION
+		if (cmmu->cmmu_regs == NULL)
+			continue;
+#endif
+		/*
+		 * XXX 88200 v6 could not be tested. Do 88200 ever have
+		 * XXX even version numbers anyway?
+		 */
+		if (CMMU_TYPE(cmmu->cmmu_idr) == M88200_ID &&
+		    CMMU_VERSION(cmmu->cmmu_idr) <= 6)
+			return CACHE_WT;
+	}
+	/*
+	 * XXX 88100 v9 could not be tested. Might be unaffected, but
+	 * XXX better be safe than sorry.
+	 */
+	if (((get_cpu_pid() & PID_VN) >> VN_SHIFT) <= 9)
+		return CACHE_WT;
+
 	return CACHE_DFL;
+}
+
+/*
+ * Older systems require page tables to be cache inhibited (write-through
+ * won't even cut it).
+ * We can rely upon 88200 rev 9 onwards to be safe (as well as all 88204
+ * revs).
+ */
+apr_t
+m8820x_pte_cmode()
+{
+	u_int cmmu_num;
+	struct m8820x_cmmu *cmmu;
+
+	cmmu = m8820x_cmmu;
+	for (cmmu_num = max_cmmus; cmmu_num != 0; cmmu_num--, cmmu++) {
+#ifdef M88200_HAS_ASYMMETRICAL_ASSOCIATION
+		if (cmmu->cmmu_regs == NULL)
+			continue;
+#endif
+		/*
+		 * XXX 88200 v8 could not be tested. Do 88200 ever have
+		 * XXX even version numbers anyway?
+		 */
+		if (CMMU_TYPE(cmmu->cmmu_idr) == M88200_ID &&
+		    CMMU_VERSION(cmmu->cmmu_idr) <= 8)
+			return CACHE_INH;
+	}
+
+	return CACHE_WT;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.70 2013/02/19 21:02:06 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.71 2013/05/17 22:33:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -133,17 +133,12 @@ struct pmap kernel_pmap_store;
  * Cacheability settings for page tables and kernel data.
  */
 
-/* #define	CACHE_PT	(CPU_IS88100 ? CACHE_INH : CACHE_WT) */
-#define	CACHE_PT	CACHE_WT
+apr_t	pte_cmode = CACHE_WT;
+apr_t	kernel_apr = CACHE_GLOBAL | CACHE_DFL | APR_V;
+apr_t	userland_apr = CACHE_GLOBAL | CACHE_DFL | APR_V;
 
-#if defined(M88110) && defined(M88410)
-apr_t	kernel_apr_cmode = CACHE_DFL;		/* might be downgraded to WT */
-#define	KERNEL_APR_CMODE	kernel_apr_cmode
-#else
-#define	KERNEL_APR_CMODE	CACHE_DFL
-#endif
-#define	USERLAND_APR_CMODE	CACHE_DFL
-apr_t	default_apr = CACHE_GLOBAL | APR_V;
+#define	KERNEL_APR_CMODE	(kernel_apr & (CACHE_MASK & ~CACHE_GLOBAL))
+#define	USERLAND_APR_CMODE	(userland_apr & (CACHE_MASK & ~CACHE_GLOBAL))
 
 /*
  * Internal routines
@@ -413,8 +408,7 @@ pmap_expand_kmap(vaddr_t va, int canfail)
 		bzero((void *)pa, PAGE_SIZE);
 	}
 
-	/* memory for page tables should not be writeback */
-	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_PT);
+	pmap_cache_ctrl(pa, pa + PAGE_SIZE, pte_cmode);
 	sdt = SDTENT(pmap_kernel(), va);
 	*sdt = pa | SG_SO | SG_RW | PG_M | SG_V;
 	return sdt_pte(sdt, va);
@@ -449,8 +443,7 @@ pmap_expand(pmap_t pmap, vaddr_t va, int canfail)
 	}
 
 	pa = VM_PAGE_TO_PHYS(pg);
-	/* memory for page tables should not be writeback */
-	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_PT);
+	pmap_cache_ctrl(pa, pa + PAGE_SIZE, pte_cmode);
 
 	*sdt = pa | SG_RW | PG_M | SG_V;
 
@@ -605,7 +598,8 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 		pa += PAGE_SIZE;
 	}
 	/* kernel page tables */
-	template = PG_SO | PG_RW | PG_M_U | PG_W | PG_V | CACHE_PT;
+	pte_cmode = cmmu_pte_cmode();
+	template = PG_SO | PG_RW | PG_M_U | PG_W | PG_V | pte_cmode;
 	for (i = atop(eptpa) - atop(pa); i != 0; i--) {
 		*pdt++ = pa | template;
 		pa += PAGE_SIZE;
@@ -634,24 +628,26 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 			    ptable->prot, ptable->cacheability);
 
 	/*
+	 * Adjust cache settings according to the hardware we are running on.
+	 */
+
+	kernel_apr = (kernel_apr & ~(CACHE_MASK & ~CACHE_GLOBAL)) |
+	    cmmu_apr_cmode();
+#if defined(M88110) && !defined(MULTIPROCESSOR)
+	if (CPU_IS88110)
+		kernel_apr &= ~CACHE_GLOBAL;
+#endif
+	userland_apr = (userland_apr & ~CACHE_MASK) | (kernel_apr & CACHE_MASK);
+
+	/*
 	 * Switch to using new page tables
 	 */
 
-#if defined(M88110)
-	if (CPU_IS88110) {
-#if defined(M88410)
-		kernel_apr_cmode = cmmu_kapr_cmode();
-#endif
-#ifndef MULTIPROCESSOR
-		default_apr &= ~CACHE_GLOBAL;
-#endif
-	}
-#endif
 	pmap_kernel()->pm_count = 1;
-	pmap_kernel()->pm_apr = sptpa | default_apr | KERNEL_APR_CMODE;
+	pmap_kernel()->pm_apr = sptpa | kernel_apr;
 
 	DPRINTF(CD_BOOT, ("default apr %08x kernel apr %08x\n",
-	    default_apr, sptpa));
+	    kernel_apr, sptpa));
 
 	pmap_bootstrap_cpu(cpu_number());
 }
@@ -711,11 +707,10 @@ pmap_create(void)
 	}
 
 	pa = VM_PAGE_TO_PHYS(pg);
-	/* memory for page tables should not be writeback */
-	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_PT);
+	pmap_cache_ctrl(pa, pa + PAGE_SIZE, pte_cmode);
 
 	pmap->pm_stab = (sdt_entry_t *)pa;
-	pmap->pm_apr = pa | default_apr | USERLAND_APR_CMODE;
+	pmap->pm_apr = pa | userland_apr;
 	pmap->pm_count = 1;
 
 	DPRINTF(CD_CREAT, ("pmap_create() -> pmap %p, pm_stab %p\n", pmap, pa));
