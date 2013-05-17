@@ -1,4 +1,4 @@
-#	$OpenBSD: reexec.sh,v 1.6 2013/05/17 04:29:14 dtucker Exp $
+#	$OpenBSD: reexec.sh,v 1.7 2013/05/17 10:23:52 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="reexec tests"
@@ -39,7 +39,7 @@ echo "InvalidXXX=no" >> $OBJ/sshd_config
 
 copy_tests
 
-$SUDO kill `cat $PIDFILE`
+$SUDO kill `$SUDO cat $PIDFILE`
 rm -f $PIDFILE
 
 cp $OBJ/sshd_config.orig $OBJ/sshd_config

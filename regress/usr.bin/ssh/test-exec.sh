@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.42 2013/05/17 04:29:14 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.43 2013/05/17 10:23:52 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -141,7 +141,7 @@ export SSH SSHD SSHAGENT SSHADD SSHKEYGEN SSHKEYSCAN SFTP SFTPSERVER SCP
 cleanup ()
 {
 	if [ -f $PIDFILE ]; then
-		pid=`cat $PIDFILE`
+		pid=`$SUDO cat $PIDFILE`
 		if [ "X$pid" = "X" ]; then
 			echo no sshd running
 		else
@@ -346,7 +346,7 @@ fi
 # create a proxy version of the client config
 (
 	cat $OBJ/ssh_config
-	echo proxycommand sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSHD_LOGFILE} -i -f $OBJ/sshd_proxy
+	echo proxycommand ${SUDO} sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSHD_LOGFILE} -i -f $OBJ/sshd_proxy
 ) > $OBJ/ssh_proxy
 
 # check proxy config
