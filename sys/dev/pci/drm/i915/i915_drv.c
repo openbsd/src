@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.29 2013/05/16 21:14:11 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.30 2013/05/17 12:03:42 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -631,6 +631,7 @@ void inteldrm_free_screen(void *, void *);
 int inteldrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
 void inteldrm_doswitch(void *, void *);
+int inteldrm_getchar(void *, int, int, struct wsdisplay_charcell *);
 void inteldrm_burner(void *, u_int, u_int);
 
 struct wsscreen_descr inteldrm_stdscreen = {
@@ -658,7 +659,7 @@ struct wsdisplay_accessops inteldrm_accessops = {
 	inteldrm_show_screen,
 	NULL,
 	NULL,
-	NULL,
+	inteldrm_getchar,
 	inteldrm_burner
 };
 
@@ -761,6 +762,15 @@ inteldrm_doswitch(void *v, void *cookie)
 
 	if (dev_priv->switchcb)
 		(*dev_priv->switchcb)(dev_priv->switchcbarg, 0, 0);
+}
+
+int
+inteldrm_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
+{
+	struct inteldrm_softc *dev_priv = v;
+	struct rasops_info *ri = &dev_priv->ro;
+
+	return rasops_getchar(ri, row, col, cell);
 }
 
 void
