@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.26 2011/01/29 13:15:39 bluhm Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.27 2013/05/17 17:20:09 mpi Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: January 29 2011 $
+.Dd $Mdocdate: May 17 2013 $
 .Dt MBUF_TAGS 9
 .Os
 .Sh NAME
@@ -47,11 +47,12 @@
 These functions allow the manipulation of generic packet attributes.
 They are used by the kernel to keep track of operations done or
 scheduled to happen to packets.
-These attributes are attached to mbuf packet headers.
+These attributes are attached to
+.Xr mbuf 9
+packet headers.
 .Pp
 Mbuf tags get allocated using
-.Xr malloc 9 ,
-thus, due to the performance impact, mbuf tags should be used with care.
+.Xr pool 9 .
 .Pp
 .Fn m_tag_get
 allocates a new tag of type
@@ -62,7 +63,7 @@ bytes of space following the tag header itself.
 The
 .Va flag
 argument is passed directly to
-.Xr malloc 9 .
+.Xr pool_get 9 .
 If successful,
 .Fn m_tag_get
 returns a memory buffer of (len + sizeof (struct m_tag)) bytes.
@@ -94,9 +95,7 @@ Following this structure are
 bytes of space that can be used to store tag-specific information.
 .Pp
 The currently defined tag types are:
-.Bl -tag -width "111111111111"
-.It PACKET_TAG_NONE
-This should never be used.
+.Bl -tag -width PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED
 .It PACKET_TAG_IPSEC_IN_DONE
 Used by
 .Xr ipsec 4
@@ -128,14 +127,6 @@ The tag contains a
 identifying the security association that should be applied.
 The packet is already formatted for the appropriate security
 protocol.
-.It PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO
-Used by network cards that implement on-board IPsec
-processing to indicate to the IPsec stack that cryptographic
-processing could be deferred to hardware.
-The tag contains a
-.Va struct tdb_ident
-identifying the security association that could be offloaded to the
-network card.
 .It PACKET_TAG_IPSEC_PENDING_TDB
 Used by the IPsec stack to keep track of IPsec processing that should
 happen to the packet on output.
@@ -161,10 +152,38 @@ Used by the
 interface to detect loops in processing.
 The tag contains a pointer to the gre interface that already processed
 the packet.
-.It PACKET_TAG_IN_PACKET_CHECKSUM
-Used by network cards that can compute complete packet checksums to
-pass that information to higher-level protocols.
-The tag contains the 2 byte checksum of the packet.
+.It PACKET_TAG_DLT
+Used by
+.Xr bpf 4
+to indicate that the packet was injected.
+The tag contains a
+.Va u_int
+identifying the data link layer type.
+.It PACKET_TAG_PF_DIVERT
+Indicates that the packet was diverted by
+.Xr pf 4
+by using
+.Em divert-packet ,
+.Em divert-to
+or
+.Em divert-reply
+directives.
+The tag contains a
+.Va struct pf_divert
+identifying the port, address and routing domain the packet should be
+diverted to.
+.It PACKET_TAG_PIPEX
+Used by
+.Xr pipex 4
+to cache its session information.
+The tag contains a
+.Va struct pipex_tag .
+.It PACKET_TAG_PF_REASSEMBLED
+Used by
+.Xr pf 4
+to reassemble IPv6 fragments.
+The tag contains a
+.Va struct pf_fragment_tag .
 .El
 .Pp
 .Fn m_tag_find
@@ -236,20 +255,18 @@ and
 macros defined in
 .Pa sys/sys/mbuf.h
 move the tags from the old to the new mbuf.
-The
-.Fn M_DUP_PKTHDR
-and
-.Fn M_DUP_HDR
-macros create copies of the tag chain for the new mbuf.
 .Sh CODE REFERENCES
 The tag-manipulating code is contained in the file
 .Pa sys/kern/uipc_mbuf2.c .
 .Sh SEE ALSO
+.Xr bpf 4,
 .Xr bridge 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
 .Xr ipsec 4 ,
-.Xr malloc 9
+.Xr mbuf 9 ,
+.Xr pf 4 ,
+.Xr pipex 4
 .Sh HISTORY
 The packet tags first appeared in
 .Ox 2.9
