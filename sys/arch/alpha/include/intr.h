@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.39 2011/04/15 20:40:05 deraadt Exp $ */
+/* $OpenBSD: intr.h,v 1.40 2013/05/17 19:38:51 kettenis Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -124,6 +124,8 @@ struct scbvec {
 #define	IPL_SOFTCLOCK	1	/* clock software interrupts */
 #define	IPL_SOFTNET	2	/* network software interrupts */
 #define	IPL_SOFT	3	/* other software interrupts */
+
+#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */

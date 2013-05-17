@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.15 2011/09/03 20:41:31 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.16 2013/05/17 19:38:52 kettenis Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 #define IPL_STATCLOCK	0x18	/* statclock */
 #define	IPL_SCHED	0x1f
 #define	IPL_HIGH	0x1f
+
+#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */

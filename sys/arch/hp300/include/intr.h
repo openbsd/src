@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.29 2011/12/21 22:39:11 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.30 2013/05/17 19:38:51 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -68,6 +68,8 @@ struct isr {
 #define	IPL_STATCLOCK	6
 #define	IPL_SCHED	7
 #define	IPL_HIGH	7
+
+#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
 /*
  * This array contains the appropriate PSL_S|PSL_IPL? values

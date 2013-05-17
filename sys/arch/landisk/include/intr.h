@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2013/05/17 19:38:52 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -44,6 +44,8 @@
 #define	IPL_CLOCK	14	/* clock */
 #define	IPL_SCHED	14	/* scheduling */
 #define	IPL_HIGH	15	/* everything */
+
+#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
 #define	splsoftclock()		_cpu_intr_raise(IPL_SOFTCLOCK << 4)
 #define	splsoftnet()		_cpu_intr_raise(IPL_SOFTNET << 4)

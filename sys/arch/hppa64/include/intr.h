@@ -35,6 +35,8 @@
 #define	IPL_HIGH	10
 #define	IPL_IPI		11
 
+#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
+
 #define	IST_NONE	0
 #define	IST_PULSE	1
 #define	IST_EDGE	2

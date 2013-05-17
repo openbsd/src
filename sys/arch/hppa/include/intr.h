@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.37 2011/01/14 13:20:06 jsing Exp $	*/
+/*	$OpenBSD: intr.h,v 1.38 2013/05/17 19:38:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -49,6 +49,8 @@
 #define	IPL_HIGH	10
 #define	IPL_IPI		11
 #define	IPL_NESTED	12	/* pseudo-level for sub-tables */
+
+#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
 #define	IST_NONE	0
 #define	IST_PULSE	1
