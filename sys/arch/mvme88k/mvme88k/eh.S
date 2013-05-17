@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.69 2013/05/17 22:46:28 miod Exp $	*/
+/*	$OpenBSD: eh.S,v 1.70 2013/05/17 22:51:59 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
  *
@@ -39,7 +39,7 @@
 
 #include <m88k/m88k/eh_common.S>
 
-#ifdef MVME187
+#if defined(MVME181) || defined(MVME187)
 /*
  * Single-processor with 2 CMMU version (MVME181, MVME187, MVME8120)
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.52 2013/05/17 22:46:28 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.53 2013/05/17 22:51:59 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -34,6 +34,9 @@
 
 #include <machine/cmmu.h>
 #include <machine/m8820x.h>
+#ifdef MVME181
+#include <machine/mvme181.h>
+#endif
 #ifdef MVME187
 #include <machine/mvme187.h>
 #endif
@@ -93,6 +96,21 @@ m8820x_setup_board_config()
 #endif
 
 	switch (brdtyp) {
+#ifdef MVME181
+	case BRD_180:
+	case BRD_181:
+#ifdef MVME188
+		/* There is no WHOAMI reg on MVME181 - fake it... */
+		vme188_config = 0x0a;
+#endif
+		m8820x_cmmu[0].cmmu_regs = (void *)M181_CMMU_I;
+		m8820x_cmmu[1].cmmu_regs = (void *)M181_CMMU_D;
+		ncpusfound = 1;
+		max_cmmus = 2;
+		cmmu_shift = 1;
+		m8820x_pfsr = pfsr_save_single;
+		break;
+#endif	/* MVME181 */
 #ifdef MVME187
 	case BRD_187:
 	case BRD_8120:
@@ -130,7 +148,7 @@ m8820x_setup_board_config()
 
 #ifdef MVME188
 	if (bd_config[vme188_config].ncpus != 0) {
-		/* 187 has a fixed configuration, no need to print it */
+		/* 181 and 187 have a fixed configuration, don't print it */
 		if (brdtyp == BRD_188) {
 			printf("MVME188 board configuration #%X "
 			    "(%d CPUs %d CMMUs)\n",
@@ -261,7 +279,7 @@ m8820x_setup_board_config()
 
 /*
  * Find out the CPU number from accessing CMMU.
- * On MVME187, there is only one CPU, so this is trivial.
+ * On MVME181 and MVME187, there is only one CPU, so this is trivial.
  * On MVME188, we access the WHOAMI register, which is in data space;
  * its value will let us know which data CMMU has been used to perform
  * the read, and we can reliably compute the CPU number from it.
@@ -274,7 +292,7 @@ m8820x_cpu_number()
 	cpuid_t cpu;
 #endif
 
-#ifdef MVME187
+#if defined(MVME181) || defined(MVME187)
 #ifdef MVME188
 	if (brdtyp != BRD_188)
 #endif

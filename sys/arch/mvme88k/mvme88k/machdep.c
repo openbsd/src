@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.252 2013/05/17 22:46:28 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.253 2013/05/17 22:51:59 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -839,6 +839,12 @@ mvme_bootstrap()
 	 * Set up interrupt and fp exception handlers based on the machine.
 	 */
 	switch (brdtyp) {
+#ifdef MVME181
+	case BRD_180:
+	case BRD_181:
+		platform = &board_mvme181;
+		break;
+#endif
 #ifdef MVME187
 	case BRD_187:
 	case BRD_8120:

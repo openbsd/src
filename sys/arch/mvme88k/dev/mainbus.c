@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.27 2011/10/09 17:01:34 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.28 2013/05/17 22:51:59 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -43,6 +43,9 @@
 
 #ifdef M88100
 #include <machine/m8820x.h>
+#endif
+#ifdef MVME181
+#include <machine/mvme181.h>
 #endif
 #ifdef MVME187
 #include <machine/mvme187.h>
@@ -301,8 +304,19 @@ mainbus_attach(struct device *parent, struct device *self, void *args)
 	 */
 #ifdef M88100
 	if (CPU_IS88100) {
-		bs_obio_start = BATC8_VA;	/* hardwired BATC */
-		bs_obio_end = 0;
+		switch (brdtyp) {
+#ifdef MVME181
+		case BRD_180:
+		case BRD_181:
+			bs_obio_start = M181_OBIO_START;
+			bs_obio_end = 0;
+			break;
+#endif
+		default:
+			bs_obio_start = BATC8_VA;	/* hardwired BATC */
+			bs_obio_end = 0;
+			break;
+		}
 	}
 #endif
 #ifdef MVME197

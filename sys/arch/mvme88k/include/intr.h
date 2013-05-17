@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.22 2013/05/17 22:40:01 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.23 2013/05/17 22:51:59 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -78,8 +78,8 @@
 #define IPL_SOFTINT	1
 #define IPL_BIO		2
 #define IPL_NET		3
-#define IPL_TTY		3
-#define IPL_VM		3
+#define IPL_TTY		5
+#define IPL_VM		5
 #define IPL_CLOCK	5
 #define IPL_STATCLOCK	5
 #define	IPL_SCHED	5

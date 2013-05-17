@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.58 2013/05/17 22:46:27 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.59 2013/05/17 22:51:59 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -40,6 +40,7 @@
 
 #include <dev/cons.h>
 
+#include <machine/mvme181.h>
 #include <machine/mvme188.h>
 #include <mvme88k/dev/dartreg.h>
 
@@ -119,21 +120,33 @@ dartmatch(struct device *parent, void *cf, void *aux)
 	bus_space_handle_t ioh;
 	int rc;
 
-	if (brdtyp != BRD_188)
-		return (0);
-
 	/*
 	 * We do not accept empty locators here...
 	 */
-	if (ca->ca_paddr != DART_BASE)
-		return (0);
+	switch (brdtyp) {
+#ifdef MVME181
+	case BRD_180:
+	case BRD_181:
+		if (ca->ca_paddr != M181_DUART)
+			return 0;
+		break;
+#endif
+#ifdef MVME188
+	case BRD_188:
+		if (ca->ca_paddr != DART_BASE)
+			return 0;
+		break;
+#endif
+	default:
+		return 0;
+	}
 
 	if (bus_space_map(ca->ca_iot, ca->ca_paddr, DART_SIZE, 0, &ioh) != 0)
-		return (0);
+		return 0;
 	rc = badaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
 	bus_space_unmap(ca->ca_iot, ca->ca_paddr, DART_SIZE);
 
-	return (rc == 0);
+	return rc == 0;
 }
 
 void
@@ -167,15 +180,20 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	/* Start out with Tx and RX interrupts disabled */
 	/* Enable input port change interrupt */
 	sc->sc_sv_reg.sv_imr  = IIPCHG;
+#ifdef MVME181
+	if (brdtyp == BRD_180 || brdtyp == BRD_181)
+		sc->sc_sv_reg.sv_imr |= ITIMER;
+#endif
 
 	/*
 	 * Although we are still running using the BUG routines,
 	 * this device will be elected as the console after
 	 * autoconf.
-	 * We do not even test since we know we are an MVME188 and
-	 * console is always on the first port.
+	 * We do not even test since we know we are an MVME181 or
+	 * an MVME188 and console is always on the first port.
 	 */
 	printf(": console");
+	delay(10000);
 
 	/* reset port a */
 	dart_write(sc, DART_CRA, RXRESET | TXDIS | RXDIS);
@@ -831,6 +849,7 @@ dartintr(void *arg)
 	struct dartsoftc *sc = arg;
 	unsigned char isr, imr;
 	int port;
+	int rc = -1;
 
 	/* read interrupt status register and mask with imr */
 	isr = dart_read(sc, DART_ISR);
@@ -842,12 +861,25 @@ dartintr(void *arg)
 		 * ready change on a disabled port). This should not happen,
 		 * but we have to claim the interrupt anyway.
 		 */
-#if defined(DIAGNOSTIC) && !defined(MULTIPROCESSOR)
+#ifdef DEBUG
 		printf("dartintr: spurious interrupt, isr %x imr %x\n",
 		    isr, imr);
 #endif
-		return (1);
+		return (-1);
 	}
+
+	rc = 1;
+
+#ifdef MVME181
+	if (imr & ITIMER) {
+		if (isr & ITIMER)
+			rc = -1;
+		isr &= ~ITIMER;
+		if (isr == 0)
+			goto done;	/* will be handled by the second
+					   interrupt handler */
+	}
+#endif
 	isr &= imr;
 
 	if (isr & IIPCHG) {
@@ -856,7 +888,7 @@ dartintr(void *arg)
 		ip = dart_read(sc, DART_IP);
 		ipcr = dart_read(sc, DART_IPCR);
 		dartmodemtrans(sc, ip, ipcr);
-		return (1);
+		goto done;
 	}
 
 	if (isr & (IRXRDYA | ITXRDYA))
@@ -865,7 +897,8 @@ dartintr(void *arg)
 		port = 1;
 	else {
 		printf("dartintr: spurious interrupt, isr 0x%08x\n", isr);
-		return (1);	/* claim it anyway */
+		rc = -1;
+		goto done;
 	}
 
 	if (isr & (IRXRDYA | IRXRDYB)) {
@@ -879,7 +912,8 @@ dartintr(void *arg)
 		dart_write(sc, port ? DART_CRB : DART_CRA, BRKINTRESET);
 	}
 
-	return (1);
+done:
+	return rc;
 }
 
 /*
@@ -893,8 +927,23 @@ dartcnprobe(struct consdev *cp)
 {
 	int maj;
 
-	if (brdtyp != BRD_188 || badaddr(DART_BASE, 4) != 0)
+	switch (brdtyp) {
+#ifdef MVME181
+	case BRD_180:
+	case BRD_181:
+		if (badaddr(M181_DUART, 4) != 0)
+			return;
+		break;
+#endif
+#ifdef MVME188
+	case BRD_188:
+		if (badaddr(DART_BASE, 4) != 0)
+			return;
+		break;
+#endif
+	default:
 		return;
+	}
 
 	/* do not attach as console if dart has been disabled */
 	if (dart_cd.cd_ndevs == 0 || dart_cd.cd_devs[0] == NULL)

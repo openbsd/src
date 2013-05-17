@@ -1,18 +1,26 @@
-#	$OpenBSD: files.mvme88k,v 1.47 2013/05/17 22:46:27 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.48 2013/05/17 22:51:59 miod Exp $
 #
 maxpartitions 16
 
 device	mainbus {[addr = -1]}
 attach	mainbus at root
 
+# MVME180/181 base logic
+device	angelfire {[offset = -1], [ipl = 0]}
+attach	angelfire at mainbus
+file	arch/mvme88k/dev/angelfire.c			angelfire
+
+# MVME197 BusSwitch system bus
 device	bussw {[offset = -1], [ipl = 0]}
 attach	bussw at mainbus
 file	arch/mvme88k/dev/bussw.c			bussw needs-count
 
+# MVME187 PCC2 system bus
 device	pcctwo {[offset = -1], [ipl = 0]}
 attach	pcctwo at bussw, mainbus
 file	arch/mvme88k/dev/pcctwo.c			pcctwo
 
+# MVME188 base logic
 device	syscon {[offset = -1], [ipl = 0]}
 attach	syscon at mainbus
 file	arch/mvme88k/dev/syscon.c			syscon
@@ -34,7 +42,7 @@ attach	cl at pcctwo
 file	arch/mvme88k/dev/cl.c				cl needs-count
 
 device	dart: tty
-attach	dart at syscon
+attach	dart at angelfire, syscon
 file	arch/mvme88k/dev/dart.c				dart needs-count
 
 include	"scsi/files.scsi"
@@ -49,7 +57,7 @@ attach	osiop at pcctwo with osiop_pcctwo
 file	arch/mvme88k/dev/osiop_pcctwo.c			osiop_pcctwo
 
 device	vme {}
-attach	vme at pcctwo, syscon
+attach	vme at angelfire, pcctwo, syscon
 device	vmes {[addr = -1], [vec = -1], [ipl = 0]}
 attach	vmes at vme
 device	vmel {[addr = -1], [vec = -1], [ipl = 0]}
@@ -69,6 +77,7 @@ file	arch/mvme88k/mvme88k/db_machdep.c		ddb
 file	arch/mvme88k/mvme88k/disksubr.c
 file	arch/mvme88k/mvme88k/eh.S
 file	arch/mvme88k/mvme88k/machdep.c
+file	arch/mvme88k/mvme88k/m181_machdep.c		mvme181
 file	arch/mvme88k/mvme88k/m187_machdep.c		mvme187
 file	arch/mvme88k/mvme88k/m188_machdep.c		mvme188
 file	arch/mvme88k/mvme88k/m197_machdep.c		mvme197
