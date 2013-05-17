@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.7 2011/03/23 16:54:35 pirofti Exp $ */
+/*	$OpenBSD: psl.h,v 1.8 2013/05/17 22:28:21 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -67,7 +67,7 @@
 
 #define PSR_MODE	0x80000000	/* supervisor/user mode */
 #define PSR_BO		0x40000000	/* byte-ordering 0:big 1:little */
-#define PSR_SER		0x20000000	/* 88110 serial mode */
+#define PSR_SER		0x20000000	/* serial mode */
 #define PSR_C		0x10000000	/* carry */
 #define PSR_SGN		0x04000000	/* 88110 Signed Immediate mode */
 #define PSR_SRM		0x02000000	/* 88110 Serialize Memory */
@@ -80,8 +80,8 @@
 #define PSR_SFRZ	0x00000001	/* shadow freeze */
 
 /* bits userland is not allowed to change */
-#define	PSR_USERSTATIC	(PSR_MODE | PSR_BO | PSR_SGN | PSR_SRM | PSR_SFD | \
-			 PSR_MXM | PSR_IND | PSR_SFRZ)
+#define	PSR_USERSTATIC	(PSR_MODE | PSR_BO | PSR_SER | PSR_SGN | PSR_SRM | \
+			 PSR_SFD | PSR_MXM | PSR_IND | PSR_SFRZ)
 
 #define FIP_V		0x00000002	/* valid */
 #define FIP_E		0x00000001	/* exception */

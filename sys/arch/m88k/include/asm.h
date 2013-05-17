@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.13 2013/03/28 17:41:04 martynas Exp $	*/
+/*	$OpenBSD: asm.h,v 1.14 2013/05/17 22:28:21 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -181,7 +181,7 @@
 #define	PSR_GRAPHICS_DISABLE_BIT	4	/* SFU2 - MC88110 */
 #define	PSR_SERIALIZE_BIT		25	/* MC88110 */
 #define	PSR_CARRY_BIT			28
-#define	PSR_SERIAL_MODE_BIT		29	/* MC88110 */
+#define	PSR_SERIAL_MODE_BIT		29
 #define	PSR_BIG_ENDIAN_MODE		30
 #define	PSR_SUPERVISOR_MODE_BIT		31
 
