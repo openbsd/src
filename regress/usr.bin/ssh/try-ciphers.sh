@@ -1,4 +1,4 @@
-#	$OpenBSD: try-ciphers.sh,v 1.19 2013/02/11 23:58:51 djm Exp $
+#	$OpenBSD: try-ciphers.sh,v 1.20 2013/05/17 10:16:26 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="try ciphers"
@@ -29,7 +29,7 @@ for c in $ciphers; do
 		case $c in
 		aes*-gcm@openssh.com)	test $n -gt 0 && break;;
 		esac
-		n=$(($n + 1))
+		n=`expr $n + 1`
 	done
 done
 
