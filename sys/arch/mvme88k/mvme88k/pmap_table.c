@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.25 2011/01/02 13:40:07 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.26 2013/05/17 22:46:28 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,68 +31,11 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/board.h>
 #include <machine/pmap_table.h>
-
-#define	R	UVM_PROT_R
-#define	RW	UVM_PROT_RW
-#define	CW	CACHE_WT
-#define	CI	CACHE_INH
-#define	CG	CACHE_GLOBAL
-
-#ifdef MVME187
-#include <machine/mvme187.h>
-const struct pmap_table
-m187_board_table[] = {
-	{ BUG187_START,		BUG187_SIZE,	RW, CI },
-#if 0	/* mapped by the hardcoded BATC entries */
-	{ OBIO187_START,	OBIO187_SIZE,	RW, CI },
-#endif
-	{ 0, 0xffffffff, 0, 0 },
-};
-#endif
-
-#ifdef MVME188
-#include <machine/mvme188.h>
-const struct pmap_table
-m188_board_table[] = {
-	{ MVME188_EPROM,	MVME188_EPROM_SIZE, RW, CI },
-#if 0	/* mapped by the hardcoded BATC entries */
-	{ MVME188_UTILITY,	MVME188_UTILITY_SIZE, RW, CI },
-#endif
-	{ 0, 0xffffffff, 0, 0 },
-};
-#endif
-
-#ifdef MVME197
-#include <machine/mvme197.h>
-const struct pmap_table
-m197_board_table[] = {
-	/* We need flash 1:1 mapped to access the 88410 chip underneath */
-	{ FLASH_START,		FLASH_SIZE,	RW, CI },
-	{ OBIO197_START,	OBIO197_SIZE,	RW, CI },
-	/* No need to mention BUG here - it is contained inside OBIO */
-	{ 0, 0xffffffff, 0, 0 },
-};
-#endif
 
 const struct pmap_table *
 pmap_table_build()
 {
-	switch (brdtyp) {
-#ifdef MVME187
-	case BRD_187:
-	case BRD_8120:
-		return m187_board_table;
-#endif
-#ifdef MVME188
-	case BRD_188:
-		return m188_board_table;
-#endif
-#ifdef MVME197
-	case BRD_197:
-		return m197_board_table;
-#endif
-	default:
-		return NULL;	/* silence warning */
-	}
+	return platform->ptable;
 }

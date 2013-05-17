@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.23 2013/02/17 18:07:36 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.24 2013/05/17 22:46:28 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -52,23 +52,61 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
+#include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/pmap_table.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+
 #include <machine/m88100.h>
+#include <machine/m8820x.h>
 #include <machine/mvme187.h>
 
 #include <mvme88k/dev/memcreg.h>
 #include <mvme88k/dev/pcctworeg.h>
 #include <mvme88k/mvme88k/clockvar.h>
 
-void	m187_bootstrap(void);
-void	m187_ext_int(struct trapframe *);
-u_int	m187_getipl(void);
-vaddr_t	m187_memsize(void);
-u_int	m187_raiseipl(u_int);
-u_int	m187_setipl(u_int);
+const struct pmap_table m187_pmap_table[] = {
+	{ BUG187_START,		BUG187_SIZE,	UVM_PROT_RW, CACHE_INH },
+#if 0	/* mapped by the hardcoded BATC entries */
+	{ OBIO187_START,	OBIO187_SIZE,	UVM_PROT_RW, CACHE_INH },
+#endif
+	{ 0, 0xffffffff, 0, 0 },
+};
+
+const struct board board_mvme187 = {
+	.bootstrap = m187_bootstrap,
+	.memsize = m187_memsize,
+	.cpuspeed = m187_cpuspeed,
+	.reboot = m1x7_reboot,
+	.is_syscon = m1x7_is_syscon,
+	.intr = m187_intr,
+	.nmi = NULL,
+	.nmi_wrapup = NULL,
+	.getipl = m187_getipl,
+	.setipl = m187_setipl,
+	.raiseipl = m187_raiseipl,
+	.intsrc_available = m1x7_intsrc_available,
+	.intsrc_enable = m1x7_intsrc_enable,
+	.intsrc_disable = NULL,
+	.intsrc_establish = NULL,
+	.intsrc_disestablish = NULL,
+	.init_clocks = m1x7_init_clocks,
+	.delay = m1x7_delay,
+	.init_vme = m1x7_init_vme,
+#ifdef MULTIPROCESSOR
+	.send_ipi = NULL,
+	.smp_setup = m88100_smp_setup,
+#endif
+	.ptable = m187_pmap_table,
+	.cmmu = &cmmu8820x
+};
+
+void
+m187_bootstrap()
+{
+}
 
 /*
  * Figure out how much memory is available, by querying the memory controllers.
@@ -90,11 +128,23 @@ m187_memsize()
 }
 
 /*
+ * Return the processor speed in MHz.
+ */
+int
+m187_cpuspeed(const struct mvmeprom_brdid *brdid)
+{
+	/*
+	 * Find out the processor speed, from the PCC2 prescaler
+	 * adjust register.
+	 */
+	return 256 - *(volatile u_int8_t *)(PCC2_BASE + PCCTWO_PSCALEADJ);
+}
+
+/*
  * Device interrupt handler for MVME187
  */
-
 void
-m187_ext_int(struct trapframe *eframe)
+m187_intr(struct trapframe *eframe)
 {
 	int level;
 	struct intrhand *intr;
@@ -218,28 +268,4 @@ m187_raiseipl(u_int level)
 	 */
 	set_psr(psr);
 	return curspl;
-}
-
-void
-m187_bootstrap()
-{
-	extern int cpuspeed;
-	extern const struct cmmu_p cmmu8820x;
-
-	/*
-	 * Find out the processor speed, from the PCC2 prescaler
-	 * adjust register.
-	 */
-	cpuspeed = 256 - *(volatile u_int8_t *)(PCC2_BASE + PCCTWO_PSCALEADJ);
-
-	cmmu = &cmmu8820x;
-	md_interrupt_func_ptr = m187_ext_int;
-	md_getipl = m187_getipl;
-	md_setipl = m187_setipl;
-	md_raiseipl = m187_raiseipl;
-	md_init_clocks = m1x7_init_clocks;
-	md_delay = m1x7_delay;
-#ifdef MULTIPROCESSOR
-	md_smp_setup = m88100_smp_setup;
-#endif
 }

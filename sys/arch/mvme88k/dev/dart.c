@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.57 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: dart.c,v 1.58 2013/05/17 22:46:27 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,13 +34,13 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
 
 #include <machine/mvme188.h>
-#include <mvme88k/dev/sysconvar.h>
 #include <mvme88k/dev/dartreg.h>
 
 #ifdef	DDB
@@ -227,7 +227,8 @@ dartattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	sysconintr_establish(INTSRC_DUART, &sc->sc_ih, self->dv_xname);
+	platform->intsrc_establish(INTSRC_DUART, &sc->sc_ih, self->dv_xname);
+
 	printf("\n");
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.46 2013/05/17 22:40:01 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.47 2013/05/17 22:46:27 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -46,22 +46,14 @@
 
 extern int cpuspeed;
 
-/* board dependent pointers */
-extern void	(*md_interrupt_func_ptr)(struct trapframe *);
-#define	md_interrupt_func	(*md_interrupt_func_ptr)
-extern int	(*md_nmi_func_ptr)(struct trapframe *);
-#define	md_nmi_func		(*md_nmi_func_ptr)
-extern void	(*md_nmi_wrapup_func_ptr)(struct trapframe *);
-#define	md_nmi_wrapup_func	(*md_nmi_wrapup_func_ptr)
-extern u_int	(*md_getipl)(void);
-extern u_int	(*md_setipl)(u_int);
-extern u_int	(*md_raiseipl)(u_int);
-extern void	(*md_init_clocks)(void);
-extern void	(*md_send_ipi)(int, cpuid_t);
-extern void	(*md_delay)(int);
-extern void	(*md_smp_setup)(struct cpu_info *);
 __dead void doboot(void);
 void	nmihand(void *);
+
+/* M88100 PFSR machine-dependent code snippets */
+extern u_int32_t pfsr_save_single[];
+extern u_int32_t pfsr_save_188_straight[];
+extern u_int32_t pfsr_save_188_double[];
+extern u_int32_t pfsr_save_188_quad[];
 
 #endif /* _KERNEL */
 

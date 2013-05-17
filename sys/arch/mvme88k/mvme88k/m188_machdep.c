@@ -1,6 +1,6 @@
-/*	$OpenBSD: m188_machdep.c,v 1.55 2013/02/17 18:07:36 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.56 2013/05/17 22:46:28 miod Exp $	*/
 /*
- * Copyright (c) 2009 Miodrag Vallat.
+ * Copyright (c) 2009, 2013 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -125,6 +125,10 @@
  *
  */
 
+/*
+ * MVME188 support routines
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -134,15 +138,18 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
+#include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/pmap_table.h>
+#include <machine/prom.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 
 #include <machine/m88100.h>
+#include <machine/m8820x.h>
 #include <machine/mvme188.h>
 
-#include <mvme88k/dev/sysconvar.h>
 #include <dev/ic/z8536reg.h>
 #include <mvme88k/mvme88k/clockvar.h>
 
@@ -150,25 +157,47 @@
 #include <machine/db_machdep.h>
 #endif
 
-void	m188_reset(void);
-u_int	safe_level(u_int, u_int);
+const struct pmap_table m188_pmap_table[] = {
+	{ MVME188_EPROM,	MVME188_EPROM_SIZE, UVM_PROT_RW, CACHE_INH },
+#if 0	/* mapped by the hardcoded BATC entries */
+	{ MVME188_UTILITY,	MVME188_UTILITY_SIZE, UVM_PROT_RW, CACHE_INH },
+#endif
+	{ 0, 0xffffffff, 0, 0 },
+};
 
-void	m188_bootstrap(void);
+const struct board board_mvme188 = {
+	.bootstrap = m188_bootstrap,
+	.memsize = m188_memsize,
+	.cpuspeed = m188_cpuspeed,
+	.reboot = m188_reboot,
+	.is_syscon = m188_is_syscon,
+	.intr = m188_intr,
+	.nmi = NULL,
+	.nmi_wrapup = NULL,
+	.getipl = m188_getipl,
+	.setipl = m188_setipl,
+	.raiseipl = m188_raiseipl,
+	.intsrc_available = m188_intsrc_available,
+	.intsrc_enable = m188_intsrc_enable,
+	.intsrc_disable = m188_intsrc_disable,
+	.intsrc_establish = m188_intsrc_establish,
+	.intsrc_disestablish = m188_intsrc_disestablish,
+	.init_clocks = m188_init_clocks,
+	.delay = dumb_delay,
+	.init_vme = m188_init_vme,
+#ifdef MULTIPROCESSOR
+	.send_ipi = m188_send_ipi,
+	.smp_setup = m88100_smp_setup,
+#endif
+	.ptable = m188_pmap_table,
+	.cmmu = &cmmu8820x
+};
+
+u_int	m188_safe_level(u_int, u_int);
+
 void	m188_clock_ipi_handler(struct trapframe *);
-void	m188_ext_int(struct trapframe *);
-u_int	m188_getipl(void);
-void	m188_init_clocks(void);
 void	m188_ipi_handler(struct trapframe *);
-vaddr_t	m188_memsize(void);
-u_int	m188_raiseipl(u_int);
 void	m188_send_ipi(int, cpuid_t);
-u_int	m188_setipl(u_int);
-
-/*
- * The MVME188 interrupt arbiter has 25 orthogonal interrupt sources.
- * We fold this model in the 8-level spl model this port uses, enforcing
- * priorities manually with the interrupt masks.
- */
 
 /*
  * Copy of the interrupt enable register for each CPU.
@@ -177,17 +206,32 @@ u_int32_t int_mask_reg[] = { 0, 0, 0, 0 };
 
 u_int m188_curspl[] = { IPL_HIGH, IPL_HIGH, IPL_HIGH, IPL_HIGH };
 
-/*
- * Interrupt masks, one per IPL level.
- */
-u_int32_t int_mask_val[NIPLS];
-
 #ifdef MULTIPROCESSOR
 /*
  * Interrupts allowed on secondary processors.
  */
 #define	SLAVE_MASK	0
 #endif
+
+/*
+ * The MVME188 interrupt arbiter has 25 orthogonal interrupt sources.
+ * We fold this model in the 8-level spl model this port uses, enforcing
+ * priorities manually with the interrupt masks.
+ */
+
+intrhand_t syscon_intr_handlers[INTSRC_VME];
+
+void
+m188_bootstrap()
+{
+	int i;
+
+	/* clear and disable all interrupts */
+	*(volatile u_int32_t *)MVME188_IENALL = 0;
+
+	for (i = 0; i < INTSRC_VME; i++)
+		SLIST_INIT(&syscon_intr_handlers[i]);
+}
 
 /*
  * Figure out how much memory is available, by querying the MBus registers.
@@ -218,31 +262,59 @@ m188_memsize()
 	return (pgnum << 22);
 }
 
-void
-m188_bootstrap()
+/*
+ * Return the processor speed in MHz.
+ */
+int
+m188_cpuspeed(const struct mvmeprom_brdid *brdid)
 {
-	extern const struct cmmu_p cmmu8820x;
+	int speed;
+	int i;
+	u_int c;
 
-	cmmu = &cmmu8820x;
-	md_interrupt_func_ptr = m188_ext_int;
-	md_getipl = m188_getipl;
-	md_setipl = m188_setipl;
-	md_raiseipl = m188_raiseipl;
-	md_init_clocks = m188_init_clocks;
-#ifdef MULTIPROCESSOR
-	md_send_ipi = m188_send_ipi;
-#endif
-	md_delay = m188_delay;
-#ifdef MULTIPROCESSOR
-	md_smp_setup = m88100_smp_setup;
-#endif
+	/*
+	 * If BUG version prior to 5.x, there is no CNFG block and speed
+	 * can be found in the environment.
+	 * XXX We don't process ENV data yet - assume 20MHz in this case.
+	 */
+	if ((u_int)brdid->rev < 0x50) {
+		return 20;
+	}
 
-	/* clear and disable all interrupts */
-	*(volatile u_int32_t *)MVME188_IENALL = 0;
+	speed = 0;
+	for (i = 0; i < 4; i++) {
+		c = (u_int)brdid->speed[i];
+		if (c == ' ')
+			c = '0';
+		else if (c > '9' || c < '0') {
+			speed = 0;
+			break;
+		}
+		speed = speed * 10 + (c - '0');
+	}
+	speed = speed / 100;
+
+	if (speed == 20 || speed == 25)
+		return speed;
+
+        /*
+	 * If we end up here, the board information block is damaged and
+	 * we can't trust it.
+	 * Suppose we are running at the most common speed for our board,
+	 * and hope for the best (this really only affects osiop, which
+	 * doesn't exist on 188).
+	 */
+        printf("WARNING: Board Configuration Data invalid, "
+	    "replace NVRAM and restore values\n");
+
+	return 25;
 }
 
+/*
+ * Reboot the system.
+ */
 void
-m188_reset()
+m188_reboot(int howto)
 {
 	volatile int cnt;
 
@@ -262,7 +334,16 @@ m188_reset()
 		;
 	*(volatile u_int32_t *)MVME188_UCSR |= 0x2000;	/* clear SYSFAIL */
 
-	printf("reset failed\n");
+	printf("Reset failed\n");
+}
+
+/*
+ * Return whether we are the VME bus system controller.
+ */
+int
+m188_is_syscon()
+{
+	return ISSET(*(volatile u_int8_t *)MVME188_GLOBAL1, M188_SYSCON);
 }
 
 /*
@@ -270,7 +351,7 @@ m188_reset()
  * while keeping ``mask'' masked.
  */
 u_int
-safe_level(u_int mask, u_int curlevel)
+m188_safe_level(u_int mask, u_int curlevel)
 {
 	int i;
 
@@ -284,6 +365,250 @@ safe_level(u_int mask, u_int curlevel)
 			return (i);
 
 	return (NIPLS - 1);
+}
+
+/*
+ * Provide the interrupt source for a give interrupt status bit.
+ */
+const u_int m188_vec[32] = {
+	0,		/* SWI0 */
+	0,		/* SWI1 */
+	0,		/* SWI2 */
+	0,		/* SWI3 */
+	INTSRC_VME,	/* VME1 */
+	0,
+	INTSRC_VME,	/* VME2 */
+	0,		/* SIGLPI */
+	0,		/* LMI */
+	0,
+	INTSRC_VME,	/* VME3 */
+	0,
+	INTSRC_VME,	/* VME4 */
+	0,
+	INTSRC_VME,	/* VME5 */
+	0,
+	0,		/* SIGHPI */
+	INTSRC_DUART,	/* DI */
+	0,
+	INTSRC_VME,	/* VME6 */
+	INTSRC_SYSFAIL,	/* SF */
+	INTSRC_CIO,	/* CIOI */
+	0,
+	INTSRC_VME,	/* VME7 */
+	0,		/* SWI4 */
+	0,		/* SWI5 */
+	0,		/* SWI6 */
+	0,		/* SWI7 */
+	INTSRC_DTIMER,	/* DTI */
+	0,		/* ARBTO */
+	INTSRC_ACFAIL,	/* ACF */
+	INTSRC_ABORT	/* ABORT */
+};
+
+/*
+ * Device interrupt handler for MVME188
+ */
+
+#define VME_VECTOR_MASK		0x1ff 	/* mask into VIACK register */
+#define VME_BERR_MASK		0x100 	/* timeout during VME IACK cycle */
+
+void
+m188_intr(struct trapframe *eframe)
+{
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+	u_int cpu = ci->ci_cpuid;
+#else
+	u_int cpu = cpu_number();
+#endif
+	u_int32_t cur_mask, ign_mask;
+	u_int level, old_spl;
+	struct intrhand *intr;
+	intrhand_t *list;
+	int ret, intbit;
+	vaddr_t ivec;
+	u_int intsrc, vec;
+	int unmasked = 0;
+	int warn;
+#ifdef DIAGNOSTIC
+	static int problems = 0;
+#endif
+
+	cur_mask = ISR_GET_CURRENT_MASK(cpu);
+	ign_mask = 0;
+	old_spl = eframe->tf_mask;
+
+	if (cur_mask == 0) {
+		/*
+		 * Spurious interrupts - may be caused by debug output clearing
+		 * DUART interrupts.
+		 */
+#ifdef MULTIPROCESSOR
+		if (cpu != master_cpu) {
+			if (++problems >= 10) {
+				printf("cpu%d: interrupt pin won't clear, "
+				    "disabling processor\n", cpu);
+				cpu_emergency_disable();
+				/* NOTREACHED */
+			}
+		}
+#endif
+		flush_pipeline();
+		goto out;
+	}
+
+	uvmexp.intrs++;
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Handle unmaskable IPIs immediately, so that we can reenable
+	 * interrupts before further processing. We rely on the interrupt
+	 * mask to make sure that if we get an IPI, it's really for us
+	 * and no other processor.
+	 */
+	if (cur_mask & IPI_MASK) {
+		m188_ipi_handler(eframe);
+		cur_mask &= ~IPI_MASK;
+		if (cur_mask == 0)
+			goto out;
+	}
+#endif
+
+#ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_lock(&kernel_lock);
+#endif
+
+	/*
+	 * We want to service all interrupts marked in the IST register
+	 * They are all valid because the mask would have prevented them
+	 * from being generated otherwise.  We will service them in order of
+	 * priority.
+	 */
+	do {
+		level = m188_safe_level(cur_mask, old_spl);
+		m188_setipl(level);
+
+		if (unmasked == 0) {
+			set_psr(get_psr() & ~PSR_IND);
+			unmasked = 1;
+		}
+
+#ifdef MULTIPROCESSOR
+		/*
+		 * Handle pending maskable IPIs first.
+		 */
+		if (cur_mask & CLOCK_IPI_MASK) {
+			m188_clock_ipi_handler(eframe);
+			cur_mask &= ~CLOCK_IPI_MASK;
+			if (cur_mask == 0)
+				break;
+		}
+#endif
+
+		/* find the first bit set in the current mask */
+		warn = 0;
+		intbit = ff1(cur_mask);
+		intsrc = m188_vec[intbit];
+
+		if (intsrc == 0)
+			panic("%s: unexpected interrupt source (bit %d), "
+			    "level %d, mask 0x%b",
+			    __func__, intbit, level, cur_mask, IST_STRING);
+
+		if (intsrc == INTSRC_VME) {
+			ivec = MVME188_VIRQLV + (level << 2);
+			vec = *(volatile u_int32_t *)ivec & VME_VECTOR_MASK;
+			if (vec & VME_BERR_MASK) {
+				/*
+				 * If only one VME interrupt is registered
+				 * with this IPL, we can reasonably safely
+				 * assume that this is our vector.
+				 */
+				vec = vmevec_hints[level];
+				if (vec == (u_int)-1) {
+					printf("%s: timeout getting VME "
+					    "interrupt vector, "
+					    "level %d, mask 0x%b\n",
+					    __func__, level,
+					   cur_mask, IST_STRING); 
+					ign_mask |=  1 << intbit;
+					continue;
+				}
+			}
+			list = &intr_handlers[vec];
+		} else {
+			list = &syscon_intr_handlers[intsrc];
+		}
+
+		if (SLIST_EMPTY(list)) {
+			warn = 1;
+		} else {
+			/*
+			 * Walk through all interrupt handlers in the chain
+			 * for the given vector, calling each handler in turn,
+			 * till some handler returns a value != 0.
+			 */
+			ret = 0;
+			SLIST_FOREACH(intr, list, ih_link) {
+				if (intr->ih_wantframe != 0)
+					ret = (*intr->ih_fn)((void *)eframe);
+				else
+					ret = (*intr->ih_fn)(intr->ih_arg);
+				if (ret != 0) {
+					intr->ih_count.ec_count++;
+					break;
+				}
+			}
+			if (ret == 0)
+				warn = 2;
+		}
+
+		if (warn != 0) {
+			ign_mask |= 1 << intbit;
+
+			if (intsrc == INTSRC_VME)
+				printf("%s: %s VME interrupt, "
+				    "level %d, vec 0x%x, mask 0x%b\n",
+				    __func__,
+				    warn == 1 ? "spurious" : "unclaimed",
+				    level, vec, cur_mask, IST_STRING);
+			else
+				printf("%s: %s interrupt, "
+				    "level %d, bit %d, mask 0x%b\n",
+				    __func__,
+				    warn == 1 ? "spurious" : "unclaimed",
+				    level, intbit, cur_mask, IST_STRING);
+		}
+	} while (((cur_mask = ISR_GET_CURRENT_MASK(cpu)) & ~ign_mask &
+	    ~IPI_MASK) != 0);
+
+#ifdef DIAGNOSTIC
+	if (ign_mask != 0) {
+		if (++problems >= 10)
+			panic("%s: broken interrupt behaviour", __func__);
+	} else
+		problems = 0;
+#endif
+
+#ifdef MULTIPROCESSOR
+	if (old_spl < IPL_SCHED)
+		__mp_unlock(&kernel_lock);
+#endif
+
+out:
+	/*
+	 * process any remaining data access exceptions before
+	 * returning to assembler
+	 */
+	if (eframe->tf_dmt0 & DMT_VALID)
+		m88100_trap(T_DATAFLT, eframe);
+
+	/*
+	 * Disable interrupts before returning to assembler, the spl will
+	 * be restored later.
+	 */
+	set_psr(get_psr() | PSR_IND);
 }
 
 u_int
@@ -445,248 +770,126 @@ m188_clock_ipi_handler(struct trapframe *eframe)
 
 #endif
 
-/*
- * Provide the interrupt source for a give interrupt status bit.
- */
-const u_int obio_vec[32] = {
-	0,		/* SWI0 */
-	0,		/* SWI1 */
-	0,		/* SWI2 */
-	0,		/* SWI3 */
-	INTSRC_VME,	/* VME1 */
+/* Interrupt masks per logical interrupt source */
+const u_int32_t m188_intsrc[] = {
 	0,
-	INTSRC_VME,	/* VME2 */
-	0,		/* SIGLPI */
-	0,		/* LMI */
+	IRQ_ABORT,
+	IRQ_ACF,
+	IRQ_SF,
 	0,
-	INTSRC_VME,	/* VME3 */
-	0,
-	INTSRC_VME,	/* VME4 */
-	0,
-	INTSRC_VME,	/* VME5 */
-	0,
-	0,		/* SIGHPI */
-	INTSRC_DUART,	/* DI */
-	0,
-	INTSRC_VME,	/* VME6 */
-	INTSRC_SYSFAIL,	/* SF */
-	INTSRC_CIO,	/* CIOI */
-	0,
-	INTSRC_VME,	/* VME7 */
-	0,		/* SWI4 */
-	0,		/* SWI5 */
-	0,		/* SWI6 */
-	0,		/* SWI7 */
-	INTSRC_DTIMER,	/* DTI */
-	0,		/* ARBTO */
-	INTSRC_ACFAIL,	/* ACF */
-	INTSRC_ABORT	/* ABORT */
+	IRQ_CIOI,
+	IRQ_DTI,
+	IRQ_DI,
+
+	IRQ_VME1,
+	IRQ_VME2,
+	IRQ_VME3,
+	IRQ_VME4,
+	IRQ_VME5,
+	IRQ_VME6,
+	IRQ_VME7
 };
 
-/*
- * Device interrupt handler for MVME188
- */
+int
+m188_intsrc_available(u_int intsrc, int ipl)
+{
+	if (intsrc == INTSRC_VME)
+		return 0;
 
-#define VME_VECTOR_MASK		0x1ff 	/* mask into VIACK register */
-#define VME_BERR_MASK		0x100 	/* timeout during VME IACK cycle */
+	if (m188_intsrc[intsrc] == 0)
+		return ENXIO;
+
+	return 0;
+}
 
 void
-m188_ext_int(struct trapframe *eframe)
+m188_intsrc_enable(u_int intsrc, int ipl)
 {
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci = curcpu();
-	u_int cpu = ci->ci_cpuid;
-#else
-	u_int cpu = cpu_number();
-#endif
-	u_int32_t cur_mask, ign_mask;
-	u_int level, old_spl;
-	struct intrhand *intr;
+	u_int32_t psr;
+	u_int32_t intmask;
+	int i;
+
+	if (intsrc == INTSRC_VME)
+		intmask = m188_intsrc[INTSRC_VME + (ipl - 1)];
+	else
+		intmask = m188_intsrc[intsrc];
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	for (i = IPL_NONE; i < ipl; i++)
+		int_mask_val[i] |= intmask;
+
+	setipl(getipl());
+	set_psr(psr);
+}
+
+void
+m188_intsrc_disable(u_int intsrc, int ipl)
+{
+	u_int32_t psr;
+	u_int32_t intmask;
+	int i;
+
+	if (intsrc == INTSRC_VME)
+		intmask = m188_intsrc[INTSRC_VME + (ipl - 1)];
+	else
+		intmask = m188_intsrc[intsrc];
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	for (i = 0; i < NIPLS; i++)
+		int_mask_val[i] &= ~intmask;
+
+	setipl(getipl());
+	set_psr(psr);
+}
+
+int
+m188_intsrc_establish(u_int intsrc, struct intrhand *ih, const char *name)
+{
 	intrhand_t *list;
-	int ret, intbit;
-	vaddr_t ivec;
-	u_int intsrc, vec;
-	int unmasked = 0;
-	int warn;
-#ifdef DIAGNOSTIC
-	static int problems = 0;
-#endif
-
-	cur_mask = ISR_GET_CURRENT_MASK(cpu);
-	ign_mask = 0;
-	old_spl = eframe->tf_mask;
-
-	if (cur_mask == 0) {
-		/*
-		 * Spurious interrupts - may be caused by debug output clearing
-		 * DUART interrupts.
-		 */
-#ifdef MULTIPROCESSOR
-		if (cpu != master_cpu) {
-			if (++problems >= 10) {
-				printf("cpu%d: interrupt pin won't clear, "
-				    "disabling processor\n", cpu);
-				cpu_emergency_disable();
-				/* NOTREACHED */
-			}
-		}
-#endif
-		flush_pipeline();
-		goto out;
-	}
-
-	uvmexp.intrs++;
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * Handle unmaskable IPIs immediately, so that we can reenable
-	 * interrupts before further processing. We rely on the interrupt
-	 * mask to make sure that if we get an IPI, it's really for us
-	 * and no other processor.
-	 */
-	if (cur_mask & IPI_MASK) {
-		m188_ipi_handler(eframe);
-		cur_mask &= ~IPI_MASK;
-		if (cur_mask == 0)
-			goto out;
-	}
-#endif
-
-#ifdef MULTIPROCESSOR
-	if (old_spl < IPL_SCHED)
-		__mp_lock(&kernel_lock);
-#endif
-
-	/*
-	 * We want to service all interrupts marked in the IST register
-	 * They are all valid because the mask would have prevented them
-	 * from being generated otherwise.  We will service them in order of
-	 * priority.
-	 */
-	do {
-		level = safe_level(cur_mask, old_spl);
-		m188_setipl(level);
-
-		if (unmasked == 0) {
-			set_psr(get_psr() & ~PSR_IND);
-			unmasked = 1;
-		}
-
-#ifdef MULTIPROCESSOR
-		/*
-		 * Handle pending maskable IPIs first.
-		 */
-		if (cur_mask & CLOCK_IPI_MASK) {
-			m188_clock_ipi_handler(eframe);
-			cur_mask &= ~CLOCK_IPI_MASK;
-			if (cur_mask == 0)
-				break;
-		}
-#endif
-
-		/* find the first bit set in the current mask */
-		warn = 0;
-		intbit = ff1(cur_mask);
-		intsrc = obio_vec[intbit];
-
-		if (intsrc == 0)
-			panic("%s: unexpected interrupt source (bit %d), "
-			    "level %d, mask 0x%b",
-			    __func__, intbit, level, cur_mask, IST_STRING);
-
-		if (intsrc == INTSRC_VME) {
-			ivec = MVME188_VIRQLV + (level << 2);
-			vec = *(volatile u_int32_t *)ivec & VME_VECTOR_MASK;
-			if (vec & VME_BERR_MASK) {
-				/*
-				 * If only one VME interrupt is registered
-				 * with this IPL, we can reasonably safely
-				 * assume that this is our vector.
-				 */
-				vec = vmevec_hints[level];
-				if (vec == (u_int)-1) {
-					printf("%s: timeout getting VME "
-					    "interrupt vector, "
-					    "level %d, mask 0x%b\n",
-					    __func__, level,
-					   cur_mask, IST_STRING); 
-					ign_mask |=  1 << intbit;
-					continue;
-				}
-			}
-			list = &intr_handlers[vec];
-		} else {
-			list = &sysconintr_handlers[intsrc];
-		}
-
-		if (SLIST_EMPTY(list)) {
-			warn = 1;
-		} else {
-			/*
-			 * Walk through all interrupt handlers in the chain
-			 * for the given vector, calling each handler in turn,
-			 * till some handler returns a value != 0.
-			 */
-			ret = 0;
-			SLIST_FOREACH(intr, list, ih_link) {
-				if (intr->ih_wantframe != 0)
-					ret = (*intr->ih_fn)((void *)eframe);
-				else
-					ret = (*intr->ih_fn)(intr->ih_arg);
-				if (ret != 0) {
-					intr->ih_count.ec_count++;
-					break;
-				}
-			}
-			if (ret == 0)
-				warn = 2;
-		}
-
-		if (warn != 0) {
-			ign_mask |= 1 << intbit;
-
-			if (intsrc == INTSRC_VME)
-				printf("%s: %s VME interrupt, "
-				    "level %d, vec 0x%x, mask 0x%b\n",
-				    __func__,
-				    warn == 1 ? "spurious" : "unclaimed",
-				    level, vec, cur_mask, IST_STRING);
-			else
-				printf("%s: %s interrupt, "
-				    "level %d, bit %d, mask 0x%b\n",
-				    __func__,
-				    warn == 1 ? "spurious" : "unclaimed",
-				    level, intbit, cur_mask, IST_STRING);
-		}
-	} while (((cur_mask = ISR_GET_CURRENT_MASK(cpu)) & ~ign_mask &
-	    ~IPI_MASK) != 0);
 
 #ifdef DIAGNOSTIC
-	if (ign_mask != 0) {
-		if (++problems >= 10)
-			panic("%s: broken interrupt behaviour", __func__);
-	} else
-		problems = 0;
+	if (intsrc == INTSRC_VME)
+		return EINVAL;
 #endif
 
-#ifdef MULTIPROCESSOR
-	if (old_spl < IPL_SCHED)
-		__mp_unlock(&kernel_lock);
+	list = &syscon_intr_handlers[intsrc];
+	if (!SLIST_EMPTY(list)) {
+#ifdef DIAGNOSTIC
+		printf("%s: interrupt source %u already registered\n",
+		    __func__, intsrc);
+#endif
+		return EINVAL;
+	}
+
+	if (m188_intsrc_available(intsrc, ih->ih_ipl) != 0)
+		return EINVAL;
+
+	evcount_attach(&ih->ih_count, name, &ih->ih_ipl);
+	SLIST_INSERT_HEAD(list, ih, ih_link);
+	m188_intsrc_enable(intsrc, ih->ih_ipl);
+
+	return 0;
+}
+
+void
+m188_intsrc_disestablish(u_int intsrc, struct intrhand *ih)
+{
+	intrhand_t *list;
+
+#ifdef DIAGNOSTIC
+	if (intsrc == INTSRC_VME)
+		return;
 #endif
 
-out:
-	/*
-	 * process any remaining data access exceptions before
-	 * returning to assembler
-	 */
-	if (eframe->tf_dmt0 & DMT_VALID)
-		m88100_trap(T_DATAFLT, eframe);
+	list = &syscon_intr_handlers[intsrc];
+	evcount_detach(&ih->ih_count);
+	SLIST_REMOVE(list, ih, intrhand, ih_link);
 
-	/*
-	 * Disable interrupts before returning to assembler, the spl will
-	 * be restored later.
-	 */
-	set_psr(get_psr() | PSR_IND);
+	m188_intsrc_disable(intsrc, ih->ih_ipl);
 }
 
 /*
@@ -703,9 +906,6 @@ int	m188_statintr(void *);
 u_int	m188_cio_get_timecount(struct timecounter *);
 
 volatile int	m188_calibrate_phase = 0;
-
-/* multiplication factor for delay() */
-u_int	m188_delay_const = 25;		/* no MVME188 is faster than 25MHz */
 
 uint32_t	cio_step;
 uint32_t	cio_refcnt;
@@ -821,7 +1021,7 @@ m188_init_clocks(void)
 	statclock_ih.ih_arg = 0;
 	statclock_ih.ih_wantframe = 1;
 	statclock_ih.ih_ipl = IPL_STATCLOCK;
-	sysconintr_establish(INTSRC_DTIMER, &statclock_ih, "stat");
+	platform->intsrc_establish(INTSRC_DTIMER, &statclock_ih, "stat");
 
 	/*
 	 * Calibrate delay const.
@@ -830,9 +1030,9 @@ m188_init_clocks(void)
 	clock_ih.ih_arg = 0;
 	clock_ih.ih_wantframe = 1;
 	clock_ih.ih_ipl = IPL_CLOCK;
-	sysconintr_establish(INTSRC_CIO, &clock_ih, "clock");
+	platform->intsrc_establish(INTSRC_CIO, &clock_ih, "clock");
 
-	m188_delay_const = 1;
+	dumb_delay_const = 1;
 	set_psr(psr);
 	while (m188_calibrate_phase == 0)
 		;
@@ -844,13 +1044,13 @@ m188_init_clocks(void)
 	}
 
 	divisor = 1000000 / 10000;
-	m188_delay_const = (iter * hz + divisor - 1) / divisor;
+	dumb_delay_const = (iter * hz + divisor - 1) / divisor;
 
 	set_psr(psr | PSR_IND);
 
-	sysconintr_disestablish(INTSRC_CIO, &clock_ih);
+	platform->intsrc_disestablish(INTSRC_CIO, &clock_ih);
 	clock_ih.ih_fn = m188_clockintr;
-	sysconintr_establish(INTSRC_CIO, &clock_ih, "clock");
+	platform->intsrc_establish(INTSRC_CIO, &clock_ih, "clock");
 
 	set_psr(psr);
 
@@ -936,7 +1136,7 @@ void
 write_cio(int reg, u_int val)
 {
 	volatile int i;
-	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
+	volatile u_int32_t *cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
 
 	i = *cio_ctrl;				/* goto state 1 */
 	*cio_ctrl = 0;				/* take CIO out of RESET */
@@ -952,7 +1152,7 @@ read_cio(int reg)
 {
 	int c;
 	volatile int i;
-	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
+	volatile u_int32_t *cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
 
 	/* select register */
 	*cio_ctrl = (reg & 0xff);
@@ -1040,4 +1240,25 @@ m188_cio_get_timecount(struct timecounter *tc)
 	cio_lastcnt = curcnt;
 	mtx_leave(&cio_mutex);
 	return curcnt;
+}
+
+/*
+ * Setup VME bus access and return the lower interrupt number usable by VME
+ * boards.
+ */
+u_int
+m188_init_vme(const char *devname)
+{
+	u_int32_t ucsr;
+
+	/*
+	 * Force a reasonable timeout for VME data transfers.
+	 * We can not disable this, this would cause autoconf to hang
+	 * on the first missing device we'll probe.
+	 */
+	ucsr = *(volatile u_int32_t*)MVME188_UCSR;
+	ucsr = (ucsr & ~VTOSELBITS) | VTO128US;
+	*(volatile u_int32_t *)MVME188_UCSR = ucsr;
+
+	return 0;	/* all vectors available */
 }

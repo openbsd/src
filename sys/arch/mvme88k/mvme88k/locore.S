@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.71 2013/05/17 22:38:25 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.72 2013/05/17 22:46:28 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -154,17 +154,17 @@ ASLOCAL(main_start)
 	bsr.n	_ASM_LABEL(setup_psr)
 	 st	%r8,  %r13, %lo16(_C_LABEL(cputyp))
 
+#ifdef MULTIPROCESSOR
 	/*
 	 * Have curcpu() point at the dummy cpuinfo structure,
 	 * and initialize cr17.
 	 * This is necessary for early spl*() usage, as well as
 	 * mutex diagnostic code.
 	 */
-	or.u	%r11, %r0,  %hi16(_ASM_LABEL(dummy_cpu))
-	or	%r11, %r11, %lo16(_ASM_LABEL(dummy_cpu))
+	or.u	%r11, %r0,  %hi16(_C_LABEL(dummy_cpu))
+	or	%r11, %r11, %lo16(_C_LABEL(dummy_cpu))
 	stcr	%r11, CPU
 
-#ifdef MULTIPROCESSOR
 	/*
 	 * MVME BUG idles all secondary MPUs upon startup, so at this point
 	 * we do not have to compete with them.
@@ -238,8 +238,8 @@ GLOBAL(secondary_start)
 	 * This is necessary for early spl*() usage, as well as
 	 * mutex diagnostic code.
 	 */
-	or.u	%r11, %r0,  %hi16(_ASM_LABEL(dummy_cpu))
-	or	%r11, %r11, %lo16(_ASM_LABEL(dummy_cpu))
+	or.u	%r11, %r0,  %hi16(_C_LABEL(dummy_cpu))
+	or	%r11, %r11, %lo16(_C_LABEL(dummy_cpu))
 	st	%r0,  %r11, CI_FLAGS		/* reset CIF_PRIMARY */
 	stcr	%r11, CPU
 
@@ -258,68 +258,18 @@ GLOBAL(secondary_start)
 	bsr.n	_C_LABEL(secondary_main)
 	 addu	%r31, %r2, USPACE		/* switch to startup stack */
 
-	/*
-	 * Dummy mp_atomic_begin() and mp_atomic_end() routine, so that
-	 * we can interact with ddb if things go wrong very early during
-	 * bootstrap. Of course this should never happen (-:
-	 */
-ASLOCAL(dummy_mplock)
-	jmp	%r1
-
 #endif	/* MULTIPROCESSOR */
 
 /*
- * Reset code.
- * Should be rewritten in C eventually.
+ * Reset code trampoline.
  */
 GLOBAL(doboot)
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	%r4, %r0, %hi16(_C_LABEL(brdtyp))
-	ld	%r3, %r4, %lo16(_C_LABEL(brdtyp))
-	cmp	%r4, %r3, BRD_188
-	bb1	ne, %r4, 1f
-	bsr	_C_LABEL(m188_reset)
-	br	8f
-1:
-#endif	/* MVME188 */
 	/*
-	 * Try hitting the SRST bit in VMEchip2 to reset the system.
-	 */
-	or.u	%r3, %r0, 0xfff4
-	ld	%r4, %r3, 0x0060	/* read offset (LCSR + 0x60) */
-	bb0.n	30, %r4, 1f		/* if not SYSCON, don't SYSRST */
-	 set	%r4, %r4, 1<23>		/* set SYSRST bit - bit 23 */
-	st	%r4, %r3, 0x0060	/* and store it back  */
-1:
-	/*
-	 * MVME197LE Errata #7:
-	 * ``When asserting the RST bit in the VMEchip2 GCSR, the pulse
-	 *   generated is too short for the BusSwitch1 to recognize
-	 *   properly.''
-	 */
-#ifdef MVME197
-	or.u	%r2, %r0, %hi16(0x20000)
-#endif
-	ld	%r4, %r3, 0x0104		/* try local reset, then... */
-	set	%r4, %r4, 1<7>
-	st	%r4, %r3, 0x0104
-#ifdef MVME197
-	bcnd.n	ne0,%r2, 1b		/* ...for a while */
-	 subu	%r2, %r2, 1
-#endif
-
-	/*
-	 * We will be here if the reset above failed. In this case,
-	 * we will try to return to bug.
-	 *
-	 * Switch to interrupt stack and call _doboot to take care
+	 * Switch to interrupt stack and call _doboot to take care of
 	 * going to BUG. Need to do this since _doboot turns off the
 	 * the MMU and we need to be on a 1-to-1 mapped stack so that
 	 * further calls don't get data access exceptions.
 	 */
-
-8:
 	or.u	%r31, %r0,  %hi16(_ASM_LABEL(initstack_end))
 	bsr.n	_C_LABEL(_doboot)
 	 or	%r31, %r31, %lo16(_ASM_LABEL(initstack_end))
@@ -373,22 +323,6 @@ ASLOCAL(u0)
 
 GLOBAL(proc0paddr)
 	.word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
-
-/* Dummy cpuinfo structure, for cpu_number() to work early. */
-ASLOCAL(dummy_cpu)
-	.word	3 /* CIF_ALIVE | CIF_PRIMARY */	/* ci_flags */
-	.word	0				/* ci_curproc */
-	.word	0				/* ci_curpcb */
-	.word	0				/* ci_curpmap */
-	.word	0				/* ci_cpuid */
-#ifdef MULTIPROCESSOR
-	.word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_begin */
-	.word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_end */
-#else
-	.word	0
-	.word	0
-#endif	/* MULTIPROCESSOR */
-	.space	CPU_INFO_SIZEOF - 7 * 4
 
 #if defined(DDB) || NKSYMS > 0
 GLOBAL(esym)

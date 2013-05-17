@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.34 2011/03/23 16:54:36 pirofti Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.35 2013/05/17 22:46:27 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -214,13 +214,5 @@
 #define VME_CMMU_D1	0xfff5f000
 #define VME_CMMU_D2	0xfff3f000
 #define VME_CMMU_D3	0xfff7f000
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-extern u_int32_t pfsr_save_188_straight[];
-extern u_int32_t pfsr_save_188_double[];
-extern u_int32_t pfsr_save_188_quad[];
-
-extern u_int32_t int_mask_val[NIPLS];
-#endif
 
 #endif	/* _MACHINE_MVME188_H_ */

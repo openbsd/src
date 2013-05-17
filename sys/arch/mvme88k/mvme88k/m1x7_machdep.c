@@ -1,6 +1,6 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.10 2013/01/05 11:20:56 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.11 2013/05/17 22:46:28 miod Exp $ */
 /*
- * Copyright (c) 2009 Miodrag Vallat.
+ * Copyright (c) 2009, 2013 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -82,7 +82,7 @@
  */
 
 /*
- * Interval and statistic clocks driver.
+ * PCC 2 interval and statistic clocks driver, and reboot routine.
  */
 
 #include <sys/param.h>
@@ -92,6 +92,7 @@
 #include <sys/mutex.h>
 #include <sys/timetc.h>
 
+#include <machine/board.h>
 #include <machine/bus.h>
 
 #include <mvme88k/dev/pcctwovar.h>
@@ -307,4 +308,181 @@ m1x7_delay(int us)
 	    (u_int32_t)us)
 		;
 	*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) &= ~VME2_TCTL1_CEN;
+}
+
+/*
+ * Reboot the system.
+ */
+void
+m1x7_reboot(int howto)
+{
+#ifdef MVME197
+	int i;
+#endif
+
+	/*
+	 * Try hitting the SRST bit in VMEChip2 to reset the system.
+	 */
+	if (*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) & VME2_TCTL_SCON)
+		*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) |=
+		    VME2_TCTL_SRST;
+
+#ifdef MVME197
+	/*
+	 * MVME197LE Errata #7:
+	 * ``When asserting the RST bit in the VMEchip2 GCSR, the pulse
+	 *   generated is too short for the BusSwitch1 to recognize
+	 *   properly.''
+	 */
+	for (i = 0x20000000; i != 0; i--)
+#endif
+		*(volatile u_int32_t *)(VME2_BASE + VME2_GCSR_LM_SIG_BSCR) |=
+		    VME2_GCSR_RST;
+}
+
+/*
+ * Return whether we are the VME bus system controller.
+ */
+int
+m1x7_is_syscon()
+{
+	return ISSET(*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL),
+	    VME2_TCTL_SCON);
+}
+
+int	vme2abort(void *);
+struct intrhand vme2_abih;
+
+/*
+ * Setup VME bus access and return the lower interrupt number usable by VME
+ * boards.
+ */
+u_int
+m1x7_init_vme(const char *devname)
+{
+	u_int32_t vbr, ctl, irqen, master, master4mod;
+	u_int vecbase;
+
+	vbr = *(volatile u_int32_t *)(VME2_BASE + VME2_VBR);
+	vecbase = VME2_GET_VBR1(vbr) + 0x10;
+	/* Sanity check that the BUG is set up right */
+	if (vecbase >= 0x100) {
+		panic("Correct the VME Vector Base Register values "
+		    "in the BUG settings.\n"
+		    "Suggested values are 0x60 for VME Vec0 and "
+		    "0x70 for VME Vec1.");
+	}
+
+	/* turn off SYSFAIL LED */
+	*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) &= ~VME2_TCTL_SYSFAIL;
+
+	/*
+	 * Display the VMEChip2 decoder status.
+	 */
+	printf("%s: using BUG parameters\n", devname);
+	ctl = *(volatile u_int32_t *)(VME2_BASE + VME2_GCSRCTL);
+	if (ctl & VME2_GCSRCTL_MDEN1) {
+		master = *(volatile u_int32_t *)(VME2_BASE + VME2_MASTER1);
+		printf("%s: 1phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
+		    devname, master << 16, master & 0xffff0000,
+		    master << 16, master & 0xffff0000);
+	}
+	if (ctl & VME2_GCSRCTL_MDEN2) {
+		master = *(volatile u_int32_t *)(VME2_BASE + VME2_MASTER2);
+		printf("%s: 2phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
+		    devname, master << 16, master & 0xffff0000,
+		    master << 16, master & 0xffff0000);
+	}
+	if (ctl & VME2_GCSRCTL_MDEN3) {
+		master = *(volatile u_int32_t *)(VME2_BASE + VME2_MASTER3);
+		printf("%s: 3phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
+		    devname, master << 16, master & 0xffff0000,
+		    master << 16, master & 0xffff0000);
+	}
+	if (ctl & VME2_GCSRCTL_MDEN4) {
+		master = *(volatile u_int32_t *)(VME2_BASE + VME2_MASTER4);
+		master4mod =
+		    *(volatile u_int32_t *)(VME2_BASE + VME2_MASTER4MOD);
+		printf("%s: 4phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
+		    devname, master << 16, master & 0xffff0000,
+		    (master << 16) + (master4mod << 16),
+		    (master & 0xffff0000) + (master4mod & 0xffff0000));
+	}
+
+	/*
+	 * Map the VME irq levels to the cpu levels 1:1.
+	 * This is rather inflexible, but much easier.
+	 */
+	*(volatile u_int32_t *)(VME2_BASE + VME2_IRQL4) =
+	    (7 << VME2_IRQL4_VME7SHIFT) | (6 << VME2_IRQL4_VME6SHIFT) |
+	    (5 << VME2_IRQL4_VME5SHIFT) | (4 << VME2_IRQL4_VME4SHIFT) |
+	    (3 << VME2_IRQL4_VME3SHIFT) | (2 << VME2_IRQL4_VME2SHIFT) |
+	    (1 << VME2_IRQL4_VME1SHIFT);
+	printf("%s: vme to cpu irq level 1:1\n", devname);
+
+	/* Enable the reset switch */
+	*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) |= VME2_TCTL_RSWE;
+	/* Set Watchdog timeout to about 1 minute */
+	*(volatile u_int32_t *)(VME2_BASE + VME2_TCR) |= VME2_TCR_64S;
+	/* Enable VMEChip2 Interrupts */
+	*(volatile u_int32_t *)(VME2_BASE + VME2_VBR) |= VME2_IOCTL1_MIEN;
+
+	/*
+	 * Map the Software VME irq levels to the cpu level 7.
+	 */
+	*(volatile u_int32_t *)(VME2_BASE + VME2_IRQL3) =
+	    (7 << VME2_IRQL3_SW7SHIFT) | (7 << VME2_IRQL3_SW6SHIFT) |
+	    (7 << VME2_IRQL3_SW5SHIFT) | (7 << VME2_IRQL3_SW4SHIFT) |
+	    (7 << VME2_IRQL3_SW3SHIFT) | (7 << VME2_IRQL3_SW2SHIFT) |
+	    (7 << VME2_IRQL3_SW1SHIFT);
+
+	/*
+	 * Register abort interrupt handler.
+	 */
+	vme2_abih.ih_fn = vme2abort;
+	vme2_abih.ih_arg = 0;
+	vme2_abih.ih_wantframe = 1;
+	vme2_abih.ih_ipl = IPL_NMI;
+	intr_establish(0x6e, &vme2_abih, devname);
+
+	irqen = *(volatile u_int32_t *)(VME2_BASE + VME2_IRQEN);
+	irqen |= VME2_IRQ_AB;
+
+	/*
+	 * Enable ACFAIL interrupt, but disable Timer 1 interrupt - we
+	 * prefer it without for delay().
+	 */
+	irqen = (irqen | VME2_IRQ_ACF) & ~VME2_IRQ_TIC1;
+	*(volatile u_int32_t *)(VME2_BASE + VME2_IRQEN) = irqen;
+
+	return vecbase;
+}
+
+int
+m1x7_intsrc_available(u_int intsrc, int ipl)
+{
+	if (intsrc != INTSRC_VME)
+		return ENXIO;		/* should never happen anyway */
+
+	return 0;
+}
+
+void
+m1x7_intsrc_enable(u_int intsrc, int ipl)
+{
+	*(volatile u_int32_t *)(VME2_BASE + VME2_IRQEN) |=
+	    VME2_IRQ_VME(ipl);
+}
+
+int
+vme2abort(void *frame)
+{
+	if ((*(volatile u_int32_t *)(VME2_BASE + VME2_IRQSTAT) &
+	    VME2_IRQ_AB) == 0)
+		return 0;
+
+	*(volatile u_int32_t *)(VME2_BASE + VME2_IRQCLR) = VME2_IRQ_AB;
+	nmihand(frame);
+
+	return 1;
 }

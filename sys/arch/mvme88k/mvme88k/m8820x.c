@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.51 2011/10/09 17:01:34 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.52 2013/05/17 22:46:28 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -105,7 +105,7 @@ m8820x_setup_board_config()
 		ncpusfound = 1;
 		max_cmmus = 2;
 		cmmu_shift = 1;
-		m8820x_pfsr = pfsr_save_187;
+		m8820x_pfsr = pfsr_save_single;
 		break;
 #endif /* MVME187 */
 #ifdef MVME188

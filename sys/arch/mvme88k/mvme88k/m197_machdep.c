@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.47 2013/02/17 18:07:36 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.48 2013/05/17 22:46:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -68,11 +68,14 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>
+#include <machine/board.h>
 #include <machine/bugio.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
+#include <machine/pmap_table.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+
 #include <machine/m88410.h>
 #include <machine/mvme197.h>
 
@@ -83,20 +86,139 @@
 #include <machine/db_machdep.h>
 #endif
 
-void	m197_bootstrap(void);
-void	m197_delay(int);
-void	m197_ext_int(struct trapframe *);
-u_int	m197_getipl(void);
+extern const struct cmmu_p cmmu88110;
+extern const struct cmmu_p cmmu88410;
+
+const struct pmap_table m197_pmap_table[] = {
+	/* We need flash 1:1 mapped to access the 88410 chip underneath */
+	{ FLASH_START,		FLASH_SIZE,	UVM_PROT_RW, CACHE_INH },
+	{ OBIO197_START,	OBIO197_SIZE,	UVM_PROT_RW, CACHE_INH },
+	/* No need to mention BUG here - it is contained inside OBIO */
+	{ 0, 0xffffffff, 0, 0 },
+};
+
+extern void m1x7_reboot(int);
+
+const struct board board_mvme197le = {
+	.bootstrap = m197_bootstrap,
+	.memsize = m197_memsize,
+	.cpuspeed = m197_cpuspeed,
+	.reboot = m1x7_reboot,
+	.is_syscon = m1x7_is_syscon,
+	.intr = m197_intr,
+	.nmi = m197_nmi,
+	.nmi_wrapup = m197_nmi_wrapup,
+	.getipl = m197_getipl,
+	.setipl = m197_setipl,
+	.raiseipl = m197_raiseipl,
+	.intsrc_available = m1x7_intsrc_available,
+	.intsrc_enable = m1x7_intsrc_enable,
+	.intsrc_disable = NULL,
+	.intsrc_establish = NULL,
+	.intsrc_disestablish = NULL,
+	.init_clocks = m1x7_init_clocks,
+	.delay = m1x7_delay,
+	.init_vme = m1x7_init_vme,
+#ifdef MULTIPROCESSOR
+	.send_ipi = m197_send_ipi,
+	.smp_setup = m197_smp_setup,
+#endif
+	.ptable = m197_pmap_table,
+	.cmmu = &cmmu88110
+};
+
+void	m197spdp_bootstrap(void);
+
+const struct board board_mvme197spdp = {
+	.bootstrap = m197spdp_bootstrap,
+	.memsize = m197_memsize,
+	.cpuspeed = m197_cpuspeed,
+	.reboot = m1x7_reboot,
+	.is_syscon = m1x7_is_syscon,
+	.intr = m197_intr,
+	.nmi = m197_nmi,
+	.nmi_wrapup = m197_nmi_wrapup,
+	.getipl = m197_getipl,
+	.setipl = m197_setipl,
+	.raiseipl = m197_raiseipl,
+	.intsrc_available = m1x7_intsrc_available,
+	.intsrc_enable = m1x7_intsrc_enable,
+	.intsrc_disable = NULL,
+	.intsrc_establish = NULL,
+	.intsrc_disestablish = NULL,
+	.init_clocks = m1x7_init_clocks,
+#ifdef MULTIPROCESSOR
+	.delay = m197_delay,
+#else
+	.delay = m1x7_delay,
+#endif
+	.init_vme = m1x7_init_vme,
+#ifdef MULTIPROCESSOR
+	.send_ipi = m197_send_ipi,
+	.smp_setup = m197_smp_setup,
+#endif
+	.ptable = m197_pmap_table,
+	.cmmu = &cmmu88410
+};
+
 int	m197_ipi_handler(struct trapframe *);
-vaddr_t	m197_memsize(void);
 uint32_t m197_mp_atomic_begin(__cpu_simple_lock_t *, uint *);
 void	m197_mp_atomic_end(uint32_t, __cpu_simple_lock_t *, uint);
-int	m197_nmi(struct trapframe *);
-void	m197_nmi_wrapup(struct trapframe *);
-u_int	m197_raiseipl(u_int);
-u_int	m197_setipl(u_int);
-void	m197_smp_setup(struct cpu_info *);
 void	m197_soft_ipi(void);
+
+void
+m197_bootstrap()
+{
+	u_int8_t version, btimer, pbt;
+
+	/*
+	 * Kernels running without snooping enabled (i.e. without
+	 * CACHE_GLOBAL set in the apr in pmap.c) need increased processor
+	 * bus timeout limits, or the instruction cache might not be able
+	 * to fill or answer fast enough. It does not hurt to increase
+	 * them unconditionnaly, though.
+	 *
+	 * Do this as soon as possible (i.e. now...), since this is
+	 * especially critical on 40MHz boards, while some 50MHz boards can
+	 * run without this timeout change... but better be safe than sorry.
+	 *
+	 * Boot blocks do this for us now, but again, better stay on the
+	 * safe side. Be sure to update the boot blocks code if the logic
+	 * below changes.
+	 */
+	version = *(volatile u_int8_t *)(BS_BASE + BS_CHIPREV);
+	btimer = *(volatile u_int8_t *)(BS_BASE + BS_BTIMER);
+	pbt = btimer & BS_BTIMER_PBT_MASK;
+	btimer &= ~BS_BTIMER_PBT_MASK;
+	
+	/* XXX PBT256 might only be necessary for busswitch rev1? */
+	if (m197_cpuspeed(NULL) < 50 || version <= 0x01) {
+		if (pbt < BS_BTIMER_PBT256)
+			pbt = BS_BTIMER_PBT256;
+	} else {
+		if (pbt < BS_BTIMER_PBT64)
+			pbt = BS_BTIMER_PBT64;
+	}
+
+	*(volatile u_int8_t *)(BS_BASE + BS_BTIMER) = btimer | pbt;
+}
+
+void
+m197spdp_bootstrap()
+{
+	u_int16_t cpu;
+
+	/*
+	 * Make sure all interrupts (levels 1 to 7) get routed to the boot cpu.
+	 *
+	 * We only need to write to one ISEL registers, this will set the
+	 * correct value in the other one, since we set all the active bits.
+	 */
+	cpu = *(u_int16_t *)(BS_BASE + BS_GCSR) & BS_GCSR_CPUID;
+	*(u_int8_t *)(BS_BASE + (cpu ? BS_ISEL1 : BS_ISEL0)) = 0xfe;
+
+	m197_bootstrap();
+}
 
 /*
  * Figure out how much real memory is available.
@@ -155,11 +277,23 @@ m197_memsize()
 }
 
 /*
+ * Return the processor speed in MHz.
+ */
+int
+m197_cpuspeed(const struct mvmeprom_brdid *brdid)
+{
+	/*
+	 * Find out the processor speed, from the BusSwitch prescaler
+	 * adjust register.
+	 */
+	return 256 - *(volatile u_int8_t *)(BS_BASE + BS_PADJUST);
+}
+
+/*
  * Device interrupt handler for MVME197
  */
-
 void
-m197_ext_int(struct trapframe *eframe)
+m197_intr(struct trapframe *eframe)
 {
 	u_int32_t psr;
 	int level;
@@ -233,7 +367,6 @@ m197_ext_int(struct trapframe *eframe)
  * Returns nonzero if NMI have been reenabled, and the exception handler
  * is allowed to run soft interrupts and AST; nonzero otherwise.
  */
-
 int
 m197_nmi(struct trapframe *eframe)
 {
@@ -321,84 +454,6 @@ m197_raiseipl(u_int level)
 	 */
 	set_psr(psr);
 	return curspl;
-}
-
-void
-m197_bootstrap()
-{
-	extern const struct cmmu_p cmmu88110;
-	extern const struct cmmu_p cmmu88410;
-	extern int cpuspeed;
-	u_int16_t cpu;
-	u_int8_t version, btimer, pbt;
-
-	if (mc88410_present()) {
-		cmmu = &cmmu88410;	/* 197SP/197DP */
-
-		/*
-		 * Make sure all interrupts (levels 1 to 7) get routed
-		 * to the boot cpu.
-		 *
-		 * We only need to write to one ISEL registers, this will
-		 * set the correct value in the other one, since we set
-		 * all the active bits.
-		 */
-		cpu = *(u_int16_t *)(BS_BASE + BS_GCSR) & BS_GCSR_CPUID;
-		*(u_int8_t *)(BS_BASE + (cpu ? BS_ISEL1 : BS_ISEL0)) = 0xfe;
-	} else
-		cmmu = &cmmu88110;	/* 197LE */
-
-	/*
-	 * Find out the processor speed, from the BusSwitch prescaler
-	 * adjust register.
-	 */
-	cpuspeed = 256 - *(volatile u_int8_t *)(BS_BASE + BS_PADJUST);
-
-	/*
-	 * Kernels running without snooping enabled (i.e. without
-	 * CACHE_GLOBAL set in the apr in pmap.c) need increased processor
-	 * bus timeout limits, or the instruction cache might not be able
-	 * to fill or answer fast enough. It does not hurt to increase
-	 * them unconditionnaly, though.
-	 *
-	 * Do this as soon as possible (i.e. now...), since this is
-	 * especially critical on 40MHz boards, while some 50MHz boards can
-	 * run without this timeout change... but better be safe than sorry.
-	 *
-	 * Boot blocks do this for us now, but again, better stay on the
-	 * safe side. Be sure to update the boot blocks code if the logic
-	 * below changes.
-	 */
-	version = *(volatile u_int8_t *)(BS_BASE + BS_CHIPREV);
-	btimer = *(volatile u_int8_t *)(BS_BASE + BS_BTIMER);
-	pbt = btimer & BS_BTIMER_PBT_MASK;
-	btimer = (btimer & ~BS_BTIMER_PBT_MASK);
-	
-	/* XXX PBT256 might only be necessary for busswitch rev1? */
-	if (cpuspeed < 50 || version <= 0x01) {
-		if (pbt < BS_BTIMER_PBT256)
-			pbt = BS_BTIMER_PBT256;
-	} else {
-		if (pbt < BS_BTIMER_PBT64)
-			pbt = BS_BTIMER_PBT64;
-	}
-
-	*(volatile u_int8_t *)(BS_BASE + BS_BTIMER) = btimer | pbt;
-
-	md_interrupt_func_ptr = m197_ext_int;
-	md_nmi_func_ptr = m197_nmi;
-	md_nmi_wrapup_func_ptr = m197_nmi_wrapup;
-	md_getipl = m197_getipl;
-	md_setipl = m197_setipl;
-	md_raiseipl = m197_raiseipl;
-	md_init_clocks = m1x7_init_clocks;
-#ifdef MULTIPROCESSOR
-	md_send_ipi = m197_send_ipi;
-	md_delay = m197_delay;
-	md_smp_setup = m197_smp_setup;
-#else
-	md_delay = m1x7_delay;
-#endif
 }
 
 #ifdef MULTIPROCESSOR
@@ -722,7 +777,6 @@ m197_smp_setup(struct cpu_info *ci)
 	/*
 	 * Setup function pointers for mplock operation.
 	 */
-
 	ci->ci_mp_atomic_begin = m197_mp_atomic_begin;
 	ci->ci_mp_atomic_end = m197_mp_atomic_end;
 }

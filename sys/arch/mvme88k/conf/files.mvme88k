@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.46 2013/05/17 22:38:25 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.47 2013/05/17 22:46:27 miod Exp $
 #
 maxpartitions 16
 
@@ -11,11 +11,11 @@ file	arch/mvme88k/dev/bussw.c			bussw needs-count
 
 device	pcctwo {[offset = -1], [ipl = 0]}
 attach	pcctwo at bussw, mainbus
-file	arch/mvme88k/dev/pcctwo.c			pcctwo needs-count
+file	arch/mvme88k/dev/pcctwo.c			pcctwo
 
 device	syscon {[offset = -1], [ipl = 0]}
 attach	syscon at mainbus
-file	arch/mvme88k/dev/syscon.c			syscon needs-count
+file	arch/mvme88k/dev/syscon.c			syscon
 
 device	memc
 attach	memc at pcctwo

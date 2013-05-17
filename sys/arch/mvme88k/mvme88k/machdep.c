@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.251 2013/05/17 22:38:25 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.252 2013/05/17 22:46:28 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -64,8 +64,11 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 
+#include <uvm/uvm.h>
+
 #include <machine/asm.h>
 #include <machine/asm_macro.h>
+#include <machine/board.h>
 #include <machine/bug.h>
 #include <machine/bugio.h>
 #include <machine/cmmu.h>
@@ -75,15 +78,15 @@
 #ifdef M88100
 #include <machine/m88100.h>
 #endif
-#ifdef MVME188
-#include <mvme88k/dev/sysconvar.h>
+#ifdef MVME197
+#include <machine/m88410.h>
 #endif
+
 #include <mvme88k/mvme88k/clockvar.h>
 
 #include <dev/cons.h>
 
 #include <net/if.h>
-#include <uvm/uvm.h>
 
 #include "ksyms.h"
 #if DDB
@@ -93,12 +96,35 @@
 #include <ddb/db_var.h>
 #endif /* DDB */
 
+/*
+ * Dummy routines and data to be able to handle unexpected situations and
+ * at least report them, until enough of the kernel is initialized.
+ */
+static u_int
+dummy_func(void)
+{
+	return 0;
+}
+static const struct board dummy_board = {
+    .getipl = (u_int (*)(void))dummy_func,
+    .setipl = (u_int (*)(u_int))dummy_func,
+    .raiseipl = (u_int (*)(u_int))dummy_func
+};
+#ifdef MULTIPROCESSOR
+struct cpu_info dummy_cpu = {
+	.ci_flags = CIF_ALIVE | CIF_PRIMARY,
+	.ci_cpuid = 0,
+	.ci_mp_atomic_begin =
+	    (uint32_t (*)(__cpu_simple_lock_t *, uint*))dummy_func,
+	.ci_mp_atomic_end =
+	    (void (*)(uint32_t, __cpu_simple_lock_t *, uint))dummy_func
+};
+#endif
+
 void	consinit(void);
 void	cpu_hatch_secondary_processors(void *);
-void	dumb_delay(int);
 void	dumpconf(void);
 void	dumpsys(void);
-int	getcpuspeed(struct mvmeprom_brdid *);
 void	identifycpu(void);
 void	mvme_bootstrap(void);
 void	mvme88k_vector_init(uint32_t *, uint32_t *);
@@ -108,37 +134,11 @@ void	secondary_main(void);
 vaddr_t	secondary_pre_main(void);
 void	_doboot(void);
 
-extern void	m187_bootstrap(void);
-extern vaddr_t	m187_memsize(void);
-extern void	m188_bootstrap(void);
-extern vaddr_t	m188_memsize(void);
-extern void	m197_bootstrap(void);
-extern vaddr_t	m197_memsize(void);
-
 extern int kernelstart;
 register_t kernel_vbr;
 intrhand_t intr_handlers[NVMEINTR];
 
-static u_int dummy_getipl(void) { return 0; }
-static u_int dummy_setipl(u_int whatever) { return 0; }
-
-/* board dependent pointers */
-void (*md_interrupt_func_ptr)(struct trapframe *);
-#ifdef M88110
-int (*md_nmi_func_ptr)(struct trapframe *);
-void (*md_nmi_wrapup_func_ptr)(struct trapframe *);
-#endif
-void (*md_init_clocks)(void);
-u_int (*md_getipl)(void) = dummy_getipl;
-u_int (*md_setipl)(u_int) = dummy_setipl;
-u_int (*md_raiseipl)(u_int) = dummy_setipl;
-#ifdef MULTIPROCESSOR
-void (*md_send_ipi)(int, cpuid_t);
-#endif
-void (*md_delay)(int) = dumb_delay;
-#ifdef MULTIPROCESSOR
-void (*md_smp_setup)(struct cpu_info *);
-#endif
+const struct board *platform = &dummy_board;
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -152,8 +152,7 @@ __cpu_simple_lock_t cpu_boot_mutex = __SIMPLELOCK_LOCKED;
 
 /*
  * 32 or 34 bit physical address bus depending upon the CPU flavor.
- * 32 bit DMA. "I am not aware of any system where the upper 2 bits
- * have ever been used" - miod@
+ * 32 bit DMA.
  */
 struct uvm_constraint_range  dma_constraint = { 0x0, 0xffffffffUL};
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
@@ -195,6 +194,13 @@ void *etherbuf = NULL;
 int etherlen;
 #endif
 
+#if defined(MVME181) || defined(MVME188)
+/*
+ * Interrupt masks, one per IPL level.
+ */
+u_int32_t int_mask_val[NIPLS];
+#endif
+
 /*
  * This is to fake out the console routines, while booting.
  */
@@ -230,68 +236,6 @@ consinit()
 #endif
 }
 
-int
-getcpuspeed(struct mvmeprom_brdid *brdid)
-{
-	int speed = 0;
-#ifdef MVME188
-	u_int i, c;
-#endif
-
-	switch (brdtyp) {
-#ifdef MVME187
-	case BRD_187:
-	case BRD_8120:
-		/* we already computed the speed in m187_bootstrap() */
-		return cpuspeed;
-#endif
-#ifdef MVME188
-	case BRD_188:
-		/*
-		 * If BUG version prior to 5.x, there is no CNFG block and
-		 * speed can be found in the environment.
-		 * XXX We don't process ENV data yet - assume 20MHz in this
-		 * case.
-		 */
-		if ((u_int)brdid->rev < 0x50) {
-			speed = 20;
-		} else {
-			for (i = 0; i < 4; i++) {
-				c = (u_int)brdid->speed[i];
-				if (c == ' ')
-					c = '0';
-				else if (c > '9' || c < '0') {
-					speed = 0;
-					break;
-				}
-				speed = speed * 10 + (c - '0');
-			}
-			speed = speed / 100;
-
-			if (speed == 20 || speed == 25)
-				return speed;
-			speed = 25;
-		}
-		break;
-#endif
-#ifdef MVME197
-	case BRD_197:
-		/* we already computed the speed in m197_bootstrap() */
-		return cpuspeed;
-#endif
-	}
-
-	/*
-	 * If we end up here, the board information block is damaged and
-	 * we can't trust it.
-	 * Suppose we are running at the most common speed for our board,
-	 * and hope for the best (this really only affects osiop).
-	 */
-	printf("WARNING: Board Configuration Data invalid, "
-	    "replace NVRAM and restore values\n");
-	return speed;
-}
-
 void
 identifycpu()
 {
@@ -302,7 +246,7 @@ identifycpu()
 	bzero(&brdid, sizeof(brdid));
 	bugbrdid(&brdid);
 
-	cpuspeed = getcpuspeed(&brdid);
+	cpuspeed = platform->cpuspeed(&brdid);
 
 	i = 0;
 	if (brdid.suffix[0] >= ' ' && brdid.suffix[0] < 0x7f) {
@@ -318,14 +262,10 @@ identifycpu()
 	    "Motorola MVME%x%s, %dMHz", brdtyp, suffix, cpuspeed);
 }
 
-/*
- * Set up real-time clocks.
- * These function pointers are set in dev/clock.c.
- */
 void
 cpu_initclocks()
 {
-	(*md_init_clocks)();
+	platform->init_clocks();
 }
 
 void
@@ -333,7 +273,6 @@ setstatclockrate(int newhz)
 {
 	/* function stub */
 }
-
 
 void
 cpu_startup()
@@ -449,9 +388,10 @@ haltsys:
 		cnpollc(0);
 	}
 
-	doboot();
+	if (platform->reboot != NULL)
+		platform->reboot(howto);
 
-	for (;;);
+	doboot();	/* will invoke _doboot on a 1:1 mapped stack */
 	/*NOTREACHED*/
 }
 
@@ -641,7 +581,7 @@ secondary_pre_main()
 	set_cpu_number(cmmu_cpu_number());
 	ci = curcpu();
 	ci->ci_curproc = &proc0;
-	(*md_smp_setup)(ci);
+	platform->smp_setup(ci);
 
 	splhigh();
 
@@ -746,22 +686,14 @@ intr_establish(int vec, struct intrhand *ih, const char *name)
 			    "vec (0x%x) at ipl %x, but you want it at %x",
 			    vec, intr->ih_ipl, ih->ih_ipl);
 #endif /* DIAGNOSTIC */
-			return (EINVAL);
+			return EINVAL;
 		}
 	}
 
 	evcount_attach(&ih->ih_count, name, &ih->ih_ipl);
 	SLIST_INSERT_HEAD(list, ih, ih_link);
 
-#ifdef MVME188
-	/*
-	 * Enable VME interrupt source for this level.
-	 */
-	if (brdtyp == BRD_188)
-		syscon_intsrc_enable(INTSRC_VME + (ih->ih_ipl - 1), ih->ih_ipl);
-#endif
-
-	return (0);
+	return 0;
 }
 
 void
@@ -910,52 +842,40 @@ mvme_bootstrap()
 #ifdef MVME187
 	case BRD_187:
 	case BRD_8120:
-		m187_bootstrap();
+		platform = &board_mvme187;
 		break;
 #endif
 #ifdef MVME188
 	case BRD_188:
-		m188_bootstrap();
+		platform = &board_mvme188;
 		break;
 #endif
 #ifdef MVME197
 	case BRD_197:
-		m197_bootstrap();
+		if (mc88410_present())
+			platform = &board_mvme197spdp;
+		else
+			platform = &board_mvme197le;
 		break;
 #endif
 	default:
 		panic("Sorry, this kernel does not support MVME%x", brdtyp);
 	}
 
+	platform->bootstrap();
+
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 	first_addr = round_page(first_addr);
-
-	switch (brdtyp) {
-#ifdef MVME187
-	case BRD_187:
-	case BRD_8120:
-		last_addr = m187_memsize();
-		break;
-#endif
-#ifdef MVME188
-	case BRD_188:
-		last_addr = m188_memsize();
-		break;
-#endif
-#ifdef MVME197
-	case BRD_197:
-		last_addr = m197_memsize();
-		break;
-#endif
-	}
+	last_addr = platform->memsize();
 	physmem = atop(last_addr);
 
+	cmmu = platform->cmmu;
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
 #ifdef MULTIPROCESSOR
-	(*md_smp_setup)(curcpu());
+	platform->smp_setup(curcpu());
 #endif
 	SET(curcpu()->ci_flags, CIF_ALIVE | CIF_PRIMARY);
 
@@ -1109,19 +1029,19 @@ bootcnputc(dev, c)
 int
 getipl(void)
 {
-	return (int)(*md_getipl)();
+	return (int)platform->getipl();
 }
 
 int
 setipl(int level)
 {
-	return (int)(*md_setipl)((u_int)level);
+	return (int)platform->setipl((u_int)level);
 }
 
 int
 raiseipl(int level)
 {
-	return (int)(*md_raiseipl)((u_int)level);
+	return (int)platform->raiseipl((u_int)level);
 }
 
 #ifdef MULTIPROCESSOR
@@ -1133,7 +1053,7 @@ m88k_send_ipi(int ipi, cpuid_t cpu)
 
 	ci = &m88k_cpus[cpu];
 	if (ISSET(ci->ci_flags, CIF_ALIVE))
-		(*md_send_ipi)(ipi, cpu);
+		platform->send_ipi(ipi, cpu);
 }
 
 void
@@ -1148,7 +1068,7 @@ m88k_broadcast_ipi(int ipi)
 			continue;
 
 		if (ISSET(ci->ci_flags, CIF_ALIVE))
-			(*md_send_ipi)(ipi, ci->ci_cpuid);
+			platform->send_ipi(ipi, ci->ci_cpuid);
 	}
 }
 
@@ -1157,5 +1077,5 @@ m88k_broadcast_ipi(int ipi)
 void
 delay(int us)
 {
-	(*md_delay)(us);
+	platform->delay(us);
 }

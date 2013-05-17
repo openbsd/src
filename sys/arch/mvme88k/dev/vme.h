@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.18 2013/05/14 21:01:21 miod Exp $ */
+/*	$OpenBSD: vme.h,v 1.19 2013/05/17 22:46:27 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -27,17 +27,6 @@
 
 #ifndef __MVME88K_DEV_VME_H__
 #define	__MVME88K_DEV_VME_H__
-
-struct vmesoftc {
-	struct device		sc_dev;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	struct intrhand 	sc_abih;       /* `abort' switch */
-};
-
-/*
- * XXX: this chip has some rather insane access rules!
- */
 
 #define	VME2_BASE		0xfff40000
 
@@ -77,6 +66,15 @@ struct vmesoftc {
 #define	VME2_IRQL4		0x0084
 #define	VME2_VBR		0x0088
 #define	VME2_MISC		0x008c
+
+#define	VME2_GCSR_ID		0x0100
+#define	VME2_GCSR_LM_SIG_BSCR	0x0104
+#define	VME2_GCSR_0		0x0108
+#define	VME2_GCSR_1		0x010c
+#define	VME2_GCSR_2		0x0110
+#define	VME2_GCSR_3		0x0114
+#define	VME2_GCSR_4		0x0118
+#define	VME2_GCSR_5		0x011c
 
 #define	VME2_SADDR_END		0xffff0000	/* VME address END & START */
 #define	VME2_SADDR_START	0x0000ffff
@@ -269,6 +267,20 @@ struct vmesoftc {
 #define	VME2_MISC_ENINT		0x00000002	/* do not set */
 #define	VME2_MISC_DISBGN	0x00000001	/* do not set */
 
+#define	VME2_GCSR_LM3		0x8000
+#define	VME2_GCSR_LM2		0x4000
+#define	VME2_GCSR_LM1		0x2000
+#define	VME2_GCSR_LM0		0x1000
+#define	VME2_GCSR_SIG3		0x0800
+#define	VME2_GCSR_SIG2		0x0400
+#define	VME2_GCSR_SIG1		0x0200
+#define	VME2_GCSR_SIG0		0x0100
+#define	VME2_GCSR_RST		0x0080
+#define	VME2_GCSR_ISF		0x0040
+#define	VME2_GCSR_BF		0x0020
+#define	VME2_GCSR_SCON		0x0010
+#define	VME2_GCSR_SF		0x0008
+
 #define	VME2_A16D32BASE	0xffff0000UL
 #define	VME2_A16D32LEN	0x00010000UL
 #define	VME2_A32D16BASE	0xf1000000UL
@@ -280,10 +292,10 @@ struct vmesoftc {
 #define	VME2_A16BASE	0xffff0000UL
 #define	VME2_A24BASE	0xff000000UL
 
-paddr_t vmepmap(struct device *sc, off_t vmeaddr, int bustype);
-int vmerw(struct device *sc, struct uio *uio, int flags, int bus);
-int vmeintr_establish(int, struct intrhand *, const char *);
-int vme_findvec(int);
-int vmescan(struct device *, void *, void *, int);
+paddr_t	vmepmap(struct device *sc, off_t vmeaddr, int bustype);
+int	vmerw(struct device *sc, struct uio *uio, int flags, int bus);
+int	vmeintr_establish(int, struct intrhand *, const char *);
+int	vme_findvec(int);
+int	vmescan(struct device *, void *, void *, int);
 
 #endif /* __MVME88K_DEV_VME_H__ */

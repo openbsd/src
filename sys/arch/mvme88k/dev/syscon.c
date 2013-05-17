@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.29 2010/09/20 06:33:47 matthew Exp $ */
+/*	$OpenBSD: syscon.c,v 1.30 2013/05/17 22:46:27 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -35,10 +35,10 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cpu.h>
 
 #include <machine/mvme188.h>
-#include <mvme88k/dev/sysconvar.h>
 
 struct sysconsoftc {
 	struct device	sc_dev;
@@ -79,15 +79,8 @@ void
 sysconattach(struct device *parent, struct device *self, void *args)
 {
 	struct sysconsoftc *sc = (struct sysconsoftc *)self;
-	int i;
 
 	printf("\n");
-
-	/*
-	 * Set up interrupt handlers.
-	 */
-	for (i = 0; i < INTSRC_VME; i++)
-		SLIST_INIT(&sysconintr_handlers[i]);
 
 	/*
 	 * Clear SYSFAIL if lit.
@@ -109,9 +102,9 @@ sysconattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sfih.ih_wantframe = 1;
 	sc->sc_sfih.ih_ipl = IPL_ABORT;
 
-	sysconintr_establish(INTSRC_ABORT, &sc->sc_abih, "abort");
-	sysconintr_establish(INTSRC_ACFAIL, &sc->sc_acih, "acfail");
-	sysconintr_establish(INTSRC_SYSFAIL, &sc->sc_sfih, "sysfail");
+	platform->intsrc_establish(INTSRC_ABORT, &sc->sc_abih, "abort");
+	platform->intsrc_establish(INTSRC_ACFAIL, &sc->sc_acih, "acfail");
+	platform->intsrc_establish(INTSRC_SYSFAIL, &sc->sc_sfih, "sysfail");
 
 	config_search(syscon_scan, self, args);
 }
@@ -151,100 +144,6 @@ syscon_print(void *args, const char *bus)
 	if (ca->ca_ipl > 0)
 		printf(" ipl %d", ca->ca_ipl);
 	return (UNCONF);
-}
-
-/*
- * Interrupt related code
- */
-
-intrhand_t sysconintr_handlers[INTSRC_VME];
-
-int
-sysconintr_establish(u_int intsrc, struct intrhand *ih, const char *name)
-{
-	intrhand_t *list;
-
-	list = &sysconintr_handlers[intsrc];
-	if (!SLIST_EMPTY(list)) {
-#ifdef DIAGNOSTIC
-		printf("%s: interrupt source %u already registered\n",
-		    __func__, intsrc);
-#endif
-		return (EINVAL);
-	}
-
-	evcount_attach(&ih->ih_count, name, &ih->ih_ipl);
-	SLIST_INSERT_HEAD(list, ih, ih_link);
-
-	syscon_intsrc_enable(intsrc, ih->ih_ipl);
-
-	return (0);
-}
-
-void
-sysconintr_disestablish(u_int intsrc, struct intrhand *ih)
-{
-	intrhand_t *list;
-
-	list = &sysconintr_handlers[intsrc];
-	evcount_detach(&ih->ih_count);
-	SLIST_REMOVE(list, ih, intrhand, ih_link);
-
-	syscon_intsrc_disable(intsrc);
-}
-
-/* Interrupt masks per logical interrupt source */
-const u_int32_t syscon_intsrc[] = {
-	0,
-	IRQ_ABORT,
-	IRQ_ACF,
-	IRQ_SF,
-	IRQ_CIOI,
-	IRQ_DTI,
-	IRQ_DI,
-	IRQ_VME1,
-	IRQ_VME2,
-	IRQ_VME3,
-	IRQ_VME4,
-	IRQ_VME5,
-	IRQ_VME6,
-	IRQ_VME7
-};
-
-void
-syscon_intsrc_enable(u_int intsrc, int ipl)
-{
-	u_int32_t psr;
-	u_int32_t intmask = syscon_intsrc[intsrc];
-	int i;
-
-	psr = get_psr();
-	set_psr(psr | PSR_IND);
-
-	for (i = IPL_NONE; i < ipl; i++)
-		int_mask_val[i] |= intmask;
-
-	setipl(getipl());
-
-	set_psr(psr);
-}
-
-void
-syscon_intsrc_disable(u_int intsrc)
-{
-	u_int32_t psr;
-	u_int32_t intmask = syscon_intsrc[intsrc];
-	int i;
-
-	psr = get_psr();
-	set_psr(psr | PSR_IND);
-
-	for (i = 0; i < NIPLS; i++)
-		int_mask_val[i] &= ~intmask;
-
-	setipl(getipl());
-
-	set_psr(psr);
 }
 
 int
