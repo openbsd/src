@@ -1,4 +1,4 @@
-#	$OpenBSD: sftp-badcmds.sh,v 1.5 2013/05/17 04:29:14 dtucker Exp $
+#	$OpenBSD: sftp-badcmds.sh,v 1.6 2013/05/17 10:26:26 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="sftp invalid commands"
@@ -7,7 +7,7 @@ DATA2=/bin/cat
 NONEXIST=/NONEXIST.$$
 GLOBFILES=`(cd /bin;echo l*)`
 
-rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd ${BATCH}.*
+rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd
 
 rm -f ${COPY}
 verbose "$tid: get nonexistent"
@@ -60,6 +60,6 @@ verbose "$tid: glob put files to local file"
 echo "put /bin/l* $COPY" | ${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1 
 cmp ${DATA2} ${COPY} || fail "put successed when it should have failed"
 
-rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd ${BATCH}.*
+rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd
 
 
