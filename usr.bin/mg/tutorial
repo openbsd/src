@@ -253,13 +253,18 @@ in the bottom of your screen. In general, it is a good idea to save quite
 often. When you save a file, mg saves a backup of the file with a tilde (~)
 character at the end.
 
-Windows
--------
+Working with Buffers and Windows
+--------------------------------
 
-The mg editor can support several windows at the same time, each one displaying
-different text. To split a screen into two horizontal windows use C-x 2 to do
-this. To return to one window, use C-x 1 to close the other windows and only
-keep the current window.
+Once a file is loaded into mg, it is often referred to as a buffer.
+
+The mg editor is capable of editing multiple buffers at the same time. When you
+open a second file with C-x C-f, the first buffer is still being edited by mg.
+
+Both buffers can be viewed simultaneously because mg can support several windows
+at the same time, each one displaying different text. To split a screen into two
+horizontal windows use C-x 2. To return to one window, use C-x 1 to close the
+other windows and only keep the current window.
 
 >> Use C-x 2 to split the screen into two windows. 
 
@@ -268,16 +273,10 @@ keep the current window.
 
 >> Use C-x 1 to restore back to one window.
 
-Buffers
--------
-
-The mg editor is capable of editing multiple files at the same time. When you
-open a second file with C-x C-f, the first file is still being edited by mg.
 You can list all the buffers that are opened by mg by typing C-x C-b. The 
 screen should divide into two and the top window will list the buffers that
-are currently open. Use C-x o to switch to the top window (we already learned
-this key combination above in the Windows section) and then use the arrow keys
-to move to the buffer you wish to switch to and then type the Enter key to 
+are currently open. Use C-x o to switch to the top window, then use the arrow
+keys to move to the buffer you wish to switch to, and then type the Enter key to
 select that buffer. Then use C-x 1 to switch back to only one window.
 
 You may also move back to the last opened buffer by using C-x b to toggle back
@@ -285,11 +284,6 @@ and forth between two buffers. Note the difference between C-x b and C-x C-b.
 
 >> Use C-x C-f to open a new file
 >> Use C-x b to switch back and forth between that buffer and this one.
-
-To edit files in multiple windows, use C-x 2 to split the screen into two 
-windows. Then use C-x C-f to open a new file in one of the two windows. You
-can then switch between the two windows using C-x o. You can switch between
-buffers in any window using C-x b. To go back to one window, use C-x 1.
 
 To kill any buffer, use C-x k. You will be prompted for the buffer to kill.
 By default, the current buffer is selected as the one to kill. You may also
