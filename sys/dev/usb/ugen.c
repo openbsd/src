@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.71 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: ugen.c,v 1.72 2013/05/17 09:09:11 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1202,6 +1202,9 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			error = EIO;
 			goto ret;
 		}
+		/* Only if USBD_SHORT_XFER_OK is set. */
+		if (len > ur->ucr_actlen)
+			len = ur->ucr_actlen;
 		if (len != 0) {
 			if (uio.uio_rw == UIO_READ) {
 				error = uiomove(ptr, len, &uio);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.90 2013/04/26 14:05:24 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.91 2013/05/17 09:09:11 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -622,6 +622,9 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EIO;
 			goto ret;
 		}
+		/* Only if USBD_SHORT_XFER_OK is set. */
+		if (len > ur->ucr_actlen)
+			len = ur->ucr_actlen;
 		if (len != 0) {
 			if (uio.uio_rw == UIO_READ) {
 				error = uiomove(ptr, len, &uio);
