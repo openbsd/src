@@ -1,10 +1,7 @@
-#	$OpenBSD: ssh-com-sftp.sh,v 1.6 2009/08/20 18:43:07 djm Exp $
+#	$OpenBSD: ssh-com-sftp.sh,v 1.7 2013/05/17 04:29:14 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="basic sftp put/get with ssh.com server"
-
-DATA=/bin/ls
-COPY=${OBJ}/copy
 
 BUFFERSIZE="5 1000 32000 64000"
 REQUESTS="1 2 10"

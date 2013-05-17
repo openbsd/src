@@ -1,11 +1,7 @@
-#	$OpenBSD: stderr-after-eof.sh,v 1.1 2002/03/23 16:38:09 markus Exp $
+#	$OpenBSD: stderr-after-eof.sh,v 1.2 2013/05/17 04:29:14 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="stderr data after eof"
-
-DATA=/etc/motd
-DATA=${OBJ}/data
-COPY=${OBJ}/copy
 
 # setup data
 rm -f ${DATA} ${COPY}

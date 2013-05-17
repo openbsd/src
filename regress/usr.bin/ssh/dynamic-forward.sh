@@ -1,4 +1,4 @@
-#	$OpenBSD: dynamic-forward.sh,v 1.9 2011/06/03 00:29:52 dtucker Exp $
+#	$OpenBSD: dynamic-forward.sh,v 1.10 2013/05/17 04:29:14 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="dynamic forwarding"
@@ -41,9 +41,9 @@ for p in 1 2; do
 		trace "testing ssh protocol $p socks version $s host $h"
 		${SSH} -F $OBJ/ssh_config \
 			-o "ProxyCommand ${proxycmd}${s} $h $PORT" \
-			somehost cat /bin/ls > $OBJ/ls.copy
-		test -f $OBJ/ls.copy	 || fail "failed copy /bin/ls"
-		cmp /bin/ls $OBJ/ls.copy || fail "corrupted copy of /bin/ls"
+			somehost cat ${DATA} > ${COPY}
+		test -f ${COPY}	 || fail "failed copy ${DATA}"
+		cmp ${DATA} ${COPY} || fail "corrupted copy of ${DATA}"
 	    done
 	done
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: forwarding.sh,v 1.9 2013/04/07 02:16:03 dtucker Exp $
+#	$OpenBSD: forwarding.sh,v 1.10 2013/05/17 04:29:14 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="local and remote forwarding"
@@ -25,9 +25,9 @@ for p in 1 2; do
 
 	trace "transfer over forwarded channels and check result"
 	${SSH} -$q -F $OBJ/ssh_config -p$last -o 'ConnectionAttempts=4' \
-		somehost cat /bin/ls > $OBJ/ls.copy
-	test -f $OBJ/ls.copy			|| fail "failed copy /bin/ls"
-	cmp /bin/ls $OBJ/ls.copy		|| fail "corrupted copy of /bin/ls"
+		somehost cat ${DATA} > ${COPY}
+	test -f ${COPY}		|| fail "failed copy of ${DATA}"
+	cmp ${DATA} ${COPY}	|| fail "corrupted copy of ${DATA}"
 
 	sleep 10
 done

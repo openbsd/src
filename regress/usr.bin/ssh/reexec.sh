@@ -1,10 +1,8 @@
-#	$OpenBSD: reexec.sh,v 1.5 2004/10/08 02:01:50 djm Exp $
+#	$OpenBSD: reexec.sh,v 1.6 2013/05/17 04:29:14 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="reexec tests"
 
-DATA=/bin/ls
-COPY=${OBJ}/copy
 SSHD_ORIG=$SSHD
 SSHD_COPY=$OBJ/sshd
 
