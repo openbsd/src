@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.15 2013/05/13 17:46:42 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.16 2013/05/17 18:26:37 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -79,8 +79,10 @@ void    intr_establish(int, struct intrhand *);
 #define	IPL_SERIAL	PIL_SER		/* serial */
 #define	IPL_SCHED	PIL_SCHED	/* scheduler */
 #define	IPL_LOCK	PIL_LOCK	/* locks */
-#define IPL_STATCLOCK	PIL_STATCLOCK	/* statclock */
+#define	IPL_STATCLOCK	PIL_STATCLOCK	/* statclock */
 #define	IPL_HIGH	PIL_HIGH	/* everything */
+
+#define	IPL_MPSAFE	0x100
 
 void	*softintr_establish(int, void (*)(void *), void *);
 void	 softintr_disestablish(void *);

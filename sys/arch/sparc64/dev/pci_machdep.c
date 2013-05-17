@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.42 2011/07/06 05:08:50 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.43 2013/05/17 18:26:37 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -450,10 +450,17 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 	const char *what;
 {
 	void *cookie;
+	int flags = 0;
+
+	if (level & IPL_MPSAFE) {
+		flags |= BUS_INTR_ESTABLISH_MPSAFE;
+		level &= ~IPL_MPSAFE;
+	}
 
 	DPRINTF(SPDB_INTR, ("pci_intr_establish: ih %lu; level %d",
 	    (u_long)ih, level));
-	cookie = bus_intr_establish(pc->bustag, ih, level, 0, func, arg, what);
+	cookie = bus_intr_establish(pc->bustag, ih, level, flags,
+	    func, arg, what);
 
 	DPRINTF(SPDB_INTR, ("; returning handle %p\n", cookie));
 	return (cookie);
