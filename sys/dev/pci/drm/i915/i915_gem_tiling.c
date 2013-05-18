@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem_tiling.c,v 1.4 2013/05/18 16:45:34 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem_tiling.c,v 1.5 2013/05/18 21:43:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -388,11 +388,7 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 
 		obj->map_and_fenceable =
 			obj->dmamap == NULL ||
-#ifdef notyet
 			(obj->gtt_offset + obj->base.size <= dev_priv->mm.gtt_mappable_end &&
-#else
-			(
-#endif
 			 i915_gem_object_fence_ok(obj, args->tiling_mode));
 
 		/* Rebind if we need a change of alignment */

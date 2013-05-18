@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.20 2013/05/11 15:56:28 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.21 2013/05/18 21:43:42 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -646,6 +646,11 @@ struct inteldrm_softc {
 		 */
 		struct list_head unbound_list;
 
+		/** Usable portion of the GTT for GEM */
+		unsigned long gtt_start;
+		unsigned long gtt_mappable_end;
+		unsigned long gtt_end;
+
 		/**
 		 * List of objects currently involved in rendering from the
 		 * ringbuffer.
@@ -714,6 +719,9 @@ struct inteldrm_softc {
 
 		/* storage for physical objects */
 		struct drm_i915_gem_phys_object *phys_objs[I915_MAX_PHYS_OBJECT];
+
+		/* accounting, useful for userland debugging */
+		size_t gtt_total;
 	} mm;
 
 	/* for hangcheck */

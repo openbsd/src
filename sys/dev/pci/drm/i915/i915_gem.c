@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.20 2013/05/11 19:03:41 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.21 2013/05/18 21:43:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -2067,7 +2067,6 @@ i915_gem_object_bind_to_gtt(struct drm_i915_gem_object *obj,
 
 	size = map_and_fenceable ? fence_size : obj->base.size;
 
-#ifdef notyet
 	/* If the object is bigger than the entire aperture, reject it early
 	 * before evicting everything in a vain attempt to find space.
 	 */
@@ -2076,7 +2075,6 @@ i915_gem_object_bind_to_gtt(struct drm_i915_gem_object *obj,
 		DRM_ERROR("Attempting to bind an object larger than the aperture\n");
 		return -E2BIG;
 	}
-#endif
 
 	if ((ret = bus_dmamap_create(dev_priv->agpdmat, size, 1,
 	    size, 0, BUS_DMA_WAITOK, &obj->dmamap)) != 0) {
@@ -2141,12 +2139,8 @@ i915_gem_object_bind_to_gtt(struct drm_i915_gem_object *obj,
 		obj->dmamap->dm_segs[0].ds_len == fence_size &&
 		(obj->dmamap->dm_segs[0].ds_addr & (fence_alignment - 1)) == 0;
 
-#ifdef notyet
 	mappable =
 		obj->gtt_offset + obj->base.size <= dev_priv->mm.gtt_mappable_end;
-#else
-	mappable = true;
-#endif
 
 	obj->map_and_fenceable = mappable && fenceable;
 
@@ -3092,6 +3086,11 @@ i915_gem_init(struct drm_device *dev)
 
 	dev->gtt_total = (uint32_t)(gtt_end - gtt_start);
 	inteldrm_set_max_obj_size(dev_priv);
+
+	dev_priv->mm.gtt_start = gtt_start;
+	dev_priv->mm.gtt_mappable_end = gtt_end;
+	dev_priv->mm.gtt_end = gtt_end;
+	dev_priv->mm.gtt_total = gtt_end - gtt_start;
 
 	ret = i915_gem_init_hw(dev);
 	if (ret != 0) {
