@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcov/Makefile,v 1.6 2009/06/21 01:54:47 kan Exp $
-# $OpenBSD: Makefile,v 1.1 2013/05/18 18:18:21 miod Exp $
+# $OpenBSD: Makefile,v 1.2 2013/05/18 18:21:39 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,7 @@ CC=${.CURDIR}/../cc/cc -B ${.CURDIR}/../cc1
 .include "${.CURDIR}/../Makefile.ver"
 
 LIB=		gcov
+LIBDIR=		/usr/lib/gcc-lib/${GCC_TARGET}/${BASEVER}
 NOPROFILE=	Yes
 NOPIC=		Yes
 
