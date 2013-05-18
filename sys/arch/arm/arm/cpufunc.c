@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.22 2013/05/18 17:42:11 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.23 2013/05/18 17:48:48 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -1392,7 +1392,8 @@ armv7_setup()
 	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK
-	    | CPU_CONTROL_VECRELOC | CPU_CONTROL_FI | CPU_CONTROL_VE;
+	    | CPU_CONTROL_VECRELOC | CPU_CONTROL_FI | CPU_CONTROL_VE
+	    | CPU_CONTROL_TRE | CPU_CONTROL_AFE;
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
@@ -1408,7 +1409,7 @@ armv7_setup()
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
-	cpu_control(0xffffffff, cpuctrl);
+	cpu_control(cpuctrlmask, cpuctrl);
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
