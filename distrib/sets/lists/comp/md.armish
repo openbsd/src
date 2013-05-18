@@ -651,6 +651,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.3/4.2.1/cc1obj
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.3/4.2.1/cc1plus
 ./usr/lib/gcc-lib/arm-unknown-openbsd5.3/4.2.1/libgcc.a
+./usr/lib/gcc-lib/arm-unknown-openbsd5.3/4.2.1/libgcov.a
 ./usr/lib/libarm.a
 ./usr/lib/libarm_p.a
 ./usr/lib/libstdc++_p.a

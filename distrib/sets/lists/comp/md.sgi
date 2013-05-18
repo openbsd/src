@@ -657,6 +657,7 @@
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.3/4.2.1/cc1plus
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.3/4.2.1/collect2
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.3/4.2.1/libgcc.a
+./usr/lib/gcc-lib/mips64-unknown-openbsd5.3/4.2.1/libgcov.a
 ./usr/lib/gcc-lib/mips64-unknown-openbsd5.3/4.2.1/specs
 ./usr/lib/libstdc++_p.a
 ./usr/lib/libsupc++.a

@@ -608,6 +608,7 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd5.3/4.2.1/cc1obj
 ./usr/lib/gcc-lib/alpha-unknown-openbsd5.3/4.2.1/cc1plus
 ./usr/lib/gcc-lib/alpha-unknown-openbsd5.3/4.2.1/libgcc.a
+./usr/lib/gcc-lib/alpha-unknown-openbsd5.3/4.2.1/libgcov.a
 ./usr/lib/libalpha.a
 ./usr/lib/libalpha_p.a
 ./usr/lib/libstdc++_p.a

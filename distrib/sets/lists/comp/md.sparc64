@@ -614,6 +614,7 @@
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd5.3/4.2.1/cc1obj
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd5.3/4.2.1/cc1plus
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd5.3/4.2.1/libgcc.a
+./usr/lib/gcc-lib/sparc64-unknown-openbsd5.3/4.2.1/libgcov.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/libsupc++.a
 ./usr/lib/libsupc++_p.a

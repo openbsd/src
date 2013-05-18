@@ -5026,8 +5026,8 @@
 ./usr/share/man/man3/memchr.3
 ./usr/share/man/man3/memcmp.3
 ./usr/share/man/man3/memcpy.3
-./usr/share/man/man3/memmove.3
 ./usr/share/man/man3/memmem.3
+./usr/share/man/man3/memmove.3
 ./usr/share/man/man3/memrchr.3
 ./usr/share/man/man3/memset.3
 ./usr/share/man/man3/menu.3
@@ -6648,6 +6648,7 @@
 ./usr/share/man/man9/m_copym.9
 ./usr/share/man/man9/m_copym2.9
 ./usr/share/man/man9/m_devget.9
+./usr/share/man/man9/m_dup_pkthdr.9
 ./usr/share/man/man9/m_free.9
 ./usr/share/man/man9/m_freem.9
 ./usr/share/man/man9/m_get.9
