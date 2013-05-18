@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2013/05/09 20:07:25 patrick Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.42 2013/05/18 18:06:05 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1595,7 +1595,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 					pv->pv_flags &= ~PVF_NC;
 				}
 			} else
-			if (opte & L2_S_PROT_W) {
+			if (opte & L2_S_PROT_KW) {
 				/* 
 				 * Entry is writable/cacheable: check if pmap
 				 * is current if it is flush it, otherwise it
@@ -1613,7 +1613,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 			}
 
 			/* make the pte read only */
-			npte &= ~L2_S_PROT_W;
+			npte &= ~L2_S_PROT_KW;
 
 			if (maskbits & PVF_WRITE) {
 				/*
@@ -1641,7 +1641,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 				 * of the PTE is the same for opte and
 				 * npte.
 				 */
-				if (npte & L2_S_PROT_W) {
+				if (npte & L2_S_PROT_KW) {
 					if (PV_BEEN_EXECD(oflags))
 						pmap_idcache_wbinv_range(pm,
 						    pv->pv_va, PAGE_SIZE);
@@ -2017,7 +2017,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				 * already been modified. Make it
 				 * writable from the outset.
 				 */
-				npte |= L2_S_PROT_W;
+				npte |= L2_S_PROT_KW;
 				nflags |= PVF_MOD;
 			}
 		} else {
@@ -2045,7 +2045,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 */
 			if (pm->pm_cstate.cs_cache_d &&
 			    (oflags & PVF_NC) == 0 &&
-			    (opte & L2_S_PROT_W) != 0 &&
+			    (opte & L2_S_PROT_KW) != 0 &&
 			    (prot & VM_PROT_WRITE) == 0)
 				cpu_dcache_wb_range(va, PAGE_SIZE);
 		} else {
@@ -2107,7 +2107,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 */
 		npte |= L2_S_PROTO;
 		if (prot & VM_PROT_WRITE)
-			npte |= L2_S_PROT_W;
+			npte |= L2_S_PROT_KW;
 
 		/*
 		 * Make sure the vector table is mapped cacheable
@@ -2143,7 +2143,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Make sure userland mappings get the right permissions
 	 */
 	if (pm != pmap_kernel() && va != vector_page)
-		npte |= L2_S_PROT_U;
+		npte |= L2_S_PROT_UR;
 
 	/*
 	 * Keep the stats up to date
@@ -2620,7 +2620,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		ptep = &l2b->l2b_kva[l2pte_index(sva)];
 
 		while (sva < next_bucket) {
-			if ((pte = *ptep) != 0 && (pte & L2_S_PROT_W) != 0) {
+			if ((pte = *ptep) != 0 && (pte & L2_S_PROT_KW) != 0) {
 				struct vm_page *pg;
 				u_int f;
 
@@ -2633,7 +2633,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				    FALSE, FALSE);
 
 				pg = PHYS_TO_VM_PAGE(l2pte_pa(pte));
-				pte &= ~L2_S_PROT_W;
+				pte &= ~L2_S_PROT_KW;
 				*ptep = pte;
 				PTE_SYNC(ptep);
 
@@ -2795,12 +2795,12 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	/*
 	 * Catch a userland access to the vector page mapped at 0x0
 	 */
-	if (user && (pte & L2_S_PROT_U) == 0)
+	if (user && (pte & L2_S_PROT_UR) == 0)
 		goto out;
 
 	pa = l2pte_pa(pte);
 
-	if ((ftype & VM_PROT_WRITE) && (pte & L2_S_PROT_W) == 0) {
+	if ((ftype & VM_PROT_WRITE) && (pte & L2_S_PROT_KW) == 0) {
 		/*
 		 * This looks like a good candidate for "page modified"
 		 * emulation...
@@ -2848,7 +2848,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		 * changing. We've already set the cacheable bits based on
 		 * the assumption that we can write to this page.
 		 */
-		*ptep = (pte & ~L2_TYPE_MASK) | L2_S_PROTO | L2_S_PROT_W;
+		*ptep = (pte & ~L2_TYPE_MASK) | L2_S_PROTO | L2_S_PROT_KW;
 		PTE_SYNC(ptep);
 		rv = 1;
 	} else
@@ -4624,8 +4624,10 @@ pt_entry_t	pte_l1_s_coherent;
 pt_entry_t	pte_l2_l_coherent;
 pt_entry_t	pte_l2_s_coherent;
 
-pt_entry_t	pte_l2_s_prot_u;
-pt_entry_t	pte_l2_s_prot_w;
+pt_entry_t	pte_l2_s_prot_ur;
+pt_entry_t	pte_l2_s_prot_uw;
+pt_entry_t	pte_l2_s_prot_kr;
+pt_entry_t	pte_l2_s_prot_kw;
 pt_entry_t	pte_l2_s_prot_mask;
 
 pt_entry_t	pte_l1_s_proto;
@@ -4668,8 +4670,10 @@ pmap_pte_init_generic(void)
 	pte_l2_l_coherent = L2_L_COHERENT_generic;
 	pte_l2_s_coherent = L2_S_COHERENT_generic;
 
-	pte_l2_s_prot_u = L2_S_PROT_U_generic;
-	pte_l2_s_prot_w = L2_S_PROT_W_generic;
+	pte_l2_s_prot_ur = L2_S_PROT_UR_generic;
+	pte_l2_s_prot_uw = L2_S_PROT_UW_generic;
+	pte_l2_s_prot_kr = L2_S_PROT_KR_generic;
+	pte_l2_s_prot_kw = L2_S_PROT_KW_generic;
 	pte_l2_s_prot_mask = L2_S_PROT_MASK_generic;
 
 	pte_l1_s_proto = L1_S_PROTO_generic;
@@ -4789,8 +4793,10 @@ pmap_pte_init_armv7(void)
 	pte_l2_l_coherent = L2_L_COHERENT_v7;
 	pte_l2_s_coherent = L2_S_COHERENT_v7;
 
-	pte_l2_s_prot_u = L2_S_PROT_U_v7;
-	pte_l2_s_prot_w = L2_S_PROT_W_v7;
+	pte_l2_s_prot_ur = L2_S_PROT_UR_v7;
+	pte_l2_s_prot_uw = L2_S_PROT_UW_v7;
+	pte_l2_s_prot_kr = L2_S_PROT_KR_v7;
+	pte_l2_s_prot_kw = L2_S_PROT_KW_v7;
 	pte_l2_s_prot_mask = L2_S_PROT_MASK_v7;
 
 	pte_l1_s_proto = L1_S_PROTO_v7;
@@ -4919,8 +4925,10 @@ pmap_pte_init_xscale(void)
 	pte_l2_l_coherent = L2_L_COHERENT_xscale;
 	pte_l2_s_coherent = L2_S_COHERENT_xscale;
 
-	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
-	pte_l2_s_prot_w = L2_S_PROT_W_xscale;
+	pte_l2_s_prot_ur = L2_S_PROT_UR_xscale;
+	pte_l2_s_prot_uw = L2_S_PROT_UW_xscale;
+	pte_l2_s_prot_kr = L2_S_PROT_KR_xscale;
+	pte_l2_s_prot_kw = L2_S_PROT_KW_xscale;
 	pte_l2_s_prot_mask = L2_S_PROT_MASK_xscale;
 
 	pte_l1_s_proto = L1_S_PROTO_xscale;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.23 2013/05/09 20:07:26 patrick Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.24 2013/05/18 18:06:05 patrick Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -326,25 +326,42 @@ extern int pmap_needs_pte_sync;
 
 #define	PTE_SYNC(pte)							\
 do {									\
-	if (PMAP_NEEDS_PTE_SYNC)					\
+	if (PMAP_NEEDS_PTE_SYNC) {					\
+		paddr_t pa;						\
+		cpu_drain_writebuf();					\
 		cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t));\
+		if (cpu_sdcache_enabled()) { 				\
+		(void)pmap_extract(pmap_kernel(), (vaddr_t)(pte), &pa);	\
+		cpu_sdcache_wb_range((vaddr_t)(pte), (paddr_t)(pa),	\
+		    sizeof(pt_entry_t));				\
+		};							\
+		cpu_drain_writebuf();					\
+	}								\
 } while (/*CONSTCOND*/0)
 
 #define	PTE_SYNC_RANGE(pte, cnt)					\
 do {									\
 	if (PMAP_NEEDS_PTE_SYNC) {					\
+		paddr_t pa;						\
+		cpu_drain_writebuf();					\
 		cpu_dcache_wb_range((vaddr_t)(pte),			\
 		    (cnt) << 2); /* * sizeof(pt_entry_t) */		\
+		if (cpu_sdcache_enabled()) { 				\
+		(void)pmap_extract(pmap_kernel(), (vaddr_t)(pte), &pa);\
+		cpu_sdcache_wb_range((vaddr_t)(pte), (paddr_t)(pa),	\
+		    (cnt) << 2); /* * sizeof(pt_entry_t) */		\
+		};							\
+		cpu_drain_writebuf();					\
 	}								\
 } while (/*CONSTCOND*/0)
 
-#define	l1pte_valid(pde)	((pde) != 0)
+#define	l1pte_valid(pde)	(((pde) & L1_TYPE_MASK) != L1_TYPE_INV)
 #define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
 #define	l1pte_page_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_C)
 #define	l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
 
 #define l2pte_index(v)		(((v) & L2_ADDR_BITS) >> L2_S_SHIFT)
-#define	l2pte_valid(pte)	((pte) != 0)
+#define	l2pte_valid(pte)	(((pte) & L2_TYPE_MASK) != L2_TYPE_INV)
 #define	l2pte_pa(pte)		((pte) & L2_S_FRAME)
 #define l2pte_minidata(pte)	(((pte) & \
 				 (L2_B | L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X)))\
@@ -356,16 +373,13 @@ do {									\
 #define pmap_pde_page(pde)	l1pte_page_p(*(pde))
 #define pmap_pde_fpage(pde)	l1pte_fpage_p(*(pde))
 
-#define	pmap_pte_v(pte)		l2pte_valid(*(pte))
-#define	pmap_pte_pa(pte)	l2pte_pa(*(pte))
-
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
 	(L1_TABLE_SIZE - (KERNEL_BASE >> L1_S_SHIFT) * sizeof(pd_entry_t))
 
 /************************* ARM MMU configuration *****************************/
 
-#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V7) != 0
 void	pmap_copy_page_generic(struct vm_page *, struct vm_page *);
 void	pmap_zero_page_generic(struct vm_page *);
 
@@ -385,16 +399,13 @@ void	pmap_pte_init_arm11(void);
 #if defined(CPU_ARMv7)
 void	pmap_pte_init_armv7(void);
 #endif /* CPU_ARMv7 */
-#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
+#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V7) != 0 */
 
 #if ARM_MMU_SA1 == 1
 void	pmap_pte_init_sa1(void);
 #endif /* ARM_MMU_SA1 == 1 */
 
 #if ARM_MMU_V7 == 1
-void	pmap_copy_page_v7(struct vm_page *, struct vm_page *);
-void	pmap_zero_page_v7(struct vm_page *);
-
 void	pmap_pte_init_v7(void);
 #endif /* ARM_MMU_V7 == 1 */
 
@@ -427,8 +438,10 @@ extern pt_entry_t		pte_l1_s_coherent;
 extern pt_entry_t		pte_l2_l_coherent;
 extern pt_entry_t		pte_l2_s_coherent;
 
-extern pt_entry_t		pte_l2_s_prot_u;
-extern pt_entry_t		pte_l2_s_prot_w;
+extern pt_entry_t		pte_l2_s_prot_ur;
+extern pt_entry_t		pte_l2_s_prot_uw;
+extern pt_entry_t		pte_l2_s_prot_kr;
+extern pt_entry_t		pte_l2_s_prot_kw;
 extern pt_entry_t		pte_l2_s_prot_mask;
  
 extern pt_entry_t		pte_l1_s_proto;
@@ -461,43 +474,51 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
-#define	L1_S_CACHE_MASK_v7	(L1_S_B|L1_S_C|L1_S_V7_TEX(TEX_V7_X))
+#define	L1_S_CACHE_MASK_v7	(L1_S_B|L1_S_C|L1_S_V7_TEX_MASK)
 
 #define	L1_S_COHERENT_generic	(L1_S_B|L1_S_C)
 #define	L1_S_COHERENT_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
-#define	L1_S_COHERENT_v7	(L1_S_C|L1_S_V7_TEX(TEX_V7_X))
+#define	L1_S_COHERENT_v7	(L1_S_C|L1_S_V7_TEX_MASK)
 
-#define	L2_L_PROT_U		(L2_AP(AP_U))
-#define	L2_L_PROT_W		(L2_AP(AP_W))
-#define	L2_L_PROT_MASK		(L2_L_PROT_U|L2_L_PROT_W)
+#define	L2_L_PROT_KR		(L2_AP(0))
+#define	L2_L_PROT_UR		(L2_AP(AP_U))
+#define	L2_L_PROT_KW		(L2_AP(AP_W))
+#define	L2_L_PROT_UW		(L2_AP(AP_U|AP_W))
+#define	L2_L_PROT_MASK		(L2_AP(AP_U|AP_W))
 
 #define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
-#define	L2_L_CACHE_MASK_v7	(L2_B|L2_C|L2_V7_L_TEX(TEX_V7_X))
+#define	L2_L_CACHE_MASK_v7	(L2_B|L2_C|L2_V7_L_TEX_MASK)
 
 #define	L2_L_COHERENT_generic	(L2_B|L2_C)
 #define	L2_L_COHERENT_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
-#define	L2_L_COHERENT_v7	(L2_C|L2_V7_L_TEX(TEX_V7_X))
+#define	L2_L_COHERENT_v7	(L2_C|L2_V7_L_TEX_MASK)
 
-#define	L2_S_PROT_U_generic	(L2_AP(AP_U))
-#define	L2_S_PROT_W_generic	(L2_AP(AP_W))
-#define	L2_S_PROT_MASK_generic	(L2_S_PROT_U|L2_S_PROT_W)
+#define	L2_S_PROT_UR_generic	(L2_AP(AP_U))
+#define	L2_S_PROT_UW_generic	(L2_AP(AP_U|AP_W))
+#define	L2_S_PROT_KR_generic	(L2_AP(0))
+#define	L2_S_PROT_KW_generic	(L2_AP(AP_W))
+#define	L2_S_PROT_MASK_generic	(L2_AP(AP_U|AP_W))
 
-#define	L2_S_PROT_U_xscale	(L2_AP0(AP_U))
-#define	L2_S_PROT_W_xscale	(L2_AP0(AP_W))
-#define	L2_S_PROT_MASK_xscale	(L2_S_PROT_U|L2_S_PROT_W)
+#define	L2_S_PROT_UR_xscale	(L2_AP0(AP_U))
+#define	L2_S_PROT_UW_xscale	(L2_AP0(AP_U|AP_W))
+#define	L2_S_PROT_KR_xscale	(L2_AP0(0))
+#define	L2_S_PROT_KW_xscale	(L2_AP0(AP_W))
+#define	L2_S_PROT_MASK_xscale	(L2_AP0(AP_U|AP_W))
 
-#define	L2_S_PROT_U_v7		(L2_AP0(AP_U))
-#define	L2_S_PROT_W_v7		(L2_AP0(AP_W))
-#define	L2_S_PROT_MASK_v7	(L2_S_PROT_U|L2_S_PROT_W)
+#define	L2_S_PROT_UR_v7		(L2_V7_AP(AP_KRWUR))
+#define	L2_S_PROT_UW_v7		(L2_V7_AP(AP_KRWURW))
+#define	L2_S_PROT_KR_v7		(L2_V7_AP(AP_V7_KR))
+#define	L2_S_PROT_KW_v7		(L2_V7_AP(AP_KRW))
+#define	L2_S_PROT_MASK_v7	(L2_V7_AP(0x07) | L2_V7_S_XN)
 
 #define	L2_S_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_S_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X))
-#define	L2_S_CACHE_MASK_v7	(L2_B|L2_C)
+#define	L2_S_CACHE_MASK_v7	(L2_B|L2_C|L2_V7_S_TEX_MASK)
 
 #define	L2_S_COHERENT_generic	(L2_B|L2_C)
 #define	L2_S_COHERENT_xscale	(L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X))
-#define	L2_S_COHERENT_v7	(L2_C)
+#define	L2_S_COHERENT_v7	(L2_C|L2_V7_S_TEX_MASK)
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
 #define	L1_S_PROTO_xscale	(L1_TYPE_S)
@@ -519,8 +540,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #if ARM_NMMUS > 1
 /* More than one MMU class configured; use variables. */
-#define	L2_S_PROT_U		pte_l2_s_prot_u
-#define	L2_S_PROT_W		pte_l2_s_prot_w
+#define	L2_S_PROT_UR		pte_l2_s_prot_ur
+#define	L2_S_PROT_UW		pte_l2_s_prot_uw
+#define	L2_S_PROT_KR		pte_l2_s_prot_kr
+#define	L2_S_PROT_KW		pte_l2_s_prot_kw
 #define	L2_S_PROT_MASK		pte_l2_s_prot_mask
 
 #define	L1_S_CACHE_MASK		pte_l1_s_cache_mask
@@ -538,8 +561,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	pmap_copy_page(s, d)	(*pmap_copy_page_func)((s), (d))
 #define	pmap_zero_page(d)	(*pmap_zero_page_func)((d))
 #elif (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
-#define	L2_S_PROT_U		L2_S_PROT_U_generic
-#define	L2_S_PROT_W		L2_S_PROT_W_generic
+#define	L2_S_PROT_UR		L2_S_PROT_UR_generic
+#define	L2_S_PROT_UW		L2_S_PROT_UW_generic
+#define	L2_S_PROT_KR		L2_S_PROT_KR_generic
+#define	L2_S_PROT_KW		L2_S_PROT_KW_generic
 #define	L2_S_PROT_MASK		L2_S_PROT_MASK_generic
 
 #define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_generic
@@ -557,8 +582,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	pmap_copy_page(s, d)	pmap_copy_page_generic((s), (d))
 #define	pmap_zero_page(d)	pmap_zero_page_generic((d))
 #elif ARM_MMU_XSCALE == 1
-#define	L2_S_PROT_U		L2_S_PROT_U_xscale
-#define	L2_S_PROT_W		L2_S_PROT_W_xscale
+#define	L2_S_PROT_UR		L2_S_PROT_UR_xscale
+#define	L2_S_PROT_UW		L2_S_PROT_UW_xscale
+#define	L2_S_PROT_KR		L2_S_PROT_KR_xscale
+#define	L2_S_PROT_KW		L2_S_PROT_KW_xscale
 #define	L2_S_PROT_MASK		L2_S_PROT_MASK_xscale
 
 #define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_xscale
@@ -576,8 +603,10 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	pmap_copy_page(s, d)	pmap_copy_page_xscale((s), (d))
 #define	pmap_zero_page(d)	pmap_zero_page_xscale((d))
 #elif ARM_MMU_V7 == 1
-#define	L2_S_PROT_U		L2_S_PROT_U_v7
-#define	L2_S_PROT_W		L2_S_PROT_W_v7
+#define	L2_S_PROT_UR		L2_S_PROT_UR_v7
+#define	L2_S_PROT_UW		L2_S_PROT_UW_v7
+#define	L2_S_PROT_KR		L2_S_PROT_KR_v7
+#define	L2_S_PROT_KW		L2_S_PROT_KW_v7
 #define	L2_S_PROT_MASK		L2_S_PROT_MASK_v7
 
 #define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_v7
@@ -603,11 +632,57 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L1_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L1_S_PROT_U : 0) | \
 				 (((pr) & VM_PROT_WRITE) ? L1_S_PROT_W : 0))
 
-#define	L2_L_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_L_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L2_L_PROT_W : 0))
+#ifndef _LOCORE
+static __inline pt_entry_t
+L2_L_PROT(int ku, vm_prot_t pr)
+{
+	pt_entry_t pte;
 
-#define	L2_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_S_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L2_S_PROT_W : 0))
+	if (ku == PTE_USER)
+		pte = (pr & VM_PROT_WRITE) ? L2_L_PROT_UW : L2_L_PROT_UR;
+	else
+		pte = (pr & VM_PROT_WRITE) ? L2_L_PROT_KW : L2_L_PROT_KR;
+	/*
+	 * If we set the XN bit, the abort handlers or the vector page
+	 * might be marked as such. Needs Debugging.
+	 */
+	/*
+	if ((pr & VM_PROT_EXECUTE) == 0)
+		pte |= L2_V7_L_XN;
+	*/
+
+	return pte;
+}
+static __inline pt_entry_t
+L2_S_PROT(int ku, vm_prot_t pr)
+{
+	pt_entry_t pte;
+
+	if (ku == PTE_USER)
+		pte = (pr & VM_PROT_WRITE) ? L2_S_PROT_UW : L2_S_PROT_UR;
+	else
+		pte = (pr & VM_PROT_WRITE) ? L2_S_PROT_KW : L2_S_PROT_KR;
+	/*
+	 * If we set the XN bit, the abort handlers or the vector page
+	 * might be marked as such. Needs Debugging.
+	 */
+	/*
+	if ((pr & VM_PROT_EXECUTE) == 0)
+		pte |= L2_V7_S_XN;
+	*/
+
+	return pte;
+}
+
+static __inline boolean_t
+l2pte_is_writeable(pt_entry_t pte, struct pmap *pm)
+{
+	/* XXX use of L2_V7_S_XN */
+	return (pte & L2_S_PROT_MASK & ~L2_V7_S_XN) ==
+	    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
+	              VM_PROT_WRITE);
+}
+#endif
 
 /*
  * Macros to test if a mapping is mappable with an L1 Section mapping
