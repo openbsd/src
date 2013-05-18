@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.145 2013/05/08 03:00:32 jsg Exp $ */
+/* $OpenBSD: mfi.c,v 1.146 2013/05/18 08:39:47 jmc Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1487,7 +1487,7 @@ mfi_bio_getitall(struct mfi_softc *sc)
 		goto done;
 	}
 
-	/* replace current pointer with enw one */
+	/* replace current pointer with new one */
 	if (sc->sc_cfg)
 		free(sc->sc_cfg, M_DEVBUF);
 	sc->sc_cfg = cfg;
