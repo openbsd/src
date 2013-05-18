@@ -258,10 +258,10 @@ gcov_exit (void)
 	      };
 
           /* Update complete filename with stripped original. */
-          strcpy (gi_filename_up, fname);
+          strlcpy (gi_filename_up, fname, gcov_max_filename + 1);
         }
       else
-        strcpy (gi_filename_up, gi_ptr->filename);
+        strlcpy (gi_filename_up, gi_ptr->filename, gcov_max_filename + 1);
 
       /* Totals for this object file.  */
       ci_ptr = gi_ptr->counts;
