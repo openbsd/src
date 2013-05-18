@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.21 2013/05/17 04:59:29 lum Exp $	*/
+/*	$OpenBSD: dir.c,v 1.22 2013/05/18 11:23:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -86,24 +86,22 @@ makedir(int f, int n)
 	struct stat	 sb;
 	int		 finished, ishere;
 	mode_t		 dir_mode, mode, oumask;
-	char		 bufc[NFILEN], path[MAXPATHLEN];
-	char		*slash,	*tpath, *fpath;
+	char		 bufc[NFILEN];
+	char		*slash,	*path;
 
 	if (getbufcwd(bufc, sizeof(bufc)) != TRUE)
 		return (ABORT);
-	if ((tpath = eread("Make directory: ", bufc, NFILEN,
+	if ((path = eread("Make directory: ", bufc, NFILEN,
 	    EFDEF | EFNEW | EFCR | EFFILE)) == NULL)
 		return (ABORT);
-	else if (tpath[0] == '\0')
+	else if (path[0] == '\0')
 		return (FALSE);
 
-	if ((fpath = expandtilde(tpath)) == NULL)
+	if ((path = adjustname(path, TRUE)) == NULL)
 		return (FALSE);
-
-	(void)strlcpy(path, fpath, sizeof(path));
-	free(fpath);
 
 	slash = path;
+
 	oumask = umask(0);
 	mode = 0777 & ~oumask;
 	dir_mode = mode | S_IWUSR | S_IXUSR;
