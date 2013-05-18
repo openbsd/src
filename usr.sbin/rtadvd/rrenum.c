@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrenum.c,v 1.14 2011/04/06 11:36:26 miod Exp $	*/
+/*	$OpenBSD: rrenum.c,v 1.15 2013/05/18 07:34:59 jmc Exp $	*/
 /*	$KAME: rrenum.c,v 1.11 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ do_rr(int len, struct icmp6_router_renum *rr)
 		if (len < sizeof(struct rr_pco_match)) {
 		    tooshort:
 			log_warnx("pkt too short. left len = %d. "
-			    "gabage at end of pkt?", len);
+			    "garbage at end of pkt?", len);
 			return 1;
 		}
 		rpmlen = rpm->rpm_len << 3;
