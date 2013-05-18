@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.11 2013/05/17 23:08:37 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.12 2013/05/18 11:26:01 miod Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: May 17 2013 $
+.Dd $Mdocdate: May 18 2013 $
 .Dt INTRO 4 mvme88k
 .Os
 .Sh NAME
@@ -102,7 +102,9 @@ MVME181 system controller
 .It Xr bussw 4
 BusSwitch local peripheral bus interface
 .It Xr cl 4
-Cirrus Logic CL2400 serial controller
+Cirrus Logic CD2401 serial controller
+.It Xr dart 4
+MC68681 or MC68692 dual UART
 .It Xr ie 4
 Intel i82596 Ethernet device
 .It Xr le 4

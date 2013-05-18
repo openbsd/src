@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscon.4,v 1.1 2008/01/05 12:47:56 miod Exp $
+.\"	$OpenBSD: syscon.4,v 1.2 2013/05/18 11:26:01 miod Exp $
 .\"
 .\" Copyright (c) 2008 Miodrag Vallat.
 .\"
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2008 $
+.Dd $Mdocdate: May 18 2013 $
 .Dt SYSCON 4 mvme88k
 .Os
 .Sh NAME
@@ -24,16 +24,13 @@
 .Sh SYNOPSIS
 .Cd "syscon0 at mainbus0 addr 0xfff00000"
 .Cd "nvram0  at syscon0 offset 0x80000"
-.Cd "dart0   at syscon0 offset 0x82000"
+.Cd "dart0   at syscon0 offset 0x82000 ipl 3"
 .Cd "vme0    at syscon0 offset 0x85000"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides an interface to the different local bus-attached I/O
 devices found on MVME188 systems.
-It also provides internal interfaces to help handling interrupts produced by
-the on-board devices
-.Pq as opposed to the VME devices .
 .Pp
 The devices connected to
 .Nm
@@ -41,12 +38,12 @@ are:
 .Pp
 .Bl -tag -compact -width 8n -offset indent
 .It Xr dart 4
-MC68681 dual UART
+MC68681 or MC68692 dual UART
 .It Xr nvram 4
 Non-volatile memory
 .It Xr vme 4
 VMEbus interface
 .El
 .Sh SEE ALSO
-.Xr autoconf 4 ,
+.Xr intro 4 ,
 .Xr config 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: angelfire.4,v 1.2 2013/05/18 11:26:01 miod Exp $
+.\"	$OpenBSD: cl.4,v 1.1 2013/05/18 11:26:01 miod Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -15,31 +15,34 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: May 18 2013 $
-.Dt ANGELFIRE 4 mvme88k
+.Dt CL 4 mvme88k
 .Os
 .Sh NAME
-.Nm angelfire
-.Nd MVME181 system controller
+.Nm cl
+.Nd Cirrus Logic CD2401 serial controller
 .Sh SYNOPSIS
-.Cd "angelfire0 at mainbus0 addr 0xff800000"
-.Cd "dart0      at angelfire0 offset 0x640000 ipl 5"
-.Cd "vme0       at angelfire0 offset 0x680000"
+.Cd "cl0 at pcctwo0 offset 0x45000 ipl 3"
+.Cd "cl1 at pcctwo0 offset 0x45200 ipl 3" Pq "M8120 only"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides an interface to the interrupt controller and VME bus controller
-found on MVME180 and MVME181 systems.
+driver provides support for the CD2401 serial controller found on
+MVME187, MVME197 and M8120 systems.
 .Pp
-The devices connected to
+Each CD2401 controller supports four serial ports with a 16 character buffer.
+.Pp
+The following link speeds are supported by the
 .Nm
-are:
-.Pp
-.Bl -tag -compact -width 8n -offset indent
-.It Xr dart 4
-MC68681 or MC68692 dual UART
-.It Xr vme 4
-VMEbus interface
+driver:
+50, 110, 150, 300, 600, 1200, 2401, 3600, 4800, 7200, 9600, 19200, 38400,
+56000 and 64000 bps,
+with an error margin smaller than 0.25%
+(except for 56000 bps, where the error margin is 0.80%).
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /dev/tty[0-3]
+.It Pa /dev/tty[4-7] Pq M8120 only
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr vme 4
+.Xr tty 4
