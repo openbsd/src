@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.27 2009/03/01 22:08:12 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.28 2013/05/18 17:45:38 miod Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: March 1 2009 $
+.Dd $Mdocdate: May 18 2013 $
 .Dt INTRO 4 mvme68k
 .Os
 .Sh NAME
@@ -96,13 +96,13 @@ Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width pcctwo(4) -compact -offset indent
-.It Xr cl
-Cirrus Logic CL2400 serial controller
-.It Xr dart
-MC68681 serial controller
+.Bl -tag -width 9n -compact -offset indent
+.It Xr cl 4
+Cirrus Logic CD2401 serial controller
+.It Xr dart 4
+MC68681 or MC68692 dual UART
 .It Xr flash
-MVME162 on-board flash memory
+MVME1x2 on-board flash memory
 .It Xr ie 4
 Intel i82596 Ethernet device
 .It Xr ipic
@@ -111,11 +111,11 @@ MVME162 Industry Pack ports
 AMD LANCE Ethernet device
 .It Xr lp
 MVME147 printer interface
-.It Xr lrc
+.It Xr lrc 4
 MVME165 Local Resource Controller
 .It Xr mc
-MVME1[67]2 MCchip
-.It Xr memc
+MCchip local bus controller
+.It Xr memc 4
 MVME1[67]x memory controller
 .\" nvram
 .It Xr ofobio 4
@@ -123,12 +123,11 @@ MVME141 On-Board I/O
 .It Xr osiop 4
 Symbios/NCR 53C710 SCSI driver
 .It Xr pcc
-MVME147 PCC chip
-.It Xr pcctwo
-MVME1[67]7 PCC2 chip
-.It Xr sram
-MVME1[67]2 static memory
-.It Xr vme
+PCCchip local bus controller
+.It Xr pcctwo 4
+PCCchip2 local bus controller
+.\" sram
+.It Xr vme 4
 VME bus support
 .It Xr vs 4
 MVME328, MVME328S and MVME328XT high performance SCSI controller

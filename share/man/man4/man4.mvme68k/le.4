@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.18 2011/09/03 22:59:07 jmc Exp $
+.\"	$OpenBSD: le.4,v 1.19 2013/05/18 17:45:38 miod Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,20 +33,20 @@
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: September 3 2011 $
+.Dd $Mdocdate: May 18 2013 $
 .Dt LE 4 mvme68k
 .Os
 .Sh NAME
 .Nm le
 .Nd AMD LANCE Ethernet device
 .Sh SYNOPSIS
-.Cd "le* at pcc0 offset 0x1800 ipl 1                      " Pq "MVME147"
-.Cd "le* at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100" Pq "MVME376"
-.Cd "le* at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100" Pq "MVME376"
-.Cd "le* at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100" Pq "MVME376"
-.Cd "le* at vmes0 addr 0xffff5400 ipl 1 vec 0x77 len 0x100" Pq "MVME376"
-.Cd "le* at vmes0 addr 0xffff5600 ipl 1 vec 0x78 len 0x100" Pq "MVME376"
-.Cd "le* at vmes0 addr 0xffffa400 ipl 1 vec 0x79 len 0x100" Pq "MVME376"
+.Cd "le* at pcc0 offset 0x1800 ipl 3                      " Pq "MVME147"
+.Cd "le* at vmes0 addr 0xffff1200 ipl 3 vec 0x74 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffff1400 ipl 3 vec 0x75 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffff1600 ipl 3 vec 0x76 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffff5400 ipl 3 vec 0x77 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffff5600 ipl 3 vec 0x78 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffffa400 ipl 3 vec 0x79 len 0x100" Pq "MVME376"
 .Sh DESCRIPTION
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ie.4,v 1.9 2009/03/01 21:40:49 miod Exp $
+.\"     $OpenBSD: ie.4,v 1.10 2013/05/18 17:45:38 miod Exp $
 .\"
 .\" Copyright (c) 1988 John E. Stone <j.stone@acm.org>
 .\"
@@ -14,15 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2009 $
+.Dd $Mdocdate: May 18 2013 $
 .Dt IE 4 mvme68k
 .Os
 .Sh NAME
 .Nm ie
 .Nd Intel i82596 Ethernet device
 .Sh SYNOPSIS
-.Cd "ie0 at mc0 offset 0x46000 ipl 1" Pq "MVME162/172"
-.Cd "ie0 at pcctwo0 offset 0x46000 ipl 1" Pq "MVME167/177"
+.Cd "ie0 at mc0     offset 0x46000 ipl 3" Pq "MVME162/172"
+.Cd "ie0 at pcctwo0 offset 0x46000 ipl 3" Pq "MVME166/167/176/177"
 .Sh DESCRIPTION
 The
 .Nm

@@ -1,0 +1,61 @@
+.\"	$OpenBSD: dart.4,v 1.1 2013/05/18 17:45:38 miod Exp $
+.\"
+.\" Copyright (c) 2013 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 18 2013 $
+.Dt DART 4 mvme68k
+.Os
+.Sh NAME
+.Nm dart
+.Nd MC68681 or MC68692 dual UART
+.Sh SYNOPSIS
+.Cd "dart0 at ofobio0 offset 0x20000 ipl 5" Pq MVME141
+.Cd "dart0 at lrc0    offset 0x40000 ipl 5" Pq MVME165
+.Sh DESCRIPTION
+The MC68681 and MC68692 dual asynchronous receiver/transmitter
+.Pq Tn DUART
+component provides two serial ports, as well as a 16-bit programmable
+counter/timer.
+.Pp
+The
+.Nm
+driver provides support for the two serial ports found onboard
+MVME141 and MVME165 systems.
+.Pp
+The
+.Nm
+serial ports have a two character buffer on the transmit path, and a four
+character buffer on the receive path.
+.Pp
+The following link speeds are supported by the
+.Nm
+driver:
+75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600 and 19200 bps.
+.Pp
+On MVME141, the counter/timer is used to provide the
+scheduling clock.
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /dev/ttya
+.It Pa /dev/ttyb
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr tty 4
+.Sh BUGS
+The following link speeds are supported by the hardware, but not by the
+.Nm
+driver yet:
+50, 200, 1050, 2000, 7200 and 38400 bps.

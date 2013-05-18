@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ofobio.4,v 1.3 2013/05/18 17:45:38 miod Exp $
+.\"	$OpenBSD: memc.4,v 1.1 2013/05/18 17:45:38 miod Exp $
 .\"
-.\" Copyright (c) 2009 Miodrag Vallat.
+.\" Copyright (c) 2013 Miodrag Vallat.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,22 +15,35 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: May 18 2013 $
-.Dt OFOBIO 4 mvme68k
+.Dt MEMC 4 mvme68k
 .Os
 .Sh NAME
-.Nm ofobio
-.Nd MVME141 On-Board I/O
+.Nm memc
+.Nd MVME1[67]x memory controller
 .Sh SYNOPSIS
-.Cd "ofobio0 at mainbus0 addr 0xfff50000"
+.Cd "memc0 at mc0 offset 0x43000    " Pq MVME162/172
+.Cd "memc1 at mc0 offset 0x43100    " Pq MVME162/172
+.Cd "memc0 at pcctwo0 offset 0x43000" Pq MVME166/167/176/177
+.Cd "memc1 at pcctwo0 offset 0x43100" Pq MVME166/167/176/177
 .Sh DESCRIPTION
+MVME16x and MVME17x boards support up to two memory mezzanine boards.
+Each board contains its own memory controller, of which two flavours exist:
+.Pp
+.Bl -tag -compact -width 8n
+.It MEMC040
+Memory Controller with parity memory
+.It MCECC
+Memory Controller with ECC memory
+.El
+.Pp
 The
 .Nm
-driver controls local interrupt routing and cache memory on the MVME141 board.
-It is also responsible for handling abort button interrupts.
+driver recognizes both.
 .Sh SEE ALSO
-.\" .Xr clock 4 ,
-.Xr dart 4 ,
 .Xr intro 4 ,
-.\" .Xr nvram 4
-.\" .Xr vsb 4
-.Xr vme 4
+.\" Xr mc 4 ,
+.Xr pcctwo 4
+.Sh BUGS
+The
+.Nm
+driver does not report corrected ECC memory errors.

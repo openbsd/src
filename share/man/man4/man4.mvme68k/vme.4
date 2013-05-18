@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcctwo.4,v 1.3 2013/05/18 17:45:38 miod Exp $
+.\"	$OpenBSD: vme.4,v 1.1 2013/05/18 17:45:38 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -26,45 +26,64 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: May 18 2013 $
-.Dt PCCTWO 4 mvme68k
+.Dt VME 4 mvme88k
 .Os
 .Sh NAME
-.Nm pcctwo
-.Nd PCCchip2 local bus controller
+.Nm vme
+.Nd VMEbus interface
 .Sh SYNOPSIS
-.Cd "pcctwo0 at mainbus0 addr 0xfff00000"
+.Cd "vme0   at lrc0    offset 0x20000"
+.Cd "vme0   at mc0     offset 0x40000"
+.Cd "vme0   at ofobio0 offset 0x60000"
+.Cd "vme0   at pcc0    offset 0x2000"
+.Cd "vme0   at pcctwo0 offset 0x40000"
+.Cd "vmes0  at vme0"
+.Cd "vmel0  at vme0"
 .Sh DESCRIPTION
 The
 .Nm
-PCCchip2 ASIC provides an interface to the different local bus-attached I/O
-devices as found on the MVME166, MVME167, MVME176 and MVME177
-Single-Board Computers.
+driver provides access to the VMEbus.
+On MVME141 boards, it operates the VMEbus part of the
+.Xr ofobio 4
+device.
+On MVME147 boards, it operates the VMEchip ASIC connected to the
+.\" .Xr pcc 4
+PCCchip local bus controller.
+On MVME165 boards, it operates the VMEbus part of the
+.Xr lrc 4
+local resource controller.
+On MVME162 and MVME172 boards, it operates the VMEchip2 ASIC connectod to the
+.\" .Xr mc 4
+MCchip local bus controller.
+On MVME166, MVME167, MVME176 and MVME177 boards, it operates the VMEchip2 ASIC
+connected to the
+.Xr pcctwo 4
+PCCchip2 local bus controller.
 .Pp
-Features summary:
+The
+.Nm
+driver exposes the D16 and D32 access spaces through the
+.Nm vmes
+and
+.Nm vmel
+drivers, respectively.
 .Pp
-.Bl -bullet -compact
-.It
-8-bit parallel I/O port
-.It
-Master/slave interface for
-.Xr cl 4
-Cirrus Logic CD2401 serial controller
-.It
-Host interface to
-.Xr ie 4
-Intel i82596CA LAN coprocessor
-.It
-Host interface to
-.Xr osiop 4
-Symbios/NCR 53C710 SCSI controller
-.It
-Interface to the
-.Xr memc 4
-Memory controller ASIC
+The currently supported VMEbus drivers are:
+.Pp
+.Bl -tag -compact -width 10n -offset indent
+.It Xr le 4
+MVME376 AMD LANCE Ethernet device
+.It Xr vs 4
+MVME328, MVME328S and MVME328XT high performance SCSI controller
+.It Xr vsbic 4
+MVME327A SCSI and floppy controller
+.\" .It Xr vx 4
+.\" MVME332XT high performance serial I/O controller
 .El
 .Sh SEE ALSO
-.Xr cl 4 ,
-.Xr ie 4 ,
 .Xr intro 4 ,
-.Xr memc 4 ,
-.Xr osiop 4
+.Xr lrc 4 ,
+.\" .Xr mc 4 ,
+.Xr ofobio 4 ,
+.\" .Xr pcc 4 ,
+.Xr pcctwo 4
