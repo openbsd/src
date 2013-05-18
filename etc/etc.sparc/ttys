@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ttys,v 1.9 2008/01/08 05:08:11 deraadt Exp $
+#	$OpenBSD: ttys,v 1.10 2013/05/18 23:28:23 miod Exp $
 #
 # name	getty				type	status		comments
 #
@@ -7,13 +7,11 @@
 console	"/usr/libexec/getty std.9600"	sun	on  secure
 # graphics console
 ttyC0	"/usr/libexec/getty std.9600"	sun	off secure
-# on-board serial lines
+# on-board serial lines (ttyc-ttyd on 4/3x0 only)
 ttya	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyb	"/usr/libexec/getty std.9600"	unknown	off secure
-# ttyc is usually the mouse port...
-# ttyc	"/usr/libexec/getty std.9600"	unknown	off secure
+ttyc	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyd	"/usr/libexec/getty std.9600"	unknown	off secure
-ttye	"/usr/libexec/getty std.9600"	unknown	off secure
 # magma0
 ttym0	"/usr/libexec/getty std.9600"	unknown	off secure
 ttym1	"/usr/libexec/getty std.9600"	unknown	off secure
