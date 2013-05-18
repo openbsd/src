@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.20 2013/03/27 00:06:09 patrick Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.21 2013/05/18 17:34:01 patrick Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -417,7 +417,7 @@ struct cpu_functions armv7_cpufuncs = {
 
 	armv7_dcache_wbinv_all,		/* dcache_wbinv_all	*/
 	armv7_dcache_wbinv_range,	/* dcache_wbinv_range	*/
-/*XXX*/	armv7_dcache_wbinv_range,	/* dcache_inv_range	*/
+	armv7_dcache_inv_range,		/* dcache_inv_range	*/
 	armv7_dcache_wb_range,		/* dcache_wb_range	*/
 
 	armv7_idcache_wbinv_all,	/* idcache_wbinv_all	*/
