@@ -1,4 +1,4 @@
-/* $OpenBSD: auth1.c,v 1.78 2013/05/17 00:13:13 djm Exp $ */
+/* $OpenBSD: auth1.c,v 1.79 2013/05/19 02:42:42 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -40,17 +40,17 @@
 /* import */
 extern ServerOptions options;
 
-static int auth1_process_password(Authctxt *, char *, size_t);
-static int auth1_process_rsa(Authctxt *, char *, size_t);
-static int auth1_process_rhosts_rsa(Authctxt *, char *, size_t);
-static int auth1_process_tis_challenge(Authctxt *, char *, size_t);
-static int auth1_process_tis_response(Authctxt *, char *, size_t);
+static int auth1_process_password(Authctxt *);
+static int auth1_process_rsa(Authctxt *);
+static int auth1_process_rhosts_rsa(Authctxt *);
+static int auth1_process_tis_challenge(Authctxt *);
+static int auth1_process_tis_response(Authctxt *);
 
 struct AuthMethod1 {
 	int type;
 	char *name;
 	int *enabled;
-	int (*method)(Authctxt *, char *, size_t);
+	int (*method)(Authctxt *);
 };
 
 const struct AuthMethod1 auth1_methods[] = {
@@ -105,7 +105,7 @@ get_authname(int type)
 
 /*ARGSUSED*/
 static int
-auth1_process_password(Authctxt *authctxt, char *info, size_t infolen)
+auth1_process_password(Authctxt *authctxt)
 {
 	int authenticated = 0;
 	char *password;
@@ -130,7 +130,7 @@ auth1_process_password(Authctxt *authctxt, char *info, size_t infolen)
 
 /*ARGSUSED*/
 static int
-auth1_process_rsa(Authctxt *authctxt, char *info, size_t infolen)
+auth1_process_rsa(Authctxt *authctxt)
 {
 	int authenticated = 0;
 	BIGNUM *n;
@@ -148,7 +148,7 @@ auth1_process_rsa(Authctxt *authctxt, char *info, size_t infolen)
 
 /*ARGSUSED*/
 static int
-auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
+auth1_process_rhosts_rsa(Authctxt *authctxt)
 {
 	int keybits, authenticated = 0;
 	u_int bits;
@@ -181,7 +181,7 @@ auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
 	    client_host_key);
 	key_free(client_host_key);
 
-	snprintf(info, infolen, " ruser %.100s", client_user);
+	auth_info(authctxt, "ruser %.100s", client_user);
 	free(client_user);
 
 	return (authenticated);
@@ -189,7 +189,7 @@ auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
 
 /*ARGSUSED*/
 static int
-auth1_process_tis_challenge(Authctxt *authctxt, char *info, size_t infolen)
+auth1_process_tis_challenge(Authctxt *authctxt)
 {
 	char *challenge;
 
@@ -208,7 +208,7 @@ auth1_process_tis_challenge(Authctxt *authctxt, char *info, size_t infolen)
 
 /*ARGSUSED*/
 static int
-auth1_process_tis_response(Authctxt *authctxt, char *info, size_t infolen)
+auth1_process_tis_response(Authctxt *authctxt)
 {
 	int authenticated = 0;
 	char *response;
@@ -231,7 +231,6 @@ static void
 do_authloop(Authctxt *authctxt)
 {
 	int authenticated = 0;
-	char info[1024];
 	int type = 0;
 	const struct AuthMethod1 *meth;
 
@@ -244,7 +243,7 @@ do_authloop(Authctxt *authctxt)
 	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif
 	    PRIVSEP(auth_password(authctxt, ""))) {
-		auth_log(authctxt, 1, 0, "without authentication", NULL, "");
+		auth_log(authctxt, 1, 0, "without authentication", NULL);
 		return;
 	}
 
@@ -257,7 +256,6 @@ do_authloop(Authctxt *authctxt)
 		/* default to fail */
 		authenticated = 0;
 
-		info[0] = '\0';
 
 		/* Get a packet from the client. */
 		type = packet_read();
@@ -274,7 +272,7 @@ do_authloop(Authctxt *authctxt)
 			goto skip;
 		}
 
-		authenticated = meth->method(authctxt, info, sizeof(info));
+		authenticated = meth->method(authctxt);
 		if (authenticated == -1)
 			continue; /* "postponed" */
 
@@ -293,8 +291,7 @@ do_authloop(Authctxt *authctxt)
 
  skip:
 		/* Log before sending the reply */
-		auth_log(authctxt, authenticated, 0, get_authname(type),
-		    NULL, info);
+		auth_log(authctxt, authenticated, 0, get_authname(type), NULL);
 
 		if (authenticated)
 			return;
