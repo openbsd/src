@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.60 2013/05/15 22:46:00 guenther Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.61 2013/05/19 18:37:40 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -476,6 +476,7 @@ handle_client(int sock_fd, int ctl_fd)
 void
 suspend(int ctl_fd)
 {
+	syslog(LOG_NOTICE, "system suspending");
 	do_etc_file(_PATH_APM_ETC_SUSPEND);
 	sync();
 	sleep(1);
@@ -485,6 +486,7 @@ suspend(int ctl_fd)
 void
 stand_by(int ctl_fd)
 {
+	syslog(LOG_NOTICE, "system entering standby");
 	do_etc_file(_PATH_APM_ETC_STANDBY);
 	sync();
 	sleep(1);
@@ -494,6 +496,7 @@ stand_by(int ctl_fd)
 void
 hibernate(int ctl_fd)
 {
+	syslog(LOG_NOTICE, "system hibernating");
 	do_etc_file(_PATH_APM_ETC_HIBERNATE);
 	sync();
 	sleep(1);
@@ -713,7 +716,7 @@ main(int argc, char *argv[])
 			else if (resumes) {
 				do_etc_file(_PATH_APM_ETC_RESUME);
 				syslog(LOG_NOTICE,
-				    "system resumed from APM sleep");
+				    "system resumed from sleep");
 			}
 
 			if (powerchange) {
