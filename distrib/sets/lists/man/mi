@@ -2092,7 +2092,6 @@
 ./usr/share/man/man4/sgi/panel.4
 ./usr/share/man/man4/sgi/power.4
 ./usr/share/man/man4/sgi/sq.4
-./usr/share/man/man4/sgi/wdsc.4
 ./usr/share/man/man4/sgi/xbow.4
 ./usr/share/man/man4/sgi/xbpci.4
 ./usr/share/man/man4/sgi/xbridge.4
@@ -2435,6 +2434,7 @@
 ./usr/share/man/man4/wbsio.4
 ./usr/share/man/man4/wd.4
 ./usr/share/man/man4/wdc.4
+./usr/share/man/man4/wdsc.4
 ./usr/share/man/man4/we.4
 ./usr/share/man/man4/wi.4
 ./usr/share/man/man4/wpi.4

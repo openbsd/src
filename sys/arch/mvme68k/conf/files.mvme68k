@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.35 2010/12/06 20:10:18 jasper Exp $
+#	$OpenBSD: files.mvme68k,v 1.36 2013/05/19 20:32:47 miod Exp $
 
 # config file for mvme68k
 
@@ -72,9 +72,8 @@ file	arch/mvme68k/dev/if_ie.c		ie
 
 include "scsi/files.scsi"
 
-device	wdsc: scsi
+device	wdsc: wd33c93, scsi
 attach	wdsc at pcc
-file	arch/mvme68k/dev/sbic.c			wdsc
 file	arch/mvme68k/dev/wdsc.c			wdsc
 
 device	ipic {manu = -1, prod = -1, [vec = -1], [ipl = 0]}
