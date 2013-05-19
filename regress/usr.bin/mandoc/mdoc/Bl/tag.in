@@ -1,4 +1,4 @@
-.Dd December 31, 2012
+.Dd May 19, 2013
 .Dt BL-TAG 1
 .Os OpenBSD
 .Sh NAME
@@ -56,6 +56,14 @@ text
 .Bl -tag -width xxxxxxxxxx
 .It tag
 text
+.El
+.Pp
+Indented list:
+.Bl -tag -offset 6n -width xxx
+.It one
+first text
+.It two
+second text
 .El
 .Pp
 Embedded paragraph:

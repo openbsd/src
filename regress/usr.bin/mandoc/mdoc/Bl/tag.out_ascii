@@ -47,10 +47,16 @@ DDEESSCCRRIIPPTTIIOONN
 
      tag         text
 
+     Indented list:
+
+           one  first text
+
+           two  second text
+
      Embedded paragraph:
 
      tag     first paragraph
 
              second paragraph
 
-OpenBSD                        December 31, 2012                       OpenBSD
+OpenBSD                          May 19, 2013                          OpenBSD

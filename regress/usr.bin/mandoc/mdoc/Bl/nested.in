@@ -1,4 +1,4 @@
-.Dd December 31, 2012
+.Dd May 19, 2013
 .Dt BL-NESTED 1
 .Os OpenBSD
 .Sh NAME
@@ -67,6 +67,15 @@ outer text
 .Dl outer text (one-line display)
 .Bl -tag -width 4n
 .It inner tag
+inner text
+.El
+outer text
+.El
+.Bl -tag -width 4n -offset 3n
+.It outer tag (indented 3n)
+outer text
+.Bl -tag -width 4n -offset 6n
+.It inner tag (indented 6n)
 inner text
 .El
 outer text

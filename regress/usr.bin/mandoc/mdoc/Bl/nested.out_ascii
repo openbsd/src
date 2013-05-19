@@ -42,6 +42,13 @@ DDEESSCCRRIIPPTTIIOONN
            inner tag
                  inner text
            outer text
+
+        outer tag (indented 3n)
+              outer text
+
+                    inner tag (indented 6n)
+                          inner text
+              outer text
      final text
 
-OpenBSD                        December 31, 2012                       OpenBSD
+OpenBSD                          May 19, 2013                          OpenBSD
