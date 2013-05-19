@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.79 2013/04/29 17:06:20 matthew Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.80 2013/05/19 19:14:44 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 int selscan(struct proc *, fd_set *, fd_set *, int, int, register_t *);
 void pollscan(struct proc *, struct pollfd *, u_int, register_t *);
 int pollout(struct pollfd *, struct pollfd *, u_int);
-int dopselect(struct proc *, u_int, fd_set *, fd_set *, fd_set *,
+int dopselect(struct proc *, int, fd_set *, fd_set *, fd_set *,
     const struct timespec *, const sigset_t *, register_t *);
 int doppoll(struct proc *, struct pollfd *, u_int, const struct timespec *,
     const sigset_t *, register_t *);
@@ -598,7 +598,7 @@ sys_pselect(struct proc *p, void *v, register_t *retval)
 }
 
 int
-dopselect(struct proc *p, u_int nd, fd_set *in, fd_set *ou, fd_set *ex,
+dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
     const struct timespec *tsp, const sigset_t *sigmask, register_t *retval)
 {
 	fd_mask bits[6];
@@ -607,6 +607,8 @@ dopselect(struct proc *p, u_int nd, fd_set *in, fd_set *ou, fd_set *ex,
 	int s, ncoll, error = 0, timo;
 	u_int ni;
 
+	if (nd < 0)
+		return (EINVAL);
 	if (nd > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
 		nd = p->p_fd->fd_nfiles;
