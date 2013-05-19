@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.46 2012/12/31 22:34:01 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.47 2013/05/19 21:05:29 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -404,6 +404,8 @@ print_offs(const char *v)
 	struct roffsu	  su;
 	size_t		  sz;
 
+	print_line(".RS", MMAN_Bk_susp);
+
 	/* Convert v into a number (of characters). */
 	if (NULL == v || '\0' == *v || 0 == strcmp(v, "left"))
 		sz = 0;
@@ -423,6 +425,7 @@ print_offs(const char *v)
 			 * in terms of different units.
 			 */
 			print_word(v);
+			outflags |= MMAN_nl;
 			return;
 		}
 	} else
@@ -437,6 +440,7 @@ print_offs(const char *v)
 
 	snprintf(buf, sizeof(buf), "%ldn", sz);
 	print_word(buf);
+	outflags |= MMAN_nl;
 }
 
 /*
@@ -821,9 +825,7 @@ pre_bd(DECL_ARGS)
 		print_line(".nf", 0);
 	if (0 == n->norm->Bd.comp && NULL != n->parent->prev)
 		outflags |= MMAN_sp;
-	print_line(".RS", MMAN_Bk_susp);
 	print_offs(n->norm->Bd.offs);
-	outflags |= MMAN_nl;
 	return(1);
 }
 
@@ -977,9 +979,7 @@ static int
 pre_dl(DECL_ARGS)
 {
 
-	print_line(".RS", MMAN_Bk_susp);
 	print_offs("6n");
-	outflags |= MMAN_nl;
 	return(1);
 }
 
