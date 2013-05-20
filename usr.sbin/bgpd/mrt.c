@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.73 2012/11/15 18:06:36 krw Exp $ */
+/*	$OpenBSD: mrt.c,v 1.74 2013/05/20 11:25:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -299,6 +299,8 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_SHORT(h2buf, 1);		/* status */
 	DUMP_LONG(h2buf, p->lastchange);	/* originated */
 
+	pt_getaddr(p->prefix, &addr);
+
 	if (p->aspath->nexthop == NULL) {
 		bzero(&nexthop, sizeof(struct bgpd_addr));
 		nexthop.aid = addr.aid;
@@ -306,7 +308,6 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	} else
 		nh = &p->aspath->nexthop->exit_nexthop;
 
-	pt_getaddr(p->prefix, &addr);
 	switch (addr.aid) {
 	case AID_INET:
 		DUMP_SHORT(h2buf, AFI_IPv4);	/* afi */
