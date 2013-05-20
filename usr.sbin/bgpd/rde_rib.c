@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.135 2013/03/14 14:52:52 florian Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.136 2013/05/20 11:26:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -840,6 +840,7 @@ prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, u_int8_t plen)
 	case AID_VPN_IPv4:
 		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn4.rd) +
 		    prefix->vpn4.labellen;
+		break;
 	default:
 		return (-1);
 	}
