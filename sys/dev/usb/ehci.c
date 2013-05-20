@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.131 2013/04/19 08:58:53 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.132 2013/05/20 08:19:47 yasuoka Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -800,6 +800,7 @@ ehci_check_itd_intr(struct ehci_softc *sc, struct ehci_xfer *ex) {
 done:
 	DPRINTFN(12, ("ehci_check_itd_intr: ex=%p done\n", ex));
 	timeout_del(&ex->xfer.timeout_handle);
+	usb_rem_task(ex->xfer.pipe->device, &ex->abort_task);
 	ehci_idone(ex);
 }
 
@@ -2859,6 +2860,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 		s = splusb();
 		xfer->status = status;
 		timeout_del(&xfer->timeout_handle);
+		usb_rem_task(epipe->pipe.device, &exfer->abort_task);
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
@@ -2883,6 +2885,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	xfer->status = status;
 	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(epipe->pipe.device, &exfer->abort_task);
 
 	s = splusb();
 	for (itd = exfer->itdstart; itd != NULL; itd = itd->xfer_next) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.111 2013/04/19 08:58:53 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.112 2013/05/20 08:19:47 yasuoka Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1315,6 +1315,8 @@ ohci_softintr(void *v)
 			continue;
 		}
 		timeout_del(&xfer->timeout_handle);
+		usb_rem_task(xfer->pipe->device,
+		    &((struct ohci_xfer *)xfer)->abort_task);
 
 		len = std->len;
 		if (std->td.td_cbp != 0)
@@ -2151,6 +2153,8 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
 		timeout_del(&xfer->timeout_handle);
+		usb_rem_task(xfer->pipe->device,
+		    &((struct ohci_xfer *)xfer)->abort_task);
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
@@ -2165,6 +2169,8 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	s = splusb();
 	xfer->status = status;	/* make software ignore it */
 	timeout_del(&xfer->timeout_handle);
+	usb_rem_task(xfer->pipe->device,
+	    &((struct ohci_xfer *)xfer)->abort_task);
 	splx(s);
 	DPRINTFN(1,("ohci_abort_xfer: stop ed=%p\n", sed));
 	sed->ed.ed_flags |= htole32(OHCI_ED_SKIP); /* force hardware skip */
