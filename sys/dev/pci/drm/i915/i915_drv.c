@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.30 2013/05/17 12:03:42 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.31 2013/05/21 22:12:58 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1344,25 +1344,6 @@ inteldrm_set_max_obj_size(struct inteldrm_softc *dev_priv)
 	dev_priv->max_gem_obj_size = (dev->gtt_total -
 	    atomic_read(&dev->pin_memory)) * 3 / 4 / 2;
 
-}
-
-void
-inteldrm_wipe_mappings(struct drm_obj *obj)
-{
-	struct drm_i915_gem_object *obj_priv = to_intel_bo(obj);
-	struct drm_device	*dev = obj->dev;
-	struct inteldrm_softc	*dev_priv = dev->dev_private;
-	struct vm_page		*pg;
-
-	DRM_ASSERT_HELD(obj);
-	/* make sure any writes hit the bus before we do whatever change
-	 * that prompted us to kill the mappings.
-	 */
-	DRM_MEMORYBARRIER();
-	/* nuke all our mappings. XXX optimise. */
-	for (pg = &dev_priv->pgs[atop(obj_priv->gtt_offset)]; pg !=
-	    &dev_priv->pgs[atop(obj_priv->gtt_offset + obj->size)]; pg++)
-		pmap_page_protect(pg, VM_PROT_NONE);
 }
 
 /**

@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.h,v 1.21 2013/05/18 21:43:42 kettenis Exp $ */
+/* $OpenBSD: i915_drv.h,v 1.22 2013/05/21 22:12:58 kettenis Exp $ */
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
 /*
@@ -1171,7 +1171,6 @@ int	i915_driver_open(struct drm_device *, struct drm_file *);
 void	i915_driver_close(struct drm_device *, struct drm_file *);
 
 /* i915_drv.c */
-void	inteldrm_wipe_mappings(struct drm_obj *);
 void	inteldrm_set_max_obj_size(struct inteldrm_softc *);
 void	inteldrm_purge_obj(struct drm_obj *);
 void	i915_gem_chipset_flush(struct drm_device *);
