@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.19 2013/05/09 15:16:53 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.20 2013/05/21 14:41:05 rapha Exp $
 #
 # GENERIC machine description file
 #
@@ -76,6 +76,7 @@ prcm*		at soc?			# power/clock controller
 omdog*		at soc?			# watchdog timer
 omgpio*		at soc?			# user-visible GPIO pins?
 gptimer*	at soc?			# general purpose timers
+dmtimer*	at soc?			# am335x dual mode timers
 ommmc*		at soc?			# SD/MMC card controller
 omusbtll*	at soc?
 

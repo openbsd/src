@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.14 2013/05/09 15:16:53 patrick Exp $
+#	$OpenBSD: files.beagle,v 1.15 2013/05/21 14:41:05 rapha Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -53,6 +53,10 @@ file	arch/beagle/dev/intc.c			intc
 device gptimer
 attach gptimer at soc
 file	arch/beagle/dev/gptimer.c		gptimer
+
+device dmtimer
+attach dmtimer at soc
+file	arch/beagle/dev/dmtimer.c		dmtimer
 
 device omapid
 attach omapid at soc
