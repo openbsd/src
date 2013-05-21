@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.307 2013/05/21 15:15:43 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.308 2013/05/21 15:21:16 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1190,7 +1190,10 @@ sr_boot_assembly(struct sr_softc *sc)
 		}
 
 		/* native softraid uses partitions */
+		rw_enter_write(&sc->sc_lock);
+		bio_status_init(&sc->sc_status, &sc->sc_dev);
 		sr_meta_native_bootprobe(sc, dk->dk_devno, &bch);
+		rw_exit_write(&sc->sc_lock);
 
 		/* probe non-native disks if native failed. */
 
@@ -1224,7 +1227,8 @@ sr_boot_assembly(struct sr_softc *sc)
 			bv = malloc(sizeof(struct sr_boot_volume),
 			    M_DEVBUF, M_NOWAIT | M_CANFAIL | M_ZERO);
 			if (bv == NULL) {
-				sr_error(sc, "failed to allocate boot volume");
+				printf("%s: failed to allocate boot volume\n",
+				    DEVNAME(sc));
 				goto unwind;
 			}
 
