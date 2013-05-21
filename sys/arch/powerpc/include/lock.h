@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.3 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: lock.h,v 1.4 2013/05/21 20:05:30 tedu Exp $	*/
 /*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
 
 /*-
@@ -36,71 +36,6 @@
 
 #ifndef _POWERPC_LOCK_H_
 #define _POWERPC_LOCK_H_
-
-typedef __volatile int          __cpu_simple_lock_t;
-
-#define __SIMPLELOCK_LOCKED     1
-#define __SIMPLELOCK_UNLOCKED   0
-
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
-{
-	*alp = __SIMPLELOCK_UNLOCKED;
-	__asm volatile ("sync");
-}
-
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
-{
-	int old;
-
-	__asm volatile ("	\
-				\n\
-1:	lwarx	%0,0,%1		\n\
-	cmpwi	%0,%2		\n\
-	beq+	3f		\n\
-2:	lwzx	%0,0,%1		\n\
-	cmpwi	%0,%2		\n\
-	beq+	1b		\n\
-	b	2b		\n\
-3:	stwcx.	%3,0,%1		\n\
-	bne-	1b		\n\
-	isync			\n\
-				\n"
-	: "=&r"(old)
-	: "r"(alp), "I"(__SIMPLELOCK_UNLOCKED), "r"(__SIMPLELOCK_LOCKED)
-	: "memory");
-}
-
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
-{
-	int old, dummy;
-
-	__asm volatile ("	\
-				\n\
-1:	lwarx	%0,0,%1		\n\
-	cmpwi	%0,%2		\n\
-	bne	2f		\n\
-	stwcx.	%3,0,%1		\n\
-	bne-	1b		\n\
-2:	stwcx.	%3,0,%4		\n\
-	isync			\n\
-				\n"
-	: "=&r"(old)
-	: "r"(alp), "I"(__SIMPLELOCK_UNLOCKED), "r"(__SIMPLELOCK_LOCKED),
-	  "r"(&dummy)
-	: "memory");
-
-	return (old == __SIMPLELOCK_UNLOCKED);
-}
-
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
-{
-	__asm volatile ("sync");
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
 
 #define rw_cas __cpu_cas
 static __inline int

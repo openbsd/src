@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.3 2010/04/26 05:48:19 deraadt Exp $	*/
+/*	$OpenBSD: lock.h,v 1.4 2013/05/21 20:05:30 tedu Exp $	*/
 /*	$NetBSD: lock.h,v 1.10 2006/01/03 01:29:46 uwe Exp $	*/
 
 /*-
@@ -38,45 +38,5 @@
 #define	_SH_LOCK_H_
 
 #include <sh/atomic.h>
-
-typedef volatile u_int8_t __cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	0x80
-#define	__SIMPLELOCK_UNLOCKED	0x00
-
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
-{
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
-
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
-{
-	 __asm volatile(
-		"1:	tas.b	%0	\n"
-		"	bf	1b	\n"
-		: "=m" (*alp));
-}
-
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
-{
-	int __rv;
-
-	__asm volatile(
-		"	tas.b	%0	\n"
-		"	mov	#0, %1	\n"
-		"	rotcl	%1	\n"
-		: "=m" (*alp), "=r" (__rv));
-
-	return (__rv);
-}
-
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
-{
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
 
 #endif /* !_SH_LOCK_H_ */

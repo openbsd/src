@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.4 2010/04/21 03:03:26 deraadt Exp $	*/
+/*	$OpenBSD: lock.h,v 1.5 2013/05/21 20:05:30 tedu Exp $	*/
 
 /* public domain */
 
@@ -6,52 +6,6 @@
 #define	_MIPS64_LOCK_H_
 
 #include <mips64/atomic.h>
-
-typedef volatile u_int __cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
-
-static __inline__ void
-__cpu_simple_lock_init(__cpu_simple_lock_t *l)
-{
-	*l = __SIMPLELOCK_UNLOCKED;
-}
-
-static __inline__ void
-__cpu_simple_lock(__cpu_simple_lock_t *l)
-{
-	__cpu_simple_lock_t old, new;
-
-	do {
-		new = __SIMPLELOCK_LOCKED;
-		__asm__ __volatile__
-		   ("1:\tll\t%0, %1\n" 
-		    "\tsc\t%2, %1\n"
-		    "\tbeqz\t%2, 1b\n"
-		    "\t nop" : "=&r" (old) : "m" (*l), "r" (new));
-	} while (old != __SIMPLELOCK_UNLOCKED);
-}
-
-static __inline__ int
-__cpu_simple_lock_try(__cpu_simple_lock_t *l)
-{
-	__cpu_simple_lock_t old, new = __SIMPLELOCK_LOCKED;
-
-	__asm__ __volatile__
-	   ("1:\tll\t%0, %1\n" 
-	    "\tsc\t%2, %1\n"
-	    "\tbeqz\t%2, 1b\n"
-	    "\t nop" : "=&r" (old) : "m" (*l), "r" (new));
-
-	return (old == __SIMPLELOCK_UNLOCKED);
-}
-
-static __inline__ void
-__cpu_simple_unlock(__cpu_simple_lock_t *l)
-{
-	*l = __SIMPLELOCK_UNLOCKED;
-}
 
 #define rw_cas __cpu_cas
 static __inline int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.11 2012/12/05 23:20:12 deraadt Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.12 2013/05/21 20:05:30 tedu Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -44,60 +44,6 @@
 #include <machine/cpufunc.h>
 
 #include <ddb/db_output.h>
-
-#ifdef LOCKDEBUG
-
-void
-__cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
-{
-	*lockp = __SIMPLELOCK_UNLOCKED;
-}
-
-#if defined (DEBUG) && defined(DDB)
-int spin_limit = 10000000;
-#endif
-
-void
-__cpu_simple_lock(__cpu_simple_lock_t *lockp)
-{
-#if defined (DEBUG) && defined(DDB)	
-	int spincount = 0;
-#endif
-	
-	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_LOCKED) {
-#if defined(DEBUG) && defined(DDB)
-		spincount++;
-		if (spincount == spin_limit) {
-			extern int db_active;
-			db_printf("spundry\n");
-			if (db_active) {
-				db_printf("but already in debugger\n");
-			} else {
-				Debugger();
-			}
-		}
-#endif
-	}
-}
-
-int
-__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
-{
-
-	if (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_UNLOCKED)
-		return (1);
-	return (0);
-}
-
-void
-__cpu_simple_unlock(__cpu_simple_lock_t *lockp)
-{
-	*lockp = __SIMPLELOCK_UNLOCKED;
-}
-
-#endif
 
 int
 rw_cas_486(volatile unsigned long *p, unsigned long o, unsigned long n)

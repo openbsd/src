@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: lock.h,v 1.7 2013/05/21 20:05:30 tedu Exp $	*/
 /*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
 
 /*-
@@ -37,11 +37,6 @@
 #ifndef _MACHINE_LOCK_H_
 #define	_MACHINE_LOCK_H_
 
-typedef	__volatile int		__cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
-
 /*
  * compiler barrier: prevent reordering of instructions.
  * XXX something similar will move to <sys/cdefs.h>
@@ -54,61 +49,6 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define SPINLOCK_SPIN_HOOK __asm __volatile("pause": : :"memory");
 
 #include <machine/atomic.h>
-
-#ifdef LOCKDEBUG
-
-extern void __cpu_simple_lock_init(__cpu_simple_lock_t *);
-extern void __cpu_simple_lock(__cpu_simple_lock_t *);
-extern int __cpu_simple_lock_try(__cpu_simple_lock_t *);
-extern void __cpu_simple_unlock(__cpu_simple_lock_t *);
-
-#else
-
-static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
-static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
-
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
-{
-	*lockp = __SIMPLELOCK_UNLOCKED;
-	__lockbarrier();
-}
-
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *lockp)
-{
-	while (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_LOCKED) {
-		continue;	/* spin */
-	}
-	__lockbarrier();
-}
-
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
-{
-	int r = (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_UNLOCKED);
-
-	__lockbarrier();
-
-	return (r);
-}
-
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *lockp)
-{
-	__lockbarrier();
-	*lockp = __SIMPLELOCK_UNLOCKED;
-}
-
-#endif /* !LOCKDEBUG */
 
 #define rw_cas(p, o, n) (x86_atomic_cas_ul(p, o, n) != o)
 
