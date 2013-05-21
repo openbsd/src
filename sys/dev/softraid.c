@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.304 2013/05/21 14:30:00 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.305 2013/05/21 14:36:10 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2288,8 +2288,6 @@ sr_wu_done_callback(void *arg1, void *arg2)
 			sr_raid_recreate_wu(wu->swu_collider);
 
 		/* XXX Should the collider be failed if this xs failed? */
-		wu->swu_collider->swu_state = SR_WU_INPROGRESS;
-		TAILQ_REMOVE(&sd->sd_wu_defq, wu->swu_collider, swu_link);
 		sr_raid_startwu(wu->swu_collider);
 	}
 
@@ -4171,14 +4169,12 @@ sr_raid_startwu(struct sr_workunit *wu)
 
 	splassert(IPL_BIO);
 
-	if (wu->swu_state == SR_WU_RESTART)
-		/*
-		 * no need to put the wu on the pending queue since we
-		 * are restarting the io
-		 */
-		 ;
-	else
-		/* move wu to pending queue */
+	if (wu->swu_state == SR_WU_DEFERRED) {
+		TAILQ_REMOVE(&sd->sd_wu_defq, wu, swu_link);
+		wu->swu_state = SR_WU_INPROGRESS;
+	}
+
+	if (wu->swu_state != SR_WU_RESTART)
 		TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
 
 	/* start all individual ios */
