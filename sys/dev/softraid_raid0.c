@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.39 2013/03/31 15:44:52 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.40 2013/05/21 15:01:53 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -120,7 +120,6 @@ sr_raid0_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
-	int			s;
 	daddr64_t		blk, lbaoffs, strip_no, chunk, stripoffs;
 	daddr64_t		strip_size, no_chunk, chunkoffs, physoffs;
 	daddr64_t		strip_bits, length, leftover;
@@ -187,15 +186,10 @@ sr_raid0_rw(struct sr_workunit *wu)
 		length = MIN(leftover,strip_size);
 	}
 
-	s = splbio();
+	sr_schedule_wu(wu);
 
-	if (sr_check_io_collision(wu))
-		goto queued;
-
-	sr_raid_startwu(wu);
-queued:
-	splx(s);
 	return (0);
+
 bad:
 	/* wu is unwound by sr_wu_put */
 	return (1);

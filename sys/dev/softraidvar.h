@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.137 2013/05/21 14:25:24 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.138 2013/05/21 15:01:54 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -688,7 +688,7 @@ void			sr_checksum(struct sr_softc *, void *, void *,
 			    u_int32_t);
 int			sr_validate_io(struct sr_workunit *, daddr64_t *,
 			    char *);
-int			sr_check_io_collision(struct sr_workunit *);
+void			sr_schedule_wu(struct sr_workunit *);
 void			sr_scsi_done(struct sr_discipline *,
 			    struct scsi_xfer *);
 struct sr_workunit	*sr_scsi_wu_get(struct sr_discipline *, int);

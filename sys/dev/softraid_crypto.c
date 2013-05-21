@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.93 2013/04/01 15:17:32 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.94 2013/05/21 15:01:53 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -1214,7 +1214,6 @@ sr_crypto_dev_rw(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 	struct sr_ccb		*ccb;
 	struct uio		*uio;
 	daddr64_t		blk;
-	int			s;
 
 	blk = wu->swu_blk_start;
 	blk += sd->sd_meta->ssd_data_offset;
@@ -1232,17 +1231,10 @@ sr_crypto_dev_rw(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 		ccb->ccb_opaque = crwu;
 	}
 	sr_wu_enqueue_ccb(wu, ccb);
+	sr_schedule_wu(wu);
 
-	s = splbio();
-
-	if (sr_check_io_collision(wu))
-		goto queued;
-
-	sr_raid_startwu(wu);
-
-queued:
-	splx(s);
 	return (0);
+
 bad:
 	/* wu is unwound by sr_wu_put */
 	if (crwu)

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.48 2013/05/21 14:30:01 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.49 2013/05/21 15:01:53 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -487,27 +487,12 @@ sr_raidp_rw(struct sr_workunit *wu)
 
 		wu = wu_r;
 	}
-
-	/* Construct the work unit, do not schedule it. */
-	if (wu->swu_state == SR_WU_CONSTRUCT)
-		goto queued;
-
-	/* current io failed, restart */
-	if (wu->swu_state == SR_WU_RESTART)
-		goto start;
-
-	/* deferred io failed, don't restart */
-	if (wu->swu_state == SR_WU_REQUEUE)
-		goto queued;
-
-	if (sr_check_io_collision(wu))
-		goto queued;
-
-start:
-	sr_raid_startwu(wu);
-queued:
 	splx(s);
+
+	sr_schedule_wu(wu);
+
 	return (0);
+
 bad:
 	/* XXX - can leak xorbuf on error. */
 	/* wu is unwound by sr_wu_put */
@@ -685,12 +670,10 @@ sr_raidp_scrub(struct sr_discipline *sd)
 
 		s = splbio();
 		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu_w, swu_link);
-
-		if (sr_check_io_collision(wu_r))
-			goto queued;
-		sr_raid_startwu(wu_r);
-	queued:
 		splx(s);
+
+		wu_r->swu_state = SR_WU_INPROGRESS;
+		sr_schedule_wu(wu_r);
 
 		slept = 0;
 		while ((wu_w->swu_flags & SR_WUF_REBUILDIOCOMP) == 0) {

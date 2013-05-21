@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_concat.c,v 1.15 2013/03/31 15:44:52 jsing Exp $ */
+/* $OpenBSD: softraid_concat.c,v 1.16 2013/05/21 15:01:53 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -98,7 +98,6 @@ sr_concat_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
-	int			s;
 	daddr64_t		blk, lbaoffs, chunk, chunksize;
 	daddr64_t		no_chunk, chunkend, physoffs;
 	daddr64_t		length, leftover;
@@ -164,13 +163,10 @@ sr_concat_rw(struct sr_workunit *wu)
 		lbaoffs += length;
 	}
 
-	s = splbio();
+	sr_schedule_wu(wu);
 
-	if (!sr_check_io_collision(wu))
-		sr_raid_startwu(wu);
-
-	splx(s);
 	return (0);
+
 bad:
 	/* wu is unwound by sr_wu_put */
 	return (1);
