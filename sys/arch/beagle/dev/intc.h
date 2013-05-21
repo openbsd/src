@@ -1,4 +1,4 @@
-/*	$OpenBSD: intc.h,v 1.2 2011/10/24 22:49:07 drahn Exp $ */
+/*	$OpenBSD: intc.h,v 1.3 2013/05/21 15:43:40 rapha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -35,8 +35,6 @@ void intc_splx(int new);
 int intc_splraise(int ipl);
 int intc_spllower(int ipl);
 void intc_setsoftintr(int si);
-
-#define  INTC_NUM_IRQ	96
 
 /*
  * An useful function for interrupt handlers.

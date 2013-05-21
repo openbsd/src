@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.11 2013/05/10 00:18:42 patrick Exp $ */
+/* $OpenBSD: intc.c,v 1.12 2013/05/21 15:43:40 rapha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -25,6 +25,11 @@
 #include <beagle/dev/omapvar.h>
 #include "intc.h"
 
+#define INTC_NUM_IRQ intc_nirq
+#define INTC_NUM_BANKS (intc_nirq/32)
+#define INTC_MAX_IRQ 128
+#define INTC_MAX_BANKS (INTC_MAX_IRQ/32)
+
 /* registers */
 #define	INTC_REVISION		0x00	/* R */
 #define	INTC_SYSCONFIG		0x10	/* RW */
@@ -36,7 +41,7 @@
 #define	INTC_SIR_FIQ		0x44	/* R */
 #define	INTC_CONTROL		0x48	/* RW */
 #define		INTC_CONTROL_NEWIRQ	0x1
-#define		INTC_CONTROL_NEWFIQ	0x1
+#define		INTC_CONTROL_NEWFIQ	0x2
 #define		INTC_CONTROL_GLOBALMASK	0x1
 #define	INTC_PROTECTION		0x4c	/* RW */
 #define		INTC_PROTECTION_PROT 1	/* only privileged mode */
@@ -53,33 +58,6 @@
 #define INTC_PENDING_IRQn(i)	0x80+(0x20*i)+0x18	/* R */
 #define INTC_PENDING_FIQn(i)	0x80+(0x20*i)+0x1c	/* R */
 
-#define	INTC_ITR0		0x80	/* R */
-#define	INTC_MIR0		0x84	/* RW */
-#define	INTC_CLEAR0		0x88	/* RW */
-#define	INTC_SET0		0x8c	/* RW */
-#define	INTC_ISR_SET0		0x90	/* RW */
-#define	INTC_ISR_CLEAR0		0x94	/* RW */
-#define INTC_PENDING_IRQ0	0x98 	/* R */
-#define INTC_PENDING_FIQ0	0x9c 	/* R */
-
-#define	INTC_ITR1		0xa0	/* R */
-#define	INTC_MIR1		0xa4	/* RW */
-#define	INTC_CLEAR1		0xa8	/* RW */
-#define	INTC_SET1		0xac	/* RW */
-#define	INTC_ISR_SET1		0xb0	/* RW */
-#define	INTC_ISR_CLEAR1		0xb4	/* RW */
-#define INTC_PENDING_IRQ1	0xb8 	/* R */
-#define INTC_PENDING_FIQ1	0xbc 	/* R */
-
-#define	INTC_ITR2		0xc0	/* R */
-#define	INTC_MIR2		0xc4	/* RW */
-#define	INTC_CLEAR2		0xc8	/* RW */
-#define	INTC_SET2		0xcc	/* RW */
-#define	INTC_ISR_SET2		0xd0	/* RW */
-#define	INTC_ISR_CLEAR2		0xd4	/* RW */
-#define INTC_PENDING_IRQ2	0xd8 	/* R */
-#define INTC_PENDING_FIQ2	0xdc 	/* R */
-
 #define INTC_ILRn(i)		0x100+(4*i)
 #define		INTC_ILR_IRQ	0x0		/* not of FIQ */
 #define		INTC_ILR_FIQ	0x1
@@ -88,8 +66,6 @@
 #define		INTC_MIN_PRI	63
 #define		INTC_STD_PRI	32
 #define		INTC_MAX_PRI	0
-
-#define NIRQ	INTC_NUM_IRQ
 
 struct intrhand {
 	TAILQ_ENTRY(intrhand) ih_list;	/* link on intrq list */
@@ -110,12 +86,13 @@ struct intrq {
 
 volatile int softint_pending;
 
-struct intrq intc_handler[NIRQ];
+struct intrq intc_handler[INTC_MAX_IRQ];
 u_int32_t intc_smask[NIPL];
-u_int32_t intc_imask[3][NIPL];
+u_int32_t intc_imask[INTC_MAX_BANKS][NIPL];
 
 bus_space_tag_t		intc_iot;
 bus_space_handle_t	intc_ioh;
+int			intc_nirq;
 
 void	intc_attach(struct device *, struct device *, void *);
 int	intc_spllower(int new);
@@ -156,14 +133,24 @@ intc_attach(struct device *parent, struct device *self, void *args)
 	     INTC_PROTECTION_PROT);
 #endif
 
-	/* XXX - check power saving bit */
+	/* enable interface clock power saving mode */
+	bus_space_write_4(intc_iot, intc_ioh, INTC_SYSCONFIG,
+	    INTC_SYSCONFIG_AUTOIDLE);
+
+	switch (board_id) {
+	case BOARD_ID_AM335X_BEAGLEBONE:
+		intc_nirq = 128;
+		break;
+	default:
+		intc_nirq = 96;
+		break;
+	}
 
 	/* mask all interrupts */
-	bus_space_write_4(intc_iot, intc_ioh, INTC_MIR0, 0xffffffff);
-	bus_space_write_4(intc_iot, intc_ioh, INTC_MIR1, 0xffffffff);
-	bus_space_write_4(intc_iot, intc_ioh, INTC_MIR2, 0xffffffff);
+	for (i = 0; i < INTC_NUM_BANKS; i++)
+		bus_space_write_4(intc_iot, intc_ioh, INTC_MIRn(i), 0xffffffff);
 
-	for (i = 0; i < NIRQ; i++) {
+	for (i = 0; i < INTC_NUM_IRQ; i++) {
 		bus_space_write_4(intc_iot, intc_ioh, INTC_ILRn(i),
 		    INTC_ILR_PRIs(INTC_MIN_PRI)|INTC_ILR_IRQ);
 
@@ -194,7 +181,7 @@ intc_calc_mask(void)
 	struct intrhand *ih;
 	int i;
 
-	for (irq = 0; irq < NIRQ; irq++) {
+	for (irq = 0; irq < INTC_NUM_IRQ; irq++) {
 		int max = IPL_NONE;
 		int min = IPL_HIGH;
 		TAILQ_FOREACH(ih, &intc_handler[irq].iq_list, ih_list) {
@@ -295,7 +282,7 @@ intc_setipl(int new)
 	}
 #endif
 	ci->ci_cpl = new;
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < INTC_NUM_BANKS; i++)
 		bus_space_write_4(intc_iot, intc_ioh,
 		    INTC_MIRn(i), intc_imask[i][new]);
 	bus_space_write_4(intc_iot, intc_ioh, INTC_CONTROL,
@@ -310,7 +297,7 @@ intc_intr_bootstrap(vaddr_t addr)
 	extern struct bus_space armv7_bs_tag;
 	intc_iot = &armv7_bs_tag;
 	intc_ioh = addr;
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < INTC_NUM_BANKS; i++)
 		for (j = 0; j < NIPL; j++)
 			intc_imask[i][j] = 0xffffffff;
 }
@@ -352,7 +339,7 @@ intc_intr_establish(int irqno, int level, int (*func)(void *),
 	int psw;
 	struct intrhand *ih;
 
-	if (irqno < 0 || irqno >= NIRQ)
+	if (irqno < 0 || irqno >= INTC_NUM_IRQ)
 		panic("intc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
 	psw = disable_interrupts(I32_bit);
@@ -411,7 +398,7 @@ int
 intc_tst(void *a)
 {
 	printf("inct_tst called\n");
-	bus_space_write_4(intc_iot, intc_ioh, INTC_ISR_CLEAR0, 2);
+	bus_space_write_4(intc_iot, intc_ioh, INTC_ISR_CLEARn(0), 2);
 	return 1;
 }
 
@@ -423,10 +410,10 @@ void intc_test(void)
 	ih = intc_intr_establish(1, IPL_BIO, intc_tst, NULL, "intctst");
 
 	printf("about to set bit\n");
-	bus_space_write_4(intc_iot, intc_ioh, INTC_ISR_SET0, 2);
+	bus_space_write_4(intc_iot, intc_ioh, INTC_ISR_SETn(0), 2);
 
 	printf("about to clear bit\n");
-	bus_space_write_4(intc_iot, intc_ioh, INTC_ISR_CLEAR0, 2);
+	bus_space_write_4(intc_iot, intc_ioh, INTC_ISR_CLEARn(0), 2);
 
 	printf("about to remove handler\n");
 	intc_intr_disestablish(ih);
