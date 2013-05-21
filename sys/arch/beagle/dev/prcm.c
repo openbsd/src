@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.11 2013/05/14 12:01:17 rapha Exp $ */
+/* $OpenBSD: prcm.c,v 1.12 2013/05/21 16:47:54 bmercer Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -181,14 +181,12 @@ prcm_v3_setclock(struct prcm_softc *sc, int clock, int speed)
 		oreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL_WKUP);
 		mask = 1;
 		reg = (oreg &~mask) | (speed & mask);
-		printf("%s: old %08x new %08x", __func__, oreg, reg);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL_WKUP, reg);
 	} else if (clock >= 2 && clock <= 9) {
 		int shift =  (clock-2);
 		oreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL_PER);
 		mask = 1 << (shift);
 		reg =  (oreg & ~mask) | ( (speed << shift) & mask);
-		printf("%s: old %08x new %08x", __func__, oreg, reg);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CM_CLKSEL_PER, reg);
 	} else
 		panic("%s: invalid clock %d", __func__, clock);
