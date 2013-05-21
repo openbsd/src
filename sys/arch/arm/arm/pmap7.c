@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.5 2013/05/09 20:07:25 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.6 2013/05/21 18:25:40 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1512,7 +1512,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Make sure userland mappings get the right permissions
 	 */
-	npte |= L2_S_PROT(pm == pmap_kernel() ?  PTE_KERNEL : PTE_USER, prot);
+	npte |= L2_S_PROT(pm == pmap_kernel() ?  PTE_KERNEL : PTE_USER,
+	    prot & ~VM_PROT_WRITE);
 
 	/*
 	 * Keep the stats up to date
@@ -2129,7 +2130,7 @@ Debugger();
 		 * We've already set the cacheable bits based on
 		 * the assumption that we can write to this page.
 		 */
-		*ptep = (pte & ~L2_TYPE_MASK) | L2_S_PROTO |
+		*ptep = (pte & ~(L2_TYPE_MASK|L2_S_PROT_MASK)) | L2_S_PROTO |
 		    L2_S_PROT(pm == pmap_kernel() ? PTE_KERNEL : PTE_USER,
 		      pte & L2_V7_S_XN ? VM_PROT_WRITE : VM_PROT_WRITE | VM_PROT_EXECUTE);
 		PTE_SYNC(ptep);
