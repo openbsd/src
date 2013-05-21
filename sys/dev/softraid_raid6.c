@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.50 2013/05/21 14:25:23 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.51 2013/05/21 14:30:01 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -405,6 +405,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 			printf("%s: can't get wu_r", DEVNAME(sd->sd_sc));
 			goto bad;
 		}
+		wu_r->swu_state = SR_WU_INPROGRESS;
 		wu_r->swu_flags |= SR_WUF_DISCIPLINE;
 	}
 

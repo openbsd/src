@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.303 2013/05/21 14:25:23 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.304 2013/05/21 14:30:00 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4675,6 +4675,7 @@ sr_rebuild_thread(void *arg)
 		if (sr_check_io_collision(wu_r))
 			goto queued;
 
+		wu_r->swu_state = SR_WU_INPROGRESS;
 		sr_raid_startwu(wu_r);
 queued:
 		splx(s);
