@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.30 2012/01/13 15:09:06 shadchin Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.31 2013/05/21 16:31:19 miod Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -785,15 +785,15 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 		int hi = (c >> 8), lo = c & 255;
 		struct wsfont_level1_glyphmap *map1 =
 		    &encodings[font->encoding];
+		struct wsfont_level2_glyphmap *map2;
 
 		hi -= map1->base;
 
-		if (hi >= 0 && hi < map1->size) {
-			struct wsfont_level2_glyphmap *map2 = map1->level2[hi];
-
+		if (hi >= 0 && hi < map1->size &&
+		    (map2 = map1->level2[hi]) != NULL) {
 			lo -= map2->base;
 
-			if (map2 != NULL && lo >= 0 && lo < map2->size) {
+			if (lo >= 0 && lo < map2->size) {
 				switch (map2->width) {
 				case 1:
 					c = (((u_int8_t *)map2->chars)[lo]);
