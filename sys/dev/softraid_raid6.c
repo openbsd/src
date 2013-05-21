@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.49 2013/04/27 14:06:09 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.50 2013/05/21 14:25:23 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -630,8 +630,8 @@ sr_raid6_rw(struct sr_workunit *wu)
 		wu = wu_r;
 	}
 
-	/* rebuild io, let rebuild routine deal with it */
-	if (wu->swu_flags & SR_WUF_REBUILD)
+	/* Construct the work unit, do not schedule it. */
+	if (wu->swu_state == SR_WU_CONSTRUCT)
 		goto queued;
 
 	/* current io failed, restart */

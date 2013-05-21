@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.136 2013/04/26 15:45:35 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.137 2013/05/21 14:25:24 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -379,6 +379,7 @@ struct sr_workunit {
 #define SR_WU_PENDING		6
 #define SR_WU_RESTART		7
 #define SR_WU_REQUEUE		8
+#define SR_WU_CONSTRUCT		9
 
 	int			swu_flags;	/* additional hints */
 #define SR_WUF_REBUILD		(1<<0)		/* rebuild io */

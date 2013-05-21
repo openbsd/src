@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.46 2013/04/26 16:06:05 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.47 2013/05/21 14:25:23 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -487,8 +487,8 @@ sr_raidp_rw(struct sr_workunit *wu)
 		wu = wu_r;
 	}
 
-	/* rebuild io, let rebuild routine deal with it */
-	if (wu->swu_flags & SR_WUF_REBUILD)
+	/* Construct the work unit, do not schedule it. */
+	if (wu->swu_state == SR_WU_CONSTRUCT)
 		goto queued;
 
 	/* current io failed, restart */

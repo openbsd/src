@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.50 2013/04/21 13:00:21 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.51 2013/05/21 14:25:23 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -404,8 +404,8 @@ ragain:
 
 	s = splbio();
 
-	/* rebuild io, let rebuild routine deal with it */
-	if (wu->swu_flags & SR_WUF_REBUILD)
+	/* Construct the work unit, do not schedule it. */
+	if (wu->swu_state == SR_WU_CONSTRUCT)
 		goto queued;
 
 	/* current io failed, restart */

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.302 2013/04/26 15:45:35 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.303 2013/05/21 14:25:23 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4632,6 +4632,7 @@ sr_rebuild_thread(void *arg)
 		cr->opcode = READ_16;
 		_lto4b(sz, cr->length);
 		_lto8b(lba, cr->addr);
+		wu_r->swu_state = SR_WU_CONSTRUCT;
 		wu_r->swu_flags |= SR_WUF_REBUILD;
 		wu_r->swu_xs = &xs_r;
 		if (sd->sd_scsi_rw(wu_r)) {
@@ -4652,6 +4653,7 @@ sr_rebuild_thread(void *arg)
 		cw->opcode = WRITE_16;
 		_lto4b(sz, cw->length);
 		_lto8b(lba, cw->addr);
+		wu_w->swu_state = SR_WU_CONSTRUCT;
 		wu_w->swu_flags |= SR_WUF_REBUILD | SR_WUF_WAKEUP;
 		wu_w->swu_xs = &xs_w;
 		if (sd->sd_scsi_rw(wu_w)) {
