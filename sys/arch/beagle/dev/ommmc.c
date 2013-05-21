@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.14 2011/11/15 21:46:44 drahn Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.15 2013/05/21 20:57:13 rapha Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -34,17 +34,11 @@
 #include <beagle/dev/omapvar.h>
 #include <beagle/dev/prcmvar.h>
 
-#define MMCHS1_ADDR 0x4809C000
-#define MMCHS2_ADDR 0x480B4000
-#define MMCHS3_ADDR 0x480AD000
-
 /*
- * NOTE: on OMAP4430 these registers skew by 0x100
+ * NOTE: on OMAP4430/AM335x these registers skew by 0x100
  * this is handled by mapping at base address + 0x100
- * then all but the REVISION register is 'correctly' mapped.
  */
 /* registers */
-/* MMCHS_REVISION	0x000 - is no longer useful */
 #define MMCHS_SYSCONFIG	0x010
 #define MMCHS_SYSSTATUS	0x014
 #define MMCHS_CSRE	0x024
@@ -182,8 +176,6 @@
 #define SDHC_TRANSFER_TIMEOUT	hz
 
 void ommmc_attach(struct device *parent, struct device *self, void *args);
-
-#include <machine/bus.h>
 
 struct ommmc_softc {
 	struct device sc_dev;
@@ -362,15 +354,16 @@ ommmc_attach(struct device *parent, struct device *self, void *args)
 	/* XXX - ICLKEN, FCLKEN? */
 
 	baseaddr = oa->oa_dev->mem[0].addr;
-	if (board_id == BOARD_ID_OMAP4_PANDA) {
-		/* omap4430 has mmc registers offset +0x100, but not revision */
+	if (board_id == BOARD_ID_OMAP4_PANDA ||
+	    board_id == BOARD_ID_AM335X_BEAGLEBONE) {
+		/* omap4430 has mmc registers offset +0x100 */
 		baseaddr += 0x100;
 	}
 
 	sc->sc_iot = oa->oa_iot;
 	if (bus_space_map(sc->sc_iot, baseaddr, oa->oa_dev->mem[0].size,
 	    0, &sc->sc_ioh))
-		panic("omgpio_attach: bus_space_map failed!");
+		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
 
