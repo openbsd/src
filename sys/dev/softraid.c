@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.306 2013/05/21 15:01:52 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.307 2013/05/21 15:15:43 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -138,7 +138,6 @@ void			sr_rebuild(void *);
 void			sr_rebuild_thread(void *);
 void			sr_roam_chunks(struct sr_discipline *);
 int			sr_chunk_in_use(struct sr_softc *, dev_t);
-void			sr_startwu_callback(void *, void *);
 int			sr_rw(struct sr_softc *, dev_t, char *, size_t,
 			    daddr64_t, long);
 void			sr_wu_done_callback(void *, void *);
@@ -4196,29 +4195,12 @@ queued:
 }
 
 void
-sr_startwu_callback(void *arg1, void *arg2)
-{
-	struct sr_discipline	*sd = arg1;
-	struct sr_workunit	*wu = arg2;
-	struct sr_ccb		*ccb;
-	int			s;
-
-	s = splbio();
-	if (wu->swu_cb_active == 1)
-		panic("%s: sr_startwu_callback", DEVNAME(sd->sd_sc));
-	wu->swu_cb_active = 1;
-
-	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link)
-		VOP_STRATEGY(&ccb->ccb_buf);
-
-	wu->swu_cb_active = 0;
-	splx(s);
-}
-
-void
 sr_raid_startwu(struct sr_workunit *wu)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_ccb		*ccb;
+
+	DNPRINTF(SR_D_WU, "sr_raid_startwu: start wu %p\n", wu);
 
 	splassert(IPL_BIO);
 
@@ -4230,9 +4212,15 @@ sr_raid_startwu(struct sr_workunit *wu)
 	if (wu->swu_state != SR_WU_RESTART)
 		TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
 
-	/* start all individual ios */
-	workq_queue_task(sd->sd_workq, &wu->swu_wqt, 0, sr_startwu_callback,
-	    sd, wu);
+	/* Start all of the individual I/Os. */
+	if (wu->swu_cb_active == 1)
+		panic("%s: sr_startwu_callback", DEVNAME(sd->sd_sc));
+	wu->swu_cb_active = 1;
+
+	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link)
+		VOP_STRATEGY(&ccb->ccb_buf);
+
+	wu->swu_cb_active = 0;
 }
 
 void
