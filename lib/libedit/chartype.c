@@ -1,5 +1,5 @@
-/*	$OpenBSD: chartype.c,v 1.4 2011/11/17 20:14:24 nicm Exp $	*/
-/*	$NetBSD: chartype.c,v 1.4 2010/04/15 00:55:57 christos Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.5 2013/05/22 00:31:38 yasuoka Exp $	*/
+/*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 	void *p;
 	if (mincsize > conv->csize) {
 		conv->csize = mincsize;
-		p = el_realloc(conv->cbuff, conv->csize);
+		p = el_realloc(conv->cbuff, conv->csize * sizeof(char));
 		if (p == NULL) {
 			conv->csize = 0;
 			el_free(conv->cbuff);
@@ -61,7 +61,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 
 	if (minwsize > conv->wsize) {
 		conv->wsize = minwsize;
-		p = el_realloc(conv->wbuff, conv->wsize);
+		p = el_realloc(conv->wbuff, conv->wsize * sizeof(Char));
 		if (p == NULL) {
 			conv->wsize = 0;
 			el_free(conv->wbuff);
@@ -87,26 +87,19 @@ ct_encode_string(const Char *s, ct_buffer_t *conv)
 
 	dst = conv->cbuff;
 	while (*s) {
-		used = ct_encode_char(dst, (int)(conv->csize -
-		    (dst - conv->cbuff)), *s);
-		if (used == -1) { /* failed to encode, need more buffer space */
+		used = conv->csize - (dst - conv->cbuff);
+		if (used < 5) {
 			used = dst - conv->cbuff;
 			ct_conv_buff_resize(conv, conv->csize + CT_BUFSIZ, 0);
 			if (!conv->cbuff)
 				return NULL;
 			dst = conv->cbuff + used;
-			/* don't increment s here - we want to retry it! */
 		}
-		else
-			++s;
+		used = ct_encode_char(dst, 5, *s);
+		if (used == -1) /* failed to encode, need more buffer space */
+			abort();
+		++s;
 		dst += used;
-	}
-	if (dst >= (conv->cbuff + conv->csize)) {
-		used = dst - conv->cbuff;
-		ct_conv_buff_resize(conv, conv->csize + 1, 0);
-		if (!conv->cbuff)
-			return NULL;
-		dst = conv->cbuff + used;
 	}
 	*dst = '\0';
 	return conv->cbuff;
@@ -124,7 +117,9 @@ ct_decode_string(const char *s, ct_buffer_t *conv)
 	if (!conv->wbuff)
 		return NULL;
 
-	len = ct_mbstowcs(0, s, 0);
+	len = ct_mbstowcs(NULL, s, 0);
+	if (len == (size_t)-1)
+		return NULL;
 	if (len > conv->wsize)
 		ct_conv_buff_resize(conv, 0, len + 1);
 	if (!conv->wbuff)
