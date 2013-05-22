@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.193 2013/03/20 04:01:42 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.194 2013/05/22 20:39:12 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1560,7 +1560,7 @@ kroute_remove(struct ktable *kt, struct kroute_node *kr)
 			    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
 			return (-1);
 		}
-	       	if (kr->next != NULL) {
+		if (kr->next != NULL) {
 			if (RB_INSERT(kroute_tree, &kt->krt, kr->next) !=
 			    NULL) {
 				log_warnx("kroute_remove failed to add %s/%u",
@@ -1712,7 +1712,7 @@ kroute6_remove(struct ktable *kt, struct kroute6_node *kr)
 			    log_in6addr(&kr->r.prefix), kr->r.prefixlen);
 			return (-1);
 		}
-	       	if (kr->next != NULL) {
+		if (kr->next != NULL) {
 			if (RB_INSERT(kroute6_tree, &kt->krt6, kr->next) !=
 			    NULL) {
 				log_warnx("kroute6_remove failed to add %s/%u",
