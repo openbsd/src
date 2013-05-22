@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.194 2013/05/22 20:39:12 sthen Exp $ */
+/*	$OpenBSD: kroute.c,v 1.195 2013/05/22 21:00:36 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2627,6 +2627,7 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
 	hdr.rtm_tableid = kt->rtableid;
+	hdr.rtm_priority = RTP_BGP;
 	if (kroute->flags & F_BLACKHOLE)
 		hdr.rtm_flags |= RTF_BLACKHOLE;
 	if (kroute->flags & F_REJECT)
