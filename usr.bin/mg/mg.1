@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.75 2012/12/28 16:12:50 naddy Exp $
+.\"	$OpenBSD: mg.1,v 1.76 2013/05/22 19:23:45 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: December 28 2012 $
+.Dd $Mdocdate: May 22 2013 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -268,6 +268,8 @@ suspend-emacs
 scroll-other-window
 .It M-SPC
 just-one-space
+.It M-!
+shell-command
 .It M-.
 find-tag
 .It M-*
@@ -835,6 +837,8 @@ Used by auto-fill-mode.
 Sets the mark in the current window to the current dot location.
 .It set-prefix-string
 Sets the prefix string to be used by the 'prefix-region' command.
+.It shell-command
+Execute external command from mini-buffer.
 .It shell-command-on-region
 Provide the text in region to the shell command as input.
 .It shrink-window

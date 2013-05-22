@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.32 2012/12/27 18:49:59 florian Exp $	*/
+/*	$OpenBSD: region.c,v 1.33 2013/05/22 19:23:45 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -28,6 +28,7 @@ static	int	iomux(int, char * const, int, struct buffer *);
 static	int	preadin(int, struct buffer *);
 static	void	pwriteout(int, char **, int *);
 static	int	setsize(struct region *, RSIZE);
+static	int	shellcmdoutput(char * const[], char * const, int);
 
 /*
  * Kill the region.  Ask "getregion" to figure out the bounds of the region.
@@ -406,9 +407,8 @@ int
 piperegion(int f, int n)
 {
 	struct region region;
-	struct buffer *bp;
-	int len, ret;
-	char *cmd, cmdbuf[NFILEN], *shellp, *text;
+	int len;
+	char *cmd, cmdbuf[NFILEN], *text;
 	char *argv[] = {"sh", "-c", (char *) NULL, (char *) NULL};
 
 	/* C-u M-| is not supported yet */
@@ -436,6 +436,43 @@ piperegion(int f, int n)
 		return (FALSE);
 	}
 
+	region_get_data(&region, text, len);
+
+	return shellcmdoutput(argv, text, len);
+}
+
+/*
+ * Get command from mini-buffer and execute externally.
+ */
+/*ARGSUSED */
+int
+shellcommand(int f, int n)
+{
+
+	char *cmd, cmdbuf[NFILEN];
+	char *argv[] = {"sh", "-c", (char *) NULL, (char *) NULL};
+
+	if (n > 1)
+		return (ABORT);
+
+	if ((cmd = eread("Shell command: ", cmdbuf, sizeof(cmdbuf),
+	    EFNEW | EFCR)) == NULL || (cmd[0] == '\0'))
+		return (ABORT);
+
+	argv[2] = cmd;
+
+	return shellcmdoutput(argv, NULL, 0);
+}
+
+
+int
+shellcmdoutput(char* const argv[], char* const text, int len)
+{
+
+	struct buffer *bp;
+	char	*shellp;
+	int	 ret;
+
 	bp = bfind("*Shell Command Output*", TRUE);
 	bp->b_flag |= BFREADONLY;
 	if (bclear(bp) != TRUE) {
@@ -443,7 +480,6 @@ piperegion(int f, int n)
 		return (FALSE);
 	}
 
-	region_get_data(&region, text, len);
 	shellp = getenv("SHELL");
 
 	ret = pipeio(shellp, argv, text, len, bp);
