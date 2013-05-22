@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.18 2013/05/10 10:17:27 patrick Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.19 2013/05/22 17:44:46 rapha Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -891,6 +891,9 @@ initarm(void *arg0, void *arg1, void *arg2)
 	case BOARD_ID_OMAP3_BEAGLE:
 		printf("board type: beagle\n");
 		break;
+	case BOARD_ID_AM335X_BEAGLEBONE:
+		printf("board type: beaglebone\n");
+		break;
 	case BOARD_ID_OMAP3_OVERO:
 		printf("board type: overo\n");
 		break;
@@ -988,6 +991,9 @@ consinit(void)
 	case BOARD_ID_OMAP3_BEAGLE:
 	case BOARD_ID_OMAP3_OVERO:
 		paddr = 0x49020000; 
+		break;
+	case BOARD_ID_AM335X_BEAGLEBONE:
+		paddr = 0x44E09000; /* UART0 */
 		break;
 	case BOARD_ID_OMAP4_PANDA:
 		paddr = 0x48020000; 

@@ -1,4 +1,4 @@
-/* $OpenBSD: omapvar.h,v 1.2 2013/05/14 11:05:57 rapha Exp $ */
+/* $OpenBSD: omapvar.h,v 1.3 2013/05/22 17:44:47 rapha Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@drahn.com>
  *
@@ -44,6 +44,7 @@ struct omap_dev *omap_find_dev(const char *, int);
 
 void omap3_init(void);
 void omap4_init(void);
+void am335x_init(void);
 
 /* XXX */
 void *avic_intr_establish(int irqno, int level, int (*func)(void *),

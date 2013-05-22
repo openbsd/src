@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.15 2013/05/21 14:41:05 rapha Exp $
+#	$OpenBSD: files.beagle,v 1.16 2013/05/22 17:44:47 rapha Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -31,6 +31,7 @@ attach omap at mainbus
 file	arch/beagle/dev/omap.c			omap
 file	arch/beagle/dev/omap3.c			omap
 file	arch/beagle/dev/omap4.c			omap
+file	arch/beagle/dev/am335x.c		omap
 
 include "dev/sdmmc/files.sdmmc"
 
