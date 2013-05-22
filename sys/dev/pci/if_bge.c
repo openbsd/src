@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.327 2013/04/07 03:22:05 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.328 2013/05/22 16:02:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1226,7 +1226,7 @@ bge_init_rx_ring_std(struct bge_softc *sc)
 
 	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, MCLBYTES, 1, MCLBYTES, 0,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &sc->bge_cdata.bge_rx_std_map[i]) != 0) {
 			printf("%s: unable to create dmamap for slot %d\n",
 			    sc->bge_dev.dv_xname, i);
@@ -1336,7 +1336,7 @@ bge_init_rx_ring_jumbo(struct bge_softc *sc)
 
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, BGE_JLEN, 4, BGE_JLEN, 0,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &sc->bge_cdata.bge_rx_jumbo_map[i]) != 0) {
 			printf("%s: unable to create dmamap for slot %d\n",
 			    sc->bge_dev.dv_xname, i);
