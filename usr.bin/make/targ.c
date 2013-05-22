@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.71 2013/05/14 18:47:40 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.72 2013/05/22 12:14:08 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -158,7 +158,6 @@ Targ_NewGNi(const char *name, const char *ename)
 	gn->childMade =	false;
 	gn->order = 0;
 	ts_set_out_of_date(gn->mtime);
-	ts_set_out_of_date(gn->cmtime);
 	gn->youngest = gn;
 	Lst_Init(&gn->cohorts);
 	Lst_Init(&gn->parents);

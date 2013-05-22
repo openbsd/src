@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.62 2013/04/23 14:32:53 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.63 2013/05/22 12:14:08 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 				* needed, we don't have to fetch it again.  */
 				if (DEBUG(DIR))
 					printf("Caching %s for %s\n",
-					    time_to_string(mtime), file);
+					    time_to_string(&mtime), file);
 				record_stamp(file, mtime);
 				return file;
 			} else
@@ -614,7 +614,8 @@ Dir_FindFileComplexi(const char *name, const char *ename, Lst path,
 
 		ts_set_from_stat(stb, mtime);
 		if (DEBUG(DIR))
-			printf("Caching %s for %s\n", time_to_string(mtime), q);
+			printf("Caching %s for %s\n", time_to_string(&mtime), 
+			    q);
 		record_stamp(q, mtime);
 		return q;
 	} else {
@@ -724,7 +725,7 @@ Dir_MTime(GNode *gn)
 		 * actually go to the file system.	*/
 		if (DEBUG(DIR))
 			printf("Using cached time %s for %s\n",
-			    time_to_string(entry->mtime), fullName);
+			    time_to_string(&entry->mtime), fullName);
 		mtime = entry->mtime;
 		free(entry);
 		ohash_remove(&mtimes, slot);

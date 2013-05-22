@@ -1,4 +1,4 @@
-/*	$OpenBSD: timestamp.c,v 1.9 2013/04/23 14:32:53 espie Exp $ */
+/*	$OpenBSD: timestamp.c,v 1.10 2013/05/22 12:14:08 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -25,12 +25,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/time.h>
+#include <stdio.h>
+#include <string.h>
 #include "config.h"
 #include "defines.h"
 #include "timestamp.h"
 
 
-struct timespec now;	/* The time at the start of this whole process */
+struct timespec starttime;
 
 int
 set_times(const char *f)
@@ -38,17 +40,21 @@ set_times(const char *f)
     return utimes(f, NULL);
 }
 
+#define PLACEHOLDER "XXXXXXXXX "
 char *
-time_to_string(struct timespec time)
+time_to_string(struct timespec *t)
 {
 	struct tm *parts;
 	static char buf[128];
-	time_t t;
+	char *s;
 
-	t = timestamp2time_t(time);
-
-	parts = localtime(&t);
-	strftime(buf, sizeof buf, "%H:%M:%S %b %d, %Y", parts);
+	parts = localtime(&t->tv_sec);
+	strftime(buf, sizeof buf, "%H:%M:%S." PLACEHOLDER "%b %d, %Y", parts);
+	s = strstr(buf, PLACEHOLDER);
+	if (s) {
+		snprintf(s, sizeof(PLACEHOLDER), "%09ld", t->tv_nsec);
+		s[9] = ' ';
+	}
 	buf[sizeof(buf) - 1] = '\0';
 	return buf;
 }

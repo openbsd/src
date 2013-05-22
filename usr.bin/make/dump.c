@@ -1,4 +1,4 @@
-/* $OpenBSD: dump.c,v 1.4 2013/04/23 14:32:53 espie Exp $ */
+/* $OpenBSD: dump.c,v 1.5 2013/05/22 12:14:08 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -120,7 +120,7 @@ TargPrintNode(GNode *gn, bool full)
 		if (! (gn->type & (OP_JOIN|OP_USE|OP_EXEC))) {
 			if (!is_out_of_date(gn->mtime)) {
 				printf("# last modified %s: %s\n",
-				      time_to_string(gn->mtime),
+				      time_to_string(&gn->mtime),
 				      status_to_string(gn));
 			} else if (gn->built_status != UNKNOWN) {
 				printf("# non-existent (maybe): %s\n",

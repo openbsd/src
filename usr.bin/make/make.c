@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.66 2013/04/23 14:32:53 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.67 2013/05/22 12:14:08 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -48,9 +48,9 @@
  *				otherwise.
  *
  *	Make_Update		Update all parents of a given child. Performs
- *				various bookkeeping chores like the updating
- *				of the cmtime field of the parent, filling
- *				of the IMPSRC context variable, etc. It will
+ *				various bookkeeping chores like finding the
+ *				youngest child of the parent, filling
+ *				the IMPSRC context variable, etc. It will
  *				place the parent on the toBeMade queue if it
  *				should be.
  *
@@ -121,22 +121,13 @@ random_setup()
 {
 	randomize_queue = Var_Definedi("RANDOM_ORDER", NULL);
 
+/* no random delay in the new engine for now */
+#if 0
 	if (Var_Definedi("RANDOM_DELAY", NULL))
 		random_delay = strtonum(Var_Value("RANDOM_DELAY"), 0, 1000, 
 		    NULL) * 1000000;
+#endif
 
-	if (randomize_queue || random_delay) {
-		unsigned int random_seed;
-		char *t;
-		
-		t = Var_Value("RANDOM_SEED");
-		if (t != NULL)
-			random_seed = strtonum(t, 0, UINT_MAX, NULL);
-		else
-			random_seed = time(NULL);
-		fprintf(stderr, "RANDOM_SEED=%u\n", random_seed);
-		srandom(random_seed);
-	}
 }
 
 static void
@@ -147,7 +138,7 @@ randomize_garray(struct growableArray *g)
 	GNode *e;
 
 	for (i = g->n; i > 0; i--) {
-		v = random() % i;
+		v = arc4random_uniform(i);
 		if (v == i-1)
 			continue;
 		else {
@@ -232,12 +223,8 @@ requeue(GNode *gn)
  *	The unmade field of pgn is decremented and pgn may be placed on
  *	the toBeMade queue if this field becomes 0.
  *
- *	If the child was made, the parent's childMade field will be set true
- *	and its cmtime set to now.
- *
- *	If the child wasn't made, the cmtime field of the parent will be
- *	altered if the child's mtime is big enough.
- *
+ *	If the child was made, the parent's childMade field will be set to
+ *	true
  *-----------------------------------------------------------------------
  */
 void
@@ -267,9 +254,10 @@ Make_Update(GNode *cgn)	/* the child node */
 		 * on this one.
 		 */
 		if (noExecute || is_out_of_date(Dir_MTime(cgn)))
-			ts_set_from_now(cgn->mtime);
+			clock_gettime(CLOCK_REALTIME, &cgn->mtime);
 		if (DEBUG(MAKE))
-			printf("update time: %s\n", time_to_string(cgn->mtime));
+			printf("update time: %s\n", 
+			    time_to_string(&cgn->mtime));
 	}
 
 	requeue(cgn);

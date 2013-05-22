@@ -1,7 +1,7 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-/*	$OpenBSD: timestamp.h,v 1.9 2013/04/23 14:32:53 espie Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.10 2013/05/22 12:14:08 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -36,16 +36,14 @@
  * ts_set_from_stat(s, t):	grab date out of stat(2) buffer.
  * b = is_strictly_before(t1, t2):
  *				check whether t1 is before t2.
- * stamp = timestamp2time_t(t):	extract time_t from timestamp.
  * ts_set_from_time_t(d, t):	create timestamp from time_t.
- * ts_set_from_now(n):		grab current date.
  */
 
 /* sysresult = set_times(name):	set modification times on a file.
  * 				system call results.
  */
 
-#define Init_Timestamp()	ts_set_from_now(now)
+#define Init_Timestamp()	clock_gettime(CLOCK_REALTIME, &starttime)
 
 #define TMIN (sizeof(time_t) == sizeof(int32_t) ? INT32_MIN : INT64_MIN)
 #define ts_set_out_of_date(t)	(t).tv_sec = TMIN, (t).tv_nsec = 0
@@ -66,14 +64,12 @@ do { \
 	if (is_out_of_date(t)) \
 		(t).tv_nsec++; \
 } while (0)
-#define ts_set_from_now(n)	clock_gettime(CLOCK_REALTIME, &(n))
-#define timestamp2time_t(t)	((t).tv_sec)
 
 extern int set_times(const char *);
 
-extern struct timespec now;	/* The time at the start of this whole
-				 * process */
-extern char *time_to_string(struct timespec t);
+extern struct timespec starttime;	/* The time at the start 
+					 * of this whole process */
+extern char *time_to_string(struct timespec *);
 
 
 #endif

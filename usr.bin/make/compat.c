@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.79 2013/04/23 14:32:53 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.80 2013/05/22 12:14:08 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -139,8 +139,8 @@ CompatMake(void *gnp,	/* The node to make */
 			return;
 		}
 
-		/* All the children were made ok. Now cmtime contains the
-		 * modification time of the newest child, we need to find out
+		/* All the children were made ok. Now youngest poinst to
+		 * the newest child, we need to find out
 		 * if we exist and when we were modified last. The criteria
 		 * for datedness are defined by the Make_OODate function.  */
 		if (DEBUG(MAKE))
@@ -216,18 +216,20 @@ CompatMake(void *gnp,	/* The node to make */
 			 * havoc with files that depend on this one.
 			 */
 			if (noExecute || is_out_of_date(Dir_MTime(gn)))
-				ts_set_from_now(gn->mtime);
-			if (is_strictly_before(gn->mtime, gn->cmtime))
-				gn->mtime = gn->cmtime;
+				clock_gettime(CLOCK_REALTIME, &gn->mtime);
+			if (is_strictly_before(gn->mtime, gn->youngest->mtime))
+				gn->mtime = gn->youngest->mtime;
 			if (sib != gn) {
 				if (noExecute || is_out_of_date(Dir_MTime(sib)))
-					ts_set_from_now(sib->mtime);
-				if (is_strictly_before(sib->mtime, sib->cmtime))
-					sib->mtime = sib->cmtime;
+					clock_gettime(CLOCK_REALTIME, 
+					    &sib->mtime);
+				if (is_strictly_before(sib->mtime, 
+				    sib->youngest->mtime))
+					sib->mtime = sib->youngest->mtime;
 			}
 			if (DEBUG(MAKE))
 				printf("update time: %s\n",
-				    time_to_string(gn->mtime));
+				    time_to_string(&gn->mtime));
 			if (!(gn->type & OP_EXEC)) {
 				pgn->childMade = true;
 				Make_TimeStamp(pgn, gn);
