@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.6 2013/05/21 18:25:40 patrick Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.7 2013/05/22 12:27:44 patrick Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1019,7 +1019,7 @@ pmap_uncache_page(paddr_t va, vaddr_t pa)
 
 	pte = vtopte(va);
 	*pte &= ~L2_S_CACHE_MASK;
-	*pte |= L1_S_B; /* device memory */
+	*pte |= L2_B; /* device memory */
 	PTE_SYNC(pte);
 	cpu_tlb_flushD_SE(va);
 	cpu_cpwait();
