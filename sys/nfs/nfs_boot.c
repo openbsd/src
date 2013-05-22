@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.26 2010/04/03 20:03:38 krw Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.27 2013/05/22 09:13:36 mpi Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 
 #include <nfs/rpcv2.h>
@@ -114,6 +115,7 @@ int
 nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 {
 	struct ifreq ireq;
+	struct in_aliasreq ifra;
 	struct in_addr my_ip, gw_ip;
 	struct sockaddr_in bp_sin;
 	struct sockaddr_in *sin;
@@ -175,12 +177,14 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  (just set the address)
 	 */
-	sin = (struct sockaddr_in *)&ireq.ifr_addr;
-	bzero((caddr_t)sin, sizeof(*sin));
+	bzero(&ifra, sizeof(ifra));
+	bcopy(ifp->if_xname, ifra.ifra_name, sizeof(ifra.ifra_name));
+
+	sin = (struct sockaddr_in *)&ifra.ifra_addr;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = my_ip.s_addr;
-	error = ifioctl(so, SIOCSIFADDR, (caddr_t)&ireq, procp);
+	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&ifra, procp);
 	if (error)
 		panic("nfs_boot: set if addr, error=%d", error);
 
