@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.13 2013/04/20 08:01:37 tobias Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.14 2013/05/23 18:29:51 tobias Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -32,14 +32,6 @@
 
 #include <sys/timeout.h>
 
-/*
- * Only compile Active PS/2 Multiplexing support on systems where it might
- * be found.
- */
-#if (defined(__i386__) || defined(__amd64__)) && !defined(SMALL_KERNEL)
-#define PCKBC_APM
-#endif
-
 #define PCKBCCF_SLOT            0
 #define PCKBCCF_SLOT_DEFAULT    -1
 
@@ -47,11 +39,7 @@ typedef void *pckbc_tag_t;
 typedef int pckbc_slot_t;
 #define	PCKBC_KBD_SLOT	0
 #define	PCKBC_AUX_SLOT	1
-#ifdef PCKBC_APM
-#define	PCKBC_NSLOTS	5	/* 1 KBD + 4 AUX */
-#else
 #define	PCKBC_NSLOTS	2
-#endif
 
 /*
  * external representation (pckbc_tag_t),
@@ -67,9 +55,6 @@ struct pckbc_internal {
 #define	PCKBC_CANT_TRANSLATE	0x0001	/* can't translate to XT scancodes */
 #define	PCKBC_NEED_AUXWRITE	0x0002	/* need auxwrite command to find aux */
 	int t_haveaux; /* controller has an aux port */
-#ifdef PCKBC_APM
-	int t_apmver; /* Active PS/2 Multiplexing version */
-#endif
 
 	struct pckbc_slotdata *t_slotdata[PCKBC_NSLOTS];
 
@@ -114,8 +99,8 @@ int pckbc_enqueue_cmd(pckbc_tag_t, pckbc_slot_t, u_char *, int,
 			   int, int, u_char *);
 int pckbc_send_cmd(bus_space_tag_t, bus_space_handle_t, u_char);
 int pckbc_poll_data(pckbc_tag_t, pckbc_slot_t);
-int pckbc_poll_data1(bus_space_tag_t, bus_space_handle_t, bus_space_handle_t,
-			   pckbc_slot_t, struct pckbc_internal *);
+int pckbc_poll_data1(bus_space_tag_t, bus_space_handle_t,
+			  bus_space_handle_t, pckbc_slot_t, int);
 void pckbc_set_poll(pckbc_tag_t, pckbc_slot_t, int);
 int pckbc_xt_translation(pckbc_tag_t);
 void pckbc_slot_enable(pckbc_tag_t, pckbc_slot_t, int);

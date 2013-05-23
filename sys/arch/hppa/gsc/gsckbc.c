@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.16 2013/04/20 23:40:26 deraadt Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.17 2013/05/23 18:29:51 tobias Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -465,11 +465,11 @@ pckbc_send_cmd(iot, ioh, val)
 
 /* XXX logic */
 int
-pckbc_poll_data1(iot, ioh, ioh_c, slot, t)
+pckbc_poll_data1(iot, ioh, ioh_c, slot, checkaux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh, ioh_c;
 	pckbc_slot_t slot;
-	struct pckbc_internal *t;
+	int checkaux;	/* ignored on hppa */
 {
 	int i;
 	u_char stat;
@@ -568,7 +568,7 @@ pckbc_flush(self, slot)
 {
 	struct pckbc_internal *t = self;
 
-	pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_d, slot, t);
+	pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_d, slot, 0);
 }
 
 int
@@ -580,7 +580,7 @@ pckbc_poll_data(self, slot)
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	int c;
 
-	c = pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_d, slot, t);
+	c = pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_d, slot, 0);
 	if (c != -1 && q && CMD_IN_QUEUE(q)) {
 		/* we jumped into a running command - try to
 		 deliver the response */
@@ -655,7 +655,7 @@ pckbc_poll_cmd1(t, slot, cmd)
 			return;
 		}
 		for (i = 10; i; i--) { /* 1s ??? */
-			c = pckbc_poll_data1(iot, ioh, ioh, slot, t);
+			c = pckbc_poll_data1(iot, ioh, ioh, slot, 0);
 			if (c != -1)
 				break;
 		}
@@ -696,7 +696,7 @@ pckbc_poll_cmd1(t, slot, cmd)
 		else
 			i = 10; /* 1s ??? */
 		while (i--) {
-			c = pckbc_poll_data1(iot, ioh, ioh, slot, t);
+			c = pckbc_poll_data1(iot, ioh, ioh, slot, 0);
 			if (c != -1)
 				break;
 		}

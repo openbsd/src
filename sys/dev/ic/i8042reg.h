@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8042reg.h,v 1.6 2013/04/20 08:01:37 tobias Exp $	*/
+/*	$OpenBSD: i8042reg.h,v 1.7 2013/05/23 18:29:51 tobias Exp $	*/
 /*	$NetBSD: i8042reg.h,v 1.7 1998/01/18 14:41:37 drochner Exp $	*/
 
 #define	KBSTATP		4	/* kbd controller status port (I) */
@@ -44,17 +44,3 @@
 #define	KC8_MENABLE	0x02	/* enable mouse interrupt */
 #define	KC8_KENABLE	0x01	/* enable keyboard interrupt */
 #define	CMDBYTE		(KC8_TRANS|KC8_CPU|KC8_MENABLE|KC8_KENABLE)
-
-/*
- * Defines for Active PS/2 Multiplexing
- */
-
-#define	KBC_APM_ENB1	0xf0
-#define	KBC_APM_ENB2	0x56
-#define	KBC_APM_ENB3	0xa4
-
-#define	KBC_APM_DIS1	0xf0
-#define	KBC_APM_DIS2	0x56
-#define	KBC_APM_DIS3	0xa5
-
-#define	KBC_APM_PREFIX(p)	(0x90 | (p))
