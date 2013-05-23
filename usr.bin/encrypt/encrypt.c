@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.28 2007/07/14 21:26:38 krw Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.29 2013/05/23 01:33:08 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -62,6 +62,40 @@ usage(void)
 	    __progname);
 	exit(1);
 }
+
+/*
+ * Time how long 8 rounds takes to measure this system's performance.
+ * We are aiming for something that takes between 0.25 and 0.5 seconds.
+ */
+int
+ideal_rounds()
+{
+	clock_t before, after;
+	int r = 8;
+	char buf[_PASSWORD_LEN];
+	int duration;
+
+	strlcpy(buf, bcrypt_gensalt(r), _PASSWORD_LEN);
+	before = clock();
+	crypt("testpassword", buf);
+	after = clock();
+
+	duration = after - before;
+
+	/* too quick? slow it down. */
+	while (duration <= CLOCKS_PER_SEC / 4) {
+		r += 1;
+		duration *= 2;
+	}
+	/* too slow? speed it up. */
+	while (duration > CLOCKS_PER_SEC / 2) {
+		r -= 1;
+		duration /= 2;
+	}
+
+	return r;
+}
+
 
 void
 print_passwd(char *string, int operation, void *extra)
@@ -160,7 +194,10 @@ main(int argc, char **argv)
 			if (operation != -1)
 				usage();
 			operation = DO_BLF;
-			rounds = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (strcmp(optarg, "a") == 0)
+				rounds = ideal_rounds();
+			else
+				rounds = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "%s: %s", errstr, optarg);
 			extra = &rounds;
