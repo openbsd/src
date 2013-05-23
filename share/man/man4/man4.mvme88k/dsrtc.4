@@ -1,4 +1,4 @@
-.\"	$OpenBSD: angelfire.4,v 1.3 2013/05/23 21:20:48 miod Exp $
+.\"	$OpenBSD: dsrtc.4,v 1.1 2013/05/23 21:20:48 miod Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -15,34 +15,19 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: May 23 2013 $
-.Dt ANGELFIRE 4 mvme88k
+.Dt DSRTC 4 mvme88k
 .Os
 .Sh NAME
-.Nm angelfire
-.Nd MVME181 system controller
+.Nm dsrtc
+.Nd DS1216 SmartWatch ROM
 .Sh SYNOPSIS
-.Cd "angelfire0 at mainbus0 addr 0xff800000"
-.Cd "dart0      at angelfire0 offset 0x640000 ipl 5"
-.Cd "dsrtc0     at angelfire0 offset 0x10000"
-.Cd "vme0       at angelfire0 offset 0x680000"
+.Cd "dsrtc0 at angelfire0 offset 0x10000"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides an interface to the interrupt controller and VME bus controller
-found on MVME180 and MVME181 systems.
-.Pp
-The devices connected to
-.Nm
-are:
-.Pp
-.Bl -tag -compact -width 8n -offset indent
-.It Xr dart 4
-MC68681 or MC68692 dual UART
-.It Xr dsrtc 4
-DS1216 SmartWatch ROM
-.It Xr vme 4
-VMEbus interface
-.El
+driver provides support for the
+.Dq SmartWatch
+battery-backed clock found on MVME180 and MVME181 systems.
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr vme 4
+.Xr angelfire 4 ,
+.Xr intro 4

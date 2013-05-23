@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.13 2013/05/18 17:20:45 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.14 2013/05/23 21:20:48 miod Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: May 18 2013 $
+.Dd $Mdocdate: May 23 2013 $
 .Dt INTRO 4 mvme88k
 .Os
 .Sh NAME
@@ -105,12 +105,16 @@ BusSwitch local peripheral bus interface
 Cirrus Logic CD2401 serial controller
 .It Xr dart 4
 MC68681 or MC68692 dual UART
+.It Xr dsrtc 4
+DS1216 SmartWatch ROM
 .It Xr ie 4
 Intel i82596 Ethernet device
 .It Xr le 4
 MVME376 AMD LANCE Ethernet device
 .It Xr memc 4
 MVME187 memory controller
+.It Xr nvram 4
+Mostek MK48T0x battery-backed realtime clock
 .It Xr osiop 4
 Symbios/NCR 53C710 SCSI driver
 .It Xr pcctwo 4

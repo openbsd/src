@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcctwo.4,v 1.9 2013/05/18 17:20:45 miod Exp $
+.\"	$OpenBSD: pcctwo.4,v 1.10 2013/05/23 21:20:48 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2013 $
+.Dd $Mdocdate: May 23 2013 $
 .Dt PCCTWO 4 mvme88k
 .Os
 .Sh NAME
@@ -34,6 +34,14 @@
 .Sh SYNOPSIS
 .Cd "pcctwo0 at mainbus0 addr 0xfff00000        " Pq "MVME187"
 .Cd "pcctwo0 at bussw0 offset 0x00000           " Pq "MVME197"
+.Cd "nvram0  at pcctwo0 offset 0xc0000"
+.Cd "vme0    at pcctwo0 offset 0x40000"
+.Cd "ie0     at pcctwo0 offset 0x46000 ipl 3"
+.Cd "osiop0  at pcctwo0 offset 0x47000 ipl 2"
+.Cd "cl0     at pcctwo0 offset 0x45000 ipl 3"
+.Cd "cl1     at pcctwo0 offset 0x45200 ipl 3    " Pq "M8120 only"
+.Cd "memc0   at pcctwo0 offset 0x43000"
+.Cd "memc1   at pcctwo0 offset 0x43100"
 .Sh DESCRIPTION
 The
 .Nm
@@ -67,6 +75,8 @@ Host interface to
 i82596CA LAN coprocessor
 .It
 Host interface to
+.Xr nvram 4
+Mostek MK48T0x battery-backed realtime clock
 .Xr osiop 4
 Symbios/NCR 53C710 SCSI controller
 .It
@@ -80,4 +90,5 @@ Memory controller ASIC
 .Xr ie 4 ,
 .Xr intro 4 ,
 .Xr memc 4 ,
+.Xr nvram 4 ,
 .Xr osiop 4

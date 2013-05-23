@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscon.4,v 1.2 2013/05/18 11:26:01 miod Exp $
+.\"	$OpenBSD: syscon.4,v 1.3 2013/05/23 21:20:48 miod Exp $
 .\"
 .\" Copyright (c) 2008 Miodrag Vallat.
 .\"
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2013 $
+.Dd $Mdocdate: May 23 2013 $
 .Dt SYSCON 4 mvme88k
 .Os
 .Sh NAME
@@ -40,10 +40,12 @@ are:
 .It Xr dart 4
 MC68681 or MC68692 dual UART
 .It Xr nvram 4
-Non-volatile memory
+Mostek MK48T0x battery-backed realtime clock
 .It Xr vme 4
 VMEbus interface
 .El
 .Sh SEE ALSO
+.Xr dart 4 ,
 .Xr intro 4 ,
-.Xr config 8
+.Xr nvram 4 ,
+.Xr vme 4
