@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.231 2013/03/22 16:40:24 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.232 2013/05/23 01:47:43 lteo Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 22 2013 $
+.Dd $Mdocdate: May 23 2013 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -278,7 +278,7 @@ for details.
 .Bl -ohang
 .It Cd option BUFCACHEPERCENT= Ns Ar integer
 Percentage of RAM to use as a file system buffer.
-It defaults to 5.
+It defaults to 20.
 .It Cd option EXT2FS_SYSTEM_FLAGS
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
