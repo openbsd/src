@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.48 2013/05/17 22:51:59 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.49 2013/05/23 21:20:12 miod Exp $
 #
 maxpartitions 16
 
@@ -36,6 +36,10 @@ file	arch/mvme88k/dev/sram.c				sram needs-count
 device	nvram
 attach	nvram at pcctwo, syscon
 file	arch/mvme88k/dev/nvram.c			nvram needs-count
+
+device	dsrtc
+attach	dsrtc at angelfire
+file	arch/mvme88k/dev/ds1216.c			dsrtc
 
 device	cl: tty
 attach	cl at pcctwo

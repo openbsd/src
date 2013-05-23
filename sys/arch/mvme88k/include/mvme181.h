@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme181.h,v 1.1 2013/05/17 22:51:59 miod Exp $	*/
+/*	$OpenBSD: mvme181.h,v 1.2 2013/05/23 21:20:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -31,7 +31,7 @@
 #define	M181_CLRABRT	0xffee0000	/* clear abort interrupt */
 
 #define	M181_DUART	0xffe40000	/* base address of DUART chip */
-#define	M181_DSRTC	0xff800000	/* base address of TODclock */
+#define	M181_DSRTC	0xff810000	/* base address of TODclock */
 
 /*
  * Control and Status Register interrupt bits - 180 only has the lower 8 bits

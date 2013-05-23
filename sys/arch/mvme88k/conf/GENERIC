@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.57 2013/05/17 22:51:59 miod Exp $
+#	$OpenBSD: GENERIC,v 1.58 2013/05/23 21:20:12 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -39,6 +39,7 @@ mainbus0	at root
 angelfire0	at mainbus0 addr 0xff800000
 vme0		at angelfire0 offset 0x680000
 dart0		at angelfire0 offset 0x640000 ipl 5
+dsrtc0		at angelfire0 offset 0x10000
 
 # MVME1x7 devices
 pcctwo0		at mainbus0 addr 0xfff00000		# MVME187
