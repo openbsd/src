@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.85 2013/03/28 03:29:44 guenther Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.86 2013/05/23 09:11:00 espie Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1957,7 +1957,8 @@ struct vops msdosfs_vops = {
 	.vop_islocked	= msdosfs_islocked,
 	.vop_pathconf	= msdosfs_pathconf,
 	.vop_advlock	= msdosfs_advlock,
-	.vop_bwrite	= vop_generic_bwrite
+	.vop_bwrite	= vop_generic_bwrite,
+	.vop_revoke	= vop_generic_revoke,
 };
 
 struct filterops msdosfsreadwrite_filtops =
