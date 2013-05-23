@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.2 2013/05/23 13:03:52 jasper Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.3 2013/05/23 16:13:08 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -623,7 +623,7 @@ parse_params(uint8_t *buf, uint16_t n, struct client *c, uint16_t id)
 		if (val_len < MAXPATHLEN && strcmp(env_entry->val,
 		    "SCRIPT_NAME") == 0) {
 			bcopy(buf, c->script_name, val_len);
-			c->script_name[val_len+1] = '\0';
+			c->script_name[val_len] = '\0';
 		}
 		env_entry->val[name_len] = '=';
 
