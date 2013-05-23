@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.1 2013/05/23 12:03:24 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.2 2013/05/23 13:03:52 jasper Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -376,7 +376,7 @@ slowcgi_accept(int fd, short events, void *arg)
 		return;
 	}
 	clients = calloc(1, sizeof(*clients));
-	if (c == NULL) {
+	if (clients == NULL) {
 		lwarn("cannot calloc clients");
 		close(s);
 		free(c);
@@ -815,6 +815,7 @@ script_in(int fd, struct event *ev, struct client *c, uint8_t type)
 		switch (errno) {
 		case EINTR:
 		case EAGAIN:
+			free(resp);
 			return;
 		default:
 			n = 0; /* fake empty FCGI_STD{OUT,ERR} response */
