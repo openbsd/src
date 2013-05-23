@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.200 2013/04/10 01:35:55 guenther Exp $ */
+/* $OpenBSD: dsdt.c,v 1.201 2013/05/23 10:27:43 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2221,8 +2221,9 @@ aml_evalhid(struct aml_node *node, struct aml_value *val)
 	return (0);
 }
 
-void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
 void aml_rwgas(struct aml_value *, int, int, struct aml_value *, int, int);
+void aml_rwindexfield(struct aml_value *, struct aml_value *val, int);
+void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
 
 /* Get PCI address for opregion objects */
 int
@@ -2341,6 +2342,81 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 	aml_freevalue(&tmp);
 }
 
+
+void
+aml_rwindexfield(struct aml_value *fld, struct aml_value *val, int mode)
+{
+	struct aml_value tmp, *ref1, *ref2;
+	void *tbit, *vbit;
+	int vpos, bpos, blen;
+	int indexval;
+	int sz, len;
+
+	ref2 = fld->v_field.ref2;
+	ref1 = fld->v_field.ref1;
+	bpos = fld->v_field.bitpos;
+	blen = fld->v_field.bitlen;
+
+	memset(&tmp, 0, sizeof(tmp));
+	tmp.refcnt = 99;
+
+	/* Get field access size */
+	switch (AML_FIELD_ACCESS(fld->v_field.flags)) {
+	case AML_FIELD_WORDACC:
+		sz = 2;
+		break;
+	case AML_FIELD_DWORDACC:
+		sz = 4;
+		break;
+	case AML_FIELD_QWORDACC:
+		sz = 8;
+		break;
+	default:
+		sz = 1;
+		break;
+	}
+
+	if (blen > aml_intlen) {
+		if (mode == ACPI_IOREAD) {
+			/* Read from a large field: create buffer */
+			_aml_setvalue(val, AML_OBJTYPE_BUFFER,
+			    (blen + 7) >> 3, 0);
+		}
+		vbit = val->v_buffer;
+	} else {
+		if (mode == ACPI_IOREAD) {
+			/* Read from a short field: initialize integer */
+			_aml_setvalue(val, AML_OBJTYPE_INTEGER, 0, 0);
+		}
+		vbit = &val->v_integer;
+	}
+	tbit = &tmp.v_integer;
+	vpos = 0;
+
+	indexval = (bpos >> 3) & ~(sz - 1);
+	bpos = bpos - (indexval << 3);
+
+	while (blen > 0) {
+		len = min(blen, (sz << 3) - bpos);
+
+		/* Write index register */
+		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, indexval, 0);
+		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
+		indexval += sz;
+
+		/* Read/write data register */
+		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, 0, 0);
+		if (mode == ACPI_IOWRITE)
+			aml_bufcpy(tbit, 0, vbit, vpos, len);
+		aml_rwfield(ref1, bpos, len, &tmp, mode);
+		if (mode == ACPI_IOREAD)
+			aml_bufcpy(vbit, vpos, tbit, 0, len);
+		vpos += len;
+		blen -= len;
+		bpos = 0;
+	}
+}
+
 void
 aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
     int mode)
@@ -2356,10 +2432,7 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 	memset(&tmp, 0, sizeof(tmp));
 	aml_addref(&tmp, "fld.write");
 	if (fld->v_field.type == AMLOP_INDEXFIELD) {
-		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, fld->v_field.ref3, 0);
-		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
-		aml_rwfield(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
-		    val, mode);
+		aml_rwindexfield(fld, val, mode);
 	} else if (fld->v_field.type == AMLOP_BANKFIELD) {
 		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, fld->v_field.ref3, 0);
 		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
@@ -2414,10 +2487,6 @@ aml_createfield(struct aml_value *field, int opcode,
 	    opcode == AMLOP_BANKFIELD) ?
 	    AML_OBJTYPE_FIELDUNIT :
 	    AML_OBJTYPE_BUFFERFIELD;
-	if (opcode == AMLOP_INDEXFIELD) {
-		indexval = bpos >> 3;
-		bpos &= 7;
-	}
 
 	if (field->type == AML_OBJTYPE_BUFFERFIELD &&
 	    data->type != AML_OBJTYPE_BUFFER)
