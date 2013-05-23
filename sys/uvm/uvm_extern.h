@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.106 2013/05/14 20:33:01 miod Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.107 2013/05/23 01:42:59 tedu Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -254,7 +254,6 @@ struct vmspace;
 struct pmap;
 struct vnode;
 struct pool;
-struct simplelock;
 
 /*
  * uvm_constraint_range's:

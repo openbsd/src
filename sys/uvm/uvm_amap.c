@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.46 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.47 2013/05/23 01:42:59 tedu Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -53,8 +53,7 @@
 #include <uvm/uvm_swap.h>
 
 /*
- * pool for allocation of vm_map structures.  note that the pool has
- * its own simplelock for its protection.  also note that in order to
+ * pool for allocation of vm_map structures.  note that in order to
  * avoid an endless loop, the amap pool's allocator cannot allocate
  * memory from an amap (it currently goes through the kernel uobj, so
  * we are ok).
@@ -249,7 +248,7 @@ amap_alloc(vaddr_t sz, vaddr_t padsz, int waitf)
 /*
  * amap_free: free an amap
  *
- * => the amap must be locked (mainly for simplelock accounting)
+ * => the amap must be locked
  * => the amap should have a zero reference count and be empty
  */
 void
