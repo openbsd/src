@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.1 2013/05/23 12:03:24 florian Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.2 2013/05/23 16:23:16 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -29,15 +29,13 @@ is a server which implements the FastCGI Protocol to execute CGI scripts.
 .Pp
 .Nm
 opens a socket at
-.Ar /var/www/logs/slowcgi.sock
-owned by
-.Ar root:www
-and permissions
-.Ar 0660.
+.Pa /var/www/logs/slowcgi.sock ,
+owned by root:www,
+with permissions 0660.
 It then
 .Xr chroot 8
 to
-.Ar /var/www.
+.Pa /var/www .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
