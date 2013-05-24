@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1216.c,v 1.1 2013/05/23 21:20:12 miod Exp $	*/
+/*	$OpenBSD: ds1216.c,v 1.2 2013/05/24 16:49:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -232,7 +232,7 @@ ds1216_resettodr()
 	regs[DS1216_SEC] = TOBCD(c.dt_sec);
 	regs[DS1216_MIN] = TOBCD(c.dt_min);
 	regs[DS1216_HOUR] = TOBCD(c.dt_hour);
-	regs[DS1216_DOW] = DS1216_RESET | c.dt_wday;
+	regs[DS1216_DOW] = DS1216_RESET | (c.dt_wday + 1);
 	regs[DS1216_DAY] = TOBCD(c.dt_day);
 	regs[DS1216_MONTH] = TOBCD(c.dt_mon);
 	regs[DS1216_YEAR] = TOBCD(c.dt_year % 100);
