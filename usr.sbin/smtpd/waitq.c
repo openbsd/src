@@ -1,4 +1,4 @@
-/*	$OpenBSD: waitq.c,v 1.3 2013/01/26 09:37:24 gilles Exp $	*/
+/*	$OpenBSD: waitq.c,v 1.4 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -17,8 +17,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/tree.h>
 #include <sys/queue.h>
+#include <sys/tree.h>
 #include <sys/uio.h>
 
 #include <imsg.h>

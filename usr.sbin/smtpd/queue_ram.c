@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_ram.c,v 1.2 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: queue_ram.c,v 1.3 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -76,7 +75,7 @@ queue_ram_init(int server)
 static int
 queue_ram_message(enum queue_op qop, uint32_t *msgid)
 {
-	char			 path[MAXPATHLEN];
+	char			 path[SMTPD_MAXPATHLEN];
 	uint64_t		 evpid;
 	struct qr_envelope	*evp;
 	struct qr_message	*msg;

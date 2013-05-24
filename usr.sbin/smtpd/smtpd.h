@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.409 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.410 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -22,11 +22,13 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#include "smtpd-defines.h"
 #include "smtpd-api.h"
 #include "ioev.h"
 #include "iobuf.h"
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
+#define CA_FILE			 "/etc/ssl/cert.pem"
 #define MAX_LISTEN		 16
 #define PROC_COUNT		 10
 #define MAX_NAME_SIZE		 64
@@ -40,8 +42,7 @@
 
 /* return and forward path size */
 #define	MAX_FILTER_NAME		 32
-#define MAX_PATH_SIZE		 256
-/*#define MAX_RULEBUFFER_LEN	 512*/
+
 #define	EXPAND_BUFFER		 1024
 
 #define SMTPD_QUEUE_INTERVAL	 (15 * 60)
@@ -54,7 +55,7 @@
 #ifndef SMTPD_NAME
 #define	SMTPD_NAME		 "OpenSMTPD"
 #endif
-#define	SMTPD_VERSION		 "5.3"
+#define	SMTPD_VERSION		 "5.3.2"
 #define SMTPD_BANNER		 "220 %s ESMTP %s"
 #define SMTPD_SESSION_TIMEOUT	 300
 #define SMTPD_BACKLOG		 5
@@ -69,16 +70,6 @@
 #define PATH_MESSAGE		"/message"
 
 #define	PATH_FILTERS		"/usr/libexec/smtpd"
-
-
-/* number of MX records to lookup */
-#define MAX_MX_COUNT		10
-
-/* max response delay under flood conditions */
-#define MAX_RESPONSE_DELAY	60
-
-/* how many responses per state are undelayed */
-#define FAST_RESPONSES		2
 
 #define F_STARTTLS		0x01
 #define F_SMTPS			0x02
@@ -103,11 +94,9 @@
 #define RELAY_MX		0x20
 #define RELAY_LMTP		0x80
 
-typedef uint32_t	objid_t;
-
 struct userinfo {
-	char username[MAXLOGNAME];
-	char directory[MAXPATHLEN];
+	char username[SMTPD_MAXLOGNAME];
+	char directory[SMTPD_MAXPATHLEN];
 	uid_t uid;
 	gid_t gid;
 };
@@ -117,20 +106,15 @@ struct netaddr {
 	int bits;
 };
 
-union sockaddr_any {
-	struct in6_addr		in6;
-	struct in_addr		in4;
-};
-
 struct relayhost {
 	uint8_t flags;
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[SMTPD_MAXHOSTNAMELEN];
 	uint16_t port;
-	char cert[PATH_MAX];
-	char authtable[MAX_PATH_SIZE];
-	char authlabel[MAX_PATH_SIZE];
-	char sourcetable[MAX_PATH_SIZE];
-	char helotable[MAX_PATH_SIZE];
+	char cert[SMTPD_MAXPATHLEN];
+	char authtable[SMTPD_MAXPATHLEN];
+	char authlabel[SMTPD_MAXPATHLEN];
+	char sourcetable[SMTPD_MAXPATHLEN];
+	char helotable[SMTPD_MAXPATHLEN];
 };
 
 struct credentials {
@@ -139,17 +123,35 @@ struct credentials {
 };
 
 struct destination {
-	char	name[MAXHOSTNAMELEN];
+	char	name[SMTPD_MAXHOSTNAMELEN];
 };
 
 struct source {
-	union sockaddr_any	addr;
+	struct sockaddr_storage	addr;
 };
 
 struct addrname {
-	union sockaddr_any	addr;
-	char			name[MAXHOSTNAMELEN];
+	struct sockaddr_storage	addr;
+	char			name[SMTPD_MAXHOSTNAMELEN];
 };
+
+union lookup {
+	struct expand		*expand;
+	struct credentials	 creds;
+	struct netaddr		 netaddr;
+	struct source		 source;
+	struct destination	 domain;
+	struct userinfo		 userinfo;
+	struct mailaddr		 mailaddr;
+	struct addrname		 addrname;
+};
+
+/* XXX */
+/*
+ * Bump IMSG_VERSION whenever a change is made to enum imsg_type.
+ * This will ensure that we can never use a wrong version of smtpctl with smtpd.
+ */
+#define	IMSG_VERSION		2
 
 enum imsg_type {
 	IMSG_NONE,
@@ -240,7 +242,6 @@ enum imsg_type {
 	IMSG_PARENT_FORWARD_OPEN,
 	IMSG_PARENT_FORK_MDA,
 	IMSG_PARENT_KILL_MDA,
-	IMSG_PARENT_SEND_CONFIG,
 
 	IMSG_SMTP_ENQUEUE_FD,
 
@@ -274,6 +275,9 @@ enum smtp_proc_type {
 	PROC_MTA,
 	PROC_CONTROL,
 	PROC_SCHEDULER,
+
+	PROC_FILTER,
+	PROC_CLIENT,
 };
 
 enum table_type {
@@ -297,28 +301,24 @@ enum table_service {
 
 struct table {
 	char				 t_name[SMTPD_MAXLINESIZE];
-	objid_t				 t_id;
 	enum table_type			 t_type;
-	char				 t_src[MAX_TABLE_BACKEND_SIZE];
-	char				 t_config[MAXPATHLEN];
+	char				 t_config[SMTPD_MAXPATHLEN];
 
 	struct dict			 t_dict;
 
 	void				*t_handle;
 	struct table_backend		*t_backend;
-	void				*t_payload;
 	void				*t_iter;
-	char				 t_cfgtable[MAXPATHLEN];
 };
 
 struct table_backend {
 	const unsigned int	services;
-	int	(*config)(struct table *, const char *);
-	void	*(*open)(struct table *);
+	int	(*config)(struct table *);
+	void   *(*open)(struct table *);
 	int	(*update)(struct table *);
 	void	(*close)(void *);
-	int	(*lookup)(void *, const char *, enum table_service, void **);
-	int	(*fetch)(void *, enum table_service, char **);
+	int	(*lookup)(void *, const char *, enum table_service, union lookup *);
+	int	(*fetch)(void *, enum table_service, union lookup *);
 };
 
 
@@ -333,7 +333,8 @@ enum action_type {
 	A_MAILDIR,
 	A_MBOX,
 	A_FILENAME,
-	A_MDA
+	A_MDA,
+	A_LMTP
 };
 
 enum decision {
@@ -371,8 +372,8 @@ enum delivery_type {
 
 struct delivery_mda {
 	enum action_type	method;
-	char			usertable[MAX_PATH_SIZE];
-	char			username[MAXLOGNAME];
+	char			usertable[SMTPD_MAXPATHLEN];
+	char			username[SMTPD_MAXLOGNAME];
 	char			buffer[EXPAND_BUFFER];
 };
 
@@ -397,7 +398,8 @@ enum expand_type {
 	EXPAND_FILENAME,
 	EXPAND_FILTER,
 	EXPAND_INCLUDE,
-	EXPAND_ADDRESS
+	EXPAND_ADDRESS,
+	EXPAND_ERROR
 };
 
 struct expandnode {
@@ -416,7 +418,7 @@ struct expandnode {
 		 * user field handles both expansion user and system user
 		 * so we MUST make it large enough to fit a mailaddr user
 		 */
-		char		user[MAX_LOCALPART_SIZE];
+		char		user[SMTPD_MAXLOCALPARTSIZE];
 		char		buffer[EXPAND_BUFFER];
 		struct mailaddr	mailaddr;
 	}			u;
@@ -452,8 +454,8 @@ struct envelope {
 	uint64_t			id;
 	enum envelope_flags		flags;
 
-	char				helo[MAXHOSTNAMELEN];
-	char				hostname[MAXHOSTNAMELEN];
+	char				helo[SMTPD_MAXHOSTNAMELEN];
+	char				hostname[SMTPD_MAXHOSTNAMELEN];
 	char				errorline[SMTPD_MAXLINESIZE];
 	struct sockaddr_storage		ss;
 
@@ -515,17 +517,17 @@ struct listener {
 	in_port_t		 port;
 	struct timeval		 timeout;
 	struct event		 ev;
-	char			 ssl_cert_name[PATH_MAX];
+	char			 ssl_cert_name[SMTPD_MAXPATHLEN];
 	struct ssl		*ssl;
 	void			*ssl_ctx;
 	char			 tag[MAX_TAG_SIZE];
 	char			 authtable[SMTPD_MAXLINESIZE];
-	char			 helo[MAXHOSTNAMELEN];
+	char			 helo[SMTPD_MAXHOSTNAMELEN];
 	TAILQ_ENTRY(listener)	 entry;
 };
 
 struct smtpd {
-	char				sc_conffile[MAXPATHLEN];
+	char				sc_conffile[SMTPD_MAXPATHLEN];
 	size_t				sc_maxsize;
 
 	pid_t				sc_pid;
@@ -533,6 +535,7 @@ struct smtpd {
 #define SMTPD_OPT_VERBOSE		0x00000001
 #define SMTPD_OPT_NOACTION		0x00000002
 	uint32_t			sc_opts;
+
 #define SMTPD_CONFIGURING		0x00000001
 #define SMTPD_EXITING			0x00000002
 #define SMTPD_MDA_PAUSED		0x00000004
@@ -543,18 +546,18 @@ struct smtpd {
 #define SMTPD_BOUNCE_BUSY		0x00000080
 #define SMTPD_SMTP_DISABLED		0x00000100
 	uint32_t			sc_flags;
+
+#define QUEUE_COMPRESSION      		0x00000001
 	uint32_t			sc_queue_flags;
-#define QUEUE_COMPRESS			0x00000001
-	char			       *sc_queue_compress_algo;
+
 	int				sc_qexpire;
 #define MAX_BOUNCE_WARN			4
 	time_t				sc_bounce_warn[MAX_BOUNCE_WARN];
-	struct event			sc_ev;
 	struct passwd		       *sc_pw;
 	struct passwd		       *sc_pwqueue;
-	char				sc_hostname[MAXHOSTNAMELEN];
-	struct scheduler_backend       *sc_scheduler;
+	char				sc_hostname[SMTPD_MAXHOSTNAMELEN];
 	struct stat_backend	       *sc_stat;
+	struct compress_backend	       *sc_comp;
 
 	time_t					 sc_uptime;
 
@@ -565,13 +568,12 @@ struct smtpd {
 	struct dict			       *sc_ssl_dict;
 
 	struct dict			       *sc_tables_dict;		/* keyed lookup	*/
-	struct tree			       *sc_tables_tree;		/* id lookup	*/
 
 	struct dict				sc_filters;
 	uint32_t				filtermask;
 };
 
-#define	TRACE_VERBOSE	0x0001
+#define	TRACE_DEBUG	0x0001
 #define	TRACE_IMSG	0x0002
 #define	TRACE_IO	0x0004
 #define	TRACE_SMTP	0x0008
@@ -582,8 +584,10 @@ struct smtpd {
 #define	TRACE_LOOKUP	0x0100
 #define	TRACE_STAT	0x0200
 #define	TRACE_RULES	0x0400
-#define	TRACE_IMSGSIZE	0x0800
+#define	TRACE_MPROC	0x0800
 #define	TRACE_EXPAND	0x1000
+#define	TRACE_TABLES	0x2000
+#define	TRACE_QUEUE	0x4000
 
 #define PROFILE_TOSTAT	0x0001
 #define PROFILE_IMSG	0x0002
@@ -593,16 +597,16 @@ struct forward_req {
 	uint64_t			id;
 	uint8_t				status;
 
-	char				user[MAXLOGNAME];
+	char				user[SMTPD_MAXLOGNAME];
 	uid_t				uid;
 	gid_t				gid;
-	char				directory[MAXPATHLEN];
+	char				directory[SMTPD_MAXPATHLEN];
 };
 
 struct deliver {
-	char			to[PATH_MAX];
-	char			from[PATH_MAX];
-	char			user[MAXLOGNAME];
+	char			to[SMTPD_MAXPATHLEN];
+	char			from[SMTPD_MAXPATHLEN];
+	char			user[SMTPD_MAXLOGNAME];
 	short			mode;
 
 	struct userinfo		userinfo;
@@ -611,7 +615,7 @@ struct deliver {
 struct filter {
 	struct imsgproc	       *process;
 	char			name[MAX_FILTER_NAME];
-	char			path[MAXPATHLEN];
+	char			path[SMTPD_MAXPATHLEN];
 };
 
 struct mta_host {
@@ -740,6 +744,7 @@ struct mta_relay {
 struct mta_envelope {
 	TAILQ_ENTRY(mta_envelope)	 entry;
 	uint64_t			 id;
+	uint64_t			 session;
 	time_t				 creation;
 	char				*dest;
 	char				*rcpt;
@@ -773,12 +778,10 @@ struct queue_backend {
 };
 
 struct compress_backend {
-	void *	(*compress_new)(void);
-	size_t	(*compress_chunk)(void *, void *, size_t, void *, size_t);
-	size_t	(*compress_finalize)(void *, void *, size_t);
-	void *	(*uncompress_new)(void);
-	size_t	(*uncompress_chunk)(void *, void *, size_t, void *, size_t);
-	size_t	(*uncompress_finalize)(void *, void *, size_t);
+	size_t	(*compress_chunk)(void *, size_t, void *, size_t);
+	size_t	(*uncompress_chunk)(void *, size_t, void *, size_t);
+	int	(*compress_file)(FILE *, FILE *);
+	int	(*uncompress_file)(FILE *, FILE *);
 };
 
 /* auth structures */
@@ -832,21 +835,21 @@ struct scheduler_batch {
 };
 
 struct scheduler_backend {
-	void	(*init)(void);
+	int	(*init)(void);
 
-	void	(*insert)(struct scheduler_info *);
+	int	(*insert)(struct scheduler_info *);
 	size_t	(*commit)(uint32_t);
 	size_t	(*rollback)(uint32_t);
 
-	void	(*update)(struct scheduler_info *);
-	void	(*delete)(uint64_t);
+	int	(*update)(struct scheduler_info *);
+	int	(*delete)(uint64_t);
 
-	void	(*batch)(int, struct scheduler_batch *);
+	int	(*batch)(int, struct scheduler_batch *);
 
 	size_t	(*messages)(uint32_t, uint32_t *, size_t);
 	size_t	(*envelopes)(uint64_t, struct evpstate *, size_t);
-	void	(*schedule)(uint64_t);
-	void	(*remove)(uint64_t);
+	int	(*schedule)(uint64_t);
+	int	(*remove)(uint64_t);
 };
 
 
@@ -903,8 +906,6 @@ struct stat_digest {
 	size_t			 dlv_loop;
 };
 
-#define MSZ_EVP		512
-
 
 struct mproc {
 	pid_t		 pid;
@@ -912,8 +913,15 @@ struct mproc {
 	int		 proc;
 	void		(*handler)(struct mproc *, struct imsg *);
 	struct imsgbuf	 imsgbuf;
-	struct ibuf	*ibuf;
-	int		 ibuferror;
+
+	char		*m_buf;
+	size_t		 m_alloc;
+	size_t		 m_pos;
+	uint32_t	 m_type;
+	uint32_t	 m_peerid;
+	pid_t		 m_pid;
+	int		 m_fd;
+
 	int		 enable;
 	short		 events;
 	struct event	 ev;
@@ -995,7 +1003,7 @@ enum ca_resp_status {
 
 struct ca_cert_req_msg {
 	uint64_t		reqid;
-	char			name[MAXPATHLEN];
+	char			name[SMTPD_MAXPATHLEN];
 };
 
 struct ca_cert_resp_msg {
@@ -1044,15 +1052,10 @@ int	ca_X509_verify(void *, void *, const char *, const char *, const char **);
 
 
 /* compress_backend.c */
-int	compress_backend_init(const char *);
-void*	compress_new(void);
-size_t	compress_chunk(void *, void *, size_t, void *, size_t);
-size_t	compress_finalize(void *, void *, size_t);
-size_t	compress_buffer(char *, size_t, char *, size_t);
-void*	uncompress_new(void);
-size_t	uncompress_chunk(void *, void *, size_t, void *, size_t);
-size_t	uncompress_finalize(void *, void *, size_t);
-size_t	uncompress_buffer(char *, size_t, char *, size_t);
+struct compress_backend *compress_backend_lookup(const char *);
+size_t	compress_chunk(void *, size_t, void *, size_t);
+size_t	uncompress_chunk(void *, size_t, void *, size_t);
+int	compress_file(FILE *, FILE *);
 int	uncompress_file(FILE *, FILE *);
 
 /* config.c */
@@ -1106,6 +1109,7 @@ struct expandnode *expand_lookup(struct expand *, struct expandnode *);
 void expand_clear(struct expand *);
 void expand_free(struct expand *);
 int expand_line(struct expand *, const char *, int);
+int expand_to_text(struct expand *, char *, size_t);
 RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
 
 
@@ -1127,13 +1131,13 @@ void imsgproc_reset_callback(struct imsgproc *, void (*)(struct imsg *, void *),
 pid_t lka(void);
 
 
-/* log.c */
-void vlog(int, const char *, va_list);
-
-
 /* lka_session.c */
 void lka_session(uint64_t, struct envelope *);
 void lka_session_forward_reply(struct forward_req *, int);
+
+
+/* log.c */
+void vlog(int, const char *, va_list);
 
 
 /* mda.c */
@@ -1164,7 +1168,7 @@ void m_compose(struct mproc *, uint32_t, uint32_t, pid_t, int, void *, size_t);
 void m_composev(struct mproc *, uint32_t, uint32_t, pid_t, int,
     const struct iovec *, int);
 void m_forward(struct mproc *, struct imsg *);
-void m_create(struct mproc *, uint32_t, uint32_t, pid_t, int, size_t);
+void m_create(struct mproc *, uint32_t, uint32_t, pid_t, int);
 void m_add(struct mproc *, const void *, size_t);
 void m_add_int(struct mproc *, int);
 void m_add_u32(struct mproc *, uint32_t);
@@ -1201,7 +1205,7 @@ void mta_route_ok(struct mta_relay *, struct mta_route *);
 void mta_route_error(struct mta_relay *, struct mta_route *);
 void mta_route_collect(struct mta_relay *, struct mta_route *);
 void mta_source_error(struct mta_relay *, struct mta_route *, const char *);
-void mta_delivery(struct mta_envelope *, const char *, int, const char *);
+void mta_delivery(struct mta_envelope *, const char *, const char *, int, const char *);
 struct mta_task *mta_route_next_task(struct mta_relay *, struct mta_route *);
 const char *mta_host_to_text(struct mta_host *);
 const char *mta_relay_to_text(struct mta_relay *);
@@ -1292,37 +1296,31 @@ struct stat_value *stat_timespec(struct timespec *);
 
 
 /* table.c */
+struct table *table_find(const char *, const char *);
+struct table *table_create(const char *, const char *, const char *,
+    const char *);
+int	table_config(struct table *);
 int	table_open(struct table *);
-void	table_update(struct table *);
+int	table_update(struct table *);
 void	table_close(struct table *);
 int	table_check_use(struct table *, uint32_t, uint32_t);
 int	table_check_type(struct table *, uint32_t);
 int	table_check_service(struct table *, uint32_t);
-int	table_lookup(struct table *, const char *, enum table_service, void **);
-int	table_fetch(struct table *, enum table_service, char **);
-struct table *table_find(objid_t);
-struct table *table_findbyname(const char *);
-struct table *table_create(const char *, const char *, const char *);
+int	table_lookup(struct table *, const char *, enum table_service,
+    union lookup *);
+int	table_fetch(struct table *, enum table_service, union lookup *);
 void table_destroy(struct table *);
 void table_add(struct table *, const char *, const char *);
 void table_delete(struct table *, const char *);
-void table_delete_all(struct table *);
-void table_replace(struct table *, struct table *);
 int table_domain_match(const char *, const char *);
 int table_netaddr_match(const char *, const char *);
 int table_mailaddr_match(const char *, const char *);
 void	table_open_all(void);
+void	table_dump_all(void);
 void	table_close_all(void);
-void	table_set_payload(struct table *, void *);
-void   *table_get_payload(struct table *);
-void	table_set_configuration(struct table *, struct table *);
-struct table	*table_get_configuration(struct table *);
 const void	*table_get(struct table *, const char *);
-
-void *table_config_create(void);
-const char *table_config_get(void *, const char *);
-void table_config_destroy(void *);
-int table_config_parse(void *, const char *, enum table_type);
+int table_parse_lookup(enum table_service, const char *, const char *,
+    union lookup *);
 
 
 /* to.c */

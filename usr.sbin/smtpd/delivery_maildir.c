@@ -1,4 +1,4 @@
-/*	$OpenBSD: delivery_maildir.c,v 1.11 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: delivery_maildir.c,v 1.12 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -52,7 +51,7 @@ struct delivery_backend delivery_backend_maildir = {
 static void
 delivery_maildir_open(struct deliver *deliver)
 {
-	char	 tmp[PATH_MAX], new[PATH_MAX];
+	char	 tmp[SMTPD_MAXPATHLEN], new[SMTPD_MAXPATHLEN];
 	int	 ch, fd;
 	FILE	*fp;
 	char	*msg;

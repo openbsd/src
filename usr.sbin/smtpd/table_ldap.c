@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_ldap.c,v 1.3 2013/03/08 19:11:52 chl Exp $	*/
+/*	$OpenBSD: table_ldap.c,v 1.4 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2010-2012 Gilles Chehade <gilles@poolp.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
@@ -48,13 +47,13 @@
 #define MAX_LDAP_FILTERLEN     	 1024
 #define MAX_LDAP_FIELDLEN      	 128
 
-static void			*table_ldap_open(struct table *);
-static int			 table_ldap_update(struct table *);
-static int			 table_ldap_config(struct table *, const char *);
-static int			 table_ldap_lookup(void *, const  char *, enum table_service, void **);
-static int			 table_ldap_fetch(void *, enum table_service, char **);
-static void			 table_ldap_close(void *);
-static struct aldap		*ldap_client_connect(const char *);
+static void	*table_ldap_open(struct table *);
+static int	 table_ldap_update(struct table *);
+static int	 table_ldap_config(struct table *);
+static int	 table_ldap_lookup(void *, const  char *, enum table_service, union lookup *);
+static int	 table_ldap_fetch(void *, enum table_service, union lookup *);
+static void	 table_ldap_close(void *);
+static struct aldap	*ldap_client_connect(const char *);
 
 struct table_backend table_backend_ldap = {
 	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_USERINFO, /* K_NETADDR|K_SOURCE,*/
@@ -75,37 +74,36 @@ static int	parse_attributes(char **, const char *, size_t);
 static int	table_ldap_internal_query(struct aldap *, const char *,
     const char *, char **, char ***, size_t);
 
-static int	table_ldap_alias(struct table_ldap_handle *, const char *, void **);
-static int	table_ldap_credentials(struct table_ldap_handle *, const char *, void **);
-static int	table_ldap_domain(struct table_ldap_handle *, const char *, void **);
-static int	table_ldap_userinfo(struct table_ldap_handle *, const char *, void **);
+static int	table_ldap_alias(struct table_ldap_handle *, const char *, union lookup *);
+static int	table_ldap_credentials(struct table_ldap_handle *, const char *, union lookup *);
+static int	table_ldap_domain(struct table_ldap_handle *, const char *, union lookup *);
+static int	table_ldap_userinfo(struct table_ldap_handle *, const char *, union lookup *);
 
 
 static int
-table_ldap_config(struct table *table, const char *config)
+table_ldap_config(struct table *table)
 {
-	void	*cfg = NULL;
+	struct table	*cfg = NULL;
 
 	/* no config ? broken */
-	if (config == NULL)
+	if (table->t_config[0] == '\0')
 		return 0;
 
-	cfg = table_config_create();
-	if (! table_config_parse(cfg, config, T_HASH))
+	cfg = table_create("static", table->t_name, "conf", table->t_config);
+	if (!table_config(cfg))
 		goto err;
 
 	/* sanity checks */
-	if (table_config_get(cfg, "url") == NULL) {
+	if (table_get(cfg, "url") == NULL) {
 		log_warnx("table_ldap: missing 'url' configuration");
 		goto err;
 	}
 
-	if (table_config_get(cfg, "basedn") == NULL) {
+	if (table_get(cfg, "basedn") == NULL) {
 		log_warnx("table_ldap: missing 'basedn' configuration");
 		goto err;
 	}
 
-	table_set_configuration(table, cfg);
 	return 1;
 
 err:
@@ -130,7 +128,7 @@ table_ldap_open(struct table *table)
 	char     			*username = NULL;
 	char     			*password = NULL;
 
-	cfg = table_get_configuration(table);
+	cfg = table_find(table->t_name, "conf");
 	if (table_get(cfg, "url") == NULL ||
 	    table_get(cfg, "username") == NULL ||
 	    table_get(cfg, "password") == NULL)
@@ -194,22 +192,22 @@ table_ldap_close(void *hdl)
 
 static int
 table_ldap_lookup(void *hdl, const char *key, enum table_service service,
-		void **retp)
+    union lookup *lk)
 {
 	struct table_ldap_handle	*tlh = hdl;
 
 	switch (service) {
 	case K_ALIAS:
-		return table_ldap_alias(tlh, key, retp);
+		return table_ldap_alias(tlh, key, lk);
 
 	case K_CREDENTIALS:
-		return table_ldap_credentials(tlh, key, retp);
+		return table_ldap_credentials(tlh, key, lk);
 
 	case K_DOMAIN:
-		return table_ldap_domain(tlh, key, retp);
+		return table_ldap_domain(tlh, key, lk);
 
 	case K_USERINFO:
-		return table_ldap_userinfo(tlh, key, retp);
+		return table_ldap_userinfo(tlh, key, lk);
 
 	default:
 		break;
@@ -219,7 +217,7 @@ table_ldap_lookup(void *hdl, const char *key, enum table_service service,
 }
 
 static int
-table_ldap_fetch(void *hdl, enum table_service service, char **retp)
+table_ldap_fetch(void *hdl, enum table_service service, union lookup *lk)
 {
 	/* fetch not support for LDAP at this point */
 	return -1;
@@ -300,20 +298,19 @@ end:
 
 
 static int
-table_ldap_credentials(struct table_ldap_handle *tlh, const char *key, void **retp)
+table_ldap_credentials(struct table_ldap_handle *tlh, const char *key, union lookup *lk)
 {
-	struct aldap		       *aldap = tlh->aldap;
-	struct table		       *cfg = table_get_configuration(tlh->table);
-	const char		       *filter = NULL;
-	const char		       *basedn = NULL;
-	struct credentials		credentials;
-	char			       *expfilter = NULL;
-	char     		       *attributes[4];
-	char     		      **ret_attr[4];
-	const char     		       *attr;
-	char				line[1024];
-	int				ret = -1;
-	size_t				i;
+	struct aldap	       *aldap = tlh->aldap;
+	struct table	       *cfg = table_find(tlh->table->t_name, "conf");
+	const char	       *filter = NULL;
+	const char	       *basedn = NULL;
+	char		       *expfilter = NULL;
+	char     	       *attributes[4];
+	char     	      **ret_attr[4];
+	const char     	       *attr;
+	char			line[1024];
+	int			ret = -1;
+	size_t			i;
 
 	bzero(&attributes, sizeof attributes);
 	bzero(&ret_attr, sizeof ret_attr);
@@ -343,7 +340,7 @@ table_ldap_credentials(struct table_ldap_handle *tlh, const char *key, void **re
 		    ret_attr, nitems(attributes))) <= 0)
 		goto end;
 
-	if (retp == NULL)
+	if (lk == NULL)
 		goto end;
 
 	if (! bsnprintf(line, sizeof line, "%s:%s", ret_attr[0][0], ret_attr[0][1])) {
@@ -351,13 +348,9 @@ table_ldap_credentials(struct table_ldap_handle *tlh, const char *key, void **re
 		goto end;
 	}
 
-	bzero(&credentials, sizeof credentials);
-	if (! text_to_credentials(&credentials, line)) {
+	bzero(&lk->creds, sizeof(lk->creds));
+	if (! text_to_credentials(&lk->creds, line))
 		ret = -1;
-		goto end;
-	}
-
-	*retp = xmemdup(&credentials, sizeof credentials, "table_ldap_credentials");
 
 end:
 	for (i = 0; i < nitems(attributes); ++i) {
@@ -372,19 +365,18 @@ end:
 }
 
 static int
-table_ldap_domain(struct table_ldap_handle *tlh, const char *key, void **retp)
+table_ldap_domain(struct table_ldap_handle *tlh, const char *key, union lookup *lk)
 {
-	struct aldap		       *aldap = tlh->aldap;
-	struct table		       *cfg = table_get_configuration(tlh->table);
-	const char		       *filter = NULL;
-	const char		       *basedn = NULL;
-	struct destination		destination;
-	char			       *expfilter = NULL;
-	char     		       *attributes[1];
-	char     		      **ret_attr[1];
-	const char     		       *attr;
-	int				ret = -1;
-	size_t				i;
+	struct aldap	       *aldap = tlh->aldap;
+	struct table	       *cfg = table_find(tlh->table->t_name, "conf");
+	const char	       *filter = NULL;
+	const char	       *basedn = NULL;
+	char		       *expfilter = NULL;
+	char     	       *attributes[1];
+	char     	      **ret_attr[1];
+	const char     	       *attr;
+	int			ret = -1;
+	size_t			i;
 
 	bzero(&attributes, sizeof attributes);
 	bzero(&ret_attr, sizeof ret_attr);
@@ -415,13 +407,13 @@ table_ldap_domain(struct table_ldap_handle *tlh, const char *key, void **retp)
 		    ret_attr, nitems(attributes))) <= 0)
 		goto end;
 
-	if (retp == NULL)
+	if (lk == NULL)
 		goto end;
 
-	bzero(&destination, sizeof destination);
-	if (strlcpy(destination.name, ret_attr[0][0], sizeof destination.name)
-	    >= sizeof destination.name);
-	*retp = xmemdup(&destination, sizeof destination, "table_ldap_destination");
+	bzero(&lk->domain, sizeof(lk->domain));
+	if (strlcpy(lk->domain.name, ret_attr[0][0], sizeof(lk->domain.name))
+	    >= sizeof(lk->domain.name))
+		ret = -1;
 
 end:
 	for (i = 0; i < nitems(attributes); ++i) {
@@ -430,25 +422,24 @@ end:
 			aldap_free_attr(ret_attr[i]);
 	}
 	free(expfilter);
-	log_debug("debug: table_ldap_destination: ret=%d", ret);
+	log_debug("debug: table_ldap_domain: ret=%d", ret);
 	return ret;
 }
 
 static int
-table_ldap_userinfo(struct table_ldap_handle *tlh, const char *key, void **retp)
+table_ldap_userinfo(struct table_ldap_handle *tlh, const char *key, union lookup *lk)
 {
-	struct aldap		       *aldap = tlh->aldap;
-	struct table		       *cfg = table_get_configuration(tlh->table);
-	const char		       *filter = NULL;
-	const char		       *basedn = NULL;
-	struct userinfo			userinfo;
-	char			       *expfilter = NULL;
-	char     		       *attributes[4];
-	char     		      **ret_attr[4];
-	const char     		       *attr;
-	char				line[1024];
-	int				ret = -1;
-	size_t				i;
+	struct aldap	       *aldap = tlh->aldap;
+	struct table	       *cfg = table_find(tlh->table->t_name, "conf");
+	const char	       *filter = NULL;
+	const char	       *basedn = NULL;
+	char		       *expfilter = NULL;
+	char     	       *attributes[4];
+	char     	      **ret_attr[4];
+	const char     	       *attr;
+	char			line[1024];
+	int			ret = -1;
+	size_t			i;
 
 	bzero(&attributes, sizeof attributes);
 	bzero(&ret_attr, sizeof ret_attr);
@@ -478,7 +469,7 @@ table_ldap_userinfo(struct table_ldap_handle *tlh, const char *key, void **retp)
 		    ret_attr, nitems(attributes))) <= 0)
 		goto end;
 
-	if (retp == NULL)
+	if (lk == NULL)
 		goto end;
 
 	if (! bsnprintf(line, sizeof line, "%s:%s:%s:%s",
@@ -487,13 +478,9 @@ table_ldap_userinfo(struct table_ldap_handle *tlh, const char *key, void **retp)
 		goto end;
 	}
 
-	bzero(&userinfo, sizeof userinfo);
-	if (! text_to_userinfo(&userinfo, line)) {
+	bzero(&lk->userinfo, sizeof(lk->userinfo));
+	if (!text_to_userinfo(&(lk->userinfo), line))
 		ret = -1;
-		goto end;
-	}
-
-	*retp = xmemdup(&userinfo, sizeof userinfo, "table_ldap_userinfo");
 
 end:
 	for (i = 0; i < nitems(attributes); ++i) {
@@ -507,22 +494,23 @@ end:
 }
 
 static int
-table_ldap_alias(struct table_ldap_handle *tlh, const char *key, void **retp)
+table_ldap_alias(struct table_ldap_handle *tlh, const char *key, union lookup *lk)
 {
-	struct aldap		       *aldap = tlh->aldap;
-	struct table		       *cfg = table_get_configuration(tlh->table);
-	const char		       *filter = NULL;
-	const char		       *basedn = NULL;
-	struct expand		       *xp = NULL;
-	char			       *expfilter = NULL;
-	char     		       *attributes[1];
-	char     		      **ret_attr[1];
-	const char     		       *attr;
-	int				ret = -1;
-	size_t				i;
+	struct aldap	       *aldap = tlh->aldap;
+	struct table	       *cfg = table_find(tlh->table->t_name, "conf");
+	const char	       *filter = NULL;
+	const char	       *basedn = NULL;
+	char		       *expfilter = NULL;
+	char     	       *attributes[1];
+	char     	      **ret_attr[1];
+	const char     	       *attr;
+	int			ret = -1;
+	size_t			i;
 
 	bzero(&attributes, sizeof attributes);
 	bzero(&ret_attr, sizeof ret_attr);
+	if (lk)
+		lk->expand = NULL;
 
 	basedn = table_get(cfg, "basedn");
 	if ((filter = table_get(cfg, "alias_filter")) == NULL) {
@@ -549,17 +537,16 @@ table_ldap_alias(struct table_ldap_handle *tlh, const char *key, void **retp)
 		    ret_attr, nitems(attributes))) <= 0)
 		goto end;
 
-	if (retp == NULL)
+	if (lk == NULL)
 		goto end;
 
-	xp = xcalloc(1, sizeof *xp, "table_ldap_alias");
+	lk->expand = xcalloc(1, sizeof(*lk->expand), "table_ldap_alias");
 	for (i = 0; ret_attr[0][i]; ++i) {
-		if (! expand_line(xp, ret_attr[0][i], 1)) {
+		if (! expand_line(lk->expand, ret_attr[0][i], 1)) {
 			ret = -1;
 			goto end;
 		}
 	}
-	*retp = xp;
 
 end:
 	for (i = 0; i < nitems(attributes); ++i) {
@@ -567,12 +554,9 @@ end:
 		if (ret_attr[i])
 			aldap_free_attr(ret_attr[i]);
 	}
-	if (ret != 1) {
-		if (retp)
-			*retp = NULL;
-		if (xp)
-			expand_free(xp);
-	}
+	if (ret != 1 && lk && lk->expand)
+		expand_free(lk->expand);
+
 	free(expfilter);
 	log_debug("debug: table_ldap_alias: ret=%d", ret);
 	return ret;

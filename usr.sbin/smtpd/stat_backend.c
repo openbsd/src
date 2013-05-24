@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_backend.c,v 1.7 2013/03/08 19:11:52 chl Exp $	*/
+/*	$OpenBSD: stat_backend.c,v 1.8 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 
 #include <event.h>
 #include <imsg.h>
@@ -48,13 +47,11 @@ stat_backend_lookup(const char *name)
 void
 stat_increment(const char *key, size_t count)
 {
-	size_t			 len;
 	struct stat_value	*value;
 
 	value = stat_counter(count);
 
-	len = 32 + strlen(key) + sizeof(*value);
-	m_create(p_control, IMSG_STAT_INCREMENT, 0, 0, -1, len);
+	m_create(p_control, IMSG_STAT_INCREMENT, 0, 0, -1);
 	m_add_string(p_control, key);
 	m_add_data(p_control, value, sizeof(*value));
 	m_close(p_control);
@@ -63,13 +60,11 @@ stat_increment(const char *key, size_t count)
 void
 stat_decrement(const char *key, size_t count)
 {
-	size_t			 len;
 	struct stat_value	*value;
 
 	value = stat_counter(count);
 
-	len = 32 + strlen(key) + sizeof(*value);
-	m_create(p_control, IMSG_STAT_DECREMENT, 0, 0, -1, len);
+	m_create(p_control, IMSG_STAT_DECREMENT, 0, 0, -1);
 	m_add_string(p_control, key);
 	m_add_data(p_control, value, sizeof(*value));
 	m_close(p_control);
@@ -78,10 +73,7 @@ stat_decrement(const char *key, size_t count)
 void
 stat_set(const char *key, const struct stat_value *value)
 {
-	size_t			 len;
-
-	len = 32 + strlen(key) + sizeof(*value);
-	m_create(p_control, IMSG_STAT_SET, 0, 0, -1, len);
+	m_create(p_control, IMSG_STAT_SET, 0, 0, -1);
 	m_add_string(p_control, key);
 	m_add_data(p_control, value, sizeof(*value));
 	m_close(p_control);

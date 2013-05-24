@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.43 2013/04/17 15:02:38 deraadt Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.44 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -73,8 +72,8 @@ static inline void profile_leave(void)
 
 	clock_gettime(CLOCK_MONOTONIC, &t1);
 	timespecsub(&t1, &profile.t0, &dt);
-	log_debug("profile-queue: %s %lld.%06li", profile.name,
-	    (long long)dt.tv_sec * 1000000 + dt.tv_nsec / 1000000,
+	log_debug("profile-queue: %s %li.%06li", profile.name,
+	    dt.tv_sec * 1000000 + dt.tv_nsec / 1000000,
 	    dt.tv_nsec % 1000000);
 }
 #else
@@ -93,6 +92,8 @@ queue_message_incoming_path(uint32_t msgid, char *buf, size_t len)
 int
 queue_init(const char *name, int server)
 {
+	int	r;
+
 	if (!strcmp(name, "fs"))
 		backend = &queue_backend_fs;
 	if (!strcmp(name, "null"))
@@ -105,7 +106,11 @@ queue_init(const char *name, int server)
 		return (0);
 	}
 
-	return backend->init(server);
+	r = backend->init(server);
+
+	log_trace(TRACE_QUEUE, "queue-backend: queue_init(%i) -> %i", server, r);
+
+	return (r);
 }
 
 int
@@ -116,6 +121,10 @@ queue_message_create(uint32_t *msgid)
 	profile_enter("queue_message_create");
 	r = backend->message(QOP_CREATE, msgid);
 	profile_leave();
+
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_message_create() -> %i (%08"PRIx32")",
+	    r, *msgid);
 
 	return (r);
 }
@@ -129,6 +138,9 @@ queue_message_delete(uint32_t msgid)
 	r = backend->message(QOP_DELETE, &msgid);
 	profile_leave();
 
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_message_delete(%08"PRIx32") -> %i", msgid, r);
+
 	return (r);
 }
 
@@ -136,12 +148,51 @@ int
 queue_message_commit(uint32_t msgid)
 {
 	int	r;
+	char	msgpath[MAXPATHLEN];
+	char	tmppath[MAXPATHLEN];
+	FILE	*ifp = NULL;
+	FILE	*ofp = NULL;
 
 	profile_enter("queue_message_commit");
+	queue_message_incoming_path(msgid, msgpath, sizeof msgpath);
+	strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath));
+
+	if (env->sc_queue_flags & QUEUE_COMPRESSION) {
+
+		bsnprintf(tmppath, sizeof tmppath, "%s.comp", msgpath);
+		ifp = fopen(msgpath, "r");
+		ofp = fopen(tmppath, "w+");
+		if (ifp == NULL || ofp == NULL)
+			goto err;
+		if (! compress_file(ifp, ofp))
+			goto err;
+		fclose(ifp);
+		fclose(ofp);
+		ifp = NULL;
+		ofp = NULL;
+
+		if (rename(tmppath, msgpath) == -1) {
+			if (errno == ENOSPC)
+				return (0);
+			fatal("queue_message_commit: rename");
+		}
+	}
+
 	r = backend->message(QOP_COMMIT, &msgid);
 	profile_leave();
 
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_message_commit(%08"PRIx32") -> %i",
+	    msgid, r);
+
 	return (r);
+
+err:
+	if (ifp)
+		fclose(ifp);
+	if (ofp)
+		fclose(ofp);
+	return 0;
 }
 
 int
@@ -152,6 +203,9 @@ queue_message_corrupt(uint32_t msgid)
 	profile_enter("queue_message_corrupt");
 	r = backend->message(QOP_CORRUPT, &msgid);
 	profile_leave();
+
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_message_corrupt(%08"PRIx32") -> %i", msgid, r);
 
 	return (r);
 }
@@ -167,10 +221,13 @@ queue_message_fd_r(uint32_t msgid)
 	fdin = backend->message(QOP_FD_R, &msgid);
 	profile_leave();
 
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_message_fd_r(%08"PRIx32") -> %i", msgid, fdin);
+
 	if (fdin == -1)
 		return (-1);
 
-	if (env->sc_queue_flags & QUEUE_COMPRESS) {
+	if (env->sc_queue_flags & QUEUE_COMPRESSION) {
 		if ((fdout = mktmpfile()) == -1)
 			goto err;
 		if ((fd = dup(fdout)) == -1)
@@ -181,8 +238,10 @@ queue_message_fd_r(uint32_t msgid)
 		fd = -1;
 		if ((ofp = fdopen(fdout, "w+")) == NULL)
 			goto err;
+
 		if (! uncompress_file(ifp, ofp))
 			goto err;
+
 		fclose(ifp);
 		fclose(ofp);
 		lseek(fdin, SEEK_SET, 0);
@@ -213,27 +272,31 @@ queue_message_fd_rw(uint32_t msgid)
 	r = backend->message(QOP_FD_RW, &msgid);
 	profile_leave();
 
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_message_fd_rw(%08"PRIx32") -> %i", msgid, r);
+
 	return (r);
 }
 
 static int
 queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
-	char		 evpbufcom[sizeof(struct envelope)];
-	char		*evp;
-	size_t		 evplen;
+	char   *evp;
+	size_t	evplen;
+	size_t	complen;
+	char	compbuf[sizeof(struct envelope)];
 
 	evp = evpbuf;
 	evplen = envelope_dump_buffer(ep, evpbuf, evpbufsize);
 	if (evplen == 0)
 		return (0);
 
-	if (env->sc_queue_flags & QUEUE_COMPRESS) {
-		evplen = compress_buffer(evp, evplen, evpbufcom,
-		    sizeof evpbufcom);
-		if (evplen == 0)
+	if (env->sc_queue_flags & QUEUE_COMPRESSION) {
+		complen = compress_chunk(evp, evplen, compbuf, sizeof compbuf);
+		if (complen == 0)
 			return (0);
-		evp = evpbufcom;
+		evp = compbuf;
+		evplen = complen;
 	}
 
 	memmove(evpbuf, evp, evplen);
@@ -244,19 +307,20 @@ queue_envelope_dump_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 static int
 queue_envelope_load_buffer(struct envelope *ep, char *evpbuf, size_t evpbufsize)
 {
-	char		 evpbufcom[sizeof(struct envelope)];
 	char		*evp;
 	size_t		 evplen;
+	char		 compbuf[sizeof(struct envelope)];
+	size_t		 complen;
 
 	evp = evpbuf;
 	evplen = evpbufsize;
 
-	if (env->sc_queue_flags & QUEUE_COMPRESS) {
-		evplen = uncompress_buffer(evp, evplen, evpbufcom,
-		    sizeof evpbufcom);
-		if (evplen == 0)
+	if (env->sc_queue_flags & QUEUE_COMPRESSION) {
+		complen = uncompress_chunk(evp, evplen, compbuf, sizeof compbuf);
+		if (complen == 0)
 			return (0);
-		evp = evpbufcom;
+		evp = compbuf;
+		evplen = complen;
 	}
 
 	return (envelope_load_buffer(ep, evp, evplen));
@@ -268,19 +332,28 @@ queue_envelope_create(struct envelope *ep)
 	int		 r;
 	char		 evpbuf[sizeof(struct envelope)];
 	size_t		 evplen;
+	uint64_t	 evpid;
 
 	ep->creation = time(NULL);
 	evplen = queue_envelope_dump_buffer(ep, evpbuf, sizeof evpbuf);
 	if (evplen == 0)
 		return (0);
 
+	evpid = ep->id;
+
 	profile_enter("queue_envelope_create");
 	r = backend->envelope(QOP_CREATE, &ep->id, evpbuf, evplen);
 	profile_leave();
+
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_envelope_create(%016"PRIx64", %zu) -> %i (%016"PRIx64")",
+	    evpid, evplen, r, ep->id);
+
 	if (!r) {
 		ep->creation = 0;
 		ep->id = 0;
 	}
+
 	return (r);
 }
 
@@ -292,6 +365,10 @@ queue_envelope_delete(uint64_t evpid)
 	profile_enter("queue_envelope_delete");
 	r = backend->envelope(QOP_DELETE, &evpid, NULL, 0);
 	profile_leave();
+
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_envelope_delete(%016"PRIx64") -> %i",
+	    evpid, r);
 
 	return (r);
 }
@@ -307,6 +384,11 @@ queue_envelope_load(uint64_t evpid, struct envelope *ep)
 	profile_enter("queue_envelope_load");
 	evplen = backend->envelope(QOP_LOAD, &ep->id, evpbuf, sizeof evpbuf);
 	profile_leave();
+
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_envelope_load(%016"PRIx64") -> %zu",
+	    evpid, evplen);
+
 	if (evplen == 0)
 		return (0);
 
@@ -318,6 +400,8 @@ queue_envelope_load(uint64_t evpid, struct envelope *ep)
 		log_debug("debug: invalid envelope %016" PRIx64 ": %s",
 		    ep->id, e);
 	}
+
+	(void)queue_message_corrupt(evpid_to_msgid(evpid));
 	return (0);
 }
 
@@ -336,6 +420,10 @@ queue_envelope_update(struct envelope *ep)
 	r = backend->envelope(QOP_UPDATE, &ep->id, evpbuf, evplen);
 	profile_leave();
 
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_envelope_update(%016"PRIx64") -> %i",
+	    ep->id, r);
+
 	return (r);
 }
 
@@ -350,10 +438,15 @@ queue_envelope_walk(struct envelope *ep)
 	profile_enter("queue_envelope_walk");
 	r = backend->envelope(QOP_WALK, &evpid, evpbuf, sizeof evpbuf);
 	profile_leave();
-	if (r == -1 || r == 0)
+
+	log_trace(TRACE_QUEUE,
+	    "queue-backend: queue_envelope_walk() -> %i (%016"PRIx64")",
+	    r, evpid);
+
+	if (r == -1)
 		return (r);
 
-	if (queue_envelope_load_buffer(ep, evpbuf, (size_t)r)) {
+	if (r && queue_envelope_load_buffer(ep, evpbuf, (size_t)r)) {
 		if ((e = envelope_validate(ep)) == NULL) {
 			ep->id = evpid;
 			return (1);
@@ -361,6 +454,8 @@ queue_envelope_walk(struct envelope *ep)
 		log_debug("debug: invalid envelope %016" PRIx64 ": %s",
 		    ep->id, e);
 	}
+
+	(void)queue_message_corrupt(evpid_to_msgid(evpid));
 	return (0);
 }
 

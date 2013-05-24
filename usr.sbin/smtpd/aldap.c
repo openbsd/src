@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.4 2013/01/31 18:34:43 eric Exp $ */
-/*	$OpenBSD: aldap.c,v 1.4 2013/01/31 18:34:43 eric Exp $ */
+/*	$Id: aldap.c,v 1.5 2013/05/24 17:03:14 eric Exp $ */
+/*	$OpenBSD: aldap.c,v 1.5 2013/05/24 17:03:14 eric Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -29,7 +29,7 @@
 #if 0
 #define DEBUG
 #endif
-#define VERSION 3
+#define ALDAP_VERSION 3
 
 static struct ber_element	*ldap_parse_search_filter(struct ber_element *,
 				    char *);
@@ -92,7 +92,7 @@ aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 		goto fail;
 
 	elm = ber_printf_elements(root, "d{tdsst", ++ldap->msgid, BER_CLASS_APP,
-	    (unsigned long)LDAP_REQ_BIND, VERSION, binddn, bindcred,
+	    (unsigned long)LDAP_REQ_BIND, ALDAP_VERSION, binddn, bindcred,
 	    BER_CLASS_CONTEXT, (unsigned long)LDAP_AUTH_SIMPLE);
 	if (elm == NULL)
 		goto fail;

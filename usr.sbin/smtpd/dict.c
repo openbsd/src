@@ -1,4 +1,4 @@
-/*	$OpenBSD: dict.c,v 1.1 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: dict.c,v 1.2 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -41,7 +41,7 @@ struct dictentry {
 
 static int dictentry_cmp(struct dictentry *, struct dictentry *);
 
-SPLAY_PROTOTYPE(dict, dictentry, entry, dictentry_cmp);
+SPLAY_PROTOTYPE(_dict, dictentry, entry, dictentry_cmp);
 
 int
 dict_check(struct dict *d, const char *k)
@@ -51,7 +51,7 @@ dict_check(struct dict *d, const char *k)
 	if (strlcpy(key.key, k, sizeof key.key) >= sizeof key.key)
 		errx(1, "dict_check(%p, %s): key too large", d, k);
 
-	return (SPLAY_FIND(dict, d, &key) != NULL);
+	return (SPLAY_FIND(_dict, &d->dict, &key) != NULL);
 }
 
 void *
@@ -62,11 +62,13 @@ dict_set(struct dict *d, const char *k, void *data)
 
 	if (strlcpy(key.key, k, sizeof key.key) >= sizeof key.key)
 		errx(1, "dict_set(%p, %s): key too large", d, k);
-	if ((entry = SPLAY_FIND(dict, d, &key)) == NULL) {
-		entry = xmalloc(sizeof *entry, "dict_set");
+	if ((entry = SPLAY_FIND(_dict, &d->dict, &key)) == NULL) {
+		if ((entry = malloc(sizeof *entry)) == NULL)
+			err(1, "dict_set: malloc");
 		(void)strlcpy(entry->key, k, sizeof entry->key);
-		SPLAY_INSERT(dict, d, entry);
+		SPLAY_INSERT(_dict, &d->dict, entry);
 		old = NULL;
+		d->count += 1;
 	} else
 		old = entry->data;
 
@@ -80,12 +82,14 @@ dict_xset(struct dict *d, const char * k, void *data)
 {
 	struct dictentry	*entry;
 
-	entry = xmalloc(sizeof *entry, "dict_xset");
+	if ((entry = malloc(sizeof *entry)) == NULL)
+		err(1, "dict_xset: malloc");
 	if (strlcpy(entry->key, k, sizeof entry->key) >= sizeof entry->key)
 		errx(1, "dict_xset(%p, %s): key too large", d, k);
 	entry->data = data;
-	if (SPLAY_INSERT(dict, d, entry))
+	if (SPLAY_INSERT(_dict, &d->dict, entry))
 		errx(1, "dict_xset(%p, %s)", d, k);
+	d->count += 1;
 }
 
 void *
@@ -95,7 +99,7 @@ dict_get(struct dict *d, const char *k)
 
 	if (strlcpy(key.key, k, sizeof key.key) >= sizeof key.key)
 		errx(1, "dict_get(%p, %s): key too large", d, k);
-	if ((entry = SPLAY_FIND(dict, d, &key)) == NULL)
+	if ((entry = SPLAY_FIND(_dict, &d->dict, &key)) == NULL)
 		return (NULL);
 
 	return (entry->data);
@@ -108,7 +112,7 @@ dict_xget(struct dict *d, const char *k)
 
 	if (strlcpy(key.key, k, sizeof key.key) >= sizeof key.key)
 		errx(1, "dict_xget(%p, %s): key too large", d, k);
-	if ((entry = SPLAY_FIND(dict, d, &key)) == NULL)
+	if ((entry = SPLAY_FIND(_dict, &d->dict, &key)) == NULL)
 		errx(1, "dict_xget(%p, %s)", d, k);
 
 	return (entry->data);
@@ -122,12 +126,13 @@ dict_pop(struct dict *d, const char *k)
 
 	if (strlcpy(key.key, k, sizeof key.key) >= sizeof key.key)
 		errx(1, "dict_pop(%p, %s): key too large", d, k);
-	if ((entry = SPLAY_FIND(dict, d, &key)) == NULL)
+	if ((entry = SPLAY_FIND(_dict, &d->dict, &key)) == NULL)
 		return (NULL);
 
 	data = entry->data;
-	SPLAY_REMOVE(dict, d, entry);
+	SPLAY_REMOVE(_dict, &d->dict, entry);
 	free(entry);
+	d->count -= 1;
 
 	return (data);
 }
@@ -140,12 +145,13 @@ dict_xpop(struct dict *d, const char *k)
 
 	if (strlcpy(key.key, k, sizeof key.key) >= sizeof key.key)
 		errx(1, "dict_xpop(%p, %s): key too large", d, k);
-	if ((entry = SPLAY_FIND(dict, d, &key)) == NULL)
+	if ((entry = SPLAY_FIND(_dict, &d->dict, &key)) == NULL)
 		errx(1, "dict_xpop(%p, %s)", d, k);
 
 	data = entry->data;
-	SPLAY_REMOVE(dict, d, entry);
+	SPLAY_REMOVE(_dict, &d->dict, entry);
 	free(entry);
+	d->count -= 1;
 
 	return (data);
 }
@@ -155,15 +161,17 @@ dict_poproot(struct dict *d, const char **k, void **data)
 {
 	struct dictentry	*entry;
 
-	entry = SPLAY_ROOT(d);
+	entry = SPLAY_ROOT(&d->dict);
 	if (entry == NULL)
 		return (0);
 	if (k)
 		*k = entry->key;
 	if (data)
 		*data = entry->data;
-	SPLAY_REMOVE(dict, d, entry);
+	SPLAY_REMOVE(_dict, &d->dict, entry);
 	free(entry);
+	d->count -= 1;
+
 	return (1);
 }
 
@@ -172,7 +180,7 @@ dict_root(struct dict *d, const char **k, void **data)
 {
 	struct dictentry	*entry;
 
-	entry = SPLAY_ROOT(d);
+	entry = SPLAY_ROOT(&d->dict);
 	if (entry == NULL)
 		return (0);
 	if (k)
@@ -188,9 +196,9 @@ dict_iter(struct dict *d, void **hdl, const char **k, void **data)
 	struct dictentry *curr = *hdl;
 
 	if (curr == NULL)
-		curr = SPLAY_MIN(dict, d);
+		curr = SPLAY_MIN(_dict, &d->dict);
 	else
-		curr = SPLAY_NEXT(dict, d, curr);
+		curr = SPLAY_NEXT(_dict, &d->dict, curr);
 
 	if (curr) {
 		*hdl = curr;
@@ -212,21 +220,21 @@ dict_iterfrom(struct dict *d, void **hdl, const char *kfrom, const char **k,
 
 	if (curr == NULL) {
 		if (kfrom == NULL)
-			curr = SPLAY_MIN(dict, d);
+			curr = SPLAY_MIN(_dict, &d->dict);
 		else {
 			if (strlcpy(key.key, kfrom, sizeof key.key)
 			    >= sizeof key.key)
 				errx(1, "dict_iterfrom(%p, %s): key too large",
 				    d, kfrom);
-			curr = SPLAY_FIND(dict, d, &key);
+			curr = SPLAY_FIND(_dict, &d->dict, &key);
 			if (curr == NULL) {
-				SPLAY_INSERT(dict, d, &key);
-				curr = SPLAY_NEXT(dict, d, &key);
-				SPLAY_REMOVE(dict, d, &key);
+				SPLAY_INSERT(_dict, &d->dict, &key);
+				curr = SPLAY_NEXT(_dict, &d->dict, &key);
+				SPLAY_REMOVE(_dict, &d->dict, &key);
 			}
 		}
 	} else
-		curr = SPLAY_NEXT(dict, d, curr);
+		curr = SPLAY_NEXT(_dict, &d->dict, curr);
 
 	if (curr) {
 		*hdl = curr;
@@ -245,12 +253,14 @@ dict_merge(struct dict *dst, struct dict *src)
 {
 	struct dictentry	*entry;
 
-	while (!SPLAY_EMPTY(src)) {
-		entry = SPLAY_ROOT(src);
-		SPLAY_REMOVE(dict, src, entry);
-		if (SPLAY_INSERT(dict, dst, entry))
+	while (!SPLAY_EMPTY(&src->dict)) {
+		entry = SPLAY_ROOT(&src->dict);
+		SPLAY_REMOVE(_dict, &src->dict, entry);
+		if (SPLAY_INSERT(_dict, &dst->dict, entry))
 			errx(1, "dict_merge: duplicate");
 	}
+	dst->count += src->count;
+	src->count = 0;
 }
 
 static int
@@ -259,4 +269,4 @@ dictentry_cmp(struct dictentry *a, struct dictentry *b)
 	return strcmp(a->key, b->key);
 }
 
-SPLAY_GENERATE(dict, dictentry, entry, dictentry_cmp);
+SPLAY_GENERATE(_dict, dictentry, entry, dictentry_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.c,v 1.4 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: iobuf.c,v 1.5 2013/05/24 17:03:14 eric Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -15,11 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

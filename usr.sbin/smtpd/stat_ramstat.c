@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_ramstat.c,v 1.7 2013/03/08 19:11:52 chl Exp $	*/
+/*	$OpenBSD: stat_ramstat.c,v 1.8 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 
 #include <event.h>
 #include <imsg.h>

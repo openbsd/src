@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2013/03/27 07:48:42 eric Exp $
+#	$OpenBSD: Makefile,v 1.60 2013/05/24 17:03:14 eric Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
 
@@ -20,6 +20,7 @@ SRCS+=		delivery_filename.c
 SRCS+=		delivery_maildir.c
 SRCS+=		delivery_mbox.c
 SRCS+=		delivery_mda.c
+SRCS+=		delivery_lmtp.c
 SRCS+=		table_db.c
 SRCS+=		table_getpwnam.c
 SRCS+=		table_static.c
@@ -46,7 +47,6 @@ BINDIR=		/usr/sbin
 LDADD+=		-levent -lutil -lssl -lcrypto -lm -lz -lsqlite3
 DPADD+=		${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO} ${LIBM} ${LIBZ} ${LIBSQLITE3}
 CFLAGS+=	-g3 -ggdb -I${.CURDIR}/.. -I${.CURDIR}/../../../lib/libc/asr
-
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fsqueue.c,v 1.61 2013/04/02 09:17:14 gilles Exp $	*/
+/*	$OpenBSD: queue_fsqueue.c,v 1.62 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -79,8 +78,8 @@ struct tree	evpcount;
 #define PATH_EVPTMP		PATH_INCOMING "/envelope.tmp"
 
 /* percentage of remaining space / inodes required to accept new messages */
-#define	MINSPACE		10
-#define	MININODES		10
+#define	MINSPACE		5
+#define	MININODES		5
 
 struct queue_backend	queue_backend_fs = {
 	fsqueue_init,
@@ -110,6 +109,7 @@ fsqueue_check_space(void)
 		used = 100;
 	if (100 - used < MINSPACE) {
 		log_warnx("warn: not enough disk space: %llu%% left", 100 - used);
+		log_warnx("warn: temporarily rejecting messages");
 		return 0;
 	}
 
@@ -121,6 +121,7 @@ fsqueue_check_space(void)
 		used = 100;
 	if (100 - used < MININODES) {
 		log_warnx("warn: not enough inodes: %llu%% left", 100 - used);
+		log_warnx("warn: temporarily rejecting messages");
 		return 0;
 	}
 
@@ -227,7 +228,7 @@ tempfail:
 static int
 fsqueue_envelope_create(uint64_t *evpid, char *buf, size_t len)
 {
-	char		path[MAXPATHLEN];
+	char		path[SMTPD_MAXPATHLEN];
 	uint32_t	msgid;
 	int		queued = 0, i, r = 0;
 	struct stat	sb;
@@ -271,7 +272,7 @@ done:
 static int
 fsqueue_envelope_load(uint64_t evpid, char *buf, size_t len)
 {
-	char	 pathname[MAXPATHLEN];
+	char	 pathname[SMTPD_MAXPATHLEN];
 	FILE	*fp;
 	size_t	 r;
 
@@ -301,7 +302,7 @@ fsqueue_envelope_load(uint64_t evpid, char *buf, size_t len)
 static int
 fsqueue_envelope_update(uint64_t evpid, char *buf, size_t len)
 {
-	char dest[MAXPATHLEN];
+	char dest[SMTPD_MAXPATHLEN];
 
 	fsqueue_envelope_path(evpid, dest, sizeof(dest));
 
@@ -311,7 +312,7 @@ fsqueue_envelope_update(uint64_t evpid, char *buf, size_t len)
 static int
 fsqueue_envelope_delete(uint64_t evpid)
 {
-	char		pathname[MAXPATHLEN];
+	char		pathname[SMTPD_MAXPATHLEN];
 	uint32_t	msgid;
 	uintptr_t	*n;
 
@@ -339,7 +340,6 @@ fsqueue_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 	uintptr_t	*n;
 	int		 r;
 	uint32_t	 msgid;
-	struct envelope	 ep;
 
 	if (done)
 		return (-1);
@@ -352,13 +352,9 @@ fsqueue_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 		r = fsqueue_envelope_load(*evpid, buf, len);
 		if (r) {
 			msgid = evpid_to_msgid(*evpid);
-			if (! envelope_load_buffer(&ep, buf, r))
-				(void)fsqueue_message_corrupt(msgid);
-			else {
-				n = tree_pop(&evpcount, msgid);
-				n += 1;
-				tree_xset(&evpcount, msgid, n);
-			}
+			n = tree_pop(&evpcount, msgid);
+			n += 1;
+			tree_xset(&evpcount, msgid, n);
 		}
 		return (r);
 	}
@@ -371,8 +367,8 @@ fsqueue_envelope_walk(uint64_t *evpid, char *buf, size_t len)
 static int
 fsqueue_message_create(uint32_t *msgid)
 {
-	char rootdir[MAXPATHLEN];
-	struct stat sb;
+	char		rootdir[SMTPD_MAXPATHLEN];
+	struct stat	sb;
 
 	if (! fsqueue_check_space())
 		return 0;
@@ -382,8 +378,14 @@ again:
 
 	/* prevent possible collision later when moving to Q_QUEUE */
 	fsqueue_message_path(*msgid, rootdir, sizeof(rootdir));
-	if (stat(rootdir, &sb) != -1 || errno != ENOENT)
+	if (stat(rootdir, &sb) != -1)
 		goto again;
+
+	/* we hit an unexpected error, temporarily fail */
+	if (errno != ENOENT) {
+		*msgid = 0;
+		return 0;
+	}
 
 	queue_message_incoming_path(*msgid, rootdir, sizeof(rootdir));
 	if (mkdir(rootdir, 0700) == -1) {
@@ -406,9 +408,9 @@ again:
 static int
 fsqueue_message_commit(uint32_t msgid)
 {
-	char incomingdir[MAXPATHLEN];
-	char queuedir[MAXPATHLEN];
-	char msgdir[MAXPATHLEN];
+	char incomingdir[SMTPD_MAXPATHLEN];
+	char queuedir[SMTPD_MAXPATHLEN];
+	char msgdir[SMTPD_MAXPATHLEN];
 
 	queue_message_incoming_path(msgid, incomingdir, sizeof(incomingdir));
 	fsqueue_message_path(msgid, msgdir, sizeof(msgdir));
@@ -450,7 +452,7 @@ static int
 fsqueue_message_fd_r(uint32_t msgid)
 {
 	int fd;
-	char path[MAXPATHLEN];
+	char path[SMTPD_MAXPATHLEN];
 
 	fsqueue_message_path(msgid, path, sizeof(path));
 	strlcat(path, PATH_MESSAGE, sizeof(path));
@@ -466,7 +468,7 @@ fsqueue_message_fd_r(uint32_t msgid)
 static int
 fsqueue_message_fd_rw(uint32_t msgid)
 {
-	char msgpath[MAXPATHLEN];
+	char msgpath[SMTPD_MAXPATHLEN];
 
 	queue_message_incoming_path(msgid, msgpath, sizeof msgpath);
 	strlcat(msgpath, PATH_MESSAGE, sizeof(msgpath));
@@ -477,7 +479,7 @@ fsqueue_message_fd_rw(uint32_t msgid)
 static int
 fsqueue_message_delete(uint32_t msgid)
 {
-	char		path[MAXPATHLEN];
+	char		path[SMTPD_MAXPATHLEN];
 	struct stat	sb;
 
 	queue_message_incoming_path(msgid, path, sizeof(path));
@@ -496,8 +498,8 @@ static int
 fsqueue_message_corrupt(uint32_t msgid)
 {
 	struct stat sb;
-	char rootdir[MAXPATHLEN];
-	char corruptdir[MAXPATHLEN];
+	char rootdir[SMTPD_MAXPATHLEN];
+	char corruptdir[SMTPD_MAXPATHLEN];
 	char buf[64];
 	int  retry = 0;
 
@@ -519,6 +521,8 @@ again:
 		return 0;
 	}
 
+	tree_pop(&evpcount, msgid);
+
 	return 1;
 }
 
@@ -527,7 +531,7 @@ fsqueue_init(int server)
 {
 	unsigned int	 n;
 	char		*paths[] = { PATH_QUEUE, PATH_CORRUPT };
-	char		 path[MAXPATHLEN];
+	char		 path[SMTPD_MAXPATHLEN];
 	int		 ret;
 	struct timeval	 tv;
 
@@ -602,7 +606,7 @@ struct qwalk {
 static void *
 fsqueue_qwalk_new(void)
 {
-	char		 path[MAXPATHLEN];
+	char		 path[SMTPD_MAXPATHLEN];
 	char * const	 path_argv[] = { path, NULL };
 	struct qwalk	*q;
 

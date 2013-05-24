@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.11 2013/02/05 11:45:18 gilles Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.12 2013/05/24 17:03:14 eric Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 
@@ -118,6 +118,7 @@ io_strevent(int evt)
 	switch (evt) {
 	CASE(IO_CONNECTED);
 	CASE(IO_TLSREADY);
+	CASE(IO_TLSVERIFIED);
 	CASE(IO_DATAIN);
 	CASE(IO_LOWAT);
 	CASE(IO_DISCONNECTED);
@@ -622,6 +623,8 @@ void
 io_dispatch_connect(int fd, short ev, void *humppa)
 {
 	struct io	*io = humppa;
+	int		 r, e;
+	socklen_t	 sl;
 
 	io_frame_enter("io_dispatch_connect", io, ev);
 
@@ -630,8 +633,22 @@ io_dispatch_connect(int fd, short ev, void *humppa)
 		io->sock = -1;
 		io_callback(io, IO_TIMEOUT);
 	} else {
-		io->state = IO_STATE_UP;
-		io_callback(io, IO_CONNECTED);
+		sl = sizeof(e);
+		r = getsockopt(fd, SOL_SOCKET, SO_ERROR, &e, &sl);
+		if (r == -1)  {
+			warn("io_dispatch_connect: getsockopt");
+			e = errno;
+		}
+		if (e) {
+			close(fd);
+			io->sock = -1;
+			io->error = strerror(e);
+			io_callback(io, e == ETIMEDOUT ? IO_TIMEOUT : IO_ERROR);
+		}
+		else {
+			io->state = IO_STATE_UP;
+			io_callback(io, IO_CONNECTED);
+		}
 	}
 
 	io_frame_leave(io);
@@ -675,11 +692,11 @@ io_start_tls(struct io *io, void *ssl)
 	if (mode == IO_WRITE) {
 		io->state = IO_STATE_CONNECT_SSL;
 		SSL_set_connect_state(io->ssl);
-		io_reset(io, EV_READ | EV_WRITE, io_dispatch_connect_ssl);
+		io_reset(io, EV_WRITE, io_dispatch_connect_ssl);
 	} else {
 		io->state = IO_STATE_ACCEPT_SSL;
 		SSL_set_accept_state(io->ssl);
-		io_reset(io, EV_READ | EV_WRITE, io_dispatch_accept_ssl);
+		io_reset(io, EV_READ, io_dispatch_accept_ssl);
 	}
 
 	return (0);
@@ -853,29 +870,36 @@ io_dispatch_write_ssl(int fd, short event, void *humppa)
 void
 io_reload_ssl(struct io *io)
 {
+	short	ev = 0;
 	void	(*dispatch)(int, short, void*) = NULL;
 
 	switch (io->state) {
 	case IO_STATE_CONNECT_SSL:
+		ev = EV_WRITE;
 		dispatch = io_dispatch_connect_ssl;
 		break;
 	case IO_STATE_ACCEPT_SSL:
+		ev = EV_READ;
 		dispatch = io_dispatch_accept_ssl;
 		break;
 	case IO_STATE_UP:
-		if ((io->flags & IO_RW) == IO_READ)
+		ev = 0;
+		if (IO_READING(io) && !(io->flags & IO_PAUSE_IN)) {
+			ev = EV_READ;
 			dispatch = io_dispatch_read_ssl;
-		else {
-			if (io_queued(io) == 0)
-				return; /* nothing to write */
+		}
+		else if (IO_WRITING(io) && !(io->flags & IO_PAUSE_OUT) && io_queued(io)) {
+			ev = EV_WRITE;
 			dispatch = io_dispatch_write_ssl;
 		}
+		if (! ev)
+			return; /* paused */
 		break;
 	default:
 		errx(1, "io_reload_ssl(): bad state");
 	}
 
-	io_reset(io, EV_READ | EV_WRITE, dispatch);
+	io_reset(io, ev, dispatch);
 }
 
 #endif /* IO_SSL */

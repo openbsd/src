@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.63 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.64 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <ctype.h>
@@ -40,10 +39,10 @@ int
 aliases_get(struct expand *expand, const char *username)
 {
 	struct expandnode      *xn;
-	char			buf[MAX_LOCALPART_SIZE];
+	char			buf[SMTPD_MAXLOCALPARTSIZE];
 	size_t			nbaliases;
 	int			ret;
-	struct expand	       *xp = NULL;
+	union lookup		lk;
 	struct table	       *mapping = NULL;
 	struct table	       *userbase = NULL;
 
@@ -51,13 +50,13 @@ aliases_get(struct expand *expand, const char *username)
 	userbase = expand->rule->r_userbase;
 	
 	xlowercase(buf, username, sizeof(buf));
-	ret = table_lookup(mapping, buf, K_ALIAS, (void **)&xp);
+	ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 	if (ret <= 0)
 		return ret;
 
 	/* foreach node in table_alias expandtree, we merge */
 	nbaliases = 0;
-	RB_FOREACH(xn, expandtree, &xp->tree) {
+	RB_FOREACH(xn, expandtree, &lk.expand->tree) {
 		if (xn->type == EXPAND_INCLUDE)
 			nbaliases += aliases_expand_include(expand,
 			    xn->u.buffer);
@@ -69,7 +68,7 @@ aliases_get(struct expand *expand, const char *username)
 		}
 	}
 
-	expand_free(xp);
+	expand_free(lk.expand);
 
 	log_debug("debug: aliases_get: returned %zd aliases", nbaliases);
 	return nbaliases;
@@ -123,7 +122,7 @@ int
 aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 {
 	struct expandnode      *xn;
-	struct expand	       *xp;
+	union lookup		lk;
 	char			buf[SMTPD_MAXLINESIZE];
 	char		       *pbuf;
 	int			nbaliases;
@@ -140,7 +139,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	xlowercase(buf, buf, sizeof(buf));
 
 	/* First, we lookup for full entry: user@domain */
-	ret = table_lookup(mapping, buf, K_ALIAS, (void **)&xp);
+	ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
@@ -149,7 +148,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	/* Failed ? We lookup for username only */
 	pbuf = strchr(buf, '@');
 	*pbuf = '\0';
-	ret = table_lookup(mapping, buf, K_ALIAS, (void **)&xp);
+	ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
@@ -157,21 +156,21 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 
 	*pbuf = '@';
 	/* Failed ? We lookup for catch all for virtual domain */
-	ret = table_lookup(mapping, pbuf, K_ALIAS, (void **)&xp);
+	ret = table_lookup(mapping, pbuf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
 		goto expand;
 
 	/* Failed ? We lookup for a *global* catch all */
-	ret = table_lookup(mapping, "@", K_ALIAS, (void **)&xp);
+	ret = table_lookup(mapping, "@", K_ALIAS, &lk);
 	if (ret <= 0)
 		return (ret);
 
 expand:
 	/* foreach node in table_virtual expand, we merge */
 	nbaliases = 0;
-	RB_FOREACH(xn, expandtree, &xp->tree) {
+	RB_FOREACH(xn, expandtree, &lk.expand->tree) {
 		if (xn->type == EXPAND_INCLUDE)
 			nbaliases += aliases_expand_include(expand,
 			    xn->u.buffer);
@@ -183,7 +182,7 @@ expand:
 		}
 	}
 
-	expand_free(xp);
+	expand_free(lk.expand);
 
 	log_debug("debug: aliases_virtual_get: '%s' resolved to %d nodes",
 	    buf, nbaliases);
@@ -197,7 +196,7 @@ aliases_expand_include(struct expand *expand, const char *filename)
 	FILE *fp;
 	char *line;
 	size_t len, lineno = 0;
-	char delim[3] = { '\\', '\0', '#' };
+	char delim[3] = { '\\', '#', '\0' };
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {

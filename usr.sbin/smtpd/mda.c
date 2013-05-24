@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.90 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.91 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -22,7 +22,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <ctype.h>
@@ -68,8 +67,8 @@ struct mda_envelope {
 struct mda_user {
 	TAILQ_ENTRY(mda_user)		entry;
 	TAILQ_ENTRY(mda_user)		entry_runnable;
-	char				name[MAXLOGNAME];
-	char				usertable[MAXPATHLEN];
+	char				name[SMTPD_MAXLOGNAME];
+	char				usertable[SMTPD_MAXPATHLEN];
 	size_t				evpcount;
 	TAILQ_HEAD(, mda_envelope)	envelopes;
 	int				flags;
@@ -218,8 +217,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				strlcpy(u->name, username, sizeof u->name);
 				strlcpy(u->usertable, usertable, sizeof u->usertable);
 				u->flags |= FLAG_USER_WAITINFO;
-				m_create(p_lka, IMSG_LKA_USERINFO, 0, 0, -1,
-				    32 + strlen(usertable) + strlen(username));
+				m_create(p_lka, IMSG_LKA_USERINFO, 0, 0, -1);
 				m_add_string(p_lka, usertable);
 				m_add_string(p_lka, username);
 				m_close(p_lka);
@@ -358,6 +356,17 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 				    sizeof deliver.to);
 				break;
 
+			case A_LMTP:
+				deliver.mode = A_LMTP;
+				deliver.userinfo = *userinfo;
+				strlcpy(deliver.user, userinfo->username,
+				    sizeof(deliver.user));
+				strlcpy(deliver.to, e->buffer,
+				    sizeof(deliver.to));
+				strlcpy(deliver.from, e->sender,
+				    sizeof(deliver.from));
+				break;
+
 			default:
 				errx(1, "mda: unknown delivery method: %d",
 				    e->method);
@@ -367,8 +376,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			    "for session %016"PRIx64 " evpid %016"PRIx64,
 			    s->id, s->evp->id);
 
-			m_create(p_parent, IMSG_PARENT_FORK_MDA, 0, 0, -1,
-			    32 + sizeof(deliver));
+			m_create(p_parent, IMSG_PARENT_FORK_MDA, 0, 0, -1);
 			m_add_id(p_parent, reqid);
 			m_add_data(p_parent, &deliver, sizeof(deliver));
 			m_close(p_parent);
@@ -557,6 +565,7 @@ mda_io(struct io *io, int evt)
 	case IO_LOWAT:
 
 		/* done */
+	   done:
 		if (s->datafp == NULL) {
 			log_debug("debug: mda: all data sent for session"
 			    " %016"PRIx64 " evpid %016"PRIx64,
@@ -570,7 +579,7 @@ mda_io(struct io *io, int evt)
 				break;
 			if (iobuf_queue(&s->iobuf, ln, len) == -1) {
 				m_create(p_parent, IMSG_PARENT_KILL_MDA,
-				    0, 0, -1, 128);
+				    0, 0, -1);
 				m_add_id(p_parent, s->id);
 				m_add_string(p_parent, "Out of memory");
 				m_close(p_parent);
@@ -587,7 +596,7 @@ mda_io(struct io *io, int evt)
 		if (ferror(s->datafp)) {
 			log_debug("debug: mda: ferror on session %016"PRIx64,
 			    s->id);
-			m_create(p_parent, IMSG_PARENT_KILL_MDA, 0, 0, -1, 128);
+			m_create(p_parent, IMSG_PARENT_KILL_MDA, 0, 0, -1);
 			m_add_id(p_parent, s->id);
 			m_add_string(p_parent, "Error reading body");
 			m_close(p_parent);
@@ -601,6 +610,8 @@ mda_io(struct io *io, int evt)
 			    s->id, s->evp->id);
 			fclose(s->datafp);
 			s->datafp = NULL;
+ 			if (iobuf_queued(&s->iobuf) == 0)
+				goto done;
 		}
 		return;
 
@@ -793,7 +804,7 @@ mda_drain(void)
 		    " for user \"%s\" evpid %016" PRIx64, s->id, u->name,
 		    s->evp->id);
 
-		m_create(p_queue, IMSG_QUEUE_MESSAGE_FD, 0, 0, -1, 18);
+		m_create(p_queue, IMSG_QUEUE_MESSAGE_FD, 0, 0, -1);
 		m_add_id(p_queue, s->id);
 		m_add_msgid(p_queue, evpid_to_msgid(s->evp->id));
 		m_close(p_queue);
@@ -867,6 +878,8 @@ mda_log(const struct mda_envelope *evp, const char *prefix, const char *status)
 		method = "file";
 	else if (evp->method == A_MDA)
 		method = "mda";
+	else if (evp->method == A_LMTP)
+		method = "lmtp";
 	else
 		method = "???";
 

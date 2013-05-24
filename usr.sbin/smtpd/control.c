@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.84 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.85 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -320,6 +319,7 @@ control_accept(int listenfd, short event, void *arg)
 	if (getpeereid(connfd, &c->euid, &c->egid) == -1)
 		fatal("getpeereid");
 	c->id = ++connid;
+	c->mproc.proc = PROC_CLIENT;
 	c->mproc.handler = control_dispatch_ext;
 	c->mproc.data = c;
 	mproc_init(&c->mproc, connfd);
@@ -413,6 +413,11 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		return;
 	}
 
+	if (imsg->hdr.peerid != IMSG_VERSION) {
+		m_compose(p, IMSG_CTL_FAIL, IMSG_VERSION, 0, -1, NULL, 0);
+		return;
+	}
+
 	switch (imsg->hdr.type) {
 	case IMSG_SMTP_ENQUEUE_FD:
 		if (env->sc_flags & (SMTPD_SMTP_PAUSED |
@@ -477,7 +482,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		verbose = v;
 		log_verbose(verbose);
 
-		m_create(p_parent, IMSG_CTL_VERBOSE, 0, 0, -1, 9);
+		m_create(p_parent, IMSG_CTL_VERBOSE, 0, 0, -1);
 		m_add_int(p_parent, verbose);
 		m_close(p_parent);
 
@@ -495,7 +500,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		verbose |= v;
 		log_verbose(verbose);
 
-		m_create(p_parent, IMSG_CTL_TRACE, 0, 0, -1, 9);
+		m_create(p_parent, IMSG_CTL_TRACE, 0, 0, -1);
 		m_add_int(p_parent, v);
 		m_close(p_parent);
 
@@ -513,7 +518,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		verbose &= ~v;
 		log_verbose(verbose);
 
-		m_create(p_parent, IMSG_CTL_UNTRACE, 0, 0, -1, 9);
+		m_create(p_parent, IMSG_CTL_UNTRACE, 0, 0, -1);
 		m_add_int(p_parent, v);
 		m_close(p_parent);
 
@@ -530,7 +535,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		memcpy(&v, imsg->data, sizeof(v));
 		profiling |= v;
 
-		m_create(p_parent, IMSG_CTL_PROFILE, 0, 0, -1, 9);
+		m_create(p_parent, IMSG_CTL_PROFILE, 0, 0, -1);
 		m_add_int(p_parent, v);
 		m_close(p_parent);
 
@@ -547,7 +552,7 @@ control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 		memcpy(&v, imsg->data, sizeof(v));
 		profiling &= ~v;
 
-		m_create(p_parent, IMSG_CTL_UNPROFILE, 0, 0, -1, 9);
+		m_create(p_parent, IMSG_CTL_UNPROFILE, 0, 0, -1);
 		m_add_int(p_parent, v);
 		m_close(p_parent);
 

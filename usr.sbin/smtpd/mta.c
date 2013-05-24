@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.156 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.157 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <ctype.h>
@@ -72,7 +71,7 @@ static void mta_relay_timeout(int, short, void *);
 static void mta_flush(struct mta_relay *, int, const char *);
 static struct mta_route *mta_find_route(struct mta_connector *);
 static void mta_log(const struct mta_envelope *, const char *, const char *,
-    const char *);
+    const char *, const char *);
 
 SPLAY_HEAD(mta_relay_tree, mta_relay);
 static struct mta_relay *mta_relay(struct envelope *);
@@ -577,23 +576,23 @@ mta_route_next_task(struct mta_relay *relay, struct mta_route *route)
 }
 
 void
-mta_delivery(struct mta_envelope *e, const char *relay, int delivery,
-    const char *status)
+mta_delivery(struct mta_envelope *e, const char *source, const char *relay,
+    int delivery, const char *status)
 {
 	if (delivery == IMSG_DELIVERY_OK) {
-		mta_log(e, "Ok", relay, status);
+		mta_log(e, "Ok", source, relay, status);
 		queue_ok(e->id);
 	}
 	else if (delivery == IMSG_DELIVERY_TEMPFAIL) {
-		mta_log(e, "TempFail", relay, status);
+		mta_log(e, "TempFail", source, relay, status);
 		queue_tempfail(e->id, status);
 	}
 	else if (delivery == IMSG_DELIVERY_PERMFAIL) {
-		mta_log(e, "PermFail", relay, status);
+		mta_log(e, "PermFail", source, relay, status);
 		queue_permfail(e->id, status);
 	}
 	else if (delivery == IMSG_DELIVERY_LOOP) {
-		mta_log(e, "PermFail", relay, "Loop detected");
+		mta_log(e, "PermFail", source, relay, "Loop detected");
 		queue_loop(e->id);
 	}
 	else
@@ -634,7 +633,7 @@ mta_query_secret(struct mta_relay *relay)
 	tree_xset(&wait_secret, relay->id, relay);
 	relay->status |= RELAY_WAIT_SECRET;
 
-	m_create(p_lka, IMSG_LKA_SECRET, 0, 0, -1, 128);
+	m_create(p_lka, IMSG_LKA_SECRET, 0, 0, -1);
 	m_add_id(p_lka, relay->id);
 	m_add_string(p_lka, relay->authtable);
 	m_add_string(p_lka, relay->authlabel);
@@ -663,7 +662,7 @@ mta_query_source(struct mta_relay *relay)
 {
 	log_debug("debug: mta_query_source(%s)", mta_relay_to_text(relay));
 
-	m_create(p_lka, IMSG_LKA_SOURCE, 0, 0, -1, 64);
+	m_create(p_lka, IMSG_LKA_SOURCE, 0, 0, -1);
 	m_add_id(p_lka, relay->id);
 	m_add_string(p_lka, relay->sourcetable);
 	m_close(p_lka);
@@ -980,17 +979,12 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 {
 	struct mta_envelope	*e;
 	struct mta_task		*task;
-	const char		*pfx;
 	size_t			 n;
 
 	log_debug("debug: mta_flush(%s, %i, \"%s\")",
 	    mta_relay_to_text(relay), fail, error);
 
-	if (fail == IMSG_DELIVERY_TEMPFAIL)
-		pfx = "TempFail";
-	else if (fail == IMSG_DELIVERY_PERMFAIL)
-		pfx = "PermFail";
-	else
+	if (fail != IMSG_DELIVERY_TEMPFAIL && fail != IMSG_DELIVERY_PERMFAIL)
 		errx(1, "unexpected delivery status %i", fail);
 
 	n = 0;
@@ -998,7 +992,7 @@ mta_flush(struct mta_relay *relay, int fail, const char *error)
 		TAILQ_REMOVE(&relay->tasks, task, entry);
 		while ((e = TAILQ_FIRST(&task->envelopes))) {
 			TAILQ_REMOVE(&task->envelopes, e, entry);
-			mta_delivery(e, relay->domain->name, fail, error);
+			mta_delivery(e, NULL, relay->domain->name, fail, error);
 			free(e->dest);
 			free(e->rcpt);
 			free(e);
@@ -1116,11 +1110,6 @@ mta_find_route(struct mta_connector *c)
 		    mta_connector_to_text(c));
 		c->flags |= CONNECTOR_MX_ERROR;
 	}
-	else if (family_mismatch) {
-		log_info("smtp-out: Address family mismatch on connector %s",
-		    mta_connector_to_text(c));
-		c->flags |= CONNECTOR_FAMILY_ERROR;
-	}
 	else if (limit_route) {
 		log_debug("debug: mta: hit route limit on connector %s",
 		    mta_connector_to_text(c));
@@ -1131,26 +1120,45 @@ mta_find_route(struct mta_connector *c)
 		    mta_connector_to_text(c));
 		c->flags |= CONNECTOR_LIMIT_HOST;
 	}
+	else if (family_mismatch) {
+		log_info("smtp-out: Address family mismatch on connector %s",
+		    mta_connector_to_text(c));
+		c->flags |= CONNECTOR_FAMILY_ERROR;
+	}
 
 	return (NULL);
 }
 
 static void
-mta_log(const struct mta_envelope *evp, const char *prefix, const char *relay,
-    const char *status)
+mta_log(const struct mta_envelope *evp, const char *prefix, const char *source,
+    const char *relay, const char *status)
 {
+	char session[SMTPD_MAXLINESIZE];
 	char rcpt[SMTPD_MAXLINESIZE];
+	char src[SMTPD_MAXLINESIZE];
+
+	session[0] = '\0';
+	if (evp->session)
+		snprintf(session, sizeof session, "session=%016"PRIx64", ",
+		    evp->session);
 
 	rcpt[0] = '\0';
 	if (evp->rcpt)
 		snprintf(rcpt, sizeof rcpt, "rcpt=<%s>, ", evp->rcpt);
 
-	log_info("relay: %s for %016" PRIx64 ": from=<%s>, to=<%s>, "
-	    "%srelay=%s, delay=%s, stat=%s",
+	src[0] = '\0';
+	if (source)
+		snprintf(src, sizeof src, "source=%s, ", source);
+
+
+	log_info("relay: %s for %016" PRIx64 ": %sfrom=<%s>, to=<%s>, "
+	    "%s%srelay=%s, delay=%s, stat=%s",
 	    prefix,
 	    evp->id,
+	    session,
 	    evp->task->sender,
 	    evp->dest,
+	    src,
 	    rcpt,
 	    relay,
 	    duration_to_text(time(NULL) - evp->creation),

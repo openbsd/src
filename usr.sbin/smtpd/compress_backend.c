@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress_backend.c,v 1.7 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: compress_backend.c,v 1.8 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Charles Longeau <chl@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -32,71 +31,39 @@
 
 #include "smtpd.h"
 
+#define	BUFFER_SIZE	16364
+
 extern struct compress_backend compress_gzip;
 
-static struct compress_backend	*backend = NULL;
-
-int
-compress_backend_init(const char *name)
+struct compress_backend *
+compress_backend_lookup(const char *name)
 {
 	if (!strcmp(name, "gzip"))
-		backend = &compress_gzip;
+		return &compress_gzip;
 
-	if (backend)
-		return (1);
-	return (0);
-}
-
-void *
-compress_new(void)
-{
-	return (backend->compress_new());
+	return NULL;
 }
 
 size_t
-compress_chunk(void *hdl, void *ib, size_t ibsz, void *ob, size_t obsz)
+compress_chunk(void *ib, size_t ibsz, void *ob, size_t obsz)
 {
-	return (backend->compress_chunk(hdl, ib, ibsz, ob, obsz));
+	return (env->sc_comp->compress_chunk(ib, ibsz, ob, obsz));
 }
 
 size_t
-compress_finalize(void *hdl, void *ob, size_t obsz)
+uncompress_chunk(void *ib, size_t ibsz, void *ob, size_t obsz)
 {
-	return (backend->compress_finalize(hdl, ob, obsz));
+	return (env->sc_comp->uncompress_chunk(ib, ibsz, ob, obsz));
 }
 
-void *
-uncompress_new(void)
+int
+compress_file(FILE *ifile, FILE *ofile)
 {
-	return (backend->uncompress_new());
-}
-
-size_t
-uncompress_chunk(void *hdl, void *ib, size_t ibsz, void *ob, size_t obsz)
-{
-	return (backend->uncompress_chunk(hdl, ib, ibsz, ob, obsz));
-}
-
-size_t
-uncompress_finalize(void *hdl, void *ob, size_t obsz)
-{
-	return (backend->uncompress_finalize(hdl, ob, obsz));
-}
-
-size_t
-compress_buffer(char *ib, size_t iblen, char *ob, size_t oblen)
-{
-	return (compress_chunk(NULL, ib, iblen, ob, oblen));
-}
-
-size_t
-uncompress_buffer(char *ib, size_t iblen, char *ob, size_t oblen)
-{
-	return (uncompress_chunk(NULL, ib, iblen, ob, oblen));
+	return (env->sc_comp->compress_file(ifile, ofile));
 }
 
 int
 uncompress_file(FILE *ifile, FILE *ofile)
 {
-	return (0);
-};
+	return (env->sc_comp->uncompress_file(ifile, ofile));
+}

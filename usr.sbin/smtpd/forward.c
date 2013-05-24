@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.34 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: forward.c,v 1.35 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -45,18 +44,22 @@ forwards_get(int fd, struct expand *expand)
 	char	       *line = NULL;
 	size_t		len;
 	size_t		lineno;
+	size_t		save;
 	int		ret;
 	struct stat	sb;
 
-	ret = 0;
+	ret = -1;
 	if (fstat(fd, &sb) == -1)
 		goto end;
 
-	/* empty or over MAX_FORWARD_SIZE, temporarily fail */
+	/* if it's empty just pretend that no expansion took place */
 	if (sb.st_size == 0) {
 		log_info("info: forward file is empty");
+		ret = 0;
 		goto end;
 	}
+
+	/* over MAX_FORWARD_SIZE, temporarily fail */
 	if (sb.st_size >= MAX_FORWARD_SIZE) {
 		log_info("info: forward file exceeds max size");
 		goto end;
@@ -68,6 +71,7 @@ forwards_get(int fd, struct expand *expand)
 	}
 
 	lineno = 0;
+	save = expand->nb_nodes;
 	while ((line = fparseln(fp, &len, &lineno, NULL, 0)) != NULL) {
 		if (! expand_line(expand, line, 0)) {
 			log_info("info: parse error in forward file");
@@ -80,7 +84,7 @@ forwards_get(int fd, struct expand *expand)
 		free(line);
 	}
 	       
-	ret = 1;
+	ret = expand->nb_nodes > save ? 1 : 0;
 
 end:
 	if (line)

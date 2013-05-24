@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.6 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.7 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -19,7 +19,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
@@ -56,6 +55,7 @@ static int alias_is_username(struct expandnode *, const char *, size_t);
 static int alias_is_address(struct expandnode *, const char *, size_t);
 static int alias_is_filename(struct expandnode *, const char *, size_t);
 static int alias_is_include(struct expandnode *, const char *, size_t);
+static int alias_is_error(struct expandnode *, const char *, size_t);
 
 const char *
 sockaddr_to_text(struct sockaddr *sa)
@@ -270,7 +270,7 @@ text_to_netaddr(struct netaddr *netaddr, const char *s)
 	bzero(&ssin, sizeof(struct sockaddr_in));
 	bzero(&ssin6, sizeof(struct sockaddr_in6));
 
-	if (strncmp("IPv6:", s, 5) == 0)
+	if (strncasecmp("IPv6:", s, 5) == 0)
 		s += 5;
 
 	if (strchr(s, '/') != NULL) {
@@ -571,6 +571,11 @@ rule_to_text(struct rule *r)
 		strlcat(buf, r->r_value.buffer, sizeof buf);
 		strlcat(buf, "\"", sizeof buf);
 		break;
+	case A_LMTP:
+		strlcat(buf, " deliver to lmtp \"", sizeof buf);
+		strlcat(buf, r->r_value.buffer, sizeof buf);
+		strlcat(buf, "\"", sizeof buf);
+		break;
 	}
 	    
 	return buf;
@@ -579,7 +584,7 @@ rule_to_text(struct rule *r)
 int
 text_to_userinfo(struct userinfo *userinfo, const char *s)
 {
-	char		buf[MAXPATHLEN];
+	char		buf[SMTPD_MAXPATHLEN];
 	char	       *p;
 	const char     *errstr;
 
@@ -664,7 +669,8 @@ text_to_expandnode(struct expandnode *expandnode, const char *s)
 	size_t	l;
 
 	l = strlen(s);
-	if (alias_is_include(expandnode, s, l) ||
+	if (alias_is_error(expandnode, s, l) ||
+	    alias_is_include(expandnode, s, l) ||
 	    alias_is_filter(expandnode, s, l) ||
 	    alias_is_filename(expandnode, s, l) ||
 	    alias_is_address(expandnode, s, l) ||
@@ -681,6 +687,7 @@ expandnode_to_text(struct expandnode *expandnode)
 	case EXPAND_FILTER:
 	case EXPAND_FILENAME:
 	case EXPAND_INCLUDE:
+	case EXPAND_ERROR:
 		return expandnode->u.buffer;
 	case EXPAND_USERNAME:
 		return expandnode->u.user;
@@ -805,5 +812,36 @@ alias_is_include(struct expandnode *alias, const char *line, size_t len)
 		return 0;
 
 	alias->type = EXPAND_INCLUDE;
+	return 1;
+}
+
+static int
+alias_is_error(struct expandnode *alias, const char *line, size_t len)
+{
+	size_t	skip;
+
+	bzero(alias, sizeof *alias);
+
+	if (strncasecmp(":error:", line, 7) == 0)
+		skip = 7;
+	else if (strncasecmp("error:", line, 6) == 0)
+		skip = 6;
+	else
+		return 0;
+
+	if (strlcpy(alias->u.buffer, line + skip,
+	    sizeof(alias->u.buffer)) >= sizeof(alias->u.buffer))
+		return 0;
+
+	if (strlen(alias->u.buffer) < 5)
+		return 0;
+
+	/* [45][0-9]{2} [a-zA-Z0-9].* */
+	if (alias->u.buffer[3] != ' ' || !isalnum(alias->u.buffer[4]) ||
+	    (alias->u.buffer[0] != '4' && alias->u.buffer[0] != '5') ||
+	    !isdigit(alias->u.buffer[1]) || !isdigit(alias->u.buffer[2]))
+		return 0;
+
+	alias->type = EXPAND_ERROR;
 	return 1;
 }

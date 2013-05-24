@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.44 2013/03/29 12:56:19 tobias Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.45 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <sys/tree.h>
 #include <sys/queue.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <db.h>
@@ -34,8 +33,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "smtpd.h"
 #include "log.h"
@@ -45,7 +44,7 @@
 extern char *__progname;
 
 __dead void	usage(void);
-static int parse_map(FILE *, char *);
+static int parse_map(char *);
 static int parse_entry(char *, size_t, size_t);
 static int parse_mapentry(char *, size_t, size_t);
 static int parse_setentry(char *, size_t, size_t);
@@ -85,13 +84,13 @@ int
 main(int argc, char *argv[])
 {
 	struct stat	 sb;
-	char		 dbname[MAXPATHLEN];
-	FILE		*fp;
+	char		 dbname[SMTPD_MAXPATHLEN];
 	char		*opts;
 	char		*conf;
 	int		 ch;
 	DBTYPE		 dbtype = DB_HASH;
 	char		*p;
+	mode_t		 omode;
 
 	log_init(1);
 
@@ -173,40 +172,32 @@ main(int argc, char *argv[])
 	if (oflag == NULL && asprintf(&oflag, "%s.db", source) == -1)
 		err(1, "asprintf");
 
+	if (strcmp(source, "-") != 0)
+		if (stat(source, &sb) == -1)
+			err(1, "stat: %s", source);
+
 	if (! bsnprintf(dbname, sizeof(dbname), "%s.XXXXXXXXXXX", oflag))
 		errx(1, "path too long");
+	omode = umask(7077);
+	if (mkstemp(dbname) == -1)
+		err(1, "mkstemp");
+	umask(omode);
 
-	if (mktemp(dbname) == NULL)
-		err(1, "mktemp");
-
-	db = dbopen(dbname, O_EXCL|O_CREAT|O_EXLOCK|O_RDWR|O_SYNC, 0644,
-		    dbtype, NULL);
+	db = dbopen(dbname, O_EXLOCK|O_RDWR|O_SYNC, 0644, dbtype, NULL);
 	if (db == NULL) {
 		warn("dbopen: %s", dbname);
 		goto bad;
 	}
 
 	if (strcmp(source, "-") != 0)
-		fp = fopen(source, "r");
-	else
-		fp = fdopen(STDIN_FILENO, "r");
-	if (fp == NULL) {
-		warn("%s", source);
-		goto bad;
-	}
-
-	if (strcmp(source, "-") != 0) {
-		if (fstat(fileno(fp), &sb) == -1)
-			err(1, "stat: %s", source);
-		if (fchown(db->fd(db), sb.st_uid, sb.st_gid) == -1 ||
-		    fchmod(db->fd(db), sb.st_mode) == -1) {
+		if (fchmod(db->fd(db), sb.st_mode) == -1 ||
+		    fchown(db->fd(db), sb.st_uid, sb.st_gid) == -1) {
 			warn("couldn't carry ownership and perms to %s",
 			    dbname);
 			goto bad;
 		}
-	}
 
-	if (! parse_map(fp, source))
+	if (! parse_map(source))
 		goto bad;
 
 	if (db->close(db) == -1) {
@@ -231,12 +222,22 @@ bad:
 }
 
 int
-parse_map(FILE *fp, char *filename)
+parse_map(char *filename)
 {
+	FILE	*fp;
 	char	*line;
 	size_t	 len;
 	size_t	 lineno = 0;
 	char	 delim[] = { '\\', 0, 0 };
+
+	if (strcmp(filename, "-") == 0)
+		fp = fdopen(0, "r");
+	else
+		fp = fopen(filename, "r");
+	if (fp == NULL) {
+		warn("%s", filename);
+		return 0;
+	}
 
 	if (!isatty(fileno(fp)) && flock(fileno(fp), LOCK_SH|LOCK_NB) == -1) {
 		if (errno == EWOULDBLOCK)
@@ -424,7 +425,7 @@ conf_aliases(char *cfgpath)
 	if (parse_config(env, cfgpath, 0))
 		exit(1);
 
-	table = table_findbyname("aliases");
+	table = table_find("aliases", NULL);
 	if (table == NULL)
 		return (PATH_ALIASES);
 

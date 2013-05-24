@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.26 2013/02/14 12:30:49 gilles Exp $	*/
+/*	$OpenBSD: parser.h,v 1.27 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -46,7 +46,7 @@ enum actions {
 	LOG_TRACE_LOOKUP,
 	LOG_TRACE_STAT,
 	LOG_TRACE_RULES,
-	LOG_TRACE_IMSG_SIZE,
+	LOG_TRACE_MPROC,
 	LOG_TRACE_EXPAND,
 	LOG_TRACE_ALL,
 	LOG_UNTRACE_IMSG,
@@ -59,7 +59,7 @@ enum actions {
 	LOG_UNTRACE_LOOKUP,
 	LOG_UNTRACE_STAT,
 	LOG_UNTRACE_RULES,
-	LOG_UNTRACE_IMSG_SIZE,
+	LOG_UNTRACE_MPROC,
 	LOG_UNTRACE_EXPAND,
 	LOG_UNTRACE_ALL,
 	LOG_PROFILE_IMSG,
@@ -69,7 +69,7 @@ enum actions {
 };
 
 struct ctl_id {
-	objid_t		 id;
+	uint32_t	 id;
 	char		 name[MAX_NAME_SIZE];
 };
 

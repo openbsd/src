@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.22 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: expand.c,v 1.23 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -20,7 +20,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <ctype.h>
@@ -39,6 +38,22 @@ struct expandnode *
 expand_lookup(struct expand *expand, struct expandnode *key)
 {
 	return RB_FIND(expandtree, &expand->tree, key);
+}
+
+int
+expand_to_text(struct expand *expand, char *buf, size_t sz)
+{
+	struct expandnode *xn;
+
+	buf[0] = '\0';
+
+	RB_FOREACH(xn, expandtree, &expand->tree) {
+		if (buf[0])
+			strlcat(buf, ", ", sz);
+		strlcat(buf, expandnode_to_text(xn), sz);
+	}
+
+	return 1;
 }
 
 void
@@ -222,6 +237,9 @@ expandnode_info(struct expandnode *e)
 		break;
 	case EXPAND_ADDRESS:
 		type = "address";
+		break;
+	case EXPAND_ERROR:
+		type = "error";
 		break;
 	case EXPAND_INVALID:
 	default:

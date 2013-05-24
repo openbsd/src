@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.14 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: log.c,v 1.15 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <errno.h>
@@ -33,7 +32,9 @@
 
 #include "log.h"
 
-static int	 debug;
+#define	TRACE_DEBUG	0x1
+
+static int	 foreground;
 static int	 verbose;
 
 void	 vlog(int, const char *, va_list);
@@ -42,14 +43,12 @@ void	 logit(int, const char *, ...)
 
 
 void
-log_init(int n_debug)
+log_init(int n_foreground)
 {
 	extern char	*__progname;
 
-	debug = n_debug;
-	verbose = n_debug;
-
-	if (!debug)
+	foreground = n_foreground;
+	if (! foreground)
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_MAIL);
 
 	tzset();
@@ -76,7 +75,7 @@ vlog(int pri, const char *fmt, va_list ap)
 {
 	char	*nfmt;
 
-	if (debug) {
+	if (foreground) {
 		/* best effort in out of mem situations */
 		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
 			vfprintf(stderr, fmt, ap);
@@ -140,7 +139,7 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (verbose) {
+	if (verbose & TRACE_DEBUG) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);

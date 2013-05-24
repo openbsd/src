@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.19 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: config.c,v 1.20 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <event.h>
@@ -54,12 +53,10 @@ purge_config(uint8_t what)
 		env->sc_listeners = NULL;
 	}
 	if (what & PURGE_TABLES) {
-		while (tree_root(env->sc_tables_tree, NULL, (void **)&t))
+		while (dict_root(env->sc_tables_dict, NULL, (void **)&t))
 			table_destroy(t);
 		free(env->sc_tables_dict);
-		free(env->sc_tables_tree);
 		env->sc_tables_dict = NULL;
-		env->sc_tables_tree = NULL;
 	}
 	if (what & PURGE_RULES) {
 		while ((r = TAILQ_FIRST(env->sc_rules)) != NULL) {

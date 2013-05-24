@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.52 2013/01/26 09:37:24 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.53 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -29,6 +28,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -320,11 +320,8 @@ ssl_error(const char *where)
 {
 	unsigned long	code;
 	char		errbuf[128];
-	extern int	debug;
 
 	for (; (code = ERR_get_error()) != 0 ;) {
-		if (!debug)
-			continue;
 		ERR_error_string_n(code, errbuf, sizeof(errbuf));
 		log_debug("debug: SSL library error: %s: %s", where, errbuf);
 	}

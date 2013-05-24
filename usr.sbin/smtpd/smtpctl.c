@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.103 2013/04/17 15:02:38 deraadt Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.104 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 Gilles Chehade <gilles@poolp.org>
@@ -25,7 +25,7 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/un.h>
-#include <sys/param.h>
+#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
@@ -44,7 +44,7 @@
 #include "log.h"
 
 #define PATH_CAT	"/bin/cat"
-#define PATH_GZCAT	"/bin/gzcat"
+#define PATH_GZCAT	"/usr/bin/gzcat"
 #define PATH_QUEUE	"/queue"
 
 void usage(void);
@@ -237,51 +237,51 @@ main(int argc, char *argv[])
 
 		if ((ulval = text_to_evpid(res->data)) == 0)
 			errx(1, "invalid msgid/evpid");
-		imsg_compose(ibuf, IMSG_CTL_SCHEDULE, 0, 0, -1, &ulval,
+		imsg_compose(ibuf, IMSG_CTL_SCHEDULE, IMSG_VERSION, 0, -1, &ulval,
 		    sizeof(ulval));
 		break;
 	case REMOVE:
 		if ((ulval = text_to_evpid(res->data)) == 0)
 			errx(1, "invalid msgid/evpid");
-		imsg_compose(ibuf, IMSG_CTL_REMOVE, 0, 0, -1, &ulval,
+		imsg_compose(ibuf, IMSG_CTL_REMOVE, IMSG_VERSION, 0, -1, &ulval,
 		    sizeof(ulval));
 		break;
 	case SHOW_QUEUE:
 		return action_show_queue();
 	case SHUTDOWN:
-		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, IMSG_VERSION, 0, -1, NULL, 0);
 		break;
 	case PAUSE_MDA:
-		imsg_compose(ibuf, IMSG_CTL_PAUSE_MDA, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_PAUSE_MDA, IMSG_VERSION, 0, -1, NULL, 0);
 		break;
 	case PAUSE_MTA:
-		imsg_compose(ibuf, IMSG_CTL_PAUSE_MTA, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_PAUSE_MTA, IMSG_VERSION, 0, -1, NULL, 0);
 		break;
 	case PAUSE_SMTP:
-		imsg_compose(ibuf, IMSG_CTL_PAUSE_SMTP, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_PAUSE_SMTP, IMSG_VERSION, 0, -1, NULL, 0);
 		break;
 	case RESUME_MDA:
-		imsg_compose(ibuf, IMSG_CTL_RESUME_MDA, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_RESUME_MDA, IMSG_VERSION, 0, -1, NULL, 0);
 		break;
 	case RESUME_MTA:
-		imsg_compose(ibuf, IMSG_CTL_RESUME_MTA, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_RESUME_MTA, IMSG_VERSION, 0, -1, NULL, 0);
 		break;
 	case RESUME_SMTP:
-		imsg_compose(ibuf, IMSG_CTL_RESUME_SMTP, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_RESUME_SMTP, IMSG_VERSION, 0, -1, NULL, 0);
 		break;
 	case SHOW_STATS:
-		imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_STATS, IMSG_VERSION, 0, -1, NULL, 0);
 		break;
 	case UPDATE_TABLE:
 		if (strlcpy(name, res->data, sizeof name) >= sizeof name)
 			errx(1, "table name too long.");
-		imsg_compose(ibuf, IMSG_LKA_UPDATE_TABLE, 0, 0, -1,
+		imsg_compose(ibuf, IMSG_LKA_UPDATE_TABLE, IMSG_VERSION, 0, -1,
 		    name, strlen(name) + 1);
 		done = 1;
 		break;
 	case MONITOR:
 		while (1) {
-			imsg_compose(ibuf, IMSG_DIGEST, 0, 0, -1, NULL, 0);
+			imsg_compose(ibuf, IMSG_DIGEST, IMSG_VERSION, 0, -1, NULL, 0);
 			flush();
 			next_message(&imsg);
 			show_monitor(imsg.data);
@@ -290,10 +290,10 @@ main(int argc, char *argv[])
 		}
 		break;
 	case LOG_VERBOSE:
-		verb = TRACE_VERBOSE;
+		verb = TRACE_DEBUG;
 		/* FALLTHROUGH */
 	case LOG_BRIEF:
-		imsg_compose(ibuf, IMSG_CTL_VERBOSE, 0, 0, -1, &verb,
+		imsg_compose(ibuf, IMSG_CTL_VERBOSE, IMSG_VERSION, 0, -1, &verb,
 		    sizeof(verb));
 		printf("logging request sent.\n");
 		done = 1;
@@ -309,11 +309,11 @@ main(int argc, char *argv[])
 	case LOG_TRACE_LOOKUP:
 	case LOG_TRACE_STAT:
 	case LOG_TRACE_RULES:
-	case LOG_TRACE_IMSG_SIZE:
+	case LOG_TRACE_MPROC:
 	case LOG_TRACE_EXPAND:
 	case LOG_TRACE_ALL:
 		verb = trace_convert(action);
-		imsg_compose(ibuf, IMSG_CTL_TRACE, 0, 0, -1, &verb,
+		imsg_compose(ibuf, IMSG_CTL_TRACE, IMSG_VERSION, 0, -1, &verb,
 		    sizeof(verb));
 		done = 1;
 		break;
@@ -328,11 +328,11 @@ main(int argc, char *argv[])
 	case LOG_UNTRACE_LOOKUP:
 	case LOG_UNTRACE_STAT:
 	case LOG_UNTRACE_RULES:
-	case LOG_UNTRACE_IMSG_SIZE:
+	case LOG_UNTRACE_MPROC:
 	case LOG_UNTRACE_EXPAND:
 	case LOG_UNTRACE_ALL:
 		verb = trace_convert(action);
-		imsg_compose(ibuf, IMSG_CTL_UNTRACE, 0, 0, -1, &verb,
+		imsg_compose(ibuf, IMSG_CTL_UNTRACE, IMSG_VERSION, 0, -1, &verb,
 		    sizeof(verb));
 		done = 1;
 		break;
@@ -340,7 +340,7 @@ main(int argc, char *argv[])
 	case LOG_PROFILE_IMSG:
 	case LOG_PROFILE_QUEUE:
 		profile = profile_convert(action);
-		imsg_compose(ibuf, IMSG_CTL_PROFILE, 0, 0, -1, &profile,
+		imsg_compose(ibuf, IMSG_CTL_PROFILE, IMSG_VERSION, 0, -1, &profile,
 		    sizeof(profile));
 		done = 1;
 		break;
@@ -348,7 +348,7 @@ main(int argc, char *argv[])
 	case LOG_UNPROFILE_IMSG:
 	case LOG_UNPROFILE_QUEUE:
 		profile = profile_convert(action);
-		imsg_compose(ibuf, IMSG_CTL_UNPROFILE, 0, 0, -1, &profile,
+		imsg_compose(ibuf, IMSG_CTL_UNPROFILE, IMSG_VERSION, 0, -1, &profile,
 		    sizeof(profile));
 		done = 1;
 		break;
@@ -360,6 +360,12 @@ main(int argc, char *argv[])
 	do {
 		flush();
 		next_message(&imsg);
+
+		/* ANY command can return IMSG_CTL_FAIL if version mismatch */
+		if (imsg.hdr.type == IMSG_CTL_FAIL) {
+			show_command_output(&imsg);
+			break;
+		}
 
 		switch (action) {
 		case REMOVE:
@@ -383,7 +389,7 @@ main(int argc, char *argv[])
 		case LOG_TRACE_LOOKUP:
 		case LOG_TRACE_STAT:
 		case LOG_TRACE_RULES:
-		case LOG_TRACE_IMSG_SIZE:
+		case LOG_TRACE_MPROC:
 		case LOG_TRACE_EXPAND:
 		case LOG_TRACE_ALL:
 		case LOG_UNTRACE_IMSG:
@@ -396,7 +402,7 @@ main(int argc, char *argv[])
 		case LOG_UNTRACE_LOOKUP:
 		case LOG_UNTRACE_STAT:
 		case LOG_UNTRACE_RULES:
-		case LOG_UNTRACE_IMSG_SIZE:
+		case LOG_UNTRACE_MPROC:
 		case LOG_UNTRACE_EXPAND:
 		case LOG_UNTRACE_ALL:
 		case LOG_PROFILE_IMSG:
@@ -440,7 +446,7 @@ action_show_queue_message(uint32_t msgid)
     nextbatch:
 
 	found = 0;
-	imsg_compose(ibuf, IMSG_CTL_LIST_ENVELOPES, 0, 0, -1,
+	imsg_compose(ibuf, IMSG_CTL_LIST_ENVELOPES, IMSG_VERSION, 0, -1,
 	    &evpid, sizeof evpid);
 	flush();
 
@@ -475,7 +481,7 @@ action_show_queue(void)
 	now = time(NULL);
 
 	do {
-		imsg_compose(ibuf, IMSG_CTL_LIST_MESSAGES, 0, 0, -1,
+		imsg_compose(ibuf, IMSG_CTL_LIST_MESSAGES, IMSG_VERSION, 0, -1,
 		    &msgid, sizeof msgid);
 		flush();
 		next_message(&imsg);
@@ -508,7 +514,7 @@ action_schedule_all(void)
 
 	from = 0;
 	while (1) {
-		imsg_compose(ibuf, IMSG_CTL_LIST_MESSAGES, 0, 0, -1,
+		imsg_compose(ibuf, IMSG_CTL_LIST_MESSAGES, IMSG_VERSION, 0, -1,
 		    &from, sizeof from);
 		flush();
 		next_message(&imsg);
@@ -521,7 +527,7 @@ action_schedule_all(void)
 
 		for (i = 0; i < n; i++) {
 			evpid = msgids[i];
-			imsg_compose(ibuf, IMSG_CTL_SCHEDULE, 0,
+			imsg_compose(ibuf, IMSG_CTL_SCHEDULE, IMSG_VERSION,
 			    0, -1, &evpid, sizeof(evpid));
 		}
 		from = msgids[n - 1] + 1;
@@ -551,7 +557,10 @@ show_command_output(struct imsg *imsg)
 		printf("command succeeded\n");
 		break;
 	case IMSG_CTL_FAIL:
-		printf("command failed\n");
+		if (imsg->hdr.peerid != IMSG_VERSION)
+			printf("command failed: incompatible smtpctl and smtpd\n");
+		else
+			printf("command failed\n");
 		break;
 	default:
 		errx(1, "wrong message in summary: %u", imsg->hdr.type);
@@ -569,7 +578,7 @@ show_stats_output(void)
 	bzero(&kv, sizeof kv);
 
 	while (1) {
-		imsg_compose(ibuf, IMSG_STATS_GET, 0, 0, -1, &kv, sizeof kv);
+		imsg_compose(ibuf, IMSG_STATS_GET, IMSG_VERSION, 0, -1, &kv, sizeof kv);
 		flush();
 		next_message(&imsg);
 		if (imsg.hdr.type != IMSG_STATS_GET)
@@ -583,7 +592,7 @@ show_stats_output(void)
 
 		if (strcmp(kvp->key, "uptime") == 0) {
 			duration = time(NULL) - kvp->val.u.counter;
-			printf("uptime=%lld\n", (long long)duration);
+			printf("uptime=%zd\n", (size_t)duration);
 			printf("uptime.human=%s\n",
 			    duration_to_text(duration));
 		}
@@ -598,8 +607,8 @@ show_stats_output(void)
 				    kvp->key, (int64_t)kvp->val.u.timestamp);
 				break;
 			case STAT_TIMEVAL:
-				printf("%s=%lld.%ld\n",
-				    kvp->key, (long long)kvp->val.u.tv.tv_sec,
+				printf("%s=%zd.%zd\n",
+				    kvp->key, kvp->val.u.tv.tv_sec,
 				    kvp->val.u.tv.tv_usec);
 				break;
 			case STAT_TIMESPEC:
@@ -717,25 +726,37 @@ getflag(uint *bitmap, int bit, char *bitstr, char *buf, size_t len)
 static void
 display(const char *s)
 {
+	pid_t	pid;
 	arglist args;
 	char	*cmd;
+	int	status;
 
-	if (env->sc_queue_flags & QUEUE_COMPRESS)
+	pid = fork();
+	if (pid < 0)
+		err(1, "fork");
+	if (pid == 0) {
 		cmd = PATH_GZCAT;
-	else
-		cmd = PATH_CAT;
-
+		bzero(&args, sizeof(args));
+		addargs(&args, "%s", cmd);
+		addargs(&args, "%s", s);
+		execvp(cmd, args.list);
+		err(1, "execvp");
+	}
+	wait(&status);
+	if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+		exit(0);
+	cmd = PATH_CAT;
 	bzero(&args, sizeof(args));
 	addargs(&args, "%s", cmd);
 	addargs(&args, "%s", s);
 	execvp(cmd, args.list);
-	errx(1, "execvp");
+	err(1, "execvp");
 }
 
 static void
 show_envelope(const char *s)
 {
-	char	 buf[MAXPATHLEN];
+	char	 buf[SMTPD_MAXPATHLEN];
 	uint64_t evpid;
 
 	if ((evpid = text_to_evpid(s)) == 0)
@@ -755,7 +776,7 @@ show_envelope(const char *s)
 static void
 show_message(const char *s)
 {
-	char	 buf[MAXPATHLEN];
+	char	 buf[SMTPD_MAXPATHLEN];
 	uint32_t msgid;
 	uint64_t evpid;
 
@@ -764,10 +785,10 @@ show_message(const char *s)
 
 	msgid = evpid_to_msgid(evpid);
 	if (! bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/message",
-	    PATH_SPOOL,
-	    PATH_QUEUE,
-	    msgid & 0xff,
-	    msgid))
+		PATH_SPOOL,
+		PATH_QUEUE,
+		(evpid_to_msgid(evpid) & 0xff000000) >> 24,
+		msgid))
 		errx(1, "unable to retrieve message");
 
 	display(buf);
@@ -866,9 +887,9 @@ trace_convert(uint32_t trace)
 	case LOG_UNTRACE_RULES:
 		return TRACE_RULES;
 
-	case LOG_TRACE_IMSG_SIZE:
-	case LOG_UNTRACE_IMSG_SIZE:
-		return TRACE_IMSGSIZE;
+	case LOG_TRACE_MPROC:
+	case LOG_UNTRACE_MPROC:
+		return TRACE_MPROC;
 
 	case LOG_TRACE_EXPAND:
 	case LOG_UNTRACE_EXPAND:
@@ -876,7 +897,7 @@ trace_convert(uint32_t trace)
 
 	case LOG_TRACE_ALL:
 	case LOG_UNTRACE_ALL:
-		return ~TRACE_VERBOSE;
+		return ~TRACE_DEBUG;
 	}
 
 	return 0;

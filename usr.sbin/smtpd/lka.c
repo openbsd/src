@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.151 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.152 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/uio.h>
@@ -65,12 +64,10 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	void			*tmp;
 	int			 ret;
 	const char		*key, *val;
-	char			*src;
 	struct ssl		*ssl;
 	struct iovec		iov[3];
 	static struct dict	*ssl_dict;
 	static struct dict	*tables_dict;
-	static struct tree	*tables_tree;
 	static struct table	*table_last;
 	static struct ca_vrfy_req_msg	*req_ca_vrfy_smtp = NULL;
 	static struct ca_vrfy_req_msg	*req_ca_vrfy_mta = NULL;
@@ -79,15 +76,15 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	struct ca_cert_req_msg		*req_ca_cert;
 	struct ca_cert_resp_msg		 resp_ca_cert;
 	struct sockaddr_storage	 ss;
-	struct addrinfo		 hints, *ai;
 	struct userinfo		 userinfo;
 	struct addrname		 addrname;
 	struct envelope		 evp;
 	struct msg		 m;
+	union lookup		 lk;
 	char			 buf[SMTPD_MAXLINESIZE];
 	const char		*tablename, *username, *password, *label;
 	uint64_t		 reqid;
-	size_t			 i, len;
+	size_t			 i;
 	int			 v;
 
 	if (imsg->hdr.type == IMSG_DNS_HOST ||
@@ -159,7 +156,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			resp_ca_vrfy.reqid = req_ca_vrfy_smtp->reqid;
 
-			if (! lka_X509_verify(req_ca_vrfy_smtp, "/etc/ssl/cert.pem", NULL))
+			if (! lka_X509_verify(req_ca_vrfy_smtp, CA_FILE, NULL))
 				resp_ca_vrfy.status = CA_FAIL;
 			else
 				resp_ca_vrfy.status = CA_OK;
@@ -185,7 +182,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (!tablename[0]) {
 				m_create(p_parent, IMSG_LKA_AUTHENTICATE,
-				    0, 0, -1, 128);
+				    0, 0, -1);
 				m_add_id(p_parent, reqid);
 				m_add_string(p_parent, username);
 				m_add_string(p_parent, password);
@@ -195,7 +192,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			ret = lka_authenticate(tablename, username, password);
 
-			m_create(p, IMSG_LKA_AUTHENTICATE, 0, 0, -1, 128);
+			m_create(p, IMSG_LKA_AUTHENTICATE, 0, 0, -1);
 			m_add_id(p, reqid);
 			m_add_int(p, ret);
 			m_close(p);
@@ -213,10 +210,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			ret = lka_userinfo(tablename, username, &userinfo);
 
-			len = 32 + strlen(tablename) + strlen(username);
-			if (ret == LKA_OK)
-				len += sizeof(userinfo);
-			m_create(p, IMSG_LKA_USERINFO, 0, 0, -1, len);
+			m_create(p, IMSG_LKA_USERINFO, 0, 0, -1);
 			m_add_string(p, tablename);
 			m_add_string(p, username);
 			m_add_int(p, ret);
@@ -282,7 +276,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			resp_ca_vrfy.reqid = req_ca_vrfy_mta->reqid;
 
-			if (! lka_X509_verify(req_ca_vrfy_mta, "/etc/ssl/cert.pem", NULL))
+			if (! lka_X509_verify(req_ca_vrfy_mta, CA_FILE, NULL))
 				resp_ca_vrfy.status = CA_FAIL;
 			else
 				resp_ca_vrfy.status = CA_OK;
@@ -307,7 +301,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			lka_credentials(tablename, label, buf, sizeof(buf));
 
-			m_create(p, IMSG_LKA_SECRET, 0, 0, -1, 128);
+			m_create(p, IMSG_LKA_SECRET, 0, 0, -1);
 			m_add_id(p, reqid);
 			m_add_string(p, buf);
 			m_close(p);
@@ -318,34 +312,26 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			m_get_id(&m, &reqid);
 			m_get_string(&m, &tablename);
 
-			table = table_findbyname(tablename);
+			table = table_find(tablename, NULL);
 
-			m_create(p, IMSG_LKA_SOURCE, 0, 0, -1, 64);
+			m_create(p, IMSG_LKA_SOURCE, 0, 0, -1);
 			m_add_id(p, reqid);
 
 			if (table == NULL) {
 				log_warn("warn: source address table %s missing",
 				    tablename);
 				m_add_int(p, LKA_TEMPFAIL);
-			} 
+			}
 			else {
-				ret = table_fetch(table, K_SOURCE, &src);
+				ret = table_fetch(table, K_SOURCE, &lk);
 				if (ret == -1)
 					m_add_int(p, LKA_TEMPFAIL);
 				else if (ret == 0)
 					m_add_int(p, LKA_PERMFAIL);
 				else {
-					/* XXX find a nicer way? */
-					bzero(&hints, sizeof hints);
-					hints.ai_flags = AI_NUMERICHOST;
-					if (getaddrinfo(src, NULL, &hints, &ai) != 0)
-						m_add_int(p, LKA_TEMPFAIL);
-					else {
-						m_add_int(p, LKA_OK);
-						m_add_sockaddr(p, ai->ai_addr);
-						freeaddrinfo(ai);
-					}
-					free(src);
+					m_add_int(p, LKA_OK);
+					m_add_sockaddr(p,
+					    (struct sockaddr *)&lk.source.addr);
 				}
 			}
 			m_close(p);
@@ -361,7 +347,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			ret = lka_addrname(tablename, (struct sockaddr*)&ss,
 			    &addrname);
 
-			m_create(p, IMSG_LKA_HELO, 0, 0, -1, 1024);
+			m_create(p, IMSG_LKA_HELO, 0, 0, -1);
 			m_add_id(p, reqid);
 			m_add_int(p, ret);
 			if (ret == LKA_OK)
@@ -379,15 +365,12 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			    sizeof *env->sc_rules, "lka:sc_rules_reload");
 			tables_dict = xcalloc(1,
 			    sizeof *tables_dict, "lka:tables_dict");
-			tables_tree = xcalloc(1,
-			    sizeof *tables_tree, "lka:tables_tree");
 
 			ssl_dict = calloc(1, sizeof *ssl_dict);
 			if (ssl_dict == NULL)
 				fatal(NULL);
 			dict_init(ssl_dict);
 			dict_init(tables_dict);
-			tree_init(tables_tree);
 			TAILQ_INIT(env->sc_rules_reload);
 
 			return;
@@ -425,14 +408,13 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			    "lka:table");
 			dict_init(&table->t_dict);
 			dict_set(tables_dict, table->t_name, table);
-			tree_set(tables_tree, table->t_id, table);
 			return;
 
 		case IMSG_CONF_RULE_SOURCE:
 			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
 			tmp = env->sc_tables_dict;
 			env->sc_tables_dict = tables_dict;
-			rule->r_sources = table_findbyname(imsg->data);
+			rule->r_sources = table_find(imsg->data, NULL);
 			if (rule->r_sources == NULL)
 				fatalx("lka: tables inconsistency");
 			env->sc_tables_dict = tmp;
@@ -442,7 +424,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
 			tmp = env->sc_tables_dict;
 			env->sc_tables_dict = tables_dict;
-			rule->r_senders = table_findbyname(imsg->data);
+			rule->r_senders = table_find(imsg->data, NULL);
 			if (rule->r_senders == NULL)
 				fatalx("lka: tables inconsistency");
 			env->sc_tables_dict = tmp;
@@ -452,7 +434,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
 			tmp = env->sc_tables_dict;
 			env->sc_tables_dict = tables_dict;
-			rule->r_destination = table_findbyname(imsg->data);
+			rule->r_destination = table_find(imsg->data, NULL);
 			if (rule->r_destination == NULL)
 				fatalx("lka: tables inconsistency");
 			env->sc_tables_dict = tmp;
@@ -462,7 +444,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
 			tmp = env->sc_tables_dict;
 			env->sc_tables_dict = tables_dict;
-			rule->r_mapping = table_findbyname(imsg->data);
+			rule->r_mapping = table_find(imsg->data, NULL);
 			if (rule->r_mapping == NULL)
 				fatalx("lka: tables inconsistency");
 			env->sc_tables_dict = tmp;
@@ -472,7 +454,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			rule = TAILQ_LAST(env->sc_rules_reload, rulelist);
 			tmp = env->sc_tables_dict;
 			env->sc_tables_dict = tables_dict;
-			rule->r_userbase = table_findbyname(imsg->data);
+			rule->r_userbase = table_find(imsg->data, NULL);
 			if (rule->r_userbase == NULL)
 				fatalx("lka: tables inconsistency");
 			env->sc_tables_dict = tmp;
@@ -497,20 +479,20 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (env->sc_rules)
 				purge_config(PURGE_RULES);
-			if (env->sc_tables_tree) {
+			if (env->sc_tables_dict) {
 				table_close_all();
 				purge_config(PURGE_TABLES);
 			}
 			env->sc_rules = env->sc_rules_reload;
 			env->sc_ssl_dict = ssl_dict;
 			env->sc_tables_dict = tables_dict;
-			env->sc_tables_tree = tables_tree;
+			if (verbose & TRACE_TABLES)
+				table_dump_all();
 			table_open_all();
 
 			ssl_dict = NULL;
 			table_last = NULL;
 			tables_dict = NULL;
-			tables_tree = NULL;
 
 			/* Start fulfilling requests */
 			mproc_enable(p_mda);
@@ -545,7 +527,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	if (p->proc == PROC_CONTROL) {
 		switch (imsg->hdr.type) {
 		case IMSG_LKA_UPDATE_TABLE:
-			table = table_findbyname(imsg->data);
+			table = table_find(imsg->data, NULL);
 			if (table == NULL) {
 				log_warnx("warn: Lookup table not found: "
 				    "\"%s\"", (char *)imsg->data);
@@ -659,18 +641,17 @@ static int
 lka_authenticate(const char *tablename, const char *user, const char *password)
 {
 	struct table		*table;
-	struct credentials	*creds;
-	int			 r;
+	union lookup		 lk;
 
-	log_trace(TRACE_LOOKUP, "lookup: authenticating for %s:%s", tablename, user);
-	table = table_findbyname(tablename);
+	log_debug("debug: lka: authenticating for %s:%s", tablename, user);
+	table = table_find(tablename, NULL);
 	if (table == NULL) {
 		log_warnx("warn: could not find table %s needed for authentication",
 		    tablename);
 		return (LKA_TEMPFAIL);
 	}
 
-	switch (table_lookup(table, user, K_CREDENTIALS, (void **)&creds)) {
+	switch (table_lookup(table, user, K_CREDENTIALS, &lk)) {
 	case -1:
 		log_warnx("warn: user credentials lookup fail for %s:%s",
 		    tablename, user);
@@ -678,9 +659,7 @@ lka_authenticate(const char *tablename, const char *user, const char *password)
 	case 0:
 		return (LKA_PERMFAIL);
 	default:
-		r = !strcmp(creds->password, crypt(password, creds->password));
-		free(creds);
-		if (r)
+		if (!strcmp(lk.creds.password, crypt(password, lk.creds.password)))
 			return (LKA_OK);
 		return (LKA_PERMFAIL);
 	}
@@ -690,11 +669,11 @@ static int
 lka_credentials(const char *tablename, const char *label, char *dst, size_t sz)
 {
 	struct table		*table;
-	struct credentials	*creds;
+	union lookup		 lk;
 	char			*buf;
 	int			 buflen, r;
 
-	table = table_findbyname(tablename);
+	table = table_find(tablename, NULL);
 	if (table == NULL) {
 		log_warnx("warn: credentials table %s missing", tablename);
 		return (LKA_TEMPFAIL);
@@ -702,7 +681,7 @@ lka_credentials(const char *tablename, const char *label, char *dst, size_t sz)
 
 	dst[0] = '\0';
 
-	switch(table_lookup(table, label, K_CREDENTIALS, (void **)&creds)) {
+	switch(table_lookup(table, label, K_CREDENTIALS, &lk)) {
 	case -1:
 		log_warnx("warn: credentials lookup fail for %s:%s",
 		    tablename, label);
@@ -713,12 +692,10 @@ lka_credentials(const char *tablename, const char *label, char *dst, size_t sz)
 		return (LKA_PERMFAIL);
 	default:
 		if ((buflen = asprintf(&buf, "%c%s%c%s", '\0',
-		    creds->username, '\0', creds->password)) == -1) {
-			free(creds);
+		    lk.creds.username, '\0', lk.creds.password)) == -1) {
 			log_warn("warn");
 			return (LKA_TEMPFAIL);
 		}
-		free(creds);
 
 		r = __b64_ntop((unsigned char *)buf, buflen, dst, sz);
 		free(buf);
@@ -735,17 +712,17 @@ lka_credentials(const char *tablename, const char *label, char *dst, size_t sz)
 static int
 lka_userinfo(const char *tablename, const char *username, struct userinfo *res)
 {
-	struct userinfo *info;
 	struct table	*table;
+	union lookup	 lk;
 
-	log_trace(TRACE_LOOKUP, "lookup: userinfo %s:%s", tablename, username);
-	table = table_findbyname(tablename);
+	log_debug("debug: lka: userinfo %s:%s", tablename, username);
+	table = table_find(tablename, NULL);
 	if (table == NULL) {
 		log_warnx("warn: cannot find user table %s", tablename);
 		return (LKA_TEMPFAIL);
 	}
 
-	switch (table_lookup(table, username, K_USERINFO, (void **)&info)) {
+	switch (table_lookup(table, username, K_USERINFO, &lk)) {
 	case -1:
 		log_warnx("warn: failure during userinfo lookup %s:%s",
 		    tablename, username);
@@ -753,8 +730,7 @@ lka_userinfo(const char *tablename, const char *username, struct userinfo *res)
 	case 0:
 		return (LKA_PERMFAIL);
 	default:
-		*res = *info;
-		free(info);
+		*res = lk.userinfo;
 		return (LKA_OK);
 	}
 }
@@ -763,20 +739,20 @@ static int
 lka_addrname(const char *tablename, const struct sockaddr *sa,
     struct addrname *res)
 {
-	struct addrname *addrname;
 	struct table	*table;
+	union lookup	 lk;
 	const char	*source;
 
 	source = sa_to_text(sa);
 
-	log_trace(TRACE_LOOKUP, "lookup: helo %s:%s", tablename, source);
-	table = table_findbyname(tablename);
+	log_debug("debug: lka: helo %s:%s", tablename, source);
+	table = table_find(tablename, NULL);
 	if (table == NULL) {
 		log_warnx("warn: cannot find helo table %s", tablename);
 		return (LKA_TEMPFAIL);
 	}
 
-	switch (table_lookup(table, source, K_ADDRNAME, (void **)&addrname)) {
+	switch (table_lookup(table, source, K_ADDRNAME, &lk)) {
 	case -1:
 		log_warnx("warn: failure during helo lookup %s:%s",
 		    tablename, source);
@@ -784,8 +760,7 @@ lka_addrname(const char *tablename, const struct sockaddr *sa,
 	case 0:
 		return (LKA_PERMFAIL);
 	default:
-		*res = *addrname;
-		free(addrname);
+		*res = lk.addrname;
 		return (LKA_OK);
 	}
 }      
@@ -829,7 +804,7 @@ lka_X509_verify(struct ca_vrfy_req_msg *vrfy,
 		}
 	}
 	if (! ca_X509_verify(x509, x509_chain, CAfile, NULL, &errstr))
-		log_trace(TRACE_LOOKUP, "lookup: X509 verify: %s", errstr);
+		log_debug("debug: lka: X509 verify: %s", errstr);
 	else
 		ret = 1;
 

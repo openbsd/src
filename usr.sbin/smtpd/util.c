@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.93 2013/04/12 18:22:49 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.94 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -20,7 +20,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
@@ -175,7 +174,7 @@ mkdirs_component(char *path, mode_t mode)
 int
 mkdirs(char *path, mode_t mode)
 {
-	char	 buf[MAXPATHLEN];
+	char	 buf[SMTPD_MAXPATHLEN];
 	int	 i = 0;
 	int	 done = 0;
 	char	*p;
@@ -184,7 +183,7 @@ mkdirs(char *path, mode_t mode)
 	if (*path != '/')
 		return 0;
 
-	/* make sure we don't exceed MAXPATHLEN */
+	/* make sure we don't exceed SMTPD_MAXPATHLEN */
 	if (strlen(path) >= sizeof buf)
 		return 0;
 
@@ -333,7 +332,7 @@ mvpurge(char *from, char *to)
 	size_t		 n;
 	int		 retry;
 	const char	*sep;
-	char		 buf[MAXPATHLEN];
+	char		 buf[SMTPD_MAXPATHLEN];
 
 	if ((n = strlen(to)) == 0)
 		fatalx("to is empty");
@@ -341,7 +340,7 @@ mvpurge(char *from, char *to)
 	sep = (to[n - 1] == '/') ? "" : "/";
 	retry = 0;
 
-    again:
+again:
 	snprintf(buf, sizeof buf, "%s%s%u", to, sep, arc4random());
 	if (rename(from, buf) == -1) {
 		/* ENOTDIR has actually 2 meanings, and incorrect input
@@ -363,12 +362,12 @@ mvpurge(char *from, char *to)
 int
 mktmpfile(void)
 {
-	char		path[MAXPATHLEN];
+	char		path[SMTPD_MAXPATHLEN];
 	int		fd;
 	mode_t		omode;
 
 	if (! bsnprintf(path, sizeof(path), "%s/smtpd.XXXXXXXXXX",
-	    PATH_TEMPORARY))
+		PATH_TEMPORARY))
 		err(1, "snprintf");
 
 	omode = umask(7077);
@@ -454,25 +453,32 @@ valid_domainpart(const char *s)
 {
 	struct in_addr	 ina;
 	struct in6_addr	 ina6;
-	char		*c, domain[MAX_DOMAINPART_SIZE];
+	char		*c, domain[SMTPD_MAXDOMAINPARTSIZE];
+	const char	*p;
 
 	if (*s == '[') {
-		strlcpy(domain, s + 1, sizeof domain);
+		if (strncasecmp("[IPv6:", s, 6) == 0)
+			p = s + 6;
+		else
+			p = s + 1;
+	
+		if (strlcpy(domain, p, sizeof domain) >= sizeof domain)
+			return 0;
 
 		c = strchr(domain, (int)']');
 		if (!c || c[1] != '\0')
 			return 0;
-
+		
 		*c = '\0';
-
+		
 		if (inet_pton(AF_INET6, domain, &ina6) == 1)
 			return 1;
 		if (inet_pton(AF_INET, domain, &ina) == 1)
 			return 1;
-
+		
 		return 0;
 	}
-
+	
 nextsub:
 	if (!isalnum((int)*s))
 		return 0;
@@ -492,15 +498,14 @@ nextsub:
 	return 1;
 }
 
-
 /*
  * Check file for security. Based on usr.bin/ssh/auth.c.
  */
 int
 secure_file(int fd, char *path, char *userdir, uid_t uid, int mayread)
 {
-	char		 buf[MAXPATHLEN];
-	char		 homedir[MAXPATHLEN];
+	char		 buf[PATH_MAX];
+	char		 homedir[PATH_MAX];
 	struct stat	 st;
 	char		*cp;
 

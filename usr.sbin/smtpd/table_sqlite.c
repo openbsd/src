@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_sqlite.c,v 1.2 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: table_sqlite.c,v 1.3 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <ctype.h>
@@ -36,11 +35,11 @@
 #include "log.h"
 
 /* sqlite(3) backend */
-static int table_sqlite_config(struct table *, const char *);
+static int table_sqlite_config(struct table *);
 static int table_sqlite_update(struct table *);
 static void *table_sqlite_open(struct table *);
 static int table_sqlite_lookup(void *, const char *, enum table_service,
-    void **);
+    union lookup *);
 static void  table_sqlite_close(void *);
 
 struct table_backend table_backend_sqlite = {
@@ -57,36 +56,35 @@ struct table_sqlite_handle {
 	struct table	*table;
 };
 
-static int table_sqlite_alias(struct table_sqlite_handle *, const char *, void **);
-static int table_sqlite_domain(struct table_sqlite_handle *, const char *, void **);
-static int table_sqlite_userinfo(struct table_sqlite_handle *, const char *, void **);
-static int table_sqlite_credentials(struct table_sqlite_handle *, const char *, void **);
-static int table_sqlite_netaddr(struct table_sqlite_handle *, const char *, void **);
+static int table_sqlite_alias(struct table_sqlite_handle *, const char *, union lookup *);
+static int table_sqlite_domain(struct table_sqlite_handle *, const char *, union lookup *);
+static int table_sqlite_userinfo(struct table_sqlite_handle *, const char *, union lookup *);
+static int table_sqlite_credentials(struct table_sqlite_handle *, const char *, union lookup *);
+static int table_sqlite_netaddr(struct table_sqlite_handle *, const char *, union lookup *);
 
 static int
-table_sqlite_config(struct table *table, const char *config)
+table_sqlite_config(struct table *table)
 {
-	void	*cfg;
+	struct table	*cfg;
 
 	/* no config ? broken */
-	if (config == NULL)
+	if (table->t_config[0] == '\0')
 		return 0;
 
-	cfg = table_config_create();
-	if (! table_config_parse(cfg, config, T_HASH))
+	cfg = table_create("static", table->t_name, "conf", table->t_config);
+	if (!table_config(cfg))
 		goto err;
 
 	/* sanity checks */
-	if (table_config_get(cfg, "dbpath") == NULL) {
+	if (table_get(cfg, "dbpath") == NULL) {
 		log_warnx("table_sqlite: missing 'dbpath' configuration");
 		return 0;
 	}
 
-	table_set_configuration(table, cfg);
 	return 1;
 
 err:
-	table_config_destroy(cfg);
+	table_destroy(cfg);
 	return 0;
 }
 
@@ -101,13 +99,13 @@ static void *
 table_sqlite_open(struct table *table)
 {
 	struct table_sqlite_handle	*tsh;
-	void		*cfg;
+	struct table	*cfg;
 	const char	*dbpath;
 
 	tsh = xcalloc(1, sizeof *tsh, "table_sqlite_open");
 	tsh->table = table;
 
-	cfg = table_get_configuration(table);
+	cfg = table_find(table->t_name, "conf");
 	dbpath = table_get(cfg, "dbpath");
 
 	if (sqlite3_open(dbpath, &tsh->ppDb) != SQLITE_OK) {
@@ -127,21 +125,21 @@ table_sqlite_close(void *hdl)
 
 static int
 table_sqlite_lookup(void *hdl, const char *key, enum table_service service,
-    void **retp)
+    union lookup *lk)
 {
 	struct table_sqlite_handle	*tsh = hdl;
 
 	switch (service) {
 	case K_ALIAS:
-		return table_sqlite_alias(tsh, key, retp);
+		return table_sqlite_alias(tsh, key, lk);
 	case K_DOMAIN:
-		return table_sqlite_domain(tsh, key, retp);
+		return table_sqlite_domain(tsh, key, lk);
 	case K_USERINFO:
-		return table_sqlite_userinfo(tsh, key, retp);
+		return table_sqlite_userinfo(tsh, key, lk);
 	case K_CREDENTIALS:
-		return table_sqlite_credentials(tsh, key, retp);
+		return table_sqlite_credentials(tsh, key, lk);
 	case K_NETADDR:
-		return table_sqlite_netaddr(tsh, key, retp);
+		return table_sqlite_netaddr(tsh, key, lk);
 	default:
 		log_warnx("table_sqlite: lookup: unsupported lookup service");
 		return -1;
@@ -151,13 +149,12 @@ table_sqlite_lookup(void *hdl, const char *key, enum table_service service,
 }
 
 static int
-table_sqlite_alias(struct table_sqlite_handle *tsh, const char *key, void **retp)
+table_sqlite_alias(struct table_sqlite_handle *tsh, const char *key, union lookup *lk)
 
 {
-	struct table	       *cfg = table_get_configuration(tsh->table);
+	struct table	       *cfg = table_find(tsh->table->t_name, "conf");
 	const char	       *query = table_get(cfg, "query_alias");
 	sqlite3_stmt	       *stmt;
-	struct expand	       *xp = NULL;
 	struct expandnode	xn;
 	int			nrows;
 	
@@ -177,43 +174,38 @@ table_sqlite_alias(struct table_sqlite_handle *tsh, const char *key, void **retp
 		return -1;
 	}
 
-	if (retp)
-		xp = xcalloc(1, sizeof *xp, "table_sqlite_alias");
+	if (lk)
+		lk->expand = xcalloc(1, sizeof(*lk->expand), "table_sqlite_alias");
 
 	nrows = 0;
 
 	sqlite3_bind_text(stmt, 1, key, strlen(key), NULL);
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
-		if (retp == NULL) {
+		if (lk == NULL) {
 			sqlite3_finalize(stmt);
 			return 1;
 		}
 		if (! text_to_expandnode(&xn, sqlite3_column_text(stmt, 0)))
 			goto error;
-		expand_insert(xp, &xn);
+		expand_insert(lk->expand, &xn);
 		nrows++;
 	}
 
 	sqlite3_finalize(stmt);
-	if (retp)
-		*retp = xp;
 	return nrows ? 1 : 0;
 
 error:
-	if (retp)
-		*retp = NULL;
-	if (xp)
-		expand_free(xp);
+	if (lk && lk->expand)
+		expand_free(lk->expand);
 	return -1;
 }
 
 static int
-table_sqlite_domain(struct table_sqlite_handle *tsh, const char *key, void **retp)
+table_sqlite_domain(struct table_sqlite_handle *tsh, const char *key, union lookup *lk)
 {
-	struct table	       *cfg = table_get_configuration(tsh->table);
+	struct table	       *cfg = table_find(tsh->table->t_name, "conf");
 	const char	       *query = table_get(cfg, "query_domain");
 	sqlite3_stmt	       *stmt;
-	struct destination     *domain = NULL;
 	
 	if (query == NULL) {
 		log_warnx("table_sqlite: lookup: no query configured for domain");
@@ -235,11 +227,8 @@ table_sqlite_domain(struct table_sqlite_handle *tsh, const char *key, void **ret
 
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_ROW:
-		if (retp) {
-			domain = xcalloc(1, sizeof *domain, "table_sqlite_domain");
-			strlcpy(domain->name, sqlite3_column_text(stmt, 0), sizeof domain->name);
-			*retp = domain;
-		}
+		if (lk)
+			strlcpy(lk->domain.name, sqlite3_column_text(stmt, 0), sizeof(lk->domain.name));
 		sqlite3_finalize(stmt);
 		return 1;
 
@@ -251,19 +240,15 @@ table_sqlite_domain(struct table_sqlite_handle *tsh, const char *key, void **ret
 		sqlite3_finalize(stmt);
 	}
 
-	free(domain);
-	if (retp)
-		*retp = NULL;
 	return -1;
 }
 
 static int
-table_sqlite_userinfo(struct table_sqlite_handle *tsh, const char *key, void **retp)
+table_sqlite_userinfo(struct table_sqlite_handle *tsh, const char *key, union lookup *lk)
 {
-	struct table	       *cfg = table_get_configuration(tsh->table);
+	struct table	       *cfg = table_find(tsh->table->t_name, "conf");
 	const char	       *query = table_get(cfg, "query_userinfo");
 	sqlite3_stmt	       *stmt;
-	struct userinfo	       *userinfo = NULL;
 	size_t			s;
 	
 	if (query == NULL) {
@@ -286,19 +271,17 @@ table_sqlite_userinfo(struct table_sqlite_handle *tsh, const char *key, void **r
 
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_ROW:
-		if (retp) {
-			userinfo = xcalloc(1, sizeof *userinfo, "table_sqlite_userinfo");
-			s = strlcpy(userinfo->username, sqlite3_column_text(stmt, 0),
-			    sizeof(userinfo->username));
-			if (s >= sizeof(userinfo->username))
+		if (lk) {
+			s = strlcpy(lk->userinfo.username, sqlite3_column_text(stmt, 0),
+			    sizeof(lk->userinfo.username));
+			if (s >= sizeof(lk->userinfo.username))
 				goto error;
-			userinfo->uid = sqlite3_column_int(stmt, 1);
-			userinfo->gid = sqlite3_column_int(stmt, 2);
-			s = strlcpy(userinfo->directory, sqlite3_column_text(stmt, 3),
-			    sizeof(userinfo->directory));
-			if (s >= sizeof(userinfo->directory))
+			lk->userinfo.uid = sqlite3_column_int(stmt, 1);
+			lk->userinfo.gid = sqlite3_column_int(stmt, 2);
+			s = strlcpy(lk->userinfo.directory, sqlite3_column_text(stmt, 3),
+			    sizeof(lk->userinfo.directory));
+			if (s >= sizeof(lk->userinfo.directory))
 				goto error;
-			*retp = userinfo;
 		}
 		sqlite3_finalize(stmt);
 		return 1;
@@ -313,19 +296,15 @@ table_sqlite_userinfo(struct table_sqlite_handle *tsh, const char *key, void **r
 
 error:
 	sqlite3_finalize(stmt);
-	free(userinfo);
-	if (retp)
-		*retp = NULL;
 	return -1;
 }
 
 static int
-table_sqlite_credentials(struct table_sqlite_handle *tsh, const char *key, void **retp)
+table_sqlite_credentials(struct table_sqlite_handle *tsh, const char *key, union lookup *lk)
 {
-	struct table	       *cfg = table_get_configuration(tsh->table);
+	struct table	       *cfg = table_find(tsh->table->t_name, "conf");
 	const char	       *query = table_get(cfg, "query_credentials");
 	sqlite3_stmt	       *stmt;
-	struct credentials     *creds = NULL;
 	size_t			s;
 	
 	if (query == NULL) {
@@ -347,17 +326,15 @@ table_sqlite_credentials(struct table_sqlite_handle *tsh, const char *key, void 
 	sqlite3_bind_text(stmt, 1, key, strlen(key), NULL);
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_ROW:
-		if (retp) {
-			creds = xcalloc(1, sizeof *creds, "table_sqlite_credentials");
-			s = strlcpy(creds->username, sqlite3_column_text(stmt, 0),
-			    sizeof(creds->username));
-			if (s >= sizeof(creds->username))
+		if (lk) {
+			s = strlcpy(lk->creds.username, sqlite3_column_text(stmt, 0),
+			    sizeof(lk->creds.username));
+			if (s >= sizeof(lk->creds.username))
 				goto error;
-			s = strlcpy(creds->password, sqlite3_column_text(stmt, 1),
-			    sizeof(creds->password));
-			if (s >= sizeof(creds->password))
+			s = strlcpy(lk->creds.password, sqlite3_column_text(stmt, 1),
+			    sizeof(lk->creds.password));
+			if (s >= sizeof(lk->creds.password))
 				goto error;
-			*retp = creds;
 		}
 		sqlite3_finalize(stmt);
 		return 1;
@@ -372,20 +349,16 @@ table_sqlite_credentials(struct table_sqlite_handle *tsh, const char *key, void 
 
 error:
 	sqlite3_finalize(stmt);
-	free(creds);
-	if (retp)
-		*retp = NULL;
 	return -1;
 }
 
 
 static int
-table_sqlite_netaddr(struct table_sqlite_handle *tsh, const char *key, void **retp)
+table_sqlite_netaddr(struct table_sqlite_handle *tsh, const char *key, union lookup *lk)
 {
-	struct table	       *cfg = table_get_configuration(tsh->table);
+	struct table	       *cfg = table_find(tsh->table->t_name, "conf");
 	const char	       *query = table_get(cfg, "query_netaddr");
 	sqlite3_stmt	       *stmt;
-	struct netaddr	       *netaddr = NULL;
 	
 	if (query == NULL) {
 		log_warnx("table_sqlite: lookup: no query configured for netaddr");
@@ -406,11 +379,9 @@ table_sqlite_netaddr(struct table_sqlite_handle *tsh, const char *key, void **re
 	sqlite3_bind_text(stmt, 1, key, strlen(key), NULL);
 	switch (sqlite3_step(stmt)) {
 	case SQLITE_ROW:
-		if (retp) {
-			netaddr = xcalloc(1, sizeof *netaddr, "table_sqlite_netaddr");
-			if (! text_to_netaddr(netaddr, sqlite3_column_text(stmt, 0)))
+		if (lk) {
+			if (! text_to_netaddr(&lk->netaddr, sqlite3_column_text(stmt, 0)))
 				goto error;
-			*retp = netaddr;
 		}
 		sqlite3_finalize(stmt);
 		return 1;
@@ -425,8 +396,5 @@ table_sqlite_netaddr(struct table_sqlite_handle *tsh, const char *key, void **re
 
 error:
 	sqlite3_finalize(stmt);
-	free(netaddr);
-	if (retp)
-		*retp = NULL;
 	return -1;
 }

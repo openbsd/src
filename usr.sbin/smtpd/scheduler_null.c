@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_null.c,v 1.1 2013/01/26 09:37:23 gilles Exp $	*/
+/*	$OpenBSD: scheduler_null.c,v 1.2 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <ctype.h>
@@ -31,17 +30,17 @@
 
 #include "smtpd.h"
 
-static void scheduler_null_init(void);
-static void scheduler_null_insert(struct scheduler_info *);
+static int scheduler_null_init(void);
+static int scheduler_null_insert(struct scheduler_info *);
 static size_t scheduler_null_commit(uint32_t);
 static size_t scheduler_null_rollback(uint32_t);
-static void scheduler_null_update(struct scheduler_info *);
-static void scheduler_null_delete(uint64_t);
-static void scheduler_null_batch(int, struct scheduler_batch *);
+static int scheduler_null_update(struct scheduler_info *);
+static int scheduler_null_delete(uint64_t);
+static int scheduler_null_batch(int, struct scheduler_batch *);
 static size_t scheduler_null_messages(uint32_t, uint32_t *, size_t);
 static size_t scheduler_null_envelopes(uint64_t, struct evpstate *, size_t);
-static void scheduler_null_schedule(uint64_t);
-static void scheduler_null_remove(uint64_t);
+static int scheduler_null_schedule(uint64_t);
+static int scheduler_null_remove(uint64_t);
 
 struct scheduler_backend scheduler_backend_null = {
 	scheduler_null_init,
@@ -61,14 +60,16 @@ struct scheduler_backend scheduler_backend_null = {
 	scheduler_null_remove,
 };
 
-static void
+static int
 scheduler_null_init(void)
 {
+	return (1);
 }
 
-static void
+static int
 scheduler_null_insert(struct scheduler_info *si)
 {
+	return (0);
 }
 
 static size_t
@@ -83,30 +84,37 @@ scheduler_null_rollback(uint32_t msgid)
 	return (0);
 }
 
-static void
+static int
 scheduler_null_update(struct scheduler_info *si)
 {
+	return (0);
 }
 
-static void
+static int
 scheduler_null_delete(uint64_t evpid)
 {
+	return (0);
 }
 
-static void
+static int
 scheduler_null_batch(int typemask, struct scheduler_batch *ret)
 {
 	ret->type = SCHED_NONE;
+	ret->evpcount = 0;
+
+	return (0);
 }
 
-static void
+static int
 scheduler_null_schedule(uint64_t evpid)
 {
+	return (0);
 }
 
-static void
+static int
 scheduler_null_remove(uint64_t evpid)
 {
+	return (0);
 }
 
 static size_t

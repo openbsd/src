@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.2 2013/01/31 18:34:43 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.3 2013/05/24 17:03:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -42,9 +42,6 @@ static void mproc_event_add(struct mproc *);
 static void mproc_dispatch(int, short, void *);
 
 static ssize_t msgbuf_write2(struct msgbuf *);
-
-static uint32_t	reqtype;
-static size_t	reqlen;
 
 int
 mproc_fork(struct mproc *p, const char *path, const char *arg)
@@ -100,7 +97,8 @@ void
 mproc_enable(struct mproc *p)
 {
 	if (p->enable == 0) {
-		log_debug("debug: enabling %s -> %s", proc_name(smtpd_process),
+		log_trace(TRACE_MPROC, "mproc: %s -> %s: enabled",
+		    proc_name(smtpd_process),
 		    proc_name(p->proc));
 		p->enable = 1;
 	}
@@ -111,7 +109,8 @@ void
 mproc_disable(struct mproc *p)
 {
 	if (p->enable == 1) {
-		log_debug("debug: disabling %s -> %s", proc_name(smtpd_process),
+		log_trace(TRACE_MPROC, "mproc: %s -> %s: disabled",
+		    proc_name(smtpd_process),
 		    proc_name(p->proc));
 		p->enable = 0;
 	}
@@ -152,10 +151,17 @@ mproc_dispatch(int fd, short event, void *arg)
 
 	if (event & EV_READ) {
 
-		if ((n = imsg_read(&p->imsgbuf)) == -1)
-			fatal("imsg_read");
+		if ((n = imsg_read(&p->imsgbuf)) == -1) {
+			log_warn("warn: %s -> %s: imsg_read",
+			    proc_name(smtpd_process),  p->name);
+			fatal("exiting");
+		}
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
+			if (smtpd_process != PROC_CONTROL ||
+			    p->proc != PROC_CLIENT)
+				log_warnx("warn: %s -> %s: pipe closed",
+				    proc_name(smtpd_process),  p->name);
 			p->handler(p, NULL);
 			return;
 		}
@@ -268,6 +274,12 @@ m_forward(struct mproc *p, struct imsg *imsg)
 	    imsg->hdr.pid, imsg->fd, imsg->data,
 	    imsg->hdr.len - sizeof(imsg->hdr));
 
+	log_trace(TRACE_MPROC, "mproc: %s -> %s : %zu %s (forward)",
+		    proc_name(smtpd_process),
+		    proc_name(p->proc),
+		    imsg->hdr.len - sizeof(imsg->hdr),
+		    imsg_to_str(imsg->hdr.type));
+
 	p->msg_out += 1;
 	p->bytes_queued += imsg->hdr.len;
 	if (p->bytes_queued > p->bytes_queued_max)
@@ -282,6 +294,12 @@ m_compose(struct mproc *p, uint32_t type, uint32_t peerid, pid_t pid, int fd,
 {
 	imsg_compose(&p->imsgbuf, type, peerid, pid, fd, data, len);
 
+	log_trace(TRACE_MPROC, "mproc: %s -> %s : %zu %s",
+		    proc_name(smtpd_process),
+		    proc_name(p->proc),
+		    len,
+		    imsg_to_str(type));
+
 	p->msg_out += 1;
 	p->bytes_queued += len + IMSG_HEADER_SIZE;
 	if (p->bytes_queued > p->bytes_queued_max)
@@ -294,73 +312,99 @@ void
 m_composev(struct mproc *p, uint32_t type, uint32_t peerid, pid_t pid,
     int fd, const struct iovec *iov, int n)
 {
+	size_t	len;
 	int	i;
 
 	imsg_composev(&p->imsgbuf, type, peerid, pid, fd, iov, n);
 
-	p->msg_out += 1;
-	p->bytes_queued += IMSG_HEADER_SIZE;
+	len = 0;
 	for (i = 0; i < n; i++)
-		p->bytes_queued += iov[i].iov_len;
+		len += iov[i].iov_len;
+
+	p->msg_out += 1;
+	p->bytes_queued += IMSG_HEADER_SIZE + len;
 	if (p->bytes_queued > p->bytes_queued_max)
 		p->bytes_queued_max = p->bytes_queued;
+
+	log_trace(TRACE_MPROC, "mproc: %s -> %s : %zu %s",
+		    proc_name(smtpd_process),
+		    proc_name(p->proc),
+		    len,
+		    imsg_to_str(type));
 
 	mproc_event_add(p);
 }
 
 void
-m_create(struct mproc *p, uint32_t type, uint32_t peerid, pid_t pid, int fd,
-    size_t len)
+m_create(struct mproc *p, uint32_t type, uint32_t peerid, pid_t pid, int fd)
 {
-	if (p->ibuf)
-		fatal("ibuf already rhere");
+	if (p->m_buf == NULL) {
+		p->m_alloc = 128;
+		log_trace(TRACE_MPROC, "mproc: %s -> %s: allocating %zu", 
+		    proc_name(smtpd_process),
+		    proc_name(p->proc),
+		    p->m_alloc);
+		p->m_buf = malloc(p->m_alloc);
+		if (p->m_buf == NULL)
+			fatal("warn: m_create: malloc");
+	}
 
-	reqtype = type;
-	reqlen = len;
-
-	p->ibuf = imsg_create(&p->imsgbuf, type, peerid, pid, len);
-	if (p->ibuf == NULL)
-		fatal("imsg_create");
-
-	/* Is this a problem with imsg? */
-	p->ibuf->fd = fd;
+	p->m_pos = 0;
+	p->m_type = type;
+	p->m_peerid = peerid;
+	p->m_pid = pid;
+	p->m_fd = fd;
 }
 
 void
 m_add(struct mproc *p, const void *data, size_t len)
 {
-	if (p->ibuferror)
-		return;
+	size_t	 alloc;
+	void	*tmp;
 
-	if (ibuf_add(p->ibuf, data, len) == -1)
-		p->ibuferror = 1;
+	if (p->m_pos + len + IMSG_HEADER_SIZE > MAX_IMSGSIZE) {
+		log_warnx("warn: message to large");
+		fatal(NULL);
+	}
+
+	alloc = p->m_alloc;
+	while (p->m_pos + len > alloc)
+		alloc *= 2;
+	if (alloc != p->m_alloc) {
+		log_trace(TRACE_MPROC, "mproc: %s -> %s: realloc %zu -> %zu",
+		    proc_name(smtpd_process),
+		    proc_name(p->proc),
+		    p->m_alloc,
+		    alloc);
+
+		tmp = realloc(p->m_buf, alloc);
+		if (tmp == NULL)
+			fatal("realloc");
+		p->m_alloc = alloc;
+		p->m_buf = tmp;
+	}
+
+	memmove(p->m_buf + p->m_pos, data, len);
+	p->m_pos += len;
 }
 
 void
 m_close(struct mproc *p)
 {
-	imsg_close(&p->imsgbuf, p->ibuf);
+	if (imsg_compose(&p->imsgbuf, p->m_type, p->m_peerid, p->m_pid, p->m_fd,
+	    p->m_buf, p->m_pos) == -1)
+		fatal("imsg_compose");
 
-	if (verbose & TRACE_IMSGSIZE &&
-	    reqlen != p->ibuf->wpos - IMSG_HEADER_SIZE)
-		log_debug("msg-len: too %s %zu -> %zu : %s -> %s : %s",
-		    (reqlen < p->ibuf->wpos - IMSG_HEADER_SIZE) ? "small" : "large",
-		    reqlen, p->ibuf->wpos - IMSG_HEADER_SIZE,
+	log_trace(TRACE_MPROC, "mproc: %s -> %s : %zu %s",
 		    proc_name(smtpd_process),
 		    proc_name(p->proc),
-		    imsg_to_str(reqtype));
-	else if (verbose & TRACE_IMSGSIZE)
-		log_debug("msg-len: ok %zu : %s -> %s : %s",
-		    p->ibuf->wpos - IMSG_HEADER_SIZE,
-		    proc_name(smtpd_process),
-		    proc_name(p->proc),
-		    imsg_to_str(reqtype));
+		    p->m_pos,
+		    imsg_to_str(p->m_type));
 
 	p->msg_out += 1;
-	p->bytes_queued += p->ibuf->wpos;
+	p->bytes_queued += p->m_pos + IMSG_HEADER_SIZE;
 	if (p->bytes_queued > p->bytes_queued_max)
 		p->bytes_queued_max = p->bytes_queued;
-	p->ibuf = NULL;
 
 	mproc_event_add(p);
 }
@@ -438,24 +482,16 @@ m_get_typed_sized(struct msg *m, uint8_t type, const void **dst, size_t *sz)
 static void
 m_add_typed(struct mproc *p, uint8_t type, const void *data, size_t len)
 {
-	if (p->ibuferror)
-		return;
-
-	if (ibuf_add(p->ibuf, &type, 1) == -1 ||
-	    ibuf_add(p->ibuf, data, len) == -1)
-		p->ibuferror = 1;
+	m_add(p, &type, 1);
+	m_add(p, data, len);
 }
 
 static void
 m_add_typed_sized(struct mproc *p, uint8_t type, const void *data, size_t len)
 {
-	if (p->ibuferror)
-		return;
-
-	if (ibuf_add(p->ibuf, &type, 1) == -1 ||
-	    ibuf_add(p->ibuf, &len, sizeof(len)) == -1 ||
-	    ibuf_add(p->ibuf, data, len) == -1)
-		p->ibuferror = 1;
+	m_add(p, &type, 1);
+	m_add(p, &len, sizeof(len));
+	m_add(p, data, len);
 }
 
 enum {
@@ -532,6 +568,7 @@ m_add_mailaddr(struct mproc *m, const struct mailaddr *maddr)
 	m_add_typed(m, M_MAILADDR, maddr, sizeof(*maddr));
 }
 
+#ifndef BUILD_FILTER
 void
 m_add_envelope(struct mproc *m, const struct envelope *evp)
 {
@@ -545,6 +582,7 @@ m_add_envelope(struct mproc *m, const struct envelope *evp)
 	m_add_typed_sized(m, M_ENVELOPE, buf, strlen(buf) + 1);
 #endif
 }
+#endif
 
 void
 m_get_int(struct msg *m, int *i)
@@ -622,6 +660,7 @@ m_get_mailaddr(struct msg *m, struct mailaddr *maddr)
 	m_get_typed(m, M_MAILADDR, maddr, sizeof(*maddr));
 }
 
+#ifndef BUILD_FILTER
 void
 m_get_envelope(struct msg *m, struct envelope *evp)
 {
@@ -636,7 +675,8 @@ m_get_envelope(struct msg *m, struct envelope *evp)
 	m_get_typed_sized(m, M_ENVELOPE, &d, &s);
 
 	if (!envelope_load_buffer(evp, d, s - 1))
-		fatalx("failed to load envelope");
+		fatalx("failed to retreive envelope");
 	evp->id = evpid;
 #endif
 }
+#endif
