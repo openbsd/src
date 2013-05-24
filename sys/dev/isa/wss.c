@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.25 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: wss.c,v 1.26 2013/05/24 07:58:46 ratchov Exp $	*/
 /*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
 
 /*
@@ -126,7 +126,8 @@ wssattach(sc)
     
     madattach(sc);
 
-    sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->wss_irq, IST_EDGE, IPL_AUDIO,
+    sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->wss_irq,
+	IST_EDGE, IPL_AUDIO | IPL_MPSAFE,
         ad1848_intr, &sc->sc_ad1848, sc->sc_dev.dv_xname);
 
     ad1848_attach(&sc->sc_ad1848);

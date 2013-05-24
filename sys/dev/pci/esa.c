@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.26 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: esa.c,v 1.27 2013/05/24 07:58:46 ratchov Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1066,8 +1066,8 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, self,
-            sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    esa_intr, self, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt");
 		if (intrstr != NULL)

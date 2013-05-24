@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.50 2013/05/15 08:29:24 ratchov Exp $ */
+/*	$OpenBSD: auvia.c,v 1.51 2013/05/24 07:58:46 ratchov Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -298,8 +298,8 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, ih);
 
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auvia_intr, sc,
-	    sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    auvia_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)

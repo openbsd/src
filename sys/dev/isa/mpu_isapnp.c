@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isapnp.c,v 1.6 2002/11/28 23:24:53 mickey Exp $	*/
+/*	$OpenBSD: mpu_isapnp.c,v 1.7 2013/05/24 07:58:46 ratchov Exp $	*/
 
 #include "midi.h"
 
@@ -62,8 +62,8 @@ mpu_isapnp_attach(parent, self, aux)
 	sc->sc_mpu.ioh = ipa->ipa_io[0].h;
 
 	sc->sc_ih = isa_intr_establish(ipa->ia_ic, ipa->ipa_irq[0].num,
-	    ipa->ipa_irq[0].type, IPL_AUDIO, mpu_intr, &sc->sc_mpu,
-	    sc->sc_dev.dv_xname);
+	    ipa->ipa_irq[0].type, IPL_AUDIO | IPL_MPSAFE,
+	    mpu_intr, &sc->sc_mpu, sc->sc_dev.dv_xname);
 
 	if (!mpu_find(&sc->sc_mpu)) {
 		printf("%s: find failed\n", sc->sc_dev.dv_xname);

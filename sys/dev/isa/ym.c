@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.17 2010/07/31 11:25:38 ratchov Exp $ */
+/* $OpenBSD: ym.c,v 1.18 2013/05/24 07:58:46 ratchov Exp $ */
 
 
 /*
@@ -362,8 +362,9 @@ ym_attach(sc)
 	struct midi_hw_if *mhw = &ym_mpu401_hw_if;
 #endif
 
-	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->ym_irq, IST_EDGE,
-	    IPL_AUDIO, ym_intr, &sc->sc_ad1848, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->ym_irq,
+	    IST_EDGE, IPL_AUDIO | IPL_MPSAFE,
+	    ym_intr, &sc->sc_ad1848, sc->sc_dev.dv_xname);
 
 	ad1848_attach(&sc->sc_ad1848);
 	printf("\n");

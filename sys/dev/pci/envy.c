@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.55 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.56 2013/05/24 07:58:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1677,7 +1677,7 @@ envyattach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map interrupt\n");
 	}
 	intrstr = pci_intr_string(sc->pci_pc, ih);
-	sc->pci_ih = pci_intr_establish(sc->pci_pc, ih, IPL_AUDIO,
+	sc->pci_ih = pci_intr_establish(sc->pci_pc, ih, IPL_AUDIO | IPL_MPSAFE,
 	    envy_intr, sc, sc->dev.dv_xname);
 	if (sc->pci_ih == NULL) {
 		printf(": can't establish interrupt");

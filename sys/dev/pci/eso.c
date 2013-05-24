@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.36 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: eso.c,v 1.37 2013/05/24 07:58:46 ratchov Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -259,8 +259,8 @@ eso_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstring = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc,
-					sc->sc_dev.dv_xname);
+	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    eso_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(", couldn't establish interrupt");
 		if (intrstring != NULL)

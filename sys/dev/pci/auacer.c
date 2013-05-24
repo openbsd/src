@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.13 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.14 2013/05/24 07:58:46 ratchov Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -257,7 +257,7 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO | IPL_MPSAFE,
 	    auacer_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf("%s: can't establish interrupt",

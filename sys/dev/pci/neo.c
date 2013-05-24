@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.27 2013/05/15 08:29:24 ratchov Exp $       */
+/*      $OpenBSD: neo.c,v 1.28 2013/05/24 07:58:46 ratchov Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -591,8 +591,8 @@ neo_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, neo_intr, sc,
-				       sc->dev.dv_xname);
+	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    neo_intr, sc, sc->dev.dv_xname);
 
 	if (sc->ih == NULL) {
 		printf("\n%s: couldn't establish interrupt",

@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.9 2013/05/15 08:29:24 ratchov Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.10 2013/05/24 07:58:46 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -323,8 +323,8 @@ auglx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, auglx_intr,
-				       sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    auglx_intr, sc, sc->sc_dev.dv_xname);
 	if (!sc->sc_ih) {
 		printf(": can't establish interrupt");
 		if (intrstr)

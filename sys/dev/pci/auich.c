@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.97 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: auich.c,v 1.98 2013/05/24 07:58:46 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -446,8 +446,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, auich_intr,
-				       sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    auich_intr, sc, sc->sc_dev.dv_xname);
 	if (!sc->sc_ih) {
 		printf(": can't establish interrupt");
 		if (intrstr)

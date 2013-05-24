@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.36 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: gus.c,v 1.37 2013/05/24 07:58:46 ratchov Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -3595,8 +3595,9 @@ gus_subattach(sc, ia)
 	/* XXX we shouldn't have to use splgus == splclock, nor should
 	 * we use IPL_CLOCK.
 	 */
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_AUDIO, gusintr, sc /* sc->sc_gusdsp */, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+	    IST_EDGE, IPL_AUDIO | IPL_MPSAFE,
+	    gusintr, sc /* sc->sc_gusdsp */, sc->sc_dev.dv_xname);
 
 	/*
 	 * Set some default values

@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.41 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.42 2013/05/24 07:58:46 ratchov Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -454,8 +454,8 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, emuxki_intr,
-		sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    emuxki_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt");
 		if (intrstr != NULL)

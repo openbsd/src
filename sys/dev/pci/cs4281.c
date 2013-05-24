@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.28 2013/05/15 08:29:24 ratchov Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.29 2013/05/24 07:58:46 ratchov Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -326,8 +326,8 @@ cs4281_attach(parent, self, aux)
 	}
 	intrstr = pci_intr_string(pc, ih);
 
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, cs4281_intr, sc,
-	    sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    cs4281_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
 		if (intrstr != NULL)

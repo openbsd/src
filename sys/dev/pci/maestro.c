@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.34 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.35 2013/05/24 07:58:46 ratchov Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -645,8 +645,8 @@ maestro_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, maestro_intr, sc,
-	    sc->dev.dv_xname);
+	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO | IPL_MPSAFE,
+	    maestro_intr, sc, sc->dev.dv_xname);
 	if (sc->ih == NULL) {
 		printf(": can't establish interrupt");
 		if (intrstr != NULL)

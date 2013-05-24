@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.17 2013/05/15 08:29:24 ratchov Exp $	*/
+/*	$OpenBSD: ess.c,v 1.18 2013/05/24 07:58:46 ratchov Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -904,7 +904,8 @@ essattach(sc)
 	sc->sc_audio1.polled = sc->sc_audio1.irq == -1;
 	if (!sc->sc_audio1.polled) {
 		sc->sc_audio1.ih = isa_intr_establish(sc->sc_ic,
-		    sc->sc_audio1.irq, sc->sc_audio1.ist, IPL_AUDIO,
+		    sc->sc_audio1.irq, sc->sc_audio1.ist,
+		    IPL_AUDIO | IPL_MPSAFE,
 		    ess_audio1_intr, sc, sc->sc_dev.dv_xname);
 		printf("%s: audio1 interrupting at irq %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_audio1.irq);
@@ -921,7 +922,8 @@ essattach(sc)
 		sc->sc_audio2.polled = sc->sc_audio2.irq == -1;
 		if (!sc->sc_audio2.polled) {
 			sc->sc_audio2.ih = isa_intr_establish(sc->sc_ic,
-			    sc->sc_audio2.irq, sc->sc_audio2.ist, IPL_AUDIO,
+			    sc->sc_audio2.irq, sc->sc_audio2.ist,
+			    IPL_AUDIO | IPL_MPSAFE,
 			    ess_audio2_intr, sc, sc->sc_dev.dv_xname);
 			printf("%s: audio2 interrupting at irq %d\n",
 			    sc->sc_dev.dv_xname, sc->sc_audio2.irq);
