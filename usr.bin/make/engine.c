@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.43 2013/05/22 12:14:08 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.44 2013/05/25 11:54:14 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -286,8 +286,9 @@ Job_Touch(GNode *gn)
 void
 Make_TimeStamp(GNode *parent, GNode *child)
 {
-	if (is_strictly_before(parent->youngest->mtime, child->mtime)) {
-		parent->youngest = child;
+	if (is_strictly_before(parent->cmtime, child->mtime)) {
+ 		parent->youngest = child;
+		parent->cmtime = child->mtime;
 	}
 }
 
@@ -490,8 +491,8 @@ Make_OODate(GNode *gn)
 				printf(".EXEC node...");
 		}
 		oodate = true;
-	} else if (is_strictly_before(gn->mtime, gn->youngest->mtime) ||
-	   (is_out_of_date(gn->youngest->mtime) &&
+	} else if (is_strictly_before(gn->mtime, gn->cmtime) ||
+	   (is_out_of_date(gn->cmtime) &&
 	    (is_out_of_date(gn->mtime) || (gn->type & OP_DOUBLEDEP)))) {
 		/*
 		 * A node whose modification time is less than that of its
@@ -500,7 +501,7 @@ Make_OODate(GNode *gn)
 		 * or was the object of a :: operator is out-of-date.
 		 */
 		if (DEBUG(MAKE)) {
-			if (is_strictly_before(gn->mtime, gn->youngest->mtime))
+			if (is_strictly_before(gn->mtime, gn->cmtime))
 				printf("modified before source(%s)...",
 				    gn->youngest->name);
 			else if (is_out_of_date(gn->mtime))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.80 2013/05/22 12:14:08 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.81 2013/05/25 11:54:14 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -217,15 +217,15 @@ CompatMake(void *gnp,	/* The node to make */
 			 */
 			if (noExecute || is_out_of_date(Dir_MTime(gn)))
 				clock_gettime(CLOCK_REALTIME, &gn->mtime);
-			if (is_strictly_before(gn->mtime, gn->youngest->mtime))
-				gn->mtime = gn->youngest->mtime;
+			if (is_strictly_before(gn->mtime, gn->cmtime))
+				gn->mtime = gn->cmtime;
 			if (sib != gn) {
 				if (noExecute || is_out_of_date(Dir_MTime(sib)))
 					clock_gettime(CLOCK_REALTIME, 
 					    &sib->mtime);
 				if (is_strictly_before(sib->mtime, 
-				    sib->youngest->mtime))
-					sib->mtime = sib->youngest->mtime;
+				    sib->cmtime))
+					sib->mtime = sib->cmtime;
 			}
 			if (DEBUG(MAKE))
 				printf("update time: %s\n",
