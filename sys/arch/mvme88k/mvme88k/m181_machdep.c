@@ -1,4 +1,4 @@
-/*	$OpenBSD: m181_machdep.c,v 1.1 2013/05/17 22:51:59 miod Exp $	*/
+/*	$OpenBSD: m181_machdep.c,v 1.2 2013/05/25 15:09:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -17,7 +17,7 @@
  */
 
 /*
- * MVME181 support routines
+ * MVME180 ``AngelFire'' and MVME181 ``AngelFire-2'' support routines.
  */
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@
 #include <machine/mvme181.h>
 
 #include <mvme88k/mvme88k/clockvar.h>
+#include <mvme88k/dev/dartreg.h>
 
 const struct pmap_table m181_pmap_table[] = {
 	{ M181_SSR,		PAGE_SIZE,	UVM_PROT_RW, CACHE_INH },
@@ -124,26 +125,72 @@ m181_bootstrap()
 
 /*
  * Figure out how much memory is available.
- * We currently don't attempt to support external VME memory.
+ *
+ * AngelFire boards always have 8MB onboard; MVME224 and/or MVME236 boards
+ * may be used. SVR3/m88k officially only supports up to two MVME224 boards
+ * and up to four MVME236 boards, which would allow for up to 2x8 + 4x16MB
+ * extra memory.
+ *
+ * However, Motorola eventually produced 16MB and 32MB MVME224A boards, and
+ * the MVME224 documentation says up top five MVME224 boards may be present
+ * in the same chassis, when using them in VSB configuration (which hints
+ * that more than five may be possible, in VME configuration).
+ *
+ * The real limiting factor, is the location of the CSR register in VME
+ * A16 (short I/O) space. MVME224 boards use a fixed assignment, depending
+ * upon their base address in VME address space; while MVME236 gives full
+ * control of the 14 higher bits.
+ *
+ * Add to this, that the on-board memory may be configured to answer to a
+ * different base address than zero, and you have a nightmare, with no
+ * chance to be able to figure out which memory boards are available by
+ * looking for their CSR registers.
+ *
+ * Better fall back to the good old `try and find memory until we fault or
+ * whatever we hit does not have memory properties' logic. If one ever sets
+ * up a noncontiguous memory layout, only the lower part will be found.
  */
 vaddr_t
 m181_memsize()
 {
-	return 8 * 1024 * 1024;
-}
+#define	M181_ONBOARD_SIZE	(8 * 1024 * 1024)
+#define	M181_MEMORY_LIMIT	(128 * 1024 * 1024) /* got more? call me */
+#define	M181_SAFE_STRIDE	(64 * 1024) /* conservative... 1MB could work */
+#define	M181_MEMORY_PATTERN	0x55aac33c
+	paddr_t pa;
+	uint32_t r1, r2;
 
-/*
- * Return the processor speed in MHz.
- */
-int
-m181_cpuspeed(const struct mvmeprom_brdid *brdid)
-{
-	/* XXX need to tell 20 and 25MHz systems apart */
-	return 20;
+	for (pa = M181_ONBOARD_SIZE; pa <= M181_MEMORY_LIMIT;
+	    pa += M181_SAFE_STRIDE) {
+		/* memory ought to be accessible at any size */
+		if (badaddr(pa, 8) != 0 || badaddr(pa, 4) != 0 ||
+		    badaddr(pa, 2) != 0 || badaddr(pa, 1) != 0)
+			break;
+
+		/* what gets written to memory ought to be read back */
+		r1 = *(volatile uint32_t *)pa;
+		*(volatile uint32_t *)pa = M181_MEMORY_PATTERN;
+		r2 = *(volatile uint32_t *)pa;
+		if (r2 != M181_MEMORY_PATTERN)
+			break;
+
+		/* and all bits should be writeable as either 1 or 0 */
+		*(volatile uint32_t *)pa = ~M181_MEMORY_PATTERN;
+		r2 = *(volatile uint32_t *)pa;
+		if (r2 != ~M181_MEMORY_PATTERN)
+			break;
+
+		*(volatile uint32_t *)pa = r1;
+		r2 = *(volatile uint32_t *)pa;
+		if (r2 != r1)
+			break;
+	}
+	return pa;
 }
 
 /*
  * Reboot the system.
+ * AngelFire boards can't reboot themselves (even the BUG won't).
  */
 void
 m181_reboot(int howto)
@@ -333,7 +380,7 @@ m181_intr(struct trapframe *eframe)
 		}
 
 		/*
-		 * Read updated pending interrupt mask
+		 * Read updated pending interrupt mask.
 		 */
 		cur_mask = *(volatile u_int32_t *)M181_SSR & m181_int_mask;
 		if ((cur_mask & ~ign_mask) == 0)
@@ -355,8 +402,8 @@ m181_intr(struct trapframe *eframe)
 
 out:
 	/*
-	 * process any remaining data access exceptions before
-	 * returning to assembler
+	 * Process any remaining data access exceptions before
+	 * returning to assembler.
 	 */
 	if (eframe->tf_dmt0 & DMT_VALID)
 		m88100_trap(T_DATAFLT, eframe);
@@ -573,6 +620,15 @@ m181_intsrc_disestablish(u_int intsrc, struct intrhand *ih)
  * Clock routines
  */
 
+/*
+ * Notes on the MVME181 clock usage:
+ *
+ * We have only one timer source, the two counter/timers in the DUART
+ * (MC68681/MC68692), which share the DUART serial interrupt.
+ */
+
+#define	DART_REG(x)	((volatile uint8_t *)(M181_DUART | ((x) << 2) | 0x03))
+
 u_int	m181_get_tc(struct timecounter *);
 int	m181_clockintr(void *);
 int	m181_clkint;
@@ -588,36 +644,12 @@ struct timecounter m181_timecounter = {
 u_int
 m181_get_tc(struct timecounter *tc)
 {
-	/* XXX lazy */
 	return (u_int)clock_ih.ih_count.ec_count;
 }
-
-/*
- * Notes on the MVME181 clock usage:
- *
- * We have only one timer source, the two counter/timers in the DUART
- * (MC68681/MC68692), which share the DUART serial interrupt.
- *
- * Note that the DUART timers keep counting down from 0xffff even after
- * interrupting, and need to be manually stopped, then restarted, to
- * resume counting down the initial count value.
- *
- * Also, the 3.6864MHz clock source of the DUART timers does not seem to
- * be precise.
- */
-
-#define	DART_ISR		0xffe40017	/* interrupt status */
-#define	DART_STARTC		0xffe4003b	/* start counter cmd */
-#define	DART_STOPC		0xffe4003f	/* stop counter cmd */
-#define	DART_ACR		0xffe40013	/* auxiliary control */
-#define	DART_CTUR		0xffe4001b	/* counter/timer MSB */
-#define	DART_CTLR		0xffe4001f	/* counter/timer LSB */
-#define	DART_OPCR		0xffe40037	/* output port config*/
 
 void
 m181_init_clocks(void)
 {
-	volatile u_int8_t imr;
 	u_int32_t psr;
 
 	psr = get_psr();
@@ -633,23 +665,21 @@ m181_init_clocks(void)
 
 	stathz = profhz = 0;
 
-	/*
-	 * The DUART runs at 3.6864 MHz, CT#1 will run in PCLK/16 mode.
-	 */
+	/* the DART clock runs at 3.6864 MHz, CT#1 will run in PCLK/16 mode. */
 	m181_clkint = (3686400 / 16) / hz;
+	/* in timer mode, interrupts occur every second cycle */
+	m181_clkint >>= 1;
 
 	/* clear the counter/timer output OP3 while we program the DART */
-	*(volatile u_int8_t *)DART_OPCR = 0x00;
+	*DART_REG(DART_OPCR) = 0x00;
 	/* do the stop counter/timer command */
-	imr = *(volatile u_int8_t *)DART_STOPC;
-	/* set counter/timer to counter mode, PCLK/16 */
-	*(volatile u_int8_t *)DART_ACR = 0x30;
-	*(volatile u_int8_t *)DART_CTUR = (m181_clkint >> 8);
-	*(volatile u_int8_t *)DART_CTLR = (m181_clkint & 0xff);
-	/* set the counter/timer output OP3 */
-	*(volatile u_int8_t *)DART_OPCR = 0x04;
+	(void)*DART_REG(DART_CTSTOP);
+	/* set counter/timer to timer mode, PCLK/16 */
+	*DART_REG(DART_ACR) = 0x70 | BDSET1;
+	*DART_REG(DART_CTUR) = m181_clkint >> 8;
+	*DART_REG(DART_CTLR) = m181_clkint & 0xff;
 	/* give the start counter/timer command */
-	imr = *(volatile u_int8_t *)DART_STARTC;
+	(void)*DART_REG(DART_CTSTART);
 
 	clock_ih.ih_fn = m181_clockintr;
 	clock_ih.ih_arg = 0;
@@ -664,38 +694,55 @@ int
 m181_clockintr(void *eframe)
 {
 	u_int8_t isr;
-	u_int newint, ctr, extra;
-	int ticks;
 
-	isr = *(volatile u_int8_t *)DART_ISR;
-	if ((isr & 0x08) == 0)	/* ITIMER */
+	isr = *DART_REG(DART_ISR);
+	if ((isr & ITIMER) == 0)
 		return 0;
 
-	/* stop counter */
-	(void)*(volatile u_int8_t *)DART_STOPC;
+	/* acknowledge and clear interrupt */
+	(void)*DART_REG(DART_CTSTOP);
 
-	ctr = *(volatile u_int8_t *)DART_CTUR;
-	ctr <<= 8;
-	ctr |= *(volatile u_int8_t *)DART_CTLR;
-	extra = 0x10000 - ctr;
-
-	ticks = 1;
-	while (extra > m181_clkint) {
-		ticks++;
-		extra -= m181_clkint;
-	}
-
-	newint = m181_clkint - extra;
-
-	/* setup new value and restart counter */
-	*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
-	*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
-	(void)*(volatile u_int8_t *)DART_STARTC;
-
-	while (ticks-- != 0)
-		hardclock(eframe);
+	hardclock(eframe);
 
 	return 1;
+}
+
+/*
+ * Return the processor speed in MHz.
+ * Since there is no easy way to figure out this information, we'll simply
+ * spin for a known amount of time incrementing a counter and deduct the
+ * processor speed.
+ */
+int
+m181_cpuspeed(const struct mvmeprom_brdid *brdid)
+{
+	static int af_cpuspeed = 0;
+	u_int cycles, clkspan;
+
+	if (af_cpuspeed == 0) {
+		cycles = 0;
+		/* 10/256 msec gives a value of 9 */
+		clkspan = (3686400 / 16) / 100 / 256;
+
+		*DART_REG(DART_OPCR) = 0x00;
+		(void)*DART_REG(DART_CTSTOP);
+		*DART_REG(DART_ACR) = CCLK16 | BDSET1;
+		*DART_REG(DART_CTUR) = clkspan >> 8;
+		*DART_REG(DART_CTLR) = clkspan & 0xff;
+		(void)*DART_REG(DART_CTSTART);
+
+		do {
+			cycles++;
+		} while ((*DART_REG(DART_ISR) & ITIMER) == 0);
+		(void)*DART_REG(DART_CTSTOP);
+
+		if (cycles < 45)
+			af_cpuspeed = 20;
+		else
+			af_cpuspeed = 25;
+	}
+
+	return af_cpuspeed;
 }
 
 /*
