@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.675 2013/03/25 21:35:45 halex Exp $
+#	$OpenBSD: install.sub,v 1.676 2013/05/25 15:00:25 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -251,7 +251,7 @@ _ask() {
 	echo -n "${_q:+$_q }${_def:+[$_def] }"
 	read resp
 	lock; rm /tmp/update; unlock
-	if (( _redo )); then
+	if ((_redo)); then
 		stty raw
 		stty -raw
 	else
@@ -266,7 +266,7 @@ _ask() {
 		esac
 	fi
 	retrap
-	(( _int )) && kill -INT $$
+	((_int)) && kill -INT $$
 	: ${resp:=$_def}
 	return $_redo
 }
@@ -308,7 +308,7 @@ user_setup() {
 		root|daemon|operator|bin|smmsp|popa3d) ;;
 		sshd|uucp|www|named|proxy|nobody|ftp) ;;
 		[a-z]*([a-z0-9_]))
-			(( ${#resp} <= 31 )) && break ;;
+			((${#resp} <= 31)) && break ;;
 		esac
 		echo "$resp is not a useable loginname."
 	done
@@ -319,7 +319,7 @@ user_setup() {
 		*[:\&,]*)
 			echo "':', '&' or ',' are not allowed." ;;
 		*)
-			(( ${#resp} <= 100 )) && break
+			((${#resp} <= 100)) && break
 			echo "Too long." ;;
 		esac
 	done
@@ -394,7 +394,7 @@ ask_which() {
 		set -- $_dyndef; _dyndef="$1"
 		set -- $_dynlist; _dynlist="$*"
 		set +o noglob
-		(( $# < 1 )) && resp=done && return
+		(($# < 1)) && resp=done && return
 
 		: ${_dyndef:=$1}
 		echo "Available ${_name}s are: $_dynlist."
@@ -620,7 +620,7 @@ configure_ifs() {
 			fi
 
 			# Validate range of $_vi as 1-4095, and $_vi not in use.
-			if (( _vi < 1 || _vi > 4095 )) || isin "$_vi" $_tags; then
+			if ((_vi < 1 || _vi > 4095)) || isin "$_vi" $_tags; then
 				echo "Invalid or in-use vlan tag '$_vi'"
 				continue
 			fi
@@ -1241,7 +1241,7 @@ ftp_error() {
 
 startftplist() {
 	# If no networks are configured, we do not need the ftplist file
-	(( nifs < 1 )) && return
+	((nifs < 1)) && return
 
 	# Make sure the ftp subshell gets its own process group
 	set -m
@@ -1337,7 +1337,7 @@ install_url() {
 	resp=${1#*/}
 	# If there is no directory specified, don't use the server name!
 	[[ $resp == "$1" ]] && resp=
-	if (( $# > 1 )); then
+	if (($# > 1)); then
 		# It's a mirror, since it has location info.
 		resp=$resp/$FTPSETDIR
 		_mirror=yes
@@ -2092,7 +2092,7 @@ if [[ $MODE == install ]]; then
 	echo
 	donetconfig
 
-	(( nifs != 0 )) && startftplist
+	((nifs != 0)) && startftplist
 
 	echo
 	while :; do
