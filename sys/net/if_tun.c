@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.114 2013/03/28 16:55:27 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.115 2013/05/25 10:05:52 mikeb Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -316,6 +316,7 @@ tun_switch(struct tun_softc *tp, int flags)
 		/* already opened before ifconfig tunX link0 */
 		s = splnet();
 		tp->tun_flags |= open;
+		ifp->if_flags |= IFF_RUNNING;
 		tun_link_state(tp);
 		splx(s);
 		TUNDEBUG(("%s: already open\n", tp->tun_if.if_xname));
