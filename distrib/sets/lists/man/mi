@@ -1950,12 +1950,14 @@
 ./usr/share/man/man4/mvme88k/bussw.4
 ./usr/share/man/man4/mvme88k/cl.4
 ./usr/share/man/man4/mvme88k/dart.4
+./usr/share/man/man4/mvme88k/dsrtc.4
 ./usr/share/man/man4/mvme88k/ie.4
 ./usr/share/man/man4/mvme88k/intro.4
 ./usr/share/man/man4/mvme88k/kmem.4
 ./usr/share/man/man4/mvme88k/le.4
 ./usr/share/man/man4/mvme88k/mem.4
 ./usr/share/man/man4/mvme88k/memc.4
+./usr/share/man/man4/mvme88k/nvram.4
 ./usr/share/man/man4/mvme88k/pcctwo.4
 ./usr/share/man/man4/mvme88k/syscon.4
 ./usr/share/man/man4/mvme88k/vme.4
