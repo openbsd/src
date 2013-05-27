@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.341 2013/01/05 08:27:48 jasper Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.342 2013/05/27 21:19:31 miod Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -5980,6 +5980,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
+		compatchan = 0;
 		if (sc->sc_wdcdev.nchannels > 1) {
 			compatchan = i;
 			if((pciide_pci_read(sc->sc_pc, sc->sc_tag,

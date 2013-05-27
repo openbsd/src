@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.153 2013/05/24 10:52:13 jsg Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.154 2013/05/27 21:19:31 miod Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2299,6 +2299,7 @@ azalia_mixer_from_device_value(const codec_t *this, nid_t nid, int target,
 	} else {
 		DPRINTF(("%s: unknown target: %d\n", __func__, target));
 		steps = 255;
+		ctloff = 0;
 	}
 	dv -= ctloff;
 	if (dv <= 0 || steps == 0)
@@ -2325,6 +2326,7 @@ azalia_mixer_to_device_value(const codec_t *this, nid_t nid, int target,
 	} else {
 		DPRINTF(("%s: unknown target: %d\n", __func__, target));
 		steps = 255;
+		ctloff = 0;
 	}
 	if (uv <= AUDIO_MIN_GAIN || steps == 0)
 		return(ctloff);
