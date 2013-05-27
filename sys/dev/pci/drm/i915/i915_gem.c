@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.21 2013/05/18 21:43:42 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.22 2013/05/27 19:29:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -611,16 +611,25 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 	uint32_t write_domain = args->write_domain;
 	int ret;
 
-	/*
-	 * Only handle setting domains to types we allow the cpu to see.
-	 * while linux allows the CPU domain here, we only allow GTT since that
-	 * is all that we let userland near.
-	 * Also sanity check that having something in the write domain implies
-	 * it's in the read domain, and only that read domain.
+	/* Only handle setting domains to types used by the CPU. */
+	if (write_domain & I915_GEM_GPU_DOMAINS)
+		return EINVAL;
+
+	if (read_domains & I915_GEM_GPU_DOMAINS)
+		return EINVAL;
+
+	/* Having something in the write domain implies it's in the read
+	 * domain, and only that read domain.  Enforce that in the request.
 	 */
-	if ((write_domain | read_domains)  & ~I915_GEM_DOMAIN_GTT ||
-	    (write_domain != 0 && read_domains != write_domain))
-		return (EINVAL);
+	if (write_domain != 0 && read_domains != write_domain)
+		return EINVAL;
+
+	/*
+	 * Only allow GTT since that is all that we let userland near
+	 * on OpenBSD.
+	 */
+	if ((write_domain | read_domains)  & ~I915_GEM_DOMAIN_GTT)
+		return EINVAL;
 
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret)
@@ -632,18 +641,33 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 		goto unlock;
 	}
 
-	drm_hold_object(&obj->base);
-	ret = i915_gem_object_set_to_gtt_domain(obj, write_domain != 0);
-	drm_unhold_and_unref(&obj->base);
-
-	/*
-	 * Silently promote `you're not bound, there was nothing to do'
-	 * to success, since the client was just asking us to make sure
-	 * everything was done.
+#if notyet
+	/* Try to flush the object off the GPU without holding the lock.
+	 * We will repeat the flush holding the lock in the normal manner
+	 * to catch cases where we are gazumped.
 	 */
-	if (ret == EINVAL)
-		ret = 0;
+	ret = i915_gem_object_wait_rendering__nonblocking(obj, !write_domain);
+	if (ret)
+		goto unref;
+#endif
 
+	if (read_domains & I915_GEM_DOMAIN_GTT) {
+		ret = i915_gem_object_set_to_gtt_domain(obj, write_domain != 0);
+
+		/* Silently promote "you're not bound, there was nothing to do"
+		 * to success, since the client was just asking us to
+		 * make sure everything was done.
+		 */
+		if (ret == EINVAL)
+			ret = 0;
+	} else {
+		ret = i915_gem_object_set_to_cpu_domain(obj, write_domain != 0);
+	}
+
+#ifdef notyet
+unref:
+#endif
+	drm_gem_object_unreference(&obj->base);
 unlock:
 	DRM_UNLOCK();
 	return ret;
