@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.17 2012/10/03 22:46:09 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.18 2013/05/27 19:37:45 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -739,8 +739,8 @@ gbe_setup(struct gbe_softc *gsc)
 		    ((screen->depth >> 4) << GBE_FB_SIZE_TILE_DEPTH_SHIFT) |
 		    ((screen->width / tile_width) <<
 		        GBE_FB_SIZE_TILE_WIDTH_SHIFT) |
-		    ((screen->width % tile_width != 0) ?
-		        (screen->height / GBE_TILE_HEIGHT) : 0));
+		    (((screen->width % tile_width) >> (screen->depth >> 4)) /
+		        32));
 
 		bus_space_write_4(gsc->iot, gsc->ioh, GBE_FB_SIZE_PIXEL, 
 		    screen->height << GBE_FB_SIZE_PIXEL_HEIGHT_SHIFT);
