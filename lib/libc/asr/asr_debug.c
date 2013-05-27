@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.12 2013/04/09 06:42:17 otto Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.13 2013/05/27 17:31:01 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -302,22 +302,7 @@ asr_dump_config(FILE *f, struct asr *a)
 		fprintf(f, "	%s\n", print_sockaddr(ac->ac_ns[i], buf,
 		    sizeof buf));
 	fprintf(f, "HOSTFILE %s\n", ac->ac_hostfile);
-	fprintf(f, "LOOKUP");
-	for (i = 0; i < ac->ac_dbcount; i++) {
-		switch (ac->ac_db[i]) {
-		case ASR_DB_FILE:
-			fprintf(f, " file");
-			break;
-		case ASR_DB_DNS:
-			fprintf(f, " dns");
-			break;
-		case ASR_DB_YP:
-			fprintf(f, " yp");
-			break;
-		default:
-			fprintf(f, " ?%i", ac->ac_db[i]);
-		}
-	}
+	fprintf(f, "LOOKUP %s", ac->ac_db);
 	fprintf(f, "\n------------------------------------\n");
 }
 

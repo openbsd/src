@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.17 2013/04/30 12:02:39 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.18 2013/05/27 17:31:01 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -121,11 +121,9 @@ enum async_type {
 	ASR_GETNAMEINFO,
 };
 
-enum asr_db_type {
-	ASR_DB_FILE,
-	ASR_DB_DNS,
-	ASR_DB_YP,
-};
+#define	ASR_DB_FILE	'f'
+#define	ASR_DB_DNS	'b'
+#define	ASR_DB_YP	'y'
 
 struct asr_ctx {
 	int		 ac_refcount;
@@ -135,7 +133,7 @@ struct asr_ctx {
 	int		 ac_domcount;
 	char		*ac_dom[ASR_MAXDOM];
 	int		 ac_dbcount;
-	int		 ac_db[ASR_MAXDB];
+	char		 ac_db[ASR_MAXDB + 1];
 	int		 ac_family[3];
 
 	char		*ac_hostfile;

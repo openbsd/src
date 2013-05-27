@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.3 2013/04/30 12:02:39 eric Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.4 2013/05/27 17:31:01 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -30,6 +30,8 @@ res_query(const char *name, int class, int type, u_char *ans, int anslen)
 	struct async	*as;
 	struct async_res ar;
 	size_t		 len;
+
+	res_init();
 
 	if (ans == NULL || anslen <= 0) {
 		h_errno = NO_RECOVERY;
@@ -70,6 +72,8 @@ res_search(const char *name, int class, int type, u_char *ans, int anslen)
 	struct async	*as;
 	struct async_res ar;
 	size_t		 len;
+
+	res_init();
 
 	if (ans == NULL || anslen <= 0) {
 		h_errno = NO_RECOVERY;

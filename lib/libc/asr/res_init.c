@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.1 2012/09/08 11:08:21 eric Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.2 2013/05/27 17:31:01 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -16,18 +16,16 @@
  */
 
 #include <sys/types.h>
+#include <arpa/nameser.h>
 #include <netinet/in.h>
 
 #include <resolv.h>
+#include <string.h>
 
 #include "asr.h"
+#include "asr_private.h"
+#include "thread_private.h"
 
-/*
- * XXX these function is actually internal to asr, but we use it here to force
- * the creation a default resolver context in res_init().
- */
-struct asr_ctx *asr_use_resolver(struct asr *);
-void asr_ctx_unref(struct asr_ctx *);
 
 struct __res_state _res;
 struct __res_state_ext _res_ext;
@@ -37,8 +35,47 @@ int h_errno;
 int
 res_init(void)
 {
-	async_resolver_done(NULL);
-	asr_ctx_unref(asr_use_resolver(NULL));
+	_THREAD_PRIVATE_MUTEX(init);
+	struct asr_ctx	*ac;
+
+	ac = asr_use_resolver(NULL);
+
+	/*
+	 * The first thread to call res_init() will setup the global _res
+	 * structure from the async context, not overriding fields set early
+	 * by the user.
+	 */
+	_THREAD_PRIVATE_MUTEX_LOCK(init);
+	if (!(_res.options & RES_INIT)) {
+		if (_res.retry == 0)
+			_res.retry = ac->ac_nsretries;
+		if (_res.options == 0)
+			_res.options = ac->ac_options;
+		if (_res.lookups[0] == '\0')
+			strlcpy(_res.lookups, ac->ac_db, sizeof(_res.lookups));
+
+		_res.nscount = ac->ac_nscount;
+		_res.options |= RES_INIT;
+	}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(init);
+
+	/*
+	 * If the program is not threaded, we want to reflect (some) changes
+	 * made by the user to the global _res structure.
+	 * This is a bit of a hack: if there is already an async query on
+	 * this context, it might change things in its back.  It is ok
+	 * as long as the user only uses the blocking resolver API.
+	 * If needed we could consider cloning the context if there is
+	 * a running query.
+	 */
+	if (!__isthreaded) {
+		ac->ac_nsretries = _res.retry;
+		ac->ac_options = _res.options;
+		strlcpy(ac->ac_db, _res.lookups, sizeof(ac->ac_db));
+		ac->ac_dbcount = strlen(ac->ac_db);
+	}
+
+	asr_ctx_unref(ac);
 
 	return (0);
 }

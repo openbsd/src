@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname.c,v 1.1 2012/09/08 11:08:21 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname.c,v 1.2 2013/05/27 17:31:01 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -31,6 +31,8 @@ getrrsetbyname(const char *name, unsigned int class, unsigned int type,
 	struct async	*as;
 	struct async_res ar;
 	int		 r, saved_errno = errno;
+
+	res_init();
 
 	as = getrrsetbyname_async(name, class, type, flags, NULL);
 	if (as == NULL) {

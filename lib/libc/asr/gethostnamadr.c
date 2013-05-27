@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.6 2013/04/14 22:23:08 deraadt Exp $	*/
+/*	$OpenBSD: gethostnamadr.c,v 1.7 2013/05/27 17:31:01 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -127,12 +127,22 @@ _gethostbyname(const char *name, int af)
 struct hostent *
 gethostbyname(const char *name)
 {
-	return _gethostbyname(name, -1);
+	struct hostent	*h;
+
+	res_init();
+
+	if (_res.options & RES_USE_INET6 &&
+	    (h = _gethostbyname(name, AF_INET6)))
+			return (h);
+
+	return _gethostbyname(name, AF_INET);
 }
 
 struct hostent *
 gethostbyname2(const char *name, int af)
 {
+	res_init();
+
 	return _gethostbyname(name, af);
 }
 
@@ -141,6 +151,8 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 {
 	struct async	*as;
 	struct async_res ar;
+
+	res_init();
 
 	as = gethostbyaddr_async(addr, len, af, NULL);
 	if (as == NULL) {
