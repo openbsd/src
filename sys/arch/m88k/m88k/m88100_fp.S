@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.7 2013/02/17 18:05:51 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.8 2013/05/27 21:10:33 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -135,7 +135,7 @@ ASLOCAL(FPuimp)
 	 */
 
 ASLOCAL(wrapup)
-	tb1	0, %r0, 0	/* make sure all floating point operations */
+	FLUSH_PIPELINE		/* make sure all floating point operations */
 				/* have finished */
 	ldcr	%r10, %cr1	/* load the PSR */
 #if 0
@@ -2665,7 +2665,7 @@ ASENTRY(Xfp_imprecise)
 	/* XXX handle inexact!!! */
 
 fpui_wrapup:
-	tb1	0,    %r0,  0			/* make sure all floating */
+	FLUSH_PIPELINE				/* make sure all floating */
 						/* point operations have */
 						/* finished */
 	ldcr	%r4,  %cr1			/* load the PSR */
