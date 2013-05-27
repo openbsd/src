@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.60 2013/05/24 17:03:14 eric Exp $
+#	$OpenBSD: Makefile,v 1.61 2013/05/27 17:25:00 eric Exp $
 
-.PATH:		${.CURDIR}/.. ${.CURDIR}/../../../lib/libc/asr
+.PATH:		${.CURDIR}/..
 
 PROG=		smtpd
 
@@ -33,11 +33,6 @@ SRCS+=		scheduler_ramqueue.c
 SRCS+=		scheduler_null.c
 SRCS+=		stat_ramstat.c
 
-# resolver
-SRCS+=		asr.c asr_debug.c asr_utils.c gethostnamadr_async.c	\
-		res_send_async.c getaddrinfo_async.c getnameinfo_async.c \
-		res_search_async.c
-
 # ldap backend
 SRCS+=		ber.c aldap.c
 
@@ -54,8 +49,6 @@ CFLAGS+=	-Wsign-compare -Wbounded
 #CFLAGS+=	-Werror # during development phase (breaks some archs)
 CFLAGS+=	-DIO_SSL
 CFLAGS+=	-DQUEUE_PROFILING
-CFLAGS+=	-DASR_OPT_THREADSAFE=0
 YFLAGS=
 
 .include <bsd.prog.mk>
-
