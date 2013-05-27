@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.77 2013/05/27 18:16:32 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.78 2013/05/27 19:28:51 jmc Exp $
 .\" This file is in the public domain.
 .\"
 .Dd $Mdocdate: May 27 2013 $
@@ -919,21 +919,22 @@ Unlike emacs, the
 kill buffer consists only
 of the most recent kill.
 It is not a ring.
+.El
 .Sh MG DIRED COMMANDS
 The following are a list of the commands specific to dired mode:
 .Bl -tag -width Ds
 .It dired-backup-unflag
 Remove the deletion flag from the file listed on the current line
 of the dired buffer, then move up one line.
-.It dired-create-directory
-Create a directory.
 .It dired-copy-file
 Copy the file listed on the current line of the dired buffer.
+.It dired-create-directory
+Create a directory.
 .It dired-do-deletions
 Delete the files that have been flagged for deletion.
 .It dired-find-file
 Open the file on the current line of the dired buffer.
-If the cursor is on a directory it will be opened in dired mode. 
+If the cursor is on a directory it will be opened in dired mode.
 .It dired-find-file-other-window
 Open the file on the current line of the dired buffer in a
 different window.
