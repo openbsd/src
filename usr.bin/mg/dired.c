@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.52 2012/11/03 15:36:03 haesbaert Exp $	*/
+/*	$OpenBSD: dired.c,v 1.53 2013/05/27 18:24:44 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -182,6 +182,7 @@ dired_init(void)
 {
 	funmap_add(dired, "dired");
 	funmap_add(d_undelbak, "dired-backup-unflag");
+	funmap_add(d_create_directory, "dired-create-directory");
 	funmap_add(d_copy, "dired-copy-file");
 	funmap_add(d_expunge, "dired-do-deletions");
 	funmap_add(d_findfile, "dired-find-file");
