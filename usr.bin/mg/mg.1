@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.76 2013/05/22 19:23:45 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.77 2013/05/27 18:16:32 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: May 22 2013 $
+.Dd $Mdocdate: May 27 2013 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -919,6 +919,44 @@ Unlike emacs, the
 kill buffer consists only
 of the most recent kill.
 It is not a ring.
+.Sh MG DIRED COMMANDS
+The following are a list of the commands specific to dired mode:
+.Bl -tag -width Ds
+.It dired-backup-unflag
+Remove the deletion flag from the file listed on the current line
+of the dired buffer, then move up one line.
+.It dired-create-directory
+Create a directory.
+.It dired-copy-file
+Copy the file listed on the current line of the dired buffer.
+.It dired-do-deletions
+Delete the files that have been flagged for deletion.
+.It dired-find-file
+Open the file on the current line of the dired buffer.
+If the cursor is on a directory it will be opened in dired mode. 
+.It dired-find-file-other-window
+Open the file on the current line of the dired buffer in a
+different window.
+.It dired-flag-file-deleted
+Flag the file listed on the current line for deletion.
+This is indicated in the buffer by putting a D at the left margin.
+No files are actually deleted until the function dired-do-deletions
+is executed.
+.It dired-next-line
+Move the cursor to the next line.
+.It dired-other-window
+This function works just like dired, except that it puts the
+dired buffer in another window.
+.It dired-previous-line
+Move the cursor to the previous line.
+.It dired-rename-file
+Rename the file listed on the current line of the dired buffer.
+.It dired-scroll-down
+Scroll down the dired buffer.
+.It dired-scroll-up
+Scroll up the dired buffer.
+.It dired-unflag
+Remove the deletion flag for the file on the current line.
 .El
 .Sh CONFIGURATION FILES
 There are two configuration files,
