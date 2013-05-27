@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.70 2012/07/13 10:15:53 benno Exp $
+.\"	$OpenBSD: route.8,v 1.71 2013/05/27 14:07:25 sthen Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 13 2012 $
+.Dd $Mdocdate: May 27 2013 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -309,6 +309,11 @@ Actual
 .Vt sockaddr
 data, in hexadecimal format
 .El
+.Pp
+In the absence of modifiers, an address is assumed to be IPv4,
+unless containing a
+.Sq :\&
+character, when it is treated as IPv6.
 .Pp
 The optional modifier
 .Fl link

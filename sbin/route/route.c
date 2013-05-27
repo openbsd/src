@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.161 2013/03/21 04:43:17 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.162 2013/05/27 14:07:25 sthen Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -803,8 +803,13 @@ getaddr(int which, char *s, struct hostent **hpp)
 	int afamily, bits;
 
 	if (af == 0) {
-		af = AF_INET;
-		aflen = sizeof(struct sockaddr_in);
+		if (strchr(s, ':') != NULL) {
+			af = AF_INET6;
+			aflen = sizeof(struct sockaddr_in6);
+		} else {
+			af = AF_INET;
+			aflen = sizeof(struct sockaddr_in);
+		}
 	}
 	afamily = af;	/* local copy of af so we can change it */
 
