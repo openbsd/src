@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.17 2013/05/17 23:17:21 miod Exp $
+dnl	$OpenBSD: hardware,v 1.18 2013/05/27 21:25:56 miod Exp $
 OpenBSD/MACHINE OSREV runs on the systems built around the following
 MVME boards:
 
@@ -16,10 +16,13 @@ OpenBSD/MACHINE OSREV supports MVME188 and MVME197DP SMP (Symmetrical
 MultiProcessor) systems.  To support SMP operation, a separate SMP kernel
 (bsd.mp) is included with the installation file sets.
 
-While OpenBSD will boot in 8MB, 16MB of RAM are recommended as a minimum for
-the system not to be swap-bound, wint 32MB or more being recommended for
-serious usage of the system.  A minimal system can probably be squeezed
-onto a 250MB disk by installing only the `base' and `etc' sets.
+While OpenBSD will boot single-user in 8MB, a minimum of 12MB of RAM is
+necessary to install and boot multi-user, and 16MB of RAM are recommended
+as a minimum for the system not to be swap-bound, with 32MB or more being
+recommended for serious usage of the system.  A minimal system can probably
+be squeezed onto a 250MB disk by installing only the `base' and `etc' sets
+and using a small swap partition.
+
 Note that until you have at least 32MB of RAM, getting more RAM is more
 important than getting a faster CPU board.
 
@@ -43,15 +46,19 @@ Supported devices:
 MVME181 on-board devices:
 	serial ports, ttya-ttyb (dart)
 
+MVME181 compatible VME memory boards:
+	MVME224 and MVME224A (4, 8, 16 and 32MB)
+	MVME236 (4, 8 and 16MB)
+
 MVME187, M8120 and MVME197 on-board devices:
-	Cirrus Logic CD2401 serial ports, tty00-tty03/tty07(M8120) (cl)
+	Cirrus Logic CD2401 serial ports (cl)
 	Intel 82596CA Ethernet (ie)
 	NCR53c710 SCSI Controller (osiop)
 	128KB SRAM (/dev/sram0)
 	8KB NVRAM (/dev/nvram0)
 
 MVME188 on-board devices:
-	serial ports on SYSCON board, ttya-ttyb (dart)
+	serial ports on SYSCON board (dart)
 	2KB NVRAM (/dev/nvram0)
 
 Additional VMEbus devices:
@@ -59,5 +66,5 @@ Additional VMEbus devices:
 	MVME327A SCSI and floppy Controller (vsbic), currently limited
 	    to the SCSI interface only
 	MVME328 High Performance SCSI Controller (vs)
-	MVME332XT High Performance Serial I/O Controller (vx)
+dnl	MVME332XT High Performance Serial I/O Controller (vx)
 	MVME376 Ethernet Communications Controller (le)
