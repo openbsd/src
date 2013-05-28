@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.29 2008/09/17 07:19:19 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.30 2013/05/28 09:46:06 mikeb Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -251,12 +251,16 @@ setit:
 		 */
 		if (sc->mii_rev < 2) {
 			reg = PHY_READ(sc, RL_GMEDIASTAT);
-			if (reg & RL_GMEDIASTAT_LINK)
+			if (reg & RL_GMEDIASTAT_LINK) {
+				sc->mii_ticks = 0;
 				break;
+			}
 		} else {
 			reg = PHY_READ(sc, RGEPHY_SR);
-			if (reg & RGEPHY_SR_LINK)
+			if (reg & RGEPHY_SR_LINK) {
+				sc->mii_ticks = 0;
 				break;
+			}
 		}
 
 		/*
@@ -267,7 +271,7 @@ setit:
 		
 		sc->mii_ticks = 0;
 		rgephy_mii_phy_auto(sc);
-		return (0);
+		break;
 	}
 
 	/* Update the media status. */

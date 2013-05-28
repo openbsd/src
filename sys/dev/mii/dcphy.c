@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.23 2008/09/11 17:20:18 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.24 2013/05/28 09:46:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -272,8 +272,10 @@ dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		reg = CSR_READ_4(dc_sc, DC_10BTSTAT);
-		if (!(reg & DC_TSTAT_LS10) || !(reg & DC_TSTAT_LS100))
+		if (!(reg & DC_TSTAT_LS10) || !(reg & DC_TSTAT_LS100)) {
+			sc->mii_ticks = 0;
 			break;
+		}
 
 		/*
 		 * Only retry autonegotiation every mii_anegticks seconds.

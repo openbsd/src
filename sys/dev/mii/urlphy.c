@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.13 2008/09/08 07:50:15 brad Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.14 2013/05/28 09:46:06 mikeb Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -186,8 +186,10 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		/* Read the status register twice; MSR_LINK is latch-low. */
 		reg = PHY_READ(sc, URLPHY_MSR) | PHY_READ(sc, URLPHY_MSR);
-		if (reg & URLPHY_MSR_LINK)
-			return (0);
+		if (reg & URLPHY_MSR_LINK) {
+			sc->mii_ticks = 0;
+			break;
+		}
 
 		/*
 	 	 * Only retry autonegotiation every mii_anegticks seconds.

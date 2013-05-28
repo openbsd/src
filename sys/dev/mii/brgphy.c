@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.101 2013/03/17 00:23:44 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.102 2013/05/28 09:46:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -412,8 +412,10 @@ setit:
 		 * the BMSR twice in case it's latched.
 		 */
 		reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
-		if (reg & BMSR_LINK)
+		if (reg & BMSR_LINK) {
+			sc->mii_ticks = 0;	/* Reset autoneg timer. */
 			break;
+		}
 
 		/*
 		 * Only retry autonegotiation every mii_anegticks seconds.

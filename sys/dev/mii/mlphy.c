@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlphy.c,v 1.2 2011/11/19 13:00:14 claudio Exp $	*/
+/*	$OpenBSD: mlphy.c,v 1.3 2013/05/28 09:46:06 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999
@@ -306,6 +306,7 @@ mlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 				msc->ml_linked = 1;
 				mlphy_status(sc);
 			}
+			sc->mii_ticks = 0;
 			break;
 		}
 		/*
