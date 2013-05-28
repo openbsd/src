@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.53 2013/05/27 18:24:44 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.54 2013/05/28 18:35:10 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <err.h>
 #include <errno.h>
 #include <libgen.h>
 #include <stdarg.h>
@@ -44,6 +45,7 @@ static int	 d_backpage(int, int);
 static int	 d_forwline(int, int);
 static int	 d_backline(int, int);
 static void	 reaper(int);
+static struct buffer	*refreshbuffer(struct buffer *);
 
 extern struct keymap_s helpmap, cXmap, metamap;
 
@@ -423,7 +425,8 @@ d_copy(int f, int n)
 	ret = (copy(frname, toname) >= 0) ? TRUE : FALSE;
 	if (ret != TRUE)
 		return (ret);
-	bp = dired_(curbp->b_fname);
+	if ((bp = refreshbuffer(curbp)) == NULL)
+		return (FALSE);
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
@@ -456,7 +459,8 @@ d_rename(int f, int n)
 	ret = (rename(frname, toname) >= 0) ? TRUE : FALSE;
 	if (ret != TRUE)
 		return (ret);
-	bp = dired_(curbp->b_fname);
+	if ((bp = refreshbuffer(curbp)) == NULL)
+		return (FALSE);
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
@@ -639,8 +643,31 @@ d_create_directory(int f, int n)
 		    tocreate);
 		return (FALSE);
 	}
-	bp = dired_(curbp->b_fname);
+	if ((bp = refreshbuffer(curbp)) == NULL)
+		return (FALSE);
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
+}
+
+struct buffer *
+refreshbuffer(struct buffer *bp)
+{
+	char	*tmp;
+
+	tmp = strdup(bp->b_fname);
+	if (tmp == NULL)
+		err(1, NULL);
+
+	killbuffer(bp);
+
+	/* dired_() uses findbuffer() to create new buffer */
+	if ((bp = dired_(tmp)) == NULL) {
+		free(tmp);
+		return (NULL);
+	}
+	free(tmp);
+	curbp = bp;
+
+	return (bp);
 }
 
 static int
