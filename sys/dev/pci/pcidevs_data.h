@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1676 2013/05/15 10:13:31 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1677 2013/05/28 15:02:45 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3392,20 +3392,676 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X700 SE Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8670A,
+	    "Radeon HD 8670A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8730M,
+	    "Radeon HD 8730M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_1,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_2,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8790M,
+	    "Radeon HD 8790M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8530M,
+	    "Radeon HD 8530M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8600,
+	    "Radeon HD 8600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8570,
+	    "Radeon HD 8570",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8500,
+	    "Radeon HD 8500",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_3,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_4,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_5,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_6,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8670M,
+	    "Radeon HD 8670M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8500M_1,
+	    "Radeon HD 8500M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAINAN_1,
+	    "Hainan",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAINAN_2,
+	    "Hainan",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAINAN_3,
+	    "Hainan",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8500M_2,
+	    "Radeon HD 8500M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_1,
+	    "Cayman",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_2,
+	    "Cayman",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_3,
+	    "Cayman",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_4,
+	    "Cayman",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V7900,
+	    "FirePro V7900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_5,
+	    "Cayman",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_6,
+	    "Cayman",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V5900,
+	    "FirePro V5900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_7,
+	    "Cayman",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_8,
+	    "Cayman",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6970,
+	    "Radeon HD 6970",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6950,
+	    "Radeon HD 6950",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6990_1,
+	    "Radeon HD 6990",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6990_2,
+	    "Radeon HD 6990",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6930,
+	    "Radeon HD 6930",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6970M,
+	    "Radeon HD 6970M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD6000_1,
+	    "Mobility Radeon HD 6000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BARTS_1,
+	    "Barts",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BARTS_2,
+	    "Barts",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD6000_2,
+	    "Mobility Radeon HD 6000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6900M,
+	    "Radeon HD 6900M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BARTS_3,
+	    "Barts",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BARTS_4,
+	    "Barts",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BARTS_5,
+	    "Barts",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BARTS_6,
+	    "Barts",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6870,
+	    "Radeon HD 6870",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6850,
+	    "Radeon HD 6850",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6790,
+	    "Radeon HD 6790",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6730M,
+	    "Radeon HD 6730M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6600M,
+	    "Radeon HD 6600M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6610M,
+	    "Radeon HD 6610M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_E6760,
+	    "Radeon E6760",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_1,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_2,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_3,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_4,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_5,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V4900,
+	    "FirePro V4900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V3900,
+	    "FirePro V3900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6650A,
+	    "Radeon HD 6650A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7670A,
+	    "Radeon HD 7670A",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6670,
 	    "Radeon HD 6670",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5800,
-	    "Radeon HD 5800",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6570,
+	    "Radeon HD 6570",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5700,
-	    "Radeon HD 5700",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_6,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7570,
+	    "Radeon HD 7570",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6510,
+	    "Radeon HD 6510",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6400M,
+	    "Radeon HD 6400M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6430M,
+	    "Radeon HD 6430M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAICOS_1,
+	    "Caicos",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_E6460,
+	    "Radeon E6460",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6400M_1,
+	    "Radeon HD 6400M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6400M_2,
+	    "Radeon HD 6400M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAICOS_2,
+	    "Caicos",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAICOS_3,
+	    "Caicos",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAICOS_4,
+	    "Caicos",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6450A,
+	    "Radeon HD 6450A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8490,
+	    "Radeon HD 8490",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7450A,
+	    "Radeon HD 7450A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7470,
+	    "Radeon HD 7470",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6450,
+	    "Radeon HD 6450",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7450,
+	    "Radeon HD 7450",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_W9000,
+	    "FirePro W9000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V_1,
+	    "FirePro V",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V_2,
+	    "FirePro V",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TAHITI_1,
+	    "Tahiti",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TAHITI_2,
+	    "Tahiti",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TAHITI_3,
+	    "Tahiti",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TAHITI_4,
+	    "Tahiti",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7970,
+	    "Radeon HD 7970",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7900,
+	    "Radeon HD 7900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7950,
+	    "Radeon HD 7950",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7990,
+	    "Radeon HD 7990",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7870XT,
+	    "Radeon HD 7870 XT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TAHITI_5,
+	    "Tahiti",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7970M,
+	    "Radeon HD 7970M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8970M,
+	    "Radeon HD 8970M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PITCAIRN_1,
+	    "Pitcairn",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PITCAIRN_2,
+	    "Pitcairn",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_W7000,
+	    "FirePro W7000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_W5000,
+	    "FirePro W5000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PITCAIRN_3,
+	    "Pitcairn",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PITCAIRN_4,
+	    "Pitcairn",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PITCAIRN_5,
+	    "Pitcairn",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PITCAIRN_6,
+	    "Pitcairn",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7870,
+	    "Radeon HD 7870",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7850,
+	    "Radeon HD 7850",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8800M_1,
+	    "Radeon HD 8800M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8800M_2,
+	    "Radeon HD 8800M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_4,
+	    "Cape Verde",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8800M_3,
+	    "Radeon HD 8800M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7700M_1,
+	    "Radeon HD 7700M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7870M,
+	    "Radeon HD 7870M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7700M_2,
+	    "Radeon HD 7700M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7850M,
+	    "Radeon HD 7850M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_W600,
+	    "FirePro W600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_1,
+	    "Cape Verde",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_5,
+	    "Cape Verde",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8800M,
+	    "Radeon HD 8800M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_M4000,
+	    "FirePro M4000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7730M,
+	    "Radeon HD 7730M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7800M,
+	    "Radeon HD 7800M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7700M,
+	    "Radeon HD 7700M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_6,
+	    "Cape Verde",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7730,
+	    "Radeon HD 7730",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_2,
+	    "Cape Verde",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_3,
+	    "Cape Verde",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7700,
+	    "Radeon HD 7700",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7770,
+	    "Radeon HD 7770",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7750,
+	    "Radeon HD 7750",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7670M_1,
+	    "Radeon HD 7670M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7550M,
+	    "Radeon HD 7550M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7000M,
+	    "Radeon HD 7000M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7670M_2,
+	    "Radeon HD 7670M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7400,
+	    "Radeon HD 7400",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PITCAIRN_7,
+	    "Pitcairn",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_7,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_8,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TURKS_9,
+	    "Turks",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CYPRESS,
+	    "Cypress",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V8800,
+	    "FirePro V8800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V7800,
+	    "FirePro V7800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V9800,
+	    "FirePro V9800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIRESTREAM_9370,
+	    "FireStream 9370",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIRESTREAM_9350,
+	    "FireStream 9350",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5870,
+	    "Radeon HD 5870",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5850,
+	    "Radeon HD 5850",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6800,
+	    "Radeon HD 6800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5970,
+	    "Radeon HD 5970",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5900,
+	    "Radeon HD 5900",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5830,
+	    "Radeon HD 5830",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5870,
+	    "Mobility Radeon HD 5870",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5850,
+	    "Mobility Radeon HD 5850",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6850M,
+	    "Radeon HD 6850M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V5800,
+	    "FirePro V5800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5800,
+	    "Mobility Radeon HD 5800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5770,
+	    "Radeon HD 5770",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5670_640SP,
+	    "Radeon HD 5670 640SP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6770,
+	    "Radeon HD 6770",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5750,
+	    "Radeon HD 5750",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6750,
+	    "Radeon HD 6750",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5730,
+	    "Mobility Radeon HD 5730",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5650,
+	    "Mobility Radeon HD 5650",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5570,
+	    "Mobility Radeon HD 5570",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V4800,
+	    "FirePro V4800",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_V3800,
+	    "FirePro V3800",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5670,
 	    "Radeon HD 5670",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5570,
+	    "Radeon HD 5570",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5550,
+	    "Radeon HD 5550",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_REDWOOD,
+	    "Redwood",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_HD5470,
@@ -3416,8 +4072,44 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon Mobility HD 5430",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6370M,
+	    "Radeon HD 6370M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6330M,
+	    "Radeon HD 6330M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CEDAR,
+	    "Cedar",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_CEDAR,
+	    "FirePro (Cedar)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_2460,
+	    "FirePro 2460",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_2270,
+	    "FirePro 2270",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7300,
+	    "Radeon HD 7300",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD5450,
 	    "Radeon HD 5450",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7350,
+	    "Radeon HD 7350",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CEDAR_LE,
+	    "Cedar LE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_PCI,
@@ -4276,20 +4968,60 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 3000",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6550D,
+	    "Radeon HD 6550D",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6620G,
 	    "Radeon HD 6620G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6370D,
+	    "Radeon HD 6370D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6380G,
+	    "Radeon HD 6380G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6410D_1,
+	    "Radeon HD 6410D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6410D_2,
+	    "Radeon HD 6410D",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6520G,
 	    "Radeon HD 6520G",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6480G,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6480G_1,
+	    "Radeon HD 6480G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6480G_2,
 	    "Radeon HD 6480G",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6530D,
 	    "Radeon HD 6530D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SUMO_1,
+	    "Sumo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SUMO_2,
+	    "Sumo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SUMO_3,
+	    "Sumo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SUMO_4,
+	    "Sumo",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4200_HDA,
@@ -4340,8 +5072,168 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 6320",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6290,
+	    "Radeon HD 6290",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7340,
+	    "Radeon HD 7340",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7310,
+	    "Radeon HD 7310",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7290,
 	    "Radeon HD 7290",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ARUBA_1,
+	    "Aruba",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7660D,
+	    "Radeon HD 7660D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7640G_1,
+	    "Radeon HD 7640G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7560D,
+	    "Radeon HD 7560D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_A300_1,
+	    "FirePro A300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_A300_2,
+	    "FirePro A300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7620G_1,
+	    "Radeon HD 7620G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7600G_1,
+	    "Radeon HD 7600G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7500G_1,
+	    "Radeon HD 7500G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7500G_2,
+	    "Radeon HD 7500G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8650G,
+	    "Radeon HD 8650G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8670D,
+	    "Radeon HD 8670D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8550G,
+	    "Radeon HD 8550G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8570D,
+	    "Radeon HD 8570D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8610G,
+	    "Radeon HD 8610G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7660G,
+	    "Radeon HD 7660G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7640G_2,
+	    "Radeon HD 7640G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7620G_2,
+	    "Radeon HD 7620G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7600G_2,
+	    "Radeon HD 7600G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7500G,
+	    "Radeon HD 7500G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7520G_1,
+	    "Radeon HD 7520G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7540D,
+	    "Radeon HD 7540D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7420G_1,
+	    "Radeon HD 7420G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7480D,
+	    "Radeon HD 7480D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7400G_1,
+	    "Radeon HD 7400G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8450G,
+	    "Radeon HD 8450G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8470D,
+	    "Radeon HD 8470D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8350G,
+	    "Radeon HD 8350G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8370D,
+	    "Radeon HD 8370D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8510G,
+	    "Radeon HD 8510G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8410G,
+	    "Radeon HD 8410G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8310G,
+	    "Radeon HD 8310G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ARUBA_2,
+	    "Aruba",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ARUBA_3,
+	    "Aruba",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7520G_2,
+	    "Radeon HD 7520G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7420G_2,
+	    "Radeon HD 7420G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7400G_2,
+	    "Radeon HD 7400G",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_HDA,
