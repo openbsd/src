@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.148 2013/05/18 17:47:17 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.149 2013/05/29 15:40:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -2211,7 +2211,7 @@ static void
 termp_bk_post(DECL_ARGS)
 {
 
-	if (MDOC_BODY == n->type)
+	if (MDOC_BODY == n->type && ! (MDOC_SYNPRETTY & n->flags))
 		p->flags &= ~(TERMP_KEEP | TERMP_PREKEEP);
 }
 

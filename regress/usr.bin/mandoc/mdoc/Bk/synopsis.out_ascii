@@ -6,9 +6,11 @@ NNAAMMEE
 SSYYNNOOPPSSIISS
      kksshh [--++aabbCCeeffhhiikkllmmnnpprruuvvXXxx] [--++oo _o_p_t_i_o_n]
          [--cc _s_t_r_i_n_g | --ss | _f_i_l_e [_a_r_g_u_m_e_n_t _._._.]]
+     kksshh [--++aabbCCeeffhhiikkllmmnnpprruuvvXXxx] [--++oo _o_p_t_i_o_n]
+         [--cc _s_t_r_i_n_g | --ss | _f_i_l_e [_a_r_g_u_m_e_n_t _._._.]]
 
 DDEESSCCRRIIPPTTIIOONN
      kksshh [--++aabbCCeeffhhiikkllmmnnpprruuvvXXxx] [--++oo _o_p_t_i_o_n] [--cc _s_t_r_i_n_g | --ss | _f_i_l_e [_a_r_g_u_m_e_n_t
      _._._.]]
 
-OpenBSD                        November 18, 2012                       OpenBSD
+OpenBSD                          May 29, 2013                          OpenBSD

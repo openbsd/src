@@ -1,10 +1,16 @@
-.Dd November 18, 2012
+.Dd $Mdocdate: May 29 2013 $
 .Dt BK-SYNOPSIS 1
 .Os OpenBSD
 .Sh NAME
 .Nm Bk-synopsis
 .Nd automatic keeps in the synopsis
 .Sh SYNOPSIS
+.Nm ksh
+.Op Fl +abCefhiklmnpruvXx
+.Op Fl +o Ar option
+.Op Fl c Ar string \*(Ba Fl s \*(Ba Ar file Op Ar argument ...
+.Bk -words
+.Ek
 .Nm ksh
 .Op Fl +abCefhiklmnpruvXx
 .Op Fl +o Ar option

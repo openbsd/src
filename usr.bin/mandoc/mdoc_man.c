@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.48 2013/05/19 21:40:18 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.49 2013/05/29 15:40:14 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -897,7 +897,7 @@ static void
 post_bk(DECL_ARGS)
 {
 
-	if (MDOC_BODY == n->type)
+	if (MDOC_BODY == n->type && ! (MDOC_SYNPRETTY & n->flags))
 		outflags &= ~MMAN_Bk;
 }
 
