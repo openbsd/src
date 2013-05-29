@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.118 2012/11/17 14:02:51 kettenis Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.119 2013/05/29 23:16:52 yuo Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -92,6 +92,7 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_100_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_100_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6235_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_6235_2 },
 };
 
 int		iwn_match(struct device *, void *, void *);
@@ -643,7 +644,8 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		    pid == PCI_PRODUCT_INTEL_WL_1030_2 ||
 		    pid == PCI_PRODUCT_INTEL_WL_6030_1 ||
 		    pid == PCI_PRODUCT_INTEL_WL_6030_2 ||
-		    pid == PCI_PRODUCT_INTEL_WL_6235_1) {
+		    pid == PCI_PRODUCT_INTEL_WL_6235_1 ||
+		    pid == PCI_PRODUCT_INTEL_WL_6235_2) {
 			sc->fwname = "iwn-6030";
 			sc->sc_flags |= IWN_FLAG_ADV_BT_COEX;
 		} else
