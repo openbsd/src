@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.28 2012/05/10 21:12:26 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.29 2013/05/29 20:36:12 pirofti Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -167,6 +167,12 @@ void pmap_update_kernel_page(vaddr_t, pt_entry_t);
 vaddr_t	pmap_map_direct(vm_page_t);
 vm_page_t pmap_unmap_direct(vaddr_t);
 #endif
+
+/*
+ * MD flags to pmap_enter:
+ */
+
+#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK)
 
 #endif	/* _KERNEL */
 
