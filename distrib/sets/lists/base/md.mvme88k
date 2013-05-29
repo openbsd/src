@@ -1675,6 +1675,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/mmu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/mplock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/mutex.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/mvme181.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/mvme187.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/mvme188.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/mvme197.ph

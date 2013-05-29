@@ -219,6 +219,7 @@
 ./usr/include/mvme88k/mmu.h
 ./usr/include/mvme88k/mplock.h
 ./usr/include/mvme88k/mutex.h
+./usr/include/mvme88k/mvme181.h
 ./usr/include/mvme88k/mvme187.h
 ./usr/include/mvme88k/mvme188.h
 ./usr/include/mvme88k/mvme197.h
