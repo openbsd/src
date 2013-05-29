@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.55 2013/05/29 05:28:48 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.56 2013/05/29 19:16:48 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -275,8 +275,7 @@ d_del(int f, int n)
 			curwp->w_dotp = lforw(curwp->w_dotp);
 	}
 	curwp->w_rflag |= WFEDIT | WFMOVE;
-	curwp->w_doto = 0;
-	return (TRUE);
+	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
 }
 
 /* ARGSUSED */
@@ -292,8 +291,7 @@ d_undel(int f, int n)
 			curwp->w_dotp = lforw(curwp->w_dotp);
 	}
 	curwp->w_rflag |= WFEDIT | WFMOVE;
-	curwp->w_doto = 0;
-	return (TRUE);
+	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
 }
 
 /* ARGSUSED */
@@ -308,9 +306,8 @@ d_undelbak(int f, int n)
 		if (lback(curwp->w_dotp) != curbp->b_headp)
 			curwp->w_dotp = lback(curwp->w_dotp);
 	}
-	curwp->w_doto = 0;
 	curwp->w_rflag |= WFEDIT | WFMOVE;
-	return (TRUE);
+	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
 }
 
 /* ARGSUSED */
