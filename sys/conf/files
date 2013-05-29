@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.545 2013/03/31 13:30:23 kettenis Exp $
+#	$OpenBSD: files,v 1.546 2013/05/29 22:23:01 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -935,7 +935,6 @@ file uvm/uvm_glue.c
 file uvm/uvm_init.c
 file uvm/uvm_io.c
 file uvm/uvm_km.c
-#file uvm/uvm_loan.c
 file uvm/uvm_map.c
 file uvm/uvm_meter.c
 file uvm/uvm_mmap.c

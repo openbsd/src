@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.47 2012/03/09 13:01:29 ariane Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.48 2013/05/29 22:23:01 tedu Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 #include <uvm/uvm_fault.h>
 #include <uvm/uvm_glue.h>
 #include <uvm/uvm_km.h>
-#include <uvm/uvm_loan.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_page.h>
