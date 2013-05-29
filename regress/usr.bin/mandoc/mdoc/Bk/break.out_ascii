@@ -19,4 +19,10 @@ DDEESSCCRRIIPPTTIIOONN
      BBkk--bbrreeaakk _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x _x
      [o _a]
 
-OpenBSD                          June 30, 2010                         OpenBSD
+     Even text printed without spacing must be kept together with the text
+     following it:
+
+     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x
+     _x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x, _x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x)
+
+OpenBSD                          May 29, 2013                          OpenBSD

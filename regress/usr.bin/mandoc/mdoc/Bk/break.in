@@ -1,4 +1,4 @@
-.Dd June 30, 2010
+.Dd $Mdocdate: May 29 2013 $
 .Dt BK-BREAK 1
 .Os OpenBSD
 .Sh NAME
@@ -39,4 +39,11 @@ including just the macros to be kept together is sufficient:
 .Ar x x x x x x x x
 .Ar x x x x x x
 .Op o Ar a
+.Ek
+.Pp
+Even text printed without spacing must be kept together
+with the text following it:
+.Pp
+.Bk -words
+.Fn xxxxxxxxxxxxxxxxxxxx "xxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx" xxxxxxxxxxxxxxxxxxxx
 .Ek

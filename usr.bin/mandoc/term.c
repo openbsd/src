@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.67 2012/11/16 17:16:29 schwarze Exp $ */
+/*	$Id: term.c,v 1.68 2013/05/29 15:15:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -402,14 +402,14 @@ term_word(struct termp *p, const char *word)
 
 	if ( ! (TERMP_NOSPACE & p->flags)) {
 		if ( ! (TERMP_KEEP & p->flags)) {
-			if (TERMP_PREKEEP & p->flags)
-				p->flags |= TERMP_KEEP;
 			bufferc(p, ' ');
 			if (TERMP_SENTENCE & p->flags)
 				bufferc(p, ' ');
 		} else
 			bufferc(p, ASCII_NBRSP);
 	}
+	if (TERMP_PREKEEP & p->flags)
+		p->flags |= TERMP_KEEP;
 
 	if ( ! (p->flags & TERMP_NONOSPACE))
 		p->flags &= ~TERMP_NOSPACE;
