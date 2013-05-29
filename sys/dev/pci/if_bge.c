@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.328 2013/05/22 16:02:31 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.329 2013/05/29 17:04:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1057,6 +1057,18 @@ bge_miibus_statchg(struct device *dev)
 		mii->mii_media_active &= ~IFM_ETH_FMASK;
 	}
 
+	if (!BGE_STS_BIT(sc, BGE_STS_LINK) &&
+	    mii->mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
+		BGE_STS_SETBIT(sc, BGE_STS_LINK);
+	else if (BGE_STS_BIT(sc, BGE_STS_LINK) &&
+	    (!(mii->mii_media_status & IFM_ACTIVE) ||
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE))
+		BGE_STS_CLRBIT(sc, BGE_STS_LINK);
+
+	if (!BGE_STS_BIT(sc, BGE_STS_LINK))
+		return;
+
 	/* Set the port mode (MII/GMII) to match the link speed. */
 	mac_mode = CSR_READ_4(sc, BGE_MAC_MODE) &
 	    ~(BGE_MACMODE_PORTMODE | BGE_MACMODE_HALF_DUPLEX);
@@ -1775,7 +1787,7 @@ bge_blockinit(struct bge_softc *sc)
 	volatile struct bge_rcb		*rcb;
 	vaddr_t			rcb_addr;
 	bge_hostaddr		taddr;
-	u_int32_t		dmactl, val;
+	u_int32_t		dmactl, mimode, val;
 	int			i, limit;
 
 	/*
@@ -2371,9 +2383,19 @@ bge_blockinit(struct bge_softc *sc)
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
  	} else {
-		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
-		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
-		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700)
+		if ((sc->bge_flags & BGE_CPMU_PRESENT) != 0)
+			mimode = BGE_MIMODE_500KHZ_CONST;
+		else
+			mimode = BGE_MIMODE_BASE;
+		if (BGE_IS_5700_FAMILY(sc) ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705) {
+			mimode |= BGE_MIMODE_AUTOPOLL;
+			BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
+		}
+		mimode |= BGE_MIMODE_PHYADDR(sc->bge_phy_addr);
+		CSR_WRITE_4(sc, BGE_MI_MODE, mimode);
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
+		    sc->bge_chipid != BGE_CHIPID_BCM5700_B2)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 	}
@@ -2720,9 +2742,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		sc->bge_flags |= BGE_CPMU_PRESENT;
-
-	if ((sc->bge_flags & BGE_CPMU_PRESENT) != 0)
-		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_500KHZ_CONST);
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
@@ -4491,11 +4510,6 @@ bge_link_upd(struct bge_softc *sc)
 			if_link_state_change(ifp);
 			ifp->if_baudrate = 0;
 		}
-	/*
-	 * Discard link events for MII/GMII cards if MI auto-polling disabled.
-	 * This should not happen since mii callouts are locked now, but
-	 * we keep this check for debug.
-	 */
 	} else if (BGE_STS_BIT(sc, BGE_STS_AUTOPOLL)) {
 		/*
 		 * Some broken BCM chips have BGE_STATFLAG_LINKSTATE_CHANGED bit
@@ -4517,6 +4531,13 @@ bge_link_upd(struct bge_softc *sc)
 			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE))
 				BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 		}
+	} else {
+		/*
+		 * For controllers that call mii_tick, we have to poll
+		 * link status.
+		 */
+		mii_pollstat(mii);
+		bge_miibus_statchg(&sc->bge_dev);
 	}
 
 	/* Clear the attention */
