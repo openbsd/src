@@ -1,6 +1,6 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.7 2013/05/27 17:31:01 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr.c,v 1.8 2013/05/29 06:43:49 eric Exp $	*/
 /*
- * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
+ * Copyright (c) 2012,2013 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,8 +26,9 @@
 
 #include "asr.h"
 
-static struct hostent *_gethostbyname(const char *, int);
-static void _fillhostent(const struct hostent *, struct hostent *, char *buf,
+static int _gethostbyname(const char *, int, struct hostent *, char *, size_t,
+    int *);
+static int _fillhostent(const struct hostent *, struct hostent *, char *,
     size_t);
 
 static struct hostent	 _hostent;
@@ -35,7 +36,7 @@ static char		 _entbuf[4096];
 
 static char *_empty[] = { NULL, };
 
-static void
+static int
 _fillhostent(const struct hostent *h, struct hostent *r, char *buf, size_t len)
 {
 	char	**ptr, *end, *pos;
@@ -51,7 +52,7 @@ _fillhostent(const struct hostent *h, struct hostent *r, char *buf, size_t len)
 	ptr = (char **)ALIGN(buf);
 
 	if ((char *)ptr >= end)
-		return;
+		return (ERANGE);
 
 	for (naliases = 0; h->h_aliases[naliases]; naliases++)
 		;
@@ -60,7 +61,7 @@ _fillhostent(const struct hostent *h, struct hostent *r, char *buf, size_t len)
 
 	pos = (char *)(ptr + (naliases + 1) + (naddrs + 1));
 	if (pos >= end)
-		return;
+		return (ERANGE);
 
 	r->h_name = NULL;
 	r->h_addrtype = h->h_addrtype;
@@ -70,58 +71,60 @@ _fillhostent(const struct hostent *h, struct hostent *r, char *buf, size_t len)
 
 	n = strlcpy(pos, h->h_name, end - pos);
 	if (n >= end - pos)
-		return;
+		return (ERANGE);
 	r->h_name = pos;
 	pos += n + 1;
 
 	for (i = 0; i < naliases; i++) {
 		n = strlcpy(pos, h->h_aliases[i], end - pos);
 		if (n >= end - pos)
-			return;
+			return (ERANGE);
 		r->h_aliases[i] = pos;
 		pos += n + 1;
 	}
 
 	pos = (char *)ALIGN(pos);
 	if (pos >= end)
-		return;
+		return (ERANGE);
 
 	for (i = 0; i < naddrs; i++) {
 		if (r->h_length > end - pos)
-			return;
+			return (ERANGE);
 		memmove(pos, h->h_addr_list[i], r->h_length);
 		r->h_addr_list[i] = pos;
 		pos += r->h_length;
 	}
+
+	return (0);
 }
 
-static struct hostent *
-_gethostbyname(const char *name, int af)
+static int
+_gethostbyname(const char *name, int af, struct hostent *ret, char *buf,
+    size_t buflen, int *h_errnop)
 {
 	struct async		*as;
 	struct async_res	 ar;
+	int			 r;
 
 	if (af == -1)
 		as = gethostbyname_async(name, NULL);
 	else
 		as = gethostbyname2_async(name, af, NULL);
 
-	if (as == NULL) {
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
+	if (as == NULL)
+		return (errno);
 
 	async_run_sync(as, &ar);
 
 	errno = ar.ar_errno;
-	h_errno = ar.ar_h_errno;
+	*h_errnop = ar.ar_h_errno;
 	if (ar.ar_hostent == NULL)
-		return (NULL);
+		return (0);
 
-	_fillhostent(ar.ar_hostent, &_hostent, _entbuf, sizeof(_entbuf));
+	r = _fillhostent(ar.ar_hostent, ret, buf, buflen);
 	free(ar.ar_hostent);
 
-	return (&_hostent);
+	return (r);
 }
 
 struct hostent *
@@ -132,18 +135,30 @@ gethostbyname(const char *name)
 	res_init();
 
 	if (_res.options & RES_USE_INET6 &&
-	    (h = _gethostbyname(name, AF_INET6)))
-			return (h);
+	    (h = gethostbyname2(name, AF_INET6)))
+		return (h);
 
-	return _gethostbyname(name, AF_INET);
+	return gethostbyname2(name, AF_INET);
 }
 
 struct hostent *
 gethostbyname2(const char *name, int af)
 {
+	int	r;
+
 	res_init();
 
-	return _gethostbyname(name, af);
+	r = _gethostbyname(name, af, &_hostent, _entbuf, sizeof(_entbuf),
+	    &h_errno);
+	if (r) {
+		h_errno = NETDB_INTERNAL;
+		errno = r;
+	}
+
+	if (h_errno)
+		return (NULL);
+
+	return (&_hostent);
 }
 
 struct hostent *
@@ -151,6 +166,7 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 {
 	struct async	*as;
 	struct async_res ar;
+	int		 r;
 
 	res_init();
 
@@ -167,8 +183,14 @@ gethostbyaddr(const void *addr, socklen_t len, int af)
 	if (ar.ar_hostent == NULL)
 		return (NULL);
 
-	_fillhostent(ar.ar_hostent, &_hostent, _entbuf, sizeof(_entbuf));
+	r = _fillhostent(ar.ar_hostent, &_hostent, _entbuf, sizeof(_entbuf));
 	free(ar.ar_hostent);
+
+	if (r) {
+		h_errno = NETDB_INTERNAL;
+		errno = r;
+		return (NULL);
+	}
 
 	return (&_hostent);
 }
