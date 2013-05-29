@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.599 2013/05/16 09:30:05 sthen Exp $
+$OpenBSD: usbdevs,v 1.600 2013/05/29 23:32:04 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -947,6 +947,7 @@ product ASKEY VOYAGER1010	0x0821	Voyager 1010
 /* ASIX Electronics products */
 product ASIX AX88172		0x1720	USB 2.0 10/100 Ethernet controller
 product ASIX AX88178		0x1780	AX88178
+product ASIX AX88179		0x1790	AX88179
 product ASIX AX88772		0x7720	AX88772
 product ASIX AX88772A		0x772a	AX88772A
 product ASIX AX88772B		0x772b	AX88772B
