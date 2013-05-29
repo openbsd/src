@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.100 2012/07/13 07:50:13 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.101 2013/05/29 09:35:16 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -42,7 +42,7 @@ sub build_default_path
 	$default_path->add(OpenBSD::PackageRepository->new("./", $state)->can_be_empty);
 	return if $state->defines('NOINSTALLPATH');
 
-	if (my $i = $state->config->value("installpath")) {
+	for my $i ($state->config->value("installpath")) {
 		$default_path->add(OpenBSD::PackageRepository->new($i, $state));
 	}
 }
