@@ -1,4 +1,4 @@
-/*	$Id: manpath.c,v 1.5 2012/12/04 02:24:47 deraadt Exp $ */
+/*	$Id: manpath.c,v 1.6 2013/05/29 23:15:11 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -66,7 +66,7 @@ manpath_parse(struct manpaths *dirs, const char *file,
 	}
 
 	/* Append man.conf(5) to MANPATH. */
-	if (':' == defp[(int)strlen(defp) - 1]) {
+	if (':' == defp[strlen(defp) - 1]) {
 		manpath_parseline(dirs, defp);
 		manpath_manconf(dirs, file);
 		return;
@@ -110,7 +110,7 @@ manpath_add(struct manpaths *dirs, const char *dir)
 {
 	char		 buf[PATH_MAX];
 	char		*cp;
-	int		 i;
+	size_t		 i;
 
 	if (NULL == (cp = realpath(dir, buf)))
 		return;
@@ -121,7 +121,7 @@ manpath_add(struct manpaths *dirs, const char *dir)
 
 	dirs->paths = mandoc_realloc
 		(dirs->paths,
-		 ((size_t)dirs->sz + 1) * sizeof(char *));
+		 (dirs->sz + 1) * sizeof(char *));
 
 	dirs->paths[dirs->sz++] = mandoc_strdup(cp);
 }
@@ -129,7 +129,7 @@ manpath_add(struct manpaths *dirs, const char *dir)
 void
 manpath_free(struct manpaths *p)
 {
-	int		 i;
+	size_t		 i;
 
 	for (i = 0; i < p->sz; i++)
 		free(p->paths[i]);
