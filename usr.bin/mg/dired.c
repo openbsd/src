@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.58 2013/05/30 04:27:18 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.59 2013/05/30 17:43:43 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -398,10 +398,11 @@ d_expunge(int f, int n)
 int
 d_copy(int f, int n)
 {
-	char	frname[NFILEN], toname[NFILEN], sname[NFILEN], *bufp;
-	int	ret;
-	size_t	off;
-	struct buffer *bp;
+	char		 frname[NFILEN], toname[NFILEN], sname[NFILEN];
+	char		*topath, *bufp;
+	int		 ret;
+	size_t		 off;
+	struct buffer	*bp;
 
 	if (d_makename(curwp->w_dotp, frname, sizeof(frname)) != FALSE) {
 		ewprintf("Not a file");
@@ -419,7 +420,9 @@ d_copy(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	ret = (copy(frname, toname) >= 0) ? TRUE : FALSE;
+
+	topath = adjustname(toname, TRUE);
+	ret = (copy(frname, topath) >= 0) ? TRUE : FALSE;
 	if (ret != TRUE)
 		return (ret);
 	if ((bp = refreshbuffer(curbp)) == NULL)
@@ -431,7 +434,8 @@ d_copy(int f, int n)
 int
 d_rename(int f, int n)
 {
-	char		 frname[NFILEN], toname[NFILEN], *bufp;
+	char		 frname[NFILEN], toname[NFILEN];
+	char		*topath, *bufp;
 	int		 ret;
 	size_t		 off;
 	struct buffer	*bp;
@@ -453,7 +457,9 @@ d_rename(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	ret = (rename(frname, toname) >= 0) ? TRUE : FALSE;
+
+	topath = adjustname(toname, TRUE);
+	ret = (rename(frname, topath) >= 0) ? TRUE : FALSE;
 	if (ret != TRUE)
 		return (ret);
 	if ((bp = refreshbuffer(curbp)) == NULL)
