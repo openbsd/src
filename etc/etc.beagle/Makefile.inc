@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2011/10/19 02:24:31 uwe Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2013/05/30 15:57:25 florian Exp $
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}
 
-MDEXT=	bsd.rd boot
+MDEXT=	bsd.rd
