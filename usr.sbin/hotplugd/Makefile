@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.14 2013/03/25 17:29:28 deraadt Exp $
+# $OpenBSD: Makefile,v 1.15 2013/05/30 15:55:53 florian Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
-    ${MACHINE} == "armish" || ${MACHINE} == "hppa" || \
-    ${MACHINE} == "hppa64" || ${MACHINE} == "i386" || \
-    ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
-    ${MACHINE} == "macppc" || \
+    ${MACHINE} == "armish" || ${MACHINE} == "beagle" || \
+    ${MACHINE} == "hppa" || ${MACHINE} == "hppa64" || \
+    ${MACHINE} == "i386" || ${MACHINE} == "landisk" || \
+    ${MACHINE} == "loongson" || ${MACHINE} == "macppc" || \
     ${MACHINE} == "sgi" || ${MACHINE} == "socppc" || \
     ${MACHINE} == "sparc64" || ${MACHINE} == "zaurus"
 
