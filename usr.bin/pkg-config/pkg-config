@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.79 2013/03/31 13:58:01 brad Exp $
+# $OpenBSD: pkg-config,v 1.80 2013/05/30 00:02:02 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -358,9 +358,7 @@ sub validate_config
 	# Check if we're dealing with an empty file, but don't error out just
 	# yet, we'll do that when we realize there's no Name field.
 	if (stat($f)->size == 0) {
-		my $p = $f;
-		$p =~ s/(^.*\/)(.*?)$/$2/g;
-		say_error("Package file '$p' appears to be empty");
+		say_error("Package file '$f' appears to be empty");
 	}
 
 	foreach (@required_elems) {
