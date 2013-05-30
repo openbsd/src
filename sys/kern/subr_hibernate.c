@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.54 2013/04/09 18:58:03 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.55 2013/05/30 16:00:54 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -443,7 +443,9 @@ uvm_pmr_alloc_piglet(vaddr_t *va, paddr_t *pa, vsize_t sz, paddr_t align)
 	int			 pdaemon_woken;
 	vaddr_t			 piglet_va;
 
+	/* Ensure align is a power of 2 */
 	KASSERT((align & (align - 1)) == 0);
+
 	pdaemon_woken = 0; /* Didn't wake the pagedaemon. */
 
 	/*
