@@ -287,7 +287,6 @@
 ./usr/include/dev/ic/isp_openbsd.h
 ./usr/include/dev/ic/isp_stds.h
 ./usr/include/dev/ic/isp_target.h
-./usr/include/dev/ic/isp_tpublic.h
 ./usr/include/dev/ic/ispmbox.h
 ./usr/include/dev/ic/ispreg.h
 ./usr/include/dev/ic/ispvar.h
