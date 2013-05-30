@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.133 2013/04/27 16:39:30 benno Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.134 2013/05/30 20:17:12 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2013 $
+.Dd $Mdocdate: May 30 2013 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -680,6 +680,83 @@ Specify the inactivity timeout in seconds for accepted sessions.
 The default timeout is 600 seconds (10 minutes).
 The maximum is 2147483647 seconds (68 years).
 .El
+.Sh SSL RELAYS
+In addition to plain TCP,
+.Xr relayd 8
+supports the Secure Sockets Layer (SSL) and Transport Layer Security
+(TLS) cryptographic protocols for authenticated and encrypted relays.
+TLS is the successor of the original SSL protocol but the term SSL can
+refer to either of the protocols in
+.Nm .
+.Xr relayd 8
+can operate as an SSL client or server to offer a variety of options
+for different use cases related to SSL.
+.Bl -tag -width Ds
+.It Ic SSL client
+When configuring the relay
+.Ic forward
+statements with the
+.Ic with ssl
+directive,
+.Xr relayd 8
+will enable client-side SSL to connect to the remote host.
+This is commonly used for SSL tunneling and transparent encapsulation
+of plain TCP connections.
+See the
+.Ic forward to
+description in the
+.Sx RELAYS
+section for more details.
+.It Ic SSL server
+When specifying the
+.Ic ssl
+keyword in the relay
+.Ic listen
+statements,
+.Xr relayd 8
+will accept connections from clients as an SSL server.
+This mode is also known as
+.Dq SSL acceleration .
+See the
+.Ic listen on
+description in the
+.Sx RELAYS
+section for more details.
+.It Ic SSL client and server
+When combining both modes, SSL server and client,
+.Xr relayd 8
+can filter SSL connections as a man-in-the-middle.
+This combined mode is also called
+.Dq SSL inspection .
+The configuration requires additional X.509 certificate settings;
+see the
+.Ic ca key
+description in the
+.Sx PROTOCOLS
+section for more details.
+.El
+.Pp
+When configured for
+.Dq SSL inspection
+mode,
+.Xr relayd 8
+will listen for incoming connections which have been diverted to the
+local socket by PF.
+Before accepting and negotiating the incoming SSL connection as a
+server, it will look up the original destination address on the
+diverted socket, and pre-connect to the target server as an SSL client
+to obtain the remote SSL certificate.
+It will update or patch the obtained SSL certificate by replacing the
+included public key with its local server key because it doesn't have
+the private key of the remote server certificate.
+It also updates the X.509 issuer name to the local CA subject name and
+signs the certificate with its local CA key.
+This way it keeps all the other X.509 attributes that are already
+present in the server certificate, including the "green bar" extended
+validation attributes.
+Now it finally accepts the SSL connection from the diverted client
+using the updated certificate and continues to handle the connection
+and to connect to the remote server.
 .Sh PROTOCOLS
 Protocols are templates defining actions and settings for relays.
 They allow setting generic TCP options, SSL settings, and actions
@@ -1008,6 +1085,11 @@ Set the SSL options and session settings.
 This is only used if SSL is enabled in the relay.
 Valid options are:
 .Bl -tag -width Ds
+.It Ic ca cert Ar path
+Specify a CA certificate for SSL inspection.
+For more information, see the
+.Ic ca key
+option below.
 .It Ic ca file Ar path
 This option enables CA verification in SSL client mode.
 The daemon will load the CA (Certificate Authority) certificates from
@@ -1015,6 +1097,35 @@ the specified path to verify the server certificates.
 .Ox
 provides a default CA bundle in
 .Pa /etc/ssl/cert.pem .
+.It Ic ca key Ar path Ic password Ar password
+Specify a CA key for SSL inspection.
+The
+.Ar password
+argument will specify the password to decrypt the CA key
+(typically an RSA key).
+This option will enable SSL inspection if the following conditions
+are true:
+.Pp
+.Bl -bullet -compact -offset indent
+.It
+SSL client mode is enabled by the
+.Ic listen
+directive:
+.Ic listen on ... ssl .
+.It
+SSL server mode and divert lookups are enabled by the
+.Ic forward
+directive:
+.Ic forward with ssl to destination .
+.It
+The
+.Ic ca cert
+option is specified.
+.It
+The
+.Ic ca key
+option is specified.
+.El
 .It Ic ciphers Ar string
 Set the string defining the SSL cipher suite.
 If not specified, the default value
@@ -1267,6 +1378,52 @@ relay "sshforward" {
 	listen on www.example.com port 2222
 	protocol "myssh"
 	forward to shell.example.com port 22
+}
+.Ed
+.Pp
+The following relay example will configure
+.Dq SSL inspection
+as described in the
+.Sx SSL RELAYS
+section.
+To start, first generate a new local CA key and certificate:
+.Bd -literal -offset indent
+# openssl req -x509 -days 365 -newkey rsa:2048 \e
+	-keyout /etc/ssl/private/ca.key -out /etc/ssl/ca.crt
+.Ed
+.Pp
+An SSL server key and self-signed cert for 127.0.0.1 are also required;
+see
+.Ic listen on
+in the
+.Sx RELAYS
+section for more details about certificate locations.
+Configure the packet filter with a matching divert rule in
+.Xr pf.conf 5 :
+.Bd -literal -offset indent
+# Divert incoming HTTPS traffic to relayd
+pass in on vlan1 inet proto tcp to port 443 \e
+	divert-to localhost port 8443
+.Ed
+.Pp
+And finally configure the SSL inspection in
+.Nm :
+.Bd -literal -offset indent
+http protocol httpfilter {
+	return error
+
+	label "Prohibited!"
+	request url filter "social.network.example.com/"
+
+	# New configuration directives for SSL Interception
+	ssl ca key "/etc/ssl/private/ca.key" password "password123"
+	ssl ca cert "/etc/ssl/ca.crt"
+}
+
+relay sslinspect {
+	listen on 127.0.0.1 port 8443 ssl
+	protocol httpfilter
+	forward with ssl to destination
 }
 .Ed
 .Pp

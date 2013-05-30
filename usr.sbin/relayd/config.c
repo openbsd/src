@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2012/12/18 15:57:16 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2013/05/30 20:17:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 Reyk Floeter <reyk@openbsd.org>
@@ -177,6 +177,8 @@ config_purge(struct relayd *env, u_int reset)
 			purge_tree(&proto->response_tree);
 			if (proto->style != NULL)
 				free(proto->style);
+			if (proto->sslcapass != NULL)
+				free(proto->sslcapass);
 			free(proto);
 		}
 		env->sc_protocount = 0;
@@ -635,6 +637,7 @@ config_getproto(struct relayd *env, struct imsg *imsg)
 
 	proto->request_nodes = 0;
 	proto->response_nodes = 0;
+	proto->sslcapass = NULL;
 	RB_INIT(&proto->request_tree);
 	RB_INIT(&proto->response_tree);
 
@@ -830,6 +833,14 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			iov[c].iov_base = rlay->rl_ssl_ca;
 			iov[c++].iov_len = rlay->rl_conf.ssl_ca_len;
 		}
+		if (rlay->rl_conf.ssl_cacert_len) {
+			iov[c].iov_base = rlay->rl_ssl_cacert;
+			iov[c++].iov_len = rlay->rl_conf.ssl_cacert_len;
+		}
+		if (rlay->rl_conf.ssl_cakey_len) {
+			iov[c].iov_base = rlay->rl_ssl_cakey;
+			iov[c++].iov_len = rlay->rl_conf.ssl_cakey_len;
+		}
 
 		if (id == PROC_RELAY) {
 			/* XXX imsg code will close the fd after 1st call */
@@ -898,7 +909,9 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 	if ((u_int)(IMSG_DATA_SIZE(imsg) - s) <
 	    (rlay->rl_conf.ssl_cert_len +
 	    rlay->rl_conf.ssl_key_len +
-	    rlay->rl_conf.ssl_ca_len)) {
+	    rlay->rl_conf.ssl_ca_len +
+	    rlay->rl_conf.ssl_cacert_len +
+	    rlay->rl_conf.ssl_cakey_len)) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;
 	}
@@ -920,6 +933,18 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 		    rlay->rl_conf.ssl_ca_len)) == NULL)
 			goto fail;
 		s += rlay->rl_conf.ssl_ca_len;
+	}
+	if (rlay->rl_conf.ssl_cacert_len) {
+		if ((rlay->rl_ssl_cacert = get_data(p + s,
+		    rlay->rl_conf.ssl_cacert_len)) == NULL)
+			goto fail;
+		s += rlay->rl_conf.ssl_cacert_len;
+	}
+	if (rlay->rl_conf.ssl_cakey_len) {
+		if ((rlay->rl_ssl_cakey = get_data(p + s,
+		    rlay->rl_conf.ssl_cakey_len)) == NULL)
+			goto fail;
+		s += rlay->rl_conf.ssl_cakey_len;
 	}
 
 	TAILQ_INIT(&rlay->rl_tables);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.168 2013/04/27 16:39:30 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.169 2013/05/30 20:17:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -47,6 +47,7 @@
 #define SRV_NAME_SIZE		64
 #define MAX_NAME_SIZE		64
 #define SRV_MAX_VIRTS		16
+#define SSL_NAME_SIZE		512
 
 #define FD_RESERVE		5
 
@@ -77,6 +78,7 @@
 
 #if DEBUG > 1
 #define DPRINTF		log_debug
+#define DEBUG_CERT	1
 #else
 #define DPRINTF(x...)	do {} while(0)
 #endif
@@ -177,6 +179,7 @@ struct ctl_relay_event {
 	struct ctl_relay_event	*dst;
 	struct rsession		*con;
 	SSL			*ssl;
+	X509			*sslcert;
 	u_int8_t		*nodes;
 	struct proto_tree	*tree;
 
@@ -282,6 +285,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_MATCH			0x00800000
 #define F_DIVERT		0x01000000
 #define F_SCRIPT		0x02000000
+#define F_SSLINSPECT		0x04000000
 
 #define F_BITS								\
 	"\10\01DISABLE\02BACKUP\03USED\04DOWN\05ADD\06DEL\07CHANGED"	\
@@ -455,6 +459,7 @@ struct rsession {
 	int				 se_done;
 	int				 se_retry;
 	int				 se_retrycount;
+	int				 se_connectcount;
 	u_int16_t			 se_mark;
 	struct evbuffer			*se_log;
 	struct relay			*se_relay;
@@ -576,6 +581,9 @@ struct protocol {
 	u_int8_t		 sslflags;
 	char			 sslciphers[768];
 	char			 sslca[MAXPATHLEN];
+	char			 sslcacert[MAXPATHLEN];
+	char			 sslcakey[MAXPATHLEN];
+	char			*sslcapass;
 	char			 name[MAX_NAME_SIZE];
 	int			 cache;
 	enum prototype		 type;
@@ -625,6 +633,8 @@ struct relay_config {
 	off_t			 ssl_cert_len;
 	off_t			 ssl_key_len;
 	off_t			 ssl_ca_len;
+	off_t			 ssl_cacert_len;
+	off_t			 ssl_cakey_len;
 };
 
 struct relay {
@@ -648,6 +658,8 @@ struct relay {
 	char			*rl_ssl_cert;
 	char			*rl_ssl_key;
 	char			*rl_ssl_ca;
+	char			*rl_ssl_cacert;
+	char			*rl_ssl_cakey;
 
 	struct ctl_stats	 rl_stats[RELAY_MAXPROC + 1];
 
@@ -1001,6 +1013,7 @@ int	 relay_spliceadjust(struct ctl_relay_event *);
 void	 relay_error(struct bufferevent *, short, void *);
 int	 relay_lognode(struct rsession *,
 	    struct protonode *, struct protonode *, char *, size_t);
+int	 relay_preconnect(struct rsession *);
 int	 relay_connect(struct rsession *);
 void	 relay_connected(int, short, void *);
 void	 relay_bindanyreq(struct rsession *, in_port_t, int);
@@ -1048,6 +1061,9 @@ void	 ssl_init(struct relayd *);
 void	 ssl_transaction(struct ctl_tcp_event *);
 SSL_CTX	*ssl_ctx_create(struct relayd *);
 void	 ssl_error(const char *, const char *);
+char	*ssl_load_key(struct relayd *, const char *, off_t *, char *);
+X509	*ssl_update_certificate(X509 *, char *, off_t,
+	    char *, off_t, char *, off_t);
 
 /* ssl_privsep.c */
 int	 ssl_ctx_use_private_key(SSL_CTX *, char *, off_t);

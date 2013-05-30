@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.116 2013/03/10 23:32:53 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.117 2013/05/30 20:17:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -290,8 +290,16 @@ parent_configure(struct relayd *env)
 		config_setrt(env, rt);
 	TAILQ_FOREACH(proto, env->sc_protos, entry)
 		config_setproto(env, proto);
-	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
+	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
+		/* Check for SSL Inspection */
+		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) ==
+		    (F_SSL|F_SSLCLIENT) &&
+		    rlay->rl_conf.ssl_cacert_len &&
+		    rlay->rl_conf.ssl_cakey_len)
+			rlay->rl_conf.flags |= F_SSLINSPECT;
+
 		config_setrelay(env, rlay);
+	}
 
 	/* HCE, PFE and the preforked relays need to reload their config. */
 	env->sc_reload = 2 + env->sc_prefork_relay;
