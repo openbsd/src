@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.18 2011/07/04 04:30:41 tedu Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.19 2013/05/30 17:35:01 guenther Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ cd9660_lookup(v)
 	u_long bmask;			/* block offset mask */
 	int lockparent;			/* 1 => lockparent flag is set */
 	int error;
-	ino_t ino = 0;
+	cdino_t ino = 0;
 	int reclen;
 	u_short namelen;
 	char *altname;

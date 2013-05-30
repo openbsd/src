@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.16 2013/03/23 17:12:57 deraadt Exp $	*/
+/*	$OpenBSD: udf.h,v 1.17 2013/05/30 17:35:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -34,6 +34,8 @@
 
 #define UDF_HASHTBLSIZE 100
 
+typedef uint32_t udfino_t;
+
 struct unode {
 	LIST_ENTRY(unode) u_le;
 	struct vnode *u_vnode;
@@ -41,7 +43,7 @@ struct unode {
 	struct umount *u_ump;
 	struct lock u_lock;
 	dev_t u_dev;
-	ino_t u_ino;
+	udfino_t u_ino;
 	union {
 		long u_diroff;
 		long u_vatlen;
@@ -125,14 +127,14 @@ udf_readlblks(struct umount *ump, int sector, int size, struct buf **bp)
  * Assumes the ICB is a long_ad.  This struct is compatible with short_ad,
  *     but not ext_ad.
  */
-static __inline ino_t
+static __inline udfino_t
 udf_getid(struct long_ad *icb)
 {
 	return (letoh32(icb->loc.lb_num));
 }
 
 int udf_allocv(struct mount *, struct vnode **, struct proc *);
-int udf_hashlookup(struct umount *, ino_t, int, struct vnode **);
+int udf_hashlookup(struct umount *, udfino_t, int, struct vnode **);
 int udf_hashins(struct unode *);
 int udf_hashrem(struct unode *);
 int udf_checktag(struct desc_tag *, uint16_t);

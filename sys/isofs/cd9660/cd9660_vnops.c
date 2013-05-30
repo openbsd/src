@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.59 2013/03/28 03:29:44 guenther Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.60 2013/05/30 17:35:01 guenther Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -493,6 +493,7 @@ cd9660_readdir(void *v)
 	u_short namelen;
 	int  ncookies = 0;
 	u_long *cookies = NULL;
+	cdino_t ino;
 
 	dp = VTOI(vdp);
 	imp = dp->i_mnt;
@@ -579,22 +580,23 @@ cd9660_readdir(void *v)
 		}
 
 		if (isonum_711(ep->flags)&2)
-			idp->current.d_fileno = isodirino(ep, imp);
+			ino = isodirino(ep, imp);
 		else
-			idp->current.d_fileno = dbtob(bp->b_blkno) +
-				entryoffsetinblock;
+			ino = dbtob(bp->b_blkno) + entryoffsetinblock;
 
 		idp->curroff += reclen;
 
 		switch (imp->iso_ftype) {
 		case ISO_FTYPE_RRIP:
 			cd9660_rrip_getname(ep,idp->current.d_name, &namelen,
-					   &idp->current.d_fileno,imp);
+					   &ino, imp);
+			idp->current.d_fileno = ino;
 			idp->current.d_namlen = (u_char)namelen;
 			if (idp->current.d_namlen)
 				error = iso_uiodir(idp,&idp->current,idp->curroff);
 			break;
 		default:	/* ISO_FTYPE_DEFAULT || ISO_FTYPE_9660 */
+			idp->current.d_fileno = ino;
 			strlcpy(idp->current.d_name,"..",
 			    sizeof idp->current.d_name);
 			if (idp->current.d_namlen == 1 && ep->name[0] == 0) {

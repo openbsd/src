@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.46 2013/03/28 02:08:39 guenther Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.47 2013/05/30 17:35:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -78,9 +78,9 @@ struct vops udf_vops = {
 
 #define UDF_INVALID_BMAP	-1
 
-/* Look up a unode based on the ino_t passed in and return its vnode */
+/* Look up a unode based on the udfino_t passed in and return its vnode */
 int
-udf_hashlookup(struct umount *ump, ino_t id, int flags, struct vnode **vpp)
+udf_hashlookup(struct umount *ump, udfino_t id, int flags, struct vnode **vpp)
 {
 	struct unode *up;
 	struct udf_hash_lh *lh;
@@ -992,7 +992,7 @@ udf_lookup(void *v)
 	u_long flags;
 	char *nameptr;
 	long namelen;
-	ino_t id = 0;
+	udfino_t id = 0;
 	int offset, error = 0;
 	int numdirpasses, fsize;
 

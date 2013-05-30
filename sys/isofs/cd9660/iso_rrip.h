@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_rrip.h,v 1.5 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: iso_rrip.h,v 1.6 2013/05/30 17:35:01 guenther Exp $	*/
 /*	$NetBSD: iso_rrip.h,v 1.3 1994/06/29 06:32:02 cgd Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ typedef struct {
 	off_t		iso_ce_off;	/* offset of continuation area */
 	int		iso_ce_len;	/* length of continuation area */
 	struct iso_mnt	*imp;		/* mount structure */
-	ino_t		*inump;		/* inode number pointer */
+	cdino_t		*inump;		/* inode number pointer */
 	char		*outbuf;	/* name/symbolic link output area */
 	u_short		*outlen;	/* length of above */
 	u_short		maxlen;		/* maximum length of above */
@@ -74,7 +74,7 @@ int cd9660_rrip_analyze(struct iso_directory_record *isodir,
 			    struct iso_node *inop, struct iso_mnt *imp);
 int cd9660_rrip_getname(struct iso_directory_record *isodir,
 			    char *outbuf, u_short *outlen,
-			    ino_t *inump, struct iso_mnt *imp);
+			    cdino_t *inump, struct iso_mnt *imp);
 int cd9660_rrip_getsymname(struct iso_directory_record *isodir,
 			       char *outbuf, u_short *outlen,
 			       struct iso_mnt *imp);

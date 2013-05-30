@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.17 2004/10/04 23:37:37 millert Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.18 2013/05/30 17:35:01 guenther Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ typedef	struct	{
 struct iso_dnode {
 	struct iso_dnode *d_next, **d_prev;	/* hash chain */
 	dev_t		i_dev;		/* device where dnode resides */
-	ino_t		i_number;	/* the identity of the inode */
+	cdino_t		i_number;	/* the identity of the inode */
 	dev_t		d_dev;		/* device # for translation */
 };
 #endif
@@ -70,14 +70,14 @@ struct iso_node {
 	struct	vnode *i_devvp;	/* vnode for block I/O */
 	u_int	i_flag;		/* see below */
 	dev_t	i_dev;		/* device where inode resides */
-	ino_t	i_number;	/* the identity of the inode */
+	cdino_t	i_number;	/* the identity of the inode */
 				/* we use the actual starting block of the file */
 	struct	iso_mnt *i_mnt;	/* filesystem associated with this inode */
 	struct	lockf *i_lockf;	/* head of byte-level lock list */
 	doff_t	i_endoff;	/* end of useful stuff in directory */
 	doff_t	i_diroff;	/* offset in dir, where we found last entry */
 	doff_t	i_offset;	/* offset of free space in directory */
-	ino_t	i_ino;		/* inode number of found directory */
+	cdino_t	i_ino;		/* inode number of found directory */
 	struct  lock i_lock;    /* node lock */
 
 	doff_t	iso_extent;	/* extent of file */
@@ -136,15 +136,10 @@ void	cd9660_defattr(struct iso_directory_record *, struct iso_node *,
     struct buf *);
 void	cd9660_deftstamp(struct iso_directory_record *, struct iso_node *,
     struct buf *);
-struct	vnode *cd9660_ihashget(dev_t, ino_t);
+struct	vnode *cd9660_ihashget(dev_t, cdino_t);
 int	cd9660_ihashins(struct iso_node *);
 void	cd9660_ihashrem(struct iso_node *);
 int	cd9660_tstamp_conv7(u_char *, struct timespec *);
 int	cd9660_tstamp_conv17(u_char *, struct timespec *);
-int	cd9660_vget_internal(struct mount *, ino_t, struct vnode **, int,
+int	cd9660_vget_internal(struct mount *, cdino_t, struct vnode **, int,
     struct iso_directory_record *);
-ino_t	isodirino(struct iso_directory_record *, struct iso_mnt *);
-#ifdef	ISODEVMAP
-struct	iso_dnode *iso_dmap(dev_t, ino_t, int);
-void	iso_dunmap(dev_t);
-#endif

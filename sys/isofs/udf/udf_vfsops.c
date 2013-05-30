@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.40 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.41 2013/05/30 17:35:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -503,7 +503,7 @@ udf_root(struct mount *mp, struct vnode **vpp)
 {
 	struct umount *ump;
 	struct vnode *vp;
-	ino_t id;
+	udfino_t id;
 	int error;
 
 	ump = VFSTOUDFFS(mp);
@@ -562,7 +562,11 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct unode *up;
 	struct extfile_entry *xfe;
 	struct file_entry *fe;
-	int error, sector, size;
+	uint32_t sector;
+	int error, size;
+
+	if (ino > (udfino_t)-1)
+		panic("udf_vget: alien ino_t %llu", (unsigned long long)ino);
 
 	p = curproc;
 	bp = NULL;

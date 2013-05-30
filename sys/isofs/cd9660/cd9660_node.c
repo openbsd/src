@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.21 2010/04/23 19:40:28 oga Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.22 2013/05/30 17:35:01 guenther Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ cd9660_init(vfsp)
 struct iso_dnode *
 iso_dmap(device, inum, create)
 	dev_t	device;
-	ino_t	inum;
+	cdino_t	inum;
 	int	create;
 {
 	register struct iso_dnode **dpp, *dp, *dq;
@@ -149,7 +149,7 @@ iso_dunmap(device)
 struct vnode *
 cd9660_ihashget(dev, inum)
 	dev_t dev;
-	ino_t inum;
+	cdino_t inum;
 {
 	struct proc *p = curproc;               /* XXX */
 	struct iso_node *ip;
@@ -482,12 +482,12 @@ cd9660_tstamp_conv17(pi,pu)
 	return (cd9660_tstamp_conv7(buf,pu));
 }
 
-ino_t
+cdino_t
 isodirino(isodir, imp)
 	struct iso_directory_record *isodir;
 	struct iso_mnt *imp;
 {
-	ino_t ino;
+	cdino_t ino;
 
 	ino = (isonum_733(isodir->extent) +
 	    isonum_711(isodir->ext_attr_length)) << imp->im_bshift;
