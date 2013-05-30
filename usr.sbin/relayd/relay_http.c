@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.13 2013/05/07 16:19:58 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.14 2013/05/30 19:45:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -849,7 +849,7 @@ relay_abort_http(struct rsession *con, u_int code, const char *msg,
 
 	/* Generate simple HTTP+HTML error document */
 	if (asprintf(&httpmsg,
-	    "HTTP/1.x %03d %s\r\n"
+	    "HTTP/1.0 %03d %s\r\n"
 	    "Date: %s\r\n"
 	    "Server: %s\r\n"
 	    "Connection: close\r\n"
