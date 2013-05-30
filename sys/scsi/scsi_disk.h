@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.32 2011/07/08 07:28:45 dlg Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.33 2013/05/30 18:31:34 tedu Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ struct page_caching_mode {
 
 #define SI_PG_DISK_LIMITS	0xb0 /* block limits */
 #define SI_PG_DISK_INFO		0xb1 /* device charateristics */
-#define SI_PG_DISK_THIN		0xb2 /* thing provisioning */
+#define SI_PG_DISK_THIN		0xb2 /* thin provisioning */
 
 struct scsi_vpd_disk_limits {
 	struct scsi_vpd_hdr hdr;
