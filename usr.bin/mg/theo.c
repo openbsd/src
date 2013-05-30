@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.124 2012/07/09 22:24:36 mlarkin Exp $	*/
+/*	$OpenBSD: theo.c,v 1.125 2013/05/30 20:15:40 florian Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -166,7 +166,8 @@ static const char *talk[] = {
 	"I would rather run Windows than use vi.",
 	"if you assign that responsibility to non-hikers I will walk over and cripple you now.",
 	"i ojbect two yoru splelng of achlhlocis.",
-	"We have two kinds of developers - those that deal with their own shit and those that deal with other people's shit."
+	"We have two kinds of developers - those that deal with their own shit and those that deal with other people's shit.",
+	"If people keep adding such huge stuff, soon mg will be bigger than emacs."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
