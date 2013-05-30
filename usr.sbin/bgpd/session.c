@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.329 2013/03/20 04:01:42 deraadt Exp $ */
+/*	$OpenBSD: session.c,v 1.330 2013/05/30 10:13:58 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -162,6 +162,11 @@ setup_listeners(u_int *la_cnt)
 		if (la->sa.ss_family == AF_INET && setsockopt(la->fd,
 		    IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) == -1) {
 			log_warn("setup_listeners setsockopt TTL");
+			continue;
+		}
+		if (la->sa.ss_family == AF_INET6 && setsockopt(la->fd,
+		    IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl, sizeof(ttl)) == -1) {
+			log_warn("setup_listeners setsockopt hoplimit");
 			continue;
 		}
 
@@ -1230,7 +1235,17 @@ session_setup_socket(struct peer *p)
 		break;
 	case AID_INET6:
 		if (p->conf.ebgp) {
-			/* set hoplimit to foreign router's distance */
+			/* set hoplimit to foreign router's distance
+			   1=direct n=multihop with ttlsec, we always use 255 */
+			if (p->conf.ttlsec) {
+			/*
+			 * XXX Kernel has no ip6 equivalent of MINTTL yet so
+			 * we can't check incoming packets, but we can at least
+			 * set the outgoing TTL to allow sessions configured
+			 * with ttl-security to come up.
+			 */
+				ttl = 255;
+			}
 			if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
 			    &ttl, sizeof(ttl)) == -1) {
 				log_peer_warn(&p->conf,

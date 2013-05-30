@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.124 2013/01/02 15:06:46 florian Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.125 2013/05/30 10:13:58 sthen Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2013 $
+.Dd $Mdocdate: May 30 2013 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -960,6 +960,10 @@ incoming packets are required to have a TTL of 256 minus multihop distance,
 ensuring they have not passed through more than the expected number of hops.
 The default is
 .Ic no .
+.Pp
+There is currently only partial support for ttl-security with IPv6:
+the TTL of outgoing packets is set,
+but no check is made for the TTL of incoming packets.
 .El
 .Sh FILTER
 .Xr bgpd 8
