@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.57 2013/05/30 04:17:25 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.58 2013/05/30 04:27:18 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -745,11 +745,6 @@ dired_(char *dname)
 	int		 i;
 	size_t		 len;
 
-	if ((access(dname, R_OK | X_OK)) == -1) {
-		if (errno == EACCES)
-			ewprintf("Permission denied");
-		return (NULL);
-	}
 	if ((dname = adjustname(dname, FALSE)) == NULL) {
 		ewprintf("Bad directory name");
 		return (NULL);
@@ -759,6 +754,11 @@ dired_(char *dname)
 	if (dname[len - 1] != '/') {
 		dname[len++] = '/';
 		dname[len] = '\0';
+	}
+	if ((access(dname, R_OK | X_OK)) == -1) {
+		if (errno == EACCES)
+			ewprintf("Permission denied");
+		return (NULL);
 	}
 	if ((bp = findbuffer(dname)) == NULL) {
 		ewprintf("Could not create buffer");
