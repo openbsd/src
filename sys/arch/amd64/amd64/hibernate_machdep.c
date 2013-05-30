@@ -247,10 +247,10 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 
 	/* Identity map 3 pages for stack */
 	pmap_kenter_pa(HIBERNATE_STACK_PAGE, HIBERNATE_STACK_PAGE, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_STACK_PAGE + PAGE_SIZE,
-		HIBERNATE_STACK_PAGE + PAGE_SIZE, VM_PROT_ALL);
-	pmap_kenter_pa(HIBERNATE_STACK_PAGE + 2*PAGE_SIZE,
-		HIBERNATE_STACK_PAGE + 2*PAGE_SIZE, VM_PROT_ALL);
+	pmap_kenter_pa(HIBERNATE_STACK_PAGE - PAGE_SIZE,
+		HIBERNATE_STACK_PAGE - PAGE_SIZE, VM_PROT_ALL);
+	pmap_kenter_pa(HIBERNATE_STACK_PAGE - 2*PAGE_SIZE,
+		HIBERNATE_STACK_PAGE - 2*PAGE_SIZE, VM_PROT_ALL);
 	pmap_activate(curproc);
 
 	bzero((caddr_t)HIBERNATE_PML4T, PAGE_SIZE);
