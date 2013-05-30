@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.54 2012/11/02 15:10:28 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.55 2013/05/30 15:58:06 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -555,7 +555,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 }
 
 /*
- * The CPU ends up here when its ready to run
+ * The CPU ends up here when it's ready to run
  * This is called from code in mptramp.s; at this point, we are running
  * in the idle pcb/idle stack of the new cpu.  When this function returns,
  * this processor will enter the idle loop and start looking for work.
