@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmem.c,v 1.2 2013/05/15 12:45:59 ajacoutot Exp $ */
+/*	$OpenBSD: memmem.c,v 1.3 2013/05/30 01:10:45 ajacoutot Exp $ */
 /*-
  * Copyright (c) 2005 Pascal Gloor <pascal.gloor@spale.com>
  *
@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <string.h>
 
 /*
