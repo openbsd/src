@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.17 2013/03/11 17:40:11 deraadt Exp $ */
+/*	$OpenBSD: packet.c,v 1.18 2013/05/30 15:49:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -122,7 +122,6 @@ disc_recv_packet(int fd, short event, void *bula)
 	struct cmsghdr		*cmsg;
 	ssize_t			 r;
 	u_int16_t		 len;
-	int			 l;
 	unsigned int		 ifindex = 0;
 
 	if (event != EV_READ)
@@ -176,11 +175,12 @@ disc_recv_packet(int fd, short event, void *bula)
 		return;
 	}
 
-	if ((l = ldp_hdr_sanity_check(&ldp_hdr, len, iface)) == -1)
+	if (ldp_hdr_sanity_check(&ldp_hdr, len, iface) == -1)
 		return;
 
-	if (l > len) {
-		log_debug("disc_recv_packet: invalid LDP packet length %d",
+	if (ntohs(ldp_hdr.length) >
+	    len - sizeof(ldp_hdr.version) - sizeof(ldp_hdr.length)) {
+		log_debug("disc_recv_packet: invalid LDP packet length %u",
 		    ntohs(ldp_hdr.length));
 		return;
 	}
@@ -219,7 +219,7 @@ ldp_hdr_sanity_check(struct ldp_hdr *ldp_hdr, u_int16_t len,
 		return (-1);
 	}
 
-	return (ntohs(ldp_hdr->length));
+	return (0);
 }
 
 struct iface *
@@ -304,7 +304,7 @@ session_read(int fd, short event, void *arg)
 	struct ldp_msg	*ldp_msg;
 	char		*buf, *pdu;
 	ssize_t		 n, len;
-	int		 l, msg_size;
+	int		 msg_size;
 	u_int16_t	 pdu_len;
 
 	if (event != EV_READ) {
@@ -344,7 +344,7 @@ session_read(int fd, short event, void *arg)
 			return;
 		}
 
-		if ((l = ldp_hdr_sanity_check(ldp_hdr, len, iface)) == -1) {
+		if (ldp_hdr_sanity_check(ldp_hdr, len, iface) == -1) {
 			session_shutdown(nbr, S_BAD_LDP_ID, 0, 0);
 			free(buf);
 			return;
