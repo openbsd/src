@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.h,v 1.8 2007/05/07 18:39:28 millert Exp $	*/
+/*	$OpenBSD: ls.h,v 1.9 2013/05/30 16:34:32 guenther Exp $	*/
 /*	$NetBSD: ls.h,v 1.7 1995/03/21 09:06:33 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ extern int f_typedir;		/* add type character for directories */
 
 typedef struct {
 	FTSENT *list;
-	u_long btotal;
+	unsigned long long btotal;
 	int bcfile;
 	int entries;
 	int maxlen;

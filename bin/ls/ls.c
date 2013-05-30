@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.37 2011/03/04 21:03:19 okan Exp $	*/
+/*	$OpenBSD: ls.c,v 1.38 2013/05/30 16:34:32 guenther Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -412,7 +412,9 @@ display(FTSENT *p, FTSENT *list)
 	FTSENT *cur;
 	NAMES *np;
 	off_t maxsize;
-	u_long btotal, maxblock, maxinode, maxlen, maxnlink;
+	u_long maxlen, maxnlink;
+	unsigned long long btotal, maxblock;
+	ino_t maxinode;
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
 	int entries, needstats;
 	char *user, *group, buf[21];	/* 64 bits == 20 digits */
@@ -532,11 +534,12 @@ display(FTSENT *p, FTSENT *list)
 	if (needstats) {
 		d.bcfile = bcfile;
 		d.btotal = btotal;
-		(void)snprintf(buf, sizeof(buf), "%lu", maxblock);
+		(void)snprintf(buf, sizeof(buf), "%llu", maxblock);
 		d.s_block = strlen(buf);
 		d.s_flags = maxflags;
 		d.s_group = maxgroup;
-		(void)snprintf(buf, sizeof(buf), "%lu", maxinode);
+		(void)snprintf(buf, sizeof(buf), "%llu",
+		    (unsigned long long)maxinode);
 		d.s_inode = strlen(buf);
 		(void)snprintf(buf, sizeof(buf), "%lu", maxnlink);
 		d.s_nlink = strlen(buf);
