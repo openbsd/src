@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.h,v 1.15 2010/06/14 10:05:37 thib Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.16 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_anon.h,v 1.13 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
@@ -53,8 +53,6 @@ struct vm_anon {
 	 * PG_BUSY]
 	 */
 	int an_swslot;
-
-	simple_lock_data_t an_lock;
 };
 
 /*

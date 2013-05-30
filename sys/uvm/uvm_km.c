@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.108 2012/11/10 11:18:45 kettenis Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.109 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -282,7 +282,6 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
 			UVM_UNLOCK_AND_WAIT(pp, &uobj->vmobjlock, 0,
 			    "km_pgrm", 0);
-			simple_lock(&uobj->vmobjlock);
 			curoff -= PAGE_SIZE; /* loop back to us */
 			continue;
 		}
@@ -295,9 +294,7 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 			uvm_pagefree(pp);
 			uvm_unlock_pageq();
 		} else if (slot != 0) {
-			simple_lock(&uvm.swap_data_lock);
 			uvmexp.swpgonly--;
-			simple_unlock(&uvm.swap_data_lock);
 		}
 	}
 }
@@ -522,14 +519,12 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 
 	loopva = kva;
 	while (size) {
-		simple_lock(&uvm.kernel_object->vmobjlock);
 		/* allocate ram */
 		pg = uvm_pagealloc(uvm.kernel_object, offset, NULL, 0);
 		if (pg) {
 			atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
-		simple_unlock(&uvm.kernel_object->vmobjlock);
 		if (__predict_false(pg == NULL)) {
 			if (curproc == uvm.pagedaemon_proc) {
 				/*

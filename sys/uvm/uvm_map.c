@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.161 2013/04/17 23:22:42 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.162 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -491,9 +491,7 @@ uvm_mapent_addr_remove(struct vm_map *map, struct vm_map_entry *entry)
  */
 #define uvm_map_reference(_map)						\
 	do {								\
-		simple_lock(&map->ref_lock);				\
 		map->ref_count++;					\
-		simple_unlock(&map->ref_lock);				\
 	} while (0)
 
 /*
@@ -1521,7 +1519,6 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 
 	if (map->flags & VM_MAP_INTRSAFE || cold) {
 		s = splvm();
-		simple_lock(&uvm.kentry_lock);
 		me = uvm.kentry_free;
 		if (me == NULL) {
 			ne = km_alloc(PAGE_SIZE, &kv_page, &kp_dirty,
@@ -1542,7 +1539,6 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 		}
 		uvm.kentry_free = RB_LEFT(me, daddrs.addr_entry);
 		uvmexp.kmapent++;
-		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 		me->flags = UVM_MAP_STATIC;
 	} else if (map == kernel_map) {
@@ -1581,11 +1577,9 @@ uvm_mapent_free(struct vm_map_entry *me)
 
 	if (me->flags & UVM_MAP_STATIC) {
 		s = splvm();
-		simple_lock(&uvm.kentry_lock);
 		RB_LEFT(me, daddrs.addr_entry) = uvm.kentry_free;
 		uvm.kentry_free = me;
 		uvmexp.kmapent--;
-		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 	} else if (me->flags & UVM_MAP_KMEM) {
 		splassert(IPL_NONE);
@@ -2295,7 +2289,6 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	map->flags = flags;
 	map->timestamp = 0;
 	rw_init(&map->lock, "vmmaplk");
-	simple_lock_init(&map->ref_lock);
 
 	/*
 	 * Configure the allocators.
@@ -2680,7 +2673,6 @@ uvm_map_init(void)
 	 * now set up static pool of kernel map entries ...
 	 */
 
-	simple_lock_init(&uvm.kentry_lock);
 	uvm.kentry_free = NULL;
 	for (lcv = 0 ; lcv < MAX_KMAPENT ; lcv++) {
 		RB_LEFT(&kernel_map_entry[lcv], daddrs.addr_entry) =
@@ -3788,9 +3780,7 @@ uvm_map_deallocate(vm_map_t map)
 	int c;
 	struct uvm_map_deadq dead;
 
-	simple_lock(&map->ref_lock);
 	c = --map->ref_count;
-	simple_unlock(&map->ref_lock);
 	if (c > 0) {
 		return;
 	}
@@ -4169,11 +4159,8 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			if (anon == NULL)
 				continue;
 
-			simple_lock(&anon->an_lock); /* XXX */
-
 			pg = anon->an_page;
 			if (pg == NULL) {
-				simple_unlock(&anon->an_lock);
 				continue;
 			}
 
@@ -4191,7 +4178,6 @@ deactivate_it:
 				/* skip the page if it's loaned or wired */
 				if (pg->loan_count != 0 ||
 				    pg->wire_count != 0) {
-					simple_unlock(&anon->an_lock);
 					break;
 				}
 
@@ -4205,7 +4191,6 @@ deactivate_it:
 				if ((pg->pg_flags & PQ_ANON) == 0) {
 					KASSERT(pg->uobject == NULL);
 					uvm_unlock_pageq();
-					simple_unlock(&anon->an_lock);
 					break;
 				}
 				KASSERT(pg->uanon == anon);
@@ -4217,7 +4202,6 @@ deactivate_it:
 				uvm_pagedeactivate(pg);
 
 				uvm_unlock_pageq();
-				simple_unlock(&anon->an_lock);
 				break;
 
 			case PGO_FREE:
@@ -4231,13 +4215,11 @@ deactivate_it:
 
 				/* XXX skip the page if it's wired */
 				if (pg->wire_count != 0) {
-					simple_unlock(&anon->an_lock);
 					break;
 				}
 				amap_unadd(&entry->aref,
 				    cp_start - entry->start);
 				refs = --anon->an_ref;
-				simple_unlock(&anon->an_lock);
 				if (refs == 0)
 					uvm_anfree(anon);
 				break;
@@ -4262,11 +4244,9 @@ flush_object:
 		    ((flags & PGO_FREE) == 0 ||
 		     ((entry->max_protection & VM_PROT_WRITE) != 0 &&
 		      (entry->etype & UVM_ET_COPYONWRITE) == 0))) {
-			simple_lock(&uobj->vmobjlock);
 			rv = uobj->pgops->pgo_flush(uobj,
 			    cp_start - entry->start + entry->offset,
 			    cp_end - entry->start + entry->offset, flags);
-			simple_unlock(&uobj->vmobjlock);
 
 			if (rv == FALSE)
 				error = EFAULT;

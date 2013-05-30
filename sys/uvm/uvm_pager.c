@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.60 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.61 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -567,9 +567,6 @@ ReTry:
 			 * drop cluster and relock object (only if I/O is
 			 * not pending)
 			 */
-			if (uobj)
-				/* required for dropcluster */
-				simple_lock(&uobj->vmobjlock);
 			if (*npages > 1 || pg == NULL)
 				uvm_pager_dropcluster(uobj, pg, ppsp, npages,
 				    PGO_PDFREECLUST);
@@ -586,9 +583,6 @@ ReTry:
 	 */
 
 	if (*npages > 1 || pg == NULL) {
-		if (uobj) {
-			simple_lock(&uobj->vmobjlock);
-		}
 		uvm_pager_dropcluster(uobj, pg, ppsp, npages, PGO_REALLOCSWAP);
 
 		/*
@@ -602,15 +596,11 @@ ReTry:
 			/* XXX daddr64_t -> int */
 			int nswblk = (result == VM_PAGER_AGAIN) ? swblk : 0;
 			if (pg->pg_flags & PQ_ANON) {
-				simple_lock(&pg->uanon->an_lock);
 				pg->uanon->an_swslot = nswblk;
-				simple_unlock(&pg->uanon->an_lock);
 			} else {
-				simple_lock(&pg->uobject->vmobjlock);
 				uao_set_swslot(pg->uobject,
 					       pg->offset >> PAGE_SHIFT,
 					       nswblk);
-				simple_unlock(&pg->uobject->vmobjlock);
 			}
 		}
 		if (result == VM_PAGER_AGAIN) {
@@ -653,8 +643,6 @@ ReTry:
 	 * to worry about.
 	 */
 	
-	if (uobj && (flags & PGO_PDFREECLUST) != 0)
-		simple_lock(&uobj->vmobjlock);
 	return(result);
 }
 
@@ -704,12 +692,10 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 		 */
 		if (!uobj) {
 			if (ppsp[lcv]->pg_flags & PQ_ANON) {
-				simple_lock(&ppsp[lcv]->uanon->an_lock);
 				if (flags & PGO_REALLOCSWAP)
 					  /* zap swap block */
 					  ppsp[lcv]->uanon->an_swslot = 0;
 			} else {
-				simple_lock(&ppsp[lcv]->uobject->vmobjlock);
 				if (flags & PGO_REALLOCSWAP)
 					uao_set_swslot(ppsp[lcv]->uobject,
 					    ppsp[lcv]->offset >> PAGE_SHIFT, 0);
@@ -730,7 +716,6 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 				    PG_BUSY);
 				UVM_PAGE_OWN(ppsp[lcv], NULL);
 
-				simple_unlock(&ppsp[lcv]->uanon->an_lock);
 				/* kills anon and frees pg */
 				uvm_anfree(ppsp[lcv]->uanon);
 
@@ -753,14 +738,6 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 			pmap_clear_reference(ppsp[lcv]);
 			pmap_clear_modify(ppsp[lcv]);
 			atomic_setbits_int(&ppsp[lcv]->pg_flags, PG_CLEAN);
-		}
-
-		/* if anonymous cluster, unlock object and move on */
-		if (!uobj) {
-			if (ppsp[lcv]->pg_flags & PQ_ANON)
-				simple_unlock(&ppsp[lcv]->uanon->an_lock);
-			else
-				simple_unlock(&ppsp[lcv]->uobject->vmobjlock);
 		}
 	}
 }
@@ -826,17 +803,9 @@ uvm_aio_aiodone(struct buf *bp)
 			swap = (pg->pg_flags & PQ_SWAPBACKED) != 0;
 			if (!swap) {
 				uobj = pg->uobject;
-				simple_lock(&uobj->vmobjlock);
 			}
 		}
 		KASSERT(swap || pg->uobject == uobj);
-		if (swap) {
-			if (pg->pg_flags & PQ_ANON) {
-				simple_lock(&pg->uanon->an_lock);
-			} else {
-				simple_lock(&pg->uobject->vmobjlock);
-			}
-		}
 
 		/*
 		 * if this is a read and we got an error, mark the pages
@@ -860,18 +829,8 @@ uvm_aio_aiodone(struct buf *bp)
 			atomic_setbits_int(&pgs[i]->pg_flags, PG_CLEAN);
 			atomic_clearbits_int(&pgs[i]->pg_flags, PG_FAKE);
 		}
-		if (swap) {
-			if (pg->pg_flags & PQ_ANON) {
-				simple_unlock(&pg->uanon->an_lock);
-			} else {
-				simple_unlock(&pg->uobject->vmobjlock);
-			}
-		}
 	}
 	uvm_page_unbusy(pgs, npages);
-	if (!swap) {
-		simple_unlock(&uobj->vmobjlock);
-	}
 
 #ifdef UVM_SWAP_ENCRYPT
 freed:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.35 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.36 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -70,11 +70,9 @@ uvm_analloc(void)
 
 	anon = pool_get(&uvm_anon_pool, PR_NOWAIT);
 	if (anon) {
-		simple_lock_init(&anon->an_lock);
 		anon->an_ref = 1;
 		anon->an_page = NULL;
 		anon->an_swslot = 0;
-		simple_lock(&anon->an_lock);
 	}
 	return(anon);
 }
@@ -125,7 +123,6 @@ uvm_anfree(struct vm_anon *anon)
 			pg->loan_count--;
 			pg->uanon = NULL;
 			uvm_unlock_pageq();
-			simple_unlock(&pg->uobject->vmobjlock);
 		} else {
 
 			/*
@@ -150,10 +147,8 @@ uvm_anfree(struct vm_anon *anon)
 	}
 	if (pg == NULL && anon->an_swslot != 0) {
 		/* this page is no longer only in swap. */
-		simple_lock(&uvm.swap_data_lock);
 		KASSERT(uvmexp.swpgonly > 0);
 		uvmexp.swpgonly--;
-		simple_unlock(&uvm.swap_data_lock);
 	}
 
 	/*
@@ -208,7 +203,6 @@ struct vm_page *
 uvm_anon_lockloanpg(struct vm_anon *anon)
 {
 	struct vm_page *pg;
-	boolean_t locked = FALSE;
 
 	/*
 	 * loop while we have a resident page that has a non-zero loan count.
@@ -221,44 +215,6 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 
 	while (((pg = anon->an_page) != NULL) && pg->loan_count != 0) {
 
-		/*
-		 * quickly check to see if the page has an object before
-		 * bothering to lock the page queues.   this may also produce
-		 * a false positive result, but that's ok because we do a real
-		 * check after that.
-		 *
-		 * XXX: quick check -- worth it?   need volatile?
-		 */
-
-		if (pg->uobject) {
-
-			uvm_lock_pageq();
-			if (pg->uobject) {	/* the "real" check */
-				locked =
-				    simple_lock_try(&pg->uobject->vmobjlock);
-			} else {
-				/* object disowned before we got PQ lock */
-				locked = TRUE;
-			}
-			uvm_unlock_pageq();
-
-			/*
-			 * if we didn't get a lock (try lock failed), then we
-			 * toggle our anon lock and try again
-			 */
-
-			if (!locked) {
-				simple_unlock(&anon->an_lock);
-
-				/*
-				 * someone locking the object has a chance to
-				 * lock us right now
-				 */
-
-				simple_lock(&anon->an_lock);
-				continue;
-			}
-		}
 
 		/*
 		 * if page is un-owned [i.e. the object dropped its ownership],
@@ -350,9 +306,5 @@ uvm_anon_pagein(struct vm_anon *anon)
 	 * unlock the anon and we're done.
 	 */
 
-	simple_unlock(&anon->an_lock);
-	if (uobj) {
-		simple_unlock(&uobj->vmobjlock);
-	}
 	return FALSE;
 }

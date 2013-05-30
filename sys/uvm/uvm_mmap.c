@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.91 2012/07/21 06:46:58 matthew Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.92 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -258,9 +258,6 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 		amap = entry->aref.ar_amap;	/* top layer */
 		uobj = entry->object.uvm_obj;	/* bottom layer */
 
-		if (uobj != NULL)
-			simple_lock(&uobj->vmobjlock);
-
 		for (/* nothing */; start < lim; start += PAGE_SIZE, pgi++) {
 			*pgi = 0;
 			if (amap != NULL) {
@@ -290,9 +287,6 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 				}
 			}
 		}
-
-		if (uobj != NULL)
-			simple_unlock(&uobj->vmobjlock);
 	}
 
  out:

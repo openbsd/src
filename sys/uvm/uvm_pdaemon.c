@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.62 2013/02/07 17:29:31 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.63 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -465,10 +465,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			if ((p->pg_flags & PQ_ANON) || p->uobject == NULL) {
 				anon = p->uanon;
 				KASSERT(anon != NULL);
-				if (!simple_lock_try(&anon->an_lock)) {
-					/* lock failed, skip this page */
-					continue;
-				}
 
 				/*
 				 * if the page is ownerless, claim it in the
@@ -483,7 +479,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 					/* anon now owns it */
 				}
 				if (p->pg_flags & PG_BUSY) {
-					simple_unlock(&anon->an_lock);
 					uvmexp.pdbusy++;
 					/* someone else owns page, skip it */
 					continue;
@@ -492,12 +487,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			} else {
 				uobj = p->uobject;
 				KASSERT(uobj != NULL);
-				if (!simple_lock_try(&uobj->vmobjlock)) {
-					/* lock failed, skip this page */
-					continue;
-				}
 				if (p->pg_flags & PG_BUSY) {
-					simple_unlock(&uobj->vmobjlock);
 					uvmexp.pdbusy++;
 					/* someone else owns page, skip it */
 					continue;
@@ -514,9 +504,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			if (p->pg_flags & PG_CLEAN) {
 				if (p->pg_flags & PQ_SWAPBACKED) {
 					/* this page now lives only in swap */
-					simple_lock(&uvm.swap_data_lock);
 					uvmexp.swpgonly++;
-					simple_unlock(&uvm.swap_data_lock);
 				}
 
 				/* zap all mappings with pmap_page_protect... */
@@ -535,11 +523,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 
 					/* remove from object */
 					anon->an_page = NULL;
-					simple_unlock(&anon->an_lock);
-				} else {
-					/* pagefree has already removed the
-					 * page from the object */
-					simple_unlock(&uobj->vmobjlock);
 				}
 				continue;
 			}
@@ -550,11 +533,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 */
 
 			if (free + uvmexp.paging > uvmexp.freetarg << 2) {
-				if (anon) {
-					simple_unlock(&anon->an_lock);
-				} else {
-					simple_unlock(&uobj->vmobjlock);
-				}
 				continue;
 			}
 
@@ -570,11 +548,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			    uvmexp.swpgonly == uvmexp.swpages) {
 				dirtyreacts++;
 				uvm_pageactivate(p);
-				if (anon) {
-					simple_unlock(&anon->an_lock);
-				} else {
-					simple_unlock(&uobj->vmobjlock);
-				}
 				continue;
 			}
 
@@ -650,12 +623,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 						    &p->pg_flags,
 						    PG_BUSY);
 						UVM_PAGE_OWN(p, NULL);
-						if (anon)
-							simple_unlock(
-							    &anon->an_lock);
-						else
-							simple_unlock(
-							    &uobj->vmobjlock);
 						continue;
 					}
 					swcpages = 0;	/* cluster is empty */
@@ -692,11 +659,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 
 		if (swap_backed) {
 			if (p) {	/* if we just added a page to cluster */
-				if (anon)
-					simple_unlock(&anon->an_lock);
-				else
-					simple_unlock(&uobj->vmobjlock);
-
 				/* cluster not full yet? */
 				if (swcpages < swnpages)
 					continue;
@@ -823,14 +785,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			/* relock p's object: page queues not lock yet, so
 			 * no need for "try" */
 
-			/* !swap_backed case: already locked... */
-			if (swap_backed) {
-				if (anon)
-					simple_lock(&anon->an_lock);
-				else
-					simple_lock(&uobj->vmobjlock);
-			}
-
 #ifdef DIAGNOSTIC
 			if (result == VM_PAGER_UNLOCK)
 				panic("pagedaemon: pageout returned "
@@ -856,7 +810,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 				anon->an_page = NULL;
 				p->uanon = NULL;
 
-				simple_unlock(&anon->an_lock);
 				uvm_anfree(anon);	/* kills anon */
 				pmap_page_protect(p, VM_PROT_NONE);
 				anon = NULL;
@@ -890,11 +843,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * the inactive queue can't be re-queued [note: not
 			 * true for active queue]).
 			 */
-
-			if (anon)
-				simple_unlock(&anon->an_lock);
-			else if (uobj)
-				simple_unlock(&uobj->vmobjlock);
 
 			if (nextpg && (nextpg->pg_flags & PQ_INACTIVE) == 0) {
 				nextpg = TAILQ_FIRST(pglst);	/* reload! */
@@ -1009,8 +957,6 @@ uvmpd_scan(void)
 		/* is page anon owned or ownerless? */
 		if ((p->pg_flags & PQ_ANON) || p->uobject == NULL) {
 			KASSERT(p->uanon != NULL);
-			if (!simple_lock_try(&p->uanon->an_lock))
-				continue;
 
 			/* take over the page? */
 			if ((p->pg_flags & PQ_ANON) == 0) {
@@ -1018,9 +964,6 @@ uvmpd_scan(void)
 				p->loan_count--;
 				atomic_setbits_int(&p->pg_flags, PQ_ANON);
 			}
-		} else {
-			if (!simple_lock_try(&p->uobject->vmobjlock))
-				continue;
 		}
 
 		/*
@@ -1028,10 +971,6 @@ uvmpd_scan(void)
 		 */
 
 		if ((p->pg_flags & PG_BUSY) != 0) {
-			if (p->pg_flags & PQ_ANON)
-				simple_unlock(&p->uanon->an_lock);
-			else
-				simple_unlock(&p->uobject->vmobjlock);
 			continue;
 		}
 
@@ -1071,9 +1010,5 @@ uvmpd_scan(void)
 			uvmexp.pddeact++;
 			inactive_shortage--;
 		}
-		if (p->pg_flags & PQ_ANON)
-			simple_unlock(&p->uanon->an_lock);
-		else
-			simple_unlock(&p->uobject->vmobjlock);
 	}
 }

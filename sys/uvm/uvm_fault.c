@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.65 2012/04/12 11:55:43 ariane Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.66 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -199,7 +199,6 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 	for (lcv = 0 ; lcv < n ; lcv++) {
 		if (anons[lcv] == NULL)
 			continue;
-		simple_lock(&anons[lcv]->an_lock);
 		pg = anons[lcv]->an_page;
 		if (pg && (pg->pg_flags & PG_BUSY) == 0 && pg->loan_count == 0) {
 			uvm_lock_pageq();
@@ -213,7 +212,6 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 			}
 			uvm_unlock_pageq();
 		}
-		simple_unlock(&anons[lcv]->an_lock);
 	}
 }
 
@@ -405,8 +403,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		 */
 
 		locked = uvmfault_relock(ufi);
-		if (locked || we_own)
-			simple_lock(&anon->an_lock);
 
 		/*
 		 * if we own the page (i.e. we set PG_BUSY), then we need
@@ -437,7 +433,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 */
 			if (pg->pg_flags & PG_RELEASED) {
 				pmap_page_protect(pg, VM_PROT_NONE);
-				simple_unlock(&anon->an_lock);
 				uvm_anfree(anon);	/* frees page for us */
 				if (locked)
 					uvmfault_unlockall(ufi, amap, NULL,
@@ -473,8 +468,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				if (locked)
 					uvmfault_unlockall(ufi, amap, NULL,
 					    anon);
-				else
-					simple_unlock(&anon->an_lock);
 				return (VM_PAGER_ERROR);
 			}
 			
@@ -486,8 +479,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			uvm_lock_pageq();
 			uvm_pageactivate(pg);
 			uvm_unlock_pageq();
-			if (!locked)
-				simple_unlock(&anon->an_lock);
 		}
 
 		/*
@@ -768,10 +759,8 @@ ReFault:
 		/* flush object? */
 		if (uobj) {
 			uoff = (startva - ufi.entry->start) + ufi.entry->offset;
-			simple_lock(&uobj->vmobjlock);
 			(void) uobj->pgops->pgo_flush(uobj, uoff, uoff + 
 				    (nback << PAGE_SHIFT), PGO_DEACTIVATE);
-			simple_unlock(&uobj->vmobjlock);
 		}
 
 		/* now forget about the backpages */
@@ -822,7 +811,6 @@ ReFault:
 			continue;
 		}
 		anon = anons[lcv];
-		simple_lock(&anon->an_lock);
 		/* ignore loaned pages */
 		if (anon->an_page && anon->an_page->loan_count == 0 &&
 		    (anon->an_page->pg_flags & (PG_RELEASED|PG_BUSY)) == 0) {
@@ -844,7 +832,6 @@ ReFault:
 			    PMAP_CANFAIL |
 			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
 		}
-		simple_unlock(&anon->an_lock);
 		pmap_update(ufi.orig_map->pmap);
 	}
 
@@ -868,8 +855,6 @@ ReFault:
 	 */
 
 	if (uobj && shadowed == FALSE && uobj->pgops->pgo_fault != NULL) {
-		simple_lock(&uobj->vmobjlock);
-
 		/* locked: maps(read), amap (if there), uobj */
 		result = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
 				    centeridx, fault_type, access_type,
@@ -896,8 +881,6 @@ ReFault:
 	 */
 
 	if (uobj && shadowed == FALSE) {
-		simple_lock(&uobj->vmobjlock);
-
 		/* locked (!shadowed): maps(read), amap (if there), uobj */
 		/*
 		 * the following call to pgo_get does _not_ change locking state
@@ -1018,7 +1001,6 @@ ReFault:
 	 */
 
 	anon = anons[centeridx];
-	simple_lock(&anon->an_lock);
 
 	/* locked: maps(read), amap, anon */
 
@@ -1130,7 +1112,6 @@ ReFault:
 				uvm_pageactivate(pg);
 				uvm_unlock_pageq();
 				if (uobj) {
-					simple_unlock(&uobj->vmobjlock);
 					uobj = NULL;
 				}
 
@@ -1353,7 +1334,6 @@ Case2:
 		 */
 
 		locked = uvmfault_relock(&ufi);
-		simple_lock(&uobj->vmobjlock);
 		
 		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
 		/* locked(!locked): uobj, uobjpage */
@@ -1387,7 +1367,6 @@ Case2:
 			atomic_clearbits_int(&uobjpage->pg_flags,
 			    PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
-			simple_unlock(&uobj->vmobjlock);
 			goto ReFault;
 
 		}
@@ -1599,7 +1578,6 @@ Case2:
 			uvm_lock_pageq();
 			uvm_pageactivate(uobjpage);
 			uvm_unlock_pageq();
-			simple_unlock(&uobj->vmobjlock);
 			uobj = NULL;
 		} else {
 			uvmexp.flt_przero++;
@@ -1830,10 +1808,6 @@ uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
     struct uvm_object *uobj, struct vm_anon *anon)
 {
 
-	if (anon)
-		simple_unlock(&anon->an_lock);
-	if (uobj)
-		simple_unlock(&uobj->vmobjlock);
 	uvmfault_unlockmaps(ufi, FALSE);
 }
 

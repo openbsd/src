@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.55 2012/04/12 14:59:26 ariane Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.56 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -382,8 +382,6 @@ static void
 uao_free(struct uvm_aobj *aobj)
 {
 
-	simple_unlock(&aobj->u_obj.vmobjlock);
-
 	if (UAO_USES_SWHASH(aobj)) {
 		int i, hashbuckets = aobj->u_swhashmask + 1;
 
@@ -411,9 +409,7 @@ uao_free(struct uvm_aobj *aobj)
 					 * this page is no longer
 					 * only in swap.
 					 */
-					simple_lock(&uvm.swap_data_lock);
 					uvmexp.swpgonly--;
-					simple_unlock(&uvm.swap_data_lock);
 				}
 
 				next = LIST_NEXT(elt, list);
@@ -435,9 +431,7 @@ uao_free(struct uvm_aobj *aobj)
 				uvm_swap_free(slot, 1);
 
 				/* this page is no longer only in swap. */
-				simple_lock(&uvm.swap_data_lock);
 				uvmexp.swpgonly--;
-				simple_unlock(&uvm.swap_data_lock);
 			}
 		}
 		free(aobj->u_swslots, M_UVMAOBJ);
@@ -575,9 +569,7 @@ uao_init(void)
 void
 uao_reference(struct uvm_object *uobj)
 {
-	simple_lock(&uobj->vmobjlock);
 	uao_reference_locked(uobj);
-	simple_unlock(&uobj->vmobjlock);
 }
 
 /*
@@ -612,7 +604,6 @@ uao_reference_locked(struct uvm_object *uobj)
 void
 uao_detach(struct uvm_object *uobj)
 {
-	simple_lock(&uobj->vmobjlock);
 	uao_detach_locked(uobj);
 }
 
@@ -635,13 +626,11 @@ uao_detach_locked(struct uvm_object *uobj)
  	 * detaching from kernel_object is a noop.
  	 */
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj)) {
-		simple_unlock(&uobj->vmobjlock);
 		return;
 	}
 
 	uobj->uo_refs--;				/* drop ref! */
 	if (uobj->uo_refs) {				/* still more refs? */
-		simple_unlock(&uobj->vmobjlock);
 		return;
 	}
 
@@ -664,7 +653,6 @@ uao_detach_locked(struct uvm_object *uobj)
 			uvm_unlock_pageq();
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 			    "uao_det", 0);
-			simple_lock(&uobj->vmobjlock);
 			uvm_lock_pageq();
 			continue;
 		}
@@ -747,7 +735,6 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
 			UVM_UNLOCK_AND_WAIT(pp, &uobj->vmobjlock, 0,
 			    "uaoflsh", 0);
-			simple_lock(&uobj->vmobjlock);
 			curoff -= PAGE_SIZE;
 			continue;
 		}
@@ -971,9 +958,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
-					simple_unlock(&uobj->vmobjlock);
 					uvm_wait("uao_getpage");
-					simple_lock(&uobj->vmobjlock);
 					/* goto top of pps while loop */
 					continue;	
 				}
@@ -996,7 +981,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				atomic_setbits_int(&ptmp->pg_flags, PG_WANTED);
 				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock,
 				    FALSE, "uao_get", 0);
-				simple_lock(&uobj->vmobjlock);
 				continue;	/* goto top of pps while loop */
 			}
 			
@@ -1038,9 +1022,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 * page in the swapped-out page.
 			 * unlock object for i/o, relock when done.
 			 */
-			simple_unlock(&uobj->vmobjlock);
 			rv = uvm_swap_get(ptmp, swslot, PGO_SYNCIO);
-			simple_lock(&uobj->vmobjlock);
 
 			/*
 			 * I/O done.  check for errors.
@@ -1067,7 +1049,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				uvm_pagefree(ptmp);
 				uvm_unlock_pageq();
 
-				simple_unlock(&uobj->vmobjlock);
 				return (rv);
 			}
 		}
@@ -1094,7 +1075,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  	 * finally, unlock object and return.
  	 */
 
-	simple_unlock(&uobj->vmobjlock);
 	return(VM_PAGER_OK);
 }
 
@@ -1132,28 +1112,12 @@ uao_swap_off(int startslot, int endslot)
 	 * walk the list of all aobjs.
 	 */
 
-restart:
 	mtx_enter(&uao_list_lock);
 
 	for (aobj = LIST_FIRST(&uao_list);
 	     aobj != NULL;
 	     aobj = nextaobj) {
 		boolean_t rv;
-
-		/*
-		 * try to get the object lock,
-		 * start all over if we fail.
-		 * most of the time we'll get the aobj lock,
-		 * so this should be a rare case.
-		 */
-		if (!simple_lock_try(&aobj->u_obj.vmobjlock)) {
-			mtx_leave(&uao_list_lock);
-			if (prevaobj) {
-				uao_detach_locked(&prevaobj->u_obj);
-				prevaobj = NULL;
-			}
-			goto restart;
-		}
 
 		/*
 		 * add a ref to the aobj so it doesn't disappear
@@ -1301,11 +1265,6 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	rv = uao_get(&aobj->u_obj, pageidx << PAGE_SHIFT,
 		     &pg, &npages, 0, VM_PROT_READ|VM_PROT_WRITE, 0, 0);
 	/* unlocked: aobj */
-
-	/*
-	 * relock and finish up.
-	 */
-	simple_lock(&aobj->u_obj.vmobjlock);
 
 	switch (rv) {
 	case VM_PAGER_OK:

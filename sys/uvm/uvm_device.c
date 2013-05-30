@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.40 2011/07/03 18:34:14 oga Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.41 2013/05/30 15:17:59 tedu Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -180,9 +180,7 @@ udv_attach(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
 			 * bump reference count, unhold, return.
 			 */
 
-			simple_lock(&lcv->u_obj.vmobjlock);
 			lcv->u_obj.uo_refs++;
-			simple_unlock(&lcv->u_obj.vmobjlock);
 
 			mtx_enter(&udv_lock);
 			if (lcv->u_flags & UVM_DEVICE_WANTED)
@@ -251,9 +249,7 @@ static void
 udv_reference(struct uvm_object *uobj)
 {
 
-	simple_lock(&uobj->vmobjlock);
 	uobj->uo_refs++;
-	simple_unlock(&uobj->vmobjlock);
 }
 
 /*
@@ -273,10 +269,8 @@ udv_detach(struct uvm_object *uobj)
 	 * loop until done
 	 */
 again:
-	simple_lock(&uobj->vmobjlock);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
-		simple_unlock(&uobj->vmobjlock);
 		return;
 	}
 	KASSERT(uobj->uo_npages == 0 && RB_EMPTY(&uobj->memt));
@@ -292,7 +286,6 @@ again:
 		 * lock interleaving. -- this is ok in this case since the
 		 * locks are both IPL_NONE
 		 */
-		simple_unlock(&uobj->vmobjlock);
 		msleep(udv, &udv_lock, PVM | PNORELOCK, "udv_detach", 0);
 		goto again;
 	}
@@ -305,7 +298,6 @@ again:
 	if (udv->u_flags & UVM_DEVICE_WANTED)
 		wakeup(udv);
 	mtx_leave(&udv_lock);
-	simple_unlock(&uobj->vmobjlock);
 	free(udv, M_TEMP);
 }
 
