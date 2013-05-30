@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.9 2011/01/10 11:58:39 claudio Exp $ */
+/*	$OpenBSD: ldp.h,v 1.10 2013/05/30 16:14:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -31,13 +31,13 @@
 
 #define LDP_MAX_LEN		4096
 
-#define INFINITE_TMR		(-1)
 #define LINK_DFLT_HOLDTIME	15
 #define TARGETED_DFLT_HOLDTIME	45
 
 #define DEFAULT_HOLDTIME	15
 #define MIN_HOLDTIME		1
 #define MAX_HOLDTIME		0xffff
+#define	INFINITE_HOLDTIME	0xffff
 
 #define DEFAULT_KEEPALIVE	180
 #define MIN_KEEPALIVE		1
@@ -94,7 +94,6 @@ struct ldp_hdr {
 } __packed;
 
 #define	LDP_HDR_SIZE		10
-#define	INFINITE_HOLDTIME	0xffff
 
 /* TLV record */
 struct tlv {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.12 2011/03/12 01:57:13 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.13 2013/05/30 16:14:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -136,21 +136,14 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		/* set neighbor parameters */
 		nbr->hello_type = flags;
 
-		if (holdtime == 0) {
-			/* XXX: lacks support for targeted hellos */
-			if (iface->holdtime < LINK_DFLT_HOLDTIME)
-				nbr->holdtime = iface->holdtime;
-			else
-				nbr->holdtime = LINK_DFLT_HOLDTIME;
-		} else if (holdtime == INFINITE_HOLDTIME) {
-			/* No timeout for this neighbor */
+		/* XXX: lacks support for targeted hellos */
+		if (holdtime == 0)
+			holdtime = LINK_DFLT_HOLDTIME;
+
+		if (iface->holdtime < holdtime)
 			nbr->holdtime = iface->holdtime;
-		} else {
-			if (iface->holdtime < holdtime)
-				nbr->holdtime = iface->holdtime;
-			else
-				nbr->holdtime = holdtime;
-		}
+		else
+			nbr->holdtime = holdtime;
 	}
 
 	nbr_fsm(nbr, NBR_EVT_HELLO_RCVD);
