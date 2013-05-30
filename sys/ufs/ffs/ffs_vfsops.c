@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.136 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.137 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1235,6 +1235,9 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	dev_t dev;
 	int error;
 
+	if (ino > (ufsino_t)-1)
+		panic("ffs_vget: alien ino_t %llu", (unsigned long long)ino);
+
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 retry:
@@ -1372,7 +1375,8 @@ ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	ufhp = (struct ufid *)fhp;
 	fs = VFSTOUFS(mp)->um_fs;
-	if (ufhp->ufid_ino < ROOTINO ||
+	if (ufhp->ufid_len != sizeof(*ufhp) ||
+	    ufhp->ufid_ino < ROOTINO ||
 	    ufhp->ufid_ino >= fs->fs_ncg * fs->fs_ipg)
 		return (ESTALE);
 	return (ufs_fhtovp(mp, ufhp, vpp));

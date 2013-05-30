@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.27 2011/09/18 23:20:28 bluhm Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.28 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	struct vnode *pvp;
 	struct m_ext2fs *fs;
 	struct inode *ip;
-	ino_t ino, ipref;
+	ufsino_t ino, ipref;
 	int cg, error;
 	
 	*vpp = NULL;
@@ -152,7 +152,7 @@ ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	else
 		cg = ino_to_cg(fs, pip->i_number);
 	ipref = cg * fs->e2fs.e2fs_ipg + 1;
-	ino = (ino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
+	ino = (ufsino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
 	error = VFS_VGET(pvp->v_mount, ino, vpp);
@@ -506,7 +506,7 @@ ext2fs_blkfree(struct inode *ip, int32_t bno)
  * The specified inode is placed back in the free map.
  */
 int
-ext2fs_inode_free(struct inode *pip, ino_t ino, mode_t mode)
+ext2fs_inode_free(struct inode *pip, ufsino_t ino, mode_t mode)
 {
 	struct m_ext2fs *fs;
 	char *ibp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.16 2010/07/19 21:13:43 deraadt Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.17 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ ufs_ihashinit(void)
  * to it. If it is in core, return it, even if it is locked.
  */
 struct vnode *
-ufs_ihashlookup(dev_t dev, ino_t inum)
+ufs_ihashlookup(dev_t dev, ufsino_t inum)
 {
         struct inode *ip;
 
@@ -84,7 +84,7 @@ ufs_ihashlookup(dev_t dev, ino_t inum)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-ufs_ihashget(dev_t dev, ino_t inum)
+ufs_ihashget(dev_t dev, ufsino_t inum)
 {
 	struct proc *p = curproc;
 	struct inode *ip;
@@ -110,10 +110,10 @@ loop:
 int
 ufs_ihashins(struct inode *ip)
 {
-	struct inode *curip;
-	struct ihashhead *ipp;
-	dev_t  dev = ip->i_dev;
-	ino_t  inum = ip->i_number;
+	struct   inode *curip;
+	struct   ihashhead *ipp;
+	dev_t    dev = ip->i_dev;
+	ufsino_t inum = ip->i_number;
 
 	/* lock the inode, then put it on the appropriate hash list */
 	lockmgr(&ip->i_lock, LK_EXCLUSIVE, NULL);

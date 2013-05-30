@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.32 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.33 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -99,8 +99,8 @@ int ufs_getlbns(struct vnode *, daddr64_t, struct indir *, int *);
 
 /* ufs_ihash.c */
 void ufs_ihashinit(void);
-struct vnode *ufs_ihashlookup(dev_t, ino_t);
-struct vnode *ufs_ihashget(dev_t, ino_t);
+struct vnode *ufs_ihashlookup(dev_t, ufsino_t);
+struct vnode *ufs_ihashget(dev_t, ufsino_t);
 int ufs_ihashins(struct inode *);
 void ufs_ihashrem(struct inode *);
 
@@ -117,8 +117,8 @@ int ufs_direnter(struct vnode *, struct vnode *, struct direct *,
 		      struct componentname *, struct buf *);
 int ufs_dirremove(struct vnode *, struct inode *, int, int);
 int ufs_dirrewrite(struct inode *, struct inode *,
-		        ino_t, int, int);
-int ufs_dirempty(struct inode *, ino_t, struct ucred *);
+		        ufsino_t, int, int);
+int ufs_dirempty(struct inode *, ufsino_t, struct ucred *);
 int ufs_checkpath(struct inode *, struct inode *, struct ucred *);
 
 /* ufs_vfsops.c */

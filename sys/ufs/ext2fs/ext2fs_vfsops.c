@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.66 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.67 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -809,6 +809,10 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct vnode *vp;
 	dev_t dev;
 	int error;
+
+	if (ino > (ufsino_t)-1)
+		panic("ext2fs_vget: alien ino_t %llu",
+		    (unsigned long long)ino);
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;

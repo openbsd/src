@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.38 2010/08/20 22:29:52 matthew Exp $	*/
+/*	$OpenBSD: inode.h,v 1.39 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 
+
 /*
  * Per-filesystem inode extensions.
  */
@@ -68,7 +69,7 @@ struct inode {
 	struct	ufsmount *i_ump;
 	u_int32_t i_flag;	/* flags, see below */
 	dev_t	  i_dev;	/* Device associated with the inode. */
-	ino_t	  i_number;	/* The identity of the inode. */
+	ufsino_t  i_number;	/* The identity of the inode. */
 	int       i_effnlink;   /* i_nlink when I/O completes */
 
 	union {			/* Associated filesystem. */
@@ -92,7 +93,7 @@ struct inode {
 	doff_t	  i_endoff;	/* End of useful stuff in directory. */
 	doff_t	  i_diroff;	/* Offset in dir, where we found last entry. */
 	doff_t	  i_offset;	/* Offset of free space in directory. */
-	ino_t	  i_ino;	/* Inode number of found directory. */
+	ufsino_t  i_ino;	/* Inode number of found directory. */
 	u_int32_t i_reclen;	/* Size of found directory entry. */
 	/*
 	 * Inode extensions
@@ -132,7 +133,7 @@ struct inode_vtbl {
 	    int waitfor);
 	int (* iv_inode_alloc)(struct inode *, mode_t mode, 
 	    struct ucred *, struct vnode **);
-	int (* iv_inode_free)(struct inode *, ino_t ino, mode_t mode);
+	int (* iv_inode_free)(struct inode *, ufsino_t ino, mode_t mode);
 	int (* iv_buf_alloc)(struct inode *, off_t, int, struct ucred *,
 	    int, struct buf **);
 	int (* iv_bufatoff)(struct inode *, off_t offset, char **res,
@@ -364,7 +365,7 @@ struct indir {
 struct ufid {
 	u_int16_t ufid_len;	/* Length of structure. */
 	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
-	ino_t	  ufid_ino;	/* File number (ino). */
+	ufsino_t  ufid_ino;	/* File number (ino). */
 	int32_t	  ufid_gen;	/* Generation number. */
 };
 #endif /* _KERNEL */

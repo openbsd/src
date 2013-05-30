@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.17 2007/06/02 01:32:04 pedro Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.18 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -41,12 +41,18 @@
 #define _UFS_DINODE_H_
 
 /*
+ * UFS directories use 32bit inode numbers internally, regardless
+ * of what the system on top of it uses.
+ */
+typedef u_int32_t	ufsino_t;
+
+/*
  * The root inode is the root of the file system.  Inode 0 can't be used for
  * normal purposes and historically bad blocks were linked to inode 1, thus
  * the root inode is 2.  (Inode 1 is no longer used for this purpose, however
  * numerous dump tapes make this assumption, so we are stuck with it).
  */
-#define	ROOTINO	((ino_t)2)
+#define	ROOTINO	((ufsino_t)2)
 
 /*
  * A dinode contains all the meta-data associated with a UFS file.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.93 2013/04/23 20:42:38 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.94 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ daddr64_t	ffs_alloccg(struct inode *, int, daddr64_t, int);
 struct buf *	ffs_cgread(struct fs *, struct inode *, int);
 daddr64_t	ffs_alloccgblk(struct inode *, struct buf *, daddr64_t);
 daddr64_t	ffs_clusteralloc(struct inode *, int, daddr64_t, int);
-ino_t		ffs_dirpref(struct inode *);
+ufsino_t	ffs_dirpref(struct inode *);
 daddr64_t	ffs_fragextend(struct inode *, int, daddr64_t, int, int);
 daddr64_t	ffs_hashalloc(struct inode *, int, daddr64_t, int,
     daddr64_t (*)(struct inode *, int, daddr64_t, int));
@@ -834,7 +834,7 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	struct vnode *pvp = ITOV(pip);
 	struct fs *fs;
 	struct inode *ip;
-	ino_t ino, ipref;
+	ufsino_t ino, ipref;
 	int cg, error;
 	
 	*vpp = NULL;
@@ -861,7 +861,7 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 		if (fs->fs_contigdirs[cg] > 0)
 			fs->fs_contigdirs[cg]--;
 	}
-	ino = (ino_t)ffs_hashalloc(pip, cg, ipref, mode, ffs_nodealloccg);
+	ino = (ufsino_t)ffs_hashalloc(pip, cg, ipref, mode, ffs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
 	error = VFS_VGET(pvp->v_mount, ino, vpp);
@@ -923,7 +923,7 @@ noinodes:
  * If we allocate a first level directory then force allocation
  * in another cylinder group.
  */
-ino_t
+ufsino_t
 ffs_dirpref(struct inode *pip)
 {
 	struct fs *fs;
@@ -1037,7 +1037,7 @@ ffs_dirpref(struct inode *pip)
 		if (fs->fs_cs(fs, cg).cs_nifree >= avgifree)
 			goto end;
 end:
-	return ((ino_t)(fs->fs_ipg * cg));
+	return ((ufsino_t)(fs->fs_ipg * cg));
 }
 
 /*
@@ -1932,7 +1932,7 @@ ffs_blkfree(struct inode *ip, daddr64_t bno, long size)
 }
 
 int
-ffs_inode_free(struct inode *pip, ino_t ino, mode_t mode)
+ffs_inode_free(struct inode *pip, ufsino_t ino, mode_t mode)
 {
 	struct vnode *pvp = ITOV(pip);
 
@@ -1949,7 +1949,7 @@ ffs_inode_free(struct inode *pip, ino_t ino, mode_t mode)
  * The specified inode is placed back in the free map.
  */
 int
-ffs_freefile(struct inode *pip, ino_t ino, mode_t mode)
+ffs_freefile(struct inode *pip, ufsino_t ino, mode_t mode)
 {
 	struct fs *fs;
 	struct cg *cgp;

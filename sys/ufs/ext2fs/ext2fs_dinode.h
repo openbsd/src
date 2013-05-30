@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.12 2010/02/16 08:24:13 otto Exp $	*/
+/*	$OpenBSD: ext2fs_dinode.h,v 1.13 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
  */
 
 #include <sys/stat.h>
+#include <ufs/ufs/dinode.h>	/* for ufsino_t */
 
 /*
  * The root inode is the root of the file system.  Inode 0 can't be used for
@@ -47,9 +48,9 @@
  * the root inode is 2.
  * Inode 3 to 10 are reserved in ext2fs.
  */
-#define	EXT2_ROOTINO ((ino_t)2)
-#define EXT2_RESIZEINO ((ino_t)7)
-#define EXT2_FIRSTINO ((ino_t)11)
+#define	EXT2_ROOTINO ((ufsino_t)2)
+#define EXT2_RESIZEINO ((ufsino_t)7)
+#define EXT2_FIRSTINO ((ufsino_t)11)
 
 /*
  * A dinode contains all the meta-data associated with a UFS file.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.37 2010/12/21 20:14:44 thib Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.38 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -105,8 +105,8 @@ int ffs_realloccg(struct inode *, daddr64_t, daddr64_t, int, int ,
 		       struct ucred *, struct buf **, daddr64_t *);
 int ffs_reallocblks(void *);
 int ffs_inode_alloc(struct inode *, mode_t, struct ucred *, struct vnode **);
-int ffs_inode_free(struct inode *, ino_t, mode_t);
-int ffs_freefile(struct inode *, ino_t, mode_t);
+int ffs_inode_free(struct inode *, ufsino_t, mode_t);
+int ffs_freefile(struct inode *, ufsino_t, mode_t);
 
 int32_t ffs1_blkpref(struct inode *, daddr64_t, int, int32_t *);
 #ifdef FFS2
@@ -175,9 +175,9 @@ int   softdep_flushworklist(struct mount *, int *, struct proc *);
 int   softdep_flushfiles(struct mount *, int, struct proc *);
 void  softdep_update_inodeblock(struct inode *, struct buf *, int);
 void  softdep_load_inodeblock(struct inode *);
-void  softdep_freefile(struct vnode *, ino_t, mode_t);
+void  softdep_freefile(struct vnode *, ufsino_t, mode_t);
 void  softdep_setup_freeblocks(struct inode *, off_t);
-void  softdep_setup_inomapdep(struct buf *, struct inode *, ino_t);
+void  softdep_setup_inomapdep(struct buf *, struct inode *, ufsino_t);
 void  softdep_setup_blkmapdep(struct buf *, struct fs *, daddr64_t);
 void  softdep_setup_allocdirect(struct inode *, daddr64_t, daddr64_t,
             daddr64_t, long, long, struct buf *);

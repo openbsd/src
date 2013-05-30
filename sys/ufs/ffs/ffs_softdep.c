@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.117 2013/04/04 17:29:36 beck Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.118 2013/05/30 19:19:09 guenther Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -120,7 +120,7 @@ STATIC	void clear_remove(struct proc *);
 STATIC	void clear_inodedeps(struct proc *);
 STATIC	int flush_pagedep_deps(struct vnode *, struct mount *,
 	    struct diraddhd *);
-STATIC	int flush_inodedep_deps(struct fs *, ino_t);
+STATIC	int flush_inodedep_deps(struct fs *, ufsino_t);
 STATIC	int handle_written_filepage(struct pagedep *, struct buf *);
 STATIC  void diradd_inode_written(struct diradd *, struct inodedep *);
 STATIC	int handle_written_inodeblock(struct inodedep *, struct buf *);
@@ -158,7 +158,7 @@ STATIC	void allocdirect_merge(struct allocdirectlst *,
 STATIC	struct bmsafemap *bmsafemap_lookup(struct buf *);
 STATIC	int newblk_lookup(struct fs *, daddr64_t, int,
 	    struct newblk **);
-STATIC	int inodedep_lookup(struct fs *, ino_t, int, struct inodedep **);
+STATIC	int inodedep_lookup(struct fs *, ufsino_t, int, struct inodedep **);
 STATIC	int pagedep_lookup(struct inode *, daddr64_t, int, struct pagedep **);
 STATIC	void pause_timer(void *);
 STATIC	int request_cleanup(int, int);
@@ -1026,7 +1026,7 @@ STATIC struct sema inodedep_in_progress;
  * This routine must be called with splbio interrupts blocked.
  */
 STATIC int
-inodedep_lookup(struct fs *fs, ino_t inum, int flags,
+inodedep_lookup(struct fs *fs, ufsino_t inum, int flags,
     struct inodedep **inodedeppp)
 {
 	struct inodedep *inodedep;
@@ -1276,7 +1276,7 @@ softdep_mount(struct vnode *devvp, struct mount *mp, struct fs *fs,
 /* inode related to allocation */
 /* new inode number being allocated */
 void
-softdep_setup_inomapdep(struct buf *bp, struct inode *ip, ino_t newinum)
+softdep_setup_inomapdep(struct buf *bp, struct inode *ip, ufsino_t newinum)
 {
 	struct inodedep *inodedep;
 	struct bmsafemap *bmsafemap;
@@ -2219,7 +2219,7 @@ free_newdirblk(struct newdirblk *newdirblk)
  * done until the zero'ed inode has been written to disk.
  */
 void
-softdep_freefile(struct vnode *pvp, ino_t ino, mode_t mode)
+softdep_freefile(struct vnode *pvp, ufsino_t ino, mode_t mode)
 {
 	struct inode *ip = VTOI(pvp);
 	struct inodedep *inodedep;
@@ -3077,7 +3077,7 @@ handle_workitem_remove(struct dirrem *dirrem)
 	struct inodedep *inodedep;
 	struct vnode *vp;
 	struct inode *ip;
-	ino_t oldinum;
+	ufsino_t oldinum;
 	int error;
 
 	if ((error = VFS_VGET(dirrem->dm_mnt, dirrem->dm_oldinum, &vp)) != 0) {
@@ -4486,7 +4486,7 @@ softdep_fsync(struct vnode *vp)
 	struct fs *fs;
 	struct proc *p = CURPROC;		/* XXX */
 	int error, flushparent;
-	ino_t parentino;
+	ufsino_t parentino;
 	daddr64_t lbn;
 
 	ip = VTOI(vp);
@@ -4927,7 +4927,7 @@ loop:
  * Called with splbio blocked.
  */
 STATIC int
-flush_inodedep_deps(struct fs *fs, ino_t ino)
+flush_inodedep_deps(struct fs *fs, ufsino_t ino)
 {
 	struct inodedep *inodedep;
 	struct allocdirect *adp;
@@ -5033,7 +5033,7 @@ flush_pagedep_deps(struct vnode *pvp, struct mount *mp,
 	struct vnode *vp;
 	int gotit, error = 0;
 	struct buf *bp;
-	ino_t inum;
+	ufsino_t inum;
 
 	splassert(IPL_BIO);
 
@@ -5317,7 +5317,7 @@ clear_remove(struct proc *p)
 	struct mount *mp;
 	struct vnode *vp;
 	int error, cnt;
-	ino_t ino;
+	ufsino_t ino;
 
 	ACQUIRE_LOCK(&lk);
 	for (cnt = 0; cnt <= pagedep_hash; cnt++) {
@@ -5368,7 +5368,7 @@ clear_inodedeps(struct proc *p)
 	struct vnode *vp;
 	struct fs *fs;
 	int error, cnt;
-	ino_t firstino, lastino, ino;
+	ufsino_t firstino, lastino, ino;
 
 	ACQUIRE_LOCK(&lk);
 	/*

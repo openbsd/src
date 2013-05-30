@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.30 2013/03/28 03:29:44 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.31 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@ int ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *,
     struct vnode **);
 daddr64_t ext2fs_blkpref(struct inode *, int32_t, int, int32_t *);
 void ext2fs_blkfree(struct inode *, int32_t);
-int ext2fs_inode_free(struct inode *pip, ino_t ino, mode_t mode);
+int ext2fs_inode_free(struct inode *pip, ufsino_t ino, mode_t mode);
 
 /* ext2fs_balloc.c */
 int ext2fs_buf_alloc(struct inode *, daddr64_t, int, struct ucred *,
@@ -92,7 +92,7 @@ int ext2fs_direnter(struct inode *, struct vnode *,
 int ext2fs_dirremove(struct vnode *, struct componentname *);
 int ext2fs_dirrewrite(struct inode *, struct inode *,
 								struct componentname *);
-int ext2fs_dirempty(struct inode *, ino_t, struct ucred *);
+int ext2fs_dirempty(struct inode *, ufsino_t, struct ucred *);
 int ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
 
 /* ext2fs_subr.c */

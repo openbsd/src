@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.21 2011/05/28 19:50:52 miod Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.22 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -94,10 +94,10 @@ struct file {
 	daddr32_t	f_buf_blkno;	/* block number of data block */
 };
 
-static int	read_inode(ino_t, struct open_file *);
+static int	read_inode(ufsino_t, struct open_file *);
 static int	block_map(struct open_file *, daddr32_t, daddr32_t *);
 static int	buf_read_file(struct open_file *, char **, size_t *);
-static int	search_directory(char *, struct open_file *, ino_t *);
+static int	search_directory(char *, struct open_file *, ufsino_t *);
 static int	ufs_close_internal(struct file *);
 #ifdef COMPAT_UFS
 static void	ffs_oldfscompat(struct fs *);
@@ -107,7 +107,7 @@ static void	ffs_oldfscompat(struct fs *);
  * Read a new inode into a file structure.
  */
 static int
-read_inode(ino_t inumber, struct open_file *f)
+read_inode(ufsino_t inumber, struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
@@ -313,7 +313,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
  * i_number.
  */
 static int
-search_directory(char *name, struct open_file *f, ino_t *inumber_p)
+search_directory(char *name, struct open_file *f, ufsino_t *inumber_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	int namlen, length, rc;
@@ -332,7 +332,7 @@ search_directory(char *name, struct open_file *f, ino_t *inumber_p)
 		dp = (struct direct *)buf;
 		edp = (struct direct *)(buf + buf_size);
 		while (dp < edp) {
-			if (dp->d_ino == (ino_t)0)
+			if (dp->d_ino == 0)
 				goto next;
 #if BYTE_ORDER == LITTLE_ENDIAN
 			if (fp->f_fs->fs_maxsymlinklen <= 0)
@@ -361,7 +361,7 @@ int
 ufs_open(char *path, struct open_file *f)
 {
 	char namebuf[MAXPATHLEN+1], *cp, *ncp, *buf = NULL;
-	ino_t inumber, parent_inumber;
+	ufsino_t inumber, parent_inumber;
 	int rc, c, nlinks = 0;
 	struct file *fp;
 	size_t buf_size;
@@ -513,7 +513,7 @@ ufs_open(char *path, struct open_file *f)
 			if (*cp != '/')
 				inumber = parent_inumber;
 			else
-				inumber = (ino_t)ROOTINO;
+				inumber = ROOTINO;
 
 			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;
@@ -665,7 +665,7 @@ ufs_readdir(struct open_file *f, char *name)
 
 			dp = (struct direct *)buf;
 			edp = (struct direct *)(buf + buf_size);
-			while (dp < edp && dp->d_ino == (ino_t)0)
+			while (dp < edp && dp->d_ino == 0)
 				dp = (struct direct *)((char *)dp + dp->d_reclen);
 			fp->f_seekp += buf_size -
 			    ((u_int8_t *)edp - (u_int8_t *)dp);

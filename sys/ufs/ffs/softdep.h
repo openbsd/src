@@ -1,4 +1,4 @@
-/*	$OpenBSD: softdep.h,v 1.15 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: softdep.h,v 1.16 2013/05/30 19:19:09 guenther Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -191,7 +191,7 @@ struct pagedep {
 #	define	pd_state pd_list.wk_state /* check for multiple I/O starts */
 	LIST_ENTRY(pagedep) pd_hash;	/* hashed lookup */
 	struct	mount *pd_mnt;		/* associated mount point */
-	ino_t	pd_ino;			/* associated file */
+	ufsino_t	pd_ino;		/* associated file */
 	daddr64_t pd_lbn;		/* block within file */
 	struct	dirremhd pd_dirremhd;	/* dirrem's waiting for page */
 	struct	diraddhd pd_diraddhd[DAHASHSZ]; /* diradd dir entry updates */
@@ -250,7 +250,7 @@ struct inodedep {
 #	define	id_state id_list.wk_state /* inode dependency state */
 	LIST_ENTRY(inodedep) id_hash;	/* hashed lookup */
 	struct	fs *id_fs;		/* associated filesystem */
-	ino_t	id_ino;			/* dependent inode */
+	ufsino_t	id_ino;		/* dependent inode */
 	nlink_t	id_nlinkdelta;		/* saved effective link count */
 	union { /* Saved UFS1/UFS2 dinode contents */
 		struct ufs1_dinode *idu_savedino1;
@@ -417,7 +417,7 @@ struct freefrag {
 	struct	mount *ff_mnt;		/* associated mount point */
 	daddr64_t ff_blkno;		/* fragment physical block number */
 	long	ff_fragsize;		/* size of fragment being deleted */
-	ino_t	ff_inum;		/* owning inode number */
+	ufsino_t	ff_inum;	/* owning inode number */
 };
 
 /*
@@ -429,7 +429,7 @@ struct freefrag {
 struct freeblks {
 	struct	worklist fb_list;	/* id_inowait or delayed worklist */
 #	define	fb_state fb_list.wk_state /* inode and dirty block state */
-	ino_t	fb_previousinum;	/* inode of previous owner of blocks */
+	ufsino_t	fb_previousinum; /* inode of previous owner of blocks */
 	struct	vnode *fb_devvp;	/* filesystem device vnode */
 	struct	mount *fb_mnt;		/* associated mount point */
 	off_t	fb_oldsize;		/* previous file size */
@@ -449,7 +449,7 @@ struct freeblks {
 struct freefile {
 	struct	worklist fx_list;	/* id_inowait or delayed worklist */
 	mode_t	fx_mode;		/* mode of inode */
-	ino_t	fx_oldinum;		/* inum of the unlinked file */
+	ufsino_t	fx_oldinum;	/* inum of the unlinked file */
 	struct	vnode *fx_devvp;	/* filesystem device vnode */
 	struct	mount *fx_mnt;		/* associated mount point */
 };
@@ -496,7 +496,7 @@ struct diradd {
 #	define	da_state da_list.wk_state /* state of the new directory entry */
 	LIST_ENTRY(diradd) da_pdlist;	/* pagedep holding directory block */
 	doff_t	da_offset;		/* offset of new dir entry in dir blk */
-	ino_t	da_newinum;		/* inode number for the new dir entry */
+	ufsino_t	da_newinum;	/* inode number for the new dir entry */
 	union {
 	struct	dirrem *dau_previous;	/* entry being replaced in dir change */
 	struct	pagedep *dau_pagedep;	/* pagedep dependency for addition */
@@ -554,10 +554,10 @@ struct dirrem {
 #	define	dm_state dm_list.wk_state /* state of the old directory entry */
 	LIST_ENTRY(dirrem) dm_next;	/* pagedep's list of dirrem's */
 	struct	mount *dm_mnt;		/* associated mount point */
-	ino_t	dm_oldinum;		/* inum of the removed dir entry */
+	ufsino_t	dm_oldinum;	/* inum of the removed dir entry */
 	union {
 	struct	pagedep *dmu_pagedep;	/* pagedep dependency for remove */
-	ino_t	dmu_dirinum;		/* parent inode number (for rmdir) */
+	ufsino_t	dmu_dirinum;	/* parent inode number (for rmdir) */
 	} dm_un;
 };
 #define dm_pagedep dm_un.dmu_pagedep

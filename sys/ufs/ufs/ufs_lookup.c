@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.41 2011/09/18 23:20:28 bluhm Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.42 2013/05/30 19:19:09 guenther Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -1021,8 +1021,8 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
  * set up by a call to namei.
  */
 int
-ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
-    int isrmdir)
+ufs_dirrewrite(struct inode *dp, struct inode *oip, ufsino_t newinum,
+    int newtype, int isrmdir)
 {
 	struct buf *bp;
 	struct direct *ep;
@@ -1064,7 +1064,7 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
  * NB: does not handle corrupted directories.
  */
 int
-ufs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
+ufs_dirempty(struct inode *ip, ufsino_t parentino, struct ucred *cred)
 {
 	off_t off, m;
 	struct dirtemplate dbuf;
