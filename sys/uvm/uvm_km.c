@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.110 2013/05/30 16:39:26 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.111 2013/05/30 18:02:04 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -641,7 +641,7 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 		 * failed.  sleep for a while (on map)
 		 */
 
-		tsleep((caddr_t)map, PVM, "vallocwait", 0);
+		tsleep(map, PVM, "vallocwait", 0);
 	}
 	/*NOTREACHED*/
 }
