@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.46 2013/05/22 06:44:58 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.47 2013/05/30 16:53:22 tedu Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: May 22 2013 $
+.Dd $Mdocdate: May 30 2013 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -560,9 +560,7 @@ causes no pages to be allocated, only a virtual address.
 .Dv UVM_KMF_TRYLOCK
 causes
 .Fn uvm_km_kmemalloc
-to use
-.Fn simple_lock_try
-when locking maps.
+to only try and not sleep when locking maps.
 .Pp
 The
 .Fn uvm_km_valloc
@@ -610,7 +608,7 @@ bytes of memory in the kernel map, starting at address
 .Fa addr .
 .Fn uvm_km_free_wakeup
 calls
-.Fn thread_wakeup
+.Fn wakeup
 on the map before unlocking the map.
 .Sh ALLOCATION OF PHYSICAL MEMORY
 .nr nS 1
@@ -635,8 +633,7 @@ function allocates a page of memory at virtual address
 in either the object
 .Fa uobj
 or the anonymous memory
-.Fa anon ,
-which must be locked by the caller.
+.Fa anon .
 Only one of
 .Fa anon
 and
@@ -1040,8 +1037,6 @@ The structure and types whose names begin with
 .Dq vm_
 were named so UVM could coexist with BSD VM during the early
 development stages.
-They will be renamed to
-.Dq uvm_ .
 .Sh SEE ALSO
 .Xr getloadavg 3 ,
 .Xr kvm 3 ,
