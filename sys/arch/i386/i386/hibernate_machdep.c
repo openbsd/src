@@ -229,6 +229,8 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	 */
 	kern_start_4m_va = (paddr_t)&start & ~(PAGE_MASK_4M);
 	kern_end_4m_va = (paddr_t)&end & ~(PAGE_MASK_4M);
+
+	/* i386 kernels load at 2MB phys (on the 0th 4mb page) */
 	phys_page_number = 0;
 
 	for (page = kern_start_4m_va; page <= kern_end_4m_va;

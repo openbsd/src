@@ -296,7 +296,9 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	 */
 	kern_start_2m_va = (paddr_t)&start & ~(PAGE_MASK_2M);
 	kern_end_2m_va = (paddr_t)&end & ~(PAGE_MASK_2M);
-	phys_page_number = 0;
+
+	/* amd64 kernels load at 16MB phys (on the 8th 2mb page) */
+	phys_page_number = 8;
 
 	for (page = kern_start_2m_va; page <= kern_end_2m_va;
 	    page += NBPD_L2, phys_page_number++) {
