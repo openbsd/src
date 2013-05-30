@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.7 2013/04/08 13:17:03 bcallah Exp $
+dnl	$OpenBSD: install,v 1.8 2013/05/30 13:47:45 jasper Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -86,16 +86,16 @@ dnl OpenBSDInstallMBRPart2
 	displayed and you will be allowed to modify them, and add new
 	partitions.
 
-dnl	The setup will need two partitions, one 'OpenBSD' for the
-dnl	OpenBSD/MACHINE installation, and one 'U-Boot files' for the
-dnl	U-Boot scripts/bootloader.
-dnl	
-dnl	If you use the whole disk option, the install script
-dnl	will create a small 'U-Boot files' partition and use the rest of
-dnl	the disk for the OpenBSD installation.
-dnl
-dnl	After your OpenBSD MBR partition has been setup, the real
-dnl	partition setup can follow.
+	The setup will need two partitions, one 'OpenBSD' for the
+	OpenBSD/MACHINE installation, and one 'MSDOS' for the
+	U-Boot scripts/bootloader.
+	
+	If you use the whole disk option, the install script
+	will create a small 'MSDOS' partition and use the rest of
+	the disk for the OpenBSD installation.
+
+	After your OpenBSD MBR partition has been setup, the real
+	partition setup can follow.
 
 OpenBSDInstallPart5({:-
 	U-Boot partitions defined on the disk will usually show up as
