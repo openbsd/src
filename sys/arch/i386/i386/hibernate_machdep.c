@@ -314,3 +314,15 @@ hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 
 	return (0);
 }
+
+void
+hibernate_enable_intr_machdep(void)
+{
+	enable_intr();
+}
+
+void
+hibernate_disable_intr_machdep(void)
+{
+	disable_intr();
+}

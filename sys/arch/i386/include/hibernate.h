@@ -27,3 +27,5 @@ int	hibernate_suspend(void);
 void	hibernate_switch_stack_machdep(void);
 void	hibernate_resume_machdep(void);
 void	hibernate_activate_resume_pt_machdep(void);
+void	hibernate_enable_intr_machdep(void);
+void	hibernate_disable_intr_machdep(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.55 2013/05/30 16:00:54 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.56 2013/05/30 19:00:59 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1197,12 +1197,12 @@ hibernate_resume(void)
 		goto fail;
 
 	(void) splhigh();
-	disable_intr();
+	hibernate_disable_intr_machdep();
 	cold = 1;
 
 	if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0) {
 		cold = 0;
-		enable_intr();
+		hibernate_enable_intr_machdep();
 		goto fail;
 	}
 
