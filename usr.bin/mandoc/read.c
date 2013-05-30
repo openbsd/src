@@ -1,7 +1,7 @@
-/*	$Id: read.c,v 1.12 2012/11/19 22:28:35 schwarze Exp $ */
+/*	$Id: read.c,v 1.13 2013/05/30 03:51:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -317,6 +317,15 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 				break;
 			}
 
+			/*
+			 * Make sure we have space for at least
+			 * one backslash and one other character
+			 * and the trailing NUL byte.
+			 */
+
+			if (pos + 2 >= (int)ln.sz)
+				resize_buf(&ln, 256);
+
 			/* 
 			 * Warn about bogus characters.  If you're using
 			 * non-ASCII encoding, you're screwing your
@@ -333,8 +342,6 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 				mandoc_msg(MANDOCERR_BADCHAR, curp,
 						curp->line, pos, NULL);
 				i++;
-				if (pos >= (int)ln.sz)
-					resize_buf(&ln, 256);
 				ln.buf[pos++] = '?';
 				continue;
 			}
@@ -342,8 +349,6 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 			/* Trailing backslash = a plain char. */
 
 			if ('\\' != blk.buf[i] || i + 1 == (int)blk.sz) {
-				if (pos >= (int)ln.sz)
-					resize_buf(&ln, 256);
 				ln.buf[pos++] = blk.buf[i++];
 				continue;
 			}
@@ -385,10 +390,20 @@ mparse_buf_r(struct mparse *curp, struct buf blk, int start)
 				break;
 			}
 
-			/* Some other escape sequence, copy & cont. */
+			/* Catch escaped bogus characters. */
 
-			if (pos + 1 >= (int)ln.sz)
-				resize_buf(&ln, 256);
+			c = (unsigned char) blk.buf[i+1];
+
+			if ( ! (isascii(c) && 
+					(isgraph(c) || isblank(c)))) {
+				mandoc_msg(MANDOCERR_BADCHAR, curp,
+						curp->line, pos, NULL);
+				i += 2;
+				ln.buf[pos++] = '?';
+				continue;
+			}
+
+			/* Some other escape sequence, copy & cont. */
 
 			ln.buf[pos++] = blk.buf[i++];
 			ln.buf[pos++] = blk.buf[i++];
