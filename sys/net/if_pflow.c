@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.29 2013/05/03 15:33:47 florian Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.30 2013/05/30 20:20:58 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -566,7 +566,8 @@ void
 copy_flow_data(struct pflow_flow *flow1, struct pflow_flow *flow2,
     struct pf_state *st, int src, int dst)
 {
-	struct pf_state_key	*sk = st->key[PF_SK_WIRE];
+	struct pf_state_key	*sk = st->key[st->direction == PF_IN ?
+					PF_SK_WIRE : PF_SK_STACK];
 
 	flow1->src_ip = flow2->dest_ip = sk->addr[src].v4.s_addr;
 	flow1->src_port = flow2->dest_port = sk->port[src];
@@ -605,7 +606,8 @@ void
 copy_flow4_data(struct pflow_flow4 *flow1, struct pflow_flow4 *flow2,
     struct pf_state *st, struct pflow_softc *sc, int src, int dst)
 {
-	struct pf_state_key	*sk = st->key[PF_SK_WIRE];
+	struct pf_state_key	*sk = st->key[st->direction == PF_IN ?
+					PF_SK_WIRE : PF_SK_STACK];
 
 	flow1->src_ip = flow2->dest_ip = sk->addr[src].v4.s_addr;
 	flow1->src_port = flow2->dest_port = sk->port[src];
@@ -654,7 +656,9 @@ void
 copy_flow6_data(struct pflow_flow6 *flow1, struct pflow_flow6 *flow2,
     struct pf_state *st, struct pflow_softc *sc, int src, int dst)
 {
-	struct pf_state_key	*sk = st->key[PF_SK_WIRE];
+	struct pf_state_key	*sk = st->key[st->direction == PF_IN ?
+					PF_SK_WIRE : PF_SK_STACK];
+
 	bcopy(&sk->addr[src].v6, &flow1->src_ip, sizeof(flow1->src_ip));
 	bcopy(&sk->addr[src].v6, &flow2->dest_ip, sizeof(flow2->dest_ip));
 	flow1->src_port = flow2->dest_port = sk->port[src];
