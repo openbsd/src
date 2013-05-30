@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.10 2013/05/30 16:19:31 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.11 2013/05/30 16:22:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -51,7 +51,7 @@ struct {
 	int			new_state;
 } iface_fsm[] = {
     /* current state	event that happened	action to take	resulting state */
-    {IF_STA_DOWN,	IF_EVT_UP,		IF_ACT_STRT,	IF_STA_ACTIVE},
+    {IF_STA_DOWN,	IF_EVT_UP,		IF_ACT_STRT,	0},
     {IF_STA_LOOPBACK,	IF_EVT_DOWN,		IF_ACT_NOTHING,	IF_STA_DOWN},
     {IF_STA_ANY,	IF_EVT_DOWN,		IF_ACT_RST,	IF_STA_DOWN},
     {-1,		IF_EVT_NOTHING,		IF_ACT_NOTHING,	0},
@@ -248,7 +248,7 @@ if_act_start(struct iface *iface)
 	inet_aton(AllRouters, &addr);
 	if (if_join_group(iface, &addr))
 		return (-1);
-	iface->state = IF_STA_DOWN;
+	iface->state = IF_STA_ACTIVE;
 
 	/* hello timer needs to be started in any case */
 	if_start_hello_timer(iface);
