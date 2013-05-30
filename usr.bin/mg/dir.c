@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.22 2013/05/18 11:23:29 lum Exp $	*/
+/*	$OpenBSD: dir.c,v 1.23 2013/05/30 04:17:25 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -83,6 +83,13 @@ getcwdir(char *buf, size_t len)
 int
 makedir(int f, int n)
 {
+	return (do_makedir());
+}
+
+int
+do_makedir(void)
+{
+
 	struct stat	 sb;
 	int		 finished, ishere;
 	mode_t		 dir_mode, mode, oumask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.56 2013/05/29 19:16:48 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.57 2013/05/30 04:17:25 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -623,25 +623,16 @@ out:
 int
 d_create_directory(int f, int n)
 {
-	char	 tocreate[MAXPATHLEN], *bufp;
-	size_t  off;
+	int ret;
 	struct buffer	*bp;
 
-	off = strlcpy(tocreate, curbp->b_fname, sizeof(tocreate));
-	if (off >= sizeof(tocreate) - 1)
-		return (FALSE);
-	if ((bufp = eread("Create directory: ", tocreate,
-	    sizeof(tocreate), EFDEF | EFNEW | EFCR)) == NULL)
-		return (ABORT);
-	else if (bufp[0] == '\0')
-		return (FALSE);
-	if (mkdir(tocreate, 0755) == -1) {
-		ewprintf("Creating directory: %s, %s", strerror(errno),
-		    tocreate);
-		return (FALSE);
-	}
+	ret = do_makedir();
+	if (ret != TRUE)
+		return(ret);
+
 	if ((bp = refreshbuffer(curbp)) == NULL)
 		return (FALSE);
+
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 

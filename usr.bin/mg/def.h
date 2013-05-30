@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.136 2013/05/22 19:23:45 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.137 2013/05/30 04:17:25 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -336,6 +336,7 @@ int		 changedir(int, int);
 int		 showcwdir(int, int);
 int		 getcwdir(char *, size_t);
 int		 makedir(int, int);
+int		 do_makedir(void);
 
 /* dired.c */
 struct buffer	*dired_(char *);
