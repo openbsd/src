@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.34 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.35 2013/05/30 20:11:06 guenther Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -680,7 +680,7 @@ ntfs_vptofh(struct vnode *vp, struct fid *fhp)
 }
 
 int
-ntfs_vgetex(struct mount *mp, ino_t ino, u_int32_t attrtype, char *attrname,
+ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
     u_long lkflags, u_long flags, struct proc *p, struct vnode **vpp) 
 {
 	int error;
@@ -794,6 +794,8 @@ ntfs_vgetex(struct mount *mp, ino_t ino, u_int32_t attrtype, char *attrname,
 int
 ntfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp) 
 {
+	if (ino > (ntfsino_t)-1)
+		panic("ntfs_vget: alien ino_t %llu", (unsigned long long)ino);
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
 }

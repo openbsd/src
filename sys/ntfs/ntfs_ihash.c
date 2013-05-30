@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.12 2013/01/14 02:41:03 jsing Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.13 2013/05/30 20:11:06 guenther Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ ntfs_nthashinit(void)
  * to it. If it is in core, return it, even if it is locked.
  */
 struct ntnode *
-ntfs_nthashlookup(dev_t dev, ino_t inum)
+ntfs_nthashlookup(dev_t dev, ntfsino_t inum)
 {
 	struct ntnode *ip;
 	struct nthashhead *ipp;

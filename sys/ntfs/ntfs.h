@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.14 2013/01/25 22:25:14 brad Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.15 2013/05/30 20:11:06 guenther Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -45,6 +45,12 @@ typedef u_int16_t wchar;
 #define	NTFS_BADCLUSINO		8
 #define	NTFS_UPCASEINO		10
 #define NTFS_MAXFILENAME	255
+
+/*
+ * UFS directories use 32bit inode numbers internally, regardless
+ * of what the system on top of it uses.
+ */
+typedef u_int32_t	ntfsino_t;
 
 struct fixuphdr {
 	u_int32_t       fh_magic;
