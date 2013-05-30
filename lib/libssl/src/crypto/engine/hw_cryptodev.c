@@ -625,7 +625,7 @@ viac3_xcrypt_cbc(int *cw, const void *src, void *dst, void *key, int rep,
 	 * Cannot simply place key into "b" register, since the compiler
 	 * -pic mode uses that register; so instead we must dance a little.
 	 */
-	__asm __volatile("pushl %%ebx; movl %0, %%ebx; rep xcrypt-cbc; popl %%ebx" :
+	__asm __volatile("pushl %%ebx; movl %0, %%ebx; rep xcryptcbc; popl %%ebx" :
 	    : "m" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 	    : "memory", "cc");
 #else
@@ -634,7 +634,7 @@ viac3_xcrypt_cbc(int *cw, const void *src, void *dst, void *key, int rep,
 	 * Clear bit 30 of EFLAGS.
 	 */
 	__asm __volatile("pushfq; popfq");
-	__asm __volatile("rep xcrypt-cbc" :
+	__asm __volatile("rep xcryptcbc" :
 	    : "b" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 	    : "memory", "cc");
 #endif
