@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.36 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.37 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -82,7 +82,6 @@ uvm_analloc(void)
  *
  * => caller must remove anon from its amap before calling (if it was in
  *	an amap).
- * => anon must be unlocked and have a zero reference count.
  * => we may lock the pageq's.
  */
 void
@@ -113,7 +112,7 @@ uvm_anfree(struct vm_anon *anon)
 	if (pg) {
 
 		/*
-		 * if the page is owned by a uobject (now locked), then we must 
+		 * if the page is owned by a uobject, then we must 
 		 * kill the loan on the page rather than free it.
 		 */
 
@@ -168,8 +167,6 @@ uvm_anfree(struct vm_anon *anon)
 
 /*
  * uvm_anon_dropswap:  release any swap resources from this anon.
- * 
- * => anon must be locked or have a reference count of 0.
  */
 void
 uvm_anon_dropswap(struct vm_anon *anon)
@@ -185,10 +182,8 @@ uvm_anon_dropswap(struct vm_anon *anon)
 /*
  * uvm_anon_lockloanpg: given a locked anon, lock its resident page
  *
- * => anon is locked by caller
- * => on return: anon is locked
+ * => on return:
  *		 if there is a resident page:
- *			if it has a uobject, it is locked by us
  *			if it is ownerless, we take over as owner
  *		 we return the resident page (it can change during
  *		 this function)
@@ -240,7 +235,6 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 /*
  * fetch an anon's page.
  *
- * => anon must be locked, and is unlocked upon return.
  * => returns TRUE if pagein was aborted due to lack of memory.
  */
 
@@ -251,12 +245,7 @@ uvm_anon_pagein(struct vm_anon *anon)
 	struct uvm_object *uobj;
 	int rv;
 
-	/* locked: anon */
 	rv = uvmfault_anonget(NULL, NULL, anon);
-	/*
-	 * if rv == VM_PAGER_OK, anon is still locked, else anon
-	 * is unlocked
-	 */
 
 	switch (rv) {
 	case VM_PAGER_OK:
@@ -301,10 +290,6 @@ uvm_anon_pagein(struct vm_anon *anon)
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();
-
-	/*
-	 * unlock the anon and we're done.
-	 */
 
 	return FALSE;
 }

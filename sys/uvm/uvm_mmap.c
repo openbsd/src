@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.92 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.93 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -264,7 +264,6 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 				/* Check the top layer first. */
 				anon = amap_lookup(&entry->aref,
 				    start - entry->start);
-				/* Don't need to lock anon here. */
 				if (anon != NULL && anon->an_page != NULL) {
 					/*
 					 * Anon has the page for this entry

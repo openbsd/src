@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.h,v 1.16 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.17 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_anon.h,v 1.13 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
@@ -45,12 +45,11 @@
  */
 
 struct vm_anon {
-	struct vm_page *an_page;	/* if in RAM [an_lock] */
-	int an_ref;			/* reference count [an_lock] */
+	struct vm_page *an_page;	/* if in RAM */
+	int an_ref;			/* reference count */
 
 	/*
-	 * Drum swap slot # (if != 0) [an_lock or not, if we hold an_page
-	 * PG_BUSY]
+	 * Drum swap slot # (if != 0) [if we hold an_page, PG_BUSY]
 	 */
 	int an_swslot;
 };

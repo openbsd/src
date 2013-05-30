@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.49 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.50 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -431,8 +431,6 @@ void		uvm_unmap_remove(struct vm_map*, vaddr_t, vaddr_t,
  *
  *	vm_map_unbusy: clear busy status on a map.
  *
- * Note that "intrsafe" maps use only exclusive, spin locks.  We simply
- * use the sleep lock's interlock for this.
  */
 
 #ifdef _KERNEL

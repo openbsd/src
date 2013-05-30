@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.49 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.50 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct uvm {
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
-	/* Lock order: object lock,  pageqlock, then fpageqlock. */
+	/* Lock order: pageqlock, then fpageqlock. */
 	struct mutex fpageqlock;	/* lock for free page q  + pdaemon */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
 	boolean_t page_idle_zero;	/* TRUE if we should try to zero

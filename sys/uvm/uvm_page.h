@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.49 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.50 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -90,9 +90,8 @@
  *	and offset to which this page belongs (for pageout),
  *	and sundry status bits.
  *
- *	Fields in this structure are locked either by the lock on the
- *	object that the page belongs to (O) or by the lock on the page
- *	queues (P) [or both].
+ *	Fields in this structure are possibly locked by the lock on the page
+ *	queues (P).
  */
 
 #include <uvm/uvm_extern.h>
@@ -102,20 +101,20 @@ TAILQ_HEAD(pglist, vm_page);
 struct vm_page {
 	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
 						 * queue or free list (P) */
-	RB_ENTRY(vm_page)	objt;		/* object tree (O)*/
+	RB_ENTRY(vm_page)	objt;		/* object tree */
 
-	struct vm_anon		*uanon;		/* anon (O,P) */
-	struct uvm_object	*uobject;	/* object (O,P) */
-	voff_t			offset;		/* offset into object (O,P) */
+	struct vm_anon		*uanon;		/* anon (P) */
+	struct uvm_object	*uobject;	/* object (P) */
+	voff_t			offset;		/* offset into object (P) */
 
-	u_int			pg_flags;	/* object flags [O or P] */
+	u_int			pg_flags;	/* object flags [P] */
 
-	u_int			pg_version;	/* version count [O] */
+	u_int			pg_version;	/* version count */
 	u_int			wire_count;	/* wired down map refs [P] */
 
 	u_int			loan_count;	/* number of active loans
-						 * to read: [O or P]
-						 * to modify: [O _and_ P] */
+						 * to read: [P]
+						 * to modify: [P] */
 	paddr_t			phys_addr;	/* physical address of page */
 	psize_t			fpgsz;		/* free page range size */
 
@@ -137,7 +136,6 @@ struct vm_page {
 
 /*
  * locking rules:
- *   PG_ ==> locked by object lock
  *   PQ_ ==> lock by page queue lock 
  *   PQ_FREE is locked by free queue lock and is mutex with all other PQs
  *   pg_flags may only be changed using the atomic operations.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.77 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.78 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -138,7 +138,6 @@ uvn_init(void)
  * the "accessprot" tells the max access the attaching thread wants to
  * our pages.
  *
- * => caller must _not_ already be holding the lock on the uvm_object.
  * => in fact, nothing should be locked so that we can sleep here.
  * => note that uvm_object is first thing in vnode structure, so their
  *    pointers are equiv.
@@ -173,7 +172,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	}
 
 	/*
-	 * now we have lock and uvn must not be in a blocked state.
+	 * now uvn must not be in a blocked state.
 	 * first check to see if it is already active, in which case
 	 * we can bump the reference count, check to see if we need to
 	 * add it to the writeable list, and then return.
@@ -194,7 +193,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 			uvn->u_flags |= UVM_VNODE_WRITEABLE;
 		}
 
-		/* unlock and return */
 		return (&uvn->u_obj);
 	}
 
@@ -229,8 +227,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
 	}
-
-	/* relock object */
 
 	if (result != 0) {
 		if (uvn->u_flags & UVM_VNODE_WANTED)
@@ -281,9 +277,8 @@ uvn_attach(void *arg, vm_prot_t accessprot)
  *
  * duplicate a reference to a VM object.  Note that the reference
  * count must already be at least one (the passed in reference) so
- * there is no chance of the uvn being killed or locked out here.
+ * there is no chance of the uvn being killed out here.
  *
- * => caller must call with object unlocked.
  * => caller must be using the same accessprot as was used at attach time
  */
 
@@ -310,7 +305,7 @@ uvn_reference(struct uvm_object *uobj)
  *
  * remove a reference to a VM object.
  *
- * => caller must call with object unlocked and map locked.
+ * => caller must call with map locked.
  * => this starts the detach process, but doesn't have to finish it
  *    (async i/o could still be pending).
  */
@@ -446,7 +441,7 @@ uvm_vnp_terminate(struct vnode *vp)
 	int oldflags;
 
 	/*
-	 * lock object and check if it is valid
+	 * check if it is valid
 	 */
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0) {
 		return;
@@ -483,8 +478,7 @@ uvm_vnp_terminate(struct vnode *vp)
 
 	/*
 	 * block the uvn by setting the dying flag, and then flush the
-	 * pages.  (note that flush may unlock object while doing I/O, but
-	 * it will re-lock it before it returns control here).
+	 * pages.
 	 *
 	 * also, note that we tell I/O that we are already VOP_LOCK'd so
 	 * that uvn_io doesn't attempt to VOP_LOCK again.
@@ -557,9 +551,7 @@ uvm_vnp_terminate(struct vnode *vp)
 	}
 
 	if (oldflags & UVM_VNODE_WANTED)
-		wakeup(uvn);		/* object lock still held */
-
-
+		wakeup(uvn);
 }
 
 /*
@@ -591,7 +583,6 @@ uvm_vnp_terminate(struct vnode *vp)
  * => called with pageq's locked by the daemon.
  *
  * general outline:
- * - "try" to lock object.   if fail, just return (will try again later)
  * - drop "u_nio" (this req is done!)
  * - if (object->iosync && u_naio == 0) { wakeup &uvn->u_naio }
  * - get "page" structures (atop?).
@@ -603,14 +594,10 @@ uvm_vnp_terminate(struct vnode *vp)
 /*
  * uvn_flush: flush pages out of a uvm object.
  *
- * => object should be locked by caller.   we may _unlock_ the object
- *	if (and only if) we need to clean a page (PGO_CLEANIT).
- *	we return with the object locked.
  * => if PGO_CLEANIT is set, we may block (due to I/O).   thus, a caller
  *	might want to unlock higher level resources (e.g. vm_map)
  *	before calling flush.
- * => if PGO_CLEANIT is not set, then we will neither unlock the object
- *	or block.
+ * => if PGO_CLEANIT is not set, then we will not block
  * => if PGO_ALLPAGE is set, then all pages in the object are valid targets
  *	for flushing.
  * => NOTE: we are allowed to lock the page queues, so the caller
@@ -680,8 +667,8 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	}
 
 	ppsp = NULL;		/* XXX: shut up gcc */
-	uvm_lock_pageq();	/* page queues locked */
-	/* locked: both page queues and uobj */
+	uvm_lock_pageq();
+	/* locked: both page queues */
 	for (curoff = start; curoff < stop; curoff += PAGE_SIZE) {
 		if ((pp = uvm_pagelookup(uobj, curoff)) == NULL)
 			continue;
@@ -749,12 +736,12 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 
 		/*
-		 * pp points to a page in the locked object that we are
+		 * pp points to a page in the object that we are
 		 * working on.  if it is !PG_CLEAN,!PG_BUSY and we asked
 		 * for cleaning (PGO_CLEANIT).  we clean it now.
 		 *
 		 * let uvm_pager_put attempted a clustered page out.
-		 * note: locked: uobj and page queues.
+		 * note: locked: page queues.
 		 */
 
 		atomic_setbits_int(&pp->pg_flags, PG_BUSY);
@@ -767,10 +754,8 @@ ReTry:
 		ppsp = pps;
 		npages = sizeof(pps) / sizeof(struct vm_page *);
 
-		/* locked: page queues, uobj */
 		result = uvm_pager_put(uobj, pp, &ppsp, &npages,
 			   flags | PGO_DOACTCLUST, start, stop);
-		/* unlocked: page queues, uobj */
 
 		/*
 		 * if we did an async I/O it is remotely possible for the
@@ -779,8 +764,6 @@ ReTry:
 		 * we only touch it when it won't be freed, RELEASED took care
 		 * of the rest.
 		 */
-
-		/* relock! */
 		uvm_lock_pageq();
 
 		/*
@@ -793,8 +776,8 @@ ReTry:
 		if (result == VM_PAGER_AGAIN) {
 			/*
 			 * it is unlikely, but page could have been released
-			 * while we had the object lock dropped.   we ignore
-			 * this now and retry the I/O.  we will detect and
+			 * we ignore this now and retry the I/O.
+			 * we will detect and
 			 * handle the released page after the syncio I/O
 			 * completes.
 			 */
@@ -834,8 +817,7 @@ ReTry:
 			ptmp = ppsp[lcv];
 
 			/*
-			 * verify the page didn't get moved while obj was
-			 * unlocked
+			 * verify the page didn't get moved
 			 */
 			if (result == VM_PAGER_PEND && ptmp->uobject != uobj)
 				continue;
@@ -843,13 +825,12 @@ ReTry:
 			/*
 			 * unbusy the page if I/O is done.   note that for
 			 * pending I/O it is possible that the I/O op
-			 * finished before we relocked the object (in
-			 * which case the page is no longer busy).
+			 * finished
+			 * (in which case the page is no longer busy).
 			 */
 
 			if (result != VM_PAGER_PEND) {
 				if (ptmp->pg_flags & PG_WANTED)
-					/* still holding object lock */
 					wakeup(ptmp);
 
 				atomic_clearbits_int(&ptmp->pg_flags,
@@ -910,7 +891,6 @@ ReTry:
 		uvn->u_flags &= ~(UVM_VNODE_IOSYNC|UVM_VNODE_IOSYNCWANTED);
 	}
 
-	/* return, with object locked! */
 	return(retval);
 }
 
@@ -920,8 +900,6 @@ ReTry:
  * we are about to do I/O in an object at offset.   this function is called
  * to establish a range of offsets around "offset" in which we can cluster
  * I/O.
- *
- * - currently doesn't matter if obj locked or not.
  */
 
 void
@@ -948,7 +926,6 @@ uvn_cluster(struct uvm_object *uobj, voff_t offset, voff_t *loffset,
  * uvn_put: flush page data to backing store.
  *
  * => prefer map unlocked (not required)
- * => object must be locked!   we will _unlock_ it before starting I/O.
  * => flags: PGO_SYNCIO -- use sync. I/O
  * => note: caller must set PG_CLEAN and pmap_clear_modify (if needed)
  * => XXX: currently we use VOP_READ/VOP_WRITE which are only sync.
@@ -960,9 +937,7 @@ uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
 {
 	int retval;
 
-	/* note: object locked */
 	retval = uvn_io((struct uvm_vnode*)uobj, pps, npages, flags, UIO_WRITE);
-	/* note: object unlocked */
 
 	return(retval);
 }
@@ -972,7 +947,6 @@ uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
  * uvn_get: get pages (synchronously) from backing store
  *
  * => prefer map unlocked (not required)
- * => object must be locked!  we will _unlock_ it before starting any I/O.
  * => flags: PGO_ALLPAGES: get all of the pages
  *           PGO_LOCKED: fault data structures are locked
  * => NOTE: offset is the offset of pps[0], _NOT_ pps[centeridx]
@@ -1029,7 +1003,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			}
 
 			/*
-			 * useful page: busy/lock it and plug it in our
+			 * useful page: busy it and plug it in our
 			 * result array
 			 */
 			atomic_setbits_int(&ptmp->pg_flags, PG_BUSY);
@@ -1060,13 +1034,12 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		if (done)
 			return(VM_PAGER_OK);		/* bingo! */
 		else
-			/* EEK!   Need to unlock and I/O */
 			return(VM_PAGER_UNLOCK);
 	}
 
 	/*
 	 * step 2: get non-resident or busy pages.
-	 * object is locked.   data structures are unlocked.
+	 * data structures are unlocked.
 	 *
 	 * XXX: because we can't do async I/O at this level we get things
 	 * page at a time (otherwise we'd chunk).   the VOP_READ() will do
@@ -1154,23 +1127,19 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 		/*
 		 * we have a "fake/busy/clean" page that we just allocated.  do
-		 * I/O to fill it with valid data.  note that object must be
-		 * locked going into uvn_io, but will be unlocked afterwards.
+		 * I/O to fill it with valid data.
 		 */
 
 		result = uvn_io((struct uvm_vnode *) uobj, &ptmp, 1,
 		    PGO_SYNCIO, UIO_READ);
 
 		/*
-		 * I/O done.   object is unlocked (by uvn_io).   because we used
-		 * syncio the result can not be PEND or AGAIN.   we must relock
-		 * and check for errors.
+		 * I/O done.  because we used syncio the result can not be
+		 * PEND or AGAIN.
 		 */
 
-		/* lock object.   check for errors.   */
 		if (result != VM_PAGER_OK) {
 			if (ptmp->pg_flags & PG_WANTED)
-				/* object lock still held */
 				wakeup(ptmp);
 
 			atomic_clearbits_int(&ptmp->pg_flags,
@@ -1200,10 +1169,6 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 	}	/* lcv loop */
 
-	/*
-	 * finally, unlock object and return.
-	 */
-
 	return (VM_PAGER_OK);
 }
 
@@ -1211,7 +1176,6 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  * uvn_io: do I/O to a vnode
  *
  * => prefer map unlocked (not required)
- * => object must be locked!   we will _unlock_ it before starting I/O.
  * => flags: PGO_SYNCIO -- use sync. I/O
  * => XXX: currently we use VOP_READ/VOP_WRITE which are only sync.
  *	[thus we never do async i/o!  see iodone comment]
@@ -1276,7 +1240,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 */
 
 	uvn->u_nio++;			/* we have an I/O in progress! */
-	/* NOTE: object now unlocked */
 	if (kva == 0)
 		kva = uvm_pagermapin(pps, npages,
 		    mapinflags | UVMPAGER_MAPIN_WAITOK);
@@ -1323,7 +1286,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 
 	if (result == 0) {
 		/* NOTE: vnode now locked! */
-
 		if (rw == UIO_READ)
 			result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
 		else
@@ -1361,18 +1323,14 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 * now clean up the object (i.e. drop I/O count)
 	 */
 
-	/* NOTE: object now locked! */
-
 	uvn->u_nio--;			/* I/O DONE! */
 	if ((uvn->u_flags & UVM_VNODE_IOSYNC) != 0 && uvn->u_nio == 0) {
 		wakeup(&uvn->u_nio);
 	}
-	/* NOTE: object now unlocked! */
 
 	/*
 	 * done!
 	 */
-
 	if (result == 0)
 		return(VM_PAGER_OK);
 	else

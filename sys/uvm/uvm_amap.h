@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.18 2009/03/25 20:00:18 oga Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.19 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ struct vm_amap {
 }
 
 /*
- * lock/unlock/refs/flags macros
+ * flags macros
  */
 
 #define amap_flags(AMAP)	((AMAP)->am_flags)

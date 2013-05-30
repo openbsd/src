@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.61 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.62 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ uvm_mk_pcluster(struct uvm_object *uobj, struct vm_page **pps, int *npages,
  *
  * => page queues must be locked by caller
  * => if page is not swap-backed, then "uobj" points to the object
- *	backing it.   this object should be locked by the caller.
+ *	backing it.
  * => if page is swap-backed, then "uobj" should be NULL.
  * => "pg" should be PG_BUSY (by caller), and !PG_CLEAN
  *    for swap-backed memory, "pg" can be NULL if there is no page
@@ -466,17 +466,10 @@ uvm_mk_pcluster(struct uvm_object *uobj, struct vm_page **pps, int *npages,
  * => return state:
  *	1. we return the VM_PAGER status code of the pageout
  *	2. we return with the page queues unlocked
- *	3. if (uobj != NULL) [!swap_backed] we return with
- *		uobj locked _only_ if PGO_PDFREECLUST is set 
- *		AND result != VM_PAGER_PEND.   in all other cases
- *		we return with uobj unlocked.   [this is a hack
- *		that allows the pagedaemon to save one lock/unlock
- *		pair in the !swap_backed case since we have to
- *		lock the uobj to drop the cluster anyway]
- *	4. on errors we always drop the cluster.   thus, if we return
+ *	3. on errors we always drop the cluster.   thus, if we return
  *		!PEND, !OK, then the caller only has to worry about
  *		un-busying the main page (not the cluster pages).
- *	5. on success, if !PGO_PDFREECLUST, we return the cluster
+ *	4. on success, if !PGO_PDFREECLUST, we return the cluster
  *		with all pages busy (caller must un-busy and check
  *		wanted/released flags).
  */
@@ -538,14 +531,10 @@ uvm_pager_put(struct uvm_object *uobj, struct vm_page *pg,
 
 ReTry:
 	if (uobj) {
-		/* object is locked */
 		result = uobj->pgops->pgo_put(uobj, ppsp, *npages, flags);
-		/* object is now unlocked */
 	} else {
-		/* nothing locked */
 		/* XXX daddr64_t -> int */
 		result = uvm_swap_put(swblk, ppsp, *npages, flags);
-		/* nothing locked */
 	}
 
 	/*
@@ -564,14 +553,11 @@ ReTry:
 	if (result == VM_PAGER_PEND || result == VM_PAGER_OK) {
 		if (result == VM_PAGER_OK && (flags & PGO_PDFREECLUST)) {
 			/*
-			 * drop cluster and relock object (only if I/O is
-			 * not pending)
+			 * drop cluster
 			 */
 			if (*npages > 1 || pg == NULL)
 				uvm_pager_dropcluster(uobj, pg, ppsp, npages,
 				    PGO_PDFREECLUST);
-			/* if (uobj): object still locked, as per
-			 * return-state item #3 */
 		}
 		return (result);
 	}
@@ -651,9 +637,7 @@ ReTry:
  * got an error, or, if PGO_PDFREECLUST we are un-busying the
  * cluster pages on behalf of the pagedaemon).
  *
- * => uobj, if non-null, is a non-swap-backed object that is 
- *	locked by the caller.   we return with this object still
- *	locked.
+ * => uobj, if non-null, is a non-swap-backed object
  * => page queues are not locked
  * => pg is our page of interest (the one we clustered around, can be null)
  * => ppsp/npages is our current cluster
@@ -682,13 +666,9 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 			continue;
 	
 		/*
-		 * if swap-backed, gain lock on object that owns page.  note
-		 * that PQ_ANON bit can't change as long as we are holding
+		 * Note that PQ_ANON bit can't change as long as we are holding
 		 * the PG_BUSY bit (so there is no need to lock the page
 		 * queues to test it).
-		 *
-		 * once we have the lock, dispose of the pointer to swap, if
-		 * requested
 		 */
 		if (!uobj) {
 			if (ppsp[lcv]->pg_flags & PQ_ANON) {
@@ -704,7 +684,6 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 
 		/* did someone want the page while we had it busy-locked? */
 		if (ppsp[lcv]->pg_flags & PG_WANTED) {
-			/* still holding obj lock */
 			wakeup(ppsp[lcv]);
 		}
 
@@ -757,7 +736,7 @@ uvm_aio_biodone(struct buf *bp)
 	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = uvm_aio_aiodone;
 
-	mtx_enter(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
+	mtx_enter(&uvm.aiodoned_lock);
 	TAILQ_INSERT_TAIL(&uvm.aio_done, bp, b_freelist);
 	wakeup(&uvm.aiodoned);
 	mtx_leave(&uvm.aiodoned_lock);

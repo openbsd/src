@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.124 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.125 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ static void uvm_pageremove(struct vm_page *);
 /*
  * uvm_pageinsert: insert a page in the object
  *
- * => caller must lock object
  * => caller must lock page queues XXX questionable
  * => call should have already set pg's object and offset pointers
  *    and bumped the version counter
@@ -164,7 +163,6 @@ uvm_pageinsert(struct vm_page *pg)
 /*
  * uvm_page_remove: remove page from object
  *
- * => caller must lock object
  * => caller must lock page queues
  */
 
@@ -940,8 +938,6 @@ uvm_pagerealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
  *
  * => return null if no pages free
  * => wake up pagedaemon if number of free pages drops below low water mark
- * => if obj != NULL, obj must be locked (to put in tree)
- * => if anon != NULL, anon must be locked (to put in anon)
  * => only one of obj or anon can be non-null
  * => caller must activate/deactivate page if it is not wired.
  */
@@ -1009,8 +1005,6 @@ uvm_pagealloc(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 
 /*
  * uvm_pagerealloc: reallocate a page from one object to another
- *
- * => both objects must be locked
  */
 
 void
@@ -1043,7 +1037,6 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
  *
  * => erase page's identity (i.e. remove from object)
  * => put page on free list
- * => caller must lock owning object (either anon or uvm_object)
  * => caller must lock page queues
  * => assumes all valid mappings of pg are gone
  */
@@ -1169,8 +1162,7 @@ uvm_pagefree(struct vm_page *pg)
  * uvm_page_unbusy: unbusy an array of pages.
  *
  * => pages must either all belong to the same object, or all belong to anons.
- * => if pages are object-owned, object must be locked.
- * => if pages are anon-owned, anons must be unlockd and have 0 refcount.
+ * => if pages are anon-owned, anons must have 0 refcount.
  */
 
 void
@@ -1219,7 +1211,6 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
  * => this is a debugging function that keeps track of who sets PG_BUSY
  *	and where they do it.   it can be used to track down problems
  *	such a process setting "PG_BUSY" and never releasing it.
- * => page's object [if any] must be locked
  * => if "tag" is NULL then we are releasing page ownership
  */
 void
@@ -1416,9 +1407,6 @@ PHYS_TO_VM_PAGE(paddr_t pa)
 
 /*
  * uvm_pagelookup: look up a page
- *
- * => caller should lock object to keep someone from pulling the page
- *	out from under it
  */
 struct vm_page *
 uvm_pagelookup(struct uvm_object *obj, voff_t off)
@@ -1547,9 +1535,6 @@ uvm_pageactivate(struct vm_page *pg)
 
 /*
  * uvm_pagezero: zero fill a page
- *
- * => if page is part of an object then the object should be locked
- *	to protect pg->flags.
  */
 void
 uvm_pagezero(struct vm_page *pg)
@@ -1560,9 +1545,6 @@ uvm_pagezero(struct vm_page *pg)
 
 /*
  * uvm_pagecopy: copy a page
- *
- * => if page is part of an object then the object should be locked
- *	to protect pg->flags.
  */
 void
 uvm_pagecopy(struct vm_page *src, struct vm_page *dst)

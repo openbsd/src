@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.63 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.64 2013/05/30 16:29:46 tedu Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -446,13 +446,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			}
 
 			/*
-			 * first we attempt to lock the object that this page
-			 * belongs to.  if our attempt fails we skip on to
-			 * the next page (no harm done).  it is important to
-			 * "try" locking the object as we are locking in the
-			 * wrong order (pageq -> object) and we don't want to
-			 * deadlock.
-			 *
 			 * the only time we expect to see an ownerless page
 			 * (i.e. a page with no uobject and !PQ_ANON) is if an
 			 * anon has loaned a page from a uvm_object and the
@@ -496,7 +489,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			}
 
 			/*
-			 * we now have the object and the page queues locked.
+			 * we now have the page queues locked.
 			 * the page is not busy.   if the page is clean we
 			 * can free it now and continue.
 			 */
@@ -698,19 +691,14 @@ uvmpd_scan_inactive(struct pglist *pglst)
 		 * with cluster pages at this level.
 		 *
 		 * note locking semantics of uvm_pager_put with PGO_PDFREECLUST:
-		 *  IN: locked: uobj (if !swap_backed), page queues
-		 * OUT: locked: uobj (if !swap_backed && result !=VM_PAGER_PEND)
-		 *     !locked: pageqs, uobj (if swap_backed || VM_PAGER_PEND)
-		 *
-		 * [the bit about VM_PAGER_PEND saves us one lock-unlock pair]
+		 *  IN: locked: page queues
+		 * OUT: locked: 
+		 *     !locked: pageqs
 		 */
 
-		/* locked: uobj (if !swap_backed), page queues */
 		uvmexp.pdpageouts++;
 		result = uvm_pager_put(swap_backed ? NULL : uobj, p,
 		    &ppsp, &npages, PGO_ALLPAGES|PGO_PDFREECLUST, start, 0);
-		/* locked: uobj (if !swap_backed && result != PEND) */
-		/* unlocked: pageqs, object (if swap_backed ||result == PEND) */
 
 		/*
 		 * if we did i/o to swap, zero swslot to indicate that we are
@@ -793,7 +781,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 
 			/* handle PG_WANTED now */
 			if (p->pg_flags & PG_WANTED)
-				/* still holding object lock */
 				wakeup(p);
 
 			atomic_clearbits_int(&p->pg_flags, PG_BUSY|PG_WANTED);
@@ -949,11 +936,8 @@ uvmpd_scan(void)
 	     p = nextpg) {
 		nextpg = TAILQ_NEXT(p, pageq);
 		if (p->pg_flags & PG_BUSY)
-			continue;	/* quick check before trying to lock */
+			continue;
 
-		/*
-		 * lock the page's owner.
-		 */
 		/* is page anon owned or ownerless? */
 		if ((p->pg_flags & PQ_ANON) || p->uobject == NULL) {
 			KASSERT(p->uanon != NULL);
