@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.49 2013/05/30 16:29:46 tedu Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.50 2013/05/30 16:39:26 tedu Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -714,8 +714,7 @@ ReStart:
 			 */
 			if (pg->pg_flags & PG_BUSY) {
 				atomic_setbits_int(&pg->pg_flags, PG_WANTED);
-				UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE,
-				    "cownow", 0);
+				UVM_WAIT(pg, FALSE, "cownow", 0);
 				goto ReStart;
 			}
 

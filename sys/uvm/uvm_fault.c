@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.67 2013/05/30 16:29:46 tedu Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.68 2013/05/30 16:39:26 tedu Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -341,14 +341,11 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 */
 			if (pg->uobject) {	/* owner is uobject ? */
 				uvmfault_unlockall(ufi, amap, NULL, anon);
-				UVM_UNLOCK_AND_WAIT(pg,
-				    &pg->uobject->vmobjlock,
-				    FALSE, "anonget1",0);
+				UVM_WAIT(pg, FALSE, "anonget1",0);
 			} else {
 				/* anon owns page */
 				uvmfault_unlockall(ufi, amap, NULL, NULL);
-				UVM_UNLOCK_AND_WAIT(pg,&anon->an_lock,0,
-				    "anonget2",0);
+				UVM_WAIT(pg, 0, "anonget2", 0);
 			}
 			/* ready to relock and try again */
 

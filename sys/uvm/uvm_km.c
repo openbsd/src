@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.109 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.110 2013/05/30 16:39:26 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -280,8 +280,7 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 		pp = uvm_pagelookup(uobj, curoff);
 		if (pp && pp->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
-			UVM_UNLOCK_AND_WAIT(pp, &uobj->vmobjlock, 0,
-			    "km_pgrm", 0);
+			UVM_WAIT(pp, 0, "km_pgrm", 0);
 			curoff -= PAGE_SIZE; /* loop back to us */
 			continue;
 		}

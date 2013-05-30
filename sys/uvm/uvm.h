@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.50 2013/05/30 16:29:46 tedu Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.51 2013/05/30 16:39:26 tedu Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -130,11 +130,10 @@ struct uvm {
 extern struct uvm uvm;
 
 /*
- * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... wrapper around the
- * interlocked tsleep() function.
+ * UVM_WAIT: wait... wrapper around the tsleep() function.
  */
 
-#define	UVM_UNLOCK_AND_WAIT(event, slock, intr, msg, timo)		\
+#define	UVM_WAIT(event, intr, msg, timo)		\
 do {									\
 	tsleep(event, PVM|PNORELOCK|(intr ? PCATCH : 0), msg, timo);	\
 } while (0)
