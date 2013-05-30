@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.115 2013/03/07 21:26:28 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.116 2013/05/30 20:29:27 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -269,6 +269,7 @@ void		 mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t,
 		     struct peer *);
 void		 mrt_dump_state(struct mrt *, u_int16_t, u_int16_t,
 		     struct peer *);
+void		 mrt_done(void *);
 
 /* parse.y */
 int	 parse_config(char *, struct bgpd_config *, struct mrt_head *,

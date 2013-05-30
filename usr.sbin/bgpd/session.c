@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.330 2013/05/30 10:13:58 sthen Exp $ */
+/*	$OpenBSD: session.c,v 1.331 2013/05/30 20:29:27 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2829,11 +2829,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 
 			memcpy(&xmrt, imsg.data, sizeof(struct mrt));
 			mrt = mrt_get(&mrthead, &xmrt);
-			if (mrt != NULL) {
-				mrt_clean(mrt);
-				LIST_REMOVE(mrt, entry);
-				free(mrt);
-			}
+			if (mrt != NULL)
+				mrt_done(mrt);
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:

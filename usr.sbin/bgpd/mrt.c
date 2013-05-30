@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.74 2013/05/20 11:25:02 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.75 2013/05/30 20:29:27 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -81,6 +81,13 @@ int mrt_open(struct mrt *, time_t);
 			goto fail;					\
 		}							\
 	} while (0)
+
+#define RDEIDX		0
+#define SEIDX		1
+#define TYPE2IDX(x)	((x == MRT_TABLE_DUMP ||			\
+			    x == MRT_TABLE_DUMP_MP ||			\
+			    x == MRT_TABLE_DUMP_V2) ? RDEIDX : SEIDX	\
+			)
 
 void
 mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
@@ -848,15 +855,15 @@ static struct imsgbuf	*mrt_imsgbuf[2];
 void
 mrt_init(struct imsgbuf *rde, struct imsgbuf *se)
 {
-	mrt_imsgbuf[0] = rde;
-	mrt_imsgbuf[1] = se;
+	mrt_imsgbuf[RDEIDX] = rde;
+	mrt_imsgbuf[SEIDX] = se;
 }
 
 int
 mrt_open(struct mrt *mrt, time_t now)
 {
 	enum imsg_type	type;
-	int		i = 1, fd;
+	int		fd;
 
 	if (strftime(MRT2MC(mrt)->file, sizeof(MRT2MC(mrt)->file),
 	    MRT2MC(mrt)->name, localtime(&now)) == 0) {
@@ -876,11 +883,7 @@ mrt_open(struct mrt *mrt, time_t now)
 	else
 		type = IMSG_MRT_REOPEN;
 
-	if (mrt->type == MRT_TABLE_DUMP || mrt->type == MRT_TABLE_DUMP_MP ||
-	    mrt->type == MRT_TABLE_DUMP_V2)
-		i = 0;
-
-	if (imsg_compose(mrt_imsgbuf[i], type, 0, 0, fd,
+	if (imsg_compose(mrt_imsgbuf[TYPE2IDX(mrt->type)], type, 0, 0, fd,
 	    mrt, sizeof(struct mrt)) == -1)
 		log_warn("mrt_open");
 
@@ -929,6 +932,10 @@ mrt_reconfigure(struct mrt_head *mrt)
 			m->state = MRT_STATE_RUNNING;
 		}
 		if (m->state == MRT_STATE_REMOVE) {
+			if (imsg_compose(mrt_imsgbuf[TYPE2IDX(m->type)],
+			    IMSG_MRT_CLOSE, 0, 0, -1, m, sizeof(struct mrt)) ==
+			    -1)
+				log_warn("mrt_reconfigure");
 			LIST_REMOVE(m, entry);
 			free(m);
 			continue;
