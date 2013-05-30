@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.56 2012/10/16 13:57:46 mikeb Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.57 2013/05/30 16:19:25 deraadt Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -685,6 +685,6 @@ pci_min_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 #if NACPI > 0
 	return acpi_pci_min_powerstate(pc, tag);
 #else
-	return PCI_PMCSR_STATE_D3;
+	return pci_get_powerstate(pc, tag);
 #endif
 }
