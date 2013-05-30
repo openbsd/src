@@ -1,4 +1,4 @@
-/*	$OpenBSD: setrunelocale.c,v 1.8 2013/05/03 13:53:49 stsp Exp $ */
+/*	$OpenBSD: setrunelocale.c,v 1.9 2013/05/30 18:35:55 stsp Exp $ */
 /*	$NetBSD: setrunelocale.c,v 1.14 2003/08/07 16:43:07 agc Exp $	*/
 
 /*-
@@ -88,18 +88,19 @@
  * SUCH DAMAGE.
  */
 
-#include "rune.h"
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <paths.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 #include <unistd.h>
-#include <locale.h>
-#include <citrus/citrus_ctype.h>
+
+#include "citrus_ctype.h"
+#include "rune.h"
 #include "rune_local.h"
 
 struct localetable {
