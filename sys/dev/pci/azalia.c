@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.205 2013/05/24 07:58:46 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.206 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -550,8 +550,6 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->audiodev = audio_attach_mi(&azalia_hw_if, sc, &sc->dev);
 
-	shutdownhook_establish(azalia_shutdown, sc);
-
 	return;
 
 err_exit:
@@ -571,6 +569,9 @@ azalia_pci_activate(struct device *self, int act)
 		break;
 	case DVACT_SUSPEND:
 		azalia_suspend(sc);
+		break;
+	case DVACT_POWERDOWN:
+		azalia_shutdown(sc);
 		break;
 	case DVACT_RESUME:
 		azalia_resume(sc);

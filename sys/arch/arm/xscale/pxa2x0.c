@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.16 2010/08/30 21:35:55 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.17 2013/05/30 16:15:01 deraadt Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -129,8 +129,7 @@ CFATTACH_DECL(pxaip, sizeof(struct pxaip_softc),
     pxaip_match, pxaip_attach, NULL, NULL);
 #else
 struct cfattach pxaip_ca = {
-	sizeof(struct pxaip_softc), pxaip_match, pxaip_attach, NULL,
-	config_activate_children
+	sizeof(struct pxaip_softc), pxaip_match, pxaip_attach
 };
 
 struct cfdriver pxaip_cd = {

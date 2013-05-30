@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.112 2013/05/20 08:19:47 yasuoka Exp $ */
+/*	$OpenBSD: ohci.c,v 1.113 2013/05/30 16:15:02 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -99,7 +99,6 @@ usbd_status	ohci_alloc_std_chain(struct ohci_pipe *,
 			    struct ohci_softc *, u_int, int, struct usbd_xfer *,
 			    struct ohci_soft_td *, struct ohci_soft_td **);
 
-void		ohci_shutdown(void *v);
 usbd_status	ohci_open(struct usbd_pipe *);
 void		ohci_poll(struct usbd_bus *);
 void		ohci_softintr(void *);
@@ -325,6 +324,7 @@ ohci_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		sc->sc_bus.use_polling++;
 		reg = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
 		if (sc->sc_control == 0) {
@@ -341,6 +341,10 @@ ohci_activate(struct device *self, int act)
 		OWRITE4(sc, OHCI_CONTROL, reg);
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_bus.use_polling--;
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
 		break;
 	case DVACT_RESUME:
 		sc->sc_bus.use_polling++;
@@ -377,6 +381,7 @@ ohci_activate(struct device *self, int act)
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 		sc->sc_control = sc->sc_intre = sc->sc_ival = 0;
 		sc->sc_bus.use_polling--;
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_child != NULL)
@@ -399,9 +404,6 @@ ohci_detach(struct ohci_softc *sc, int flags)
 		return (rv);
 
 	timeout_del(&sc->sc_tmo_rhsc);
-
-	if (sc->sc_shutdownhook != NULL)
-		shutdownhook_disestablish(sc->sc_shutdownhook);
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
@@ -919,7 +921,6 @@ ohci_init(struct ohci_softc *sc)
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 
 	sc->sc_control = sc->sc_intre = 0;
-	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 
 	timeout_set(&sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
 
@@ -984,18 +985,6 @@ ohci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	xfer->busy_free = XFER_FREE;
 #endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
-}
-
-/*
- * Shut down the controller when the system is going down.
- */
-void
-ohci_shutdown(void *v)
-{
-	struct ohci_softc *sc = v;
-
-	DPRINTF(("ohci_shutdown: stopping the HC\n"));
-	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
 }
 
 #ifdef OHCI_DEBUG

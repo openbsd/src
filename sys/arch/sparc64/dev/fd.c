@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.37 2013/01/01 01:00:14 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.38 2013/05/30 16:15:01 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -265,8 +265,6 @@ struct fd_softc {
 	int sc_cylin;		/* where we think the head is */
 	int sc_opts;		/* user-set options */
 
-	void	*sc_sdhook;	/* shutdownhook cookie */
-
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct buf sc_q;	/* pending I/O requests */
@@ -275,9 +273,11 @@ struct fd_softc {
 /* floppy driver configuration */
 int	fdmatch(struct device *, void *, void *);
 void	fdattach(struct device *, struct device *, void *);
+int	fdactivate(struct device *, int);
 
 struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdmatch, fdattach
+	sizeof(struct fd_softc), fdmatch, fdattach,
+	NULL, fdactivate
 };
 
 struct cfdriver fd_cd = {
@@ -670,9 +670,21 @@ fdattach(parent, self, aux)
 	fd->sc_dk.dk_flags = DKF_NOLABELREAD;
 	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
 	disk_attach(&fd->sc_dv, &fd->sc_dk);
+}
 
-	/* Make sure the drive motor gets turned off at shutdown time. */
-	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
+int
+fdactivate(struct device *self, int act)
+{
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		/* Make sure the drive motor gets turned off at shutdown time. */
+		fd_motor_off(self);
+		break;
+	}
+
+	return (ret);
 }
 
 __inline struct fd_type *

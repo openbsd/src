@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.6 2011/09/22 17:45:59 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.7 2013/05/30 16:15:01 deraadt Exp $	*/
 /* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
 
 /*
@@ -59,8 +59,7 @@ int mainbussearch(struct device *,  void *, void *);
 /* attach and device structures for the device */
 
 struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbusmatch, mainbusattach, NULL,
-	config_activate_children
+	sizeof(struct device), mainbusmatch, mainbusattach
 };
 
 struct cfdriver mainbus_cd = {

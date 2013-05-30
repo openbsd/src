@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.29 2011/04/03 12:42:36 krw Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.30 2013/05/30 16:15:01 deraadt Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -220,7 +220,8 @@ static inline void mesh_set_reg(struct mesh_softc *, int, int);
 
 int mesh_match(struct device *, void *, void *);
 void mesh_attach(struct device *, struct device *, void *);
-void mesh_shutdownhook(void *);
+int mesh_activate(struct device *, int);
+
 int mesh_intr(void *);
 void mesh_error(struct mesh_softc *, struct mesh_scb *, int, int);
 void mesh_select(struct mesh_softc *, struct mesh_scb *);
@@ -246,7 +247,8 @@ void mesh_timeout(void *);
 void mesh_minphys(struct buf *, struct scsi_link *);
 
 struct cfattach mesh_ca = {
-	sizeof(struct mesh_softc), mesh_match, mesh_attach
+	sizeof(struct mesh_softc), mesh_match, mesh_attach,
+	NULL, mesh_activate
 };
 
 struct cfdriver mesh_cd = {
@@ -366,9 +368,6 @@ mesh_attach(struct device *parent, struct device *self, void *aux)
 	mac_intr_establish(parent, sc->sc_irq, IST_LEVEL, IPL_BIO, mesh_intr,
 	    sc, sc->sc_dev.dv_xname);
 
-	/* Reset SCSI bus when halt. */
-	shutdownhook_establish(mesh_shutdownhook, sc);
-
 	return;
 nodbdma:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
@@ -376,6 +375,25 @@ nofreq:
 	unmapiodev(sc->sc_dmareg, reg[3]);
 noreg:
 	unmapiodev(sc->sc_reg, reg[1]);
+}
+
+int
+mesh_activate(struct device *self, int act)
+{
+	struct mesh_softc *sc = (struct mesh_softc *)self;
+	int ret = 0;
+
+	reg = config_activate_children(self, act);
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		/* Set to async mode. */
+		mesh_set_reg(sc, MESH_SYNC_PARAM, 2);
+		mesh_bus_reset(sc);
+		break;
+	}
+
+	return (ret);
 }
 
 #define MESH_SET_XFER(sc, count) do {					\
@@ -396,16 +414,6 @@ void
 mesh_set_reg(struct mesh_softc *sc, int reg, int val)
 {
 	out8(sc->sc_reg + reg, val);
-}
-
-void
-mesh_shutdownhook(void *arg)
-{
-	struct mesh_softc *sc = arg;
-
-	/* Set to async mode. */
-	mesh_set_reg(sc, MESH_SYNC_PARAM, 2);
-	mesh_bus_reset(sc);
 }
 
 #ifdef MESH_DEBUG

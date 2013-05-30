@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.30 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: sab.c,v 1.31 2013/05/30 16:15:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -121,6 +121,7 @@ struct sabtty_softc *sabtty_cons_output;
 
 int sab_match(struct device *, void *, void *);
 void sab_attach(struct device *, struct device *, void *);
+
 int sab_print(void *, const char *);
 int sab_intr(void *);
 void sab_softintr(void *);
@@ -130,6 +131,8 @@ void sab_cnpollc(dev_t, int);
 
 int sabtty_match(struct device *, void *, void *);
 void sabtty_attach(struct device *, struct device *, void *);
+int sabtty_activate(struct device *, int);
+
 void sabtty_start(struct tty *);
 int sabtty_param(struct tty *, struct termios *);
 int sabtty_intr(struct sabtty_softc *, int *);
@@ -143,7 +146,7 @@ int sabtty_speed(int);
 void sabtty_console_flags(struct sabtty_softc *);
 void sabtty_console_speed(struct sabtty_softc *);
 void sabtty_cnpollc(struct sabtty_softc *, int);
-void sabtty_shutdown(void *);
+void sabtty_shutdown(struct sabtty_softc *);
 int sabttyparam(struct sabtty_softc *, struct tty *, struct termios *);
 
 int sabttyopen(dev_t, int, int, struct proc *);
@@ -166,7 +169,8 @@ struct cfdriver sab_cd = {
 };
 
 struct cfattach sabtty_ca = {
-	sizeof(struct sabtty_softc), sabtty_match, sabtty_attach
+	sizeof(struct sabtty_softc), sabtty_match, sabtty_attach,
+	NULL, sabtty_activate
 };
 
 struct cfdriver sabtty_cd = {
@@ -302,6 +306,22 @@ sab_attach(parent, self, aux)
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}
+}
+
+int
+sabtty_activate(struct device *self, int act)
+{
+	struct sabtty_softc *sc = (struct sabtty_softc *)self;
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		if (sc->sc_flags & SABTTYF_CONS_IN)
+			sabtty_shutdown(sc);
+		break;
+	}
+
+	return (ret);
 }
 
 int
@@ -444,7 +464,6 @@ sabtty_attach(parent, self, aux)
 			cn_tab->cn_pollc = sab_cnpollc;
 			cn_tab->cn_getc = sab_cngetc;
 			cn_tab->cn_dev = makedev(77/*XXX*/, self->dv_unit);
-			shutdownhook_establish(sabtty_shutdown, sc);
 		}
 
 		if (sc->sc_flags & SABTTYF_CONS_OUT) {
@@ -1389,11 +1408,8 @@ sabtty_abort(sc)
 }
 
 void
-sabtty_shutdown(vsc)
-	void *vsc;
+sabtty_shutdown(struct sabtty_softc *sc)
 {
-	struct sabtty_softc *sc = vsc;
-
 	/* Have to put the chip back into single char mode */
 	sc->sc_flags |= SABTTYF_DONTDDB;
 	SAB_WRITE(sc, SAB_RFC, SAB_READ(sc, SAB_RFC) & ~SAB_RFC_RFDF);

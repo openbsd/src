@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.33 2011/06/21 20:23:49 matthew Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.34 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -316,9 +316,6 @@ dpt_init(sc, intrstr)
 		sc->sc_nccbs = i;
 	}
 
-	/* Set shutdownhook before we start any device activity */
-	sc->sc_sdh = shutdownhook_establish(dpt_shutdown, sc);
-
 	/* Get the page 0 inquiry data from the HBA */
 	dpt_hba_inquire(sc, &ei);
 
@@ -384,20 +381,16 @@ dpt_init(sc, intrstr)
 }
 
 /*
- * Our 'shutdownhook' to cleanly shut down the HBA. The HBA must flush 
+ * Cleanly shut down the HBA. The HBA must flush 
  * all data from its cache and mark array groups as clean.
  */
 void
-dpt_shutdown(xxx_sc)
-	void *xxx_sc;
+dpt_shutdown(void *v)
 {
-	struct dpt_softc *sc;
+	struct dpt_softc *sc = v;
 
-	sc = xxx_sc;
-	printf("shutting down %s...", sc->sc_dv.dv_xname);
 	dpt_cmd(sc, NULL, 0, CP_IMMEDIATE, CPI_POWEROFF_WARN);
 	DELAY(5000*1000);
-	printf(" done\n");
 }
 
 /*

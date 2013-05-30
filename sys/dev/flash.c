@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.24 2011/07/06 04:49:36 matthew Exp $	*/
+/*	$OpenBSD: flash.c,v 1.25 2013/05/30 16:15:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -169,13 +169,6 @@ flashdetach(struct device *self, int flags)
 	disk_detach(&sc->sc_dk);
 
 	/* XXX more resources need to be freed here. */
-	return 0;
-}
-
-int
-flashactivate(struct device *self, int act)
-{
-	/* XXX anything to be done here? */
 	return 0;
 }
 

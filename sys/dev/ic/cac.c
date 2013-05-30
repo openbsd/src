@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.49 2011/10/27 00:18:23 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.50 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -111,8 +111,6 @@ int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
 int	cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	int drive, int blkno, int flags, struct scsi_xfer *xs);
 int	cac_get_dinfo(struct cac_softc *sc, int target);
-int	cac_flush(struct cac_softc *sc);
-void	cac_shutdown(void *);
 void	cac_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 
 struct	cac_ccb *cac_l0_completed(struct cac_softc *);
@@ -130,8 +128,6 @@ int	cac_create_sensors(struct cac_softc *);
 void	cac_sensor_refresh(void *);
 #endif
 #endif /* NBIO > 0 */
-
-void	*cac_sdh;	/* shutdown hook */
 
 const
 struct cac_linkage cac_l0 = {
@@ -256,10 +252,6 @@ cac_init(struct cac_softc *sc, int startfw)
 
 	config_found(&sc->sc_dv, &saa, scsiprint);
 
-	/* Set our `shutdownhook' before we start any device activity. */
-	if (cac_sdh == NULL)
-		cac_sdh = shutdownhook_establish(cac_shutdown, NULL);
-
 	(*sc->sc_cl->cl_intr_enable)(sc, 1);
 
 #if NBIO > 0
@@ -289,23 +281,6 @@ cac_flush(sc)
 	buf[0] = 1;
 	return cac_cmd(sc, CAC_CMD_FLUSH_CACHE, buf, sizeof(buf), 0, 0,
 	    CAC_CCB_DATA_OUT, NULL);
-}
-
-/*
- * Shut down all `cac' controllers.
- */
-void
-cac_shutdown(void *cookie)
-{
-	extern struct cfdriver cac_cd;
-	struct cac_softc *sc;
-	int i;
-
-	for (i = 0; i < cac_cd.cd_ndevs; i++) {
-		if ((sc = (struct cac_softc *)device_lookup(&cac_cd, i)) == NULL)
-			continue;
-		cac_flush(sc);
-	}
 }
 
 /*

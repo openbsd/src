@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop_pci.c,v 1.8 2010/07/13 13:07:35 kettenis Exp $	*/
+/*	$OpenBSD: iop_pci.c,v 1.9 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: iop_pci.c,v 1.4 2001/03/20 13:21:00 ad Exp $	*/
 
 /*-
@@ -56,9 +56,11 @@
 
 void	iop_pci_attach(struct device *, struct device *, void *);
 int	iop_pci_match(struct device *, void *, void *);
+int	iop_activate(struct device *, int);
 
 struct cfattach iop_pci_ca = {
-	sizeof(struct iop_softc), iop_pci_match, iop_pci_attach
+	sizeof(struct iop_softc), iop_pci_match, iop_pci_attach,
+	NULL, iop_activate
 };
 
 int
@@ -142,4 +144,28 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach to the bus-independent code. */
 	iop_init(sc, intrstr);
+}
+
+int
+iop_activate(struct device *self, int act)
+{
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		ret = config_activate_children(self, act);
+		break;
+	case DVACT_SUSPEND:
+		ret = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		ret = config_activate_children(self, act);
+		iop_shutdown(self);
+		break;
+	case DVACT_RESUME:
+		ret = config_activate_children(self, act);
+		break;
+	}
+
+	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.25 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.26 2013/05/30 16:15:02 deraadt Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -169,8 +169,6 @@ struct uhci_softc {
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
-
-	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 	struct device *sc_child;		/* /dev/usb# device */
 };

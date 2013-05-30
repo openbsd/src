@@ -1,4 +1,4 @@
-/*	$OpenBSD: flashvar.h,v 1.5 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: flashvar.h,v 1.6 2013/05/30 16:15:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -116,7 +116,6 @@ struct flash_softc {
 
 void	 flashattach(struct flash_softc *, struct flash_ctl_tag *, void *);
 int	 flashdetach(struct device *, int);
-int	 flashactivate(struct device *, int);
 
 u_int8_t flash_reg8_read(struct flash_softc *, int);
 void	 flash_reg8_read_page(struct flash_softc *, caddr_t, caddr_t);

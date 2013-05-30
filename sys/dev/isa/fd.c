@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.92 2011/07/04 05:41:48 matthew Exp $	*/
+/*	$OpenBSD: fd.c,v 1.93 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -117,8 +117,6 @@ struct fd_softc {
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_cylin;		/* where we think the head is */
 
-	void *sc_sdhook;	/* saved shutdown hook for drive. */
-
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct buf sc_q;	/* head of buf chain */
@@ -130,9 +128,10 @@ struct fd_softc {
 /* floppy driver configuration */
 int fdprobe(struct device *, void *, void *);
 void fdattach(struct device *, struct device *, void *);
+int fdactivate(struct device *, int);
 
 struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
+	sizeof(struct fd_softc), fdprobe, fdattach, NULL, fdactivate
 };
 
 struct cfdriver fd_cd = {
@@ -302,13 +301,24 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
 	disk_attach(&fd->sc_dev, &fd->sc_dk);
 
-	/* Needed to power off if the motor is on when we halt. */
-	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
-
 	/* Setup timeout structures */
 	timeout_set(&fd->fd_motor_on_to, fd_motor_on, fd);
 	timeout_set(&fd->fd_motor_off_to, fd_motor_off, fd);
 	timeout_set(&fd->fdtimeout_to, fdtimeout, fd);
+}
+
+int
+fdactivate(struct device *self, int act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		fd_motor_off(self);
+		break;
+	}
+
+	return (rv);
 }
 
 /*

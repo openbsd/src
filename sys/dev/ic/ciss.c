@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.67 2011/11/10 12:05:11 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -81,7 +81,6 @@ int	ciss_ioctl(struct device *, u_long, caddr_t);
 #endif
 int	ciss_sync(struct ciss_softc *sc);
 void	ciss_heartbeat(void *v);
-void	ciss_shutdown(void *v);
 #ifndef SMALL_KERNEL
 void	ciss_sensors(void *);
 #endif
@@ -356,12 +355,6 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	sc->sc_flush = CISS_FLUSH_ENABLE;
-	if (!(sc->sc_sh = shutdownhook_establish(ciss_shutdown, sc))) {
-		printf(": unable to establish shutdown hook\n");
-		bus_dmamem_free(sc->dmat, sc->cmdseg, 1);
-		bus_dmamap_destroy(sc->dmat, sc->cmdmap);
-		return -1;
-	}
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.openings = sc->maxcmd;

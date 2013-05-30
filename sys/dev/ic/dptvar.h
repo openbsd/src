@@ -1,4 +1,4 @@
-/*	$OpenBSD: dptvar.h,v 1.10 2011/06/21 20:23:49 matthew Exp $	*/
+/*	$OpenBSD: dptvar.h,v 1.11 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
 
 /*
@@ -69,7 +69,6 @@ struct dpt_softc {
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
 	bus_dmamap_t	sc_dmamap_ccb;	/* maps the CCBs */
 	void	 	*sc_ih;		/* interrupt handler cookie */
-	void		*sc_sdh;	/* shutdown hook */
 	struct dpt_ccb	*sc_ccbs;	/* all our CCBs */
 	struct eata_sp	*sc_statpack;	/* EATA status packet */
 	int		sc_spoff;	/* status packet offset in dmamap */

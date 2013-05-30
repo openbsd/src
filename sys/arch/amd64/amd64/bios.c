@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.24 2013/04/24 08:23:44 blambert Exp $	*/
+/*	$OpenBSD: bios.c,v 1.25 2013/05/30 16:15:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -55,8 +55,7 @@ int bios_print(void *, const char *);
 char *fixstring(char *);
 
 struct cfattach bios_ca = {
-	sizeof(struct bios_softc), bios_match, bios_attach, NULL,
-	config_activate_children
+	sizeof(struct bios_softc), bios_match, bios_attach
 };
 
 struct cfdriver bios_cd = {

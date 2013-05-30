@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopvar.h,v 1.10 2009/04/02 18:44:49 oga Exp $	*/
+/*	$OpenBSD: iopvar.h,v 1.11 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: iopvar.h,v 1.5 2001/03/20 13:01:49 ad Exp $	*/
 
 /*-
@@ -167,6 +167,7 @@ int	iop_param_op(struct iop_softc *, int, struct iop_initiator *, int,
 int	iop_print_ident(struct iop_softc *, int);
 int	iop_simple_cmd(struct iop_softc *, int, int, int, int, int);
 void	iop_strvis(struct iop_softc *, const char *, int, char *, int);
+void	iop_shutdown(void *);
 
 void	iop_initiator_register(struct iop_softc *, struct iop_initiator *);
 void	iop_initiator_unregister(struct iop_softc *, struct iop_initiator *);

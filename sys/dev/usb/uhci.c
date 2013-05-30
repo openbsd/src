@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.97 2013/05/20 08:19:47 yasuoka Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.98 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -127,7 +127,6 @@ struct uhci_pipe {
 void		uhci_globalreset(struct uhci_softc *);
 usbd_status	uhci_portreset(struct uhci_softc *, int);
 void		uhci_reset(struct uhci_softc *);
-void		uhci_shutdown(void *v);
 usbd_status	uhci_run(struct uhci_softc *, int run);
 struct uhci_soft_td *uhci_alloc_std(struct uhci_softc *);
 void		uhci_free_std(struct uhci_softc *, struct uhci_soft_td *);
@@ -502,7 +501,6 @@ uhci_init(struct uhci_softc *sc)
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
 
 	sc->sc_suspend = DVACT_RESUME;
-	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
 
 	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
@@ -525,6 +523,7 @@ uhci_activate(struct device *self, int act)
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
 #endif
+		rv = config_activate_children(self, act);
 		if (sc->sc_intr_xfer != NULL)
 			timeout_del(&sc->sc_poll_handle);
 		sc->sc_bus.use_polling++;
@@ -541,6 +540,10 @@ uhci_activate(struct device *self, int act)
 		sc->sc_suspend = act;
 		sc->sc_bus.use_polling--;
 		DPRINTF(("uhci_activate: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
+		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		uhci_run(sc, 0); /* stop the controller */
 		break;
 	case DVACT_RESUME:
 #ifdef DIAGNOSTIC
@@ -577,6 +580,7 @@ uhci_activate(struct device *self, int act)
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
 #endif
+		rv = config_activate_children(self, act);
 		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_child != NULL)
@@ -597,9 +601,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 
 	if (rv != 0)
 		return (rv);
-
-	if (sc->sc_shutdownhook != NULL)
-		shutdownhook_disestablish(sc->sc_shutdownhook);
 
 	if (sc->sc_intr_xfer != NULL) {
 		timeout_del(&sc->sc_poll_handle);
@@ -667,18 +668,6 @@ uhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	}
 #endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
-}
-
-/*
- * Shut down the controller when the system is going down.
- */
-void
-uhci_shutdown(void *v)
-{
-	struct uhci_softc *sc = v;
-
-	DPRINTF(("uhci_shutdown: stopping the HC\n"));
-	uhci_run(sc, 0); /* stop the controller */
 }
 
 #ifdef UHCI_DEBUG

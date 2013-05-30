@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.37 2010/01/13 00:31:04 chl Exp $	*/
+/*	$OpenBSD: iop.c,v 1.38 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -204,7 +204,6 @@ void	iop_configure_devices(struct iop_softc *, int, int);
 void	iop_devinfo(int, char *, size_t);
 int	iop_print(void *, const char *);
 int	iop_reconfigure(struct iop_softc *, u_int);
-void	iop_shutdown(void *);
 int	iop_submatch(struct device *, void *, void *);
 #ifdef notyet
 int	iop_vendor_print(void *, const char *);
@@ -375,10 +374,6 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		    sc->sc_dv.dv_xname);
 		goto bail_out;
 	}
-
-	/* Configure shutdown hook before we start any device activity. */
-	if (iop_sdh == NULL)
-		iop_sdh = shutdownhook_establish(iop_shutdown, NULL);
 
 	/* Ensure interrupts are enabled at the IOP. */
 	mask = iop_inl(sc, IOP_REG_INTR_MASK);
@@ -858,35 +853,27 @@ iop_submatch(struct device *parent, void *vcf, void *aux)
  * Shut down all configured IOPs.
  */ 
 void
-iop_shutdown(void *junk)
+iop_shutdown(void *v)
 {
-	struct iop_softc *sc;
-	int i;
+	struct iop_softc *sc = v;
 
-	printf("shutting down iop devices...");
+	if ((sc->sc_flags & IOP_ONLINE) == 0)
+		return;
 
-	for (i = 0; i < iop_cd.cd_ndevs; i++) {
-		if (!(sc = (struct iop_softc *)device_lookup(&iop_cd, i)))
-			continue;
-		if ((sc->sc_flags & IOP_ONLINE) == 0)
-			continue;
+	iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_SYS_QUIESCE, IOP_ICTX,
+	    0, 5000);
 
-		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_SYS_QUIESCE, IOP_ICTX,
-		    0, 5000);
-
-		if (letoh16(sc->sc_status.orgid) != I2O_ORG_AMI) {
-			/*
-			 * Some AMI firmware revisions will go to sleep and
-			 * never come back after this.
-			 */
-			iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR,
-			    IOP_ICTX, 0, 1000);
-		}
+	if (letoh16(sc->sc_status.orgid) != I2O_ORG_AMI) {
+		/*
+		 * Some AMI firmware revisions will go to sleep and
+		 * never come back after this.
+		 */
+		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR,
+		    IOP_ICTX, 0, 1000);
 	}
 
 	/* Wait.  Some boards could still be flushing, stupidly enough. */
 	delay(5000*1000);
-	printf(" done.\n");
 }
 
 /*

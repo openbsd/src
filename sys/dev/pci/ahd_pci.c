@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.21 2012/12/05 23:20:19 deraadt Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.22 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -283,9 +283,11 @@ static const char *pci_bus_modes[] =
 
 int	ahd_pci_probe(struct device *, void *, void *);
 void	ahd_pci_attach(struct device *, struct device *, void *);
+int	ahd_activate(struct device *, int);
 
 struct cfattach ahd_pci_ca = {
-	        sizeof(struct ahd_softc), ahd_pci_probe, ahd_pci_attach
+        sizeof(struct ahd_softc), ahd_pci_probe, ahd_pci_attach,
+	NULL, ahd_activate
 };
 
 int	ahd_check_extport(struct ahd_softc *ahd);
@@ -538,6 +540,22 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* complete the attach */
 	ahd_attach(ahd);
+}
+
+int
+ahd_activate(struct device *self, int act)
+{
+	int ret = 0;
+
+	ret = config_activate_children(self, act);
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		ahd_shutdown(self);
+		break;
+	}
+
+	return (ret);
 }
 
 /*

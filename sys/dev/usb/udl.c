@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.75 2013/04/26 14:28:39 mpi Exp $ */
+/*	$OpenBSD: udl.c,v 1.76 2013/05/30 16:15:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -486,14 +486,16 @@ int
 udl_activate(struct device *self, int act)
 {
 	struct udl_softc *sc = (struct udl_softc *)self;
+	int ret = 0;
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		usbd_deactivate(sc->sc_udev);
 		break;
 	}
+	ret = config_activate_children(self, act);
 
-	return (0);
+	return (ret);
 }
 
 /* ---------- */

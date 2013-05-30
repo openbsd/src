@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.22 2012/10/03 11:18:20 miod Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.23 2013/05/30 16:15:01 deraadt Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -82,8 +82,7 @@ int	bonito_match(struct device *, void *, void *);
 void	bonito_attach(struct device *, struct device *, void *);
 
 const struct cfattach bonito_ca = {
-	sizeof(struct bonito_softc), bonito_match, bonito_attach,
-	NULL, config_activate_children
+	sizeof(struct bonito_softc), bonito_match, bonito_attach
 };
 
 struct cfdriver bonito_cd = {

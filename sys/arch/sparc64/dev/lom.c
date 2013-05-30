@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.23 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: lom.c,v 1.24 2013/05/30 16:15:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -179,9 +179,11 @@ struct lom_softc {
 
 int	lom_match(struct device *, void *, void *);
 void	lom_attach(struct device *, struct device *, void *);
+int	lom_activate(struct device *, int);
 
 struct cfattach lom_ca = {
-	sizeof(struct lom_softc), lom_match, lom_attach
+	sizeof(struct lom_softc), lom_match, lom_attach,
+	NULL, lom_activate
 };
 
 struct cfdriver lom_cd = {
@@ -357,8 +359,20 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s rev %d.%d\n",
 	    sc->sc_type < LOM_LOMLITE2 ? "LOMlite" : "LOMlite2",
 	    fw_rev >> 4, fw_rev & 0x0f);
+}
 
-	shutdownhook_establish(lom_shutdown, sc);
+int
+lom_activate(struct device *self, int act)
+{
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		lom_shutdown(self);
+		break;
+	}
+
+	return (ret);
 }
 
 int

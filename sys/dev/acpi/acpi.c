@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.243 2013/04/18 18:30:41 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.244 2013/05/30 16:15:01 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -154,8 +154,7 @@ void	acpi_disable_allgpes(struct acpi_softc *);
 extern struct aml_node aml_root;
 
 struct cfattach acpi_ca = {
-	sizeof(struct acpi_softc), acpi_match, acpi_attach, NULL,
-	config_activate_children
+	sizeof(struct acpi_softc), acpi_match, acpi_attach
 };
 
 struct cfdriver acpi_cd = {

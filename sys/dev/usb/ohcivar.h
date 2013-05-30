@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.32 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.33 2013/05/30 16:15:02 deraadt Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -115,8 +115,6 @@ struct ohci_softc {
 
 	char sc_vendor[16];
 	int sc_id_vendor;
-
-	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 	u_int32_t sc_control;		/* Preserved during suspend/standby */
 	u_int32_t sc_intre;

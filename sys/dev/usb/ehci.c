@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.132 2013/05/20 08:19:47 yasuoka Exp $ */
+/*	$OpenBSD: ehci.c,v 1.133 2013/05/30 16:15:02 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1053,6 +1053,7 @@ ehci_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		sc->sc_bus.use_polling++;
 
 		for (i = 1; i <= sc->sc_noport; i++) {
@@ -1095,6 +1096,7 @@ ehci_activate(struct device *self, int act)
 		sc->sc_bus.use_polling--;
 		break;
 	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
 		ehci_shutdown(sc);
 		break;
 	case DVACT_RESUME:

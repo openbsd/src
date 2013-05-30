@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.16 2012/03/11 13:33:06 jsg Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.17 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -39,9 +39,11 @@
 
 int	ciss_pci_match(struct device *, void *, void *);
 void	ciss_pci_attach(struct device *, struct device *, void *);
+int	ciss_activate(struct device *, int);
 
 struct cfattach ciss_pci_ca = {
-	sizeof(struct ciss_softc), ciss_pci_match, ciss_pci_attach
+	sizeof(struct ciss_softc), ciss_pci_match, ciss_pci_attach,
+	NULL, ciss_activate
 };
 
 const struct pci_matchid ciss_pci_devices[] = {
@@ -191,4 +193,20 @@ ciss_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* enable interrupts now */
 	bus_space_write_4(sc->iot, sc->ioh, CISS_IMR,
 	    bus_space_read_4(sc->iot, sc->ioh, CISS_IMR) & ~sc->iem);
+}
+
+int
+ciss_activate(struct device *self, int act)
+{
+	int ret = 0;
+
+	ret = config_activate_children(self, act);
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		ciss_shutdown(self);
+		break;
+	}
+
+	return (ret);
 }

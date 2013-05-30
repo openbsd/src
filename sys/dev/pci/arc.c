@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.95 2011/07/17 22:46:48 matthew Exp $ */
+/*	$OpenBSD: arc.c,v 1.96 2013/05/30 16:15:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -347,7 +347,7 @@ struct arc_fw_sysinfo {
 int			arc_match(struct device *, void *, void *);
 void			arc_attach(struct device *, struct device *, void *);
 int			arc_detach(struct device *, int);
-void			arc_shutdown(void *);
+int			arc_activate(struct device *, int);
 int			arc_intr(void *);
 
 struct arc_iop;
@@ -368,8 +368,6 @@ struct arc_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	void			*sc_ih;
-
-	void			*sc_shutdownhook;
 
 	int			sc_req_count;
 
@@ -393,7 +391,8 @@ struct arc_softc {
 #define DEVNAME(_s)		((_s)->sc_dev.dv_xname)
 
 struct cfattach arc_ca = {
-	sizeof(struct arc_softc), arc_match, arc_attach, arc_detach
+	sizeof(struct arc_softc), arc_match, arc_attach, arc_detach,
+	arc_activate
 };
 
 struct cfdriver arc_cd = {
@@ -590,10 +589,6 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap_pci;
 	}
 
-	sc->sc_shutdownhook = shutdownhook_establish(arc_shutdown, sc);
-	if (sc->sc_shutdownhook == NULL)
-		panic("unable to establish arc shutdownhook");
-
 	sc->sc_link.adapter = &arc_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = ARC_MAX_TARGET;
@@ -633,11 +628,32 @@ unmap_pci:
 }
 
 int
+arc_activate(struct device *self, int act)
+{
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		ret = config_activate_children(self, act);
+		break;
+	case DVACT_SUSPEND:
+		ret = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		ret = config_activate_children(self, act);
+		arc_detach(self, 0);
+		break;
+	case DVACT_RESUME:
+		ret = config_activate_children(self, act);
+		break;
+	}
+	return (ret);	
+}
+
+int
 arc_detach(struct device *self, int flags)
 {
 	struct arc_softc		*sc = (struct arc_softc *)self;
-
-	shutdownhook_disestablish(sc->sc_shutdownhook);
 
 	if (arc_msg0(sc, ARC_RA_INB_MSG0_STOP_BGRB) != 0)
 		printf("%s: timeout waiting to stop bg rebuild\n", DEVNAME(sc));
@@ -646,18 +662,6 @@ arc_detach(struct device *self, int flags)
 		printf("%s: timeout waiting to flush cache\n", DEVNAME(sc));
 
 	return (0);
-}
-
-void
-arc_shutdown(void *xsc)
-{
-	struct arc_softc		*sc = xsc;
-
-	if (arc_msg0(sc, ARC_RA_INB_MSG0_STOP_BGRB) != 0)
-		printf("%s: timeout waiting to stop bg rebuild\n", DEVNAME(sc));
-
-	if (arc_msg0(sc, ARC_RA_INB_MSG0_FLUSH_CACHE) != 0)
-		printf("%s: timeout waiting to flush cache\n", DEVNAME(sc));
 }
 
 int

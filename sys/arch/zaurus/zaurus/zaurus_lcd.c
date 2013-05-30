@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.24 2010/09/07 16:21:41 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.25 2013/05/30 16:15:01 deraadt Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -399,6 +399,7 @@ int
 lcd_activate(struct device *self, int act)
 {
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
+	int ret = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
@@ -409,6 +410,9 @@ lcd_activate(struct device *self, int act)
 		pxa2x0_lcd_resume(sc);
 		lcd_set_brightness(lcd_get_brightness());
 		break;
+	case DVACT_POWERDOWN:
+		ret = config_activate_children(self, act);
+		break;
 	}
-	return 0;
+	return (ret);
 }

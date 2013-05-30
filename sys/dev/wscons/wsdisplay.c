@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.108 2013/05/12 20:41:45 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.109 2013/05/30 16:15:02 deraadt Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -156,7 +156,6 @@ int	wsdisplay_getscreen(struct wsdisplay_softc *,
 	    struct wsdisplay_addscreendata *);
 void	wsdisplay_resume_device(struct device *);
 void	wsdisplay_suspend_device(struct device *);
-void	wsdisplay_shutdownhook(void *);
 void	wsdisplay_addscreen_print(struct wsdisplay_softc *, int, int);
 void	wsdisplay_closescreen(struct wsdisplay_softc *, struct wsscreen *);
 int	wsdisplay_delscreen(struct wsdisplay_softc *, int, int);
@@ -216,13 +215,15 @@ int	wsdisplay_emul_match(struct device *, void *, void *);
 void	wsdisplay_emul_attach(struct device *, struct device *, void *);
 int	wsdisplay_emul_detach(struct device *, int);
 
+int	wsdisplay_activate(struct device *, int);
+
 struct cfdriver wsdisplay_cd = {
 	NULL, "wsdisplay", DV_TTY
 };
 
 struct cfattach wsdisplay_emul_ca = {
 	sizeof(struct wsdisplay_softc), wsdisplay_emul_match,
-	    wsdisplay_emul_attach, wsdisplay_emul_detach
+	wsdisplay_emul_attach, wsdisplay_emul_detach, wsdisplay_activate
 };
 
 void	wsdisplaystart(struct tty *);
@@ -585,6 +586,20 @@ wsdisplay_emul_detach(struct device *self, int flags)
 }
 
 int
+wsdisplay_activate(struct device *self, int act)
+{
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		wsdisplay_switchtoconsole();
+		break;
+	}
+
+	return (ret);
+}
+
+int
 wsdisplay_common_detach(struct wsdisplay_softc *sc, int flags)
 {
 	int i;
@@ -659,7 +674,6 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
     const struct wsdisplay_accessops *accessops, void *accesscookie,
     u_int defaultscreens)
 {
-	static int hookset = 0;
 	int i, start = 0;
 #if NWSKBD > 0
 	struct wsevsrc *kme;
@@ -753,10 +767,6 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	sc->sc_burnout = sc->sc_burnoutintvl;
 	wsdisplay_burn(sc, sc->sc_burnflags);
 #endif
-
-	if (hookset == 0)
-		shutdownhook_establish(wsdisplay_shutdownhook, NULL);
-	hookset = 1;
 
 #if NWSKBD > 0 && NWSMUX == 0
 	if (console == 0) {
@@ -2352,15 +2362,6 @@ wsdisplay_burner(void *v)
 	}
 }
 #endif
-
-/*
- * Switch the console at shutdown.
- */
-void
-wsdisplay_shutdownhook(void *arg)
-{
-	wsdisplay_switchtoconsole();
-}
 
 #ifdef WSMOUSED_SUPPORT
 /*

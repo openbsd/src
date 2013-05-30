@@ -1,4 +1,4 @@
-/* $OpenBSD: esp.c,v 1.8 2012/12/05 23:20:13 deraadt Exp $ */
+/* $OpenBSD: esp.c,v 1.9 2013/05/30 16:15:01 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,7 +129,8 @@ int espmatch(struct device *, void *, void *);
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
-	sizeof(struct esp_softc), espmatch, espattach
+	sizeof(struct esp_softc), espmatch, espattach,
+	NULL, espactivate
 };
 
 struct scsi_adapter esp_switch = {
@@ -165,7 +166,6 @@ struct ncr53c9x_glue esp_glue = {
 };
 
 static int espdmaintr(struct esp_softc *);
-static void esp_shutdownhook(void *);
 
 int
 espmatch(struct device *parent, void *cf, void *aux)
@@ -258,14 +258,28 @@ espattach(struct device *parent, struct device *self, void *aux)
 	mac_intr_establish(parent, esc->sc_intr, IST_LEVEL, IPL_BIO,
 	    ncr53c9x_intr, sc, sc->sc_dev.dv_xname);
 
-	/* Reset SCSI bus when halt. */
-	shutdownhook_establish(esp_shutdownhook, sc);
-
 	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
 
 	ncr53c9x_attach(sc, &esp_switch);
 
+}
+
+int
+esp_activate(struct device *self, int act)
+{
+	struct ncr53c9x_softc *sc = self;
+	int ret = 0;
+
+	ret = config_activate_children(self, act);
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		NCRCMD(sc, NCRCMD_RSTSCSI);
+		break;
+	}
+
+	return (ret);
 }
 
 /*
@@ -451,12 +465,4 @@ espdmaintr(struct esp_softc *sc)
 	*sc->sc_dmaaddr += trans;
 
 	return 0;
-}
-
-void
-esp_shutdownhook(void *arg)
-{
-	struct ncr53c9x_softc *sc = arg;
-
-	NCRCMD(sc, NCRCMD_RSTSCSI);
 }

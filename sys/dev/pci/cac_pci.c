@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_pci.c,v 1.13 2009/04/06 15:18:45 kettenis Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.14 2013/05/30 16:15:02 deraadt Exp $	*/
 /*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 void	cac_pci_attach(struct device *, struct device *, void *);
 const struct	cac_pci_type *cac_pci_findtype(struct pci_attach_args *);
 int	cac_pci_match(struct device *, void *, void *);
+int	cac_activate(struct device *, int);
 
 struct	cac_ccb *cac_pci_l0_completed(struct cac_softc *);
 int	cac_pci_l0_fifo_full(struct cac_softc *);
@@ -232,6 +233,24 @@ cac_pci_attach(parent, self, aux)
 	sc->sc_cl = ct->ct_linkage;
 	cac_init(sc, (ct->ct_flags & CT_STARTFW) != 0);
 }
+
+int
+cac_activate(struct device *self, int act)
+{
+	struct cac_softc *sc = (struct cac_softc *)self;
+	int ret = 0;
+
+	ret = config_activate_children(self, act);
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		cac_flush(sc);
+		break;
+	}
+
+	return (ret);
+}
+
 
 void
 cac_pci_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)

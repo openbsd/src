@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.54 2011/07/17 22:46:48 matthew Exp $	*/
+/*	$OpenBSD: aac.c,v 1.55 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -275,11 +275,6 @@ aac_attach(struct aac_softc *sc)
 	sc->aifthread = 0;
 	sc->aifflags = 0;
 	kthread_create_deferred(aac_create_thread, sc);
-
-#if 0
-	/* Register the shutdown method to only be called post-dump */
-	sc->aac_sdh = shutdownhook_establish(aac_shutdown, (void *)sc);
-#endif
 
 	return (0);
 }

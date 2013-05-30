@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissvar.h,v 1.14 2010/06/03 01:03:55 dlg Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.15 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -31,7 +31,6 @@ struct ciss_softc {
 	struct scsi_link sc_link;
 	struct timeout	sc_hb;
 	void		*sc_ih;
-	void		*sc_sh;
 	int		sc_flush;
 	struct ksensor	*sensors;
 	struct ksensordev sensordev;
@@ -68,3 +67,4 @@ typedef	int ciss_lock_t;
 
 int	ciss_attach(struct ciss_softc *sc);
 int	ciss_intr(void *v);
+void	ciss_shutdown(void *v);

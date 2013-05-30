@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpcib.c,v 1.4 2012/10/17 22:32:01 deraadt Exp $	*/
+/*	$OpenBSD: tcpcib.c,v 1.5 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Matt Dainty <matt@bodgit-n-scarper.com>
@@ -269,9 +269,11 @@ int
 tcpcib_activate(struct device *self, int act)
 {
 	struct tcpcib_softc *sc = (struct tcpcib_softc *)self;
-
+	int ret = 0;
+	
 	switch (act) {
 	case DVACT_SUSPEND:
+		ret = config_activate_children(self, act);
 		/* Watchdog is running, disable it */
 		if (sc->sc_active & E600_WDT_ACTIVE && sc->sc_wdt_period != 0)
 			tcpcib_wdt_stop(sc);
@@ -291,9 +293,13 @@ tcpcib_activate(struct device *self, int act)
 		if (sc->sc_active & E600_HPET_ACTIVE)
 			bus_space_write_4(sc->sc_hpet_iot, sc->sc_hpet_ioh,
 			    E600_HPET_GC, E600_HPET_GC_ENABLE);
+		ret = config_activate_children(self, act);
+		break;
+	default:
+		ret = config_activate_children(self, act);
 		break;
 	}
-	return (0);
+	return (ret);
 }
 
 int

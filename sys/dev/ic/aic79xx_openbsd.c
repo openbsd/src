@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.39 2012/12/05 23:20:16 deraadt Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.40 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -611,9 +611,6 @@ ahd_detach(struct device *self, int flags)
 
 	if (ahd->sc_child != NULL)
 		rv = config_detach((void *)ahd->sc_child, flags);
-
-	if (ahd->shutdown_hook != NULL)
-		shutdownhook_disestablish(ahd->shutdown_hook);
 
 	ahd_free(ahd);
 

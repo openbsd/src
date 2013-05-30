@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.18 2013/05/27 19:37:45 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.19 2013/05/30 16:15:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -173,9 +173,11 @@ struct wsscreen_list gbe_screenlist = {
 
 int	gbe_match(struct device *, void *, void *);
 void	gbe_attach(struct device *, struct device *, void *);
+int	gbe_activate(struct device *, int);
 
 struct cfattach gbe_ca = {
-	sizeof (struct gbe_softc), gbe_match, gbe_attach
+	sizeof (struct gbe_softc), gbe_match, gbe_attach,
+	NULL, gbe_activate
 };
 
 struct cfdriver gbe_cd = {
@@ -237,8 +239,6 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 		printf("rev %u, %iMB, %dx%d at %d bits\n", gsc->rev,
 		    gbe_consdata.fb_size >> 20, gbe_consdata.width,
 		    gbe_consdata.height, gbe_consdata.depth);
-
-		shutdownhook_establish((void(*)(void *))gbe_disable, self);
 
 		waa.console = gsc->console;
 		waa.scrdata = &gbe_screenlist;
@@ -381,8 +381,6 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 	screen->fb_phys = fb_dmamap->dm_segs[0].ds_addr;
 	screen->ro_phys = ro_dmamap->dm_segs[0].ds_addr;
 
-	shutdownhook_establish((void(*)(void *))gbe_disable, self);
-
 	gbe_init_screen(screen);
 	gbe_disable(gsc);
 	gbe_setup(gsc);
@@ -445,6 +443,21 @@ fail1:
 	bus_space_unmap(gsc->iot, gsc->re_ioh, RE_REG_SIZE);
 fail0:
 	bus_space_unmap(gsc->iot, gsc->ioh, GBE_REG_SIZE);
+}
+
+int
+gbe_activate(struct device *self, int act)
+{
+	struct gbe_softc *gsc = (struct gbe_softc *)self;
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		gbe_disable(gsc);
+		break;
+	}
+
+	return (ret);
 }
 
 /*

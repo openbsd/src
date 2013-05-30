@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.28 2012/10/05 10:51:28 haesbaert Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.29 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -185,8 +185,8 @@ int	amdpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 int	amdpm_intr(void *);
 
 struct cfattach amdpm_ca = {
-	sizeof(struct amdpm_softc), amdpm_match, amdpm_attach, NULL,
-	amdpm_activate
+	sizeof(struct amdpm_softc), amdpm_match, amdpm_attach,
+	NULL, amdpm_activate
 };
 
 struct cfdriver amdpm_cd = {
@@ -312,8 +312,15 @@ int
 amdpm_activate(struct device *self, int act)
 {
 	struct amdpm_softc *sc = (struct amdpm_softc *)self;
+	int ret = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		ret = config_activate_children(self, act);
+		break;
+	case DVACT_SUSPEND:
+		ret = config_activate_children(self, act);
+		break;
 	case DVACT_RESUME:
 		if (timeout_initialized(&sc->sc_rnd_ch)) {
 			pcireg_t cfg_reg;
@@ -325,9 +332,13 @@ amdpm_activate(struct device *self, int act)
 			    AMDPM_CONFREG, cfg_reg | AMDPM_RNGEN);
 		
 		}
+		ret = config_activate_children(self, act);
+		break;
+	case DVACT_POWERDOWN:
+		ret = config_activate_children(self, act);
 		break;
 	}
-	return (0);
+	return (ret);
 }
 
 void

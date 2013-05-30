@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.22 2012/10/17 22:49:27 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.23 2013/05/30 16:15:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -62,9 +62,11 @@ struct zapm_softc {
 
 int	apm_match(struct device *, void *, void *);
 void	apm_attach(struct device *, struct device *, void *);
+int	apm_activate(struct device *, int);
 
 struct cfattach apm_pxaip_ca = {
-        sizeof (struct zapm_softc), apm_match, apm_attach
+        sizeof (struct zapm_softc), apm_match, apm_attach,
+	NULL, apm_activate
 };
 extern struct cfdriver apm_cd;
 
@@ -131,9 +133,6 @@ const	struct timeval zapm_battchkrate = { 60, 0 };
 
 /* Prototypes */
 
-#if 0
-void	zapm_shutdown(void *);
-#endif
 int	zapm_acintr(void *);
 int	zapm_bcintr(void *);
 int	zapm_ac_on(void);
@@ -198,23 +197,24 @@ apm_attach(struct device *parent, struct device *self, void *aux)
 
 	pxa2x0_apm_attach_sub(&sc->sc);
 
-#if 0
-	(void)shutdownhook_establish(zapm_shutdown, NULL);
-#endif
-
 	cpu_setperf = pxa2x0_setperf;
 	cpu_cpuspeed = pxa2x0_cpuspeed;
 }
 
-#if 0
-void
-zapm_shutdown(void *v)
+int
+apm_activate(struct device *self, int act)
 {
-	struct zapm_softc *sc = v;
+	struct zapm_softc *sc = (struct zapm_softc *)self;
+	int ret = 0;
 
-	zapm_enable_charging(sc, 0);
+	switch (act) {
+	case DVACT_POWERDOWN:
+		zapm_enable_charging(sc, 0);
+		break;
+	}
+
+	return (ret);
 }
-#endif
 
 int
 zapm_acintr(void *v)
