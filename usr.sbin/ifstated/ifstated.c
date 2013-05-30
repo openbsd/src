@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.40 2011/07/04 04:34:14 claudio Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.41 2013/05/30 19:22:48 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -169,7 +169,12 @@ startup_handler(int fd, short event, void *arg)
 	rtfilter = ROUTE_FILTER(RTM_IFINFO);
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
-		log_warn("startup_handler: setsockopt");
+		log_warn("startup_handler: setsockopt msgfilter");
+
+	rtfilter = RTABLE_ANY;
+	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_TABLEFILTER,
+	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
+		log_warn("startup_handler: setsockopt tablefilter");
 	
 	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST, rt_msg_handler, NULL);
 	event_add(&rt_msg_ev, NULL);
