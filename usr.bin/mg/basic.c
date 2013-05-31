@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.40 2013/05/31 18:03:43 lum Exp $	*/
+/*	$OpenBSD: basic.c,v 1.41 2013/05/31 18:19:19 florian Exp $	*/
 
 /* This file is in the public domain */
 
@@ -162,8 +162,13 @@ forwline(int f, int n)
 
 	if (n < 0)
 		return (backline(f | FFRAND, -n));
-	if ((dlp = curwp->w_dotp) == curbp->b_headp)
+	if ((dlp = curwp->w_dotp) == curbp->b_headp) {
+		if (!(f & FFRAND)) {
+			dobeep();
+			ewprintf("End of buffer");
+		}
 		return(TRUE);
+	}
 	if ((lastflag & CFCPCN) == 0)	/* Fix goal. */
 		setgoal();
 	thisflag |= CFCPCN;
@@ -175,6 +180,10 @@ forwline(int f, int n)
 			curwp->w_dotp = lback(dlp);
 			curwp->w_doto = llength(curwp->w_dotp);
 			curwp->w_rflag |= WFMOVE;
+			if (!(f & FFRAND)) {
+				dobeep();
+				ewprintf("End of buffer");
+			}
 			return (TRUE);
 		}
 		curwp->w_dotline++;
@@ -205,9 +214,20 @@ backline(int f, int n)
 		setgoal();
 	thisflag |= CFCPCN;
 	dlp = curwp->w_dotp;
+	if (lback(dlp) == curbp->b_headp)  {
+		if (!(f & FFRAND)) {
+			dobeep();
+			ewprintf("Beginning of buffer");
+		}
+		return(TRUE);
+	}
 	while (n-- && lback(dlp) != curbp->b_headp) {
 		dlp = lback(dlp);
 		curwp->w_dotline--;
+	}
+	if (n > 0 && !(f & FFRAND)) {
+		dobeep();
+		ewprintf("Beginning of buffer");
 	}
 	curwp->w_dotp = dlp;
 	curwp->w_doto = getgoal(dlp);
