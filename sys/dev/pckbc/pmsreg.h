@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.9 2012/10/29 11:54:45 stsp Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.10 2013/05/31 19:21:09 jcs Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -188,5 +188,12 @@
 #define ELANTECH_V2_X_MAX	1152
 #define ELANTECH_V2_Y_MAX	768
 
+/* V4 */
+#define ELANTECH_MAX_FINGERS			5
+#define ELANTECH_V4_WEIGHT_VALUE		5
+
+#define ELANTECH_V4_PKT_STATUS			0x10
+#define ELANTECH_V4_PKT_HEAD			0x11
+#define ELANTECH_V4_PKT_MOTION			0x12
 
 #endif /* SYS_DEV_PCKBC_PMSREG_H */

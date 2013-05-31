@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.42 2013/05/23 18:29:51 tobias Exp $ */
+/* $OpenBSD: pms.c,v 1.43 2013/05/31 19:21:09 jcs Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -60,6 +60,7 @@ struct pms_protocol {
 #define PMS_ELANTECH_V1		4
 #define PMS_ELANTECH_V2		5
 #define PMS_ELANTECH_V3		6
+#define PMS_ELANTECH_V4		7
 	u_int packetsize;
 	int (*enable)(struct pms_softc *);
 	int (*ioctl)(struct pms_softc *, u_long, caddr_t, int, struct proc *);
@@ -120,6 +121,12 @@ struct elantech_softc {
 
 	int min_x, min_y;
 	int max_x, max_y;
+	struct {
+		unsigned int x;
+		unsigned int y;
+	} mt[ELANTECH_MAX_FINGERS];
+	int fingers[ELANTECH_MAX_FINGERS];
+	int width;
 
 	u_char parity[256];
 	u_char p1, p2, p3;
@@ -254,14 +261,17 @@ void	pms_proc_alps(struct pms_softc *);
 int	pms_enable_elantech_v1(struct pms_softc *);
 int	pms_enable_elantech_v2(struct pms_softc *);
 int	pms_enable_elantech_v3(struct pms_softc *);
+int	pms_enable_elantech_v4(struct pms_softc *);
 int	pms_ioctl_elantech(struct pms_softc *, u_long, caddr_t, int,
     struct proc *);
 int	pms_sync_elantech_v1(struct pms_softc *, int);
 int	pms_sync_elantech_v2(struct pms_softc *, int);
 int	pms_sync_elantech_v3(struct pms_softc *, int);
+int	pms_sync_elantech_v4(struct pms_softc *, int);
 void	pms_proc_elantech_v1(struct pms_softc *);
 void	pms_proc_elantech_v2(struct pms_softc *);
 void	pms_proc_elantech_v3(struct pms_softc *);
+void	pms_proc_elantech_v4(struct pms_softc *);
 
 int	synaptics_set_mode(struct pms_softc *, int);
 int	synaptics_query(struct pms_softc *, int, int *);
@@ -276,10 +286,12 @@ void	elantech_send_input(struct pms_softc *, int, int, int, int);
 int	elantech_get_hwinfo_v1(struct pms_softc *);
 int	elantech_get_hwinfo_v2(struct pms_softc *);
 int	elantech_get_hwinfo_v3(struct pms_softc *);
+int	elantech_get_hwinfo_v4(struct pms_softc *);
 int	elantech_ps2_cmd(struct pms_softc *, u_char);
 int	elantech_set_absolute_mode_v1(struct pms_softc *);
 int	elantech_set_absolute_mode_v2(struct pms_softc *);
 int	elantech_set_absolute_mode_v3(struct pms_softc *);
+int	elantech_set_absolute_mode_v4(struct pms_softc *);
 
 
 struct cfattach pms_ca = {
@@ -356,6 +368,15 @@ const struct pms_protocol pms_protocols[] = {
 		pms_ioctl_elantech,
 		pms_sync_elantech_v3,
 		pms_proc_elantech_v3,
+		NULL
+	},
+	/* Elantech touchpad (hardware version 4) */
+	{
+		PMS_ELANTECH_V4, 6,
+		pms_enable_elantech_v4,
+		pms_ioctl_elantech,
+		pms_sync_elantech_v4,
+		pms_proc_elantech_v4,
 		NULL
 	},
 	/* Microsoft IntelliMouse */
@@ -804,7 +825,8 @@ pmsinput(void *vsc, int data)
 	sc->packet[sc->inputstate] = data;
 	if (sc->protocol->sync(sc, data)) {
 #ifdef DIAGNOSTIC
-		printf("%s: not in sync yet, discard input\n", DEVNAME(sc));
+		printf("%s: not in sync yet, discard input (state %d)\n",
+		    DEVNAME(sc), sc->inputstate);
 #endif
 		sc->inputstate = 0;
 		return;
@@ -1559,6 +1581,26 @@ elantech_set_absolute_mode_v3(struct pms_softc *sc)
 }
 
 int
+elantech_set_absolute_mode_v4(struct pms_softc *sc)
+{
+	/* Enable absolute mode. Magic numbers from Linux driver. */
+	if (elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
+	    elantech_ps2_cmd(sc, ELANTECH_CMD_READ_WRITE_REG) ||
+	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
+	    elantech_ps2_cmd(sc, 0x07) ||
+	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
+	    elantech_ps2_cmd(sc, ELANTECH_CMD_READ_WRITE_REG) ||
+	    elantech_ps2_cmd(sc, ELANTECH_PS2_CUSTOM_COMMAND) ||
+	    elantech_ps2_cmd(sc, 0x01) ||
+	    pms_set_scaling(sc, 1))
+		return (-1);
+
+	/* v4 has no register 0x10 to read response from */
+
+	return (0);
+}
+
+int
 elantech_get_hwinfo_v1(struct pms_softc *sc)
 {
 	struct elantech_softc *elantech = sc->elantech;
@@ -1673,6 +1715,44 @@ elantech_get_hwinfo_v3(struct pms_softc *sc)
 
 	elantech->max_x = (resp[0] & 0x0f) << 8 | resp[1];
 	elantech->max_y = (resp[0] & 0xf0) << 4 | resp[2];
+
+	return (0);
+}
+
+int
+elantech_get_hwinfo_v4(struct pms_softc *sc)
+{
+	struct elantech_softc *elantech = sc->elantech;
+	int fw_version;
+	u_char capabilities[3];
+	u_char resp[3];
+
+	if (synaptics_query(sc, ELANTECH_QUE_FW_VER, &fw_version))
+		return (-1);
+
+	if (((fw_version & 0x0f0000) >> 16) != 6)
+		return (-1);
+
+	elantech->flags |= ELANTECH_F_REPORTS_PRESSURE;
+
+	if (elantech_set_absolute_mode_v4(sc))
+		return (-1);
+
+	if (pms_spec_cmd(sc, ELANTECH_QUE_CAPABILITIES) ||
+	    pms_get_status(sc, capabilities))
+		return (-1);
+
+	if (pms_spec_cmd(sc, ELANTECH_QUE_FW_ID) ||
+	    pms_get_status(sc, resp))
+		return (-1);
+
+	elantech->max_x = (resp[0] & 0x0f) << 8 | resp[1];
+	elantech->max_y = (resp[0] & 0xf0) << 4 | resp[2];
+
+	if ((capabilities[1] < 2) || (capabilities[1] > elantech->max_x))
+		return (-1);
+
+	elantech->width = elantech->max_x / (capabilities[1] - 1);
 
 	return (0);
 }
@@ -1805,6 +1885,43 @@ pms_enable_elantech_v3(struct pms_softc *sc)
 
 		printf("%s: Elantech Touchpad, version %d\n", DEVNAME(sc), 3);
 	} else if (elantech_set_absolute_mode_v3(sc))
+		goto err;
+
+	return (1);
+
+err:
+	if (sc->elantech) {
+		free(sc->elantech, M_DEVBUF);
+		sc->elantech = NULL;
+	}
+
+	pms_reset(sc);
+
+	return (0);
+}
+
+int
+pms_enable_elantech_v4(struct pms_softc *sc)
+{
+	struct elantech_softc *elantech = sc->elantech;
+
+	if (elantech_knock(sc))
+		goto err;
+
+	if (sc->elantech == NULL) {
+		sc->elantech = elantech = malloc(sizeof(struct elantech_softc),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		if (elantech == NULL) {
+			printf("%s: elantech: not enough memory\n",
+			    DEVNAME(sc));
+			goto err;
+		}
+
+		if (elantech_get_hwinfo_v4(sc))
+			goto err;
+
+		printf("%s: Elantech Clickpad, version %d\n", DEVNAME(sc), 4);
+	} else if (elantech_set_absolute_mode_v4(sc))
 		goto err;
 
 	return (1);
@@ -1958,6 +2075,15 @@ pms_sync_elantech_v3(struct pms_softc *sc, int data)
 	return (0);
 }
 
+int
+pms_sync_elantech_v4(struct pms_softc *sc, int data)
+{
+	if (sc->inputstate == 0 && (data & 0x0c) != 0x04)
+		return (-1);
+	else
+		return (0);
+}
+
 void
 pms_proc_elantech_v1(struct pms_softc *sc)
 {
@@ -2063,6 +2189,90 @@ pms_proc_elantech_v3(struct pms_softc *sc)
 		z = SYNAPTICS_PRESSURE;
 
 	elantech_send_input(sc, x, y, z, w);
+}
+
+void
+pms_proc_elantech_v4(struct pms_softc *sc)
+{
+	struct elantech_softc *elantech = sc->elantech;
+	int w, z, delta_x1 = 0, delta_x2 = 0, delta_y1 = 0, delta_y2 = 0;
+	int i, weight, finger, fingers = 0, id, sid;
+
+	switch (sc->packet[3] & 0x1f) {
+	case ELANTECH_V4_PKT_STATUS:
+		fingers = sc->packet[1] & 0x1f;
+		for (i = 0; i < ELANTECH_MAX_FINGERS; i++) {
+			finger = ((fingers & (1 << i)) != 0);
+			if (elantech->fingers[i] && !finger)
+				/* notify that we lifted */
+				elantech_send_input(sc, elantech->mt[i].x,
+				    elantech->mt[i].y, 0, 0);
+
+			elantech->fingers[i] = finger;
+		}
+
+		break;
+
+	case ELANTECH_V4_PKT_HEAD:
+		id = ((sc->packet[3] & 0xe0) >> 5) - 1;
+		if (id < 0)
+			return;
+
+		for (i = 0; i < ELANTECH_MAX_FINGERS; i++)
+			if (elantech->fingers[i])
+				fingers++;
+
+		elantech->mt[id].x = ((sc->packet[1] & 0x0f) << 8) |
+		    sc->packet[2];
+		elantech->mt[id].y = (((sc->packet[4] & 0x0f) << 8) |
+		    sc->packet[5]);
+		z = (sc->packet[1] & 0xf0) | ((sc->packet[4] & 0xf0) >> 4);
+
+		elantech_send_input(sc, elantech->mt[id].x, elantech->mt[id].y,
+		    z, fingers);
+
+		break;
+
+	case ELANTECH_V4_PKT_MOTION:
+		id = ((sc->packet[0] & 0xe0) >> 5) - 1;
+		if (id < 0)
+			return;
+
+		sid = ((sc->packet[3] & 0xe0) >> 5) - 1;
+		weight = (sc->packet[0] & 0x10) ? ELANTECH_V4_WEIGHT_VALUE : 1;
+
+		delta_x1 = (signed char)sc->packet[1];
+		delta_y1 = (signed char)sc->packet[2];
+		delta_x2 = (signed char)sc->packet[4];
+		delta_y2 = (signed char)sc->packet[5];
+
+		elantech->mt[id].x += delta_x1 * weight;
+		elantech->mt[id].y -= delta_y1 * weight;
+
+		for (i = 0; i < ELANTECH_MAX_FINGERS; i++)
+			if (elantech->fingers[i])
+				fingers++;
+
+		elantech_send_input(sc, elantech->mt[id].x, elantech->mt[id].y,
+		    z, fingers);
+
+		if (sid >= 0) {
+			elantech->mt[sid].x += delta_x2 * w;
+			elantech->mt[sid].y -= delta_y2 * w;
+			/* XXX: can only send one finger of input */
+			/*
+			elantech_send_input(sc, elantech->mt[sid].x,
+			    elantech->mt[sid].y, z, w);
+			*/
+		}
+
+		break;
+
+	default:
+		printf("%s: unknown packet type 0x%x\n", DEVNAME(sc),
+		    sc->packet[3] & 0x1f);
+		return;
+	}
 }
 
 void
