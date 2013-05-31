@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.45 2010/05/13 20:35:43 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.46 2013/05/31 22:07:49 deraadt Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -94,6 +94,7 @@ struct tcx_softc {
 	paddr_t	sc_cplane;		/* S24 control plane PA */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 	struct	intrhand sc_ih;
+	int	sc_isconsole;
 
 	/* acceleration parts */
 	paddr_t	sc_stipple;		/* Stipple space PA */
@@ -116,7 +117,7 @@ int	tcx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static __inline__
 void	tcx_loadcmap_deferred(struct tcx_softc *, u_int, u_int);
 paddr_t	tcx_mmap(void *, off_t, int);
-void	tcx_prom(void *);
+void	tcx_prom(struct tcx_softc *);
 int	tcx_putchar(void *, int, int, u_int, long);
 void	tcx_reset(struct tcx_softc *, int);
 void	tcx_s24_reset(struct tcx_softc *, int);
@@ -138,9 +139,11 @@ struct wsdisplay_accessops tcx_accessops = {
 
 int	tcxmatch(struct device *, void *, void *);
 void	tcxattach(struct device *, struct device *, void *);
+int	tcxactivate(struct device *, int);
 
 const struct cfattach tcx_ca = {
-	sizeof(struct tcx_softc), tcxmatch, tcxattach
+	sizeof(struct tcx_softc), tcxmatch, tcxattach,
+	NULL, tcxactivate
 };
 
 struct cfdriver tcx_cd = {
@@ -191,7 +194,6 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct confargs *ca = args;
 	int node, pri;
-	int isconsole = 0;
 	char *nam = NULL;
 	vaddr_t thc_offset;
 
@@ -199,7 +201,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	printf(" pri %d: ", pri);
 
 	node = ca->ca_ra.ra_node;
-	isconsole = node == fbnode;
+	sc->sc_isconsole = node == fbnode;
 
 	if (ca->ca_ra.ra_nreg < TCX_NREG) {
 		printf("expected %d registers, got %d\n",
@@ -282,7 +284,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_dfb8;
 
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_init(&sc->sc_sunfb, sc->sc_isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 
 	/*
@@ -294,12 +296,26 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
-	if (isconsole) {
+	if (sc->sc_isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-		shutdownhook_establish(tcx_prom, sc);
+
+	fbwscons_attach(&sc->sc_sunfb, &tcx_accessops, sc->sc_isconsole);
+}
+
+int
+tcxactivate(struct device *self, int act)
+{
+	struct tcx_softc *sc = (struct tcx_softc *)self;
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		if (sc->sc_isconsole)
+			tcx_prom(sc);
+		break;
 	}
 
-	fbwscons_attach(&sc->sc_sunfb, &tcx_accessops, isconsole);
+	return (ret);
 }
 
 int
@@ -408,9 +424,8 @@ tcx_reset(struct tcx_softc *sc, int depth)
 }
 
 void
-tcx_prom(void *v)
+tcx_prom(struct tcx_softc *sc)
 {
-	struct tcx_softc *sc = v;
 	extern struct consdev consdev_prom;
 
 	if (sc->sc_sunfb.sf_depth != 8) {

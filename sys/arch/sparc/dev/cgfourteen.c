@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.36 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.37 2013/05/31 22:07:49 deraadt Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -137,6 +137,7 @@ struct cgfourteen_softc {
 	int	sc_rev;			/* VSIMM revision */
 	int	sc_32;			/* can do 32bit at this resolution */
 	size_t	sc_vramsize;		/* total video memory size */
+	int	sc_isconsole;
 
 	struct	intrhand sc_ih;
 };
@@ -150,7 +151,7 @@ int	cgfourteen_getcmap(union cgfourteen_cmap *, struct wsdisplay_cmap *);
 int	cgfourteen_intr(void *);
 void	cgfourteen_loadcmap_deferred(struct cgfourteen_softc *, u_int, u_int);
 void	cgfourteen_loadcmap_immediate(struct cgfourteen_softc *, u_int, u_int);
-void	cgfourteen_prom(void *);
+void	cgfourteen_prom(struct cgfourteen_softc *);
 int	cgfourteen_putcmap(union cgfourteen_cmap *, struct wsdisplay_cmap *);
 void	cgfourteen_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
@@ -169,9 +170,11 @@ struct wsdisplay_accessops cgfourteen_accessops = {
 
 void	cgfourteenattach(struct device *, struct device *, void *);
 int	cgfourteenmatch(struct device *, void *, void *);
+int	cgfourteenactivate(struct device *, int);
 
 struct cfattach cgfourteen_ca = {
-	sizeof(struct cgfourteen_softc), cgfourteenmatch, cgfourteenattach
+	sizeof(struct cgfourteen_softc), cgfourteenmatch, cgfourteenattach,
+	NULL, cgfourteenactivate
 };
 
 struct cfdriver cgfourteen_cd = {
@@ -221,7 +224,6 @@ cgfourteenattach(struct device *parent, struct device *self, void *args)
 	struct confargs *ca = args;
 	int node, pri, i;
 	u_int32_t *lut;
-	int isconsole;
 	char *nam;
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
@@ -250,7 +252,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *args)
 	if (*nam != '\0')
 		printf("%s, ", nam);
 
-	isconsole = node == fbnode;
+	sc->sc_isconsole = node == fbnode;
 
 	/*
 	 * Map in the 8 useful pages of registers
@@ -322,15 +324,29 @@ cgfourteenattach(struct device *parent, struct device *self, void *args)
 	cgfourteen_burner(sc, 1, 0);
 
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_init(&sc->sc_sunfb, sc->sc_isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgfourteen_setcolor);
 
-	if (isconsole) {
+	if (sc->sc_isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-		shutdownhook_establish(cgfourteen_prom, sc);
+
+	fbwscons_attach(&sc->sc_sunfb, &cgfourteen_accessops, sc->sc_isconsole);
+}
+
+int
+cgfourteenactivate(struct device *self, int act)
+{
+	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		if (sc->sc_isconsole)
+			cgfourteen_prom(sc);
+		break;
 	}
 
-	fbwscons_attach(&sc->sc_sunfb, &cgfourteen_accessops, isconsole);
+	return (ret);
 }
 
 int
@@ -482,9 +498,8 @@ cgfourteen_reset(struct cgfourteen_softc *sc, int depth)
 }
 
 void
-cgfourteen_prom(void *v)
+cgfourteen_prom(struct cgfourteen_softc *sc)
 {
-	struct cgfourteen_softc *sc = v;
 	extern struct consdev consdev_prom;
 
 	if (sc->sc_sunfb.sf_depth != 8) {

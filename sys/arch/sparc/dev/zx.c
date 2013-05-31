@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.23 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.24 2013/05/31 22:07:49 deraadt Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -117,12 +117,13 @@ struct zx_softc {
 	volatile struct zx_cursor *sc_zcu;
 
 	int	sc_mode;
+	int	sc_isconsole;
 };
 
 void	zx_burner(void *, u_int, u_int);
 int	zx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	zx_mmap(void *v, off_t offset, int prot);
-void	zx_prom(void *);
+void	zx_prom(struct zx_softc *);
 void	zx_reset(struct zx_softc *, u_int);
 void	zx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
@@ -152,6 +153,7 @@ struct wsdisplay_accessops zx_accessops = {
 
 void	zx_attach(struct device *, struct device *, void *);
 int	zx_match(struct device *, void *, void *);
+int	zx_activate(struct device *, int);
 
 void	zx_copyrect(struct rasops_info *, int, int, int, int, int, int);
 int	zx_cross_loadwid(struct zx_softc *, u_int, u_int, u_int);
@@ -168,7 +170,8 @@ int	zx_eraserows(void *, int, int, long);
 int	zx_putchar(void *, int, int, u_int, long);
 
 struct cfattach zx_ca = {
-	sizeof(struct zx_softc), zx_match, zx_attach
+	sizeof(struct zx_softc), zx_match, zx_attach,
+	NULL, zx_activate
 };
 
 struct cfdriver zx_cd = {
@@ -193,7 +196,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	struct zx_softc *sc = (struct zx_softc *)self;
 	struct confargs *ca = args;
 	struct rasops_info *ri;
-	int node, isconsole = 0;
+	int node;
 	const char *nam;
 
 	ri = &sc->sc_sunfb.sf_ro;
@@ -225,7 +228,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 		nam = ca->ca_ra.ra_name;
 	printf(": %s", nam);
 
-	isconsole = node == fbnode;
+	sc->sc_isconsole = node == fbnode;
 
 	/*
 	 * The console is using the 8-bit overlay plane, while the prom
@@ -247,7 +250,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	    ZX_OFF_SS0, round_page(sc->sc_sunfb.sf_fbsize));
 	ri->ri_hw = sc;
 
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_init(&sc->sc_sunfb, sc->sc_isconsole);
 
 	/*
 	 * Watch out! rasops_init() invoked via fbwscons_init() did not
@@ -275,10 +278,9 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	ri->ri_ops.putchar = zx_putchar;
 	ri->ri_do_cursor = zx_do_cursor;
 
-	if (isconsole) {
+	if (sc->sc_isconsole) {
 		/* zx_reset() below will clear screen, so restart at 1st row */
 		fbwscons_console_init(&sc->sc_sunfb, 0);
-		shutdownhook_establish(zx_prom, sc);
 	}
 
 	/* reset cursor & frame buffer controls */
@@ -288,7 +290,23 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	/* enable video */
 	zx_burner(sc, 1, 0);
 
-	fbwscons_attach(&sc->sc_sunfb, &zx_accessops, isconsole);
+	fbwscons_attach(&sc->sc_sunfb, &zx_accessops, sc->sc_isconsole);
+}
+
+int
+zx_activate(struct device *self, int act)
+{
+	struct zx_softc *sc = (struct zx_softc *)self;
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		if (sc->sc_isconsole)
+			zx_prom(sc);
+		break;
+	}
+
+	return (ret);
 }
 
 int
@@ -770,9 +788,8 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 }
 
 void
-zx_prom(void *v)
+zx_prom(struct zx_softc *sc)
 {
-	struct zx_softc *sc = v;
 	extern struct consdev consdev_prom;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) {

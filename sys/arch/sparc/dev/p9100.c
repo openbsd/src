@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.50 2011/05/31 17:40:19 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.51 2013/05/31 22:07:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, 2006, 2008, Miodrag Vallat.
@@ -156,9 +156,11 @@ void	p9100_ras_init(struct p9100_softc *);
 
 int	p9100match(struct device *, void *, void *);
 void	p9100attach(struct device *, struct device *, void *);
+int	p9100activate(struct device *, int);
 
 struct cfattach pnozz_ca = {
-	sizeof (struct p9100_softc), p9100match, p9100attach
+	sizeof (struct p9100_softc), p9100match, p9100attach,
+	NULL, p9100activate
 };
 
 struct cfdriver pnozz_cd = {
@@ -387,14 +389,26 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	/* enable video */
 	p9100_burner(sc, 1, 0);
 
-	if (isconsole) {
+	if (isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-#if NTCTRL > 0
-		shutdownhook_establish(p9100_prom, sc);
-#endif
-	}
 
 	fbwscons_attach(&sc->sc_sunfb, &p9100_accessops, isconsole);
+}
+
+int
+p9100activate(struct device *self, int act)
+{
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+#if NTCTRL > 0
+		p9100_prom(self);
+#endif
+		break;
+	}
+
+	return (ret);
 }
 
 int

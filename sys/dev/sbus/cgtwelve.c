@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.6 2008/12/27 17:23:03 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.7 2013/05/31 22:07:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -86,12 +86,13 @@ struct cgtwelve_softc {
 
 	int	sc_highres;
 	int	sc_nscreens;
+	int	sc_isconsole;
 };
 
 int	cgtwelve_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	cgtwelve_mmap(void *, off_t, int);
 void	cgtwelve_reset(struct cgtwelve_softc *, int);
-void	cgtwelve_prom(void *);
+void	cgtwelve_prom(struct cgtwelve_softc *);
 
 static __inline__ void cgtwelve_ramdac_wraddr(struct cgtwelve_softc *sc,
 	    u_int32_t addr);
@@ -110,9 +111,11 @@ struct wsdisplay_accessops cgtwelve_accessops = {
 
 int	cgtwelvematch(struct device *, void *, void *);
 void	cgtwelveattach(struct device *, struct device *, void *);
+int	cgtwelveactivate(struct device *, int);
 
 struct cfattach cgtwelve_ca = {
-	sizeof(struct cgtwelve_softc), cgtwelvematch, cgtwelveattach
+	sizeof(struct cgtwelve_softc), cgtwelvematch, cgtwelveattach,
+	NULL, cgtwelveactivate
 };
 
 struct cfdriver cgtwelve_cd = {
@@ -145,7 +148,7 @@ cgtwelveattach(struct device *parent, struct device *self, void *args)
 	struct sbus_attach_args *sa = args;
 	bus_space_tag_t bt;
 	bus_space_handle_t bh;
-	int node, isconsole = 0;
+	int node;
 	char *ps;
 
 	bt = sa->sa_bustag;
@@ -157,7 +160,7 @@ cgtwelveattach(struct device *parent, struct device *self, void *args)
 		printf(" (%s)", ps);
 	printf("\n");
 
-	isconsole = node == fbnode;
+	sc->sc_isconsole = node == fbnode;
 
 	if (sa->sa_nreg == 0) {
 		printf("%s: no SBus registers!\n", self->dv_xname);
@@ -232,12 +235,10 @@ cgtwelveattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_overlay;
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, 0, isconsole);
+	fbwscons_init(&sc->sc_sunfb, 0, sc->sc_isconsole);
 
-	if (isconsole) {
+	if (sc->sc_isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-		shutdownhook_establish(cgtwelve_prom, sc);
-	}
 
 	printf("%s: %dx%d", self->dv_xname,
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
@@ -246,7 +247,23 @@ cgtwelveattach(struct device *parent, struct device *self, void *args)
 		printf(", microcode rev. %s", ps);
 	printf("\n");
 
-	fbwscons_attach(&sc->sc_sunfb, &cgtwelve_accessops, isconsole);
+	fbwscons_attach(&sc->sc_sunfb, &cgtwelve_accessops, sc->sc_isconsole);
+}
+
+int
+cgtwelveactivate(struct device *self, int act)
+{
+	struct cgtwelve_softc *sc = (struct cgtwelve_softc *)self;
+	int ret = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		if (sc->sc_isconsole)
+			cgtwelve_prom(sc);
+		break;
+	}
+
+	return (ret);
 }
 
 int
@@ -445,9 +462,8 @@ cgtwelve_ramdac_wraddr(struct cgtwelve_softc *sc, u_int32_t addr)
  * so that the PROM prompt is visible again.
  */
 void
-cgtwelve_prom(void *v)
+cgtwelve_prom(struct cgtwelve_softc *sc)
 {
-	struct cgtwelve_softc *sc = v;
 	extern struct consdev consdev_prom;
 
 	if (sc->sc_sunfb.sf_depth != 1) {
