@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.25 2013/05/30 16:14:50 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.26 2013/05/31 14:10:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -28,6 +28,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +42,6 @@
 #include "log.h"
 #include "lde.h"
 
-int	nbr_establish_connection(struct nbr *);
 void	nbr_send_labelmappings(struct nbr *);
 int	nbr_act_session_operational(struct nbr *);
 
@@ -287,6 +287,8 @@ nbr_del(struct nbr *nbr)
 {
 	session_close(nbr);
 
+	if (event_pending(&nbr->ev_connect, EV_WRITE, NULL))
+		event_del(&nbr->ev_connect);
 	if (evtimer_pending(&nbr->inactivity_timer, NULL))
 		evtimer_del(&nbr->inactivity_timer);
 	if (evtimer_pending(&nbr->keepalive_timer, NULL))
@@ -449,7 +451,7 @@ nbr_idtimer(int fd, short event, void *arg)
 	log_debug("nbr_idtimer: neighbor ID %s peerid %lu", inet_ntoa(nbr->id),
 	    nbr->peerid);
 
-	nbr_act_session_establish(nbr, 1);
+	nbr_establish_connection(nbr);
 }
 
 void
@@ -481,6 +483,40 @@ nbr_pending_idtimer(struct nbr *nbr)
 }
 
 int
+nbr_pending_connect(struct nbr *nbr)
+{
+	if (event_initialized(&nbr->ev_connect) &&
+	    event_pending(&nbr->ev_connect, EV_WRITE, NULL))
+		return (1);
+
+	return (0);
+}
+
+static void
+nbr_connect_cb(int fd, short event, void *arg)
+{
+	struct nbr	*nbr = arg;
+	int		 error;
+	socklen_t	 len;
+
+	len = sizeof(error);
+	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+		log_warn("nbr_connect_cb getsockopt SOL_SOCKET SO_ERROR");
+		return;
+	}
+
+	if (error) {
+		close(nbr->fd);
+		errno = error;
+		log_debug("nbr_connect_cb: error while "
+		    "connecting to %s", inet_ntoa(nbr->addr));
+		return;
+	}
+
+	nbr_act_session_establish(nbr, 1);
+}
+
+int
 nbr_establish_connection(struct nbr *nbr)
 {
 	struct sockaddr_in	in;
@@ -497,7 +533,15 @@ nbr_establish_connection(struct nbr *nbr)
 		return (-1);
 	}
 
+	session_socket_blockmode(nbr->fd, BM_NONBLOCK);
+
 	if (connect(nbr->fd, (struct sockaddr *)&in, sizeof(in)) == -1) {
+		if (errno == EINPROGRESS) {
+			event_set(&nbr->ev_connect, nbr->fd, EV_WRITE,
+			    nbr_connect_cb, nbr);
+			event_add(&nbr->ev_connect, NULL);
+			return (0);
+		}
 		log_debug("nbr_establish_connection: error while "
 		    "connecting to %s", inet_ntoa(nbr->addr));
 		nbr_start_idtimer(nbr);
@@ -505,17 +549,13 @@ nbr_establish_connection(struct nbr *nbr)
 		return (-1);
 	}
 
-	return (0);
+	/* connection completed immediately */
+	return (nbr_act_session_establish(nbr, 1));
 }
 
 int
 nbr_act_session_establish(struct nbr *nbr, int active)
 {
-	if (active) {
-		if (nbr_establish_connection(nbr) < 0)
-			return (-1);
-	}
-
 	evbuf_init(&nbr->wbuf, nbr->fd, session_write, nbr);
 	event_set(&nbr->rev, nbr->fd, EV_READ | EV_PERSIST, session_read, nbr);
 	event_add(&nbr->rev, NULL);

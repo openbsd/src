@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.16 2012/04/12 17:33:43 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.17 2013/05/31 14:10:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -38,6 +38,7 @@ struct nbr {
 	RB_ENTRY(nbr)		 id_tree, addr_tree, pid_tree;
 	struct evbuf		 wbuf;
 	struct event		 rev;
+	struct event		 ev_connect;
 	struct event		 inactivity_timer;
 	struct event		 keepalive_timer;
 	struct event		 keepalive_timeout;
@@ -172,7 +173,9 @@ void	 nbr_idtimer(int, short, void *);
 void	 nbr_start_idtimer(struct nbr *);
 void	 nbr_stop_idtimer(struct nbr *);
 int	 nbr_pending_idtimer(struct nbr *);
+int	 nbr_pending_connect(struct nbr *);
 
+int	 nbr_establish_connection(struct nbr *);
 int	 nbr_act_session_establish(struct nbr *, int);
 
 void			 nbr_mapping_add(struct nbr *, struct mapping_head *,
