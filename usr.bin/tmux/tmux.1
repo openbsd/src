@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.357 2013/04/24 10:15:47 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.358 2013/05/31 19:46:42 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2013 $
+.Dd $Mdocdate: May 31 2013 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3056,6 +3056,7 @@ The following variables are available, where appropriate:
 .It Li "history_limit" Ta "Maximum window history lines"
 .It Li "history_size" Ta "Size of history in bytes"
 .It Li "host" Ta "Hostname of local host"
+.It Li "host_short" Ta "Hostname of local host (no domain name)"
 .It Li "insert_flag" Ta "Pane insert flag"
 .It Li "keypad_cursor_flag" Ta "Pane keypad cursor flag"
 .It Li "keypad_flag" Ta "Pane keypad flag"
