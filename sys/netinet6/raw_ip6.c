@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.54 2013/05/02 11:54:10 mpi Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.55 2013/05/31 13:15:53 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -240,6 +240,7 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 {
 	struct ip6_hdr *ip6;
 	struct ip6ctlparam *ip6cp = NULL;
+	struct sockaddr_in6 *sa6 = satosin6(sa);
 	const struct sockaddr_in6 *sa6_src = NULL;
 	void *cmdarg;
 	void (*notify)(struct in6pcb *, int) = in6_rtchange;
@@ -275,7 +276,6 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 	}
 
 	if (ip6 && cmd == PRC_MSGSIZE) {
-		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
 		int valid = 0;
 		struct in6pcb *in6p;
 
@@ -288,7 +288,7 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 		 */
 		in6p = NULL;
 		in6p = in6_pcbhashlookup(&rawin6pcbtable, &sa6->sin6_addr, 0,
-		    (struct in6_addr *)&sa6_src->sin6_addr, 0);
+		    &sa6_src->sin6_addr, 0);
 #if 0
 		if (!in6p) {
 			/*
@@ -326,8 +326,8 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 		 */
 	}
 
-	(void) in6_pcbnotify(&rawin6pcbtable, sa, 0,
-	    (struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
+	(void) in6_pcbnotify(&rawin6pcbtable, sa6, 0,
+	    sa6_src, 0, cmd, cmdarg, notify);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.78 2013/05/17 09:04:30 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.79 2013/05/31 13:15:53 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -266,8 +266,8 @@ struct inpcb *
 	    struct mbuf *, u_int);
 #ifdef INET6
 struct inpcb *
-	 in6_pcbhashlookup(struct inpcbtable *, struct in6_addr *,
-			       u_int, struct in6_addr *, u_int);
+	 in6_pcbhashlookup(struct inpcbtable *, const struct in6_addr *,
+			       u_int, const struct in6_addr *, u_int);
 struct inpcb *
 	 in6_pcblookup_listen(struct inpcbtable *,
 			       struct in6_addr *, u_int, int, struct mbuf *);
@@ -293,8 +293,8 @@ struct rtentry *
 	in_pcbrtentry(struct inpcb *);
 
 /* INET6 stuff */
-int	in6_pcbnotify(struct inpcbtable *, struct sockaddr *,
-	u_int, struct sockaddr *, u_int, int, void *,
+int	in6_pcbnotify(struct inpcbtable *, struct sockaddr_in6 *,
+	u_int, const struct sockaddr_in6 *, u_int, int, void *,
 	void (*)(struct inpcb *, int));
 int	in6_selecthlim(struct inpcb *, struct ifnet *);
 int	in6_pcbsetport(struct in6_addr *, struct inpcb *, struct proc *);

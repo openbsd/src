@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.137 2013/04/09 08:35:38 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.138 2013/05/31 13:15:53 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -946,8 +946,8 @@ in_pcbhashlookup(struct inpcbtable *table, struct in_addr faddr,
 
 #ifdef INET6
 struct inpcb *
-in6_pcbhashlookup(struct inpcbtable *table, struct in6_addr *faddr,
-    u_int fport_arg, struct in6_addr *laddr, u_int lport_arg)
+in6_pcbhashlookup(struct inpcbtable *table, const struct in6_addr *faddr,
+    u_int fport_arg, const struct in6_addr *laddr, u_int lport_arg)
 {
 	struct inpcbhead *head;
 	struct inpcb *inp;

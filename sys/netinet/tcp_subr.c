@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.118 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.119 2013/05/31 13:15:53 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -663,7 +663,7 @@ tcp6_ctlinput(cmd, sa, d)
 	void (*notify)(struct inpcb *, int) = tcp_notify;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *sa6_src = NULL;
-	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+	struct sockaddr_in6 *sa6 = satosin6(sa);
 	struct inpcb *inp;
 	struct mbuf *m;
 	tcp_seq seq;
@@ -760,8 +760,8 @@ tcp6_ctlinput(cmd, sa, d)
 			syn_cache_unreach((struct sockaddr *)sa6_src,
 			    sa, &th, /* XXX */ 0);
 	} else {
-		(void) in6_pcbnotify(&tcbtable, sa, 0,
-		    (struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
+		(void) in6_pcbnotify(&tcbtable, sa6, 0,
+		    sa6_src, 0, cmd, NULL, notify);
 	}
 }
 #endif
@@ -906,8 +906,8 @@ tcp6_mtudisc_callback(faddr)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
-	(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sin6, 0,
-	    (struct sockaddr *)&sa6_any, 0, PRC_MSGSIZE, NULL, tcp_mtudisc);
+	(void) in6_pcbnotify(&tcbtable, &sin6, 0,
+	    &sa6_any, 0, PRC_MSGSIZE, NULL, tcp_mtudisc);
 }
 #endif /* INET6 */
 

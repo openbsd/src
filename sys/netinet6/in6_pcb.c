@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.54 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.55 2013/05/31 13:15:53 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -478,23 +478,22 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
  * Must be called at splnet.
  */
 int
-in6_pcbnotify(struct inpcbtable *head, struct sockaddr *dst, 
-	uint fport_arg, struct sockaddr *src, uint lport_arg, int cmd, 
-	void *cmdarg, void (*notify)(struct inpcb *, int))
+in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst, 
+    uint fport_arg, const struct sockaddr_in6 *src, uint lport_arg, int cmd, 
+    void *cmdarg, void (*notify)(struct inpcb *, int))
 {
 	struct inpcb *inp, *ninp;
 	u_short fport = fport_arg, lport = lport_arg;
-	struct sockaddr_in6 sa6_src, *sa6_dst;
+	struct sockaddr_in6 sa6_src;
 	int errno, nmatch = 0;
 	u_int32_t flowinfo;
 
-	if ((unsigned)cmd >= PRC_NCMDS || dst->sa_family != AF_INET6)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return (0);
 
-	sa6_dst = (struct sockaddr_in6 *)dst;
-	if (IN6_IS_ADDR_UNSPECIFIED(&sa6_dst->sin6_addr))
+	if (IN6_IS_ADDR_UNSPECIFIED(&dst->sin6_addr))
 		return (0);
-	if (IN6_IS_ADDR_V4MAPPED(&sa6_dst->sin6_addr)) {
+	if (IN6_IS_ADDR_V4MAPPED(&dst->sin6_addr)) {
 #ifdef DIAGNOSTIC
 		printf("Huh?  Thought in6_pcbnotify() never got "
 		       "called with mapped!\n");
@@ -505,7 +504,7 @@ in6_pcbnotify(struct inpcbtable *head, struct sockaddr *dst,
 	/*
 	 * note that src can be NULL when we get notify by local fragmentation.
 	 */
-	sa6_src = (src == NULL) ? sa6_any : *(struct sockaddr_in6 *)src;
+	sa6_src = (src == NULL) ? sa6_any : *src;
 	flowinfo = sa6_src.sin6_flowinfo;
 
 	/*
@@ -572,7 +571,7 @@ in6_pcbnotify(struct inpcbtable *head, struct sockaddr *dst,
 
 			dst6 = (struct sockaddr_in6 *)&inp->inp_route.ro_dst;
 			if (IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
-			    &sa6_dst->sin6_addr))
+			    &dst->sin6_addr))
 				goto do_notify;
 		}
 
@@ -590,7 +589,7 @@ in6_pcbnotify(struct inpcbtable *head, struct sockaddr *dst,
 		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &sa6_src.sin6_addr))
 			goto do_notify;
 		else if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6,
-					     &sa6_dst->sin6_addr) ||
+					     &dst->sin6_addr) ||
 			 inp->inp_socket == 0 ||
 			 (lport && inp->inp_lport != lport) ||
 			 (!IN6_IS_ADDR_UNSPECIFIED(&sa6_src.sin6_addr) &&
