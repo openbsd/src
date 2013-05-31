@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.29 2012/04/12 17:33:43 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.30 2013/05/31 14:11:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -36,8 +36,6 @@
 #define CONF_FILE		"/etc/ldpd.conf"
 #define	LDPD_SOCKET		"/var/run/ldpd.sock"
 #define LDPD_USER		"_ldpd"
-
-#define NBR_HASHSIZE		128
 
 #define NBR_IDSELF		1
 #define NBR_CNTSTART		(NBR_IDSELF + 1)
@@ -358,12 +356,6 @@ int			 cmdline_symset(char *);
 
 /* control.c */
 void	session_socket_blockmode(int, enum blockmodes);
-
-/* in_cksum.c */
-u_int16_t	 in_cksum(void *, size_t);
-
-/* iso_cksum.c */
-u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 
 /* kroute.c */
 int		 kif_init(void);
