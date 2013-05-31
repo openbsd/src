@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.263 2013/04/25 06:41:46 otto Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.264 2013/05/31 19:56:06 yasuoka Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3430,7 +3430,7 @@ setcarp_advskew(const char *val, int d)
 	struct carpreq carpr;
 	int advskew;
 
-	advskew = strtonum(val, 0, 255, &errmsg);
+	advskew = strtonum(val, 0, 254, &errmsg);
 	if (errmsg)
 		errx(1, "advskew %s: %s", val, errmsg);
 
@@ -3454,7 +3454,7 @@ setcarp_advbase(const char *val, int d)
 	struct carpreq carpr;
 	int advbase;
 
-	advbase = strtonum(val, 0, 255, &errmsg);
+	advbase = strtonum(val, 0, 254, &errmsg);
 	if (errmsg)
 		errx(1, "advbase %s: %s", val, errmsg);
 
@@ -3609,7 +3609,7 @@ setcarp_nodes(const char *val, int d)
 		if (sscanf(str, "%u:%u", &vhid, &advskew) != 2) {
 			errx(1, "non parsable arg: %s", str);
 		}
-		if (vhid >= 255)
+		if (vhid > 255)
 			errx(1, "vhid %u: value too large", vhid);
 		if (advskew >= 255)
 			errx(1, "advskew %u: value too large", advskew);
