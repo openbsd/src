@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.8 2006/08/17 12:40:11 jmc Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.9 2013/05/31 19:32:52 guenther Exp $	*/
 /*	$NetBSD: dirent.h,v 1.12 1996/04/09 20:55:25 cgd Exp $	*/
 
 /*-
@@ -49,10 +49,10 @@
  */
 
 struct dirent {
-	u_int32_t d_fileno;		/* file number of entry */
-	u_int16_t d_reclen;		/* length of this record */
-	u_int8_t  d_type; 		/* file type, see below */
-	u_int8_t  d_namlen;		/* length of string in d_name */
+	__ino_t    d_fileno;		/* file number of entry */
+	__uint16_t d_reclen;		/* length of this record */
+	__uint8_t  d_type; 		/* file type, see below */
+	__uint8_t  d_namlen;		/* length of string in d_name */
 #if __BSD_VISIBLE
 #define	MAXNAMLEN	255
 	char	d_name[MAXNAMLEN + 1];	/* name must be no longer than this */
