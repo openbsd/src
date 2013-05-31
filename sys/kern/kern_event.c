@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.49 2013/04/24 09:52:54 nicm Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.50 2013/05/31 19:01:56 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -292,6 +292,7 @@ filt_proc(struct knote *kn, long hint)
 
 		kn->kn_status |= KN_DETACHED;
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		kn->kn_data = pr->ps_mainproc->p_xstat;
 		SLIST_REMOVE(&pr->ps_klist, kn, knote, kn_selnext);
 		return (1);
 	}
