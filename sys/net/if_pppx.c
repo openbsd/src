@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.18 2013/04/10 01:35:55 guenther Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.19 2013/05/31 19:16:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -915,7 +915,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	
 	ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr;
 
-	error = in_ifinit(ifp, ia, &ifaddr, 0, 1);
+	error = in_ifinit(ifp, ia, &ifaddr, 1);
 	if (error) {
 		printf("pppx: unable to set addresses for %s, error=%d\n",
 		    ifp->if_xname, error);

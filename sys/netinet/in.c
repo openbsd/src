@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.76 2013/05/13 10:17:13 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.77 2013/05/31 19:16:52 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -341,8 +341,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 
 	case SIOCSIFADDR:
 		s = splsoftnet();
-		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1,
-		    newifaddr);
+		in_ifscrub(ifp, ia);
+		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), newifaddr);
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
 		else if (newifaddr) {
@@ -391,8 +391,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 				    sintosa(&ifra->ifra_broadaddr));
 		}
 		if (ifra->ifra_addr.sin_family == AF_INET && needinit) {
-			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0,
-			    newifaddr);
+			error = in_ifinit(ifp, ia, &ifra->ifra_addr, newifaddr);
 		}
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
@@ -641,7 +640,7 @@ in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
  */
 int
 in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
-    int scrub, int newaddr)
+    int newaddr)
 {
 	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
@@ -672,12 +671,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	 * Be safe for now.
 	 */
 	splsoftassert(IPL_SOFTNET);
-
-	if (scrub) {
-		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
-		in_ifscrub(ifp, ia);
-		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
-	}
 
 	if (ia->ia_netmask == 0) {
 		if (IN_CLASSA(i))

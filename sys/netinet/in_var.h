@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.19 2013/03/22 01:41:12 tedu Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.20 2013/05/31 19:16:52 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 int	in_ifinit(struct ifnet *,
-	    struct in_ifaddr *, struct sockaddr_in *, int, int);
+	    struct in_ifaddr *, struct sockaddr_in *, int);
 struct	in_multi *in_addmulti(struct in_addr *, struct ifnet *);
 void	in_delmulti(struct in_multi *);
 void	in_ifscrub(struct ifnet *, struct in_ifaddr *);

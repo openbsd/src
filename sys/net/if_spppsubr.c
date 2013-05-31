@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.101 2013/03/28 16:55:27 deraadt Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.102 2013/05/31 19:16:52 mpi Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4739,11 +4739,6 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
 
-		/*
-		 * Scrub old routes now instead of calling in_ifinit with
-		 * scrub=1, because we may change the dstaddr
-		 * before the call to in_ifinit.
-		 */
 		in_ifscrub(ifp, ifatoia(ifa));
 
 		if (myaddr != 0)
@@ -4755,7 +4750,7 @@ sppp_set_ip_addrs(void *arg1, void *arg2)
 				*dest = new_dst; /* fix dstaddr in place */
 			}
 		}
-		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0)))
+		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0)))
 			dohooks(ifp->if_addrhooks, 0);
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addrs: in_ifinit "
@@ -4816,7 +4811,7 @@ sppp_clear_ip_addrs(void *arg1, void *arg2)
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 			/* replace peer addr in place */
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
-		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0)))
+		if (!(error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0)))
 			dohooks(ifp->if_addrhooks, 0);
 		if (debug && error) {
 			log(LOG_DEBUG, SPP_FMT "sppp_clear_ip_addrs: in_ifinit "
