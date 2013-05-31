@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.32 2013/03/23 16:12:22 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.33 2013/05/31 17:00:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -96,10 +96,6 @@ struct cpu_info {
 	int		ci_number;
 	struct schedstate_percpu ci_schedstate;	/* scheduler state */
 	u_int32_t	ci_randseed;
-
-	/* DEBUG/DIAGNOSTIC stuff */
-	u_long		ci_spin_locks;  /* # of spin locks held */
-	u_long		ci_simple_locks;/* # of simple locks held */
 
 	/* Spinning up the CPU */
 	void		(*ci_spinup)(void); /* spinup routine */

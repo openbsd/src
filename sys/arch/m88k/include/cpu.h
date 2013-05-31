@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.59 2013/03/12 09:37:16 mpi Exp $ */
+/*	$OpenBSD: cpu.h,v 1.60 2013/05/31 17:00:58 tedu Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -144,8 +144,6 @@ struct cpu_info {
 	int		 ci_want_resched;	/* need_resched() invoked */
 
 	u_int		 ci_intrdepth;		/* interrupt depth */
-
-	u_long		 ci_spin_locks;		/* spin locks counter */
 
 	int		 ci_ddb_state;		/* ddb status */
 #define	CI_DDB_RUNNING	0

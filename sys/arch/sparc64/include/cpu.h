@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.82 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.83 2013/05/31 17:00:59 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -128,10 +128,6 @@ struct cpu_info {
 	void			*ci_intrpending[16][8];
 	u_int64_t		ci_tick;
 	struct intrhand		ci_tickintr;
-
-	/* DEBUG/DIAGNOSTIC stuff */
-	u_long			ci_spin_locks;	/* # of spin locks held */
-	u_long			ci_simple_locks;/* # of simple locks held */
 
 	/* Spinning up the CPU */
 	void			(*ci_spinup)(void); /* spinup routine */
