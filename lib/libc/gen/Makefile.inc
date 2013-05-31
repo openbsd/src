@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.60 2013/05/31 18:41:25 tedu Exp $
+#	$OpenBSD: Makefile.inc,v 1.61 2013/05/31 20:59:23 ajacoutot Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -11,14 +11,14 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         fstab.c ftok.c fts.c ftw.c getbsize.c getcap.c getcwd.c \
         getdomainname.c getgrent.c getgrouplist.c gethostname.c \
         getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
-        getpwent.c getttyent.c getusershell.c glob.c initgroups.c \
-        isatty.c isctype.c isfdtype.c isfinite.c isinf.c isnan.c \
-        isnormal.c signbit.c lockf.c login_cap.c nice.c \
+        getprogname.c getpwent.c getttyent.c getusershell.c glob.c \
+        initgroups.c isatty.c isctype.c isfdtype.c isfinite.c isinf.c \
+        isnan.c isnormal.c signbit.c lockf.c login_cap.c nice.c \
         nlist.c nftw.c opendir.c pause.c popen.c posix_spawn.c psignal.c \
         pw_dup.c pwcache.c raise.c readdir.c readdir_r.c readpassphrase.c \
-        rewinddir.c scandir.c \
-        seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
-        setproctitle.c shm_open.c siginterrupt.c siglist.c signal.c signame.c \
+        rewinddir.c scandir.c seekdir.c setdomainname.c sethostname.c \
+        setprogname.c setjmperr.c setmode.c setproctitle.c shm_open.c \
+        siginterrupt.c siglist.c signal.c signame.c \
         sigsetops.c sleep.c statvfs.c strtofflags.c sysconf.c sysctl.c \
         syslog.c syslog_r.c telldir.c time.c times.c timezone.c \
         tolower_.c ttyname.c \
@@ -41,8 +41,8 @@ MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	exec.3 fabs.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 ftok.3 fts.3 \
 	ftw.3 getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
-	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
-	getpwnam.3 \
+	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getprogname.3 \
+	getpwent.3 getpwnam.3 \
 	getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 isalpha.3 \
 	isascii.3 isblank.3 iscntrl.3 isdigit.3 isfdtype.3 isgraph.3 \
 	isgreater.3 islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 \
@@ -104,6 +104,7 @@ MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 MLINKS+=gethostname.3 sethostname.3
 MLINKS+=getnetgrent.3 endnetgrent.3 getnetgrent.3 innetgr.3 \
 	getnetgrent.3 setnetgrent.3
+MLINKS+=getprogname.3 setprogname.3
 MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpwent.3
 MLINKS+=getpwnam.3 getpwuid.3 getpwnam.3 getpwnam_r.3 getpwnam.3 getpwuid_r.3 \
 	getpwnam.3 setpassent.3
