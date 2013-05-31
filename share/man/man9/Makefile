@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.178 2013/05/17 14:54:04 mpi Exp $
+#	$OpenBSD: Makefile,v 1.179 2013/05/31 20:06:22 guenther Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -235,7 +235,8 @@ MLINKS+=mountroothook_establish.9 mountroothook_disestablish.9
 MLINKS+=mutex.9 mtx_init.9 mutex.9 mtx_enter.9 mutex.9 mtx_leave.9 \
 	mutex.9 MUTEX_ASSERT_LOCKED.9 mutex.9 MUTEX_ASSERT_UNLOCKED.9
 MLINKS+=mutex.9 mtx_enter_try.9
-MLINKS+=namei.9 lookup.9 namei.9 relookup.9 namei.9 NDINIT.9
+MLINKS+=namei.9 vfs_lookup.9 namei.9 vfs_relookup.9 namei.9 NDINIT.9
+MLINKS+=namei.9 NDINITAT.9
 MLINKS+=pci_conf_read.9 pci_conf_write.9 pci_conf_read.9 pci_make_tag.9 \
 	pci_conf_read.9 pci_decompose_tag.9
 MLINKS+=pci_intr_map.9 pci_intr_map_msi.9 pci_intr_map.9 pci_intr_string.9 \

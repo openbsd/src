@@ -1,4 +1,4 @@
-.\"	$OpenBSD: namei.9,v 1.15 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: namei.9,v 1.16 2013/05/31 20:06:23 guenther Exp $
 .\"     $NetBSD: namei.9,v 1.9 2003/05/06 10:46:44 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,13 +28,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: May 31 2013 $
 .Dt NAMEI 9
 .Os
 .Sh NAME
 .Nm namei ,
-.Nm lookup ,
-.Nm relookup ,
+.Nm vfs_lookup ,
+.Nm vfs_relookup ,
 .Nm NDINIT
 .Nd pathname lookup
 .Sh SYNOPSIS
@@ -43,19 +43,22 @@
 .Ft int
 .Fn namei "struct nameidata *ndp"
 .Ft int
-.Fn lookup "struct nameidata *ndp"
+.Fn vfs_lookup "struct nameidata *ndp"
 .Ft int
-.Fn relookup "struct vnode *dvp" "struct vnode **vpp" \
+.Fn vfs_relookup "struct vnode *dvp" "struct vnode **vpp" \
 "struct componentname *cnp"
 .Ft void
 .Fn NDINIT "struct nameidata *ndp" "u_long op" "u_long flags" \
 "enum uio_seg segflg" "const char *namep" "struct proc *p"
+.Ft void
+.Fn NDINITAT "struct nameidata *ndp" "u_long op" "u_long flags" \
+"enum uio_seg segflg" "int dirfd" "const char *namep" "struct proc *p"
 .Sh DESCRIPTION
 The
-.Nm
-interface is used to convert pathnames to file system vnodes.
+.Fn namei
+function is used to convert pathnames to file system vnodes.
 The
-name of the interface is actually a contraction of the words
+name of the function is actually a contraction of the words
 .Em name
 and
 .Em inode
@@ -73,6 +76,8 @@ struct nameidata {
          * Arguments to namei/lookup.
          */
         const char *ni_dirp;            /* pathname pointer */
+        int     ni_dirfd;               /* AT_FDCWD or fd of base of */
+					/* relative paths */
         enum    uio_seg ni_segflg;      /* location of pathname */
         /*
          * Arguments to lookup.
@@ -98,8 +103,8 @@ struct nameidata {
 .Ed
 .Pp
 The
-.Nm
-interface accesses vnode operations by passing arguments in the
+.Fn namei
+function accesses vnode operations by passing arguments in the
 partially initialised
 .Em componentname
 structure
@@ -110,22 +115,24 @@ See
 .Xr VOP_LOOKUP 9
 for more information.
 The details of the componentname structure are not absolutely necessary
-since the members are initialised by the helper macro
-.Fn NDINIT .
+since the members are initialised by the helper macros
+.Fn NDINIT
+and
+.Fn NDINITAT .
 It is useful to know the operations and flags as specified in
 .Xr VOP_LOOKUP 9 .
 .Pp
 The
-.Nm
-interface overloads
+.Fn namei
+function overloads
 .Em ni_cnd.cn_flags
 with some additional flags.
-These flags should be specific to the
-.Nm
-interface and ignored by vnode operations.
-However, due to the historic close relationship between the
-.Nm
-interface and the vnode operations, these flags are sometimes used
+These flags should be specific to
+.Fn namei
+and ignored by vnode operations.
+However, due to the historic close relationship between
+.Fn namei
+and the vnode operations, these flags are sometimes used
 (and set) by vnode operations, particularly
 .Fn VOP_LOOKUP .
 The additional flags are:
@@ -152,6 +159,8 @@ this is last component of pathname
 symlink needs interpretation
 .It REQUIREDIR
 must be a directory
+.It STRIPSLASHES
+strip trailing slashes from the pathname
 .It PDIRUNLOCK
 .Fn VOP_LOOKUP
 unlocked parent dir
@@ -172,16 +181,19 @@ It implies SAVENAME plus the addition of saving the parent directory
 that contains the name in
 .Em ni_startdir .
 It allows repeated calls to
-.Fn lookup
+.Fn vfs_lookup
 for the name being sought.
 The caller is responsible for releasing the buffer and for invoking
 .Fn vrele
 on
 .Em ni_startdir .
 .Pp
-All access to the
-.Nm
-interface must be in process context.
+All access to
+.Fn namei ,
+.Fn vfs_lookup ,
+and
+.Fn vfs_relookup
+must be in process context.
 Pathname lookups cannot be done in interrupt context.
 .Sh FUNCTIONS
 .Bl -tag -width compact
@@ -208,7 +220,7 @@ Symbolic links are always followed for all other pathname components
 other than the last.
 .Pp
 If the LOCKLEAF flag is set, a locked vnode is returned.
-.It Fn lookup "ndp"
+.It Fn vfs_lookup "ndp"
 Search for a pathname.
 This is a very central and rather complicated routine.
 .Pp
@@ -222,7 +234,7 @@ The pathname is descended until done, or a symbolic link is
 encountered.
 .Pp
 The semantics of
-.Fn lookup
+.Fn vfs_lookup
 are altered by the operation specified by
 .Em ndp-\*[Gt]ni_cnd.cn_nameiop .
 When CREATE, RENAME, or DELETE is specified, information usable in
@@ -238,7 +250,7 @@ If the target of the pathname exists and LOCKLEAF is set, the target
 is returned locked in
 .Em ndp-\*[Gt]ni_vp ,
 otherwise it is returned unlocked.
-.It Fn relookup "dvp" "vpp" "cnp"
+.It Fn vfs_relookup "dvp" "vpp" "cnp"
 Reacquire a path name component in a directory.
 This is a quicker way to lookup a pathname component when the parent
 directory is known.
@@ -248,12 +260,12 @@ and the pathname component by
 .Fa cnp .
 The vnode of the pathname is returned in the address specified by
 .Fa vpp .
-.It Fn NDINIT "ndp" "op" "flags" "segflg" "namep" "p"
+.It Fn NDINITAT "ndp" "op" "flags" "segflg" "dirfd" "namep" "p"
 Initialise a nameidata structure pointed to by
 .Fa ndp
 for use by the
 .Nm
-interface.
+interfaces.
 It saves having to deal with the componentname structure inside
 .Fa ndp .
 The operation and flags are specified by
@@ -269,6 +281,13 @@ are respectively set.
 The segment flags which defines whether the pathname is in kernel
 address space or user address space is specified by
 .Fa segflg .
+The directory from which relative pathnames will be looked up is
+specified by
+.Fa dirfd ,
+with
+.Dv AT_FDCWD
+specifying use of the current working directory of process
+.Fa p .
 The argument
 .Fa namep
 is a pointer to the pathname that
@@ -276,6 +295,9 @@ is a pointer to the pathname that
 is set to and
 .Fa p
 is the calling process.
+.It Fn NDINIT "ndp" "op" "flags" "segflg" "namep" "p"
+Same as
+.Fn NDINITAT "ndp" "op" "flags" "segflg" \fRAT_FDCWD\fP "namep" "p" .
 .El
 .Sh CODE REFERENCES
 The name lookup subsystem is implemented within the file
