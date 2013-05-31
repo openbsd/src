@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.15 2013/03/24 09:54:10 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.16 2013/05/31 12:50:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,7 +56,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct window_pane	*wp;
 	struct session		*s;
 	struct input_ctx	*ictx;
-	const char		*str;
+	const u_char		*str;
 	int			 i, key;
 
 	if (cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp) == NULL)
