@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.329 2013/05/29 17:04:46 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.330 2013/05/31 14:27:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1651,8 +1651,10 @@ bge_chipinit(struct bge_softc *sc)
 	    BGE_PCIDMARWCTL_WR_CMD_SHIFT(7);
 
 	if (sc->bge_flags & BGE_PCIE) {
-		/* Read watermark not used, 128 bytes for write. */
-		dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
+		if (sc->bge_mps >= 256)
+			dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(7);
+		else
+			dma_rw_ctl |= BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
 	} else if (sc->bge_flags & BGE_PCIX) {
 		/* PCI-X bus */
 		if (BGE_IS_5714_FAMILY(sc)) {
@@ -2461,7 +2463,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	const char		*intrstr = NULL;
 	bus_size_t		size, apesize;
 	bus_dma_segment_t	seg;
-	int			rseg, gotenaddr = 0, aspm_off;
+	int			rseg, gotenaddr = 0;
 	u_int32_t		hwcfg = 0;
 	u_int32_t		mac_addr = 0;
 	u_int32_t		misccfg;
@@ -2557,13 +2559,22 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 * PCI Express or PCI-X controller check.
 	 */
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
-	    &aspm_off, NULL) != 0) {
+	    &sc->bge_expcap, NULL) != 0) {
+		/* Extract supported maximum payload size. */
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, sc->bge_expcap +
+		    PCI_PCIE_DCAP);
+		sc->bge_mps = 128 << (reg & 0x7);
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5719 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
+			sc->bge_expmrq = 0x4000; /* (fls(2048) - 8) << 12 */
+		else
+			sc->bge_expmrq = 0x5000; /* (fls(4096) - 8) << 12 */
 		/* Disable PCIe Active State Power Management (ASPM). */
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    aspm_off + PCI_PCIE_LCSR);
+		    sc->bge_expcap + PCI_PCIE_LCSR);
 		reg &= ~(PCI_PCIE_LCSR_ASPM_L0S | PCI_PCIE_LCSR_ASPM_L1);
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
-		    aspm_off + PCI_PCIE_LCSR, reg);
+		    sc->bge_expcap + PCI_PCIE_LCSR, reg);
 		sc->bge_flags |= BGE_PCIE;
 	} else {
 		if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) &
@@ -3042,7 +3053,7 @@ void
 bge_reset(struct bge_softc *sc)
 {
 	struct pci_attach_args *pa = &sc->bge_pa;
-	pcireg_t cachesize, command;
+	pcireg_t cachesize, command, devctl;
 	u_int32_t reset, mac_mode, mac_mode_mask, val;
 	void (*write_op)(struct bge_softc *, int, int);
 	int i;
@@ -3142,12 +3153,17 @@ bge_reset(struct bge_softc *sc)
 			pci_conf_write(pa->pa_pc, pa->pa_tag, 0xc4, v | (1<<15));
 		}
 
-		/*
-		 * Set PCI Express max payload size to 128 bytes
-		 * and clear error status.
-		 */
-		pci_conf_write(pa->pa_pc, pa->pa_tag,
-		    BGE_PCI_CONF_DEV_CTRL, 0xf5000);
+		devctl = pci_conf_read(pa->pa_pc, pa->pa_tag, sc->bge_expcap +
+		    PCI_PCIE_DCSR);
+		/* Clear enable no snoop and disable relaxed ordering. */
+		devctl &= ~(0x10 | 0x800);
+		/* Set PCI Express max payload size. */
+		devctl &= ~0x7000;
+		devctl |= sc->bge_expmrq;
+		/* Clear error status. */
+		devctl |= 0xf0000;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, sc->bge_expcap +
+		    PCI_PCIE_DCSR, devctl);
 	}
 
 	/* Reset some of the PCI state that got zapped by reset */
