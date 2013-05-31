@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.56 2013/05/30 19:00:59 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.57 2013/05/31 20:00:00 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1186,6 +1186,10 @@ hibernate_resume(void)
 		splx(s);
 		return;
 	}
+
+#ifdef MULTIPROCESSOR
+	hibernate_quiesce_cpus();
+#endif /* MULTIPROCESSOR */
 
 	printf("Unhibernating...\n");
 

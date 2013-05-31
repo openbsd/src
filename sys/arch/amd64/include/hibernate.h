@@ -29,3 +29,6 @@ void	hibernate_resume_machdep(void);
 void	hibernate_activate_resume_pt_machdep(void);
 void	hibernate_enable_intr_machdep(void);
 void	hibernate_disable_intr_machdep(void);
+#ifdef MULTIPROCESSOR
+void	hibernate_quiesce_cpus(void);
+#endif /* MULTIPROCESSOR */

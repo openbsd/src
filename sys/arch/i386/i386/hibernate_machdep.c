@@ -328,3 +328,22 @@ hibernate_disable_intr_machdep(void)
 {
 	disable_intr();
 }
+
+#ifdef MULTIPROCESSOR
+/*
+ * Quiesce CPUs in a multiprocessor machine before resuming. We need to do
+ * this since the APs will be hatched (but waiting for CPUF_GO), and we don't
+ * want the APs to be executing code and causing side effects during the
+ * unpack operation.
+ */
+void
+hibernate_quiesce_cpus(void)
+{
+	/* Start the hatched (but idling) APs */
+	cpu_boot_secondary_processors();
+	sched_start_secondary_cpus();
+
+	/* Now shut them down */
+	acpi_sleep_mp();
+}
+#endif /* MULTIPROCESSOR */
