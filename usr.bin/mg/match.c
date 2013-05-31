@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.16 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: match.c,v 1.17 2013/05/31 18:03:44 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -45,7 +45,7 @@ showmatch(int f, int n)
 			return (s);
 		/* unbalanced -- warn user */
 		if (balance() != TRUE)
-			ttbeep();
+			dobeep();
 	}
 	return (TRUE);
 }
@@ -152,13 +152,13 @@ displaymatch(struct line *clp, int cbo)
 		curwp->w_doto = cbo;
 		curwp->w_rflag |= WFMOVE;
 
-		update();		/* show match */
+		update(CMODE);		/* show match */
 		ttwait(1000);		/* wait for key or 1 second */
 
 		curwp->w_dotp = tlp;	/* return to old position */
 		curwp->w_doto = tbo;
 		curwp->w_rflag |= WFMOVE;
-		update();
+		update(CMODE);
 	} else {
 		/* match is not in this window, so display line in echo area */
 		bufo = 0;

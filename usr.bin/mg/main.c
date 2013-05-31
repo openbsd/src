@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.70 2012/12/28 16:12:50 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.71 2013/05/31 18:03:44 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -18,6 +18,9 @@ int		 thisflag;			/* flags, this command	*/
 int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
 int		 startrow;			/* row to start		*/
+int		 doaudiblebell;			/* audible bell toggle	*/
+int		 dovisiblebell;			/* visible bell toggle	*/
+int		 donebell;			/* done't wring bell	*/
 struct buffer	*curbp;				/* current buffer	*/
 struct buffer	*bheadp;			/* BUFFER list head	*/
 struct mgwin	*curwp;				/* current window	*/
@@ -93,13 +96,14 @@ main(int argc, char **argv)
 	dirinit();		/* Get current directory.	*/
 	edinit(bp);		/* Buffers, windows.		*/
 	ttykeymapinit();	/* Symbols, bindings.		*/
+	bellinit();		/* Audible and visible bell.	*/
 
 	/*
 	 * doing update() before reading files causes the error messages from
 	 * the file I/O show up on the screen.	(and also an extra display of
 	 * the mode line if there are files specified on the command line.)
 	 */
-	update();
+	update(CMODE);
 
 	/* user startup file. */
 	if ((cp = startupfile(NULL)) != NULL)
@@ -171,7 +175,7 @@ notnum:
 			do_redraw(0, 0, TRUE);
 			winch_flag = 0;
 		}
-		update();
+		update(CMODE);
 		lastflag = thisflag;
 		thisflag = 0;
 
@@ -183,9 +187,11 @@ notnum:
 			/* FALLTHRU */
 		case FALSE:
 		default:
-			ttbeep();
+			if (!donebell)
+				dobeep();
 			macrodef = FALSE;
 		}
+		donebell = 0;
 	}
 }
 

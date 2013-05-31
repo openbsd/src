@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.41 2012/09/07 19:01:56 lum Exp $	*/
+/*	$OpenBSD: search.c,v 1.42 2013/05/31 18:03:45 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -192,7 +192,7 @@ isearch(int dir)
 	is_prompt(dir, TRUE, success);
 
 	for (;;) {
-		update();
+		update(CMODE);
 
 		switch (c = getkey(FALSE)) {
 		case CCHR('['):
@@ -248,7 +248,7 @@ isearch(int dir)
 			is_lpush();
 			pptr = strlen(pat);
 			if (forwchar(FFRAND, 1) == FALSE) {
-                                ttbeep();
+                                dobeep();
                                 success = FALSE;
                                 ewprintf("Failed I-search: %s", pat);
 			} else {
@@ -256,7 +256,7 @@ isearch(int dir)
 					is_cpush(SRCH_MARK);
 				else {
 					(void)backchar(FFRAND, 1);
-					ttbeep();
+					dobeep();
 					success = FALSE;
 					ewprintf("Failed I-search: %s", pat);
 				}
@@ -285,14 +285,14 @@ isearch(int dir)
 			is_lpush();
 			pptr = strlen(pat);
                         if (backchar(FFRAND, 1) == FALSE) {
-                                ttbeep();
+                                dobeep();
                                 success = FALSE;
                         } else {
 				if (is_find(SRCH_BACK) != FALSE)
 					is_cpush(SRCH_MARK);
 				else {
 					(void)forwchar(FFRAND, 1);
-					ttbeep();
+					dobeep();
 					success = FALSE;
 				}
 			}
@@ -322,7 +322,7 @@ isearch(int dir)
 					break;
 
 				if (pptr == NPAT - 1) {
-					ttbeep();
+					dobeep();
 					break;
 				}
 				firstc = 0;
@@ -335,7 +335,7 @@ isearch(int dir)
 				if (dir == SRCH_FORW) {
 					curwp->w_doto = cbo;
 					curwp->w_rflag |= WFMOVE;
-					update();
+					update(CMODE);
 				}
 			}
 			is_prompt(dir, pptr < 0, success);
@@ -373,7 +373,7 @@ isearch(int dir)
 			if (pptr == 0)
 				success = TRUE;
 			if (pptr == NPAT - 1)
-				ttbeep();
+				dobeep();
 			else {
 				pat[pptr++] = c;
 				pat[pptr] = '\0';
@@ -384,7 +384,7 @@ isearch(int dir)
 					is_cpush(c);
 				else {
 					success = FALSE;
-					ttbeep();
+					dobeep();
 					is_cpush(SRCH_ACCM);
 				}
 			} else
@@ -579,7 +579,7 @@ queryrepl(int f, int n)
 	 */
 	while (forwsrch() == TRUE) {
 retry:
-		update();
+		update(CMODE);
 		switch (getkey(FALSE)) {
 		case 'y':
 		case ' ':
@@ -618,7 +618,7 @@ retry:
 	}
 stopsearch:
 	curwp->w_rflag |= WFFULL;
-	update();
+	update(CMODE);
 	if (rcnt == 1)
 		ewprintf("Replaced 1 occurrence");
 	else
@@ -647,7 +647,7 @@ replstr(int f, int n)
 
 	plen = strlen(pat);
 	while (forwsrch() == TRUE) {
-		update();
+		update(CMODE);
 		if (lreplace((RSIZE)plen, news) == FALSE)
 			return (FALSE);
 
@@ -655,7 +655,7 @@ replstr(int f, int n)
 	}
 
 	curwp->w_rflag |= WFFULL;
-	update();
+	update(CMODE);
 
 	if (rcnt == 1)
 		ewprintf("Replaced 1 occurrence");

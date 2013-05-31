@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.78 2013/05/27 19:28:51 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.79 2013/05/31 18:03:44 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: May 27 2013 $
+.Dd $Mdocdate: May 31 2013 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -361,6 +361,8 @@ Prompt the user for a string, open the *help* buffer,
 and list all
 .Nm
 commands that contain that string.
+.It audible-bell
+Toggle the audible system bell.
 .It auto-execute
 Register an auto-execute hook; that is, specify a filename pattern
 (conforming to the shell's filename globbing rules) and an associated
@@ -897,6 +899,8 @@ upper case.
 .It upcase-word
 Move the cursor forward by the specified number of words.
 As it moves, convert any characters to upper case.
+.It visible-bell
+Toggle the visible bell. If this toggle is on, the modeline will flash.
 .It visit-tags-table
 Record name of the tags file to be used for subsequent find-tag.
 .It what-cursor-position

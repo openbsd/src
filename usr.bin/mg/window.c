@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.28 2011/08/01 12:15:23 lum Exp $	*/
+/*	$OpenBSD: window.c,v 1.29 2013/05/31 18:03:45 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -97,7 +97,7 @@ do_redraw(int f, int n, int force)
 		}
 		wp->w_ntrows = nrow - wp->w_toprow - 2;
 		sgarbf = TRUE;
-		update();
+		update(CMODE);
 	} else
 		sgarbf = TRUE;
 	return (TRUE);

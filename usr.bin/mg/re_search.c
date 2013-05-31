@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.26 2011/01/21 19:10:13 kjell Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.27 2013/05/31 18:03:45 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -149,7 +149,7 @@ re_queryrepl(int f, int n)
 	 */
 	while (re_forwsrch() == TRUE) {
 retry:
-		update();
+		update(CMODE);
 		switch (getkey(FALSE)) {
 		case ' ':
 			plen = re_match[0].rm_eo - re_match[0].rm_so;
@@ -191,7 +191,7 @@ retry:
 
 stopsearch:
 	curwp->w_rflag |= WFFULL;
-	update();
+	update(CMODE);
 	if (!inmacro) {
 		if (rcnt == 0)
 			ewprintf("(No replacements done)");

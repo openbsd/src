@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.39 2013/03/25 11:41:44 florian Exp $	*/
+/*	$OpenBSD: basic.c,v 1.40 2013/05/31 18:03:43 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -43,8 +43,10 @@ backchar(int f, int n)
 	while (n--) {
 		if (curwp->w_doto == 0) {
 			if ((lp = lback(curwp->w_dotp)) == curbp->b_headp) {
-				if (!(f & FFRAND))
+				if (!(f & FFRAND)) {
+					dobeep();
 					ewprintf("Beginning of buffer");
+				}
 				return (FALSE);
 			}
 			curwp->w_dotp = lp;
@@ -85,8 +87,10 @@ forwchar(int f, int n)
 			curwp->w_dotp = lforw(curwp->w_dotp);
 			if (curwp->w_dotp == curbp->b_headp) {
 				curwp->w_dotp = lback(curwp->w_dotp);
-				if (!(f & FFRAND))
+				if (!(f & FFRAND)) {
+					dobeep();
 					ewprintf("End of buffer");
+				}
 				return (FALSE);
 			}
 			curwp->w_doto = 0;
@@ -283,7 +287,7 @@ forwpage(int f, int n)
 	lp = curwp->w_linep;
 	while (n--)
 		if ((lp = lforw(lp)) == curbp->b_headp) {
-			ttbeep();
+			dobeep();
 			ewprintf("End of buffer");
 			return(TRUE);
 		}
@@ -332,7 +336,7 @@ backpage(int f, int n)
 		lp = lback(lp);
 	}
 	if (lp == curwp->w_linep) {
-		ttbeep();
+		dobeep();
 		ewprintf("Beginning of buffer");
 	}
 	curwp->w_linep = lp;

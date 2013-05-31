@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.54 2012/11/03 16:28:14 florian Exp $	*/
+/*	$OpenBSD: echo.c,v 1.55 2013/05/31 18:03:44 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -756,7 +756,7 @@ complt_list(int flags, char *buf, int cpos)
 	free_file_list(wholelist);
 	popbuftop(bp, WEPHEM);	/* split the screen and put up the help
 				 * buffer */
-	update();		/* needed to make the new stuff actually
+	update(CMODE);		/* needed to make the new stuff actually
 				 * appear */
 	ttmove(oldrow, oldcol);	/* update leaves cursor in arbitrary place */
 	ttcolor(oldhue);	/* with arbitrary color */
