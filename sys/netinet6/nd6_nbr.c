@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.66 2013/03/07 09:03:16 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.67 2013/05/31 15:04:24 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -217,8 +217,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		tsin6.sin6_family = AF_INET6;
 		tsin6.sin6_addr = taddr6;
 
-		rt = rtalloc1((struct sockaddr *)&tsin6, 0,
-			      m->m_pkthdr.rdomain);
+		rt = rtalloc1(sin6tosa(&tsin6), 0, m->m_pkthdr.rdomain);
 		if (rt && (rt->rt_flags & RTF_ANNOUNCE) != 0 &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			/*
@@ -801,7 +800,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			struct in6_addr *in6;
 			int s;
 
-			in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
+			in6 = &satosin6(rt_key(rt))->sin6_addr;
 
 			/*
 			 * Lock to protect the default router list.
@@ -836,7 +835,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		 * we assume ifp is not a loopback here, so just set the 2nd
 		 * argument as the 1st one.
 		 */
-		nd6_output(ifp, ifp, n, (struct sockaddr_in6 *)rt_key(rt), rt);
+		nd6_output(ifp, ifp, n, satosin6(rt_key(rt)), rt);
 		if (ln->ln_hold == n) {
 			/* n is back in ln_hold. Discard. */
 			m_freem(ln->ln_hold);

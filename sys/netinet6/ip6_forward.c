@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.57 2012/11/06 12:32:42 henning Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.58 2013/05/31 15:04:24 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ reroute:
 #endif /* IPSEC */
 
 	if (rt->rt_flags & RTF_GATEWAY)
-		dst = (struct sockaddr_in6 *)rt->rt_gateway;
+		dst = satosin6(rt->rt_gateway);
 
 	/*
 	 * If we are to forward the packet using the same interface
@@ -396,7 +396,7 @@ reroute:
 	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt && ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
-		    nd6_is_addr_neighbor((struct sockaddr_in6 *)&ip6_forward_rt.ro_dst, rt->rt_ifp)) {
+		    nd6_is_addr_neighbor(&ip6_forward_rt.ro_dst, rt->rt_ifp)) {
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is

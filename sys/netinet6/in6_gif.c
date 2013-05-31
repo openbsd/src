@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.30 2011/04/03 13:54:21 stsp Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.31 2013/05/31 15:04:23 bluhm Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -76,8 +76,8 @@ int
 in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
-	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
+	struct sockaddr_in6 *sin6_src = satosin6(sc->gif_psrc);
+	struct sockaddr_in6 *sin6_dst = satosin6(sc->gif_pdst);
 	struct tdb tdb;
 	struct xformsw xfs;
 	int error;
@@ -167,7 +167,7 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 
 	ip6 = mtod(m, struct ip6_hdr *);
 
-#define satoin6(sa)	(((struct sockaddr_in6 *)(sa))->sin6_addr)
+#define satoin6(sa)	(satosin6(sa)->sin6_addr)
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
 		    sc->gif_psrc->sa_family != AF_INET6 ||

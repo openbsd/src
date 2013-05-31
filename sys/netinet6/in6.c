@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.111 2013/05/30 15:23:38 claudio Exp $	*/
+/*	$OpenBSD: in6.c,v 1.112 2013/05/31 15:04:23 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	info.rti_info[RTAX_DST] = ifa->ifa_addr;
 	if (cmd != RTM_DELETE)
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&all1_sa;
+	info.rti_info[RTAX_NETMASK] = sin6tosa(&all1_sa);
 	e = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt,
 	    ifa->ifa_ifp->if_rdomain);
 	if (e != 0) {
@@ -885,7 +885,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia = malloc(sizeof(*ia), M_IFADDR, M_WAITOK | M_ZERO);
 		LIST_INIT(&ia->ia6_memberships);
 		/* Initialize the address and masks, and put time stamp */
-		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
+		ia->ia_ifa.ifa_addr = sin6tosa(&ia->ia_addr);
 		ia->ia_addr.sin6_family = AF_INET6;
 		ia->ia_addr.sin6_len = sizeof(ia->ia_addr);
 		ia->ia6_createtime = ia->ia6_updatetime = time_second;
@@ -894,13 +894,11 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			 * XXX: some functions expect that ifa_dstaddr is not
 			 * NULL for p2p interfaces.
 			 */
-			ia->ia_ifa.ifa_dstaddr =
-			    (struct sockaddr *)&ia->ia_dstaddr;
+			ia->ia_ifa.ifa_dstaddr = sin6tosa(&ia->ia_dstaddr);
 		} else {
 			ia->ia_ifa.ifa_dstaddr = NULL;
 		}
-		ia->ia_ifa.ifa_netmask =
-		    (struct sockaddr *)&ia->ia_prefixmask;
+		ia->ia_ifa.ifa_netmask = sin6tosa(&ia->ia_prefixmask);
 
 		ia->ia_ifp = ifp;
 		TAILQ_INSERT_TAIL(&in6_ifaddr, ia, ia_list);
@@ -1048,13 +1046,13 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		 * actually do not need the routes, since they usually specify
 		 * the outgoing interface.
 		 */
-		rt = rtalloc1((struct sockaddr *)&mltaddr, 0, ifp->if_rdomain);
+		rt = rtalloc1(sin6tosa(&mltaddr), 0, ifp->if_rdomain);
 		if (rt) {
 			/*
 			 * 32bit came from "mltmask"
 			 */
 			if (memcmp(&mltaddr.sin6_addr,
-			    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
+			    &satosin6(rt_key(rt))->sin6_addr,
 			    32 / 8)) {
 				RTFREE(rt);
 				rt = NULL;
@@ -1064,13 +1062,10 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			struct rt_addrinfo info;
 
 			bzero(&info, sizeof(info));
-			info.rti_info[RTAX_DST] = (struct sockaddr *)&mltaddr;
-			info.rti_info[RTAX_GATEWAY] =
-			    (struct sockaddr *)&ia->ia_addr;
-			info.rti_info[RTAX_NETMASK] =
-			    (struct sockaddr *)&mltmask;
-			info.rti_info[RTAX_IFA] =
-			    (struct sockaddr *)&ia->ia_addr;
+			info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
+			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia->ia_addr);
+			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
+			info.rti_info[RTAX_IFA] = sin6tosa(&ia->ia_addr);
 			/* XXX: we need RTF_CLONING to fake nd6_rtrequest */
 			info.rti_flags = RTF_UP | RTF_CLONING;
 			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED, NULL,
@@ -1120,11 +1115,11 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		mltaddr.sin6_scope_id = 0;
 
 		/* XXX: again, do we really need the route? */
-		rt = rtalloc1((struct sockaddr *)&mltaddr, 0, ifp->if_rdomain);
+		rt = rtalloc1(sin6tosa(&mltaddr), 0, ifp->if_rdomain);
 		if (rt) {
 			/* 32bit came from "mltmask" */
 			if (memcmp(&mltaddr.sin6_addr,
-			    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
+			    &satosin6(rt_key(rt))->sin6_addr,
 			    32 / 8)) {
 				RTFREE(rt);
 				rt = NULL;
@@ -1134,13 +1129,10 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			struct rt_addrinfo info;
 
 			bzero(&info, sizeof(info));
-			info.rti_info[RTAX_DST] = (struct sockaddr *)&mltaddr;
-			info.rti_info[RTAX_GATEWAY] =
-			    (struct sockaddr *)&ia->ia_addr;
-			info.rti_info[RTAX_NETMASK] =
-			    (struct sockaddr *)&mltmask;
-			info.rti_info[RTAX_IFA] =
-			    (struct sockaddr *)&ia->ia_addr;
+			info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
+			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia->ia_addr);
+			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
+			info.rti_info[RTAX_IFA] = sin6tosa(&ia->ia_addr);
 			info.rti_flags = RTF_UP | RTF_CLONING;
 			error = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
 			    NULL, ifp->if_rdomain);
@@ -1885,7 +1877,7 @@ in6_ifpprefix(const struct ifnet *ifp, const struct in6_addr *addr)
 	dst.sin6_len = sizeof(struct sockaddr_in6);
 	dst.sin6_family = AF_INET6;
 	dst.sin6_addr = *addr;
-	rt = rtalloc1((struct sockaddr *)&dst, RT_NOCLONING, tableid);
+	rt = rtalloc1(sin6tosa(&dst), RT_NOCLONING, tableid);
 
 	if (rt == NULL)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.98 2013/04/10 08:50:59 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.99 2013/05/31 15:04:24 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 #define ND6_SLOWTIMER_INTERVAL (60 * 60) /* 1 hour */
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
 
-#define SIN6(s) ((struct sockaddr_in6 *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
 
 /* timer values */
@@ -414,7 +413,7 @@ nd6_llinfo_timer(void *arg)
 	if ((ifp = rt->rt_ifp) == NULL)
 		panic("ln->ln_rt->rt_ifp == NULL");
 	ndi = ND_IFINFO(ifp);
-	dst = (struct sockaddr_in6 *)rt_key(rt);
+	dst = satosin6(rt_key(rt));
 
 	/* sanity check */
 	if (rt->rt_llinfo && (struct llinfo_nd6 *)rt->rt_llinfo != ln)
@@ -653,7 +652,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_addr = *addr6;
 
-	rt = rtalloc1((struct sockaddr *)&sin6, create, ifp->if_rdomain);
+	rt = rtalloc1(sin6tosa(&sin6), create, ifp->if_rdomain);
 	if (rt && (rt->rt_flags & RTF_LLINFO) == 0) {
 		/*
 		 * This is the case for the default route.
@@ -679,7 +678,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp)
 			 * be covered by our own prefix.
 			 */
 			struct ifaddr *ifa =
-			    ifaof_ifpforaddr((struct sockaddr *)&sin6, ifp);
+			    ifaof_ifpforaddr(sin6tosa(&sin6), ifp);
 			if (ifa == NULL)
 				return (NULL);
 
@@ -692,10 +691,9 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp)
 			bzero(&info, sizeof(info));
 			info.rti_flags = (ifa->ifa_flags | RTF_HOST |
 			    RTF_LLINFO) & ~RTF_CLONING;
-			info.rti_info[RTAX_DST] = (struct sockaddr *)&sin6;
+			info.rti_info[RTAX_DST] = sin6tosa(&sin6);
 			info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-			info.rti_info[RTAX_NETMASK] =
-			    (struct sockaddr *)&all1_sa;
+			info.rti_info[RTAX_NETMASK] = sin6tosa(&all1_sa);
 			if ((e = rtrequest1(RTM_ADD, &info, RTP_CONNECTED,
 			    &rt, ifp->if_rdomain)) != 0) {
 #if 0
@@ -800,7 +798,7 @@ nd6_free(struct rtentry *rt, int gc)
 {
 	struct rt_addrinfo info;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
-	struct in6_addr in6 = ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
+	struct in6_addr in6 = satosin6(rt_key(rt))->sin6_addr;
 	struct nd_defrouter *dr;
 
 	/*
@@ -811,7 +809,7 @@ nd6_free(struct rtentry *rt, int gc)
 	if (!ip6_forwarding) {
 		int s;
 		s = splsoftnet();
-		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
+		dr = defrouter_lookup(&satosin6(rt_key(rt))->sin6_addr,
 		    rt->rt_ifp);
 
 		if (dr != NULL && dr->expire &&
@@ -969,7 +967,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	    &in6addr_any) && rt_mask(rt) && (rt_mask(rt)->sa_len == 0 ||
 	    IN6_ARE_ADDR_EQUAL(&(satosin6(rt_mask(rt)))->sin6_addr,
 	    &in6addr_any)))) {
-		dr = defrouter_lookup(&SIN6(gate)->sin6_addr, ifp);
+		dr = defrouter_lookup(&satosin6(gate)->sin6_addr, ifp);
 		if (dr)
 			dr->installed = 0;
 	}
@@ -1056,8 +1054,8 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		/* XXX it does not work */
 		if (rt->rt_flags & RTF_ANNOUNCE)
 			nd6_na_output(ifp,
-			      &SIN6(rt_key(rt))->sin6_addr,
-			      &SIN6(rt_key(rt))->sin6_addr,
+			      &satosin6(rt_key(rt))->sin6_addr,
+			      &satosin6(rt_key(rt))->sin6_addr,
 			      ip6_forwarding ? ND_NA_FLAG_ROUTER : 0,
 			      1, NULL);
 #endif
@@ -1152,7 +1150,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 * to the interface.
 		 */
 		ifa = &in6ifa_ifpwithaddr(rt->rt_ifp,
-		    &SIN6(rt_key(rt))->sin6_addr)->ia_ifa;
+		    &satosin6(rt_key(rt))->sin6_addr)->ia_ifa;
 		if (ifa) {
 			caddr_t macp = nd6_ifptomac(ifp);
 			nd6_llinfo_settimer(ln, -1);
@@ -1188,7 +1186,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 				struct in6_addr llsol;
 				int error;
 
-				llsol = SIN6(rt_key(rt))->sin6_addr;
+				llsol = satosin6(rt_key(rt))->sin6_addr;
 				llsol.s6_addr16[0] = htons(0xff02);
 				llsol.s6_addr16[1] = htons(ifp->if_index);
 				llsol.s6_addr32[1] = 0;
@@ -1213,7 +1211,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			struct in6_addr llsol;
 			struct in6_multi *in6m;
 
-			llsol = SIN6(rt_key(rt))->sin6_addr;
+			llsol = satosin6(rt_key(rt))->sin6_addr;
 			llsol.s6_addr16[0] = htons(0xff02);
 			llsol.s6_addr16[1] = htons(ifp->if_index);
 			llsol.s6_addr32[1] = 0;
@@ -1584,7 +1582,7 @@ fail:
 				 * set the 2nd argument as the 1st one.
 				 */
 				nd6_output(ifp, ifp, n,
-				    (struct sockaddr_in6 *)rt_key(rt), rt);
+				    satosin6(rt_key(rt)), rt);
 				if (ln->ln_hold == n) {
 					/* n is back in ln_hold. Discard. */
 					m_freem(ln->ln_hold);
@@ -1734,7 +1732,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	 */
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1((struct sockaddr *)dst,
+			if ((rt0 = rt = rtalloc1(sin6tosa(dst),
 			    RT_REPORT, m->m_pkthdr.rdomain)) != NULL)
 			{
 				rt->rt_refcnt--;
@@ -1745,7 +1743,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		}
 
 		if (rt->rt_flags & RTF_GATEWAY) {
-			gw6 = (struct sockaddr_in6 *)rt->rt_gateway;
+			gw6 = satosin6(rt->rt_gateway);
 
 			/*
 			 * We skip link-layer address resolution and NUD
@@ -1889,8 +1887,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 			goto bad;
 		}
 #endif /* IPSEC */
-		return ((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
-		    rt));
+		return ((*ifp->if_output)(origifp, m, sin6tosa(dst), rt));
 	}
 #ifdef IPSEC
 	if (mtag != NULL) {
@@ -1900,7 +1897,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 		goto bad;
 	}
 #endif /* IPSEC */
-	return ((*ifp->if_output)(ifp, m, (struct sockaddr *)dst, rt));
+	return ((*ifp->if_output)(ifp, m, sin6tosa(dst), rt));
 
   bad:
 	if (m)
@@ -1944,7 +1941,7 @@ nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		switch (ifp->if_type) {
 		case IFT_ETHER:
 		case IFT_FDDI:
-			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr,
+			ETHER_MAP_IPV6_MULTICAST(&satosin6(dst)->sin6_addr,
 						 desten);
 			return (1);
 			break;
@@ -1968,7 +1965,7 @@ nd6_storelladdr(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	if (sdl->sdl_alen == 0) {
 		/* this should be impossible, but we bark here for debugging */
 		printf("nd6_storelladdr: sdl_alen == 0, dst=%s, if=%s\n",
-		    ip6_sprintf(&SIN6(dst)->sin6_addr), ifp->if_xname);
+		    ip6_sprintf(&satosin6(dst)->sin6_addr), ifp->if_xname);
 		m_freem(m);
 		return (0);
 	}

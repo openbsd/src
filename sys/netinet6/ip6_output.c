@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.139 2013/04/11 12:06:25 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.140 2013/05/31 15:04:24 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ reroute:
 	ro_pmtu = ro;
 	if (opt && opt->ip6po_rthdr)
 		ro = &opt->ip6po_route;
-	dst = (struct sockaddr_in6 *)&ro->ro_dst;
+	dst = &ro->ro_dst;
 
 	/*
 	 * if specified, try to fill in the traffic class field.
@@ -606,9 +606,9 @@ reroute:
 			 * application.  We assume the next hop is an IPv6
 			 * address.
 			 */
-			dst = (struct sockaddr_in6 *)opt->ip6po_nexthop;
+			dst = satosin6(opt->ip6po_nexthop);
 		} else if ((rt->rt_flags & RTF_GATEWAY))
-			dst = (struct sockaddr_in6 *)rt->rt_gateway;
+			dst = satosin6(rt->rt_gateway);
 	}
 
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
@@ -855,7 +855,7 @@ reroute:
 		mtu32 = (u_int32_t)mtu;
 		bzero(&ip6cp, sizeof(ip6cp));
 		ip6cp.ip6c_cmdarg = (void *)&mtu32;
-		pfctlinput2(PRC_MSGSIZE, (struct sockaddr *)&ro_pmtu->ro_dst,
+		pfctlinput2(PRC_MSGSIZE, sin6tosa(&ro_pmtu->ro_dst),
 		    (void *)&ip6cp);
 #endif
 
@@ -905,7 +905,7 @@ reroute:
 		mtu32 = (u_int32_t)mtu;
 		bzero(&ip6cp, sizeof(ip6cp));
 		ip6cp.ip6c_cmdarg = (void *)&mtu32;
-		pfctlinput2(PRC_MSGSIZE, (struct sockaddr *)&ro_pmtu->ro_dst,
+		pfctlinput2(PRC_MSGSIZE, sin6tosa(&ro_pmtu->ro_dst),
 		    (void *)&ip6cp);
 #endif
 
@@ -1220,8 +1220,8 @@ ip6_getpmtu(struct route_in6 *ro_pmtu, struct route_in6 *ro,
 
 	if (ro_pmtu != ro) {
 		/* The first hop and the final destination may differ. */
-		struct sockaddr_in6 *sa6_dst =
-		    (struct sockaddr_in6 *)&ro_pmtu->ro_dst;
+		struct sockaddr_in6 *sa6_dst = &ro_pmtu->ro_dst;
+
 		if (ro_pmtu->ro_rt &&
 		    ((ro_pmtu->ro_rt->rt_flags & RTF_UP) == 0 ||
 		     !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst))) {
@@ -2458,7 +2458,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			 *   XXX: is it a good approach?
 			 */
 			bzero(&ro, sizeof(ro));
-			dst = (struct sockaddr_in6 *)&ro.ro_dst;
+			dst = &ro.ro_dst;
 			dst->sin6_len = sizeof(struct sockaddr_in6);
 			dst->sin6_family = AF_INET6;
 			dst->sin6_addr = mreq->ipv6mr_multiaddr;
@@ -3139,7 +3139,7 @@ ip6_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in6 *dst)
 	if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst))
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
-	(void)looutput(ifp, copym, (struct sockaddr *)dst, NULL);
+	(void)looutput(ifp, copym, sin6tosa(dst), NULL);
 }
 
 /*

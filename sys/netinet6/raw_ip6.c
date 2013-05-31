@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.55 2013/05/31 13:15:53 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.56 2013/05/31 15:04:25 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 				/* strip intermediate headers */
 				m_adj(n, *offp);
 				if (sbappendaddr(&last->in6p_socket->so_rcv,
-				    (struct sockaddr *)&rip6src, n, opts) == 0) {
+				    sin6tosa(&rip6src), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
 					if (opts)
@@ -210,7 +210,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		/* strip intermediate headers */
 		m_adj(m, *offp);
 		if (sbappendaddr(&last->in6p_socket->so_rcv,
-		    (struct sockaddr *)&rip6src, m, opts) == 0) {
+		    sin6tosa(&rip6src), m, opts) == 0) {
 			m_freem(m);
 			if (opts)
 				m_freem(opts);
@@ -691,7 +691,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		if (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
 		    !(so->so_options & SO_BINDANY) &&
-		    (ia = ifa_ifwithaddr((struct sockaddr *)addr,
+		    (ia = ifa_ifwithaddr(sin6tosa(addr),
 		    in6p->inp_rtableid)) == 0) {
 			error = EADDRNOTAVAIL;
 			break;

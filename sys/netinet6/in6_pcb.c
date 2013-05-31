@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.55 2013/05/31 13:15:53 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.56 2013/05/31 15:04:24 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -228,7 +228,7 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 					       */
 			sin6->sin6_flowinfo = 0;
 			if (!(so->so_options & SO_BINDANY) &&
-			    (ia = ifa_ifwithaddr((struct sockaddr *)sin6,
+			    (ia = ifa_ifwithaddr(sin6tosa(sin6),
 			    inp->inp_rtableid)) == NULL)
 				return EADDRNOTAVAIL;
 
@@ -569,7 +569,7 @@ in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst,
 		    !(inp->inp_route.ro_rt->rt_flags & RTF_HOST)) {
 			struct sockaddr_in6 *dst6;
 
-			dst6 = (struct sockaddr_in6 *)&inp->inp_route.ro_dst;
+			dst6 = satosin6(&inp->inp_route.ro_dst);
 			if (IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
 			    &dst->sin6_addr))
 				goto do_notify;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.31 2013/03/28 16:45:16 tedu Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.32 2013/05/31 15:04:24 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -133,8 +133,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		if (ifp && IN6_IS_SCOPE_EMBED(&sa6.sin6_addr))
 			sa6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 
-		ia6 = ifatoia6(
-		    ifa_ifwithaddr((struct sockaddr *)&sa6, rtableid));
+		ia6 = ifatoia6(ifa_ifwithaddr(sin6tosa(&sa6), rtableid));
 		if (ia6 == NULL ||
 		    (ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY))) {
 			*errorp = EADDRNOTAVAIL;
@@ -261,7 +260,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 			/* No route yet, so try to acquire one */
 			bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
-			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
+			sa6 = &ro->ro_dst;
 			sa6->sin6_family = AF_INET6;
 			sa6->sin6_len = sizeof(struct sockaddr_in6);
 			sa6->sin6_addr = *dst;
@@ -437,7 +436,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	if (ro) {
 		if (ro->ro_rt &&
 		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
-		     ((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
+		     sin6tosa(&ro->ro_dst)->sa_family != AF_INET6 ||
 		     !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst))) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)NULL;
@@ -447,7 +446,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 			/* No route yet, so try to acquire one */
 			bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
-			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
+			sa6 = &ro->ro_dst;
 			*sa6 = *dstsock;
 			sa6->sin6_scope_id = 0;
 			ro->ro_tableid = rtableid;
