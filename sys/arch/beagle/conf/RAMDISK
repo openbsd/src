@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.20 2013/05/21 14:41:05 rapha Exp $
+# $OpenBSD: RAMDISK,v 1.21 2013/05/31 19:24:16 rapha Exp $
 #
 # GENERIC machine description file
 #
@@ -44,8 +44,7 @@ options		APERTURE
 maxusers	32
 
 # CPU options
-options	CPU_ARMv7	# Support the ARM11
-makeoptions	CPUFLAGS="-mcpu=armv5"
+options	CPU_ARMv7	# Support the ARMv7
 
 #option WSDISPLAY_COMPAT_USL		# VT handling
 #option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
