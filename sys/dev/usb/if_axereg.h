@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axereg.h,v 1.23 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_axereg.h,v 1.24 2013/05/31 15:20:49 yuo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -148,6 +148,24 @@
 #define        AXE_PHY_NO(x)           ((x) & AXE_PHY_NO_MASK)
 
 #define        AXE_PHY_NO_AX772_EPHY   0x10    /* Embedded 10/100 PHY of AX88772 */
+
+#define AXE_GPIO0_EN		0x01
+#define AXE_GPIO0		0x02
+#define AXE_GPIO1_EN		0x04
+#define AXE_GPIO1		0x08
+#define AXE_GPIO2_EN		0x10
+#define AXE_GPIO2		0x20
+#define AXE_GPIO_RELOAD_EEPROM	0x80
+
+#define AXE_PHY_MODE_MARVELL		0x00
+#define AXE_PHY_MODE_CICADA		0x01
+#define AXE_PHY_MODE_AGERE		0x02
+#define AXE_PHY_MODE_CICADA_V2		0x05
+#define AXE_PHY_MODE_CICADA_V2_ASIX	0x09
+#define AXE_PHY_MODE_REALTEK_8211CL	0x0c
+#define AXE_PHY_MODE_REALTEK_8211BN	0x0d
+#define AXE_PHY_MODE_REALTEK_8251CL	0x0e
+#define AXE_PHY_MODE_ATTANSIC		0x40
 
 #define AXE_772B_RXCMD_RH1M	0x0100
 #define AXE_772B_RXCMD_RH2M	0x0200

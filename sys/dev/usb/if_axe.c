@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.118 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.119 2013/05/31 15:20:49 yuo Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -521,11 +521,16 @@ axe_reset(struct axe_softc *sc)
 	return;
 }
 
+#define AXE_GPIO_WRITE(x,y) do {                                \
+	axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, (x), NULL);          \
+	usbd_delay_ms(sc->axe_udev, (y));			\
+} while (0)
+
 void
 axe_ax88178_init(struct axe_softc *sc)
 {
-	int gpio0 = 0, phymode = 0;
-	u_int16_t eeprom;
+	int gpio0 = 0, phymode = 0, ledmode;
+	u_int16_t eeprom, val;
 
 	axe_cmd(sc, AXE_CMD_SROM_WR_ENABLE, 0, 0, NULL);
 	/* XXX magic */
@@ -538,32 +543,39 @@ axe_ax88178_init(struct axe_softc *sc)
 
 	/* if EEPROM is invalid we have to use to GPIO0 */
 	if (eeprom == 0xffff) {
-		phymode = 0;
+		phymode = AXE_PHY_MODE_MARVELL;
 		gpio0 = 1;
+		ledmode = 0;
 	} else {
-		phymode = eeprom & 7;
+		phymode = eeprom & 0x7f;
 		gpio0 = (eeprom & 0x80) ? 0 : 1;
+		ledmode = eeprom >> 8;
 	}
 
-	DPRINTF(("use gpio0: %d, phymode %d\n", gpio0, phymode));
+	DPRINTF(("use gpio0: %d, phymode 0x%02x, eeprom 0x%04x\n",
+	    gpio0, phymode, eeprom));
 
-	axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x008c, NULL);
-	usbd_delay_ms(sc->axe_udev, 40);
-	if ((eeprom >> 8) != 1) {
-		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
-		usbd_delay_ms(sc->axe_udev, 30);
-
-		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x001c, NULL);
-		usbd_delay_ms(sc->axe_udev, 300);
-
-		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
-		usbd_delay_ms(sc->axe_udev, 30);
+	/* power up external phy */
+	AXE_GPIO_WRITE(AXE_GPIO1|AXE_GPIO1_EN | AXE_GPIO_RELOAD_EEPROM, 40);
+	if (ledmode == 1) {
+		AXE_GPIO_WRITE(AXE_GPIO1_EN, 30);
+		AXE_GPIO_WRITE(AXE_GPIO1_EN | AXE_GPIO1, 30);
 	} else {
-		DPRINTF(("axe gpio phymode == 1 path\n"));
-		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x0004, NULL);
-		usbd_delay_ms(sc->axe_udev, 30);
-		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x000c, NULL);
-		usbd_delay_ms(sc->axe_udev, 30);
+		val = gpio0 == 1 ? AXE_GPIO0 | AXE_GPIO0_EN : 
+	    	    AXE_GPIO1 | AXE_GPIO1_EN;
+		AXE_GPIO_WRITE(val | AXE_GPIO2 | AXE_GPIO2_EN, 30);
+		AXE_GPIO_WRITE(val | AXE_GPIO2_EN, 300);
+		AXE_GPIO_WRITE(val | AXE_GPIO2 | AXE_GPIO2_EN, 30);
+	}
+
+	/* initialize phy */
+	if (phymode == AXE_PHY_MODE_REALTEK_8211CL) {
+		axe_miibus_writereg(&sc->axe_dev, sc->axe_phyno, 0x1f, 0x0005);
+		axe_miibus_writereg(&sc->axe_dev, sc->axe_phyno, 0x0c, 0x0000);
+		val = axe_miibus_readreg(&sc->axe_dev, sc->axe_phyno, 0x0001);
+		axe_miibus_writereg(&sc->axe_dev, sc->axe_phyno, 0x01,
+		    val | 0x0080);
+		axe_miibus_writereg(&sc->axe_dev, sc->axe_phyno, 0x1f, 0x0000);
 	}
 
 	/* soft reset */
