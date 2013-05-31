@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_debug.c,v 1.3 2009/08/14 21:16:13 thib Exp $ */
+/*	$OpenBSD: nfs_debug.c,v 1.4 2013/05/31 14:00:08 guenther Exp $ */
 /*
  * Copyright (c) 2009 Thordur I. Bjornsson. <thib@openbsd.org>
  *
@@ -79,8 +79,8 @@ nfs_node_print(void *v, int full, int (*pr)(const char *, ...))
 {
 	struct nfsnode	*np = v;
 
-	(*pr)("size %llu flag %i vnode %p accstamp %i\n",
-	    np->n_size, np->n_flag, np->n_vnode, np->n_accstamp);
+	(*pr)("size %llu flag %i vnode %p accstamp %lld\n",
+	    np->n_size, np->n_flag, np->n_vnode, (long long)np->n_accstamp);
 
 	if (full) {
 		(*pr)("pushedlo %llu pushedhi %llu pushlo %llu pushhi %llu\n",
