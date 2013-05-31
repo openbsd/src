@@ -1,40 +1,36 @@
-/*	$OpenBSD: tpms.c,v 1.16 2012/02/24 06:19:00 guenther Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.1 2013/05/31 19:32:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the copyright holder may not be used to endorse or
+ *    promote products derived from this software without specific
+ *    prior written permission.
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *
- *   2. Redistributions in binary form must reproduce the above
- *      copyright notice, this list of conditions and the following
- *      disclaimer in the documentation and/or other materials provided
- *      with the distribution.
- *
- *   3. The name of the copyright holder may not be used to endorse or
- *      promote products derived from this software without specific
- *      prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
- * The tpms driver provides support for the trackpad on new (post
+ * The utpms driver provides support for the trackpad on new (post
  * February 2005) Apple PowerBooks and iBooks that are not standard
  * USB HID mice.
  */
@@ -57,10 +53,10 @@
  * 15 inch PowerBooks, only the 16 first sensors in the X-direction
  * are used. In the X-direction, the sensors correspond to byte
  * positions
- * 
+ *
  *   2, 7, 12, 17, 22, 27, 32, 37, 4, 9, 14, 19, 24, 29, 34, 39, 42,
  *   47, 52, 57, 62, 67, 72, 77, 44 and 49;
- * 
+ *
  * in the Y direction, the sensors correspond to byte positions
  *
  *   1, 6, 11, 16, 21, 26, 31, 36, 3, 8, 13, 18, 23, 28, 33 and 38.
@@ -90,7 +86,7 @@
  * compute a new virtual position as a weighted average of the previous
  * virtual position and the new raw position.  The weights are
  * controlled by the raw change and a noise parameter.  The position
- * is reported as a relative position.  
+ * is reported as a relative position.
  */
 
 /*
@@ -124,19 +120,15 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-/*
- * Magic numbers.
- */
-
 /* The amount of data transferred by the USB device. */
-#define TPMS_DATA_LEN 81
+#define UTPMS_DATA_LEN 81
 
 /* The maximum number of sensors. */
-#define TPMS_X_SENSORS 26
-#define TPMS_Y_SENSORS 16
-#define TPMS_SENSORS (TPMS_X_SENSORS + TPMS_Y_SENSORS)
+#define UTPMS_X_SENSORS 26
+#define UTPMS_Y_SENSORS 16
+#define UTPMS_SENSORS (UTPMS_X_SENSORS + UTPMS_Y_SENSORS)
 
-/* 
+/*
  * Parameters for supported devices.  For generality, these parameters
  * can be different for each device.  The meanings of the parameters
  * are as follows.
@@ -145,22 +137,22 @@
  *            to know some of the device parameters.
  *
  * noise:     Amount of noise in the computed position. This controls
- *            how large a change must be to get reported, and how 
+ *            how large a change must be to get reported, and how
  *            large enough changes are smoothed.  A good value can
  *            probably only be found experimentally, but something around
  *            16 seems suitable.
  *
  * product:   The product ID of the trackpad.
  *
- * 
- * threshold: Accumulated changes less than this are ignored.  A good 
+ *
+ * threshold: Accumulated changes less than this are ignored.  A good
  *            value could be determined experimentally, but 5 is a
  *            reasonable guess.
  *
  * vendor:    The vendor ID.  Currently USB_VENDOR_APPLE for all devices.
  *
  * x_factor:  Factor used in computations with X-coordinates.  If the
- *            x-resolution of the display is x, this should be 
+ *            x-resolution of the display is x, this should be
  *            (x + 1) / (x_sensors - 1).  Other values work fine, but
  *            then the aspect ratio is not necessarily kept.
  *
@@ -171,7 +163,7 @@
  * y_sensors: The number of sensors in the Y-direction.
  */
 
-struct tpms_dev {
+struct utpms_dev {
 	int type;	   /* Type of the trackpad. */
 #define FOUNTAIN	0x00
 #define GEYSER1		0x01
@@ -186,12 +178,10 @@ struct tpms_dev {
 	uint16_t vendor;   /* The vendor ID. */
 };
 
-/* Devices supported by this driver. */
-static struct tpms_dev tpms_devices[] =
-{
-#define POWERBOOK_TOUCHPAD(ttype, prod, x_fact, x_sens, y_fact)	\
+static struct utpms_dev utpms_devices[] = {
+#define UTPMS_TOUCHPAD(ttype, prod, x_fact, x_sens, y_fact)		\
        {								\
-		.type = (ttype),						\
+		.type = (ttype),					\
 		.vendor = USB_VENDOR_APPLE,				\
 		.product = (prod),					\
 		.noise = 16,						\
@@ -202,39 +192,31 @@ static struct tpms_dev tpms_devices[] =
 		.y_sensors = 16						\
        }
        /* 12 inch PowerBooks */
-       POWERBOOK_TOUCHPAD(FOUNTAIN, 0x030a, 69, 16, 52), /* XXX Not tested. */
+       UTPMS_TOUCHPAD(FOUNTAIN, 0x030a, 69, 16, 52),
        /* 12 and 14 inch iBook G4 */
-       POWERBOOK_TOUCHPAD(GEYSER1, 0x030b, 69, 16, 52),
+       UTPMS_TOUCHPAD(GEYSER1, 0x030b, 69, 16, 52),
        /* 15 inch PowerBooks */
-       POWERBOOK_TOUCHPAD(FOUNTAIN, 0x020e, 85, 16, 57), /* XXX Not tested. */
-       POWERBOOK_TOUCHPAD(FOUNTAIN, 0x020f, 85, 16, 57),
-       POWERBOOK_TOUCHPAD(GEYSER2, 0x0214, 90, 15, 107),
-       POWERBOOK_TOUCHPAD(GEYSER2, 0x0215, 90, 15, 107),
-       POWERBOOK_TOUCHPAD(GEYSER2, 0x0216, 90, 15, 107),
+       UTPMS_TOUCHPAD(FOUNTAIN, 0x020e, 85, 16, 57),
+       UTPMS_TOUCHPAD(FOUNTAIN, 0x020f, 85, 16, 57),
+       UTPMS_TOUCHPAD(GEYSER2, 0x0214, 90, 15, 107),
+       UTPMS_TOUCHPAD(GEYSER2, 0x0215, 90, 15, 107),
+       UTPMS_TOUCHPAD(GEYSER2, 0x0216, 90, 15, 107),
        /* 17 inch PowerBooks */
-       POWERBOOK_TOUCHPAD(FOUNTAIN, 0x020d, 71, 26, 68)  /* XXX Not tested. */
-#undef POWERBOOK_TOUCHPAD
+       UTPMS_TOUCHPAD(FOUNTAIN, 0x020d, 71, 26, 68),
+#undef UTPMS_TOUCHPAD
 };
 
-/* The number of supported devices. */
-#define TPMS_NUM_DEVICES (sizeof(tpms_devices) / sizeof(tpms_devices[0]))
-
-/*
- * Types and prototypes. 
- */
-
-/* Device data. */
-struct tpms_softc {
+struct utpms_softc {
 	struct uhidev sc_hdev;	      /* USB parent (got the struct device). */
 	int sc_type;		      /* Type of the trackpad */
 	int sc_datalen;
-	int sc_acc[TPMS_SENSORS];     /* Accumulated sensor values. */
-	unsigned char sc_prev[TPMS_SENSORS];   /* Previous sample. */
-	unsigned char sc_sample[TPMS_SENSORS]; /* Current sample. */
+	int sc_acc[UTPMS_SENSORS];     /* Accumulated sensor values. */
+	unsigned char sc_prev[UTPMS_SENSORS];   /* Previous sample. */
+	unsigned char sc_sample[UTPMS_SENSORS]; /* Current sample. */
 	struct device *sc_wsmousedev; /* WSMouse device. */
 	int sc_noise;		      /* Amount of noise. */
 	int sc_threshold;	      /* Threshold value. */
-	int sc_x;		      /* Virtual position in horizontal 
+	int sc_x;		      /* Virtual position in horizontal
 				       * direction (wsmouse position). */
 	int sc_x_factor;	      /* X-coordinate factor. */
 	int sc_x_raw;		      /* X-position of finger on trackpad. */
@@ -246,53 +228,42 @@ struct tpms_softc {
 	int sc_y_sensors;	      /* Number of Y-sensors. */
 	uint32_t sc_buttons;	      /* Button state. */
 	uint32_t sc_status;	      /* Status flags. */
-#define TPMS_ENABLED 1		      /* Is the device enabled? */
-#define TPMS_DYING 2		      /* Is the device dying? */
-#define TPMS_VALID 4		      /* Is the previous sample valid? */
+#define UTPMS_ENABLED 1		      /* Is the device enabled? */
+#define UTPMS_DYING 2		      /* Is the device dying? */
+#define UTPMS_VALID 4		      /* Is the previous sample valid? */
 };
 
-void tpms_intr(struct uhidev *, void *, unsigned int);
-int tpms_enable(void *);
-void tpms_disable(void *);
-int tpms_ioctl(void *, unsigned long, caddr_t, int, struct proc *);
-void reorder_sample(struct tpms_softc*, unsigned char *, unsigned char *);
-int compute_delta(struct tpms_softc *, int *, int *, int *, uint32_t *);
-int detect_pos(int *, int, int, int, int *, int *);
-int smooth_pos(int, int, int);
+void	utpms_intr(struct uhidev *, void *, unsigned int);
+int	utpms_enable(void *);
+void	utpms_disable(void *);
+int	utpms_ioctl(void *, unsigned long, caddr_t, int, struct proc *);
+void	reorder_sample(struct utpms_softc*, unsigned char *, unsigned char *);
+int	compute_delta(struct utpms_softc *, int *, int *, int *, uint32_t *);
+int	detect_pos(int *, int, int, int, int *, int *);
+int	smooth_pos(int, int, int);
 
-/* Access methods for wsmouse. */
-const struct wsmouse_accessops tpms_accessops = {
-	tpms_enable,
-	tpms_ioctl,
-	tpms_disable,
+const struct wsmouse_accessops utpms_accessops = {
+	utpms_enable,
+	utpms_ioctl,
+	utpms_disable,
 };
 
-/* This take cares also of the basic device registration. */
-int tpms_match(struct device *, void *, void *); 
-void tpms_attach(struct device *, struct device *, void *); 
-int tpms_detach(struct device *, int); 
-int tpms_activate(struct device *, int); 
+int	utpms_match(struct device *, void *, void *);
+void	utpms_attach(struct device *, struct device *, void *);
+int	utpms_detach(struct device *, int);
+int	utpms_activate(struct device *, int);
 
-struct cfdriver tpms_cd = { 
-	NULL, "tpms", DV_DULL 
-}; 
-
-const struct cfattach tpms_ca = { 
-	sizeof(struct tpms_softc), 
-	tpms_match, 
-	tpms_attach, 
-	tpms_detach, 
-	tpms_activate, 
+struct cfdriver utpms_cd = {
+	NULL, "utpms", DV_DULL
 };
 
-/*
- * Basic driver. 
- */
-
-/* Try to match the device at some uhidev. */
+const struct cfattach utpms_ca = {
+	sizeof(struct utpms_softc), utpms_match, utpms_attach, utpms_detach,
+	utpms_activate,
+};
 
 int
-tpms_match(struct device *parent, void *match, void *aux)
+utpms_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
@@ -300,16 +271,16 @@ tpms_match(struct device *parent, void *match, void *aux)
 	int i;
 	uint16_t vendor, product;
 
-	/* 
+	/*
 	 * We just check if the vendor and product IDs have the magic numbers
-	 * we expect. 
+	 * we expect.
 	 */
 	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
 		vendor = UGETW(udd->idVendor);
 		product = UGETW(udd->idProduct);
-		for (i = 0; i < TPMS_NUM_DEVICES; i++) {
-			if (vendor == tpms_devices[i].vendor &&
-			    product == tpms_devices[i].product)
+		for (i = 0; i < nitems(utpms_devices); i++) {
+			if (vendor == utpms_devices[i].vendor &&
+			    product == utpms_devices[i].product)
 				return (UMATCH_IFACECLASS);
 		}
 	}
@@ -317,29 +288,26 @@ tpms_match(struct device *parent, void *match, void *aux)
 	return (UMATCH_NONE);
 }
 
-
-/* Attach the device. */
-
 void
-tpms_attach(struct device *parent, struct device *self, void *aux)
+utpms_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct tpms_softc *sc = (struct tpms_softc *)self;
+	struct utpms_softc *sc = (struct utpms_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	struct wsmousedev_attach_args a;
-	struct tpms_dev *pd;
+	struct utpms_dev *pd;
 	usb_device_descriptor_t *udd;
 	int i;
 	uint16_t vendor, product;
 
-	sc->sc_datalen = TPMS_DATA_LEN;
+	sc->sc_datalen = UTPMS_DATA_LEN;
 
 	/* Fill in device-specific parameters. */
 	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
 		product = UGETW(udd->idProduct);
 		vendor = UGETW(udd->idVendor);
-		for (i = 0; i < TPMS_NUM_DEVICES; i++) {
-			pd = &tpms_devices[i];
+		for (i = 0; i < nitems(utpms_devices); i++) {
+			pd = &utpms_devices[i];
 			if (product == pd->product && vendor == pd->vendor) {
 				switch (pd->type) {
 				case FOUNTAIN:
@@ -352,7 +320,7 @@ tpms_attach(struct device *parent, struct device *self, void *aux)
 					sc->sc_type = GEYSER2;
 					sc->sc_datalen = 64;
 					sc->sc_y_sensors = 9;
-					printf(": Geyser 2"); 
+					printf(": Geyser 2");
 					break;
 				}
 				printf(" Trackpad\n");
@@ -366,96 +334,86 @@ tpms_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 	}
-	if (sc->sc_x_sensors <= 0 || sc->sc_x_sensors > TPMS_X_SENSORS ||
-	    sc->sc_y_sensors <= 0 || sc->sc_y_sensors > TPMS_Y_SENSORS) {
-		printf(": unexpected sensors configuration (%d:%d)\n",
+	if (sc->sc_x_sensors <= 0 || sc->sc_x_sensors > UTPMS_X_SENSORS ||
+	    sc->sc_y_sensors <= 0 || sc->sc_y_sensors > UTPMS_Y_SENSORS) {
+		printf(": unexpected sensors configuration (d:d)\n",
 		    sc->sc_x_sensors, sc->sc_y_sensors);
 		return;
 	}
 
-	sc->sc_hdev.sc_intr = tpms_intr;
+	sc->sc_hdev.sc_intr = utpms_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
 	sc->sc_status = 0;
 
-	a.accessops = &tpms_accessops;
+	a.accessops = &utpms_accessops;
 	a.accesscookie = sc;
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
-/* Detach the device. */
-
 int
-tpms_detach(struct device *self, int flags)
+utpms_detach(struct device *self, int flags)
 {
-	struct tpms_softc *sc = (struct tpms_softc *)self;
-	int ret;
+	struct utpms_softc *sc = (struct utpms_softc *)self;
+	int ret = 0;
 
 	/* The wsmouse driver does all the work. */
-	ret = 0;
 	if (sc->sc_wsmousedev != NULL)
 		ret = config_detach(sc->sc_wsmousedev, flags);
 
 	return (ret);
 }
 
-/* Activate the device. */
-
 int
-tpms_activate(struct device *self, int act)
+utpms_activate(struct device *self, int act)
 {
-	struct tpms_softc *sc = (struct tpms_softc *)self;
+	struct utpms_softc *sc = (struct utpms_softc *)self;
 	int ret;
 
 	if (act == DVACT_DEACTIVATE) {
 		ret = 0;
 		if (sc->sc_wsmousedev != NULL)
 			ret = config_deactivate(sc->sc_wsmousedev);
-		sc->sc_status |= TPMS_DYING;
+		sc->sc_status |= UTPMS_DYING;
 		return (ret);
 	}
 	return (EOPNOTSUPP);
 }
 
-
-/* Enable the device. */
-
 int
-tpms_enable(void *v)
+utpms_enable(void *v)
 {
-	struct tpms_softc *sc = v;
+	struct utpms_softc *sc = v;
 
 	/* Check that we are not detaching or already enabled. */
-	if (sc->sc_status & TPMS_DYING)
+	if (sc->sc_status & UTPMS_DYING)
 		return (EIO);
-	if (sc->sc_status & TPMS_ENABLED)
+	if (sc->sc_status & UTPMS_ENABLED)
 		return (EBUSY);
 
-	sc->sc_status |= TPMS_ENABLED;
-	sc->sc_status &= ~TPMS_VALID;
+	sc->sc_status |= UTPMS_ENABLED;
+	sc->sc_status &= ~UTPMS_VALID;
 	sc->sc_buttons = 0;
 	bzero(sc->sc_sample, sizeof(sc->sc_sample));
 
 	return (uhidev_open(&sc->sc_hdev));
 }
 
-/* Disable the device. */
-
 void
-tpms_disable(void *v)
+utpms_disable(void *v)
 {
-	struct tpms_softc *sc = v;
+	struct utpms_softc *sc = v;
 
-	if (!(sc->sc_status & TPMS_ENABLED))
+	if (!(sc->sc_status & UTPMS_ENABLED))
 		return;
 
-	sc->sc_status &= ~TPMS_ENABLED;
+	sc->sc_status &= ~UTPMS_ENABLED;
 	uhidev_close(&sc->sc_hdev);
 }
 
 int
-tpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
+utpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
@@ -466,16 +424,10 @@ tpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 	return (-1);
 }
 
-/*
- * Interrupts & pointer movement. 
- */
-
-/* Handle interrupts. */
-
 void
-tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
+utpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 {
-	struct tpms_softc *sc = (struct tpms_softc *)addr;
+	struct utpms_softc *sc = (struct utpms_softc *)addr;
 	unsigned char *data;
 	int dx, dy, dz, i, s;
 	uint32_t buttons;
@@ -492,8 +444,8 @@ tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	reorder_sample(sc, sc->sc_sample, data);
 
 	/* Is this the first sample? */
-	if (!(sc->sc_status & TPMS_VALID)) {
-		sc->sc_status |= TPMS_VALID;
+	if (!(sc->sc_status & UTPMS_VALID)) {
+		sc->sc_status |= UTPMS_VALID;
 		sc->sc_x = sc->sc_y = -1;
 		sc->sc_x_raw = sc->sc_y_raw = -1;
 		memcpy(sc->sc_prev, sc->sc_sample, sizeof(sc->sc_prev));
@@ -501,7 +453,7 @@ tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 		return;
 	}
 	/* Accumulate the sensor change while keeping it nonnegative. */
-	for (i = 0; i < TPMS_SENSORS; i++) {
+	for (i = 0; i < UTPMS_SENSORS; i++) {
 		sc->sc_acc[i] +=
 			(signed char)(sc->sc_sample[i] - sc->sc_prev[i]);
 
@@ -526,28 +478,27 @@ tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	sc->sc_buttons = buttons;
 }
 
-/* 
+/*
  * Reorder the sensor values so that all the X-sensors are before the
  * Y-sensors in the natural order. Note that this might have to be
- * rewritten if TPMS_X_SENSORS or TPMS_Y_SENSORS change. 
+ * rewritten if UTPMS_X_SENSORS or UTPMS_Y_SENSORS change.
  */
-
-void 
-reorder_sample(struct tpms_softc *sc, unsigned char *to, unsigned char *from)
+void
+reorder_sample(struct utpms_softc *sc, unsigned char *to, unsigned char *from)
 {
 	int i;
 
 	if (sc->sc_type == GEYSER2) {
 		int j;
 
-		bzero(to, TPMS_SENSORS);
+		bzero(to, UTPMS_SENSORS);
 		for (i = 0, j = 19; i < 20; i += 2, j += 3) {
 			to[i] = from[j];
 			to[i + 1] = from[j + 1];
 		}
 		for (i = 0, j = 1; i < 9; i += 2, j += 3) {
-			to[TPMS_X_SENSORS + i] = from[j];
-			to[TPMS_X_SENSORS + i + 1] = from[j + 1];
+			to[UTPMS_X_SENSORS + i] = from[j];
+			to[UTPMS_X_SENSORS + i + 1] = from[j + 1];
 		}
 	} else {
 		for (i = 0; i < 8; i++) {
@@ -556,9 +507,10 @@ reorder_sample(struct tpms_softc *sc, unsigned char *to, unsigned char *from)
 			to[i + 8] = from[5 * i + 4];
 			to[i + 16] = from[5 * i + 42];
 #if 0
-			/* 
-			 * XXX This seems to introduce random ventical jumps, so
-			 * we ignore these sensors until we figure out their meaning.
+			/*
+			 * XXX This seems to introduce random ventical jumps,
+			 * so we ignore these sensors until we figure out
+			 * their meaning.
 			 */
 			if (i < 2)
 				to[i + 24] = from[5 * i + 44];
@@ -576,19 +528,18 @@ reorder_sample(struct tpms_softc *sc, unsigned char *to, unsigned char *from)
  * history. Note that dx, dy, dz and buttons are modified only if
  * corresponding pressure is detected and should thus be initialised
  * before the call.  Return 0 on error.
+ *
+ * XXX Could we report something useful in dz?
  */
-
-/* XXX Could we report something useful in dz? */
-
 int
-compute_delta(struct tpms_softc *sc, int *dx, int *dy, int *dz, 
+compute_delta(struct utpms_softc *sc, int *dx, int *dy, int *dz,
 	      uint32_t * buttons)
 {
 	int x_det, y_det, x_raw, y_raw, x_fingers, y_fingers, fingers, x, y;
 
 	x_det = detect_pos(sc->sc_acc, sc->sc_x_sensors, sc->sc_threshold,
 			   sc->sc_x_factor, &x_raw, &x_fingers);
-	y_det = detect_pos(sc->sc_acc + TPMS_X_SENSORS, sc->sc_y_sensors,
+	y_det = detect_pos(sc->sc_acc + UTPMS_X_SENSORS, sc->sc_y_sensors,
 			   sc->sc_threshold, sc->sc_y_factor,
 			   &y_raw, &y_fingers);
 	fingers = max(x_fingers, y_fingers);
@@ -605,9 +556,9 @@ compute_delta(struct tpms_softc *sc, int *dx, int *dy, int *dz,
 			if (sc->sc_x_raw >= 0) {
 				sc->sc_x_raw = (3 * sc->sc_x_raw + x_raw) / 4;
 				sc->sc_y_raw = (3 * sc->sc_y_raw + y_raw) / 4;
-				/* 
+				/*
 				 * Compute virtual position and change if we
-				 * already have a decent position. 
+				 * already have a decent position.
 				 */
 				if (sc->sc_x >= 0) {
 					x = smooth_pos(sc->sc_x, sc->sc_x_raw,
@@ -646,7 +597,6 @@ compute_delta(struct tpms_softc *sc, int *dx, int *dy, int *dz,
  * Compute the new smoothed position from the previous smoothed position
  * and the raw position.
  */
-
 int
 smooth_pos(int pos_old, int pos_raw, int noise)
 {
@@ -673,7 +623,6 @@ smooth_pos(int pos_old, int pos_raw, int noise)
  * is returned in fingers_ret.  The position returned in pos_ret
  * is in [0, (n_sensors - 1) * factor - 1].
  */
-
 int
 detect_pos(int *sensors, int n_sensors, int threshold, int fact,
 	   int *pos_ret, int *fingers_ret)
@@ -682,7 +631,7 @@ detect_pos(int *sensors, int n_sensors, int threshold, int fact,
 
 	/*
 	 * Compute the number of fingers, total pressure, and weighted
-	 * position of the fingers. 
+	 * position of the fingers.
 	 */
 	*fingers_ret = 0;
 	w = s = 0;

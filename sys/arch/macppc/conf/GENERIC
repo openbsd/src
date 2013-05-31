@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.217 2013/03/15 09:10:52 ratchov Exp $g
+#	$OpenBSD: GENERIC,v 1.218 2013/05/31 19:32:30 mpi Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -243,8 +243,8 @@ midi*	at umidi?
 ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
 uhidev*	at uhub?		# Human Interface Devices
-tpms*	at uhidev?		# Apple touchpad mouse
-wsmouse* at tpms? mux 0
+utpms*	at uhidev?		# Apple touchpad mouse
+wsmouse* at utpms? mux 0
 ums*	at uhidev?		# USB mouse
 wsmouse*	at ums? mux 0
 uts*	at uhub?		# USB touchscreen
