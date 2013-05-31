@@ -1,4 +1,4 @@
-/*	$Id: tbl_data.c,v 1.12 2012/05/26 20:03:34 schwarze Exp $ */
+/*	$Id: tbl_data.c,v 1.13 2013/05/31 21:37:09 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -181,7 +181,7 @@ newspan(struct tbl_node *tbl, int line, struct tbl_row *rp)
 
 	dp = mandoc_calloc(1, sizeof(struct tbl_span));
 	dp->line = line;
-	dp->tbl = &tbl->opts;
+	dp->opts = &tbl->opts;
 	dp->layout = rp;
 	dp->head = tbl->first_head;
 

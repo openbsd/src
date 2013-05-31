@@ -1,4 +1,4 @@
-/*	$Id: libroff.h,v 1.5 2011/09/18 10:25:28 schwarze Exp $ */
+/*	$Id: libroff.h,v 1.6 2013/05/31 21:37:08 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,7 +31,7 @@ struct	tbl_node {
 	int		  pos; /* invocation column */
 	int		  line; /* invocation line */
 	enum tbl_part	  part;
-	struct tbl	  opts;
+	struct tbl_opts	  opts;
 	struct tbl_row	 *first_row;
 	struct tbl_row	 *last_row;
 	struct tbl_span	 *first_span;

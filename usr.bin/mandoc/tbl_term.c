@@ -1,4 +1,4 @@
-/*	$Id: tbl_term.c,v 1.13 2012/05/27 01:01:24 schwarze Exp $ */
+/*	$Id: tbl_term.c,v 1.14 2013/05/31 21:37:09 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,14 +27,14 @@
 static	size_t	term_tbl_len(size_t, void *);
 static	size_t	term_tbl_strlen(const char *, void *);
 static	void	tbl_char(struct termp *, char, size_t);
-static	void	tbl_data(struct termp *, const struct tbl *,
+static	void	tbl_data(struct termp *, const struct tbl_opts *,
 			const struct tbl_dat *, 
 			const struct roffcol *);
 static	size_t	tbl_rulewidth(struct termp *, const struct tbl_head *);
 static	void	tbl_hframe(struct termp *, const struct tbl_span *, int);
 static	void	tbl_literal(struct termp *, const struct tbl_dat *, 
 			const struct roffcol *);
-static	void	tbl_number(struct termp *, const struct tbl *, 
+static	void	tbl_number(struct termp *, const struct tbl_opts *, 
 			const struct tbl_dat *, 
 			const struct roffcol *);
 static	void	tbl_hrule(struct termp *, const struct tbl_span *);
@@ -92,16 +92,16 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	/* Horizontal frame at the start of boxed tables. */
 
 	if (TBL_SPAN_FIRST & sp->flags) {
-		if (TBL_OPT_DBOX & sp->tbl->opts)
+		if (TBL_OPT_DBOX & sp->opts->opts)
 			tbl_hframe(tp, sp, 1);
-		if (TBL_OPT_DBOX & sp->tbl->opts ||
-		    TBL_OPT_BOX  & sp->tbl->opts)
+		if (TBL_OPT_DBOX & sp->opts->opts ||
+		    TBL_OPT_BOX  & sp->opts->opts)
 			tbl_hframe(tp, sp, 0);
 	}
 
 	/* Vertical frame at the start of each row. */
 
-	if (TBL_OPT_BOX & sp->tbl->opts || TBL_OPT_DBOX & sp->tbl->opts)
+	if (TBL_OPT_BOX & sp->opts->opts || TBL_OPT_DBOX & sp->opts->opts)
 		term_word(tp, TBL_SPAN_HORIZ == sp->pos ||
 			TBL_SPAN_DHORIZ == sp->pos ? "+" : "|");
 
@@ -138,7 +138,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 				tbl_vrule(tp, hp);
 
 			col = &tp->tbl.cols[hp->ident];
-			tbl_data(tp, sp->tbl, dp, col);
+			tbl_data(tp, sp->opts, dp, col);
 
 			/* 
 			 * Go to the next data cell and assign the
@@ -155,7 +155,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 	/* Vertical frame at the end of each row. */
 
-	if (TBL_OPT_BOX & sp->tbl->opts || TBL_OPT_DBOX & sp->tbl->opts)
+	if (TBL_OPT_BOX & sp->opts->opts || TBL_OPT_DBOX & sp->opts->opts)
 		term_word(tp, TBL_SPAN_HORIZ == sp->pos ||
 			TBL_SPAN_DHORIZ == sp->pos ? "+" : " |");
 	term_flushln(tp);
@@ -166,12 +166,12 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	 */
 
 	if (TBL_SPAN_LAST & sp->flags) {
-		if (TBL_OPT_DBOX & sp->tbl->opts ||
-		    TBL_OPT_BOX  & sp->tbl->opts) {
+		if (TBL_OPT_DBOX & sp->opts->opts ||
+		    TBL_OPT_BOX  & sp->opts->opts) {
 			tbl_hframe(tp, sp, 0);
 			tp->skipvsp = 1;
 		}
-		if (TBL_OPT_DBOX & sp->tbl->opts) {
+		if (TBL_OPT_DBOX & sp->opts->opts) {
 			tbl_hframe(tp, sp, 1);
 			tp->skipvsp = 2;
 		}
@@ -250,7 +250,7 @@ tbl_hframe(struct termp *tp, const struct tbl_span *sp, int outer)
 }
 
 static void
-tbl_data(struct termp *tp, const struct tbl *tbl,
+tbl_data(struct termp *tp, const struct tbl_opts *opts,
 		const struct tbl_dat *dp, 
 		const struct roffcol *col)
 {
@@ -296,7 +296,7 @@ tbl_data(struct termp *tp, const struct tbl *tbl,
 		tbl_literal(tp, dp, col);
 		break;
 	case (TBL_CELL_NUMBER):
-		tbl_number(tp, tbl, dp, col);
+		tbl_number(tp, opts, dp, col);
 		break;
 	case (TBL_CELL_DOWN):
 		tbl_char(tp, ASCII_NBRSP, col->width);
@@ -377,7 +377,7 @@ tbl_literal(struct termp *tp, const struct tbl_dat *dp,
 }
 
 static void
-tbl_number(struct termp *tp, const struct tbl *tbl,
+tbl_number(struct termp *tp, const struct tbl_opts *opts,
 		const struct tbl_dat *dp,
 		const struct roffcol *col)
 {
@@ -395,12 +395,12 @@ tbl_number(struct termp *tp, const struct tbl *tbl,
 
 	sz = term_strlen(tp, dp->string);
 
-	buf[0] = tbl->decimal;
+	buf[0] = opts->decimal;
 	buf[1] = '\0';
 
 	psz = term_strlen(tp, buf);
 
-	if (NULL != (cp = strrchr(dp->string, tbl->decimal))) {
+	if (NULL != (cp = strrchr(dp->string, opts->decimal))) {
 		buf[1] = '\0';
 		for (ssz = 0, i = 0; cp != &dp->string[i]; i++) {
 			buf[0] = dp->string[i];

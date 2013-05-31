@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.17 2012/05/26 20:03:34 schwarze Exp $ */
+/*	$Id: out.c,v 1.18 2013/05/31 21:37:09 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,11 +28,11 @@
 #include "out.h"
 
 static	void	tblcalc_data(struct rofftbl *, struct roffcol *,
-			const struct tbl *, const struct tbl_dat *);
+			const struct tbl_opts *, const struct tbl_dat *);
 static	void	tblcalc_literal(struct rofftbl *, struct roffcol *,
 			const struct tbl_dat *);
 static	void	tblcalc_number(struct rofftbl *, struct roffcol *,
-			const struct tbl *, const struct tbl_dat *);
+			const struct tbl_opts *, const struct tbl_dat *);
 
 /* 
  * Convert a `scaling unit' to a consistent form, or fail.  Scaling
@@ -150,7 +150,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp)
 
 	assert(NULL == tbl->cols);
 	tbl->cols = mandoc_calloc
-		((size_t)sp->tbl->cols, sizeof(struct roffcol));
+		((size_t)sp->opts->cols, sizeof(struct roffcol));
 
 	hp = sp->head;
 
@@ -171,14 +171,14 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp)
 				continue;
 			assert(dp->layout);
 			col = &tbl->cols[dp->layout->head->ident];
-			tblcalc_data(tbl, col, sp->tbl, dp);
+			tblcalc_data(tbl, col, sp->opts, dp);
 		}
 	}
 }
 
 static void
 tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
-		const struct tbl *tp, const struct tbl_dat *dp)
+		const struct tbl_opts *opts, const struct tbl_dat *dp)
 {
 	size_t		 sz;
 
@@ -202,7 +202,7 @@ tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
 		tblcalc_literal(tbl, col, dp);
 		break;
 	case (TBL_CELL_NUMBER):
-		tblcalc_number(tbl, col, tp, dp);
+		tblcalc_number(tbl, col, opts, dp);
 		break;
 	case (TBL_CELL_DOWN):
 		break;
@@ -228,7 +228,7 @@ tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
 
 static void
 tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
-		const struct tbl *tp, const struct tbl_dat *dp)
+		const struct tbl_opts *opts, const struct tbl_dat *dp)
 {
 	int 		 i;
 	size_t		 sz, psz, ssz, d;
@@ -250,12 +250,12 @@ tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
 
 	/* FIXME: TBL_DATA_HORIZ et al.? */
 
-	buf[0] = tp->decimal;
+	buf[0] = opts->decimal;
 	buf[1] = '\0';
 
 	psz = (*tbl->slen)(buf, tbl->arg);
 
-	if (NULL != (cp = strrchr(str, tp->decimal))) {
+	if (NULL != (cp = strrchr(str, opts->decimal))) {
 		buf[1] = '\0';
 		for (ssz = 0, i = 0; cp != &str[i]; i++) {
 			buf[0] = str[i];
