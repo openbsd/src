@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.8 2012/06/23 14:03:42 mpi Exp $ */
+/*	$OpenBSD: akbdmap.h,v 1.9 2013/05/31 15:37:04 mpi Exp $ */
 /*	$NetBSD: akbdmap.h,v 1.7 2005/05/05 22:29:41 abs Exp $	*/
 
 /*-
@@ -257,34 +257,34 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(92),			KS_KP_9,	KS_KP_Prior,
 
     KC(95),			KS_KP_Decimal,	KS_KP_Delete,
-    KC(96),			KS_f5,
-    KC(97),			KS_f6,
-    KC(98),			KS_f7,
-    KC(99),			KS_f3,
-    KC(100),			KS_f8,
+    KC(96), KS_Cmd_Screen4,	KS_f5,
+    KC(97), KS_Cmd_Screen5,	KS_f6,
+    KC(98), KS_Cmd_Screen6,	KS_f7,
+    KC(99), KS_Cmd_Screen2,	KS_f3,
+    KC(100), KS_Cmd_Screen7,	KS_f8,
 
-    KC(101),			KS_f9,
+    KC(101), KS_Cmd_Screen8,	KS_f9,
 
-    KC(103),			KS_f11,
+    KC(103), KS_Cmd_Screen10,	KS_f11,
 
     KC(105),			KS_f13,		KS_Print_Screen,
     KC(106),			KS_KP_Enter,
     KC(107),			KS_f14,		KS_Hold_Screen,
 
-    KC(109),			KS_f10,
+    KC(109), KS_Cmd_Screen9,	KS_f10,
 
-    KC(111),			KS_f12,
+    KC(111), KS_Cmd_Screen11,	KS_f12,
 
     KC(113),			KS_f15,		KS_Pause,
     KC(114),			KS_Insert,
     KC(115),			KS_Home,
-    KC(116),			KS_Prior,
-    KC(117),			KS_Delete,
-    KC(118),			KS_f4,
+    KC(116), KS_Cmd_ScrollBack,	KS_Prior,
+    KC(117), KS_Cmd_ResetEmul,	KS_Delete,
+    KC(118), KS_Cmd_Screen3,	KS_f4,
     KC(119),			KS_End,
-    KC(120),			KS_f2,
-    KC(121),			KS_Next,
-    KC(122),			KS_f1,
+    KC(120), KS_Cmd_Screen1,	KS_f2,
+    KC(121), KS_Cmd_ScrollFwd,	KS_Next,
+    KC(122), KS_Cmd_Screen0,	KS_f1,
 
     KC(127),	KS_Cmd_Debugger,
 };
