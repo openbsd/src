@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.676 2013/05/25 15:00:25 rpe Exp $
+#	$OpenBSD: install.sub,v 1.677 2013/05/31 06:27:08 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -135,9 +135,9 @@ get_cddevs () {
 }
 
 get_ifdevs() {
-	ifconfig "$@" 2>/dev/null \
-		| egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun)[[:digit:]]+:' \
-		| sed -ne 's/^\(.*\):.*/\1/p'
+	ifconfig "$@" 2>/dev/null |
+		egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun)[[:digit:]]+:' |
+		sed -ne 's/^\(.*\):.*/\1/p'
 }
 
 get_drive() {
@@ -150,8 +150,8 @@ get_drive() {
 mount_mnt2() {
 	local _dev=$1 _opts _file=/tmp/parts.$1 _parts
 
-	disklabel $_dev 2>/dev/null | grep '^  [a-p]: '	\
-		| egrep -v "swap|unused" >$_file
+	disklabel $_dev 2>/dev/null | grep '^  [a-p]: '	|
+		egrep -v "swap|unused" >$_file
 
 	_parts=$(sed -e 's/^  \(.\): .*/\1/' $_file)
 	set -- $_parts
@@ -590,10 +590,10 @@ configure_ifs() {
 		# questions and bring it up
 		if [[ $_ifs == vlan[0-9]* ]]; then
 			# Get existing tag for this vlan.
-			_vi=$(ifconfig $_ifs 2>/dev/null | \
+			_vi=$(ifconfig $_ifs 2>/dev/null |
 				sed -n 's/vlan: \([0-9]*\).*/\1/p')
 			# Get list of all in-use tags.
-			_tags=$(ifconfig vlan 2>/dev/null | \
+			_tags=$(ifconfig vlan 2>/dev/null |
 				sed -n 's/vlan: \([0-9]*\).*/\1/p')
 			# Current tag is a valid tag for this vlan.
 			[[ -n $_tags ]] && _tags=$(rmel "$_vi" $_tags)
@@ -627,7 +627,7 @@ configure_ifs() {
 
 			# hostname.$_vd must say something, anything, to
 			# make sure it is up.
-			grep -qs "^up" /tmp/hostname.$_vd || \
+			grep -qs "^up" /tmp/hostname.$_vd ||
 				echo "up" >>/tmp/hostname.$_vd
 			ifconfig $_vd up
 
@@ -646,7 +646,7 @@ configure_ifs() {
 		# First interface configured will use the hostname without
 		# asking the user.
 		resp=$(hostname -s)
-		[[ -n $_first && $_first != $_ifs ]] && \
+		[[ -n $_first && $_first != $_ifs ]] &&
 			ask "Symbolic (host) name for $_ifs?" $resp
 		_name=$resp
 
@@ -931,8 +931,8 @@ v6_defroute() {
 	fi
 
 	if [[ -x /sbin/ping6 ]]; then
-		_routers=$(ping6 -n -c 2 ff02::2%$_if 2>&1 | sed -n \
-			-e '/bytes from/{s/^.*from //;s/,.*$//;p;}')
+		_routers=$(ping6 -n -c 2 ff02::2%$_if 2>&1 |
+			sed -ne '/bytes from/{s/^.*from //;s/,.*$//;p;}')
 	fi
 
 	_oifs=$IFS
@@ -1106,7 +1106,7 @@ install_files() {
 			# No displays and X isn't installed ==> skip X sets
 			isin ${_f%${VERSION}.tgz} xbase xetc xshare xfont xserv && continue
 		fi
-		isin $_f $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" && \
+		isin $_f $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" &&
 			_get_sets=$(addel $_f $_get_sets)
 	done
 
@@ -1144,10 +1144,10 @@ install_files() {
 		echo -n "Getting $_f ..."
 		rm -f /tmp/h
 		case $_f in
-		*.tgz)	ftp -Vmo - "$_src/$_f" | \
+		*.tgz)	ftp -Vmo - "$_src/$_f" |
 				$shacmd | tar zxphf - -C /mnt
 			;;
-		*)	ftp -Vmo - "$_src/$_f" | \
+		*)	ftp -Vmo - "$_src/$_f" |
 				$shacmd > "/mnt/$_f"
 			;;
 		esac
@@ -1167,13 +1167,13 @@ install_files() {
 		fi
 
 		# get sets and save arguments for sysmerge(8)
-		[[ $_f == base$VERSION.tgz ]] && \
+		[[ $_f == base$VERSION.tgz ]] &&
 			ftp -Vmo /mnt/tmp/etc$VERSION.tgz \
-				"$_src/etc$VERSION.tgz" >/dev/null 2>&1 && \
+				"$_src/etc$VERSION.tgz" >/dev/null 2>&1 &&
 			SM_ARGS="-s /tmp/etc$VERSION.tgz"
-		[[ $_f == xbase$VERSION.tgz ]] && \
+		[[ $_f == xbase$VERSION.tgz ]] &&
 			ftp -Vmo /mnt/tmp/xetc$VERSION.tgz \
-				"$_src/xetc$VERSION.tgz" >/dev/null 2>&1  && \
+				"$_src/xetc$VERSION.tgz" >/dev/null 2>&1 &&
 			SM_ARGSX="-x /tmp/xetc$VERSION.tgz"
 	done
 }
@@ -1383,7 +1383,7 @@ install_url() {
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
-		_file_list=$(ftp -Vo - "$_url_base/index.txt" | \
+		_file_list=$(ftp -Vo - "$_url_base/index.txt" |
 			sed -e 's/^.* //' | sed -e 's///')
 	fi
 
@@ -1584,7 +1584,7 @@ install_sets() {
 
 	echo
 
-	[[ -s $SERVERLISTALL ]] && \
+	[[ -s $SERVERLISTALL ]] &&
 		_d=$(sed -ne '/^method=/s/method=//p' $SERVERLISTALL)
 
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
@@ -1622,7 +1622,7 @@ run_sysmerge() {
 	echo "After rebooting, run sysmerge(8) to update your /etc configuration."
 	#if [[ -n "$SM_ARGS" || -n "$SM_ARGSX" ]]; then
 	#	ask_yn "Merge the new etc/xetc install sets using sysmerge(8)?" no
-	#	if [[ $resp == y ]]; then \
+	#	if [[ $resp == y ]]; then
 	#		/mnt/usr/sbin/chroot /mnt /usr/sbin/sysmerge $SM_ARGS $SM_ARGSX
 	#	fi
 	#fi
@@ -1654,10 +1654,10 @@ munge_fstab() {
 
 	while read _dev _mp _fstype _opt _rest; do
 		# Drop irrelevant lines and filesystems.
-		[[ $_dev == @(/dev/vnd*|\#*) || \
-			$_fstype == nfs || \
-			! -f /sbin/mount_$_fstype || \
-			$_opt == *noauto* || \
+		[[ $_dev == @(/dev/vnd*|\#*) ||
+			$_fstype == nfs ||
+			! -f /sbin/mount_$_fstype ||
+			$_opt == *noauto* ||
 			$_opt == *xx* ]] && continue
 
 		# Remove any softdep options, as soft updates are not
@@ -1869,7 +1869,7 @@ servers $1
 		sed	-e "/^$CTTY/s/std.9600/std.${CSPEED}/" \
 			-e "/^$CTTY/s/unknown/vt220	/" \
 			-e "/$CTTY/s/off.*/on secure/" /tmp/ttys >/mnt/etc/ttys
-		[[ -n $CPROM ]] && \
+		[[ -n $CPROM ]] &&
 			echo "stty $CPROM $CSPEED\nset tty $CPROM" >>/mnt/etc/boot.conf
 	fi
 
@@ -1930,7 +1930,7 @@ finish_up() {
 		# is a small chance the device does not exist on the ramdisk
 		# and will thus not get mounted.
 		while read _dev _mp _fstype _rest; do
-			[[ $_fstype == swap ]] && \
+			[[ $_fstype == swap ]] &&
 				/mnt/sbin/swapctl -a $_dev >/dev/null 2>&1
 		done </mnt/etc/fstab
 	fi
