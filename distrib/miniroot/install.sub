@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.677 2013/05/31 06:27:08 rpe Exp $
+#	$OpenBSD: install.sub,v 1.678 2013/05/31 23:52:18 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -120,10 +120,8 @@ scan_dmesg() {
 }
 
 scan_disknames() {
-	local _n _oifs=$IFS
-	IFS=","
+	local IFS=,
 	bsort $(for _n in $(sysctl -n hw.disknames); do echo "${_n%%:*} "; done | sed -ne "$1")
-	IFS=$_oifs
 }
 
 get_dkdevs () {
@@ -183,12 +181,11 @@ mount_mnt2() {
 #    *Don't* allow the '!' options that ask does.
 #    *Don't* echo input.
 #    *Don't* interpret "\" as escape character.
+#    Preserve whitespace in input
 askpass() {
-	set -o noglob
 	stty -echo
-	read -r resp?"$1 "
+	IFS= read -r resp?"$1 "
 	stty echo
-	set +o noglob
 	echo
 }
 
@@ -280,20 +277,15 @@ ask() {
 
 # Ask for a password twice, saving the input in $_password
 askpassword() {
-	local _oifs=$IFS
-	IFS=
 	while :; do
 		askpass "Password for $1 account? (will not echo)"
 		_password=$resp
 
 		askpass "Password for $1 account? (again)"
-		# N.B.: Need quotes around $resp and $_password to preserve leading
-		#       or trailing spaces.
-		[[ "$resp" == "$_password" ]] && break
+		[[ $resp == "$_password" ]] && break
 
 		echo "Passwords do not match, try again."
 	done
-	IFS=$_oifs
 }
 
 user_setup() {
@@ -341,7 +333,7 @@ user_setup() {
 #    $2    = the default answer
 #
 # Save the user input (or the default) in $resp.
-ask_until() {
+function ask_until {
 	resp=
 	while [[ -z $resp ]] ; do
 		ask "$1" "$2"
@@ -1281,7 +1273,7 @@ ftp_time() {
 # $1 = url type (ftp or http)
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd _mirror
+	local _url_type=$1 _file_list _url_base _prompt _passwd _mirror
 	eval local _server_ip=\$_${_url_type}_server_ip \
 		_server_dir=\$_${_url_type}_server_dir
 
@@ -1348,11 +1340,8 @@ install_url() {
 	eval _${_url_type}_server_dir=$_server_dir
 
 	if [[ $_url_type == ftp ]]; then
-		# Get login name, setting IFS to nothing so trailing or
-		# embedded blanks are preserved!
-		_oifs=$IFS
-		IFS=
-		ask_until "Login?" "${_ftp_server_login:=anonymous}"
+		# Get login name, preserving leading and trailing blanks
+		IFS= ask_until "Login?" "${_ftp_server_login:=anonymous}"
 		_ftp_server_login=$resp
 
 		# Get password unless login in 'anonymous' or 'ftp'
@@ -1365,7 +1354,6 @@ install_url() {
 			done
 			_passwd=$resp
 		fi
-		IFS=$_oifs
 	fi
 
 	# Build up the base url since it is so nasty...
