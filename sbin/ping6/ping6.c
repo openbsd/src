@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.83 2013/04/16 22:10:48 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.84 2013/05/31 19:46:57 naddy Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1351,7 +1351,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				    sizeof(dstsa)));
 			}
 			if (timing)
-				(void)printf(" time=%g ms", triptime);
+				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
 				(void)printf("(DUP!)");
 			if (options & F_AUD_RECV)
