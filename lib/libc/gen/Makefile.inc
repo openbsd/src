@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.59 2013/04/15 16:38:21 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.60 2013/05/31 18:41:25 tedu Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -18,7 +18,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         pw_dup.c pwcache.c raise.c readdir.c readdir_r.c readpassphrase.c \
         rewinddir.c scandir.c \
         seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
-        setproctitle.c siginterrupt.c siglist.c signal.c signame.c \
+        setproctitle.c shm_open.c siginterrupt.c siglist.c signal.c signame.c \
         sigsetops.c sleep.c statvfs.c strtofflags.c sysconf.c sysctl.c \
         syslog.c syslog_r.c telldir.c time.c times.c timezone.c \
         tolower_.c ttyname.c \
@@ -51,7 +51,8 @@ MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	posix_spawn_file_actions_init.3 posix_spawnattr_getflags.3 \
 	posix_spawnattr_getpgroup.3 posix_spawnattr_init.3 \
 	psignal.3 pw_dup.3 pwcache.3 raise.3 readpassphrase.3 \
-	scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 signal.3 \
+	scandir.3 setjmp.3 setmode.3 setproctitle.3 shm_open.3 \
+	siginterrupt.3 signal.3 \
 	sigsetops.3 sleep.3 statvfs.3 sysconf.3 sysctl.3 strtofflags.3 \
 	syslog.3 time.3 times.3 timezone.3 toascii.3 tolower.3 toupper.3 \
 	ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
@@ -140,6 +141,7 @@ MLINKS+=scandir.3 alphasort.3
 MLINKS+=setjmp.3 _longjmp.3 setjmp.3 _setjmp.3 setjmp.3 longjmp.3 \
 	setjmp.3 longjmperror.3 setjmp.3 sigsetjmp.3 setjmp.3 siglongjmp.3
 MLINKS+=setmode.3 getmode.3
+MLINKS+=shm_open.3 shm_unlink.3 shm_open.3 shm_mkstemp.3
 MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigaddset.3 sigsetops.3 sigdelset.3 \
 	sigsetops.3 sigismember.3
