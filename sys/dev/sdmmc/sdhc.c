@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.35 2012/10/08 21:47:50 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.36 2013/05/31 21:28:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -260,8 +260,7 @@ sdhc_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:
-		/* XXX poll for command completion or suspend command
-		 * in progress */
+		rv = config_activate_children(self, act);
 
 		/* Save the host controller state. */
 		for (n = 0; n < sc->sc_nhosts; n++) {
@@ -269,7 +268,6 @@ sdhc_activate(struct device *self, int act)
 			for (i = 0; i < sizeof hp->regs; i++)
 				hp->regs[i] = HREAD1(hp, i);
 		}
-		rv = config_activate_children(self, act);
 		break;
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);

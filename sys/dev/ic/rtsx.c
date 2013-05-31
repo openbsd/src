@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.3 2013/03/28 20:03:19 stsp Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.4 2013/05/31 21:28:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -283,12 +283,11 @@ rtsx_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_QUIESCE:
-		/* XXX abort commands in progress? */
 		rv = config_activate_children(self, act);
 		break;
 	case DVACT_SUSPEND:
-		rtsx_save_regs(sc);
 		rv = config_activate_children(self, act);
+		rtsx_save_regs(sc);
 		break;
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);

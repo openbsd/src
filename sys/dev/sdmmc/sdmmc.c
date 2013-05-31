@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.26 2011/11/14 14:13:45 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.27 2013/05/31 21:28:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -146,18 +146,27 @@ int
 sdmmc_activate(struct device *self, int act)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)self;
+	int rv = 0;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
 		/* If card in slot, cause a detach/re-attach */
 		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT))
 			sc->sc_dying = -1;
 		break;
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+		break;
 	case DVACT_RESUME:
 		wakeup(&sc->sc_tskq);
+		rv = config_activate_children(self, act);
 		break;
 	}
-	return (0);
+	return (rv);
 }
 
 void
