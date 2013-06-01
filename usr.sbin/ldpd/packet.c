@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.20 2013/06/01 18:16:35 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.21 2013/06/01 18:24:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -457,10 +457,8 @@ session_close(struct nbr *nbr)
 	evbuf_clear(&nbr->wbuf);
 	event_del(&nbr->rev);
 
-	if (evtimer_pending(&nbr->keepalive_timer, NULL))
-		evtimer_del(&nbr->keepalive_timer);
-	if (evtimer_pending(&nbr->keepalive_timeout, NULL))
-		evtimer_del(&nbr->keepalive_timeout);
+	nbr_stop_ktimer(nbr);
+	nbr_stop_ktimeout(nbr);
 
 	close(nbr->fd);
 	accept_unpause();

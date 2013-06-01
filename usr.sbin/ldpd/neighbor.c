@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.29 2013/06/01 18:21:45 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.30 2013/06/01 18:24:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -285,14 +285,10 @@ nbr_del(struct nbr *nbr)
 
 	if (event_pending(&nbr->ev_connect, EV_WRITE, NULL))
 		event_del(&nbr->ev_connect);
-	if (evtimer_pending(&nbr->inactivity_timer, NULL))
-		evtimer_del(&nbr->inactivity_timer);
-	if (evtimer_pending(&nbr->keepalive_timer, NULL))
-		evtimer_del(&nbr->keepalive_timer);
-	if (evtimer_pending(&nbr->keepalive_timeout, NULL))
-		evtimer_del(&nbr->keepalive_timeout);
-	if (evtimer_pending(&nbr->initdelay_timer, NULL))
-		evtimer_del(&nbr->initdelay_timer);
+	nbr_stop_itimer(nbr);
+	nbr_stop_ktimer(nbr);
+	nbr_stop_ktimeout(nbr);
+	nbr_stop_idtimer(nbr);
 
 	nbr_mapping_list_clr(nbr, &nbr->mapping_list);
 
@@ -368,7 +364,8 @@ nbr_start_itimer(struct nbr *nbr)
 void
 nbr_stop_itimer(struct nbr *nbr)
 {
-	if (evtimer_del(&nbr->inactivity_timer) == -1)
+	if (evtimer_pending(&nbr->inactivity_timer, NULL) &&
+	    evtimer_del(&nbr->inactivity_timer) == -1)
 		fatal("nbr_stop_itimer");
 }
 
@@ -405,7 +402,8 @@ nbr_start_ktimer(struct nbr *nbr)
 void
 nbr_stop_ktimer(struct nbr *nbr)
 {
-	if (evtimer_del(&nbr->keepalive_timer) == -1)
+	if (evtimer_pending(&nbr->keepalive_timer, NULL) &&
+	    evtimer_del(&nbr->keepalive_timer) == -1)
 		fatal("nbr_stop_ktimer");
 }
 
@@ -439,7 +437,8 @@ nbr_start_ktimeout(struct nbr *nbr)
 void
 nbr_stop_ktimeout(struct nbr *nbr)
 {
-	if (evtimer_del(&nbr->keepalive_timeout) == -1)
+	if (evtimer_pending(&nbr->keepalive_timeout, NULL) &&
+	    evtimer_del(&nbr->keepalive_timeout) == -1)
 		fatal("nbr_stop_ktimeout");
 }
 
@@ -474,7 +473,8 @@ nbr_start_idtimer(struct nbr *nbr)
 void
 nbr_stop_idtimer(struct nbr *nbr)
 {
-	if (evtimer_del(&nbr->initdelay_timer) == -1)
+	if (evtimer_pending(&nbr->initdelay_timer, NULL) &&
+	    evtimer_del(&nbr->initdelay_timer) == -1)
 		fatal("nbr_stop_idtimer");
 }
 
