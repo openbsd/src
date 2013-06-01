@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.24 2013/05/19 10:27:11 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.25 2013/06/01 09:46:31 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -63,37 +63,33 @@ gotobop(int f, int n)
 int
 gotoeop(int f, int n)
 {
+	int col;
+	int nospace;
+
 	/* the other way... */
 	if (n < 0)
 		return (gotobop(f, -n));
 
 	/* for each one asked for */
 	while (n-- > 0) {
-		/* Find the first word on/after the current line */
-		curwp->w_doto = 0;
-		while (forwchar(FFRAND, 1) && inword() == 0);
+		while (lforw(curwp->w_dotp) != curbp->b_headp) {
+			col = 0;
+			curwp->w_doto = 0;
 
-		curwp->w_doto = 0;
-		curwp->w_dotp = lforw(curwp->w_dotp);
+			while (col < llength(curwp->w_dotp) &&
+			    (isspace(lgetc(curwp->w_dotp, col))))
+				col++;
 
-		/* and scan forword until we hit a <NL><SP> or ... */
-		while (curwp->w_dotp != curbp->b_headp) {
-			if (llength(curwp->w_dotp) &&
-			    lgetc(curwp->w_dotp, 0) != ' ' &&
-			    lgetc(curwp->w_dotp, 0) != '.' &&
-			    lgetc(curwp->w_dotp, 0) != '\t') {
-				curwp->w_dotp = lforw(curwp->w_dotp);
-				curwp->w_dotline++;
+			if (col >= llength(curwp->w_dotp)) {
+				if (nospace)
+					break;
 			} else
-				break;
-		}
-		if (curwp->w_dotp == curbp->b_headp) {
-			/* beyond end of buffer, cleanup time */
-			curwp->w_dotp = lback(curwp->w_dotp);
-			curwp->w_doto = llength(curwp->w_dotp);
-			break;
-		} else
+				nospace = 1;
+
+			curwp->w_dotp = lforw(curwp->w_dotp);
 			curwp->w_dotline++;
+		}
+		nospace = 0;
 	}
 	/* force screen update */
 	curwp->w_rflag |= WFMOVE;
