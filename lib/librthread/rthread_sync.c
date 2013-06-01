@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.36 2012/04/14 12:07:49 kurt Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.37 2013/06/01 19:47:28 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -445,7 +445,7 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 		if ((error = pthread_cond_init(condp, NULL)))
 			return (error);
 	cond = *condp;
-	_rthread_debug(5, "%p: cond_timed %p,%p\n", (void *)self,
+	_rthread_debug(5, "%p: cond_wait %p,%p\n", (void *)self,
 	    (void *)cond, (void *)mutex);
 
 	if (mutex == NULL)
