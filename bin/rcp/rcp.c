@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.50 2012/12/04 02:24:46 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.51 2013/06/01 20:59:25 dtucker Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -691,7 +691,7 @@ sink(int argc, char *argv[])
 			continue;
 		}
 		omode = mode;
-		mode |= S_IWRITE;
+		mode |= S_IWUSR;
 		if ((ofd = open(np, O_WRONLY|O_CREAT, mode)) < 0) {
 bad:			run_err("%s: %s", np, strerror(errno));
 			continue;
