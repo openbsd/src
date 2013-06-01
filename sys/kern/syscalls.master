@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.131 2013/06/01 09:49:50 miod Exp $
+;	$OpenBSD: syscalls.master,v 1.132 2013/06/01 16:27:37 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -343,12 +343,8 @@
 			    const struct timeval *tptr); }
 207	STD		{ pid_t sys_getpgid(pid_t pid); }
 208	OBSOL		nnpfspioctl
-#ifdef KTRACE
 209	STD		{ int sys_utrace(const char *label, const void *addr, \
 			    size_t len); }
-#else
-209	UNIMPL
-#endif
 ;
 ; Syscalls 210-219 are reserved for dynamically loaded syscalls
 ;

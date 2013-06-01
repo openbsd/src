@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.80 2013/05/19 19:14:44 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.81 2013/06/01 16:27:37 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -1018,4 +1018,24 @@ bad:
 	if (pl != pfds)
 		free(pl, M_TEMP);
 	return (error);
+}
+
+/*
+ * utrace system call
+ */
+/* ARGSUSED */
+int
+sys_utrace(struct proc *curp, void *v, register_t *retval)
+{
+#ifdef KTRACE
+	struct sys_utrace_args /* {
+		syscallarg(const char *) label;
+		syscallarg(const void *) addr;
+		syscallarg(size_t) len;
+	} */ *uap = v;
+	return (ktruser(curp, SCARG(uap, label), SCARG(uap, addr),
+	    SCARG(uap, len)));
+#else
+	return (0);
+#endif
 }

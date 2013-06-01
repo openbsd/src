@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.59 2013/06/01 09:49:50 miod Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.60 2013/06/01 16:27:37 tedu Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -647,20 +647,4 @@ ktrcanset(struct proc *callp, struct process *targetpr)
 		return (1);
 
 	return (0);
-}
-
-/*
- * utrace system call
- */
-/* ARGSUSED */
-int
-sys_utrace(struct proc *curp, void *v, register_t *retval)
-{
-	struct sys_utrace_args /* {
-		syscallarg(const char *) label;
-		syscallarg(const void *) addr;
-		syscallarg(size_t) len;
-	} */ *uap = v;
-	return (ktruser(curp, SCARG(uap, label), SCARG(uap, addr),
-	    SCARG(uap, len)));
 }
