@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.13 2013/05/30 03:51:59 schwarze Exp $ */
+/*	$Id: read.c,v 1.14 2013/06/01 22:57:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -59,7 +59,6 @@ struct	mparse {
 
 static	void	  resize_buf(struct buf *, size_t);
 static	void	  mparse_buf_r(struct mparse *, struct buf, int);
-static	void	  mparse_readfd_r(struct mparse *, int, const char *, int);
 static	void	  pset(const char *, int, struct mparse *);
 static	void	  pdesc(struct mparse *, const char *, int);
 static	int	  read_whole_file(const char *, int, struct buf *, int *);
@@ -479,7 +478,7 @@ rerun:
 			 */
 			if (curp->secondary) 
 				curp->secondary->sz -= pos + 1;
-			mparse_readfd_r(curp, -1, ln.buf + of, 1);
+			mparse_readfd(curp, -1, ln.buf + of);
 			if (MANDOCLEVEL_FATAL <= curp->file_status)
 				break;
 			pos = 0;
@@ -680,37 +679,38 @@ mparse_end(struct mparse *curp)
 	roff_endparse(curp->roff);
 }
 
-static void
-mparse_readfd_r(struct mparse *curp, int fd, const char *file, int re)
+enum mandoclevel
+mparse_readfd(struct mparse *curp, int fd, const char *file)
 {
 	const char	*svfile;
+	static int	 recursion_depth;
+
+	if (64 < recursion_depth) {
+		mandoc_msg(MANDOCERR_ROFFLOOP, curp, curp->line, 0, NULL);
+		goto out;
+	}
 
 	if (-1 == fd)
 		if (-1 == (fd = open(file, O_RDONLY, 0))) {
 			perror(file);
 			curp->file_status = MANDOCLEVEL_SYSERR;
-			return;
+			goto out;
 		}
 
 	svfile = curp->file;
 	curp->file = file;
+	recursion_depth++;
 
 	pdesc(curp, file, fd);
 
-	if (0 == re && MANDOCLEVEL_FATAL > curp->file_status)
+	if (0 == --recursion_depth && MANDOCLEVEL_FATAL > curp->file_status)
 		mparse_end(curp);
 
 	if (STDIN_FILENO != fd && -1 == close(fd))
 		perror(file);
 
 	curp->file = svfile;
-}
-
-enum mandoclevel
-mparse_readfd(struct mparse *curp, int fd, const char *file)
-{
-
-	mparse_readfd_r(curp, fd, file, 0);
+out:
 	return(curp->file_status);
 }
 
