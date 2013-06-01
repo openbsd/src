@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.17 2012/07/12 14:28:13 millert Exp $	*/
+/*	$OpenBSD: dd.c,v 1.18 2013/06/01 16:46:49 tedu Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -89,10 +89,6 @@ main(int argc, char *argv[])
 static void
 setup(void)
 {
-#ifndef NO_CONV
-	u_int cnt;
-#endif
-
 	if (in.name == NULL) {
 		in.name = "stdin";
 		in.fd = STDIN_FILENO;
@@ -168,6 +164,7 @@ setup(void)
 		/* Should not get here, but just in case... */
 		errx(1, "case conv and -DNO_CONV");
 #else	/* NO_CONV */
+		u_int cnt;
 		if (ddflags & C_ASCII || ddflags & C_EBCDIC) {
 			if (ddflags & C_LCASE) {
 				for (cnt = 0; cnt < 0377; ++cnt)
