@@ -1,3 +1,3 @@
 BOARD=	beagle
 
-.include "../Makefile.inc"
+.include "${.CURDIR}/../Makefile.inc"

@@ -1,3 +1,3 @@
 BOARD=	am335x
 
-.include "../Makefile.inc"
+.include "${.CURDIR}/../Makefile.inc"
