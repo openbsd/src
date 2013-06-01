@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.10 2013/06/01 18:26:40 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.11 2013/06/01 20:13:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -140,7 +140,7 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (verbose) {
+	if (verbose & LDPD_OPT_VERBOSE) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);
@@ -298,4 +298,38 @@ log_fec(struct map *map)
 		return ("???");
 
 	return (buf);
+}
+
+static char *msgtypes[] = {
+	"",
+	"RTM_ADD: Add Route",
+	"RTM_DELETE: Delete Route",
+	"RTM_CHANGE: Change Metrics or flags",
+	"RTM_GET: Report Metrics",
+	"RTM_LOSING: Kernel Suspects Partitioning",
+	"RTM_REDIRECT: Told to use different route",
+	"RTM_MISS: Lookup failed on this address",
+	"RTM_LOCK: fix specified metrics",
+	"RTM_OLDADD: caused by SIOCADDRT",
+	"RTM_OLDDEL: caused by SIOCDELRT",
+	"RTM_RESOLVE: Route created by cloning",
+	"RTM_NEWADDR: address being added to iface",
+	"RTM_DELADDR: address being removed from iface",
+	"RTM_IFINFO: iface status change",
+	"RTM_IFANNOUNCE: iface arrival/departure",
+	"RTM_DESYNC: route socket overflow",
+};
+
+void
+log_rtmsg(u_char rtm_type)
+{
+	if (!(verbose & LDPD_OPT_VERBOSE2))
+		return;
+
+	if (rtm_type > 0 &&
+	    rtm_type < sizeof(msgtypes)/sizeof(msgtypes[0]))
+		log_debug("rtmsg_process: %s", msgtypes[rtm_type]);
+	else
+		log_debug("rtmsg_process: rtm_type %d out of range",
+		    rtm_type);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.25 2011/06/26 19:19:23 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.26 2013/06/01 20:13:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -129,6 +129,7 @@ kr_init(int fs)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
+	unsigned int	rtfilter;
 
 	kr_state.fib_sync = fs;
 
@@ -140,7 +141,17 @@ kr_init(int fs)
 	/* not interested in my own messages */
 	if (setsockopt(kr_state.fd, SOL_SOCKET, SO_USELOOPBACK,
 	    &opt, sizeof(opt)) == -1)
-		log_warn("kr_init: setsockopt");	/* not fatal */
+		log_warn("kr_init: setsockopt(SO_USELOOPBACK)");
+
+	/* filter out unwanted messages */
+	rtfilter = ROUTE_FILTER(RTM_ADD) | ROUTE_FILTER(RTM_GET) |
+	    ROUTE_FILTER(RTM_CHANGE) | ROUTE_FILTER(RTM_DELETE) |
+	    ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
+	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_IFANNOUNCE);
+
+	if (setsockopt(kr_state.fd, PF_ROUTE, ROUTE_MSGFILTER,
+	    &rtfilter, sizeof(rtfilter)) == -1)
+		log_warn("kr_init: setsockopt(ROUTE_MSGFILTER)");
 
 	/* grow receive buffer, don't wanna miss messages */
 	optlen = sizeof(default_rcvbuf);
@@ -1149,6 +1160,7 @@ rtmsg_process(char *buf, int len)
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
+		log_rtmsg(rtm->rtm_type);
 
 		prefix.s_addr = 0;
 		prefixlen = 0;
