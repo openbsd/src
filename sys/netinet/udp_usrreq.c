@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.162 2013/05/31 13:15:53 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.163 2013/06/01 16:22:05 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -737,7 +737,7 @@ udp_notify(struct inpcb *inp, int errno)
 
 #ifdef INET6
 void
-udp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
+udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 {
 	struct udphdr uh;
 	struct sockaddr_in6 sa6;

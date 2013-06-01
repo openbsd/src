@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.56 2013/05/31 15:04:25 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.57 2013/06/01 16:22:05 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 }
 
 void
-rip6_ctlinput(int cmd, struct sockaddr *sa, void *d)
+rip6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 {
 	struct ip6_hdr *ip6;
 	struct ip6ctlparam *ip6cp = NULL;
