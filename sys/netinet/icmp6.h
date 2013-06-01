@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.35 2013/03/17 00:38:29 brad Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.36 2013/06/01 01:30:53 brad Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -290,6 +290,7 @@ struct nd_opt_hdr {		/* Neighbor discovery option header */
 #define ND_OPT_PREFIX_INFORMATION	3
 #define ND_OPT_REDIRECTED_HEADER	4
 #define ND_OPT_MTU			5
+#define ND_OPT_ROUTE_INFO		24
 #define ND_OPT_RDNSS			25
 #define ND_OPT_DNSSL			31
 
@@ -320,6 +321,14 @@ struct nd_opt_mtu {		/* MTU option */
 	u_int8_t	nd_opt_mtu_len;
 	u_int16_t	nd_opt_mtu_reserved;
 	u_int32_t	nd_opt_mtu_mtu;
+} __packed;
+
+struct nd_opt_route_info {	/* route info */
+	u_int8_t	nd_opt_rti_type;
+	u_int8_t	nd_opt_rti_len;
+	u_int8_t	nd_opt_rti_prefixlen;
+	u_int8_t	nd_opt_rti_flags;
+	u_int32_t	nd_opt_rti_lifetime;
 } __packed;
 
 struct nd_opt_rdnss {		/* RDNSS option */

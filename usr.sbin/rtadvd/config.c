@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.37 2013/05/08 06:32:07 brad Exp $	*/
+/*	$OpenBSD: config.c,v 1.38 2013/06/01 01:30:53 brad Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ getconfig(intface)
 		fatal("malloc");
 
 	TAILQ_INIT(&tmp->prefixes);
+	TAILQ_INIT(&tmp->rtinfos);
 	TAILQ_INIT(&tmp->rdnsss);
 	TAILQ_INIT(&tmp->dnssls);
 	SLIST_INIT(&tmp->soliciters);
@@ -320,6 +321,77 @@ getconfig(intface)
 	}
 	if (tmp->pfxs == 0 && !agetflag("noifprefix"))
 		get_prefix(tmp);
+
+	tmp->rtinfocnt = 0;
+	for (i = -1; i < MAXRTINFO; i++) {
+		struct rtinfo *rti;
+		char entbuf[256];
+		const char *flagstr;
+
+		makeentry(entbuf, sizeof(entbuf), i, "rtprefix");
+		addr = (char *)agetstr(entbuf, &bp);
+		if (addr == NULL)
+			continue;
+
+		rti = malloc(sizeof(struct rtinfo));
+		if (rti == NULL)
+			fatal("malloc");
+
+		if (inet_pton(AF_INET6, addr, &rti->prefix) != 1) {
+			log_warn("inet_pton failed for %s", addr);
+			exit(1);
+		}
+
+		makeentry(entbuf, sizeof(entbuf), i, "rtplen");
+		MAYHAVE(val, entbuf, 64);
+		if (val < 0 || val > 128) {
+			log_warnx("route prefixlen (%ld) for %s "
+                            "on %s out of range",
+			    val, addr, intface);
+			exit(1);
+		}
+		rti->prefixlen = (int)val;
+
+		makeentry(entbuf, sizeof(entbuf), i, "rtflags");
+		if ((flagstr = (char *)agetstr(entbuf, &bp))) {
+			val = 0;
+			if (strchr(flagstr, 'h'))
+				val |= ND_RA_FLAG_RTPREF_HIGH;
+			if (strchr(flagstr, 'l')) {
+				if (val & ND_RA_FLAG_RTPREF_HIGH) {
+					log_warnx("the \'h\' and \'l\'"
+					    " route preferences are"
+					    " exclusive");
+					exit(1);
+				}
+				val |= ND_RA_FLAG_RTPREF_LOW;
+			}
+		} else
+			MAYHAVE(val, entbuf, 0);
+
+		rti->rtpref = val & ND_RA_FLAG_RTPREF_MASK;
+		if (rti->rtpref == ND_RA_FLAG_RTPREF_RSV) {
+			log_warnx("invalid route preference (%02x)"
+			    " for %s/%d on %s",
+			    rti->rtpref, addr, rti->prefixlen, intface);
+			exit(1);
+		}
+
+		makeentry(entbuf, sizeof(entbuf), i, "rtltime");
+		MAYHAVE(val64, entbuf, -1);
+		if (val64 == -1)
+			val64 = tmp->lifetime;
+		if (val64 < 0 || val64 >= 0xffffffff) {
+			log_warnx("route lifetime (%d) "
+			    " for %s/%d on %s out of range",
+			    rti->rtpref, addr, rti->prefixlen, intface);
+			exit(1);
+		}
+		rti->lifetime = (uint32_t)val64;
+
+		TAILQ_INSERT_TAIL(&tmp->rtinfos, rti, entry);
+		tmp->rtinfocnt++;
+	}
 
 	tmp->rdnsscnt = 0;
 	for (i = -1; i < MAXRDNSS; ++i) {
@@ -694,9 +766,11 @@ make_packet(struct rainfo *rainfo)
 	struct nd_router_advert *ra;
 	struct nd_opt_prefix_info *ndopt_pi;
 	struct nd_opt_mtu *ndopt_mtu;
+	struct nd_opt_route_info *ndopt_rti;
 	struct nd_opt_rdnss *ndopt_rdnss;
 	struct nd_opt_dnssl *ndopt_dnssl;
 	struct prefix *pfx;
+	struct rtinfo *rti;
 	struct rdnss *rds;
 	struct dnssl *dsl;
 	struct dnssldom *dnsd;
@@ -716,6 +790,9 @@ make_packet(struct rainfo *rainfo)
 		packlen += sizeof(struct nd_opt_prefix_info) * rainfo->pfxs;
 	if (rainfo->linkmtu)
 		packlen += sizeof(struct nd_opt_mtu);
+	TAILQ_FOREACH(rti, &rainfo->rtinfos, entry)
+		packlen += sizeof(struct nd_opt_route_info) +
+		    ((rti->prefixlen + 0x3f) >> 6) * 8;
 	TAILQ_FOREACH(rds, &rainfo->rdnsss, entry)
 		packlen += sizeof(struct nd_opt_rdnss) + 16 * rds->servercnt;
 	TAILQ_FOREACH(dsl, &rainfo->dnssls, entry) {
@@ -824,6 +901,19 @@ make_packet(struct rainfo *rainfo)
 		ndopt_pi->nd_opt_pi_prefix = pfx->prefix;
 
 		buf += sizeof(struct nd_opt_prefix_info);
+	}
+
+	TAILQ_FOREACH(rti, &rainfo->rtinfos, entry) {
+		uint8_t psize = (rti->prefixlen + 0x3f) >> 6;
+
+		ndopt_rti = (struct nd_opt_route_info *)buf;
+		ndopt_rti->nd_opt_rti_type = ND_OPT_ROUTE_INFO;
+		ndopt_rti->nd_opt_rti_len = 1 + psize;
+		ndopt_rti->nd_opt_rti_prefixlen = rti->prefixlen;
+		ndopt_rti->nd_opt_rti_flags = 0xff & rti->rtpref;
+		ndopt_rti->nd_opt_rti_lifetime = htonl(rti->lifetime);
+		memcpy(ndopt_rti + 1, &rti->prefix, psize * 8);
+		buf += sizeof(struct nd_opt_route_info) + psize * 8;
 	}
 
 	TAILQ_FOREACH(rds, &rainfo->rdnsss, entry) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.15 2013/05/08 06:30:25 brad Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.16 2013/06/01 01:30:54 brad Exp $	*/
 /*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -82,6 +82,15 @@ struct prefix {
 	struct in6_addr prefix;
 };
 
+struct rtinfo {
+	TAILQ_ENTRY(rtinfo) entry;
+
+	uint32_t lifetime;
+	int rtpref;
+	int prefixlen;
+	struct in6_addr prefix;
+};
+
 /*
  * `struct rdnss` may contain an arbitrary number of `servers` and `struct
  * dnssldom` will contain a variable-sized `domain`. Space required for these
@@ -147,6 +156,8 @@ struct	rainfo {
 	u_int	hoplimit;	/* AdvCurHopLimit */
 	TAILQ_HEAD(prefixlist, prefix) prefixes; /* AdvPrefixList(link head) */
 	int	pfxs;		/* number of prefixes */
+	TAILQ_HEAD(rtinfolist, rtinfo) rtinfos;
+	int     rtinfocnt;
 	TAILQ_HEAD(rdnsslist, rdnss) rdnsss; /* advertised recursive dns servers */
 	int	rdnsscnt;	/* number of rdnss entries */
 	TAILQ_HEAD(dnssllist, dnssl) dnssls;

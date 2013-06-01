@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.32 2013/03/30 02:49:38 lteo Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.33 2013/06/01 01:30:54 brad Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 30 2013 $
+.Dd $Mdocdate: June 1 2013 $
 .Dt RTADVD.CONF 5
 .Os
 .Sh NAME
@@ -231,6 +231,45 @@ is specified for this item, MTU option will be included and its value
 will be set to the interface MTU automatically.
 .El
 .Pp
+The following items are for ICMPv6 route information option,
+which will be attached to router advertisement header.
+These items are optional.
+Each items can be augmented with number, like
+.Dq Li rtplen2 ,
+to specify multiple routes.
+.Bl -tag -width indent
+.It Cm \&rtprefix
+(str) The prefix filled into the Prefix field of route information option.
+Since
+.Dq \&:
+is used for
+.Xr termcap 5
+file format as well as IPv6 numeric address, the field MUST be quoted by
+doublequote character.
+.It Cm \&rtplen
+(num) Prefix length field in route information option.
+The default value is 64.
+.It Cm \&rtflags
+(str or num) A 8-bit flags field in route information option.
+Currently only the preference values are defined.
+The notation is same as that of the raflags field.
+Bit 4
+.Po
+.Li 0x10
+.Pc
+and
+Bit 3
+.Po
+.Li 0x08
+.Pc
+are used to encode the route preference for the route.
+The default value is 0x00, i.e., medium preference.
+.It Cm \&rtltime
+(num) route lifetime field in route information option.
+.Pq unit: seconds .
+The default value is same as router lifetime.
+.El
+.Pp
 The following items are for ICMPv6 RDNSS option, used to give a list of
 recursive DNS servers to hosts.
 If this item is omitted, no information about DNS servers will be advertised.
@@ -340,6 +379,14 @@ ef0:\e
 .Xr rtadvd 8 ,
 .Xr rtsol 8
 .Sh STANDARDS
+.Rs
+.%A R. Draves
+.%A D. Thaler
+.%D 2005
+.%R RFC 4191
+.%T Default Router Preferences and More-Specific Routes
+.Re
+.Pp
 .Rs
 .%A T. Narten
 .%A E. Nordmark
