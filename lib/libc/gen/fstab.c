@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstab.c,v 1.18 2009/06/03 18:18:23 jsg Exp $ */
+/*	$OpenBSD: fstab.c,v 1.19 2013/06/01 01:42:55 tedu Exp $ */
 /*
  * Copyright (c) 1980, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -64,8 +64,8 @@ fstabscan(void)
 			_fs_fstab.fs_spec = strtok_r(cp, ":\n", &last);
 			if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 				continue;
-			_fs_fstab.fs_file = strtok_r((char *)NULL, ":\n", &last);
-			_fs_fstab.fs_type = strtok_r((char *)NULL, ":\n", &last);
+			_fs_fstab.fs_file = strtok_r(NULL, ":\n", &last);
+			_fs_fstab.fs_type = strtok_r(NULL, ":\n", &last);
 			if (_fs_fstab.fs_type) {
 				if (!strcmp(_fs_fstab.fs_type, FSTAB_XX))
 					continue;
@@ -73,12 +73,12 @@ fstabscan(void)
 				_fs_fstab.fs_vfstype =
 				    strcmp(_fs_fstab.fs_type, FSTAB_SW) ?
 				    "ufs" : "swap";
-				if ((cp = strtok_r((char *)NULL, ":\n", &last))) {
+				if ((cp = strtok_r(NULL, ":\n", &last))) {
 					_fs_fstab.fs_freq = strtonum(cp, 0,
 					    INT_MAX, &errstr);
 					if (errstr)
 						goto bad;
-					if ((cp = strtok_r((char *)NULL,
+					if ((cp = strtok_r(NULL,
 					    ":\n", &last))) {
 						_fs_fstab.fs_passno =
 						    strtonum(cp, 0, INT_MAX,
@@ -95,18 +95,18 @@ fstabscan(void)
 		_fs_fstab.fs_spec = strtok_r(cp, " \t\n", &last);
 		if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 			continue;
-		_fs_fstab.fs_file = strtok_r((char *)NULL, " \t\n", &last);
-		_fs_fstab.fs_vfstype = strtok_r((char *)NULL, " \t\n", &last);
-		_fs_fstab.fs_mntops = strtok_r((char *)NULL, " \t\n", &last);
+		_fs_fstab.fs_file = strtok_r(NULL, " \t\n", &last);
+		_fs_fstab.fs_vfstype = strtok_r(NULL, " \t\n", &last);
+		_fs_fstab.fs_mntops = strtok_r(NULL, " \t\n", &last);
 		if (_fs_fstab.fs_mntops == NULL)
 			goto bad;
 		_fs_fstab.fs_freq = 0;
 		_fs_fstab.fs_passno = 0;
-		if ((cp = strtok_r((char *)NULL, " \t\n", &last)) != NULL) {
+		if ((cp = strtok_r(NULL, " \t\n", &last)) != NULL) {
 			_fs_fstab.fs_freq = strtonum(cp, 0, INT_MAX, &errstr);
 			if (errstr)
 				goto bad;
-			if ((cp = strtok_r((char *)NULL, " \t\n", &last)) != NULL) {
+			if ((cp = strtok_r(NULL, " \t\n", &last)) != NULL) {
 				_fs_fstab.fs_passno = strtonum(cp, 0, INT_MAX,
 				    &errstr);
 				if (errstr)
@@ -115,7 +115,7 @@ fstabscan(void)
 		}
 		strlcpy(subline, _fs_fstab.fs_mntops, sizeof subline);
 		for (typexx = 0, cp = strtok_r(subline, ",", &last); cp;
-		     cp = strtok_r((char *)NULL, ",", &last)) {
+		     cp = strtok_r(NULL, ",", &last)) {
 			if (strlen(cp) != 2)
 				continue;
 			if (!strcmp(cp, FSTAB_RW)) {
@@ -166,7 +166,7 @@ getfsspec(const char *name)
 		while (fstabscan())
 			if (!strcmp(_fs_fstab.fs_spec, name))
 				return(&_fs_fstab);
-	return((struct fstab *)NULL);
+	return(NULL);
 }
 
 struct fstab *
@@ -176,7 +176,7 @@ getfsfile(const char *name)
 		while (fstabscan())
 			if (!strcmp(_fs_fstab.fs_file, name))
 				return(&_fs_fstab);
-	return((struct fstab *)NULL);
+	return(NULL);
 }
 
 int

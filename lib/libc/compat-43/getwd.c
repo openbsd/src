@@ -1,4 +1,4 @@
-/*	$OpenBSD: getwd.c,v 1.9 2005/08/08 08:05:33 espie Exp $ */
+/*	$OpenBSD: getwd.c,v 1.10 2013/06/01 01:46:05 tedu Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +42,7 @@ getwd(char *buf)
 	if ((p = getcwd(buf, MAXPATHLEN)))
 		return(p);
 	strlcpy(buf, strerror(errno), MAXPATHLEN);
-	return((char *)NULL);
+	return(NULL);
 }
 
 __warn_references(getwd,
