@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.17 2013/04/30 12:02:39 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.18 2013/06/01 09:21:10 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -43,9 +43,9 @@ static int tcp_read(struct async *);
 static int validate_packet(struct async *);
 static int setup_query(struct async *, const char *, const char *, int, int);
 static int ensure_ibuf(struct async *, size_t);
+int asr_iter_ns(struct async *);
 
-
-#define AS_NS_SA(p) ((p)->as_ctx->ac_ns[(p)->as_ns_idx - 1])
+#define AS_NS_SA(p) ((p)->as_ctx->ac_ns[(p)->as.dns.nsidx - 1])
 
 
 struct async *
@@ -733,4 +733,33 @@ validate_packet(struct async *as)
     inval:
 	errno = EINVAL;
 	return (-1);
+}
+
+/*
+ * Set the async context nameserver index to the next nameserver, cycling
+ * over the list until the maximum retry counter is reached.  Return 0 on
+ * success, or -1 if all nameservers were used.
+ */
+int
+asr_iter_ns(struct async *as)
+{
+	for (;;) {
+		if (as->as.dns.nsloop >= as->as_ctx->ac_nsretries)
+			return (-1);
+
+		as->as.dns.nsidx += 1;
+		if (as->as.dns.nsidx <= as->as_ctx->ac_nscount)
+			break;
+		as->as.dns.nsidx = 0;
+		as->as.dns.nsloop++;
+		DPRINT("asr: asr_iter_ns(): cycle %i\n", as->as.dns.nsloop);
+	}
+
+	as->as_timeout = 1000 * (as->as_ctx->ac_nstimeout << as->as.dns.nsloop);
+	if (as->as.dns.nsloop > 0)
+		as->as_timeout /= as->as_ctx->ac_nscount;
+	if (as->as_timeout < 1000)
+		as->as_timeout = 1000;
+
+	return (0);
 }

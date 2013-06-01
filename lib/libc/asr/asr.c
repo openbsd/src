@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.26 2013/05/27 17:31:01 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.27 2013/06/01 09:21:09 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -914,38 +914,7 @@ asr_iter_db(struct async *as)
 	}
 
 	as->as_db_idx += 1;
-	as->as_ns_idx = 0;
 	DPRINT("asr_iter_db: %i\n", as->as_db_idx);
-
-	return (0);
-}
-
-/*
- * Set the async context nameserver index to the next nameserver of the
- * currently used DB (assuming it is DNS), cycling over the list until the
- * maximum retry counter is reached.  Return 0 on success, or -1 if all
- * nameservers were used.
- */
-int
-asr_iter_ns(struct async *as)
-{
-	for (;;) {
-		if (as->as_ns_cycles >= as->as_ctx->ac_nsretries)
-			return (-1);
-
-		as->as_ns_idx += 1;
-		if (as->as_ns_idx <= as->as_ctx->ac_nscount)
-			break;
-		as->as_ns_idx = 0;
-		as->as_ns_cycles++;
-		DPRINT("asr: asr_iter_ns(): cycle %i\n", as->as_ns_cycles);
-	}
-
-	as->as_timeout = 1000 * (as->as_ctx->ac_nstimeout << as->as_ns_cycles);
-	if (as->as_ns_cycles > 0)
-		as->as_timeout /= as->as_ctx->ac_nscount;
-	if (as->as_timeout < 1000)
-		as->as_timeout = 1000;
 
 	return (0);
 }

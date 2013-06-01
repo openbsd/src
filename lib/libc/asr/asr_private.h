@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.18 2013/05/27 17:31:01 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.19 2013/06/01 09:21:10 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -181,8 +181,6 @@ struct async {
 	int		 as_dom_flags;
 	int		 as_family_idx;
 	int		 as_db_idx;
-	int		 as_ns_idx;
-	int		 as_ns_cycles;
 
 	int		 as_count;
 
@@ -195,6 +193,9 @@ struct async {
 			char		*dname;		/* not fqdn! */
 			int		 rcode;		/* response code */
 			int		 ancount;	/* answer count */
+
+			int		 nsidx;
+			int		 nsloop;
 
 			/* io buffers for query/response */
 			unsigned char	*obuf;
@@ -319,7 +320,6 @@ size_t asr_make_fqdn(const char *, const char *, char *, size_t);
 size_t asr_domcat(const char *, const char *, char *, size_t);
 char *asr_strdname(const char *, char *, size_t);
 int asr_iter_db(struct async *);
-int asr_iter_ns(struct async *);
 int asr_iter_domain(struct async *, const char *, char *, size_t);
 int asr_parse_namedb_line(FILE *, char **, int);
 
