@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.14 2013/05/07 00:26:34 dlg Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.15 2013/06/01 21:06:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -927,10 +927,10 @@ validate_access(struct tftp_client *client, const char *filename)
 		}
 	} else {
 		if (mode == RRQ) {
-			if ((stbuf.st_mode & (S_IREAD >> 6)) == 0)
+			if ((stbuf.st_mode & (S_IRUSR >> 6)) == 0)
 				return (EACCESS);
 		} else {
-			if ((stbuf.st_mode & (S_IWRITE >> 6)) == 0)
+			if ((stbuf.st_mode & (S_IWUSR >> 6)) == 0)
 				return (EACCESS);
 		}
 	}
