@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.27 2013/06/01 01:34:57 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.28 2013/06/01 18:16:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -98,9 +98,9 @@ struct {
     {NBR_STA_DOWN,	NBR_EVT_HELLO_RCVD,	NBR_ACT_STRT_ITIMER,	NBR_STA_PRESENT},
     {NBR_STA_SESSION,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	0},
 /* Passive Role */
-    {NBR_STA_PRESENT,	NBR_EVT_SESSION_UP,	NBR_ACT_SESSION_EST,	NBR_STA_INITIAL},
-    {NBR_STA_INITIAL,	NBR_EVT_INIT_RCVD,	NBR_ACT_INIT_SEND,	NBR_STA_OPENREC},
-    {NBR_STA_OPENREC,	NBR_EVT_KEEPALIVE_RCVD,	NBR_ACT_STRT_KTIMER,	NBR_STA_OPER},
+    {NBR_STA_PRESENT,	NBR_EVT_CONNECT_UP,	NBR_ACT_CONNECT_SETUP,	NBR_STA_INITIAL},
+    {NBR_STA_INITIAL,	NBR_EVT_INIT_RCVD,	NBR_ACT_PASSIVE_INIT,	NBR_STA_OPENREC},
+    {NBR_STA_OPENREC,	NBR_EVT_KEEPALIVE_RCVD,	NBR_ACT_SESSION_EST,	NBR_STA_OPER},
 /* Active Role */
     {NBR_STA_PRESENT,	NBR_EVT_INIT_SENT,	NBR_ACT_NOTHING,	NBR_STA_OPENSENT},
     {NBR_STA_OPENSENT,	NBR_EVT_INIT_RCVD,	NBR_ACT_KEEPALIVE_SEND,	NBR_STA_OPER},
@@ -115,7 +115,7 @@ struct {
 const char * const nbr_event_names[] = {
 	"NOTHING",
 	"HELLO RECEIVED",
-	"SESSION UP",
+	"CONNECTION UP",
 	"SESSION CLOSE",
 	"INIT RECEIVED",
 	"KEEPALIVE RECEIVED",
@@ -129,10 +129,10 @@ const char * const nbr_action_names[] = {
 	"START INACTIVITY TIMER",
 	"RESET INACTIVITY TIMER",
 	"RESET KEEPALIVE TIMEOUT",
-	"START KEEPALIVE TIMER",
-	"RESET KEEPALIVE TIMER",
 	"START NEIGHBOR SESSION",
-	"SEND INIT",
+	"RESET KEEPALIVE TIMER",
+	"SETUP NEIGHBOR CONNECTION",
+	"SEND INIT AND KEEPALIVE",
 	"SEND KEEPALIVE",
 	"CLOSE SESSION"
 };
@@ -178,17 +178,17 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	case NBR_ACT_RST_KTIMER:
 		nbr_start_ktimer(nbr);
 		break;
-	case NBR_ACT_STRT_KTIMER:
+	case NBR_ACT_SESSION_EST:
 		nbr_act_session_operational(nbr);
 		nbr_start_ktimer(nbr);
 		nbr_start_ktimeout(nbr);
 		send_address(nbr, NULL);
 		nbr_send_labelmappings(nbr);
 		break;
-	case NBR_ACT_SESSION_EST:
-		ret = nbr_act_session_establish(nbr, 0);
+	case NBR_ACT_CONNECT_SETUP:
+		ret = nbr_act_connect_setup(nbr, 0);
 		break;
-	case NBR_ACT_INIT_SEND:
+	case NBR_ACT_PASSIVE_INIT:
 		send_init(nbr);
 		send_keepalive(nbr);
 		break;
@@ -522,7 +522,7 @@ nbr_connect_cb(int fd, short event, void *arg)
 		return;
 	}
 
-	nbr_act_session_establish(nbr, 1);
+	nbr_act_connect_setup(nbr, 1);
 }
 
 int
@@ -574,11 +574,11 @@ nbr_establish_connection(struct nbr *nbr)
 	}
 
 	/* connection completed immediately */
-	return (nbr_act_session_establish(nbr, 1));
+	return (nbr_act_connect_setup(nbr, 1));
 }
 
 int
-nbr_act_session_establish(struct nbr *nbr, int active)
+nbr_act_connect_setup(struct nbr *nbr, int active)
 {
 	evbuf_init(&nbr->wbuf, nbr->fd, session_write, nbr);
 	event_set(&nbr->rev, nbr->fd, EV_READ | EV_PERSIST, session_read, nbr);

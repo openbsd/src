@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.18 2013/06/01 01:34:57 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.19 2013/06/01 18:16:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -177,7 +177,7 @@ int	 nbr_pending_idtimer(struct nbr *);
 int	 nbr_pending_connect(struct nbr *);
 
 int	 nbr_establish_connection(struct nbr *);
-int	 nbr_act_session_establish(struct nbr *, int);
+int	 nbr_act_connect_setup(struct nbr *, int);
 
 void			 nbr_mapping_add(struct nbr *, struct mapping_head *,
 			    struct map *);
