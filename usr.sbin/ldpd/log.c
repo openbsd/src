@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2011/08/20 19:02:28 sthen Exp $ */
+/*	$OpenBSD: log.c,v 1.10 2013/06/01 18:26:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -202,8 +202,6 @@ if_state_name(int state)
 	switch (state) {
 	case IF_STA_DOWN:
 		return ("DOWN");
-	case IF_STA_LOOPBACK:
-		return ("LOOP");
 	case IF_STA_ACTIVE:
 		return ("ACTIVE");
 	default:

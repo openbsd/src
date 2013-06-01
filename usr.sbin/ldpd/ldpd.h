@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.31 2013/06/01 18:16:35 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.32 2013/06/01 18:26:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -111,9 +111,8 @@ enum imsg_type {
 /* interface states */
 #define	IF_STA_NEW		0x00	/* dummy state for reload */
 #define	IF_STA_DOWN		0x01
-#define	IF_STA_LOOPBACK		0x02
-#define	IF_STA_ACTIVE		0x04
-#define	IF_STA_ANY		0x07
+#define	IF_STA_ACTIVE		0x02
+#define	IF_STA_ANY		(IF_STA_DOWN | IF_STA_ACTIVE)
 
 /* interface events */
 enum iface_event {

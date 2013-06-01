@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2013/05/30 15:44:37 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.10 2013/06/01 18:26:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <ifaddrs.h>
+#include <net/if_types.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -287,6 +288,12 @@ interface	: INTERFACE STRING	{
 			iface = conf_get_if(kif, ka);
 			if (iface == NULL)
 				YYERROR;
+			if (iface->media_type == IFT_LOOP ||
+			    iface->media_type == IFT_CARP) {
+				yyerror("unsupported interface type %s",
+				    iface->name);
+				YYERROR;
+			}
 			LIST_INSERT_HEAD(&conf->iface_list, iface, entry);
 
 			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
