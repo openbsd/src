@@ -204,6 +204,7 @@ struct octeon_fau_map {
 
 #ifdef _KERNEL
 #define OCTEON_ARGV_MAX 64
+#define OCTEON_MAXCPUS	4
 
 struct boot_desc {
 	uint32_t desc_ver;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2013/04/08 09:42:26 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.34 2013/06/01 17:08:26 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -125,6 +125,7 @@ boolean_t is_memory_range(paddr_t, psize_t, psize_t);
 void	octeon_memory_init(struct boot_info *);
 int	octeon_cpuspeed(int *);
 static void	process_bootargs(void);
+static uint64_t	get_ncpusfound(void);
 
 extern void parse_uboot_root(void);
 
@@ -380,6 +381,8 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 
 	cpu_cpuspeed = octeon_cpuspeed;
 
+	ncpusfound = get_ncpusfound();
+
 	process_bootargs();
 
 	/*
@@ -562,6 +565,19 @@ octeon_cpuspeed(int *freq)
 	return (0);
 }
 
+static u_int64_t
+get_ncpusfound(void)
+{
+	extern struct boot_desc *octeon_boot_desc;
+	uint64_t core_mask = octeon_boot_desc->core_mask;
+	uint64_t i, m, ncpus = 1;
+
+	for (i = 0, m = 1 ; i < OCTEON_MAXCPUS; i++, m <<= 1)
+		if (core_mask & m)
+			ncpus++;
+
+	return ncpus;
+}
 
 static void
 process_bootargs(void)
@@ -782,7 +798,7 @@ void
 hw_cpu_hatch(struct cpu_info *ci)
 {
 	int s;
-	
+
 	/*
 	 * Set curcpu address on this processor.
 	 */
