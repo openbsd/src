@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.25 2013/06/01 09:46:31 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.26 2013/06/01 09:50:47 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -24,8 +24,7 @@ static int	fillcol = 70;
 int
 gotobop(int f, int n)
 {
-	int col;
-	int nospace = 0;
+	int col, nospace;
 
 	/* the other way... */
 	if (n < 0)
@@ -63,8 +62,7 @@ gotobop(int f, int n)
 int
 gotoeop(int f, int n)
 {
-	int col;
-	int nospace;
+	int col, nospace;
 
 	/* the other way... */
 	if (n < 0)
