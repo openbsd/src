@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.22 2012/04/10 20:39:37 mikeb Exp $
+.\"	$OpenBSD: kdump.1,v 1.23 2013/06/01 09:51:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 10 2012 $
+.Dd $Mdocdate: June 1 2013 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
 .Op Fl p Ar pid
-.Op Fl t Op ceinsw
+.Op Fl t Op ceinstuw
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -106,7 +106,7 @@ CALL records or structure members in STRU records
 display symbolically instead of numerically.
 .It Fl T
 Display absolute timestamps for each entry (seconds since the Epoch).
-.It Fl t Op ceinstw
+.It Fl t Op ceinstuw
 Selects which tracepoints to display.
 See the
 .Fl t

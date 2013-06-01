@@ -1,4 +1,4 @@
-/* *	$OpenBSD: ktrace.h,v 1.4 2011/07/08 19:29:44 otto Exp $*/
+/* *	$OpenBSD: ktrace.h,v 1.5 2013/06/01 09:51:28 miod Exp $*/
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,8 @@
  */
 
 #define DEF_POINTS (KTRFAC_SYSCALL | KTRFAC_SYSRET | KTRFAC_NAMEI | \
-		  KTRFAC_GENIO | KTRFAC_PSIG | KTRFAC_EMUL | KTRFAC_STRUCT)
+		  KTRFAC_GENIO | KTRFAC_PSIG | KTRFAC_EMUL | KTRFAC_STRUCT | \
+		  KTRFAC_USER)
 
 #define ALL_POINTS (DEF_POINTS | KTRFAC_CSW)
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.23 2012/07/12 16:45:15 guenther Exp $
+.\"	$OpenBSD: ktrace.1,v 1.24 2013/06/01 09:51:28 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 12 2012 $
+.Dd $Mdocdate: June 1 2013 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ The trace file is not human-readable; use
 to decode it.
 .Pp
 The options are as follows:
-.Bl -tag -width "-t trstr"
+.Bl -tag -width 9n
 .It Fl a
 Append to the trace file instead of recreating it.
 .It Fl B
@@ -117,8 +117,9 @@ The default flags are
 .Cm i ,
 .Cm n ,
 .Cm s ,
+.Cm t ,
 and
-.Cm t .
+.Cm u .
 The following table equates the letters with the tracepoints:
 .Pp
 .Bl -tag -width flag -offset indent -compact
@@ -134,6 +135,9 @@ trace namei translations
 trace signal processing
 .It Cm t
 trace various structures
+.It Cm u
+trace user data coming from
+.Xr utrace 2
 .It Cm w
 trace context switch points
 .It Cm +
@@ -185,7 +189,8 @@ Disable tracing of all processes owned by the user:
 .Dl $ ktrace -C
 .Sh SEE ALSO
 .Xr kdump 1 ,
-.Xr ktrace 2
+.Xr ktrace 2 ,
+.Xr utrace 2
 .Sh HISTORY
 The
 .Nm ktrace

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.80 2013/04/23 20:03:05 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.81 2013/06/01 09:51:30 miod Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -157,6 +157,7 @@ static void ktrsyscall(struct ktr_syscall *);
 static const char *kresolvsysctl(int, int *, int);
 static void ktrsysret(struct ktr_sysret *);
 static void ktrstruct(char *, size_t);
+static void ktruser(struct ktr_user *, size_t);
 static void setemul(const char *);
 static void usage(void);
 static void atfd(int);
@@ -286,6 +287,9 @@ main(int argc, char *argv[])
 		case KTR_STRUCT:
 			ktrstruct(m, ktrlen);
 			break;
+		case KTR_USER:
+			ktruser(m, ktrlen);
+			break;
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -368,6 +372,9 @@ dumpheader(struct ktr_header *kth)
 		break;
 	case KTR_STRUCT:
 		type = "STRU";
+		break;
+	case KTR_USER:
+		type = "USER";
 		break;
 	default:
 		(void)snprintf(unknown, sizeof unknown, "UNKNOWN(%d)",
@@ -1094,12 +1101,10 @@ ktremul(char *cp, size_t len)
 }
 
 static void
-ktrgenio(struct ktr_genio *ktr, size_t len)
+showbuf(unsigned char *dp, size_t datalen)
 {
-	unsigned char *dp = (unsigned char *)ktr + sizeof(struct ktr_genio);
 	int i, j;
-	size_t datalen = len - sizeof(struct ktr_genio);
-	static int screenwidth = 0;
+	static int screenwidth;
 	int col = 0, width, bpl;
 	unsigned char visbuf[5], *cp, c;
 
@@ -1112,14 +1117,6 @@ ktrgenio(struct ktr_genio *ktr, size_t len)
 		else
 			screenwidth = 80;
 	}
-	printf("fd %d %s %zu bytes\n", ktr->ktr_fd,
-		ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
-	if (maxdata == 0)
-		return;
-	if (datalen > maxdata)
-		datalen = maxdata;
-	if (iohex && !datalen)
-		return;
 	if (iohex == 1) {
 		putchar('\t');
 		col = 8;
@@ -1202,6 +1199,23 @@ ktrgenio(struct ktr_genio *ktr, size_t len)
 }
 
 static void
+ktrgenio(struct ktr_genio *ktr, size_t len)
+{
+	unsigned char *dp = (unsigned char *)ktr + sizeof(struct ktr_genio);
+	size_t datalen = len - sizeof(struct ktr_genio);
+
+	printf("fd %d %s %zu bytes\n", ktr->ktr_fd,
+		ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
+	if (maxdata == 0)
+		return;
+	if (datalen > maxdata)
+		datalen = maxdata;
+	if (iohex && !datalen)
+		return;
+	showbuf(dp, datalen);
+}
+
+static void
 ktrpsig(struct ktr_psig *psig)
 {
 	(void)printf("SIG%s ", sys_signame[psig->signo]);
@@ -1262,8 +1276,6 @@ ktrcsw(struct ktr_csw *cs)
 	(void)printf("%s %s\n", cs->out ? "stop" : "resume",
 	    cs->user ? "user" : "kernel");
 }
-
-
 
 static void
 ktrsockaddr(struct sockaddr *sa)
@@ -1589,13 +1601,22 @@ invalid:
 }
 
 static void
+ktruser(struct ktr_user *usr, size_t len)
+{
+	len -= sizeof(struct ktr_user);
+	printf("%.*s:", KTR_USER_MAXIDLEN, usr->ktr_id);
+	printf(" %zu bytes\n", len);
+	showbuf((unsigned char *)(usr + 1), len);
+}
+
+static void
 usage(void)
 {
 
 	extern char *__progname;
 	fprintf(stderr, "usage: %s "
 	    "[-dHlnRrTXx] [-e emulation] [-f file] [-m maxdata] [-p pid]\n"
-	    "%*s[-t [ceinsw]]\n",
+	    "%*s[-t [ceinstuw]]\n",
 	    __progname, (int)(sizeof("usage: ") + strlen(__progname)), "");
 	exit(1);
 }
