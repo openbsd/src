@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.139 2013/05/02 20:16:50 mglocker Exp $
+.\"	$OpenBSD: usb.4,v 1.140 2013/06/01 17:04:57 jmc Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 2 2013 $
+.Dd $Mdocdate: June 1 2013 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -240,8 +240,6 @@ D-Link DSB-R100 USB radio device
 .El
 .Ss Human Interface Devices
 .Bl -tag -width 12n -offset ind -compact
-.It Xr tpms 4
-Apple touchpad mouse
 .It Xr uhid 4
 Generic driver for Human Interface Devices
 .It Xr uhidev 4
@@ -263,6 +261,8 @@ Toradex OAK USB temperature and relative humidity sensor
 Toradex OAK USB +/-10V 8channel ADC interface
 .It Xr uthum 4
 TEMPer USB temperature and humidity sensor
+.It Xr utpms 4
+Apple touchpad mouse
 .It Xr utrh 4
 USBRH temperature and humidity sensor
 .El
