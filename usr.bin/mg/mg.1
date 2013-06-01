@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.79 2013/05/31 18:03:44 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.80 2013/06/01 14:47:07 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: May 31 2013 $
+.Dd $Mdocdate: June 1 2013 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -923,6 +923,39 @@ Unlike emacs, the
 kill buffer consists only
 of the most recent kill.
 It is not a ring.
+.El
+.Sh MG DIRED KEY BINDINGS
+Specific key bindings are available in dired mode.
+.Pp
+.Bl -tag -width xxxxxxxxxxxx -offset indent -compact
+.It SPC
+dired-next-line
+.It !
+dired-shell-command
+.It +
+dired-create-directory
+.It c
+dired-copy-file
+.It d and C-d
+dired-flag-file-deleted
+.It e, f and C-m
+dired-find-file
+.It n
+dired-next-line
+.It o
+dired-find-file-other-window
+.It p
+dired-previous-line
+.It r
+dired-rename-file
+.It u
+dired-unflag
+.It x
+dired-do-deletions
+.It C-v
+dired-scroll-down
+.It M-v
+dired-scroll-up
 .El
 .Sh MG DIRED COMMANDS
 The following are a list of the commands specific to dired mode:
