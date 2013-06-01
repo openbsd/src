@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.38 2009/06/04 23:39:37 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.39 2013/06/01 17:31:11 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -17,7 +17,6 @@ int		 next_error(int, int);
 static int	 grep(int, int);
 static int	 gid(int, int);
 static struct buffer	*compile_mode(const char *, const char *);
-static int	 xlint(int, int);
 void grep_init(void);
 
 static char compile_last_command[NFILEN] = "make ";
@@ -49,7 +48,6 @@ grep_init(void)
 	funmap_add(compile_goto_error, "compile-goto-error");
 	funmap_add(next_error, "next-error");
 	funmap_add(grep, "grep");
-	funmap_add(xlint, "lint");
 	funmap_add(compile, "compile");
 	funmap_add(gid, "gid");
 	maps_add((KEYMAP *)&compilemap, "compile");
@@ -73,30 +71,6 @@ grep(int f, int n)
 		return (FALSE);
 
 	if ((bp = compile_mode("*grep*", cprompt)) == NULL)
-		return (FALSE);
-	if ((wp = popbuf(bp, WNONE)) == NULL)
-		return (FALSE);
-	curbp = bp;
-	compile_win = curwp = wp;
-	return (TRUE);
-}
-
-/* ARGSUSED */
-static int
-xlint(int f, int n)
-{
-	char	 cprompt[NFILEN], *bufp;
-	struct buffer	*bp;
-	struct mgwin	*wp;
-
-	(void)strlcpy(cprompt, "make lint ", sizeof(cprompt));
-	if ((bufp = eread("Run lint: ", cprompt, NFILEN,
-	    EFDEF | EFNEW | EFCR)) == NULL)
-		return (ABORT);
-	else if (bufp[0] == '\0')
-		return (FALSE);
-
-	if ((bp = compile_mode("*lint*", cprompt)) == NULL)
 		return (FALSE);
 	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
