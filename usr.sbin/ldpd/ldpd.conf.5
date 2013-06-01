@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.10 2013/06/01 18:47:07 claudio Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.11 2013/06/01 19:28:55 claudio Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -81,7 +81,7 @@ The default is
 Set the router ID; in combination with labelspace it forms the LSR-ID.
 .Pp
 .It Ic keepalive Ar seconds
-Set the keepalive interval in seconds.
+Set the keepalive timeout in seconds.
 The default value is 180; valid range is 1\-65535.
 .Pp
 .It Xo

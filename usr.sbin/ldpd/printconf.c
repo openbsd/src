@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.4 2013/06/01 18:35:02 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.5 2013/06/01 19:28:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -50,6 +50,8 @@ print_mainconf(struct ldpd_conf *conf)
 		printf("advertisement ondemand\n");
 	else
 		printf("advertisement unsolicited\n");
+
+	printf("keepalive %u\n", conf->keepalive);
 }
 
 void

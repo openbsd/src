@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.9 2013/06/01 18:47:07 claudio Exp $ */
+/*	$OpenBSD: init.c,v 1.10 2013/06/01 19:28:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -36,6 +36,8 @@
 #include "ldp.h"
 #include "log.h"
 #include "ldpe.h"
+
+extern struct ldpd_conf        *leconf;
 
 int	gen_init_prms_tlv(struct ibuf *, struct nbr *, u_int16_t);
 int	tlv_decode_opt_init_prms(char *, u_int16_t);
@@ -100,8 +102,8 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 		return (-1);
 	}
 
-	if (nbr->iface->keepalive < ntohs(sess.keepalive_time))
-		nbr->keepalive = nbr->iface->keepalive;
+	if (leconf->keepalive < ntohs(sess.keepalive_time))
+		nbr->keepalive = leconf->keepalive;
 	else
 		nbr->keepalive = ntohs(sess.keepalive_time);
 
@@ -122,7 +124,7 @@ gen_init_prms_tlv(struct ibuf *buf, struct nbr *nbr, u_int16_t size)
 	parms.type = htons(TLV_TYPE_COMMONSESSION);
 	parms.length = htons(size);
 	parms.proto_version = htons(LDP_VERSION);
-	parms.keepalive_time = htons(nbr->iface->keepalive);
+	parms.keepalive_time = htons(leconf->keepalive);
 	parms.reserved = 0;
 	parms.pvlim = 0;
 	parms.max_pdu_len = 0;

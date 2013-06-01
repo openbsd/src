@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.31 2013/06/01 18:47:07 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.32 2013/06/01 19:28:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -233,7 +233,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 }
 
 struct nbr *
-nbr_new(u_int32_t nbr_id, struct iface *iface, struct in_addr a)
+nbr_new(u_int32_t nbr_id, struct in_addr a)
 {
 	struct nbr	*nbr;
 
@@ -244,7 +244,6 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, struct in_addr a)
 
 	nbr->state = NBR_STA_DOWN;
 	nbr->id.s_addr = nbr_id;
-	nbr->iface = iface;
 	nbr->addr = a;
 
 	/* get next unused peerid */
@@ -661,12 +660,9 @@ nbr_to_ctl(struct nbr *nbr)
 	static struct ctl_nbr	 nctl;
 	struct timeval		 tv, now, res;
 
-	memcpy(nctl.name, nbr->iface->name, sizeof(nctl.name));
 	memcpy(&nctl.id, &nbr->id, sizeof(nctl.id));
 	memcpy(&nctl.addr, &nbr->addr, sizeof(nctl.addr));
-
 	nctl.nbr_state = nbr->state;
-	nctl.iface_state = nbr->iface->state;
 
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&nbr->inactivity_timer, &tv)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2013/06/01 18:47:07 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.14 2013/06/01 19:28:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -87,9 +87,7 @@ struct iface	*iface = NULL;
 
 struct config_defaults {
 	u_int16_t	holdtime;
-	u_int16_t	keepalive;
 	u_int16_t	hello_interval;
-	u_int8_t	mode;
 };
 
 struct config_defaults	 globaldefs;
@@ -213,6 +211,15 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 		}
+		| KEEPALIVE NUMBER {
+			if ($2 < MIN_KEEPALIVE ||
+			    $2 > MAX_KEEPALIVE) {
+				yyerror("keepalive out of range (%d-%d)",
+				    MIN_KEEPALIVE, MAX_KEEPALIVE);
+				YYERROR;
+			}
+			conf->keepalive = $2;
+		}
 		| defaults
 		;
 defaults	: HOLDTIME NUMBER {
@@ -223,15 +230,6 @@ defaults	: HOLDTIME NUMBER {
 				YYERROR;
 			}
 			defs->holdtime = $2;
-		}
-		| KEEPALIVE NUMBER {
-			if ($2 < MIN_KEEPALIVE ||
-			    $2 > MAX_KEEPALIVE) {
-				yyerror("keepalive out of range (%d-%d)",
-				    MIN_KEEPALIVE, MAX_KEEPALIVE);
-				YYERROR;
-			}
-			defs->keepalive = $2;
 		}
 		| HELLOINTERVAL NUMBER {
 			if ($2 < MIN_HELLO_INTERVAL ||
@@ -299,7 +297,6 @@ interface	: INTERFACE STRING	{
 			defs = &ifacedefs;
 		} interface_block {
 			iface->holdtime = defs->holdtime;
-			iface->keepalive = defs->keepalive;
 			iface->hello_interval = defs->hello_interval;
 			iface = NULL;
 
@@ -686,11 +683,11 @@ parse_config(char *filename, int opts)
 	if ((conf = calloc(1, sizeof(struct ldpd_conf))) == NULL)
 		fatal("parse_config");
 	conf->opts = opts;
+	conf->keepalive = DEFAULT_KEEPALIVE;
 
 	bzero(&globaldefs, sizeof(globaldefs));
 	defs = &globaldefs;
 	defs->holdtime = DEFAULT_HOLDTIME;
-	defs->keepalive = DEFAULT_KEEPALIVE;
 	defs->hello_interval = DEFAULT_HELLO_INTERVAL;
 
 	conf->mode = (MODE_DIST_INDEPENDENT | MODE_RET_LIBERAL |
