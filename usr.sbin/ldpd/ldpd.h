@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.35 2013/06/01 19:28:55 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.36 2013/06/01 19:42:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -154,6 +154,7 @@ enum nbr_event {
 	NBR_EVT_INIT_RCVD,
 	NBR_EVT_KEEPALIVE_RCVD,
 	NBR_EVT_PDU_RCVD,
+	NBR_EVT_PDU_SENT,
 	NBR_EVT_INIT_SENT,
 	NBR_EVT_DOWN
 };

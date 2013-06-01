@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.11 2013/06/01 18:47:07 claudio Exp $ */
+/*	$OpenBSD: notification.c,v 1.12 2013/06/01 19:42:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -47,6 +47,7 @@ send_notification_nbr(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
 
 	buf = send_notification(status, msgid, type);
 	evbuf_enqueue(&nbr->wbuf, buf);
+	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
 struct ibuf *

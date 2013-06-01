@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.32 2013/06/01 19:28:55 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.33 2013/06/01 19:42:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -104,6 +104,7 @@ struct {
     {NBR_STA_OPENSENT,	NBR_EVT_INIT_RCVD,	NBR_ACT_KEEPALIVE_SEND,	NBR_STA_OPENREC},
 /* Session Maintenance */
     {NBR_STA_OPER,	NBR_EVT_PDU_RCVD,	NBR_ACT_RST_KTIMEOUT,	0},
+    {NBR_STA_OPER,	NBR_EVT_PDU_SENT,	NBR_ACT_RST_KTIMER,	0},
 /* Session Close */
     {NBR_STA_SESSION,	NBR_EVT_CLOSE_SESSION,	NBR_ACT_CLOSE_SESSION,	NBR_STA_PRESENT},
     {NBR_STA_SESSION,	NBR_EVT_DOWN,		NBR_ACT_CLOSE_SESSION,	},
@@ -118,6 +119,7 @@ const char * const nbr_event_names[] = {
 	"INIT RECEIVED",
 	"KEEPALIVE RECEIVED",
 	"PDU RECEIVED",
+	"PDU SENT",
 	"INIT SENT",
 	"DOWN"
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.22 2013/06/01 19:01:32 claudio Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.23 2013/06/01 19:42:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -84,6 +84,7 @@ send_labelmapping(struct nbr *nbr)
 	ldp_hdr->length = htons(size);
 
 	evbuf_enqueue(&nbr->wbuf, buf);
+	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
 int
@@ -184,6 +185,7 @@ send_labelrequest(struct nbr *nbr)
 	ldp_hdr->length = htons(size);
 
 	evbuf_enqueue(&nbr->wbuf, buf);
+	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
 int
@@ -280,6 +282,7 @@ send_labelwithdraw(struct nbr *nbr)
 	ldp_hdr->length = htons(size);
 
 	evbuf_enqueue(&nbr->wbuf, buf);
+	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
 int
@@ -412,6 +415,7 @@ send_labelrelease(struct nbr *nbr)
 	ldp_hdr->length = htons(size);
 
 	evbuf_enqueue(&nbr->wbuf, buf);
+	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
 int
@@ -522,6 +526,7 @@ send_labelabortreq(struct nbr *nbr)
 	gen_msg_tlv(buf, MSG_TYPE_LABELABORTREQ, size);
 
 	evbuf_enqueue(&nbr->wbuf, buf);
+	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
 int
