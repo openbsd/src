@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.53 2013/03/25 11:39:38 florian Exp $ */
+/* $OpenBSD: undo.c,v 1.54 2013/06/01 16:27:56 lum Exp $ */
 /*
  * This file is in the public domain
  */
@@ -390,7 +390,8 @@ undo_dump(int f, int n)
 		return (FALSE);
 	bp->b_flag |= BFREADONLY;
 	bclear(bp);
-	popbuf(bp, WNONE);
+	if ((wp = popbuf(bp, WNONE)) == NULL)
+		return (FALSE);
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == bp) {
