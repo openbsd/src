@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.17 2013/04/30 12:02:39 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.18 2013/06/01 14:34:34 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -105,6 +105,7 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 	static char	*domain = NULL;
 	char		*res;
 	int		 len;
+	char		 alias[MAXDNAME], *name;
 #endif
 	const char	*str;
 	struct addrinfo	*ai;
@@ -345,13 +346,18 @@ getaddrinfo_async_run(struct async *as, struct async_res *ar)
 			}
 			family = (as->as.ai.hints.ai_family == AF_UNSPEC) ?
 			    AS_FAMILY(as) : as->as.ai.hints.ai_family;
+
+			name = asr_hostalias(as->as_ctx, as->as.ai.hostname,
+			    alias, sizeof(alias));
+			if (name == NULL)
+				name = as->as.ai.hostname;
+
 			/* XXX
 			 * ipnodes.byname could also contain IPv4 address
 			 */
 			r = yp_match(domain, (family == AF_INET6) ?
 			    "ipnodes.byname" : "hosts.byname",
-			    as->as.ai.hostname, strlen(as->as.ai.hostname),
-			    &res, &len);
+			    name, strlen(name), &res, &len);
 			if (r == 0) {
 				r = addrinfo_from_yp(as, family, res);
 				free(res);
@@ -550,7 +556,7 @@ addrinfo_add(struct async *as, const struct sockaddr *sa, const char *cname)
 static int
 addrinfo_from_file(struct async *as, int family, FILE *f)
 {
-	char		*tokens[MAXTOKEN], *c;
+	char		*tokens[MAXTOKEN], buf[MAXDNAME], *name, *c;
 	int		 n, i;
 	union {
 		struct sockaddr		sa;
@@ -558,13 +564,17 @@ addrinfo_from_file(struct async *as, int family, FILE *f)
 		struct sockaddr_in6	sain6;
 	} u;
 
+	name = asr_hostalias(as->as_ctx, as->as.ai.hostname, buf, sizeof(buf));
+	if (name == NULL)
+		name = as->as.ai.hostname;
+
 	for (;;) {
 		n = asr_parse_namedb_line(f, tokens, MAXTOKEN);
 		if (n == -1)
 			break; /* ignore errors reading the file */
 
 		for (i = 1; i < n; i++) {
-			if (strcasecmp(as->as.ai.hostname, tokens[i]))
+			if (strcasecmp(name, tokens[i]))
 				continue;
 			if (sockaddr_from_str(&u.sa, family, tokens[0]) == -1)
 				continue;

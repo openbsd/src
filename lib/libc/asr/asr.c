@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.28 2013/06/01 12:38:29 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.29 2013/06/01 14:34:34 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -937,10 +937,6 @@ enum {
 int
 asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 {
-#if ASR_OPT_HOSTALIASES
-	char	*alias;
-#endif
-
 	switch (as->as_dom_step) {
 
 	case DOM_INIT:
@@ -956,21 +952,6 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 			as->as_dom_step = DOM_DONE;
 			return (asr_domcat(name, NULL, buf, len));
 		}
-
-#if ASR_OPT_HOSTALIASES
-		/*
-		 * If "name" has no dots, it might be an alias. If so,
-		 * That's also the only result.
-		 */
-		alias = asr_hostalias(as->as_ctx, name, buf, len);
-		if (alias) {
-			DPRINT("asr: asr_iter_domain(\"%s\") is alias \"%s\"\n",
-			    name, alias);
-			as->as_dom_flags |= ASYNC_DOM_HOSTALIAS;
-			as->as_dom_step = DOM_DONE;
-			return (asr_domcat(alias, NULL, buf, len));
-		}
-#endif
 
 		/*
 		 * Otherwise, we iterate through the specified search domains.

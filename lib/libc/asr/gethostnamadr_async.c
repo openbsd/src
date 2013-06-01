@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.19 2013/04/30 12:02:39 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.20 2013/06/01 14:34:34 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -148,7 +148,7 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 	struct hostent_ext	*h;
 	int			 r, type, saved_errno;
 	FILE			*f;
-	char			 dname[MAXDNAME], *data, addr[16], *c;
+	char			 name[MAXDNAME], *data, addr[16], *c;
 
     next:
 	switch (as->as_state) {
@@ -220,9 +220,9 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 			} else {
 				addr_as_fqdn(as->as.hostnamadr.addr,
 				    as->as.hostnamadr.family,
-				    dname, sizeof(dname));
+				    name, sizeof(name));
 				as->as.hostnamadr.subq = res_query_async_ctx(
-				    dname, C_IN, T_PTR, as->as_ctx);
+				    name, C_IN, T_PTR, as->as_ctx);
 			}
 
 			if (as->as.hostnamadr.subq == NULL) {
@@ -242,8 +242,12 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 			if ((f = fopen(as->as_ctx->ac_hostfile, "r")) == NULL)
 				break;
 
-			if (as->as_type == ASR_GETHOSTBYNAME)
-				data = as->as.hostnamadr.name;
+			if (as->as_type == ASR_GETHOSTBYNAME) {
+				data = asr_hostalias(as->as_ctx,
+				    as->as.hostnamadr.name, name, sizeof(name));
+				if (data == NULL)
+					data = as->as.hostnamadr.name;
+			}
 			else
 				data = as->as.hostnamadr.addr;
 
@@ -272,8 +276,12 @@ gethostnamadr_async_run(struct async *as, struct async_res *ar)
 			/* IPv4 only */
 			if (as->as.hostnamadr.family != AF_INET)
 				break;
-			if (as->as_type == ASR_GETHOSTBYNAME)
-				data = as->as.hostnamadr.name;
+			if (as->as_type == ASR_GETHOSTBYNAME) {
+				data = asr_hostalias(as->as_ctx,
+				    as->as.hostnamadr.name, name, sizeof(name));
+				if (data == NULL)
+					data = as->as.hostnamadr.name;
+			}
 			else
 				data = as->as.hostnamadr.addr;
 			h = _yp_gethostnamadr(as->as_type, data);

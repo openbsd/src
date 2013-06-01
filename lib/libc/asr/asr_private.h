@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.20 2013/06/01 12:38:29 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.21 2013/06/01 14:34:34 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -155,9 +155,8 @@ struct asr {
 
 #define	ASYNC_DOM_FQDN		0x00000001
 #define	ASYNC_DOM_NDOTS		0x00000002
-#define	ASYNC_DOM_HOSTALIAS	0x00000004
-#define	ASYNC_DOM_DOMAIN	0x00000008
-#define ASYNC_DOM_ASIS		0x00000010
+#define	ASYNC_DOM_DOMAIN	0x00000004
+#define ASYNC_DOM_ASIS		0x00000008
 
 #define	ASYNC_NODATA		0x00000100
 #define	ASYNC_AGAIN		0x00000200
