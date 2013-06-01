@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2013/05/17 23:27:40 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.8 2013/06/01 09:57:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -284,6 +284,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return (0);
 
+	if (object->traced)
+		lazy = 1;
+
 	object->got_addr = 0;
 	object->got_size = 0;
 	this = NULL;
@@ -398,6 +401,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	Elf_Addr *r_addr, ooff, value;
 	const Elf_Sym *sym, *this;
 	const char *symn;
+	const elf_object_t *sobj;
 	sigset_t savedmask;
 
 	rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
@@ -409,13 +413,16 @@ _dl_bind(elf_object_t *object, int reloff)
 	r_addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
-	    SYM_SEARCH_ALL | SYM_WARNNOTFOUND | SYM_PLT, sym, object, NULL);
+	    SYM_SEARCH_ALL | SYM_WARNNOTFOUND | SYM_PLT, sym, object, &sobj);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
 	}
 
 	value = ooff + this->st_value;
+
+	if (sobj->traced && _dl_trace_plt(sobj, symn))
+		return value;
 
 	/* if GOT is protected, allow the write */
 	if (object->got_size != 0)  {

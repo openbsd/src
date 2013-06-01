@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.19 2013/04/05 12:58:03 kurt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.20 2013/06/01 09:57:57 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -56,6 +56,7 @@ int	_dl_gettimeofday(struct timeval *tp, struct timezone *tzp);
 int	_dl_readlink(const char *path, char *buf, size_t bufsiz);
 int	_dl_lstat(const char *path, struct stat *sb);
 int	_dl_getcwd(char *buf, size_t size);
+int	_dl_utrace(const char *label, const void *addr, size_t len);
 
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)

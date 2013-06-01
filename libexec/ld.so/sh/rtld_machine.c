@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.18 2013/05/08 20:55:14 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.19 2013/06/01 09:57:58 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -826,6 +826,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->plt_start = 0;
 	object->plt_size = 0;
 
+	if (object->traced)
+		lazy = 1;
+
 	if (!lazy) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
@@ -862,6 +865,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	Elf_Word *addr;
 	const Elf_Sym *sym, *this;
 	const char *symn;
+	const elf_object_t *sobj;
 	Elf_Addr ooff, newval;
 	sigset_t savedmask;
 
@@ -873,15 +877,18 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	this = NULL;
 	ooff = _dl_find_symbol(symn,  &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym,
-	    object, NULL);
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
 	}
 
-	addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
 	newval = ooff + this->st_value;
+
+	if (sobj->traced && _dl_trace_plt(sobj, symn))
+		return newval;
+
+	addr = (Elf_Addr *)(object->obj_base + rel->r_offset);
 
 	/* if GOT is protected, allow the write */
 	if (object->got_size != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.24 2012/07/12 18:03:29 jmc Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.25 2013/06/01 09:57:58 miod Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -47,9 +47,13 @@
 #include "ktrace.h"
 #include "extern.h"
 
+extern char *__progname;
+
 static int rpid(const char *);
 static void no_ktrace(int);
 static void usage(void);
+
+int	is_ltrace;
 
 int
 main(int argc, char *argv[])
@@ -57,62 +61,87 @@ main(int argc, char *argv[])
 	enum { NOTSET, CLEAR, CLEARALL } clear;
 	int append, ch, fd, inherit, ops, pidset, trpoints;
 	pid_t pid;
-	char *tracefile;
+	char *tracefile, *tracespec;
 	mode_t omask;
 	struct stat sb;
 
+	is_ltrace = strcmp(__progname, "ltrace") == 0;
+
 	clear = NOTSET;
 	append = ops = pidset = inherit = pid = 0;
-	trpoints = DEF_POINTS;
+	trpoints = is_ltrace ? KTRFAC_USER : DEF_POINTS;
 	tracefile = DEF_TRACEFILE;
-	while ((ch = getopt(argc,argv,"aBCcdf:g:ip:t:")) != -1)
-		switch((char)ch) {
-		case 'a':
-			append = 1;
-			break;
-		case 'B':
-			putenv("LD_BIND_NOW=");
-			break;
-		case 'C':
-			clear = CLEARALL;
-			pidset = 1;
-			break;
-		case 'c':
-			clear = CLEAR;
-			break;
-		case 'd':
-			ops |= KTRFLAG_DESCEND;
-			break;
-		case 'f':
-			tracefile = optarg;
-			break;
-		case 'g':
-			pid = -rpid(optarg);
-			pidset = 1;
-			break;
-		case 'i':
-			inherit = 1;
-			break;
-		case 'p':
-			pid = rpid(optarg);
-			pidset = 1;
-			break;
-		case 't':
-			trpoints = getpoints(optarg);
-			if (trpoints < 0) {
-				warnx("unknown facility in %s", optarg);
+	tracespec = NULL;
+
+	if (is_ltrace) {
+		while ((ch = getopt(argc, argv, "af:iu:")) != -1)
+			switch ((char)ch) {
+			case 'a':
+				append = 1;
+				break;
+			case 'f':
+				tracefile = optarg;
+				break;
+			case 'i':
+				inherit = 1;
+				break;
+			case 'u':
+				tracespec = optarg;
+				break;
+			default:
 				usage();
 			}
-			break;
-		default:
-			usage();
-		}
+	} else {
+		while ((ch = getopt(argc, argv, "aBCcdf:g:ip:t:")) != -1)
+			switch ((char)ch) {
+			case 'a':
+				append = 1;
+				break;
+			case 'B':
+				putenv("LD_BIND_NOW=");
+				break;
+			case 'C':
+				clear = CLEARALL;
+				pidset = 1;
+				break;
+			case 'c':
+				clear = CLEAR;
+				break;
+			case 'd':
+				ops |= KTRFLAG_DESCEND;
+				break;
+			case 'f':
+				tracefile = optarg;
+				break;
+			case 'g':
+				pid = -rpid(optarg);
+				pidset = 1;
+				break;
+			case 'i':
+				inherit = 1;
+				break;
+			case 'p':
+				pid = rpid(optarg);
+				pidset = 1;
+				break;
+			case 't':
+				trpoints = getpoints(optarg);
+				if (trpoints < 0) {
+					warnx("unknown facility in %s", optarg);
+					usage();
+				}
+				break;
+			default:
+				usage();
+			}
+	}
+
 	argv += optind;
 	argc -= optind;
 	
 	if ((pidset && *argv) || (!pidset && !*argv && clear != CLEAR))
 		usage();
-			
+
 	if (inherit)
 		trpoints |= KTRFAC_INHERIT;
 
@@ -148,6 +177,13 @@ main(int argc, char *argv[])
 	(void)close(fd);
 
 	if (*argv) { 
+		if (is_ltrace) {
+			if (setenv("LD_TRACE_PLT", inherit ? "i" : "", 1) < 0)
+				err(1, "setenv(LD_TRACE_PLT)");
+			if (tracespec &&
+			    setenv("LD_TRACE_PLTSPEC", tracespec, 1) < 0)
+				err(1, "setenv(LD_TRACE_PLTSPEC)");
+		}
 		if (ktrace(tracefile, ops, trpoints, getpid()) < 0)
 			err(1, "%s", tracefile);
 		execvp(argv[0], &argv[0]);
@@ -177,9 +213,15 @@ rpid(const char *p)
 static void
 usage(void)
 {
-	(void)fprintf(stderr,
-	    "usage: ktrace [-aBCcdi] [-f trfile] [-g pgid] [-p pid] [-t trstr]\n"
-	    "       ktrace [-adi] [-f trfile] [-t trstr] command\n");
+	if (is_ltrace)
+		fprintf(stderr, "usage: %s [-ai] [-f trfile] [-u trspec]"
+		    "  comand\n",
+		    __progname);
+	else
+		fprintf(stderr, "usage: %s [-aBCcdi] [-f trfile] [-g pgid]"
+		    " [-p pid] [-t trstr]\n"
+		    "       %s [-adi] [-f trfile] [-t trstr] command\n",
+		    __progname, __progname);
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.132 2013/04/05 12:58:03 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.133 2013/06/01 09:57:55 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,8 +51,6 @@
 /*
  * Local decls.
  */
-static char *_dl_getenv(const char *, char **);
-static void _dl_unsetenv(const char *, char **);
 unsigned long _dl_boot(const char **, char **, const long, long *);
 void _dl_debug_state(void);
 void _dl_setup_env(char **);
@@ -257,6 +255,8 @@ _dl_setup_env(char **envp)
 		}
 	}
 	_dl_so_envp = envp;
+
+	_dl_trace_setup(envp);
 }
 
 int
@@ -914,7 +914,7 @@ _dl_call_init_recurse(elf_object_t *object, int initfirst)
 	object->status |= STAT_INIT_DONE;
 }
 
-static char *
+char *
 _dl_getenv(const char *var, char **env)
 {
 	const char *ep;
@@ -932,7 +932,7 @@ _dl_getenv(const char *var, char **env)
 	return(NULL);
 }
 
-static void
+void
 _dl_unsetenv(const char *var, char **env)
 {
 	char *ep;

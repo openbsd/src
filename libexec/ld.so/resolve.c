@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.62 2013/05/08 20:55:14 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.63 2013/06/01 09:57:55 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -351,6 +351,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		if ((object->obj_flags & DF_1_ORIGIN) && _dl_trust)
 			_dl_origin_subst(object);
 	}
+
+	_dl_trace_object_setup(object);
 
 	return (object);
 }

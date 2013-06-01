@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2013/04/05 12:58:03 kurt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2013/06/01 09:57:58 miod Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -180,6 +180,9 @@ DL_SYSCALL(readlink)
 	rts
 
 DL_SYSCALL(lstat)
+	rts
+
+DL_SYSCALL(utrace)
 	rts
 
 DL_SYSCALL2(getcwd,__getcwd)

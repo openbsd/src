@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.15 2013/05/08 20:55:14 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.16 2013/06/01 09:57:58 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -232,6 +232,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_start;
 
+	if (object->traced)
+		lazy = 1;
+
 	/*
 	 *  Then do all global references according to the ABI.
 	 *  Quickstart is not yet implemented.
@@ -290,6 +293,7 @@ _dl_bind(elf_object_t *object, int symidx)
 	Elf_Addr *addr, ooff;
 	const Elf_Sym *sym, *this;
 	const char *symn;
+	const elf_object_t *sobj;
 	sigset_t savedmask;
 	int n;
 
@@ -301,11 +305,14 @@ _dl_bind(elf_object_t *object, int symidx)
 
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, NULL);
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed\n");
 		*((int *)0) = 0;	/* XXX */
 	}
+
+	if (sobj->traced && _dl_trace_plt(sobj, symn))
+		return ooff + this->st_value;
 
 	addr = &gotp[n + symidx];
 

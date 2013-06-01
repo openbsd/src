@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.19 2013/04/05 12:58:03 kurt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.20 2013/06/01 09:57:57 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -325,3 +325,8 @@ LEAF_NOPROFILE(_dl_getcwd, 2)
 	RET
 END(_dl_getcwd)
 
+LEAF_NOPROFILE(_dl_utrace, 2)
+	ldiq	v0, SYS_utrace
+	call_pal PAL_OSF1_callsys
+	RET
+END(_dl_utrace)

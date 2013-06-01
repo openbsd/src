@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.26 2013/03/26 18:50:48 kettenis Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.27 2013/06/01 09:57:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -42,7 +42,10 @@
 
 #include "syscall.h"
 #include "archdep.h"
+#define	_dl_bind XXX_dl_bind
 #include "resolve.h"
+#undef	_dl_bind
+uint64_t _dl_bind(elf_object_t *object, int reloff);
 
 typedef
 struct hppa_plabel {
@@ -329,6 +332,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
 	}
 
+	if (object->traced)
+		lazy = 1;
+
 	if (!lazy) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
@@ -420,7 +426,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 /*
  * Resolve a symbol at run-time.
  */
-Elf_Addr
+uint64_t
 _dl_bind(elf_object_t *object, int reloff)
 {
 	const elf_object_t *sobj;
@@ -449,6 +455,9 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	value = ooff + this->st_value + rela->r_addend;
 
+	if (sobj->traced && _dl_trace_plt(sobj, symn))
+		return ((uint64_t)value << 32) | (Elf_Addr)sobj->dyn.pltgot;
+
 	/* if PLT+GOT is protected, allow the write */
 	if (object->got_size != 0) {
 		_dl_thread_bind_lock(0, &savedmask);
@@ -468,5 +477,5 @@ _dl_bind(elf_object_t *object, int reloff)
 		_dl_thread_bind_lock(1, &savedmask);
 	}
 
-	return ((Elf_Addr)addr);
+	return ((uint64_t)addr[0] << 32) | addr[1];
 }

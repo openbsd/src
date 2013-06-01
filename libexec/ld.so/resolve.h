@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.68 2013/05/08 20:55:14 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.69 2013/06/01 09:57:55 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -154,6 +154,9 @@ struct elf_object {
 	int lastlookup;
 
 	char **rpath;
+
+	/* nonzero if trace enabled for this object */
+	int traced;
 };
 
 struct dep_node {
@@ -235,6 +238,13 @@ void	_dl_thread_kern_go(void);
 void	_dl_thread_kern_stop(void);
 
 void	_dl_thread_bind_lock(int, sigset_t *);
+
+char	*_dl_getenv(const char *, char **);
+void	_dl_unsetenv(const char *, char **);
+
+void	_dl_trace_setup(char **);
+void	_dl_trace_object_setup(elf_object_t *);
+int	_dl_trace_plt(const elf_object_t *, const char *);
 
 extern elf_object_t *_dl_objects;
 extern elf_object_t *_dl_last_object;

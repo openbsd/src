@@ -1,0 +1,150 @@
+.\"	$OpenBSD: ltrace.1,v 1.1 2013/06/01 09:57:58 miod Exp $
+.\"
+.\" Copyright (c) 2013 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd $Mdocdate: June 1 2013 $
+.Dt LTRACE 1
+.Os
+.Sh NAME
+.Nm ltrace
+.Nd shared library function call tracer
+.Sh SYNOPSIS
+.Nm ltrace
+.Op Fl ai
+.Op Fl f Ar trfile
+.Op Fl u Ar trspec
+.Ar command
+.Sh DESCRIPTION
+.Nm ltrace
+enables shared library function calls issued by the specified processes
+to be traced using the
+.Xr utrace 2
+user tracing facility.
+By default, call trace data is logged to the file
+.Pa ktrace.out ,
+unless overridden by the
+.Fl f
+option.
+Each function call is traced as a pair of
+.Dv KTRFAC_USER
+entries;
+the first entry contains the shared library containing the symbol being
+called, and the second entry contains the symbol name.
+.Pp
+Once tracing is enabled on a process, trace data will be logged until
+either the process exits or the trace point is cleared with
+.Xr ktrace 1 .
+A traced process can generate enormous amounts of log data quickly;
+it is strongly suggested that users memorize how to disable tracing before
+attempting to trace a process.
+The following command is sufficient to disable tracing on all user owned
+processes, and, if executed by root, all processes:
+.Pp
+.Dl $ ktrace -C
+.Pp
+The trace file is not human-readable; use
+.Xr kdump 1
+to decode it.
+.Pp
+The options are as follows:
+.Bl -tag -width 9n
+.It Fl a
+Append to the trace file instead of recreating it.
+.It Fl f Ar trfile
+Log trace records to
+.Ar trfile
+instead of
+.Pa ktrace.out .
+.It Fl i
+Inherit; pass the trace flags to all future children of the designated
+processes.
+.It Ar command
+Execute
+.Ar command
+with the specified trace flags.
+.It Fl u Ar trspec
+Restrict the trace to a list of shared objects and/or function names, as
+specified by the
+.Ar trspec
+argument.
+The trace specification is a comma-separated list of library names,
+followed by a colon
+.Pq : , and a comma-separated list of function names.
+Each list can be empty.
+Each list member may end up with a star
+.Pq *
+to only match the beginning of a name.
+A leading bang at the beginning of a list turns it into a rejection list,
+causing all unmatched names to be traced.
+Library names are compared without their version number and
+.Sq .so
+suffix.
+.El
+.Sh FILES
+.Bl -tag -width ktrace.out -compact
+.It Pa ktrace.out
+default ltrace dump file
+.El
+.Sh EXAMPLES
+Trace all shared library function calls from
+.Xr wc 1
+reading the message of the day:
+.Dl $ ltrace wc -lh /etc/motd
+.Pp
+Trace only the shared library function calls in
+.Pa libutil.so :
+.Dl $ ltrace -u libutil wc -lh /etc/motd
+.Pp
+Trace all the shared library function calls but those in
+.Pa libc.so :
+.Dl $ ltrace -u \(dq!libc\(dq wc -lh /etc/motd
+.Pp
+Trace all the shared library function calls which name start in
+.Pq fmt :
+.Dl $ ltrace -u \(dq:fmt*\(dq wc -lh /etc/motd
+.Sh SEE ALSO
+.Xr kdump 1 ,
+.Xr ktrace 1 ,
+.Xr ktrace 2 ,
+.Xr utrace 2

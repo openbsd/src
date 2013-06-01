@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.48 2013/05/08 20:55:14 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.49 2013/06/01 09:57:57 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -208,6 +208,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	Elf_Addr *addr, ooff;
 	const Elf_Sym *sym, *this;
 	const char *symn;
+	const elf_object_t *sobj;
 	sigset_t savedmask;
 
 	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
@@ -229,12 +230,14 @@ _dl_bind(elf_object_t *object, int reloff)
 
 	this = NULL;
 	ooff = _dl_find_symbol(symn, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym,
-	    object, NULL);
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym, object, &sobj);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
 	}
+
+	if (sobj->traced && _dl_trace_plt(sobj, symn))
+		return ooff + this->st_value + rela->r_addend;
 
 	/* if PLT is protected, allow the write */
 	if (object->plt_size != 0) {
@@ -267,7 +270,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf_Addr ooff;
 	Elf_Addr plt_addr;
 	const Elf_Sym *this;
-
 
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 
@@ -313,6 +315,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		object->plt_size += plt_addr - object->plt_start;
 		object->plt_size = ELF_ROUND(object->plt_size, _dl_pagesz);
 	}
+
+	if (object->traced)
+		lazy = 1;
 
 	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);

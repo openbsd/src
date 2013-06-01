@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.19 2013/04/05 12:58:03 kurt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.20 2013/06/01 09:57:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -354,6 +354,17 @@ _dl_getcwd:
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
 
+
+	.section ".text"
+	.align 4
+	.global _dl_utrace
+	.type _dl_utrace,@function
+_dl_utrace:
+	mov SYS_utrace | SYSCALL_G2RFLAG, %g1	! calling sys_utrace
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0			! error: result = -errno
 
 /*
  * V8 sparc .{,u}{mul,div,rem} replacements.
