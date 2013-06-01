@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.28 2013/06/01 18:16:35 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.29 2013/06/01 18:21:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -103,7 +103,7 @@ struct {
     {NBR_STA_OPENREC,	NBR_EVT_KEEPALIVE_RCVD,	NBR_ACT_SESSION_EST,	NBR_STA_OPER},
 /* Active Role */
     {NBR_STA_PRESENT,	NBR_EVT_INIT_SENT,	NBR_ACT_NOTHING,	NBR_STA_OPENSENT},
-    {NBR_STA_OPENSENT,	NBR_EVT_INIT_RCVD,	NBR_ACT_KEEPALIVE_SEND,	NBR_STA_OPER},
+    {NBR_STA_OPENSENT,	NBR_EVT_INIT_RCVD,	NBR_ACT_KEEPALIVE_SEND,	NBR_STA_OPENREC},
 /* Session Maintenance */
     {NBR_STA_OPER,	NBR_EVT_PDU_RCVD,	NBR_ACT_RST_KTIMEOUT,	0},
 /* Session Close */
@@ -193,12 +193,8 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		send_keepalive(nbr);
 		break;
 	case NBR_ACT_KEEPALIVE_SEND:
-		nbr_act_session_operational(nbr);
-		nbr_start_ktimer(nbr);
 		nbr_start_ktimeout(nbr);
 		send_keepalive(nbr);
-		send_address(nbr, NULL);
-		nbr_send_labelmappings(nbr);
 		break;
 	case NBR_ACT_CLOSE_SESSION:
 		ldpe_imsg_compose_lde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0,
