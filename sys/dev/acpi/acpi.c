@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.245 2013/05/31 22:43:43 bluhm Exp $ */
+/* $OpenBSD: acpi.c,v 1.246 2013/06/01 23:00:16 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -631,6 +631,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_dsdt *p_dsdt;
 	int idx;
 #ifndef SMALL_KERNEL
+	int wakeup_dev_ct;
 	struct acpi_wakeq *wentry;
 	struct device *dev;
 	struct acpi_ac *ac;
@@ -796,10 +797,15 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef SMALL_KERNEL
 	/* Display wakeup devices and lowest S-state */
+	wakeup_dev_ct = 0;
 	printf("%s: wakeup devices", DEVNAME(sc));
 	SIMPLEQ_FOREACH(wentry, &sc->sc_wakedevs, q_next) {
-		printf(" %.4s(S%d)", wentry->q_node->name,
-		    wentry->q_state);
+		if (wakeup_dev_ct < 16)
+			printf(" %.4s(S%d)", wentry->q_node->name,
+			    wentry->q_state);
+		else if (wakeup_dev_ct == 16)
+			printf(" [...]");
+		wakeup_dev_ct ++;
 	}
 	printf("\n");
 
