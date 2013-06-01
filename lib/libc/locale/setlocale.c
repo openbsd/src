@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.18 2011/03/15 22:27:48 stsp Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.19 2013/06/01 20:02:53 stsp Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -211,9 +211,6 @@ revert_to_default(int category)
 static int
 load_locale_sub(int category, const char *locname, int isspecial)
 {
-	char name[PATH_MAX];
-	int len;
-
 	/* check for the default locales */
 	if (!strcmp(new_categories[category], "C") ||
 	    !strcmp(new_categories[category], "POSIX")) {
@@ -223,11 +220,6 @@ load_locale_sub(int category, const char *locname, int isspecial)
 
 	/* sanity check */
 	if (strchr(locname, '/') != NULL)
-		return -1;
-
-	len = snprintf(name, sizeof(name), "%s/%s/%s",
-		       _PATH_LOCALE, locname, categories[category]);
-	if (len < 0 || len >= sizeof(name))
 		return -1;
 
 	switch (category) {

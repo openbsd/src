@@ -1,4 +1,4 @@
-/*	$OpenBSD: setrunelocale.c,v 1.9 2013/05/30 18:35:55 stsp Exp $ */
+/*	$OpenBSD: setrunelocale.c,v 1.10 2013/06/01 20:02:53 stsp Exp $ */
 /*	$NetBSD: setrunelocale.c,v 1.14 2003/08/07 16:43:07 agc Exp $	*/
 
 /*-
@@ -171,17 +171,27 @@ found:
 }
 
 int
-_xpg4_setrunelocale(const char *encoding)
+_xpg4_setrunelocale(const char *locname)
 {
 	char path[PATH_MAX];
 	_RuneLocale *rl;
 	int error, len;
+	const char *dot, *encoding;
 
-	if (!strcmp(encoding, "C") || !strcmp(encoding, "POSIX")) {
+	if (!strcmp(locname, "C") || !strcmp(locname, "POSIX")) {
 		rl = &_DefaultRuneLocale;
 		goto found;
 	}
 
+	/* Assumes "language[_territory][.codeset]" locale name. */
+	dot = strrchr(locname, '.');
+	if (dot == NULL) {
+		/* No encoding specified. Fall back to ASCII. */
+		rl = &_DefaultRuneLocale;
+		goto found;
+	}
+
+	encoding = dot + 1;
 	len = snprintf(path, sizeof(path),
 	    "%s/%s/LC_CTYPE", _PATH_LOCALE, encoding);
 	if (len < 0 || len >= sizeof(path))
