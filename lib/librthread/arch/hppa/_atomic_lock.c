@@ -1,4 +1,4 @@
-/* $OpenBSD: _atomic_lock.c,v 1.6 2012/03/03 14:42:33 miod Exp $ */
+/* $OpenBSD: _atomic_lock.c,v 1.7 2013/06/01 20:47:40 tedu Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -15,16 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <spinlock.h>
+#include <machine/spinlock.h>
 #ifdef DIAGNOSTIC
 #include <stdio.h>
 #include <stdlib.h>
 #endif
 
 int
-_atomic_lock(volatile _spinlock_lock_t *lock)
+_atomic_lock(volatile _atomic_lock_t *lock)
 {
-	volatile _spinlock_lock_t old;
+	volatile _atomic_lock_t old;
 
 #ifdef DIAGNOSTIC
 	if ((unsigned long)lock & 0xf) {
@@ -37,5 +37,5 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 		     : "=&r" (old), "+m" (lock)
 		     : "r" (lock));
 
-	return (old == _SPINLOCK_LOCKED);
+	return (old == _ATOMIC_LOCK_LOCKED);
 }

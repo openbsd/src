@@ -1,23 +1,23 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.4 2011/10/13 05:41:06 guenther Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.5 2013/06/01 20:47:40 tedu Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
  * Atomic lock for sparc
  */
  
-#include <spinlock.h>
+#include <machine/spinlock.h>
 
 int
-_atomic_lock(volatile _spinlock_lock_t * lock)
+_atomic_lock(volatile _atomic_lock_t * lock)
 {
-	_spinlock_lock_t old;
+	_atomic_lock_t old;
 
 	/*
 	 *  "  ldstub  [address], reg_rd
 	 * 
 	 *  The atomic load-store instructions copy a byte from memory
 	 *  into r[rd]m then rewrite the addressed byte in memory to all
-	 *  ones [_SPINLOCK_LOCKED]. The operation is performed
+	 *  ones [_ATOMIC_LOCK_LOCKED]. The operation is performed
 	 *  atomically, that is, without allowing intervening interrupts
 	 *  or deferred traps. In a multiprocessor system, two or more
 	 *  processors executing atomic load-store unsigned byte [...]
@@ -37,5 +37,5 @@ _atomic_lock(volatile _spinlock_lock_t * lock)
 	 */
 	__asm__("ldstub [%1], %0" : "=&r" (old) : "r" (lock) : "memory");
 
-	return (old == _SPINLOCK_LOCKED);
+	return (old == _ATOMIC_LOCK_LOCKED);
 }

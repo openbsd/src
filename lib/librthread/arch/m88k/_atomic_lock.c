@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.3 2013/01/05 11:20:55 miod Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.4 2013/06/01 20:47:40 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -29,16 +29,16 @@
  * Atomic lock for m88k
  */
 
-#include <spinlock.h>
+#include <machine/spinlock.h>
 
 int
-_atomic_lock(volatile _spinlock_lock_t *lock)
+_atomic_lock(volatile _atomic_lock_t *lock)
 {
-	_spinlock_lock_t old;
+	_atomic_lock_t old;
 
-	old = _SPINLOCK_LOCKED;
+	old = _ATOMIC_LOCK_LOCKED;
 	__asm__ __volatile__
 	    ("xmem %0, %2, %%r0" : "=r" (old) : "0" (old), "r" (lock));
 
-	return (old != _SPINLOCK_UNLOCKED);
+	return (old != _ATOMIC_LOCK_UNLOCKED);
 }

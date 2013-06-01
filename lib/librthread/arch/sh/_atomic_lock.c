@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 2008/06/26 05:42:05 ray Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 2013/06/01 20:47:40 tedu Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,12 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "spinlock.h"
+#include <machine/spinlock.h>
 
 int
-_atomic_lock(volatile _spinlock_lock_t *lock)
+_atomic_lock(volatile _atomic_lock_t *lock)
 {
-	_spinlock_lock_t old;
+	_atomic_lock_t old;
 
 	__asm volatile(
 		"	tas.b	%0	\n"
@@ -43,11 +43,4 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 		: "=m" (*lock), "=r" (old));
 
 	return (old == 0);
-}
-
-int
-_atomic_is_locked(volatile _spinlock_lock_t *lock)
-{
-
-	return (*lock != _SPINLOCK_UNLOCKED);
 }

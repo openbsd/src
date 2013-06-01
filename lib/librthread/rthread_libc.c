@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.10 2012/04/17 15:10:11 miod Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.11 2013/06/01 20:47:40 tedu Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -152,7 +152,7 @@ _thread_mutex_destroy(void **mutex)
 /*
  * the malloc lock
  */
-static _spinlock_lock_t malloc_lock = _SPINLOCK_UNLOCKED;
+static struct _spinlock malloc_lock = _SPINLOCK_UNLOCKED;
 
 void
 _thread_malloc_lock(void)
@@ -169,7 +169,7 @@ _thread_malloc_unlock(void)
 /*
  * atexit lock
  */
-static _spinlock_lock_t atexit_lock = _SPINLOCK_UNLOCKED;
+static struct _spinlock atexit_lock = _SPINLOCK_UNLOCKED;
 
 void
 _thread_atexit_lock(void)
@@ -186,7 +186,7 @@ _thread_atexit_unlock(void)
 /*
  * arc4random lock
  */
-static _spinlock_lock_t arc4_lock = _SPINLOCK_UNLOCKED;
+static struct _spinlock arc4_lock = _SPINLOCK_UNLOCKED;
 
 void
 _thread_arc4_lock(void)

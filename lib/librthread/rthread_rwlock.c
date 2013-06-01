@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_rwlock.c,v 1.2 2012/01/17 02:34:18 guenther Exp $ */
+/*	$OpenBSD: rthread_rwlock.c,v 1.3 2013/06/01 20:47:40 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -31,7 +31,7 @@
 #include "rthread.h"
 
 
-static _spinlock_lock_t rwlock_init_lock = _SPINLOCK_UNLOCKED;
+static struct _spinlock rwlock_init_lock = _SPINLOCK_UNLOCKED;
 
 /* ARGSUSED1 */
 int
@@ -43,7 +43,7 @@ pthread_rwlock_init(pthread_rwlock_t *lockp,
 	lock = calloc(1, sizeof(*lock));
 	if (!lock)
 		return (errno);
-	lock->lock = _SPINLOCK_UNLOCKED;
+	lock->lock = _SPINLOCK_UNLOCKED_ASSIGN;
 	TAILQ_INIT(&lock->writers);
 
 	*lockp = lock;
@@ -117,8 +117,8 @@ _rthread_rwlock_rdlock(pthread_rwlock_t *lockp, const struct timespec *abstime,
 		error = EDEADLK;
 	else {
 		do {
-			if (__thrsleep(lock, CLOCK_REALTIME, abstime,
-			    &lock->lock, NULL) == EWOULDBLOCK)
+			if (__thrsleep(lock, CLOCK_REALTIME | 0x8, abstime,
+			    &lock->lock.ready, NULL) == EWOULDBLOCK)
 				return (ETIMEDOUT);
 			_spinlock(&lock->lock);
 		} while (lock->owner != NULL || !TAILQ_EMPTY(&lock->writers));
@@ -180,8 +180,8 @@ _rthread_rwlock_wrlock(pthread_rwlock_t *lockp, const struct timespec *abstime,
 		/* gotta block */
 		TAILQ_INSERT_TAIL(&lock->writers, thread, waiting);
 		do {
-			do_wait = __thrsleep(thread, CLOCK_REALTIME, abstime,
-			    &lock->lock, NULL) != EWOULDBLOCK;
+			do_wait = __thrsleep(thread, CLOCK_REALTIME | 0x8, abstime,
+			    &lock->lock.ready, NULL) != EWOULDBLOCK;
 			_spinlock(&lock->lock);
 		} while (lock->owner != thread && do_wait);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_file.c,v 1.4 2012/01/17 02:34:18 guenther Exp $	*/
+/*	$OpenBSD: rthread_file.c,v 1.5 2013/06/01 20:47:40 tedu Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -86,7 +86,7 @@ static struct static_file_lock {
 } flh[NUM_HEADS];
 
 /* Lock for accesses to the hash table: */
-static	_spinlock_lock_t	hash_lock	= _SPINLOCK_UNLOCKED;
+static	struct _spinlock	hash_lock	= _SPINLOCK_UNLOCKED;
 
 /*
  * Find a lock structure for a FILE, return NULL if the file is
@@ -204,7 +204,7 @@ void
 		 */
 		TAILQ_INSERT_TAIL(&p->lockers,self,waiting);
 		while (p->owner != self) {
-			__thrsleep(self, 0, NULL, &hash_lock, NULL);
+			__thrsleep(self, 0 | 0x8, NULL, &hash_lock.ready, NULL);
 			_spinlock(&hash_lock);
 		}
 	}

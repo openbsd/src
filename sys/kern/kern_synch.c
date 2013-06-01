@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.105 2013/04/06 03:44:34 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.106 2013/06/01 20:47:40 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -393,6 +393,31 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
+int thrsleep_unlock(void *, int);
+int
+thrsleep_unlock(void *lock, int lockflags)
+{
+	static _atomic_lock_t unlocked = _ATOMIC_LOCK_UNLOCKED;
+	_atomic_lock_t *atomiclock = lock;
+	uint32_t *ticket = lock;
+	uint32_t ticketvalue;
+	int error;
+
+	if (!lock)
+		return (0);
+
+	if (lockflags) {
+		if ((error = copyin(ticket, &ticketvalue, sizeof(ticketvalue))))
+			return (error);
+		ticketvalue++;
+		error = copyout(&ticketvalue, ticket, sizeof(ticketvalue));
+	} else {
+		error = copyout(&unlocked, atomiclock, sizeof(unlocked));
+	}
+	return (error);
+}
+
+
 int
 sys___thrsleep(struct proc *p, void *v, register_t *retval)
 {
@@ -404,10 +429,11 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 		syscallarg(const int *) abort;
 	} */ *uap = v;
 	long ident = (long)SCARG(uap, ident);
-	_spinlock_lock_t *lock = SCARG(uap, lock);
-	static _spinlock_lock_t unlocked = _SPINLOCK_UNLOCKED;
+	void *lock = SCARG(uap, lock);
 	long long to_ticks = 0;
 	int abort, error;
+	clockid_t clock_id = SCARG(uap, clock_id) & 0x7;
+	int lockflags = SCARG(uap, clock_id) & 0x8;
 
 	if (ident == 0) {
 		*retval = EINVAL;
@@ -417,7 +443,7 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 		struct timespec now, ats;
 
 		if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) ||
-		    (error = clock_gettime(p, SCARG(uap, clock_id), &now))) {
+		    (error = clock_gettime(p, clock_id, &now))) {
 			*retval = error;
 			return (0);
 		}
@@ -428,12 +454,9 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 
 		if (timespeccmp(&ats, &now, <)) {
 			/* already passed: still do the unlock */
-			if (lock) {
-				if ((error = copyout(&unlocked, lock,
-				    sizeof(unlocked))) != 0) {
-					*retval = error;
-					return (0);
-				}
+			if ((error = thrsleep_unlock(lock, lockflags))) {
+				*retval = error;
+				return (0);
 			}
 			*retval = EWOULDBLOCK;
 			return (0);
@@ -448,9 +471,8 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 
 	p->p_thrslpid = ident;
 
-	if (lock) {
-		if ((error = copyout(&unlocked, lock, sizeof(unlocked))) != 0)
-			goto out;
+	if ((error = thrsleep_unlock(lock, lockflags))) {
+		goto out;
 	}
 
 	if (SCARG(uap, abort) != NULL) {

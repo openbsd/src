@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.6 2012/08/22 23:43:32 matthew Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.7 2013/06/01 20:47:40 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -55,7 +55,7 @@ struct rthread_atfork {
 static TAILQ_HEAD(atfork_listhead, rthread_atfork) _atfork_list =
     TAILQ_HEAD_INITIALIZER(_atfork_list);
 
-static _spinlock_lock_t _atfork_lock = _SPINLOCK_UNLOCKED;
+static struct _spinlock _atfork_lock = _SPINLOCK_UNLOCKED;
 
 pid_t   _thread_sys_fork(void);
 pid_t   _thread_sys_vfork(void);
@@ -116,9 +116,9 @@ _dofork(int is_vfork)
 	if (newid == 0) {
 		/* update this thread's structure */
 		me->tid = getthrid();
-		me->donesem.lock = _SPINLOCK_UNLOCKED;
+		me->donesem.lock = _SPINLOCK_UNLOCKED_ASSIGN;
 		me->flags &= ~THREAD_DETACHED;
-		me->flags_lock = _SPINLOCK_UNLOCKED;
+		me->flags_lock = _SPINLOCK_UNLOCKED_ASSIGN;
 
 		/* this thread is the initial thread for the new process */
 		_initial_thread = *me;
@@ -126,7 +126,7 @@ _dofork(int is_vfork)
 		/* reinit the thread list */
 		LIST_INIT(&_thread_list);
 		LIST_INSERT_HEAD(&_thread_list, &_initial_thread, threads);
-		_thread_lock = _SPINLOCK_UNLOCKED;
+		_thread_lock = _SPINLOCK_UNLOCKED_ASSIGN;
 
 		/* single threaded now */
 		__isthreaded = 0;

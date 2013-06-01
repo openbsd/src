@@ -1,16 +1,16 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.3 2008/10/02 23:29:26 deraadt Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.4 2013/06/01 20:47:40 tedu Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
  * Atomic lock for m68k
  */
 
-#include <spinlock.h>
+#include <machine/spinlock.h>
 
 int
-_atomic_lock(volatile _spinlock_lock_t *lock)
+_atomic_lock(volatile _atomic_lock_t *lock)
 {
-	_spinlock_lock_t old;
+	_atomic_lock_t old;
 
 	/*
 	 * The Compare And Swap instruction (mc68020 and above)
@@ -29,10 +29,10 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	 *	if Z then Du -> <ea>
 	 *	else      <ea> -> Dc;
 	 */
-	old = _SPINLOCK_UNLOCKED;
+	old = _ATOMIC_LOCK_UNLOCKED;
 	__asm__("casl %0, %2, %1" : "=d" (old), "=m" (*lock)
-				  : "d" (_SPINLOCK_LOCKED),
+				  : "d" (_ATOMIC_LOCK_LOCKED),
 				    "0" (old),  "1" (*lock)
 				  : "cc");
-	return (old != _SPINLOCK_UNLOCKED);
+	return (old != _ATOMIC_LOCK_UNLOCKED);
 }

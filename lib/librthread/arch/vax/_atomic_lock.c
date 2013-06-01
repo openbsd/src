@@ -1,16 +1,16 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 2006/01/05 22:33:24 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 2013/06/01 20:47:40 tedu Exp $	*/
 
 /*
  * Atomic lock for vax
  * Written by Miodrag Vallat <miod@openbsd.org> - placed in the public domain.
  */
 
-#include <spinlock.h>
+#include <machine/spinlock.h>
 
 int
-_atomic_lock(volatile _spinlock_lock_t *lock)
+_atomic_lock(volatile _atomic_lock_t *lock)
 {
-	_spinlock_lock_t old;
+	_atomic_lock_t old;
 
 	/*
 	 * The Branch on Bit Set and Set Interlocked instruction
@@ -24,19 +24,12 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	 * ``Control instructions''.
 	 */
 	__asm__ (
-		"movl	$1, %1\n"	/* _SPINLOCK_LOCKED */
+		"movl	$1, %1\n"	/* _ATOMIC_LOCK_LOCKED */
 		"bbssi	$0, %0, 1f\n"
-		"movl	$0, %1\n"	/* _SPINLOCK_UNLOCKED */
+		"movl	$0, %1\n"	/* _ATOMIC_LOCK_UNLOCKED */
 		"1:	\n"
 		: "=m" (*lock), "=r" (old) : "0" (*lock)
 	);
 
-	return (old != _SPINLOCK_UNLOCKED);
-}
-
-int
-_atomic_is_locked(volatile _spinlock_lock_t *lock)
-{
-
-	return (*lock != _SPINLOCK_UNLOCKED);
+	return (old != _ATOMIC_LOCK_UNLOCKED);
 }
