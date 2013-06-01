@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.91 2011/09/16 18:24:57 sthen Exp $ */
+/*	$OpenBSD: kroute.c,v 1.92 2013/06/01 16:00:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1345,10 +1345,10 @@ rtmsg_process(char *buf, int len)
 
 		prefix.s_addr = 0;
 		prefixlen = 0;
-		flags = F_KERNEL;
 		nexthop.s_addr = 0;
 		mpath = 0;
 		prio = 0;
+		flags = F_KERNEL;
 
 		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
@@ -1358,12 +1358,6 @@ rtmsg_process(char *buf, int len)
 		case RTM_GET:
 		case RTM_CHANGE:
 		case RTM_DELETE:
-			prefix.s_addr = 0;
-			prefixlen = 0;
-			nexthop.s_addr = 0;
-			mpath = 0;
-			prio = 0;
-
 			if (rtm->rtm_errno)		/* failed attempts... */
 				continue;
 
@@ -1441,7 +1435,8 @@ rtmsg_process(char *buf, int len)
 				if ((mpath || prio == RTP_OSPF) &&
 				    (kr = kroute_matchgw(okr, nexthop)) ==
 				    NULL) {
-					log_warnx("mpath route not found");
+					log_warnx("dispatch_rtmsg "
+					    "mpath route not found");
 					/* add routes we missed out earlier */
 					goto add;
 				}
@@ -1519,8 +1514,8 @@ add:
 			okr = kr;
 			if (mpath &&
 			    (kr = kroute_matchgw(kr, nexthop)) == NULL) {
-				log_warnx("dispatch_rtmsg mpath route"
-				    " not found");
+				log_warnx("dispatch_rtmsg "
+				    "mpath route not found");
 				return (-1);
 			}
 			if (kroute_remove(kr) == -1)
