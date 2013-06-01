@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.38 2013/06/01 01:30:53 brad Exp $	*/
+/*	$OpenBSD: config.c,v 1.39 2013/06/01 21:57:12 brad Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ getconfig(intface)
 		char entbuf[256];
 
 		makeentry(entbuf, sizeof(entbuf), i, "addr");
-		addr = (char *)agetstr(entbuf, &bp);
+		addr = agetstr(entbuf, &bp);
 		if (addr == NULL)
 			continue;
 
@@ -329,7 +329,7 @@ getconfig(intface)
 		const char *flagstr;
 
 		makeentry(entbuf, sizeof(entbuf), i, "rtprefix");
-		addr = (char *)agetstr(entbuf, &bp);
+		addr = agetstr(entbuf, &bp);
 		if (addr == NULL)
 			continue;
 
@@ -353,7 +353,7 @@ getconfig(intface)
 		rti->prefixlen = (int)val;
 
 		makeentry(entbuf, sizeof(entbuf), i, "rtflags");
-		if ((flagstr = (char *)agetstr(entbuf, &bp))) {
+		if ((flagstr = agetstr(entbuf, &bp))) {
 			val = 0;
 			if (strchr(flagstr, 'h'))
 				val |= ND_RA_FLAG_RTPREF_HIGH;
@@ -502,7 +502,7 @@ getconfig(intface)
 	if (tmp->linkmtu == 0) {
 		char *mtustr;
 
-		if ((mtustr = (char *)agetstr("mtu", &bp)) &&
+		if ((mtustr = agetstr("mtu", &bp)) &&
 		    strcmp(mtustr, "auto") == 0)
 			tmp->linkmtu = tmp->phymtu;
 	}
