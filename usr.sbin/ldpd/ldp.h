@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.10 2013/05/30 16:14:50 claudio Exp $ */
+/*	$OpenBSD: ldp.h,v 1.11 2013/06/01 01:34:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -124,6 +124,12 @@ struct hello_prms_tlv {
 	u_int16_t	length;
 	u_int16_t	holdtime;
 	u_int16_t	flags;
+};
+
+struct hello_prms_opt4_tlv {
+	u_int16_t	type;
+	u_int16_t	length;
+	u_int32_t	value;
 };
 
 #define HELLO_PRMS_SIZE		8

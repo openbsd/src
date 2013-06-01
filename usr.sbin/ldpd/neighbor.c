@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.26 2013/05/31 14:10:10 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.27 2013/06/01 01:34:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -333,6 +333,15 @@ nbr_find_ldpid(u_int32_t rtr_id, u_int16_t lspace)
 	return (RB_FIND(nbr_id_head, &nbrs_by_id, &n));
 }
 
+int
+nbr_session_active_role(struct nbr *nbr)
+{
+	if (ntohl(ldpe_router_id()) > ntohl(nbr->addr.s_addr))
+		return 1;
+
+	return 0;
+}
+
 /* timers */
 
 /* Inactivity timer: timeout based on hellos */
@@ -445,7 +454,7 @@ nbr_idtimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	if (ntohl(nbr->addr.s_addr) >= ntohl(nbr->iface->addr.s_addr))
+	if (!nbr_session_active_role(nbr))
 		return;
 
 	log_debug("nbr_idtimer: neighbor ID %s peerid %lu", inet_ntoa(nbr->id),
@@ -519,12 +528,8 @@ nbr_connect_cb(int fd, short event, void *arg)
 int
 nbr_establish_connection(struct nbr *nbr)
 {
-	struct sockaddr_in	in;
-
-	bzero(&in, sizeof(in));
-	in.sin_family = AF_INET;
-	in.sin_port = htons(LDP_PORT);
-	in.sin_addr.s_addr = nbr->addr.s_addr;
+	struct sockaddr_in	local_sa;
+	struct sockaddr_in	remote_sa;
 
 	nbr->fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (nbr->fd == -1) {
@@ -535,7 +540,26 @@ nbr_establish_connection(struct nbr *nbr)
 
 	session_socket_blockmode(nbr->fd, BM_NONBLOCK);
 
-	if (connect(nbr->fd, (struct sockaddr *)&in, sizeof(in)) == -1) {
+	bzero(&local_sa, sizeof(local_sa));
+	local_sa.sin_family = AF_INET;
+	local_sa.sin_port = htons(0);
+	local_sa.sin_addr.s_addr = ldpe_router_id();
+
+	if (bind(nbr->fd, (struct sockaddr *) &local_sa,
+	    sizeof(struct sockaddr_in)) == -1) {
+		log_debug("nbr_establish_connection: error while "
+		    "binding socket to %s", inet_ntoa(local_sa.sin_addr));
+		close(nbr->fd);
+		return (-1);
+	}
+
+	bzero(&remote_sa, sizeof(remote_sa));
+	remote_sa.sin_family = AF_INET;
+	remote_sa.sin_port = htons(LDP_PORT);
+	remote_sa.sin_addr.s_addr = nbr->addr.s_addr;
+
+	if (connect(nbr->fd, (struct sockaddr *)&remote_sa,
+	    sizeof(remote_sa)) == -1) {
 		if (errno == EINPROGRESS) {
 			event_set(&nbr->ev_connect, nbr->fd, EV_WRITE,
 			    nbr_connect_cb, nbr);

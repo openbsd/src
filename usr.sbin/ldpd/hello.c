@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.14 2013/05/31 14:10:10 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.15 2013/06/01 01:34:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,7 +39,8 @@
 int	tlv_decode_hello_prms(char *, u_int16_t, u_int16_t *, u_int16_t *);
 int	tlv_decode_opt_hello_prms(char *, u_int16_t, struct in_addr *,
 	    u_int32_t *);
-int	gen_hello_prms_tlv(struct iface *, struct ibuf *, u_int16_t);
+int	gen_hello_prms_tlv(struct iface *, struct ibuf *);
+int	gen_opt4_hello_prms_tlv(struct iface *, struct ibuf *);
 
 int
 send_hello(struct iface *iface)
@@ -60,7 +61,8 @@ send_hello(struct iface *iface)
 		fatal("send_hello");
 
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) +
-	    sizeof(struct hello_prms_tlv);
+	    sizeof(struct hello_prms_tlv) +
+	    sizeof(struct hello_prms_opt4_tlv);
 
 	gen_ldp_hdr(buf, iface, size);
 
@@ -68,9 +70,8 @@ send_hello(struct iface *iface)
 
 	gen_msg_tlv(buf, MSG_TYPE_HELLO, size);
 
-	size -= sizeof(struct ldp_msg);
-
-	gen_hello_prms_tlv(iface, buf, size);
+	gen_hello_prms_tlv(iface, buf);
+	gen_opt4_hello_prms_tlv(iface, buf);
 
 	send_packet(iface, buf->buf, buf->wpos, &dst);
 	ibuf_free(buf);
@@ -148,26 +149,35 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 
 	nbr_fsm(nbr, NBR_EVT_HELLO_RCVD);
 
-	if (ntohl(nbr->addr.s_addr) < ntohl(nbr->iface->addr.s_addr) &&
-	    nbr->state == NBR_STA_PRESENT && !nbr_pending_connect(nbr) &&
-	    !nbr_pending_idtimer(nbr))
+	if (nbr->state == NBR_STA_PRESENT && nbr_session_active_role(nbr) &&
+	    !nbr_pending_connect(nbr) && !nbr_pending_idtimer(nbr))
 		nbr_establish_connection(nbr);
 }
 
 int
-gen_hello_prms_tlv(struct iface *iface, struct ibuf *buf, u_int16_t size)
+gen_hello_prms_tlv(struct iface *iface, struct ibuf *buf)
 {
 	struct hello_prms_tlv	parms;
 
-	/* We want just the size of the value */
-	size -= TLV_HDR_LEN;
-
 	bzero(&parms, sizeof(parms));
 	parms.type = htons(TLV_TYPE_COMMONHELLO);
-	parms.length = htons(size);
+	parms.length = htons(sizeof(parms.holdtime) + sizeof(parms.flags));
 	/* XXX */
 	parms.holdtime = htons(iface->holdtime);
 	parms.flags = 0;
+
+	return (ibuf_add(buf, &parms, sizeof(parms)));
+}
+
+int
+gen_opt4_hello_prms_tlv(struct iface *iface, struct ibuf *buf)
+{
+	struct hello_prms_opt4_tlv	parms;
+
+	bzero(&parms, sizeof(parms));
+	parms.type = htons(TLV_TYPE_IPV4TRANSADDR);
+	parms.length = htons(4);
+	parms.value = ldpe_router_id();
 
 	return (ibuf_add(buf, &parms, sizeof(parms)));
 }

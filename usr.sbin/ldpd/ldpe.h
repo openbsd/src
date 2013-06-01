@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.17 2013/05/31 14:10:10 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.18 2013/06/01 01:34:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -159,6 +159,7 @@ struct nbr	*nbr_find_ldpid(u_int32_t, u_int16_t);
 struct nbr	*nbr_find_peerid(u_int32_t);
 
 int	 nbr_fsm(struct nbr *, enum nbr_event);
+int	 nbr_session_active_role(struct nbr *);
 
 void	 nbr_itimer(int, short, void *);
 void	 nbr_start_itimer(struct nbr *);
