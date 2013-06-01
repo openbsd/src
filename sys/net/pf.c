@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.825 2013/05/14 23:59:26 mikeb Exp $ */
+/*	$OpenBSD: pf.c,v 1.826 2013/06/01 21:18:02 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -233,6 +233,11 @@ struct pf_state		*pf_find_state(struct pfi_kif *,
 int			 pf_src_connlimit(struct pf_state **);
 int			 pf_check_congestion(struct ifqueue *);
 int			 pf_match_rcvif(struct mbuf *, struct pf_rule *);
+void			 pf_step_into_anchor(int *, struct pf_ruleset **,
+			    struct pf_rule **, struct pf_rule **, int *);
+int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
+			     struct pf_rule **, struct pf_rule **,
+			     int *);
 void			 pf_counters_inc(int, struct pf_pdesc *,
 			    struct pf_state *, struct pf_rule *,
 			    struct pf_rule *);
@@ -2865,8 +2870,7 @@ pf_step_into_anchor(int *depth, struct pf_ruleset **rs,
 	struct pf_anchor_stackframe	*f;
 
 	(*r)->anchor->match = 0;
-	if (match)
-		*match = 0;
+	*match = 0;
 	if (*depth >= sizeof(pf_anchor_stack) /
 	    sizeof(pf_anchor_stack[0])) {
 		log(LOG_ERR, "pf_step_into_anchor: stack overflow\n");
@@ -2905,8 +2909,7 @@ pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs,
 			break;
 		f = pf_anchor_stack + *depth - 1;
 		if (f->parent != NULL && f->child != NULL) {
-			if (f->child->match ||
-			    (match != NULL && *match)) {
+			if (f->child->match || *match) {
 				f->r->anchor->match = 1;
 				*match = 0;
 			}
@@ -2924,7 +2927,7 @@ pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs,
 		if (*depth == 0 && a != NULL)
 			*a = NULL;
 		*rs = f->rs;
-		if (f->r->anchor->match || (match != NULL && *match))
+		if (f->r->anchor->match || *match)
 			quick = f->r->quick;
 		*r = TAILQ_NEXT(f->r, entries);
 	} while (*r == NULL);
