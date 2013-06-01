@@ -1,7 +1,7 @@
-/*	$OpenBSD: misc.c,v 1.4 2011/04/19 23:54:00 matthew Exp $	*/
+/*	$OpenBSD: misc.c,v 1.5 2013/06/01 18:47:55 reyk Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -1,7 +1,7 @@
-/*	$OpenBSD: bgplg.h,v 1.9 2012/03/30 14:31:18 gsoares Exp $	*/
+/*	$OpenBSD: bgplg.h,v 1.10 2013/06/01 18:47:55 reyk Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@
 
 #define NAME		"bgplg"
 #define BRIEF		"a looking glass for OpenBGPD"
-#define COPYRIGHT	"2005, 2006 Reyk Floeter (reyk@vantronix.net)"
+#define COPYRIGHT	"2005, 2006 Reyk Floeter (reyk@openbsd.org)"
 
 #define BGPLG_TIMEOUT	60	/* 60 seconds */
 
