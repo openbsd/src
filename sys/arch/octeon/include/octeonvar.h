@@ -343,13 +343,6 @@ ffs64(uint64_t val)
 #define OCTEON_SYNCW		__asm __volatile (".word  0x10f" : : )
 #define OCTEON_SYNC		OCTEON_SYNCCOMMON(sync)
 #define OCTEON_SYNCWS		__asm __volatile (".word  0x14f" : : )
-/* XXX backward compatibility */
-#if 1
-#define	OCT_SYNCIOBDMA		OCTEON_SYNCIOBDMA
-#define	OCT_SYNCW		OCTEON_SYNCW
-#define	OCT_SYNC		OCTEON_SYNC
-#define	OCT_SYNCWS		OCTEON_SYNCWS
-#endif
 
 static inline uint64_t
 octeon_xkphys_read_8(paddr_t address)
@@ -425,22 +418,6 @@ octeon_restore_status(uint32_t s)
 static inline uint64_t
 octeon_get_cycles(void)
 { 
-#if defined(__mips_o32)
-	uint32_t s, lo, hi;
-  
-	s = octeon_disable_interrupt((void *)0);
-	__asm __volatile (
-		_ASM_PROLOGUE_MIPS64
-		"	dmfc0	%[lo], $9, 6		\n"
-		"	add	%[hi], %[lo], $0	\n"
-		"	srl	%[hi], 32		\n"
-		"	sll	%[lo], 32		\n"
-		"	srl	%[lo], 32		\n"
-		_ASM_EPILOGUE
-		: [lo]"=&r"(lo), [hi]"=&r"(hi));
-	octeon_restore_status(s);
-	return ((uint64_t)hi << 32) + (uint64_t)lo;
-#else
 	uint64_t tmp;
 
 	__asm __volatile (
@@ -449,7 +426,6 @@ octeon_get_cycles(void)
 		_ASM_EPILOGUE
 		: [tmp]"=&r"(tmp));
 	return tmp;
-#endif
 }
 
 /* -------------------------------------------------------------------------- */
