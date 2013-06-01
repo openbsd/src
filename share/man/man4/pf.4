@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.74 2012/02/10 00:08:20 haesbaert Exp $
+.\"	$OpenBSD: pf.4,v 1.75 2013/06/01 17:15:02 lteo Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 10 2012 $
+.Dd $Mdocdate: June 1 2013 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -305,6 +305,7 @@ struct pfioc_natlook {
 	struct pf_addr	 rsaddr;
 	struct pf_addr	 rdaddr;
 	u_int16_t	 rdomain;
+	u_int16_t	 rrdomain;
 	u_int16_t	 sport;
 	u_int16_t	 dport;
 	u_int16_t	 rsport;
@@ -580,6 +581,8 @@ struct pfr_addr {
 		struct in6_addr	 _pfra_ip6addr;
 	}		 pfra_u;
 	char		 pfra_ifname[IFNAMSIZ];
+	u_int32_t	 pfra_states;
+	u_int16_t	 pfra_weight;
 	u_int8_t	 pfra_af;
 	u_int8_t	 pfra_net;
 	u_int8_t	 pfra_not;
