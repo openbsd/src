@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.12 2010/09/01 13:59:17 claudio Exp $
+/*	$OpenBSD: ldpctl.c,v 1.13 2013/06/01 19:29:23 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -112,8 +112,8 @@ main(int argc, char *argv[])
 		    &ifidx, sizeof(ifidx));
 		break;
 	case SHOW_NBR:
-		printf("%-15s %-18s %-15s %-9s %-10s\n", "ID",
-		    "State", "Address", "Iface", "Uptime");
+		printf("%-15s %-18s %-15s %-10s\n", "ID",
+		    "State", "Address", "Uptime");
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_LIB:
@@ -362,20 +362,14 @@ int
 show_nbr_msg(struct imsg *imsg)
 {
 	struct ctl_nbr	*nbr;
-	char		*state;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NBR:
 		nbr = imsg->data;
-		if (asprintf(&state, "%s/%s", nbr_state_name(nbr->nbr_state),
-		    if_state_name(nbr->iface_state)) == -1)
-			err(1, NULL);
 		printf("%-15s %-19s", inet_ntoa(nbr->id),
-		    state);
-		printf("%-15s %-10s", inet_ntoa(nbr->addr), nbr->name);
-		printf("%-15s\n", nbr->uptime == 0 ? "-" :
-		    fmt_timeframe_core(nbr->uptime));
-		free(state);
+		    nbr_state_name(nbr->nbr_state));
+		printf("%-15s %-15s\n", inet_ntoa(nbr->addr),
+		    nbr->uptime == 0 ? "-" : fmt_timeframe_core(nbr->uptime));
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
