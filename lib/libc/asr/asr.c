@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.29 2013/06/01 14:34:34 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.30 2013/06/01 15:02:01 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -487,23 +487,6 @@ asr_make_fqdn(const char *name, const char *domain, char *buf, size_t buflen)
 }
 
 /*
- * Concatenate a name and a domain name. The result has no trailing dot.
- * Return the resulting string length, or 0 in case of error.
- */
-size_t
-asr_domcat(const char *name, const char *domain, char *buf, size_t buflen)
-{
-	size_t	r;
-
-	r = asr_make_fqdn(name, domain, buf, buflen);
-	if (r == 0)
-		return (0);
-	buf[r - 1] = '\0';
-
-	return (r - 1);
-}
-
-/*
  * Count the dots in a string.
  */
 static int
@@ -914,96 +897,6 @@ asr_iter_db(struct async *as)
 	DPRINT("asr_iter_db: %i\n", as->as_db_idx);
 
 	return (0);
-}
-
-enum {
-	DOM_INIT,
-	DOM_DOMAIN,
-	DOM_DONE
-};
-
-/*
- * Implement the search domain strategy.
- *
- * This function works as a generator that constructs complete domains in
- * buffer "buf" of size "len" for the given host name "name", according to the
- * search rules defined by the resolving context.  It is supposed to be called
- * multiple times (with the same name) to generate the next possible domain
- * name, if any.
- *
- * It returns -1 if all possibilities have been exhausted, 0 if there was an
- * error generating the next name, or the resulting name length.
- */
-int
-asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
-{
-	switch (as->as_dom_step) {
-
-	case DOM_INIT:
-		/* First call */
-
-		/*
-		 * If "name" is an FQDN, that's the only result and we
-		 * don't try anything else.
-		 */
-		if (strlen(name) && name[strlen(name) - 1] ==  '.') {
-			DPRINT("asr: asr_iter_domain(\"%s\") fqdn\n", name);
-			as->as_dom_flags |= ASYNC_DOM_FQDN;
-			as->as_dom_step = DOM_DONE;
-			return (asr_domcat(name, NULL, buf, len));
-		}
-
-		/*
-		 * Otherwise, we iterate through the specified search domains.
-		 */
-		as->as_dom_step = DOM_DOMAIN;
-		as->as_dom_idx = 0;
-
-		/*
-		 * If "name" as enough dots, use it as-is first, as indicated
-		 * in resolv.conf(5).
-		 */
-		if ((asr_ndots(name)) >= as->as_ctx->ac_ndots) {
-			DPRINT("asr: asr_iter_domain(\"%s\") ndots\n", name);
-			as->as_dom_flags |= ASYNC_DOM_NDOTS;
-			if (strlcpy(buf, name, len) >= len)
-				return (0);
-			return (strlen(buf));
-		}
-		/* Otherwise, starts using the search domains */
-		/* FALLTHROUGH */
-
-	case DOM_DOMAIN:
-		if (as->as_dom_idx < as->as_ctx->ac_domcount) {
-			DPRINT("asr: asr_iter_domain(\"%s\") domain \"%s\"\n",
-			    name, as->as_ctx->ac_dom[as->as_dom_idx]);
-			as->as_dom_flags |= ASYNC_DOM_DOMAIN;
-			return (asr_domcat(name,
-			    as->as_ctx->ac_dom[as->as_dom_idx++], buf, len));
-		}
-
-		/* No more domain to try. */
-
-		as->as_dom_step = DOM_DONE;
-
-		/*
-		 * If the name was not tried as an absolute name before,
-		 * do it now.
-		 */
-		if (!(as->as_dom_flags & ASYNC_DOM_NDOTS)) {
-			DPRINT("asr: asr_iter_domain(\"%s\") as is\n", name);
-			as->as_dom_flags |= ASYNC_DOM_ASIS;
-			if (strlcpy(buf, name, len) >= len)
-				return (0);
-			return (strlen(buf));
-		}
-		/* Otherwise, we are done. */
-
-	case DOM_DONE:
-	default:
-		DPRINT("asr: asr_iter_domain(\"%s\") done\n", name);
-		return (-1);
-	}
 }
 
 /*
