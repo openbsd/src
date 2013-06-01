@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.111 2013/04/29 17:06:20 matthew Exp $
+#	$OpenBSD: Makefile.inc,v 1.112 2013/06/01 09:49:53 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -56,7 +56,7 @@ ASM=	__get_tcb.o __getcwd.o __semctl.o __set_tcb.o __syscall.o \
 	shmget.o shutdown.o sigaction.o sigaltstack.o socket.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o \
 	symlinkat.o sync.o sysarch.o umask.o unlink.o unlinkat.o \
-	unmount.o utimensat.o utimes.o wait4.o write.o writev.o
+	unmount.o utimensat.o utimes.o utrace.o wait4.o write.o writev.o
 
 # modules with specific implementations on some architectures, and the
 # default implementation elsewhere:
@@ -195,7 +195,7 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	sigprocmask.2 sigreturn.2 sigsuspend.2 socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 symlink.2 \
 	sync.2 sysarch.2 syscall.2 truncate.2 umask.2 unlink.2 \
-	utimes.2 vfork.2 wait.2 write.2
+	utimes.2 utrace.2 vfork.2 wait.2 write.2
 
 MLINKS+=__get_tcb.2 __set_tcb.2
 MLINKS+=__thrsleep.2 __thrwakeup.2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.15 2012/07/09 17:51:08 claudio Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.16 2013/06/01 09:49:52 miod Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -151,6 +151,19 @@ struct sockaddr;
 struct stat;
 
 /*
+ * KTR_USER - user record
+ */
+#define KTR_USER	9
+#define KTR_USER_MAXIDLEN	20
+#define KTR_USER_MAXLEN		2048	/* maximum length of passed data */
+struct ktr_user {
+	char    ktr_id[KTR_USER_MAXIDLEN];      /* string id of caller */
+	/*
+	 * Followed by ktr_len - sizeof(struct ktr_user) of user data.
+	 */
+};
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -162,6 +175,7 @@ struct stat;
 #define KTRFAC_CSW	(1<<KTR_CSW)
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
 #define KTRFAC_STRUCT   (1<<KTR_STRUCT)
+#define KTRFAC_USER	(1<<KTR_USER)
 
 /*
  * trace flags (also in p_traceflags)
@@ -175,6 +189,7 @@ struct stat;
 
 __BEGIN_DECLS
 int	ktrace(const char *, int, int, pid_t);
+int	utrace(const char *, const void *, size_t);
 __END_DECLS
 
 #else
@@ -186,6 +201,8 @@ void ktrnamei(struct proc *, char *);
 void ktrpsig(struct proc *, int, sig_t, int, int, siginfo_t *);
 void ktrsyscall(struct proc *, register_t, size_t, register_t []);
 void ktrsysret(struct proc *, register_t, int, register_t);
+void ktr_kuser(const char *, void *, size_t);
+int ktruser(struct proc *, const char *, const void *, size_t);
 
 void ktrcleartrace(struct process *);
 void ktrsettrace(struct process *, int, struct vnode *, struct ucred *);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.22 2012/11/29 02:35:04 guenther Exp $
+.\"	$OpenBSD: ktrace.2,v 1.23 2013/06/01 09:49:53 miod Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 29 2012 $
+.Dd $Mdocdate: June 1 2013 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -110,6 +110,10 @@ Trace emulation changes.
 Trace context switch points.
 .It Dv KTRFAC_STRUCT
 Trace various structs
+.It Dv KTRFAC_USER
+Trace user data coming from
+.Xr utrace 2
+calls.
 .It Dv KTRFAC_INHERIT
 Inherit tracing to future children.
 .El
@@ -188,7 +192,8 @@ No process can be found corresponding to that specified by
 .El
 .Sh SEE ALSO
 .Xr kdump 1 ,
-.Xr ktrace 1
+.Xr ktrace 1 ,
+.Xr utrace 2
 .Sh HISTORY
 A
 .Fn ktrace

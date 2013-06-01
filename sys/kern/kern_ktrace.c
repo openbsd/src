@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.58 2012/04/10 20:39:37 mikeb Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.59 2013/06/01 09:49:50 miod Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -31,8 +31,6 @@
  *
  *	@(#)kern_ktrace.c	8.2 (Berkeley) 9/23/93
  */
-
-#ifdef KTRACE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,6 +343,49 @@ ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
+int
+ktruser(struct proc *p, const char *id, const void *addr, size_t len)
+{
+	struct ktr_header kth;
+	struct ktr_user *ktp;
+	int error;
+	void *memp;
+	size_t size;
+#define	STK_PARAMS	128
+	long long stkbuf[STK_PARAMS / sizeof(long long)];
+
+	if (!KTRPOINT(p, KTR_USER))
+		return (0);
+	if (len > KTR_USER_MAXLEN)
+		return EINVAL;
+
+	atomic_setbits_int(&p->p_flag, P_INKTR);
+	ktrinitheader(&kth, p, KTR_USER);
+	size = sizeof(*ktp) + len;
+	memp = NULL;
+	if (size > sizeof(stkbuf)) {
+		memp = malloc(sizeof(*ktp) + len, M_TEMP, M_WAITOK);
+		ktp = (struct ktr_user *)memp;
+	} else
+		ktp = (struct ktr_user *)stkbuf;
+	bzero(ktp->ktr_id, KTR_USER_MAXIDLEN);
+	error = copyinstr(id, ktp->ktr_id, KTR_USER_MAXIDLEN, NULL);
+	if (error)
+	    goto out;
+
+	error = copyin(addr, (void *)(ktp + 1), len);
+	if (error)
+		goto out;
+	kth.ktr_len = sizeof(*ktp) + len;
+	ktrwrite(p, &kth, ktp);
+out:
+	if (memp != NULL)
+		free(memp, M_TEMP);
+	atomic_clearbits_int(&p->p_flag, P_INKTR);
+	return (error);
+}
+
+
 /* Interface and common routines */
 
 /*
@@ -608,4 +649,18 @@ ktrcanset(struct proc *callp, struct process *targetpr)
 	return (0);
 }
 
-#endif
+/*
+ * utrace system call
+ */
+/* ARGSUSED */
+int
+sys_utrace(struct proc *curp, void *v, register_t *retval)
+{
+	struct sys_utrace_args /* {
+		syscallarg(const char *) label;
+		syscallarg(const void *) addr;
+		syscallarg(size_t) len;
+	} */ *uap = v;
+	return (ktruser(curp, SCARG(uap, label), SCARG(uap, addr),
+	    SCARG(uap, len)));
+}
