@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.42 2013/06/01 20:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.43 2013/06/01 23:06:26 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -36,11 +36,17 @@
 #define RTHREAD_STACK_SIZE_DEF (256 * 1024)
 #endif
 
+#define _USING_TICKETS 0
+/*
+ * tickets don't work yet? (or seem much slower, with lots of system time)
+ * until then, keep the struct around to avoid excessive changes going
+ * back and forth.
+ */
 struct _spinlock {
-	_atomic_lock_t atomiclock;
-	uint32_t waiter;
-	uint32_t ready;
-	int pad;
+	_atomic_lock_t ticket;
+	uint32_t __waiter;
+	uint32_t __ready;
+	int __pad;
 };
 
 #define	_SPINLOCK_UNLOCKED { _ATOMIC_LOCK_UNLOCKED, 0, 0 }

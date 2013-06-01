@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.38 2013/06/01 20:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.39 2013/06/01 23:06:26 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -127,8 +127,9 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
 				abort();
 
 			/* self-deadlock, possibly until timeout */
-			while (__thrsleep(self, CLOCK_REALTIME | 0x8, abstime,
-			    &mutex->lock.ready, NULL) != EWOULDBLOCK)
+			while (__thrsleep(self, CLOCK_REALTIME |
+			    _USING_TICKETS, abstime,
+			    &mutex->lock.ticket, NULL) != EWOULDBLOCK)
 				_spinlock(&mutex->lock);
 			return (ETIMEDOUT);
 		}
@@ -144,8 +145,8 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait,
 		/* add to the wait queue and block until at the head */
 		TAILQ_INSERT_TAIL(&mutex->lockers, self, waiting);
 		while (mutex->owner != self) {
-			ret = __thrsleep(self, CLOCK_REALTIME | 0x8, abstime,
-			    &mutex->lock.ready, NULL);
+			ret = __thrsleep(self, CLOCK_REALTIME | _USING_TICKETS,
+			    abstime, &mutex->lock.ticket, NULL);
 			_spinlock(&mutex->lock);
 			assert(mutex->owner != NULL);
 			if (ret == EWOULDBLOCK) {
@@ -350,8 +351,8 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 
 	/* wait until we're the owner of the mutex again */
 	while (mutex->owner != self) {
-		error = __thrsleep(self, cond->clock | 0x8, abstime,
-		    &mutex->lock.ready, &self->delayed_cancel);
+		error = __thrsleep(self, cond->clock | _USING_TICKETS, abstime,
+		    &mutex->lock.ticket, &self->delayed_cancel);
 
 		/*
 		 * If abstime == NULL, then we're definitely waiting
@@ -497,8 +498,8 @@ pthread_cond_wait(pthread_cond_t *condp, pthread_mutex_t *mutexp)
 
 	/* wait until we're the owner of the mutex again */
 	while (mutex->owner != self) {
-		error = __thrsleep(self, 0 | 0x8, NULL, &mutex->lock.ready,
-		    &self->delayed_cancel);
+		error = __thrsleep(self, 0 | _USING_TICKETS, NULL,
+		    &mutex->lock.ticket, &self->delayed_cancel);
 
 		/*
 		 * If we took a normal signal (not from

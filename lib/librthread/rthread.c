@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.70 2013/06/01 20:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.71 2013/06/01 23:06:26 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -82,43 +82,20 @@ struct pthread_attr _rthread_attr_default = {
 void
 _spinlock(volatile struct _spinlock *lock)
 {
-	uint32_t me;
-
-	while (_atomic_lock(&lock->atomiclock))
+	while (_atomic_lock(&lock->ticket))
 		sched_yield();
-	me = lock->waiter++;
-	lock->atomiclock = _ATOMIC_LOCK_UNLOCKED;
-	while (me != lock->ready) {
-		if (me < lock->ready) {
-			_rthread_debug(0, "SPINLOCK FAIL: %d %d\n",
-			    me, lock->ready);
-			_exit(1);
-		}
-		if (me > lock->ready + 1)
-			sched_yield();
-	}
 }
 
 int
 _spinlocktry(volatile struct _spinlock *lock)
 {
-	int gotit = 0;
-
-	while (_atomic_lock(&lock->atomiclock))
-		sched_yield();
-	if (lock->waiter == lock->ready) {
-		lock->waiter++;
-		gotit = 1;
-	}
-	lock->atomiclock = _ATOMIC_LOCK_UNLOCKED;
-
-	return gotit;
+	return 0 == _atomic_lock(&lock->ticket);
 }
 
 void
 _spinunlock(volatile struct _spinlock *lock)
 {
-	lock->ready++;
+	lock->ticket = _ATOMIC_LOCK_UNLOCKED;
 }
 
 /*
@@ -648,7 +625,8 @@ _rthread_dl_lock(int what)
 		} else if (owner != self) {
 			TAILQ_INSERT_TAIL(&lockers, self, waiting);
 			while (owner != self) {
-				__thrsleep(self, 0 | 0x8, NULL, &lock.ready, NULL);
+				__thrsleep(self, 0 | _USING_TICKETS, NULL,
+				    &lock.ticket, NULL);
 				_spinlock(&lock);
 			}
 		}
