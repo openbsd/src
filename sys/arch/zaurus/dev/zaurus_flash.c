@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_flash.c,v 1.9 2009/05/21 23:45:48 krw Exp $	*/
+/*	$OpenBSD: zaurus_flash.c,v 1.10 2013/06/01 22:06:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -123,7 +123,7 @@ void	 zflash_safe_stop(struct zflash_softc *, dev_t);
 
 struct cfattach flash_pxaip_ca = {
 	sizeof(struct zflash_softc), zflashmatch, zflashattach,
-	zflashdetach, flashactivate
+	zflashdetach
 };
 
 struct flash_ctl_tag zflash_ctl_tag = {
