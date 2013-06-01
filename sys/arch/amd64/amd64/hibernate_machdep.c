@@ -263,7 +263,7 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 	bzero((caddr_t)HIBERNATE_PT_LOW2, PAGE_SIZE);
 	bzero((caddr_t)HIBERNATE_PT_HI, PAGE_SIZE);
 	bzero((caddr_t)HIBERNATE_SELTABLE, PAGE_SIZE);
-	bzero((caddr_t)HIBERNATE_STACK_PAGE, PAGE_SIZE*3);
+	bzero((caddr_t)(HIBERNATE_STACK_PAGE - 3*PAGE_SIZE) , 3*PAGE_SIZE);
 
 	/* First 512GB PML4E */
 	pde = (pt_entry_t *)(HIBERNATE_PML4T +
