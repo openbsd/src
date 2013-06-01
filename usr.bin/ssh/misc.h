@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.h,v 1.48 2011/03/29 18:54:17 stevesk Exp $ */
+/* $OpenBSD: misc.h,v 1.49 2013/06/01 13:15:52 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,6 +35,7 @@ char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
 void	 ms_subtract_diff(struct timeval *, int *);
 void	 ms_to_timeval(struct timeval *, int);
+time_t	 monotime(void);
 
 struct passwd *pwcopy(struct passwd *);
 const char *ssh_gai_strerror(int);

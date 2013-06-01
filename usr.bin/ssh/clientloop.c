@@ -1,4 +1,4 @@
-/* $OpenBSD: clientloop.c,v 1.250 2013/05/17 00:13:13 djm Exp $ */
+/* $OpenBSD: clientloop.c,v 1.251 2013/06/01 13:15:51 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -265,7 +265,7 @@ set_control_persist_exit_time(void)
 		control_persist_exit_time = 0;
 	} else if (control_persist_exit_time <= 0) {
 		/* a client connection has recently closed */
-		control_persist_exit_time = time(NULL) +
+		control_persist_exit_time = monotime() +
 			(time_t)options.control_persist_timeout;
 		debug2("%s: schedule exit in %d seconds", __func__,
 		    options.control_persist_timeout);
@@ -348,7 +348,7 @@ client_x11_get_proto(const char *display, const char *xauth_path,
 				if (system(cmd) == 0)
 					generated = 1;
 				if (x11_refuse_time == 0) {
-					now = time(NULL) + 1;
+					now = monotime() + 1;
 					if (UINT_MAX - timeout < now)
 						x11_refuse_time = UINT_MAX;
 					else
@@ -573,7 +573,7 @@ client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
 {
 	struct timeval tv, *tvp;
 	int timeout_secs;
-	time_t minwait_secs = 0, server_alive_time = 0, now = time(NULL);
+	time_t minwait_secs = 0, server_alive_time = 0, now = monotime();
 	int ret;
 
 	/* Add any selections by the channel mechanism. */
@@ -668,7 +668,7 @@ client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
 		 * Timeout.  Could have been either keepalive or rekeying.
 		 * Keepalive we check here, rekeying is checked in clientloop.
 		 */
-		if (server_alive_time != 0 && server_alive_time <= time(NULL))
+		if (server_alive_time != 0 && server_alive_time <= monotime())
 			server_alive_check();
 	}
 
@@ -1638,7 +1638,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		 * connections, then quit.
 		 */
 		if (control_persist_exit_time > 0) {
-			if (time(NULL) >= control_persist_exit_time) {
+			if (monotime() >= control_persist_exit_time) {
 				debug("ControlPersist timeout expired");
 				break;
 			}
@@ -1856,7 +1856,7 @@ client_request_x11(const char *request_type, int rchan)
 		    "malicious server.");
 		return NULL;
 	}
-	if (x11_refuse_time != 0 && time(NULL) >= x11_refuse_time) {
+	if (x11_refuse_time != 0 && monotime() >= x11_refuse_time) {
 		verbose("Rejected X11 connection after ForwardX11Timeout "
 		    "expired");
 		return NULL;
