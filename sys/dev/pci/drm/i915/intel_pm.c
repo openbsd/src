@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_pm.c,v 1.5 2013/05/05 13:55:36 kettenis Exp $	*/
+/*	$OpenBSD: intel_pm.c,v 1.6 2013/06/01 02:03:30 kettenis Exp $	*/
 /*
  * Copyright © 2012 Intel Corporation
  *
@@ -4674,7 +4674,7 @@ intel_gt_init(struct drm_device *dev)
 {
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 
-	mtx_init(&dev_priv->gt_lock, IPL_NONE);
+	mtx_init(&dev_priv->gt_lock, IPL_TTY);
 
 	intel_gt_reset(dev);
 

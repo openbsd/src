@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.31 2013/05/21 22:12:58 kettenis Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.32 2013/06/01 02:03:30 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -979,9 +979,9 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	i915_gem_load(dev);
 
 	mtx_init(&dev_priv->irq_lock, IPL_TTY);
-	mtx_init(&dev_priv->rps.lock, IPL_NONE);
-	mtx_init(&dev_priv->dpio_lock, IPL_NONE);
-	mtx_init(&mchdev_lock, IPL_NONE);
+	mtx_init(&dev_priv->rps.lock, IPL_TTY);
+	mtx_init(&dev_priv->dpio_lock, IPL_TTY);
+	mtx_init(&mchdev_lock, IPL_TTY);
 	mtx_init(&dev_priv->error_completion_lock, IPL_NONE);
 
 	rw_init(&dev_priv->rps.hw_lock, "rpshw");
