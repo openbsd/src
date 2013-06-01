@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.57 2013/05/31 20:00:00 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.58 2013/06/01 17:39:20 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -937,6 +937,11 @@ hibernate_write_signature(union hibernate_info *hiber_info)
  * Write the memory chunk table to the area in swap immediately
  * preceding the signature block. The chunk table is stored
  * in the piglet when this function is called.
+ *
+ * Return values:
+ *
+ * 0   -  success
+ * EIO -  I/O error writing the chunktable
  */
 int
 hibernate_write_chunktable(union hibernate_info *hiber_info)
@@ -964,7 +969,7 @@ hibernate_write_chunktable(union hibernate_info *hiber_info)
 		    chunkbase + (i/hiber_info->secsize),
 		    (vaddr_t)(hibernate_chunk_table_start + i),
 		    MAXPHYS, HIB_W, hiber_info->io_page))
-			return (1);
+			return (EIO);
 	}
 
 	return (0);
@@ -1354,6 +1359,13 @@ hibernate_process_chunk(union hibernate_info *hiber_info,
  * write has started, and the write function itself can also have no
  * side effects. This also means no printfs are permitted (since printf
  * has side effects.)
+ *
+ * Return values :
+ *
+ * 0      - success
+ * EIO    - I/O error occurred writing the chunks
+ * EINVAL - Failed to write a complete range
+ * ENOMEM - Memory allocation failure during preparation of the zlib arena
  */
 int
 hibernate_write_chunks(union hibernate_info *hiber_info)
@@ -1380,17 +1392,16 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 	hibernate_temp_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
 	if (!hibernate_temp_page)
-		return (1);
+		return (ENOMEM);
 
 	hibernate_copy_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
 	if (!hibernate_copy_page)
-		return (1);
+		return (ENOMEM);
 
 	pmap_kenter_pa(hibernate_copy_page,
 	    (hiber_info->piglet_pa + 3*PAGE_SIZE), VM_PROT_ALL);
 
-	/* XXX - not needed on all archs */
 	pmap_activate(curproc);
 
 	chunks = (struct hibernate_disk_chunk *)(hiber_info->piglet_va +
@@ -1425,7 +1436,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 		/* Reset zlib for deflate */
 		if (hibernate_zlib_reset(hiber_info, 1) != Z_OK)
-			return (1);
+			return (ENOMEM);
 
 		inaddr = range_base;
 
@@ -1451,7 +1462,6 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 					pmap_kenter_pa(hibernate_temp_page,
 					    inaddr & PMAP_PA_MASK, VM_PROT_ALL);
 
-					/* XXX - not needed on all archs */
 					pmap_activate(curproc);
 
 					bcopy((caddr_t)hibernate_temp_page,
@@ -1471,7 +1481,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 					    blkctr, (vaddr_t)hibernate_io_page,
 					    PAGE_SIZE, HIB_W,
 					    hiber_info->io_page))
-						return (1);
+						return (EIO);
 
 					blkctr += nblocks;
 				}
@@ -1479,7 +1489,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		}
 
 		if (inaddr != range_end)
-			return (1);
+			return (EINVAL);
 
 		/*
 		 * End of range. Round up to next secsize bytes
@@ -1497,7 +1507,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 
 		if (deflate(&hibernate_state->hib_stream, Z_FINISH) !=
 		    Z_STREAM_END)
-			return (1);
+			return (EIO);
 
 		out_remaining = hibernate_state->hib_stream.avail_out;
 
@@ -1512,7 +1522,7 @@ hibernate_write_chunks(union hibernate_info *hiber_info)
 		if (hiber_info->io_func(hiber_info->device, blkctr,
 		    (vaddr_t)hibernate_io_page, nblocks*hiber_info->secsize,
 		    HIB_W, hiber_info->io_page))
-			return (1);
+			return (EIO);
 
 		blkctr += nblocks;
 
@@ -1671,7 +1681,6 @@ hibernate_read_chunks(union hibernate_info *hib_info, paddr_t pig_start,
 
 	global_pig_start = pig_start;
 
-	/* XXX - dont need this on all archs */
 	pmap_activate(curproc);
 
 	/*
