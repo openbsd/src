@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.58 2013/06/01 17:39:20 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.59 2013/06/01 19:06:34 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1222,24 +1222,8 @@ hibernate_resume(void)
 	/* Switch stacks */
 	hibernate_switch_stack_machdep();
 
-	/*
-	 * Point of no return. Once we pass this point, only kernel code can
-	 * be accessed. No global variables or other kernel data structures
-	 * are guaranteed to be coherent after unpack starts.
-	 *
-	 * The image is now in high memory (pig area), we unpack from the pig
-	 * to the correct location in memory. We'll eventually end up copying
-	 * on top of ourself, but we are assured the kernel code here is the
-	 * same between the hibernated and resuming kernel, and we are running
-	 * on our own stack, so the overwrite is ok.
-	 */
+	/* Unpack and resume */
 	hibernate_unpack_image(&disk_hiber_info);
-
-	/*
-	 * Resume the loaded kernel by jumping to the MD resume vector.
-	 * We won't be returning from this call.
-	 */
-	hibernate_resume_machdep();
 
 fail:
 	splx(s);
@@ -1249,6 +1233,9 @@ fail:
 /*
  * Unpack image from pig area to original location by looping through the
  * list of output chunks in the order they should be restored (fchunks).
+ *
+ * Note that due to the stack smash protector and the fact that we have
+ * switched stacks, it is not permitted to return from this function.
  */
 void
 hibernate_unpack_image(union hibernate_info *hiber_info)
@@ -1272,6 +1259,17 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 	/* Can't use hiber_info that's passed in after this point */
 	bcopy(hiber_info, &local_hiber_info, sizeof(union hibernate_info));
 
+	/*
+	 * Point of no return. Once we pass this point, only kernel code can
+	 * be accessed. No global variables or other kernel data structures
+	 * are guaranteed to be coherent after unpack starts.
+	 *
+	 * The image is now in high memory (pig area), we unpack from the pig
+	 * to the correct location in memory. We'll eventually end up copying
+	 * on top of ourself, but we are assured the kernel code here is the
+	 * same between the hibernated and resuming kernel, and we are running
+	 * on our own stack, so the overwrite is ok.
+	 */
 	hibernate_activate_resume_pt_machdep();
 
 	for (i = 0; i < local_hiber_info.chunk_ctr; i++) {
@@ -1285,6 +1283,12 @@ hibernate_unpack_image(union hibernate_info *hiber_info)
 		image_cur += chunks[fchunks[i]].compressed_size;
 
 	}
+
+	/*
+	 * Resume the loaded kernel by jumping to the MD resume vector.
+	 * We won't be returning from this call.
+	 */
+	hibernate_resume_machdep();
 }
 
 /*
