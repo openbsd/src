@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.247 2013/05/05 16:45:01 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.248 2013/06/01 16:26:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -107,6 +107,8 @@ struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
 void		 socket_nonblockmode(int);
 void		 apply_ignore_list(char *);
+
+void add_default_route(int, struct in_addr, struct in_addr);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -2262,4 +2264,43 @@ priv_write_file(struct imsg_write_file *imsg)
 	fchown(fd, imsg->uid, imsg->gid);
 
 	close(fd);
+}
+
+/*
+ * add_default_route is the equivalent of
+ *
+ *	route -q $rdomain add default -iface $router
+ *
+ *	or
+ *
+ * 	route -q $rdomain add default $router
+ *
+ * depending on the contents of the gateway parameter.
+ */
+void
+add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
+{
+	struct imsg_add_route	 imsg;
+	int			 rslt;
+
+	memset(&imsg, 0, sizeof(imsg));
+
+	imsg.rdomain = rdomain;
+	imsg.dest = addr;
+	imsg.addrs = RTA_DST | RTA_NETMASK;
+
+	/*
+	 * Set gateway address if and only if non-zero addr supplied. A
+	 * gateway address of 0 implies '-iface'.
+	 */
+	if (bcmp(&gateway, &addr, sizeof(addr)) != 0) {
+		imsg.gateway = gateway;
+		imsg.addrs |= RTA_GATEWAY;
+	}
+
+	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ROUTE, 0, 0, -1, &imsg,
+	   sizeof(imsg));
+
+	if (rslt == -1)
+		warning("add_route: imsg_compose: %s", strerror(errno));
 }
