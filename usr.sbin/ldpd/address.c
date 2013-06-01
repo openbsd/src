@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.8 2013/06/01 18:47:07 claudio Exp $ */
+/*	$OpenBSD: address.c,v 1.9 2013/06/01 19:01:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -83,12 +83,6 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 	struct ldp_msg		addr;
 	struct address_list_tlv	alt;
 	enum imsg_type		type;
-
-	if (nbr->state != NBR_STA_OPER) {
-		log_debug("recv_address: neighbor ID %s not operational",
-		    inet_ntoa(nbr->id));
-		return (-1);
-	}
 
 	bcopy(buf, &addr, sizeof(addr));
 	log_debug("recv_address: neighbor ID %s%s", inet_ntoa(nbr->id),

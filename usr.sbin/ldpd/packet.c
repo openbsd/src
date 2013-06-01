@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.23 2013/06/01 18:47:07 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.24 2013/06/01 19:01:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,8 +39,6 @@
 #include "log.h"
 #include "ldpe.h"
 
-int		 ldp_hdr_sanity_check(struct ldp_hdr *, u_int16_t,
-		    const struct iface *);
 struct iface	*find_iface(struct ldpd_conf *, unsigned int, struct in_addr);
 ssize_t		 session_get_pdu(struct ibuf_read *, char **);
 
@@ -175,8 +173,12 @@ disc_recv_packet(int fd, short event, void *bula)
 		return;
 	}
 
-	if (ldp_hdr_sanity_check(&ldp_hdr, len, iface) == -1)
+	if (ldp_hdr.lspace_id != 0) {
+		log_debug("disc_recv_packet: invalid label space "
+		    "ID %s, interface %s", ldp_hdr.lspace_id,
+		    iface->name);
 		return;
+	}
 
 	if (ntohs(ldp_hdr.length) >
 	    len - sizeof(ldp_hdr.version) - sizeof(ldp_hdr.length)) {
@@ -193,7 +195,6 @@ disc_recv_packet(int fd, short event, void *bula)
 
 	bcopy(buf + LDP_HDR_SIZE, &ldp_msg, sizeof(ldp_msg));
 
-
 	/* switch LDP packet type */
 	switch (ntohs(ldp_msg.type)) {
 	case MSG_TYPE_HELLO:
@@ -203,23 +204,6 @@ disc_recv_packet(int fd, short event, void *bula)
 		log_debug("recv_packet: unknown LDP packet type, interface %s",
 		    iface->name);
 	}
-}
-
-int
-ldp_hdr_sanity_check(struct ldp_hdr *ldp_hdr, u_int16_t len,
-    const struct iface *iface)
-{
-	struct in_addr		 addr;
-
-	if (ldp_hdr->lspace_id != 0) {
-		addr.s_addr = ldp_hdr->lspace_id;
-		log_debug("ldp_hdr_sanity_check: invalid label space "
-		    "ID %s, interface %s", inet_ntoa(addr),
-		    iface->name);
-		return (-1);
-	}
-
-	return (0);
 }
 
 struct iface *
@@ -297,7 +281,6 @@ void
 session_read(int fd, short event, void *arg)
 {
 	struct nbr	*nbr = arg;
-	struct iface	*iface = nbr->iface;
 	struct ldp_hdr	*ldp_hdr;
 	struct ldp_msg	*ldp_msg;
 	char		*buf, *pdu;
@@ -313,7 +296,8 @@ session_read(int fd, short event, void *arg)
 	if ((n = read(fd, nbr->rbuf->buf + nbr->rbuf->wpos,
 	    sizeof(nbr->rbuf->buf) - nbr->rbuf->wpos)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
-			session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+			log_warn("session_read: read error");
+			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 			return;
 		}
 		/* retry read */
@@ -321,7 +305,8 @@ session_read(int fd, short event, void *arg)
 	}
 	if (n == 0) {
 		/* connection closed */
-		session_shutdown(nbr, S_SHUTDOWN, 0, 0);
+		log_debug("session_read: connection closed by remote end");
+		nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 		return;
 	}
 	nbr->rbuf->wpos += n;
@@ -342,7 +327,8 @@ session_read(int fd, short event, void *arg)
 			return;
 		}
 
-		if (ldp_hdr_sanity_check(ldp_hdr, len, iface) == -1) {
+		if (ldp_hdr->lsr_id != nbr->id.s_addr ||
+		    ldp_hdr->lspace_id != 0) {
 			session_shutdown(nbr, S_BAD_LDP_ID, 0, 0);
 			free(buf);
 			return;
@@ -353,17 +339,59 @@ session_read(int fd, short event, void *arg)
 
 		while (len >= LDP_MSG_LEN) {
 			ldp_msg = (struct ldp_msg *)pdu;
+			u_int16_t type = ntohs(ldp_msg->type);
 
 			pdu_len = ntohs(ldp_msg->length) + TLV_HDR_LEN;
 			if (pdu_len > len ||
 			    pdu_len < LDP_MSG_LEN - TLV_HDR_LEN) {
-				session_shutdown(nbr, S_BAD_TLV_LEN, 0, 0);
+				session_shutdown(nbr, S_BAD_TLV_LEN,
+				    ldp_msg->msgid, ldp_msg->type);
 				free(buf);
 				return;
 			}
 
+			/* check for error conditions earlier */
+			switch (type) {
+			case MSG_TYPE_NOTIFICATION:
+				/* notifications are always processed */
+				break;
+			case MSG_TYPE_INIT:
+				if ((nbr->state != NBR_STA_INITIAL) &&
+				    (nbr->state != NBR_STA_OPENSENT)) {
+					session_shutdown(nbr, S_SHUTDOWN,
+					    ldp_msg->msgid, ldp_msg->type);
+					free(buf);
+					return;
+				}
+				break;
+			case MSG_TYPE_KEEPALIVE:
+				if ((nbr->state == NBR_STA_INITIAL) ||
+				    (nbr->state == NBR_STA_OPENSENT)) {
+					session_shutdown(nbr, S_SHUTDOWN,
+					    ldp_msg->msgid, ldp_msg->type);
+					free(buf);
+					return;
+				}
+				break;
+			case MSG_TYPE_ADDR:
+			case MSG_TYPE_ADDRWITHDRAW:
+			case MSG_TYPE_LABELMAPPING:
+			case MSG_TYPE_LABELREQUEST:
+			case MSG_TYPE_LABELWITHDRAW:
+			case MSG_TYPE_LABELRELEASE:
+			case MSG_TYPE_LABELABORTREQ:
+			default:
+				if (nbr->state != NBR_STA_OPER) {
+					session_shutdown(nbr, S_SHUTDOWN,
+					    ldp_msg->msgid, ldp_msg->type);
+					free(buf);
+					return;
+				}
+				break;
+			}
+
 			/* switch LDP packet type */
-			switch (ntohs(ldp_msg->type)) {
+			switch (type) {
 			case MSG_TYPE_NOTIFICATION:
 				msg_size = recv_notification(nbr, pdu, pdu_len);
 				break;
@@ -390,10 +418,9 @@ session_read(int fd, short event, void *arg)
 				msg_size = recv_labelrelease(nbr, pdu, pdu_len);
 				break;
 			case MSG_TYPE_LABELABORTREQ:
-			case MSG_TYPE_HELLO:
 			default:
 				log_debug("session_read: unknown LDP packet "
-				    "type interface %s", iface->name);
+				    "from nbr %s", inet_ntoa(nbr->id));
 				free(buf);
 				return;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.16 2012/04/12 17:33:43 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.17 2013/06/01 19:01:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -399,6 +399,8 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 				    "neighbor");
 				return;
 			}
+			if (nbr->state != NBR_STA_OPER)
+				return;
 
 			switch (imsg.hdr.type) {
 			case IMSG_MAPPING_ADD:
@@ -421,6 +423,8 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 				    "neighbor");
 				return;
 			}
+			if (nbr->state != NBR_STA_OPER)
+				return;
 
 			switch (imsg.hdr.type) {
 			case IMSG_MAPPING_ADD_END:
@@ -445,6 +449,8 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 				    "neighbor");
 				return;
 			}
+			if (nbr->state != NBR_STA_OPER)
+				return;
 
 			send_notification_nbr(nbr, nm.status,
 			    htonl(nm.messageid), htonl(nm.type));
