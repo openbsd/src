@@ -1,3 +1,3 @@
-/*	$OpenBSD: fenv.h,v 1.1 2011/04/28 18:05:39 martynas Exp $	*/
-
+/*	$OpenBSD: fenv.h,v 1.2 2013/06/01 21:20:54 jasper Exp $	*/
+/* public domain */
 #include <powerpc/fenv.h>
