@@ -304,34 +304,6 @@ ffs64(uint64_t val)
 	return 64 - ret;
 }
 
-/*
- * Prefetch
- *
- *	OCTEON_PREF		normal (L1 and L2)
- *	OCTEON_PREF_L1		L1 only
- *	OCTEON_PREF_L2		L2 only
- *	OCTEON_PREF_DWB		don't write back
- *	OCTEON_PREF_PFS		prepare for store
- */
-#define __OCTEON_PREF_N(n, base, offset)			\
-	__asm __volatile (					\
-		"	.set	push				\
-		"	.set	arch=octeon			\n" \
-		"	pref	"#n", "#offset"(%[base])	\n" \
-		"	.set	pop				\
-		: : [base] "d" (base)				\
-	)
-#define __OCTEON_PREF_0(base, offset)	__OCTEON_PREF_N(0, base, offset)
-#define __OCTEON_PREF_4(base, offset)	__OCTEON_PREF_N(4, base, offset)
-#define __OCTEON_PREF_28(base, offset)	__OCTEON_PREF_N(28, base, offset)
-#define __OCTEON_PREF_29(base, offset)	__OCTEON_PREF_N(29, base, offset)
-#define __OCTEON_PREF_30(base, offset)	__OCTEON_PREF_N(30, base, offset)
-#define OCTEON_PREF(base, offset)	__OCTEON_PREF_0(base, offset)
-#define OCTEON_PREF_L1(base, offset)	__OCTEON_PREF_4(base, offset)
-#define OCTEON_PREF_L2(base, offset)	__OCTEON_PREF_28(base, offset)
-#define OCTEON_PREF_DWB(base, offset)	__OCTEON_PREF_29(base, offset)
-#define OCTEON_PREF_PFS(base, offset)	__OCTEON_PREF_30(base, offset)
-
 static inline uint64_t
 octeon_xkphys_read_8(paddr_t address)
 {
