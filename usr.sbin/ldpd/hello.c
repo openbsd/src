@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.16 2013/06/01 18:35:02 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.17 2013/06/01 18:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -61,7 +61,7 @@ send_hello(struct iface *iface)
 	    sizeof(struct hello_prms_tlv) +
 	    sizeof(struct hello_prms_opt4_tlv);
 
-	gen_ldp_hdr(buf, iface, size);
+	gen_ldp_hdr(buf, size);
 
 	size -= LDP_HDR_SIZE;
 
@@ -120,7 +120,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		return;
 	}
 
-	nbr = nbr_find_ldpid(ldp.lsr_id, ldp.lspace_id);
+	nbr = nbr_find_ldpid(ldp.lsr_id);
 	if (!nbr) {
 		struct in_addr	a;
 
@@ -129,7 +129,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		else
 			a = address;
 
-		nbr = nbr_new(ldp.lsr_id, ldp.lspace_id, iface, a);
+		nbr = nbr_new(ldp.lsr_id, iface, a);
 
 		/* set neighbor parameters */
 		nbr->hello_type = flags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.7 2013/06/01 18:35:02 claudio Exp $ */
+/*	$OpenBSD: address.c,v 1.8 2013/06/01 18:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -64,7 +64,7 @@ send_address(struct nbr *nbr, struct iface *iface)
 	    sizeof(struct address_list_tlv) +
 	    iface_count * sizeof(struct in_addr);
 
-	gen_ldp_hdr(buf, nbr->iface, size);
+	gen_ldp_hdr(buf, size);
 
 	size -= LDP_HDR_SIZE;
 
@@ -181,7 +181,7 @@ send_address_withdraw(struct nbr *nbr, struct iface *iface)
 	/* XXX: multiple address on the same iface? */
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) + sizeof(struct in_addr);
 
-	gen_ldp_hdr(buf, nbr->iface, size);
+	gen_ldp_hdr(buf, size);
 
 	size -= LDP_HDR_SIZE;
 

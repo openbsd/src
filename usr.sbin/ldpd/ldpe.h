@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.19 2013/06/01 18:16:35 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.20 2013/06/01 18:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -62,7 +62,6 @@ struct nbr {
 	int			 fd;
 	int			 state;
 
-	u_int16_t		 lspace;
 	u_int16_t		 holdtime;
 	u_int16_t		 keepalive;
 
@@ -95,8 +94,7 @@ int	 recv_keepalive(struct nbr *, char *, u_int16_t);
 
 /* notification.c */
 void	 send_notification_nbr(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
-struct ibuf	*send_notification(u_int32_t, struct iface *, u_int32_t,
-	    u_int32_t);
+struct ibuf	*send_notification(u_int32_t, u_int32_t, u_int32_t);
 int	 recv_notification(struct nbr *, char *, u_int16_t);
 
 /* address.c */
@@ -151,11 +149,11 @@ int	 if_set_tos(int, int);
 int	 if_set_reuse(int, int);
 
 /* neighbor.c */
-struct nbr	*nbr_new(u_int32_t, u_int16_t, struct iface *, struct in_addr);
+struct nbr	*nbr_new(u_int32_t, struct iface *, struct in_addr);
 void		 nbr_del(struct nbr *);
 
 struct nbr	*nbr_find_ip(u_int32_t);
-struct nbr	*nbr_find_ldpid(u_int32_t, u_int16_t);
+struct nbr	*nbr_find_ldpid(u_int32_t);
 struct nbr	*nbr_find_peerid(u_int32_t);
 
 int	 nbr_fsm(struct nbr *, enum nbr_event);
@@ -192,7 +190,7 @@ struct ctl_nbr	*nbr_to_ctl(struct nbr *);
 void		 ldpe_nbr_ctl(struct ctl_conn *);
 
 /* packet.c */
-int	 gen_ldp_hdr(struct ibuf *, struct iface *, u_int16_t);
+int	 gen_ldp_hdr(struct ibuf *, u_int16_t);
 int	 gen_msg_tlv(struct ibuf *, u_int32_t, u_int16_t);
 int	 send_packet(struct iface *, void *, size_t, struct sockaddr_in *);
 void	 disc_recv_packet(int, short, void *);

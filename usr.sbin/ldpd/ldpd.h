@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.33 2013/06/01 18:35:02 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.34 2013/06/01 18:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -203,8 +203,6 @@ struct iface {
 	struct in_addr		 dst;
 	struct in_addr		 mask;
 
-	u_int16_t		 lspace_id;
-
 	u_int64_t		 baudrate;
 	time_t			 uptime;
 	unsigned int		 ifindex;
@@ -291,7 +289,6 @@ struct ctl_iface {
 	char			 name[IF_NAMESIZE];
 	struct in_addr		 addr;
 	struct in_addr		 mask;
-	struct in_addr		 lspace;
 	struct in_addr		 rtr_id;
 	struct in_addr		 dr_id;
 	struct in_addr		 dr_addr;
@@ -320,7 +317,6 @@ struct ctl_nbr {
 	struct in_addr		 addr;
 	struct in_addr		 dr;
 	struct in_addr		 bdr;
-	struct in_addr		 lspace;
 	time_t			 dead_timer;
 	time_t			 uptime;
 	u_int32_t		 db_sum_lst_cnt;
@@ -336,7 +332,6 @@ struct ctl_nbr {
 struct ctl_rt {
 	struct in_addr		 prefix;
 	struct in_addr		 nexthop;
-	struct in_addr		 lspace;
 	struct in_addr		 adv_rtr;
 	time_t			 uptime;
 	u_int32_t		 local_label;

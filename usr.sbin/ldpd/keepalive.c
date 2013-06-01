@@ -1,4 +1,4 @@
-/*	$OpenBSD: keepalive.c,v 1.8 2013/06/01 18:35:02 claudio Exp $ */
+/*	$OpenBSD: keepalive.c,v 1.9 2013/06/01 18:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -48,7 +48,7 @@ send_keepalive(struct nbr *nbr)
 
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg);
 
-	gen_ldp_hdr(buf, nbr->iface, size);
+	gen_ldp_hdr(buf, size);
 
 	size -= LDP_HDR_SIZE;
 

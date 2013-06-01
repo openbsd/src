@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.30 2013/06/01 18:24:28 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.31 2013/06/01 18:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -62,8 +62,6 @@ RB_GENERATE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 static __inline int
 nbr_id_compare(struct nbr *a, struct nbr *b)
 {
-	if (ntohl(a->id.s_addr) - ntohl(b->id.s_addr) == 0)
-		return (a->lspace - b->lspace);
 	return (ntohl(a->id.s_addr) - ntohl(b->id.s_addr));
 }
 
@@ -235,8 +233,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 }
 
 struct nbr *
-nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface,
-    struct in_addr a)
+nbr_new(u_int32_t nbr_id, struct iface *iface, struct in_addr a)
 {
 	struct nbr	*nbr;
 
@@ -247,7 +244,6 @@ nbr_new(u_int32_t nbr_id, u_int16_t lspace, struct iface *iface,
 
 	nbr->state = NBR_STA_DOWN;
 	nbr->id.s_addr = nbr_id;
-	nbr->lspace = lspace;
 	nbr->iface = iface;
 	nbr->addr = a;
 
@@ -317,11 +313,10 @@ nbr_find_ip(u_int32_t addr)
 }
 
 struct nbr *
-nbr_find_ldpid(u_int32_t rtr_id, u_int16_t lspace)
+nbr_find_ldpid(u_int32_t rtr_id)
 {
 	struct nbr	n;
 	n.id.s_addr = rtr_id;
-	n.lspace = lspace;
 	return (RB_FIND(nbr_id_head, &nbrs_by_id, &n));
 }
 
@@ -595,7 +590,6 @@ nbr_act_session_operational(struct nbr *nbr)
 
 	bzero(&rn, sizeof(rn));
 	rn.id.s_addr = nbr->id.s_addr;
-	rn.lspace = nbr->lspace;
 
 	return (ldpe_imsg_compose_lde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,
 	    sizeof(rn)));

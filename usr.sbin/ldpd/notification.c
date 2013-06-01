@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.10 2013/06/01 18:35:02 claudio Exp $ */
+/*	$OpenBSD: notification.c,v 1.11 2013/06/01 18:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -45,13 +45,12 @@ send_notification_nbr(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
 {
 	struct ibuf	*buf;
 
-	buf = send_notification(status, nbr->iface, msgid, type);
+	buf = send_notification(status, msgid, type);
 	evbuf_enqueue(&nbr->wbuf, buf);
 }
 
 struct ibuf *
-send_notification(u_int32_t status, struct iface *iface, u_int32_t msgid,
-    u_int32_t type)
+send_notification(u_int32_t status, u_int32_t msgid, u_int32_t type)
 {
 	struct ibuf	*buf;
 	u_int16_t	 size;
@@ -61,7 +60,7 @@ send_notification(u_int32_t status, struct iface *iface, u_int32_t msgid,
 
 	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) + STATUS_SIZE;
 
-	gen_ldp_hdr(buf, iface, size);
+	gen_ldp_hdr(buf, size);
 
 	size -= LDP_HDR_SIZE;
 

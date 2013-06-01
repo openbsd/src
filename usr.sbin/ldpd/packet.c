@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.22 2013/06/01 18:35:02 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.23 2013/06/01 18:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -47,7 +47,7 @@ ssize_t		 session_get_pdu(struct ibuf_read *, char **);
 static int	 msgcnt = 0;
 
 int
-gen_ldp_hdr(struct ibuf *buf, struct iface *iface, u_int16_t size)
+gen_ldp_hdr(struct ibuf *buf, u_int16_t size)
 {
 	struct ldp_hdr	ldp_hdr;
 
@@ -59,8 +59,7 @@ gen_ldp_hdr(struct ibuf *buf, struct iface *iface, u_int16_t size)
 
 	ldp_hdr.length = htons(size);
 	ldp_hdr.lsr_id = ldpe_router_id();
-	if (iface)
-		ldp_hdr.lspace_id = iface->lspace_id;
+	ldp_hdr.lspace_id = 0;
 
 	return (ibuf_add(buf, &ldp_hdr, LDP_HDR_SIZE));
 }
@@ -212,7 +211,7 @@ ldp_hdr_sanity_check(struct ldp_hdr *ldp_hdr, u_int16_t len,
 {
 	struct in_addr		 addr;
 
-	if (ldp_hdr->lspace_id != iface->lspace_id) {
+	if (ldp_hdr->lspace_id != 0) {
 		addr.s_addr = ldp_hdr->lspace_id;
 		log_debug("ldp_hdr_sanity_check: invalid label space "
 		    "ID %s, interface %s", inet_ntoa(addr),
@@ -283,7 +282,7 @@ session_accept(int fd, short event, void *bula)
 		   Hello adjacency: try to send notification */
 		log_warnx("Connection attempt from unknown neighbor %s: %s",
 		    inet_ntoa(src.sin_addr), "NO HELLO");
-		buf = send_notification(S_NO_HELLO, NULL, 0, 0);
+		buf = send_notification(S_NO_HELLO, 0, 0);
 		write(newfd, buf->buf, buf->wpos);
 		ibuf_free(buf);
 		close(newfd);
