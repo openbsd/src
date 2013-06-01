@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: slowcgi,v 1.1 2013/06/01 14:06:20 naddy Exp $
+
+daemon="/usr/sbin/slowcgi"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1
