@@ -332,20 +332,6 @@ ffs64(uint64_t val)
 #define OCTEON_PREF_DWB(base, offset)	__OCTEON_PREF_29(base, offset)
 #define OCTEON_PREF_PFS(base, offset)	__OCTEON_PREF_30(base, offset)
 
-/*
- * Sync
- */
-#define OCTEON_SYNCCOMMON(name) \
-	__asm __volatile ( \
-		_ASM_PROLOGUE_OCTEON			\
-		"	"#name"				\n" \
-		_ASM_EPILOGUE				\
-		::: "memory")
-#define OCTEON_SYNCIOBDMA	__asm __volatile (".word 0x8f" : : :"memory")
-#define OCTEON_SYNCW		__asm __volatile (".word  0x10f" : : )
-#define OCTEON_SYNC		OCTEON_SYNCCOMMON(sync)
-#define OCTEON_SYNCWS		__asm __volatile (".word  0x14f" : : )
-
 static inline uint64_t
 octeon_xkphys_read_8(paddr_t address)
 {

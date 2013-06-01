@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpko.c,v 1.2 2012/12/05 23:20:14 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxpko.c,v 1.3 2013/06/01 22:20:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -97,7 +97,7 @@ cn30xxpko_enable(struct cn30xxpko_softc *sc)
 	SET(reg_flags, PKO_REG_FLAGS_ENA_DWB);
 	SET(reg_flags, PKO_REG_FLAGS_ENA_PKO);
 	/* XXX */
-	OCTEON_SYNCW;
+	mips_sync();
 	_PKO_WR8(sc, PKO_REG_FLAGS_OFFSET, reg_flags);
 
 	return 0;
@@ -176,7 +176,7 @@ cn30xxpko_port_config(struct cn30xxpko_softc *sc)
 	SET(mem_queue_ptrs, sc->sc_port & PKO_MEM_QUEUE_PTRS_QID);
 	SET(mem_queue_ptrs, ((uint64_t)0xff << 53) & PKO_MEM_QUEUE_PTRS_QOS_MASK);
 	SET(mem_queue_ptrs, ((uint64_t)buf_ptr << 17) & PKO_MEM_QUEUE_PTRS_BUF_PTR);
-	OCTEON_SYNCW;
+	mips_sync();
 	_PKO_WR8(sc, PKO_MEM_QUEUE_PTRS_OFFSET, mem_queue_ptrs);
 
 	/*

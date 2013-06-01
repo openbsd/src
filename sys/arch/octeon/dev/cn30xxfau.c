@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfau.c,v 1.3 2013/06/01 21:25:26 jasper Exp $	*/
+/*	$OpenBSD: cn30xxfau.c,v 1.4 2013/06/01 22:20:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -119,7 +119,7 @@ cn30xxfau_op_init(struct cn30xxfau_desc *fd, size_t scroff, size_t regno)
 uint64_t
 cn30xxfau_op_save(struct cn30xxfau_desc *fd)
 {
-	OCTEON_SYNCIOBDMA/* XXX */;
+	mips_sync();
 	return octeon_cvmseg_read_8(fd->fd_scroff);
 }
 
@@ -134,7 +134,7 @@ cn30xxfau_op_inc_8(struct cn30xxfau_desc *fd, int64_t v)
 {
 	cn30xxfau_op_iobdma_store_data(fd->fd_scroff, v, 0, OCT_FAU_OP_SIZE_64/* XXX */,
 	    fd->fd_regno);
-	OCTEON_SYNCIOBDMA/* XXX */;
+	mips_sync();
 	return octeon_cvmseg_read_8(fd->fd_scroff)/* XXX */;
 }
 
@@ -144,7 +144,7 @@ cn30xxfau_op_incwait_8(struct cn30xxfau_desc *fd, int v)
 	cn30xxfau_op_iobdma_store_data(fd->fd_scroff, v, 1, OCT_FAU_OP_SIZE_64/* XXX */,
 	    fd->fd_regno);
 	/* XXX */
-	OCTEON_SYNCIOBDMA/* XXX */;
+	mips_sync();
 	/* XXX */
 	return octeon_cvmseg_read_8(fd->fd_scroff)/* XXX */;
 }

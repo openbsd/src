@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpavar.h,v 1.2 2013/06/01 21:25:26 jasper Exp $	*/
+/*	$OpenBSD: cn30xxfpavar.h,v 1.3 2013/06/01 22:20:35 jasper Exp $	*/
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
  * All rights reserved.
@@ -123,7 +123,7 @@ cn30xxfpa_store(uint64_t addr, uint64_t fpapool, uint64_t dwbcount)
 	    (fpapool & 0x07ULL) << 40 |
 	    (addr & 0xffffffffffULL);
 
-	OCTEON_SYNCWS;
+	mips_sync();
 	octeon_xkphys_write_8(ptr, (dwbcount & 0x0ffULL));
 }
 
