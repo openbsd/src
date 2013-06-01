@@ -358,14 +358,6 @@ octeon_xkphys_write_8(paddr_t address, uint64_t value)
 	*(volatile uint64_t *)(PHYS_TO_XKPHYS(address, CCA_NC)) = value;
 }
 
-/* XXX backward compatibility */
-#if 1
-#define octeon_read_csr(address) \
-	octeon_xkphys_read_8(address)
-#define octeon_write_csr(address, value) \
-	octeon_xkphys_write_8(address, value)
-#endif
-
 static inline void
 octeon_iobdma_write_8(uint64_t value)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfau.c,v 1.2 2012/12/05 23:20:14 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxfau.c,v 1.3 2013/06/01 21:25:26 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -54,7 +54,7 @@ cn30xxfau_op_load(uint64_t args)
 	    ((uint64_t)(CN30XXFAU_MAJORDID & 0x1f) << 43) |
 	    ((uint64_t)(CN30XXFAU_SUBDID & 0x7) << 40) |
 	    ((uint64_t)(args & 0xfffffffffULL) << 0);
-	return octeon_read_csr(addr);
+	return octeon_xkphys_read_8(addr);
 }
 
 static void
@@ -67,7 +67,7 @@ cn30xxfau_op_store(uint64_t args, int64_t value)
 	    ((uint64_t)(CN30XXFAU_MAJORDID & 0x1f) << 43) |
 	    ((uint64_t)(CN30XXFAU_SUBDID & 0x7) << 40) |
 	    ((uint64_t)(args & 0xfffffffffULL) << 0);
-	octeon_write_csr(addr, value);
+	octeon_xkphys_write_8(addr, value);
 }
 
 /* ---- operation primitives */

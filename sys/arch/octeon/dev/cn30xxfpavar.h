@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpavar.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxfpavar.h,v 1.2 2013/06/01 21:25:26 jasper Exp $	*/
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
  * All rights reserved.
@@ -100,7 +100,7 @@ cn30xxfpa_load(uint64_t fpapool)
 	    (0x5ULL << 43) |
 	    (fpapool & 0x07ULL) << 40;
 
-	return octeon_read_csr(addr);
+	return octeon_xkphys_read_8(addr);
 }
 
 #ifdef notyet
@@ -124,7 +124,7 @@ cn30xxfpa_store(uint64_t addr, uint64_t fpapool, uint64_t dwbcount)
 	    (addr & 0xffffffffffULL);
 
 	OCTEON_SYNCWS;
-	octeon_write_csr(ptr, (dwbcount & 0x0ffULL));
+	octeon_xkphys_write_8(ptr, (dwbcount & 0x0ffULL));
 }
 
 static inline paddr_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 2013/06/01 17:08:26 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.35 2013/06/01 21:25:26 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -705,7 +705,7 @@ haltsys:
 		(void)disableintr();
 		tlb_set_wired(0);
 		tlb_flush(bootcpu_hwinfo.tlbsize);
-		octeon_write_csr(OCTEON_CIU_BASE + CIU_SOFT_RST, 1);
+		octeon_xkphys_write_8(OCTEON_CIU_BASE + CIU_SOFT_RST, 1);
 	}
 
 	for (;;) ;
