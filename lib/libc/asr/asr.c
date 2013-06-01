@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.27 2013/06/01 09:21:09 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.28 2013/06/01 12:38:29 eric Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -74,9 +74,6 @@ static int asr_parse_nameserver(struct sockaddr *, const char *);
 static int asr_ndots(const char *);
 static void pass0(char **, int, struct asr_ctx *);
 static int strsplit(char *, char **, int);
-#if ASR_OPT_HOSTALIASES
-static char *asr_hostalias(const char *, char *, size_t);
-#endif
 #if ASR_OPT_ENVOPTS
 static void asr_ctx_envopts(struct asr_ctx *);
 #endif
@@ -965,9 +962,8 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 		 * If "name" has no dots, it might be an alias. If so,
 		 * That's also the only result.
 		 */
-		if ((as->as_ctx->ac_options & RES_NOALIASES) == 0 &&
-		    asr_ndots(name) == 0 &&
-		    (alias = asr_hostalias(name, buf, len)) != NULL) {
+		alias = asr_hostalias(as->as_ctx, name, buf, len);
+		if (alias) {
 			DPRINT("asr: asr_iter_domain(\"%s\") is alias \"%s\"\n",
 			    name, alias);
 			as->as_dom_flags |= ASYNC_DOM_HOSTALIAS;
@@ -1029,22 +1025,25 @@ asr_iter_domain(struct async *as, const char *name, char * buf, size_t len)
 	}
 }
 
-#if ASR_OPT_HOSTALIASES
 /*
  * Check if the hostname "name" is a user-defined alias as per hostname(7).
  * If so, copies the result in the buffer "abuf" of size "abufsz" and
  * return "abuf". Otherwise return NULL.
  */
-static char *
-asr_hostalias(const char *name, char *abuf, size_t abufsz)
+char *
+asr_hostalias(struct asr_ctx *ac, const char *name, char *abuf, size_t abufsz)
 {
+#if ASR_OPT_HOSTALIASES
 	FILE	 *fp;
 	size_t	  len;
 	char	 *file, *buf, *tokens[2];
 	int	  ntok;
 
-	file = getenv("HOSTALIASES");
-	if (file == NULL || issetugid() != 0 || (fp = fopen(file, "r")) == NULL)
+	if (ac->ac_options & RES_NOALIASES ||
+	    asr_ndots(name) != 0 ||
+	    issetugid() ||
+	    (file = getenv("HOSTALIASES")) == NULL ||
+	    (fp = fopen(file, "r")) == NULL)
 		return (NULL);
 
 	DPRINT("asr: looking up aliases in \"%s\"\n", file);
@@ -1065,6 +1064,6 @@ asr_hostalias(const char *name, char *abuf, size_t abufsz)
 	}
 
 	fclose(fp);
+#endif
 	return (NULL);
 }
-#endif
