@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.13 2013/06/01 09:57:58 miod Exp $ */
+/*	$OpenBSD: syscall.h,v 1.14 2013/06/01 20:50:37 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -43,20 +43,20 @@ int	_dl_close(int);
 int	_dl_exit(int);
 int	_dl_issetugid(void);
 long	_dl__syscall(quad_t, ...);
-int	_dl_mprotect(const void *, int, int);
-int	_dl_munmap(const void*, unsigned int);
-int	_dl_open(const char*, unsigned int);
-int	_dl_read(int, const char*, int);
+int	_dl_mprotect(const void *, size_t, int);
+int	_dl_munmap(const void *, size_t);
+int	_dl_open(const char *, int);
+ssize_t	_dl_read(int, const char *, size_t);
 int	_dl_fstat(int, struct stat *);
 int	_dl_fcntl(int, int, ...);
-int	_dl_getdirentries(int, char*, int, off_t *);
+int	_dl_getdirentries(int, char *, int, off_t *);
 int	_dl_sigprocmask(int, const sigset_t *, sigset_t *);
 int	_dl_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	_dl_gettimeofday(struct timeval *tp, struct timezone *tzp);
-int	_dl_readlink(const char *path, char *buf, size_t bufsiz);
-int	_dl_lstat(const char *path, struct stat *sb);
-int	_dl_getcwd(char *buf, size_t size);
-int	_dl_utrace(const char *label, const void *addr, size_t len);
+int	_dl_gettimeofday(struct timeval *, struct timezone *);
+int	_dl_readlink(const char *, char *, size_t);
+int	_dl_lstat(const char *, struct stat *);
+int	_dl_getcwd(char *, size_t);
+int	_dl_utrace(const char *, const void *, size_t);
 
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)
