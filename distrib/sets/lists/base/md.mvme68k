@@ -2004,7 +2004,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/spawn.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sqlite3.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ssl

@@ -1362,7 +1362,6 @@
 ./usr/include/sndio.h
 ./usr/include/soundcard.h
 ./usr/include/spawn.h
-./usr/include/spinlock.h
 ./usr/include/sqlite3.h
 ./usr/include/sqlite3ext.h
 ./usr/include/ssl

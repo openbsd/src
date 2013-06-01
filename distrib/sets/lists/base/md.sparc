@@ -1600,7 +1600,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/vmparam.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/z8530var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/spawn.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sqlite3.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ssl

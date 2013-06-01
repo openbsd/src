@@ -2110,7 +2110,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/spawn.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sqlite3.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/ssl

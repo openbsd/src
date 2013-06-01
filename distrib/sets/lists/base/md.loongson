@@ -2123,7 +2123,6 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sndio.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/spawn.ph
-./usr/libdata/perl5/site_perl/mips64el-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sqlite3.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/sqlite3ext.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/ssl
