@@ -1,5 +1,5 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.8 2013/06/01 01:02:53 jasper Exp $	*/
-/*	$OpenBSD: octeon_pcibus.c,v 1.8 2013/06/01 01:02:53 jasper Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.9 2013/06/01 01:16:20 jasper Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.9 2013/06/01 01:16:20 jasper Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -195,6 +195,7 @@ octeon_pcibus_match(struct device *parent, void *vcf, void *aux)
 		OCTEON_PCIDEBUG(("%s, no PCI host function detected.\n", __func__));
 		return 0;
 	}
+
 	if (strcmp(aa->aa_name, pcibus_cd.cd_name) == 0)
 		return 1;
 
@@ -288,8 +289,7 @@ octeon_pcibus_attach_hook(struct device *parent, struct device *self,
 int
 octeon_pcibus_bus_maxdevs(void *v, int busno)
 {
-	/* XXX */
-	return 32;
+	return (32);
 }
 
 pcitag_t
