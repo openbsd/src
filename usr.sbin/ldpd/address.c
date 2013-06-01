@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.6 2010/11/04 09:52:16 claudio Exp $ */
+/*	$OpenBSD: address.c,v 1.7 2013/06/01 18:35:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -47,9 +47,6 @@ send_address(struct nbr *nbr, struct iface *iface)
 	struct ibuf	*buf;
 	struct iface	*niface;
 	u_int16_t	 size, iface_count = 0;
-
-	if (nbr->iface->passive)
-		return;
 
 	log_debug("send_address: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -175,9 +172,6 @@ send_address_withdraw(struct nbr *nbr, struct iface *iface)
 {
 	struct ibuf	*buf;
 	u_int16_t	 size;
-
-	if (nbr->iface->passive)
-		return;
 
 	log_debug("send_address_withdraw: neighbor ID %s", inet_ntoa(nbr->id));
 

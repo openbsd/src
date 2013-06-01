@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2013/06/01 18:30:32 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.12 2013/06/01 18:35:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -112,7 +112,7 @@ typedef struct {
 %token	LSPACE INTERFACE ROUTERID FIBUPDATE
 %token	HOLDTIME HELLOINTERVAL KEEPALIVE
 %token	DISTRIBUTION RETENTION ADVERTISEMENT
-%token	EXTTAG PASSIVE
+%token	EXTTAG
 %token	HELLOINTERVAL
 %token	YES NO
 %token	ERROR
@@ -313,12 +313,8 @@ interface_block	: '{' optnl interfaceopts_l '}'
 		| /* nothing */
 		;
 
-interfaceopts_l	: interfaceopts_l interfaceoptsl nl
-		| interfaceoptsl optnl
-		;
-
-interfaceoptsl	: PASSIVE		{ iface->passive = 1; }
-		| defaults
+interfaceopts_l	: interfaceopts_l defaults nl
+		| defaults optnl
 		;
 
 %%
@@ -364,7 +360,6 @@ lookup(char *s)
 		{"interface",		INTERFACE},
 		{"keepalive",		KEEPALIVE},
 		{"labelspace",		LSPACE},
-		{"passive",		PASSIVE},
 		{"retention",		RETENTION},
 		{"router-id",		ROUTERID},
 		{"yes",			YES}

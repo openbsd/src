@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 2011/01/10 12:02:48 claudio Exp $ */
+/*	$OpenBSD: init.c,v 1.8 2013/06/01 18:35:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -45,9 +45,6 @@ send_init(struct nbr *nbr)
 {
 	struct ibuf		*buf;
 	u_int16_t		 size;
-
-	if (nbr->iface->passive)
-		return;
 
 	log_debug("send_init: neighbor ID %s", inet_ntoa(nbr->id));
 

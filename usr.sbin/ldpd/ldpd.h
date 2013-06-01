@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.32 2013/06/01 18:26:40 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.33 2013/06/01 18:35:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -220,7 +220,6 @@ struct iface {
 	u_int8_t		 media_type;
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
-	u_int8_t		 passive;
 };
 
 /* ldp_conf */
@@ -313,7 +312,6 @@ struct ctl_iface {
 	u_int8_t		 linkstate;
 	u_int8_t		 mediatype;
 	u_int8_t		 priority;
-	u_int8_t		 passive;
 };
 
 struct ctl_nbr {

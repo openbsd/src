@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.21 2013/06/01 18:24:28 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.22 2013/06/01 18:35:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -233,15 +233,13 @@ find_iface(struct ldpd_conf *xconf, unsigned int ifindex, struct in_addr src)
 		switch (iface->type) {
 		case IF_TYPE_POINTOPOINT:
 			if (ifindex == iface->ifindex &&
-			    iface->dst.s_addr == src.s_addr &&
-			    !iface->passive)
+			    iface->dst.s_addr == src.s_addr)
 				return (iface);
 			break;
 		default:
 			if (ifindex == iface->ifindex &&
 			    (iface->addr.s_addr & iface->mask.s_addr) ==
-			    (src.s_addr & iface->mask.s_addr) &&
-			    !iface->passive)
+			    (src.s_addr & iface->mask.s_addr))
 				return (iface);
 			break;
 		}

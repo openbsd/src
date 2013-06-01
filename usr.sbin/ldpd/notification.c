@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.9 2011/01/20 23:12:33 jasper Exp $ */
+/*	$OpenBSD: notification.c,v 1.10 2013/06/01 18:35:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -44,9 +44,6 @@ send_notification_nbr(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
     u_int32_t type)
 {
 	struct ibuf	*buf;
-
-	if (nbr->iface->passive)
-		return;
 
 	buf = send_notification(status, nbr->iface, msgid, type);
 	evbuf_enqueue(&nbr->wbuf, buf);

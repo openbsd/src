@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.12 2013/06/01 18:26:40 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.13 2013/06/01 18:35:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -279,7 +279,6 @@ if_to_ctl(struct iface *iface)
 	ictl.linkstate = iface->linkstate;
 	ictl.mediatype = iface->media_type;
 	ictl.priority = iface->priority;
-	ictl.passive = iface->passive;
 
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&iface->hello_timer, &tv)) {
