@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.50 2011/01/18 16:28:00 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.51 2013/06/01 10:17:01 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -8,8 +8,7 @@
  * The functions in this file are a general set of line management
  * utilities. They are the only routines that touch the text. They
  * also touch the buffer and window structures to make sure that the
- * necessary updating gets done.  There are routines in this file that
- * handle the kill buffer too.  It isn't here for any good reason.
+ * necessary updating gets done.
  *
  * Note that this code only updates the dot and mark values in the window
  * list.  Since all the code acts on the current window, the buffer that
