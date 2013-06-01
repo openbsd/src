@@ -204,6 +204,8 @@ struct octeon_fau_map {
 
 #ifdef _KERNEL
 #define OCTEON_ARGV_MAX 64
+
+/* Maximum number of cores on <= CN52XX */
 #define OCTEON_MAXCPUS	4
 
 struct boot_desc {
@@ -302,7 +304,7 @@ ffs64(uint64_t val)
 	return 64 - ret;
 }
 
-/* 
+/*
  * Prefetch
  *
  *	OCTEON_PREF		normal (L1 and L2)
@@ -383,7 +385,7 @@ static inline uint32_t
 octeon_disable_interrupt(uint32_t *new)
 {
 	uint32_t s, tmp;
-        
+
 	__asm __volatile (
 		_ASM_PROLOGUE
 		"	mfc0	%[s], $12		\n"
@@ -409,7 +411,7 @@ octeon_restore_status(uint32_t s)
 
 static inline uint64_t
 octeon_get_cycles(void)
-{ 
+{
 	uint64_t tmp;
 
 	__asm __volatile (
