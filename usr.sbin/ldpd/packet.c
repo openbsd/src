@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.18 2013/05/30 15:49:33 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.19 2013/06/01 01:39:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -76,7 +76,8 @@ gen_msg_tlv(struct ibuf *buf, u_int32_t type, u_int16_t size)
 	bzero(&msg, sizeof(msg));
 	msg.type = htons(type);
 	msg.length = htons(size);
-	msg.msgid = htonl(++msgcnt);
+	if (type != MSG_TYPE_HELLO)
+		msg.msgid = htonl(++msgcnt);
 
 	return (ibuf_add(buf, &msg, sizeof(msg)));
 }
