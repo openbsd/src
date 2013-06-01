@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.16 2013/01/17 00:54:48 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.17 2013/06/01 17:16:51 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -420,6 +420,47 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 
 	/* Jump to the S3 resume vector */
 	ljmp	$0x0400, $acpi_s3_vector_real
+
+NENTRY(hibernate_drop_to_real_mode)
+	.code64
+	cli
+	/* Jump to the identity mapped version of ourself */
+	mov	$hibernate_resume_vector_2b, %rax
+	jmp	*%rax
+_ACPI_TRMP_LABEL(hibernate_resume_vector_2b)
+
+	/* Get out of 64 bit CS */
+	lgdtq	tmp_gdt6416
+
+	rex64	ljmp	*(hibernate_indirect_16b)
+_ACPI_TRMP_LABEL(hibernate_indirect_16b)
+	.quad	hibernate_resume_vector_3b
+	.word	0x18
+
+_ACPI_TRMP_LABEL(hibernate_resume_vector_3b)
+	.code16
+
+	movl	%cr0, %eax
+	/* Disable CR0.PG - no paging */
+	andl	$(~CR0_PG), %eax
+	/* Disable CR0.PE - real mode */
+	andl	$(~CR0_PE), %eax
+	movl	%eax, %cr0
+
+	/* Set up real mode segment selectors */
+	movw	$0x0400, %ax
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
+	movl	$0x0FFE, %esp
+	lidtl	clean_idt
+
+	ljmp	$0x0400, $hib_hlt_real
+
+_ACPI_TRMP_LABEL(hib_hlt_real)
+	hlt
+	ljmp 	$0x0400, $hib_hlt_real
 
 	.code64
 	/* Switch to hibernate resume pagetable */
