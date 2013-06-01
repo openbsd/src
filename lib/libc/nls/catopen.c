@@ -1,4 +1,4 @@
-/*	$OpenBSD: catopen.c,v 1.14 2011/07/12 21:31:20 matthew Exp $ */
+/*	$OpenBSD: catopen.c,v 1.15 2013/06/01 21:26:17 stsp Exp $ */
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #include <fcntl.h>
 #include <nl_types.h>
 
-#define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
+#define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%l.%c/%N.cat:/usr/share/nls/%l/%N.cat"
 #define NLS_DEFAULT_LANG "C"
 
 static nl_catd load_msgcat(const char *);
@@ -53,7 +53,7 @@ _catopen(const char *name, int oflag)
 	char tmppath[PATH_MAX];
 	char *nlspath;
 	char *lang;
-	char *s, *t;
+	char *s, *t, *sep, *dot;
 	const char *u;
 	nl_catd catd;
 		
@@ -66,28 +66,73 @@ _catopen(const char *name, int oflag)
 
 	if (issetugid() != 0 || (nlspath = getenv("NLSPATH")) == NULL)
 		nlspath = NLS_DEFAULT_PATH;
-	if ((lang = getenv("LANG")) == NULL)
+
+	lang = NULL;
+	if (oflag & NL_CAT_LOCALE) {
+		lang = getenv("LC_ALL");
+		if (lang == NULL)
+			lang = getenv("LC_MESSAGES");
+	}
+	if (lang == NULL)
+		lang = getenv("LANG");
+	if (lang == NULL)
+		lang = NLS_DEFAULT_LANG;
+	if (strcmp(lang, "POSIX") == 0)
 		lang = NLS_DEFAULT_LANG;
 
 	s = nlspath;
-	t = tmppath;	
+	t = tmppath;
+
+	/*
+	 * Locale names are of the form language[_territory][.codeset].
+	 * See POSIX-1-2008 "8.2 Internationalization Variables"
+	 */
+	sep = strchr(lang, '_');
+	dot = strrchr(lang, '.');
+	if (dot && sep && dot < sep)
+		dot = NULL; /* ignore dots preceeding _ */
+	if (dot == NULL)
+		lang = NLS_DEFAULT_LANG; /* no codeset specified */
 	do {
 		while (*s && *s != ':') {
 			if (*s == '%') {
 				switch (*(++s)) {
-				case 'L':	/* locale */
+				case 'L':	/* LANG or LC_MESSAGES */
 					u = lang;
 					while (*u && t < tmppath + PATH_MAX-1)
 						*t++ = *u++;
 					break;
-				case 'N':	/* name */
+				case 'N':	/* value of name parameter */
 					u = name;
 					while (*u && t < tmppath + PATH_MAX-1)
 						*t++ = *u++;
 					break;
-				case 'l':	/* lang */
-				case 't':	/* territory */
-				case 'c':	/* codeset */
+				case 'l':	/* language part */
+					u = lang;
+					while (*u && t < tmppath + PATH_MAX-1) {
+						*t++ = *u++;
+						if (sep && u >= sep)
+							break;
+						if (dot && u >= dot)
+							break;
+					}
+					break;
+				case 't':	/* territory part */
+					if (sep == NULL)
+						break;
+					u = sep + 1;
+					while (*u && t < tmppath + PATH_MAX-1) {
+						*t++ = *u++;
+						if (dot && u >= dot)
+							break;
+					}
+					break;
+				case 'c':	/* codeset part */
+					if (dot == NULL)
+						break;
+					u = dot + 1;
+					while (*u && t < tmppath + PATH_MAX-1)
+						*t++ = *u++;
 					break;
 				default:
 					if (t < tmppath + PATH_MAX-1)
@@ -121,7 +166,7 @@ load_msgcat(const char *path)
 	void *data;
 	int fd;
 
-	if ((fd = open(path, O_RDONLY)) == -1)
+	if ((fd = open(path, O_RDONLY|O_CLOEXEC)) == -1)
 		return (nl_catd) -1;
 
 	if (fstat(fd, &st) != 0) {

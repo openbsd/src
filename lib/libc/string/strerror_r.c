@@ -1,4 +1,4 @@
-/* $OpenBSD: strerror_r.c,v 1.7 2007/03/01 16:29:09 bluhm Exp $ */
+/* $OpenBSD: strerror_r.c,v 1.8 2013/06/01 21:26:18 stsp Exp $ */
 /* Public Domain <marc@snafu.org> */
 
 #ifdef NLS
@@ -75,7 +75,7 @@ __num2string(int num, int sign, int setid, char *buf, size_t buflen,
 
 #ifdef NLS
 	nl_catd catd;
-	catd = catopen("libc", 0);
+	catd = catopen("libc", NL_CAT_LOCALE);
 #endif
 
 	if (0 <= num && num < max) {

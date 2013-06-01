@@ -38,7 +38,7 @@ $ EXDEV
 $ ENODEV
 19 Operazione non supportata dalla periferica
 $ ENOTDIR
-20 Non è una directory
+20 Non Ã¨ una directory
 $ EISDIR
 21 E' una directory
 $ EINVAL
@@ -72,7 +72,7 @@ $ EAGAIN, EWOULDBLOCK
 $ EINPROGRESS
 36 Operazione in esecuzione
 $ EALREADY
-37 Operazione già in esecuzione
+37 Operazione giÃ  in esecuzione
 $ ENOTSOCK
 38 Operazione sui socket eseguita su un non-socket
 $ EDESTADDRREQ
@@ -94,7 +94,7 @@ $ EPFNOSUPPORT
 $ EAFNOSUPPORT
 47 Famiglia di indirizzi non supportata dalla famiglia di protocolli
 $ EADDRINUSE
-48 Indirizzo già in uso
+48 Indirizzo giÃ  in uso
 $ EADDRNOTAVAIL
 49 Impossibile assegnare l'indirizzo richiesto
 $ ENETDOWN
@@ -110,7 +110,7 @@ $ ECONNRESET
 $ ENOBUFS
 55 Spazio del buffer esaurito
 $ EISCONN
-56 Socket già connesso
+56 Socket giÃ  connesso
 $ ENOTCONN
 57 Socket non connesso
 $ ESHUTDOWN
