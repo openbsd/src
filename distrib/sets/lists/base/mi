@@ -322,6 +322,7 @@
 ./usr/bin/lpq
 ./usr/bin/lpr
 ./usr/bin/lprm
+./usr/bin/ltrace
 ./usr/bin/lynx
 ./usr/bin/m4
 ./usr/bin/machine
@@ -2806,6 +2807,7 @@
 ./usr/sbin/sendmail
 ./usr/sbin/sensorsd
 ./usr/sbin/sliplogin
+./usr/sbin/slowcgi
 ./usr/sbin/slstats
 ./usr/sbin/smtpctl
 ./usr/sbin/smtpd

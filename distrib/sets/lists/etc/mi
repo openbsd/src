@@ -158,6 +158,7 @@
 ./etc/rc.d/sasyncd
 ./etc/rc.d/sendmail
 ./etc/rc.d/sensorsd
+./etc/rc.d/slowcgi
 ./etc/rc.d/smtpd
 ./etc/rc.d/sndiod
 ./etc/rc.d/snmpd

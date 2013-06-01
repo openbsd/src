@@ -273,7 +273,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/isp_openbsd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/isp_stds.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/isp_target.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/isp_tpublic.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ispmbox.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ispreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ispvar.ph
@@ -594,6 +593,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_txpreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_vgereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_vgevar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_vmxreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_vrreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_vtereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_wbreg.ph
@@ -1589,7 +1589,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_fault.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_glue.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_km.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_loan.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_map.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_object.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_page.ph

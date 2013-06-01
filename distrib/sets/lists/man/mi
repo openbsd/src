@@ -452,6 +452,7 @@
 ./usr/share/man/man1/lprm.1
 ./usr/share/man/man1/lptest.1
 ./usr/share/man/man1/ls.1
+./usr/share/man/man1/ltrace.1
 ./usr/share/man/man1/lynx.1
 ./usr/share/man/man1/m4.1
 ./usr/share/man/man1/machine.1
@@ -1895,7 +1896,6 @@
 ./usr/share/man/man4/macppc/smu.4
 ./usr/share/man/man4/macppc/snapper.4
 ./usr/share/man/man4/macppc/sysbutton.4
-./usr/share/man/man4/macppc/tpms.4
 ./usr/share/man/man4/macppc/tumbler.4
 ./usr/share/man/man4/macppc/xlights.4
 ./usr/share/man/man4/macppc/zs.4
@@ -2366,6 +2366,7 @@
 ./usr/share/man/man4/usps.4
 ./usr/share/man/man4/uthum.4
 ./usr/share/man/man4/uticom.4
+./usr/share/man/man4/utpms.4
 ./usr/share/man/man4/utrh.4
 ./usr/share/man/man4/uts.4
 ./usr/share/man/man4/utwitch.4
@@ -2424,6 +2425,7 @@
 ./usr/share/man/man4/virtio.4
 ./usr/share/man/man4/vlan.4
 ./usr/share/man/man4/vmt.4
+./usr/share/man/man4/vmx.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/vr.4
 ./usr/share/man/man4/vscsi.4
@@ -2886,6 +2888,7 @@
 ./usr/share/man/man8/mkhybrid.8
 ./usr/share/man/man8/mknetid.8
 ./usr/share/man/man8/mknod.8
+./usr/share/man/man8/mkuboot.8
 ./usr/share/man/man8/modload.8
 ./usr/share/man/man8/modstat.8
 ./usr/share/man/man8/modunload.8
@@ -3039,6 +3042,7 @@
 ./usr/share/man/man8/slattach.8
 ./usr/share/man/man8/slip.8
 ./usr/share/man/man8/sliplogin.8
+./usr/share/man/man8/slowcgi.8
 ./usr/share/man/man8/slstats.8
 ./usr/share/man/man8/smrsh.8
 ./usr/share/man/man8/smtpctl.8

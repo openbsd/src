@@ -607,6 +607,7 @@
 ./usr/include/dev/pci/if_txpreg.h
 ./usr/include/dev/pci/if_vgereg.h
 ./usr/include/dev/pci/if_vgevar.h
+./usr/include/dev/pci/if_vmxreg.h
 ./usr/include/dev/pci/if_vrreg.h
 ./usr/include/dev/pci/if_vtereg.h
 ./usr/include/dev/pci/if_wbreg.h
@@ -1560,7 +1561,6 @@
 ./usr/include/uvm/uvm_fault.h
 ./usr/include/uvm/uvm_glue.h
 ./usr/include/uvm/uvm_km.h
-./usr/include/uvm/uvm_loan.h
 ./usr/include/uvm/uvm_map.h
 ./usr/include/uvm/uvm_object.h
 ./usr/include/uvm/uvm_page.h
@@ -2027,6 +2027,7 @@
 ./usr/share/man/man2/unmount.2
 ./usr/share/man/man2/utimensat.2
 ./usr/share/man/man2/utimes.2
+./usr/share/man/man2/utrace.2
 ./usr/share/man/man2/vfork.2
 ./usr/share/man/man2/wait.2
 ./usr/share/man/man2/wait3.2
@@ -4001,6 +4002,7 @@
 ./usr/share/man/man3/getparyx.3
 ./usr/share/man/man3/getpass.3
 ./usr/share/man/man3/getpeereid.3
+./usr/share/man/man3/getprogname.3
 ./usr/share/man/man3/getprotobyname.3
 ./usr/share/man/man3/getprotobyname_r.3
 ./usr/share/man/man3/getprotobynumber.3
@@ -5697,6 +5699,7 @@
 ./usr/share/man/man3/setnetgrent.3
 ./usr/share/man/man3/setpassent.3
 ./usr/share/man/man3/setproctitle.3
+./usr/share/man/man3/setprogname.3
 ./usr/share/man/man3/setprotoent.3
 ./usr/share/man/man3/setprotoent_r.3
 ./usr/share/man/man3/setpwent.3
@@ -5720,6 +5723,9 @@
 ./usr/share/man/man3/sgi/set_fpc_csr.3
 ./usr/share/man/man3/sha1.3
 ./usr/share/man/man3/sha2.3
+./usr/share/man/man3/shm_mkstemp.3
+./usr/share/man/man3/shm_open.3
+./usr/share/man/man3/shm_unlink.3
 ./usr/share/man/man3/show_panel.3
 ./usr/share/man/man3/sigaddset.3
 ./usr/share/man/man3/sigblock.3
@@ -6293,6 +6299,7 @@
 ./usr/share/man/man9/M_READONLY.9
 ./usr/share/man/man9/M_TRAILINGSPACE.9
 ./usr/share/man/man9/NDINIT.9
+./usr/share/man/man9/NDINITAT.9
 ./usr/share/man/man9/UVM_MAPFLAG.9
 ./usr/share/man/man9/VOP_ABORTOP.9
 ./usr/share/man/man9/VOP_ACCESS.9
@@ -6638,7 +6645,6 @@
 ./usr/share/man/man9/lockmgr_printinfo.9
 ./usr/share/man/man9/lockstatus.9
 ./usr/share/man/man9/log.9
-./usr/share/man/man9/lookup.9
 ./usr/share/man/man9/m_adj.9
 ./usr/share/man/man9/m_apply.9
 ./usr/share/man/man9/m_cat.9
@@ -6755,7 +6761,6 @@
 ./usr/share/man/man9/rasops_reconfig.9
 ./usr/share/man/man9/ratecheck.9
 ./usr/share/man/man9/readdisklabel.9
-./usr/share/man/man9/relookup.9
 ./usr/share/man/man9/resettodr.9
 ./usr/share/man/man9/route.9
 ./usr/share/man/man9/rssadapt.9
@@ -6961,6 +6966,8 @@
 ./usr/share/man/man9/vfs_busy.9
 ./usr/share/man/man9/vfs_cache.9
 ./usr/share/man/man9/vfs_isbusy.9
+./usr/share/man/man9/vfs_lookup.9
+./usr/share/man/man9/vfs_relookup.9
 ./usr/share/man/man9/vfs_unbusy.9
 ./usr/share/man/man9/vget.9
 ./usr/share/man/man9/vgone.9
