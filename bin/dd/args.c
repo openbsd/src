@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.19 2011/10/18 09:37:35 nicm Exp $	*/
+/*	$OpenBSD: args.c,v 1.20 2013/06/01 18:57:59 tedu Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -250,27 +250,18 @@ f_skip(char *arg)
 	in.offset = get_off(arg);
 }
 
-#ifdef	NO_CONV
-/* Build a small version (i.e. for a ramdisk root) */
-static void
-f_conv(char *arg)
-{
-	errx(1, "conv option disabled");
-}
-#else	/* NO_CONV */
 
 static const struct conv {
 	const char *name;
 	u_int set, noset;
 	const u_char *ctab;
 } clist[] = {
+#ifndef	NO_CONV
 	{ "ascii",	C_ASCII,	C_EBCDIC,	e2a_POSIX },
 	{ "block",	C_BLOCK,	C_UNBLOCK,	NULL },
 	{ "ebcdic",	C_EBCDIC,	C_ASCII,	a2e_POSIX },
 	{ "ibm",	C_EBCDIC,	C_ASCII,	a2ibm_POSIX },
 	{ "lcase",	C_LCASE,	C_UCASE,	NULL },
-	{ "noerror",	C_NOERROR,	0,		NULL },
-	{ "notrunc",	C_NOTRUNC,	0,		NULL },
 	{ "oldascii",	C_ASCII,	C_EBCDIC,	e2a_32V },
 	{ "oldebcdic",	C_EBCDIC,	C_ASCII,	a2e_32V },
 	{ "oldibm",	C_EBCDIC,	C_ASCII,	a2ibm_32V },
@@ -279,35 +270,32 @@ static const struct conv {
 	{ "sync",	C_SYNC,		0,		NULL },
 	{ "ucase",	C_UCASE,	C_LCASE,	NULL },
 	{ "unblock",	C_UNBLOCK,	C_BLOCK,	NULL },
+#endif
+	{ "noerror",	C_NOERROR,	0,		NULL },
+	{ "notrunc",	C_NOTRUNC,	0,		NULL },
+	{ NULL,		0,		0,		NULL }
 };
 
 static void
 f_conv(char *arg)
 {
-	struct conv *cp, tmp;
+	const struct conv *cp;
+	const char *name;
 
 	while (arg != NULL) {
-		tmp.name = strsep(&arg, ",");
-		if (!(cp = (struct conv *)bsearch(&tmp, clist,
-		    sizeof(clist)/sizeof(struct conv), sizeof(struct conv),
-		    c_conv)))
-			errx(1, "unknown conversion %s", tmp.name);
+		name = strsep(&arg, ",");
+		for (cp = &clist[0]; cp->name; cp++)
+			if (strcmp(name, cp->name) == 0)
+				break;
+		if (!cp->name)
+			errx(1, "unknown conversion %s", name);
 		if (ddflags & cp->noset)
-			errx(1, "%s: illegal conversion combination", tmp.name);
+			errx(1, "%s: illegal conversion combination", name);
 		ddflags |= cp->set;
 		if (cp->ctab)
 			ctab = cp->ctab;
 	}
 }
-
-static int
-c_conv(const void *a, const void *b)
-{
-
-	return (strcmp(((struct conv *)a)->name, ((struct conv *)b)->name));
-}
-
-#endif	/* NO_CONV */
 
 /*
  * Convert an expression of the following forms to a size_t
