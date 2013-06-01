@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.26 2013/06/01 09:50:47 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.27 2013/06/01 10:23:40 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -16,9 +16,11 @@ static int	fillcol = 70;
 #define MAXWORD 256
 
 /*
- * Move to start of paragraph.  Go back to the beginning of the current
- * paragraph here we look for a <NL><NL> or <NL><TAB> or <NL><SPACE>
- * combination to delimit the beginning of a paragraph.
+ * Move to start of paragraph.
+ * Move backwards by line, checking from the 1st character forwards for the
+ * existence a non-space. If a non-space character is found, move to the 
+ * preceding line. Keep doing this until a line with only spaces is found or
+ * the start of buffer.
  */
 /* ARGSUSED */
 int
@@ -54,9 +56,8 @@ gotobop(int f, int n)
 }
 
 /*
- * Move to end of paragraph.  Go forward to the end of the current paragraph
- * here we look for a <NL><NL> or <NL><TAB> or <NL><SPACE> combination to
- * delimit the beginning of a paragraph.
+ * Move to end of paragraph.
+ * See comments for gotobop(). Same, but moving forwards.
  */
 /* ARGSUSED */
 int
