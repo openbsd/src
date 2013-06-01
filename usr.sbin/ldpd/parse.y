@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2013/06/01 18:26:40 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.11 2013/06/01 18:30:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -290,8 +290,8 @@ interface	: INTERFACE STRING	{
 				YYERROR;
 			if (iface->media_type == IFT_LOOP ||
 			    iface->media_type == IFT_CARP) {
-				yyerror("unsupported interface type %s",
-				    iface->name);
+				yyerror("unsupported interface type on "
+				    "interface %s", iface->name);
 				YYERROR;
 			}
 			LIST_INSERT_HEAD(&conf->iface_list, iface, entry);
