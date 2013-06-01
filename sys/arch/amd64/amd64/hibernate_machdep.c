@@ -395,11 +395,26 @@ hibernate_disable_intr_machdep(void)
 void
 hibernate_quiesce_cpus(void)
 {
+	int i;
+
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
+
 	/* Start the hatched (but idling) APs */
 	cpu_boot_secondary_processors();
 	sched_start_secondary_cpus();
 
-	/* Now shut them down */
-	acpi_sleep_mp();
+	/* 
+	 * Wait for cpus to halt so we know their FPU state has been
+	 * saved and their caches have been written back.
+	 */
+	x86_broadcast_ipi(X86_IPI_HALT_REALMODE);
+	for (i = 0; i < ncpus; i++) {
+		struct cpu_info *ci = cpu_info[i];
+
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		while (ci->ci_flags & CPUF_RUNNING)
+			;
+	}
 }
 #endif /* MULTIPROCESSOR */
