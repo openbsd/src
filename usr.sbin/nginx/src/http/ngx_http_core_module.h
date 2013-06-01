@@ -75,8 +75,11 @@ typedef struct {
 #if (NGX_HTTP_SSL)
     unsigned                   ssl:1;
 #endif
+#if (NGX_HTTP_SPDY)
+    unsigned                   spdy:1;
+#endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    unsigned                   ipv6only:2;
+    unsigned                   ipv6only:1;
 #endif
     unsigned                   so_keepalive:2;
 
@@ -209,15 +212,35 @@ typedef struct {
 
 
 typedef struct {
+#if (NGX_PCRE)
+    ngx_http_regex_t          *regex;
+#endif
+    ngx_http_core_srv_conf_t  *server;   /* virtual name server conf */
+    ngx_str_t                  name;
+} ngx_http_server_name_t;
+
+
+typedef struct {
+     ngx_hash_combined_t       names;
+
+     ngx_uint_t                nregex;
+     ngx_http_server_name_t   *regex;
+} ngx_http_virtual_names_t;
+
+
+struct ngx_http_addr_conf_s {
     /* the default server configuration for this address:port */
     ngx_http_core_srv_conf_t  *default_server;
 
     ngx_http_virtual_names_t  *virtual_names;
 
 #if (NGX_HTTP_SSL)
-    ngx_uint_t                 ssl;   /* unsigned  ssl:1; */
+    unsigned                   ssl:1;
 #endif
-} ngx_http_addr_conf_t;
+#if (NGX_HTTP_SPDY)
+    unsigned                   spdy:1;
+#endif
+};
 
 
 typedef struct {
@@ -266,15 +289,6 @@ typedef struct {
     ngx_http_core_srv_conf_t  *default_server;
     ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */
 } ngx_http_conf_addr_t;
-
-
-struct ngx_http_server_name_s {
-#if (NGX_PCRE)
-    ngx_http_regex_t          *regex;
-#endif
-    ngx_http_core_srv_conf_t  *server;   /* virtual name server conf */
-    ngx_str_t                  name;
-};
 
 
 typedef struct {
@@ -392,6 +406,7 @@ struct ngx_http_core_loc_conf_s {
     ngx_flag_t    recursive_error_pages;   /* recursive_error_pages */
     ngx_flag_t    server_tokens;           /* server_tokens */
     ngx_flag_t    chunked_transfer_encoding; /* chunked_transfer_encoding */
+    ngx_flag_t    etag;                    /* etag */
 
 #if (NGX_HTTP_GZIP)
     ngx_flag_t    gzip_vary;               /* gzip_vary */
@@ -480,6 +495,7 @@ ngx_int_t ngx_http_core_content_phase(ngx_http_request_t *r,
 void *ngx_http_test_content_type(ngx_http_request_t *r, ngx_hash_t *types_hash);
 ngx_int_t ngx_http_set_content_type(ngx_http_request_t *r);
 void ngx_http_set_exten(ngx_http_request_t *r);
+ngx_int_t ngx_http_set_etag(ngx_http_request_t *r);
 ngx_int_t ngx_http_send_response(ngx_http_request_t *r, ngx_uint_t status,
     ngx_str_t *ct, ngx_http_complex_value_t *cv);
 u_char *ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *name,
@@ -514,7 +530,8 @@ ngx_int_t ngx_http_set_disable_symlinks(ngx_http_request_t *r,
     ngx_http_core_loc_conf_t *clcf, ngx_str_t *path, ngx_open_file_info_t *of);
 
 ngx_int_t ngx_http_get_forwarded_addr(ngx_http_request_t *r, ngx_addr_t *addr,
-    u_char *xff, size_t xfflen, ngx_array_t *proxies, int recursive);
+    ngx_array_t *headers, ngx_str_t *value, ngx_array_t *proxies,
+    int recursive);
 
 
 extern ngx_module_t  ngx_http_core_module;
@@ -553,6 +570,13 @@ extern ngx_str_t  ngx_http_core_get_method;
     if (r->headers_out.location) {                                            \
         r->headers_out.location->hash = 0;                                    \
         r->headers_out.location = NULL;                                       \
+    }
+
+#define ngx_http_clear_etag(r)                                                \
+                                                                              \
+    if (r->headers_out.etag) {                                                \
+        r->headers_out.etag->hash = 0;                                        \
+        r->headers_out.etag = NULL;                                           \
     }
 
 

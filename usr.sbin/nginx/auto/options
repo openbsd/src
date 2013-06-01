@@ -15,7 +15,7 @@ NGX_LOCK_PATH=
 NGX_USER=
 NGX_GROUP=
 
-CC=${CC:-gcc}
+CC=${CC:-cc}
 CPP=
 NGX_OBJS=objs
 
@@ -60,6 +60,7 @@ HTTP_CACHE=YES
 HTTP_CHARSET=YES
 HTTP_GZIP=YES
 HTTP_SSL=NO
+HTTP_SPDY=NO
 HTTP_SSI=YES
 HTTP_POSTPONE=NO
 HTTP_REALIP=NO
@@ -94,6 +95,7 @@ HTTP_SECURE_LINK=NO
 HTTP_DEGRADATION=NO
 HTTP_FLV=NO
 HTTP_MP4=NO
+HTTP_GUNZIP=NO
 HTTP_GZIP_STATIC=NO
 HTTP_UPSTREAM_IP_HASH=YES
 HTTP_UPSTREAM_LEAST_CONN=YES
@@ -201,6 +203,7 @@ do
         --http-scgi-temp-path=*)         NGX_HTTP_SCGI_TEMP_PATH="$value" ;;
 
         --with-http_ssl_module)          HTTP_SSL=YES               ;;
+        --with-http_spdy_module)         HTTP_SPDY=YES              ;;
         --with-http_realip_module)       HTTP_REALIP=YES            ;;
         --with-http_addition_module)     HTTP_ADDITION=YES          ;;
         --with-http_xslt_module)         HTTP_XSLT=YES              ;;
@@ -210,6 +213,7 @@ do
         --with-http_dav_module)          HTTP_DAV=YES               ;;
         --with-http_flv_module)          HTTP_FLV=YES               ;;
         --with-http_mp4_module)          HTTP_MP4=YES               ;;
+        --with-http_gunzip_module)       HTTP_GUNZIP=YES            ;;
         --with-http_gzip_static_module)  HTTP_GZIP_STATIC=YES       ;;
         --with-http_random_index_module) HTTP_RANDOM_INDEX=YES      ;;
         --with-http_secure_link_module)  HTTP_SECURE_LINK=YES       ;;
@@ -347,6 +351,7 @@ cat << END
   --with-ipv6                        enable IPv6 support
 
   --with-http_ssl_module             enable ngx_http_ssl_module
+  --with-http_spdy_module            enable ngx_http_spdy_module
   --with-http_realip_module          enable ngx_http_realip_module
   --with-http_addition_module        enable ngx_http_addition_module
   --with-http_xslt_module            enable ngx_http_xslt_module
@@ -356,6 +361,7 @@ cat << END
   --with-http_dav_module             enable ngx_http_dav_module
   --with-http_flv_module             enable ngx_http_flv_module
   --with-http_mp4_module             enable ngx_http_mp4_module
+  --with-http_gunzip_module          enable ngx_http_gunzip_module
   --with-http_gzip_static_module     enable ngx_http_gzip_static_module
   --with-http_random_index_module    enable ngx_http_random_index_module
   --with-http_secure_link_module     enable ngx_http_secure_link_module

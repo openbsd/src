@@ -100,6 +100,7 @@ fi
 #     ngx_http_write_filter
 #     ngx_http_header_filter
 #     ngx_http_chunked_filter
+#     ngx_http_spdy_filter
 #     ngx_http_range_header_filter
 #     ngx_http_gzip_filter
 #     ngx_http_postpone_filter
@@ -109,6 +110,7 @@ fi
 #         ngx_http_image_filter
 #         ngx_http_sub_filter
 #         ngx_http_addition_filter
+#         ngx_http_gunzip_filter
 #         ngx_http_userid_filter
 #         ngx_http_headers_filter
 #     ngx_http_copy_filter
@@ -117,8 +119,13 @@ fi
 
 HTTP_FILTER_MODULES="$HTTP_WRITE_FILTER_MODULE \
                      $HTTP_HEADER_FILTER_MODULE \
-                     $HTTP_CHUNKED_FILTER_MODULE \
-                     $HTTP_RANGE_HEADER_FILTER_MODULE"
+                     $HTTP_CHUNKED_FILTER_MODULE"
+
+if [ $HTTP_SPDY = YES ]; then
+    HTTP_FILTER_MODULES="$HTTP_FILTER_MODULES $HTTP_SPDY_FILTER_MODULE"
+fi
+
+HTTP_FILTER_MODULES="$HTTP_FILTER_MODULES $HTTP_RANGE_HEADER_FILTER_MODULE"
 
 if [ $HTTP_GZIP = YES ]; then
     have=NGX_HTTP_GZIP . auto/have
@@ -166,9 +173,25 @@ if [ $HTTP_ADDITION = YES ]; then
     HTTP_SRCS="$HTTP_SRCS $HTTP_ADDITION_SRCS"
 fi
 
+if [ $HTTP_GUNZIP = YES ]; then
+    have=NGX_HTTP_GZIP . auto/have
+    USE_ZLIB=YES
+    HTTP_FILTER_MODULES="$HTTP_FILTER_MODULES $HTTP_GUNZIP_FILTER_MODULE"
+    HTTP_SRCS="$HTTP_SRCS $HTTP_GUNZIP_SRCS"
+fi
+
 if [ $HTTP_USERID = YES ]; then
     HTTP_FILTER_MODULES="$HTTP_FILTER_MODULES $HTTP_USERID_FILTER_MODULE"
     HTTP_SRCS="$HTTP_SRCS $HTTP_USERID_SRCS"
+fi
+
+
+if [ $HTTP_SPDY = YES ]; then
+    have=NGX_HTTP_SPDY . auto/have
+    USE_ZLIB=YES
+    HTTP_MODULES="$HTTP_MODULES $HTTP_SPDY_MODULE"
+    HTTP_DEPS="$HTTP_DEPS $HTTP_SPDY_DEPS"
+    HTTP_SRCS="$HTTP_SRCS $HTTP_SPDY_SRCS"
 fi
 
 HTTP_MODULES="$HTTP_MODULES $HTTP_STATIC_MODULE"
@@ -234,7 +257,6 @@ if [ $HTTP_STATUS = YES ]; then
 fi
 
 if [ $HTTP_GEO = YES ]; then
-    have=NGX_HTTP_GEO . auto/have
     have=NGX_HTTP_X_FORWARDED_FOR . auto/have
     HTTP_MODULES="$HTTP_MODULES $HTTP_GEO_MODULE"
     HTTP_SRCS="$HTTP_SRCS $HTTP_GEO_SRCS"
@@ -276,7 +298,6 @@ if [ $HTTP_SSL = YES ]; then
 fi
 
 if [ $HTTP_PROXY = YES ]; then
-    have=NGX_HTTP_PROXY . auto/have
     have=NGX_HTTP_X_FORWARDED_FOR . auto/have
     #USE_MD5=YES
     HTTP_MODULES="$HTTP_MODULES $HTTP_PROXY_MODULE"
