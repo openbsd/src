@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.826 2013/06/01 21:18:02 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.827 2013/06/02 23:06:36 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3373,9 +3373,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 #endif /* INET6 */
 	}
 
-	pd->osport = pd->nsport;
-	pd->odport = pd->ndport;
-
 	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
@@ -6625,9 +6622,9 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 	}
 
 	if (pd->sport)
-		pd->nsport = *pd->sport;
+		pd->osport = pd->nsport = *pd->sport;
 	if (pd->dport)
-		pd->ndport = *pd->dport;
+		pd->odport = pd->ndport = *pd->dport;
 
 	return (PF_PASS);
 }
