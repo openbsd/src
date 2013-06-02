@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.60 2013/05/30 17:35:01 guenther Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.61 2013/06/02 01:07:39 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -84,63 +84,6 @@ struct isoreaddir {
 
 int	iso_uiodir(struct isoreaddir *, struct dirent *, off_t);
 int	iso_shipdir(struct isoreaddir *);
-
-#if 0
-/*
- * Mknod vnode call
- *  Actually remap the device number
- */
-int
-cd9660_mknod(ndp, vap, cred, p)
-	struct nameidata *ndp;
-	struct ucred *cred;
-	struct vattr *vap;
-	struct proc *p;
-{
-#ifndef	ISODEVMAP
-	pool_put(&namei_pool, ndp->ni_pnbuf);
-	vput(ndp->ni_dvp);
-	vput(ndp->ni_vp);
-	return (EINVAL);
-#else
-	register struct vnode *vp;
-	struct iso_node *ip;
-	struct iso_dnode *dp;
-	int error;
-
-	vp = ndp->ni_vp;
-	ip = VTOI(vp);
-
-	if (ip->i_mnt->iso_ftype != ISO_FTYPE_RRIP
-	    || vap->va_type != vp->v_type
-	    || (vap->va_type != VCHR && vap->va_type != VBLK)) {
-		pool_put(&namei_pool, ndp->ni_pnbuf);
-		vput(ndp->ni_dvp);
-		vput(ndp->ni_vp);
-		return (EINVAL);
-	}
-
-	dp = iso_dmap(ip->i_dev,ip->i_number,1);
-	if (ip->inode.iso_rdev == vap->va_rdev || vap->va_rdev == VNOVAL) {
-		/* same as the unmapped one, delete the mapping */
-		remque(dp);
-		free(dp, M_CACHE);
-	} else
-		/* enter new mapping */
-		dp->d_dev = vap->va_rdev;
-
-	/*
-	 * Remove inode so that it will be reloaded by iget and
-	 * checked to see if it is an alias of an existing entry
-	 * in the inode cache.
-	 */
-	vput(vp);
-	vp->v_type = VNON;
-	vgone(vp);
-	return (0);
-#endif
-}
-#endif
 
 /*
  * Setattr call. Only allowed for block and character special devices.

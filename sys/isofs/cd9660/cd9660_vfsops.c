@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.63 2013/05/30 17:35:01 guenther Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.64 2013/06/02 01:07:39 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -588,11 +588,6 @@ cd9660_unmount(mp, mntflags, p)
 
 	isomp = VFSTOISOFS(mp);
 
-#ifdef	ISODEVMAP
-	if (isomp->iso_ftype == ISO_FTYPE_RRIP)
-		iso_dunmap(isomp->im_dev);
-#endif
-	
 	isomp->im_devvp->v_specmountpoint = NULL;
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
@@ -930,10 +925,6 @@ retry:
 		/*
 		 * if device, look at device number table for translation
 		 */
-#ifdef	ISODEVMAP
-		if (dp = iso_dmap(dev, ino, 0))
-			ip->inode.iso_rdev = dp->d_dev;
-#endif
 		vp->v_op = &cd9660_specvops;
 		if ((nvp = checkalias(vp, ip->inode.iso_rdev, mp)) != NULL) {
 			/*

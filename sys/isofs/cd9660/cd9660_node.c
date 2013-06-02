@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.22 2013/05/30 17:35:01 guenther Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.23 2013/06/02 01:07:39 deraadt Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -61,12 +61,6 @@ struct iso_node **isohashtbl;
 u_long isohash;
 #define	INOHASH(device, inum)	(((device) + ((inum)>>12)) & isohash)
 
-#ifdef ISODEVMAP
-struct iso_node **idvhashtbl;
-u_long idvhash;
-#define	DNOHASH(device, inum)	(((device) + ((inum)>>12)) & idvhash)
-#endif
-
 extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 static u_int cd9660_chars2ui(u_char *, int);
@@ -80,67 +74,8 @@ cd9660_init(vfsp)
 {
 
 	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
-#ifdef ISODEVMAP
-	idvhashtbl = hashinit(desiredvnodes / 8, M_ISOFSMNT, M_WAITOK, &idvhash);
-#endif
 	return (0);
 }
-
-#ifdef ISODEVMAP
-/*
- * Enter a new node into the device hash list
- */
-struct iso_dnode *
-iso_dmap(device, inum, create)
-	dev_t	device;
-	cdino_t	inum;
-	int	create;
-{
-	register struct iso_dnode **dpp, *dp, *dq;
-
-	dpp = &idvhashtbl[DNOHASH(device, inum)];
-	for (dp = *dpp;; dp = dp->d_next) {
-		if (dp == NULL)
-			return (NULL);
-		if (inum == dp->i_number && device == dp->i_dev)
-			return (dp);
-	}
-
-	if (!create)
-		return (NULL);
-
-	dp = malloc(sizeof(struct iso_dnode), M_CACHE, M_WAITOK);
-	dp->i_dev = dev;
-	dp->i_number = ino;
-
-	if (dq = *dpp)
-		dq->d_prev = dp->d_next;
-	dp->d_next = dq;
-	dp->d_prev = dpp;
-	*dpp = dp;
-
-	return (dp);
-}
-
-void
-iso_dunmap(device)
-	dev_t device;
-{
-	struct iso_dnode **dpp, *dp, *dq;
-	
-	for (dpp = idvhashtbl; dpp <= idvhashtbl + idvhash; dpp++) {
-		for (dp = *dpp; dp != NULL; dp = dq) {
-			dq = dp->d_next;
-			if (device == dp->i_dev) {
-				if (dq)
-					dq->d_prev = dp->d_prev;
-				*dp->d_prev = dq;
-				free(dp, M_CACHE);
-			}
-		}
-	}
-}
-#endif
 
 /*
  * Use the device/inum pair to find the incore inode, and return a pointer

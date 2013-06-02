@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_extern.h,v 1.12 2013/05/30 17:35:01 guenther Exp $	*/
+/*	$OpenBSD: cd9660_extern.h,v 1.13 2013/06/02 01:07:39 deraadt Exp $	*/
 /*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
 
 /*-
@@ -109,7 +109,3 @@ int	isochar(const u_char *, const u_char *, int, u_char *);
 int	isofncmp(const u_char *, int, const u_char *, int, int);
 void	isofntrans(u_char *, int, u_char *, u_short *, int, int, int);
 cdino_t	isodirino(struct iso_directory_record *, struct iso_mnt *);
-#ifdef  ISODEVMAP
-struct	iso_dnode *iso_dmap(dev_t, cdino_t, int);
-void	iso_dunmap(dev_t);
-#endif

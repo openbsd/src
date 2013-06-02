@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.18 2013/05/30 17:35:01 guenther Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.19 2013/06/02 01:07:39 deraadt Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -51,18 +51,6 @@ typedef	struct	{
 	short		iso_links;	/* links of file */
 	dev_t		iso_rdev;	/* Major/Minor number for special */
 } ISO_RRIP_INODE;
-
-#ifdef ISODEVMAP
-/*
- * FOr device# (major,minor) translation table
- */
-struct iso_dnode {
-	struct iso_dnode *d_next, **d_prev;	/* hash chain */
-	dev_t		i_dev;		/* device where dnode resides */
-	cdino_t		i_number;	/* the identity of the inode */
-	dev_t		d_dev;		/* device # for translation */
-};
-#endif
 
 struct iso_node {
 	struct	iso_node *i_next, **i_prev;	/* hash chain */
