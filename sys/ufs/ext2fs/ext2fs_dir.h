@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dir.h,v 1.8 2011/07/08 08:26:41 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_dir.h,v 1.9 2013/06/02 06:41:12 guenther Exp $	*/
 /*	$NetBSD: ext2fs_dir.h,v 1.4 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  * a directory block is free, then its dp->e2d_ino is set to 0.
  * Entries other than the first in a directory do not normally have
  * dp->e2d_ino set to 0.
- * Ext2 rev 0 has a 16 bits e2d_namlen. For Ext2 vev 1 this has been split
+ * Ext2 rev 0 has a 16 bits e2d_namlen. For Ext2 rev 1 this has been split
  * into a 8 bits e2d_namlen and 8 bits e2d_type (looks like ffs, isnt't it ? :)
  * It's safe to use this for rev 0 as well because all ext2 are little-endian.
  */
