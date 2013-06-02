@@ -1,4 +1,4 @@
-/*	$OpenBSD: _wcstod.h,v 1.1 2009/01/13 18:18:31 kettenis Exp $	*/
+/*	$OpenBSD: _wcstod.h,v 1.2 2013/06/02 15:22:20 matthew Exp $	*/
 /* $NetBSD: wcstod.c,v 1.4 2001/10/28 12:08:43 yamt Exp $ */
 
 /*-
@@ -44,6 +44,7 @@ FUNCNAME(const wchar_t *nptr, wchar_t **endptr)
 	const wchar_t *src;
 	size_t size;
 	const wchar_t *start;
+	const wchar_t *aftersign;
 
 	/*
 	 * check length of string and call strtod
@@ -59,6 +60,24 @@ FUNCNAME(const wchar_t *nptr, wchar_t **endptr)
 	start = src;
 	if (*src && wcschr(L"+-", *src))
 		src++;
+	aftersign = src;
+	if (wcsncasecmp(src, L"inf", 3) == 0) {
+		src += 3;
+		if (wcsncasecmp(src, L"inity", 5) == 0)
+			src += 5;
+		goto match;
+	}
+	if (wcsncasecmp(src, L"nan", 3) == 0) {
+		src += 3;
+		if (*src == L'(') {
+			size = 1;
+			while (src[size] != L'\0' && src[size] != L')')
+				size++;
+			if (src[size] == L')')
+				src += size + 1;
+		}
+		goto match;
+	}
 	size = wcsspn(src, L"0123456789");
 	src += size;
 	if (*src == L'.') {/* XXX use localeconv */
@@ -73,56 +92,62 @@ FUNCNAME(const wchar_t *nptr, wchar_t **endptr)
 		size = wcsspn(src, L"0123456789");
 		src += size;
 	}
+match:
 	size = src - start;
 
 	/*
 	 * convert to a char-string and pass it to strtod.
-	 *
-	 * since all mb chars used to represent a double-constant
-	 * are in the portable character set, we can assume
-	 * that they are 1-byte chars.
 	 */
-	if (size)
-	{
+	if (src > aftersign) {
 		mbstate_t st;
 		char *buf;
 		char *end;
 		const wchar_t *s;
 		size_t size_converted;
 		float_type result;
-		
-		buf = malloc(size + 1);
-		if (!buf) {
-			/* error */
-			errno = ENOMEM; /* XXX */
-			return 0;
-		}
-			
+		size_t bufsize;
+
 		s = start;
 		memset(&st, 0, sizeof(st));
-		size_converted = wcsrtombs(buf, &s, size, &st);
-		if (size != size_converted) {
+		bufsize = wcsnrtombs(NULL, &s, size, 0, &st);
+
+		buf = malloc(bufsize + 1);
+		if (!buf) {
+			errno = ENOMEM; /* XXX */
+			goto fail;
+		}
+
+		s = start;
+		memset(&st, 0, sizeof(st));
+		size_converted = wcsnrtombs(buf, &s, size, bufsize, &st);
+		if (size_converted != bufsize) {
 			/* XXX should not happen */
 			free(buf);
 			errno = EILSEQ;
-			return 0;
+			goto fail;
 		}
 
-		buf[size] = 0;
+		buf[bufsize] = 0;
 		result = STRTOD_FUNC(buf, &end);
 
-		free(buf);
+		if (endptr) {
+			const char *s = buf;
+			memset(&st, 0, sizeof(st));
+			size = mbsnrtowcs(NULL, &s, end - buf, 0, &st);
 
-		if (endptr)
 			/* LINTED bad interface */
-			*endptr = (wchar_t*)start + (end - buf);
+			*endptr = (wchar_t*)start + size;
+		}
+
+		free(buf);
 
 		return result;
 	}
 
+fail:
 	if (endptr)
 		/* LINTED bad interface */
-		*endptr = (wchar_t*)start;
+		*endptr = (wchar_t*)nptr;
 
 	return 0;
 }
