@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2010/02/16 21:31:36 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2013/06/02 21:46:04 pirofti Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -20,6 +20,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/hibernate.h>
 
 #include <machine/autoconf.h>
 
@@ -93,6 +94,10 @@ diskconf(void)
 
 	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
+
+#ifdef HIBERNATE
+	hibernate_resume();
+#endif /* HIBERNATE */
 }
 
 void

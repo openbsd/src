@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson2_machdep.c,v 1.13 2013/01/16 20:28:06 miod Exp $	*/
+/*	$OpenBSD: loongson2_machdep.c,v 1.14 2013/06/02 21:46:04 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -29,6 +29,10 @@
 #include <machine/loongson2.h>
 #include <machine/memconf.h>
 #include <machine/pmon.h>
+
+#ifdef HIBERNATE
+#include <machine/hibernate_var.h>
+#endif /* HIBERNATE */
 
 #include <loongson/dev/bonitoreg.h>
 
@@ -148,6 +152,9 @@ loongson2f_setup(u_long memlo, u_long memhi)
 	if (memhi != 0) {
 		/* do NOT stomp on exception area */
 		mem_layout[0].mem_first_page = atop(DDR_WINDOW_BASE) + 1;
+#ifdef HIBERNATE
+		mem_layout[0].mem_first_page += HIBERNATE_RESERVED_PAGES;
+#endif
 		mem_layout[0].mem_last_page = atop(DDR_WINDOW_BASE) +
 		    memlo + memhi;
 		loongson_dma_base = PCI_DDR_BASE ^ DDR_WINDOW_BASE;

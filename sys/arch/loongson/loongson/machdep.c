@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2013/01/15 23:30:36 pirofti Exp $ */
+/*	$OpenBSD: machdep.c,v 1.42 2013/06/02 21:46:04 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -62,6 +62,7 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
+#include <sys/kcore.h>
 
 #include <net/if.h>
 #include <uvm/uvm.h>
@@ -75,6 +76,10 @@
 #include <mips64/mips_cpu.h>
 #include <machine/memconf.h>
 #include <machine/pmon.h>
+
+#ifdef HIBERNATE
+#include <machine/hibernate_var.h>
+#endif /* HIBERNATE */
 
 #include <dev/cons.h>
 
@@ -497,6 +502,9 @@ mips_init(int32_t argc, int32_t argv, int32_t envp, int32_t cv,
 
 		firstkernpage = atop(trunc_page(firstkernpa)) +
 		    mem_layout[0].mem_first_page - 1;
+#ifdef HIBERNATE
+		firstkernpage -= HIBERNATE_RESERVED_PAGES;
+#endif
 		lastkernpage = atop(round_page(lastkernpa)) +
 		    mem_layout[0].mem_first_page - 1;
 
