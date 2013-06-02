@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.22 2009/10/27 23:59:41 deraadt Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.23 2013/06/02 06:20:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -483,7 +483,7 @@ rcmptime(st)
 	struct stat *st;
 {
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	char *cp;
 	char *otp;
 	int len;

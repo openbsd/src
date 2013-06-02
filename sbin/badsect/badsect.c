@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.19 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.20 2013/06/02 06:22:29 guenther Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -41,12 +41,12 @@
  * does not support bad block forwarding.
  */
 #include <sys/param.h>
-#include <sys/dir.h>
 #include <sys/stat.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 
+#include <dirent.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 {
 	daddr64_t number;
 	struct stat stbuf, devstat;
-	struct direct *dp;
+	struct dirent *dp;
 	DIR *dirp;
 	char name[BUFSIZ];
 	int len;

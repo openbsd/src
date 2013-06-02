@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.14 2011/07/22 18:26:18 matthew Exp $	*/
+/*	$OpenBSD: expand.c,v 1.15 2013/06/02 06:20:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -291,7 +291,7 @@ matchdir(pattern)
 	char *pattern;
 {
 	struct stat stb;
-	struct direct *dp;
+	struct dirent *dp;
 	DIR *dirp;
 
 	dirp = opendir(path);

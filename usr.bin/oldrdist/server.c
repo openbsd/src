@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.33 2013/04/16 22:37:28 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.34 2013/06/02 06:20:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -361,7 +361,7 @@ sendf(rname, opts)
 	int sizerr, f, u, len;
 	off_t i;
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	char *otp, *cp;
 	extern struct subcmd *subcmds;
 	static char user[15], group[15];
@@ -1218,7 +1218,7 @@ clean(cp)
 	char *cp;
 {
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	struct stat stb;
 	char *otp;
 	int len, opts;
@@ -1292,7 +1292,7 @@ removeit(stp)
 	struct stat *stp;
 {
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	char *cp;
 	struct stat stb;
 	char *otp;
