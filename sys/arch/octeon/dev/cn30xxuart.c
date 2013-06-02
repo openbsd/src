@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.1 2011/05/08 13:39:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.2 2013/06/02 19:47:32 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,7 +41,6 @@
 
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/uartbusvar.h>
-#include <octeon/dev/octeonreg.h>
 
 int	cn30xxuart_probe(struct device *, void *, void *);
 void	cn30xxuart_attach(struct device *, struct device *, void *);
