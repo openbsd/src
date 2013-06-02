@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.61 2013/06/02 09:57:23 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.62 2013/06/02 10:09:21 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -44,6 +44,7 @@ static int	 d_forwpage(int, int);
 static int	 d_backpage(int, int);
 static int	 d_forwline(int, int);
 static int	 d_backline(int, int);
+static int	 d_killbuffer_cmd(int, int);
 static void	 reaper(int);
 static struct buffer	*refreshbuffer(struct buffer *);
 
@@ -109,7 +110,7 @@ static PF diredn[] = {
 	d_forwline,		/* n */
 	d_ffotherwindow,	/* o */
 	d_backline,		/* p */
-	rescan,			/* q */
+	d_killbuffer_cmd,	/* q */
 	d_rename,		/* r */
 	rescan,			/* s */
 	rescan,			/* t */
@@ -197,6 +198,7 @@ dired_init(void)
 	funmap_add(d_backpage, "dired-scroll-down");
 	funmap_add(d_forwpage, "dired-scroll-up");
 	funmap_add(d_undel, "dired-unmark");
+	funmap_add(d_killbuffer_cmd, "quit-window");
 	maps_add((KEYMAP *)&diredmap, "dired");
 	dobindkey(fundamental_map, "dired", "^Xd");
 }
@@ -640,6 +642,13 @@ d_create_directory(int f, int n)
 		return (FALSE);
 
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
+}
+
+/* ARGSUSED */
+int
+d_killbuffer_cmd(int f, int n)
+{
+	return(killbuffer_cmd(FFRAND, 0));
 }
 
 struct buffer *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.90 2013/02/17 10:30:26 florian Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.91 2013/06/02 10:09:21 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -124,10 +124,10 @@ poptobuffer(int f, int n)
 
 /*
  * Dispose of a buffer, by name.
- * Ask for the name. Look it up (don't get too
- * upset if it isn't there at all!). Clear the buffer (ask
+ * Ask for the name (unless called by dired mode). Look it up (don't
+ * get too upset if it isn't there at all!). Clear the buffer (ask
  * if the buffer has been changed). Then free the header
- * line and the buffer header. Bound to "C-X k".
+ * line and the buffer header. Bound to "C-x k".
  */
 /* ARGSUSED */
 int
@@ -136,7 +136,9 @@ killbuffer_cmd(int f, int n)
 	struct buffer *bp;
 	char    bufn[NBUFN], *bufp;
 
-	if ((bufp = eread("Kill buffer: (default %s) ", bufn, NBUFN,
+	if (f & FFRAND) /* dired mode 'q' */
+		bp = curbp;
+	else if ((bufp = eread("Kill buffer: (default %s) ", bufn, NBUFN,
 	    EFNUL | EFNEW | EFBUF, curbp->b_bname)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.82 2013/06/02 09:53:42 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.83 2013/06/02 10:09:21 lum Exp $
 .\" This file is in the public domain.
 .\"
 .Dd $Mdocdate: June 2 2013 $
@@ -947,6 +947,8 @@ dired-next-line
 dired-find-file-other-window
 .It p
 dired-previous-line
+.It q
+quit-window
 .It r
 dired-do-rename
 .It u
@@ -996,6 +998,8 @@ Remove the deletion flag for the file on the current line.
 .It dired-unmark-backward
 Remove the deletion flag from the file listed on the current line
 of the dired buffer, then move up one line.
+.It quit-window
+Close the current dired buffer.
 .El
 .Sh CONFIGURATION FILES
 There are two configuration files,
