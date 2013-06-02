@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ltrace.1,v 1.1 2013/06/01 09:57:58 miod Exp $
+.\"	$OpenBSD: ltrace.1,v 1.2 2013/06/02 14:44:34 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -43,7 +43,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 1 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt LTRACE 1
 .Os
 .Sh NAME
@@ -99,10 +99,6 @@ instead of
 .It Fl i
 Inherit; pass the trace flags to all future children of the designated
 processes.
-.It Ar command
-Execute
-.Ar command
-with the specified trace flags.
 .It Fl u Ar trspec
 Restrict the trace to a list of shared objects and/or function names, as
 specified by the
@@ -110,9 +106,10 @@ specified by the
 argument.
 The trace specification is a comma-separated list of library names,
 followed by a colon
-.Pq : , and a comma-separated list of function names.
+.Pq :\& ,
+and a comma-separated list of function names.
 Each list can be empty.
-Each list member may end up with a star
+Each list member may end with a star
 .Pq *
 to only match the beginning of a name.
 A leading bang at the beginning of a list turns it into a rejection list,
@@ -120,11 +117,17 @@ causing all unmatched names to be traced.
 Library names are compared without their version number and
 .Sq .so
 suffix.
+.It Ar command
+Execute
+.Ar command
+with the specified trace flags.
 .El
 .Sh FILES
-.Bl -tag -width ktrace.out -compact
+.Bl -tag -width ktrace.outXXX -compact
 .It Pa ktrace.out
-default ltrace dump file
+Default
+.Nm
+dump file.
 .El
 .Sh EXAMPLES
 Trace all shared library function calls from
@@ -140,7 +143,7 @@ Trace all the shared library function calls but those in
 .Pa libc.so :
 .Dl $ ltrace -u \(dq!libc\(dq wc -lh /etc/motd
 .Pp
-Trace all the shared library function calls which name start in
+Trace all the shared library function calls with names starting
 .Pq fmt :
 .Dl $ ltrace -u \(dq:fmt*\(dq wc -lh /etc/motd
 .Sh SEE ALSO
