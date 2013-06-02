@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.3 2012/10/03 19:42:53 miod Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.4 2013/06/02 20:29:36 jasper Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -43,8 +43,8 @@
 #include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/octeonvar.h>
+#include <machine/octeonreg.h>
 
-#include <octeon/dev/octeonreg.h>
 #include <octeon/dev/iobusvar.h>
 #include <octeon/dev/cn30xxgmxreg.h>
 

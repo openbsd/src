@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.10 2013/03/19 16:37:12 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.11 2013/06/02 20:29:36 jasper Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -84,7 +84,7 @@
 #include <dev/ic/wdcvar.h>
 
 #include <octeon/dev/iobusvar.h>
-#include <octeon/dev/octeonreg.h>
+#include <machine/octeonreg.h>
 #include <machine/octeonvar.h>
 
 #define OCTCF_REG_SIZE	8

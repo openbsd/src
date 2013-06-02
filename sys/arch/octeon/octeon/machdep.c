@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 2013/06/01 21:25:26 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.36 2013/06/02 20:29:36 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -79,7 +79,7 @@
 #include <dev/cons.h>
 
 #include <octeon/dev/iobusvar.h>
-#include <octeon/dev/octeonreg.h>
+#include <machine/octeonreg.h>
 #include <machine/octeonvar.h>
 
 /* The following is used externally (sysctl_hw) */

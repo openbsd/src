@@ -41,8 +41,8 @@
 #include <machine/autoconf.h>
 #include <machine/atomic.h>
 #include <machine/intr.h>
+#include <machine/octeonreg.h>
 
-#include <octeon/dev/octeonreg.h>
 #include <octeon/dev/iobusvar.h>
 
 extern bus_space_handle_t iobus_h;

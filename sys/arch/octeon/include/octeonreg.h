@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.4 2010/11/23 18:46:29 syuu Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.1 2013/06/02 20:29:36 jasper Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -25,6 +25,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef _MACHINE_OCTEONREG_H_
+#define _MACHINE_OCTEONREG_H
 
 #define OCTEON_CF_BASE		0x1D000800ULL
 #define OCTEON_CIU_BASE		0x1070000000000ULL
@@ -159,3 +162,5 @@
 #define CIU_INT1_EN4_0          0x00000C90
 #define CIU_INT0_EN4_1          0x00000C88
 #define CIU_INT1_EN4_1          0x00000C98
+
+#endif /* !_MACHINE_OCTEONREG_H_ */
