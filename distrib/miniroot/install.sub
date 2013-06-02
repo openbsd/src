@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.678 2013/05/31 23:52:18 halex Exp $
+#	$OpenBSD: install.sub,v 1.679 2013/06/02 14:55:39 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -473,18 +473,9 @@ showcols() {
 	rm -rf -- $_cdir
 }
 
-# Create a device.
-#
-# $1 = name of the device to create.
+# Create devices passed as arguments
 makedev() {
-	local _dev=$1
-
-	if [[ ! -r /dev/MAKEDEV ]] ; then
-		echo "MAKEDEV not found. Can't create device nodes."
-		return 1
-	fi
-
-	[[ -z $(cd /dev && sh MAKEDEV "$_dev" 2>&1) ]]
+	[[ -z $(cd /dev && sh MAKEDEV "$@" 2>&1) ]]
 }
 
 # Create an entry in the hosts file. If an entry with the
@@ -1948,6 +1939,9 @@ finish_up() {
 
 	[ -x /mnt/$MODE.site ] && /mnt/usr/sbin/chroot /mnt /$MODE.site
 
+	# In case this is a softraid device, make sure all underlying
+	# device nodes exist.
+	makedev $(bioctl $ROOTDISK | sed -n 's/.*<\(.*\)>$/\1/p')
 	md_installboot $ROOTDISK
 
 	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
