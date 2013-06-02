@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uda.4,v 1.20 2013/06/02 20:42:27 tedu Exp $
+.\"	$OpenBSD: uda.4,v 1.21 2013/06/02 20:51:58 tedu Exp $
 .\"	$NetBSD: uda.4,v 1.3 1996/03/03 17:14:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -251,18 +251,12 @@ Retrying may sometimes fix it.
 When the controller hangs, the driver occasionally tries to reinitialize
 it.
 This means it just tried, without success.
-.It "panic: udastart: bp==NULL"
-A bug in the driver has put an empty drive queue on a controller queue.
 .It "uda0: command ring too small"
 If you increase
 .Dv NCMDL2 ,
 you may see a performance improvement.
 (See
-.Pa /sys/arch/vax/uba/uda.c . )
-.It "panic: udastart"
-A drive was found marked for status or on-line functions while performing
-status or on-line functions.
-This indicates a bug in the driver.
+.Pa /sys/arch/vax/mscp/mscpreg.h . )
 .It "uda0: controller error, sa=0%o (...)"
 The controller reported an error.
 The error code is printed in
@@ -288,21 +282,6 @@ An informational message giving the revision level of the controller.
 An informational message showing the
 .Tn DMA
 burst size, in words.
-.It "panic: udaintr"
-Indicates a bug in the generic
-.Tn MSCP
-code.
-.It "uda0: driver bug, state N"
-The driver has a bogus value for the controller state.
-Something is quite wrong.
-This is immediately followed by a
-.Sq panic: udastate .
-.It "uda0: purge bdp N"
-A benign message tracing BDP purges.
-I have been trying to figure out what BDP purges are for.
-You might want to comment out this
-call to log() in
-.Pa /sys/arch/vax/uba/uda.c .
 .It "uda0: SETCTLRC failed:  `detail'"
 The Set Controller Characteristics command (the last part of the
 controller initialization sequence) failed.
