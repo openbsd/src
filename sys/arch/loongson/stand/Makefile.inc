@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2012/08/31 16:13:59 pascal Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2013/06/02 19:52:36 jasper Exp $
 
 BINDIR=		/usr/mdec
 
@@ -16,6 +16,7 @@ CFLAGS+=	-fno-builtin-memcmp
 CFLAGS+=	-fno-builtin-memset
 CFLAGS+=	-fno-builtin-strncpy
 CFLAGS+=	-fno-builtin-strncmp
+CFLAGS+=	-fno-builtin-exit
 CFLAGS+=	-Wa,-mfix-loongson2f-btb
 SAABI=		-mips3 -mno-abicalls -G 0 -fno-pic -fno-common
 AS?=		as
