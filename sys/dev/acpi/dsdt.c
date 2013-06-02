@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.202 2013/06/02 01:22:00 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.203 2013/06/02 17:21:38 jcs Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2694,6 +2694,14 @@ aml_store(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 			aml_die("Could not create node %s", lhs->v_nameref);
 		}
 		aml_copyvalue(node->value, rhs);
+		break;
+	case AML_OBJTYPE_METHOD:
+		/* Method override */
+		if (rhs->type != AML_OBJTYPE_INTEGER) {
+			aml_die("Overriding a method with a non-int?");
+		}
+		aml_freevalue(lhs);
+		aml_copyvalue(lhs, rhs);
 		break;
 	default:
 		aml_die("Store to default type!	 %x\n", lhs->type);
