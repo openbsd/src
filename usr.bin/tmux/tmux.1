@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.359 2013/05/31 19:56:05 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.360 2013/06/02 07:52:15 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3571,7 +3571,7 @@ This command only works from outside
 understands some extensions to
 .Xr terminfo 5 :
 .Bl -tag -width Ds
-.It Em Cc , Cr
+.It Em Cs , Cr
 Set the cursor colour.
 The first takes a single string argument and is used to set the colour;
 the second takes no arguments and restores the default cursor colour.
@@ -3581,7 +3581,7 @@ to change the cursor colour from inside
 .Bd -literal -offset indent
 $ printf '\e033]12;red\e033\e\e'
 .Ed
-.It Em Cs , Csr
+.It Em Ss , Se
 Change the cursor style.
 If set, a sequence such as this may be used
 to change the cursor to an underline:
