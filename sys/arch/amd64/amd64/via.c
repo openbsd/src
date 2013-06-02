@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.13 2013/05/30 15:37:51 matthew Exp $	*/
+/*	$OpenBSD: via.c,v 1.14 2013/06/02 16:38:05 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
-#include <machine/gdt.h>
 #include <machine/pio.h>
 #include <machine/bus.h>
 #include <machine/psl.h>
