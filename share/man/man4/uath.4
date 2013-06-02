@@ -1,4 +1,4 @@
-.\" $OpenBSD: uath.4,v 1.29 2013/06/02 20:23:34 tedu Exp $
+.\" $OpenBSD: uath.4,v 1.30 2013/06/02 21:52:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2006
 .\"     Damien Bergamini <damien.bergamini@free.fr>
@@ -144,13 +144,13 @@ dhcp
 For some reason, the driver was unable to read the firmware image from the
 filesystem.
 The file might be missing or corrupted.
-.It "uath0: could not load firmware (error=%s)"
+.It "uath0: could not load firmware (error=...)"
 An error occurred while attempting to upload the firmware to the onboard
 MIPS R4000 processor.
-.It "uath0: could not initialize adapter (error=N)"
+.It "uath0: could not initialize adapter"
 The firmware was uploaded successfully but did not initialize properly or
 in time.
-.It "uath0: could not send command (error=%s)"
+.It "uath0: could not send command 0xXX (error=...)"
 An attempt to send a command to the firmware failed.
 .It "uath0: timeout waiting for command reply"
 A read command was sent to the firmware but the firmware failed to reply in
