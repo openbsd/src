@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_extern.h,v 1.12 2013/03/23 17:12:57 deraadt Exp $	*/
+/*	$OpenBSD: udf_extern.h,v 1.13 2013/06/02 15:35:18 deraadt Exp $	*/
 
 /*
  * Written by Pedro Martelletto <pedro@ambientworks.net> in February 2005.
@@ -50,6 +50,7 @@ int udf_inactive(void *v);
 int udf_reclaim(void *v);
 int udf_lock(void *v);
 int udf_unlock(void *v);
+int udf_pathconf(void *);
 int udf_islocked(void *v);
 int udf_print(void *v);
 int udf_transname(char *, char *, int, struct umount *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.47 2013/05/30 17:35:01 guenther Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.48 2013/06/02 15:35:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -72,6 +72,7 @@ struct vops udf_vops = {
 	.vop_strategy	= udf_strategy,
 	.vop_lock	= udf_lock,
 	.vop_unlock	= udf_unlock,
+	.vop_pathconf	= udf_pathconf,
 	.vop_islocked	= udf_islocked,
 	.vop_print	= udf_print
 };
@@ -388,10 +389,10 @@ udf_ioctl(void *v)
  * I'm not sure that this has much value in a read-only filesystem, but
  * cd9660 has it too.
  */
-#if 0
-static int
-udf_pathconf(struct vop_pathconf_args *a)
+int
+udf_pathconf(void *v)
 {
+	struct vop_pathconf_args *ap = v;
 	int error = 0;
 
 	switch (ap->a_name) {
@@ -401,8 +402,14 @@ udf_pathconf(struct vop_pathconf_args *a)
 	case _PC_NAME_MAX:
 		*ap->a_retval = NAME_MAX;
 		break;
+	case _PC_CHOWN_RESTRICTED:
+		*ap->a_retval = 1;
+		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 1;
+		break;
+	case _PC_TIMESTAMP_RESOLUTION:
+		*ap->a_retval = 1000;		/* 1 microsecond */
 		break;
 	default:
 		error = EINVAL;
@@ -411,7 +418,6 @@ udf_pathconf(struct vop_pathconf_args *a)
 
 	return (error);
 }
-#endif
 
 int
 udf_read(void *v)
