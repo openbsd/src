@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.204 2013/03/28 23:10:05 tedu Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.205 2013/06/02 15:03:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -165,6 +165,7 @@ struct carp_softc {
 	u_int32_t sc_lsmask;		/* load sharing mask */
 	int sc_lscount;			/* # load sharing interfaces (max 32) */
 	int sc_delayed_arp;		/* delayed ARP request countdown */
+	int sc_realmac;			/* using real mac */
 
 	struct in_addr sc_peer;
 
@@ -304,8 +305,8 @@ carp_hmac_prepare_ctx(struct carp_vhost_entry *vhe, u_int8_t ctx)
 	}
 
 	/* the rest of the precomputation */
-	if (vhe->vhe_leader && bcmp(sc->sc_ac.ac_enaddr, vhe->vhe_enaddr,
-	    ETHER_ADDR_LEN) != 0)
+	if (!sc->sc_realmac && vhe->vhe_leader &&
+	    bcmp(sc->sc_ac.ac_enaddr, vhe->vhe_enaddr, ETHER_ADDR_LEN) != 0)
 		SHA1Update(&vhe->vhe_sha1[ctx], sc->sc_ac.ac_enaddr,
 		    ETHER_ADDR_LEN);
 
@@ -1701,6 +1702,12 @@ carp_setrun(struct carp_vhost_entry *vhe, sa_family_t af)
 		carp_set_state_all(sc, INIT);
 		return;
 	}
+
+	if (bcmp(((struct arpcom *)sc->sc_carpdev)->ac_enaddr,
+	    sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN) == 0)
+		sc->sc_realmac = 1;
+	else
+		sc->sc_realmac = 0;
 
 	if (sc->sc_if.if_flags & IFF_UP && vhe->vhid > 0 &&
 	    (sc->sc_naddrs || sc->sc_naddrs6) && !sc->sc_suppress) {
