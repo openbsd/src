@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2013/06/02 16:38:05 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.65 2013/06/02 16:45:12 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -161,10 +161,9 @@
  * in the upper layer.
  *
  * data structures we use include:
- *
- *  - struct pmap: describes the address space of one thread
+ *  - struct pmap: describes the address space of one process
  *  - struct pv_entry: describes one <PMAP,VA> mapping of a PA
- * - pmap_remove_record: a list of virtual addresses whose mappings
+ *  - struct pg_to_free: a list of virtual addresses whose mappings
  *	have been changed.   used for TLB flushing.
  */
 
