@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.12 2013/06/01 18:41:43 lteo Exp $
+.\"     $OpenBSD: divert.4,v 1.13 2013/06/02 01:07:47 benno Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -48,13 +48,15 @@ processes a packet that matches a rule with the
 parameter
 (see
 .Xr pf.conf 5
-for details) it is immediately sent to the divert socket listening on the
+for details) it is sent to the divert socket listening on the
 divert port specified in the rule.
 Note that
 .Ar divert-packet
 should not be confused with
-.Ar divert-to ,
-which does not use divert sockets.
+.Ar divert-to
+or
+.Ar divert-reply ,
+which do not use divert sockets.
 .Xr pf 4
 reassembles TCP streams by default (if IP reassembly is not disabled)
 before sending them to the divert sockets.
