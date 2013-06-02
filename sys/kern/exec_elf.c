@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.91 2013/03/28 16:55:25 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.92 2013/06/02 16:41:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1265,8 +1265,9 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 
 	/*
 	 * Now, for each thread, write the register info and any other
-	 * per-thread notes.  Since we're dumping core, we don't bother
-	 * locking.
+	 * per-thread notes.  Since we're dumping core, all the other
+	 * threads in the process have been stopped and the list can't
+	 * change.
 	 */
 	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		if (q == p)		/* we've taken care of this thread */
