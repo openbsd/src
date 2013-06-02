@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.81 2013/06/01 17:33:49 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.82 2013/06/02 09:53:42 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 1 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -936,9 +936,9 @@ dired-shell-command
 .It +
 dired-create-directory
 .It c
-dired-copy-file
+dired-do-copy
 .It d and C-d
-dired-flag-file-deleted
+dired-flag-file-deletion
 .It e, f and C-m
 dired-find-file
 .It n
@@ -948,11 +948,11 @@ dired-find-file-other-window
 .It p
 dired-previous-line
 .It r
-dired-rename-file
+dired-do-rename
 .It u
-dired-unflag
+dired-unmark
 .It x
-dired-do-deletions
+dired-do-flagged-delete
 .It C-v
 dired-scroll-down
 .It M-v
@@ -961,26 +961,25 @@ dired-scroll-up
 .Sh MG DIRED COMMANDS
 The following are a list of the commands specific to dired mode:
 .Bl -tag -width Ds
-.It dired-backup-unflag
-Remove the deletion flag from the file listed on the current line
-of the dired buffer, then move up one line.
-.It dired-copy-file
-Copy the file listed on the current line of the dired buffer.
 .It dired-create-directory
 Create a directory.
-.It dired-do-deletions
+.It dired-do-copy
+Copy the file listed on the current line of the dired buffer.
+.It dired-do-flagged-delete
 Delete the files that have been flagged for deletion.
+.It dired-do-rename
+Rename the file listed on the current line of the dired buffer.
 .It dired-find-file
 Open the file on the current line of the dired buffer.
 If the cursor is on a directory it will be opened in dired mode.
-.It dired-find-file-other-window
-Open the file on the current line of the dired buffer in a
-different window.
-.It dired-flag-file-deleted
+.It dired-flag-file-deletion
 Flag the file listed on the current line for deletion.
 This is indicated in the buffer by putting a D at the left margin.
 No files are actually deleted until the function dired-do-deletions
 is executed.
+.It dired-find-file-other-window
+Open the file on the current line of the dired buffer in a
+different window.
 .It dired-next-line
 Move the cursor to the next line.
 .It dired-other-window
@@ -988,14 +987,15 @@ This function works just like dired, except that it puts the
 dired buffer in another window.
 .It dired-previous-line
 Move the cursor to the previous line.
-.It dired-rename-file
-Rename the file listed on the current line of the dired buffer.
 .It dired-scroll-down
 Scroll down the dired buffer.
 .It dired-scroll-up
 Scroll up the dired buffer.
-.It dired-unflag
+.It dired-unmark
 Remove the deletion flag for the file on the current line.
+.It dired-unmark-backward
+Remove the deletion flag from the file listed on the current line
+of the dired buffer, then move up one line.
 .El
 .Sh CONFIGURATION FILES
 There are two configuration files,

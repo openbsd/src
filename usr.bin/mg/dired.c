@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.59 2013/05/30 17:43:43 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.60 2013/06/02 09:53:42 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -183,20 +183,20 @@ void
 dired_init(void)
 {
 	funmap_add(dired, "dired");
-	funmap_add(d_undelbak, "dired-backup-unflag");
+	funmap_add(d_undelbak, "dired-unmark-backward");
 	funmap_add(d_create_directory, "dired-create-directory");
-	funmap_add(d_copy, "dired-copy-file");
-	funmap_add(d_expunge, "dired-do-deletions");
+	funmap_add(d_copy, "dired-do-copy");
+	funmap_add(d_expunge, "dired-do-flagged-delete");
 	funmap_add(d_findfile, "dired-find-file");
 	funmap_add(d_ffotherwindow, "dired-find-file-other-window");
-	funmap_add(d_del, "dired-flag-file-deleted");
+	funmap_add(d_del, "dired-flag-file-deletion");
 	funmap_add(d_forwline, "dired-next-line");
 	funmap_add(d_otherwindow, "dired-other-window");
 	funmap_add(d_backline, "dired-previous-line");
-	funmap_add(d_rename, "dired-rename-file");
+	funmap_add(d_rename, "dired-do-rename");
 	funmap_add(d_backpage, "dired-scroll-down");
 	funmap_add(d_forwpage, "dired-scroll-up");
-	funmap_add(d_undel, "dired-unflag");
+	funmap_add(d_undel, "dired-unmark");
 	maps_add((KEYMAP *)&diredmap, "dired");
 	dobindkey(fundamental_map, "dired", "^Xd");
 }
