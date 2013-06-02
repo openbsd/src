@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.201 2013/05/23 10:27:43 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.202 2013/06/02 01:22:00 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -610,6 +610,7 @@ acpi_poll_notify_task(void *arg0, int arg1)
  */
 
 struct aml_node *__aml_search(struct aml_node *, uint8_t *, int);
+struct aml_node *__aml_searchname(struct aml_node *, const void *, int);
 void aml_delchildren(struct aml_node *);
 
 
@@ -2628,6 +2629,7 @@ aml_store(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
     struct aml_value *rhs)
 {
 	struct aml_value tmp;
+	struct aml_node *node;
 	int mlen;
 
 	/* Already set */
@@ -2685,6 +2687,13 @@ aml_store(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 		}
 		aml_freevalue(lhs);
 		aml_copyvalue(lhs, rhs);
+		break;
+	case AML_OBJTYPE_NAMEREF:
+		node = __aml_searchname(scope->node, lhs->v_nameref, 1);
+		if (node == NULL) {
+			aml_die("Could not create node %s", lhs->v_nameref);
+		}
+		aml_copyvalue(node->value, rhs);
 		break;
 	default:
 		aml_die("Store to default type!	 %x\n", lhs->type);
@@ -4202,7 +4211,7 @@ aml_evalinteger(struct acpi_softc *sc, struct aml_node *parent,
  * Search for an AML name in namespace.. root only
  */
 struct aml_node *
-aml_searchname(struct aml_node *root, const void *vname)
+__aml_searchname(struct aml_node *root, const void *vname, int create)
 {
 	char *name = (char *)vname;
 	char  nseg[AML_NAMESEG_LEN + 1];
@@ -4220,10 +4229,16 @@ aml_searchname(struct aml_node *root, const void *vname)
 			nseg[i] = *name++;
 		if (*name == '.')
 			name++;
-		root = __aml_search(root, nseg, 0);
+		root = __aml_search(root, nseg, create);
 	}
 	dnprintf(25,"%p %s\n", root, aml_nodename(root));
 	return root;
+}
+
+struct aml_node *
+aml_searchname(struct aml_node *root, const void *vname)
+{
+	return __aml_searchname(root, vname, 0);
 }
 
 /*
