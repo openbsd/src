@@ -1,5 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.9 2013/06/01 01:16:20 jasper Exp $	*/
-/*	$OpenBSD: octeon_pcibus.c,v 1.9 2013/06/01 01:16:20 jasper Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.10 2013/06/02 19:47:01 jasper Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
