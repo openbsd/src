@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dcm.4,v 1.18 2013/01/17 21:54:18 jmc Exp $
+.\"	$OpenBSD: dcm.4,v 1.19 2013/06/02 20:42:27 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dcm.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt DCM 4 hp300
 .Os
 .Sh NAME
@@ -83,10 +83,10 @@ the interrupt rate drops.
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It dcm%d port%d: silo overflow
+.It dcm0 port0: silo overflow
 Input Silo has overflowed and incoming data
 has been lost.
-.It dcm%d port%d: uart overflow
+.It dcm0 port0: uart overflow
 The 3 character buffer in the UART has
 overflowed.
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apci.4,v 1.13 2010/01/02 19:55:35 schwarze Exp $
+.\"	$OpenBSD: apci.4,v 1.14 2013/06/02 20:42:27 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: January 2 2010 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt APCI 4 hp300
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ Input and output for each line may be set to one of the following baud rates:
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It apci%d: silo overflow.
+.It apci0: silo overflow.
 The single-character input
 .Dq silo
 has overflowed and incoming data has been lost.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uda.4,v 1.19 2010/02/18 13:23:38 schwarze Exp $
+.\"	$OpenBSD: uda.4,v 1.20 2013/06/02 20:42:27 tedu Exp $
 .\"	$NetBSD: uda.4,v 1.3 1996/03/03 17:14:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)uda.4	6.6 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: February 18 2010 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt UDA 4 vax
 .Os
 .Sh NAME
@@ -218,42 +218,42 @@ copying (it maps the entire disk).
 No command packets were available while the driver was looking
 for disk drives.
 The controller is not extending enough credits to use the drives.
-.It "uda%d: no response to Get Unit Status request"
+.It "uda0: no response to Get Unit Status request"
 A disk drive was found, but did not respond to a status request.
 This is either a hardware problem or someone pulling unit number
 plugs very fast.
-.It "uda%d: unit %d off line"
+.It "uda0: unit N off line"
 While searching for drives, the controller found one that
 seems to be manually disabled.
 It is ignored.
-.It "uda%d: unable to get unit status"
+.It "uda0: unable to get unit status"
 Something went wrong while trying to determine the status of
 a disk drive.
 This is followed by an error detail.
-.It "uda%d: unit %d, next %d"
+.It "uda0: unit N, next X"
 This probably never happens, but I wanted to know if it did.
 I have no idea what one should do about it.
-.It "uda%d: cannot handle unit number %d (max is %d)"
+.It "uda0: cannot handle unit number N (max is X)"
 The controller found a drive whose unit number is too large.
 Valid unit numbers are those in the range [0..7].
-.It "uda%d: uballoc map failed"
+.It "uda0: uballoc map failed"
 UNIBUS resource map allocation failed during initialization.
 This can only happen if you have 496 devices on a UNIBUS.
-.It "uda%d: timeout during init"
+.It "uda0: timeout during init"
 The controller did not initialize within ten seconds.
 A hardware problem, but it sometimes goes away if you try again.
-.It "uda%d: init failed, sa=%b"
+.It "uda0: init failed, sa=..."
 The controller refused to initialize.
-.It "uda%d: controller hung"
+.It "uda0: controller hung"
 The controller never finished initialization.
 Retrying may sometimes fix it.
-.It "uda%d: still hung"
+.It "uda0: still hung"
 When the controller hangs, the driver occasionally tries to reinitialize
 it.
 This means it just tried, without success.
 .It "panic: udastart: bp==NULL"
 A bug in the driver has put an empty drive queue on a controller queue.
-.It "uda%d: command ring too small"
+.It "uda0: command ring too small"
 If you increase
 .Dv NCMDL2 ,
 you may see a performance improvement.
@@ -263,7 +263,7 @@ you may see a performance improvement.
 A drive was found marked for status or on-line functions while performing
 status or on-line functions.
 This indicates a bug in the driver.
-.It "uda%d: controller error, sa=0%o (%s)"
+.It "uda0: controller error, sa=0%o (...)"
 The controller reported an error.
 The error code is printed in
 octal, along with a short description if the code is known (see the
@@ -276,15 +276,15 @@ If this occurs during normal
 operation, the driver will reset it and retry pending I/O.
 If
 it occurs during configuration, the controller may be ignored.
-.It "uda%d: stray intr"
+.It "uda0: stray intr"
 The controller interrupted when it should have stayed quiet.
 The interrupt has been ignored.
-.It "uda%d: init step %d failed, sa=%b"
+.It "uda0: init step N failed, sa=..."
 The controller reported an error during the named initialization step.
 The driver will retry initialization later.
-.It "uda%d: version %d model %d"
+.It "uda0: version X model Y"
 An informational message giving the revision level of the controller.
-.It "uda%d: DMA burst size set to %d"
+.It "uda0: DMA burst size set to N"
 An informational message showing the
 .Tn DMA
 burst size, in words.
@@ -292,32 +292,32 @@ burst size, in words.
 Indicates a bug in the generic
 .Tn MSCP
 code.
-.It "uda%d: driver bug, state %d"
+.It "uda0: driver bug, state N"
 The driver has a bogus value for the controller state.
 Something is quite wrong.
 This is immediately followed by a
 .Sq panic: udastate .
-.It "uda%d: purge bdp %d"
+.It "uda0: purge bdp N"
 A benign message tracing BDP purges.
 I have been trying to figure out what BDP purges are for.
 You might want to comment out this
 call to log() in
 .Pa /sys/arch/vax/uba/uda.c .
-.It "uda%d: SETCTLRC failed:  `detail'"
+.It "uda0: SETCTLRC failed:  `detail'"
 The Set Controller Characteristics command (the last part of the
 controller initialization sequence) failed.
 The
 .Em detail
 message tells why.
-.It "uda%d: attempt to bring ra%d on line failed:  `detail'"
+.It "uda0: attempt to bring ra0 on line failed:  `detail'"
 The drive could not be brought on line.
 The
 .Em detail
 message tells why.
-.It "uda%d: ra%d: unknown type %d"
+.It "uda0: ra0: unknown type N"
 The type index of the named drive is not known to the driver, so the
 drive will be ignored.
-.It "uda%d: attempt to get status for ra%d failed:  `detail'"
+.It "uda0: attempt to get status for ra0 failed:  `detail'"
 A status request failed.
 The
 .Em detail
@@ -333,7 +333,7 @@ so something is wrong.
 The controller reported completion of bad block related I/O.
 The
 driver never issues any such, so something is wrong.
-.It "uda%d: lost interrupt"
+.It "uda0: lost interrupt"
 The controller has gone out to lunch, and is being reset to try to bring
 it back.
 .It "panic: mscp_go: AEB_MAX_BP too small"
@@ -347,22 +347,22 @@ Raise
 .Dv AEB_MAX_BP
 or turn off
 .Dv AVOID_EMULEX_BUG .
-.It "uda%d: unit %d: unknown message type 0x%x ignored"
+.It "uda0: unit N: unknown message type 0xXXX ignored"
 The controller responded with a mysterious message type.
 See
 .Pa /sys/vax/mscp.h
 for a list of known message types.
 This is probably a controller hardware problem.
-.It "uda%d: unit %d out of range"
+.It "uda0: unit N out of range"
 The disk drive unit number (the unit plug) is higher than the
 maximum number the driver allows (currently 7).
-.It "uda%d: unit %d not configured, message ignored"
+.It "uda0: unit N not configured, message ignored"
 The named disk drive has announced its presence to the controller,
 but was not, or cannot now be, configured into the running system.
 .Em Message
 is one of `available attention' (an `I am here' message) or
-`stray response op 0x%x status 0x%x' (anything else).
-.It "Emulex SC41/MS screwup: uda%d, got %d correct, then changed 0x%x to 0x%x"
+`stray response op 0xXXXX status 0xXXXX' (anything else).
+.It "Emulex SC41/MS screwup: uda0, got N correct, then changed 0xXXXX to 0xYYYY"
 You turned on
 .Dv AVOID_EMULEX_BUG ,
 and the driver successfully
@@ -378,7 +378,7 @@ avoided the avoidance.
 Try turning on
 .Dv MSCP_PARANOIA
 instead.
-.It "uda%d: bad response packet ignored"
+.It "uda0: bad response packet ignored"
 You turned on
 .Dv MSCP_PARANOIA ,
 and the driver caught the controller in
@@ -386,7 +386,7 @@ a lie.
 The lie has been ignored, and the controller will soon be
 reset (after a `lost' interrupt).
 This is followed by a hex dump of the offending packet.
-.It "uda%d: %s error datagram"
+.It "uda0: ... error datagram"
 The controller has reported some kind of error, either `hard'
 (unrecoverable) or `soft' (recoverable).
 If the controller is going on
@@ -402,7 +402,7 @@ be followed by a failure detail message (also listed below).
 .It memory addr 0x%x
 A host memory access error; this is the address that could not be
 read.
-.It "unit %d: level %d retry %d, %s %d"
+.It "unit N: level N retry N, ... N"
 A typical disk error; the retry count and error recovery levels are
 printed, along with the block type (`lbn', or logical block; or `rbn',
 or replacement block) and number.
@@ -410,7 +410,7 @@ If the string is something else,
 .Tn DEC
 has been clever, or your hardware has gone to Australia for vacation
 (unless you live there; then it might be in New Zealand, or Brazil).
-.It unit %d: %s %d
+.It unit N: ... N
 Also a disk error, but an `SDI' error, whatever that is.
 .Po
 I doubt it has anything to do with Ronald Reagan.
@@ -423,12 +423,12 @@ be used by field service as an aid in locating failing hardware.
 The codes for RA81s can be found in the
 .%T RA81 Maintenance Guide ,
 DEC order number AA-M879A-TC, in appendices E and F.
-.It "unit %d: small disk error, cyl %d"
+.It "unit N: small disk error, cyl N"
 Yet another kind of disk error, but for small disks.
 .Po
 ``That's what it says, guv'nor. Dunnask me what it means.''
 .Pc
-.It "unit %d: unknown error, format 0x%x"
+.It "unit N: unknown error, format 0x%x"
 A mysterious error: the given format code is not known.
 .El
 .Ed
@@ -436,26 +436,26 @@ A mysterious error: the given format code is not known.
 The detail messages are as follows:
 .Bd -filled -offset indent
 .Bl -diag
-.It success (%s) (code 0, subcode %d)
+.It success (...) (code 0, subcode N)
 Everything worked, but the controller thought it would let you know
 that something went wrong.
 No matter what subcode, this can probably
 be ignored.
-.It "invalid command (%s) (code 1, subcode %d)"
-This probably cannot occur unless the hardware is out; %s should be
+.It "invalid command (...) (code 1, subcode N)"
+This probably cannot occur unless the hardware is out; ... should be
 `invalid msg length', meaning some command was too short or too long.
-.It "command aborted (unknown subcode) (code 2, subcode %d)"
+.It "command aborted (unknown subcode) (code 2, subcode N)"
 This should never occur, as the driver never aborts commands.
-.It "unit offline (%s) (code 3, subcode %d)"
+.It "unit offline (...) (code 3, subcode N)"
 The drive is offline, either because it is not around (`unknown
 drive'), stopped (`not mounted'), out of order (`inoperative'), has the
 same unit number as some other drive (`duplicate'), or has been
 disabled for diagnostics (`in diagnosis').
-.It "unit available (unknown subcode) (code 4, subcode %d)"
+.It "unit available (unknown subcode) (code 4, subcode N)"
 The controller has decided to report a perfectly normal event as
 an error.
 (Why?)
-.It "media format error (%s) (code 5, subcode %d)"
+.It "media format error (...) (code 5, subcode N)"
 The drive cannot be used without reformatting.
 The Format Control
 Table cannot be read (`fct unread - edc'), there is a bad sector
@@ -466,14 +466,14 @@ or the
 has an uncorrectable
 .Tn ECC
 error (`fct ecc').
-.It "write protected (%s) (code 6, subcode %d)"
+.It "write protected (...) (code 6, subcode N)"
 The drive is write protected, either by the front panel switch
 (`hardware') or via the driver (`software').
 The driver never sets software write protect.
-.It "compare error (unknown subcode) (code 7, subcode %d)"
+.It "compare error (unknown subcode) (code 7, subcode N)"
 A compare operation showed some sort of difference.
 The driver never uses compare operations.
-.It "data error (%s) (code 7, subcode %d)"
+.It "data error (...) (code 7, subcode N)"
 Something went wrong reading or writing a data sector.
 A `forced
 error' is a software-asserted error used to mark a sector that contains
@@ -487,7 +487,7 @@ An `uncorrectable ecc' error is an ordinary data error that cannot
 be fixed via
 .Tn ECC
 logic.
-A `%d symbol ecc' error is a data error
+A `N symbol ecc' error is a data error
 that can be (and presumably has been) corrected by the
 .Tn ECC
 logic.
@@ -495,19 +495,19 @@ It might indicate a sector that is imperfect but usable, or that
 is starting to go bad.
 If any of these errors recur, the sector
 may need to be replaced.
-.It "host buffer access error (%s) (code %d, subcode %d)"
+.It "host buffer access error (...) (code N, subcode N)"
 Something went wrong while trying to copy data to or from the host
 (Vax).
 The subcode is one of `odd xfer addr', `odd xfer count',
 `non-exist. memory', or `memory parity'.
 The first two could be a
 software glitch; the last two indicate hardware problems.
-.It controller error (%s) (code %d, subcode %d)
+.It controller error (...) (code N, subcode N)
 The controller has detected a hardware error in itself.
 A `serdes overrun' is a serialiser / deserialiser overrun; `edc'
 probably stands for `error detection code'; and `inconsistent
 internal data struct' is obvious.
-.It "drive error (%s) (code %d, subcode %d)"
+.It "drive error (...) (code N, subcode N)"
 Either the controller or the drive has detected a hardware error
 in the drive.
 I am not sure what an `sdi command timeout' is, but

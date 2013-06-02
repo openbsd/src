@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hd.4,v 1.16 2010/07/03 09:20:06 krw Exp $
+.\"	$OpenBSD: hd.4,v 1.17 2013/06/02 20:42:27 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)rd.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 3 2010 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt HD 4 hp300
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ raw files
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "hd%d err: v%d u%d, R0x%x F0x%x A0x%x I0x%x, block %d"
+.It "hd0 err: vNN uNN, R0xXX F0xXX A0xXX I0xXX, block N"
 An unrecoverable data error occurred during transfer of the
 specified block on the specified disk.
 .El

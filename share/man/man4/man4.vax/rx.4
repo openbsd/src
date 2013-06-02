@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rx.4,v 1.15 2013/01/17 21:54:18 jmc Exp $
+.\"	$OpenBSD: rx.4,v 1.16 2013/06/02 20:42:27 tedu Exp $
 .\"	$NetBSD: rx.4,v 1.3 1996/03/03 17:14:03 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)rx.4	6.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt RX 4 vax
 .Os
 .Sh NAME
@@ -131,11 +131,11 @@ hold file systems.
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "rx%d: hard error, trk %d psec %d cs=%b, db=%b, err=%x, %x, %x, %x."
+.It "rx0: hard error, trk N psec N cs=..., db=..., err=X, X, X, X."
 An unrecoverable error was encountered.
 The track and physical sector numbers, the device registers and the
 extended error status are displayed.
-.It rx%d: state %d (reset).
+.It rx0: state N (reset).
 The driver entered a bogus state.
 This should not happen.
 .El

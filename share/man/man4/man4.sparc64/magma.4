@@ -1,4 +1,4 @@
-.\"	$OpenBSD: magma.4,v 1.11 2008/11/29 01:55:06 ray Exp $
+.\"	$OpenBSD: magma.4,v 1.12 2013/06/02 20:42:27 tedu Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 Iain Hibbert
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2008 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt MAGMA 4 sparc64
 .Os
 .Sh NAME
@@ -69,14 +69,14 @@ Parallel ports
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "mtty%d%x: ring buffer overflow"
+.It "mtty0X: ring buffer overflow"
 Incoming characters have been discarded due to a buffer overflow.
 This is caused by the process in control of the device not reading characters
 fast enough.
 If need be you can make the ring buffer bigger by changing the
 .Dv MAGMA_RBUF_SIZE
 #define to something bigger, but it should be a multiple of two.
-.It "mtty%d%x: fifo overflow"
+.It "mtty0X: fifo overflow"
 Incoming characters have been discarded due to a CD1400 channel overrun.
 This is caused by interrupts not being serviced sufficiently quickly to prevent
 the 12 byte receive FIFO on a serial channel from overflowing.
