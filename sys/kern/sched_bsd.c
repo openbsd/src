@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.31 2013/03/28 16:55:25 deraadt Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.32 2013/06/02 20:59:09 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -376,8 +376,9 @@ mi_switch(void)
 	if (timercmp(&tv, &spc->spc_runtime, <)) {
 #if 0
 		printf("uptime is not monotonic! "
-		    "tv=%lu.%06lu, runtime=%lu.%06lu\n",
-		    tv.tv_sec, tv.tv_usec, spc->spc_runtime.tv_sec,
+		    "tv=%lld.%06lu, runtime=%lld.%06lu\n",
+		    (long long)tv.tv_sec, tv.tv_usec,
+		    (long long)spc->spc_runtime.tv_sec,
 		    spc->spc_runtime.tv_usec);
 #endif
 	} else {

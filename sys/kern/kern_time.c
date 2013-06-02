@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.77 2013/03/28 16:55:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.78 2013/06/02 20:59:09 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -86,8 +86,8 @@ settime(struct timespec *ts)
 	 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
 	 */
 	if (ts->tv_sec > INT_MAX - 365*24*60*60) {
-		printf("denied attempt to set clock forward to %ld\n",
-		    ts->tv_sec);
+		printf("denied attempt to set clock forward to %lld\n",
+		    (long long)ts->tv_sec);
 		return (EPERM);
 	}
 	/*
@@ -98,8 +98,8 @@ settime(struct timespec *ts)
 	 */
 	nanotime(&now);
 	if (securelevel > 1 && timespeccmp(ts, &now, <)) {
-		printf("denied attempt to set clock back %ld seconds\n",
-		    now.tv_sec - ts->tv_sec);
+		printf("denied attempt to set clock back %lld seconds\n",
+		    (long long)now.tv_sec - ts->tv_sec);
 		return (EPERM);
 	}
 
