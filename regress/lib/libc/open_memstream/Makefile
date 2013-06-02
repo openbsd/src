@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2013/01/01 17:43:07 mpi Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/06/02 15:33:53 dtucker Exp $
 
-PROG=	open_memstreamtest	
+PROG=	open_memstreamtest
 
 .include <bsd.regress.mk>
