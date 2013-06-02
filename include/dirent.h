@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.30 2013/03/24 17:46:58 deraadt Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.31 2013/06/02 16:14:59 guenther Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -40,8 +40,10 @@
 /*
  * POSIX doesn't mandate this, but X/Open XPG 4.2 does.
  */
-#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 400
 #include <sys/types.h>
+#else
+#include <sys/_types.h>
 #endif
 
 /*
