@@ -1,4 +1,4 @@
-/*	$Id: mdoc_man.c,v 1.49 2013/05/29 15:40:14 schwarze Exp $ */
+/*	$Id: mdoc_man.c,v 1.50 2013/06/02 18:16:51 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -178,8 +178,8 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ NULL, pre_bx, NULL, NULL, NULL }, /* Bx */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Db */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dc */
-	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Do */
-	{ cond_body, pre_enc, post_enc, "``", "''" }, /* Dq */
+	{ cond_body, pre_enc, post_enc, "\\(lq", "\\(rq" }, /* Do */
+	{ cond_body, pre_enc, post_enc, "\\(lq", "\\(rq" }, /* Dq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ec */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ef */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Em */
@@ -195,14 +195,14 @@ static	const struct manact manacts[MDOC_MAX + 1] = {
 	{ cond_body, pre_enc, post_enc, "(", ")" }, /* Po */
 	{ cond_body, pre_enc, post_enc, "(", ")" }, /* Pq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Qc */
-	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Ql */
+	{ cond_body, pre_enc, post_enc, "\\(oq", "\\(cq" }, /* Ql */
 	{ cond_body, pre_enc, post_enc, "\"", "\"" }, /* Qo */
 	{ cond_body, pre_enc, post_enc, "\"", "\"" }, /* Qq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Re */
 	{ cond_body, pre_rs, NULL, NULL, NULL }, /* Rs */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Sc */
-	{ cond_body, pre_enc, post_enc, "`", "'" }, /* So */
-	{ cond_body, pre_enc, post_enc, "`", "'" }, /* Sq */
+	{ cond_body, pre_enc, post_enc, "\\(oq", "\\(cq" }, /* So */
+	{ cond_body, pre_enc, post_enc, "\\(oq", "\\(cq" }, /* Sq */
 	{ NULL, pre_sm, NULL, NULL, NULL }, /* Sm */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Sx */
 	{ NULL, pre_sy, post_font, NULL, NULL }, /* Sy */
