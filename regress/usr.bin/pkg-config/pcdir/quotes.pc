@@ -1,0 +1,7 @@
+includedir="/usr/X11R6/include"
+
+Name: Quotes
+Description: Silly quotes are silly
+Version: 0.0.1
+Requires:
+Cflags: -I${includedir}/freetype2

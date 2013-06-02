@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2013/05/30 00:02:36 jasper Exp $
+#	$OpenBSD: Makefile,v 1.39 2013/06/02 16:12:27 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -52,6 +52,7 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		whitespace-libs \
 		whitespace-linebreak \
 		whitespace-name \
+		quoting \
 		broken-require-1 \
 		broken-require-2 \
 		min-version-1 \
@@ -398,6 +399,12 @@ whitespace-name:
 	# Test whitespace in Name
 	@echo "Requested 'whitespace > 0.2.0' but version of Whitespace test is 0.0.0" > ${WANT}
 	@if ${VPCONFIG} "whitespace > 0.2.0"; then false; fi
+	@diff -u ${WANT} ${GOT}
+
+quoting:
+	# Test for stripping out quotes from variables
+	@echo "-I/usr/X11R6/include/freetype2" > ${WANT}
+	@${VPCONFIG} --cflags quotes
 	@diff -u ${WANT} ${GOT}
 
 broken-require-1:
