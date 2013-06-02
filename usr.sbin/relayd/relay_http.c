@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.14 2013/05/30 19:45:20 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.15 2013/06/02 18:02:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2012 Reyk Floeter <reyk@openbsd.org>
@@ -332,11 +332,11 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				bev->readcb = relay_read_httpcontent;
 
 			/* Single-pass HTTP response */
-			if (cre->toread < 0) {
+			if (cre->dir == RELAY_DIR_RESPONSE &&
+			    cre->toread < 0) {
 				cre->toread = TOREAD_UNLIMITED;
 				bev->readcb = relay_read;
 			}
-
 			break;
 		default:
 			/* HTTP handler */
