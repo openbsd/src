@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2013/04/23 16:41:13 jsing Exp $
+#	$OpenBSD: Makefile,v 1.24 2013/06/02 21:01:48 guenther Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -45,7 +45,7 @@ SRCS+=	aes_xts.c explicit_bzero.c hmac_sha1.c pbkdf2.c rijndael.c sha1.c
 .endif
 
 .PATH:	${S}/lib/libkern/arch/amd64 ${S}/lib/libkern
-SRCS+=	divdi3.c moddi3.c qdivrem.c udivdi3.c umoddi3.c
+SRCS+=	divdi3.c moddi3.c qdivrem.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
