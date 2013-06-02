@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.3 2013/05/23 16:13:08 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.4 2013/06/02 14:11:38 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 
 	event_init();
 
-	slowcgi_listen("/var/www/logs/slowcgi.sock", pw->pw_gid);
+	slowcgi_listen("/var/www/run/slowcgi.sock", pw->pw_gid);
 	if (chroot(pw->pw_dir) == -1)
 		lerr(1, "chroot(%s)", pw->pw_dir);
 

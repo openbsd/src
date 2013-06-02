@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgsh.c,v 1.4 2013/06/01 18:47:55 reyk Exp $	*/
+/*	$OpenBSD: bgplgsh.c,v 1.5 2013/06/02 14:11:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -34,7 +34,7 @@
 
 #include "bgplg.h"
 
-#define BGPDSOCK	"/var/www/logs/bgpd.rsock"
+#define BGPDSOCK	"/var/www/run/bgpd.rsock"
 #define BGPCTL		"/usr/sbin/bgpctl", "-s", BGPDSOCK
 #define PING		"/sbin/ping"
 #define TRACEROUTE	"/usr/sbin/traceroute"

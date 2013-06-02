@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bgplgsh.8,v 1.8 2013/06/01 18:47:55 reyk Exp $
+.\"	$OpenBSD: bgplgsh.8,v 1.9 2013/06/02 14:11:38 florian Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt BGPLGSH 8
 .Os
 .Sh NAME
@@ -74,11 +74,11 @@ to have
 .Xr bgpd 8
 open a second, restricted, control socket:
 .Pp
-.Dl socket \&"/var/www/logs/bgpd.rsock\&" restricted
+.Dl socket \&"/var/www/run/bgpd.rsock\&" restricted
 .El
 .Sh FILES
-.Bl -tag -width "/var/www/conf/bgpd.rsockXX" -compact
-.It Pa /var/www/logs/bgpd.rsock
+.Bl -tag -width "/var/www/run/bgpd.rsockXX" -compact
+.It Pa /var/www/run/bgpd.rsock
 Position of the second, restricted, control socket of
 .Xr bgpd 8 .
 .El

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.10 2013/06/01 18:47:55 reyk Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.11 2013/06/02 14:11:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -35,7 +35,7 @@
 #define INC_HEAD	"/conf/bgplg.head"
 #define INC_FOOT	"/conf/bgplg.foot"
 
-#define BGPDSOCK	"/logs/bgpd.rsock"
+#define BGPDSOCK	"/run/bgpd.rsock"
 #define BGPCTL		"/bin/bgpctl", "-s", BGPDSOCK
 #define PING		"/bin/ping"
 #define TRACEROUTE	"/bin/traceroute"
