@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.27 2010/09/20 06:33:46 matthew Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.28 2013/06/02 18:16:42 gerhard Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -305,6 +305,20 @@ lapic_initclocks(void)
 extern int gettick(void);	/* XXX put in header file */
 extern u_long rtclock_tval; /* XXX put in header file */
 
+static __inline void
+wait_next_cycle(void)
+{
+	unsigned int tick, tlast;
+
+	tlast = (1 << 16);	/* i8254 counter has 16 bits at most */
+	for (;;) {
+		tick = gettick();
+		if (tick > tlast)
+			return;
+		tlast = tick;
+	}
+}
+
 /*
  * Calibrate the local apic count-down timer (which is running at
  * bus-clock speed) vs. the i8254 counter/timer (which is running at
@@ -319,8 +333,7 @@ extern u_long rtclock_tval; /* XXX put in header file */
 void
 lapic_calibrate_timer(struct cpu_info *ci)
 {
-	unsigned int starttick, tick1, tick2, endtick;
-	unsigned int startapic, apic1, apic2, endapic;
+	unsigned int startapic, endapic;
 	u_int64_t dtick, dapic, tmp;
 	long rf = read_rflags();
 	int i;
@@ -337,27 +350,20 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	i82489_writereg(LAPIC_ICR_TIMER, 0x80000000);
 
 	disable_intr();
-	starttick = gettick();
+
+	/* wait for current cycle to finish */
+	wait_next_cycle();
+
 	startapic = lapic_gettick();
 
-	for (i = 0; i < hz; i++) {
-		i8254_delay(2);
-		do {
-			tick1 = gettick();
-			apic1 = lapic_gettick();
-		} while (tick1 < starttick);
-		i8254_delay(2);
-		do {
-			tick2 = gettick();
-			apic2 = lapic_gettick();
-		} while (tick2 > starttick);
-	}
+	/* wait the next hz cycles */
+	for (i = 0; i < hz; i++)
+		wait_next_cycle();
 
-	endtick = gettick();
 	endapic = lapic_gettick();
 	write_rflags(rf);
 
-	dtick = hz * rtclock_tval + (starttick-endtick);
+	dtick = hz * rtclock_tval;
 	dapic = startapic-endapic;
 
 	/*
