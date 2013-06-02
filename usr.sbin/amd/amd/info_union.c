@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_union.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_union.c,v 1.6 2003/06/02 23:36:51 millert Exp $
+ *	$Id: info_union.c,v 1.7 2013/06/02 06:25:20 guenther Exp $
  */
 
 /*
@@ -46,13 +46,8 @@
 
 #ifdef HAS_UNION_MAPS
 
-#ifdef _POSIX_SOURCE
 #include <dirent.h>
 #define	DIRENT struct dirent
-#else
-#include <sys/dir.h>
-#define	DIRENT struct direct
-#endif
 
 #define	UNION_PREFIX	"union:"
 #define	UNION_PREFLEN	6
