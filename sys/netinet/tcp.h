@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.18 2010/10/23 22:50:07 guenther Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.19 2013/06/02 23:12:23 henning Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -77,34 +77,34 @@ struct tcphdr {
 #define	TCPOPT_EOL		0
 #define	TCPOPT_NOP		1
 #define	TCPOPT_MAXSEG		2
-#define	   TCPOLEN_MAXSEG		4
+#define	TCPOLEN_MAXSEG		4
 #define	TCPOPT_WINDOW		3
-#define	   TCPOLEN_WINDOW		3
+#define	TCPOLEN_WINDOW		3
 #define	TCPOPT_SACK_PERMITTED	4		/* Experimental */
-#define	   TCPOLEN_SACK_PERMITTED	2
+#define	TCPOLEN_SACK_PERMITTED	2
 #define	TCPOPT_SACK		5		/* Experimental */
 #define	TCPOLEN_SACK		8		/* 2*sizeof(tcp_seq) */
 #define	TCPOPT_TIMESTAMP	8
-#define	   TCPOLEN_TIMESTAMP		10
-#define	   TCPOLEN_TSTAMP_APPA		(TCPOLEN_TIMESTAMP+2) /* appendix A */
+#define	TCPOLEN_TIMESTAMP		10
+#define	TCPOLEN_TSTAMP_APPA		(TCPOLEN_TIMESTAMP+2) /* appendix A */
 #define	TCPOPT_SIGNATURE	19
-#define	   TCPOLEN_SIGNATURE		18
-#define	   TCPOLEN_SIGLEN		(TCPOLEN_SIGNATURE+2) /* padding */
+#define	TCPOLEN_SIGNATURE		18
+#define	TCPOLEN_SIGLEN		(TCPOLEN_SIGNATURE+2) /* padding */
 
 #define	MAX_TCPOPTLEN		40	/* Absolute maximum TCP options len */
 
-#define TCPOPT_TSTAMP_HDR	\
+#define	TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
 
 /* Option definitions */
-#define TCPOPT_SACK_PERMIT_HDR \
+#define	TCPOPT_SACK_PERMIT_HDR \
 (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_SACK_PERMITTED<<8|TCPOLEN_SACK_PERMITTED)
-#define TCPOPT_SACK_HDR   (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_SACK<<8)
+#define	TCPOPT_SACK_HDR   (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_SACK<<8)
 /* Miscellaneous constants */
-#define MAX_SACK_BLKS	6	/* Max # SACK blocks stored at sender side */
-#define TCP_MAX_SACK	3	/* MAX # SACKs sent in any segment */
+#define	MAX_SACK_BLKS	6	/* Max # SACK blocks stored at sender side */
+#define	TCP_MAX_SACK	3	/* MAX # SACKs sent in any segment */
 
-#define TCP_MAXBURST	4	/* Max # packets after leaving Fast Rxmit */
+#define	TCP_MAXBURST	4	/* Max # packets after leaving Fast Rxmit */
 
 /*
  * Default maximum segment size for TCP.
