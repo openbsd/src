@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.168 2013/04/15 16:47:14 guenther Exp $
+.\"	$OpenBSD: sysctl.8,v 1.169 2013/06/02 21:37:03 yasuoka Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: April 15 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -244,6 +244,9 @@ and a few require a kernel compiled with non-standard
 .It net.inet.ip.mtudisc Ta integer Ta yes
 .It net.inet.ip.mtudisctimeout Ta integer Ta yes
 .It net.inet.ip.ipsec-comp-alg Ta string Ta yes
+.It net.inet.ip.ifq.len Ta integer Ta no
+.It net.inet.ip.ifq.maxlen Ta integer Ta yes
+.It net.inet.ip.ifq.drops Ta integer Ta no
 .It net.inet.ip.mforwarding Ta integer Ta yes
 .It net.inet.ip.multipath Ta integer Ta yes
 .It net.inet.icmp.maskrepl Ta integer Ta yes
@@ -316,6 +319,13 @@ and a few require a kernel compiled with non-standard
 .It net.inet6.icmp6.mtudisc_hiwat Ta integer Ta yes
 .It net.inet6.icmp6.mtudisc_lowat Ta integer Ta yes
 .It net.inet6.icmp6.nd6_debug Ta integer Ta yes
+.It net.mpls.ttl Ta integer Ta yes
+.It net.mpls.ifq.len Ta integer Ta no
+.It net.mpls.ifq.maxlen Ta integer Ta yes
+.It net.mpls.ifq.drops Ta integer Ta no
+.It net.mpls.maxloop_inkernel Ta integer Ta yes
+.It net.mpls.mapttl_ip Ta integer Ta yes
+.It net.mpls.mapttl_ip6 Ta integer Ta yes
 .It net.pipex.enable Ta integer Ta yes
 .It debug.syncprt Ta integer Ta yes
 .It debug.busyprt Ta integer Ta yes

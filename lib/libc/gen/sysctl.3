@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.219 2013/04/15 16:47:14 guenther Exp $
+.\"	$OpenBSD: sysctl.3,v 1.220 2013/06/02 21:37:03 yasuoka Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 15 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1114,6 +1114,7 @@ privileges may change the value.
 .It Dv PF_INET Ta "IPv4 values" Ta "yes"
 .It Dv PF_INET6 Ta "IPv6 values" Ta "yes"
 .It Dv PF_KEY Ta "key management" Ta "no"
+.It Dv PF_MPLS Ta "MPLS values" Ta "yes"
 .It Dv PF_PIPEX Ta "PIPEX values" Ta "yes"
 .El
 .Bl -tag -width "123456"
@@ -1171,6 +1172,7 @@ The currently defined protocols and names are:
 .It ip Ta directed-broadcast Ta integer Ta yes
 .It ip Ta encdebug Ta integer Ta yes
 .It ip Ta forwarding Ta integer Ta yes
+.It ip Ta ifq Ta node Ta "N/A"
 .It ip Ta ipsec-allocs Ta integer Ta yes
 .It ip Ta ipsec-auth-alg Ta string Ta yes
 .It ip Ta ipsec-bytes Ta integer Ta yes
@@ -1344,6 +1346,30 @@ forwarding is restricted to traffic that has
 been IPsec encapsulated or decapsulated by
 the host.
 The default value is 0.
+.It Li ip.ifq
+Fifth level comprises an array of
+.Li struct ifqueue
+structures containing information about IP packet input queue.
+The fifth level names for the elements of
+.Li struct ifqueue
+are detailed below.
+.Bl -column "Fifth level name" "integer" "Changeable" -offset indent
+.It Sy "Fifth level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv IFQCTL_DROPS Ta "integer" Ta "no"
+.It Dv IFQCTL_LEN Ta "integer" Ta "no"
+.It Dv IFQCTL_MAXLEN Ta "integer" Ta "yes"
+.El
+.Pp
+The variables are as follows:
+.Pp
+.Bl -tag -width Ds -compact
+.It Dv IFQCTL_DROPS
+Returns number of packet dropped.
+.It Dv IFQCTL_LEN
+Returns the current queue length.
+.It Dv IFQCTL_MAXLEN
+Get or set the maximum number of queue length.
+.El
 .It Li ip.ipsec-allocs
 The number of IPsec flows that can use a security association before
 it expires.
@@ -1897,6 +1923,49 @@ The third level name selects the database as follows:
 Security Association database (SADB).
 .It Dv NET_KEY_SPD_DUMP
 IPsec flow database (SPD).
+.El
+.It Dv PF_MPLS
+Get or set global information about MPLS (Multiprotocol Label Switching).
+.Bl -column "MPLSCTL_MAXINKLOOP " "integer" "not applicable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv MPLSCTL_DEFTTL Ta integer Ta yes
+.It Dv MPLSCTL_IFQUEUE Ta node Ta "not applicable"
+.It Dv MPLSCTL_MAPTTL_IP Ta integer Ta yes
+.It Dv MPLSCTL_MAPTTL_IP6 Ta integer Ta yes
+.It Dv MPLSCTL_MAXINKLOOP Ta integer Ta yes
+.El
+.Bl -tag -width "123456"
+.It Dv MPLSCTL_DEFTTL
+Set or get the default TTL value which is used for MPLS (Shim) Header.
+The default is 255.
+.It Dv MPLSCTL_IFQUEUE
+Fourth level comprises an array of
+.Li struct ifqueue
+structures containing information about MPLS packet input queue.
+The forth level names for the elements of
+.Li struct ifqueue are same as described in
+.Li ip.ifq
+in the
+.Dv PF_INET
+section.
+.It Dv MPLSCTL_MAPTTL_IP
+If set to 1 the TTL field is synchronized between the IP header and the
+MPLS label stack.
+If set to 0 the IP header TTL is not modified while passing through MPLS
+and the MPLS label stack is initialized with the
+.Dv MPLSCTL_DEFTTL .
+The default is 1.
+.It Dv MPLSCTL_MAPTTL_IP6
+If set to 1 the TTL field is synchronized between the IPv6 header and the
+MPLS label stack.
+If set to 0 the IPv6 header TTL is not modified while passing through MPLS
+and the MPLS label stack is initialized with the
+.Dv MPLSCTL_DEFTTL .
+The default is 0.
+.It Dv MPLSCTL_MAXINKLOOP
+Set or get the maxinum number of label stack operations (push, swap, pop)
+that can be made on a packet.
+The default is 16.
 .El
 .It Dv PF_PIPEX
 Get or set global information about PIPEX.
