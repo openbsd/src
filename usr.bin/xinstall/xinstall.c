@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.53 2013/02/18 22:15:11 miod Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.54 2013/06/02 01:41:23 naddy Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -568,8 +568,17 @@ install_dir(char *path)
 		if (!*p || (p != path && *p  == '/')) {
 			ch = *p;
 			*p = '\0';
-			if (stat(path, &sb)) {
-				if (errno != ENOENT || mkdir(path, 0777) < 0) {
+			if (mkdir(path, 0777)) {
+				int mkdir_errno = errno;
+				if (stat(path, &sb)) {
+					/* Not there; use mkdir()s errno */
+					errno = mkdir_errno;
+					err(EX_OSERR, "%s", path);
+					/* NOTREACHED */
+				}
+				if (!S_ISDIR(sb.st_mode)) {
+					/* Is there, but isn't a directory */
+					errno = ENOTDIR;
 					err(EX_OSERR, "%s", path);
 					/* NOTREACHED */
 				}
