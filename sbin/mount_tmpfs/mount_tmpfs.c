@@ -162,8 +162,8 @@ usage(void)
 {
 	extern char *__progname;
 	(void)fprintf(stderr,
-	    "Usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
-	    "           [-u user] tmpfs mountpoint\n", __progname);
+	    "usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
+	    "           [-u user] tmpfs mount_point\n", __progname);
 	exit(1);
 }
 

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: mount_tmpfs.8,v 1.2 2013/06/02 14:38:11 jmc Exp $
 .\"	$NetBSD: mount_tmpfs.8,v 1.14 2008/04/30 13:10:53 martin Exp $
 .\"
 .\" Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -28,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 13, 2008
+.Dd $Mdocdate: June 2 2013 $
 .Dt MOUNT_TMPFS 8
 .Os
 .Sh NAME
@@ -56,7 +57,7 @@ is ignored.
 The directory specified by
 .Ar mount_point
 is converted to an absolute path before use and its attributes (owner,
-group and mode) are inherited unless explicitly overriden by the options
+group and mode) are inherited unless explicitly overridden by the options
 described below.
 .Pp
 The following options are supported:
@@ -93,11 +94,11 @@ Defaults to the mount point's UID.
 Every option that accepts a numerical value as its argument can take a
 trailing
 .Sq b
-to indicate bytes (the default), a trailing
+to indicate bytes (the default), a
 .Sq k
-to indicate kilobytes, a trailing
+to indicate kilobytes, a
 .Sq M
-to indicate megabytes or a trailing
+to indicate megabytes or a
 .Sq G
 to indicate gigabytes.
 Note that both lowercase and uppercase forms of these letters are allowed.
@@ -106,7 +107,7 @@ The following command mounts a tmpfs instance over the
 .Pa /tmp
 directory, inheriting its owner, group and mode settings:
 .Pp
-.Ic "mount -t tmpfs tmpfs /tmp"
+.Dl # mount -t tmpfs tmpfs /tmp
 .Pp
 The following command mounts a tmpfs instance over the
 .Pa /mnt
@@ -116,7 +117,7 @@ user and belonging to the
 .Sq users
 group, with a restricted 0700 mode:
 .Pp
-.Ic "mount -t tmpfs -o -s20M -o -ujoe -o -gusers -o -m0700 tmpfs /mnt"
+.Dl # mount -t tmpfs -o -s20M -o -ujoe -o -gusers -o -m0700 tmpfs /mnt
 .Sh SEE ALSO
 .Xr fstab 5 ,
 .Xr mount 8
@@ -124,7 +125,9 @@ group, with a restricted 0700 mode:
 The
 .Nm
 utility first appeared in
-.Nx 4.0 .
+.Nx 4.0
+and
+.Ox 5.4 .
 .Sh CAVEATS
 The update of mount options (through mount -u) is currently not supported.
 .Sh BUGS
