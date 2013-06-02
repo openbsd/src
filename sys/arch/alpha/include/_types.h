@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.16 2012/11/05 19:39:34 miod Exp $	*/
+/*	$OpenBSD: _types.h,v 1.17 2013/06/02 16:54:11 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -131,9 +131,9 @@ typedef int			__timer_t;
 typedef	__builtin_va_list	__va_list;
 #else
 typedef struct {
-	char *base;
-	int offset;
-	int pad;
+	char *__base;
+	int __offset;
+	int __pad;
 } __va_list;
 #endif
 
