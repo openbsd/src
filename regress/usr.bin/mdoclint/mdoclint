@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.32 2013/03/26 18:28:11 jmc Exp $
-# $NetBSD: mdoclint,v 1.29 2013/03/10 22:14:40 wiz Exp $
+# $OpenBSD: mdoclint,v 1.33 2013/06/02 14:33:18 jmc Exp $
+# $NetBSD: mdoclint,v 1.33 2013/06/02 11:58:36 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
 # All rights reserved.
@@ -330,7 +330,7 @@ sub close
 sub parse_macro_args
 {
 	my ($s, $string) = @_;
-	my $_ = $string;
+	$_ = $string;
 	my @params = ();
 	while (!/^$/) {
 		if (s/^\"(.*?)\"\s*//) {
@@ -385,7 +385,8 @@ sub set_section_header
 
 sub process_and_save_line
 {
-	my ($s, $_) = @_;
+	my $s;
+	($s, $_) = @_;
 	my $result = $s->process_line($_);
 	# note that process_line chomps \n, then re-adds it,
 	# so we detect a change on last lines without a \n.
@@ -397,7 +398,8 @@ sub process_and_save_line
 
 sub process_line
 {
-	my ($s, $_) = @_;
+	my $s;
+	($s, $_) = @_;
 	chomp;
 	# always cut trailing spaces
 	if (/\s+$/o) {
@@ -649,7 +651,7 @@ sub handle_file
 {
 	my $parser = Parser->new($_[0]);
 
-	while (my $_ = $parser->next_line) {
+	while ($_ = $parser->next_line) {
 		$parser->process_and_save_line($_);
 	}
 
