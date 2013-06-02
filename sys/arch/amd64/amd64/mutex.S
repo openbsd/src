@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.8 2010/09/24 13:21:30 matthew Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.9 2013/06/02 01:55:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -38,7 +38,7 @@
  * Yeah, we don't really need to implement mtx_init here, but let's keep
  * all the functions in the same place.
  */
-ENTRY(mtx_init)
+ENTRY(__mtx_init)
 	movl	%esi, MTX_WANTIPL(%rdi)
 	movl	$0, MTX_OLDIPL(%rdi)
 	movq	$0, MTX_OWNER(%rdi)
