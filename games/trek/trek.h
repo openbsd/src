@@ -1,4 +1,4 @@
-/*	$OpenBSD: trek.h,v 1.12 2012/12/05 23:19:51 deraadt Exp $	*/
+/*	$OpenBSD: trek.h,v 1.13 2013/06/02 04:28:39 schwarze Exp $	*/
 /*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 
 /* galactic parameters */
 #define	NSECTS		10	/* dimensions of quadrant in sectors */
-#define	NQUADS		8	/* dimension of galazy in quadrants */
+#define	NQUADS		8	/* dimension of galaxy in quadrants */
 #define	NINHAB		32	/* number of quadrants which are inhabited */
 
 struct quad		/* definition for each quadrant */

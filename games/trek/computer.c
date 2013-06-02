@@ -1,4 +1,4 @@
-/*	$OpenBSD: computer.c,v 1.9 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: computer.c,v 1.10 2013/06/02 04:28:39 schwarze Exp $	*/
 /*	$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ computer(v)
 				warpfact = Ship.warp;
 			cost = (dist + 0.05) * warpfact * warpfact * warpfact;
 			time = Param.warptime * dist / (warpfact * warpfact);
-			printf("Warp %.2f distance %.2f cost %.2f stardates %d (%d w/ shlds up) units\n",
+			printf("Warp %.2f distance %.2f stardates %.2f cost %d (%d w/ shlds up) units\n",
 				warpfact, dist, time, cost, cost + cost);
 			break;
 
