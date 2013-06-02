@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ste.4,v 1.24 2013/06/02 20:23:34 tedu Exp $
+.\"	$OpenBSD: ste.4,v 1.25 2013/06/02 20:28:26 tedu Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -122,28 +122,6 @@ The driver failed to allocate an mbuf for the receiver ring.
 .It "ste0: no memory for tx list"
 The driver failed to allocate an mbuf for the transmitter ring when
 allocating a pad buffer or collapsing an mbuf chain into a cluster.
-.It "ste0: chip is in D3 power state -- setting to D0"
-This message applies only to adapters which support power
-management.
-Some operating systems place the controller in low power
-mode when shutting down, and some PCI BIOSes fail to bring the chip
-out of this state before configuring it.
-The controller loses all of
-its PCI configuration in the D3 state, so if the BIOS does not set
-it back to full power mode in time, it won't be able to configure it
-correctly.
-The driver tries to detect this condition and bring
-the adapter back to the D0 (full power) state, but this may not be
-enough to return the driver to a fully operational condition.
-If this message appears at boot time and the driver fails to attach
-the device as a network interface, a second warm boot will have to be
-performed to have the device properly configured.
-.Pp
-Note that this condition only occurs when warm booting from another
-operating system.
-If the system is powered down prior to booting
-.Ox ,
-the card should be configured correctly.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
