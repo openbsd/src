@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.48 2013/06/02 15:35:18 deraadt Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.49 2013/06/02 15:38:26 guenther Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -252,16 +252,17 @@ udf_timetotimespec(struct timestamp *time, struct timespec *t)
 		int16_t		s_tz_offset;
 	} tz;
 
-	t->tv_nsec = 0;
-
 	/* DirectCD seems to like using bogus year values */
 	year = letoh16(time->year);
 	if (year < 1970) {
 		t->tv_sec = 0;
+		t->tv_nsec = 0;
 		return;
 	}
 
 	/* Calculate the time and day */
+	t->tv_nsec = 1000 * time->usec + 100000 * time->hund_usec
+	    + 10000000 * time->centisec;
 	t->tv_sec = time->second;
 	t->tv_sec += time->minute * 60;
 	t->tv_sec += time->hour * 3600;
