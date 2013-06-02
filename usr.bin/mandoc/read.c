@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.14 2013/06/01 22:57:30 schwarze Exp $ */
+/*	$Id: read.c,v 1.15 2013/06/02 03:35:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011, 2012, 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -60,9 +60,10 @@ struct	mparse {
 static	void	  resize_buf(struct buf *, size_t);
 static	void	  mparse_buf_r(struct mparse *, struct buf, int);
 static	void	  pset(const char *, int, struct mparse *);
-static	void	  pdesc(struct mparse *, const char *, int);
 static	int	  read_whole_file(const char *, int, struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
+static	void	  mparse_parse_buffer(struct mparse *, struct buf,
+			const char *);
 
 static	const enum mandocerr	mandoclimits[MANDOCLEVEL_MAX] = {
 	MANDOCERR_OK,
@@ -557,36 +558,6 @@ rerun:
 	free(ln.buf);
 }
 
-static void
-pdesc(struct mparse *curp, const char *file, int fd)
-{
-	struct buf	 blk;
-	int		 with_mmap;
-
-	/*
-	 * Run for each opened file; may be called more than once for
-	 * each full parse sequence if the opened file is nested (i.e.,
-	 * from `so').  Simply sucks in the whole file and moves into
-	 * the parse phase for the file.
-	 */
-
-	if ( ! read_whole_file(file, fd, &blk, &with_mmap)) {
-		curp->file_status = MANDOCLEVEL_SYSERR;
-		return;
-	}
-
-	/* Line number is per-file. */
-
-	curp->line = 1;
-
-	mparse_buf_r(curp, blk, 1);
-
-	if (with_mmap)
-		munmap(blk.buf, blk.sz);
-	else
-		free(blk.buf);
-}
-
 static int
 read_whole_file(const char *file, int fd, struct buf *fb, int *with_mmap)
 {
@@ -613,8 +584,7 @@ read_whole_file(const char *file, int fd, struct buf *fb, int *with_mmap)
 		}
 		*with_mmap = 1;
 		fb->sz = (size_t)st.st_size;
-		fb->buf = mmap(NULL, fb->sz, PROT_READ, 
-				MAP_FILE|MAP_SHARED, fd, 0);
+		fb->buf = mmap(NULL, fb->sz, PROT_READ, MAP_SHARED, fd, 0);
 		if (fb->buf != MAP_FAILED)
 			return(1);
 	}
@@ -679,16 +649,36 @@ mparse_end(struct mparse *curp)
 	roff_endparse(curp->roff);
 }
 
-enum mandoclevel
-mparse_readfd(struct mparse *curp, int fd, const char *file)
+static void
+mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 {
 	const char	*svfile;
 	static int	 recursion_depth;
 
 	if (64 < recursion_depth) {
 		mandoc_msg(MANDOCERR_ROFFLOOP, curp, curp->line, 0, NULL);
-		goto out;
+		return;
 	}
+
+	/* Line number is per-file. */
+	svfile = curp->file;
+	curp->file = file;
+	curp->line = 1;
+	recursion_depth++;
+
+	mparse_buf_r(curp, blk, 1);
+
+	if (0 == --recursion_depth && MANDOCLEVEL_FATAL > curp->file_status)
+		mparse_end(curp);
+
+	curp->file = svfile;
+}
+
+enum mandoclevel
+mparse_readfd(struct mparse *curp, int fd, const char *file)
+{
+	struct buf	 blk;
+	int		 with_mmap;
 
 	if (-1 == fd)
 		if (-1 == (fd = open(file, O_RDONLY, 0))) {
@@ -696,20 +686,27 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 			curp->file_status = MANDOCLEVEL_SYSERR;
 			goto out;
 		}
+	/*
+	 * Run for each opened file; may be called more than once for
+	 * each full parse sequence if the opened file is nested (i.e.,
+	 * from `so').  Simply sucks in the whole file and moves into
+	 * the parse phase for the file.
+	 */
 
-	svfile = curp->file;
-	curp->file = file;
-	recursion_depth++;
+	if ( ! read_whole_file(file, fd, &blk, &with_mmap)) {
+		curp->file_status = MANDOCLEVEL_SYSERR;
+		goto out;
+	}
 
-	pdesc(curp, file, fd);
+	mparse_parse_buffer(curp, blk, file);
 
-	if (0 == --recursion_depth && MANDOCLEVEL_FATAL > curp->file_status)
-		mparse_end(curp);
+	if (with_mmap)
+		munmap(blk.buf, blk.sz);
+	else
+		free(blk.buf);
 
 	if (STDIN_FILENO != fd && -1 == close(fd))
 		perror(file);
-
-	curp->file = svfile;
 out:
 	return(curp->file_status);
 }
