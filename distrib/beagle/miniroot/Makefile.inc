@@ -2,8 +2,6 @@
 REV=	${OSrev}
 BSD_RD=		bsd.rd
 
-BOARD=	am335x
-
 IMAGE=	miniroot-${BOARD}-${REV}.fs
 
 MOUNT_POINT=	/mnt
