@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.15 2011/03/02 18:34:05 matthew Exp $ */
+/*	$OpenBSD: atexit.c,v 1.16 2013/06/02 21:08:36 matthew Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -37,7 +37,6 @@
 #include "atexit.h"
 #include "thread_private.h"
 
-int __atexit_invalid = 1;
 struct atexit *__atexit;
 
 /*
@@ -89,8 +88,6 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 		    sizeof(p->fns[0]);
 		p->next = __atexit;
 		__atexit = p;
-		if (__atexit_invalid)
-			__atexit_invalid = 0;
 	}
 	fnp = &p->fns[p->ind++];
 	fnp->fn_ptr.cxa_func = func;
@@ -126,9 +123,6 @@ __cxa_finalize(void *dso)
 	int n, pgsize = getpagesize();
 	static int call_depth;
 
-	if (__atexit_invalid)
-		return;
-
 	call_depth++;
 
 	for (p = __atexit; p != NULL; p = p->next) {
@@ -154,12 +148,14 @@ __cxa_finalize(void *dso)
 		}
 	}
 
+	call_depth--;
+
 	/*
 	 * If called via exit(), unmap the pages since we have now run
 	 * all the handlers.  We defer this until calldepth == 0 so that
 	 * we don't unmap things prematurely if called recursively.
 	 */
-	if (dso == NULL && --call_depth == 0) {
+	if (dso == NULL && call_depth == 0) {
 		for (p = __atexit; p != NULL; ) {
 			q = p;
 			p = p->next;
@@ -194,8 +190,6 @@ __atexit_register_cleanup(void (*func)(void))
 		    sizeof(p->fns[0]);
 		p->next = NULL;
 		__atexit = p;
-		if (__atexit_invalid)
-			__atexit_invalid = 0;
 	} else {
 		if (mprotect(p, pgsize, PROT_READ | PROT_WRITE))
 			goto unlock;

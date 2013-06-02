@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.h,v 1.7 2007/09/03 14:40:16 millert Exp $ */
+/*	$OpenBSD: atexit.h,v 1.8 2013/06/02 21:08:36 matthew Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -44,7 +44,6 @@ struct atexit {
 	} fns[1];			/* the table itself */
 };
 
-extern int __atexit_invalid;
 extern struct atexit *__atexit;		/* points to head of LIFO stack */
 
 int	__cxa_atexit(void (*)(void *), void *, void *);
