@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/* $OpenBSD: shm_open.c,v 1.2 2013/06/02 21:08:19 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
