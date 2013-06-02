@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.8 2012/09/11 15:44:18 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.9 2013/06/02 16:40:20 guenther Exp $	*/
 /*	$NetBSD: elf_machdep.h,v 1.7 2001/02/11 00:18:49 eeh Exp $	*/
 
 #define _KERN_DO_ELF64
@@ -89,6 +89,12 @@
 #define	R_SPARC_REGISTER	53
 #define	R_SPARC_UA64		54
 #define	R_SPARC_UA16		55
+#define	R_SPARC_TLS_DTPMOD32	74
+#define	R_SPARC_TLS_DTPMOD64	75
+#define	R_SPARC_TLS_DTPOFF32	76
+#define	R_SPARC_TLS_DTPOFF64	77
+#define	R_SPARC_TLS_TPOFF32	78
+#define	R_SPARC_TLS_TPOFF64	79
 
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)
