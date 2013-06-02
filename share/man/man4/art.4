@@ -1,4 +1,4 @@
-.\"	$OpenBSD: art.4,v 1.7 2009/11/16 17:53:29 sobrado Exp $
+.\"	$OpenBSD: art.4,v 1.8 2013/06/02 20:23:33 tedu Exp $
 .\"
 .\" Copyright (c) 2005  Internet Business Solutions AG, Zurich, Switzerland
 .\" Written by: Claudio Jeker <jeker@accoom.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 16 2009 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt ART 4
 .Os
 .Sh NAME
@@ -122,15 +122,15 @@ For example:
 .Dl # ifconfig art0 media E1-G.704 mode autoselect
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "art%d: device timeout"
+.It "art0: device timeout"
 The device has stopped responding to the network
-.It "art%d: internal FIFO underflow"
+.It "art0: internal FIFO underflow"
 The internal FIFO got empty while transmitting a packet.
 This may indicate a PCI bus congestion.
-.It "art%d: internal FIFO overflow"
+.It "art0: internal FIFO overflow"
 The internal FIFO overflowed while receiving a packet.
 This may indicate a PCI bus congestion.
-.It "art%d: Failed to malloc memory"
+.It "art0: Failed to malloc memory"
 There are not enough mbufs available for allocation.
 .El
 .Sh SEE ALSO

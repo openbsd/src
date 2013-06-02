@@ -1,4 +1,4 @@
-.\"     $OpenBSD: atw.4,v 1.32 2013/02/14 07:40:42 jmc Exp $
+.\"     $OpenBSD: atw.4,v 1.33 2013/06/02 20:23:33 tedu Exp $
 .\"	$NetBSD: atw.4,v 1.8 2004/06/06 04:05:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 14 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt ATW 4
 .Os
 .Sh NAME
@@ -151,10 +151,10 @@ dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "atw0: failed to tune channel %d"
+.It "atw0: failed to tune channel N"
 The driver failed to tune the radio to a new channel.
 The radio remains tuned to the old channel.
-.It "atw0: atw_si4136_write wrote %08x, SYNCTL still busy"
+.It "atw0: atw_si4136_write wrote XXXX, SYNCTL still busy"
 The driver waited 100ms without seeing an indication that the
 ADM8211 had finished writing a register on the Si4126 RF/IF
 synthesizer.

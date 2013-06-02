@@ -1,4 +1,4 @@
-.\" $OpenBSD: run.4,v 1.38 2013/05/15 20:49:10 jmc Exp $
+.\" $OpenBSD: run.4,v 1.39 2013/06/02 20:23:34 tedu Exp $
 .\"
 .\" Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 15 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt RUN 4
 .Os
 .Sh NAME
@@ -175,14 +175,14 @@ dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "run%d: error %d, could not read firmware %s"
+.It "run0: error N, could not read firmware ..."
 For some reason, the driver was unable to read the microcode file from the
 filesystem.
 The file might be missing or corrupted.
-.It "run%d: could not load 8051 microcode"
+.It "run0: could not load 8051 microcode"
 An error occurred while attempting to upload the microcode to the onboard 8051
 microcontroller unit.
-.It "run%d: device timeout"
+.It "run0: device timeout"
 A frame dispatched to the hardware for transmission did not complete in time.
 The driver will reset the hardware.
 This should not happen.

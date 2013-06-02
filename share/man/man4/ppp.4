@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ppp.4,v 1.13 2012/09/26 17:34:38 jmc Exp $
+.\"	$OpenBSD: ppp.4,v 1.14 2013/06/02 20:23:33 tedu Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     From:	@(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: September 26 2012 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt PPP 4
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ over the SLIP protocol used by the
 interface.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It ppp%d: af%d not supported
+.It ppp0: afX not supported
 The interface was handed
 a message with addresses formatted in an unsuitable address
 family; the packet was dropped.

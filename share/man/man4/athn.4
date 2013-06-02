@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.22 2013/02/14 07:40:42 jmc Exp $
+.\" $OpenBSD: athn.4,v 1.23 2013/06/02 20:23:33 tedu Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -201,18 +201,18 @@ wpakey mywpakey
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "athn%d: device timeout"
+.It "athn0: device timeout"
 A frame dispatched to the hardware for transmission did not complete in time.
 The driver will reset the hardware.
 This should not happen.
-.It "athn%d: radio is disabled by hardware switch"
+.It "athn0: radio is disabled by hardware switch"
 The radio transmitter is off and thus no packet can go out.
 The driver will reset the hardware.
 Make sure the laptop radio switch is on.
-.It "athn%d: radio switch turned off"
+.It "athn0: radio switch turned off"
 The radio switch has been turned off while the interface was up and running.
 The driver will turn the interface down.
-.It "athn%d: error %d, could not read firmware %s"
+.It "athn0: error N, could not read firmware ..."
 For some reason, the driver was unable to read the firmware file from the
 filesystem.
 The file might be missing or corrupted.

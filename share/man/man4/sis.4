@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sis.4,v 1.29 2013/03/30 05:34:53 brad Exp $
+.\"	$OpenBSD: sis.4,v 1.30 2013/06/02 20:23:34 tedu Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/sis.4,v 1.2 1999/11/15 23:14:27 phantom Exp $
 .\"
-.Dd $Mdocdate: March 30 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt SIS 4
 .Os
 .Sh NAME
@@ -121,19 +121,19 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "sis%d: couldn't map ports/memory"
+.It "sis0: couldn't map ports/memory"
 A fatal initialization error has occurred.
-.It "sis%d: couldn't map interrupt"
+.It "sis0: couldn't map interrupt"
 A fatal initialization error has occurred.
-.It "sis%d: watchdog timeout"
+.It "sis0: watchdog timeout"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
-.It "sis%d: no memory for rx list"
+.It "sis0: no memory for rx list"
 The driver failed to allocate an mbuf for the receiver ring.
-.It "sis%d: no memory for tx list"
+.It "sis0: no memory for tx list"
 The driver failed to allocate an mbuf for the transmitter ring when
 allocating a pad buffer or collapsing an mbuf chain into a cluster.
-.It "sis%d: chip is in D3 power state -- setting to D0"
+.It "sis0: chip is in D3 power state -- setting to D0"
 This message applies only to adapters which support power management.
 Some operating systems place the controller in low power
 mode when shutting down, and some PCI BIOSes fail to bring the chip

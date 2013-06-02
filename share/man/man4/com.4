@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.34 2009/05/17 22:08:32 miod Exp $
+.\"	$OpenBSD: com.4,v 1.35 2013/06/02 20:23:33 tedu Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: May 17 2009 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -133,11 +133,11 @@ of 115200.
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It com%d: %d silo overflows
+.It com0: N silo overflows
 The input
 .Dq silo
 has overflowed and incoming data has been lost.
-.It com%d: weird interrupt: iir=%x
+.It com0: weird interrupt: iir=XXXX
 The device has generated an unexpected interrupt
 with the code listed.
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: safe.4,v 1.7 2007/05/31 19:19:51 jmc Exp $
+.\"	$OpenBSD: safe.4,v 1.8 2013/06/02 20:23:34 tedu Exp $
 .\"
 .\" Copyright (c) 2003	Sam Leffler, Errno Consulting
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/safe.4,v 1.1 2003/07/21 21:52:14 sam Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt SAFE 4
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ input to the
 subsystem.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "safe%d: Reduce max DMA size to %u words for rev %u.%u"
+.It "safe0: Reduce max DMA size to N words for rev X.Y"
 The 1.0 silicon has major
 .Xr pci 4
 bugs and may lock the bus completely.

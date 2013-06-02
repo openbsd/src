@@ -1,4 +1,4 @@
-.\" $OpenBSD: urtwn.4,v 1.20 2013/05/16 10:02:59 sthen Exp $
+.\" $OpenBSD: urtwn.4,v 1.21 2013/06/02 20:23:34 tedu Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt URTWN 4
 .Os
 .Sh NAME
@@ -133,11 +133,11 @@ dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "urtwn%d: error %d, could not read firmware %s"
+.It "urtwn0: error N, could not read firmware ..."
 For some reason, the driver was unable to read the microcode file from the
 filesystem.
 The file might be missing or corrupted.
-.It "urtwn%d: device timeout"
+.It "urtwn0: device timeout"
 A frame dispatched to the hardware for transmission did not complete in time.
 The driver will reset the hardware.
 This should not happen.

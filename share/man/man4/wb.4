@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wb.4,v 1.18 2008/05/08 03:30:17 brad Exp $
+.\"	$OpenBSD: wb.4,v 1.19 2013/06/02 20:23:34 tedu Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: wb.4,v 1.2 1998/12/05 09:31:25 rnordier Exp $
 .\"
-.Dd $Mdocdate: May 8 2008 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt WB 4
 .Os
 .Sh NAME
@@ -108,19 +108,19 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "wb%d: couldn't map memory"
+.It "wb0: couldn't map memory"
 A fatal initialization error has occurred.
-.It "wb%d: couldn't map interrupt"
+.It "wb0: couldn't map interrupt"
 A fatal initialization error has occurred.
-.It "wb%d: watchdog timeout"
+.It "wb0: watchdog timeout"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
-.It "wb%d: no memory for rx list"
+.It "wb0: no memory for rx list"
 The driver failed to allocate an mbuf for the receiver ring.
-.It "wb%d: no memory for tx list"
+.It "wb0: no memory for tx list"
 The driver failed to allocate an mbuf for the transmitter ring when
 allocating a pad buffer or collapsing an mbuf chain into a cluster.
-.It "wb%d: chip is in D3 power state -- setting to D0"
+.It "wb0: chip is in D3 power state -- setting to D0"
 This message applies only to adapters which support power management.
 Some operating systems place the controller in low power
 mode when shutting down, and some PCI BIOSes fail to bring the chip

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.40 2012/09/17 21:17:06 sthen Exp $
+.\"	$OpenBSD: ti.4,v 1.41 2013/06/02 20:23:34 tedu Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man4/ti.4,v 1.11 2000/08/10 19:47:32 billf Exp $
 .\"
-.Dd $Mdocdate: September 17 2012 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt TI 4
 .Os
 .Sh NAME
@@ -155,35 +155,35 @@ when the device is attached:
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "ti%d: couldn't map memory"
+.It "ti0: couldn't map memory"
 A fatal initialization error has occurred.
-.It "ti%d: couldn't map interrupt"
+.It "ti0: couldn't map interrupt"
 A fatal initialization error has occurred.
-.It "ti%d: no memory for softc struct!"
+.It "ti0: no memory for softc struct!"
 The driver failed to allocate memory for per-device instance information
 during initialization.
-.It "ti%d: failed to enable memory mapping!"
+.It "ti0: failed to enable memory mapping!"
 The driver failed to initialize PCI shared memory mapping.
 This might happen if the card is not in a bus-master slot.
-.It "ti%d: no memory for jumbo buffers!"
+.It "ti0: no memory for jumbo buffers!"
 The driver failed to allocate memory for Jumbo frames during
 initialization.
-.It "ti%d: bios thinks we're in a 64 bit slot, but we aren't"
+.It "ti0: bios thinks we're in a 64 bit slot, but we aren't"
 The BIOS has programmed the NIC as though it had been installed in
 a 64-bit PCI slot, but in fact the NIC is in a 32-bit slot.
 This happens as a result of a bug in some BIOSes.
 This can be worked around on the Tigon II, but
 on the Tigon I initialization will fail.
-.It "ti%d: board self-diagnostics failed!"
+.It "ti0: board self-diagnostics failed!"
 The ROMFAIL bit in the CPU state register was set after system
 startup, indicating that the on-board NIC diagnostics failed.
-.It "ti%d: unknown hwrev"
+.It "ti0: unknown hwrev"
 The driver detected a board with an unsupported hardware revision.
 The
 .Nm
 driver supports revision 4 (Tigon 1) and revision 6 (Tigon 2) chips
 and has firmware only for those devices.
-.It "ti%d: watchdog timeout -- resetting"
+.It "ti0: watchdog timeout -- resetting"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
 .El

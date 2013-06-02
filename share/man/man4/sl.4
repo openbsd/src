@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sl.4,v 1.16 2008/01/06 09:53:17 mbalmer Exp $
+.\"	$OpenBSD: sl.4,v 1.17 2013/06/02 20:23:34 tedu Exp $
 .\"	$NetBSD: sl.4,v 1.1 1996/08/10 21:26:14 explorer Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     From:	@(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: January 6 2008 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt SL 4
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ Auto-enable Van Jacobsen TCP header compression
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It sl%d: af%d not supported.
+.It sl0: afX not supported.
 The interface was handed
 a message with addresses formatted in an unsuitable address
 family; the packet was dropped.

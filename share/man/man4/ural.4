@@ -1,4 +1,4 @@
-.\" $OpenBSD: ural.4,v 1.15 2013/02/14 07:40:42 jmc Exp $
+.\" $OpenBSD: ural.4,v 1.16 2013/06/02 20:23:34 tedu Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt URAL 4
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ wpakey mywpakey
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "ural%d: device timeout"
+.It "ural0: device timeout"
 A frame dispatched to the hardware for transmission did not complete in time.
 The driver will reset the hardware.
 This should not happen.

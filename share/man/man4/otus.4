@@ -1,4 +1,4 @@
-.\" $OpenBSD: otus.4,v 1.22 2013/02/14 07:40:42 jmc Exp $
+.\" $OpenBSD: otus.4,v 1.23 2013/06/02 20:23:33 tedu Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt OTUS 4
 .Os
 .Sh NAME
@@ -123,11 +123,11 @@ dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "otus%d: error %d, could not read firmware %s"
+.It "otus0: error N, could not read firmware ..."
 For some reason, the driver was unable to read the microcode file from the
 filesystem.
 The file might be missing or corrupted.
-.It "otus%d: device timeout"
+.It "otus0: device timeout"
 A frame dispatched to the hardware for transmission did not complete in time.
 The driver will reset the hardware.
 This should not happen.

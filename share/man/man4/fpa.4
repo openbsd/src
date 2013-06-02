@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fpa.4,v 1.25 2009/12/13 16:01:51 sobrado Exp $
+.\"	$OpenBSD: fpa.4,v 1.26 2013/06/02 20:23:33 tedu Exp $
 .\"	$NetBSD: fpa.4,v 1.2 1997/02/18 01:07:46 jonathan Exp $
 .\"
 .\" Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 13 2009 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt FPA 4
 .Os
 .Sh NAME
@@ -52,10 +52,10 @@ All variants of either controller are supported including the DAS and
 SAS configurations.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "fea%d: error: desired IRQ of %d does not match device's actual IRQ (%d)"
+.It "fea0: error: desired IRQ of X does not match device's actual IRQ (Y)"
 The device probe detected that the DEFEA board is configured for a different
 interrupt than the one specified in the kernel configuration file.
-.It "fea%d: error: memory not enabled! ECU reconfiguration required"
+.It "fea0: error: memory not enabled! ECU reconfiguration required"
 The device probe found that no device memory had been configured on the
 DEFEA.
 The DEFEA can be configured with no device memory, this driver

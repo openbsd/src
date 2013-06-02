@@ -1,4 +1,4 @@
-.\" $OpenBSD: uath.4,v 1.28 2013/02/14 07:40:42 jmc Exp $
+.\" $OpenBSD: uath.4,v 1.29 2013/06/02 20:23:34 tedu Exp $
 .\"
 .\" Copyright (c) 2006
 .\"     Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2013 $
+.Dd $Mdocdate: June 2 2013 $
 .Dt UATH 4
 .Os
 .Sh NAME
@@ -140,22 +140,22 @@ dhcp
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "uath%d: error %d, could not read firmware %s"
+.It "uath0: error N, could not read firmware ..."
 For some reason, the driver was unable to read the firmware image from the
 filesystem.
 The file might be missing or corrupted.
-.It "uath%d: could not load firmware (error=%s)"
+.It "uath0: could not load firmware (error=%s)"
 An error occurred while attempting to upload the firmware to the onboard
 MIPS R4000 processor.
-.It "uath%d: could not initialize adapter (error=%d)"
+.It "uath0: could not initialize adapter (error=N)"
 The firmware was uploaded successfully but did not initialize properly or
 in time.
-.It "uath%d: could not send command (error=%s)"
+.It "uath0: could not send command (error=%s)"
 An attempt to send a command to the firmware failed.
-.It "uath%d: timeout waiting for command reply"
+.It "uath0: timeout waiting for command reply"
 A read command was sent to the firmware but the firmware failed to reply in
 time.
-.It "uath%d: device timeout"
+.It "uath0: device timeout"
 A frame dispatched to the hardware for transmission did not complete in time.
 The driver will reset the hardware.
 This should not happen.
