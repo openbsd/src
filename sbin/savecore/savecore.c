@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.48 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.49 2013/06/03 02:49:42 tedu Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -98,11 +98,11 @@ u_long	dumpsize;		/* amount of memory dumped */
 
 char	*kernel;
 char	*dirn;			/* directory to save dumps in */
-char	*ddname;			/* name of dump device */
-dev_t	dumpdev;			/* dump device */
-int	dumpfd;				/* read/write descriptor on block dev */
-kvm_t	*kd_dump;			/* kvm descriptor on block dev	*/
-time_t	now;				/* current date */
+char	*ddname;		/* name of dump device */
+dev_t	dumpdev;		/* dump device */
+int	dumpfd;			/* read/write descriptor on block dev */
+kvm_t	*kd_dump;		/* kvm descriptor on block dev	*/
+time_t	now;			/* current date */
 char	panic_mesg[1024];
 int	panicstr;
 char	vers[1024];
@@ -342,7 +342,7 @@ dump_exists(void)
 	dumpsize = (u_long)dumppages * getpagesize();
 
 	/*
-	 * Return zero if core dump doesn't seem to be there, and note
+	 * Return zero if core dump doesn't seem to be there and note
 	 * it for syslog.  This check and return happens after the dump size
 	 * is read, so dumpsize is whether or not the core is valid (for -f).
 	 */
@@ -380,7 +380,7 @@ save_core(void)
 
 	/*
 	 * Get the current number and update the bounds file.  Do the update
-	 * now, because may fail later and don't want to overwrite anything.
+	 * now, because we may fail later and don't want to overwrite anything.
 	 */
 	(void)snprintf(path, sizeof(path), "%s/bounds", dirn);
 	if ((fp = fopen(path, "r")) == NULL)
