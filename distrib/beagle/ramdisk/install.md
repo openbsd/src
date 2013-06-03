@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2012/07/10 14:25:00 halex Exp $
+#	$OpenBSD: install.md,v 1.4 2013/06/03 21:10:06 florian Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 #
 
 md_installboot() {
+	mount /dev/${DISK}i /mnt/mnt
+	/mnt/usr/sbin/chroot /mnt /usr/bin/objcopy -O binary /bsd /bsd.img
+	/mnt/usr/sbin/chroot /mnt /usr/sbin/mkuboot -a arm -o linux \
+		-e 0x80300000 -l 0x80300000 /bsd.img /mnt/bsd.umg
 }
 
 md_prep_fdisk() {
