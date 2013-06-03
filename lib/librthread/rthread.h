@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.43 2013/06/01 23:06:26 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.44 2013/06/03 04:33:44 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -23,6 +23,8 @@
  * Do not reorder struct _spinlock and sem_t variables in the structs.
  * This is due to alignment requirements of certain arches like hppa.
  * The current requirement is 16 bytes.
+ *
+ * THE MACHINE DEPENDENT CERROR CODE HAS HARD CODED OFFSETS INTO PTHREAD_T!
  */
 
 #include <sys/queue.h>
@@ -44,12 +46,9 @@
  */
 struct _spinlock {
 	_atomic_lock_t ticket;
-	uint32_t __waiter;
-	uint32_t __ready;
-	int __pad;
 };
 
-#define	_SPINLOCK_UNLOCKED { _ATOMIC_LOCK_UNLOCKED, 0, 0 }
+#define	_SPINLOCK_UNLOCKED { _ATOMIC_LOCK_UNLOCKED }
 extern struct _spinlock _SPINLOCK_UNLOCKED_ASSIGN;
 
 struct stack {
@@ -65,6 +64,7 @@ struct __sem {
 	struct _spinlock lock;
 	volatile int waitcount;
 	volatile int value;
+	int __pad;
 };
 
 TAILQ_HEAD(pthread_queue, pthread);
@@ -156,12 +156,12 @@ struct pthread_spinlock {
 
 struct pthread {
 	struct __sem donesem;
-	pid_t tid;
-	unsigned int flags;
-	struct _spinlock flags_lock;
 #if TLS_VARIANT == 1
 	int *errno_ptr;
 #endif
+	pid_t tid;
+	unsigned int flags;
+	struct _spinlock flags_lock;
 	void *retval;
 	void *(*fn)(void *);
 	void *arg;
