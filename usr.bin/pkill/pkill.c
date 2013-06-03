@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.31 2012/12/12 22:25:21 halex Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.32 2013/06/03 04:17:37 tedu Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -88,6 +88,7 @@ int	inverse;
 int	longfmt;
 int	matchargs;
 int	fullmatch;
+int	confirmkill;
 kvm_t	*kd;
 pid_t	mypid;
 
@@ -108,12 +109,39 @@ void	makelist(struct listhead *, enum listtype, char *);
 
 extern char *__progname;
 
+char *
+getargv(struct kinfo_proc *kp)
+{
+	static char buf[_POSIX2_LINE_MAX];
+	char **pargv;
+	size_t j;
+
+	if ((pargv = kvm_getargv(kd, kp, 0)) == NULL) {
+		strlcpy(buf, kp->p_comm, sizeof(buf));
+		return buf;
+	}
+
+	j = 0;
+	while (j < sizeof(buf) && *pargv != NULL) {
+		int ret;
+
+		ret = snprintf(buf + j, sizeof(buf) - j,
+		    pargv[1] != NULL ? "%s " : "%s", pargv[0]);
+		if (ret >= sizeof(buf) - j)
+			j += sizeof(buf) - j - 1;
+		else if (ret > 0)
+			j += ret;
+		pargv++;
+	}
+	return buf;
+}
+
 int
 main(int argc, char **argv)
 {
 	extern char *optarg;
 	extern int optind;
-	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p, *q;
+	char buf[_POSIX2_LINE_MAX], *mstr, *p, *q;
 	int i, j, ch, bestidx, rv, criteria;
 	int (*action)(struct kinfo_proc *, int);
 	struct kinfo_proc *kp;
@@ -153,7 +181,7 @@ main(int argc, char **argv)
 
 	criteria = 0;
 
-	while ((ch = getopt(argc, argv, "G:P:T:U:d:fg:lnoqs:t:u:vx")) != -1)
+	while ((ch = getopt(argc, argv, "G:P:T:U:d:fg:Ilnoqs:t:u:vx")) != -1)
 		switch (ch) {
 		case 'G':
 			makelist(&rgidlist, LT_GROUP, optarg);
@@ -182,6 +210,9 @@ main(int argc, char **argv)
 		case 'g':
 			makelist(&pgrplist, LT_PGRP, optarg);
 			criteria = 1;
+			break;
+		case 'I':
+			confirmkill = 1;
 			break;
 		case 'l':
 			longfmt = 1;
@@ -262,26 +293,9 @@ main(int argc, char **argv)
 			     kp->p_pid == mypid)
 				continue;
 
-			if (matchargs) {
-				if ((pargv = kvm_getargv(kd, kp, 0)) == NULL)
-					continue;
-
-				j = 0;
-				while (j < sizeof(buf) && *pargv != NULL) {
-					int ret;
-
-					ret = snprintf(buf + j, sizeof(buf) - j,
-					    pargv[1] != NULL ? "%s " : "%s",
-					    pargv[0]);
-					if (ret >= sizeof(buf) - j)
-						j += sizeof(buf) - j - 1;
-					else if (ret > 0)
-						j += ret;
-					pargv++;
-				}
-
-				mstr = buf;
-			} else
+			if (matchargs)
+				mstr = getargv(kp);
+			else
 				mstr = kp->p_comm;
 
 			rv = regexec(&reg, mstr, 1, &regmatch, 0);
@@ -446,7 +460,7 @@ usage(void)
 	if (pgrep)
 		ustr = "[-flnoqvx] [-d delim]";
 	else
-		ustr = "[-signal] [-flnoqvx]";
+		ustr = "[-signal] [-fIlnoqvx]";
 
 	fprintf(stderr, "usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid]"
 	    "\n\t[-T rtable] [-t tty] [-U uid] [-u euid] [pattern ...]\n",
@@ -456,12 +470,33 @@ usage(void)
 }
 
 int
+askyn(struct kinfo_proc *kp)
+{
+	int first, ch;
+
+	printf("kill %d %.60s? ", (int)kp->p_pid, getargv(kp));
+	fflush(stdout);
+
+	first = ch = getchar();
+	while (ch != '\n' && ch != EOF)
+		ch = getchar();
+	return (first == 'y' || first == 'Y');
+}
+
+int
 killact(struct kinfo_proc *kp, int dummy)
 {
-	if (longfmt && !quiet)
-		printf("%d %s\n", (int)kp->p_pid, kp->p_comm);
+	int doit;
 
-	if (kill(kp->p_pid, signum) == -1) {
+	if (confirmkill) {
+		doit = askyn(kp);
+	} else {
+		if (longfmt && !quiet)
+			printf("%d %s\n", (int)kp->p_pid, kp->p_comm);
+		doit = 1;
+	}
+
+	if (doit && kill(kp->p_pid, signum) == -1) {
 		if (errno == ESRCH)
 			return (STATUS_NOMATCH);
 		warn("signalling pid %d", (int)kp->p_pid);

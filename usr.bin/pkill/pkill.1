@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.20 2012/08/21 09:45:50 ajacoutot Exp $
+.\"	$OpenBSD: pkill.1,v 1.21 2013/06/03 04:17:37 tedu Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 21 2012 $
+.Dd $Mdocdate: June 3 2013 $
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@
 .Op Ar pattern ...
 .Nm pkill
 .Op Fl Ar signal
-.Op Fl flnoqvx
+.Op Fl fIlnoqvx
 .Op Fl G Ar gid
 .Op Fl g Ar pgrp
 .Op Fl P Ar ppid
@@ -82,6 +82,8 @@ command.
 .It Fl f
 Match against full argument lists.
 The default is to match against process names.
+.It Fl I
+Ask for confirmation before killing a process.
 .It Fl G Ar gid
 Restrict matches to processes with a real group ID in the comma-separated
 list
