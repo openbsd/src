@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.12 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.13 2013/06/03 15:57:40 eric Exp $	*/
 /*      
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -789,6 +789,7 @@ io_dispatch_read_ssl(int fd, short event, void *humppa)
 		goto leave;
 	}
 
+again:
 	switch ((n = iobuf_read_ssl(io->iobuf, (SSL*)io->ssl))) {
 	case IOBUF_WANT_READ:
 		io_reset(io, EV_READ, io_dispatch_read_ssl);
@@ -813,6 +814,8 @@ io_dispatch_read_ssl(int fd, short event, void *humppa)
 	default:
 		io_debug("io_dispatch_read_ssl(...) -> r=%i\n", n);
 		io_callback(io, IO_DATAIN);
+		if (current == io && IO_READING(io) && SSL_pending(io->ssl))
+			goto again;
 	}
 
     leave:
