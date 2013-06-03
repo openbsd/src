@@ -1,4 +1,4 @@
-.\" $OpenBSD: fusebuf.9,v 1.3 2013/06/03 16:35:55 tedu Exp $
+.\" $OpenBSD: fusebuf.9,v 1.4 2013/06/03 19:56:16 tedu Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -83,50 +83,44 @@ struct fusebuf {
 .Ed
 .Sh DESCRIPTION
 Fusebufs functions provide a way to manage the kernel messaging mechanism
-for filesystem in userland. It is based on
+for filesystem in userland.
+It is based on
 .Xr mbuf 9 .
-There is some changes with the original
-.Xr mbuf 9 ,
-the
-.Fa mbuf_ext
-and
-.Fa pkthdr
-are not needed so not existant.
 .Pp
-Each fuse operation fit in a
+Each fuse operation fits in a
 .Nm
-except for read write and readdirs. These operations are splitted in severals
-fusebufs with a changing value in
+except for read, write, and readdirs.
+These operations are split into severals fusebufs with a changing value in
 .Fa fb_io_off
-each time. Several functions and macros are used to handle fusebufs. The size
-of an fusebuf is
-.Fa PAGE_SIZE
+for each.
+The size of a fusebuf is
+.Fa PAGE_SIZE .
 .Pp
-An fusebuf structure is defined as an
+A fusebuf structure is defined as an
 .Fa fb_hdr
-followed by a structure containing an union and a buffer
+followed by a structure containing a union and a buffer
 .Fa F_Dat .
 The header contains the following elements:
 .Bl -tag -width foobarmoocow
 .It Fa fh_next
-This is a
+A
 .Xr SIMPLEQ_ENTRY 9
 needed to store the different fusebufs stored with
-.Fa fb_queue
+.Fa fb_queue .
 .It Fa fh_len
 Indicates the amount of data in
-.Fa F_dat
+.Fa F_dat .
 .It Fa fh_resid
-Is used to for partial
+Used for partial
 .Xr fuse 4
-read. if a the read is inferior of the fusebuf, we store
-the number of bytes of
+read.
+If the read is inferior of the fusebuf, we store the number of bytes of
 .Fa F_dat
 written in this field.
 .It Fa fh_err
 Indicates the
 .Xr errno 2
-failure of a fusebuf
+failure of a fusebuf.
 .It Fa fh_type
 Indicates the type of fusebuf transaction (see below).
 .It Fa fh_ino
@@ -134,7 +128,7 @@ Indicates the ino on which the
 .Xr fuse 4
 operation is done.
 .It Fa fh_uuid
-Uuid to track the answer. This number is generated with
+UUID to track the answer. This number is generated with
 .Xr arc4random 9 .
 .El
 .Pp
@@ -158,15 +152,15 @@ the fusebuf is a mknod operation.
 .It Dv FBT_MKDIR
 the fusebuf is a mkdir operation.
 .It Dv FBT_UNLINK
-the fusebuf is a unlink operation.
+the fusebuf is an unlink operation.
 .It Dv FBT_RMDIR
-the fusebuf is a rmdir operation.
+the fusebuf is an rmdir operation.
 .It Dv FBT_RENAME
 the fusebuf is a rename operation.
 .It Dv FBT_LINK
 the fusebuf is a link operation.
 .It Dv FBT_OPEN
-the fusebuf is a open operation.
+the fusebuf is an open operation.
 .It Dv FBT_READ
 the fusebuf is a read operation.
 .It Dv FBT_WRITE
@@ -180,7 +174,7 @@ the fusebuf is a file sync operation.
 .It Dv FBT_FLUSH
 the fusebuf is a flush operation.
 .It Dv FBT_INIT
-the fusebuf initialise the fuse connection.
+the fusebuf initializes the fuse connection.
 .It Dv FBT_OPENDIR
 the fusebuf is an opendir operation.
 .It Dv FBT_READDIR
@@ -190,41 +184,44 @@ the fusebuf is a close dir operation.
 .It Dv FBT_FSYNCDIR
 the fusebuf is a dir sync operation.
 .It Dv FBT_ACCESS
-the fusebuf is a access operation.
+the fusebuf is an access operation.
 .It Dv FBT_CREATE
 the fusebuf is a create file operation.
 .It Dv FBT_DESTROY
-the fusebuf close the fuse connection.
+the fusebuf closes the fuse connection.
 .El
 .Pp
-All the data needed by the fuse clients are contained in the
+All the data needed by the fuse clients is contained in the
 .Fa F_dat
-structure. This structure contained an union
+structure.
+This structure contains a union
 .Fa FD
 of frequently used type
 and a buffer
 .Fa F_databuf
-to send datas to libfuse.
+to send data to libfuse.
 The union contains the following elements:
 .Bl -tag -width foobarmoocow
 .It Fa FD_stat
-Is a struct
+A struct
 .Xr statvfs 3
-fill by the fuse client statfs for the fuse VFS statfs code.
+filled in by the fuse client statfs for the fuse VFS statfs code.
 .It Fa FD_vattr
-Is used by the getattr and setattr calls.
+Used by the getattr and setattr calls.
 .It Fa FD_io
-Contains all fields commonly used by fuse clients callback to
-give information to fuse vnops. It is used by access, readdir,
-release, releasedir, read, write, create, mkdir and setattr.
+Contains all fields commonly used by fuse client callbacks to
+provide information to fuse vnops.
+It is used by access, readdir, release, releasedir, read, write, create,
+mkdir, and setattr.
 .El
 .Pp
-Setattr use a struct fb_io and a struct vattr. To do that settattr used
+Setattr uses a struct fb_io and a struct vattr.
+Settattr uses
 .Fa FD_stat
-and encapsulate a struct fb_io in
+and encapsulates a struct fb_io in
 .Fa F_databuf
 with
-.Fa fbtod
+.Fa fbtod .
 .Sh SEE ALSO
 .Xr errno 2 ,
 .Xr fuse 3 ,
