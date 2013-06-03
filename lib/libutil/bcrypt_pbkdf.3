@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkcs5_pbkdf2.3,v 1.4 2013/06/03 21:07:02 tedu Exp $
+.\"	$OpenBSD: bcrypt_pbkdf.3,v 1.1 2013/06/03 21:07:02 tedu Exp $
 .\"
 .\" Copyright (c) 2012 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -15,16 +15,16 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: June 3 2013 $
-.Dt PKCS5_PBKDF2 3
+.Dt BCRYPT_PBKDF 3
 .Os
 .Sh NAME
-.Nm pkcs5_pbkdf2
-.Nd password-based key derivation function
+.Nm bcrypt_pbkdf
+.Nd bcrypt password-based key derivation function
 .Sh SYNOPSIS
 .Fd #include <util.h>
 .Ft int
-.Fn pkcs5_pbkdf2 "const char *pass" "size_t pass_len" "const char *salt" \
-    "size_t salt_len" "u_int8_t *key" "size_t key_len" "u_int rounds"
+.Fn bcrypt_pbkdf "const char *pass" "size_t pass_len" "const uint8_t *salt" \
+    "size_t salt_len" "uint8_t *key" "size_t key_len" "unsigned int rounds"
 .Sh DESCRIPTION
 The
 .Nm
@@ -37,17 +37,23 @@ The salt value should be randomly generated beforehand.
 The repeated hashing is designed to thwart discovery of the key via
 password guessing attacks.
 The higher the number of rounds, the slower each attempt will be.
-A minimum value of at least 1000 is recommended.
+.\" A minimum value of at least 1000 is recommended.
 .Sh RETURN VALUES
 The
-.Fn pkcs5_pbkdf2
+.Fn bcrypt_pbkdf
 function returns 0 to indicate success and -1 for failure.
 .\" .Sh EXAMPLES
 .\" .Sh ERRORS
 .Sh SEE ALSO
 .Xr sha1 1 ,
-.Xr bcrypt_pbkdf 3
+.Xr bcrypt 3
 .Sh STANDARDS
+.Rs
+.%A Niels Provos and David Mazieres
+.%D June 1999
+.%T A Future-Adaptable Password Scheme
+.Re
+.Pp
 .Rs
 .%A B. Kaliski
 .%D September 2000
@@ -57,7 +63,6 @@ function returns 0 to indicate success and -1 for failure.
 .\" .Sh HISTORY
 .\" .Sh AUTHORS
 .Sh CAVEATS
-The standard allows for different hash functions to be used.
-This implementation only uses
-.Xr sha1 1 .
+This implementation deviates slightly from the PBKDF2 standard by mixing
+output key bits nonlinearly.
 .\" .Sh BUGS
