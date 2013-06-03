@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.1 2013/05/31 20:14:18 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.2 2013/06/03 15:05:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1038,7 +1038,10 @@ vmxnet3_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	while (IFQ_LEN(&ifp->if_snd) > 0) {
+	for (;;) {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
 		if ((ring->next - ring->head - 1) % NTXDESC < 8) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
