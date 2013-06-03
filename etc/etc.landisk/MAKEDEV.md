@@ -1,6 +1,6 @@
 define(MACHINE,landisk)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.28 2013/03/15 09:10:52 ratchov Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.29 2013/06/03 16:06:42 tedu Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -78,6 +78,7 @@ _DEV(bthub,100)
 _DEV(cry, 47)
 _DEV(diskmap,101)
 _DEV(fdesc, 7)
+_DEV(fuse, 103)
 _DEV(hotplug, 37)
 dnl _DEV(iop, 73)
 _DEV(lkm, 35)

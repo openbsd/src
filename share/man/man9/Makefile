@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.179 2013/05/31 20:06:22 guenther Exp $
+#	$OpenBSD: Makefile,v 1.180 2013/06/03 16:06:42 tedu Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -8,8 +8,8 @@ MAN=	altq.9 aml_evalnode.9 atomic.9 audio.9 autoconf.9 bio_register.9 \
 	buffercache.9 bus_dma.9 bus_space.9 copy.9 crypto.9 delay.9 \
 	disk.9 disklabel.9 dma_alloc.9 dohooks.9 dopowerhooks.9 \
 	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
-	evcount.9 file.9 \
-	fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
+	evcount.9 file.9 fork1.9 \
+	fusebuf.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 idgen32.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
