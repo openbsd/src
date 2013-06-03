@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2012/08/23 06:12:49 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.9 2013/06/03 17:33:58 tedu Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,6 +137,7 @@ cdev_decl(pci);
 #include "bthub.h"
 #include "vscsi.h"
 #include "pppx.h"
+#include "fuse.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -201,7 +202,7 @@ struct cdevsw	cdevsw[] =
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
 	cdev_notdef(),			/* 51: */
 	cdev_ptm_init(NPTY,ptm),	/* 52: pseudo-tty ptm device */
-	cdev_notdef(),			/* 53: */
+	cdev_fuse_init(NFUSE,fuse),	/* 53: fuse */
 	cdev_notdef(),			/* 54: */
 	cdev_notdef(),			/* 55: */
 	cdev_notdef(),			/* 56: */

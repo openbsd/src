@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.51 2013/03/15 09:10:52 ratchov Exp $ */
+/*	$OpenBSD: conf.c,v 1.52 2013/06/03 17:33:58 tedu Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -141,6 +141,7 @@ cdev_decl(pci);
 #include "bio.h"
 #include "vscsi.h"
 #include "pppx.h"
+#include "fuse.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -239,6 +240,7 @@ struct cdevsw cdevsw[] = {
 	cdev_pppx_init(NPPPX,pppx),	/* 85: pppx */
 	cdev_agp_init(NAGP,agp),	/* 86: agp */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
+	cdev_fuse_init(NFUSE,fuse),	/* 88: fuse */
 };
 int nchrdev = nitems(cdevsw);
 
