@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.828 2013/06/03 01:41:04 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.829 2013/06/03 16:32:00 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3344,11 +3344,11 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		state_icmp = pf_icmp_mapping(pd, icmptype,
 		    &icmp_dir, &multi, &virtual_id, &virtual_type);
 		if (icmp_dir == PF_IN) {
-			pd->nsport = virtual_id;
-			pd->ndport = virtual_type;
+			pd->osport = pd->nsport = virtual_id;
+			pd->odport = pd->ndport = virtual_type;
 		} else {
-			pd->nsport = virtual_type;
-			pd->ndport = virtual_id;
+			pd->osport = pd->nsport = virtual_type;
+			pd->odport = pd->ndport = virtual_id;
 		}
 		break;
 #endif /* INET */
@@ -3359,11 +3359,11 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		state_icmp = pf_icmp_mapping(pd, icmptype,
 		    &icmp_dir, &multi, &virtual_id, &virtual_type);
 		if (icmp_dir == PF_IN) {
-			pd->nsport = virtual_id;
-			pd->ndport = virtual_type;
+			pd->osport = pd->nsport = virtual_id;
+			pd->odport = pd->ndport = virtual_type;
 		} else {
-			pd->nsport = virtual_type;
-			pd->ndport = virtual_id;
+			pd->osport = pd->nsport = virtual_type;
+			pd->odport = pd->ndport = virtual_id;
 		}
 		break;
 #endif /* INET6 */
