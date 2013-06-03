@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.29 2010/11/04 09:49:07 claudio Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.30 2013/06/03 16:56:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -320,7 +320,7 @@ lde_kernel_insert(struct kroute *kr)
 	}
 
 	if (rn->local_label == NO_LABEL) {
-		if (kr->nexthop.s_addr == INADDR_ANY)
+		if (kr->flags & F_CONNECTED)
 			/* Directly connected route */
 			rn->local_label = MPLS_LABEL_IMPLNULL;
 		else

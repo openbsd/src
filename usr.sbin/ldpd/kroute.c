@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.27 2013/06/03 16:53:49 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.28 2013/06/03 16:56:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1297,6 +1297,10 @@ rtmsg_process(char *buf, int len)
 				    inet_ntoa(prefix), prefixlen);
 				continue;
 			}
+
+			/* routes attached to loopback interfaces */
+			if (prefix.s_addr == nexthop.s_addr)
+				flags |= F_CONNECTED;
 
 			if ((okr = kroute_find_fec(prefix.s_addr, prefixlen,
 			    nexthop))
