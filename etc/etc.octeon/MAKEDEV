@@ -61,6 +61,7 @@
 #	crypto	Hardware crypto access driver
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
+#	fuse	Userland Filesystem
 #	hotplug	devices hot plugging
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
@@ -257,6 +258,10 @@ hotplug)
 	M hotplug c 67 $U 400
 	;;
 
+fuse)
+	M fuse$U c 53 $U 600
+	;;
+
 fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
@@ -407,7 +412,7 @@ all)
 	R octcf0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
 	R sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2
 	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 diskmap
-	R vscsi0 ch0 audio0 audio1 audio2 pppx hotplug ptm local
+	R vscsi0 ch0 audio0 audio1 audio2 fuse pppx hotplug ptm local
 	R wscons pci0 pci1 pci2 pci3 video0 video1 uk0 random tty00
 	R tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0
 	R st1 fd

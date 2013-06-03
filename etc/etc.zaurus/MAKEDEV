@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.32 2013/03/15 09:10:52 ratchov Exp 
-#	OpenBSD: MAKEDEV.common,v 1.62 2013/03/15 09:10:52 ratchov Exp 
+#	OpenBSD: MAKEDEV.common,v 1.64 2013/06/03 16:06:42 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -69,6 +69,7 @@
 #	crypto	Hardware crypto access driver
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
+#	fuse	Userland Filesystem
 #	hotplug	devices hot plugging
 #	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
@@ -285,6 +286,10 @@ hotplug)
 	M hotplug c 37 $U 400
 	;;
 
+fuse)
+	M fuse$U c 77 $U 600
+	;;
+
 fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
@@ -478,10 +483,10 @@ all)
 	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
 	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 bio
-	R diskmap vscsi0 ch0 pppx hotplug ptm local wscons uall rmidi0
-	R rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0
-	R radio0 video0 video1 uk0 random lkm tty00 tty01 tty02 tty03
-	R apm crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R diskmap vscsi0 ch0 fuse pppx hotplug ptm local wscons uall
+	R rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	R tuner0 radio0 video0 video1 uk0 random lkm tty00 tty01 tty02
+	R tty03 apm crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

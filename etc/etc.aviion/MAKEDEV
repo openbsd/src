@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.aviion/MAKEDEV.md,v 1.15 2012/08/23 06:15:28 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.60 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.64 2013/06/03 16:06:42 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -48,6 +48,7 @@
 #	bpf*	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
+#	fuse	Userland Filesystem
 #	lkm	Loadable kernel modules interface
 #	nvram0	On-board non-volatile memory
 #	pf*	Packet Filter
@@ -238,6 +239,10 @@ lkm)
 	M lkm c 24 0 640 _lkm
 	;;
 
+fuse)
+	M fuse$U c 45 $U 600
+	;;
+
 fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
@@ -336,8 +341,8 @@ ramdisk)
 all)
 	R ttya ttyb ttyc vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0
 	R cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 nvram0 pppx
-	R ptm local uk0 random lkm pf systrace std st0 st1 fd
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 nvram0 fuse
+	R pppx ptm local uk0 random lkm pf systrace std st0 st1 fd
 	;;
 
 sd*)
