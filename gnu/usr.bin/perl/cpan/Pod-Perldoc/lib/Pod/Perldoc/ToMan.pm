@@ -256,7 +256,7 @@ sub _get_device_switches {
 	   if( $self->_is_nroff  )             { qw()              }
 	elsif( $self->_have_groff_with_utf8 )  { qw(-Kutf8 -Tutf8) }
 	elsif( $self->_is_ebcdic )             { qw(-Tcp1047)      }
-	elsif( $self->_have_mandoc_with_utf8 ) { qw(-Tutf8)        }
+	elsif( $self->_have_mandoc_with_utf8 ) { qw(-Tlocale)      }
 	elsif( $self->_is_mandoc )             { qw()              }
 	else                                   { qw(-Tlatin1)      }
 	}
