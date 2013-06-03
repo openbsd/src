@@ -1,1 +1,1 @@
-/* No code here since kernel impliments this itself */
+/* No code here since kernel implements this itself */
