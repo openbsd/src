@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.15 2012/08/30 21:54:13 mpi Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.16 2013/06/03 23:28:43 mpi Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -40,21 +40,12 @@ struct vga_config {
 	u_char vc_cmap_green[256];
 	u_char vc_cmap_blue[256];
 
-	/*
-	 * Private to back-end.
-	 */
-	int		vc_ncol, vc_nrow; /* screen width & height */
-	int		vc_ccol, vc_crow; /* current cursor position */
-
-	char		vc_so;		/* in standout mode? */
-	char		vc_at;		/* normal attributes */
-	char		vc_so_at;	/* standout attributes */
 
 	int	(*vc_ioctl)(void *, u_long,
 		    caddr_t, int, struct proc *);
 	paddr_t	(*vc_mmap)(void *, off_t, int);
 
-	struct rasops_info    dc_rinfo;       /* raster display data*/
+	struct rasops_info	ri;
 
 	bus_addr_t	membase;
 	bus_size_t	memsize;

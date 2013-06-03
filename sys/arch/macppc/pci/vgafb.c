@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.41 2012/08/30 21:54:13 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.42 2013/06/03 23:28:43 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -57,13 +57,7 @@ void vgafb_setcolor(struct vga_config *vc, unsigned int index,
 		    u_int8_t r, u_int8_t g, u_int8_t b);
 void vgafb_restore_default_colors(struct vga_config *vc);
 
-struct vgafb_devconfig {
-	struct rasops_info dc_rinfo;    /* raster display data */
-	int dc_blanked;			/* currently had video disabled */
-};
-
-extern struct vga_config vgafb_pci_console_vc;
-struct vgafb_devconfig vgafb_console_dc;
+extern struct vga_config vgafbcn;
 
 struct wsscreen_descr vgafb_stdscreen = {
 	"std",
@@ -124,19 +118,8 @@ vgafb_init(bus_space_tag_t iot, bus_space_tag_t memt, struct vga_config *vc,
 	    /* XXX */ppc_proc_is_64b ? 0 : 1, &vc->vc_memh))
 		panic("vgafb_init: can't map mem space"); 
 
-	vc->vc_crow = vc->vc_ccol = 0; /* Has to be some onscreen value */
-	vc->vc_so = 0;
-
-	/* clear screen, frob cursor, etc.? */
-	/*
-	*/
-
-	vc->vc_at = 0x00 | 0xf;			/* black bg|white fg */
-	vc->vc_so_at = 0x00 | 0xf | 0x80;	/* black bg|white fg|blink */
-
-	if (cons_depth == 8) { 
+	if (cons_depth == 8)
 		vgafb_restore_default_colors(vc);
-	}
 }
 
 void
@@ -317,9 +300,8 @@ vgafb_mmap(void *v, off_t off, int prot)
 int
 vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 {
-	struct vga_config *vc = &vgafb_pci_console_vc;
-	struct vgafb_devconfig *dc = &vgafb_console_dc;
-        struct rasops_info *ri = &dc->dc_rinfo;
+	struct vga_config *vc = &vgafbcn;
+        struct rasops_info *ri = &vc->ri;
         long defattr;
         int i;
 
@@ -331,7 +313,7 @@ vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	ri->ri_width = cons_width;
 	ri->ri_height = cons_height;
 	ri->ri_stride = cons_linebytes;
-	ri->ri_hw = dc;
+	ri->ri_hw = vc;
 
 	/* Clear the screen */
 	for (i = 0; i < cons_linebytes * cons_height; i++)
@@ -450,17 +432,15 @@ vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *attrp)
 {
 	struct vga_config *vc = v;
-	long defattr;
+        struct rasops_info *ri = &vc->ri;
 
 	if (vc->nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &vc->dc_rinfo; /* one and only for now */
+	*cookiep = ri;
 	*curxp = 0;
 	*curyp = 0;
-	vc->dc_rinfo.ri_ops.alloc_attr(&vc->dc_rinfo, 0, 0, 0, &defattr);
-	*attrp = defattr;
-
+	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
 	vc->nscreens++;
 
 	return (0);
@@ -471,7 +451,7 @@ vgafb_free_screen(void *v, void *cookie)
 {
 	struct vga_config *vc = v;
 
-	if (vc == &vgafb_pci_console_vc)
+	if (vc == &vgafbcn)
 		panic("vgafb_free_screen: console");
 
 	vc->nscreens--;

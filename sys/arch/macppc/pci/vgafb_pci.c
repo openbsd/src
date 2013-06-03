@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.27 2012/12/13 13:55:18 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.28 2013/06/03 23:28:43 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ struct cfattach vgafb_pci_ca = {
 };
 
 pcitag_t vgafb_pci_console_tag;
-struct vga_config vgafb_pci_console_vc;
+struct vga_config vgafbcn;
 
 void
 vgafb_pci_mem_init(struct vga_pci_softc *dev, uint32_t *memaddr,
@@ -194,7 +194,7 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 
 	console = (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag)));
 	if (console)
-		vc = sc->sc_vc = &vgafb_pci_console_vc;
+		vc = sc->sc_vc = &vgafbcn;
 	else {
 		vc = sc->sc_vc = (struct vga_config *)
 		    malloc(sizeof(struct vga_config), M_DEVBUF, M_WAITOK);
@@ -211,8 +211,6 @@ vgafb_pci_attach(struct device *parent, struct device  *self, void *aux)
 	reg |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
-	vc->vc_mmap = vgafb_mmap;
-	vc->vc_ioctl = vgafb_ioctl;
 	vc->membase = memaddr;
 	vc->memsize = memsize;
 	vc->mmiobase = mmioaddr;
