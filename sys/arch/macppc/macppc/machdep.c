@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.135 2012/12/06 12:35:22 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.136 2013/06/03 19:16:44 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -113,6 +113,9 @@ int system_type = SYS_TYPE;	/* XXX Hardwire it for now */
 char ofw_eth_addr[6];		/* Save address of first network ifc found */
 char *bootpath;
 char bootpathbuf[512];
+
+/* from autoconf.c */
+extern void parseofwbp(char *);
 
 struct firmware *fw = NULL;
 
@@ -367,7 +370,8 @@ initppc(startkernel, endkernel, args)
 			}
 		}
 	}
-	bootpath= &bootpathbuf[0];
+	bootpath = &bootpathbuf[0];
+	parseofwbp(bootpath);
 
 #ifdef DDB
 	ddb_init();

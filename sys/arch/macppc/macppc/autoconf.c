@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.39 2010/11/11 17:58:21 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.40 2013/06/03 19:16:43 mpi Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.39 2010/11/11 17:58:21 miod Exp $
+ *      $Id: autoconf.c,v 1.40 2013/06/03 19:16:43 mpi Exp $
  */
 
 /*
@@ -62,13 +62,12 @@
 
 #include <sys/disk.h>
 #include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
-#include <scsi/sdvar.h>
+#include <dev/ata/atavar.h>
 
 void	dumpconf(void);
 static	struct devmap *findtype(char **);
-void	makebootdev(char *cp);
+void	parseofwbp(char *);
 int	getpno(char **);
 
 /*
@@ -79,6 +78,9 @@ int	getpno(char **);
 int	cold = 1;	/* if 1, still working on cold-start */
 char	bootdev[16];	/* to hold boot dev name */
 struct device *bootdv = NULL;
+enum devclass bootdev_class = DV_DULL;
+int	bootdev_type = 0;
+int	bootdev_unit = 0;
 
 struct dumpmem dumpmem[VM_PHYSSEG_MAX];
 u_int ndumpmem;
@@ -165,9 +167,9 @@ findtype(char **s)
  *			 '/ht@0,f2000000/pci@2/bcom5704@4/bsd'
  */
 void
-makebootdev(char *bp)
+parseofwbp(char *bp)
 {
-	int	unit, ptype;
+	int	ptype;
 	char   *dev, *cp;
 	struct devmap *dp;
 
@@ -184,6 +186,8 @@ makebootdev(char *bp)
 	} while((dp->type & T_IFACE) == 0);
 
 	if (dp->att && dp->type == T_IFACE) {
+		bootdev_class = DV_IFNET;
+		bootdev_type = dp->type;
 		strlcpy(bootdev, dp->dev, sizeof bootdev);
 		return;
 	}
@@ -193,24 +197,9 @@ makebootdev(char *bp)
 	ptype = dp->type;
 	dp = findtype(&cp);
 	if (dp->att && dp->type == T_DISK) {
-		unit = getpno(&cp);
-		if (ptype == T_SCSI) {
-			struct device *dv;
-			struct sd_softc *sd;
-
-			TAILQ_FOREACH(dv, &alldevs, dv_list) {
-				if (dv->dv_class != DV_DISK ||
-				    strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd"))
-					continue;
-				sd = (struct sd_softc *)dv;
-				if (sd->sc_link->target != unit)
-					continue;
-				snprintf(bootdev, sizeof bootdev,
-				    "%s%c", dv->dv_xname, 'a');
-				return;
-			}
-		}
-		snprintf(bootdev, sizeof bootdev, "%s%d%c", dev, unit, 'a');
+		bootdev_class = DV_DISK;
+		bootdev_type = ptype;
+		bootdev_unit = getpno(&cp);
 		return;
 	}
 	printf("Warning: boot device unrecognized: %s\n", bp);
@@ -239,25 +228,43 @@ getpno(char **cp)
 void
 device_register(struct device *dev, void *aux)
 {
+	const char *drvrname = dev->dv_cfdata->cf_driver->cd_name;
+	const char *name = dev->dv_xname;
+
+	if (bootdv != NULL || dev->dv_class != bootdev_class)
+		return;
+
+	switch (bootdev_type) {
+	case T_SCSI:
+		if (strcmp(drvrname, "sd") == 0) {
+			struct scsi_attach_args *sa = aux;
+
+			if (sa->sa_sc_link->target == bootdev_unit)
+				bootdv = dev;
+		}
+	case T_IDE:
+		if (strcmp(drvrname, "wd") == 0) {
+			struct ata_atapi_attach *aa = aux;
+
+	    		if (aa->aa_drv_data->drive == bootdev_unit)
+				bootdv = dev;
+		}
+		break;
+	case T_IFACE:
+		if (strcmp(name, bootdev) == 0)
+			bootdv = dev;
+		break;
+	default:
+		break;
+	}
 }
 
-/*
- * Now that we are fully operational, we can checksum the
- * disks, and using some heuristics, hopefully are able to
- * always determine the correct root disk.
- */
 void
 diskconf(void)
 {
-	dev_t temp;
-	int part = 0;
-
 	printf("bootpath: %s\n", bootpath);
-	makebootdev(bootpath);
 
-	/* Lookup boot device from boot if not set by configuration */
-	bootdv = parsedisk(bootdev, strlen(bootdev), 0, &temp);
-	setroot(bootdv, part, RB_USERREQ);
+	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
 }
 
