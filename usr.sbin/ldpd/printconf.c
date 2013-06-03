@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.5 2013/06/01 19:28:55 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.6 2013/06/03 16:58:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -35,6 +35,11 @@ void
 print_mainconf(struct ldpd_conf *conf)
 {
 	printf("router-id %s\n\n", inet_ntoa(conf->rtr_id));
+
+	if (conf->flags & LDPD_FLAG_NO_FIB_UPDATE)
+		printf("fib-update no\n");
+	else
+		printf("fib-update yes\n");
 
 	if (conf->mode & MODE_DIST_INDEPENDENT)
 		printf("distribution independent\n");

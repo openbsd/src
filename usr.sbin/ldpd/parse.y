@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2013/06/03 16:53:49 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.16 2013/06/03 16:58:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -331,6 +331,7 @@ lookup(char *s)
 		{"holdtime",		HOLDTIME},
 		{"interface",		INTERFACE},
 		{"keepalive",		KEEPALIVE},
+		{"no",			NO},
 		{"retention",		RETENTION},
 		{"router-id",		ROUTERID},
 		{"yes",			YES}
