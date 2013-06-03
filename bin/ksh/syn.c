@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.28 2008/07/23 16:34:38 jaredy Exp $	*/
+/*	$OpenBSD: syn.c,v 1.29 2013/06/03 18:40:05 jca Exp $	*/
 
 /*
  * shell parser (C version)
@@ -598,13 +598,8 @@ wordlist(void)
 		XPput(args, yylval.cp);
 	if (c != '\n' && c != ';')
 		syntaxerr((char *) 0);
-	if (XPsize(args) == 0) {
-		XPfree(args);
-		return NULL;
-	} else {
-		XPput(args, NULL);
-		return (char **) XPclose(args);
-	}
+	XPput(args, NULL);
+	return (char **) XPclose(args);
 }
 
 /*
