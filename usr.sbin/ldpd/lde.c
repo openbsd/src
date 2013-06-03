@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.22 2010/10/26 12:08:14 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.23 2013/06/03 17:01:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -195,7 +195,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	struct in_addr		 addr;
 	ssize_t			 n;
 	time_t			 now;
-	int			 state, shut = 0, verbose;
+	int			 shut = 0, verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -314,17 +314,6 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_NEIGHBOR_DOWN:
 			lde_nbr_del(lde_nbr_find(imsg.hdr.peerid));
-			break;
-		case IMSG_NEIGHBOR_CHANGE:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(state))
-				fatalx("invalid size of OE request");
-			memcpy(&state, imsg.data, sizeof(state));
-
-			nbr = lde_nbr_find(imsg.hdr.peerid);
-			if (nbr == NULL)
-				break;
-
-			nbr->state = state;
 			break;
 		case IMSG_CTL_SHOW_LIB:
 			rt_dump(imsg.hdr.pid);
@@ -600,9 +589,6 @@ struct lde_nbr *
 lde_nbr_new(u_int32_t peerid, struct lde_nbr *new)
 {
 	struct lde_nbr	*nbr;
-
-	if (lde_nbr_find(peerid))
-		return (NULL);
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("lde_nbr_new");

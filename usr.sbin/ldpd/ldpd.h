@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.37 2013/06/03 16:53:49 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.38 2013/06/03 17:01:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -104,7 +104,6 @@ enum imsg_type {
 	IMSG_NOTIFICATION_SEND,
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
-	IMSG_NEIGHBOR_CHANGE,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_DEL,
 	IMSG_RECONF_CONF,
@@ -210,8 +209,6 @@ struct if_addr {
 struct iface {
 	LIST_ENTRY(iface)	 entry;
 	struct event		 hello_timer;
-
-	LIST_HEAD(, lde_nbr)	 lde_nbr_list;
 
 	char			 name[IF_NAMESIZE];
 	LIST_HEAD(, if_addr)	 addr_list;
