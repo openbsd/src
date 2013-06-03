@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsparse.c,v 1.8 2012/02/04 21:22:32 tobias Exp $	*/
+/*	$OpenBSD: rcsparse.c,v 1.9 2013/06/03 17:04:35 jcs Exp $	*/
 /*
  * Copyright (c) 2010 Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -106,6 +106,7 @@ static const struct rcs_keyword keywords[] = {
 	{ "branch",		RCS_TOK_BRANCH},
 	{ "branches",		RCS_TOK_BRANCHES},
 	{ "comment",		RCS_TOK_COMMENT},
+	{ "commitid",		RCS_TOK_COMMITID},
 	{ "date",		RCS_TOK_DATE},
 	{ "desc",		RCS_TOK_DESC},
 	{ "expand",		RCS_TOK_EXPAND},
@@ -150,6 +151,7 @@ static int	rcsparse_string(RCSFILE *, int);
 static int	rcsparse_token(RCSFILE *, int);
 static void	rcsparse_warnx(RCSFILE *, char *, ...);
 static int	valid_login(char *);
+static int	valid_commitid(char *);
 
 /*
  * head [REVISION];
@@ -527,7 +529,7 @@ rcsparse_commitid(RCSFILE *rfp, struct rcs_pdata *pdp)
 	if (rcsparse_token(rfp, RCS_TYPE_COMMITID) != RCS_TYPE_COMMITID)
 		return (1);
 
-	/* XXX - do something with commitid */
+	pdp->rp_delta->rd_commitid = pdp->rp_value.str;
 
 	return (rcsparse_token(rfp, RCS_TOK_SCOLON) != RCS_TOK_SCOLON);
 }
@@ -988,7 +990,12 @@ rcsparse_token(RCSFILE *rfp, int allowed)
 
 	switch (allowed) {
 	case RCS_TYPE_COMMITID:
-		/* XXX validate commitid */
+		if (!valid_commitid(pdp->rp_buf)) {
+			rcsparse_warnx(rfp, "invalid commitid \"%s\"",
+			    pdp->rp_buf);
+			return (0);
+		}
+		pdp->rp_value.str = xstrdup(pdp->rp_buf);
 		break;
 	case RCS_TYPE_LOGIN:
 		if (!valid_login(pdp->rp_buf)) {
@@ -1221,6 +1228,21 @@ valid_login(char *login_name)
 		}
 	}
 	if ((char *)cp - login_name > _PW_NAME_LEN)
+		return 0;
+	return 1;
+}
+
+static int
+valid_commitid(char *commitid)
+{
+	unsigned char *cp;
+
+	/* A-Za-z0-9 */
+	for (cp = commitid; *cp ; cp++) {
+		if (!isalnum(*cp))
+			return 0;
+	}
+	if ((char *)cp - commitid > RCS_COMMITID_MAXLEN)
 		return 0;
 	return 1;
 }

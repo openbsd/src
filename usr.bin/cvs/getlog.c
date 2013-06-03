@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.95 2010/07/30 21:47:18 ray Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.96 2013/06/03 17:04:35 jcs Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -376,10 +376,14 @@ log_rev_print(struct rcs_delta *rdp)
 		int added, removed;
 		rcs_delta_stats(nrdp, &added, &removed);
 		if (RCSNUM_ISBRANCHREV(rdp->rd_num))
-			cvs_printf("  lines: +%d -%d", added, removed);
+			cvs_printf("  lines: +%d -%d;", added, removed);
 		else
-			cvs_printf("  lines: +%d -%d", removed, added);
+			cvs_printf("  lines: +%d -%d;", removed, added);
 	}
+
+	if (rdp->rd_commitid != NULL)
+		printf("  commitid: %s;", rdp->rd_commitid);
+
 	cvs_printf("\n");
 
 	if (!TAILQ_EMPTY(&(rdp->rd_branches))) {

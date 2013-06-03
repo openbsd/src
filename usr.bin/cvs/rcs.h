@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.100 2012/07/02 21:56:25 tedu Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.101 2013/06/03 17:04:35 jcs Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -126,6 +126,9 @@ struct rcs_kw {
 #define RCS_RD_DEAD	0x01	/* dead */
 #define RCS_RD_SELECT	0x02	/* select for operation */
 
+/* commitids in cvs/cvsnt can be up to 64 bytes */
+#define RCS_COMMITID_MAXLEN 64
+
 typedef struct rcs_num {
 	u_int		 rn_len;
 	u_int16_t	 rn_id[RCSNUM_MAXLEN];
@@ -163,6 +166,7 @@ struct rcs_delta {
 	struct tm	 rd_date;
 	char		*rd_author;
 	char		*rd_state;
+	char		*rd_commitid;
 	char		*rd_log;
 	char		*rd_locker;
 	u_char		*rd_text;

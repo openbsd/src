@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.15 2011/07/06 15:36:52 nicm Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.16 2013/06/03 17:04:35 jcs Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -142,6 +142,9 @@ struct rcs_kw {
 #define CHECKOUT_REV_REMOVED	3
 #define CHECKOUT_REV_UPDATED	4
 
+/* commitids in cvs/cvsnt can be up to 64 bytes */
+#define RCS_COMMITID_MAXLEN 64
+
 typedef struct rcs_num {
 	u_int		 rn_len;
 	u_int16_t	*rn_id;
@@ -179,6 +182,7 @@ struct rcs_delta {
 	struct tm	 rd_date;
 	char		*rd_author;
 	char		*rd_state;
+	char		*rd_commitid;
 	char		*rd_log;
 	char		*rd_locker;
 	u_char		*rd_text;
