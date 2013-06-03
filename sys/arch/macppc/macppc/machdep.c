@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.136 2013/06/03 19:16:44 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.137 2013/06/03 19:43:28 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1071,7 +1071,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 			printf("bus_space_map: can't free region\n");
 		}
 	}
-	return 0;
+	return error;
 }
 bus_addr_t
 bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
