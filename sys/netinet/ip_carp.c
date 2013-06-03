@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.205 2013/06/02 15:03:32 yasuoka Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.206 2013/06/03 17:19:40 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2227,7 +2227,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		case AF_INET:
 			sc->sc_if.if_flags |= IFF_UP;
 			/*
-			 * emulate arp_ifinit() without doing a gratious arp
+			 * emulate arp_ifinit() without doing a gratuitous arp
 			 * request so that the routes are setup correctly.
 			 */
 			ifa->ifa_rtrequest = arp_rtrequest;
