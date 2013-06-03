@@ -966,6 +966,18 @@ option, thus suppressing the editor invocation, or use the
 .B \-F
 option to specify that the argument \fIfile\fP contains the log message.
 .sp
+At
+.B commit
+a unique commitid is placed in the
+.SM rcs
+file inside the repository.
+All files committed at once get the same commitid.
+The commitid can be retrieved with the
+.B log
+and
+.B status
+commands.
+.sp
 The
 .B \-r
 option can be used to commit to a particular symbolic or numeric revision.

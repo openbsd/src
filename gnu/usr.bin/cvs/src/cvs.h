@@ -907,3 +907,5 @@ extern void cvs_outerr PROTO ((const char *, size_t));
 extern void cvs_flusherr PROTO ((void));
 extern void cvs_flushout PROTO ((void));
 extern void cvs_output_tagged PROTO ((char *, char *));
+
+extern char *global_session_id;

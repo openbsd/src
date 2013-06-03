@@ -1553,6 +1553,15 @@ log_version (log_data, revlist, rcs, ver, trunk)
 	cvs_output (padd->data, 0);
 	cvs_output (" -", 2);
 	cvs_output (pdel->data, 0);
+	cvs_output (";", 1);
+    }
+
+    p = findnode (ver->other_delta,"commitid");
+    if (p != NULL && p->data)
+    {
+	cvs_output ("  commitid: ", 12);
+	cvs_output (p->data, 0);
+	cvs_output (";", 1);
     }
 
     if (ver->branches != NULL)

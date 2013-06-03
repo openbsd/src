@@ -115,6 +115,11 @@ file.  That is, in the repository file README,v, any hardlinks fields
 in the delta nodes should include `README'; CVS will not operate
 properly if this is not done.
 
+Newphrases are also used to implement the 'commitid' feature. The
+following new keyword is defined:
+
+   commitid
+
 The rules regarding keyword expansion are not documented along with
 the rest of the RCS file format; they are documented in the co(1)
 manpage in the RCS 5.7 distribution.  See also the "Keyword

@@ -286,6 +286,8 @@ expand_variable (name, file, line)
 	return Editor;
     else if (strcmp (name, "USER") == 0)
 	return getcaller ();
+    else if (strcmp (name, "SESSIONID") == 0 || strcmp (name, "COMMITID") == 0)
+	return global_session_id;
     else if (isalpha ((unsigned char) name[0]))
     {
 	/* These names are reserved for future versions of CVS,
