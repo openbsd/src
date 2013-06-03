@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.381 2013/06/03 01:41:04 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.382 2013/06/03 15:00:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1004,6 +1004,7 @@ struct pf_anchor {
 	char			 path[MAXPATHLEN];
 	struct pf_ruleset	 ruleset;
 	int			 refcnt;	/* anchor rules */
+	int			 match;
 };
 RB_PROTOTYPE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
 RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
