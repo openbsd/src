@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.6 2013/06/01 20:47:40 tedu Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.7 2013/06/03 16:19:45 miod Exp $	*/
 
 /*
  * Atomic lock for mips
@@ -20,7 +20,7 @@ _atomic_lock(volatile _atomic_lock_t *lock)
 	"	 addi	%2,	$0, %3\n"
 	".set	reorder\n"
 		: "=&r"(old)
-		: "r"(lock), "r"(_ATOMIC_LOCK_LOCKED), "i"(_SPINLOCK_LOCKED)
+		: "r"(lock), "r"(_ATOMIC_LOCK_LOCKED), "i"(_ATOMIC_LOCK_LOCKED)
 		: "memory");
 
 	return (old != _ATOMIC_LOCK_UNLOCKED);
