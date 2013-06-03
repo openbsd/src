@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.30 2013/04/20 23:32:32 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.31 2013/06/03 23:26:57 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.30 2013/04/20 23:32:32 yasuoka Exp $
+ * $Id: npppd.c,v 1.31 2013/06/03 23:26:57 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/types.h>
@@ -1200,25 +1200,35 @@ pipex_periodic(npppd *_this)
 {
 	struct pipex_session_list_req  req;
 	npppd_ppp                     *ppp;
-	int                            i, error;
+	int                            i, devf, error;
 	u_int                          ppp_id;
 	slist                          dlist, users;
 
 	slist_init(&dlist);
 	slist_init(&users);
-	do {
-		error = ioctl(_this->iface[0].devf, PIPEXGCLOSED, &req);
-		if (error) {
-			if (errno != ENXIO)
-				log_printf(LOG_WARNING,
-				    "PIPEXGCLOSED failed: %m");
+
+	devf = -1;
+	for (i = 0; i < nitems(_this->iface); i++) {
+		if (_this->iface[i].initialized != 0) {
+			devf = _this->iface[i].devf;
 			break;
 		}
-		for (i = 0; i < req.plr_ppp_id_count; i++) {
-			ppp_id = req.plr_ppp_id[i];
-			slist_add(&dlist, (void *)(uintptr_t)ppp_id);
-		}
-	} while (req.plr_flags & PIPEX_LISTREQ_MORE);
+	}
+	if (devf >= 0) {
+		do {
+			error = ioctl(devf, PIPEXGCLOSED, &req);
+			if (error) {
+				if (errno != ENXIO)
+					log_printf(LOG_WARNING,
+					    "PIPEXGCLOSED failed: %m");
+				break;
+			}
+			for (i = 0; i < req.plr_ppp_id_count; i++) {
+				ppp_id = req.plr_ppp_id[i];
+				slist_add(&dlist, (void *)(uintptr_t)ppp_id);
+			}
+		} while (req.plr_flags & PIPEX_LISTREQ_MORE);
+	}
 
 	if (slist_length(&dlist) <= 0)
 		goto pipex_done;
