@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.155 2013/03/28 16:55:27 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.156 2013/06/03 12:32:06 kettenis Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -363,14 +363,13 @@ ether_output(ifp0, m0, dst, rt0)
 	if (m == 0)
 		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
-	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
-		sizeof(eh->ether_type));
-	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof(edst));
+	eh->ether_type = etype;
+	memcpy(eh->ether_dhost, edst, sizeof(edst));
 	if (hdrcmplt)
-		bcopy((caddr_t)esrc, (caddr_t)eh->ether_shost,
+		memcpy(eh->ether_shost, esrc,
 		    sizeof(eh->ether_shost));
 	else
-		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
+		memcpy(eh->ether_shost, ac->ac_enaddr, 
 		    sizeof(eh->ether_shost));
 
 #if NCARP > 0
