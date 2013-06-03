@@ -5183,6 +5183,7 @@
 ./var/www/icons
 ./var/www/icons/small
 ./var/www/logs
+./var/www/run
 ./var/www/users
 ./var/yp
 ./var/yp/Makefile.main
