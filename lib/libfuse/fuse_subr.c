@@ -1,3 +1,4 @@
+/* $OpenBSD: fuse_subr.c,v 1.2 2013/06/03 16:21:08 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
