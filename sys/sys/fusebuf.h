@@ -1,3 +1,4 @@
+/* $OpenBSD: fusebuf.h,v 1.2 2013/06/03 16:22:08 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
