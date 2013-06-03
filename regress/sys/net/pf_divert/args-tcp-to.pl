@@ -4,5 +4,6 @@ use strict;
 use warnings;
 
 our %args = (
+	protocol => "tcp",
 	divert => "to",
 );

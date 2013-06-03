@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.1.1.1 2013/06/03 05:06:38 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.2 2013/06/03 21:07:45 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -71,6 +71,7 @@ if ($mode eq "divert") {
 if ($local eq "server") {
 	$l = $s = Server->new(
 	    func		=> $func,
+	    %args,
 	    %{$args{server}},
 	    logfile		=> $logfile,
 	    listendomain	=> $domain,
@@ -80,7 +81,7 @@ if ($local eq "server") {
 }
 if ($mode eq "auto") {
 	$r = Remote->new(
-	    %{$args{relay}},
+	    %args,
 	    af			=> $af,
 	    logfile		=> "$remote.log",
 	    testfile		=> $test,
@@ -97,6 +98,7 @@ if ($mode eq "auto") {
 if ($local eq "client") {
 	$l = $c = Client->new(
 	    func		=> $func,
+	    %args,
 	    %{$args{client}},
 	    logfile		=> $logfile,
 	    connectdomain	=> $domain,
@@ -123,11 +125,11 @@ if ($mode eq "divert") {
 	open(my $pf, '|-', @cmd)
 	    or die "Open pipe to pf '@cmd' failed: $!";
 	if ($local eq "server") {
-		print $pf "pass in log $af proto tcp ".
+		print $pf "pass in log $af proto $args{protocol} ".
 		    "from $ARGV[1] to $ARGV[0] port $s->{listenport} ".
 		    "divert-to $s->{listenaddr} port $s->{listenport}\n";
 	} else {
-		print $pf "pass out log $af proto tcp ".
+		print $pf "pass out log $af proto $args{protocol} ".
 		    "from $c->{bindaddr} to $ARGV[1] port $ARGV[2] ".
 		    "divert-reply\n";
 	}

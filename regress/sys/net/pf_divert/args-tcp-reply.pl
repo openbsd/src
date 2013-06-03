@@ -7,5 +7,6 @@ use strict;
 use warnings;
 
 our %args = (
+	protocol => "tcp",
 	divert => "reply",
 );

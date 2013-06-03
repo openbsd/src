@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.1.1.1 2013/06/03 05:06:38 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.2 2013/06/03 21:07:45 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -33,6 +33,22 @@ sub write_read_stream {
 	print STDERR "<<< $in";
 }
 
+sub write_datagram {
+	my $self = shift;
+
+	my $out = ref($self). "\n";
+	print $out;
+	IO::Handle::flush(\*STDOUT);
+	print STDERR ">>> $out";
+}
+
+sub read_datagram {
+	my $self = shift;
+
+	my $in = <STDIN>;
+	print STDERR "<<< $in";
+}
+
 ########################################################################
 # Script funcs
 ########################################################################
@@ -49,12 +65,16 @@ sub check_inout {
 	my ($c, $s, %args) = @_;
 
 	if ($c && !$args{client}{nocheck}) {
-		$c->loggrep(qr/^>>> Client$/) or die "no client out";
-		$c->loggrep(qr/^<<< Server$/) or die "no client in";
+		$c->loggrep(qr/^>>> Client$/) or die "no client out"
+		    unless $args{client}{noout};
+		$c->loggrep(qr/^<<< Server$/) or die "no client in"
+		    unless $args{client}{noin};
 	}
 	if ($s && !$args{server}{nocheck}) {
-		$s->loggrep(qr/^>>> Server$/) or die "no server out";
-		$s->loggrep(qr/^<<< Client$/) or die "no server in";
+		$s->loggrep(qr/^>>> Server$/) or die "no server out"
+		    unless $args{server}{noout};
+		$s->loggrep(qr/^<<< Client$/) or die "no server in"
+		    unless $args{server}{noin};
 	}
 }
 
