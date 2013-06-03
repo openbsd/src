@@ -30,10 +30,10 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 bsd:
-	cd ${.CURDIR}/../../../../sys/arch/beagle/conf && config RAMDISK
-	cd ${.CURDIR}/../../../../sys/arch/beagle/compile/RAMDISK && \
-		${MAKE} clean && COPTS=-Os exec make bsd.umg 
-	cp ${.CURDIR}/../../../../sys/arch/beagle/compile/RAMDISK/bsd.umg bsd
+	objcopy -O binary ${.CURDIR}/../../ramdisk/obj/bsd.rd \
+		${.CURDIR}/bsd.rd.img
+	mkuboot -a arm -o linux -e 0x80300000 -l 0x80300000 \
+		${.CURDIR}/bsd.rd.img ${.CURDIR}/bsd
 
 do_files: bsd
 	cp ${.CURDIR}/bsd ${MOUNT_POINT}/bsd.umg
