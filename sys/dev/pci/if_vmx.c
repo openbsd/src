@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.2 2013/06/03 15:05:29 reyk Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.3 2013/06/03 21:08:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -163,7 +163,7 @@ void vmxnet3_reset(struct ifnet *);
 int vmxnet3_init(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, caddr_t);
 void vmxnet3_start(struct ifnet *);
-int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct mbuf *);
+int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct mbuf **);
 void vmxnet3_watchdog(struct ifnet *);
 void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
 int vmxnet3_media_change(struct ifnet *);
@@ -1047,7 +1047,7 @@ vmxnet3_start(struct ifnet *ifp)
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (vmxnet3_load_mbuf(sc, m)) {
+		if (vmxnet3_load_mbuf(sc, &m) != 0) {
 			m_freem(m);
 			ifp->if_oerrors++;
 			break;
@@ -1072,12 +1072,12 @@ vmxnet3_start(struct ifnet *ifp)
 }
 
 int
-vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf *m)
+vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf **m0)
 {
 	struct vmxnet3_txqueue *tq = &sc->sc_txq[0];
 	struct vmxnet3_txring *ring = &tq->cmd_ring;
 	struct vmxnet3_txdesc *txd, *sop;
-	struct mbuf *n;
+	struct mbuf *m = *m0, *n = NULL;
 	struct ip *ip;
 	bus_dmamap_t map = ring->dmap[ring->head];
 	int hlen, csum_off, error, nsegs, gen, i;
@@ -1124,7 +1124,7 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf *m)
 		n->m_pkthdr.ether_vtag = m->m_pkthdr.ether_vtag;
 		n->m_pkthdr.csum_flags = m->m_pkthdr.csum_flags;
 		m_freem(m);
-		m = n;
+		m = *m0 = n;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
 			goto copy_error;
 	}
