@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.15 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.16 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -56,16 +56,18 @@ do {									\
 } while (0)
 
 #ifdef _KERNEL
-void	 addupc_intr(struct proc *p, u_long pc);
-void	 addupc_task(struct proc *p, u_long pc, u_int ticks);
+void	 addupc_intr(struct proc *, u_long);
+void	 addupc_task(struct proc *, u_long, u_int);
 void	 tuagg_unlocked(struct process *, struct proc *);
 struct tusage;
-void	 calcru(struct tusage *, struct timeval *up, struct timeval *sp,
-	    struct timeval *ip);
-struct plimit *limcopy(struct plimit *lim);
+void	 calctsru(struct tusage *, struct timespec *, struct timespec *,
+	    struct timespec *);
+void	 calcru(struct tusage *, struct timeval *, struct timeval *,
+	    struct timeval *);
+struct plimit *limcopy(struct plimit *);
 void	limfree(struct plimit *);
 
-void	 ruadd(struct rusage *ru, struct rusage *ru2);
+void	 ruadd(struct rusage *, struct rusage *);
 
 void	virttimer_trampoline(void *);
 void	proftimer_trampoline(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.28 2013/04/19 21:44:08 tedu Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.29 2013/06/03 16:55:22 guenther Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -190,13 +190,13 @@ void
 sched_exit(struct proc *p)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
-	struct timeval tv;
+	struct timespec ts;
 	struct proc *idle;
 	int s;
 
-	microuptime(&tv);
-	timersub(&tv, &spc->spc_runtime, &tv);
-	timeradd(&p->p_rtime, &tv, &p->p_rtime);
+	nanouptime(&ts);
+	timespecsub(&ts, &spc->spc_runtime, &ts);
+	timespecadd(&p->p_rtime, &ts, &p->p_rtime);
 
 	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
 

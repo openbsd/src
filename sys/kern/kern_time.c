@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.78 2013/06/02 20:59:09 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.79 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -112,8 +112,6 @@ settime(struct timespec *ts)
 int
 clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 {
-	struct timeval tv;
-
 	switch (clock_id) {
 	case CLOCK_REALTIME:
 		nanotime(tp);
@@ -122,11 +120,9 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 		nanouptime(tp);
 		break;
 	case CLOCK_PROF:
-		microuptime(&tv);
-		timersub(&tv, &curcpu()->ci_schedstate.spc_runtime, &tv);
-		timeradd(&tv, &p->p_rtime, &tv);
-		tp->tv_sec = tv.tv_sec;
-		tp->tv_nsec = tv.tv_usec * 1000;
+		nanouptime(tp);
+		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
+		timespecadd(tp, &p->p_rtime, tp);
 		break;
 	default:
 		return (EINVAL);

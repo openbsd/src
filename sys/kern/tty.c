@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.97 2013/04/24 09:52:54 nicm Exp $	*/
+/*	$OpenBSD: tty.c,v 1.98 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2122,7 +2122,7 @@ ttyinfo(struct tty *tp)
 {
 	struct process *pr;
 	struct proc *pick;
-	struct timeval utime, stime;
+	struct timespec utime, stime;
 	int tmp;
 
 	if (ttycheckoutq(tp,0) == 0)
@@ -2152,20 +2152,20 @@ ttyinfo(struct tty *tp)
 		rss = pick->p_stat == SIDL || P_ZOMBIE(pick) ? 0 :
 		    vm_resident_count(pick->p_vmspace);
 
-		calcru(&pick->p_p->ps_tu, &utime, &stime, NULL);
+		calctsru(&pick->p_p->ps_tu, &utime, &stime, NULL);
 
 		/* Round up and print user time. */
-		utime.tv_usec += 5000;
-		if (utime.tv_usec >= 1000000) {
+		utime.tv_nsec += 5000000;
+		if (utime.tv_nsec >= 1000000000) {
 			utime.tv_sec += 1;
-			utime.tv_usec -= 1000000;
+			utime.tv_nsec -= 1000000000;
 		}
 
 		/* Round up and print system time. */
-		stime.tv_usec += 5000;
-		if (stime.tv_usec >= 1000000) {
+		stime.tv_nsec += 5000000;
+		if (stime.tv_nsec >= 1000000000) {
 			stime.tv_sec += 1;
-			stime.tv_usec -= 1000000;
+			stime.tv_nsec -= 1000000000;
 		}
 
 		ttyprintf(tp,
@@ -2174,8 +2174,8 @@ ttyinfo(struct tty *tp)
 		    pick->p_stat == SONPROC ? "running" :
 		    pick->p_stat == SRUN ? "runnable" :
 		    pick->p_wmesg ? pick->p_wmesg : "iowait",
-		    utime.tv_sec, utime.tv_usec / 10000,
-		    stime.tv_sec, stime.tv_usec / 10000, pctcpu / 100, rss);
+		    utime.tv_sec, utime.tv_nsec / 10000000,
+		    stime.tv_sec, stime.tv_nsec / 10000000, pctcpu / 100, rss);
 	}
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
 }

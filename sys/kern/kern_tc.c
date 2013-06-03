@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.19 2013/06/02 20:59:09 guenther Exp $
+ * $OpenBSD: kern_tc.c,v 1.20 2013/06/03 16:55:22 guenther Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -296,7 +296,7 @@ tc_setrealtimeclock(struct timespec *ts)
 	bintime_sub(&bt, &bt2);
 	bintime_add(&bt2, &boottimebin);
 	boottimebin = bt;
-	bintime2timeval(&bt, &boottime);
+	bintime2timespec(&bt, &boottime);
 	add_timer_randomness(ts->tv_sec);
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */

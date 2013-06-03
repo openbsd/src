@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.32 2013/06/02 20:59:09 guenther Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.33 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -346,7 +346,7 @@ mi_switch(void)
 	struct process *pr = p->p_p;
 	struct rlimit *rlim;
 	rlim_t secs;
-	struct timeval tv;
+	struct timespec ts;
 #ifdef MULTIPROCESSOR
 	int hold_count;
 	int sched_count;
@@ -372,18 +372,18 @@ mi_switch(void)
 	 * Compute the amount of time during which the current
 	 * process was running, and add that to its total so far.
 	 */
-	microuptime(&tv);
-	if (timercmp(&tv, &spc->spc_runtime, <)) {
+	nanouptime(&ts);
+	if (timespeccmp(&ts, &spc->spc_runtime, <)) {
 #if 0
 		printf("uptime is not monotonic! "
-		    "tv=%lld.%06lu, runtime=%lld.%06lu\n",
-		    (long long)tv.tv_sec, tv.tv_usec,
+		    "ts=%lld.%09lu, runtime=%lld.%09lu\n",
+		    (long long)tv.tv_sec, tv.tv_nsec,
 		    (long long)spc->spc_runtime.tv_sec,
-		    spc->spc_runtime.tv_usec);
+		    spc->spc_runtime.tv_nsec);
 #endif
 	} else {
-		timersub(&tv, &spc->spc_runtime, &tv);
-		timeradd(&p->p_rtime, &tv, &p->p_rtime);
+		timespecsub(&ts, &spc->spc_runtime, &ts);
+		timespecadd(&p->p_rtime, &ts, &p->p_rtime);
 	}
 
 	/* add the time counts for this thread to the process's total */
@@ -443,7 +443,7 @@ mi_switch(void)
 	 */
 	KASSERT(p->p_cpu == curcpu());
 
-	microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
+	nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
 
 #ifdef MULTIPROCESSOR
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.41 2013/04/01 01:07:34 guenther Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.42 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -339,7 +339,7 @@ sys_getrlimit(struct proc *p, void *v, register_t *retval)
 void
 tuagg_sub(struct tusage *tup, struct proc *p)
 {
-	timeradd(&tup->tu_runtime, &p->p_rtime, &tup->tu_runtime);
+	timespecadd(&tup->tu_runtime, &p->p_rtime, &tup->tu_runtime);
 	tup->tu_uticks += p->p_uticks;
 	tup->tu_sticks += p->p_sticks;
 	tup->tu_iticks += p->p_iticks;
@@ -354,7 +354,7 @@ tuagg_unlocked(struct process *pr, struct proc *p)
 {
 	tuagg_sub(&pr->ps_tu, p);
 	tuagg_sub(&p->p_tu, p);
-	timerclear(&p->p_rtime);
+	timespecclear(&p->p_rtime);
 	p->p_uticks = 0;
 	p->p_sticks = 0;
 	p->p_iticks = 0;
@@ -375,8 +375,8 @@ tuagg(struct process *pr, struct proc *p)
  * into user, system, and interrupt time usage.
  */
 void
-calcru(struct tusage *tup, struct timeval *up, struct timeval *sp,
-    struct timeval *ip)
+calctsru(struct tusage *tup, struct timespec *up, struct timespec *sp,
+    struct timespec *ip)
 {
 	u_quad_t st, ut, it;
 	int freq;
@@ -386,27 +386,41 @@ calcru(struct tusage *tup, struct timeval *up, struct timeval *sp,
 	it = tup->tu_iticks;
 
 	if (st + ut + it == 0) {
-		timerclear(up);
-		timerclear(sp);
+		timespecclear(up);
+		timespecclear(sp);
 		if (ip != NULL)
-			timerclear(ip);
+			timespecclear(ip);
 		return;
 	}
 
 	freq = stathz ? stathz : hz;
 
-	st = st * 1000000 / freq;
-	sp->tv_sec = st / 1000000;
-	sp->tv_usec = st % 1000000;
-	ut = ut * 1000000 / freq;
-	up->tv_sec = ut / 1000000;
-	up->tv_usec = ut % 1000000;
+	st = st * 1000000000 / freq;
+	sp->tv_sec = st / 1000000000;
+	sp->tv_nsec = st % 1000000000;
+	ut = ut * 1000000000 / freq;
+	up->tv_sec = ut / 1000000000;
+	up->tv_nsec = ut % 1000000000;
 	if (ip != NULL) {
-		it = it * 1000000 / freq;
-		ip->tv_sec = it / 1000000;
-		ip->tv_usec = it % 1000000;
+		it = it * 1000000000 / freq;
+		ip->tv_sec = it / 1000000000;
+		ip->tv_nsec = it % 1000000000;
 	}
 }
+
+void
+calcru(struct tusage *tup, struct timeval *up, struct timeval *sp,
+    struct timeval *ip)
+{
+	struct timespec u, s, i;
+
+	calctsru(tup, &u, &s, ip != NULL ? &i : NULL);
+	TIMESPEC_TO_TIMEVAL(up, &u);
+	TIMESPEC_TO_TIMEVAL(sp, &s);
+	if (ip != NULL)
+		TIMESPEC_TO_TIMEVAL(ip, &i);
+}
+
 
 /* ARGSUSED */
 int

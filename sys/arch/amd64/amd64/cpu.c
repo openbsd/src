@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.55 2013/05/30 15:58:06 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.56 2013/06/03 16:55:21 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -621,7 +621,7 @@ cpu_hatch(void *v)
 	lcr8(0);
 	enable_intr();
 
-	microuptime(&ci->ci_schedstate.spc_runtime);
+	nanouptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 
 	SCHED_LOCK(s);

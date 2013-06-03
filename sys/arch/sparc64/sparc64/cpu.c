@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.59 2012/12/04 21:00:21 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.60 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -736,7 +736,7 @@ cpu_hatch(void)
 	sparc_membar(Sync);
 
 	s = splhigh();
-	microuptime(&ci->ci_schedstate.spc_runtime);
+	nanouptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 
 	cpu_start_clock();

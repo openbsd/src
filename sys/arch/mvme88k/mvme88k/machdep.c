@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.253 2013/05/17 22:51:59 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.254 2013/06/03 16:55:22 guenther Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -620,7 +620,7 @@ secondary_main()
 	ncpus++;
 
 	sched_init_cpu(ci);
-	microuptime(&ci->ci_schedstate.spc_runtime);
+	nanouptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
 	ci->ci_randseed = random();
 

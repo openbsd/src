@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.70 2013/03/07 03:19:38 brad Exp $ */
+/*	$OpenBSD: cpu.c,v 1.71 2013/06/03 16:55:22 guenther Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -804,7 +804,7 @@ cpu_hatch(void)
 	curcpu()->ci_cpl = 0;
 
 	s = splhigh();
-	microuptime(&curcpu()->ci_schedstate.spc_runtime);
+	nanouptime(&curcpu()->ci_schedstate.spc_runtime);
 	splx(s);
 
 	intrstate = ppc_intr_disable();

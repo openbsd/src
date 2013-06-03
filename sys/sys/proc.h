@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.165 2013/02/11 11:11:42 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.166 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -125,7 +125,7 @@ extern int nemuls;			/* Number of emuls */
  * accumulated into these.
  */
 struct tusage {
-	struct	timeval tu_runtime;	/* Realtime. */
+	struct	timespec tu_runtime;	/* Realtime. */
 	uint64_t	tu_uticks;	/* Statclock hits in user mode. */
 	uint64_t	tu_sticks;	/* Statclock hits in system mode. */
 	uint64_t	tu_iticks;	/* Statclock hits processing intr. */
@@ -207,7 +207,7 @@ struct process {
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_refcnt
 
-	struct	timeval ps_start;	/* starting time. */
+	struct	timespec ps_start;	/* starting time. */
 	struct	timeout ps_realit_to;	/* real-time itimer trampoline. */
 	struct	timeout ps_virt_to;	/* virtual itimer trampoline. */
 	struct	timeout ps_prof_to;	/* prof itimer trampoline. */
@@ -293,7 +293,7 @@ struct proc {
 
 	struct	rusage p_ru;		/* Statistics */
 	struct	tusage p_tu;		/* accumulated times. */
-	struct	timeval p_rtime;	/* Real time. */
+	struct	timespec p_rtime;	/* Real time. */
 	u_int	p_uticks;		/* Statclock hits in user mode. */
 	u_int	p_sticks;		/* Statclock hits in system mode. */
 	u_int	p_iticks;		/* Statclock hits processing intr. */

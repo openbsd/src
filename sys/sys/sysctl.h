@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.134 2013/04/15 16:47:14 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.135 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -498,14 +498,14 @@ do {									\
 	(kp)->p_estcpu = (p)->p_estcpu;					\
 	if (isthread) {							\
 		(kp)->p_rtime_sec = (p)->p_tu.tu_runtime.tv_sec;	\
-		(kp)->p_rtime_usec = (p)->p_tu.tu_runtime.tv_usec;	\
+		(kp)->p_rtime_usec = (p)->p_tu.tu_runtime.tv_nsec/1000;	\
 		(kp)->p_tid = (p)->p_pid + THREAD_PID_OFFSET;		\
 		(kp)->p_uticks = (p)->p_tu.tu_uticks;			\
 		(kp)->p_sticks = (p)->p_tu.tu_sticks;			\
 		(kp)->p_iticks = (p)->p_tu.tu_iticks;			\
 	} else {							\
 		(kp)->p_rtime_sec = (pr)->ps_tu.tu_runtime.tv_sec;	\
-		(kp)->p_rtime_usec = (pr)->ps_tu.tu_runtime.tv_usec;	\
+		(kp)->p_rtime_usec = (pr)->ps_tu.tu_runtime.tv_nsec/1000; \
 		(kp)->p_tid = -1;					\
 		(kp)->p_uticks = (pr)->ps_tu.tu_uticks;			\
 		(kp)->p_sticks = (pr)->ps_tu.tu_sticks;			\
@@ -575,7 +575,7 @@ do {									\
 		(kp)->p_uvalid = 1;					\
 									\
 		(kp)->p_ustart_sec = (pr)->ps_start.tv_sec;		\
-		(kp)->p_ustart_usec = (pr)->ps_start.tv_usec;		\
+		(kp)->p_ustart_usec = (pr)->ps_start.tv_nsec/1000;	\
 									\
 		(kp)->p_uru_maxrss = (p)->p_ru.ru_maxrss;		\
 		(kp)->p_uru_ixrss = (p)->p_ru.ru_ixrss;			\

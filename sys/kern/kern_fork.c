@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.147 2013/06/01 16:04:46 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.148 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -492,7 +492,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * For new processes, set accounting bits
 	 */
 	if ((flags & FORK_THREAD) == 0) {
-		getmicrotime(&pr->ps_start);
+		getnanotime(&pr->ps_start);
 		pr->ps_acflag = AFORK;
 	}
 

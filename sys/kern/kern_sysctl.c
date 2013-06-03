@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.234 2013/04/06 03:44:34 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.235 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -356,9 +356,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 	case KERN_CLOCKRATE:
 		return (sysctl_clockrate(oldp, oldlenp, newp));
-	case KERN_BOOTTIME:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &boottime,
-		    sizeof(struct timeval)));
+	case KERN_BOOTTIME: {
+		struct timeval bt;
+		TIMESPEC_TO_TIMEVAL(&bt, &boottime);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
+	  }
 	case KERN_VNODE:
 		return (sysctl_vnode(oldp, oldlenp, p));
 #ifndef SMALL_KERNEL
@@ -1543,7 +1545,7 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread,
 	struct process *pr = p->p_p;
 	struct session *s = pr->ps_session;
 	struct tty *tp;
-	struct timeval ut, st;
+	struct timespec ut, st;
 
 	FILL_KPROC(ki, strlcpy, p, pr, p->p_cred, p->p_ucred, pr->ps_pgrp,
 	    p, pr, s, p->p_vmspace, pr->ps_limit, p->p_sigacts, isthread,
@@ -1571,11 +1573,11 @@ fill_kproc(struct proc *p, struct kinfo_proc *ki, int isthread,
 		if (p->p_stat != SIDL)
 			ki->p_vm_rssize = vm_resident_count(p->p_vmspace);
 
-		calcru(&p->p_tu, &ut, &st, NULL);
+		calctsru(&p->p_tu, &ut, &st, NULL);
 		ki->p_uutime_sec = ut.tv_sec;
-		ki->p_uutime_usec = ut.tv_usec;
+		ki->p_uutime_usec = ut.tv_nsec/1000;
 		ki->p_ustime_sec = st.tv_sec;
-		ki->p_ustime_usec = st.tv_usec;
+		ki->p_ustime_usec = st.tv_nsec/1000;
 
 #ifdef MULTIPROCESSOR
 		if (p->p_cpu != NULL)

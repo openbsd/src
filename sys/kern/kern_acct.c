@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.26 2012/07/08 17:14:39 guenther Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.27 2013/06/03 16:55:22 guenther Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -161,7 +161,7 @@ acct_process(struct proc *p)
 	struct acct acct;
 	struct process *pr = p->p_p;
 	struct rusage *r;
-	struct timeval ut, st, tmp;
+	struct timespec ut, st, tmp;
 	int t;
 	struct vnode *vp;
 	int error;
@@ -179,20 +179,20 @@ acct_process(struct proc *p)
 	bcopy(p->p_comm, acct.ac_comm, sizeof acct.ac_comm);
 
 	/* (2) The amount of user and system time that was used */
-	calcru(&pr->ps_tu, &ut, &st, NULL);
-	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_usec);
-	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_usec);
+	calctsru(&pr->ps_tu, &ut, &st, NULL);
+	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_nsec);
+	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_nsec);
 
 	/* (3) The elapsed time the command ran (and its starting time) */
 	acct.ac_btime = pr->ps_start.tv_sec;
-	getmicrotime(&tmp);
-	timersub(&tmp, &pr->ps_start, &tmp);
-	acct.ac_etime = encode_comp_t(tmp.tv_sec, tmp.tv_usec);
+	getnanotime(&tmp);
+	timespecsub(&tmp, &pr->ps_start, &tmp);
+	acct.ac_etime = encode_comp_t(tmp.tv_sec, tmp.tv_nsec);
 
 	/* (4) The average amount of memory used */
 	r = &p->p_ru;
-	timeradd(&ut, &st, &tmp);
-	t = tmp.tv_sec * hz + tmp.tv_usec / tick;
+	timespecadd(&ut, &st, &tmp);
+	t = tmp.tv_sec * hz + tmp.tv_nsec / (1000 * tick);
 	if (t)
 		acct.ac_mem = (r->ru_ixrss + r->ru_idrss + r->ru_isrss) / t;
 	else
@@ -236,14 +236,14 @@ acct_process(struct proc *p)
 #define	MAXFRACT	((1 << MANTSIZE) - 1)	/* Maximum fractional value. */
 
 comp_t
-encode_comp_t(u_long s, u_long us)
+encode_comp_t(u_long s, u_long ns)
 {
 	int exp, rnd;
 
 	exp = 0;
 	rnd = 0;
 	s *= AHZ;
-	s += us / (1000000 / AHZ);	/* Maximize precision. */
+	s += ns / (1000000000 / AHZ);	/* Maximize precision. */
 
 	while (s > MAXFRACT) {
 	rnd = s & (1 << (EXPSIZE - 1));	/* Round up? */

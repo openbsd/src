@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.92 2012/03/21 16:33:21 kettenis Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.93 2013/06/03 16:55:22 guenther Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -826,7 +826,7 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		 * for debugging purposes.
 		 */
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_usec);
+		*tl = txdr_unsigned(boottime.tv_nsec/1000);
 	} else {
 		fp = nfsm_build(&info.nmi_mb, NFSX_V2FATTR);
 		nfsm_srvfattr(nfsd, &va, fp);
@@ -2547,7 +2547,7 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (!error) {
 		tl = nfsm_build(&info.nmi_mb, NFSX_V3WRITEVERF);
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_usec);
+		*tl = txdr_unsigned(boottime.tv_nsec/1000);
 	} else
 		error = 0;
 nfsmout:

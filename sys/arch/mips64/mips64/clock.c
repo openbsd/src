@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.38 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.39 2013/06/03 16:55:22 guenther Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -177,7 +177,7 @@ cp0_startclock(struct cpu_info *ci)
 #ifdef MULTIPROCESSOR
 	if (!CPU_IS_PRIMARY(ci)) {
 		s = splhigh();
-		microuptime(&ci->ci_schedstate.spc_runtime);
+		nanouptime(&ci->ci_schedstate.spc_runtime);
 		splx(s);
 
 		/* try to avoid getting clock interrupts early */
