@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.3,v 1.3 2013/06/03 19:13:21 tedu Exp $
+.\" $OpenBSD: fuse.3,v 1.4 2013/06/03 19:46:05 tedu Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -69,38 +69,39 @@
 .Sh DESCRIPTION
 The
 .Nm
-library provides routine to implement a filesystem in userspace.
+library provides routines to implement a filesystem in userspace.
 .Ss INTRODUCTION
-There is two way of Implementing a Fuse filesystem. You can implement a fs only
-by calling
+There are two ways of Implementing a Fuse filesystem.
+You can implement a FS by calling only
 .Fn fuse_main
-and giving this function the
+and passing this function the
 .Em ops
-argument containing all the callbacks of your filesystems. Or you can use all
-others functions.
+argument containing all the callbacks of the filesystem.
+Or you can use all others functions.
 .Ss FUNCTIONS
 .Fn fuse_new
-Fuse new return a
+returns a
 .Fa struct fuse
-That will be needed by
-.Fn fuse_loop
+that will be needed by
+.Fn fuse_loop .
 .Pp
 .Fn fuse_parse_cmdline
-This function will parse the
+parses the
 .Fa struct fuse_args
 given by the user and will set
 .Fa mp
 with a char * containing the mountpoint directory.
 .Pp
 .Fn fuse_mount
-Will look for an empty
+will look for an empty
 .Xr fuse 4
-device to create a connection. If this function find an available device it will
-open it to use it for fuse communication with the fuse VFS driver and will mount
-the filesystem. This function will return a
+device to create a connection.
+If this function finds an available device it will open it for fuse
+communication with the fuse VFS driver and will mount the filesystem.
+This function will return a
 .Fa struct fuse_chan
 that will be needed by
-.Fn fuse_new
+.Fn fuse_new .
 .Pp
 .Fn fuse_remove_signal_handlers
 I do not know yet what this function is supposed to do...
@@ -109,28 +110,30 @@ I do not know yet what this function is supposed to do...
 I do not know yet what this function is supposed to do...
 .Pp
 .Fn fuse_get_session
-returns a pointer on the structure
+returns a pointer to the structure
 .Fa fuse_session
 contained in a
-.Fa struct fuse
+.Fa struct fuse .
 .Pp
 .Fn fuse_is_lib_option
-check if the string
+checks if the string
 .Fa opt
-is an option handled by the libfuse or by the fuse client. It returns 1 if it is
-handled by the lib and 0 in the other case.
+is an option handled by the libfuse or by the fuse client.
+It returns 1 if it is handled by the lib and 0 otherwise.
 .Pp
 .Fn fuse_loop_mt
-Do not use! It is not supported yet (and we will probably never need it...)
+Do not use!
+It is not supported yet (and we will probably never need it...)
 .Pp
 .Fn fuse_loop
-This is the mainloop of a fuse program. This function will look for fuse
-request from kernel and will respond to it using the
+is the main loop of a fuse program.
+This function will look for fuse requests from kernel and will respond to them
+using the
 .Fa struct fuse_operation
 present in the structure
-.Fa fuse.
+.Fa fuse .
 It will return only if something goes wrong
-or if the kernel send a
+or if the kernel sends a
 .Fa FUSE_DESTROY
 opcode to libfuse.
 .Pp
@@ -140,13 +143,14 @@ returns the filedescriptor used by the given
 structure.
 .Pp
 .Fn fuse_unmount
-unmount the
+unmounts the
 .Fa dir
 mountpoint.
 .Pp
 .Fn fuse_daemonize
-daemonise the fuse library. It will permit to background the fuse program that
-will continue to handles kernel filesystems opcodes.
+daemonises the fuse library.
+It will permit to background the fuse program that will continue to handle
+kernel filesystem opcodes.
 .Pp
 .Fn fuse_destroy
 I do not know yet what this function is supposed to do...
@@ -239,4 +243,4 @@ The
 library first appeared in
 .Ox 5.4 .
 .Sh BUGS
-This man page is woefully incomplete
+This man page is woefully incomplete.
