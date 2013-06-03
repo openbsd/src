@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.4,v 1.4 2013/06/03 19:16:44 tedu Exp $
+.\" $OpenBSD: fuse.4,v 1.5 2013/06/03 19:47:05 tedu Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -26,15 +26,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-device provides a FUSE interface for implementing FileSystem in Userland.
-Each fuse mount will take a
+device provides a FUSE interface for implementing a FileSystem in Userland.
+Each fuse mount will use a
 .Nm
-device so there are
+device so up to
 .Fa count
 .Nm
-mountpoints possible.
+mountpoints are possible.
 .Pp
-This device does not supports partial reads and writes.
+This device does not support partial reads and writes.
 .Sh FILES
 .Bl -tag -width /dev/fuse* -compact
 .It Pa /dev/fuse*
