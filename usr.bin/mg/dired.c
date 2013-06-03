@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.62 2013/06/02 10:09:21 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.63 2013/06/03 05:10:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -45,6 +45,7 @@ static int	 d_backpage(int, int);
 static int	 d_forwline(int, int);
 static int	 d_backline(int, int);
 static int	 d_killbuffer_cmd(int, int);
+static int	 d_refreshbuffer(int, int);
 static void	 reaper(int);
 static struct buffer	*refreshbuffer(struct buffer *);
 
@@ -103,7 +104,8 @@ static PF diredc[] = {
 	d_copy,			/* c */
 	d_del,			/* d */
 	d_findfile,		/* e */
-	d_findfile		/* f */
+	d_findfile,		/* f */
+	d_refreshbuffer		/* g */
 };
 
 static PF diredn[] = {
@@ -166,7 +168,7 @@ static struct KEYMAPE (7 + NDIRED_XMAPS + IMAPEXT) diredmap = {
 			CCHR('Z'), '+', diredcz, (KEYMAP *) & metamap
 		},
 		{
-			'c', 'f', diredc, NULL
+			'c', 'g', diredc, NULL
 		},
 		{
 			'n', 'x', diredn, NULL
@@ -649,6 +651,17 @@ int
 d_killbuffer_cmd(int f, int n)
 {
 	return(killbuffer_cmd(FFRAND, 0));
+}
+
+int
+d_refreshbuffer(int f, int n)
+{
+	struct buffer *bp;
+
+	if ((bp = refreshbuffer(curbp)) == NULL)
+		return (FALSE);
+
+	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
 struct buffer *

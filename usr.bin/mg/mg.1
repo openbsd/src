@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.83 2013/06/02 10:09:21 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.84 2013/06/03 05:10:59 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: June 3 2013 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -941,6 +941,8 @@ dired-do-copy
 dired-flag-file-deletion
 .It e, f and C-m
 dired-find-file
+.It g
+dired-revert
 .It n
 dired-next-line
 .It o
@@ -989,6 +991,8 @@ This function works just like dired, except that it puts the
 dired buffer in another window.
 .It dired-previous-line
 Move the cursor to the previous line.
+.It dired-revert
+Refresh the dired buffer.
 .It dired-scroll-down
 Scroll down the dired buffer.
 .It dired-scroll-up
