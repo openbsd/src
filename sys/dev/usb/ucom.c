@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.58 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: ucom.c,v 1.59 2013/06/03 16:10:56 mpi Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -127,8 +127,9 @@ void	ucom_hwiflow(struct ucom_softc *);
 int	ucomparam(struct tty *, struct termios *);
 void	ucomstart(struct tty *);
 void	ucom_shutdown(struct ucom_softc *);
-int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
-			      int, struct proc *);
+int	ucom_do_open(dev_t, int, int, struct proc *);
+int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t, int, struct proc *);
+int	ucom_do_close(struct ucom_softc *, int, int , struct proc *);
 void	ucom_dtr(struct ucom_softc *, int);
 void	ucom_rts(struct ucom_softc *, int);
 void	ucom_break(struct ucom_softc *, int);
@@ -160,7 +161,6 @@ const struct cfattach ucom_ca = {
 void
 ucom_lock(struct ucom_softc *sc)
 {
-	sc->sc_refcnt++;
 	rw_enter_write(&sc->sc_lock);
 }
 
@@ -168,8 +168,6 @@ void
 ucom_unlock(struct ucom_softc *sc)
 {
 	rw_exit_write(&sc->sc_lock);
-	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
 }
 
 int
@@ -295,11 +293,7 @@ int
 ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = UCOMUNIT(dev);
-	usbd_status err;
 	struct ucom_softc *sc;
-	struct tty *tp;
-	struct termios t;
-	int s;
 	int error;
 
 	if (unit >= ucom_cd.cd_ndevs)
@@ -313,6 +307,23 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
 		return (ENXIO);
+
+	sc->sc_refcnt++;
+	error = ucom_do_open(dev, flag, mode, p);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(&sc->sc_dev);
+
+	return (error);
+}
+
+int
+ucom_do_open(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	usbd_status err;
+	struct tty *tp;
+	struct termios t;
+	int error, s;
 
 	/* open the pipes if this is the first open */
 	ucom_lock(sc);
@@ -529,6 +540,22 @@ int
 ucomclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	int error;
+
+	if (sc == NULL || sc->sc_dying)
+		return (EIO);
+
+	sc->sc_refcnt++;
+	error = ucom_do_close(sc, flag, mode, p);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(&sc->sc_dev);
+
+	return (error);
+}
+
+int
+ucom_do_close(struct ucom_softc *sc, int flag, int mode, struct proc *p)
+{
 	struct tty *tp = sc->sc_tty;
 	int s;
 
@@ -561,10 +588,11 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	if (sc->sc_dying)
+	if (sc == NULL || sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
+	tp = sc->sc_tty;
 	error = (*LINESW(tp, l_read))(tp, uio, flag);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(&sc->sc_dev);
@@ -575,13 +603,14 @@ int
 ucomwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct tty *tp;
 	int error;
 
-	if (sc->sc_dying)
+	if (sc == NULL || sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
+	tp = sc->sc_tty;
 	error = (*LINESW(tp, l_write))(tp, uio, flag);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(&sc->sc_dev);
@@ -592,9 +621,11 @@ struct tty *
 ucomtty(dev_t dev)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
 
-	return (tp);
+	if (sc == NULL || sc->sc_dying)
+		return (NULL);
+
+	return (sc->sc_tty);
 }
 
 int
@@ -602,6 +633,9 @@ ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
+
+	if (sc == NULL || sc->sc_dying)
+		return (EIO);
 
 	sc->sc_refcnt++;
 	error = ucom_do_ioctl(sc, cmd, data, flag, p);
@@ -617,9 +651,6 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
-
-	if (sc->sc_dying)
-		return (EIO);
 
 	DPRINTF(("ucomioctl: cmd=0x%08lx\n", cmd));
 
@@ -817,7 +848,7 @@ ucomparam(struct tty *tp, struct termios *t)
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
 	int error;
 
-	if (sc->sc_dying)
+	if (sc == NULL || sc->sc_dying)
 		return (EIO);
 
 	/* Check requested parameters. */
@@ -914,7 +945,7 @@ ucomstart(struct tty *tp)
 	u_char *data;
 	int cnt;
 
-	if (sc->sc_dying)
+	if (sc == NULL || sc->sc_dying)
 		return;
 
 	s = spltty();
