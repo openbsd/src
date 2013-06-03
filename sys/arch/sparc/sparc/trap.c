@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.62 2012/12/31 06:46:14 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.63 2013/06/03 18:46:02 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -968,8 +968,8 @@ syscall(code, tf, pc)
 		panic("syscall trapframe");
 #endif
 	p->p_md.md_tf = tf;
-	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
-	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
+	new = code & SYSCALL_G2RFLAG;
+	code &= ~SYSCALL_G2RFLAG;
 
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
@@ -1030,8 +1030,8 @@ syscall(code, tf, pc)
 		tf->tf_out[0] = rval[0];
 		tf->tf_out[1] = rval[1];
 		if (new) {
-			/* jmp %g2 (or %g7, deprecated) on success */
-			i = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+			/* jmp %g2 on success */
+			i = tf->tf_global[2];
 			if (i & 3) {
 				error = EINVAL;
 				goto bad;
