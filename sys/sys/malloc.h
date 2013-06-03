@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.106 2013/06/03 15:54:48 tedu Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.107 2013/06/03 15:56:01 tedu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -120,7 +120,7 @@
 #define	M_TTYS		62	/* allocated tty structures */
 #define	M_EXEC		63	/* argument lists & other mem used by exec */
 #define	M_MISCFSMNT	64	/* miscfs mount structures */
-#define M_FUSEFS	65	/* fusefs mount structures */
+#define	M_FUSEFS	65	/* fusefs mount structures */
 /* 66-73 - free */
 #define	M_PFKEY		74	/* pfkey data */
 #define	M_TDB		75	/* Transforms database */
