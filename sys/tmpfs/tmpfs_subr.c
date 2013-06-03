@@ -1,3 +1,4 @@
+/*	$OpenBSD: tmpfs_subr.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*

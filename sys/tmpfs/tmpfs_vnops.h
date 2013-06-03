@@ -1,3 +1,4 @@
+/*	$OpenBSD: tmpfs_vnops.h,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
 /*	$NetBSD: tmpfs_vnops.h,v 1.13 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*

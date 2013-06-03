@@ -1,3 +1,4 @@
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*

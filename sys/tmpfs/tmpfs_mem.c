@@ -1,3 +1,4 @@
+/*	$OpenBSD: tmpfs_mem.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
 /*	$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $	*/
 
 /*
