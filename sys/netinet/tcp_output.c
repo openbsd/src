@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.97 2012/09/20 10:25:03 blambert Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.98 2013/06/03 16:57:06 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -67,6 +67,8 @@
  * official policies, either expressed or implied, of the US Naval
  * Research Laboratory (NRL).
  */
+
+#include "pf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1074,6 +1076,10 @@ send:
 
 	/* force routing domain */
 	m->m_pkthdr.rdomain = tp->t_inpcb->inp_rtableid;
+
+#if NPF > 0
+	m->m_pkthdr.pf.inp = tp->t_inpcb;
+#endif
 
 	switch (tp->pf) {
 	case 0:	/*default to PF_INET*/

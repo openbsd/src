@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.163 2013/04/02 03:34:31 lteo Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.164 2013/06/03 16:57:06 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -79,10 +79,12 @@ struct m_hdr {
 
 /* pf stuff */
 struct pf_state_key;
+struct inpcb;
 
 struct pkthdr_pf {
 	void		*hdr;		/* saved hdr pos in mbuf, for ECN */
 	struct pf_state_key *statekey;	/* pf stackside statekey */
+	struct inpcb	*inp;		/* connected pcb for outgoing packet */
 	u_int32_t	 qid;		/* queue id */
 	u_int16_t	 tag;		/* tag id */
 	u_int8_t	 flags;
