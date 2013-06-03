@@ -321,7 +321,7 @@ distclean-hdr:
 	-rm -f options.h
 cvsbug: $(top_builddir)/config.status cvsbug.in
 	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= CONFIG_LINKS= $(SHELL) ./config.status
-install-binPROGRAMS: $(bin_PROGRAMS)
+install-binPROGRAMS:
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(bindir)
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
@@ -508,7 +508,7 @@ install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
 
-install-am: all-am
+install-am:
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
 installcheck: installcheck-am
