@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2012/04/06 15:10:40 jsing Exp $ */
+/*	$OpenBSD: conf.c,v 1.17 2013/06/03 15:54:47 tedu Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -119,6 +119,7 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "hotplug.h"
+#include "fuse.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -212,6 +213,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(1,diskmap),	/* 82: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 83: pppx */
 	cdev_hotplug_init(NHOTPLUG,hotplug),	/* 84: devices hot plugging */
+	cdev_fuse_init(NFUSE,fuse),	/* 85: fuse */
 };
 int nchrdev = nitems(cdevsw);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.66 2012/12/08 20:38:10 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.67 2013/06/03 15:54:47 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -117,6 +117,7 @@ cdev_decl(pci);
 #include "hotplug.h"
 #include "vscsi.h"
 #include "pppx.h"
+#include "fuse.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -289,7 +290,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 130: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 131: pppx */
 	cdev_gen_init(NVLDCP,vldcp),	/* 132: vldcp */
-	cdev_vdsp_init(NVDSP,vdsp)	/* 133: vdsp */
+	cdev_vdsp_init(NVDSP,vdsp),	/* 133: vdsp */
+	cdev_fuse_init(NFUSE,fuse),	/* 134: fuse */
 };
 int	nchrdev = nitems(cdevsw);
 

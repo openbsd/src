@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.109 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: mount.h,v 1.110 2013/06/03 15:54:48 tedu Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -258,6 +258,15 @@ struct procfs_args {
 #define PROCFS_ARGSVERSION      1
 #define PROCFSMNT_LINUXCOMPAT   0x01
 
+/*
+ * Arguments to mount fusefs filesystems
+ */
+struct fusefs_args {
+	char *name;
+	char *url;
+	dev_t dev;
+	int flags;
+};
 
 /*
  * file system statistics
@@ -360,6 +369,7 @@ struct statfs53 {
 #define	MOUNT_NCPFS	"ncpfs"		/* NetWare Network File System */
 #define	MOUNT_NTFS	"ntfs"		/* NTFS */
 #define	MOUNT_UDF	"udf"		/* UDF */
+#define MOUNT_FUSEFS	"fuse"		/* FUSE */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an

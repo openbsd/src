@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.70 2013/03/15 09:10:52 ratchov Exp $	*/
+/*	$OpenBSD: conf.c,v 1.71 2013/06/03 15:54:47 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -130,6 +130,7 @@ cdev_decl(pci);
 #include "hotplug.h"
 #include "vscsi.h"
 #include "pppx.h"
+#include "fuse.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -204,6 +205,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pppx_init(NPPPX,pppx),	/* 64: pppx */
 	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_usbdev_init(NUSCANNER,uscanner),	/* 66: USB scanners */
+	cdev_fuse_init(NFUSE,fuse),	/* 67: fuse */
 };
 int	nchrdev = nitems(cdevsw);
 

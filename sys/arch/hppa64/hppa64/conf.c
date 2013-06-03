@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2012/08/23 06:12:49 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2013/06/03 15:54:47 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -120,6 +120,7 @@ cdev_decl(pci);
 #include "uscanner.h"
 
 #include "bthub.h"
+#include "fuse.h"
 
 struct cdevsw   cdevsw[] =
 {
@@ -186,6 +187,7 @@ struct cdevsw   cdevsw[] =
 	cdev_bthub_init(NBTHUB,bthub),	/* 55: bthub */
 	cdev_disk_init(1,diskmap),	/* 56: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 57: pppx */
+	cdev_fuse_init(NFUSE,fuse),	/* 58: fuse */
 };
 int nchrdev = nitems(cdevsw);
 

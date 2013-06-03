@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.546 2013/05/29 22:23:01 tedu Exp $
+#	$OpenBSD: files,v 1.547 2013/06/03 15:54:47 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -544,6 +544,14 @@ pseudo-device systrace
 
 pseudo-device ksyms
 file	dev/ksyms.c			ksyms needs-flag
+
+pseudo-device fuse
+file	miscfs/fuse/fuse_device.c	fuse	needs-flag
+file	miscfs/fuse/fuse_file.c		fuse
+file	miscfs/fuse/fuse_lookup.c	fuse
+file	miscfs/fuse/fuse_vfsops.c	fuse
+file	miscfs/fuse/fuse_vnops.c	fuse
+file	miscfs/fuse/fusebuf.c		fuse
 
 pseudo-device pf: ifnet
 file	net/pf.c			pf	needs-flag
