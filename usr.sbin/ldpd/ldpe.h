@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.21 2013/06/01 19:28:55 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.22 2013/06/03 16:53:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -97,9 +97,9 @@ struct ibuf	*send_notification(u_int32_t, u_int32_t, u_int32_t);
 int	 recv_notification(struct nbr *, char *, u_int16_t);
 
 /* address.c */
-void	 send_address(struct nbr *, struct iface *);
+void	 send_address(struct nbr *, struct if_addr *);
 int	 recv_address(struct nbr *, char *, u_int16_t);
-void	 send_address_withdraw(struct nbr *, struct iface *);
+void	 send_address_withdraw(struct nbr *, struct if_addr *);
 
 /* labelmapping.c */
 #define PREFIX_SIZE(x)	(((x) + 7) / 8)
@@ -128,12 +128,10 @@ void		 ldpe_iface_ctl(struct ctl_conn *, unsigned int);
 /* interface.c */
 int		 if_fsm(struct iface *, enum iface_event);
 
-struct iface	*if_new(struct kif *, struct kif_addr *);
+struct iface	*if_new(struct kif *);
 void		 if_del(struct iface *);
 void		 if_init(struct ldpd_conf *, struct iface *);
-
-int		 if_act_start(struct iface *);
-int		 if_act_reset(struct iface *);
+struct iface	*if_lookup(u_short);
 
 struct ctl_iface	*if_to_ctl(struct iface *);
 

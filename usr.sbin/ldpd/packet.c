@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.24 2013/06/01 19:01:32 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.25 2013/06/03 16:53:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,7 +39,9 @@
 #include "log.h"
 #include "ldpe.h"
 
-struct iface	*find_iface(struct ldpd_conf *, unsigned int, struct in_addr);
+extern struct ldpd_conf        *leconf;
+
+struct iface	*disc_find_iface(unsigned int, struct in_addr);
 ssize_t		 session_get_pdu(struct ibuf_read *, char **);
 
 static int	 msgcnt = 0;
@@ -112,7 +114,6 @@ disc_recv_packet(int fd, short event, void *bula)
 	struct sockaddr_in	 src;
 	struct msghdr		 msg;
 	struct iovec		 iov;
-	struct ldpd_conf	*xconf = bula;
 	struct ldp_hdr		 ldp_hdr;
 	struct ldp_msg		 ldp_msg;
 	struct iface		*iface;
@@ -155,7 +156,7 @@ disc_recv_packet(int fd, short event, void *bula)
 	len = (u_int16_t)r;
 
 	/* find a matching interface */
-	if ((iface = find_iface(xconf, ifindex, src.sin_addr)) == NULL) {
+	if ((iface = disc_find_iface(ifindex, src.sin_addr)) == NULL) {
 		log_debug("disc_recv_packet: cannot find a matching interface");
 		return;
 	}
@@ -207,26 +208,27 @@ disc_recv_packet(int fd, short event, void *bula)
 }
 
 struct iface *
-find_iface(struct ldpd_conf *xconf, unsigned int ifindex, struct in_addr src)
+disc_find_iface(unsigned int ifindex, struct in_addr src)
 {
-	struct iface	*iface = NULL;
+	struct iface	*iface;
+	struct if_addr	*if_addr;
 
-	/* returned interface needs to be active */
-	LIST_FOREACH(iface, &xconf->iface_list, entry) {
-		switch (iface->type) {
-		case IF_TYPE_POINTOPOINT:
-			if (ifindex == iface->ifindex &&
-			    iface->dst.s_addr == src.s_addr)
-				return (iface);
-			break;
-		default:
-			if (ifindex == iface->ifindex &&
-			    (iface->addr.s_addr & iface->mask.s_addr) ==
-			    (src.s_addr & iface->mask.s_addr))
-				return (iface);
-			break;
-		}
-	}
+	LIST_FOREACH(iface, &leconf->iface_list, entry)
+		LIST_FOREACH(if_addr, &iface->addr_list, iface_entry)
+			switch (iface->type) {
+			case IF_TYPE_POINTOPOINT:
+				if (ifindex == iface->ifindex &&
+				    if_addr->dstbrd.s_addr == src.s_addr)
+					return (iface);
+				break;
+			default:
+				if (ifindex == iface->ifindex &&
+				    (if_addr->addr.s_addr &
+					if_addr->mask.s_addr) ==
+				    (src.s_addr & if_addr->mask.s_addr))
+					return (iface);
+				break;
+			}
 
 	return (NULL);
 }

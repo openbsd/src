@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2013/06/01 19:28:55 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.15 2013/06/03 16:53:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -94,7 +94,7 @@ struct config_defaults	 globaldefs;
 struct config_defaults	 ifacedefs;
 struct config_defaults	*defs;
 
-struct iface	*conf_get_if(struct kif *, struct kif_addr *);
+struct iface	*conf_get_if(struct kif *);
 
 typedef struct {
 	union {
@@ -251,38 +251,14 @@ nl		: '\n' optnl		/* one newline or more */
 
 interface	: INTERFACE STRING	{
 			struct kif	*kif;
-			struct kif_addr	*ka = NULL;
-			char		*s;
-			struct in_addr	 addr;
 
-			s = strchr($2, ':');
-			if (s) {
-				*s++ = '\0';
-				if (inet_aton(s, &addr) == 0) {
-					yyerror(
-					    "error parsing interface address");
-					free($2);
-					YYERROR;
-				}
-			} else
-				addr.s_addr = 0;
-
-			if ((kif = kif_findname($2, addr, &ka)) == NULL) {
+			if ((kif = kif_findname($2)) == NULL) {
 				yyerror("unknown interface %s", $2);
 				free($2);
 				YYERROR;
 			}
-			if (ka == NULL) {
-				if (s)
-					yyerror("address %s not configured on "
-					    "interface %s", s, $2);
-				else
-					yyerror("unnumbered interface %s", $2);
-				free($2);
-				YYERROR;
-			}
 			free($2);
-			iface = conf_get_if(kif, ka);
+			iface = conf_get_if(kif);
 			if (iface == NULL)
 				YYERROR;
 			if (iface->media_type == IFT_LOOP ||
@@ -804,20 +780,19 @@ symget(const char *nam)
 }
 
 struct iface *
-conf_get_if(struct kif *kif, struct kif_addr *ka)
+conf_get_if(struct kif *kif)
 {
 	struct iface	*i;
 
 	LIST_FOREACH(i, &conf->iface_list, entry) {
-		if (i->ifindex == kif->ifindex &&
-		    i->addr.s_addr == ka->addr.s_addr) {
+		if (i->ifindex == kif->ifindex) {
 			yyerror("interface %s already configured",
 			    kif->ifname);
 			return (NULL);
 		}
 	}
 
-	i = if_new(kif, ka);
+	i = if_new(kif);
 
 	return (i);
 }

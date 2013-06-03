@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.26 2013/06/01 20:13:04 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.27 2013/06/03 16:53:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -56,6 +56,11 @@ struct kroute_node {
 	struct kroute_node	*next;
 };
 
+struct kif_addr {
+	TAILQ_ENTRY(kif_addr)	 entry;
+	struct kaddr		 addr;
+};
+
 struct kif_node {
 	RB_ENTRY(kif_node)	 entry;
 	TAILQ_HEAD(, kif_addr)	 addrs;
@@ -79,8 +84,8 @@ struct kif_node		*kif_find(u_short);
 struct kif_node		*kif_insert(u_short);
 int			 kif_remove(struct kif_node *);
 void			 kif_clear(void);
-struct kif		*kif_update(u_short, int, struct if_data *,
-			    struct sockaddr_dl *);
+struct kif_node		*kif_update(u_short, int, struct if_data *,
+			    struct sockaddr_dl *, int *);
 
 struct kroute_node	*kroute_match(in_addr_t);
 
@@ -122,6 +127,22 @@ kif_init(void)
 		return (-1);
 
 	return (0);
+}
+
+void
+kif_redistribute(void)
+{
+	struct kif_node		*kif;
+	struct kif_addr		*ka;
+
+	RB_FOREACH(kif, kif_tree, &kit) {
+		main_imsg_compose_ldpe(IMSG_IFUP, 0, &kif->k,
+		    sizeof(struct kif));
+
+		TAILQ_FOREACH(ka, &kif->addrs, entry)
+			main_imsg_compose_ldpe(IMSG_NEWADDR, 0, &ka->addr,
+			    sizeof(struct kaddr));
+	}
 }
 
 int
@@ -636,24 +657,13 @@ kif_find(u_short ifindex)
 }
 
 struct kif *
-kif_findname(char *ifname, struct in_addr addr, struct kif_addr **kap)
+kif_findname(char *ifname)
 {
 	struct kif_node	*kif;
-	struct kif_addr	*ka;
 
 	RB_FOREACH(kif, kif_tree, &kit)
-		if (!strcmp(ifname, kif->k.ifname)) {
-			ka = TAILQ_FIRST(&kif->addrs);
-			if (addr.s_addr != 0) {
-				TAILQ_FOREACH(ka, &kif->addrs, entry) {
-					if (addr.s_addr == ka->addr.s_addr)
-						break;
-				}
-			}
-			if (kap != NULL)
-				*kap = ka;
+		if (!strcmp(ifname, kif->k.ifname))
 			return (&kif->k);
-		}
 
 	return (NULL);
 }
@@ -702,16 +712,18 @@ kif_clear(void)
 		kif_remove(kif);
 }
 
-struct kif *
+struct kif_node *
 kif_update(u_short ifindex, int flags, struct if_data *ifd,
-    struct sockaddr_dl *sdl)
+    struct sockaddr_dl *sdl, int *link_old)
 {
 	struct kif_node		*kif;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
 		if ((kif = kif_insert(ifindex)) == NULL)
 			return (NULL);
-	}
+	} else
+		*link_old = (kif->k.flags & IFF_UP) &&
+		    LINK_STATE_IS_UP(kif->k.link_state);
 
 	kif->k.flags = flags;
 	kif->k.link_state = ifd->ifi_link_state;
@@ -729,7 +741,7 @@ kif_update(u_short ifindex, int flags, struct if_data *ifd,
 		/* string already terminated via calloc() */
 	}
 
-	return (&kif->k);
+	return (kif);
 }
 
 struct kroute_node *
@@ -829,15 +841,35 @@ void
 if_change(u_short ifindex, int flags, struct if_data *ifd,
     struct sockaddr_dl *sdl)
 {
-	struct kif		*kif;
+	struct kif_node		*kif;
+	struct kif_addr		*ka;
+	int			 link_old = 0, link_new;
 
-	if ((kif = kif_update(ifindex, flags, ifd, sdl)) == NULL) {
+	kif = kif_update(ifindex, flags, ifd, sdl, &link_old);
+	if (!kif) {
 		log_warn("if_change:  kif_update(%u)", ifindex);
 		return;
 	}
+	link_new = (kif->k.flags & IFF_UP) &&
+	    LINK_STATE_IS_UP(kif->k.link_state);
 
-	/* notify ldpe about interface link state */
-	main_imsg_compose_ldpe(IMSG_IFINFO, 0, kif, sizeof(struct kif));
+	if (link_new == link_old) {
+		main_imsg_compose_ldpe(IMSG_IFSTATUS, 0, &kif->k,
+		    sizeof(struct kif));
+		return;
+	} else if (link_new) {
+		main_imsg_compose_ldpe(IMSG_IFUP, 0, &kif->k,
+		    sizeof(struct kif));
+		TAILQ_FOREACH(ka, &kif->addrs, entry)
+			main_imsg_compose_ldpe(IMSG_NEWADDR, 0, &ka->addr,
+			    sizeof(struct kaddr));
+	} else {
+		main_imsg_compose_ldpe(IMSG_IFDOWN, 0, &kif->k,
+		    sizeof(struct kif));
+		TAILQ_FOREACH(ka, &kif->addrs, entry)
+			main_imsg_compose_ldpe(IMSG_DELADDR, 0, &ka->addr,
+			    sizeof(struct kaddr));
+	}
 }
 
 void
@@ -846,6 +878,7 @@ if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 {
 	struct kif_node *kif;
 	struct kif_addr *ka;
+	u_int32_t	 a;
 
 	if (ifa == NULL || ifa->sin_family != AF_INET)
 		return;
@@ -853,19 +886,29 @@ if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 		log_warnx("if_newaddr: corresponding if %i not found", ifindex);
 		return;
 	}
+	a = ntohl(ifa->sin_addr.s_addr);
+	if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
+	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
+		return;
+
 	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
 		fatal("if_newaddr");
-	ka->addr = ifa->sin_addr;
+	ka->addr.ifindex = ifindex;
+	ka->addr.addr = ifa->sin_addr;
 	if (mask)
-		ka->mask = mask->sin_addr;
+		ka->addr.mask = mask->sin_addr;
 	else
-		ka->mask.s_addr = INADDR_NONE;
+		ka->addr.mask.s_addr = INADDR_NONE;
 	if (brd)
-		ka->dstbrd = brd->sin_addr;
+		ka->addr.dstbrd = brd->sin_addr;
 	else
-		ka->dstbrd.s_addr = INADDR_NONE;
+		ka->addr.dstbrd.s_addr = INADDR_NONE;
 
 	TAILQ_INSERT_TAIL(&kif->addrs, ka, entry);
+
+	/* notify ldpe about new address */
+	main_imsg_compose_ldpe(IMSG_NEWADDR, 0, &ka->addr,
+	    sizeof(struct kaddr));
 }
 
 void
@@ -885,9 +928,13 @@ if_deladdr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 	for (ka = TAILQ_FIRST(&kif->addrs); ka != NULL; ka = nka) {
 		nka = TAILQ_NEXT(ka, entry);
 
-		if (ka->addr.s_addr == ifa->sin_addr.s_addr) {
+		if (ka->addr.addr.s_addr == ifa->sin_addr.s_addr) {
 			TAILQ_REMOVE(&kif->addrs, ka, entry);
-			/* XXX inform engine about if change? */
+
+			/* notify ldpe about removed address */
+			main_imsg_compose_ldpe(IMSG_DELADDR, 0, &ka->addr,
+			    sizeof(struct kaddr));
+
 			free(ka);
 			return;
 		}

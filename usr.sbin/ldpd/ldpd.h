@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.36 2013/06/01 19:42:07 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.37 2013/06/03 16:53:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -82,7 +82,11 @@ enum imsg_type {
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_KLABEL_CHANGE,
 	IMSG_KLABEL_DELETE,
-	IMSG_IFINFO,
+	IMSG_IFSTATUS,
+	IMSG_IFUP,
+	IMSG_IFDOWN,
+	IMSG_NEWADDR,
+	IMSG_DELADDR,
 	IMSG_LABEL_MAPPING,
 	IMSG_LABEL_MAPPING_FULL,
 	IMSG_LABEL_REQUEST,
@@ -118,13 +122,15 @@ enum imsg_type {
 enum iface_event {
 	IF_EVT_NOTHING,
 	IF_EVT_UP,
-	IF_EVT_DOWN
+	IF_EVT_DOWN,
+	IF_EVT_NEWADDR,
+	IF_EVT_DELADDR
 };
 
 /* interface actions */
 enum iface_action {
 	IF_ACT_NOTHING,
-	IF_ACT_STRT,
+	IF_ACT_UPDATE,
 	IF_ACT_RST
 };
 
@@ -193,6 +199,14 @@ struct notify_msg {
 	u_int32_t	type;
 };
 
+struct if_addr {
+	LIST_ENTRY(if_addr)	 global_entry;
+	LIST_ENTRY(if_addr)	 iface_entry;
+	struct in_addr		 addr;
+	struct in_addr		 mask;
+	struct in_addr		 dstbrd;
+};
+
 struct iface {
 	LIST_ENTRY(iface)	 entry;
 	struct event		 hello_timer;
@@ -200,9 +214,7 @@ struct iface {
 	LIST_HEAD(, lde_nbr)	 lde_nbr_list;
 
 	char			 name[IF_NAMESIZE];
-	struct in_addr		 addr;
-	struct in_addr		 dst;
-	struct in_addr		 mask;
+	LIST_HEAD(, if_addr)	 addr_list;
 
 	u_int64_t		 baudrate;
 	time_t			 uptime;
@@ -243,6 +255,7 @@ struct ldpd_conf {
 	struct event		disc_ev;
 	struct in_addr		rtr_id;
 	LIST_HEAD(, iface)	iface_list;
+	LIST_HEAD(, if_addr)	addr_list;
 
 	u_int32_t		opts;
 #define LDPD_OPT_VERBOSE	0x00000001
@@ -268,8 +281,8 @@ struct kroute {
 	u_int8_t	priority;
 };
 
-struct kif_addr {
-	TAILQ_ENTRY(kif_addr)	 entry;
+struct kaddr {
+	u_short			 ifindex;
 	struct in_addr		 addr;
 	struct in_addr		 mask;
 	struct in_addr		 dstbrd;
@@ -350,6 +363,7 @@ void	session_socket_blockmode(int, enum blockmodes);
 
 /* kroute.c */
 int		 kif_init(void);
+void		 kif_redistribute(void);
 int		 kr_init(int);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
@@ -359,7 +373,7 @@ void		 kr_fib_decouple(void);
 void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
-struct kif	*kif_findname(char *, struct in_addr, struct kif_addr **);
+struct kif	*kif_findname(char *);
 void		 kr_reload(void);
 
 u_int8_t	mask2prefixlen(in_addr_t);

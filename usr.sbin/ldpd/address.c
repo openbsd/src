@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.10 2013/06/01 19:42:07 claudio Exp $ */
+/*	$OpenBSD: address.c,v 1.11 2013/06/03 16:53:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -39,13 +39,12 @@
 
 extern struct ldpd_conf        *leconf;
 
-void	gen_address_list_tlv(struct ibuf *, struct iface *, u_int16_t);
+void	gen_address_list_tlv(struct ibuf *, struct if_addr *, u_int16_t);
 
 void
-send_address(struct nbr *nbr, struct iface *iface)
+send_address(struct nbr *nbr, struct if_addr *if_addr)
 {
 	struct ibuf	*buf;
-	struct iface	*niface;
 	u_int16_t	 size, iface_count = 0;
 
 	log_debug("send_address: neighbor ID %s", inet_ntoa(nbr->id));
@@ -53,9 +52,8 @@ send_address(struct nbr *nbr, struct iface *iface)
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_address");
 
-	/* XXX: multiple address on the same iface? */
-	if (iface == NULL)
-		LIST_FOREACH(niface, &leconf->iface_list, entry)
+	if (if_addr == NULL)
+		LIST_FOREACH(if_addr, &leconf->addr_list, global_entry)
 			iface_count++;
 	else
 		iface_count = 1;
@@ -72,7 +70,7 @@ send_address(struct nbr *nbr, struct iface *iface)
 
 	size -= sizeof(struct ldp_msg);
 
-	gen_address_list_tlv(buf, iface, size);
+	gen_address_list_tlv(buf, if_addr, size);
 
 	evbuf_enqueue(&nbr->wbuf, buf);
 	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
@@ -141,10 +139,10 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 void
-gen_address_list_tlv(struct ibuf *buf, struct iface *iface, u_int16_t size)
+gen_address_list_tlv(struct ibuf *buf, struct if_addr *if_addr,
+    u_int16_t size)
 {
 	struct address_list_tlv	 alt;
-	struct iface		*niface;
 
 	/* We want just the size of the value */
 	size -= TLV_HDR_LEN;
@@ -157,15 +155,15 @@ gen_address_list_tlv(struct ibuf *buf, struct iface *iface, u_int16_t size)
 
 	ibuf_add(buf, &alt, sizeof(alt));
 
-	if (iface == NULL)
-		LIST_FOREACH(niface, &leconf->iface_list, entry)
-			ibuf_add(buf, &niface->addr, sizeof(niface->addr));
+	if (if_addr == NULL)
+		LIST_FOREACH(if_addr, &leconf->addr_list, global_entry)
+			ibuf_add(buf, &if_addr->addr, sizeof(if_addr->addr));
 	else
-		ibuf_add(buf, &iface->addr, sizeof(iface->addr));
+		ibuf_add(buf, &if_addr->addr, sizeof(if_addr->addr));
 }
 
 void
-send_address_withdraw(struct nbr *nbr, struct iface *iface)
+send_address_withdraw(struct nbr *nbr,  struct if_addr *if_addr)
 {
 	struct ibuf	*buf;
 	u_int16_t	 size;
@@ -175,8 +173,8 @@ send_address_withdraw(struct nbr *nbr, struct iface *iface)
 	if ((buf = ibuf_open(LDP_MAX_LEN)) == NULL)
 		fatal("send_address_withdraw");
 
-	/* XXX: multiple address on the same iface? */
-	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) + sizeof(struct in_addr);
+	size = LDP_HDR_SIZE + sizeof(struct ldp_msg) +
+	    sizeof(struct address_list_tlv) + sizeof(struct in_addr);
 
 	gen_ldp_hdr(buf, size);
 
@@ -186,7 +184,7 @@ send_address_withdraw(struct nbr *nbr, struct iface *iface)
 
 	size -= sizeof(struct ldp_msg);
 
-	gen_address_list_tlv(buf, iface, size);
+	gen_address_list_tlv(buf, if_addr, size);
 
 	evbuf_enqueue(&nbr->wbuf, buf);
 	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
