@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.36 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.37 2013/06/03 16:04:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -319,6 +319,8 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
 		bzero(resp_ca_cert->key, resp_ca_cert->key_len);
+		free(resp_ca_cert->cert);
+		free(resp_ca_cert->key);
 		free(resp_ca_cert);
 
 		return;

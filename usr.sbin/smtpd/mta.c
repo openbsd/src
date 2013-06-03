@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.157 2013/05/24 17:03:14 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.158 2013/06/03 16:04:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1254,12 +1254,14 @@ mta_relay_unref(struct mta_relay *relay)
 
 	log_debug("debug: mta: freeing %s", mta_relay_to_text(relay));
 	SPLAY_REMOVE(mta_relay_tree, &relays, relay);
-	if (relay->cert)
-		free(relay->cert);
-	if (relay->authtable)
-		free(relay->authtable);
-	if (relay->authlabel)
-		free(relay->authlabel);
+
+	free(relay->authlabel);
+	free(relay->authtable);
+	free(relay->backupname);
+	free(relay->cert);
+	free(relay->helotable);
+	free(relay->secret);
+	free(relay->sourcetable);
 
 	while ((tree_poproot(&relay->connectors, NULL, (void**)&c)))
 		mta_connector_free(c);
@@ -1419,6 +1421,7 @@ mta_host_unref(struct mta_host *h)
 	SPLAY_REMOVE(mta_host_tree, &hosts, h);
 	free(h->sa);
 	free(h->ptrname);
+	free(h);
 	stat_decrement("mta.host", 1);
 }
 
@@ -1494,6 +1497,7 @@ mta_domain_unref(struct mta_domain *d)
 
 	SPLAY_REMOVE(mta_domain_tree, &domains, d);
 	free(d->name);
+	free(d);
 	stat_decrement("mta.domain", 1);
 }
 
@@ -1548,6 +1552,7 @@ mta_source_unref(struct mta_source *s)
 
 	SPLAY_REMOVE(mta_source_tree, &sources, s);
 	free(s->sa);
+	free(s);
 	stat_decrement("mta.source", 1);
 }
 
@@ -1607,6 +1612,7 @@ mta_connector_free(struct mta_connector *c)
 	c->relay->nconnector--;
 	TAILQ_REMOVE(c->queue, c, lst_entry);
 	mta_source_unref(c->source);
+	free(c);
 	stat_decrement("mta.connector", 1);
 }
 
@@ -1661,6 +1667,7 @@ mta_route_unref(struct mta_route *r)
 	SPLAY_REMOVE(mta_route_tree, &routes, r);
 	mta_source_unref(r->src); /* from constructor */
 	mta_host_unref(r->dst); /* from constructor */
+	free(r);
 	stat_decrement("mta.route", 1);
 }
 
