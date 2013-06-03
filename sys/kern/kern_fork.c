@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.148 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.149 2013/06/03 22:35:15 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -323,16 +323,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	if (flags & FORK_THREAD) {
 		atomic_setbits_int(&p->p_flag, P_THREAD);
 		p->p_p = pr = curpr;
-		TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
 		pr->ps_refcnt++;
-		/*
-		 * if somebody else wants to take us to single threaded mode,
-		 * count ourselves in.
-		 */
-		if (pr->ps_single) {
-			curpr->ps_singlecount++;
-			atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);
-		}
 	} else {
 		process_new(p, curpr);
 		pr = p->p_p;
@@ -473,6 +464,16 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 				curpr->ps_ptstat->pe_other_pid = pr->ps_pid;
 				pr->ps_ptstat->pe_other_pid = curpr->ps_pid;
 			}
+		}
+	} else {
+		TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
+		/*
+		 * if somebody else wants to take us to single threaded mode,
+		 * count ourselves in.
+		 */
+		if (pr->ps_single) {
+			curpr->ps_singlecount++;
+			atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);
 		}
 	}
 
