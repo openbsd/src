@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93reg.h,v 1.2 2012/04/27 19:48:58 miod Exp $	*/
+/*	$OpenBSD: wd33c93reg.h,v 1.3 2013/06/04 17:47:23 miod Exp $	*/
 /*	$NetBSD: wd33c93reg.h,v 1.4 2009/02/12 06:24:45 rumble Exp $	*/
 
 /*
@@ -362,10 +362,6 @@
 
 #define SCSI_STATUS_MASK	0x3e	/* Mask unused bits in status byte */
 
-/* approximate, but we won't do SBT on selects */
-#define wd33c93_isa_select(cmd)	   (((cmd) > 0x5) && ((cmd) < 0xa))
-
-#define PAD(n)	char n;
 #define SBIC_MACHINE_DMA_MODE	SBIC_CTL_DMA
 
 /*
