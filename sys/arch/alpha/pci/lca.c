@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca.c,v 1.22 2009/09/30 19:32:11 miod Exp $	*/
+/*	$OpenBSD: lca.c,v 1.23 2013/06/04 19:12:34 miod Exp $	*/
 /*	$NetBSD: lca.c,v 1.14 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*-
@@ -187,13 +187,20 @@ lca_init(lcp, mallocsafe)
 	 *	IOC_HAE left AS IS.
 	 */
 
-	/* According to section 6.4.2, all bits of the IOC_CONF register are
+	/*
+	 * According to section 6.4.2, all bits of the IOC_CONF register are
 	 * undefined after reset.  Bits <1:0> are write-only.  Set them to
 	 * 0x00 for PCI Type 0 configuration access.
 	 *
 	 *	IOC_CONF set to ZERO.
 	 */
 	REGVAL64(LCA_IOC_CONF) = 0;
+
+	/*
+	 * Disable parity on the bus. According to Linux, on some systems,
+	 * siop(4) behaves badly unless parity is disabled.
+	 */
+	REGVAL64(LCA_IOC_PAR_DIS) = IOC_PAR_DISABLE;
 
 	lcp->lc_initted = 1;
 }

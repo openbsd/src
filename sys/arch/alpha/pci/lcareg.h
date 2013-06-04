@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcareg.h,v 1.7 2001/02/16 16:02:54 jason Exp $	*/
+/*	$OpenBSD: lcareg.h,v 1.8 2013/06/04 19:12:34 miod Exp $	*/
 /* $NetBSD: lcareg.h,v 1.7 1997/06/06 23:54:31 thorpej Exp $ */
 
 /*
@@ -66,6 +66,9 @@
 #define	LCA_IOC_TBIA	(LCA_IOC_BASE + 0x080)	/* TLB Invalidate All */
 #define	LCA_IOC_TB_ENA	(LCA_IOC_BASE + 0x0a0)	/* TLB Enable */
 #define	IOC_TB_ENA_TEN	0x0000000000000080UL
+
+#define	LCA_IOC_PAR_DIS	(LCA_IOC_BASE + 0x0e0)	/* Parity Disable */
+#define	IOC_PAR_DISABLE	0x0000000000000020UL
 
 #define LCA_IOC_W_BASE0	(LCA_IOC_BASE + 0x100)	/* Window Base */
 #define LCA_IOC_W_MASK0	(LCA_IOC_BASE + 0x140)	/* Window Mask */
