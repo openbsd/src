@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.331 2013/06/04 09:36:20 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.332 2013/06/04 09:41:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3160,8 +3160,8 @@ bge_reset(struct bge_softc *sc)
 		/* Set PCI Express max payload size. */
 		devctl = (devctl & ~PCI_PCIE_DCSR_MPS) | sc->bge_expmrq;
 		/* Clear error status. */
-		devctl |= PCI_PCIE_DCSR_CED | PCI_PCIE_DCSR_NED |
-		    PCI_PCIE_DCSR_FED | PCI_PCIE_DCSR_URD;
+		devctl |= PCI_PCIE_DCSR_CEE | PCI_PCIE_DCSR_NFE |
+		    PCI_PCIE_DCSR_FEE | PCI_PCIE_DCSR_URE;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, sc->bge_expcap +
 		    PCI_PCIE_DCSR, devctl);
 	}
