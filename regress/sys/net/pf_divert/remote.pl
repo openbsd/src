@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.2 2013/06/03 21:07:45 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.3 2013/06/04 04:17:42 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -17,6 +17,13 @@
 
 use strict;
 use warnings;
+
+BEGIN {
+	if ($> == 0 && $ENV{SUDO_UID}) {
+		$> = $ENV{SUDO_UID};
+	}
+}
+
 use File::Basename;
 use File::Copy;
 use Socket;
@@ -73,6 +80,7 @@ if ($local eq "server") {
 	    func		=> $func,
 	    %args,
 	    %{$args{server}},
+	    af			=> $af,
 	    logfile		=> $logfile,
 	    listendomain	=> $domain,
 	    listenaddr		=> $mode ne "divert" ? $ARGV[0] :
@@ -87,9 +95,9 @@ if ($mode eq "auto") {
 	    testfile		=> $test,
 	    remotessh		=> $ARGV[2],
 	    bindaddr		=> $ARGV[1],
+	    connect		=> $remote eq "client",
 	    connectaddr		=> $ARGV[0],
 	    connectport		=> $s ? $s->{listenport} : 0,
-	    sudo		=> $ENV{SUDO},
 	);
 	$r->run->up;
 	$r->loggrep(qr/^Diverted$/, 10)
@@ -100,6 +108,7 @@ if ($local eq "client") {
 	    func		=> $func,
 	    %args,
 	    %{$args{client}},
+	    af			=> $af,
 	    logfile		=> $logfile,
 	    connectdomain	=> $domain,
 	    connectaddr		=> $ARGV[1],
@@ -120,18 +129,22 @@ if ($mode eq "divert") {
 	};
 	copy($log, \*STDERR);
 
-	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
-	my @cmd = (@sudo, qw(pfctl -a regress -f -));
-	open(my $pf, '|-', @cmd)
+	my @cmd = qw(pfctl -a regress -f -);
+	my $pf;
+	do { local $> = 0; open($pf, '|-', @cmd) }
 	    or die "Open pipe to pf '@cmd' failed: $!";
 	if ($local eq "server") {
+		my $port = $args{protocol} =~ /^(tcp|udp)$/ ?
+		    "port $s->{listenport}" : "";
+		my $divertport = $port || "port 1";  # XXX bad pf syntax
 		print $pf "pass in log $af proto $args{protocol} ".
-		    "from $ARGV[1] to $ARGV[0] port $s->{listenport} ".
-		    "divert-to $s->{listenaddr} port $s->{listenport}\n";
+		    "from $ARGV[1] to $ARGV[0] $port ".
+		    "divert-to $s->{listenaddr} $divertport\n";
 	} else {
+		my $port = $args{protocol} =~ /^(tcp|udp)$/ ?
+		    "port $ARGV[2]" : "";
 		print $pf "pass out log $af proto $args{protocol} ".
-		    "from $c->{bindaddr} to $ARGV[1] port $ARGV[2] ".
-		    "divert-reply\n";
+		    "from $c->{bindaddr} to $ARGV[1] $port divert-reply\n";
 	}
 	close($pf) or die $! ?
 	    "Close pipe to pf '@cmd' failed: $!" :
@@ -156,4 +169,4 @@ $c->down if $c;
 $r->down if $r;
 $s->down if $s;
 
-check_logs($c, $s, %args);
+check_logs($c || $r, $s || $r, %args);

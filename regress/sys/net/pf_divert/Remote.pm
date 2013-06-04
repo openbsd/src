@@ -1,4 +1,4 @@
-#	$OpenBSD: Remote.pm,v 1.1.1.1 2013/06/03 05:06:38 bluhm Exp $
+#	$OpenBSD: Remote.pm,v 1.2 2013/06/04 04:17:42 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -46,7 +46,7 @@ sub new {
 sub up {
 	my $self = Proc::up(shift, @_);
 	my $timeout = shift || 10;
-	if ($self->{connectport}) {
+	if ($self->{connect}) {
 		$self->loggrep(qr/^Connected$/, $timeout)
 		    or croak ref($self), " no Connected in $self->{logfile} ".
 			"after $timeout seconds";
@@ -67,9 +67,7 @@ sub child {
 
 	print STDERR $self->{up}, "\n";
 	my @opts = split(' ', $ENV{SSH_OPTIONS}) if $ENV{SSH_OPTIONS};
-	# if sudo is set, run the remote perl as root, otherwise pass SUDO
-	my @sudo = !$ENV{SUDO} ? () :
-	    $self->{sudo} ? $ENV{SUDO} : "SUDO=$ENV{SUDO}";
+	my @sudo = $ENV{SUDO} ? ($ENV{SUDO}, "SUDO=$ENV{SUDO}") : ();
 	my $dir = dirname($0);
 	$dir = getcwd() if ! $dir || $dir eq '.';
 	my @cmd = ('ssh', '-n', @opts, $self->{remotessh}, @sudo, 'perl',
@@ -78,6 +76,7 @@ sub child {
 	    ($self->{testfile} ? "$dir/".basename($self->{testfile}) :
 	    ()));
 	print STDERR "execute: @cmd\n";
+	$< = $>;
 	exec @cmd;
 	die "Exec @cmd failed: $!";
 }

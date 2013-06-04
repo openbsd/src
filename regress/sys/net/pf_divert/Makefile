@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2013/06/03 05:06:38 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/06/04 04:17:42 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -66,11 +66,11 @@ PERLPATH =	${.CURDIR}/
 run-regress-$a: $a
 .if !empty (LOCAL_ADDR)
 	@echo
-	time SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl inet ${LOCAL_ADDR} ${FAKE_ADDR} ${REMOTE_SSH} ${PERLPATH}$a
+	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl inet ${LOCAL_ADDR} ${FAKE_ADDR} ${REMOTE_SSH} ${PERLPATH}$a
 .endif
 .if !empty (LOCAL_ADDR6)
 	@echo
-	time SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl inet6 ${LOCAL_ADDR6} ${FAKE_ADDR6} ${REMOTE_SSH} ${PERLPATH}$a
+	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl inet6 ${LOCAL_ADDR6} ${FAKE_ADDR6} ${REMOTE_SSH} ${PERLPATH}$a
 .endif
 .endfor
 

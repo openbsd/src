@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.1.1.1 2013/06/03 05:06:38 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.2 2013/06/04 04:17:42 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -39,30 +39,32 @@ sub new {
 	    or croak "$class connect domain not given";
 	$self->{connectaddr}
 	    or croak "$class connect addr not given";
-	$self->{connectport}
+	$self->{connectport} || $self->{protocol} !~ /^(tcp|udp)$/
 	    or croak "$class connect port not given";
 
 	my $cs;
 	if ($self->{bindany}) {
-		$cs = IO::Socket::INET6->new(
+		do { local $> = 0; $cs = IO::Socket::INET6->new(
+		    Type	=> $self->{socktype},
 		    Proto	=> $self->{protocol},
 		    Domain	=> $self->{connectdomain},
 		    Blocking	=> ($self->{nonblocking} ? 0 : 1),
-		) or die ref($self), " socket connect failed: $!";
-		$cs->setsockopt(SOL_SOCKET, SO_BINDANY, 1)
+		) } or die ref($self), " socket connect failed: $!";
+		do { local $> = 0; $cs->setsockopt(SOL_SOCKET, SO_BINDANY, 1) }
 		    or die ref($self), " setsockopt SO_BINDANY failed: $!";
 		my @rres = getaddrinfo($self->{bindaddr}, $self->{bindport}||0,
 		    $self->{connectdomain}, SOCK_STREAM, 0, AI_PASSIVE);
 		$cs->bind($rres[3])
 		    or die ref($self), " bind failed: $!";
 	} elsif ($self->{bindaddr} || $self->{bindport}) {
-		$cs = IO::Socket::INET6->new(
+		do { local $> = 0; $cs = IO::Socket::INET6->new(
+		    Type	=> $self->{socktype},
 		    Proto	=> $self->{protocol},
 		    Domain	=> $self->{connectdomain},
 		    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 		    LocalAddr	=> $self->{bindaddr},
 		    LocalPort	=> $self->{bindport},
-		) or die ref($self), " socket connect failed: $!";
+		) } or die ref($self), " socket connect failed: $!";
 	}
 	if ($cs) {
 		$self->{bindaddr} = $cs->sockhost();
@@ -76,11 +78,12 @@ sub new {
 sub child {
 	my $self = shift;
 
-	my $cs = $self->{cs} || IO::Socket::INET6->new(
+	my $cs = $self->{cs} || do { local $> = 0; IO::Socket::INET6->new(
+	    Type	=> $self->{socktype},
 	    Proto	=> $self->{protocol},
 	    Domain	=> $self->{connectdomain},
 	    Blocking	=> ($self->{nonblocking} ? 0 : 1),
-	) or die ref($self), " socket connect failed: $!";
+	) } or die ref($self), " socket connect failed: $!";
 	if ($self->{oobinline}) {
 		setsockopt($cs, SOL_SOCKET, SO_OOBINLINE, pack('i', 1))
 		    or die ref($self), " set oobinline connect failed: $!";

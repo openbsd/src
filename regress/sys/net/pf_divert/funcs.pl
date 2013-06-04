@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.2 2013/06/03 21:07:45 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.3 2013/06/04 04:17:42 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -44,8 +44,18 @@ sub write_datagram {
 
 sub read_datagram {
 	my $self = shift;
+	my $skip = $self->{skip};
+	$skip = $skip->($self) if ref $skip eq 'CODE';
 
-	my $in = <STDIN>;
+	my $in;
+	if ($skip) {
+		# Raw sockets include the IPv4 header.
+		sysread(STDIN, $in, 70000);
+		# Cut the header off.
+		substr($in, 0, $skip, "");
+	} else {
+		$in = <STDIN>;
+	}
 	print STDERR "<<< $in";
 }
 
@@ -65,15 +75,15 @@ sub check_inout {
 	my ($c, $s, %args) = @_;
 
 	if ($c && !$args{client}{nocheck}) {
-		$c->loggrep(qr/^>>> Client$/) or die "no client out"
+		$c->loggrep(qr/^>>> Client$/) or die "no client output"
 		    unless $args{client}{noout};
-		$c->loggrep(qr/^<<< Server$/) or die "no client in"
+		$c->loggrep(qr/^<<< Server$/) or die "no client input"
 		    unless $args{client}{noin};
 	}
 	if ($s && !$args{server}{nocheck}) {
-		$s->loggrep(qr/^>>> Server$/) or die "no server out"
+		$s->loggrep(qr/^>>> Server$/) or die "no server output"
 		    unless $args{server}{noout};
-		$s->loggrep(qr/^<<< Client$/) or die "no server in"
+		$s->loggrep(qr/^<<< Client$/) or die "no server input"
 		    unless $args{server}{noin};
 	}
 }
