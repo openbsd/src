@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.57 2013/06/01 16:22:05 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.58 2013/06/04 19:11:52 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -61,6 +61,8 @@
  *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -74,6 +76,9 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_types.h>
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -169,6 +174,18 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		if (in6p->in6p_ip6.ip6_nxt &&
 		    in6p->in6p_ip6.ip6_nxt != proto)
 			continue;
+#if NPF > 0
+		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+			struct pf_divert *divert;
+
+			/* XXX rdomain support */
+			if ((divert = pf_find_divert(m)) == NULL)
+				continue;
+			if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr,
+			    &divert->addr.v6))
+				continue;
+		} else
+#endif
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
 		    !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
 			continue;

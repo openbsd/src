@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.128 2013/06/01 16:22:05 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.129 2013/06/04 19:11:51 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1884,6 +1884,18 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 			continue;
 		if (in6p->in6p_ip6_nxt != IPPROTO_ICMPV6)
 			continue;
+#if NPF > 0
+		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+			struct pf_divert *divert;
+
+			/* XXX rdomain support */
+			if ((divert = pf_find_divert(m)) == NULL)
+				continue;
+			if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr,
+			    &divert->addr.v6))
+				continue;
+		} else
+#endif
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
 		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
 			continue;
