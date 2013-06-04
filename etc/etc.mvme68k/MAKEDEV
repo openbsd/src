@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.32 2012/08/23 06:15:28 deraadt Exp 
+#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.33 2013/06/03 17:34:15 tedu Exp 
 #	OpenBSD: MAKEDEV.common,v 1.64 2013/06/03 16:06:42 tedu Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -266,7 +266,7 @@ flash0)
 	;;
 
 fuse)
-	M fuse$U c 56 $U 600
+	M fuse$U c 57 $U 600
 	;;
 
 fd)
