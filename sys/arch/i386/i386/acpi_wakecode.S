@@ -397,7 +397,6 @@ NENTRY(hibernate_switch_stack_machdep)
 NENTRY(hibernate_flush)
 	wbinvd
 	invlpg  HIBERNATE_INFLATE_PAGE
-	invlpg  HIBERNATE_COPY_PAGE
 	ret
 #endif /* HIBERNATE */
 
