@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.S,v 1.3 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: atomic.S,v 1.4 2013/06/04 22:11:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -21,7 +21,7 @@
 	.data
 
 /*
- * A __cpu_simplelock_t used to provide the inter-processor interlock.
+ * A __cpu_simple_lock_t used to provide the inter-processor interlock.
  */
 ASLOCAL(__atomic_interlock)
 	.word	0
