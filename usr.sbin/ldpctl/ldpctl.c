@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.14 2013/06/04 02:28:58 claudio Exp $
+/*	$OpenBSD: ldpctl.c,v 1.15 2013/06/04 02:40:17 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -42,6 +42,7 @@ __dead void	 usage(void);
 const char	*fmt_timeframe_core(time_t);
 const char	*get_linkstate(int, int);
 int		 show_interface_msg(struct imsg *);
+int		 show_discovery_msg(struct imsg *);
 int		 get_ifms_type(int);
 int		 show_lib_msg(struct imsg *);
 int		 show_nbr_msg(struct imsg *);
@@ -110,6 +111,12 @@ main(int argc, char *argv[])
 		}
 		imsg_compose(ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0, -1,
 		    &ifidx, sizeof(ifidx));
+		break;
+	case SHOW_DISC:
+		printf("%-15s %-9s %-15s %-9s\n",
+		    "ID", "Type", "Source", "Holdtime");
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DISCOVERY, 0, 0, -1,
+		    NULL, 0);
 		break;
 	case SHOW_NBR:
 		printf("%-15s %-18s %-15s %-10s\n", "ID",
@@ -186,6 +193,9 @@ main(int argc, char *argv[])
 			case SHOW:
 			case SHOW_IFACE:
 				done = show_interface_msg(&imsg);
+				break;
+			case SHOW_DISC:
+				done = show_discovery_msg(&imsg);
 				break;
 			case SHOW_NBR:
 				done = show_nbr_msg(&imsg);
@@ -306,6 +316,37 @@ show_interface_msg(struct imsg *imsg)
 		    fmt_timeframe_core(iface->uptime), timers,
 		    iface->adj_cnt);
 		free(timers);
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+int
+show_discovery_msg(struct imsg *imsg)
+{
+	struct ctl_adj		*adj;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_DISCOVERY:
+		adj = imsg->data;
+
+		printf("%-15s ", inet_ntoa(adj->id));
+		switch(adj->type) {
+		case HELLO_LINK:
+			printf("%-9s %-15s ", "Link", adj->ifname);
+			break;
+		case HELLO_TARGETED:
+			printf("%-9s %-15s ", "Targeted",
+			    inet_ntoa(adj->src_addr));
+			break;
+		}
+		printf("%-9u\n", adj->holdtime);
 		break;
 	case IMSG_CTL_END:
 		printf("\n");

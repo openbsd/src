@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.5 2010/09/04 21:31:04 tedu Exp $ */
+/*	$OpenBSD: parser.h,v 1.6 2013/06/04 02:40:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -33,6 +33,7 @@ enum actions {
 	LOG_VERBOSE,
 	LOG_BRIEF,
 	SHOW,
+	SHOW_DISC,
 	SHOW_IFACE,
 	SHOW_NBR,
 	SHOW_LIB,
