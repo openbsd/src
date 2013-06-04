@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.23 2013/06/03 17:01:59 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.24 2013/06/04 00:45:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -96,6 +96,9 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 
 	ldeconf = xconf;
 
+	setproctitle("label decision engine");
+	ldpd_process = PROC_LDE_ENGINE;
+
 	if ((pw = getpwnam(LDPD_USER)) == NULL)
 		fatal("getpwnam");
 
@@ -103,9 +106,6 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
-
-	setproctitle("label decision engine");
-	ldpd_process = PROC_LDE_ENGINE;
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

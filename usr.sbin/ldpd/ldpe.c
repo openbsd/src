@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.19 2013/06/04 00:41:18 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.20 2013/06/04 00:45:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -87,6 +87,11 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 		return (pid);
 	}
 
+	leconf = xconf;
+
+	setproctitle("ldp engine");
+	ldpd_process = PROC_LDP_ENGINE;
+
 	/* create ldpd control socket outside chroot */
 	if (control_init() == -1)
 		fatalx("control socket setup failed");
@@ -142,8 +147,6 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 		fatal("if_set_tos");
 	session_socket_blockmode(xconf->ldp_session_socket, BM_NONBLOCK);
 
-	leconf = xconf;
-
 	if ((pw = getpwnam(LDPD_USER)) == NULL)
 		fatal("getpwnam");
 
@@ -151,9 +154,6 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
-
-	setproctitle("ldp engine");
-	ldpd_process = PROC_LDP_ENGINE;
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
