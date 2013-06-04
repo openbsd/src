@@ -138,7 +138,14 @@ sub _get_podman_switches {
 
 	my @switches = grep !m/^_/s, keys %$self;
 
-	push @switches, 'utf8' => 1;
+    # There needs to be a cleaner way to handle setting
+    # the UTF-8 flag, but for now, comment out this
+    # line because it often does the wrong thing.
+    #
+    # See RT #77465
+    #
+    #push @switches, 'utf8' => 1;
+
 	$self->debug( "Pod::Man switches are [@switches]\n" );
 
 	return @switches;
