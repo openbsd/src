@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.23 2013/06/04 00:56:49 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.24 2013/06/04 01:32:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -60,6 +60,7 @@ struct nbr {
 
 	int			 fd;
 	int			 state;
+	int			 idtimer_cnt;
 
 	u_int16_t		 holdtime;
 	u_int16_t		 keepalive;

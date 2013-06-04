@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.34 2013/06/04 00:56:49 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.35 2013/06/04 01:32:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -219,7 +219,6 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		ldpe_imsg_compose_lde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0,
 		    NULL, 0);
 		session_close(nbr);
-		nbr_start_idtimer(nbr);
 		break;
 	case NBR_ACT_NOTHING:
 		/* do nothing */
@@ -446,13 +445,13 @@ nbr_idtimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	if (!nbr_session_active_role(nbr))
-		return;
-
 	log_debug("nbr_idtimer: neighbor ID %s peerid %lu", inet_ntoa(nbr->id),
 	    nbr->peerid);
 
-	nbr_establish_connection(nbr);
+	if (nbr_session_active_role(nbr))
+		nbr_establish_connection(nbr);
+	else if (nbr->state == NBR_STA_INITIAL)
+		nbr_fsm(nbr, NBR_EVT_INIT_RCVD);
 }
 
 void
@@ -461,7 +460,23 @@ nbr_start_idtimer(struct nbr *nbr)
 	struct timeval	tv;
 
 	timerclear(&tv);
+
 	tv.tv_sec = INIT_DELAY_TMR;
+	switch(nbr->idtimer_cnt) {
+	default:
+		/* do not further increase the counter */
+		tv.tv_sec = MAX_DELAY_TMR;
+		break;
+	case 2:
+		tv.tv_sec *= 2;
+		/* FALLTHROUGH */
+	case 1:
+		tv.tv_sec *= 2;
+		/* FALLTHROUGH */
+	case 0:
+		nbr->idtimer_cnt++;
+		break;
+	}
 
 	if (evtimer_add(&nbr->initdelay_timer, &tv) == -1)
 		fatal("nbr_start_idtimer");
@@ -561,7 +576,6 @@ nbr_establish_connection(struct nbr *nbr)
 		}
 		log_debug("nbr_establish_connection: error while "
 		    "connecting to %s", inet_ntoa(nbr->addr));
-		nbr_start_idtimer(nbr);
 		close(nbr->fd);
 		return (-1);
 	}
@@ -584,6 +598,8 @@ int
 nbr_act_session_operational(struct nbr *nbr)
 {
 	struct lde_nbr	 rn;
+
+	nbr->idtimer_cnt = 0;
 
 	bzero(&rn, sizeof(rn));
 	rn.id.s_addr = nbr->id.s_addr;

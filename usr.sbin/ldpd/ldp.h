@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.11 2013/06/01 01:34:57 claudio Exp $ */
+/*	$OpenBSD: ldp.h,v 1.12 2013/06/04 01:32:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -49,6 +49,7 @@
 #define	MAX_HELLO_INTERVAL	0xffff	/* XXX */
 
 #define	INIT_DELAY_TMR		15
+#define	MAX_DELAY_TMR		120
 #define DEFAULT_NBR_TMOUT	86400	/* 24 hours */
 
 /* LDP message types */
