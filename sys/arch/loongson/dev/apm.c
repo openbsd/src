@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.14 2013/06/02 21:46:04 pirofti Exp $	*/
+/*	$OpenBSD: apm.c,v 1.15 2013/06/04 22:39:27 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -224,6 +224,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case APM_IOC_SUSPEND:
 	case APM_IOC_SUSPEND_REQ:
+	case APM_IOC_HIBERNATE:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else if (sys_platform->suspend == NULL ||
@@ -376,7 +377,7 @@ apm_suspend(int state)
 	rv = config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
 #ifdef HIBERNATE
-	if (state == APM_STANDBY_REQ) {
+	if (state == APM_SUSPEND_REQ) {
 		uvm_pmr_zero_everything();
 		if (hibernate_suspend()) {
 			printf("apm: hibernate_suspend failed");
