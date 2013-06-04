@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.17 2013/06/04 02:16:14 mpi Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.18 2013/06/04 02:20:18 mpi Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -53,19 +53,8 @@ struct vga_config {
 	u_int vc_mode;
 };
 
+int	vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
+
 void	vgafb_init(bus_space_tag_t, bus_space_tag_t,
 	    struct vga_config *, u_int32_t, size_t);
-void	vgafb_wscons_attach(struct device *, struct vga_config *, int);
-void	vgafb_wscons_console(struct vga_config *);
-int	vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 void	vgafb_wsdisplay_attach(struct device *, struct vga_config *, int);
-int	vgafbioctl(void *, u_long, caddr_t, int, struct proc *);
-paddr_t	vgafbmmap(void *, off_t, int);
-int	vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
-paddr_t	vgafb_mmap(void *, off_t, int);
-int	vgafb_alloc_screen(void *v, const struct wsscreen_descr *type,
-	    void **cookiep, int *curxp, int *curyp, long *attrp);
-void	vgafb_free_screen(void *v, void *cookie);
-int	vgafb_show_screen(void *v, void *cookie, int waitok,
-	    void (*cb)(void *, int, int), void *cbarg);
-void	vgafb_burn(void *v, u_int on, u_int flags);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.44 2013/06/04 02:16:14 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.45 2013/06/04 02:20:18 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -53,9 +53,16 @@ struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL,
 };
 
-void vgafb_setcolor(struct vga_config *vc, unsigned int index,
-		    u_int8_t r, u_int8_t g, u_int8_t b);
-void vgafb_restore_default_colors(struct vga_config *vc);
+int	vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	vgafb_mmap(void *, off_t, int);
+int	vgafb_alloc_screen(void *, const struct wsscreen_descr *, void **,
+	    int *, int *, long *);
+void	vgafb_free_screen(void *, void *);
+int	vgafb_show_screen(void *, void *, int, void (*cb)(void *, int, int),
+	    void *);
+void	vgafb_burn(void *v, u_int , u_int);
+void	vgafb_setcolor(struct vga_config *, u_int, uint8_t, uint8_t, uint8_t);
+void	vgafb_restore_default_colors(struct vga_config *);
 
 extern struct vga_config vgafbcn;
 
