@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.45 2013/06/04 02:20:18 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.46 2013/06/04 02:26:36 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -30,24 +30,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/buf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-
-#include <dev/cons.h>
-#include <dev/ofw/openfirm.h>
-#include <macppc/macppc/ofw_machdep.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-#include <dev/wsfont/wsfont.h>
 
+#include <dev/ofw/openfirm.h>
+#include <macppc/macppc/ofw_machdep.h>
 #include <macppc/pci/vgafbvar.h>
+
 
 struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL,
@@ -68,19 +62,19 @@ extern struct vga_config vgafbcn;
 
 struct wsscreen_descr vgafb_stdscreen = {
 	"std",
-	0, 0,   /* will be filled in -- XXX shouldn't, it's global */
+	0, 0,
 	0,
 	0, 0,
 	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
+
 const struct wsscreen_descr *vgafb_scrlist[] = {
 	&vgafb_stdscreen,
-	/* XXX other formats, graphics screen? */
 };
 
 struct wsscreen_list vgafb_screenlist = {
-	sizeof(vgafb_scrlist) / sizeof(struct wsscreen_descr *), vgafb_scrlist
+	nitems(vgafb_scrlist), vgafb_scrlist
 };
 
 struct wsdisplay_accessops vgafb_accessops = {
@@ -98,13 +92,9 @@ struct wsdisplay_accessops vgafb_accessops = {
 int	vgafb_getcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
 int	vgafb_putcmap(struct vga_config *vc, struct wsdisplay_cmap *cm);
 
-#define FONT_WIDTH 8
-#define FONT_HEIGHT 16
-
 #ifdef APERTURE
 extern int allowaperture;
 #endif
-
 
 void
 vgafb_init(bus_space_tag_t iot, bus_space_tag_t memt, struct vga_config *vc,
@@ -307,6 +297,10 @@ vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	if (cons_depth == 8)
 		vgafb_restore_default_colors(vc);
 
+	/* Clear the screen */
+	for (i = 0; i < cons_linebytes * cons_height; i++)
+		bus_space_write_1(memt,	vc->vc_memh, i, 0);
+
 	ri->ri_flg = RI_CENTER;
 	ri->ri_depth = cons_depth;
 	ri->ri_bits = (void *)vc->vc_memh;
@@ -315,11 +309,7 @@ vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	ri->ri_stride = cons_linebytes;
 	ri->ri_hw = vc;
 
-	/* Clear the screen */
-	for (i = 0; i < cons_linebytes * cons_height; i++)
-		bus_space_write_1(memt,	vc->vc_memh, i, 0);
-
-	rasops_init(ri, 160, 160);	/* XXX */
+	rasops_init(ri, 160, 160);
 
 	vgafb_stdscreen.nrows = ri->ri_rows;
 	vgafb_stdscreen.ncols = ri->ri_cols;

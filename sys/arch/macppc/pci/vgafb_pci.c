@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.30 2013/06/04 02:16:14 mpi Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.31 2013/06/04 02:26:36 mpi Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -30,14 +30,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/autoconf.h>
-#include <machine/pte.h>
-
-#include <dev/cons.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -45,7 +40,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-#include <dev/wsfont/wsfont.h>
 
 #include "drm.h"
 
@@ -64,8 +58,8 @@ void	vgafb_pci_attach(struct device *, struct device *, void *);
 void	vgafb_pci_mem_init(struct vga_pci_softc *, uint32_t *, uint32_t *,
 	    uint32_t *, uint32_t *);
 
-struct cfattach vgafb_pci_ca = {
-	sizeof(struct vga_pci_softc), (cfmatch_t)vgafb_pci_match, vgafb_pci_attach,
+const struct cfattach vgafb_pci_ca = {
+	sizeof(struct vga_pci_softc), vgafb_pci_match, vgafb_pci_attach,
 };
 
 pcitag_t vgafb_pci_console_tag;
