@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: dvmrpd,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: dvmrpd,v 1.2 2013/06/04 12:27:29 sthen Exp $
 
 daemon="/usr/sbin/dvmrpd"
 
 . /etc/rc.d/rc.subr
 
+pexp="dvmrpd: parent.*"
 rc_reload=NO
 
 rc_cmd $1
