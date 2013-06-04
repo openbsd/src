@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.1 2013/06/03 15:50:56 tedu Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.2 2013/06/04 20:52:54 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -82,7 +82,6 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 	fmp->mp = mp;
 	fmp->sess_init = 0;
 	fmp->dev = args.dev;
-	printf("fusefs: mount dev %i\n", fmp->dev);
 	mp->mnt_data = fmp;
 
 	mp->mnt_flag |= MNT_LOCAL;
