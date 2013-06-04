@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.679 2013/06/02 14:55:39 halex Exp $
+#	$OpenBSD: install.sub,v 1.680 2013/06/04 00:42:23 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1941,7 +1941,7 @@ finish_up() {
 
 	# In case this is a softraid device, make sure all underlying
 	# device nodes exist.
-	makedev $(bioctl $ROOTDISK | sed -n 's/.*<\(.*\)>$/\1/p')
+	makedev $(bioctl $ROOTDISK 2>/dev/null | sed -n 's/.*<\(.*\)>$/\1/p')
 	md_installboot $ROOTDISK
 
 	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
