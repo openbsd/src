@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.332 2013/06/04 09:41:50 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.333 2013/06/04 09:47:25 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2356,11 +2356,8 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Turn on send data completion state machine */
 	val = BGE_SDCMODE_ENABLE;
-
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761)
 		val |= BGE_SDCMODE_CDELAY;
-
-	/* Turn on send data completion state machine */
 	CSR_WRITE_4(sc, BGE_SDC_MODE, val);
 
 	/* Turn on send data initiator state machine */
@@ -3238,22 +3235,18 @@ bge_reset(struct bge_softc *sc)
 	 */
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI &&
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
-		u_int32_t serdescfg;
-
-		serdescfg = CSR_READ_4(sc, BGE_SERDES_CFG);
-		serdescfg = (serdescfg & ~0xFFF) | 0x880;
-		CSR_WRITE_4(sc, BGE_SERDES_CFG, serdescfg);
+		val = CSR_READ_4(sc, BGE_SERDES_CFG);
+		val = (val & ~0xFFF) | 0x880;
+		CSR_WRITE_4(sc, BGE_SERDES_CFG, val);
 	}
 
 	if (sc->bge_flags & BGE_PCIE &&
 	    !BGE_IS_5717_PLUS(sc) &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5750_A0 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785) {
-		u_int32_t v;
-
-		/* Enable PCI Express bug fix */
-		v = CSR_READ_4(sc, 0x7c00);
-		CSR_WRITE_4(sc, 0x7c00, v | (1<<25));
+		/* Enable Data FIFO protection. */
+		val = CSR_READ_4(sc, 0x7c00);
+		CSR_WRITE_4(sc, 0x7c00, val | (1<<25));
 	}
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5720)
