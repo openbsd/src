@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.13 2013/06/04 02:25:28 claudio Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.14 2013/06/04 06:41:35 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -41,7 +41,7 @@ Global settings for
 .Xr ldpd 8 .
 .It Sy Interfaces Configuration
 Interface-specific parameters.
-.It Sy Targeted neighbors Configuration
+.It Sy Targeted Neighbors Configuration
 Targeted neighbor specific parameters.
 .El
 .Sh MACROS
@@ -168,7 +168,6 @@ The maximum time
 will wait between two consecutive hello messages from a peer before it is
 marked as being down.
 The default value is 45.
-.Pp
 .It Ic targeted-hello-interval Ar seconds
 Set the hello interval in seconds.
 The default value is 5; valid range is 1\-65535.
