@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.47 2013/05/06 04:32:12 dlg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.48 2013/06/04 15:29:16 haesbaert Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -217,6 +217,8 @@ intelcore_update_sensor(void *args)
 void (*setperf_setup)(struct cpu_info *);
 
 void via_nano_setup(struct cpu_info *ci);
+
+void cpu_topology(struct cpu_info *ci);
 
 void
 via_nano_setup(struct cpu_info *ci)
@@ -575,4 +577,127 @@ identifycpu(struct cpu_info *ci)
 		sensordev_install(&ci->ci_sensordev);
 #endif
 	}
+
+	cpu_topology(ci);
+}
+
+#ifndef SMALL_KERNEL
+/*
+ * Base 2 logarithm of an int. returns 0 for 0 (yeye, I know).
+ */
+static int
+log2(unsigned int i)
+{
+	int ret = 0;
+
+	while (i >>= 1)
+		ret++;
+
+	return (ret);
+}
+
+static int
+mask_width(u_int x)
+{
+	int bit;
+	int mask;
+	int powerof2;
+
+	powerof2 = ((x - 1) & x) == 0;
+	mask = (x << (1 - powerof2)) - 1;
+
+	/* fls */
+	if (mask == 0)
+		return (0);
+	for (bit = 1; mask != 1; bit++)
+		mask = (unsigned int)mask >> 1;
+
+	return (bit);
+}
+#endif
+
+/*
+ * Build up cpu topology for given cpu, must run on the core itself.
+ */
+void
+cpu_topology(struct cpu_info *ci)
+{
+#ifndef SMALL_KERNEL
+	u_int32_t eax, ebx, ecx, edx;
+	u_int32_t apicid, max_apicid, max_coreid;
+	u_int32_t smt_bits, core_bits, pkg_bits;
+	u_int32_t smt_mask, core_mask, pkg_mask;
+
+	/* We need at least apicid at CPUID 1 */
+	CPUID(0, eax, ebx, ecx, edx);
+	if (eax < 1)
+		goto no_topology;
+
+	/* Initial apicid */
+	CPUID(1, eax, ebx, ecx, edx);
+	apicid = (ebx >> 24) & 0xff;
+
+	if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+		/* We need at least apicid at CPUID 0x80000008 */
+		CPUID(0x80000000, eax, ebx, ecx, edx);
+		if (eax < 0x80000008)
+			goto no_topology;
+
+		CPUID(0x80000008, eax, ebx, ecx, edx);
+		core_bits = (ecx >> 12) & 0xf;
+		if (core_bits == 0)
+			goto no_topology;
+		/* So coreidsize 2 gives 3, 3 gives 7... */
+		core_mask = (1 << core_bits) - 1;
+		/* Core id is the least significant considering mask */
+		ci->ci_core_id = apicid & core_mask;
+		/* Pkg id is the upper remaining bits */
+		ci->ci_pkg_id = apicid & ~core_mask;
+		ci->ci_pkg_id >>= core_bits;
+	} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+		/* We only support leaf 1/4 detection */
+		CPUID(0, eax, ebx, ecx, edx);
+		if (eax < 4)
+			goto no_topology;
+		/* Get max_apicid */
+		CPUID(1, eax, ebx, ecx, edx);
+		max_apicid = (ebx >> 16) & 0xff;
+		/* Get max_coreid */
+		CPUID_LEAF(4, 0, eax, ebx, ecx, edx);
+		max_coreid = ((eax >> 26) & 0x3f) + 1;
+		/* SMT */
+		smt_bits = mask_width(max_apicid / max_coreid);
+		smt_mask = (1 << smt_bits) - 1;
+		/* Core */
+		core_bits = log2(max_coreid);
+		core_mask = (1 << (core_bits + smt_bits)) - 1;
+		core_mask ^= smt_mask;
+		/* Pkg */
+		pkg_bits = core_bits + smt_bits;
+		pkg_mask = -1 << core_bits;
+
+		ci->ci_smt_id = apicid & smt_mask;
+		ci->ci_core_id = (apicid & core_mask) >> smt_bits;
+		ci->ci_pkg_id = (apicid & pkg_mask) >> pkg_bits;
+	} else
+		goto no_topology;
+#ifdef DEBUG
+	printf("cpu%d: smt %u, core %u, pkg %u "
+		"(apicid 0x%x, max_apicid 0x%x, max_coreid 0x%x, smt_bits 0x%x, smt_mask 0x%x, "
+		"core_bits 0x%x, core_mask 0x%x, pkg_bits 0x%x, pkg_mask 0x%x)\n",
+		ci->ci_cpuid, ci->ci_smt_id, ci->ci_core_id, ci->ci_pkg_id,
+		apicid, max_apicid, max_coreid, smt_bits, smt_mask, core_bits,
+		core_mask, pkg_bits, pkg_mask);
+#else
+	printf("cpu%d: smt %u, core %u, package %u\n", ci->ci_cpuid,
+		ci->ci_smt_id, ci->ci_core_id, ci->ci_pkg_id);
+
+#endif
+	return;
+	/* We can't map, so consider ci_core_id as ci_cpuid */
+no_topology:
+#endif
+	ci->ci_smt_id  = 0;
+	ci->ci_core_id = ci->ci_cpuid;
+	ci->ci_pkg_id  = 0;
 }

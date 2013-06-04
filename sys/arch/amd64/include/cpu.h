@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.80 2013/03/31 17:07:02 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.81 2013/06/04 15:29:16 haesbaert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -104,6 +104,11 @@ struct cpu_info {
 	u_int32_t	ci_model;
 	u_int32_t	ci_cflushsz;
 	u_int64_t	ci_tsc_freq;
+
+#define ARCH_HAVE_CPU_TOPOLOGY
+	u_int32_t	ci_smt_id;
+	u_int32_t	ci_core_id;
+	u_int32_t	ci_pkg_id;
 
 	struct cpu_functions *ci_func;
 	void (*cpu_setup)(struct cpu_info *);
