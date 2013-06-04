@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.330 2013/05/31 14:27:20 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.331 2013/06/04 09:36:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3156,12 +3156,12 @@ bge_reset(struct bge_softc *sc)
 		devctl = pci_conf_read(pa->pa_pc, pa->pa_tag, sc->bge_expcap +
 		    PCI_PCIE_DCSR);
 		/* Clear enable no snoop and disable relaxed ordering. */
-		devctl &= ~(0x10 | 0x800);
+		devctl &= ~(PCI_PCIE_DCSR_ERO | PCI_PCIE_DCSR_ENS);
 		/* Set PCI Express max payload size. */
-		devctl &= ~0x7000;
-		devctl |= sc->bge_expmrq;
+		devctl = (devctl & ~PCI_PCIE_DCSR_MPS) | sc->bge_expmrq;
 		/* Clear error status. */
-		devctl |= 0xf0000;
+		devctl |= PCI_PCIE_DCSR_CED | PCI_PCIE_DCSR_NED |
+		    PCI_PCIE_DCSR_FED | PCI_PCIE_DCSR_URD;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, sc->bge_expcap +
 		    PCI_PCIE_DCSR, devctl);
 	}
