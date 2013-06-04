@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.5 2012/12/23 00:50:44 halex Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.6 2013/06/04 18:49:12 mcbride Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -43,6 +43,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "yubikey.h"
 
@@ -183,14 +184,7 @@ yubikey_login(const char *username, const char *password)
 	FILE *f;
 	yubikey_token_st tok;
 	u_int32_t last_ctr = 0, ctr;
-
-	if (strlen(password) > 32)
-		password = password + strlen(password) - 32;
-	if (strlen(password) != 32) {
-		syslog(LOG_INFO, "user %s: password len %zu != 32",
-		    username, strlen(password));
-		return (AUTH_FAILED);
-	}
+	int r, i = 0, mapok = 0, crcok = 0;
 
 	snprintf(fn, sizeof(fn), "%s/%s.uid", path, username);
 	if ((f = fopen(fn, "r")) == NULL) {
@@ -229,22 +223,54 @@ yubikey_login(const char *username, const char *password)
 
 	yubikey_hex_decode(uid, hexuid, YUBIKEY_UID_SIZE);
 	yubikey_hex_decode(key, hexkey, YUBIKEY_KEY_SIZE);
-	yubikey_parse((uint8_t *)password, (uint8_t *)key, &tok);
-	if (!yubikey_crc_ok_p((uint8_t *)&tok)) {
-		syslog(LOG_DEBUG, "user %s: crc %04x failed: %s",
-		    username, tok.crc, password);
-		return (AUTH_FAILED);
-	}
-	syslog(LOG_DEBUG, "user %s: crc %04x ok", username, tok.crc);
 
-	if (memcmp(tok.uid, uid, YUBIKEY_UID_SIZE)) {
-		char h[13];
+	/* 
+	 * Cycle through the key mapping table.
+         * XXX brute force, unoptimized; a lookup table for valid mappings may
+	 * be appropriate.
+	 */
+	while (1) {
+		r = yubikey_parse((uint8_t *)password, (uint8_t *)key, &tok, i++);
+		switch (r) {
+		case EMSGSIZE:
+			syslog(LOG_INFO, "user %s failed: password %s: %s",
+			    username, password, "too short.");
+			return (AUTH_FAILED);
+		case EINVAL: 	/* keyboard mapping invalid */
+			continue;
+		case 0:		/* found a valid keyboard mapping */
+			mapok++;
+			if (!yubikey_crc_ok_p((uint8_t *)&tok))
+				continue;	/* try another one */
+			crcok++;
+			syslog(LOG_DEBUG, "user %s: crc %04x ok",
+			    username, tok.crc);
 
-		yubikey_hex_encode(h, (const char *)tok.uid, YUBIKEY_UID_SIZE);
-		syslog(LOG_INFO, "user %s: uid %s != %s", username, h, hexuid);
-		return (AUTH_FAILED);
+			if (memcmp(tok.uid, uid, YUBIKEY_UID_SIZE)) {
+				char h[13];
+
+				yubikey_hex_encode(h, (const char *)tok.uid,
+				    YUBIKEY_UID_SIZE);
+				syslog(LOG_DEBUG, "user %s: uid %s != %s",
+				    username, h, hexuid);
+				continue;	/* try another one */
+			}
+			break; /* uid matches */
+		case -1:
+			syslog(LOG_INFO, "user %s: %p could not decode "
+			    "with any keymap (%d crc ok)",
+			    username, password, crcok);
+			return (AUTH_FAILED);
+		default: 
+			syslog(LOG_DEBUG, "user %s failed: %s: %s",
+			    username, password, strerror(r));
+			return (AUTH_FAILED);
+		}
+		break; /* only reached through the bottom of case 0 */
 	}
-	syslog(LOG_DEBUG, "user %s: uid %s matches", username, hexuid);
+
+	syslog(LOG_INFO, "user %s uid %s: %d matching keymaps (%d checked), "
+	    "%d crc ok", username, hexuid, mapok, i, crcok);
 
 	ctr = ((u_int32_t)yubikey_counter(tok.ctr) << 8) | tok.use;
 	if (ctr <= last_ctr) {

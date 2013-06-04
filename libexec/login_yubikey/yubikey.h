@@ -1,4 +1,4 @@
-/* $OpenBSD: yubikey.h,v 1.2 2012/01/31 16:58:38 sobrado Exp $ */
+/* $OpenBSD: yubikey.h,v 1.3 2013/06/04 18:49:12 mcbride Exp $ */
 
 /*
  * Written by Simon Josefsson <simon@josefsson.org>.
@@ -40,6 +40,7 @@
 
 #define	YUBIKEY_BLOCK_SIZE	16
 #define	YUBIKEY_KEY_SIZE	16
+#define	YUBIKEY_TOKEN_SIZE	32
 #define	YUBIKEY_UID_SIZE	6
 #define YUBIKEY_CRC_OK_RESIDUE	0xf0b8
 
@@ -60,8 +61,8 @@ typedef struct {
 
 typedef yubikey_token_st *yubikey_token_t;
 
-extern void yubikey_parse(const uint8_t token[YUBIKEY_BLOCK_SIZE],
-    const uint8_t key[YUBIKEY_KEY_SIZE], yubikey_token_t out);
+extern int yubikey_parse(const uint8_t token[YUBIKEY_BLOCK_SIZE],
+    const uint8_t key[YUBIKEY_KEY_SIZE], yubikey_token_t out, int index);
 
 extern void yubikey_modhex_decode(char *dst, const char *src, size_t dstsize);
 

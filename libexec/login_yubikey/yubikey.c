@@ -1,4 +1,4 @@
-/* $OpenBSD: yubikey.c,v 1.3 2012/11/23 23:53:54 halex Exp $ */
+/* $OpenBSD: yubikey.c,v 1.4 2013/06/04 18:49:12 mcbride Exp $ */
 
 /*
  * Written by Simon Josefsson <simon@josefsson.org>.
@@ -33,8 +33,13 @@
  */
 
 #include <ctype.h>
+#include <stdlib.h>
+#include <wchar.h>
+#include <locale.h>
+#include <errno.h>
 
 #include "yubikey.h"
+#include "keymaps.h"
 
 static const uint8_t RC[] = {
 	0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
@@ -299,11 +304,60 @@ yubikey_modhex_decode(char *dst, const char *src, size_t dstSize)
 		*dst++ = 0;
 }
 
-void
-yubikey_parse(const uint8_t token[32], const uint8_t key[16],
-    yubikey_token_t out)
+uint8_t
+yubikey_keymap_decode(wchar_t *wpassword, char *token, int index)
 {
+	int c, j, found;
+	for (j=0; j<YUBIKEY_TOKEN_SIZE; j++) {
+		found = 0;
+		for (c=0; c<16; c++) {
+			if (wpassword[j] == keymaps[index][c]) {
+				token[j] = modhex_trans[c];
+				found++;
+				break;
+			}
+		}
+		if (found == 0)
+			return 1;
+	}
+	return 0;
+}
+
+int
+yubikey_parse(const uint8_t *password, const uint8_t key[YUBIKEY_KEY_SIZE],
+    yubikey_token_t out, int index)
+{
+	wchar_t *wpassword, *pp;
+	char token[YUBIKEY_TOKEN_SIZE + 1], *lc_ctype;
+	int len;
+
+	if (index < 0 || index >= YUBIKEY_KEYMAP_COUNT)
+		return -1;
+
+	len = strlen(password);
+	pp = wpassword = malloc(sizeof(wchar_t) * (len + 1));
+	if (pp == NULL)
+		return ENOMEM;
+	
 	memset(out, 0, sizeof(*out));
-	yubikey_modhex_decode((void *)out, (char *)token, sizeof(*out));
+	memset(token, 0, YUBIKEY_TOKEN_SIZE + 1);
+
+	lc_ctype = getenv("LC_CTYPE");
+	setlocale(LC_CTYPE, lc_ctype ? lc_ctype : "C.UTF-8");
+	len = mbstowcs(wpassword, password, len);
+	if (len < 0) {
+		return errno;
+	}
+	setlocale(LC_CTYPE, "C");
+
+	if (len > YUBIKEY_TOKEN_SIZE)
+		pp = pp + len - YUBIKEY_TOKEN_SIZE;
+	if (len < YUBIKEY_TOKEN_SIZE)
+		return EMSGSIZE;
+	
+	if (yubikey_keymap_decode(pp, token, index))
+		return EINVAL;
+	yubikey_modhex_decode((void *)out, token, sizeof(*out));
 	yubikey_aes_decrypt((void *)out, key);
+	return 0;
 }
