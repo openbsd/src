@@ -1657,6 +1657,7 @@
 ./usr/share/man/man4/fms.4
 ./usr/share/man/man4/fpa.4
 ./usr/share/man/man4/fta.4
+./usr/share/man/man4/fuse.4
 ./usr/share/man/man4/fxp.4
 ./usr/share/man/man4/gcu.4
 ./usr/share/man/man4/gdt.4

@@ -1008,6 +1008,9 @@
 ./usr/include/miscfs
 ./usr/include/miscfs/fifofs
 ./usr/include/miscfs/fifofs/fifo.h
+./usr/include/miscfs/fuse
+./usr/include/miscfs/fuse/fusefs.h
+./usr/include/miscfs/fuse/fusefs_node.h
 ./usr/include/miscfs/procfs
 ./usr/include/miscfs/procfs/procfs.h
 ./usr/include/mpool.h
@@ -1412,6 +1415,7 @@
 ./usr/include/sys/file.h
 ./usr/include/sys/filedesc.h
 ./usr/include/sys/filio.h
+./usr/include/sys/fusebuf.h
 ./usr/include/sys/gmon.h
 ./usr/include/sys/gpio.h
 ./usr/include/sys/hash.h
@@ -3242,6 +3246,7 @@
 ./usr/share/man/man3/bcopy.3
 ./usr/share/man/man3/bcrypt.3
 ./usr/share/man/man3/bcrypt_gensalt.3
+./usr/share/man/man3/bcrypt_pbkdf.3
 ./usr/share/man/man3/beep.3
 ./usr/share/man/man3/betoh16.3
 ./usr/share/man/man3/betoh32.3
@@ -6528,6 +6533,7 @@
 ./usr/share/man/man9/file.9
 ./usr/share/man/man9/fork1.9
 ./usr/share/man/man9/free.9
+./usr/share/man/man9/fusebuf.9
 ./usr/share/man/man9/getblk.9
 ./usr/share/man/man9/getdevvp.9
 ./usr/share/man/man9/geteblk.9

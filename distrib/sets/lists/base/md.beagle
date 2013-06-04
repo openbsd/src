@@ -64,7 +64,7 @@
 ./usr/lib/libtermcap.so.12.1
 ./usr/lib/libtermlib.so.12.1
 ./usr/lib/libusbhid.so.5.0
-./usr/lib/libutil.so.11.4
+./usr/lib/libutil.so.11.5
 ./usr/lib/libwrap.so.4.0
 ./usr/lib/libz.so.4.1
 ./usr/libdata/perl5/arm-openbsd
@@ -1751,6 +1751,9 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs/fifo.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fuse
+./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fuse/fusefs.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fuse/fusefs_node.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/mmintrin.ph
@@ -2143,6 +2146,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/file.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/filedesc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/filio.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/fusebuf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/gmon.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/hash.ph
