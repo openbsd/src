@@ -48,8 +48,8 @@ struct test tests[] = {
 	"\x0d\xb3\xac\x94\xb3\xee\x53\x28\x4f\x4a\x22\x89\x3b\x3c\x24\xae"
 	},
 	/* longer password */
-	{ 8, 445,
-	"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do"
+	{ 8, 446,
+	"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do "
 	"eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut "
 	"enim ad minim veniam, quis nostrud exercitation ullamco laboris "
 	"nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor "
@@ -57,7 +57,7 @@ struct test tests[] = {
 	"nulla pariatur. Excepteur sint occaecat cupidatat non proident, "
 	"sunt in culpa qui officia deserunt mollit anim id est laborum.",
 	6, "salis", 16,
-	"\x3a\x62\xf0\xf0\xdb\xce\xf8\x23\xcf\xcc\x85\x48\x56\xea\x10\x28"
+	"\xf5\xfc\xa8\x06\x4e\x92\xf5\xf0\x37\xd7\x7e\x05\xb7\x80\x2f\x96"
 	},
 	/* "unicode" */
 	{ 8,
