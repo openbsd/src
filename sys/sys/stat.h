@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.21 2012/12/05 23:20:24 deraadt Exp $	*/
+/*	$OpenBSD: stat.h,v 1.22 2013/06/04 02:23:56 guenther Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -141,6 +141,13 @@ struct stat {
 #if __POSIX_VISIBLE >= 200112 || __BSD_VISIBLE
 #define	S_ISLNK(m)	((m & 0170000) == 0120000)	/* symbolic link */
 #define	S_ISSOCK(m)	((m & 0170000) == 0140000)	/* socket */
+#endif
+
+#if __POSIX_VISIBLE >= 200809
+/* manadated to be present, but permitted to always return zero */
+#define	S_TYPEISMQ(m)	0
+#define	S_TYPEISSEM(m)	0
+#define	S_TYPEISSHM(m)	0
 #endif
 
 #if __BSD_VISIBLE
