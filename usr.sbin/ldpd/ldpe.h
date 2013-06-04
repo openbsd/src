@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.25 2013/06/04 02:25:28 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.26 2013/06/04 02:28:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -77,11 +77,6 @@ struct nbr {
 	int			 idtimer_cnt;
 
 	u_int16_t		 keepalive;
-
-	u_int8_t		 priority;
-	u_int8_t		 options;
-
-	u_int8_t		 flags;
 };
 
 struct mapping_entry {

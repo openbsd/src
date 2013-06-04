@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.40 2013/06/04 02:25:28 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.41 2013/06/04 02:28:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -210,20 +210,16 @@ struct iface {
 	LIST_HEAD(, if_addr)	 addr_list;
 	LIST_HEAD(, adj)	 adj_list;
 
-	u_int64_t		 baudrate;
 	time_t			 uptime;
 	unsigned int		 ifindex;
 	int			 discovery_fd;
-	int			 session_fd;
 	int			 state;
-	int			 mtu;
 	u_int16_t		 hello_holdtime;
 	u_int16_t		 hello_interval;
 	u_int16_t		 flags;
 	enum iface_type		 type;
 	u_int8_t		 media_type;
 	u_int8_t		 linkstate;
-	u_int8_t		 priority;
 };
 
 /* source of targeted hellos */
@@ -319,28 +315,16 @@ struct kif {
 /* control data structures */
 struct ctl_iface {
 	char			 name[IF_NAMESIZE];
-	struct in_addr		 addr;
-	struct in_addr		 mask;
-	struct in_addr		 rtr_id;
-	struct in_addr		 dr_id;
-	struct in_addr		 dr_addr;
-	struct in_addr		 bdr_id;
-	struct in_addr		 bdr_addr;
-	time_t			 hello_timer;
 	time_t			 uptime;
-	u_int64_t		 baudrate;
 	unsigned int		 ifindex;
 	int			 state;
-	int			 mtu;
-	int			 nbr_cnt;
-	int			 adj_cnt;
+	u_int16_t		 adj_cnt;
 	u_int16_t		 flags;
-	u_int16_t		 holdtime;
+	u_int16_t		 hello_holdtime;
 	u_int16_t		 hello_interval;
 	enum iface_type		 type;
 	u_int8_t		 linkstate;
 	u_int8_t		 mediatype;
-	u_int8_t		 priority;
 };
 
 struct ctl_adj {
@@ -354,16 +338,8 @@ struct ctl_adj {
 struct ctl_nbr {
 	struct in_addr		 id;
 	struct in_addr		 addr;
-	struct in_addr		 dr;
-	struct in_addr		 bdr;
 	time_t			 uptime;
-	u_int32_t		 db_sum_lst_cnt;
-	u_int32_t		 ls_req_lst_cnt;
-	u_int32_t		 ls_retrans_lst_cnt;
-	u_int32_t		 state_chng_cnt;
 	int			 nbr_state;
-	u_int8_t		 priority;
-	u_int8_t		 options;
 };
 
 struct ctl_rt {
