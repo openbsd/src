@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.2 2013/06/03 16:22:08 tedu Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.3 2013/06/04 18:25:09 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -20,13 +20,11 @@
 #define _SYS_FUSEBUF_H_
 
 /*
- * Fusebufs are of a single size, PAGE_SIZE, and cannot be bigger.This
- * restriction is due to the fact that we allocate the fusebuf(9) with
- * pool_get(9) and that it does not support size >= to PAGE_SIZE
+ * Fusebufs are of a single size, 4096 bytes.
  */
-
-#define FUSEFDSIZE	sizeof(((struct fusebuf *)0)->F_dat.FD)
-#define FUSELEN		(PAGE_SIZE - sizeof(struct fb_hdr) - sizeof(union uFD))
+#define	FUSEBUFSIZE	4096
+#define	FUSEFDSIZE	sizeof(((struct fusebuf *)0)->F_dat.FD)
+#define	FUSELEN	(FUSEBUFSIZE - sizeof(struct fb_hdr) - sizeof(union uFD))
 
 /* header at beginning of each fusebuf(9): */
 struct fb_hdr {
