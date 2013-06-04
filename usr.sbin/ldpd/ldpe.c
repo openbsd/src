@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.18 2013/06/03 16:53:49 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.19 2013/06/04 00:41:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -331,9 +331,9 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			if ((if_addr = calloc(1, sizeof(*if_addr))) == NULL)
 				fatal("ldpe_dispatch_main");
 
-			if_addr->addr = kaddr->addr;
-			if_addr->mask = kaddr->mask;
-			if_addr->dstbrd = kaddr->dstbrd;
+			if_addr->addr.s_addr = kaddr->addr.s_addr;
+			if_addr->mask.s_addr = kaddr->mask.s_addr;
+			if_addr->dstbrd.s_addr = kaddr->dstbrd.s_addr;
 
 			LIST_INSERT_HEAD(&leconf->addr_list, if_addr,
 			    global_entry);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.11 2013/06/03 16:53:49 claudio Exp $ */
+/*	$OpenBSD: address.c,v 1.12 2013/06/04 00:41:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -163,7 +163,7 @@ gen_address_list_tlv(struct ibuf *buf, struct if_addr *if_addr,
 }
 
 void
-send_address_withdraw(struct nbr *nbr,  struct if_addr *if_addr)
+send_address_withdraw(struct nbr *nbr, struct if_addr *if_addr)
 {
 	struct ibuf	*buf;
 	u_int16_t	 size;

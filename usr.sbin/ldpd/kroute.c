@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.28 2013/06/03 16:56:47 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.29 2013/06/04 00:41:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -894,13 +894,13 @@ if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 	if ((ka = calloc(1, sizeof(struct kif_addr))) == NULL)
 		fatal("if_newaddr");
 	ka->addr.ifindex = ifindex;
-	ka->addr.addr = ifa->sin_addr;
+	ka->addr.addr.s_addr = ifa->sin_addr.s_addr;
 	if (mask)
-		ka->addr.mask = mask->sin_addr;
+		ka->addr.mask.s_addr = mask->sin_addr.s_addr;
 	else
 		ka->addr.mask.s_addr = INADDR_NONE;
 	if (brd)
-		ka->addr.dstbrd = brd->sin_addr;
+		ka->addr.dstbrd.s_addr = brd->sin_addr.s_addr;
 	else
 		ka->addr.dstbrd.s_addr = INADDR_NONE;
 

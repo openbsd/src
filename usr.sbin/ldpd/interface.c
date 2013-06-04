@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.15 2013/06/03 17:01:59 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.16 2013/06/04 00:41:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -243,20 +243,12 @@ if_act_start(struct iface *iface)
 	struct in_addr		 addr;
 	struct timeval		 now;
 
-	if (!((iface->flags & IFF_UP) &&
-	    LINK_STATE_IS_UP(iface->linkstate))) {
-		log_debug("if_act_start: interface %s link down",
-		    iface->name);
-		return (0);
-	}
-
 	gettimeofday(&now, NULL);
 	iface->uptime = now.tv_sec;
 
 	inet_aton(AllRouters, &addr);
 	if (if_join_group(iface, &addr))
 		return (-1);
-	iface->state = IF_STA_ACTIVE;
 
 	/* hello timer needs to be started in any case */
 	if_start_hello_timer(iface);
