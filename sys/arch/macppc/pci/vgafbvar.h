@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.16 2013/06/03 23:28:43 mpi Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.17 2013/06/04 02:16:14 mpi Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -32,18 +32,13 @@ struct vga_config {
 	/*
 	 * Filled in by front-ends.
 	 */
-	bus_space_tag_t	vc_iot, vc_memt;
-	bus_space_handle_t vc_memh, vc_mmioh;
-	paddr_t		vc_paddr; /* physical address */
+	bus_space_tag_t		vc_memt;
+	bus_space_handle_t	vc_memh;
+
 	/* Colormap */
 	u_char vc_cmap_red[256];
 	u_char vc_cmap_green[256];
 	u_char vc_cmap_blue[256];
-
-
-	int	(*vc_ioctl)(void *, u_long,
-		    caddr_t, int, struct proc *);
-	paddr_t	(*vc_mmap)(void *, off_t, int);
 
 	struct rasops_info	ri;
 
@@ -59,7 +54,7 @@ struct vga_config {
 };
 
 void	vgafb_init(bus_space_tag_t, bus_space_tag_t,
-	    struct vga_config *, u_int32_t, size_t, u_int32_t, size_t);
+	    struct vga_config *, u_int32_t, size_t);
 void	vgafb_wscons_attach(struct device *, struct vga_config *, int);
 void	vgafb_wscons_console(struct vga_config *);
 int	vgafb_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);

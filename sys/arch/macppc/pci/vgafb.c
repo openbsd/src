@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.43 2013/06/04 02:09:00 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.44 2013/06/04 02:16:14 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -101,25 +101,15 @@ extern int allowaperture;
 
 void
 vgafb_init(bus_space_tag_t iot, bus_space_tag_t memt, struct vga_config *vc,
-    u_int32_t  membase, size_t memsize, u_int32_t mmiobase, size_t mmiosize)
+    u_int32_t  membase, size_t memsize)
 {
-	vc->vc_iot = iot;
 	vc->vc_memt = memt;
-	vc->vc_paddr = membase;
+	vc->membase = membase;
+	vc->memsize = memsize;
 
-	if (mmiosize != 0)
-	       if (bus_space_map(vc->vc_memt, mmiobase, mmiosize, 0,
-		   &vc->vc_mmioh))
-			panic("vgafb_init: couldn't map mmio");
-
-	/* memsize should only be visible region for console */
-	memsize = cons_height * cons_linebytes;
 	if (bus_space_map(vc->vc_memt, membase, memsize,
 	    /* XXX */ppc_proc_is_64b ? 0 : 1, &vc->vc_memh))
 		panic("vgafb_init: can't map mem space");
-
-	if (cons_depth == 8)
-		vgafb_restore_default_colors(vc);
 }
 
 void
@@ -283,13 +273,13 @@ vgafb_mmap(void *v, off_t off, int prot)
 		if (off >= vc->membase && off < (vc->membase + vc->memsize))
 			return (off);
 
-		 if (off >= vc->mmiobase && off < (vc->mmiobase+vc->mmiosize))
+		if (off >= vc->mmiobase && off < (vc->mmiobase + vc->mmiosize))
 			return (off);
 		break;
 
 	case WSDISPLAYIO_MODE_DUMBFB:
 		if (off >= 0x00000 && off < vc->memsize)
-			return (vc->vc_paddr + off);
+			return (vc->membase + off);
 		break;
 
 	}
@@ -305,7 +295,10 @@ vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	long defattr;
 	int i;
 
-	vgafb_init(iot, memt, vc, cons_addr, cons_linebytes * cons_height,0, 0);
+	vgafb_init(iot, memt, vc, cons_addr, cons_linebytes * cons_height);
+
+	if (cons_depth == 8)
+		vgafb_restore_default_colors(vc);
 
 	ri->ri_flg = RI_CENTER;
 	ri->ri_depth = cons_depth;
