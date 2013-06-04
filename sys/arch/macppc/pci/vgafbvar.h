@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.18 2013/06/04 02:20:18 mpi Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.19 2013/06/04 02:29:32 mpi Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -49,7 +49,6 @@ struct vga_config {
 	bus_size_t	mmiosize;
 
 	int vc_backlight_on;
-	int nscreens;
 	u_int vc_mode;
 };
 

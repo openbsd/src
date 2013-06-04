@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.46 2013/06/04 02:26:36 mpi Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.47 2013/06/04 02:29:32 mpi Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -127,6 +127,19 @@ vgafb_wsdisplay_attach(struct device *parent, struct vga_config *vc,
     int console)
 {
 	struct wsemuldisplaydev_attach_args aa;
+
+	/* Setup virtual console now that we can allocate resources. */
+	if (console) {
+		struct rasops_info *ri = &vc->ri;
+		long defattr;
+
+		ri->ri_flg |= RI_VCONS;
+		rasops_init(ri, 160, 160);
+
+		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		wsdisplay_cnattach(&vgafb_stdscreen, ri->ri_active,
+		    0, 0, defattr);
+	}
 
 	aa.console = console;
 	aa.scrdata = &vgafb_screenlist;
@@ -318,7 +331,6 @@ vgafb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 
 	wsdisplay_cnattach(&vgafb_stdscreen, ri, 0, 0, defattr);
-	vc->nscreens++;
 
 	return (0);
 }
@@ -424,32 +436,27 @@ vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct vga_config *vc = v;
 	struct rasops_info *ri = &vc->ri;
 
-	if (vc->nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = ri;
-	*curxp = 0;
-	*curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
-	vc->nscreens++;
-
-	return (0);
+	return rasops_alloc_screen(ri, cookiep, curxp, curyp, attrp);
 }
 
 void
 vgafb_free_screen(void *v, void *cookie)
 {
 	struct vga_config *vc = v;
+	struct rasops_info *ri = &vc->ri;
 
-	if (vc == &vgafbcn)
-		panic("vgafb_free_screen: console");
-
-	vc->nscreens--;
+	return rasops_free_screen(ri, cookie);
 }
 
 int
 vgafb_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
-	return (0);
+	struct vga_config *vc = v;
+	struct rasops_info *ri = &vc->ri;
+
+	if (cookie == ri->ri_active)
+		return (0);
+
+	return rasops_show_screen(ri, cookie, waitok, cb, cbarg);
 }
