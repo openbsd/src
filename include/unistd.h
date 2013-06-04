@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.77 2013/04/15 16:38:21 matthew Exp $ */
+/*	$OpenBSD: unistd.h,v 1.78 2013/06/04 23:01:07 brad Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@
 #define _POSIX_REGEXP				1
 #define _POSIX_SAVED_IDS			1
 #define _POSIX_SEMAPHORES			200112L
-#define _POSIX_SHARED_MEMORY_OBJECTS		(-1)
+#define _POSIX_SHARED_MEMORY_OBJECTS		200809L
 #define _POSIX_SHELL				1
 #define _POSIX_SPAWN				200112L
 #define _POSIX_SPIN_LOCKS			200112L
