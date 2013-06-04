@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs.h,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
+/*	$OpenBSD: tmpfs.h,v 1.3 2013/06/04 09:11:40 espie Exp $	*/
 /*	$NetBSD: tmpfs.h,v 1.45 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _FS_TMPFS_TMPFS_H_
-#define _FS_TMPFS_TMPFS_H_
+#ifndef _TMPFS_TMPFS_H_
+#define _TMPFS_TMPFS_H_
 
 #if !defined(_KERNEL) && !defined(_KMEMUSER)
 #error "not supposed to be exposed to userland"
@@ -381,4 +381,4 @@ VP_TO_TMPFS_NODE(struct vnode *vp)
 	return node;
 }
 
-#endif /* _FS_TMPFS_TMPFS_H_ */
+#endif /* _TMPFS_TMPFS_H_ */
