@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.37 2013/06/04 02:34:48 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.38 2013/06/04 02:39:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -466,6 +466,7 @@ nbr_establish_connection(struct nbr *nbr)
 {
 	struct sockaddr_in	local_sa;
 	struct sockaddr_in	remote_sa;
+	struct adj		*adj;
 
 	nbr->fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (nbr->fd == -1) {
@@ -493,6 +494,14 @@ nbr_establish_connection(struct nbr *nbr)
 	remote_sa.sin_family = AF_INET;
 	remote_sa.sin_port = htons(LDP_PORT);
 	remote_sa.sin_addr.s_addr = nbr->addr.s_addr;
+
+	/*
+	 * Send an extra hello to guarantee that the remote peer has formed
+	 * an adjacency as well.
+	 */
+	LIST_FOREACH(adj, &nbr->adj_list, nbr_entry)
+		send_hello(adj->source.type, adj->source.link.iface,
+		    adj->source.target);
 
 	if (connect(nbr->fd, (struct sockaddr *)&remote_sa,
 	    sizeof(remote_sa)) == -1) {
