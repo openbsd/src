@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.28 2012/06/26 21:37:59 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.29 2013/06/04 21:14:28 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ header(void)
 	if (ISSET(todo, SHOW_STATS_2))
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i]) {
-			(void)printf("   KB xfr time ");
+			(void)printf("     KB  xfr time ");
 		}
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf(" us ni sy in id");
@@ -291,7 +291,7 @@ disk_stats2(double etime)
 			continue;
 
 		/* average kbytes per second. */
-		(void)printf(" %4.0f",
+		(void)printf(" %6.0f",
 		    (cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / (1024.0) / etime);
 
 		/* average transfers per second. */
