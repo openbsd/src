@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt_pbkdf.c,v 1.1 2013/06/03 21:07:02 tedu Exp $ */
+/* $OpenBSD: bcrypt_pbkdf.c,v 1.2 2013/06/04 15:54:32 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -107,8 +107,6 @@ bcrypt_pbkdf(const char *pass, size_t passlen, const uint8_t *salt, size_t saltl
 	uint32_t count;
 
 	/* nothing crazy */
-	if (rounds < 1)
-		return -1;
 	if (passlen == 0 || saltlen == 0 || keylen == 0 ||
 	    keylen > sizeof(out) * sizeof(out))
 		return -1;
