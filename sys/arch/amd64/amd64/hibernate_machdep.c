@@ -1,3 +1,5 @@
+/*	$OpenBSD: hibernate_machdep.c,v 1.13 2013/06/04 01:20:23 pirofti Exp $	*/
+
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
  *
