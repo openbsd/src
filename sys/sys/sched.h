@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.31 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: sched.h,v 1.32 2013/06/04 22:16:23 tedu Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -180,8 +180,8 @@ void remrunqueue(struct proc *);
 /*
  * XXX Instead of using struct lock for the kernel lock and thus requiring us
  * XXX to implement simplelocks, causing all sorts of fine-grained locks all
- * XXX over our tree getting activated consuming both time and potentially
- * XXX introducing locking protocol bugs.
+ * XXX over our tree getting activated, the sched_lock is a different kind of
+ * XXX lock toi avoid introducing locking protocol bugs.
  */
 extern struct __mp_lock sched_lock;
 
