@@ -1,4 +1,4 @@
-.\" $OpenBSD: fusebuf.9,v 1.4 2013/06/03 19:56:16 tedu Exp $
+.\" $OpenBSD: fusebuf.9,v 1.5 2013/06/04 18:26:51 tedu Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2013 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt FUSE 9
 .Os
 .Sh NAME
@@ -27,8 +27,9 @@
 .Ft int
 .Fn fb_queue "dev_t dev" "struct fusebuf *fbuf"
 .Bd -literal
-#define FUSEFDSIZE	sizeof(((struct fusebuf *)0)->F_dat.FD)
-#define FUSELEN		(PAGE_SIZE - sizeof(struct fb_hdr) - \\
+#define	FUSEBUFSIZE	4096
+#define	FUSEFDSIZE	sizeof(((struct fusebuf *)0)->F_dat.FD)
+#define	FUSELEN		(FUSEBUFSIZE - sizeof(struct fb_hdr) - \\
 			sizeof(union uFD))
 
 struct fb_hdr {
@@ -94,7 +95,7 @@ These operations are split into severals fusebufs with a changing value in
 .Fa fb_io_off
 for each.
 The size of a fusebuf is
-.Fa PAGE_SIZE .
+.Fa FUSEBUFSIZE .
 .Pp
 A fusebuf structure is defined as an
 .Fa fb_hdr
