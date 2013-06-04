@@ -1,4 +1,4 @@
-.\"	$OpenBSD: presto.4,v 1.5 2010/07/11 07:37:30 jmc Exp $
+.\"	$OpenBSD: presto.4,v 1.6 2013/06/04 21:05:53 miod Exp $
 .\" Copyright (c) 2003, Miodrag Vallat
 .\" All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 11 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt PRESTO 4 sparc
 .Os
 .Sh NAME
@@ -31,13 +31,13 @@
 .Nd Prestoserve battery-backed memory
 .Sh SYNOPSIS
 .Cd "presto* at sbus?"
+.Cd "presto* at mainbus?" Pq "SS10/SS20 NVSIMM"
 .Sh DESCRIPTION
 The
 .Tn Legato
-Prestoserve NVRAM cards
-used to be part of the
+Prestoserve NVRAM SBus cards and NVSIMM used to be part of the
 .Dq NFS accelerator
-product, which used the cards memory as an NFS-dedicated cache, increasing
+product, which used the device's memory as an NFS-dedicated cache, increasing
 performance of NFS servers exporting filesystem as NFS protocol, version 2.
 .Pp
 The
@@ -64,6 +64,3 @@ partition
 .Xr disklabel 5 ,
 .Xr disklabel 8 ,
 .Xr MAKEDEV 8
-.Sh BUGS
-The NVSIMM flavour, designed for SPARCstation models 10 and 20, is not
-supported yet.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.23 2011/07/06 19:14:54 matthew Exp $	*/
+/*	$OpenBSD: presto.c,v 1.24 2013/06/04 21:05:53 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -47,13 +47,17 @@ struct presto_softc {
 	struct	device	sc_dev;
 	struct	disk	sc_dk;
 
+	vsize_t		sc_offset;	/* reserved memory offset */
 	vsize_t		sc_memsize;	/* total NVRAM size */
 	caddr_t		sc_mem;		/* NVRAM kva */
+	caddr_t		sc_status;	/* status register kva (MBus) */
 	char		sc_model[16];	/* Prestoserve model */
 };
 
 /*
- * The beginning of the NVRAM contains a few control and status values
+ * The beginning of the NVRAM contains a few control and status values.
+ * On SBus boards, there are two distinct four-bit status values;
+ * On MBus boards, these are provided in the second register mapping.
  */
 
 #define	PSERVE_BATTERYSTATUS	0x07
@@ -65,7 +69,10 @@ struct presto_softc {
 #define	PSDATA_EMPTY			0x00
 #define	PSDATA_SAVED			0x01
 
-/* reserved area size - needs to be rounded to a sector size for i/o */
+/*
+ * Reserved area size on SBus flavours, needs to be rounded to a sector
+ * size for i/o.
+ */
 #define	PSERVE_RESERVED		0x0010
 #define	PSERVE_OFFSET		roundup(PSERVE_RESERVED, DEV_BSIZE)
 
@@ -90,13 +97,18 @@ presto_match(struct device *parent, void *vcf, void *aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	if (strcmp(ra->ra_name, "MMI,prestoserve") != 0)
-		return (0);
+	if (strcmp(ra->ra_name, "MMI,prestoserve") != 0 &&
+	    strcmp(ra->ra_name, "SUNW,nvone") != 0)
+		return 0;
 
-	if (ra->ra_len < PSERVE_OFFSET)	/* no usable memory ? */
-		return (0);
+	if (ra->ra_nreg < 1)
+		return 0;
 
-	return (1);
+	/* no usable memory ? */
+	if (ra->ra_nreg == 1 && ra->ra_len < PSERVE_OFFSET)
+		return 0;
+
+	return 1;
 }
 
 void
@@ -126,24 +138,39 @@ presto_attach(struct device *parent, struct device *self, void *args)
 
 	/* Map memory */
 	sc->sc_mem = (void *)mapiodev(ca->ca_ra.ra_reg, 0, sc->sc_memsize);
+	if (ca->ca_ra.ra_nreg == 1) {
+		sc->sc_status = NULL;
+	} else {
+		sc->sc_status = (void *)mapiodev(&ca->ca_ra.ra_reg[1], 0,
+		    ca->ca_ra.ra_reg[1].rr_len);
+	}
 
 	/*
 	 * Clear the ``disconnect battery'' bit.
 	 */
-	*(u_int8_t *)(sc->sc_mem + PSERVE_BATTERYSTATUS) = 0x00;
+	if (sc->sc_status == NULL)
+		*(u_int8_t *)(sc->sc_mem + PSERVE_BATTERYSTATUS) = 0x00;
+	else
+		*(u_int8_t *)sc->sc_status &= 0x0f;
 
 	/*
 	 * Clear the ``unflushed data'' status. This way, if the card is
 	 * reused under SunOS, the system will not try to flush whatever
 	 * data the user put in the nvram...
 	 */
-	*(u_int8_t *)(sc->sc_mem + PSERVE_DATASTATUS) = 0x00;
+	if (sc->sc_status == NULL)
+		*(u_int8_t *)(sc->sc_mem + PSERVE_DATASTATUS) = 0x00;
+	else
+		*(u_int8_t *)sc->sc_status &= 0xf0;
 
 	/*
 	 * Decode battery status
 	 */
-	status = *(u_int8_t *)(sc->sc_mem + PSERVE_BATTERYSTATUS);
-	printf("battery status %x ", status);
+	if (sc->sc_status == NULL)
+		status = *(u_int8_t *)(sc->sc_mem + PSERVE_BATTERYSTATUS);
+	else
+		status = *(u_int8_t *)sc->sc_status;
+	printf("battery status %02x ", status);
 	if (ISSET(status, PSBAT_FAULT)) {
 		printf("(non-working)");
 	} else if (ISSET(status, PSBAT_CONNECTED)) {
@@ -156,13 +183,21 @@ presto_attach(struct device *parent, struct device *self, void *args)
 	printf("\n");
 
 #ifdef DEBUG
-	printf("%s: status codes %02.2x, %02.2x, %02.2x, %02.2x\n",
-	    sc->sc_dev.dv_xname,
-	    *(u_int8_t *)(sc->sc_mem + 0x03), *(u_int8_t *)(sc->sc_mem + 0x07),
-	    *(u_int8_t *)(sc->sc_mem + 0x0b), *(u_int8_t *)(sc->sc_mem + 0x0f));
+	if (sc->sc_status == NULL) {
+		printf("%s: status codes %02.2x, %02.2x, %02.2x, %02.2x\n",
+		    sc->sc_dev.dv_xname,
+		    *(u_int8_t *)(sc->sc_mem + 0x03),
+		    *(u_int8_t *)(sc->sc_mem + 0x07),
+		    *(u_int8_t *)(sc->sc_mem + 0x0b),
+		    *(u_int8_t *)(sc->sc_mem + 0x0f));
+	}
 #endif
 
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
+	if (sc->sc_status == NULL)
+		sc->sc_offset = PSERVE_OFFSET;
+	else
+		sc->sc_offset = 0;
 	disk_attach(&sc->sc_dev, &sc->sc_dk);
 }
 
@@ -269,7 +304,7 @@ prestostrategy(struct buf *bp)
 		goto done;
 
 	/* Bound the request size, then move data between buf and nvram */
-	offset = (bp->b_blkno << DEV_BSHIFT) + PSERVE_OFFSET;
+	offset = (bp->b_blkno << DEV_BSHIFT) + sc->sc_offset;
 	count = bp->b_bcount;
 	if (count > (sc->sc_memsize - offset))
 		count = (sc->sc_memsize - offset);
@@ -338,14 +373,14 @@ prestoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
  */
 void
 presto_getdisklabel(dev_t dev, struct presto_softc *sc, struct disklabel *lp,
-    int spoofonly);
+    int spoofonly)
 {
 	bzero(sc->sc_dk.dk_label, sizeof(struct disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 32;
-	DL_SETDSIZE(lp, (sc->sc_memsize - PSERVE_OFFSET) >> DEV_BSHIFT);
+	DL_SETDSIZE(lp, (sc->sc_memsize - sc->sc_offset) >> DEV_BSHIFT);
 	lp->d_ncylinders = DL_GETDSIZE(lp) / lp->d_nsectors;
 	lp->d_secpercyl = lp->d_nsectors;
 

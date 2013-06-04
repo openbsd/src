@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.103 2011/11/08 12:53:58 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.104 2013/06/04 21:05:54 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -359,7 +359,8 @@ fd*	at fdc0					# the drive itself
 #daadio*	at fvme? addr 0x0 level 1 vect 0x1f	# Matrix MD-DAADIO board
 
 # Prestoserve NVRAM
-#presto*	at sbus?
+#presto*	at sbus?		# SBus board
+#presto*	at mainbus?		# SS10/SS20 NVSIMM
 
 pseudo-device	hotplug		1	# devices hot plugging
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
