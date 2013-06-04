@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.830 2013/06/03 16:57:05 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.831 2013/06/04 18:58:28 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1688,12 +1688,15 @@ pf_change_ap(struct pf_addr *a, u_int16_t *p, u_int16_t *pc,
     sa_family_t naf)
 {
 	struct pf_addr	ao;
-	u_int16_t	po = *p;
+	u_int16_t	po;
 
 	PF_ACPY(&ao, a, af);
 	if (af == naf)
 		PF_ACPY(a, an, naf);
 
+	if (p == NULL)	/* no port -> done. no cksum to worry about. */
+		return;
+	po = *p;
 	*p = pn;
 
 	switch (af) {
