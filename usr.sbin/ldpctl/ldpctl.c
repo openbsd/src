@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.13 2013/06/01 19:29:23 claudio Exp $
+/*	$OpenBSD: ldpctl.c,v 1.14 2013/06/04 02:28:58 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -100,9 +100,9 @@ main(int argc, char *argv[])
 		/* not reached */
 	case SHOW:
 	case SHOW_IFACE:
-		printf("%-11s %-18s %-10s %-10s %-8s\n",
-		    "Interface", "Address", "State", "Linkstate",
-		    "Uptime");
+		printf("%-11s %-10s %-10s %-8s %-12s %3s\n",
+		    "Interface", "State", "Linkstate", "Uptime",
+		    "Hello Timers", "ac");
 		if (*res->ifname) {
 			ifidx = if_nametoindex(res->ifname);
 			if (ifidx == 0)
@@ -289,21 +289,23 @@ int
 show_interface_msg(struct imsg *imsg)
 {
 	struct ctl_iface	*iface;
-	char			*netid;
+	char			*timers;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE:
 		iface = imsg->data;
 
-		if (asprintf(&netid, "%s/%d", inet_ntoa(iface->addr),
-		    mask2prefixlen(iface->mask.s_addr)) == -1)
+		if (asprintf(&timers, "%u/%u", iface->hello_interval,
+		    iface->hello_holdtime) == -1)
 			err(1, NULL);
-		printf("%-11s %-18s %-10s %-10s %-8s\n",
-		    iface->name, netid, if_state_name(iface->state),
+
+		printf("%-11s %-10s %-10s %-8s %12s %3u\n",
+		    iface->name, if_state_name(iface->state),
 		    get_linkstate(iface->mediatype, iface->linkstate),
 		    iface->uptime == 0 ? "00:00:00" :
-		    fmt_timeframe_core(iface->uptime));
-		free(netid);
+		    fmt_timeframe_core(iface->uptime), timers,
+		    iface->adj_cnt);
+		free(timers);
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
