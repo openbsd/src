@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.33 2013/06/01 19:42:07 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.34 2013/06/04 00:56:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -95,19 +95,18 @@ struct {
 /* Discovery States */
     {NBR_STA_DOWN,	NBR_EVT_HELLO_RCVD,	NBR_ACT_STRT_ITIMER,	NBR_STA_PRESENT},
     {NBR_STA_SESSION,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	0},
-/* Passive Role */
     {NBR_STA_PRESENT,	NBR_EVT_CONNECT_UP,	NBR_ACT_CONNECT_SETUP,	NBR_STA_INITIAL},
+/* Passive Role */
     {NBR_STA_INITIAL,	NBR_EVT_INIT_RCVD,	NBR_ACT_PASSIVE_INIT,	NBR_STA_OPENREC},
     {NBR_STA_OPENREC,	NBR_EVT_KEEPALIVE_RCVD,	NBR_ACT_SESSION_EST,	NBR_STA_OPER},
 /* Active Role */
-    {NBR_STA_PRESENT,	NBR_EVT_INIT_SENT,	NBR_ACT_NOTHING,	NBR_STA_OPENSENT},
+    {NBR_STA_INITIAL,	NBR_EVT_INIT_SENT,	NBR_ACT_NOTHING,	NBR_STA_OPENSENT},
     {NBR_STA_OPENSENT,	NBR_EVT_INIT_RCVD,	NBR_ACT_KEEPALIVE_SEND,	NBR_STA_OPENREC},
 /* Session Maintenance */
     {NBR_STA_OPER,	NBR_EVT_PDU_RCVD,	NBR_ACT_RST_KTIMEOUT,	0},
     {NBR_STA_OPER,	NBR_EVT_PDU_SENT,	NBR_ACT_RST_KTIMER,	0},
 /* Session Close */
     {NBR_STA_SESSION,	NBR_EVT_CLOSE_SESSION,	NBR_ACT_CLOSE_SESSION,	NBR_STA_PRESENT},
-    {NBR_STA_SESSION,	NBR_EVT_DOWN,		NBR_ACT_CLOSE_SESSION,	},
     {-1,		NBR_EVT_NOTHING,	NBR_ACT_NOTHING,	0},
 };
 
@@ -120,8 +119,7 @@ const char * const nbr_event_names[] = {
 	"KEEPALIVE RECEIVED",
 	"PDU RECEIVED",
 	"PDU SENT",
-	"INIT SENT",
-	"DOWN"
+	"INIT SENT"
 };
 
 const char * const nbr_action_names[] = {
@@ -143,7 +141,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	struct timeval	now;
 	int		old_state;
 	int		new_state = 0;
-	int		i, ret = 0;
+	int		i;
 
 	old_state = nbr->state;
 	for (i = 0; nbr_fsm_tbl[i].state != -1; i++)
@@ -162,7 +160,22 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		return (0);
 	}
 
-	ret = 0;
+	if (new_state != 0)
+		nbr->state = new_state;
+
+	if (old_state != nbr->state) {
+		log_debug("nbr_fsm: event %s resulted in action %s and "
+		    "changing state for neighbor ID %s from %s to %s",
+		    nbr_event_names[event],
+		    nbr_action_names[nbr_fsm_tbl[i].action],
+		    inet_ntoa(nbr->id), nbr_state_name(old_state),
+		    nbr_state_name(nbr->state));
+
+		if (nbr->state == NBR_STA_OPER) {
+			gettimeofday(&now, NULL);
+			nbr->uptime = now.tv_sec;
+		}
+	}
 
 	switch (nbr_fsm_tbl[i].action) {
 	case NBR_ACT_RST_ITIMER:
@@ -186,7 +199,13 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr_send_labelmappings(nbr);
 		break;
 	case NBR_ACT_CONNECT_SETUP:
-		ret = nbr_act_connect_setup(nbr, 0);
+		nbr_act_connect_setup(nbr);
+
+		if (nbr_session_active_role(nbr)) {
+			/* trigger next state */
+			send_init(nbr);
+			nbr_fsm(nbr, NBR_EVT_INIT_SENT);
+		}
 		break;
 	case NBR_ACT_PASSIVE_INIT:
 		send_init(nbr);
@@ -207,37 +226,15 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		break;
 	}
 
-	if (ret) {
-		log_warnx("nbr_fsm: error changing state for neighbor ID %s, "
-		    "event %s, state %s", inet_ntoa(nbr->id),
-		    nbr_event_names[event], nbr_state_name(old_state));
-		return (-1);
-	}
-
-	if (new_state != 0)
-		nbr->state = new_state;
-
-	if (old_state != nbr->state) {
-		log_debug("nbr_fsm: event %s resulted in action %s and "
-		    "changing state for neighbor ID %s from %s to %s",
-		    nbr_event_names[event],
-		    nbr_action_names[nbr_fsm_tbl[i].action],
-		    inet_ntoa(nbr->id), nbr_state_name(old_state),
-		    nbr_state_name(nbr->state));
-
-		if (nbr->state == NBR_STA_OPER) {
-			gettimeofday(&now, NULL);
-			nbr->uptime = now.tv_sec;
-		}
-	}
-
-	return (ret);
+	return (0);
 }
 
 struct nbr *
-nbr_new(u_int32_t nbr_id, struct in_addr a)
+nbr_new(struct in_addr id, struct in_addr addr)
 {
 	struct nbr	*nbr;
+
+	log_debug("nbr_new: LSR ID %s", inet_ntoa(id));
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("nbr_new");
@@ -245,8 +242,8 @@ nbr_new(u_int32_t nbr_id, struct in_addr a)
 		fatal("nbr_new");
 
 	nbr->state = NBR_STA_DOWN;
-	nbr->id.s_addr = nbr_id;
-	nbr->addr = a;
+	nbr->id.s_addr = id.s_addr;
+	nbr->addr = addr;
 
 	/* get next unused peerid */
 	while (nbr_find_peerid(++peercnt))
@@ -278,7 +275,9 @@ nbr_new(u_int32_t nbr_id, struct in_addr a)
 void
 nbr_del(struct nbr *nbr)
 {
-	session_close(nbr);
+	log_debug("nbr_del: LSR ID %s", inet_ntoa(nbr->id));
+
+	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 
 	if (event_pending(&nbr->ev_connect, EV_WRITE, NULL))
 		event_del(&nbr->ev_connect);
@@ -288,6 +287,10 @@ nbr_del(struct nbr *nbr)
 	nbr_stop_idtimer(nbr);
 
 	nbr_mapping_list_clr(nbr, &nbr->mapping_list);
+	nbr_mapping_list_clr(nbr, &nbr->withdraw_list);
+	nbr_mapping_list_clr(nbr, &nbr->request_list);
+	nbr_mapping_list_clr(nbr, &nbr->release_list);
+	nbr_mapping_list_clr(nbr, &nbr->abortreq_list);
 
 	RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
 	RB_REMOVE(nbr_addr_head, &nbrs_by_addr, nbr);
@@ -413,9 +416,7 @@ nbr_ktimeout(int fd, short event, void *arg)
 	log_debug("nbr_ktimeout: neighbor ID %s peerid %lu", inet_ntoa(nbr->id),
 	    nbr->peerid);
 
-	send_notification_nbr(nbr, S_KEEPALIVE_TMR, 0, 0);
-	/* XXX race, send_notification_nbr() has no chance to be sent */
-	session_close(nbr);
+	session_shutdown(nbr, S_KEEPALIVE_TMR, 0, 0);
 }
 
 void
@@ -514,7 +515,7 @@ nbr_connect_cb(int fd, short event, void *arg)
 		return;
 	}
 
-	nbr_act_connect_setup(nbr, 1);
+	nbr_fsm(nbr, NBR_EVT_CONNECT_UP);
 }
 
 int
@@ -566,22 +567,17 @@ nbr_establish_connection(struct nbr *nbr)
 	}
 
 	/* connection completed immediately */
-	return (nbr_act_connect_setup(nbr, 1));
+	nbr_fsm(nbr, NBR_EVT_CONNECT_UP);
+
+	return (0);
 }
 
-int
-nbr_act_connect_setup(struct nbr *nbr, int active)
+void
+nbr_act_connect_setup(struct nbr *nbr)
 {
 	evbuf_init(&nbr->wbuf, nbr->fd, session_write, nbr);
 	event_set(&nbr->rev, nbr->fd, EV_READ | EV_PERSIST, session_read, nbr);
 	event_add(&nbr->rev, NULL);
-
-	if (active) {
-		send_init(nbr);
-		nbr_fsm(nbr, NBR_EVT_INIT_SENT);
-	}
-
-	return (0);
 }
 
 int

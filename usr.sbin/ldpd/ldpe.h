@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.22 2013/06/03 16:53:49 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.23 2013/06/04 00:56:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -146,7 +146,7 @@ int	 if_set_tos(int, int);
 int	 if_set_reuse(int, int);
 
 /* neighbor.c */
-struct nbr	*nbr_new(u_int32_t, struct in_addr);
+struct nbr	*nbr_new(struct in_addr, struct in_addr);
 void		 nbr_del(struct nbr *);
 
 struct nbr	*nbr_find_ip(u_int32_t);
@@ -172,7 +172,7 @@ int	 nbr_pending_idtimer(struct nbr *);
 int	 nbr_pending_connect(struct nbr *);
 
 int	 nbr_establish_connection(struct nbr *);
-int	 nbr_act_connect_setup(struct nbr *, int);
+void	 nbr_act_connect_setup(struct nbr *);
 
 void			 nbr_mapping_add(struct nbr *, struct mapping_head *,
 			    struct map *);

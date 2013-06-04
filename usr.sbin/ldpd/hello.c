@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.18 2013/06/01 19:28:55 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.19 2013/06/04 00:56:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -83,6 +83,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	struct ldp_hdr		 ldp;
 	struct nbr		*nbr = NULL;
 	struct in_addr		 address;
+	struct in_addr		 lsr_id;
 	u_int32_t		 conf_number;
 	u_int16_t		 holdtime, flags;
 	int			 r;
@@ -95,11 +96,12 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
 
+	lsr_id.s_addr = ldp.lsr_id;
+
 	r = tlv_decode_hello_prms(buf, len, &holdtime, &flags);
 	if (r == -1) {
-		address.s_addr = ldp.lsr_id;
 		log_debug("recv_hello: neighbor %s: failed to decode params",
-		    inet_ntoa(address));
+		    inet_ntoa(lsr_id));
 		return;
 	}
 
@@ -108,15 +110,13 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 
 	r = tlv_decode_opt_hello_prms(buf, len, &address, &conf_number);
 	if (r == -1) {
-		address.s_addr = ldp.lsr_id;
 		log_debug("recv_hello: neighbor %s: failed to decode "
-		    "optional params", inet_ntoa(address));
+		    "optional params", inet_ntoa(lsr_id));
 		return;
 	}
 	if (r != len) {
-		address.s_addr = ldp.lsr_id;
 		log_debug("recv_hello: neighbor %s: unexpected data in message",
-		    inet_ntoa(address));
+		    inet_ntoa(lsr_id));
 		return;
 	}
 
@@ -129,7 +129,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 		else
 			a = address;
 
-		nbr = nbr_new(ldp.lsr_id, a);
+		nbr = nbr_new(lsr_id, a);
 
 		/* set neighbor parameters */
 		nbr->hello_type = flags;

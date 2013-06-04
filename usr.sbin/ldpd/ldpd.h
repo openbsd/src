@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.38 2013/06/03 17:01:59 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.39 2013/06/04 00:56:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -161,7 +161,6 @@ enum nbr_event {
 	NBR_EVT_PDU_RCVD,
 	NBR_EVT_PDU_SENT,
 	NBR_EVT_INIT_SENT,
-	NBR_EVT_DOWN
 };
 
 /* neighbor actions */
