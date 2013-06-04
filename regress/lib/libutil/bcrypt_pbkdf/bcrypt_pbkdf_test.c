@@ -90,7 +90,7 @@ struct test tests[] = {
 };
 
 void
-printkey(uint8_t *key, size_t keylen)
+printkey(const uint8_t *key, size_t keylen)
 {
 	int k;
 
