@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.29 2013/06/04 21:14:28 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.30 2013/06/04 21:17:45 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -210,12 +210,12 @@ header(void)
 	if (ISSET(todo, SHOW_STATS_1))
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
-			(void)printf(" %14.14s ", cur.dk_name[i]);
+			(void)printf(" %16.16s ", cur.dk_name[i]);
 
 	if (ISSET(todo, SHOW_STATS_2))
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
-			(void)printf(" %13.13s ", cur.dk_name[i]);
+			(void)printf(" %16.16s ", cur.dk_name[i]);
 
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf("            cpu");
