@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.2 2013/06/03 10:37:02 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.3 2013/06/04 02:57:29 brad Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -1150,23 +1150,17 @@ tmpfs_pathconf(void *v)
 	case _PC_NAME_MAX:
 		*retval = TMPFS_MAXNAMLEN;
 		break;
-	case _PC_PATH_MAX:
-		*retval = PATH_MAX;
-		break;
-	case _PC_PIPE_BUF:
-		*retval = PIPE_BUF;
-		break;
 	case _PC_CHOWN_RESTRICTED:
 		*retval = 1;
 		break;
 	case _PC_NO_TRUNC:
 		*retval = 1;
 		break;
-	case _PC_SYNC_IO:
-		*retval = 1;
-		break;
 	case _PC_FILESIZEBITS:
-		*retval = sizeof(off_t) * CHAR_BIT;
+		*retval = 64;
+		break;
+	case _PC_TIMESTAMP_RESOLUTION:
+		*retval = 1;
 		break;
 	default:
 		error = EINVAL;
