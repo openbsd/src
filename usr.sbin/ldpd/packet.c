@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.25 2013/06/03 16:53:49 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.26 2013/06/04 02:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -81,22 +81,22 @@ gen_msg_tlv(struct ibuf *buf, u_int32_t type, u_int16_t size)
 	return (ibuf_add(buf, &msg, sizeof(msg)));
 }
 
-/* send and receive packets */
+/* send packets */
 int
-send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
+send_packet(int fd, struct iface *iface, void *pkt, size_t len,
+    struct sockaddr_in *dst)
 {
 	/* set outgoing interface for multicast traffic */
-	if (IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
+	if (iface && IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
 		if (if_set_mcast(iface) == -1) {
 			log_warn("send_packet: error setting multicast "
 			    "interface, %s", iface->name);
 			return (-1);
 		}
 
-	if (sendto(iface->discovery_fd, pkt, len, 0,
-	    (struct sockaddr *)dst, sizeof(*dst)) == -1) {
-		log_warn("send_packet: error sending packet on interface %s",
-		    iface->name);
+	if (sendto(fd, pkt, len, 0, (struct sockaddr *)dst,
+	    sizeof(*dst)) == -1) {
+		log_warn("send_packet: error sending packet");
 		return (-1);
 	}
 
@@ -116,7 +116,7 @@ disc_recv_packet(int fd, short event, void *bula)
 	struct iovec		 iov;
 	struct ldp_hdr		 ldp_hdr;
 	struct ldp_msg		 ldp_msg;
-	struct iface		*iface;
+	struct iface		*iface = NULL;
 	char			*buf;
 	struct cmsghdr		*cmsg;
 	ssize_t			 r;
@@ -156,7 +156,8 @@ disc_recv_packet(int fd, short event, void *bula)
 	len = (u_int16_t)r;
 
 	/* find a matching interface */
-	if ((iface = disc_find_iface(ifindex, src.sin_addr)) == NULL) {
+	if ((fd == leconf->ldp_discovery_socket) &&
+	    (iface = disc_find_iface(ifindex, src.sin_addr)) == NULL) {
 		log_debug("disc_recv_packet: cannot find a matching interface");
 		return;
 	}
@@ -171,13 +172,6 @@ disc_recv_packet(int fd, short event, void *bula)
 	if (ntohs(ldp_hdr.version) != LDP_VERSION) {
 		log_debug("dsc_recv_packet: invalid LDP version %d",
 		    ldp_hdr.version);
-		return;
-	}
-
-	if (ldp_hdr.lspace_id != 0) {
-		log_debug("disc_recv_packet: invalid label space "
-		    "ID %s, interface %s", ldp_hdr.lspace_id,
-		    iface->name);
 		return;
 	}
 
@@ -202,8 +196,8 @@ disc_recv_packet(int fd, short event, void *bula)
 		recv_hello(iface, src.sin_addr, buf, len);
 		break;
 	default:
-		log_debug("recv_packet: unknown LDP packet type, interface %s",
-		    iface->name);
+		log_debug("recv_packet: unknown LDP packet type, source %s",
+		    inet_ntoa(src.sin_addr));
 	}
 }
 

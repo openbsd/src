@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.12 2013/06/01 20:07:07 jmc Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.13 2013/06/04 02:25:28 claudio Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2013 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ daemon implements the Label Distribution Protocol as described in RFC 5036.
 .Sh SECTIONS
 The
 .Nm
-config file is divided into three main sections.
+config file is divided into four main sections.
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -41,6 +41,8 @@ Global settings for
 .Xr ldpd 8 .
 .It Sy Interfaces Configuration
 Interface-specific parameters.
+.It Sy Targeted neighbors Configuration
+Targeted neighbor specific parameters.
 .El
 .Sh MACROS
 Much like
@@ -116,6 +118,17 @@ Select the advertisement mode.
 advertises labels according to the distribution mode;
 .Ic ondemand
 advertises labels solely upon explicit request from peers.
+.Pp
+.It Xo
+.Ic targeted-hello-accept
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+allow LDP sessions to be established with remote neighbors that have not been
+specifically configured.
+The default is
+.Ic no .
 .El
 .Sh INTERFACES
 Each interface can have several parameters configured individually, otherwise
@@ -127,14 +140,36 @@ interface em0 {
 .Pp
 Interface-specific parameters are listed below.
 .Bl -tag -width Ds
-.It Ic holdtime Ar seconds
+.It Ic link-hello-holdtime Ar seconds
 Set the hello holdtime in seconds.
 The maximum time
 .Xr ldpd 8
 will wait between two consecutive hello messages from a peer before it is
 marked as being down.
 The default value is 15.
-.It Ic hello-interval Ar seconds
+.It Ic link-hello-interval Ar seconds
+Set the hello interval in seconds.
+The default value is 5; valid range is 1\-65535.
+.El
+.Sh TARGETED NEIGHBORS
+Each targeted neighbor can have several parameters configured individually,
+otherwise they are inherited.
+.Bd -literal -offset indent
+targeted-neighbor A.B.C.D {
+}
+.Ed
+.Pp
+Targeted-neighbor specific parameters are listed below.
+.Bl -tag -width Ds
+.It Ic targeted-hello-holdtime Ar seconds
+Set the hello holdtime in seconds.
+The maximum time
+.Xr ldpd 8
+will wait between two consecutive hello messages from a peer before it is
+marked as being down.
+The default value is 45.
+.Pp
+.It Ic targeted-hello-interval Ar seconds
 Set the hello interval in seconds.
 The default value is 5; valid range is 1\-65535.
 .El

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.20 2013/06/04 00:45:00 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.21 2013/06/04 02:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -73,6 +73,7 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
     int pipe_parent2lde[2])
 {
 	struct iface		*iface;
+	struct tnbr		*tnbr;
 	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
 	struct sockaddr_in	 disc_addr, sess_addr;
@@ -105,6 +106,9 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	    IPPROTO_UDP)) == -1)
 		fatal("error creating discovery socket");
 
+	if (if_set_reuse(xconf->ldp_discovery_socket, 1) == -1)
+		fatal("if_set_reuse");
+
 	if (bind(xconf->ldp_discovery_socket, (struct sockaddr *)&disc_addr,
 	    sizeof(disc_addr)) == -1)
 		fatal("error binding discovery socket");
@@ -121,6 +125,30 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	if (if_set_recvif(xconf->ldp_discovery_socket, 1) == -1)
 		fatal("if_set_recvif");
 	if_set_recvbuf(xconf->ldp_discovery_socket);
+
+	/* create the extended discovery UDP socket */
+	disc_addr.sin_family = AF_INET;
+	disc_addr.sin_port = htons(LDP_PORT);
+	disc_addr.sin_addr.s_addr = xconf->rtr_id.s_addr;
+
+	if ((xconf->ldp_ediscovery_socket = socket(AF_INET, SOCK_DGRAM,
+	    IPPROTO_UDP)) == -1)
+		fatal("error creating extended discovery socket");
+
+	if (if_set_reuse(xconf->ldp_ediscovery_socket, 1) == -1)
+		fatal("if_set_reuse");
+
+	if (bind(xconf->ldp_ediscovery_socket, (struct sockaddr *)&disc_addr,
+	    sizeof(disc_addr)) == -1)
+		fatal("error binding extended discovery socket");
+
+	/* set some defaults */
+	if (if_set_tos(xconf->ldp_ediscovery_socket,
+	    IPTOS_PREC_INTERNETCONTROL) == -1)
+		fatal("if_set_tos");
+	if (if_set_recvif(xconf->ldp_ediscovery_socket, 1) == -1)
+		fatal("if_set_recvif");
+	if_set_recvbuf(xconf->ldp_ediscovery_socket);
 
 	/* create the session TCP socket */
 	sess_addr.sin_family = AF_INET;
@@ -197,10 +225,14 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	event_add(&iev_main->ev, NULL);
 
 	event_set(&leconf->disc_ev, leconf->ldp_discovery_socket,
-	    EV_READ|EV_PERSIST, disc_recv_packet, leconf);
+	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
 	event_add(&leconf->disc_ev, NULL);
 
-	accept_add(leconf->ldp_session_socket, session_accept, leconf);
+	event_set(&leconf->edisc_ev, leconf->ldp_ediscovery_socket,
+	    EV_READ|EV_PERSIST, disc_recv_packet, NULL);
+	event_add(&leconf->edisc_ev, NULL);
+
+	accept_add(leconf->ldp_session_socket, session_accept, NULL);
 	/* listen on ldpd control socket */
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
@@ -211,6 +243,10 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	/* initialize interfaces */
 	LIST_FOREACH(iface, &leconf->iface_list, entry)
 		if_init(xconf, iface);
+
+	/* start configured targeted neighbors */
+	LIST_FOREACH(tnbr, &leconf->tnbr_list, entry)
+		tnbr_init(xconf, tnbr);
 
 	event_dispatch();
 
@@ -223,6 +259,7 @@ void
 ldpe_shutdown(void)
 {
 	struct iface	*iface;
+	struct tnbr	*tnbr;
 
 	/* stop all interfaces */
 	while ((iface = LIST_FIRST(&leconf->iface_list)) != NULL) {
@@ -234,7 +271,14 @@ ldpe_shutdown(void)
 		if_del(iface);
 	}
 
+	/* stop all targeted neighbors */
+	while ((tnbr = LIST_FIRST(&leconf->tnbr_list)) != NULL) {
+		LIST_REMOVE(tnbr, entry);
+		tnbr_del(tnbr);
+	}
+
 	close(leconf->ldp_discovery_socket);
+	close(leconf->ldp_session_socket);
 
 	/* clean up */
 	msgbuf_write(&iev_lde->ibuf.w);

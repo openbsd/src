@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.11 2013/03/11 17:40:11 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.12 2013/06/04 02:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -247,6 +247,9 @@ control_dispatch_imsg(int fd, short event, void *bula)
 				imsg_compose_event(&c->iev, IMSG_CTL_END, 0,
 				    0, -1, NULL, 0);
 			}
+			break;
+		case IMSG_CTL_SHOW_DISCOVERY:
+			ldpe_adj_ctl(c);
 			break;
 		case IMSG_CTL_SHOW_LIB:
 			c->iev.ibuf.pid = imsg.hdr.pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.35 2013/06/04 01:32:16 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.36 2013/06/04 02:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -92,9 +92,6 @@ struct {
 	int		new_state;
 } nbr_fsm_tbl[] = {
     /* current state	event that happened	action to take		resulting state */
-/* Discovery States */
-    {NBR_STA_DOWN,	NBR_EVT_HELLO_RCVD,	NBR_ACT_STRT_ITIMER,	NBR_STA_PRESENT},
-    {NBR_STA_SESSION,	NBR_EVT_HELLO_RCVD,	NBR_ACT_RST_ITIMER,	0},
     {NBR_STA_PRESENT,	NBR_EVT_CONNECT_UP,	NBR_ACT_CONNECT_SETUP,	NBR_STA_INITIAL},
 /* Passive Role */
     {NBR_STA_INITIAL,	NBR_EVT_INIT_RCVD,	NBR_ACT_PASSIVE_INIT,	NBR_STA_OPENREC},
@@ -106,13 +103,13 @@ struct {
     {NBR_STA_OPER,	NBR_EVT_PDU_RCVD,	NBR_ACT_RST_KTIMEOUT,	0},
     {NBR_STA_OPER,	NBR_EVT_PDU_SENT,	NBR_ACT_RST_KTIMER,	0},
 /* Session Close */
+    {NBR_STA_PRESENT,	NBR_EVT_CLOSE_SESSION,	NBR_ACT_NOTHING,	0},
     {NBR_STA_SESSION,	NBR_EVT_CLOSE_SESSION,	NBR_ACT_CLOSE_SESSION,	NBR_STA_PRESENT},
     {-1,		NBR_EVT_NOTHING,	NBR_ACT_NOTHING,	0},
 };
 
 const char * const nbr_event_names[] = {
 	"NOTHING",
-	"HELLO RECEIVED",
 	"CONNECTION UP",
 	"SESSION CLOSE",
 	"INIT RECEIVED",
@@ -124,8 +121,6 @@ const char * const nbr_event_names[] = {
 
 const char * const nbr_action_names[] = {
 	"NOTHING",
-	"START INACTIVITY TIMER",
-	"RESET INACTIVITY TIMER",
 	"RESET KEEPALIVE TIMEOUT",
 	"START NEIGHBOR SESSION",
 	"RESET KEEPALIVE TIMER",
@@ -178,13 +173,6 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	}
 
 	switch (nbr_fsm_tbl[i].action) {
-	case NBR_ACT_RST_ITIMER:
-	case NBR_ACT_STRT_ITIMER:
-		if (nbr->holdtime != INFINITE_HOLDTIME)
-			nbr_start_itimer(nbr);
-		else
-			nbr_stop_itimer(nbr);
-		break;
 	case NBR_ACT_RST_KTIMEOUT:
 		nbr_start_ktimeout(nbr);
 		break;
@@ -240,7 +228,7 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	if ((nbr->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
 		fatal("nbr_new");
 
-	nbr->state = NBR_STA_DOWN;
+	nbr->state = NBR_STA_PRESENT;
 	nbr->id.s_addr = id.s_addr;
 	nbr->addr = addr;
 
@@ -263,7 +251,6 @@ nbr_new(struct in_addr id, struct in_addr addr)
 	TAILQ_INIT(&nbr->abortreq_list);
 
 	/* set event structures */
-	evtimer_set(&nbr->inactivity_timer, nbr_itimer, nbr);
 	evtimer_set(&nbr->keepalive_timeout, nbr_ktimeout, nbr);
 	evtimer_set(&nbr->keepalive_timer, nbr_ktimer, nbr);
 	evtimer_set(&nbr->initdelay_timer, nbr_idtimer, nbr);
@@ -280,7 +267,6 @@ nbr_del(struct nbr *nbr)
 
 	if (event_pending(&nbr->ev_connect, EV_WRITE, NULL))
 		event_del(&nbr->ev_connect);
-	nbr_stop_itimer(nbr);
 	nbr_stop_ktimer(nbr);
 	nbr_stop_ktimeout(nbr);
 	nbr_stop_idtimer(nbr);
@@ -333,39 +319,6 @@ nbr_session_active_role(struct nbr *nbr)
 }
 
 /* timers */
-
-/* Inactivity timer: timeout based on hellos */
-/* ARGSUSED */
-void
-nbr_itimer(int fd, short event, void *arg)
-{
-	struct nbr *nbr = arg;
-
-	log_debug("nbr_itimer: neighbor ID %s peerid %lu", inet_ntoa(nbr->id),
-	    nbr->peerid);
-
-	nbr_del(nbr);
-}
-
-void
-nbr_start_itimer(struct nbr *nbr)
-{
-	struct timeval	tv;
-
-	timerclear(&tv);
-	tv.tv_sec = nbr->holdtime;
-
-	if (evtimer_add(&nbr->inactivity_timer, &tv) == -1)
-		fatal("nbr_start_itimer");
-}
-
-void
-nbr_stop_itimer(struct nbr *nbr)
-{
-	if (evtimer_pending(&nbr->inactivity_timer, NULL) &&
-	    evtimer_del(&nbr->inactivity_timer) == -1)
-		fatal("nbr_stop_itimer");
-}
 
 /* Keepalive timer: timer to send keepalive message to neighbors */
 
@@ -672,22 +625,13 @@ struct ctl_nbr *
 nbr_to_ctl(struct nbr *nbr)
 {
 	static struct ctl_nbr	 nctl;
-	struct timeval		 tv, now, res;
+	struct timeval		 now;
 
 	memcpy(&nctl.id, &nbr->id, sizeof(nctl.id));
 	memcpy(&nctl.addr, &nbr->addr, sizeof(nctl.addr));
 	nctl.nbr_state = nbr->state;
 
 	gettimeofday(&now, NULL);
-	if (evtimer_pending(&nbr->inactivity_timer, &tv)) {
-		timersub(&tv, &now, &res);
-		if (nbr->state & NBR_STA_DOWN)
-			nctl.dead_timer = DEFAULT_NBR_TMOUT - res.tv_sec;
-		else
-			nctl.dead_timer = res.tv_sec;
-	} else
-		nctl.dead_timer = 0;
-
 	if (nbr->state == NBR_STA_OPER) {
 		nctl.uptime = now.tv_sec - nbr->uptime;
 	} else

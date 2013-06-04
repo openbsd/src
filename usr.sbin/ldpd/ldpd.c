@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.16 2013/06/03 16:53:49 claudio Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.17 2013/06/04 02:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -296,8 +296,6 @@ ldpd_shutdown(void)
 	free(iev_ldpe);
 	msgbuf_clear(&iev_lde->ibuf.w);
 	free(iev_lde);
-
-	close(ldpd_conf->ldp_session_socket);
 	free(ldpd_conf);
 
 	log_info("terminating");

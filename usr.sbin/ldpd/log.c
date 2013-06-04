@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.11 2013/06/01 20:13:04 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.12 2013/06/04 02:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -179,8 +179,6 @@ const char *
 nbr_state_name(int state)
 {
 	switch (state) {
-	case NBR_STA_DOWN:
-		return ("DOWN");
 	case NBR_STA_PRESENT:
 		return ("PRESENT");
 	case NBR_STA_INITIAL:

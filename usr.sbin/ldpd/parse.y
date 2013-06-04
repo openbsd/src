@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2013/06/03 16:58:14 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2013/06/04 02:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -84,17 +84,22 @@ static struct ldpd_conf	*conf;
 static int			 errors = 0;
 
 struct iface	*iface = NULL;
+struct tnbr	*tnbr = NULL;
 
 struct config_defaults {
-	u_int16_t	holdtime;
-	u_int16_t	hello_interval;
+	u_int16_t	lhello_holdtime;
+	u_int16_t	lhello_interval;
+	u_int16_t	thello_holdtime;
+	u_int16_t	thello_interval;
 };
 
 struct config_defaults	 globaldefs;
 struct config_defaults	 ifacedefs;
+struct config_defaults	 tnbrdefs;
 struct config_defaults	*defs;
 
 struct iface	*conf_get_if(struct kif *);
+struct tnbr	*conf_get_tnbr(struct in_addr);
 
 typedef struct {
 	union {
@@ -106,11 +111,13 @@ typedef struct {
 
 %}
 
-%token	INTERFACE ROUTERID FIBUPDATE
-%token	HOLDTIME HELLOINTERVAL KEEPALIVE
+%token	INTERFACE TNEIGHBOR ROUTERID FIBUPDATE
+%token	LHELLOHOLDTIME LHELLOINTERVAL
+%token	THELLOHOLDTIME THELLOINTERVAL
+%token	THELLOACCEPT
+%token	KEEPALIVE
 %token	DISTRIBUTION RETENTION ADVERTISEMENT
 %token	EXTTAG
-%token	HELLOINTERVAL
 %token	YES NO
 %token	ERROR
 %token	<v.string>	STRING
@@ -125,6 +132,7 @@ grammar		: /* empty */
 		| grammar conf_main '\n'
 		| grammar varset '\n'
 		| grammar interface '\n'
+		| grammar tneighbor '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -211,6 +219,12 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 		}
+		| THELLOACCEPT yesno {
+			if ($2 == 0)
+				conf->flags &= ~LDPD_FLAG_TH_ACCEPT;
+			else
+				conf->flags |= LDPD_FLAG_TH_ACCEPT;
+		}
 		| KEEPALIVE NUMBER {
 			if ($2 < MIN_KEEPALIVE ||
 			    $2 > MAX_KEEPALIVE) {
@@ -220,25 +234,48 @@ conf_main	: ROUTERID STRING {
 			}
 			conf->keepalive = $2;
 		}
-		| defaults
+		| iface_defaults
+		| tnbr_defaults
 		;
-defaults	: HOLDTIME NUMBER {
+iface_defaults	: LHELLOHOLDTIME NUMBER {
 			if ($2 < MIN_HOLDTIME ||
 			    $2 > MAX_HOLDTIME) {
-				yyerror("holdtime out of range (%d-%d)",
+				yyerror("hello holdtime out of range (%d-%d)",
 				    MIN_HOLDTIME, MAX_HOLDTIME);
 				YYERROR;
 			}
-			defs->holdtime = $2;
+			defs->lhello_holdtime = $2;
 		}
-		| HELLOINTERVAL NUMBER {
+		| LHELLOINTERVAL NUMBER {
 			if ($2 < MIN_HELLO_INTERVAL ||
 			    $2 > MAX_HELLO_INTERVAL) {
 				yyerror("hello-interval out of range (%d-%d)",
 				    MIN_HELLO_INTERVAL, MAX_HELLO_INTERVAL);
 				YYERROR;
 			}
-			defs->hello_interval = $2;
+			defs->lhello_interval = $2;
+		}
+		;
+
+tnbr_defaults	: THELLOHOLDTIME NUMBER {
+			if ($2 < MIN_HOLDTIME ||
+			    $2 > MAX_HOLDTIME) {
+				yyerror("hello holdtime out of range (%d-%d)",
+				    MIN_HOLDTIME, MAX_HOLDTIME);
+				YYERROR;
+			}
+			conf->thello_holdtime = $2;
+			defs->thello_holdtime = $2;
+		}
+		| THELLOINTERVAL NUMBER {
+			if ($2 < MIN_HELLO_INTERVAL ||
+			    $2 > MAX_HELLO_INTERVAL) {
+				yyerror("hello-interval out of range (%d-%d)",
+				    MIN_HELLO_INTERVAL, MAX_HELLO_INTERVAL);
+				YYERROR;
+			}
+			conf->thello_interval = $2;
+			defs->thello_interval = $2;
 		}
 		;
 
@@ -272,8 +309,8 @@ interface	: INTERFACE STRING	{
 			memcpy(&ifacedefs, defs, sizeof(ifacedefs));
 			defs = &ifacedefs;
 		} interface_block {
-			iface->holdtime = defs->holdtime;
-			iface->hello_interval = defs->hello_interval;
+			iface->hello_holdtime = defs->lhello_holdtime;
+			iface->hello_interval = defs->lhello_interval;
 			iface = NULL;
 
 			defs = &globaldefs;
@@ -285,8 +322,44 @@ interface_block	: '{' optnl interfaceopts_l '}'
 		| /* nothing */
 		;
 
-interfaceopts_l	: interfaceopts_l defaults nl
-		| defaults optnl
+interfaceopts_l	: interfaceopts_l iface_defaults nl
+		| iface_defaults optnl
+		;
+
+tneighbor	: TNEIGHBOR STRING	{
+			struct in_addr	 addr;
+
+			if (inet_aton($2, &addr) == 0) {
+				yyerror(
+				    "error parsing neighbor address");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			tnbr = conf_get_tnbr(addr);
+			if (tnbr == NULL)
+				YYERROR;
+			LIST_INSERT_HEAD(&conf->tnbr_list, tnbr, entry);
+
+			memcpy(&tnbrdefs, defs, sizeof(tnbrdefs));
+			defs = &tnbrdefs;
+		} tneighbor_block {
+			tnbr->hello_holdtime = defs->thello_holdtime;
+			tnbr->hello_interval = defs->thello_interval;
+			tnbr = NULL;
+
+			defs = &globaldefs;
+		}
+		;
+
+tneighbor_block	: '{' optnl tneighboropts_l '}'
+		| '{' optnl '}'
+		| /* nothing */
+		;
+
+tneighboropts_l	: tneighboropts_l tnbr_defaults nl
+		| tnbr_defaults optnl
 		;
 
 %%
@@ -323,18 +396,22 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{"advertisement",	ADVERTISEMENT},
-		{"distribution",	DISTRIBUTION},
-		{"external-tag",	EXTTAG},
-		{"fib-update",		FIBUPDATE},
-		{"hello-interval",	HELLOINTERVAL},
-		{"holdtime",		HOLDTIME},
-		{"interface",		INTERFACE},
-		{"keepalive",		KEEPALIVE},
-		{"no",			NO},
-		{"retention",		RETENTION},
-		{"router-id",		ROUTERID},
-		{"yes",			YES}
+		{"advertisement",		ADVERTISEMENT},
+		{"distribution",		DISTRIBUTION},
+		{"external-tag",		EXTTAG},
+		{"fib-update",			FIBUPDATE},
+		{"interface",			INTERFACE},
+		{"keepalive",			KEEPALIVE},
+		{"link-hello-holdtime",		LHELLOHOLDTIME},
+		{"link-hello-interval",		LHELLOINTERVAL},
+		{"no",				NO},
+		{"retention",			RETENTION},
+		{"router-id",			ROUTERID},
+		{"targeted-hello-accept",	THELLOACCEPT},
+		{"targeted-hello-holdtime",	THELLOHOLDTIME},
+		{"targeted-hello-interval",	THELLOINTERVAL},
+		{"targeted-neighbor",		TNEIGHBOR},
+		{"yes",				YES}
 	};
 	const struct keywords	*p;
 
@@ -664,8 +741,12 @@ parse_config(char *filename, int opts)
 
 	bzero(&globaldefs, sizeof(globaldefs));
 	defs = &globaldefs;
-	defs->holdtime = DEFAULT_HOLDTIME;
-	defs->hello_interval = DEFAULT_HELLO_INTERVAL;
+	defs->lhello_holdtime = LINK_DFLT_HOLDTIME;
+	defs->lhello_interval = DEFAULT_HELLO_INTERVAL;
+	defs->thello_holdtime = TARGETED_DFLT_HOLDTIME;
+	defs->thello_interval = DEFAULT_HELLO_INTERVAL;
+	conf->thello_holdtime = TARGETED_DFLT_HOLDTIME;
+	conf->thello_interval = DEFAULT_HELLO_INTERVAL;
 
 	conf->mode = (MODE_DIST_INDEPENDENT | MODE_RET_LIBERAL |
 	    MODE_ADV_UNSOLICITED);
@@ -796,6 +877,24 @@ conf_get_if(struct kif *kif)
 	i = if_new(kif);
 
 	return (i);
+}
+
+struct tnbr *
+conf_get_tnbr(struct in_addr addr)
+{
+	struct tnbr	*t;
+
+	LIST_FOREACH(t, &conf->tnbr_list, entry) {
+		if (t->addr.s_addr == addr.s_addr) {
+			yyerror("targeted neighbor %s already configured",
+			    inet_ntoa(addr));
+			return (NULL);
+		}
+	}
+
+	t = tnbr_new(addr, 1);
+
+	return (t);
 }
 
 void

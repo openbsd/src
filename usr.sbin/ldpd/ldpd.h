@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.39 2013/06/04 00:56:49 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.40 2013/06/04 02:25:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -45,6 +45,7 @@
 #define	LDP_BACKLOG		128
 
 #define	LDPD_FLAG_NO_FIB_UPDATE	0x0001
+#define	LDPD_FLAG_TH_ACCEPT	0x0002
 
 #define	F_LDPD_INSERTED		0x0001
 #define	F_CONNECTED		0x0002
@@ -71,6 +72,7 @@ enum imsg_type {
 	IMSG_NONE,
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_SHOW_INTERFACE,
+	IMSG_CTL_SHOW_DISCOVERY,
 	IMSG_CTL_SHOW_NBR,
 	IMSG_CTL_SHOW_LIB,
 	IMSG_CTL_FIB_COUPLE,
@@ -140,20 +142,17 @@ enum iface_type {
 };
 
 /* neighbor states */
-#define	NBR_STA_DOWN		0x0001
-#define	NBR_STA_PRESENT		0x0002
-#define	NBR_STA_INITIAL		0x0004
-#define	NBR_STA_OPENREC		0x0008
-#define	NBR_STA_OPENSENT	0x0010
-#define	NBR_STA_OPER		0x0020
-#define	NBR_STA_SESSION		(NBR_STA_PRESENT | NBR_STA_INITIAL | \
-				NBR_STA_OPENREC | NBR_STA_OPENSENT | \
-				NBR_STA_OPER)
+#define	NBR_STA_PRESENT		0x0001
+#define	NBR_STA_INITIAL		0x0002
+#define	NBR_STA_OPENREC		0x0004
+#define	NBR_STA_OPENSENT	0x0008
+#define	NBR_STA_OPER		0x0010
+#define	NBR_STA_SESSION		(NBR_STA_INITIAL | NBR_STA_OPENREC | \
+				NBR_STA_OPENSENT | NBR_STA_OPER)
 
 /* neighbor events */
 enum nbr_event {
 	NBR_EVT_NOTHING,
-	NBR_EVT_HELLO_RCVD,
 	NBR_EVT_CONNECT_UP,
 	NBR_EVT_CLOSE_SESSION,
 	NBR_EVT_INIT_RCVD,
@@ -166,8 +165,6 @@ enum nbr_event {
 /* neighbor actions */
 enum nbr_action {
 	NBR_ACT_NOTHING,
-	NBR_ACT_STRT_ITIMER,
-	NBR_ACT_RST_ITIMER,
 	NBR_ACT_RST_KTIMEOUT,
 	NBR_ACT_SESSION_EST,
 	NBR_ACT_RST_KTIMER,
@@ -211,6 +208,7 @@ struct iface {
 
 	char			 name[IF_NAMESIZE];
 	LIST_HEAD(, if_addr)	 addr_list;
+	LIST_HEAD(, adj)	 adj_list;
 
 	u_int64_t		 baudrate;
 	time_t			 uptime;
@@ -219,7 +217,7 @@ struct iface {
 	int			 session_fd;
 	int			 state;
 	int			 mtu;
-	u_int16_t		 holdtime;
+	u_int16_t		 hello_holdtime;
 	u_int16_t		 hello_interval;
 	u_int16_t		 flags;
 	enum iface_type		 type;
@@ -227,6 +225,20 @@ struct iface {
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;
 };
+
+/* source of targeted hellos */
+struct tnbr {
+	LIST_ENTRY(tnbr)	 entry;
+	struct event		 hello_timer;
+	int			 discovery_fd;
+	struct adj		*adj;
+	struct in_addr		 addr;
+
+	u_int16_t		 hello_holdtime;
+	u_int16_t		 hello_interval;
+	u_int8_t		 flags;
+};
+#define F_TNBR_CONFIGURED	 0x01
 
 /* ldp_conf */
 enum {
@@ -240,6 +252,11 @@ enum blockmodes {
 	BM_NONBLOCK
 };
 
+enum hello_type {
+	HELLO_LINK,
+	HELLO_TARGETED
+};
+
 #define	MODE_DIST_INDEPENDENT	0x01
 #define	MODE_DIST_ORDERED	0x02
 #define	MODE_RET_LIBERAL	0x04
@@ -249,9 +266,11 @@ enum blockmodes {
 
 struct ldpd_conf {
 	struct event		disc_ev;
+	struct event		edisc_ev;
 	struct in_addr		rtr_id;
 	LIST_HEAD(, iface)	iface_list;
 	LIST_HEAD(, if_addr)	addr_list;
+	LIST_HEAD(, tnbr)	tnbr_list;
 
 	u_int32_t		opts;
 #define LDPD_OPT_VERBOSE	0x00000001
@@ -259,10 +278,13 @@ struct ldpd_conf {
 #define LDPD_OPT_NOACTION	0x00000004
 	time_t			uptime;
 	int			ldp_discovery_socket;
+	int			ldp_ediscovery_socket;
 	int			ldp_session_socket;
 	int			flags;
 	u_int8_t		mode;
 	u_int16_t		keepalive;
+	u_int16_t		thello_holdtime;
+	u_int16_t		thello_interval;
 };
 
 /* kroute */
@@ -321,12 +343,19 @@ struct ctl_iface {
 	u_int8_t		 priority;
 };
 
+struct ctl_adj {
+	struct in_addr		 id;
+	enum hello_type		 type;
+	char			 ifname[IF_NAMESIZE];
+	struct in_addr		 src_addr;
+	u_int16_t		 holdtime;
+};
+
 struct ctl_nbr {
 	struct in_addr		 id;
 	struct in_addr		 addr;
 	struct in_addr		 dr;
 	struct in_addr		 bdr;
-	time_t			 dead_timer;
 	time_t			 uptime;
 	u_int32_t		 db_sum_lst_cnt;
 	u_int32_t		 ls_req_lst_cnt;
