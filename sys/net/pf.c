@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.831 2013/06/04 18:58:28 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.832 2013/06/04 19:03:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6565,6 +6565,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		pd->p_len = pd->tot_len - pd->off - (th->th_off << 2);
 		pd->sport = &th->th_sport;
 		pd->dport = &th->th_dport;
+		pd->pcksum = &th->th_sum;
 		break;
 	}
 	case IPPROTO_UDP: {
@@ -6582,6 +6583,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 		}
 		pd->sport = &uh->uh_sport;
 		pd->dport = &uh->uh_dport;
+		pd->pcksum = &uh->uh_sum;
 		break;
 	}
 	case IPPROTO_ICMP: {
@@ -6593,6 +6595,7 @@ pf_setup_pdesc(struct pf_pdesc *pd, void *pdhdrs, sa_family_t af, int dir,
 			REASON_SET(reason, PFRES_SHORT);
 			return (PF_DROP);
 		}
+		pd->pcksum = &pd->hdr.icmp->icmp_cksum;
 		break;
 	}
 #ifdef INET6

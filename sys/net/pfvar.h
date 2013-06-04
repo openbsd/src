@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.382 2013/06/03 15:00:00 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.383 2013/06/04 19:03:12 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1245,6 +1245,7 @@ struct pf_pdesc {
 			*eh;
 	struct pf_addr	*src;		/* src address */
 	struct pf_addr	*dst;		/* dst address */
+	u_int16_t	*pcksum;	/* proto cksum */
 	u_int16_t	*sport;
 	u_int16_t	*dport;
 	u_int16_t	 osport;
