@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.S,v 1.2 2013/06/01 20:47:40 tedu Exp $	*/
+/*	$OpenBSD: _atomic_lock.S,v 1.3 2013/06/04 17:55:51 miod Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -7,7 +7,7 @@ LEAF(_atomic_lock,1)
         LDGP(pv)
 
 				/* NOTE: using ldl_l/stl_c instead of
-				   ldq_l and ldq_c as machine/spinlock.h
+				   ldq_l and stq_c as machine/spinlock.h
 				   defines _atomic_lock_t as int */
 0:      ldl_l   v0, 0(a0)       /* read existing lock value */
         mov     1, t0           /* locked value to store */
