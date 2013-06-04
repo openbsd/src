@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.12 2013/06/04 00:41:18 claudio Exp $ */
+/*	$OpenBSD: address.c,v 1.13 2013/06/04 02:34:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -72,7 +72,7 @@ send_address(struct nbr *nbr, struct if_addr *if_addr)
 
 	gen_address_list_tlv(buf, if_addr, size);
 
-	evbuf_enqueue(&nbr->wbuf, buf);
+	evbuf_enqueue(&nbr->tcp->wbuf, buf);
 	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }
 
@@ -186,6 +186,6 @@ send_address_withdraw(struct nbr *nbr, struct if_addr *if_addr)
 
 	gen_address_list_tlv(buf, if_addr, size);
 
-	evbuf_enqueue(&nbr->wbuf, buf);
+	evbuf_enqueue(&nbr->tcp->wbuf, buf);
 	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
 }

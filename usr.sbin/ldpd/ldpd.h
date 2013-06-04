@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.41 2013/06/04 02:28:27 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.42 2013/06/04 02:34:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -153,6 +153,7 @@ enum iface_type {
 /* neighbor events */
 enum nbr_event {
 	NBR_EVT_NOTHING,
+	NBR_EVT_MATCH_ADJ,
 	NBR_EVT_CONNECT_UP,
 	NBR_EVT_CLOSE_SESSION,
 	NBR_EVT_INIT_RCVD,

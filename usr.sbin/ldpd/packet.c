@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.26 2013/06/04 02:25:28 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.27 2013/06/04 02:34:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -227,11 +227,41 @@ disc_find_iface(unsigned int ifindex, struct in_addr src)
 	return (NULL);
 }
 
+struct tcp_conn *
+tcp_new(int fd, struct nbr *nbr)
+{
+	struct tcp_conn *tcp;
+
+	if ((tcp = calloc(1, sizeof(*tcp))) == NULL)
+		fatal("tcp_new");
+	if ((tcp->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
+		fatal("tcp_new");
+
+	if (nbr)
+		tcp->nbr = nbr;
+
+	tcp->fd = fd;
+	evbuf_init(&tcp->wbuf, tcp->fd, session_write, tcp);
+	event_set(&tcp->rev, tcp->fd, EV_READ | EV_PERSIST, session_read, tcp);
+	event_add(&tcp->rev, NULL);
+
+	return (tcp);
+}
+
+void
+tcp_close(struct tcp_conn *tcp)
+{
+	evbuf_clear(&tcp->wbuf);
+	event_del(&tcp->rev);
+	close(tcp->fd);
+	free(tcp->rbuf);
+	free(tcp);
+}
+
 void
 session_accept(int fd, short event, void *bula)
 {
 	struct sockaddr_in	 src;
-	struct nbr		*nbr = NULL;
 	int			 newfd;
 	socklen_t		 len = sizeof(src);
 
@@ -255,28 +285,14 @@ session_accept(int fd, short event, void *bula)
 
 	session_socket_blockmode(newfd, BM_NONBLOCK);
 
-	nbr = nbr_find_ip(src.sin_addr.s_addr);
-	if (nbr == NULL) {
-		struct ibuf	*buf;
-		/* If there is no neighbor matching there is no
-		   Hello adjacency: try to send notification */
-		log_warnx("Connection attempt from unknown neighbor %s: %s",
-		    inet_ntoa(src.sin_addr), "NO HELLO");
-		buf = send_notification(S_NO_HELLO, 0, 0);
-		write(newfd, buf->buf, buf->wpos);
-		ibuf_free(buf);
-		close(newfd);
-		return;
-	}
-
-	nbr->fd = newfd;
-	nbr_fsm(nbr, NBR_EVT_CONNECT_UP);
+	tcp_new(newfd, NULL);
 }
 
 void
 session_read(int fd, short event, void *arg)
 {
-	struct nbr	*nbr = arg;
+	struct tcp_conn	*tcp = arg;
+	struct nbr	*nbr = tcp->nbr;
 	struct ldp_hdr	*ldp_hdr;
 	struct ldp_msg	*ldp_msg;
 	char		*buf, *pdu;
@@ -289,11 +305,14 @@ session_read(int fd, short event, void *arg)
 		return;
 	}
 
-	if ((n = read(fd, nbr->rbuf->buf + nbr->rbuf->wpos,
-	    sizeof(nbr->rbuf->buf) - nbr->rbuf->wpos)) == -1) {
+	if ((n = read(fd, tcp->rbuf->buf + tcp->rbuf->wpos,
+	    sizeof(tcp->rbuf->buf) - tcp->rbuf->wpos)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
 			log_warn("session_read: read error");
-			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+			if (nbr)
+				nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+			else
+				tcp_close(tcp);
 			return;
 		}
 		/* retry read */
@@ -302,32 +321,68 @@ session_read(int fd, short event, void *arg)
 	if (n == 0) {
 		/* connection closed */
 		log_debug("session_read: connection closed by remote end");
-		nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+		if (nbr)
+			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+		else
+			tcp_close(tcp);
 		return;
 	}
-	nbr->rbuf->wpos += n;
+	tcp->rbuf->wpos += n;
 
-	while ((len = session_get_pdu(nbr->rbuf, &buf)) > 0) {
+	while ((len = session_get_pdu(tcp->rbuf, &buf)) > 0) {
 		pdu = buf;
 		ldp_hdr = (struct ldp_hdr *)pdu;
 		if (ntohs(ldp_hdr->version) != LDP_VERSION) {
-			session_shutdown(nbr, S_BAD_PROTO_VER, 0, 0);
+			if (nbr)
+				session_shutdown(nbr, S_BAD_PROTO_VER, 0, 0);
+			else {
+				send_notification(S_BAD_PROTO_VER, tcp, 0, 0);
+				msgbuf_write(&tcp->wbuf.wbuf);
+				tcp_close(tcp);
+			}
 			free(buf);
 			return;
 		}
 
 		pdu_len = ntohs(ldp_hdr->length);
 		if (pdu_len < LDP_HDR_SIZE || pdu_len > LDP_MAX_LEN) {
-			session_shutdown(nbr, S_BAD_MSG_LEN, 0, 0);
+			if (nbr)
+				session_shutdown(nbr, S_BAD_MSG_LEN, 0, 0);
+			else {
+				send_notification(S_BAD_MSG_LEN, tcp, 0, 0);
+				msgbuf_write(&tcp->wbuf.wbuf);
+				tcp_close(tcp);
+			}
 			free(buf);
 			return;
 		}
 
-		if (ldp_hdr->lsr_id != nbr->id.s_addr ||
-		    ldp_hdr->lspace_id != 0) {
-			session_shutdown(nbr, S_BAD_LDP_ID, 0, 0);
-			free(buf);
-			return;
+		if (nbr) {
+			if (ldp_hdr->lsr_id != nbr->id.s_addr ||
+			    ldp_hdr->lspace_id != 0) {
+				session_shutdown(nbr, S_BAD_LDP_ID, 0, 0);
+				free(buf);
+				return;
+			}
+		} else {
+			nbr = nbr_find_ldpid(ldp_hdr->lsr_id);
+			if (!nbr) {
+				send_notification(S_NO_HELLO, tcp, 0, 0);
+				msgbuf_write(&tcp->wbuf.wbuf);
+				tcp_close(tcp);
+				free(buf);
+				return;
+			}
+			/* handle duplicate SYNs */
+			if (nbr->tcp) {
+				tcp_close(tcp);
+				free(buf);
+				return;
+			}
+
+			nbr->tcp = tcp;
+			tcp->nbr = nbr;
+			nbr_fsm(nbr, NBR_EVT_MATCH_ADJ);
 		}
 
 		pdu += LDP_HDR_SIZE;
@@ -442,15 +497,18 @@ session_read(int fd, short event, void *arg)
 void
 session_write(int fd, short event, void *arg)
 {
-	struct nbr *nbr = arg;
+	struct tcp_conn *tcp = arg;
+	struct nbr *nbr = tcp->nbr;
 
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&nbr->wbuf.wbuf) == -1)
-			nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+		if (msgbuf_write(&tcp->wbuf.wbuf) == -1) {
+			if (nbr)
+				nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+		}
 	} else
 		log_debug("session_write: spurious event");
 
-	evbuf_event_add(&nbr->wbuf);
+	evbuf_event_add(&tcp->wbuf);
 }
 
 void
@@ -463,7 +521,7 @@ session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
 	send_notification_nbr(nbr, status, msgid, type);
 
 	/* try to flush write buffer, if it fails tough shit */
-	msgbuf_write(&nbr->wbuf.wbuf);
+	msgbuf_write(&nbr->tcp->wbuf.wbuf);
 
 	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 }
@@ -474,13 +532,12 @@ session_close(struct nbr *nbr)
 	log_debug("session_close: closing session with nbr ID %s",
 	    inet_ntoa(nbr->id));
 
-	evbuf_clear(&nbr->wbuf);
-	event_del(&nbr->rev);
+	tcp_close(nbr->tcp);
+	nbr->tcp = NULL;
 
 	nbr_stop_ktimer(nbr);
 	nbr_stop_ktimeout(nbr);
 
-	close(nbr->fd);
 	accept_unpause();
 }
 

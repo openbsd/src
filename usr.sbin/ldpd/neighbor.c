@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.36 2013/06/04 02:25:28 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.37 2013/06/04 02:34:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -46,15 +46,11 @@ void	nbr_send_labelmappings(struct nbr *);
 int	nbr_act_session_operational(struct nbr *);
 
 static __inline int nbr_id_compare(struct nbr *, struct nbr *);
-static __inline int nbr_addr_compare(struct nbr *, struct nbr *);
 static __inline int nbr_pid_compare(struct nbr *, struct nbr *);
 
 RB_HEAD(nbr_id_head, nbr);
 RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)
 RB_GENERATE(nbr_id_head, nbr, id_tree, nbr_id_compare)
-RB_HEAD(nbr_addr_head, nbr);
-RB_PROTOTYPE(nbr_addr_head, nbr, addr_tree, nbr_addr_compare)
-RB_GENERATE(nbr_addr_head, nbr, addr_tree, nbr_addr_compare)
 RB_HEAD(nbr_pid_head, nbr);
 RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 RB_GENERATE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
@@ -66,19 +62,12 @@ nbr_id_compare(struct nbr *a, struct nbr *b)
 }
 
 static __inline int
-nbr_addr_compare(struct nbr *a, struct nbr *b)
-{
-	return (ntohl(a->addr.s_addr) - ntohl(b->addr.s_addr));
-}
-
-static __inline int
 nbr_pid_compare(struct nbr *a, struct nbr *b)
 {
 	return (a->peerid - b->peerid);
 }
 
 struct nbr_id_head nbrs_by_id = RB_INITIALIZER(&nbrs_by_id);
-struct nbr_addr_head nbrs_by_addr = RB_INITIALIZER(&nbrs_by_addr);
 struct nbr_pid_head nbrs_by_pid = RB_INITIALIZER(&nbrs_by_pid);
 
 u_int32_t	peercnt = NBR_CNTSTART;
@@ -92,11 +81,12 @@ struct {
 	int		new_state;
 } nbr_fsm_tbl[] = {
     /* current state	event that happened	action to take		resulting state */
-    {NBR_STA_PRESENT,	NBR_EVT_CONNECT_UP,	NBR_ACT_CONNECT_SETUP,	NBR_STA_INITIAL},
 /* Passive Role */
+    {NBR_STA_PRESENT,	NBR_EVT_MATCH_ADJ,	NBR_ACT_NOTHING,	NBR_STA_INITIAL},
     {NBR_STA_INITIAL,	NBR_EVT_INIT_RCVD,	NBR_ACT_PASSIVE_INIT,	NBR_STA_OPENREC},
     {NBR_STA_OPENREC,	NBR_EVT_KEEPALIVE_RCVD,	NBR_ACT_SESSION_EST,	NBR_STA_OPER},
 /* Active Role */
+    {NBR_STA_PRESENT,	NBR_EVT_CONNECT_UP,	NBR_ACT_CONNECT_SETUP,	NBR_STA_INITIAL},
     {NBR_STA_INITIAL,	NBR_EVT_INIT_SENT,	NBR_ACT_NOTHING,	NBR_STA_OPENSENT},
     {NBR_STA_OPENSENT,	NBR_EVT_INIT_RCVD,	NBR_ACT_KEEPALIVE_SEND,	NBR_STA_OPENREC},
 /* Session Maintenance */
@@ -110,6 +100,7 @@ struct {
 
 const char * const nbr_event_names[] = {
 	"NOTHING",
+	"ADJACENCY MATCHED",
 	"CONNECTION UP",
 	"SESSION CLOSE",
 	"INIT RECEIVED",
@@ -187,13 +178,11 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr_send_labelmappings(nbr);
 		break;
 	case NBR_ACT_CONNECT_SETUP:
-		nbr_act_connect_setup(nbr);
+		nbr->tcp = tcp_new(nbr->fd, nbr);
 
-		if (nbr_session_active_role(nbr)) {
-			/* trigger next state */
-			send_init(nbr);
-			nbr_fsm(nbr, NBR_EVT_INIT_SENT);
-		}
+		/* trigger next state */
+		send_init(nbr);
+		nbr_fsm(nbr, NBR_EVT_INIT_SENT);
 		break;
 	case NBR_ACT_PASSIVE_INIT:
 		send_init(nbr);
@@ -225,8 +214,6 @@ nbr_new(struct in_addr id, struct in_addr addr)
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
 		fatal("nbr_new");
-	if ((nbr->rbuf = calloc(1, sizeof(struct ibuf_read))) == NULL)
-		fatal("nbr_new");
 
 	nbr->state = NBR_STA_PRESENT;
 	nbr->id.s_addr = id.s_addr;
@@ -239,8 +226,6 @@ nbr_new(struct in_addr id, struct in_addr addr)
 
 	if (RB_INSERT(nbr_pid_head, &nbrs_by_pid, nbr) != NULL)
 		fatalx("nbr_new: RB_INSERT(nbrs_by_pid) failed");
-	if (RB_INSERT(nbr_addr_head, &nbrs_by_addr, nbr) != NULL)
-		fatalx("nbr_new: RB_INSERT(nbrs_by_addr) failed");
 	if (RB_INSERT(nbr_id_head, &nbrs_by_id, nbr) != NULL)
 		fatalx("nbr_new: RB_INSERT(nbrs_by_id) failed");
 
@@ -278,10 +263,8 @@ nbr_del(struct nbr *nbr)
 	nbr_mapping_list_clr(nbr, &nbr->abortreq_list);
 
 	RB_REMOVE(nbr_pid_head, &nbrs_by_pid, nbr);
-	RB_REMOVE(nbr_addr_head, &nbrs_by_addr, nbr);
 	RB_REMOVE(nbr_id_head, &nbrs_by_id, nbr);
 
-	free(nbr->rbuf);
 	free(nbr);
 }
 
@@ -291,14 +274,6 @@ nbr_find_peerid(u_int32_t peerid)
 	struct nbr	n;
 	n.peerid = peerid;
 	return (RB_FIND(nbr_pid_head, &nbrs_by_pid, &n));
-}
-
-struct nbr *
-nbr_find_ip(u_int32_t addr)
-{
-	struct nbr	n;
-	n.addr.s_addr = addr;
-	return (RB_FIND(nbr_addr_head, &nbrs_by_addr, &n));
 }
 
 struct nbr *
@@ -539,14 +514,6 @@ nbr_establish_connection(struct nbr *nbr)
 	return (0);
 }
 
-void
-nbr_act_connect_setup(struct nbr *nbr)
-{
-	evbuf_init(&nbr->wbuf, nbr->fd, session_write, nbr);
-	event_set(&nbr->rev, nbr->fd, EV_READ | EV_PERSIST, session_read, nbr);
-	event_add(&nbr->rev, NULL);
-}
-
 int
 nbr_act_session_operational(struct nbr *nbr)
 {
@@ -646,7 +613,7 @@ ldpe_nbr_ctl(struct ctl_conn *c)
 	struct nbr	*nbr;
 	struct ctl_nbr	*nctl;
 
-	RB_FOREACH(nbr, nbr_addr_head, &nbrs_by_addr) {
+	RB_FOREACH(nbr, nbr_pid_head, &nbrs_by_pid) {
 		nctl = nbr_to_ctl(nbr);
 		imsg_compose_event(&c->iev, IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
 		    sizeof(struct ctl_nbr));

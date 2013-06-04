@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.26 2013/06/04 02:28:27 claudio Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.27 2013/06/04 02:34:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -48,10 +48,18 @@ struct adj {
 	struct in_addr		 addr;
 };
 
-struct nbr {
-	RB_ENTRY(nbr)		 id_tree, addr_tree, pid_tree;
+struct nbr;
+struct tcp_conn {
+	struct nbr		*nbr;
+	int			 fd;
+	struct ibuf_read	*rbuf;
 	struct evbuf		 wbuf;
 	struct event		 rev;
+};
+
+struct nbr {
+	RB_ENTRY(nbr)		 id_tree, pid_tree;
+	struct tcp_conn		*tcp;
 	LIST_HEAD(, adj)	 adj_list;	/* adjacencies */
 	struct event		 ev_connect;
 	struct event		 keepalive_timer;
@@ -67,15 +75,12 @@ struct nbr {
 	struct in_addr		 addr;
 	struct in_addr		 id;
 
-	struct ibuf_read	*rbuf;
-
 	time_t			 uptime;
 	u_int32_t		 peerid;	/* unique ID in DB */
 
 	int			 fd;
 	int			 state;
 	int			 idtimer_cnt;
-
 	u_int16_t		 keepalive;
 };
 
@@ -105,7 +110,8 @@ int	 recv_keepalive(struct nbr *, char *, u_int16_t);
 
 /* notification.c */
 void	 send_notification_nbr(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
-struct ibuf	*send_notification(u_int32_t, u_int32_t, u_int32_t);
+void	 send_notification(u_int32_t, struct tcp_conn *, u_int32_t,
+	    u_int32_t);
 int	 recv_notification(struct nbr *, char *, u_int16_t);
 
 /* address.c */
@@ -176,7 +182,6 @@ void		 ldpe_adj_ctl(struct ctl_conn *);
 struct nbr	*nbr_new(struct in_addr, struct in_addr);
 void		 nbr_del(struct nbr *);
 
-struct nbr	*nbr_find_ip(u_int32_t);
 struct nbr	*nbr_find_ldpid(u_int32_t);
 struct nbr	*nbr_find_peerid(u_int32_t);
 
@@ -196,7 +201,6 @@ int	 nbr_pending_idtimer(struct nbr *);
 int	 nbr_pending_connect(struct nbr *);
 
 int	 nbr_establish_connection(struct nbr *);
-void	 nbr_act_connect_setup(struct nbr *);
 
 void			 nbr_mapping_add(struct nbr *, struct mapping_head *,
 			    struct map *);
@@ -216,6 +220,10 @@ int	 gen_msg_tlv(struct ibuf *, u_int32_t, u_int16_t);
 int	 send_packet(int, struct iface *, void *, size_t, struct sockaddr_in *);
 void	 disc_recv_packet(int, short, void *);
 void	 session_accept(int, short, void *);
+
+struct tcp_conn *tcp_new(int, struct nbr *);
+void		 tcp_close(struct tcp_conn *);
+
 
 void	 session_read(int, short, void *);
 void	 session_write(int, short, void *);
