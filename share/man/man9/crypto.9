@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.34 2013/01/17 21:54:18 jmc Exp $
+.\"	$OpenBSD: crypto.9,v 1.35 2013/06/04 19:27:04 schwarze Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,14 +15,14 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt CRYPTO 9
 .Os
 .Sh NAME
 .Nm crypto
 .Nd API for cryptographic services in the kernel
 .Sh SYNOPSIS
-.Fd #include <crypto/cryptodev.h>
+.In crypto/cryptodev.h
 .Ft int32_t
 .Fn crypto_get_driverid "u_int8_t"
 .Ft int

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tc_init.9,v 1.6 2012/08/18 08:44:25 jmc Exp $
+.\"	$OpenBSD: tc_init.9,v 1.7 2013/06/04 19:27:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2012 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt TC_INIT 9
 .Os
 .Sh NAME
 .Nm tc_init
 .Nd machine-independent binary timescale
 .Sh SYNOPSIS
-.Fd #include <sys/timetc.h>
+.In sys/timetc.h
 .Ft void
 .Fn tc_init "struct timecounter *tc"
 .Sh DESCRIPTION

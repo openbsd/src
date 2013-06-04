@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getdevvp.9,v 1.7 2007/05/31 19:20:00 jmc Exp $
+.\"     $OpenBSD: getdevvp.9,v 1.8 2013/06/04 19:27:06 schwarze Exp $
 .\"
 .\" Copyright (C) 2002 Peter A. Werner. All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt GETDEVVP 9
 .Os
 .Sh NAME
@@ -35,8 +35,8 @@
 .Nm cdevvp
 .Nd create a vnode for a device
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft int
 .Fn getdevvp "dev_t dev" "struct vnode **vpp" "enum vtype type"
 .Ft int

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vrele.9,v 1.8 2010/10/28 18:27:29 jmc Exp $
+.\"     $OpenBSD: vrele.9,v 1.9 2013/06/04 19:27:17 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 Doug Rabson
 .\"
@@ -28,15 +28,15 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vrele.9,v 1.9 2001/10/01 16:09:25 ru Exp $
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VRELE 9
 .Os
 .Sh NAME
 .Nm vrele
 .Nd decrement the use count for a vnode
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft int
 .Fn vrele "struct vnode *vp"
 .Sh DESCRIPTION

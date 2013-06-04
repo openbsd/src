@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.14 2010/08/08 12:39:05 jmc Exp $
+.\" $OpenBSD: mutex.9,v 1.15 2013/06/04 19:27:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Nm mtx_leave
 .Nd interface to CPU mutexes
 .Sh SYNOPSIS
-.Fd #include <sys/mutex.h>
+.In sys/mutex.h
 .Ft void
 .Fn mtx_init "struct mutex *mtxp" "int wantipl"
 .Ft void

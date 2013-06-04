@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vcount.9,v 1.6 2010/10/28 18:27:29 jmc Exp $
+.\"     $OpenBSD: vcount.9,v 1.7 2013/06/04 19:27:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2000 Andrew Stevenson
 .\"
@@ -32,17 +32,17 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vcount.9,v 1.4 2001/12/26 23:14:04 davidc Exp $
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VCOUNT 9
 .Os
 .Sh NAME
 .Nm vcount
 .Nd get total number of references to a device
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/time.h>
-.Fd #include <sys/conf.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/time.h
+.In sys/conf.h
+.In sys/vnode.h
 .Ft int
 .Fn vcount "struct vnode *vp"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getnewvnode.9,v 1.6 2012/05/18 05:56:00 jmc Exp $
+.\"     $OpenBSD: getnewvnode.9,v 1.7 2013/06/04 19:27:06 schwarze Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,16 +27,16 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/getnewvnode.9,v 1.1 2001/12/02 02:13:35 alfred Exp $
 .\"
-.Dd $Mdocdate: May 18 2012 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt GETNEWVNODE 9
 .Os
 .Sh NAME
 .Nm getnewvnode
 .Nd "get a new vnode"
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
-.Fd #include <sys/mount.h>
+.In sys/param.h
+.In sys/vnode.h
+.In sys/mount.h
 .Ft int
 .Fo getnewvnode
 .Fa "enum vtagtype tag"

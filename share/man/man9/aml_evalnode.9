@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aml_evalnode.9,v 1.7 2010/03/26 19:30:40 jmc Exp $
+.\"	$OpenBSD: aml_evalnode.9,v 1.8 2013/06/04 19:27:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt AML_EVALNODE 9
 .Os
 .Sh NAME
@@ -25,11 +25,11 @@
 .Nm aml_val2int
 .Nd AML API
 .Sh SYNOPSIS
-.Fd #include <dev/acpi/acpireg.h>
-.Fd #include <dev/acpi/acpivar.h>
-.Fd #include <dev/acpi/acpidev.h>
-.Fd #include <dev/acpi/amltypes.h>
-.Fd #include <dev/acpi/dsdt.h>
+.In dev/acpi/acpireg.h
+.In dev/acpi/acpivar.h
+.In dev/acpi/acpidev.h
+.In dev/acpi/amltypes.h
+.In dev/acpi/dsdt.h
 .Ft int
 .Fn "aml_evalnode" "struct acpi_softc *sc" "struct aml_node *node" \
 "int argc" "struct aml_value *argv" "struct aml_value *res"

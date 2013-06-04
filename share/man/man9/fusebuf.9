@@ -1,4 +1,4 @@
-.\" $OpenBSD: fusebuf.9,v 1.5 2013/06/04 18:26:51 tedu Exp $
+.\" $OpenBSD: fusebuf.9,v 1.6 2013/06/04 19:27:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -21,7 +21,7 @@
 .Nm fusebuf
 .Nd kernel messaging mechanism for file system in userland
 .Sh SYNOPSIS
-.Fd #include <sys/fusebuf.h>
+.In sys/fusebuf.h
 .Ft struct fusebuf *
 .Fn fb_setup "size_t size" "ino_t inode" "int type" "struct proc *p"
 .Ft int

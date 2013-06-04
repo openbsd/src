@@ -1,15 +1,15 @@
-.\"	$OpenBSD: vflushbuf.9,v 1.2 2007/05/31 19:20:01 jmc Exp $
+.\"	$OpenBSD: vflushbuf.9,v 1.3 2013/06/04 19:27:16 schwarze Exp $
 .\" Written by Jared Yanovich
 .\" This file belongs to the public domain.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VFLUSHBUF 9
 .Os
 .Sh NAME
 .Nm vflushbuf
 .Nd flush dirty vnode buffers to disk
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft void
 .Fn vflushbuf "struct vnode *vp" "int sync"
 .Sh DESCRIPTION

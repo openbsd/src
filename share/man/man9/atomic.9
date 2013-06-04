@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic.9,v 1.4 2007/05/31 19:20:00 jmc Exp $
+.\" $OpenBSD: atomic.9,v 1.5 2013/06/04 19:27:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt ATOMIC 9
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm atomic_clearbits_int
 .Nd interface to perform atomic operations on data
 .Sh SYNOPSIS
-.Fd #include <machine/atomic.h>
+.In machine/atomic.h
 .Ft void
 .Fn atomic_setbits_int "unsigned int *p" "unsigned int b"
 .Ft void

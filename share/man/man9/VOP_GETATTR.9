@@ -1,4 +1,4 @@
-.\"	$OpenBSD: VOP_GETATTR.9,v 1.4 2007/12/09 20:54:01 jmc Exp $
+.\"	$OpenBSD: VOP_GETATTR.9,v 1.5 2013/06/04 19:27:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2007 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VOP_GETATTR 9
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nm VOP_SETATTR
 .Nd get or set vnode attributes
 .Sh SYNOPSIS
-.Fd #include <sys/vnode.h>
+.In sys/vnode.h
 .Ft int
 .Fo VOP_GETATTR
 .Fa "struct vnode *vp"

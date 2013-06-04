@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoconf.9,v 1.10 2008/06/26 05:42:08 ray Exp $
+.\"     $OpenBSD: autoconf.9,v 1.11 2013/06/04 19:27:03 schwarze Exp $
 .\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,15 +28,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt AUTOCONF 9
 .Os
 .Sh NAME
 .Nm autoconf
 .Nd autoconfiguration framework
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/device.h>
+.In sys/param.h
+.In sys/device.h
 .Sh DESCRIPTION
 Autoconfiguration is the process of matching hardware devices with an
 appropriate device driver.

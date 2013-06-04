@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfind.9,v 1.6 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: pfind.9,v 1.7 2013/06/04 19:27:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt PFIND 9
 .Os
 .Sh NAME
@@ -31,8 +31,8 @@
 .Nm pgfind
 .Nd find process / process group by number
 .Sh SYNOPSIS
-.Fd #include <sys/cdefs.h>
-.Fd #include <sys/proc.h>
+.In sys/cdefs.h
+.In sys/proc.h
 .Ft "struct proc *"
 .Fn pfind "pid_t pid"
 .Ft "struct pgrp *"

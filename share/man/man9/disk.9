@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.31 2012/04/06 15:42:56 jsing Exp $
+.\"	$OpenBSD: disk.9,v 1.32 2013/06/04 19:27:04 schwarze Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -31,16 +31,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 6 2012 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt DISK 9
 .Os
 .Sh NAME
 .Nm disk
 .Nd generic disk framework
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/disklabel.h>
-.Fd #include <sys/disk.h>
+.In sys/types.h
+.In sys/disklabel.h
+.In sys/disk.h
 .Ft void
 .Fn disk_init "void"
 .Ft void

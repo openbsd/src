@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vrecycle.9,v 1.9 2010/09/19 13:17:25 jmc Exp $
+.\"     $OpenBSD: vrecycle.9,v 1.10 2013/06/04 19:27:17 schwarze Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner
 .\" All rights reserved.
@@ -25,15 +25,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VRECYCLE 9
 .Os
 .Sh NAME
 .Nm vrecycle
 .Nd recycle a vnode if its reference count is zero
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft int
 .Fo vrecycle
 .Fa "struct vnode *vp"

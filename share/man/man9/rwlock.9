@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.9 2010/08/01 14:21:10 blambert Exp $
+.\" $OpenBSD: rwlock.9,v 1.10 2013/06/04 19:27:12 schwarze Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -29,7 +29,7 @@
 .Nm rw_exit_write
 .Nd interface to read/write locks
 .Sh SYNOPSIS
-.Fd #include <sys/rwlock.h>
+.In sys/rwlock.h
 .Ft void
 .Fn rw_init "struct rwlock *rwl" "const char *name"
 .Ft int

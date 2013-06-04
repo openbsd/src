@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vaccess.9,v 1.8 2012/09/16 09:57:33 jmc Exp $
+.\"     $OpenBSD: vaccess.9,v 1.9 2013/06/04 19:27:15 schwarze Exp $
 .\"-
 .\" Copyright (c) 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -25,15 +25,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 16 2012 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VACCESS 9
 .Os
 .Sh NAME
 .Nm vaccess
 .Nd check access permissions based on vnode parameters
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft int
 .Fo vaccess
 .Fa "enum vtype type"

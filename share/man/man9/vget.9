@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vget.9,v 1.10 2010/10/28 18:27:29 jmc Exp $
+.\"     $OpenBSD: vget.9,v 1.11 2013/06/04 19:27:16 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 Doug Rabson
 .\"
@@ -28,15 +28,15 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vget.9,v 1.7 2001/12/26 23:14:04 davidc Exp $
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VGET 9
 .Os
 .Sh NAME
 .Nm vget
 .Nd get a vnode from the free list
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft int
 .Fn vget "struct vnode *vp" "int flags" "struct proc *p"
 .Sh DESCRIPTION

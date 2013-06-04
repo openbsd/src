@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vref.9,v 1.7 2010/10/28 18:27:29 jmc Exp $
+.\"     $OpenBSD: vref.9,v 1.8 2013/06/04 19:27:17 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 Doug Rabson
 .\"
@@ -28,15 +28,15 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vref.9,v 1.8 2001/10/01 16:09:25 ru Exp $
 .\"
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VREF 9
 .Os
 .Sh NAME
 .Nm vref
 .Nd increment the use count for a vnode
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft void
 .Fn vref "struct vnode *vp"
 .Sh DESCRIPTION

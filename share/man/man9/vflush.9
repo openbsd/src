@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vflush.9,v 1.4 2007/05/31 19:20:01 jmc Exp $
+.\"     $OpenBSD: vflush.9,v 1.5 2013/06/04 19:27:16 schwarze Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,15 +27,15 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vflush.9,v 1.2 2001/12/14 09:11:13 ru Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VFLUSH 9
 .Os
 .Sh NAME
 .Nm vflush
 .Nd flush vnodes for a mount point
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft int
 .Fn vflush "struct mount *mp" "struct vnode *skipvp" "int flags"
 .Sh DESCRIPTION

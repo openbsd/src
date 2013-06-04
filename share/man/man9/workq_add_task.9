@@ -1,4 +1,4 @@
-.\"	$OpenBSD: workq_add_task.9,v 1.14 2009/09/03 15:10:39 jmc Exp $
+.\"	$OpenBSD: workq_add_task.9,v 1.15 2013/06/04 19:27:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2009 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt WORKQ_ADD_TASK 9
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm workq_destroy
 .Nd work queues
 .Sh SYNOPSIS
-.Fd #include <sys/workq.h>
+.In sys/workq.h
 .Ft int
 .Fn "workq_add_task" "struct workq *wq" "int flags" "void (*func)(void *, void *)" "void *arg1" "void *arg2"
 .Ft void

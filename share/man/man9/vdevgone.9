@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vdevgone.9,v 1.6 2010/09/19 13:17:25 jmc Exp $
+.\"     $OpenBSD: vdevgone.9,v 1.7 2013/06/04 19:27:15 schwarze Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner
 .\" All rights reserved.
@@ -25,15 +25,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VDEVGONE 9
 .Os
 .Sh NAME
 .Nm vdevgone
 .Nd revoke all specified minor numbered vnodes for a device
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft void
 .Fo vdevgone
 .Fa "int maj"

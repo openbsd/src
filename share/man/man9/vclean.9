@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vclean.9,v 1.9 2010/09/19 13:17:25 jmc Exp $
+.\"     $OpenBSD: vclean.9,v 1.10 2013/06/04 19:27:15 schwarze Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner
 .\" All rights reserved.
@@ -25,15 +25,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 19 2010 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VCLEAN 9
 .Os
 .Sh NAME
 .Nm vclean
 .Nd disassociate the underlying file system from a vnode
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft void
 .Fo vclean
 .Fa "struct vnode *vp"

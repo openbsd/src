@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mountroothook_establish.9,v 1.2 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: mountroothook_establish.9,v 1.3 2013/06/04 19:27:10 schwarze Exp $
 .\"	$NetBSD: mountroothook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt MOUNTROOTHOOK_ESTABLISH 9
 .Os
 .Sh NAME
@@ -38,8 +38,8 @@
 .Nm mountroothook_disestablish
 .Nd add or remove a mountroot hook
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/systm.h>
+.In sys/types.h
+.In sys/systm.h
 .Ft void *
 .Fn mountroothook_establish "void (*fn)(void *)" "void *arg"
 .Ft void

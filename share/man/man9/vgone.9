@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vgone.9,v 1.6 2007/05/31 19:20:01 jmc Exp $
+.\"     $OpenBSD: vgone.9,v 1.7 2013/06/04 19:27:16 schwarze Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vgone.9,v 1.2 2001/12/14 09:11:13 ru Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VGONE 9
 .Os
 .Sh NAME
@@ -35,8 +35,8 @@
 .Nm vgonel
 .Nd prepare a vnode for reuse
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft void
 .Fn vgone "struct vnode *vp"
 .Ft void

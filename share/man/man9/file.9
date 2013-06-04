@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.11 2012/10/04 02:47:49 guenther Exp $
+.\"     $OpenBSD: file.9,v 1.12 2013/06/04 19:27:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -22,15 +22,15 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 4 2012 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt FILE 9
 .Os
 .Sh NAME
 .Nm file
 .Nd an overview of file descriptor handling
 .Sh SYNOPSIS
-.Fd #include <sys/file.h>
-.Fd #include <sys/filedesc.h>
+.In sys/file.h
+.In sys/filedesc.h
 .Ft int
 .Fn falloc "struct proc *p" "struct file **resultfp" "int *resultfd"
 .Ft int
@@ -43,9 +43,9 @@
 .Fn fd_getfile "struct filedesc *fdp" "int fd"
 .Ft int
 .Fn getsock "struct filedesc *fdp" "int fd" "struct file **fpp"
-.Fd #include <sys/file.h>
-.Fd #include <sys/filedesc.h>
-.Fd #include <sys/vnode.h>
+.In sys/file.h
+.In sys/filedesc.h
+.In sys/vnode.h
 .Ft int
 .Fn getvnode "struct filedesc *fdp" "int fd" "struct file **fpp"
 .Sh DESCRIPTION

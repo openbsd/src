@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vhold.9,v 1.7 2012/09/17 05:50:53 jmc Exp $
+.\"     $OpenBSD: vhold.9,v 1.8 2013/06/04 19:27:16 schwarze Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vhold.9,v 1.2 2001/12/14 09:11:13 ru Exp $
 .\"
-.Dd $Mdocdate: September 17 2012 $
+.Dd $Mdocdate: June 4 2013 $
 .Dt VHOLD 9
 .Os
 .Sh NAME
@@ -35,8 +35,8 @@
 .Nm vdrop
 .Nd acquire/release a hold on a vnode
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.In sys/param.h
+.In sys/vnode.h
 .Ft void
 .Fn vhold "struct vnode *vp"
 .Ft void
