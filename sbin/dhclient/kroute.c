@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.48 2013/06/01 16:26:07 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.49 2013/06/04 21:04:53 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -229,18 +229,21 @@ priv_add_route(struct imsg_add_route *imsg)
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
 	
-	/* Set destination address of all zeros. */
+	/* Set destination address. */
 
 	memset(&dest, 0, sizeof(dest));
 
-	dest.sin_len = sizeof(dest);
-	dest.sin_family = AF_INET;
+	if (imsg->addrs & RTA_DST) {
+		dest.sin_len = sizeof(dest);
+		dest.sin_family = AF_INET;
+		dest.sin_addr.s_addr = imsg->dest.s_addr;
 
-	rtm.rtm_addrs |= RTA_DST;
-	rtm.rtm_msglen += sizeof(dest);
+		rtm.rtm_addrs |= RTA_DST;
+		rtm.rtm_msglen += sizeof(dest);
 
-	iov[iovcnt].iov_base = &dest;
-	iov[iovcnt++].iov_len = sizeof(dest);
+		iov[iovcnt].iov_base = &dest;
+		iov[iovcnt++].iov_len = sizeof(dest);
+	}
 	
 	/*
 	 * Set gateway address if and only if non-zero addr supplied. A
@@ -248,7 +251,7 @@ priv_add_route(struct imsg_add_route *imsg)
 	 */
 
 	memset(&gateway, 0, sizeof(gateway));
-	if ((imsg->addrs & RTA_GATEWAY) != 0) {
+	if (imsg->addrs & RTA_GATEWAY) {
 		gateway.sin_len = sizeof(gateway);
 		gateway.sin_family = AF_INET;
 		gateway.sin_addr.s_addr = imsg->gateway.s_addr;
@@ -261,18 +264,20 @@ priv_add_route(struct imsg_add_route *imsg)
 		iov[iovcnt++].iov_len = sizeof(gateway);
 	}
 
-	/* Add netmask of 0. */
+	/* Add netmask. */
 	memset(&mask, 0, sizeof(mask));
 
-	mask.sin_len = sizeof(mask);
-	mask.sin_family = AF_INET;
-	mask.sin_addr.s_addr = imsg->netmask.s_addr;
+	if (imsg->addrs & RTA_NETMASK) {
+		mask.sin_len = sizeof(mask);
+		mask.sin_family = AF_INET;
+		mask.sin_addr.s_addr = imsg->netmask.s_addr;
 
-	rtm.rtm_addrs |= RTA_NETMASK;
-	rtm.rtm_msglen += sizeof(mask);
+		rtm.rtm_addrs |= RTA_NETMASK;
+		rtm.rtm_msglen += sizeof(mask);
 
-	iov[iovcnt].iov_base = &mask;
-	iov[iovcnt++].iov_len = sizeof(mask);
+		iov[iovcnt].iov_base = &mask;
+		iov[iovcnt++].iov_len = sizeof(mask);
+	}
 
 	/* Add our label so we can identify the route as our creation. */
 	if (create_route_label(&label) == 0) {

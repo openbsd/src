@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.248 2013/06/01 16:26:07 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.249 2013/06/04 21:04:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -109,6 +109,8 @@ void		 socket_nonblockmode(int);
 void		 apply_ignore_list(char *);
 
 void add_default_route(int, struct in_addr, struct in_addr);
+void add_static_routes(int, struct option_data *);
+void add_classless_static_routes(int, struct option_data *);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -790,12 +792,21 @@ bind_lease(void)
 	 * is done by the RTM_NEWADDR message being received.
 	 */
 	add_address(ifi->name, ifi->rdomain, client->new->address, mask);
-	if (options[DHO_ROUTERS].len) {
-		memset(&gateway, 0, sizeof(gateway));
-		/* XXX Only use FIRST router address for now. */
-		memcpy(&gateway.s_addr, options[DHO_ROUTERS].data,
-		    options[DHO_ROUTERS].len);
-		add_default_route(ifi->rdomain, client->new->address, gateway);
+	if (options[DHO_CLASSLESS_STATIC_ROUTES].len) {
+		add_classless_static_routes(ifi->rdomain,
+		    &options[DHO_CLASSLESS_STATIC_ROUTES]);
+	} else {
+		if (options[DHO_ROUTERS].len) {
+			memset(&gateway, 0, sizeof(gateway));
+			/* XXX Only use FIRST router address for now. */
+			memcpy(&gateway.s_addr, options[DHO_ROUTERS].data,
+			    options[DHO_ROUTERS].len);
+			add_default_route(ifi->rdomain, client->new->address,
+			    gateway);
+		}
+		if (options[DHO_STATIC_ROUTES].len)
+			add_static_routes(ifi->rdomain,
+			    &options[DHO_STATIC_ROUTES]);
 	}
 
 	client->new->resolv_conf = resolv_conf_contents(
@@ -2280,27 +2291,76 @@ priv_write_file(struct imsg_write_file *imsg)
 void
 add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
 {
-	struct imsg_add_route	 imsg;
-	int			 rslt;
+	struct in_addr netmask;
+	int addrs;
 
-	memset(&imsg, 0, sizeof(imsg));
-
-	imsg.rdomain = rdomain;
-	imsg.dest = addr;
-	imsg.addrs = RTA_DST | RTA_NETMASK;
+	memset(&netmask, 0, sizeof(netmask));
+	addrs = RTA_DST | RTA_NETMASK;
 
 	/*
 	 * Set gateway address if and only if non-zero addr supplied. A
 	 * gateway address of 0 implies '-iface'.
 	 */
-	if (bcmp(&gateway, &addr, sizeof(addr)) != 0) {
-		imsg.gateway = gateway;
-		imsg.addrs |= RTA_GATEWAY;
+	if (bcmp(&gateway, &addr, sizeof(addr)) != 0)
+		addrs |= RTA_GATEWAY;
+
+	add_route(rdomain, addr, netmask, gateway, addrs); 
+}
+
+void
+add_static_routes(int rdomain, struct option_data *static_routes)
+{
+	struct in_addr		 dest, netmask, gateway;
+	u_int8_t		 *addr;
+	int			 i;
+
+	memset(&netmask, 0, sizeof(netmask));	/* Always 0 for class addrs. */
+
+	for (i = 0; (i + 7) < static_routes->len; i += 8) {
+		addr = &static_routes->data[i];
+		memset(&dest, 0, sizeof(dest));
+		memset(&gateway, 0, sizeof(gateway));
+
+		memcpy(&dest.s_addr, addr, 4);
+		if (dest.s_addr == INADDR_ANY)
+			continue; /* RFC 2132 says 0.0.0.0 is not allowed. */
+		memcpy(&gateway.s_addr, addr+4, 4);
+
+		/* XXX Order implies priority but we're ignoring that. */
+		add_route(rdomain, dest, netmask, gateway,
+		    RTA_DST | RTA_GATEWAY);
 	}
+}
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ROUTE, 0, 0, -1, &imsg,
-	   sizeof(imsg));
+void add_classless_static_routes(int rdomain,
+    struct option_data *classless_static_routes)
+{
+	struct in_addr	 dest, netmask, gateway;
+	int		 bits, bytes, i;
 
-	if (rslt == -1)
-		warning("add_route: imsg_compose: %s", strerror(errno));
+	i = 0;
+	while (i < classless_static_routes->len) {
+		bits = classless_static_routes->data[i];
+		bytes = (bits + 7) / 8;
+		i++;
+
+		memset(&netmask, 0, sizeof(netmask));
+		if (bits)
+			netmask.s_addr = htonl(0xffffffff << (32 - bits)); 
+
+		memset(&dest, 0, sizeof(dest));
+		memcpy(&dest, &classless_static_routes->data[i], bytes);
+		dest.s_addr = dest.s_addr & netmask.s_addr;
+		i += bytes;
+
+		memset(&gateway, 0, sizeof(gateway));
+		memcpy(&gateway, &classless_static_routes->data[i], 4);
+		i += 4;
+
+		if (gateway.s_addr == INADDR_ANY)
+			continue; /* OBSD TCP/IP doesn't support this. */
+
+		add_route(rdomain, dest, netmask, gateway,
+		    RTA_DST | RTA_GATEWAY | RTA_NETMASK);
+	}
 }
