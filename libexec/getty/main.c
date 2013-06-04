@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2009/10/27 23:59:31 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2013/06/04 22:23:18 benno Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -293,7 +293,7 @@ main(int argc, char *argv[])
 				tmode.c_iflag |= ICRNL;
 				tmode.c_oflag |= ONLCR;
 			}
-			if (upper || UC) {
+			if (UC) {
 				tmode.c_iflag |= IUCLC;
 				tmode.c_oflag |= OLCUC;
 				tmode.c_lflag |= XCASE;
@@ -437,10 +437,6 @@ getname(void)
 	*np = 0;
 	if (c == '\r')
 		crmod = 1;
-	if (upper && !lower && !LC || UC)
-		for (np = name; *np; np++)
-			if (isupper(*np))
-				*np = tolower(*np);
 	return (1 + ppp_connection);
 }
 
