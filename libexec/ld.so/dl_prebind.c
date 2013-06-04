@@ -1,4 +1,4 @@
-/* $OpenBSD: dl_prebind.c,v 1.11 2013/04/16 23:16:19 deraadt Exp $ */
+/* $OpenBSD: dl_prebind.c,v 1.12 2013/06/04 00:59:00 brad Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -175,8 +175,7 @@ prebind_symcache(elf_object_t *object, int plt)
 	struct prebind_footer *footer;
 	int i = 0, cur_obj = -1, idx;
 	void *prebind_map;
-	struct nameidx *nameidx;
-	char *nametab, *c;
+	char *c;
 	struct fixup *fixup;
 	elf_object_t *obj;
 
@@ -220,7 +219,7 @@ prebind_symcache(elf_object_t *object, int plt)
 
 	footer = (void *)c;
 	prebind_map = (void *)object->prebind_data;
-	nameidx = prebind_map + footer->nameidx_idx;
+
 	if (plt) {
 		symcachetab = prebind_map + footer->pltsymcache_idx;
 		symcache_cnt = footer->pltsymcache_cnt;
@@ -230,7 +229,6 @@ prebind_symcache(elf_object_t *object, int plt)
 		symcache_cnt = footer->symcache_cnt;
 //		DL_DEB(("loading got %d\n", symcache_cnt));
 	}
-	nametab = prebind_map + footer->nametab_idx;
 
 	libmap = _dl_prog_prebind_map + prog_footer->libmap_idx;
 	idxtolib = _dl_prog_prebind_map + libmap[cur_obj];
@@ -238,7 +236,9 @@ prebind_symcache(elf_object_t *object, int plt)
 	for (i = 0; i < symcache_cnt; i++) {
 		struct elf_object *tobj;
 		const Elf_Sym *sym;
+#ifdef DEBUG2
 		const char *str;
+#endif
 
 		s = &(symcachetab[i]);
 		if (cur_obj == 0)
@@ -256,8 +256,8 @@ prebind_symcache(elf_object_t *object, int plt)
 #endif
 		tobj = objarray[idx];
 		sym = tobj->dyn.symtab + s->sym_idx;
-		str = tobj->dyn.strtab + sym->st_name;
 #ifdef DEBUG2
+		str = tobj->dyn.strtab + sym->st_name;
 		DL_DEB(("symidx %d: obj %d %s sym %d %s flags %d %x\n",
 		    s->idx, s->obj_idx, tobj->load_name,
 		    s->sym_idx, str, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|plt,
@@ -278,7 +278,9 @@ prebind_symcache(elf_object_t *object, int plt)
 			struct fixup *f;
 			struct elf_object *tobj;
 			const Elf_Sym *sym;
+#ifdef DEBUG2
 			const char *str;
+#endif
 
 			f = &(fixup[i]);
 #if 0
@@ -287,8 +289,8 @@ prebind_symcache(elf_object_t *object, int plt)
 #endif
 			tobj = objarray[f->obj_idx];
 			sym = tobj->dyn.symtab + f->sym_idx;
-			str = tobj->dyn.strtab + sym->st_name;
 #ifdef DEBUG2
+			str = tobj->dyn.strtab + sym->st_name;
 			DL_DEB(("symidx %d: obj %d %s sym %d %s flags %d %x\n",
 			    f->sym, f->obj_idx, tobj->load_name,
 			    f->sym_idx, str, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|plt,
@@ -313,7 +315,9 @@ prebind_symcache(elf_object_t *object, int plt)
 			struct fixup *f;
 			struct elf_object *tobj;
 			const Elf_Sym *sym;
+#ifdef DEBUG2
 			const char *str;
+#endif
 
 			f = &(fixup[i]);
 #if 0
@@ -323,8 +327,8 @@ prebind_symcache(elf_object_t *object, int plt)
 #endif
 			tobj = objarray[f->obj_idx];
 			sym = tobj->dyn.symtab + f->sym_idx;
-			str = tobj->dyn.strtab + sym->st_name;
 #ifdef DEBUG2
+			str = tobj->dyn.strtab + sym->st_name;
 			DL_DEB(("symidx %d: obj %d %s sym %d %s flags %d %x\n",
 			    f->sym, f->obj_idx, tobj->load_name,
 			    f->sym_idx, str, SYM_SEARCH_ALL|SYM_WARNNOTFOUND|plt,
@@ -476,7 +480,6 @@ prebind_validate(elf_object_t *req_obj, unsigned int symidx, int flags,
 	const Elf_Sym *sym, **this;
 	const elf_object_t *sobj;
 	const char *symn;
-	Elf_Addr ret;
 
 	/* Don't verify non-matching flags*/
 
@@ -486,7 +489,7 @@ prebind_validate(elf_object_t *req_obj, unsigned int symidx, int flags,
 	this = &sym;
 
 	//_dl_printf("checking %s\n", symn);
-	ret = _dl_find_symbol(symn, this, flags, ref_sym, req_obj, &sobj);
+	_dl_find_symbol(symn, this, flags, ref_sym, req_obj, &sobj);
 
 	if (_dl_symcache[symidx].sym != *this ||
 	    _dl_symcache[symidx].obj != sobj) {
