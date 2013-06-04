@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.2 2013/06/03 16:21:08 tedu Exp $ */
+/* $OpenBSD: fuse.h,v 1.3 2013/06/04 20:53:26 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -67,6 +67,7 @@ typedef struct fuse_dirhandle {
 	uint32_t size;
 	uint32_t start;
 	uint32_t idx;
+	off_t off;
 } *fuse_dirh_t;
 
 typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);

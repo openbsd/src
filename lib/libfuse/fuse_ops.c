@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.2 2013/06/03 16:21:08 tedu Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.3 2013/06/04 20:53:27 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -223,7 +223,8 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	namelen = strnlen(name, MAXNAMLEN);
 	len = GENERIC_DIRSIZ(namelen);
 
-	if (fd->full || fbdatsize(fbuf) + len > fd->size) {
+	if ((fd->full || fbdatsize(fbuf) + len > fd->size) ||
+	    (!fd->isgetdir && fd->off != off)) {
 		fd->full = 1;
 		return (0);
 	}
@@ -235,7 +236,7 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 
 	dir = (struct dirent *) &fbuf->fb_dat[fbdatsize(fbuf)];
 
-	if (!off)
+	if (off)
 		fd->filled = 0;
 
 	if (stbuf) {
@@ -305,6 +306,7 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 		vn->fd->full = 0;
 		vn->fd->isgetdir = 0;
 		vn->fd->size = size;
+		vn->fd->off = offset;
 
 		realname = build_realname(f, vn->ino);
 		if (f->op.readdir)
