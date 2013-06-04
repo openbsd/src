@@ -164,10 +164,10 @@ classify_integer (enum machine_mode mode, int value)
     return m88k_or_lo16;
   else if (mode == QImode)
     return m88k_or_lo8;
-  else if ((value & 0xffff) == 0)
-    return m88k_oru_hi16;
   else if (integer_ok_for_set (value))
     return m88k_set;
+  else if ((value & 0xffff) == 0)
+    return m88k_oru_hi16;
   else
     return m88k_oru_or;
 }
@@ -179,17 +179,32 @@ condition_value (rtx condition)
 {
   switch (GET_CODE (condition))
     {
-    case EQ: return 2;
-    case NE: return 3;
-    case GT: return 4;
-    case LE: return 5;
-    case LT: return 6;
-    case GE: return 7;
-    case GTU: return 8;
-    case LEU: return 9;
-    case LTU: return 10;
-    case GEU: return 11;
-    default: gcc_unreachable ();
+    case UNORDERED:
+      return 0;
+    case ORDERED:
+      return 1;
+    case EQ:
+      return 2;
+    case NE:
+      return 3;
+    case GT:
+      return 4;
+    case LE:
+      return 5;
+    case LT:
+      return 6;
+    case GE:
+      return 7;
+    case GTU:
+      return 8;
+    case LEU:
+      return 9;
+    case LTU:
+      return 10;
+    case GEU:
+      return 11;
+    default:
+      gcc_unreachable ();
     }
 }
 
@@ -2235,12 +2250,6 @@ print_operand (FILE *file, rtx x, int code)
       fprintf (file, "%d", value & 0xff);
       return;
 
-    case 'w': /* print the integer constant (X == 32 ? 0 : 32 - X) */
-      if (xc != CONST_INT)
-	output_operand_lossage ("invalid %%o value");
-      fprintf (file, "%d", value == 32 ? 0 : 32 - value);
-      return;
-
     case 'p': /* print the logarithm of the integer constant */
       if (xc != CONST_INT
 	  || (value = exact_log2 (value)) < 0)
@@ -2336,7 +2345,11 @@ print_operand (FILE *file, rtx x, int code)
 	    fputs (m88k_register_prefix, file);
 	  fputs ("gt0", file);
 	  return;
-	case LE: fputs ("0xe", file); return;
+	case LE:
+	  if (0) /* SVR4 */
+	    fputs (m88k_register_prefix, file);
+	  fputs ("le0", file);
+	  return;
 	case LT: fputs ("0x4", file); return;
 	case GE: fputs ("0xb", file); return;
 	default: output_operand_lossage ("invalid %%D value");
