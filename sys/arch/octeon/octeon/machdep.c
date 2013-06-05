@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2013/06/02 20:29:36 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.37 2013/06/05 01:32:22 jasper Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -118,16 +118,16 @@ caddr_t	ekern;
 
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
-void	dumpsys(void);
-void	dumpconf(void);
-vaddr_t	mips_init(__register_t, __register_t, __register_t, __register_t);
-boolean_t is_memory_range(paddr_t, psize_t, psize_t);
-void	octeon_memory_init(struct boot_info *);
-int	octeon_cpuspeed(int *);
+void		dumpsys(void);
+void		dumpconf(void);
+vaddr_t		mips_init(__register_t, __register_t, __register_t, __register_t);
+boolean_t 	is_memory_range(paddr_t, psize_t, psize_t);
+void		octeon_memory_init(struct boot_info *);
+int		octeon_cpuspeed(int *);
 static void	process_bootargs(void);
 static uint64_t	get_ncpusfound(void);
 
-extern void parse_uboot_root(void);
+extern void 	parse_uboot_root(void);
 
 cons_decl(cn30xxuart);
 struct consdev uartcons = cons_init(cn30xxuart);

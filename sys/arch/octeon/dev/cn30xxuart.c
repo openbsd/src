@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.2 2013/06/02 19:47:32 jasper Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.3 2013/06/05 01:32:22 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -140,7 +140,7 @@ cn30xxuart_attach(struct device *parent, struct device *self, void *aux)
 /*
  * Early console routines.
  */
-int 
+int
 cn30xxuart_delay(void)
 {
 	int divisor;
@@ -151,10 +151,10 @@ cn30xxuart_delay(void)
         delay_changed = 0;
 	lcr = (u_char)*(uint64_t*)OCTEON_MIO_UART0_LCR;
 	*(uint64_t*)OCTEON_MIO_UART0_LCR = lcr | LCR_DLAB;
-	divisor = (int)(*(uint64_t*)OCTEON_MIO_UART0_DLL | 
+	divisor = (int)(*(uint64_t*)OCTEON_MIO_UART0_DLL |
 		*(uint64_t*)OCTEON_MIO_UART0_DLH << 8);
 	*(uint64_t*)OCTEON_MIO_UART0_LCR = lcr;
-	
+
 	return 10; /* return an approx delay value */
 }
 
