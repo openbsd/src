@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.1 2013/06/02 21:46:04 pirofti Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.2 2013/06/05 01:28:04 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -30,6 +30,8 @@
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmemrange.h>
+
+#include <mips64/cache.h>
 
 #include <machine/hibernate.h>
 #include <machine/hibernate_var.h>
@@ -204,3 +206,8 @@ hibernate_disable_intr_machdep(void)
 	disableintr();
 }
 
+void
+hibernate_flush(void)
+{
+	Mips_SyncCache(curcpu());
+}

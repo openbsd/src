@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2013/06/02 21:46:04 pirofti Exp $ */
+/*	$OpenBSD: locore.S,v 1.5 2013/06/05 01:28:04 pirofti Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -76,11 +76,6 @@ start:
 	nop
 
 #ifdef HIBERNATE
-
-LEAF(hibernate_flush, 0)						/* { */
-	/* XXX TBD */
-	j	ra
-END(hibernate_flush)							/* } */
 
 	/* Switch to hibernate resume pagetable */
 LEAF(hibernate_activate_resume_pt_machdep, 0)				/* { */
