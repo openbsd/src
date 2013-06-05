@@ -1,4 +1,4 @@
-/*	$OpenBSD: uart.c,v 1.1 2013/06/05 01:02:29 jasper Exp $	*/
+/*	$OpenBSD: uart.c,v 1.2 2013/06/05 02:42:29 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -47,7 +47,6 @@
 #define  OCTEON_MIO_UART0_DLH           0x8001180000000888ull
 #define  USR_TXFIFO_NOTFULL		2
 
-static int delay_changed = 1;
 int cn30xxuart_delay(void);
 void cn30xxuart_wait_txhr_empty(int);
 
@@ -59,10 +58,7 @@ cn30xxuart_delay(void)
 {
 	int divisor;
 	u_char lcr;
-        static int d = 0;
 
-        if (!delay_changed) return d;
-        delay_changed = 0;
 	lcr = (u_char)*(uint64_t*)OCTEON_MIO_UART0_LCR;
 	*(uint64_t*)OCTEON_MIO_UART0_LCR = lcr | LCR_DLAB;
 	divisor = (int)(*(uint64_t*)OCTEON_MIO_UART0_DLL |
