@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.833 2013/06/04 19:07:59 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.834 2013/06/05 00:56:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6643,46 +6643,6 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 		break;
 	}
 
-	case IPPROTO_TCP: {
-		if ((pd.hdr.tcp->th_flags & TH_ACK) && pd.p_len == 0)
-			pqid = 1;
-		action = pf_normalize_tcp(&pd);
-		if (action == PF_DROP)
-			goto done;
-		action = pf_test_state(&pd, &s, &reason);
-		if (action == PF_PASS || action == PF_AFRT) {
-#if NPFSYNC > 0
-			pfsync_update_state(s);
-#endif /* NPFSYNC */
-			r = s->rule.ptr;
-			a = s->anchor.ptr;
-			pd.pflog |= s->log;
-		} else if (s == NULL)
-			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
-
-		if (s) {
-			if (s->max_mss)
-				pf_normalize_mss(&pd, s->max_mss);
-		} else if (r->max_mss)
-			pf_normalize_mss(&pd, r->max_mss);
-
-		break;
-	}
-
-	case IPPROTO_UDP: {
-		action = pf_test_state(&pd, &s, &reason);
-		if (action == PF_PASS || action == PF_AFRT) {
-#if NPFSYNC > 0
-			pfsync_update_state(s);
-#endif /* NPFSYNC */
-			r = s->rule.ptr;
-			a = s->anchor.ptr;
-			pd.pflog |= s->log;
-		} else if (s == NULL)
-			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
-		break;
-	}
-
 	case IPPROTO_ICMP: {
 		if (pd.af != AF_INET) {
 			action = PF_DROP;
@@ -6728,6 +6688,13 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 #endif /* INET6 */
 
 	default:
+		if (pd.virtual_proto == IPPROTO_TCP) {
+			if ((pd.hdr.tcp->th_flags & TH_ACK) && pd.p_len == 0)
+				pqid = 1;
+			action = pf_normalize_tcp(&pd);
+			if (action == PF_DROP)
+				goto done;
+		}
 		action = pf_test_state(&pd, &s, &reason);
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
@@ -6738,6 +6705,15 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0,
 			pd.pflog |= s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&pd, &r, &s, &a, &ruleset);
+
+		if (pd.virtual_proto == IPPROTO_TCP) {
+			if (s) {
+				if (s->max_mss)
+					pf_normalize_mss(&pd, s->max_mss);
+			} else if (r->max_mss)
+				pf_normalize_mss(&pd, r->max_mss);
+		}
+
 		break;
 	}
 
