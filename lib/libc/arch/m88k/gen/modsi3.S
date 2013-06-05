@@ -1,4 +1,4 @@
-/*	$OpenBSD: modsi3.S,v 1.1 2013/06/05 22:06:30 miod Exp $	*/
+/*	$OpenBSD: modsi3.S,v 1.2 2013/06/05 22:48:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -28,7 +28,9 @@
 #endif
 ENTRY(__modsi3)
 	/* if divider is zero, trap */
-	tcnd	eq0, %r3, 503
+	bcnd	ne0, %r3, 1f
+	tb0	0, %r0, 503
+1:
 
 	bb1	31, %r2, 1f
 	bb1	31, %r3, 2f
@@ -36,7 +38,7 @@ ENTRY(__modsi3)
 	/* both operands are positive */
 	divu	%r4, %r2, %r3
 9:
-	mulu	%r5, %r4, %r3
+	mul	%r5, %r4, %r3
 	jmp.n	%r1
 	 subu	%r2, %r2, %r5
 

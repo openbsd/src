@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsi3.S,v 1.2 2013/06/05 22:06:30 miod Exp $	*/
+/*	$OpenBSD: divsi3.S,v 1.3 2013/06/05 22:48:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -28,7 +28,9 @@
 #endif
 ENTRY(__divsi3)
 	/* if divider is zero, trap */
-	tcnd	eq0, %r3, 503
+	bcnd	ne0, %r3, 1f
+	tb0	0, %r0, 503
+1:
 
 	bb1	31, %r2, 1f
 	bb1	31, %r3, 2f

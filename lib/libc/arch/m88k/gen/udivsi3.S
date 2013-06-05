@@ -1,4 +1,4 @@
-/*	$OpenBSD: udivsi3.S,v 1.2 2013/06/05 22:06:30 miod Exp $	*/
+/*	$OpenBSD: udivsi3.S,v 1.3 2013/06/05 22:48:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -28,7 +28,9 @@
 #endif
 ENTRY(__udivsi3)
 	/* if divider is zero, trap */
-	tcnd	eq0, %r3, 503
+	bcnd	ne0, %r3, 1f
+	tb0	0, %r0, 503
+1:
 
 	jmp.n	%r1
 	 divu	%r2, %r2, %r3
