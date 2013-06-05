@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.3 2013/06/03 21:08:21 reyk Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.4 2013/06/05 02:04:07 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -51,7 +51,8 @@
 #define NRXQUEUE 1
 #define NTXQUEUE 1
 
-#define NTXDESC 64
+#define NTXDESC 64 /* tx ring size */
+#define NTXSEGS 8 /* tx descriptors per packet */
 #define NRXDESC 64
 #define NTXCOMPDESC NTXDESC
 #define NRXCOMPDESC (NRXDESC * 2)	/* ring1 + ring2 */
@@ -163,7 +164,7 @@ void vmxnet3_reset(struct ifnet *);
 int vmxnet3_init(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, caddr_t);
 void vmxnet3_start(struct ifnet *);
-int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct mbuf **);
+int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct mbuf *);
 void vmxnet3_watchdog(struct ifnet *);
 void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
 int vmxnet3_media_change(struct ifnet *);
@@ -389,7 +390,7 @@ vmxnet3_alloc_txring(struct vmxnet3_softc *sc, int queue)
 		return -1;
 
 	for (idx = 0; idx < NTXDESC; idx++) {
-		if (bus_dmamap_create(sc->sc_dmat, JUMBO_LEN, 8,
+		if (bus_dmamap_create(sc->sc_dmat, JUMBO_LEN, NTXSEGS,
 		    JUMBO_LEN, 0, BUS_DMA_NOWAIT, &ring->dmap[idx]))
 			return -1;
 	}
@@ -1042,15 +1043,15 @@ vmxnet3_start(struct ifnet *ifp)
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
-		if ((ring->next - ring->head - 1) % NTXDESC < 8) {
+		if ((ring->next - ring->head - 1) % NTXDESC < NTXSEGS) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (vmxnet3_load_mbuf(sc, &m) != 0) {
-			m_freem(m);
+		if (vmxnet3_load_mbuf(sc, m) != 0) {
 			ifp->if_oerrors++;
-			break;
+			continue;
 		}
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1072,15 +1073,16 @@ vmxnet3_start(struct ifnet *ifp)
 }
 
 int
-vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf **m0)
+vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf *m)
 {
 	struct vmxnet3_txqueue *tq = &sc->sc_txq[0];
 	struct vmxnet3_txring *ring = &tq->cmd_ring;
 	struct vmxnet3_txdesc *txd, *sop;
-	struct mbuf *m = *m0, *n = NULL;
+	struct mbuf *mp;
 	struct ip *ip;
 	bus_dmamap_t map = ring->dmap[ring->head];
-	int hlen, csum_off, error, nsegs, gen, i;
+	u_int hlen = ETHER_HDR_LEN, csum_off;
+	int offp, gen, i;
 
 #if 0
 	if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT) {
@@ -1094,51 +1096,38 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf **m0)
 			csum_off = offsetof(struct tcphdr, th_sum);
 		else
 			csum_off = offsetof(struct udphdr, uh_sum);
-		if (m->m_len < ETHER_HDR_LEN + 1)
-			goto copy_chain;
-		ip = (void *)(m->m_data + ETHER_HDR_LEN);
-		hlen = ip->ip_hl << 2;
-		if (m->m_len < ETHER_HDR_LEN + hlen + csum_off + 2)
-			goto copy_chain;
+
+		mp = m_pulldown(m, hlen, sizeof(*ip), &offp);
+		if (mp == NULL)
+			return (-1);
+
+		ip = (struct ip *)(mp->m_data + offp);
+		hlen += ip->ip_hl << 2;
+
+		mp = m_pulldown(m, 0, hlen + csum_off + 2, &offp);
+		if (mp == NULL)
+			return (-1);
 	}
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
-	switch (error) {
+	switch (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
 	case 0:
 		break;
-	default:
-	copy_error:
-		printf("%s: bus_dmamap_load failed\n", sc->sc_dev.dv_xname);
-		return -1;
 	case EFBIG:
-	copy_chain:
-		n = MCLGETI(NULL, M_DONTWAIT, NULL, m->m_pkthdr.len);
-		if (n == NULL) {
-			printf("%s: mbuf chain is too long\n",
-			    sc->sc_dev.dv_xname);
-			return -1;
-		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
-		n->m_flags |= m->m_flags & M_VLANTAG;
-		n->m_pkthdr.len = n->m_len = m->m_pkthdr.len;
-		n->m_pkthdr.ether_vtag = m->m_pkthdr.ether_vtag;
-		n->m_pkthdr.csum_flags = m->m_pkthdr.csum_flags;
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+		     BUS_DMA_NOWAIT) == 0)
+			break;
+
+		/* FALLTHROUGH */
+	default:
 		m_freem(m);
-		m = *m0 = n;
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
-			goto copy_error;
-	}
-	nsegs = map->dm_nsegs;
-	if (nsegs > (ring->next - ring->head - 1) % NTXDESC) {
-		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-		ifp->if_flags |= IFF_OACTIVE;
 		return -1;
 	}
 
 	ring->m[ring->head] = m;
 	sop = &ring->txd[ring->head];
 	gen = ring->gen ^ 1;		/* owned by cpu (yet) */
-	for (i = 0; i < nsegs; i++) {
+	for (i = 0; i < map->dm_nsegs; i++) {
 		txd = &ring->txd[ring->head];
 		txd->addr = map->dm_segs[i].ds_addr;
 		txd->len = map->dm_segs[i].ds_len;
@@ -1163,13 +1152,14 @@ vmxnet3_load_mbuf(struct vmxnet3_softc *sc, struct mbuf **m0)
 	}
 	if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
 		sop->offload_mode = VMXNET3_OM_CSUM;
-		sop->hlen = ETHER_HDR_LEN + hlen;
-		sop->offload_pos = ETHER_HDR_LEN + hlen + csum_off;
+		sop->hlen = hlen;
+		sop->offload_pos = hlen + csum_off;
 	}
 
 	/* Change the ownership. */
 	sop->gen ^= 1;
-	return 0;
+
+	return (0);
 }
 
 void
