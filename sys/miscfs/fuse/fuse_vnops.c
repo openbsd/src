@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.1 2013/06/03 15:50:56 tedu Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.2 2013/06/05 18:26:06 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -1018,44 +1018,15 @@ abortit:
 	 * If source and dest are the same, do nothing.
 	 */
 	if (tvp == fvp) {
-		if (fvp->v_type == VDIR) {
-			error = EINVAL;
-			goto abortit;
-		}
-
-		DPRINTF("THE SAME!!!\n");
-		/* Release destination completely. */
-		VOP_ABORTOP(tdvp, tcnp);
-		vput(tdvp);
-		vput(tvp);
-
-		/* Delete source. */
-		vrele(fdvp);
-		vrele(fvp);
-		fcnp->cn_flags &= ~MODMASK;
-		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-		if ((fcnp->cn_flags & SAVESTART) == 0)
-			panic("fusefs_rename: lost from startdir");
-		fcnp->cn_nameiop = DELETE;
-		vfs_relookup(fdvp, &fvp, fcnp);
-		return (VOP_REMOVE(fdvp, fvp, fcnp));
+		error = 0;
+		goto abortit;
 	}
 
-	/* */
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
-
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
-	/*
-	 *If fuse connection down RENAME undef
-	 */
-	if (!fmp->sess_init || (fmp->undef_op & UNDEF_RMDIR)) {
-		VOP_UNLOCK(fvp, 0, p);
-		error = ENOSYS;
-		goto abortit;
-	}
 
 	/*
 	 * Be sure we are not renaming ".", "..", or an alias of ".". This
@@ -1064,15 +1035,6 @@ abortit:
 	 * doesn't work if the ".." entry is missing.
 	 */
 	if (ip->vtype == VDIR) {
-		error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-		if (!error && tvp)
-			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
-			    tcnp->cn_proc);
-		if (error) {
-			VOP_UNLOCK(fvp, 0, p);
-			error = EACCES;
-			goto abortit;
-		}
 		/*
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
@@ -1085,14 +1047,13 @@ abortit:
 			goto abortit;
 		}
 	}
-	vrele(fdvp);
 	VN_KNOTE(fdvp, NOTE_WRITE);	/* XXX right place? */
 
-	/*
-	 * When the target exists, both the directory
-	 * and target vnodes are returned locked.
-	 */
-	dp = VTOI(tdvp);
+	if (!fmp->sess_init || (fmp->undef_op & UNDEF_RENAME)) {
+		error = ENOSYS;
+		VOP_UNLOCK(fvp, 0, p);
+		goto abortit;
+	}
 
 	fbuf = fb_setup(FUSEFDSIZE + fcnp->cn_namelen + tcnp->cn_namelen + 2,
 	    dp->ufs_ino.i_number, FBT_RENAME, p);
@@ -1102,6 +1063,7 @@ abortit:
 	memcpy(fbuf->fb_dat + fcnp->cn_namelen + 1, tcnp->cn_nameptr,
 	    tcnp->cn_namelen);
 	fbuf->fb_dat[fcnp->cn_namelen + tcnp->cn_namelen + 1] = '\0';
+	fbuf->fb_io_ino = VTOI(tdvp)->ufs_ino.i_number;
 
 	error = fb_queue(fmp->dev, fbuf);
 
@@ -1116,12 +1078,15 @@ abortit:
 	}
 
 	VN_KNOTE(fvp, NOTE_RENAME);
+
 	VOP_UNLOCK(fvp, 0, p);
+	if (tdvp == tvp)
+		vrele(tdvp);
+	else
+		vput(tdvp);
+	vrele(fdvp);
+	vrele(fvp);
 
-	if (dp)
-		vput(fdvp);
-
-	vrele(ap->a_fvp);
 	return (error);
 }
 

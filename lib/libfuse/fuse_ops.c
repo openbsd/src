@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.3 2013/06/04 20:53:27 tedu Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.4 2013/06/05 18:26:06 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -790,6 +790,33 @@ ifuse_ops_symlink(unused struct fuse *f, struct fusebuf *fbuf)
 }
 
 static int
+ifuse_ops_rename(struct fuse *f, struct fusebuf *fbuf)
+{
+	struct fuse_vnode *vnt;
+	struct fuse_vnode *vnf;
+	char *realnamef;
+	char *realnamet;
+	int len;
+
+	CHECK_OPT(rename);
+
+	len = strlen(fbuf->fb_dat);
+	vnf = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
+	vnt = get_vn_by_name_and_parent(f, &fbuf->fb_dat[len + 1],
+	    fbuf->fb_io_ino);
+	fbuf->fb_len = 0;
+
+	realnamef = build_realname(f, vnf->ino);
+	realnamet = build_realname(f, vnt->ino);
+	fbuf->fb_err = f->op.rename(realnamef, realnamet);
+	free(realnamef);
+	free(realnamet);
+
+	DPRINTF("\n");
+	return (0);
+}
+
+static int
 ifuse_ops_destroy(struct fuse *f, struct fusebuf *fbuf)
 {
 	DPRINTF("Opcode:\tdestroy\n");
@@ -868,6 +895,9 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 		break;
 	case FBT_SYMLINK:
 		ret = ifuse_ops_symlink(f, fbuf);
+		break;
+	case FBT_RENAME:
+		ret = ifuse_ops_rename(f, fbuf);
 		break;
 	case FBT_DESTROY:
 		ret = ifuse_ops_destroy(f, fbuf);

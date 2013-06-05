@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.1 2013/06/03 15:50:56 tedu Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.2 2013/06/05 18:26:06 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -50,6 +50,7 @@ fusefs_lookup(void *v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
+	int wantparent;
 	int error = 0;
 	uint64_t nid;
 
@@ -59,6 +60,7 @@ fusefs_lookup(void *v)
 	dp = VTOI(vdp);
 	fmp = (struct fusefs_mnt *)dp->ufs_ino.i_ump;
 	lockparent = flags & LOCKPARENT;
+	wantparent = flags & (LOCKPARENT | WANTPARENT);
 
 	DPRINTF("lookup path %s\n", cnp->cn_pnbuf);
 	DPRINTF("lookup file %s\n", cnp->cn_nameptr);
@@ -132,7 +134,7 @@ fusefs_lookup(void *v)
 		cnp->cn_flags |= SAVENAME;
 	}
 
-	if (nameiop == RENAME && (flags & ISLASTCN)) {
+	if (nameiop == RENAME && wantparent && (flags & ISLASTCN)) {
 		/*
 		 * Write access to directory required to delete files.
 		 */
@@ -144,6 +146,13 @@ fusefs_lookup(void *v)
 			goto out;
 		}
 
+		error = VFS_VGET(fmp->mp, nid, &tdp);
+		if (error)
+			goto out;
+
+		tdp->v_type = IFTOVT(fbuf->fb_vattr.va_mode);
+		VTOI(tdp)->vtype = tdp->v_type;
+		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 
 		goto out;
