@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.129 2013/06/04 19:11:51 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.130 2013/06/05 15:22:32 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -453,6 +453,24 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		goto freeit;
 	}
 
+#if NPF > 0
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		switch (icmp6->icmp6_type) {
+		/*
+		 * These ICMP6 types map to other connections.  They must be
+		 * delivered to pr_ctlinput() also for diverted connections.
+		 */
+		case ICMP6_DST_UNREACH:
+		case ICMP6_PACKET_TOO_BIG:
+		case ICMP6_TIME_EXCEEDED:
+		case ICMP6_PARAM_PROB:
+			break;
+		default:
+			goto raw;
+		}
+	}
+#endif /* NPF */
+
 #if NCARP > 0
 	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
 	    icmp6->icmp6_type == ICMP6_ECHO_REQUEST &&
@@ -860,6 +878,9 @@ badlen:
 		break;
 	}
 
+#if NPF > 0
+raw:
+#endif
 	/* deliver the packet to appropriate sockets */
 	icmp6_rip6_input(&m, *offp);
 
