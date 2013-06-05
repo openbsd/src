@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.15 2007/05/31 19:19:30 jmc Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.16 2013/06/05 03:39:23 tedu Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -15,7 +15,7 @@
 .\" NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt GETRRSETBYNAME 3
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nm getrrsetbyname
 .Nd retrieve DNS records
 .Sh SYNOPSIS
-.Fd #include <netdb.h>
+.In netdb.h
 .Ft int
 .Fn getrrsetbyname "const char *hostname" "unsigned int rdclass" \
 "unsigned int rdtype" "unsigned int flags" "struct rrsetinfo **res"

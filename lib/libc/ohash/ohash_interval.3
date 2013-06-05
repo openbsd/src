@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_interval.3,v 1.13 2012/09/23 15:05:23 espie Exp $
+.\"	$OpenBSD: ohash_interval.3,v 1.14 2013/06/05 03:39:23 tedu Exp $
 .\" Copyright (c) 2001 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 23 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt OHASH_INTERVAL 3
 .Os
 .Sh NAME
@@ -23,9 +23,9 @@
 .Nm ohash_qlookupi
 .Nd helper functions for open hashing
 .Sh SYNOPSIS
-.Fd #include <stdint.h>
-.Fd #include <stddef.h>
-.Fd #include <ohash.h>
+.In stdint.h
+.In stddef.h
+.In ohash.h
 .Ft uint32_t
 .Fn ohash_interval "const char *start" "const char **pend"
 .Ft "void *"

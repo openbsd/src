@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.21 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: regex.3,v 1.22 2013/06/05 03:39:23 tedu Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt REGEX 3
 .Os
 .Sh NAME
@@ -45,8 +45,8 @@
 .Nm regfree
 .Nd regular expression routines
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <regex.h>
+.In sys/types.h
+.In regex.h
 .Ft int
 .Fn regcomp "regex_t *preg" "const char *pattern" "int cflags"
 .Pp

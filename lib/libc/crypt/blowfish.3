@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.20 2007/05/31 19:19:27 jmc Exp $
+.\" $OpenBSD: blowfish.3,v 1.21 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt BLOWFISH 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nm blf_cbc_decrypt
 .Nd Blowfish encryption
 .Sh SYNOPSIS
-.Fd #include <blf.h>
+.In blf.h
 .Ft void
 .Fn blf_key "blf_ctx *state" "const u_int8_t *key" "u_int16_t keylen"
 .Ft void

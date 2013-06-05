@@ -1,16 +1,16 @@
-.\"	$OpenBSD: catgets.3,v 1.6 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: catgets.3,v 1.7 2013/06/05 03:39:23 tedu Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt CATGETS 3
 .Os
 .Sh NAME
 .Nm catgets
 .Nd retrieve string from message catalog
 .Sh SYNOPSIS
-.Fd #include <nl_types.h>
+.In nl_types.h
 .Ft char *
 .Fn catgets "nl_catd catd" "int set_id" "int msg_id" "const char *s"
 .Sh DESCRIPTION

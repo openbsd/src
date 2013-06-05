@@ -1,4 +1,4 @@
-.\"	$OpenBSD: confstr.3,v 1.18 2013/03/02 07:02:31 jmc Exp $
+.\"	$OpenBSD: confstr.3,v 1.19 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,14 +27,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 2 2013 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt CONFSTR 3
 .Os
 .Sh NAME
 .Nm confstr
 .Nd get string-valued configurable variables
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft size_t
 .Fn confstr "int name" "char *buf" "size_t len"
 .Sh DESCRIPTION

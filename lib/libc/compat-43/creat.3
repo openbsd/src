@@ -25,18 +25,18 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: creat.3,v 1.6 2007/05/31 19:19:27 jmc Exp $
+.\"	$OpenBSD: creat.3,v 1.7 2013/06/05 03:39:22 tedu Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt CREAT 3
 .Os
 .Sh NAME
 .Nm creat
 .Nd create a new file
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/stat.h>
-.Fd #include <fcntl.h>
+.In sys/types.h
+.In sys/stat.h
+.In fcntl.h
 .Ft int
 .Fn creat "const char *path" "mode_t mode"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strlcpy.3,v 1.22 2012/04/03 14:01:55 jmc Exp $
+.\"	$OpenBSD: strlcpy.3,v 1.23 2013/06/05 03:39:23 tedu Exp $
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt STRLCPY 3
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nm strlcat
 .Nd size-bounded string copying and concatenation
 .Sh SYNOPSIS
-.Fd #include <string.h>
+.In string.h
 .Ft size_t
 .Fn strlcpy "char *dst" "const char *src" "size_t dstsize"
 .Ft size_t

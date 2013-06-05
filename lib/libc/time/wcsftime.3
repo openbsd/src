@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wcsftime.3,v 1.2 2012/02/26 19:15:20 haesbaert Exp $
+.\"	$OpenBSD: wcsftime.3,v 1.3 2013/06/05 03:39:23 tedu Exp $
 .\" Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,14 +13,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt WCSFTIME 3
 .Os
 .Sh NAME
 .Nm wcsftime
 .Nd format date and time to wide characters string
 .Sh SYNOPSIS
-.Fd #include <wchar.h>
+.In wchar.h
 .Ft size_t
 .Fn wcsftime "wchar_t *buf" "size_t maxsize" "const wchar_t *format" "const struct tm *timeptr"
 .Sh DESCRIPTION

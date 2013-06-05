@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.21 2012/03/21 23:20:35 matthew Exp $
+.\"	$OpenBSD: exec.3,v 1.22 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt EXEC 3
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Nm execvpe
 .Nd execute a file
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Vt extern char **environ;
 .Ft int
 .Fn execl "const char *path" "const char *arg" ...

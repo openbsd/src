@@ -25,16 +25,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.30 2011/11/22 21:13:30 guenther Exp $
+.\"	$OpenBSD: sigvec.3,v 1.31 2013/06/05 03:39:22 tedu Exp $
 .\"
-.Dd $Mdocdate: November 22 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt SIGVEC 3
 .Os
 .Sh NAME
 .Nm sigvec
 .Nd software signal facilities
 .Sh SYNOPSIS
-.Fd #include <signal.h>
+.In signal.h
 .Bd -literal
 struct sigvec {
 	void	 (*sv_handler)();

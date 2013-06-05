@@ -1,4 +1,4 @@
-.\"	$OpenBSD: memccpy.3,v 1.10 2011/07/25 00:38:52 schwarze Exp $
+.\"	$OpenBSD: memccpy.3,v 1.11 2013/06/05 03:39:23 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,14 +29,14 @@
 .\"
 .\"     @(#)memccpy.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: July 25 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt MEMCCPY 3
 .Os
 .Sh NAME
 .Nm memccpy
 .Nd copy string until character found
 .Sh SYNOPSIS
-.Fd #include <string.h>
+.In string.h
 .Ft void *
 .Fn memccpy "void *dst" "const void *src" "int c" "size_t len"
 .Sh DESCRIPTION

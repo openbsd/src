@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lockf.3,v 1.12 2008/06/26 05:42:05 ray Exp $
+.\"	$OpenBSD: lockf.3,v 1.13 2013/06/05 03:39:22 tedu Exp $
 .\"	$NetBSD: lockf.3,v 1.1 1997/12/20 20:23:17 kleink Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,14 +28,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt LOCKF 3
 .Os
 .Sh NAME
 .Nm lockf
 .Nd record locking on files
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft int
 .Fn lockf "int filedes" "int function" "off_t size"
 .Sh DESCRIPTION

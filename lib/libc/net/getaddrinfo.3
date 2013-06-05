@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.52 2013/03/31 19:17:47 brad Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.53 2013/06/05 03:39:22 tedu Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2013 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Nm freeaddrinfo
 .Nd host and service name to socket address structure
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <netdb.h>
+.In sys/types.h
+.In sys/socket.h
+.In netdb.h
 .Ft int
 .Fn getaddrinfo "const char *hostname" "const char *servname" \
     "const struct addrinfo *hints" "struct addrinfo **res"

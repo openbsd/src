@@ -6,9 +6,9 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.13 2012/09/27 11:31:57 jmc Exp $
+.\" 	$OpenBSD: mdX.3,v 1.14 2013/06/05 03:39:22 tedu Exp $
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt MDX 3
 .Os
 .Sh NAME
@@ -23,8 +23,8 @@
 .Nm MDXData
 .Nd calculate the RSA Data Security, Inc., ``MDX'' message digest
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <mdX.h>
+.In sys/types.h
+.In mdX.h
 .Ft void
 .Fn MDXInit "MDX_CTX *context"
 .Ft void

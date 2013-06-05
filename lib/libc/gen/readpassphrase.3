@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.17 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.18 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,14 +18,14 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt READPASSPHRASE 3
 .Os
 .Sh NAME
 .Nm readpassphrase
 .Nd get a passphrase from the user
 .Sh SYNOPSIS
-.Fd #include <readpassphrase.h>
+.In readpassphrase.h
 .Ft char *
 .Fn readpassphrase "const char *prompt" "char *buf" "size_t bufsiz" "int flags"
 .Sh DESCRIPTION

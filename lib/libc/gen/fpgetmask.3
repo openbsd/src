@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fpgetmask.3,v 1.8 2011/08/30 12:25:09 jmc Exp $
+.\"	$OpenBSD: fpgetmask.3,v 1.9 2013/06/05 03:39:22 tedu Exp $
 .\"	$NetBSD: fpgetmask.3,v 1.3 2001/09/16 02:57:03 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 30 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt FPGETMASK 3
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nm fpsetsticky
 .Nd IEEE FP mode control
 .Sh SYNOPSIS
-.Fd #include <ieeefp.h>
+.In ieeefp.h
 .Ft fp_except
 .Fn fpgetmask void
 .Ft fp_rnd

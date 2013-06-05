@@ -29,16 +29,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: bsearch.3,v 1.8 2012/07/08 10:25:55 guenther Exp $
+.\"	$OpenBSD: bsearch.3,v 1.9 2013/06/05 03:39:23 tedu Exp $
 .\"
-.Dd $Mdocdate: July 8 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt BSEARCH 3
 .Os
 .Sh NAME
 .Nm bsearch
 .Nd binary search of a sorted table
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
+.In stdlib.h
 .Ft void *
 .Fn bsearch "const void *key" "const void *base" "size_t nmemb" "size_t size" "int (*compar)(const void *, const void *)"
 .Sh DESCRIPTION

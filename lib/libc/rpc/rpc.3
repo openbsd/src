@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.45 2012/09/27 11:31:58 jmc Exp $
+.\"	$OpenBSD: rpc.3,v 1.46 2013/06/05 03:39:23 tedu Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\"   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\"   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt RPC 3
 .Os
 .Sh NAME
@@ -124,7 +124,7 @@
 .Nm xprt_unregister
 .Nd library routines for remote procedure calls
 .Sh SYNOPSIS
-.Fd #include <rpc/rpc.h>
+.In rpc/rpc.h
 .Ft int
 .Fn callrpc "char *host" "u_long prognum" "u_long versnum" "u_long procnum" "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out"
 .Ft "enum clnt_stat"

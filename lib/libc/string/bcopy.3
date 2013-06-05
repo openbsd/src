@@ -28,16 +28,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: bcopy.3,v 1.10 2011/07/25 00:38:52 schwarze Exp $
+.\"	$OpenBSD: bcopy.3,v 1.11 2013/06/05 03:39:23 tedu Exp $
 .\"
-.Dd $Mdocdate: July 25 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt BCOPY 3
 .Os
 .Sh NAME
 .Nm bcopy
 .Nd copy bytes
 .Sh SYNOPSIS
-.Fd #include <string.h>
+.In string.h
 .Ft void
 .Fn bcopy "const void *src" "void *dst" "size_t len"
 .Sh DESCRIPTION

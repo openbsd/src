@@ -25,16 +25,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigpause.3,v 1.12 2007/05/31 19:19:27 jmc Exp $
+.\"	$OpenBSD: sigpause.3,v 1.13 2013/06/05 03:39:22 tedu Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt SIGPAUSE 3
 .Os
 .Sh NAME
 .Nm sigpause
 .Nd atomically release blocked signals and wait for interrupt
 .Sh SYNOPSIS
-.Fd #include <signal.h>
+.In signal.h
 .Ft int
 .Fn sigpause "int sigmask"
 .Sh DESCRIPTION

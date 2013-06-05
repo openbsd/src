@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gai_strerror.3,v 1.7 2009/06/02 16:47:50 jasper Exp $
+.\"	$OpenBSD: gai_strerror.3,v 1.8 2013/06/05 03:39:22 tedu Exp $
 .\"	$KAME: gai_strerror.3,v 1.1 2005/01/05 03:04:47 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,16 +16,16 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2009 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt GAI_STRERROR 3
 .Os
 .Sh NAME
 .Nm gai_strerror
 .Nd get error message string from EAI_xxx error code
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <netdb.h>
+.In sys/types.h
+.In sys/socket.h
+.In netdb.h
 .Ft "const char *"
 .Fn gai_strerror "int ecode"
 .Sh DESCRIPTION

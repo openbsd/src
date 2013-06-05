@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.31 2013/04/21 18:07:32 tedu Exp $
+.\" $OpenBSD: crypt.3,v 1.32 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: April 21 2013 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -45,11 +45,11 @@
 .Nm md5crypt
 .Nd password hashing
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
+.In stdlib.h
 .Ft int
 .Fn setkey "const char *key"
 .Pp
-.Fd #include <unistd.h>
+.In unistd.h
 .Ft char *
 .Fn crypt "const char *key" "const char *setting"
 .Ft int

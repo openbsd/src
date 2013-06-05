@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uname.3,v 1.13 2011/04/19 22:19:46 schwarze Exp $
+.\"	$OpenBSD: uname.3,v 1.14 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,14 +27,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 19 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt UNAME 3
 .Os
 .Sh NAME
 .Nm uname
 .Nd get system identification
 .Sh SYNOPSIS
-.Fd #include <sys/utsname.h>
+.In sys/utsname.h
 .Ft int
 .Fn uname "struct utsname *name"
 .Sh DESCRIPTION

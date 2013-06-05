@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ethers.3,v 1.21 2011/04/19 22:38:26 matthew Exp $
+.\"	$OpenBSD: ethers.3,v 1.22 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
-.Dd $Mdocdate: April 19 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt ETHERS 3
 .Os
 .Sh NAME
@@ -13,11 +13,11 @@
 .Nm ether_line
 .Nd get ethers entry
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <net/if.h>
-.Fd #include <netinet/in.h>
-.Fd #include <netinet/if_ether.h>
+.In sys/types.h
+.In sys/socket.h
+.In net/if.h
+.In netinet/in.h
+.In netinet/if_ether.h
 .Ft char *
 .Fn ether_ntoa "struct ether_addr *e"
 .Ft struct ether_addr *

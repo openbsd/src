@@ -1,4 +1,4 @@
-.\" $OpenBSD: strmode.3,v 1.15 2011/07/25 00:38:53 schwarze Exp $
+.\" $OpenBSD: strmode.3,v 1.16 2013/06/05 03:39:23 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,14 +29,14 @@
 .\"
 .\"     @(#)strmode.3	8.3 (Berkeley) 7/28/94
 .\"
-.Dd $Mdocdate: July 25 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt STRMODE 3
 .Os
 .Sh NAME
 .Nm strmode
 .Nd convert inode status information into a symbolic string
 .Sh SYNOPSIS
-.Fd #include <string.h>
+.In string.h
 .Ft void
 .Fn strmode "mode_t mode" "char *bp"
 .Sh DESCRIPTION

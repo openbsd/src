@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtoul.3,v 1.20 2010/04/07 18:32:53 jmc Exp $
+.\"	$OpenBSD: strtoul.3,v 1.21 2013/06/05 03:39:23 tedu Exp $
 .\"
-.Dd $Mdocdate: April 7 2010 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt STRTOUL 3
 .Os
 .Sh NAME
@@ -41,18 +41,18 @@
 .Nm strtouq
 .Nd "convert a string to an unsigned long, unsigned long long or uintmax_t integer"
 .Sh SYNOPSIS
-.Fd #include <limits.h>
-.Fd #include <stdlib.h>
+.In limits.h
+.In stdlib.h
 .Ft unsigned long
 .Fn strtoul "const char *nptr" "char **endptr" "int base"
 .Ft unsigned long long
 .Fn strtoull "const char *nptr" "char **endptr" "int base"
-.Fd #include <inttypes.h>
+.In inttypes.h
 .Ft uintmax_t
 .Fn strtoumax "const char *nptr" "char **endptr" "int base"
-.Fd #include <sys/types.h>
-.Fd #include <limits.h>
-.Fd #include <stdlib.h>
+.In sys/types.h
+.In limits.h
+.In stdlib.h
 .Ft u_quad_t
 .Fn strtouq "const char *nptr" "char **endptr" "int base"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: async_resolver.3,v 1.12 2013/04/30 13:05:44 jmc Exp $
+.\"	$OpenBSD: async_resolver.3,v 1.13 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 2012, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2013 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt ASYN_RESOLVER 3
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nm getnameinfo_async
 .Nd asynchronous resolver functions
 .Sh SYNOPSIS
-.Fd #include <asr.h>
+.In asr.h
 .Ft struct asr *
 .Fn async_resolver "const char *conf"
 .Ft void

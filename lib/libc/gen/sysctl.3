@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.220 2013/06/02 21:37:03 yasuoka Exp $
+.\"	$OpenBSD: sysctl.3,v 1.221 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,15 +27,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
 .Nm sysctl
 .Nd get or set system information
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/sysctl.h>
+.In sys/param.h
+.In sys/sysctl.h
 .Ft int
 .Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
 .Sh DESCRIPTION

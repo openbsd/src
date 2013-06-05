@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_indextoname.3,v 1.13 2012/09/27 11:31:58 jmc Exp $
+.\"	$OpenBSD: if_indextoname.3,v 1.14 2013/06/05 03:39:23 tedu Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     From: @(#)rcmd.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt IF_NAMETOINDEX 3
 .Os
 .Sh NAME
@@ -38,9 +38,9 @@
 .Nm if_freenameindex
 .Nd convert interface index to name, and vice versa
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <net/if.h>
+.In sys/types.h
+.In sys/socket.h
+.In net/if.h
 .Ft "unsigned int"
 .Fn if_nametoindex "const char *ifname"
 .Ft "char *"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: perror.3,v 1.8 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: perror.3,v 1.9 2013/06/05 03:39:23 tedu Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -31,14 +31,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PERROR 3
 .Os
 .Sh NAME
 .Nm perror
 .Nd write error messages to standard error
 .Sh SYNOPSIS
-.Fd #include <stdio.h>
+.In stdio.h
 .Ft void
 .Fn perror "const char *string"
 .Sh DESCRIPTION

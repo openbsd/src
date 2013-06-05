@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.25 2007/09/16 19:40:56 otto Exp $
+.\"	$OpenBSD: dbopen.3,v 1.26 2013/06/05 03:39:22 tedu Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -32,17 +32,17 @@
 .\"
 .\"	@(#)dbopen.3	8.5 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: September 16 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt DBOPEN 3
 .Os
 .Sh NAME
 .Nm dbopen
 .Nd database access methods
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <fcntl.h>
-.Fd #include <limits.h>
-.Fd #include <db.h>
+.In sys/types.h
+.In fcntl.h
+.In limits.h
+.In db.h
 .Ft DB *
 .Fn dbopen "const char *file" "int flags" "int mode" "DBTYPE type" "const void *openinfo"
 .Sh DESCRIPTION

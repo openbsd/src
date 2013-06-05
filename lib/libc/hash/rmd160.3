@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.30 2010/07/13 07:01:23 jmc Exp $
+.\"	$OpenBSD: rmd160.3,v 1.31 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -17,7 +17,7 @@
 .\" See http://www.esat.kuleuven.ac.be/~bosselae/ripemd160.html
 .\"	for detailed information about RIPEMD-160.
 .\"
-.Dd $Mdocdate: July 13 2010 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt RMD160 3
 .Os
 .Sh NAME
@@ -32,8 +32,8 @@
 .Nm RMD160Data
 .Nd calculate the ``RIPEMD-160'' message digest
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <rmd160.h>
+.In sys/types.h
+.In rmd160.h
 .Ft void
 .Fn RMD160Init "RMD160_CTX *context"
 .Ft void

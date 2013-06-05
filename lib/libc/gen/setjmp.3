@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.22 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: setjmp.3,v 1.23 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt SETJMP 3
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Nm longjmperror
 .Nd non-local jumps
 .Sh SYNOPSIS
-.Fd #include <setjmp.h>
+.In setjmp.h
 .Ft int
 .Fn sigsetjmp "sigjmp_buf env" "int savemask"
 .Ft void

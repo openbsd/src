@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.43 2012/09/27 11:31:58 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.44 2013/06/05 03:39:23 tedu Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,16 +16,16 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
 .Nm getnameinfo
 .Nd socket address structure to hostname and service name
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <netdb.h>
+.In sys/types.h
+.In sys/socket.h
+.In netdb.h
 .Ft int
 .Fn getnameinfo "const struct sockaddr *sa" "socklen_t salen" "char *host" \
     "size_t hostlen" "char *serv" "size_t servlen" "int flags"

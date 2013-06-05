@@ -1,5 +1,5 @@
-.\"	$OpenBSD: time2posix.3,v 1.18 2012/09/13 11:14:20 millert Exp $
-.Dd $Mdocdate: September 13 2012 $
+.\"	$OpenBSD: time2posix.3,v 1.19 2013/06/05 03:39:23 tedu Exp $
+.Dd $Mdocdate: June 5 2013 $
 .Dt TIME2POSIX 3
 .Os
 .Sh NAME
@@ -7,8 +7,8 @@
 .Nm posix2time
 .Nd convert seconds since the Epoch
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <time.h>
+.In sys/types.h
+.In time.h
 .Ft time_t
 .Fn time2posix "time_t t"
 .Ft time_t

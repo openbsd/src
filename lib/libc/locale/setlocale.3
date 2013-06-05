@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setlocale.3,v 1.13 2011/03/09 01:27:37 schwarze Exp $
+.\"	$OpenBSD: setlocale.3,v 1.14 2013/06/05 03:39:22 tedu Exp $
 .\"	$NetBSD: setlocale.3,v 1.3 1997/07/14 23:19:47 kleink Exp $
 .\"
 .\" Copyright (c) 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)setlocale.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 9 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt SETLOCALE 3
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nm localeconv
 .Nd natural language formatting for C
 .Sh SYNOPSIS
-.Fd #include <locale.h>
+.In locale.h
 .Ft char *
 .Fn setlocale "int category" "const char *locale"
 .Ft struct lconv *

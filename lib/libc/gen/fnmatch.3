@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fnmatch.3,v 1.13 2009/03/05 15:13:30 millert Exp $
+.\"	$OpenBSD: fnmatch.3,v 1.14 2013/06/05 03:39:22 tedu Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,14 +31,14 @@
 .\"
 .\"     @(#)fnmatch.3	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: March 5 2009 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt FNMATCH 3
 .Os
 .Sh NAME
 .Nm fnmatch
 .Nd match filename or pathname using shell globbing rules
 .Sh SYNOPSIS
-.Fd #include <fnmatch.h>
+.In fnmatch.h
 .Ft int
 .Fn fnmatch "const char *pattern" "const char *string" "int flags"
 .Sh DESCRIPTION
