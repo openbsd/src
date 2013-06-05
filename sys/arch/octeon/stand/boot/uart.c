@@ -1,4 +1,4 @@
-/*	$OpenBSD: uart.c,v 1.2 2013/06/05 02:42:29 jasper Exp $	*/
+/*	$OpenBSD: uart.c,v 1.3 2013/06/05 02:45:37 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -84,13 +84,8 @@ cn30xxuartcninit(struct consdev *consdev)
 void
 cn30xxuartcnprobe(struct consdev *cn)
 {
-	cn->cn_pri = CN_LOWPRI;
-	cn->cn_dev = makedev(0, 0);
-}
-
-void
-cn30xxuartcnpollc(dev_t dev, int c)
-{
+	cn->cn_pri = CN_HIGHPRI;
+	cn->cn_dev = makedev(CONSMAJOR, 0);
 }
 
 void
