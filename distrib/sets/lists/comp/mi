@@ -1795,6 +1795,7 @@
 ./usr/share/man/man2/WIFSTOPPED.2
 ./usr/share/man/man2/WSTOPSIG.2
 ./usr/share/man/man2/WTERMSIG.2
+./usr/share/man/man2/_Exit.2
 ./usr/share/man/man2/__get_tcb.2
 ./usr/share/man/man2/__set_tcb.2
 ./usr/share/man/man2/__syscall.2
@@ -3133,7 +3134,6 @@
 ./usr/share/man/man3/X509_NAME_print_ex.3
 ./usr/share/man/man3/X509_free.3
 ./usr/share/man/man3/X509_new.3
-./usr/share/man/man3/_Exit.3
 ./usr/share/man/man3/__tfork_thread.3
 ./usr/share/man/man3/_longjmp.3
 ./usr/share/man/man3/_setjmp.3
@@ -6657,6 +6657,7 @@
 ./usr/share/man/man9/m_copydata.9
 ./usr/share/man/man9/m_copym.9
 ./usr/share/man/man9/m_copym2.9
+./usr/share/man/man9/m_defrag.9
 ./usr/share/man/man9/m_devget.9
 ./usr/share/man/man9/m_dup_pkthdr.9
 ./usr/share/man/man9/m_free.9
