@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.121 2013/05/31 20:44:10 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.122 2013/06/05 00:44:06 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -780,6 +780,12 @@ pool_do_put(struct pool *pp, void *v)
 	 * Return to item list.
 	 */
 #ifdef DIAGNOSTIC
+	if (pool_debug) {
+		struct pool_item *qi;
+		XSIMPLEQ_FOREACH(qi, &ph->ph_itemlist, pi_list)
+			if (pi == qi)
+				panic("double pool_put: %p", pi);
+	}
 	pi->pi_magic = poison_value(pi);
 	if (ph->ph_magic) {
 		poison_mem(pi + 1, pp->pr_size - sizeof(*pi));
