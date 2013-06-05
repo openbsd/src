@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.156 2013/06/03 12:32:06 kettenis Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.157 2013/06/05 10:42:58 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -199,11 +199,8 @@ ether_ioctl(struct ifnet *ifp, struct arpcom *arp, u_long cmd, caddr_t data)
  * Assumes that ifp is actually pointer to arpcom structure.
  */
 int
-ether_output(ifp0, m0, dst, rt0)
-	struct ifnet *ifp0;
-	struct mbuf *m0;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 	u_int16_t etype;
 	int s, len, error = 0, hdrcmplt = 0;
@@ -452,10 +449,7 @@ bad:
  * the ether header, which is provided separately.
  */
 void
-ether_input(ifp0, eh, m)
-	struct ifnet *ifp0;
-	struct ether_header *eh;
-	struct mbuf *m;
+ether_input(struct ifnet *ifp0, struct ether_header *eh, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	u_int16_t etype;
@@ -738,8 +732,7 @@ done:
  */
 static char digits[] = "0123456789abcdef";
 char *
-ether_sprintf(ap)
-	u_char *ap;
+ether_sprintf(u_char *ap)
 {
 	int i;
 	static char etherbuf[ETHER_ADDR_LEN * 3];
@@ -777,8 +770,7 @@ ether_fakeaddr(struct ifnet *ifp)
  * Perform common duties while attaching to interface list
  */
 void
-ether_ifattach(ifp)
-	struct ifnet *ifp;
+ether_ifattach(struct ifnet *ifp)
 {
 	/*
 	 * Any interface which provides a MAC address which is obviously
@@ -806,8 +798,7 @@ ether_ifattach(ifp)
 }
 
 void
-ether_ifdetach(ifp)
-	struct ifnet *ifp;
+ether_ifdetach(struct ifnet *ifp)
 {
 	struct arpcom *ac = (struct arpcom *)ifp;
 	struct ether_multi *enm;
@@ -1018,9 +1009,7 @@ ether_multiaddr(struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
  * given interface.
  */
 int
-ether_addmulti(ifr, ac)
-	struct ifreq *ifr;
-	struct arpcom *ac;
+ether_addmulti(struct ifreq *ifr, struct arpcom *ac)
 {
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
@@ -1081,9 +1070,7 @@ ether_addmulti(ifr, ac)
  * Delete a multicast address record.
  */
 int
-ether_delmulti(ifr, ac)
-	struct ifreq *ifr;
-	struct arpcom *ac;
+ether_delmulti(struct ifreq *ifr, struct arpcom *ac)
 {
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
