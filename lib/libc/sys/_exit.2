@@ -1,4 +1,4 @@
-.\"	$OpenBSD: _exit.2,v 1.17 2011/11/17 14:26:14 schwarze Exp $
+.\"	$OpenBSD: _exit.2,v 1.18 2013/06/05 04:06:08 guenther Exp $
 .\"	$NetBSD: _exit.2,v 1.6 1995/02/27 12:31:34 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -30,21 +30,29 @@
 .\"
 .\"     @(#)_exit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 17 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt _EXIT 2
 .Os
 .Sh NAME
-.Nm _exit
+.Nm _exit ,
+.Nm _Exit
 .Nd terminate the calling process
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft void
 .Fn _exit "int status"
+.Fd #include <stdlib.h>
+.Ft void
+.Fn _Exit "int status"
 .Sh DESCRIPTION
 The
 .Fn _exit
-function terminates a process with the following consequences:
+and
+.Fn _Exit
+functions terminate a process with the following consequences:
 .Bl -bullet
+.It
+All threads in the process are terminated.
 .It
 All open file descriptors in the calling process are closed.
 This may entail delays; for example, waiting for output to drain.
@@ -96,6 +104,8 @@ and then calls
 .Fn _exit .
 .Sh RETURN VALUES
 .Fn _exit
+and
+.Fn _Exit
 can never return.
 .Sh SEE ALSO
 .Xr fork 2 ,
@@ -107,8 +117,12 @@ can never return.
 .Sh STANDARDS
 The
 .Fn _exit
-function is defined by
-.St -p1003.1-88 .
+function conform to
+.St -p1003.1-2008 .
+The
+.Fn _Exit
+function conforms to
+.St -ansiC-99 .
 .Sh HISTORY
 An
 .Fn exit
@@ -118,3 +132,7 @@ and an
 .Fn _exit
 variant in
 .At v7 .
+The
+.Fn _Exit
+function appeared in
+.Ox 3.6 .

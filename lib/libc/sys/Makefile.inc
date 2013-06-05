@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.112 2013/06/01 09:49:53 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.113 2013/06/05 04:06:08 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -199,6 +199,7 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 
 MLINKS+=__get_tcb.2 __set_tcb.2
 MLINKS+=__thrsleep.2 __thrwakeup.2
+MLINKS+=_exit.2 _Exit.2
 MLINKS+=access.2 faccessat.2
 MLINKS+=brk.2 sbrk.2
 MLINKS+=chdir.2 fchdir.2
