@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.4 2013/06/04 09:12:20 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.5 2013/06/05 12:51:01 espie Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -472,7 +472,7 @@ tmpfs_getattr(void *v)
 	vap->va_nlink = node->tn_links;
 	vap->va_uid = node->tn_uid;
 	vap->va_gid = node->tn_gid;
-	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
+	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_fileid = node->tn_id;
 	vap->va_size = node->tn_size;
 	vap->va_blocksize = PAGE_SIZE;
