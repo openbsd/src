@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.2 2013/06/04 04:17:42 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.3 2013/06/05 04:34:27 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -34,9 +34,10 @@ sub new {
 	$args{down} ||= $args{alarm} ? "Alarm" :
 	    "Shutdown|Broken pipe|Connection reset by peer";
 	my $self = Proc::new($class, %args);
-	$self->{protocol} ||= "tcp";
-	$self->{connectdomain}
-	    or croak "$class connect domain not given";
+	$self->{domain}
+	    or croak "$class domain not given";
+	$self->{protocol}
+	    or croak "$class protocol not given";
 	$self->{connectaddr}
 	    or croak "$class connect addr not given";
 	$self->{connectport} || $self->{protocol} !~ /^(tcp|udp)$/
@@ -47,20 +48,20 @@ sub new {
 		do { local $> = 0; $cs = IO::Socket::INET6->new(
 		    Type	=> $self->{socktype},
 		    Proto	=> $self->{protocol},
-		    Domain	=> $self->{connectdomain},
+		    Domain	=> $self->{domain},
 		    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 		) } or die ref($self), " socket connect failed: $!";
 		do { local $> = 0; $cs->setsockopt(SOL_SOCKET, SO_BINDANY, 1) }
 		    or die ref($self), " setsockopt SO_BINDANY failed: $!";
 		my @rres = getaddrinfo($self->{bindaddr}, $self->{bindport}||0,
-		    $self->{connectdomain}, SOCK_STREAM, 0, AI_PASSIVE);
+		    $self->{domain}, SOCK_STREAM, 0, AI_PASSIVE);
 		$cs->bind($rres[3])
 		    or die ref($self), " bind failed: $!";
 	} elsif ($self->{bindaddr} || $self->{bindport}) {
 		do { local $> = 0; $cs = IO::Socket::INET6->new(
 		    Type	=> $self->{socktype},
 		    Proto	=> $self->{protocol},
-		    Domain	=> $self->{connectdomain},
+		    Domain	=> $self->{domain},
 		    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 		    LocalAddr	=> $self->{bindaddr},
 		    LocalPort	=> $self->{bindport},
@@ -81,7 +82,7 @@ sub child {
 	my $cs = $self->{cs} || do { local $> = 0; IO::Socket::INET6->new(
 	    Type	=> $self->{socktype},
 	    Proto	=> $self->{protocol},
-	    Domain	=> $self->{connectdomain},
+	    Domain	=> $self->{domain},
 	    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 	) } or die ref($self), " socket connect failed: $!";
 	if ($self->{oobinline}) {
@@ -103,7 +104,7 @@ sub child {
 		    or die ref($self), " set nodelay connect failed: $!";
 	}
 	my @rres = getaddrinfo($self->{connectaddr}, $self->{connectport},
-	    $self->{connectdomain}, SOCK_STREAM);
+	    $self->{domain}, SOCK_STREAM);
 	$cs->connect($rres[3])
 	    or die ref($self), " connect failed: $!";
 	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";

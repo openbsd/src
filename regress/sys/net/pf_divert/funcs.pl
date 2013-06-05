@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.3 2013/06/04 04:17:42 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.4 2013/06/05 04:34:27 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -59,6 +59,84 @@ sub read_datagram {
 	print STDERR "<<< $in";
 }
 
+sub in_cksum {
+	my $data = shift;
+	my $sum = 0;
+
+	$data .= pack("x") if (length($data) & 1);
+	while (length($data)) {
+		$sum += unpack("n", substr($data, 0, 2, ""));
+		$sum = ($sum >> 16) + ($sum & 0xffff) if ($sum > 0xffff);
+	}
+	return (~$sum & 0xffff);
+}
+
+use constant IPPROTO_ICMPV6	=> 58;
+use constant ICMP_ECHO		=> 8;
+use constant ICMP6_ECHO_REQUEST	=> 128;
+
+my $seq = 0;
+sub write_icmp_echo {
+	my $self = shift;
+	my $af = $self->{af};
+
+	my $type = $af eq "inet" ? ICMP_ECHO : ICMP6_ECHO_REQUEST;
+	# type, code, cksum, id, seq
+	my $icmp = pack("CCnnn", $type, 0, 0, $$, ++$seq);
+	if ($af eq "inet") {
+		substr($icmp, 2, 2, pack("n", in_cksum($icmp)));
+	} else {
+		# src, dst, plen, pad, next
+		my $phdr = "";
+		$phdr .= inet_pton(AF_INET6, $self->{srcaddr});
+		$phdr .= inet_pton(AF_INET6, $self->{dstaddr});
+		$phdr .= pack("NxxxC", length($icmp), IPPROTO_ICMPV6);
+		print STDERR "pseudo header: ", unpack("H*", $phdr), "\n";
+		substr($icmp, 2, 2, pack("n", in_cksum($phdr. $icmp)));
+	}
+
+	print $icmp;
+	IO::Handle::flush(\*STDOUT);
+	my $text = $af eq "inet" ? "ICMP" : "ICMP6";
+	print STDERR ">>> $text ", unpack("H*", $icmp), "\n";
+}
+
+sub read_icmp_echo {
+	my $self = shift;
+	my $af = $self->{af};
+
+	# Raw sockets include the IPv4 header.
+	sysread(STDIN, my $icmp, 70000);
+	# Cut the header off.
+	if ($af eq "inet") {
+		substr($icmp, 0, 20, "");
+	}
+
+	my $text = $af eq "inet" ? "ICMP" : "ICMP6";
+	my $phdr = "";
+	if ($af eq "inet6") {
+		# src, dst, plen, pad, next
+		$phdr .= inet_pton(AF_INET6, $self->{srcaddr});
+		$phdr .= inet_pton(AF_INET6, $self->{dstaddr});
+		$phdr .= pack("NxxxC", length($icmp), IPPROTO_ICMPV6);
+		print STDERR "pseudo header: ", unpack("H*", $phdr), "\n";
+	}
+	if (length($icmp) < 8) {
+		$text = "BAD $text LENGTH";
+	} elsif (in_cksum($phdr. $icmp) != 0) {
+		$text = "BAD $text CHECKSUM";
+	} else {
+		my($type, $code, $cksum, $id, $seq) = unpack("CCnnn", $icmp);
+		if ($type != ($af eq "inet" ? ICMP_ECHO : ICMP6_ECHO_REQUEST)) {
+			$text = "BAD $text TYPE";
+		} elsif ($code != 0) {
+			$text = "BAD $text CODE";
+		}
+	}
+
+	print STDERR "<<< $text ", unpack("H*", $icmp), "\n";
+}
+
 ########################################################################
 # Script funcs
 ########################################################################
@@ -75,15 +153,19 @@ sub check_inout {
 	my ($c, $s, %args) = @_;
 
 	if ($c && !$args{client}{nocheck}) {
-		$c->loggrep(qr/^>>> Client$/) or die "no client output"
+		my $out = $args{client}{out} || "Client";
+		$c->loggrep(qr/^>>> $out/) or die "no client output"
 		    unless $args{client}{noout};
-		$c->loggrep(qr/^<<< Server$/) or die "no client input"
+		my $in = $args{client}{in} || "Server";
+		$c->loggrep(qr/^<<< $in/) or die "no client input"
 		    unless $args{client}{noin};
 	}
 	if ($s && !$args{server}{nocheck}) {
-		$s->loggrep(qr/^>>> Server$/) or die "no server output"
+		my $out = $args{server}{out} || "Server";
+		$s->loggrep(qr/^>>> $out/) or die "no server output"
 		    unless $args{server}{noout};
-		$s->loggrep(qr/^<<< Client$/) or die "no server input"
+		my $in = $args{server}{in} || "Client";
+		$s->loggrep(qr/^<<< $in/) or die "no server input"
 		    unless $args{server}{noin};
 	}
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.3 2013/06/04 04:17:42 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.4 2013/06/05 04:34:27 bluhm Exp $
 
 # Copyright (c) 2010-2013 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -47,18 +47,21 @@ EOF
 
 my $test;
 our %args;
-if (@ARGV and -f $ARGV[-1]) {
+if (@ARGV) {
 	$test = pop;
 	do $test
 	    or die "Do test file $test failed: ", $@ || $!;
 }
-my($af, $domain);
+my($af, $domain, $protocol);
 if (@ARGV) {
 	$af = shift;
 	$domain =
 	    $af eq "inet" ? AF_INET :
 	    $af eq "inet6" ? AF_INET6 :
 	    die "address family must be 'inet' or 'inet6\n";
+	$protocol = $args{protocol};
+	$protocol = $protocol->({ %args, af => $af, domain => $domain, })
+	    if ref $protocol eq 'CODE';
 }
 my $mode =
 	@ARGV == 3 && $ARGV[0] !~ /^\d+$/ && $ARGV[2] =~ /^\d+$/ ? "divert"  :
@@ -66,13 +69,19 @@ my $mode =
 	usage();
 
 my($c, $l, $r, $s, $logfile);
-my $func = \&write_read_stream;
-my $divert = $args{divert} || "to";
-my $local = $divert eq "to" ? "client" : "server";
-my $remote = $divert eq "to" ? "server" : "client";
+my $func	= \&write_read_stream;
+my $divert	= $args{divert} || "to";
+my $local	= $divert eq "to" ? "client" : "server";
+my $remote	= $divert eq "to" ? "server" : "client";
 if ($mode eq "divert") {
 	$local		= $divert eq "to" ? "server" : "client";
+	$remote		= $divert eq "to" ? "client" : "server";
 	$logfile	= dirname($0)."/remote.log";
+}
+my $srcaddr	= $ARGV[0];
+my $dstaddr	= $ARGV[1];
+if ($mode eq "divert" xor $divert eq "reply") {
+	($srcaddr, $dstaddr) = ($dstaddr, $srcaddr);
 }
 
 if ($local eq "server") {
@@ -80,19 +89,22 @@ if ($local eq "server") {
 	    func		=> $func,
 	    %args,
 	    %{$args{server}},
-	    af			=> $af,
 	    logfile		=> $logfile,
-	    listendomain	=> $domain,
+	    af			=> $af,
+	    domain		=> $domain,
+	    protocol		=> $protocol,
 	    listenaddr		=> $mode ne "divert" ? $ARGV[0] :
 		$af eq "inet" ? "127.0.0.1" : "::1",
+	    srcaddr		=> $srcaddr,
+	    dstaddr		=> $dstaddr,
 	);
 }
 if ($mode eq "auto") {
 	$r = Remote->new(
 	    %args,
-	    af			=> $af,
 	    logfile		=> "$remote.log",
 	    testfile		=> $test,
+	    af			=> $af,
 	    remotessh		=> $ARGV[2],
 	    bindaddr		=> $ARGV[1],
 	    connect		=> $remote eq "client",
@@ -108,13 +120,16 @@ if ($local eq "client") {
 	    func		=> $func,
 	    %args,
 	    %{$args{client}},
-	    af			=> $af,
 	    logfile		=> $logfile,
-	    connectdomain	=> $domain,
+	    af			=> $af,
+	    domain		=> $domain,
+	    protocol		=> $protocol,
 	    connectaddr		=> $ARGV[1],
 	    connectport		=> $r ? $r->{listenport} : $ARGV[2],
 	    bindany		=> $mode eq "divert",
 	    bindaddr		=> $ARGV[0],
+	    srcaddr		=> $srcaddr,
+	    dstaddr		=> $dstaddr,
 	);
 }
 
@@ -134,16 +149,16 @@ if ($mode eq "divert") {
 	do { local $> = 0; open($pf, '|-', @cmd) }
 	    or die "Open pipe to pf '@cmd' failed: $!";
 	if ($local eq "server") {
-		my $port = $args{protocol} =~ /^(tcp|udp)$/ ?
+		my $port = $protocol =~ /^(tcp|udp)$/ ?
 		    "port $s->{listenport}" : "";
 		my $divertport = $port || "port 1";  # XXX bad pf syntax
-		print $pf "pass in log $af proto $args{protocol} ".
+		print $pf "pass in log $af proto $protocol ".
 		    "from $ARGV[1] to $ARGV[0] $port ".
 		    "divert-to $s->{listenaddr} $divertport\n";
 	} else {
-		my $port = $args{protocol} =~ /^(tcp|udp)$/ ?
+		my $port = $protocol =~ /^(tcp|udp)$/ ?
 		    "port $ARGV[2]" : "";
-		print $pf "pass out log $af proto $args{protocol} ".
+		print $pf "pass out log $af proto $protocol ".
 		    "from $c->{bindaddr} to $ARGV[1] $port divert-reply\n";
 	}
 	close($pf) or die $! ?
