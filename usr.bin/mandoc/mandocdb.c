@@ -1,4 +1,4 @@
-/*	$Id: mandocdb.c,v 1.43 2013/05/29 23:15:11 schwarze Exp $ */
+/*	$Id: mandocdb.c,v 1.44 2013/06/05 02:02:53 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/param.h>
 #include <sys/types.h>
 
 #include <assert.h>
@@ -24,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -46,8 +46,8 @@
 /* Access to the mandoc database on disk. */
 
 struct	mdb {
-	char		  idxn[MAXPATHLEN]; /* index db filename */
-	char		  dbn[MAXPATHLEN]; /* keyword db filename */
+	char		  idxn[PATH_MAX]; /* index db filename */
+	char		  dbn[PATH_MAX]; /* keyword db filename */
 	DB		 *idx; /* index recno database */
 	DB		 *db; /* keyword btree database */
 };
@@ -402,13 +402,13 @@ mandocdb(int argc, char *argv[])
 			exit((int)MANDOCLEVEL_BADARG);
 		}
 
-		strlcat(mdb.dbn, pbuf, MAXPATHLEN);
-		sz1 = strlcat(mdb.dbn, MANDOC_DB, MAXPATHLEN);
+		strlcat(mdb.dbn, pbuf, PATH_MAX);
+		sz1 = strlcat(mdb.dbn, MANDOC_DB, PATH_MAX);
 
-		strlcat(mdb.idxn, pbuf, MAXPATHLEN);
-		sz2 = strlcat(mdb.idxn, MANDOC_IDX, MAXPATHLEN);
+		strlcat(mdb.idxn, pbuf, PATH_MAX);
+		sz2 = strlcat(mdb.idxn, MANDOC_IDX, PATH_MAX);
 
-		if (sz1 >= MAXPATHLEN || sz2 >= MAXPATHLEN) {
+		if (sz1 >= PATH_MAX || sz2 >= PATH_MAX) {
 			fprintf(stderr, "%s: path too long\n", mdb.idxn);
 			exit((int)MANDOCLEVEL_BADARG);
 		}
@@ -486,8 +486,8 @@ mandocdb(int argc, char *argv[])
 
 		flags = O_CREAT | O_EXCL | O_RDWR;
 		while (NULL == mdb.db) {
-			strlcpy(mdb.dbn, MANDOC_DB, MAXPATHLEN);
-			strlcat(mdb.dbn, ".XXXXXXXXXX", MAXPATHLEN);
+			strlcpy(mdb.dbn, MANDOC_DB, PATH_MAX);
+			strlcat(mdb.dbn, ".XXXXXXXXXX", PATH_MAX);
 			if (NULL == mktemp(mdb.dbn)) {
 				perror(mdb.dbn);
 				exit((int)MANDOCLEVEL_SYSERR);
@@ -500,8 +500,8 @@ mandocdb(int argc, char *argv[])
 			}
 		}
 		while (NULL == mdb.idx) {
-			strlcpy(mdb.idxn, MANDOC_IDX, MAXPATHLEN);
-			strlcat(mdb.idxn, ".XXXXXXXXXX", MAXPATHLEN);
+			strlcpy(mdb.idxn, MANDOC_IDX, PATH_MAX);
+			strlcat(mdb.idxn, ".XXXXXXXXXX", PATH_MAX);
 			if (NULL == mktemp(mdb.idxn)) {
 				perror(mdb.idxn);
 				unlink(mdb.dbn);
@@ -1634,7 +1634,7 @@ static void
 ofile_argbuild(int argc, char *argv[], struct of **of,
 		const char *basedir)
 {
-	char		 buf[MAXPATHLEN];
+	char		 buf[PATH_MAX];
 	char		 pbuf[PATH_MAX];
 	const char	*sec, *arch, *title;
 	char		*relpath, *p;
@@ -1744,7 +1744,7 @@ static void
 ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 		int p_src_form, struct of **of)
 {
-	char		 buf[MAXPATHLEN];
+	char		 buf[PATH_MAX];
 	size_t		 sz;
 	DIR		*d;
 	const char	*fn, *sec, *arch;
@@ -1810,11 +1810,11 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 			}
 
 			buf[0] = '\0';
-			strlcat(buf, dir, MAXPATHLEN);
-			strlcat(buf, "/", MAXPATHLEN);
-			sz = strlcat(buf, fn, MAXPATHLEN);
+			strlcat(buf, dir, PATH_MAX);
+			strlcat(buf, "/", PATH_MAX);
+			sz = strlcat(buf, fn, PATH_MAX);
 
-			if (MAXPATHLEN <= sz) {
+			if (PATH_MAX <= sz) {
 				if (warnings) fprintf(stderr, "%s/%s: "
 				    "path too long\n", dir, fn);
 				continue;
@@ -1885,7 +1885,7 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 		if (0 == use_all && MANDOC_FORM & src_form &&
 				'\0' != *psec) {
 			buf[0] = '\0';
-			strlcat(buf, dir, MAXPATHLEN);
+			strlcat(buf, dir, PATH_MAX);
 			p = strrchr(buf, '/');
 			if ('\0' != *parch && NULL != p)
 				for (p--; p > buf; p--)
@@ -1897,9 +1897,9 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 				p++;
 			if (0 == strncmp("cat", p, 3))
 				memcpy(p, "man", 3);
-			strlcat(buf, "/", MAXPATHLEN);
-			sz = strlcat(buf, fn, MAXPATHLEN);
-			if (sz >= MAXPATHLEN) {
+			strlcat(buf, "/", PATH_MAX);
+			sz = strlcat(buf, fn, PATH_MAX);
+			if (sz >= PATH_MAX) {
 				if (warnings) fprintf(stderr,
 				    "%s/%s: path too long\n",
 				    dir, fn);
@@ -1908,8 +1908,8 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 			q = strrchr(buf, '.');
 			if (NULL != q && p < q++) {
 				*q = '\0';
-				sz = strlcat(buf, psec, MAXPATHLEN);
-				if (sz >= MAXPATHLEN) {
+				sz = strlcat(buf, psec, PATH_MAX);
+				if (sz >= PATH_MAX) {
 					if (warnings) fprintf(stderr,
 					    "%s/%s: path too long\n",
 					    dir, fn);
@@ -1923,11 +1923,11 @@ ofile_dirbuild(const char *dir, const char* psec, const char *parch,
 		buf[0] = '\0';
 		assert('.' == dir[0]);
 		if ('/' == dir[1]) {
-			strlcat(buf, dir + 2, MAXPATHLEN);
-			strlcat(buf, "/", MAXPATHLEN);
+			strlcat(buf, dir + 2, PATH_MAX);
+			strlcat(buf, "/", PATH_MAX);
 		}
-		sz = strlcat(buf, fn, MAXPATHLEN);
-		if (sz >= MAXPATHLEN) {
+		sz = strlcat(buf, fn, PATH_MAX);
+		if (sz >= PATH_MAX) {
 			if (warnings) fprintf(stderr,
 			    "%s/%s: path too long\n", dir, fn);
 			continue;
