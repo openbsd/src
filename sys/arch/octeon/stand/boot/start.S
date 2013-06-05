@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.1 2013/06/05 01:02:29 jasper Exp $	*/
+/*	$OpenBSD: start.S,v 1.2 2013/06/05 01:09:09 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -35,10 +35,10 @@
 	.set	noreorder
 	.set	mips64r2
 
-	.globl	start
+	.globl	__start
 	.globl	kernel_text
-kernel_text = start
-start:
+kernel_text = __start
+__start:
 /* initialize ebase */
 	dla	t0, 0xffffffff80000000
 	mtc0	t0, COP_0_EBASE
@@ -67,7 +67,7 @@ start:
 	/*
 	 * Initialize stack and call bootloader setup.
 	 */
-	LA	t0, start - FRAMESZ(CF_SZ)
+	LA	t0, __start - FRAMESZ(CF_SZ)
 	PTR_S	ra, CF_RA_OFFS(t0)		# save uboot return address
 	PTR_S	sp, 0(t0)			# and stack
 	move	sp, t0

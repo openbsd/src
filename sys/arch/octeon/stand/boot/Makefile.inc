@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2013/06/05 01:02:29 jasper Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2013/06/05 01:09:09 jasper Exp $
 
 NOMAN=
 S=		${.CURDIR}/../../../..
@@ -9,8 +9,8 @@ CPPFLAGS+=	${SAABI} -mno-abicalls -D_NO_ABICALLS -Werror \
 		-I${S} -I${S}/lib/libsa \
 		-I${.OBJDIR} -I${BOOTDIR}
 
-LDSCRIPT=	${.CURDIR}/ld.script
-LDFLAGS+=	${SALDFLAGS} -T ${LDSCRIPT} -Ttext=0xffffffff81000000 -e start
+LDSCRIPT=	${.CURDIR}/../../conf/ld.script
+LDFLAGS+=	${SALDFLAGS} -T ${LDSCRIPT} -Ttext=0xffffffff81000000 -e __start
 
 AFLAGS+=	${SAABI}
 
