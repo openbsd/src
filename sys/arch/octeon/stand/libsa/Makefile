@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2013/06/05 01:02:29 jasper Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/06/05 01:32:11 jasper Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -23,7 +23,6 @@ SRCS=	alloc.c cons.c ctime.c exit.c getfile.c gets.c globals.c \
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c \
 	lseek.c open.c read.c readdir.c stat.c write.c
-#SRCS+=	nullfs.c
 
 #SRCS+=	cread.c
 #CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
