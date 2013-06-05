@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.99 2013/05/03 09:35:20 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.100 2013/06/05 02:25:05 lteo Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -347,16 +347,12 @@ icmp_input(struct mbuf *m, ...)
 		return;
 	}
 	ip = mtod(m, struct ip *);
-	m->m_len -= hlen;
-	m->m_data += hlen;
-	icp = mtod(m, struct icmp *);
-	if (in_cksum(m, icmplen)) {
+	if (in4_cksum(m, 0, hlen, icmplen)) {
 		icmpstat.icps_checksum++;
 		goto freeit;
 	}
-	m->m_len += hlen;
-	m->m_data -= hlen;
 
+	icp = (struct icmp *)(mtod(m, caddr_t) + hlen);
 #ifdef ICMPPRINTFS
 	/*
 	 * Message type specific processing.
@@ -807,13 +803,9 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	struct icmp *icp;
 
 	hlen = ip->ip_hl << 2;
-	m->m_data += hlen;
-	m->m_len -= hlen;
-	icp = mtod(m, struct icmp *);
+	icp = (struct icmp *)(mtod(m, caddr_t) + hlen);
 	icp->icmp_cksum = 0;
-	icp->icmp_cksum = in_cksum(m, ntohs(ip->ip_len) - hlen);
-	m->m_data -= hlen;
-	m->m_len += hlen;
+	icp->icmp_cksum = in4_cksum(m, 0, hlen, ntohs(ip->ip_len) - hlen);
 #ifdef ICMPPRINTFS
 	if (icmpprintfs) {
 		char buf[4 * sizeof("123")];

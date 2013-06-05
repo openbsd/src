@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.239 2013/04/24 12:34:15 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.240 2013/06/05 02:25:05 lteo Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -2126,13 +2126,10 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		struct icmp *icp;
 
 		hlen = ip->ip_hl << 2;
-		m->m_data += hlen;
-		m->m_len -= hlen;
-		icp = mtod(m, struct icmp *);
+		icp = (struct icmp *)(mtod(m, caddr_t) + hlen);
 		icp->icmp_cksum = 0;
-		icp->icmp_cksum = in_cksum(m, ntohs(ip->ip_len) - hlen);
-		m->m_data -= hlen;
-		m->m_len += hlen;
+		icp->icmp_cksum = in4_cksum(m, 0, hlen,
+		    ntohs(ip->ip_len) - hlen);
 		m->m_pkthdr.csum_flags &= ~M_ICMP_CSUM_OUT; /* Clear */
 	}
 }
