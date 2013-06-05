@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.39 2013/03/28 23:10:05 tedu Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.40 2013/06/05 02:03:15 reyk Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -1005,10 +1005,11 @@ export_tag(void **p, struct tdb *tdb)
 	struct sadb_x_tag *stag = (struct sadb_x_tag *)*p;
 	char *s = (char *)(stag + 1);
 
+	pf_tag2tagname(tdb->tdb_tag, s);
+
 	stag->sadb_x_tag_taglen = strlen(s) + 1;
 	stag->sadb_x_tag_len = (sizeof(struct sadb_x_tag) +
 	    PADUP(stag->sadb_x_tag_taglen)) / sizeof(uint64_t);
-	pf_tag2tagname(tdb->tdb_tag, s);
 	*p += sizeof(struct sadb_x_tag) + PADUP(stag->sadb_x_tag_taglen);
 }
 
