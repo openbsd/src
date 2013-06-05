@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsi3.S,v 1.2 2013/06/05 22:06:30 miod Exp $	*/
+/*	$OpenBSD: modsi3.S,v 1.1 2013/06/05 22:06:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -20,13 +20,13 @@
 #include "SYS.h"
 
 /*
- * int __divsi3(int n, int d);
+ * int __modsi3(int n, int d);
  */
 
 #ifndef LDSO
-.weak	_C_LABEL(__divsi3)
+.weak	_C_LABEL(__modsi3)
 #endif
-ENTRY(__divsi3)
+ENTRY(__modsi3)
 	/* if divider is zero, trap */
 	tcnd	eq0, %r3, 503
 
@@ -34,8 +34,11 @@ ENTRY(__divsi3)
 	bb1	31, %r3, 2f
 
 	/* both operands are positive */
+	divu	%r4, %r2, %r3
+9:
+	mulu	%r5, %r4, %r3
 	jmp.n	%r1
-	 divu	%r2, %r2, %r3
+	 subu	%r2, %r2, %r5
 
 1:
 	bb1	31, %r3, 3f
@@ -43,20 +46,20 @@ ENTRY(__divsi3)
 	/* r2 is negative, r3 is positive */
 	subu	%r4, %r0, %r2
 	divu	%r5, %r4, %r3
-	jmp.n	%r1
-	 subu	%r2, %r0, %r5
+	subu	%r4, %r0, %r5
+	br	9b
 
 2:
 	/* r2 is positive, r3 is negative */
 	subu	%r5, %r0, %r3
 	divu	%r4, %r2, %r5
-	jmp.n	%r1
-	 subu	%r2, %r0, %r4
+	subu	%r4, %r0, %r4
+	br	9b
 
 3:
 	/* both operands are negative */
 	subu	%r4, %r0, %r2
 	subu	%r5, %r0, %r3
-	jmp.n	%r1
-	 divu	%r2, %r4, %r5
-END(__divsi3)
+	divu	%r4, %r4, %r5
+	br	9b
+END(__modsi3)
