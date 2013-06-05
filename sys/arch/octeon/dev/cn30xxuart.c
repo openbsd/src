@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.3 2013/06/05 01:32:22 jasper Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.4 2013/06/05 02:45:03 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,6 +62,7 @@ cons_decl(cn30xxuart);
 #define  OCTEON_MIO_UART0_DLH           0x8001180000000888ull
 #define  USR_TXFIFO_NOTFULL		2
 
+/* XXX: What is this used for? Removed from stand/boot/uart.c -r1.2 */
 static int delay_changed = 1;
 int cn30xxuart_delay(void);
 void cn30xxuart_wait_txhr_empty(int);
