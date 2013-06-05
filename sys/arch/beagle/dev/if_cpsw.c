@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.1 2013/06/05 15:03:23 bmercer Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.2 2013/06/05 17:56:32 rapha Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#include <arch/beagle/dev/omapvar.h>
 #include <arch/beagle/dev/if_cpswreg.h>
 
 #define CPSW_TXFRAGS	16
@@ -129,27 +130,6 @@
 
 #define __SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 
-struct obio_softc {
-	struct device		sc_dev;
-        bus_dma_tag_t		sc_dmat;
-        bus_space_tag_t		sc_iot;
-        bus_space_handle_t	sc_ioh;
-        bus_addr_t		sc_base;
-        bus_size_t		sc_size;
-        struct device		sc_obio_dev;
-};
-
-struct obio_attach_args {
-        const char *obio_name;
-        bus_space_tag_t obio_iot;
-        bus_addr_t      obio_addr;
-        bus_size_t      obio_size;
-        int             obio_intr;
-        bus_dma_tag_t   obio_dmat;
-        unsigned int    obio_mult;
-        unsigned int    obio_intrbase;
-};
-
 struct cpsw_ring_data {
 	bus_dmamap_t tx_dm[CPSW_NTXDESCS];
 	struct mbuf *tx_mb[CPSW_NTXDESCS];
@@ -192,7 +172,6 @@ struct cpsw_softc {
 };
 
 void	cpsw_get_mac_addr(struct cpsw_softc *);
-int cpsw_match(struct device *, void *, void *);
 void cpsw_attach(struct device *, struct device *, void *);
 
 void cpsw_start(struct ifnet *);
@@ -217,7 +196,7 @@ int cpsw_miscintr(void *);
 int sitara_cm_reg_read_4(uint32_t reg, uint32_t *val);
 
 struct cfattach cpsw_ca = {
-        sizeof (struct cpsw_softc), cpsw_match, cpsw_attach
+        sizeof (struct cpsw_softc), NULL, cpsw_attach
 };
 
 struct cfdriver cpsw_cd = {
@@ -353,16 +332,6 @@ cpsw_rxdesc_paddr(struct cpsw_softc * const sc, u_int x)
 	return sc->sc_rxdescs_pa + sizeof(struct cpsw_cpdma_bd) * x;
 }
 
-
-int
-cpsw_match(struct device *parent, void *cf, void *aux)
-{
-	struct obio_attach_args * const oa = aux;
-	if (oa->obio_addr == 0x4a100000 && oa->obio_size >= 0x4000)
-		return 1;
-	return 0;
-}
-
 void
 cpsw_get_mac_addr(struct cpsw_softc *sc)
 {
@@ -382,14 +351,13 @@ cpsw_get_mac_addr(struct cpsw_softc *sc)
 			sc->sc_enaddr[4] = (mac_lo >>  0) & 0xff;
 			sc->sc_enaddr[5] = (mac_lo >>  8) & 0xff;
 	}
-
 }
 
 void
 cpsw_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpsw_softc *sc = (struct cpsw_softc *)self;
-	struct obio_attach_args *oa = aux;
+	struct omap_attach_args *oa = aux;
 	struct arpcom * const ec = &sc->sc_ec;
 	struct ifnet * const ifp = &ec->ac_if;
 	int error;
@@ -412,26 +380,26 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	 	void *cookie, 
 	 	char *name;
 #endif
-	sc->sc_rxthih = arm_intr_establish(oa->obio_intrbase + CPSW_INTROFF_RXTH, 
+	sc->sc_rxthih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RXTH, 
 	    IST_LEVEL, cpsw_rxthintr, sc, NULL);
-	sc->sc_rxih = arm_intr_establish(oa->obio_intrbase + CPSW_INTROFF_RX,
+	sc->sc_rxih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_RX,
 	    IST_LEVEL, cpsw_rxintr, sc, NULL);
-	sc->sc_txih = arm_intr_establish(oa->obio_intrbase + CPSW_INTROFF_TX,
+	sc->sc_txih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_TX,
 	    IST_LEVEL, cpsw_txintr, sc, NULL);
-	sc->sc_miscih = arm_intr_establish(oa->obio_intrbase + CPSW_INTROFF_MISC,
+	sc->sc_miscih = arm_intr_establish(oa->oa_dev->irq[0] + CPSW_INTROFF_MISC,
 	    IST_LEVEL, cpsw_miscintr, sc, NULL);
 
-	sc->sc_bst = oa->obio_iot;
-	sc->sc_bdt = oa->obio_dmat;
+	sc->sc_bst = oa->oa_iot;
+	sc->sc_bdt = oa->oa_dmat;
 
-	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
+	error = bus_space_map(sc->sc_bst, oa->oa_dev->mem[0].addr, oa->oa_dev->mem[0].size, 0,
 	    &sc->sc_bsh);
 	if (error) {
 		printf("can't map registers: %d\n", error);
 		return;
 	}
 
-	sc->sc_txdescs_pa = oa->obio_addr + CPSW_CPPI_RAM_TXDESCS_BASE;
+	sc->sc_txdescs_pa = oa->oa_dev->mem[0].addr + CPSW_CPPI_RAM_TXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    CPSW_CPPI_RAM_TXDESCS_BASE, CPSW_CPPI_RAM_TXDESCS_SIZE,
 	    &sc->sc_bsh_txdescs);
@@ -441,7 +409,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("txdescs at %p\n", (void *)sc->sc_bsh_txdescs);
 
-	sc->sc_rxdescs_pa = oa->obio_addr + CPSW_CPPI_RAM_RXDESCS_BASE;
+	sc->sc_rxdescs_pa = oa->oa_dev->mem[0].addr + CPSW_CPPI_RAM_RXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    CPSW_CPPI_RAM_RXDESCS_BASE, CPSW_CPPI_RAM_RXDESCS_SIZE,
 	    &sc->sc_bsh_rxdescs);

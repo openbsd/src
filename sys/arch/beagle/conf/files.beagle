@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.17 2013/06/05 15:03:23 bmercer Exp $
+#	$OpenBSD: files.beagle,v 1.18 2013/06/05 17:56:32 rapha Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -39,7 +39,10 @@ device ommmc: sdmmcbus
 attach ommmc at soc
 file	arch/beagle/dev/ommmc.c			ommmc
 
-device cpsw
+# Media Independent Interface (mii)
+include "dev/mii/files.mii"
+
+device cpsw: ether, ifnet, mii, ifmedia
 attach cpsw at soc
 file	arch/beagle/dev/if_cpsw.c		cpsw
 
@@ -49,7 +52,7 @@ file	arch/beagle/dev/prcm.c			prcm
 
 device omgpio
 attach omgpio at soc
-file	arch/beagle/dev/omgpio.c		omgpio
+file   arch/beagle/dev/omgpio.c			omgpio
 
 device intc
 attach intc at soc
@@ -144,6 +147,3 @@ include "dev/usb/files.usb"
 
 # Bluetooth
 include "dev/bluetooth/files.bluetooth"
-
-# Media Independent Interface (mii)
-include "dev/mii/files.mii"

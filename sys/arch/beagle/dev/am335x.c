@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.2 2013/06/05 15:03:23 bmercer Exp $ */
+/* $OpenBSD: am335x.c,v 1.3 2013/06/05 17:56:32 rapha Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -79,7 +79,7 @@
 #define HSMMC0_ADDR	0x48060000
 #define HSMMC0_IRQ	64
 
-#define CPSW_SIZE	0x300
+#define CPSW_SIZE	0x4000
 #define CPSW_ADDR	0x4A100000
 #define CPSW_IRQ	40
 
