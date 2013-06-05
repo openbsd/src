@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.57 2012/11/17 17:21:44 guenther Exp $
+.\"	$OpenBSD: queue.3,v 1.58 2013/06/05 03:42:03 tedu Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: November 17 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -120,7 +120,7 @@
 .Nm CIRCLEQ_REPLACE
 .Nd "implementations of singly-linked lists, doubly-linked lists, simple queues, tail queues, and circular queues"
 .Sh SYNOPSIS
-.Fd #include <sys/queue.h>
+.In sys/queue.h
 .Pp
 .Fn SLIST_ENTRY "TYPE"
 .Fn SLIST_HEAD "HEADNAME" "TYPE"
