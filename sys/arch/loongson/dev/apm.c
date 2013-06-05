@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.15 2013/06/04 22:39:27 pirofti Exp $	*/
+/*	$OpenBSD: apm.c,v 1.16 2013/06/05 00:44:24 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -214,16 +214,17 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* some ioctl names from linux */
 	case APM_IOC_STANDBY:
 	case APM_IOC_STANDBY_REQ:
+	case APM_IOC_SUSPEND:
+	case APM_IOC_SUSPEND_REQ:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else if (sys_platform->suspend == NULL ||
 		    sys_platform->resume == NULL)
 			error = EOPNOTSUPP;
 		else
-			error = apm_suspend(APM_STANDBY_REQ);
+			error = apm_suspend(APM_IOC_SUSPEND);
 		break;
-	case APM_IOC_SUSPEND:
-	case APM_IOC_SUSPEND_REQ:
+#ifdef HIBERNATE
 	case APM_IOC_HIBERNATE:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
@@ -231,8 +232,9 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    sys_platform->resume == NULL)
 			error = EOPNOTSUPP;
 		else
-			error = apm_suspend(APM_SUSPEND_REQ);
+			error = apm_suspend(APM_IOC_HIBERNATE);
 		break;
+#endif
 	case APM_IOC_PRN_CTL:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
@@ -377,7 +379,7 @@ apm_suspend(int state)
 	rv = config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
 
 #ifdef HIBERNATE
-	if (state == APM_SUSPEND_REQ) {
+	if (state == APM_IOC_HIBERNATE) {
 		uvm_pmr_zero_everything();
 		if (hibernate_suspend()) {
 			printf("apm: hibernate_suspend failed");
