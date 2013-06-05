@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.19 2011/07/18 17:29:49 matthew Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.20 2013/06/05 01:26:00 guenther Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -91,11 +91,6 @@
 #define	O_CREAT		0x0200		/* create if nonexistent */
 #define	O_TRUNC		0x0400		/* truncate to zero length */
 #define	O_EXCL		0x0800		/* error if already exists */
-
-/* XXX - FHASLOCK should be FIF_HASLOCK. */
-#ifdef _KERNEL
-#define	FHASLOCK	0x4000		/* descriptor holds advisory lock */
-#endif
 
 /*
  * POSIX 1003.1 specifies a higher granularity for synchronous operations

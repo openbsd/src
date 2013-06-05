@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.99 2012/08/23 00:11:56 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.100 2013/06/05 01:26:00 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1145,7 +1145,7 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 	lf.l_len = 0;
 	if (how & LOCK_UN) {
 		lf.l_type = F_UNLCK;
-		fp->f_flag &= ~FHASLOCK;
+		fp->f_iflags &= ~FIF_HASLOCK;
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK);
 		goto out;
 	}
@@ -1157,7 +1157,7 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 		error = EINVAL;
 		goto out;
 	}
-	fp->f_flag |= FHASLOCK;
+	fp->f_iflags |= FIF_HASLOCK;
 	if (how & LOCK_NB)
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.192 2013/04/15 15:32:19 jsing Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.193 2013/06/05 01:26:00 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1107,7 +1107,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			goto out;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-		fp->f_flag |= FHASLOCK;
+		fp->f_iflags |= FIF_HASLOCK;
 	}
 	if (localtrunc) {
 		if ((fp->f_flag & FWRITE) == 0)
@@ -1289,7 +1289,7 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 			goto bad;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-		fp->f_flag |= FHASLOCK;
+		fp->f_iflags |= FIF_HASLOCK;
 	}
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;

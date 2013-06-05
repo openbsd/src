@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.30 2012/05/01 03:43:23 guenther Exp $	*/
+/*	$OpenBSD: file.h,v 1.31 2013/06/05 01:26:00 guenther Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ struct file {
 	u_int64_t f_wbytes;	/* total bytes written */
 };
 
+#define FIF_HASLOCK		0x01	/* descriptor holds advisory lock */
 #define FIF_LARVAL		0x02	/* not fully constructed, don't use */
 #define FIF_MARK		0x04	/* mark during gc() */
 #define FIF_DEFER		0x08	/* defer for next gc() pass */
