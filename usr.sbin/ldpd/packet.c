@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.27 2013/06/04 02:34:48 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.28 2013/06/05 19:19:10 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -389,8 +389,10 @@ session_read(int fd, short event, void *arg)
 		len -= LDP_HDR_SIZE;
 
 		while (len >= LDP_MSG_LEN) {
+			u_int16_t type;
+
 			ldp_msg = (struct ldp_msg *)pdu;
-			u_int16_t type = ntohs(ldp_msg->type);
+			type = ntohs(ldp_msg->type);
 
 			pdu_len = ntohs(ldp_msg->length) + TLV_HDR_LEN;
 			if (pdu_len > len ||
