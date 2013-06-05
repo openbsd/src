@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.149 2013/06/03 22:35:15 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.150 2013/06/05 00:53:26 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -72,7 +72,6 @@
 int	nprocesses = 1;		/* process 0 */
 int	nthreads = 1;		/* proc 0 */
 int	randompid;		/* when set to 1, pid's go random */
-pid_t	lastpid;
 struct	forkstat forkstat;
 
 void fork_return(void *);
@@ -436,11 +435,7 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 		newstrp = systrace_getproc();
 #endif
 
-	/* Find an unused pid satisfying 1 <= lastpid <= PID_MAX */
-	do {
-		lastpid = 1 + (randompid ? arc4random() : lastpid) % PID_MAX;
-	} while (pidtaken(lastpid));
-	p->p_pid = lastpid;
+	p->p_pid = allocpid();
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(PIDHASH(p->p_pid), p, p_hash);
@@ -562,20 +557,54 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 /*
  * Checks for current use of a pid, either as a pid or pgid.
  */
+pid_t oldpids[100];
 int
-pidtaken(pid_t pid)
+ispidtaken(pid_t pid)
 {
+	uint32_t i;
 	struct proc *p;
+
+	for (i = 0; i < nitems(oldpids); i++)
+		if (pid == oldpids[i])
+			return (1);
 
 	if (pfind(pid) != NULL)
 		return (1);
 	if (pgfind(pid) != NULL)
 		return (1);
 	LIST_FOREACH(p, &zombproc, p_list) {
-		if (p->p_pid == pid || (p->p_p->ps_pgrp && p->p_p->ps_pgrp->pg_id == pid))
+		if (p->p_pid == pid ||
+		    (p->p_p->ps_pgrp && p->p_p->ps_pgrp->pg_id == pid))
 			return (1);
 	}
 	return (0);
+}
+
+/* Find an unused pid satisfying 1 <= lastpid <= PID_MAX */
+pid_t
+allocpid(void)
+{
+	static pid_t lastpid;
+	pid_t pid;
+
+	if (!randompid) {
+		/* only used early on for system processes */
+		pid = ++lastpid;
+	} else {
+		do {
+			pid = 1 + arc4random_uniform(PID_MAX - 1);
+		} while (ispidtaken(pid));
+	}
+
+	return pid;
+}
+
+void
+freepid(pid_t pid)
+{
+	static uint32_t idx;
+
+	oldpids[idx++ % nitems(oldpids)] = pid;
 }
 
 #if defined(MULTIPROCESSOR)

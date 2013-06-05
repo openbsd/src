@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.124 2013/06/01 04:05:26 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.125 2013/06/05 00:53:26 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -644,6 +644,7 @@ proc_zap(struct proc *p)
 		nprocesses--;
 	}
 
+	freepid(p->p_pid);
 	pool_put(&proc_pool, p);
 	nthreads--;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.166 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.167 2013/06/05 00:53:27 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -514,7 +514,9 @@ extern struct pool session_pool;	/* memory pool for sessions */
 extern struct pool pgrp_pool;		/* memory pool for pgrps */
 extern struct pool pcred_pool;		/* memory pool for pcreds */
 
-struct simplelock;
+int	ispidtaken(pid_t);
+pid_t	allocpid(void);
+void	freepid(pid_t);
 
 struct process *prfind(pid_t);	/* Find process by id. */
 struct proc *pfind(pid_t);	/* Find thread by id. */
