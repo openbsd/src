@@ -1,16 +1,16 @@
-.\" $OpenBSD: pthread_stackseg_np.3,v 1.5 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_stackseg_np.3,v 1.6 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org>
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_STACKSEG_NP 3
 .Os
 .Sh NAME
 .Nm pthread_stackseg_np
 .Nd return stack size and location
 .Sh SYNOPSIS
-.Fd #include <sys/signal.h>
-.Fd #include <pthread_np.h>
+.In sys/signal.h
+.In pthread_np.h
 .Ft int
 .Fn pthread_stackseg_np "pthread_t thread" "stack_t *sinfo"
 .Sh DESCRIPTION

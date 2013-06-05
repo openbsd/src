@@ -1,6 +1,6 @@
-.\" $OpenBSD: flockfile.3,v 1.10 2007/05/31 19:19:36 jmc Exp $
+.\" $OpenBSD: flockfile.3,v 1.11 2013/06/05 03:44:50 tedu Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt FLOCKFILE 3
 .Os
 .Sh NAME
@@ -9,7 +9,7 @@
 .Nm funlockfile
 .Nd application level locking of stdio files
 .Sh SYNOPSIS
-.Fd #include <stdio.h>
+.In stdio.h
 .Ft void
 .Fn flockfile "FILE *file"
 .Ft int

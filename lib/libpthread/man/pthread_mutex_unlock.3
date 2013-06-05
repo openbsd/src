@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_mutex_unlock.3,v 1.9 2012/02/24 06:35:27 jmc Exp $
+.\" $OpenBSD: pthread_mutex_unlock.3,v 1.10 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -29,14 +29,14 @@
 .\"
 .\" $FreeBSD: pthread_mutex_unlock.3,v 1.5 1999/08/28 00:03:08 peter Exp $
 .\"
-.Dd $Mdocdate: February 24 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_MUTEX_UNLOCK 3
 .Os
 .Sh NAME
 .Nm pthread_mutex_unlock
 .Nd unlock a mutex
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_mutex_unlock "pthread_mutex_t *mutex"
 .Sh DESCRIPTION

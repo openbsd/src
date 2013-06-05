@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_destroy.3,v 1.8 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_rwlock_destroy.3,v 1.9 2013/06/05 03:44:50 tedu Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,14 +25,14 @@
 .\"
 .\" $FreeBSD: pthread_rwlock_destroy.3,v 1.3 1999/08/28 00:03:09 peter Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_RWLOCK_DESTROY 3
 .Os
 .Sh NAME
 .Nm pthread_rwlock_destroy
 .Nd destroy a read/write lock
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_rwlock_destroy "pthread_rwlock_t *lock"
 .Sh DESCRIPTION

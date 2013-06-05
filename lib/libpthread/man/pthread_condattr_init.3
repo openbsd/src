@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_condattr_init.3,v 1.1 2012/02/24 06:37:33 guenther Exp $
+.\" $OpenBSD: pthread_condattr_init.3,v 1.2 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: pthread_mutexattr.3,v 1.5 2001/07/15 07:53:26 dd Exp $
-.Dd $Mdocdate: February 24 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_CONDATTR_INIT 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm pthread_condattr_getclock
 .Nd condition variable attribute operations
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_condattr_init "pthread_condattr_t *attr"
 .Ft int

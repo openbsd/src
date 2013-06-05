@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fparseln.3,v 1.7 2007/05/31 19:19:38 jmc Exp $
+.\"	$OpenBSD: fparseln.3,v 1.8 2013/06/05 03:40:26 tedu Exp $
 .\"	$NetBSD: fparseln.3,v 1.7 1999/07/02 15:49:12 simonb Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -28,15 +28,15 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt FPARSELN 3
 .Os
 .Sh NAME
 .Nm fparseln
 .Nd return the next logical line from a stream
 .Sh SYNOPSIS
-.Fd #include <stdio.h>
-.Fd #include <util.h>
+.In stdio.h
+.In util.h
 .Ft "char *"
 .Fo "fparseln"
 .Fa "FILE *stream" "size_t *len" "size_t *lineno"

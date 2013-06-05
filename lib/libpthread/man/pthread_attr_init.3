@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_init.3,v 1.10 2008/12/18 09:30:32 guenther Exp $
+.\" $OpenBSD: pthread_attr_init.3,v 1.11 2013/06/05 03:44:50 tedu Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: December 18 2008 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_ATTR_INIT 3
 .Os
 .Sh NAME
@@ -11,7 +11,7 @@
 .Nm pthread_attr_destroy
 .Nd initialise and destroy threads attribute object
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_attr_init "pthread_attr_t *attr"
 .Ft int

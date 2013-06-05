@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.14 2011/08/18 13:01:26 jmc Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.15 2013/06/05 03:40:26 tedu Exp $
 .\"	$NetBSD: kvm_open.3,v 1.2 1996/03/18 22:33:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_open.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 18 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt KVM_OPEN 3
 .Os
 .Sh NAME
@@ -43,8 +43,8 @@
 .Nm kvm_close
 .Nd initialize kernel virtual memory access
 .Sh SYNOPSIS
-.Fd #include <fcntl.h>
-.Fd #include <kvm.h>
+.In fcntl.h
+.In kvm.h
 .Ft kvm_t *
 .Fn kvm_open "const char *execfile" "const char *corefile" "char *swapfile" "int flags" "const char *errstr"
 .Ft kvm_t *

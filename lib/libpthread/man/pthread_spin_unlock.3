@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pthread_spin_unlock.3,v 1.1 2012/05/03 09:07:17 pirofti Exp $
+.\"	$OpenBSD: pthread_spin_unlock.3,v 1.2 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
 .\"
@@ -15,14 +15,14 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 3 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_SPIN_UNLOCK 3
 .Os
 .Sh NAME
 .Nm pthread_spin_unlock
 .Nd unlock a spinlock object
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_spin_unlock "pthread_spinlock_t *lock"
 .Sh DESCRIPTION

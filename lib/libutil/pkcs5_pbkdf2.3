@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkcs5_pbkdf2.3,v 1.4 2013/06/03 21:07:02 tedu Exp $
+.\"	$OpenBSD: pkcs5_pbkdf2.3,v 1.5 2013/06/05 03:40:26 tedu Exp $
 .\"
 .\" Copyright (c) 2012 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2013 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PKCS5_PBKDF2 3
 .Os
 .Sh NAME
 .Nm pkcs5_pbkdf2
 .Nd password-based key derivation function
 .Sh SYNOPSIS
-.Fd #include <util.h>
+.In util.h
 .Ft int
 .Fn pkcs5_pbkdf2 "const char *pass" "size_t pass_len" "const char *salt" \
     "size_t salt_len" "u_int8_t *key" "size_t key_len" "u_int rounds"

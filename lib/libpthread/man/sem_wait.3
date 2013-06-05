@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_wait.3,v 1.8 2012/03/04 07:23:55 jmc Exp $
+.\" $OpenBSD: sem_wait.3,v 1.9 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_wait.3,v 1.8 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: March 4 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt SEM_WAIT 3
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nm sem_trywait
 .Nd decrement (lock) a semaphore
 .Sh SYNOPSIS
-.Fd #include <semaphore.h>
+.In semaphore.h
 .Ft int
 .Fn sem_wait "sem_t *sem"
 .Ft int

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_read.3,v 1.8 2011/08/18 13:01:26 jmc Exp $
+.\"	$OpenBSD: kvm_read.3,v 1.9 2013/06/05 03:40:26 tedu Exp $
 .\"	$NetBSD: kvm_read.3,v 1.2 1996/03/18 22:34:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_read.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 18 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt KVM_READ 3
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Nm kvm_write
 .Nd read or write kernel virtual memory
 .Sh SYNOPSIS
-.Fd #include <kvm.h>
+.In kvm.h
 .Ft ssize_t
 .Fn kvm_read "kvm_t *kd" "u_long addr" "void *buf" "size_t nbytes"
 .Ft ssize_t

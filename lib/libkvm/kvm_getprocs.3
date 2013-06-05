@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.18 2012/04/12 14:59:19 pirofti Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.19 2013/06/05 03:40:26 tedu Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 12 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt KVM_GETPROCS 3
 .Os
 .Sh NAME
@@ -43,9 +43,9 @@
 .Nm kvm_getenvv
 .Nd access user process state
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/sysctl.h>
-.Fd #include <kvm.h>
+.In sys/param.h
+.In sys/sysctl.h
+.In kvm.h
 .Ft struct kinfo_proc *
 .Fn kvm_getprocs "kvm_t *kd" "int op" "int arg" "size_t elemsize" "int *cnt"
 .Ft char **

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_mutexattr.3,v 1.4 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_mutexattr.3,v 1.5 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: pthread_mutexattr.3,v 1.5 2001/07/15 07:53:26 dd Exp $
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_MUTEXATTR 3
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Nm pthread_mutexattr_gettype
 .Nd mutex attribute operations
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_mutexattr_init "pthread_mutexattr_t *attr"
 .Ft int

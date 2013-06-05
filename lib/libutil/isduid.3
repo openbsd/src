@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: isduid.3,v 1.1 2010/11/17 10:10:31 jsing Exp $
+.\" 	$OpenBSD: isduid.3,v 1.2 2013/06/05 03:40:26 tedu Exp $
 .\"
 .\" * Copyright (c) Joel Sing <jsing@openbsd.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2010 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt ISDUID 3
 .Os
 .Sh NAME
 .Nm isduid
 .Nd disklabel UID test
 .Sh SYNOPSIS
-.Fd #include <util.h>
+.In util.h
 .Ft int
 .Fn isduid "char *duid" "int dflags"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_self.3,v 1.7 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_self.3,v 1.8 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -32,14 +32,14 @@
 .\"
 .\" $FreeBSD: pthread_self.3,v 1.4 1999/08/28 00:03:11 peter Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_SELF 3
 .Os
 .Sh NAME
 .Nm pthread_self
 .Nd get the calling thread's ID
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft pthread_t
 .Fn pthread_self "void"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.10 2010/05/03 20:43:24 jmc Exp $
+.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.11 2013/06/05 03:44:50 tedu Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" $FreeBSD: pthread_rwlock_rdlock.3,v 1.2 1999/08/28 00:03:09 peter Exp $
 .\"
-.Dd $Mdocdate: May 3 2010 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_RWLOCK_RDLOCK 3
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Nm pthread_rwlock_tryrdlock
 .Nd acquire a read/write lock for reading
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_rwlock_rdlock "pthread_rwlock_t *lock"
 .Ft int

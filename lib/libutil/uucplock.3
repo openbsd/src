@@ -1,4 +1,4 @@
-.\" $OpenBSD: uucplock.3,v 1.17 2007/05/31 19:19:38 jmc Exp $
+.\" $OpenBSD: uucplock.3,v 1.18 2013/06/05 03:40:26 tedu Exp $
 .\"
 .\" All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" "
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt UUCPLOCK 3
 .Os
 .Sh NAME
@@ -33,8 +33,8 @@
 .Nm uu_lock_txfr
 .Nd acquire and release control of a serial device
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <util.h>
+.In sys/types.h
+.In util.h
 .Ft int
 .Fn uu_lock "const char *ttyname"
 .Ft int

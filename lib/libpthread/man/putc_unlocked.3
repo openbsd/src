@@ -1,6 +1,6 @@
-.\" $OpenBSD: putc_unlocked.3,v 1.3 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: putc_unlocked.3,v 1.4 2013/06/05 03:44:50 tedu Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PUTC_UNLOCKED 3
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Nm putchar_unlocked
 .Nd put next character from stream, efficiently
 .Sh SYNOPSIS
-.Fd #include <stdio.h>
+.In stdio.h
 .Ft int
 .Fn putc_unlocked "int c" "FILE *stream"
 .Ft int

@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_init.3,v 1.4 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: sem_init.3,v 1.5 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,14 +28,14 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_init.3,v 1.11 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt SEM_INIT 3
 .Os
 .Sh NAME
 .Nm sem_init
 .Nd initialize an unnamed semaphore
 .Sh SYNOPSIS
-.Fd #include <semaphore.h>
+.In semaphore.h
 .Ft int
 .Fn sem_init "sem_t *sem" "int pshared" "unsigned int value"
 .Sh DESCRIPTION

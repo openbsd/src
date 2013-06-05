@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlockattr_setpshared.3,v 1.9 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_rwlockattr_setpshared.3,v 1.10 2013/06/05 03:44:50 tedu Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,14 +25,14 @@
 .\"
 .\" $FreeBSD: pthread_rwlockattr_setpshared.3,v 1.2 1999/08/28 00:03:11 peter Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_RWLOCKATTR_SETPSHARED 3
 .Os
 .Sh NAME
 .Nm pthread_rwlockattr_setpshared
 .Nd set the process shared attribute
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_rwlockattr_setpshared "pthread_rwlockattr_t *attr" "int pshared"
 .Sh DESCRIPTION

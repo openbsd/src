@@ -1,14 +1,14 @@
-.\" $OpenBSD: pthread_set_name_np.3,v 1.4 2007/05/31 19:19:37 jmc Exp $
+.\" $OpenBSD: pthread_set_name_np.3,v 1.5 2013/06/05 03:44:50 tedu Exp $
 .\" David Leonard <d@openbsd.org>, 1999. Public domain.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_SET_NAME_NP 3
 .Os
 .Sh NAME
 .Nm pthread_set_name_np
 .Nd set the name of a thread
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
-.Fd #include <pthread_np.h>
+.In pthread.h
+.In pthread_np.h
 .Ft void
 .Fn pthread_set_name_np "pthread_t thread" "char *name"
 .Sh DESCRIPTION

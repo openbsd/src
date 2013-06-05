@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_geterr.3,v 1.8 2011/08/18 13:01:26 jmc Exp $
+.\"	$OpenBSD: kvm_geterr.3,v 1.9 2013/06/05 03:40:26 tedu Exp $
 .\"	$NetBSD: kvm_geterr.3,v 1.2 1996/03/18 22:33:20 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,14 +34,14 @@
 .\"
 .\"     @(#)kvm_geterr.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 18 2011 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt KVM_GETERR 3
 .Os
 .Sh NAME
 .Nm kvm_geterr
 .Nd get error message on kvm descriptor
 .Sh SYNOPSIS
-.Fd #include <kvm.h>
+.In kvm.h
 .Ft char *
 .Fn kvm_geterr "kvm_t *kd"
 .Sh DESCRIPTION

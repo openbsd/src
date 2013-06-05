@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.8 2012/11/15 15:31:36 krw Exp $
+.\" $OpenBSD: imsg_init.3,v 1.9 2013/06/05 03:40:26 tedu Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 15 2012 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -45,10 +45,10 @@
 .Nm msgbuf_drain
 .Nd IPC messaging functions
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/queue.h>
-.Fd #include <sys/uio.h>
-.Fd #include <imsg.h>
+.In sys/types.h
+.In sys/queue.h
+.In sys/uio.h
+.In imsg.h
 .Ft void
 .Fn imsg_init "struct imsgbuf *ibuf" "int fd"
 .Ft ssize_t

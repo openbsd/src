@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_key_create.3,v 1.8 2007/05/31 19:19:36 jmc Exp $
+.\" $OpenBSD: pthread_key_create.3,v 1.9 2013/06/05 03:44:50 tedu Exp $
 .\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -32,14 +32,14 @@
 .\"
 .\" $FreeBSD: pthread_key_create.3,v 1.5 1999/08/28 00:03:06 peter Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2013 $
 .Dt PTHREAD_KEY_CREATE 3
 .Os
 .Sh NAME
 .Nm pthread_key_create
 .Nd thread-specific data key creation
 .Sh SYNOPSIS
-.Fd #include <pthread.h>
+.In pthread.h
 .Ft int
 .Fn pthread_key_create "pthread_key_t *key" "void (*destructor)(void *)"
 .Sh DESCRIPTION
