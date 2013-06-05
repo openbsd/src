@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.7 2013/05/22 17:44:47 rapha Exp $ */
+/* $OpenBSD: omap.c,v 1.8 2013/06/05 15:03:23 bmercer Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -74,6 +74,7 @@ struct board_dev beaglebone_devs[] = {
 	{ "omdog",	0 },
 	{ "ommmc",	0 },		/* HSMMC0 */
 	{ "com",	0 },		/* UART0 */
+	{ "cpsw",	0 },
 	{ NULL,		0 }
 };
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.beagle,v 1.16 2013/05/22 17:44:47 rapha Exp $
+#	$OpenBSD: files.beagle,v 1.17 2013/06/05 15:03:23 bmercer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -38,6 +38,10 @@ include "dev/sdmmc/files.sdmmc"
 device ommmc: sdmmcbus
 attach ommmc at soc
 file	arch/beagle/dev/ommmc.c			ommmc
+
+device cpsw
+attach cpsw at soc
+file	arch/beagle/dev/if_cpsw.c		cpsw
 
 device prcm
 attach prcm at soc
@@ -80,7 +84,6 @@ file	arch/beagle/dev/omap_com.c		com_omap
 device omusbtll
 attach omusbtll at soc
 file arch/beagle/dev/omusbtll.c			omusbtll
-
 
 device omkbd: wskbddev
 attach omkbd at soc

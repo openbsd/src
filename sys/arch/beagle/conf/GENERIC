@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.19 2013/05/31 19:24:16 rapha Exp $
+# $OpenBSD: GENERIC,v 1.20 2013/06/05 15:03:23 bmercer Exp $
 #
 # GENERIC machine description file
 #
@@ -73,6 +73,7 @@ gptimer*	at soc?			# general purpose timers
 dmtimer*	at soc?			# am335x dual mode timers
 ommmc*		at soc?			# SD/MMC card controller
 omusbtll*	at soc?
+cpsw*		at soc?
 
 #omkbd*		at soc?
 #wskbd*		at omkbd? mux 1
