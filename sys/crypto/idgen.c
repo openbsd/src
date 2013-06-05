@@ -15,9 +15,10 @@
  */
 
 /*
- * IDGEN32: non-repeating ID generation covering an almost maximal
- * 32 bit range.
- * Based on public domain SKIP32 by Greg Rose.
+ * IDGEN32: non-repeating ID generation covering an almost maximal 32-bit
+ * range.
+ *
+ * IDGEN32 is based on public domain SKIP32 by Greg Rose.
  */
 
 #include <sys/types.h>
@@ -28,7 +29,7 @@
 
 #include <crypto/idgen.h>
 
-static const u_int8_t ftable[256] = { 
+static const u_int8_t idgen32_ftable[256] = { 
 	0xa3, 0xd7, 0x09, 0x83, 0xf8, 0x48, 0xf6, 0xf4,
 	0xb3, 0x21, 0x15, 0x78, 0x99, 0xb1, 0xaf, 0xf9,
 	0xe7, 0x2d, 0x4d, 0x8a, 0xce, 0x4c, 0xca, 0x2e,
@@ -72,16 +73,16 @@ idgen32_g(u_int8_t *key, int k, u_int16_t w)
 	g1 = (w >> 8) & 0xff;
 	g2 = w & 0xff;
 
-	g3 = ftable[g2 ^ key[o++ & (IDGEN32_KEYLEN - 1)]] ^ g1;
-	g4 = ftable[g3 ^ key[o++ & (IDGEN32_KEYLEN - 1)]] ^ g2;
-	g5 = ftable[g4 ^ key[o++ & (IDGEN32_KEYLEN - 1)]] ^ g3;
-	g6 = ftable[g5 ^ key[o++ & (IDGEN32_KEYLEN - 1)]] ^ g4;
+	g3 = idgen32_ftable[g2 ^ key[o++ & (IDGEN32_KEYLEN - 1)]] ^ g1;
+	g4 = idgen32_ftable[g3 ^ key[o++ & (IDGEN32_KEYLEN - 1)]] ^ g2;
+	g5 = idgen32_ftable[g4 ^ key[o++ & (IDGEN32_KEYLEN - 1)]] ^ g3;
+	g6 = idgen32_ftable[g5 ^ key[o++ & (IDGEN32_KEYLEN - 1)]] ^ g4;
 
 	return (g5 << 8) | g6;
 }
 
 static u_int32_t
-idgen32_permute(u_int8_t key[IDGEN32_KEYLEN], u_int32_t in)
+idgen32_permute(struct idgen32_ctx *ctx, u_int32_t in)
 {
 	u_int i, r;
 	u_int16_t wl, wr;
@@ -91,12 +92,12 @@ idgen32_permute(u_int8_t key[IDGEN32_KEYLEN], u_int32_t in)
 
 	/* Doubled up rounds, with an odd round at the end to swap */
 	for (i = r = 0; i < IDGEN32_ROUNDS / 2; ++i) {
-		wr ^= (idgen32_g(key, r, wl) ^ r);
+		wr ^= (idgen32_g(ctx->id32_key, r, wl) ^ r);
 		r++;
-		wl ^= (idgen32_g(key, r, wr) ^ r) & 0x7fff;
+		wl ^= (idgen32_g(ctx->id32_key, r, wr) ^ r) & 0x7fff;
 		r++;
 	}
-	wr ^= (idgen32_g(key, r, wl) ^ r);
+	wr ^= (idgen32_g(ctx->id32_key, r, wl) ^ r);
 
 	return (wl << 16) | wr;
 }
@@ -104,18 +105,18 @@ idgen32_permute(u_int8_t key[IDGEN32_KEYLEN], u_int32_t in)
 static void
 idgen32_rekey(struct idgen32_ctx *ctx)
 {
-	ctx->id_counter = 0;
-	ctx->id_hibit ^= 0x80000000;
-	ctx->id_offset = arc4random();
-	arc4random_buf(ctx->id_key, sizeof(ctx->id_key));
-	ctx->id_rekey_time = time_second + IDGEN32_REKEY_TIME;
+	ctx->id32_counter = 0;
+	ctx->id32_hibit ^= 0x80000000;
+	ctx->id32_offset = arc4random();
+	arc4random_buf(ctx->id32_key, sizeof(ctx->id32_key));
+	ctx->id32_rekey_time = time_second + IDGEN32_REKEY_TIME;
 }
 
 void
 idgen32_init(struct idgen32_ctx *ctx)
 {
 	bzero(ctx, sizeof(*ctx));
-	ctx->id_hibit = arc4random() & 0x80000000;
+	ctx->id32_hibit = arc4random() & 0x80000000;
 	idgen32_rekey(ctx);
 }
 
@@ -124,16 +125,15 @@ idgen32(struct idgen32_ctx *ctx)
 {
 	u_int32_t ret;
 
-	/* Avoid emitting a zero ID as they often have special meaning */
 	do {
-		ret = idgen32_permute(ctx->id_key,
-		    ctx->id_offset + ctx->id_counter++);
-
 		/* Rekey a little early to avoid "card counting" attack */
-		if (ctx->id_counter > IDGEN32_REKEY_LIMIT ||
-		    ctx->id_rekey_time > time_second)
+		if (ctx->id32_counter > IDGEN32_REKEY_LIMIT ||
+		    ctx->id32_rekey_time < time_second)
 			idgen32_rekey(ctx);
-	} while (ret == 0);
+		ret = ctx->id32_hibit | idgen32_permute(ctx,
+		    (ctx->id32_offset + ctx->id32_counter++) & 0x7fffffff);
+	} while (ret == 0); /* Zero IDs are often special, so avoid */
 
-	return ret | ctx->id_hibit;
+	return ret;
 }
+
