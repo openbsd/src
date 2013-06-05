@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.2 2013/06/05 01:28:04 pirofti Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.3 2013/06/05 01:33:02 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -48,14 +48,6 @@
 #include <dev/ata/wdvar.h>
 #endif
 
-/* Hibernate support */
-void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
-void    hibernate_enter_resume_2m_pde(vaddr_t, paddr_t);
-
-extern	void hibernate_resume_machdep(void);
-extern	void hibernate_flush(void);
-extern	caddr_t start, end;
-extern	struct hibernate_state *hibernate_state;
 
 /*
  * Loongson MD Hibernate functions
