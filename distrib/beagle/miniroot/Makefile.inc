@@ -29,14 +29,15 @@ ${IMAGE}: rd_setup do_files rd_teardown
 
 .endif
 
-bsd:
-	objcopy -O binary ${.CURDIR}/../../ramdisk/obj/bsd.rd \
-		${.CURDIR}/bsd.rd.img
+do_files:
+	cp ${.OBJDIR}/../../../../sys/arch/beagle/stand/boot.scr/boot.scr \
+		${MOUNT_POINT}/boot.scr
+	cp /usr/mdec/${BOARD}/mlo ${MOUNT_POINT}/mlo
+	cp /usr/mdec/${BOARD}/u-boot.bin ${MOUNT_POINT}/u-boot.bin
+	objcopy -O binary ${.OBJDIR}/../../ramdisk/bsd.rd \
+		${.OBJDIR}/bsdrd.img
 	mkuboot -a arm -o linux -e 0x80300000 -l 0x80300000 \
-		${.CURDIR}/bsd.rd.img ${.CURDIR}/bsd
-
-do_files: bsd
-	cp ${.CURDIR}/bsd ${MOUNT_POINT}/bsd.umg
+		${.OBJDIR}/bsdrd.img ${MOUNT_POINT}/bsd.umg
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
