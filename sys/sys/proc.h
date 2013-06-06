@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.167 2013/06/05 00:53:27 tedu Exp $	*/
+/*	$OpenBSD: proc.h,v 1.168 2013/06/06 13:09:37 haesbaert Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -471,6 +471,7 @@ struct uidinfo *uid_find(uid_t);
  */
 #define FORK_FORK	0x00000001
 #define FORK_VFORK	0x00000002
+#define FORK_IDLE	0x00000004
 #define FORK_PPWAIT	0x00000008
 #define FORK_SHAREFILES	0x00000010
 #define FORK_NOZOMBIE	0x00000040
