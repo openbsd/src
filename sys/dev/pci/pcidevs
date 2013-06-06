@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1678 2013/05/29 23:14:40 yuo Exp $
+$OpenBSD: pcidevs,v 1.1679 2013/06/06 15:58:42 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2715,6 +2715,21 @@ product INTEL IOP333_B		0x0372	IOP333 PCIE-PCIX
 product INTEL DH89XXCC_SGMII	0x0438	DH89XXCC SGMII
 product INTEL DH89XXCC_SERDES	0x043a	DH89XXCC SerDes
 product INTEL DH89XXCC_BPLANE	0x043c	DH89XXCC backplane
+product INTEL CORE4G_D_GT1	0x0402	HD Graphics
+product INTEL CORE4G_M_GT1	0x0406	HD Graphics
+product INTEL CORE4G_S_GT1	0x040a	HD Graphics
+product INTEL CORE4G_R_GT1_1	0x040b	HD Graphics
+product INTEL CORE4G_R_GT1_2	0x040e	HD Graphics
+product INTEL CORE4G_D_GT2	0x0412	HD Graphics 4400
+product INTEL CORE4G_M_GT2	0x0416	HD Graphics 4600
+product INTEL CORE4G_S_GT2	0x041a	HD Graphics P4600
+product INTEL CORE4G_R_GT2_1	0x041b	HD Graphics
+product INTEL CORE4G_R_GT2_2	0x041e	HD Graphics 4600
+product INTEL CORE4G_D_GT3	0x0422	HD Graphics
+product INTEL CORE4G_M_GT2_2	0x0426	HD Graphics
+product INTEL CORE4G_S_GT3	0x042a	HD Graphics
+product INTEL CORE4G_R_GT3_1	0x042b	HD Graphics
+product INTEL CORE4G_R_GT3_2	0x042e	HD Graphics
 product INTEL DH89XXCC_SFP	0x0440	DH89XXCC SFP
 product INTEL PCEB		0x0482	82375EB EISA
 product INTEL CDC		0x0483	82424ZX Cache/DRAM
@@ -2734,8 +2749,53 @@ product INTEL WL_100_2		0x08af	WiFi Link 100
 product INTEL 80960RP		0x0960	i960 RP PCI-PCI
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
+product INTEL CORE4G_D_ULT_GT1	0x0a02	HD Graphics
+product INTEL CORE4G_M_ULT_GT1	0x0a06	HD Graphics
+product INTEL CORE4G_S_ULT_GT1	0x0a0a	HD Graphics
+product INTEL CORE4G_R_ULT_GT1_1 0x0a0b	HD Graphics
+product INTEL CORE4G_R_ULT_GT1_2 0x0a0e	HD Graphics
+product INTEL CORE4G_D_ULT_GT2	0x0a12	HD Graphics
+product INTEL CORE4G_M_ULT_GT2	0x0a16	HD Graphics
+product INTEL CORE4G_S_ULT_GT2	0x0a1a	HD Graphics
+product INTEL CORE4G_R_ULT_GT2_1 0x0a1b	HD Graphics
+product INTEL CORE4G_R_ULT_GT2_2 0x0a1e	HD Graphics
+product INTEL CORE4G_D_ULT_GT3	0x0a22	HD Graphics
+product INTEL CORE4G_M_ULT_GT3	0x0a26	HD Graphics 5000
+product INTEL CORE4G_S_ULT_GT3	0x0a2a	HD Graphics
+product INTEL CORE4G_R_ULT_GT3_1 0x0a2b	HD Graphics
+product INTEL CORE4G_R_ULT_GT3_2 0x0a2e	Iris Graphics 5100
 product INTEL D2000_IGD		0x0be1	Atom D2000/N2000 Video
 product INTEL D2000_HB		0x0bf5	Atom D2000/N2000 Host
+product INTEL CORE4G_D_SDV_GT1	0x0c02	HD Graphics
+product INTEL CORE4G_M_SDV_GT1	0x0c06	HD Graphics
+product INTEL CORE4G_S_SDV_GT1	0x0c0a	HD Graphics
+product INTEL CORE4G_R_SDV_GT1_1 0x0c0b	HD Graphics
+product INTEL CORE4G_R_SDV_GT1_2 0x0c0e	HD Graphics
+product INTEL CORE4G_D_SDV_GT2	0x0c12	HD Graphics
+product INTEL CORE4G_M_SDV_GT2	0x0c16	HD Graphics
+product INTEL CORE4G_S_SDV_GT2	0x0c1a	HD Graphics
+product INTEL CORE4G_R_SDV_GT2_1 0x0c1b	HD Graphics
+product INTEL CORE4G_R_SDV_GT2_2 0x0c1e	HD Graphics
+product INTEL CORE4G_D_SDV_GT3	0x0c22	HD Graphics
+product INTEL CORE4G_M_SDV_GT3	0x0c26	HD Graphics
+product INTEL CORE4G_S_SDV_GT3	0x0c2a	HD Graphics
+product INTEL CORE4G_R_SDV_GT3_1 0x0c2b	HD Graphics
+product INTEL CORE4G_R_SDV_GT3_2 0x0c2e	HD Graphics
+product INTEL CORE4G_D_CRW_GT1	0x0d02	HD Graphics
+product INTEL CORE4G_M_CRW_GT1	0x0d06	HD Graphics
+product INTEL CORE4G_S_CRW_GT1	0x0d0a	HD Graphics
+product INTEL CORE4G_R_CRW_GT1_1 0x0d0b	HD Graphics
+product INTEL CORE4G_R_CRW_GT1_2 0x0d0e	HD Graphics
+product INTEL CORE4G_D_CRW_GT2	0x0d12	HD Graphics
+product INTEL CORE4G_M_CRW_GT2	0x0d16	HD Graphics
+product INTEL CORE4G_S_CRW_GT2	0x0d1a	HD Graphics
+product INTEL CORE4G_R_CRW_GT2_1 0x0d1b	HD Graphics
+product INTEL CORE4G_R_CRW_GT2_2 0x0d1e	HD Graphics
+product INTEL CORE4G_D_CRW_GT3	0x0d22	Iris Pro Graphics 5200
+product INTEL CORE4G_M_CRW_GT3	0x0d26	Iris Pro Graphics 5200
+product INTEL CORE4G_S_CRW_GT3	0x0d2a	HD Graphics
+product INTEL CORE4G_R_CRW_GT3_1 0x0d2b	HD Graphics
+product INTEL CORE4G_R_CRW_GT3_2 0x0d2e	HD Graphics
 product INTEL 82542		0x1000	PRO/1000 (82542)
 product INTEL 82543GC_FIBER	0x1001	PRO/1000F (82543GC)
 product INTEL MODEM56		0x1002	56k Modem
