@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.121 2011/07/03 15:47:18 matthew Exp $	*/
+/*	$OpenBSD: st.c,v 1.122 2013/06/06 14:00:44 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ struct st_softc {
 	u_int32_t media_density;	/* this is what it said when asked    */
 	int media_fileno;		/* relative to BOT. -1 means unknown. */
 	int media_blkno;		/* relative to BOF. -1 means unknown. */
+	int media_eom;			/* relative to BOT. -1 means unknown. */
 
 	u_int drive_quirks;	/* quirks of this drive               */
 
@@ -265,19 +266,23 @@ struct cfdriver st_cd = {
 #define	ST_FIXEDBLOCKS	0x0008
 #define	ST_AT_FILEMARK	0x0010
 #define	ST_EIO_PENDING	0x0020	/* we couldn't report it then (had data) */
+#define	ST_EOM_PENDING	0x0040	/* we couldn't report it then (had data) */
+#define ST_EOD_DETECTED	0x0080
 #define	ST_FM_WRITTEN	0x0100	/*
 				 * EOF file mark written  -- used with
 				 * ~ST_WRITTEN to indicate that multiple file
 				 * marks have been written
 				 */
-#define	ST_DYING	0x40	/* dying, when deactivated */
 #define	ST_BLANK_READ	0x0200	/* BLANK CHECK encountered already */
 #define	ST_2FM_AT_EOD	0x0400	/* write 2 file marks at EOD */
 #define	ST_MOUNTED	0x0800	/* Device is presently mounted */
 #define	ST_DONTBUFFER	0x1000	/* Disable buffering/caching */
 #define ST_WAITING	0x2000
+#define	ST_DYING	0x4000	/* dying, when deactivated */
+#define ST_BOD_DETECTED	0x8000
 
-#define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_BLANK_READ)
+#define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_EOM_PENDING | \
+			 ST_BLANK_READ)
 
 #define stlookup(unit) (struct st_softc *)device_lookup(&st_cd, (unit))
 
@@ -335,6 +340,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 	/* Start up with media position unknown. */
 	st->media_fileno = -1;
 	st->media_blkno = -1;
+	st->media_eom = -1;
 
 	/*
 	 * Reset the media loaded flag, sometimes the data
@@ -660,6 +666,9 @@ st_mount_tape(dev_t dev, int flags)
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 	st->flags |= ST_MOUNTED;
 	sc_link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
+	st->media_fileno = 0;
+	st->media_blkno = 0;
+	st->media_eom = -1;
 
 done:
 	device_unref(&st->sc_dev);
@@ -927,7 +936,8 @@ ststart(struct scsi_xfer *xs)
 		}
 
 		/*
-		 * only FIXEDBLOCK devices have pending operations
+		 * Only FIXEDBLOCK devices have pending I/O or space
+		 * operations.
 		 */
 		if (st->flags & ST_FIXEDBLOCKS) {
 			/*
@@ -962,25 +972,26 @@ ststart(struct scsi_xfer *xs)
 					continue;	/* seek more work */
 				}
 			}
-			/*
-			 * If we are at EIO (e.g. EOM) but have not reported it
-			 * yet then we should report it now
-			 */
-			if (st->flags & ST_EIO_PENDING) {
-				bp->b_resid = bp->b_bcount;
-				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
-				st->flags &= ~ST_EIO_PENDING;
-				s = splbio();
-				biodone(bp);
-				splx(s);
-				continue;	/* seek more work */
-			}
 		}
 
+		/*
+		 * If we are at EIO or EOM but have not reported it
+		 * yet then we should report it now.
+		 */
+		if (st->flags & (ST_EOM_PENDING | ST_EIO_PENDING)) {
+			bp->b_resid = bp->b_bcount;
+			if (st->flags & ST_EIO_PENDING) {
+				bp->b_error = EIO;
+				bp->b_flags |= B_ERROR;
+			}
+			st->flags &= ~(ST_EOM_PENDING | ST_EIO_PENDING);
+			s = splbio();
+			biodone(bp);
+			splx(s);
+			continue;	/* seek more work */
+		}
 		break;
 	}
-
 
 	/*
 	 *  Fill out the scsi command
@@ -1667,7 +1678,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 					st->flags &= ~ST_BLANK_READ;
 					return EIO;
 				}
-				st->flags &= ~ST_EIO_PENDING;
+				st->flags &= ~(ST_EIO_PENDING | ST_EOM_PENDING);
 			}
 		}
 		break;
@@ -1693,6 +1704,11 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 		}
 		break;
 	case SP_EOM:
+		if (st->flags & ST_EOM_PENDING) {
+			/* We are already there. */
+			st->flags &= ~ST_EOM_PENDING;
+			return (0);
+		}
 		if (st->flags & ST_EIO_PENDING) {
 			/* pretend we just discovered the error */
 			st->flags &= ~ST_EIO_PENDING;
@@ -1706,11 +1722,8 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 		return 0;
 
 	xs = scsi_xs_get(st->sc_link, flags);
-	if (xs == NULL) {
-		st->media_fileno = -1;
-		st->media_blkno = -1;
+	if (xs == NULL)
 		return (ENOMEM);
-	}
 
 	cmd = (struct scsi_space *)xs->cmd;
 	cmd->opcode = SPACE;
@@ -1718,6 +1731,8 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 	_lto3b(number, cmd->number);
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = ST_SPC_TIME;
+
+	CLR(st->flags, ST_EOD_DETECTED);
 
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
@@ -1736,8 +1751,20 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 			break;
 		case SP_FILEMARKS:
 			if (st->media_fileno != -1) {
-				st->media_fileno += number;
+				if (!ISSET(st->flags, ST_EOD_DETECTED))
+					st->media_fileno += number;
+				if (st->media_fileno > st->media_eom)
+					st->media_eom = st->media_fileno;
 				st->media_blkno = 0;
+			}
+			break;
+		case SP_EOM:
+			if (st->media_eom != -1) {
+				st->media_fileno = st->media_eom;
+				st->media_blkno = 0;
+			} else {
+				st->media_fileno = -1;
+				st->media_blkno = -1;
 			}
 			break;
 		default:
@@ -1764,11 +1791,9 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		return (EINVAL);
 
 	xs = scsi_xs_get(st->sc_link, flags);
-	if (xs == NULL) {
-		st->media_fileno = -1;
-		st->media_blkno = -1;
+	if (xs == NULL)
 		return (ENOMEM);
-	}
+
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = ST_IO_TIME * 4;
 
@@ -1797,8 +1822,10 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 	if (error != 0) {
 		st->media_fileno = -1;
 		st->media_blkno = -1;
+		st->media_eom = -1;
 	} else if (st->media_fileno != -1) {
 		st->media_fileno += number;
+		st->media_eom = st->media_fileno;
 		st->media_blkno = 0;
 	}
 
@@ -1847,6 +1874,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 
 	st->media_fileno = -1;
 	st->media_blkno = -1;
+	st->media_eom = -1;
 
 	if (type != LD_LOAD) {
 		error = st_check_eod(st, FALSE, &nmarks, flags);
@@ -1927,15 +1955,18 @@ st_interpret_sense(struct scsi_xfer *xs)
 {
 	struct scsi_sense_data *sense = &xs->sense;
 	struct scsi_link *sc_link = xs->sc_link;
+	struct scsi_space *space;
 	struct st_softc *st = sc_link->device_softc;
 	u_int8_t serr = sense->error_code & SSD_ERRCODE;
 	u_int8_t skey = sense->flags & SSD_KEY;
-	int32_t resid;
+	int32_t resid, info, number;
 	int datalen;
 
 	if (((sc_link->flags & SDEV_OPEN) == 0) ||
 	    (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED))
 		return (scsi_interpret_sense(xs));
+
+	info = (int32_t)_4btol(sense->info);
 
 	switch (skey) {
 
@@ -1963,12 +1994,32 @@ st_interpret_sense(struct scsi_xfer *xs)
 			return (scsi_delay(xs, 1));
 		default:
 			return (scsi_interpret_sense(xs));
-	}
+		}
+		break;
+	case SKEY_BLANK_CHECK:
+		if (sense->error_code & SSD_ERRCODE_VALID &&
+		    xs->cmd->opcode == SPACE) {
+			switch (ASC_ASCQ(sense)) {
+			case SENSE_END_OF_DATA_DETECTED:
+				st->flags |= ST_EOD_DETECTED;
+				space = (struct scsi_space *)xs->cmd;
+				number = _3btol(space->number);
+				st->media_fileno = number - info;
+				st->media_eom = st->media_fileno;
+				return (0);
+			case SENSE_BEGINNING_OF_MEDIUM_DETECTED:
+				/* Standard says: Position is undefined! */
+				st->flags |= ST_BOD_DETECTED;
+				st->media_fileno = -1;
+				st->media_blkno = -1;
+				return (0);
+			}
+		}
+		break;
 	case SKEY_NO_SENSE:
 	case SKEY_RECOVERED_ERROR:
 	case SKEY_MEDIUM_ERROR:
 	case SKEY_VOLUME_OVERFLOW:
-	case SKEY_BLANK_CHECK:
 		break;
 	default:
 		return (scsi_interpret_sense(xs));
@@ -1982,7 +2033,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 	 */
 	datalen = xs->datalen;
 	if (sense->error_code & SSD_ERRCODE_VALID) {
-		xs->resid = resid = (int32_t)_4btol(sense->info);
+		xs->resid = resid = info;
 		if (st->flags & ST_FIXEDBLOCKS) {
 			xs->resid *= st->blksize;
 			datalen /= st->blksize;
@@ -2000,6 +2051,8 @@ st_interpret_sense(struct scsi_xfer *xs)
 	if (sense->flags & SSD_FILEMARK) {
 		if (st->media_fileno != -1) {
 			st->media_fileno++;
+			if (st->media_fileno > st->media_eom)
+				st->media_eom = st->media_fileno;
 			st->media_blkno = 0;
 		}
 		if ((st->flags & ST_FIXEDBLOCKS) == 0)
@@ -2008,9 +2061,10 @@ st_interpret_sense(struct scsi_xfer *xs)
 	}
 
 	if (sense->flags & SSD_EOM) {
-		if ((st->flags & ST_FIXEDBLOCKS) == 0)
-			return EIO;
-		st->flags |= ST_EIO_PENDING;
+		st->flags |= ST_EOM_PENDING;
+		xs->resid = 0;
+		if (st->flags & ST_FIXEDBLOCKS)
+			return (0);
 	}
 
 	if (sense->flags & SSD_ILI) {
@@ -2059,6 +2113,7 @@ st_interpret_sense(struct scsi_xfer *xs)
 			st->blksize -= 512;
 		} else if (!(st->flags & (ST_2FM_AT_EOD | ST_BLANK_READ))) {
 			st->flags |= ST_BLANK_READ;
+			st->flags |= ST_EOM_PENDING;
 			xs->resid = xs->datalen;
 			return (0);
 		}

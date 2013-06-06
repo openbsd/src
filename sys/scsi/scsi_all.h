@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.53 2011/07/08 08:13:19 dlg Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.54 2013/06/06 14:00:44 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -378,6 +378,11 @@ struct scsi_sense_data {
 /* Additional sense code info */
 #define ASC_ASCQ(ssd)	((ssd->add_sense_code << 8) | ssd->add_sense_code_qual)
 
+#define SENSE_FILEMARK_DETECTED			0x0001
+#define SENSE_END_OF_MEDIUM_DETECTED		0x0002
+#define SENSE_SETMARK_DETECTED			0x0003
+#define SENSE_BEGINNING_OF_MEDIUM_DETECTED	0x0004
+#define SENSE_END_OF_DATA_DETECTED		0x0005
 #define SENSE_NOT_READY_BECOMING_READY		0x0401
 #define SENSE_NOT_READY_INIT_REQUIRED		0x0402
 #define SENSE_NOT_READY_FORMAT			0x0404
