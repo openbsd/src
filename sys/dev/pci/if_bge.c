@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.333 2013/06/04 09:47:25 mikeb Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.334 2013/06/06 00:05:30 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3641,8 +3641,7 @@ bge_stats_update_regs(struct bge_softc *sc)
 	sc->bge_rx_inerrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS);
 
 	ifp->if_collisions = sc->bge_tx_collisions;
-	ifp->if_ierrors = sc->bge_rx_discards + sc->bge_rx_inerrors +
-	    sc->bge_rx_overruns;
+	ifp->if_ierrors = sc->bge_rx_discards + sc->bge_rx_inerrors;
 }
 
 void
@@ -3660,7 +3659,6 @@ bge_stats_update(struct bge_softc *sc)
 	sc->bge_tx_collisions = cnt;
 
 	cnt = READ_STAT(sc, stats, nicNoMoreRxBDs.bge_addr_lo);
-	ifp->if_ierrors += (uint32_t)(cnt - sc->bge_rx_overruns);
 	sc->bge_rx_overruns = cnt;
 	cnt = READ_STAT(sc, stats, ifInErrors.bge_addr_lo);
 	ifp->if_ierrors += (uint32_t)(cnt - sc->bge_rx_inerrors);
