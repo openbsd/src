@@ -2374,8 +2374,10 @@ try_combine (rtx i3, rtx i2, rtx i1, int *new_direct_jump_p)
 	 above (see detailed comments there) that ensures  that I1DEST
 	 isn't mentioned in any SETs in NEWPAT that are field assignments.  */
 
+#if !defined(OPENBSD_NATIVE) && !defined(OPENBSD_CROSS) /* GCC PR #34628 */
       if (! combinable_i3pat (NULL_RTX, &newpat, i1dest, NULL_RTX,
 			      0, (rtx*) 0))
+#endif
 	{
 	  undo_all ();
 	  return 0;
