@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.77 2013/05/15 10:24:36 jsg Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.78 2013/06/06 16:14:26 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -61,6 +61,7 @@
 #define	INTEL_COHERENT	0x6	
 
 #define GEN6_PTE_UNCACHED		(1 << 1)
+#define HSW_PTE_UNCACHED		(0)
 #define GEN6_PTE_CACHE_LLC		(2 << 1)
 #define GEN6_PTE_CACHE_LLC_MLC		(3 << 1)
 
@@ -77,6 +78,7 @@ enum {
 	CHIP_IRONLAKE	= 9,	/* Clarkdale/Arrandale */
 	CHIP_SANDYBRIDGE=10,	/* Sandybridge */
 	CHIP_IVYBRIDGE	=11,	/* Ivybridge */
+	CHIP_HASWELL	=12,	/* Haswell */
 };
 
 struct agp_i810_softc {
@@ -219,6 +221,67 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_CORE3G_M_GT2:
 	case PCI_PRODUCT_INTEL_CORE3G_S_GT2:
 		return (CHIP_IVYBRIDGE);
+	case PCI_PRODUCT_INTEL_CORE4G_D_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_D_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_D_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_S_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_S_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_S_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_M_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_M_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_M_GT2_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_GT1_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_GT2_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_GT3_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_GT1_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_GT2_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_GT3_2:
+	case PCI_PRODUCT_INTEL_CORE4G_D_SDV_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_D_SDV_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_D_SDV_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_S_SDV_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_S_SDV_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_S_SDV_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_M_SDV_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_M_SDV_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_M_SDV_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_R_SDV_GT1_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_SDV_GT2_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_SDV_GT3_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_SDV_GT1_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_SDV_GT2_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_SDV_GT3_2:
+	case PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT2_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT1_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT2_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2:
+	case PCI_PRODUCT_INTEL_CORE4G_D_CRW_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_D_CRW_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_D_CRW_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_S_CRW_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_S_CRW_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_S_CRW_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_M_CRW_GT1:
+	case PCI_PRODUCT_INTEL_CORE4G_M_CRW_GT2:
+	case PCI_PRODUCT_INTEL_CORE4G_M_CRW_GT3:
+	case PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT1_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT2_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT3_1:
+	case PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT1_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT2_2:
+	case PCI_PRODUCT_INTEL_CORE4G_R_CRW_GT3_2:
+		return (CHIP_HASWELL);
 		break;
 	}
 	
@@ -279,6 +342,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	case CHIP_IRONLAKE:
 	case CHIP_SANDYBRIDGE:
 	case CHIP_IVYBRIDGE:
+	case CHIP_HASWELL:
 		gmaddr = AGP_I965_GMADR;
 		mmaddr = AGP_I965_MMADR;
 		memtype = PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT;
@@ -512,6 +576,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	case CHIP_SANDYBRIDGE:
 	case CHIP_IVYBRIDGE:
+	case CHIP_HASWELL:
 		/*
 		 * Even though stolen memory exists on these machines,
 		 * it isn't necessarily mapped into the aperture.
@@ -580,6 +645,7 @@ agp_i810_activate(struct device *arg, int act)
 	case CHIP_IRONLAKE:
 	case CHIP_SANDYBRIDGE:
 	case CHIP_IVYBRIDGE:
+	case CHIP_HASWELL:
 		offset = AGP_G4X_GTT;
 		break;
 	default:
@@ -677,6 +743,15 @@ agp_i810_bind_page(void *sc, bus_addr_t offset, paddr_t physical, int flags)
 			physical |= GEN6_PTE_CACHE_LLC;
 		if (flags & BUS_DMA_GTT_CACHE_LLC_MLC)
 			physical |= GEN6_PTE_CACHE_LLC_MLC;
+		break;
+	case CHIP_HASWELL:
+		if (flags & BUS_DMA_GTT_NOCACHE)
+			physical |= HSW_PTE_UNCACHED;
+		if (flags & BUS_DMA_GTT_CACHE_LLC)
+			physical |= GEN6_PTE_CACHE_LLC;
+		/* Haswell doesn't set L3 this way */
+		if (flags & BUS_DMA_GTT_CACHE_LLC_MLC)
+			physical |= GEN6_PTE_CACHE_LLC;
 		break;
 	default:
 		if (flags & BUS_DMA_COHERENT)
@@ -912,6 +987,7 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 		/* gen6+ can do 40 bit addressing */
 		case CHIP_SANDYBRIDGE:
 		case CHIP_IVYBRIDGE:
+		case CHIP_HASWELL:
 			pte |= (v & 0x000000ff00000000ULL) >> 28;
 			break;
 		}
@@ -934,6 +1010,7 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 	case CHIP_IRONLAKE:
 	case CHIP_SANDYBRIDGE:
 	case CHIP_IVYBRIDGE:
+	case CHIP_HASWELL:
 		baseoff = AGP_G4X_GTT;
 		break;
 	default:
