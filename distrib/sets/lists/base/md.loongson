@@ -1692,6 +1692,8 @@
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/fenv.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/fpu.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/frame.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/hibernate.ph
+./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/hibernate_var.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/ieee.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/ieeefp.ph
 ./usr/libdata/perl5/site_perl/mips64el-openbsd/loongson/intr.ph

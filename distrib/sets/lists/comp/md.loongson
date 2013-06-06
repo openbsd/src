@@ -563,6 +563,8 @@
 ./usr/include/loongson/fenv.h
 ./usr/include/loongson/fpu.h
 ./usr/include/loongson/frame.h
+./usr/include/loongson/hibernate.h
+./usr/include/loongson/hibernate_var.h
 ./usr/include/loongson/ieee.h
 ./usr/include/loongson/ieeefp.h
 ./usr/include/loongson/intr.h
