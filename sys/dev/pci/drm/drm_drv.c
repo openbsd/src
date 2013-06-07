@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.105 2013/04/22 08:31:46 mpi Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.106 2013/06/07 20:46:15 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -44,6 +44,7 @@
 #include <sys/limits.h>
 #include <sys/systm.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_device.h>
 
 #include <sys/ttycom.h> /* for TIOCSGRP */
 
@@ -1735,6 +1736,120 @@ unwire:
 free:
 	free(segs, M_DRM);
 	return (ret);
+}
+
+/**
+ * drm_gem_free_mmap_offset - release a fake mmap offset for an object
+ * @obj: obj in question
+ *
+ * This routine frees fake offsets allocated by drm_gem_create_mmap_offset().
+ */
+void
+drm_gem_free_mmap_offset(struct drm_obj *obj)
+{
+	struct drm_device *dev = obj->dev;
+	struct drm_local_map *map = obj->map;
+
+	TAILQ_REMOVE(&dev->maplist, map, link);
+	obj->map = NULL;
+
+	/* NOCOALESCE set, can't fail */
+	extent_free(dev->handle_ext, map->ext, map->size, EX_NOWAIT);
+
+	drm_free(map);
+}
+
+/**
+ * drm_gem_create_mmap_offset - create a fake mmap offset for an object
+ * @obj: obj in question
+ *
+ * GEM memory mapping works by handing back to userspace a fake mmap offset
+ * it can use in a subsequent mmap(2) call.  The DRM core code then looks
+ * up the object based on the offset and sets up the various memory mapping
+ * structures.
+ *
+ * This routine allocates and attaches a fake offset for @obj.
+ */
+int
+drm_gem_create_mmap_offset(struct drm_obj *obj)
+{
+	struct drm_device *dev = obj->dev;
+	struct drm_local_map *map;
+	int ret;
+
+	/* Set the object up for mmap'ing */
+	map = drm_calloc(1, sizeof(*map));
+	if (map == NULL)
+		return -ENOMEM;
+
+	map->flags = _DRM_DRIVER;
+	map->type = _DRM_GEM;
+	map->size = obj->size;
+	map->handle = obj;
+
+	/* Get a DRM GEM mmap offset allocated... */
+	ret = extent_alloc(dev->handle_ext, map->size, PAGE_SIZE, 0,
+	    0, EX_NOWAIT, &map->ext);
+	if (ret) {
+		DRM_ERROR("failed to allocate offset for bo %d\n", obj->name);
+		ret = -ENOSPC;
+		goto out_free_list;
+	}
+
+	TAILQ_INSERT_TAIL(&dev->maplist, map, link);
+	obj->map = map;
+	return 0;
+
+out_free_list:
+	drm_free(map);
+
+	return ret;
+}
+
+struct uvm_object *
+udv_attach_drm(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
+{
+	dev_t device = *((dev_t *)arg);
+	struct drm_device *dev = drm_get_device_from_kdev(kdev);
+	struct drm_local_map *map;
+	struct drm_obj *obj;
+
+	if (cdevsw[major(device)].d_mmap != drmmmap)
+		return NULL;
+
+	if (dev == NULL)
+		return NULL;
+
+again:
+	DRM_LOCK();
+	TAILQ_FOREACH(map, &dev->maplist, link) {
+		if (off >= map->ext && off + size <= map->ext + map->size)
+			break;
+	}
+
+	if (map == NULL || map->type != _DRM_GEM) {
+		DRM_UNLOCK();
+		return NULL;
+	}
+
+	obj = (struct drm_obj *)map->handle;
+	simple_lock(&uobj->vmobjlock);
+	if (obj->do_flags & DRM_BUSY) {
+		atomic_setbits_int(&obj->do_flags, DRM_WANTED);
+		simple_unlock(&uobj->vmobjlock);
+		DRM_UNLOCK();
+		tsleep(obj, PVM, "udv_drm", 0); /* XXX msleep */
+		goto again;
+	}
+#ifdef DRMLOCKDEBUG
+	obj->holding_proc = curproc;
+#endif
+	atomic_setbits_int(&obj->do_flags, DRM_BUSY);
+	simple_unlock(&obj->vmobjlock);
+	drm_ref(&obj->uobj);
+	drm_unhold_object(obj);
+	DRM_UNLOCK();
+	return &obj->uobj;
 }
 
 int

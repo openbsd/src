@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.136 2013/03/28 23:47:37 jsg Exp $ */
+/* $OpenBSD: drmP.h,v 1.137 2013/06/07 20:46:14 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -497,6 +497,7 @@ struct drm_obj {
 	SPLAY_ENTRY(drm_obj)	 	 entry;
 	struct drm_device		*dev;
 	struct uvm_object		*uao;
+	struct drm_local_map		*map;
 
 	size_t				 size;
 	int				 name;
@@ -924,6 +925,10 @@ void	drm_unhold_object(struct drm_obj *);
 int	drm_try_hold_object(struct drm_obj *);
 void	drm_unhold_and_unref(struct drm_obj *);
 int	drm_handle_create(struct drm_file *, struct drm_obj *, int *);
+
+void drm_gem_free_mmap_offset(struct drm_obj *obj);
+int drm_gem_create_mmap_offset(struct drm_obj *obj);
+
 struct drm_obj *drm_gem_object_lookup(struct drm_device *,
 			    struct drm_file *, int );
 int	drm_gem_close_ioctl(struct drm_device *, void *, struct drm_file *);

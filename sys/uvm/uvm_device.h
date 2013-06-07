@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.h,v 1.8 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_device.h,v 1.9 2013/06/07 20:46:14 kettenis Exp $	*/
 /*	$NetBSD: uvm_device.h,v 1.9 2000/05/28 10:21:55 drochner Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ struct uvm_device {
  */
 
 struct uvm_object *udv_attach(void *, vm_prot_t, voff_t, vsize_t);
+struct uvm_object *udv_attach_drm(void *, vm_prot_t, voff_t, vsize_t);
 
 #endif /* _KERNEL */
 

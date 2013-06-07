@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.22 2013/05/27 19:29:25 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.23 2013/06/07 20:46:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -82,6 +82,8 @@ int i915_gem_object_bind_to_gtt(struct drm_i915_gem_object *obj,
 				bool nonblocking);
 int i915_gem_wait_for_error(struct drm_device *);
 int __wait_seqno(struct intel_ring_buffer *, uint32_t, bool, struct timespec *);
+int i915_gem_object_create_mmap_offset(struct drm_i915_gem_object *);
+void i915_gem_object_free_mmap_offset(struct drm_i915_gem_object *);
 
 extern int ticks;
 
@@ -624,13 +626,6 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 	if (write_domain != 0 && read_domains != write_domain)
 		return EINVAL;
 
-	/*
-	 * Only allow GTT since that is all that we let userland near
-	 * on OpenBSD.
-	 */
-	if ((write_domain | read_domains)  & ~I915_GEM_DOMAIN_GTT)
-		return EINVAL;
-
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret)
 		return ret;
@@ -747,9 +742,11 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	 * must free it in the case that the map fails.
 	 */
 	addr = 0;
-	ret = uvm_map(&curproc->p_vmspace->vm_map, &addr, nsize, &obj->uobj,
+	ret = uvm_map(&curproc->p_vmspace->vm_map, &addr, nsize, obj->uao,
 	    offset, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	if (ret == 0)
+		uao_reference(obj->uao);
 
 done:
 	if (ret == 0)
@@ -775,6 +772,9 @@ i915_gem_fault(struct drm_obj *gem_obj, struct uvm_faultinfo *ufi,
 	boolean_t locked = TRUE;
 
 	dev_priv->entries++;
+
+	KASSERT(obj->base.map);
+	offset -= obj->base.map->ext;
 
 	if (rw_enter(&dev->dev_lock, RW_NOSLEEP | RW_READ) != 0) {
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
@@ -980,62 +980,98 @@ i915_gem_get_unfenced_gtt_alignment(struct drm_device *dev,
 	return i915_gem_get_gtt_size(dev, size, tiling_mode);
 }
 
-// i915_gem_object_create_mmap_offset
-// i915_gem_object_free_mmap_offset
+int
+i915_gem_object_create_mmap_offset(struct drm_i915_gem_object *obj)
+{
+#if 0
+	struct drm_i915_private *dev_priv = obj->base.dev->dev_private;
+#endif
+	int ret;
+
+	if (obj->base.map)
+		return 0;
+
+#if 0
+	dev_priv->mm.shrinker_no_lock_stealing = true;
+#endif
+
+	ret = drm_gem_create_mmap_offset(&obj->base);
+#if 0
+	if (ret != -ENOSPC)
+		goto out;
+
+	/* Badly fragmented mmap space? The only way we can recover
+	 * space is by destroying unwanted objects. We can't randomly release
+	 * mmap_offsets as userspace expects them to be persistent for the
+	 * lifetime of the objects. The closest we can is to release the
+	 * offsets on purgeable objects by truncating it and marking it purged,
+	 * which prevents userspace from ever using that object again.
+	 */
+	i915_gem_purge(dev_priv, obj->base.size >> PAGE_SHIFT);
+	ret = drm_gem_create_mmap_offset(&obj->base);
+	if (ret != -ENOSPC)
+		goto out;
+
+	i915_gem_shrink_all(dev_priv);
+	ret = drm_gem_create_mmap_offset(&obj->base);
+out:
+	dev_priv->mm.shrinker_no_lock_stealing = false;
+#endif
+
+	return ret;
+}
+
+void
+i915_gem_object_free_mmap_offset(struct drm_i915_gem_object *obj)
+{
+	if (!obj->base.map)
+		return;
+
+	drm_gem_free_mmap_offset(&obj->base);
+}
 
 int
-i915_gem_mmap_gtt(struct drm_file *file, struct drm_device *dev,
-    uint32_t handle, uint64_t *mmap_offset)
+i915_gem_mmap_gtt(struct drm_file *file,
+		  struct drm_device *dev,
+		  uint32_t handle,
+		  uint64_t *offset)
 {
-	struct drm_i915_gem_object	*obj;
-	struct drm_local_map		*map;
-	voff_t				 offset; 
-	vsize_t				 end, nsize;
-	int				 ret;
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_gem_object *obj;
+	int ret;
 
-	offset = (voff_t)*mmap_offset;
+	ret = i915_mutex_lock_interruptible(dev);
+	if (ret)
+		return ret;
 
 	obj = to_intel_bo(drm_gem_object_lookup(dev, file, handle));
-	if (obj == NULL)
-		return ENOENT;
+	if (&obj->base == NULL) {
+		ret = -ENOENT;
+		goto unlock;
+	}
 
-	/* Since we are doing purely uvm-related operations here we do
-	 * not need to hold the object, a reference alone is sufficient
-	 */
-
-	/* Check size. */
-	if (offset > obj->base.size) {
-		ret = EINVAL;
-		goto done;
+	if (obj->base.size > dev_priv->mm.gtt_mappable_end) {
+		ret = -E2BIG;
+		goto out;
 	}
 
 	if (obj->madv != I915_MADV_WILLNEED) {
 		DRM_ERROR("Attempting to mmap a purgeable buffer\n");
-		ret = EINVAL;
-		goto done;
+		ret = -EINVAL;
+		goto out;
 	}
 
-	ret = i915_gem_object_bind_to_gtt(obj, 0, true, false);
-	if (ret) {
-		printf("%s: failed to bind\n", __func__);
-		goto done;
-	}
-	i915_gem_object_move_to_inactive(obj);
+	ret = i915_gem_object_create_mmap_offset(obj);
+	if (ret)
+		goto out;
 
-	end = round_page(offset + obj->base.size);
-	offset = trunc_page(offset);
-	nsize = end - offset;
+	*offset = (u64)obj->base.map->ext;
 
-	ret = drm_addmap(dev, offset + obj->gtt_offset, nsize, _DRM_AGP,
-	    _DRM_WRITE_COMBINING, &map);
-	
-done:
-	if (ret == 0)
-		*mmap_offset = map->ext;
-	else
-		drm_unref(&obj->base.uobj);
-
-	return (ret);
+out:
+	drm_gem_object_unreference(&obj->base);
+unlock:
+	DRM_UNLOCK();
+	return ret;
 }
 
 /**
@@ -1067,6 +1103,8 @@ void
 i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 {
 	DRM_ASSERT_HELD(&obj->base);
+
+	i915_gem_object_free_mmap_offset(obj);
 
 	simple_lock(&obj->base.uao->vmobjlock);
 	obj->base.uao->pgops->pgo_flush(obj->base.uao, 0, obj->base.size,
