@@ -2316,3 +2316,4 @@
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/sbin/hotplugd
+./usr/sbin/mkuboot
