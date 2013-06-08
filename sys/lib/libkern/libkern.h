@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.29 2012/04/26 01:22:31 matthew Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.30 2013/06/08 19:06:50 sf Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -137,6 +137,9 @@ abs(int j)
 			    __assert("debugging ", __FILE__, __LINE__, "e"))
 #endif
 #endif
+
+#define	CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ]	\
+			    __attribute__((__unused__))
 
 /* Prototypes for non-quad routines. */
 void	 __assert(const char *, const char *, int, const char *)
