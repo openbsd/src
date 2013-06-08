@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.94 2013/05/30 19:19:09 guenther Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.95 2013/06/08 23:02:26 beck Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ ffs_realloccg(struct inode *ip, daddr64_t lbprev, daddr64_t bpref, int osize,
 		/* NOTREACHED */
 	}
 	bno = ffs_hashalloc(ip, cg, bpref, request, ffs_alloccg);
-	if (bno <= 0) 
+	if (bno <= 0)
 		goto nospace;
 
 	(void) uvm_vnp_uncache(ITOV(ip));
@@ -348,7 +348,7 @@ error:
 	 */
 	if (quota_updated != 0)
 		(void)ufs_quota_free_blocks(ip, quota_updated, cred);
-		
+
 	return error;
 }
 
@@ -400,7 +400,7 @@ ffs1_reallocblks(void *v)
 		if (!ffs_checkblk(ip,
 		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
 			panic("ffs1_reallocblks: unallocated block 1");
-		
+
 	for (i = 1; i < len; i++)
 		if (buflist->bs_children[i]->b_lblkno != start_lbn + i)
 			panic("ffs1_reallocblks: non-logical cluster");
@@ -813,7 +813,7 @@ ffs_reallocblks(void *v)
 
 /*
  * Allocate an inode in the file system.
- * 
+ *
  * If allocating a directory, use ffs_dirpref to select the inode.
  * If allocating in a directory, the following hierarchy is followed:
  *   1) allocate the preferred inode.
@@ -836,7 +836,7 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	struct inode *ip;
 	ufsino_t ino, ipref;
 	int cg, error;
-	
+
 	*vpp = NULL;
 	fs = pip->i_fs;
 	if (fs->fs_cstotal.cs_nifree == 0)
@@ -1445,7 +1445,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr64_t bpref, int size)
 			break;
 	if (allocsiz == fs->fs_frag) {
 		/*
-		 * no fragments were available, so a block will be 
+		 * no fragments were available, so a block will be
 		 * allocated, and hacked up
 		 */
 		if (cgp->cg_cs.cs_nbfree == 0) {
