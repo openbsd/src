@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.41 2013/04/16 07:36:55 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.42 2013/06/08 14:24:38 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -3061,14 +3061,18 @@ int
 pipex_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
 	switch (name[0]) {
 	case PIPEXCTL_ENABLE:
+		if (namelen != 1)
+			return (ENOTDIR);
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &pipex_enable));
+	case PIPEXCTL_INQ:
+	        return (sysctl_ifq(name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, &pipexinq));
+	case PIPEXCTL_OUTQ:
+	        return (sysctl_ifq(name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, &pipexoutq));
 	default:
 		return (ENOPROTOOPT);
 	}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.169 2013/06/02 21:37:03 yasuoka Exp $
+.\"	$OpenBSD: sysctl.8,v 1.170 2013/06/08 14:24:39 yasuoka Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: June 8 2013 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -327,6 +327,12 @@ and a few require a kernel compiled with non-standard
 .It net.mpls.mapttl_ip Ta integer Ta yes
 .It net.mpls.mapttl_ip6 Ta integer Ta yes
 .It net.pipex.enable Ta integer Ta yes
+.It net.pipex.inq.len Ta integer Ta no
+.It net.pipex.inq.maxlen Ta integer Ta yes
+.It net.pipex.inq.drops Ta integer Ta no
+.It net.pipex.outq.len Ta integer Ta no
+.It net.pipex.outq.maxlen Ta integer Ta yes
+.It net.pipex.outq.drops=0 Ta integer Ta no
 .It debug.syncprt Ta integer Ta yes
 .It debug.busyprt Ta integer Ta yes
 .It debug.doclusterread Ta integer Ta yes

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.189 2013/04/16 22:06:48 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.190 2013/06/08 14:24:39 yasuoka Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2175,6 +2175,7 @@ sysctl_mpls(char *string, char **bufpp, int mib[], int flags, int *typep)
 int
 sysctl_pipex(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
+	struct list *lp;
 	int indx;
 
 	if (*bufpp == NULL) {
@@ -2185,6 +2186,20 @@ sysctl_pipex(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[2] = indx;
 	*typep = pipexlist.list[indx].ctl_type;
+	if (*typep == CTLTYPE_NODE) {
+		int tindx;
+
+		if (*bufpp == NULL) {
+			listall(string, &ifqlist);
+			return(-1);
+		}
+		lp = &ifqlist;
+		if ((tindx = findname(string, "fourth", bufpp, lp)) == -1)
+			return (-1);
+		mib[3] = tindx;
+		*typep = lp->list[tindx].ctl_type;
+		return(4);
+	}
 	return (3);
 }
 

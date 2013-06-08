@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.221 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: sysctl.3,v 1.222 2013/06/08 14:24:39 yasuoka Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 8 2013 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1974,11 +1974,34 @@ The currently defined variable names are:
 .Bl -column "Third level name" "integer" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv PIPEXCTL_ENABLE Ta integer Ta yes
+.It Dv PIPEXCTL_INQ Ta node Ta not applicable
+.It Dv PIPEXCTL_OUTQ Ta node Ta not applicable
 .El
 .Bl -tag -width "123456"
 .It Dv PIPEXCTL_ENABLE
 If set to 1, enable PIPEX processing.
 The default is 0.
+.It Dv PIPEXCTL_INQ
+Fourth level comprises an array of
+.Li struct ifqueue
+structures containing information about the PIPEX packet input queue.
+The forth level names for the elements of
+.Li struct ifqueue
+are the same as described in
+.Li ip.ifq
+in the
+.Dv PF_INET
+section.
+.It Dv PIPEXCTL_OUTQ
+Fourth level comprises an array of
+.Li struct ifqueue
+structures containing information about PIPEX packet output queue.
+The forth level names for the elements of
+.Li struct ifqueue are same as described in
+.Li ip.ifq
+in the
+.Dv PF_INET
+section.
 .El
 .El
 .Ss CTL_VFS
@@ -2174,6 +2197,8 @@ definitions for third level virtual file system identifiers
 definitions for second level virtual memory identifiers
 .It Aq Pa uvm/uvm_swap_encrypt.h
 definitions for third level virtual memory identifiers
+.It Aq Pa net/if.h
+definitions for packet input/output queue identifiers
 .It Aq Pa net/pipex.h
 definitions for third level PIPEX identifiers
 .It Aq Pa netinet/in.h
