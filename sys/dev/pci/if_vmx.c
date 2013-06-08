@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.4 2013/06/05 02:04:07 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.5 2013/06/08 17:07:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -198,12 +198,8 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	u_int csr, memtype, ver, macl, mach;
+	u_int memtype, ver, macl, mach;
 	u_char enaddr[ETHER_ADDR_LEN];
-
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, 0x10);
 	if (pci_mapreg_map(pa, 0x10, memtype, 0, &sc->sc_iot0, &sc->sc_ioh0,
