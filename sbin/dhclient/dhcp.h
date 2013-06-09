@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.14 2013/06/09 00:30:06 krw Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.15 2013/06/09 16:21:50 krw Exp $	*/
 
 /* Protocol structures. */
 
@@ -173,6 +173,7 @@ struct dhcp_packet {
 #define DHO_NDS_SERVERS			85
 #define DHO_NDS_TREE_NAME		86
 #define DHO_NDS_CONTEXT			87
+#define DHO_CLASSLESS_STATIC_ROUTES	121
 #define DHO_TFTP_CONFIG_FILE		144
 #define DHO_VOIP_CONFIGURATION_SERVER	150
 #define DHO_AUTOPROXY_SCRIPT		252

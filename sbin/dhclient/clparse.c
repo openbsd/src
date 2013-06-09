@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.59 2013/06/09 00:30:06 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.60 2013/06/09 16:21:50 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -72,6 +72,9 @@ read_client_conf(void)
 	    [config->requested_option_count++] = DHO_BROADCAST_ADDRESS;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_TIME_OFFSET;
+	/* RFC 3442 says CLASSLESS_STATIC_ROUTES must be before ROUTERS! */
+	config->requested_options
+	    [config->requested_option_count++] = DHO_CLASSLESS_STATIC_ROUTES;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_ROUTERS;
 	config->requested_options
