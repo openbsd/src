@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2013/05/18 18:06:05 patrick Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 2013/06/09 12:53:42 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4149,7 +4149,7 @@ pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
  *
  * This routine is called after the vm and kmem subsystems have been
  * initialised. This allows the pmap code to perform any initialisation
- * that can only be done one the memory allocation is in place.
+ * that can only be done once the memory allocation is in place.
  */
 void
 pmap_postinit(void)
