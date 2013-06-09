@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.262 2013/06/03 16:57:05 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.263 2013/06/09 22:03:06 yasuoka Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -896,6 +896,7 @@ findpcb:
 	ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
 	    tdb, inp, 0);
 	if (error) {
+		tcpstat.tcps_rcvnosec++;
 		splx(s);
 		goto drop;
 	}

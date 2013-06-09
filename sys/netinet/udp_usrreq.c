@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.163 2013/06/01 16:22:05 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.164 2013/06/09 22:03:06 yasuoka Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -610,6 +610,7 @@ udp_input(struct mbuf *m, ...)
 	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
 	    IPSP_DIRECTION_IN, tdb, inp, 0);
 	if (error) {
+		udpstat.udps_nosec++;
 		splx(s);
 		goto bad;
 	}
