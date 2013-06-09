@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.8 2013/04/15 16:47:14 guenther Exp $ */
+/*	$OpenBSD: sysctl.c,v 1.9 2013/06/09 13:10:17 miod Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,10 +31,10 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
-int __sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int __sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 
 int
-sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+sysctl(const int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
 	return (__sysctl(name, namelen, oldp, oldlenp, newp, newlen));

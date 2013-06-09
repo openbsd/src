@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.132 2013/06/01 16:27:37 tedu Exp $
+;	$OpenBSD: syscalls.master,v 1.133 2013/06/09 13:10:19 miod Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -333,7 +333,7 @@
 200	STD		{ int sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	STD		{ int sys_ftruncate(int fd, int pad, off_t length); }
-202	STD		{ int sys___sysctl(int *name, u_int namelen, \
+202	STD		{ int sys___sysctl(const int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, void *new, \
 			    size_t newlen); }
 203	STD		{ int sys_mlock(const void *addr, size_t len); }

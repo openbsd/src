@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.223 2013/06/09 13:03:47 tedu Exp $
+.\"	$OpenBSD: sysctl.3,v 1.224 2013/06/09 13:10:17 miod Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .In sys/param.h
 .In sys/sysctl.h
 .Ft int
-.Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
+.Fn sysctl "const int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
 .Sh DESCRIPTION
 The
 .Fn sysctl

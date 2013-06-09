@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.25 2013/01/23 19:01:44 miod Exp $	*/
+/*	$OpenBSD: util.c,v 1.26 2013/06/09 13:10:19 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -132,7 +132,7 @@ _dl_free(void *p)
 void
 _dl_randombuf(void *buf, size_t buflen)
 {
-	int mib[2] = { CTL_KERN, KERN_ARND };
+	const int mib[2] = { CTL_KERN, KERN_ARND };
 	_dl_sysctl(mib, 2, buf, &buflen, NULL, 0);
 }
 

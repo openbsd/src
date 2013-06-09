@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.235 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.236 2013/06/09 13:10:19 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -140,7 +140,7 @@ int
 sys___sysctl(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___sysctl_args /* {
-		syscallarg(int *) name;
+		syscallarg(const int *) name;
 		syscallarg(u_int) namelen;
 		syscallarg(void *) old;
 		syscallarg(size_t *) oldlenp;

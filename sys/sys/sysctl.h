@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.135 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.136 2013/06/09 13:10:19 miod Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -925,7 +925,7 @@ int pipex_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 #else	/* !_KERNEL */
 
 __BEGIN_DECLS
-int	sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int	sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 __END_DECLS
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SYSCTL_H_ */
