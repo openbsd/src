@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2012/08/27 11:19:38 espie Exp $
+# $OpenBSD: Makefile,v 1.10 2013/06/09 14:48:53 landry Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ SRCS =	alter.c analyze.c attach.c auth.c \
 	callback.c complete.c ctime.c date.c delete.c \
 	expr.c fault.c fkey.c \
 	fts3.c fts3_aux.c fts3_expr.c fts3_hash.c fts3_icu.c fts3_porter.c \
-	fts3_snippet.c fts3_tokenizer.c fts3_tokenizer1.c \
+	fts3_snippet.c fts3_tokenize_vtab.c fts3_tokenizer.c fts3_tokenizer1.c \
 	fts3_unicode.c fts3_unicode2.c fts3_write.c \
 	func.c global.c hash.c \
 	insert.c journal.c legacy.c loadext.c \
