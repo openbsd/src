@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.49 2013/06/04 21:04:53 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.50 2013/06/09 00:30:06 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -183,35 +183,36 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
  * depending on the contents of the gateway parameter.
  */
 void
-add_route(int rdomain, struct in_addr dest, struct in_addr netmask,
-    struct in_addr gateway, int addrs)
+add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
 {
-	struct imsg_add_route	 imsg;
-	int			 rslt;
+	struct imsg_add_default_route	 imsg;
+	int				 rslt;
 
 	memset(&imsg, 0, sizeof(imsg));
 
 	imsg.rdomain = rdomain;
-	imsg.dest = dest;
+	imsg.addr = addr;
 	imsg.gateway = gateway;
-	imsg.netmask = netmask;
-	imsg.addrs = addrs;
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ROUTE, 0, 0, -1,
+	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_DEFAULT_ROUTE, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 
 	if (rslt == -1)
-		warning("add_route: imsg_compose: %s", strerror(errno));
+		warning("add_default_route: imsg_compose: %s", strerror(errno));
 }
 
 void
-priv_add_route(struct imsg_add_route *imsg)
+priv_add_default_route(struct imsg_add_default_route *imsg)
 {
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway, mask;
 	struct sockaddr_rtlabel label;
 	struct iovec iov[5];
 	int s, i, iovcnt = 0;
+
+	/*
+	 * Add a default route via the specified address.
+	 */
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("Routing Socket open failed: %s", strerror(errno));
@@ -229,21 +230,18 @@ priv_add_route(struct imsg_add_route *imsg)
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
 	
-	/* Set destination address. */
+	/* Set destination address of all zeros. */
 
 	memset(&dest, 0, sizeof(dest));
 
-	if (imsg->addrs & RTA_DST) {
-		dest.sin_len = sizeof(dest);
-		dest.sin_family = AF_INET;
-		dest.sin_addr.s_addr = imsg->dest.s_addr;
+	dest.sin_len = sizeof(dest);
+	dest.sin_family = AF_INET;
 
-		rtm.rtm_addrs |= RTA_DST;
-		rtm.rtm_msglen += sizeof(dest);
+	rtm.rtm_addrs |= RTA_DST;
+	rtm.rtm_msglen += sizeof(dest);
 
-		iov[iovcnt].iov_base = &dest;
-		iov[iovcnt++].iov_len = sizeof(dest);
-	}
+	iov[iovcnt].iov_base = &dest;
+	iov[iovcnt++].iov_len = sizeof(dest);
 	
 	/*
 	 * Set gateway address if and only if non-zero addr supplied. A
@@ -251,7 +249,7 @@ priv_add_route(struct imsg_add_route *imsg)
 	 */
 
 	memset(&gateway, 0, sizeof(gateway));
-	if (imsg->addrs & RTA_GATEWAY) {
+	if (bcmp(&imsg->gateway, &imsg->addr, sizeof(imsg->addr)) != 0) {
 		gateway.sin_len = sizeof(gateway);
 		gateway.sin_family = AF_INET;
 		gateway.sin_addr.s_addr = imsg->gateway.s_addr;
@@ -264,20 +262,17 @@ priv_add_route(struct imsg_add_route *imsg)
 		iov[iovcnt++].iov_len = sizeof(gateway);
 	}
 
-	/* Add netmask. */
+	/* Add netmask of 0. */
 	memset(&mask, 0, sizeof(mask));
 
-	if (imsg->addrs & RTA_NETMASK) {
-		mask.sin_len = sizeof(mask);
-		mask.sin_family = AF_INET;
-		mask.sin_addr.s_addr = imsg->netmask.s_addr;
+	mask.sin_len = sizeof(mask);
+	mask.sin_family = AF_INET;
 
-		rtm.rtm_addrs |= RTA_NETMASK;
-		rtm.rtm_msglen += sizeof(mask);
+	rtm.rtm_addrs |= RTA_NETMASK;
+	rtm.rtm_msglen += sizeof(mask);
 
-		iov[iovcnt].iov_base = &mask;
-		iov[iovcnt++].iov_len = sizeof(mask);
-	}
+	iov[iovcnt].iov_base = &mask;
+	iov[iovcnt++].iov_len = sizeof(mask);
 
 	/* Add our label so we can identify the route as our creation. */
 	if (create_route_label(&label) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.20 2013/06/04 13:00:07 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.21 2013/06/09 00:30:06 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -233,29 +233,34 @@ skip_to_eol(FILE *cfile)
 static int
 read_string(FILE *cfile)
 {
-	int i, c, bs;
+	int	i, c, bs = 0;
 
-	bs = i = 0;
-	do {
+	for (i = 0; i < sizeof(tokbuf); i++) {
 		c = get_char(cfile);
-		if (bs)
+		if (c == EOF) {
+			parse_warn("eof in string constant");
+			break;
+		}
+		if (bs) {
 			bs = 0;
-		else if (c == '\\')
+			tokbuf[i] = c;
+		} else if (c == '\\')
 			bs = 1;
-
-		if (c != '"' && c != EOF && bs == 0)
-			tokbuf[i++] = c;
-
-	} while (i < (sizeof(tokbuf) - 1) && c != EOF && c != '"');
-
-	if (c == EOF)
-		parse_warn("eof in string constant");
-	else if (c != '"')
+		else if (c == '"')
+			break;
+		else
+			tokbuf[i] = c;
+	}
+	/*
+	 * Normally, I'd feel guilty about this, but we're talking about
+	 * strings that'll fit in a DHCP packet here.
+	 */
+	if (i == sizeof(tokbuf)) {
 		parse_warn("string constant larger than internal buffer");
-
+		i--;
+	}
 	tokbuf[i] = 0;
 	tval = tokbuf;
-
 	return (TOK_STRING);
 }
 

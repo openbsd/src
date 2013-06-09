@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.19 2013/06/01 16:26:07 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.20 2013/06/09 00:30:06 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -25,7 +25,7 @@ enum imsg_code {
 	IMSG_DELETE_ADDRESS,
 	IMSG_ADD_ADDRESS,
 	IMSG_FLUSH_ROUTES,
-	IMSG_ADD_ROUTE,
+	IMSG_ADD_DEFAULT_ROUTE,
 	IMSG_HUP,
 	IMSG_WRITE_FILE
 };
@@ -49,12 +49,10 @@ struct imsg_flush_routes {
 	int	zapzombies;
 };
 
-struct imsg_add_route {
-	struct in_addr	dest;
-	struct in_addr	netmask;
-	struct in_addr	gateway;
+struct imsg_add_default_route {
 	int		rdomain;
-	int		addrs;
+	struct in_addr	addr;
+	struct in_addr	gateway;
 };
 
 struct imsg_hup {
@@ -78,6 +76,6 @@ void	dispatch_imsg(struct imsgbuf *);
 void	priv_delete_address(struct imsg_delete_address *);
 void	priv_add_address(struct imsg_add_address *);
 void	priv_flush_routes(struct imsg_flush_routes *);
-void	priv_add_route(struct imsg_add_route *);
+void	priv_add_default_route(struct imsg_add_default_route *);
 void	priv_cleanup(struct imsg_hup *);
 void	priv_write_file(struct imsg_write_file *);

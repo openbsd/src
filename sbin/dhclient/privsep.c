@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.32 2013/06/01 16:26:07 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.33 2013/06/09 00:30:06 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -63,12 +63,12 @@ dispatch_imsg(struct imsgbuf *ibuf)
 				priv_flush_routes(imsg.data);
 			break;
 
-		case IMSG_ADD_ROUTE:
+		case IMSG_ADD_DEFAULT_ROUTE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct imsg_add_route))
-				warning("bad IMSG_ADD_ROUTE");
+			    sizeof(struct imsg_add_default_route))
+				warning("bad IMSG_ADD_DEFAULT_ROUTE");
 			else
-				priv_add_route(imsg.data);
+				priv_add_default_route(imsg.data);
 			break;
 
 		case IMSG_HUP:
