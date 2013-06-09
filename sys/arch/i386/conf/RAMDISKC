@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.102 2012/03/15 20:06:03 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.103 2013/06/09 18:06:33 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -234,8 +234,8 @@ atapiscsi* at pciide?
 #ep*	at isapnp?			# 3C509 PnP ethernet
 #le*	at isapnp?
 #de*	at pci?				# DC21X4X-based ethernet
-fxp*	at pci?				# EtherExpress 10/100B ethernet
-fxp*	at cardbus?			# Intel PRO/100 ethernet
+#fxp*	at pci?				# EtherExpress 10/100B ethernet
+#fxp*	at cardbus?			# Intel PRO/100 ethernet
 #ep*	at pci?				# 3C59x ethernet
 #ne*	at pci?				# NE2000-compat ethernet
 #ne*	at pcmcia?			# PCMCIA based NE2000
