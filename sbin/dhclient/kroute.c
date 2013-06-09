@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.52 2013/06/09 16:21:50 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.53 2013/06/09 17:31:54 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -170,18 +170,6 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 	free(buf);
 }
 
-/*
- * [priv_]add_default_route is the equivalent of
- *
- *	route -q $rdomain -n flush -inet -iface $interface
- *
- * and one of
- *
- *	route -q $rdomain add default -iface $router
- * 	route -q $rdomain add default $router
- *
- * depending on the contents of the gateway parameter.
- */
 void
 add_route(int rdomain, struct in_addr dest, struct in_addr netmask,
     struct in_addr gateway, int addrs)
@@ -229,11 +217,9 @@ priv_add_route(struct imsg_add_route *imsg)
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
 	
-	/* Set destination address. */
-
-	memset(&dest, 0, sizeof(dest));
-
 	if (imsg->addrs & RTA_DST) {
+		memset(&dest, 0, sizeof(dest));
+
 		dest.sin_len = sizeof(dest);
 		dest.sin_family = AF_INET;
 		dest.sin_addr.s_addr = imsg->dest.s_addr;
@@ -245,13 +231,9 @@ priv_add_route(struct imsg_add_route *imsg)
 		iov[iovcnt++].iov_len = sizeof(dest);
 	}
 	
-	/*
-	 * Set gateway address if and only if non-zero addr supplied. A
-	 * gateway address of 0 implies '-iface'.
-	 */
-
-	memset(&gateway, 0, sizeof(gateway));
 	if (imsg->addrs & RTA_GATEWAY) {
+		memset(&gateway, 0, sizeof(gateway));
+
 		gateway.sin_len = sizeof(gateway);
 		gateway.sin_family = AF_INET;
 		gateway.sin_addr.s_addr = imsg->gateway.s_addr;
@@ -264,10 +246,9 @@ priv_add_route(struct imsg_add_route *imsg)
 		iov[iovcnt++].iov_len = sizeof(gateway);
 	}
 
-	/* Add netmask. */
-	memset(&mask, 0, sizeof(mask));
-
 	if (imsg->addrs & RTA_NETMASK) {
+		memset(&mask, 0, sizeof(mask));
+
 		mask.sin_len = sizeof(mask);
 		mask.sin_family = AF_INET;
 		mask.sin_addr.s_addr = imsg->netmask.s_addr;

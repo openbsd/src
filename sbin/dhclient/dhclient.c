@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.252 2013/06/09 16:21:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.253 2013/06/09 17:31:54 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2285,8 +2285,6 @@ priv_write_file(struct imsg_write_file *imsg)
  *	or
  *
  * 	route -q $rdomain add default $router
- *
- * depending on the contents of the gateway parameter.
  */
 void
 add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
@@ -2299,8 +2297,9 @@ add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
 	addrs = RTA_DST | RTA_NETMASK;
 
 	/*
-	 * Set gateway address if and only if non-zero addr supplied. A
-	 * gateway address of 0 implies '-iface'.
+	 * When 'addr' and 'gateway' are identical the desired behaviour is
+	 * to emulate the '-iface' variant of 'route'. This is done by
+	 * claiming there is no gateway address to use.
 	 */
 	if (bcmp(&gateway, &addr, sizeof(addr)) != 0)
 		addrs |= RTA_GATEWAY;
