@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.19 2013/06/09 12:43:57 tedu Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.20 2013/06/09 13:15:26 tedu Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -174,7 +174,7 @@ vfs_getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 					goto out;
 				}
 
-				memmove(dp->d_name, bp, dp->d_namlen);
+				memmove(bp, dp->d_name, dp->d_namlen);
 				error = 0;
 				*bpp = bp;
 
