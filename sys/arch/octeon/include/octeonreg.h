@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.1 2013/06/02 20:29:36 jasper Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.2 2013/06/09 20:20:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -27,7 +27,7 @@
  */
 
 #ifndef _MACHINE_OCTEONREG_H_
-#define _MACHINE_OCTEONREG_H
+#define _MACHINE_OCTEONREG_H_
 
 #define OCTEON_CF_BASE		0x1D000800ULL
 #define OCTEON_CIU_BASE		0x1070000000000ULL
