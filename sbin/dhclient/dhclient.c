@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.253 2013/06/09 17:31:54 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.254 2013/06/09 22:39:51 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2290,21 +2290,24 @@ void
 add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
 {
 	struct in_addr netmask, dest;
-	int addrs;
+	int addrs, flags;
 
 	memset(&netmask, 0, sizeof(netmask));
 	memset(&dest, 0, sizeof(dest));
 	addrs = RTA_DST | RTA_NETMASK;
+	flags = 0;
 
 	/*
 	 * When 'addr' and 'gateway' are identical the desired behaviour is
 	 * to emulate the '-iface' variant of 'route'. This is done by
 	 * claiming there is no gateway address to use.
 	 */
-	if (bcmp(&gateway, &addr, sizeof(addr)) != 0)
+	if (bcmp(&gateway, &addr, sizeof(addr)) != 0) {
 		addrs |= RTA_GATEWAY;
+		flags |= RTF_GATEWAY | RTF_STATIC;
+	}
 
-	add_route(rdomain, dest, netmask, gateway, addrs); 
+	add_route(rdomain, dest, netmask, gateway, addrs, flags); 
 }
 
 void
@@ -2314,7 +2317,7 @@ add_static_routes(int rdomain, struct option_data *static_routes)
 	u_int8_t		 *addr;
 	int			 i;
 
-	memset(&netmask, 0, sizeof(netmask));	/* Always 0 for class addrs. */
+	memset(&netmask, 0, sizeof(netmask));	/* Not used for CLASSFULL! */
 
 	for (i = 0; (i + 7) < static_routes->len; i += 8) {
 		addr = &static_routes->data[i];
@@ -2328,7 +2331,7 @@ add_static_routes(int rdomain, struct option_data *static_routes)
 
 		/* XXX Order implies priority but we're ignoring that. */
 		add_route(rdomain, dest, netmask, gateway,
-		    RTA_DST | RTA_GATEWAY);
+		    RTA_DST | RTA_GATEWAY, RTF_GATEWAY | RTF_STATIC);
 	}
 }
 
@@ -2361,6 +2364,7 @@ void add_classless_static_routes(int rdomain,
 			continue; /* OBSD TCP/IP doesn't support this. */
 
 		add_route(rdomain, dest, netmask, gateway,
-		    RTA_DST | RTA_GATEWAY | RTA_NETMASK);
+		    RTA_DST | RTA_GATEWAY | RTA_NETMASK,
+		    RTF_GATEWAY | RTF_STATIC);
 	}
 }

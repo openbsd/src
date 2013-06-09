@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.21 2013/06/09 15:06:34 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.22 2013/06/09 22:39:51 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -55,6 +55,7 @@ struct imsg_add_route {
 	struct in_addr	gateway;
 	int		rdomain;
 	int		addrs;
+	int		flags;
 };
 
 struct imsg_hup {

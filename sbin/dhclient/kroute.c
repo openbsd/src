@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.53 2013/06/09 17:31:54 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.54 2013/06/09 22:39:51 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -172,7 +172,7 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
 
 void
 add_route(int rdomain, struct in_addr dest, struct in_addr netmask,
-    struct in_addr gateway, int addrs)
+    struct in_addr gateway, int addrs, int flags)
 {
 	struct imsg_add_route	 imsg;
 	int			 rslt;
@@ -184,6 +184,7 @@ add_route(int rdomain, struct in_addr dest, struct in_addr netmask,
 	imsg.gateway = gateway;
 	imsg.netmask = netmask;
 	imsg.addrs = addrs;
+	imsg.flags = flags;
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ROUTE, 0, 0, -1,
 	    &imsg, sizeof(imsg));
@@ -213,6 +214,8 @@ priv_add_route(struct imsg_add_route *imsg)
 	rtm.rtm_tableid = imsg->rdomain;
 	rtm.rtm_priority = RTP_NONE;
 	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_addrs = imsg->addrs;
+	rtm.rtm_flags = imsg->flags;
 
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
@@ -224,7 +227,6 @@ priv_add_route(struct imsg_add_route *imsg)
 		dest.sin_family = AF_INET;
 		dest.sin_addr.s_addr = imsg->dest.s_addr;
 
-		rtm.rtm_addrs |= RTA_DST;
 		rtm.rtm_msglen += sizeof(dest);
 
 		iov[iovcnt].iov_base = &dest;
@@ -238,8 +240,6 @@ priv_add_route(struct imsg_add_route *imsg)
 		gateway.sin_family = AF_INET;
 		gateway.sin_addr.s_addr = imsg->gateway.s_addr;
 
-		rtm.rtm_flags |= RTF_GATEWAY | RTF_STATIC;
-		rtm.rtm_addrs |= RTA_GATEWAY;
 		rtm.rtm_msglen += sizeof(gateway);
 
 		iov[iovcnt].iov_base = &gateway;
@@ -253,7 +253,6 @@ priv_add_route(struct imsg_add_route *imsg)
 		mask.sin_family = AF_INET;
 		mask.sin_addr.s_addr = imsg->netmask.s_addr;
 
-		rtm.rtm_addrs |= RTA_NETMASK;
 		rtm.rtm_msglen += sizeof(mask);
 
 		iov[iovcnt].iov_base = &mask;
@@ -411,13 +410,10 @@ add_address(char *ifname, int rdomain, struct in_addr addr,
 void
 priv_add_address(struct imsg_add_address *imsg)
 {
+	struct imsg_add_route rimsg;
 	struct ifaliasreq ifaliasreq;
-	struct rt_msghdr rtm;
-	struct sockaddr_in dest, gateway;
-	struct sockaddr_rtlabel label;
-	struct iovec iov[4];
 	struct sockaddr_in *in;
-	int s, i, iovcnt = 0;
+	int s;
 
 	if (imsg->addr.s_addr == INADDR_ANY) {
 		/* Notification that the active_addr has been deleted. */
@@ -460,74 +456,13 @@ priv_add_address(struct imsg_add_address *imsg)
 	/*
 	 * Add the 127.0.0.1 route for the specified address.
 	 */
+	memset(&rimsg, 0, sizeof(rimsg));
+	rimsg.dest.s_addr = imsg->addr.s_addr;
+	rimsg.gateway.s_addr = inet_addr("127.0.0.1");
+	rimsg.addrs = RTA_DST | RTA_GATEWAY;
+	rimsg.flags = RTF_GATEWAY | RTF_STATIC;
 
-	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		error("Routing Socket open failed: %s", strerror(errno));
-
-	/* Build RTM header */
-
-	memset(&rtm, 0, sizeof(rtm));
-
-	rtm.rtm_version = RTM_VERSION;
-	rtm.rtm_type = RTM_ADD;
-	rtm.rtm_tableid = imsg->rdomain;
-	rtm.rtm_priority = RTP_NONE;
-	rtm.rtm_msglen = sizeof(rtm);
-
-	iov[iovcnt].iov_base = &rtm;
-	iov[iovcnt++].iov_len = sizeof(rtm);
-	
-	/* Set destination address */
-
-	memset(&dest, 0, sizeof(dest));
-
-	dest.sin_len = sizeof(dest);
-	dest.sin_family = AF_INET;
-	dest.sin_addr.s_addr = imsg->addr.s_addr;
-
-	rtm.rtm_addrs |= RTA_DST;
-	rtm.rtm_msglen += sizeof(dest);
-
-	iov[iovcnt].iov_base = &dest;
-	iov[iovcnt++].iov_len = sizeof(dest);
-	
-	/* Set gateway address */
-
-	memset(&gateway, 0, sizeof(gateway));
-
-	gateway.sin_len = sizeof(gateway);
-	gateway.sin_family = AF_INET;
-	gateway.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-	rtm.rtm_flags |= RTF_GATEWAY;
-	rtm.rtm_addrs |= RTA_GATEWAY;
-	rtm.rtm_msglen += sizeof(gateway);
-
-	iov[iovcnt].iov_base = &gateway;
-	iov[iovcnt++].iov_len = sizeof(gateway);
-
-	/* Add our label so we can identify the route as our creation. */
-	if (create_route_label(&label) == 0) {
-		rtm.rtm_addrs |= RTA_LABEL;
-		rtm.rtm_msglen += sizeof(label);
-		iov[iovcnt].iov_base = &label;
-		iov[iovcnt++].iov_len = sizeof(label);
-	}
-
-	/* Check for EEXIST since other dhclient may not be done. */
-	for (i = 0; i < 5; i++) {
-		if (writev(s, iov, iovcnt) != -1)
-			break;
-		if (errno == ENETUNREACH) {
-			/* Not our responsibility to ensure 127/8 exists. */
-			break;
-		} else if (errno != EEXIST)
-			error("failed to add 127.0.0.1 route: %s",
-			    strerror(errno));
-		sleep(1);
-	}
-
-	close(s);
+	priv_add_route(&rimsg);
 
 	active_addr = imsg->addr;
 }
