@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.170 2013/06/08 14:24:39 yasuoka Exp $
+.\"	$OpenBSD: sysctl.8,v 1.171 2013/06/09 12:54:38 tedu Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: June 8 2013 $
+.Dd $Mdocdate: June 9 2013 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -405,6 +405,10 @@ and a few require a kernel compiled with non-standard
 .It vfs.ffs.dirhash_maxmem Ta integer Ta yes
 .It vfs.ffs.dirhash_mem Ta integer Ta no
 .It vfs.nfs.iothreads Ta integer Ta yes
+.It vfs.fuse.fusefs_open_devices Ta integer Ta no
+.It vfs.fuse.fusefs_fbufs_in Ta integer Ta no
+.It vfs.fuse.fusefs_fbufs_wait Ta integer Ta no
+.It vfs.fuse.fusefs_pool_pages Ta integer Ta no
 .El
 .Pp
 The
@@ -455,6 +459,8 @@ definitions for second level ddb identifiers
 definitions for second level vfs identifiers
 .It Aq Pa nfs/nfs.h
 definitions for third level NFS identifiers
+.It Aq Pa miscfs/fuse/fusefs.h
+definitions for third level fusefs identifiers
 .It Aq Pa ufs/ffs/ffs_extern.h
 definitions for third level FFS identifiers
 .It Aq Pa machine/cpu.h
