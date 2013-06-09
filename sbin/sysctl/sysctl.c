@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.190 2013/06/08 14:24:39 yasuoka Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.191 2013/06/09 12:37:43 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1124,7 +1124,7 @@ vfsinit(void)
 	buflen = 4;
 	if (sysctl(mib, 3, &maxtypenum, &buflen, (void *)0, (size_t)0) < 0)
 		return;
-	maxtypenum++;	/* + generic */
+	maxtypenum++;	/* + generic (0) */
 	if ((vfs_typenums = calloc(maxtypenum, sizeof(int))) == NULL)
 		return;
 	if ((vfsvars = calloc(maxtypenum, sizeof(*vfsvars))) == NULL) {
@@ -1139,7 +1139,7 @@ vfsinit(void)
 	mib[2] = VFS_CONF;
 	buflen = sizeof vfc;
 	for (loc = lastused, cnt = 1; cnt < maxtypenum; cnt++) {
-		mib[3] = cnt - 1;
+		mib[3] = cnt;
 		if (sysctl(mib, 4, &vfc, &buflen, (void *)0, (size_t)0) < 0) {
 			if (errno == EOPNOTSUPP)
 				continue;
