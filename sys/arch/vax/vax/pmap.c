@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 2012/11/25 22:13:46 jsg Exp $ */
+/*	$OpenBSD: pmap.c,v 1.56 2013/06/09 15:47:33 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -97,9 +97,6 @@ static inline
 #endif
 void pmap_decpteref(struct pmap *, pt_entry_t *);
 
-#ifndef PMAPDEBUG
-static inline
-#endif
 void rensa(pt_entry_t, pt_entry_t *);
 
 vaddr_t   avail_start, avail_end;
@@ -528,7 +525,6 @@ rensa(pte, ptp)
 			if ((pg->mdpage.pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pg->mdpage.pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
-			pv->pv_pmap->pm_stats.resident_count--;
 			if (npv != NULL) {
 				*pv = *npv;
 				free_pventry(npv);
@@ -569,6 +565,8 @@ pmap_kenter_pa(va, pa, prot)
 if(startpmapdebug)
 	printf("pmap_kenter_pa: va: %lx, pa %lx, prot %x ptp %p\n", va, pa, prot, ptp);
 #endif
+	if ((*ptp & PG_FRAME) == 0)
+		pmap_kernel()->pm_stats.resident_count++;
 	ptp[0] = PG_V | ((prot & VM_PROT_WRITE)? PG_KW : PG_KR) |
 	    PG_PFNUM(pa) | PG_SREF;
 	ptp[1] = ptp[0] + 1;
@@ -602,7 +600,8 @@ if(startpmapdebug)
 	for (i = 0; i < len; i++) {
 		if ((*pte & PG_FRAME) == 0)
 			continue;
-#ifdef DIAGNOSTIC /* DEBUG */
+		pmap_kernel()->pm_stats.resident_count--;
+#ifdef DEBUG
 		if ((*pte & PG_SREF) == 0) {
 			printf("pmap_kremove(%p, %x): "
 			    "pte %x@%p does not have SREF set!\n", 
@@ -759,12 +758,13 @@ if (startpmapdebug)
 		 * Mapped before? Remove it then.
 		 */
 		if (oldpte & PG_FRAME) {
+			pmap->pm_stats.resident_count--;
 			RECURSEEND;
 			if ((oldpte & PG_SREF) == 0)
 				rensa(oldpte, (pt_entry_t *)&patch[i]);
 			RECURSESTART;
 		} else if (pmap != pmap_kernel())
-				pmap->pm_refcnt[index]++; /* New mapping */
+			pmap->pm_refcnt[index]++; /* New mapping */
 
 		s = splvm();
 		pv = get_pventry();
@@ -961,6 +961,7 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 					rensa(*pts, pts);
 				RECURSESTART;
 				bzero(pts, sizeof(pt_entry_t) * LTOHPN);
+				pmap->pm_stats.resident_count--;
 				pmap_decpteref(pmap, pts);
 			} else {
 				pts[0] = (pts[0] & ~PG_PROT) | pr;
