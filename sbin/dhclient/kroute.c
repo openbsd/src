@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.50 2013/06/09 00:30:06 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.51 2013/06/09 15:06:34 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -183,36 +183,35 @@ priv_flush_routes(struct imsg_flush_routes *imsg)
  * depending on the contents of the gateway parameter.
  */
 void
-add_default_route(int rdomain, struct in_addr addr, struct in_addr gateway)
+add_route(int rdomain, struct in_addr dest, struct in_addr netmask,
+    struct in_addr gateway, int addrs)
 {
-	struct imsg_add_default_route	 imsg;
-	int				 rslt;
+	struct imsg_add_route	 imsg;
+	int			 rslt;
 
 	memset(&imsg, 0, sizeof(imsg));
 
 	imsg.rdomain = rdomain;
-	imsg.addr = addr;
+	imsg.dest = dest;
 	imsg.gateway = gateway;
+	imsg.netmask = netmask;
+	imsg.addrs = addrs;
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_DEFAULT_ROUTE, 0, 0, -1,
+	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ROUTE, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 
 	if (rslt == -1)
-		warning("add_default_route: imsg_compose: %s", strerror(errno));
+		warning("add_route: imsg_compose: %s", strerror(errno));
 }
 
 void
-priv_add_default_route(struct imsg_add_default_route *imsg)
+priv_add_route(struct imsg_add_route *imsg)
 {
 	struct rt_msghdr rtm;
 	struct sockaddr_in dest, gateway, mask;
 	struct sockaddr_rtlabel label;
 	struct iovec iov[5];
 	int s, i, iovcnt = 0;
-
-	/*
-	 * Add a default route via the specified address.
-	 */
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("Routing Socket open failed: %s", strerror(errno));
@@ -249,7 +248,7 @@ priv_add_default_route(struct imsg_add_default_route *imsg)
 	 */
 
 	memset(&gateway, 0, sizeof(gateway));
-	if (bcmp(&imsg->gateway, &imsg->addr, sizeof(imsg->addr)) != 0) {
+	if ((imsg->addrs & RTA_GATEWAY) != 0) {
 		gateway.sin_len = sizeof(gateway);
 		gateway.sin_family = AF_INET;
 		gateway.sin_addr.s_addr = imsg->gateway.s_addr;
@@ -267,6 +266,7 @@ priv_add_default_route(struct imsg_add_default_route *imsg)
 
 	mask.sin_len = sizeof(mask);
 	mask.sin_family = AF_INET;
+	mask.sin_addr.s_addr = imsg->netmask.s_addr;
 
 	rtm.rtm_addrs |= RTA_NETMASK;
 	rtm.rtm_msglen += sizeof(mask);
