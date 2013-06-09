@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.1 2013/06/03 15:50:56 tedu Exp $ */
+/* $OpenBSD: fusefs.h,v 1.2 2013/06/09 12:51:40 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -17,6 +17,23 @@
 
 #ifndef __FUSEFS_H__
 #define __FUSEFS_H__
+
+/* sysctl defines */
+#define FUSEFS_OPENDEVS		1	/* # of fuse devices opened */
+#define FUSEFS_INFBUFS		2	/* # of in fbufs */
+#define FUSEFS_WAITFBUFS	3	/* # of fbufs waiting for a response */
+#define FUSEFS_POOL_NBPAGES	4	/* # total fusefs size */
+#define FUSEFS_MAXID		5	/* number of valid fusefs ids */
+
+#define FUSEFS_NAMES { \
+	{ 0, 0}, \
+	{ "fusefs_open_devices", CTLTYPE_INT }, \
+	{ "fusefs_fbufs_in", CTLTYPE_INT }, \
+	{ "fusefs_fbufs_wait", CTLTYPE_INT }, \
+	{ "fusefs_pool_pages", CTLTYPE_INT }, \
+}
+
+#ifdef _KERNEL
 
 struct fuse_msg;
 
@@ -41,21 +58,6 @@ struct fusefs_mnt {
 
 extern struct vops fusefs_vops;
 extern struct pool fusefs_fbuf_pool;
-
-/* sysctl defines */
-#define FUSEFS_NB_OPENDEVS	1	/* # of fuse devices opened */
-#define FUSEFS_INFBUFS		2	/* # of in fbufs */
-#define FUSEFS_WAITFBUFS	3	/* # of fbufs waiting for a response */
-#define FUSEFS_POOL_NBPAGES	4	/* # total fusefs size */
-#define FUSEFS_MAXID		5	/* number of valid fusefs ids */
-
-#define FUSEFS_NAMES { \
-	{ 0, 0}, \
-	{ "fusefs_open_devices", CTLTYPE_INT }, \
-	{ "fusefs_fbufs_in", CTLTYPE_INT }, \
-	{ "fusefs_fbufs_wait", CTLTYPE_INT }, \
-	{ "fusefs_pool_pages", CTLTYPE_INT }, \
-}
 
 /* fuse helpers */
 #define TSLEEP_TIMEOUT 5
@@ -82,4 +84,5 @@ void fuse_device_set_fmp(struct fusefs_mnt *);
 /* #define FUSE_DEBUG_VNOP
 #define FUSE_DEBUG */
 
+#endif /* _KERNEL */
 #endif /* __FUSEFS_H__ */
