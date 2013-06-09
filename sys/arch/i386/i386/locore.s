@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.145 2012/11/18 12:17:40 sf Exp $	*/
+/*	$OpenBSD: locore.s,v 1.146 2013/06/09 12:42:22 tedu Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -828,10 +828,13 @@ docopy:
 	ret
 
 /*
- * Emulate memcpy() by loading the first two arguments in reverse order
- * and jumping into bcopy()
+ * Emulate memmove() by loading the first two arguments in reverse order
+ * and jumping into bcopy(), which handles overlapping regions.
+ * memcpy() is not guaranteed to have this guarantee, but it's safe
+ * to offer it (if a bit slower).
  */
-ENTRY(memcpy)
+ALTENTRY(memcpy)
+ENTRY(memmove)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%edi

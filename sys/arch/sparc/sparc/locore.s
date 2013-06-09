@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.91 2012/11/05 13:20:16 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.92 2013/06/09 12:42:22 tedu Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4803,6 +4803,14 @@ Lbcopy_done:
 1:
 	retl
 	stb	%o4,[%o1]
+
+ENTRY(memmove)
+	/*
+	 * Swap args and continue to ovbcopy.
+	 */
+	mov	%o0, %o3
+	mov	%o1, %o0
+	mov	%o3, %o1
 /*
  * ovbcopy(src, dst, len): like old bcopy, but regions may overlap.
  */
