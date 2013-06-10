@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.98 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.99 2013/06/10 04:44:30 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2169,13 +2169,14 @@ ttyinfo(struct tty *tp)
 		}
 
 		ttyprintf(tp,
-		    " cmd: %s %d [%s] %ld.%02ldu %ld.%02lds %d%% %ldk\n",
+		    " cmd: %s %d [%s] %lld.%02ldu %lld.%02lds %d%% %ldk\n",
 		    pick->p_comm, pick->p_pid,
 		    pick->p_stat == SONPROC ? "running" :
 		    pick->p_stat == SRUN ? "runnable" :
 		    pick->p_wmesg ? pick->p_wmesg : "iowait",
-		    utime.tv_sec, utime.tv_nsec / 10000000,
-		    stime.tv_sec, stime.tv_nsec / 10000000, pctcpu / 100, rss);
+		    (long long)utime.tv_sec, utime.tv_nsec / 10000000,
+		    (long long)stime.tv_sec, stime.tv_nsec / 10000000,
+		    pctcpu / 100, rss);
 	}
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
 }
