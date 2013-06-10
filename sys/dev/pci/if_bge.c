@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.334 2013/06/06 00:05:30 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.335 2013/06/10 13:38:47 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2119,9 +2119,9 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Set random backoff seed for TX */
 	CSR_WRITE_4(sc, BGE_TX_RANDOM_BACKOFF,
-	    sc->arpcom.ac_enaddr[0] + sc->arpcom.ac_enaddr[1] +
-	    sc->arpcom.ac_enaddr[2] + sc->arpcom.ac_enaddr[3] +
-	    sc->arpcom.ac_enaddr[4] + sc->arpcom.ac_enaddr[5] +
+	    (sc->arpcom.ac_enaddr[0] + sc->arpcom.ac_enaddr[1] +
+	     sc->arpcom.ac_enaddr[2] + sc->arpcom.ac_enaddr[3] +
+	     sc->arpcom.ac_enaddr[4] + sc->arpcom.ac_enaddr[5]) &
 	    BGE_TX_BACKOFF_SEED_MASK);
 
 	/* Set inter-packet gap */
@@ -2239,7 +2239,7 @@ bge_blockinit(struct bge_softc *sc)
 	DELAY(40);
 
 	/* Set misc. local control, enable interrupts on attentions */
-	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_ONATTN);
+	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_ONATTN);
 
 #ifdef notdef
 	/* Assert GPIO pins for PHY reset */
