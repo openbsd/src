@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.680 2013/06/04 00:42:23 halex Exp $
+#	$OpenBSD: install.sub,v 1.681 2013/06/10 21:19:29 rpe Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -875,9 +875,6 @@ v6_config() {
 	addhostent "$_addr" "$_name"
 
 	v6_defroute $_ifs
-	[[ $resp == none ]] && return
-	route -n add -inet6 -host default "$resp" || return
-	echo "$resp" >>/tmp/mygate
 }
 
 v4_defroute() {
@@ -906,32 +903,22 @@ v4_defroute() {
 }
 
 v6_defroute() {
-	local _if=$1 _routers _oifs
+	local _if=$1 _resp _routers
 
-	if [[ -z $(route -n show -inet6 | sed -ne '/^default */{s///; s/ .*//; p;}') ]]; then
-		resp=none
-		return
-	fi
+	route -n show -inet6 | egrep -q '^default[[:space:]]' && return
 
-	if [[ -x /sbin/ping6 ]]; then
-		_routers=$(ping6 -n -c 2 ff02::2%$_if 2>&1 |
-			sed -ne '/bytes from/{s/^.*from //;s/,.*$//;p;}')
-	fi
+	_routers=$(bsort $(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
+		sed -ne '/bytes from/{s/^.*from //;s/,.*$//;p;}' |
+		sed -ne 'G;s/\n/&&/;/^\(.*\n\).*\n\1/d;h;P'))
 
-	_oifs=$IFS
-	IFS=
-	PS3="IPv6 default router? (list #, IPv6 address or 'none'): "
-	select i in $_routers; do
-		case $i in
-		"")	resp=$REPLY
-			[[ -n $resp ]] && break
-			;;
-		*)	resp=$i
-			break
-			;;
-		esac
+	local PS3="IPv6 default router? (${_routers:+list #, }IPv6 address or 'none'): "
+	select _resp in $_routers; do
+		[[ ${_resp:=$REPLY} == *:* ]] && break
+		[[ $_resp == none ]] && return
 	done
-	IFS=$_oifs
+
+	route -n add -inet6 -host default "$_resp" &&
+		echo "$_resp" >>/tmp/mygate
 }
 
 # Much of this is gratuitously stolen from /etc/netstart.
