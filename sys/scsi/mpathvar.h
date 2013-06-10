@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpathvar.h,v 1.3 2011/07/11 01:02:48 dlg Exp $ */
+/*	$OpenBSD: mpathvar.h,v 1.4 2013/06/10 04:16:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -40,7 +40,7 @@ struct mpath_path {
 	struct scsi_link	*p_link;
 	int			 p_gid;
 
-	/* the follwoing are private to mpath.c */
+	/* the following are private to mpath.c */
 	TAILQ_ENTRY(mpath_path)	 p_entry;
 	struct mpath_dev	*p_dev;
 	int			 p_state;
