@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.25 2011/07/17 22:46:48 matthew Exp $ */
+/*	$OpenBSD: mpath.c,v 1.26 2013/06/10 04:12:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/conf.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
-#include <sys/pool.h>
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/selinfo.h>
@@ -43,16 +42,10 @@ void		mpath_shutdown(void *);
 
 TAILQ_HEAD(mpath_paths, mpath_path);
 
-struct mpath_ccb {
-	struct scsi_xfer	*c_xs;
-	SIMPLEQ_ENTRY(mpath_ccb) c_entry;
-};
-SIMPLEQ_HEAD(mpath_ccbs, mpath_ccb);
-
 struct mpath_dev {
 	struct mutex		 d_mtx;
 
-	struct mpath_ccbs	 d_ccbs;
+	struct scsi_xfer_list	 d_xfers;
 	struct mpath_paths	 d_paths;
 	struct mpath_path	*d_next_path;
 
@@ -65,8 +58,6 @@ struct mpath_dev {
 struct mpath_softc {
 	struct device		sc_dev;
 	struct scsi_link	sc_link;
-	struct pool		sc_ccb_pool;
-	struct scsi_iopool	sc_iopool;
 	struct scsibus_softc	*sc_scsibus;
 };
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
@@ -101,9 +92,6 @@ struct scsi_adapter mpath_switch = {
 
 void		mpath_xs_stuffup(struct scsi_xfer *);
 
-void *		mpath_ccb_get(void *);
-void		mpath_ccb_put(void *, void *);
-
 int
 mpath_match(struct device *parent, void *match, void *aux)
 {
@@ -120,19 +108,12 @@ mpath_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	pool_init(&sc->sc_ccb_pool, sizeof(struct mpath_ccb), 0, 0, 0,
-	    "mpathccb", NULL);
-	pool_setipl(&sc->sc_ccb_pool, IPL_BIO);
-
-	scsi_iopool_init(&sc->sc_iopool, sc, mpath_ccb_get, mpath_ccb_put);
-
 	sc->sc_link.adapter = &mpath_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = MPATH_BUSWIDTH;
 	sc->sc_link.adapter_buswidth = MPATH_BUSWIDTH;
 	sc->sc_link.luns = 1;
 	sc->sc_link.openings = 1024; /* XXX magical */
-	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -184,7 +165,6 @@ mpath_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
 	struct mpath_dev *d = mpath_devs[link->target];
-	struct mpath_ccb *ccb = xs->io;
 	struct mpath_path *p;
 	struct scsi_xfer *mxs;
 
@@ -229,10 +209,8 @@ mpath_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	ccb->c_xs = xs;
-
 	mtx_enter(&d->d_mtx);
-	SIMPLEQ_INSERT_TAIL(&d->d_ccbs, ccb, c_entry);
+	SIMPLEQ_INSERT_TAIL(&d->d_xfers, xs, xfer_list);
 	p = mpath_next_path(d, d->d_ops->op_schedule);
 	mtx_leave(&d->d_mtx);
 
@@ -244,7 +222,6 @@ void
 mpath_start(struct mpath_path *p, struct scsi_xfer *mxs)
 {
 	struct mpath_dev *d = p->p_dev;
-	struct mpath_ccb *ccb;
 	struct scsi_xfer *xs;
 	int addxsh = 0;
 
@@ -252,18 +229,16 @@ mpath_start(struct mpath_path *p, struct scsi_xfer *mxs)
 		goto fail;
 
 	mtx_enter(&d->d_mtx);
-	ccb = SIMPLEQ_FIRST(&d->d_ccbs);
-	if (ccb != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&d->d_ccbs, c_entry);
-		if (!SIMPLEQ_EMPTY(&d->d_ccbs))
+	xs = SIMPLEQ_FIRST(&d->d_xfers);
+	if (xs != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&d->d_xfers, xfer_list);
+		if (!SIMPLEQ_EMPTY(&d->d_xfers))
 			addxsh = 1;
 	}
 	mtx_leave(&d->d_mtx);
 
-	if (ccb == NULL)
+	if (xs == NULL)
 		goto fail;
-
-	xs = ccb->c_xs;
 
 	memcpy(mxs->cmd, xs->cmd, xs->cmdlen);
 	mxs->cmdlen = xs->cmdlen;
@@ -292,7 +267,6 @@ mpath_done(struct scsi_xfer *mxs)
 {
 	struct scsi_xfer *xs = mxs->cookie;
 	struct scsi_link *link = xs->sc_link;
-	struct mpath_ccb *ccb = xs->io;
 	struct mpath_dev *d = mpath_devs[link->target];
 	struct mpath_path *p;
 	int next = d->d_ops->op_schedule;
@@ -302,7 +276,7 @@ mpath_done(struct scsi_xfer *mxs)
 		next = MPATH_NEXT;
 	case XS_RESET:
 		mtx_enter(&d->d_mtx);
-		SIMPLEQ_INSERT_HEAD(&d->d_ccbs, ccb, c_entry);
+		SIMPLEQ_INSERT_HEAD(&d->d_xfers, xs, xfer_list);
 		p = mpath_next_path(d, next);
 		mtx_leave(&d->d_mtx);
 
@@ -407,7 +381,7 @@ mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
 
 		mtx_init(&d->d_mtx, IPL_BIO);
 		TAILQ_INIT(&d->d_paths);
-		SIMPLEQ_INIT(&d->d_ccbs);
+		SIMPLEQ_INIT(&d->d_xfers);
 		d->d_id = devid_copy(link->id);
 		d->d_ops = ops;
 
@@ -429,7 +403,7 @@ mpath_path_attach(struct mpath_path *p, const struct mpath_ops *ops)
 		d->d_next_path = p;
 	TAILQ_INSERT_TAIL(&d->d_paths, p, p_entry);
 	d->d_path_count++;
-	if (!SIMPLEQ_EMPTY(&d->d_ccbs))
+	if (!SIMPLEQ_EMPTY(&d->d_xfers))
 		addxsh = 1;
 	mtx_leave(&d->d_mtx);
 
@@ -459,7 +433,7 @@ mpath_path_detach(struct mpath_path *p)
 		d->d_next_path = TAILQ_FIRST(&d->d_paths);
 
 	d->d_path_count--;
-	if (!SIMPLEQ_EMPTY(&d->d_ccbs))
+	if (!SIMPLEQ_EMPTY(&d->d_xfers))
 		np = d->d_next_path;
 	mtx_leave(&d->d_mtx);
 
@@ -469,22 +443,6 @@ mpath_path_detach(struct mpath_path *p)
 		scsi_xsh_add(&np->p_xsh);
 
 	return (0);
-}
-
-void *
-mpath_ccb_get(void *cookie)
-{
-	struct mpath_softc *sc = cookie;
-
-	return (pool_get(&sc->sc_ccb_pool, PR_NOWAIT));
-}
-
-void
-mpath_ccb_put(void *cookie, void *io)
-{
-	struct mpath_softc *sc = cookie;
-
-	pool_put(&sc->sc_ccb_pool, io);
 }
 
 struct device *
