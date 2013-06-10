@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.5 2013/06/08 17:07:31 brad Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.6 2013/06/10 00:49:26 brad Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -170,6 +170,10 @@ void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
 int vmxnet3_media_change(struct ifnet *);
 static void *dma_allocmem(struct vmxnet3_softc *, u_int, u_int, bus_addr_t *);
 
+const struct pci_matchid vmx_devices[] = {
+	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET_3 }
+};
+
 struct cfattach vmx_ca = {
 	sizeof(struct vmxnet3_softc), vmxnet3_match, vmxnet3_attach
 };
@@ -181,13 +185,7 @@ struct cfdriver vmx_cd = {
 int
 vmxnet3_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	switch (pa->pa_id) {
-	case PCI_ID_CODE(PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET_3):
-		return 1;
-	}
-	return 0;
+	return (pci_matchbyid(aux, vmx_devices, nitems(vmx_devices)));
 }
 
 void
