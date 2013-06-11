@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.172 2013/06/11 01:01:15 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.173 2013/06/11 13:29:50 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -583,13 +583,13 @@ m_defrag(struct mbuf *m, int how)
 	 * original mbuf chain.
 	 */
 	if (m0->m_flags & M_EXT) {
-		bcopy(&m0->m_ext, &m->m_ext, sizeof(struct mbuf_ext));
+		memcpy(&m->m_ext, &m0->m_ext, sizeof(struct mbuf_ext));
 		MCLINITREFERENCE(m);
 		m->m_flags |= M_EXT|M_CLUSTER;
 		m->m_data = m->m_ext.ext_buf;
 	} else {
 		m->m_data = m->m_pktdat;
-		bcopy(m0->m_data, m->m_data, m0->m_len);
+		memcpy(m->m_data, m0->m_data, m0->m_len);
 	}
 	m->m_pkthdr.len = m->m_len = m0->m_len;
 	m->m_pkthdr.pf.hdr = NULL;	/* altq will cope */
