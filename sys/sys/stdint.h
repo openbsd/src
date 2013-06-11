@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdint.h,v 1.7 2012/01/05 20:37:50 kettenis Exp $	*/
+/*	$OpenBSD: stdint.h,v 1.8 2013/06/11 15:59:16 matthew Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -95,7 +95,6 @@ typedef	__uintptr_t		uintptr_t;
 typedef	__intmax_t		intmax_t;
 typedef	__uintmax_t		uintmax_t;
 
-#if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS)
 /*
  * 7.18.2 Limits of specified-width integer types.
  *
@@ -200,9 +199,6 @@ typedef	__uintmax_t		uintmax_t;
 #define	WINT_MIN		INT32_MIN
 #define	WINT_MAX		INT32_MAX
 
-#endif /* __cplusplus || __STDC_LIMIT_MACROS */
-
-#if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS)
 /*
  * 7.18.4 Macros for integer constants.
  *
@@ -227,7 +223,5 @@ typedef	__uintmax_t		uintmax_t;
 /* 7.18.4.2 Macros for greatest-width integer constants. */
 #define	INTMAX_C(_c)		__CONCAT(_c, LL)
 #define	UINTMAX_C(_c)		__CONCAT(_c, ULL)
-
-#endif /* __cplusplus || __STDC_CONSTANT_MACROS */
 
 #endif /* _SYS_STDINT_H_ */

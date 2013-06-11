@@ -1,4 +1,4 @@
-/*	$OpenBSD: inttypes.h,v 1.10 2009/01/13 18:13:51 kettenis Exp $	*/
+/*	$OpenBSD: inttypes.h,v 1.11 2013/06/11 15:59:16 matthew Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -25,7 +25,6 @@
 #define __wchar_t	wchar_t
 #endif
 
-#if !defined(__cplusplus) || defined(__STDC_FORMAT_MACROS)
 /*
  * 7.8.1 Macros for format specifiers
  *
@@ -243,8 +242,6 @@
 
 #define	SCNxMAX			"jx"		/* uintmax_t */
 #define	SCNxPTR			"lx"		/* uintptr_t */
-
-#endif /* __cplusplus || __STDC_FORMAT_MACROS */
 
 typedef struct {
 	intmax_t quot;		/* quotient */
