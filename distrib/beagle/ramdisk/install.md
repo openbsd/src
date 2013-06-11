@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2013/06/03 21:10:06 florian Exp $
+#	$OpenBSD: install.md,v 1.5 2013/06/11 16:04:43 florian Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,15 +33,31 @@
 #
 
 md_installboot() {
-	mount /dev/${DISK}i /mnt/mnt
+	local _disk=$1
+	mount /dev/${_disk}i /mnt/mnt
 	/mnt/usr/sbin/chroot /mnt /usr/bin/objcopy -O binary /bsd /bsd.img
 	/mnt/usr/sbin/chroot /mnt /usr/sbin/mkuboot -a arm -o linux \
 		-e 0x80300000 -l 0x80300000 /bsd.img /mnt/bsd.umg
+	cp -r /tmp/u-boots/* /mnt/usr/mdec/
+	BEAGLE=$(scan_dmesg '/^omap0 at mainbus0: \(Beagle\).*/s//\1/p')
+	PANDA=$(scan_dmesg '/^omap0 at mainbus0: \(PandaBoard\)/s//\1/p')
+	if [[ -n $BEAGLE ]]; then
+		cp /mnt/usr/mdec/beagle/{mlo,u-boot.bin} /mnt/mnt/
+	elif [[ -n $PANDA ]]; then
+		cp /mnt/usr/mdec/panda/{mlo,u-boot.bin} /mnt/mnt/
+	fi
+	cat > /mnt/mnt/uenv.txt<<__EOT
+bootcmd=mmc rescan ; setenv loadaddr 0x82800000 ; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 \${loadaddr} bsd.umg ; bootm \${loadaddr} ;
+uenvcmd=boot
+__EOT
 }
 
 md_prep_fdisk() {
 	local _disk=$1 _q _d
 
+	mount /dev/sd0i /mnt2
+	cp -r /mnt2/u-boots/ /tmp/
+	umount /mnt2
 	while :; do
 		_d=whole
 		if [[ -n $(fdisk $_disk | grep 'Signature: 0xAA55') ]]; then
@@ -56,23 +72,38 @@ md_prep_fdisk() {
 		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
 		w*|W*)
-			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
+			echo -n "Creating a FAT partition and an OpenBSD partition for rest of $_disk..."
 			fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
-update
+e 0
+C
+n
+64
+32768
+f 0
+e 3
+A6
+n
+32832
+
 write
 quit
 __EOT
 			echo "done."
+			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
+			newfs -t msdos ${_disk}i
 			return ;;
 		e*|E*)
 			# Manually configure the MBR.
 			cat <<__EOT
 
-You will now create a single MBR partition to contain your OpenBSD data. This
-partition must have an id of 'A6'; must *NOT* overlap other partitions; and
-must be marked as the only active partition.  Inside the fdisk command, the
-'manual' command describes all the fdisk commands in detail.
+You will now create one MBR partition to contain your OpenBSD data
+and one MBR partition on which kernels are located which are loaded
+by U-Boot. Neither partition will overlap any other partition.
+
+The OpenBSD MBR partition will have an id of 'A6' and the boot MBR
+partition will have an id of 'C' (MSDOS). The boot partition will be
+at least 16MB and be the first 'MSDOS' partition on the disk.
 
 $(fdisk ${_disk})
 __EOT
