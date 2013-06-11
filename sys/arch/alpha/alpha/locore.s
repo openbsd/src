@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.35 2012/11/01 21:09:17 miod Exp $ */
+/* $OpenBSD: locore.s,v 1.36 2013/06/11 21:16:14 deraadt Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -973,8 +973,8 @@ LEAF(memcpy,3)
 XLEAF(bcopy,3)
 XLEAF(ovbcopy,3)
 
-	/* Check for negative length */
-	ble	a2,bcopy_done
+	/* Check for zero length */
+	beq	a2,bcopy_done
 
 	/* Check for overlap */
 	subq	a1,a0,t5

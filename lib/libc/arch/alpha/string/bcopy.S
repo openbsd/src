@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.5 2005/08/07 16:40:13 espie Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.6 2013/06/11 21:16:15 deraadt Exp $	*/
 /*	$NetBSD: bcopy.S,v 1.3 1996/10/17 03:08:11 cgd Exp $	*/
 
 /*
@@ -67,8 +67,8 @@ LEAF(FUNCTION,3)
 	mov	DSTREG,v0
 #endif
 
-	/* Check for negative length */
-	ble	SIZEREG,bcopy_done
+	/* Check for zero length */
+	beq	SIZEREG,bcopy_done
 
 	/* Check for overlap */
 	subq	DSTREG,SRCREG,t5
