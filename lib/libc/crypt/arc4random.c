@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.23 2012/06/24 18:25:12 matthew Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.24 2013/06/11 16:59:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -120,8 +120,7 @@ arc4_stir_if_needed(void)
 {
 	pid_t pid = getpid();
 
-	if (arc4_count <= 0 || !rs_initialized || arc4_stir_pid != pid)
-	{
+	if (arc4_count <= 0 || !rs_initialized || arc4_stir_pid != pid) {
 		arc4_stir_pid = pid;
 		arc4_stir();
 	}
