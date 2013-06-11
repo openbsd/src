@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.22 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.23 2013/06/11 18:15:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -1050,8 +1050,8 @@ cfxga_copycols(void *cookie, int row, int src, int dst, int num)
 	int sx, dx, y, cx, cy;
 
 	/* Copy columns in backing store. */
-	ovbcopy(scr->scr_mem + row * ri->ri_cols + src,
-	    scr->scr_mem + row * ri->ri_cols + dst,
+	memmove(scr->scr_mem + row * ri->ri_cols + dst,
+	    scr->scr_mem + row * ri->ri_cols + src,
 	    num * sizeof(struct wsdisplay_charcell));
 
 	if (scr != scr->scr_sc->sc_active)
@@ -1073,8 +1073,8 @@ cfxga_copyrows(void *cookie, int src, int dst, int num)
 	int x, sy, dy, cx, cy;
 
 	/* Copy rows in backing store. */
-	ovbcopy(scr->scr_mem + src * ri->ri_cols,
-	    scr->scr_mem + dst * ri->ri_cols,
+	memmove(scr->scr_mem + dst * ri->ri_cols,
+	    scr->scr_mem + src * ri->ri_cols,
 	    num * ri->ri_cols * sizeof(struct wsdisplay_charcell));
 
 	if (scr != scr->scr_sc->sc_active)
@@ -1144,8 +1144,8 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 		scr->scr_mem[row * ri->ri_cols + x].attr = attr;
 	}
 	for (y = 1; y < num; y++)
-		ovbcopy(scr->scr_mem + row * ri->ri_cols,
-		    scr->scr_mem + (row + y) * ri->ri_cols,
+		memmove(scr->scr_mem + (row + y) * ri->ri_cols,
+		    scr->scr_mem + row * ri->ri_cols,
 		    ri->ri_cols * sizeof(struct wsdisplay_charcell));
 
 	if (scr != scr->scr_sc->sc_active)

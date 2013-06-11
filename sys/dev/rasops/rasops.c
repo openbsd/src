@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.24 2013/05/17 12:03:11 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.25 2013/06/11 18:15:55 deraadt Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -698,7 +698,7 @@ rasops_copycols(void *cookie, int row, int src, int dst, int num)
 #endif
 	{
 		while (height--) {
-			ovbcopy(sp, dp, num);
+			memmove(dp, sp, num);
 			dp += ri->ri_stride;
 			sp += ri->ri_stride;
 		}
@@ -1205,7 +1205,7 @@ rasops_copychar(void *cookie, int srcrow, int dstrow, int srccol, int dstcol)
 #endif
 	{
 		while (height--) {
-			ovbcopy(sp, dp, ri->ri_xscale);
+			memmove(dp, sp, ri->ri_xscale);
 			dp += ri->ri_stride;
 			sp += ri->ri_stride;
 		}
@@ -1517,7 +1517,7 @@ rasops_vcons_copycols(void *cookie, int row, int src, int dst, int num)
 	struct rasops_screen *scr = cookie;
 	int cols = scr->rs_ri->ri_cols;
 
-	ovbcopy(&scr->rs_bs[row * cols + src], &scr->rs_bs[row * cols + dst],
+	memmove(&scr->rs_bs[row * cols + dst], &scr->rs_bs[row * cols + src],
 	    num * sizeof(struct wsdisplay_charcell));
 
 	if (!scr->rs_visible)
@@ -1550,7 +1550,7 @@ rasops_vcons_copyrows(void *cookie, int src, int dst, int num)
 	struct rasops_screen *scr = cookie;
 	int cols = scr->rs_ri->ri_cols;
 
-	ovbcopy(&scr->rs_bs[src * cols], &scr->rs_bs[dst * cols],
+	memmove(&scr->rs_bs[dst * cols], &scr->rs_bs[src * cols],
 	    num * cols * sizeof(struct wsdisplay_charcell));
 
 	if (!scr->rs_visible)

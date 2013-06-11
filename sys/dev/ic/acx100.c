@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.22 2012/10/27 16:13:28 claudio Exp $ */
+/*	$OpenBSD: acx100.c,v 1.23 2013/06/11 18:15:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -732,7 +732,7 @@ acx100_proc_wep_rxbuf(struct acx_softc *sc, struct mbuf *m, int *len)
 	*len = *len - IEEEWEP_EXLEN;
 
 	/* Move MAC header toward frame body */
-	ovbcopy(f, (uint8_t *)f + IEEEWEP_IVLEN, mac_hdrlen);
+	memmove((uint8_t *)f + IEEEWEP_IVLEN, f, mac_hdrlen);
 	m_adj(m, IEEEWEP_IVLEN);
 
 #undef IEEEWEP_EXLEN

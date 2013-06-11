@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.106 2013/04/11 12:06:25 mpi Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.107 2013/06/11 18:15:53 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -500,7 +500,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 							addr[i].s6_addr16[1] = 0;
 
 					finaldst = addr[rh0->ip6r0_segleft - 1];
-					ovbcopy(&addr[0], &addr[1],
+					memmove(&addr[1], &addr[0],
 					    sizeof(struct in6_addr) *
 					    (rh0->ip6r0_segleft - 1));
 

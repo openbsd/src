@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.17 2009/09/05 14:49:20 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.18 2013/06/11 18:15:55 deraadt Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -70,8 +70,8 @@ wsemul_vt100_scrollup(struct wsemul_vt100_emuldata *edp, int n)
 		return rc;
 	if (edp->dblwid) {
 		if (help > 0)
-			ovbcopy(&edp->dblwid[edp->scrreg_startrow + n],
-			    &edp->dblwid[edp->scrreg_startrow], help);
+			memmove(&edp->dblwid[edp->scrreg_startrow],
+			    &edp->dblwid[edp->scrreg_startrow + n], help);
 		memset(&edp->dblwid[edp->scrreg_startrow + help], 0, n);
 	}
 	CHECK_DW;
@@ -105,8 +105,8 @@ wsemul_vt100_scrolldown(struct wsemul_vt100_emuldata *edp, int n)
 		return rc;
 	if (edp->dblwid) {
 		if (help > 0)
-			ovbcopy(&edp->dblwid[edp->scrreg_startrow],
-			    &edp->dblwid[edp->scrreg_startrow + n], help);
+			memmove(&edp->dblwid[edp->scrreg_startrow + n],
+			    &edp->dblwid[edp->scrreg_startrow], help);
 		memset(&edp->dblwid[edp->scrreg_startrow], 0, n);
 	}
 	CHECK_DW;

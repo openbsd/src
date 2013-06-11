@@ -1,4 +1,4 @@
-/*	$OpenBSD: slcompress.c,v 1.9 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: slcompress.c,v 1.10 2013/06/11 18:15:53 deraadt Exp $	*/
 /*	$NetBSD: slcompress.c,v 1.17 1997/05/17 21:12:10 christos Exp $	*/
 
 /*
@@ -59,10 +59,6 @@
 
 #define BCMP(p1, p2, n) bcmp((char *)(p1), (char *)(p2), (int)(n))
 #define BCOPY(p1, p2, n) bcopy((char *)(p1), (char *)(p2), (int)(n))
-#ifndef _KERNEL
-#define ovbcopy bcopy
-#endif
-
 
 void
 sl_compress_init(comp)
@@ -456,7 +452,7 @@ sl_uncompress_tcp(bufp, len, type, comp)
 	 */
 	if ((long)cp & 3) {
 		if (len > 0)
-			(void) ovbcopy(cp, (caddr_t)((long)cp &~ 3), len);
+			(void) memmove((caddr_t)((long)cp &~ 3), cp, len);
 		cp = (u_char *)((long)cp &~ 3);
 	}
 	cp -= hlen;

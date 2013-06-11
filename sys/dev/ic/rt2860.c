@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.67 2012/10/12 19:53:24 haesbaert Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.68 2013/06/11 18:15:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1312,7 +1312,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		/* HW may insert 2 padding bytes after 802.11 header */
 		if (rxd->flags & htole32(RT2860_RX_L2PAD)) {
 			u_int hdrlen = ieee80211_get_hdrlen(wh);
-			ovbcopy(wh, (caddr_t)wh + 2, hdrlen);
+			memmove((caddr_t)wh + 2, wh, hdrlen);
 			m->m_data += 2;
 			wh = mtod(m, struct ieee80211_frame *);
 		}

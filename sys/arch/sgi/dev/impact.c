@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.2 2012/04/19 21:02:27 miod Exp $	*/
+/*	$OpenBSD: impact.c,v 1.3 2013/06/11 18:15:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2012 Miodrag Vallat.
@@ -633,7 +633,7 @@ impact_copycols(void *cookie, int row, int src, int dst, int num)
 
 	/* Copy columns in backing store. */
 	cell = scr->bs + row * ri->ri_cols;
-	ovbcopy(cell + src, cell + dst,
+	memmove(cell + dst, cell + src,
 	    num * sizeof(struct wsdisplay_charcell));
 
 	/* Repaint affected area */
@@ -681,7 +681,7 @@ impact_copyrows(void *cookie, int src, int dst, int num)
 
 	/* Copy rows in backing store. */
 	cell = scr->bs + dst * ri->ri_cols;
-	ovbcopy(scr->bs + src * ri->ri_cols, cell,
+	memmove(cell, scr->bs + src * ri->ri_cols,
 	    num * ri->ri_cols * sizeof(struct wsdisplay_charcell));
 
 	/* Repaint affected area */
@@ -708,8 +708,8 @@ impact_eraserows(void *cookie, int row, int num, long attr)
 		cell->attr = attr;
 	}
 	for (y = 1; y < num; y++)
-		ovbcopy(scr->bs + row * ri->ri_cols,
-		    scr->bs + (row + y) * ri->ri_cols,
+		memmove(scr->bs + (row + y) * ri->ri_cols,
+		    scr->bs + row * ri->ri_cols,
 		    ri->ri_cols * sizeof(struct wsdisplay_charcell));
 
 	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);

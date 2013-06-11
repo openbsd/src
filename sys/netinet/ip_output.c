@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.240 2013/06/05 02:25:05 lteo Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.241 2013/06/11 18:15:53 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -945,7 +945,7 @@ ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 		m->m_data -= optlen;
 		m->m_len += optlen;
 		m->m_pkthdr.len += optlen;
-		ovbcopy((caddr_t)ip, mtod(m, caddr_t), sizeof(struct ip));
+		memmove(mtod(m, caddr_t), (caddr_t)ip, sizeof(struct ip));
 	}
 	ip = mtod(m, struct ip *);
 	bcopy((caddr_t)p->ipopt_list, (caddr_t)(ip + 1), optlen);
@@ -1653,7 +1653,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	cnt = m->m_len;
 	m->m_len += sizeof(struct in_addr);
 	cp = mtod(m, u_char *) + sizeof(struct in_addr);
-	ovbcopy(mtod(m, caddr_t), (caddr_t)cp, (unsigned)cnt);
+	memmove((caddr_t)cp, mtod(m, caddr_t), (unsigned)cnt);
 	bzero(mtod(m, caddr_t), sizeof(struct in_addr));
 
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
@@ -1699,9 +1699,9 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			 * Then copy rest of options back
 			 * to close up the deleted entry.
 			 */
-			ovbcopy((caddr_t)(&cp[IPOPT_OFFSET+1] +
-			    sizeof(struct in_addr)),
-			    (caddr_t)&cp[IPOPT_OFFSET+1],
+			memmove((caddr_t)&cp[IPOPT_OFFSET+1],
+			    (caddr_t)(&cp[IPOPT_OFFSET+1] +
+			    sizeof(struct in_addr)),			    
 			    (unsigned)cnt - (IPOPT_OFFSET+1));
 			break;
 		}

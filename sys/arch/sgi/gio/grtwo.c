@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.5 2012/05/10 21:29:28 miod Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.6 2013/06/11 18:15:55 deraadt Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -661,7 +661,7 @@ grtwo_copycols(void *c, int row, int src, int dst, int ncol)
 
 	/* Copy columns in backing store. */
 	cell = dc->dc_bs + row * ri->ri_cols;
-	ovbcopy(cell + src, cell + dst, ncol * sizeof(*cell));
+	memmove(cell + dst, cell + src, ncol * sizeof(*cell));
 
 	if (src > dst) {
 		/* may overlap, copy cell by cell */
@@ -717,7 +717,7 @@ grtwo_copyrows(void *c, int src, int dst, int nrow)
 
 	/* Copy rows in backing store. */
 	cell = dc->dc_bs + dst * ri->ri_cols;
-	ovbcopy(dc->dc_bs + src * ri->ri_cols, cell,
+	memmove(cell, dc->dc_bs + src * ri->ri_cols,
 	    nrow * ri->ri_cols * sizeof(*cell));
 
 	if (src > dst) {
@@ -754,8 +754,8 @@ grtwo_eraserows(void *c, int startrow, int nrow, long attr)
 		cell->attr = attr;
 	}
 	for (i = 1; i < nrow; i++)
-		ovbcopy(dc->dc_bs + startrow * ri->ri_cols,
-		    dc->dc_bs + (startrow + i) * ri->ri_cols,
+		memmove(dc->dc_bs + (startrow + i) * ri->ri_cols,
+		    dc->dc_bs + startrow * ri->ri_cols,
 		    ri->ri_cols * sizeof(*cell));
 
 	ri->ri_ops.unpack_attr(ri, attr, &fg, &bg, NULL);
