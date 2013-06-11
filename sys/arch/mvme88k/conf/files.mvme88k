@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.49 2013/05/23 21:20:12 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.50 2013/06/11 21:06:31 miod Exp $
 #
 maxpartitions 16
 
@@ -46,6 +46,7 @@ attach	cl at pcctwo
 file	arch/mvme88k/dev/cl.c				cl needs-count
 
 device	dart: tty
+file	dev/ic/mc68681.c				dart
 attach	dart at angelfire, syscon
 file	arch/mvme88k/dev/dart.c				dart needs-count
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.56 2013/05/17 22:46:28 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.57 2013/06/11 21:06:31 miod Exp $	*/
 /*
  * Copyright (c) 2009, 2013 Miodrag Vallat.
  *
@@ -150,8 +150,9 @@
 #include <machine/m8820x.h>
 #include <machine/mvme188.h>
 
-#include <dev/ic/z8536reg.h>
 #include <mvme88k/mvme88k/clockvar.h>
+#include <dev/ic/mc68681reg.h>
+#include <dev/ic/z8536reg.h>
 
 #ifdef MULTIPROCESSOR
 #include <machine/db_machdep.h>
@@ -896,23 +897,6 @@ m188_intsrc_disestablish(u_int intsrc, struct intrhand *ih)
  * Clock routines
  */
 
-void	m188_cio_init(u_int);
-u_int	read_cio(int);
-void	write_cio(int, u_int);
-
-int	m188_clockintr(void *);
-int	m188_calibrateintr(void *);
-int	m188_statintr(void *);
-u_int	m188_cio_get_timecount(struct timecounter *);
-
-volatile int	m188_calibrate_phase = 0;
-
-uint32_t	cio_step;
-uint32_t	cio_refcnt;
-uint32_t	cio_lastcnt;
-
-struct mutex cio_mutex = MUTEX_INITIALIZER(IPL_CLOCK);
-
 /*
  * Notes on the MVME188 clock usage:
  *
@@ -934,7 +918,8 @@ struct mutex cio_mutex = MUTEX_INITIALIZER(IPL_CLOCK);
  *   resume counting down the initial count value.
  *
  * Also, while the Z8536 has a very reliable 4MHz clock source, the
- * 3.6864MHz clock source of the DUART timers does not seem to be correct.
+ * 3.6864MHz clock source of the DUART timers does not seem to be precise
+ * enough (and is apparently slowed down when there are four processors).
  *
  * As a result, clock is run on a Z8536 counter, kept in counter mode and
  * retriggered every interrupt, while statclock is run on a DUART counter,
@@ -945,14 +930,24 @@ struct mutex cio_mutex = MUTEX_INITIALIZER(IPL_CLOCK);
  * counters interrupt at the same time...
  */
 
-#define	DART_ISR		0xfff82017	/* interrupt status */
-#define	DART_IVR		0xfff82033	/* interrupt vector */
-#define	DART_STARTC		0xfff8203b	/* start counter cmd */
-#define	DART_STOPC		0xfff8203f	/* stop counter cmd */
-#define	DART_ACR		0xfff82013	/* auxiliary control */
-#define	DART_CTUR		0xfff8201b	/* counter/timer MSB */
-#define	DART_CTLR		0xfff8201f	/* counter/timer LSB */
-#define	DART_OPCR		0xfff82037	/* output port config*/
+#define	DART_REG(x)	((volatile uint8_t *)(DART_BASE | ((x) << 2) | 0x03))
+
+void	m188_cio_init(u_int);
+u_int	read_cio(int);
+void	write_cio(int, u_int);
+
+int	m188_clockintr(void *);
+int	m188_calibrateintr(void *);
+int	m188_statintr(void *);
+u_int	m188_cio_get_timecount(struct timecounter *);
+
+volatile int	m188_calibrate_phase = 0;
+
+uint32_t	cio_step;
+uint32_t	cio_refcnt;
+uint32_t	cio_lastcnt;
+
+struct mutex cio_mutex = MUTEX_INITIALIZER(IPL_CLOCK);
 
 struct timecounter m188_cio_timecounter = {
 	m188_cio_get_timecount,
@@ -967,7 +962,6 @@ struct timecounter m188_cio_timecounter = {
 void
 m188_init_clocks(void)
 {
-	volatile u_int8_t imr;
 	int statint, minint;
 	u_int iter, divisor;
 	u_int32_t psr;
@@ -1005,17 +999,17 @@ m188_init_clocks(void)
 	statmin = statint - (statvar >> 1);
 
 	/* clear the counter/timer output OP3 while we program the DART */
-	*(volatile u_int8_t *)DART_OPCR = 0x00;
+	*DART_REG(DART_OPCR) = DART_OPCR_OP3;
 	/* do the stop counter/timer command */
-	imr = *(volatile u_int8_t *)DART_STOPC;
+	(void)*DART_REG(DART_CTSTOP);
 	/* set counter/timer to counter mode, PCLK/16 */
-	*(volatile u_int8_t *)DART_ACR = 0x30;
-	*(volatile u_int8_t *)DART_CTUR = (statint >> 8);
-	*(volatile u_int8_t *)DART_CTLR = (statint & 0xff);
-	/* set the counter/timer output OP3 */
-	*(volatile u_int8_t *)DART_OPCR = 0x04;
+	*DART_REG(DART_ACR) = DART_ACR_CT_COUNTER_CLK_16 | DART_ACR_BRG_SET_1;
+	*DART_REG(DART_CTUR) = statint >> 8;
+	*DART_REG(DART_CTLR) = statint & 0xff;
 	/* give the start counter/timer command */
-	imr = *(volatile u_int8_t *)DART_STARTC;
+	(void)*DART_REG(DART_CTSTART);
+	/* set the counter/timer output OP3 */
+	*DART_REG(DART_OPCR) = DART_OPCR_CT_OUTPUT;
 
 	statclock_ih.ih_fn = m188_statintr;
 	statclock_ih.ih_arg = 0;
@@ -1094,12 +1088,11 @@ m188_clockintr(void *eframe)
 int
 m188_statintr(void *eframe)
 {
-	volatile u_int8_t tmp;
 	u_long newint, r, var;
 
 	/* stop counter and acknowledge interrupt */
-	tmp = *(volatile u_int8_t *)DART_STOPC;
-	tmp = *(volatile u_int8_t *)DART_ISR;
+	(void)*DART_REG(DART_CTSTOP);
+	(void)*DART_REG(DART_ISR);
 
 	/*
 	 * Compute new randomized interval.  The intervals are
@@ -1115,9 +1108,9 @@ m188_statintr(void *eframe)
 	newint = statmin + r;
 
 	/* setup new value and restart counter */
-	*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
-	*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
-	tmp = *(volatile u_int8_t *)DART_STARTC;
+	*DART_REG(DART_CTUR) = newint >> 8;
+	*DART_REG(DART_CTLR) = newint & 0xff;
+	(void)*DART_REG(DART_CTSTART);
 
 	statclock((struct clockframe *)eframe);
 

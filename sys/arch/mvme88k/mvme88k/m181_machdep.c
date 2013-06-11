@@ -1,4 +1,4 @@
-/*	$OpenBSD: m181_machdep.c,v 1.2 2013/05/25 15:09:40 miod Exp $	*/
+/*	$OpenBSD: m181_machdep.c,v 1.3 2013/06/11 21:06:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -40,7 +40,7 @@
 #include <machine/mvme181.h>
 
 #include <mvme88k/mvme88k/clockvar.h>
-#include <mvme88k/dev/dartreg.h>
+#include <dev/ic/mc68681reg.h>
 
 const struct pmap_table m181_pmap_table[] = {
 	{ M181_SSR,		PAGE_SIZE,	UVM_PROT_RW, CACHE_INH },
@@ -132,7 +132,7 @@ m181_bootstrap()
  * extra memory.
  *
  * However, Motorola eventually produced 16MB and 32MB MVME224A boards, and
- * the MVME224 documentation says up top five MVME224 boards may be present
+ * the MVME224 documentation says up to five MVME224 boards may be present
  * in the same chassis, when using them in VSB configuration (which hints
  * that more than five may be possible, in VME configuration).
  *
@@ -195,8 +195,8 @@ m181_memsize()
 void
 m181_reboot(int howto)
 {
-	printf("Reboot not available on MVME181. "
-	    "Please manually reset the board.\n");
+	printf("Reboot not available on MVME%x. "
+	    "Please manually reset the board.\n", brdtyp);
 }
 
 /*
@@ -671,11 +671,11 @@ m181_init_clocks(void)
 	m181_clkint >>= 1;
 
 	/* clear the counter/timer output OP3 while we program the DART */
-	*DART_REG(DART_OPCR) = 0x00;
+	*DART_REG(DART_OPCR) = DART_OPCR_OP3;
 	/* do the stop counter/timer command */
 	(void)*DART_REG(DART_CTSTOP);
 	/* set counter/timer to timer mode, PCLK/16 */
-	*DART_REG(DART_ACR) = 0x70 | BDSET1;
+	*DART_REG(DART_ACR) = DART_ACR_BRG_SET_2 | DART_ACR_CT_TIMER_CLK_16;
 	*DART_REG(DART_CTUR) = m181_clkint >> 8;
 	*DART_REG(DART_CTLR) = m181_clkint & 0xff;
 	/* give the start counter/timer command */
@@ -696,7 +696,7 @@ m181_clockintr(void *eframe)
 	u_int8_t isr;
 
 	isr = *DART_REG(DART_ISR);
-	if ((isr & ITIMER) == 0)
+	if ((isr & DART_ISR_CT) == 0)
 		return 0;
 
 	/* acknowledge and clear interrupt */
@@ -721,22 +721,22 @@ m181_cpuspeed(const struct mvmeprom_brdid *brdid)
 
 	if (af_cpuspeed == 0) {
 		cycles = 0;
-		/* 10/256 msec gives a value of 9 */
-		clkspan = (3686400 / 16) / 100 / 256;
+		clkspan = (3686400 / 16) / 100;
 
-		*DART_REG(DART_OPCR) = 0x00;
+		*DART_REG(DART_OPCR) = DART_OPCR_OP3;
 		(void)*DART_REG(DART_CTSTOP);
-		*DART_REG(DART_ACR) = CCLK16 | BDSET1;
+		*DART_REG(DART_ACR) =
+		    DART_ACR_BRG_SET_2 | DART_ACR_CT_COUNTER_CLK_16;
 		*DART_REG(DART_CTUR) = clkspan >> 8;
 		*DART_REG(DART_CTLR) = clkspan & 0xff;
 		(void)*DART_REG(DART_CTSTART);
 
 		do {
 			cycles++;
-		} while ((*DART_REG(DART_ISR) & ITIMER) == 0);
+		} while ((*DART_REG(DART_ISR) & DART_ISR_CT) == 0);
 		(void)*DART_REG(DART_CTSTOP);
 
-		if (cycles < 45)
+		if (cycles < 10000)	/* observed ~9220 @20MHz */
 			af_cpuspeed = 20;
 		else
 			af_cpuspeed = 25;
