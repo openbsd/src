@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.148 2013/06/11 19:01:20 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.149 2013/06/11 21:51:55 tedu Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ buf_put(struct buf *bp)
 	bcstats.numbufs--;
 
 	if (buf_dealloc_mem(bp) != 0)
-		 return;
+		return;
 	pool_put(&bufpool, bp);
 }
 
@@ -223,8 +223,8 @@ bufinit(void)
 	KASSERT(bufcachepercent <= 90);
 	KASSERT(bufcachepercent >= 5);
 	if (bufpages == 0)
-		bufpages = (b_dmapages_total + b_highpages_total)
-		    * bufcachepercent / 100;
+		bufpages = (b_dmapages_total + b_highpages_total) *
+		    bufcachepercent / 100;
 	if (bufpages < BCACHE_MIN)
 		bufpages = BCACHE_MIN;
 
@@ -326,7 +326,7 @@ bufadjust(int newbufpages)
 	if (!growing && (bcstats.numbufpages > lopages)) {
 		if (bfreeclean(bcstats.numbufpages - lopages,
 			&bufqueues[BQ_CLEANH]) != 0)
-			(void) bfreeclean(bcstats.numbufpages - lopages,
+			(void)bfreeclean(bcstats.numbufpages - lopages,
 			    &bufqueues[BQ_CLEANL]);
 	}
 
@@ -373,17 +373,16 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 		pdelta = bufpages - buflowpages;
 
 	oldbufpages = bufpages;
-	if (b_highpages_total
-	    && (range->ucr_high <= dma_constraint.ucr_high)) {
+	if (b_highpages_total &&
+	    (range->ucr_high <= dma_constraint.ucr_high)) {
 		/*
 		 * Free up DMA accessible memory by moving pages to
 		 * the high range.
 		 */
 		if (bufhigh(pdelta) == 0)
 			return(0); /* we moved enough pages up high */
-		else {
+		else
 			bufadjust(bufpages - pdelta); /* shrink the cache. */
-		}
 	} else {
 		/* Free memory by shrinking the cache. */
 		bufadjust(bufpages - pdelta);
@@ -1026,9 +1025,9 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		 */
 		if (bcstats.numbufpages + npages > hipages) {
 			if (bfreeclean(bcstats.numbufpages - lopages,
-				&bufqueues[BQ_CLEANH]) != 0)
-				(void) bfreeclean(bcstats.numbufpages
-				    - lopages, &bufqueues[BQ_CLEANL]);
+			    &bufqueues[BQ_CLEANH]) != 0)
+				(void)bfreeclean(bcstats.numbufpages -
+				    lopages, &bufqueues[BQ_CLEANL]);
 		}
 
 
@@ -1351,6 +1350,7 @@ bufhigh(int delta)
 	psize_t newdmapages;
 	struct buf *b, *bn;
 	int s;
+
 	if (!b_highpages_total)
 		return(-1);
        	s = splbio();
@@ -1374,10 +1374,10 @@ bufhigh(int delta)
 				buf_release(b);
 			} else {
 				/* free up some high memory and try again. */
-				if (bfreeclean(delta, &bufqueues[BQ_CLEANH])
-				    == 0)
+				if (bfreeclean(delta,
+				    &bufqueues[BQ_CLEANH]) == 0) {
 					goto moveit;
-				else {
+				} else {
 					/* otherwise just free the buffer */
 					buf_release(b);
 					if (b->b_vp) {

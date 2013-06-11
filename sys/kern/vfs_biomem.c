@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.24 2013/06/11 19:01:20 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.25 2013/06/11 21:51:55 tedu Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2012,2013 Bob Beck <beck@openbsd.org>
@@ -333,6 +333,7 @@ buf_realloc_pages(struct buf *bp, struct uvm_constraint_range *where,
 	vaddr_t va;
 	int dma;
   	int i, r;
+
 	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
 
 	splassert(IPL_BIO);
