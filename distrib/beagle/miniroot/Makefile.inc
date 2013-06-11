@@ -30,10 +30,11 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 do_files:
-	cp ${.OBJDIR}/../../../../sys/arch/beagle/stand/boot.scr/boot.scr \
-		${MOUNT_POINT}/boot.scr
+	echo 'bootcmd=mmc rescan ; setenv loadaddr 0x82800000 ; setenv bootargs sd0i:/bsd.umg ; fatload mmc 0 $${loadaddr} bsd.umg ; bootm $${loadaddr} ;\nuenvcmd=boot' > ${MOUNT_POINT}/uenv.txt
 	cp /usr/mdec/${BOARD}/mlo ${MOUNT_POINT}/mlo
 	cp /usr/mdec/${BOARD}/u-boot.bin ${MOUNT_POINT}/u-boot.bin
+	mkdir ${MOUNT_POINT}/u-boots
+	cp -r /usr/mdec/{am335x,beagle,panda} ${MOUNT_POINT}/u-boots
 	objcopy -O binary ${.OBJDIR}/../../ramdisk/bsd.rd \
 		${.OBJDIR}/bsdrd.img
 	mkuboot -a arm -o linux -e 0x80300000 -l 0x80300000 \
