@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.4,v 1.6 2013/06/11 20:16:37 sobrado Exp $
+.\" $OpenBSD: fuse.4,v 1.7 2013/06/11 20:20:52 sobrado Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -19,20 +19,20 @@
 .Os
 .Sh NAME
 .Nm fuse
-.Nd filesystem in userland
+.Nd file system in userland
 .Sh SYNOPSIS
 .Cd "option FUSE"
 .Cd "pseudo-device fuse" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
-device provides a FUSE interface for implementing a filesystem in userland.
+device provides a FUSE interface for implementing a file system in userland.
 Each fuse mount will use a
 .Nm
 device so up to
 .Fa count
 .Nm
-mountpoints are possible.
+mount points are possible.
 .Pp
 This device does not support partial reads and writes.
 .Sh FILES
