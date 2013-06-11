@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.36 2013/02/07 11:06:42 mikeb Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.37 2013/06/11 01:01:15 dlg Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -355,7 +355,7 @@ m_tag_copy_chain(struct mbuf *to, struct mbuf *from, int wait)
 		t = m_tag_copy(p, wait);
 		if (t == NULL) {
 			m_tag_delete_chain(to);
-			return (ENOMEM);
+			return (ENOBUFS);
 		}
 		if (tprev == NULL)
 			SLIST_INSERT_HEAD(&to->m_pkthdr.tags, t, m_tag_link);

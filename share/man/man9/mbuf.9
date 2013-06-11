@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.63 2013/06/05 11:30:23 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.64 2013/06/11 01:01:15 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 11 2013 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -558,7 +558,9 @@ single mbuf or cluster.
 .Fa wait
 specifies whether it can wait or not for the replacement storage.
 .Fn m_defrag
-returns 0 on success or \-1 on failure.
+returns 0 on success or
+.Er ENOBUFS
+on failure.
 The mbuf pointer
 .Fa m
 remains in existence and unchanged on failure.

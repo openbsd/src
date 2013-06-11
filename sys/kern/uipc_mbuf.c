@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.171 2013/03/28 16:55:25 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.172 2013/06/11 01:01:15 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -548,7 +548,7 @@ m_defrag(struct mbuf *m, int how)
 	struct mbuf *m0;
 
 	if (m->m_next == NULL)
-		return 0;
+		return (0);
 
 #ifdef DIAGNOSTIC
 	if (!(m->m_flags & M_PKTHDR))
@@ -556,12 +556,12 @@ m_defrag(struct mbuf *m, int how)
 #endif
 
 	if ((m0 = m_gethdr(how, m->m_type)) == NULL)
-		return -1;
+		return (ENOBUFS);
 	if (m->m_pkthdr.len > MHLEN) {
 		MCLGETI(m0, how, NULL, m->m_pkthdr.len);
 		if (!(m0->m_flags & M_EXT)) {
 			m_free(m0);
-			return -1;
+			return (ENOBUFS);
 		}
 	}
 	m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
@@ -597,7 +597,7 @@ m_defrag(struct mbuf *m, int how)
 	m0->m_flags &= ~(M_EXT|M_CLUSTER);	/* cluster is gone */
 	m_free(m0);
 
-	return 0;
+	return (0);
 }
 
 /*

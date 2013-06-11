@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.29 2013/06/04 19:27:09 schwarze Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.30 2013/06/11 01:01:15 dlg Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: June 11 2013 $
 .Dt MBUF_TAGS 9
 .Os
 .Sh NAME
@@ -236,7 +236,7 @@ to packet
 .Va mbuf2 .
 On success, it returns 0.
 Otherwise, it returns
-.Er ENOMEM .
+.Er ENOBUFS .
 .Pp
 .Fn m_tag_first
 returns the first tag attached to packet
