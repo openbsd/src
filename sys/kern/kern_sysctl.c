@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.236 2013/06/09 13:10:19 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.237 2013/06/11 19:01:20 beck Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -110,6 +110,7 @@ extern struct disklist_head disklist;
 extern fixpt_t ccpu;
 extern  long numvnodes;
 extern u_int mcllivelocks;
+extern psize_t b_dmapages_total, b_highpages_total, b_dmamaxpages;
 
 extern void nmbclust_update(void);
 
@@ -566,8 +567,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
 		    newp, newlen));
 	case KERN_CACHEPCT: {
-		u_int64_t dmapages;
-		int opct, pgs;
+		psize_t pgs;
+		int opct;
 		opct = bufcachepercent;
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &bufcachepercent);
@@ -577,9 +578,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			bufcachepercent = opct;
 			return (EINVAL);
 		}
-		dmapages = uvm_pagecount(&dma_constraint);
 		if (bufcachepercent != opct) {
-			pgs = bufcachepercent * dmapages / 100;
+			pgs = (b_highpages_total + b_dmapages_total)
+			    * bufcachepercent / 100;
+			b_dmamaxpages = b_dmapages_total * bufcachepercent
+			    / 100;
 			bufadjust(pgs); /* adjust bufpages */
 			bufhighpages = bufpages; /* set high water mark */
 		}

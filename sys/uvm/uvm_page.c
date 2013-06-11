@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.125 2013/05/30 16:29:46 tedu Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.126 2013/06/11 19:01:20 beck Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -876,19 +876,21 @@ uvm_pglistfree(struct pglist *list)
  * interface used by the buffer cache to allocate a buffer at a time.
  * The pages are allocated wired in DMA accessible memory
  */
-void
+int
 uvm_pagealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
     int flags)
 {
 	struct pglist    plist;
 	struct vm_page  *pg;
-	int              i;
+	int              i, r;
 
 
 	TAILQ_INIT(&plist);
-	(void) uvm_pglistalloc(size, dma_constraint.ucr_low,
+	r = uvm_pglistalloc(size, dma_constraint.ucr_low,
 	    dma_constraint.ucr_high, 0, 0, &plist, atop(round_page(size)),
-	    UVM_PLA_WAITOK);
+	    flags);
+	if (r != 0)
+		return(r);
 	i = 0;
 	while ((pg = TAILQ_FIRST(&plist)) != NULL) {
 		pg->wire_count = 1;
@@ -897,6 +899,7 @@ uvm_pagealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
 		TAILQ_REMOVE(&plist, pg, pageq);
 		uvm_pagealloc_pg(pg, obj, off + ptoa(i++), NULL);
 	}
+	return(0);
 }
 
 /*
@@ -904,21 +907,23 @@ uvm_pagealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
  * The pages are reallocated wired outside the DMA accessible region.
  *
  */
-void
+int
 uvm_pagerealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
     int flags, struct uvm_constraint_range *where)
 {
 	struct pglist    plist;
 	struct vm_page  *pg, *tpg;
-	int              i;
+	int              i,r;
 	voff_t		offset;
 
 
 	TAILQ_INIT(&plist);
 	if (size == 0)
 		panic("size 0 uvm_pagerealloc");
-	(void) uvm_pglistalloc(size, where->ucr_low, where->ucr_high, 0,
-	    0, &plist, atop(round_page(size)), UVM_PLA_WAITOK);
+	r = uvm_pglistalloc(size, where->ucr_low, where->ucr_high, 0,
+	    0, &plist, atop(round_page(size)), flags);
+	if (r != 0)
+		return(r);
 	i = 0;
 	while((pg = TAILQ_FIRST(&plist)) != NULL) {
 		offset = off + ptoa(i++);
@@ -931,6 +936,7 @@ uvm_pagerealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
 		uvm_pagefree(tpg);
 		uvm_pagealloc_pg(pg, obj, offset, NULL);
 	}
+	return(0);
 }
 
 /*

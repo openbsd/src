@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.85 2013/06/11 16:42:17 deraadt Exp $	*/
+/*	$OpenBSD: buf.h,v 1.86 2013/06/11 19:01:20 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -234,12 +234,14 @@ struct buf {
 #define	B_SCANNED	0x00100000	/* Block already pushed during sync */
 #define	B_PDAEMON	0x00200000	/* I/O started by pagedaemon */
 #define	B_RELEASED	0x00400000	/* free this buffer after its kvm */
+#define B_BC		0x00800000      /* Managed by the Buffer Cache. */
+#define B_DMA		0x01000000      /* DMA reachable. */
 
 #define	B_BITS	"\20\001AGE\002NEEDCOMMIT\003ASYNC\004BAD\005BUSY" \
     "\006CACHE\007CALL\010DELWRI\011DONE\012EINTR\013ERROR" \
     "\014INVAL\015NOCACHE\016PHYS\017RAW\020READ" \
     "\021WANTED\022WRITEINPROG\023XXX(FORMAT)\024DEFERRED" \
-    "\025SCANNED\026DAEMON\027RELEASED"
+    "\025SCANNED\026DAEMON\027RELEASED\030BC\031DMA"
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
@@ -305,6 +307,7 @@ void	bremfree(struct buf *);
 void	bufinit(void);
 void	buf_dirty(struct buf *);
 void    buf_undirty(struct buf *);
+void	buf_dma(struct buf *);
 int	bwrite(struct buf *);
 struct buf *getblk(struct vnode *, daddr_t, int, int, int);
 struct buf *geteblk(int);
@@ -328,7 +331,8 @@ int	buf_dealloc_mem(struct buf *);
 void	buf_fix_mapping(struct buf *, vsize_t);
 void	buf_alloc_pages(struct buf *, vsize_t);
 void	buf_free_pages(struct buf *);
-
+struct uvm_constraint_range;
+int	buf_realloc_pages(struct buf *, struct uvm_constraint_range *, int);
 
 void	minphys(struct buf *bp);
 int	physio(void (*strategy)(struct buf *), dev_t dev, int flags,
