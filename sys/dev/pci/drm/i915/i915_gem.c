@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.23 2013/06/07 20:46:15 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.24 2013/06/11 19:39:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -84,6 +84,9 @@ int i915_gem_wait_for_error(struct drm_device *);
 int __wait_seqno(struct intel_ring_buffer *, uint32_t, bool, struct timespec *);
 int i915_gem_object_create_mmap_offset(struct drm_i915_gem_object *);
 void i915_gem_object_free_mmap_offset(struct drm_i915_gem_object *);
+void *i915_gem_object_alloc(struct drm_device *);
+void i915_gem_object_free(struct drm_i915_gem_object *);
+void i915_gem_object_init(struct drm_i915_gem_object *);
 
 extern int ticks;
 
@@ -216,6 +219,19 @@ i915_gem_get_aperture_ioctl(struct drm_device *dev, void *data,
 	DRM_UNLOCK();
 
 	return 0;
+}
+
+void *
+i915_gem_object_alloc(struct drm_device *dev)
+{
+	return pool_get(&dev->objpl, PR_WAITOK | PR_ZERO);
+}
+
+void
+i915_gem_object_free(struct drm_i915_gem_object *obj)
+{
+	struct drm_device *dev = obj->base.dev;
+	pool_put(&dev->objpl, obj);
 }
 
 int
@@ -2891,35 +2907,42 @@ unlock:
 	return ret;
 }
 
+void
+i915_gem_object_init(struct drm_i915_gem_object *obj)
+{
+	INIT_LIST_HEAD(&obj->mm_list);
+	INIT_LIST_HEAD(&obj->gtt_list);
+	INIT_LIST_HEAD(&obj->ring_list);
+	INIT_LIST_HEAD(&obj->exec_list);
+
+	obj->fence_reg = I915_FENCE_REG_NONE;
+	obj->madv = I915_MADV_WILLNEED;
+	/* Avoid an unnecessary call to unbind on the first bind. */
+	obj->map_and_fenceable = true;
+
+#ifdef notyet
+	i915_gem_info_add_obj(obj->base.dev->dev_private, obj->base.size);
+#endif
+}
+
 struct drm_i915_gem_object *
 i915_gem_alloc_object(struct drm_device *dev, size_t size)
 {
-	struct drm_obj			*obj;
-	struct drm_i915_gem_object	*obj_priv;
+	struct drm_i915_gem_object *obj;
 
-	obj = drm_gem_object_alloc(dev, size);
+	obj = i915_gem_object_alloc(dev);
 	if (obj == NULL)
 		return NULL;
 
-	obj_priv = to_intel_bo(obj);
+	if (drm_gem_object_init(dev, &obj->base, size) != 0) {
+		i915_gem_object_free(obj);
+		return NULL;
+	}
 
-	return (obj_priv);
-}
+	i915_gem_object_init(obj);
 
-int
-i915_gem_init_object(struct drm_obj *obj)
-{
-	struct drm_i915_gem_object *obj_priv = to_intel_bo(obj);
-	struct drm_device *dev = obj->dev;
-
-	/*
-	 * We've just allocated pages from the kernel,
-	 * so they've just been written by the CPU with
-	 * zeros. They'll need to be flushed before we
-	 * use them with the GPU.
-	 */
-	obj->write_domain = I915_GEM_DOMAIN_CPU;
-	obj->read_domains = I915_GEM_DOMAIN_CPU;
+	obj->base.write_domain = I915_GEM_DOMAIN_CPU;
+	obj->base.read_domains = I915_GEM_DOMAIN_CPU;
 
 	if (HAS_LLC(dev)) {
 		/* On some devices, we can have the GPU use the LLC (the CPU
@@ -2934,28 +2957,21 @@ i915_gem_init_object(struct drm_obj *obj)
 		 * However, we maintain the display planes as UC, and so
 		 * need to rebind when first used as such.
 		 */
-		obj_priv->cache_level = I915_CACHE_LLC;
+		obj->cache_level = I915_CACHE_LLC;
 	} else
-		obj_priv->cache_level = I915_CACHE_NONE;
+		obj->cache_level = I915_CACHE_NONE;
 
-	/* normal objects don't need special treatment */
-	obj_priv->dma_flags = 0;
-	obj_priv->fence_reg = I915_FENCE_REG_NONE;
-	obj_priv->madv = I915_MADV_WILLNEED;
-	/* Avoid an unnecessary call to unbind on the first bind. */
-	obj_priv->map_and_fenceable = true;
+	return obj;
+}
 
-	INIT_LIST_HEAD(&obj_priv->mm_list);
-	INIT_LIST_HEAD(&obj_priv->gtt_list);
-	INIT_LIST_HEAD(&obj_priv->ring_list);
+int
+i915_gem_init_object(struct drm_obj *obj)
+{
+	BUG();
 
 	return 0;
 }
 
-/*
- * NOTE all object unreferences in this driver need to hold the DRM_LOCK(),
- * because if they free they poke around in driver structures.
- */
 void
 i915_gem_free_object(struct drm_obj *gem_obj)
 {
@@ -2971,9 +2987,14 @@ i915_gem_free_object(struct drm_obj *gem_obj)
 		i915_gem_object_unpin(obj);
 
 	i915_gem_object_unbind(obj);
+
+	drm_gem_object_release(&obj->base);
+#ifdef notyet
+	i915_gem_info_remove_obj(dev_priv, obj->base.size);
+#endif
+
 	drm_free(obj->bit_17);
-	obj->bit_17 = NULL;
-	/* XXX dmatag went away? */
+	i915_gem_object_free(obj);
 }
 
 int

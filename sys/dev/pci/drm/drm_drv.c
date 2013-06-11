@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.106 2013/06/07 20:46:15 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.107 2013/06/11 19:39:09 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -1374,14 +1374,6 @@ again:
 	 */
 	if (dev->driver->gem_free_object != NULL)
 		dev->driver->gem_free_object(obj);
-
-	uao_detach(obj->uao);
-
-	atomic_dec(&dev->obj_count);
-	atomic_sub(obj->size, &dev->obj_memory);
-	if (obj->do_flags & DRM_WANTED) /* should never happen, not on lists */
-		wakeup(obj);
-	pool_put(&dev->objpl, obj);
 }
 
 /*
@@ -1461,6 +1453,37 @@ drm_gem_object_alloc(struct drm_device *dev, size_t size)
 	atomic_inc(&dev->obj_count);
 	atomic_add(obj->size, &dev->obj_memory);
 	return (obj);
+}
+
+int
+drm_gem_object_init(struct drm_device *dev, struct drm_obj *obj, size_t size)
+{
+	BUG_ON((size & (PAGE_SIZE -1)) != 0);
+
+	obj->dev = dev;
+
+	/* uao create can't fail in the 0 case, it just sleeps */
+	obj->uao = uao_create(size, 0);
+	obj->size = size;
+	uvm_objinit(&obj->uobj, &drm_pgops, 1);
+
+	atomic_inc(&dev->obj_count);
+	atomic_add(obj->size, &dev->obj_memory);
+	return 0;
+}
+
+void
+drm_gem_object_release(struct drm_obj *obj)
+{
+	struct drm_device *dev = obj->dev;
+
+	if (obj->uao)
+		uao_detach(obj->uao);
+
+	atomic_dec(&dev->obj_count);
+	atomic_sub(obj->size, &dev->obj_memory);
+	if (obj->do_flags & DRM_WANTED) /* should never happen, not on lists */
+		wakeup(obj);
 }
 
 int

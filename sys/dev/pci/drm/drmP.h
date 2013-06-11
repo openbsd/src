@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.137 2013/06/07 20:46:14 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.138 2013/06/11 19:39:09 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -914,6 +914,8 @@ int	drm_sg_alloc_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_sg_free(struct drm_device *, void *, struct drm_file *);
 
 struct drm_obj *drm_gem_object_alloc(struct drm_device *, size_t);
+int	 drm_gem_object_init(struct drm_device *, struct drm_obj *, size_t);
+void	 drm_gem_object_release(struct drm_obj *);
 void	 drm_unref(struct uvm_object *);
 void	 drm_ref(struct uvm_object *);
 void	 drm_unref_locked(struct uvm_object *);
