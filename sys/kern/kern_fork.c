@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.151 2013/06/06 13:09:37 haesbaert Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.152 2013/06/11 13:00:31 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -196,14 +196,14 @@ process_new(struct proc *p, struct process *parent)
 	 * Start by zeroing the section of proc that is zero-initialized,
 	 * then copy the section that is copied directly from the parent.
 	 */
-	bzero(&pr->ps_startzero,
-	    (unsigned) ((caddr_t)&pr->ps_endzero - (caddr_t)&pr->ps_startzero));
-	bcopy(&parent->ps_startcopy, &pr->ps_startcopy,
-	    (unsigned) ((caddr_t)&pr->ps_endcopy - (caddr_t)&pr->ps_startcopy));
+	memset(&pr->ps_startzero, 0,
+	    (caddr_t)&pr->ps_endzero - (caddr_t)&pr->ps_startzero);
+	memcpy(&pr->ps_startcopy, &parent->ps_startcopy,
+	    (caddr_t)&pr->ps_endcopy - (caddr_t)&pr->ps_startcopy);
 
 	/* post-copy fixups */
 	pr->ps_cred = pool_get(&pcred_pool, PR_WAITOK);
-	bcopy(parent->ps_cred, pr->ps_cred, sizeof(*pr->ps_cred));
+	memcpy(pr->ps_cred, parent->ps_cred, sizeof(*pr->ps_cred));
 	crhold(parent->ps_cred->pc_ucred);
 	pr->ps_limit->p_refcnt++;
 
@@ -333,10 +333,10 @@ fork1(struct proc *curp, int exitsig, int flags, void *stack, pid_t *tidptr,
 	 * Start by zeroing the section of proc that is zero-initialized,
 	 * then copy the section that is copied directly from the parent.
 	 */
-	bzero(&p->p_startzero,
-	    (unsigned) ((caddr_t)&p->p_endzero - (caddr_t)&p->p_startzero));
-	bcopy(&curp->p_startcopy, &p->p_startcopy,
-	    (unsigned) ((caddr_t)&p->p_endcopy - (caddr_t)&p->p_startcopy));
+	memset(&p->p_startzero, 0,
+	    (caddr_t)&p->p_endzero - (caddr_t)&p->p_startzero);
+	memcpy(&p->p_startcopy, &curp->p_startcopy,
+	    (caddr_t)&p->p_endcopy - (caddr_t)&p->p_startcopy);
 
 	/*
 	 * Initialize the timeouts.
