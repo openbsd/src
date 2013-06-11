@@ -1,3 +1,4 @@
+/* $OpenBSD: am335x_cm_padconf.c,v 1.2 2013/06/11 21:51:07 rapha Exp $ */
 /* $NetBSD: am335x_cm_padconf.c,v 1.2 2013/05/06 18:53:40 rkujawa Exp $ */
 /*-
  * Copyright (c) 2012 Damjan Marion <dmarion@FreeBSD.org>
