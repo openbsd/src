@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.116 2013/06/03 15:54:48 tedu Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.117 2013/06/11 16:42:18 deraadt Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -535,12 +535,12 @@ int VOP_UNLOCK(struct vnode *, int, struct proc *);
 
 struct vop_bmap_args {
 	struct vnode *a_vp;
-	daddr64_t a_bn;
+	daddr_t a_bn;
 	struct vnode **a_vpp;
-	daddr64_t *a_bnp;
+	daddr_t *a_bnp;
 	int *a_runp;
 };
-int VOP_BMAP(struct vnode *, daddr64_t, struct vnode **, daddr64_t *, int *);
+int VOP_BMAP(struct vnode *, daddr_t, struct vnode **, daddr_t *, int *);
 
 struct vop_print_args {
 	struct vnode *a_vp;

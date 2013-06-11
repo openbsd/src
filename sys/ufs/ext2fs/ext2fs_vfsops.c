@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.67 2013/05/30 19:19:09 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.68 2013/06/11 16:42:18 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	error = bread(devvp, (daddr64_t)(SBOFF / DEV_BSIZE), SBSIZE, &bp);
+	error = bread(devvp, (daddr_t)(SBOFF / DEV_BSIZE), SBSIZE, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -506,7 +506,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 #ifdef DEBUG_EXT2
 	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
 #endif
-	error = bread(devvp, (daddr64_t)(SBOFF / DEV_BSIZE), SBSIZE, &bp);
+	error = bread(devvp, (daddr_t)(SBOFF / DEV_BSIZE), SBSIZE, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;

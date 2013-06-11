@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.71 2013/03/28 03:29:44 guenther Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.72 2013/06/11 16:42:16 deraadt Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ spec_read(void *v)
 	struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
-	daddr64_t bn, nextbn, bscale;
+	daddr_t bn, nextbn, bscale;
 	int bsize;
 	struct partinfo dpart;
 	int n, on, majordev;
@@ -283,7 +283,7 @@ spec_write(void *v)
 	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
-	daddr64_t bn, bscale;
+	daddr_t bn, bscale;
 	int bsize;
 	struct partinfo dpart;
 	int n, on, majordev;

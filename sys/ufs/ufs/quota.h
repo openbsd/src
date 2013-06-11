@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.h,v 1.10 2012/12/05 23:20:24 deraadt Exp $	*/
+/*	$OpenBSD: quota.h,v 1.11 2013/06/11 16:42:19 deraadt Exp $	*/
 /*	$NetBSD: quota.h,v 1.6 1995/03/26 20:38:17 jtc Exp $	*/
 
 /*
@@ -128,8 +128,8 @@ __BEGIN_DECLS
 #define ufs_quota_free_blocks(i, c, cr) ufs_quota_free_blocks2(i, c, cr, 0)
 #define ufs_quota_alloc_inode(i, cr) ufs_quota_alloc_inode2(i, cr, 0)
 #define ufs_quota_free_inode(i, cr) ufs_quota_free_inode2(i, cr, 0)
-int     ufs_quota_alloc_blocks2(struct inode *, daddr64_t, struct ucred *, enum ufs_quota_flags);
-int     ufs_quota_free_blocks2(struct inode *, daddr64_t, struct ucred *, enum ufs_quota_flags);
+int     ufs_quota_alloc_blocks2(struct inode *, daddr_t, struct ucred *, enum ufs_quota_flags);
+int     ufs_quota_free_blocks2(struct inode *, daddr_t, struct ucred *, enum ufs_quota_flags);
 int     ufs_quota_alloc_inode2(struct inode *, struct ucred *, enum ufs_quota_flags);
 int     ufs_quota_free_inode2(struct inode *, struct ucred *, enum ufs_quota_flags);
 

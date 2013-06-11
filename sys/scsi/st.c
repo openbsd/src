@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.122 2013/06/06 14:00:44 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.123 2013/06/11 16:42:17 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -2177,7 +2177,7 @@ done:
 }
 
 int
-stdump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+stdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */

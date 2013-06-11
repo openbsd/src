@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.49 2013/05/21 15:01:53 jsing Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.50 2013/06/11 16:42:13 deraadt Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -58,7 +58,7 @@ void	sr_raidp_set_chunk_state(struct sr_discipline *, int, int);
 void	sr_raidp_set_vol_state(struct sr_discipline *);
 
 void	sr_raidp_xor(void *, void *, int);
-int	sr_raidp_addio(struct sr_workunit *wu, int, daddr64_t, daddr64_t,
+int	sr_raidp_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
 	    void *, int, int, void *);
 void	sr_dump(void *, int);
 void	sr_raidp_scrub(struct sr_discipline *);
@@ -337,9 +337,9 @@ sr_raidp_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
 	int			s, i;
-	daddr64_t		blk, lbaoffs, strip_no, chunk, row_size;
-	daddr64_t		strip_size, no_chunk, lba, chunk_offs, phys_offs;
-	daddr64_t		strip_bits, length, parity, strip_offs, datalen;
+	daddr_t			blk, lbaoffs, strip_no, chunk, row_size;
+	daddr_t			strip_size, no_chunk, lba, chunk_offs, phys_offs;
+	daddr_t			strip_bits, length, parity, strip_offs, datalen;
 	void			*xorbuf, *data;
 
 	/* blk and scsi error will be handled by sr_validate_io */
@@ -567,8 +567,8 @@ sr_raidp_wu_done(struct sr_workunit *wu)
 }
 
 int
-sr_raidp_addio(struct sr_workunit *wu, int chunk, daddr64_t blkno,
-    daddr64_t len, void *data, int xsflags, int ccbflags, void *xorbuf)
+sr_raidp_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
+    daddr_t len, void *data, int xsflags, int ccbflags, void *xorbuf)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct sr_ccb		*ccb;
@@ -631,8 +631,8 @@ sr_raidp_xor(void *a, void *b, int len)
 void
 sr_raidp_scrub(struct sr_discipline *sd)
 {
-	daddr64_t strip_no, strip_size, no_chunk, parity, max_strip, strip_bits;
-	daddr64_t i;
+	daddr_t strip_no, strip_size, no_chunk, parity, max_strip, strip_bits;
+	daddr_t i;
 	struct sr_workunit *wu_r, *wu_w;
 	int s, slept;
 	void *xorbuf;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.52 2013/05/21 15:01:53 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.53 2013/06/11 16:42:13 deraadt Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -63,7 +63,7 @@ void	sr_raid6_set_vol_state(struct sr_discipline *);
 
 void	sr_raid6_xorp(void *, void *, int);
 void	sr_raid6_xorq(void *, void *, int, int);
-int	sr_raid6_addio(struct sr_workunit *wu, int, daddr64_t, daddr64_t,
+int	sr_raid6_addio(struct sr_workunit *wu, int, daddr_t, daddr_t,
 	    void *, int, int, void *, void *, int);
 void	sr_dump(void *, int);
 void	sr_raid6_scrub(struct sr_discipline *);
@@ -382,9 +382,9 @@ sr_raid6_rw(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
 	int			s, fail, i, gxinv, pxinv;
-	daddr64_t		blk, lbaoffs, strip_no, chunk, qchunk, pchunk, fchunk;
-	daddr64_t		strip_size, no_chunk, lba, chunk_offs, phys_offs;
-	daddr64_t		strip_bits, length, strip_offs, datalen, row_size;
+	daddr_t			blk, lbaoffs, strip_no, chunk, qchunk, pchunk, fchunk;
+	daddr_t			strip_size, no_chunk, lba, chunk_offs, phys_offs;
+	daddr_t			strip_bits, length, strip_offs, datalen, row_size;
 	void			*pbuf, *data, *qbuf;
 
 	/* blk and scsi error will be handled by sr_validate_io */
@@ -734,8 +734,8 @@ sr_raid6_wu_done(struct sr_workunit *wu)
 }
 
 int
-sr_raid6_addio(struct sr_workunit *wu, int chunk, daddr64_t blkno,
-    daddr64_t len, void *data, int xsflags, int ccbflags, void *pbuf,
+sr_raid6_addio(struct sr_workunit *wu, int chunk, daddr_t blkno,
+    daddr_t len, void *data, int xsflags, int ccbflags, void *pbuf,
     void *qbuf, int gn)
 {
 	struct sr_discipline	*sd = wu->swu_dis;

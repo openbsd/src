@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.270 2013/04/19 14:10:20 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.271 2013/06/11 16:42:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -62,8 +62,8 @@ struct mountinfo {
 /* used when allocating all space according to recommendations */
 
 struct space_allocation {
-	daddr64_t	minsz;	/* starts as blocks, xlated to sectors. */
-	daddr64_t	maxsz;	/* starts as blocks, xlated to sectors. */
+	daddr_t		minsz;	/* starts as blocks, xlated to sectors. */
+	daddr_t		maxsz;	/* starts as blocks, xlated to sectors. */
 	int		rate;	/* % of extra space to use */
 	char	       *mp;
 };
@@ -529,7 +529,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct space_allocation *ap;
 	struct partition *pp;
 	struct diskchunk *chunks;
-	daddr64_t secs, chunkstart, chunksize, cylsecs, totsecs, xtrasecs;
+	daddr_t secs, chunkstart, chunksize, cylsecs, totsecs, xtrasecs;
 	char **partmp;
 	int i, j, lastalloc, index = 0, fragsize, partno;
 	int64_t physmem;
@@ -539,7 +539,7 @@ editor_allocspace(struct disklabel *lp_org)
 
 	overlap = 0;
 	for (i = 0;  i < MAXPARTITIONS; i++) {
-		daddr64_t psz, pstart, pend;
+		daddr_t psz, pstart, pend;
 
 		pp = &lp_org->d_partitions[i];
 		psz = DL_GETPSIZE(pp);
@@ -709,9 +709,9 @@ editor_resize(struct disklabel *lp, char *p)
 {
 	struct disklabel label;
 	struct partition *pp, *prev;
-	daddr64_t secs, sz, off;
+	daddr_t secs, sz, off;
 #ifdef SUN_CYLCHECK
-	daddr64_t cylsecs;
+	daddr_t cylsecs;
 #endif
 	int partno, i;
 
@@ -2318,7 +2318,7 @@ max_partition_size(struct disklabel *lp, int partno)
 }
 
 void
-psize(daddr64_t sz, char unit, struct disklabel *lp)
+psize(daddr_t sz, char unit, struct disklabel *lp)
 {
 	double d = scale(sz, unit, lp);
 	if (d < 0)

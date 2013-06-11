@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.38 2011/09/19 21:23:42 miod Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.39 2013/06/11 16:42:13 deraadt Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -141,7 +141,7 @@ struct	hdcsoftc {
 	caddr_t	sc_dmabase;		/* */
 	int	sc_dmasize;
 	caddr_t sc_bufaddr;		/* Current in-core address */
-	daddr64_t sc_diskblk;		/* Current block on disk */
+	daddr_t sc_diskblk;		/* Current block on disk */
 	int sc_bytecnt;			/* How much left to transfer */
 	int sc_xfer;			/* Current transfer size */
 	int sc_retries;
@@ -495,7 +495,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	struct buf *dp, *bp;
 	int cn, sn, tn, blks;
 	volatile char ch;
-	daddr64_t bn;
+	daddr_t bn;
 
 	splassert(IPL_BIO);
 
@@ -619,7 +619,7 @@ hdc_printgeom(p)
 /*
  * Return the size of a partition, if known, or -1 if not.
  */
-daddr64_t
+daddr_t
 hdsize(dev_t dev)
 {
 	struct hdsoftc *hd;
@@ -760,7 +760,7 @@ hdwrite(dev_t dev, struct uio *uio, int flag)
  *
  */
 int
-hddump(dev_t dev, daddr64_t daddr, caddr_t addr, size_t size)
+hddump(dev_t dev, daddr_t daddr, caddr_t addr, size_t size)
 {
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.11 2013/06/02 20:29:36 jasper Exp $ */
+/*	$OpenBSD: octcf.c,v 1.12 2013/06/11 16:42:10 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -693,7 +693,7 @@ wdformat(struct buf *bp)
 }
 #endif
 
-daddr64_t
+daddr_t
 octcfsize(dev_t dev)
 {
 	struct octcf_softc *wd;
@@ -728,7 +728,7 @@ octcfsize(dev_t dev)
  * Dump core after a system crash.
  */
 int
-octcfdump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+octcfdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	return ENXIO;
 }

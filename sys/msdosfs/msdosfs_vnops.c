@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.86 2013/05/23 09:11:00 espie Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.87 2013/06/11 16:42:16 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -512,7 +512,7 @@ msdosfs_read(void *v)
 	int isadir;
 	uint32_t n;
 	long on;
-	daddr64_t lbn, rablock, rablkno;
+	daddr_t lbn, rablock, rablkno;
 	struct buf *bp;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
@@ -599,7 +599,7 @@ msdosfs_write(void *v)
 	uint32_t osize;
 	int error = 0;
 	uint32_t count, lastcn;
-	daddr64_t bn;
+	daddr_t bn;
 	struct buf *bp;
 	int ioflag = ap->a_ioflag;
 	struct uio *uio = ap->a_uio;
@@ -943,7 +943,7 @@ msdosfs_rename(void *v)
 	int doingdirectory = 0, newparent = 0;
 	int error;
 	uint32_t cn, pcl;
-	daddr64_t bn;
+	daddr_t bn;
 	struct msdosfsmount *pmp;
 	struct direntry *dotdotp;
 	struct buf *bp;
@@ -1275,7 +1275,7 @@ msdosfs_mkdir(void *v)
 	struct denode *dep;
 	struct denode *pdep = VTODE(ap->a_dvp);
 	int error;
-	daddr64_t bn;
+	daddr_t bn;
 	uint32_t newcluster, pcl;
 	struct direntry *denp;
 	struct msdosfsmount *pmp = pdep->de_pmp;
@@ -1470,7 +1470,7 @@ msdosfs_readdir(void *v)
 	uint32_t cn, lbn;
 	uint32_t fileno;
 	long bias = 0;
-	daddr64_t bn;
+	daddr_t bn;
 	struct buf *bp;
 	struct denode *dep = VTODE(ap->a_vp);
 	struct msdosfsmount *pmp = dep->de_pmp;

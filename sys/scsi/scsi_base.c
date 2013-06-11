@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.201 2012/07/01 19:32:55 miod Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.202 2013/06/11 16:42:17 deraadt Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -763,7 +763,7 @@ scsi_xs_put(struct scsi_xfer *xs)
 /*
  * Find out from the device what its capacity is.
  */
-daddr64_t
+daddr_t
 scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 {
 	struct scsi_read_cap_data_16 *rdcap16;
@@ -771,7 +771,7 @@ scsi_size(struct scsi_link *sc_link, int flags, u_int32_t *blksize)
 	struct scsi_read_cap_data *rdcap;
 	struct scsi_read_capacity *cmd10;
 	struct scsi_xfer *xs;
-	daddr64_t max_addr;
+	daddr_t max_addr;
 	int error;
 
 	if (blksize != NULL)

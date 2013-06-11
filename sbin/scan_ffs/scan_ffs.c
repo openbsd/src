@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.15 2013/04/02 05:22:04 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.16 2013/06/11 16:42:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -47,12 +47,12 @@
 static void usage(void);
 
 static int
-ufsscan(int fd, daddr64_t beg, daddr64_t end, int flags)
+ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 {
 	static char lastmount[MAXMNTLEN];
 	static u_int8_t buf[SBSIZE * SBCOUNT];
 	struct fs *sb;
-	daddr64_t blk, lastblk;
+	daddr_t blk, lastblk;
 	int n;
 
 	lastblk = -1;
@@ -132,7 +132,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, fd, flags = 0;
-	daddr64_t beg = 0, end = -1;
+	daddr_t beg = 0, end = -1;
 	const char *errstr;
 
 	while ((ch = getopt(argc, argv, "lsvb:e:")) != -1)

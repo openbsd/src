@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.90 2011/05/23 10:56:17 dcoppa Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.91 2013/06/11 16:42:05 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ u_short	dkcksum(struct disklabel *);
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* 0 = 4.3BSD ffs, 1 = 4.4BSD ffs, 2 = ffs2 */
-daddr64_t	fssize;			/* file system size */
+daddr_t	fssize;			/* file system size */
 long long	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
@@ -428,13 +428,13 @@ havelabel:
 	}
 
 	if (fssize_usebytes) {
-		fssize = (daddr64_t)fssize_input / (daddr64_t)sectorsize;
-		if ((daddr64_t)fssize_input % (daddr64_t)sectorsize != 0)
+		fssize = (daddr_t)fssize_input / (daddr_t)sectorsize;
+		if ((daddr_t)fssize_input % (daddr_t)sectorsize != 0)
 			fssize++;
 	} else if (fssize_input == 0)
 		fssize = DL_GETPSIZE(pp);
 	else
-		fssize = (daddr64_t)fssize_input;
+		fssize = (daddr_t)fssize_input;
 
 	if (fssize > DL_GETPSIZE(pp) && !mfs)
 	       fatal("%s: maximum file system size on the `%c' partition is "
@@ -598,7 +598,7 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
 		int i;
 		int cfd;
-		daddr64_t alt;
+		daddr_t alt;
 		char specname[64];
 		char blk[1024];
 		char *cp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.146 2013/02/17 17:39:29 miod Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.147 2013/06/11 16:42:16 deraadt Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -86,8 +86,8 @@ void buf_put(struct buf *);
 #define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
 #define	binstailfree(bp, dp)	TAILQ_INSERT_TAIL(dp, bp, b_freelist)
 
-struct buf *bio_doread(struct vnode *, daddr64_t, int, int);
-struct buf *buf_get(struct vnode *, daddr64_t, size_t);
+struct buf *bio_doread(struct vnode *, daddr_t, int, int);
+struct buf *buf_get(struct vnode *, daddr_t, size_t);
 void bread_cluster_callback(struct buf *);
 
 struct bcachestats bcstats;  /* counters */
@@ -349,7 +349,7 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 }
 
 struct buf *
-bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
+bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 {
 	struct buf *bp;
 	struct mount *mp;
@@ -394,7 +394,7 @@ bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
  * This algorithm described in Bach (p.54).
  */
 int
-bread(struct vnode *vp, daddr64_t blkno, int size, struct buf **bpp)
+bread(struct vnode *vp, daddr_t blkno, int size, struct buf **bpp)
 {
 	struct buf *bp;
 
@@ -410,7 +410,7 @@ bread(struct vnode *vp, daddr64_t blkno, int size, struct buf **bpp)
  * Trivial modification to the breada algorithm presented in Bach (p.55).
  */
 int
-breadn(struct vnode *vp, daddr64_t blkno, int size, daddr64_t rablks[],
+breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t rablks[],
     int rasizes[], int nrablks, struct buf **bpp)
 {
 	struct buf *bp;
@@ -471,11 +471,11 @@ bread_cluster_callback(struct buf *bp)
 }
 
 int
-bread_cluster(struct vnode *vp, daddr64_t blkno, int size, struct buf **rbpp)
+bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 {
 	struct buf *bp, **xbpp;
 	int howmany, maxra, i, inc;
-	daddr64_t sblkno;
+	daddr_t sblkno;
 
 	*rbpp = bio_doread(vp, blkno, size, 0);
 
@@ -857,7 +857,7 @@ brelse(struct buf *bp)
  * chain. If it's there, return a pointer to it, unless it's marked invalid.
  */
 struct buf *
-incore(struct vnode *vp, daddr64_t blkno)
+incore(struct vnode *vp, daddr_t blkno)
 {
 	struct buf *bp;
 	struct buf b;
@@ -884,7 +884,7 @@ incore(struct vnode *vp, daddr64_t blkno)
  * cached blocks be of the correct size.
  */
 struct buf *
-getblk(struct vnode *vp, daddr64_t blkno, int size, int slpflag, int slptimeo)
+getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 {
 	struct buf *bp;
 	struct buf b;
@@ -950,7 +950,7 @@ geteblk(int size)
  * Allocate a buffer.
  */
 struct buf *
-buf_get(struct vnode *vp, daddr64_t blkno, size_t size)
+buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 {
 	struct buf *bp;
 	int poolwait = size == 0 ? PR_NOWAIT : PR_WAITOK;

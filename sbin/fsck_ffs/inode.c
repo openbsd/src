@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.37 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: inode.c,v 1.38 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ iblock(struct inodesc *idesc, long ilevel, off_t isize)
  * Return 0 if in range, 1 if out of range.
  */
 int
-chkrange(daddr64_t blk, int cnt)
+chkrange(daddr_t blk, int cnt)
 {
 	int c;
 
@@ -274,7 +274,7 @@ chkrange(daddr64_t blk, int cnt)
 union dinode *
 ginode(ino_t inumber)
 {
-	daddr64_t iblk;
+	daddr_t iblk;
 
 	if (inumber < ROOTINO || inumber > maxino)
 		errexit("bad inode number %llu to ginode\n",
@@ -305,7 +305,7 @@ union dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
-	daddr64_t dblk;
+	daddr_t dblk;
 	union dinode *dp;
 	static caddr_t nextinop;
 
@@ -394,7 +394,7 @@ cacheino(union dinode *dp, ino_t inumber)
 	blks = howmany(DIP(dp, di_size), sblock.fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	inp = malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr64_t));
+	inp = malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr_t));
 	if (inp == NULL)
 		errexit("cannot allocate memory for inode cache\n");
 	inpp = &inphead[inumber % numdirs];
@@ -543,7 +543,7 @@ pinode(ino_t ino)
 }
 
 void
-blkerror(ino_t ino, char *type, daddr64_t blk)
+blkerror(ino_t ino, char *type, daddr_t blk)
 {
 
 	pfatal("%lld %s I=%llu", blk, type, (unsigned long long)ino);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.149 2011/08/26 04:36:42 matthew Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.150 2013/06/11 16:42:14 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -110,12 +110,12 @@ void	vndattach(int);
 void	vndclear(struct vnd_softc *);
 int	vndsetcred(struct vnd_softc *, struct ucred *);
 int	vndgetdisklabel(dev_t, struct vnd_softc *, struct disklabel *, int);
-void	vndencrypt(struct vnd_softc *, caddr_t, size_t, daddr64_t, int);
+void	vndencrypt(struct vnd_softc *, caddr_t, size_t, daddr_t, int);
 void	vndencryptbuf(struct vnd_softc *, struct buf *, int);
 size_t	vndbdevsize(struct vnode *, struct proc *);
 
 void
-vndencrypt(struct vnd_softc *sc, caddr_t addr, size_t size, daddr64_t off,
+vndencrypt(struct vnd_softc *sc, caddr_t addr, size_t size, daddr_t off,
     int encrypt)
 {
 	int i, bsize;
@@ -673,7 +673,7 @@ vndclear(struct vnd_softc *sc)
 	bzero(sc->sc_file, sizeof(sc->sc_file));
 }
 
-daddr64_t
+daddr_t
 vndsize(dev_t dev)
 {
 	/* We don't support swapping to vnd anymore. */
@@ -681,7 +681,7 @@ vndsize(dev_t dev)
 }
 
 int
-vnddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+vnddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	/* Not implemented. */
 	return (ENXIO);

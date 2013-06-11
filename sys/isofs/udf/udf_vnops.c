@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.49 2013/06/02 15:38:26 guenther Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.50 2013/06/11 16:42:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -54,7 +54,7 @@
 #include <isofs/udf/udf.h>
 #include <isofs/udf/udf_extern.h>
 
-int udf_bmap_internal(struct unode *, off_t, daddr64_t *, uint32_t *);
+int udf_bmap_internal(struct unode *, off_t, daddr_t *, uint32_t *);
 
 struct vops udf_vops = {
 	.vop_access	= udf_access,
@@ -955,7 +955,7 @@ udf_bmap(void *v)
 	struct vop_bmap_args *ap = v;
 	struct unode *up;
 	uint32_t max_size;
-	daddr64_t lsector;
+	daddr_t lsector;
 	int error;
 
 	up = VTOU(ap->a_vp);
@@ -1212,7 +1212,7 @@ udf_readatoffset(struct unode *up, int *size, off_t offset,
 	struct file_entry *fentry = NULL;
 	struct buf *bp1;
 	uint32_t max_size;
-	daddr64_t sector;
+	daddr_t sector;
 	int error;
 
 	ump = up->u_ump;
@@ -1259,7 +1259,7 @@ udf_readatoffset(struct unode *up, int *size, off_t offset,
  * block.
  */
 int
-udf_bmap_internal(struct unode *up, off_t offset, daddr64_t *sector,
+udf_bmap_internal(struct unode *up, off_t offset, daddr_t *sector,
     uint32_t *max_size)
 {
 	struct umount *ump;
@@ -1268,7 +1268,7 @@ udf_bmap_internal(struct unode *up, off_t offset, daddr64_t *sector,
 	void *icb;
 	struct icb_tag *tag;
 	uint32_t icblen = 0;
-	daddr64_t lsector;
+	daddr_t lsector;
 	int ad_offset, ad_num = 0;
 	int i, p_offset, l_ea, l_ad;
 

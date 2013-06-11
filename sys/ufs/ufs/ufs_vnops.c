@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.106 2013/03/28 03:29:44 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.107 2013/06/11 16:42:19 deraadt Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -446,7 +446,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	uid_t ouid;
 	gid_t ogid;
 	int error = 0;
-	daddr64_t change;
+	daddr_t change;
 	enum ufs_quota_flags quota_flags = 0;
 
 	if (uid == (uid_t)VNOVAL)

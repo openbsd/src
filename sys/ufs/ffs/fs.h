@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.36 2013/04/23 20:42:38 tedu Exp $	*/
+/*	$OpenBSD: fs.h,v 1.37 2013/06/11 16:42:18 deraadt Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -60,8 +60,8 @@
 #define SBSIZE		8192
 #define	BBOFF		((off_t)(0))
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
-#define	BBLOCK		((daddr64_t)(0))
-#define	SBLOCK		((daddr64_t)(BBLOCK + BBSIZE / DEV_BSIZE))
+#define	BBLOCK		((daddr_t)(0))
+#define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
 #define	SBLOCK_UFS1	8192
 #define	SBLOCK_UFS2	65536
 #define	SBLOCK_PIGGY	262144
@@ -463,7 +463,7 @@ struct ocg {
  * Cylinder group macros to locate things in cylinder groups.
  * They calc file system addresses of cylinder group data structures.
  */
-#define	cgbase(fs, c)	((daddr64_t)(fs)->fs_fpg * (c))
+#define	cgbase(fs, c)	((daddr_t)(fs)->fs_fpg * (c))
 #define	cgdata(fs, c)	(cgdmin(fs, c) + (fs)->fs_minfree)	/* data zone */
 #define	cgmeta(fs, c)	(cgdmin(fs, c))				/* meta data */
 #define	cgdmin(fs, c)	(cgstart(fs, c) + (fs)->fs_dblkno)	/* 1st data */
@@ -481,7 +481,7 @@ struct ocg {
  */
 #define	ino_to_cg(fs, x)	((x) / (fs)->fs_ipg)
 #define	ino_to_fsba(fs, x)						\
-	((daddr64_t)(cgimin(fs, ino_to_cg(fs, x)) +			\
+	((daddr_t)(cgimin(fs, ino_to_cg(fs, x)) +			\
 	    (blkstofrags((fs), (((x) % (fs)->fs_ipg) / INOPB(fs))))))
 #define	ino_to_fsbo(fs, x)	((x) % INOPB(fs))
 

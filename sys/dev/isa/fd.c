@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.93 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.94 2013/06/11 16:42:15 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ struct fd_softc {
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
 
-	daddr64_t	sc_blkno;	/* starting block number */
+	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
  	int sc_opts;			/* user-set options */
 	int sc_skip;		/* bytes already transferred */
@@ -620,7 +620,7 @@ fdclose(dev_t dev, int flags, int fmt, struct proc *p)
 	return (0);
 }
 
-daddr64_t
+daddr_t
 fdsize(dev_t dev)
 {
 	/* Swapping to floppies would not make sense. */
@@ -628,7 +628,7 @@ fdsize(dev_t dev)
 }
 
 int
-fddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+fddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	/* Not implemented. */
 	return ENXIO;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.52 2013/05/21 15:01:53 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.53 2013/06/11 16:42:13 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -331,7 +331,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
 	int			ios, chunk, i, rt;
-	daddr64_t		blk;
+	daddr_t			blk;
 
 	/* blk and scsi error will be handled by sr_validate_io */
 	if (sr_validate_io(wu, &blk, "sr_raid1_rw"))

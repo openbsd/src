@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.40 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.41 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror(char *, daddr64_t);
+static void rwerror(char *, daddr_t);
 
 int
 ftypeok(union dinode *dp)
@@ -179,7 +179,7 @@ bufinit(void)
  * Manage a cache of directory blocks.
  */
 struct bufarea *
-getdatablk(daddr64_t blkno, long size)
+getdatablk(daddr_t blkno, long size)
 {
 	struct bufarea *bp;
 
@@ -206,9 +206,9 @@ foundit:
 }
 
 void
-getblk(struct bufarea *bp, daddr64_t blk, long size)
+getblk(struct bufarea *bp, daddr_t blk, long size)
 {
-	daddr64_t dblk;
+	daddr_t dblk;
 
 	dblk = fsbtodb(&sblock, blk);
 	if (bp->b_bno != dblk) {
@@ -245,7 +245,7 @@ flush(int fd, struct bufarea *bp)
 }
 
 static void
-rwerror(char *mesg, daddr64_t blk)
+rwerror(char *mesg, daddr_t blk)
 {
 
 	if (preen == 0)
@@ -331,7 +331,7 @@ ckfini(int markclean)
 }
 
 int
-bread(int fd, char *buf, daddr64_t blk, long size)
+bread(int fd, char *buf, daddr_t blk, long size)
 {
 	char *cp;
 	int i, errs;
@@ -366,7 +366,7 @@ bread(int fd, char *buf, daddr64_t blk, long size)
 }
 
 void
-bwrite(int fd, char *buf, daddr64_t blk, long size)
+bwrite(int fd, char *buf, daddr_t blk, long size)
 {
 	int i;
 	char *cp;
@@ -442,7 +442,7 @@ allocblk(long frags)
  * Free a previously allocated block
  */
 void
-freeblk(daddr64_t blkno, long frags)
+freeblk(daddr_t blkno, long frags)
 {
 	struct inodesc idesc;
 

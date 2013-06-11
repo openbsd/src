@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.16 2011/03/13 00:13:51 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.17 2013/06/11 16:42:06 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	long	protosize;
 	struct stat disksb, bootsb;
 	struct disklabel dl;
-	daddr64_t partoffset;
+	daddr_t partoffset;
 #define BBPAD   0x1e0
 	struct bb {
 		char	bb_pad[BBPAD];	/* disklabel lives in here, actually */

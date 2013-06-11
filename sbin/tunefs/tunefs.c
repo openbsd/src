@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.31 2011/05/05 16:29:33 millert Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.32 2013/06/11 16:42:05 deraadt Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $	*/
 
 /*
@@ -67,8 +67,8 @@ off_t	sblockloc;
 
 static off_t sblock_try[] = SBLOCKSEARCH;
 
-static	void	bwrite(daddr64_t, char *, int, const char *);
-static	void	bread(daddr64_t, char *, int, const char *);
+static	void	bwrite(daddr_t, char *, int, const char *);
+static	void	bread(daddr_t, char *, int, const char *);
 static	int	getnum(const char *, const char *, int, int);
 static	void	getsb(struct fs *, const char *);
 static	int	openpartition(char *, int, char **);
@@ -292,7 +292,7 @@ getsb(struct fs *fs, const char *file)
 }
 
 static void
-bwrite(daddr64_t blk, char *buffer, int size, const char *file)
+bwrite(daddr_t blk, char *buffer, int size, const char *file)
 {
 	off_t	offset;
 
@@ -304,7 +304,7 @@ bwrite(daddr64_t blk, char *buffer, int size, const char *file)
 }
 
 static void
-bread(daddr64_t blk, char *buffer, int cnt, const char *file)
+bread(daddr_t blk, char *buffer, int cnt, const char *file)
 {
 	off_t	offset;
 	int	i;

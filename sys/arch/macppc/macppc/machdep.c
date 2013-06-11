@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.137 2013/06/03 19:43:28 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.138 2013/06/11 16:42:09 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -721,7 +721,7 @@ int cpu_dump(void);
 int
 cpu_dump()
 {
-	int (*dump) (dev_t, daddr64_t, caddr_t, size_t);
+	int (*dump) (dev_t, daddr_t, caddr_t, size_t);
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
 
@@ -744,8 +744,8 @@ dumpsys()
 #if 0
 	u_int npg;
 	u_int i, j;
-	daddr64_t blkno;
-	int (*dump) (dev_t, daddr64_t, caddr_t, size_t);
+	daddr_t blkno;
+	int (*dump) (dev_t, daddr_t, caddr_t, size_t);
 	char *str;
 	int maddr;
 	extern int msgbufmapped;

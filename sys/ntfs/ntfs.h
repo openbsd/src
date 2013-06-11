@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.15 2013/05/30 20:11:06 guenther Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.16 2013/06/11 16:42:17 deraadt Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -292,7 +292,7 @@ struct ntfsmount {
 #define	VTOF(v)		((struct fnode *)((v)->v_data))
 #define	FTOV(f)		((f)->f_vp)
 #define	FTONT(f)	((f)->f_ip)
-#define ntfs_cntobn(cn)	(daddr64_t)((cn) * (ntmp->ntm_spc))
+#define ntfs_cntobn(cn)	(daddr_t)((cn) * (ntmp->ntm_spc))
 #define ntfs_cntob(cn)	(off_t)((cn) * (ntmp)->ntm_spc * (ntmp)->ntm_bps)
 #define ntfs_btocn(off)	(cn_t)((off) / ((ntmp)->ntm_spc * (ntmp)->ntm_bps))
 #define ntfs_btocl(off)	(cn_t)((off + ntfs_cntob(1) - 1) / ((ntmp)->ntm_spc * (ntmp)->ntm_bps))

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.94 2013/05/21 15:01:53 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.95 2013/06/11 16:42:13 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -255,7 +255,7 @@ sr_crypto_wu_get(struct sr_workunit *wu, int encrypt)
 	struct sr_crypto_wu	*crwu;
 	struct cryptodesc	*crd;
 	int			flags, i, n;
-	daddr64_t		blk;
+	daddr_t			blk;
 	u_int			keyndx;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_wu_get wu %p encrypt %d\n",
@@ -1159,7 +1159,7 @@ int
 sr_crypto_rw(struct sr_workunit *wu)
 {
 	struct sr_crypto_wu	*crwu;
-	daddr64_t		blk;
+	daddr_t			blk;
 	int			s, rv = 0;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_rw wu %p\n",
@@ -1213,7 +1213,7 @@ sr_crypto_dev_rw(struct sr_workunit *wu, struct sr_crypto_wu *crwu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
 	struct uio		*uio;
-	daddr64_t		blk;
+	daddr_t			blk;
 
 	blk = wu->swu_blk_start;
 	blk += sd->sd_meta->ssd_data_offset;

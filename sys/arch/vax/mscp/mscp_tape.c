@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_tape.c,v 1.15 2013/05/07 01:28:53 jsg Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.16 2013/06/11 16:42:13 deraadt Exp $ */
 /*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -464,7 +464,7 @@ mtioctl(dev, cmd, data, flag, p)
 int
 mtdump(dev, blkno, va, size)
 	dev_t	dev;
-	daddr64_t blkno;
+	daddr_t blkno;
 	caddr_t va;
 	size_t	size;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.42 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.43 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -63,8 +63,8 @@ pass5(void)
 	int inomapsize, blkmapsize;
 	struct fs *fs = &sblock;
 	struct cg *cg = &cgrp;
-	daddr64_t dbase, dmax;
-	daddr64_t d;
+	daddr_t dbase, dmax;
+	daddr_t d;
 	long i, j, k, rewritecg = 0;
 	struct csum *cs;
 	struct csum_total cstotal;

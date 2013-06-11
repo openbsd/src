@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.138 2013/05/21 15:01:54 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.139 2013/06/11 16:42:13 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -391,8 +391,8 @@ struct sr_workunit {
 
 	int			swu_fake;	/* faked wu */
 	/* workunit io range */
-	daddr64_t		swu_blk_start;
-	daddr64_t		swu_blk_end;
+	daddr_t			swu_blk_start;
+	daddr_t			swu_blk_end;
 
 	/* in flight totals */
 	u_int32_t		swu_ios_complete;
@@ -654,8 +654,8 @@ int			sr_ccb_alloc(struct sr_discipline *);
 void			sr_ccb_free(struct sr_discipline *);
 struct sr_ccb		*sr_ccb_get(struct sr_discipline *);
 void			sr_ccb_put(struct sr_ccb *);
-struct sr_ccb		*sr_ccb_rw(struct sr_discipline *, int, daddr64_t,
-			    daddr64_t, u_int8_t *, int, int);
+struct sr_ccb		*sr_ccb_rw(struct sr_discipline *, int, daddr_t,
+			    daddr_t, u_int8_t *, int, int);
 void			sr_ccb_done(struct sr_ccb *);
 int			sr_wu_alloc(struct sr_discipline *);
 void			sr_wu_free(struct sr_discipline *);
@@ -686,7 +686,7 @@ void			sr_meta_opt_load(struct sr_softc *,
 			    struct sr_metadata *, struct sr_meta_opt_head *);
 void			sr_checksum(struct sr_softc *, void *, void *,
 			    u_int32_t);
-int			sr_validate_io(struct sr_workunit *, daddr64_t *,
+int			sr_validate_io(struct sr_workunit *, daddr_t *,
 			    char *);
 void			sr_schedule_wu(struct sr_workunit *);
 void			sr_scsi_done(struct sr_discipline *,

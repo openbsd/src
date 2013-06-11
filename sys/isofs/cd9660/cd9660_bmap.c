@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_bmap.c,v 1.6 2007/06/06 17:15:13 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_bmap.c,v 1.7 2013/06/11 16:42:15 deraadt Exp $	*/
 /*	$NetBSD: cd9660_bmap.c,v 1.7 1997/01/24 00:27:29 cgd Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ cd9660_bmap(v)
 {
 	struct vop_bmap_args *ap = v;
 	struct iso_node *ip = VTOI(ap->a_vp);
-	daddr64_t lblkno = ap->a_bn;
+	daddr_t lblkno = ap->a_bn;
 	int bshift;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.38 2011/11/01 20:52:17 miod Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.39 2013/06/11 16:42:13 deraadt Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -428,7 +428,7 @@ raioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 
 int
-radump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+radump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	return ENXIO;
 }
@@ -436,7 +436,7 @@ radump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 /*
  * Return the size of a partition, if known, or -1 if not.
  */
-daddr64_t
+daddr_t
 rasize(dev_t dev)
 {
 	int unit = DISKUNIT(dev), part = DISKPART(dev);
@@ -472,8 +472,8 @@ void	rxstrategy(struct buf *);
 int	rxread(dev_t, struct uio *);
 int	rxwrite(dev_t, struct uio *);
 int	rxioctl(dev_t, int, caddr_t, int, struct proc *);
-int	rxdump(dev_t, daddr64_t, caddr_t, size_t);
-daddr64_t	rxsize(dev_t);
+int	rxdump(dev_t, daddr_t, caddr_t, size_t);
+daddr_t	rxsize(dev_t);
 
 const struct cfattach rx_ca = {
 	sizeof(struct rx_softc), (cfmatch_t)rxmatch, rxattach
@@ -712,14 +712,14 @@ rxioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-rxdump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+rxdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not likely. */
 	return ENXIO;
 }
 
-daddr64_t
+daddr_t
 rxsize(dev_t dev)
 {
 

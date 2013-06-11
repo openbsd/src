@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.185 2012/04/06 18:20:35 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.186 2013/06/11 16:42:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -716,7 +716,7 @@ char
 canonical_unit(struct disklabel *lp, char unit)
 {
 	struct partition *pp;
-	daddr64_t small;
+	daddr_t small;
 	int i;
 
 	if (unit == '*') {
@@ -1377,7 +1377,7 @@ setbootflag(struct disklabel *lp)
 {
 	struct partition *pp;
 	int i, errors = 0;
-	daddr64_t bend;
+	daddr_t bend;
 	char part;
 
 	if (bootbuf == NULL)

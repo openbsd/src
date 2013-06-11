@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.5 2011/07/06 04:49:36 matthew Exp $	*/
+/*	$OpenBSD: rd.c,v 1.6 2013/06/11 16:42:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew Dempsky <matthew@dempsky.org>
@@ -352,12 +352,12 @@ rdwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-rddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+rddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	return (ENXIO);
 }
 
-daddr64_t
+daddr_t
 rdsize(dev_t dev)
 {
 	return (-1);

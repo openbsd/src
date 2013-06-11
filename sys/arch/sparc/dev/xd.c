@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.57 2012/07/01 12:11:53 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.58 2013/06/11 16:42:11 deraadt Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -300,7 +300,7 @@ xdgetdisklabel(xd, b)
 	lp->d_secsize = XDFM_BPS;
 	if (sl->sl_magic == SUN_DKMAGIC) {
 		lp->d_secpercyl = sl->sl_nsectors * sl->sl_ntracks;
-		DL_SETDSIZE(lp, (daddr64_t)lp->d_secpercyl * sl->sl_ncylinders);
+		DL_SETDSIZE(lp, (daddr_t)lp->d_secpercyl * sl->sl_ncylinders);
 	} else {
 		lp->d_secpercyl = 1;
 	}
@@ -774,7 +774,7 @@ xdclose(dev, flag, fmt, p)
 int
 xddump(dev, blkno, va, size)
 	dev_t dev;
-	daddr64_t blkno;
+	daddr_t blkno;
 	caddr_t va;
 	size_t size;
 {
@@ -965,7 +965,7 @@ xdwrite(dev, uio, flags)
  * xdsize: return size of a partition for a dump
  */
 
-daddr64_t
+daddr_t
 xdsize(dev)
 	dev_t   dev;
 

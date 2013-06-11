@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.70 2013/01/16 22:41:47 beck Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.71 2013/06/11 16:42:18 deraadt Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ ffs_read(void *v)
 	struct uio *uio;
 	struct fs *fs;
 	struct buf *bp;
-	daddr64_t lbn, nextlbn;
+	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	mode_t mode;
@@ -295,7 +295,7 @@ ffs_write(void *v)
 	struct inode *ip;
 	struct fs *fs;
 	struct buf *bp;
-	daddr64_t lbn;
+	daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, extended, flags, ioflag, resid, size, xfersize;
 	int overrun;

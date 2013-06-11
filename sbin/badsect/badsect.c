@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.20 2013/06/02 06:22:29 guenther Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.21 2013/06/11 16:42:02 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -55,8 +55,8 @@
 #include <unistd.h>
 #include <err.h>
 
-static int chkuse(daddr64_t, int);
-static void rdfs(daddr64_t, int, char *);
+static int chkuse(daddr_t, int);
+static void rdfs(daddr_t, int, char *);
 
 static union {
 	struct	fs fs;
@@ -76,7 +76,7 @@ static long	dev_bsize = 1;
 int
 main(int argc, char *argv[])
 {
-	daddr64_t number;
+	daddr_t number;
 	struct stat stbuf, devstat;
 	struct dirent *dp;
 	DIR *dirp;
@@ -140,10 +140,10 @@ main(int argc, char *argv[])
 }
 
 static int
-chkuse(daddr64_t blkno, int cnt)
+chkuse(daddr_t blkno, int cnt)
 {
 	int cg;
-	daddr64_t fsbn, bn;
+	daddr_t fsbn, bn;
 
 	fsbn = dbtofsb(fs, blkno);
 	if (fsbn+cnt > fs->fs_ffs1_size) {
@@ -181,7 +181,7 @@ chkuse(daddr64_t blkno, int cnt)
  * read a block from the file system
  */
 static void
-rdfs(daddr64_t bno, int size, char *bf)
+rdfs(daddr_t bno, int size, char *bf)
 {
 	int n;
 

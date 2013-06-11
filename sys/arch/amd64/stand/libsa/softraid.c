@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.3 2013/04/04 11:18:03 halex Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.4 2013/06/11 16:42:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -280,7 +280,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 	struct sr_boot_chunk *bc;
 	struct aes_xts_ctx ctx;
 	size_t i, j, nsect;
-	daddr64_t blkno;
+	daddr_t blkno;
 	u_char iv[8];
 	u_char *bp;
 	int err;

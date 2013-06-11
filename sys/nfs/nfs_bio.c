@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.73 2012/07/11 12:39:20 guenther Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.74 2013/06/11 16:42:17 deraadt Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag, struct ucred *cred)
 	struct vattr vattr;
 	struct proc *p;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	daddr64_t lbn, bn, rabn;
+	daddr_t lbn, bn, rabn;
 	caddr_t baddr;
 	int got_buf = 0, nra, error = 0, n = 0, on = 0, not_readin;
 	off_t offdiff;
@@ -255,7 +255,7 @@ nfs_write(void *v)
 	struct buf *bp;
 	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	daddr64_t lbn, bn;
+	daddr_t lbn, bn;
 	int n, on, error = 0, extended = 0, wrotedta = 0, truncated = 0;
 	int overrun;
 
@@ -426,7 +426,7 @@ out:
  * NULL.
  */
 struct buf *
-nfs_getcacheblk(struct vnode *vp, daddr64_t bn, int size, struct proc *p)
+nfs_getcacheblk(struct vnode *vp, daddr_t bn, int size, struct proc *p)
 {
 	struct buf *bp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);

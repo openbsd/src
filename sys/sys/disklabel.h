@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.54 2012/04/06 15:10:40 jsing Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.55 2013/06/11 16:42:18 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -172,13 +172,13 @@ struct	__partitionv0 {		/* the partition table */
 
 #define DL_GETPSIZE(p)		(((u_int64_t)(p)->p_sizeh << 32) + (p)->p_size)
 #define DL_SETPSIZE(p, n)	do { \
-					daddr64_t x = (n); \
+					daddr_t x = (n); \
 					(p)->p_sizeh = x >> 32; \
 					(p)->p_size = x; \
 				} while (0)
 #define DL_GETPOFFSET(p)	(((u_int64_t)(p)->p_offseth << 32) + (p)->p_offset)
 #define DL_SETPOFFSET(p, n)	do { \
-					daddr64_t x = (n); \
+					daddr_t x = (n); \
 					(p)->p_offseth = x >> 32; \
 					(p)->p_offset = x; \
 				} while (0)
@@ -186,21 +186,21 @@ struct	__partitionv0 {		/* the partition table */
 #define DL_GETDSIZE(d)		(((u_int64_t)(d)->d_secperunith << 32) + \
 				    (d)->d_secperunit)
 #define DL_SETDSIZE(d, n)	do { \
-					daddr64_t x = (n); \
+					daddr_t x = (n); \
 					(d)->d_secperunith = x >> 32; \
 					(d)->d_secperunit = x; \
 				} while (0)
 #define DL_GETBSTART(d)		(((u_int64_t)(d)->d_bstarth << 32) + \
 				    (d)->d_bstart)
 #define DL_SETBSTART(d, n)	do { \
-					daddr64_t x = (n); \
+					daddr_t x = (n); \
 					(d)->d_bstarth = x >> 32; \
 					(d)->d_bstart = x; \
 				} while (0)
 #define DL_GETBEND(d)		(((u_int64_t)(d)->d_bendh << 32) + \
 				    (d)->d_bend)
 #define DL_SETBEND(d, n)	do { \
-					daddr64_t x = (n); \
+					daddr_t x = (n); \
 					(d)->d_bendh = x >> 32; \
 					(d)->d_bend = x; \
 				} while (0)
@@ -367,7 +367,7 @@ static char *fstypesnames[] = {
 struct format_op {
 	char	*df_buf;
 	int	 df_count;		/* value-result */
-	daddr64_t df_startblk;
+	daddr_t	 df_startblk;
 	int	 df_reg[8];		/* result */
 };
 

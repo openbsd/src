@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.78 2012/08/29 20:33:16 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.79 2013/06/11 16:42:12 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2490,8 +2490,8 @@ pmap_dumpsize()
  */
 int
 pmap_dumpmmu(dump, blkno)
-	register daddr64_t blkno;
-	register int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
+	register daddr_t blkno;
+	register int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 {
 	kcore_seg_t	*kseg;
 	cpu_kcore_hdr_t	*kcpu;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.32 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.33 2013/06/11 16:42:19 deraadt Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ ufs_bmap(void *v)
  * next block and the disk address of the block (if it is assigned).
  */
 int
-ufs_bmaparray(struct vnode *vp, daddr64_t bn, daddr64_t *bnp, struct indir *ap,
+ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
     int *nump, int *runp)
 {
 	struct inode *ip;
@@ -97,7 +97,7 @@ ufs_bmaparray(struct vnode *vp, daddr64_t bn, daddr64_t *bnp, struct indir *ap,
 	struct mount *mp;
 	struct vnode *devvp;
 	struct indir a[NIADDR+1], *xap;
-	daddr64_t daddr, metalbn;
+	daddr_t daddr, metalbn;
 	int error, maxrun = 0, num;
 
 	ip = VTOI(vp);
@@ -225,9 +225,9 @@ ufs_bmaparray(struct vnode *vp, daddr64_t bn, daddr64_t *bnp, struct indir *ap,
  * once with the offset into the page itself.
  */
 int
-ufs_getlbns(struct vnode *vp, daddr64_t bn, struct indir *ap, int *nump)
+ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 {
-	daddr64_t metalbn, realbn;
+	daddr_t metalbn, realbn;
 	struct ufsmount *ump;
 	int64_t blockcnt;
 	int i, numlevels, off;

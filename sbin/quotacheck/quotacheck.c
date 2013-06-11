@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.30 2013/04/23 21:28:10 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.31 2013/06/11 16:42:05 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ u_int32_t highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
 struct fileusage *
 	 addid(u_int32_t, int, char *);
 char	*blockcheck(char *);
-void	 bread(daddr64_t, char *, long);
+void	 bread(daddr_t, char *, long);
 int	 chkquota(const char *, const char *, const char *, void *, pid_t *);
 void	 freeinodebuf(void);
 union dinode *
@@ -654,7 +654,7 @@ union dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
-	daddr64_t dblk;
+	daddr_t dblk;
 	union dinode *dp;
 	static caddr_t nextinop;
 
@@ -735,7 +735,7 @@ freeinodebuf(void)
  * Read specified disk blocks.
  */
 void
-bread(daddr64_t bno, char *buf, long cnt)
+bread(daddr_t bno, char *buf, long cnt)
 {
 
 	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0 ||

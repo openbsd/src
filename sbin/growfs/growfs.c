@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.30 2013/04/23 21:27:15 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.31 2013/06/11 16:42:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -87,7 +87,7 @@ static union {
  * Possible superblock locations ordered from most to least likely.
  */
 static int sblock_try[] = SBLOCKSEARCH;
-static daddr64_t sblockloc;
+static daddr_t sblockloc;
 
 static union {
 	struct	cg cg;
@@ -113,7 +113,7 @@ union dinode {
 	else \
 		(dp)->dp2.field = (val); \
 	} while (0)
-static daddr64_t 	inoblk;			/* inode block address */
+static daddr_t 	inoblk;			/* inode block address */
 static char		inobuf[MAXBSIZE];	/* inode block */
 ino_t			maxino;			/* last valid inode */
 
@@ -123,19 +123,19 @@ ino_t			maxino;			/* last valid inode */
  * summary for all cylinder groups located in the first cylinder group.
  */
 struct gfs_bpp {
-	daddr64_t	old;		/* old block number */
-	daddr64_t	new;		/* new block number */
+	daddr_t		old;		/* old block number */
+	daddr_t		new;		/* new block number */
 #define GFS_FL_FIRST	1
 #define GFS_FL_LAST	2
-	unsigned int	flags;	/* special handling required */
-	int	found;		/* how many references were updated */
+	unsigned int	flags;		/* special handling required */
+	int		found;		/* how many references were updated */
 };
 
 /* ******************************************************** PROTOTYPES ***** */
 static void	growfs(int, int, unsigned int);
-static void	rdfs(daddr64_t, size_t, void *, int);
-static void	wtfs(daddr64_t, size_t, void *, int, unsigned int);
-static daddr64_t alloc(void);
+static void	rdfs(daddr_t, size_t, void *, int);
+static void	wtfs(daddr_t, size_t, void *, int, unsigned int);
+static daddr_t alloc(void);
 static int	charsperline(void);
 static void	usage(void);
 static int	isblock(struct fs *, unsigned char *, int);
@@ -147,14 +147,14 @@ static void	updcsloc(time_t, int, int, unsigned int);
 static struct disklabel	*get_disklabel(int);
 static void	return_disklabel(int, struct disklabel *, unsigned int);
 static union dinode *ginode(ino_t, int, int);
-static void	frag_adjust(daddr64_t, int);
-static int	cond_bl_upd(daddr64_t *, struct gfs_bpp *, int, int,
+static void	frag_adjust(daddr_t, int);
+static int	cond_bl_upd(daddr_t *, struct gfs_bpp *, int, int,
 		    unsigned int);
 static void	updclst(int);
 static void	updrefs(int, ino_t, struct gfs_bpp *, int, int, unsigned int);
-static void	indirchk(daddr64_t, daddr64_t, daddr64_t, daddr64_t,
+static void	indirchk(daddr_t, daddr_t, daddr_t, daddr_t,
 		    struct gfs_bpp *, int, int, unsigned int);
-static void	ffs1_sb_update(struct fs *, daddr64_t);
+static void	ffs1_sb_update(struct fs *, daddr_t);
 
 /* ************************************************************ growfs ***** */
 /*
@@ -375,8 +375,8 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 {
 	DBG_FUNC("initcg")
 	static char *iobuf;
-	daddr64_t d, dlower, dupper, blkno, start;
-	daddr64_t i, cbase, dmax;
+	daddr_t d, dlower, dupper, blkno, start;
+	daddr_t i, cbase, dmax;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	struct csum *cs;
@@ -580,7 +580,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
  * statistic, which seems to be otherwise a rather complex operation.
  */
 static void
-frag_adjust(daddr64_t frag, int sign)
+frag_adjust(daddr_t frag, int sign)
 {
 	DBG_FUNC("frag_adjust")
 	int fragsize;
@@ -635,12 +635,12 @@ frag_adjust(daddr64_t frag, int sign)
  * out if a write back operation is needed.
  */
 static int
-cond_bl_upd(daddr64_t *block, struct gfs_bpp *field, int fsi, int fso,
+cond_bl_upd(daddr_t *block, struct gfs_bpp *field, int fsi, int fso,
     unsigned int Nflag)
 {
 	DBG_FUNC("cond_bl_upd")
 	struct gfs_bpp	*f;
-	daddr64_t src, dst;
+	daddr_t src, dst;
 	int fragnum;
 	void *ibuf;
 
@@ -700,7 +700,7 @@ static void
 updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 {
 	DBG_FUNC("updjcg")
-	daddr64_t	cbase, dmax, dupper;
+	daddr_t	cbase, dmax, dupper;
 	struct csum	*cs;
 	int	i, k;
 	int	j = 0;
@@ -940,7 +940,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	struct csum	*cs;
 	int	ocscg, ncscg;
 	int	blocks;
-	daddr64_t	cbase, dupper, odupper, d, f, g;
+	daddr_t	cbase, dupper, odupper, d, f, g;
 	int	ind;
 	int	cylno, inc;
 	struct gfs_bpp	*bp;
@@ -1514,7 +1514,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
  * Here we read some block(s) from disk.
  */
 static void
-rdfs(daddr64_t bno, size_t size, void *bf, int fsi)
+rdfs(daddr_t bno, size_t size, void *bf, int fsi)
 {
 	DBG_FUNC("rdfs")
 	ssize_t	n;
@@ -1539,7 +1539,7 @@ rdfs(daddr64_t bno, size_t size, void *bf, int fsi)
  * Here we write some block(s) to disk.
  */
 static void
-wtfs(daddr64_t bno, size_t size, void *bf, int fso, unsigned int Nflag)
+wtfs(daddr_t bno, size_t size, void *bf, int fso, unsigned int Nflag)
 {
 	DBG_FUNC("wtfs")
 	ssize_t	n;
@@ -1567,11 +1567,11 @@ wtfs(daddr64_t bno, size_t size, void *bf, int fso, unsigned int Nflag)
  * that  acg contains the current cylinder group. As we may take a block  from
  * somewhere in the filesystem we have to handle cluster summary here.
  */
-static daddr64_t
+static daddr_t
 alloc(void)
 {
 	DBG_FUNC("alloc")
-	daddr64_t	d, blkno;
+	daddr_t	d, blkno;
 	int	lcs1, lcs2;
 	int	l;
 	int	csmin, csmax;
@@ -2075,7 +2075,7 @@ main(int argc, char **argv)
 	 * later on realize we have to abort our operation, on that block
 	 * there should be no data, so we can't destroy something yet.
 	 */
-	wtfs((daddr64_t)pp->p_size-1, (size_t)DEV_BSIZE, (void *)&sblock,
+	wtfs((daddr_t)pp->p_size-1, (size_t)DEV_BSIZE, (void *)&sblock,
 	    fso, Nflag);
 
 	/*
@@ -2285,8 +2285,8 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
     Nflag)
 {
 	DBG_FUNC("updrefs")
-	daddr64_t	len, lbn, numblks;
-	daddr64_t	iptr, blksperindir;
+	daddr_t	len, lbn, numblks;
+	daddr_t	iptr, blksperindir;
 	union dinode	*ino;
 	int		i, mode, inodeupdated;
 
@@ -2362,13 +2362,13 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
  * Recursively check all the indirect blocks.
  */
 static void
-indirchk(daddr64_t blksperindir, daddr64_t lbn, daddr64_t blkno,
-    daddr64_t lastlbn, struct gfs_bpp *bp, int fsi, int fso, unsigned int Nflag)
+indirchk(daddr_t blksperindir, daddr_t lbn, daddr_t blkno,
+    daddr_t lastlbn, struct gfs_bpp *bp, int fsi, int fso, unsigned int Nflag)
 {
 	DBG_FUNC("indirchk")
 	void *ibuf;
 	int i, last;
-	daddr64_t iptr;
+	daddr_t iptr;
 
 	DBG_ENTER;
 
@@ -2383,14 +2383,14 @@ indirchk(daddr64_t blksperindir, daddr64_t lbn, daddr64_t blkno,
 		if (sblock.fs_magic == FS_UFS1_MAGIC)
 			iptr = ((int32_t *)ibuf)[i];
 		else
-			iptr = ((daddr64_t *)ibuf)[i];
+			iptr = ((daddr_t *)ibuf)[i];
 		if (iptr == 0)
 			continue;
 		if (cond_bl_upd(&iptr, bp, fsi, fso, Nflag)) {
 			if (sblock.fs_magic == FS_UFS1_MAGIC)
 				((int32_t *)ibuf)[i] = iptr;
 			else
-				((daddr64_t *)ibuf)[i] = iptr;
+				((daddr_t *)ibuf)[i] = iptr;
 		}
 		if (blksperindir == 1)
 			continue;
@@ -2403,7 +2403,7 @@ indirchk(daddr64_t blksperindir, daddr64_t lbn, daddr64_t blkno,
 }
 
 static void
-ffs1_sb_update(struct fs *fs, daddr64_t sbloc)
+ffs1_sb_update(struct fs *fs, daddr_t sbloc)
 {
 	fs->fs_flags = fs->fs_ffs1_flags;
 	fs->fs_sblockloc = sbloc;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.32 2013/03/31 15:44:52 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.33 2013/06/11 16:42:13 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -278,14 +278,14 @@ sr_aoe_free_resources(struct sr_discipline *sd)
 	sr_ccb_free(sd);
 }
 
-int sr_send_aoe_chunk(struct sr_workunit *wu, daddr64_t blk, int i);
+int sr_send_aoe_chunk(struct sr_workunit *wu, daddr_t blk, int i);
 int
-sr_send_aoe_chunk(struct sr_workunit *wu, daddr64_t blk, int i)
+sr_send_aoe_chunk(struct sr_workunit *wu, daddr_t blk, int i)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	int			s;
-	daddr64_t		fragblk;
+	daddr_t			fragblk;
 	struct mbuf		*m;
 	struct ether_header	*eh;
 	struct aoe_packet	*ap;
@@ -382,7 +382,7 @@ sr_aoe_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
-	daddr64_t		blk;
+	daddr_t			blk;
 	int			s, ios, rt;
 	int			rv, i;
 	const int		aoe_frags = 2;
@@ -468,7 +468,7 @@ sr_aoe_request_done(struct aoe_req *ar, struct aoe_packet *ap)
 	struct sr_discipline	*sd;
 	struct scsi_xfer	*xs;
 	struct sr_workunit	*wu;
-	daddr64_t		blk, offset;
+	daddr_t			blk, offset;
 	int			len, s;
 
 	wu = ar->v;
@@ -694,7 +694,7 @@ sr_aoe_server_thread(void *arg)
 	struct mbuf		*m, *m2;
 	struct ether_header	*eh;
 	struct buf		buf;
-	daddr64_t		blk;
+	daddr_t			blk;
 	int			len;
 	int			rv, s;
 

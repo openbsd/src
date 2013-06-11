@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.33 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.34 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -469,7 +469,7 @@ again:
 static int
 blksort(const void *inpp1, const void *inpp2)
 {
-	daddr64_t d;
+	daddr_t d;
 
 	d = (* (struct inoinfo **) inpp1)->i_blks[0] -
 	    (* (struct inoinfo **) inpp2)->i_blks[0];

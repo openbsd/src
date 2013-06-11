@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.114 2013/05/30 15:17:59 tedu Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.115 2013/06/11 16:42:19 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1157,7 +1157,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 {
 	struct vnode	*vp;
 	struct vndxfer	*vnx;
-	daddr64_t	nbn;
+	daddr_t	nbn;
 	caddr_t		addr;
 	off_t		byteoff;
 	int		s, off, nra, error, sz, resid;
@@ -1196,7 +1196,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		error = VOP_BMAP(sdp->swd_vp, byteoff / sdp->swd_bsize,
 				 	&vp, &nbn, &nra);
 
-		if (error == 0 && nbn == (daddr64_t)-1) {
+		if (error == 0 && nbn == (daddr_t)-1) {
 			/*
 			 * this used to just set error, but that doesn't
 			 * do the right thing.  Instead, it causes random
@@ -1632,7 +1632,7 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 int
 uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 {
-	daddr64_t startblk;
+	daddr_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
 	int	result, s, mapinflags, pflag, bounce = 0, i;

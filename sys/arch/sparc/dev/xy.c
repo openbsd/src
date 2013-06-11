@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.53 2011/07/06 04:49:35 matthew Exp $	*/
+/*	$OpenBSD: xy.c,v 1.54 2013/06/11 16:42:11 deraadt Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ xygetdisklabel(xy, b)
 	lp->d_secsize = XYFM_BPS;
 	if (sl->sl_magic == SUN_DKMAGIC) {
 		lp->d_secpercyl = sl->sl_nsectors * sl->sl_ntracks;
-		DL_SETDSIZE(lp, (daddr64_t)lp->d_secpercyl * sl->sl_ncylinders);
+		DL_SETDSIZE(lp, (daddr_t)lp->d_secpercyl * sl->sl_ncylinders);
 	} else {
 		lp->d_secpercyl = 1;
 	}
@@ -734,7 +734,7 @@ xyclose(dev, flag, fmt, p)
 int
 xydump(dev, blkno, va, size)
 	dev_t dev;
-	daddr64_t blkno;
+	daddr_t blkno;
 	caddr_t va;
 	size_t size;
 {
@@ -927,7 +927,7 @@ xywrite(dev, uio, flags)
  * xysize: return size of a partition for a dump
  */
 
-daddr64_t
+daddr_t
 xysize(dev)
 	dev_t   dev;
 
@@ -1222,7 +1222,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	int     partno;
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
-	daddr64_t  block;
+	daddr_t  block;
 	caddr_t dbuf;
 
 	iorq = xysc->xyrq;

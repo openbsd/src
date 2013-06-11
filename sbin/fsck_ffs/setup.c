@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.48 2011/04/24 07:07:03 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.49 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ badsblabel:
 static int
 readsb(int listerr)
 {
-	daddr64_t super = 0;
+	daddr_t super = 0;
 	int i;
 
 	if (bflag) {

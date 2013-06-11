@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.5 2013/03/28 02:08:39 guenther Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.6 2013/06/11 16:42:16 deraadt Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -529,8 +529,8 @@ VOP_UNLOCK(struct vnode *vp, int flags, struct proc *p)
 }
 
 int
-VOP_BMAP(struct vnode *vp, daddr64_t bn, struct vnode **vpp, 
-    daddr64_t *bnp, int *runp)
+VOP_BMAP(struct vnode *vp, daddr_t bn, struct vnode **vpp, 
+    daddr_t *bnp, int *runp)
 {
 	struct vop_bmap_args a;
 	a.a_vp = vp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.148 2013/04/24 08:31:06 blambert Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.149 2013/06/11 16:42:16 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ checkdisklabel(void *rlp, struct disklabel *lp, u_int64_t boundstart,
 	struct disklabel *dlp = rlp;
 	struct __partitionv0 *v0pp;
 	struct partition *pp;
-	daddr64_t disksize;
+	daddr_t disksize;
 	int error = 0;
 	int i;
 
@@ -390,7 +390,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 	u_int64_t dospartoff = 0, dospartend = DL_GETBEND(lp);
 	int i, ourpart = -1, wander = 1, n = 0, loop = 0, offset;
 	struct dos_partition dp[NDOSPART], *dp2;
-	daddr64_t part_blkno = DOSBBSECTOR;
+	daddr_t part_blkno = DOSBBSECTOR;
 	u_int32_t extoff = 0;
 	int error;
 
@@ -697,7 +697,7 @@ int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp)
 {
 	struct partition *p = &lp->d_partitions[DISKPART(bp->b_dev)];
-	daddr64_t partblocks, sz;
+	daddr_t partblocks, sz;
 
 	/* Avoid division by zero, negative offsets, and negative sizes. */
 	if (lp->d_secpercyl == 0 || bp->b_blkno < 0 || bp->b_bcount < 0)
@@ -758,7 +758,7 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
     	int (*pr)(const char *, ...) /* __attribute__((__format__(__kprintf__,1,2))) */;
 	char partname = 'a' + part;
-	daddr64_t sn;
+	daddr_t sn;
 
 	if (pri != LOG_PRINTF) {
 		static const char fmt[] = "";

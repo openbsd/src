@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.207 2011/07/06 04:49:36 matthew Exp $	*/
+/*	$OpenBSD: cd.c,v 1.208 2013/06/11 16:42:17 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ struct cd_softc {
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
 		u_int32_t secsize;
-		daddr64_t disksize;	/* total number sectors */
+		daddr_t disksize;	/* total number sectors */
 	} params;
 	struct bufq	sc_bufq;
 	struct scsi_xshandler sc_xsh;
@@ -1631,7 +1631,7 @@ cd_get_parms(struct cd_softc *sc, int flags)
 	return (0);
 }
 
-daddr64_t
+daddr_t
 cdsize(dev_t dev)
 {
 
@@ -1640,7 +1640,7 @@ cdsize(dev_t dev)
 }
 
 int
-cddump(dev_t dev, daddr64_t secno, caddr_t va, size_t size)
+cddump(dev_t dev, daddr_t secno, caddr_t va, size_t size)
 {
 	/* Not implemented. */
 	return ENXIO;

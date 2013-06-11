@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.21 2013/04/23 18:18:59 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.22 2013/06/11 16:42:19 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -203,11 +203,11 @@ isfree(struct fs *super, union dinode *dp)
 static struct user {
 	uid_t uid;
 	char *name;
-	daddr64_t space;
+	daddr_t space;
 	long count;
-	daddr64_t spc30;
-	daddr64_t spc60;
-	daddr64_t spc90;
+	daddr_t spc30;
+	daddr_t spc60;
+	daddr_t spc90;
 } *users;
 static int nusers;
 
@@ -296,7 +296,7 @@ cmpusers(const void *v1, const void *v2)
 				    cmpusers))
 
 static void
-uses(uid_t uid, daddr64_t blks, time_t act)
+uses(uid_t uid, daddr_t blks, time_t act)
 {
 	static time_t today;
 	struct user *usr;
@@ -323,9 +323,9 @@ uses(uid_t uid, daddr64_t blks, time_t act)
 #endif
 struct fsizes {
 	struct fsizes *fsz_next;
-	daddr64_t fsz_first, fsz_last;
+	daddr_t fsz_first, fsz_last;
 	ino_t fsz_count[FSZCNT];
-	daddr64_t fsz_sz[FSZCNT];
+	daddr_t fsz_sz[FSZCNT];
 } *fsizes;
 
 static void
@@ -347,7 +347,7 @@ dofsizes(int fd, struct fs *super, char *name)
 {
 	ino_t inode, maxino;
 	union dinode *dp;
-	daddr64_t sz, ksz;
+	daddr_t sz, ksz;
 	struct fsizes *fp, **fsp;
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.83 2013/05/30 16:15:01 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.84 2013/06/11 16:42:11 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ struct fd_softc {
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
 
-	daddr64_t sc_blkno;	/* starting block number */
+	daddr_t sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
 	int sc_skip;		/* bytes already transferred */
 	int sc_nblks;		/* number of blocks currently transferring */
@@ -1720,7 +1720,7 @@ fdcretry(fdc)
 	fdc->sc_errors++;
 }
 
-daddr64_t
+daddr_t
 fdsize(dev)
 	dev_t dev;
 {
@@ -1732,7 +1732,7 @@ fdsize(dev)
 int
 fddump(dev, blkno, va, size)
 	dev_t dev;
-	daddr64_t blkno;
+	daddr_t blkno;
 	caddr_t va;
 	size_t size;
 {

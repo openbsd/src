@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.37 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.38 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -45,8 +45,8 @@
 #include "extern.h"
 #include "fsutil.h"
 
-static daddr64_t badblk;
-static daddr64_t dupblk;
+static daddr_t badblk;
+static daddr_t dupblk;
 static void checkinode(ino_t, struct inodesc *);
 
 static ino_t info_inumber;
@@ -67,7 +67,7 @@ pass1(void)
 	struct inostat *info;
 	int c;
 	struct inodesc idesc;
-	daddr64_t i, cgd;
+	daddr_t i, cgd;
 	u_int8_t *cp;
 
 	/*
@@ -216,9 +216,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		      dp->dp1.di_mode || dp->dp1.di_size)) ||
 		    (sblock.fs_magic == FS_UFS2_MAGIC &&
 		     (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
-			NDADDR * sizeof(daddr64_t)) ||
+			NDADDR * sizeof(daddr_t)) ||
 		      memcmp(dp->dp2.di_ib, ufs2_zino.di_ib,
-			NIADDR * sizeof(daddr64_t)) ||
+			NIADDR * sizeof(daddr_t)) ||
 		      dp->dp2.di_mode || dp->dp2.di_size))) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
 			    (unsigned long long)inumber);
@@ -355,7 +355,7 @@ pass1check(struct inodesc *idesc)
 {
 	int res = KEEPON;
 	int anyout, nfrags;
-	daddr64_t blkno = idesc->id_blkno;
+	daddr_t blkno = idesc->id_blkno;
 	struct dups *dlp;
 	struct dups *new;
 

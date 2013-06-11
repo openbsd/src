@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.h,v 1.8 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: fsdb.h,v 1.9 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: fsdb.h,v 1.4 1996/09/28 19:30:36 christos Exp $	*/
 
 /*-
@@ -30,9 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int bread(int fd, char *buf, daddr64_t blk, long size);
-extern void bwrite(int fd, char *buf, daddr64_t blk, long size);
-extern void rwerror(char *mesg, daddr64_t blk);
+extern int bread(int fd, char *buf, daddr_t blk, long size);
+extern void bwrite(int fd, char *buf, daddr_t blk, long size);
+extern void rwerror(char *mesg, daddr_t blk);
 extern int reply(char *question);
 
 extern long dev_bsize;

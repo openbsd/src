@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.20 2012/03/23 15:51:26 guenther Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.21 2013/06/11 16:42:18 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ext2fs_bmaparray(struct vnode *, int32_t, daddr64_t *,
+static int ext2fs_bmaparray(struct vnode *, int32_t, daddr_t *,
     struct indir *, int *, int *);
 
 /*
@@ -95,7 +95,7 @@ ext2fs_bmap(void *v)
  */
 
 int
-ext2fs_bmaparray(struct vnode *vp, int32_t bn, daddr64_t *bnp,
+ext2fs_bmaparray(struct vnode *vp, int32_t bn, daddr_t *bnp,
     struct indir *ap, int *nump, int *runp)
 {
 	struct inode *ip;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.8 2009/10/27 23:59:33 deraadt Exp $	*/
+/*	$OpenBSD: debug.c,v 1.9 2013/06/11 16:42:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -799,24 +799,24 @@ dbg_dump_ufs2_ino(struct fs *sb, const char *comment, struct ufs2_dinode *ino)
 
 	remaining_blocks = howmany(ino->di_size, sb->fs_bsize); /* XXX ts - +1? */
 	for (ictr = 0; ictr < MIN(NDADDR, remaining_blocks); ictr++) {
-		fprintf(dbg_log, "db         daddr64_t[%x] 0x%16jx\n", ictr,
+		fprintf(dbg_log, "db         daddr_t[%x] 0x%16jx\n", ictr,
 		    ino->di_db[ictr]);
 	}
 	remaining_blocks -= NDADDR;
 	if (remaining_blocks > 0) {
-		fprintf(dbg_log, "ib         daddr64_t[0] 0x%16jx\n",
+		fprintf(dbg_log, "ib         daddr_t[0] 0x%16jx\n",
 		    ino->di_ib[0]);
 	}
-	remaining_blocks -= howmany(sb->fs_bsize, sizeof(daddr64_t));
+	remaining_blocks -= howmany(sb->fs_bsize, sizeof(daddr_t));
 	if (remaining_blocks > 0) {
-		fprintf(dbg_log, "ib         daddr64_t[1] 0x%16jx\n",
+		fprintf(dbg_log, "ib         daddr_t[1] 0x%16jx\n",
 		    ino->di_ib[1]);
 	}
 #define SQUARE(a) ((a)*(a))
-	remaining_blocks -= SQUARE(howmany(sb->fs_bsize, sizeof(daddr64_t)));
+	remaining_blocks -= SQUARE(howmany(sb->fs_bsize, sizeof(daddr_t)));
 #undef SQUARE
 	if (remaining_blocks > 0) {
-		fprintf(dbg_log, "ib         daddr64_t[2] 0x%16jx\n",
+		fprintf(dbg_log, "ib         daddr_t[2] 0x%16jx\n",
 		    ino->di_ib[2]);
 	}
 

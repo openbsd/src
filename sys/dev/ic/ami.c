@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.224 2013/05/07 01:54:06 jsg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.225 2013/06/11 16:42:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -147,7 +147,7 @@ int		ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
 int		ami_drv_pt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t *,
 		    int, int, void *);
 int		ami_drv_readcap(struct ami_softc *, u_int8_t, u_int8_t,
-		    daddr64_t *);
+		    daddr_t *);
 int		ami_drv_inq(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
 		    void *);
 int		ami_ioctl(struct device *, u_long, caddr_t);
@@ -1700,13 +1700,13 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 }
 
 int
-ami_drv_readcap(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, daddr64_t *sz)
+ami_drv_readcap(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, daddr_t *sz)
 {
 	struct scsi_read_cap_data *rcd = NULL;
 	struct scsi_read_cap_data_16 *rcd16 = NULL;
 	u_int8_t cdb[16];
 	u_int32_t blksz;
-	daddr64_t noblk;
+	daddr_t noblk;
 	int error = 0;
 
 	bzero(&cdb, sizeof cdb);
@@ -1996,7 +1996,7 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 	struct scsi_vpd_serial *vpdbuf;
 	int i, ld = p->ada_nld, error = EINVAL;
 	u_int8_t ch, tg;
-	daddr64_t sz = 0;
+	daddr_t sz = 0;
 
 	inqbuf = dma_alloc(sizeof(*inqbuf), PR_WAITOK);
 	vpdbuf = dma_alloc(sizeof(*vpdbuf), PR_WAITOK);

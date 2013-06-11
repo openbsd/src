@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.36 2013/04/24 13:46:29 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.37 2013/06/11 16:42:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -104,11 +104,11 @@ int	nicache;
 void addinode(ino_t inum);
 void *getino(ino_t inum);
 void findinodes(ino_t);
-void bread(daddr64_t, char *, int);
+void bread(daddr_t, char *, int);
 __dead void usage(void);
 void scanonedir(ino_t, const char *);
-void dirindir(ino_t, daddr64_t, int, off_t, const char *);
-void searchdir(ino_t, daddr64_t, long, off_t, const char *);
+void dirindir(ino_t, daddr_t, int, off_t, const char *);
+void searchdir(ino_t, daddr_t, long, off_t, const char *);
 int matchino(const void *, const void *);
 int matchcache(const void *, const void *);
 void cacheino(ino_t, void *);
@@ -228,7 +228,7 @@ void *
 getino(ino_t inum)
 {
 	static char *itab = NULL;
-	static daddr64_t iblk = -1;
+	static daddr_t iblk = -1;
 	void *dp;
 	size_t dsize;
 
@@ -261,7 +261,7 @@ int	breaderrors = 0;
 #define	BREADEMAX 32
 
 void
-bread(daddr64_t blkno, char *buf, int size)
+bread(daddr_t blkno, char *buf, int size)
 {
 	int cnt, i;
 
@@ -364,7 +364,7 @@ scanonedir(ino_t ino, const char *path)
  * require the directory to be dumped.
  */
 void
-dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t filesize,
+dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t filesize,
     const char *path)
 {
 	int i;
@@ -402,7 +402,7 @@ dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t filesize,
  * contains any subdirectories.
  */
 void
-searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize,
+searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize,
     const char *path)
 {
 	char *dblk;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.61 2013/06/02 01:07:39 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.62 2013/06/11 16:42:15 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -222,7 +222,7 @@ cd9660_read(void *v)
 	register struct iso_node *ip = VTOI(vp);
 	register struct iso_mnt *imp;
 	struct buf *bp;
-	daddr64_t lbn, rablock;
+	daddr_t lbn, rablock;
 	off_t diff;
 	int error = 0;
 	long size, n, on;
@@ -250,7 +250,7 @@ cd9660_read(void *v)
 #define MAX_RA 32
 		if (ci->ci_lastr + 1 == lbn) {
 			struct ra {
-				daddr64_t blks[MAX_RA];
+				daddr_t blks[MAX_RA];
 				int sizes[MAX_RA];
 			} *ra;
 			int i;

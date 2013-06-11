@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.4 2013/03/23 15:50:23 deraadt Exp $	*/
+/*	$OpenBSD: dev.c,v 1.5 2013/06/11 16:42:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -80,7 +80,7 @@ pmon_iostrategy(void *f, int rw, daddr32_t dblk, size_t size, void *buf,
 	if (rw != F_READ)
 		return EOPNOTSUPP;
 
-	offs = ((daddr64_t)dblk + pi->partoff) * DEV_BSIZE;
+	offs = ((daddr_t)dblk + pi->partoff) * DEV_BSIZE;
 	if (offs != pi->curpos) {
 		pos = pmon_lseek(pi->fd, offs, 0 /* SEEK_SET */);
 		if (pos != offs)

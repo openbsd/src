@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.245 2012/12/19 19:52:11 kettenis Exp $	*/
+/*	$OpenBSD: sd.c,v 1.246 2013/06/11 16:42:17 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -104,10 +104,10 @@ void	viscpy(u_char *, u_char *, int);
 int	sd_ioctl_inquiry(struct sd_softc *, struct dk_inquiry *);
 int	sd_ioctl_cache(struct sd_softc *, long, struct dk_cache *);
 
-void	sd_cmd_rw6(struct scsi_xfer *, int, daddr64_t, u_int);
-void	sd_cmd_rw10(struct scsi_xfer *, int, daddr64_t, u_int);
-void	sd_cmd_rw12(struct scsi_xfer *, int, daddr64_t, u_int);
-void	sd_cmd_rw16(struct scsi_xfer *, int, daddr64_t, u_int);
+void	sd_cmd_rw6(struct scsi_xfer *, int, daddr_t, u_int);
+void	sd_cmd_rw10(struct scsi_xfer *, int, daddr_t, u_int);
+void	sd_cmd_rw12(struct scsi_xfer *, int, daddr_t, u_int);
+void	sd_cmd_rw16(struct scsi_xfer *, int, daddr_t, u_int);
 
 void	sd_buf_done(struct scsi_xfer *);
 
@@ -571,7 +571,7 @@ sdstrategy(struct buf *bp)
 }
 
 void
-sd_cmd_rw6(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
+sd_cmd_rw6(struct scsi_xfer *xs, int read, daddr_t secno, u_int nsecs)
 {
 	struct scsi_rw *cmd = (struct scsi_rw *)xs->cmd;
 
@@ -583,7 +583,7 @@ sd_cmd_rw6(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
 }
 
 void
-sd_cmd_rw10(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
+sd_cmd_rw10(struct scsi_xfer *xs, int read, daddr_t secno, u_int nsecs)
 {
 	struct scsi_rw_big *cmd = (struct scsi_rw_big *)xs->cmd;
 
@@ -595,7 +595,7 @@ sd_cmd_rw10(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
 }
 
 void
-sd_cmd_rw12(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
+sd_cmd_rw12(struct scsi_xfer *xs, int read, daddr_t secno, u_int nsecs)
 {
 	struct scsi_rw_12 *cmd = (struct scsi_rw_12 *)xs->cmd;
 
@@ -607,7 +607,7 @@ sd_cmd_rw12(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
 }
 
 void
-sd_cmd_rw16(struct scsi_xfer *xs, int read, daddr64_t secno, u_int nsecs)
+sd_cmd_rw16(struct scsi_xfer *xs, int read, daddr_t secno, u_int nsecs)
 {
 	struct scsi_rw_16 *cmd = (struct scsi_rw_16 *)xs->cmd;
 
@@ -637,7 +637,7 @@ sdstart(struct scsi_xfer *xs)
 	struct scsi_link *link = xs->sc_link;
 	struct sd_softc *sc = link->device_softc;
 	struct buf *bp;
-	daddr64_t secno;
+	daddr_t secno;
 	int nsecs;
 	int read;
 	struct partition *p;
@@ -1192,7 +1192,7 @@ sd_interpret_sense(struct scsi_xfer *xs)
 	return (retval);
 }
 
-daddr64_t
+daddr_t
 sdsize(dev_t dev)
 {
 	struct sd_softc *sc;
@@ -1237,14 +1237,14 @@ static int sddoingadump;
  * at offset 'dumplo' into the partition.
  */
 int
-sddump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct sd_softc *sc;	/* disk unit to do the I/O */
 	struct disklabel *lp;	/* disk's disklabel */
 	int	unit, part;
 	int	sectorsize;	/* size of a disk sector */
-	daddr64_t	nsects;		/* number of sectors in partition */
-	daddr64_t	sectoff;	/* sector offset of partition */
+	daddr_t	nsects;		/* number of sectors in partition */
+	daddr_t	sectoff;	/* sector offset of partition */
 	int	totwrt;		/* total number of sectors left to write */
 	int	nwrt;		/* current number of sectors to write */
 	struct scsi_xfer *xs;	/* ... convenience */

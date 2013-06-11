@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.308 2013/05/21 15:21:16 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.309 2013/06/11 16:42:13 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -139,7 +139,7 @@ void			sr_rebuild_thread(void *);
 void			sr_roam_chunks(struct sr_discipline *);
 int			sr_chunk_in_use(struct sr_softc *, dev_t);
 int			sr_rw(struct sr_softc *, dev_t, char *, size_t,
-			    daddr64_t, long);
+			    daddr_t, long);
 void			sr_wu_done_callback(void *, void *);
 
 /* don't include these on RAMDISK */
@@ -153,7 +153,7 @@ void			sr_sensors_delete(struct sr_discipline *);
 int			sr_meta_probe(struct sr_discipline *, dev_t *, int);
 int			sr_meta_attach(struct sr_discipline *, int, int);
 int			sr_meta_rw(struct sr_discipline *, dev_t, void *,
-			    size_t, daddr64_t, long);
+			    size_t, daddr_t, long);
 int			sr_meta_clear(struct sr_discipline *);
 void			sr_meta_init(struct sr_discipline *, int, int);
 void			sr_meta_init_complete(struct sr_discipline *);
@@ -199,7 +199,7 @@ void			sr_meta_print(struct sr_metadata *);
 
 /* the metadata driver should remain stateless */
 struct sr_meta_driver {
-	daddr64_t		smd_offset;	/* metadata location */
+	daddr_t			smd_offset;	/* metadata location */
 	u_int32_t		smd_size;	/* size of metadata */
 
 	int			(*smd_probe)(struct sr_softc *,
@@ -397,7 +397,7 @@ sr_meta_getdevname(struct sr_softc *sc, dev_t dev, char *buf, int size)
 }
 
 int
-sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr64_t offset,
+sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t offset,
     long flags)
 {
 	struct vnode		*vp;
@@ -472,7 +472,7 @@ done:
 
 int
 sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t size,
-    daddr64_t offset, long flags)
+    daddr_t offset, long flags)
 {
 	int			rv = 1;
 
@@ -1551,7 +1551,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 	struct disklabel	label;
 	char			*devname;
 	int			error, part;
-	daddr64_t		size;
+	daddr_t			size;
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_native_probe(%s)\n",
 	   DEVNAME(sc), ch_entry->src_devname);
@@ -2012,8 +2012,8 @@ sr_ccb_put(struct sr_ccb *ccb)
 }
 
 struct sr_ccb *
-sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr64_t blkno,
-    daddr64_t len, u_int8_t *data, int xsflags, int ccbflags)
+sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
+    daddr_t len, u_int8_t *data, int xsflags, int ccbflags)
 {
 	struct sr_chunk		*sc = sd->sd_vol.sv_chunks[chunk];
 	struct sr_ccb		*ccb = NULL;
@@ -2590,7 +2590,7 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 	int			vol = -1, rv = EINVAL;
 	struct sr_discipline	*sd;
 	struct sr_chunk		*hotspare;
-	daddr64_t		rb, sz;
+	daddr_t			rb, sz;
 
 	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
 		vol++;
@@ -2814,7 +2814,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	struct sr_uuid		uuid;
 	struct disklabel	label;
 	struct vnode		*vn;
-	daddr64_t		size;
+	daddr_t			size;
 	char			devname[32];
 	int			rv = EINVAL;
 	int			c, part, open = 0;
@@ -3092,7 +3092,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	struct sr_meta_chunk	*meta;
 	struct disklabel	label;
 	struct vnode		*vn;
-	daddr64_t		size, csize;
+	daddr_t			size, csize;
 	char			devname[32];
 	int			rv = EINVAL, open = 0;
 	int			cid, i, part, status;
@@ -4007,7 +4007,7 @@ sr_raid_read_cap(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct scsi_read_cap_data rcd;
 	struct scsi_read_cap_data_16 rcd16;
-	daddr64_t		addr;
+	daddr_t			addr;
 	int			rv = 1;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_read_cap\n", DEVNAME(sd->sd_sc));
@@ -4499,7 +4499,7 @@ sr_shutdown(struct sr_softc *sc)
 }
 
 int
-sr_validate_io(struct sr_workunit *wu, daddr64_t *blk, char *func)
+sr_validate_io(struct sr_workunit *wu, daddr_t *blk, char *func)
 {
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
@@ -4575,8 +4575,8 @@ sr_rebuild_thread(void *arg)
 {
 	struct sr_discipline	*sd = arg;
 	struct sr_softc		*sc = sd->sd_sc;
-	daddr64_t		whole_blk, partial_blk, blk, sz, lba;
-	daddr64_t		psz, rb, restart;
+	daddr_t			whole_blk, partial_blk, blk, sz, lba;
+	daddr_t			psz, rb, restart;
 	struct sr_workunit	*wu_r, *wu_w;
 	struct scsi_xfer	xs_r, xs_w;
 	struct scsi_rw_16	*cr, *cw;

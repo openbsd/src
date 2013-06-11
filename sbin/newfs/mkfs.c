@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.77 2013/04/23 21:27:38 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.78 2013/06/11 16:42:05 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
 extern int	mfs;		/* run as the memory based filesystem */
 extern int	Nflag;		/* run mkfs without writing file system */
 extern int	Oflag;		/* format as an 4.3BSD file system */
-extern daddr64_t fssize;	/* file system size */
+extern daddr_t fssize;	/* file system size */
 extern long long	sectorsize;	/* bytes/sector */
 extern int	fsize;		/* fragment size */
 extern int	bsize;		/* block size */
@@ -124,11 +124,11 @@ int	fsi, fso;
 static caddr_t iobuf;
 static long iobufsize;
 
-daddr64_t	alloc(int, int);
+daddr_t	alloc(int, int);
 static int	charsperline(void);
 static int	ilog2(int);
 void		initcg(int, time_t);
-void		wtfs(daddr64_t, int, void *);
+void		wtfs(daddr_t, int, void *);
 int		fsinit1(time_t, mode_t, uid_t, gid_t);
 int		fsinit2(time_t);
 int		makedir(struct direct *, int);
@@ -136,7 +136,7 @@ void		iput(union dinode *, ino_t);
 void		setblock(struct fs *, unsigned char *, int);
 void		clrblock(struct fs *, unsigned char *, int);
 int		isblock(struct fs *, unsigned char *, int);
-void		rdfs(daddr64_t, int, void *);
+void		rdfs(daddr_t, int, void *);
 void		mkfs(struct partition *, char *, int, int,
 		    mode_t, uid_t, gid_t);
 static		void checksz(void);
@@ -612,7 +612,7 @@ void
 initcg(int cylno, time_t utime)
 {
 	int i, j, d, dlower, dupper, blkno, start;
-	daddr64_t cbase, dmax;
+	daddr_t cbase, dmax;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	struct csum *cs;
@@ -907,11 +907,11 @@ makedir(struct direct *protodir, int entries)
 /*
  * allocate a block or frag
  */
-daddr64_t
+daddr_t
 alloc(int size, int mode)
 {
 	int i, frag;
-	daddr64_t d, blkno;
+	daddr_t d, blkno;
 
 	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
 	    (char *)&acg);
@@ -964,7 +964,7 @@ goth:
 void
 iput(union dinode *ip, ino_t ino)
 {
-	daddr64_t d;
+	daddr_t d;
 
 	if (Oflag <= 1)
 		ip->dp1.di_gen = (u_int32_t)arc4random();
@@ -1004,7 +1004,7 @@ iput(union dinode *ip, ino_t ino)
  * read a block from the file system
  */
 void
-rdfs(daddr64_t bno, int size, void *bf)
+rdfs(daddr_t bno, int size, void *bf)
 {
 	int n;
 
@@ -1022,7 +1022,7 @@ rdfs(daddr64_t bno, int size, void *bf)
  * write a block to the file system
  */
 void
-wtfs(daddr64_t bno, int size, void *bf)
+wtfs(daddr_t bno, int size, void *bf)
 {
 	int n;
 
@@ -1168,7 +1168,7 @@ struct inoinfo {
   
         ino_t   i_dotdot;               /* inode number of `..' */
         u_int   i_numblks;              /* size of block array in bytes */
-        daddr64_t       i_blks[1];              /* actually longer */
+        daddr_t       i_blks[1];              /* actually longer */
 };
 
 static void

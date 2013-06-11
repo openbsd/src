@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.22 2010/09/22 01:18:57 matthew Exp $	*/
+/*	$OpenBSD: ct.c,v 1.23 2013/06/11 16:42:07 deraadt Exp $	*/
 /*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
@@ -927,7 +927,7 @@ ctioctl(dev, cmd, data, flag, p)
 int
 ctdump(dev, blkno, va, size)
 	dev_t dev;
-	daddr64_t blkno;
+	daddr_t blkno;
 	caddr_t va;
 	size_t size;
 {

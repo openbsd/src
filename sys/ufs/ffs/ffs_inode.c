@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.63 2013/04/22 02:07:46 tedu Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.64 2013/06/11 16:42:18 deraadt Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
-int ffs_indirtrunc(struct inode *, daddr64_t, daddr64_t, daddr64_t, int, long *);
+int ffs_indirtrunc(struct inode *, daddr_t, daddr_t, daddr_t, int, long *);
 
 /*
  * Update the access, modified, and inode change times as specified by the
@@ -157,9 +157,9 @@ int
 ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 {
 	struct vnode *ovp;
-	daddr64_t lastblock;
-	daddr64_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr64_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	daddr_t lastblock;
+	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	struct fs *fs;
 	struct buf *bp;
 	int offset, size, level;
@@ -469,15 +469,15 @@ done:
  * NB: triple indirect blocks are untested.
  */
 int
-ffs_indirtrunc(struct inode *ip, daddr64_t lbn, daddr64_t dbn,
-    daddr64_t lastbn, int level, long *countp)
+ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
+    daddr_t lastbn, int level, long *countp)
 {
 	int i;
 	struct buf *bp;
 	struct fs *fs = ip->i_fs;
 	struct vnode *vp;
 	void *copy = NULL;
-	daddr64_t nb, nlbn, last;
+	daddr_t nb, nlbn, last;
 	long blkcount, factor;
 	int nblocks, blocksreleased = 0;
 	int error = 0, allerror = 0;
@@ -565,7 +565,7 @@ ffs_indirtrunc(struct inode *ip, daddr64_t lbn, daddr64_t dbn,
 			continue;
 		if (level > SINGLE) {
 			error = ffs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
-					       (daddr64_t)-1, level - 1,
+					       (daddr_t)-1, level - 1,
 					       &blkcount);
 			if (error)
 				allerror = error;

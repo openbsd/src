@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.145 2013/02/17 17:36:49 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.146 2013/06/11 16:42:11 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -661,8 +661,8 @@ void
 dumpsys()
 {
 	int psize;
-	daddr64_t blkno;
-	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
+	daddr_t blkno;
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error = 0;
 	struct memarr *mp;
 	int nmem;

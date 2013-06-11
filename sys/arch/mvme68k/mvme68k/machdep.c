@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.129 2013/02/02 13:36:06 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.130 2013/06/11 16:42:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -564,9 +564,9 @@ dumpsys()
 {
 	int maj;
 	int psize;
-	daddr64_t blkno;		/* current block to write */
+	daddr_t blkno;		/* current block to write */
 					/* dump routine */
-	int (*dump)(dev_t, daddr64_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int pg;				/* page being dumped */
 	paddr_t maddr;			/* PA being dumped */
 	int error;			/* error code from (*dump)() */

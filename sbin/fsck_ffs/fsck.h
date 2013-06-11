@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.26 2011/05/08 14:38:40 otto Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.27 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ struct inostatlist {
  * buffer cache structure.
  */
 struct bufarea {
-	daddr64_t	b_bno;
+	daddr_t	b_bno;
 	struct bufarea	*b_next;		/* free list queue */
 	struct bufarea	*b_prev;		/* free list queue */
 	int	b_size;
@@ -143,12 +143,12 @@ struct bufarea asblk;		/* alternate file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk(daddr64_t, long);
+struct bufarea *getdatablk(daddr_t, long);
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
 	(bp)->b_dirty = 0; \
-	(bp)->b_bno = (daddr64_t)-1; \
+	(bp)->b_bno = (daddr_t)-1; \
 	(bp)->b_flags = 0;
 
 #define	sbdirty()	sblk.b_dirty = 1
@@ -159,7 +159,7 @@ struct bufarea *getdatablk(daddr64_t, long);
 enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 
 struct inodesc {
-	daddr64_t id_blkno;	/* current block number being examined */
+	daddr_t id_blkno;	/* current block number being examined */
 	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int (*id_func)		/* function to be applied to blocks of inode */
 (struct inodesc *);
@@ -200,7 +200,7 @@ struct inodesc {
  */
 struct dups {
 	struct dups *next;
-	daddr64_t dup;
+	daddr_t dup;
 };
 struct dups *duplist;		/* head of dup list */
 struct dups *muldup;		/* end of unique duplicate dup block numbers */
@@ -225,7 +225,7 @@ struct inoinfo {
 	ino_t	i_parent;		/* inode number of parent */
 	ino_t	i_dotdot;		/* inode number of `..' */
 	u_int	i_numblks;		/* size of block array in bytes */
-	daddr64_t	i_blks[1];		/* actually longer */
+	daddr_t	i_blks[1];		/* actually longer */
 } **inphead, **inpsort;
 
 extern long numdirs, listmax, inplast;
@@ -247,7 +247,7 @@ int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */
 int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 
-daddr64_t	maxfsblock;		/* number of blocks in the file system */
+daddr_t	maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
@@ -256,8 +256,8 @@ ino_t	lfdir;			/* lost & found directory inode number */
 char	*lfname;		/* lost & found directory name */
 int	lfmode;			/* lost & found directory creation mode */
 
-daddr64_t	n_blks;			/* number of blocks in use */
-daddr64_t	n_files;		/* number of files in use */
+daddr_t	n_blks;			/* number of blocks in use */
+daddr_t	n_files;		/* number of files in use */
 
 #define	clearinode(dp)	\
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {	\
@@ -281,7 +281,7 @@ struct ufs2_dinode ufs2_zino;
 
 union dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);
-void getblk(struct bufarea *, daddr64_t, long);
+void getblk(struct bufarea *, daddr_t, long);
 ino_t allocino(ino_t, int);
 
 int	(*info_fn)(char *, size_t);

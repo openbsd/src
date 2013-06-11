@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.26 2013/04/23 21:39:59 deraadt Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.27 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -60,9 +60,9 @@ union dinode {
 #define	HASDUMPEDFILE	0x1
 #define	HASSUBDIRS	0x2
 
-static	int dirindir(ino_t, daddr64_t, int, off_t *, off_t *, int);
-static	void dmpindir(ino_t, daddr64_t, int, off_t *);
-static	int searchdir(ino_t, daddr64_t, long, off_t, off_t *, int);
+static	int dirindir(ino_t, daddr_t, int, off_t *, off_t *, int);
+static	void dmpindir(ino_t, daddr_t, int, off_t *);
+static	int searchdir(ino_t, daddr_t, long, off_t, off_t *, int);
 
 /*
  * This is an estimation of the number of TP_BSIZE blocks in the file.
@@ -377,7 +377,7 @@ mapdirs(ino_t maxino, off_t *tapesize)
  * require the directory to be dumped.
  */
 static int
-dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t *filesize,
+dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t *filesize,
     off_t *tapesize, int nodump)
 {
 	int ret = 0;
@@ -420,7 +420,7 @@ dirindir(ino_t ino, daddr64_t blkno, int ind_level, off_t *filesize,
  * contains any subdirectories.
  */
 static int
-searchdir(ino_t ino, daddr64_t blkno, long size, off_t filesize,
+searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize,
     off_t *tapesize, int nodump)
 {
 	struct direct *dp;
@@ -603,7 +603,7 @@ dumpino(union dinode *dp, ino_t ino)
  * Read indirect blocks, and pass the data blocks to be dumped.
  */
 static void
-dmpindir(ino_t ino, daddr64_t  blk, int ind_level, off_t *size)
+dmpindir(ino_t ino, daddr_t  blk, int ind_level, off_t *size)
 {
 	int i, cnt;
 	char idblk[MAXBSIZE];
@@ -676,9 +676,9 @@ ufs1_blksout(int32_t *blkp, int frags, ino_t ino)
  * Collect up the data into tape record sized buffers and output them.
  */
 void
-ufs2_blksout(daddr64_t *blkp, int frags, ino_t ino)
+ufs2_blksout(daddr_t *blkp, int frags, ino_t ino)
 {
-	daddr64_t *bp;
+	daddr_t *bp;
 	int i, j, count, blks, tbperdb;
 
 	blks = howmany(frags * sblock->fs_fsize, TP_BSIZE);
@@ -797,7 +797,7 @@ int	breaderrors = 0;
 #define	BREADEMAX 32
 
 void
-bread(daddr64_t blkno, char *buf, int size)
+bread(daddr_t blkno, char *buf, int size)
 {
 	int cnt, i;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.24 2013/06/04 21:05:53 miod Exp $	*/
+/*	$OpenBSD: presto.c,v 1.25 2013/06/11 16:42:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -206,7 +206,7 @@ presto_attach(struct device *parent, struct device *self, void *args)
  */
 
 int
-prestodump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
+prestodump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	/*
 	 * A dump to nvram is theoretically possible, but its size is
@@ -215,11 +215,11 @@ prestodump(dev_t dev, daddr64_t blkno, caddr_t va, size_t size)
 	return (ENXIO);
 }
 
-daddr64_t
+daddr_t
 prestosize(dev_t dev)
 {
 	struct presto_softc *sc;
-	daddr64_t size;
+	daddr_t size;
 	int part;
 
 	sc = prestolookup(DISKUNIT(dev));

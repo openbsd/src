@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.23 2012/04/05 09:26:40 mikeb Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.24 2013/06/11 16:42:16 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ fatblock(struct msdosfsmount *pmp, uint32_t ofs, uint32_t *bnp, uint32_t *sizep,
  *  If cnp is null, nothing is returned.
  */
 int
-pcbmap(struct denode *dep, uint32_t findcn, daddr64_t *bnp, uint32_t *cnp,
+pcbmap(struct denode *dep, uint32_t findcn, daddr_t *bnp, uint32_t *cnp,
     int *sp)
 {
 	int error;

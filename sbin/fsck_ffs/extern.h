@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 2011/04/16 16:37:21 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 2013/06/11 16:42:04 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.6 1996/09/27 22:45:12 christos Exp $	*/
 
 /*
@@ -28,14 +28,14 @@
 void	adjust(struct inodesc *, short);
 int	allocblk(long);
 int	allocdir(ino_t, ino_t, int);
-void	blkerror(ino_t, char *, daddr64_t);
-int	bread(int, char *, daddr64_t, long);
+void	blkerror(ino_t, char *, daddr_t);
+int	bread(int, char *, daddr_t, long);
 void	bufinit(void);
-void	bwrite(int, char *, daddr64_t, long);
+void	bwrite(int, char *, daddr_t, long);
 void	cacheino(union dinode *, ino_t);
 int	changeino(ino_t, char *, ino_t);
 struct	fstab;
-int	chkrange(daddr64_t, int);
+int	chkrange(daddr_t, int);
 void	ckfini(int);
 int	ckinode(union dinode *, struct inodesc *);
 void	clri(struct inodesc *, char *, int);
@@ -47,7 +47,7 @@ void	fileerror(ino_t, ino_t, char *);
 int	findino(struct inodesc *);
 int	findname(struct inodesc *);
 void	flush(int, struct bufarea *);
-void	freeblk(daddr64_t, long);
+void	freeblk(daddr_t, long);
 void	freeino(ino_t);
 void	freeinodebuf(void);
 int	ftypeok(union dinode *);
