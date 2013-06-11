@@ -1,4 +1,4 @@
-/*	$OpenBSD: key_wrap.c,v 1.3 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: key_wrap.c,v 1.4 2013/06/11 18:45:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -50,7 +50,7 @@ aes_key_wrap(aes_key_wrap_ctx *ctx, const u_int8_t *P, size_t n, u_int8_t *C)
 	size_t i;
 	int j;
 
-	ovbcopy(P, C + 8, n * 8);	/* P and C may overlap */
+	memmove(C + 8, P, n * 8);	/* P and C may overlap */
 	A = C;				/* A points to C[0] */
 	memcpy(A, IV, 8);		/* A = IV, an initial value */
 
@@ -84,7 +84,7 @@ aes_key_unwrap(aes_key_wrap_ctx *ctx, const u_int8_t *C, u_int8_t *P, size_t n)
 	int j;
 
 	memcpy(A, C, 8);		/* A = C[0] */
-	ovbcopy(C + 8, P, n * 8);	/* P and C may overlap */
+	memmove(P, C + 8, n * 8);	/* P and C may overlap */
 
 	for (j = 5, t = 6 * n; j >= 0; j--) {
 		R = P + (n - 1) * 8;

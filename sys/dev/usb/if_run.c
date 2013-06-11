@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.92 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.93 2013/06/11 18:45:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1966,7 +1966,7 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 
 	if (flags & RT2860_RX_L2PAD) {
 		u_int hdrlen = ieee80211_get_hdrlen(wh);
-		ovbcopy(wh, (caddr_t)wh + 2, hdrlen);
+		memmove((caddr_t)wh + 2, wh, hdrlen);
 		wh = (struct ieee80211_frame *)((caddr_t)wh + 2);
 	}
 

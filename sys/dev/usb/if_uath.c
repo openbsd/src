@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.54 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.55 2013/06/11 18:45:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1254,8 +1254,8 @@ uath_data_rxeof(struct usbd_xfer *xfer, void *priv,
 		 * fields.
 		 */
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
-		ovbcopy(wh, (caddr_t)wh + IEEE80211_WEP_IVLEN +
-		    IEEE80211_WEP_KIDLEN, sizeof (struct ieee80211_frame));
+		memmove((caddr_t)wh + IEEE80211_WEP_IVLEN +
+		    IEEE80211_WEP_KIDLEN, wh, sizeof (struct ieee80211_frame));
 		m_adj(m, IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN);
 		m_adj(m, -IEEE80211_WEP_CRCLEN);
 		wh = mtod(m, struct ieee80211_frame *);
