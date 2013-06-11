@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.3 2013/06/05 17:56:32 rapha Exp $ */
+/* $OpenBSD: am335x.c,v 1.4 2013/06/11 19:19:43 rapha Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -25,6 +25,9 @@
 
 #define PRCM_SIZE	0x2000
 #define PRCM_ADDR	0x44E00000
+
+#define SCM_SIZE	0x2000
+#define SCM_ADDR	0x44E10000
 
 #define INTC_SIZE	0x300
 #define INTC_ADDR	0x48200000
@@ -92,6 +95,15 @@ struct omap_dev am335x_devs[] = {
 	{ .name = "prcm",
 	  .unit = 0,
 	  .mem = { { PRCM_ADDR, PRCM_SIZE } },
+	},
+
+	/*
+	 * System Control Module
+	 */
+
+	{ .name = "sitaracm",
+	  .unit = 0,
+	  .mem = { { SCM_ADDR, SCM_SIZE } },
 	},
 
 	/*

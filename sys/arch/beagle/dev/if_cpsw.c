@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.2 2013/06/05 17:56:32 rapha Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.3 2013/06/11 19:19:43 rapha Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -85,6 +85,7 @@
 #include <dev/mii/miivar.h>
 
 #include <arch/beagle/dev/omapvar.h>
+#include <arch/beagle/dev/sitara_cm.h>
 #include <arch/beagle/dev/if_cpswreg.h>
 
 #define CPSW_TXFRAGS	16
@@ -193,8 +194,6 @@ int cpsw_rxintr(void *);
 int cpsw_txintr(void *);
 int cpsw_miscintr(void *);
 
-int sitara_cm_reg_read_4(uint32_t reg, uint32_t *val);
-
 struct cfattach cpsw_ca = {
         sizeof (struct cpsw_softc), NULL, cpsw_attach
 };
@@ -219,20 +218,6 @@ m_length(const struct mbuf *m)
         for (m0 = m; m0 != NULL; m0 = m0->m_next)
                 pktlen += m0->m_len;
         return pktlen;
-}
-
-int
-sitara_cm_reg_read_4(uint32_t reg, uint32_t *val)
-{
-	/* XXX this needs to be fixed */
-#if 0
-	if (!sitara_cm_sc)
-		return (ENXIO);
-
-	*val = sitara_cm_read_4(sitara_cm_sc, reg);
-	return (0);
-#endif
-	return (ENXIO);
 }
 
 static inline u_int
@@ -337,8 +322,8 @@ cpsw_get_mac_addr(struct cpsw_softc *sc)
 {
 	u_int32_t	mac_lo = 0, mac_hi = 0;
 
-	mac_lo = sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_LO, &mac_lo);
-	mac_hi = sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_HI, &mac_hi);
+	sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_LO, &mac_lo);
+	sitara_cm_reg_read_4(OMAP2SCM_MAC_ID0_HI, &mac_hi);
 
 	if ((mac_lo == 0) && (mac_hi == 0)) {
 		CPSW_PRINTF(sc, "%s(%d): Invalid Ethernet address!\n",
@@ -407,7 +392,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't subregion tx ring SRAM: %d\n", error);
 		return;
 	}
-	printf("txdescs at %p\n", (void *)sc->sc_bsh_txdescs);
+	printf(" txdescs at %p", (void *)sc->sc_bsh_txdescs);
 
 	sc->sc_rxdescs_pa = oa->oa_dev->mem[0].addr + CPSW_CPPI_RAM_RXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
@@ -417,7 +402,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't subregion rx ring SRAM: %d\n", error);
 		return;
 	}
-	printf("rxdescs at %p\n", (void *)sc->sc_bsh_rxdescs);
+	printf(" rxdescs at %p", (void *)sc->sc_bsh_rxdescs);
 
 	sc->sc_rdp = malloc(sizeof(*sc->sc_rdp), M_TEMP, M_WAITOK);
 	KASSERT(sc->sc_rdp != NULL);
@@ -451,7 +436,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamap_sync(sc->sc_bdt, sc->sc_txpad_dm, 0, ETHER_MIN_LEN,
 	    BUS_DMASYNC_PREWRITE);
 
-	printf("Ethernet address %s\n", sc->sc_enaddr);
+	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	strlcpy(ifp->if_xname, "cpsw", IFNAMSIZ);
 	ifp->if_softc = sc;

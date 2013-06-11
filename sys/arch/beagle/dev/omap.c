@@ -1,4 +1,4 @@
-/* $OpenBSD: omap.c,v 1.8 2013/06/05 15:03:23 bmercer Exp $ */
+/* $OpenBSD: omap.c,v 1.9 2013/06/11 19:19:43 rapha Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  *
@@ -68,6 +68,7 @@ struct board_dev beagleboard_devs[] = {
 
 struct board_dev beaglebone_devs[] = {
 	{ "prcm",	0 },
+	{ "sitaracm",	0 },
 	{ "intc",	0 },
 	{ "dmtimer",	0 },
 	{ "dmtimer",	1 },
