@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.25 2013/04/15 09:23:01 mglocker Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.26 2013/06/12 11:42:01 mpi Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.19 2005/04/29 15:04:29 augustss Exp $	*/
 
 /*
@@ -125,8 +125,6 @@ struct ehci_softc {
 	char sc_vendor[16];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
-	u_int32_t sc_cmd;		/* shadow of cmd reg during suspend */
-
 	struct usb_dma sc_fldma;
 	ehci_link_t *sc_flist;
 	u_int sc_flsize;
@@ -180,4 +178,5 @@ usbd_status	ehci_init(struct ehci_softc *);
 int		ehci_intr(void *);
 int		ehci_detach(struct ehci_softc *, int);
 int		ehci_activate(struct device *, int);
-void		ehci_shutdown(void *);
+usbd_status	ehci_reset(struct ehci_softc *);
+

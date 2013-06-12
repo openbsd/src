@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.13 2013/05/14 12:01:17 rapha Exp $ */
+/*	$OpenBSD: omehci.c,v 1.14 2013/06/12 11:42:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -179,7 +179,7 @@ omehci_activate(struct device *self, int act)
 		sc->sc.sc_bus.use_polling--;
 		break;
 	case DVACT_POWERDOWN:
-		ehci_shutdown(sc);
+		ehci_reset(sc->sc);
 		break;
 	}
 	return 0;

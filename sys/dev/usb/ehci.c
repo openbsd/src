@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.133 2013/05/30 16:15:02 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.134 2013/06/12 11:42:01 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -353,22 +353,10 @@ ehci_init(struct ehci_softc *sc)
 
 	sc->sc_bus.usbrev = USBREV_2_0;
 
-	/* Reset the controller */
 	DPRINTF(("%s: resetting\n", sc->sc_bus.bdev.dv_xname));
-	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
-	usb_delay_ms(&sc->sc_bus, 1);
-	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
-	for (i = 0; i < 100; i++) {
-		usb_delay_ms(&sc->sc_bus, 1);
-		hcr = EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_HCRESET;
-		if (!hcr)
-			break;
-	}
-	if (hcr) {
-		printf("%s: reset timeout\n",
-		    sc->sc_bus.bdev.dv_xname);
-		return (USBD_IOERROR);
-	}
+	err = ehci_reset(sc);
+	if (err)
+		return (err);
 
 	/* frame list size at default, read back what we got and use that */
 	switch (EHCI_CMD_FLS(EOREAD4(sc, EHCI_USBCMD))) {
@@ -1033,6 +1021,8 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	timeout_del(&sc->sc_tmo_intrlist);
 
+	ehci_reset(sc);
+
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
 	/* XXX free other data structures XXX */
@@ -1045,7 +1035,7 @@ int
 ehci_activate(struct device *self, int act)
 {
 	struct ehci_softc *sc = (struct ehci_softc *)self;
-	u_int32_t cmd, hcr;
+	u_int32_t cmd, hcr, cparams;
 	int i, rv = 0;
 
 	switch (act) {
@@ -1056,95 +1046,74 @@ ehci_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		sc->sc_bus.use_polling++;
 
-		for (i = 1; i <= sc->sc_noport; i++) {
-			cmd = EOREAD4(sc, EHCI_PORTSC(i));
-			if ((cmd & (EHCI_PS_PO|EHCI_PS_PE)) == EHCI_PS_PE)
-				EOWRITE4(sc, EHCI_PORTSC(i),
-				    cmd | EHCI_PS_SUSP);
-		}
-
-		sc->sc_cmd = EOREAD4(sc, EHCI_USBCMD);
-		cmd = sc->sc_cmd & ~(EHCI_CMD_ASE | EHCI_CMD_PSE);
+		/*
+		 * First tell the host to stop processing Asynchronous
+		 * and Periodic schedules.
+		 */
+		cmd = EOREAD4(sc, EHCI_USBCMD) & ~(EHCI_CMD_ASE | EHCI_CMD_PSE);
 		EOWRITE4(sc, EHCI_USBCMD, cmd);
-
 		for (i = 0; i < 100; i++) {
+			usb_delay_ms(&sc->sc_bus, 1);
 			hcr = EOREAD4(sc, EHCI_USBSTS) &
 			    (EHCI_STS_ASS | EHCI_STS_PSS);
 			if (hcr == 0)
 				break;
-
-			usb_delay_ms(&sc->sc_bus, 1);
 		}
 		if (hcr != 0)
-			printf("%s: reset timeout\n",
+			printf("%s: disable schedules timeout\n",
 			    sc->sc_bus.bdev.dv_xname);
 
-		cmd &= ~EHCI_CMD_RS;
-		EOWRITE4(sc, EHCI_USBCMD, cmd);
-
-		for (i = 0; i < 100; i++) {
-			hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
-			if (hcr == EHCI_STS_HCH)
-				break;
-
-			usb_delay_ms(&sc->sc_bus, 1);
-		}
-		if (hcr != EHCI_STS_HCH)
-			printf("%s: config timeout\n",
-			    sc->sc_bus.bdev.dv_xname);
+		/*
+		 * Then reset the host as if it was a shutdown.
+		 *
+		 * All USB devices are disconnected/reconnected during
+		 * a suspend/resume cycle so keep it simple.
+		 */
+		ehci_reset(sc);
 
 		sc->sc_bus.use_polling--;
 		break;
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(self, act);
-		ehci_shutdown(sc);
+		ehci_reset(sc);
 		break;
 	case DVACT_RESUME:
 		sc->sc_bus.use_polling++;
 
-		/* restore things in case the bios sucks */
-		EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
+		ehci_reset(sc);
+
+		cparams = EREAD4(sc, EHCI_HCCPARAMS);
+		/* MUST clear segment register if 64 bit capable. */
+		if (EHCI_HCC_64BIT(cparams))
+			EWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
+
 		EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 		EOWRITE4(sc, EHCI_ASYNCLISTADDR,
 		    sc->sc_async_head->physaddr | EHCI_LINK_QH);
-		EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
-		hcr = 0;
-		for (i = 1; i <= sc->sc_noport; i++) {
-			cmd = EOREAD4(sc, EHCI_PORTSC(i));
-			if ((cmd & (EHCI_PS_PO|EHCI_PS_SUSP)) == EHCI_PS_SUSP) {
-				EOWRITE4(sc, EHCI_PORTSC(i),
-				    cmd | EHCI_PS_FPR);
-				hcr = 1;
-			}
-		}
-
-		if (hcr) {
-			usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
-			for (i = 1; i <= sc->sc_noport; i++) {
-				cmd = EOREAD4(sc, EHCI_PORTSC(i));
-				if ((cmd & (EHCI_PS_PO|EHCI_PS_SUSP)) ==
-				    EHCI_PS_SUSP)
-					EOWRITE4(sc, EHCI_PORTSC(i),
-					    cmd & ~EHCI_PS_FPR);
-			}
-		}
-
-		EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
+		/* Turn on controller */
+		EOWRITE4(sc, EHCI_USBCMD,
+		    EHCI_CMD_ITC_2 | /* 2 microframes interrupt delay */
+		    (EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_FLS_M) |
+		    EHCI_CMD_ASE |
+		    EHCI_CMD_PSE |
+		    EHCI_CMD_RS);
 
 		/* Take over port ownership */
 		EOWRITE4(sc, EHCI_CONFIGFLAG, EHCI_CONF_CF);
-
 		for (i = 0; i < 100; i++) {
-			hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
-			if (hcr != EHCI_STS_HCH)
-				break;
-
 			usb_delay_ms(&sc->sc_bus, 1);
+			hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
+			if (!hcr)
+				break;
 		}
-		if (hcr == EHCI_STS_HCH)
-			printf("%s: config timeout\n",
-			    sc->sc_bus.bdev.dv_xname);
+
+		if (hcr) {
+			printf("%s: run timeout\n", sc->sc_bus.bdev.dv_xname);
+			/* XXX should we bail here? */
+		}
+
+		EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 
@@ -1160,17 +1129,38 @@ ehci_activate(struct device *self, int act)
 	return (rv);
 }
 
-/*
- * Shut down the controller when the system is going down.
- */
-void
-ehci_shutdown(void *v)
+usbd_status
+ehci_reset(struct ehci_softc *sc)
 {
-	struct ehci_softc *sc = v;
+	u_int32_t hcr;
+	int i;
 
-	DPRINTF(("ehci_shutdown: stopping the HC\n"));
+	DPRINTF(("%s: stopping the HC\n", __func__));
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
+	for (i = 0; i < 100; i++) {
+		usb_delay_ms(&sc->sc_bus, 1);
+		hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
+		if (hcr)
+			break;
+	}
+
+	if (!hcr)
+		printf("%s: halt timeout\n", sc->sc_bus.bdev.dv_xname);
+
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
+	for (i = 0; i < 100; i++) {
+		usb_delay_ms(&sc->sc_bus, 1);
+		hcr = EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_HCRESET;
+		if (!hcr)
+			break;
+	}
+
+	if (hcr) {
+		printf("%s: reset timeout\n", sc->sc_bus.bdev.dv_xname);
+		return (USBD_IOERROR);
+	}
+
+	return (USBD_NORMAL_COMPLETION);
 }
 
 struct usbd_xfer *
