@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmxreg.h,v 1.1 2013/05/31 20:14:19 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmxreg.h,v 1.2 2013/06/12 01:07:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -77,7 +77,7 @@ struct UPT1_RxStats {
 #define VMXNET3_CMD_GET_MACL	0xf00d0003
 #define VMXNET3_CMD_GET_MACH	0xf00d0004
 
-#define __aligned(x) __attribute__((__aligned__(x)))
+#define VMXNET3_DMADESC_ALIGN	128
 
 struct vmxnet3_txdesc {
 	u_int64_t addr;
@@ -261,7 +261,9 @@ struct vmxnet3_txq_shared {
 	u_int32_t error;
 
 	struct UPT1_TxStats stats;
-} __packed __aligned(128);
+
+	u_int8_t pad3[88];
+} __packed;
 
 struct vmxnet3_rxq_shared {
 	u_int8_t update_rxhead;
@@ -283,4 +285,6 @@ struct vmxnet3_rxq_shared {
 	u_int32_t error;
 
 	struct UPT1_RxStats stats;
-} __packed __aligned(128);
+
+	u_int8_t pad4[88];
+} __packed;

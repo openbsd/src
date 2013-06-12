@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.8 2013/06/12 00:19:36 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.9 2013/06/12 01:07:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -296,7 +296,7 @@ vmxnet3_dma_init(struct vmxnet3_softc *sc)
 	u_int major, minor, release_code, rev;
 
 	qs_len = NTXQUEUE * sizeof *ts + NRXQUEUE * sizeof *rs;
-	ts = dma_allocmem(sc, qs_len, 128, &qs_pa);
+	ts = dma_allocmem(sc, qs_len, VMXNET3_DMADESC_ALIGN, &qs_pa);
 	if (ts == NULL)
 		return -1;
 	for (queue = 0; queue < NTXQUEUE; queue++)
