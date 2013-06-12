@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.6 2013/06/10 00:49:26 brad Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.7 2013/06/12 00:18:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -112,7 +112,7 @@ struct vmxnet3_softc {
 	struct vmxnet3_txqueue sc_txq[NTXQUEUE];
 	struct vmxnet3_rxqueue sc_rxq[NRXQUEUE];
 	struct vmxnet3_driver_shared *sc_ds;
-	void *sc_mcast;
+	u_int8_t *sc_mcast;
 };
 
 #define VMXNET3_STAT
@@ -761,54 +761,42 @@ skip_buffer:
 }
 
 static void
-vmxnet3_set_rx_filter(struct vmxnet3_softc *sc)
+vmxnet3_iff(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct vmxnet3_driver_shared *ds = sc->sc_ds;
-	u_int mode = VMXNET3_RXMODE_UCAST;
 	struct arpcom *ac = &sc->sc_arpcom;
+	struct vmxnet3_driver_shared *ds = sc->sc_ds;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	int n;
-	char *p;
+	u_int mode;
+	u_int8_t *p;
 
-	if (ifp->if_flags & IFF_MULTICAST)
-		mode |= VMXNET3_RXMODE_MCAST;
-	if (ifp->if_flags & IFF_ALLMULTI)
-		mode |= VMXNET3_RXMODE_ALLMULTI;
-	if (ifp->if_flags & IFF_BROADCAST)
-		mode |= VMXNET3_RXMODE_BCAST;
-	if (ifp->if_flags & IFF_PROMISC)
-		mode |= VMXNET3_RXMODE_PROMISC | VMXNET3_RXMODE_ALLMULTI;
+	mode = VMXNET3_RXMODE_UCAST;
+	if (ISSET(ifp->if_flags, IFF_BROADCAST))
+		SET(mode, VMXNET3_RXMODE_BCAST);
+	if (ISSET(ifp->if_flags, IFF_PROMISC))
+		SET(mode, VMXNET3_RXMODE_PROMISC);
 
-	if ((mode & (VMXNET3_RXMODE_ALLMULTI | VMXNET3_RXMODE_MCAST))
-	    != VMXNET3_RXMODE_MCAST) {
+	CLR(ifp->if_flags, IFF_ALLMULTI);
+	if (ISSET(ifp->if_flags, IFF_PROMISC) || ac->ac_multirangecnt > 0 ||
+	    ac->ac_multicnt > 682) {
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		SET(mode, VMXNET3_RXMODE_MCAST | VMXNET3_RXMODE_ALLMULTI);
 		ds->mcast_tablelen = 0;
-		goto setit;
+	} else if (ISSET(ifp->if_flags, IFF_MULTICAST) &&
+	    ac->ac_multicnt > 0) {
+		p = sc->sc_mcast;
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			bcopy(enm->enm_addrlo, p, ETHER_ADDR_LEN);
+			p += ETHER_ADDR_LEN;
+			ETHER_NEXT_MULTI(step, enm);
+		}
+		ds->mcast_tablelen = p - sc->sc_mcast;
+
+		SET(mode, VMXNET3_RXMODE_MCAST);
 	}
 
-	n = sc->sc_arpcom.ac_multicnt;
-	if (n == 0) {
-		mode &= ~VMXNET3_RXMODE_MCAST;
-		ds->mcast_tablelen = 0;
-		goto setit;
-	}
-	if (n > 682) {
-		mode |= VMXNET3_RXMODE_ALLMULTI;
-		ds->mcast_tablelen = 0;
-		goto setit;
-	}
-
-	p = sc->sc_mcast;
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm) {
-		bcopy(enm->enm_addrlo, p, ETHER_ADDR_LEN);
-		p += ETHER_ADDR_LEN;
-		ETHER_NEXT_MULTI(step, enm);
-	}
-	ds->mcast_tablelen = n * ETHER_ADDR_LEN;
-
-setit:
 	WRITE_CMD(sc, VMXNET3_CMD_SET_FILTER);
 	ds->rxmode = mode;
 	WRITE_CMD(sc, VMXNET3_CMD_SET_RXMODE);
@@ -950,7 +938,7 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 		WRITE_BAR0(sc, VMXNET3_BAR0_RXH2(queue), 0);
 	}
 
-	vmxnet3_set_rx_filter(sc);
+	vmxnet3_iff(sc);
 	vmxnet3_enable_all_intrs(sc);
 	vmxnet3_link_state(sc);
 	return 0;
@@ -986,8 +974,10 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			error = vmxnet3_init(sc);
+#ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
+#endif
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -1013,7 +1003,7 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			vmxnet3_set_rx_filter(sc);
+			vmxnet3_iff(sc);
 		error = 0;
 	}
 
