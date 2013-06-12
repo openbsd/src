@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.2 2013/06/05 18:26:06 tedu Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.3 2013/06/12 22:55:02 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -98,7 +98,7 @@ fusefs_lookup(void *v)
 
 		if (error) {
 			if ((nameiop == CREATE || nameiop == RENAME) &&
-			    (flags & ISLASTCN) ) {
+			    (flags & ISLASTCN)) {
 				if (vdp->v_mount->mnt_flag & MNT_RDONLY)
 					return (EROFS);
 
@@ -215,7 +215,7 @@ fusefs_lookup(void *v)
 
 out:
 	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE &&
-	    nameiop != DELETE )
+	    nameiop != DELETE)
 		cache_enter(vdp, *vpp, cnp);
 
 	if (fbuf)

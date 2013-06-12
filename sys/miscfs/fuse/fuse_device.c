@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.1 2013/06/03 15:50:56 tedu Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.2 2013/06/12 22:55:02 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -94,8 +94,7 @@ fuse_dump_buff(char *buff, int len)
 	int i;
 
 	bzero(text, 17);
-	for (i = 0; i < len ; i++) {
-
+	for (i = 0; i < len; i++) {
 		if (i != 0 && (i % 16) == 0) {
 			printf(": %s\n", text);
 			bzero(text, 17);
@@ -291,7 +290,6 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 		return (ENODEV);
 
 	if (SIMPLEQ_EMPTY(&sc->sc_fbufs_in)) {
-
 		if (ioflag & O_NONBLOCK)
 			return (EAGAIN);
 
@@ -392,7 +390,7 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 
 		if (uio->uio_resid != hdr.fh_len ||
 		    (uio->uio_resid != 0 && hdr.fh_err) ||
-		    SIMPLEQ_EMPTY(&sc->sc_fbufs_wait) ) {
+		    SIMPLEQ_EMPTY(&sc->sc_fbufs_wait)) {
 			printf("corrupted fuse header or queue empty\n");
 			return (EINVAL);
 		}

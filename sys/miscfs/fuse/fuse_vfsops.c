@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.3 2013/06/09 12:51:40 tedu Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.4 2013/06/12 22:55:02 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -119,7 +119,6 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	fmp = VFSTOFUSEFS(mp);
 
 	if (fmp->sess_init) {
-
 		fmp->sess_init = 0;
 		fbuf = fb_setup(0, 0, FBT_DESTROY, p);
 
@@ -128,7 +127,6 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 		if (error)
 			printf("error from fuse\n");
-
 	} else {
 		fuse_device_cleanup(fmp->dev, NULL);
 	}

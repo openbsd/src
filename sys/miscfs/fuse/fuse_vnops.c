@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.2 2013/06/05 18:26:06 tedu Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.3 2013/06/12 22:55:02 tedu Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -341,9 +341,9 @@ fusefs_setattr(void *v)
 	 * Check for unsettable attributes.
 	 */
 	if ((vap->va_type != VNON) || (vap->va_nlink != VNOVAL) ||
-		(vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
-		(vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
-		((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL))
+	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
+	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
+	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL))
 		return (EINVAL);
 
 	if (!fmp->sess_init || (fmp->undef_op & UNDEF_SETATTR))
