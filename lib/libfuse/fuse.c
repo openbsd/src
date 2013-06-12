@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.3 2013/06/12 22:36:06 tedu Exp $ */
+/* $OpenBSD: fuse.c,v 1.4 2013/06/12 22:44:42 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -299,7 +299,8 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, unused int *fg)
 	ifuse_debug_init();
 #endif
 
-	for (i = args->argc - 1 ; i > 0 && *args->argv[i] == '-' ; --i);
+	for (i = args->argc - 1; i > 0 && *args->argv[i] == '-'; --i)
+		;
 	*mp = args->argv[i];
 	*mt = 0;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.3 2013/06/12 22:42:52 tedu Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.4 2013/06/12 22:44:42 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -34,7 +34,7 @@ fuse_opt_add_arg(struct fuse_args *args, const char *name)
 		if (av == NULL)
 			return (-1);
 
-		for (i = 0 ; i < args->argc ; i++) {
+		for (i = 0; i < args->argc; i++) {
 			av[i] = strdup(args->argv[i]);
 			if (av[i] == NULL)
 				return (-1);
@@ -71,7 +71,7 @@ fuse_opt_parse(struct fuse_args *args, void *data, struct fuse_opt *opt,
 	int ret;
 	int i, j;
 
-	for (i = 0 ; i < args->argc ; i++) {
+	for (i = 0; i < args->argc; i++) {
 		arg = args->argv[i];
 
 		/* not - and not -- */
@@ -92,7 +92,7 @@ fuse_opt_parse(struct fuse_args *args, void *data, struct fuse_opt *opt,
 				break ;
 			default:
 				good = NULL;
-				for (j = 0 ; opt[j].templ != NULL ; j++)
+				for (j = 0; opt[j].templ != NULL; j++)
 					if (strcmp(arg, opt[j].templ) == 0) {
 						good = &opt[j];
 						break ;
@@ -130,7 +130,7 @@ fuse_opt_insert_arg(struct fuse_args *args, int p, const char *arg)
 
 		args->argv = av;
 		args->argc++;
-		for (i = args->argc - 1 ; i > p ; i++)
+		for (i = args->argc - 1; i > p; i++)
 			args->argv[i] = args->argv[i - 1];
 
 		args->argv[p] = strdup(arg);
@@ -146,7 +146,7 @@ fuse_opt_free_args(struct fuse_args *args)
 	int i;
 
 	if (args->allocated)
-		for (i = 0 ; i < args->argc ; i++)
+		for (i = 0; i < args->argc; i++)
 			free(args->argv[i]);
 	free(args->argv);
 	args->allocated = 0;
