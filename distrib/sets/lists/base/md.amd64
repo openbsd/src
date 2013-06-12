@@ -951,6 +951,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/mc146818reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/mc6845.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/mc6845reg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/mc68681reg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/mc68681var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/mfireg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/mfivar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/mk48txxreg.ph
