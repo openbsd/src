@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.7 2013/06/12 00:18:00 uebayasi Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.8 2013/06/12 00:19:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -728,7 +728,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ether_input_mbuf(ifp, m);
 
