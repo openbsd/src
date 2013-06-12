@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.2 2012/07/08 07:58:26 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.3 2013/06/12 13:30:59 jasper Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -58,7 +58,7 @@ sub add_variable
 		die "Duplicate variable $name";
 	}
 	push(@{$self->{vlist}}, $name);
-	$self->{variables}->{$name} = $value;
+	$self->{variables}->{$name} = ($value =~ s/^\"|\"$//rg);
 }
 
 sub parse_value
