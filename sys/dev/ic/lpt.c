@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.9 2012/01/11 16:22:33 dhill Exp $ */
+/*	$OpenBSD: lpt.c,v 1.10 2013/06/12 19:07:40 deraadt Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -98,9 +98,9 @@ struct cfdriver lpt_cd = {
 #define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
 #define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
 #define	NOT_READY() \
-    ((bus_space_read_1(iot, ioh, lpt_status) ^ LPS_INVERT) & LPS_MASK)
+    ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, lpt_status) ^ LPS_INVERT) & LPS_MASK)
 #define	NOT_READY_ERR() \
-    lpt_not_ready(bus_space_read_1(iot, ioh, lpt_status), sc)
+    lpt_not_ready(bus_space_read_1(sc->sc_iot, sc->sc_ioh, lpt_status), sc)
 
 int	lpt_not_ready(u_int8_t, struct lpt_softc *);
 void	lptwakeup(void *arg);
@@ -138,6 +138,16 @@ lpt_attach_common(struct lpt_softc *sc)
 	timeout_set(&sc->sc_wakeup_tmo, lptwakeup, sc);
 }
 
+void
+lpt_detach_common(struct lpt_softc *sc)
+{
+	timeout_del(&sc->sc_wakeup_tmo);
+	if (sc->sc_state != 0) {
+		sc->sc_state = 0;
+		wakeup(sc);
+	}
+}
+
 /*
  * Reset the printer, then wait until it's selected and not busy.
  */
@@ -147,8 +157,6 @@ lptopen(dev_t dev, int flag, int mode, struct proc *p)
 	int unit = LPTUNIT(dev);
 	u_int8_t flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	u_int8_t control;
 	int error;
 	int spin;
@@ -174,17 +182,15 @@ lptopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	sc->sc_state = LPT_INIT;
 	LPRINTF(("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags));
-	iot = sc->sc_iot;
-	ioh = sc->sc_ioh;
 
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert INIT for 100 usec to start up printer */
-		bus_space_write_1(iot, ioh, lpt_control, LPC_SELECT);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, LPC_SELECT);
 		delay(100);
 	}
 
 	control = LPC_SELECT | LPC_NINIT;
-	bus_space_write_1(iot, ioh, lpt_control, control);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, control);
 
 	/* wait till ready (printer running diagnostics) */
 	for (spin = 0; NOT_READY_ERR(); spin += STEP) {
@@ -195,6 +201,8 @@ lptopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		/* wait 1/4 second, give up if we get a signal */
 		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen", STEP);
+		if (sc->sc_state == 0)
+			return (EIO);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return error;
@@ -206,7 +214,7 @@ lptopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (flags & LPT_AUTOLF)
 		control |= LPC_AUTOLF;
 	sc->sc_control = control;
-	bus_space_write_1(iot, ioh, lpt_control, control);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, control);
 
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
 	sc->sc_count = 0;
@@ -248,7 +256,8 @@ lptwakeup(void *arg)
 	lptintr(sc);
 	splx(s);
 
-	timeout_add(&sc->sc_wakeup_tmo, STEP);
+	if (sc->sc_state != 0)
+		timeout_add(&sc->sc_wakeup_tmo, STEP);
 }
 
 /*
@@ -290,6 +299,8 @@ lptpushbytes(struct lpt_softc *sc)
 
 		while (sc->sc_count > 0) {
 			spin = 0;
+			if (sc->sc_state == 0)
+				return (EIO);
 			while (NOT_READY()) {
 				if (++spin < sc->sc_spinmax)
 					continue;
@@ -303,6 +314,8 @@ lptpushbytes(struct lpt_softc *sc)
 						tic = TIMEOUT;
 					error = tsleep((caddr_t)sc,
 					    LPTPRI | PCATCH, "lptpsh", tic);
+					if (sc->sc_state == 0)
+						error = EIO;
 					if (error != EWOULDBLOCK)
 						return error;
 				}
@@ -331,8 +344,12 @@ lptpushbytes(struct lpt_softc *sc)
 				(void) lptintr(sc);
 				splx(s);
 			}
+			if (sc->sc_state == 0)
+				return (EIO);
 			error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
 			    "lptwrite2", 0);
+			if (sc->sc_state == 0)
+				error = EIO;
 			if (error)
 				return error;
 		}
@@ -407,4 +424,52 @@ lptintr(void *arg)
 	}
 
 	return 1;
+}
+
+int
+lpt_activate(struct device *self, int act)
+{
+	struct lpt_softc *sc = (struct lpt_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (timeout_pending(&sc->sc_wakeup_tmo))
+			timeout_del(&sc->sc_wakeup_tmo);
+		break;
+	case DVACT_RESUME:
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, LPC_NINIT);
+
+		if (sc->sc_state) {
+			int spin;
+
+			if ((sc->sc_flags & LPT_NOPRIME) == 0) {
+				/* assert INIT for 100 usec to start up printer */
+				bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+				    lpt_control, LPC_SELECT);
+				delay(100);
+			}
+			
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control,
+			    LPC_SELECT | LPC_NINIT);
+
+			/* wait till ready (printer running diagnostics) */
+			for (spin = 0; NOT_READY_ERR(); spin += STEP) {
+				if (spin >= TIMEOUT) {
+					sc->sc_state = 0;
+					goto fail;
+				}
+
+				/* wait 1/4 second, give up if we get a signal */
+				delay(STEP * 1000);
+			}
+
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    lpt_control, sc->sc_control);
+			wakeup(sc);
+		}
+fail:
+		break;
+	}
+ 
+	return (0);
 }
