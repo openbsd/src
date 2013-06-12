@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_gem.c,v 1.24 2013/06/11 19:39:09 kettenis Exp $	*/
+/*	$OpenBSD: i915_gem.c,v 1.25 2013/06/12 14:28:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -84,8 +84,6 @@ int i915_gem_wait_for_error(struct drm_device *);
 int __wait_seqno(struct intel_ring_buffer *, uint32_t, bool, struct timespec *);
 int i915_gem_object_create_mmap_offset(struct drm_i915_gem_object *);
 void i915_gem_object_free_mmap_offset(struct drm_i915_gem_object *);
-void *i915_gem_object_alloc(struct drm_device *);
-void i915_gem_object_free(struct drm_i915_gem_object *);
 void i915_gem_object_init(struct drm_i915_gem_object *);
 
 extern int ticks;
@@ -219,19 +217,6 @@ i915_gem_get_aperture_ioctl(struct drm_device *dev, void *data,
 	DRM_UNLOCK();
 
 	return 0;
-}
-
-void *
-i915_gem_object_alloc(struct drm_device *dev)
-{
-	return pool_get(&dev->objpl, PR_WAITOK | PR_ZERO);
-}
-
-void
-i915_gem_object_free(struct drm_i915_gem_object *obj)
-{
-	struct drm_device *dev = obj->base.dev;
-	pool_put(&dev->objpl, obj);
 }
 
 int
@@ -2930,12 +2915,12 @@ i915_gem_alloc_object(struct drm_device *dev, size_t size)
 {
 	struct drm_i915_gem_object *obj;
 
-	obj = i915_gem_object_alloc(dev);
+	obj = pool_get(&dev->objpl, PR_WAITOK | PR_ZERO);
 	if (obj == NULL)
 		return NULL;
 
 	if (drm_gem_object_init(dev, &obj->base, size) != 0) {
-		i915_gem_object_free(obj);
+		pool_put(&dev->objpl, obj);
 		return NULL;
 	}
 
@@ -2994,7 +2979,7 @@ i915_gem_free_object(struct drm_obj *gem_obj)
 #endif
 
 	drm_free(obj->bit_17);
-	i915_gem_object_free(obj);
+	pool_put(&dev->objpl, obj);
 }
 
 int
