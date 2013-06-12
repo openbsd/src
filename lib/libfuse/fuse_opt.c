@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.1 2013/06/12 22:36:06 tedu Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.2 2013/06/12 22:38:08 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -62,7 +62,8 @@ fuse_opt_add_arg(struct fuse_args *args, const char *name)
 	return (0);
 }
 
-int fuse_opt_parse(struct fuse_args *args, void *data, struct fuse_opt *opt,
+int
+fuse_opt_parse(struct fuse_args *args, void *data, struct fuse_opt *opt,
     fuse_opt_proc_t f)
 {
 	const char *arg;
