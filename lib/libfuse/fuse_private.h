@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.2 2013/06/03 16:21:08 tedu Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.3 2013/06/12 22:36:06 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -28,6 +28,7 @@
 #include "fuse.h"
 
 struct fuse_dirhandle;
+struct fuse_args;
 
 struct fuse_vnode {
 	ino_t ino;
@@ -42,12 +43,6 @@ struct fuse_vnode {
 SIMPLEQ_HEAD(fuse_vn_head, fuse_vnode);
 SPLAY_HEAD(dict, dictentry);
 SPLAY_HEAD(tree, treeentry);
-
-struct fuse_args {
-	int	argc;
-	char	**argv;
-	int	allocated;
-};
 
 struct fuse_session {
 	void *args;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2013/06/03 16:00:50 tedu Exp $
+#	$OpenBSD: Makefile,v 1.2 2013/06/12 22:36:06 tedu Exp $
 
 LIB=	fuse
 MAN=	fuse.3
@@ -29,8 +29,8 @@ CDIAGFLAGS+=	-Wundef -Wbad-function-cast -Winline -Wcast-align
 # XXX Shouldn't we use a common fuse.h with proper ifdef _KERNEL part?
 CFLAGS+=	-I${.CURDIR} -DDEBUG
 
-SRCS=	debug.c dict.c fuse.c fuse_ops.c fuse_subr.c tree.c
-HDRS=	fuse.h
+SRCS=	debug.c dict.c fuse.c fuse_ops.c fuse_opt.c fuse_subr.c tree.c
+HDRS=	fuse.h fuse_opt.h
 
 PC_FILES=fuse.pc
 CLEANFILES+=${PC_FILES}
