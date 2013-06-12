@@ -1,4 +1,4 @@
-.\" $OpenBSD: fusebuf.9,v 1.8 2013/06/11 20:20:52 sobrado Exp $
+.\" $OpenBSD: fusebuf.9,v 1.9 2013/06/12 05:56:53 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 11 2013 $
+.Dd $Mdocdate: June 12 2013 $
 .Dt FUSEBUF 9
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ The header contains the following elements:
 .Bl -tag -width foobarmoocow
 .It Fa fh_next
 A
-.Xr SIMPLEQ_ENTRY 9
+.Xr SIMPLEQ_ENTRY 3
 needed to store the different fusebufs stored with
 .Fa fb_queue .
 .It Fa fh_len
@@ -129,7 +129,8 @@ Indicates the ino on which the
 .Xr fuse 4
 operation is done.
 .It Fa fh_uuid
-UUID to track the answer. This number is generated with
+UUID to track the answer.
+This number is generated with
 .Xr arc4random 9 .
 .El
 .Pp
@@ -227,7 +228,7 @@ with
 .Xr errno 2 ,
 .Xr fuse 3 ,
 .Xr queue 3 ,
-.Xr statvfs 3,
+.Xr statvfs 3 ,
 .Xr fuse 4 ,
 .Xr arc4random 9 ,
 .Xr mbuf 9

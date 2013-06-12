@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.3,v 1.4 2013/06/03 19:46:05 tedu Exp $
+.\" $OpenBSD: fuse.3,v 1.5 2013/06/12 06:00:54 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2013 $
+.Dd $Mdocdate: June 12 2013 $
 .Dt FUSE 3
 .Os
 .Sh NAME
@@ -31,11 +31,11 @@
 .Nm fuse_loop_mt ,
 .Nm fuse_chan_fd ,
 .Nm fuse_unmount ,
-.Nm fuse_daemonize,
+.Nm fuse_daemonize ,
 .Nm fuse_destroy
 .Nd FUSE implementation routines
 .Sh SYNOPSIS
-.Fd #include \*[Lt]fuse.h\*[Gt]
+.In fuse.h
 .Ft int
 .Fn fuse_main "int argc" "char **argv" "const struct fuse_operations *ops" \
     "void *data"
@@ -70,7 +70,7 @@
 The
 .Nm
 library provides routines to implement a filesystem in userspace.
-.Ss INTRODUCTION
+.Pp
 There are two ways of Implementing a Fuse filesystem.
 You can implement a FS by calling only
 .Fn fuse_main
@@ -154,7 +154,7 @@ kernel filesystem opcodes.
 .Pp
 .Fn fuse_destroy
 I do not know yet what this function is supposed to do...
-.Sh EXAMPLE
+.Sh EXAMPLES
 Here is a simple example of a fuse implementation:
 .Bd -literal
 #include <errno.h>
