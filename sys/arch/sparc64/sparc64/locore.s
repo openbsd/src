@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.173 2013/06/13 19:33:04 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.174 2013/06/13 20:03:59 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6448,7 +6448,7 @@ ENTRY(bcopy) /* src, dest, size */
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
 	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
-	 cmp	%o2, 256
+	 nop
 
 	mov	%o1, %o5	! Save memcpy return value
 	/*
