@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.20 2013/03/26 05:04:10 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.21 2013/06/13 05:13:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -102,8 +102,6 @@
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)
 #endif
-
-#define	ovbcopy bcopy
 
 #if !defined(_LOCORE)
 #include <machine/cpu.h>
