@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.8 2013/06/01 09:57:58 miod Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.9 2013/06/13 04:13:47 brad Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -416,7 +416,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	    SYM_SEARCH_ALL | SYM_WARNNOTFOUND | SYM_PLT, sym, object, &sobj);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
-		*((int *)0) = 0;	/* XXX */
+		*(volatile int *)0 = 0;		/* XXX */
 	}
 
 	value = ooff + this->st_value;
