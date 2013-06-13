@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.238 2013/06/11 21:51:55 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.239 2013/06/13 15:00:04 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -579,10 +579,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (EINVAL);
 		}
 		if (bufcachepercent != opct) {
-			pgs = (b_highpages_total + b_dmapages_total) *
-			    bufcachepercent / 100;
-			b_dmamaxpages = b_dmapages_total * bufcachepercent /
-			    100;
+			pgs = (b_highpages_total + b_dmapages_total)
+			    * bufcachepercent / 100;
+			b_dmamaxpages = b_dmapages_total * bufcachepercent
+			    / 100;
 			bufadjust(pgs); /* adjust bufpages */
 			bufhighpages = bufpages; /* set high water mark */
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.87 2013/06/11 21:51:54 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.88 2013/06/13 15:00:04 tedu Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -234,8 +234,8 @@ struct buf {
 #define	B_SCANNED	0x00100000	/* Block already pushed during sync */
 #define	B_PDAEMON	0x00200000	/* I/O started by pagedaemon */
 #define	B_RELEASED	0x00400000	/* free this buffer after its kvm */
-#define	B_BC		0x00800000      /* Managed by the Buffer Cache. */
-#define	B_DMA		0x01000000      /* DMA reachable. */
+#define B_BC		0x00800000      /* Managed by the Buffer Cache. */
+#define B_DMA		0x01000000      /* DMA reachable. */
 
 #define	B_BITS	"\20\001AGE\002NEEDCOMMIT\003ASYNC\004BAD\005BUSY" \
     "\006CACHE\007CALL\010DELWRI\011DONE\012EINTR\013ERROR" \
@@ -306,7 +306,7 @@ void	brelse(struct buf *);
 void	bremfree(struct buf *);
 void	bufinit(void);
 void	buf_dirty(struct buf *);
-void	buf_undirty(struct buf *);
+void    buf_undirty(struct buf *);
 void	buf_dma(struct buf *);
 int	bwrite(struct buf *);
 struct buf *getblk(struct vnode *, daddr_t, int, int, int);
