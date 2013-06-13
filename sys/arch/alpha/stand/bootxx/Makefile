@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2012/09/01 15:10:06 pascal Exp $
+#	$OpenBSD: Makefile,v 1.14 2013/06/13 11:27:56 deraadt Exp $
 #	$NetBSD: Makefile,v 1.12 1997/04/17 07:27:49 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -17,7 +17,7 @@ BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
 CLEANFILES+= ${PROG}.sym ${PROG}.nosym ${PROG}.trunc
 
 .PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libkern
-SRCS+=	bzero.c memcpy.c
+SRCS+=	memmove.S bzero.c
 
 DEFNS= -DPRIMARY_BOOTBLOCK
 
