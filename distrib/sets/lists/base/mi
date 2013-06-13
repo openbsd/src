@@ -3238,6 +3238,7 @@
 ./usr/share/sendmail/ostype/sco-uw-2.1.m4
 ./usr/share/sendmail/ostype/sco3.2.m4
 ./usr/share/sendmail/ostype/sinix.m4
+./usr/share/sendmail/ostype/solaris11.m4
 ./usr/share/sendmail/ostype/solaris2.m4
 ./usr/share/sendmail/ostype/solaris2.ml.m4
 ./usr/share/sendmail/ostype/solaris2.pre5.m4
