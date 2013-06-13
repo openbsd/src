@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.146 2013/06/09 12:42:22 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.147 2013/06/13 02:26:53 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -779,68 +779,6 @@ ENTRY(kcopy)
 #endif
 	ret
 	
-/*
- * bcopy(caddr_t from, caddr_t to, size_t len);
- * Copy len bytes.
- */
-ALTENTRY(ovbcopy)
-ENTRY(bcopy)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-docopy:
-	movl	20(%esp),%ecx
-	movl	%edi,%eax
-	subl	%esi,%eax
-	cmpl	%ecx,%eax		# overlapping?
-	jb	1f
-	cld				# nope, copy forward
-	shrl	$2,%ecx			# copy by 32-bit words
-	rep
-	movsl
-	movl	20(%esp),%ecx
-	andl	$3,%ecx			# any bytes left?
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	ret
-
-	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
-	addl	%ecx,%esi
-	std
-	andl	$3,%ecx			# any fractional bytes?
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	movl	20(%esp),%ecx		# copy remainder by 32-bit words
-	shrl	$2,%ecx
-	subl	$3,%esi
-	subl	$3,%edi
-	rep
-	movsl
-	popl	%edi
-	popl	%esi
-	cld
-	ret
-
-/*
- * Emulate memmove() by loading the first two arguments in reverse order
- * and jumping into bcopy(), which handles overlapping regions.
- * memcpy() is not guaranteed to have this guarantee, but it's safe
- * to offer it (if a bit slower).
- */
-ALTENTRY(memcpy)
-ENTRY(memmove)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%edi
-	movl	16(%esp),%esi
-	jmp	docopy
-
 /*****************************************************************************/
 
 /*
