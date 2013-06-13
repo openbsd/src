@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.3 2009/08/19 19:47:53 miod Exp $ */
+/*	$OpenBSD: memmove.S,v 1.4 2013/06/13 03:58:22 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,10 +38,26 @@
 
 #include <machine/asm.h>
 
+ENTRY(bcopy, R2|R3|R4|R5)
+	movzwl	$65535,r0	/* r0 = 64K (needed below) */
+	movq	8(ap),r1	/* r1 = src, r2 = length */
+	movl	r1,r3		/* r3 = dst */
+	movl	4(ap),r1	/* r1 = src */
+	brw	5f		/* do a memmove */
+
+ENTRY(memcpy, R2|R3|R4|R5)
+	movzwl	$65535,r0	/* r0 = 64K (needed below) */
+	movq	8(ap),r1	/* r1 = src, r2 = length */
+	movl	4(ap),r3	/* r3 = dst */
+	cmpl	r1,r3
+	beql	2f		/* equal, nothing to do */
+	brw	1f		/* jump into the forward copy path of memmove */
+
 ENTRY(memmove, R2|R3|R4|R5)
 	movzwl	$65535,r0	/* r0 = 64K (needed below) */
 	movq	8(ap),r1	/* r1 = src, r2 = length */
 	movl	4(ap),r3	/* r3 = dst */
+5:
 	cmpl	r1,r3
 	bgtru	1f		/* normal forward case */
 	beql	2f		/* equal, nothing to do */
