@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.35 2013/03/26 05:04:10 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.36 2013/06/13 11:29:20 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,11 +74,6 @@
 #define	PPC_KERNEL_SEG0	0xfffff0
 #define	PPC_KERNEL_SEGMENT	(PPC_KERNEL_SEG0 + PPC_KERNEL_SR)
 #define	PPC_USER_ADDR	((void *)(PPC_USER_SR << ADDR_SR_SHIFT))
-
-/*
- * Temporary kludge till we do (ov)bcopy in assembler
- */
-#define	ovbcopy	bcopy
 
 #endif /* _KERNEL */
 
