@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.171 2013/06/09 12:42:22 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.172 2013/06/13 19:11:13 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6514,26 +6514,6 @@ ENTRY(memcpy) /* dest, src, size */
 	mov	%o3, %o1
 #endif	/* 1 */
 ENTRY(bcopy) /* src, dest, size */
-#ifdef DEBUG
-	set	pmapdebug, %o4
-	ld	[%o4], %o4
-	btst	0x80, %o4	! PDB_COPY
-	bz,pt	%icc, 3f
-	 nop
-	save	%sp, -CC64FSZ, %sp
-	mov	%i0, %o1
-	set	2f, %o0
-	mov	%i1, %o2
-	call	printf
-	 mov	%i2, %o3
-!	ta	1; nop
-	restore
-	.data
-2:	.asciz	"bcopy(%p->%p,%x)\n"
-	_ALIGN
-	.text
-3:
-#endif	/* DEBUG */
 	/*
 	 * Check for overlaps and punt.
 	 *
@@ -6928,44 +6908,6 @@ Lbcopy_finish:
 	inc	1, %l1					! Update address
 2:	
 Lbcopy_complete:
-#if 0
-	!!
-	!! verify copy success.
-	!! 
-
-	mov	%i0, %o2
-	mov	%i1, %o4
-	mov	%i2, %l4
-0:	
-	ldub	[%o2], %o1
-	inc	%o2
-	ldub	[%o4], %o3
-	inc	%o4
-	cmp	%o3, %o1
-	bnz	1f
-	 dec	%l4
-	brnz	%l4, 0b
-	 nop
-	ba	2f
-	 nop
-
-1:
-	set	0f, %o0
-	call	printf
-	 sub	%i2, %l4, %o5
-	set	1f, %o0
-	mov	%i0, %o1
-	mov	%i1, %o2
-	call	printf
-	 mov	%i2, %o3
-	ta	1
-	.data
-0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\n"
-1:	.asciz	"bcopy(%p, %p, %lx)\n"
-	.align 8
-	.text
-2:	
-#endif	/* 0 */
 	ret
 	 restore %i1, %g0, %o0
 
@@ -8065,48 +8007,6 @@ Lbcopy_blockfinish:
 	inc	1, %o1					! Update address
 2:
 	membar	#Sync
-#if 0
-	!!
-	!! verify copy success.
-	!! 
-
-	mov	%i0, %o2
-	mov	%i1, %o4
-	mov	%i2, %l4
-0:	
-	ldub	[%o2], %o1
-	inc	%o2
-	ldub	[%o4], %o3
-	inc	%o4
-	cmp	%o3, %o1
-	bnz	1f
-	 dec	%l4
-	brnz	%l4, 0b
-	 nop
-	ba	2f
-	 nop
-
-1:
-	set	block_disable, %o0
-	stx	%o0, [%o0]
-	
-	set	0f, %o0
-	call	prom_printf
-	 sub	%i2, %l4, %o5
-	set	1f, %o0
-	mov	%i0, %o1
-	mov	%i1, %o2
-	call	prom_printf
-	 mov	%i2, %o3
-	ta	1
-	.data
-	_ALIGN
-0:	.asciz	"block bcopy failed: %x@%p != %x@%p byte %d\r\n"
-1:	.asciz	"bcopy(%p, %p, %lx)\r\n"
-	_ALIGN
-	.text
-2:	
-#endif	/* 0 */
 #ifdef _KERNEL		
 
 /*
@@ -8312,26 +8212,6 @@ Lbzero_block:
  * caller.
  */
 ENTRY(kcopy)
-#ifdef DEBUG
-	set	pmapdebug, %o4
-	ld	[%o4], %o4
-	btst	0x80, %o4	! PDB_COPY
-	bz,pt	%icc, 3f
-	 nop
-	save	%sp, -CC64FSZ, %sp
-	mov	%i0, %o1
-	set	2f, %o0
-	mov	%i1, %o2
-	call	printf
-	 mov	%i2, %o3
-!	ta	1; nop
-	restore
-	.data
-2:	.asciz	"kcopy(%p->%p,%x)\n"
-	_ALIGN
-	.text
-3:
-#endif	/* DEBUG */
 	GET_CPCB(%o5)			! cpcb->pcb_onfault = Lkcerr;
 	set	Lkcerr, %o3
 	ldx	[%o5 + PCB_ONFAULT], %g1! save current onfault handler
@@ -8524,24 +8404,6 @@ Lkcopy_done:
 	NOTREACHED
 
 Lkcerr:
-#ifdef DEBUG
-	set	pmapdebug, %o4
-	ld	[%o4], %o4
-	btst	0x80, %o4	! PDB_COPY
-	bz,pt	%icc, 3f
-	 nop
-	save	%sp, -CC64FSZ, %sp
-	set	2f, %o0
-	call	printf
-	 nop
-!	ta	1; nop
-	restore
-	.data
-2:	.asciz	"kcopy error\n"
-	_ALIGN
-	.text
-3:
-#endif	/* DEBUG */
 	stx	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
 	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
