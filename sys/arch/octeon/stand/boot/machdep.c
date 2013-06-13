@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2013/06/05 01:02:29 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2013/06/13 20:01:01 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -53,7 +53,7 @@
 int
 main()
 {
-	cninit();
+	boot(0);
 	return (0);
 }
 
@@ -133,7 +133,11 @@ ttydev(char *name)
 void
 devboot(dev_t dev, char *path)
 {
-	strlcpy(path, "octcf0a", 7);
+	/* XXX:
+	 * Assumes we booted from CF as this is currently the only supported
+	 * disk. We may need to dig deeper to figure out the real root device.
+	 */
+	strlcpy(path, "octcf0a", BOOTDEVLEN);
 }
 
 time_t
@@ -144,7 +148,9 @@ getsecs()
 
 void
 machdep()
-{}
+{
+	cninit();
+}
 
 __dead void
 _rtt()

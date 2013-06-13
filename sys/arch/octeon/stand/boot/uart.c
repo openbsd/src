@@ -1,4 +1,4 @@
-/*	$OpenBSD: uart.c,v 1.3 2013/06/05 02:45:37 jasper Exp $	*/
+/*	$OpenBSD: uart.c,v 1.4 2013/06/13 20:01:01 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -72,7 +72,7 @@ void
 cn30xxuart_wait_txhr_empty(int d)
 {
 	while (((*(uint64_t*)OCTEON_MIO_UART0_LSR & LSR_TXRDY) == 0) &&
-        	((*(uint64_t*)OCTEON_MIO_UART0_USR & USR_TXFIFO_NOTFULL) == 0))
+               ((*(uint64_t*)OCTEON_MIO_UART0_USR & USR_TXFIFO_NOTFULL) == 0))
 		delay(d);
 }
 
