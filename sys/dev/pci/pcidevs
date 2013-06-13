@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1680 2013/06/09 18:09:34 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1681 2013/06/13 03:57:40 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3532,6 +3532,13 @@ product INTEL 82GM45_HECI_2	0x2a45	GM45 HECI
 product INTEL 82GM45_PT_IDER	0x2a46	GM45 PT IDER
 product INTEL 82GM45_KT		0x2a47	GM45 KT
 product INTEL 4SERIES_IGD	0x2e02	4 Series Video
+product INTEL NCORE_QP_REG_1	0x2c61	QuickPath
+product INTEL NCORE_QP_REG_2	0x2c62	QuickPath
+product INTEL NCORE_QP_SAD	0x2d01	QuickPath
+product INTEL NCORE_QPI_LINK_0	0x2d10	QPI Link
+product INTEL NCORE_QPI_PHYS_0	0x2d11	QPI Physical
+product INTEL NCORE_RESERVED_1	0x2d12	Reserved
+product INTEL NCORE_RESERVED_2	0x2d13	Reserved
 product INTEL 82Q45_HB		0x2e10	Q45 Host
 product INTEL 82Q45_PCIE	0x2e11	Q45 PCIE
 product INTEL 82Q45_IGD_1	0x2e12	Q45 Video
