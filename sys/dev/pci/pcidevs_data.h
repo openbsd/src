@@ -11728,6 +11728,34 @@ static const struct pci_known_product pci_known_products[] = {
 	    "4 Series Video",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NCORE_QP_REG_1,
+	    "QuickPath",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NCORE_QP_REG_2,
+	    "QuickPath",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NCORE_QP_SAD,
+	    "QuickPath",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NCORE_QPI_LINK_0,
+	    "QPI Link",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NCORE_QPI_PHYS_0,
+	    "QPI Physical",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NCORE_RESERVED_1,
+	    "Reserved",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NCORE_RESERVED_2,
+	    "Reserved",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_HB,
 	    "Q45 Host",
 	},
