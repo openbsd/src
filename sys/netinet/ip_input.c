@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.211 2013/05/17 09:04:30 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.212 2013/06/13 12:15:52 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ struct pool ipq_pool;
 
 struct ipstat ipstat;
 
+void	ip_ours(struct mbuf *);
 int	in_ouraddr(struct in_addr, struct mbuf *);
 
 char *
@@ -234,16 +235,15 @@ ipintr(void)
 }
 
 /*
- * Ip input routine.  Checksum and byte swap header.  If fragmented
- * try to reassemble.  Process options.  Pass to next level.
+ * IPv4 input routine.
+ *
+ * Checksum and byte swap header.  Process options. Forward or deliver.
  */
 void
 ipv4_input(struct mbuf *m)
 {
 	struct ip *ip;
-	struct ipq *fp;
-	struct ipqent *ipqe;
-	int hlen, mff, len;
+	int hlen, len;
 	in_addr_t pfrdr = 0;
 #ifdef IPSEC
 	int error, s;
@@ -369,8 +369,10 @@ ipv4_input(struct mbuf *m)
 	        return;
 	}
 
-	if (in_ouraddr(ip->ip_dst, m))
-		goto ours;
+	if (in_ouraddr(ip->ip_dst, m)) {
+		ip_ours(m);
+		return;
+	}
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
@@ -397,8 +399,7 @@ ipv4_input(struct mbuf *m)
 			 */
 			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
 				ipstat.ips_cantforward++;
-				m_freem(m);
-				return;
+				goto bad;
 			}
 
 			/*
@@ -406,8 +407,10 @@ ipv4_input(struct mbuf *m)
 			 * all multicast IGMP packets, whether or not this
 			 * host belongs to their destination groups.
 			 */
-			if (ip->ip_p == IPPROTO_IGMP)
-				goto ours;
+			if (ip->ip_p == IPPROTO_IGMP) {
+				ip_ours(m);
+				return;
+			}
 			ipstat.ips_forward++;
 		}
 #endif
@@ -420,15 +423,17 @@ ipv4_input(struct mbuf *m)
 			ipstat.ips_notmember++;
 			if (!IN_LOCAL_GROUP(ip->ip_dst.s_addr))
 				ipstat.ips_cantforward++;
-			m_freem(m);
-			return;
+			goto bad;
 		}
-		goto ours;
+		ip_ours(m);
+		return;
 	}
 
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
-	    ip->ip_dst.s_addr == INADDR_ANY)
-		goto ours;
+	    ip->ip_dst.s_addr == INADDR_ANY) {
+		ip_ours(m);
+		return;
+	}
 
 #if NCARP > 0
 	if (m->m_pkthdr.rcvif->if_type == IFT_CARP &&
@@ -441,8 +446,7 @@ ipv4_input(struct mbuf *m)
 	 */
 	if (ipforwarding == 0) {
 		ipstat.ips_cantforward++;
-		m_freem(m);
-		return;
+		goto bad;
 	}
 #ifdef IPSEC
 	if (ipsec_in_use) {
@@ -465,8 +469,7 @@ ipv4_input(struct mbuf *m)
 		/* Error or otherwise drop-packet indication */
 		if (error) {
 			ipstat.ips_cantforward++;
-			m_freem(m);
-			return;
+			goto bad;
 		}
 
 		/*
@@ -478,8 +481,31 @@ ipv4_input(struct mbuf *m)
 
 	ip_forward(m, pfrdr);
 	return;
+bad:
+	m_freem(m);
+}
 
-ours:
+/*
+ * IPv4 local-delivery routine.
+ *
+ * If fragmented try to reassemble.  Pass to next level.
+ */
+void
+ip_ours(struct mbuf *m)
+{
+	struct ip *ip = mtod(m, struct ip *);
+	struct ipq *fp;
+	struct ipqent *ipqe;
+	int mff, hlen;
+#ifdef IPSEC
+	int error, s;
+	struct tdb *tdb;
+	struct tdb_ident *tdbi;
+	struct m_tag *mtag;
+#endif /* IPSEC */
+
+	hlen = ip->ip_hl << 2;
+
 	/*
 	 * If offset or IP_MF are set, must reassemble.
 	 * Otherwise, nothing need be done.
@@ -625,8 +651,7 @@ found:
 	/* Error or otherwise drop-packet indication. */
 	if (error) {
 	        ipstat.ips_cantforward++;
-		m_freem(m);
-		return;
+	        goto bad;
 	}
 
  skipipsec:
