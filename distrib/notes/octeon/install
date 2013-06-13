@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.8 2013/05/30 13:47:45 jasper Exp $
+dnl	$OpenBSD: install,v 1.9 2013/06/13 18:24:21 jasper Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -55,7 +55,7 @@ ${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
 partition on the first CF card (created by the installer) and save the
 environment to persistent storage:
 
-	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux root=/dev/octcf0' 
+	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux root=/dev/octcf0'
 	# setenv bootdelay 5
 	# saveenv
 	Saving Environment to Flash...
@@ -89,7 +89,7 @@ dnl OpenBSDInstallMBRPart2
 	The setup will need two partitions, one 'OpenBSD' for the
 	OpenBSD/MACHINE installation, and one 'MSDOS' for the
 	U-Boot scripts/bootloader.
-	
+
 	If you use the whole disk option, the install script
 	will create a small 'MSDOS' partition and use the rest of
 	the disk for the OpenBSD installation.
