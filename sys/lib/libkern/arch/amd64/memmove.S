@@ -40,11 +40,9 @@
 	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
 	 */
 
-
 ENTRY(memcpy)
 	movq	%rdi,%r11	/* save dest */
 	movq	%rdx,%rcx
-	movq	%rdi,%rax
 	jmp	2f		/* jump to forward copy code path */
 
 ENTRY(bcopy)
