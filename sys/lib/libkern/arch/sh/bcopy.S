@@ -1,2 +1,1 @@
-#define BCOPY
-#include "memcpy.S"
+/* This code is contained in memmove.S */
