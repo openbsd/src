@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2013/06/03 17:33:58 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 2013/06/13 13:42:12 aoyama Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,6 +66,7 @@
 #include "systrace.h"
 #include "vscsi.h"
 #include "pppx.h"
+#include "fuse.h"
 
 struct bdevsw	bdevsw[] =
 {
