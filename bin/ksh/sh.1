@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sh.1,v 1.93 2013/01/17 21:20:25 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.94 2013/06/13 19:43:09 millert Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: June 13 2013 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -2917,11 +2917,14 @@ explicitly tested by a shell construct such as
 .Ic if ,
 .Ic until ,
 .Ic while ,
-.Ic && ,
-.Ic || ,
 or
 .Ic !\&
 statements.
+For
+.Ic &&
+or
+.Ic || ,
+only the status of the last command is tested.
 .It Fl f \*(Ba Ic noglob
 Do not expand file name patterns.
 .It Fl h \*(Ba Ic trackall
