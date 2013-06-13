@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.112 2013/04/24 10:17:08 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.113 2013/06/13 12:17:23 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -350,14 +350,9 @@ ip6_input(struct mbuf *m)
 	}
 
 	/* drop packets if interface ID portion is already filled */
-	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
-		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_src) &&
-		    ip6->ip6_src.s6_addr16[1]) {
-			ip6stat.ip6s_badscope++;
-			goto bad;
-		}
-		if (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst) &&
-		    ip6->ip6_dst.s6_addr16[1]) {
+	if ((IN6_IS_SCOPE_EMBED(&ip6->ip6_src) && ip6->ip6_src.s6_addr16[1]) ||
+	    (IN6_IS_SCOPE_EMBED(&ip6->ip6_dst) && ip6->ip6_dst.s6_addr16[1])) {
+		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
 			ip6stat.ip6s_badscope++;
 			goto bad;
 		}
