@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.92 2013/06/09 12:42:22 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.93 2013/06/13 04:15:13 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4806,16 +4806,15 @@ Lbcopy_done:
 
 ENTRY(memmove)
 	/*
-	 * Swap args and continue to ovbcopy.
+	 * Swap args and continue to bcopy.
 	 */
 	mov	%o0, %o3
 	mov	%o1, %o0
 	mov	%o3, %o1
 /*
- * ovbcopy(src, dst, len): like old bcopy, but regions may overlap.
+ * bcopy(src, dst, len): like old bcopy, but regions may overlap.
  */
 ENTRY(bcopy)
-ENTRY(ovbcopy)
 	cmp	%o0, %o1	! src < dst?
 	bgeu	Lbcopy_start	! no, go copy forwards as via old bcopy
 	cmp	%o2, BCOPY_SMALL! (check length for doublecopy first)
