@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.115 2013/05/31 14:27:21 mikeb Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.116 2013/06/13 11:23:54 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -722,7 +722,7 @@
 #define	BGE_LEDCTL_BLINKPERIOD_OVERRIDE	0x80000000
 
 /* TX backoff seed register */
-#define	BGE_TX_BACKOFF_SEED_MASK	0x3F
+#define	BGE_TX_BACKOFF_SEED_MASK	0x3FF
 
 /* Autopoll status register */
 #define	BGE_AUTOPOLLSTS_ERROR		0x00000001
