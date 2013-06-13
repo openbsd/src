@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.82 2013/03/21 04:30:14 deraadt Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.83 2013/06/13 09:11:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1392,6 +1392,7 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, struct ibuf *buf)
 	struct ikev2_cfg	*cfg;
 	struct iked_cfg		*ikecfg;
 	u_int			 i;
+	u_int32_t		 mask4;
 	size_t			 len;
 	struct sockaddr_in	*in4;
 	struct sockaddr_in6	*in6;
@@ -1437,6 +1438,17 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, struct ibuf *buf)
 				return (-1);
 			len += 4;
 			break;
+		case IKEV2_CFG_INTERNAL_IP4_SUBNET:
+			/* 4 bytes IPv4 address + 4 bytes IPv4 mask + */
+			in4 = (struct sockaddr_in *)&ikecfg->cfg.address.addr;
+			mask4 = prefixlen2mask(ikecfg->cfg.address.addr_mask);
+			cfg->cfg_length = htobe16(8);
+			if (ibuf_add(buf, &in4->sin_addr.s_addr, 4) == -1)
+				return (-1);
+			if (ibuf_add(buf, &mask4, 4) == -1)
+				return (-1);
+			len += 8;
+			break;
 		case IKEV2_CFG_INTERNAL_IP6_DNS:
 		case IKEV2_CFG_INTERNAL_IP6_NBNS:
 		case IKEV2_CFG_INTERNAL_IP6_DHCP:
@@ -1449,6 +1461,7 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, struct ibuf *buf)
 			len += 16;
 			break;
 		case IKEV2_CFG_INTERNAL_IP6_ADDRESS:
+		case IKEV2_CFG_INTERNAL_IP6_SUBNET:
 			/* 16 bytes IPv6 address + 1 byte prefix length */
 			in6 = (struct sockaddr_in6 *)&ikecfg->cfg.address.addr;
 			cfg->cfg_length = htobe16(17);
