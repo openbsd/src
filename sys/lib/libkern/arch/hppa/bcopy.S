@@ -39,7 +39,6 @@
 
 
 LEAF_ENTRY(bcopy)
-ALTENTRY(ovbcopy)
 	copy	arg0, ret0
 	copy	arg1, arg0
 	copy	ret0, arg1
