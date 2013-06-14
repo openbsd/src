@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.5 2013/06/14 20:49:06 syl Exp $ */
+/* $OpenBSD: fuse.h,v 1.6 2013/06/14 20:58:28 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -46,12 +46,12 @@ struct fuse_file_info {
 };
 
 struct fuse_conn_info {
-	uint32_t proto_major;
-	uint32_t proto_minor;
-	uint32_t async_read;
-	uint32_t max_write;
-	uint32_t max_readahead;
-	uint32_t reserved[27];
+	uint32_t	proto_major;
+	uint32_t	proto_minor;
+	uint32_t	async_read;
+	uint32_t	max_write;
+	uint32_t	max_readahead;
+	uint32_t	reserved[27];
 };
 
 struct fuse_context {
