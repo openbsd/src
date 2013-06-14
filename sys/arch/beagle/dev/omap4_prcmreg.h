@@ -1,6 +1,6 @@
-/* $OpenBSD: prcmvar.h,v 1.6 2013/06/14 23:13:54 patrick Exp $ */
+/* $OpenBSD: omap4_prcmreg.h,v 1.1 2013/06/14 23:13:54 patrick Exp $ */
 /*
- * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
+ * Copyright (c) 2007, 2009, 2012 Dale Rahn <drahn@dalerahn.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,28 +15,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-void prcm_setclock(int clock, int speed);
-void prcm_enablemodule(int mod);
-void prcm_disablemodule(int mod);
+#define O4_L3INIT_CM2_OFFSET              0x00001300
+#define O4_CLKCTRL_MODULEMODE_MASK       0x00000003
+#define O4_CLKCTRL_MODULEMODE_DISABLE    0x00000000
+#define O4_CLKCTRL_MODULEMODE_AUTO       0x00000001
+#define O4_CLKCTRL_MODULEMODE_ENABLE     0x00000001
 
-#define PRCM_CLK_SPEED_32	0
-#define PRCM_CLK_SPEED_SYS	1
+#define O4_MAX_MODULE_ENABLE_WAIT    1000
 
-enum PRCM_MODULES {
-	PRCM_TIMER0,
-	PRCM_TIMER1,
-	PRCM_TIMER2,
-	PRCM_TIMER3,
-	PRCM_MMC,
-	PRCM_USB,
-	PRCM_USBTLL,
-	PRCM_USBP1_PHY,
-	PRCM_USBP1_UTMI,
-	PRCM_USBP1_HSIC,
-	PRCM_USBP2_PHY,
-	PRCM_USBP2_UTMI,
-	PRCM_USBP2_HSIC
-};
-
-#define PRCM_REG_MAX	6
-/* need interface for CM_AUTOIDLE */
+#define O4_CLKCTRL_IDLEST_MASK           0x00030000UL
+#define O4_CLKCTRL_IDLEST_ENABLED        0x00000000UL
