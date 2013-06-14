@@ -1,3 +1,5 @@
+/* $OpenBSD: omehcivar.h,v 1.2 2013/06/14 23:15:59 patrick Exp $ */
+
 /*
  * Misc
  */
