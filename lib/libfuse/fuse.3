@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.3,v 1.5 2013/06/12 06:00:54 jmc Exp $
+.\" $OpenBSD: fuse.3,v 1.6 2013/06/14 20:40:41 syl Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,11 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2013 $
+.Dd $Mdocdate: June 14 2013 $
 .Dt FUSE 3
 .Os
 .Sh NAME
 .Nm fuse ,
+.Nm fuse_version ,
 .Nm fuse_main ,
 .Nm fuse_new ,
 .Nm fuse_parse_cmdline ,
@@ -36,6 +37,8 @@
 .Nd FUSE implementation routines
 .Sh SYNOPSIS
 .In fuse.h
+.Ft int
+.Fn fuse_version "void"
 .Ft int
 .Fn fuse_main "int argc" "char **argv" "const struct fuse_operations *ops" \
     "void *data"
@@ -79,6 +82,9 @@ and passing this function the
 argument containing all the callbacks of the filesystem.
 Or you can use all others functions.
 .Ss FUNCTIONS
+.Fn fuse_version
+returns the fuse version number.
+.Pp
 .Fn fuse_new
 returns a
 .Fa struct fuse

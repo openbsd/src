@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.4 2013/06/12 22:44:42 tedu Exp $ */
+/* $OpenBSD: fuse.c,v 1.5 2013/06/14 20:40:41 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -305,6 +305,12 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, unused int *fg)
 	*mt = 0;
 
 	return (0);
+}
+
+int
+fuse_version(void)
+{
+	return (FUSE_VERSION);
 }
 
 int

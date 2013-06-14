@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.3 2013/06/04 20:53:26 tedu Exp $ */
+/* $OpenBSD: fuse.h,v 1.4 2013/06/14 20:40:41 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -131,6 +131,7 @@ struct fuse_operations {
 /*
  * API prototypes
  */
+int fuse_version(void);
 int fuse_main(int, char **, const struct fuse_operations *, void *);
 struct fuse *fuse_new(struct fuse_chan *, struct fuse_args *,
     const struct fuse_operations *, size_t, void *);
