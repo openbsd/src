@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.10 2002/09/02 19:56:55 avsm Exp $
+# $OpenBSD: bsd.regress.mk,v 1.11 2013/06/14 22:38:50 halex Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -37,6 +37,7 @@ ${_REGRESS_NEW}:=${${_REGRESS_OLD}}
 REGRESS_LOG?=/dev/null
 REGRESS_SKIP_TARGETS?=
 REGRESS_SKIP_SLOW?=no
+REGRESS_FAIL_EARLY?=no
 
 _REGRESS_NAME=${.CURDIR:S/${BSDSRCDIR}\/regress\///}
 _REGRESS_TMP?=/dev/null
@@ -56,6 +57,12 @@ REGRESS_SKIP_TARGETS=run-regress-${PROG}
 
 .if defined(REGRESS_SLOW_TARGETS) && !empty(REGRESS_SKIP_SLOW)
 REGRESS_SKIP_TARGETS+=${REGRESS_SLOW_TARGETS}
+.endif
+
+.if ${REGRESS_FAIL_EARLY} != no
+_SKIP_FAIL=
+.else
+_SKIP_FAIL=-
 .endif
 
 .if defined(REGRESS_ROOT_TARGETS)
@@ -91,18 +98,21 @@ regress: .SILENT
 # XXX - we need a better method to see if a test fails due to timeout or just
 #       normal failure.
 .   if !defined(REGRESS_MAXTIME)
-	-if cd ${.CURDIR} && ${MAKE} ${RT}; then \
+	${_SKIP_FAIL}if cd ${.CURDIR} && ${MAKE} ${RT}; then \
 	    echo -n "SUCCESS " ${_REGRESS_OUT} ; \
 	else \
 	    echo -n "FAIL " ${_REGRESS_OUT} ; \
 	    echo FAILED ; \
+	    false; \
 	fi
 .   else
-	-if cd ${.CURDIR} && (ulimit -t ${REGRESS_MAXTIME} ; ${MAKE} ${RT}); then \
+	${_SKIP_FAIL}if cd ${.CURDIR} && \
+	    (ulimit -t ${REGRESS_MAXTIME} ; ${MAKE} ${RT}); then \
 	    echo -n "SUCCESS " ${_REGRESS_OUT} ; \
 	else \
 	    echo -n "FAIL (possible timeout) " ${_REGRESS_OUT} ; \
 	    echo FAILED ; \
+	    false; \
 	fi
 .   endif
 .  endif
