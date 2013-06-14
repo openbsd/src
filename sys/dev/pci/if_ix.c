@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.88 2013/06/09 18:09:55 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.89 2013/06/14 16:25:54 mikeb Exp $	*/
 
 /******************************************************************************
 
@@ -805,12 +805,9 @@ ixgbe_init(void *arg)
 	}
 
 	/* Setup interrupt moderation */
-	if (sc->hw.mac.type == ixgbe_mac_82598EB)
-		itr = (8000000 / IXGBE_INTS_PER_SEC) & 0xff8;
-	else {
-		itr = (4000000 / IXGBE_INTS_PER_SEC) & 0xff8;
+	itr = (4000000 / IXGBE_INTS_PER_SEC) & 0xff8;
+	if (sc->hw.mac.type != ixgbe_mac_82598EB)
 		itr |= IXGBE_EITR_LLI_MOD | IXGBE_EITR_CNT_WDIS;
-	}
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(0), itr);
 
 	/* Config/Enable Link */
