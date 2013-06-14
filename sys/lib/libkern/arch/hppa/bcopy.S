@@ -46,6 +46,7 @@ ALTENTRY(ovbcopy)
 ALTENTRY(memmove)
 	comb,>,n arg0, arg1, $bcopy.reverse
 ALTENTRY(memcpy)
+	copy	arg0, ret0
 	
 	comib,>=,n 15, arg2, $bcopy_f.byte
 
@@ -140,6 +141,7 @@ $bcopy_f.done
 	bv	0(rp)
 	nop
 $bcopy.reverse
+	copy	arg0, ret0
 	add	arg1, arg2, arg1
 	add	arg0, arg2, arg0
 
