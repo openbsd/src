@@ -1,4 +1,4 @@
-/* $OpenBSD: arml2cc.c,v 1.2 2013/05/02 20:57:37 patrick Exp $ */
+/* $OpenBSD: arml2cc.c,v 1.3 2013/06/14 23:58:30 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,7 +25,7 @@
 #include <sys/timeout.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 #include <arm/cortex/cortex.h>
 #include <arm/cortex/smc.h>
 
