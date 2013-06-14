@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.10 2013/06/11 20:05:53 kettenis Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.11 2013/06/14 12:40:03 kettenis Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -191,10 +191,12 @@ ALTENTRY(ovbcopy)
 ALTENTRY(memmove)
 	cmpb,*>,n %arg0, %arg1, L(bcopy, reverse)
 ALTENTRY(memcpy)
+	copy	%arg0, %ret0
 	hppa_copy(bcopy_f, %sr0, %arg1, %sr0, %arg0, %arg2, `+')
 	bv	%r0(%rp)
 	nop
 L(bcopy, reverse)
+	copy	%arg0, %ret0
 	hppa_copy(bcopy_r, %sr0, %arg1, %sr0, %arg0, %arg2, `-')
 	bv	%r0(%rp)
 	nop
