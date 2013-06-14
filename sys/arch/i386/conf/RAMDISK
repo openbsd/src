@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.179 2012/03/15 20:06:03 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.180 2013/06/14 01:00:24 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -141,7 +141,7 @@ ahc*	at pci?			# Adaptec 2940 SCSI controllers
 #aic0	at isa? port 0x340 irq 11 # Adaptec 152[02] SCSI controllers
 #aic*	at isapnp?
 #aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
-siop*	at pci?			# NCR 538XX SCSI controllers(new)
+#siop*	at pci?			# NCR 538XX SCSI controllers(new)
 #adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
 #adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
 #sea0	at isa? iomem 0xc8000 irq 5 # Seagate ST0[12] SCSI controllers
