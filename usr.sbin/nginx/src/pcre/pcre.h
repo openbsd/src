@@ -5,7 +5,7 @@
 /* This is the public header file for the PCRE library, to be #included by
 applications that call the PCRE functions.
 
-           Copyright (c) 1997-2012 University of Cambridge
+           Copyright (c) 1997-2013 University of Cambridge
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -42,9 +42,9 @@ POSSIBILITY OF SUCH DAMAGE.
 /* The current PCRE version information. */
 
 #define PCRE_MAJOR          8
-#define PCRE_MINOR          32
+#define PCRE_MINOR          33
 #define PCRE_PRERELEASE     
-#define PCRE_DATE           2012-11-30
+#define PCRE_DATE           2013-05-28
 
 /* When an application links to a PCRE DLL in Windows, the symbols that are
 imported have to be identified as such. When building PCRE, the appropriate
@@ -96,11 +96,14 @@ extern "C" {
 #endif
 
 /* Public options. Some are compile-time only, some are run-time only, and some
-are both, so we keep them all distinct. However, almost all the bits in the
-options word are now used. In the long run, we may have to re-use some of the
-compile-time only bits for runtime options, or vice versa. Any of the
-compile-time options may be inspected during studying (and therefore JIT
-compiling).
+are both. Most of the compile-time options are saved with the compiled regex so
+that they can be inspected during studying (and therefore JIT compiling). Note
+that pcre_study() has its own set of options. Originally, all the options
+defined here used distinct bits. However, almost all the bits in a 32-bit word
+are now used, so in order to conserve them, option bits that were previously
+only recognized at matching time (i.e. by pcre_exec() or pcre_dfa_exec()) may
+also be used for compile-time options that affect only compiling and are not
+relevant for studying or JIT compiling.
 
 Some options for pcre_compile() change its behaviour but do not affect the
 behaviour of the execution functions. Other options are passed through to the
@@ -142,7 +145,11 @@ with J. */
 #define PCRE_AUTO_CALLOUT       0x00004000  /* C1       */
 #define PCRE_PARTIAL_SOFT       0x00008000  /*    E D J  ) Synonyms */
 #define PCRE_PARTIAL            0x00008000  /*    E D J  )          */
-#define PCRE_DFA_SHORTEST       0x00010000  /*      D   */
+
+/* This pair use the same bit. */
+#define PCRE_NEVER_UTF          0x00010000  /* C1        ) Overlaid */
+#define PCRE_DFA_SHORTEST       0x00010000  /*      D    ) Overlaid */
+
 #define PCRE_DFA_RESTART        0x00020000  /*      D   */
 #define PCRE_FIRSTLINE          0x00040000  /* C3       */
 #define PCRE_DUPNAMES           0x00080000  /* C1       */
@@ -199,6 +206,7 @@ with J. */
 #define PCRE_ERROR_DFA_BADRESTART  (-30)
 #define PCRE_ERROR_JIT_BADOPTION   (-31)
 #define PCRE_ERROR_BADLENGTH       (-32)
+#define PCRE_ERROR_UNSET           (-33)
 
 /* Specific error codes for UTF-8 validity checks */
 
@@ -224,7 +232,7 @@ with J. */
 #define PCRE_UTF8_ERR19             19
 #define PCRE_UTF8_ERR20             20
 #define PCRE_UTF8_ERR21             21
-#define PCRE_UTF8_ERR22             22
+#define PCRE_UTF8_ERR22             22  /* Unused (was non-character) */
 
 /* Specific error codes for UTF-16 validity checks */
 
@@ -232,13 +240,13 @@ with J. */
 #define PCRE_UTF16_ERR1              1
 #define PCRE_UTF16_ERR2              2
 #define PCRE_UTF16_ERR3              3
-#define PCRE_UTF16_ERR4              4
+#define PCRE_UTF16_ERR4              4  /* Unused (was non-character) */
 
 /* Specific error codes for UTF-32 validity checks */
 
 #define PCRE_UTF32_ERR0              0
 #define PCRE_UTF32_ERR1              1
-#define PCRE_UTF32_ERR2              2
+#define PCRE_UTF32_ERR2              2  /* Unused (was non-character) */
 #define PCRE_UTF32_ERR3              3
 
 /* Request types for pcre_fullinfo() */
@@ -263,10 +271,12 @@ with J. */
 #define PCRE_INFO_JIT               16
 #define PCRE_INFO_JITSIZE           17
 #define PCRE_INFO_MAXLOOKBEHIND     18
-#define PCRE_INFO_FIRSTCHARACTER      19
-#define PCRE_INFO_FIRSTCHARACTERFLAGS   20
+#define PCRE_INFO_FIRSTCHARACTER    19
+#define PCRE_INFO_FIRSTCHARACTERFLAGS 20
 #define PCRE_INFO_REQUIREDCHAR      21
-#define PCRE_INFO_REQUIREDCHARFLAGS   22
+#define PCRE_INFO_REQUIREDCHARFLAGS 22
+#define PCRE_INFO_MATCHLIMIT        23
+#define PCRE_INFO_RECURSIONLIMIT    24
 
 /* Request types for pcre_config(). Do not re-arrange, in order to remain
 compatible. */

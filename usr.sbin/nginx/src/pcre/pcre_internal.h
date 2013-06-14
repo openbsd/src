@@ -7,7 +7,7 @@
 and semantics are as close as possible to those of the Perl 5 language.
 
                        Written by Philip Hazel
-           Copyright (c) 1997-2012 University of Cambridge
+           Copyright (c) 1997-2013 University of Cambridge
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -194,23 +194,31 @@ preprocessor time in standard C environments. */
 typedef unsigned char pcre_uint8;
 
 #if USHRT_MAX == 65535
-  typedef unsigned short pcre_uint16;
-  typedef short pcre_int16;
+typedef unsigned short pcre_uint16;
+typedef short pcre_int16;
+#define PCRE_UINT16_MAX USHRT_MAX
+#define PCRE_INT16_MAX SHRT_MAX
 #elif UINT_MAX == 65535
-  typedef unsigned int pcre_uint16;
-  typedef int pcre_int16;
+typedef unsigned int pcre_uint16;
+typedef int pcre_int16;
+#define PCRE_UINT16_MAX UINT_MAX
+#define PCRE_INT16_MAX INT_MAX
 #else
-# error Cannot determine a type for 16-bit unsigned integers
+#error Cannot determine a type for 16-bit integers
 #endif
 
-#if UINT_MAX == 4294967295
-  typedef unsigned int pcre_uint32;
-  typedef int pcre_int32;
-#elif ULONG_MAX == 4294967295
-  typedef unsigned long int pcre_uint32;
-  typedef long int pcre_int32;
+#if UINT_MAX == 4294967295U
+typedef unsigned int pcre_uint32;
+typedef int pcre_int32;
+#define PCRE_UINT32_MAX UINT_MAX
+#define PCRE_INT32_MAX INT_MAX
+#elif ULONG_MAX == 4294967295UL
+typedef unsigned long int pcre_uint32;
+typedef long int pcre_int32;
+#define PCRE_UINT32_MAX ULONG_MAX
+#define PCRE_INT32_MAX LONG_MAX
 #else
-# error Cannot determine a type for 32-bit unsigned integers
+#error Cannot determine a type for 32-bit integers
 #endif
 
 /* When checking for integer overflow in pcre_compile(), we need to handle
@@ -1121,23 +1129,26 @@ other. NOTE: The values also appear in pcre_jit_compile.c. */
 
 
 /* Private flags containing information about the compiled regex. They used to
-live at the top end of the options word, but that got almost full, so now they
-are in a 16-bit flags word. From release 8.00, PCRE_NOPARTIAL is unused, as
-the restrictions on partial matching have been lifted. It remains for backwards
+live at the top end of the options word, but that got almost full, so they were
+moved to a 16-bit flags word - which got almost full, so now they are in a
+32-bit flags word. From release 8.00, PCRE_NOPARTIAL is unused, as the
+restrictions on partial matching have been lifted. It remains for backwards
 compatibility. */
 
-#define PCRE_MODE8         0x0001  /* compiled in 8 bit mode */
-#define PCRE_MODE16        0x0002  /* compiled in 16 bit mode */
-#define PCRE_MODE32        0x0004  /* compiled in 32 bit mode */
-#define PCRE_FIRSTSET      0x0010  /* first_char is set */
-#define PCRE_FCH_CASELESS  0x0020  /* caseless first char */
-#define PCRE_REQCHSET      0x0040  /* req_byte is set */
-#define PCRE_RCH_CASELESS  0x0080  /* caseless requested char */
-#define PCRE_STARTLINE     0x0100  /* start after \n for multiline */
-#define PCRE_NOPARTIAL     0x0200  /* can't use partial with this regex */
-#define PCRE_JCHANGED      0x0400  /* j option used in regex */
-#define PCRE_HASCRORLF     0x0800  /* explicit \r or \n in pattern */
-#define PCRE_HASTHEN       0x1000  /* pattern contains (*THEN) */
+#define PCRE_MODE8         0x00000001  /* compiled in 8 bit mode */
+#define PCRE_MODE16        0x00000002  /* compiled in 16 bit mode */
+#define PCRE_MODE32        0x00000004  /* compiled in 32 bit mode */
+#define PCRE_FIRSTSET      0x00000010  /* first_char is set */
+#define PCRE_FCH_CASELESS  0x00000020  /* caseless first char */
+#define PCRE_REQCHSET      0x00000040  /* req_byte is set */
+#define PCRE_RCH_CASELESS  0x00000080  /* caseless requested char */
+#define PCRE_STARTLINE     0x00000100  /* start after \n for multiline */
+#define PCRE_NOPARTIAL     0x00000200  /* can't use partial with this regex */
+#define PCRE_JCHANGED      0x00000400  /* j option used in regex */
+#define PCRE_HASCRORLF     0x00000800  /* explicit \r or \n in pattern */
+#define PCRE_HASTHEN       0x00001000  /* pattern contains (*THEN) */
+#define PCRE_MLSET         0x00002000  /* match limit set by regex */
+#define PCRE_RLSET         0x00004000  /* recursion limit set by regex */
 
 #if defined COMPILE_PCRE8
 #define PCRE_MODE          PCRE_MODE8
@@ -1164,7 +1175,7 @@ time, run time, or study time, respectively. */
    PCRE_DOTALL|PCRE_DOLLAR_ENDONLY|PCRE_EXTRA|PCRE_UNGREEDY|PCRE_UTF8| \
    PCRE_NO_AUTO_CAPTURE|PCRE_NO_UTF8_CHECK|PCRE_AUTO_CALLOUT|PCRE_FIRSTLINE| \
    PCRE_DUPNAMES|PCRE_NEWLINE_BITS|PCRE_BSR_ANYCRLF|PCRE_BSR_UNICODE| \
-   PCRE_JAVASCRIPT_COMPAT|PCRE_UCP|PCRE_NO_START_OPTIMIZE)
+   PCRE_JAVASCRIPT_COMPAT|PCRE_UCP|PCRE_NO_START_OPTIMIZE|PCRE_NEVER_UTF)
 
 #define PUBLIC_EXEC_OPTIONS \
   (PCRE_ANCHORED|PCRE_NOTBOL|PCRE_NOTEOL|PCRE_NOTEMPTY|PCRE_NOTEMPTY_ATSTART| \
@@ -1534,6 +1545,8 @@ a positive value. */
 #define STRING_UTF_RIGHTPAR            "UTF)"
 #define STRING_UCP_RIGHTPAR            "UCP)"
 #define STRING_NO_START_OPT_RIGHTPAR   "NO_START_OPT)"
+#define STRING_LIMIT_MATCH_EQ          "LIMIT_MATCH="
+#define STRING_LIMIT_RECURSION_EQ      "LIMIT_RECURSION="
 
 #else  /* SUPPORT_UTF */
 
@@ -1795,6 +1808,8 @@ only. */
 #define STRING_UTF_RIGHTPAR            STR_U STR_T STR_F STR_RIGHT_PARENTHESIS
 #define STRING_UCP_RIGHTPAR            STR_U STR_C STR_P STR_RIGHT_PARENTHESIS
 #define STRING_NO_START_OPT_RIGHTPAR   STR_N STR_O STR_UNDERSCORE STR_S STR_T STR_A STR_R STR_T STR_UNDERSCORE STR_O STR_P STR_T STR_RIGHT_PARENTHESIS
+#define STRING_LIMIT_MATCH_EQ          STR_L STR_I STR_M STR_I STR_T STR_UNDERSCORE STR_M STR_A STR_T STR_C STR_H STR_EQUALS_SIGN
+#define STRING_LIMIT_RECURSION_EQ      STR_L STR_I STR_M STR_I STR_T STR_UNDERSCORE STR_R STR_E STR_C STR_U STR_R STR_S STR_I STR_O STR_N STR_EQUALS_SIGN
 
 #endif  /* SUPPORT_UTF */
 
@@ -1835,6 +1850,7 @@ only. */
 #define PT_PXSPACE    7    /* POSIX space - Z plus 9,10,11,12,13 */
 #define PT_WORD       8    /* Word - L plus N plus underscore */
 #define PT_CLIST      9    /* Pseudo-property: match character list */
+#define PT_UCNC      10    /* Universal Character nameable character */
 
 /* Flag bits and data types for the extended class (OP_XCLASS) for classes that
 contain characters with values greater than 255. */
@@ -2270,7 +2286,7 @@ enum { ERR0,  ERR1,  ERR2,  ERR3,  ERR4,  ERR5,  ERR6,  ERR7,  ERR8,  ERR9,
        ERR40, ERR41, ERR42, ERR43, ERR44, ERR45, ERR46, ERR47, ERR48, ERR49,
        ERR50, ERR51, ERR52, ERR53, ERR54, ERR55, ERR56, ERR57, ERR58, ERR59,
        ERR60, ERR61, ERR62, ERR63, ERR64, ERR65, ERR66, ERR67, ERR68, ERR69,
-       ERR70, ERR71, ERR72, ERR73, ERR74, ERR75, ERR76, ERR77, ERRCOUNT };
+       ERR70, ERR71, ERR72, ERR73, ERR74, ERR75, ERR76, ERR77, ERR78, ERRCOUNT };
 
 /* JIT compiling modes. The function list is indexed by them. */
 enum { JIT_COMPILE, JIT_PARTIAL_SOFT_COMPILE, JIT_PARTIAL_HARD_COMPILE,
@@ -2280,48 +2296,49 @@ enum { JIT_COMPILE, JIT_PARTIAL_SOFT_COMPILE, JIT_PARTIAL_HARD_COMPILE,
 code vector run on as long as necessary after the end. We store an explicit
 offset to the name table so that if a regex is compiled on one host, saved, and
 then run on another where the size of pointers is different, all might still
-be well. For the case of compiled-on-4 and run-on-8, we include an extra
-pointer that is always NULL. For future-proofing, a few dummy fields were
-originally included - even though you can never get this planning right - but
-there is only one left now.
+be well.
 
-NOTE NOTE NOTE:
-Because people can now save and re-use compiled patterns, any additions to this
-structure should be made at the end, and something earlier (e.g. a new
-flag in the options or one of the dummy fields) should indicate that the new
-fields are present. Currently PCRE always sets the dummy fields to zero.
-NOTE NOTE NOTE
+The size of the structure must be a multiple of 8 bytes. For the case of
+compiled-on-4 and run-on-8, we include an extra pointer that is always NULL so
+that there are an even number of pointers which therefore are a multiple of 8
+bytes.
+
+It is necessary to fork the struct for the 32 bit library, since it needs to
+use pcre_uint32 for first_char and req_char. We can't put an ifdef inside the
+typedef because pcretest needs access to the struct of the 8-, 16- and 32-bit
+variants.
+
+*** WARNING ***
+When new fields are added to these structures, remember to adjust the code in
+pcre_byte_order.c that is concerned with swapping the byte order of the fields
+when a compiled regex is reloaded on a host with different endianness.
+*** WARNING ***
+There is also similar byte-flipping code in pcretest.c, which is used for
+testing the byte-flipping features. It must also be kept in step.
+*** WARNING ***
 */
-
-#if defined COMPILE_PCRE8
-#define REAL_PCRE real_pcre
-#elif defined COMPILE_PCRE16
-#define REAL_PCRE real_pcre16
-#elif defined COMPILE_PCRE32
-#define REAL_PCRE real_pcre32
-#endif
-
-/* It is necessary to fork the struct for 32 bit, since it needs to use
- * pcre_uchar for first_char and req_char. Can't put an ifdef inside the
- * typedef since pcretest needs access to  the struct of the 8-, 16-
- * and 32-bit variants. */
 
 typedef struct real_pcre8_or_16 {
   pcre_uint32 magic_number;
   pcre_uint32 size;               /* Total that was malloced */
   pcre_uint32 options;            /* Public options */
-  pcre_uint16 flags;              /* Private flags */
+  pcre_uint32 flags;              /* Private flags */
+  pcre_uint32 limit_match;        /* Limit set from regex */
+  pcre_uint32 limit_recursion;    /* Limit set from regex */
+  pcre_uint16 first_char;         /* Starting character */
+  pcre_uint16 req_char;           /* This character must be seen */
   pcre_uint16 max_lookbehind;     /* Longest lookbehind (characters) */
   pcre_uint16 top_bracket;        /* Highest numbered group */
   pcre_uint16 top_backref;        /* Highest numbered back reference */
-  pcre_uint16 first_char;         /* Starting character */
-  pcre_uint16 req_char;           /* This character must be seen */
   pcre_uint16 name_table_offset;  /* Offset to name table that follows */
   pcre_uint16 name_entry_size;    /* Size of any name items */
   pcre_uint16 name_count;         /* Number of name items */
   pcre_uint16 ref_count;          /* Reference count */
+  pcre_uint16 dummy1;             /* To ensure size is a multiple of 8 */
+  pcre_uint16 dummy2;             /* To ensure size is a multiple of 8 */
+  pcre_uint16 dummy3;             /* To ensure size is a multiple of 8 */
   const pcre_uint8 *tables;       /* Pointer to tables or NULL for std */
-  const pcre_uint8 *nullpad;      /* NULL padding */
+  void             *nullpad;      /* NULL padding */
 } real_pcre8_or_16;
 
 typedef struct real_pcre8_or_16 real_pcre;
@@ -2331,21 +2348,30 @@ typedef struct real_pcre32 {
   pcre_uint32 magic_number;
   pcre_uint32 size;               /* Total that was malloced */
   pcre_uint32 options;            /* Public options */
-  pcre_uint16 flags;              /* Private flags */
+  pcre_uint32 flags;              /* Private flags */
+  pcre_uint32 limit_match;        /* Limit set from regex */
+  pcre_uint32 limit_recursion;    /* Limit set from regex */
+  pcre_uint32 first_char;         /* Starting character */
+  pcre_uint32 req_char;           /* This character must be seen */
   pcre_uint16 max_lookbehind;     /* Longest lookbehind (characters) */
   pcre_uint16 top_bracket;        /* Highest numbered group */
   pcre_uint16 top_backref;        /* Highest numbered back reference */
-  pcre_uint32 first_char;         /* Starting character */
-  pcre_uint32 req_char;           /* This character must be seen */
   pcre_uint16 name_table_offset;  /* Offset to name table that follows */
   pcre_uint16 name_entry_size;    /* Size of any name items */
   pcre_uint16 name_count;         /* Number of name items */
   pcre_uint16 ref_count;          /* Reference count */
-  pcre_uint16 dummy1;             /* for later expansion */
-  pcre_uint16 dummy2;             /* for later expansion */
+  pcre_uint16 dummy;              /* To ensure size is a multiple of 8 */
   const pcre_uint8 *tables;       /* Pointer to tables or NULL for std */
-  void *nullpad;                  /* for later expansion */
+  void             *nullpad;      /* NULL padding */
 } real_pcre32;
+
+#if defined COMPILE_PCRE8
+#define REAL_PCRE real_pcre
+#elif defined COMPILE_PCRE16
+#define REAL_PCRE real_pcre16
+#elif defined COMPILE_PCRE32
+#define REAL_PCRE real_pcre32
+#endif
 
 /* Assert that the size of REAL_PCRE is divisible by 8 */
 typedef int __assert_real_pcre_size_divisible_8[(sizeof(REAL_PCRE) % 8) == 0 ? 1 : -1];
@@ -2398,14 +2424,14 @@ typedef struct compile_data {
   int  names_found;                 /* Number of entries so far */
   int  name_entry_size;             /* Size of each entry */
   int  workspace_size;              /* Size of workspace */
-  unsigned int  bracount;           /* Count of capturing parens as we compile */
+  unsigned int bracount;            /* Count of capturing parens as we compile */
   int  final_bracount;              /* Saved value after first pass */
   int  max_lookbehind;              /* Maximum lookbehind (characters) */
   int  top_backref;                 /* Maximum back reference */
   unsigned int backref_map;         /* Bitmap of low back refs */
   int  assert_depth;                /* Depth of nested assertions */
-  int  external_options;            /* External (initial) options */
-  int  external_flags;              /* External flag bits to be set */
+  pcre_uint32 external_options;     /* External (initial) options */
+  pcre_uint32 external_flags;       /* External flag bits to be set */
   int  req_varyopt;                 /* "After variable item" flag for reqbyte */
   BOOL had_accept;                  /* (*ACCEPT) encountered */
   BOOL had_pruneorskip;             /* (*PRUNE) or (*SKIP) encountered */
@@ -2431,6 +2457,7 @@ typedef struct recursion_info {
   unsigned int group_num;         /* Number of group that was called */
   int *offset_save;               /* Pointer to start of saved offsets */
   int saved_max;                  /* Number of saved offsets */
+  int saved_capture_last;         /* Last capture number */
   PCRE_PUCHAR subject_position;   /* Position at start of recursion */
 } recursion_info;
 
@@ -2467,12 +2494,13 @@ typedef struct match_data {
   int    nllen;                   /* Newline string length */
   int    name_count;              /* Number of names in name table */
   int    name_entry_size;         /* Size of entry in names table */
+  unsigned int skip_arg_count;    /* For counting SKIP_ARGs */
+  unsigned int ignore_skip_arg;   /* For re-run when SKIP arg name not found */
   pcre_uchar *name_table;         /* Table of names */
   pcre_uchar nl[4];               /* Newline string when fixed */
   const  pcre_uint8 *lcc;         /* Points to lower casing table */
   const  pcre_uint8 *fcc;         /* Points to case-flipping table */
   const  pcre_uint8 *ctypes;      /* Points to table of type maps */
-  BOOL   offset_overflow;         /* Set if too many extractions */
   BOOL   notbol;                  /* NOTBOL flag */
   BOOL   noteol;                  /* NOTEOL flag */
   BOOL   utf;                     /* UTF-8 / UTF-16 flag */
@@ -2484,7 +2512,6 @@ typedef struct match_data {
   BOOL   hitend;                  /* Hit the end of the subject at some point */
   BOOL   bsr_anycrlf;             /* \R is just any CRLF, not full Unicode */
   BOOL   hasthen;                 /* Pattern contains (*THEN) */
-  BOOL   ignore_skip_arg;         /* For re-run when SKIP name not found */
   const  pcre_uchar *start_code;  /* For use when recursing */
   PCRE_PUCHAR start_subject;      /* Start of the subject string */
   PCRE_PUCHAR end_subject;        /* End of the subject string */
@@ -2493,7 +2520,7 @@ typedef struct match_data {
   PCRE_PUCHAR start_used_ptr;     /* Earliest consulted character */
   int    partial;                 /* PARTIAL options */
   int    end_offset_top;          /* Highwater mark at end of match */
-  int    capture_last;            /* Most recent capture number */
+  pcre_int32 capture_last;        /* Most recent capture number + overflow flag */
   int    start_offset;            /* The start offset value */
   int    match_function_type;     /* Set for certain special calls of MATCH() */
   eptrblock *eptrchain;           /* Chain of eptrblocks for tail recursions */
