@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: th,v 1.15 2013/06/14 20:31:56 millert Exp $
+#	$OpenBSD: th,v 1.16 2013/06/14 20:52:08 millert Exp $
 
 
 #
@@ -146,6 +146,7 @@ Usage: $prog [-s test-set] [-C category] [-p prog] [-v] [-e e=v] test-name ...
 	-s s	Read tests from file s; if s is a directory, it is recursively
 		scaned for test files (which end in .t).
 	-t t	Use t as default time limit for tests (default is unlimited)
+	-T dir	Use dir instead of /tmp to hold temporary files
 	-P	program (-p) string has multiple words, and the program is in
 		the path (kludge option)
 	-v	Verbose mode: print reason test failed.
@@ -191,16 +192,6 @@ EOF
 	"os:$os", '1'
 	);
 
-($fh, $temps) = mkstemp("/tmp/rts.XXXXXXXX");
-close($fh);
-($fh, $tempi) = mkstemp("/tmp/rti.XXXXXXXX");
-close($fh);
-($fh, $tempo) = mkstemp("/tmp/rto.XXXXXXXX");
-close($fh);
-($fh, $tempe) = mkstemp("/tmp/rte.XXXXXXXX");
-close($fh);
-$tempdir = mkdtemp("/tmp/rtd.XXXXXXXX");
-
 $nfailed = 0;
 $nxfailed = 0;
 $npassed = 0;
@@ -208,7 +199,7 @@ $nxpassed = 0;
 
 %known_tests = ();
 
-if (!getopts('C:p:Ps:t:ve:')) {
+if (!getopts('C:p:Ps:t:T:ve:')) {
     print STDERR $Usage;
     exit 1;
 }
@@ -218,6 +209,7 @@ die "$prog: no test set specified (use -s)\n" if !defined $opt_s;
 $test_prog = $opt_p;
 $verbose = defined $opt_v && $opt_v;
 $test_set = $opt_s;
+$temp_dir = $opt_T || "/tmp";
 if (defined $opt_t) {
     die "$prog: bad -t argument (should be number > 0): $opt_t\n"
 	if $opt_t !~ /^\d+$/ || $opt_t <= 0;
@@ -277,6 +269,17 @@ $child_kill_ok = 0;
 $SIG{'ALRM'} = 'catch_sigalrm';
 
 $| = 1;
+
+# Create temp files
+($fh, $temps) = mkstemp("${temp_dir}/rts.XXXXXXXX");
+close($fh);
+($fh, $tempi) = mkstemp("${temp_dir}/rti.XXXXXXXX");
+close($fh);
+($fh, $tempo) = mkstemp("${temp_dir}/rto.XXXXXXXX");
+close($fh);
+($fh, $tempe) = mkstemp("${temp_dir}/rte.XXXXXXXX");
+close($fh);
+$tempdir = mkdtemp("${temp_dir}/rtd.XXXXXXXX");
 
 if (-d $test_set) {
     $file_prefix_skip = length($test_set) + 1;
