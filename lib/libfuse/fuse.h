@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.4 2013/06/14 20:40:41 syl Exp $ */
+/* $OpenBSD: fuse.h,v 1.5 2013/06/14 20:49:06 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -52,6 +52,15 @@ struct fuse_conn_info {
 	uint32_t max_write;
 	uint32_t max_readahead;
 	uint32_t reserved[27];
+};
+
+struct fuse_context {
+	struct fuse *	fuse;
+	uid_t		uid;
+	gid_t		gid;
+	pid_t		pid;
+	void		*private_data;
+	mode_t		umask;
 };
 
 typedef ino_t fuse_ino_t;
@@ -140,6 +149,7 @@ struct fuse_chan *fuse_mount(const char *, struct fuse_args *);
 void fuse_remove_signal_handlers(struct fuse_session *);
 int fuse_set_signal_handlers(struct fuse_session *);
 struct fuse_session *fuse_get_session(struct fuse *);
+struct fuse_context *fuse_get_context(void);
 int fuse_is_lib_option(const char *);
 int fuse_loop(struct fuse *);
 int fuse_loop_mt(struct fuse *);

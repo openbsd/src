@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2013/06/14 20:40:41 syl Exp $
+#	$OpenBSD: Makefile,v 1.4 2013/06/14 20:49:06 syl Exp $
 
 LIB=	fuse
 MAN=	fuse.3
@@ -11,6 +11,7 @@ MLINKS=	fuse.3 fuse_version.3 \
 	fuse.3 fuse_remove_signal_handlers.3 \
 	fuse.3 fuse_set_signal_handlers.3 \
 	fuse.3 fuse_get_session.3 \
+	fuse.3 fuse_get_context.3 \
 	fuse.3 fuse_is_lib_option.3 \
 	fuse.3 fuse_loop.3 \
 	fuse.3 fuse_loop_mt.3 \

@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse.3,v 1.6 2013/06/14 20:40:41 syl Exp $
+.\" $OpenBSD: fuse.3,v 1.7 2013/06/14 20:49:06 syl Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -27,6 +27,7 @@
 .Nm fuse_remove_signal_handlers ,
 .Nm fuse_set_signal_handlers ,
 .Nm fuse_get_session ,
+.Nm fuse_get_context ,
 .Nm fuse_is_lib_option ,
 .Nm fuse_loop ,
 .Nm fuse_loop_mt ,
@@ -55,6 +56,8 @@
 .Fn fuse_set_signal_handlers "struct fuse_session *se"
 .Ft struct fuse_session *
 .Fn fuse_get_session "struct fuse *f"
+.Ft struct fuse_context *
+.Fn fuse_get_context "void"
 .Ft int
 .Fn fuse_is_lib_option "const char *opt"
 .Ft int
@@ -120,6 +123,12 @@ returns a pointer to the structure
 .Fa fuse_session
 contained in a
 .Fa struct fuse .
+.Pp
+.Fn fuse_get_context
+returns a pointer to the structure
+.Fa fuse_context .
+The returned fuse_context is only available during the lifetime of a fuse
+operation.
 .Pp
 .Fn fuse_is_lib_option
 checks if the string

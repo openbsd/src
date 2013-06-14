@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.3 2013/06/12 22:36:06 tedu Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.4 2013/06/14 20:49:06 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -63,6 +63,7 @@ struct fuse_chan {
 struct fuse_config {
 	uid_t			uid;
 	gid_t			gid;
+	pid_t			pid;
 	mode_t			umask;
 	int			set_mode;
 	int			set_uid;

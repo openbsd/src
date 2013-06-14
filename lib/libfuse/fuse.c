@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.5 2013/06/14 20:40:41 syl Exp $ */
+/* $OpenBSD: fuse.c,v 1.6 2013/06/14 20:49:06 syl Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -28,11 +28,13 @@
 #include "debug.h"
 
 static struct fuse_session *sigse;
+static struct fuse_context *ictx = NULL;
 
 int
 fuse_loop(struct fuse *fuse)
 {
 	struct fusebuf fbuf;
+	struct fuse_context ctx;
 	struct kevent ev;
 	int error = 0;
 	size_t len = 0;
@@ -67,13 +69,22 @@ fuse_loop(struct fuse *fuse)
 				}
 			}
 
+			ctx.fuse = fuse;
+			ctx.uid = fuse->conf.uid;
+			ctx.gid = fuse->conf.gid;
+			ctx.pid = fuse->conf.pid;
+			ctx.umask = fuse->conf.umask;
+			ictx = &ctx;
+
 			ret = ifuse_exec_opcode(fuse, &fbuf);
 			if (ret) {
+				ictx = NULL;
 				return (ret);
 			}
 
 			len = sizeof(fbuf.fb_hdr) + fbuf.fb_len;
 			ret = write(fuse->fc->fd, &fbuf, len);
+			ictx = NULL;
 
 			if (ret != (int)len) {
 				errno = EINVAL;
@@ -305,6 +316,12 @@ fuse_parse_cmdline(struct fuse_args *args, char **mp, int *mt, unused int *fg)
 	*mt = 0;
 
 	return (0);
+}
+
+struct fuse_context *
+fuse_get_context(void)
+{
+	return (ictx);
 }
 
 int
