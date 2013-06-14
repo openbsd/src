@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: th,v 1.14 2013/06/14 20:11:11 millert Exp $
+#	$OpenBSD: th,v 1.15 2013/06/14 20:31:56 millert Exp $
 
 
 #
@@ -132,6 +132,7 @@
 
 use POSIX qw(EINTR);
 use Getopt::Std;
+use File::Temp qw/ :mktemp  /;
 
 $os = defined $^O ? $^O : 'unknown';
 
@@ -190,11 +191,15 @@ EOF
 	"os:$os", '1'
 	);
 
-$temps = "/tmp/rts$$";
-$tempi = "/tmp/rti$$";
-$tempo = "/tmp/rto$$";
-$tempe = "/tmp/rte$$";
-$tempdir = "/tmp/rtd$$";
+($fh, $temps) = mkstemp("/tmp/rts.XXXXXXXX");
+close($fh);
+($fh, $tempi) = mkstemp("/tmp/rti.XXXXXXXX");
+close($fh);
+($fh, $tempo) = mkstemp("/tmp/rto.XXXXXXXX");
+close($fh);
+($fh, $tempe) = mkstemp("/tmp/rte.XXXXXXXX");
+close($fh);
+$tempdir = mkdtemp("/tmp/rtd.XXXXXXXX");
 
 $nfailed = 0;
 $nxfailed = 0;
@@ -255,8 +260,6 @@ foreach $k (keys(%ENV)) {
     delete $ENV{$k};
 }
 $ENV{$k} = $v while ($k,$v) = each %new_env;
-
-die "$prog: couldn't make directory $tempdir - $!\n" if !mkdir($tempdir, 0777);
 
 chop($pwd = `pwd 2> /dev/null`);
 die "$prog: couldn't get current working directory\n" if $pwd eq '';
@@ -388,6 +391,8 @@ run_test
 
     #print "Running test $name...\n" if $verbose;
 
+    return undef if !&scrub_dir($tempdir);
+
     if (defined $test{'stdin'}) {
 	return undef if !&write_file($tempi, $test{'stdin'});
 	$ifile = $tempi;
@@ -398,8 +403,6 @@ run_test
     if (defined $test{'script'}) {
 	return undef if !&write_file($temps, $test{'script'});
     }
-
-    return undef if !&scrub_dir($tempdir);
 
     if (!chdir($tempdir)) {
 	print STDERR "$prog: couldn't cd to $tempdir - $!\n";
