@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.1 2013/06/14 20:10:18 millert Exp $
+#	$OpenBSD: obsd-regress.t,v 1.2 2013/06/15 17:30:05 millert Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -226,5 +226,23 @@ stdin:
 	true
 arguments: !-e!
 expected-exit: e == 0
+---
+
+name: seterror-6
+description:
+	When trapping ERR and EXIT, both traps should run in -e mode
+	when an error occurs.
+stdin:
+	trap 'echo EXIT' EXIT
+	trap 'echo ERR' ERR
+	set -e
+	false
+	echo DONE
+	exit 0
+arguments: !-e!
+expected-exit: e != 0
+expected-stdout:
+	ERR
+	EXIT
 ---
 
