@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.4 2013/06/13 02:26:15 deraadt Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.5 2013/06/15 19:45:26 miod Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -75,7 +75,7 @@ docopy:
 	cmpl	%ecx,%eax		# overlapping?
 	jb	1f
 docopyf:
-	movl	%esi,%eax		# setup return value for memcpy/memmove
+	movl	%edi,%eax		# setup return value for memcpy/memmove
 	cld				# nope, copy forward
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
