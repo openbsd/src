@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.armish/MAKEDEV.md,v 1.26 2013/03/15 09:10:52 ratchov Exp 
-#	OpenBSD: MAKEDEV.common,v 1.64 2013/06/03 16:06:42 tedu Exp 
+#	OpenBSD: etc.armish/MAKEDEV.md,v 1.27 2013/06/03 17:34:15 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.65 2013/06/15 23:09:36 halex Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -69,7 +69,7 @@
 #	crypto	Hardware crypto access driver
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
-#	fuse	Userland Filesystem
+#	fuse*	Userland Filesystem
 #	hotplug	devices hot plugging
 #	iop*	I2O controller devices
 #	lkm	Loadable kernel modules interface
@@ -297,7 +297,7 @@ hotplug)
 	M hotplug c 37 $U 400
 	;;
 
-fuse)
+fuse*)
 	M fuse$U c 77 $U 600
 	;;
 
@@ -494,11 +494,12 @@ all)
 	R bthub0 bthub1 bthub2 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
 	R sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
-	R diskmap vscsi0 ch0 audio0 audio1 audio2 fuse pppx hotplug
-	R ptm local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall rmidi0
-	R rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0
-	R radio0 video0 video1 uk0 random lkm tty00 tty01 tty02 tty03
-	R apm crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R diskmap vscsi0 ch0 audio0 audio1 audio2 fuse0 fuse1 fuse2
+	R fuse3 pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 iop0
+	R iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6
+	R rmidi7 tuner0 radio0 video0 video1 uk0 random lkm tty00
+	R tty01 tty02 tty03 apm crypto pf systrace wd0 wd1 wd2 wd3 std
+	R st0 st1 fd
 	;;
 
 wd*|sd*)

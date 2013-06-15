@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.19 2012/08/23 06:15:28 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.64 2013/06/03 16:06:42 tedu Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.20 2013/06/03 17:34:15 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.65 2013/06/15 23:09:36 halex Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -55,7 +55,7 @@
 #	bpf*	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
-#	fuse	Userland Filesystem
+#	fuse*	Userland Filesystem
 #	lcd	front panel LCD display
 #	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
@@ -246,7 +246,7 @@ lcd)
 		M lcd c 10 0 644 
 	;;
 
-fuse)
+fuse*)
 	M fuse$U c 45 $U 600
 	;;
 
@@ -375,8 +375,9 @@ ramdisk)
 all)
 	R lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1
 	R rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5
-	R bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse pppx ptm
-	R local wscons uk0 random lkm pf systrace std st0 st1 fd
+	R bpf6 bpf7 bpf8 bpf9 pty0 diskmap vscsi0 ch0 fuse0 fuse1
+	R fuse2 fuse3 pppx ptm local wscons uk0 random lkm pf systrace
+	R std st0 st1 fd
 	;;
 
 sd*)

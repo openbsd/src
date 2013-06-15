@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.31 2012/08/23 06:15:28 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.64 2013/06/03 16:06:42 tedu Exp 
+#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.32 2013/06/03 17:34:15 tedu Exp 
+#	OpenBSD: MAKEDEV.common,v 1.65 2013/06/15 23:09:36 halex Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.81 2012/11/05 08:07:09 jasper Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -50,7 +50,7 @@
 #	bpf*	Berkeley Packet Filter
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
-#	fuse	Userland Filesystem
+#	fuse*	Userland Filesystem
 #	lkm	Loadable kernel modules interface
 #	nvram0	On-board non-volatile memory
 #	pf*	Packet Filter
@@ -256,7 +256,7 @@ lkm)
 	M lkm c 24 0 640 _lkm
 	;;
 
-fuse)
+fuse*)
 	M fuse$U c 45 $U 600
 	;;
 
@@ -381,8 +381,9 @@ all)
 	R tty02 tty03 tty04 tty05 tty06 tty07 ttya ttyb vnd0 vnd1 vnd2
 	R vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
-	R diskmap vscsi0 ch0 vmel0 vmes0 nvram0 sram0 fuse pppx ptm
-	R local uk0 random lkm pf systrace std st0 st1 fd
+	R diskmap vscsi0 ch0 vmel0 vmes0 nvram0 sram0 fuse0 fuse1
+	R fuse2 fuse3 pppx ptm local uk0 random lkm pf systrace std
+	R st0 st1 fd
 	;;
 
 sd*)
