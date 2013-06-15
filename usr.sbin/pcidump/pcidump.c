@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.32 2012/07/03 13:09:25 jsg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.33 2013/06/15 19:45:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -597,7 +597,7 @@ dump(int bus, int dev, int func)
 
 	if (pci_read(bus, dev, func, PCI_COMMAND_STATUS_REG, &reg) != 0)
 		warn("unable to read PCI_COMMAND_STATUS_REG");
-	printf("\t0x%04x: Command: %04x Status ID: %04x\n",
+	printf("\t0x%04x: Command: %04x Status: %04x\n",
 	    PCI_COMMAND_STATUS_REG, reg & 0xffff, (reg  >> 16) & 0xffff);
 
 	if (pci_read(bus, dev, func, PCI_CLASS_REG, &reg) != 0)
