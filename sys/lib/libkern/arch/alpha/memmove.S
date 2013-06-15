@@ -31,20 +31,27 @@
  * Copy a bytes within the kernel's address space.  The bcopy and memmove
  * variants handle overlapping regions, the memcpy variant does not.
  *
- * void memcpy(char *to, char *from, size_t len);
- * void memmove(char *to, char *from, size_t len);
- * void bcopy(char *from, char *to, size_t len);
+ * void* memcpy(void *to, void *from, size_t len);
+ * void* memmove(void *to, void *from, size_t len);
+ * void bcopy(void *from, void *to, size_t len);
  */
 LEAF(memcpy,3)
-	cmoveq  zero,a0,t5
+	/* Swap arguments, also saving the original `from' in v0 */
+	cmoveq  zero,a0,v0
 	cmoveq  zero,a1,a0
-	cmoveq  zero,t5,a1
+	cmoveq  zero,v0,a1
+
+ 	/* Check for zero length */
+	beq	a2,bcopy_done
+
 	br	bcopy_forward
 
 XLEAF(memmove,3)
-	cmoveq  zero,a0,t5
+	/* Swap arguments, also saving the original `from' in v0 */
+	cmoveq  zero,a0,v0
 	cmoveq  zero,a1,a0
-	cmoveq  zero,t5,a1
+	cmoveq  zero,v0,a1
+
 XLEAF(bcopy,3)
  	/* Check for zero length */
 	beq	a2,bcopy_done
