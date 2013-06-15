@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.S,v 1.3 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: memcpy.S,v 1.4 2013/06/15 19:16:53 miod Exp $	*/
 /*	$NetBSD: memcpy.S,v 1.2 2001/11/20 00:29:20 chris Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@ ENTRY_NP(memmove)
 	/* Determine copy direction */
 	cmp	r1, r0
 
-	moveq	r0, #0			/* Quick abort for len=0 */
 #ifdef __APCS_26__
 	moveqs	pc, lr
 #else
