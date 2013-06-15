@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.28 2013/06/01 14:27:32 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.29 2013/06/15 19:58:39 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -49,6 +49,7 @@ gotobop(int f, int n)
 			} else
 				nospace = 1;
 		}
+		nospace = 0;
 	}
 	/* force screen update */
 	curwp->w_rflag |= WFMOVE;
