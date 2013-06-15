@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.103 2013/05/06 20:57:26 naddy Exp $
+.\"	$OpenBSD: make.1,v 1.104 2013/06/15 13:03:41 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: May 6 2013 $
+.Dd $Mdocdate: June 15 2013 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Op Fl BeiknpqrSst
 .Op Fl D Ar variable
 .Op Fl d Ar flags
-.Op Fl f Ar makefile
+.Op Fl f Ar mk
 .Op Fl I Ar directory
 .Op Fl j Ar max_processes
 .Op Fl m Ar directory
@@ -87,15 +87,17 @@ are BSD extensions.
 Standard options are as follows:
 .Bl -tag -width Ds
 .It Fl e
-Specify that environment variables override macro assignments within
+Environment variables override macro assignments within
 makefiles.
-.It Fl f Ar makefile
-Specify a makefile to read instead of the default.
+.It Fl f Ar mk
+Read file
+.Ar mk
+instead of the default makefile.
 If
-.Ar makefile
+.Ar mk
 is
 .Ql \- ,
-standard input is read.
+standard input is used.
 Multiple makefiles may be specified, and are read in the order specified.
 .It Fl i
 Ignore non-zero exit of shell commands in the makefile.
@@ -115,7 +117,8 @@ Do not build anything.
 Do not execute any commands, but exit with status 0 if the specified targets
 are up-to-date, and 1 otherwise.
 .It Fl r
-Do not use the built-in rules specified in the system makefile.
+Do not use the built-in rules specified in the system makefile,
+.Pa <sys.mk> .
 .It Fl S
 Stop processing when an error is encountered.
 This is the default behavior.
@@ -129,7 +132,8 @@ Equivalent to specifying
 before each command line in the makefile.
 .It Fl t
 Rather than re-building a target as specified in the makefile, create it
-or update its modification time to make it appear up-to-date.
+or update its modification time to make it appear up-to-date, a bit like
+.Xr touch 1 .
 .It Ar NAME Ns = Ns Ar value
 Set the value of the variable
 .Ar NAME
@@ -220,26 +224,25 @@ Print debugging information about target group determination.
 Print debugging information about variable assignment.
 .El
 .It Fl I Ar directory
-Specify a directory in which to search for makefiles and included makefiles.
-The system makefile directory (or directories, see the
+Specify a directory in which to search for makefiles and
+for "..."-style inclusions.
+Multiple directories can be added to form a search path.
+Furthermore, the system include path (see the
 .Fl m
-option) is automatically included as part of this list.
+option) will be used after this search path.
 .It Fl j Ar max_processes
 Specify the maximum number of processes that
 .Nm
 may have running at any one time.
 .It Fl m Ar directory
-Specify a directory in which to search for
+Specify a directory in which to search for system include files:
 .Pa sys.mk
-and makefiles included
-via the <...> style.
-Multiple directories can be added to form a search path.
-This path will override the default system include path:
+and <...>-style inclusions.
+Multiple directories can be added to form the system search path.
+Using
+.Fl m
+will override the default system include directory
 .Pa /usr/share/mk .
-Furthermore, the system include path will be appended to the search path used
-for "..."-style inclusions (see the
-.Fl I
-option).
 .It Fl V Ar variable
 Print
 .Nm make Ns 's
@@ -267,7 +270,11 @@ The trailing newline character and initial whitespace on the following
 line are compressed into a single space.
 .Sh DEPENDENCY LINES
 Dependency lines consist of one or more targets, an operator, and zero
-or more prerequisites.
+or more prerequisites:
+.Bd -literal -offset indent
+.Ar target ... Ns : Ns Op Ar prerequisite ...
+.Ed
+.Pp
 This creates a relationship where the targets
 .Dq depend
 on the prerequisites and are usually built from them.
@@ -409,11 +416,13 @@ has been specified.
 (This can be useful to debug recursive Makefiles.)
 .El
 .Pp
-Commands are always executed using
+Commands are executed using
 .Pa /bin/sh
 in
 .Qq set -e
-mode.
+mode, unless
+.Sq Ic \-
+is specified.
 .Pp
 As an optimization,
 .Nm
