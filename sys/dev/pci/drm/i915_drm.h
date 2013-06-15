@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.18 2013/03/28 05:13:07 jsg Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.19 2013/06/15 11:27:59 jsg Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -297,7 +297,7 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_HAS_WAIT_TIMEOUT	 19
 #define I915_PARAM_HAS_SEMAPHORES	 20
 #define I915_PARAM_HAS_PRIME_VMAP_FLUSH	 21
-#define I915_PARAM_RSVD_FOR_FUTURE_USE	 22
+#define I915_PARAM_HAS_VEBOX		 22
 #define I915_PARAM_HAS_SECURE_BATCHES	 23
 #define I915_PARAM_HAS_PINNED_BATCHES	 24
 
@@ -598,6 +598,7 @@ struct drm_i915_gem_execbuffer2 {
 #define I915_EXEC_RENDER                 (1<<0)
 #define I915_EXEC_BSD                    (2<<0)
 #define I915_EXEC_BLT                    (3<<0)
+#define I915_EXEC_VEBOX                  (4<<0)
 
 /* Used for switching the constants addressing mode on gen4+ RENDER ring.
  * Gen6+ only supports relative addressing to dynamic state (default) and
