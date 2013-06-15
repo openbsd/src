@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.109 2013/05/30 16:15:02 deraadt Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.110 2013/06/15 21:35:15 kettenis Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1157,14 +1157,18 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			if (sc->sc_burnman)
 				wsdisplay_burner(sc);
 			/* ...and disable the burner while X is running */
-			if (sc->sc_burnout)
+			if (sc->sc_burnout) {
 				timeout_del(&sc->sc_burner);
+				sc->sc_burnout = 0;
+			}
 #endif
 		} else {
 #ifdef BURNER_SUPPORT
 			/* reenable the burner after exiting from X */
-			if (!sc->sc_burnman)
+			if (!sc->sc_burnman) {
+				sc->sc_burnout = sc->sc_burnoutintvl;
 				wsdisplay_burn(sc, sc->sc_burnflags);
+			}
 #endif
 
 #ifdef WSMOUSED_SUPPORT
