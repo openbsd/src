@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.4 2013/06/13 19:33:58 deraadt Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.5 2013/06/15 19:36:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -197,16 +197,19 @@ Lbcopy_fancy:
 	dec	4, %o2		! }
 1:
 Lbcopy_doubles:
+	mov	%o5, %o3	! save return value
+1:
 	ldd	[%o0], %o4	! do {
 	std	%o4, [%o1]	!	*(double *)dst = *(double *)src;
 	inc	8, %o0		!	dst += 8, src += 8;
 	deccc	8, %o2		! } while ((len -= 8) >= 0);
-	bge	Lbcopy_doubles
+	bge	1b
 	inc	8, %o1
 
 	! check for a usual case again (save work)
 	btst	7, %o2		! if ((len & 7) == 0)
 	be	Lbcopy_done	!	goto bcopy_done;
+	mov	%o3, %o5	! [delay slot: restore return value]
 
 	btst	4, %o2		! if ((len & 4) == 0)
 	be,a	Lbcopy_mopw	!	goto mop_up_word_and_byte;
@@ -415,5 +418,3 @@ Lback_mopb:
 	stb	%o4, [%o1 - 1]	! }
 	retl			!	dst[-1] = b;
 	 mov	%o5, %o0	! return (dst)
-
-
