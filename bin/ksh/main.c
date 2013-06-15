@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2012/09/10 01:25:30 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2013/06/15 17:25:19 millert Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -612,9 +612,13 @@ unwind(int i)
 	/* ordering for EXIT vs ERR is a bit odd (this is what at&t ksh does) */
 	if (i == LEXIT || (Flag(FERREXIT) && (i == LERROR || i == LINTR) &&
 	    sigtraps[SIGEXIT_].trap)) {
+		if (trap)
+			runtraps(0);
 		runtrap(&sigtraps[SIGEXIT_]);
 		i = LLEAVE;
 	} else if (Flag(FERREXIT) && (i == LERROR || i == LINTR)) {
+		if (trap)
+			runtraps(0);
 		runtrap(&sigtraps[SIGERR_]);
 		i = LLEAVE;
 	}
