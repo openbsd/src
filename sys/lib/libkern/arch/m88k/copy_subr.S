@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy_subr.S,v 1.5 2013/06/13 03:59:03 deraadt Exp $	*/
+/*	$OpenBSD: copy_subr.S,v 1.6 2013/06/15 18:38:18 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -52,6 +52,7 @@ ENTRY(memcpy)
 ENTRY(memmove)
 #endif
 #ifdef BCOPY
+#define	OVBCOPY
 ENTRY(bcopy)
 #endif
 
