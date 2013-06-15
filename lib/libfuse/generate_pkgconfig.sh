@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.1 2013/06/03 16:00:50 tedu Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.2 2013/06/15 11:40:56 jasper Exp $
 #
 # Copyright (c) 2010,2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
@@ -16,7 +16,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-# Generate pkg-config file for zlib.
+# Generate pkg-config file for fuse
 
 usage() {
 	echo "usage: ${0##*/} -c current_directory -o obj_directory"
