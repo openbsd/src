@@ -46,6 +46,7 @@ ENTRY(memmove)
 	bf/s	bcopy_overlap
 
 ENTRY(memcpy)
+	mov	REG_DST,REG_DST0
 	cmp/eq	REG_DST,REG_SRC	/* if ( src == dst ) return; */
 	bt/s	bcopy_return
 	mov	REG_SRC,r0
