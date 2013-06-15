@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.174 2013/06/13 20:03:59 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.175 2013/06/15 10:05:58 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6418,7 +6418,6 @@ ENTRY(pseg_set)
 	 mov	1, %o0
 
 
-#if 1
 /*
  * kernel bcopy/memcpy
  * Assumes regions do not overlap; has no useful return value.
@@ -6433,7 +6432,8 @@ ENTRY(memcpy) /* dest, src, size */
 	mov	%o0, %o3
 	mov	%o1, %o0
 	mov	%o3, %o1
-#endif	/* 1 */
+	ba,pt	%xcc, Lbcopy_start
+	 cmp	%o2, BCOPY_SMALL
 ENTRY(bcopy) /* src, dest, size */
 	/*
 	 * Check for overlaps and punt.
