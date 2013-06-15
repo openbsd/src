@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.122 2013/01/10 00:33:13 dlg Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.123 2013/06/15 20:30:23 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.119 2013/01/10 00:32:35 dlg Exp 
+ *	OpenBSD: miidevs,v 1.120 2013/06/15 20:29:25 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -411,6 +411,8 @@
 #define	MII_STR_RDC_R6040	"R6040 10/100 PHY"
 
 /* Realtek PHYs */
+#define	MII_MODEL_xxREALTEK_RTL8201E	0x0008
+#define	MII_STR_xxREALTEK_RTL8201E	"RTL8201E 10/100 PHY"
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
 #define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S PHY"
 #define	MII_MODEL_REALTEK_RTL8201L	0x0020
