@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.c,v 1.3 2013/06/16 15:09:03 jca Exp $	*/
+/*	$OpenBSD: locale.c,v 1.4 2013/06/16 18:09:47 jca Exp $	*/
 /*
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
  *
@@ -61,7 +61,8 @@ const char * const some_locales[] = {
 	"C.UTF-8",
 	"POSIX",
 	"POSIX.UTF-8",
-	"Pig",
+	"Pig.ISO8859-1",
+	"Pig.UTF-8",
 	"ar_SD.UTF-8",
 	"ar_SY.UTF-8",
 	"bg_BG.CP1251",
