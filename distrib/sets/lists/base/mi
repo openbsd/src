@@ -313,6 +313,7 @@
 ./usr/bin/libnetcfg
 ./usr/bin/libtool
 ./usr/bin/lndir
+./usr/bin/locale
 ./usr/bin/locate
 ./usr/bin/lock
 ./usr/bin/logger

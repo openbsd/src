@@ -440,6 +440,7 @@
 ./usr/share/man/man1/libtool.1
 ./usr/share/man/man1/ln.1
 ./usr/share/man/man1/lndir.1
+./usr/share/man/man1/locale.1
 ./usr/share/man/man1/locate.1
 ./usr/share/man/man1/lock.1
 ./usr/share/man/man1/lockspool.1
