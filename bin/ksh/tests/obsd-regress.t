@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.2 2013/06/15 17:30:05 millert Exp $
+#	$OpenBSD: obsd-regress.t,v 1.3 2013/06/16 12:17:20 millert Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -244,5 +244,15 @@ expected-exit: e != 0
 expected-stdout:
 	ERR
 	EXIT
+---
+
+name: seterror-7
+description:
+	The -e flag within a command substitution should be honored
+stdin:
+	echo $( set -e; false; echo foo )
+arguments: !-e!
+expected-stdout:
+	
 ---
 
