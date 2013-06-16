@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.22 2013/06/14 23:46:31 bmercer Exp $
+# $OpenBSD: RAMDISK,v 1.23 2013/06/16 22:06:42 florian Exp $
 #
 # GENERIC machine description file
 #
@@ -74,6 +74,7 @@ intc*		at soc?			# interrupt controller
 
 # OMAP on-chip devices
 prcm*		at soc?			# power/clock controller
+sitaracm*	at soc?			# sitara control module
 omdog*		at soc?			# watchdog timer
 omgpio*		at soc?			# user-visible GPIO pins?
 gptimer*	at soc?			# general purpose timers
