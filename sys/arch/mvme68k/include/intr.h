@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.21 2011/03/23 16:54:36 pirofti Exp $	*/
+/*	$OpenBSD: intr.h,v 1.22 2013/06/16 14:49:49 kettenis Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -51,6 +51,8 @@
 #define IPL_STATCLOCK	5
 #define IPL_SCHED	7
 #define IPL_HIGH	7
+
+#define IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
 #define	MD_IPLTOPSL(ipl)	IPLTOPSL(ipl)
 

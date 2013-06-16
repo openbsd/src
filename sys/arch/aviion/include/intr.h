@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2013/06/16 14:49:49 kettenis Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -50,6 +50,8 @@
 #define IPL_ABORT	7
 
 #define	NIPLS		8
+
+#define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
 #include <m88k/intr.h>
 
