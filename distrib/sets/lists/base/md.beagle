@@ -550,7 +550,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/conf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/cpu.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/cpuconf.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/cpufunc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/db_machdep.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/disklabel.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/endian.ph

@@ -13,7 +13,6 @@
 ./usr/include/arm/conf.h
 ./usr/include/arm/cpu.h
 ./usr/include/arm/cpuconf.h
-./usr/include/arm/cpufunc.h
 ./usr/include/arm/db_machdep.h
 ./usr/include/arm/disklabel.h
 ./usr/include/arm/endian.h
