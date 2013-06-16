@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.113 2013/06/13 21:06:58 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.114 2013/06/16 21:27:15 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1239,7 +1239,8 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	/* Release the reference to the base prefix. */
 	if (ia->ia6_ndpr == NULL) {
 		if (!IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia)) &&
-		    !IN6_IS_ADDR_LOOPBACK(IA6_IN6(ia)))
+		    !IN6_IS_ADDR_LOOPBACK(IA6_IN6(ia)) &&
+		    !IN6_ARE_ADDR_EQUAL(IA6_MASKIN6(ia), &in6mask128))
 			log(LOG_NOTICE, "in6_unlink_ifa: interface address "
 			    "%s has no prefix\n", ip6_sprintf(IA6_IN6(ia)));
 	} else {
