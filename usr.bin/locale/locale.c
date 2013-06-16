@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.c,v 1.4 2013/06/16 18:09:47 jca Exp $	*/
+/*	$OpenBSD: locale.c,v 1.5 2013/06/16 19:46:59 guenther Exp $	*/
 /*
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
  *
@@ -36,6 +36,33 @@ struct category_name {
 };
 
 void
+put_assignment(const char *name, const char *value, int double_quoted)
+{
+	char c;
+
+	fputs(name, stdout);
+	putchar('=');
+	if (double_quoted)
+		putchar('"');
+	if (value != NULL)
+		while ((c = *value++) != '\0')
+			switch (c) {
+			case ' ': case '\t': case '\n': case '\'':
+			case '(': case ')': case '<': case '>':
+			case '&': case ';': case '|': case '~':
+				if (!double_quoted)
+			case '"': case '\\': case '$': case '`': 
+					putchar('\\');
+			default:
+				putchar(c);
+				break;
+			}
+	if (double_quoted)
+		putchar('"');
+	putchar('\n');
+}
+
+void
 show_current_locale()
 {
 	char *lang, *lc_all;
@@ -44,16 +71,16 @@ show_current_locale()
 	lang = getenv("LANG");
 	lc_all = getenv("LC_ALL");
 
-	printf("LANG=%s\n", lang ? lang : "");
+	put_assignment("LANG", lang, 0);
 	for (i = 0; categories[i].name != NULL; i++) {
 		if (lc_all == NULL && getenv(categories[i].name))
-			printf("%s=%s\n", categories[i].name,
-			    getenv(categories[i].name));
+			put_assignment(categories[i].name,
+			    getenv(categories[i].name), 0);
 		else
-			printf("%s=\"%s\"\n", categories[i].name,
-			    setlocale(categories[i].category, NULL));
+			put_assignment(categories[i].name,
+			    setlocale(categories[i].category, NULL), 1);
 	}
-	printf("LC_ALL=%s\n", lc_all ? lc_all : "");
+	put_assignment("LC_ALL", lc_all, 0);
 }
 
 const char * const some_locales[] = {
