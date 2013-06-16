@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.60 2013/03/26 13:19:25 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.61 2013/06/16 20:45:51 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ gif_start(struct ifnet *ifp)
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	struct mbuf *m;
 	int s;
-	sa_family_t family;
 
 	while (1) {
 		s = splnet();
@@ -166,9 +165,6 @@ gif_start(struct ifnet *ifp)
 			m_freem(m);
 			continue;
 		}
-
-		/* get tunnel address family */
-		family = sc->gif_psrc->sa_family;
 
 		/*
 		 * Check if the packet is coming via bridge and needs
@@ -294,7 +290,6 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
 	int s;
-	sa_family_t family = dst->sa_family;
 
 	if (!(ifp->if_flags & IFF_UP) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
@@ -316,12 +311,12 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 	case AF_INET:
-		error = in_gif_output(ifp, family, &m);
+		error = in_gif_output(ifp, dst->sa_family, &m);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		error = in6_gif_output(ifp, family, &m);
+		error = in6_gif_output(ifp, dst->sa_family, &m);
 		break;
 #endif
 	default:
