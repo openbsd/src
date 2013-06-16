@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.28 2011/08/04 04:18:42 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.29 2013/06/16 19:04:20 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -202,10 +202,10 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT | M_ZERO);
 	edp->dw = 0;
 	edp->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
-	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
-	edp->decgraphtab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
-	edp->dectechtab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
-	edp->nrctab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
+	edp->isolatin1tab = malloc(128 * sizeof(u_int), M_DEVBUF, M_NOWAIT);
+	edp->decgraphtab = malloc(128 * sizeof(u_int), M_DEVBUF, M_NOWAIT);
+	edp->dectechtab = malloc(128 * sizeof(u_int), M_DEVBUF, M_NOWAIT);
+	edp->nrctab = malloc(128 * sizeof(u_int), M_DEVBUF, M_NOWAIT);
 	vt100_initchartables(edp);
 	wsemul_vt100_reset(edp);
 	return (edp);
