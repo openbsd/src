@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.c,v 1.2 2013/06/05 14:56:45 stsp Exp $	*/
+/*	$OpenBSD: locale.c,v 1.3 2013/06/16 15:09:03 jca Exp $	*/
 /*
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
  *
@@ -32,20 +32,28 @@ struct category_name {
 	{ LC_NUMERIC,	"LC_NUMERIC" },
 	{ LC_TIME,	"LC_TIME" },
 	{ LC_MESSAGES,	"LC_MESSAGES" },
-	{ LC_ALL,	"LC_ALL" },
 	{ 0, 		NULL},
 };
 
 void
 show_current_locale()
 {
-	char *lang = getenv("LANG");
+	char *lang, *lc_all;
 	int i;
 
+	lang = getenv("LANG");
+	lc_all = getenv("LC_ALL");
+
 	printf("LANG=%s\n", lang ? lang : "");
-	for (i = 0; categories[i].name != NULL; i++)
-		printf("%s=%s\n", categories[i].name,
-		    setlocale(categories[i].category, NULL));
+	for (i = 0; categories[i].name != NULL; i++) {
+		if (lc_all == NULL && getenv(categories[i].name))
+			printf("%s=%s\n", categories[i].name,
+			    getenv(categories[i].name));
+		else
+			printf("%s=\"%s\"\n", categories[i].name,
+			    setlocale(categories[i].category, NULL));
+	}
+	printf("LC_ALL=%s\n", lc_all ? lc_all : "");
 }
 
 const char * const some_locales[] = {
@@ -53,8 +61,7 @@ const char * const some_locales[] = {
 	"C.UTF-8",
 	"POSIX",
 	"POSIX.UTF-8",
-	"Pig.ISO8859-1",
-	"Pig.UTF-8",
+	"Pig",
 	"ar_SD.UTF-8",
 	"ar_SY.UTF-8",
 	"bg_BG.CP1251",
