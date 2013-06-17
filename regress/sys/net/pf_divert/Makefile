@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2013/06/04 04:17:42 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2013/06/17 19:42:27 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -22,13 +22,13 @@ CLEANFILES +=		*.log ktrace.out stamp-*
 # You must have an anchor "regress" for the divert rules in the pf.conf
 # of the remote machine.  The kernel of the remote machine gets testet.
 
-LOCAL_ADDR ?= 10.188.50.10
-REMOTE_ADDR ?= 10.188.50.50
-FAKE_ADDR ?= 10.188.50.51
-LOCAL_ADDR6 ?= fdd7:e83e:66bc:211:fce1:baff:fed1:561f
-REMOTE_ADDR6 ?= fdd7:e83e:66bc:211:5054:ff:fe12:3450
-FAKE_ADDR6 ?= fdd7:e83e:66bc:211:5054:ff:fe12:3451
-REMOTE_SSH ?= q0
+LOCAL_ADDR ?=
+REMOTE_ADDR ?=
+FAKE_ADDR ?=
+LOCAL_ADDR6 ?=
+REMOTE_ADDR6 ?=
+FAKE_ADDR6 ?=
+REMOTE_SSH ?=
 
 .MAIN: all
 
