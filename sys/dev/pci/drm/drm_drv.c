@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.107 2013/06/11 19:39:09 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.108 2013/06/17 20:55:41 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -43,7 +43,7 @@
 #include <sys/param.h>
 #include <sys/limits.h>
 #include <sys/systm.h>
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
 
 #include <sys/ttycom.h> /* for TIOCSGRP */
