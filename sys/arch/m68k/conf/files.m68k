@@ -1,7 +1,6 @@
-#	$OpenBSD: files.m68k,v 1.21 2010/07/02 19:57:14 tedu Exp $
+#	$OpenBSD: files.m68k,v 1.22 2013/06/17 17:50:07 jj Exp $
 #	$NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
-file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/cachectl.c
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/copypage.s
