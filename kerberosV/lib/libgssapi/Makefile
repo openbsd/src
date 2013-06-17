@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2013/06/17 19:11:35 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2013/06/17 21:14:19 robert Exp $
 
 LIB=	gssapi
 
@@ -288,7 +288,7 @@ beforedepend:
 gengssapi: gssapi.asn1
 	${ASN1_COMPILE} ${.ALLSRC:M*.asn1} gssapi_asn1
 
-genspnego: spnego.asn1 spnego.opt	
+genspnego: spnego.asn1 spnego.opt
 	${ASN1_COMPILE} --option-file=${.ALLSRC:M*.opt} ${.ALLSRC:M*.asn1} spnego_asn1
 
 ${GEN}: gengssapi genspnego
