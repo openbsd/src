@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2011/07/09 03:58:12 nicm Exp $
+#	$OpenBSD: Makefile,v 1.7 2013/06/17 04:50:31 guenther Exp $
 
-SUBDIR+= md5 ksh pax systrace test
+SUBDIR+= ksh ln md5 pax systrace test
 
 install:
 
