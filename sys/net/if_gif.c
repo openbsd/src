@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.61 2013/06/16 20:45:51 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.62 2013/06/17 18:19:44 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -676,8 +676,7 @@ gif_checkloop(struct ifnet *ifp, struct mbuf *m)
 	 */
 	for (mtag = m_tag_find(m, PACKET_TAG_GIF, NULL); mtag;
 	    mtag = m_tag_find(m, PACKET_TAG_GIF, mtag)) {
-		if (!bcmp((caddr_t)(mtag + 1), &ifp,
-		    sizeof(struct ifnet *))) {
+		if (*(struct ifnet **)(mtag + 1) == ifp) {
 			log(LOG_NOTICE, "gif_output: "
 			    "recursively called too many times\n");
 			m_freem(m);
@@ -685,12 +684,12 @@ gif_checkloop(struct ifnet *ifp, struct mbuf *m)
 		}
 	}
 
-	mtag = m_tag_get(PACKET_TAG_GIF, sizeof(caddr_t), M_NOWAIT);
+	mtag = m_tag_get(PACKET_TAG_GIF, sizeof(struct ifnet *), M_NOWAIT);
 	if (mtag == NULL) {
 		m_freem(m);
 		return ENOMEM;
 	}
-	bcopy(&ifp, mtag + 1, sizeof(caddr_t));
+	*(struct ifnet **)(mtag + 1) = ifp;
 	m_tag_prepend(m, mtag);
 	return 0;
 }
