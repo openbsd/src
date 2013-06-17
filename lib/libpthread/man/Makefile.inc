@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.33 2012/05/03 09:07:17 pirofti Exp $
+# $OpenBSD: Makefile.inc,v 1.34 2013/06/17 19:11:54 guenther Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -32,6 +32,7 @@ MAN+=	\
 	pthread_equal.3 \
 	pthread_exit.3 \
 	pthread_getconcurrency.3 \
+	pthread_getcpuclockid.3 \
 	pthread_getspecific.3 \
 	pthread_join.3 \
 	pthread_key_create.3 \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.79 2013/06/03 16:55:22 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.80 2013/06/17 19:11:54 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -112,6 +112,8 @@ settime(struct timespec *ts)
 int
 clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 {
+	struct proc *q;
+
 	switch (clock_id) {
 	case CLOCK_REALTIME:
 		nanotime(tp);
@@ -119,13 +121,27 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 	case CLOCK_MONOTONIC:
 		nanouptime(tp);
 		break;
-	case CLOCK_PROF:
+	case CLOCK_PROCESS_CPUTIME_ID:
 		nanouptime(tp);
 		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
+		timespecadd(tp, &p->p_p->ps_tu.tu_runtime, tp);
+		timespecadd(tp, &p->p_rtime, tp);
+		break;
+	case CLOCK_THREAD_CPUTIME_ID:
+		nanouptime(tp);
+		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
+		timespecadd(tp, &p->p_tu.tu_runtime, tp);
 		timespecadd(tp, &p->p_rtime, tp);
 		break;
 	default:
-		return (EINVAL);
+		/* check for clock from pthread_getcpuclockid() */
+		if (__CLOCK_TYPE(clock_id) == CLOCK_THREAD_CPUTIME_ID) {
+			q = pfind(__CLOCK_PTID(clock_id) - THREAD_PID_OFFSET);
+			if (q == NULL || q->p_p != p->p_p)
+				return (ESRCH);
+			*tp = q->p_tu.tu_runtime;
+		} else
+			return (EINVAL);
 	}
 	return (0);
 }
@@ -195,17 +211,28 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	clockid_t clock_id;
 	struct timespec ts;
+	struct proc *q;
 	int error = 0;
 
 	clock_id = SCARG(uap, clock_id);
 	switch (clock_id) {
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
+	case CLOCK_PROCESS_CPUTIME_ID:
+	case CLOCK_THREAD_CPUTIME_ID:
 		ts.tv_sec = 0;
 		ts.tv_nsec = 1000000000 / hz;
 		break;
 	default:
-		return (EINVAL);
+		/* check for clock from pthread_getcpuclockid() */
+		if (__CLOCK_TYPE(clock_id) == CLOCK_THREAD_CPUTIME_ID) {
+			q = pfind(__CLOCK_PTID(clock_id) - THREAD_PID_OFFSET);
+			if (q == NULL || q->p_p != p->p_p)
+				return (ESRCH);
+			ts.tv_sec = 0;
+			ts.tv_nsec = 1000000000 / hz;
+		} else
+			return (EINVAL);
 	}
 
 	if (SCARG(uap, tp)) {

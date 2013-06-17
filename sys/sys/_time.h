@@ -1,4 +1,4 @@
-/*	$OpenBSD: _time.h,v 1.2 2012/05/10 19:13:12 kettenis Exp $	*/
+/*	$OpenBSD: _time.h,v 1.3 2013/06/17 19:11:54 guenther Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,10 +32,21 @@
 #ifndef _SYS__TIME_H_
 #define _SYS__TIME_H_
 
-#define CLOCK_REALTIME	0
-#define CLOCK_VIRTUAL	1
-#define CLOCK_PROF	2
-#define CLOCK_MONOTONIC	3
+#define CLOCK_REALTIME			0
+#define CLOCK_VIRTUAL			1
+#define CLOCK_PROCESS_CPUTIME_ID	2
+#define CLOCK_MONOTONIC			3
+#define CLOCK_THREAD_CPUTIME_ID		4
+
+#if __BSD_VISIBLE
+/*
+ * Per-process and per-thread clocks encode the PID or TID into the
+ * high bits, with the type in the bottom bits
+ */
+#define __CLOCK_ENCODE(type,id)		((type) | ((id) << 12))
+#define __CLOCK_TYPE(c)			((c) & 0xfff)
+#define __CLOCK_PTID(c)			(((c) >> 12) & 0xfffff)
+#endif
 
 /*
  * Structure defined by POSIX 1003.1b to be like a itimerval,

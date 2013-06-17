@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.61 2013/05/31 20:59:23 ajacoutot Exp $
+#	$OpenBSD: Makefile.inc,v 1.62 2013/06/17 19:11:54 guenther Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
 
 SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
-        basename.c clock.c closedir.c confstr.c ctermid.c ctype_.c \
+        basename.c clock.c clock_getcpuclockid.c \
+        closedir.c confstr.c ctermid.c ctype_.c \
         daemon.c devname.c dirfd.c dirname.c disklabel.c elf_hash.c err.c \
         errx.c errlist.c errno.c exec.c \
         fdatasync.c fnmatch.c fpclassify.c frexp.c \
@@ -36,7 +37,8 @@ SRCS+=	_sys_errlist.c _sys_nerr.c _sys_siglist.c
 
 .include "${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen/Makefile.inc"
 
-MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
+MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
+	clock_getcpuclockid.3 confstr.3 \
 	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 err.3 \
 	exec.3 fabs.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 ftok.3 fts.3 \
 	ftw.3 getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \

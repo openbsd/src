@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2012/11/22 19:10:27 miod Exp $
+#	$OpenBSD: Makefile,v 1.35 2013/06/17 19:11:54 guenther Exp $
 
 # For ``COMPILER_VERSION'' and ``ELF_TOOLCHAIN''
 .include <bsd.own.mk>
@@ -27,6 +27,7 @@ SRCS=	rthread.c \
 	rthread_debug.c \
 	rthread_file.c \
 	rthread_fork.c \
+	rthread_getcpuclockid.c \
 	rthread_libc.c \
 	rthread_mutex_prio.c \
 	rthread_mutexattr.c \

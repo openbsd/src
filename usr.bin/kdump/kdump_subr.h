@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump_subr.h,v 1.8 2012/12/25 09:35:51 guenther Exp $	*/
+/*	$OpenBSD: kdump_subr.h,v 1.9 2013/06/17 19:11:54 guenther Exp $	*/
 /*
  * Copyright(c) 2006 2006 David Kirchner <dpk@dpk.net>
  *
@@ -55,6 +55,7 @@ void prioname(int);
 void madvisebehavname(int);
 void msyncflagsname(int);
 void clockname(int);
+void clocktypename(int);
 void schedpolicyname(int);
 void kldunloadfflagsname(int);
 void ksethrcmdname(int);

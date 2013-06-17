@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.78 2013/06/04 23:01:07 brad Exp $ */
+/*	$OpenBSD: unistd.h,v 1.79 2013/06/17 19:11:54 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 #define _POSIX_BARRIERS				200112L
 #define _POSIX_CHOWN_RESTRICTED			1
 #define _POSIX_CLOCK_SELECTION			(-1)
-#define _POSIX_CPUTIME				(-1)
+#define _POSIX_CPUTIME				200809L
 #define _POSIX_FSYNC				200112L
 #define _POSIX_IPV6				0
 #define _POSIX_JOB_CONTROL			1
@@ -93,7 +93,7 @@
 #define _POSIX_SYNCHRONIZED_IO			(-1)
 #define _POSIX_THREAD_ATTR_STACKADDR		200112L
 #define _POSIX_THREAD_ATTR_STACKSIZE		200112L
-#define _POSIX_THREAD_CPUTIME			(-1)
+#define _POSIX_THREAD_CPUTIME			200809L
 #define _POSIX_THREAD_PRIO_INHERIT		(-1)
 #define _POSIX_THREAD_PRIO_PROTECT		(-1)
 #define _POSIX_THREAD_PRIORITY_SCHEDULING	(-1)
