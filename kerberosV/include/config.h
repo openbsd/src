@@ -1448,7 +1448,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE "heimdal"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "heimdal-bugs@h5l.org"
+#define PACKAGE_BUGREPORT "bugs@openbsd.org"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "Heimdal"
