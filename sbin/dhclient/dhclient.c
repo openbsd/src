@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.254 2013/06/09 22:39:51 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.255 2013/06/17 19:51:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2222,10 +2222,13 @@ write_file(char *path, int flags, mode_t mode, uid_t uid, gid_t gid,
 	size_t rslt;
 
 	imsg = calloc(1, sizeof(*imsg) + sz);
+	if (imsg == NULL)
+		error("no memory for imsg_write_file");
 	imsg->rdomain = ifi->rdomain;
 
 	rslt = strlcpy(imsg->path, path, MAXPATHLEN);
 	if (rslt >= MAXPATHLEN) {
+		free(imsg);
 		warning("write_file: path too long (%zu)", rslt);
 		return;
 	}
