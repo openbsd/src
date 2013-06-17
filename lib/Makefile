@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2012/04/22 23:43:38 espie Exp $
+#	$OpenBSD: Makefile,v 1.60 2013/06/17 19:18:37 robert Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libcompat libcurses \
@@ -10,7 +10,7 @@ SUBDIR=	csu libarch libc libcompat libcurses \
 .include <bsd.own.mk>
 
 .if (${KERBEROS5:L} == "yes")
-SUBDIR+=libgssapi libkadm5srv libkadm5clnt libkrb5
+SUBDIR+=../kerberosV/lib
 .endif
 
 .include <bsd.subdir.mk>
