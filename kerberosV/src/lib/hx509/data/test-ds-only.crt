@@ -1,0 +1,53 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 5 (0x5)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: CN=hx509 Test Root CA, C=SE
+        Validity
+            Not Before: Apr 26 20:29:40 2009 GMT
+            Not After : Apr 24 20:29:40 2019 GMT
+        Subject: C=SE, CN=Test cert DigitalSignature
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:eb:6c:c9:0d:97:91:ab:88:5c:44:a7:40:ed:25:
+                    b1:d9:0d:cd:22:1e:07:80:15:49:05:b0:7d:f2:bc:
+                    6c:12:7a:4a:74:a8:26:4c:98:0f:29:d0:b2:68:21:
+                    c3:bb:6a:cd:4a:27:71:5b:8b:51:12:ed:47:cc:21:
+                    94:ee:05:11:55:61:2c:88:22:33:c2:4e:12:ca:ed:
+                    63:00:10:4c:4f:7c:62:97:a0:9f:95:2a:99:d7:8e:
+                    a7:8a:d7:53:b2:b2:7d:a8:b7:5f:dd:4c:79:30:e7:
+                    48:0e:0d:9d:6d:85:04:56:63:d4:27:53:09:a9:bc:
+                    b3:c1:67:1e:65:bb:4e:10:a5
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Key Usage: 
+                Digital Signature, Non Repudiation
+            X509v3 Subject Key Identifier: 
+                30:2F:86:11:EA:5A:CD:C6:B4:61:FC:11:59:74:34:7C:16:93:25:52
+    Signature Algorithm: sha1WithRSAEncryption
+        15:f4:85:10:1a:98:d7:ec:74:4c:2b:55:1f:db:c9:2f:e0:ad:
+        2d:76:83:17:e1:13:d7:17:8d:27:a7:e3:21:1f:63:f2:30:94:
+        ae:9f:1f:b9:4f:6a:6b:ce:50:7d:1a:a7:4e:be:f1:98:33:16:
+        a0:53:a3:06:61:4f:6e:11:8b:55:3f:cd:91:4f:0a:0b:2d:f1:
+        5a:68:13:e2:f9:25:88:00:74:79:e8:f4:a9:c4:5c:9e:df:c0:
+        17:e2:e5:75:54:3d:64:65:52:b4:a5:9c:51:ff:c3:ec:8f:88:
+        06:18:f6:a5:42:b9:d9:75:7b:d1:4c:d1:fa:ab:89:b3:24:5a:
+        14:aa
+-----BEGIN CERTIFICATE-----
+MIICCzCCAXSgAwIBAgIBBTANBgkqhkiG9w0BAQUFADAqMRswGQYDVQQDDBJoeDUw
+OSBUZXN0IFJvb3QgQ0ExCzAJBgNVBAYTAlNFMB4XDTA5MDQyNjIwMjk0MFoXDTE5
+MDQyNDIwMjk0MFowMjELMAkGA1UEBhMCU0UxIzAhBgNVBAMMGlRlc3QgY2VydCBE
+aWdpdGFsU2lnbmF0dXJlMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDrbMkN
+l5GriFxEp0DtJbHZDc0iHgeAFUkFsH3yvGwSekp0qCZMmA8p0LJoIcO7as1KJ3Fb
+i1ES7UfMIZTuBRFVYSyIIjPCThLK7WMAEExPfGKXoJ+VKpnXjqeK11Oysn2ot1/d
+THkw50gODZ1thQRWY9QnUwmpvLPBZx5lu04QpQIDAQABozkwNzAJBgNVHRMEAjAA
+MAsGA1UdDwQEAwIGwDAdBgNVHQ4EFgQUMC+GEepazca0YfwRWXQ0fBaTJVIwDQYJ
+KoZIhvcNAQEFBQADgYEAFfSFEBqY1+x0TCtVH9vJL+CtLXaDF+ET1xeNJ6fjIR9j
+8jCUrp8fuU9qa85QfRqnTr7xmDMWoFOjBmFPbhGLVT/NkU8KCy3xWmgT4vkliAB0
+eej0qcRcnt/AF+LldVQ9ZGVStKWcUf/D7I+IBhj2pUK52XV70UzR+quJsyRaFKo=
+-----END CERTIFICATE-----

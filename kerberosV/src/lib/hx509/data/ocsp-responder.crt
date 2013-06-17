@@ -1,0 +1,56 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: CN=hx509 Test Root CA, C=SE
+        Validity
+            Not Before: Apr 26 20:29:40 2009 GMT
+            Not After : Apr 24 20:29:40 2019 GMT
+        Subject: C=SE, CN=OCSP responder
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:f1:38:9c:a0:5e:b9:0e:73:19:b6:f5:57:2b:9c:
+                    0c:ef:a6:c7:57:0f:8d:3c:05:03:8f:53:28:f0:b6:
+                    f8:d1:0d:c9:dc:13:37:2d:f1:76:36:b7:5c:6b:5d:
+                    a5:22:02:7c:86:84:9e:b5:e3:8b:e6:9e:82:d9:97:
+                    96:02:9f:3c:7b:74:e6:1b:b6:c9:fa:b3:b7:8b:53:
+                    6e:26:fb:b2:3f:ae:2a:7f:f9:67:df:1a:e1:de:87:
+                    97:47:76:80:a3:c4:bf:5c:2c:0d:ab:36:97:13:2d:
+                    b8:c2:65:41:47:e8:34:54:f8:45:fc:38:76:b8:99:
+                    3f:ee:83:f6:49:40:96:16:71
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Key Usage: 
+                Digital Signature, Non Repudiation, Key Encipherment
+            X509v3 Extended Key Usage: 
+                OCSP No Check, OCSP Signing
+            X509v3 Subject Key Identifier: 
+                FD:2F:3F:35:BC:72:5C:51:52:4F:5F:D6:20:CB:D1:CB:56:2F:BC:0A
+    Signature Algorithm: sha1WithRSAEncryption
+        24:95:11:a0:f2:10:58:4d:4e:20:e5:d3:4d:17:b5:4b:37:aa:
+        fe:c8:28:79:e4:ca:15:b1:9e:28:93:fc:45:99:d5:4a:8a:a0:
+        0a:e4:9e:75:64:f9:a4:63:96:dd:2a:9e:c7:0f:03:83:86:44:
+        c5:1c:a4:34:b6:b7:74:e3:ff:e3:97:0f:11:b5:00:bd:10:fd:
+        91:db:ec:2d:14:9b:16:c7:e5:48:b0:08:62:d1:58:be:92:69:
+        a6:5a:3d:7e:58:39:f0:bb:bc:71:08:b9:76:6c:9b:e6:57:1c:
+        25:1b:d6:7a:98:70:9f:95:50:09:17:d9:1a:d9:20:db:d6:8a:
+        be:9e
+-----BEGIN CERTIFICATE-----
+MIICHzCCAYigAwIBAgIBATANBgkqhkiG9w0BAQUFADAqMRswGQYDVQQDDBJoeDUw
+OSBUZXN0IFJvb3QgQ0ExCzAJBgNVBAYTAlNFMB4XDTA5MDQyNjIwMjk0MFoXDTE5
+MDQyNDIwMjk0MFowJjELMAkGA1UEBhMCU0UxFzAVBgNVBAMMDk9DU1AgcmVzcG9u
+ZGVyMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDxOJygXrkOcxm29VcrnAzv
+psdXD408BQOPUyjwtvjRDcncEzct8XY2t1xrXaUiAnyGhJ6144vmnoLZl5YCnzx7
+dOYbtsn6s7eLU24m+7I/rip/+WffGuHeh5dHdoCjxL9cLA2rNpcTLbjCZUFH6DRU
++EX8OHa4mT/ug/ZJQJYWcQIDAQABo1kwVzAJBgNVHRMEAjAAMAsGA1UdDwQEAwIF
+4DAeBgNVHSUEFzAVBgkrBgEFBQcwAQUGCCsGAQUFBwMJMB0GA1UdDgQWBBT9Lz81
+vHJcUVJPX9Ygy9HLVi+8CjANBgkqhkiG9w0BAQUFAAOBgQAklRGg8hBYTU4g5dNN
+F7VLN6r+yCh55MoVsZ4ok/xFmdVKiqAK5J51ZPmkY5bdKp7HDwODhkTFHKQ0trd0
+4//jlw8RtQC9EP2R2+wtFJsWx+VIsAhi0Vi+kmmmWj1+WDnwu7xxCLl2bJvmVxwl
+G9Z6mHCflVAJF9ka2SDb1oq+ng==
+-----END CERTIFICATE-----

@@ -1,0 +1,53 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 3 (0x3)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: CN=hx509 Test Root CA, C=SE
+        Validity
+            Not Before: Apr 26 20:29:40 2009 GMT
+            Not After : Apr 24 20:29:40 2019 GMT
+        Subject: C=SE, CN=Revoke cert
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:a6:5f:11:30:35:3a:5f:ed:c2:06:ac:f4:14:27:
+                    c1:db:ae:79:f0:b6:9e:0a:83:e7:82:6a:69:92:a6:
+                    85:9c:5d:e4:8a:0e:6b:32:99:4d:22:b9:ea:a6:8c:
+                    84:9e:62:f0:a3:f1:d2:b0:ef:41:ce:93:ce:d9:49:
+                    43:be:0d:a7:ea:cd:37:bb:ba:4d:ee:75:ed:86:74:
+                    8a:e2:08:77:2b:60:91:30:b2:96:57:4e:42:d1:5e:
+                    6f:0d:f5:b2:d6:98:ed:3f:ab:a0:64:33:8b:52:ad:
+                    b5:7a:4a:fd:70:dc:d8:8b:e1:47:0c:8d:8f:93:5c:
+                    9c:35:3f:cb:21:d7:5c:6c:b3
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Key Usage: 
+                Digital Signature, Non Repudiation, Key Encipherment
+            X509v3 Subject Key Identifier: 
+                AC:ED:61:9B:1A:7D:7D:27:D4:E3:B9:3D:79:9C:F1:96:10:B3:46:45
+    Signature Algorithm: sha1WithRSAEncryption
+        71:4d:fc:63:69:bb:b5:cf:0c:50:dc:de:55:ef:9b:90:07:42:
+        98:3e:80:36:e4:94:aa:d5:f3:0b:56:38:12:1d:3d:e6:dc:a3:
+        8b:bf:8a:f6:82:d6:25:8b:9c:88:ce:38:2a:ee:e1:2f:2e:8f:
+        c7:74:c6:42:5f:68:99:a5:48:e7:08:5a:bd:3c:fa:db:14:5a:
+        39:cc:dc:50:c5:ba:05:97:c9:66:9e:39:d8:ce:17:a6:ec:6b:
+        bd:c9:c9:a8:d1:6d:dc:68:c0:79:20:6e:df:04:0a:14:37:06:
+        7b:e8:54:62:60:0c:9f:d5:73:55:b7:d0:4f:cb:e0:14:75:65:
+        b7:d1
+-----BEGIN CERTIFICATE-----
+MIIB/DCCAWWgAwIBAgIBAzANBgkqhkiG9w0BAQUFADAqMRswGQYDVQQDDBJoeDUw
+OSBUZXN0IFJvb3QgQ0ExCzAJBgNVBAYTAlNFMB4XDTA5MDQyNjIwMjk0MFoXDTE5
+MDQyNDIwMjk0MFowIzELMAkGA1UEBhMCU0UxFDASBgNVBAMMC1Jldm9rZSBjZXJ0
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCmXxEwNTpf7cIGrPQUJ8Hbrnnw
+tp4Kg+eCammSpoWcXeSKDmsymU0iueqmjISeYvCj8dKw70HOk87ZSUO+DafqzTe7
+uk3ude2GdIriCHcrYJEwspZXTkLRXm8N9bLWmO0/q6BkM4tSrbV6Sv1w3NiL4UcM
+jY+TXJw1P8sh11xsswIDAQABozkwNzAJBgNVHRMEAjAAMAsGA1UdDwQEAwIF4DAd
+BgNVHQ4EFgQUrO1hmxp9fSfU47k9eZzxlhCzRkUwDQYJKoZIhvcNAQEFBQADgYEA
+cU38Y2m7tc8MUNzeVe+bkAdCmD6ANuSUqtXzC1Y4Eh095tyji7+K9oLWJYuciM44
+Ku7hLy6Px3TGQl9omaVI5whavTz62xRaOczcUMW6BZfJZp452M4XpuxrvcnJqNFt
+3GjAeSBu3wQKFDcGe+hUYmAMn9VzVbfQT8vgFHVlt9E=
+-----END CERTIFICATE-----

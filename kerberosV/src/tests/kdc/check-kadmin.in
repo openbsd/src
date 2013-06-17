@@ -1,0 +1,310 @@
+#!/bin/sh
+#
+# Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden). 
+# All rights reserved. 
+#
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions 
+# are met: 
+#
+# 1. Redistributions of source code must retain the above copyright 
+#    notice, this list of conditions and the following disclaimer. 
+#
+# 2. Redistributions in binary form must reproduce the above copyright 
+#    notice, this list of conditions and the following disclaimer in the 
+#    documentation and/or other materials provided with the distribution. 
+#
+# 3. Neither the name of the Institute nor the names of its contributors 
+#    may be used to endorse or promote products derived from this software 
+#    without specific prior written permission. 
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE. 
+
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
+objdir="@objdir@"
+srcdir="@srcdir@"
+
+. ${env_setup}
+
+# If there is no useful db support compile in, disable test
+${have_db} || exit 77
+
+R=TEST.H5L.SE
+R2=TEST2.H5L.SE
+
+port=@port@
+admport=@admport@
+
+cache="FILE:${objdir}/cache.krb5"
+
+kadmin="${kadmin} -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
+kadmind="${kadmind} -p $admport"
+
+server=host/datan.test.h5l.se
+
+kinit="${kinit} -c $cache ${afs_no_afslog}"
+kgetcred="${kgetcred} -c $cache"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+
+KRB5_CONFIG="${objdir}/krb5.conf"
+export KRB5_CONFIG
+
+rm -f ${keytabfile}
+rm -f current-db*
+rm -f out-*
+rm -f mkey.file*
+rm -f messages.log
+
+> messages.log
+
+echo Creating database
+${kadmin} -l \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
+    ${R} || exit 1
+
+${kadmin} -l add -p foo --use-defaults foo/admin@${R} || exit 1
+${kadmin} -l add -p foo --use-defaults bar@${R} || exit 1
+${kadmin} -l add -p foo --use-defaults baz@${R} || exit 1
+${kadmin} -l add -p foo --use-defaults bez@${R} || exit 1
+${kadmin} -l add -p foo --use-defaults fez@${R} || exit 1
+${kadmin} -l add -p foo --use-defaults pkinit@${R} || exit 1
+${kadmin} -l modify --pkinit-acl="CN=baz,DC=test,DC=h5l,DC=se" pkinit@${R} || exit 1
+
+echo foo > ${objdir}/foopassword
+
+echo Starting kdc
+${kdc} &
+kdcpid=$!
+
+sh ${wait_kdc}
+if [ "$?" != 0 ] ; then
+    kill -9 ${kdcpid}
+    kill -9 ${kadmpid}
+    exit 1
+fi
+
+trap "kill -9 ${kdcpid} ${kadmpid}" EXIT
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kinit (no admin)"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} bar@${R} || exit 1
+echo "kadmin"
+env KRB5CCNAME=${cache} \
+${kadmin} -p bar@${R} add -p foo --use-defaults kaka2@${R} || 
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
+${kadmin} -l get kaka2@${R} > /dev/null ||
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kinit (no admin)"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} baz@${R} || exit 1
+echo "kadmin globacl"
+env KRB5CCNAME=${cache} \
+${kadmin} -p baz@${R} get bar@${R} > /dev/null || 
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kinit (no admin)"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} baz@${R} || exit 1
+echo "kadmin globacl, negative"
+env KRB5CCNAME=${cache} \
+${kadmin} -p baz@${R} passwd -p foo bar@${R} > /dev/null 2>/dev/null && 
+	{ echo "kadmin succesded $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kinit (no admin)"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} baz@${R} || exit 1
+echo "kadmin globacl"
+env KRB5CCNAME=${cache} \
+${kadmin} -p baz@${R} get bar@${R} > /dev/null || 
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kinit (no admin)"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} bez@${R} || exit 1
+echo "kadmin globacl, negative"
+env KRB5CCNAME=${cache} \
+${kadmin} -p bez@${R} passwd -p foo bar@${R} > /dev/null 2>/dev/null && 
+	{ echo "kadmin succesded $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kinit (no admin)"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} fez@${R} || exit 1
+echo "kadmin globacl"
+env KRB5CCNAME=${cache} \
+${kadmin} -p fez@${R} get bar@${R} > /dev/null || 
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kinit (no admin)"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} fez@${R} || exit 1
+echo "kadmin globacl, negative"
+env KRB5CCNAME=${cache} \
+${kadmin} -p fez@${R} passwd -p foo bar@${R} > /dev/null 2>/dev/null && 
+	{ echo "kadmin succesded $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kinit (admin)"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} foo/admin@${R} || exit 1
+
+echo "kadmin"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} add -p foo --use-defaults kaka@${R} || 
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get doesnotexists"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -s doesnotexists@${R} \
+        > /dev/null 2>kadmin.tmp && \
+	{ echo "kadmin passed"; cat messages.log ; exit 1; }
+
+# evil hack to support libtool
+sed 's/lt-kadmin:/kadmin:/' < kadmin.tmp > kadmin2.tmp
+mv kadmin2.tmp kadmin.tmp
+
+# If client tried IPv6, but service only listened on IPv4
+grep -v ': connect' kadmin.tmp > kadmin2.tmp
+mv kadmin2.tmp kadmin.tmp
+
+cmp kadmin.tmp ${srcdir}/donotexists.txt || \
+    { echo "wrong response"; exit 1;}
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get pkinit-acl"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -o pkinit-acl pkinit@${R} \
+        > /dev/null || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get -o principal"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -o principal bar@${R} \
+        > kadmin.tmp 2>&1 || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+if test "`cat kadmin.tmp`" != "Principal: bar@TEST.H5L.SE" ; then
+   cat kadmin.tmp ; cat messages.log ; exit 1 ;
+fi
+
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get -o kvno"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -o kvno bar@${R} \
+        > kadmin.tmp 2>&1 || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+if test "`cat kadmin.tmp`" != "Kvno: 1" ; then
+   cat kadmin.tmp ; cat messages.log ; exit 1 ;
+fi
+
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get -o princ_expire_time"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -o princ_expire_time bar@${R} \
+        > kadmin.tmp 2>&1 || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+if test "`cat kadmin.tmp`" != "Principal expires: never" ; then
+   cat kadmin.tmp ; cat messages.log ; exit 1 ;
+fi
+
+#----------------------------------
+${kadmind} -d &
+kadmpid=$!
+sleep 1
+
+echo "kadmin get -s -o attributes"
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} get -s -o attributes bar@${R} \
+        > kadmin.tmp 2>&1 || \
+	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
+if test "`cat kadmin.tmp`" != "Attributes" ; then
+   cat kadmin.tmp ; cat messages.log ; exit 1 ;
+fi
+
+#----------------------------------
+
+
+echo "killing kdc (${kdcpid} ${kadmpid})"
+sh ${leaks_kill} kdc $kdcpid || exit 1
+
+trap "" EXIT
+
+exit $ec
