@@ -1,4 +1,4 @@
-/*	$Id: st.in,v 1.13 2012/02/26 21:29:49 guenther Exp $ */
+/*	$Id: st.in,v 1.14 2013/06/17 17:39:48 guenther Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,16 +35,19 @@ LINE("-p1003.1-2001",	"IEEE Std 1003.1-2001 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.1-2004",	"IEEE Std 1003.1-2004 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.1-2008",	"IEEE Std 1003.1-2008 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.1",	"IEEE Std 1003.1 (\\(lqPOSIX.1\\(rq)")
-LINE("-p1003.1b",	"IEEE Std 1003.1b (\\(lqPOSIX.1\\(rq)")
-LINE("-p1003.1b-93",	"IEEE Std 1003.1b-1993 (\\(lqPOSIX.1\\(rq)")
-LINE("-p1003.1c-95",	"IEEE Std 1003.1c-1995 (\\(lqPOSIX.1\\(rq)")
-LINE("-p1003.1g-2000",	"IEEE Std 1003.1g-2000 (\\(lqPOSIX.1\\(rq)")
-LINE("-p1003.1i-95",	"IEEE Std 1003.1i-1995 (\\(lqPOSIX.1\\(rq)")
+LINE("-p1003.1b",	"IEEE Std 1003.1b (\\(lqPOSIX.1b\\(rq)")
+LINE("-p1003.1b-93",	"IEEE Std 1003.1b-1993 (\\(lqPOSIX.1b\\(rq)")
+LINE("-p1003.1c-95",	"IEEE Std 1003.1c-1995 (\\(lqPOSIX.1c\\(rq)")
+LINE("-p1003.1d-99",	"IEEE Std 1003.1d-1999 (\\(lqPOSIX.1d\\(rq)")
+LINE("-p1003.1g-2000",	"IEEE Std 1003.1g-2000 (\\(lqPOSIX.1g\\(rq)")
+LINE("-p1003.1i-95",	"IEEE Std 1003.1i-1995 (\\(lqPOSIX.1i\\(rq)")
+LINE("-p1003.1j-2000",	"IEEE Std 1003.1j-2000 (\\(lqPOSIX.1j\\(rq)")
+LINE("-p1003.1q-2000",	"IEEE Std 1003.1q-2000 (\\(lqPOSIX.1q\\(rq)")
+LINE("-p1003.2",	"IEEE Std 1003.2 (\\(lqPOSIX.2\\(rq)")
 LINE("-p1003.2-92",	"IEEE Std 1003.2-1992 (\\(lqPOSIX.2\\(rq)")
 LINE("-p1003.2a-92",	"IEEE Std 1003.2a-1992 (\\(lqPOSIX.2\\(rq)")
-LINE("-p1387.2-95",	"IEEE Std 1387.2-1995 (\\(lqPOSIX.7.2\\(rq)")
-LINE("-p1003.2",	"IEEE Std 1003.2 (\\(lqPOSIX.2\\(rq)")
 LINE("-p1387.2",	"IEEE Std 1387.2 (\\(lqPOSIX.7.2\\(rq)")
+LINE("-p1387.2-95",	"IEEE Std 1387.2-1995 (\\(lqPOSIX.7.2\\(rq)")
 LINE("-isoC",		"ISO/IEC 9899:1990 (\\(lqISO\\~C90\\(rq)")
 LINE("-isoC-90",	"ISO/IEC 9899:1990 (\\(lqISO\\~C90\\(rq)")
 LINE("-isoC-amd1",	"ISO/IEC 9899/AMD1:1995 (\\(lqISO\\~C90, Amendment 1\\(rq)")
