@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2013/06/17 21:14:19 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2013/06/17 21:27:16 robert Exp $
 
 LIB=	gssapi
 
@@ -277,12 +277,10 @@ CLEANFILES=	${GEN} ${GEN:S/.x$/.c/:S/.hx$/.h/} gssapi_asn1_files spnego_asn1_fil
 
 .for i in ${KRB5SRC} ${MECHSRC} ${SPNEGOSRC} ${NTLMSRC}
 CLEANFILES+=$i
-.endfor
+SRCS+=$i
 
-beforedepend:
-.for i in ${KRB5SRC} ${MECHSRC} ${SPNEGOSRC} ${NTLMSRC}
-	cmp -s ${KRB5DIR}/lib/gssapi/${i:S@__@/@} ${.OBJDIR}/${i} || \
-		ln -sf ${KRB5DIR}/lib/gssapi/${i:S@__@/@} ${.OBJDIR}/${i}
+${i}: ${i:S@__@/@}
+	ln -s ${.ALLSRC} ${.OBJDIR}/${i}
 .endfor
 
 gengssapi: gssapi.asn1
