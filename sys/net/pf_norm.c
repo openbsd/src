@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.157 2012/11/06 12:32:41 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.158 2013/06/17 19:50:06 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1401,8 +1401,8 @@ pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 	thoff = th->th_off << 2;
 	cnt = thoff - sizeof(struct tcphdr);
 
-	if (cnt > 0 && !pf_pull_hdr(pd->m, pd->off + sizeof(*th), opts, cnt,
-	    NULL, NULL, pd->af))
+	if (cnt <= 0 || cnt > MAX_TCPOPTLEN || !pf_pull_hdr(pd->m,
+	    pd->off + sizeof(*th), opts, cnt, NULL, NULL, pd->af))
 		return (0);
 
 	for (; cnt > 0; cnt -= optlen, optp += optlen) {

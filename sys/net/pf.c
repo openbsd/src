@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.834 2013/06/05 00:56:35 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.835 2013/06/17 19:50:06 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2457,8 +2457,8 @@ pf_modulate_sack(struct pf_pdesc *pd, struct pf_state_peer *dst)
 	struct sackblk	 sack;
 
 #define TCPOLEN_SACKLEN	(TCPOLEN_SACK + 2)
-	if (hlen < TCPOLEN_SACKLEN || !pf_pull_hdr(pd->m, pd->off + sizeof(*th),
-	    opts, hlen, NULL, NULL, pd->af))
+	if (hlen < TCPOLEN_SACKLEN || hlen > MAX_TCPOPTLEN || !pf_pull_hdr(
+	    pd->m, pd->off + sizeof(*th), opts, hlen, NULL, NULL, pd->af))
 		return 0;
 
 	while (hlen >= TCPOLEN_SACKLEN) {
